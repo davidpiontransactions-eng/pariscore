@@ -583,6 +583,12 @@
   .cr-hist-unit { font-size: 10px; color: var(--text3); }
   .cr-cache-badge { font-size: 10px; color: var(--text3); margin-top: 10px; text-align: center; }
 
+  /* Power Score / Scouting */
+  .ps-loading { display:flex; align-items:center; gap:10px; padding:20px 0; color:var(--text3); font-size:13px; }
+  .ps-spinner { width:18px; height:18px; border:2px solid var(--bg4); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .ps-report { font-size:13.5px; line-height:1.75; color:var(--text); }
+
   /* Sortable headers */
   .sortable { cursor: pointer; user-select: none; transition: color .15s; }
   .sortable:hover { color: var(--text) !important; }
@@ -2773,7 +2779,7 @@ function ppgFromFormStr(form, n) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function buildLiveStatsPanel(m) {
-  if (!m.live_score) return '';
+  if (!m || !m.live_score) return '';
 
   // Collect all available stats
   const stats = [];
@@ -3783,11 +3789,12 @@ function insSetStatsMode(mode) {
 }
 
 function buildStatsTab(d) {
+  if (!d || !d.match) return '<div class="ins-empty" style="padding:40px 0">Données indisponibles</div>';
   const m  = d.match;
   const ha = d.homeAdv || {};
   const aa = d.awayAdv || {};
-  const hs = d.homeStats?.home || d.match.stats?.home || {};
-  const as = d.awayStats?.away || d.match.stats?.away || {};
+  const hs = d.homeStats?.home || (d.match.stats?.home) || {};
+  const as = d.awayStats?.away || (d.match.stats?.away) || {};
 
   const globPlayedH = (ha.played_home||0)+(ha.played_away||0);
   const globPlayedA = (aa.played_home||0)+(aa.played_away||0);
