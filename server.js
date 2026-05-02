@@ -1038,11 +1038,15 @@ function calcLiveAdjustedLambdas(match) {
     adjLambdaA *= (1 - momentumBias);
   }
   const possession = match.live_possession;
-  if (possession && possession.home && possession.away) {
-    const possRatio = possession.home / (possession.home + possession.away);
-    const possBias = (possRatio - 0.5) * 0.15;
-    adjLambdaH *= (1 + possBias);
-    adjLambdaA *= (1 - possBias);
+  if (possession) {
+    const pH = parseFloat(possession.home) || 0;
+    const pA = parseFloat(possession.away) || 0;
+    if (pH + pA > 0) {
+      const possRatio = pH / (pH + pA);
+      const possBias = (possRatio - 0.5) * 0.15;
+      adjLambdaH *= (1 + possBias);
+      adjLambdaA *= (1 - possBias);
+    }
   }
   adjLambdaH = Math.max(0.1, adjLambdaH * timeFactor);
   adjLambdaA = Math.max(0.1, adjLambdaA * timeFactor);
@@ -5222,7 +5226,7 @@ server.listen(PORT, async () => {
           match.live_minute = live.current_minute || null;
 
           // AUTO-ARCHIVE: Supprimer immédiatement les matchs terminés (FT, AET, PEN)
-          const isFinished = live.status && /^(FT|AET|PEN|FT-P)$/i.test(live.status);
+          const isFinished = live.status && /^(FT|AET|PEN|FT-?P|AET-?P|INT|CANC|ABAN|SUSP|PST)$/i.test(live.status);
           if (isFinished) {
             console.log(`  [Live] Match terminé: ${match.home_team} ${scoreHome}-${scoreAway} ${match.away_team} (${live.status})`);
             match.live_minute = 90;
@@ -5277,7 +5281,7 @@ server.listen(PORT, async () => {
         for (const m of db.matches) {
           if (m.live_score && !liveMatchIds.has(m.id)) {
             const elapsed = (Date.now() - new Date(m.commence_time).getTime()) / 60000;
-            if (elapsed > 150) {
+            if (elapsed > 120) {
               console.log(`  [Live] Nettoyage: ${m.home_team} ${m.live_score} ${m.away_team} (plus dans API, ${Math.round(elapsed)}min)`);
               m.live_score = null; m.live_minute = null; m.live_status = null;
               updated = true;

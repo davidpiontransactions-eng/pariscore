@@ -1802,7 +1802,7 @@
       <div id="scrollbar-top-inner" style="height:1px;"></div>
     </div>
     <div id="table-scroll" style="overflow-x:auto;">
-      <table id="vb-table" class="neu-table" style="min-width:1400px;"></table>
+      <table id="vb-table" class="neu-table" style="min-width:1400px;"><tbody id="vb-body"></tbody></table>
     </div>
   </div>
 </section>
@@ -2889,7 +2889,9 @@ function buildLiveStatsPanel(m) {
 }
 
 function renderMatches(matches) {
+  if (!matches) return;
   const tbody = document.getElementById('vb-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   let filtered = matches;
@@ -3009,13 +3011,14 @@ function renderMatches(matches) {
     });
   }
 
+  const mt = document.getElementById('matches-table');
+  const es = document.getElementById('empty-state');
+
   if (!filtered.length) {
-    document.getElementById('matches-table').style.display = 'none';
-    document.getElementById('empty-state').style.display = 'block';
-    document.getElementById('empty-state').textContent = activeDay !== 'all'
-      ? 'Aucun match trouvé pour ce jour.'
-      : 'Aucun match trouvé.';
-    document.getElementById('bet-count').textContent = '';
+    if (mt) mt.style.display = 'none';
+    if (es) { es.style.display = 'block'; es.textContent = activeDay !== 'all' ? 'Aucun match trouvé pour ce jour.' : 'Aucun match trouvé.'; }
+    const bc = document.getElementById('bet-count');
+    if (bc) bc.textContent = '';
     return;
   }
 
@@ -3023,11 +3026,8 @@ function renderMatches(matches) {
   if (!sortKey) {
     filtered.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
   }
-  document.getElementById('matches-table').style.display = 'table';
-  document.getElementById('empty-state').style.display = 'none';
-  // Masquer colonne Pression si aucun match live dans la vue courante
-  const hasLive = filtered.some(m => !!m.live_score);
-  document.getElementById('matches-table').classList.toggle('no-live', !hasLive);
+  if (mt) { mt.style.display = 'table'; mt.classList.toggle('no-live', !filtered.some(m => !!m.live_score)); }
+  if (es) es.style.display = 'none';
   const vbCount = filtered.filter(m => (m.best_edge?.edge || 0) > 0).length;
   const vbStr   = vbCount > 0 ? ` · ${vbCount} value bet${vbCount > 1 ? 's' : ''}` : '';
   document.getElementById('bet-count').textContent = `${filtered.length} match${filtered.length > 1 ? 's' : ''}${vbStr}`;
@@ -6530,7 +6530,7 @@ function saveSettings() {
   const ob = document.getElementById('settings-odds-bookmaker');
   if (ob) _settings.oddsBookmaker = ob.value;
   localStorage.setItem('ps_settings', JSON.stringify(_settings));
-  if (allMatches.length) renderTable(allMatches);
+  if (allMatches.length) renderMatches(allMatches);
 }
 
 function isAffiliateEnabled() { return _settings.affiliateLinks; }
