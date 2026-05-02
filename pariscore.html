@@ -3749,12 +3749,59 @@ function buildResumeTab(d) {
   `;
 }
 
-function buildStatsTab(d) {
+let _insStatsMode = 'global';
+
+function insSetStatsMode(mode) {
+  _insStatsMode = mode;
+  const tab = document.getElementById('ins-tab-stats');
+  if (tab && insCurrentData) {
+    tab.innerHTML = buildStatsTab(insCurrentData, mode);
+  }
+  document.querySelectorAll('.ins-stats-btn').forEach(b => {
+    const active = b.dataset.mode === mode;
+    b.style.background = active ? 'var(--green)' : 'var(--bg4)';
+    b.style.color = active ? '#000' : 'var(--text2)';
+    b.style.fontWeight = active ? '700' : '400';
+  });
+}
+
+function buildStatsTab(d, mode) {
+  mode = mode || _insStatsMode || 'global';
   const m  = d.match;
   const ha = d.homeAdv || {};
   const aa = d.awayAdv || {};
   const hs = d.homeStats?.home || d.match.stats?.home || {};
   const as = d.awayStats?.away || d.match.stats?.away || {};
+
+  const venue = (what, hWhat, aWhat) => {
+    if (what === 'global') return [hWhat, aWhat];
+    const hVal = (hWhat != null) ? hWhat : null;
+    const aVal = (aWhat != null) ? aWhat : null;
+    return [hVal, aVal];
+  };
+
+  const getH = (field, hSrc) => {
+    if (mode === 'global' || !hSrc) return hs[field];
+    if (field === 'ppg') return hSrc.played_home ? ((hSrc.wins_home||0)*3 + (hSrc.draws_home||0)) / hSrc.played_home : null;
+    if (field === 'wins') return hSrc.played_home ? Math.round((hSrc.wins_home||0) / hSrc.played_home * 100) : null;
+    if (field === 'draws') return hSrc.played_home ? Math.round((hSrc.draws_home||0) / hSrc.played_home * 100) : null;
+    if (field === 'losses') return hSrc.played_home ? Math.round((hSrc.losses_home||0) / hSrc.played_home * 100) : null;
+    if (field === 'avgScored') return mode === 'home' ? hSrc.goals_scored_home_avg : hSrc.goals_scored_away_avg;
+    if (field === 'avgConceded') return mode === 'home' ? hSrc.goals_conceded_home_avg : hSrc.goals_conceded_away_avg;
+    return hs[field];
+  };
+  const getA = (field, aSrc) => {
+    if (mode === 'global' || !aSrc) return as[field];
+    if (field === 'ppg') return aSrc.played_home ? ((aSrc.wins_home||0)*3 + (aSrc.draws_home||0)) / aSrc.played_home : null;
+    if (field === 'wins') return aSrc.played_home ? Math.round((aSrc.wins_home||0) / aSrc.played_home * 100) : null;
+    if (field === 'draws') return aSrc.played_home ? Math.round((aSrc.draws_home||0) / aSrc.played_home * 100) : null;
+    if (field === 'losses') return aSrc.played_home ? Math.round((aSrc.losses_home||0) / aSrc.played_home * 100) : null;
+    if (field === 'avgScored') return mode === 'home' ? aSrc.goals_scored_home_avg : aSrc.goals_scored_away_avg;
+    if (field === 'avgConceded') return mode === 'home' ? aSrc.goals_conceded_home_avg : aSrc.goals_conceded_away_avg;
+    return as[field];
+  };
+
+  const modeLabel = mode === 'global' ? '' : mode === 'home' ? ' (Dom)' : ' (Ext)';
 
   const row = (label, hVal, aVal) =>
     (hVal != null || aVal != null) ? `<tr>
@@ -3763,55 +3810,45 @@ function buildStatsTab(d) {
       <td class="val-away">${aVal ?? '—'}</td>
     </tr>` : '';
 
-  const domRow = (label, hVal, aVal) =>
-    (hVal != null || aVal != null) ? `<tr>
-      <td class="row-label" style="padding-left:20px;color:var(--text3)">${label}</td>
-      <td class="val-home">${hVal ?? '—'}</td>
-      <td class="val-away">${aVal ?? '—'}</td>
-    </tr>` : '';
-
   return `
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="ins-stats-btn" data-mode="global" onclick="insSetStatsMode('global')" style="background:${mode==='global'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='global'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='global'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">Global</button>
+      <button class="ins-stats-btn" data-mode="home" onclick="insSetStatsMode('home')" style="background:${mode==='home'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='home'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='home'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">Domicile</button>
+      <button class="ins-stats-btn" data-mode="away" onclick="insSetStatsMode('away')" style="background:${mode==='away'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='away'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='away'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">Extérieur</button>
+    </div>
     <table class="ins-table">
       <thead><tr>
-        <th style="text-align:left">Statistique</th>
+        <th style="text-align:left">Statistique${modeLabel ? `<span style="color:var(--green);font-weight:400;margin-left:6px">${modeLabel}</span>` : ''}</th>
         <th style="color:var(--blue)">${m.home_team}</th>
         <th style="color:#ab47bc">${m.away_team}</th>
       </tr></thead>
       <tbody>
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">PERFORMANCE GLOBALE</td></tr>
-        ${row('PPG', hs.ppg?.toFixed(2), as.ppg?.toFixed(2))}
-        ${row('Victoires', hs.wins != null ? hs.wins+'%' : null, as.wins != null ? as.wins+'%' : null)}
-        ${row('Nuls', hs.draws != null ? hs.draws+'%' : null, as.draws != null ? as.draws+'%' : null)}
-        ${row('Défaites', hs.losses != null ? hs.losses+'%' : null, as.losses != null ? as.losses+'%' : null)}
-        ${row('Moy. Buts Marqués', hs.avgScored?.toFixed(2), as.avgScored?.toFixed(2))}
-        ${row('Moy. Buts Encaissés', hs.avgConceded?.toFixed(2), as.avgConceded?.toFixed(2))}
+        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">PERFORMANCE</td></tr>
+        ${row('PPG', getH('ppg',ha)?.toFixed(2), getA('ppg',aa)?.toFixed(2))}
+        ${row('Victoires', getH('wins',ha) != null ? getH('wins',ha)+'%' : null, getA('wins',aa) != null ? getA('wins',aa)+'%' : null)}
+        ${row('Nuls', getH('draws',ha) != null ? getH('draws',ha)+'%' : null, getA('draws',aa) != null ? getA('draws',aa)+'%' : null)}
+        ${row('Défaites', getH('losses',ha) != null ? getH('losses',ha)+'%' : null, getA('losses',aa) != null ? getA('losses',aa)+'%' : null)}
+        ${row('Moy. Buts Marqués', getH('avgScored',ha)?.toFixed(2), getA('avgScored',aa)?.toFixed(2))}
+        ${row('Moy. Buts Encaissés', getH('avgConceded',ha)?.toFixed(2), getA('avgConceded',aa)?.toFixed(2))}
 
-        ${ha.played_home || aa.played_home ? `
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">DOMICILE / EXTÉRIEUR</td></tr>
-        ${domRow('Matchs (Dom/Ext)', ha.played_home != null ? `${ha.played_home}/${ha.played_away}` : null, aa.played_home != null ? `${aa.played_home}/${aa.played_away}` : null)}
-        ${domRow('Victoires (Dom/Ext)', ha.wins_home != null ? `${ha.wins_home}/${ha.wins_away}` : null, aa.wins_home != null ? `${aa.wins_home}/${aa.wins_away}` : null)}
-        ${domRow('Buts Marqués (Dom/Ext)', ha.goals_scored_home_avg != null ? `${ha.goals_scored_home_avg?.toFixed(2)}/${ha.goals_scored_away_avg?.toFixed(2)}` : null, aa.goals_scored_home_avg != null ? `${aa.goals_scored_home_avg?.toFixed(2)}/${aa.goals_scored_away_avg?.toFixed(2)}` : null)}
-        ${domRow('Buts Encaissés (Dom/Ext)', ha.goals_conceded_home_avg != null ? `${ha.goals_conceded_home_avg?.toFixed(2)}/${ha.goals_conceded_away_avg?.toFixed(2)}` : null, aa.goals_conceded_home_avg != null ? `${aa.goals_conceded_home_avg?.toFixed(2)}/${aa.goals_conceded_away_avg?.toFixed(2)}` : null)}
-        ` : ''}
-
-        ${ha.shots_on_total || aa.shots_on_total ? `
+        ${ha.shots_on_total != null || aa.shots_on_total != null ? `
         <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">🎯 TIRS</td></tr>
-        ${domRow('Tirs Cadrés /match', ha.shots_on_home != null && ha.played_home > 0 ? (ha.shots_on_home/ha.played_home).toFixed(2) : null, aa.shots_on_home != null && aa.played_home > 0 ? (aa.shots_on_home/aa.played_home).toFixed(2) : null)}
-        ${domRow('Tirs Totaux /match', ha.shots_total_home != null && ha.played_home > 0 ? (ha.shots_total_home/ha.played_home).toFixed(2) : null, aa.shots_total_home != null && aa.played_home > 0 ? (aa.shots_total_home/aa.played_home).toFixed(2) : null)}
+        ${row('Tirs Cadrés /match', ha.shots_on_total != null ? (mode==='global' ? (ha.shots_on_total/((ha.played_home||0)+(ha.played_away||0))) : ha.shots_on_home/(ha.played_home||1)).toFixed(2) : null, aa.shots_on_total != null ? (mode==='global' ? (aa.shots_on_total/((aa.played_home||0)+(aa.played_away||0))) : aa.shots_on_home/(aa.played_home||1)).toFixed(2) : null)}
+        ${row('Tirs Totaux /match', (ha.shots_total_home != null && ha.shots_total_away != null) ? (mode==='global' ? ((ha.shots_total_home+ha.shots_total_away)/((ha.played_home||0)+(ha.played_away||0))) : ha.shots_total_home/(ha.played_home||1)).toFixed(2) : null, (aa.shots_total_home != null && aa.shots_total_away != null) ? (mode==='global' ? ((aa.shots_total_home+aa.shots_total_away)/((aa.played_home||0)+(aa.played_away||0))) : aa.shots_total_home/(aa.played_home||1)).toFixed(2) : null)}
         ` : ''}
 
         ${ha.biggest_win_home || aa.biggest_win_home ? `
         <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">RECORDS</td></tr>
-        ${domRow('Plus grande victoire Dom', ha.biggest_win_home || null, aa.biggest_win_home || null)}
-        ${domRow('Plus grande victoire Ext', ha.biggest_win_away || null, aa.biggest_win_away || null)}
-        ${domRow('Plus lourde défaite Dom', ha.biggest_loss_home || null, aa.biggest_loss_home || null)}
-        ${domRow('Plus grande série Victoires', ha.streak_wins != null ? ha.streak_wins : null, aa.streak_wins != null ? aa.streak_wins : null)}
+        ${row('Plus grande victoire '+(mode==='home'?'Dom':mode==='away'?'Ext':''), ha.biggest_win_home || null, aa.biggest_win_home || null)}
+        ${row('Plus grande victoire '+(mode==='away'?'Dom':mode==='home'?'Ext':''), ha.biggest_win_away || null, aa.biggest_win_away || null)}
+        ${row('Plus lourde défaite '+(mode==='home'?'Dom':mode==='away'?'Ext':''), ha.biggest_loss_home || null, aa.biggest_loss_home || null)}
+        ${row('Plus grande série Victoires', ha.streak_wins != null ? ha.streak_wins : null, aa.streak_wins != null ? aa.streak_wins : null)}
         ` : ''}
 
         ${ha.penalties_scored != null || aa.penalties_scored != null ? `
         <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">PÉNALTYS</td></tr>
-        ${domRow('Marqués', ha.penalties_scored ?? null, aa.penalties_scored ?? null)}
-        ${domRow('Manqués', ha.penalties_missed ?? null, aa.penalties_missed ?? null)}
+        ${row('Marqués', ha.penalties_scored ?? null, aa.penalties_scored ?? null)}
+        ${row('Manqués', ha.penalties_missed ?? null, aa.penalties_missed ?? null)}
         ` : ''}
 
         ${ha.cards_yellow_total != null || aa.cards_yellow_total != null ? `
@@ -3820,10 +3857,9 @@ function buildStatsTab(d) {
           const hPlayed = (ha.played_home||0)+(ha.played_away||0);
           const aPlayed = (aa.played_home||0)+(aa.played_away||0);
           return [
-            domRow('Cartons Jaunes /match', ha.cards_yellow_total != null && hPlayed>0 ? (ha.cards_yellow_total/hPlayed).toFixed(2) : null, aa.cards_yellow_total != null && aPlayed>0 ? (aa.cards_yellow_total/aPlayed).toFixed(2) : null),
-            domRow('Cartons Rouges /match', ha.cards_red_total != null && hPlayed>0 ? (ha.cards_red_total/hPlayed).toFixed(2) : null, aa.cards_red_total != null && aPlayed>0 ? (aa.cards_red_total/aPlayed).toFixed(2) : null),
-            domRow('Clean Sheet %', ha.clean_sheet_total != null && hPlayed>0 ? ((ha.clean_sheet_total/hPlayed)*100).toFixed(1)+'%' : null, aa.clean_sheet_total != null && aPlayed>0 ? ((aa.clean_sheet_total/aPlayed)*100).toFixed(1)+'%' : null),
-            domRow('CS Dom / Ext', ha.clean_sheet_home != null ? `${ha.clean_sheet_home}/${ha.clean_sheet_away}` : null, aa.clean_sheet_home != null ? `${aa.clean_sheet_home}/${aa.clean_sheet_away}` : null),
+            row('Cartons Jaunes /match', ha.cards_yellow_total != null && hPlayed>0 ? (ha.cards_yellow_total/hPlayed).toFixed(2) : null, aa.cards_yellow_total != null && aPlayed>0 ? (aa.cards_yellow_total/aPlayed).toFixed(2) : null),
+            row('Cartons Rouges /match', ha.cards_red_total != null && hPlayed>0 ? (ha.cards_red_total/hPlayed).toFixed(2) : null, aa.cards_red_total != null && aPlayed>0 ? (aa.cards_red_total/aPlayed).toFixed(2) : null),
+            row('Clean Sheet %', ha.clean_sheet_total != null && hPlayed>0 ? ((ha.clean_sheet_total/hPlayed)*100).toFixed(1)+'%' : null, aa.clean_sheet_total != null && aPlayed>0 ? ((aa.clean_sheet_total/aPlayed)*100).toFixed(1)+'%' : null),
           ].join('');
         })()}
         ` : ''}
@@ -4251,6 +4287,7 @@ async function openInsights(matchId) {
   });
 
   document.getElementById('insights-modal').classList.add('open');
+  _insStatsMode = 'global';
   insShowTab('resume');
 
   try {
