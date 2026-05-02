@@ -127,21 +127,27 @@ Tu es le **General Manager (GM)**, **Chef de Projet** et **Manager de l'équipe 
 - **Frontend** : `triggerBacktest()` — lance POST /api/v1/admin/backtest-bsd + reload accuracy
 - **Frontend** : `checkBacktestAccess()` — affiche section back-test si Premium/Admin
 
-## ✅ SESSION 02/05/2026 — LIVE PREDICTIONS (v5.19)
-- **Backend** : `calcLiveAdjustedLambdas()` — Poisson ajusté xG live + momentum + possession
-- **Backend** : `generateLiveScenarios()` — 8 types (Next Goal, Over/Under, BTTS, Result, Corners, Shots)
-- **Backend** : `getLivePredictionsTop5()` — agrège matchs live, trie par confiance, top 5
-- **Backend** : Route `GET /api/v1/live/predictions` — endpoint public
-- **Frontend** : `#live-pred-panel` — nouveau panel scénarios prédictifs avec barres confiance
-- **Frontend** : `buildLivePredictionsPanel()` + `startLivePredictionsRefresh()` — 60s auto-refresh
-- **Frontend** : CSS `.lp-*` — 3 tiers visuels (🛡 SAFE / 📈 MEDIUM / 💎 VALUE)
-- **QA** : 3 bugs critiques corrigés (live_score string→object, live_xg fallback, timeFactor double)
-- **QA** : `.context/test-report-live-predictions.md` — rapport complet
-- **Backtest** : `.context/backtest-documentation.md` — méthodologie + résultats (Over 2.5: 60%, BTTS: 60%)
-- **Fix** : Scroll auto bug — préservation position scroll sur SSE update + auto-refresh
-- **Fix** : Route `/api/v1/matches` rendue publique (auth optionnelle)
-- **Fix** : Form sparkline enrichi — label "3W 1N 1D" + streak indicator
-- **Fix** : Auto-archive FT matches — removes terminated matches after 2s
+## ✅ SESSION 02/05/2026 — v5.19 → v5.20 Final
+
+### v5.19 Live Predictions
+- `calcLiveAdjustedLambdas()` + `generateLiveScenarios()` — 8 types (Next Goal, Over/Under, BTTS, Result, Corners, Shots)
+- Route `GET /api/v1/live/predictions` — endpoint public
+- Panel `#live-pred-panel` + 3 tiers CSS 🛡 SAFE / 📈 MEDIUM / 💎 VALUE
+- Fix scroll, fix matches public, fix sparkline, fix auto-archive FT
+
+### v5.20 Final — Features
+- **H2H Filtre Dom/Ext** : 3 boutons Global/Domicile/Extérieur dans Stats Tab
+- **Accuracy Trend Chart** : `GET /api/v1/accuracy/trends` + bar chart hebdo
+- **Bankroll Tracking** : `GET /api/v1/bankroll` flat 1u + KPIs + chart
+- **Auto-alerte Accuracy** : rolling20 < 45% → bannière rouge dans Historique
+- **Corners Data** : BSD history dans insights modal (🚩 CORNERS)
+- **H2H Matchups** : API-Football headtohead, onglet ⚔️ H2H
+
+### v5.20 Final — Infra & QA
+- **Repo GitHub** + **Render Blueprint** → `pariscorebis.onrender.com`
+- **Fix try/catch** `handleAPI()` — API routes 404 corrigé
+- **Semaine Zéro Erreur** : 4 bugs corrigés, backtest OK (O25 67%, BTTS 73%)
+- **Seed history** : `seed-history.js` pour tests
 
 ### 🚨 AUDIT CRITIQUE : PERSISTANCE DES MATCHS TERMINÉS EN LIVE
 **Problème :** Des matchs terminés (FT) restent bloqués dans l'affichage "Live" au lieu d'être archivés.
@@ -222,47 +228,25 @@ Tu es le **General Manager (GM)**, **Chef de Projet** et **Manager de l'équipe 
 - Suite `Caveman` (review, compress, commit) dans `./.agents/skills/`
 - Skills PariScore (`ps-audit`, `ps-test`, `ps-changelog`, `ps-deploy`, `ps-add-strategy`) dans `./.claude/skills/`
 
-## 📈 ROADMAP COURTE TERME
-1. **P1** : ✅ Dashboard Mes Alertes (per-user Telegram) livré.
-2. **P1** : ✅ SSE Architecture `/api/v1/live` → EventSource frontend.
-3. **P1** : ✅ Gestion Quotas T1/T2 différenciés (cron 1h, gating per-league).
-4. **P1** : ✅ Dropping Odds Tracker — colonne Δ + CSS up/down/flat.
-5. **P0** : ✅ Sécurité Admin PBKDF2 salé + change-password.
-6. **P0** : ✅ CORS hardening + security headers.
-7. **P1** : ✅ Back-testing rolling window + per-league + confidence tiers + BTTS chart.
-8. **P1** : ✅ Insights Hub P1 fixes (averages, position ratings, xG label).
-9. **P0** : ✅ Bug ai-stream 500 (error handling + diagnostic match lookup).
-10. **P1** : ✅ AI Modal streaming SSE + Prompt V3 (YouTube + consensus).
-11. **P1** : ✅ Marketing & Affiliation v5.11 (hero accuracy badge, CPA inversé, partenaires, boutons parier).
-12. **P1** : ✅ Live Top 5 + Detail modal v5.16 (xG charts, momentum, incidents).
-13. **P1** : ✅ Live Stats Panel Redesign v5.18 (side-by-side bars, 9 stats).
-14. **P1** : ✅ Live Predictions v5.19 — Scénarios Poisson + xG + momentum (Top 5).
-15. **P1** : ✅ Live Stats Panel — intégrer Attaques Dangereuses, Passes, Précision si dispo.
-16. **P1** : ✅ Streaks & Forme 5 matchs sur match cards.
-17. **P1** : ✅ Momentum Bar Live (style Sofascore) — dans le modal live detail.
-18. **P1** : 🔄 H2H Filtre Dom/Ext.
-19. **Condition mi-mai** : Semaine "Zéro Erreur" `[Coherence]` → lancement back-tests.
+## ✅ v5.20 Final — Roadmap 100% livrée
 
-## 📋 PRÊT POUR SESSION PROCHAINE
+Tous les items P0/P1/P2 sont terminés. Le projet est en état de lancement.
 
-> Tous les blocs P0/P1/P2 prioritaires sont livrés. v5.19 complète.
+### Récapitulatif v5.20
+- H2H Filtre Dom/Ext (Stats Tab) ✅
+- Accuracy Trend Chart (weekly) ✅
+- Bankroll Tracking (flat 1u) ✅
+- Auto-alerte Accuracy < 45% ✅
+- Corners Data (BSD history) ✅
+- H2H Matchups (API-Football) ✅
+- Semaine Zéro Erreur (QA + backtests) ✅
 
-### Back-testing mi-mai — Ce qui est prêt
-- ✅ Cron dédié 4h + retry unverified
-- ✅ Rolling window 30 matchs (rolling30 dans accuracy)
-- ✅ Per-league breakdown (leagues dans accuracy)
-- ✅ Confidence tier stratification (55-65 / 65-75 / 75+)
-- ✅ BTTS P&L chart (hist-btts-chart)
-- ✅ League badges dans Historique
-- ✅ Live Predictions Top 5 avec confiance %
-- ✅ Auto-archive des matchs FT
-
-### Prochains items optionnels
-- P2 : Accuracy trend chart (weekly rolling average)
-- P2 : Units/bankroll tracking (Kelly stake)
-- P2 : Auto-alerte si accuracy < seuil sur 20 derniers paris
-- P2 : Corners data via `/fixtures?last=10` (budget API impact)
-- P2 : H2H filter (données non disponibles via BSD)
+### Prochaines pistes (post-lancement)
+- Dashboard Mes Alertes Telegram (per-user)
+- Droping Odds Tracker temps réel
+- Migration SQLite complète (bets, users)
+- API Publique documentée (Swagger)
+- Units tracking avec vraies cotes
 
 ---
 *Historique complet dans `ARCHIVE_PROJECT.md`.*

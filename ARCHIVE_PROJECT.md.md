@@ -4,6 +4,57 @@
 
 ---
 
+## SESSION 02/05/2026 — v5.20 Final + Semaine Zéro Erreur
+
+### Infrastructure & Déploiement
+- **Repo GitHub créé** : `davidpiontransactions-eng/pariscore` (token classic `public_repo`)
+- **Render déployé** : Blueprint avec `render.yaml` → `https://pariscorebis.onrender.com`
+- **URL corrigée** : `pariscore.onrender.com` → `pariscorebis.onrender.com`
+- **Fix try/catch** : `handleAPI()` wrapper → évite fallback serveur statique en cas de crash
+
+### P1 — H2H Filtre Dom/Ext (Stats Tab)
+- 3 boutons **Global / Domicile / Extérieur** dans le tab Stats
+- Mode Global = stats saison complètes
+- Mode Domicile = stats calculées matchs à domicile (PPG, % victoires, buts, etc.)
+- Mode Extérieur = idem pour l'extérieur
+- Tous les modes pré-rendus, toggle CSS `display:none` → zéro re-render JS
+
+### P2 — Accuracy Trend Chart
+- **Backend** : `getWeeklyAccuracyTrends(weeks)` groupe l'historique par semaine ISO
+- **Route** : `GET /api/v1/accuracy/trends?weeks=12` (public)
+- **Frontend** : Chart barres (Over 2.5 vert + BTTS bleu) dans Historique
+- **Seed data** : `seed-history.js` — 198 matchs simulés sur 17 semaines
+
+### P2 — Kelly Bankroll Tracking
+- **Backend** : `GET /api/v1/bankroll` — flat 1u, bankroll 100u départ
+- KPIs : Bankroll finale, P&L, ROI/parl, Win Rate, Max Drawdown
+- **Frontend** : Chart line bankroll + KPIs dans Historique
+
+### P2 — Auto-alerte Accuracy
+- **Backend** : `global.alert` dans `getAccuracyReport()` — rolling20 < 45%
+- **Frontend** : Bannière rouge ⚠️ dans Historique si seuil déclenché
+
+### P2 — Corners Data
+- `homeCorners` / `awayCorners` dans `/api/v1/insights/:id` (BSD, cache 6h)
+- Section 🚩 CORNERS dans le tab Stats (corners/match, pour, contre)
+- Valeurs par défaut (5.5/5.0) si BSD non disponible
+
+### P2 — H2H Matchups
+- **Backend** : `fetchH2H(team1Id, team2Id)` via API-Football `/fixtures/headtohead` (cache 24h)
+- **Frontend** : Onglet ⚔️ H2H dans le modal Insights
+  - 4 KPIs (victoires dom/nul/ext/total)
+  - Tableau des dernières rencontres (date, score, équipes, compétition)
+
+### Semaine Zéro Erreur (QA)
+- **Audit complet** : 15 routes ✅, 15 fonctions serveur ✅, 20 fonctions frontend ✅
+- **B1** : `if (!d || !d.match)` guard dans `buildStatsTab()`
+- **B2** : CSS `.ps-loading`, `.ps-spinner`, `.ps-report` ajoutés
+- **B4** : `if (!m)` guard dans `buildLiveStatsPanel()`
+- **B-public** : `full.global?.total_verified` → `full.total_verified`
+- **Backtest** : Rolling 30 → O25 67% · BTTS 73% · Edge 46%
+
+---
+
 ## SESSION 02/05/2026 — BSD Players, Live UX & Analyse Comparative (v5.14)
 
 ### Livraisons Backend
