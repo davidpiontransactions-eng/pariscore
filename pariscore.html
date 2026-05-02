@@ -2469,9 +2469,16 @@ async function initLeagueFilters() {
       return (a.country || '').localeCompare(b.country || '');
     });
     // Générer les chips
+    const COUNTRY_FLAGS = {
+      'France': '🇫🇷', 'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Spain': '🇪🇸', 'Germany': '🇩🇪',
+      'Italy': '🇮🇹', 'Netherlands': '🇳🇱', 'Belgium': '🇧🇪', 'Portugal': '🇵🇹',
+      'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Turkey': '🇹🇷', 'Saudi Arabia': '🇸🇦', 'Brazil': '🇧🇷',
+      'Argentina': '🇦🇷', 'World': '🌍', 'Europe': '🇪🇺', 'S. America': '🌎',
+    };
     const chips = sorted.map(l => {
+      const flag = COUNTRY_FLAGS[l.country] || '';
       const label = l.country === 'World' || l.country === 'Europe' || l.country === 'S. America'
-        ? `${l.name}` : l.name;
+        ? `${flag} ${l.name}` : `${flag} ${l.name}`;
       return `<button class="filter-chip" data-sport="${l.odds_key}">${label}</button>`;
     }).join('');
     // Insérer après le bouton "Toutes"
