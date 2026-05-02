@@ -267,3 +267,87 @@ Phases livrées au 29 avril :
 - Confidence tiers : 55-65% / 65-75% / 75%+ sur Over 2.5
 - Frontend : chart BTTS P&L (`hist-btts-chart`) + badges league accuracy
 - CSS `.league-badge` ajouté
+
+---
+
+## SESSION 01/05/2026 — P0 Résolu
+- **Bug sync Pisa/Lecce** : `findFuzzy()` rewrite (matching strict + logging)
+- **Serie A stats** : Force refresh T1 leagues ajouté
+- **Auth** : Admin SHA-256 → PBKDF2 salé + route change-password + force_change flag
+- **CORS** : `*` → `http://localhost:3000` + headers X-Frame-Options + X-Content-Type-Options
+- **Accuracy** : `/api/v1/accuracy` protégé auth minimum
+- **Back-testing** : Rolling 30 + per-league + confidence tiers + BTTS P&L chart
+- **P0 ai-stream 500** : Error handling try/catch dans Promise chain + diagnostic match lookup
+
+## SESSION 01/05/2026 — P1 INSIGHTS (v5.9)
+- **Shots** : Totaux → moyennes /match (buildStatsTab)
+- **Cartons** : Totaux → moyennes /match (buildStatsTab)
+- **Clean Sheets** : Compteur → % + CS Dom/Ext conservé
+- **Position Ratings** : Proxy buts/match → vraies notes par poste (G/D/M/A) via `/players`
+- **xG** : Label "Expected Goals" → "Modèle Poisson" (transparence source)
+- **Backend** : `fetchTeamPositionRatings()` + cache 24h + insights route
+- **Strategy click** : `.strat-card` onclick → `openInsightsById()` avec enhanced hover CSS
+- **AI Modal SSE** : `openGemini()` → `startGeminiStream()` via EventSource, fin JSON renderPowerScore
+- **Prompt V3** : YouTube press conference links + consensus web dans POWER_SCORE_SYSTEM_PROMPT
+- **Modal layout** : HTML gemini-modal → streaming markdown, CSS streaming + cursor blink
+
+## SESSION 01/05/2026 — P1 MONÉTISATION IA (v5.10)
+- **Modèle hybride** : Freemium (1/jour) → Matchday Pass (5/24h €4.99) → Premium (illimité €9.99/mo)
+- **Backend** : `POWER_SCORE_LIMITS` + `incrementPowerScoreUsage()` + `checkIpAbuse()` (30 req/min)
+- **Route** : `GET /api/v1/ai-stream/:id` → auth (header + query param) + quota check + cache global
+- **Route** : `GET /api/v1/ai-quota` → retourne role, label, remaining, limit
+- **Frontend** : Auth gate + quota check + badge modal + upsell modal + loading lock
+- **Frontend** : SSE retry (1x après 2s) si ReadableStream coupe
+- **QA Report** : `.context/test-report-ai-power-score.md`
+
+## SESSION 01/05/2026 — P1 MARKETING & AFFILIATION (v5.11)
+- **Benchmark Datafoot** : Analyse complète modèle Julien (CPA inversé, réseau partenaires)
+- **Doc** : `.context/marketing-affiliation-strategy.md` + `.context/marketing-templates.md`
+- **Backend** : `GET /api/v1/accuracy/public` — endpoint public badge hero
+- **Frontend** : Hero accuracy badge + CPA inversé + Partenaires + boutons 🎰 Parier
+- **Frontend** : `openBetLink()` + `trackAffiliateClick()`
+
+## SESSION 02/05/2026 — P0 BSD INTEGRATION (v5.12)
+- `bsdToOddsApiFormat()` + BSD supplement dans `fetchOdds()`
+- `getBSDScoreForMatch()` — score lookup BSD avec cache date
+- `archivePastMatches()` → BSD primaire + API-Football fallback
+- Route `POST /api/v1/admin/backtest-bsd` — bulk catch-up
+- `buildCornersTab()` — Poisson grid + historique BSD
+- `openBetLink()` — fallback Winamax
+
+## SESSION 02/05/2026 — BSD Players & Live UX (v5.14)
+- `fetchBSDStandings()` enrichi — bsdTeamId, bsdSeasonId, bsdLeagueId, xgFor, xgAgainst
+- `fetchBSDTeamSquad()` + `fetchBSDPlayerRatings()`
+- Route `/api/v1/insights/:id` enrichie — BSD squad/ratings
+- Script `compare-apis.js`
+- CSS live stats bar + Live Top 5 panel + buildJoueursTab()
+
+## SESSION 02/05/2026 — P2 LIVE + BUGS FIX (v5.15)
+- `GET /api/v1/live/bsd` — endpoint live BSD
+- `buildCornersTab()` — unifiée CSS `.cr-*`
+- Live stats bar + live top 5 panel + buildJoueursTab() complète
+- Modal live detail (xG timeline + momentum + incidents)
+- Bouton 🔴 LIVE + fix duplicate goToMatch()
+- QA : 30+ items ✅, 3⚠️, 5🔴 corrigés
+
+## SESSION 02/05/2026 — LIVE TOP 5 + CORNERS FIX (v5.16)
+- `buildLiveTop5Panel()` — scoring live (xG momentum + underperf + possession + edge)
+- `startLiveTop5Refresh()` + `openLiveDetail()` + `renderLiveDetailPanel()`
+- CSS `.live-btn` + `.ld-*` + `.bsd-*`
+
+## SESSION 02/05/2026 — LIVE STATS PANEL REDESIGN (v5.18)
+- `buildLiveStatsPanel()` — side-by-side, 9 stats, barres comparaison
+- CSS `.live-stats-panel`, `.ls-row`, `.ls-row-bar`
+
+## SESSION 02/05/2026 — MATCH CACHE FIX + BACKTEST UI (v5.17)
+- Fix cache fetchOdds() + `scheduleMorningRefresh()` à 6h
+- Backtest ouvert à Premium
+- UI back-test dans Historique
+
+## SESSION 02/05/2026 — LIVE PREDICTIONS (v5.19)
+- `calcLiveAdjustedLambdas()` + `generateLiveScenarios()` — 8 types
+- Route `GET /api/v1/live/predictions`
+- Panel `#live-pred-panel` + 3 tiers CSS 🛡 📈 💎
+- Fix scroll auto, fix matches public, fix sparkline, fix auto-archive FT
+
+---
