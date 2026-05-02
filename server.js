@@ -2100,34 +2100,39 @@ async function fetchTeamInjuries(teamKey) {
 }
 
 // ─── SCOUTING REPORT (Gemini, cache 24h) ─────────────────────────────────────
-function buildScoutingPrompt(match) {
+function buildScoutingPrompt(match, homeRatings = [], awayRatings = [], homeSquad = [], awaySquad = []) {
   const homeInj = (match.injuries?.home || []).map(p => p.name).join(', ') || 'Aucune absence connue';
   const awayInj = (match.injuries?.away || []).map(p => p.name).join(', ') || 'Aucune absence connue';
-  return `Tu es l'analyste tactique de PariScore. Génère un rapport de scouting concis en français.
+  const homeAvg = homeRatings.length ? (homeRatings.reduce((s, p) => s + (p.avg_rating || 0), 0) / homeRatings.length).toFixed(1) : '?';
+  const awayAvg = awayRatings.length ? (awayRatings.reduce((s, p) => s + (p.avg_rating || 0), 0) / awayRatings.length).toFixed(1) : '?';
+  const homeAtt = homeSquad.filter(p => p.position === 'Attacker').length || 0;
+  const awayAtt = awaySquad.filter(p => p.position === 'Attacker').length || 0;
+  const homeDef = homeSquad.filter(p => p.position === 'Defender').length || 0;
+  const awayDef = awaySquad.filter(p => p.position === 'Defender').length || 0;
+
+  return `Tu es l'analyste tactique de PariScore. Détecte les mismatchs tactiques. Rapport concis.
 
 **${match.home_team} vs ${match.away_team}** — ${match.league}
 
 Données:
 - Classement: #${match.home_rank || '?'} vs #${match.away_rank || '?'}
-- PPG dom.: ${match.stats?.home?.ppg ?? '?'} | PPG ext.: ${match.stats?.away?.ppg ?? '?'}
-- Forme dom. (L5): ${(match.home_form || '').slice(0, 5) || '?'} | Forme ext.: ${(match.away_form || '').slice(0, 5) || '?'}
+- Note BSD: ${match.home_team} ${homeAvg} ⌀ | ${match.away_team} ${awayAvg} ⌀
+- Effectif: ${match.home_team} ${homeDef} déf/${homeAtt} att | ${match.away_team} ${awayDef} déf/${awayAtt} att
+- PPG: ${match.stats?.home?.ppg ?? '?'} vs ${match.stats?.away?.ppg ?? '?'} | Forme: ${(match.home_form || '').slice(0,5)||'?'} vs ${(match.away_form || '').slice(0,5)||'?'}
 - xG: ${match.expectedGoals?.home?.toFixed(2) ?? '?'} vs ${match.expectedGoals?.away?.toFixed(2) ?? '?'}
-- Poisson: Vic.dom ${match.poisson?.homeWin ?? '?'}% | Nul ${match.poisson?.draw ?? '?'}% | Vic.ext ${match.poisson?.awayWin ?? '?'}%
-- BTTS: ${match.poisson?.btts ?? '?'}% | Over 2.5: ${match.poisson?.over25 ?? '?'}%
-- Best edge: ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds ?? '?'} (edge: ${match.best_edge?.edge ?? '?'}%)
-- Absences ${match.home_team}: ${homeInj}
-- Absences ${match.away_team}: ${awayInj}
+- BTTS: ${match.poisson?.btts ?? '?'}% | O2.5: ${match.poisson?.over25 ?? '?'}% | Best: ${match.best_edge?.label ?? '?'} (edge ${match.best_edge?.edge ?? '?'}%)
+- Absences: ${homeInj} / ${awayInj}
 
-Format Markdown (350 mots max):
+Format Markdown (350 mots):
 ## 🎯 Rapport Scouting
-### ⚔️ Analyse Tactique
-[2-3 points clés]
-### 📊 Angle Statistique
-[Insight data — marché le plus favorable]
-### ⚠️ Risques & Alertes
-[Absences, enjeux, calendrier]
-### 💡 Recommandation
-[1 pari principal + justification]`;
+### ⚔️ Mismatch Tactique
+[Forces/faiblesses confrontées. Dom: déf/att vs Ext: déf/att. Duel clé milieu/couloirs.]
+### 📊 Marché Exploitable
+[Corner/BTTS/Over/Under/cartons selon mismatch détecté]
+### ⚠️ Risques
+[Absences qui creusent le déséquilibre]
+### 💡 Pari
+[1 pari exploitant le mismatch + justification]`;
 }
 
 async function getScoutReport(match) {
@@ -2136,7 +2141,19 @@ async function getScoutReport(match) {
   if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
     return { report: cached.report, cached: true };
   }
-  const prompt = buildScoutingPrompt(match);
+  const hKey = normName(match.home_team);
+  const aKey = normName(match.away_team);
+  const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+  const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+  const homeRatings = hMeta?.bsdTeamId && hMeta?.bsdSeasonId
+    ? await fetchBSDPlayerRatings(hMeta.bsdTeamId, hMeta.bsdSeasonId) : [];
+  const awayRatings = aMeta?.bsdTeamId && aMeta?.bsdSeasonId
+    ? await fetchBSDPlayerRatings(aMeta.bsdTeamId, aMeta.bsdSeasonId) : [];
+  const homeSquad = hMeta?.bsdTeamId
+    ? await fetchBSDTeamSquad(hMeta.bsdTeamId) : [];
+  const awaySquad = aMeta?.bsdTeamId
+    ? await fetchBSDTeamSquad(aMeta.bsdTeamId) : [];
+  const prompt = buildScoutingPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad);
   const report = await callGemini(prompt, 600);
   kvSet(cacheKey, { report, ts: Date.now() });
   return { report, cached: false };
