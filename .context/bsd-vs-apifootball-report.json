@@ -1,0 +1,222 @@
+{
+  "generated_at": "2026-05-01T19:50:29.862Z",
+  "days": 7,
+  "stats": {
+    "bsd_total": 210,
+    "af_found": 0,
+    "af_not_found": 210,
+    "scores_match": 0,
+    "scores_differ": 0,
+    "differences": [],
+    "af_only": 0,
+    "leagues": {
+      "Copa Sudamericana": {
+        "bsd": 11,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Copa Libertadores": {
+        "bsd": 12,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Tunisian Ligue Professionnelle 1": {
+        "bsd": 8,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Saudi Pro League": {
+        "bsd": 11,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Europa League": {
+        "bsd": 2,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "J1 League": {
+        "bsd": 18,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Eredivisie": {
+        "bsd": 4,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Champions League": {
+        "bsd": 2,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Liga Portugal Betclic": {
+        "bsd": 4,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Brasileirão Serie B": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Championship": {
+        "bsd": 12,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Liga MX Clausura": {
+        "bsd": 9,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "MLS": {
+        "bsd": 12,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Brasileirão Serie A": {
+        "bsd": 3,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Trendyol Super Lig": {
+        "bsd": 7,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Superliga": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Parva Liga": {
+        "bsd": 7,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Serie A": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Allsvenskan": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Ekstraklasa": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Pro League": {
+        "bsd": 5,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Segunda División": {
+        "bsd": 4,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "La Liga": {
+        "bsd": 5,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Premier League": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "K League 1": {
+        "bsd": 6,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Chinese Super League": {
+        "bsd": 8,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Liga F": {
+        "bsd": 5,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Super League": {
+        "bsd": 1,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Stoiximan Super League": {
+        "bsd": 1,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Ligue 1": {
+        "bsd": 3,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Scottish Premiership": {
+        "bsd": 3,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Bundesliga": {
+        "bsd": 7,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      },
+      "Copa do Brasil": {
+        "bsd": 4,
+        "af": 0,
+        "match": 0,
+        "diff": 0
+      }
+    },
+    "bsd_dates": {
+      "2026-04-30": 19,
+      "2026-04-29": 32,
+      "2026-04-28": 8,
+      "2026-04-27": 28,
+      "2026-04-26": 50,
+      "2026-04-25": 50,
+      "2026-04-24": 23
+    }
+  }
+}

@@ -1,0 +1,70 @@
+# render.yaml — Déploiement PariScore sur Render.com
+# Documentation : https://render.com/docs/blueprint-spec
+#
+# Pour déployer :
+# 1. Pushez server.js, pariscore.html, admin.html sur un repo GitHub
+# 2. Connectez le repo à Render.com
+# 3. Render détecte ce fichier et crée le service automatiquement
+# 4. Ajoutez les variables d'environnement dans le dashboard Render
+
+services:
+  - type: web
+    name: pariscore
+    runtime: node
+    buildCommand: echo "No build step required"
+    startCommand: node server.js
+    healthCheckPath: /api/v1/status
+    plan: free   # ou "starter" pour plus de RAM
+
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+
+      # ⚠ À renseigner manuellement dans le dashboard Render (onglet Environment)
+      - key: ODDS_API_KEY
+        sync: false
+      - key: API_FOOTBALL_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true   # Render génère une valeur aléatoire sécurisée
+      - key: ADMIN_PASSWORD
+        sync: false           # Définir manuellement
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_IDS
+        sync: false
+      - key: ALERT_EDGE_THRESHOLD
+        value: "8"
+
+      # Restreindre CORS à votre domaine en production
+      - key: ALLOWED_ORIGIN
+        value: "https://pariscore.onrender.com"
+      - key: DATABASE_PATH
+        value: "/app/data/pariscore.db"
+
+      # Stripe — Matchday Pass €1,50
+      # Créer sur dashboard.stripe.com → Products → Matchday Pass → Price ID
+      - key: STRIPE_SECRET_KEY
+        sync: false   # sk_live_... (à renseigner dans Render dashboard)
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false   # whsec_... (Stripe CLI ou dashboard Webhooks)
+      - key: STRIPE_MATCHDAY_PRICE_ID
+        sync: false   # price_... (ID du prix €1,50 créé sur Stripe)
+      - key: STRIPE_SUCCESS_URL
+        value: "https://pariscore.onrender.com/?matchday=success"
+      - key: STRIPE_CANCEL_URL
+        value: "https://pariscore.onrender.com/"
+
+      # GNews API — Power Score V2 (optionnel, 100 req/jour gratuit sur gnews.io)
+      - key: GNEWS_API_KEY
+        sync: false   # laisser vide pour utiliser uniquement les flux RSS
+
+    # Disque persistant — pariscore.db survit aux redémarrages
+    disk:
+      name: pariscore-data
+      mountPath: /app/data
+      sizeGB: 1

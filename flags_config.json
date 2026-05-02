@@ -1,0 +1,22 @@
+{
+  "sports": [
+    { "odds_key": "soccer_france_ligue1",                   "code": "fr",     "name": "France"       },
+    { "odds_key": "soccer_france_ligue_two",                "code": "fr",     "name": "France"       },
+    { "odds_key": "soccer_epl",                             "code": "gb-eng", "name": "England"      },
+    { "odds_key": "soccer_england_league1",                 "code": "gb-eng", "name": "England"      },
+    { "odds_key": "soccer_spain_la_liga",                   "code": "es",     "name": "Spain"        },
+    { "odds_key": "soccer_spain_segunda_division",          "code": "es",     "name": "Spain"        },
+    { "odds_key": "soccer_germany_bundesliga",              "code": "de",     "name": "Germany"      },
+    { "odds_key": "soccer_germany_bundesliga2",             "code": "de",     "name": "Germany"      },
+    { "odds_key": "soccer_italy_serie_a",                   "code": "it",     "name": "Italy"        },
+    { "odds_key": "soccer_italy_serie_b",                   "code": "it",     "name": "Italy"        },
+    { "odds_key": "soccer_uefa_champs_league",              "code": "eu",     "name": "Europe"       },
+    { "odds_key": "soccer_uefa_europa_league",              "code": "eu",     "name": "Europe"       },
+    { "odds_key": "soccer_uefa_europa_conference_league",   "code": "eu",     "name": "Europe"       },
+    { "odds_key": "soccer_usa_mls",                        "code": "us",     "name": "USA"          },
+    { "odds_key": "soccer_brazil_campeonato",               "code": "br",     "name": "Brazil"       },
+    { "odds_key": "soccer_japan_j_league",                  "code": "jp",     "name": "Japan"        },
+    { "odds_key": "soccer_korea_kleague1",                  "code": "kr",     "name": "South Korea"  },
+    { "odds_key": "soccer_saudi_premier_league",            "code": "sa",     "name": "Saudi Arabia" }
+  ]
+}

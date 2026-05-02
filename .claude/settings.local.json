@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check \"C:/Users/david/Documents/dev PariScore/ParisScorebis/server.js\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const html=fs.readFileSync\\('C:/Users/david/Documents/dev PariScore/ParisScorebis/pariscore.html','utf8'\\);const m=html.match\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\);if\\(!m\\){console.log\\('no script'\\);process.exit\\(1\\);}let ok=true;m.forEach\\(\\(s,i\\)=>{try{new Function\\(s.replace\\(/^<script>|<\\\\/script>$/g,''\\)\\);}catch\\(e\\){console.log\\('script #'+i+' error:',e.message\\);ok=false;}}\\);console.log\\(ok?'html JS OK \\('+m.length+' blocks\\)':'html JS FAIL'\\);\")",
+      "Bash(node --check server.js)",
+      "Bash(node -e ' *)",
+      "Bash(node scripts/inject-test-history.js)",
+      "Bash(node --check \"c:\\\\Users\\\\david\\\\Documents\\\\dev PariScore\\\\ParisScorebis\\\\server.js\")",
+      "Bash(npx skillfish *)",
+      "Bash(claude mcp *)",
+      "WebFetch(domain:matchonai.com)",
+      "mcp__sqlite-inspector__query",
+      "mcp__sqlite-inspector__list-tables",
+      "PowerShell(Stop-Process -Name node -Force -ErrorAction SilentlyContinue)",
+      "Bash(curl -s http://localhost:3000/api/v1/status)",
+      "Bash(node server.js)",
+      "Bash(node -e \"const c=require\\('./bsd_config.json'\\);console.log\\(c.api_key\\)\")",
+      "Bash(node -e \"const c=require\\('./bsd_config.json'\\);console.log\\(c.base_url\\)\")",
+      "Bash(curl -s '__TRACKED_VAR__/events/?date_from=2026-04-30&date_to=2026-05-01&tz=Europe/Paris' -H 'Authorization: Token __TRACKED_VAR__')",
+      "Bash(curl -s __TRACKED_VAR__/events/__TRACKED_VAR__/ -H 'Authorization: Token __TRACKED_VAR__')",
+      "Bash(curl -s '__TRACKED_VAR__/seasons/?league=61&current=true' -H 'Authorization: Token __TRACKED_VAR__')",
+      "Bash(node -e \"const c=require\\('./bsd_config.json'\\);console.log\\('mapping:',JSON.stringify\\(c.mapping.config_to_bsd\\)\\)\")",
+      "Bash(curl -s '__TRACKED_VAR__/seasons/?league=6&current=true' -H 'Authorization: Token __TRACKED_VAR__')"
+    ]
+  }
+}

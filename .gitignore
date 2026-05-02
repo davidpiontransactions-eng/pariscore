@@ -1,0 +1,38 @@
+# Secrets & Config
+.env
+.env.local
+*.pem
+*.key
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+server*.log
+
+# Cache
+*_cache.json
+ai_cache.json
+database.json
+
+# Build
+dist/
+build/
