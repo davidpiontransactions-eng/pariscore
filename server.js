@@ -4531,6 +4531,13 @@ function handleAPI(req, res, pathname, query) {
         const hBsdSeasonId = hMeta?.bsdSeasonId || null;
         const aBsdSeasonId = aMeta?.bsdSeasonId || null;
 
+        // Corner history pour les deux équipes (BSD, cache 6h)
+        const cfg = bsdConfig.mapping?.config_to_bsd?.[String(leagueId)];
+        const [homeCorners, awayCorners] = await Promise.all([
+          hBsdTeamId && cfg ? fetchBSDTeamCornerHistory(match.home_team, cfg, 10) : Promise.resolve(null),
+          aBsdTeamId && cfg ? fetchBSDTeamCornerHistory(match.away_team, cfg, 10) : Promise.resolve(null),
+        ]);
+
         const [homeKeyPlayers, awayKeyPlayers, homePosRatings, awayPosRatings,
                homeBSDSquad, awayBSDSquad, homeBSDRatings, awayBSDRatings] = await Promise.all([
           hTeamId ? fetchTeamKeyPlayers(hTeamId, leagueId, season) : Promise.resolve([]),
@@ -4574,6 +4581,8 @@ function handleAPI(req, res, pathname, query) {
           homeBSDRatings:  homeBSDRatings,
           awayBSDRatings:  awayBSDRatings,
           bsdCoverage:     !!(hBsdTeamId || aBsdTeamId),
+          homeCorners,
+          awayCorners,
         });
       } catch(e) { jsonResponse(res, 500, { error: e.message }); }
     })();
