@@ -4852,7 +4852,11 @@ const server = http.createServer((req, res) => {
 
   // API REST
   if (pathname.startsWith('/api/')) {
-    handleAPI(req, res, pathname, query);
+    try {
+      handleAPI(req, res, pathname, query);
+    } catch(e) {
+      jsonResponse(res, 500, { error: 'Internal error: ' + e.message });
+    }
     return;
   }
 
