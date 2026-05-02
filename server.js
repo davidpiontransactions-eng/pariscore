@@ -4485,7 +4485,7 @@ function handleAPI(req, res, pathname, query) {
     return jsonResponse(res, 200, {
       rolling30: full.rolling30 || {},
       leagues: full.leagues || {},
-      global: { total_verified: full.global?.total_verified || 0 },
+      global: { total_verified: full.total_verified || 0 },
     });
   }
 
