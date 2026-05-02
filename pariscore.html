@@ -3749,24 +3749,17 @@ function buildResumeTab(d) {
   `;
 }
 
-let _insStatsMode = 'global';
-
 function insSetStatsMode(mode) {
-  _insStatsMode = mode;
   const tab = document.getElementById('ins-tab-stats');
-  if (tab && insCurrentData) {
-    tab.innerHTML = buildStatsTab(insCurrentData, mode);
-  }
-  document.querySelectorAll('.ins-stats-btn').forEach(b => {
-    const active = b.dataset.mode === mode;
-    b.style.background = active ? 'var(--green)' : 'var(--bg4)';
-    b.style.color = active ? '#000' : 'var(--text2)';
-    b.style.fontWeight = active ? '700' : '400';
-  });
+  if (!tab) return;
+  const d = tab._insData;
+  if (!d) return;
+  tab._insMode = mode;
+  tab.innerHTML = buildStatsTab(d, mode);
 }
 
 function buildStatsTab(d, mode) {
-  mode = mode || _insStatsMode || 'global';
+  mode = mode || 'global';
   const m  = d.match;
   const ha = d.homeAdv || {};
   const aa = d.awayAdv || {};
@@ -4287,7 +4280,8 @@ async function openInsights(matchId) {
   });
 
   document.getElementById('insights-modal').classList.add('open');
-  _insStatsMode = 'global';
+  const st = document.getElementById('ins-tab-stats');
+  if (st) { st._insData = null; st._insMode = 'global'; }
   insShowTab('resume');
 
   try {
@@ -4297,7 +4291,9 @@ async function openInsights(matchId) {
     insCurrentData = d;
 
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
-    document.getElementById('ins-tab-stats').innerHTML      = buildStatsTab(d);
+    const statsEl = document.getElementById('ins-tab-stats');
+    if (statsEl) { statsEl._insData = d; statsEl._insMode = 'global'; }
+    if (statsEl) statsEl.innerHTML = buildStatsTab(d);
     document.getElementById('ins-tab-joueurs').innerHTML    = buildJoueursTab(d);
     document.getElementById('ins-tab-graphique').innerHTML  = buildGraphiqueTab(d);
     document.getElementById('ins-tab-classement').innerHTML = buildClassementTab(d);
