@@ -1789,6 +1789,40 @@ async function archivePastMatches() {
   }
 }
 
+function getWeeklyAccuracyTrends(weeks = 12) {
+  const getWeek = dateStr => {
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const start = new Date(y, 0, 1);
+    const diff = Math.floor((d - start + (start.getTimezoneOffset() - d.getTimezoneOffset()) * 60000) / 86400000);
+    const w = Math.ceil((diff + start.getDay() + 1) / 7);
+    return `${y}-W${String(w).padStart(2, '0')}`;
+  };
+  const weeksMap = {};
+  for (const h of history) {
+    if (!h.verified || !h.realScore || !h.commence_time) continue;
+    const wk = getWeek(h.commence_time);
+    if (!weeksMap[wk]) weeksMap[wk] = { over25c: 0, over25t: 0, bttsc: 0, bttst: 0, total: 0 };
+    weeksMap[wk].total++;
+    const rs = h.realScore;
+    const wasOver25 = (rs.home + rs.away) > 2.5;
+    const wasBTTS = rs.home > 0 && rs.away > 0;
+    if (h.predicted?.over25 > 55) { weeksMap[wk].over25t++; if (wasOver25) weeksMap[wk].over25c++; }
+    if (h.predicted?.btts > 55) { weeksMap[wk].bttst++; if (wasBTTS) weeksMap[wk].bttsc++; }
+  }
+  return Object.entries(weeksMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-weeks)
+    .map(([week, d]) => ({
+      week,
+      total: d.total,
+      over25: d.over25t > 0 ? Math.round(d.over25c / d.over25t * 100) : null,
+      btts: d.bttst > 0 ? Math.round(d.bttsc / d.bttst * 100) : null,
+      over25_bets: d.over25t,
+      btts_bets: d.bttst,
+    }));
+}
+
 function getAccuracyReport() {
   const pct = (c, t) => t > 0 ? Math.round(c / t * 100) : null;
 
@@ -4348,6 +4382,12 @@ function handleAPI(req, res, pathname, query) {
     const user = getAuthUser(req);
     if (!user) return jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
     return jsonResponse(res, 200, getAccuracyReport());
+  }
+
+  // GET /api/v1/accuracy/trends — Weekly accuracy trend chart
+  if (pathname === '/api/v1/accuracy/trends') {
+    const weeks = parseInt(query.weeks) || 12;
+    return jsonResponse(res, 200, getWeeklyAccuracyTrends(weeks));
   }
 
   // GET /api/v1/accuracy/public — Badge hero (proof social, style Datafoot)

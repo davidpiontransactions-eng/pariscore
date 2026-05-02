@@ -1877,6 +1877,11 @@
     <canvas id="hist-btts-chart" style="width:100%;height:176px;"></canvas>
   </div>
 
+  <div class="hist-chart-wrap" id="accuracy-trend-wrap" style="display:none">
+    <div class="hist-chart-title">Tendance hebdomadaire — Taux de réussite</div>
+    <canvas id="hist-accuracy-trend" style="width:100%;height:176px;"></canvas>
+  </div>
+
   <div class="hist-table-wrap">
     <table class="hist-table">
       <thead>
@@ -5895,6 +5900,7 @@ function renderHistorique(data) {
 
   renderHistChart(matches);
   renderBttsChart(matches);
+  renderAccuracyTrendChart();
   renderHistTable(matches);
 }
 
@@ -5982,6 +5988,51 @@ function renderBttsChart(matches) {
       },
     },
   });
+}
+
+let accuracyTrendChart = null;
+
+async function renderAccuracyTrendChart() {
+  const el = document.getElementById('hist-accuracy-trend');
+  if (!el) return;
+  const ctx = el.getContext('2d');
+  if (accuracyTrendChart) { accuracyTrendChart.destroy(); accuracyTrendChart = null; }
+  try {
+    const res = await fetch('/api/v1/accuracy/trends?weeks=12');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.length) return;
+    document.getElementById('accuracy-trend-wrap').style.display = 'block';
+    const labels = data.map(d => d.week.replace('-W', ' S'));
+    const over25 = data.map(d => d.over25);
+    const btts = data.map(d => d.btts);
+    accuracyTrendChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Over 2.5', data: over25, backgroundColor: 'rgba(0,230,118,0.5)', borderColor: '#00e676', borderWidth: 1, borderRadius: 3 },
+          { label: 'BTTS', data: btts, backgroundColor: 'rgba(41,182,246,0.5)', borderColor: '#29b6f6', borderWidth: 1, borderRadius: 3 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#8d9399', font: { size: 10 }, boxWidth: 12, padding: 12 } },
+          tooltip: {
+            callbacks: {
+              label: c => c.dataset.label + ': ' + c.parsed.y + '%  (' + data[c.dataIndex][c.dataset.label === 'Over 2.5' ? 'over25_bets' : 'btts_bets'] + ' paris)'
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#5a6068', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { min: 0, max: 100, ticks: { color: '#5a6068', font: { size: 9 }, callback: v => v + '%' },
+               grid: { color: 'rgba(255,255,255,.04)' } },
+        },
+      },
+    });
+  } catch(e) { /* ignore */ }
 }
 
 function renderHistTable(matches) {
