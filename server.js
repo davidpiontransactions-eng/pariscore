@@ -5165,7 +5165,7 @@ server.listen(PORT, async () => {
               home_score: fix.goals?.home,
               away_score: fix.goals?.away,
               current_minute: fix.fixture?.status?.elapsed,
-              status: 'inprogress',
+              status: fix.fixture?.status?.short || 'inprogress',
               league: { name: fix.league?.name },
               live_stats: null,
               incidents: null,
@@ -5180,6 +5180,7 @@ server.listen(PORT, async () => {
 
       if (!liveMatches.length) return;
 
+      const liveMatchIds = new Set();
       let updated = false;
       for (const live of liveMatches) {
         const liveHome = normName(live.home_team || '');
@@ -5194,6 +5195,7 @@ server.listen(PORT, async () => {
                   && (ma.startsWith(liveAway.slice(0,5)) || liveAway.startsWith(ma.slice(0,5)));
             });
         if (!match) { console.warn(`  [Live] Match non trouvé: ${live.home_team} vs ${live.away_team}`); continue; }
+        liveMatchIds.add(match.id);
 
         const scoreHome = live.home_score;
         const scoreAway = live.away_score;
@@ -5250,6 +5252,20 @@ server.listen(PORT, async () => {
           }
 
           updated = true;
+        }
+      }
+
+      // Nettoyage: matchs live absents de l'API → clear (évite 0-0 fantômes)
+      if (liveMatchIds.size > 0) {
+        for (const m of db.matches) {
+          if (m.live_score && !liveMatchIds.has(m.id)) {
+            const elapsed = (Date.now() - new Date(m.commence_time).getTime()) / 60000;
+            if (elapsed > 150) {
+              console.log(`  [Live] Nettoyage: ${m.home_team} ${m.live_score} ${m.away_team} (plus dans API, ${Math.round(elapsed)}min)`);
+              m.live_score = null; m.live_minute = null; m.live_status = null;
+              updated = true;
+            }
+          }
         }
       }
 
