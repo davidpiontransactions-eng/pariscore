@@ -3750,51 +3750,27 @@ function buildResumeTab(d) {
 }
 
 function insSetStatsMode(mode) {
-  const tab = document.getElementById('ins-tab-stats');
-  if (!tab) return;
-  const d = tab._insData;
-  if (!d) return;
-  tab._insMode = mode;
-  tab.innerHTML = buildStatsTab(d, mode);
+  ['global','home','away'].forEach(m => {
+    const el = document.getElementById('stats-tab-'+m);
+    if (el) el.style.display = m === mode ? '' : 'none';
+    const btn = document.getElementById('ins-stats-btn-'+m);
+    if (btn) {
+      btn.style.background = m === mode ? 'var(--green)' : 'var(--bg4)';
+      btn.style.color = m === mode ? '#000' : 'var(--text2)';
+      btn.style.fontWeight = m === mode ? '700' : '400';
+    }
+  });
 }
 
-function buildStatsTab(d, mode) {
-  mode = mode || 'global';
+function buildStatsTab(d) {
   const m  = d.match;
   const ha = d.homeAdv || {};
   const aa = d.awayAdv || {};
   const hs = d.homeStats?.home || d.match.stats?.home || {};
   const as = d.awayStats?.away || d.match.stats?.away || {};
 
-  const venue = (what, hWhat, aWhat) => {
-    if (what === 'global') return [hWhat, aWhat];
-    const hVal = (hWhat != null) ? hWhat : null;
-    const aVal = (aWhat != null) ? aWhat : null;
-    return [hVal, aVal];
-  };
-
-  const getH = (field, hSrc) => {
-    if (mode === 'global' || !hSrc) return hs[field];
-    if (field === 'ppg') return hSrc.played_home ? ((hSrc.wins_home||0)*3 + (hSrc.draws_home||0)) / hSrc.played_home : null;
-    if (field === 'wins') return hSrc.played_home ? Math.round((hSrc.wins_home||0) / hSrc.played_home * 100) : null;
-    if (field === 'draws') return hSrc.played_home ? Math.round((hSrc.draws_home||0) / hSrc.played_home * 100) : null;
-    if (field === 'losses') return hSrc.played_home ? Math.round((hSrc.losses_home||0) / hSrc.played_home * 100) : null;
-    if (field === 'avgScored') return mode === 'home' ? hSrc.goals_scored_home_avg : hSrc.goals_scored_away_avg;
-    if (field === 'avgConceded') return mode === 'home' ? hSrc.goals_conceded_home_avg : hSrc.goals_conceded_away_avg;
-    return hs[field];
-  };
-  const getA = (field, aSrc) => {
-    if (mode === 'global' || !aSrc) return as[field];
-    if (field === 'ppg') return aSrc.played_home ? ((aSrc.wins_home||0)*3 + (aSrc.draws_home||0)) / aSrc.played_home : null;
-    if (field === 'wins') return aSrc.played_home ? Math.round((aSrc.wins_home||0) / aSrc.played_home * 100) : null;
-    if (field === 'draws') return aSrc.played_home ? Math.round((aSrc.draws_home||0) / aSrc.played_home * 100) : null;
-    if (field === 'losses') return aSrc.played_home ? Math.round((aSrc.losses_home||0) / aSrc.played_home * 100) : null;
-    if (field === 'avgScored') return mode === 'home' ? aSrc.goals_scored_home_avg : aSrc.goals_scored_away_avg;
-    if (field === 'avgConceded') return mode === 'home' ? aSrc.goals_conceded_home_avg : aSrc.goals_conceded_away_avg;
-    return as[field];
-  };
-
-  const modeLabel = mode === 'global' ? '' : mode === 'home' ? ' (Dom)' : ' (Ext)';
+  const globPlayedH = (ha.played_home||0)+(ha.played_away||0);
+  const globPlayedA = (aa.played_home||0)+(aa.played_away||0);
 
   const row = (label, hVal, aVal) =>
     (hVal != null || aVal != null) ? `<tr>
@@ -3803,61 +3779,89 @@ function buildStatsTab(d, mode) {
       <td class="val-away">${aVal ?? '—'}</td>
     </tr>` : '';
 
+  const sec = label => `<tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">${label}</td></tr>`;
+
+  const rowsFor = (mode) => {
+    const label = mode === 'global' ? '' : mode === 'home' ? ' (Dom)' : ' (Ext)';
+    const title = `PERFORMANCE${label}`;
+
+    const getH = (field) => {
+      if (mode === 'global' || !ha) return hs[field];
+      const ph = ha.played_home || 1;
+      if (field === 'ppg') return ((ha.wins_home||0)*3 + (ha.draws_home||0)) / ph;
+      if (field === 'wins') return Math.round((ha.wins_home||0) / ph * 100);
+      if (field === 'draws') return Math.round((ha.draws_home||0) / ph * 100);
+      if (field === 'losses') return Math.round((ha.losses_home||0) / ph * 100);
+      if (field === 'avgScored') return mode === 'home' ? ha.goals_scored_home_avg : ha.goals_scored_away_avg;
+      if (field === 'avgConceded') return mode === 'home' ? ha.goals_conceded_home_avg : ha.goals_conceded_away_avg;
+      return hs[field];
+    };
+    const getA = (field) => {
+      if (mode === 'global' || !aa) return as[field];
+      const pa = aa.played_home || 1;
+      if (field === 'ppg') return ((aa.wins_home||0)*3 + (aa.draws_home||0)) / pa;
+      if (field === 'wins') return Math.round((aa.wins_home||0) / pa * 100);
+      if (field === 'draws') return Math.round((aa.draws_home||0) / pa * 100);
+      if (field === 'losses') return Math.round((aa.losses_home||0) / pa * 100);
+      if (field === 'avgScored') return mode === 'home' ? aa.goals_scored_home_avg : aa.goals_scored_away_avg;
+      if (field === 'avgConceded') return mode === 'home' ? aa.goals_conceded_home_avg : aa.goals_conceded_away_avg;
+      return as[field];
+    };
+
+    const shotsOnH = ha.shots_on_total != null ? (mode === 'global' ? ha.shots_on_total/globPlayedH : ha.shots_on_home/ha.played_home).toFixed(2) : null;
+    const shotsOnA = aa.shots_on_total != null ? (mode === 'global' ? aa.shots_on_total/globPlayedA : aa.shots_on_home/aa.played_home).toFixed(2) : null;
+    const shotsTotH = (ha.shots_total_home != null && ha.shots_total_away != null) ? (mode === 'global' ? (ha.shots_total_home+ha.shots_total_away)/globPlayedH : ha.shots_total_home/ha.played_home).toFixed(2) : null;
+    const shotsTotA = (aa.shots_total_home != null && aa.shots_total_away != null) ? (mode === 'global' ? (aa.shots_total_home+aa.shots_total_away)/globPlayedA : aa.shots_total_home/aa.played_home).toFixed(2) : null;
+
+    const hPlayed = (ha.played_home||0)+(ha.played_away||0);
+    const aPlayed = (aa.played_home||0)+(aa.played_away||0);
+
+    const yelH = ha.cards_yellow_total != null && hPlayed>0 ? (ha.cards_yellow_total/hPlayed).toFixed(2) : null;
+    const yelA = aa.cards_yellow_total != null && aPlayed>0 ? (aa.cards_yellow_total/aPlayed).toFixed(2) : null;
+    const redH = ha.cards_red_total != null && hPlayed>0 ? (ha.cards_red_total/hPlayed).toFixed(2) : null;
+    const redA = aa.cards_red_total != null && aPlayed>0 ? (aa.cards_red_total/aPlayed).toFixed(2) : null;
+    const csH = ha.clean_sheet_total != null && hPlayed>0 ? ((ha.clean_sheet_total/hPlayed)*100).toFixed(1)+'%' : null;
+    const csA = aa.clean_sheet_total != null && aPlayed>0 ? ((aa.clean_sheet_total/aPlayed)*100).toFixed(1)+'%' : null;
+
+    return `
+      ${sec(title)}
+      ${row('PPG', getH('ppg')?.toFixed(2), getA('ppg')?.toFixed(2))}
+      ${row('Victoires', getH('wins') != null ? getH('wins')+'%':null, getA('wins') != null ? getA('wins')+'%':null)}
+      ${row('Nuls', getH('draws') != null ? getH('draws')+'%':null, getA('draws') != null ? getA('draws')+'%':null)}
+      ${row('Défaites', getH('losses') != null ? getH('losses')+'%':null, getA('losses') != null ? getA('losses')+'%':null)}
+      ${row('Moy. Buts Marqués', getH('avgScored')?.toFixed(2), getA('avgScored')?.toFixed(2))}
+      ${row('Moy. Buts Encaissés', getH('avgConceded')?.toFixed(2), getA('avgConceded')?.toFixed(2))}
+      ${ha.shots_on_total != null || aa.shots_on_total != null ? sec('🎯 TIRS')+row('Tirs Cadrés /match',shotsOnH,shotsOnA)+row('Tirs Totaux /match',shotsTotH,shotsTotA) : ''}
+      ${ha.biggest_win_home || aa.biggest_win_home ? sec('RECORDS') : ''}
+      ${row('Plus grande victoire '+(mode==='home'?'Dom':mode==='away'?'Ext':''), ha.biggest_win_home||null, aa.biggest_win_home||null)}
+      ${row('Plus grande victoire '+(mode==='away'?'Dom':mode==='home'?'Ext':''), ha.biggest_win_away||null, aa.biggest_win_away||null)}
+      ${row('Plus lourde défaite '+(mode==='home'?'Dom':mode==='away'?'Ext':''), ha.biggest_loss_home||null, aa.biggest_loss_home||null)}
+      ${row('Plus grande série Victoires', ha.streak_wins??null, aa.streak_wins??null)}
+      ${ha.penalties_scored != null || aa.penalties_scored != null ? sec('PÉNALTYS')+row('Marqués',ha.penalties_scored??null,aa.penalties_scored??null)+row('Manqués',ha.penalties_missed??null,aa.penalties_missed??null) : ''}
+      ${ha.cards_yellow_total != null || aa.cards_yellow_total != null ? sec('🟨 DISCIPLINE') : ''}
+      ${row('Cartons Jaunes /match', yelH, yelA)}
+      ${row('Cartons Rouges /match', redH, redA)}
+      ${row('Clean Sheet %', csH, csA)}
+    `;
+  };
+
+  const btn = (mode, label) =>
+    `<button id="ins-stats-btn-${mode}" onclick="insSetStatsMode('${mode}')" style="background:${mode==='global'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='global'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='global'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">${label}</button>`;
+
+  const tbl = mode => `<div id="stats-tab-${mode}" style="display:${mode==='global'?'':'none'}"><table class="ins-table">
+    <thead><tr>
+      <th style="text-align:left">Statistique${mode==='global'?'':`<span style="color:var(--green);font-weight:400;margin-left:6px">${mode==='home'?'(Dom)':'(Ext)'}</span>`}</th>
+      <th style="color:var(--blue)">${m.home_team}</th>
+      <th style="color:#ab47bc">${m.away_team}</th>
+    </tr></thead>
+    <tbody>${rowsFor(mode)}</tbody>
+  </table></div>`;
+
   return `
     <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="ins-stats-btn" data-mode="global" onclick="insSetStatsMode('global')" style="background:${mode==='global'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='global'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='global'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">Global</button>
-      <button class="ins-stats-btn" data-mode="home" onclick="insSetStatsMode('home')" style="background:${mode==='home'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='home'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='home'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">Domicile</button>
-      <button class="ins-stats-btn" data-mode="away" onclick="insSetStatsMode('away')" style="background:${mode==='away'?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode==='away'?'700':'400'} 11px/1 var(--font-sans);color:${mode==='away'?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">Extérieur</button>
+      ${btn('global','Global')}${btn('home','Domicile')}${btn('away','Extérieur')}
     </div>
-    <table class="ins-table">
-      <thead><tr>
-        <th style="text-align:left">Statistique${modeLabel ? `<span style="color:var(--green);font-weight:400;margin-left:6px">${modeLabel}</span>` : ''}</th>
-        <th style="color:var(--blue)">${m.home_team}</th>
-        <th style="color:#ab47bc">${m.away_team}</th>
-      </tr></thead>
-      <tbody>
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">PERFORMANCE</td></tr>
-        ${row('PPG', getH('ppg',ha)?.toFixed(2), getA('ppg',aa)?.toFixed(2))}
-        ${row('Victoires', getH('wins',ha) != null ? getH('wins',ha)+'%' : null, getA('wins',aa) != null ? getA('wins',aa)+'%' : null)}
-        ${row('Nuls', getH('draws',ha) != null ? getH('draws',ha)+'%' : null, getA('draws',aa) != null ? getA('draws',aa)+'%' : null)}
-        ${row('Défaites', getH('losses',ha) != null ? getH('losses',ha)+'%' : null, getA('losses',aa) != null ? getA('losses',aa)+'%' : null)}
-        ${row('Moy. Buts Marqués', getH('avgScored',ha)?.toFixed(2), getA('avgScored',aa)?.toFixed(2))}
-        ${row('Moy. Buts Encaissés', getH('avgConceded',ha)?.toFixed(2), getA('avgConceded',aa)?.toFixed(2))}
-
-        ${ha.shots_on_total != null || aa.shots_on_total != null ? `
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">🎯 TIRS</td></tr>
-        ${row('Tirs Cadrés /match', ha.shots_on_total != null ? (mode==='global' ? (ha.shots_on_total/((ha.played_home||0)+(ha.played_away||0))) : ha.shots_on_home/(ha.played_home||1)).toFixed(2) : null, aa.shots_on_total != null ? (mode==='global' ? (aa.shots_on_total/((aa.played_home||0)+(aa.played_away||0))) : aa.shots_on_home/(aa.played_home||1)).toFixed(2) : null)}
-        ${row('Tirs Totaux /match', (ha.shots_total_home != null && ha.shots_total_away != null) ? (mode==='global' ? ((ha.shots_total_home+ha.shots_total_away)/((ha.played_home||0)+(ha.played_away||0))) : ha.shots_total_home/(ha.played_home||1)).toFixed(2) : null, (aa.shots_total_home != null && aa.shots_total_away != null) ? (mode==='global' ? ((aa.shots_total_home+aa.shots_total_away)/((aa.played_home||0)+(aa.played_away||0))) : aa.shots_total_home/(aa.played_home||1)).toFixed(2) : null)}
-        ` : ''}
-
-        ${ha.biggest_win_home || aa.biggest_win_home ? `
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">RECORDS</td></tr>
-        ${row('Plus grande victoire '+(mode==='home'?'Dom':mode==='away'?'Ext':''), ha.biggest_win_home || null, aa.biggest_win_home || null)}
-        ${row('Plus grande victoire '+(mode==='away'?'Dom':mode==='home'?'Ext':''), ha.biggest_win_away || null, aa.biggest_win_away || null)}
-        ${row('Plus lourde défaite '+(mode==='home'?'Dom':mode==='away'?'Ext':''), ha.biggest_loss_home || null, aa.biggest_loss_home || null)}
-        ${row('Plus grande série Victoires', ha.streak_wins != null ? ha.streak_wins : null, aa.streak_wins != null ? aa.streak_wins : null)}
-        ` : ''}
-
-        ${ha.penalties_scored != null || aa.penalties_scored != null ? `
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">PÉNALTYS</td></tr>
-        ${row('Marqués', ha.penalties_scored ?? null, aa.penalties_scored ?? null)}
-        ${row('Manqués', ha.penalties_missed ?? null, aa.penalties_missed ?? null)}
-        ` : ''}
-
-        ${ha.cards_yellow_total != null || aa.cards_yellow_total != null ? `
-        <tr><td class="row-label" colspan="3" style="color:var(--text3);font-size:10px;padding-top:12px">🟨 DISCIPLINE</td></tr>
-        ${(() => {
-          const hPlayed = (ha.played_home||0)+(ha.played_away||0);
-          const aPlayed = (aa.played_home||0)+(aa.played_away||0);
-          return [
-            row('Cartons Jaunes /match', ha.cards_yellow_total != null && hPlayed>0 ? (ha.cards_yellow_total/hPlayed).toFixed(2) : null, aa.cards_yellow_total != null && aPlayed>0 ? (aa.cards_yellow_total/aPlayed).toFixed(2) : null),
-            row('Cartons Rouges /match', ha.cards_red_total != null && hPlayed>0 ? (ha.cards_red_total/hPlayed).toFixed(2) : null, aa.cards_red_total != null && aPlayed>0 ? (aa.cards_red_total/aPlayed).toFixed(2) : null),
-            row('Clean Sheet %', ha.clean_sheet_total != null && hPlayed>0 ? ((ha.clean_sheet_total/hPlayed)*100).toFixed(1)+'%' : null, aa.clean_sheet_total != null && aPlayed>0 ? ((aa.clean_sheet_total/aPlayed)*100).toFixed(1)+'%' : null),
-          ].join('');
-        })()}
-        ` : ''}
-      </tbody>
-    </table>
+    ${tbl('global')}${tbl('home')}${tbl('away')}
   `;
 }
 
@@ -4280,8 +4284,6 @@ async function openInsights(matchId) {
   });
 
   document.getElementById('insights-modal').classList.add('open');
-  const st = document.getElementById('ins-tab-stats');
-  if (st) { st._insData = null; st._insMode = 'global'; }
   insShowTab('resume');
 
   try {
@@ -4292,7 +4294,6 @@ async function openInsights(matchId) {
 
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
     const statsEl = document.getElementById('ins-tab-stats');
-    if (statsEl) { statsEl._insData = d; statsEl._insMode = 'global'; }
     if (statsEl) statsEl.innerHTML = buildStatsTab(d);
     document.getElementById('ins-tab-joueurs').innerHTML    = buildJoueursTab(d);
     document.getElementById('ins-tab-graphique').innerHTML  = buildGraphiqueTab(d);
