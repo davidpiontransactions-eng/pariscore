@@ -1883,7 +1883,7 @@
   </div>
 
   <div class="hist-chart-wrap" id="bankroll-wrap" style="display:none">
-    <div class="hist-chart-title">Bankroll simulée — Kelly fractionnel (25%) — 100u de départ</div>
+    <div class="hist-chart-title">Bankroll simulée — 1u/pari plat — 100u de départ</div>
     <div id="bankroll-kpis" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;"></div>
     <canvas id="hist-bankroll-chart" style="width:100%;height:176px;"></canvas>
   </div>
@@ -6004,18 +6004,18 @@ async function renderBankrollChart() {
   const wrap = document.getElementById('bankroll-wrap');
   if (!wrap) return;
   try {
-    const res = await fetch('/api/v1/bankroll?kelly=0.25');
+    const res = await fetch('/api/v1/bankroll');
     if (!res.ok) { wrap.style.display = 'none'; return; }
     const d = await res.json();
     if (!d.bets || !d.bets.length) { wrap.style.display = 'none'; return; }
     wrap.style.display = 'block';
 
     document.getElementById('bankroll-kpis').innerHTML = [
-      { label: 'Bankroll finale', val: d.finalBankroll + 'u', color: d.totalPL >= 0 ? 'var(--green)' : 'var(--red)' },
-      { label: 'P&L Total', val: (d.totalPL >= 0 ? '+' : '') + d.totalPL + 'u', color: d.totalPL >= 0 ? 'var(--green)' : 'var(--red)' },
-      { label: 'ROI', val: (d.roi >= 0 ? '+' : '') + d.roi + '%', color: d.roi >= 0 ? 'var(--green)' : 'var(--red)' },
-      { label: 'Win Rate', val: d.winRate + '%', sub: d.wonBets + '/' + d.totalBets + ' paris', color: 'var(--text2)' },
-      { label: 'Max Drawdown', val: '-' + d.maxDrawdown + '%', color: 'var(--amber)' },
+      { label: 'Bankroll (100u)', val: d.finalBankroll + 'u', color: d.totalPL >= 0 ? 'var(--green)' : 'var(--red)' },
+      { label: 'P&L', val: (d.totalPL >= 0 ? '+' : '') + d.totalPL + 'u', color: d.totalPL >= 0 ? 'var(--green)' : 'var(--red)' },
+      { label: 'ROI/parl', val: (d.roi >= 0 ? '+' : '') + d.roi + '%', color: d.roi >= 0 ? 'var(--green)' : 'var(--red)' },
+      { label: 'Win Rate', val: d.winRate + '%', sub: d.wonBets + '/' + d.totalBets, color: 'var(--text2)' },
+      { label: 'Drawdown Max', val: '-' + d.maxDrawdown + '%', color: 'var(--amber)' },
     ].map(k => `<div class="hist-kpi"><div class="hist-kpi-label">${k.label}</div><div class="hist-kpi-val" style="color:${k.color}">${k.val}</div>${k.sub ? `<div class="hist-kpi-sub">${k.sub}</div>` : ''}</div>`).join('');
 
     const ctx = document.getElementById('hist-bankroll-chart').getContext('2d');
@@ -6028,21 +6028,15 @@ async function renderBankrollChart() {
       data: {
         labels,
         datasets: [{
-          data: values,
-          borderColor: values[values.length-1] >= startVal ? '#00e676' : '#ff4d4d',
-          backgroundColor: values[values.length-1] >= startVal ? 'rgba(0,230,118,0.07)' : 'rgba(255,77,77,0.07)',
-          borderWidth: 2, pointRadius: values.length > 60 ? 0 : 2, fill: true, tension: 0.3,
+          data: values, borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.07)',
+          borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3,
         }],
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: c => c.parsed.y + 'u (' + d.bets[c.dataIndex].market + ' — ' + (d.bets[c.dataIndex].won ? '✅' : '❌') + ')',
-            }
-          }
+          tooltip: { callbacks: { label: c => c.parsed.y + 'u (' + d.bets[c.dataIndex].market + ' ' + (d.bets[c.dataIndex].won ? '+1' : '-1') + ')' } }
         },
         scales: {
           x: { ticks: { color: '#5a6068', font: { size: 9 }, maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,.04)' } },
