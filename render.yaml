@@ -42,7 +42,7 @@ services:
 
       # Restreindre CORS à votre domaine en production
       - key: ALLOWED_ORIGIN
-        value: "https://pariscore.onrender.com"
+        value: "https://pariscorebis.onrender.com"
       - key: DATABASE_PATH
         value: "/app/data/pariscore.db"
 
@@ -55,9 +55,9 @@ services:
       - key: STRIPE_MATCHDAY_PRICE_ID
         sync: false   # price_... (ID du prix €1,50 créé sur Stripe)
       - key: STRIPE_SUCCESS_URL
-        value: "https://pariscore.onrender.com/?matchday=success"
+        value: "https://pariscorebis.onrender.com/?matchday=success"
       - key: STRIPE_CANCEL_URL
-        value: "https://pariscore.onrender.com/"
+        value: "https://pariscorebis.onrender.com/"
 
       # GNews API — Power Score V2 (optionnel, 100 req/jour gratuit sur gnews.io)
       - key: GNEWS_API_KEY

@@ -1858,6 +1858,28 @@ function getAccuracyReport() {
     edge:   { rate: pct(rEdgec, rEdget), sample: rEdget },
   };
 
+  // ── Auto-alerte rolling20 ────────────────────────────────────────────────────
+  const last20 = history.filter(h => h.verified).slice(-20);
+  let aOver25c = 0, aOver25t = 0, aBttsc = 0, aBttst = 0;
+  for (const h of last20) {
+    if (!h.realScore) continue;
+    const rs = h.realScore;
+    if (h.predicted?.over25 > 55) { aOver25t++; if ((rs.home+rs.away)>2.5) aOver25c++; }
+    if (h.predicted?.btts > 55) { aBttst++; if (rs.home>0 && rs.away>0) aBttsc++; }
+  }
+  const allBets = aOver25t + aBttst;
+  const allCorrect = aOver25c + aBttsc;
+  global.alert = allBets >= 10 ? {
+    combined: pct(allCorrect, allBets),
+    over25: pct(aOver25c, aOver25t),
+    over25_bets: aOver25t,
+    btts: pct(aBttsc, aBttst),
+    btts_bets: aBttst,
+    total: allBets,
+    triggered: pct(allCorrect, allBets) < 45,
+    threshold: 45,
+  } : null;
+
   // ── Per-league breakdown ────────────────────────────────────────────────────
   const byLeague = {};
   for (const h of history) {

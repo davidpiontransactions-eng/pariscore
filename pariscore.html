@@ -1865,6 +1865,13 @@
     </div>
   </div>
 
+  <div id="hist-alert" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;background:rgba(255,77,77,0.12);border:1px solid rgba(255,77,77,0.3);font-size:13px;line-height:1.5;">
+    <span style="font-size:16px;margin-right:8px;">⚠️</span>
+    <strong style="color:var(--red);">Alerte précision</strong>
+    <span style="color:var(--text2);"> — Taux de réussite combiné sous 45% sur les 20 derniers pronostics.</span>
+    <span id="hist-alert-detail" style="display:block;color:var(--text3);font-size:11px;margin-top:4px;"></span>
+  </div>
+
   <div class="hist-kpi-row" id="hist-kpis"></div>
 
   <div class="hist-chart-wrap">
@@ -5878,6 +5885,17 @@ async function initHistoriquePage() {
 function renderHistorique(data) {
   const acc     = data.accuracy || {};
   const matches = data.matches  || [];
+
+  const alertEl = document.getElementById('hist-alert');
+  if (alertEl && acc.alert) {
+    if (acc.alert.triggered) {
+      alertEl.style.display = 'block';
+      document.getElementById('hist-alert-detail').textContent =
+        'Over 2.5: ' + acc.alert.over25 + '% (' + acc.alert.over25_bets + ' paris) · BTTS: ' + acc.alert.btts + '% · Total: ' + acc.alert.total + ' paris';
+    } else {
+      alertEl.style.display = 'none';
+    }
+  }
 
   const kpis = [
     { label: 'Win Rate Over 2.5', val: acc.over25?.rate != null ? acc.over25.rate + '%' : '—', sub: `${acc.over25?.sample || 0} paris tracés`, color: histKpiColor(acc.over25?.rate) },
