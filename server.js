@@ -2480,6 +2480,39 @@ async function fetchBSDPrediction(eventId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  H2H — Head-to-Head matchups via API-Football
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function fetchH2H(team1Id, team2Id, limit = 10) {
+  try {
+    const cacheKey = `h2h_${Math.min(team1Id,team2Id)}_${Math.max(team1Id,team2Id)}`;
+    const cached = apiCacheGet(cacheKey, 'h2h');
+    if (cached) return cached;
+    const res = await httpsGet(
+      `https://v3.football.api-sports.io/fixtures/headtohead?h2h=${team1Id}-${team2Id}&last=${limit}`,
+      { 'x-apisports-key': API_FOOTBALL_KEY }
+    );
+    if (res.status !== 200 || !res.data?.response?.length) return null;
+    const meetings = res.data.response.map(f => {
+      const d = new Date(f.fixture?.date);
+      return {
+        date: d.toISOString().slice(0, 10),
+        league: f.league?.name || '',
+        home: f.teams.home.name,
+        away: f.teams.away.name,
+        score: f.goals ? `${f.goals.home}-${f.goals.away}` : '?-?',
+        home_goals: f.goals?.home ?? null,
+        away_goals: f.goals?.away ?? null,
+        status: f.fixture?.status?.short || '',
+      };
+    });
+    const result = { meetings, total: meetings.length };
+    apiCacheSet(cacheKey, result, 'h2h', 24 * 3600);
+    return result;
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  CORNERS — Predictions Over/Under via BSD historical data
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -4519,6 +4552,9 @@ function handleAPI(req, res, pathname, query) {
           })
           .sort((a, b) => a.rank - b.rank);
 
+        // H2H historique — derniers face-à-face
+        const h2h = (hTeamId && aTeamId) ? await fetchH2H(hTeamId, aTeamId, 10) : null;
+
         // Top buteurs (1 req/ligue max, cache 24h)
         const topScorers = leagueId ? await fetchLeagueTopScorers(leagueId, season) : [];
 
@@ -4583,6 +4619,7 @@ function handleAPI(req, res, pathname, query) {
           bsdCoverage:     !!(hBsdTeamId || aBsdTeamId),
           homeCorners,
           awayCorners,
+          h2h,
         });
       } catch(e) { jsonResponse(res, 500, { error: e.message }); }
     })();

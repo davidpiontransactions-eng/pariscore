@@ -2272,6 +2272,7 @@
         <div class="ins-tab" onclick="insShowTab('corners')">🚩 Corners</div>
         <div class="ins-tab" onclick="insShowTab('powerscore')">⚡ Power Score</div>
         <div class="ins-tab" onclick="insShowTab('scouting')">🕵️ Scouting</div>
+        <div class="ins-tab" onclick="insShowTab('h2h')">⚔️ H2H</div>
       </div>
       <div id="ins-tab-resume"></div>
       <div id="ins-tab-stats"      style="display:none"></div>
@@ -2280,7 +2281,8 @@
       <div id="ins-tab-classement" style="display:none"></div>
       <div id="ins-tab-corners"    style="display:none"></div>
       <div id="ins-tab-powerscore" style="display:none"></div>
-      <div id="ins-tab-scouting"   style="display:none">
+      <div id="ins-tab-scouting"   style="display:none"></div>
+      <div id="ins-tab-h2h"        style="display:none"></div>
         <div id="scout-content" style="padding:16px"></div>
       </div>
     </div>
@@ -3597,11 +3599,11 @@ function insSetRankPeriod(v)  { insRankingPeriod = v; _rebuildClassement(); }
 
 function insShowTab(tab) {
   if (tab !== 'powerscore' && psEventSource) { psEventSource.close(); psEventSource = null; }
-  ['resume','stats','joueurs','graphique','classement','powerscore','scouting'].forEach(t => {
+  ['resume','stats','joueurs','graphique','classement','powerscore','scouting','h2h'].forEach(t => {
     document.getElementById(`ins-tab-${t}`).style.display = t === tab ? '' : 'none';
   });
   document.querySelectorAll('.ins-tab').forEach((el, i) => {
-    const tabs = ['resume','stats','joueurs','graphique','classement','powerscore','scouting'];
+    const tabs = ['resume','stats','joueurs','graphique','classement','powerscore','scouting','h2h'];
     el.classList.toggle('active', tabs[i] === tab);
   });
   if (tab === 'powerscore') {
@@ -4328,8 +4330,9 @@ async function openInsights(matchId) {
     document.getElementById('ins-tab-classement').innerHTML = buildClassementTab(d);
     document.getElementById('ins-tab-corners').innerHTML    = await buildCornersTab(m.id);
     document.getElementById('ins-tab-powerscore').innerHTML = buildPowerScoreTab(d.match.id);
+    document.getElementById('ins-tab-h2h').innerHTML         = buildH2HTab(d);
   } catch(e) {
-    ['ins-tab-resume','ins-tab-stats','ins-tab-joueurs','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-scouting'].forEach(id => {
+  ['ins-tab-resume','ins-tab-stats','ins-tab-joueurs','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-scouting','ins-tab-h2h'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = `<div class="ins-empty">Erreur : ${e.message}</div>`;
     });
@@ -4618,6 +4621,46 @@ async function openLiveDetail(matchId) {
     renderLiveDetailPanel(m);
     modal.classList.add('open');
   }
+}
+
+function buildH2HTab(d) {
+  const h2h = d.h2h;
+  if (!h2h || !h2h.meetings || !h2h.meetings.length) {
+    return `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⚔️</div>Aucun face-à-face récent<br><span style="font-size:11px;color:var(--text3)">Données H2H indisponibles pour ce match</span></div>`;
+  }
+  const m = d.match;
+  const homeWins = h2h.meetings.filter(x => x.home_goals != null && ((x.home === m.home_team && x.home_goals > x.away_goals) || (x.home !== m.home_team && x.away_goals > x.home_goals))).length;
+  const awayWins = h2h.meetings.filter(x => x.home_goals != null && ((x.away === m.away_team && x.away_goals > x.home_goals) || (x.away !== m.away_team && x.home_goals > x.away_goals))).length;
+  const draws = h2h.total - homeWins - awayWins;
+  const rows = h2h.meetings.map(x => {
+    const date = x.date;
+    const isHome = x.home === m.home_team;
+    const ht = isHome ? x.home : x.away;
+    const at = isHome ? x.away : x.home;
+    const hs = isHome ? x.home_goals : x.away_goals;
+    const as = isHome ? x.away_goals : x.home_goals;
+    const winner = hs != null && as != null ? (hs > as ? 'H' : as > hs ? 'A' : 'N') : '?';
+    const wColor = winner === 'H' ? 'var(--blue)' : winner === 'A' ? '#ab47bc' : 'var(--text3)';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-size:11px;color:var(--text3)">${date}</td>
+      <td style="padding:5px 8px;font-size:12px;color:var(--text2)">${ht}</td>
+      <td style="padding:5px 8px;font-size:13px;font-weight:700;font-family:var(--font-mono);color:${wColor}">${hs != null ? hs+'-'+as : '?-?'}</td>
+      <td style="padding:5px 8px;font-size:12px;color:var(--text2)">${at}</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--text3)">${x.league}</td>
+    </tr>`;
+  }).join('');
+  return `<div style="padding:4px 0">
+    <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:var(--blue)">${homeWins}</div><div style="font-size:10px;color:var(--text3)">${m.home_team}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:var(--text2)">${draws}</div><div style="font-size:10px;color:var(--text3)">Nuls</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:#ab47bc">${awayWins}</div><div style="font-size:10px;color:var(--text3)">${m.away_team}</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:var(--text)">${h2h.total}</div><div style="font-size:10px;color:var(--text3)">Matchs</div></div>
+    </div>
+    <table class="ins-table">
+      <thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Domicile</th><th style="text-align:left">Score</th><th style="text-align:left">Extérieur</th><th style="text-align:left">Compétition</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
 }
 
 function renderLiveDetailPanel(m) {
