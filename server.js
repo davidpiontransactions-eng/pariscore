@@ -4384,6 +4384,56 @@ function handleAPI(req, res, pathname, query) {
     return jsonResponse(res, 200, getAccuracyReport());
   }
 
+  // GET /api/v1/bankroll — Kelly stake simulation
+  if (pathname === '/api/v1/bankroll') {
+    const kellyFraction = parseFloat(query.kelly) || 0.25;
+    const startBankroll = 100;
+    let bankroll = startBankroll;
+    const bets = [];
+    for (const h of history) {
+      if (!h.verified || !h.realScore) continue;
+      const rs = h.realScore;
+      const markets = [];
+      if (h.predicted?.over25 > 55) {
+        const p = h.predicted.over25 / 100;
+        const fairOdds = 1 / p;
+        const kelly = (p * fairOdds - 1) / (fairOdds - 1);
+        const stake = Math.max(0, bankroll * kelly * kellyFraction);
+        const won = (rs.home + rs.away) > 2.5;
+        const profit = stake * (won ? (fairOdds - 1) : -1);
+        bankroll += profit;
+        bets.push({ date: h.commence_time, market: 'Over 2.5', prob: p, fairOdds, kelly, stake: Math.round(stake * 100) / 100, won, profit: Math.round(profit * 100) / 100, bankroll: Math.round(bankroll * 100) / 100, match: h.home_team + ' - ' + h.away_team });
+      }
+      if (h.predicted?.btts > 55) {
+        const p = h.predicted.btts / 100;
+        const fairOdds = 1 / p;
+        const kelly = (p * fairOdds - 1) / (fairOdds - 1);
+        const stake = Math.max(0, bankroll * kelly * kellyFraction);
+        const won = rs.home > 0 && rs.away > 0;
+        const profit = stake * (won ? (fairOdds - 1) : -1);
+        bankroll += profit;
+        bets.push({ date: h.commence_time, market: 'BTTS', prob: p, fairOdds, kelly, stake: Math.round(stake * 100) / 100, won, profit: Math.round(profit * 100) / 100, bankroll: Math.round(bankroll * 100) / 100, match: h.home_team + ' - ' + h.away_team });
+      }
+    }
+    const totalBets = bets.length;
+    const wonBets = bets.filter(b => b.won).length;
+    const peak = bets.reduce((m, b) => Math.max(m, b.bankroll), startBankroll);
+    const trough = bets.reduce((m, b) => Math.min(m, b.bankroll), startBankroll);
+    const maxDrawdown = peak > 0 ? Math.round((1 - trough / peak) * 10000) / 100 : 0;
+    return jsonResponse(res, 200, {
+      startBankroll,
+      finalBankroll: Math.round(bankroll * 100) / 100,
+      totalPL: Math.round((bankroll - startBankroll) * 100) / 100,
+      totalBets,
+      wonBets,
+      winRate: totalBets > 0 ? Math.round(wonBets / totalBets * 100) : 0,
+      roi: startBankroll > 0 ? Math.round((bankroll - startBankroll) / startBankroll * 10000) / 100 : 0,
+      maxDrawdown,
+      kellyFraction,
+      bets: bets.slice(-50),
+    });
+  }
+
   // GET /api/v1/accuracy/trends — Weekly accuracy trend chart
   if (pathname === '/api/v1/accuracy/trends') {
     const weeks = parseInt(query.weeks) || 12;
