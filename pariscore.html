@@ -628,6 +628,16 @@
     background: var(--bg2); border: 1px solid var(--border);
     border-radius: var(--radius-lg); overflow: hidden;
   }
+  #vb-table th:first-child, #vb-table td:first-child {
+    position: sticky; left: 0; z-index: 2;
+    background: var(--bg2);
+  }
+  #vb-table th:first-child { z-index: 3; }
+  #vb-table td:first-child::after {
+    content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
+    width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.15), transparent);
+    pointer-events: none;
+  }
   .table-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 20px; border-bottom: 1px solid var(--border);
@@ -1788,48 +1798,11 @@
       <div style="font-size:13px;color:var(--red);" id="error-msg"></div>
     </div>
 
-    <div style="overflow-x:auto;">
-    <table class="vb-table" id="matches-table" style="display:none;min-width:1400px;">
-      <thead>
-        <tr class="stat-header-main">
-          <th rowspan="2" style="min-width:200px;text-align:left;">Match</th>
-          <th rowspan="2" style="min-width:60px;">Heure</th>
-          <th rowspan="2" class="sortable pressure-col" onclick="setSort('pressure',this)" style="min-width:75px;cursor:pointer;color:var(--red);" title="Pression live : Tirs×1.5 + Att.Dang.×0.5 + Corners×1.0">⚡ Pression</th>
-          <th rowspan="2" style="min-width:110px;color:var(--amber);">🔥 Top Pick</th>
-          <th colspan="2" class="stat-group" id="ppg-group-header">PPG</th>
-          <th colspan="2" class="stat-group">Victoires %</th>
-          <th colspan="2" class="stat-group">Nuls %</th>
-          <th colspan="2" class="stat-group">Défaites %</th>
-          <th colspan="5" class="stat-group" title="Probabilités calculées par Distribution de Poisson">BTTS + Over Buts</th>
-          <th colspan="2" class="stat-group">Moy. Buts Marqués</th>
-          <th colspan="2" class="stat-group">Moy. Buts Encaissés</th>
-          <th colspan="2" class="stat-group">xG</th>
-          <th rowspan="2" style="min-width:60px;" title="Cliquer sur ⚽ pour la matrice de scores Poisson">Score Prédit</th>
-          <th colspan="3" class="stat-group">Cotes</th>
-          <th rowspan="2" title="Variation de cote depuis le dernier refresh" style="min-width:52px;color:var(--text3);">Δ Cote</th>
-          <th rowspan="2" style="min-width:70px;">Edge</th>
-          <th rowspan="2"></th>
-        </tr>
-        <tr class="stat-header-sub">
-          <th class="sortable" onclick="setSort('home_ppg',this)">Dom</th><th class="sortable" onclick="setSort('away_ppg',this)">Ext</th>
-          <th class="sortable" onclick="setSort('home_wins',this)">Dom</th><th class="sortable" onclick="setSort('away_wins',this)">Ext</th>
-          <th class="sortable" onclick="setSort('home_draws',this)">Dom</th><th class="sortable" onclick="setSort('away_draws',this)">Ext</th>
-          <th class="sortable" onclick="setSort('home_losses',this)">Dom</th><th class="sortable" onclick="setSort('away_losses',this)">Ext</th>
-          <th class="sortable" onclick="setSort('poisson_btts',this)" title="Les deux équipes marquent">BTTS</th>
-          <th class="sortable" onclick="setSort('poisson_over05',this)" title="Au moins 1 but">O 0.5</th>
-          <th class="sortable" onclick="setSort('poisson_over15',this)" title="Plus de 1.5 buts">O 1.5</th>
-          <th class="sortable" onclick="setSort('poisson_over25',this)" title="Plus de 2.5 buts">O 2.5</th>
-          <th class="sortable" onclick="setSort('poisson_over35',this)" title="Plus de 3.5 buts">O 3.5</th>
-          <th class="sortable" onclick="setSort('home_avgScored',this)">Dom</th><th class="sortable" onclick="setSort('away_avgScored',this)">Ext</th>
-          <th class="sortable" onclick="setSort('home_avgConceded',this)">Dom</th><th class="sortable" onclick="setSort('away_avgConceded',this)">Ext</th>
-          <th class="sortable" onclick="setSort('home_xg',this)">Dom</th><th class="sortable" onclick="setSort('away_xg',this)">Ext</th>
-          <th style="min-width:48px;">1</th>
-          <th style="min-width:48px;">N</th>
-          <th style="min-width:48px;">2</th>
-        </tr>
-      </thead>
-      <tbody id="vb-body"></tbody>
-    </table>
+    <div id="scrollbar-top" style="overflow-x:auto;height:14px;position:sticky;top:0;z-index:10;background:var(--bg2);">
+      <div id="scrollbar-top-inner" style="height:1px;"></div>
+    </div>
+    <div id="table-scroll" style="overflow-x:auto;">
+      <table id="vb-table" class="neu-table" style="min-width:1400px;"></table>
     </div>
   </div>
 </section>
@@ -6579,6 +6552,22 @@ function goToMatch(matchId) {
 }
 
 loadSettings();
+
+// Dual scrollbar sync
+const scrollTop = document.getElementById('scrollbar-top');
+const scrollMain = document.getElementById('table-scroll');
+if (scrollTop && scrollMain) {
+  scrollTop.addEventListener('scroll', () => { scrollMain.scrollLeft = scrollTop.scrollLeft; });
+  scrollMain.addEventListener('scroll', () => { scrollTop.scrollLeft = scrollMain.scrollLeft; });
+  // Taille du ghost = largeur scrollable
+  const syncScrollWidth = () => {
+    const inner = document.getElementById('scrollbar-top-inner');
+    if (inner && scrollMain.firstElementChild) inner.style.width = scrollMain.firstElementChild.scrollWidth + 'px';
+  };
+  syncScrollWidth();
+  const obs = new MutationObserver(syncScrollWidth);
+  obs.observe(scrollMain, { childList: true, subtree: true });
+}
 </script>
 </body>
 </html>
