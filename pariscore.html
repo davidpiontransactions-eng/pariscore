@@ -535,15 +535,49 @@
   .rk-zone-rel { color: #ff4d4d !important; font-weight: 700; }
   /* Mobile compact — masquer colonnes secondaires */
   @media (max-width: 768px) {
-    .stat-header-main th:nth-child(5),
-    .stat-header-main th:nth-child(6),
-    .stat-header-main th:nth-child(10) { display: none; }
-    .stat-header-sub th:nth-child(5), .stat-header-sub th:nth-child(6),
-    .stat-header-sub th:nth-child(7), .stat-header-sub th:nth-child(8),
-    .stat-header-sub th:nth-child(18), .stat-header-sub th:nth-child(19) { display: none; }
-    #vb-body td:nth-child(7), #vb-body td:nth-child(8),
-    #vb-body td:nth-child(9), #vb-body td:nth-child(10),
-    #vb-body td:nth-child(20), #vb-body td:nth-child(21) { display: none; }
+    .stat-header-main th:nth-child(8),
+    .stat-header-main th:nth-child(9),
+    .stat-header-main th:nth-child(10),
+    .stat-header-main th:nth-child(11),
+    .stat-header-main th:nth-child(12),
+    .stat-header-main th:nth-child(13),
+    .stat-header-main th:nth-child(15),
+    .stat-header-main th:nth-child(16),
+    .stat-header-main th:nth-child(18),
+    .stat-header-main th:nth-child(19),
+    .stat-header-main th:nth-child(20),
+    .stat-header-main th:nth-child(21),
+    .stat-header-main th:nth-child(22),
+    .stat-header-main th:nth-child(23),
+    .stat-header-main th:nth-child(24),
+    .stat-header-main th:nth-child(25),
+    .stat-header-main th:nth-child(26),
+    .stat-header-main th:nth-child(27),
+    .stat-header-main th:nth-child(28),
+    .stat-header-main th:nth-child(29) { display: none; }
+    .stat-header-sub th:nth-child(8), .stat-header-sub th:nth-child(9),
+    .stat-header-sub th:nth-child(10), .stat-header-sub th:nth-child(11),
+    .stat-header-sub th:nth-child(12), .stat-header-sub th:nth-child(13),
+    .stat-header-sub th:nth-child(15), .stat-header-sub th:nth-child(16),
+    .stat-header-sub th:nth-child(18), .stat-header-sub th:nth-child(19),
+    .stat-header-sub th:nth-child(20), .stat-header-sub th:nth-child(21),
+    .stat-header-sub th:nth-child(22), .stat-header-sub th:nth-child(23),
+    .stat-header-sub th:nth-child(24), .stat-header-sub th:nth-child(25),
+    .stat-header-sub th:nth-child(26), .stat-header-sub th:nth-child(27),
+    .stat-header-sub th:nth-child(28), .stat-header-sub th:nth-child(29) { display: none; }
+    #vb-body td:nth-child(8), #vb-body td:nth-child(9),
+    #vb-body td:nth-child(10), #vb-body td:nth-child(11),
+    #vb-body td:nth-child(12), #vb-body td:nth-child(13),
+    #vb-body td:nth-child(15), #vb-body td:nth-child(16),
+    #vb-body td:nth-child(18), #vb-body td:nth-child(19),
+    #vb-body td:nth-child(20), #vb-body td:nth-child(21),
+    #vb-body td:nth-child(22), #vb-body td:nth-child(23),
+    #vb-body td:nth-child(24), #vb-body td:nth-child(25),
+    #vb-body td:nth-child(26), #vb-body td:nth-child(27),
+    #vb-body td:nth-child(28), #vb-body td:nth-child(29),
+    #vb-body td:nth-child(30) { display: none; }
+    .stat-header-main th:nth-child(30),
+    .stat-header-sub th:nth-child(30) { display: none; }
     #matches-table { font-size: 11px; }
     .sc { min-width: 34px; padding: 4px 3px; }
   }
@@ -628,11 +662,24 @@
     background: var(--bg2); border: 1px solid var(--border);
     border-radius: var(--radius-lg); overflow: hidden;
   }
+  #vb-table thead { position: sticky; top: 0; z-index: 5; }
+  #vb-table thead tr { background: var(--bg2); }
+  #vb-table thead th {
+    font-size: 9.5px; font-family: var(--font-mono);
+    color: var(--text3); letter-spacing: .3px; text-align: center;
+    padding: 5px 6px; border-bottom: 1px solid var(--border);
+    font-weight: 400; white-space: nowrap; background: var(--bg2);
+  }
+  #vb-table thead tr.stat-header-sub th {
+    font-size: 8.5px; color: var(--text3); padding: 3px 5px;
+    border-bottom: 2px solid var(--border);
+  }
+  #vb-table thead th.stat-group { border-left: 2px solid rgba(255,255,255,0.18); color: var(--text2); font-weight: 500; }
   #vb-table th:first-child, #vb-table td:first-child {
     position: sticky; left: 0; z-index: 2;
     background: var(--bg2);
   }
-  #vb-table th:first-child { z-index: 3; }
+  #vb-table thead th:first-child { z-index: 6; }
   #vb-table td:first-child::after {
     content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
     width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.15), transparent);
@@ -943,6 +990,36 @@
   .al-history-edge { display: inline-block; margin-left: 6px; font-size: 10px; font-family: var(--font-mono); color: var(--green); background: rgba(0,230,118,0.1); border-radius: 3px; padding: 1px 5px; }
   .al-login-gate { text-align: center; padding: 60px 20px; color: var(--text3); }
   .al-login-gate .ico { font-size: 40px; margin-bottom: 16px; }
+
+  /* EXPERT REPORT — Bet or Skip */
+  #expert-report-panel { background: linear-gradient(135deg, rgba(0,230,118,0.06) 0%, var(--bg2) 50%, rgba(255,77,77,0.04) 100%); border: 1px solid rgba(0,230,118,0.2); border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 16px; }
+  #expert-report-panel.er-skip { border-color: rgba(255,77,77,0.3); background: linear-gradient(135deg, rgba(255,77,77,0.06) 0%, var(--bg2) 50%, rgba(255,167,38,0.04) 100%); }
+  #expert-report-panel.er-neutral { border-color: var(--border); background: var(--bg2); }
+  .er-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .er-header-left { display: flex; align-items: center; gap: 12px; }
+  .er-icon { font-size: 28px; }
+  .er-title { font: 700 14px/1 var(--font-head); color: var(--text); letter-spacing: .02em; }
+  .er-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .er-verdict { padding: 6px 18px; border-radius: 8px; font: 800 16px/1 var(--font-head); letter-spacing: .05em; }
+  .er-verdict.bet { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+  .er-verdict.skip { background: rgba(255,77,77,0.15); color: var(--red); border: 1px solid rgba(255,77,77,0.3); }
+  .er-verdict.caution { background: rgba(255,167,38,0.15); color: var(--amber); border: 1px solid rgba(255,167,38,0.3); }
+  .er-verdict-text { white-space: nowrap; }
+  .er-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 700px) { .er-grid { grid-template-columns: repeat(2, 1fr); } }
+  .er-kpi { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; text-align: center; }
+  .er-kpi-label { font-size: 9px; font-family: var(--font-mono); color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .er-kpi-val { font: 800 22px/1 var(--font-head); }
+  .er-kpi-val.green { color: var(--green); }
+  .er-kpi-val.amber { color: var(--amber); }
+  .er-kpi-val.red { color: var(--red); }
+  .er-kpi-val.neutral { color: var(--text); }
+  .er-kpi-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .er-kpi-bar { height: 4px; background: var(--bg4); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .er-kpi-bar-fill { height: 100%; border-radius: 2px; transition: width .5s ease, background .3s; }
+  .er-insights { display: flex; flex-wrap: wrap; gap: 8px; }
+  .er-insight-chip { font-size: 11px; padding: 5px 10px; border-radius: 6px; background: var(--bg4); border: 1px solid var(--border); color: var(--text2); display: flex; align-items: center; gap: 5px; }
+  .er-insight-chip strong { color: var(--text); }
 
   /* PRICING */
   .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
@@ -1767,6 +1844,43 @@
     </div>
   </div>
 
+  <!-- EXPERT REPORT — Bet or Skip -->
+  <div id="expert-report-panel" style="display:none;">
+    <div class="er-header">
+      <div class="er-header-left">
+        <span class="er-icon" id="er-icon">🎯</span>
+        <div>
+          <div class="er-title" id="er-title">Rapport Expert</div>
+          <div class="er-sub" id="er-sub">Analyse globale du jour</div>
+        </div>
+      </div>
+      <div class="er-verdict" id="er-verdict">
+        <span class="er-verdict-text" id="er-verdict-text">—</span>
+      </div>
+    </div>
+    <div class="er-grid">
+      <div class="er-kpi">
+        <div class="er-kpi-label">Matchs analysés</div>
+        <div class="er-kpi-val neutral" id="er-total">—</div>
+      </div>
+      <div class="er-kpi">
+        <div class="er-kpi-label">Haute confiance</div>
+        <div class="er-kpi-val green" id="er-high">—</div>
+        <div class="er-kpi-sub" id="er-high-sub"></div>
+      </div>
+      <div class="er-kpi">
+        <div class="er-kpi-label">Confiance moyenne</div>
+        <div class="er-kpi-val amber" id="er-mid">—</div>
+      </div>
+      <div class="er-kpi">
+        <div class="er-kpi-label">Score global</div>
+        <div class="er-kpi-val neutral" id="er-score">—</div>
+        <div class="er-kpi-bar"><div class="er-kpi-bar-fill" id="er-bar"></div></div>
+      </div>
+    </div>
+    <div class="er-insights" id="er-insights"></div>
+  </div>
+
   <div class="table-wrap">
     <div class="table-header">
       <div style="display:flex;align-items:center;gap:12px;">
@@ -1802,7 +1916,61 @@
       <div id="scrollbar-top-inner" style="height:1px;"></div>
     </div>
     <div id="table-scroll" style="overflow-x:auto;">
-      <table id="vb-table" class="neu-table" style="min-width:1400px;"><tbody id="vb-body"></tbody></table>
+      <table id="vb-table" class="neu-table" style="min-width:1400px;">
+        <thead>
+          <tr class="stat-header-main">
+            <th style="text-align:left;min-width:200px;">Match</th>
+            <th style="min-width:90px;">Top Pick</th>
+            <th style="min-width:200px;">Actions</th>
+            <th style="min-width:60px;">Heure</th>
+            <th style="min-width:50px;" class="stat-group">⚡</th>
+            <th colspan="2" class="stat-group">PPG</th>
+            <th colspan="6">Résultats</th>
+            <th colspan="5" class="stat-group">Poisson</th>
+            <th colspan="4">Attaque</th>
+            <th colspan="2" class="stat-group">xG</th>
+            <th style="min-width:40px;">⚽</th>
+            <th colspan="3" class="stat-group">Cotes</th>
+            <th style="min-width:50px;">Δ</th>
+            <th style="min-width:60px;">Edge</th>
+            <th style="min-width:70px;" class="stat-group">EV%</th>
+          </tr>
+          <tr class="stat-header-sub">
+            <th style="text-align:left;">Équipes / Ligue</th>
+            <th>Meilleur pari</th>
+            <th>★ STATS IA APT 🔴</th>
+            <th>Date</th>
+            <th>Pression</th>
+            <th class="stat-group">Dom</th>
+            <th>Ext</th>
+            <th class="stat-group">V Dom</th>
+            <th>V Ext</th>
+            <th>N Dom</th>
+            <th>N Ext</th>
+            <th>D Dom</th>
+            <th>D Ext</th>
+            <th class="stat-group">BTTS</th>
+            <th>O0.5</th>
+            <th>O1.5</th>
+            <th>O2.5</th>
+            <th>O3.5</th>
+            <th class="stat-group">M. Dom</th>
+            <th>M. Ext</th>
+            <th>E Dom</th>
+            <th>E Ext</th>
+            <th class="stat-group">Dom</th>
+            <th>Ext</th>
+            <th>Matrix</th>
+            <th class="stat-group">1</th>
+            <th>X</th>
+            <th>2</th>
+            <th>Drop</th>
+            <th>Value</th>
+            <th class="stat-group">🟢🟡🔴</th>
+          </tr>
+        </thead>
+        <tbody id="vb-body"></tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -3130,6 +3298,33 @@ function renderMatches(matches) {
           <span class="form-spark">${formSparkline(m.away_form, true)}</span>
         </div>
       </td>
+      ${(()=>{
+        const picks = [
+          { key:'over25', label:'Over 2.5', val: p.over25||0 },
+          { key:'btts',   label:'BTTS',     val: p.btts||0   },
+          { key:'over15', label:'Over 1.5', val: p.over15||0 },
+          { key:'homeWin',label:'Vic. Dom.',val: p.homeWin||0},
+          { key:'awayWin',label:'Vic. Ext.',val: p.awayWin||0},
+          { key:'over35', label:'Over 3.5', val: p.over35||0 },
+          { key:'under15',label:'Under 1.5',val: p.under15||0},
+        ];
+        const best = picks.reduce((b,c)=>c.val>b.val?c:b,{val:0,label:'—'});
+        const tier = best.val>=80?'elite':best.val>=65?'fire':'';
+        const icon = best.val>=80?'🔥':best.val>=65?'⚡':'';
+        return best.val>0
+          ? `<td style="text-align:center;"><span class="top-pick-badge ${tier}" title="${best.val}% de confiance Poisson">${icon} ${best.label}<br><span style="font-size:13px;font-weight:800;">${best.val}%</span></span></td>`
+          : '<td style="text-align:center;color:var(--text3);font-size:11px;">—</td>';
+      })()}
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
+          <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
+          <button class="ai-btn" onclick="openGemini('${m.id}')" title="Power Score IA">✦</button>
+          <button class="apt-btn" onclick="openAttributesRadar('${m.id}')" title="Attributs">APT</button>
+          ${m.live_score ? `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG + Momentum">🔴 LIVE</button>` : ''}
+          <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
+        </div>
+      </td>
       <td style="min-width:60px;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:600;">${time}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:1px;">${date}</div>
@@ -3164,35 +3359,104 @@ function renderMatches(matches) {
       <td style="text-align:center;">${deltaStr}</td>
       <td><span class="edge-badge ${isHigh?'edge-high':isPos?'edge-med':''}">${isPos?'+':''}${edgePct}%</span></td>
       ${(()=>{
-        const picks = [
-          { key:'over25', label:'Over 2.5', val: p.over25||0 },
-          { key:'btts',   label:'BTTS',     val: p.btts||0   },
-          { key:'over15', label:'Over 1.5', val: p.over15||0 },
-          { key:'homeWin',label:'Vic. Dom.',val: p.homeWin||0},
-          { key:'awayWin',label:'Vic. Ext.',val: p.awayWin||0},
-          { key:'over35', label:'Over 3.5', val: p.over35||0 },
-          { key:'under15',label:'Under 1.5',val: p.under15||0},
-        ];
-        const best = picks.reduce((b,c)=>c.val>b.val?c:b,{val:0,label:'—'});
-        const tier = best.val>=80?'elite':best.val>=65?'fire':'';
-        const icon = best.val>=80?'🔥':best.val>=65?'⚡':'';
-        return best.val>0
-          ? `<td style="text-align:center;"><span class="top-pick-badge ${tier}" title="${best.val}% de confiance Poisson">${icon} ${best.label}<br><span style="font-size:13px;font-weight:800;">${best.val}%</span></span></td>`
-          : '<td style="text-align:center;color:var(--text3);font-size:11px;">—</td>';
+        const ev = m.evs?.best;
+        if (!ev || ev.value == null) return '<td style="text-align:center;color:var(--text3);font-size:11px;">—</td>';
+        const evCls = ev.value >= 5 ? 'sc green' : ev.value >= 1 ? 'sc orange' : 'sc red';
+        return `<td class="${evCls}" title="Best EV: ${ev.label} (${ev.value}%)">${ev.value >= 0 ? '+' : ''}${ev.value}%</td>`;
       })()}
-      <td>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
-          <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
-          <button class="ai-btn" onclick="openGemini('${m.id}')" title="Power Score IA">✦</button>
-          <button class="apt-btn" onclick="openAttributesRadar('${m.id}')" title="Attributs">APT</button>
-          ${m.live_score ? `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG + Momentum">🔴 LIVE</button>` : ''}
-          <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
-        </div>
-      </td>
     `;
     tbody.appendChild(tr);
   });
+  buildExpertReport(matches);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  EXPERT REPORT — Bet or Skip (confidence-based daily summary)
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildExpertReport(matches) {
+  const panel = document.getElementById('expert-report-panel');
+  if (!panel || !matches || !matches.length) { if (panel) panel.style.display = 'none'; return; }
+
+  const picks = [];
+  const leagueConf = {};
+  const marketConf = { over25: [], btts: [], homeWin: [], awayWin: [] };
+
+  matches.forEach(m => {
+    const p = m.calibrated || m.blended || m.poisson || {};
+    const best = [
+      { key: 'over25', label: 'Over 2.5', val: p.over25 || 0 },
+      { key: 'btts', label: 'BTTS', val: p.btts || 0 },
+      { key: 'over15', label: 'Over 1.5', val: p.over15 || 0 },
+      { key: 'homeWin', label: 'Vic. Dom.', val: p.homeWin || 0 },
+      { key: 'awayWin', label: 'Vic. Ext.', val: p.awayWin || 0 },
+      { key: 'over35', label: 'Over 3.5', val: p.over35 || 0 },
+    ].reduce((b, c) => c.val > b.val ? c : b, { val: 0, label: '—' });
+
+    if (best.val > 0) {
+      picks.push({ match: `${m.home_team} vs ${m.away_team}`, league: m.league, ...best });
+      if (!leagueConf[m.league]) leagueConf[m.league] = [];
+      leagueConf[m.league].push(best.val);
+      if (marketConf[best.key]) marketConf[best.key].push(best.val);
+    }
+  });
+
+  if (!picks.length) { panel.style.display = 'none'; return; }
+
+  const high = picks.filter(p => p.val >= 70);
+  const mid = picks.filter(p => p.val >= 55 && p.val < 70);
+  const avgConf = Math.round(picks.reduce((s, p) => s + p.val, 0) / picks.length);
+  const score = Math.min(100, Math.round((high.length * 1.5 + mid.length * 0.8) / picks.length * 100));
+
+  const verdict = score >= 60 ? 'bet' : score >= 40 ? 'caution' : 'skip';
+  const verdictText = verdict === 'bet' ? '✅ BET' : verdict === 'caution' ? '⚠️ PRUDENCE' : '🛑 SKIP';
+  const title = verdict === 'bet' ? '🎯 Journée Porteuse' : verdict === 'caution' ? '⚠️ Journée Mitigée' : '🛑 Journée Faible';
+
+  // Best league
+  let bestLeague = '', bestLeagueAvg = 0;
+  Object.entries(leagueConf).forEach(([lg, vals]) => {
+    const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+    if (avg > bestLeagueAvg) { bestLeagueAvg = avg; bestLeague = lg; }
+  });
+
+  // Best market
+  let bestMarket = '', bestMarketAvg = 0;
+  Object.entries(marketConf).forEach(([mk, vals]) => {
+    if (vals.length >= 2) {
+      const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+      if (avg > bestMarketAvg) { bestMarketAvg = avg; bestMarket = mk; }
+    }
+  });
+  const marketLabels = { over25: 'Over 2.5', btts: 'BTTS', homeWin: 'Victoire Dom.', awayWin: 'Victoire Ext.' };
+
+  panel.className = verdict === 'bet' ? '' : verdict === 'skip' ? 'er-skip' : 'er-neutral';
+  panel.style.display = '';
+  document.getElementById('er-icon').textContent = verdict === 'bet' ? '🎯' : verdict === 'caution' ? '⚠️' : '🛑';
+  document.getElementById('er-title').textContent = title;
+  document.getElementById('er-sub').textContent = `${picks.length} matchs avec picks identifiés`;
+
+  const vEl = document.getElementById('er-verdict');
+  vEl.className = `er-verdict ${verdict}`;
+  document.getElementById('er-verdict-text').textContent = verdictText;
+
+  document.getElementById('er-total').textContent = picks.length;
+  document.getElementById('er-high').textContent = high.length;
+  document.getElementById('er-high-sub').textContent = high.length ? `≥70% conf.` : 'aucun';
+  document.getElementById('er-mid').textContent = mid.length;
+  document.getElementById('er-score').textContent = `${score}/100`;
+  const bar = document.getElementById('er-bar');
+  bar.style.width = `${score}%`;
+  bar.style.background = verdict === 'bet' ? 'var(--green)' : verdict === 'caution' ? 'var(--amber)' : 'var(--red)';
+
+  let insights = '';
+  if (bestLeague) insights += `<div class="er-insight-chip">🏟️ <strong>${bestLeague}</strong> (${Math.round(bestLeagueAvg)}% moy.)</div>`;
+  if (bestMarket) insights += `<div class="er-insight-chip">📊 Marché <strong>${marketLabels[bestMarket] || bestMarket}</strong> (${Math.round(bestMarketAvg)}% moy.)</div>`;
+  if (high.length) {
+    const top3 = high.sort((a, b) => b.val - a.val).slice(0, 3);
+    insights += `<div class="er-insight-chip">🔥 Top: ${top3.map(t => `${t.label} ${t.val}%`).join(' · ')}</div>`;
+  }
+  const edgeMatches = matches.filter(m => (m.best_edge?.edge || 0) >= 5);
+  if (edgeMatches.length) insights += `<div class="er-insight-chip">💰 <strong>${edgeMatches.length}</strong> value bet${edgeMatches.length > 1 ? 's' : ''} (edge ≥5%)</div>`;
+  document.getElementById('er-insights').innerHTML = insights;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

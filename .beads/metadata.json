@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "ParisScorebis",
+  "project_id": "2098a490-2592-444e-8e71-c9368249a237"
+}
