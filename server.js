@@ -1,4 +1,5 @@
-/**
+/**alert("ALERTE : Le fichier JS est bien connecté !");
+ * 
  * ══════════════════════════════════════════════════════════════════════════════
  *  PariScore — Backend Serveur-Centrique v2.0
  * ══════════════════════════════════════════════════════════════════════════════
@@ -252,11 +253,11 @@ async function fetchPressContext(homeTeam, awayTeam) {
 }
 
 function buildPowerScorePrompt(match, pressContext = null) {
-  const p = match.poisson || {};
-  const eg = match.expectedGoals || {};
-  const hs = match.stats?.home || {};
-  const as = match.stats?.away || {};
-  const dt = new Date(match.commence_time);
+  const p = match?.poisson || {};
+  const eg = match?.expectedGoals || {};
+  const hs = match?.stats?.home || {};
+  const as = match?.stats?.away || {};
+  const dt = match?.commence_time ? new Date(match.commence_time) : new Date();
   const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
@@ -444,6 +445,23 @@ function bsdCurrentSeasonYear() {
   return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
 }
 
+// ─── TAMpons MÉMOIRE (BUFFER) — Cache robuste anti-black hole ────────────────
+// Ces variables servent de tampon permanent : jamais vidées, même si l'API échoue.
+// Les requêtes clients répondent TOUJOURS depuis ce tampon en priorité.
+let cachedMatches = [];       // Dernière version valide des matchs
+let cachedLeagues = {};       // Ligues par pays { [country]: [ {id, name} ] }
+let cachedInjuries = {};      // Blessures par match { [matchId]: { home: [], away: [] } }
+let cacheVersion = 0;         // Incrémenté à chaque update réussi
+let lastCacheUpdate = null;   // Timestamp du dernier refresh réussi
+
+// ─── ODDS BATCH CACHE — TTL 30 min pour préserver crédits API ───────────────
+let oddsCache = {};           // { [fixture_id]: { data, ts, bestLink, bookmaker } }
+const ODDS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+// ANJ bookmakers reconnus (France régulée)
+const ANJ_BOOKMAKERS = ['Winamax', 'Betclic', 'Unibet', 'PMU', 'ParionsSport', 'ZEbet', 'Winamax'];
+const FINAL_FALLBACK = 'https://www.coteur.com/cotes/football';
+
 // ─── BASE DE DONNÉES EN MÉMOIRE ─────────────────────────────────────────────
 let db = {
   matches:            [],   // matchs fusionnés (odds + stats)
@@ -511,17 +529,17 @@ function initSQLite() {
     clicked_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_date ON affiliate_clicks(clicked_at)`);
-  // Seed 1xBet par défaut (modifie l'affiliate_link après inscription)
-  const has1xbet = sqldb.prepare('SELECT id FROM affiliates WHERE bookmaker = ?').get('1xbet');
-  if (!has1xbet) {
+  // Seed Coteur — comparateur de cotes légal ANJ France
+  const hasCoteur = sqldb.prepare('SELECT id FROM affiliates WHERE bookmaker = ?').get('coteur');
+  if (!hasCoteur) {
     sqldb.prepare(`INSERT INTO affiliates (bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, active, priority)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-      '1xbet', '1xBet - Meilleures Cotes',
-      'https://refpa7902968.top/L?tag=d_YOUR_TAG&site=YOUR_SITE_ID&banner=YOUR_BANNER_ID',
-      'https://1xbet.com/fr/live?sport={sport}&event={event_id}',
-      'PARISCORE2026', 'revshare', 30, 1, 10
+      'coteur', 'Coteur — Comparateur de Cotes',
+      'https://www.coteur.com/',
+      'https://www.coteur.com/match/cotes-{home}-{away}.html',
+      '', 'cpa', 25, 1, 10
     );
-    console.log('  ✓ Affilié 1xBet ajouté (modifie le lien après inscription)');
+    console.log('  ✓ Affilié Coteur (comparateur légal ANJ) ajouté');
   }
   // Seed Winamax ANJ — fallback légal France
   const hasWinamax = sqldb.prepare('SELECT id FROM affiliates WHERE bookmaker = ?').get('winamax');
@@ -535,6 +553,11 @@ function initSQLite() {
     );
     console.log('  ✓ Affilié Winamax ANJ ajouté');
   }
+  // Nettoyage forcé — désactive tout bookmaker non-ANJ (1xBet, etc.)
+  const cleaned = sqldb.prepare("UPDATE affiliates SET active = 0 WHERE bookmaker NOT IN ('coteur', 'winamax', 'unibet', 'betclic', 'parions_sport', 'pmu')").run();
+  if (cleaned.changes > 0) console.log(`  ✓ ${cleaned.changes} affilié(s) non-ANJ désactivé(s) (cleanup sécurité)`);
+  // Boost Coteur en priorité #1
+  sqldb.prepare("UPDATE affiliates SET priority = 99 WHERE bookmaker = 'coteur'").run();
   // Seed utilisateur de test (idempotent)
   const testEmail = 'test@pariscore.fr';
   const existing = sqldb.prepare('SELECT id FROM users WHERE email = ?').get(testEmail);
@@ -622,6 +645,26 @@ function apiCacheStats() {
   };
 }
 
+function oddsCacheCleanExpired() {
+  const now = Date.now();
+  let cleaned = 0;
+  for (const key of Object.keys(oddsCache)) {
+    if (now - oddsCache[key].ts > ODDS_CACHE_TTL) {
+      delete oddsCache[key];
+      cleaned++;
+    }
+  }
+  return cleaned;
+}
+
+function oddsCacheStats() {
+  return {
+    entries: Object.keys(oddsCache).length,
+    ttl_minutes: ODDS_CACHE_TTL / 60000,
+    keys: Object.keys(oddsCache).slice(0, 10),
+  };
+}
+
 // ─── POWER SCORE USAGE TRACKING ───────────────────────────────────────
 const POWER_SCORE_COOLDOWN_IP = new Map(); // IP -> { count, reset }
 
@@ -677,6 +720,59 @@ function saveDB() {
   ]);
 }
 
+function syncCacheBuffers() {
+  // Copie les données valides de db vers les tampons mémoire
+  // NE JAMAIS vider les tampons — si db est vide, on garde l'ancien cache
+  if (db.matches && db.matches.length > 0) {
+    cachedMatches = JSON.parse(JSON.stringify(db.matches)); // deep clone
+    lastCacheUpdate = Date.now();
+    cacheVersion++;
+  }
+  // Injuries : extraire depuis les matchs si disponibles
+  if (db.matches && db.matches.length > 0) {
+    for (const m of db.matches) {
+      if (m.injuries) {
+        cachedInjuries[m.id] = m.injuries;
+      }
+    }
+  }
+  // Ligues : construire depuis les matchs
+  if (db.matches && db.matches.length > 0) {
+    const leagueSet = new Set();
+    for (const m of db.matches) {
+      if (m.league && m.league !== '?') leagueSet.add(m.league);
+    }
+    // Grouper par pays (déduit du nom de ligue)
+    for (const league of leagueSet) {
+      const country = detectCountryFromLeague(league);
+      if (!cachedLeagues[country]) cachedLeagues[country] = [];
+      if (!cachedLeagues[country].find(l => l.name === league)) {
+        cachedLeagues[country].push({ name: league, id: league.toLowerCase().replace(/\s+/g, '_') });
+      }
+    }
+  }
+}
+
+// Helper: détecte le pays depuis le nom de ligue
+function detectCountryFromLeague(leagueName) {
+  const countryMap = {
+    'france': ['Ligue 1', 'Ligue 2', 'Coupe de France'],
+    'angleterre': ['Premier League', 'Championship', 'FA Cup', 'League Cup'],
+    'espagne': ['La Liga', 'Segunda Division', 'Copa del Rey'],
+    'allemagne': ['Bundesliga', '2. Bundesliga', 'DFB Pokal'],
+    'italie': ['Serie A', 'Serie B', 'Coppa Italia'],
+    'portugal': ['Liga Portugal', 'Taca de Portugal'],
+    'pays-bas': ['Eredivisie', 'KNVB Beker'],
+    'belgique': ['Jupiler Pro League', 'Belgian Cup'],
+    'europe': ['Champions League', 'Europa League', 'Conference League'],
+    'monde': ['Club Friendlies', 'World Cup'],
+  };
+  for (const [country, leagues] of Object.entries(countryMap)) {
+    if (leagues.some(l => leagueName.includes(l))) return country;
+  }
+  return 'autre';
+}
+
 function loadDB() {
   // Rétrocompat : migration one-shot depuis database.json
   if (fs.existsSync(DB_FILE)) {
@@ -688,6 +784,7 @@ function loadDB() {
       saveDB();
       fs.renameSync(DB_FILE, DB_FILE + '.migrated');
       console.log(`  ✓ database.json migré vers SQLite (${db.matches.length} matchs)`);
+      syncCacheBuffers(); // Populate buffers from migrated data
       return;
     } catch(e) { console.warn('[DB] Migration JSON→SQLite échouée:', e.message); }
   }
@@ -703,6 +800,32 @@ function loadDB() {
   db.statsUpdateByLeague  = meta.statsUpdateByLeague  || {};
   db.oddsQuotaRemaining   = meta.oddsQuotaRemaining   || null;
   console.log(`  ✓ SQLite chargé (${db.matches.length} matchs, ${Object.keys(db.teamStats).length} équipes, ${Object.keys(db.advancedTeamStats).length} stats avancées)`);
+  syncCacheBuffers(); // Populate buffers from SQLite on startup
+}
+
+// Backfill home_form / away_form depuis stats PPG pour les matchs sans form string
+function backfillMatchForms() {
+  let fixed = 0;
+  for (const m of db.matches) {
+    if (!m.home_form || m.home_form.length < 2) {
+      const stats = m.stats?.home;
+      if (stats) {
+        const form = deriveFormFromStats(stats);
+        if (form) { m.home_form = form; fixed++; }
+      }
+    }
+    if (!m.away_form || m.away_form.length < 2) {
+      const stats = m.stats?.away;
+      if (stats) {
+        const form = deriveFormFromStats(stats);
+        if (form) { m.away_form = form; fixed++; }
+      }
+    }
+  }
+  if (fixed > 0) {
+    console.log(`  [Backfill] ✓ ${fixed} champs home_form/away_form synthétisés depuis PPG`);
+    saveDB();
+  }
 }
 
 // ─── UTILS HTTPS ─────────────────────────────────────────────────────────────
@@ -923,10 +1046,29 @@ function currentSeason() {
 }
 
 // Nettoyage des matchs expirés — 150min après kickoff, jamais pendant un live actif
+// v10.5: Triple verrou — LIVE > 4h OU minute > 130 = purgé
 function cleanExpiredMatches() {
-  const cutoff = Date.now() - 150 * 60 * 1000; // 150min = 90min + 60min buffer pour prolongations/VAR
+  const cutoff = Date.now() - 150 * 60 * 1000;
+  const staleCutoff = Date.now() - 240 * 60 * 1000; // 4h
   const before = db.matches.length;
-  db.matches = db.matches.filter(m => m.live_score || new Date(m.commence_time).getTime() > cutoff);
+  db.matches = db.matches.filter(m => {
+    if (m.live_score) {
+      // Verrou minute > 130
+      const minuteVal = parseInt(m.live_minute || m.minute || 0);
+      if (minuteVal > 130) {
+        console.log(`  [Clean] Stale LIVE purged (minute > 130): ${m.home_team} vs ${m.away_team}`);
+        return false;
+      }
+      // Verrou temporel > 4h
+      const kickoff = new Date(m.commence_time).getTime();
+      if (!isNaN(kickoff) && kickoff < staleCutoff) {
+        console.log(`  [Clean] Stale LIVE purged (> 4h): ${m.home_team} vs ${m.away_team}`);
+        return false;
+      }
+      return true;
+    }
+    return new Date(m.commence_time).getTime() > cutoff;
+  });
   const removed = before - db.matches.length;
   if (removed > 0) console.log(`  [Clean] ${removed} matchs expirés supprimés`);
 }
@@ -1269,6 +1411,177 @@ function calibrateProbs(probs) {
   return calibrated;
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+//  P1 QUANT — BOOTSTRAP UQD (Uncertainty Quantification & Decision)
+//  Auteur : Hermes · Date : 2026-05-06
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Box-Muller : générateur N(0,1) sans dépendance externe ───────────────────
+function boxMullerGaussian() {
+  const u1 = Math.max(1e-10, Math.random());
+  const u2 = Math.random();
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+
+// ── BOOTSTRAP UQD — 500 itérations, IC 90% sur les marchés Poisson ───────────
+// Principe : perturbation log-normale des λ (expHome, expAway) selon l'incertitude
+//            sur les moyennes de buts (σ ≈ 1/√played — approx. variance de Poisson)
+// Complexité : O(N × 7 × 7) ≈ 24 500 ops/match — non-bloquant (<50ms sur 50 matchs)
+function computeBootstrapUQD(expHome, expAway, playedHome, playedAway, N) {
+  N = N || 500;
+  if (!expHome || !expAway || expHome <= 0 || expAway <= 0) return null;
+
+  // Écart-type log-normal : 1/√n (variance Poisson de la moyenne des buts)
+  const sigH = 1 / Math.sqrt(Math.max(1, playedHome || 10));
+  const sigA = 1 / Math.sqrt(Math.max(1, playedAway || 10));
+  const lnH  = Math.log(expHome);
+  const lnA  = Math.log(expAway);
+
+  // Tableaux d'échantillons par marché
+  const sOver25 = [], sBtts = [], sHomeWin = [], sDraw = [], sAwayWin = [];
+  const sOver15 = [], sOver35 = [];
+
+  for (let i = 0; i < N; i++) {
+    // Perturbation log-normale : λ' = exp(ln(λ) + σ·Z) reste toujours > 0
+    const lH = Math.exp(lnH + sigH * boxMullerGaussian());
+    const lA = Math.exp(lnA + sigA * boxMullerGaussian());
+
+    // Matrice Poisson 7×7 rapide
+    let o25 = 0, o15 = 0, o35 = 0, btts = 0, hw = 0, dr = 0, aw = 0;
+    for (let h = 0; h < 7; h++) {
+      for (let a = 0; a < 7; a++) {
+        const p = poissonPMF(lH, h) * poissonPMF(lA, a);
+        const tot = h + a;
+        if (tot > 2) o25  += p;
+        if (tot > 1) o15  += p;
+        if (tot > 3) o35  += p;
+        if (h > 0 && a > 0) btts += p;
+        if (h > a)  hw += p;
+        if (h === a) dr += p;
+        if (h < a)  aw += p;
+      }
+    }
+    sOver25.push(o25 * 100);
+    sOver15.push(o15 * 100);
+    sOver35.push(o35 * 100);
+    sBtts.push(btts * 100);
+    sHomeWin.push(hw * 100);
+    sDraw.push(dr * 100);
+    sAwayWin.push(aw * 100);
+  }
+
+  // Extraction des percentiles (5th = borne inf IC 90%, 95th = borne sup)
+  const percentile = (arr, p) => {
+    arr.sort((a, b) => a - b);
+    const idx = (p / 100) * (arr.length - 1);
+    const lo = Math.floor(idx), hi = Math.ceil(idx);
+    if (lo === hi) return Math.round(arr[lo] * 10) / 10;
+    return Math.round((arr[lo] + (idx - lo) * (arr[hi] - arr[lo])) * 10) / 10;
+  };
+
+  const summarize = (arr) => {
+    const mean  = Math.round(arr.reduce((s, v) => s + v, 0) / N * 10) / 10;
+    const lower = percentile([...arr], 5);
+    const upper = percentile([...arr], 95);
+    return { mean, lower, upper, width: Math.round((upper - lower) * 10) / 10 };
+  };
+
+  return {
+    n:        N,
+    ic_level: 90,
+    markets: {
+      over25:  summarize(sOver25),
+      over15:  summarize(sOver15),
+      over35:  summarize(sOver35),
+      btts:    summarize(sBtts),
+      homeWin: summarize(sHomeWin),
+      draw:    summarize(sDraw),
+      awayWin: summarize(sAwayWin),
+    },
+  };
+}
+
+// ── SCORE DE FIABILITÉ COMPOSITE (0-100) ─────────────────────────────────────
+// Remplace l'ancien confidence_score heuristique (0.6×Poisson + 0.4×PPG)
+// Composantes :
+//   35% — Volume Data   : fiabilité statistique (matchs joués)
+//   35% — Stabilité xG  : étroitesse de l'IC over25 (IC large = incertitude élevée)
+//   30% — Qualité Source: données réelles BSD/API vs simulées
+function computeReliabilityScore(uqd, isRealData, playedHome, playedAway) {
+  const avgPlayed    = ((playedHome || 5) + (playedAway || 5)) / 2;
+  const volumeScore  = Math.min(100, (avgPlayed / 20) * 100);           // 20+ matchs = max
+
+  const icWidth      = uqd && uqd.markets && uqd.markets.over25 ? uqd.markets.over25.width : 60;
+  const stabilityScore = Math.max(0, 100 - icWidth * 1.8);             // IC large → score bas
+
+  const qualityScore = isRealData ? 85 : 28;                           // Réel vs simulé
+
+  const raw = 0.35 * volumeScore + 0.35 * stabilityScore + 0.30 * qualityScore;
+  return Math.round(Math.max(0, Math.min(100, raw)));
+}
+
+// ── RÈGLE DE DÉCISION STRICTE — BET si EV>5% ET IC borne inf → EV>0% ────────
+// Principe : même dans le scénario pessimiste (IC borne inférieure 90%),
+//            l'edge reste positif → seulement alors recommander le pari.
+function computeBetSignal(record, uqd) {
+  const ev    = record.best_edge && record.best_edge.edge != null ? record.best_edge.edge : null;
+  const label = record.best_edge && record.best_edge.label;
+
+  if (ev == null) return { recommended: false, reason: 'Aucun edge disponible' };
+  if (!uqd)      return { recommended: false, reason: 'UQD non calculé', ev_pct: ev };
+
+  // Mapper le label du best_edge vers la clé marché UQD
+  let marketKey = null;
+  if      (label === record.home_team) marketKey = 'homeWin';
+  else if (label === record.away_team) marketKey = 'awayWin';
+  else if (label === 'Nul')            marketKey = 'draw';
+
+  // Récupérer la borne inférieure IC du marché
+  const icData = marketKey && uqd.markets[marketKey];
+  if (!icData) {
+    const reason = ev > 5
+      ? `EV ${ev.toFixed(1)}% > 5% ✓ mais marché "${label}" non mappé UQD`
+      : `EV ${ev.toFixed(1)}% ≤ seuil 5%`;
+    return { recommended: false, reason, ev_pct: ev };
+  }
+
+  // Calculer l'EV avec la borne inférieure de l'IC (scénario pessimiste)
+  const oddsKey  = marketKey === 'homeWin' ? 'home' : marketKey === 'awayWin' ? 'away' : 'draw';
+  const odds     = record.odds && record.odds[oddsKey];
+  const pLower   = (icData.lower || 0) / 100;
+  const evLower  = odds ? parseFloat(((pLower * odds - 1) * 100).toFixed(1)) : null;
+
+  const cond1 = ev > 5;
+  const cond2 = evLower != null && evLower > 0;
+
+  if (cond1 && cond2) {
+    return {
+      recommended: true,
+      market:      label,
+      ev_pct:      ev,
+      ic_lower_pct: icData.lower,
+      ic_lower_ev:  evLower,
+      reason: `✓ EV ${ev.toFixed(1)}% > 5% | ✓ EV pessimiste IC90% ${evLower.toFixed(1)}% > 0%`,
+    };
+  } else if (cond1 && !cond2) {
+    return {
+      recommended: false,
+      market:      label,
+      ev_pct:      ev,
+      ic_lower_pct: icData.lower,
+      ic_lower_ev:  evLower,
+      reason: `✓ EV ${ev.toFixed(1)}% > 5% | ✗ EV pessimiste ${evLower != null ? evLower.toFixed(1) : '?'}% ≤ 0% (incertitude trop haute)`,
+    };
+  } else {
+    return {
+      recommended: false,
+      market:      label,
+      ev_pct:      ev,
+      reason: `✗ EV ${ev.toFixed(1)}% ≤ seuil 5%`,
+    };
+  }
+}
+
 // ── EV CALCULATOR — Expected Value avec cotes dévigées ───────────────────────
 
 function calcEV(modelProb, marketOdds, fairProb) {
@@ -1607,7 +1920,19 @@ function generateLiveScenarios(match) {
 }
 
 function getLivePredictionsTop5() {
-  const liveMatches = db.matches.filter(m => m.live_score && m.live_minute && m.live_minute > 5 && m.live_minute < 85);
+  const now = Date.now();
+  const liveMatches = db.matches.filter(m => {
+    if (!m.live_score || !m.live_minute) return false;
+    if (m.live_minute <= 5 || m.live_minute >= 85) return false;
+    // v10.5: Ghost filter
+    const minuteVal = parseInt(m.live_minute || 0);
+    if (minuteVal > 130) return false;
+    if (m.commence_time) {
+      const hoursSince = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
+      if (hoursSince > 4) return false;
+    }
+    return true;
+  });
   if (!liveMatches.length) return { predictions: [], message: 'Aucun match live éligible' };
   let allScenarios = [];
   for (const match of liveMatches) {
@@ -1639,8 +1964,35 @@ function getLivePredictionsTop5() {
 function buildSideStats(s) {
   const played = s?.played || 1;
   const w = s?.win || 0, d = s?.draw || 0, l = s?.lose || 0;
-  const gf = s?.goals?.for || 0, ga = s?.goals?.against || 0;
-  const avgFor = gf / played, avgAgainst = ga / played;
+
+  // v9.2: Deep mapping — handle BOTH API-Football (nested) and BSD (flat) formats
+  // API-Football: s.goals.for = { total: 15, average: "1.5" }
+  // BSD: s.goals_for = 15 (flat number)
+  const extractGoals = (obj) => {
+    if (obj == null) return 0;
+    if (typeof obj === 'number') return obj;
+    if (typeof obj === 'object') {
+      // API-Football nested format: { total: N, average: "N" }
+      if (typeof obj.total === 'number') return obj.total;
+      if (typeof obj.average === 'number') return obj.average;
+      if (typeof obj.average === 'string') return parseFloat(obj.average) || 0;
+    }
+    return 0;
+  };
+
+  // Try nested first (API-Football), then flat (BSD)
+  let gf = 0, ga = 0;
+  if (s?.goals) {
+    gf = extractGoals(s.goals.for);
+    ga = extractGoals(s.goals.against);
+  }
+  // Fallback to flat properties (BSD format)
+  if (gf === 0 && s?.goals_for != null) gf = extractGoals(s.goals_for);
+  if (ga === 0 && s?.goals_against != null) ga = extractGoals(s.goals_against);
+
+  const avgFor = played > 0 ? gf / played : 0;
+  const avgAgainst = played > 0 ? ga / played : 0;
+
   return {
     ppg:        parseFloat(((w * 3 + d) / played).toFixed(2)),
     wins:       Math.round(w / played * 100),
@@ -1650,6 +2002,7 @@ function buildSideStats(s) {
     conceded:   Math.round(Math.min(95, (ga > 0 ? 1 : 0) / played * 100 || avgAgainst * 50)),
     avgScored:  parseFloat(avgFor.toFixed(2)),
     avgConceded:parseFloat(avgAgainst.toFixed(2)),
+    played,      // Conservé pour le Bootstrap UQD (P1 Quant)
   };
 }
 
@@ -1720,6 +2073,109 @@ function computeEdge(match) {
   };
 }
 
+// FIX v20.0 — Dérivation de forme depuis l'historique (dernier recours si db.teamStats absent)
+// Scan db.matches + db.archive_matches pour reconstituer W/D/L récent d'une équipe
+// Convention : forme[0] = match le plus ancien, forme[last] = plus récent (convention BSD/API-Football)
+function deriveFormFromHistory(teamName, limit = 5) {
+  const now = Date.now();
+  const allMatches = [
+    ...(db.matches || []),
+    ...(db.archive_matches || [])
+  ];
+  const finished = allMatches
+    .filter(m => {
+      if (m.home_team !== teamName && m.away_team !== teamName) return false;
+      const hasResult = !!(m.live_score || (m.goals?.home !== undefined && m.goals?.away !== undefined));
+      const isPast = new Date(m.commence_time).getTime() < now;
+      return hasResult && isPast;
+    })
+    .sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime()) // plus ancien → plus récent
+    .slice(-limit); // garder les N derniers
+
+  if (finished.length < 2) return '';
+
+  const formChars = [];
+  for (const m of finished) {
+    let hs, as;
+    if (m.live_score) {
+      [hs, as] = m.live_score.split('-').map(Number);
+      if (isNaN(hs) || isNaN(as)) continue;
+    } else if (m.goals?.home !== undefined && m.goals?.away !== undefined) {
+      hs = m.goals.home;
+      as = m.goals.away;
+    } else {
+      continue;
+    }
+    if (m.home_team === teamName) {
+      formChars.push(hs > as ? 'W' : hs === as ? 'D' : 'L');
+    } else {
+      formChars.push(as > hs ? 'W' : as === hs ? 'D' : 'L');
+    }
+  }
+
+  return formChars.join('');
+}
+
+// Level 5 — Synthèse forme depuis stats saison (PPG → W/D/L)
+//   Ex: PPG 2.40 → "WWWWL", PPG 0.80 → "WDLLL"
+function deriveFormFromStats(stats) {
+  if (!stats || typeof stats.ppg !== 'number') return '';
+  const ppg = stats.ppg;
+  // Points totaux sur 5 matchs théoriques
+  const ptsTotal = Math.round(ppg * 5);
+  // Max de victoires possibles
+  const wins = Math.min(5, Math.max(0, Math.floor(ptsTotal / 3)));
+  const remainingPts = ptsTotal - wins * 3;
+  const draws = Math.min(5 - wins, Math.max(0, remainingPts));
+  const losses = 5 - wins - draws;
+  // Construire la forme : W → D → L (du + récent au + ancien)
+  let form = '';
+  form += 'W'.repeat(wins);
+  form += 'D'.repeat(draws);
+  form += 'L'.repeat(losses);
+  return form || 'LLLLL';
+}
+
+// H2H — Dernières 5 confrontations directes entre deux équipes
+function computeH2H(homeTeam, awayTeam) {
+  const all = [...(db.matches || []), ...(db.archive_matches || [])];
+  const hNorm = normName(homeTeam);
+  const aNorm = normName(awayTeam);
+  const h2hMatches = all
+    .filter(m => {
+      const h = normName(m.home_team);
+      const a = normName(m.away_team);
+      return (h === hNorm && a === aNorm) || (h === aNorm && a === hNorm);
+    })
+    .sort((a, b) => new Date(b.commence_time) - new Date(a.commence_time))
+    .slice(0, 5);
+
+  if (h2hMatches.length === 0) return null;
+
+  let w = 0, d = 0, l = 0;
+  const formChars = [];
+  for (const m of [...h2hMatches].reverse()) {
+    if (!m.live_score && (!m.goals?.home)) continue;
+    let hs, as;
+    if (m.live_score) { [hs, as] = m.live_score.split('-').map(Number); }
+    else { hs = m.goals.home; as = m.goals.away; }
+    if (isNaN(hs) || isNaN(as)) continue;
+    const isHome = normName(m.home_team) === hNorm;
+    if (isHome) {
+      if (hs > as) { w++; formChars.push('W'); }
+      else if (hs === as) { d++; formChars.push('D'); }
+      else { l++; formChars.push('L'); }
+    } else {
+      if (as > hs) { w++; formChars.push('W'); }
+      else if (as === hs) { d++; formChars.push('D'); }
+      else { l++; formChars.push('L'); }
+    }
+  }
+
+  const summary = `${w}W-${d}D-${l}L`;
+  return { summary, form: formChars.join(''), wins: w, draws: d, losses: l, total: w + d + l };
+}
+
 function buildMatchRecord(raw) {
   const edge = computeEdge(raw);
   if (!edge) return null;
@@ -1728,6 +2184,9 @@ function buildMatchRecord(raw) {
   const aKey = normName(raw.away_team);
   let hRaw = db.teamStats[hKey] || findFuzzy(hKey);
   let aRaw = db.teamStats[aKey] || findFuzzy(aKey);
+
+  // H2H — 5 dernières confrontations
+  const h2h = computeH2H(raw.home_team, raw.away_team);
 
   // ── Protocole double-check cohérence Home/Away ────────────────────────────
   // Guard 1 : cross-contamination — même objet DB pour les deux équipes
@@ -1759,11 +2218,56 @@ function buildMatchRecord(raw) {
   if (!hRaw) console.warn(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (non trouvé en DB)`);
   if (!aRaw) console.warn(`  [BuildMatch] "${raw.away_team}" (Away) — stats simulées (non trouvé en DB)`);
 
+  // ── FIX v20.0 — getTeamForm() : Normalisateur Universel (symétrique Home/Away) ──
+  // Niveaux : 1) DB exacte  2) Fuzzy  3) Prefix fallback  4) Historique de matchs
+  const getTeamForm = (teamName, normKey, rawEntry, fallbackStats) => {
+    // Niveau 1 — DB exacte (rawEntry passé par buildMatchRecord)
+    if (rawEntry?.form && rawEntry.form.length >= 3) return rawEntry.form;
+    // Niveau 2 — Fuzzy matching
+    const fuzzy = findFuzzy(normKey);
+    if (fuzzy?.form && fuzzy.form.length >= 3) return fuzzy.form;
+    // Niveau 3 — Prefix fallback (premier mot, 4+ chars)
+    const firstWord = normKey.split(' ')[0];
+    if (firstWord.length >= 4) {
+      for (const [k, v] of Object.entries(db.teamStats)) {
+        if (k.startsWith(firstWord) && v?.form && v.form.length >= 3) {
+          console.warn(`  [Forme] "${teamName}" → fallback forme depuis "${k}" (${v.form})`);
+          return v.form;
+        }
+      }
+    }
+    // Niveau 4 — Dérivation depuis l'historique des matchs terminés (dernier recours)
+    const derived = deriveFormFromHistory(teamName, 5);
+    if (derived) {
+      console.warn(`  [Forme] "${teamName}" → forme dérivée de l'historique (${derived})`);
+      return derived;
+    }
+    // Niveau 5 — Synthèse forme depuis stats saison (PPG → W/D/L)
+    const synForm = deriveFormFromStats(fallbackStats);
+    if (synForm) {
+      console.warn(`  [Forme] "${teamName}" → forme synthétisée depuis PPG (${synForm})`);
+      return synForm;
+    }
+    return '';
+  };
+  const homeForm = getTeamForm(raw.home_team, hKey, hRaw, homeStats);
+  const awayForm = getTeamForm(raw.away_team, aKey, aRaw, awayStats);
+
   // Expected goals (Poisson λ) : attaque dom × défense ext / ligue moyenne (~1.35)
   const LEAGUE_AVG = 1.35;
   const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG);
   const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG);
-  const poisson = computePoisson(expHome, expAway);
+
+  // v9.0: Anti-Zero Poisson — interdire calcul si moyennes à 0
+  let poisson;
+  if (expHome === 0 && expAway === 0) {
+    console.error("\x1b[31m[POISSON] Anti-Zero: expHome=0 et expAway=0 pour %s vs %s — calcul bloqué\x1b[0m", raw.home_team, raw.away_team);
+    poisson = { error: 'ZERO_STATS', message: 'Moyennes de buts à 0 — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
+  } else {
+    poisson = computePoisson(expHome, expAway);
+  }
+
+  // ── v7.0 BAYESIAN MODEL BLENDER ────────────────────────────────────────────
 
   // ── v7.0 BAYESIAN MODEL BLENDER ────────────────────────────────────────────
   const tempMatch = { stats: { home: homeStats, away: awayStats }, expectedGoals: { home: expHome, away: expAway } };
@@ -1809,8 +2313,9 @@ function buildMatchRecord(raw) {
     away_team:     raw.away_team,
     home_rank:     hRaw?.rank || null,
     away_rank:     aRaw?.rank || null,
-    home_form:     hRaw?.form || db.teamStats[hKey]?.form || findFuzzy(hKey)?.form || '',
-    away_form:     aRaw?.form || db.teamStats[aKey]?.form || findFuzzy(aKey)?.form || '',
+    home_form:     homeForm,
+    away_form:     awayForm,
+    h2h,
     odds:          edge.odds,
     bookmakers:    edge.bookmakers,
     fair:          edge.fair,
@@ -1834,6 +2339,25 @@ function buildMatchRecord(raw) {
     },
   };
 
+  // ── P1 QUANT — Bootstrap UQD + Reliability Score + Bet Signal ───────────────
+  const playedHome = homeStats.played || 10;
+  const playedAway = awayStats.played || 10;
+
+  // 1. Bootstrap UQD : IC 90% sur tous les marchés Poisson
+  const uqd = (expHome > 0 && expAway > 0)
+    ? computeBootstrapUQD(expHome, expAway, playedHome, playedAway, 500)
+    : null;
+  record.uqd = uqd;
+
+  // 2. Score de Fiabilité Composite (remplace l'ancien confidence_score heuristique)
+  record.reliability_score = computeReliabilityScore(uqd, isRealData, playedHome, playedAway);
+
+  // 3. Rétro-compatibilité : conserver confidence_score = reliability_score
+  record.confidence_score = record.reliability_score;
+
+  // 4. Règle de Décision Stricte : BET si EV>5% ET EV pessimiste IC>0%
+  record.bet_signal = computeBetSignal(record, uqd);
+
   // Dropping Odds Tracker — snapshot et calcul delta
   const snapKey = `odds_snap_${record.id}`;
   const prevSnap = kvGet(snapKey);
@@ -1849,23 +2373,49 @@ function buildMatchRecord(raw) {
     kvSet(snapKey, { home: record.odds.home, draw: record.odds.draw, away: record.odds.away, ts: Date.now() });
   }
 
-  // Injuries — lookup synchrone depuis cache SQLite KV (pré-chargé par fetchTeamInjuries)
-  const homeKey = normName(record.home_team);
-  const awayKey = normName(record.away_team);
-  const homeTeamId = db.teamStats[homeKey]?.teamId;
-  const awayTeamId = db.teamStats[awayKey]?.teamId;
-  const homeInjCached = homeTeamId ? kvGet(`injuries_${homeTeamId}_${currentSeason()}`) : null;
-  const awayInjCached = awayTeamId ? kvGet(`injuries_${awayTeamId}_${currentSeason()}`) : null;
-  record.injuries = {
-    home: homeInjCached?.data || [],
-    away: awayInjCached?.data || [],
-  };
+  // Injuries — mappées directement depuis le flux BSD (unavailable_players)
+  // Plus besoin d'appel API-Football dédié → économie de quota
+  const bsdUnavailable = raw._source === 'bsd' ? raw.unavailable : null;
+  if (bsdUnavailable) {
+    record.injuries = {
+      home: (bsdUnavailable.home || []).map(p => ({
+        name:   p.name   || p.player?.name   || '?',
+        reason: p.reason || p.type || 'blessure',
+      })),
+      away: (bsdUnavailable.away || []).map(p => ({
+        name:   p.name   || p.player?.name   || '?',
+        reason: p.reason || p.type || 'blessure',
+      })),
+    };
+  } else {
+    // Fallback: ancien mécanisme cache API-Football (si BSD non dispo)
+    const homeKey = normName(record.home_team);
+    const awayKey = normName(record.away_team);
+    const homeTeamId = db.teamStats[homeKey]?.teamId;
+    const awayTeamId = db.teamStats[awayKey]?.teamId;
+    const homeInjCached = homeTeamId ? kvGet(`injuries_${homeTeamId}_${currentSeason()}`) : null;
+    const awayInjCached = awayTeamId ? kvGet(`injuries_${awayTeamId}_${currentSeason()}`) : null;
+    record.injuries = {
+      home: homeInjCached?.data || [],
+      away: awayInjCached?.data || [],
+    };
+  }
   const homeInjCount = Math.min((record.injuries.home || []).length, 6);
   const awayInjCount = Math.min((record.injuries.away || []).length, 6);
   record.injuryPenalty = {
     home: Math.min(homeInjCount * 5, 30),
     away: Math.min(awayInjCount * 5, 30),
   };
+
+  // Corners Poisson — total attendu = (xG Dom + xG Ext) * ratio corners/buts (~3.0)
+  const cornerTotal = Math.max(1.0, (expHome + expAway) * 3.0);
+  let crCum = 0;
+  for (let k = 0; k <= 6; k++) {
+    let logP = -cornerTotal + k * Math.log(Math.max(cornerTotal, 0.001));
+    for (let i = 1; i <= k; i++) logP -= Math.log(i);
+    crCum += Math.exp(logP);
+  }
+  record.corners_poisson = { over_6_5: Math.round(Math.max(0, Math.min(99, (1 - crCum) * 100))) };
 
   // BSD metadata — xG réel, coaches, absences
   if (raw._source === 'bsd') {
@@ -1877,6 +2427,52 @@ function buildMatchRecord(raw) {
   }
 
   return record;
+}
+
+// Enrichissement corners depuis BSD (donnees reelles par equipe, avec cache)
+async function enrichCornersFromBSD(matches) {
+  if (!BSD_API_KEY || !Object.keys(BSD_CONFIG_TO_BSD).length) {
+    console.log('  [Corners] BSD non configure — conservation heuristique xG');
+    return;
+  }
+  console.log('  [Corners] Enrichissement corners depuis BSD…');
+  const teamCache = new Map(); // normName -> { totalCornersPerMatch }
+  let enriched = 0;
+
+  for (const m of matches) {
+    if (m._source !== 'bsd' && !m._bsd_event_id) continue;
+    const configLeague = leaguesConfig.leagues.find(l => l.name === m.league || l.odds_key === m.sport);
+    const bsdLeagueId = configLeague ? configIdToBsd(configLeague.id) : null;
+    if (!bsdLeagueId) continue;
+
+    const homeKey = normName(m.home_team);
+    const awayKey = normName(m.away_team);
+
+    try {
+      if (!teamCache.has(homeKey)) {
+        const data = await fetchBSDTeamCornerHistory(m.home_team, bsdLeagueId, 5);
+        teamCache.set(homeKey, data?.totalCornersPerMatch || null);
+      }
+      if (!teamCache.has(awayKey)) {
+        const data = await fetchBSDTeamCornerHistory(m.away_team, bsdLeagueId, 5);
+        teamCache.set(awayKey, data?.totalCornersPerMatch || null);
+      }
+    } catch(e) { continue; }
+
+    const homeAvg = teamCache.get(homeKey);
+    const awayAvg = teamCache.get(awayKey);
+    if (homeAvg != null && awayAvg != null) {
+      const cr = predictCorners(homeAvg, awayAvg, [6.5]);
+      m.corners_poisson = {
+        over_6_5: cr.probabilities.over_6_5,
+        source: 'bsd',
+        home_avg: Math.round(homeAvg * 10) / 10,
+        away_avg: Math.round(awayAvg * 10) / 10,
+      };
+      enriched++;
+    }
+  }
+  console.log(`  [Corners] ${enriched}/${matches.length} matchs enrichis via BSD`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2400,118 +2996,404 @@ async function fetchTeamAdvancedStats(teamKey, teamId, leagueId, season) {
 
 // ─── HELPER GEMINI (appel synchrone one-shot) ────────────────────────────────
 async function callGemini(prompt, maxTokens = 600) {
-  if (!GEMINI_API_KEY) throw new Error('Clé Gemini non configurée');
-  const res = await httpsPost(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
-      safetySettings: GEMINI_SAFETY_SETTINGS,
-    }
-  );
+  if (!GEMINI_API_KEY) throw new Error('Cle Gemini non configuree');
+  const res = await Promise.race([
+    httpsPost(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
+        safetySettings: GEMINI_SAFETY_SETTINGS,
+      }
+    ),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Gemini timeout (12s)')), 12000)),
+  ]);
+  if (res.status === 429) throw new Error('GEMINI_QUOTA');
   const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text && res.status !== 200) throw new Error(`Gemini HTTP ${res.status}`);
+  if (!text && res.status !== 200) throw new Error(`GEMINI_ERR_${res.status}`);
   return text;
 }
 
-// ─── INJURIES PAR ÉQUIPE (cache 24h, skip si pas d'ID) ─────────────────────
-async function fetchTeamInjuries(teamKey) {
-  const stats = db.teamStats[teamKey];
-  if (!stats?.teamId || !API_FOOTBALL_KEY) return null;
-  const season = currentSeason();
-  const cacheKey = `injuries_${stats.teamId}_${season}`;
-  const cached = kvGet(cacheKey);
-  if (cached && cached.ts && Date.now() - cached.ts < 86400000) return cached.data;
-  try {
-    const res = await httpsGet(
-      `https://v3.football.api-sports.io/injuries?team=${stats.teamId}&season=${season}`,
-      { 'x-apisports-key': API_FOOTBALL_KEY }
-    );
-    if (res.status === 429) { console.warn(`  [Injuries] Quota épuisé — team ${stats.teamId}`); return null; }
-    if (res.status !== 200) { console.warn(`  [Injuries] HTTP ${res.status} — team ${stats.teamId}`); return null; }
-    const injuries = (res.data?.response || []).slice(0, 5).map(p => ({
-      name:   p.player?.name   || '?',
-      reason: p.player?.reason || 'blessure',
-    }));
-    kvSet(cacheKey, { data: injuries, ts: Date.now() });
-    return injuries;
-  } catch(e) {
-    console.error('[Injuries] erreur fetch:', e.message);
-    return null;
-  }
-}
+// ─── INJURIES PAR ÉQUIPE — SUPPRIMÉ (données mappées via flux BSD) ─────────
+// fetchTeamInjuries() removed — injuries now sourced from BSD unavailable_players
+// in buildMatchRecord(). API-Football /injuries endpoint no longer called.
 
 // ─── SCOUTING REPORT (Gemini, cache 24h) ─────────────────────────────────────
+
+// ── Prompt Système "Brain" du Scout Pro — 5 Piliers ─────────────────────────
+const SYSTEM_SCOUT_PROMPT = `Agis comme le Head Scout quantitatif de PariScore, spécialiste en détection de mismatchs tactiques et en modélisation prédictive pour paris sportifs.
+
+[MÉTHODOLOGIE PRO SCOUT — 5 PILIERS (100 pts)]
+Tu calcules un Power Score DOMICILE et un Power Score EXTÉRIEUR en isolant strictement le contexte (performance à domicile vs performance à l'extérieur) selon ces 5 piliers :
+
+1. 📊 Métriques Avancées (30%) : Analyse le différentiel xG (Expected Goals) vs xGA (Expected Goals Against), le volume de corners, les tirs cadrés et la pression offensive. Un xG élevé avec xGA faible = équipe dominante.
+2. ⚔️ Tactique & Effectifs (20%) : Détecte les mismatchs structurels (attaque forte vs défense faible, ailiers rapides vs défenseurs lents), évalue les absences clés, analyse la composition dom/déf/mil/att.
+3. 🔥 Dynamique & Momentum (20%) : Forme des 5 derniers matchs (W/D/L), difficulté du calendrier récent, momentum (série en cours), fatigue (matchs joués cette semaine).
+4. 📰 Presse & Consensus Web (15%) : Synthèse des sites de référence (L'Équipe, Sofascore, BetMines, OddAlerts, Forebet). Consensus ou divergence notable sur le favori.
+5. 🧠 Psychologie & H2H (15%) : Historique des confrontations directes, enjeux du match (titre, maintien, derby), avantage psychologique (série de victoires contre l'adversaire).
+
+[FORMAT DE SORTIE EXIGÉ — MARKDOWN STRUCTURÉ AVEC ÉMOJIS]
+
+## 🏟️ [Équipe Dom] vs [Équipe Ext] — [Compétition]
+
+## 📊 POWER SCORE PARISCORE
+| Équipe | Score | Contexte |
+|--------|-------|---------|
+| [Dom] | XX/100 | Domicile |
+| [Ext] | XX/100 | Extérieur |
+
+## 🔬 ANALYSE DÉTAILLÉE — 5 PILIERS
+
+### 1️⃣ Métriques Avancées (xG / Corners)
+[Analyse du différentiel xG, xGA, volume corners attendu. Cite les chiffres exacts.]
+
+### 2️⃣ Duel Tactique & Effectifs
+[Mismatch clé détecté, composition, absences impactantes.]
+
+### 3️⃣ Dynamique & Momentum
+[Forme récente des 2 équipes, série en cours, calendrier difficile/facile.]
+
+### 4️⃣ Synthèse Web & Médias
+[Ce que dit la presse et les algos de prédiction. Consensus ou divergence ?]
+
+### 5️⃣ Psychologie & H2H
+[Historique confrontations directes, enjeux, avantage mental.]
+
+## 🔢 PROBABILITÉS MATHÉMATIQUES CERTIFIÉES
+- **1N2** : 1 (X%) / N (X%) / 2 (X%)
+- **Buts** : Over 1.5 (X%) · Over 2.5 (X%) · BTTS (X%)
+- **Corners** : Over 8.5 estimé (X%) · Corners/match attendu : X
+- **Score le plus probable** : X-X (X%)
+
+## 🏆 TOP 5 PARIS EXPLOITABLES
+- 🛡️ **Le Safe** : [Pari] (Proba : X%) — [Justification courte]
+- 📈 **Le Bankroll Builder** : [Pari] (Proba : X%) — [Justification]
+- 💎 **Le Value Bet** : [Pari cote X.XX] — [Erreur de marché détectée]
+- 🚩 **Le Coup Tactique** : [Pari corners/buteur/cartons] — [Justification mismatch]
+- ⚡ **Le Coup Risqué** : [Pari grosse cote] — [Justification]
+
+## 📲 SCRIPT TELEGRAM
+\`\`\`telegram
+[Message Telegram dynamique et enthousiaste, utilisant ¤ comme puces, reprenant le résumé de l'analyse, la stat cadeau (souvent les corners) et le meilleur combo. Appel à l'action final : "Mettez un 🔥 si vous validez !"]
+\`\`\`
+
+[DIRECTIVES CRITIQUES]
+- Utilise EXCLUSIVEMENT les données mathématiques du bloc [DONNÉES PARISCORE] ci-dessous.
+- Ne jamais inventer des probabilités — utilise celles calculées par l'algorithme Poisson.
+- Ton d'expert sûr de lui qui explique la logique mathématique derrière chaque choix.
+- Si une donnée est manquante (?), fais une estimation raisonnée à partir des données disponibles.`;
+
+// ── Générateur de prompt Pro Scout (données injectées) ───────────────────────
+function generateProScoutPrompt(match, homeRatings = [], awayRatings = [], homeSquad = [], awaySquad = []) {
+  const p   = match.poisson         || {};
+  const eg  = match.expectedGoals   || {};
+  const hs  = match.stats?.home     || {};
+  const as  = match.stats?.away     || {};
+  const h2h = match.h2h             || null;
+  const cp  = match.corners_poisson || {};
+
+  // BSD ratings moyen (note qualité équipe)
+  const homeAvgRating = homeRatings.length
+    ? (homeRatings.reduce((s, pl) => s + (pl.avg_rating || 0), 0) / homeRatings.length).toFixed(1)
+    : '?';
+  const awayAvgRating = awayRatings.length
+    ? (awayRatings.reduce((s, pl) => s + (pl.avg_rating || 0), 0) / awayRatings.length).toFixed(1)
+    : '?';
+
+  // Top joueurs par rating BSD
+  const topHomePlayers = [...homeRatings].sort((a, b) => (b.avg_rating||0) - (a.avg_rating||0)).slice(0, 3)
+    .map(pl => `${pl.name} (${(pl.avg_rating||0).toFixed(1)})`).join(', ') || 'N/A';
+  const topAwayPlayers = [...awayRatings].sort((a, b) => (b.avg_rating||0) - (a.avg_rating||0)).slice(0, 3)
+    .map(pl => `${pl.name} (${(pl.avg_rating||0).toFixed(1)})`).join(', ') || 'N/A';
+
+  // Composition par poste
+  const homeAtt = homeSquad.filter(pl => pl.position === 'Attacker').length  || 0;
+  const awayAtt = awaySquad.filter(pl => pl.position === 'Attacker').length  || 0;
+  const homeDef = homeSquad.filter(pl => pl.position === 'Defender').length  || 0;
+  const awayDef = awaySquad.filter(pl => pl.position === 'Defender').length  || 0;
+  const homeMid = homeSquad.filter(pl => pl.position === 'Midfielder').length || 0;
+  const awayMid = awaySquad.filter(pl => pl.position === 'Midfielder').length || 0;
+
+  // Absences
+  const homeInj = (match.injuries?.home || []).map(pl => pl.name).join(', ') || 'Aucune absence connue';
+  const awayInj = (match.injuries?.away || []).map(pl => pl.name).join(', ') || 'Aucune absence connue';
+
+  // H2H résumé
+  let h2hBlock = 'Historique H2H non disponible.';
+  if (h2h) {
+    h2hBlock = `Dernières confrontations : ${match.home_team} ${h2h.homeWins||0}V / Nul ${h2h.draws||0} / ${match.away_team} ${h2h.awayWins||0}V. Buts/match moy : ${h2h.avgGoals?.toFixed(1) || '?'}. Score H2H récent : ${(h2h.lastMatches||[]).slice(0,3).map(m=>`${m.score||'?'} (${m.date?.slice(0,10)||'?'})`).join(' · ') || 'N/A'}`;
+  }
+
+  // xGA estimé (buts encaissés = proxy xGA)
+  const homeXGA = hs.avgConceded != null ? hs.avgConceded.toFixed(2) : '?';
+  const awayXGA = as.avgConceded != null ? as.avgConceded.toFixed(2) : '?';
+
+  // Corners estimés
+  const cornersOver85 = cp.over_8_5 || cp.over_6_5 || '?';
+  const cornersTotal  = match.corners_avg ? match.corners_avg.toFixed(1) : '?';
+
+  // Date/heure
+  const dt      = match.commence_time ? new Date(match.commence_time) : new Date();
+  const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const dataBlock = `
+[DONNÉES PARISCORE — 5 PILIERS INJECTÉS — UTILISE CES CHIFFRES PRÉCISÉMENT]
+
+Match : ${match.home_team} vs ${match.away_team} (${match.league})
+Date  : ${dateStr} à ${timeStr}
+
+═══════════════════════════════════════════════
+PILIER 1 — MÉTRIQUES AVANCÉES (xG / xGA / Corners)
+═══════════════════════════════════════════════
+Équipe DOM (${match.home_team}) :
+  xG attendu (λ dom)  : ${eg.home != null ? eg.home.toFixed(2) : '?'}
+  xGA proxy (buts enc) : ${homeXGA} / match
+  Buts marqués/match   : ${hs.avgScored != null ? hs.avgScored.toFixed(2) : '?'}
+  Note équipe BSD       : ${homeAvgRating} / 10
+  Top joueurs BSD       : ${topHomePlayers}
+
+Équipe EXT (${match.away_team}) :
+  xG attendu (λ ext)  : ${eg.away != null ? eg.away.toFixed(2) : '?'}
+  xGA proxy (buts enc) : ${awayXGA} / match
+  Buts marqués/match   : ${as.avgScored != null ? as.avgScored.toFixed(2) : '?'}
+  Note équipe BSD       : ${awayAvgRating} / 10
+  Top joueurs BSD       : ${topAwayPlayers}
+
+Corners :
+  Over 8.5 (Poisson) : ${cornersOver85}%
+  Moy corners/match  : ${cornersTotal}
+
+═══════════════════════════════════════════════
+PILIER 2 — TACTIQUE & EFFECTIFS
+═══════════════════════════════════════════════
+${match.home_team} :
+  Composition : ${homeDef} Déf · ${homeMid} Mil · ${homeAtt} Att
+  Classement  : #${match.home_rank || '?'} | PPG dom : ${hs.ppg ?? '?'}
+  Absences    : ${homeInj}
+
+${match.away_team} :
+  Composition : ${awayDef} Déf · ${awayMid} Mil · ${awayAtt} Att
+  Classement  : #${match.away_rank || '?'} | PPG ext : ${as.ppg ?? '?'}
+  Absences    : ${awayInj}
+
+Mismatch clé : Attaque dom (${homeAtt} att, xG ${eg.home != null ? eg.home.toFixed(2) : '?'}) vs Défense ext (${awayDef} déf, xGA ${awayXGA}) — et inversement.
+
+═══════════════════════════════════════════════
+PILIER 3 — DYNAMIQUE & MOMENTUM
+═══════════════════════════════════════════════
+Forme récente (5 matchs, gauche=récent) :
+  ${match.home_team} (DOM) : ${match.home_form || 'N/A'}
+  ${match.away_team} (EXT) : ${match.away_form || 'N/A'}
+
+W% / D% / L% :
+  ${match.home_team} : ${hs.wins ?? 0}% V / ${hs.draws ?? 0}% N / ${hs.losses ?? 0}% D
+  ${match.away_team} : ${as.wins ?? 0}% V / ${as.draws ?? 0}% N / ${as.losses ?? 0}% D
+
+═══════════════════════════════════════════════
+PILIER 4 — PRESSE & CONSENSUS WEB
+═══════════════════════════════════════════════
+(Analyse à partir du contexte général — pas de données presse en temps réel pour ce rapport Scout)
+Consulte : Sofascore, BetMines, OddAlerts, Forebet pour compléter.
+
+═══════════════════════════════════════════════
+PILIER 5 — PSYCHOLOGIE & H2H
+═══════════════════════════════════════════════
+${h2hBlock}
+
+═══════════════════════════════════════════════
+PROBABILITÉS POISSON (ALGORITHME CERTIFIÉ)
+═══════════════════════════════════════════════
+1N2         : 1 (${p.homeWin ?? 0}%) / N (${p.draw ?? 0}%) / 2 (${p.awayWin ?? 0}%)
+BTTS        : ${p.btts ?? 0}%
+Over 1.5    : ${p.over15 ?? 0}% | Over 2.5 : ${p.over25 ?? 0}% | Over 3.5 : ${p.over35 ?? 0}%
+Clean Sheet : ${p.cs00 ?? 0}%
+Score #1    : ${p.topScores?.[0]?.score ?? '?'} (${p.topScores?.[0]?.prob ?? 0}%)
+Score #2    : ${p.topScores?.[1]?.score ?? '?'} (${p.topScores?.[1]?.prob ?? 0}%)
+
+COTES & VALUE :
+  1 / N / 2   : ${match.odds?.home != null ? match.odds.home.toFixed(2) : '?'} / ${match.odds?.draw != null ? match.odds.draw.toFixed(2) : '?'} / ${match.odds?.away != null ? match.odds.away.toFixed(2) : '?'}
+  Edge dom    : ${match.edge?.home != null ? match.edge.home.toFixed(1) : '?'}% | Edge nul : ${match.edge?.draw != null ? match.edge.draw.toFixed(1) : '?'}% | Edge ext : ${match.edge?.away != null ? match.edge.away.toFixed(1) : '?'}%
+  Meilleur edge : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? match.best_edge.odds.toFixed(2) : '?'} (Edge +${match.best_edge?.edge != null ? match.best_edge.edge.toFixed(1) : '?'}%) via ${match.best_edge?.bk ?? 'N/A'}
+`;
+
+  return SYSTEM_SCOUT_PROMPT + '\n\n' + dataBlock;
+}
+
+// ── Legacy wrapper (conservé pour compatibilité interne) ─────────────────────
 function buildScoutingPrompt(match, homeRatings = [], awayRatings = [], homeSquad = [], awaySquad = []) {
-  const homeInj = (match.injuries?.home || []).map(p => p.name).join(', ') || 'Aucune absence connue';
-  const awayInj = (match.injuries?.away || []).map(p => p.name).join(', ') || 'Aucune absence connue';
-  const homeAvg = homeRatings.length ? (homeRatings.reduce((s, p) => s + (p.avg_rating || 0), 0) / homeRatings.length).toFixed(1) : '?';
-  const awayAvg = awayRatings.length ? (awayRatings.reduce((s, p) => s + (p.avg_rating || 0), 0) / awayRatings.length).toFixed(1) : '?';
-  const homeAtt = homeSquad.filter(p => p.position === 'Attacker').length || 0;
-  const awayAtt = awaySquad.filter(p => p.position === 'Attacker').length || 0;
-  const homeDef = homeSquad.filter(p => p.position === 'Defender').length || 0;
-  const awayDef = awaySquad.filter(p => p.position === 'Defender').length || 0;
-
-  return `Tu es l'analyste tactique de PariScore. Détecte les mismatchs tactiques. Rapport concis.
-
-**${match.home_team} vs ${match.away_team}** — ${match.league}
-
-Données:
-- Classement: #${match.home_rank || '?'} vs #${match.away_rank || '?'}
-- Note BSD: ${match.home_team} ${homeAvg} ⌀ | ${match.away_team} ${awayAvg} ⌀
-- Effectif: ${match.home_team} ${homeDef} déf/${homeAtt} att | ${match.away_team} ${awayDef} déf/${awayAtt} att
-- PPG: ${match.stats?.home?.ppg ?? '?'} vs ${match.stats?.away?.ppg ?? '?'} | Forme: ${(match.home_form || '').slice(0,5)||'?'} vs ${(match.away_form || '').slice(0,5)||'?'}
-- xG: ${match.expectedGoals?.home?.toFixed(2) ?? '?'} vs ${match.expectedGoals?.away?.toFixed(2) ?? '?'}
-- BTTS: ${match.poisson?.btts ?? '?'}% | O2.5: ${match.poisson?.over25 ?? '?'}% | Best: ${match.best_edge?.label ?? '?'} (edge ${match.best_edge?.edge ?? '?'}%)
-- Absences: ${homeInj} / ${awayInj}
-
-Format Markdown (350 mots):
-## 🎯 Rapport Scouting
-### ⚔️ Mismatch Tactique
-[Forces/faiblesses confrontées. Dom: déf/att vs Ext: déf/att. Duel clé milieu/couloirs.]
-### 📊 Marché Exploitable
-[Corner/BTTS/Over/Under/cartons selon mismatch détecté]
-### ⚠️ Risques
-[Absences qui creusent le déséquilibre]
-### 💡 Pari
-[1 pari exploitant le mismatch + justification]`;
+  return generateProScoutPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad);
 }
 
 async function getScoutReport(match) {
-  const cacheKey = `scout_${match.id}`;
-  const cached = kvGet(cacheKey);
-  if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
-    return { report: cached.report, cached: true };
+  try {
+    const cacheKey = `scout_${match.id}`;
+    const cached = kvGet(cacheKey);
+    if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
+      console.log(`  [Scout] Cache HIT — ${match.home_team} vs ${match.away_team}`);
+      return { report: cached.report, cached: true };
+    }
+
+    console.log(`  [Scout] Génération Pro Scout — ${match.home_team} vs ${match.away_team}`);
+
+    // ── Enrichissement BSD (ratings + squad) en parallèle ──────────────────
+    const hKey  = normName(match.home_team);
+    const aKey  = normName(match.away_team);
+    const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+    const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+
+    const [homeRatings, awayRatings, homeSquad, awaySquad] = await Promise.all([
+      hMeta?.bsdTeamId && hMeta?.bsdSeasonId
+        ? fetchBSDPlayerRatings(hMeta.bsdTeamId, hMeta.bsdSeasonId).catch(() => [])
+        : Promise.resolve([]),
+      aMeta?.bsdTeamId && aMeta?.bsdSeasonId
+        ? fetchBSDPlayerRatings(aMeta.bsdTeamId, aMeta.bsdSeasonId).catch(() => [])
+        : Promise.resolve([]),
+      hMeta?.bsdTeamId
+        ? fetchBSDTeamSquad(hMeta.bsdTeamId).catch(() => [])
+        : Promise.resolve([]),
+      aMeta?.bsdTeamId
+        ? fetchBSDTeamSquad(aMeta.bsdTeamId).catch(() => [])
+        : Promise.resolve([]),
+    ]);
+
+    // ── Génération du prompt Pro Scout (5 Piliers) ──────────────────────────
+    const prompt = generateProScoutPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad);
+
+    // ── Appel Gemini — 1200 tokens pour un rapport complet ─────────────────
+    const report = await callGemini(prompt, 1200);
+
+    if (!report) {
+      return { report: `Analyse indisponible — l'IA n'a pas pu générer de rapport. Réessayez dans quelques minutes.`, cached: false };
+    }
+
+    // ── Cache 24h ──────────────────────────────────────────────────────────
+    kvSet(cacheKey, { report, ts: Date.now() });
+    console.log(`  [Scout] ✓ Rapport généré et mis en cache 24h — ${match.home_team} vs ${match.away_team}`);
+    return { report, cached: false };
+
+  } catch(e) {
+    console.error('[Scout] Erreur (fallback math):', e.message);
+    return { report: buildScoutMathFallback(match), cached: false, fallback: true };
   }
-  const hKey = normName(match.home_team);
-  const aKey = normName(match.away_team);
-  const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
-  const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
-  const homeRatings = hMeta?.bsdTeamId && hMeta?.bsdSeasonId
-    ? await fetchBSDPlayerRatings(hMeta.bsdTeamId, hMeta.bsdSeasonId) : [];
-  const awayRatings = aMeta?.bsdTeamId && aMeta?.bsdSeasonId
-    ? await fetchBSDPlayerRatings(aMeta.bsdTeamId, aMeta.bsdSeasonId) : [];
-  const homeSquad = hMeta?.bsdTeamId
-    ? await fetchBSDTeamSquad(hMeta.bsdTeamId) : [];
-  const awaySquad = aMeta?.bsdTeamId
-    ? await fetchBSDTeamSquad(aMeta.bsdTeamId) : [];
-  const prompt = buildScoutingPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad);
-  const report = await callGemini(prompt, 600);
-  kvSet(cacheKey, { report, ts: Date.now() });
-  return { report, cached: false };
+}
+
+function buildScoutMathFallback(match) {
+  const p   = match.poisson || {};
+  const eg  = match.expectedGoals || {};
+  const hs  = match.stats?.home || {};
+  const as_ = match.stats?.away || {};
+  const dt  = new Date(match.commence_time);
+  const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const sig = (v, hi = 55, lo = 45) => v >= hi ? '🟢 Fort' : v >= lo ? '🟡 Moyen' : '🔴 Faible';
+  const be = match.best_edge;
+  return `# 🏟️ ${match.home_team} vs ${match.away_team}
+## ${match.league} — ${dateStr} à ${timeStr}
+
+> ⚡ *Mode Statistique — Analyse Poisson certifiée PariScore*
+
+---
+
+## 📊 PROBABILITÉS MATHÉMATIQUES
+
+| Marché | Probabilité | Signal |
+|--------|-------------|--------|
+| ${match.home_team} gagne | ${p.homeWin ?? 0}% | ${sig(p.homeWin ?? 0)} |
+| Match Nul | ${p.draw ?? 0}% | ${sig(p.draw ?? 0, 30, 20)} |
+| ${match.away_team} gagne | ${p.awayWin ?? 0}% | ${sig(p.awayWin ?? 0)} |
+| BTTS | ${p.btts ?? 0}% | ${sig(p.btts ?? 0)} |
+| Over 2.5 | ${p.over25 ?? 0}% | ${sig(p.over25 ?? 0)} |
+| Over 1.5 | ${p.over15 ?? 0}% | ${sig(p.over15 ?? 0, 70, 55)} |
+
+**xG attendu** : ${match.home_team} **${eg.home ?? '?'}** — ${match.away_team} **${eg.away ?? '?'}**
+
+**Score le plus probable** : ${p.topScores?.[0]?.score ?? '?'} (${p.topScores?.[0]?.prob ?? 0}%)
+
+---
+
+## 💎 VALUE BET
+
+${be?.edge > 0
+  ? `**${be.label}** @ **${be.odds?.toFixed(2) ?? '?'}** — Edge **+${be.edge?.toFixed(1) ?? '?'}%** via ${be.bk ?? 'N/A'}`
+  : 'Aucun edge positif détecté sur ce match.'}
+
+---
+
+## 📈 FORME & STATS
+
+| Équipe | PPG | Buts/match | Encaissés/match |
+|--------|-----|-----------|-----------------|
+| ${match.home_team} (DOM) | ${hs.ppg ?? '?'} | ${hs.avgScored ?? '?'} | ${hs.avgConceded ?? '?'} |
+| ${match.away_team} (EXT) | ${as_.ppg ?? '?'} | ${as_.avgScored ?? '?'} | ${as_.avgConceded ?? '?'} |`;
 }
 
 // ─── TOP BUTEURS PAR LIGUE (cache 24h, 1 req/ligue à la demande) ────────────
 async function fetchLeagueTopScorers(leagueId, season) {
-  if (!API_FOOTBALL_KEY || !leagueId) return [];
+  if (!leagueId) return [];
 
-  // Essaie la saison demandée, puis la précédente (plan gratuit = accès limité)
+  // 1. Essayer BSD d'abord — via player-stats agrégés
+  const bsdLeagueId = configIdToBsd(String(leagueId));
+  if (bsdLeagueId) {
+    try {
+      const cacheKey = `bsd_topscorers_${leagueId}_${season}`;
+      const cached = apiCacheGet(cacheKey);
+      if (cached) return cached;
+
+      // Fetch tous les player-stats de la ligue pour la saison
+      const allStats = [];
+      for (let page = 1; page <= 3; page++) {
+        const res = await bsdFetch(`/player-stats/?league=${bsdLeagueId}&season=${season}&page=${page}&page_size=100`);
+        if (res.status !== 200 || !res.data?.results?.length) break;
+        allStats.push(...res.data.results);
+        if (!res.data.next) break;
+      }
+
+      if (allStats.length > 0) {
+        // Agréger par joueur
+        const byPlayer = {};
+        for (const stat of allStats) {
+          const pid = stat.player?.id;
+          if (!pid) continue;
+          if (!byPlayer[pid]) {
+            byPlayer[pid] = {
+              id: pid,
+              name: stat.player.name,
+               photo: stat.player.photo || '',  // API-Football: photo field may contain a URL
+              team: stat.team?.name || '',
+              teamId: stat.team?.id || null,
+              goals: 0, assists: 0, rating: 0, appearances: 0, _ratingCount: 0,
+            };
+          }
+          byPlayer[pid].goals += stat.goals || 0;
+          byPlayer[pid].assists += stat.goal_assist || 0;
+          byPlayer[pid].appearances += 1;
+          if (stat.rating != null) {
+            byPlayer[pid].rating += stat.rating;
+            byPlayer[pid]._ratingCount += 1;
+          }
+        }
+        const players = Object.values(byPlayer)
+          .map(p => ({ ...p, rating: p._ratingCount > 0 ? parseFloat((p.rating / p._ratingCount).toFixed(2)) : null }))
+          .sort((a, b) => b.goals - a.goals)
+          .slice(0, 15);
+        apiCacheSet(cacheKey, players, 'bsd_topscorers');
+        console.log(`  [TopScorers BSD] ✓ Ligue ${leagueId} — ${players.length} joueurs depuis BSD`);
+        return players;
+      }
+    } catch(e) {
+      console.warn(`  [TopScorers BSD] Erreur ligue ${leagueId}:`, e.message);
+    }
+  }
+
+  // 2. Fallback API-Football si BSD indisponible
+  if (!API_FOOTBALL_KEY) return [];
   const seasonsToTry = [season, season - 1];
   for (const s of seasonsToTry) {
     const cacheKey = `${leagueId}_${s}`;
     const cached = db.topScorers[cacheKey];
     if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < ADV_STATS_TTL)) {
-      return cached.data; // cache hit (peut être vide si déjà tenté)
+      return cached.data;
     }
     try {
       const res = await httpsGet(
@@ -2542,10 +3424,149 @@ async function fetchLeagueTopScorers(leagueId, season) {
   return [];
 }
 
-// ─── KEY PLAYER INDEX — top 2 joueurs par équipe (cache SQLite 24h) ──────────
+// v63.0: Fallback ultime — cherche les joueurs par nom d'équipe sur API-Football
+async function fetchBackupPlayers(teamName) {
+  if (!API_FOOTBALL_KEY || !teamName) return [];
+  try {
+    const res = await httpsGet(
+      `https://v3.football.api-sports.io/players?team=${encodeURIComponent(teamName)}&season=${currentSeason()}`,
+      { 'x-apisports-key': API_FOOTBALL_KEY }
+    );
+    if (res.status === 429 || res.status !== 200) return [];
+    const players = (res.data?.response || []).slice(0, 3).map(entry => {
+      const s = entry.statistics?.[0];
+      const goals = s?.goals?.total || 0;
+      const assists = s?.goals?.assists || 0;
+      const rating = parseFloat(s?.games?.rating || 0);
+      const minutes = s?.games?.minutes || 0;
+      const per90 = Math.max(1, minutes / 90);
+      const kpi = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
+      return {
+        id: entry.player?.id, name: entry.player?.name || '?',
+        photo: `https://media.api-sports.io/football/players/${entry.player?.id}.png`,
+        position: s?.games?.position || '', goals, assists,
+        rating: rating > 0 ? rating.toFixed(1) : null, minutes, kpi,
+      };
+    }).filter(p => p.minutes >= 45).sort((a, b) => b.kpi - a.kpi);
+    if (players.length) console.log(`  [BackupPlayers] ✓ ${teamName} — ${players.length} joueurs (API-Football)`);
+    return players;
+  } catch(e) { return []; }
+}
+
+// ─── KEY PLAYER INDEX — top 2 joueurs par équipe (BSD priority, fallback API-Football) ──
 // KPI = (goals×3 + assists×2 + rating×1) / (minutes/90) → performance par 90 min
+
+// v48.0: Version BSD-only (sans fallback API-Football) — appelée quand teamId AFI n'existe pas
+async function fetchTeamKeyPlayersBSD(bsdTeamId, bsdSeasonId) {
+  if (!bsdTeamId || !bsdSeasonId) return [];
+  try {
+    const cacheKey = `bsd_kp_${bsdTeamId}_${bsdSeasonId}`;
+    const cached = apiCacheGet(cacheKey);
+    if (cached) return cached;
+
+    const allStats = [];
+    for (let page = 1; page <= 3; page++) {
+      const res = await bsdFetch(`/player-stats/?team=${bsdTeamId}&season=${bsdSeasonId}&page=${page}&page_size=100`);
+      if (res.status !== 200 || !res.data?.results?.length) break;
+      allStats.push(...res.data.results);
+      if (!res.data.next) break;
+    }
+    if (allStats.length > 0) {
+      const players = allStats
+        .map(entry => {
+          const goals   = entry.goals        || 0;
+          const assists = entry.goal_assist   || 0;
+          const rating  = parseFloat(entry.rating || 0);
+          const minutes = entry.minutes_played || 0;
+          const per90   = Math.max(1, minutes / 90);
+          const kpi     = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
+          return {
+            id:       entry.player?.id || Math.random(),
+            name:     entry.player?.name || '?',
+            photo:    `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
+            position: entry.player?.position || '',
+            goals,
+            assists,
+            rating:   rating > 0 ? rating.toFixed(1) : null,
+            minutes,
+            kpi,
+          };
+        })
+        .filter(p => p.minutes >= 45)
+        .sort((a, b) => b.kpi - a.kpi)
+        .slice(0, 3);
+      if (players.length > 0) {
+        apiCacheSet(cacheKey, players, 'bsd_kp');
+        console.log(`  [KeyPlayers BSD direct] ✓ Team ${bsdTeamId} — ${players.length} joueurs`);
+        return players;
+      }
+    }
+  } catch(e) {
+    console.warn(`  [KeyPlayers BSD direct] Erreur team ${bsdTeamId}:`, e.message);
+  }
+  return [];
+}
+
 async function fetchTeamKeyPlayers(teamId, leagueId, season) {
-  if (!API_FOOTBALL_KEY || !teamId || !leagueId) return [];
+  if (!teamId || !leagueId) return [];
+
+  // 1. Essayer BSD d'abord
+  const hMeta = Object.values(db.teamStats).find(s => s.teamId === teamId);
+  const bsdTeamId = hMeta?.bsdTeamId || null;
+  const bsdSeasonId = hMeta?.bsdSeasonId || null;
+
+  if (bsdTeamId && bsdSeasonId) {
+    try {
+      const cacheKey = `bsd_kp_${bsdTeamId}_${bsdSeasonId}`;
+      const cached = apiCacheGet(cacheKey);
+      if (cached) return cached;
+
+      const allStats = [];
+      for (let page = 1; page <= 3; page++) {
+        const res = await bsdFetch(`/player-stats/?team=${bsdTeamId}&season=${bsdSeasonId}&page=${page}&page_size=100`);
+        if (res.status !== 200 || !res.data?.results?.length) break;
+        allStats.push(...res.data.results);
+        if (!res.data.next) break;
+      }
+
+      if (allStats.length > 0) {
+        const players = allStats
+          .map(entry => {
+            const goals   = entry.goals        || 0;
+            const assists = entry.goal_assist   || 0;
+            const rating  = parseFloat(entry.rating || 0);
+            const minutes = entry.minutes_played || 0;
+            const per90   = Math.max(1, minutes / 90);
+            const kpi     = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
+            return {
+              id:       entry.player?.id || Math.random(),
+              name:     entry.player?.name || '?',
+            photo:    `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
+              position: entry.player?.position || '',
+              goals,
+              assists,
+              rating:   rating > 0 ? rating.toFixed(1) : null,
+              minutes,
+              kpi,
+            };
+          })
+          .filter(p => p.minutes >= 45)
+          .sort((a, b) => b.kpi - a.kpi)
+          .slice(0, 3);
+
+        if (players.length > 0) {
+          apiCacheSet(cacheKey, players, 'bsd_kp');
+          console.log(`  [KeyPlayers BSD] ✓ Team ${bsdTeamId} — ${players.length} joueurs depuis BSD`);
+          return players;
+        }
+      }
+    } catch(e) {
+      console.warn(`  [KeyPlayers BSD] Erreur team ${bsdTeamId}:`, e.message);
+    }
+  }
+
+  // 2. Fallback API-Football
+  if (!API_FOOTBALL_KEY) return [];
   const cacheKey = `kp_${teamId}_${leagueId}_${season}`;
   const cached   = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < ADV_STATS_TTL)) return cached.data;
@@ -2632,6 +3653,137 @@ async function fetchTeamPositionRatings(teamId, leagueId, season) {
   } catch(e) {
     console.warn(`  [PosRatings] Erreur team ${teamId}:`, e.message);
     return null;
+  }
+}
+
+// v48.0: Version BSD-only (sans fallback API-Football) pour les ligues sans teamId AFI
+async function fetchTopPerformersBSD(bsdTeamId, bsdSeasonId) {
+  if (!bsdTeamId || !bsdSeasonId) return { attackers: [], defenders: [] };
+  try {
+    const allStats = [];
+    for (let page = 1; page <= 3; page++) {
+      const res = await bsdFetch(`/player-stats/?team=${bsdTeamId}&season=${bsdSeasonId}&page=${page}&page_size=100`);
+      if (res.status !== 200 || !res.data?.results?.length) break;
+      allStats.push(...res.data.results);
+      if (!res.data.next) break;
+    }
+    if (allStats.length > 0) {
+      const players = allStats
+        .map(entry => ({
+          name: entry.player?.name || '?',
+          photo: entry.player?.photo || '',
+          position: entry.player?.position || '',
+          goals: entry.goals || 0,
+          assists: entry.goal_assist || 0,
+          rating: parseFloat(entry.rating || 0),
+          minutes: entry.minutes_played || 0,
+          xg: parseFloat(entry.xg || 0),
+        }))
+        .filter(p => p.minutes >= 45);
+      const posMap = { Goalkeeper: 'Defender', Defender: 'Defender', Midfielder: 'Midfielder', Attacker: 'Attacker', G: 'Defender', D: 'Defender', M: 'Midfielder', A: 'Attacker' };
+      const result = {
+        attackers: players.filter(p => { const g = p.goals > 0 || p.assists > 0; const isAtt = (posMap[p.position] || '') === 'Attacker'; return g || isAtt; })
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5),
+        defenders: players.filter(p => (posMap[p.position] || '') === 'Defender')
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5),
+      };
+      console.log(`  [TopPerformers BSD direct] ✓ Team ${bsdTeamId} — ${result.attackers.length}A / ${result.defenders.length}D`);
+      return result;
+    }
+  } catch(e) {
+    console.warn(`  [TopPerformers BSD direct] Erreur team ${bsdTeamId}:`, e.message);
+  }
+  return { attackers: [], defenders: [] };
+}
+
+async function fetchTopPerformers(teamId, leagueId, season) {
+  if (!teamId || !leagueId) return { attackers: [], defenders: [] };
+  const cacheKey = `tp_${teamId}_${leagueId}_${season}`;
+  const cached = kvGet(cacheKey);
+  if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < ADV_STATS_TTL)) return cached.data;
+
+  // Try BSD first
+  const meta = Object.values(db.teamStats).find(s => s.teamId === teamId);
+  const bsdTeamId = meta?.bsdTeamId || null;
+  const bsdSeasonId = meta?.bsdSeasonId || null;
+
+  if (bsdTeamId && bsdSeasonId) {
+    try {
+      const allStats = [];
+      for (let page = 1; page <= 3; page++) {
+        const res = await bsdFetch(`/player-stats/?team=${bsdTeamId}&season=${bsdSeasonId}&page=${page}&page_size=100`);
+        if (res.status !== 200 || !res.data?.results?.length) break;
+        allStats.push(...res.data.results);
+        if (!res.data.next) break;
+      }
+      if (allStats.length > 0) {
+        const players = allStats
+          .map(entry => ({
+            name: entry.player?.name || '?',
+            position: entry.player?.position || '',
+            goals: entry.goals || 0,
+            assists: entry.goal_assist || 0,
+            rating: parseFloat(entry.rating || 0),
+            minutes: entry.minutes_played || 0,
+            xg: parseFloat(entry.xg || 0),
+          }))
+          .filter(p => p.minutes >= 45);
+        const posMap = { Goalkeeper: 'Defender', Defender: 'Defender', Midfielder: 'Midfielder', Attacker: 'Attacker', G: 'Defender', D: 'Defender', M: 'Midfielder', A: 'Attacker' };
+        const result = {
+          attackers: players.filter(p => { const g = p.goals > 0 || p.assists > 0; const isAtt = (posMap[p.position] || '') === 'Attacker'; return g || isAtt; })
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5),
+          defenders: players.filter(p => (posMap[p.position] || '') === 'Defender')
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5),
+        };
+        kvSet(cacheKey, { data: result, fetchedAt: new Date().toISOString() });
+        console.log(`  [TopPerformers BSD] ✓ Team ${bsdTeamId} — ${result.attackers.length}A / ${result.defenders.length}D`);
+        return result;
+      }
+    } catch(e) {
+      console.warn(`  [TopPerformers BSD] Erreur team ${bsdTeamId}:`, e.message);
+    }
+  }
+
+  // Fallback API-Football
+  if (!API_FOOTBALL_KEY) return { attackers: [], defenders: [] };
+  try {
+    const res = await httpsGet(
+      `https://v3.football.api-sports.io/players?team=${teamId}&league=${leagueId}&season=${season}&page=1`,
+      { 'x-apisports-key': API_FOOTBALL_KEY }
+    );
+    if (res.status === 429 || res.status !== 200) return { attackers: [], defenders: [] };
+
+    const players = (res.data?.response || [])
+      .map(entry => {
+        const s = entry.statistics?.[0];
+        return {
+          name: entry.player?.name || '?',
+          photo: entry.player?.photo || '',
+          position: s?.games?.position || '',
+          goals: s?.goals?.total || 0,
+          assists: s?.goals?.assists || 0,
+          rating: parseFloat(s?.games?.rating || 0),
+          minutes: s?.games?.minutes || 0,
+          shots: s?.shots?.total || 0,
+          tackles: s?.tackles?.total || 0,
+          interceptions: s?.tackles?.interceptions || 0,
+        };
+      })
+      .filter(p => p.minutes >= 45);
+
+    const posMap = { Goalkeeper: 'Defender', Defender: 'Defender', Midfielder: 'Midfielder', Attacker: 'Attacker' };
+    const result = {
+      attackers: players.filter(p => { const g = p.goals > 0 || p.assists > 0; const isAtt = (posMap[p.position] || '') === 'Attacker'; return g || isAtt; })
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5),
+      defenders: players.filter(p => (posMap[p.position] || '') === 'Defender')
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5),
+    };
+    kvSet(cacheKey, { data: result, fetchedAt: new Date().toISOString() });
+    console.log(`  [TopPerformers] ✓ team ${teamId} — ${result.attackers.length}A / ${result.defenders.length}D`);
+    return result;
+  } catch(e) {
+    console.warn(`  [TopPerformers] Erreur team ${teamId}:`, e.message);
+    return { attackers: [], defenders: [] };
   }
 }
 
@@ -2752,11 +3904,44 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
 
     // 3. Convertir au format db.teamStats
     const teams = {};
+    const firstEntry = standingsRes.data.standings[0];
+    console.log(`  [DATA MAPPING] BSD standings sample — keys: ${Object.keys(firstEntry).join(', ')}`);
+    console.log(`  [DATA MAPPING] BSD sample: team=${firstEntry.team}, played=${firstEntry.played}, gf=${firstEntry.gf}, ga=${firstEntry.ga}, form=${firstEntry.form}`);
+
     standingsRes.data.standings.forEach(entry => {
       const key = normName(entry.team);
+
+      // Vérifier si BSD fournit les vrais splits domicile/extérieur
+      const hasHomeFields = entry.played_home !== undefined && entry.played_away !== undefined;
+      const hasGoalHomeFields = entry.gf_home !== undefined && entry.gf_away !== undefined;
+
+      let homeStats, awayStats;
+      if (hasHomeFields) {
+        const hPlayed = entry.played_home || 0;
+        const aPlayed = entry.played_away || 0;
+        const hWon = entry.won_home || 0;
+        const aWon = entry.won_away || 0;
+        const hDrawn = entry.drawn_home || 0;
+        const aDrawn = entry.drawn_away || 0;
+        const hLost = entry.lost_home || 0;
+        const aLost = entry.lost_away || 0;
+        homeStats = buildSideStats({ played: hPlayed, win: hWon, draw: hDrawn, lose: hLost, goals_for: hasGoalHomeFields ? (entry.gf_home || 0) : Math.floor((entry.gf || 0) * hPlayed / Math.max(1, entry.played)), goals_against: hasGoalHomeFields ? (entry.ga_home || 0) : Math.floor((entry.ga || 0) * hPlayed / Math.max(1, entry.played)) });
+        awayStats = buildSideStats({ played: aPlayed, win: aWon, draw: aDrawn, lose: aLost, goals_for: hasGoalHomeFields ? (entry.gf_away || 0) : Math.floor((entry.gf || 0) * aPlayed / Math.max(1, entry.played)), goals_against: hasGoalHomeFields ? (entry.ga_away || 0) : Math.floor((entry.ga || 0) * aPlayed / Math.max(1, entry.played)) });
+        console.log(`  [BSD] Splits réels Domicile/Extérieur pour ${entry.team}: ${hPlayed}D/${aPlayed}E`);
+      } else {
+        homeStats = buildSideStats({ played: entry.played, win: entry.won, draw: entry.drawn, lose: entry.lost, goals_for: entry.gf, goals_against: entry.ga });
+        awayStats = buildSideStats({ played: Math.floor(entry.played / 2), win: Math.floor(entry.won / 2), draw: Math.floor(entry.drawn / 2), lose: Math.floor(entry.lost / 2), goals_for: Math.floor(entry.gf / 2), goals_against: Math.floor(entry.ga / 2) });
+        console.log(`  [BSD] Splits estimés (÷2) pour ${entry.team} — BSD ne fournit pas played_home/played_away`);
+      }
+
+      // Debug log for first team only
+      if (Object.keys(teams).length === 0) {
+        console.log(`  [DATA MAPPING] Buts extraits pour ${entry.team} : ${homeStats.avgScored} marqués, ${homeStats.avgConceded} encaissés (home) | ${awayStats.avgScored} marqués, ${awayStats.avgConceded} encaissés (away) | form: ${entry.form || '(vide)'}`);
+      }
+
       teams[key] = {
-        home:        buildSideStats({ played: entry.played, win: entry.won, draw: entry.drawn, lose: entry.lost, goals_for: entry.gf, goals_against: entry.ga }),
-        away:        buildSideStats({ played: Math.floor(entry.played / 2), win: Math.floor(entry.won / 2), draw: Math.floor(entry.drawn / 2), lose: Math.floor(entry.lost / 2), goals_for: Math.floor(entry.gf / 2), goals_against: Math.floor(entry.ga / 2) }),
+        home:        homeStats,
+        away:        awayStats,
         rank:        entry.position,
         form:        entry.form || '',
         leagueId:    configLeagueId,
@@ -3017,7 +4202,54 @@ async function fetchBSDPlayerRatings(bsdTeamId, bsdSeasonId) {
   }
 }
 
-function predictCorners(homeAvg, awayAvg, thresholds = [7.5, 8.5, 9.5, 10.5]) {
+// Calcule le top 3 des buteurs probables pour un match (cumul des 2 equipes)
+// Ponderation xG/match + buts/match, ajustee domicile/exterieur (+10%/-10%)
+// Retourne [{name, team, teamName, score, probaMarquer, xgPerMatch, goalsPerMatch, goals, xgTotal, matches}] ou null
+function computeMatchTopButteurs(m) {
+  const homeRatings = m._bsd_home_ratings || [];
+  const awayRatings = m._bsd_away_ratings || [];
+  if (!homeRatings.length && !awayRatings.length) return null;
+
+  const HOME_BOOST = 1.10;
+  const AWAY_PENALTY = 0.90;
+  const attackers = [];
+
+  function process(ratings, team, teamName, boost) {
+    for (const p of ratings) {
+      const pos = p.position || '';
+      const spec = p.specific_position || '';
+      if (pos !== 'F' && pos !== 'Attacker' && pos !== 'A' && spec !== 'Forwards') continue;
+      if (!p.minutes || p.minutes < 90) continue;
+      const matches = p.matches || 1;
+      const xgPerMatch = p.xg / matches;
+      const goalsPerMatch = p.goals / matches;
+      const rawScore = xgPerMatch * 0.6 + goalsPerMatch * 0.4;
+      const score = rawScore * boost;
+      const lambda = rawScore * boost;
+      const probaMarquer = Math.round((1 - Math.exp(-lambda)) * 100);
+      attackers.push({
+        name: p.short_name || p.name || '?',
+        team,
+        teamName,
+        score: Math.round(score * 100) / 100,
+        probaMarquer,
+        xgPerMatch: Math.round(xgPerMatch * 100) / 100,
+        goalsPerMatch: Math.round(goalsPerMatch * 100) / 100,
+        goals: p.goals,
+        xgTotal: Math.round(p.xg * 100) / 100,
+        matches
+      });
+    }
+  }
+
+  process(homeRatings, 'home', m.home_team, HOME_BOOST);
+  process(awayRatings, 'away', m.away_team, AWAY_PENALTY);
+  if (!attackers.length) return null;
+  attackers.sort((a, b) => b.score - a.score);
+  return attackers.slice(0, 3);
+}
+
+function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5]) {
   // Expected total corners = average of both teams' averages
   const expectedTotal = (homeAvg + awayAvg) / 2;
 
@@ -3028,7 +4260,7 @@ function predictCorners(homeAvg, awayAvg, thresholds = [7.5, 8.5, 9.5, 10.5]) {
   for (const threshold of thresholds) {
     // P(Over X.5) = 1 - P(X ≤ floor(threshold))
     let cumulative = 0;
-    const maxX = Math.floor(threshold) + 1;
+    const maxX = Math.floor(threshold);
     for (let k = 0; k <= maxX; k++) {
       // Poisson PMF approximation for corners
       let logP = -lambda + k * Math.log(Math.max(lambda, 0.001));
@@ -3275,8 +4507,41 @@ async function fetchOdds(force = false) {
     }
 
     // 3. Fusionner avec les stats et calculer edge/probabilités
+    // Snapshot Poisson précédent pour tracking des variations
+    const prevPoisson = {};
+    for (const m of db.matches) {
+      if (m.poisson && !m.poisson.error) {
+        prevPoisson[m.id] = {
+          homeWin: m.poisson.homeWin, awayWin: m.poisson.awayWin, draw: m.poisson.draw,
+          over35: m.poisson.over35, over15: m.poisson.over15, btts: m.poisson.btts,
+          dc: (m.poisson.homeWin + m.poisson.draw),
+          corners: m.corners_poisson?.over_6_5,
+        };
+        kvSet(`poisson_snap_${m.id}`, prevPoisson[m.id]);
+      }
+    }
+
     const built = rawMatches.map(buildMatchRecord).filter(Boolean);
     built.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+
+    // Calcul des deltas Poisson vs snapshot precedent
+    for (const m of built) {
+      const prev = kvGet(`poisson_snap_${m.id}`) || prevPoisson[m.id];
+      if (prev && m.poisson && !m.poisson.error) {
+        const d = {};
+        const homeWin = m.poisson.homeWin || 0, awayWin = m.poisson.awayWin || 0, draw = m.poisson.draw || 0;
+        d.homeWin  = Math.round(homeWin - (prev.homeWin || 0));
+        d.awayWin  = Math.round(awayWin - (prev.awayWin || 0));
+        d.draw     = Math.round(draw - (prev.draw || 0));
+        d.under35  = Math.round((prev.over35 || 0) - (m.poisson.over35 || 0));
+        d.over15   = Math.round((m.poisson.over15 || 0) - (prev.over15 || 0));
+        d.btts     = Math.round((m.poisson.btts || 0) - (prev.btts || 0));
+        d.dc       = Math.round((homeWin + draw) - (prev.dc || 0));
+        d.corners  = Math.round((m.corners_poisson?.over_6_5 || 0) - (prev.corners || 0));
+        const hasDelta = Object.values(d).some(v => Math.abs(v) >= 1);
+        if (hasDelta) m.poisson_delta = d;
+      }
+    }
 
     // Dual-Check IA : si GameForecast est configuré, valider les matchs Shield
     if (GAMEFORECAST_API_HOST) {
@@ -3297,10 +4562,14 @@ async function fetchOdds(force = false) {
       if (confirmed) console.log(`  [Dual-Check] ${confirmed} matchs Shield confirmés par GameForecast`);
     }
 
+    // Enrichissement corners depuis BSD (données réelles par équipe)
+    await enrichCornersFromBSD(built).catch(e => console.warn('  [Corners] Erreur non bloquante:', e.message));
+
     db.matches = built;
     db.lastOddsUpdate = new Date().toISOString();
     db.status = 'ok';
     saveDB();
+    syncCacheBuffers(); // ← Tampon mémoire mis à jour après succès
 
     // Notifie tous les clients SSE des nouveaux matchs
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
@@ -3317,7 +4586,17 @@ async function fetchOdds(force = false) {
 
   } catch(e) {
     console.error('  [Cron:Odds] Erreur fatale:', e.message);
-    if (!db.matches.length) { db.status = 'erreur_odds'; db.matches = buildDemoMatches(); saveDB(); }
+    // GUARD: Ne jamais perdre les données — fallback vers le tampon mémoire
+    if (!db.matches.length && cachedMatches.length > 0) {
+      console.log('  [Cron:Odds] 🛡️ Fallback cache mémoire — restauration de', cachedMatches.length, 'matchs');
+      db.matches = JSON.parse(JSON.stringify(cachedMatches));
+      db.status = 'cache_fallback';
+      saveDB();
+    } else if (!db.matches.length) {
+      db.status = 'erreur_odds';
+      db.matches = buildDemoMatches();
+      saveDB();
+    }
   } finally {
     isFetchingOdds = false;
   }
@@ -3416,12 +4695,26 @@ async function fetchStats(force = false) {
             db.statsQuotaRemaining = sRes.headers['x-requests-remaining'];
           }
           const groups = sRes.data.response?.[0]?.league?.standings || [];
+          // v9.2: Debug log pour voir la structure API-Football
+          if (groups.length > 0 && groups[0].length > 0) {
+            const sample = groups[0][0];
+            console.log(`  [DATA MAPPING] API-Football standings sample — team: ${sample.team?.name}`);
+            console.log(`  [DATA MAPPING] API-Football home structure: goals.for=${JSON.stringify(sample.home?.goals?.for)}, goals.against=${JSON.stringify(sample.home?.goals?.against)}`);
+          }
           groups.forEach(group => {
             group.forEach(entry => {
               const key = normName(entry.team.name);
+              const homeStats = buildSideStats(entry.home);
+              const awayStats = buildSideStats(entry.away);
+
+              // Debug log for first team only
+              if (fallbackTeamsFetched === 0) {
+                console.log(`  [DATA MAPPING] Buts extraits pour ${entry.team.name} : ${homeStats.avgScored} marqués, ${homeStats.avgConceded} encaissés (home) | ${awayStats.avgScored} marqués, ${awayStats.avgConceded} encaissés (away) | form: ${entry.form || '(vide)'}`);
+              }
+
               db.teamStats[key] = {
-                home:     buildSideStats(entry.home),
-                away:     buildSideStats(entry.away),
+                home:     homeStats,
+                away:     awayStats,
                 rank:     entry.rank,
                 form:     entry.form || '',
                 teamId:   entry.team.id,
@@ -3445,31 +4738,30 @@ async function fetchStats(force = false) {
     db.lastStatsUpdate = new Date().toISOString();
     db.status = 'ok';
     saveDB();
+    syncCacheBuffers(); // ← Tampon mémoire mis à jour après succès
 
     console.log(`  [Cron:Stats] ✓ ${totalTeams} équipes mises à jour (BSD: ${bsdTeamsFetched}, Fallback: ${fallbackTeamsFetched})`);
     if (db.statsQuotaRemaining) console.log(`  [Cron:Stats] Quota API-Football restant: ${db.statsQuotaRemaining}`);
     console.log('═'.repeat(60));
 
-    // Injuries pre-fetch (fire & forget, cache 24h) pour les matchs à venir
-    if (db.matches?.length) {
-      const seen = new Set();
-      const teamsToFetch = [];
-      for (const m of db.matches.slice(0, 20)) {
-        const hk = normName(m.home_team);
-        const ak = normName(m.away_team);
-        if (!seen.has(hk)) { seen.add(hk); teamsToFetch.push(hk); }
-        if (!seen.has(ak)) { seen.add(ak); teamsToFetch.push(ak); }
-      }
-      for (const teamKey of teamsToFetch) {
-        fetchTeamInjuries(teamKey).catch(() => {});
-      }
-    }
+    // Injuries pre-fetch — SUPPRIMÉ (données mappées via flux BSD dans buildMatchRecord)
+    console.log('✅ [OPTIMISATION] Données Injuries mappées directement via le flux principal (Appel API tiers supprimé).');
 
     // Re-fusionner les matchs avec les nouvelles stats
     if (db.matches.length) await fetchOdds();
 
   } catch(e) {
     console.error('  [Cron:Stats] Erreur fatale:', e.message);
+    // GUARD: Préserver le cache mémoire même si stats échouent
+    if (Object.keys(db.teamStats).length === 0 && Object.keys(cachedLeagues).length > 0) {
+      console.log('  [Cron:Stats] 🛡️ Fallback — stats vides, ligues en cache conservées');
+    }
+    if (!db.matches.length && cachedMatches.length > 0) {
+      console.log('  [Cron:Stats] 🛡️ Fallback cache mémoire — restauration de', cachedMatches.length, 'matchs');
+      db.matches = JSON.parse(JSON.stringify(cachedMatches));
+      db.status = 'cache_fallback';
+      saveDB();
+    }
   } finally {
     isFetchingStats = false;
   }
@@ -3497,6 +4789,780 @@ async function fetchFixturesByDateRange(from, to) {
     }
   }
   return fixtures;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  v7.9 LAZY LOADING PRIORITAIRE — Force Sync d'un fixture manquant on-demand
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const forceSyncLock = new Set(); // Évite les doubles appels simultanés sur le même ID
+
+// Helper: un match est-il "vide" (aucune stat utile) ?
+function matchHasData(m) {
+  const hasStats = m.stats && (m.stats.home || m.stats.away);
+  const hasPoisson = m.poisson && m.poisson.homeWin != null;
+  const hasEdge = m.edge && (m.edge.home !== null || m.edge.draw !== null || m.edge.away !== null);
+  const hasExpectedGoals = m.expectedGoals && (m.expectedGoals.home > 0 || m.expectedGoals.away > 0);
+  return hasStats || hasPoisson || hasEdge || hasExpectedGoals;
+}
+
+// Validation Full-or-Nothing pour deep-stats
+function isMatchReady(m) {
+  const missing = [];
+  const hasRatings = (m._bsd_home_ratings?.length > 0) && (m._bsd_away_ratings?.length > 0);
+  const hasSquad = (m._bsd_home_squad?.length > 0) && (m._bsd_away_squad?.length > 0);
+  const hasPoisson = m.poisson && m.poisson.homeWin != null && m.poisson.homeWin > 0;
+  const hasStats = m.stats && ((m.stats.home?.avgScored > 0) || (m.stats.away?.avgScored > 0));
+
+  if (!hasRatings) missing.push('ratings');
+  if (!hasSquad) missing.push('squad');
+  if (!hasPoisson || !hasStats) missing.push('poisson');
+
+  return { ready: missing.length === 0, missing };
+}
+
+// v9.2: Validation de contenu — vérification TYPE STRICTE, pas juste existence
+function validateMatchIntegrity(m) {
+  const errors = [];
+
+  // Vérifier stats de base — TYPE CHECK (nombre > 0, pas juste existence)
+  const hs = m.stats?.home || {};
+  const as = m.stats?.away || {};
+
+  if (typeof hs.avgScored !== 'number' || isNaN(hs.avgScored) || hs.avgScored === 0) errors.push(`home_avgScored=${hs.avgScored ?? 'null'} (type: ${typeof hs.avgScored})`);
+  if (typeof as.avgScored !== 'number' || isNaN(as.avgScored) || as.avgScored === 0) errors.push(`away_avgScored=${as.avgScored ?? 'null'} (type: ${typeof as.avgScored})`);
+  if (typeof hs.avgConceded !== 'number' || isNaN(hs.avgConceded) || hs.avgConceded === 0) errors.push(`home_avgConceded=${hs.avgConceded ?? 'null'}`);
+  if (typeof as.avgConceded !== 'number' || isNaN(as.avgConceded) || as.avgConceded === 0) errors.push(`away_avgConceded=${as.avgConceded ?? 'null'}`);
+
+  // Vérifier ratings BSD
+  if (!m._bsd_home_ratings?.length) errors.push('home_ratings_empty');
+  if (!m._bsd_away_ratings?.length) errors.push('away_ratings_empty');
+
+  // Vérifier Poisson — type check
+  if (!m.poisson || typeof m.poisson.homeWin !== 'number' || m.poisson.homeWin === 0) errors.push('poisson_invalid');
+  if (!m.expectedGoals || typeof m.expectedGoals.home !== 'number' || m.expectedGoals.home === 0) errors.push('expectedGoals_invalid');
+
+  // Vérifier forme — si vide, données incomplètes
+  if (!m.home_form || m.home_form === '') errors.push('home_form_empty');
+  if (!m.away_form || m.away_form === '') errors.push('away_form_empty');
+
+  // Vérifier fatigue (999h = échec de calcul)
+  if (m._fatigue_home?.hoursRest === 999) errors.push('fatigue_home_failed');
+  if (m._fatigue_away?.hoursRest === 999) errors.push('fatigue_away_failed');
+
+  return { valid: errors.length === 0, errors };
+}
+
+async function forceSyncFixture(fixtureId) {
+  // v9.1: ID validation — prevent undefined/null fetches
+  if (!fixtureId || fixtureId === 'undefined' || fixtureId === 'null') {
+    console.error("\x1b[31m[CRITICAL_FETCH] ID invalide: %s — abort\x1b[0m", fixtureId);
+    return null;
+  }
+  if (!BSD_API_KEY) {
+    console.error("\x1b[31m[SYNC] BSD API clé manquante — impossible de sync %s\x1b[0m", fixtureId);
+    return null;
+  }
+  if (forceSyncLock.has(fixtureId)) {
+    console.log(`  [SYNC] Déjà en cours pour ${fixtureId} — skip`);
+    return null;
+  }
+  forceSyncLock.add(fixtureId);
+  console.error("\x1b[31m[CRITICAL_FETCH] Appel API pour MatchID: %s\x1b[0m", fixtureId);
+
+  try {
+    // 1. Trouver le match existant en cache pour récupérer les metadata BSD
+    let match = db.matches.find(m => m.id === fixtureId);
+    if (!match) match = cachedMatches.find(m => m.id === fixtureId);
+    if (!match) match = db.matches.find(m => String(m._bsd_event_id) === String(fixtureId));
+    if (!match) match = db.matches.find(m => String(m.fixture_id) === String(fixtureId));
+    if (!match) {
+      console.error("\x1b[31m[SYNC] Match %s introuvable dans db et cache\x1b[0m", fixtureId);
+      forceSyncLock.delete(fixtureId);
+      return null;
+    }
+
+    const eventId = match._bsd_event_id;
+    const homeTeam = match.home_team;
+    const awayTeam = match.away_team;
+    const league = match.league;
+
+    console.error("\x1b[31m[SYNC] Match trouvé: %s vs %s (%s) — BSD Event ID: %s\x1b[0m", homeTeam, awayTeam, league, eventId);
+
+    // 2. Récupérer les BSD team IDs depuis db.teamStats
+    const hKey = normName(homeTeam);
+    const aKey = normName(awayTeam);
+    const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+    const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+    const hBsdTeamId = hMeta?.bsdTeamId || null;
+    const aBsdTeamId = aMeta?.bsdTeamId || null;
+    const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+    const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+    console.error("\x1b[31m[SYNC] Home BSD Team ID: %s, Away BSD Team ID: %s\x1b[0m", hBsdTeamId, aBsdTeamId);
+
+    // FIX v15.5 — Dr. Chen : Backfill home_form/away_form depuis db.teamStats
+    //   Sans ça, un match construit avant l'arrivée des standings garde home_form="" à vie
+    if ((!match.home_form || match.home_form === '') && hMeta?.form && hMeta.form.length >= 3) {
+      match.home_form = hMeta.form;
+      console.log(`  [SYNC] ✓ home_form backfillé pour ${homeTeam}: "${hMeta.form}"`);
+    }
+    if ((!match.away_form || match.away_form === '') && aMeta?.form && aMeta.form.length >= 3) {
+      match.away_form = aMeta.form;
+      console.log(`  [SYNC] ✓ away_form backfillé pour ${awayTeam}: "${aMeta.form}"`);
+    }
+
+    // 3. Fetch BSD data en parallèle (v50.0: + key players KPI)
+    const [prediction, homeSquad, awaySquad, homeRatings, awayRatings, homeKP, awayKP] = await Promise.all([
+      eventId ? fetchBSDPrediction(eventId) : Promise.resolve(null),
+      hBsdTeamId ? fetchBSDTeamSquad(hBsdTeamId) : Promise.resolve([]),
+      aBsdTeamId ? fetchBSDTeamSquad(aBsdTeamId) : Promise.resolve([]),
+      (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+      (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+      (hBsdTeamId && hBsdSeasonId) ? fetchTeamKeyPlayersBSD(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+      (aBsdTeamId && aBsdSeasonId) ? fetchTeamKeyPlayersBSD(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+    ]);
+
+    // 4. Fetch BSD event details pour refresh odds/xg
+    let eventDetails = null;
+    if (eventId) {
+      try {
+        const evRes = await bsdFetch(`/events/${eventId}/`);
+        if (evRes.status === 200 && evRes.data) {
+          eventDetails = evRes.data;
+          // Refresh odds et xg dans le match existant
+          if (eventDetails.odds_home != null) match.odds.home = eventDetails.odds_home;
+          if (eventDetails.odds_draw != null) match.odds.draw = eventDetails.odds_draw;
+          if (eventDetails.odds_away != null) match.odds.away = eventDetails.odds_away;
+          if (eventDetails.actual_home_xg != null) match.bsd_xg = match.bsd_xg || {};
+          if (eventDetails.actual_home_xg != null) match.bsd_xg.home = eventDetails.actual_home_xg;
+          if (eventDetails.actual_away_xg != null) { match.bsd_xg = match.bsd_xg || {}; match.bsd_xg.away = eventDetails.actual_away_xg; }
+        }
+      } catch(e) {
+        console.warn(`  [SYNC] Event details fetch échoué: ${e.message}`);
+      }
+    }
+
+    // 5. Re-calculer Poisson avec les données BSD mises à jour
+    // Fallback historique si stats à 0 ou vides
+    let hs = match.stats?.home || {};
+    let as = match.stats?.away || {};
+    const LEAGUE_AVG = 1.35;
+
+    const hHist = getHistoricalAvgGoals(match.home_team, true);
+    const aHist = getHistoricalAvgGoals(match.away_team, false);
+
+    // Si stats réelles absentes ou à 0 → utiliser historique
+    if ((!hs.avgScored || hs.avgScored === 0) && hHist) {
+      console.log("\x1b[33m[SYNC] Stats home à 0 — fallback historique: %s (avg %.2f marqué, %.2f encaissé, %d matchs)\x1b[0m",
+        match.home_team, hHist.avgScored, hHist.avgConceded, hHist.sampleSize);
+      hs = { ...hs, avgScored: hHist.avgScored, avgConceded: hHist.avgConceded };
+    }
+    if ((!as.avgScored || as.avgScored === 0) && aHist) {
+      console.log("\x1b[33m[SYNC] Stats away à 0 — fallback historique: %s (avg %.2f marqué, %.2f encaissé, %d matchs)\x1b[0m",
+        match.away_team, aHist.avgScored, aHist.avgConceded, aHist.sampleSize);
+      as = { ...as, avgScored: aHist.avgScored, avgConceded: aHist.avgConceded };
+    }
+
+    // Dernier fallback: league average si toujours 0
+    const hScored = hs.avgScored || LEAGUE_AVG;
+    const hConceded = hs.avgConceded || LEAGUE_AVG;
+    const aScored = as.avgScored || LEAGUE_AVG;
+    const aConceded = as.avgConceded || LEAGUE_AVG;
+
+    const expHome = hScored / LEAGUE_AVG * aConceded;
+    const expAway = aScored / LEAGUE_AVG * hConceded;
+    match.expectedGoals = { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) };
+    match.poisson = computePoisson(expHome, expAway);
+
+    // 6. Injecter les données BSD enrichies (v50.0: + key players KPI)
+    match._bsd_prediction = prediction;
+    match._bsd_home_squad = homeSquad;
+    match._bsd_away_squad = awaySquad;
+    match._bsd_home_ratings = homeRatings;
+    match._bsd_away_ratings = awayRatings;
+    match._bsd_home_kp = homeKP;
+    match._bsd_away_kp = awayKP;
+
+    // Pre-calculer le top 3 buteurs
+    match.topButteurs = computeMatchTopButteurs(match);
+
+    // 7. Recalculer edge si les cotes ont changé
+    if (match.odds.home && match.odds.draw && match.odds.away) {
+      const edge = computeEdge(match);
+      if (edge) {
+        match.edge = edge.edge;
+        match.fair = edge.fair;
+        match.best_edge = edge.best;
+      }
+    }
+
+    // 8. Sauvegarder — injection directe dans db ET cachedMatches
+    saveDB();
+
+    // Mise à jour immédiate de cachedMatches (le match est déjà dans db.matches par référence)
+    const cachedIdx = cachedMatches.findIndex(m => m.id === match.id);
+    if (cachedIdx >= 0) {
+      cachedMatches[cachedIdx] = match; // Remplacer la référence
+    } else {
+      cachedMatches.push(match);
+    }
+
+    console.error("\x1b[32m✅ [BSD_BRIDGE] Match %s injecté et prêt pour l'UI\x1b[0m", fixtureId);
+    console.error("\x1b[32m[SYNC] Match %s synchronisé avec succès via BSD Engine\x1b[0m", fixtureId);
+    console.log(`  [SYNC] ✅ ${homeTeam} vs ${awayTeam} — BSD: prediction=${!!prediction}, squad=${homeSquad.length + awaySquad.length} joueurs, ratings=${homeRatings.length + awayRatings.length} entrées`);
+
+    forceSyncLock.delete(fixtureId);
+    return match;
+  } catch(e) {
+    console.error("\x1b[31m[SYNC] Erreur pour %s: %s\x1b[0m", fixtureId, e.message);
+    console.error("\x1b[31m[SYNC] Stack: %s\x1b[0m", e.stack);
+    forceSyncLock.delete(fixtureId);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  v8.7 GLOBAL PROACTIVE CRAWLER — Pré-chargement BSD au démarrage
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PRELOAD_WINDOW_MS = 48 * 3600 * 1000; // 48h
+const PRELOAD_DELAY_MS = 2000; // 2s entre chaque match
+const PRELOAD_START_DELAY_MS = 60 * 1000; // 1min après boot
+
+// Tracker de persistance : quels matchs ont été pré-chargés
+let preloadTracker = {}; // { matchId: { ts, ratingsCount, squadCount } }
+
+function loadPreloadTracker() {
+  try {
+    preloadTracker = kvGet('preload_tracker', {});
+    const count = Object.keys(preloadTracker).length;
+    if (count > 0) console.log(`  [PRELOAD] Tracker chargé — ${count} matchs déjà pré-chargés`);
+  } catch(e) {
+    console.warn('  [PRELOAD] Tracker load échoué:', e.message);
+    preloadTracker = {};
+  }
+}
+
+function savePreloadTracker() {
+  try {
+    kvSet('preload_tracker', preloadTracker);
+  } catch(e) {
+    console.warn('  [PRELOAD] Tracker save échoué:', e.message);
+  }
+}
+
+function markMatchPreloaded(matchId, ratingsCount, squadCount) {
+  preloadTracker[matchId] = { ts: Date.now(), ratingsCount, squadCount };
+  savePreloadTracker();
+}
+
+function isMatchPreloaded(matchId) {
+  const entry = preloadTracker[matchId];
+  if (!entry) return false;
+  // Expirer après 24h (les données joueurs changent)
+  return (Date.now() - entry.ts) < 24 * 3600 * 1000;
+}
+
+async function runGlobalPreload() {
+  console.log('');
+  console.log('  ╔══════════════════════════════════════════════════════╗');
+  console.log('  ║     🌐 GLOBAL BSD PRELOAD — Proactive Crawler      ║');
+  console.log('  ╚══════════════════════════════════════════════════════╝');
+
+  const now = Date.now();
+  const cutoff = now + PRELOAD_WINDOW_MS;
+
+  // Filtrer les matchs dans les prochaines 48h
+  const upcomingMatches = db.matches.filter(m => {
+    const kickoff = new Date(m.commence_time).getTime();
+    return kickoff > now && kickoff < cutoff;
+  });
+
+  // Filtrer ceux qui n'ont pas encore de données BSD fraîches
+  const toPreload = upcomingMatches.filter(m => {
+    if (isMatchPreloaded(m.id)) return false; // Déjà fait
+    const hasBSD = m._bsd_home_ratings?.length || m._bsd_away_ratings?.length;
+    return !hasBSD;
+  });
+
+  console.log(`  [PRELOAD] Scan lancé pour ${upcomingMatches.length} matchs dans les 48h...`);
+  console.log(`  [PRELOAD] ${toPreload.length} matchs nécessitent un pré-chargement BSD`);
+
+  if (toPreload.length === 0) {
+    console.log('  [PRELOAD] ✅ Tous les matchs sont à jour — aucun fetch nécessaire');
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+  let skipCount = 0;
+
+  for (let i = 0; i < toPreload.length; i++) {
+    const m = toPreload[i];
+    const eventId = m._bsd_event_id;
+    const homeTeam = m.home_team;
+    const awayTeam = m.away_team;
+
+    // Vérifier si on a les BSD team IDs
+    const hKey = normName(homeTeam);
+    const aKey = normName(awayTeam);
+    const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+    const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+    const hBsdTeamId = hMeta?.bsdTeamId || null;
+    const aBsdTeamId = aMeta?.bsdTeamId || null;
+    const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+    const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+    if (!hBsdTeamId && !aBsdTeamId) {
+      console.log(`  [PRELOAD] ⏭️ ${homeTeam} vs ${awayTeam} — pas de BSD team IDs → skip`);
+      skipCount++;
+      continue;
+    }
+
+    try {
+      // Fetch BSD data en parallèle
+      const [prediction, homeSquad, awaySquad, homeRatings, awayRatings] = await Promise.all([
+        eventId ? fetchBSDPrediction(eventId) : Promise.resolve(null),
+        hBsdTeamId ? fetchBSDTeamSquad(hBsdTeamId) : Promise.resolve([]),
+        aBsdTeamId ? fetchBSDTeamSquad(aBsdTeamId) : Promise.resolve([]),
+        (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+        (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+      ]);
+
+      // Injecter dans le match
+      m._bsd_prediction = prediction;
+      m._bsd_home_squad = homeSquad;
+      m._bsd_away_squad = awaySquad;
+      m._bsd_home_ratings = homeRatings;
+      m._bsd_away_ratings = awayRatings;
+
+      // Pre-calculer le top 3 buteurs (persiste en DB avec le match)
+      m.topButteurs = computeMatchTopButteurs(m);
+
+      // Mettre à jour cachedMatches aussi
+      const cachedIdx = cachedMatches.findIndex(cm => cm.id === m.id);
+      if (cachedIdx >= 0) cachedMatches[cachedIdx] = m;
+
+      // Marquer comme pré-chargé
+      markMatchPreloaded(m.id, homeRatings.length + awayRatings.length, homeSquad.length + awaySquad.length);
+
+      successCount++;
+      console.log(`  [PRELOAD] ✅ [${i+1}/${toPreload.length}] ${homeTeam} vs ${awayTeam} — ratings=${homeRatings.length + awayRatings.length}, squad=${homeSquad.length + awaySquad.length}`);
+    } catch(e) {
+      failCount++;
+      console.warn(`  [PRELOAD] ❌ [${i+1}/${toPreload.length}] ${homeTeam} vs ${awayTeam} — ${e.message}`);
+    }
+
+    // Délai anti-spam (sauf dernier)
+    if (i < toPreload.length - 1) {
+      await new Promise(r => setTimeout(r, PRELOAD_DELAY_MS));
+    }
+  }
+
+  // Sauvegarder tout
+  saveDB();
+
+  console.log('');
+  console.log(`  [PRELOAD] 📊 Résumé: ${successCount} succès, ${failCount} échecs, ${skipCount} skip`);
+  console.log(`  [PRELOAD] 💾 Données persistées dans pariscore.db`);
+  console.log('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  v8.8 PROACTIVE HYDRATOR — Worker de fond autonome
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const HYDRATOR_WINDOW_MS = 48 * 3600 * 1000; // 48h
+const HYDRATOR_DELAY_MS = 3000; // 3s entre chaque match (rate limit BSD)
+const HYDRATOR_INTERVAL_MS = 15 * 60 * 1000; // 15min entre chaque cycle
+const HYDRATOR_START_DELAY_MS = 90 * 1000; // 90s après boot (après preload)
+
+let hydratorRunning = false;
+
+// ── Historical Fallback: avg goals from last N finished matches ──────────────
+function getHistoricalAvgGoals(teamName, isHome, limit = 5) {
+  const now = Date.now();
+  const finished = db.matches
+    .filter(m => {
+      const isTeamMatch = (m.home_team === teamName || m.away_team === teamName);
+      const isFinished = m.live_score && !m.live_minute; // terminé (score final)
+      const isPast = new Date(m.commence_time).getTime() < now;
+      return isTeamMatch && isFinished && isPast;
+    })
+    .sort((a, b) => new Date(b.commence_time).getTime() - new Date(a.commence_time).getTime())
+    .slice(0, limit);
+
+  if (finished.length === 0) return null;
+
+  let totalScored = 0, totalConceded = 0;
+  for (const m of finished) {
+    const [hs, as] = m.live_score.split('-').map(Number);
+    if (isNaN(hs) || isNaN(as)) continue;
+    if (m.home_team === teamName) {
+      totalScored += hs;
+      totalConceded += as;
+    } else {
+      totalScored += as;
+      totalConceded += hs;
+    }
+  }
+
+  if (totalScored === 0 && totalConceded === 0) return null;
+  return {
+    avgScored: parseFloat((totalScored / finished.length).toFixed(2)),
+    avgConceded: parseFloat((totalConceded / finished.length).toFixed(2)),
+    sampleSize: finished.length,
+  };
+}
+
+// Calculs Data Science post-injection
+function computeFatigueIndex(teamName, matchDate) {
+  // v9.0 Fix: Fallback to archive_matches si 999h (pas de match dans db.matches)
+  const matchTs = new Date(matchDate).getTime();
+  const windowMs = 7 * 24 * 3600 * 1000; // ±7 jours
+
+  // Tous les matchs de l'équipe dans la fenêtre (db.matches)
+  let teamMatches = db.matches.filter(m => {
+    const mTs = new Date(m.commence_time).getTime();
+    const diff = Math.abs(mTs - matchTs);
+    return diff < windowMs && (m.home_team === teamName || m.away_team === teamName) && mTs !== matchTs;
+  }).sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime());
+
+  // 1. Recency: heures depuis le dernier match AVANT ce match
+  let pastMatches = teamMatches.filter(m => new Date(m.commence_time).getTime() < matchTs);
+  let hoursRest = pastMatches.length > 0
+    ? (matchTs - new Date(pastMatches[pastMatches.length - 1].commence_time).getTime()) / 3600000
+    : 999;
+
+  // v9.0: Si 999h, chercher dans archive_matches
+  if (hoursRest === 999 && db.archive_matches) {
+    const archiveMatches = db.archive_matches.filter(m => {
+      const mTs = new Date(m.commence_time).getTime();
+      const diff = matchTs - mTs; // seulement les matchs passés
+      return diff > 0 && diff < windowMs && (m.home_team === teamName || m.away_team === teamName);
+    }).sort((a, b) => new Date(b.commence_time).getTime() - new Date(a.commence_time).getTime());
+
+    if (archiveMatches.length > 0) {
+      const lastMatch = archiveMatches[0];
+      hoursRest = (matchTs - new Date(lastMatch.commence_time).getTime()) / 3600000;
+      pastMatches = archiveMatches;
+      console.log(`  [FATIGUE] Fallback archive_matches pour ${teamName}: ${Math.round(hoursRest)}h depuis dernier match`);
+    }
+  }
+
+  // 2. Density: nombre de matchs dans les 14 derniers jours
+  const densityWindow = matchTs - 14 * 24 * 3600 * 1000;
+  let matchesIn14d = teamMatches.filter(m => new Date(m.commence_time).getTime() >= densityWindow && new Date(m.commence_time).getTime() < matchTs).length;
+
+  // v9.0: Inclure archive_matches dans le density count
+  if (db.archive_matches && matchesIn14d === 0) {
+    const archiveDensity = db.archive_matches.filter(m => {
+      const mTs = new Date(m.commence_time).getTime();
+      return mTs >= densityWindow && mTs < matchTs && (m.home_team === teamName || m.away_team === teamName);
+    }).length;
+    matchesIn14d = archiveDensity;
+  }
+
+  // 3. Upcoming: matchs dans les 72h APRÈS ce match (double fixture)
+  const upcomingIn72h = teamMatches.filter(m => {
+    const mTs = new Date(m.commence_time).getTime();
+    return mTs > matchTs && (mTs - matchTs) < 72 * 3600 * 1000;
+  }).length;
+
+  // Score composite 0-100 (100 = très fatigué)
+  const recencyWeight = Math.exp(-hoursRest / 72) * 40; // e^(-h/72) × 40
+  const densityWeight = Math.min(matchesIn14d / 5, 1) * 35; // normalized × 35
+  const doubleFixtureWeight = upcomingIn72h > 0 ? 25 : 0; // penalty si double fixture
+
+  const fatigueScore = Math.min(100, Math.round(recencyWeight + densityWeight + doubleFixtureWeight));
+
+  let level;
+  if (fatigueScore >= 75) level = 'critical';
+  else if (fatigueScore >= 50) level = 'tired';
+  else if (fatigueScore >= 25) level = 'normal';
+  else level = 'fresh';
+
+  return {
+    hoursRest: Math.round(hoursRest),
+    level,
+    score: fatigueScore,
+    matchesIn14d,
+    upcomingIn72h,
+  };
+}
+
+function computeAbsenceImpact(squad, teamName) {
+  // P2 Fix: Graded impact (-5 to -25) based on all positions, weighted by contribution
+  if (!squad || !squad.length) return { impact: 0, player: null, grade: 'none' };
+
+  // Trouver les joueurs absents ou blessés
+  const unavailable = squad.filter(p =>
+    p.injured || p.suspended || p.availability === 'unavailable'
+  );
+
+  if (!unavailable.length) return { impact: 0, player: null, grade: 'none' };
+
+  // Calculer l'impact par joueur basé sur goals + assists + rating
+  const impacts = unavailable.map(p => {
+    const goalContribution = (p.goals || 0) * 3 + (p.assists || 0) * 2;
+    const ratingFactor = p.avg_rating ? Math.max(0, (p.avg_rating - 5) / 5) : 0.5;
+    const rawImpact = goalContribution * ratingFactor;
+
+    // Graded: -5 (mineur) à -25 (critique)
+    let grade, impact;
+    if (rawImpact >= 15 || (p.position === 'A' || p.position === 'Attacker') && (p.goals || 0) >= 5) {
+      grade = 'critical'; impact = -25;
+    } else if (rawImpact >= 8) {
+      grade = 'high'; impact = -15;
+    } else if (rawImpact >= 3) {
+      grade = 'medium'; impact = -10;
+    } else {
+      grade = 'low'; impact = -5;
+    }
+
+    return {
+      impact,
+      player: p.name,
+      position: p.position,
+      goals: p.goals || 0,
+      assists: p.assists || 0,
+      rating: p.avg_rating,
+      grade,
+      reason: p.injured ? 'blessé' : p.suspended ? 'suspendu' : 'indisponible',
+    };
+  });
+
+  // Retourner le pire impact
+  impacts.sort((a, b) => a.impact - b.impact);
+  return impacts[0];
+}
+
+function computeDominanceScore(homeRatings, awayRatings, homeSquad, awaySquad) {
+  // P2 Fix: Weight ALL lines — DEF 20%, MID 40%, ATK 40%
+  const posWeight = p => {
+    const pos = (p.position || '').toLowerCase();
+    if (pos === 'g' || pos === 'goalkeeper') return { line: 'DEF', weight: 0.05 };
+    if (pos === 'd' || pos === 'defender') return { line: 'DEF', weight: 0.20 };
+    if (pos === 'm' || pos === 'midfielder') return { line: 'MID', weight: 0.40 };
+    if (pos === 'a' || pos === 'attacker' || pos === 'f') return { line: 'ATK', weight: 0.35 };
+    return { line: 'MID', weight: 0.20 }; // default
+  };
+
+  const lineScore = (ratings) => {
+    const lines = { DEF: { total: 0, weight: 0 }, MID: { total: 0, weight: 0 }, ATK: { total: 0, weight: 0 } };
+    for (const p of ratings) {
+      const { line, weight } = posWeight(p);
+      const rating = p.avg_rating || 0;
+      const minutes = p.minutes || 90;
+      const weightedRating = rating * weight * Math.min(minutes / 90, 1);
+      lines[line].total += weightedRating;
+      lines[line].weight += weight;
+    }
+    let score = 0;
+    for (const line of Object.values(lines)) {
+      if (line.weight > 0) score += line.total / line.weight;
+    }
+    return score;
+  };
+
+  const homeScore = lineScore(homeRatings);
+  const awayScore = lineScore(awayRatings);
+  const total = homeScore + awayScore;
+  if (total === 0) return { home: 50, away: 50, label: 'Équilibré' };
+
+  const homePct = Math.round((homeScore / total) * 100);
+  const awayPct = 100 - homePct;
+
+  let label;
+  if (homePct >= 60) label = 'Domination domicile';
+  else if (homePct >= 55) label = 'Léger avantage domicile';
+  else if (awayPct >= 60) label = 'Domination extérieur';
+  else if (awayPct >= 55) label = 'Léger avantage extérieur';
+  else label = 'Équilibré';
+
+  return { home: homePct, away: awayPct, label, homeScore: homeScore.toFixed(2), awayScore: awayScore.toFixed(2) };
+}
+
+function computeMatchEV(match) {
+  // P0 Fix: Use devigged/blended probabilities, NOT calibrated
+  // EV% = (Probabilité_fair × Cote_Bookmaker) - 1
+  const evs = {};
+
+  // Chaîne de fallback: devigged → blended → poisson → calibrated
+  let probs;
+  if (match.devigged && match.devigged.homeWin != null) {
+    probs = { home: match.devigged.homeWin / 100, draw: match.devigged.draw / 100, away: match.devigged.awayWin / 100 };
+  } else if (match.blended && match.blended.homeWin != null) {
+    probs = { home: match.blended.homeWin / 100, draw: match.blended.draw / 100, away: match.blended.awayWin / 100 };
+  } else if (match.poisson && match.poisson.homeWin != null) {
+    probs = { home: match.poisson.homeWin / 100, draw: match.poisson.draw / 100, away: match.poisson.awayWin / 100 };
+  } else if (match.calibrated) {
+    probs = { home: (match.calibrated.homeWin || 33.3) / 100, draw: (match.calibrated.draw || 33.3) / 100, away: (match.calibrated.awayWin || 33.3) / 100 };
+  } else {
+    return { home: null, draw: null, away: null };
+  }
+
+  if (!match.odds) return { home: null, draw: null, away: null };
+
+  evs.home = match.odds.home ? parseFloat(((probs.home * match.odds.home - 1) * 100).toFixed(1)) : null;
+  evs.draw = match.odds.draw ? parseFloat(((probs.draw * match.odds.draw - 1) * 100).toFixed(1)) : null;
+  evs.away = match.odds.away ? parseFloat(((probs.away * match.odds.away - 1) * 100).toFixed(1)) : null;
+  return evs;
+}
+
+async function runProactiveHydrator() {
+  if (hydratorRunning) {
+    console.log('  [HYDRATOR] Déjà en cours — skip ce cycle');
+    return;
+  }
+  hydratorRunning = true;
+
+  console.log('');
+  console.log('  ╔══════════════════════════════════════════════════════╗');
+  console.log('  ║     💧 PROACTIVE HYDRATOR — Worker Autonome        ║');
+  console.log('  ╚══════════════════════════════════════════════════════╝');
+
+  const now = Date.now();
+  const cutoff = now + HYDRATOR_WINDOW_MS;
+
+  // Filtrer les matchs dans les prochaines 48h
+  const upcomingMatches = db.matches.filter(m => {
+    const kickoff = new Date(m.commence_time).getTime();
+    return kickoff > now && kickoff < cutoff;
+  });
+
+  // Filtrer ceux qui ne sont pas FULL ou PARTIAL
+  const toHydrate = upcomingMatches.filter(m => {
+    if (m.bsd_status === 'FULL') return false;
+    if (m.bsd_status === 'NO_COVERAGE') return false; // Pas de BSD pour cette ligue
+    if (m.bsd_status === 'FAILED_INTEGRITY') return true; // v9.0: Retenter les matchs échoués
+
+    // États partiels — ne pas re-fetch si on a déjà quelque chose
+    const hasRatings = m._bsd_home_ratings?.length || m._bsd_away_ratings?.length;
+    const hasSquad = m._bsd_home_squad?.length || m._bsd_away_squad?.length;
+
+    if (hasRatings && hasSquad) {
+      m.bsd_status = 'FULL';
+      return false;
+    }
+    if (hasRatings && !hasSquad) {
+      m.bsd_status = 'PARTIAL_RATINGS'; // Ratings OK, squad vide — pas critique
+      return false;
+    }
+    if (!hasRatings && hasSquad) {
+      m.bsd_status = 'PARTIAL_SQUAD'; // Squad OK, ratings vides — besoin de ratings
+      return true; // Re-fetch pour obtenir les ratings
+    }
+    return true;
+  });
+
+  // File d'attente prioritaire : matchs les plus proches d'abord
+  toHydrate.sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime());
+
+  console.log(`  [CRAWLER] ${upcomingMatches.length} matchs dans les 48h, ${toHydrate.length} en cours d'hydratation...`);
+
+  if (toHydrate.length === 0) {
+    console.log('  [HYDRATOR] ✅ Tous les matchs sont FULL — aucun fetch nécessaire');
+    hydratorRunning = false;
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (let i = 0; i < toHydrate.length; i++) {
+    const m = toHydrate[i];
+    const eventId = m._bsd_event_id;
+    const homeTeam = m.home_team;
+    const awayTeam = m.away_team;
+
+    // Lookup BSD team IDs
+    const hKey = normName(homeTeam);
+    const aKey = normName(awayTeam);
+    const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+    const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+    const hBsdTeamId = hMeta?.bsdTeamId || null;
+    const aBsdTeamId = aMeta?.bsdTeamId || null;
+    const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+    const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+    if (!hBsdTeamId && !aBsdTeamId) {
+      m.bsd_status = 'NO_COVERAGE'; // Pas de couverture BSD pour cette ligue
+      continue;
+    }
+
+    try {
+      // Fetch BSD data
+      const [prediction, homeSquad, awaySquad, homeRatings, awayRatings] = await Promise.all([
+        eventId ? fetchBSDPrediction(eventId) : Promise.resolve(null),
+        hBsdTeamId ? fetchBSDTeamSquad(hBsdTeamId) : Promise.resolve([]),
+        aBsdTeamId ? fetchBSDTeamSquad(aBsdTeamId) : Promise.resolve([]),
+        (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+        (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+      ]);
+
+      // Injection directe
+      m._bsd_prediction = prediction;
+      m._bsd_home_squad = homeSquad;
+      m._bsd_away_squad = awaySquad;
+      m._bsd_home_ratings = homeRatings;
+      m._bsd_away_ratings = awayRatings;
+
+      // Pre-calculer le top 3 buteurs
+      m.topButteurs = computeMatchTopButteurs(m);
+
+      // Calculs Data Science
+      m._fatigue_home = computeFatigueIndex(homeTeam, m.commence_time);
+      m._fatigue_away = computeFatigueIndex(awayTeam, m.commence_time);
+      m._absence_home = computeAbsenceImpact(homeSquad, homeTeam);
+      m._absence_away = computeAbsenceImpact(awaySquad, awayTeam);
+      m._dominance = computeDominanceScore(homeRatings, awayRatings, homeSquad, awaySquad);
+      m._ev = computeMatchEV(m);
+
+      // v9.0: Validation de contenu avant marquage FULL
+      const integrityCheck = validateMatchIntegrity(m);
+      if (!integrityCheck.valid) {
+        m.bsd_status = 'FAILED_INTEGRITY';
+        m.integrity_errors = integrityCheck.errors;
+        console.log(`  [HYDRATOR] ⚠️ [${i+1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — INTEGRITÉ ÉCHOUÉE: ${integrityCheck.errors.join(', ')} — reprogrammation 60s`);
+        // Reprogrammer une tentative dans 60s
+        setTimeout(() => {
+          m.bsd_status = null; // Reset pour permettre un nouveau fetch
+          console.log(`  [HYDRATOR] 🔄 Retry intégrité pour ${homeTeam} vs ${awayTeam}`);
+        }, 60000);
+        continue;
+      }
+
+      // Marquer FULL
+      m.bsd_status = 'FULL';
+      m.integrity_errors = null;
+
+      // Mettre à jour cachedMatches
+      const cachedIdx = cachedMatches.findIndex(cm => cm.id === m.id);
+      if (cachedIdx >= 0) cachedMatches[cachedIdx] = m;
+
+      successCount++;
+      console.log(`  [HYDRATOR] ✅ [${i+1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — fatigue=${m._fatigue_home.level}/${m._fatigue_away.level}, dominance=${m._dominance.label}`);
+    } catch(e) {
+      failCount++;
+      console.warn(`  [HYDRATOR] ❌ [${i+1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — ${e.message}`);
+    }
+
+    // Rate limiting
+    if (i < toHydrate.length - 1) {
+      await new Promise(r => setTimeout(r, HYDRATOR_DELAY_MS));
+    }
+  }
+
+  saveDB();
+
+  console.log('');
+  console.log(`  [HYDRATOR] 📊 Résumé: ${successCount} hydratés, ${failCount} échecs`);
+  console.log(`  [HYDRATOR] 💾 ${db.matches.filter(m => m.bsd_status === 'FULL').length}/${db.matches.length} matchs FULL`);
+  console.log('');
+
+  hydratorRunning = false;
 }
 
 // ─── DONNÉES DÉMO ───────────────────────────────────────────────────────────
@@ -3873,36 +5939,40 @@ function getLeagueHub(oddsKey) {
 
 // ─── /api/v1/top-strategy — Top matchs par stratégie ────────────────────────
 // Config centralisée : ajouter une stratégie = 1 entrée ici (zéro autre changement)
+// ── AI Tipsters — personnalités par stratégie (synchro avec STRATEGIES_UI) ────
 const STRATEGIES = {
-  BTTS_YES:      { label: 'BTTS Oui',              icon: '🥅', getProb: m => m.poisson?.btts,    getOdds: () => null },
-  OVER_2_5:      { label: 'Plus de 2.5 buts',      icon: '⚡', getProb: m => m.poisson?.over25,  getOdds: () => null },
-  OVER_1_5:      { label: 'Plus de 1.5 buts',      icon: '🎯', getProb: m => m.poisson?.over15,  getOdds: () => null },
-  UNDER_2_5:     { label: 'Moins de 2.5 buts',     icon: '🛡️', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
-  HOME_WIN:      { label: 'Victoire Domicile',     icon: '🏠', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
-  AWAY_WIN:      { label: 'Victoire Extérieur',    icon: '✈️', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
-  DRAW:          { label: 'Match Nul',             icon: '🤝', getProb: m => m.poisson?.draw,    getOdds: m => m.odds?.draw },
-  CS_00:         { label: 'Score 0-0',             icon: '🔒', getProb: m => m.poisson?.cs00,    getOdds: () => null },
+  BTTS_YES:      { label: 'BTTS Oui',              icon: '🥅', tipster: 'L\'Artilleur',   tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.',       tipsterFlag: '🇧🇷', getProb: m => m.poisson?.btts,    getOdds: () => null },
+  OVER_2_5:      { label: 'Plus de 2.5 buts',      icon: '⚡', tipster: 'Le Foudroyeur',  tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.',                                    tipsterFlag: '🇳🇱', getProb: m => m.poisson?.over25,  getOdds: () => null },
+  OVER_1_5:      { label: 'Plus de 1.5 buts',      icon: '🎯', tipster: 'Le Prudent',     tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.',                        tipsterFlag: '🇩🇪', getProb: m => m.poisson?.over15,  getOdds: () => null },
+  UNDER_2_5:     { label: 'Moins de 2.5 buts',     icon: '🛡️', tipster: 'Le Gardien',     tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.',                      tipsterFlag: '🇮🇹', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
+  HOME_WIN:      { label: 'Victoire Domicile',     icon: '🏠', tipster: 'Le Localier',    tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.',                        tipsterFlag: '🇬🇧', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
+  AWAY_WIN:      { label: 'Victoire Extérieur',    icon: '✈️', tipster: 'L\'Aventurier',  tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.',                       tipsterFlag: '🇪🇸', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
+  DRAW:          { label: 'Match Nul',             icon: '🤝', tipster: 'Le Diplomate',   tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.',                           tipsterFlag: '🇫🇷', getProb: m => m.poisson?.draw,    getOdds: m => m.odds?.draw },
+  CS_00:         { label: 'Score 0-0',             icon: '🔒', tipster: 'Le Sceptique',   tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.',                         tipsterFlag: '🇵🇹', getProb: m => m.poisson?.cs00,    getOdds: () => null },
   // ── Stratégies avancées P1 ──────────────────────────────────────────────────
   ANGLE_CORNERS: {
     label: 'Angle Mort Corners',
     icon: '📐',
+    tipster: 'Le Géomètre',
+    tipsterDesc: 'Lit le jeu dans les corners. Over 6.5 corners sur matchs à fort xG.',
+    tipsterFlag: '🇦🇷',
     getProb: m => {
       if (!m.poisson || !m.expectedGoals) return null;
-      // Proxy: pression offensive combinée = indice d'attaque des deux équipes
       if (m.expectedGoals.home + m.expectedGoals.away < 2.5) return null;
-      // Confiance basée sur over2.5 — games with high xG generate more corners
-      return m.poisson.over25;
+      return m.corners_poisson?.over_6_5 || m.poisson.over25;
     },
     getOdds: () => null,
   },
   VERROU_TACTIQUE: {
     label: 'Verrou Tactique (U3.5)',
     icon: '🔐',
+    tipster: 'Le Verrou',
+    tipsterDesc: 'Maître du under. Détecte les défenses imperméables.',
+    tipsterFlag: '🇬🇷',
     getProb: m => {
       if (!m.poisson || m.poisson.over35 == null) return null;
       const under35 = 100 - m.poisson.over35;
       if (under35 < 80) return null;
-      // Bonus uniquement sur données réelles (pas SIM — avgConceded artificiel sur SIM)
       const isReal = m.stats?.home?._real === true && m.stats?.away?._real === true;
       const bothDefensive = isReal && m.stats.home.avgConceded < 1.2 && m.stats.away.avgConceded < 1.2;
       return bothDefensive ? Math.min(under35 + 5, 99) : under35;
@@ -3912,6 +5982,9 @@ const STRATEGIES = {
   GOLDEN_PPG_GAP: {
     label: 'Golden PPG Gap',
     icon: '⭐',
+    tipster: 'L\'Éclaireur',
+    tipsterDesc: 'Repère les déséquilibres de forme. PPG gap ≥ 1.2 = value assurée.',
+    tipsterFlag: '🇧🇪',
     getProb: m => {
       if (!m.poisson || !m.stats?.home || !m.stats?.away) return null;
       const homePpg = m.stats.home.ppg || 0;
@@ -3920,7 +5993,6 @@ const STRATEGIES = {
       if (gap < 1.2) return null;
       const strongerIsHome = homePpg > awayPpg;
       const strongerOdds = strongerIsHome ? m.odds?.home : m.odds?.away;
-      // Condition: fort PPG joue à domicile OU cote > 1.70 (value bet)
       if (!strongerIsHome && (strongerOdds == null || strongerOdds <= 1.70)) return null;
       return strongerIsHome ? m.poisson.homeWin : m.poisson.awayWin;
     },
@@ -3933,6 +6005,9 @@ const STRATEGIES = {
   DC_HOME: {
     label: 'Double Chance 1X',
     icon: '🏠X',
+    tipster: 'Le Couvreur',
+    tipsterDesc: 'Double chance maison. 1X = 2 résultats sur 3.',
+    tipsterFlag: '🇨🇭',
     getProb: m => {
       if (!m.poisson) return null;
       const hw = m.poisson.homeWin ?? 0;
@@ -3944,6 +6019,9 @@ const STRATEGIES = {
   DC_AWAY: {
     label: 'Double Chance X2',
     icon: 'X✈️',
+    tipster: 'L\'Assureur',
+    tipsterDesc: 'Double chance extérieur. X2 = filet de sécurité.',
+    tipsterFlag: '🇸🇪',
     getProb: m => {
       if (!m.poisson) return null;
       const aw = m.poisson.awayWin ?? 0;
@@ -3955,6 +6033,9 @@ const STRATEGIES = {
   HT_HOME_FT_HOME: {
     label: 'Mi-Temps Victoire Dom.',
     icon: '⏱🏠',
+    tipster: 'Le Sprint',
+    tipsterDesc: 'Domicile dominant dès la 1ère MT. Home/Home assuré.',
+    tipsterFlag: '🇺🇸',
     getProb: m => {
       if (!m.poisson) return null;
       const hw = m.poisson.homeWin ?? 0;
@@ -3967,6 +6048,9 @@ const STRATEGIES = {
   HT_UNDER_FT_OVER: {
     label: 'Explosion 2e Mi-Temps',
     icon: '💥',
+    tipster: 'Le Dynamiteur',
+    tipsterDesc: '1ère MT calme, 2ème MT explosive. Son flair.',
+    tipsterFlag: '🇭🇷',
     getProb: m => {
       if (!m.poisson) return null;
       const o25 = m.poisson.over25 ?? 0;
@@ -3977,6 +6061,36 @@ const STRATEGIES = {
     getOdds: () => null,
   },
 };
+
+// Value Index: mesure la valeur RÉELLE du bet (0-100%).
+//   Pondération : 70% edge (valeur), 30% confiance (probabilité)
+//   Un edge de 0 → max 30%, un edge ≥ 15% + confiance ≥ 80% → 100%
+//   Les stratégies à haute proba naturelle (Over 1.5) ne dominent plus.
+function computeValueIndex(confidence, edge, strategyKey) {
+  if (edge == null || edge <= 0) return Math.min(Math.round(confidence * 0.2), 30);
+  // Facteur edge : 70% du score final. Edge 15%+ = max contribution (70 pts)
+  const edgeFactor = Math.min(Math.abs(edge) / 15, 1);
+  // Facteur confiance : 30% du score. Rareté bonus pour stratégies à faible proba naturelle
+  let confBonus = 1;
+  if (strategyKey === 'CS_00') confBonus = 2.5;        // proba naturelle 5-15%
+  else if (strategyKey === 'DRAW') confBonus = 1.8;     // 15-30%
+  else if (strategyKey === 'UNDER_2_5') confBonus = 1.3; // 30-50%
+  else if (strategyKey === 'HOME_WIN' || strategyKey === 'AWAY_WIN') confBonus = 1.1;
+  const confFactor = Math.min((confidence * confBonus) / 80, 1);
+  return Math.round(100 * (edgeFactor * 0.70 + confFactor * 0.30));
+}
+
+// Confidence Index: fiabilité composite (0-100%) basée sur proba + edge + stabilité
+function computeConfidenceIndex(confidence, edge, match) {
+  let score = confidence || 0;
+  if (edge != null && edge > 0) score += edge * 1.5;
+  if (match?.best_edge?.margin != null && match.best_edge.margin < 5) score += 5;
+  if (match?.stats?.isReal) score += 3;
+  const hoursToKickoff = (new Date(match?.commence_time) - Date.now()) / 3600000;
+  if (hoursToKickoff > 0 && hoursToKickoff < 24) score += Math.max(0, 5 - hoursToKickoff / 5);
+  if (match?.sport && /ligue1|epl|serie_a|la_liga|bundesliga|champs_league/i.test(match.sport)) score += 3;
+  return Math.min(99, Math.round(score));
+}
 
 function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, league = '') {
   const strat = STRATEGIES[strategyType];
@@ -3992,6 +6106,9 @@ function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, l
       const confidence = strat.getProb(m);
       if (confidence == null || confidence < minConf) return null;
       const stratOdds = strat.getOdds(m);
+      const edge = m.best_edge?.edge || 0;
+      const valueIndex = computeValueIndex(confidence, edge, strategyType);
+      const confidenceIndex = computeConfidenceIndex(confidence, edge, m);
       return {
         id: m.id,
         home_team: m.home_team, away_team: m.away_team,
@@ -4005,11 +6122,133 @@ function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, l
         expectedGoals: m.expectedGoals,
         home_form: m.home_form || '',
         away_form: m.away_form || '',
+        valueIndex,
+        confidenceIndex,
+        tipster: strat.tipster || null,
+        tipsterFlag: strat.tipsterFlag || null,
       };
     })
     .filter(Boolean)
-    .sort((a, b) => b.confidence - a.confidence)
+    .sort((a, b) => b.confidenceIndex - a.confidenceIndex)
     .slice(0, lim);
+}
+
+// GET /api/v1/hot-picks — Top 5 picks toutes stratégies confondues, classés par Value Index
+function getHotPicks(limit = 5) {
+  const now = Date.now();
+  const candidates = [];
+
+  for (const [key, strat] of Object.entries(STRATEGIES)) {
+    db.matches
+      .filter(m => m.poisson && new Date(m.commence_time).getTime() > now)
+      .forEach(m => {
+        const confidence = strat.getProb(m);
+        if (confidence == null || confidence < 50) return;
+        const stratOdds = strat.getOdds(m);
+        const edge = m.best_edge?.edge || 0;
+        const vi = computeValueIndex(confidence, edge, key);
+        const ci = computeConfidenceIndex(confidence, edge, m);
+        candidates.push({
+          id: m.id,
+          strategyKey: key,
+          strategyLabel: strat.label,
+          strategyIcon: strat.icon,
+          tipster: strat.tipster || null,
+          tipsterFlag: strat.tipsterFlag || null,
+          home_team: m.home_team, away_team: m.away_team,
+          league: m.league, sport: m.sport,
+          commence_time: m.commence_time,
+          confidence: Math.round(confidence),
+          odds: stratOdds,
+          best_edge: m.best_edge,
+          expectedGoals: m.expectedGoals,
+          valueIndex: vi,
+          confidenceIndex: ci,
+        });
+      });
+  }
+
+  // Dédupliquer par match.id (garder le meilleur valueIndex pour chaque match)
+  const seen = new Map();
+  for (const c of candidates) {
+    const existing = seen.get(c.id);
+    if (!existing || c.valueIndex > existing.valueIndex) seen.set(c.id, c);
+  }
+
+  // DIVERSIFICATION : 1er pick de chaque stratégie, puis classés par valueIndex
+  const byStrategy = new Map();
+  for (const c of seen.values()) {
+    if (!byStrategy.has(c.strategyKey)) byStrategy.set(c.strategyKey, []);
+    byStrategy.get(c.strategyKey).push(c);
+  }
+  // Trier chaque bucket par valueIndex décroissant
+  for (const [, arr] of byStrategy) arr.sort((a, b) => b.valueIndex - a.valueIndex);
+
+  // Phase 1 : un champion par stratégie (le meilleur valueIndex de chaque)
+  const champions = [];
+  for (const [stratKey, arr] of byStrategy) {
+    if (arr.length > 0) champions.push(arr[0]);
+  }
+  // Trier les champions par valueIndex décroissant
+  champions.sort((a, b) => b.valueIndex - a.valueIndex);
+
+  // Phase 2 : compléter avec les 2e, 3e... meilleurs de chaque stratégie
+  const remaining = [];
+  for (const [, arr] of byStrategy) {
+    for (let i = 1; i < arr.length; i++) remaining.push(arr[i]);
+  }
+  remaining.sort((a, b) => b.valueIndex - a.valueIndex);
+
+  const result = [...champions, ...remaining];
+  return result.slice(0, Math.max(1, Math.min(20, parseInt(limit) || 5)));
+}
+
+// GET /api/v1/sure-bets — Picks avec confiance ≥ 80% (équivalent Sure Bets 8+/10)
+function getSureBets(limit = 10) {
+  const now = Date.now();
+  const candidates = [];
+
+  for (const [key, strat] of Object.entries(STRATEGIES)) {
+    db.matches
+      .filter(m => m.poisson && new Date(m.commence_time).getTime() > now)
+      .forEach(m => {
+        const confidence = strat.getProb(m);
+        if (confidence == null || confidence < 75) return;
+        const stratOdds = strat.getOdds(m);
+        const edge = m.best_edge?.edge || 0;
+        const vi = computeValueIndex(confidence, edge, key);
+        const ci = computeConfidenceIndex(confidence, edge, m);
+        // Sure bet = confidence ≥ 75% ET confidenceIndex ≥ 70%
+        if (ci < 70) return;
+        candidates.push({
+          id: m.id,
+          strategyKey: key,
+          strategyLabel: strat.label,
+          strategyIcon: strat.icon,
+          tipster: strat.tipster || null,
+          tipsterFlag: strat.tipsterFlag || null,
+          home_team: m.home_team, away_team: m.away_team,
+          league: m.league, sport: m.sport,
+          commence_time: m.commence_time,
+          confidence: Math.round(confidence),
+          odds: stratOdds,
+          best_edge: m.best_edge,
+          valueIndex: vi,
+          confidenceIndex: ci,
+          sureLevel: ci >= 90 ? 10 : ci >= 85 ? 9 : 8, // Niveau 8/10, 9/10, 10/10
+        });
+      });
+  }
+
+  const seen = new Map();
+  for (const c of candidates) {
+    const existing = seen.get(c.id);
+    if (!existing || c.sureLevel > existing.sureLevel) seen.set(c.id, c);
+  }
+
+  return Array.from(seen.values())
+    .sort((a, b) => b.sureLevel - a.sureLevel || b.valueIndex - a.valueIndex)
+    .slice(0, Math.max(1, Math.min(30, parseInt(limit) || 10)));
 }
 
 // ─── /api/v1/acca — Acca Generator (combiné mathématique) ───────────────────
@@ -4119,10 +6358,10 @@ function getTrends() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function jsonResponse(res, statusCode, data) {
-  const origin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'X-Frame-Options': 'DENY',
@@ -4160,8 +6399,23 @@ function handleAPI(req, res, pathname, query) {
 
   // GET /api/v1/matches?league=xxx&day=0
   if (pathname === '/api/v1/matches') {
-    // Public — auth optionnelle pour les filtres premium
-    let matches = db.matches;
+    // Anti-Black Hole : TOUJOURS répondre avec le cache si disponible
+    // Même si serverReady=false ou db.matches vide, on renvoie le tampon mémoire
+    let matches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
+    let fromCache = (db.matches && db.matches.length > 0) ? false : true;
+
+    // Si serverReady=false mais on a du cache, on répond 200 avec flag stale
+    if (!serverReady && matches.length === 0) {
+      return jsonResponse(res, 200, {
+        count: 0, matches: [],
+        meta: {
+          loading: true,
+          status: 'initialisation',
+          message: 'Chargement des données en cours — première connexion API',
+          retry_after: 3,
+        },
+      });
+    }
 
     // Filtre par ligue
     if (query.league && query.league !== 'all') {
@@ -4181,6 +6435,12 @@ function handleAPI(req, res, pathname, query) {
       }
     }
 
+    // Enrichir chaque match avec le top 3 buteurs (recalcul si ratings dispos)
+    matches = matches.map(m => {
+      const fresh = computeMatchTopButteurs(m);
+      return { ...m, topButteurs: fresh || m.topButteurs || null };
+    });
+
     return jsonResponse(res, 200, {
       count:    matches.length,
       matches,
@@ -4197,22 +6457,360 @@ function handleAPI(req, res, pathname, query) {
         nextStatsUpdate: db.lastStatsUpdate
           ? new Date(new Date(db.lastStatsUpdate).getTime() + 6 * 3600000).toISOString()
           : null,
+        // Cache metadata
+        fromCache:       fromCache,
+        cacheVersion:    cacheVersion,
+        lastCacheUpdate: lastCacheUpdate,
+        serverReady:     serverReady,
       },
+    });
+  }
+
+  // GET /api/v1/leagues — Ligues groupées par pays (depuis cache tampon)
+  if (pathname === '/api/v1/leagues') {
+    // Construire les ligues depuis les matchs actuels + cache
+    const leagueSet = new Map(); // league name → { country, matches }
+    const allMatches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
+
+    for (const m of allMatches) {
+      if (!m.league || m.league === '?') continue;
+      const country = detectCountryFromLeague(m.league);
+      if (!leagueSet.has(m.league)) {
+        leagueSet.set(m.league, { name: m.league, country, matchCount: 0 });
+      }
+      leagueSet.get(m.league).matchCount++;
+    }
+
+    // Grouper par pays
+    const byCountry = {};
+    for (const [, league] of leagueSet) {
+      if (!byCountry[league.country]) byCountry[league.country] = [];
+      byCountry[league.country].push(league);
+    }
+
+    return jsonResponse(res, 200, {
+      countries: Object.keys(byCountry).sort(),
+      leagues: byCountry,
+      total: leagueSet.size,
+      fromCache: (db.matches && db.matches.length > 0) ? false : true,
     });
   }
 
   // GET /api/v1/stats/:id
   if (pathname.startsWith('/api/v1/stats/')) {
-    const id = pathname.slice('/api/v1/stats/'.length);
-    const match = db.matches.find(m => m.id === id);
-    if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
-    return jsonResponse(res, 200, match);
+    try {
+      const id = pathname.slice('/api/v1/stats/'.length);
+      console.log("[DEBUG STATS] ID demandé:", id);
+      let numId = isNaN(Number(id)) ? null : Number(id);
+      let match = db.matches.find(m => m.id === id);
+      if (!match) match = cachedMatches.find(m => m.id === id);
+      if (!match && numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === id);
+      // Nettoyer les entrées vides : match sans stats ni poisson → considéré comme non trouvé
+      if (match && !matchHasData(match)) {
+        console.error("\x1b[31m[STATS] Match %s trouvé mais vide (aucune stat) → traité comme non trouvé\x1b[0m", id);
+        match = null;
+      }
+      if (!match) {
+        console.log("[DEBUG STATS] Match non trouvé — trigger FORCE SYNC");
+        // Force sync en arrière-plan pour la prochaine tentative du frontend
+        if (numId) forceSyncFixture(String(numId));
+        else if (id.startsWith('force_')) forceSyncFixture(id.replace('force_', ''));
+        return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
+      }
+      return jsonResponse(res, 200, { success: true, data: match });
+    } catch (e) {
+      console.error('[API /stats/:id] Error:', e.message);
+      return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
+    }
+  }
+
+  // GET /api/v1/deep-stats/:id — Full-or-Nothing: bloque jusqu'à données complètes
+  if (pathname.startsWith('/api/v1/deep-stats/')) {
+    (async () => {
+      try {
+        const id = pathname.slice('/api/v1/deep-stats/'.length);
+        // v9.1: ID validation
+        if (!id || id === 'undefined' || id === 'null') {
+          console.error("\x1b[31m[CRITICAL_FETCH] deep-stats ID invalide: %s\x1b[0m", id);
+          return jsonResponse(res, 200, { success: false, message: "ID invalide." });
+        }
+        console.log("\x1b[36m[DEEP-STATS] Requête pour ID: %s\x1b[0m", id);
+
+        // 1. Trouver le match
+        let match = db.matches.find(m => m.id === id);
+        if (!match) match = cachedMatches.find(m => m.id === id);
+        if (!match) {
+          const numId = isNaN(Number(id)) ? null : Number(id);
+          if (numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === id);
+        }
+        if (!match) {
+          return jsonResponse(res, 200, { success: false, message: "Match non trouvé en base." });
+        }
+
+        // 2. Validation: isMatchReady
+        const isReady = isMatchReady(match);
+        if (isReady.ready) {
+          console.log("\x1b[32m[DEEP-STATS] Match %s déjà prêt — réponse immédiate\x1b[0m", id);
+          return jsonResponse(res, 200, { success: true, match });
+        }
+
+        console.log("\x1b[33m[DEEP-STATS] Match %s incomplet — force sync: %s\x1b[0m", id, isReady.missing.join(', '));
+
+        // 3. Force Sync Immédiat (await bloquant)
+        const eventId = match._bsd_event_id;
+        const homeTeam = match.home_team;
+        const awayTeam = match.away_team;
+
+        // Lookup BSD team IDs
+        const hKey = normName(homeTeam);
+        const aKey = normName(awayTeam);
+        const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+        const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+        const hBsdTeamId = hMeta?.bsdTeamId || null;
+        const aBsdTeamId = aMeta?.bsdTeamId || null;
+        const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+        const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+        // Fetch BSD data si manquant
+        if (isReady.missing.includes('ratings') && (hBsdTeamId || aBsdTeamId)) {
+          console.log("\x1b[36m[DEEP-STATS] Fetching BSD ratings...\x1b[0m");
+          const [homeRatingsRes, awayRatingsRes] = await Promise.allSettled([
+            (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+            (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+          ]);
+          match._bsd_home_ratings = homeRatingsRes.status === 'fulfilled' ? homeRatingsRes.value : [];
+          match._bsd_away_ratings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
+        }
+
+        if (isReady.missing.includes('squad') && (hBsdTeamId || aBsdTeamId)) {
+          console.log("\x1b[36m[DEEP-STATS] Fetching BSD squads...\x1b[0m");
+          const [homeSquadRes, awaySquadRes] = await Promise.allSettled([
+            hBsdTeamId ? fetchBSDTeamSquad(hBsdTeamId) : Promise.resolve([]),
+            aBsdTeamId ? fetchBSDTeamSquad(aBsdTeamId) : Promise.resolve([]),
+          ]);
+          match._bsd_home_squad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
+          match._bsd_away_squad = awaySquadRes.status === 'fulfilled' ? awaySquadRes.value : [];
+        }
+
+        // Pre-calculer le top 3 buteurs (apres chargement BSD ratings/squad)
+        match.topButteurs = computeMatchTopButteurs(match);
+
+        // 4. Recalculer Poisson avec données fraîches + fallback historique
+        console.log("\x1b[36m[DEEP-STATS] Recalcul Poisson + KPIs...\x1b[0m");
+        let hs = match.stats?.home || {};
+        let as = match.stats?.away || {};
+        const LEAGUE_AVG = 1.35;
+
+        const hHist = getHistoricalAvgGoals(match.home_team, true);
+        const aHist = getHistoricalAvgGoals(match.away_team, false);
+
+        if ((!hs.avgScored || hs.avgScored === 0) && hHist) {
+          console.log("\x1b[33m[DEEP-STATS] Stats home à 0 — fallback historique: %s (%.2f/%.2f, %d matchs)\x1b[0m",
+            match.home_team, hHist.avgScored, hHist.avgConceded, hHist.sampleSize);
+          hs = { ...hs, avgScored: hHist.avgScored, avgConceded: hHist.avgConceded };
+        }
+        if ((!as.avgScored || as.avgScored === 0) && aHist) {
+          console.log("\x1b[33m[DEEP-STATS] Stats away à 0 — fallback historique: %s (%.2f/%.2f, %d matchs)\x1b[0m",
+            match.away_team, aHist.avgScored, aHist.avgConceded, aHist.sampleSize);
+          as = { ...as, avgScored: aHist.avgScored, avgConceded: aHist.avgConceded };
+        }
+
+        const hScored = hs.avgScored || LEAGUE_AVG;
+        const hConceded = hs.avgConceded || LEAGUE_AVG;
+        const aScored = as.avgScored || LEAGUE_AVG;
+        const aConceded = as.avgConceded || LEAGUE_AVG;
+
+        const expHome = hScored / LEAGUE_AVG * aConceded;
+        const expAway = aScored / LEAGUE_AVG * hConceded;
+        match.expectedGoals = { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) };
+        match.poisson = computePoisson(expHome, expAway);
+
+        // 5. Calculs Data Science
+        match._fatigue_home = computeFatigueIndex(homeTeam, match.commence_time);
+        match._fatigue_away = computeFatigueIndex(awayTeam, match.commence_time);
+        match._absence_home = computeAbsenceImpact(match._bsd_home_squad || [], homeTeam);
+        match._absence_away = computeAbsenceImpact(match._bsd_away_squad || [], awayTeam);
+        match._dominance = computeDominanceScore(
+          match._bsd_home_ratings || [],
+          match._bsd_away_ratings || [],
+          match._bsd_home_squad || [],
+          match._bsd_away_squad || []
+        );
+        match._ev = computeMatchEV(match);
+
+        // 6. Marquer FULL
+        match.bsd_status = 'FULL';
+
+        // 7. Sauvegarder
+        saveDB();
+        const cachedIdx = cachedMatches.findIndex(cm => cm.id === match.id);
+        if (cachedIdx >= 0) cachedMatches[cachedIdx] = match;
+
+        console.log("\x1b[32m[DEEP-STATS] ✅ Match %s complet — prêt pour l'UI\x1b[0m", id);
+        return jsonResponse(res, 200, { success: true, match });
+      } catch(e) {
+        console.error("\x1b[31m[DEEP-STATS] Erreur: %s\x1b[0m", e.message);
+        return jsonResponse(res, 200, { success: false, message: `Erreur: ${e.message}` });
+      }
+    })();
+    return;
+  }
+
+  // GET /api/v1/odds/:id — Cotes par marché spécifique avec cache batch 30 min
+  if (pathname.startsWith('/api/v1/odds/')) {
+    (async () => {
+      try {
+        const fixtureId = pathname.slice('/api/v1/odds/'.length);
+
+        // 1. Vérification cache batch
+        const cached = oddsCache[fixtureId];
+        if (cached && (Date.now() - cached.ts) < ODDS_CACHE_TTL) {
+          console.log(`  [ODDS] Cache hit — fixture ${fixtureId} (${Math.round((Date.now() - cached.ts)/1000)}s ago)`);
+          return jsonResponse(res, 200, {
+            source: 'cache',
+            fixture_id: fixtureId,
+            markets: cached.markets,
+            cached_at: new Date(cached.ts).toISOString(),
+          });
+        }
+
+        // 2. Fallback : cotes déjà dans db.matches
+        const match = db.matches.find(m => m.id === fixtureId) || cachedMatches.find(m => m.id === fixtureId);
+        if (match && match.bookmakers && match.bookmakers.length) {
+          const markets = extractANJMarkets(match.bookmakers, match.home_team, match.away_team);
+          if (markets['1N2'] && markets['1N2'].home) {
+            oddsCache[fixtureId] = { markets, ts: Date.now() };
+            return jsonResponse(res, 200, { source: 'db', fixture_id: fixtureId, markets });
+          }
+        }
+
+        // 3. Appel API-Football si clé dispo
+        if (!API_FOOTBALL_KEY) {
+          return jsonResponse(res, 200, {
+            source: 'fallback',
+            fixture_id: fixtureId,
+            markets: {},
+            message: 'API-Football non configuré — redirection comparateur',
+          });
+        }
+
+        console.log(`  [ODDS] Fetching markets 1,5 from API-Football — fixture ${fixtureId}`);
+
+        // Fetch marché 1 (Match Winner) et marché 5 (Goals Over/Under) en parallèle
+        const [resM1, resM5] = await Promise.allSettled([
+          fetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=1`, {
+            headers: { 'x-apisports-key': API_FOOTBALL_KEY }
+          }),
+          fetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=5`, {
+            headers: { 'x-apisports-key': API_FOOTBALL_KEY }
+          })
+        ]);
+
+        const markets = {};
+
+        // Traitement marché 1 — Match Winner (1N2)
+        if (resM1.status === 'fulfilled' && resM1.value.ok) {
+          const d1 = await resM1.value.json();
+          const bkList = d1.response?.[0]?.bookmakers || [];
+          markets['1N2'] = findBestANJOdds(bkList, '1N2', match?.home_team, match?.away_team);
+        }
+
+        // Traitement marché 5 — Goals Over/Under
+        if (resM5.status === 'fulfilled' && resM5.value.ok) {
+          const d5 = await resM5.value.json();
+          const bkList = d5.response?.[0]?.bookmakers || [];
+          markets['OU25'] = findBestANJOdds(bkList, 'OU25');
+        }
+
+        if (!markets['1N2'] && !markets['OU25']) {
+          return jsonResponse(res, 200, {
+            source: 'empty',
+            fixture_id: fixtureId,
+            markets: {},
+            message: 'Aucune cote ANJ disponible pour ce match',
+          });
+        }
+
+        // Stockage cache structuré
+        oddsCache[fixtureId] = { markets, ts: Date.now() };
+
+        return jsonResponse(res, 200, {
+          source: 'api',
+          fixture_id: fixtureId,
+          markets,
+        });
+      } catch (e) {
+        console.error(`  [ODDS] Error fetching fixture ${pathname.slice('/api/v1/odds/'.length)}:`, e.message);
+        return jsonResponse(res, 200, {
+          source: 'error',
+          markets: {},
+          best_link: FINAL_FALLBACK,
+          error: e.message,
+        });
+      }
+    })();
+    return;
+  }
+
+  // ─── HELPERS — Extraction cotes ANJ par marché ─────────────────────────────
+
+  function findBestANJOdds(bkList, marketType, homeTeam, awayTeam) {
+    let result = {};
+    for (const bk of bkList) {
+      const bkName = bk.name || bk.bookmaker || '';
+      const isANJ = ANJ_BOOKMAKERS.some(a => bkName.toLowerCase().includes(a.toLowerCase()));
+      if (!isANJ) continue;
+
+      if (marketType === '1N2') {
+        const m1x2 = (bk.bets || []).find(b => b.id === 1 || b.name === 'Match Winner');
+        if (!m1x2) continue;
+        for (const val of m1x2.values) {
+          const odd = parseFloat(val.odd);
+          if (val.value === 'Home' && (!result.home || odd > result.home)) { result.home = odd; result.bookie = bkName; }
+          if (val.value === 'Draw' && (!result.draw || odd > result.draw)) { result.draw = odd; result.bookie = bkName; }
+          if (val.value === 'Away' && (!result.away || odd > result.away)) { result.away = odd; result.bookie = bkName; }
+        }
+      }
+
+      if (marketType === 'OU25') {
+        const ou = (bk.bets || []).find(b => b.id === 5 || b.name === 'Goals Over/Under');
+        if (!ou) continue;
+        for (const val of ou.values) {
+          const odd = parseFloat(val.odd);
+          if (val.value === 'Over 2.5' && (!result.over || odd > result.over)) { result.over = odd; result.bookie = bkName; }
+          if (val.value === 'Under 2.5' && (!result.under || odd > result.under)) { result.under = odd; result.bookie = bkName; }
+        }
+      }
+    }
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  function extractANJMarkets(bookmakers, homeTeam, awayTeam) {
+    const markets = {};
+    for (const bk of bookmakers) {
+      const bkName = bk.bookmaker || bk.title || '';
+      const isANJ = ANJ_BOOKMAKERS.some(a => bkName.toLowerCase().includes(a.toLowerCase()));
+      if (!isANJ) continue;
+
+      // 1N2
+      const h2h = (bk.markets || []).find(m => m.key === 'h2h');
+      if (h2h) {
+        if (!markets['1N2']) markets['1N2'] = {};
+        for (const o of h2h.outcomes) {
+          if (o.name === homeTeam && (!markets['1N2'].home || o.price > markets['1N2'].home)) { markets['1N2'].home = o.price; markets['1N2'].bookie = bkName; }
+          if (o.name === 'Draw' && (!markets['1N2'].draw || o.price > markets['1N2'].draw)) { markets['1N2'].draw = o.price; markets['1N2'].bookie = bkName; }
+          if (o.name === awayTeam && (!markets['1N2'].away || o.price > markets['1N2'].away)) { markets['1N2'].away = o.price; markets['1N2'].bookie = bkName; }
+        }
+      }
+    }
+    return markets;
   }
 
   // GET /api/v1/status
   if (pathname === '/api/v1/status') {
     return jsonResponse(res, 200, {
       status:          db.status,
+      ready:           serverReady,
       matchCount:      db.matches.length,
       teamCount:       Object.keys(db.teamStats).length,
       lastOddsUpdate:  db.lastOddsUpdate,
@@ -4227,6 +6825,11 @@ function handleAPI(req, res, pathname, query) {
   // GET /api/v1/corners/:matchId — Predictions corners Over/Under
   if (pathname.startsWith('/api/v1/corners/')) {
     const matchId = pathname.split('/api/v1/corners/')[1];
+    // v9.1: ID validation
+    if (!matchId || matchId === 'undefined' || matchId === 'null') {
+      console.error("\x1b[31m[CRITICAL_FETCH] corners ID invalide: %s\x1b[0m", matchId);
+      return jsonResponse(res, 200, { error: "ID invalide." });
+    }
     if (matchId) {
       return handleCornersRoute(res, decodeURIComponent(matchId));
     }
@@ -4234,7 +6837,18 @@ function handleAPI(req, res, pathname, query) {
 
   // GET /api/v1/live/bsd — Données live BSD brutes (xG, momentum, incidents, stats temps réel)
   if (pathname === '/api/v1/live/bsd') {
-    const liveMatches = db.matches.filter(m => m.live_score && m.live_minute);
+    const now = Date.now();
+    const liveMatches = db.matches.filter(m => {
+      if (!m.live_score || !m.live_minute) return false;
+      // v10.5: Ghost filter backend
+      const minuteVal = parseInt(m.live_minute || 0);
+      if (minuteVal > 130) return false;
+      if (m.commence_time) {
+        const hoursSince = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
+        if (hoursSince > 4) return false;
+      }
+      return true;
+    });
     if (!liveMatches.length) {
       return jsonResponse(res, 200, { live: [], message: 'Aucun match en direct' });
     }
@@ -4251,7 +6865,6 @@ function handleAPI(req, res, pathname, query) {
       shots_on_target: m.live_shots_on_target || null,
       corners: m.live_corners || null,
       cards: m.live_cards || null,
-      incidents: m.live_incidents || null,
       momentum: m.live_momentum || null,
       intensity: m.live_intensity || 0,
       edge: m.best_edge?.edge || 0,
@@ -4464,7 +7077,33 @@ function handleAPI(req, res, pathname, query) {
     return jsonResponse(res, 200, {
       strategies: Object.entries(STRATEGIES).map(([key, s]) => ({
         key, label: s.label, icon: s.icon,
+        tipster: s.tipster || null,
+        tipsterFlag: s.tipsterFlag || null,
+        tipsterDesc: s.tipsterDesc || null,
       })),
+    });
+  }
+
+  // GET /api/v1/hot-picks?limit=5 — Top picks toutes stratégies (Les 5 Stars du Jour)
+  if (pathname === '/api/v1/hot-picks') {
+    const limit = Math.max(1, Math.min(20, parseInt(query.limit) || 5));
+    const picks = getHotPicks(limit);
+    return jsonResponse(res, 200, {
+      count: picks.length,
+      picks,
+      generated_at: new Date().toISOString(),
+    });
+  }
+
+  // GET /api/v1/sure-bets?limit=10 — Sure Bets (confiance ≥ 8/10)
+  if (pathname === '/api/v1/sure-bets') {
+    const limit = Math.max(1, Math.min(30, parseInt(query.limit) || 10));
+    const bets = getSureBets(limit);
+    return jsonResponse(res, 200, {
+      count: bets.length,
+      sureBets: bets,
+      hitRateEstimate: '~40% hit rate attendu',
+      generated_at: new Date().toISOString(),
     });
   }
 
@@ -4769,18 +7408,21 @@ function handleAPI(req, res, pathname, query) {
   // GET /api/v1/affiliate/link/:matchId — Génère le meilleur lien affilié pour un match
   if (pathname.startsWith('/api/v1/affiliate/link/') && req.method === 'GET') {
     const matchId = decodeURIComponent(pathname.slice('/api/v1/affiliate/link/'.length));
-    const match = db.matches.find(m => m.id === matchId);
-    if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+    let match = db.matches.find(m => m.id === matchId);
+    if (!match) match = cachedMatches.find(m => m.id === matchId);
+    if (!match) match = cachedMatches.find(m => m.fixture_id == matchId);
+    if (!match) return jsonResponse(res, 200, { link: FINAL_FALLBACK });
     const bestAffiliate = sqldb.prepare('SELECT * FROM affiliates WHERE active = 1 ORDER BY priority DESC LIMIT 1').get();
     if (!bestAffiliate) return jsonResponse(res, 404, { error: 'Aucun affilié actif' });
     // Remplacer les placeholders dans deeplink_template
     let link = bestAffiliate.affiliate_link;
     if (bestAffiliate.deeplink_template) {
+      const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       link = bestAffiliate.deeplink_template
         .replace('{sport}', match.sport || 'soccer')
         .replace('{event_id}', match.id || '')
-        .replace('{home}', encodeURIComponent(match.home_team))
-        .replace('{away}', encodeURIComponent(match.away_team));
+        .replace('{home}', bestAffiliate.bookmaker === 'coteur' ? slugify(match.home_team) : encodeURIComponent(match.home_team))
+        .replace('{away}', bestAffiliate.bookmaker === 'coteur' ? slugify(match.away_team) : encodeURIComponent(match.away_team));
     }
     return jsonResponse(res, 200, {
       id: bestAffiliate.id,
@@ -4848,11 +7490,86 @@ function handleAPI(req, res, pathname, query) {
     });
   }
 
+  // GET /api/v1/top-butteurs/:matchId — Top 3 buteurs on-demand (avec fallback chargement BSD)
+  if (pathname.startsWith('/api/v1/top-butteurs/') && req.method === 'GET') {
+    const matchId = decodeURIComponent(pathname.slice('/api/v1/top-butteurs/'.length));
+    if (!matchId || matchId === 'undefined' || matchId === 'null') {
+      return jsonResponse(res, 200, { success: false, buteurs: null });
+    }
+    let match = db.matches.find(m => m.id === matchId);
+    if (!match) match = cachedMatches.find(m => m.id === matchId);
+    if (!match) return jsonResponse(res, 200, { success: false, buteurs: null });
+
+    // Deja calcule ?
+    if (match.topButteurs) {
+      return jsonResponse(res, 200, { success: true, buteurs: match.topButteurs, cached: true });
+    }
+
+    // Essayer de calculer depuis les donnees BSD existantes
+    const fromExisting = computeMatchTopButteurs(match);
+    if (fromExisting) {
+      match.topButteurs = fromExisting;
+      return jsonResponse(res, 200, { success: true, buteurs: fromExisting, cached: false });
+    }
+
+    // Tenter un chargement BSD on-demand (non-bloquant: on lance et on renvoie null)
+    const homeKey = normName(match.home_team);
+    const awayKey = normName(match.away_team);
+    const hMeta = db.teamStats[homeKey] || findFuzzy(homeKey);
+    const aMeta = db.teamStats[awayKey] || findFuzzy(awayKey);
+    const hBsdTeamId = hMeta?.bsdTeamId || null;
+    const aBsdTeamId = aMeta?.bsdTeamId || null;
+    const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+    const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+    if ((hBsdTeamId && hBsdSeasonId) || (aBsdTeamId && aBsdSeasonId)) {
+      // Lancement async en arriere-plan
+      (async () => {
+        try {
+          const [homeRatings, awayRatings] = await Promise.all([
+            (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+            (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+          ]);
+          match._bsd_home_ratings = homeRatings;
+          match._bsd_away_ratings = awayRatings;
+          match.topButteurs = computeMatchTopButteurs(match);
+          saveDB();
+          broadcastSSE('butteurs-ready', { matchId: match.id, buteurs: match.topButteurs });
+        } catch(e) { /* silencieux */ }
+      })();
+    }
+
+    return jsonResponse(res, 200, { success: false, buteurs: null, loading: true });
+  }
+
   // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
   if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
     const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
-    const match   = db.matches.find(m => m.id === matchId);
-    if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+    // v9.1: ID validation
+    if (!matchId || matchId === 'undefined' || matchId === 'null') {
+      console.error("\x1b[31m[CRITICAL_FETCH] insights ID invalide: %s\x1b[0m", matchId);
+      return jsonResponse(res, 200, { success: false, message: "ID invalide." });
+    }
+    console.log("[DEBUG INSIGHTS] ID demandé:", matchId);
+    let match = db.matches.find(m => m.id === matchId);
+    if (!match) match = cachedMatches.find(m => m.id === matchId);
+    if (!match) {
+      const numId = isNaN(Number(matchId)) ? null : Number(matchId);
+      if (numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === matchId);
+    }
+    // Nettoyer les entrées vides : match sans stats ni poisson → considéré comme non trouvé
+    if (match && !matchHasData(match)) {
+      console.error("\x1b[31m[INSIGHTS] Match %s trouvé mais vide (aucune stat) → traité comme non trouvé\x1b[0m", matchId);
+      match = null;
+    }
+    if (!match) {
+      console.log("[DEBUG INSIGHTS] Match non trouvé — trigger FORCE SYNC");
+      // Force sync en arrière-plan pour la prochaine tentative du frontend
+      const numId = isNaN(Number(matchId)) ? null : Number(matchId);
+      if (numId) forceSyncFixture(String(numId));
+      else if (matchId.startsWith('force_')) forceSyncFixture(matchId.replace('force_', ''));
+      return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
+    }
 
     (async () => {
       try {
@@ -4911,12 +7628,6 @@ function handleAPI(req, res, pathname, query) {
           })
           .sort((a, b) => a.rank - b.rank);
 
-        // H2H historique — derniers face-à-face
-        const h2h = (hTeamId && aTeamId) ? await fetchH2H(hTeamId, aTeamId, 10) : null;
-
-        // Top buteurs (1 req/ligue max, cache 24h)
-        const topScorers = leagueId ? await fetchLeagueTopScorers(leagueId, season) : [];
-
         // Key Player Index — top 3 par équipe + Position Ratings, en parallèle (cache 24h chacun)
         const hTeamId = hMeta?.teamId;
         const aTeamId = aMeta?.teamId;
@@ -4926,24 +7637,52 @@ function handleAPI(req, res, pathname, query) {
         const hBsdSeasonId = hMeta?.bsdSeasonId || null;
         const aBsdSeasonId = aMeta?.bsdSeasonId || null;
 
-        // Corner history pour les deux équipes (BSD, cache 6h)
+        // FIX v11.1: Corner config needed for corner history fetches
         const cfg = bsdConfig.mapping?.config_to_bsd?.[String(leagueId)];
-        const [homeCorners, awayCorners] = await Promise.all([
+
+        // FIX v11.1: Wrap ALL parallel fetches in Promise.allSettled — no single failure crashes the route
+        // v48.0: BSD-only leagues n'ont pas de teamId API-Football → fallback direct BSD
+        const hHasBsd = !!(hBsdTeamId && hBsdSeasonId);
+        const aHasBsd = !!(aBsdTeamId && aBsdSeasonId);
+        const [h2hRes, topScorersRes, homeCornersRes, awayCornersRes,
+               homeKPRes, awayKPRes, homePRRes, awayPRRes,
+               homeSquadRes, awaySquadRes, homeRatingsRes, awayRatingsRes,
+               homeTPRes, awayTPRes] = await Promise.allSettled([
+          (hTeamId && aTeamId) ? fetchH2H(hTeamId, aTeamId, 10) : Promise.resolve(null),
+          leagueId ? fetchLeagueTopScorers(leagueId, season) : Promise.resolve([]),
           hBsdTeamId && cfg ? fetchBSDTeamCornerHistory(match.home_team, cfg, 10) : Promise.resolve(null),
           aBsdTeamId && cfg ? fetchBSDTeamCornerHistory(match.away_team, cfg, 10) : Promise.resolve(null),
-        ]);
-
-        const [homeKeyPlayers, awayKeyPlayers, homePosRatings, awayPosRatings,
-               homeBSDSquad, awayBSDSquad, homeBSDRatings, awayBSDRatings] = await Promise.all([
-          hTeamId ? fetchTeamKeyPlayers(hTeamId, leagueId, season) : Promise.resolve([]),
-          aTeamId ? fetchTeamKeyPlayers(aTeamId, leagueId, season) : Promise.resolve([]),
+          hTeamId ? fetchTeamKeyPlayers(hTeamId, leagueId, season) : (hHasBsd ? fetchTeamKeyPlayersBSD(hBsdTeamId, hBsdSeasonId) : Promise.resolve([])),
+          aTeamId ? fetchTeamKeyPlayers(aTeamId, leagueId, season) : (aHasBsd ? fetchTeamKeyPlayersBSD(aBsdTeamId, aBsdSeasonId) : Promise.resolve([])),
           hTeamId ? fetchTeamPositionRatings(hTeamId, leagueId, season) : Promise.resolve(null),
           aTeamId ? fetchTeamPositionRatings(aTeamId, leagueId, season) : Promise.resolve(null),
           hBsdTeamId ? fetchBSDTeamSquad(hBsdTeamId) : Promise.resolve([]),
           aBsdTeamId ? fetchBSDTeamSquad(aBsdTeamId) : Promise.resolve([]),
           (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
           (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+          hTeamId ? fetchTopPerformers(hTeamId, leagueId, season) : (hHasBsd ? fetchTopPerformersBSD(hBsdTeamId, hBsdSeasonId) : Promise.resolve({ attackers: [], defenders: [] })),
+          aTeamId ? fetchTopPerformers(aTeamId, leagueId, season) : (aHasBsd ? fetchTopPerformersBSD(aBsdTeamId, aBsdSeasonId) : Promise.resolve({ attackers: [], defenders: [] })),
         ]);
+        const h2h = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
+        const topScorers = topScorersRes.status === 'fulfilled' ? topScorersRes.value : [];
+        const homeCorners = homeCornersRes.status === 'fulfilled' ? homeCornersRes.value : null;
+        const awayCorners = awayCornersRes.status === 'fulfilled' ? awayCornersRes.value : null;
+        const homeKeyPlayers = homeKPRes.status === 'fulfilled' ? homeKPRes.value : [];
+        const awayKeyPlayers = awayKPRes.status === 'fulfilled' ? awayKPRes.value : [];
+        // v50.0: Fallback sur le cache forceSyncFixture si le fetch live est vide
+        const homeKPFinal = homeKeyPlayers.length ? homeKeyPlayers : (match._bsd_home_kp || []);
+        const awayKPFinal = awayKeyPlayers.length ? awayKeyPlayers : (match._bsd_away_kp || []);
+        // v63.0: Fallback ultime — API-Football par nom d'équipe si tout est vide
+        const homeKP = homeKPFinal.length ? homeKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.home_team) : []);
+        const awayKP = awayKPFinal.length ? awayKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.away_team) : []);
+        const homePosRatings = homePRRes.status === 'fulfilled' ? homePRRes.value : null;
+        const awayPosRatings = awayPRRes.status === 'fulfilled' ? awayPRRes.value : null;
+        const homeBSDSquad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
+        const awayBSDSquad = awaySquadRes.status === 'fulfilled' ? awaySquadRes.value : [];
+        const homeBSDRatings = homeRatingsRes.status === 'fulfilled' ? homeRatingsRes.value : [];
+        const awayBSDRatings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
+        const homeTopPerformers = homeTPRes.status === 'fulfilled' ? homeTPRes.value : { attackers: [], defenders: [] };
+        const awayTopPerformers = awayTPRes.status === 'fulfilled' ? awayTPRes.value : { attackers: [], defenders: [] };
 
         // Croiser avec les blessures du match pour indiquer le statut
         const injuredNames = new Set(
@@ -4956,7 +7695,64 @@ function handleAPI(req, res, pathname, query) {
           injured: injuredNames.has(p.name?.toLowerCase()),
         }));
 
+        // Top players combiné (tous les joueurs avec KPI, pour affichage onglet Joueurs)
+        const allTopPlayers = [
+          ...markInjury(homeKP).map(p => ({ ...p, team: 'home', teamName: match.home_team })),
+          ...markInjury(awayKP).map(p => ({ ...p, team: 'away', teamName: match.away_team })),
+        ].sort((a, b) => b.kpi - a.kpi).slice(0, 10);
+
+        // Unified stats: pré-calcule global/home/away pour les deux équipes (v49.0 Hermes)
+        const buildUnifiedSide = (sideStats, adv, sideStatsAway) => {
+          const hasAdv = adv && adv.played_home != null && adv.played_away != null;
+          const awayFallback = sideStatsAway || sideStats;
+          const s = (obj, key) => (obj && obj[key] != null) ? obj[key] : null;
+          return {
+            global: {
+              ppg: s(sideStats, 'ppg'), wins: s(sideStats, 'wins'),
+              draws: s(sideStats, 'draws'), losses: s(sideStats, 'losses'),
+              avgScored: s(sideStats, 'avgScored'), avgConceded: s(sideStats, 'avgConceded'),
+            },
+            home: hasAdv ? {
+              ppg: (adv.played_home ? parseFloat((((adv.wins_home||0)*3 + (adv.draws_home||0)) / adv.played_home).toFixed(2)) : s(sideStats, 'ppg')),
+              wins: adv.played_home ? Math.round((adv.wins_home||0) / adv.played_home * 100) : s(sideStats, 'wins'),
+              draws: adv.played_home ? Math.round((adv.draws_home||0) / adv.played_home * 100) : s(sideStats, 'draws'),
+              losses: adv.played_home ? Math.round((adv.losses_home||0) / adv.played_home * 100) : s(sideStats, 'losses'),
+              avgScored: adv.goals_scored_home_avg || s(sideStats, 'avgScored'),
+              avgConceded: adv.goals_conceded_home_avg || s(sideStats, 'avgConceded'),
+            } : {
+              ppg: s(sideStats, 'ppg'), wins: s(sideStats, 'wins'),
+              draws: s(sideStats, 'draws'), losses: s(sideStats, 'losses'),
+              avgScored: s(sideStats, 'avgScored'), avgConceded: s(sideStats, 'avgConceded'),
+            },
+            away: hasAdv ? {
+              ppg: (adv.played_away ? parseFloat((((adv.wins_away||0)*3 + (adv.draws_away||0)) / adv.played_away).toFixed(2)) : s(awayFallback, 'ppg')),
+              wins: adv.played_away ? Math.round((adv.wins_away||0) / adv.played_away * 100) : s(awayFallback, 'wins'),
+              draws: adv.played_away ? Math.round((adv.draws_away||0) / adv.played_away * 100) : s(awayFallback, 'draws'),
+              losses: adv.played_away ? Math.round((adv.losses_away||0) / adv.played_away * 100) : s(awayFallback, 'losses'),
+              avgScored: adv.goals_scored_away_avg || s(awayFallback, 'avgScored'),
+              avgConceded: adv.goals_conceded_away_avg || s(awayFallback, 'avgConceded'),
+            } : {
+              ppg: s(awayFallback, 'ppg'), wins: s(awayFallback, 'wins'),
+              draws: s(awayFallback, 'draws'), losses: s(awayFallback, 'losses'),
+              avgScored: s(awayFallback, 'avgScored'), avgConceded: s(awayFallback, 'avgConceded'),
+            },
+          };
+        };
+        const unified_stats = {
+          home_team: buildUnifiedSide(hMeta?.home, hAdv, hMeta?.away),
+          away_team: buildUnifiedSide(aMeta?.away, aAdv, aMeta?.home),
+        };
+
+        // BSD coverage sous forme d'objet (pas de boolean)
+        const bsdCov = {
+          available: !!(hBsdTeamId || aBsdTeamId),
+          home: !!hBsdTeamId,
+          away: !!aBsdTeamId,
+          pct: ((hBsdTeamId ? 50 : 0) + (aBsdTeamId ? 50 : 0)),
+        };
+
         jsonResponse(res, 200, {
+          success:        true,
           match,
           homeStats:      hMeta,
           awayStats:      aMeta,
@@ -4964,8 +7760,8 @@ function handleAPI(req, res, pathname, query) {
           awayAdv:        aAdv,
           standings,
           topScorers,
-          homeKeyPlayers: markInjury(homeKeyPlayers),
-          awayKeyPlayers: markInjury(awayKeyPlayers),
+          homeKeyPlayers: markInjury(homeKP),
+          awayKeyPlayers: markInjury(awayKP),
           homePosRatings: homePosRatings,
           awayPosRatings: awayPosRatings,
           homeKey:        hAdvKey,
@@ -4975,12 +7771,126 @@ function handleAPI(req, res, pathname, query) {
           awayBSDSquad:    awayBSDSquad,
           homeBSDRatings:  homeBSDRatings,
           awayBSDRatings:  awayBSDRatings,
-          bsdCoverage:     !!(hBsdTeamId || aBsdTeamId),
+          bsdCoverage:     bsdCov,
           homeCorners,
           awayCorners,
           h2h,
+          // Top Performers
+          homeTopPerformers,
+          awayTopPerformers,
+          // Joueurs combinés avec KPI (v48.0)
+          top_players: allTopPlayers,
+          // Stats unifiées pré-calculées (v49.0 Hermes)
+          unified_stats,
         });
-      } catch(e) { jsonResponse(res, 500, { error: e.message }); }
+      } catch(e) {
+        console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
+        console.error("\x1b[31m[INSIGHTS ERROR] Stack: %s\x1b[0m", e.stack);
+        jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation...", match, errorDetail: e.message });
+      }
+    })();
+    return;
+  }
+
+  // POST /api/v1/force-refresh/:id — Bypass cache, fetch BSD directement
+  if (pathname.startsWith('/api/v1/force-refresh/') && req.method === 'POST') {
+    const matchId = pathname.slice('/api/v1/force-refresh/'.length);
+    console.error("\x1b[31m[FORCE-REFRESH] Requête manuelle BSD pour ID: %s\x1b[0m", matchId);
+
+    // Nettoyer les entrées vides (match sans stats)
+    const before = db.matches.length;
+    db.matches = db.matches.filter(m => {
+      if (m.id === matchId || String(m.fixture_id) === matchId) {
+        const hasStats = m.stats && (m.stats.home || m.stats.away);
+        const hasPoisson = m.poisson && m.poisson.homeWin != null;
+        if (!hasStats && !hasPoisson) {
+          console.error("\x1b[31m[FORCE-REFRESH] Match %s supprimé — aucune stat ni poisson\x1b[0m", matchId);
+          return false;
+        }
+      }
+      return true;
+    });
+    if (db.matches.length < before) console.log(`  [FORCE-REFRESH] ${before - db.matches.length} entrée(s) vide(s) nettoyée(s)`);
+
+    // Purger aussi cachedMatches
+    const cachedBefore = cachedMatches.length;
+    cachedMatches = cachedMatches.filter(m => {
+      if (m.id === matchId || String(m.fixture_id) === matchId) {
+        const hasStats = m.stats && (m.stats.home || m.stats.away);
+        const hasPoisson = m.poisson && m.poisson.homeWin != null;
+        if (!hasStats && !hasPoisson) return false;
+      }
+      return true;
+    });
+
+    // Extraire le fixture_id numérique
+    const numId = isNaN(Number(matchId)) ? null : Number(matchId);
+    const forceId = numId ? String(numId) : matchId.replace('force_', '');
+
+    // Force sync direct (ignore lock pour forcer)
+    forceSyncLock.delete(forceId);
+    forceSyncFixture(forceId).then(result => {
+      if (result) {
+        console.error("\x1b[31m[FORCE-REFRESH] ✅ Succès — match injecté\x1b[0m");
+      } else {
+        console.error("\x1b[31m[FORCE-REFRESH] ❌ Échec — API n'a pas retourné de données\x1b[0m");
+      }
+    });
+
+    return jsonResponse(res, 200, {
+      success: true,
+      message: "Synchronisation forcée lancée. Recliquez sur le match dans 5-10 secondes.",
+      cleaned: before - db.matches.length,
+    });
+  }
+
+  // POST /api/v1/force-hydrate/:id — v9.0: Hydratation forcée avec validation d'intégrité
+  if (pathname.startsWith('/api/v1/force-hydrate/') && req.method === 'POST') {
+    (async () => {
+      try {
+        const matchId = pathname.slice('/api/v1/force-hydrate/'.length);
+        // v9.1: ID validation
+        if (!matchId || matchId === 'undefined' || matchId === 'null') {
+          console.error("\x1b[31m[CRITICAL_FETCH] force-hydrate ID invalide: %s\x1b[0m", matchId);
+          return jsonResponse(res, 200, { success: false, message: "ID invalide." });
+        }
+        console.log("\x1b[36m[FORCE-HYDRATE] Requête pour ID: %s\x1b[0m", matchId);
+
+        let match = db.matches.find(m => m.id === matchId);
+        if (!match) match = cachedMatches.find(m => m.id === matchId);
+        if (!match) {
+          return jsonResponse(res, 200, { success: false, message: "Match non trouvé." });
+        }
+
+        // Reset status pour permettre un nouveau fetch
+        match.bsd_status = null;
+        match.integrity_errors = null;
+
+        // Relancer forceSyncFixture
+        forceSyncLock.delete(matchId);
+        const result = await forceSyncFixture(matchId);
+
+        if (result) {
+          // Re-valider l'intégrité après sync
+          const integrity = validateMatchIntegrity(match);
+          if (!integrity.valid) {
+            match.bsd_status = 'FAILED_INTEGRITY';
+            match.integrity_errors = integrity.errors;
+            return jsonResponse(res, 200, {
+              success: false,
+              message: `Données incomplètes: ${integrity.errors.join(', ')}`,
+              errors: integrity.errors,
+            });
+          }
+          match.bsd_status = 'FULL';
+          return jsonResponse(res, 200, { success: true, match, message: "Hydratation complète." });
+        } else {
+          return jsonResponse(res, 200, { success: false, message: "Échec de l'hydratation — API indisponible." });
+        }
+      } catch(e) {
+        console.error("\x1b[31m[FORCE-HYDRATE] Erreur: %s\x1b[0m", e.message);
+        return jsonResponse(res, 200, { success: false, message: `Erreur: ${e.message}` });
+      }
     })();
     return;
   }
@@ -5376,15 +8286,65 @@ const server = http.createServer((req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  v9.1: ANTI-CRASH — Global error handlers (server NE DOIT PLUS JAMAIS crasher)
+// ═══════════════════════════════════════════════════════════════════════════════
+process.on('unhandledRejection', (reason, promise) => {
+  console.error("\x1b[31m[ANTI-CRASH] Unhandled Rejection:\x1b[0m", reason?.message || reason);
+  // NE PAS crasher — logger et continuer
+});
+
+process.on('uncaughtException', (error) => {
+  console.error("\x1b[31m[ANTI-CRASH] Uncaught Exception:\x1b[0m", error.message);
+  console.error(error.stack);
+  // NE PAS crasher — logger et continuer
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  DÉMARRAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ─── BOOT READINESS GATE ─────────────────────────────────────────────────────
+let serverReady = false; // true after initial fetchOdds/fetchStats complete
+
 initSQLite();
 loadDB();
+backfillMatchForms();
 loadHistory();
 loadAICache();
 
-server.listen(PORT, async () => {
+// ── Anti-EADDRINUSE: détecte port occupé, tue l'ancien processus, relance ──
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\x1b[31m[BOOT] Port ${PORT} déjà utilisé — tentative de libération...\x1b[0m`);
+    const { execSync } = require('child_process');
+    try {
+      if (process.platform === 'win32') {
+        const out = execSync(`netstat -ano | findstr :${PORT}`, { encoding: 'utf8' });
+        const lines = out.trim().split('\n');
+        lines.forEach(line => {
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[parts.length - 1];
+          if (pid && pid !== '0' && !isNaN(pid)) {
+            try { execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' }); console.log(`  [BOOT] Ancien processus PID ${pid} terminé.`); } catch {}
+          }
+        });
+      } else {
+        execSync(`fuser -k ${PORT}/tcp`, { stdio: 'ignore' });
+      }
+    } catch {}
+    // Relancer après 500ms
+    setTimeout(() => {
+      console.log(`  [BOOT] Relance sur le port ${PORT}...`);
+      server.close();
+      server.listen(PORT);
+    }, 500);
+    return;
+  }
+  console.error('\x1b[31m[BOOT] Erreur serveur:\x1b[0m', err.message);
+});
+
+// ── Server starts IMMEDIATELY — bootInit runs in background ──
+server.listen(PORT, () => {
   console.log('');
   console.log('  ╔══════════════════════════════════════════════════════╗');
   console.log('  ║           PariScore v2.0 — Backend API              ║');
@@ -5398,62 +8358,18 @@ server.listen(PORT, async () => {
   console.log('  ║  Cron Archive → toutes les 4h                       ║');
   console.log('  ╚══════════════════════════════════════════════════════╝');
   console.log('');
-
-  // Premier fetch au démarrage — respect du cache 12h
-  console.log('  [Boot] Premier chargement des données…');
-
-  // Afficher stats du cache API
-  const cacheStats = apiCacheStats();
-  if (cacheStats.total > 0) {
-    console.log(`  [Boot] 🗄️ Cache API: ${cacheStats.total} entrées (${cacheStats.bySource.map(s => `${s.source}:${s.c}`).join(', ')})`);
-  }
-
-  const now = Date.now();
-  const oddsAge = db.lastOddsUpdate ? now - new Date(db.lastOddsUpdate).getTime() : Infinity;
-  const statsAge = db.lastStatsUpdate ? now - new Date(db.lastStatsUpdate).getTime() : Infinity;
-
-  // Odds : refresh si > 12h OU pas de matchs en DB
-  if (!db.matches.length || oddsAge > 12 * 3600 * 1000) {
-    console.log(`  [Boot] Odds cache ${!db.matches.length ? 'vide' : `expiré (${Math.round(oddsAge/3600000)}h)`} → refresh`);
-    await fetchOdds(true).catch(e => console.warn('  [Boot] Odds échouées:', e.message));
-  } else {
-    console.log(`  [Boot] Odds OK — ${db.matches.length} matchs en cache (${Math.round(oddsAge/3600000)}h)`);
-  }
-
-  // Stats : refresh si > 12h OU pas d'équipes en DB OU ligues manquantes
-  const hasTeams = Object.keys(db.teamStats).length > 0;
-  const configuredLeagueIds = leaguesConfig.leagues.filter(l => l.id).map(l => l.id);
-  const leaguesWithStandings = new Set(Object.values(db.teamStats).map(s => s.leagueId).filter(Boolean));
-  const missingLeagues = configuredLeagueIds.filter(lid => !leaguesWithStandings.has(lid));
-  const hasMissingLeagues = missingLeagues.length > 0;
-
-  if (!hasTeams || statsAge > 12 * 3600 * 1000 || hasMissingLeagues) {
-    if (hasMissingLeagues) {
-      console.log(`  [Boot] Stats: ${missingLeagues.length} nouvelles ligues détectées → refresh forcé`);
-    } else {
-      console.log(`  [Boot] Stats cache ${!hasTeams ? 'vide' : `expiré (${Math.round(statsAge/3600000)}h)`} → refresh`);
-    }
-    await fetchStats(true).catch(e => console.warn('  [Boot] Stats échouées:', e.message));
-  } else {
-    console.log(`  [Boot] Stats OK — ${Object.keys(db.teamStats).length} équipes en cache (${Math.round(statsAge/3600000)}h)`);
-  }
-
-  // Si aucun match (API down), charger la démo
-  if (!db.matches.length) {
-    console.log('  [Boot] Aucun match live → chargement données démo');
-    db.matches = buildDemoMatches();
-    db.status = 'demo';
-    saveDB();
-  }
+  console.log('  >>> SERVEUR DÉMARRÉ - LIENS ANJ ACTIVÉS - CACHE OPÉRATIONNEL');
+  console.log('');
 
   // Cron jobs
-  setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);     // 12h
-  setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);   // 12h
-  setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000); // 4h
-  // Nettoyage du cache API expiré (toutes les 2h)
+  setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
+  setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);
+  setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000);
   setInterval(() => {
     const cleaned = apiCacheCleanExpired();
     if (cleaned > 0) console.log(`  [Cron:Cache] 🗑️ ${cleaned} entrées API expirées nettoyées`);
+    const oddsCleaned = oddsCacheCleanExpired();
+    if (oddsCleaned > 0) console.log(`  [Cron:OddsCache] 🗑️ ${oddsCleaned} cotes expirées nettoyées`);
   }, 2 * 3600 * 1000);
 
   // Helpers Live Intensity Score
@@ -5482,8 +8398,7 @@ server.listen(PORT, async () => {
     return Math.min(100, Math.round(score));
   }
 
-  // Smart Polling scores live — actif uniquement 19h-23h (heure Paris)
-// ─── POLLING LIVE — BSD primaire + API-Football fallback ─────────────────
+  // ─── POLLING LIVE — BSD primaire + API-Football fallback ─────────────────
   async function pollLiveScores() {
     const now = new Date();
     const parisHour = parseInt(now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', hour: 'numeric', hour12: false }));
@@ -5526,9 +8441,8 @@ server.listen(PORT, async () => {
               current_minute: fix.fixture?.status?.elapsed,
               status: fix.fixture?.status?.short || 'inprogress',
               league: { name: fix.league?.name },
-              live_stats: null,
-              incidents: null,
-              home_xg_live: null,
+               live_stats: null,
+               home_xg_live: null,
               away_xg_live: null,
             }));
           }
@@ -5568,9 +8482,11 @@ server.listen(PORT, async () => {
           if (isFinished) {
             console.log(`  [Live] Match terminé: ${match.home_team} ${scoreHome}-${scoreAway} ${match.away_team} (${live.status})`);
             match.live_minute = 90;
+            // Ghost cleanup immédiat + SSE push
             setTimeout(() => {
               db.matches = db.matches.filter(m => m.id !== match.id);
-              console.log(`  [Live] Match expiré de la liste live: ${match.id}`);
+              console.log(`  [Live] Ghost cleanup: ${match.id} (${live.status})`);
+              if (sseClients.size > 0) broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
             }, 2000);
           }
 
@@ -5602,7 +8518,6 @@ server.listen(PORT, async () => {
               home: live.home_xg_live || null,
               away: live.away_xg_live || null,
             };
-            match.live_incidents = live.incidents || null;
             match.live_momentum = live.momentum || null;
             match.live_intensity = computeLiveIntensityFromBSD(live);
           } else {
@@ -5615,18 +8530,84 @@ server.listen(PORT, async () => {
       }
 
       // Nettoyage: matchs live absents de l'API → clear (évite 0-0 fantômes)
+      let ghostsCleaned = 0;
       if (liveMatchIds.size > 0) {
         for (const m of db.matches) {
           if (m.live_score && !liveMatchIds.has(m.id)) {
             const elapsed = (Date.now() - new Date(m.commence_time).getTime()) / 60000;
             if (elapsed > 120) {
-              console.log(`  [Live] Nettoyage: ${m.home_team} ${m.live_score} ${m.away_team} (plus dans API, ${Math.round(elapsed)}min)`);
+              console.log(`  [Live] Ghost cleanup: ${m.home_team} ${m.live_score} ${m.away_team} (plus dans API, ${Math.round(elapsed)}min)`);
               m.live_score = null; m.live_minute = null; m.live_status = null;
+              ghostsCleaned++;
               updated = true;
             }
           }
         }
       }
+
+      // Purge stricte: status FT/AET/PEN ou elapsed > 120m même avec live_score
+      const beforePurge = db.matches.length;
+      db.matches = db.matches.filter(m => {
+        if (m.live_status && /^(FT|AET|PEN|INT|CANC|ABAN|SUSP|PST)$/i.test(m.live_status)) return false;
+        if (m.live_minute && m.live_minute > 120) return false;
+        return true;
+      });
+      if (db.matches.length < beforePurge) {
+        console.log(`  [Live] Ghost purge: ${beforePurge - db.matches.length} matchs terminés retirés`);
+        updated = true;
+      }
+
+      // v10.5: Stale Data Rule — triple verrou backend
+      let staleFixed = 0;
+      const now = Date.now();
+      for (const m of db.matches) {
+        if (!m.live_score) continue;
+        let shouldClear = false;
+        let reason = '';
+
+        // Verrou 1: minute > 130 = match fantôme
+        const minuteVal = parseInt(m.live_minute || m.minute || 0);
+        if (minuteVal > 130) {
+          shouldClear = true;
+          reason = `minute=${minuteVal} > 130`;
+        }
+
+        // Verrou 2: kickoff > 4h
+        if (!shouldClear && m.commence_time) {
+          const hoursSinceKickoff = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
+          if (hoursSinceKickoff > 4) {
+            shouldClear = true;
+            reason = `kickoff il y a ${Math.round(hoursSinceKickoff * 60)}min`;
+          }
+        }
+
+        // Verrou 3: kickoff date de la veille (> 24h)
+        if (!shouldClear && m.commence_time) {
+          const hoursSinceKickoff = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
+          if (hoursSinceKickoff > 24) {
+            shouldClear = true;
+            reason = `kickoff il y a ${Math.round(hoursSinceKickoff / 60 * 10) / 10}j`;
+          }
+        }
+
+        if (shouldClear) {
+          console.log(`  [Live] Stale rule: ${m.home_team} vs ${m.away_team} — ${reason} → force FINISHED`);
+          m.live_score = null;
+          m.live_minute = null;
+          m.live_status = 'FT';
+          m.live_intensity = null;
+          m.live_xg = null;
+          m.live_shots = null;
+          m.live_shots_on_target = null;
+          m.live_corners = null;
+          m.live_possession = null;
+          m.live_dangerous_attacks = null;
+          m.live_momentum = null;
+          staleFixed++;
+          updated = true;
+        }
+      }
+      if (staleFixed > 0) console.log(`  [Live] Stale rule: ${staleFixed} matchs forcés FINISHED`);
 
       if (updated && sseClients.size > 0) {
         broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
@@ -5683,6 +8664,105 @@ server.listen(PORT, async () => {
     }, msUntil);
   }
   scheduleMorningRefresh();
+}); // end server.listen
 
-  console.log(`\n  ✓ Prêt — ${db.matches.length} matchs disponibles\n`);
-});
+// ── BootInit runs IN BACKGROUND — server already listening ──
+(async function bootInit() {
+  console.log('  [Boot] Chargement initial des données (background)…');
+
+  const cacheStats = apiCacheStats();
+  if (cacheStats.total > 0) {
+    console.log(`  [Boot] 🗄️ Cache API: ${cacheStats.total} entrées (${cacheStats.bySource.map(s => `${s.source}:${s.c}`).join(', ')})`);
+  }
+
+  // Timeout guard: max 30s pour le boot initial
+  const BOOT_TIMEOUT = 30000;
+  const bootDeadline = Date.now() + BOOT_TIMEOUT;
+
+  const now = Date.now();
+  const oddsAge = db.lastOddsUpdate ? now - new Date(db.lastOddsUpdate).getTime() : Infinity;
+  const statsAge = db.lastStatsUpdate ? now - new Date(db.lastStatsUpdate).getTime() : Infinity;
+
+  // Odds : refresh si > 12h OU pas de matchs en DB
+  if (!db.matches.length || oddsAge > 12 * 3600 * 1000) {
+    console.log(`  [Boot] Odds cache ${!db.matches.length ? 'vide' : `expiré (${Math.round(oddsAge/3600000)}h)`} → refresh`);
+    try {
+      await Promise.race([
+        fetchOdds(true),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), Math.max(5000, bootDeadline - Date.now())))
+      ]);
+    } catch(e) {
+      console.warn('  [Boot] Odds échouées ou timeout — fallback cache SQLite:', e.message);
+    }
+  } else {
+    console.log(`  [Boot] Odds OK — ${db.matches.length} matchs en cache (${Math.round(oddsAge/3600000)}h)`);
+  }
+
+  // Stats : refresh si > 12h OU pas d'équipes en DB OU ligues manquantes
+  const hasTeams = Object.keys(db.teamStats).length > 0;
+  const configuredLeagueIds = leaguesConfig.leagues.filter(l => l.id).map(l => l.id);
+  const leaguesWithStandings = new Set(Object.values(db.teamStats).map(s => s.leagueId).filter(Boolean));
+  const missingLeagues = configuredLeagueIds.filter(lid => !leaguesWithStandings.has(lid));
+  const hasMissingLeagues = missingLeagues.length > 0;
+
+  if (!hasTeams || statsAge > 12 * 3600 * 1000 || hasMissingLeagues) {
+    if (hasMissingLeagues) {
+      console.log(`  [Boot] Stats: ${missingLeagues.length} nouvelles ligues détectées → refresh forcé`);
+    } else {
+      console.log(`  [Boot] Stats cache ${!hasTeams ? 'vide' : `expiré (${Math.round(statsAge/3600000)}h)`} → refresh`);
+    }
+    try {
+      await Promise.race([
+        fetchStats(true),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), Math.max(5000, bootDeadline - Date.now())))
+      ]);
+    } catch(e) {
+      console.warn('  [Boot] Stats échouées ou timeout — fallback cache SQLite:', e.message);
+    }
+  } else {
+    console.log(`  [Boot] Stats OK — ${Object.keys(db.teamStats).length} équipes en cache (${Math.round(statsAge/3600000)}h)`);
+  }
+
+  // Si aucun match (API down + cache vide), charger la démo
+  if (!db.matches.length && cachedMatches.length > 0) {
+    console.log('  [Boot] 🛡️ Fallback tampon mémoire —', cachedMatches.length, 'matchs restaurés');
+    db.matches = JSON.parse(JSON.stringify(cachedMatches));
+    db.status = 'cache_fallback';
+    saveDB();
+  } else if (!db.matches.length) {
+    console.log('  [Boot] Aucun match live → chargement données démo');
+    db.matches = buildDemoMatches();
+    db.status = 'demo';
+    saveDB();
+  }
+
+  // Sync finale des tampons mémoire
+  syncCacheBuffers();
+
+  serverReady = true;
+  console.log(`\n  ✓ Prêt — ${db.matches.length} matchs disponibles (cache v${cacheVersion})\n`);
+
+  // Émettre SSE system_ready à tous les clients connectés
+  if (sseClients.size > 0) {
+    broadcastSSE('system_ready', { matches: db.matches.length, status: db.status, ts: Date.now(), cacheVersion });
+    console.log(`  [Boot] SSE system_ready → ${sseClients.size} clients notifiés`);
+  }
+
+  // Charger le tracker de pré-chargement
+  loadPreloadTracker();
+
+  // Lancer le Global BSD Preload 1 minute après le boot
+  console.log(`  [PRELOAD] Pré-chargement BSD programmé dans ${PRELOAD_START_DELAY_MS/1000}s...`);
+  setTimeout(() => {
+    runGlobalPreload().catch(e => console.error('[PRELOAD] Erreur:', e.message));
+  }, PRELOAD_START_DELAY_MS);
+
+  // Lancer le Proactive Hydrator 90s après le boot, puis toutes les 15min
+  console.log(`  [HYDRATOR] Worker autonome programmé dans ${HYDRATOR_START_DELAY_MS/1000}s (cycle ${HYDRATOR_INTERVAL_MS/60000}min)...`);
+  setTimeout(() => {
+    runProactiveHydrator().catch(e => console.error('[HYDRATOR] Erreur:', e.message));
+  }, HYDRATOR_START_DELAY_MS);
+  setInterval(() => {
+    runProactiveHydrator().catch(e => console.error('[HYDRATOR] Cycle erreur:', e.message));
+  }, HYDRATOR_INTERVAL_MS);
+})(); // end bootInit IIFE
