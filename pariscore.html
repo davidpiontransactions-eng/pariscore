@@ -4605,66 +4605,85 @@ function extractProScoutTelegram(report) {
   return m ? m[1].trim() : '';
 }
 
+function showScoutQueue(el, matchId, retrySeconds) {
+  let countdown = retrySeconds;
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:36px 16px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.3px;">🎯 Analyse Tactique en préparation</div>
+      <div style="font-size:11px;color:var(--text3);">File d'attente — traitement en cours...</div>
+      <div style="width:220px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;">
+        <div id="scout-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--green),#29b6f6);border-radius:2px;transition:width .8s ease;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;" id="scout-retry-msg">Retry dans ${countdown}s</div>
+    </div>`;
+  // Animate progress bar from 0 → 90% over countdown duration
+  const total = countdown * 1000;
+  const start = Date.now();
+  const barEl = () => el.querySelector('#scout-progress-bar');
+  const animFrame = () => {
+    const pct = Math.min(90, ((Date.now() - start) / total) * 90);
+    const b = barEl(); if (b) b.style.width = pct + '%';
+  };
+  const barInterval = setInterval(animFrame, 100);
+  const countInterval = setInterval(() => {
+    countdown--;
+    const msg = el.querySelector('#scout-retry-msg');
+    if (msg) msg.textContent = countdown > 0 ? `Retry dans ${countdown}s` : 'Connexion...';
+    if (countdown <= 0) {
+      clearInterval(countInterval);
+      clearInterval(barInterval);
+      const b = barEl(); if (b) b.style.width = '100%';
+      buildScoutingTab(matchId);
+    }
+  }, 1000);
+}
+
 async function buildScoutingTab(matchId) {
   const el = document.getElementById('scout-content');
   if (!el) return;
-  el.innerHTML = `<div class="ps-loading"><div class="ps-spinner"></div><span>Génération du rapport Pro Scouting...</span></div>`;
-  let retryTimer = null;
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:36px 16px;text-align:center;">
+      <div class="ps-spinner"></div>
+      <div style="font-size:12px;color:var(--text3);">🎯 PRO SCOUT v2 — Analyse en cours de préparation...</div>
+    </div>`;
   try {
     const res = await fetch(`/api/v1/scout/pro/${encodeURIComponent(matchId)}`);
-    if (res.status === 429) {
-      let countdown = 5;
-      const showRetry = () => {
-        el.innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:32px 16px;text-align:center;">
-            <div class="ps-spinner"></div>
-            <div style="font-size:13px;font-weight:600;color:var(--text2);">✨ NOUVEAU — PRO SCOUT v2</div>
-            <div style="font-size:12px;color:var(--text3);">Affluence élevée : Analyse en cours de préparation...</div>
-            <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;" id="scout-retry-msg">Retry dans ${countdown}s</div>
-          </div>`;
-        retryTimer = setInterval(() => {
-          countdown--;
-          const msg = document.getElementById('scout-retry-msg');
-          if (msg) msg.textContent = countdown > 0 ? `Retry dans ${countdown}s` : 'Connexion...';
-          if (countdown <= 0) {
-            clearInterval(retryTimer);
-            buildScoutingTab(matchId);
-          }
-        }, 1000);
-      };
-      showRetry();
-      return;
-    }
+    if (res.status === 429) { showScoutQueue(el, matchId, 5); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+
     const reportHtml = typeof marked !== 'undefined' ? marked.parse(data.report) : data.report.replace(/\n/g,'<br>');
     const tgText = extractProScoutTelegram(data.report);
-    const badgeLabel = data.fallback
-      ? '<span style="font-size:11px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--amber);letter-spacing:.5px;">⚡ ANALYSE STATISTIQUE BRUTE</span>'
-      : '<span style="font-size:11px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green);letter-spacing:.5px;">CERTIFIÉ PARISCORE PRO</span>';
-    const badgeBorder = data.fallback ? 'rgba(255,167,38,0.35)' : 'rgba(0,230,118,0.35)';
-    const badgeBg = data.fallback
+
+    const isFallback = !!data.fallback;
+    const badgeIcon  = isFallback ? '⚡' : '🏅';
+    const badgeText  = isFallback ? '⚡ ANALYSE MATHÉMATIQUE (Fast Mode)' : 'CERTIFIÉ PARISCORE PRO';
+    const badgeColor = isFallback ? 'var(--amber)' : 'var(--green)';
+    const badgeBorder = isFallback ? 'rgba(255,167,38,0.35)' : 'rgba(0,230,118,0.35)';
+    const badgeBg    = isFallback
       ? 'linear-gradient(135deg,rgba(255,167,38,0.12),rgba(255,77,77,0.06))'
       : 'linear-gradient(135deg,rgba(0,230,118,0.15),rgba(41,182,246,0.1))';
-    const statusLabel = data.cached ? '💾 CACHE 24H' : data.fallback ? '⚡ IA SURCHARGÉE · STATS BRUTES' : '✨ NOUVEAU · 5 PILIERS';
+    const statusParts = [];
+    if (data.cached) statusParts.push('💾 CACHE 24H');
+    else if (isFallback) statusParts.push('⚡ FAST MODE · IA SURCHARGÉE');
+    else { statusParts.push('✨ NOUVEAU · 5 PILIERS'); if (data.queue_size > 1) statusParts.push(`File: ${data.queue_size}`); }
+
     el.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:7px;background:${badgeBg};border:1px solid ${badgeBorder};border-radius:20px;padding:5px 13px;">
-          <span style="font-size:14px">${data.fallback ? '⚡' : '🏅'}</span>
-          ${badgeLabel}
+          <span style="font-size:14px">${badgeIcon}</span>
+          <span style="font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:${badgeColor};letter-spacing:.5px;">${badgeText}</span>
         </div>
-        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto;">${statusLabel}</span>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto;">${statusParts.join(' · ')}</span>
         ${tgText ? `<button onclick="copyProScoutTelegram(this)" data-tg="${encodeURIComponent(tgText)}" style="background:rgba(41,182,246,0.12);border:1px solid rgba(41,182,246,0.3);color:#29b6f6;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s;">📋 Copier pour Telegram</button>` : ''}
       </div>
       <div class="ps-report">${reportHtml}</div>
     `;
   } catch(e) {
-    if (retryTimer) clearInterval(retryTimer);
     el.innerHTML = `
-      <div style="color:var(--text2);padding:20px;text-align:center;">
-        <div style="font-size:13px;margin-bottom:6px;">✨ NOUVEAU — PRO SCOUT v2</div>
-        <div style="font-size:11px;color:var(--text3);">Affluence élevée : Analyse en cours de préparation...</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;font-family:'DM Mono',monospace;">${e.message}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 16px;text-align:center;">
+        <div style="font-size:13px;font-weight:600;color:var(--text2);">🎯 PRO SCOUT v2</div>
+        <div style="font-size:11px;color:var(--text3);">Forte affluence : Analyse en cours de préparation...</div>
       </div>`;
   }
 }

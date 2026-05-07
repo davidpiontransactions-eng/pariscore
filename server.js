@@ -2398,13 +2398,33 @@ async function fetchTeamAdvancedStats(teamKey, teamId, leagueId, season) {
   }
 }
 
-// ─── HELPER GEMINI (appel synchrone one-shot) ────────────────────────────────
-// ─── GEMINI QUEUE — 1 concurrent call max ────────────────────────────────────
+// ─── GEMINI RESILIENCE LAYER v76 ─────────────────────────────────────────────
+
+// 1. Concurrency queue (1 call at a time) + depth tracker
 let _geminiQueueTail = Promise.resolve();
+let _geminiQueueSize = 0;
 function geminiEnqueue(fn) {
-  const next = _geminiQueueTail.then(() => fn());
-  _geminiQueueTail = next.catch(() => {});
-  return next;
+  _geminiQueueSize++;
+  const slot = _geminiQueueTail.then(async () => {
+    try { return await fn(); } finally { _geminiQueueSize = Math.max(0, _geminiQueueSize - 1); }
+  });
+  _geminiQueueTail = slot.catch(() => {});
+  return slot;
+}
+
+// 2. Per-match in-flight deduplication
+const _geminiInFlight = new Map(); // matchId → Promise<result>
+
+// 3. Global RPM rate limiter
+const GEMINI_RPM_LIMIT = parseInt(process.env.GEMINI_RPM_LIMIT || '15', 10);
+let _geminiCallsThisMinute = 0;
+let _geminiRateLimitReset  = Date.now() + 60000;
+function geminiRateLimitOk() {
+  const now = Date.now();
+  if (now >= _geminiRateLimitReset) { _geminiCallsThisMinute = 0; _geminiRateLimitReset = now + 60000; }
+  if (_geminiCallsThisMinute >= GEMINI_RPM_LIMIT) return false;
+  _geminiCallsThisMinute++;
+  return true;
 }
 
 async function callGeminiWithRetry(prompt, maxTokens = 600) {
@@ -2731,12 +2751,7 @@ RÉDIGE maintenant le rapport complet en suivant EXACTEMENT ce format Markdown :
 \`\`\``;
 }
 
-async function getProScoutReport(match) {
-  const cacheKey = `pro_scout_${match.id}`;
-  const cached = kvGet(cacheKey);
-  if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
-    return { report: cached.report, cached: true };
-  }
+async function _doProScoutReport(match) {
   const hKey = normName(match.home_team);
   const aKey = normName(match.away_team);
   const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
@@ -2752,16 +2767,42 @@ async function getProScoutReport(match) {
   const prompt = buildProScoutPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad, pressContext);
   try {
     const report = await callGemini(prompt, 1500);
+    const cacheKey = `pro_scout_${match.id}`;
     kvSet(cacheKey, { report, ts: Date.now() });
-    return { report, cached: false, fallback: false };
+    return { report, cached: false, fallback: false, queue_size: _geminiQueueSize };
   } catch(e) {
     if (e.message === 'GEMINI_429') {
-      console.warn(`  [ProScout] Gemini quota épuisé — fallback statistique pour ${match.id}`);
-      const report = buildMathFallbackReport(match);
-      return { report, cached: false, fallback: true };
+      console.warn(`  [ProScout] Gemini quota épuisé — fallback math pour ${match.id}`);
+      return { report: buildMathFallbackReport(match), cached: false, fallback: true, queue_size: _geminiQueueSize };
     }
     throw e;
   }
+}
+
+async function getProScoutReport(match) {
+  // 1. Cache hit — skip AI entirely
+  const cacheKey = `pro_scout_${match.id}`;
+  const cached = kvGet(cacheKey);
+  if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
+    return { report: cached.report, cached: true, fallback: false, queue_size: 0 };
+  }
+
+  // 2. In-flight deduplication — same match already being processed
+  if (_geminiInFlight.has(match.id)) {
+    console.log(`  [ProScout] Dedup — attente du résultat en cours pour ${match.id}`);
+    return await _geminiInFlight.get(match.id);
+  }
+
+  // 3. Rate limit exceeded — instant math fallback
+  if (!geminiRateLimitOk()) {
+    console.warn(`  [ProScout] RPM limit atteint (${GEMINI_RPM_LIMIT}/min) — fallback math pour ${match.id}`);
+    return { report: buildMathFallbackReport(match), cached: false, fallback: true, queue_size: _geminiQueueSize };
+  }
+
+  // 4. Process: register in-flight, then run through queue
+  const promise = _doProScoutReport(match).finally(() => _geminiInFlight.delete(match.id));
+  _geminiInFlight.set(match.id, promise);
+  return promise;
 }
 
 async function getScoutReport(match) {
