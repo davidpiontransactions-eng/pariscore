@@ -501,6 +501,48 @@ async function fetchTeamLastFixturesBSDOrSofa(teamName, bsdLeagueId, sofaTeamIdH
   } catch(e) { return bsdMatches; }
 }
 
+// Sofascore stats supplement: derive home/away stats from last matches when API-Football has no data
+// Used for leagues added via sofa_id only (Austrian, Czech, Danish, Ukrainian, Norwegian, Croatian, Serbian)
+async function fetchSofascoreTeamStats(teamName, leagueId) {
+  try {
+    const found = await searchSofascoreTeam(teamName);
+    if (!found?.id) return null;
+    // Fetch 3 pages = ~90 matches for reliable stats
+    const allMatches = await fetchSofascoreTeamLastMatches(found.id, 3);
+    if (!allMatches.length) return null;
+    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const tNorm = norm(teamName);
+    const _stopW = new Set(['al','fc','sc','ac','cf','sd','cd','fk','sk','if','bk','afc','bfc']);
+    const sig = tNorm.split(' ').find(w => w.length >= 3 && !_stopW.has(w)) || tNorm.split(' ')[0];
+    const homeM = allMatches.filter(m => norm(m.home||'').includes(sig)).slice(0, 20);
+    const awayM = allMatches.filter(m => norm(m.away||'').includes(sig)).slice(0, 20);
+    const calc = (matches, isHome) => {
+      if (!matches.length) return { ppg: 0, avgScored: 0, avgConceded: 0, wins: 0, draws: 0, losses: 0, played: 0 };
+      let w=0, d=0, l=0, gf=0, ga=0;
+      matches.forEach(m => {
+        const myG = isHome ? m.home_goals : m.away_goals;
+        const opG = isHome ? m.away_goals : m.home_goals;
+        if (myG == null || opG == null) return;
+        if (myG > opG) w++; else if (myG === opG) d++; else l++;
+        gf += myG; ga += opG;
+      });
+      const n = w + d + l || 1;
+      return { ppg: (w*3+d)/n, avgScored: gf/n, avgConceded: ga/n, wins: Math.round(w/n*100), draws: Math.round(d/n*100), losses: Math.round(l/n*100), played: n };
+    };
+    const hStats = calc(homeM, true);
+    const aStats = calc(awayM, false);
+    // Form from last 5 total matches
+    const last5 = allMatches.slice(0, 5);
+    const formStr = last5.map(m => {
+      const myG = norm(m.home||'').includes(sig) ? m.home_goals : m.away_goals;
+      const opG = norm(m.home||'').includes(sig) ? m.away_goals : m.home_goals;
+      if (myG == null) return '';
+      return myG > opG ? 'W' : myG === opG ? 'D' : 'L';
+    }).filter(Boolean).join('');
+    return { sofaTeamId: found.id, leagueId, form: formStr, _real: true, _sofa: true, home: hStats, away: aStats };
+  } catch(e) { return null; }
+}
+
 // Helper BSD: requête GET avec retry
 async function bsdFetch(endpoint, retries = 2) {
   const url = `${BSD_BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}tz=Europe/Paris`;
@@ -4182,6 +4224,7 @@ async function fetchTeamLastFixtures(teamId, limit = 15) {
 
 // BSD fallback: last N finished matches for a team from BSD /events/ with pagination
 async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
+  if (!bsdLeagueId) return []; // guard: no BSD league → skip
   try {
     const cacheKey = `bsd_last_fx_${bsdLeagueId}_${teamName.replace(/\s+/g,'_')}`;
     const cached = apiCacheGet(cacheKey, 'bsd_last_fx');
@@ -4917,6 +4960,31 @@ async function fetchStats(force = false) {
 
     // Injuries pre-fetch — SUPPRIMÉ (données mappées via flux BSD dans buildMatchRecord)
     console.log('✅ [OPTIMISATION] Données Injuries mappées directement via le flux principal (Appel API tiers supprimé).');
+
+    // Phase 3: Sofascore supplement — fill missing stats for teams in sofa-only leagues
+    const teamsNeedingSofa = [];
+    for (const league of leaguesConfig.leagues) {
+      if (!league.sofa_id) continue;
+      const leagueMatches = db.matches.filter(m => m.sport === league.odds_key);
+      const teamSet = new Set();
+      leagueMatches.forEach(m => { teamSet.add(m.home_team); teamSet.add(m.away_team); });
+      for (const tName of teamSet) {
+        const k = normName(tName);
+        if (db.teamStats[k]?._real) continue;
+        teamsNeedingSofa.push({ teamName: tName, leagueId: league.id, leagueName: league.name });
+      }
+    }
+    if (teamsNeedingSofa.length) {
+      console.log(`  [Cron:Stats] Phase 3: Sofascore supplement — ${teamsNeedingSofa.length} équipes sans stats réelles…`);
+      let sofaFilled = 0;
+      for (const { teamName, leagueId } of teamsNeedingSofa) {
+        try {
+          const stats = await fetchSofascoreTeamStats(teamName, leagueId);
+          if (stats) { db.teamStats[normName(teamName)] = { teamId: null, rank: 0, ...stats }; sofaFilled++; }
+        } catch(e) { /* silencieux */ }
+      }
+      if (sofaFilled) console.log(`  [Cron:Stats] Phase 3: ✓ ${sofaFilled} équipes alimentées via Sofascore`);
+    }
 
     // Re-fusionner les matchs avec les nouvelles stats
     if (db.matches.length) await fetchOdds();
@@ -7833,8 +7901,8 @@ function handleAPI(req, res, pathname, query) {
           (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
           hTeamId ? fetchTopPerformers(hTeamId, leagueId, season) : (hHasBsd ? fetchTopPerformersBSD(hBsdTeamId, hBsdSeasonId) : Promise.resolve({ attackers: [], defenders: [] })),
           aTeamId ? fetchTopPerformers(aTeamId, leagueId, season) : (aHasBsd ? fetchTopPerformersBSD(aBsdTeamId, aBsdSeasonId) : Promise.resolve({ attackers: [], defenders: [] })),
-          hTeamId ? fetchTeamLastFixtures(hTeamId, 15) : (cfg ? fetchTeamLastFixturesBSDOrSofa(match.home_team, cfg, null) : Promise.resolve([])),
-          aTeamId ? fetchTeamLastFixtures(aTeamId, 15) : (cfg ? fetchTeamLastFixturesBSDOrSofa(match.away_team, cfg, null) : Promise.resolve([])),
+          hTeamId ? fetchTeamLastFixtures(hTeamId, 15) : fetchTeamLastFixturesBSDOrSofa(match.home_team, cfg || null, null),
+          aTeamId ? fetchTeamLastFixtures(aTeamId, 15) : fetchTeamLastFixturesBSDOrSofa(match.away_team, cfg || null, null),
         ]);
         const h2h = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
         const topScorers = topScorersRes.status === 'fulfilled' ? topScorersRes.value : [];
