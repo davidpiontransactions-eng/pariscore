@@ -4608,26 +4608,64 @@ function extractProScoutTelegram(report) {
 async function buildScoutingTab(matchId) {
   const el = document.getElementById('scout-content');
   if (!el) return;
-  el.innerHTML = '<div class="ps-loading"><div class="ps-spinner"></div><span>Génération du rapport Pro Scouting...</span></div>';
+  el.innerHTML = `<div class="ps-loading"><div class="ps-spinner"></div><span>Génération du rapport Pro Scouting...</span></div>`;
+  let retryTimer = null;
   try {
     const res = await fetch(`/api/v1/scout/pro/${encodeURIComponent(matchId)}`);
+    if (res.status === 429) {
+      let countdown = 5;
+      const showRetry = () => {
+        el.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:32px 16px;text-align:center;">
+            <div class="ps-spinner"></div>
+            <div style="font-size:13px;font-weight:600;color:var(--text2);">✨ NOUVEAU — PRO SCOUT v2</div>
+            <div style="font-size:12px;color:var(--text3);">Affluence élevée : Analyse en cours de préparation...</div>
+            <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;" id="scout-retry-msg">Retry dans ${countdown}s</div>
+          </div>`;
+        retryTimer = setInterval(() => {
+          countdown--;
+          const msg = document.getElementById('scout-retry-msg');
+          if (msg) msg.textContent = countdown > 0 ? `Retry dans ${countdown}s` : 'Connexion...';
+          if (countdown <= 0) {
+            clearInterval(retryTimer);
+            buildScoutingTab(matchId);
+          }
+        }, 1000);
+      };
+      showRetry();
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const reportHtml = typeof marked !== 'undefined' ? marked.parse(data.report) : data.report.replace(/\n/g,'<br>');
     const tgText = extractProScoutTelegram(data.report);
+    const badgeLabel = data.fallback
+      ? '<span style="font-size:11px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--amber);letter-spacing:.5px;">⚡ ANALYSE STATISTIQUE BRUTE</span>'
+      : '<span style="font-size:11px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--green);letter-spacing:.5px;">CERTIFIÉ PARISCORE PRO</span>';
+    const badgeBorder = data.fallback ? 'rgba(255,167,38,0.35)' : 'rgba(0,230,118,0.35)';
+    const badgeBg = data.fallback
+      ? 'linear-gradient(135deg,rgba(255,167,38,0.12),rgba(255,77,77,0.06))'
+      : 'linear-gradient(135deg,rgba(0,230,118,0.15),rgba(41,182,246,0.1))';
+    const statusLabel = data.cached ? '💾 CACHE 24H' : data.fallback ? '⚡ IA SURCHARGÉE · STATS BRUTES' : '✨ NOUVEAU · 5 PILIERS';
     el.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,rgba(0,230,118,0.15),rgba(41,182,246,0.1));border:1px solid rgba(0,230,118,0.35);border-radius:20px;padding:5px 13px;">
-          <span style="font-size:14px">🏅</span>
-          <span style="font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:.5px;">CERTIFIÉ PARISCORE PRO</span>
+        <div style="display:flex;align-items:center;gap:7px;background:${badgeBg};border:1px solid ${badgeBorder};border-radius:20px;padding:5px 13px;">
+          <span style="font-size:14px">${data.fallback ? '⚡' : '🏅'}</span>
+          ${badgeLabel}
         </div>
-        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto;">${data.cached ? '💾 CACHE 24H' : '✨ NOUVEAU · 5 PILIERS'}</span>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto;">${statusLabel}</span>
         ${tgText ? `<button onclick="copyProScoutTelegram(this)" data-tg="${encodeURIComponent(tgText)}" style="background:rgba(41,182,246,0.12);border:1px solid rgba(41,182,246,0.3);color:#29b6f6;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s;">📋 Copier pour Telegram</button>` : ''}
       </div>
       <div class="ps-report">${reportHtml}</div>
     `;
   } catch(e) {
-    el.innerHTML = `<div style="color:var(--red);padding:16px">Erreur : ${e.message}</div>`;
+    if (retryTimer) clearInterval(retryTimer);
+    el.innerHTML = `
+      <div style="color:var(--text2);padding:20px;text-align:center;">
+        <div style="font-size:13px;margin-bottom:6px;">✨ NOUVEAU — PRO SCOUT v2</div>
+        <div style="font-size:11px;color:var(--text3);">Affluence élevée : Analyse en cours de préparation...</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;font-family:'DM Mono',monospace;">${e.message}</div>
+      </div>`;
   }
 }
 

@@ -2399,19 +2399,140 @@ async function fetchTeamAdvancedStats(teamKey, teamId, leagueId, season) {
 }
 
 // ─── HELPER GEMINI (appel synchrone one-shot) ────────────────────────────────
-async function callGemini(prompt, maxTokens = 600) {
+// ─── GEMINI QUEUE — 1 concurrent call max ────────────────────────────────────
+let _geminiQueueTail = Promise.resolve();
+function geminiEnqueue(fn) {
+  const next = _geminiQueueTail.then(() => fn());
+  _geminiQueueTail = next.catch(() => {});
+  return next;
+}
+
+async function callGeminiWithRetry(prompt, maxTokens = 600) {
   if (!GEMINI_API_KEY) throw new Error('Clé Gemini non configurée');
-  const res = await httpsPost(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
-      safetySettings: GEMINI_SAFETY_SETTINGS,
+  const delays = [0, 2000, 5000];
+  let lastErr;
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+    try {
+      const res = await httpsPost(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
+          safetySettings: GEMINI_SAFETY_SETTINGS,
+        }
+      );
+      if (res.status === 429) {
+        console.warn(`  [Gemini] 429 quota — tentative ${attempt + 1}/${delays.length}`);
+        lastErr = new Error('GEMINI_429');
+        continue;
+      }
+      const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text && res.status !== 200) throw new Error(`Gemini HTTP ${res.status}`);
+      return text;
+    } catch(e) {
+      if (e.message === 'GEMINI_429') { lastErr = e; continue; }
+      throw e;
     }
-  );
-  const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text && res.status !== 200) throw new Error(`Gemini HTTP ${res.status}`);
-  return text;
+  }
+  throw lastErr || new Error('GEMINI_429');
+}
+
+async function callGemini(prompt, maxTokens = 600) {
+  return geminiEnqueue(() => callGeminiWithRetry(prompt, maxTokens));
+}
+
+// ─── MATH FALLBACK — rapport statistique pur (sans IA) ───────────────────────
+function buildMathFallbackReport(match) {
+  const p   = match.poisson || {};
+  const eg  = match.expectedGoals || {};
+  const hs  = match.stats?.home || {};
+  const as_ = match.stats?.away || {};
+  const dt  = new Date(match.commence_time);
+  const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const signal = (pct, hi = 55, lo = 45) =>
+    pct >= hi ? '🟢 Fort' : pct >= lo ? '🟡 Moyen' : '🔴 Faible';
+
+  const topScore = p.topScores?.[0];
+  const topScore2 = p.topScores?.[1];
+
+  const bestEdgeLine = match.best_edge?.edge > 0
+    ? `💎 **Value Bet détecté** : ${match.best_edge.label} @ ${match.best_edge.odds?.toFixed(2) ?? '?'} — Edge **+${match.best_edge.edge?.toFixed(1) ?? '?'}%** via ${match.best_edge.bk ?? 'N/A'}`
+    : `Aucun edge positif détecté sur ce match.`;
+
+  return `# 🏟️ ${match.home_team} vs ${match.away_team}
+## ${match.league} — ${dateStr} à ${timeStr}
+
+---
+
+## 🏅 RAPPORT STATISTIQUE BRUT
+> ⚡ *IA surchargée — Analyse statistique certifiée PariScore (données Poisson)*
+
+---
+
+## 📊 PROBABILITÉS MATHÉMATIQUES CERTIFIÉES
+
+| Marché | Probabilité | Signal |
+|--------|-------------|--------|
+| ${match.home_team} gagne | **${p.homeWin ?? 0}%** | ${signal(p.homeWin ?? 0)} |
+| Match Nul | **${p.draw ?? 0}%** | ${signal(p.draw ?? 0, 30, 20)} |
+| ${match.away_team} gagne | **${p.awayWin ?? 0}%** | ${signal(p.awayWin ?? 0)} |
+| BTTS | **${p.btts ?? 0}%** | ${signal(p.btts ?? 0)} |
+| Over 0.5 | **${p.over05 ?? 0}%** | ${signal(p.over05 ?? 0, 85, 70)} |
+| Over 1.5 | **${p.over15 ?? 0}%** | ${signal(p.over15 ?? 0, 70, 55)} |
+| Over 2.5 | **${p.over25 ?? 0}%** | ${signal(p.over25 ?? 0)} |
+| Over 3.5 | **${p.over35 ?? 0}%** | ${signal(p.over35 ?? 0, 40, 28)} |
+| Under 2.5 | **${100 - (p.over25 ?? 0)}%** | ${signal(100 - (p.over25 ?? 0))} |
+| Clean Sheet Dom | **${p.cs00 ?? 0}%** | ${signal(p.cs00 ?? 0, 35, 20)} |
+
+---
+
+## ⚽ xG ATTENDUS (Modèle Poisson)
+
+| Équipe | xG (λ) | PPG | Buts/match | Encaissés/match |
+|--------|--------|-----|-----------|----------------|
+| ${match.home_team} (Dom) | **${eg.home?.toFixed(2) ?? '?'}** | ${hs.ppg ?? '?'} | ${hs.avgScored?.toFixed(2) ?? '?'} | ${hs.avgConceded?.toFixed(2) ?? '?'} |
+| ${match.away_team} (Ext) | **${eg.away?.toFixed(2) ?? '?'}** | ${as_.ppg ?? '?'} | ${as_.avgScored?.toFixed(2) ?? '?'} | ${as_.avgConceded?.toFixed(2) ?? '?'} |
+
+---
+
+## 🎯 SCORES LES PLUS PROBABLES
+${topScore ? `1. **${topScore.score}** — ${topScore.prob}%` : ''}
+${topScore2 ? `2. **${topScore2.score}** — ${topScore2.prob}%` : ''}
+${p.topScores?.[2] ? `3. **${p.topScores[2].score}** — ${p.topScores[2].prob}%` : ''}
+
+---
+
+## 💰 VALUE BET
+${bestEdgeLine}
+
+---
+
+## 📈 FORMES RÉCENTES (L5)
+- **${match.home_team}** : ${match.home_form?.slice(0,5) || 'N/A'}
+- **${match.away_team}** : ${match.away_form?.slice(0,5) || 'N/A'}
+
+---
+
+## 📲 SCRIPT TELEGRAM
+\`\`\`telegram
+🏟️ ${match.home_team} vs ${match.away_team}
+📅 ${dateStr} à ${timeStr} | ${match.league}
+
+📊 ANALYSE STATISTIQUE PARISCORE
+
+¤ 1X2 : 1 (${p.homeWin ?? 0}%) / X (${p.draw ?? 0}%) / 2 (${p.awayWin ?? 0}%)
+¤ Over 2.5 : ${p.over25 ?? 0}% | BTTS : ${p.btts ?? 0}%
+¤ Score probable : ${topScore?.score ?? '?'} (${topScore?.prob ?? 0}%)
+¤ xG : ${eg.home?.toFixed(2) ?? '?'} vs ${eg.away?.toFixed(2) ?? '?'}
+
+${bestEdgeLine.replace(/\*\*/g, '')}
+
+🔥 Mettez un 🔥 si vous validez !
+— PariScore Pro 🏅
+\`\`\``;
 }
 
 // ─── INJURIES PAR ÉQUIPE (cache 24h, skip si pas d'ID) ─────────────────────
@@ -2629,9 +2750,18 @@ async function getProScoutReport(match) {
   ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
 
   const prompt = buildProScoutPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad, pressContext);
-  const report = await callGemini(prompt, 1500);
-  kvSet(cacheKey, { report, ts: Date.now() });
-  return { report, cached: false };
+  try {
+    const report = await callGemini(prompt, 1500);
+    kvSet(cacheKey, { report, ts: Date.now() });
+    return { report, cached: false, fallback: false };
+  } catch(e) {
+    if (e.message === 'GEMINI_429') {
+      console.warn(`  [ProScout] Gemini quota épuisé — fallback statistique pour ${match.id}`);
+      const report = buildMathFallbackReport(match);
+      return { report, cached: false, fallback: true };
+    }
+    throw e;
+  }
 }
 
 async function getScoutReport(match) {
