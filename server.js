@@ -2415,7 +2415,16 @@ function geminiEnqueue(fn) {
 // 2. Per-match in-flight deduplication
 const _geminiInFlight = new Map(); // matchId → Promise<result>
 
-// 3. Global RPM rate limiter
+// 3. Throttle: minimum 15s between consecutive Gemini calls (no burst allowed)
+const GEMINI_THROTTLE_MS = parseInt(process.env.GEMINI_THROTTLE_MS || '15000', 10);
+let _geminiLastCallTime = 0;
+function geminiThrottleMs() {
+  const gap = Date.now() - _geminiLastCallTime;
+  return gap >= GEMINI_THROTTLE_MS ? 0 : GEMINI_THROTTLE_MS - gap;
+}
+function geminiMarkCall() { _geminiLastCallTime = Date.now(); }
+
+// 4. RPM safety net (backup counter, separate from throttle)
 const GEMINI_RPM_LIMIT = parseInt(process.env.GEMINI_RPM_LIMIT || '15', 10);
 let _geminiCallsThisMinute = 0;
 let _geminiRateLimitReset  = Date.now() + 60000;
@@ -2459,7 +2468,16 @@ async function callGeminiWithRetry(prompt, maxTokens = 600) {
 }
 
 async function callGemini(prompt, maxTokens = 600) {
-  return geminiEnqueue(() => callGeminiWithRetry(prompt, maxTokens));
+  return geminiEnqueue(async () => {
+    // Enforce 15s minimum gap between consecutive calls (no burst)
+    const wait = geminiThrottleMs();
+    if (wait > 0) {
+      console.log(`  [Gemini] Throttle — attente ${wait}ms avant prochain appel`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+    geminiMarkCall();
+    return callGeminiWithRetry(prompt, maxTokens);
+  });
 }
 
 // ─── MATH FALLBACK — rapport statistique pur (sans IA) ───────────────────────
