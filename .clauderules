@@ -1,0 +1,114 @@
+# PariScore — Claude Rules
+# Adapté depuis everything-claude-code (affaan-m) · Stack : Node.js vanilla + HTML/CSS/JS natif
+
+---
+
+## MUST ALWAYS
+
+- Zéro dépendance npm — modules Node.js natifs uniquement (`http`, `https`, `fs`, `path`, `url`, `crypto`).
+- Valider tous les inputs aux frontières système (routes API, query params, body JSON).
+- Gérer les erreurs explicitement — jamais de `catch` silencieux sur les routes.
+- Utiliser des constantes nommées pour les seuils, délais, limites (pas de magic numbers).
+- Préférer les early returns aux conditionnels imbriqués profonds.
+- Logger les erreurs serveur avec contexte (`[Module] message + données`).
+- Vérifier `node --check server.js` après toute modification du backend.
+- Utiliser `bd` (beads) pour tout suivi de tâche — pas de TodoWrite ni de fichiers markdown TODO.
+
+## MUST NEVER
+
+- Hardcoder des clés API, tokens ou secrets dans le code source (toujours `.env`).
+- Exposer des clés au frontend — tout proxy via `server.js`.
+- Renvoyer des codes d'erreur HTTP techniques (429, 500, etc.) à l'utilisateur final — toujours un fallback propre.
+- Muter l'état global `db` directement depuis des handlers async concurrents sans mutex.
+- Bloquer le thread principal Node.js avec des calculs lourds (Poisson, Bootstrap).
+- Committer `.env`, `database.json`, `history.json` ou tout fichier de cache runtime.
+- Introduire des abstractions spéculatives — YAGNI strict.
+
+---
+
+## SÉCURITÉ (avant tout commit)
+
+- [ ] Aucun secret hardcodé
+- [ ] Inputs validés (`!id || id === 'undefined' || id === 'null'`)
+- [ ] Path traversal bloqué (`path.resolve().startsWith(__dirname)`)
+- [ ] Fichiers sensibles protégés (`.env`, `database.json`, `.git/`) → HTTP 403
+- [ ] Body limité (`readBodyLimited` 1 Mo max) → HTTP 413
+- [ ] Messages d'erreur sans fuite d'info technique
+
+Si secret exposé : STOP → rotation immédiate → audit du code similaire.
+
+---
+
+## STYLE DE CODE
+
+### Nommage
+- Variables/fonctions : `camelCase` descriptif
+- Booléens : préfixes `is`, `has`, `should`, `can`
+- Constantes : `UPPER_SNAKE_CASE`
+- Modules/classes : `PascalCase`
+
+### Structure
+- Fonctions < 50 lignes idéalement
+- Extraction si logique dupliquée réelle (pas spéculative)
+- Commentaires : uniquement si le POURQUOI est non-évident (contrainte cachée, invariant subtil)
+
+### Gestion d'erreurs
+- `Promise.allSettled` pour les fetches parallèles indépendants (pas `Promise.all`)
+- Mutex (`isFetchingOdds`, `isFetchingStats`) relâchés dans `finally`
+- `unhandledRejection` + `uncaughtException` handlers actifs — le serveur ne crashe jamais
+
+---
+
+## MOTEUR MATHÉMATIQUE
+
+- Jamais de calcul Poisson si `expHome === 0 && expAway === 0` → erreur explicite.
+- Validation `validateMatchIntegrity()` avant tout affichage de probabilités.
+- Aucun résultat IA affiché si `avgScored === 0` ET `poisson.over25 === 0`.
+- Bootstrap UQD (si implémenté) : workers dédiés, pas inline.
+
+---
+
+## CASCADE IA (Groq → Gemini → Math)
+
+- Groq (Llama3) = provider primaire.
+- Gemini = fallback si Groq échoue.
+- Math fallback = toujours disponible, < 1ms, HTTP 200 garanti.
+- `callUniversalAI()` = point d'entrée unique — ne jamais appeler `callGroq`/`callGemini` directement depuis les routes.
+- Cache KV 24h (`pro_scout_{matchId}`) avec champ `provider` inclus.
+- RPM counter Gemini décrémenté uniquement quand Gemini est réellement appelé.
+
+---
+
+## GIT WORKFLOW
+
+Commits : conventional commits
+```
+feat: <description>
+fix: <description>
+refactor: <description>
+docs: <description>
+perf: <description>
+```
+
+Session close obligatoire :
+```bash
+git status
+git add <fichiers>
+bd dolt pull
+git commit -m "..."
+git push
+```
+
+---
+
+## ARCHITECTURE FRONTEND
+
+- Frontend "stupide" : `fetch('/api/v1/...')` → rendu pur, zéro calcul.
+- Clés API invisibles — jamais dans `pariscore.html`.
+- Pas de frameworks (pas de React, Vue, Angular) — vanilla JS natif.
+- `marked.js` pour rendu Markdown des rapports IA (CDN, déjà inclus).
+- Erreurs UI : toujours un message propre, jamais de code HTTP visible.
+
+---
+
+*PariScore .clauderules — adapté everything-claude-code — Mai 2026*
