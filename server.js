@@ -5446,10 +5446,48 @@ server.listen(PORT, async () => {
     saveDB();
   }
 
+  // ─── LIVE CLEANUP WORKER ─────────────────────────────────────────────────────
+  // Purge finished matches (FT/AET/PEN) that ended > 60min ago.
+  // Broadcasts match_removed SSE per match so frontend can fade-out without full re-render.
+  function startLiveCleanupWorker() {
+    const FT_PATTERN = /^(FT|AET|PEN|FT-?P|AET-?P)$/i;
+    // 90min game + 60min grace = 150min after kickoff
+    const FINISHED_GRACE_MS = 150 * 60 * 1000;
+
+    function runCleanup() {
+      const now = Date.now();
+      const toRemove = [];
+
+      db.matches = db.matches.filter(m => {
+        if (m.live_status && FT_PATTERN.test(m.live_status)) {
+          const kickoff = new Date(m.commence_time).getTime();
+          if (now - kickoff > FINISHED_GRACE_MS) {
+            toRemove.push(m.id);
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (toRemove.length > 0) {
+        console.log(`  [LiveClean] Suppression ${toRemove.length} match(s) terminé(s): ${toRemove.join(', ')}`);
+        for (const id of toRemove) {
+          broadcastSSE('match_removed', { id });
+        }
+        saveDB();
+      }
+    }
+
+    runCleanup(); // run once at boot
+    setInterval(runCleanup, 15 * 60 * 1000); // every 15min
+    console.log('  [LiveClean] Worker démarré — cycle 15min');
+  }
+
   // Cron jobs
   setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);     // 12h
   setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);   // 12h
   setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000); // 4h
+  startLiveCleanupWorker();
   // Nettoyage du cache API expiré (toutes les 2h)
   setInterval(() => {
     const cleaned = apiCacheCleanExpired();

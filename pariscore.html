@@ -2715,7 +2715,6 @@ function initSSE() {
     try {
       const data = JSON.parse(e.data);
       if (data.matches) {
-        const scrollY = window.scrollY;
         const scrollEl = document.scrollingElement;
         const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
         allMatches = data.matches;
@@ -2728,6 +2727,38 @@ function initSSE() {
         }
       }
     } catch(err) { console.warn('[SSE] Parse error', err); }
+  });
+
+  sseConnection.addEventListener('match_removed', e => {
+    try {
+      const { id } = JSON.parse(e.data);
+      if (!id) return;
+      // Remove from local state
+      allMatches = allMatches.filter(m => m.id !== id);
+      // Fade-out the specific row without re-rendering the whole table
+      const row = document.querySelector(`tr[data-match-id="${CSS.escape(id)}"]`);
+      if (row) {
+        row.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(-8px)';
+        setTimeout(() => {
+          row.remove();
+          // Show empty state if no rows left
+          const tbody = document.getElementById('vb-body');
+          if (tbody && tbody.querySelectorAll('tr').length === 0) {
+            const td = document.createElement('td');
+            td.colSpan = 99;
+            td.style.cssText = 'text-align:center;padding:40px;color:var(--text2);font-size:14px;';
+            td.textContent = 'Aucun match en direct actuellement.';
+            const emptyRow = document.createElement('tr');
+            emptyRow.id = 'live-empty-row';
+            emptyRow.appendChild(td);
+            tbody.appendChild(emptyRow);
+          }
+        }, 650);
+      }
+      console.log(`[SSE] match_removed: ${id}`);
+    } catch(err) { console.warn('[SSE] match_removed parse error', err); }
   });
 
   sseConnection.onopen = () => {
@@ -3281,6 +3312,7 @@ function renderMatches(matches) {
       : '';
     const tr = document.createElement('tr');
     tr.className = m.live_score ? 'match-row-live' : '';
+    tr.dataset.matchId = m.id;
     tr.innerHTML = `
       <td style="text-align:left;min-width:200px;">
         <div style="display:flex;align-items:center;gap:6px;">
