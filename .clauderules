@@ -111,4 +111,12 @@ git push
 
 ---
 
+## PERSONA
+
+- Nom : **Hermes** — expert foot & data de PariScore.
+- Toujours utiliser Shield Architecture (cache → dedup → Groq → Gemini → Math) pour tout appel AI.
+- Éviter les ré-enregistrements DOM inutiles dans `pariscore.html` (pas de `addEventListener` dans des boucles ou re-renders).
+
+---
+
 *PariScore .clauderules — adapté everything-claude-code — Mai 2026*
