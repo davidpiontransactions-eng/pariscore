@@ -2464,7 +2464,7 @@ async function callGeminiWithRetry(prompt, maxTokens = 600) {
         continue;
       }
       const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text && res.status !== 200) throw new Error(`Gemini HTTP ${res.status}`);
+      if (!text && res.status !== 200) throw new Error(`GEMINI_ERR_${res.status}`);
       return text;
     } catch(e) {
       if (e.message === 'GEMINI_429') { lastErr = e; continue; }
@@ -5298,15 +5298,15 @@ function handleAPI(req, res, pathname, query) {
           })
           .sort((a, b) => a.rank - b.rank);
 
+        // Key Player Index — top 3 par équipe + Position Ratings, en parallèle (cache 24h chacun)
+        const hTeamId = hMeta?.teamId;
+        const aTeamId = aMeta?.teamId;
+
         // H2H historique — derniers face-à-face
         const h2h = (hTeamId && aTeamId) ? await fetchH2H(hTeamId, aTeamId, 10) : null;
 
         // Top buteurs (1 req/ligue max, cache 24h)
         const topScorers = leagueId ? await fetchLeagueTopScorers(leagueId, season) : [];
-
-        // Key Player Index — top 3 par équipe + Position Ratings, en parallèle (cache 24h chacun)
-        const hTeamId = hMeta?.teamId;
-        const aTeamId = aMeta?.teamId;
         // BSD team IDs (from standings data stored in bsdTeamId field)
         const hBsdTeamId   = hMeta?.bsdTeamId   || null;
         const aBsdTeamId   = aMeta?.bsdTeamId   || null;
@@ -5438,7 +5438,10 @@ function handleAPI(req, res, pathname, query) {
         res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
         res.end(JSON.stringify(result));
       } catch(e) {
-        res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+        console.error(`  [ProScout] Erreur inattendue ${match.id}:`, e.message);
+        const fallback = buildMathFallbackReport(match);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ report: fallback, cached: false, fallback: true, provider: 'math' }));
       }
     })();
     return;
@@ -5705,6 +5708,10 @@ function handleAPI(req, res, pathname, query) {
           console.log(`  [AICache] MISS → stocké — ${matchKey}`);
         }
 
+        if (gemRes.status === 429) {
+          console.warn('  [GeminiProxy] 429 quota — retourne 503 propre');
+          return jsonResponse(res, 503, { error: 'Analyse temporairement indisponible. Réessayez dans quelques minutes.' });
+        }
         jsonResponse(res, gemRes.status, gemRes.data);
       } catch(e) { jsonResponse(res, 500, { error: e.message }); }
     }).catch(e => jsonResponse(res, 413, { error: e.message }));

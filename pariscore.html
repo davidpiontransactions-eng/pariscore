@@ -4582,9 +4582,10 @@ async function openInsights(matchId) {
     document.getElementById('ins-tab-powerscore').innerHTML = buildPowerScoreTab(d.match.id);
     document.getElementById('ins-tab-h2h').innerHTML         = buildH2HTab(d);
   } catch(e) {
-  ['ins-tab-resume','ins-tab-stats','ins-tab-joueurs','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-scouting','ins-tab-h2h'].forEach(id => {
+    console.error('[openInsights]', e.message);
+    ['ins-tab-resume','ins-tab-stats','ins-tab-joueurs','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-scouting','ins-tab-h2h'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = `<div class="ins-empty">Erreur : ${e.message}</div>`;
+      if (el) el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⚠️</div>Données temporairement indisponibles.<br><span style="font-size:11px;color:var(--text3)">Réessayez dans quelques secondes.</span></div>`;
     });
   }
 }
