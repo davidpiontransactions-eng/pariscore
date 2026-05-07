@@ -2477,6 +2477,163 @@ Format Markdown (350 mots):
 [1 pari exploitant le mismatch + justification]`;
 }
 
+// ─── PRO SCOUT REPORT — 5 Piliers, style journalisme L'Équipe ────────────────
+
+function buildProScoutPrompt(match, homeRatings = [], awayRatings = [], homeSquad = [], awaySquad = [], pressContext = null) {
+  const p   = match.poisson || {};
+  const eg  = match.expectedGoals || {};
+  const hs  = match.stats?.home || {};
+  const as_ = match.stats?.away || {};
+  const dt  = new Date(match.commence_time);
+  const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const homeAvg = homeRatings.length
+    ? (homeRatings.reduce((s, p) => s + (p.avg_rating || 0), 0) / homeRatings.length).toFixed(1) : '?';
+  const awayAvg = awayRatings.length
+    ? (awayRatings.reduce((s, p) => s + (p.avg_rating || 0), 0) / awayRatings.length).toFixed(1) : '?';
+  const homeInj = (match.injuries?.home || []).map(p => p.name).join(', ') || 'Aucune absence connue';
+  const awayInj = (match.injuries?.away || []).map(p => p.name).join(', ') || 'Aucune absence connue';
+  const homeAtt = homeSquad.filter(p => p.position === 'Attacker').length || 0;
+  const awayAtt = awaySquad.filter(p => p.position === 'Attacker').length || 0;
+  const homeDef = homeSquad.filter(p => p.position === 'Defender').length || 0;
+  const awayDef = awaySquad.filter(p => p.position === 'Defender').length || 0;
+
+  const pressBlock = pressContext ? (typeof pressContext === 'object' ? pressContext.text : pressContext) : null;
+
+  return `Tu es le journaliste data de L'Équipe, spécialisé en paris sportifs algorithmiques. Tu rédiges des rapports de scouting de niveau professionnel pour la plateforme PariScore. Ton style : expert, précis, enthousiaste, appuyé sur les maths.
+
+═══════════════════════════════════════════════════════
+DONNÉES CERTIFIÉES PARISCORE — UTILISE-LES TELLES QUELLES
+═══════════════════════════════════════════════════════
+Match : ${match.home_team} vs ${match.away_team}
+Compétition : ${match.league}
+Date : ${dateStr} à ${timeStr}
+Classement : ${match.home_team} #${match.home_rank || '?'} | ${match.away_team} #${match.away_rank || '?'}
+
+STATISTIQUES DOMICILE (${match.home_team}) :
+¤ PPG domicile : ${hs.ppg ?? '?'} | Forme L5 : ${match.home_form?.slice(0,5) || 'N/A'}
+¤ Buts marqués/match : ${hs.avgScored != null ? hs.avgScored.toFixed(2) : '?'} | encaissés : ${hs.avgConceded != null ? hs.avgConceded.toFixed(2) : '?'}
+¤ V/N/D : ${hs.wins ?? 0}% / ${hs.draws ?? 0}% / ${hs.losses ?? 0}%
+¤ xG attendu (λ) : ${eg.home != null ? eg.home.toFixed(2) : '?'}
+¤ Note BSD moyenne : ${homeAvg} | Attaquants: ${homeAtt} | Défenseurs: ${homeDef}
+¤ Absences : ${homeInj}
+
+STATISTIQUES EXTÉRIEUR (${match.away_team}) :
+¤ PPG extérieur : ${as_.ppg ?? '?'} | Forme L5 : ${match.away_form?.slice(0,5) || 'N/A'}
+¤ Buts marqués/match : ${as_.avgScored != null ? as_.avgScored.toFixed(2) : '?'} | encaissés : ${as_.avgConceded != null ? as_.avgConceded.toFixed(2) : '?'}
+¤ V/N/D : ${as_.wins ?? 0}% / ${as_.draws ?? 0}% / ${as_.losses ?? 0}%
+¤ xG attendu (λ) : ${eg.away != null ? eg.away.toFixed(2) : '?'}
+¤ Note BSD moyenne : ${awayAvg} | Attaquants: ${awayAtt} | Défenseurs: ${awayDef}
+¤ Absences : ${awayInj}
+
+PROBABILITÉS POISSON CERTIFIÉES :
+¤ 1X2 : 1 (${p.homeWin ?? 0}%) / X (${p.draw ?? 0}%) / 2 (${p.awayWin ?? 0}%)
+¤ BTTS : ${p.btts ?? 0}% | Over 0.5: ${p.over05 ?? 0}% | Over 1.5: ${p.over15 ?? 0}% | Over 2.5: ${p.over25 ?? 0}% | Over 3.5: ${p.over35 ?? 0}%
+¤ Under 2.5 : ${100 - (p.over25 ?? 0)}% | Clean Sheet dom : ${p.cs00 ?? 0}%
+¤ Score le plus probable : ${p.topScores?.[0]?.score ?? '?'} (${p.topScores?.[0]?.prob ?? 0}%) | 2e : ${p.topScores?.[1]?.score ?? '?'} (${p.topScores?.[1]?.prob ?? 0}%)
+
+COTES & VALUE :
+¤ Cote 1: ${match.odds?.home != null ? match.odds.home.toFixed(2) : '?'} | N: ${match.odds?.draw != null ? match.odds.draw.toFixed(2) : '?'} | 2: ${match.odds?.away != null ? match.odds.away.toFixed(2) : '?'}
+¤ Edge 1: ${match.edge?.home != null ? match.edge.home.toFixed(1) : '?'}% | N: ${match.edge?.draw != null ? match.edge.draw.toFixed(1) : '?'}% | 2: ${match.edge?.away != null ? match.edge.away.toFixed(1) : '?'}%
+¤ Meilleur value bet : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? match.best_edge.odds.toFixed(2) : '?'} (Edge: +${match.best_edge?.edge != null ? match.best_edge.edge.toFixed(1) : '?'}%) — ${match.best_edge?.bk ?? 'N/A'}
+${pressBlock ? `\nCONTEXTE PRESSE RÉCENTE :\n${pressBlock}` : ''}
+═══════════════════════════════════════════════════════
+
+RÉDIGE maintenant le rapport complet en suivant EXACTEMENT ce format Markdown :
+
+# 🏟️ ${match.home_team} vs ${match.away_team}
+## ${match.league} — ${dateStr} à ${timeStr}
+
+---
+
+## 🏅 CERTIFIÉ PARISCORE PRO
+*Rapport généré par l'algorithme PariScore v9.7 — Données Poisson certifiées*
+
+---
+
+## 📊 PILIER 1 — MÉTRIQUES AVANCÉES (30%)
+[Analyse xG différentiel, volume de corners attendu, efficacité offensive/défensive des deux équipes. Cite les chiffres précis fournis. 80 mots min.]
+
+## ⚔️ PILIER 2 — ANALYSE TACTIQUE & EFFECTIFS (20%)
+[Systèmes de jeu probables, mismatch clé (attaque dom vs défense ext et vice-versa), impact des absences sur l'équilibre. 80 mots min.]
+
+## 📈 PILIER 3 — DYNAMIQUE & MOMENTUM (20%)
+[Forme L5 commentée match par match si possible, tendance positive/négative, calendrier récent, fatigue potentielle. 70 mots min.]
+
+## 📰 PILIER 4 — PRESSE & CONSENSUS WEB (15%)
+[Ce que disent L'Équipe, Sofascore, Forebet, OddAlerts, BetMines sur ce match. Consensus ou divergence ? Si aucune info presse, synthétise les signaux algorithmiques disponibles. 60 mots min.]
+
+## 🧠 PILIER 5 — PSYCHOLOGIE & H2H (15%)
+[Enjeux du match (titre, maintien, derby, coupe ?), historique des confrontations directes si connu, pression mentale sur les joueurs clés. 60 mots min.]
+
+---
+
+## 🔢 PROBABILITÉS MATHÉMATIQUES CERTIFIÉES
+| Marché | Probabilité | Signal |
+|--------|-------------|--------|
+| ${match.home_team} gagne | ${p.homeWin ?? 0}% | ${(p.homeWin ?? 0) >= 55 ? '🟢 Fort' : (p.homeWin ?? 0) >= 40 ? '🟡 Moyen' : '🔴 Faible'} |
+| Match Nul | ${p.draw ?? 0}% | ${(p.draw ?? 0) >= 30 ? '🟡 Possible' : '🔴 Improbable'} |
+| ${match.away_team} gagne | ${p.awayWin ?? 0}% | ${(p.awayWin ?? 0) >= 55 ? '🟢 Fort' : (p.awayWin ?? 0) >= 40 ? '🟡 Moyen' : '🔴 Faible'} |
+| BTTS | ${p.btts ?? 0}% | ${(p.btts ?? 0) >= 55 ? '🟢 Fort' : (p.btts ?? 0) >= 45 ? '🟡 Moyen' : '🔴 Faible'} |
+| Over 2.5 | ${p.over25 ?? 0}% | ${(p.over25 ?? 0) >= 55 ? '🟢 Fort' : (p.over25 ?? 0) >= 45 ? '🟡 Moyen' : '🔴 Faible'} |
+| Over 1.5 | ${p.over15 ?? 0}% | ${(p.over15 ?? 0) >= 70 ? '🟢 Fort' : '🟡 Moyen'} |
+
+---
+
+## 🏆 TOP 5 DES PARIS
+- 🛡️ **Le Safe** : [Pari le plus probable avec justification mathématique] (Proba: X%)
+- 📈 **Le Bankroll Builder** : [Pari cote modérée, edge positif] (Proba: X%)
+- 💎 **Le Value Bet** : [${match.best_edge?.label ?? 'Value bet'} @ ${match.best_edge?.odds != null ? match.best_edge.odds.toFixed(2) : '?'} — Edge +${match.best_edge?.edge != null ? match.best_edge.edge.toFixed(1) : '?'}%] — Explique pourquoi le bookmaker sous-évalue ce marché
+- 🚩 **Le Coup Tactique** : [Corners, cartons, buteur — basé sur le mismatch du Pilier 2]
+- ⚡ **Le Coup Risqué** : [Score exact ou grosse cote — Justification]
+
+---
+
+## 📲 SCRIPT TELEGRAM
+\`\`\`telegram
+🏟️ ${match.home_team} vs ${match.away_team}
+📅 ${dateStr} à ${timeStr} | ${match.league}
+
+📊 ANALYSE PARISCORE PRO
+
+¤ 1X2 : 1 (${p.homeWin ?? 0}%) / X (${p.draw ?? 0}%) / 2 (${p.awayWin ?? 0}%)
+¤ Over 2.5 : ${p.over25 ?? 0}% | BTTS : ${p.btts ?? 0}%
+¤ Score probable : ${p.topScores?.[0]?.score ?? '?'} (${p.topScores?.[0]?.prob ?? 0}%)
+
+💎 VALUE BET : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? match.best_edge.odds.toFixed(2) : '?'} (Edge +${match.best_edge?.edge != null ? match.best_edge.edge.toFixed(1) : '?'}%)
+
+[Complète avec les 2-3 paris retenus du Top 5 ci-dessus — style enthousiaste, appel à l'action final]
+
+🔥 Mettez un 🔥 si vous validez !
+— PariScore Pro 🏅
+\`\`\``;
+}
+
+async function getProScoutReport(match) {
+  const cacheKey = `pro_scout_${match.id}`;
+  const cached = kvGet(cacheKey);
+  if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
+    return { report: cached.report, cached: true };
+  }
+  const hKey = normName(match.home_team);
+  const aKey = normName(match.away_team);
+  const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+  const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+  const [homeRatings, awayRatings, homeSquad, awaySquad, pressContext] = await Promise.allSettled([
+    hMeta?.bsdTeamId && hMeta?.bsdSeasonId ? fetchBSDPlayerRatings(hMeta.bsdTeamId, hMeta.bsdSeasonId) : Promise.resolve([]),
+    aMeta?.bsdTeamId && aMeta?.bsdSeasonId ? fetchBSDPlayerRatings(aMeta.bsdTeamId, aMeta.bsdSeasonId) : Promise.resolve([]),
+    hMeta?.bsdTeamId ? fetchBSDTeamSquad(hMeta.bsdTeamId) : Promise.resolve([]),
+    aMeta?.bsdTeamId ? fetchBSDTeamSquad(aMeta.bsdTeamId) : Promise.resolve([]),
+    Promise.race([fetchPressContext(match.home_team, match.away_team), new Promise(r => setTimeout(() => r(null), 5000))]),
+  ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
+
+  const prompt = buildProScoutPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad, pressContext);
+  const report = await callGemini(prompt, 1500);
+  kvSet(cacheKey, { report, ts: Date.now() });
+  return { report, cached: false };
+}
+
 async function getScoutReport(match) {
   const cacheKey = `scout_${match.id}`;
   const cached = kvGet(cacheKey);
@@ -5034,6 +5191,25 @@ function handleAPI(req, res, pathname, query) {
         if (r.status === 200) jsonResponse(res, 200, { ok: true, status: r.status, response: txt.trim() });
         else jsonResponse(res, r.status, { ok: false, status: r.status, error: r.data?.error?.message || JSON.stringify(r.data) });
       } catch(e) { jsonResponse(res, 500, { ok: false, error: e.message }); }
+    })();
+    return;
+  }
+
+  // GET /api/v1/scout/pro/:matchId — Pro Scouting Report (5 piliers, style L'Équipe)
+  const proScoutMatch = pathname.match(/^\/api\/v1\/scout\/pro\/([^/?]+)$/);
+  if (proScoutMatch && req.method === 'GET') {
+    if (!GEMINI_API_KEY) { res.writeHead(503); res.end(JSON.stringify({ error: 'Clé Gemini non configurée' })); return; }
+    const matchId = decodeURIComponent(proScoutMatch[1]);
+    const match = db.matches.find(m => m.id === matchId);
+    if (!match) { res.writeHead(404); res.end(JSON.stringify({ error: 'Match non trouvé' })); return; }
+    (async () => {
+      try {
+        const result = await getProScoutReport(match);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+        res.end(JSON.stringify(result));
+      } catch(e) {
+        res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+      }
     })();
     return;
   }
