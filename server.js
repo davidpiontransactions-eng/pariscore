@@ -2440,6 +2440,11 @@ function geminiRateLimitOk() {
 
 async function callGeminiWithRetry(prompt, maxTokens = 600) {
   if (!GEMINI_API_KEY) throw new Error('Clé Gemini non configurée');
+  // RPM check here — only when Gemini is actually being called (not before Groq)
+  if (!geminiRateLimitOk()) {
+    console.warn(`  [Gemini] RPM limit atteint (${GEMINI_RPM_LIMIT}/min) — skip`);
+    throw new Error('GEMINI_429');
+  }
   const delays = [0, 2000, 5000]; // attempt 0 = immediate, then backoff
   let lastErr;
   for (let attempt = 0; attempt < delays.length; attempt++) {
@@ -2853,13 +2858,7 @@ async function getProScoutReport(match) {
     return await _geminiInFlight.get(match.id);
   }
 
-  // 3. Rate limit exceeded — instant math fallback
-  if (!geminiRateLimitOk()) {
-    console.warn(`  [ProScout] RPM limit atteint (${GEMINI_RPM_LIMIT}/min) — fallback math pour ${match.id}`);
-    return { report: buildMathFallbackReport(match), cached: false, fallback: true, provider: 'math', queue_size: _geminiQueueSize };
-  }
-
-  // 4. Process: register in-flight, then run through queue
+  // 3. Process: register in-flight, then run through queue
   const promise = _doProScoutReport(match).finally(() => _geminiInFlight.delete(match.id));
   _geminiInFlight.set(match.id, promise);
   return promise;
