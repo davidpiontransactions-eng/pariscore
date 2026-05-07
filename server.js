@@ -5448,17 +5448,19 @@ function handleAPI(req, res, pathname, query) {
   // GET /api/v1/scout/:matchId — Scouting Report (Gemini, cache 24h)
   const scoutMatch = pathname.match(/^\/api\/v1\/scout\/([^/?]+)$/);
   if (scoutMatch && req.method === 'GET') {
-    if (!GEMINI_API_KEY) { res.writeHead(503); res.end(JSON.stringify({ error: 'Clé Gemini non configurée' })); return; }
+    // Legacy route — now uses same Universal AI cascade as /scout/pro/
     const matchId = decodeURIComponent(scoutMatch[1]);
     const match = db.matches.find(m => m.id === matchId);
     if (!match) { res.writeHead(404); res.end(JSON.stringify({ error: 'Match non trouvé' })); return; }
     (async () => {
       try {
-        const result = await getScoutReport(match);
+        const result = await getProScoutReport(match);
         res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
         res.end(JSON.stringify(result));
       } catch(e) {
-        res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+        const fallback = buildMathFallbackReport(match);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ report: fallback, cached: false, fallback: true, provider: 'math' }));
       }
     })();
     return;
@@ -5805,6 +5807,10 @@ server.listen(PORT, async () => {
   console.log('  ║  Cron Archive → toutes les 4h                       ║');
   console.log('  ╚══════════════════════════════════════════════════════╝');
   console.log('');
+
+  // AI provider status
+  console.log(`  [Boot] 🤖 Groq/Llama3 : ${GROQ_API_KEY ? '✅ configuré (' + GROQ_MODEL + ')' : '❌ GROQ_API_KEY manquant — cascade Gemini uniquement'}`);
+  console.log(`  [Boot] 🤖 Gemini      : ${GEMINI_API_KEY ? '✅ configuré (fallback)' : '⚠️  GEMINI_API_KEY manquant — fallback math uniquement'}`);
 
   // Premier fetch au démarrage — respect du cache 12h
   console.log('  [Boot] Premier chargement des données…');
