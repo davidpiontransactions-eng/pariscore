@@ -27,7 +27,11 @@
       "9":   {"config_id": 71,  "name": "Brasileirão"},
       "49":  {"config_id": 98,  "name": "J1 League"},
       "50":  {"config_id": 292, "name": "K League 1"},
-      "11":  {"config_id": 203, "name": "Trendyol Super Lig"}
+      "11":  {"config_id": 203, "name": "Trendyol Super Lig"},
+      "22":  {"config_id": 172, "name": "Parva Liga"},
+      "23":  {"config_id": 283, "name": "Superliga Romania"},
+      "25":  {"config_id": 106, "name": "Ekstraklasa"},
+      "52":  {"config_id": 169, "name": "Chinese Super League"}
     },
     "config_to_bsd": {
       "39":  1,
@@ -52,9 +56,12 @@
       "71":  9,
       "98":  49,
       "292": 50,
-      "203": 11
+      "203": 11,
+      "172": 22,
+      "283": 23,
+      "106": 25,
+      "169": 52
     },
-    "bsd_only": ["27"],
-    "fallback_needed": [62, 79, 136, 89, 95, 18, 145, 189, 197, 221, 848, 128, 119, 120, 103, 104, 114, 10, 15]
+    "fallback_needed": []
   }
 }

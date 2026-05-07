@@ -276,6 +276,33 @@
   .ps-bet-pill.warn { background:rgba(245,158,11,0.13); color:var(--amber); border:1px solid rgba(245,158,11,0.3); }
   .ps-bet-pill.skip { background:rgba(239,68,68,0.10); color:var(--red); border:1px solid rgba(239,68,68,0.25); }
   .ps-reliability { font-family:var(--font-mono); font-size:10px; color:var(--text3); margin-left:8px; }
+  /* Gauge Triptych */
+  .ps-gauge-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+  .ps-gauge-cell { background:var(--bg4); border-radius:10px; padding:8px 6px 6px; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .ps-gauge-svg { width:90px; height:56px; overflow:visible; }
+  .ps-gauge-label { font-size:9px; color:var(--text3); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-top:2px; }
+  .ps-gauge-bk { display:flex; justify-content:center; align-items:center; gap:4px; margin-top:3px; font-family:var(--font-mono); font-size:9px; }
+  .ps-ic-badge { display:inline-block; font-family:var(--font-mono); font-size:8px; font-weight:700; padding:1px 5px; border-radius:3px; margin-top:3px; letter-spacing:.03em; cursor:default; }
+  .ps-ic-badge.robust   { background:rgba(0,230,118,0.12); color:var(--green); border:1px solid rgba(0,230,118,0.25); }
+  .ps-ic-badge.moderate { background:rgba(245,158,11,0.12); color:var(--amber); border:1px solid rgba(245,158,11,0.25); }
+  .ps-ic-badge.uncertain{ background:rgba(239,68,68,0.10);  color:var(--red);   border:1px solid rgba(239,68,68,0.22); }
+  /* CTA Bet Recommendation */
+  .ps-bet-cta { border-radius:10px; padding:12px 14px; margin-top:6px; }
+  .ps-bet-cta.ok   { background:linear-gradient(135deg,rgba(0,230,118,0.09),rgba(0,230,118,0.04)); border:1px solid rgba(0,230,118,0.28); }
+  .ps-bet-cta.warn { background:linear-gradient(135deg,rgba(245,158,11,0.09),rgba(245,158,11,0.04)); border:1px solid rgba(245,158,11,0.28); }
+  .ps-bet-cta.skip { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); }
+  .ps-bet-cta-title  { font-size:9px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text3); margin-bottom:7px; }
+  .ps-bet-cta-main   { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .ps-bet-cta-market { font-size:13px; font-weight:700; color:var(--text); }
+  .ps-bet-cta-odds   { font-family:var(--font-mono); font-size:18px; font-weight:800; }
+  .ps-bet-cta-bk     { font-size:10px; color:var(--text3); margin-top:1px; }
+  .ps-bet-cta-ev     { display:flex; gap:6px; margin-top:7px; font-family:var(--font-mono); font-size:10px; flex-wrap:wrap; }
+  .ps-bet-cta-ev span{ padding:2px 7px; border-radius:4px; }
+  /* Player cards */
+  .ps-player-bar-wrap { width:72px; height:4px; background:var(--bg2); border-radius:2px; margin:4px auto 0; }
+  .ps-player-bar-fill { height:4px; border-radius:2px; transition:width .4s; }
+  .ps-form-dots { display:flex; gap:3px; justify-content:center; margin-top:4px; }
+  .ps-form-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
   /* Power Score tab */
   #ps-content h1,#ps-content h2,#ps-content h3 { color: var(--text); font-family: var(--font-head); margin: 16px 0 8px; }
@@ -2763,7 +2790,7 @@
         <div class="ins-tab" onclick="insShowTab('corners')">🚩 Corners</div>
         <div class="ins-tab" onclick="insShowTab('powerscore')">⚡ Power Score</div>
         <div class="ins-tab" onclick="insShowTab('scouting')">🕵️ Scouting</div>
-        <div class="ins-tab" onclick="insShowTab('h2h')">⚔️ H2H</div>
+        <div class="ins-tab" onclick="insShowTab('h2h')">⚔️ H2H & Derniers</div>
       </div>
       <div id="ins-tab-resume"></div>
       <div id="ins-tab-stats"      style="display:none"></div>
@@ -6205,29 +6232,77 @@ function buildStaticInsightLayer(d) {
   const bs  = m.bet_signal  || {};
   const rel = m.reliability_score ?? null;
 
-  // ── P1-A : Proba snapshot avec IC ─────────────────────────────────────────
-  const probaColor = (v) => v >= 65 ? 'var(--green)' : v >= 50 ? 'var(--amber)' : 'var(--text2)';
-  const icStr = (key) => {
-    if (!uqd || !uqd[key]) return '';
-    return `[${uqd[key].lower}–${uqd[key].upper}]`;
+  // ── P1-A : Gauge Triptych avec IC arc + comparateur bookmaker ───────────────
+  const svgGauge = (prob, icLower, icUpper) => {
+    const cx = 50, cy = 50, r = 38;
+    const color = prob >= 65 ? '#00e676' : prob >= 50 ? '#ffa726' : prob >= 35 ? '#ef4444' : '#5a6068';
+    const angle = Math.PI * (1 - prob / 100);
+    const ex = (cx + r * Math.cos(angle)).toFixed(1);
+    const ey = (cy - r * Math.sin(angle)).toFixed(1);
+    const la = prob > 50 ? 1 : 0;
+    let icArc = '';
+    if (icLower != null && icUpper != null && icUpper > icLower) {
+      const aL = Math.PI * (1 - icLower / 100);
+      const aU = Math.PI * (1 - icUpper / 100);
+      const ixL = (cx + r * Math.cos(aL)).toFixed(1);
+      const iyL = (cy - r * Math.sin(aL)).toFixed(1);
+      const ixU = (cx + r * Math.cos(aU)).toFixed(1);
+      const iyU = (cy - r * Math.sin(aU)).toFixed(1);
+      const icLA = (icUpper - icLower) > 50 ? 1 : 0;
+      icArc = `<path d="M ${ixL},${iyL} A ${r},${r} 0 ${icLA},1 ${ixU},${iyU}" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round" opacity="0.18"/>`;
+    }
+    const fillArc = prob <= 0 ? '' : prob >= 100
+      ? `<path d="M 12,50 A ${r},${r} 0 1,1 88,50.01" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"/>`
+      : `<path d="M 12,50 A ${r},${r} 0 ${la},1 ${ex},${ey}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"/>`;
+    return `<svg viewBox="0 0 100 58" class="ps-gauge-svg">
+      <path d="M 12,50 A ${r},${r} 0 0,1 88,50" fill="none" stroke="var(--bg2)" stroke-width="7" stroke-linecap="round"/>
+      ${icArc}${fillArc}
+      <text x="50" y="46" text-anchor="middle" fill="${color}" font-size="15" font-weight="700" font-family="monospace">${Math.round(prob)}%</text>
+    </svg>`;
   };
-  const probaCell = (label, val, icKey) => {
+  const icData = (key) => {
+    if (!uqd || !uqd[key]) return { lower: null, upper: null };
+    return { lower: uqd[key].lower, upper: uqd[key].upper };
+  };
+  const icBadge = (icLower, icUpper) => {
+    if (icLower == null || icUpper == null) return '';
+    const amp = icUpper - icLower;
+    const [cls, lbl, tip] = amp < 15
+      ? ['robust',   'ROBUSTE', 'Intervalle étroit — modèle confiant']
+      : amp < 25
+      ? ['moderate', 'MODÉRÉ',  'Données suffisantes']
+      : ['uncertain','INCERT.', 'Peu de matchs — fourchette large'];
+    return `<span class="ps-ic-badge ${cls}" title="${tip} [${icLower}–${icUpper}]">${lbl}</span>`;
+  };
+  const gaugeCell = (label, val, icKey, bookOdds) => {
     if (val == null || val === 0) return '';
-    const col = probaColor(val);
-    return `<div class="ps-proba-cell">
-      <div class="ps-proba-label">${label}</div>
-      <div class="ps-proba-val" style="color:${col}">${Math.round(val)}%</div>
-      <div class="ps-proba-ic">${icStr(icKey)}</div>
+    const { lower, upper } = icData(icKey);
+    let bookHtml = '';
+    if (bookOdds != null && bookOdds > 1) {
+      const bookPct = Math.round(100 / bookOdds);
+      const delta   = Math.round(val - bookPct);
+      const dcol    = delta > 3 ? 'var(--green)' : delta < -3 ? 'var(--red)' : 'var(--text3)';
+      const dsign   = delta > 0 ? '+' : '';
+      bookHtml = `<div class="ps-gauge-bk" title="Cote bk: ${bookOdds.toFixed(2)} = ${bookPct}% implicite">
+        <span style="color:var(--text3)">${bookOdds.toFixed(2)}</span>
+        <span style="color:${dcol};font-weight:700">${dsign}${delta}%</span>
+      </div>`;
+    }
+    return `<div class="ps-gauge-cell">
+      ${svgGauge(val, lower, upper)}
+      <div class="ps-gauge-label">${label}</div>
+      ${icBadge(lower, upper)}
+      ${bookHtml}
     </div>`;
   };
   // Normalise homeWin : ratio (0-1) → % ou déjà en % (>1)
   const hwPct = p.homeWin != null
     ? (p.homeWin > 1 ? Math.round(p.homeWin) : Math.round(p.homeWin * 100))
     : null;
-  const probaGrid = `<div class="ps-proba-grid">
-    ${probaCell('Over 2.5', p.over25 || null, 'over25')}
-    ${probaCell('BTTS',     p.btts    || null, 'btts')}
-    ${probaCell('Vic. Dom.', hwPct,            'homeWin')}
+  const probaGrid = `<div class="ps-gauge-grid">
+    ${gaugeCell('Over 2.5', p.over25 || null, 'over25', null)}
+    ${gaugeCell('BTTS',     p.btts    || null, 'btts',   null)}
+    ${gaugeCell('Vic. Dom.', hwPct,            'homeWin', m.odds?.home || null)}
   </div>`;
 
   // ── P1-B : Form Streak Indicator ──────────────────────────────────────────
@@ -6294,24 +6369,52 @@ function buildStaticInsightLayer(d) {
     return `<div class="ps-live-row">${liveRows}</div>`;
   })();
 
-  // ── BET signal pill ───────────────────────────────────────────────────────
+  // ── BET CTA Card ──────────────────────────────────────────────────────────
   const betPill = (() => {
-    if (!bs || !m.best_edge) return '';
+    if (!m.best_edge) return '';
     const ev = m.best_edge.edge;
     if (ev == null) return '';
+    const oddsStr = m.best_edge.odds != null
+      ? (typeof m.best_edge.odds === 'number' ? m.best_edge.odds.toFixed(2) : m.best_edge.odds)
+      : '—';
     if (bs.recommended) {
-      return `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:2px">
-        <span class="ps-bet-pill ok">✅ BET — ${m.best_edge.label} @ ${m.best_edge.odds}</span>
-        <span class="ps-reliability" title="${bs.reason||''}">EV +${ev.toFixed(1)}% · IC90% validé${rel != null ? ` · Fiabilité ${rel}/100` : ''}</span>
+      return `<div class="ps-bet-cta ok">
+        <div class="ps-bet-cta-title">🎯 Pari recommandé</div>
+        <div class="ps-bet-cta-main">
+          <div>
+            <div class="ps-bet-cta-market">${m.best_edge.label}</div>
+            <div class="ps-bet-cta-bk">${m.best_edge.bk || ''}</div>
+          </div>
+          <div class="ps-bet-cta-odds" style="color:var(--green)">${oddsStr}</div>
+        </div>
+        <div class="ps-bet-cta-ev">
+          <span style="background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25)">EV +${ev.toFixed(1)}%</span>
+          <span style="background:rgba(0,230,118,0.07);color:var(--green);border:1px solid rgba(0,230,118,0.18)">✅ IC confirmé</span>
+          ${rel != null ? `<span style="color:var(--text3);background:var(--bg4);border:1px solid var(--border)">Fiabilité ${rel}/100</span>` : ''}
+        </div>
       </div>`;
     }
     if (ev >= 5) {
-      return `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:2px">
-        <span class="ps-bet-pill warn">⚠️ EV +${ev.toFixed(1)}% — IC non confirmé</span>
-        <span class="ps-reliability" title="${bs.reason||''}">${bs.reason ? bs.reason.slice(0,60) : ''}</span>
+      return `<div class="ps-bet-cta warn">
+        <div class="ps-bet-cta-title">⚠️ Value potentielle — IC non confirmé</div>
+        <div class="ps-bet-cta-main">
+          <div>
+            <div class="ps-bet-cta-market">${m.best_edge.label}</div>
+            <div class="ps-bet-cta-bk">${m.best_edge.bk || ''}</div>
+          </div>
+          <div class="ps-bet-cta-odds" style="color:var(--amber)">${oddsStr}</div>
+        </div>
+        <div class="ps-bet-cta-ev">
+          <span style="background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25)">EV +${ev.toFixed(1)}%</span>
+          <span style="background:rgba(239,68,68,0.08);color:var(--red);border:1px solid rgba(239,68,68,0.2)">✗ EV pessimiste ≤ 0%</span>
+        </div>
+        ${bs.reason ? `<div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--font-mono);line-height:1.4">${bs.reason.slice(0,90)}</div>` : ''}
       </div>`;
     }
-    return `<div style="margin-top:2px"><span class="ps-bet-pill skip">🛑 Pas de value bet confirmé</span></div>`;
+    return `<div class="ps-bet-cta skip">
+      <div class="ps-bet-cta-title">🛑 Pas de value bet confirmé</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">${bs.reason ? bs.reason.slice(0,80) : 'EV insuffisant ou intervalle de confiance trop large'}</div>
+    </div>`;
   })();
 
   // ── Assemblage ─────────────────────────────────────────────────────────────
@@ -6370,17 +6473,42 @@ function buildPowerScoreTab(matchId) {
     const ga    = `${p.goals||0}G / ${p.assists||0}A`;
     return `<span style="color:${col};font-weight:700">${sign}${delta.toFixed(1)} vs moy.</span> &nbsp;·&nbsp; ${ga}`;
   };
+  // Mini sparkline L5 depuis forme équipe (proxy joueur)
+  const formDots = (form) => {
+    if (!form || typeof form !== 'string') return '';
+    const chars = form.toUpperCase().replace(/[^WDL]/g,'').slice(0,5);
+    if (chars.length < 2) return '';
+    const dots = chars.split('').map(c => {
+      const col = c==='W' ? '#00e676' : c==='D' ? '#ffa726' : '#ef4444';
+      const tip = c==='W' ? 'Victoire' : c==='D' ? 'Nul' : 'Défaite';
+      return `<div class="ps-form-dot" style="background:${col}" title="${tip}"></div>`;
+    }).join('');
+    return `<div class="ps-form-dots">${dots}</div>`;
+  };
+  // Barre de progression /20
+  const kpiBar = (kpi) => {
+    if (kpi == null || typeof kpi !== 'number') return '';
+    const pct = Math.min(100, (kpi / 20) * 100).toFixed(0);
+    const col = kpi >= 15 ? '#00e676' : kpi >= 12 ? '#ffa726' : '#ef4444';
+    return `<div class="ps-player-bar-wrap" title="${kpi.toFixed(1)}/20">
+      <div class="ps-player-bar-fill" style="width:${pct}%;background:${col}"></div>
+    </div>`;
+  };
   const quickPanel = (topH || topA) ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;padding:12px;background:var(--bg3);border-radius:10px">
       ${topH ? `<div style="text-align:center;cursor:pointer" onclick="insShowTab('joueurs')" title="Voir onglet Joueurs">
         <div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:4px">${topH.name}${valueBadge(topH)}</div>
-        <div class="${kpiClass(topH.kpi)}" style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font:900 20px/1 var(--font-head);">${safeFixed(topH.kpi,1)}</div>
-        <div style="font-size:9px;color:var(--text3)">${formLine(topH)}</div>
+        <div class="${kpiClass(topH.kpi)}" style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font:900 20px/1 var(--font-head);">${safeFixed(topH.kpi,1)}<span style="font-size:9px;opacity:0.5;font-weight:400">/20</span></div>
+        ${kpiBar(topH.kpi)}
+        <div style="font-size:9px;color:var(--text3);margin-top:3px">${formLine(topH)}</div>
+        ${formDots(insCurrentData?.match?.home_form)}
       </div>` : '<div></div>'}
       ${topA ? `<div style="text-align:center;cursor:pointer" onclick="insShowTab('joueurs')" title="Voir onglet Joueurs">
         <div style="font-size:10px;color:#ab47bc;font-weight:700;margin-bottom:4px">${topA.name}${valueBadge(topA)}</div>
-        <div class="${kpiClass(topA.kpi)}" style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font:900 20px/1 var(--font-head);">${safeFixed(topA.kpi,1)}</div>
-        <div style="font-size:9px;color:var(--text3)">${formLine(topA)}</div>
+        <div class="${kpiClass(topA.kpi)}" style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font:900 20px/1 var(--font-head);">${safeFixed(topA.kpi,1)}<span style="font-size:9px;opacity:0.5;font-weight:400">/20</span></div>
+        ${kpiBar(topA.kpi)}
+        <div style="font-size:9px;color:var(--text3);margin-top:3px">${formLine(topA)}</div>
+        ${formDots(insCurrentData?.match?.away_form)}
       </div>` : '<div></div>'}
     </div>
   ` : '';
@@ -6590,42 +6718,165 @@ async function openLiveDetail(matchId) {
 }
 
 function buildH2HTab(d) {
-  const h2h = d.h2h;
-  if (!h2h || !h2h.meetings || !h2h.meetings.length) {
-    return `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⚔️</div>Aucun face-à-face récent<br><span style="font-size:11px;color:var(--text3)">Données H2H indisponibles pour ce match</span></div>`;
-  }
   const m = d.match;
-  const homeWins = h2h.meetings.filter(x => x.home_goals != null && ((x.home === m.home_team && x.home_goals > x.away_goals) || (x.home !== m.home_team && x.away_goals > x.home_goals))).length;
-  const awayWins = h2h.meetings.filter(x => x.home_goals != null && ((x.away === m.away_team && x.away_goals > x.home_goals) || (x.away !== m.away_team && x.home_goals > x.away_goals))).length;
-  const draws = h2h.total - homeWins - awayWins;
-  const rows = h2h.meetings.map(x => {
-    const date = x.date;
-    const isHome = x.home === m.home_team;
-    const ht = isHome ? x.home : x.away;
-    const at = isHome ? x.away : x.home;
-    const hs = isHome ? x.home_goals : x.away_goals;
-    const as = isHome ? x.away_goals : x.home_goals;
-    const winner = hs != null && as != null ? (hs > as ? 'H' : as > hs ? 'A' : 'N') : '?';
-    const wColor = winner === 'H' ? 'var(--blue)' : winner === 'A' ? '#ab47bc' : 'var(--text3)';
-    return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:5px 8px;font-size:11px;color:var(--text3)">${date}</td>
-      <td style="padding:5px 8px;font-size:12px;color:var(--text2)">${ht}</td>
-      <td style="padding:5px 8px;font-size:13px;font-weight:700;font-family:var(--font-mono);color:${wColor}">${hs != null ? hs+'-'+as : '?-?'}</td>
-      <td style="padding:5px 8px;font-size:12px;color:var(--text2)">${at}</td>
-      <td style="padding:5px 8px;font-size:11px;color:var(--text3)">${x.league}</td>
+  const h2h = d.h2h;
+  const homeLastHome = d.homeLastHome || [];
+  const awayLastAway = d.awayLastAway || [];
+
+  function matchRow(x, isHomePerspective) {
+    const hs = x.home_goals, as = x.away_goals;
+    const scored = isHomePerspective ? hs : as;
+    const conceded = isHomePerspective ? as : hs;
+    const opponent = isHomePerspective ? x.away : x.home;
+    const result = hs != null && as != null
+      ? (scored > conceded ? 'V' : scored < conceded ? 'D' : 'N')
+      : '?';
+    const rColor = result === 'V' ? '#00e676' : result === 'D' ? '#ff4d4d' : result === 'N' ? '#ffa726' : 'var(--text3)';
+    const rBg = result === 'V' ? 'rgba(0,230,118,0.12)' : result === 'D' ? 'rgba(255,77,77,0.12)' : result === 'N' ? 'rgba(255,167,38,0.1)' : 'transparent';
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+      <td style="padding:5px 8px;font-size:11px;color:var(--text3);white-space:nowrap">${x.date}</td>
+      <td style="padding:5px 8px;font-size:12px;color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${opponent}">${opponent}</td>
+      <td style="padding:5px 8px;font-family:var(--font-mono);font-size:13px;font-weight:700;text-align:center">${hs != null ? `${x.home_goals}-${x.away_goals}` : '?-?'}</td>
+      <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;min-width:22px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;color:${rColor};background:${rBg}">${result}</span></td>
+      <td style="padding:5px 8px;font-size:10px;color:var(--text3);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${x.league}">${x.league}</td>
     </tr>`;
-  }).join('');
-  return `<div style="padding:4px 0">
-    <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
-      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:var(--blue)">${homeWins}</div><div style="font-size:10px;color:var(--text3)">${m.home_team}</div></div>
-      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:var(--text2)">${draws}</div><div style="font-size:10px;color:var(--text3)">Nuls</div></div>
-      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:#ab47bc">${awayWins}</div><div style="font-size:10px;color:var(--text3)">${m.away_team}</div></div>
-      <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center;min-width:80px"><div style="font-size:20px;font-weight:800;color:var(--text)">${h2h.total}</div><div style="font-size:10px;color:var(--text3)">Matchs</div></div>
+  }
+
+  function l5Stats(fixtures, isHome) {
+    const five = fixtures.slice(0, 5);
+    let w = 0, d = 0, l = 0, gf = 0, ga = 0, cs = 0;
+    for (const f of five) {
+      if (f.home_goals == null) continue;
+      const scored = isHome ? f.home_goals : f.away_goals;
+      const conceded = isHome ? f.away_goals : f.home_goals;
+      gf += scored; ga += conceded;
+      if (scored > conceded) w++;
+      else if (scored === conceded) d++;
+      else l++;
+      if (conceded === 0) cs++;
+    }
+    const n = five.filter(f => f.home_goals != null).length || 1;
+    return { w, d, l, gf: (gf/n).toFixed(1), ga: (ga/n).toFixed(1), cs };
+  }
+
+  function h2hStats(meetings, homeTeam) {
+    const five = meetings.slice(0, 5);
+    let w = 0, d = 0, l = 0, gf = 0, ga = 0, btts = 0;
+    for (const x of five) {
+      if (x.home_goals == null) continue;
+      const isHome = x.home === homeTeam;
+      const scored = isHome ? x.home_goals : x.away_goals;
+      const conceded = isHome ? x.away_goals : x.home_goals;
+      gf += scored; ga += conceded;
+      if (scored > conceded) w++;
+      else if (scored === conceded) d++;
+      else l++;
+      if (scored > 0 && conceded > 0) btts++;
+    }
+    const n = five.filter(x => x.home_goals != null).length || 1;
+    return { w, d, l, gf: (gf/n).toFixed(1), ga: (ga/n).toFixed(1), btts, n };
+  }
+
+  function statsBadge(label, val, color) {
+    return `<div style="background:var(--bg3);border-radius:8px;padding:8px 12px;text-align:center;min-width:60px">
+      <div style="font-size:16px;font-weight:800;color:${color};font-family:var(--font-mono)">${val}</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px">${label}</div>
+    </div>`;
+  }
+
+  function sectionTitle(icon, title, subtitle) {
+    return `<div style="display:flex;align-items:center;gap:8px;margin:16px 0 10px">
+      <span style="font-size:16px">${icon}</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${title}</div>
+        ${subtitle ? `<div style="font-size:10px;color:var(--text3)">${subtitle}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function miniTable(rows, noDataMsg) {
+    if (!rows.length) return `<div style="padding:12px;color:var(--text3);font-size:12px;text-align:center">${noDataMsg}</div>`;
+    return `<table class="ins-table" style="margin-bottom:0">
+      <thead><tr>
+        <th style="text-align:left">Date</th>
+        <th style="text-align:left">Adversaire</th>
+        <th style="text-align:center">Score</th>
+        <th style="text-align:center">Rés.</th>
+        <th style="text-align:left">Compétition</th>
+      </tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>`;
+  }
+
+  const hStats = l5Stats(homeLastHome, true);
+  const aStats = l5Stats(awayLastAway, false);
+  const hh = h2hStats(h2h?.meetings || [], m.home_team);
+  const h2hMeetings = h2h?.meetings || [];
+
+  const homeRows = homeLastHome.slice(0, 5).map(x => matchRow(x, true));
+  const awayRows = awayLastAway.slice(0, 5).map(x => matchRow(x, false));
+  const h2hRows = h2hMeetings.slice(0, 5).map(x => {
+    const hs = x.home_goals, as = x.away_goals;
+    const isHome = x.home === m.home_team;
+    const scored = isHome ? hs : as;
+    const conceded = isHome ? as : hs;
+    const result = hs != null ? (scored > conceded ? 'V' : scored < conceded ? 'D' : 'N') : '?';
+    const rColor = result === 'V' ? '#00e676' : result === 'D' ? '#ff4d4d' : result === 'N' ? '#ffa726' : 'var(--text3)';
+    const rBg = result === 'V' ? 'rgba(0,230,118,0.12)' : result === 'D' ? 'rgba(255,77,77,0.12)' : result === 'N' ? 'rgba(255,167,38,0.1)' : 'transparent';
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+      <td style="padding:5px 8px;font-size:11px;color:var(--text3);white-space:nowrap">${x.date}</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.home} <span style="color:var(--text3)">vs</span> ${x.away}</td>
+      <td style="padding:5px 8px;font-family:var(--font-mono);font-size:13px;font-weight:700;text-align:center">${hs != null ? `${hs}-${as}` : '?-?'}</td>
+      <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;min-width:22px;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;color:${rColor};background:${rBg}">${result}</span></td>
+      <td style="padding:5px 8px;font-size:10px;color:var(--text3);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.league}</td>
+    </tr>`;
+  });
+
+  const statsBanner = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <div style="background:rgba(41,182,246,0.06);border:1px solid rgba(41,182,246,0.2);border-radius:10px;padding:10px 12px">
+      <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${m.home_team} — L5 Domicile</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${statsBadge('V', hStats.w, '#00e676')}
+        ${statsBadge('N', hStats.d, '#ffa726')}
+        ${statsBadge('D', hStats.l, '#ff4d4d')}
+        ${statsBadge('Buts/M', hStats.gf, 'var(--text)')}
+        ${statsBadge('Enc/M', hStats.ga, 'var(--text2)')}
+        ${statsBadge('CS', hStats.cs, '#29b6f6')}
+      </div>
     </div>
-    <table class="ins-table">
-      <thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Domicile</th><th style="text-align:left">Score</th><th style="text-align:left">Extérieur</th><th style="text-align:left">Compétition</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div style="background:rgba(171,71,188,0.06);border:1px solid rgba(171,71,188,0.2);border-radius:10px;padding:10px 12px">
+      <div style="font-size:10px;font-weight:700;color:#ab47bc;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${m.away_team} — L5 Extérieur</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${statsBadge('V', aStats.w, '#00e676')}
+        ${statsBadge('N', aStats.d, '#ffa726')}
+        ${statsBadge('D', aStats.l, '#ff4d4d')}
+        ${statsBadge('Buts/M', aStats.gf, 'var(--text)')}
+        ${statsBadge('Enc/M', aStats.ga, 'var(--text2)')}
+        ${statsBadge('CS', aStats.cs, '#29b6f6')}
+      </div>
+    </div>
+  </div>
+  ${h2hMeetings.length ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">H2H — ${m.home_team} vs ${m.away_team} (L5)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${statsBadge('V', hh.w, '#00e676')}
+      ${statsBadge('Nul', hh.d, '#ffa726')}
+      ${statsBadge('D', hh.l, '#ff4d4d')}
+      ${statsBadge('Buts/M', (parseFloat(hh.gf) + parseFloat(hh.ga)).toFixed(1), 'var(--text)')}
+      ${statsBadge('BTTS', hh.btts + '/' + hh.n, '#ffa726')}
+    </div>
+  </div>` : ''}`;
+
+  return `<div style="padding:4px 0">
+    ${statsBanner}
+    ${sectionTitle('🏠', m.home_team, '5 derniers matchs à domicile')}
+    ${miniTable(homeRows, 'Aucune donnée domicile disponible')}
+    ${sectionTitle('✈️', m.away_team, "5 derniers matchs à l'extérieur")}
+    ${miniTable(awayRows, 'Aucune donnée extérieur disponible')}
+    ${sectionTitle('⚔️', 'Face-à-face', `${m.home_team} vs ${m.away_team} — 5 derniers`)}
+    ${h2hMeetings.length
+      ? miniTable(h2hRows, '')
+      : `<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Aucun face-à-face récent disponible</div>`}
   </div>`;
 }
 

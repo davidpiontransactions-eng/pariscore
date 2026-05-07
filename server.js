@@ -406,6 +406,101 @@ const BSD_CONFIG_TO_BSD = bsdConfig.mapping?.config_to_bsd || {};
 const BSD_BSD_TO_CONFIG = bsdConfig.mapping?.bsd_to_config || {};
 const BSD_FALLBACK_NEEDED = bsdConfig.mapping?.fallback_needed || [];
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SOFASCORE — Fallback pour ligues exotiques sans données API-Football/BSD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SOFA_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+  'Referer': 'https://www.sofascore.com/',
+  'Origin': 'https://www.sofascore.com',
+  'Cache-Control': 'no-cache',
+};
+
+async function sofaGet(path) {
+  return httpsGet(`https://api.sofascore.com/api/v1${path}`, SOFA_HEADERS);
+}
+
+// Find Sofascore team ID by name — cached 7 days
+async function searchSofascoreTeam(teamName) {
+  try {
+    const cacheKey = `sofa_team_${teamName.replace(/\s+/g,'_').toLowerCase()}`;
+    const cached = apiCacheGet(cacheKey, 'sofa_team');
+    if (cached) return cached;
+    const q = encodeURIComponent(teamName);
+    const res = await sofaGet(`/search/teams?q=${q}`);
+    // API returns { results: [{entity: {id, name, ...}}] }
+    const teams = (res.data?.results||[]).map(r => r.entity).filter(Boolean);
+    if (res.status !== 200 || !teams.length) return null;
+    // Pick best match: exact name match first, then first result
+    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').trim();
+    const tNorm = norm(teamName);
+    const best = teams.find(t => norm(t.name) === tNorm)
+      || teams.find(t => norm(t.name).includes(tNorm) || tNorm.includes(norm(t.name)))
+      || teams[0];
+    const result = { id: best.id, name: best.name };
+    apiCacheSet(cacheKey, result, 'sofa_team', 7 * 24 * 3600);
+    return result;
+  } catch(e) { return null; }
+}
+
+// Fetch last N matches for a Sofascore team ID (pages 0,1 = last ~40 matches)
+async function fetchSofascoreTeamLastMatches(sofaTeamId, pagesNeeded = 2) {
+  try {
+    const cacheKey = `sofa_matches_${sofaTeamId}`;
+    const cached = apiCacheGet(cacheKey, 'sofa_matches');
+    if (cached) return cached;
+    const allEvents = [];
+    for (let page = 0; page < pagesNeeded; page++) {
+      const res = await sofaGet(`/team/${sofaTeamId}/events/last/${page}`);
+      if (res.status !== 200 || !res.data?.events?.length) break;
+      allEvents.push(...res.data.events);
+      if (!res.data.hasNextPage) break;
+    }
+    const matches = allEvents
+      .filter(e => e.status?.type === 'finished' && e.homeScore?.current != null)
+      .map(e => ({
+        date: new Date(e.startTimestamp * 1000).toISOString().slice(0, 10),
+        league: e.tournament?.name || e.tournament?.category?.name || '',
+        home: e.homeTeam?.name || '',
+        away: e.awayTeam?.name || '',
+        home_id: e.homeTeam?.id || null,
+        away_id: e.awayTeam?.id || null,
+        home_goals: e.homeScore.current,
+        away_goals: e.awayScore.current,
+        _sofa: true,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+    apiCacheSet(cacheKey, matches, 'sofa_matches', 6 * 3600);
+    return matches;
+  } catch(e) { return []; }
+}
+
+// Main entry point: get last matches for a team (BSD then Sofascore fallback)
+async function fetchTeamLastFixturesBSDOrSofa(teamName, bsdLeagueId, sofaTeamIdHint) {
+  // 1. Try BSD first
+  const bsdMatches = await fetchBSDTeamLastFixtures(teamName, bsdLeagueId, 30);
+  // Need ≥10 total to guarantee ≥5 home AND ≥5 away after filtering
+  if (bsdMatches.length >= 10) return bsdMatches;
+  // 2. Sofascore fallback when BSD coverage is insufficient
+  try {
+    let sofaId = sofaTeamIdHint;
+    if (!sofaId) {
+      const found = await searchSofascoreTeam(teamName);
+      sofaId = found?.id;
+    }
+    if (!sofaId) return bsdMatches;
+    const sofaMatches = await fetchSofascoreTeamLastMatches(sofaId, 2);
+    if (!sofaMatches.length) return bsdMatches;
+    // Merge: BSD matches take priority, pad with Sofascore
+    const seen = new Set(bsdMatches.map(m => `${m.date}|${m.home}|${m.away}`));
+    const extra = sofaMatches.filter(m => !seen.has(`${m.date}|${m.home}|${m.away}`));
+    return [...bsdMatches, ...extra].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+  } catch(e) { return bsdMatches; }
+}
+
 // Helper BSD: requête GET avec retry
 async function bsdFetch(endpoint, retries = 2) {
   const url = `${BSD_BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}tz=Europe/Paris`;
@@ -4057,6 +4152,82 @@ async function fetchH2H(team1Id, team2Id, limit = 10) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  LAST FIXTURES — Last N matches for a team (for H2H & Derniers matchs tab)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function fetchTeamLastFixtures(teamId, limit = 15) {
+  try {
+    const cacheKey = `team_fixtures_${teamId}_${limit}`;
+    const cached = apiCacheGet(cacheKey, 'team_fixtures');
+    if (cached) return cached;
+    const res = await httpsGet(
+      `https://v3.football.api-sports.io/fixtures?team=${teamId}&last=${limit}&status=FT`,
+      { 'x-apisports-key': API_FOOTBALL_KEY }
+    );
+    if (res.status !== 200 || !res.data?.response?.length) return [];
+    const fixtures = res.data.response.map(f => ({
+      date: new Date(f.fixture?.date).toISOString().slice(0, 10),
+      league: f.league?.name || '',
+      home: f.teams.home.name,
+      away: f.teams.away.name,
+      home_id: f.teams.home.id,
+      away_id: f.teams.away.id,
+      home_goals: f.goals?.home ?? null,
+      away_goals: f.goals?.away ?? null,
+    }));
+    apiCacheSet(cacheKey, fixtures, 'team_fixtures', 6 * 3600);
+    return fixtures;
+  } catch(e) { return []; }
+}
+
+// BSD fallback: last N finished matches for a team from BSD /events/ with pagination
+async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
+  try {
+    const cacheKey = `bsd_last_fx_${bsdLeagueId}_${teamName.replace(/\s+/g,'_')}`;
+    const cached = apiCacheGet(cacheKey, 'bsd_last_fx');
+    if (cached) return cached;
+    const now = new Date();
+    const from = new Date(now.getTime() - 320 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const to = now.toISOString().split('T')[0];
+    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const teamNorm = norm(teamName);
+    const stopWords = new Set(['al','fc','sc','ac','cf','sd','cd','fk','sk','if','bk','afc','bfc']);
+    const sigWord = teamNorm.split(' ').find(w => w.length >= 3 && !stopWords.has(w)) || teamNorm.split(' ')[0];
+
+    // Paginate BSD /events/ (max 6 pages), collect all matching, dedup, reverse (recent first)
+    const seen = new Set();
+    const allMatches = [];
+    for (let page = 1; page <= 6; page++) {
+      const res = await bsdFetch(`/events/?date_from=${from}&date_to=${to}&league=${bsdLeagueId}&status=finished&page_size=50&page=${page}`);
+      if (res.status !== 200 || !res.data?.results?.length) break;
+      for (const e of res.data.results) {
+        if (!(norm(e.home_team).includes(sigWord) || norm(e.away_team).includes(sigWord))) continue;
+        const dedupeKey = `${e.home_team}|${e.away_team}|${e.event_date||e.date||''}`;
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+        allMatches.push({
+          date: (e.event_date || e.date || e.start_time || '').slice(0, 10),
+          league: e.league?.name || e.league_name || String(bsdLeagueId),
+          home: e.home_team || '',
+          away: e.away_team || '',
+          home_id: null,
+          away_id: null,
+          home_goals: e.home_score != null ? Number(e.home_score) : null,
+          away_goals: e.away_score != null ? Number(e.away_score) : null,
+          _bsd: true,
+        });
+      }
+      if (!res.data.next) break;
+    }
+    // Sort most recent first
+    allMatches.sort((a, b) => b.date.localeCompare(a.date));
+    const result = allMatches.slice(0, limit);
+    apiCacheSet(cacheKey, result, 'bsd_last_fx', 6 * 3600);
+    return result;
+  } catch(e) { return []; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  CORNERS — Predictions Over/Under via BSD historical data
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -7647,7 +7818,7 @@ function handleAPI(req, res, pathname, query) {
         const [h2hRes, topScorersRes, homeCornersRes, awayCornersRes,
                homeKPRes, awayKPRes, homePRRes, awayPRRes,
                homeSquadRes, awaySquadRes, homeRatingsRes, awayRatingsRes,
-               homeTPRes, awayTPRes] = await Promise.allSettled([
+               homeTPRes, awayTPRes, homeFixturesRes, awayFixturesRes] = await Promise.allSettled([
           (hTeamId && aTeamId) ? fetchH2H(hTeamId, aTeamId, 10) : Promise.resolve(null),
           leagueId ? fetchLeagueTopScorers(leagueId, season) : Promise.resolve([]),
           hBsdTeamId && cfg ? fetchBSDTeamCornerHistory(match.home_team, cfg, 10) : Promise.resolve(null),
@@ -7662,6 +7833,8 @@ function handleAPI(req, res, pathname, query) {
           (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
           hTeamId ? fetchTopPerformers(hTeamId, leagueId, season) : (hHasBsd ? fetchTopPerformersBSD(hBsdTeamId, hBsdSeasonId) : Promise.resolve({ attackers: [], defenders: [] })),
           aTeamId ? fetchTopPerformers(aTeamId, leagueId, season) : (aHasBsd ? fetchTopPerformersBSD(aBsdTeamId, aBsdSeasonId) : Promise.resolve({ attackers: [], defenders: [] })),
+          hTeamId ? fetchTeamLastFixtures(hTeamId, 15) : (cfg ? fetchTeamLastFixturesBSDOrSofa(match.home_team, cfg, null) : Promise.resolve([])),
+          aTeamId ? fetchTeamLastFixtures(aTeamId, 15) : (cfg ? fetchTeamLastFixturesBSDOrSofa(match.away_team, cfg, null) : Promise.resolve([])),
         ]);
         const h2h = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
         const topScorers = topScorersRes.status === 'fulfilled' ? topScorersRes.value : [];
@@ -7683,6 +7856,21 @@ function handleAPI(req, res, pathname, query) {
         const awayBSDRatings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
         const homeTopPerformers = homeTPRes.status === 'fulfilled' ? homeTPRes.value : { attackers: [], defenders: [] };
         const awayTopPerformers = awayTPRes.status === 'fulfilled' ? awayTPRes.value : { attackers: [], defenders: [] };
+        // Last fixtures for H2H & Derniers matchs tab
+        const allHomeFixtures = homeFixturesRes.status === 'fulfilled' ? (homeFixturesRes.value || []) : [];
+        const allAwayFixtures = awayFixturesRes.status === 'fulfilled' ? (awayFixturesRes.value || []) : [];
+        const normTeam = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+        const _stopW = new Set(['al','fc','sc','ac','cf','sd','cd','fk','sk','if','bk','afc','bfc']);
+        const sigW = name => { const n = normTeam(name); return n.split(' ').find(w => w.length >= 3 && !_stopW.has(w)) || n.split(' ')[0]; };
+        const hSig = sigW(match.home_team);
+        const aSig = sigW(match.away_team);
+        // API-Football: filter by numeric ID; BSD/Sofa fallback: filter by significant name word
+        const homeLastHome = allHomeFixtures.filter(f =>
+          (f._bsd || f._sofa) ? normTeam(f.home).includes(hSig) : f.home_id === hTeamId
+        ).slice(0, 5);
+        const awayLastAway = allAwayFixtures.filter(f =>
+          (f._bsd || f._sofa) ? normTeam(f.away).includes(aSig) : f.away_id === aTeamId
+        ).slice(0, 5);
 
         // Croiser avec les blessures du match pour indiquer le statut
         const injuredNames = new Set(
@@ -7775,6 +7963,8 @@ function handleAPI(req, res, pathname, query) {
           homeCorners,
           awayCorners,
           h2h,
+          homeLastHome,
+          awayLastAway,
           // Top Performers
           homeTopPerformers,
           awayTopPerformers,
