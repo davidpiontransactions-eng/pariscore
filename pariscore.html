@@ -4648,7 +4648,6 @@ async function buildScoutingTab(matchId) {
     </div>`;
   try {
     const res = await fetch(`/api/v1/scout/pro/${encodeURIComponent(matchId)}`);
-    if (res.status === 429) { showScoutQueue(el, matchId, 5); return; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 

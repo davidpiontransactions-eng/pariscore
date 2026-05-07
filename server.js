@@ -2440,7 +2440,7 @@ function geminiRateLimitOk() {
 
 async function callGeminiWithRetry(prompt, maxTokens = 600) {
   if (!GEMINI_API_KEY) throw new Error('Clé Gemini non configurée');
-  const delays = [2000, 5000, 10000];
+  const delays = [0, 2000, 5000]; // attempt 0 = immediate, then backoff
   let lastErr;
   for (let attempt = 0; attempt < delays.length; attempt++) {
     if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
@@ -2856,7 +2856,7 @@ async function getProScoutReport(match) {
   // 3. Rate limit exceeded — instant math fallback
   if (!geminiRateLimitOk()) {
     console.warn(`  [ProScout] RPM limit atteint (${GEMINI_RPM_LIMIT}/min) — fallback math pour ${match.id}`);
-    return { report: buildMathFallbackReport(match), cached: false, fallback: true, queue_size: _geminiQueueSize };
+    return { report: buildMathFallbackReport(match), cached: false, fallback: true, provider: 'math', queue_size: _geminiQueueSize };
   }
 
   // 4. Process: register in-flight, then run through queue
