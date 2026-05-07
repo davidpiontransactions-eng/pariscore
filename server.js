@@ -55,6 +55,8 @@ loadEnv();
 const ODDS_API_KEY            = process.env.ODDS_API_KEY;
 const API_FOOTBALL_KEY        = process.env.API_FOOTBALL_KEY;
 const GEMINI_API_KEY          = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY            = process.env.GROQ_API_KEY || '';
+const GROQ_MODEL              = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const PARLAY_API_HOST         = process.env.PARLAY_API_HOST;
 const PARLAY_API_PATH         = process.env.PARLAY_API_PATH || '/parlay';
 const PARLAY_API_KEY          = process.env.PARLAY_API_KEY;
@@ -2480,6 +2482,46 @@ async function callGemini(prompt, maxTokens = 600) {
   });
 }
 
+// ─── GROQ (Llama 3) — second provider fallback ───────────────────────────────
+async function callGroq(prompt, maxTokens = 1500) {
+  if (!GROQ_API_KEY) throw new Error('GROQ_UNAVAILABLE');
+  const res = await httpsPost(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+    },
+    { Authorization: `Bearer ${GROQ_API_KEY}` }
+  );
+  if (res.status === 429) throw new Error('GROQ_429');
+  if (res.status !== 200) throw new Error(`GROQ_HTTP_${res.status}`);
+  const text = res.data?.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('GROQ_EMPTY');
+  return text;
+}
+
+// ─── UNIVERSAL SCOUT — cascade Gemini → Groq → Math ─────────────────────────
+async function callUniversalAI(prompt, maxTokens = 1500) {
+  // Try Gemini first (goes through queue + throttle + backoff)
+  try {
+    const text = await callGemini(prompt, maxTokens);
+    return { text, provider: 'gemini' };
+  } catch(e) {
+    if (e.message !== 'GEMINI_429') throw e;
+    console.warn('  [Universal] Gemini 429 → basculement Groq');
+  }
+  // Try Groq (Llama 3) — no queue needed, separate quota
+  try {
+    const text = await callGroq(prompt, maxTokens);
+    return { text, provider: 'groq' };
+  } catch(e) {
+    console.warn(`  [Universal] Groq échec (${e.message}) → fallback math`);
+    return null; // signals math fallback
+  }
+}
+
 // ─── MATH FALLBACK — rapport statistique pur (sans IA) ───────────────────────
 function buildMathFallbackReport(match) {
   const p   = match.poisson || {};
@@ -2783,18 +2825,17 @@ async function _doProScoutReport(match) {
   ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
 
   const prompt = buildProScoutPrompt(match, homeRatings, awayRatings, homeSquad, awaySquad, pressContext);
-  try {
-    const report = await callGemini(prompt, 1500);
+  const aiResult = await callUniversalAI(prompt, 1500);
+  if (aiResult) {
+    const { text: report, provider } = aiResult;
     const cacheKey = `pro_scout_${match.id}`;
-    kvSet(cacheKey, { report, ts: Date.now() });
-    return { report, cached: false, fallback: false, queue_size: _geminiQueueSize };
-  } catch(e) {
-    if (e.message === 'GEMINI_429') {
-      console.warn(`  [ProScout] Gemini quota épuisé — fallback math pour ${match.id}`);
-      return { report: buildMathFallbackReport(match), cached: false, fallback: true, queue_size: _geminiQueueSize };
-    }
-    throw e;
+    kvSet(cacheKey, { report, ts: Date.now(), provider });
+    console.log(`  [ProScout] ✓ ${provider.toUpperCase()} — ${match.home_team} vs ${match.away_team}`);
+    return { report, cached: false, fallback: false, provider, queue_size: _geminiQueueSize };
   }
+  // Both AI providers failed — math fallback
+  console.warn(`  [ProScout] Tous les fournisseurs IA indisponibles — fallback math pour ${match.id}`);
+  return { report: buildMathFallbackReport(match), cached: false, fallback: true, provider: 'math', queue_size: _geminiQueueSize };
 }
 
 async function getProScoutReport(match) {
@@ -2802,7 +2843,7 @@ async function getProScoutReport(match) {
   const cacheKey = `pro_scout_${match.id}`;
   const cached = kvGet(cacheKey);
   if (cached && cached.ts && Date.now() - cached.ts < 86400000) {
-    return { report: cached.report, cached: true, fallback: false, queue_size: 0 };
+    return { report: cached.report, cached: true, fallback: false, provider: cached.provider || 'gemini', queue_size: 0 };
   }
 
   // 2. In-flight deduplication — same match already being processed
