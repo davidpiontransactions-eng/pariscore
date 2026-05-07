@@ -2409,7 +2409,7 @@ function geminiEnqueue(fn) {
 
 async function callGeminiWithRetry(prompt, maxTokens = 600) {
   if (!GEMINI_API_KEY) throw new Error('Clé Gemini non configurée');
-  const delays = [0, 2000, 5000];
+  const delays = [2000, 5000, 10000];
   let lastErr;
   for (let attempt = 0; attempt < delays.length; attempt++) {
     if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
