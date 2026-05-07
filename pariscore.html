@@ -4656,23 +4656,22 @@ async function buildScoutingTab(matchId) {
     const tgText = extractProScoutTelegram(data.report);
 
     const isFallback = !!data.fallback;
-    const provider   = data.provider || 'gemini'; // 'gemini' | 'groq' | 'math'
+    const provider   = data.provider || 'groq'; // 'gemini' | 'groq' | 'math'
     const providerLabel = { gemini: 'Powered by Gemini', groq: 'Powered by Llama 3', math: 'Mode Statistique' };
     const providerColor = { gemini: '#29b6f6', groq: '#a78bfa', math: 'var(--amber)' };
 
-    const badgeIcon  = isFallback ? '📊' : (provider === 'groq' ? '🦙' : '🏅');
-    const badgeText  = isFallback ? 'ANALYSE STATISTIQUE' : 'CERTIFIÉ PARISCORE PRO';
-    const badgeColor = isFallback ? 'var(--amber)' : (provider === 'groq' ? '#a78bfa' : 'var(--green)');
-    const badgeBorder = isFallback ? 'rgba(255,167,38,0.35)' : (provider === 'groq' ? 'rgba(167,139,250,0.35)' : 'rgba(0,230,118,0.35)');
-    const badgeBg = isFallback
+    // Same badge for all AI providers — only math gets a different one
+    const badgeIcon   = isFallback ? '📊' : '🏅';
+    const badgeText   = isFallback ? 'ANALYSE STATISTIQUE' : 'CERTIFIÉ PRO';
+    const badgeColor  = isFallback ? 'var(--amber)' : 'var(--green)';
+    const badgeBorder = isFallback ? 'rgba(255,167,38,0.35)' : 'rgba(0,230,118,0.35)';
+    const badgeBg     = isFallback
       ? 'linear-gradient(135deg,rgba(255,167,38,0.12),rgba(255,77,77,0.06))'
-      : (provider === 'groq'
-        ? 'linear-gradient(135deg,rgba(167,139,250,0.12),rgba(41,182,246,0.06))'
-        : 'linear-gradient(135deg,rgba(0,230,118,0.15),rgba(41,182,246,0.1))');
+      : 'linear-gradient(135deg,rgba(0,230,118,0.15),rgba(41,182,246,0.1))';
 
     const statusParts = [];
     if (data.cached) statusParts.push('💾 CACHE 24H');
-    else if (isFallback) statusParts.push('⚡ FAST MODE');
+    else if (isFallback) statusParts.push('📊 FAST MODE');
     else { statusParts.push('✨ NOUVEAU · 5 PILIERS'); if (data.queue_size > 1) statusParts.push(`File: ${data.queue_size}`); }
 
     el.innerHTML = `

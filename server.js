@@ -2504,20 +2504,21 @@ async function callGroq(prompt, maxTokens = 1500) {
 
 // ─── UNIVERSAL SCOUT — cascade Gemini → Groq → Math ─────────────────────────
 async function callUniversalAI(prompt, maxTokens = 1500) {
-  // Try Gemini first (goes through queue + throttle + backoff)
-  try {
-    const text = await callGemini(prompt, maxTokens);
-    return { text, provider: 'gemini' };
-  } catch(e) {
-    if (e.message !== 'GEMINI_429') throw e;
-    console.warn('  [Universal] Gemini 429 → basculement Groq');
-  }
-  // Try Groq (Llama 3) — no queue needed, separate quota
+  // 1. Groq first — fast, generous quota, no throttle
   try {
     const text = await callGroq(prompt, maxTokens);
+    console.log('  [Universal] ✓ Groq');
     return { text, provider: 'groq' };
   } catch(e) {
-    console.warn(`  [Universal] Groq échec (${e.message}) → fallback math`);
+    console.warn(`  [Universal] Groq échec (${e.message}) → basculement Gemini`);
+  }
+  // 2. Gemini fallback (queue + 15s throttle + backoff 2s/5s/10s)
+  try {
+    const text = await callGemini(prompt, maxTokens);
+    console.log('  [Universal] ✓ Gemini');
+    return { text, provider: 'gemini' };
+  } catch(e) {
+    console.warn(`  [Universal] Gemini échec (${e.message}) → fallback math`);
     return null; // signals math fallback
   }
 }
