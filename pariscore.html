@@ -209,15 +209,32 @@
     display: flex; align-items: center; gap: 8px;
   }
   .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
-  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; }
   .nav-links a {
-    padding: 6px 14px; border-radius: 6px;
+    position: relative;
+    display: flex; align-items: center;
+    padding: 0 16px;
     font-size: 13px; font-weight: 500; color: var(--text2);
     font-family: var(--font-body);
-    transition: color .15s, background .15s;
+    white-space: nowrap;
+    transition: color .18s;
+    /* barre rouge en bas */
   }
-  .nav-links a:hover { color: var(--text); background: var(--bg3); }
-  .nav-links a.active { color: var(--accent); font-weight: 600; }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 16px; right: 16px;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform .24s cubic-bezier(.4,0,.2,1);
+    border-radius: 2px 2px 0 0;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-links a.active { color: var(--text); font-weight: 600; }
+  .nav-links a.active::after { transform: scaleX(1); }
   .nav-cta {
     background: var(--accent); color: #fff;
     font-family: var(--font-body); font-weight: 600;
