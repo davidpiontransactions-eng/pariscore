@@ -2872,6 +2872,168 @@
   /* ── BUTEURS BLOCK fond blanc ─────────────────────────── */
   body:not(.dark-theme) .buteurs-block { color: #1A1A1A !important; }
 
+  /* ═══════════════════════════════════════════════════════
+     MODALES / POPUPS — Design System L'Équipe
+     AI-AL (deep-panel), Insights, Score Matrix
+     ═══════════════════════════════════════════════════════ */
+
+  /* Overlay backdrop */
+  body:not(.dark-theme) #deep-modal { background: rgba(0,0,0,0.55) !important; }
+
+  /* Panel principal AI-AL */
+  body:not(.dark-theme) #deep-panel {
+    background: #fff !important;
+    border: 1px solid #EAEAEA !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+  }
+
+  /* Header */
+  body:not(.dark-theme) #deep-panel-header {
+    border-bottom: 2px solid #E2001A !important;
+  }
+
+  /* Inner text */
+  body:not(.dark-theme) #deep-panel-inner h1 { color: #1A1A1A !important; }
+  body:not(.dark-theme) #deep-panel-inner h2 {
+    color: #E2001A !important;
+    border-bottom-color: #EAEAEA !important;
+  }
+  body:not(.dark-theme) #deep-panel-inner h3 { color: #888 !important; }
+  body:not(.dark-theme) #deep-panel-inner p,
+  body:not(.dark-theme) #deep-panel-inner li { color: #1A1A1A !important; }
+  body:not(.dark-theme) #deep-panel-inner strong { color: #1A1A1A !important; }
+  body:not(.dark-theme) #deep-panel-inner code {
+    background: rgba(226,0,26,0.06) !important;
+    color: #E2001A !important;
+  }
+  body:not(.dark-theme) #deep-panel-inner pre {
+    background: #F4F4F4 !important;
+    border-color: #EAEAEA !important;
+  }
+  body:not(.dark-theme) #deep-panel-inner pre code {
+    background: none !important;
+    color: #1A1A1A !important;
+  }
+  body:not(.dark-theme) #deep-match-label { color: #888 !important; }
+
+  /* Mode buttons (Terminal / Rendu / Nouvelle analyse) */
+  body:not(.dark-theme) .dp-mode-btn {
+    border-color: #DCDCDC !important;
+    color: #888 !important;
+    background: #fff !important;
+  }
+  body:not(.dark-theme) .dp-mode-btn:hover {
+    background: #F4F4F4 !important;
+    border-color: #1A1A1A !important;
+    color: #1A1A1A !important;
+  }
+  body:not(.dark-theme) .dp-mode-btn.active {
+    background: #1A1A1A !important;
+    border-color: #1A1A1A !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+
+  /* Confidence badges */
+  body:not(.dark-theme) .dp-conf-badge.good {
+    background: rgba(226,0,26,0.08) !important;
+    border-color: rgba(226,0,26,0.3) !important;
+    color: #E2001A !important;
+  }
+  body:not(.dark-theme) .dp-conf-badge.mid {
+    background: #F4F4F4 !important;
+    border-color: #DCDCDC !important;
+    color: #1A1A1A !important;
+  }
+  body:not(.dark-theme) .dp-conf-badge.low {
+    background: #F4F4F4 !important;
+    border-color: #DCDCDC !important;
+    color: #888 !important;
+  }
+
+  /* Footer Kelly */
+  body:not(.dark-theme) #deep-panel-footer {
+    border-top-color: #EAEAEA !important;
+    background: #FAFAFA !important;
+  }
+  body:not(.dark-theme) #dp-bankroll-input {
+    background: #fff !important;
+    border-color: #DCDCDC !important;
+    color: #1A1A1A !important;
+  }
+  body:not(.dark-theme) #dp-bankroll-input:focus { border-color: #E2001A !important; }
+  body:not(.dark-theme) .dp-kelly-hint { color: #888 !important; }
+  body:not(.dark-theme) .dp-kelly-tag {
+    background: #F4F4F4 !important;
+    border-color: #DCDCDC !important;
+    color: #1A1A1A !important;
+  }
+  body:not(.dark-theme) .dp-kelly-eur { color: #E2001A !important; }
+
+  /* Pro panel */
+  body:not(.dark-theme) #dp-pro-panel {
+    background: #F4F4F4 !important;
+    border-color: #EAEAEA !important;
+  }
+  body:not(.dark-theme) .dp-pro-title { color: #1A1A1A !important; }
+  body:not(.dark-theme) #dp-btn-pro {
+    border-color: #DCDCDC !important;
+    color: #888 !important;
+  }
+  body:not(.dark-theme) #dp-btn-pro:hover,
+  body:not(.dark-theme) #dp-btn-pro.active {
+    background: #1A1A1A !important;
+    border-color: #1A1A1A !important;
+    color: #fff !important;
+  }
+
+  /* dp-score-card (violet → rouge) */
+  body:not(.dark-theme) .dp-score-card {
+    background: rgba(226,0,26,0.04) !important;
+    border-color: rgba(226,0,26,0.18) !important;
+  }
+  body:not(.dark-theme) .dp-score-card .score-val { color: #E2001A !important; }
+  body:not(.dark-theme) .dp-score-card .score-bar { background: rgba(226,0,26,0.10) !important; }
+  body:not(.dark-theme) .dp-score-card .score-bar-fill {
+    background: linear-gradient(90deg, #b8001a, #E2001A) !important;
+  }
+  body:not(.dark-theme) .dp-score-card .team-name { color: #888 !important; }
+
+  /* dp-score-card2 */
+  body:not(.dark-theme) .dp-score-card2 {
+    background: #F4F4F4 !important;
+    border-color: #EAEAEA !important;
+  }
+  body:not(.dark-theme) .dp-score-card2 .dsc-name { color: #888 !important; }
+  body:not(.dark-theme) .dp-score-card2 .dsc-val { color: #1A1A1A !important; }
+  body:not(.dark-theme) .dp-score-card2 .dsc-denom { color: #888 !important; }
+  body:not(.dark-theme) .dp-score-card2 .dsc-bar { background: #EAEAEA !important; }
+
+  /* Divergence block */
+  body:not(.dark-theme) .dp-divergence-block {
+    background: #F4F4F4 !important;
+    border-color: #EAEAEA !important;
+    color: #1A1A1A !important;
+  }
+
+  /* Score Matrix panel */
+  body:not(.dark-theme) #score-panel {
+    background: #fff !important;
+    border-color: #EAEAEA !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+  }
+
+  /* Insights panel */
+  body:not(.dark-theme) #insights-panel {
+    background: #fff !important;
+    border-color: #EAEAEA !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+  }
+  body:not(.dark-theme) .ins-tab.active {
+    border-bottom-color: #E2001A !important;
+    color: #E2001A !important;
+  }
+
 </style>
 </head>
 <body>
@@ -3873,7 +4035,7 @@
   <div id="score-panel">
     <button class="modal-close" onclick="closeScoreMatrix()" style="position:absolute;top:16px;right:16px;">×</button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);">
-      <span style="font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px;background:rgba(0,230,118,0.1);color:var(--green);letter-spacing:.5px;text-transform:uppercase;">⚽ SCORE PRÉDIT</span>
+      <span style="font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px;background:rgba(226,0,26,0.08);color:#E2001A;letter-spacing:.5px;text-transform:uppercase;">⚽ SCORE PRÉDIT</span>
       <div>
         <div style="font-family:var(--font-head);font-size:20px;font-weight:800;" id="score-match-title">—</div>
         <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="score-match-sub">—</div>
@@ -10290,7 +10452,7 @@ if (scrollTop && scrollMain) {
   <div id="deep-panel">
     <div id="deep-panel-header">
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE — AI-AL</div>
+        <div style="font-size:13px;font-weight:700;color:#E2001A;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE — AI-AL</div>
         <div id="deep-match-label" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
         <div id="dp-timestamp"></div>
       </div>
@@ -10311,7 +10473,7 @@ if (scrollTop && scrollMain) {
       <!-- I5 — Mode Pro panel (injecté par JS via meta event) -->
       <div id="dp-pro-panel"><div class="dp-pro-title">Mode Parieur Pro — données brutes</div><div id="dp-pro-content"></div></div>
       <!-- Terminal streaming view -->
-      <pre id="deep-terminal" style="display:none;font:13px/1.65 var(--font-mono);color:#a8e6a3;background:#050709;border:1px solid rgba(0,200,83,0.2);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto;margin:0;"></pre>
+      <pre id="deep-terminal" style="display:none;font:13px/1.65 var(--font-mono);color:#1A1A1A;background:#F4F4F4;border:1px solid #EAEAEA;border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto;margin:0;"></pre>
       <!-- Structured render view -->
       <div id="deep-content" style="display:none;"></div>
     </div>
