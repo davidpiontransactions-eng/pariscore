@@ -563,6 +563,9 @@
   .dp-tg-pre { position: relative; background: #080b0f; border: 1px solid rgba(171,71,188,0.3); border-radius: 8px; padding: 14px 16px 14px; font: 12px/1.7 var(--font-mono); color: #e0e0e0; white-space: pre-wrap; word-break: break-word; margin: 0; }
   .dp-tg-copy { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
   .dp-tg-copy:hover { background: rgba(171,71,188,0.38); }
+  .dp-mode-btn { font: 600 10px/1 var(--font-mono); padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.3); color: var(--text3); background: transparent; cursor: pointer; transition: all .15s; letter-spacing: .5px; }
+  .dp-mode-btn:hover, .dp-mode-btn.active { background: rgba(171,71,188,0.18); border-color: #ab47bc; color: #ce93d8; }
+  #deep-terminal { scrollbar-width: thin; scrollbar-color: rgba(0,200,83,0.3) transparent; }
   #insights-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; z-index: 1010; opacity: 0; pointer-events: none; transition: opacity .2s; }
   #insights-modal.open { opacity: 1; pointer-events: all; }
   #insights-panel { background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px; position: relative; width: 94%; max-width: 740px; max-height: 88vh; display: flex; flex-direction: column; }
@@ -9232,54 +9235,105 @@ if (scrollTop && scrollMain) {
     <div id="deep-panel-header">
       <span style="font-size:18px;">🔬</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE</div>
+        <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE — AI-AL</div>
         <div id="deep-match-label" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+      </div>
+      <!-- Mode toggle -->
+      <div id="deep-mode-bar" style="display:none;gap:4px;align-items:center;margin-right:8px;">
+        <button id="dp-btn-terminal" class="dp-mode-btn active" onclick="switchDeepMode('terminal')">📟 Terminal</button>
+        <button id="dp-btn-render"   class="dp-mode-btn"        onclick="switchDeepMode('render')">✦ Rendu</button>
       </div>
       <button onclick="closeDeepAnalysis()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
     </div>
     <div id="deep-panel-inner">
-      <div id="deep-loader">
-        <div class="dp-spinner"></div>
-        <div class="dp-loader-text">Analyse en cours par Gemini 2.0 Flash…<br>
-          <span class="dp-loader-tip">Power Score · Tactique · Top 5 Paris · Script Telegram</span>
-        </div>
-      </div>
+      <!-- Terminal streaming view -->
+      <pre id="deep-terminal" style="display:none;font:13px/1.65 var(--font-mono);color:#a8e6a3;background:#050709;border:1px solid rgba(0,200,83,0.2);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto;margin:0;"></pre>
+      <!-- Structured render view -->
       <div id="deep-content" style="display:none;"></div>
     </div>
   </div>
 </div>
 
 <script>
-// ── Deep Analysis Pro ────────────────────────────────────────────────────────
-async function openDeepAnalysis(matchId, e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
+// ── Deep Analysis Pro — Terminal SSE ─────────────────────────────────────────
+let _deepEvt = null;
+let _deepText = '';
 
-  const allMatches = allMatches || [];
+function openDeepAnalysis(matchId, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
+  _deepText = '';
+
   const match = allMatches.find(m => m.id === matchId);
   const label = match ? `${match.home_team} vs ${match.away_team}` : matchId;
 
   document.getElementById('deep-match-label').textContent = label;
-  document.getElementById('deep-loader').style.display = 'flex';
+  document.getElementById('deep-mode-bar').style.display = 'none';
   document.getElementById('deep-content').style.display = 'none';
   document.getElementById('deep-content').innerHTML = '';
 
-  // Body lock
+  const term = document.getElementById('deep-terminal');
+  term.style.display = 'block';
+  term.textContent = '> AI-AL — Terminal d\'analyse Pariscore\n> Connexion au moteur Gemini 2.0 Flash…\n> Injection des données du match : ' + label + '\n\n';
+
   document.body.style.overflow = 'hidden';
   document.getElementById('deep-modal').classList.add('open');
 
-  try {
-    const res = await fetch(`/api/v1/deep-analysis/${encodeURIComponent(matchId)}`);
-    const data = await res.json();
-    if (!res.ok || !data.text) throw new Error(data.error || 'Erreur Gemini');
-    renderDeepAnalysis(data.text);
-  } catch(err) {
-    document.getElementById('deep-loader').style.display = 'none';
-    document.getElementById('deep-content').style.display = 'block';
-    document.getElementById('deep-content').innerHTML = `<div style="color:#ff5252;padding:20px;text-align:center;">⚠️ ${err.message}</div>`;
+  let headerDone = false;
+  _deepEvt = new EventSource('/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId));
+
+  _deepEvt.addEventListener('chunk', ev => {
+    const { text } = JSON.parse(ev.data);
+    if (!headerDone) { term.textContent += '> Analyse reçue :\n\n'; headerDone = true; }
+    _deepText += text;
+    term.textContent += text;
+    term.scrollTop = term.scrollHeight;
+  });
+
+  _deepEvt.addEventListener('done', () => {
+    _deepEvt.close(); _deepEvt = null;
+    term.textContent += '\n\n> ✅ Analyse complète.';
+    // Show toggle bar
+    const bar = document.getElementById('deep-mode-bar');
+    bar.style.display = 'flex';
+    // Auto-switch to rendered view after 1.8s
+    setTimeout(() => switchDeepMode('render'), 1800);
+  });
+
+  _deepEvt.addEventListener('error', ev => {
+    _deepEvt.close(); _deepEvt = null;
+    let msg = 'Connexion interrompue';
+    try { msg = JSON.parse(ev.data).message; } catch {}
+    term.textContent += '\n\n> ⚠️ ERREUR : ' + msg;
+    document.getElementById('deep-mode-bar').style.display = 'flex';
+  });
+
+  _deepEvt.onerror = () => {
+    if (_deepEvt?.readyState === EventSource.CLOSED) return;
+    term.textContent += '\n\n> ⚠️ Connexion SSE perdue.';
+    document.getElementById('deep-mode-bar').style.display = 'flex';
+  };
+}
+
+function switchDeepMode(mode) {
+  const term    = document.getElementById('deep-terminal');
+  const content = document.getElementById('deep-content');
+  const btnT    = document.getElementById('dp-btn-terminal');
+  const btnR    = document.getElementById('dp-btn-render');
+  if (mode === 'terminal') {
+    term.style.display = 'block';
+    content.style.display = 'none';
+    btnT.classList.add('active'); btnR.classList.remove('active');
+  } else {
+    term.style.display = 'none';
+    content.style.display = 'block';
+    btnT.classList.remove('active'); btnR.classList.add('active');
+    if (!content.innerHTML.trim() && _deepText) renderDeepAnalysis(_deepText);
   }
 }
 
 function closeDeepAnalysis() {
+  if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
   document.getElementById('deep-modal').classList.remove('open');
   document.body.style.overflow = '';
 }
