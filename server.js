@@ -139,9 +139,6 @@ Rédige ton analyse de manière fluide, professionnelle et structurée en utilis
    Propose les liens YouTube les plus pertinents pour les conférences de prematch des deux équipes. Format : [▶️ Nom équipe — Conférence d'avant-match](lien_youtube). Si aucun lien officiel n'est disponible, indique les chaînes YouTube à surveiller (club officiel, Ligue, beIN Sports, etc.).
 7. 📊 SYNTHÈSE DES AVIS WEB :
    Résume les avis et prédictions des sites de référence (Sofascore, BetMines, Forebet, OddAlerts, WhoScored) pour ce match. Indique s'il y a un consensus ou des divergences notables.
-8. 📲 SCRIPT TELEGRAM (À mettre impérativement dans un bloc de code avec le tag \`\`\`telegram pour être copié facilement) :
-Rédige un message Telegram dynamique, enthousiaste, utilisant le symbole ¤ comme puces, reprenant le résumé de l'analyse, la stat "cadeau" (souvent les corners) et proposant le meilleur combo à ta communauté. N'oublie pas l'appel à l'action à la fin (ex: "Mettez un 🔥 si vous validez !").
-
 [DIRECTIVES CRITIQUES]
 - Utilise EXCLUSIVEMENT les données mathématiques fournies dans le bloc [DONNÉES PARISCORE] ci-dessous.
 - Ne jamais inventer des probabilités — utilise celles calculées par notre algorithme Poisson.
@@ -3327,11 +3324,6 @@ Tu calcules un Power Score DOMICILE et un Power Score EXTÉRIEUR en isolant stri
 - 💎 **Le Value Bet** : [Pari cote X.XX] — [Erreur de marché détectée]
 - 🚩 **Le Coup Tactique** : [Pari corners/buteur/cartons] — [Justification mismatch]
 - ⚡ **Le Coup Risqué** : [Pari grosse cote] — [Justification]
-
-## 📲 SCRIPT TELEGRAM
-\`\`\`telegram
-[Message Telegram dynamique et enthousiaste, utilisant ¤ comme puces, reprenant le résumé de l'analyse, la stat cadeau (souvent les corners) et le meilleur combo. Appel à l'action final : "Mettez un 🔥 si vous validez !"]
-\`\`\`
 
 [DIRECTIVES CRITIQUES]
 - Utilise EXCLUSIVEMENT les données mathématiques du bloc [DONNÉES PARISCORE] ci-dessous.
@@ -8695,8 +8687,6 @@ Rédige ton analyse de manière fluide, professionnelle et structurée en utilis
    - 💎 Le Value Bet : [Pari] - [Justification détaillée sur l'erreur de cote du bookmaker]
    - 🚩 Le Coup Tactique (Corners/Buteur) : [Pari] - [Justification]
    - ⚡ Le Coup Risqué : [Pari grosse cote] - [Justification]
-6. 📲 SCRIPT TELEGRAM (dans un bloc de code markdown \`\`\` pour copier facilement) :
-Rédige un message Telegram dynamique, enthousiaste, utilisant le symbole '¤' comme puces, reprenant le résumé de l'analyse, la stat "cadeau" (souvent les corners) et proposant le meilleur combo. Appel à l'action final (ex: "Mettez un 🔥 si vous validez !").
 
 [DIRECTIVES CRITIQUES]
 - Base-toi sur les données fournies ci-dessus par Pariscore.
