@@ -8674,9 +8674,36 @@ Tu utilises les données Pariscore comme un journaliste utilise ses sources : po
 
 ${dataBlock}`;
 
-    // I1 — Confidence Score SSE meta event
+    // I1 — Confidence Score + I4 — Market divergences SSE meta event
     const confidence = (s.isReal ? 40 : 0) + (odds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (xg.home ? 10 : 0);
-    try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence, dataQuality: s.isReal ? 'RÉELLES' : 'ESTIMÉES' })}\n\n`); } catch {}
+    // I4: compute Poisson vs implied prob divergences (threshold 12%)
+    const divergences = [];
+    const totalOdds = (odds.home && odds.draw && odds.away) ? (1/odds.home + 1/odds.draw + 1/odds.away) : 0;
+    if (totalOdds > 0) {
+      const impliedHome = (1/odds.home) / totalOdds * 100;
+      const impliedDraw = (1/odds.draw) / totalOdds * 100;
+      const impliedAway = (1/odds.away) / totalOdds * 100;
+      const checks = [
+        { label: `${match.home_team} victoire`, poisson: p.homeWin, implied: impliedHome },
+        { label: 'Nul', poisson: p.draw, implied: impliedDraw },
+        { label: `${match.away_team} victoire`, poisson: p.awayWin, implied: impliedAway },
+        { label: 'Over 2.5', poisson: p.over25, implied: null },
+        { label: 'BTTS', poisson: p.btts, implied: null },
+      ];
+      checks.forEach(c => {
+        if (c.poisson != null && c.implied != null) {
+          const gap = Math.round(c.poisson - c.implied);
+          if (Math.abs(gap) >= 12) divergences.push({ label: c.label, poisson: Math.round(c.poisson), implied: Math.round(c.implied), gap });
+        }
+      });
+    }
+    // Mode Pro data: λ Poisson bruts + EV% par issue
+    const ev1x2 = totalOdds > 0 ? {
+      home: p.homeWin != null ? +((p.homeWin/100 * odds.home - 1) * 100).toFixed(1) : null,
+      draw: p.draw != null ? +((p.draw/100 * odds.draw - 1) * 100).toFixed(1) : null,
+      away: p.awayWin != null ? +((p.awayWin/100 * odds.away - 1) * 100).toFixed(1) : null,
+    } : null;
+    try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence, dataQuality: s.isReal ? 'RÉELLES' : 'ESTIMÉES', divergences, lambda: xg, ev1x2, poisson: { homeWin: p.homeWin, draw: p.draw, awayWin: p.awayWin, over25: p.over25, btts: p.btts }, odds })}\n\n`); } catch {}
 
     console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
     streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
