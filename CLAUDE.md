@@ -1,29 +1,3 @@
-# 🚀 NEXT SESSION — AUTO-PRIME (À exécuter dès l'ouverture)
-
-> **Action immédiate au démarrage :** Lance `bd prime` puis exécute dans l'ordre les issues AI-AL v10 validées par David.
-
-```
-Contexte : Session amélioration AI-AL v10 — 14 issues prêtes, aucun bloqueur.
-Ordre P0 d'abord (quick wins < 1h) :
-  ParisScorebis-0pu  U4 — Cleanup dp-tg-block (bug renderer)
-  ParisScorebis-be8  U3 — Supprimer auto-bascule render 1.8s
-  ParisScorebis-6mz  U2 — Bouton "Nouvelle analyse" bypass cache
-  ParisScorebis-ogx  U1 — Badge provider dans terminal
-  ParisScorebis-6bz  F1 — maxOutputTokens 4096
-
-Puis P1 : U6, F3, F5, F4, I2, I1, I3
-Puis P2 : I4, I5
-
-Fichiers cibles :
-  server.js       → streamDeepWithProviders (~line 993), route stream (~8553)
-  pariscore.html  → openDeepAnalysis (~9262), renderDeepAnalysis (~9358)
-
-Protocole fin session : bd dolt pull → git commit → git push
-```
-
-> **Une fois cette session terminée, supprimer ce bloc NEXT SESSION du CLAUDE.md.**
-
----
 
 # 🏟️ PariScore - Poste de Pilotage (v9.7 Live Danger Matrix)
 
