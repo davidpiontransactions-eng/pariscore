@@ -2813,6 +2813,65 @@
     transform: none !important;
   }
 
+  /* ── ONGLET MATCHS : TABLE FOND BLANC ──────────────────── */
+  body:not(.dark-theme) #vb-body tr { background: #fff !important; }
+  body:not(.dark-theme) #vb-body tr:nth-child(odd)  { background: #fff !important; }
+  body:not(.dark-theme) #vb-body tr:nth-child(even) { background: #fafafa !important; }
+  body:not(.dark-theme) #vb-body tr:hover td { background: #f5f5f5 !important; }
+  body:not(.dark-theme) #vb-body tr:hover td:first-child {
+    background: linear-gradient(90deg, rgba(226,0,26,0.06) 0%, rgba(226,0,26,0.01) 100%) !important;
+  }
+  body:not(.dark-theme) #vb-body td { color: #1A1A1A !important; }
+
+  /* ── BADGES TOP CONSEILS (1X2, DC, U3.5, BTTS, Corners) ── */
+  body:not(.dark-theme) .t3c-badge.t3c-safe,
+  body:not(.dark-theme) .t3c-badge-sm.t3c-safe {
+    background: rgba(226,0,26,0.08) !important;
+    color: #E2001A !important;
+    border-color: rgba(226,0,26,0.22) !important;
+  }
+  body:not(.dark-theme) .t3c-badge.t3c-value,
+  body:not(.dark-theme) .t3c-badge-sm.t3c-value {
+    background: #F4F4F4 !important;
+    color: #1A1A1A !important;
+    border-color: #DCDCDC !important;
+  }
+  body:not(.dark-theme) .t3c-badge.t3c-risky,
+  body:not(.dark-theme) .t3c-badge-sm.t3c-risky {
+    background: #F4F4F4 !important;
+    color: #888 !important;
+    border-color: #E8E8E8 !important;
+  }
+  body:not(.dark-theme) .t3c-label { color: #888 !important; font-weight: 600 !important; }
+  body:not(.dark-theme) .t3c-pro-chip.ev   { background: rgba(226,0,26,0.08) !important; color: #E2001A !important; border-color: rgba(226,0,26,0.2) !important; }
+  body:not(.dark-theme) .t3c-pro-chip       { background: #F4F4F4 !important; color: #888 !important; border-color: #E8E8E8 !important; }
+  body:not(.dark-theme) .t3c-pro-sep { border-color: #EAEAEA !important; }
+
+  /* ── BOUTONS ACTIONS (STATS, AI-AL) ───────────────────── */
+  body:not(.dark-theme) .ins-btn {
+    background: #fff !important;
+    color: #1A1A1A !important;
+    border: 1px solid #DCDCDC !important;
+  }
+  body:not(.dark-theme) .ins-btn:hover {
+    background: #F4F4F4 !important;
+    border-color: #1A1A1A !important;
+    transform: none !important;
+  }
+  body:not(.dark-theme) .ai-gen-btn {
+    background: #E2001A !important;
+    color: #fff !important;
+    border: none !important;
+  }
+  body:not(.dark-theme) .ai-gen-btn:hover {
+    background: #b8001a !important;
+    border-color: transparent !important;
+    transform: none !important;
+  }
+
+  /* ── BUTEURS BLOCK fond blanc ─────────────────────────── */
+  body:not(.dark-theme) .buteurs-block { color: #1A1A1A !important; }
+
 </style>
 </head>
 <body>
@@ -4857,8 +4916,8 @@ function renderTopButteurs(buts) {
   if (!buts || !buts.length) return '<span style="color:var(--text3);font-size:11px;">—</span>';
   return buts.map(b => {
     const pct = b.probaMarquer || 0;
-    const pctClr = pct >= 25 ? '#00ff88' : pct >= 15 ? '#ffa726' : '#888';
-    const teamClr = b.team === 'home' ? '#00ff88' : '#ff5252';
+    const pctClr = pct >= 25 ? '#E2001A' : pct >= 15 ? '#1A1A1A' : '#888';
+    const teamClr = b.team === 'home' ? '#E2001A' : '#1A1A1A';
     const teamLbl = b.team === 'home' ? 'D' : 'E';
     const xg = b.xgPerMatch || 0;
     const gpM = b.goalsPerMatch || 0;
@@ -4868,7 +4927,7 @@ function renderTopButteurs(buts) {
     const matchCount = b.matches || 0;
     // Barre de progression xG (max 0.8 xG/match = 100%)
     const barW = Math.min(100, Math.round(xg / 0.8 * 100));
-    const barClr = xg >= 0.5 ? '#00ff88' : xg >= 0.3 ? '#ffa726' : '#666';
+    const barClr = xg >= 0.5 ? '#E2001A' : xg >= 0.3 ? '#1A1A1A' : '#888';
     // Tooltip: ratio buts/xG pour detecter sous/sur-performance
     const ratio = totalXG > 0 ? (totalGoals / totalXG).toFixed(2) : '—';
     const perfLabel = totalXG > 0 && totalGoals > totalXG ? '⚠ Surperforme' : totalXG > 0 && totalGoals < totalXG ? '📈 Sous-performe (value)' : '';
@@ -4923,21 +4982,21 @@ function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
   const barBadge = (cls, label, pct, deltaKey) => {
     const fill = Math.max(4, Math.min(98, pct));
     let colors;
-    if (cls === 't3c-safe')  colors = { accent: 'rgba(0,255,136,0.25)', muted: 'rgba(0,255,136,0.04)' };
-    else if (cls === 't3c-value') colors = { accent: 'rgba(255,167,38,0.22)', muted: 'rgba(255,167,38,0.04)' };
-    else                     colors = { accent: 'rgba(255,255,255,0.10)', muted: 'rgba(255,255,255,0.02)' };
+    if (cls === 't3c-safe')  colors = { accent: 'rgba(226,0,26,0.12)', muted: 'rgba(226,0,26,0.02)' };
+    else if (cls === 't3c-value') colors = { accent: 'rgba(26,26,26,0.08)', muted: 'rgba(26,26,26,0.01)' };
+    else                     colors = { accent: 'rgba(0,0,0,0.04)', muted: 'rgba(0,0,0,0.01)' };
     const bg = `background:linear-gradient(to right, ${colors.accent} ${fill}%, ${colors.muted} ${fill}%);`;
     const d = delta[deltaKey];
-    const arrow = d != null ? (d > 0.5 ? ` <span style="color:#00ff88;font-size:8px;">▲${Math.abs(d)}</span>` : d < -0.5 ? ` <span style="color:#ff5252;font-size:8px;">▼${Math.abs(d)}</span>` : '') : '';
+    const arrow = d != null ? (d > 0.5 ? ` <span style="color:#E2001A;font-size:8px;">▲${Math.abs(d)}</span>` : d < -0.5 ? ` <span style="color:#888;font-size:8px;">▼${Math.abs(d)}</span>` : '') : '';
     return `<span class="t3c-badge ${cls}" style="${bg}">${label} ${pct.toFixed(0)}%${arrow}</span>`;
   };
 
   const barBadgeSm = (cls, label, pct) => {
     const fill = Math.max(4, Math.min(98, pct));
     let colors;
-    if (cls === 't3c-safe')  colors = { accent: 'rgba(0,255,136,0.25)', muted: 'rgba(0,255,136,0.04)' };
-    else if (cls === 't3c-value') colors = { accent: 'rgba(255,167,38,0.22)', muted: 'rgba(255,167,38,0.04)' };
-    else                     colors = { accent: 'rgba(255,255,255,0.10)', muted: 'rgba(255,255,255,0.02)' };
+    if (cls === 't3c-safe')  colors = { accent: 'rgba(226,0,26,0.12)', muted: 'rgba(226,0,26,0.02)' };
+    else if (cls === 't3c-value') colors = { accent: 'rgba(26,26,26,0.08)', muted: 'rgba(26,26,26,0.01)' };
+    else                     colors = { accent: 'rgba(0,0,0,0.04)', muted: 'rgba(0,0,0,0.01)' };
     const bg = `background:linear-gradient(to right, ${colors.accent} ${fill}%, ${colors.muted} ${fill}%);`;
     return `<span class="t3c-badge-sm ${cls}" style="${bg}">${label} ${pct.toFixed(0)}%</span>`;
   };
@@ -5002,7 +5061,7 @@ function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
   </div>`);
   rows.push(`<div class="t3c-row t3c-pro-row">
     ${pctRank != null ? `<span class="t3c-pro-chip pct">top ${pctRank}% ligue</span>` : ''}
-    ${bestAcc ? `<span class="t3c-pro-chip acc" style="color:${bestAcc.rate>=60?'#00ff88':bestAcc.rate>=50?'#ffa726':'#888'};">✓${bestAcc.mkt} ${bestAcc.rate}%</span>` : ''}
+    ${bestAcc ? `<span class="t3c-pro-chip acc" style="color:${bestAcc.rate>=60?'#E2001A':bestAcc.rate>=50?'#1A1A1A':'#888'};">✓${bestAcc.mkt} ${bestAcc.rate}%</span>` : ''}
   </div>`);
 
   return rows.join('');
@@ -5066,7 +5125,7 @@ function buildTop5Prematch(matches) {
     const betCls = bestVal >= 75 ? 't3c-safe' : bestVal >= 55 ? 't3c-value' : 't3c-risky';
     return `<div class="lt5-card" onclick="openInsights('${m.id}')">
       <div class="lt5-match">${m.home_team} — ${m.away_team} <span style="color:var(--text3)">(${m.league})</span></div>
-      <div class="lt5-bet" style="background:${bestVal>=75?'rgba(0,255,136,0.12)':bestVal>=55?'rgba(255,167,38,0.12)':'rgba(255,255,255,0.06)'};color:${bestVal>=75?'#00ff88':bestVal>=55?'#ffa726':'var(--text3)'};">${bestLabel} · ${bestVal.toFixed(0)}%</div>
+      <div class="lt5-bet" style="background:${bestVal>=75?'rgba(226,0,26,0.08)':bestVal>=55?'#F4F4F4':'#F4F4F4'};color:${bestVal>=75?'#E2001A':bestVal>=55?'#1A1A1A':'#888'};">${bestLabel} · ${bestVal.toFixed(0)}%</div>
     </div>`;
   }).join('');
 }
@@ -5121,8 +5180,8 @@ function calcPowerScoreV44(formStr, stats, xgVal, opponentRank) {
 function ppgBar(ppg) {
   if (typeof ppg !== 'number' || isNaN(ppg)) return '';
   const pct = Math.min(100, (ppg / 3) * 100);
-  const clr = ppg >= 2.0 ? '#00ff88' : ppg >= 1.3 ? '#ffa726' : '#888';
-  return `<span style="display:inline-block;width:40px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:3px;background:${clr};width:${pct}%;"></span></span><span style="color:${clr};font-size:8px;font-weight:600;">${pct.toFixed(0)}%</span>`;
+  const clr = ppg >= 2.0 ? '#E2001A' : ppg >= 1.3 ? '#1A1A1A' : '#888';
+  return `<span style="display:inline-block;width:40px;height:5px;background:#EAEAEA;border-radius:3px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:3px;background:${clr};width:${pct}%;"></span></span><span style="color:${clr};font-size:8px;font-weight:600;">${pct.toFixed(0)}%</span>`;
 }
 
 function formBalls(formStr) {
@@ -5130,8 +5189,8 @@ function formBalls(formStr) {
     return '<span style="color:var(--text3);font-size:10px;">—</span>';
   }
   const chars = formStr.slice(0, 5).split('');
-  const colors = { W: '#00ff88', D: '#ffa726', L: '#ef5350' };
-  const bg = { W: 'rgba(0,255,136,0.2)', D: 'rgba(255,167,38,0.2)', L: 'rgba(239,83,80,0.2)' };
+  const colors = { W: '#E2001A', D: '#1A1A1A', L: '#888' };
+  const bg = { W: 'rgba(226,0,26,0.12)', D: 'rgba(26,26,26,0.08)', L: 'rgba(0,0,0,0.04)' };
   return '<span style="display:inline-flex;gap:4px;align-items:center;">' +
     chars.map((c, i) => {
       const clr = colors[c] || '#555';
@@ -5483,8 +5542,8 @@ function renderMatches(matches) {
     const homePpgL5 = ppgFromFormStr(m.home_form, 5) ?? hs.ppg ?? 0;
     const awayPpgL5 = ppgFromFormStr(m.away_form, 5) ?? as.ppg ?? 0;
 
-    const powerCls = (v) => v >= 65 ? '#00ff88' : v >= 45 ? '#ffa726' : '#888';
-    const powerBar = (v) => `<span style="display:inline-block;width:36px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:2px;background:${powerCls(v)};width:${v}%;"></span></span>`;
+    const powerCls = (v) => v >= 65 ? '#E2001A' : v >= 45 ? '#1A1A1A' : '#888';
+    const powerBar = (v) => `<span style="display:inline-block;width:36px;height:4px;background:#EAEAEA;border-radius:2px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:2px;background:${powerCls(v)};width:${v}%;"></span></span>`;
     const powerScoreHtml = (v) => `<span style="font-family:var(--font-mono);font-size:9px;color:${powerCls(v)};margin-left:4px;">${v}<span style="font-size:7px;opacity:0.6">/100</span>${powerBar(v)}</span>`;
 
     const isPast = new Date(m.commence_time).getTime() < Date.now();
@@ -5525,15 +5584,15 @@ function renderMatches(matches) {
             const est = estimateRankLabel(m.home_rank, homePpgL5);
             return `<span class="rk-badge-s ${est.cls}" title="${est.tip || 'Classement réel'}">${est.label}</span>`;
           })()}
-          <span style="color:var(--text3);">PPG D5: <span style="font-weight:600;color:${homePpgL5>=2.0?'#00ff88':homePpgL5>=1.3?'#ffa726':'#888'}">${typeof homePpgL5==='number'?homePpgL5.toFixed(2):'—'}</span>${ppgBar(homePpgL5)}</span>
+          <span style="color:var(--text3);">PPG D5: <span style="font-weight:600;color:${homePpgL5>=2.0?'#E2001A':homePpgL5>=1.3?'#1A1A1A':'#888'}">${typeof homePpgL5==='number'?homePpgL5.toFixed(2):'—'}</span>${ppgBar(homePpgL5)}</span>
         </div>
         <div style="margin:1px 0;">${formBalls(m.home_form)}</div>
         <div style="font-size:11px;color:var(--text2);margin:3px 0;display:flex;align-items:center;gap:8px;">
           ${date} · ${time} &nbsp;|&nbsp; ${flagImg(m.sport)} ${m.league}${rankInfo}${topRankMap[m.id] ? '<span class="topn-rank-badge ' + (activeTopMarket === 'smart' ? 'smart' : 'gold') + '">#' + topRankMap[m.id] + ' ' + activeTopMarket.toUpperCase() + '</span>' : ''}
           <span style="margin-left:auto;cursor:pointer;" onclick="openRadarModal('${m.id}')" title="Cliquez pour agrandir">${microRadar(hs, as)}</span>
         </div>
-        ${m.h2h ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);margin-bottom:2px;">H2H L5: <span style="color:${m.h2h.wins>=3?'#00ff88':m.h2h.wins>=1?'#ffa726':'#888'}">${m.h2h.summary}</span></div>` : ''}
-        ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">⚡ Intensité</span><span style="display:inline-block;width:60px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;"><span data-intensity="${m.id}" style="display:block;height:100%;border-radius:3px;background:${m.live_intensity>=60?'#ef5350':m.live_intensity>=30?'#ffa726':'#00ff88'};width:${Math.max(4,Math.min(100,m.live_intensity))}%;"></span></span><span data-intensity-val="${m.id}" style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:${m.live_intensity>=60?'#ef5350':m.live_intensity>=30?'#ffa726':'#00ff88'}">${m.live_intensity}</span></div>` : ''}
+        ${m.h2h ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);margin-bottom:2px;">H2H L5: <span style="color:${m.h2h.wins>=3?'#E2001A':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span></div>` : ''}
+        ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">⚡ Intensité</span><span style="display:inline-block;width:60px;height:5px;background:#EAEAEA;border-radius:3px;"><span data-intensity="${m.id}" style="display:block;height:100%;border-radius:3px;background:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'};width:${Math.max(4,Math.min(100,m.live_intensity))}%;"></span></span><span data-intensity-val="${m.id}" style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span></div>` : ''}
         <div style="display:flex;align-items:center;gap:5px;">
           <div style="font-size:13px;font-weight:600;">${m.away_team}${powerScoreHtml(awayPower)}${momentumArrow(m.away_form)}</div>
         </div>
@@ -5543,7 +5602,7 @@ function renderMatches(matches) {
             const est = estimateRankLabel(m.away_rank, awayPpgL5);
             return `<span class="rk-badge-s ${est.cls}" title="${est.tip || 'Classement réel'}">${est.label}</span>`;
           })()}
-          <span style="color:var(--text3);">PPG D5: <span style="font-weight:600;color:${awayPpgL5>=2.0?'#00ff88':awayPpgL5>=1.3?'#ffa726':'#888'}">${typeof awayPpgL5==='number'?awayPpgL5.toFixed(2):'—'}</span>${ppgBar(awayPpgL5)}</span>
+          <span style="color:var(--text3);">PPG D5: <span style="font-weight:600;color:${awayPpgL5>=2.0?'#E2001A':awayPpgL5>=1.3?'#1A1A1A':'#888'}">${typeof awayPpgL5==='number'?awayPpgL5.toFixed(2):'—'}</span>${ppgBar(awayPpgL5)}</span>
         </div>
         <div style="margin:1px 0;">${formBalls(m.away_form)}</div>
       </td>
