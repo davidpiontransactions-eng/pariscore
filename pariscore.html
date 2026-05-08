@@ -30,7 +30,16 @@
     --text3: #888888;
     --border: rgba(0,0,0,0.09);
     --border2: rgba(0,0,0,0.16);
-    --card-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
+    --card-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.85),
+      0 1px 2px rgba(0,0,0,0.04),
+      0 4px 12px rgba(0,0,0,0.07),
+      0 14px 28px rgba(0,0,0,0.04);
+    --card-shadow-hover:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 2px 4px rgba(0,0,0,0.05),
+      0 8px 24px rgba(0,0,0,0.10),
+      0 24px 48px rgba(0,0,0,0.06);
     --gauge-rail: rgba(0,0,0,0.10);
     --gauge-rail-opacity: 1;
     --font-head: 'Barlow Condensed', sans-serif;
@@ -116,20 +125,48 @@
   body:not(.dark-theme) .live-stats-panel { background: var(--bg3); border-color: var(--border2); }
   body:not(.dark-theme) .ls-row { border-bottom-color: var(--border); }
 
-  /* ── Light mode card elevation ── */
-  body:not(.dark-theme) .nav-inner,
+  /* ── Light mode : élévation universelle 3D — toutes les cards ── */
+  body:not(.dark-theme) .filter-row,
+  body:not(.dark-theme) #status-bar,
+  body:not(.dark-theme) #ai-scout-panel,
+  body:not(.dark-theme) .strat-card,
+  body:not(.dark-theme) .trend-card,
+  body:not(.dark-theme) .tm-card,
+  body:not(.dark-theme) .pa-card,
+  body:not(.dark-theme) .partner-card,
+  body:not(.dark-theme) .price-card,
+  body:not(.dark-theme) .hist-kpi,
+  body:not(.dark-theme) .hist-chart-wrap,
+  body:not(.dark-theme) .alert-cfg-card,
+  body:not(.dark-theme) .insight-card,
+  body:not(.dark-theme) .stat-card,
   body:not(.dark-theme) .modal-box,
   body:not(.dark-theme) .modal-inner,
-  body:not(.dark-theme) .insight-card,
-  body:not(.dark-theme) .deep-panel,
   body:not(.dark-theme) .ps-card,
   body:not(.dark-theme) .scout-panel,
-  body:not(.dark-theme) #ai-scout-panel,
-  body:not(.dark-theme) .stat-card,
-  body:not(.dark-theme) .match-card,
-  body:not(.dark-theme) .filter-row,
+  body:not(.dark-theme) #score-panel,
+  body:not(.dark-theme) #insights-panel,
+  body:not(.dark-theme) #live-detail-panel,
   body:not(.dark-theme) table {
     box-shadow: var(--card-shadow);
+    border-color: transparent !important;
+    background-color: #fff;
+  }
+
+  /* hover : élévation renforcée */
+  body:not(.dark-theme) .strat-card:hover,
+  body:not(.dark-theme) .trend-card:hover,
+  body:not(.dark-theme) .tm-card:hover,
+  body:not(.dark-theme) .pa-card:hover,
+  body:not(.dark-theme) .partner-card:hover,
+  body:not(.dark-theme) .price-card:hover {
+    box-shadow: var(--card-shadow-hover) !important;
+    border-color: transparent !important;
+  }
+
+  /* filter-row : fond légèrement distinct, pas blanc pur */
+  body:not(.dark-theme) .filter-row {
+    background-color: var(--bg2) !important;
   }
   body:not(.dark-theme) thead th {
     background: var(--bg3);
@@ -532,13 +569,19 @@
   }
   .btn-primary:hover { background: var(--accent-dim); transform: translateY(-1px); }
   .btn-ghost {
-    background: transparent; color: var(--text2);
+    background: #fff; color: var(--text2);
     font-family: var(--font-body); font-weight: 500; font-size: 13px;
-    padding: 12px 24px; border-radius: 6px;
+    padding: 12px 24px; border-radius: var(--radius);
     border: 1px solid var(--border2);
-    transition: border-color .15s, background .15s, color .15s;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow .2s, color .15s, transform .15s;
   }
-  .btn-ghost:hover { border-color: var(--text3); background: var(--bg3); color: var(--text); }
+  body.dark-theme .btn-ghost { background: var(--bg3); }
+  .btn-ghost:hover {
+    box-shadow: var(--card-shadow-hover);
+    color: var(--text);
+    transform: translateY(-2px);
+  }
   .hero-stats {
     display: flex; gap: 32px; margin-top: 40px;
     padding-top: 32px; border-top: 1px solid var(--border);
