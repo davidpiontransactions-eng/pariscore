@@ -250,10 +250,14 @@
     display: flex; align-items: center; gap: 6px;
     font-size: 11px; font-family: var(--font-mono);
     color: var(--green); padding: 3px 10px;
-    border: 1px solid rgba(0,230,118,0.3);
+    border: 1px solid var(--green-bg);
     border-radius: 20px;
+    letter-spacing: 0.05em;
   }
-  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 1.4s infinite; }
+  body:not(.dark-theme) .live-pill {
+    color: var(--green); border-color: rgba(26,140,69,0.3);
+  }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.4s infinite; flex-shrink: 0; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   /* Live update toast — non intrusif, pas de saut de page */
   .live-update-toast {
@@ -2118,7 +2122,7 @@
   </div>
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
   <div class="nav-right">
-    <div class="live-pill"><div class="live-dot"></div>DIRECT</div>
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
     <div id="nav-auth-area">
       <button class="nav-auth-btn" onclick="openAuthModal('login')">Se connecter</button>
     </div>
