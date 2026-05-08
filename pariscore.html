@@ -9564,8 +9564,9 @@ function renderDeepAnalysis(text) {
 
       if (!line) { flushPara(); continue; }
 
-      // ── Section header: "1. EN-TÊTE…", "2. 📊 POWER SCORE…" etc. ────────
-      const secM = line.match(/^(\d+)\.\s+(.*)/);
+      // ── Section header: "1. TITRE", "**1. TITRE**", "## 1. TITRE" ────────
+      const cleanLine = line.replace(/^#+\s*/, '').replace(/^\*+\s*/, '').replace(/\*+$/, '').trim();
+      const secM = cleanLine.match(/^(\d+)\.\s+(.*)/);
       if (secM) {
         flushPara(); closeBlocks();
         const num = parseInt(secM[1]);
@@ -9664,6 +9665,13 @@ function renderDeepAnalysis(text) {
     flushPara();
     closeBlocks();
   });
+
+  // Fallback: if parser produced nothing, render as plain styled paragraphs
+  if (!html.trim()) {
+    html = text.split(/\n{2,}/).filter(p => p.trim()).map(para =>
+      `<p class="dp-body">${dpBold(dpEsc(para.trim()))}</p>`
+    ).join('');
+  }
 
   const content = document.getElementById('deep-content');
   content.innerHTML = html;
