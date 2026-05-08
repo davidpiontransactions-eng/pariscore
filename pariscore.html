@@ -492,12 +492,11 @@
   .hero-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 11px; font-family: var(--font-mono);
-    color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text3); letter-spacing: 2px; text-transform: uppercase;
     margin-bottom: 20px;
-    background: var(--accent-bg);
-    border: 1px solid var(--accent);
-    border-radius: 4px; padding: 4px 10px;
+    background: none; border: none; padding: 0;
   }
+  .hero-eyebrow .live-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
   .hero h1 {
     font-family: var(--font-head);
     font-size: 62px; font-weight: 900; line-height: 1.0;
@@ -1188,7 +1187,7 @@
     background: transparent; transition: all .15s;
     cursor: pointer;
   }
-  .filter-chip.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .filter-chip.active { background: var(--text); color: var(--bg2); border-color: var(--text); }
   .filter-chip:hover:not(.active) { border-color: var(--border2); color: var(--text); }
 
   /* Top N best bets */
@@ -1225,9 +1224,9 @@
   }
   .country-chip:hover:not(.active) { border-color: var(--border2); color: var(--text); }
   .country-chip.active {
-    background: var(--accent-bg); color: var(--accent);
-    border-color: var(--accent);
-    box-shadow: 0 0 8px var(--accent-bg);
+    background: var(--text); color: var(--bg2);
+    border-color: var(--text);
+    box-shadow: none;
   }
   .country-chip .country-arrow { font-size: 7px; margin-left: 1px; opacity: 0.5; transition: transform .15s; }
   .country-chip-wrap:hover .country-arrow { transform: rotate(180deg); opacity: 0.8; }
@@ -1852,15 +1851,15 @@
 
   /* STICKY UPDATE BAR */
   .update-bar {
-    background: var(--accent-bg);
-    border-bottom: 1px solid var(--accent);
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
     padding: 7px 32px;
     font-size: 11.5px; font-family: var(--font-mono);
-    color: var(--accent); text-align: center;
+    color: var(--text3); text-align: center;
     display: flex; align-items: center; justify-content: center; gap: 8px;
     letter-spacing: 0.03em;
   }
-  .update-bar .live-dot { background: var(--accent); box-shadow: none; }
+  .update-bar .live-dot { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
 
   /* ── TOP MATCHES WIDGET (page accueil) ────────────────────────────────── */
   .top-matches-section { padding: 32px; border-top: 1px solid var(--bg3); }
