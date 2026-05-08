@@ -4536,7 +4536,7 @@ function renderMatches(matches) {
         <div style="display:flex;gap:5px;align-items:center;">
           <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
           <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
-          <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris · Script Telegram">⚡ IA</button>
+          <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris · Script Telegram">AI-AL</button>
           ${m.live_score ? `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live">🔴</button>` : ''}
           <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
         </div>
