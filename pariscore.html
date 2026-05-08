@@ -535,37 +535,65 @@
   @keyframes dp-spin { to { transform: rotate(360deg); } }
   .dp-loader-text { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
   .dp-loader-tip { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 4px; }
-  /* ── Deep Analysis content blocks ─────────────────────────────────────── */
-  .dp-match-title { font: 800 18px/1.3 var(--font-head); color: var(--text); margin: 0 0 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(171,71,188,0.2); }
-  .dp-section-hdr { display: flex; align-items: center; gap: 10px; margin: 22px 0 10px; }
-  .dp-section-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; font: 700 11px/22px var(--font-mono); text-align: center; }
-  .dp-section-title { font: 700 13px/1 var(--font-head); color: #ce93d8; letter-spacing: .3px; }
-  .dp-powerscore-wrap { display: flex; gap: 14px; margin: 6px 0 16px; }
-  .dp-score-card2 { flex: 1; background: rgba(171,71,188,0.07); border: 1px solid rgba(171,71,188,0.22); border-radius: 10px; padding: 14px 16px; }
-  .dp-score-card2 .dsc-name { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-  .dp-score-card2 .dsc-val { font: 700 28px/1 var(--font-mono); color: #ce93d8; }
+  /* ── Deep Analysis — style éditorial ──────────────────────────────────── */
+  .dp-match-title { font: 800 20px/1.3 var(--font-head); color: var(--text); margin: 0 0 28px; padding-bottom: 18px; border-bottom: 2px solid #c0392b; }
+  .dp-section-hdr { display: flex; align-items: center; gap: 0; margin: 44px 0 16px; }
+  .dp-section-num { display: none; }
+  .dp-section-title { font: 700 11px/1 var(--font-head); color: var(--text); letter-spacing: 1.8px; text-transform: uppercase; padding-left: 11px; border-left: 3px solid #c0392b; }
+  .dp-powerscore-wrap { display: flex; gap: 14px; margin: 14px 0 22px; }
+  .dp-score-card2 { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px 18px; }
+  .dp-score-card2 .dsc-name { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; }
+  .dp-score-card2 .dsc-val { font: 700 28px/1 var(--font-head); color: var(--text); }
   .dp-score-card2 .dsc-denom { font-size: 13px; color: var(--text3); font-weight: 400; }
-  .dp-score-card2 .dsc-bar { height: 4px; border-radius: 2px; background: rgba(171,71,188,0.15); margin-top: 10px; overflow: hidden; }
-  .dp-score-card2 .dsc-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #7b1fa2, #ce93d8); width: 0; transition: width .8s ease; }
-  .dp-sub-label { font: 700 12px/1 var(--font-head); color: var(--text); margin: 14px 0 4px; display: flex; align-items: center; gap: 6px; }
-  .dp-sub-label::before { content: ''; display: inline-block; width: 3px; height: 12px; border-radius: 2px; background: #ab47bc; flex-shrink: 0; }
-  .dp-body { font-size: 13.5px; line-height: 1.7; color: var(--text2); margin: 4px 0 12px; }
-  .dp-proba-block { background: rgba(171,71,188,0.05); border: 1px solid rgba(171,71,188,0.15); border-radius: 10px; padding: 12px 16px; margin: 6px 0 14px; display: flex; flex-direction: column; gap: 8px; }
-  .dp-proba-row { display: flex; align-items: baseline; gap: 10px; }
-  .dp-proba-key { font: 700 10px/1 var(--font-mono); color: #ce93d8; text-transform: uppercase; letter-spacing: .5px; min-width: 60px; flex-shrink: 0; }
-  .dp-proba-val { font-size: 13px; color: var(--text); line-height: 1.5; }
-  .dp-bet-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 14px; }
-  .dp-bet-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 11px 14px; }
-  .dp-bet-label { font: 700 12px/1.3 var(--font-head); color: var(--text); margin-bottom: 4px; }
-  .dp-bet-body { font-size: 12.5px; line-height: 1.6; color: var(--text2); }
-  .dp-tg-block { margin: 6px 0 14px; }
-  .dp-tg-label { font: 700 10px/1 var(--font-mono); color: #ce93d8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-  .dp-tg-pre { position: relative; background: #080b0f; border: 1px solid rgba(171,71,188,0.3); border-radius: 8px; padding: 14px 16px 14px; font: 12px/1.7 var(--font-mono); color: #e0e0e0; white-space: pre-wrap; word-break: break-word; margin: 0; }
-  .dp-tg-copy { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
-  .dp-tg-copy:hover { background: rgba(171,71,188,0.38); }
+  .dp-score-card2 .dsc-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.07); margin-top: 12px; overflow: hidden; }
+  .dp-score-card2 .dsc-fill { height: 100%; border-radius: 2px; background: #c0392b; width: 0; transition: width .8s ease; }
+  .dp-sub-label { font: 700 11px/1 var(--font-head); color: var(--text2); margin: 22px 0 7px; text-transform: uppercase; letter-spacing: .8px; }
+  .dp-body { font-size: 14.5px; line-height: 1.88; color: #b8bcc2; margin: 8px 0 20px; }
+  .dp-body strong { color: #c0392b; font-weight: 700; }
+  .dp-bet-list { display: flex; flex-direction: column; gap: 14px; margin: 14px 0 24px; padding-left: 0; }
+  .dp-bet-card { padding: 18px 20px; background: rgba(255,255,255,0.025); border-radius: 8px; border-left: 3px solid #c0392b; }
+  .dp-bet-label { font: 700 11px/1.3 var(--font-head); color: var(--text); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+  .dp-bet-body { font-size: 14px; line-height: 1.72; color: #b8bcc2; }
+  .dp-bet-body strong { color: #c0392b; font-weight: 700; }
+  .dp-code-block { margin: 8px 0 16px; }
+  .dp-code-label { font: 700 10px/1 var(--font-mono); color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .dp-code-pre { position: relative; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09); border-radius: 6px; padding: 14px 16px; font: 12px/1.7 var(--font-mono); color: #b8bcc2; white-space: pre-wrap; word-break: break-word; margin: 0; }
+  .dp-code-copy { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: var(--text3); border-radius: 4px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
+  .dp-code-copy:hover { background: rgba(255,255,255,0.14); color: var(--text); }
   .dp-mode-btn { font: 600 10px/1 var(--font-mono); padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.3); color: var(--text3); background: transparent; cursor: pointer; transition: all .15s; letter-spacing: .5px; }
   .dp-mode-btn:hover, .dp-mode-btn.active { background: rgba(171,71,188,0.18); border-color: #ab47bc; color: #ce93d8; }
   #deep-terminal { scrollbar-width: thin; scrollbar-color: rgba(0,200,83,0.3) transparent; }
+  /* I1 — Confidence badge */
+  .dp-conf-badge { display:none; font:700 10px/1 var(--font-mono); padding:4px 9px; border-radius:5px; letter-spacing:.5px; white-space:nowrap; }
+  .dp-conf-badge.good { background:rgba(0,230,118,0.13); border:1px solid rgba(0,230,118,0.4); color:#00e676; }
+  .dp-conf-badge.mid  { background:rgba(255,167,38,0.13); border:1px solid rgba(255,167,38,0.4); color:#ffa726; }
+  .dp-conf-badge.low  { background:rgba(239,68,68,0.13);  border:1px solid rgba(239,68,68,0.4);  color:#ff4d4d; }
+  /* U6 — Timestamp */
+  #dp-timestamp { font:10px/1 var(--font-mono); color:var(--text3); margin-top:3px; display:none; }
+  /* I3 — Kelly footer widget */
+  #deep-panel-footer { padding:10px 24px; border-top:1px solid rgba(171,71,188,0.15); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  #dp-bankroll-input { background:#080b0f; border:1px solid rgba(171,71,188,0.3); border-radius:6px; color:var(--text); font:13px var(--font-mono); padding:5px 10px; width:90px; outline:none; }
+  #dp-bankroll-input:focus { border-color:#ab47bc; }
+  .dp-kelly-hint { font:11px var(--font-mono); color:var(--text3); }
+  .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#ce93d8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:4px 10px; margin:10px 0 4px; }
+  .dp-kelly-eur { color:#00e676; font-weight:700; }
+  /* I4 — Divergence badge */
+  .dp-divergence-block { margin:0 0 16px; display:flex; flex-direction:column; gap:6px; }
+  .dp-div-row { display:flex; align-items:center; gap:8px; font:12px var(--font-mono); }
+  .dp-div-badge { font:700 9px/1 var(--font-mono); padding:2px 7px; border-radius:4px; white-space:nowrap; }
+  .dp-div-badge.up   { background:rgba(0,230,118,0.15); border:1px solid rgba(0,230,118,0.4); color:#00e676; }
+  .dp-div-badge.down { background:rgba(239,68,68,0.15);  border:1px solid rgba(239,68,68,0.4);  color:#ff4d4d; }
+  /* I5 — Mode Pro panel */
+  #dp-pro-panel { display:none; margin-bottom:16px; background:#080b0f; border:1px solid rgba(171,71,188,0.25); border-radius:10px; padding:14px 16px; }
+  #dp-pro-panel.visible { display:block; }
+  .dp-pro-title { font:700 10px/1 var(--font-mono); color:#ce93d8; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
+  .dp-pro-table { width:100%; border-collapse:collapse; font:12px var(--font-mono); }
+  .dp-pro-table th { color:var(--text3); font-weight:600; text-align:left; padding:4px 8px; border-bottom:1px solid rgba(171,71,188,0.15); }
+  .dp-pro-table td { color:var(--text2); padding:4px 8px; }
+  .dp-pro-table .ev-pos { color:#00e676; } .dp-pro-table .ev-neg { color:#ff4d4d; }
+  /* I5 — Pro toggle button */
+  #dp-btn-pro { font:600 10px/1 var(--font-mono); padding:5px 10px; border-radius:5px; border:1px solid rgba(171,71,188,0.3); color:var(--text3); background:transparent; cursor:pointer; transition:all .15s; letter-spacing:.5px; }
+  #dp-btn-pro:hover, #dp-btn-pro.active { background:rgba(171,71,188,0.18); border-color:#ab47bc; color:#ce93d8; }
   #insights-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; z-index: 1010; opacity: 0; pointer-events: none; transition: opacity .2s; }
   #insights-modal.open { opacity: 1; pointer-events: all; }
   #insights-panel { background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px; position: relative; width: 94%; max-width: 740px; max-height: 88vh; display: flex; flex-direction: column; }
@@ -9237,19 +9265,34 @@ if (scrollTop && scrollMain) {
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE — AI-AL</div>
         <div id="deep-match-label" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+        <div id="dp-timestamp"></div>
       </div>
+      <!-- Confidence badge (I1) -->
+      <span id="dp-confidence-badge" class="dp-conf-badge"></span>
       <!-- Mode toggle -->
       <div id="deep-mode-bar" style="display:none;gap:4px;align-items:center;margin-right:8px;">
         <button id="dp-btn-terminal" class="dp-mode-btn active" onclick="switchDeepMode('terminal')">📟 Terminal</button>
         <button id="dp-btn-render"   class="dp-mode-btn"        onclick="switchDeepMode('render')">✦ Rendu</button>
+        <button id="dp-btn-refresh"  class="dp-mode-btn"        onclick="refreshDeepAnalysis()" title="Forcer une nouvelle analyse (bypass cache)">🔄 Nouvelle analyse</button>
+        <button id="dp-btn-pro"                                 onclick="toggleProMode()" title="Mode Parieur Pro — données brutes">⚗️ Pro</button>
       </div>
       <button onclick="closeDeepAnalysis()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
     </div>
     <div id="deep-panel-inner">
+      <!-- I4 — Divergences marché (injecté par JS via meta event) -->
+      <div id="dp-divergence-block" class="dp-divergence-block" style="display:none;"></div>
+      <!-- I5 — Mode Pro panel (injecté par JS via meta event) -->
+      <div id="dp-pro-panel"><div class="dp-pro-title">⚗️ Mode Parieur Pro — données brutes</div><div id="dp-pro-content"></div></div>
       <!-- Terminal streaming view -->
       <pre id="deep-terminal" style="display:none;font:13px/1.65 var(--font-mono);color:#a8e6a3;background:#050709;border:1px solid rgba(0,200,83,0.2);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto;margin:0;"></pre>
       <!-- Structured render view -->
       <div id="deep-content" style="display:none;"></div>
+    </div>
+    <!-- I3 — Kelly footer widget -->
+    <div id="deep-panel-footer">
+      <span class="dp-kelly-hint">💰 Bankroll :</span>
+      <input id="dp-bankroll-input" type="number" min="0" step="10" placeholder="1000" oninput="updateKellyAmounts()">
+      <span class="dp-kelly-hint">€ → mises Kelly calculées automatiquement</span>
     </div>
   </div>
 </div>
@@ -9259,19 +9302,32 @@ if (scrollTop && scrollMain) {
 let _deepEvt = null;
 let _deepText = '';
 let _deepMatchId = null;
+let _deepTimestamp = null;
+let _deepProData = null;
 
-function openDeepAnalysis(matchId, e) {
+function refreshDeepAnalysis() {
+  const matchId = _deepMatchId;
+  if (!matchId) return;
+  if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
+  _deepText = '';
+  _deepMatchId = null;
+  document.getElementById('deep-content').innerHTML = '';
+  openDeepAnalysis(matchId, null, true);
+}
+
+function openDeepAnalysis(matchId, e, force) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
 
   const match = allMatches.find(m => m.id === matchId);
   const label = match ? `${match.home_team} vs ${match.away_team}` : matchId;
 
   document.getElementById('deep-match-label').textContent = label;
+  document.getElementById('deep-match-label').dataset.matchId = matchId;
   document.body.style.overflow = 'hidden';
   document.getElementById('deep-modal').classList.add('open');
 
   // Same match already analysed — show render directly, no re-fetch
-  if (_deepMatchId === matchId && _deepText) {
+  if (!force && _deepMatchId === matchId && _deepText) {
     const term = document.getElementById('deep-terminal');
     term.style.display = 'none';
     document.getElementById('deep-mode-bar').style.display = 'flex';
@@ -9279,7 +9335,7 @@ function openDeepAnalysis(matchId, e) {
     return;
   }
 
-  // New match — reset state
+  // New match or forced refresh — reset state
   if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
   _deepText = '';
   _deepMatchId = matchId;
@@ -9287,13 +9343,67 @@ function openDeepAnalysis(matchId, e) {
   document.getElementById('deep-mode-bar').style.display = 'none';
   document.getElementById('deep-content').style.display = 'none';
   document.getElementById('deep-content').innerHTML = '';
+  // Reset header UI + I4/I5
+  const confBadge = document.getElementById('dp-confidence-badge');
+  confBadge.style.display = 'none'; confBadge.className = 'dp-conf-badge';
+  const tsEl = document.getElementById('dp-timestamp');
+  tsEl.style.display = 'none'; tsEl.textContent = '';
+  document.getElementById('dp-divergence-block').style.display = 'none';
+  document.getElementById('dp-divergence-block').innerHTML = '';
+  document.getElementById('dp-pro-panel').classList.remove('visible');
+  document.getElementById('dp-btn-pro')?.classList.remove('active');
+  _deepProData = null;
 
   const term = document.getElementById('deep-terminal');
   term.style.display = 'block';
   term.textContent = '> AI-AL — Terminal d\'analyse Pariscore\n> Connexion au moteur IA…\n> Injection des données du match : ' + label + '\n\n';
 
+  // I2 — Quick Scout pré-analyse (<100ms)
+  fetch('/api/v1/quick-scout/' + encodeURIComponent(matchId))
+    .then(r => r.json())
+    .then(scout => {
+      let line = '> ⚡ Scout :';
+      if (scout.topSignal) line += '  Signal → ' + scout.topSignal;
+      if (scout.edge)      line += '  |  Edge → ' + scout.edge;
+      line += '  |  Fiabilité : ' + scout.confidence + '/100 [' + scout.dataQuality + ']';
+      term.textContent += line + '\n\n';
+    })
+    .catch(() => {});
+
   let headerDone = false;
-  _deepEvt = new EventSource('/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId));
+  const streamUrl = '/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId) + (force ? '?force=1' : '');
+  _deepEvt = new EventSource(streamUrl);
+
+  // I1/I4/I5 — meta event handler
+  _deepEvt.addEventListener('meta', ev => {
+    try {
+      const meta = JSON.parse(ev.data);
+      // I1 — confidence badge
+      const badge = document.getElementById('dp-confidence-badge');
+      badge.textContent = '🎯 ' + meta.confidence + '/100';
+      badge.className = 'dp-conf-badge ' + (meta.confidence >= 71 ? 'good' : meta.confidence >= 41 ? 'mid' : 'low');
+      badge.style.display = 'inline-flex';
+      term.textContent += '> Fiabilité données : ' + meta.confidence + '/100 (' + meta.dataQuality + ')\n\n';
+      // I4 — divergences marché
+      if (meta.divergences && meta.divergences.length) {
+        const divBlock = document.getElementById('dp-divergence-block');
+        divBlock.innerHTML = meta.divergences.map(d =>
+          `<div class="dp-div-row">
+            <span class="dp-div-badge ${d.gap > 0 ? 'up' : 'down'}">⚠️ DIVERGENCE ${d.gap > 0 ? '+' : ''}${d.gap}%</span>
+            <span style="color:var(--text2)">${dpEsc(d.label)}</span>
+            <span style="color:var(--text3)">Poisson ${d.poisson}% vs marché ${d.implied}%</span>
+          </div>`
+        ).join('');
+        divBlock.style.display = 'flex';
+        term.textContent += '> ⚠️ ' + meta.divergences.length + ' divergence(s) marché détectée(s)\n\n';
+      }
+      // I5 — Pro panel data
+      if (meta.lambda || meta.ev1x2) {
+        _deepProData = meta;
+        renderProPanel(meta);
+      }
+    } catch {}
+  });
 
   _deepEvt.addEventListener('chunk', ev => {
     const { text } = JSON.parse(ev.data);
@@ -9303,14 +9413,19 @@ function openDeepAnalysis(matchId, e) {
     term.scrollTop = term.scrollHeight;
   });
 
-  _deepEvt.addEventListener('done', () => {
+  _deepEvt.addEventListener('done', ev => {
     _deepEvt.close(); _deepEvt = null;
-    term.textContent += '\n\n> ✅ Analyse complète.';
-    // Show toggle bar
+    let providerName = '';
+    try { const d = JSON.parse(ev.data); providerName = d.provider || ''; } catch {}
+    // U6 — timestamp
+    _deepTimestamp = new Date();
+    const tsEl2 = document.getElementById('dp-timestamp');
+    tsEl2.textContent = 'Analysé à ' + _deepTimestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    tsEl2.style.display = 'block';
+    term.textContent += '\n\n> ✅ Analyse complète.' + (providerName ? ' [via ' + providerName + ']' : '');
     const bar = document.getElementById('deep-mode-bar');
+    if (providerName) bar.dataset.provider = providerName;
     bar.style.display = 'flex';
-    // Auto-switch to rendered view after 1.8s
-    setTimeout(() => switchDeepMode('render'), 1800);
   });
 
   _deepEvt.addEventListener('error', ev => {
@@ -9351,12 +9466,62 @@ function closeDeepAnalysis() {
   document.body.style.overflow = '';
 }
 
+function renderProPanel(meta) {
+  const p = meta.poisson || {};
+  const ev = meta.ev1x2 || {};
+  const λ = meta.lambda || {};
+  const odds = meta.odds || {};
+  const rows = [
+    { label: 'Victoire dom', poisson: p.homeWin, ev: ev.home, odds: odds.home },
+    { label: 'Nul',          poisson: p.draw,    ev: ev.draw,  odds: odds.draw },
+    { label: 'Victoire ext', poisson: p.awayWin, ev: ev.away,  odds: odds.away },
+    { label: 'Over 2.5',     poisson: p.over25,  ev: null,     odds: null },
+    { label: 'BTTS',         poisson: p.btts,    ev: null,     odds: null },
+  ];
+  const tableRows = rows.map(r => {
+    const evClass = r.ev == null ? '' : r.ev > 0 ? ' class="ev-pos"' : ' class="ev-neg"';
+    const evStr = r.ev == null ? '—' : (r.ev > 0 ? '+' : '') + r.ev + '%';
+    return `<tr>
+      <td>${dpEsc(r.label)}</td>
+      <td>${r.poisson != null ? r.poisson + '%' : '—'}</td>
+      <td>${r.odds != null ? r.odds : '—'}</td>
+      <td${evClass}>${evStr}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('dp-pro-content').innerHTML = `
+    <table class="dp-pro-table">
+      <thead><tr><th>Marché</th><th>Poisson</th><th>Cote</th><th>EV%</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    ${λ.home != null ? `<div style="margin-top:10px;font:11px var(--font-mono);color:var(--text3)">λ domicile : ${λ.home} | λ extérieur : ${λ.away}</div>` : ''}
+  `;
+}
+
+function toggleProMode() {
+  const panel = document.getElementById('dp-pro-panel');
+  const btn = document.getElementById('dp-btn-pro');
+  const active = panel.classList.toggle('visible');
+  btn.classList.toggle('active', active);
+  if (active && _deepProData) renderProPanel(_deepProData);
+}
+
+function updateKellyAmounts() {
+  const bankroll = parseFloat(document.getElementById('dp-bankroll-input').value) || 0;
+  document.querySelectorAll('.dp-kelly-tag[data-kelly]').forEach(el => {
+    const pct = parseFloat(el.dataset.kelly);
+    const euros = bankroll > 0 ? (pct / 100 * bankroll).toFixed(0) : null;
+    const base = '📐 Mise Kelly : ' + pct.toFixed(1) + '%';
+    el.innerHTML = euros ? `${base} <span class="dp-kelly-eur">→ €${euros}</span>` : base;
+  });
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function dpEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function dpBold(s) { return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>'); }
+function dpBold(s) { return s.replace(/\*\*(.+?)\*\*/g,'<strong style="color:#c0392b;font-weight:700">$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>'); }
 
 function renderDeepAnalysis(text) {
-  document.getElementById('deep-loader').style.display = 'none';
+  // Chirurgical emoji strip — remove any emoji the AI slipped through
+  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FEFF}\u{20D0}-\u{20FF}]/gu, '').trim();
 
   // ── Split code blocks out first ──────────────────────────────────────────
   const segments = text.split(/(```[\s\S]*?```)/g);
@@ -9365,9 +9530,9 @@ function renderDeepAnalysis(text) {
   segments.forEach(seg => {
     if (seg.startsWith('```')) {
       const code = seg.replace(/^```[^\n]*\n?/, '').replace(/\n?```$/, '').trim();
-      html += `<div class="dp-tg-block">
-        <div class="dp-tg-label">📲 Script Telegram</div>
-        <pre class="dp-tg-pre">${dpEsc(code)}<button class="dp-tg-copy" onclick="dpCopy(this)">📋 Copier</button></pre>
+      html += `<div class="dp-code-block">
+        <div class="dp-code-label">Code</div>
+        <pre class="dp-code-pre">${dpEsc(code)}<button class="dp-code-copy" onclick="dpCopy(this)">📋 Copier</button></pre>
       </div>`;
       return;
     }
@@ -9398,8 +9563,9 @@ function renderDeepAnalysis(text) {
 
       if (!line) { flushPara(); continue; }
 
-      // ── Section header: "1. EN-TÊTE…", "2. 📊 POWER SCORE…" etc. ────────
-      const secM = line.match(/^(\d+)\.\s+(.*)/);
+      // ── Section header: "1. TITRE", "**1. TITRE**", "## 1. TITRE" ────────
+      const cleanLine = line.replace(/^#+\s*/, '').replace(/^\*+\s*/, '').replace(/\*+$/, '').trim();
+      const secM = cleanLine.match(/^(\d+)\.\s+(.*)/);
       if (secM) {
         flushPara(); closeBlocks();
         const num = parseInt(secM[1]);
@@ -9408,8 +9574,8 @@ function renderDeepAnalysis(text) {
 
         // Section 1 = match title (render as big heading)
         if (num === 1) {
-          const matchTitle = titleRaw.replace(/^EN-TÊTE DU MATCH\s*:\s*/i, '').trim();
-          html += `<div class="dp-match-title">⚽ ${dpEsc(matchTitle)}</div>`;
+          const matchTitle = titleRaw.replace(/^EN-T[ÊE]TE DU MATCH\s*:\s*/i, '').trim();
+          html += `<div class="dp-match-title">${dpEsc(matchTitle)}</div>`;
         } else {
           html += `<div class="dp-section-hdr">
             <span class="dp-section-num">${num}</span>
@@ -9417,13 +9583,8 @@ function renderDeepAnalysis(text) {
           </div>`;
         }
 
-        // Open proba block right after section 4 header
+        // Section 4 = MES 5 PARIS
         if (num === 4) {
-          html += '<div class="dp-proba-block">';
-          probaBlockOpen = true;
-        }
-        // Open bet list right after section 5 header
-        if (num === 5) {
           html += '<div class="dp-bet-list">';
           betListOpen = true;
         }
@@ -9465,32 +9626,35 @@ function renderDeepAnalysis(text) {
         }
       }
 
-      // ── Probability rows (section 4): "1N2 :", "Buts :", "Corners :" ────
+      // ── Bet lines (section 4): emoji prefix, optional leading "- " ──────
       if (currentSection === 4) {
-        const probaM = line.match(/^(1N2|Buts|Corners)\s*:\s*(.*)/i);
-        if (probaM) {
-          html += `<div class="dp-proba-row">
-            <span class="dp-proba-key">${dpEsc(probaM[1])}</span>
-            <span class="dp-proba-val">${dpBold(dpEsc(probaM[2]))}</span>
-          </div>`;
+        // Kelly line immediately after a bet
+        const kellyM = line.match(/^Mise Kelly\s*:\s*(.+)/i);
+        if (kellyM) {
+          flushPara();
+          const val = kellyM[1].trim();
+          const pct = parseFloat(val);
+          const dataAttr = !isNaN(pct) && pct > 0 ? ` data-kelly="${pct}"` : '';
+          html += `<div class="dp-kelly-tag"${dataAttr}>Mise Kelly : ${dpEsc(val)}</div>`;
           continue;
         }
-      }
-
-      // ── Top 5 bet lines (section 5): emoji prefix ─────────────────────
-      if (currentSection === 5 && /^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(line)) {
-        const colonIdx = line.indexOf(':');
-        if (colonIdx > 0) {
-          const label   = line.slice(0, colonIdx).trim();
-          const content = line.slice(colonIdx + 1).trim();
-          html += `<div class="dp-bet-card">
-            <div class="dp-bet-label">${dpEsc(label)}</div>
-            <div class="dp-bet-body">${dpBold(dpEsc(content))}</div>
-          </div>`;
-        } else {
-          html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(line))}</div></div>`;
+        const stripped = line.replace(/^-\s*/, '');
+        const isBetLine = /^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(stripped) || /^\*\*.+?\*\*\s*:/.test(stripped);
+        if (isBetLine) {
+          flushPara();
+          const colonIdx = stripped.indexOf(':');
+          if (colonIdx > 0) {
+            const label   = stripped.slice(0, colonIdx).replace(/\*\*/g, '').trim();
+            const content = stripped.slice(colonIdx + 1).trim();
+            html += `<div class="dp-bet-card">
+              <div class="dp-bet-label">${dpEsc(label)}</div>
+              <div class="dp-bet-body">${dpBold(dpEsc(content))}</div>
+            </div>`;
+          } else {
+            html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(stripped))}</div></div>`;
+          }
+          continue;
         }
-        continue;
       }
 
       // ── Default: accumulate as paragraph text ─────────────────────────
@@ -9501,9 +9665,19 @@ function renderDeepAnalysis(text) {
     closeBlocks();
   });
 
+  // Fallback: if parser produced nothing, render as plain styled paragraphs
+  if (!html.trim()) {
+    html = text.split(/\n{2,}/).filter(p => p.trim()).map(para =>
+      `<p class="dp-body">${dpBold(dpEsc(para.trim()))}</p>`
+    ).join('');
+  }
+
   const content = document.getElementById('deep-content');
   content.innerHTML = html;
   content.style.display = 'block';
+
+  // Apply Kelly amounts if bankroll already set
+  updateKellyAmounts();
 
   // Animate Power Score bars
   requestAnimationFrame(() => {
