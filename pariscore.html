@@ -536,24 +536,32 @@
   .dp-loader-text { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
   .dp-loader-tip { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 4px; }
   /* ── Deep Analysis — style éditorial ──────────────────────────────────── */
-  .dp-match-title { font: 800 20px/1.3 var(--font-head); color: var(--text); margin: 0 0 28px; padding-bottom: 18px; border-bottom: 2px solid #c0392b; }
-  .dp-section-hdr { display: flex; align-items: center; gap: 0; margin: 44px 0 16px; }
+  /* ── Titre du match — headline journal ─────────────────────────── */
+  .dp-match-title { font: 800 24px/1.22 var(--font-head); color: var(--text); margin: 0 0 32px; padding-bottom: 20px; border-bottom: 2px solid #c0392b; letter-spacing: -.3px; }
+  /* ── Rubrique de section — sobre, comme L'Équipe ──────────────── */
+  .dp-section-hdr { margin: 52px 0 18px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.07); }
   .dp-section-num { display: none; }
-  .dp-section-title { font: 700 11px/1 var(--font-head); color: var(--text); letter-spacing: 1.8px; text-transform: uppercase; padding-left: 11px; border-left: 3px solid #c0392b; }
-  .dp-powerscore-wrap { display: flex; gap: 14px; margin: 14px 0 22px; }
-  .dp-score-card2 { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 16px 18px; }
+  .dp-section-title { font: 600 9px/1 var(--font-mono); color: var(--text3); letter-spacing: 3px; text-transform: uppercase; }
+  /* ── Power Score ─────────────────────────────────────────────── */
+  .dp-powerscore-wrap { display: flex; gap: 14px; margin: 14px 0 26px; }
+  .dp-score-card2 { flex: 1; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 16px 18px; }
   .dp-score-card2 .dsc-name { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; }
-  .dp-score-card2 .dsc-val { font: 700 28px/1 var(--font-head); color: var(--text); }
+  .dp-score-card2 .dsc-val { font: 800 30px/1 var(--font-head); color: var(--text); }
   .dp-score-card2 .dsc-denom { font-size: 13px; color: var(--text3); font-weight: 400; }
-  .dp-score-card2 .dsc-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.07); margin-top: 12px; overflow: hidden; }
-  .dp-score-card2 .dsc-fill { height: 100%; border-radius: 2px; background: #c0392b; width: 0; transition: width .8s ease; }
+  .dp-score-card2 .dsc-bar { height: 2px; border-radius: 2px; background: rgba(255,255,255,0.07); margin-top: 12px; overflow: hidden; }
+  .dp-score-card2 .dsc-fill { height: 100%; border-radius: 2px; background: #c0392b; width: 0; transition: width 1s ease; }
+  /* ── Corps du texte — confort de lecture ────────────────────── */
   .dp-sub-label { font: 700 11px/1 var(--font-head); color: var(--text2); margin: 22px 0 7px; text-transform: uppercase; letter-spacing: .8px; }
-  .dp-body { font-size: 14.5px; line-height: 1.88; color: #b8bcc2; margin: 8px 0 20px; }
+  .dp-body { font-size: 15.5px; line-height: 1.92; color: var(--text2); margin: 0 0 22px; }
   .dp-body strong { color: #c0392b; font-weight: 700; }
-  .dp-bet-list { display: flex; flex-direction: column; gap: 14px; margin: 14px 0 24px; padding-left: 0; }
-  .dp-bet-card { padding: 18px 20px; background: rgba(255,255,255,0.025); border-radius: 8px; border-left: 3px solid #c0392b; }
-  .dp-bet-label { font: 700 11px/1.3 var(--font-head); color: var(--text); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
-  .dp-bet-body { font-size: 14px; line-height: 1.72; color: #b8bcc2; }
+  /* ── Paris — style "sélection journaliste", numérotés ──────── */
+  .dp-bet-list { display: flex; flex-direction: column; gap: 0; margin: 20px 0 28px; counter-reset: bet-counter; }
+  .dp-bet-card { padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,0.06); counter-increment: bet-counter; }
+  .dp-bet-card:first-child { padding-top: 0; }
+  .dp-bet-card:last-child { border-bottom: none; padding-bottom: 0; }
+  .dp-bet-label { font: 700 11px/1.3 var(--font-head); color: var(--text); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; display: flex; align-items: center; gap: 9px; }
+  .dp-bet-label::before { content: counter(bet-counter); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #c0392b; border-radius: 50%; font-size: 9px; font-weight: 800; color: #fff; flex-shrink: 0; }
+  .dp-bet-body { font-size: 15px; line-height: 1.8; color: var(--text2); padding-left: 29px; }
   .dp-bet-body strong { color: #c0392b; font-weight: 700; }
   .dp-code-block { margin: 8px 0 16px; }
   .dp-code-label { font: 700 10px/1 var(--font-mono); color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
@@ -575,7 +583,10 @@
   #dp-bankroll-input { background:#080b0f; border:1px solid rgba(171,71,188,0.3); border-radius:6px; color:var(--text); font:13px var(--font-mono); padding:5px 10px; width:90px; outline:none; }
   #dp-bankroll-input:focus { border-color:#ab47bc; }
   .dp-kelly-hint { font:11px var(--font-mono); color:var(--text3); }
-  .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#ce93d8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:4px 10px; margin:10px 0 4px; }
+  .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#ce93d8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:4px 10px; margin:12px 0 0; margin-left:29px; }
+  /* ── Verdict final — pull quote ─────────────────────────────── */
+  .dp-verdict-body { font-size: 16px; line-height: 1.9; color: var(--text); font-style: italic; margin: 0 0 22px; padding: 20px 22px; background: rgba(192,57,43,0.06); border-radius: 8px; border-left: 3px solid #c0392b; }
+  .dp-verdict-body strong { color: #c0392b; font-weight: 700; font-style: normal; }
   .dp-kelly-eur { color:#00e676; font-weight:700; }
   /* I4 — Divergence badge */
   .dp-divergence-block { margin:0 0 16px; display:flex; flex-direction:column; gap:6px; }
@@ -9547,7 +9558,8 @@ function renderDeepAnalysis(text) {
 
     const flushPara = () => {
       if (pendingPara.trim()) {
-        html += `<p class="dp-body">${dpBold(dpEsc(pendingPara.trim()))}</p>`;
+        const cls = currentSection === 5 ? 'dp-verdict-body' : 'dp-body';
+        html += `<p class="${cls}">${dpBold(dpEsc(pendingPara.trim()))}</p>`;
         pendingPara = '';
       }
     };
