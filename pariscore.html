@@ -9258,26 +9258,39 @@ if (scrollTop && scrollMain) {
 // ── Deep Analysis Pro — Terminal SSE ─────────────────────────────────────────
 let _deepEvt = null;
 let _deepText = '';
+let _deepMatchId = null;
 
 function openDeepAnalysis(matchId, e) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
-  _deepText = '';
 
   const match = allMatches.find(m => m.id === matchId);
   const label = match ? `${match.home_team} vs ${match.away_team}` : matchId;
 
   document.getElementById('deep-match-label').textContent = label;
+  document.body.style.overflow = 'hidden';
+  document.getElementById('deep-modal').classList.add('open');
+
+  // Same match already analysed — show render directly, no re-fetch
+  if (_deepMatchId === matchId && _deepText) {
+    const term = document.getElementById('deep-terminal');
+    term.style.display = 'none';
+    document.getElementById('deep-mode-bar').style.display = 'flex';
+    switchDeepMode('render');
+    return;
+  }
+
+  // New match — reset state
+  if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
+  _deepText = '';
+  _deepMatchId = matchId;
+
   document.getElementById('deep-mode-bar').style.display = 'none';
   document.getElementById('deep-content').style.display = 'none';
   document.getElementById('deep-content').innerHTML = '';
 
   const term = document.getElementById('deep-terminal');
   term.style.display = 'block';
-  term.textContent = '> AI-AL — Terminal d\'analyse Pariscore\n> Connexion au moteur Gemini 2.0 Flash…\n> Injection des données du match : ' + label + '\n\n';
-
-  document.body.style.overflow = 'hidden';
-  document.getElementById('deep-modal').classList.add('open');
+  term.textContent = '> AI-AL — Terminal d\'analyse Pariscore\n> Connexion au moteur IA…\n> Injection des données du match : ' + label + '\n\n';
 
   let headerDone = false;
   _deepEvt = new EventSource('/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId));
