@@ -5,13 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PariScore — Paris de Valeur & Statistiques Football</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=Barlow+Condensed:wght@700;800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0d0f;
+    /* ── Light Premium — L'Équipe × Flashscore ── */
+    --bg: #f4f4f4;
+    --bg2: #ffffff;
+    --bg3: #ebebeb;
+    --bg4: #e0e0e0;
+    --accent: #E3000F;
+    --accent-dim: #b80009;
+    --accent-bg: rgba(227,0,15,0.07);
+    --green: #1a8c45;
+    --green-dim: #146b34;
+    --green-bg: rgba(26,140,69,0.09);
+    --red: #cc1a1a;
+    --red-bg: rgba(204,26,26,0.08);
+    --amber: #b45309;
+    --amber-bg: rgba(180,83,9,0.09);
+    --blue: #1558d6;
+    --blue-bg: rgba(21,88,214,0.08);
+    --text: #111111;
+    --text2: #4a4a4a;
+    --text3: #888888;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.16);
+    --card-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
+    --gauge-rail: rgba(0,0,0,0.10);
+    --gauge-rail-opacity: 1;
+    --font-head: 'Barlow Condensed', sans-serif;
+    --font-body: 'Source Sans 3', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+  /* ── Nuit Profonde ── */
+  body.dark-theme {
+    --bg: #0a0a0a;
     --bg2: #111417;
     --bg3: #181c20;
     --bg4: #1e2328;
+    --accent: #ff1f2d;
+    --accent-dim: #cc0f1c;
+    --accent-bg: rgba(255,31,45,0.08);
     --green: #00e676;
     --green-dim: #00c85a;
     --green-bg: rgba(0,230,118,0.08);
@@ -20,16 +56,15 @@
     --amber: #ffa726;
     --amber-bg: rgba(255,167,38,0.1);
     --blue: #29b6f6;
+    --blue-bg: rgba(41,182,246,0.09);
     --text: #e8eaed;
     --text2: #8d9399;
     --text3: #5a6068;
     --border: rgba(255,255,255,0.07);
     --border2: rgba(255,255,255,0.12);
-    --font-head: 'Syne', sans-serif;
-    --font-body: 'Instrument Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-    --radius: 10px;
-    --radius-lg: 16px;
+    --card-shadow: none;
+    --gauge-rail: rgba(255,255,255,0.08);
+    --gauge-rail-opacity: 0.6;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -45,39 +80,153 @@
   a { color: inherit; text-decoration: none; }
   button { cursor: pointer; border: none; background: none; font-family: var(--font-body); }
 
+  /* ── Light mode : override rgba(255,255,255,...) hardcodés ── */
+  body:not(.dark-theme) .dp-section-hdr { border-top-color: var(--border2); }
+  body:not(.dark-theme) .dp-score-card2 { background: var(--bg3); border-color: var(--border2); }
+  body:not(.dark-theme) .dp-score-card2 .dsc-bar { background: var(--border2); }
+  body:not(.dark-theme) .dp-bet-card { border-bottom-color: var(--border); }
+  body:not(.dark-theme) .dp-code-pre { background: var(--bg3); border-color: var(--border2); color: var(--text2); }
+  body:not(.dark-theme) .dp-code-copy { background: var(--bg4); border-color: var(--border2); }
+  body:not(.dark-theme) .dp-code-copy:hover { background: var(--bg3); color: var(--text); }
+  body:not(.dark-theme) .poisson-thermo { background: var(--bg3); border-color: var(--border2); }
+  body:not(.dark-theme) .poisson-thermo:hover { border-color: var(--text3); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  body:not(.dark-theme) .pt-track { background: var(--border2); box-shadow: none; }
+  body:not(.dark-theme) .ins-table td { border-bottom-color: var(--border); }
+  body:not(.dark-theme) .ins-table tr:hover td { background: var(--bg3); }
+  body:not(.dark-theme) .standings-table td { border-bottom-color: var(--border); }
+  body:not(.dark-theme) .standings-table tr:hover td { background: var(--bg3); }
+  body:not(.dark-theme) .rk-row { border-bottom-color: var(--border); }
+  body:not(.dark-theme) .rk-row:hover { background: var(--bg3); }
+  body:not(.dark-theme) .rk-badge-s.rk-low { background: var(--bg4); border-color: var(--border2); color: var(--text2); }
+  body:not(.dark-theme) .rk-badge-s.rk-none { background: var(--bg3); border-color: var(--border); color: var(--text3); }
+  body:not(.dark-theme) #vb-body tr { border-bottom-color: var(--border); }
+  body:not(.dark-theme) #vb-table td:nth-child(2),
+  body:not(.dark-theme) #vb-table td:nth-child(3),
+  body:not(.dark-theme) #vb-table td:nth-child(4) { border-right-color: var(--border2); }
+  body:not(.dark-theme) .t3c-row:nth-child(odd)  { background: var(--bg3); }
+  body:not(.dark-theme) .t3c-row:nth-child(even) { background: var(--bg2); }
+  body:not(.dark-theme) .t3c-badge.t3c-risky,
+  body:not(.dark-theme) .t3c-badge-sm.t3c-risky { background: var(--bg4); border-color: var(--border2); color: var(--text2); }
+  body:not(.dark-theme) .t3c-pro-sep { background: var(--border2); }
+  body:not(.dark-theme) .t3c-pro-chip.acc { background: var(--bg4); border-color: var(--border2); }
+  body:not(.dark-theme) .buteur-row:hover { background: var(--bg3); }
+  body:not(.dark-theme) .buteur-bar-wrap { background: var(--border2); }
+  body:not(.dark-theme) .sf-chip.sf-risky { background: var(--bg3); border-color: var(--border2); color: var(--text2); }
+  body:not(.dark-theme) .live-stats-panel { background: var(--bg3); border-color: var(--border2); }
+  body:not(.dark-theme) .ls-row { border-bottom-color: var(--border); }
+
+  /* ── Light mode card elevation ── */
+  body:not(.dark-theme) .nav-inner,
+  body:not(.dark-theme) .modal-box,
+  body:not(.dark-theme) .modal-inner,
+  body:not(.dark-theme) .insight-card,
+  body:not(.dark-theme) .deep-panel,
+  body:not(.dark-theme) .ps-card,
+  body:not(.dark-theme) .scout-panel,
+  body:not(.dark-theme) #ai-scout-panel,
+  body:not(.dark-theme) .stat-card,
+  body:not(.dark-theme) .match-card,
+  body:not(.dark-theme) .filter-row,
+  body:not(.dark-theme) table {
+    box-shadow: var(--card-shadow);
+  }
+  body:not(.dark-theme) thead th {
+    background: var(--bg3);
+  }
+  body:not(.dark-theme) tr:hover td {
+    background: var(--bg3) !important;
+  }
+
+  /* ── Theme toggle pill ── */
+  #theme-toggle {
+    position: fixed; bottom: 18px; right: 18px; z-index: 9999;
+    background: var(--bg4); color: var(--text2);
+    border: 1px solid var(--border2); border-radius: 20px;
+    padding: 6px 14px; font-size: 12px; font-family: var(--font-mono);
+    cursor: pointer; transition: all .2s; box-shadow: var(--card-shadow);
+    user-select: none;
+  }
+  #theme-toggle:hover { color: var(--text); border-color: var(--text3); }
+
+  /* ── Typographie éditoriale globale (Barlow Condensed) ── */
+  [style*="font-family:var(--font-head)"],
+  .logo, .hero h1, .hero-eyebrow, .hero-stat-num,
+  .modal-title, .stat-num, .price-amount,
+  .cr-title, .cr-exp-value, .cr-rec-prob,
+  .trend-pct, .strat-conf-val, .hist-kpi-val,
+  .tm-conf, .pa-header h2, .partners-header h2,
+  .auth-box h2, .gm-title, #gm-report h1, #gm-report h2, #gm-report h3,
+  .top-matches-header h2, .footer-logo, .lh-title {
+    font-family: var(--font-head);
+    letter-spacing: 0.02em;
+  }
+  /* Grands titres : uppercase condensed — effet journal sportif */
+  .hero h1, .pa-header h2, .partners-header h2,
+  .top-matches-header h2 {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+  }
+  /* Corps : Source Sans 3 — lisibilité maximale */
+  body, button, input, select, textarea {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Poids éditorial : titres de section */
+  body:not(.dark-theme) .modal-title,
+  body:not(.dark-theme) .cr-title,
+  body:not(.dark-theme) .top-matches-header h2 {
+    color: var(--text);
+  }
+  /* Nombres/stats : Barlow Condensed 700 — frappe visuelle */
+  .hero-stat-num, .stat-num, .cr-exp-value,
+  .trend-pct, .hist-kpi-val, .price-amount, .tm-conf {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
   /* NAV */
   nav {
     position: sticky; top: 0; z-index: 100;
-    background: rgba(10,13,15,0.92);
+    background: var(--bg2);
     backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border2);
     padding: 0 32px;
     height: 60px;
     display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 1px 0 var(--border);
+  }
+  body.dark-theme nav {
+    background: rgba(10,13,15,0.95);
   }
   .logo {
     font-family: var(--font-head);
-    font-size: 20px; font-weight: 800;
-    letter-spacing: -0.5px;
+    font-size: 22px; font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     display: flex; align-items: center; gap: 8px;
   }
-  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
   .nav-links { display: flex; align-items: center; gap: 4px; }
   .nav-links a {
     padding: 6px 14px; border-radius: 6px;
-    font-size: 13.5px; color: var(--text2);
+    font-size: 13px; font-weight: 500; color: var(--text2);
+    font-family: var(--font-body);
     transition: color .15s, background .15s;
   }
   .nav-links a:hover { color: var(--text); background: var(--bg3); }
-  .nav-links a.active { color: var(--green); }
+  .nav-links a.active { color: var(--accent); font-weight: 600; }
   .nav-cta {
-    background: var(--green); color: #000;
+    background: var(--accent); color: #fff;
     font-family: var(--font-body); font-weight: 600;
     font-size: 13px; padding: 8px 18px;
     border-radius: 6px; transition: background .15s;
     display: flex; align-items: center; gap: 6px;
+    text-transform: uppercase; letter-spacing: 0.04em;
   }
-  .nav-cta:hover { background: var(--green-dim); }
+  .nav-cta:hover { background: var(--accent-dim); }
   .nav-right { display: flex; align-items: center; gap: 12px; }
   .live-pill {
     display: flex; align-items: center; gap: 6px;
@@ -324,37 +473,43 @@
   }
   .hero-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12px; font-family: var(--font-mono);
-    color: var(--green); letter-spacing: 1.5px; text-transform: uppercase;
+    font-size: 11px; font-family: var(--font-mono);
+    color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
     margin-bottom: 20px;
+    background: var(--accent-bg);
+    border: 1px solid var(--accent);
+    border-radius: 4px; padding: 4px 10px;
   }
   .hero h1 {
     font-family: var(--font-head);
-    font-size: 52px; font-weight: 800; line-height: 1.08;
-    letter-spacing: -1.5px; margin-bottom: 20px;
+    font-size: 62px; font-weight: 900; line-height: 1.0;
+    letter-spacing: 0.02em; margin-bottom: 20px;
+    text-transform: uppercase;
   }
-  .hero h1 span { color: var(--green); }
+  .hero h1 span { color: var(--accent); }
   .hero-sub {
-    font-size: 16px; color: var(--text2); line-height: 1.7;
+    font-family: var(--font-body);
+    font-size: 17px; font-weight: 400; color: var(--text2); line-height: 1.65;
     max-width: 440px; margin-bottom: 36px;
   }
   .hero-btns { display: flex; gap: 12px; }
   .btn-primary {
-    background: var(--green); color: #000;
-    font-weight: 600; font-size: 14px;
-    padding: 12px 24px; border-radius: 8px;
+    background: var(--accent); color: #fff;
+    font-family: var(--font-body); font-weight: 700; font-size: 13px;
+    padding: 12px 28px; border-radius: 6px;
+    text-transform: uppercase; letter-spacing: 0.06em;
     transition: background .15s, transform .1s;
     display: flex; align-items: center; gap: 8px;
   }
-  .btn-primary:hover { background: var(--green-dim); transform: translateY(-1px); }
+  .btn-primary:hover { background: var(--accent-dim); transform: translateY(-1px); }
   .btn-ghost {
-    background: transparent; color: var(--text);
-    font-weight: 500; font-size: 14px;
-    padding: 12px 24px; border-radius: 8px;
+    background: transparent; color: var(--text2);
+    font-family: var(--font-body); font-weight: 500; font-size: 13px;
+    padding: 12px 24px; border-radius: 6px;
     border: 1px solid var(--border2);
-    transition: border-color .15s, background .15s;
+    transition: border-color .15s, background .15s, color .15s;
   }
-  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); background: var(--bg3); }
+  .btn-ghost:hover { border-color: var(--text3); background: var(--bg3); color: var(--text); }
   .hero-stats {
     display: flex; gap: 32px; margin-top: 40px;
     padding-top: 32px; border-top: 1px solid var(--border);
@@ -455,12 +610,12 @@
     padding: 6px 8px; border-bottom: 1px solid var(--border);
     font-weight: 400; white-space: nowrap; background: var(--bg2);
   }
-  .vb-table th.stat-group { border-left: 2px solid rgba(255,255,255,0.18); color: var(--text2); font-weight: 500; }
+  .vb-table th.stat-group { border-left: 2px solid var(--border2); color: var(--text2); font-weight: 500; }
   .stat-header-sub th { font-size: 9.5px; color: var(--text3); padding: 3px 6px; border-bottom: 2px solid var(--border); }
   .vb-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; text-align: center; font-size: 12.5px; }
   .vb-table td:first-child { text-align: left; }
   .vb-table tr:last-child td { border-bottom: none; }
-  .vb-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .vb-table tr:hover td { background: var(--bg3); }
   /* Country flag */
   .country-flag { width: 18px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.4); vertical-align: middle; margin-right: 4px; }
   .country-flag-img { width: 16px; height: 11px; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.4); vertical-align: middle; margin-right: 3px; object-fit: cover; }
@@ -478,14 +633,14 @@
   .country-chip.active .country-remove { display: inline; }
   /* Stat cells */
   .sc { min-width: 44px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; padding: 5px 6px; border-left: 1px solid var(--border); }
-  .sc.grp { border-left: 2px solid rgba(255,255,255,0.18) !important; }
+  .sc.grp { border-left: 2px solid var(--border2) !important; }
   .sc.green  { background: rgba(0,165,81,0.18);  color: #00c45a; }
   .sc.orange { background: rgba(245,158,11,0.18); color: #f59e0b; }
   .sc.red    { background: rgba(239,68,68,0.18);  color: #ef4444; }
   .sc.neutral{ color: var(--text2); }
   /* Bouton score prédit */
   .score-matrix-btn { background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: transform .15s, background .15s; }
-  .score-matrix-btn:hover { background: rgba(255,255,255,0.08); transform: scale(1.2); }
+  .score-matrix-btn:hover { background: var(--bg3); transform: scale(1.2); }
   /* Modal matrice scores */
   #score-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s; }
   #score-modal.open { opacity: 1; pointer-events: all; }
@@ -873,7 +1028,7 @@
     font-size: 8.5px; color: var(--text3); padding: 3px 5px;
     border-bottom: 2px solid var(--border);
   }
-  #vb-table thead th.stat-group { border-left: 2px solid rgba(255,255,255,0.18); color: var(--text2); font-weight: 500; }
+  #vb-table thead th.stat-group { border-left: 2px solid var(--border2); color: var(--text2); font-weight: 500; }
   #vb-table th:first-child, #vb-table td:first-child {
     position: sticky; left: 0; z-index: 2;
     background: var(--bg2);
@@ -1015,7 +1170,7 @@
     background: transparent; transition: all .15s;
     cursor: pointer;
   }
-  .filter-chip.active { background: var(--green-bg); color: var(--green); border-color: rgba(0,230,118,0.3); }
+  .filter-chip.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
   .filter-chip:hover:not(.active) { border-color: var(--border2); color: var(--text); }
 
   /* Top N best bets */
@@ -1052,9 +1207,9 @@
   }
   .country-chip:hover:not(.active) { border-color: var(--border2); color: var(--text); }
   .country-chip.active {
-    background: var(--green-bg); color: var(--green);
-    border-color: rgba(0,230,118,0.4);
-    box-shadow: 0 0 12px rgba(0,255,136,0.30), 0 0 3px rgba(0,255,136,0.45);
+    background: var(--accent-bg); color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-bg);
   }
   .country-chip .country-arrow { font-size: 7px; margin-left: 1px; opacity: 0.5; transition: transform .15s; }
   .country-chip-wrap:hover .country-arrow { transform: rotate(180deg); opacity: 0.8; }
@@ -1679,13 +1834,15 @@
 
   /* STICKY UPDATE BAR */
   .update-bar {
-    background: rgba(0,230,118,0.07);
-    border-bottom: 1px solid rgba(0,230,118,0.15);
-    padding: 8px 32px;
-    font-size: 12px; font-family: var(--font-mono);
-    color: var(--green); text-align: center;
+    background: var(--accent-bg);
+    border-bottom: 1px solid var(--accent);
+    padding: 7px 32px;
+    font-size: 11.5px; font-family: var(--font-mono);
+    color: var(--accent); text-align: center;
     display: flex; align-items: center; justify-content: center; gap: 8px;
+    letter-spacing: 0.03em;
   }
+  .update-bar .live-dot { background: var(--accent); box-shadow: none; }
 
   /* ── TOP MATCHES WIDGET (page accueil) ────────────────────────────────── */
   .top-matches-section { padding: 32px; border-top: 1px solid var(--bg3); }
@@ -1870,6 +2027,8 @@
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 </head>
 <body>
+
+<button id="theme-toggle" onclick="toggleTheme()" title="Basculer mode jour/nuit">☾ Nuit</button>
 
 <!-- UPDATE BAR -->
 <div class="update-bar">
@@ -2133,7 +2292,7 @@
   <div class="section-sub">Nos 15 AI Tipsters ont analysé les matchs. Voici les 5 meilleurs picks toutes stratégies confondues — classés par Value Index (potentiel de gain).</div>
   <div class="hot-picks-controls" style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap;">
     <span style="color:var(--text3);font-size:12px;">Nombre de picks :</span>
-    <select id="hp-limit" onchange="loadHotPicks()" style="background:var(--bg4);color:var(--text);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 10px;font-size:12px;">
+    <select id="hp-limit" onchange="loadHotPicks()" style="background:var(--bg4);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:12px;">
       <option value="5">Top 5</option>
       <option value="10">Top 10</option>
       <option value="15">Top 15</option>
@@ -2156,7 +2315,7 @@
   <div class="section-sub">Uniquement les picks dont la confiance atteint 8/10, 9/10 ou 10/10. Hit rate estimé ~40%. Rentabilité long terme > 100%.</div>
   <div class="sure-bets-controls" style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap;">
     <span style="color:var(--text3);font-size:12px;">Afficher :</span>
-    <select id="sb-limit" onchange="loadSureBets()" style="background:var(--bg4);color:var(--text);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 10px;font-size:12px;">
+    <select id="sb-limit" onchange="loadSureBets()" style="background:var(--bg4);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:12px;">
       <option value="10">Top 10</option>
       <option value="20">Top 20</option>
       <option value="30">Top 30</option>
@@ -2473,7 +2632,7 @@
   <div class="section-sub">Chaque match passé est archivé et comparé à nos prédictions Poisson. Mesurez la précision de l'algorithme sur des données réelles.</div>
 
   <!-- BACK-TEST CONTROLS — Premium/Admin -->
-  <div id="backtest-section" style="display:none;margin-bottom:18px;padding:14px 18px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.08);">
+  <div id="backtest-section" style="display:none;margin-bottom:18px;padding:14px 18px;background:var(--bg3);border-radius:10px;border:1px solid var(--border2);">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span style="color:var(--text2);font-size:12px;font-weight:600;">⏪ Back-test BSD :</span>
       <select id="backtest-days" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:12px;">
@@ -2553,7 +2712,7 @@
   <div class="strategy-controls" id="strategy-controls" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:12px 0 4px;padding:10px 14px;background:var(--bg2);border-radius:10px;border:1px solid rgba(255,255,255,0.05);">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="color:var(--text3);font-size:11px;white-space:nowrap;">Ligue :</span>
-      <select id="strat-league-select" style="background:var(--bg4);color:var(--text);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;" onchange="onStratLeagueChange(this.value)">
+      <select id="strat-league-select" style="background:var(--bg4);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;" onchange="onStratLeagueChange(this.value)">
         <option value="">Toutes</option>
         <option value="soccer_france_ligue1">Ligue 1</option>
         <option value="soccer_epl">Premier League</option>
@@ -6361,7 +6520,7 @@ function buildStaticInsightLayer(d) {
       ? `<path d="M 12,50 A ${r},${r} 0 1,1 88,50.01" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"/>`
       : `<path d="M 12,50 A ${r},${r} 0 ${la},1 ${ex},${ey}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"/>`;
     return `<svg viewBox="0 0 100 58" class="ps-gauge-svg">
-      <path d="M 12,50 A ${r},${r} 0 0,1 88,50" fill="none" stroke="var(--bg2)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M 12,50 A ${r},${r} 0 0,1 88,50" fill="none" stroke="var(--gauge-rail)" stroke-width="7" stroke-linecap="round"/>
       ${icArc}${fillArc}
       <text x="50" y="46" text-anchor="middle" fill="${color}" font-size="15" font-weight="700" font-family="monospace">${Math.round(prob)}%</text>
     </svg>`;
@@ -6962,7 +7121,7 @@ function buildH2HTab(d) {
       </div>
     </div>
   </div>
-  ${h2hMeetings.length ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;margin-bottom:16px">
+  ${h2hMeetings.length ? `<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;margin-bottom:16px">
     <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">H2H — ${m.home_team} vs ${m.away_team} (L5)</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${statsBadge('V', hh.w, '#00e676')}
@@ -9716,6 +9875,50 @@ function dpCopy(btn) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('deep-modal').classList.contains('open')) closeDeepAnalysis();
 });
+
+/* ── Auto Theme (Light/Dark by hour) ── */
+(function() {
+  const DARK_START = 19;
+  const DARK_END   = 7;
+  const STORAGE_KEY = 'ps-theme-override';
+
+  function shouldBeDark() {
+    const h = new Date().getHours();
+    return h >= DARK_START || h < DARK_END;
+  }
+
+  function applyTheme(dark) {
+    document.body.classList.toggle('dark-theme', dark);
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = dark ? '☀ Jour' : '☾ Nuit';
+  }
+
+  function init() {
+    const override = localStorage.getItem(STORAGE_KEY);
+    if (override !== null) {
+      applyTheme(override === 'dark');
+    } else {
+      applyTheme(shouldBeDark());
+    }
+  }
+
+  window.toggleTheme = function() {
+    const isDark = document.body.classList.contains('dark-theme');
+    localStorage.setItem(STORAGE_KEY, isDark ? 'light' : 'dark');
+    applyTheme(!isDark);
+  };
+
+  /* Re-check toutes les 5 min si pas d'override manuel */
+  setInterval(() => {
+    if (localStorage.getItem(STORAGE_KEY) === null) applyTheme(shouldBeDark());
+  }, 5 * 60 * 1000);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
 </body>
 </html>
