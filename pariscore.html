@@ -558,11 +558,11 @@
   .dp-bet-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 11px 14px; }
   .dp-bet-label { font: 700 12px/1.3 var(--font-head); color: var(--text); margin-bottom: 4px; }
   .dp-bet-body { font-size: 12.5px; line-height: 1.6; color: var(--text2); }
-  .dp-tg-block { margin: 6px 0 14px; }
-  .dp-tg-label { font: 700 10px/1 var(--font-mono); color: #ce93d8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-  .dp-tg-pre { position: relative; background: #080b0f; border: 1px solid rgba(171,71,188,0.3); border-radius: 8px; padding: 14px 16px 14px; font: 12px/1.7 var(--font-mono); color: #e0e0e0; white-space: pre-wrap; word-break: break-word; margin: 0; }
-  .dp-tg-copy { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
-  .dp-tg-copy:hover { background: rgba(171,71,188,0.38); }
+  .dp-code-block { margin: 6px 0 14px; }
+  .dp-code-label { font: 700 10px/1 var(--font-mono); color: #ce93d8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .dp-code-pre { position: relative; background: #080b0f; border: 1px solid rgba(171,71,188,0.3); border-radius: 8px; padding: 14px 16px 14px; font: 12px/1.7 var(--font-mono); color: #e0e0e0; white-space: pre-wrap; word-break: break-word; margin: 0; }
+  .dp-code-copy { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
+  .dp-code-copy:hover { background: rgba(171,71,188,0.38); }
   .dp-mode-btn { font: 600 10px/1 var(--font-mono); padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.3); color: var(--text3); background: transparent; cursor: pointer; transition: all .15s; letter-spacing: .5px; }
   .dp-mode-btn:hover, .dp-mode-btn.active { background: rgba(171,71,188,0.18); border-color: #ab47bc; color: #ce93d8; }
   #deep-terminal { scrollbar-width: thin; scrollbar-color: rgba(0,200,83,0.3) transparent; }
@@ -9242,6 +9242,7 @@ if (scrollTop && scrollMain) {
       <div id="deep-mode-bar" style="display:none;gap:4px;align-items:center;margin-right:8px;">
         <button id="dp-btn-terminal" class="dp-mode-btn active" onclick="switchDeepMode('terminal')">📟 Terminal</button>
         <button id="dp-btn-render"   class="dp-mode-btn"        onclick="switchDeepMode('render')">✦ Rendu</button>
+        <button id="dp-btn-refresh"  class="dp-mode-btn"        onclick="refreshDeepAnalysis()" title="Forcer une nouvelle analyse (bypass cache)">🔄 Nouvelle analyse</button>
       </div>
       <button onclick="closeDeepAnalysis()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
     </div>
@@ -9260,18 +9261,29 @@ let _deepEvt = null;
 let _deepText = '';
 let _deepMatchId = null;
 
-function openDeepAnalysis(matchId, e) {
+function refreshDeepAnalysis() {
+  const matchId = _deepMatchId;
+  if (!matchId) return;
+  if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
+  _deepText = '';
+  _deepMatchId = null;
+  document.getElementById('deep-content').innerHTML = '';
+  openDeepAnalysis(matchId, null, true);
+}
+
+function openDeepAnalysis(matchId, e, force) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
 
   const match = allMatches.find(m => m.id === matchId);
   const label = match ? `${match.home_team} vs ${match.away_team}` : matchId;
 
   document.getElementById('deep-match-label').textContent = label;
+  document.getElementById('deep-match-label').dataset.matchId = matchId;
   document.body.style.overflow = 'hidden';
   document.getElementById('deep-modal').classList.add('open');
 
   // Same match already analysed — show render directly, no re-fetch
-  if (_deepMatchId === matchId && _deepText) {
+  if (!force && _deepMatchId === matchId && _deepText) {
     const term = document.getElementById('deep-terminal');
     term.style.display = 'none';
     document.getElementById('deep-mode-bar').style.display = 'flex';
@@ -9279,7 +9291,7 @@ function openDeepAnalysis(matchId, e) {
     return;
   }
 
-  // New match — reset state
+  // New match or forced refresh — reset state
   if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
   _deepText = '';
   _deepMatchId = matchId;
@@ -9293,7 +9305,8 @@ function openDeepAnalysis(matchId, e) {
   term.textContent = '> AI-AL — Terminal d\'analyse Pariscore\n> Connexion au moteur IA…\n> Injection des données du match : ' + label + '\n\n';
 
   let headerDone = false;
-  _deepEvt = new EventSource('/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId));
+  const streamUrl = '/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId) + (force ? '?force=1' : '');
+  _deepEvt = new EventSource(streamUrl);
 
   _deepEvt.addEventListener('chunk', ev => {
     const { text } = JSON.parse(ev.data);
@@ -9303,14 +9316,14 @@ function openDeepAnalysis(matchId, e) {
     term.scrollTop = term.scrollHeight;
   });
 
-  _deepEvt.addEventListener('done', () => {
+  _deepEvt.addEventListener('done', ev => {
     _deepEvt.close(); _deepEvt = null;
-    term.textContent += '\n\n> ✅ Analyse complète.';
-    // Show toggle bar
+    let providerName = '';
+    try { const d = JSON.parse(ev.data); providerName = d.provider || ''; } catch {}
+    term.textContent += '\n\n> ✅ Analyse complète.' + (providerName ? ` [via ${providerName}]` : '');
     const bar = document.getElementById('deep-mode-bar');
+    if (providerName) bar.dataset.provider = providerName;
     bar.style.display = 'flex';
-    // Auto-switch to rendered view after 1.8s
-    setTimeout(() => switchDeepMode('render'), 1800);
   });
 
   _deepEvt.addEventListener('error', ev => {
@@ -9365,9 +9378,9 @@ function renderDeepAnalysis(text) {
   segments.forEach(seg => {
     if (seg.startsWith('```')) {
       const code = seg.replace(/^```[^\n]*\n?/, '').replace(/\n?```$/, '').trim();
-      html += `<div class="dp-tg-block">
-        <div class="dp-tg-label">📲 Script Telegram</div>
-        <pre class="dp-tg-pre">${dpEsc(code)}<button class="dp-tg-copy" onclick="dpCopy(this)">📋 Copier</button></pre>
+      html += `<div class="dp-code-block">
+        <div class="dp-code-label">Code</div>
+        <pre class="dp-code-pre">${dpEsc(code)}<button class="dp-code-copy" onclick="dpCopy(this)">📋 Copier</button></pre>
       </div>`;
       return;
     }

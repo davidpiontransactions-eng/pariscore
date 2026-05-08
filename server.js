@@ -1004,7 +1004,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
     // ── Gemini SSE ──────────────────────────────────────────────────────────
     const payload = JSON.stringify({
       contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+      generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
       safetySettings: GEMINI_SAFETY_SETTINGS,
     });
     const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
@@ -1044,7 +1044,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
       model: prov.model,
       messages: [{ role: 'user', content: promptText }],
       temperature: 0.8,
-      max_tokens: 2048,
+      max_tokens: 4096,
       stream: true,
     });
     const opts = {
@@ -8545,6 +8545,8 @@ function handleAPI(req, res, pathname, query) {
   // GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
   if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
     if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
+    const streamUrl = new URL(req.url, 'http://localhost');
+    const forceRefresh = streamUrl.searchParams.get('force') === '1';
     const matchId = decodeURIComponent(pathname.split('/api/v1/deep-analysis-stream/')[1]);
     const match = db.matches.find(m => m.id === matchId);
     if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
@@ -8558,7 +8560,7 @@ function handleAPI(req, res, pathname, query) {
     });
 
     const cacheKey = `deep_pro_${matchId}`;
-    const cached = getCachedAIAnalysis(cacheKey);
+    const cached = !forceRefresh && getCachedAIAnalysis(cacheKey);
     if (cached?.text) {
       console.log(`  [DeepStream] HIT cache — ${match.home_team} vs ${match.away_team}`);
       // Simulate streaming from cache in small chunks
@@ -8570,7 +8572,7 @@ function handleAPI(req, res, pathname, query) {
         try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: chunk })}\n\n`); } catch {}
         if (idx >= words.length) {
           clearInterval(iv);
-          try { res.write(`event: done\ndata: ${JSON.stringify({ _from_cache: true })}\n\n`); res.end(); } catch {}
+          try { res.write(`event: done\ndata: ${JSON.stringify({ _from_cache: true, provider: cached.provider || 'cache' })}\n\n`); res.end(); } catch {}
         }
       }, 30);
       req.on('close', () => clearInterval(iv));
@@ -8594,7 +8596,7 @@ function handleAPI(req, res, pathname, query) {
 
     console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
     streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
-      saveAIAnalysisToCache(cacheKey, { text: fullText });
+      saveAIAnalysisToCache(cacheKey, { text: fullText, provider: providerName });
       console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
       try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName })}\n\n`); res.end(); } catch {}
     });
@@ -8703,7 +8705,7 @@ ${dataBlock}`;
           {
             contents: [{ parts: [{ text: systemPrompt }] }],
             safetySettings: GEMINI_SAFETY_SETTINGS,
-            generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
+            generationConfig: { temperature: 0.8, maxOutputTokens: 4096 }
           }
         );
         if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
