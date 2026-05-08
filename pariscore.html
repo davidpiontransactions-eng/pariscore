@@ -9521,7 +9521,8 @@ function dpEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function dpBold(s) { return s.replace(/\*\*(.+?)\*\*/g,'<strong style="color:#c0392b;font-weight:700">$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>'); }
 
 function renderDeepAnalysis(text) {
-  document.getElementById('deep-loader').style.display = 'none';
+  // Chirurgical emoji strip — remove any emoji the AI slipped through
+  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FEFF}\u{20D0}-\u{20FF}]/gu, '').trim();
 
   // ── Split code blocks out first ──────────────────────────────────────────
   const segments = text.split(/(```[\s\S]*?```)/g);
@@ -9573,8 +9574,8 @@ function renderDeepAnalysis(text) {
 
         // Section 1 = match title (render as big heading)
         if (num === 1) {
-          const matchTitle = titleRaw.replace(/^EN-TÊTE DU MATCH\s*:\s*/i, '').trim();
-          html += `<div class="dp-match-title">⚽ ${dpEsc(matchTitle)}</div>`;
+          const matchTitle = titleRaw.replace(/^EN-T[ÊE]TE DU MATCH\s*:\s*/i, '').trim();
+          html += `<div class="dp-match-title">${dpEsc(matchTitle)}</div>`;
         } else {
           html += `<div class="dp-section-hdr">
             <span class="dp-section-num">${num}</span>
@@ -9638,7 +9639,8 @@ function renderDeepAnalysis(text) {
           continue;
         }
         const stripped = line.replace(/^-\s*/, '');
-        if (/^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(stripped)) {
+        const isBetLine = /^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(stripped) || /^\*\*.+?\*\*\s*:/.test(stripped);
+        if (isBetLine) {
           flushPara();
           const colonIdx = stripped.indexOf(':');
           if (colonIdx > 0) {
