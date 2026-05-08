@@ -9274,7 +9274,6 @@ if (scrollTop && scrollMain) {
 <div id="deep-modal" onclick="if(event.target===this)closeDeepAnalysis()">
   <div id="deep-panel">
     <div id="deep-panel-header">
-      <span style="font-size:18px;">🔬</span>
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE — AI-AL</div>
         <div id="deep-match-label" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
@@ -9284,10 +9283,10 @@ if (scrollTop && scrollMain) {
       <span id="dp-confidence-badge" class="dp-conf-badge"></span>
       <!-- Mode toggle -->
       <div id="deep-mode-bar" style="display:none;gap:4px;align-items:center;margin-right:8px;">
-        <button id="dp-btn-terminal" class="dp-mode-btn active" onclick="switchDeepMode('terminal')">📟 Terminal</button>
-        <button id="dp-btn-render"   class="dp-mode-btn"        onclick="switchDeepMode('render')">✦ Rendu</button>
-        <button id="dp-btn-refresh"  class="dp-mode-btn"        onclick="refreshDeepAnalysis()" title="Forcer une nouvelle analyse (bypass cache)">🔄 Nouvelle analyse</button>
-        <button id="dp-btn-pro"                                 onclick="toggleProMode()" title="Mode Parieur Pro — données brutes">⚗️ Pro</button>
+        <button id="dp-btn-terminal" class="dp-mode-btn active" onclick="switchDeepMode('terminal')">Terminal</button>
+        <button id="dp-btn-render"   class="dp-mode-btn"        onclick="switchDeepMode('render')">Rendu</button>
+        <button id="dp-btn-refresh"  class="dp-mode-btn"        onclick="refreshDeepAnalysis()" title="Forcer une nouvelle analyse (bypass cache)">Nouvelle analyse</button>
+        <button id="dp-btn-pro"                                 onclick="toggleProMode()" title="Mode Parieur Pro — données brutes">Pro</button>
       </div>
       <button onclick="closeDeepAnalysis()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
     </div>
@@ -9295,7 +9294,7 @@ if (scrollTop && scrollMain) {
       <!-- I4 — Divergences marché (injecté par JS via meta event) -->
       <div id="dp-divergence-block" class="dp-divergence-block" style="display:none;"></div>
       <!-- I5 — Mode Pro panel (injecté par JS via meta event) -->
-      <div id="dp-pro-panel"><div class="dp-pro-title">⚗️ Mode Parieur Pro — données brutes</div><div id="dp-pro-content"></div></div>
+      <div id="dp-pro-panel"><div class="dp-pro-title">Mode Parieur Pro — données brutes</div><div id="dp-pro-content"></div></div>
       <!-- Terminal streaming view -->
       <pre id="deep-terminal" style="display:none;font:13px/1.65 var(--font-mono);color:#a8e6a3;background:#050709;border:1px solid rgba(0,200,83,0.2);border-radius:10px;padding:16px 18px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto;margin:0;"></pre>
       <!-- Structured render view -->
@@ -9303,7 +9302,7 @@ if (scrollTop && scrollMain) {
     </div>
     <!-- I3 — Kelly footer widget -->
     <div id="deep-panel-footer">
-      <span class="dp-kelly-hint">💰 Bankroll :</span>
+      <span class="dp-kelly-hint">Bankroll :</span>
       <input id="dp-bankroll-input" type="number" min="0" step="10" placeholder="1000" oninput="updateKellyAmounts()">
       <span class="dp-kelly-hint">€ → mises Kelly calculées automatiquement</span>
     </div>
@@ -9375,7 +9374,7 @@ function openDeepAnalysis(matchId, e, force) {
   fetch('/api/v1/quick-scout/' + encodeURIComponent(matchId))
     .then(r => r.json())
     .then(scout => {
-      let line = '> ⚡ Scout :';
+      let line = '> Scout :';
       if (scout.topSignal) line += '  Signal → ' + scout.topSignal;
       if (scout.edge)      line += '  |  Edge → ' + scout.edge;
       line += '  |  Fiabilité : ' + scout.confidence + '/100 [' + scout.dataQuality + ']';
@@ -9393,7 +9392,7 @@ function openDeepAnalysis(matchId, e, force) {
       const meta = JSON.parse(ev.data);
       // I1 — confidence badge
       const badge = document.getElementById('dp-confidence-badge');
-      badge.textContent = '🎯 ' + meta.confidence + '/100';
+      badge.textContent = meta.confidence + '/100';
       badge.className = 'dp-conf-badge ' + (meta.confidence >= 71 ? 'good' : meta.confidence >= 41 ? 'mid' : 'low');
       badge.style.display = 'inline-flex';
       term.textContent += '> Fiabilité données : ' + meta.confidence + '/100 (' + meta.dataQuality + ')\n\n';
@@ -9402,13 +9401,13 @@ function openDeepAnalysis(matchId, e, force) {
         const divBlock = document.getElementById('dp-divergence-block');
         divBlock.innerHTML = meta.divergences.map(d =>
           `<div class="dp-div-row">
-            <span class="dp-div-badge ${d.gap > 0 ? 'up' : 'down'}">⚠️ DIVERGENCE ${d.gap > 0 ? '+' : ''}${d.gap}%</span>
+            <span class="dp-div-badge ${d.gap > 0 ? 'up' : 'down'}">DIVERGENCE ${d.gap > 0 ? '+' : ''}${d.gap}%</span>
             <span style="color:var(--text2)">${dpEsc(d.label)}</span>
             <span style="color:var(--text3)">Poisson ${d.poisson}% vs marché ${d.implied}%</span>
           </div>`
         ).join('');
         divBlock.style.display = 'flex';
-        term.textContent += '> ⚠️ ' + meta.divergences.length + ' divergence(s) marché détectée(s)\n\n';
+        term.textContent += '> ' + meta.divergences.length + ' divergence(s) marché détectée(s)\n\n';
       }
       // I5 — Pro panel data
       if (meta.lambda || meta.ev1x2) {
@@ -9435,7 +9434,7 @@ function openDeepAnalysis(matchId, e, force) {
     const tsEl2 = document.getElementById('dp-timestamp');
     tsEl2.textContent = 'Analysé à ' + _deepTimestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     tsEl2.style.display = 'block';
-    term.textContent += '\n\n> ✅ Analyse complète.' + (providerName ? ' [via ' + providerName + ']' : '');
+    term.textContent += '\n\n> Analyse complète.' + (providerName ? ' [via ' + providerName + ']' : '');
     const bar = document.getElementById('deep-mode-bar');
     if (providerName) bar.dataset.provider = providerName;
     bar.style.display = 'flex';
@@ -9445,13 +9444,13 @@ function openDeepAnalysis(matchId, e, force) {
     _deepEvt.close(); _deepEvt = null;
     let msg = 'Connexion interrompue';
     try { msg = JSON.parse(ev.data).message; } catch {}
-    term.textContent += '\n\n> ⚠️ ERREUR : ' + msg;
+    term.textContent += '\n\n> ERREUR : ' + msg;
     document.getElementById('deep-mode-bar').style.display = 'flex';
   });
 
   _deepEvt.onerror = () => {
     if (_deepEvt?.readyState === EventSource.CLOSED) return;
-    term.textContent += '\n\n> ⚠️ Connexion SSE perdue.';
+    term.textContent += '\n\n> Connexion SSE perdue.';
     document.getElementById('deep-mode-bar').style.display = 'flex';
   };
 }
@@ -9545,7 +9544,7 @@ function renderDeepAnalysis(text) {
       const code = seg.replace(/^```[^\n]*\n?/, '').replace(/\n?```$/, '').trim();
       html += `<div class="dp-code-block">
         <div class="dp-code-label">Code</div>
-        <pre class="dp-code-pre">${dpEsc(code)}<button class="dp-code-copy" onclick="dpCopy(this)">📋 Copier</button></pre>
+        <pre class="dp-code-pre">${dpEsc(code)}<button class="dp-code-copy" onclick="dpCopy(this)">Copier</button></pre>
       </div>`;
       return;
     }
@@ -9615,10 +9614,9 @@ function renderDeepAnalysis(text) {
           const m = domM || extM;
           const team = m[1].trim();
           const score = parseInt(m[2]);
-          const icon = domM ? '🏠' : '✈️';
           const ctx  = domM ? 'Domicile' : 'Extérieur';
           html += `<div class="dp-score-card2">
-            <div class="dsc-name">${icon} ${dpEsc(team)} <span style="color:var(--text3);font-weight:400">(${ctx})</span></div>
+            <div class="dsc-name">${dpEsc(team)} <span style="color:var(--text3);font-weight:400">(${ctx})</span></div>
             <div class="dsc-val">${score}<span class="dsc-denom">/100</span></div>
             <div class="dsc-bar"><div class="dsc-fill" style="width:${score}%"></div></div>
           </div>`;
@@ -9653,7 +9651,7 @@ function renderDeepAnalysis(text) {
           continue;
         }
         const stripped = line.replace(/^-\s*/, '');
-        const isBetLine = /^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(stripped) || /^\*\*.+?\*\*\s*:/.test(stripped);
+        const isBetLine = /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u.test(stripped) || /^\*\*.+?\*\*\s*:/.test(stripped);
         if (isBetLine) {
           flushPara();
           const colonIdx = stripped.indexOf(':');
@@ -9709,8 +9707,8 @@ function dpCopy(btn) {
   const clone = pre.cloneNode(true);
   clone.querySelectorAll('button').forEach(b => b.remove());
   navigator.clipboard.writeText(clone.textContent.trim()).then(() => {
-    btn.textContent = '✅ Copié !';
-    setTimeout(() => { btn.textContent = '📋 Copier'; }, 2200);
+    btn.textContent = 'Copié !';
+    setTimeout(() => { btn.textContent = 'Copier'; }, 2200);
   });
 }
 
