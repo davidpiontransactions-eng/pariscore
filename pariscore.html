@@ -9430,13 +9430,8 @@ function renderDeepAnalysis(text) {
           </div>`;
         }
 
-        // Open proba block right after section 4 header
+        // Section 4 = MES 5 PARIS
         if (num === 4) {
-          html += '<div class="dp-proba-block">';
-          probaBlockOpen = true;
-        }
-        // Open bet list right after section 5 header
-        if (num === 5) {
           html += '<div class="dp-bet-list">';
           betListOpen = true;
         }
@@ -9478,32 +9473,24 @@ function renderDeepAnalysis(text) {
         }
       }
 
-      // ── Probability rows (section 4): "1N2 :", "Buts :", "Corners :" ────
+      // ── Bet lines (section 4): emoji prefix, optional leading "- " ──────
       if (currentSection === 4) {
-        const probaM = line.match(/^(1N2|Buts|Corners)\s*:\s*(.*)/i);
-        if (probaM) {
-          html += `<div class="dp-proba-row">
-            <span class="dp-proba-key">${dpEsc(probaM[1])}</span>
-            <span class="dp-proba-val">${dpBold(dpEsc(probaM[2]))}</span>
-          </div>`;
+        const stripped = line.replace(/^-\s*/, '');
+        if (/^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(stripped)) {
+          flushPara();
+          const colonIdx = stripped.indexOf(':');
+          if (colonIdx > 0) {
+            const label   = stripped.slice(0, colonIdx).replace(/\*\*/g, '').trim();
+            const content = stripped.slice(colonIdx + 1).trim();
+            html += `<div class="dp-bet-card">
+              <div class="dp-bet-label">${dpEsc(label)}</div>
+              <div class="dp-bet-body">${dpBold(dpEsc(content))}</div>
+            </div>`;
+          } else {
+            html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(stripped))}</div></div>`;
+          }
           continue;
         }
-      }
-
-      // ── Top 5 bet lines (section 5): emoji prefix ─────────────────────
-      if (currentSection === 5 && /^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(line)) {
-        const colonIdx = line.indexOf(':');
-        if (colonIdx > 0) {
-          const label   = line.slice(0, colonIdx).trim();
-          const content = line.slice(colonIdx + 1).trim();
-          html += `<div class="dp-bet-card">
-            <div class="dp-bet-label">${dpEsc(label)}</div>
-            <div class="dp-bet-body">${dpBold(dpEsc(content))}</div>
-          </div>`;
-        } else {
-          html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(line))}</div></div>`;
-        }
-        continue;
       }
 
       // ── Default: accumulate as paragraph text ─────────────────────────
