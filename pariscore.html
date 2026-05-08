@@ -503,6 +503,38 @@
   /* ── PariScore Insights Modal ──────────────────────────────────────────── */
   .ins-btn { font: 700 9px/1 var(--font-mono); padding: 5px 7px; border-radius: 5px; border: 1px solid rgba(0,230,118,0.35); color: var(--green); background: rgba(0,230,118,0.08); letter-spacing: .5px; transition: background .15s, border-color .15s, transform .15s; }
   .ins-btn:hover { background: rgba(0,230,118,0.18); border-color: var(--green); transform: scale(1.05); }
+
+  /* ── Deep Analysis Pro Modal ───────────────────────────────────────────── */
+  .ai-gen-btn { font: 700 9px/1 var(--font-mono); padding: 5px 7px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.45); color: #ce93d8; background: rgba(171,71,188,0.1); letter-spacing: .5px; transition: background .15s, border-color .15s, transform .15s; cursor: pointer; }
+  .ai-gen-btn:hover { background: rgba(171,71,188,0.22); border-color: #ab47bc; transform: scale(1.05); }
+  #deep-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.82); display: flex; align-items: center; justify-content: center; z-index: 1020; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  #deep-modal.open { opacity: 1; pointer-events: all; }
+  #deep-panel { background: #0e1116; border: 1px solid rgba(171,71,188,0.35); border-radius: 16px; position: relative; width: 94%; max-width: 780px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(171,71,188,0.15); }
+  #deep-panel-header { padding: 18px 24px 14px; border-bottom: 1px solid rgba(171,71,188,0.2); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  #deep-panel-inner { overflow-y: auto; padding: 20px 24px 24px; flex: 1; }
+  #deep-panel-inner h1 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 14px; }
+  #deep-panel-inner h2 { font-size: 13px; font-weight: 700; color: #ce93d8; margin: 18px 0 8px; border-bottom: 1px solid rgba(171,71,188,0.2); padding-bottom: 5px; }
+  #deep-panel-inner h3 { font-size: 11px; font-weight: 700; color: var(--text2); margin: 12px 0 5px; text-transform: uppercase; letter-spacing: .5px; }
+  #deep-panel-inner p { font-size: 13px; line-height: 1.65; color: var(--text2); margin: 5px 0 10px; }
+  #deep-panel-inner ul { margin: 5px 0 10px 16px; }
+  #deep-panel-inner li { font-size: 13px; line-height: 1.65; color: var(--text2); margin-bottom: 5px; }
+  #deep-panel-inner strong { color: var(--text); }
+  #deep-panel-inner code { background: rgba(171,71,188,0.12); color: #ce93d8; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+  #deep-panel-inner pre { background: #080b0f; border: 1px solid rgba(171,71,188,0.25); border-radius: 8px; padding: 14px 16px; overflow-x: auto; position: relative; margin: 8px 0 14px; }
+  #deep-panel-inner pre code { background: none; color: #e0e0e0; font-size: 12px; line-height: 1.6; padding: 0; }
+  .dp-copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
+  .dp-copy-btn:hover { background: rgba(171,71,188,0.35); }
+  .dp-powerscore { display: flex; gap: 16px; margin: 10px 0 14px; }
+  .dp-score-card { flex: 1; background: rgba(171,71,188,0.07); border: 1px solid rgba(171,71,188,0.2); border-radius: 10px; padding: 12px 14px; }
+  .dp-score-card .team-name { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .dp-score-card .score-val { font: 700 26px/1 var(--font-mono); color: #ce93d8; }
+  .dp-score-card .score-bar { height: 4px; border-radius: 2px; background: rgba(171,71,188,0.15); margin-top: 8px; overflow: hidden; }
+  .dp-score-card .score-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #7b1fa2, #ce93d8); transition: width .8s ease; }
+  #deep-loader { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 48px 0; }
+  .dp-spinner { width: 36px; height: 36px; border: 3px solid rgba(171,71,188,0.2); border-top-color: #ab47bc; border-radius: 50%; animation: dp-spin 0.9s linear infinite; }
+  @keyframes dp-spin { to { transform: rotate(360deg); } }
+  .dp-loader-text { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
+  .dp-loader-tip { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 4px; }
   #insights-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; z-index: 1010; opacity: 0; pointer-events: none; transition: opacity .2s; }
   #insights-modal.open { opacity: 1; pointer-events: all; }
   #insights-panel { background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px; position: relative; width: 94%; max-width: 740px; max-height: 88vh; display: flex; flex-direction: column; }
@@ -4504,6 +4536,7 @@ function renderMatches(matches) {
         <div style="display:flex;gap:5px;align-items:center;">
           <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
           <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
+          <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris · Script Telegram">⚡ IA</button>
           ${m.live_score ? `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live">🔴</button>` : ''}
           <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
         </div>
@@ -9161,6 +9194,188 @@ if (scrollTop && scrollMain) {
   const obs = new MutationObserver(syncScrollWidth);
   obs.observe(scrollMain, { childList: true, subtree: true });
 }
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     DEEP ANALYSIS PRO MODAL
+═══════════════════════════════════════════════════════════ -->
+<div id="deep-modal" onclick="if(event.target===this)closeDeepAnalysis()">
+  <div id="deep-panel">
+    <div id="deep-panel-header">
+      <span style="font-size:18px;">🔬</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE</div>
+        <div id="deep-match-label" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+      </div>
+      <button onclick="closeDeepAnalysis()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
+    </div>
+    <div id="deep-panel-inner">
+      <div id="deep-loader">
+        <div class="dp-spinner"></div>
+        <div class="dp-loader-text">Analyse en cours par Gemini 2.0 Flash…<br>
+          <span class="dp-loader-tip">Power Score · Tactique · Top 5 Paris · Script Telegram</span>
+        </div>
+      </div>
+      <div id="deep-content" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Deep Analysis Pro ────────────────────────────────────────────────────────
+async function openDeepAnalysis(matchId, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+
+  const allMatches = allMatches || [];
+  const match = allMatches.find(m => m.id === matchId);
+  const label = match ? `${match.home_team} vs ${match.away_team}` : matchId;
+
+  document.getElementById('deep-match-label').textContent = label;
+  document.getElementById('deep-loader').style.display = 'flex';
+  document.getElementById('deep-content').style.display = 'none';
+  document.getElementById('deep-content').innerHTML = '';
+
+  // Body lock
+  document.body.style.overflow = 'hidden';
+  document.getElementById('deep-modal').classList.add('open');
+
+  try {
+    const res = await fetch(`/api/v1/deep-analysis/${encodeURIComponent(matchId)}`);
+    const data = await res.json();
+    if (!res.ok || !data.text) throw new Error(data.error || 'Erreur Gemini');
+    renderDeepAnalysis(data.text);
+  } catch(err) {
+    document.getElementById('deep-loader').style.display = 'none';
+    document.getElementById('deep-content').style.display = 'block';
+    document.getElementById('deep-content').innerHTML = `<div style="color:#ff5252;padding:20px;text-align:center;">⚠️ ${err.message}</div>`;
+  }
+}
+
+function closeDeepAnalysis() {
+  document.getElementById('deep-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderDeepAnalysis(text) {
+  document.getElementById('deep-loader').style.display = 'none';
+
+  // Extract Power Scores
+  const scoreRe = /\(Dom(?:icile)?\)\s*:\s*(\d+)\/100[\s\S]*?\(Ext(?:érieur)?\)\s*:\s*(\d+)\/100/i;
+  const scoreMatch = text.match(scoreRe);
+  let powerScoreHTML = '';
+  if (scoreMatch) {
+    const s1 = parseInt(scoreMatch[1]);
+    const s2 = parseInt(scoreMatch[2]);
+    const allMatches = allMatches || [];
+    const matchId = document.getElementById('deep-match-label').textContent;
+    const mObj = allMatches.find(m => `${m.home_team} vs ${m.away_team}` === matchId) || {};
+    powerScoreHTML = `
+      <div class="dp-powerscore">
+        <div class="dp-score-card">
+          <div class="team-name">🏠 ${mObj.home_team || 'Domicile'}</div>
+          <div class="score-val">${s1}<span style="font-size:14px;color:var(--text3)">/100</span></div>
+          <div class="score-bar"><div class="score-bar-fill" style="width:${s1}%"></div></div>
+        </div>
+        <div class="dp-score-card">
+          <div class="team-name">✈️ ${mObj.away_team || 'Extérieur'}</div>
+          <div class="score-val">${s2}<span style="font-size:14px;color:var(--text3)">/100</span></div>
+          <div class="score-bar"><div class="score-bar-fill" style="width:${s2}%"></div></div>
+        </div>
+      </div>`;
+  }
+
+  // Markdown → HTML (lightweight parser)
+  let html = text
+    // h1
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // h2
+    .replace(/^## (.+)$/gm, '<h2>$2</h2>'.replace('$2','$1'))
+    // h3
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    // bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // numbered list items — wrap later
+    .replace(/^(\d+)\.\s+(.+)$/gm, '<li><strong>$1.</strong> $2</li>')
+    // bullet items
+    .replace(/^[-•¤]\s+(.+)$/gm, '<li>$1</li>')
+    // EN-TÊTE (line 1 header)
+    .replace(/^(EN-TÊTE DU MATCH\s*:?\s*)(.+)$/im, '<h1>⚽ $2</h1>')
+    // sections with emoji prefix kept as-is, just wrap in h2
+    .replace(/^(📊|🔬|🔢|🏆|📲)\s*(.+)$/gm, '<h2>$1 $2</h2>')
+    // paragraphs — double newlines
+    .replace(/\n{2,}/g, '</p><p>')
+    // inline newlines
+    .replace(/\n/g, '<br>');
+
+  // Wrap in <p>
+  html = '<p>' + html + '</p>';
+
+  // Fix lists
+  html = html.replace(/(<li>.*?<\/li>)(\s*<br>\s*)*(<li>)/g, '$1$3');
+  html = html.replace(/(<li>[\s\S]*?<\/li>)+/g, m => `<ul>${m}</ul>`);
+
+  // Code blocks (telegram script)
+  text.replace(/```([\s\S]*?)```/g, (_, code) => {
+    const safe = code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html = html.replace(code.replace(/</g,'&lt;').replace(/>/g,'&gt;'), ''); // remove inline
+    return '';
+  });
+
+  // Re-do code blocks properly from original text
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  let finalHTML = '';
+  parts.forEach(part => {
+    if (part.startsWith('```')) {
+      const code = part.replace(/^```[^\n]*\n?/, '').replace(/```$/, '');
+      const safe = code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      finalHTML += `<pre><code>${safe}</code><button class="dp-copy-btn" onclick="dpCopy(this)">📋 Copier</button></pre>`;
+    } else {
+      // Apply markdown to non-code parts
+      let h = part
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^[-•¤]\s+(.+)$/gm, '<li>$1</li>')
+        .replace(/^(\d+)\.\s+(.+)$/gm, '<li>$2</li>')
+        .replace(/\n{2,}/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+      h = '<p>' + h + '</p>';
+      h = h.replace(/<p>(<li>[\s\S]*?<\/li>(<br>)*)+<\/p>/g, m => `<ul>${m.replace(/<\/?p>/g,'')}</ul>`);
+      finalHTML += h;
+    }
+  });
+
+  const content = document.getElementById('deep-content');
+  content.innerHTML = powerScoreHTML + finalHTML;
+  content.style.display = 'block';
+
+  // Animate score bars
+  setTimeout(() => {
+    content.querySelectorAll('.score-bar-fill').forEach(bar => {
+      const w = bar.style.width; bar.style.width = '0';
+      setTimeout(() => { bar.style.width = w; }, 50);
+    });
+  }, 50);
+}
+
+function dpCopy(btn) {
+  const code = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000);
+  });
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('deep-modal').classList.contains('open')) closeDeepAnalysis();
+});
 </script>
 </body>
 </html>

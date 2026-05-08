@@ -8431,6 +8431,126 @@ function handleAPI(req, res, pathname, query) {
     return;
   }
 
+  // GET /api/v1/deep-analysis/:id  — Analyse Pro Pariscore (Power Score + Top 5 paris + Telegram)
+  if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
+    if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+    const matchId = pathname.split('/api/v1/deep-analysis/')[1];
+    const match = db.matches.find(m => m.id === matchId);
+    if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+
+    const cacheKey = `deep_pro_${matchId}`;
+    const cached = getCachedAIAnalysis(cacheKey);
+    if (cached?.text) {
+      console.log(`  [DeepPro] HIT cache — ${match.home_team} vs ${match.away_team}`);
+      return jsonResponse(res, 200, { text: cached.text, _from_cache: true });
+    }
+
+    const p = match.poisson || {};
+    const s = match.stats || {};
+    const xg = match.expectedGoals || {};
+    const odds = match.odds || {};
+    const bk = match.bookmakers || {};
+    const be = match.best_edge || {};
+    const hs = s.home || {};
+    const as_ = s.away || {};
+    const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
+
+    const dataBlock = `
+[DONNÉES DU MATCH FOURNIES PAR PARISCORE]
+Match : ${match.home_team} vs ${match.away_team}
+Compétition : ${match.league || match.sport}
+Date/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', {timeZone:'Europe/Paris'}) : '—'}
+
+[COTES BOOKMAKERS]
+${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}
+Meilleur bookmaker 1 : ${bk.home ?? '—'} | N : ${bk.draw ?? '—'} | 2 : ${bk.away ?? '—'}
+Meilleure valeur calculée (Edge) : ${be.label ?? '—'} cote ${be.odds ?? '—'} chez ${be.bk ?? '—'} (edge ${be.edge ?? '—'}%)
+
+[STATISTIQUES ${match.home_team} — CONTEXTE DOMICILE]
+PPG dom : ${hs.ppg ?? '—'} | Victoires : ${hs.wins ?? '—'}% | Nuls : ${hs.draws ?? '—'}% | Défaites : ${hs.losses ?? '—'}%
+Buts marqués dom : ${hs.avgScored ?? '—'}/match | Buts encaissés dom : ${hs.avgConceded ?? '—'}/match
+Forme récente (5 derniers) : ${match.home_form ?? '—'}
+λ xG Poisson domicile : ${xg.home ?? '—'}
+
+[STATISTIQUES ${match.away_team} — CONTEXTE EXTÉRIEUR]
+PPG ext : ${as_.ppg ?? '—'} | Victoires : ${as_.wins ?? '—'}% | Nuls : ${as_.draws ?? '—'}% | Défaites : ${as_.losses ?? '—'}%
+Buts marqués ext : ${as_.avgScored ?? '—'}/match | Buts encaissés ext : ${as_.avgConceded ?? '—'}/match
+Forme récente (5 derniers) : ${match.away_form ?? '—'}
+λ xG Poisson extérieur : ${xg.away ?? '—'}
+
+[PROBABILITÉS POISSON PARISCORE]
+1X2 : ${match.home_team} ${p.homeWin ?? '—'}% / Nul ${p.draw ?? '—'}% / ${match.away_team} ${p.awayWin ?? '—'}%
+Over 1.5 : ${p.over15 ?? '—'}% | Over 2.5 : ${p.over25 ?? '—'}% | Over 3.5 : ${p.over35 ?? '—'}%
+BTTS (les deux marquent) : ${p.btts ?? '—'}% | Under 1.5 : ${p.under15 ?? '—'}%
+Scores les plus probables : ${topScores || '—'}
+`;
+
+    const systemPrompt = `Agis comme l'expert en data science et l'analyste de presse sportive principal de la plateforme Pariscore. Ton rôle est de fournir une analyse prédictive ultra-précise et agréable à lire pour un match de football donné, destinée à une communauté de parieurs exigeants.
+
+[MÉTHODOLOGIE DE CALCUL DU POWER SCORE (SUR 100)]
+Tu dois calculer un Power Score pour chaque équipe en isolant strictement le contexte (Performance à Domicile pour l'équipe A / Performance à l'Extérieur pour l'équipe B) selon ces 5 piliers :
+1. Métriques Avancées (30%) : Différentiel xG/xGA et volume de corners.
+2. Tactique & Effectifs (20%) : Systèmes, absences et mismatches.
+3. Dynamique (20%) : Forme des 5 derniers matchs et difficulté du calendrier.
+4. Presse & Consensus Web (15%) : Synthèse des sites majeurs (L'Équipe, Marca, Kicker, Sofascore, BetMines, OddAlerts).
+5. Psychologie & H2H (15%) : Historique et enjeux (titre, maintien).
+
+[FORMAT DE SORTIE EXIGÉ — TEXTE MARKDOWN RICHE, PAS DE JSON]
+Rédige ton analyse de manière fluide, professionnelle et structurée en utilisant des émojis.
+
+1. EN-TÊTE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])
+2. 📊 POWER SCORE PARISCORE :
+   - [Équipe A] (Dom) : X/100
+   - [Équipe B] (Ext) : Y/100
+3. 🔬 ANALYSE DÉTAILLÉE :
+   - Le Duel Tactique : [Explication claire des systèmes et des joueurs clés/absents].
+   - La Synthèse Web & Médias : [Que dit la presse ? Que disent les algos de prédiction ?].
+   - L'Alerte Corners : [Explication mathématique et tactique sur la physionomie des corners attendue].
+4. 🔢 PROBABILITÉS MATHÉMATIQUES :
+   - 1N2 : 1 (X%) / N (X%) / 2 (X%)
+   - Buts : +1.5 buts (X%) / BTTS (X%)
+   - Corners : +7.5 (X%) / +8.5 (X%)
+5. 🏆 LE TOP 5 DES PARIS :
+   - 🛡️ Le Safe : [Pari] (Proba : X%) - [Justification courte]
+   - 📈 Le Bankroll Builder : [Pari] (Proba : X%) - [Justification courte]
+   - 💎 Le Value Bet : [Pari] - [Justification détaillée sur l'erreur de cote du bookmaker]
+   - 🚩 Le Coup Tactique (Corners/Buteur) : [Pari] - [Justification]
+   - ⚡ Le Coup Risqué : [Pari grosse cote] - [Justification]
+6. 📲 SCRIPT TELEGRAM (dans un bloc de code markdown \`\`\` pour copier facilement) :
+Rédige un message Telegram dynamique, enthousiaste, utilisant le symbole '¤' comme puces, reprenant le résumé de l'analyse, la stat "cadeau" (souvent les corners) et proposant le meilleur combo. Appel à l'action final (ex: "Mettez un 🔥 si vous validez !").
+
+[DIRECTIVES CRITIQUES]
+- Base-toi sur les données fournies ci-dessus par Pariscore.
+- Utilise un ton d'expert, sûr de lui, qui explique la logique mathématique derrière chaque choix.
+- Le Power Score doit refléter les stats réelles fournies (xG, forme, PPG).
+
+${dataBlock}`;
+
+    (async () => {
+      try {
+        console.log(`  [DeepPro] Appel Gemini — ${match.home_team} vs ${match.away_team}`);
+        const gemRes = await httpsPost(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            safetySettings: GEMINI_SAFETY_SETTINGS,
+            generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
+          }
+        );
+        if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
+        const text = gemRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!text) return jsonResponse(res, 500, { error: 'Réponse Gemini vide' });
+        saveAIAnalysisToCache(cacheKey, { text });
+        console.log(`  [DeepPro] OK — ${text.length} chars`);
+        return jsonResponse(res, 200, { text });
+      } catch(e) {
+        console.error('  [DeepPro] Erreur:', e.message);
+        return jsonResponse(res, 500, { error: e.message });
+      }
+    })();
+    return;
+  }
+
   // POST /api/v1/gemini  (proxy Gemini avec cache 24h par match)
   if (pathname === '/api/v1/gemini' && req.method === 'POST') {
     if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
