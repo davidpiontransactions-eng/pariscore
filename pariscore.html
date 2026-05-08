@@ -36,8 +36,9 @@
     --font-head: 'Barlow Condensed', sans-serif;
     --font-body: 'Source Sans 3', sans-serif;
     --font-mono: 'DM Mono', monospace;
-    --radius: 8px;
-    --radius-lg: 14px;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
   }
   /* ── Nuit Profonde ── */
   body.dark-theme {
@@ -1934,8 +1935,13 @@
     display: flex; gap: 14px; text-decoration: none; color: inherit;
     transition: border-color .2s, transform .15s; }
   .partner-card:hover { border-color: rgba(0,230,118,0.3); transform: translateY(-2px); }
-  .partner-logo { width: 44px; height: 44px; border-radius: 10px; background: var(--bg4);
+  .partner-logo { width: 48px; height: 48px; border-radius: var(--radius); background: var(--bg4);
     display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .partner-logo--text {
+    font-family: var(--font-head); font-size: 13px; font-weight: 800;
+    letter-spacing: 0.04em; color: var(--accent);
+    background: var(--accent-bg); border: 1px solid var(--accent);
+  }
   .partner-info h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
   .partner-info p { font-size: 12px; color: var(--text2); line-height: 1.5; }
 
@@ -2061,9 +2067,9 @@
   </div>
   <div class="nav-links">
     <a href="#" class="active" onclick="showPage('accueil',this);return false;" data-page="accueil">Accueil</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">🔥 Hot Picks</a>
+    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">Hot Picks</a>
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Matchs</a>
-    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets">🏆 Sure Bets</a>
+    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets">Sure Bets</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
     <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions">Prédictions IA</a>
     <a href="#" onclick="showPage('historique',this);return false;" data-page="historique">Historique</a>
@@ -2127,7 +2133,7 @@
 <div id="page-accueil" data-page="accueil">
 
 <!-- HERO -->
-<section style="background: radial-gradient(ellipse 80% 40% at 60% 50%, rgba(0,230,118,0.04) 0%, transparent 60%);">
+<section style="background: radial-gradient(ellipse 80% 40% at 60% 50%, var(--accent-bg) 0%, transparent 60%);">
   <div class="hero">
     <div>
       <div class="hero-eyebrow"><div class="live-dot"></div> Données en temps réel</div>
@@ -2204,7 +2210,7 @@
   <!-- TOP MATCHES WIDGET -->
   <div class="top-matches-section">
     <div class="top-matches-header">
-      <h2>🔥 Top Matchs à Jouer</h2>
+      <h2>Top Matchs à Jouer</h2>
       <div class="top-matches-tabs">
         <button class="tm-tab active" onclick="switchTopMatchesTab('today',this)">Aujourd'hui</button>
         <button class="tm-tab" onclick="switchTopMatchesTab('week',this)">Cette semaine</button>
@@ -2245,7 +2251,7 @@
 <section class="partner-access-section fade-up">
   <div class="partner-access-inner">
     <div class="pa-header">
-      <div class="pa-badge">🎁 OFFRE PARTENAIRE</div>
+      <div class="pa-badge">OFFRE PARTENAIRE</div>
       <h2>Accédez à PariScore Premium <span>gratuitement</span></h2>
       <p>Inscrivez-vous chez l'un de nos bookmakers partenaires et débloquez un accès Premium gratuit. Le bookmaker finance votre abonnement.</p>
     </div>
@@ -2255,7 +2261,7 @@
       <div class="pa-card pa-skeleton"></div>
       <div class="pa-card pa-skeleton"></div>
     </div>
-    <div class="pa-note">⚠️ L'inscription seule ne suffit pas : il faut valider son compte et suivre les étapes du bookmaker. Jouez responsablement.</div>
+    <div class="pa-note">Note : L'inscription seule ne suffit pas — il faut valider son compte et suivre les étapes du bookmaker. Jouez responsablement.</div>
   </div>
 </section>
 
@@ -2268,28 +2274,28 @@
     </div>
     <div class="partners-grid">
       <a href="https://www.bureau-des-tipsters.com/" target="_blank" rel="noopener" class="partner-card">
-        <div class="partner-logo">🍀</div>
+        <div class="partner-logo partner-logo--text">BT</div>
         <div class="partner-info">
           <h3>Bureau des Tipsters</h3>
           <p>Communauté 30K+ membres. Pari responsable, discipline et gestion de bankroll.</p>
         </div>
       </a>
       <a href="https://mediapronos.com/" target="_blank" rel="noopener" class="partner-card">
-        <div class="partner-logo">📊</div>
+        <div class="partner-logo partner-logo--text">MP</div>
         <div class="partner-info">
           <h3>MediaPronos</h3>
           <p>Référence depuis 2012. Analyses pointues et résultats transparents.</p>
         </div>
       </a>
       <a href="https://www.team-soccerbet.com/" target="_blank" rel="noopener" class="partner-card">
-        <div class="partner-logo">📚</div>
+        <div class="partner-logo partner-logo--text">TSB</div>
         <div class="partner-info">
           <h3>Team Soccer Bet</h3>
           <p>Formation paris sportifs football. 10+ ans d'expérience, 9,700+ abonnés YouTube.</p>
         </div>
       </a>
       <a href="https://x.com/Papa_rieur" target="_blank" rel="noopener" class="partner-card">
-        <div class="partner-logo">🌋</div>
+        <div class="partner-logo partner-logo--text">PR</div>
         <div class="partner-info">
           <h3>Papa_rieur</h3>
           <p>Pronostics et bons plans bookmakers. Ton accessible et communautaire.</p>
