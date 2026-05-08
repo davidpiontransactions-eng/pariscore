@@ -566,6 +566,20 @@
   .dp-mode-btn { font: 600 10px/1 var(--font-mono); padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.3); color: var(--text3); background: transparent; cursor: pointer; transition: all .15s; letter-spacing: .5px; }
   .dp-mode-btn:hover, .dp-mode-btn.active { background: rgba(171,71,188,0.18); border-color: #ab47bc; color: #ce93d8; }
   #deep-terminal { scrollbar-width: thin; scrollbar-color: rgba(0,200,83,0.3) transparent; }
+  /* I1 — Confidence badge */
+  .dp-conf-badge { display:none; font:700 10px/1 var(--font-mono); padding:4px 9px; border-radius:5px; letter-spacing:.5px; white-space:nowrap; }
+  .dp-conf-badge.good { background:rgba(0,230,118,0.13); border:1px solid rgba(0,230,118,0.4); color:#00e676; }
+  .dp-conf-badge.mid  { background:rgba(255,167,38,0.13); border:1px solid rgba(255,167,38,0.4); color:#ffa726; }
+  .dp-conf-badge.low  { background:rgba(239,68,68,0.13);  border:1px solid rgba(239,68,68,0.4);  color:#ff4d4d; }
+  /* U6 — Timestamp */
+  #dp-timestamp { font:10px/1 var(--font-mono); color:var(--text3); margin-top:3px; display:none; }
+  /* I3 — Kelly footer widget */
+  #deep-panel-footer { padding:10px 24px; border-top:1px solid rgba(171,71,188,0.15); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  #dp-bankroll-input { background:#080b0f; border:1px solid rgba(171,71,188,0.3); border-radius:6px; color:var(--text); font:13px var(--font-mono); padding:5px 10px; width:90px; outline:none; }
+  #dp-bankroll-input:focus { border-color:#ab47bc; }
+  .dp-kelly-hint { font:11px var(--font-mono); color:var(--text3); }
+  .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#ce93d8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:3px 8px; margin:5px 0 2px; }
+  .dp-kelly-eur { color:#00e676; font-weight:700; }
   #insights-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; z-index: 1010; opacity: 0; pointer-events: none; transition: opacity .2s; }
   #insights-modal.open { opacity: 1; pointer-events: all; }
   #insights-panel { background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px; position: relative; width: 94%; max-width: 740px; max-height: 88vh; display: flex; flex-direction: column; }
@@ -9237,7 +9251,10 @@ if (scrollTop && scrollMain) {
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:#ce93d8;font-family:var(--font-mono);letter-spacing:.5px;">ANALYSE PRO PARISCORE — AI-AL</div>
         <div id="deep-match-label" style="font-size:11px;color:var(--text3);margin-top:2px;"></div>
+        <div id="dp-timestamp"></div>
       </div>
+      <!-- Confidence badge (I1) -->
+      <span id="dp-confidence-badge" class="dp-conf-badge"></span>
       <!-- Mode toggle -->
       <div id="deep-mode-bar" style="display:none;gap:4px;align-items:center;margin-right:8px;">
         <button id="dp-btn-terminal" class="dp-mode-btn active" onclick="switchDeepMode('terminal')">📟 Terminal</button>
@@ -9252,6 +9269,12 @@ if (scrollTop && scrollMain) {
       <!-- Structured render view -->
       <div id="deep-content" style="display:none;"></div>
     </div>
+    <!-- I3 — Kelly footer widget -->
+    <div id="deep-panel-footer">
+      <span class="dp-kelly-hint">💰 Bankroll :</span>
+      <input id="dp-bankroll-input" type="number" min="0" step="10" placeholder="1000" oninput="updateKellyAmounts()">
+      <span class="dp-kelly-hint">€ → mises Kelly calculées automatiquement</span>
+    </div>
   </div>
 </div>
 
@@ -9260,6 +9283,7 @@ if (scrollTop && scrollMain) {
 let _deepEvt = null;
 let _deepText = '';
 let _deepMatchId = null;
+let _deepTimestamp = null;
 
 function refreshDeepAnalysis() {
   const matchId = _deepMatchId;
@@ -9299,14 +9323,43 @@ function openDeepAnalysis(matchId, e, force) {
   document.getElementById('deep-mode-bar').style.display = 'none';
   document.getElementById('deep-content').style.display = 'none';
   document.getElementById('deep-content').innerHTML = '';
+  // Reset header UI
+  const confBadge = document.getElementById('dp-confidence-badge');
+  confBadge.style.display = 'none'; confBadge.className = 'dp-conf-badge';
+  const tsEl = document.getElementById('dp-timestamp');
+  tsEl.style.display = 'none'; tsEl.textContent = '';
 
   const term = document.getElementById('deep-terminal');
   term.style.display = 'block';
   term.textContent = '> AI-AL — Terminal d\'analyse Pariscore\n> Connexion au moteur IA…\n> Injection des données du match : ' + label + '\n\n';
 
+  // I2 — Quick Scout pré-analyse (<100ms)
+  fetch('/api/v1/quick-scout/' + encodeURIComponent(matchId))
+    .then(r => r.json())
+    .then(scout => {
+      let line = '> ⚡ Scout :';
+      if (scout.topSignal) line += '  Signal → ' + scout.topSignal;
+      if (scout.edge)      line += '  |  Edge → ' + scout.edge;
+      line += '  |  Fiabilité : ' + scout.confidence + '/100 [' + scout.dataQuality + ']';
+      term.textContent += line + '\n\n';
+    })
+    .catch(() => {});
+
   let headerDone = false;
   const streamUrl = '/api/v1/deep-analysis-stream/' + encodeURIComponent(matchId) + (force ? '?force=1' : '');
   _deepEvt = new EventSource(streamUrl);
+
+  // I1 — Confidence badge from meta event
+  _deepEvt.addEventListener('meta', ev => {
+    try {
+      const { confidence, dataQuality } = JSON.parse(ev.data);
+      const badge = document.getElementById('dp-confidence-badge');
+      badge.textContent = '🎯 ' + confidence + '/100';
+      badge.className = 'dp-conf-badge ' + (confidence >= 71 ? 'good' : confidence >= 41 ? 'mid' : 'low');
+      badge.style.display = 'inline-flex';
+      term.textContent += '> Fiabilité données : ' + confidence + '/100 (' + dataQuality + ')\n\n';
+    } catch {}
+  });
 
   _deepEvt.addEventListener('chunk', ev => {
     const { text } = JSON.parse(ev.data);
@@ -9320,7 +9373,12 @@ function openDeepAnalysis(matchId, e, force) {
     _deepEvt.close(); _deepEvt = null;
     let providerName = '';
     try { const d = JSON.parse(ev.data); providerName = d.provider || ''; } catch {}
-    term.textContent += '\n\n> ✅ Analyse complète.' + (providerName ? ` [via ${providerName}]` : '');
+    // U6 — timestamp
+    _deepTimestamp = new Date();
+    const tsEl2 = document.getElementById('dp-timestamp');
+    tsEl2.textContent = 'Analysé à ' + _deepTimestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    tsEl2.style.display = 'block';
+    term.textContent += '\n\n> ✅ Analyse complète.' + (providerName ? ' [via ' + providerName + ']' : '');
     const bar = document.getElementById('deep-mode-bar');
     if (providerName) bar.dataset.provider = providerName;
     bar.style.display = 'flex';
@@ -9362,6 +9420,16 @@ function closeDeepAnalysis() {
   if (_deepEvt) { _deepEvt.close(); _deepEvt = null; }
   document.getElementById('deep-modal').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+function updateKellyAmounts() {
+  const bankroll = parseFloat(document.getElementById('dp-bankroll-input').value) || 0;
+  document.querySelectorAll('.dp-kelly-tag[data-kelly]').forEach(el => {
+    const pct = parseFloat(el.dataset.kelly);
+    const euros = bankroll > 0 ? (pct / 100 * bankroll).toFixed(0) : null;
+    const base = '📐 Mise Kelly : ' + pct.toFixed(1) + '%';
+    el.innerHTML = euros ? `${base} <span class="dp-kelly-eur">→ €${euros}</span>` : base;
+  });
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -9475,6 +9543,16 @@ function renderDeepAnalysis(text) {
 
       // ── Bet lines (section 4): emoji prefix, optional leading "- " ──────
       if (currentSection === 4) {
+        // Kelly line immediately after a bet
+        const kellyM = line.match(/^Mise Kelly\s*:\s*(.+)/i);
+        if (kellyM) {
+          flushPara();
+          const val = kellyM[1].trim();
+          const pct = parseFloat(val);
+          const dataAttr = !isNaN(pct) && pct > 0 ? ` data-kelly="${pct}"` : '';
+          html += `<div class="dp-kelly-tag"${dataAttr}>📐 Mise Kelly : ${dpEsc(val)}</div>`;
+          continue;
+        }
         const stripped = line.replace(/^-\s*/, '');
         if (/^[\u{1F000}-\u{1FFFF}⚡🎯🔥💡✅]/u.test(stripped)) {
           flushPara();
@@ -9504,6 +9582,9 @@ function renderDeepAnalysis(text) {
   const content = document.getElementById('deep-content');
   content.innerHTML = html;
   content.style.display = 'block';
+
+  // Apply Kelly amounts if bankroll already set
+  updateKellyAmounts();
 
   // Animate Power Score bars
   requestAnimationFrame(() => {

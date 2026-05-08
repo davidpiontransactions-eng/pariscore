@@ -8542,6 +8542,34 @@ function handleAPI(req, res, pathname, query) {
     return;
   }
 
+  // GET /api/v1/quick-scout/:id  — Pré-analyse instantanée sans IA (<100ms)
+  if (pathname.startsWith('/api/v1/quick-scout/') && req.method === 'GET') {
+    const scoutId = decodeURIComponent(pathname.split('/api/v1/quick-scout/')[1]);
+    const scoutMatch = db.matches.find(m => m.id === scoutId);
+    if (!scoutMatch) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+    const sp = scoutMatch.poisson || {};
+    const sbe = scoutMatch.best_edge || {};
+    const ss = scoutMatch.stats || {};
+    const sxg = scoutMatch.expectedGoals || {};
+    const sodds = scoutMatch.odds || {};
+    const signals = [
+      { label: 'Over 2.5', value: sp.over25 },
+      { label: 'BTTS', value: sp.btts },
+      { label: 'Over 1.5', value: sp.over15 },
+      { label: `${scoutMatch.home_team} victoire`, value: sp.homeWin },
+      { label: `${scoutMatch.away_team} victoire`, value: sp.awayWin },
+      { label: 'Under 1.5', value: sp.under15 },
+    ].filter(m => m.value != null).sort((a, b) => Math.abs(b.value - 50) - Math.abs(a.value - 50));
+    const topSignal = signals[0] || null;
+    const scoutConf = (ss.isReal ? 40 : 0) + (sodds.home ? 30 : 0) + (scoutMatch.home_form ? 20 : 0) + (sxg.home ? 10 : 0);
+    return jsonResponse(res, 200, {
+      edge: sbe.label ? `${sbe.label} @ ${sbe.odds} (edge ${sbe.edge > 0 ? '+' : ''}${sbe.edge}%)` : null,
+      topSignal: topSignal ? `${topSignal.label} : ${topSignal.value}%` : null,
+      confidence: scoutConf,
+      dataQuality: ss.isReal ? 'RÉELLES' : 'ESTIMÉES',
+    });
+  }
+
   // GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
   if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
     if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
@@ -8563,6 +8591,9 @@ function handleAPI(req, res, pathname, query) {
     const cached = !forceRefresh && getCachedAIAnalysis(cacheKey);
     if (cached?.text) {
       console.log(`  [DeepStream] HIT cache — ${match.home_team} vs ${match.away_team}`);
+      const cacheStats = match.stats || {};
+      const cacheMeta = (cacheStats.isReal ? 40 : 0) + (match.odds?.home ? 30 : 0) + (match.home_form ? 20 : 0) + ((match.expectedGoals?.home) ? 10 : 0);
+      try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence: cacheMeta, dataQuality: cacheStats.isReal ? 'RÉELLES' : 'ESTIMÉES' })}\n\n`); } catch {}
       // Simulate streaming from cache in small chunks
       const words = cached.text.split(' ');
       let idx = 0;
@@ -8590,7 +8621,8 @@ function handleAPI(req, res, pathname, query) {
     const as_ = s.away || {};
     const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
 
-    const dataBlock = `\n[DONNÉES DU MATCH FOURNIES PAR PARISCORE]\nMatch : ${match.home_team} vs ${match.away_team}\nCompétition : ${match.league || match.sport}\nDate/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', {timeZone:'Europe/Paris'}) : '—'}\n\n[COTES BOOKMAKERS]\n${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}\nMeilleur bookmaker 1 : ${bk.home ?? '—'} | N : ${bk.draw ?? '—'} | 2 : ${bk.away ?? '—'}\nMeilleure valeur calculée (Edge) : ${be.label ?? '—'} cote ${be.odds ?? '—'} chez ${be.bk ?? '—'} (edge ${be.edge ?? '—'}%)\n\n[STATISTIQUES ${match.home_team} — CONTEXTE DOMICILE]\nPPG dom : ${hs.ppg ?? '—'} | Victoires : ${hs.wins ?? '—'}% | Nuls : ${hs.draws ?? '—'}% | Défaites : ${hs.losses ?? '—'}%\nButs marqués dom : ${hs.avgScored ?? '—'}/match | Buts encaissés dom : ${hs.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.home_form ?? '—'}\nλ xG Poisson domicile : ${xg.home ?? '—'}\n\n[STATISTIQUES ${match.away_team} — CONTEXTE EXTÉRIEUR]\nPPG ext : ${as_.ppg ?? '—'} | Victoires : ${as_.wins ?? '—'}% | Nuls : ${as_.draws ?? '—'}% | Défaites : ${as_.losses ?? '—'}%\nButs marqués ext : ${as_.avgScored ?? '—'}/match | Buts encaissés ext : ${as_.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.away_form ?? '—'}\nλ xG Poisson extérieur : ${xg.away ?? '—'}\n\n[PROBABILITÉS POISSON PARISCORE]\n1X2 : ${match.home_team} ${p.homeWin ?? '—'}% / Nul ${p.draw ?? '—'}% / ${match.away_team} ${p.awayWin ?? '—'}%\nOver 1.5 : ${p.over15 ?? '—'}% | Over 2.5 : ${p.over25 ?? '—'}% | Over 3.5 : ${p.over35 ?? '—'}%\nBTTS (les deux marquent) : ${p.btts ?? '—'}% | Under 1.5 : ${p.under15 ?? '—'}%\nScores les plus probables : ${topScores || '—'}\n`;
+    const rankCtx = (rank, team) => rank ? `${rank}e au classement` : 'rang inconnu';
+    const dataBlock = `\n[DONNÉES DU MATCH FOURNIES PAR PARISCORE]\nMatch : ${match.home_team} vs ${match.away_team}\nCompétition : ${match.league || match.sport}\nDate/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', {timeZone:'Europe/Paris'}) : '—'}\n\n[QUALITÉ DES DONNÉES]\n${s.isReal ? 'DONNÉES RÉELLES — statistiques officielles standings API. Confiance élevée.' : 'DONNÉES ESTIMÉES — modèle simulation, pas de standings disponibles. Nuance ta confiance dans l\'analyse.'}\n\n[CLASSEMENT & ENJEUX]\n${match.home_team} : ${rankCtx(match.home_rank)} en ${match.league || match.sport}\n${match.away_team} : ${rankCtx(match.away_rank)} en ${match.league || match.sport}\n\n[COTES BOOKMAKERS]\n${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}\nMeilleur bookmaker 1 : ${bk.home ?? '—'} | N : ${bk.draw ?? '—'} | 2 : ${bk.away ?? '—'}\nMeilleure valeur calculée (Edge) : ${be.label ?? '—'} cote ${be.odds ?? '—'} chez ${be.bk ?? '—'} (edge ${be.edge ?? '—'}%)\n\n[STATISTIQUES ${match.home_team} — CONTEXTE DOMICILE]\nPPG dom : ${hs.ppg ?? '—'} | Victoires : ${hs.wins ?? '—'}% | Nuls : ${hs.draws ?? '—'}% | Défaites : ${hs.losses ?? '—'}%\nButs marqués dom : ${hs.avgScored ?? '—'}/match | Buts encaissés dom : ${hs.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.home_form ?? '—'}\nλ xG Poisson domicile : ${xg.home ?? '—'}\n\n[STATISTIQUES ${match.away_team} — CONTEXTE EXTÉRIEUR]\nPPG ext : ${as_.ppg ?? '—'} | Victoires : ${as_.wins ?? '—'}% | Nuls : ${as_.draws ?? '—'}% | Défaites : ${as_.losses ?? '—'}%\nButs marqués ext : ${as_.avgScored ?? '—'}/match | Buts encaissés ext : ${as_.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.away_form ?? '—'}\nλ xG Poisson extérieur : ${xg.away ?? '—'}\n\n[PROBABILITÉS POISSON PARISCORE]\n1X2 : ${match.home_team} ${p.homeWin ?? '—'}% / Nul ${p.draw ?? '—'}% / ${match.away_team} ${p.awayWin ?? '—'}%\nOver 1.5 : ${p.over15 ?? '—'}% | Over 2.5 : ${p.over25 ?? '—'}% | Over 3.5 : ${p.over35 ?? '—'}%\nBTTS (les deux marquent) : ${p.btts ?? '—'}% | Under 1.5 : ${p.under15 ?? '—'}%\nScores les plus probables : ${topScores || '—'}\n`;
 
     const systemPrompt = `Tu es Maxime, éditorialiste football senior chez PariScore. Ancien rédacteur L'Équipe reconverti analyste parieur. Tu as vu des milliers de matchs, tu as gagné et perdu des mises, et tu SAIS reconnaître un bon pari d'un piège. Tu ne lis pas les stats comme un robot — tu les ressens, tu les contextualises, tu leur donnes une âme.
 
@@ -8616,12 +8648,20 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    Rédige 3 à 5 paragraphes narratifs. Mêle contexte (enjeux du match, position au classement, forme récente), psychologie (pression, confiance, fatigue), tactique (styles de jeu, duels clés, absences notables), et atmosphère (stade, derby, match de gala ou match piège). Parle des équipes comme d'acteurs avec des personnalités. Cite la forme en disant ce que ça SIGNIFIE ("4 victoires de suite à domicile — cette équipe ne perd plus à la maison, et ça se voit dans son jeu"). Donne ton ressenti honnête sur la physionomie attendue.
 
 4. 🎯 MES 5 PARIS :
-   Pour chaque pari, écris 2-3 phrases de conviction personnelle. Structure :
+   Pour chaque pari, écris 2-3 phrases de conviction personnelle. Puis, sur la ligne IMMÉDIATEMENT suivante, indique la mise Kelly recommandée au format EXACT :
+   Mise Kelly : X.X%
+   (Formule : f = max(0, (prob × cote − 1) / (cote − 1)), prob en décimal, arrondi 1 décimale. Si f ≤ 0 : "Mise Kelly : pas de valeur mathématique".)
+   Structure :
    - 🛡️ **La valeur sûre** : [Pari] — [Pourquoi c'est évident pour toi]
+   Mise Kelly : X.X%
    - 📈 **Le builder de bankroll** : [Pari] — [Pourquoi ça construit sur le long terme]
+   Mise Kelly : X.X%
    - 💎 **Le value bet caché** : [Pari] — [Pourquoi les bookmakers se trompent et comment tu l'as repéré avec les données Pariscore]
+   Mise Kelly : X.X%
    - 🚩 **Le coup de tactique** (corners, buteur, mi-temps) : [Pari] — [Pourquoi ta lecture du match te mène là]
+   Mise Kelly : X.X%
    - ⚡ **Le coup de poker** : [Pari grosse cote] — [Honnêteté totale sur le risque, mais voilà pourquoi la tentation est réelle]
+   Mise Kelly : X.X%
 
 5. 💬 MON VERDICT :
    Un paragraphe final tranché. "Ce match, je le joue / je le snobe." Une phrase mémorable qui résume tout — le genre de sentence qu'on envoie à un ami sur WhatsApp avant le match.
@@ -8633,6 +8673,10 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
 Tu utilises les données Pariscore comme un journaliste utilise ses sources : pour vérifier, pas pour réciter. Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il lit L'Équipe un matin de match.
 
 ${dataBlock}`;
+
+    // I1 — Confidence Score SSE meta event
+    const confidence = (s.isReal ? 40 : 0) + (odds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (xg.home ? 10 : 0);
+    try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence, dataQuality: s.isReal ? 'RÉELLES' : 'ESTIMÉES' })}\n\n`); } catch {}
 
     console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
     streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
@@ -8668,11 +8712,19 @@ ${dataBlock}`;
     const as_ = s.away || {};
     const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
 
+    const nsRankCtx = (rank) => rank ? `${rank}e au classement` : 'rang inconnu';
     const dataBlock = `
 [DONNÉES DU MATCH FOURNIES PAR PARISCORE]
 Match : ${match.home_team} vs ${match.away_team}
 Compétition : ${match.league || match.sport}
 Date/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', {timeZone:'Europe/Paris'}) : '—'}
+
+[QUALITÉ DES DONNÉES]
+${s.isReal ? 'DONNÉES RÉELLES — statistiques officielles standings API. Confiance élevée.' : 'DONNÉES ESTIMÉES — modèle simulation, pas de standings disponibles. Nuance ta confiance dans l\'analyse.'}
+
+[CLASSEMENT & ENJEUX]
+${match.home_team} : ${nsRankCtx(match.home_rank)} en ${match.league || match.sport}
+${match.away_team} : ${nsRankCtx(match.away_rank)} en ${match.league || match.sport}
 
 [COTES BOOKMAKERS]
 ${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}
@@ -8722,12 +8774,20 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    Rédige 3 à 5 paragraphes narratifs. Mêle contexte (enjeux du match, position au classement, forme récente), psychologie (pression, confiance, fatigue), tactique (styles de jeu, duels clés, absences notables), et atmosphère (stade, derby, match de gala ou match piège). Parle des équipes comme d'acteurs avec des personnalités. Cite la forme en disant ce que ça SIGNIFIE ("4 victoires de suite à domicile — cette équipe ne perd plus à la maison, et ça se voit dans son jeu"). Donne ton ressenti honnête sur la physionomie attendue.
 
 4. 🎯 MES 5 PARIS :
-   Pour chaque pari, écris 2-3 phrases de conviction personnelle. Structure :
+   Pour chaque pari, écris 2-3 phrases de conviction personnelle. Puis, sur la ligne IMMÉDIATEMENT suivante, indique la mise Kelly recommandée au format EXACT :
+   Mise Kelly : X.X%
+   (Formule : f = max(0, (prob × cote − 1) / (cote − 1)), prob en décimal, arrondi 1 décimale. Si f ≤ 0 : "Mise Kelly : pas de valeur mathématique".)
+   Structure :
    - 🛡️ **La valeur sûre** : [Pari] — [Pourquoi c'est évident pour toi]
+   Mise Kelly : X.X%
    - 📈 **Le builder de bankroll** : [Pari] — [Pourquoi ça construit sur le long terme]
+   Mise Kelly : X.X%
    - 💎 **Le value bet caché** : [Pari] — [Pourquoi les bookmakers se trompent et comment tu l'as repéré avec les données Pariscore]
+   Mise Kelly : X.X%
    - 🚩 **Le coup de tactique** (corners, buteur, mi-temps) : [Pari] — [Pourquoi ta lecture du match te mène là]
+   Mise Kelly : X.X%
    - ⚡ **Le coup de poker** : [Pari grosse cote] — [Honnêteté totale sur le risque, mais voilà pourquoi la tentation est réelle]
+   Mise Kelly : X.X%
 
 5. 💬 MON VERDICT :
    Un paragraphe final tranché. "Ce match, je le joue / je le snobe." Une phrase mémorable qui résume tout — le genre de sentence qu'on envoie à un ami sur WhatsApp avant le match.
