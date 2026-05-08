@@ -56,6 +56,9 @@ loadEnv();
 const ODDS_API_KEY            = process.env.ODDS_API_KEY;
 const API_FOOTBALL_KEY        = process.env.API_FOOTBALL_KEY;
 const GEMINI_API_KEY          = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY            = process.env.GROQ_API_KEY;       // free: api.groq.com
+const XAI_API_KEY             = process.env.XAI_API_KEY;        // free tier: api.x.ai (Grok)
+const OPENROUTER_API_KEY      = process.env.OPENROUTER_API_KEY; // free models: openrouter.ai
 const PARLAY_API_HOST         = process.env.PARLAY_API_HOST;
 const PARLAY_API_PATH         = process.env.PARLAY_API_PATH || '/parlay';
 const PARLAY_API_KEY          = process.env.PARLAY_API_KEY;
@@ -63,8 +66,18 @@ const GAMEFORECAST_API_HOST   = process.env.GAMEFORECAST_API_HOST;
 const GAMEFORECAST_API_PATH   = process.env.GAMEFORECAST_API_PATH || '/forecast';
 const GAMEFORECAST_API_KEY    = process.env.GAMEFORECAST_API_KEY;
 
+// ── AI Provider chain (Deep Analysis) — premier disponible utilisé ──────────
+// Ordre : Gemini → Groq → Grok (xAI) → OpenRouter
+const AI_DEEP_PROVIDERS = [];
+if (GEMINI_API_KEY)       AI_DEEP_PROVIDERS.push({ name: 'Gemini',      type: 'gemini' });
+if (GROQ_API_KEY)         AI_DEEP_PROVIDERS.push({ name: 'Groq/Llama',  type: 'openai', host: 'api.groq.com',      path: '/openai/v1/chat/completions',  key: GROQ_API_KEY,       model: 'llama-3.3-70b-versatile' });
+if (XAI_API_KEY)          AI_DEEP_PROVIDERS.push({ name: 'Grok (xAI)',  type: 'openai', host: 'api.x.ai',          path: '/v1/chat/completions',          key: XAI_API_KEY,        model: 'grok-3-mini' });
+if (OPENROUTER_API_KEY)   AI_DEEP_PROVIDERS.push({ name: 'OpenRouter',  type: 'openai', host: 'openrouter.ai',     path: '/api/v1/chat/completions',      key: OPENROUTER_API_KEY, model: 'meta-llama/llama-3.3-70b-instruct:free' });
+
 if (!ODDS_API_KEY)           console.warn('  ⚠ ODDS_API_KEY manquante dans .env');
 if (!API_FOOTBALL_KEY)       console.warn('  ⚠ API_FOOTBALL_KEY manquante dans .env');
+if (AI_DEEP_PROVIDERS.length === 0) console.warn('  ⚠ Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)');
+else console.log('  ✓ Providers IA:', AI_DEEP_PROVIDERS.map(p => p.name).join(' → '));
 if (PARLAY_API_HOST && !PARLAY_API_KEY) console.warn('  ⚠ PARLAY_API_KEY manquante pour Parlay-API dans .env');
 if (GAMEFORECAST_API_HOST && !GAMEFORECAST_API_KEY) console.warn('  ⚠ GAMEFORECAST_API_KEY manquante pour GameForecast dans .env');
 
@@ -972,6 +985,112 @@ function formatIsoTimestamp(date) {
 
 function formatDateOnly(date) {
   return date.toISOString().slice(0, 10);
+}
+
+// ── Multi-provider streaming for Deep Analysis ───────────────────────────────
+// Streams text chunks via SSE events: chunk | done | error
+// Tries providers in order, falls back on 429/401/5xx
+function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
+  if (providerIdx >= AI_DEEP_PROVIDERS.length) {
+    try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Tous les providers IA sont indisponibles ou non configurés' })}\n\n`); res.end(); } catch {}
+    return;
+  }
+  const prov = AI_DEEP_PROVIDERS[providerIdx];
+  console.log(`  [AI-AL] Tentative ${prov.name} (idx ${providerIdx})`);
+
+  const tryNext = (reason) => {
+    console.log(`  [AI-AL] ${prov.name} → fallback (${reason})`);
+    streamDeepWithProviders(promptText, res, onDone, providerIdx + 1);
+  };
+
+  if (prov.type === 'gemini') {
+    // ── Gemini SSE ──────────────────────────────────────────────────────────
+    const payload = JSON.stringify({
+      contents: [{ parts: [{ text: promptText }] }],
+      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+      safetySettings: GEMINI_SAFETY_SETTINGS,
+    });
+    const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
+    const opts = { hostname: gemUrl.hostname, path: gemUrl.pathname + gemUrl.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } };
+    let fullText = '';
+    const req = https.request(opts, gemRes => {
+      if (gemRes.statusCode === 429 || gemRes.statusCode === 401) {
+        gemRes.resume();
+        return tryNext(gemRes.statusCode);
+      }
+      let buf = '';
+      gemRes.on('data', chunk => {
+        buf += chunk.toString();
+        const lines = buf.split('\n'); buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') continue;
+          try {
+            const txt = JSON.parse(raw)?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch {} }
+          } catch {}
+        }
+      });
+      gemRes.on('end', () => {
+        if (!fullText) return tryNext('vide');
+        onDone(fullText, prov.name);
+      });
+      gemRes.on('error', () => tryNext('erreur réseau'));
+    });
+    req.on('error', () => tryNext('erreur req'));
+    req.write(payload); req.end();
+
+  } else {
+    // ── OpenAI-compatible SSE (Groq / Grok / OpenRouter) ────────────────────
+    const payload = JSON.stringify({
+      model: prov.model,
+      messages: [{ role: 'user', content: promptText }],
+      temperature: 0.8,
+      max_tokens: 2048,
+      stream: true,
+    });
+    const opts = {
+      hostname: prov.host,
+      path: prov.path,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${prov.key}`,
+        'Content-Length': Buffer.byteLength(payload),
+        'HTTP-Referer': 'https://pariscore.io',
+        'X-Title': 'PariScore AI-AL',
+      },
+    };
+    let fullText = '';
+    const req = https.request(opts, apiRes => {
+      if (apiRes.statusCode === 429 || apiRes.statusCode === 401 || apiRes.statusCode >= 500) {
+        apiRes.resume();
+        return tryNext(apiRes.statusCode);
+      }
+      let buf = '';
+      apiRes.on('data', chunk => {
+        buf += chunk.toString();
+        const lines = buf.split('\n'); buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') continue;
+          try {
+            const txt = JSON.parse(raw)?.choices?.[0]?.delta?.content || '';
+            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch {} }
+          } catch {}
+        }
+      });
+      apiRes.on('end', () => {
+        if (!fullText) return tryNext('vide');
+        onDone(fullText, prov.name);
+      });
+      apiRes.on('error', () => tryNext('erreur réseau'));
+    });
+    req.on('error', () => tryNext('erreur req'));
+    req.write(payload); req.end();
+  }
 }
 
 function httpsGet(urlStr, headers = {}) {
@@ -8433,7 +8552,7 @@ function handleAPI(req, res, pathname, query) {
 
   // GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
   if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
-    if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+    if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
     const matchId = decodeURIComponent(pathname.split('/api/v1/deep-analysis-stream/')[1]);
     const match = db.matches.find(m => m.id === matchId);
     if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
@@ -8481,57 +8600,13 @@ function handleAPI(req, res, pathname, query) {
 
     const systemPrompt = `Agis comme l'expert en data science et l'analyste de presse sportive principal de la plateforme Pariscore. Ton rôle est de fournir une analyse prédictive ultra-précise et agréable à lire pour un match de football donné, destinée à une communauté de parieurs exigeants.\n\n[MÉTHODOLOGIE DE CALCUL DU POWER SCORE (SUR 100)]\nTu dois calculer un Power Score pour chaque équipe en isolant strictement le contexte (Performance à Domicile pour l'équipe A / Performance à l'Extérieur pour l'équipe B) selon ces 5 piliers :\n1. Métriques Avancées (30%) : Différentiel xG/xGA et volume de corners.\n2. Tactique & Effectifs (20%) : Systèmes, absences et mismatches.\n3. Dynamique (20%) : Forme des 5 derniers matchs et difficulté du calendrier.\n4. Presse & Consensus Web (15%) : Synthèse des sites majeurs (L'Équipe, Marca, Kicker, Sofascore, BetMines, OddAlerts).\n5. Psychologie & H2H (15%) : Historique et enjeux (titre, maintien).\n\n[FORMAT DE SORTIE EXIGÉ — TEXTE MARKDOWN RICHE, PAS DE JSON]\nRédige ton analyse de manière fluide, professionnelle et structurée en utilisant des émojis.\n\n1. EN-TÊTE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])\n2. 📊 POWER SCORE PARISCORE :\n   - [Équipe A] (Dom) : X/100\n   - [Équipe B] (Ext) : Y/100\n3. 🔬 ANALYSE DÉTAILLÉE :\n   - Le Duel Tactique : [Explication claire des systèmes et des joueurs clés/absents].\n   - La Synthèse Web & Médias : [Que dit la presse ? Que disent les algos de prédiction ?].\n   - L'Alerte Corners : [Explication mathématique et tactique sur la physionomie des corners attendue].\n4. 🔢 PROBABILITÉS MATHÉMATIQUES :\n   - 1N2 : 1 (X%) / N (X%) / 2 (X%)\n   - Buts : +1.5 buts (X%) / BTTS (X%)\n   - Corners : +7.5 (X%) / +8.5 (X%)\n5. 🏆 LE TOP 5 DES PARIS :\n   - 🛡️ Le Safe : [Pari] (Proba : X%) - [Justification courte]\n   - 📈 Le Bankroll Builder : [Pari] (Proba : X%) - [Justification courte]\n   - 💎 Le Value Bet : [Pari] - [Justification détaillée sur l'erreur de cote du bookmaker]\n   - 🚩 Le Coup Tactique (Corners/Buteur) : [Pari] - [Justification]\n   - ⚡ Le Coup Risqué : [Pari grosse cote] - [Justification]\n6. 📲 SCRIPT TELEGRAM (dans un bloc de code markdown \`\`\` pour copier facilement) :\nRédige un message Telegram dynamique, enthousiaste, utilisant le symbole '¤' comme puces, reprenant le résumé de l'analyse, la stat "cadeau" (souvent les corners) et proposant le meilleur combo. Appel à l'action final (ex: "Mettez un 🔥 si vous validez !").\n\n[DIRECTIVES CRITIQUES]\n- Base-toi sur les données fournies ci-dessous par Pariscore.\n- Utilise un ton d'expert, sûr de lui, qui explique la logique mathématique derrière chaque choix.\n- Le Power Score doit refléter les stats réelles fournies (xG, forme, PPG).\n\n${dataBlock}`;
 
-    const payload = JSON.stringify({
-      contents: [{ parts: [{ text: systemPrompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
-      safetySettings: GEMINI_SAFETY_SETTINGS,
+    console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
+    streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
+      saveAIAnalysisToCache(cacheKey, { text: fullText });
+      console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
+      try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName })}\n\n`); res.end(); } catch {}
     });
-
-    const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
-    const gemOpts = {
-      hostname: gemUrl.hostname,
-      path: gemUrl.pathname + gemUrl.search,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-    };
-
-    let fullText = '';
-    console.log(`  [DeepStream] Streaming Gemini — ${match.home_team} vs ${match.away_team}`);
-    const gemReq = require('https').request(gemOpts, gemRes => {
-      let buf = '';
-      gemRes.on('data', chunk => {
-        buf += chunk.toString();
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            const json = JSON.parse(raw);
-            const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (text) {
-              fullText += text;
-              try { res.write(`event: chunk\ndata: ${JSON.stringify({ text })}\n\n`); } catch {}
-            }
-          } catch {}
-        }
-      });
-      gemRes.on('end', () => {
-        if (!fullText) {
-          try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Réponse Gemini vide' })}\n\n`); res.end(); } catch {}
-          return;
-        }
-        saveAIAnalysisToCache(cacheKey, { text: fullText });
-        console.log(`  [DeepStream] OK — streamé + cache — ${fullText.length} chars`);
-        try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length })}\n\n`); res.end(); } catch {}
-      });
-      gemRes.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch {} });
-    });
-    gemReq.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch {} });
-    gemReq.write(payload);
-    gemReq.end();
-    req.on('close', () => { try { gemReq.destroy(); } catch {} });
+    req.on('close', () => {});
     return;
   }
 
