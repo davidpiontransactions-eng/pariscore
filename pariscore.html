@@ -2141,6 +2141,679 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════
+     CHARTE L'ÉQUIPE — couche de surcharge globale
+     Phase 1 : Nav  |  Phase 2 : Cards  |  Phase 3 : Tables  |  Phase 4 : Modales
+     ═══════════════════════════════════════════════════════ -->
+<style id="equipe-theme">
+
+  /* ── PHASE 1 : NAV ─────────────────────────────────────── */
+
+  /* Bordure rouge signature sous la nav (light uniquement) */
+  body:not(.dark-theme) nav {
+    border-bottom: 3px solid var(--accent);
+  }
+
+  /* Lien actif : texte rouge + gras 700 */
+  .nav-links a.active {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  /* Underline actif devient invisible (on mise sur la couleur) */
+  .nav-links a.active::after {
+    display: none;
+  }
+
+  /* Hover : accent rouge au lieu du texte par défaut */
+  .nav-links a:hover {
+    color: var(--accent);
+  }
+
+  /* Logo : uppercase extra-bold Barlow Condensed */
+  .logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: var(--text);
+  }
+  body:not(.dark-theme) .logo { color: #111; }
+
+  /* update-bar : fond rouge discret */
+  body:not(.dark-theme) .update-bar {
+    background: var(--accent);
+    color: #fff;
+  }
+  body:not(.dark-theme) .update-bar .live-dot {
+    background: #fff;
+  }
+
+  /* ── PHASE 2 : SECTION HEADERS + CARDS ─────────────────── */
+
+  /* Section-label → style rubrique journal rouge */
+  .section-label {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    border-left: 3px solid var(--accent);
+    padding-left: 8px;
+    margin-bottom: 10px;
+  }
+
+  /* Section-title → Barlow Condensed 900 uppercase compact */
+  .section-title {
+    font-family: var(--font-head);
+    font-size: 42px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.0;
+    margin-bottom: 10px;
+  }
+  body:not(.dark-theme) .section-title { color: #111; }
+
+  /* strat-card hover → rouge à la place du bleu */
+  .strat-card:hover {
+    border-color: rgba(227,0,15,0.25) !important;
+    box-shadow: 0 6px 24px rgba(227,0,15,0.09) !important;
+    transform: translateY(-2px);
+  }
+
+  /* hp-card rang #1 → accent gauche rouge plus marqué */
+  body:not(.dark-theme) .hp-card {
+    border-left-color: var(--accent) !important;
+  }
+
+  /* Barres de score dans les cards : vert/orange gardés */
+  .strat-conf-fill.high { background: var(--green); }
+  .strat-conf-fill.mid  { background: var(--amber); }
+  .strat-conf-fill.low  { background: var(--accent); }
+  .strat-conf-val.low   { color: var(--accent); }
+
+  /* ── PHASE 3 : TABLES ───────────────────────────────────── */
+
+  /* En-têtes → Barlow Condensed uppercase */
+  body:not(.dark-theme) thead th {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+    border-bottom: 2px solid var(--accent) !important;
+    background: var(--bg3);
+  }
+
+  /* Rangées : moins de bordures, plus d'espace vertical */
+  body:not(.dark-theme) #vb-body tr {
+    border-bottom: 1px solid var(--border) !important;
+  }
+  body:not(.dark-theme) #vb-table td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* Hover rangée → accent-bg léger */
+  body:not(.dark-theme) #vb-body tr:hover td {
+    background: var(--accent-bg) !important;
+  }
+
+  /* ── PHASE 4 : MODALES ──────────────────────────────────── */
+
+  /* Barre rouge en tête de modale */
+  body:not(.dark-theme) .modal-box,
+  body:not(.dark-theme) .modal-inner {
+    border-top: 4px solid var(--accent);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
+  /* Titre de modale → uppercase Barlow Condensed */
+  .modal-title {
+    font-family: var(--font-head);
+    font-size: 24px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  body:not(.dark-theme) .modal-title { color: #111; }
+
+  /* Panel deep-analysis + panels latéraux */
+  body:not(.dark-theme) #score-panel,
+  body:not(.dark-theme) #insights-panel,
+  body:not(.dark-theme) #live-detail-panel {
+    border-top: 3px solid var(--accent);
+  }
+
+  /* ── PHASE 5 : STRATÉGIES ───────────────────────────────── */
+
+  /* Pills stratégie : actif = rouge */
+  .strategy-pill.active {
+    background: var(--accent-bg) !important;
+    color: var(--accent) !important;
+    border-color: rgba(227,0,15,0.35) !important;
+  }
+  .strategy-pill:hover:not(.active) {
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+  }
+
+  /* Slider confiance : couleur rouge */
+  #strat-conf-slider { accent-color: var(--accent); }
+  #strat-conf-val { color: var(--accent) !important; }
+
+  /* ── PHASE 5 : TENDANCES ────────────────────────────────── */
+
+  /* Trend-card hover → rouge */
+  .trend-card:hover {
+    border-color: rgba(227,0,15,0.25) !important;
+    box-shadow: 0 4px 16px rgba(227,0,15,0.08) !important;
+  }
+
+  /* Pourcentage tendance : rouge si on veut l'accent */
+  body:not(.dark-theme) .trend-pct { color: var(--accent); }
+
+  /* ── PHASE 5 : ALERTES ──────────────────────────────────── */
+
+  /* Chips marchés actifs : rouge */
+  .al-chip.active {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    background: var(--accent-bg) !important;
+  }
+
+  /* Slider alertes : rouge */
+  .al-slider { accent-color: var(--accent) !important; }
+
+  /* Toggle ON : rouge */
+  .toggle.on {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+  }
+
+  /* Bouton Sauvegarder : rouge */
+  .al-save-btn {
+    background: var(--accent) !important;
+    color: #fff !important;
+  }
+  .al-save-btn:hover { background: var(--accent-dim) !important; }
+  .al-save-msg { color: var(--accent) !important; }
+
+  /* alert-cfg-card : bordure gauche signature */
+  body:not(.dark-theme) .alert-cfg-card {
+    border-left: 3px solid var(--accent);
+  }
+
+  /* ── PHASE 5 : TARIFS ───────────────────────────────────── */
+
+  /* Card featured : rouge au lieu de vert */
+  .price-card.featured {
+    border-color: rgba(227,0,15,0.35) !important;
+    background: linear-gradient(135deg, rgba(227,0,15,0.04) 0%, var(--bg2) 60%) !important;
+  }
+
+  /* Badge "Le plus populaire" : rouge */
+  .price-badge {
+    background: var(--accent) !important;
+    color: #fff !important;
+  }
+
+  /* Bouton CTA principal → rouge */
+  .price-btn-green {
+    background: var(--accent) !important;
+    color: #fff !important;
+  }
+  .price-btn-green:hover { background: var(--accent-dim) !important; }
+
+  /* ── PHASE 5 : FOND SECTIONS — neutraliser les verts ──── */
+
+  /* Radial gradients verts → rouge accent en light mode */
+  body:not(.dark-theme) #tendances,
+  body:not(.dark-theme) #alertes,
+  body:not(.dark-theme) #predictions,
+  body:not(.dark-theme) #historique,
+  body:not(.dark-theme) #strategies {
+    background: radial-gradient(ellipse 60% 30% at 70% 50%, rgba(227,0,15,0.03) 0%, transparent 60%) !important;
+  }
+
+  /* Hist KPI : valeur principale → couleur conservée mais label en rouge */
+  body:not(.dark-theme) .hist-kpi {
+    border-top: 2px solid var(--accent);
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     UNIFICATION GLOBALE — Design System L'Équipe
+     Rafale 1 : CTAs  |  Rafale 2 : Badges  |  Rafale 3 : Cards
+     ══════════════════════════════════════════════════════════ */
+
+  /* ── RAFALE 1 : TOUS LES BOUTONS D'ACTION ────────────────
+     Règle : CTA principal = rouge #E2001A / blanc
+             CTA secondaire = blanc / bordure noire fine        */
+
+  /* Connexion / Auth */
+  .auth-submit {
+    background: var(--accent) !important;
+    color: #fff !important;
+  }
+  .auth-submit:hover { background: var(--accent-dim) !important; opacity: 1 !important; }
+
+  /* Amber CTA (tarifs Matchday, etc.) → rouge */
+  .price-btn-amber {
+    background: var(--accent) !important;
+    color: #fff !important;
+  }
+  .price-btn-amber:hover { background: var(--accent-dim) !important; opacity: 1 !important; }
+
+  /* Bouton ghost principal → blanc/noir L'Équipe */
+  body:not(.dark-theme) .btn-ghost {
+    background: #fff;
+    border: 1.5px solid #1A1A1A;
+    color: #1A1A1A;
+  }
+  body:not(.dark-theme) .btn-ghost:hover {
+    background: #1A1A1A;
+    color: #fff;
+  }
+
+  /* nav-auth-btn (Se connecter) → bordure rouge */
+  .nav-auth-btn {
+    border: 1.5px solid var(--accent) !important;
+    color: var(--accent) !important;
+    background: transparent !important;
+    border-radius: 6px !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    transition: all .15s !important;
+  }
+  .nav-auth-btn:hover {
+    background: var(--accent) !important;
+    color: #fff !important;
+  }
+
+  /* ── RAFALE 2 : BADGES STRATÉGIE — light mode pro ────────
+     Remplace les neons dark-mode (#00e676, #ffa726) par des
+     teintes light-mode lisibles sur fond blanc               */
+
+  body:not(.dark-theme) .stg-badge.btts {
+    background: rgba(26,140,69,0.10) !important;
+    color: var(--green) !important;
+    border-color: rgba(26,140,69,0.25) !important;
+  }
+  body:not(.dark-theme) .stg-badge.over25,
+  body:not(.dark-theme) .stg-badge.over15 {
+    background: rgba(180,83,9,0.09) !important;
+    color: var(--amber) !important;
+    border-color: rgba(180,83,9,0.22) !important;
+  }
+  body:not(.dark-theme) .stg-badge.under25,
+  body:not(.dark-theme) .stg-badge.under35 {
+    background: rgba(21,88,214,0.08) !important;
+    color: var(--blue) !important;
+    border-color: rgba(21,88,214,0.20) !important;
+  }
+  body:not(.dark-theme) .stg-badge.home,
+  body:not(.dark-theme) .stg-badge.hthome {
+    background: rgba(227,0,15,0.08) !important;
+    color: var(--accent) !important;
+    border-color: rgba(227,0,15,0.20) !important;
+  }
+  body:not(.dark-theme) .stg-badge.away {
+    background: rgba(21,88,214,0.08) !important;
+    color: var(--blue) !important;
+    border-color: rgba(21,88,214,0.20) !important;
+  }
+  body:not(.dark-theme) .stg-badge.draw,
+  body:not(.dark-theme) .stg-badge.cs00 {
+    background: var(--bg3) !important;
+    color: var(--text2) !important;
+    border-color: var(--border2) !important;
+  }
+  /* Sure-levels → rouge → amber → neutre */
+  body:not(.dark-theme) .stg-badge.sure-10 {
+    background: linear-gradient(135deg, rgba(227,0,15,0.15), rgba(227,0,15,0.06)) !important;
+    color: var(--accent) !important;
+    border-color: rgba(227,0,15,0.35) !important;
+  }
+  body:not(.dark-theme) .stg-badge.sure-9 {
+    background: rgba(227,0,15,0.08) !important;
+    color: var(--accent) !important;
+    border-color: rgba(227,0,15,0.20) !important;
+  }
+  body:not(.dark-theme) .stg-badge.sure-8 {
+    background: rgba(180,83,9,0.09) !important;
+    color: var(--amber) !important;
+    border-color: rgba(180,83,9,0.22) !important;
+  }
+
+  /* ── RAFALE 3 : CARDS UNIVERSELLES + TOP MATCHS ─────────── */
+
+  /* .ps-card — carte blanche L'Équipe */
+  .ps-card {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.09);
+    border-radius: 4px;
+    padding: 16px;
+    transition: box-shadow .2s, border-color .2s;
+  }
+  .ps-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-color: rgba(0,0,0,0.15);
+  }
+
+  /* .ps-badge-value — badge rouge valeur/edge */
+  .ps-badge-value {
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+
+  /* .ps-btn — bouton primaire rouge L'Équipe */
+  .ps-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: background .15s;
+    letter-spacing: 0.02em;
+  }
+  .ps-btn:hover { background: var(--accent-dim); }
+  /* Variante outline */
+  .ps-btn.outline {
+    background: transparent;
+    border: 1.5px solid #1A1A1A;
+    color: #1A1A1A;
+  }
+  .ps-btn.outline:hover { background: #1A1A1A; color: #fff; }
+
+  /* Top Matchs (tm-card) → L'Équipe */
+  .tm-card:hover {
+    border-color: rgba(227,0,15,0.35) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(227,0,15,0.08);
+  }
+  body:not(.dark-theme) .tm-card {
+    border-radius: 4px !important;
+    border: 1px solid rgba(0,0,0,0.09) !important;
+  }
+
+  /* Confidence % dans tm-card → texte noir fort */
+  body:not(.dark-theme) .tm-conf {
+    font-family: var(--font-head);
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── NETTOYAGE ORANGE RÉSIDUEL ───────────────────────────── */
+
+  /* Range inputs globaux → rouge */
+  input[type="range"] { accent-color: var(--accent); }
+
+  /* Strat-conf-slider confiance → rouge */
+  body:not(.dark-theme) #strat-conf-val { color: var(--accent) !important; }
+
+  /* ── TOUS LES GRIDS → flex colonne pill-cards ─────────────── */
+  #hot-picks-grid,
+  #sure-bets-grid,
+  #strategy-grid,
+  #pred-grid,
+  .trends-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* ── LOT 1 : ÉRADICATION FINALE LEGACY ──────────────────── */
+
+  /* pa-btn (Accéder gratuitement) → rouge plein */
+  .pa-btn { background: var(--accent) !important; color: #fff !important; }
+  .pa-btn:hover { background: var(--accent-dim) !important; }
+
+  /* partner-card hover → rouge (non surchargé avant) */
+  .partner-card:hover {
+    border-color: rgba(226,0,26,0.3) !important;
+    box-shadow: 0 4px 16px rgba(226,0,26,0.07) !important;
+  }
+
+  /* pa-badge (OFFRE PARTENAIRE) → noir sobre */
+  .pa-badge {
+    background: #1A1A1A !important;
+    color: #fff !important;
+    border: none !important;
+  }
+
+  /* tm-grid → colonne pour pill-cards horizontales */
+  body:not(.dark-theme) #top-matches-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* ── .ps-pill-card ─────────────────────────────────────── */
+  .ps-pill-card {
+    background: #fff;
+    border-radius: 24px;
+    border: 1px solid #EAEAEA;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: box-shadow .2s, border-color .2s, transform .15s;
+    width: 100%;
+  }
+  .ps-pill-card:hover {
+    border-color: rgba(226,0,26,0.25);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.07);
+    transform: translateY(-1px);
+  }
+  .ppc-league {
+    font-size: 10px; color: #888; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 4px;
+  }
+  .ppc-teams {
+    font-family: var(--font-head);
+    font-weight: 900; font-size: 15px; color: #1A1A1A;
+    line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ppc-sub { font-size: 11px; color: #888; margin-top: 2px; }
+  .ppc-badge {
+    background: #E2001A; color: #fff;
+    font-weight: 700; font-size: 11px;
+    padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap; letter-spacing: .03em;
+  }
+  .ppc-badge.neutral { background: #F4F4F4; color: #888; }
+  .ppc-odds {
+    font-family: var(--font-head);
+    font-weight: 900; font-size: 22px; color: #1A1A1A;
+    line-height: 1;
+  }
+
+  /* ── TM-CARD — Refonte L'Équipe ─────────────────────────── */
+
+  /* Card : fond blanc, bordure fine, radius 4px */
+  body:not(.dark-theme) .tm-card {
+    background: #fff !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+  }
+  body:not(.dark-theme) .tm-card:hover {
+    border-color: rgba(226,0,26,0.3) !important;
+    box-shadow: 0 4px 16px rgba(226,0,26,0.08) !important;
+    transform: translateY(-1px);
+  }
+
+  /* Équipes : texte noir ExtraBold */
+  body:not(.dark-theme) .tm-teams {
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    color: #1A1A1A !important;
+    font-family: var(--font-head) !important;
+    letter-spacing: 0.01em;
+  }
+
+  /* Badge ligue : fond gris clair, texte gris */
+  body:not(.dark-theme) .tm-league-badge {
+    background: #F4F4F4 !important;
+    color: #666 !important;
+    border: none !important;
+    border-radius: 3px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Pick badge high → rouge plein */
+  body:not(.dark-theme) .tm-pick-badge.high {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-radius: 3px !important;
+  }
+  body:not(.dark-theme) .tm-pick-badge.mid {
+    background: #F4F4F4 !important;
+    color: var(--amber) !important;
+    border-radius: 3px !important;
+  }
+  body:not(.dark-theme) .tm-pick-badge.low {
+    background: #F4F4F4 !important;
+    color: #888 !important;
+    border-radius: 3px !important;
+  }
+
+  /* Conf % : high → rouge gras, mid → noir, low → gris */
+  body:not(.dark-theme) .tm-conf.high {
+    color: var(--accent) !important;
+    font-weight: 900 !important;
+    font-size: 22px !important;
+  }
+  body:not(.dark-theme) .tm-conf.mid {
+    color: #1A1A1A !important;
+    font-weight: 800 !important;
+  }
+  body:not(.dark-theme) .tm-conf.low {
+    color: #888 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Bouton Parier : rouge/blanc — supprime le orange */
+  .tm-bet-btn {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+  }
+  .tm-bet-btn:hover {
+    background: var(--accent-dim) !important;
+  }
+
+  /* Séparateur bet-row : plus discret */
+  body:not(.dark-theme) .tm-bet-row {
+    border-top: 1px solid #F0F0F0 !important;
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+  }
+
+  /* Edge badge inline → vert sémantique conservé */
+  body:not(.dark-theme) .tm-edge-pos { color: var(--green); font-weight: 700; }
+
+  /* ── ÉRADICATION LEGACY VERT/ORANGE ─────────────────────── */
+
+  /* 1. Onglets Aujourd'hui / Cette semaine → rouge actif */
+  .tm-tab.active {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    font-weight: 700 !important;
+  }
+  .tm-tab:hover:not(.active) {
+    border-color: var(--accent) !important;
+    color: var(--text) !important;
+  }
+
+  /* 2. Filtres chips actifs (Tous / +5% ★ / pays / edge…) → noir/blanc L'Équipe */
+  .filter-chip.active {
+    background: #1A1A1A !important;
+    color: #fff !important;
+    border-color: #1A1A1A !important;
+    font-weight: 700 !important;
+  }
+  .filter-chip:hover:not(.active) {
+    border-color: #1A1A1A !important;
+    color: #1A1A1A !important;
+  }
+  /* Chip +5% ★ inline style vert → neutralisé */
+  .filter-chip[data-edge="5"] {
+    border-color: var(--border2) !important;
+    color: var(--text2) !important;
+  }
+  .filter-chip[data-edge="5"].active {
+    background: #1A1A1A !important;
+    color: #fff !important;
+    border-color: #1A1A1A !important;
+  }
+
+  /* 3. Section Premium — "gratuitement" span → rouge */
+  .pa-header h2 span { color: var(--accent) !important; }
+
+  /* 4. pa-card hover → rouge au lieu de vert */
+  .pa-card:hover {
+    border-color: rgba(226,0,26,0.35) !important;
+    box-shadow: 0 6px 20px rgba(226,0,26,0.08) !important;
+  }
+
+  /* 5. Badge rôle Premium dans nav → rouge */
+  .nav-role-badge.premium {
+    background: rgba(226,0,26,0.10) !important;
+    color: var(--accent) !important;
+    border-color: rgba(226,0,26,0.25) !important;
+  }
+
+  /* 6. Inline edge +5% chip text vert résiduel dans HTML */
+  button.filter-chip[style*="var(--green)"] {
+    color: var(--text2) !important;
+    border-color: var(--border2) !important;
+  }
+
+  /* 7. bet-btn dans table principale (bouton 🎰) → rouge */
+  .bet-btn {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 4px !important;
+  }
+  .bet-btn:hover {
+    background: var(--accent-dim) !important;
+    border-color: transparent !important;
+    transform: none !important;
+  }
+
+</style>
 </head>
 <body>
 
@@ -2436,7 +3109,7 @@
       <option value="20">Top 20</option>
       <option value="30">Top 30</option>
     </select>
-    <span style="margin-left:12px;padding:3px 10px;background:rgba(0,230,118,0.1);color:var(--green);border-radius:12px;font-size:11px;font-weight:600;">8+/10 confiance minimum</span>
+    <span style="margin-left:12px;padding:3px 10px;background:#F4F4F4;color:#888;border-radius:12px;font-size:11px;font-weight:600;">8+/10 confiance minimum</span>
   </div>
   <div id="sure-bets-stats" style="margin-bottom:16px;"></div>
   <div class="sure-bets-grid" id="sure-bets-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;"></div>
@@ -2547,7 +3220,7 @@
     <button class="filter-chip active" data-edge="0">Tous</button>
     <button class="filter-chip" data-edge="1">+1%</button>
     <button class="filter-chip" data-edge="3">+3%</button>
-    <button class="filter-chip" data-edge="5" style="border-color:rgba(0,230,118,0.3);color:var(--green);">+5% ★</button>
+    <button class="filter-chip" data-edge="5">+5% ★</button>
     <button class="filter-chip" data-edge="10">+10%</button>
     <span style="font-size:11px;color:var(--text3);margin-left:8px;" id="edge-count"></span>
     <button id="fav-filter-chip" class="filter-chip" onclick="toggleFavFilter()" title="Afficher mes favoris uniquement" style="margin-left:auto;">★ Favoris</button>
@@ -8280,26 +8953,29 @@ function renderTopMatchesGrid(matches) {
   grid.innerHTML = matches.map(m => {
     const pick = m.topPick || {};
     const conf = pick.val || 0;
-    const tier = conf >= 80 ? 'high' : conf >= 60 ? 'mid' : 'low';
-    const icon = conf >= 80 ? '🔥' : conf >= 65 ? '⚡' : '';
     const dt = new Date(m.commence_time);
     const time = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const day  = dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-    const leagueShort = (m.league || '?').split(' ').map(w=>w[0]).join('').slice(0,4).toUpperCase();
+    const day  = dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+    const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0, 4).toUpperCase() || '?';
+    const odds = m.best_edge?.odds != null
+      ? Number(m.best_edge.odds).toFixed(2)
+      : m.odds?.home ? Number(m.odds.home).toFixed(2) : '—';
     const edge = m.best_edge?.edge || 0;
-    const edgeStr = edge > 0 ? `<span style="color:var(--green);font-size:10px;font-family:var(--font-mono);">+${edge.toFixed(1)}% edge</span>` : '';
-    return `<div class="tm-card" onclick="goToMatch('${m.id}')">
-      <div class="tm-card-header">
-        <span class="tm-league-badge">${leagueShort}</span>
-        <span class="tm-time">${day} ${time}</span>
+    const badgeText = conf >= 80
+      ? `${conf}% conf.`
+      : edge > 0 ? `+${edge.toFixed(1)}% edge`
+      : pick.label || '—';
+    const badgeCls = (conf < 60 && edge <= 0) ? 'ppc-badge neutral' : 'ppc-badge';
+    return `<div class="ps-pill-card" onclick="goToMatch('${m.id}')">
+      <div style="flex:1;min-width:0;overflow:hidden;">
+        <div class="ppc-league">${leagueShort} · ${day} ${time}</div>
+        <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
+        <div class="ppc-sub">${pick.label || ''}</div>
       </div>
-      <div class="tm-teams">${m.home_team} <span style="color:var(--text3)">vs</span> ${m.away_team}</div>
-      <div class="tm-footer">
-        <span class="tm-pick-badge ${tier}">${icon} ${pick.label || '—'}</span>
-        <div style="text-align:right;">${edgeStr}<div class="tm-conf ${tier}">${conf}%</div></div>
-      </div>
-      <div class="tm-bet-row">
-        <button class="tm-bet-btn" onclick="event.stopPropagation();openBetLink('${m.id}')" title="Parier">🎰 Parier — Meilleures cotes</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+        <span class="${badgeCls}">${badgeText}</span>
+        <div class="ppc-odds">${odds}</div>
+        <button class="tm-bet-btn" onclick="event.stopPropagation();openBetLink('${m.id}')">PARIER ›</button>
       </div>
     </div>`;
   }).join('');
@@ -8389,43 +9065,60 @@ window.addEventListener('DOMContentLoaded', () => {
 // PREDICTIONS — connecté à /api/v1/predictions
 async function loadPredictions() {
   const grid = document.getElementById('pred-grid');
-  grid.innerHTML = '<div style="color:var(--text3);font-family:var(--font-mono);font-size:13px;padding:20px;">Chargement des prédictions…</div>';
+  grid.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;">Chargement des prédictions…</div>';
   try {
     const res  = await apiFetch('/api/v1/predictions');
     if (!res.ok) throw new Error();
     const data = await res.json();
-    grid.innerHTML = '';
-    (data.predictions || []).forEach(p => {
-      const div = document.createElement('div');
-      div.className = 'pred-card';
-      const dt  = new Date(p.commence_time);
-      const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-      const bestWin = p.poisson.homeWin > p.poisson.awayWin ? p.home_team : p.away_team;
-      const bestPct = Math.max(p.poisson.homeWin, p.poisson.awayWin);
-      const recCls  = bestPct > 55 ? 'green' : p.poisson.over25 > 60 ? 'amber' : 'amber';
-      div.innerHTML = `
-        <div class="pred-league">${p.league}</div>
-        <div class="pred-teams">${p.home_team} vs ${p.away_team}</div>
-        <div class="pred-date">${dateStr}</div>
-        <div class="pred-bars">
-          <div class="pred-bar-row"><div class="pred-bar-label">${p.home_team.split(' ')[0]}</div><div class="pred-bar-track"><div class="pred-bar-fill" style="width:${p.poisson.homeWin}%;background:#00e676;"></div></div><div class="pred-bar-pct">${p.poisson.homeWin}%</div></div>
-          <div class="pred-bar-row"><div class="pred-bar-label">Nul</div><div class="pred-bar-track"><div class="pred-bar-fill" style="width:${p.poisson.draw}%;background:#ffa726;"></div></div><div class="pred-bar-pct">${p.poisson.draw}%</div></div>
-          <div class="pred-bar-row"><div class="pred-bar-label">${p.away_team.split(' ')[0]}</div><div class="pred-bar-track"><div class="pred-bar-fill" style="width:${p.poisson.awayWin}%;background:#ff4d4d;"></div></div><div class="pred-bar-pct">${p.poisson.awayWin}%</div></div>
-          <div class="pred-bar-row"><div class="pred-bar-label">O 2.5</div><div class="pred-bar-track"><div class="pred-bar-fill" style="width:${p.poisson.over25}%;background:#29b6f6;"></div></div><div class="pred-bar-pct">${p.poisson.over25}%</div></div>
-          <div class="pred-bar-row"><div class="pred-bar-label">BTTS</div><div class="pred-bar-track"><div class="pred-bar-fill" style="width:${p.poisson.btts}%;background:#29b6f6;"></div></div><div class="pred-bar-pct">${p.poisson.btts}%</div></div>
+    const preds = data.predictions || [];
+    if (!preds.length) { grid.innerHTML = '<div style="color:#888;padding:20px;font-size:13px;">Aucune prédiction disponible.</div>'; return; }
+    grid.style.display = 'flex';
+    grid.style.flexDirection = 'column';
+    grid.style.gap = '8px';
+    grid.innerHTML = preds.map(p => {
+      const dt = new Date(p.commence_time);
+      const day  = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+      const time = dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const league = (p.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
+      const hw = p.poisson?.homeWin ?? 0;
+      const aw = p.poisson?.awayWin ?? 0;
+      const dr = p.poisson?.draw ?? 0;
+      const o25 = p.poisson?.over25 ?? 0;
+      const btts = p.poisson?.btts ?? 0;
+      const conf = p.confidence ?? 0;
+      const favTeam = hw >= aw ? p.home_team : p.away_team;
+      const favPct  = Math.max(hw, aw);
+      const favColor = favPct >= 60 ? '#E2001A' : favPct >= 45 ? '#1A1A1A' : '#888';
+      const o25Color = o25 >= 60 ? '#E2001A' : o25 >= 45 ? '#1A1A1A' : '#888';
+      const confBadgeCls = conf >= 70 ? 'ppc-badge' : conf >= 50 ? 'ppc-badge' : 'ppc-badge neutral';
+      const confBadgeStyle = conf >= 70 ? '' : conf >= 50 ? 'background:#1A1A1A;' : '';
+      const oddHome = p.odds?.home?.toFixed(2) ?? '—';
+      const oddDraw = p.odds?.draw?.toFixed(2) ?? '—';
+      const oddAway = p.odds?.away?.toFixed(2) ?? '—';
+      const xgStr = (p.expectedGoals?.home != null) ? `xG ${p.expectedGoals.home}–${p.expectedGoals.away}` : '';
+      return `<div class="ps-pill-card">
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <div class="ppc-league">${league} · ${day} ${time}</div>
+          <div class="ppc-teams">${p.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${p.away_team}</div>
+          <div class="ppc-sub">${p.recommendation ? '→ ' + p.recommendation : (xgStr || '')}</div>
         </div>
-        <div class="pred-rec pred-rec-${recCls}">→ ${p.recommendation}</div>
-        <div class="pred-odds-row">
-          <div class="pred-odds-item"><div class="pred-odds-val">${p.odds?.home?.toFixed(2) ?? '—'}</div><div class="pred-odds-lbl">1</div></div>
-          <div class="pred-odds-item"><div class="pred-odds-val">${p.odds?.draw?.toFixed(2) ?? '—'}</div><div class="pred-odds-lbl">N</div></div>
-          <div class="pred-odds-item"><div class="pred-odds-val">${p.odds?.away?.toFixed(2) ?? '—'}</div><div class="pred-odds-lbl">2</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;min-width:110px;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-size:11px;font-weight:700;color:${favColor};">${favTeam.split(' ')[0]} ${favPct}%</span>
+            <span style="font-size:11px;font-weight:700;color:${o25Color};">O2.5 ${o25}%</span>
+          </div>
+          <span class="${confBadgeCls}" style="${confBadgeStyle}">Conf. ${conf}%</span>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div style="text-align:center;"><div class="ppc-odds" style="font-size:16px;">${oddHome}</div><div style="font-size:9px;color:#aaa;margin-top:1px;">1</div></div>
+            <div style="text-align:center;"><div class="ppc-odds" style="font-size:16px;">${oddDraw}</div><div style="font-size:9px;color:#aaa;margin-top:1px;">N</div></div>
+            <div style="text-align:center;"><div class="ppc-odds" style="font-size:16px;">${oddAway}</div><div style="font-size:9px;color:#aaa;margin-top:1px;">2</div></div>
+          </div>
+          ${xgStr && p.recommendation ? `<div style="font-size:10px;color:#aaa;">${xgStr}</div>` : ''}
         </div>
-        <div style="margin-top:8px;font-size:10.5px;font-family:var(--font-mono);color:var(--blue);">xG: ${p.expectedGoals?.home}-${p.expectedGoals?.away} · Confiance: ${p.confidence}%</div>
-      `;
-      grid.appendChild(div);
-    });
+      </div>`;
+    }).join('');
   } catch(e) {
-    grid.innerHTML = '<div style="color:var(--text3);padding:20px;font-size:13px;">⚠ Lancez node server.js pour charger les prédictions.</div>';
+    grid.innerHTML = '<div style="color:#888;padding:20px;font-size:13px;">⚠ Lancez node server.js pour charger les prédictions.</div>';
   }
 }
 
@@ -8612,70 +9305,44 @@ async function loadStrategy(key) {
 
     grid.innerHTML = matches.map(m => {
       const dt = new Date(m.commence_time);
-      const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      const cls = confClass(m.confidence, key);
-      const odd = m.odds != null ? m.odds.toFixed(2) : m.implied_odds != null ? `~${m.implied_odds.toFixed(2)}` : '—';
-      const oddLbl = m.odds != null ? 'Cote' : 'Cote ≈';
+      const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const odd = m.odds != null ? Number(m.odds).toFixed(2) : m.implied_odds != null ? `~${Number(m.implied_odds).toFixed(2)}` : '—';
       const edge = m.best_edge?.edge;
-      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : '—';
-      const edgeCls = edge != null && edge > 0 ? '' : 'neg';
-      // Nouveaux indices v10
+      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
       const vi = m.valueIndex ?? 0;
       const ci = m.confidenceIndex ?? m.confidence;
-      const viCls = vi >= 70 ? 'high' : vi >= 40 ? 'mid' : 'low';
-      const ciCls = ci >= 80 ? 'high' : ci >= 60 ? 'mid' : 'low';
-      const badgeCls = strategyBadgeClass(key);
-      const homeSpk = formSparkline(m.home_form || '');
-      const awaySpk = formSparkline(m.away_form || '');
-      const formRow = (homeSpk || awaySpk) ? `<div class="strat-form-row"><div class="strat-form-team">${homeSpk}<span class="strat-form-name">${m.home_team}</span></div><div class="strat-form-team" style="flex-direction:row-reverse;">${awaySpk}<span class="strat-form-name" style="text-align:right;">${m.away_team}</span></div></div>` : '';
-      const xgRow = m.expectedGoals ? `<div class="strat-xg-row"><span>xG Dom. <strong>${m.expectedGoals.home.toFixed(2)}</strong></span><span>xG Ext. <strong>${m.expectedGoals.away.toFixed(2)}</strong></span></div>` : '';
+      const confColor = ci >= 80 ? '#E2001A' : ci >= 60 ? '#1A1A1A' : '#888';
+      const viColor   = vi >= 70 ? '#E2001A' : vi >= 40 ? '#1A1A1A' : '#888';
       const ui = STRATEGIES_UI.find(s => s.key === key);
-      return `
-        <div class="strat-card" onclick="openInsightsById('${m.id}')" style="cursor:pointer;">
-          <!-- TIPSTER HERO -->
-          <div class="tipster-hero">
-            ${tipsterAvatar(m.tipster || ui?.tipster, badgeCls)}
-            <span class="tipster-hero-name">${m.tipster || ui?.tipster || ''}</span>
-            <span class="stg-badge ${badgeCls}">${ui?.icon || ''} ${ui?.label || key}</span>
-          </div>
-          <div class="strat-time" style="align-self:flex-end;margin-top:-28px;">${dateStr}</div>
-          <div style="font-size:15px;font-weight:600;margin:4px 0;">${m.home_team} <span style="color:var(--text3);font-weight:400;">vs</span> ${m.away_team}</div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">${m.league}</div>
-          ${formRow}
-          <div class="strat-conf-wrap">
-            <div class="strat-conf-label">
-              <span>Confiance</span>
-              <span class="strat-conf-val ${cls}">${m.confidence}%</span>
+      const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
+      const xg = m.expectedGoals ? `xG ${m.expectedGoals.home.toFixed(1)}-${m.expectedGoals.away.toFixed(1)}` : '';
+      return `<div class="ps-pill-card" onclick="openInsightsById('${m.id}')">
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <div class="ppc-league">${leagueShort} · ${dateStr}</div>
+          <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
+          <div class="ppc-sub">${ui?.icon || ''} ${ui?.label || key}${xg ? ' · ' + xg : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <div style="display:flex;gap:10px;align-items:baseline;">
+            <div style="text-align:center;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Conf.</div>
+              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${confColor};line-height:1;">${ci}%</div>
             </div>
-            <div class="strat-conf-bar"><div class="strat-conf-fill ${cls}" style="width:${m.confidence}%;"></div></div>
-          </div>
-          <div class="strat-dual-index" style="display:flex;gap:8px;margin-top:2px;">
-            <div style="flex:1;background:var(--bg4);border-radius:6px;padding:6px 8px;">
-              <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;">📊 Value</div>
-              <div style="font-size:18px;font-weight:800;color:${vi>=70?'var(--green)':vi>=40?'var(--amber)':'var(--red)'};">${vi}%</div>
-            </div>
-            <div style="flex:1;background:var(--bg4);border-radius:6px;padding:6px 8px;">
-              <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;">✅ Fiabilité</div>
-              <div style="font-size:18px;font-weight:800;color:${ci>=80?'var(--green)':ci>=60?'var(--amber)':'var(--red)'};">${ci}%</div>
+            <div style="text-align:center;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Value</div>
+              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${viColor};line-height:1;">${vi}%</div>
             </div>
           </div>
-          ${xgRow}
-          <div class="strat-foot">
-            <div>
-              <div class="strat-odd-lbl">${oddLbl}</div>
-              <div class="strat-odd-val">${odd}</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="strat-odd-lbl">Edge</div>
-              <div class="strat-edge ${edgeCls}">${edgeStr}</div>
-            </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${edgeStr ? `<span class="ppc-badge">${edgeStr}</span>` : ''}
+            <div class="ppc-odds">${odd}</div>
           </div>
-          <div style="display:flex;justify-content:space-between;margin-top:6px;gap:6px;">
-            <button onclick="event.stopPropagation();openInsightsById('${m.id}')" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 0;font-size:12px;color:var(--text2);cursor:pointer;transition:color .15s;" title="Insights">✦ Stats</button>
-            <button onclick="event.stopPropagation();openPowerScore('${m.id}')" style="flex:1;background:rgba(41,182,246,0.1);border:1px solid rgba(41,182,246,0.25);border-radius:6px;padding:6px 0;font-size:12px;color:#29b6f6;cursor:pointer;font-weight:600;transition:background .15s;" title="Power Score IA">⚡ Power Score</button>
+          <div style="display:flex;gap:4px;margin-top:2px;">
+            <button onclick="event.stopPropagation();openInsightsById('${m.id}')" style="background:#F4F4F4;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#1A1A1A;cursor:pointer;font-weight:600;">Stats</button>
+            <button onclick="event.stopPropagation();openPowerScore('${m.id}')" style="background:#1A1A1A;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;font-weight:600;">⚡ PS</button>
           </div>
         </div>
-      `;
+      </div>`;
     }).join('');
   } catch (e) {
     grid.innerHTML = `<div class="strat-empty"><div class="ico">⚠</div>Lancez <code style="color:var(--text2);">node server.js</code> pour charger les stratégies.</div>`;
@@ -9068,29 +9735,46 @@ async function triggerBacktest() {
 // TRENDS — connecté à /api/v1/trends
 async function loadTrends() {
   const grid = document.getElementById('trends-grid');
-  grid.innerHTML = '<div style="color:var(--text3);font-family:var(--font-mono);font-size:13px;padding:20px;">Chargement des tendances…</div>';
+  grid.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;">Chargement des tendances…</div>';
   try {
     const res  = await apiFetch('/api/v1/trends');
     if (!res.ok) throw new Error();
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    grid.innerHTML = '';
     const g = data.global;
     const trends = [
-      { name:'Les deux équipes marquent', sub:`Moyenne Poisson sur ${g.total_matches} matchs`, pct: g.btts_avg+'%', fill: g.btts_avg, type: g.btts_avg > 55 ? 'green' : 'amber', meta: `xG dom moy: ${g.xg_home_avg} · xG ext moy: ${g.xg_away_avg}`, leagues: data.by_league.slice(0,3).map(l=>l.league) },
-      { name:'+2.5 buts (Poisson)', sub:'Probabilité moyenne tous matchs', pct: g.over25_avg+'%', fill: g.over25_avg, type: g.over25_avg > 50 ? 'green' : 'amber', meta:`${data.value_bets_count} value bets actifs (edge >5%)`, leagues: data.by_league.slice(0,3).map(l=>l.league) },
+      { name:'Les deux équipes marquent', sub:`Moyenne Poisson · ${g.total_matches} matchs`, pct: parseFloat(g.btts_avg), meta: `xG dom ${g.xg_home_avg} · xG ext ${g.xg_away_avg}`, tags: data.by_league.slice(0,3).map(l=>l.league) },
+      { name:'+2.5 buts (Poisson)',       sub:'Probabilité moyenne tous matchs',              pct: parseFloat(g.over25_avg), meta: `${data.value_bets_count} value bets actifs (edge >5%)`, tags: data.by_league.slice(0,3).map(l=>l.league) },
     ];
     data.by_league.slice(0, 4).forEach(l => {
-      trends.push({ name: l.league, sub:`${l.count} matchs analysés`, pct: l.over25_avg+'%', fill: l.over25_avg, type: l.over25_avg > 50 ? 'green' : 'amber', meta:`BTTS moy: ${l.btts_avg}%`, leagues:[] });
+      trends.push({ name: l.league, sub:`${l.count} matchs analysés`, pct: parseFloat(l.over25_avg), meta:`BTTS moy: ${l.btts_avg}%`, tags:[] });
     });
-    trends.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'trend-card';
-      div.innerHTML = `<div class="trend-header"><div><div class="trend-name">${t.name}</div><div class="trend-sub">${t.sub}</div></div><div class="trend-pct ${t.type}">${t.pct}</div></div><div class="trend-mini-bar"><div class="trend-mini-fill" style="width:${Math.min(100,t.fill)}%;background:${t.type==='green'?'var(--green)':'var(--amber)'}"></div></div><div class="trend-meta">${t.meta}</div><div class="trend-league-list">${t.leagues.map(l=>`<span class="trend-league-tag">${l}</span>`).join('')}</div>`;
-      grid.appendChild(div);
-    });
+    grid.style.display = 'flex';
+    grid.style.flexDirection = 'column';
+    grid.style.gap = '8px';
+    grid.innerHTML = trends.map(t => {
+      const pctColor = t.pct >= 55 ? '#E2001A' : t.pct >= 45 ? '#1A1A1A' : '#888';
+      const barColor = t.pct >= 55 ? '#E2001A' : '#1A1A1A';
+      const tagsHtml = t.tags.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${t.tags.map(l=>`<span style="background:#F4F4F4;color:#888;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;">${l}</span>`).join('')}</div>` : '';
+      return `<div class="ps-pill-card" style="flex-direction:column;align-items:stretch;gap:8px;padding:16px 20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div class="ppc-teams" style="font-size:14px;">${t.name}</div>
+            <div class="ppc-sub">${t.sub}</div>
+          </div>
+          <div class="ppc-odds" style="font-size:26px;color:${pctColor};">${t.pct}%</div>
+        </div>
+        <div style="background:#F4F4F4;border-radius:4px;height:4px;overflow:hidden;">
+          <div style="height:4px;border-radius:4px;background:${barColor};width:${Math.min(100,t.pct)}%;transition:width .4s;"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:11px;color:#888;">${t.meta}</div>
+          ${tagsHtml}
+        </div>
+      </div>`;
+    }).join('');
   } catch(e) {
-    grid.innerHTML = '<div style="color:var(--text3);padding:20px;font-size:13px;">⚠ Lancez node server.js pour charger les tendances.</div>';
+    grid.innerHTML = '<div style="color:#888;padding:20px;font-size:13px;">⚠ Lancez node server.js pour charger les tendances.</div>';
   }
 }
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -9417,41 +10101,37 @@ async function loadHotPicks() {
       const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
       const vi = p.valueIndex || 0;
       const ci = p.confidenceIndex || 0;
-      const viCls = vi >= 70 ? 'high' : vi >= 40 ? 'mid' : 'low';
-      const ciCls = ci >= 80 ? 'high' : ci >= 60 ? 'mid' : 'low';
       const edge = p.best_edge?.edge;
-      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : '—';
-      const badgeCls = strategyBadgeClass(p.strategyKey);
-      const rankClr = i === 0 ? 'var(--amber)' : i === 1 ? '#bdbdbd' : i === 2 ? '#cd7f32' : 'var(--text3)';
-      return `
-      <div class="strat-card hp-card" onclick="goToMatch('${p.id}')" style="cursor:pointer;border-left:4px solid ${vi>=70?'var(--green)':vi>=40?'var(--amber)':'var(--bg3)'}">
-        <!-- TIPSTER HERO -->
-        <div class="tipster-hero">
-          ${tipsterAvatar(p.tipster, badgeCls)}
-          <span class="tipster-hero-name">${p.tipster || p.strategyLabel}</span>
-          <span class="stg-badge ${badgeCls}">${p.strategyIcon} ${p.strategyLabel}</span>
-          <span style="margin-left:auto;font-size:22px;font-weight:900;font-family:var(--font-head);color:${rankClr};">#${i+1}</span>
+      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
+      const odds = p.odds != null ? Number(p.odds).toFixed(2) : '—';
+      const rankNum = `#${i+1}`;
+      // Value color : rouge si haut, noir si moyen, gris si bas — AUCUN VERT
+      const viColor = vi >= 70 ? '#E2001A' : vi >= 40 ? '#1A1A1A' : '#888';
+      const ciColor = ci >= 80 ? '#E2001A' : ci >= 60 ? '#1A1A1A' : '#888';
+      // Stratégie badge : fond gris clair, texte noir
+      const leagueShort = (p.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
+      return `<div class="ps-pill-card" onclick="goToMatch('${p.id}')">
+        <div style="flex-shrink:0;font-family:var(--font-head);font-size:20px;font-weight:900;color:${i===0?'#E2001A':i<=2?'#1A1A1A':'#ccc'};min-width:32px;">${rankNum}</div>
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <div class="ppc-league">${leagueShort} · ${dateStr}</div>
+          <div class="ppc-teams">${p.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${p.away_team}</div>
+          <div class="ppc-sub">${p.strategyIcon || ''} ${p.strategyLabel || ''}</div>
         </div>
-        <!-- MATCH -->
-        <div style="font-size:15px;font-weight:600;margin:4px 0;">${p.home_team} <span style="color:var(--text3);font-weight:400;">vs</span> ${p.away_team}</div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">${p.league} · ${dateStr}</div>
-        <!-- DUO VALUE + FIABILITÉ -->
-        <div style="display:flex;gap:8px;">
-          <div style="flex:1;background:var(--bg4);border-radius:8px;padding:10px 12px;text-align:center;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">📊 Value Index</div>
-            <div style="font-size:26px;font-weight:900;font-family:var(--font-head);color:${vi>=70?'var(--green)':vi>=40?'var(--amber)':'var(--red)'};">${vi}<span style="font-size:13px;">%</span></div>
-            <div class="strat-conf-bar" style="margin-top:4px;"><div class="strat-conf-fill ${viCls}" style="width:${vi}%;"></div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <div style="display:flex;gap:10px;align-items:baseline;">
+            <div style="text-align:center;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Value</div>
+              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${viColor};line-height:1;">${vi}%</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Fiab.</div>
+              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${ciColor};line-height:1;">${ci}%</div>
+            </div>
           </div>
-          <div style="flex:1;background:var(--bg4);border-radius:8px;padding:10px 12px;text-align:center;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">✅ Fiabilité</div>
-            <div style="font-size:26px;font-weight:900;font-family:var(--font-head);color:${ci>=80?'var(--green)':ci>=60?'var(--amber)':'var(--red)'};">${ci}<span style="font-size:13px;">%</span></div>
-            <div class="strat-conf-bar" style="margin-top:4px;"><div class="strat-conf-fill ${ciCls}" style="width:${ci}%;"></div></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${edgeStr ? `<span class="ppc-badge">${edgeStr} edge</span>` : ''}
+            <div class="ppc-odds">${odds}</div>
           </div>
-        </div>
-        <!-- FOOTER -->
-        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);font-size:12px;font-family:var(--font-mono);">
-          <div><span style="color:var(--text3);">Cote</span> <strong style="font-size:16px;">${p.odds != null ? p.odds.toFixed(2) : '—'}</strong></div>
-          <div style="text-align:right;"><span style="color:var(--text3);">Edge</span> <strong style="color:${edge>0?'var(--green)':'var(--text3)'};font-size:16px;">${edgeStr}</strong></div>
         </div>
       </div>`;
     }).join('');
@@ -9475,52 +10155,52 @@ async function loadSureBets() {
     if (!bets.length) { grid.innerHTML = '<div class="strat-empty"><div class="ico">🔍</div>Aucun Sure Bet pour le moment.<br><span style="color:var(--text3);">Les Sure Bets nécessitent une confiance ≥ 75% et un indice de fiabilité ≥ 70%.</span></div>'; return; }
     if (stats) {
       const lvl10 = bets.filter(b => b.sureLevel >= 10).length;
-      const lvl9 = bets.filter(b => b.sureLevel === 9).length;
-      const lvl8 = bets.filter(b => b.sureLevel === 8).length;
-      stats.innerHTML = `<div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <span style="background:rgba(0,230,118,0.15);color:var(--green);padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;">🔟 ${lvl10}× 10/10</span>
-        <span style="background:rgba(0,230,118,0.08);color:var(--green);padding:4px 10px;border-radius:12px;font-size:12px;">9️⃣ ${lvl9}× 9/10</span>
-        <span style="background:rgba(255,167,38,0.1);color:var(--amber);padding:4px 10px;border-radius:12px;font-size:12px;">8️⃣ ${lvl8}× 8/10</span>
-        <span style="margin-left:auto;color:var(--text3);font-size:11px;">${data.hitRateEstimate || '~40% hit rate'}</span>
+      const lvl9  = bets.filter(b => b.sureLevel === 9).length;
+      const lvl8  = bets.filter(b => b.sureLevel === 8).length;
+      stats.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+        <span style="background:#E2001A;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${lvl10}× 10/10</span>
+        <span style="background:#1A1A1A;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">${lvl9}× 9/10</span>
+        <span style="background:#F4F4F4;color:#888;padding:3px 10px;border-radius:20px;font-size:11px;">${lvl8}× 8/10</span>
+        <span style="margin-left:auto;color:#888;font-size:11px;">${data.hitRateEstimate || '~40% hit rate'}</span>
       </div>`;
     }
-    grid.innerHTML = bets.map((b, i) => {
+    grid.innerHTML = bets.map(b => {
       const dt = new Date(b.commence_time);
       const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
       const lvl = b.sureLevel || 8;
-      const lvlCls = lvl >= 10 ? 'sure-10' : lvl >= 9 ? 'sure-9' : 'sure-8';
-      const badgeCls = strategyBadgeClass(b.strategyKey);
-      return `
-      <div class="strat-card sb-card" onclick="goToMatch('${b.id}')" style="cursor:pointer;">
-        <!-- BADGE NIVEAU XXL -->
-        <div class="stg-badge ${lvlCls}" style="display:flex;justify-content:center;align-items:center;gap:8px;font-size:${lvl>=10?'16px':'14px'};font-weight:900;">
-          ${lvl >= 10 ? '🔟' : lvl >= 9 ? '9️⃣' : '8️⃣'}
-          <span>NIVEAU ${lvl}/10</span>
-          <span style="font-size:10px;opacity:0.7;font-weight:400;">${lvl>=10?'MAXIMUM':lvl>=9?'TRÈS ÉLEVÉ':'ÉLEVÉ'}</span>
+      const vi  = b.valueIndex || 0;
+      const ci  = b.confidenceIndex || 0;
+      const odds = b.odds != null ? Number(b.odds).toFixed(2) : '—';
+      const leagueShort = (b.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
+      // Niveau badge : rouge si max, noir si haut, gris si élevé
+      const lvlBg    = lvl >= 10 ? '#E2001A' : lvl >= 9 ? '#1A1A1A' : '#F4F4F4';
+      const lvlColor = lvl >= 9 ? '#fff' : '#888';
+      const lvlLabel = lvl >= 10 ? 'MAX' : lvl >= 9 ? 'TRÈS ÉLEVÉ' : 'ÉLEVÉ';
+      // Value / confiance : rouge si haut, noir sinon
+      const viColor = vi >= 70 ? '#E2001A' : '#1A1A1A';
+      const ciColor = ci >= 80 ? '#E2001A' : '#1A1A1A';
+      return `<div class="ps-pill-card" onclick="goToMatch('${b.id}')">
+        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;">
+          <div style="background:${lvlBg};color:${lvlColor};font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;">${lvl}/10</div>
+          <div style="font-size:9px;color:#888;">${lvlLabel}</div>
         </div>
-        <!-- TIPSTER -->
-        <div class="tipster-hero">
-          ${tipsterAvatar(b.tipster, badgeCls)}
-          <span class="tipster-hero-name">${b.tipster || b.strategyLabel}</span>
-          <span class="stg-badge ${badgeCls}">${b.strategyIcon} ${b.strategyLabel}</span>
+        <div style="flex:1;min-width:0;overflow:hidden;">
+          <div class="ppc-league">${leagueShort} · ${dateStr}</div>
+          <div class="ppc-teams">${b.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${b.away_team}</div>
+          <div class="ppc-sub">${b.strategyIcon || ''} ${b.strategyLabel || ''}</div>
         </div>
-        <!-- MATCH -->
-        <div style="font-size:15px;font-weight:600;">${b.home_team} <span style="color:var(--text3);font-weight:400;">vs</span> ${b.away_team}</div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">${b.league} · ${dateStr}</div>
-        <!-- DUO VALUE + FIABILITÉ + COTE -->
-        <div style="display:flex;gap:8px;">
-          <div style="flex:1;background:var(--bg4);border-radius:8px;padding:10px 12px;text-align:center;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">📊 Value</div>
-            <div style="font-size:24px;font-weight:900;font-family:var(--font-head);color:${(b.valueIndex||0)>=70?'var(--green)':'var(--amber)'};">${b.valueIndex||0}<span style="font-size:12px;">%</span></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <div style="display:flex;gap:10px;align-items:baseline;">
+            <div style="text-align:center;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Value</div>
+              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${viColor};line-height:1;">${vi}%</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Fiab.</div>
+              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${ciColor};line-height:1;">${ci}%</div>
+            </div>
           </div>
-          <div style="flex:1;background:var(--bg4);border-radius:8px;padding:10px 12px;text-align:center;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">✅ Fiab.</div>
-            <div style="font-size:24px;font-weight:900;font-family:var(--font-head);color:var(--green);">${b.confidenceIndex||0}<span style="font-size:12px;">%</span></div>
-          </div>
-          <div style="flex:1;background:var(--bg4);border-radius:8px;padding:10px 12px;text-align:center;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">🎰 Cote</div>
-            <div style="font-size:24px;font-weight:900;font-family:var(--font-head);color:var(--text);">${b.odds!=null?b.odds.toFixed(2):'—'}</div>
-          </div>
+          <div class="ppc-odds">${odds}</div>
         </div>
       </div>`;
     }).join('');
