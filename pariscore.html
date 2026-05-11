@@ -8708,7 +8708,7 @@ async function openInsights(matchId) {
   insShowTab('resume');
 
   try {
-    const res = await fetch(`/api/v1/match-details?id=${encodeURIComponent(m.id)}`);
+    const res = await fetch(`/api/v1/insights/${encodeURIComponent(m.id)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const d = await res.json();
     insCurrentData = d;
@@ -8724,7 +8724,7 @@ async function openInsights(matchId) {
     // v68.0: Pré-charger Scouting en arrière-plan (ne bloque pas les autres onglets)
     buildScoutingTab(m.id).catch(() => {});
   } catch(e) {
-    console.error('[openInsights] Failed to fetch modal data:', e);
+    console.error('[openInsights] fetch failed', { matchId, url: `/api/v1/insights/${matchId}`, error: e.message, stack: e.stack });
     ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-h2h'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = `<div class="ins-empty">Erreur : ${e.message}</div>`;
