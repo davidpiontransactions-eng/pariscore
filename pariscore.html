@@ -7267,9 +7267,9 @@ function renderMatches(matches) {
   // Filtre onglet Live / Prematch / All
   // Pour l'onglet "All", on masque aussi les matchs termines depuis plus de 24h
   if (activeMatchTab === 'live') {
-    filtered = filtered.filter(m => !!m.live_score && isMatchInProgress(m));
+    filtered = filtered.filter(m => isMatchInProgress(m));
   } else if (activeMatchTab === 'prematch') {
-    filtered = filtered.filter(m => !m.live_score || !isMatchInProgress(m));
+    filtered = filtered.filter(m => !isMatchInProgress(m));
   } else if (activeMatchTab === 'all') {
     // Pour "All": masquer les matchs termines depuis plus de 12 heures
     filtered = filtered.filter(m => {
@@ -7286,15 +7286,24 @@ function renderMatches(matches) {
   }
 
   // Fonction pour verifier si un match est en cours (non termine)
+  // [FIX - 2026-05-11] isMatchInProgress vérifie statuts LIVE + live_minute (plus seulement live_score)
   function isMatchInProgress(m) {
-    if (!m.live_minute) return false;
-    const minute = parseInt(m.live_minute);
-    // Match termine: plus de 130 minutes (avec temps additionnel)
-    return minute <= 130;
+    var LIVE_STATUSES = ['LIVE','IN_PLAY','INPLAY','1H','2H','HT','ET','P','BT',
+                         'EXTRA_TIME','BREAK_TIME','PENALTY','LIVE_1H','LIVE_2H',
+                         '1ST_HALF','2ND_HALF','HALFTIME','SECOND_HALF','FIRST_HALF','EXTRA_TIME_HALF'];
+    var norm = function(s) { return String(s || '').toUpperCase().trim(); };
+    if (LIVE_STATUSES.includes(norm(m.status)) || LIVE_STATUSES.includes(norm(m.live_status)) ||
+        LIVE_STATUSES.includes(norm(m.match_status)) || LIVE_STATUSES.includes(norm(m.fixture_status))) {
+      return true;
+    }
+    if (m.live_score) return parseInt(m.live_minute || 0) <= 130;
+    if (m.live_minute != null) return parseInt(m.live_minute) <= 130;
+    return false;
   }
 
   // Badge compteur live
-  const liveN = matches.filter(m => !!m.live_score).length;
+  // [FIX - 2026-05-11] Badge compteur LIVE basé sur isMatchInProgress (pas live_score)
+  const liveN = matches.filter(function(m) { return isMatchInProgress(m); }).length;
   const badge = document.getElementById('live-count-badge');
   if (badge) { badge.textContent = liveN; badge.style.display = liveN > 0 ? '' : 'none'; }
 
@@ -8187,15 +8196,25 @@ function playerImgURL(p) { return p.photo || playerPhotoURL(p.id); }
 function playerInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
+// [FIX - 2026-05-11] Cascade multi-sources: BSD → initiales (SofaScore/API-Sports bloqués CORS)
 function fixBrokenPlayerPhoto(img) {
-  // Fallback final : initiales dans un span coloré
+  const tried = parseInt(img.dataset.tryCount || 0);
+  const playerId = img.dataset.playerId || img.dataset.id || null;
+  img.dataset.tryCount = tried + 1;
+
+  // Cascade: BSD /img/player/{id}/ (si pas encore essayé et ID connu)
+  if (tried === 0 && playerId) {
+    img.src = `https://sports.bzzoiro.com/img/player/${playerId}/`;
+    return;
+  }
+  // Fallback final: initiales dans span coloré
   const name = img.alt || img.dataset.name || '?';
   const initials = playerInitials(name);
   const bg = img.dataset.bg || 'var(--green)';
   const span = document.createElement('span');
   span.style.cssText = `width:32px;height:32px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font:700 9px/1 var(--font-mono);color:#fff;flex-shrink:0`;
   span.textContent = initials;
-  img.parentNode.replaceChild(span, img);
+  if (img.parentNode) img.parentNode.replaceChild(span, img);
 }
 
 // ── Radar Fullscreen Lightbox (v62.0) ───────────────────────────────────────────

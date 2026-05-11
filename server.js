@@ -1,4 +1,4 @@
-/*const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
+﻿/*const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
 
  * ══════════════════════════════════════════════════════════════════════════════
  *  PariScore — Backend Serveur-Centrique v2.0
@@ -5091,6 +5091,8 @@ function computeMatchTopButteurs(m) {
       const probaMarquer = Math.round((1 - Math.exp(-lambda)) * 100);
       attackers.push({
         name: p.short_name || p.name || '?',
+        id: p.id || null,
+        photo: p.image_path ? ('https://sports.bzzoiro.com' + p.image_path) : null,
         team,
         teamName,
         score: Math.round(score * 100) / 100,
@@ -7279,55 +7281,72 @@ async function handleAPI(req, res, pathname, query) {
     if (pathname === '/api/v1/matches') {
       let matches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
       let fromCache = (db.matches && db.matches.length > 0) ? false : true;
-      // [MODIF] Dictionnaire statuts renforcé corrigé
-      const isFinishedStatus = (status) => {
-        if (!status) return false;
-        const norm = String(status)
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .toUpperCase()
-          .trim();
-        
-        const finishedStatuses = [
-          'FINISHED', 'FT', 'TERMINE', 'ENDED', 'AET', 'PEN', 
-          'POSTPONED', 'CANC', 'ABD', 'SUSPENDED', 'INTERRUPTED', 
-          'CANCELED', 'WALKOVER'
-        ];
-        return finishedStatuses.includes(norm);
+      // [FIX - 2026-05-11] Priorité au statut LIVE sur le Kill Switch temporel
+      const normalizeStatus = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+
+      const isLiveStatus = (status) => {
+        const norm = normalizeStatus(status);
+        return ['LIVE', 'IN_PLAY', 'INPLAY', '1H', '2H', 'HT', 'ET', 'P', 'BT',
+                'EXTRA_TIME', 'BREAK_TIME', 'PENALTY', 'LIVE_1H', 'LIVE_2H',
+                '1ST_HALF', '2ND_HALF', 'HALFTIME', 'SECOND_HALF', 'FIRST_HALF', 'EXTRA_TIME_HALF'].includes(norm);
       };
-      // Kill Switch Temporel: exclure tout match commencé il y a plus de 4 heures
-      const MATCH_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 heures
+
+      const isFinishedStatus = (status) => {
+        const norm = normalizeStatus(status);
+        return ['FINISHED', 'FT', 'TERMINE', 'ENDED', 'AET', 'PEN',
+                'POSTPONED', 'CANC', 'ABD', 'SUSPENDED', 'INTERRUPTED',
+                'CANCELED', 'WALKOVER'].includes(norm);
+      };
+
+      // [FIX - 2026-05-11] Match en direct = statut LIVE OU live_minute présent et non terminé
+      const isLiveMatch = (m) =>
+        isLiveStatus(m.status) || isLiveStatus(m.live_status) ||
+        isLiveStatus(m.match_status) || isLiveStatus(m.fixture_status) ||
+        (m.live_minute != null && !isFinishedStatus(m.status));
+
+      // Kill Switch: 4h max, MAIS ignoré si match LIVE
+      const MATCH_EXPIRY_MS = 4 * 60 * 60 * 1000;
       const now = Date.now();
       const isMatchExpired = (m) => {
         if (!m.commence_time) return false;
-        const startTime = new Date(m.commence_time).getTime();
-        return (now - startTime) > MATCH_EXPIRY_MS;
+        if (isLiveMatch(m)) return false; // [FIX - 2026-05-11] LIVE bypass Kill Switch
+        return (now - new Date(m.commence_time).getTime()) > MATCH_EXPIRY_MS;
       };
+
       if (!serverReady && matches.length === 0) {
         return jsonResponse(res, 200, { count: 0, matches: [], meta: { loading: true, status: 'initialisation' } });
       }
-    if (query.league && query.league !== 'all') {
-      const filterValue = query.league.toLowerCase();
-      matches = matches.filter(m => (m.sport || '').toLowerCase() === filterValue || (m.league || '').toLowerCase().includes(filterValue));
-    }
-    if (query.day !== undefined && query.day !== 'all') {
-      const dayOffset = parseInt(query.day);
-      if (!isNaN(dayOffset)) {
-        const target = new Date();
-        target.setDate(target.getDate() + dayOffset);
-        const targetStr = target.toLocaleDateString('fr-FR');
-        matches = matches.filter(m => new Date(m.commence_time).toLocaleDateString('fr-FR') === targetStr);
+
+      // [FIX - 2026-05-11] ?live=true → retourne UNIQUEMENT les matchs en direct
+      if (query.live === 'true') {
+        const liveMatches = matches.filter(m => isLiveMatch(m));
+        console.log('[DEBUG LIVE] Matchs en BDD: ' + matches.length + ', Matchs renvoyés après filtre: ' + liveMatches.length + ' | statuts: ' + matches.map(function(m){ return m.status || '?'; }).slice(0,10).join(','));
+        console.log(`📊 [API] Filtre LIVE actif — ${liveMatches.length} matchs en direct.`);
+        return jsonResponse(res, 200, { count: liveMatches.length, matches: liveMatches, meta: { status: db.status, fromCache, serverReady, liveOnly: true } });
       }
-    }
+
+      if (query.league && query.league !== 'all') {
+        const filterValue = query.league.toLowerCase();
+        matches = matches.filter(m => (m.sport || '').toLowerCase() === filterValue || (m.league || '').toLowerCase().includes(filterValue));
+      }
+      if (query.day !== undefined && query.day !== 'all') {
+        const dayOffset = parseInt(query.day);
+        if (!isNaN(dayOffset)) {
+          const target = new Date();
+          target.setDate(target.getDate() + dayOffset);
+          const targetStr = target.toLocaleDateString('fr-FR');
+          matches = matches.filter(m => new Date(m.commence_time).toLocaleDateString('fr-FR') === targetStr);
+        }
+      }
+
       matches = matches.map(m => {
         const fresh = computeMatchTopButteurs(m);
         return { ...m, topButteurs: fresh || m.topButteurs || null };
       });
-      // Filtre combiné: Kill Switch Temporel (prioritaire) + Statuts élargis
+
+      // [FIX - 2026-05-11] Kill Switch ignoré pour matchs LIVE — priorité statut en direct
       matches = matches.filter(m => {
-        // Kill Switch: exclure si match expiré (>4h)
         if (isMatchExpired(m)) return false;
-        // Statuts: exclure si terminé
         return !(
           isFinishedStatus(m.status) ||
           isFinishedStatus(m.live_status) ||
@@ -7335,7 +7354,8 @@ async function handleAPI(req, res, pathname, query) {
           isFinishedStatus(m.fixture_status)
         );
       });
-      console.log(`📊 [API] Envoi de ${matches.length} matchs filtrés (Kill Switch 4h + statuts élargis).`);
+
+      console.log(`📊 [API] Envoi de ${matches.length} matchs filtrés (Kill Switch 4h bypass LIVE + statuts élargis).`);
       return jsonResponse(res, 200, { count: matches.length, matches, meta: { status: db.status, fromCache, serverReady } });
     }
 
