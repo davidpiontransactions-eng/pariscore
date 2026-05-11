@@ -5298,34 +5298,51 @@ const flagMap = {
 
 // [MODIF - 2026-05-11] Remplacement Emojis par FlagCDN pour compatibilité Windows + Ajout pays manquants
 function getCountryFlag(countryName) {
+  // Normalise: lowercase + strip diacritics + trim
+  const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9\s.'-]/g, '').trim();
+  const n = norm(countryName);
   const countryToIso = {
-    // Europe
-    'France':'fr','England':'gb-eng','Spain':'es','Germany':'de','Italy':'it',
-    'Netherlands':'nl','Belgium':'be','Portugal':'pt','Scotland':'gb-sct',
-    'Wales':'gb-wls','Turkey':'tr','Denmark':'dk','Norway':'no','Sweden':'se',
-    'Greece':'gr','Switzerland':'ch','Czech Republic':'cz','Austria':'at',
-    'Poland':'pl','Hungary':'hu','Romania':'ro','Croatia':'hr','Serbia':'rs',
-    'Slovakia':'sk','Finland':'fi','Ireland':'ie','Ukraine':'ua','Russia':'ru',
-    'Bulgaria':'bg','Slovenia':'si','Lithuania':'lt','Latvia':'lv','Estonia':'ee',
-    'Albania':'al','Bosnia':'ba','North Macedonia':'mk','Montenegro':'me',
-    'Iceland':'is','Luxembourg':'lu','Malta':'mt','Cyprus':'cy','Belarus':'by',
-    // Americas
-    'Brazil':'br','Argentina':'ar','Mexico':'mx','USA':'us','Canada':'ca',
-    'Colombia':'co','Chile':'cl','Peru':'pe','Ecuador':'ec','Uruguay':'uy',
-    'Paraguay':'py','Bolivia':'bo','Venezuela':'ve','Costa Rica':'cr',
-    'Panama':'pa','Jamaica':'jm','Honduras':'hn','El Salvador':'sv','Guatemala':'gt',
-    // Asia
-    'Japan':'jp','South Korea':'kr','Saudi Arabia':'sa','UAE':'ae','Qatar':'qa',
-    'China':'cn','India':'in','Thailand':'th','Indonesia':'id','Vietnam':'vn',
-    'Australia':'au','New Zealand':'nz',
-    // Africa
-    'Morocco':'ma','Egypt':'eg','South Africa':'za','Nigeria':'ng','Senegal':'sn',
-    'Ghana':'gh','Algeria':'dz','Tunisia':'tn','Cameroon':'cm','Ivory Coast':'ci',
-    'Kenya':'ke','Ethiopia':'et','DR Congo':'cd',
-    // Other
-    'World':'world','Europe':'eu','S. America':'sa','International':'int'
+    // English (normalized)
+    'france':'fr','england':'gb-eng','spain':'es','germany':'de','italy':'it',
+    'netherlands':'nl','belgium':'be','portugal':'pt','scotland':'gb-sct',
+    'wales':'gb-wls','turkey':'tr','denmark':'dk','norway':'no','sweden':'se',
+    'greece':'gr','switzerland':'ch','czech republic':'cz','austria':'at',
+    'poland':'pl','hungary':'hu','romania':'ro','croatia':'hr','serbia':'rs',
+    'slovakia':'sk','finland':'fi','ireland':'ie','ukraine':'ua','russia':'ru',
+    'bulgaria':'bg','slovenia':'si','lithuania':'lt','latvia':'lv','estonia':'ee',
+    'albania':'al','bosnia':'ba','north macedonia':'mk','montenegro':'me',
+    'iceland':'is','luxembourg':'lu','malta':'mt','cyprus':'cy','belarus':'by',
+    'brazil':'br','argentina':'ar','mexico':'mx','usa':'us','etats-unis':'us','etats unis':'us','canada':'ca',
+    'colombia':'co','chile':'cl','peru':'pe','ecuador':'ec','uruguay':'uy',
+    'paraguay':'py','bolivia':'bo','venezuela':'ve','costa rica':'cr',
+    'panama':'pa','jamaica':'jm','honduras':'hn','el salvador':'sv','guatemala':'gt',
+    'japan':'jp','south korea':'kr','saudi arabia':'sa','uae':'ae','qatar':'qa',
+    'china':'cn','india':'in','thailand':'th','indonesia':'id','vietnam':'vn',
+    'australia':'au','new zealand':'nz',
+    'morocco':'ma','egypt':'eg','south africa':'za','nigeria':'ng','senegal':'sn',
+    'ghana':'gh','algeria':'dz','tunisia':'tn','cameroon':'cm','ivory coast':'ci',
+    'kenya':'ke','ethiopia':'et','dr congo':'cd',
+    'world':'world','europe':'eu','s. america':'xx','international':'int',
+    // French aliases (normalized: no accents, lowercase)
+    'angleterre':'gb-eng','espagne':'es','allemagne':'de','italie':'it',
+    'pays-bas':'nl','pays bas':'nl','belgique':'be','ecosse':'gb-sct',
+    'pays de galles':'gb-wls','turquie':'tr','danemark':'dk','norvege':'no',
+    'suede':'se','grece':'gr','suisse':'ch','tcheque':'cz','tchequier':'cz',
+    'republique tcheque':'cz','tchequie':'cz','autriche':'at','pologne':'pl','hongrie':'hu',
+    'roumanie':'ro','croatie':'hr','serbie':'rs','slovaquie':'sk','finlande':'fi',
+    'irlande':'ie','russie':'ru','bulgarie':'bg','slovenie':'si','lituanie':'lt',
+    'lettonie':'lv','estonie':'ee','albanie':'al','macedoine':'mk',
+    'macedoine du nord':'mk','islande':'is','malte':'mt','chypre':'cy',
+    'bielorussie':'by','bresil':'br','argentine':'ar','mexique':'mx',
+    'colombie':'co','chili':'cl','perou':'pe','equateur':'ec',
+    'japon':'jp','coree du sud':'kr','arabie saoudite':'sa','emirats':'ae',
+    'emirats arabes unis':'ae','maroc':'ma','egypte':'eg','afrique du sud':'za',
+    'algerie':'dz','tunisie':'tn','cote d ivoire':'ci','cote divoire':'ci',
+    'europe':'eu','amerique du sud':'xx','monde':'world',
+    'mali':'ml','senegal':'sn','nigeria':'ng','cameroun':'cm',
+
   };
-  const iso = countryToIso[countryName] || 'xx';
+  const iso = countryToIso[n] || 'xx';
   const emoji = flagMap[countryName] || '🏳️';
   return `<img src="https://flagcdn.com/w40/${iso}.png" class="country-flag" alt="${countryName}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22><text y=%2214%22 font-size=%2214%22>${encodeURIComponent(emoji)}</text></svg>';">`;
 }

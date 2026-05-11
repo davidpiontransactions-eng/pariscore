@@ -69,6 +69,7 @@
 ## A Faire
 
 ### Priorite Haute
+- [x] Fix normalisation noms de pays (accents, casse, traductions FR/EN) pour drapeaux FlagCDN dans headers — getCountryFlag() blindée NFD + 34 aliases français (commit suivant)
 1. Tester la page Guide - verifier qu'elle s'affiche
 2. (Termine) Integrer clicks equipe/joueur
 3. Corriger bug PRO SCOUT v2 (en cours)
