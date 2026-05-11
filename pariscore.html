@@ -410,6 +410,8 @@
   .lt5-bet { font-size:11px;font-weight:700;border-radius:4px;padding:2px 7px;display:inline-block;margin:3px 0; }
   .lt5-reason { font-size:10px;color:var(--text3);line-height:1.4;margin-top:3px; }
   .match-row-live { animation:livePulse 3s infinite; }
+  @keyframes score-flash { 0% { background:rgba(0,230,118,0.45); } 100% { background:transparent; } }
+  .score-flash { animation: score-flash 1.2s ease-out forwards; }
   @keyframes livePulse { 0%,100%{background:transparent} 50%{background:rgba(0,230,118,0.03)} }
   /* Live Predictions Panel — Scénarios prédictifs */
   #live-pred-panel { display:none;background:linear-gradient(135deg,rgba(0,230,118,0.04) 0%,var(--bg2) 60%);border:1px solid rgba(0,230,118,0.2);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:16px; }
@@ -5915,20 +5917,34 @@ var _lastLiveSnapshot = null;
 var _prevLiveIds = []; // V73: track previous live IDs for cleanup
 
 function liveScoresChanged(matches) {
-  var liveMatches = matches.filter(function(m) { return !!m.live_score; });
+  // [P0] Signature etendue : score + minute + statut
+  var liveMatches = matches.filter(function(m) { return isMatchInProgress(m); });
   var sig = '';
   for (var i = 0; i < liveMatches.length; i++) {
     var m = liveMatches[i];
-    sig += m.id + ':' + (m.live_score || '') + '|';
+    sig += m.id + ':' + (m.live_score || '') + ':' + (m.live_minute || '') + ':' + (m.status || '') + '|';
   }
   if (sig === _lastLiveSnapshot) return false;
   _lastLiveSnapshot = sig;
   return true;
 }
 
-// Patch différentiel — met à jour UNIQUEMENT les valeurs modifiées dans le DOM existant
+// [P0] isMatchInProgress global — accessible depuis patchLiveMatches ET renderMatches
+var _LIVE_STS = ['LIVE','IN_PLAY','INPLAY','1H','2H','HT','ET','P','BT',
+                 'EXTRA_TIME','BREAK_TIME','PENALTY','LIVE_1H','LIVE_2H',
+                 '1ST_HALF','2ND_HALF','HALFTIME','SECOND_HALF','FIRST_HALF','EXTRA_TIME_HALF'];
+function isMatchInProgress(m) {
+  var n = function(s) { return String(s || '').toUpperCase().trim(); };
+  if (_LIVE_STS.includes(n(m.status)) || _LIVE_STS.includes(n(m.live_status)) ||
+      _LIVE_STS.includes(n(m.match_status)) || _LIVE_STS.includes(n(m.fixture_status))) return true;
+  if (m.live_score) return parseInt(m.live_minute || 0) <= 130;
+  if (m.live_minute != null) return parseInt(m.live_minute) <= 130;
+  return false;
+}
+
+// [P0] Patch differentiel etendu — zero renderMatches sur Live tab sauf changement structurel
 function patchLiveMatches(newMatches) {
-  var liveMatches = newMatches.filter(function(m) { return !!m.live_score; });
+  var liveMatches = newMatches.filter(function(m) { return isMatchInProgress(m); });
   var currentLiveIds = [];
   var hasStructuralChange = false;
 
@@ -5936,50 +5952,58 @@ function patchLiveMatches(newMatches) {
     var m = liveMatches[i];
     currentLiveIds.push(m.id);
     var row = document.querySelector('tr[data-match-id="' + m.id + '"]');
+    if (!row) { hasStructuralChange = true; continue; }
 
-    if (!row) {
-      hasStructuralChange = true;
-      continue;
-    }
-
-    // 1. Patch du badge live
-    var badge = row.querySelector('[data-live="' + m.id + '"]');
-    if (badge) {
-      var newBadgeHTML = '\u{1F534} ' + m.live_score + (m.live_minute ? ' (' + m.live_minute + '\u2032)' : '');
-      if (badge.innerHTML !== newBadgeHTML) {
-        badge.innerHTML = newBadgeHTML;
+    // 1. Live score overlay — injection au premier but si container absent
+    if (m.live_score) {
+      var lc = row.querySelector('[data-live-container="' + m.id + '"]');
+      if (!lc) {
+        var td2 = row.querySelector('td:nth-child(2)');
+        if (td2) {
+          var iv = m.live_intensity || 0;
+          var ic = iv >= 60 ? '#E2001A' : iv >= 30 ? '#ffa726' : '#29b6f6';
+          lc = document.createElement('div');
+          lc.setAttribute('data-live-container', m.id);
+          lc.style.cssText = 'position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;';
+          lc.innerHTML = '<span data-live="' + m.id + '" style="font-size:9px;font-weight:700;color:#ff4d4d;background:rgba(255,77,77,0.15);padding:1px 5px;border-radius:4px;animation:pulse 1.5s infinite;">🔴 ' + m.live_score + (m.live_minute ? ' (' + m.live_minute + '′)' : '') + '</span>'
+            + '<div style="width:50px;height:4px;background:#EAEAEA;border-radius:2px;overflow:hidden;">'
+            + '<div data-intensity="' + m.id + '" style="width:' + iv + '%;height:100%;background:' + ic + ';border-radius:2px;"></div></div>'
+            + '<span data-intensity-val="' + m.id + '" style="font-size:7px;color:var(--text3);">⚡' + iv + '</span>';
+          td2.insertBefore(lc, td2.firstChild);
+        }
+      } else {
+        var badge = lc.querySelector('[data-live="' + m.id + '"]');
+        if (badge) {
+          var prev = badge.getAttribute('data-prev-score');
+          var nt = '🔴 ' + m.live_score + (m.live_minute ? ' (' + m.live_minute + '′)' : '');
+          if (badge.innerHTML !== nt) {
+            if (prev && prev !== m.live_score) { badge.classList.remove('score-flash'); void badge.offsetWidth; badge.classList.add('score-flash'); }
+            badge.setAttribute('data-prev-score', m.live_score);
+            badge.innerHTML = nt;
+          }
+        }
       }
     }
 
-    // 2. Patch intensité
-    var intensityBar = row.querySelector('[data-intensity="' + m.id + '"]');
-    var intensityVal = row.querySelector('[data-intensity-val="' + m.id + '"]');
-    if (intensityBar && m.live_intensity != null) {
+    // 2. Intensite
+    var ib = row.querySelector('[data-intensity="' + m.id + '"]');
+    var iv2 = row.querySelector('[data-intensity-val="' + m.id + '"]');
+    if (ib && m.live_intensity != null) {
       var pct = Math.max(4, Math.min(100, m.live_intensity));
-      var color = m.live_intensity >= 60 ? '#ef5350' : m.live_intensity >= 30 ? '#ffa726' : '#00ff88';
-      intensityBar.style.width = pct + '%';
-      intensityBar.style.background = color;
-      if (intensityVal) {
-        intensityVal.textContent = m.live_intensity;
-        intensityVal.style.color = color;
-      }
+      var ic2 = m.live_intensity >= 60 ? '#E2001A' : m.live_intensity >= 30 ? '#ffa726' : '#29b6f6';
+      ib.style.width = pct + '%'; ib.style.background = ic2;
+      if (iv2) { iv2.textContent = '⚡' + m.live_intensity; iv2.style.color = ic2; }
     }
 
     // 3. Classe live
-    if (!row.classList.contains('match-row-live') && m.live_score) {
-      row.classList.add('match-row-live');
-    }
+    if (!row.classList.contains('match-row-live') && m.live_score) row.classList.add('match-row-live');
   }
 
-  // 4. Nettoyage : matchs qui étaient live mais ne le sont plus → rebuild
+  // 4. Match fini / sorti du live → rebuild
   for (var j = 0; j < _prevLiveIds.length; j++) {
-    if (currentLiveIds.indexOf(_prevLiveIds[j]) === -1) {
-      hasStructuralChange = true;
-      break;
-    }
+    if (currentLiveIds.indexOf(_prevLiveIds[j]) === -1) { hasStructuralChange = true; break; }
   }
   _prevLiveIds = currentLiveIds;
-
   return hasStructuralChange;
 }
 
@@ -7296,21 +7320,6 @@ function renderMatches(matches) {
     });
   }
 
-  // Fonction pour verifier si un match est en cours (non termine)
-  // [FIX - 2026-05-11] isMatchInProgress vérifie statuts LIVE + live_minute (plus seulement live_score)
-  function isMatchInProgress(m) {
-    var LIVE_STATUSES = ['LIVE','IN_PLAY','INPLAY','1H','2H','HT','ET','P','BT',
-                         'EXTRA_TIME','BREAK_TIME','PENALTY','LIVE_1H','LIVE_2H',
-                         '1ST_HALF','2ND_HALF','HALFTIME','SECOND_HALF','FIRST_HALF','EXTRA_TIME_HALF'];
-    var norm = function(s) { return String(s || '').toUpperCase().trim(); };
-    if (LIVE_STATUSES.includes(norm(m.status)) || LIVE_STATUSES.includes(norm(m.live_status)) ||
-        LIVE_STATUSES.includes(norm(m.match_status)) || LIVE_STATUSES.includes(norm(m.fixture_status))) {
-      return true;
-    }
-    if (m.live_score) return parseInt(m.live_minute || 0) <= 130;
-    if (m.live_minute != null) return parseInt(m.live_minute) <= 130;
-    return false;
-  }
 
   // Badge compteur live
   // [FIX - 2026-05-11] Badge compteur LIVE basé sur isMatchInProgress (pas live_score)
@@ -7600,7 +7609,7 @@ const label = country
         <div style="font-size:10px;color:#888888 !important;margin-top:1px;">${date}</div>
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;position:relative;">
-        ${m.live_score ? `<div style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        ${m.live_score ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
           <span data-live="${m.id}" style="font-size:9px;font-weight:700;color:#ff4d4d;background:rgba(255,77,77,0.15);padding:1px 5px;border-radius:4px;animation:pulse 1.5s infinite;">🔴 ${m.live_score || 'LIVE'}</span>
           <div style="width:50px;height:4px;background:#EAEAEA;border-radius:2px;overflow:hidden;" title="Intensité: ${m.live_intensity||0}/100">
             <div data-intensity="${m.id}" style="width:${m.live_intensity||0}%;height:100%;background:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#ffa726':'#29b6f6'};border-radius:2px;"></div>
