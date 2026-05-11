@@ -9780,12 +9780,14 @@ server.listen(PORT, () => {
    ------------------------------------------------- */
 function autoPurgeDatabase() {
     const now = Date.now();
-    const EXPIRY_MS = 4 * 3600000;
+    // 150 min = 90min match + 60min buffer (ET, prolongations, décision var)
+    const EXPIRY_MS = 150 * 60 * 1000;
     const FINISHED = ['FINISHED','FT','TERMINE','ENDED','AET','PEN','POSTPONED','CANC','ABD','SUSPENDED','INTERRUPTED','CANCELED','WALKOVER'];
     const normS = s => s ? String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim() : '';
     const before = db.matches.length;
     db.matches = db.matches.filter(m => {
         const elapsed = now - new Date(m.commence_time).getTime();
+        if (elapsed <= 0) return true; // pas encore commencé
         const isFinished = [m.status, m.live_status, m.match_status].some(s => FINISHED.includes(normS(s)));
         return !isFinished && elapsed < EXPIRY_MS;
     });
@@ -9793,6 +9795,8 @@ function autoPurgeDatabase() {
     if (removed > 0) {
         saveDB();
         console.log(`  [AutoPurge] ${removed} matchs supprimés (${db.matches.length} restants)`);
+    } else {
+        console.log(`  [AutoPurge] Aucun match à purger (${db.matches.length} actifs)`);
     }
 }
 
@@ -9802,7 +9806,7 @@ function autoPurgeDatabase() {
 setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
 setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);
 setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000);
-setInterval(() => autoPurgeDatabase(), 3600 * 1000);
+setInterval(() => autoPurgeDatabase(), 15 * 60 * 1000); // toutes les 15 min
 
 setInterval(() => {
     if (typeof apiCacheCleanExpired === 'function') apiCacheCleanExpired();
