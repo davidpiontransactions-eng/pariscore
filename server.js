@@ -2896,6 +2896,7 @@ function buildMatchRecord(raw) {
     away_team: raw.away_team,
     home_rank: hRaw?.rank || null,
     away_rank: aRaw?.rank || null,
+    status: raw.status || null,
     home_team_id: hRaw?.teamId || null,
     away_team_id: aRaw?.teamId || null,
     home_bsd_id: hRaw?.bsdTeamId || null,
@@ -5103,8 +5104,17 @@ async function handleCornersRoute(res, matchId) {
 
 // Convert a BSD match object to Odds API-compatible format so it can flow
 // through buildMatchRecord() unchanged. Uses a single synthetic bookmaker entry.
+const BSD_FINISHED_STATUSES = new Set([
+  'finished','ft','aet','pen','ended','terminated',
+  'postponed','cancelled','canceled','abandoned','walkover','awrd',
+  'interrupted','suspended'
+]);
+
 function bsdToOddsApiFormat(bsdMatch) {
   if (!bsdMatch.odds?.home || !bsdMatch.odds?.away) return null;
+  // Exclure à la source les matchs déjà terminés côté BSD
+  const rawStatus = (bsdMatch.status || '').toLowerCase().trim();
+  if (rawStatus && BSD_FINISHED_STATUSES.has(rawStatus)) return null;
 
   const drawOdds = bsdMatch.odds.draw || 3.0;
 
@@ -5131,6 +5141,7 @@ function bsdToOddsApiFormat(bsdMatch) {
     _sport: sportKey, // C'est cette valeur qui est utilisée pour le filtrage !
     _source: 'bsd',
     _bsd_event_id: bsdMatch._bsd_event_id,
+    status: bsdMatch.status || null,
     bsd_odds: bsdMatch.odds,
     _league_country: leagueCountry,
     _config_league_id: configLeague?.id || null,
@@ -5291,6 +5302,7 @@ async function fetchOdds(force = false) {
     }
 
     db.lastOddsUpdate = new Date().toISOString();
+    autoPurgeDatabase(); // purge immédiate après chaque injection BSD
     saveDB();
     syncCacheBuffers();
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
@@ -9782,13 +9794,21 @@ function autoPurgeDatabase() {
     const now = Date.now();
     // 150 min = 90min match + 60min buffer (ET, prolongations, décision var)
     const EXPIRY_MS = 150 * 60 * 1000;
-    const FINISHED = ['FINISHED','FT','TERMINE','ENDED','AET','PEN','POSTPONED','CANC','ABD','SUSPENDED','INTERRUPTED','CANCELED','WALKOVER'];
-    const normS = s => s ? String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim() : '';
+    const FINISHED_SET = new Set([
+        'finished','ft','aet','pen','ended','terminated',
+        'postponed','cancelled','canceled','abandoned','walkover','awrd',
+        'interrupted','suspended','canc','abd',
+        // versions normalisées uppercase
+        'FINISHED','FT','TERMINE','ENDED','AET','PEN','POSTPONED','CANC','ABD',
+        'SUSPENDED','INTERRUPTED','CANCELED','WALKOVER'
+    ]);
+    const normS = s => s ? String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim() : '';
     const before = db.matches.length;
     db.matches = db.matches.filter(m => {
         const elapsed = now - new Date(m.commence_time).getTime();
         if (elapsed <= 0) return true; // pas encore commencé
-        const isFinished = [m.status, m.live_status, m.match_status].some(s => FINISHED.includes(normS(s)));
+        const isFinished = [m.status, m.live_status, m.match_status, m.state, m.fixture_status]
+            .some(s => s && (FINISHED_SET.has(s) || FINISHED_SET.has(normS(s))));
         return !isFinished && elapsed < EXPIRY_MS;
     });
     const removed = before - db.matches.length;
