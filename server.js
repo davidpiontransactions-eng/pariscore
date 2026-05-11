@@ -6817,6 +6817,26 @@ const STRATEGIES = {
     },
     getOdds: () => null,
   },
+  OVER_6_5_CORNERS: {
+    label: 'Over 6.5 Corners',
+    icon: '',
+    tipster: 'Le Corneriste',
+    tipsterDesc: 'Expert des corners. Traque les matchs à fort trafic dans les surfaces — xG élevé, équipes offensives, jeu direct.',
+    tipsterFlag: '🇮🇹',
+    getProb: m => {
+      // Priorité : données Poisson corners directes
+      if (m.corners_poisson?.over_6_5 != null) return m.corners_poisson.over_6_5;
+      // Fallback : estimation via xG + over25
+      if (!m.poisson || !m.expectedGoals) return null;
+      const xgTotal = (m.expectedGoals.home || 0) + (m.expectedGoals.away || 0);
+      if (xgTotal < 2.0) return null;
+      const over25 = m.poisson.over25 || 0;
+      // Corrélation empirique : over25 élevé + xG > 2 → fort traffic corners
+      const est = Math.min(88, Math.round(over25 * 0.80 + Math.max(0, xgTotal - 2.0) * 18));
+      return est >= 45 ? est : null;
+    },
+    getOdds: () => null,
+  },
   VERROU_TACTIQUE: {
     label: 'Verrou Tactique (U3.5)',
     icon: '',

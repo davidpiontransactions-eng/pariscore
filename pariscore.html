@@ -9,13 +9,13 @@
 <style>
   :root {
     /* ── Light Premium — L'Équipe × Flashscore ── */
-    --bg: #f4f4f4;
-    --bg2: #ffffff;
-    --bg3: #ebebeb;
-    --bg4: #e0e0e0;
-    --accent: #E3000F;
-    --accent-dim: #b80009;
-    --accent-bg: rgba(227,0,15,0.07);
+    --bg: #FFFFFF;
+    --bg2: #f7f7f7;
+    --bg3: #efefef;
+    --bg4: #e4e4e4;
+    --accent: #ed1c24;
+    --accent-dim: #c4151e;
+    --accent-bg: rgba(237,28,36,0.07);
     --green: #1a8c45;
     --green-dim: #146b34;
     --green-bg: rgba(26,140,69,0.09);
@@ -45,9 +45,9 @@
     --font-head: 'Barlow Condensed', sans-serif;
     --font-body: 'Source Sans 3', sans-serif;
     --font-mono: 'DM Mono', monospace;
-    --radius: 14px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
+    --radius: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 10px;
   }
   /* ── Nuit Profonde ── */
   body.dark-theme {
@@ -300,9 +300,9 @@
     box-shadow: 0 0 0 0 var(--accent);
   }
   @keyframes livePulse {
-    0%   { box-shadow: 0 0 0 0 rgba(227,0,15,0.6); }
-    60%  { box-shadow: 0 0 0 5px rgba(227,0,15,0); }
-    100% { box-shadow: 0 0 0 0 rgba(227,0,15,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(237,28,36,0.6); }
+    60%  { box-shadow: 0 0 0 5px rgba(237,28,36,0); }
+    100% { box-shadow: 0 0 0 0 rgba(237,28,36,0); }
   }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   /* Live update toast — non intrusif, pas de saut de page */
@@ -810,11 +810,11 @@
   .dp-score-card2 .dsc-val { font: 800 30px/1 var(--font-head); color: var(--text); }
   .dp-score-card2 .dsc-denom { font-size: 13px; color: var(--text3); font-weight: 400; }
   .dp-score-card2 .dsc-bar { height: 2px; border-radius: 2px; background: rgba(255,255,255,0.07); margin-top: 12px; overflow: hidden; }
-  .dp-score-card2 .dsc-fill { height: 100%; border-radius: 2px; background: #c0392b; width: 0; transition: width 1s ease; }
+  .dp-score-card2 .dsc-fill { height: 100%; border-radius: 2px; background: #ed1c24; width: 0; transition: width 1s ease; }
   /* ── Corps du texte — confort de lecture ────────────────────── */
   .dp-sub-label { font: 700 11px/1 var(--font-head); color: var(--text2); margin: 22px 0 7px; text-transform: uppercase; letter-spacing: .8px; }
   .dp-body { font: 400 16px/1.92 var(--font-eq-body); color: var(--text2); margin: 0 0 22px; }
-  .dp-body strong { color: #c0392b; font-weight: 600; }
+  .dp-body strong { color: #ed1c24; font-weight: 600; }
   /* ── Paris — style "sélection journaliste", numérotés ──────── */
   .dp-bet-list { display: flex; flex-direction: column; gap: 0; margin: 20px 0 28px; counter-reset: bet-counter; }
   .dp-bet-card { padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,0.06); counter-increment: bet-counter; }
@@ -1461,7 +1461,7 @@
   .strategy-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; margin-bottom: 8px; }
   .strategy-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 14px; border-radius: 999px;
+    padding: 9px 14px; border-radius: 3px;
     background: var(--bg2); border: 1px solid var(--border);
     color: var(--text2); font-size: 12.5px; font-weight: 500;
     cursor: pointer; transition: all .15s; user-select: none;
@@ -2908,6 +2908,44 @@
     gap: 10px;
   }
 
+  /* ── Guide Stratégies — Charte L'Équipe ─────────────────────────────────── */
+  .gs-rubrique { display:flex; align-items:center; gap:12px; margin:0 0 20px; }
+  .gs-rubrique-bar { width:36px; height:4px; background:#ed1c24; flex-shrink:0; }
+  .gs-rubrique-label { font-family:var(--font-head); font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--text3); }
+  .gs-intro { font-size:13.5px; line-height:1.85; color:var(--text2); margin-bottom:28px; padding-left:14px; border-left:3px solid #ed1c24; }
+  .gs-article { border-top:2px solid var(--text); padding:28px 0; }
+  .gs-article:last-of-type { border-bottom:2px solid var(--text); margin-bottom:8px; }
+  body.dark-theme .gs-article { border-top-color:rgba(255,255,255,0.12); }
+  body.dark-theme .gs-article:last-of-type { border-bottom-color:rgba(255,255,255,0.12); }
+  .gs-article-head { margin-bottom:18px; }
+  .gs-article-category { font-family:var(--font-head); font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:#ed1c24; margin-bottom:4px; }
+  .gs-article-title { font-family:var(--font-head); font-size:26px; font-weight:900; text-transform:uppercase; letter-spacing:-0.01em; line-height:1.05; color:var(--text); margin:4px 0 6px; display:flex; align-items:center; gap:10px; }
+  .gs-title-bar { width:5px; height:28px; background:#ed1c24; flex-shrink:0; border-radius:0; }
+  .gs-article-subtitle { font-size:12.5px; color:var(--text3); font-style:italic; padding-left:15px; }
+  .gs-article-layout { display:grid; grid-template-columns:1fr 280px; gap:28px; align-items:start; }
+  .gs-article-reverse .gs-article-layout { grid-template-columns:280px 1fr; }
+  .gs-article-reverse .gs-article-media { order:-1; }
+  @media(max-width:700px) {
+    .gs-article-layout, .gs-article-reverse .gs-article-layout { grid-template-columns:1fr; }
+    .gs-article-reverse .gs-article-media { order:0; }
+  }
+  .gs-article-text p { font-size:13px; line-height:1.85; color:var(--text2); margin-bottom:13px; }
+  .gs-article-text p:last-of-type { margin-bottom:0; }
+  .gs-stat-block { display:flex; border:2px solid var(--text); margin-top:20px; }
+  body.dark-theme .gs-stat-block { border-color:rgba(255,255,255,0.15); }
+  .gs-stat { flex:1; padding:11px 13px; border-right:1px solid var(--border2); }
+  .gs-stat:last-child { border-right:none; }
+  .gs-stat-val { font-family:var(--font-head); font-size:15px; font-weight:900; color:#ed1c24; text-transform:uppercase; letter-spacing:-0.01em; }
+  .gs-stat-lbl { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text3); margin-top:2px; }
+  .gs-img-frame { border:2px solid #1a1a1a; overflow:hidden; }
+  body.dark-theme .gs-img-frame { border-color:rgba(255,255,255,0.18); }
+  .gs-img-frame img { width:100%; height:190px; object-fit:cover; display:block; filter:grayscale(0.15); }
+  .gs-img-placeholder { width:100%; height:190px; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
+  .gs-img-placeholder span { font-family:var(--font-head); font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:0.06em; color:#fff; }
+  .gs-img-placeholder small { font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:#ed1c24; }
+  .gs-caption { font-size:9.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text3); margin-top:6px; font-style:italic; line-height:1.5; }
+  /* ── end gs ─────────────────────────────────────────────────────────────── */
+
   .guide-section-header {
     display: flex;
     align-items: center;
@@ -3085,10 +3123,25 @@
   }
   body:not(.dark-theme) .section-title { color: #111; }
 
+  /* Titres presse: majuscules, condensed, resserrés */
+  body:not(.dark-theme) h1,
+  body:not(.dark-theme) h2 {
+    font-family: var(--font-head);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+  body:not(.dark-theme) h3 {
+    font-family: var(--font-head);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
   /* strat-card hover → rouge à la place du bleu */
   .strat-card:hover {
-    border-color: rgba(227,0,15,0.25) !important;
-    box-shadow: 0 6px 24px rgba(227,0,15,0.09) !important;
+    border-color: rgba(237,28,36,0.25) !important;
+    box-shadow: 0 6px 24px rgba(237,28,36,0.09) !important;
     transform: translateY(-2px);
   }
 
@@ -3163,7 +3216,7 @@
   .strategy-pill.active {
     background: var(--accent-bg) !important;
     color: var(--accent) !important;
-    border-color: rgba(227,0,15,0.35) !important;
+    border-color: rgba(237,28,36,0.35) !important;
   }
   .strategy-pill:hover:not(.active) {
     border-color: var(--accent) !important;
@@ -3178,8 +3231,8 @@
 
   /* Trend-card hover → rouge */
   .trend-card:hover {
-    border-color: rgba(227,0,15,0.25) !important;
-    box-shadow: 0 4px 16px rgba(227,0,15,0.08) !important;
+    border-color: rgba(237,28,36,0.25) !important;
+    box-shadow: 0 4px 16px rgba(237,28,36,0.08) !important;
   }
 
   /* Pourcentage tendance : rouge si on veut l'accent */
@@ -3220,8 +3273,8 @@
 
   /* Card featured : rouge au lieu de vert */
   .price-card.featured {
-    border-color: rgba(227,0,15,0.35) !important;
-    background: linear-gradient(135deg, rgba(227,0,15,0.04) 0%, var(--bg2) 60%) !important;
+    border-color: rgba(237,28,36,0.35) !important;
+    background: linear-gradient(135deg, rgba(237,28,36,0.04) 0%, var(--bg2) 60%) !important;
   }
 
   /* Badge "Le plus populaire" : rouge */
@@ -3245,7 +3298,7 @@
   body:not(.dark-theme) #predictions,
   body:not(.dark-theme) #historique,
   body:not(.dark-theme) #strategies {
-    background: radial-gradient(ellipse 60% 30% at 70% 50%, rgba(227,0,15,0.03) 0%, transparent 60%) !important;
+    background: radial-gradient(ellipse 60% 30% at 70% 50%, rgba(237,28,36,0.03) 0%, transparent 60%) !important;
   }
 
   /* Hist KPI : valeur principale → couleur conservée mais label en rouge */
@@ -3332,9 +3385,9 @@
   }
   body:not(.dark-theme) .stg-badge.home,
   body:not(.dark-theme) .stg-badge.hthome {
-    background: rgba(227,0,15,0.08) !important;
+    background: rgba(237,28,36,0.08) !important;
     color: var(--accent) !important;
-    border-color: rgba(227,0,15,0.20) !important;
+    border-color: rgba(237,28,36,0.20) !important;
   }
   body:not(.dark-theme) .stg-badge.away {
     background: rgba(21,88,214,0.08) !important;
@@ -3349,14 +3402,14 @@
   }
   /* Sure-levels → rouge → amber → neutre */
   body:not(.dark-theme) .stg-badge.sure-10 {
-    background: linear-gradient(135deg, rgba(227,0,15,0.15), rgba(227,0,15,0.06)) !important;
+    background: linear-gradient(135deg, rgba(237,28,36,0.15), rgba(237,28,36,0.06)) !important;
     color: var(--accent) !important;
-    border-color: rgba(227,0,15,0.35) !important;
+    border-color: rgba(237,28,36,0.35) !important;
   }
   body:not(.dark-theme) .stg-badge.sure-9 {
-    background: rgba(227,0,15,0.08) !important;
+    background: rgba(237,28,36,0.08) !important;
     color: var(--accent) !important;
-    border-color: rgba(227,0,15,0.20) !important;
+    border-color: rgba(237,28,36,0.20) !important;
   }
   body:not(.dark-theme) .stg-badge.sure-8 {
     background: rgba(180,83,9,0.09) !important;
@@ -3418,9 +3471,9 @@
 
   /* Top Matchs (tm-card) → L'Équipe */
   .tm-card:hover {
-    border-color: rgba(227,0,15,0.35) !important;
+    border-color: rgba(237,28,36,0.35) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(227,0,15,0.08);
+    box-shadow: 0 4px 16px rgba(237,28,36,0.08);
   }
   body:not(.dark-theme) .tm-card {
     border-radius: 4px !important;
@@ -4890,37 +4943,111 @@
       <h2>Stratégies de Paris</h2>
     </div>
 
-    <div class="guide-cards-grid">
-      <div class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Over+2.5+Goals" alt="Over 2.5">
-        <div class="guide-card-body">
-          <div class="guide-card-icon">⚽</div>
-          <div class="guide-card-title">Over 2.5 Buts</div>
-          <div class="guide-card-desc">Stratégie populaire basée sur l'analyse xG combinée. Idéale pour les matchs entre équipes offensives.</div>
-          <a class="guide-card-link" onclick="scrollToSection('guide-strategies')">Voir les stratégies →</a>
-        </div>
-      </div>
-
-      <div class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=BTTS+Both+Teams+To+Score" alt="BTTS">
-        <div class="guide-card-body">
-          <div class="guide-card-icon">🤝</div>
-          <div class="guide-card-title">BTTS (Both Teams To Score)</div>
-          <div class="guide-card-desc">Mise sur les deux équipes marquent. Analyse des tendances offensives/défensives et historique BTTS.</div>
-          <a class="guide-card-link" onclick="scrollToSection('guide-strategies')">Voir les stratégies →</a>
-        </div>
-      </div>
-
-      <div class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Draw+No+Bet" alt="Draw No Bet">
-        <div class="guide-card-body">
-          <div class="guide-card-icon">🛡️</div>
-          <div class="guide-card-title">Draw No Bet</div>
-          <div class="guide-card-desc">Stratégie sécurisée supprimant le nul. Idéal quand une équipe est légèrement favorite.</div>
-          <a class="guide-card-link" onclick="scrollToSection('guide-strategies')">Voir les stratégies →</a>
-        </div>
-      </div>
+    <!-- Rubrique header -->
+    <div class="gs-rubrique">
+      <div class="gs-rubrique-bar"></div>
+      <div class="gs-rubrique-label">Analyse des tipsters — Modèle Poisson calibré</div>
     </div>
+
+    <p class="gs-intro">
+      PariScore déploie des stratégies prédictives développées par une équipe d'analystes quantitatifs. Chaque tipster est une personnalité algorithmique calibrée sur des milliers de rencontres. Ses sélections quotidiennes reposent sur le modèle de Poisson bivarié, le dévigage Shin-Hurley et les données Expected Goals.
+    </p>
+
+    <!-- Stratégie 1 : L'Artilleur / BTTS -->
+    <article class="gs-article">
+      <div class="gs-article-head">
+        <div class="gs-article-category">Stratégie 01 — Buteurs</div>
+        <h3 class="gs-article-title"><span class="gs-title-bar"></span>L'ARTILLEUR : BTTS OUI</h3>
+        <div class="gs-article-subtitle">Both Teams To Score — Les deux équipes marquent</div>
+      </div>
+      <div class="gs-article-layout">
+        <div class="gs-article-text">
+          <p>L'Artilleur traque les confrontations à haut potentiel offensif où les deux formations sont condamnées à marquer. Sa méthode : croiser les moyennes de buts marqués/encaissés, l'historique BTTS sur les 10 derniers matchs et les données xG en temps réel.</p>
+          <p>Un match est sélectionné lorsque les deux équipes présentent simultanément une attaque au-dessus de la moyenne (xG > 1.0/match) et une défense perméable (buts encaissés > 1.1/match). La probabilité BTTS est extraite de la matrice de scores Poisson : P(dom ≥ 1 et ext ≥ 1).</p>
+          <p>L'Artilleur exclut les rencontres où une équipe est en crise offensive marquée (0 but sur 3+ matchs consécutifs) pour limiter les faux positifs.</p>
+          <div class="gs-stat-block">
+            <div class="gs-stat"><div class="gs-stat-val">BTTS</div><div class="gs-stat-lbl">Critère central</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">xG > 1.0</div><div class="gs-stat-lbl">Par équipe</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">≥ 55%</div><div class="gs-stat-lbl">Confiance min.</div></div>
+          </div>
+        </div>
+        <div class="gs-article-media">
+          <div class="gs-img-frame">
+            <img src="/placeholder-artilleur.jpg" alt="L'Artilleur BTTS"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="gs-img-placeholder">
+              <span>L'ARTILLEUR</span>
+              <small>BTTS OUI</small>
+            </div>
+          </div>
+          <div class="gs-caption">Matrice de scores Poisson — probabilité BTTS calculée sur l'ensemble des configurations dom/ext (0-6 × 0-6).</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Stratégie 2 : Le Foudroyeur / Over 2.5 -->
+    <article class="gs-article gs-article-reverse">
+      <div class="gs-article-head">
+        <div class="gs-article-category">Stratégie 02 — Buts</div>
+        <h3 class="gs-article-title"><span class="gs-title-bar"></span>LE FOUDROYEUR : +2.5 BUTS</h3>
+        <div class="gs-article-subtitle">Over 2.5 — Au moins 3 buts au total dans le match</div>
+      </div>
+      <div class="gs-article-layout">
+        <div class="gs-article-text">
+          <p>Le Foudroyeur cible les matchs à explosion de buts. Il intègre les Expected Goals cumulés (λ = xGdom + xGext), le classement offensif des deux équipes et les statistiques de buts marqués sur les 5 dernières journées.</p>
+          <p>Sa force : le modèle de Poisson calcule P(total > 2) = Σ P(h,a) pour tout h+a > 2 dans la matrice de scores. Lorsque λ dépasse 2.6 avec un historique Over 2.5 > 60%, le Foudroyeur active la sélection.</p>
+          <p>Particularité : le Foudroyeur évite les confrontations entre leaders défensifs — si les deux équipes concèdent moins de 0.8 but/match, il suspend sa sélection pour ne pas diluer son edge.</p>
+          <div class="gs-stat-block">
+            <div class="gs-stat"><div class="gs-stat-val">Over 2.5</div><div class="gs-stat-lbl">Marché cible</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">λ > 2.6</div><div class="gs-stat-lbl">xG cumulé</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">≥ 60%</div><div class="gs-stat-lbl">Probabilité Poisson</div></div>
+          </div>
+        </div>
+        <div class="gs-article-media">
+          <div class="gs-img-frame">
+            <img src="/placeholder-foudroyeur.jpg" alt="Le Foudroyeur Over 2.5"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="gs-img-placeholder">
+              <span>LE FOUDROYEUR</span>
+              <small>OVER 2.5 BUTS</small>
+            </div>
+          </div>
+          <div class="gs-caption">Courbe de distribution Poisson — probabilité cumulée Over 0.5 / 1.5 / 2.5 / 3.5 selon λ total.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Stratégie 3 : Le Corneriste / Over 6.5 Corners -->
+    <article class="gs-article">
+      <div class="gs-article-head">
+        <div class="gs-article-category">Stratégie 03 — Corners</div>
+        <h3 class="gs-article-title"><span class="gs-title-bar"></span>LE CORNERISTE : OVER 6.5 CORNERS</h3>
+        <div class="gs-article-subtitle">Over 6.5 — Au moins 7 corners dans le match</div>
+      </div>
+      <div class="gs-article-layout">
+        <div class="gs-article-text">
+          <p>Le Corneriste est le spécialiste du trafic aérien. Il part d'un constat statistique : les matchs à fort xG génèrent mécaniquement plus de corners. Un tir dévié ou bloqué en corner est directement corrélé au volume d'actions offensives.</p>
+          <p>Sa formule propriétaire : Corners/match ∝ (Tirs cadrés + xG) × facteur pressing. Lorsque les données Poisson corners sont disponibles (via BSD), la probabilité Over 6.5 est calculée directement. En l'absence de données corners dédiées, le modèle estime la probabilité depuis le xG cumulé et l'Over 2.5 Poisson.</p>
+          <p>Terrain d'excellence : les matchs entre équipes à pressing intensif avec possession partagée (55/45 à 60/40). Les équipes longues balles — cibles de corners — sont sur-représentées dans ses sélections.</p>
+          <div class="gs-stat-block">
+            <div class="gs-stat"><div class="gs-stat-val">Over 6.5</div><div class="gs-stat-lbl">Marché corners</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">xG > 2.0</div><div class="gs-stat-lbl">Seuil de déclenchement</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">≥ 50%</div><div class="gs-stat-lbl">Confiance min.</div></div>
+          </div>
+        </div>
+        <div class="gs-article-media">
+          <div class="gs-img-frame">
+            <img src="/placeholder-corneriste.jpg" alt="Le Corneriste Over 6.5 Corners"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="gs-img-placeholder">
+              <span>LE CORNERISTE</span>
+              <small>OVER 6.5 CORNERS</small>
+            </div>
+          </div>
+          <div class="gs-caption">Corrélation xG total / corners observés — 2 400 matchs de Ligue 1, Premier League et Bundesliga (saison 2024-25).</div>
+        </div>
+      </div>
+    </article>
 
     <div id="ev" class="guide-section-header">
       <span class="guide-section-icon">🎰</span>
@@ -6102,13 +6229,16 @@ function openTeamDetail(teamNameOrId) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité équipe en cours de développement.'); return; }
   modal.style.display = 'flex';
-  document.getElementById('team-detail-content').innerHTML = '<div style="padding:40px;text-align:center;">Chargement...</div>';
+  const _tdContent = document.getElementById('team-detail-content');
+  _tdContent.style.background = 'var(--bg2)';
+  _tdContent.style.padding = '30px';
+  _tdContent.innerHTML = '<div style="padding:40px;text-align:center;">Chargement...</div>';
   fetch('/api/v1/team?name=' + encodeURIComponent(teamNameOrId))
     .then(r => r.json())
     .then(data => {
-      if (data.error) { document.getElementById('team-detail-content').innerHTML = '<div style="padding:40px;color:var(--red);">'+data.error+'</div>'; return; }
+      if (data.error) { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">'+data.error+'</div>'; return; }
       const t = data;
-      document.getElementById('team-detail-content').innerHTML = `
+      _tdContent.innerHTML = `
         <div style="max-width:600px;margin:0 auto;">
           ${t.logo ? `<img src="${t.logo}" style="width:60px;height:60px;object-fit:contain;margin-bottom:10px;">` : ''}
           <h2 style="margin:0 0 10px">${t.name||teamNameOrId}</h2>
@@ -6122,35 +6252,116 @@ function openTeamDetail(teamNameOrId) {
           <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
         </div>`;
     })
-    .catch(e => { document.getElementById('team-detail-content').innerHTML = '<div style="padding:40px;color:var(--red);">Erreur chargement équipe</div>'; });
+    .catch(() => { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">Erreur chargement équipe</div>'; });
 }
 
 function openPlayerDetail(playerName) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité joueur en cours de développement.'); return; }
   modal.style.display = 'flex';
-  document.getElementById('team-detail-content').innerHTML = '<div style="padding:40px;text-align:center;">Chargement...</div>';
+  const _pdContent = document.getElementById('team-detail-content');
+  _pdContent.style.background = '#fff';
+  _pdContent.style.padding = '0';
+  _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;">Chargement...</div>';
   fetch('/api/v1/player?name=' + encodeURIComponent(playerName))
     .then(r => r.json())
     .then(data => {
-      if (data.error) { document.getElementById('team-detail-content').innerHTML = '<div style="padding:40px;color:var(--red);">'+data.error+'</div>'; return; }
+      if (data.error) { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">'+data.error+'</div>'; return; }
       const p = data;
-      document.getElementById('team-detail-content').innerHTML = `
-        <div style="max-width:600px;margin:0 auto;">
-          ${p.photo ? `<img src="${p.photo}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px;">` : ''}
-          <h2 style="margin:0 0 10px">${p.name||playerName}</h2>
-          <div style="color:var(--text3);margin-bottom:20px;">${p.position||''} · ${p.team?.name||''} · ${p.age ? p.age + ' ans' : ''}</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0;">
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--blue)">${p.stats?.[0]?.goals||'—'}</div><div style="font-size:10px;color:var(--text3)">Buts</div></div>
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--green)">${p.stats?.[0]?.assists||'—'}</div><div style="font-size:10px;color:var(--text3)">Passes</div></div>
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--purple)">${p.stats?.[0]?.matches||'—'}</div><div style="font-size:10px;color:var(--text3)">Matchs</div></div>
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--orange)">${p.stats?.[0]?.rating?.toFixed(1)||'—'}</div><div style="font-size:10px;color:var(--text3)">Note</div></div>
+      const s = p.season_stats || {};
+      const base = s.base || {};
+      const shoot = s.shooting || {};
+      const exp = s.expected || {};
+      const per90 = s.per90 || {};
+      const form = p.form_l5 || [];
+
+      const fmt = (v, dec=0) => (v != null && v !== '' && !isNaN(v)) ? Number(v).toFixed(dec) : '—';
+      const convFmt = shoot.conversion_rate != null
+        ? (shoot.conversion_rate <= 1 ? Math.round(shoot.conversion_rate * 100) + '%' : Math.round(shoot.conversion_rate) + '%')
+        : '—';
+      const ratingColor = base.avg_rating >= 7.5 ? '#E2001A' : base.avg_rating >= 6.5 ? '#1A1A1A' : '#999';
+
+      const kpis = [
+        { label: 'Buts', val: fmt(base.goals), color: '#E2001A' },
+        { label: 'Passes D.', val: fmt(base.assists), color: '#1A1A1A' },
+        { label: 'xG Total', val: fmt(exp.xg_total, 2), color: '#E2001A' },
+        { label: 'Tirs Cadrés', val: fmt(shoot.shots_on_target), color: '#1A1A1A' },
+        { label: 'Conversion', val: convFmt, color: '#1A1A1A' },
+        { label: 'Note Moy.', val: fmt(base.avg_rating, 1), color: ratingColor },
+      ];
+
+      const formRows = form.map(f => {
+        const goalsCell = f.goals > 0 ? `<span style="color:#E2001A;font-weight:700;">${f.goals}</span>` : `<span style="color:#bbb;">0</span>`;
+        const xgFmt = f.xg != null ? Number(f.xg).toFixed(2) : '—';
+        const oppLabel = (f.is_home ? 'vs ' : '@ ') + (f.opponent || '?');
+        const dateStr = f.date ? f.date.slice(0, 10) : '';
+        const minsStr = f.minutes_played != null ? f.minutes_played + "'" : '—';
+        const noteColor = f.rating >= 7.5 ? '#E2001A' : f.rating >= 6.5 ? '#1A1A1A' : '#999';
+        return `<tr style="border-bottom:1px solid #f0f0f0;">
+          <td style="padding:6px 8px;font-size:11px;color:#888;">${dateStr}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#1A1A1A;font-weight:500;">${oppLabel}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;color:#666;">${minsStr}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;">${goalsCell}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;color:#666;">${f.assists || 0}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;color:#E2001A;font-weight:600;">${xgFmt}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;color:${noteColor};font-weight:600;">${f.rating != null ? Number(f.rating).toFixed(1) : '—'}</td>
+        </tr>`;
+      }).join('');
+
+      const per90Items = [
+        per90.xg_per90 != null ? `<div><span style="color:#888;font-size:11px;">xG/90</span> <strong style="color:#E2001A;">${fmt(per90.xg_per90, 2)}</strong></div>` : '',
+        per90.goals_per90 != null ? `<div><span style="color:#888;font-size:11px;">Buts/90</span> <strong style="color:#1A1A1A;">${fmt(per90.goals_per90, 2)}</strong></div>` : '',
+        per90.shots_per90 != null ? `<div><span style="color:#888;font-size:11px;">Tirs/90</span> <strong style="color:#1A1A1A;">${fmt(per90.shots_per90, 1)}</strong></div>` : '',
+        per90.assists_per90 != null ? `<div><span style="color:#888;font-size:11px;">Passes/90</span> <strong style="color:#1A1A1A;">${fmt(per90.assists_per90, 2)}</strong></div>` : '',
+        exp.xg_overperformance != null ? `<div><span style="color:#888;font-size:11px;">Surperf.</span> <strong style="color:${exp.xg_overperformance > 0 ? '#E2001A' : '#999'};">${exp.xg_overperformance > 0 ? '+' : ''}${fmt(exp.xg_overperformance, 2)}</strong></div>` : '',
+      ].filter(Boolean).join('');
+
+      _pdContent.innerHTML = `
+        <div style="max-width:620px;margin:0 auto;background:#fff;color:#1A1A1A;font-family:'Instrument Sans',sans-serif;padding:30px;border-radius:12px;">
+          <div style="display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:3px solid #E2001A;margin-bottom:20px;">
+            ${p.photo
+              ? `<img src="${p.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #E2001A;flex-shrink:0;">`
+              : `<div style="width:72px;height:72px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#ccc;flex-shrink:0;">${(p.name||playerName).charAt(0).toUpperCase()}</div>`}
+            <div>
+              <div style="font-size:20px;font-weight:700;line-height:1.2;">${p.name||playerName}</div>
+              <div style="font-size:12px;color:#555;margin-top:4px;">${p.specific_position||p.position||''} · ${p.team?.name||''}</div>
+              <div style="font-size:11px;color:#999;margin-top:2px;">${p.nationality||''}${p.age ? ' · '+p.age+' ans' : ''}${p.preferred_foot ? ' · '+p.preferred_foot : ''}</div>
+              ${s.competition ? `<div style="font-size:10px;color:#E2001A;font-weight:700;margin-top:5px;text-transform:uppercase;letter-spacing:0.5px;">${s.competition}${s.season ? ' '+s.season : ''}</div>` : ''}
+            </div>
           </div>
-          ${p.stats && p.stats.length > 1 ? `<div style="margin-top:15px;"><h4 style="font-size:12px;color:var(--text3);margin-bottom:8px;">Saisons precedentes</h4>` + p.stats.slice(1).map(s => `<div style="font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);">${s.season||'N/A'} ${s.competition||''}: ${s.goals}bp / ${s.assists}pa / ${s.matches}m</div>`).join('') + '</div>' : ''}
-          <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
+            ${kpis.map(k => `<div style="background:#f8f8f8;border-radius:8px;padding:12px 8px;text-align:center;border-top:3px solid ${k.color};">
+              <div style="font-size:22px;font-weight:700;color:${k.color};">${k.val}</div>
+              <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${k.label}</div>
+            </div>`).join('')}
+          </div>
+
+          ${per90Items ? `<div style="background:#f8f8f8;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">${per90Items}</div>` : ''}
+
+          ${form.length ? `
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.8px;margin-bottom:8px;">5 derniers matchs</div>
+            <table style="width:100%;border-collapse:collapse;background:#fff;">
+              <thead>
+                <tr style="background:#E2001A;color:#fff;">
+                  <th style="padding:7px 8px;font-size:10px;text-align:left;font-weight:600;">Date</th>
+                  <th style="padding:7px 8px;font-size:10px;text-align:left;font-weight:600;">Adversaire</th>
+                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Min</th>
+                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Buts</th>
+                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Passes</th>
+                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">xG</th>
+                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Note</th>
+                </tr>
+              </thead>
+              <tbody>${formRows}</tbody>
+            </table>
+          </div>` : ''}
+
+          <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="width:100%;padding:12px;background:#E2001A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;letter-spacing:0.3px;">Fermer</button>
         </div>`;
     })
-    .catch(e => { document.getElementById('team-detail-content').innerHTML = '<div style="padding:40px;color:var(--red);">Erreur chargement joueur</div>'; });
+    .catch(() => { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">Erreur chargement joueur</div>'; });
 }
 
 function toggleFavFilter() {
@@ -6448,7 +6659,6 @@ function renderTopButteurs(buts) {
     const teamLbl = b.team === 'home' ? 'D' : 'E';
     const xg = b.xgPerMatch || 0;
     const gpM = b.goalsPerMatch || 0;
-    const hot = gpM >= 0.4; // 🔥 si ≥0.4 buts/match
     const totalGoals = b.goals || 0;
     const totalXG = b.xgTotal || 0;
     const matchCount = b.matches || 0;
@@ -6460,7 +6670,7 @@ function renderTopButteurs(buts) {
     const perfLabel = totalXG > 0 && totalGoals > totalXG ? '⚠ Surperforme' : totalXG > 0 && totalGoals < totalXG ? '📈 Sous-performe (value)' : '';
     return `<div class="buteur-row" title="Buts: ${totalGoals} | xG: ${totalXG} | Matchs: ${matchCount}&#10;Ratio buts/xG: ${ratio} ${perfLabel}&#10;xG/match: ${xg} | Buts/match: ${gpM}">
       <span class="buteur-badge" style="background:${teamClr}20;color:${teamClr};border:1px solid ${teamClr}40;">${teamLbl}</span>
-      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" onclick="trackClick('player','${(b.name||'').replace(/'/g,"\\'")}',event)" title="Voir fiche joueur">${hot?'🔥 ':''}${b.name}</span>
+      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" onclick="trackClick('player','${(b.name||'').replace(/'/g,"\\'")}',event)" title="Voir fiche joueur">${b.name}</span>
       <span class="buteur-bar-wrap"><span class="buteur-bar" style="width:${barW}%;background:${barClr};"></span></span>
       <span class="buteur-xg" style="color:${barClr};">${xg.toFixed(2)}</span>
       <span class="buteur-pct" style="color:${pctClr};">${pct}%</span>
@@ -10958,6 +11168,7 @@ const STRATEGIES_UI = [
   { key: 'DRAW',            label: 'Match Nul',             icon: '', tipster: 'Le Diplomate' },
   { key: 'CS_00',           label: 'Score 0-0',             icon: '', tipster: 'Le Sceptique' },
   { key: 'ANGLE_CORNERS',   label: 'Angle Corners',         icon: '', tipster: 'Le Géomètre' },
+  { key: 'OVER_6_5_CORNERS', label: 'Over 6.5 Corners',     icon: '', tipster: 'Le Corneriste' },
   { key: 'VERROU_TACTIQUE', label: 'Verrou Tactique (U3.5)',icon: '', tipster: 'Le Verrou' },
   { key: 'GOLDEN_PPG_GAP',  label: 'Golden PPG Gap',        icon: '', tipster: 'L\'Éclaireur' },
   { key: 'DC_HOME',           label: 'Double Chance 1X',      icon: '', tipster: 'Le Couvreur' },
@@ -11055,7 +11266,7 @@ function strategyBadgeClass(key) {
   const m = {
     BTTS_YES: 'btts', OVER_2_5: 'over25', OVER_1_5: 'over15', UNDER_2_5: 'under25',
     VERROU_TACTIQUE: 'under35', HOME_WIN: 'home', AWAY_WIN: 'away', DRAW: 'draw',
-    CS_00: 'cs00', ANGLE_CORNERS: 'corners', GOLDEN_PPG_GAP: 'ppggap',
+    CS_00: 'cs00', ANGLE_CORNERS: 'corners', OVER_6_5_CORNERS: 'corners65', GOLDEN_PPG_GAP: 'ppggap',
     DC_HOME: 'dc', DC_AWAY: 'dc', HT_HOME_FT_HOME: 'hthome', HT_UNDER_FT_OVER: 'htunder',
   };
   return m[key] || 'draw';
@@ -11063,7 +11274,7 @@ function strategyBadgeClass(key) {
 
 // Avatar color per strategy badge class
 function strategyAvatarColor(badgeCls) {
-  const m = { btts:'#00c853', over25:'#ff8f00', over15:'#f9a825', under25:'#0277bd', under35:'#0288d1', home:'#7b1fa2', away:'#c62828', draw:'#616161', cs00:'#546e7a', corners:'#00838f', ppggap:'#f9a825', dc:'#64dd17', hthome:'#ad1457', htunder:'#d84315' };
+  const m = { btts:'#00c853', over25:'#ff8f00', over15:'#f9a825', under25:'#0277bd', under35:'#0288d1', home:'#7b1fa2', away:'#c62828', draw:'#616161', cs00:'#546e7a', corners:'#00838f', corners65:'#006064', ppggap:'#f9a825', dc:'#64dd17', hthome:'#ad1457', htunder:'#d84315' };
   return m[badgeCls] || '#616161';
 }
 
@@ -12988,7 +13199,7 @@ document.addEventListener('keydown', e => {
 </script>
 
 <div id="team-detail-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:1050;" onclick="if(event.target===this)this.style.display='none'">
-  <div id="team-detail-content" style="background:var(--bg2);border-radius:12px;padding:30px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;"></div>
+  <div id="team-detail-content" style="background:var(--bg2);border-radius:12px;padding:30px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;box-sizing:border-box;"></div>
 </div>
 <div id="odds-graph-tooltip"></div>
 
