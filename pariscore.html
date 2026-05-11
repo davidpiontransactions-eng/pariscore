@@ -3290,6 +3290,72 @@
   }
   .price-btn-green:hover { background: var(--accent-dim) !important; }
 
+  /* ── GUIDE — Charte L'Équipe ────────────────────────────── */
+  body:not(.dark-theme) .guide-card-visual {
+    border-radius: 0;
+    border: 2px solid #1a1a1a;
+    background: #fff;
+  }
+  body:not(.dark-theme) .guide-card-visual:hover {
+    border-color: #ed1c24;
+    box-shadow: 4px 4px 0 #ed1c24;
+    transform: translateY(-2px);
+  }
+  body:not(.dark-theme) .guide-card-visual img {
+    border-bottom: 2px solid #1a1a1a;
+    filter: none;
+  }
+  body:not(.dark-theme) .guide-card-icon {
+    border-radius: 0;
+    background: #ed1c24;
+    color: #fff;
+    font-size: 18px;
+    line-height: 44px;
+    text-align: center;
+  }
+  body:not(.dark-theme) .guide-card-title {
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: #1a1a1a;
+  }
+  body:not(.dark-theme) .guide-section-header {
+    border-bottom: 3px solid #ed1c24;
+    border-top: none;
+    background: none;
+  }
+  body:not(.dark-theme) .guide-section-header h2 {
+    color: #1a1a1a;
+    font-size: 22px;
+    font-family: var(--font-head);
+  }
+  body:not(.dark-theme) .guide-section-icon { display: none; }
+  /* Nav arrows guide */
+  body:not(.dark-theme) .guide-nav-arrow {
+    background: #fff;
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
+    border-radius: 0;
+    font-weight: 700;
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 13px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  body:not(.dark-theme) .guide-nav-arrow:hover:not(.disabled) {
+    background: #ed1c24;
+    border-color: #ed1c24;
+    color: #fff;
+  }
+  body:not(.dark-theme) .guide-nav-arrow.disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+  }
+
   /* ── PHASE 5 : FOND SECTIONS — neutraliser les verts ──── */
 
   /* Radial gradients verts → rouge accent en light mode */
@@ -4854,86 +4920,86 @@
 
   <section class="guide-container" style="max-width:1200px;margin:0 auto;padding:32px 20px;">
     
-    <div class="guide-section-header">
+    <div id="guide-stats-section" class="guide-section-header">
       <span class="guide-section-icon">📊</span>
       <h2>Comprendre les Statistiques</h2>
     </div>
     
     <div class="guide-cards-grid">
       <div id="elo" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=ELO+Ranking" alt="ELO Ranking">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=ELO+Ranking" alt="ELO Ranking">
         <div class="guide-card-body">
-          <div class="guide-card-icon">🏆</div>
+          <div class="guide-card-icon">ELO</div>
           <div class="guide-card-title">Classement ELO</div>
           <div class="guide-card-desc">Le système de notation ELO évalue la force des équipes sur une échelle de 2500+ (top) à moins de 1500. Mis à jour en temps réel.</div>
-          <a class="guide-card-link" onclick="scrollToSection('elo')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="guideNavigate(1);return false;">Section suivante →</a>
         </div>
       </div>
 
       <div id="poisson" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Poisson+Distribution" alt="Poisson Distribution">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Poisson+Distribution" alt="Poisson Distribution">
         <div class="guide-card-body">
-          <div class="guide-card-icon">📈</div>
+          <div class="guide-card-icon">P(λ)</div>
           <div class="guide-card-title">Distribution de Poisson</div>
           <div class="guide-card-desc">Modèle probabiliste calculant la probabilité de chaque score basé sur la moyenne de buts attendus (xG) des deux équipes.</div>
-          <a class="guide-card-link" onclick="scrollToSection('poisson')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-filtres-section');return false;">Modes de jeu →</a>
         </div>
       </div>
 
       <div id="xg" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=xG+Expected+Goals" alt="xG">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=xG+Expected+Goals" alt="xG">
         <div class="guide-card-body">
-          <div class="guide-card-icon">🎯</div>
+          <div class="guide-card-icon">xG</div>
           <div class="guide-card-title">xG (Expected Goals)</div>
           <div class="guide-card-desc">Métrique avancée mesurant la qualité des occasions créées. Plus précis que les statistiques brutes pour prédire les performances futures.</div>
-          <a class="guide-card-link" onclick="scrollToSection('xg')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-filtres-section');return false;">Modes de jeu →</a>
         </div>
       </div>
 
       <div id="forme" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Form+Sparkline" alt="Form Sparkline">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Form+L5" alt="Form Sparkline">
         <div class="guide-card-body">
-          <div class="guide-card-icon">📉</div>
+          <div class="guide-card-icon">L5</div>
           <div class="guide-card-title">Forme Récente (Sparkline)</div>
           <div class="guide-card-desc">Visualisation compacte des 5 derniers résultats: W (victoire), D (nul), L (défaite). Identifiez rapidement la dynamique d'une équipe.</div>
-          <a class="guide-card-link" onclick="scrollToSection('forme')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-filtres-section');return false;">Modes de jeu →</a>
         </div>
       </div>
     </div>
 
-    <div class="guide-section-header">
+    <div id="guide-filtres-section" class="guide-section-header">
       <span class="guide-section-icon">🔍</span>
       <h2>Modes de Jeu & Filtres</h2>
     </div>
 
     <div class="guide-cards-grid">
       <div id="live" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Mode+Live" alt="Mode Live">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Mode+Live" alt="Mode Live">
         <div class="guide-card-body">
-          <div class="guide-card-icon">🔴</div>
+          <div class="guide-card-icon">LIVE</div>
           <div class="guide-card-title">Mode Live</div>
           <div class="guide-card-desc">Suivez les matchs en cours avec scores réels, statistiques live (possession, tirs, xG) et mises à jour minute par minute.</div>
-          <a class="guide-card-link" onclick="scrollToSection('live')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-strategies');return false;">Stratégies →</a>
         </div>
       </div>
 
       <div id="filtres" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Filtre+Pays+Ligue" alt="Filtres">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Filtres+Pays+Ligue" alt="Filtres">
         <div class="guide-card-body">
-          <div class="guide-card-icon">🌍</div>
+          <div class="guide-card-icon">FILTR</div>
           <div class="guide-card-title">Filtres Pays & Ligues</div>
           <div class="guide-card-desc">Sélectionnez un ou plusieurs pays/ligues. Tri possible par heure de coup d'envoi (1h, 2h, 6h) pour planifier vos paris.</div>
-          <a class="guide-card-link" onclick="scrollToSection('filtres')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-strategies');return false;">Stratégies →</a>
         </div>
       </div>
 
       <div id="value" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/1a1a1f/ff1f2d?text=Value+Bets" alt="Value Bets">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Value+Bets+EV" alt="Value Bets">
         <div class="guide-card-body">
-          <div class="guide-card-icon">💎</div>
+          <div class="guide-card-icon">EV%</div>
           <div class="guide-card-title">Value Bets</div>
           <div class="guide-card-desc">Filtrez les paris avec un edge positif (≥3%). Identifiez les opportunités où les cotes offrent une valeur supérieure à la probabilité réelle.</div>
-          <a class="guide-card-link" onclick="scrollToSection('value')">Voir le détail →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-strategies');return false;">Stratégies →</a>
         </div>
       </div>
     </div>
@@ -5055,16 +5121,22 @@
     </div>
 
     <div class="guide-card-visual" style="max-width:600px;">
-      <img src="https://placehold.co/600x300/1a1a1f/00e67e?text=Expected+Value+Calculator" alt="EV Calculator">
+      <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Expected+Value+EV" alt="EV Calculator">
       <div class="guide-card-body">
-        <div class="guide-card-icon" style="background:rgba(0,230,126,0.15);">🧮</div>
+        <div class="guide-card-icon">EV</div>
         <div class="guide-card-title">Comment calculer l'EV?</div>
         <div class="guide-card-desc">
           <strong>Formule:</strong> EV = (Probabilité de gain × Gain) - (Probabilité de perte × Mise)<br><br>
-          <strong>Exemple:</strong> Cote à 2.50, probabilité estimée 45% → EV = (0.45 × 1.50) - (0.55 × 1) = <span style="color:#00e67e">+0.125</span> (positive!)
+          <strong>Exemple:</strong> Cote à 2.50, probabilité estimée 45% → EV = (0.45 × 1.50) - (0.55 × 1) = <span style="color:#ed1c24;font-weight:700;">+0.125</span> (positive!)
         </div>
-        <a class="guide-card-link" onclick="scrollToSection('ev')">Exemples détaillés →</a>
+        <a class="guide-card-link" onclick="scrollToSection('guide-stats-section');return false;">Revenir au début →</a>
       </div>
+    </div>
+
+    <!-- Navigation guide -->
+    <div class="guide-nav-arrows" id="guide-nav-arrows" style="display:flex;gap:12px;margin:36px 0 16px;">
+      <a class="guide-nav-arrow disabled" id="guide-prev-btn" onclick="guideNavigate(-1);return false;">← Précédent</a>
+      <a class="guide-nav-arrow" id="guide-next-btn" onclick="guideNavigate(1);return false;">Suivant →</a>
     </div>
 
   </section>
@@ -5406,7 +5478,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'strategies')  initStrategiesPage();
   if (pageId === 'tendances')   loadTrends();
   if (pageId === 'alertes')    initAlertesPage();
-  if (pageId === 'guide')    loadGuidePage();
+  if (pageId === 'guide')    initStaticGuideNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -11828,6 +11900,23 @@ function scrollToSection(sectionId) {
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+function initStaticGuideNav() {
+  if (guideLoaded) return;
+  // Collect all navigable section anchors from the static guide
+  const sections = Array.from(document.querySelectorAll(
+    '#page-guide h2, #page-guide .gs-article-title'
+  ));
+  if (!sections.length) return;
+  window.guideSections = sections;
+  window.guideCurrentSection = 0;
+  guideLoaded = true;
+  // Sync button states
+  const prev = document.getElementById('guide-prev-btn');
+  const next = document.getElementById('guide-next-btn');
+  if (prev) prev.classList.add('disabled');
+  if (next) next.classList.toggle('disabled', sections.length <= 1);
 }
 
 function loadGuidePage() {
