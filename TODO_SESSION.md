@@ -2,7 +2,8 @@
 
 ## Priorité Haute
 
-- [ ] Fix du layout Guide : supprimer les chevauchements de texte et passer au design épuré L'Équipe.
+- [x] Fix du layout Guide : supprimer les chevauchements de texte et passer au design épuré L'Équipe.
+- [ ] Intégration des photos joueurs réelles et complétion de l'historique des matchs (Opposant + Logos).
 
 ## En Cours / A Finaliser
 

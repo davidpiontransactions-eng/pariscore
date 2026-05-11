@@ -6359,11 +6359,12 @@ function openPlayerDetail(playerName) {
   const _pdContent = document.getElementById('team-detail-content');
   _pdContent.style.background = '#fff';
   _pdContent.style.padding = '0';
-  _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;">Chargement...</div>';
+  _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">Chargement...</div>';
+
   fetch('/api/v1/player?name=' + encodeURIComponent(playerName))
     .then(r => r.json())
     .then(data => {
-      if (data.error) { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">'+data.error+'</div>'; return; }
+      if (data.error) { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">' + data.error + '</div>'; return; }
       const p = data;
       const s = p.season_stats || {};
       const base = s.base || {};
@@ -6376,7 +6377,45 @@ function openPlayerDetail(playerName) {
       const convFmt = shoot.conversion_rate != null
         ? (shoot.conversion_rate <= 1 ? Math.round(shoot.conversion_rate * 100) + '%' : Math.round(shoot.conversion_rate) + '%')
         : '—';
-      const ratingColor = base.avg_rating >= 7.5 ? '#E2001A' : base.avg_rating >= 6.5 ? '#1A1A1A' : '#999';
+
+      // SVG silhouette neutre pour fallback photo
+      const SILHOUETTE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23f0f0f0'/%3E%3Ccircle cx='40' cy='28' r='16' fill='%23d0d0d0'/%3E%3Cellipse cx='40' cy='74' rx='26' ry='18' fill='%23d0d0d0'/%3E%3C/svg%3E";
+
+      const photoHtml = `<img
+        src="${p.photo || SILHOUETTE}"
+        onerror="this.onerror=null;this.src='${SILHOUETTE}'"
+        style="width:72px;height:72px;object-fit:cover;border:2px solid #E2001A;flex-shrink:0;border-radius:0;">`;
+
+      // Badge note coloré
+      const ratingBadge = r => {
+        if (r == null) return '<span style="color:#ccc;font-size:10px;">—</span>';
+        const rv = Number(r).toFixed(1);
+        const bg = r >= 7.5 ? '#E2001A' : r >= 6.5 ? '#1A1A1A' : '#999';
+        return `<span style="background:${bg};color:#fff;font-size:10px;font-weight:700;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.03em;">${rv}</span>`;
+      };
+
+      // Badge résultat V/N/D
+      const resultBadge = res => {
+        if (!res) return '';
+        const r = String(res).toUpperCase();
+        const isW = r === 'W' || r === 'WIN' || r === 'WON';
+        const isD = r === 'D' || r === 'DRAW';
+        const bg = isW ? '#00A651' : isD ? '#888' : '#E2001A';
+        const lbl = isW ? 'V' : isD ? 'N' : 'D';
+        return `<span style="background:${bg};color:#fff;font-size:9px;font-weight:700;padding:1px 5px;margin-left:5px;font-family:'DM Mono',monospace;">${lbl}</span>`;
+      };
+
+      // Logo adversaire avec fallback initiale
+      const oppCell = (logo, name) => {
+        const nm = name || '?';
+        const init = nm.charAt(0).toUpperCase();
+        const fallbackSpan = `<span style="display:inline-flex;width:18px;height:18px;background:#e8e8e8;border-radius:2px;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#666;flex-shrink:0;vertical-align:middle;margin-right:5px;">${init}</span>`;
+        if (logo) {
+          return `<img src="${logo}" onerror="this.outerHTML='${fallbackSpan.replace(/"/g,"'")}'"
+            style="width:18px;height:18px;object-fit:contain;border-radius:2px;flex-shrink:0;vertical-align:middle;margin-right:5px;display:inline-block;">`;
+        }
+        return fallbackSpan;
+      };
 
       const kpis = [
         { label: 'Buts', val: fmt(base.goals), color: '#E2001A' },
@@ -6384,81 +6423,106 @@ function openPlayerDetail(playerName) {
         { label: 'xG Total', val: fmt(exp.xg_total, 2), color: '#E2001A' },
         { label: 'Tirs Cadrés', val: fmt(shoot.shots_on_target), color: '#1A1A1A' },
         { label: 'Conversion', val: convFmt, color: '#1A1A1A' },
-        { label: 'Note Moy.', val: fmt(base.avg_rating, 1), color: ratingColor },
+        { label: 'Note Moy.', val: base.avg_rating != null ? fmt(base.avg_rating, 1) : '—', color: base.avg_rating >= 7.5 ? '#E2001A' : '#1A1A1A' },
       ];
 
-      const formRows = form.map(f => {
-        const goalsCell = f.goals > 0 ? `<span style="color:#E2001A;font-weight:700;">${f.goals}</span>` : `<span style="color:#bbb;">0</span>`;
-        const xgFmt = f.xg != null ? Number(f.xg).toFixed(2) : '—';
-        const oppLabel = (f.is_home ? 'vs ' : '@ ') + (f.opponent || '?');
-        const dateStr = f.date ? f.date.slice(0, 10) : '';
-        const minsStr = f.minutes_played != null ? f.minutes_played + "'" : '—';
-        const noteColor = f.rating >= 7.5 ? '#E2001A' : f.rating >= 6.5 ? '#1A1A1A' : '#999';
-        return `<tr style="border-bottom:1px solid #f0f0f0;">
-          <td style="padding:6px 8px;font-size:11px;color:#888;">${dateStr}</td>
-          <td style="padding:6px 8px;font-size:11px;color:#1A1A1A;font-weight:500;">${oppLabel}</td>
-          <td style="padding:6px 8px;font-size:11px;text-align:center;color:#666;">${minsStr}</td>
-          <td style="padding:6px 8px;font-size:11px;text-align:center;">${goalsCell}</td>
-          <td style="padding:6px 8px;font-size:11px;text-align:center;color:#666;">${f.assists || 0}</td>
-          <td style="padding:6px 8px;font-size:11px;text-align:center;color:#E2001A;font-weight:600;">${xgFmt}</td>
-          <td style="padding:6px 8px;font-size:11px;text-align:center;color:${noteColor};font-weight:600;">${f.rating != null ? Number(f.rating).toFixed(1) : '—'}</td>
+      const formRows = form.map((f, idx) => {
+        const goalsCell = f.goals > 0
+          ? `<span style="color:#E2001A;font-weight:700;font-family:'DM Mono',monospace;">${f.goals}</span>`
+          : `<span style="color:#ccc;">0</span>`;
+        const xgFmt = f.xg > 0 ? Number(f.xg).toFixed(2) : '—';
+        const oppName = f.opponent || '?';
+        const homeTag = f.is_home === true ? '<span style="color:#bbb;font-size:8px;margin-left:3px;">(D)</span>'
+                      : f.is_home === false ? '<span style="color:#bbb;font-size:8px;margin-left:3px;">(E)</span>' : '';
+        const dateStr = f.date ? f.date.slice(5).replace('-', '/') : '—';
+        const minsStr = f.minutes_played > 0 ? f.minutes_played + "'" : '—';
+        const rowBg = idx % 2 === 0 ? '#fff' : '#fafafa';
+        return `<tr style="background:${rowBg};border-bottom:1px solid #f0f0f0;">
+          <td style="padding:7px 8px;font-size:10px;color:#aaa;font-family:'DM Mono',monospace;white-space:nowrap;">${dateStr}</td>
+          <td style="padding:7px 8px;font-size:11px;max-width:150px;">
+            <div style="display:flex;align-items:center;flex-wrap:nowrap;">
+              ${oppCell(f.opponent_logo, oppName)}
+              <span style="color:#1A1A1A;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${oppName}</span>
+              ${homeTag}${resultBadge(f.result)}
+            </div>
+          </td>
+          <td style="padding:7px 8px;font-size:10px;text-align:center;color:#aaa;font-family:'DM Mono',monospace;">${minsStr}</td>
+          <td style="padding:7px 8px;font-size:11px;text-align:center;">${goalsCell}</td>
+          <td style="padding:7px 8px;font-size:11px;text-align:center;color:#555;">${f.assists || 0}</td>
+          <td style="padding:7px 8px;font-size:10px;text-align:center;color:#E2001A;font-family:'DM Mono',monospace;font-weight:600;">${xgFmt}</td>
+          <td style="padding:7px 8px;text-align:center;">${ratingBadge(f.rating)}</td>
         </tr>`;
       }).join('');
 
       const per90Items = [
-        per90.xg_per90 != null ? `<div><span style="color:#888;font-size:11px;">xG/90</span> <strong style="color:#E2001A;">${fmt(per90.xg_per90, 2)}</strong></div>` : '',
-        per90.goals_per90 != null ? `<div><span style="color:#888;font-size:11px;">Buts/90</span> <strong style="color:#1A1A1A;">${fmt(per90.goals_per90, 2)}</strong></div>` : '',
-        per90.shots_per90 != null ? `<div><span style="color:#888;font-size:11px;">Tirs/90</span> <strong style="color:#1A1A1A;">${fmt(per90.shots_per90, 1)}</strong></div>` : '',
-        per90.assists_per90 != null ? `<div><span style="color:#888;font-size:11px;">Passes/90</span> <strong style="color:#1A1A1A;">${fmt(per90.assists_per90, 2)}</strong></div>` : '',
-        exp.xg_overperformance != null ? `<div><span style="color:#888;font-size:11px;">Surperf.</span> <strong style="color:${exp.xg_overperformance > 0 ? '#E2001A' : '#999'};">${exp.xg_overperformance > 0 ? '+' : ''}${fmt(exp.xg_overperformance, 2)}</strong></div>` : '',
+        per90.xg_per90 != null ? `<div><span style="font-size:10px;color:#888;">xG/90</span><strong style="color:#E2001A;margin-left:4px;font-family:'DM Mono',monospace;">${fmt(per90.xg_per90, 2)}</strong></div>` : '',
+        per90.goals_per90 != null ? `<div><span style="font-size:10px;color:#888;">Buts/90</span><strong style="color:#1A1A1A;margin-left:4px;font-family:'DM Mono',monospace;">${fmt(per90.goals_per90, 2)}</strong></div>` : '',
+        per90.shots_per90 != null ? `<div><span style="font-size:10px;color:#888;">Tirs/90</span><strong style="color:#1A1A1A;margin-left:4px;font-family:'DM Mono',monospace;">${fmt(per90.shots_per90, 1)}</strong></div>` : '',
+        per90.assists_per90 != null ? `<div><span style="font-size:10px;color:#888;">Passes/90</span><strong style="color:#1A1A1A;margin-left:4px;font-family:'DM Mono',monospace;">${fmt(per90.assists_per90, 2)}</strong></div>` : '',
+        exp.xg_overperformance != null ? `<div><span style="font-size:10px;color:#888;">Surperf.</span><strong style="color:${exp.xg_overperformance > 0 ? '#E2001A' : '#aaa'};margin-left:4px;font-family:'DM Mono',monospace;">${exp.xg_overperformance > 0 ? '+' : ''}${fmt(exp.xg_overperformance, 2)}</strong></div>` : '',
       ].filter(Boolean).join('');
 
+      const posLabel = [p.specific_position, p.position].filter(Boolean).join(' · ');
+      const metaLine = [p.nationality, p.age ? p.age + ' ans' : null, p.preferred_foot, p.height ? p.height + ' cm' : null].filter(Boolean).join(' · ');
+
       _pdContent.innerHTML = `
-        <div style="max-width:620px;margin:0 auto;background:#fff;color:#1A1A1A;font-family:'Instrument Sans',sans-serif;padding:30px;border-radius:12px;">
-          <div style="display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:3px solid #E2001A;margin-bottom:20px;">
-            ${p.photo
-              ? `<img src="${p.photo}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #E2001A;flex-shrink:0;">`
-              : `<div style="width:72px;height:72px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#ccc;flex-shrink:0;">${(p.name||playerName).charAt(0).toUpperCase()}</div>`}
-            <div>
-              <div style="font-size:20px;font-weight:700;line-height:1.2;">${p.name||playerName}</div>
-              <div style="font-size:12px;color:#555;margin-top:4px;">${p.specific_position||p.position||''} · ${p.team?.name||''}</div>
-              <div style="font-size:11px;color:#999;margin-top:2px;">${p.nationality||''}${p.age ? ' · '+p.age+' ans' : ''}${p.preferred_foot ? ' · '+p.preferred_foot : ''}</div>
-              ${s.competition ? `<div style="font-size:10px;color:#E2001A;font-weight:700;margin-top:5px;text-transform:uppercase;letter-spacing:0.5px;">${s.competition}${s.season ? ' '+s.season : ''}</div>` : ''}
+        <div style="max-width:600px;margin:0 auto;background:#fff;color:#1A1A1A;font-family:'Instrument Sans',sans-serif;padding:28px;">
+
+          <!-- Header joueur -->
+          <div style="display:flex;align-items:flex-start;gap:14px;padding-bottom:14px;border-bottom:3px solid #E2001A;margin-bottom:20px;">
+            ${photoHtml}
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Barlow Condensed','Instrument Sans',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:0.02em;line-height:1.1;color:#1A1A1A;">${p.name || playerName}</div>
+              ${posLabel ? `<div style="font-size:10px;color:#E2001A;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-top:3px;">${posLabel}</div>` : ''}
+              ${metaLine ? `<div style="font-size:11px;color:#888;margin-top:2px;">${metaLine}</div>` : ''}
+              ${p.team?.name ? `<div style="font-size:11px;color:#555;font-weight:600;margin-top:2px;">${p.team.name}</div>` : ''}
+              ${s.competition ? `<div style="font-size:9px;color:#E2001A;font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">${s.competition}${s.season ? ' · ' + s.season : ''}</div>` : ''}
             </div>
+            ${base.matches != null ? `<div style="text-align:right;flex-shrink:0;">
+              <div style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#1A1A1A;line-height:1;">${base.matches}</div>
+              <div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px;">matchs</div>
+            </div>` : ''}
           </div>
 
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
-            ${kpis.map(k => `<div style="background:#f8f8f8;border-radius:8px;padding:12px 8px;text-align:center;border-top:3px solid ${k.color};">
-              <div style="font-size:22px;font-weight:700;color:${k.color};">${k.val}</div>
-              <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${k.label}</div>
+          <!-- KPIs 3x2 -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+            ${kpis.map(k => `<div style="background:#f8f8f8;padding:10px 8px;text-align:center;border-top:3px solid ${k.color};">
+              <div style="font-family:'Barlow Condensed','DM Mono',monospace;font-size:20px;font-weight:900;color:${k.color};line-height:1;">${k.val}</div>
+              <div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;">${k.label}</div>
             </div>`).join('')}
           </div>
 
-          ${per90Items ? `<div style="background:#f8f8f8;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">${per90Items}</div>` : ''}
+          <!-- Band Per-90 -->
+          ${per90Items ? `<div style="background:#f8f8f8;border-left:3px solid #E2001A;padding:9px 14px;margin-bottom:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;">${per90Items}</div>` : ''}
 
+          <!-- Historique 5 matchs -->
           ${form.length ? `
           <div style="margin-bottom:20px;">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.8px;margin-bottom:8px;">5 derniers matchs</div>
-            <table style="width:100%;border-collapse:collapse;background:#fff;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#1A1A1A;border-bottom:2px solid #1A1A1A;padding-bottom:5px;margin-bottom:0;">5 Derniers Matchs</div>
+            <table style="width:100%;border-collapse:collapse;">
               <thead>
-                <tr style="background:#E2001A;color:#fff;">
-                  <th style="padding:7px 8px;font-size:10px;text-align:left;font-weight:600;">Date</th>
-                  <th style="padding:7px 8px;font-size:10px;text-align:left;font-weight:600;">Adversaire</th>
-                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Min</th>
-                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Buts</th>
-                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Passes</th>
-                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">xG</th>
-                  <th style="padding:7px 8px;font-size:10px;text-align:center;font-weight:600;">Note</th>
+                <tr style="background:#1A1A1A;color:#fff;">
+                  <th style="padding:6px 8px;font-size:9px;text-align:left;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">Date</th>
+                  <th style="padding:6px 8px;font-size:9px;text-align:left;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">Adversaire</th>
+                  <th style="padding:6px 8px;font-size:9px;text-align:center;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">Min</th>
+                  <th style="padding:6px 8px;font-size:9px;text-align:center;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;color:#ff8a80;">Buts</th>
+                  <th style="padding:6px 8px;font-size:9px;text-align:center;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">Passe</th>
+                  <th style="padding:6px 8px;font-size:9px;text-align:center;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;color:#ff8a80;">xG</th>
+                  <th style="padding:6px 8px;font-size:9px;text-align:center;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">Note</th>
                 </tr>
               </thead>
               <tbody>${formRows}</tbody>
             </table>
-          </div>` : ''}
+          </div>` : '<div style="color:#aaa;font-size:12px;margin-bottom:20px;padding:12px 0;border-top:1px solid #f0f0f0;">Aucun historique de match disponible.</div>'}
 
-          <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="width:100%;padding:12px;background:#E2001A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;letter-spacing:0.3px;">Fermer</button>
+          <!-- Bouton fermer -->
+          <button onclick="document.getElementById('team-detail-modal').style.display='none'"
+            style="width:100%;padding:11px;background:#1A1A1A;color:#fff;border:none;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;">
+            FERMER
+          </button>
         </div>`;
     })
-    .catch(() => { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">Erreur chargement joueur</div>'; });
+    .catch(() => { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;font-family:\'Instrument Sans\',sans-serif;">Erreur chargement joueur</div>'; });
 }
 
 function toggleFavFilter() {

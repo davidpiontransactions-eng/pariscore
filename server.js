@@ -535,8 +535,10 @@ async function bsdGetPlayerDetail(playerId) {
 
     const form_l5 = rawStats.slice(0, 5).map(s => ({
       date:            (s.date || s.started_at || s.event_date || '').slice(0, 10),
-      opponent:        s.opponent?.name || s.opponent || null,
+      opponent:        s.opponent?.name || (typeof s.opponent === 'string' ? s.opponent : null),
+      opponent_logo:   s.opponent?.image_path ? 'https://sports.bzzoiro.com' + s.opponent.image_path : null,
       is_home:         s.is_home !== undefined ? s.is_home : null,
+      result:          s.result || null,
       minutes_played:  s.minutes_played  || 0,
       goals:           s.goals           || 0,
       assists:         s.goal_assist      || 0,
