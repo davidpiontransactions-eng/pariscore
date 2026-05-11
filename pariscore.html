@@ -152,6 +152,7 @@
     border-color: transparent !important;
     background-color: #fff;
   }
+  body:not(.dark-theme) #odds-graph-tooltip { background:#1a1d21 !important; border-color:#333 !important; }
 
   /* hover : élévation renforcée */
   body:not(.dark-theme) .strat-card:hover,
@@ -1866,6 +1867,15 @@
     cursor:pointer;transition:all .15s;white-space:nowrap;
   }
   .live-btn:hover { background:rgba(255,77,77,0.2);border-color:#ff4d4d;transform:scale(1.05); }
+  /* DROPPING ODDS */
+  .odds-delta-pill { display:inline-flex;align-items:center;gap:3px;font:700 10px/1 var(--font-mono);padding:3px 7px;border-radius:4px;cursor:pointer;transition:opacity .15s;white-space:nowrap; }
+  .odds-delta-pill.drop { background:rgba(255,77,77,0.12);border:1px solid rgba(255,77,77,0.3);color:#ff5252; }
+  .odds-delta-pill.rise { background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);color:var(--green); }
+  .odds-delta-pill.flat { background:var(--bg4);border:1px solid var(--border);color:var(--text3); }
+  .odds-delta-pill:hover { opacity:.8; }
+  #odds-graph-tooltip { position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:260px;display:none; }
+  #odds-graph-tooltip.visible { display:block; }
+  .ogt-title { font:700 11px/1 var(--font-mono);color:var(--text2);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px; }
   /* ATTRIBUTES MODAL */
   #attributes-modal {
     display: none; position: fixed; inset: 0; z-index: 200;
@@ -4280,6 +4290,7 @@
     <button class="filter-chip" data-edge="10">+10%</button>
     <span style="font-size:11px;color:var(--text3);margin-left:8px;" id="edge-count"></span>
     <button id="fav-filter-chip" class="filter-chip" onclick="toggleFavFilter()" title="Afficher mes favoris uniquement" style="margin-left:auto;">★ Favoris</button>
+    <button id="steam-filter-chip" class="filter-chip" onclick="toggleSteamFilter()" title="Cotes en chute — dropping odds détectés" style="margin-left:4px;">📉 Steam</button>
   </div>
 
   <!-- PERIOD FILTER -->
@@ -4373,6 +4384,7 @@
             <th style="min-width:70px;">Class.</th>
             <th style="min-width:70px;">Forme</th>
             <th style="min-width:100px;">Infos</th>
+            <th style="min-width:80px;text-align:center;">Δ Cotes</th>
             <th style="min-width:200px;">Top Conseils IA</th>
             <th style="min-width:150px;">Top 3 Butteurs</th>
             <th style="min-width:100px;">Actions</th>
@@ -5172,6 +5184,7 @@ let activeEdge  = 0;       // filtre edge minimum (0 = tous)
 let matchesLoaded = false;
 let favoriteMatchIds = new Set(JSON.parse(localStorage.getItem('ps_fav') || '[]'));
 let activeFavFilter  = false;
+let activeSteamFilter = false;
 let activePeriod     = 'season'; // 'season' | 'l5' | 'l10' | 'l25'
 let activeKickoff    = 0;        // heures avant kickoff (0 = tous)
 let activeO25Min     = 0;        // % Poisson Over 2.5 minimum (0 = tous)
@@ -6069,6 +6082,87 @@ function toggleFavFilter() {
   renderMatches(allMatches);
 }
 
+function toggleSteamFilter() {
+  activeSteamFilter = !activeSteamFilter;
+  const chip = document.getElementById('steam-filter-chip');
+  if (chip) chip.classList.toggle('active', activeSteamFilter);
+  renderMatches(allMatches);
+}
+
+function renderOddsDeltaCell(m) {
+  const d = m.odds_delta;
+  if (!d) return '<span style="color:var(--text3);font-size:10px;font-family:var(--font-mono);">—</span>';
+  const vals = [
+    { label: '1', v: d.home, curr: m.odds?.home },
+    { label: 'N', v: d.draw, curr: m.odds?.draw },
+    { label: '2', v: d.away, curr: m.odds?.away },
+  ].filter(x => x.v != null && x.curr != null);
+  if (!vals.length) return '<span style="color:var(--text3);font-size:10px;font-family:var(--font-mono);">—</span>';
+  const drops = vals.filter(x => x.v < 0).sort((a, b) => a.v - b.v);
+  const best = drops[0] || vals.sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0];
+  const prev = best.curr - best.v;
+  const pct = prev > 0 ? Math.round(Math.abs(best.v) / prev * 100) : 0;
+  const cls = best.v <= -0.1 ? 'drop' : best.v >= 0.1 ? 'rise' : 'flat';
+  const arrow = best.v < 0 ? '▼' : best.v > 0 ? '▲' : '●';
+  return `<div class="odds-delta-pill ${cls}" onclick="showOddsGraph('${m.id}',event)" title="Historique des cotes — clic pour graphique">${best.label} ${arrow}${Math.abs(best.v).toFixed(2)}${pct >= 2 ? ` ${pct}%` : ''}</div>`;
+}
+
+let _oddsGraphChart = null;
+async function showOddsGraph(matchId, e) {
+  e.stopPropagation();
+  const tt = document.getElementById('odds-graph-tooltip');
+  if (!tt) return;
+  if (tt._matchId === matchId && tt.classList.contains('visible')) {
+    tt.classList.remove('visible');
+    return;
+  }
+  tt._matchId = matchId;
+  tt.classList.remove('visible');
+  tt.innerHTML = '<div class="ogt-title">Chargement…</div>';
+  const x = Math.min(e.clientX, window.innerWidth - 290);
+  const y = Math.min(e.clientY + 14, window.innerHeight - 200);
+  tt.style.left = x + 'px';
+  tt.style.top = y + 'px';
+  tt.classList.add('visible');
+  document.addEventListener('click', function closeOgt(ev) {
+    if (!tt.contains(ev.target)) { tt.classList.remove('visible'); document.removeEventListener('click', closeOgt); }
+  }, { once: true });
+  try {
+    const r = await fetch(`/api/v1/odds-history/${encodeURIComponent(matchId)}`);
+    const d = await r.json();
+    const hist = d.history || [];
+    if (hist.length < 2) {
+      tt.innerHTML = `<div class="ogt-title">${d.home_team} – ${d.away_team}</div><div style="color:var(--text3);font-size:11px;padding:8px 0;font-family:var(--font-mono);">Pas assez d'historique (${hist.length} snapshot)</div>`;
+      return;
+    }
+    const labels = hist.map(s => new Date(s.ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+    tt.innerHTML = `<div class="ogt-title">${d.home_team} – ${d.away_team}</div><canvas id="ogt-canvas" style="width:240px;height:100px;"></canvas><div style="margin-top:6px;font-size:9px;color:var(--text3);font-family:var(--font-mono);">1 · N · 2 — ${hist.length} snapshots</div>`;
+    if (_oddsGraphChart) { _oddsGraphChart.destroy(); _oddsGraphChart = null; }
+    const ctx = document.getElementById('ogt-canvas').getContext('2d');
+    _oddsGraphChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: '1', data: hist.map(s => s.home), borderColor: '#00e676', borderWidth: 1.5, pointRadius: 2, tension: 0.3, fill: false },
+          { label: 'N', data: hist.map(s => s.draw), borderColor: '#29b6f6', borderWidth: 1.5, pointRadius: 2, tension: 0.3, fill: false },
+          { label: '2', data: hist.map(s => s.away), borderColor: '#ab47bc', borderWidth: 1.5, pointRadius: 2, tension: 0.3, fill: false },
+        ]
+      },
+      options: {
+        animation: false,
+        plugins: { legend: { labels: { color: '#8d9399', font: { size: 9 }, boxWidth: 10 } } },
+        scales: {
+          x: { ticks: { color: '#5a6068', font: { size: 8 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { ticks: { color: '#5a6068', font: { size: 8 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        }
+      }
+    });
+  } catch {
+    tt.innerHTML = '<div class="ogt-title" style="color:var(--red)">Erreur chargement</div>';
+  }
+}
+
 function setPeriod(period, btn) {
   activePeriod = period;
   document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
@@ -6773,6 +6867,14 @@ function renderMatches(matches) {
     filtered = filtered.filter(m => favoriteMatchIds.has(m.id));
   }
 
+  // Filtre steam drop (dropping odds détectés)
+  if (activeSteamFilter) {
+    filtered = filtered.filter(m => {
+      const d = m.odds_delta;
+      return d && [d.home, d.draw, d.away].some(v => v != null && v <= -0.05);
+    });
+  }
+
   // Filtre kickoff (prochaines X heures)
   if (activeKickoff > 0) {
     const now = Date.now();
@@ -7068,6 +7170,9 @@ const label = country
         </div>
         ${m.h2h ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H: <span style="color:${m.h2h.wins>=3?'#E2001A':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span></div>` : ''}
         ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span></div>` : ''}</td>
+      <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
+        ${renderOddsDeltaCell(m)}
+      </td>
       <td>
         <div class="t3c-wrap">${top3}</div>
       </td>
@@ -12793,6 +12898,7 @@ document.addEventListener('keydown', e => {
 <div id="team-detail-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:1050;" onclick="if(event.target===this)this.style.display='none'">
   <div id="team-detail-content" style="background:var(--bg2);border-radius:12px;padding:30px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;"></div>
 </div>
+<div id="odds-graph-tooltip"></div>
 </script>
 </body>
 </html>

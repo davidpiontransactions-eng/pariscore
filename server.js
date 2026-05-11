@@ -1,10 +1,10 @@
-/**alert("ALERTE : Le fichier JS est bien connecté !");
- * 
+/*const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
+
  * ══════════════════════════════════════════════════════════════════════════════
  *  PariScore — Backend Serveur-Centrique v2.0
  * ══════════════════════════════════════════════════════════════════════════════
  *  Zéro dépendance npm. Modules Node.js natifs uniquement.
- *
+
  *  Lancement :
  *    1. Placez un fichier .env à côté de server.js (cf. .env.example)
  *    2. node server.js
@@ -19,18 +19,18 @@
  * ══════════════════════════════════════════════════════════════════════════════
  */
 
-const http     = require('http');
-const https    = require('https');
-const fs       = require('fs');
-const path     = require('path');
-const crypto   = require('crypto');
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const Database = require('better-sqlite3');
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-const SQLITE_FILE   = process.env.DATABASE_PATH || path.join(__dirname, 'pariscore.db');
+const SQLITE_FILE = process.env.DATABASE_PATH || path.join(__dirname, 'pariscore.db');
 // Conservés uniquement pour migration one-shot depuis les anciens fichiers JSON
-const DB_FILE       = path.join(__dirname, 'database.json');
+const DB_FILE = path.join(__dirname, 'database.json');
 const AI_CACHE_FILE = path.join(__dirname, 'ai_cache.json');
 
 // Charger .env manuellement (pas de dotenv)
@@ -53,29 +53,30 @@ function loadEnv() {
 }
 loadEnv();
 
-const ODDS_API_KEY            = process.env.ODDS_API_KEY;
-const API_FOOTBALL_KEY        = process.env.API_FOOTBALL_KEY;
-const GEMINI_API_KEY          = process.env.GEMINI_API_KEY;
-const GROQ_API_KEY            = process.env.GROQ_API_KEY;       // free: api.groq.com
-const XAI_API_KEY             = process.env.XAI_API_KEY;        // free tier: api.x.ai (Grok)
-const OPENROUTER_API_KEY      = process.env.OPENROUTER_API_KEY; // free models: openrouter.ai
-const PARLAY_API_HOST         = process.env.PARLAY_API_HOST;
-const PARLAY_API_PATH         = process.env.PARLAY_API_PATH || '/parlay';
-const PARLAY_API_KEY          = process.env.PARLAY_API_KEY;
-const GAMEFORECAST_API_HOST   = process.env.GAMEFORECAST_API_HOST;
-const GAMEFORECAST_API_PATH   = process.env.GAMEFORECAST_API_PATH || '/forecast';
-const GAMEFORECAST_API_KEY    = process.env.GAMEFORECAST_API_KEY;
+const ODDS_API_KEY = process.env.ODDS_API_KEY;
+const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;       // free: api.groq.com
+const XAI_API_KEY = process.env.XAI_API_KEY;        // free tier: api.x.ai (Grok)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // free models: openrouter.ai
+const PARLAY_API_HOST = process.env.PARLAY_API_HOST;
+const PARLAY_API_PATH = process.env.PARLAY_API_PATH || '/parlay';
+const PARLAY_API_KEY = process.env.PARLAY_API_KEY;
+const GAMEFORECAST_API_HOST = process.env.GAMEFORECAST_API_HOST;
+const GAMEFORECAST_API_PATH = process.env.GAMEFORECAST_API_PATH || '/forecast';
+const GAMEFORECAST_API_KEY = process.env.GAMEFORECAST_API_KEY;
+const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
 
 // ── AI Provider chain (Deep Analysis) — premier disponible utilisé ──────────
 // Ordre : Gemini → Groq → Grok (xAI) → OpenRouter
 const AI_DEEP_PROVIDERS = [];
-if (GEMINI_API_KEY)       AI_DEEP_PROVIDERS.push({ name: 'Gemini',      type: 'gemini' });
-if (GROQ_API_KEY)         AI_DEEP_PROVIDERS.push({ name: 'Groq/Llama',  type: 'openai', host: 'api.groq.com',      path: '/openai/v1/chat/completions',  key: GROQ_API_KEY,       model: 'llama-3.3-70b-versatile' });
-if (XAI_API_KEY)          AI_DEEP_PROVIDERS.push({ name: 'Grok (xAI)',  type: 'openai', host: 'api.x.ai',          path: '/v1/chat/completions',          key: XAI_API_KEY,        model: 'grok-3-mini' });
-if (OPENROUTER_API_KEY)   AI_DEEP_PROVIDERS.push({ name: 'OpenRouter',  type: 'openai', host: 'openrouter.ai',     path: '/api/v1/chat/completions',      key: OPENROUTER_API_KEY, model: 'meta-llama/llama-3.3-70b-instruct:free' });
+if (GEMINI_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'Gemini', type: 'gemini' });
+if (GROQ_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'Groq/Llama', type: 'openai', host: 'api.groq.com', path: '/openai/v1/chat/completions', key: GROQ_API_KEY, model: 'llama-3.3-70b-versatile' });
+if (XAI_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'Grok (xAI)', type: 'openai', host: 'api.x.ai', path: '/v1/chat/completions', key: XAI_API_KEY, model: 'grok-3-mini' });
+if (OPENROUTER_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'OpenRouter', type: 'openai', host: 'openrouter.ai', path: '/api/v1/chat/completions', key: OPENROUTER_API_KEY, model: 'meta-llama/llama-3.3-70b-instruct:free' });
 
-if (!ODDS_API_KEY)           console.warn('  ⚠ ODDS_API_KEY manquante dans .env');
-if (!API_FOOTBALL_KEY)       console.warn('  ⚠ API_FOOTBALL_KEY manquante dans .env');
+if (!ODDS_API_KEY) console.warn('  ⚠ ODDS_API_KEY manquante dans .env');
+if (!API_FOOTBALL_KEY) console.warn('  ⚠ API_FOOTBALL_KEY manquante dans .env');
 if (AI_DEEP_PROVIDERS.length === 0) console.warn('  ⚠ Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)');
 else console.log('  ✓ Providers IA:', AI_DEEP_PROVIDERS.map(p => p.name).join(' → '));
 if (PARLAY_API_HOST && !PARLAY_API_KEY) console.warn('  ⚠ PARLAY_API_KEY manquante pour Parlay-API dans .env');
@@ -83,25 +84,25 @@ if (GAMEFORECAST_API_HOST && !GAMEFORECAST_API_KEY) console.warn('  ⚠ GAMEFORE
 
 // ─── SÉCURITÉ ────────────────────────────────────────────────────────────────
 const BLOCKED_FILES = ['.env', 'database.json', 'history.json', 'ai_cache.json', 'pariscore.db', 'package.json', 'package-lock.json', '.gitignore'];
-const BLOCKED_DIRS  = ['.git', 'node_modules'];
+const BLOCKED_DIRS = ['.git', 'node_modules'];
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 Mo
-const STATS_TTL     = 6 * 3600000;    // 6h entre les mises à jour stats
+const STATS_TTL = 6 * 3600000;    // 6h entre les mises à jour stats
 const ADV_STATS_TTL = 24 * 3600000;   // 24h cache stats avancées /teams/statistics
-const AI_CACHE_TTL  = 24 * 3600000;   // 24h cache analyses Power Score par match
+const AI_CACHE_TTL = 24 * 3600000;   // 24h cache analyses Power Score par match
 
 // Paramètres Gemini partagés — sécurité BLOCK_NONE pour éviter les faux-positifs sur les stats sportives
 const GEMINI_SAFETY_SETTINGS = [
-  { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
-  { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+  { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+  { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
   { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
   { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
 ];
 
 const POWER_SCORE_LIMITS = {
-  freemium:  { daily: 1,  label: 'Freemium (1/jour)' },
-  matchday:  { daily: 5,  label: 'Matchday Pass (5/24h)' },
-  premium:   { daily: 999, label: 'Premium (illimité)' },
-  admin:     { daily: 999, label: 'Admin (illimité)' },
+  freemium: { daily: 1, label: 'Freemium (1/jour)' },
+  matchday: { daily: 5, label: 'Matchday Pass (5/24h)' },
+  premium: { daily: 999, label: 'Premium (illimité)' },
+  admin: { daily: 999, label: 'Admin (illimité)' },
 };
 
 const POWER_SCORE_SYSTEM_PROMPT = `Agis comme l'expert en data science et l'analyste de presse sportive principal de la plateforme Pariscore. Ton rôle est de fournir une analyse prédictive ultra-précise et agréable à lire pour un match de football donné, destinée à une communauté de parieurs exigeants.
@@ -148,15 +149,15 @@ Rédige ton analyse de manière fluide, professionnelle et structurée en utilis
 //  POWER SCORE V2 — Contexte Presse Réelle (RSS + GNews)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const GNEWS_API_KEY   = process.env.GNEWS_API_KEY || '';
+const GNEWS_API_KEY = process.env.GNEWS_API_KEY || '';
 const PRESS_CACHE_TTL = 24 * 3600000; // 24h
 
 // Flux RSS des sources de référence (zéro API key)
 const RSS_FEEDS = [
-  { url: 'https://www.lequipe.fr/rss.xml',                   lang: 'fr', source: "L'Equipe"   },
-  { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml',  lang: 'en', source: 'BBC Sport'  },
-  { url: 'https://www.skysports.com/rss/12040',               lang: 'en', source: 'Sky Sports' },
-  { url: 'https://www.espn.com/espn/rss/soccer/news',         lang: 'en', source: 'ESPN FC'   },
+  { url: 'https://www.lequipe.fr/rss.xml', lang: 'fr', source: "L'Equipe" },
+  { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml', lang: 'en', source: 'BBC Sport' },
+  { url: 'https://www.skysports.com/rss/12040', lang: 'en', source: 'Sky Sports' },
+  { url: 'https://www.espn.com/espn/rss/soccer/news', lang: 'en', source: 'ESPN FC' },
 ];
 
 // Parseur XML RSS minimaliste (natif — zéro dépendance)
@@ -221,7 +222,7 @@ async function fetchGNews(query, lang = 'fr') {
 // Agrège toutes les sources et retourne { text, articleCount, sourceNames } pour Gemini + UI
 async function fetchPressContext(homeTeam, awayTeam) {
   const cacheKey = `press_${normName(homeTeam)}_${normName(awayTeam)}`;
-  const cached   = kvGet(cacheKey);
+  const cached = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < PRESS_CACHE_TTL)) {
     return { text: cached.text || cached.data || '', articleCount: cached.articleCount || 0, sourceNames: cached.sourceNames || [] };
   }
@@ -230,7 +231,7 @@ async function fetchPressContext(homeTeam, awayTeam) {
   const combinedQuery = `${homeTeam} ${awayTeam}`;
   const [rssResults, gnewsItems] = await Promise.all([
     Promise.all(RSS_FEEDS.map(async feed => {
-      const xml   = await fetchRSS(feed.url);
+      const xml = await fetchRSS(feed.url);
       const items = parseRSSItems(xml);
       return filterRelevantItems(items, homeTeam, awayTeam)
         .map(i => ({ ...i, source: feed.source }));
@@ -326,7 +327,7 @@ function isSafePath(filePath) {
   const resolved = path.resolve(filePath);
   if (!resolved.startsWith(path.resolve(__dirname))) return false;
   const relative = path.relative(__dirname, resolved);
-  const parts    = relative.split(path.sep);
+  const parts = relative.split(path.sep);
   if (BLOCKED_DIRS.some(d => parts.includes(d))) return false;
   if (BLOCKED_FILES.includes(parts[parts.length - 1])) return false;
   return true;
@@ -347,7 +348,7 @@ function readBodyLimited(req, maxSize) {
 }
 
 // ─── VERROU ANTI-RACE-CONDITION ──────────────────────────────────────────────
-let isFetchingOdds  = false;
+let isFetchingOdds = false;
 let isFetchingStats = false;
 
 // ─── SSE CLIENTS ─────────────────────────────────────────────────────────────
@@ -356,17 +357,17 @@ const sseClients = new Set(); // connexions SSE actives
 function broadcastSSE(eventName, data) {
   const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const res of sseClients) {
-    try { res.write(payload); } catch(e) { sseClients.delete(res); }
+    try { res.write(payload); } catch (e) { sseClients.delete(res); }
   }
 }
 
 function buildMeta() {
   return {
-    lastOddsUpdate:  db.lastOddsUpdate,
+    lastOddsUpdate: db.lastOddsUpdate,
     lastStatsUpdate: db.lastStatsUpdate,
-    status:          db.status,
-    oddsQuota:       db.oddsQuotaRemaining,
-    statsQuota:      db.statsQuotaRemaining,
+    status: db.status,
+    oddsQuota: db.oddsQuotaRemaining,
+    statsQuota: db.statsQuotaRemaining,
   };
 }
 // Chargement dynamique de la configuration des ligues
@@ -375,25 +376,27 @@ let leaguesConfig = { leagues: [] };
 try {
   leaguesConfig = JSON.parse(fs.readFileSync(LEAGUES_CONFIG_FILE, 'utf8'));
   console.log(`  ✓ leagues_config.json chargé (${leaguesConfig.leagues.length} ligues)`);
-} catch(e) {
+} catch (e) {
   console.warn('  ⚠ leagues_config.json introuvable — ligues par défaut utilisées');
-  leaguesConfig = { leagues: [
-    { id: 61,  name: 'Ligue 1',          type: 'T1', odds_key: 'soccer_france_ligue1',      cron_hours: 6  },
-    { id: 39,  name: 'Premier League',   type: 'T1', odds_key: 'soccer_epl',                cron_hours: 6  },
-    { id: 2,   name: 'Champions League', type: 'T1', odds_key: 'soccer_uefa_champs_league', cron_hours: 6  },
-    { id: 140, name: 'La Liga',          type: 'T1', odds_key: 'soccer_spain_la_liga',      cron_hours: 6  },
-    { id: 78,  name: 'Bundesliga',       type: 'T1', odds_key: 'soccer_germany_bundesliga', cron_hours: 6  },
-    { id: 135, name: 'Serie A',          type: 'T1', odds_key: 'soccer_italy_serie_a',      cron_hours: 6  },
-    { id: 3,   name: 'Europa League',    type: 'T1', odds_key: 'soccer_uefa_europa_league', cron_hours: 6  },
-  ]};
+  leaguesConfig = {
+    leagues: [
+      { id: 61, name: 'Ligue 1', type: 'T1', odds_key: 'soccer_france_ligue1', cron_hours: 6 },
+      { id: 39, name: 'Premier League', type: 'T1', odds_key: 'soccer_epl', cron_hours: 6 },
+      { id: 2, name: 'Champions League', type: 'T1', odds_key: 'soccer_uefa_champs_league', cron_hours: 6 },
+      { id: 140, name: 'La Liga', type: 'T1', odds_key: 'soccer_spain_la_liga', cron_hours: 6 },
+      { id: 78, name: 'Bundesliga', type: 'T1', odds_key: 'soccer_germany_bundesliga', cron_hours: 6 },
+      { id: 135, name: 'Serie A', type: 'T1', odds_key: 'soccer_italy_serie_a', cron_hours: 6 },
+      { id: 3, name: 'Europa League', type: 'T1', odds_key: 'soccer_uefa_europa_league', cron_hours: 6 },
+    ]
+  };
 }
 
 const SPORT_LABELS = {};
 leaguesConfig.leagues.forEach(l => { if (l.odds_key) SPORT_LABELS[l.odds_key] = l.name; });
-const ALL_SPORTS   = leaguesConfig.leagues.filter(l => l.odds_key).map(l => l.odds_key);
-const ALL_LEAGUE_IDS  = leaguesConfig.leagues.filter(l => l.id).map(l => l.id);
+const ALL_SPORTS = leaguesConfig.leagues.filter(l => l.odds_key).map(l => l.odds_key);
+const ALL_LEAGUE_IDS = leaguesConfig.leagues.filter(l => l.id).map(l => l.id);
 // Délai de refresh par ligue (en ms) — T1: 6h, T2: 12h (depuis cron_hours dans leagues_config.json)
-const LEAGUE_CRON_MS  = {};
+const LEAGUE_CRON_MS = {};
 leaguesConfig.leagues.forEach(l => { if (l.id) LEAGUE_CRON_MS[l.id] = (l.cron_hours || 6) * 3600000; });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -406,7 +409,7 @@ try {
   bsdConfig = JSON.parse(fs.readFileSync(BSD_CONFIG_FILE, 'utf8'));
   const bsdLeagueCount = Object.keys(bsdConfig.mapping.config_to_bsd).length;
   console.log(`  ✓ bsd_config.json chargé (${bsdLeagueCount} ligues BSD, ${bsdConfig.mapping.fallback_needed.length} fallback API-Football)`);
-} catch(e) {
+} catch (e) {
   console.warn('  ⚠ bsd_config.json introuvable — BSD désactivé');
 }
 
@@ -436,16 +439,16 @@ async function sofaGet(path) {
 // Find Sofascore team ID by name — cached 7 days
 async function searchSofascoreTeam(teamName) {
   try {
-    const cacheKey = `sofa_team_${teamName.replace(/\s+/g,'_').toLowerCase()}`;
+    const cacheKey = `sofa_team_${teamName.replace(/\s+/g, '_').toLowerCase()}`;
     const cached = apiCacheGet(cacheKey, 'sofa_team');
     if (cached) return cached;
     const q = encodeURIComponent(teamName);
     const res = await sofaGet(`/search/teams?q=${q}`);
     // API returns { results: [{entity: {id, name, ...}}] }
-    const teams = (res.data?.results||[]).map(r => r.entity).filter(Boolean);
+    const teams = (res.data?.results || []).map(r => r.entity).filter(Boolean);
     if (res.status !== 200 || !teams.length) return null;
     // Pick best match: exact name match first, then first result
-    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').trim();
+    const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
     const tNorm = norm(teamName);
     const best = teams.find(t => norm(t.name) === tNorm)
       || teams.find(t => norm(t.name).includes(tNorm) || tNorm.includes(norm(t.name)))
@@ -453,7 +456,153 @@ async function searchSofascoreTeam(teamName) {
     const result = { id: best.id, name: best.name };
     apiCacheSet(cacheKey, result, 'sofa_team', 7 * 24 * 3600);
     return result;
-  } catch(e) { return null; }
+  } catch (e) { return null; }
+}
+
+// -------------------------------------------------
+//  BSD: Fiche détaillée joueur
+// -------------------------------------------------
+async function bsdGetPlayerDetail(playerId) {
+  if (!BSD_API_KEY) return null;
+  try {
+    const res = await bsdFetch(`/players/${playerId}/`);
+    const p = res.data;
+    if (!p) return null;
+
+    // Récupérer les stats de la saison en cours
+    let stats = null;
+    try {
+      const statsRes = await bsdFetch(`/player-stats/?player=${playerId}&page_size=20`);
+      stats = statsRes.data?.results || [];
+    } catch { /* ignore */ }
+
+    return {
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      nationality: p.nationality,
+      age: p.age,
+      birthdate: p.birthdate,
+      photo: p.image_path ? `https://sports.bzzoiro.com${p.image_path}` : null,
+      team: p.team ? { id: p.team.id, name: p.team.name } : null,
+      height: p.height,
+      weight: p.weight,
+      stats: stats.slice(0, 5).map(s => ({
+        season: s.season?.name,
+        competition: s.league?.name,
+        matches: s.matches || 0,
+        goals: s.goals || 0,
+        assists: s.assists || 0,
+        minutes: s.minutes_played || 0,
+        rating: s.rating || null,
+        yellow_cards: s.yellow_cards || 0,
+        red_cards: s.red_cards || 0
+      }))
+    };
+  } catch (e) {
+    console.error('[bsdGetPlayerDetail] erreur:', e.message);
+    return null;
+  }
+}
+
+// -------------------------------------------------
+//  BSD: Fiche détaillée équipe
+// -------------------------------------------------
+async function bsdGetTeamDetail(teamId) {
+  if (!BSD_API_KEY) return null;
+  try {
+    const res = await bsdFetch(`/teams/${teamId}/`);
+    const t = res.data;
+    if (!t) return null;
+
+    // Récupérer les derniers matchs
+    let recentMatches = [];
+    try {
+      const matchesRes = await bsdFetch(`/teams/${teamId}/matches/?page_size=10`);
+      recentMatches = (matchesRes.data?.results || []).map(m => ({
+        id: m.id,
+        home_team: m.home_team?.name,
+        away_team: m.away_team?.name,
+        score: m.score,
+        status: m.status,
+        date: m.started_at
+      }));
+    } catch { /* ignore */ }
+
+    return {
+      id: t.id,
+      name: t.name,
+      short_name: t.short_code,
+      logo: t.image_path ? `https://sports.bzzoiro.com${t.image_path}` : null,
+      country: t.country?.name,
+      country_code: t.country?.code,
+      stadium: t.venue?.name,
+      stadium_capacity: t.venue?.capacity,
+      founded: t.founded,
+      league: t.league?.name,
+      manager: t.coach?.name,
+      recentMatches: recentMatches
+    };
+  } catch (e) {
+    console.error('[bsdGetTeamDetail] erreur:', e.message);
+    return null;
+  }
+}
+
+// Fetch TV broadcast channels for matches (Sofascore public API)
+async function fetchTVChannels(dateStr) {
+  try {
+    const cacheKey = `tv_channels_${dateStr}`;
+    const cached = apiCacheGet(cacheKey, 'tv_channels');
+    if (cached) return cached;
+    
+    const res = await sofaGet(`/sport/football/scheduled-events/${dateStr}`);
+    if (res.status !== 200 || !res.data?.events) return [];
+    
+    // Map des chaînes TV courantes avec logos
+    const channelLogos = {
+      'beIN SPORTS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+      'beIN SPORTS MAX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+      'Canal+': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+      'Canal+ Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+      'beIN CONNECT': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+      'Amazon Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
+      'ESPN': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/ESPN_logo.svg/200px-ESPN_logo.svg.png',
+      'Sky Sports': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sky_Sports_logo.svg/200px-Sky_Sports_logo.svg.png',
+      'BT Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/BT_Sport_logo.svg/200px-BT_Sport_logo.svg.png',
+      'DAZN': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/DAZN_Logo.svg/200px-DAZN_Logo.svg.png',
+      'TNT Sports': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/TNT_Sports_2021.svg/200px-TNT_Sports_2021.svg.png',
+      'Eleven Sports': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Eleven_Sports_2017.svg/200px-Eleven_Sports_2017.svg.png',
+      'RMC Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
+      'L\'Équipe': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/L_%C3%89quipe.svg/200px-L_%C3%89quipe.svg.png',
+      'M6': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/M6_logo.svg/200px-M6_logo.svg.png',
+      'TF1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/TF1_logo.svg/200px-TF1_logo.svg.png',
+      'France Télévisions': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/France_T%C3%A9l%C3%A9visions_2016.svg/200px-France_T%C3%A9l%C3%A9visions_2016.svg.png',
+      'BBC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/BBC.svg/200px-BBC.svg.png',
+      'ITV': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/ITV_logo.svg/200px-ITV_logo.svg.png',
+    };
+    
+    const channels = [];
+    for (const event of res.data.events) {
+      if (!event.channels) continue;
+      
+      for (const ch of event.channels) {
+        const logo = channelLogos[ch.name] || null;
+        channels.push({
+          match_id: event.id,
+          home_team: event.homeTeam?.name,
+          away_team: event.awayTeam?.name,
+          league: event.tournament?.name,
+          channel: ch.name,
+          channel_logo: logo,
+          start_time: new Date(event.startTimestamp * 1000).toISOString()
+        });
+      }
+    }
+    
+    apiCacheSet(cacheKey, channels, 'tv_channels', 24 * 3600); // 24h cache
+    return channels;
+  } catch (e) { return []; }
 }
 
 // Fetch last N matches for a Sofascore team ID (pages 0,1 = last ~40 matches)
@@ -485,7 +634,7 @@ async function fetchSofascoreTeamLastMatches(sofaTeamId, pagesNeeded = 2) {
       .sort((a, b) => b.date.localeCompare(a.date));
     apiCacheSet(cacheKey, matches, 'sofa_matches', 6 * 3600);
     return matches;
-  } catch(e) { return []; }
+  } catch (e) { return []; }
 }
 
 // Main entry point: get last matches for a team (BSD then Sofascore fallback)
@@ -508,7 +657,7 @@ async function fetchTeamLastFixturesBSDOrSofa(teamName, bsdLeagueId, sofaTeamIdH
     const seen = new Set(bsdMatches.map(m => `${m.date}|${m.home}|${m.away}`));
     const extra = sofaMatches.filter(m => !seen.has(`${m.date}|${m.home}|${m.away}`));
     return [...bsdMatches, ...extra].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
-  } catch(e) { return bsdMatches; }
+  } catch (e) { return bsdMatches; }
 }
 
 // Sofascore stats supplement: derive home/away stats from last matches when API-Football has no data
@@ -520,15 +669,15 @@ async function fetchSofascoreTeamStats(teamName, leagueId) {
     // Fetch 3 pages = ~90 matches for reliable stats
     const allMatches = await fetchSofascoreTeamLastMatches(found.id, 3);
     if (!allMatches.length) return null;
-    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const tNorm = norm(teamName);
-    const _stopW = new Set(['al','fc','sc','ac','cf','sd','cd','fk','sk','if','bk','afc','bfc']);
+    const _stopW = new Set(['al', 'fc', 'sc', 'ac', 'cf', 'sd', 'cd', 'fk', 'sk', 'if', 'bk', 'afc', 'bfc']);
     const sig = tNorm.split(' ').find(w => w.length >= 3 && !_stopW.has(w)) || tNorm.split(' ')[0];
-    const homeM = allMatches.filter(m => norm(m.home||'').includes(sig)).slice(0, 20);
-    const awayM = allMatches.filter(m => norm(m.away||'').includes(sig)).slice(0, 20);
+    const homeM = allMatches.filter(m => norm(m.home || '').includes(sig)).slice(0, 20);
+    const awayM = allMatches.filter(m => norm(m.away || '').includes(sig)).slice(0, 20);
     const calc = (matches, isHome) => {
       if (!matches.length) return { ppg: 0, avgScored: 0, avgConceded: 0, wins: 0, draws: 0, losses: 0, played: 0 };
-      let w=0, d=0, l=0, gf=0, ga=0;
+      let w = 0, d = 0, l = 0, gf = 0, ga = 0;
       matches.forEach(m => {
         const myG = isHome ? m.home_goals : m.away_goals;
         const opG = isHome ? m.away_goals : m.home_goals;
@@ -537,20 +686,20 @@ async function fetchSofascoreTeamStats(teamName, leagueId) {
         gf += myG; ga += opG;
       });
       const n = w + d + l || 1;
-      return { ppg: (w*3+d)/n, avgScored: gf/n, avgConceded: ga/n, wins: Math.round(w/n*100), draws: Math.round(d/n*100), losses: Math.round(l/n*100), played: n };
+      return { ppg: (w * 3 + d) / n, avgScored: gf / n, avgConceded: ga / n, wins: Math.round(w / n * 100), draws: Math.round(d / n * 100), losses: Math.round(l / n * 100), played: n };
     };
     const hStats = calc(homeM, true);
     const aStats = calc(awayM, false);
     // Form from last 5 total matches
     const last5 = allMatches.slice(0, 5);
     const formStr = last5.map(m => {
-      const myG = norm(m.home||'').includes(sig) ? m.home_goals : m.away_goals;
-      const opG = norm(m.home||'').includes(sig) ? m.away_goals : m.home_goals;
+      const myG = norm(m.home || '').includes(sig) ? m.home_goals : m.away_goals;
+      const opG = norm(m.home || '').includes(sig) ? m.away_goals : m.home_goals;
       if (myG == null) return '';
       return myG > opG ? 'W' : myG === opG ? 'D' : 'L';
     }).filter(Boolean).join('');
     return { sofaTeamId: found.id, leagueId, form: formStr, _real: true, _sofa: true, home: hStats, away: aStats };
-  } catch(e) { return null; }
+  } catch (e) { return null; }
 }
 
 // Helper BSD: requête GET avec retry
@@ -565,7 +714,7 @@ async function bsdFetch(endpoint, retries = 2) {
         continue;
       }
       return res;
-    } catch(e) {
+    } catch (e) {
       if (attempt < retries) {
         await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         continue;
@@ -584,6 +733,115 @@ function configIdToBsd(configId) {
 function bsdIdToConfig(bsdId) {
   const entry = BSD_BSD_TO_CONFIG[String(bsdId)];
   return entry ? entry.config_id : null;
+}
+
+function normText(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function normCountryName(country) {
+  const c = normText(country);
+  if (!c) return '';
+  const aliases = {
+    'bresil': 'brazil',
+    'brasil': 'brazil',
+    'brasilien': 'brazil',
+    'angleterre': 'england',
+    'italie': 'italy',
+    'espagne': 'spain',
+    'allemagne': 'germany',
+    'pays-bas': 'netherlands',
+    'etats-unis': 'usa',
+    'etats unis': 'usa',
+    'grece': 'greece'
+  };
+  return aliases[c] || c;
+}
+
+function getLeagueConfigBySportKey(sportKey) {
+  if (!sportKey) return null;
+  return leaguesConfig.leagues.find(l => l.odds_key === sportKey) || null;
+}
+
+function forceCountryForKnownCollisions(leagueName, country, bsdLeagueId) {
+  const leagueNorm = normText(leagueName);
+  const countryNorm = normCountryName(country);
+  const bsdId = bsdLeagueId != null ? String(bsdLeagueId) : '';
+
+  if (
+    countryNorm === 'brazil' ||
+    bsdId === '9' ||
+    leagueNorm.includes('brasileirao') ||
+    leagueNorm.includes('brasileirao serie a') ||
+    leagueNorm.includes('brasileirao serie b') ||
+    leagueNorm.includes('campeonato brasileiro')
+  ) {
+    return 'Brazil';
+  }
+
+  return country || null;
+}
+
+const HOMONYM_LEAGUE_NAMES = new Set([
+  'serie b',
+  'super league',
+  'premier league',
+  'primera division'
+]);
+
+function isHomonymLeagueName(leagueName) {
+  return HOMONYM_LEAGUE_NAMES.has(normText(leagueName));
+}
+
+function resolveConfigLeagueForBSDMatch(bsdMatch) {
+  const bsdLeagueId = bsdMatch?._bsd_league_id != null ? Number(bsdMatch._bsd_league_id) : null;
+  const leagueNorm = normText(bsdMatch?.league);
+  const forcedCountry = forceCountryForKnownCollisions(
+    bsdMatch?.league,
+    bsdMatch?._bsd_country || bsdMatch?.country,
+    bsdMatch?._bsd_league_id
+  );
+  const forcedCountryNorm = normCountryName(forcedCountry);
+
+  if (bsdLeagueId != null) {
+    const configId = bsdIdToConfig(bsdLeagueId);
+    if (configId != null) {
+      const byId = leaguesConfig.leagues.find(l => Number(l.id) === Number(configId));
+      if (byId) return byId;
+    }
+  }
+
+  const candidates = leaguesConfig.leagues.filter(l => {
+    const ln = normText(l.name);
+    return ln && (ln === leagueNorm || leagueNorm.includes(ln) || ln.includes(leagueNorm));
+  });
+
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  if (forcedCountryNorm) {
+    const byCountry = candidates.find(l => normCountryName(l.country) === forcedCountryNorm);
+    if (byCountry) return byCountry;
+  }
+
+  const exact = candidates.find(l => normText(l.name) === leagueNorm);
+  return exact || candidates[0];
+}
+
+function inferSportKeyFromLeagueCountry(leagueName, country) {
+  const leagueNorm = normText(leagueName);
+  const countryNorm = normCountryName(country);
+  if (countryNorm === 'brazil') {
+    if (leagueNorm.includes('serie b')) return 'soccer_brazil_serie_b';
+    if (leagueNorm.includes('brasileirao') || leagueNorm.includes('serie a') || leagueNorm.includes('campeonato brasileiro')) {
+      return 'soccer_brazil_campeonato';
+    }
+  }
+  return null;
 }
 
 // Obtenir la saison courante BSD (année de début)
@@ -611,14 +869,15 @@ const FINAL_FALLBACK = 'https://www.coteur.com/cotes/football';
 
 // ─── BASE DE DONNÉES EN MÉMOIRE ─────────────────────────────────────────────
 let db = {
-  matches:            [],   // matchs fusionnés (odds + stats)
-  teamStats:          {},   // stats par équipe (standings API-Football)
-  advancedTeamStats:  {},   // stats avancées /teams/statistics — cache 24h
-  topScorers:         {},   // top buteurs par ligue (leagueId_season) — cache 24h
-  lastOddsUpdate:      null, // ISO timestamp
-  lastStatsUpdate:     null,
+  matches: [],   // matchs fusionnés (odds + stats)
+  archive_matches: [],   // matchs termines archives (nettoyage auto)
+  teamStats: {},   // stats par équipe (standings API-Football)
+  advancedTeamStats: {},   // stats avancées /teams/statistics — cache 24h
+  topScorers: {},   // top buteurs par ligue (leagueId_season) — cache 24h
+  lastOddsUpdate: null, // ISO timestamp
+  lastStatsUpdate: null,
   statsUpdateByLeague: {},  // ISO timestamp par leagueId — gestion quotas T1/T2
-  oddsQuotaRemaining:  null,
+  oddsQuotaRemaining: null,
   statsQuotaRemaining: null,
   status: 'initialisation',
 };
@@ -817,8 +1076,8 @@ const POWER_SCORE_COOLDOWN_IP = new Map(); // IP -> { count, reset }
 
 function getPowerScoreUsage(userId) {
   const raw = kvGet(`ps_usage_${userId}`);
-  if (!raw) return { count: 0, reset: Date.now() + 24*3600*1000 };
-  if (Date.now() > raw.reset) return { count: 0, reset: Date.now() + 24*3600*1000 };
+  if (!raw) return { count: 0, reset: Date.now() + 24 * 3600 * 1000 };
+  if (Date.now() > raw.reset) return { count: 0, reset: Date.now() + 24 * 3600 * 1000 };
   return raw;
 }
 
@@ -858,66 +1117,128 @@ function kvScan(prefix) {
 // ─── DATABASE ────────────────────────────────────────────────────────────────
 
 function saveDB() {
-  kvSetBatch([
-    ['db_matches',    db.matches],
-    ['db_team_stats', db.teamStats],
-    ['db_adv_stats',  db.advancedTeamStats],
-    ['db_top_scorers',db.topScorers],
-    ['db_meta',       { status: db.status, lastOddsUpdate: db.lastOddsUpdate, lastStatsUpdate: db.lastStatsUpdate, oddsQuotaRemaining: db.oddsQuotaRemaining, statsUpdateByLeague: db.statsUpdateByLeague }],
-  ]);
+  // 🛡️ PROTECTION ANTI-EFFACEMENT (Zero-Data Guard)
+  // Si on tente de sauvegarder un tableau vide alors qu'on avait des données, 
+  // on bloque la sauvegarde pour éviter de wipe la base de données suite à une erreur API.
+  if (db.matches && db.matches.length === 0 && cachedMatches.length > 0) {
+    console.error('\x1b[31m[DB_GUARD] Tentative de sauvegarde d\'un tableau vide détectée ! Blocage de l\'écriture pour protéger les données.\x1b[0m');
+    return;
+  }
+
+  try {
+    kvSetBatch([
+      ['db_matches', db.matches],
+      ['db_team_stats', db.teamStats],
+      ['db_adv_stats', db.advancedTeamStats],
+      ['db_top_scorers', db.topScorers],
+      ['db_meta', {
+        status: db.status,
+        lastOddsUpdate: db.lastOddsUpdate,
+        lastStatsUpdate: db.lastStatsUpdate,
+        oddsQuotaRemaining: db.oddsQuotaRemaining,
+        statsUpdateByLeague: db.statsUpdateByLeague
+      }],
+    ]);
+  } catch (e) {
+    console.error('\x1b[31m[DB_ERROR] Échec critique de la sauvegarde SQLite :\x1b[0m', e.message);
+  }
 }
 
 function syncCacheBuffers() {
-  // Copie les données valides de db vers les tampons mémoire
-  // NE JAMAIS vider les tampons — si db est vide, on garde l'ancien cache
-  if (db.matches && db.matches.length > 0) {
-    cachedMatches = JSON.parse(JSON.stringify(db.matches)); // deep clone
+  // 🛡️ PROTECTION ANTI-WIPE :
+  // Si la base de données principale est vide, on NE SYNCHRONISE PAS les buffers.
+  // On conserve les anciennes données dans cachedMatches pour éviter que le site 
+  // ne devienne totalement vide en cas d'échec critique des API.
+  if (!db.matches || db.matches.length === 0) {
+    if (cachedMatches.length > 0) {
+      console.warn('\x1b[33m[SYNC] db.matches est vide, mais cachedMatches contient des données. Protection activée : on conserve le tampon mémoire.\x1b[0m');
+    }
+    return;
+  }
+
+  try {
+    console.log(`  [Sync] Synchronisation des buffers mémoire (${db.matches.length} matchs)...`);
+
+    // 1. CLONAGE PROFOND (Deep Clone)
+    // On utilise JSON.parse/stringify pour casser les références d'objets.
+    // Cela évite qu'une modification accidentelle de db.matches n'altère cachedMatches.
+    cachedMatches = JSON.parse(JSON.stringify(db.matches));
+
     lastCacheUpdate = Date.now();
     cacheVersion++;
-  }
-  // Injuries : extraire depuis les matchs si disponibles
-  if (db.matches && db.matches.length > 0) {
+
+    // 2. SYNCHRONISATION DES BLESSURES
+    // On vide et on reconstruit le dictionnaire des blessures par ID de match.
+    cachedInjuries = {};
     for (const m of db.matches) {
-      if (m.injuries) {
+      if (m.injuries && Object.keys(m.injuries).length > 0) {
         cachedInjuries[m.id] = m.injuries;
       }
     }
-  }
-  // Ligues : construire depuis les matchs
-  if (db.matches && db.matches.length > 0) {
-    const leagueSet = new Set();
+
+    // 3. SYNCHRONISATION DES LIGUES ET PAYS
+    // On reconstruit la liste des ligues groupées par pays.
+    cachedLeagues = {};
+    const leagueMap = new Map();
+
     for (const m of db.matches) {
-      if (m.league && m.league !== '?') leagueSet.add(m.league);
+      if (!m.league || m.league === '?') continue;
+      const country = detectCountryFromLeague(m.league, m.sport, m.country, m._bsd_league_id);
+      const key = `${m.league}__${country}`;
+      if (!leagueMap.has(key)) leagueMap.set(key, { leagueName: m.league, country });
     }
-    // Grouper par pays (déduit du nom de ligue)
-    for (const league of leagueSet) {
-      const country = detectCountryFromLeague(league);
-      if (!cachedLeagues[country]) cachedLeagues[country] = [];
-      if (!cachedLeagues[country].find(l => l.name === league)) {
-        cachedLeagues[country].push({ name: league, id: league.toLowerCase().replace(/\s+/g, '_') });
+
+    for (const { leagueName, country } of leagueMap.values()) {
+      if (!cachedLeagues[country]) {
+        cachedLeagues[country] = [];
+      }
+
+      // On évite les doublons dans la liste du pays
+      if (!cachedLeagues[country].find(l => l.name === leagueName)) {
+        cachedLeagues[country].push({
+          name: leagueName,
+          id: leagueName.toLowerCase().replace(/\s+/g, '_')
+        });
       }
     }
+
+    console.log(`  [Sync] ✓ Buffers mis à jour. Version: ${cacheVersion}`);
+  } catch (e) {
+    console.error('\x1b[31m[SYNC_ERROR] Erreur critique lors de la synchronisation des buffers :\x1b[0m', e.message);
+    console.error(e.stack);
   }
 }
 
-// Helper: détecte le pays depuis le nom de ligue
-function detectCountryFromLeague(leagueName) {
-  const countryMap = {
-    'france': ['Ligue 1', 'Ligue 2', 'Coupe de France'],
-    'angleterre': ['Premier League', 'Championship', 'FA Cup', 'League Cup'],
-    'espagne': ['La Liga', 'Segunda Division', 'Copa del Rey'],
-    'allemagne': ['Bundesliga', '2. Bundesliga', 'DFB Pokal'],
-    'italie': ['Serie A', 'Serie B', 'Coppa Italia'],
-    'portugal': ['Liga Portugal', 'Taca de Portugal'],
-    'pays-bas': ['Eredivisie', 'KNVB Beker'],
-    'belgique': ['Jupiler Pro League', 'Belgian Cup'],
-    'europe': ['Champions League', 'Europa League', 'Conference League'],
-    'monde': ['Club Friendlies', 'World Cup'],
-  };
-  for (const [country, leagues] of Object.entries(countryMap)) {
-    if (leagues.some(l => leagueName.includes(l))) return country;
+// Helper: détecte le pays depuis le match (pays explicite > sport_key > nom ligue)
+function detectCountryFromLeague(leagueName, sportKey = null, explicitCountry = null, bsdLeagueId = null) {
+  const forced = forceCountryForKnownCollisions(leagueName, explicitCountry, bsdLeagueId);
+  if (forced) return forced;
+
+  const cfgBySport = getLeagueConfigBySportKey(sportKey);
+  if (cfgBySport?.country) return cfgBySport.country;
+
+  if (isHomonymLeagueName(leagueName)) {
+    return 'Unknown';
   }
-  return 'autre';
+
+  const countryMap = {
+    'France': ['Ligue 1', 'Ligue 2', 'Coupe de France'],
+    'England': ['Championship', 'FA Cup', 'League Cup'],
+    'Spain': ['La Liga', 'Segunda Division', 'Copa del Rey'],
+    'Germany': ['Bundesliga', '2. Bundesliga', 'DFB Pokal'],
+    'Italy': ['Serie A', 'Coppa Italia'],
+    'Portugal': ['Liga Portugal', 'Taca de Portugal'],
+    'Netherlands': ['Eredivisie', 'KNVB Beker'],
+    'Belgium': ['Jupiler Pro League', 'Belgian Cup'],
+    'Brazil': ['Brasileirao', 'Campeonato Brasileiro'],
+    'Europe': ['Champions League', 'Europa League', 'Conference League'],
+    'World': ['Club Friendlies', 'World Cup'],
+  };
+  const leagueNorm = normText(leagueName);
+  for (const [country, leagues] of Object.entries(countryMap)) {
+    if (leagues.some(l => leagueNorm.includes(normText(l)))) return country;
+  }
+  return 'Unknown';
 }
 
 function loadDB() {
@@ -927,25 +1248,25 @@ function loadDB() {
       const old = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
       db = { ...db, ...old };
       if (!db.advancedTeamStats) db.advancedTeamStats = {};
-      if (!db.topScorers)        db.topScorers = {};
+      if (!db.topScorers) db.topScorers = {};
       saveDB();
       fs.renameSync(DB_FILE, DB_FILE + '.migrated');
       console.log(`  ✓ database.json migré vers SQLite (${db.matches.length} matchs)`);
       syncCacheBuffers(); // Populate buffers from migrated data
       return;
-    } catch(e) { console.warn('[DB] Migration JSON→SQLite échouée:', e.message); }
+    } catch (e) { console.warn('[DB] Migration JSON→SQLite échouée:', e.message); }
   }
 
-  db.matches             = kvGet('db_matches',    []);
-  db.teamStats           = kvGet('db_team_stats', {});
-  db.advancedTeamStats   = kvGet('db_adv_stats',  {});
-  db.topScorers          = kvGet('db_top_scorers',{});
-  const meta             = kvGet('db_meta', {});
-  db.status               = meta.status               || 'initialisation';
-  db.lastOddsUpdate       = meta.lastOddsUpdate       || null;
-  db.lastStatsUpdate      = meta.lastStatsUpdate      || null;
-  db.statsUpdateByLeague  = meta.statsUpdateByLeague  || {};
-  db.oddsQuotaRemaining   = meta.oddsQuotaRemaining   || null;
+  db.matches = kvGet('db_matches', []);
+  db.teamStats = kvGet('db_team_stats', {});
+  db.advancedTeamStats = kvGet('db_adv_stats', {});
+  db.topScorers = kvGet('db_top_scorers', {});
+  const meta = kvGet('db_meta', {});
+  db.status = meta.status || 'initialisation';
+  db.lastOddsUpdate = meta.lastOddsUpdate || null;
+  db.lastStatsUpdate = meta.lastStatsUpdate || null;
+  db.statsUpdateByLeague = meta.statsUpdateByLeague || {};
+  db.oddsQuotaRemaining = meta.oddsQuotaRemaining || null;
   console.log(`  ✓ SQLite chargé (${db.matches.length} matchs, ${Object.keys(db.teamStats).length} équipes, ${Object.keys(db.advancedTeamStats).length} stats avancées)`);
   syncCacheBuffers(); // Populate buffers from SQLite on startup
 }
@@ -989,7 +1310,7 @@ function formatDateOnly(date) {
 // Tries providers in order, falls back on 429/401/5xx
 function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
   if (providerIdx >= AI_DEEP_PROVIDERS.length) {
-    try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Tous les providers IA sont indisponibles ou non configurés' })}\n\n`); res.end(); } catch {}
+    try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Tous les providers IA sont indisponibles ou non configurés' })}\n\n`); res.end(); } catch { }
     return;
   }
   const prov = AI_DEEP_PROVIDERS[providerIdx];
@@ -1004,7 +1325,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
     // ── Gemini SSE ──────────────────────────────────────────────────────────
     const payload = JSON.stringify({
       contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+      generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
       safetySettings: GEMINI_SAFETY_SETTINGS,
     });
     const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
@@ -1025,8 +1346,8 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
           if (raw === '[DONE]') continue;
           try {
             const txt = JSON.parse(raw)?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch {} }
-          } catch {}
+            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch { } }
+          } catch { }
         }
       });
       gemRes.on('end', () => {
@@ -1044,7 +1365,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
       model: prov.model,
       messages: [{ role: 'user', content: promptText }],
       temperature: 0.8,
-      max_tokens: 2048,
+      max_tokens: 4096,
       stream: true,
     });
     const opts = {
@@ -1075,8 +1396,8 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
           if (raw === '[DONE]') continue;
           try {
             const txt = JSON.parse(raw)?.choices?.[0]?.delta?.content || '';
-            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch {} }
-          } catch {}
+            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch { } }
+          } catch { }
         }
       });
       apiRes.on('end', () => {
@@ -1105,7 +1426,7 @@ function httpsGet(urlStr, headers = {}) {
       res.on('end', () => {
         try {
           resolve({ status: res.statusCode, headers: res.headers, data: JSON.parse(body) });
-        } catch(e) {
+        } catch (e) {
           resolve({ status: res.statusCode, headers: res.headers, data: body });
         }
       });
@@ -1131,7 +1452,7 @@ function httpsPost(urlStr, body, headers = {}) {
       res.on('data', c => data += c);
       res.on('end', () => {
         try { resolve({ status: res.statusCode, data: JSON.parse(data) }); }
-        catch(e) { resolve({ status: res.statusCode, data }); }
+        catch (e) { resolve({ status: res.statusCode, data }); }
       });
     });
     req.on('error', reject);
@@ -1147,8 +1468,8 @@ function mockParlayOdds() {
     mocked: true,
     source: 'local-mock',
     matches: [
-      { home_team: 'PSG', away_team: 'Olympique Lyonnais', league: 'Ligue 1', commence_time: new Date(Date.now() + 2*3600000).toISOString(), odds: { home: 1.45, draw: 4.20, away: 7.80 } },
-      { home_team: 'Manchester City', away_team: 'Liverpool', league: 'Premier League', commence_time: new Date(Date.now() + 4*3600000).toISOString(), odds: { home: 2.10, draw: 3.40, away: 3.20 } },
+      { home_team: 'PSG', away_team: 'Olympique Lyonnais', league: 'Ligue 1', commence_time: new Date(Date.now() + 2 * 3600000).toISOString(), odds: { home: 1.45, draw: 4.20, away: 7.80 } },
+      { home_team: 'Manchester City', away_team: 'Liverpool', league: 'Premier League', commence_time: new Date(Date.now() + 4 * 3600000).toISOString(), odds: { home: 2.10, draw: 3.40, away: 3.20 } },
     ],
   };
 }
@@ -1179,7 +1500,7 @@ async function fetchParlayOdds() {
       'X-RapidAPI-Host': PARLAY_API_HOST,
       'Accept': 'application/json',
     });
-  } catch(e) {
+  } catch (e) {
     return { status: 500, error: e.message };
   }
 }
@@ -1198,7 +1519,7 @@ async function fetchGameForecast(match = {}) {
       'X-RapidAPI-Host': GAMEFORECAST_API_HOST,
       'Accept': 'application/json',
     });
-  } catch(e) {
+  } catch (e) {
     return { status: 500, error: e.message };
   }
 }
@@ -1262,8 +1583,8 @@ function levenshtein(a, b) {
   );
   for (let i = 1; i <= m; i++)
     for (let j = 1; j <= n; j++)
-      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
-        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
   return dp[m][n];
 }
 
@@ -1355,16 +1676,16 @@ function computePoisson(expHome, expAway) {
     for (let a = 0; a < MAX; a++) {
       const p = matrix[h][a];
       const total = h + a;
-      if (total > 0)  over05 += p;
-      if (total > 1)  over15 += p;
-      if (total > 2)  over25 += p;
-      if (total > 3)  over35 += p;
+      if (total > 0) over05 += p;
+      if (total > 1) over15 += p;
+      if (total > 2) over25 += p;
+      if (total > 3) over35 += p;
       if (total <= 1) under15 += p;
       if (h > 0 && a > 0) btts += p;
       if (h === 0 && a === 0) cs00 = p;
-      if (h > a)  homeWin += p;
+      if (h > a) homeWin += p;
       if (h === a) draw += p;
-      if (h < a)  awayWin += p;
+      if (h < a) awayWin += p;
     }
   }
 
@@ -1376,15 +1697,15 @@ function computePoisson(expHome, expAway) {
   scores.sort((a, b) => b.prob - a.prob);
 
   return {
-    over05:  Math.round(over05 * 100),
-    over15:  Math.round(over15 * 100),
-    over25:  Math.round(over25 * 100),
-    over35:  Math.round(over35 * 100),
-    btts:    Math.round(btts * 100),
+    over05: Math.round(over05 * 100),
+    over15: Math.round(over15 * 100),
+    over25: Math.round(over25 * 100),
+    over35: Math.round(over35 * 100),
+    btts: Math.round(btts * 100),
     under15: Math.round(under15 * 100),
-    cs00:    Math.round(cs00 * 100),
+    cs00: Math.round(cs00 * 100),
     homeWin: Math.round(homeWin * 100),
-    draw:    Math.round(draw * 100),
+    draw: Math.round(draw * 100),
     awayWin: Math.round(awayWin * 100),
     topScores: scores.slice(0, 5).map(s => ({ score: s.score, prob: Math.round(s.prob * 100) })),
     method: 'poisson',
@@ -1617,16 +1938,16 @@ function bayesianBlend(poissonProbs, eloProbs, xgProbs, weights = null) {
 // Basé sur l'historique des 500 derniers matchs
 
 const CALIBRATION_BINS = [
-  { min: 0,  max: 10, raw: 5,  calibrated: 4   },  // Modèle surestime les improbables
-  { min: 10, max: 20, raw: 15,  calibrated: 13  },
-  { min: 20, max: 30, raw: 25,  calibrated: 23  },
-  { min: 30, max: 40, raw: 35,  calibrated: 33  },
-  { min: 40, max: 50, raw: 45,  calibrated: 44  },
-  { min: 50, max: 60, raw: 55,  calibrated: 55  },  // Zone bien calibrée
-  { min: 60, max: 70, raw: 65,  calibrated: 64  },
-  { min: 70, max: 80, raw: 75,  calibrated: 72  },  // Modèle sous-estime les probables
-  { min: 80, max: 90, raw: 85,  calibrated: 80  },
-  { min: 90, max: 100,raw: 95,  calibrated: 88  },
+  { min: 0, max: 10, raw: 5, calibrated: 4 },  // Modèle surestime les improbables
+  { min: 10, max: 20, raw: 15, calibrated: 13 },
+  { min: 20, max: 30, raw: 25, calibrated: 23 },
+  { min: 30, max: 40, raw: 35, calibrated: 33 },
+  { min: 40, max: 50, raw: 45, calibrated: 44 },
+  { min: 50, max: 60, raw: 55, calibrated: 55 },  // Zone bien calibrée
+  { min: 60, max: 70, raw: 65, calibrated: 64 },
+  { min: 70, max: 80, raw: 75, calibrated: 72 },  // Modèle sous-estime les probables
+  { min: 80, max: 90, raw: 85, calibrated: 80 },
+  { min: 90, max: 100, raw: 95, calibrated: 88 },
 ];
 
 function calibrateProbability(rawProb) {
@@ -1687,8 +2008,8 @@ function computeBootstrapUQD(expHome, expAway, playedHome, playedAway, N) {
   // Écart-type log-normal : 1/√n (variance Poisson de la moyenne des buts)
   const sigH = 1 / Math.sqrt(Math.max(1, playedHome || 10));
   const sigA = 1 / Math.sqrt(Math.max(1, playedAway || 10));
-  const lnH  = Math.log(expHome);
-  const lnA  = Math.log(expAway);
+  const lnH = Math.log(expHome);
+  const lnA = Math.log(expAway);
 
   // Tableaux d'échantillons par marché
   const sOver25 = [], sBtts = [], sHomeWin = [], sDraw = [], sAwayWin = [];
@@ -1705,13 +2026,13 @@ function computeBootstrapUQD(expHome, expAway, playedHome, playedAway, N) {
       for (let a = 0; a < 7; a++) {
         const p = poissonPMF(lH, h) * poissonPMF(lA, a);
         const tot = h + a;
-        if (tot > 2) o25  += p;
-        if (tot > 1) o15  += p;
-        if (tot > 3) o35  += p;
+        if (tot > 2) o25 += p;
+        if (tot > 1) o15 += p;
+        if (tot > 3) o35 += p;
         if (h > 0 && a > 0) btts += p;
-        if (h > a)  hw += p;
+        if (h > a) hw += p;
         if (h === a) dr += p;
-        if (h < a)  aw += p;
+        if (h < a) aw += p;
       }
     }
     sOver25.push(o25 * 100);
@@ -1733,22 +2054,22 @@ function computeBootstrapUQD(expHome, expAway, playedHome, playedAway, N) {
   };
 
   const summarize = (arr) => {
-    const mean  = Math.round(arr.reduce((s, v) => s + v, 0) / N * 10) / 10;
+    const mean = Math.round(arr.reduce((s, v) => s + v, 0) / N * 10) / 10;
     const lower = percentile([...arr], 5);
     const upper = percentile([...arr], 95);
     return { mean, lower, upper, width: Math.round((upper - lower) * 10) / 10 };
   };
 
   return {
-    n:        N,
+    n: N,
     ic_level: 90,
     markets: {
-      over25:  summarize(sOver25),
-      over15:  summarize(sOver15),
-      over35:  summarize(sOver35),
-      btts:    summarize(sBtts),
+      over25: summarize(sOver25),
+      over15: summarize(sOver15),
+      over35: summarize(sOver35),
+      btts: summarize(sBtts),
       homeWin: summarize(sHomeWin),
-      draw:    summarize(sDraw),
+      draw: summarize(sDraw),
       awayWin: summarize(sAwayWin),
     },
   };
@@ -1761,10 +2082,10 @@ function computeBootstrapUQD(expHome, expAway, playedHome, playedAway, N) {
 //   35% — Stabilité xG  : étroitesse de l'IC over25 (IC large = incertitude élevée)
 //   30% — Qualité Source: données réelles BSD/API vs simulées
 function computeReliabilityScore(uqd, isRealData, playedHome, playedAway) {
-  const avgPlayed    = ((playedHome || 5) + (playedAway || 5)) / 2;
-  const volumeScore  = Math.min(100, (avgPlayed / 20) * 100);           // 20+ matchs = max
+  const avgPlayed = ((playedHome || 5) + (playedAway || 5)) / 2;
+  const volumeScore = Math.min(100, (avgPlayed / 20) * 100);           // 20+ matchs = max
 
-  const icWidth      = uqd && uqd.markets && uqd.markets.over25 ? uqd.markets.over25.width : 60;
+  const icWidth = uqd && uqd.markets && uqd.markets.over25 ? uqd.markets.over25.width : 60;
   const stabilityScore = Math.max(0, 100 - icWidth * 1.8);             // IC large → score bas
 
   const qualityScore = isRealData ? 85 : 28;                           // Réel vs simulé
@@ -1777,17 +2098,17 @@ function computeReliabilityScore(uqd, isRealData, playedHome, playedAway) {
 // Principe : même dans le scénario pessimiste (IC borne inférieure 90%),
 //            l'edge reste positif → seulement alors recommander le pari.
 function computeBetSignal(record, uqd) {
-  const ev    = record.best_edge && record.best_edge.edge != null ? record.best_edge.edge : null;
+  const ev = record.best_edge && record.best_edge.edge != null ? record.best_edge.edge : null;
   const label = record.best_edge && record.best_edge.label;
 
   if (ev == null) return { recommended: false, reason: 'Aucun edge disponible' };
-  if (!uqd)      return { recommended: false, reason: 'UQD non calculé', ev_pct: ev };
+  if (!uqd) return { recommended: false, reason: 'UQD non calculé', ev_pct: ev };
 
   // Mapper le label du best_edge vers la clé marché UQD
   let marketKey = null;
-  if      (label === record.home_team) marketKey = 'homeWin';
+  if (label === record.home_team) marketKey = 'homeWin';
   else if (label === record.away_team) marketKey = 'awayWin';
-  else if (label === 'Nul')            marketKey = 'draw';
+  else if (label === 'Nul') marketKey = 'draw';
 
   // Récupérer la borne inférieure IC du marché
   const icData = marketKey && uqd.markets[marketKey];
@@ -1799,10 +2120,10 @@ function computeBetSignal(record, uqd) {
   }
 
   // Calculer l'EV avec la borne inférieure de l'IC (scénario pessimiste)
-  const oddsKey  = marketKey === 'homeWin' ? 'home' : marketKey === 'awayWin' ? 'away' : 'draw';
-  const odds     = record.odds && record.odds[oddsKey];
-  const pLower   = (icData.lower || 0) / 100;
-  const evLower  = odds ? parseFloat(((pLower * odds - 1) * 100).toFixed(1)) : null;
+  const oddsKey = marketKey === 'homeWin' ? 'home' : marketKey === 'awayWin' ? 'away' : 'draw';
+  const odds = record.odds && record.odds[oddsKey];
+  const pLower = (icData.lower || 0) / 100;
+  const evLower = odds ? parseFloat(((pLower * odds - 1) * 100).toFixed(1)) : null;
 
   const cond1 = ev > 5;
   const cond2 = evLower != null && evLower > 0;
@@ -1810,26 +2131,26 @@ function computeBetSignal(record, uqd) {
   if (cond1 && cond2) {
     return {
       recommended: true,
-      market:      label,
-      ev_pct:      ev,
+      market: label,
+      ev_pct: ev,
       ic_lower_pct: icData.lower,
-      ic_lower_ev:  evLower,
+      ic_lower_ev: evLower,
       reason: `✓ EV ${ev.toFixed(1)}% > 5% | ✓ EV pessimiste IC90% ${evLower.toFixed(1)}% > 0%`,
     };
   } else if (cond1 && !cond2) {
     return {
       recommended: false,
-      market:      label,
-      ev_pct:      ev,
+      market: label,
+      ev_pct: ev,
       ic_lower_pct: icData.lower,
-      ic_lower_ev:  evLower,
+      ic_lower_ev: evLower,
       reason: `✓ EV ${ev.toFixed(1)}% > 5% | ✗ EV pessimiste ${evLower != null ? evLower.toFixed(1) : '?'}% ≤ 0% (incertitude trop haute)`,
     };
   } else {
     return {
       recommended: false,
-      market:      label,
-      ev_pct:      ev,
+      market: label,
+      ev_pct: ev,
       reason: `✗ EV ${ev.toFixed(1)}% ≤ seuil 5%`,
     };
   }
@@ -2247,14 +2568,14 @@ function buildSideStats(s) {
   const avgAgainst = played > 0 ? ga / played : 0;
 
   return {
-    ppg:        parseFloat(((w * 3 + d) / played).toFixed(2)),
-    wins:       Math.round(w / played * 100),
-    draws:      Math.round(d / played * 100),
-    losses:     Math.round(l / played * 100),
-    scored:     Math.round(Math.min(95, (gf > 0 ? 1 : 0) / played * 100 || avgFor * 55)),
-    conceded:   Math.round(Math.min(95, (ga > 0 ? 1 : 0) / played * 100 || avgAgainst * 50)),
-    avgScored:  parseFloat(avgFor.toFixed(2)),
-    avgConceded:parseFloat(avgAgainst.toFixed(2)),
+    ppg: parseFloat(((w * 3 + d) / played).toFixed(2)),
+    wins: Math.round(w / played * 100),
+    draws: Math.round(d / played * 100),
+    losses: Math.round(l / played * 100),
+    scored: Math.round(Math.min(95, (gf > 0 ? 1 : 0) / played * 100 || avgFor * 55)),
+    conceded: Math.round(Math.min(95, (ga > 0 ? 1 : 0) / played * 100 || avgAgainst * 50)),
+    avgScored: parseFloat(avgFor.toFixed(2)),
+    avgConceded: parseFloat(avgAgainst.toFixed(2)),
     played,      // Conservé pour le Bootstrap UQD (P1 Quant)
   };
 }
@@ -2271,14 +2592,14 @@ function simStats(name, isHome) {
   const draws = r(2 + side, 8, 28);
   const losses = Math.max(0, 100 - wins - draws);
   const avgFor = parseFloat(((r(8 + side, 75, 240)) / 100).toFixed(2));
-  const avgAg  = parseFloat(((r(9 + side, 60, 200)) / 100).toFixed(2));
+  const avgAg = parseFloat(((r(9 + side, 60, 200)) / 100).toFixed(2));
   return {
-    ppg:        parseFloat(((wins * 3 + draws) / 100).toFixed(2)),
+    ppg: parseFloat(((wins * 3 + draws) / 100).toFixed(2)),
     wins, draws, losses,
-    scored:     r(6 + side, 52, 93),
-    conceded:   r(7 + side, 40, 88),
-    avgScored:  avgFor,
-    avgConceded:avgAg,
+    scored: r(6 + side, 52, 93),
+    conceded: r(7 + side, 40, 88),
+    avgScored: avgFor,
+    avgConceded: avgAg,
   };
 }
 
@@ -2291,9 +2612,9 @@ function computeEdge(match) {
     const h2h = (bk.markets || []).find(m => m.key === 'h2h');
     if (!h2h) return;
     h2h.outcomes.forEach(o => {
-      if (o.name === home   && (!bestH || o.price > bestH)) { bestH = o.price; bestHbk = bk.title; }
+      if (o.name === home && (!bestH || o.price > bestH)) { bestH = o.price; bestHbk = bk.title; }
       if (o.name === 'Draw' && (!bestN || o.price > bestN)) { bestN = o.price; bestNbk = bk.title; }
-      if (o.name === away   && (!bestA || o.price > bestA)) { bestA = o.price; bestAbk = bk.title; }
+      if (o.name === away && (!bestA || o.price > bestA)) { bestA = o.price; bestAbk = bk.title; }
     });
   });
 
@@ -2308,9 +2629,9 @@ function computeEdge(match) {
   const edgeA = (bestA * fair.away - 1) * 100;
 
   const edges = [
-    { label: home,  odds: bestH, edge: edgeH, bk: bestHbk, prob: fair.home },
+    { label: home, odds: bestH, edge: edgeH, bk: bestHbk, prob: fair.home },
     { label: 'Nul', odds: bestN, edge: edgeN, bk: bestNbk, prob: fair.draw },
-    { label: away,  odds: bestA, edge: edgeA, bk: bestAbk, prob: fair.away },
+    { label: away, odds: bestA, edge: edgeA, bk: bestAbk, prob: fair.away },
   ].filter(x => x.edge !== null);
 
   const best = edges.reduce((a, b) => b.edge > a.edge ? b : a);
@@ -2464,8 +2785,8 @@ function buildMatchRecord(raw) {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
-  const homeStats = hRaw?.home  || simStats(raw.home_team, true);
-  const awayStats = aRaw?.away  || simStats(raw.away_team, false);
+  const homeStats = hRaw?.home || simStats(raw.home_team, true);
+  const awayStats = aRaw?.away || simStats(raw.away_team, false);
   const isRealData = !!(hRaw?._real && aRaw?._real);
 
   if (!hRaw) console.warn(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (non trouvé en DB)`);
@@ -2540,12 +2861,12 @@ function buildMatchRecord(raw) {
   const pFairH = calibrated.homeWin / 100;
   const pFairN = calibrated.draw / 100;
   const pFairA = calibrated.awayWin / 100;
-  const pEdgeH  = edge.odds.home ? parseFloat(((edge.odds.home * pFairH - 1) * 100).toFixed(1)) : null;
-  const pEdgeN  = edge.odds.draw ? parseFloat(((edge.odds.draw * pFairN - 1) * 100).toFixed(1)) : null;
-  const pEdgeA  = edge.odds.away ? parseFloat(((edge.odds.away * pFairA - 1) * 100).toFixed(1)) : null;
-  const pEdges  = [
+  const pEdgeH = edge.odds.home ? parseFloat(((edge.odds.home * pFairH - 1) * 100).toFixed(1)) : null;
+  const pEdgeN = edge.odds.draw ? parseFloat(((edge.odds.draw * pFairN - 1) * 100).toFixed(1)) : null;
+  const pEdgeA = edge.odds.away ? parseFloat(((edge.odds.away * pFairA - 1) * 100).toFixed(1)) : null;
+  const pEdges = [
     { label: raw.home_team, edge: pEdgeH },
-    { label: 'Nul',         edge: pEdgeN },
+    { label: 'Nul', edge: pEdgeN },
     { label: raw.away_team, edge: pEdgeA },
   ].filter(x => x.edge !== null);
   const bestPoissonEdge = pEdges.length ? pEdges.reduce((a, b) => b.edge > a.edge ? b : a) : null;
@@ -2557,34 +2878,49 @@ function buildMatchRecord(raw) {
     bestPoissonEdge?.label === edge.best.label
   );
 
+  const leagueLabel = SPORT_LABELS[raw._sport || raw.sport_key] || raw.sport_title || '?';
+  const recordCountry = detectCountryFromLeague(
+    raw.sport_title || leagueLabel,
+    raw._sport || raw.sport_key,
+    raw.country || raw._league_country,
+    raw._bsd_league_id
+  );
+
   const record = {
-    id:            raw.id,
-    sport:         raw._sport || raw.sport_key,
-    league:        SPORT_LABELS[raw._sport || raw.sport_key] || raw.sport_title || '?',
+    id: raw.id,
+    sport: raw._sport || raw.sport_key,
+    league: leagueLabel,
+    country: recordCountry,
     commence_time: raw.commence_time,
-    home_team:     raw.home_team,
-    away_team:     raw.away_team,
-    home_rank:     hRaw?.rank || null,
-    away_rank:     aRaw?.rank || null,
-    home_form:     homeForm,
-    away_form:     awayForm,
+    home_team: raw.home_team,
+    away_team: raw.away_team,
+    home_rank: hRaw?.rank || null,
+    away_rank: aRaw?.rank || null,
+    home_team_id: hRaw?.teamId || null,
+    away_team_id: aRaw?.teamId || null,
+    home_bsd_id: hRaw?.bsdTeamId || null,
+    away_bsd_id: aRaw?.bsdTeamId || null,
+    home_sofa_id: hRaw?.sofaTeamId || null,
+    away_sofa_id: aRaw?.sofaTeamId || null,
+    home_form: homeForm,
+    away_form: awayForm,
     h2h,
-    odds:          edge.odds,
-    bookmakers:    edge.bookmakers,
-    fair:          edge.fair,
-    edge:          edge.edgeValues,
-    best_edge:     edge.best,
+    odds: edge.odds,
+    bookmakers: edge.bookmakers,
+    fair: edge.fair,
+    edge: edge.edgeValues,
+    best_edge: edge.best,
     poisson,
     blended,
     calibrated,
     evs,
     expectedGoals: { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) },
-    poissonEdge:   bestPoissonEdge,
+    poissonEdge: bestPoissonEdge,
     shield,
-    elo:           eloProbs,
-    xgLogistic:    xgProbs,
-    margin:        edge.margin,
-    devigMethod:   edge.devigMethod,
+    elo: eloProbs,
+    xgLogistic: xgProbs,
+    margin: edge.margin,
+    devigMethod: edge.devigMethod,
     stats: {
       home: homeStats,
       away: awayStats,
@@ -2611,9 +2947,10 @@ function buildMatchRecord(raw) {
   // 4. Règle de Décision Stricte : BET si EV>5% ET EV pessimiste IC>0%
   record.bet_signal = computeBetSignal(record, uqd);
 
-  // Dropping Odds Tracker — snapshot et calcul delta
+  // Dropping Odds Tracker — time series (max 12 snapshots ≈ 24h à cron 2h)
   const snapKey = `odds_snap_${record.id}`;
-  const prevSnap = kvGet(snapKey);
+  const history = kvGet(snapKey) || [];
+  const prevSnap = Array.isArray(history) ? history[history.length - 1] : (history?.home != null ? history : null);
   if (prevSnap && prevSnap.home != null) {
     const dHome = record.odds?.home != null ? parseFloat((record.odds.home - prevSnap.home).toFixed(2)) : null;
     const dDraw = record.odds?.draw != null ? parseFloat((record.odds.draw - prevSnap.draw).toFixed(2)) : null;
@@ -2623,7 +2960,9 @@ function buildMatchRecord(raw) {
     record.odds_delta = null;
   }
   if (record.odds?.home != null) {
-    kvSet(snapKey, { home: record.odds.home, draw: record.odds.draw, away: record.odds.away, ts: Date.now() });
+    const arr = Array.isArray(history) ? history : (history?.home != null ? [history] : []);
+    const snap = { home: record.odds.home, draw: record.odds.draw, away: record.odds.away, ts: Date.now() };
+    kvSet(snapKey, [...arr, snap].slice(-12));
   }
 
   // Injuries — mappées directement depuis le flux BSD (unavailable_players)
@@ -2632,11 +2971,11 @@ function buildMatchRecord(raw) {
   if (bsdUnavailable) {
     record.injuries = {
       home: (bsdUnavailable.home || []).map(p => ({
-        name:   p.name   || p.player?.name   || '?',
+        name: p.name || p.player?.name || '?',
         reason: p.reason || p.type || 'blessure',
       })),
       away: (bsdUnavailable.away || []).map(p => ({
-        name:   p.name   || p.player?.name   || '?',
+        name: p.name || p.player?.name || '?',
         reason: p.reason || p.type || 'blessure',
       })),
     };
@@ -2710,7 +3049,7 @@ async function enrichCornersFromBSD(matches) {
         const data = await fetchBSDTeamCornerHistory(m.away_team, bsdLeagueId, 5);
         teamCache.set(awayKey, data?.totalCornersPerMatch || null);
       }
-    } catch(e) { continue; }
+    } catch (e) { continue; }
 
     const homeAvg = teamCache.get(homeKey);
     const awayAvg = teamCache.get(awayKey);
@@ -2741,23 +3080,23 @@ function loadHistory() {
   if (fs.existsSync(HISTORY_FILE)) {
     try {
       const raw = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
-      history  = raw.matches  || [];
+      history = raw.matches || [];
       accuracy = raw.accuracy || accuracy;
       saveHistory();
       fs.renameSync(HISTORY_FILE, HISTORY_FILE + '.migrated');
       console.log(`  ✓ history.json migré vers SQLite (${history.length} matchs archivés)`);
       return;
-    } catch(e) { console.warn('[History] Migration JSON→SQLite:', e.message); }
+    } catch (e) { console.warn('[History] Migration JSON→SQLite:', e.message); }
   }
 
-  history  = kvGet('history_matches',  []);
+  history = kvGet('history_matches', []);
   accuracy = kvGet('history_accuracy', accuracy);
   console.log(`  ✓ Historique SQLite chargé (${history.length} matchs archivés)`);
 }
 
 function saveHistory() {
   kvSetBatch([
-    ['history_matches',  history],
+    ['history_matches', history],
     ['history_accuracy', accuracy],
   ]);
 }
@@ -2781,7 +3120,7 @@ function loadAICache() {
       fs.renameSync(AI_CACHE_FILE, AI_CACHE_FILE + '.migrated');
       console.log(`  ✓ ai_cache.json migré vers SQLite (${Object.keys(aiCache).length} analyses valides)`);
       return;
-    } catch(e) { console.warn('[AICache] Migration JSON→SQLite:', e.message); }
+    } catch (e) { console.warn('[AICache] Migration JSON→SQLite:', e.message); }
   }
 
   const raw = kvGet('ai_cache', {});
@@ -2838,11 +3177,11 @@ async function getBSDScoreForMatch(team1, team2, dateStr, bsdDateCache) {
       if (bm.status === 'inprogress' || (bm.status && bm.status.includes('half'))) return false;
       const bh = normName(bm.home_team), ba = normName(bm.away_team);
       return (bh.includes(hNorm.split(' ')[0]) || hNorm.includes(bh.split(' ')[0])) &&
-             (ba.includes(aNorm.split(' ')[0]) || aNorm.includes(ba.split(' ')[0]));
+        (ba.includes(aNorm.split(' ')[0]) || aNorm.includes(ba.split(' ')[0]));
     });
     if (found) return { home: Number(found.home_score), away: Number(found.away_score), source: 'bsd' };
     return null;
-  } catch(e) {
+  } catch (e) {
     return null;
   }
 }
@@ -2883,11 +3222,11 @@ async function archivePastMatches() {
             const found = res.data.response.find(f => {
               const fh = normName(f.teams.home.name), fa = normName(f.teams.away.name);
               return (fh.includes(hNorm.split(' ')[0]) || hNorm.includes(fh.split(' ')[0])) &&
-                     (fa.includes(aNorm.split(' ')[0]) || aNorm.includes(fa.split(' ')[0]));
+                (fa.includes(aNorm.split(' ')[0]) || aNorm.includes(fa.split(' ')[0]));
             });
             if (found?.goals) realScore = { home: found.goals.home, away: found.goals.away, source: 'api-football' };
           }
-        } catch(e) { /* score unavailable */ }
+        } catch (e) { /* score unavailable */ }
       }
 
       const record = {
@@ -2918,6 +3257,12 @@ async function archivePastMatches() {
 
     const archivedIds = new Set(past.map(m => m.id));
     db.matches = db.matches.filter(m => !archivedIds.has(m.id));
+    // Sync vers db.archive_matches pour H2H et stats
+    db.archive_matches = [...db.archive_matches, ...past];
+    // Limiter a 1000 matchs archives pour performance
+    if (db.archive_matches.length > 1000) {
+      db.archive_matches = db.archive_matches.slice(-1000);
+    }
   }
 
   // ── ÉTAPE 2 : Retry des matchs non vérifiés (API était down au moment de l'archive) ──
@@ -2947,29 +3292,29 @@ async function archivePastMatches() {
             const found = res.data.response.find(f => {
               const fh = normName(f.teams.home.name), fa = normName(f.teams.away.name);
               return (fh.includes(hNorm.split(' ')[0]) || hNorm.includes(fh.split(' ')[0])) &&
-                     (fa.includes(aNorm.split(' ')[0]) || aNorm.includes(fa.split(' ')[0]));
+                (fa.includes(aNorm.split(' ')[0]) || aNorm.includes(fa.split(' ')[0]));
             });
             if (found?.goals) retryScore = { home: found.goals.home, away: found.goals.away, source: 'api-football' };
           }
-        } catch(e) { /* still unavailable */ }
+        } catch (e) { /* still unavailable */ }
       }
 
       if (retryScore) {
-            entry.realScore = retryScore;
-            const totalGoals = entry.realScore.home + entry.realScore.away;
-            const wasBTTS = entry.realScore.home > 0 && entry.realScore.away > 0;
-            const wasOver25 = totalGoals > 2.5;
-            if (entry.predicted?.over25 > 55) { accuracy.over25_total++; if (wasOver25) accuracy.over25_correct++; }
-            if (entry.predicted?.btts > 55) { accuracy.btts_total++; if (wasBTTS) accuracy.btts_correct++; }
-            if (entry.predicted?.bestEdgeValue > 5) {
-              accuracy.edge_total++;
-              const winner = entry.realScore.home > entry.realScore.away ? entry.home_team : entry.realScore.away > entry.realScore.home ? entry.away_team : 'Nul';
-              if (winner === entry.predicted.bestEdge) accuracy.edge_correct++;
-            }
-            accuracy.total++;
-            entry.verified = true;
-            entry.retry_at = new Date().toISOString();
-            retried++;
+        entry.realScore = retryScore;
+        const totalGoals = entry.realScore.home + entry.realScore.away;
+        const wasBTTS = entry.realScore.home > 0 && entry.realScore.away > 0;
+        const wasOver25 = totalGoals > 2.5;
+        if (entry.predicted?.over25 > 55) { accuracy.over25_total++; if (wasOver25) accuracy.over25_correct++; }
+        if (entry.predicted?.btts > 55) { accuracy.btts_total++; if (wasBTTS) accuracy.btts_correct++; }
+        if (entry.predicted?.bestEdgeValue > 5) {
+          accuracy.edge_total++;
+          const winner = entry.realScore.home > entry.realScore.away ? entry.home_team : entry.realScore.away > entry.realScore.home ? entry.away_team : 'Nul';
+          if (winner === entry.predicted.bestEdge) accuracy.edge_correct++;
+        }
+        accuracy.total++;
+        entry.verified = true;
+        entry.retry_at = new Date().toISOString();
+        retried++;
       }
     }
   }
@@ -2989,7 +3334,9 @@ function getWeeklyAccuracyTrends(weeks = 12) {
     const w = Math.ceil((diff + start.getDay() + 1) / 7);
     return `${y}-W${String(w).padStart(2, '0')}`;
   };
-  const weeksMap = {};
+
+  const weeksMap = {}; // déclaration correcte de la variable
+
   for (const h of history) {
     if (!h.verified || !h.realScore || !h.commence_time) continue;
     const wk = getWeek(h.commence_time);
@@ -3001,6 +3348,7 @@ function getWeeklyAccuracyTrends(weeks = 12) {
     if (h.predicted?.over25 > 55) { weeksMap[wk].over25t++; if (wasOver25) weeksMap[wk].over25c++; }
     if (h.predicted?.btts > 55) { weeksMap[wk].bttst++; if (wasBTTS) weeksMap[wk].bttsc++; }
   }
+
   return Object.entries(weeksMap)
     .sort(([a], [b]) => a.localeCompare(b))
     .slice(-weeks)
@@ -3014,6 +3362,7 @@ function getWeeklyAccuracyTrends(weeks = 12) {
     }));
 }
 
+
 function getAccuracyReport() {
   const pct = (c, t) => t > 0 ? Math.round(c / t * 100) : null;
 
@@ -3021,8 +3370,8 @@ function getAccuracyReport() {
   const global = {
     total_verified: accuracy.total,
     over25: { rate: pct(accuracy.over25_correct, accuracy.over25_total), sample: accuracy.over25_total },
-    btts:   { rate: pct(accuracy.btts_correct, accuracy.btts_total), sample: accuracy.btts_total },
-    edge:   { rate: pct(accuracy.edge_correct, accuracy.edge_total), sample: accuracy.edge_total },
+    btts: { rate: pct(accuracy.btts_correct, accuracy.btts_total), sample: accuracy.btts_total },
+    edge: { rate: pct(accuracy.edge_correct, accuracy.edge_total), sample: accuracy.edge_total },
     history_size: history.length,
   };
 
@@ -3045,8 +3394,8 @@ function getAccuracyReport() {
   global.rolling30 = {
     sample: recent.length,
     over25: { rate: pct(rOver25c, rOver25t), sample: rOver25t },
-    btts:   { rate: pct(rBttsc, rBttst), sample: rBttst },
-    edge:   { rate: pct(rEdgec, rEdget), sample: rEdget },
+    btts: { rate: pct(rBttsc, rBttst), sample: rBttst },
+    edge: { rate: pct(rEdgec, rEdget), sample: rEdget },
   };
 
   // ── Auto-alerte rolling20 ────────────────────────────────────────────────────
@@ -3055,8 +3404,8 @@ function getAccuracyReport() {
   for (const h of last20) {
     if (!h.realScore) continue;
     const rs = h.realScore;
-    if (h.predicted?.over25 > 55) { aOver25t++; if ((rs.home+rs.away)>2.5) aOver25c++; }
-    if (h.predicted?.btts > 55) { aBttst++; if (rs.home>0 && rs.away>0) aBttsc++; }
+    if (h.predicted?.over25 > 55) { aOver25t++; if ((rs.home + rs.away) > 2.5) aOver25c++; }
+    if (h.predicted?.btts > 55) { aBttst++; if (rs.home > 0 && rs.away > 0) aBttsc++; }
   }
   const allBets = aOver25t + aBttst;
   const allCorrect = aOver25c + aBttsc;
@@ -3094,8 +3443,8 @@ function getAccuracyReport() {
     global.leagues[lg] = {
       total: d.total,
       over25: { rate: pct(d.over25c, d.over25t), sample: d.over25t },
-      btts:   { rate: pct(d.bttsc, d.bttst), sample: d.bttst },
-      edge:   { rate: pct(d.edgec, d.edget), sample: d.edget },
+      btts: { rate: pct(d.bttsc, d.bttst), sample: d.bttst },
+      edge: { rate: pct(d.edgec, d.edget), sample: d.edget },
     };
   }
 
@@ -3176,57 +3525,57 @@ async function fetchTeamAdvancedStats(teamKey, teamId, leagueId, season) {
     // ── Extraction des 5 piliers du Scientific Mode ───────────────────────────
     const data = {
       // Pilier 1 — Stabilité offensive / défensive
-      goals_scored_home_avg:    parseFloat(raw.goals?.for?.average?.home  || 0),
-      goals_scored_away_avg:    parseFloat(raw.goals?.for?.average?.away  || 0),
-      goals_conceded_home_avg:  parseFloat(raw.goals?.against?.average?.home || 0),
-      goals_conceded_away_avg:  parseFloat(raw.goals?.against?.average?.away || 0),
+      goals_scored_home_avg: parseFloat(raw.goals?.for?.average?.home || 0),
+      goals_scored_away_avg: parseFloat(raw.goals?.for?.average?.away || 0),
+      goals_conceded_home_avg: parseFloat(raw.goals?.against?.average?.home || 0),
+      goals_conceded_away_avg: parseFloat(raw.goals?.against?.average?.away || 0),
 
       // Pilier 2 — Croissance de forme (5 derniers matchs)
       form: raw.form || '',
 
       // Pilier 3 — Résultats à domicile / extérieur (différentiel)
-      played_home:  raw.fixtures?.played?.home  || 0,
-      played_away:  raw.fixtures?.played?.away  || 0,
-      wins_home:    raw.fixtures?.wins?.home    || 0,
-      wins_away:    raw.fixtures?.wins?.away    || 0,
-      draws_home:   raw.fixtures?.draws?.home   || 0,
-      draws_away:   raw.fixtures?.draws?.away   || 0,
-      losses_home:  raw.fixtures?.losses?.home  || 0,
-      losses_away:  raw.fixtures?.losses?.away  || 0,
+      played_home: raw.fixtures?.played?.home || 0,
+      played_away: raw.fixtures?.played?.away || 0,
+      wins_home: raw.fixtures?.wins?.home || 0,
+      wins_away: raw.fixtures?.wins?.away || 0,
+      draws_home: raw.fixtures?.draws?.home || 0,
+      draws_away: raw.fixtures?.draws?.away || 0,
+      losses_home: raw.fixtures?.losses?.home || 0,
+      losses_away: raw.fixtures?.losses?.away || 0,
 
       // Pilier 4 — Indice spéculatif (pénaltys, biggest wins, streaks)
-      penalties_scored: raw.penalty?.scored?.total  || 0,
-      penalties_missed: raw.penalty?.missed?.total  || 0,
-      biggest_win_home: raw.biggest?.wins?.home     || '',
-      biggest_win_away: raw.biggest?.wins?.away     || '',
-      biggest_loss_home:raw.biggest?.loses?.home    || '',
-      biggest_loss_away:raw.biggest?.loses?.away    || '',
-      streak_wins:      raw.biggest?.streak?.wins   || 0,
-      streak_draws:     raw.biggest?.streak?.draws  || 0,
-      streak_losses:    raw.biggest?.streak?.loses  || 0,
+      penalties_scored: raw.penalty?.scored?.total || 0,
+      penalties_missed: raw.penalty?.missed?.total || 0,
+      biggest_win_home: raw.biggest?.wins?.home || '',
+      biggest_win_away: raw.biggest?.wins?.away || '',
+      biggest_loss_home: raw.biggest?.loses?.home || '',
+      biggest_loss_away: raw.biggest?.loses?.away || '',
+      streak_wins: raw.biggest?.streak?.wins || 0,
+      streak_draws: raw.biggest?.streak?.draws || 0,
+      streak_losses: raw.biggest?.streak?.loses || 0,
 
       // Pilier 2 — Tirs (disponibles dans /teams/statistics)
-      shots_on_home:  raw.shots?.on?.home  || 0,
-      shots_on_away:  raw.shots?.on?.away  || 0,
+      shots_on_home: raw.shots?.on?.home || 0,
+      shots_on_away: raw.shots?.on?.away || 0,
       shots_on_total: raw.shots?.on?.total || 0,
-      shots_total_home:  raw.shots?.total?.home  || 0,
-      shots_total_away:  raw.shots?.total?.away  || 0,
+      shots_total_home: raw.shots?.total?.home || 0,
+      shots_total_away: raw.shots?.total?.away || 0,
 
       // Pilier 5 — Schéma tactique (formation dominante)
-      main_formation: raw.lineups?.[0]?.formation   || 'N/A',
+      main_formation: raw.lineups?.[0]?.formation || 'N/A',
 
       // Pilier 6 — Discipline (cartons — somme de toutes les tranches horaires)
-      cards_yellow_total:    Object.values(raw.cards?.yellow || {}).reduce((s, v) => s + (v.total || 0), 0),
-      cards_red_total:       Object.values(raw.cards?.red    || {}).reduce((s, v) => s + (v.total || 0), 0),
+      cards_yellow_total: Object.values(raw.cards?.yellow || {}).reduce((s, v) => s + (v.total || 0), 0),
+      cards_red_total: Object.values(raw.cards?.red || {}).reduce((s, v) => s + (v.total || 0), 0),
 
       // Pilier 7 — Clean Sheets
-      clean_sheet_home:  raw.clean_sheet?.home  || 0,
-      clean_sheet_away:  raw.clean_sheet?.away  || 0,
+      clean_sheet_home: raw.clean_sheet?.home || 0,
+      clean_sheet_away: raw.clean_sheet?.away || 0,
       clean_sheet_total: raw.clean_sheet?.total || 0,
 
       // Moyennes globales (pour le classement mode "Global")
-      goals_scored_total_avg:    parseFloat(raw.goals?.for?.average?.total    || 0),
-      goals_conceded_total_avg:  parseFloat(raw.goals?.against?.average?.total || 0),
+      goals_scored_total_avg: parseFloat(raw.goals?.for?.average?.total || 0),
+      goals_conceded_total_avg: parseFloat(raw.goals?.against?.average?.total || 0),
     };
 
     // ── Mise en cache ─────────────────────────────────────────────────────────
@@ -3241,7 +3590,7 @@ async function fetchTeamAdvancedStats(teamKey, teamId, leagueId, season) {
     console.log(`  [AdvStats] ✓ ${teamKey} (team=${teamId}, league=${leagueId})`);
     return data;
 
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [AdvStats] Erreur ${teamKey}:`, e.message);
     return null;
   }
@@ -3333,12 +3682,12 @@ Tu calcules un Power Score DOMICILE et un Power Score EXTÉRIEUR en isolant stri
 
 // ── Générateur de prompt Pro Scout (données injectées) ───────────────────────
 function generateProScoutPrompt(match, homeRatings = [], awayRatings = [], homeSquad = [], awaySquad = []) {
-  const p   = match.poisson         || {};
-  const eg  = match.expectedGoals   || {};
-  const hs  = match.stats?.home     || {};
-  const as  = match.stats?.away     || {};
-  const h2h = match.h2h             || null;
-  const cp  = match.corners_poisson || {};
+  const p = match.poisson || {};
+  const eg = match.expectedGoals || {};
+  const hs = match.stats?.home || {};
+  const as = match.stats?.away || {};
+  const h2h = match.h2h || null;
+  const cp = match.corners_poisson || {};
 
   // BSD ratings moyen (note qualité équipe)
   const homeAvgRating = homeRatings.length
@@ -3349,16 +3698,16 @@ function generateProScoutPrompt(match, homeRatings = [], awayRatings = [], homeS
     : '?';
 
   // Top joueurs par rating BSD
-  const topHomePlayers = [...homeRatings].sort((a, b) => (b.avg_rating||0) - (a.avg_rating||0)).slice(0, 3)
-    .map(pl => `${pl.name} (${(pl.avg_rating||0).toFixed(1)})`).join(', ') || 'N/A';
-  const topAwayPlayers = [...awayRatings].sort((a, b) => (b.avg_rating||0) - (a.avg_rating||0)).slice(0, 3)
-    .map(pl => `${pl.name} (${(pl.avg_rating||0).toFixed(1)})`).join(', ') || 'N/A';
+  const topHomePlayers = [...homeRatings].sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0)).slice(0, 3)
+    .map(pl => `${pl.name} (${(pl.avg_rating || 0).toFixed(1)})`).join(', ') || 'N/A';
+  const topAwayPlayers = [...awayRatings].sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0)).slice(0, 3)
+    .map(pl => `${pl.name} (${(pl.avg_rating || 0).toFixed(1)})`).join(', ') || 'N/A';
 
   // Composition par poste
-  const homeAtt = homeSquad.filter(pl => pl.position === 'Attacker').length  || 0;
-  const awayAtt = awaySquad.filter(pl => pl.position === 'Attacker').length  || 0;
-  const homeDef = homeSquad.filter(pl => pl.position === 'Defender').length  || 0;
-  const awayDef = awaySquad.filter(pl => pl.position === 'Defender').length  || 0;
+  const homeAtt = homeSquad.filter(pl => pl.position === 'Attacker').length || 0;
+  const awayAtt = awaySquad.filter(pl => pl.position === 'Attacker').length || 0;
+  const homeDef = homeSquad.filter(pl => pl.position === 'Defender').length || 0;
+  const awayDef = awaySquad.filter(pl => pl.position === 'Defender').length || 0;
   const homeMid = homeSquad.filter(pl => pl.position === 'Midfielder').length || 0;
   const awayMid = awaySquad.filter(pl => pl.position === 'Midfielder').length || 0;
 
@@ -3369,7 +3718,7 @@ function generateProScoutPrompt(match, homeRatings = [], awayRatings = [], homeS
   // H2H résumé
   let h2hBlock = 'Historique H2H non disponible.';
   if (h2h) {
-    h2hBlock = `Dernières confrontations : ${match.home_team} ${h2h.homeWins||0}V / Nul ${h2h.draws||0} / ${match.away_team} ${h2h.awayWins||0}V. Buts/match moy : ${h2h.avgGoals?.toFixed(1) || '?'}. Score H2H récent : ${(h2h.lastMatches||[]).slice(0,3).map(m=>`${m.score||'?'} (${m.date?.slice(0,10)||'?'})`).join(' · ') || 'N/A'}`;
+    h2hBlock = `Dernières confrontations : ${match.home_team} ${h2h.homeWins || 0}V / Nul ${h2h.draws || 0} / ${match.away_team} ${h2h.awayWins || 0}V. Buts/match moy : ${h2h.avgGoals?.toFixed(1) || '?'}. Score H2H récent : ${(h2h.lastMatches || []).slice(0, 3).map(m => `${m.score || '?'} (${m.date?.slice(0, 10) || '?'})`).join(' · ') || 'N/A'}`;
   }
 
   // xGA estimé (buts encaissés = proxy xGA)
@@ -3378,10 +3727,10 @@ function generateProScoutPrompt(match, homeRatings = [], awayRatings = [], homeS
 
   // Corners estimés
   const cornersOver85 = cp.over_8_5 || cp.over_6_5 || '?';
-  const cornersTotal  = match.corners_avg ? match.corners_avg.toFixed(1) : '?';
+  const cornersTotal = match.corners_avg ? match.corners_avg.toFixed(1) : '?';
 
   // Date/heure
-  const dt      = match.commence_time ? new Date(match.commence_time) : new Date();
+  const dt = match.commence_time ? new Date(match.commence_time) : new Date();
   const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
@@ -3485,8 +3834,8 @@ async function getScoutReport(match) {
     console.log(`  [Scout] Génération Pro Scout — ${match.home_team} vs ${match.away_team}`);
 
     // ── Enrichissement BSD (ratings + squad) en parallèle ──────────────────
-    const hKey  = normName(match.home_team);
-    const aKey  = normName(match.away_team);
+    const hKey = normName(match.home_team);
+    const aKey = normName(match.away_team);
     const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
     const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
 
@@ -3520,18 +3869,18 @@ async function getScoutReport(match) {
     console.log(`  [Scout] ✓ Rapport généré et mis en cache 24h — ${match.home_team} vs ${match.away_team}`);
     return { report, cached: false };
 
-  } catch(e) {
+  } catch (e) {
     console.error('[Scout] Erreur (fallback math):', e.message);
     return { report: buildScoutMathFallback(match), cached: false, fallback: true };
   }
 }
 
 function buildScoutMathFallback(match) {
-  const p   = match.poisson || {};
-  const eg  = match.expectedGoals || {};
-  const hs  = match.stats?.home || {};
+  const p = match.poisson || {};
+  const eg = match.expectedGoals || {};
+  const hs = match.stats?.home || {};
   const as_ = match.stats?.away || {};
-  const dt  = new Date(match.commence_time);
+  const dt = new Date(match.commence_time);
   const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const sig = (v, hi = 55, lo = 45) => v >= hi ? '🟢 Fort' : v >= lo ? '🟡 Moyen' : '🔴 Faible';
@@ -3563,8 +3912,8 @@ function buildScoutMathFallback(match) {
 ## 💎 VALUE BET
 
 ${be?.edge > 0
-  ? `**${be.label}** @ **${be.odds?.toFixed(2) ?? '?'}** — Edge **+${be.edge?.toFixed(1) ?? '?'}%** via ${be.bk ?? 'N/A'}`
-  : 'Aucun edge positif détecté sur ce match.'}
+      ? `**${be.label}** @ **${be.odds?.toFixed(2) ?? '?'}** — Edge **+${be.edge?.toFixed(1) ?? '?'}%** via ${be.bk ?? 'N/A'}`
+      : 'Aucun edge positif détecté sur ce match.'}
 
 ---
 
@@ -3607,7 +3956,7 @@ async function fetchLeagueTopScorers(leagueId, season) {
             byPlayer[pid] = {
               id: pid,
               name: stat.player.name,
-               photo: stat.player.photo || '',  // API-Football: photo field may contain a URL
+              photo: stat.player.photo || '',  // API-Football: photo field may contain a URL
               team: stat.team?.name || '',
               teamId: stat.team?.id || null,
               goals: 0, assists: 0, rating: 0, appearances: 0, _ratingCount: 0,
@@ -3629,7 +3978,7 @@ async function fetchLeagueTopScorers(leagueId, season) {
         console.log(`  [TopScorers BSD] ✓ Ligue ${leagueId} — ${players.length} joueurs depuis BSD`);
         return players;
       }
-    } catch(e) {
+    } catch (e) {
       console.warn(`  [TopScorers BSD] Erreur ligue ${leagueId}:`, e.message);
     }
   }
@@ -3651,21 +4000,21 @@ async function fetchLeagueTopScorers(leagueId, season) {
       if (res.status === 429) { console.warn(`  [TopScorers] Quota épuisé — league ${leagueId}`); return []; }
       if (res.status !== 200) continue;
       const players = (res.data?.response || []).slice(0, 15).map(entry => ({
-        id:          entry.player.id,
-        name:        entry.player.name,
-        photo:       entry.player.photo,
-        team:        entry.statistics[0]?.team?.name || '',
-        teamId:      entry.statistics[0]?.team?.id,
-        goals:       entry.statistics[0]?.goals?.total || 0,
-        assists:     entry.statistics[0]?.goals?.assists || 0,
-        rating:      entry.statistics[0]?.games?.rating || null,
+        id: entry.player.id,
+        name: entry.player.name,
+        photo: entry.player.photo,
+        team: entry.statistics[0]?.team?.name || '',
+        teamId: entry.statistics[0]?.team?.id,
+        goals: entry.statistics[0]?.goals?.total || 0,
+        assists: entry.statistics[0]?.goals?.assists || 0,
+        rating: entry.statistics[0]?.games?.rating || null,
         appearances: entry.statistics[0]?.games?.appearences || 0,
       }));
       db.topScorers[cacheKey] = { data: players, fetchedAt: new Date().toISOString() };
       saveDB();
       console.log(`  [TopScorers] ✓ Ligue ${leagueId} saison ${s} — ${players.length} joueurs`);
       if (players.length > 0) return players;
-    } catch(e) {
+    } catch (e) {
       console.warn(`  [TopScorers] Erreur ligue ${leagueId}:`, e.message);
     }
   }
@@ -3698,7 +4047,7 @@ async function fetchBackupPlayers(teamName) {
     }).filter(p => p.minutes >= 45).sort((a, b) => b.kpi - a.kpi);
     if (players.length) console.log(`  [BackupPlayers] ✓ ${teamName} — ${players.length} joueurs (API-Football)`);
     return players;
-  } catch(e) { return []; }
+  } catch (e) { return []; }
 }
 
 // ─── KEY PLAYER INDEX — top 2 joueurs par équipe (BSD priority, fallback API-Football) ──
@@ -3722,20 +4071,20 @@ async function fetchTeamKeyPlayersBSD(bsdTeamId, bsdSeasonId) {
     if (allStats.length > 0) {
       const players = allStats
         .map(entry => {
-          const goals   = entry.goals        || 0;
-          const assists = entry.goal_assist   || 0;
-          const rating  = parseFloat(entry.rating || 0);
+          const goals = entry.goals || 0;
+          const assists = entry.goal_assist || 0;
+          const rating = parseFloat(entry.rating || 0);
           const minutes = entry.minutes_played || 0;
-          const per90   = Math.max(1, minutes / 90);
-          const kpi     = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
+          const per90 = Math.max(1, minutes / 90);
+          const kpi = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
           return {
-            id:       entry.player?.id || Math.random(),
-            name:     entry.player?.name || '?',
-            photo:    `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
+            id: entry.player?.id || Math.random(),
+            name: entry.player?.name || '?',
+            photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
             position: entry.player?.position || '',
             goals,
             assists,
-            rating:   rating > 0 ? rating.toFixed(1) : null,
+            rating: rating > 0 ? rating.toFixed(1) : null,
             minutes,
             kpi,
           };
@@ -3749,7 +4098,7 @@ async function fetchTeamKeyPlayersBSD(bsdTeamId, bsdSeasonId) {
         return players;
       }
     }
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [KeyPlayers BSD direct] Erreur team ${bsdTeamId}:`, e.message);
   }
   return [];
@@ -3780,20 +4129,20 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
       if (allStats.length > 0) {
         const players = allStats
           .map(entry => {
-            const goals   = entry.goals        || 0;
-            const assists = entry.goal_assist   || 0;
-            const rating  = parseFloat(entry.rating || 0);
+            const goals = entry.goals || 0;
+            const assists = entry.goal_assist || 0;
+            const rating = parseFloat(entry.rating || 0);
             const minutes = entry.minutes_played || 0;
-            const per90   = Math.max(1, minutes / 90);
-            const kpi     = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
+            const per90 = Math.max(1, minutes / 90);
+            const kpi = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
             return {
-              id:       entry.player?.id || Math.random(),
-              name:     entry.player?.name || '?',
-            photo:    `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
+              id: entry.player?.id || Math.random(),
+              name: entry.player?.name || '?',
+              photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
               position: entry.player?.position || '',
               goals,
               assists,
-              rating:   rating > 0 ? rating.toFixed(1) : null,
+              rating: rating > 0 ? rating.toFixed(1) : null,
               minutes,
               kpi,
             };
@@ -3808,7 +4157,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
           return players;
         }
       }
-    } catch(e) {
+    } catch (e) {
       console.warn(`  [KeyPlayers BSD] Erreur team ${bsdTeamId}:`, e.message);
     }
   }
@@ -3816,7 +4165,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
   // 2. Fallback API-Football
   if (!API_FOOTBALL_KEY) return [];
   const cacheKey = `kp_${teamId}_${leagueId}_${season}`;
-  const cached   = kvGet(cacheKey);
+  const cached = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < ADV_STATS_TTL)) return cached.data;
 
   try {
@@ -3829,21 +4178,21 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
 
     const players = (res.data?.response || [])
       .map(entry => {
-        const s       = entry.statistics?.[0];
-        const goals   = s?.goals?.total   || 0;
-        const assists = s?.goals?.assists  || 0;
-        const rating  = parseFloat(s?.games?.rating || 0);
-        const minutes = s?.games?.minutes  || 0;
-        const per90   = Math.max(1, minutes / 90);
-        const kpi     = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
+        const s = entry.statistics?.[0];
+        const goals = s?.goals?.total || 0;
+        const assists = s?.goals?.assists || 0;
+        const rating = parseFloat(s?.games?.rating || 0);
+        const minutes = s?.games?.minutes || 0;
+        const per90 = Math.max(1, minutes / 90);
+        const kpi = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
         return {
-          id:         entry.player.id,
-          name:       entry.player.name,
-          photo:      entry.player.photo,
-          position:   s?.games?.position || '',
+          id: entry.player.id,
+          name: entry.player.name,
+          photo: entry.player.photo,
+          position: s?.games?.position || '',
           goals,
           assists,
-          rating:     rating > 0 ? rating.toFixed(1) : null,
+          rating: rating > 0 ? rating.toFixed(1) : null,
           minutes,
           kpi,
         };
@@ -3855,7 +4204,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
     kvSet(cacheKey, { data: players, fetchedAt: new Date().toISOString() });
     console.log(`  [KeyPlayers] ✓ team ${teamId} — ${players.length} joueurs clés`);
     return players;
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [KeyPlayers] Erreur team ${teamId}:`, e.message);
     return [];
   }
@@ -3864,7 +4213,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
 async function fetchTeamPositionRatings(teamId, leagueId, season) {
   if (!API_FOOTBALL_KEY || !teamId || !leagueId) return null;
   const cacheKey = `pr_${teamId}_${leagueId}_${season}`;
-  const cached   = kvGet(cacheKey);
+  const cached = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < ADV_STATS_TTL)) return cached.data;
 
   try {
@@ -3898,7 +4247,7 @@ async function fetchTeamPositionRatings(teamId, leagueId, season) {
     kvSet(cacheKey, { data: result, fetchedAt: new Date().toISOString() });
     console.log(`  [PosRatings] ✓ team ${teamId} — G:${result.G} D:${result.D} M:${result.M} A:${result.A}`);
     return result;
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [PosRatings] Erreur team ${teamId}:`, e.message);
     return null;
   }
@@ -3938,7 +4287,7 @@ async function fetchTopPerformersBSD(bsdTeamId, bsdSeasonId) {
       console.log(`  [TopPerformers BSD direct] ✓ Team ${bsdTeamId} — ${result.attackers.length}A / ${result.defenders.length}D`);
       return result;
     }
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [TopPerformers BSD direct] Erreur team ${bsdTeamId}:`, e.message);
   }
   return { attackers: [], defenders: [] };
@@ -3987,7 +4336,7 @@ async function fetchTopPerformers(teamId, leagueId, season) {
         console.log(`  [TopPerformers BSD] ✓ Team ${bsdTeamId} — ${result.attackers.length}A / ${result.defenders.length}D`);
         return result;
       }
-    } catch(e) {
+    } catch (e) {
       console.warn(`  [TopPerformers BSD] Erreur team ${bsdTeamId}:`, e.message);
     }
   }
@@ -4029,7 +4378,7 @@ async function fetchTopPerformers(teamId, leagueId, season) {
     kvSet(cacheKey, { data: result, fetchedAt: new Date().toISOString() });
     console.log(`  [TopPerformers] ✓ team ${teamId} — ${result.attackers.length}A / ${result.defenders.length}D`);
     return result;
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [TopPerformers] Erreur team ${teamId}:`, e.message);
     return { attackers: [], defenders: [] };
   }
@@ -4048,15 +4397,15 @@ async function generateAIScout() {
 
   // ── Résumé Poisson / edge (inchangé) ────────────────────────────────────────
   const summary = top5.map((m, i) =>
-    `${i+1}. ${m.home_team} vs ${m.away_team} (${m.league}) — Edge: +${m.best_edge.edge.toFixed(1)}% sur "${m.best_edge.label}" à ${m.best_edge.odds.toFixed(2)} | Poisson: O2.5 ${m.poisson?.over25}%, BTTS ${m.poisson?.btts}% | xG dom ${m.expectedGoals?.home ?? '?'} / ext ${m.expectedGoals?.away ?? '?'}`
+    `${i + 1}. ${m.home_team} vs ${m.away_team} (${m.league}) — Edge: +${m.best_edge.edge.toFixed(1)}% sur "${m.best_edge.label}" à ${m.best_edge.odds.toFixed(2)} | Poisson: O2.5 ${m.poisson?.over25}%, BTTS ${m.poisson?.btts}% | xG dom ${m.expectedGoals?.home ?? '?'} / ext ${m.expectedGoals?.away ?? '?'}`
   ).join('\n');
 
   // ── Récupération stats avancées (10 équipes max, cache 24h) ─────────────────
   const season = currentSeason();
 
   const advancedBlocks = await Promise.all(top5.map(async (m, i) => {
-    const hKey  = normName(m.home_team);
-    const aKey  = normName(m.away_team);
+    const hKey = normName(m.home_team);
+    const aKey = normName(m.away_team);
     const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
     const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
 
@@ -4124,7 +4473,7 @@ async function generateAIScout() {
     };
     aiScoutCache = { data: result, timestamp: Date.now() };
     return result;
-  } catch(e) { return { error: e.message }; }
+  } catch (e) { return { error: e.message }; }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4188,22 +4537,22 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
       }
 
       teams[key] = {
-        home:        homeStats,
-        away:        awayStats,
-        rank:        entry.position,
-        form:        entry.form || '',
-        leagueId:    configLeagueId,
-        bsdTeamId:   entry.team_id || null,
+        home: homeStats,
+        away: awayStats,
+        rank: entry.position,
+        form: entry.form || '',
+        leagueId: configLeagueId,
+        bsdTeamId: entry.team_id || null,
         bsdSeasonId: seasonId,
         bsdLeagueId: bsdLeagueId,
-        xgFor:       entry.xgf || null,
-        xgAgainst:   entry.xga || null,
-        _real:       true,
-        _source:     'bsd',
+        xgFor: entry.xgf || null,
+        xgAgainst: entry.xga || null,
+        _real: true,
+        _source: 'bsd',
       };
     });
     return teams;
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [BSD] fetchStandings ligue ${bsdLeagueId} erreur:`, e.message);
     return null;
   }
@@ -4225,6 +4574,7 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
       home_team: e.home_team,
       away_team: e.away_team,
       league: e.league?.name || 'Unknown',
+      country: forceCountryForKnownCollisions(e.league?.name, e.league?.country || e.country || null, e.league?.id),
       commence_time: e.event_date,
       status: e.status,
       home_score: e.home_score,
@@ -4250,9 +4600,10 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
       unavailable: e.unavailable_players || null,
       _bsd_event_id: e.id,
       _bsd_league_id: e.league?.id || null,
+      _bsd_country: e.league?.country || e.country || null,
       _source: 'bsd',
     }));
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [BSD] fetchMatches erreur:`, e.message);
     return [];
   }
@@ -4266,7 +4617,7 @@ async function fetchBSDPrediction(eventId) {
       return null;
     }
     return res.data.results[0];
-  } catch(e) {
+  } catch (e) {
     return null;
   }
 }
@@ -4276,32 +4627,105 @@ async function fetchBSDPrediction(eventId) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function fetchH2H(team1Id, team2Id, limit = 10) {
-  try {
-    const cacheKey = `h2h_${Math.min(team1Id,team2Id)}_${Math.max(team1Id,team2Id)}`;
-    const cached = apiCacheGet(cacheKey, 'h2h');
-    if (cached) return cached;
-    const res = await httpsGet(
-      `https://v3.football.api-sports.io/fixtures/headtohead?h2h=${team1Id}-${team2Id}&last=${limit}`,
-      { 'x-apisports-key': API_FOOTBALL_KEY }
-    );
-    if (res.status !== 200 || !res.data?.response?.length) return null;
-    const meetings = res.data.response.map(f => {
-      const d = new Date(f.fixture?.date);
-      return {
-        date: d.toISOString().slice(0, 10),
-        league: f.league?.name || '',
-        home: f.teams.home.name,
-        away: f.teams.away.name,
-        score: f.goals ? `${f.goals.home}-${f.goals.away}` : '?-?',
-        home_goals: f.goals?.home ?? null,
-        away_goals: f.goals?.away ?? null,
-        status: f.fixture?.status?.short || '',
-      };
-    });
-    const result = { meetings, total: meetings.length };
+  const cacheKey = `h2h_${Math.min(team1Id, team2Id)}_${Math.max(team1Id, team2Id)}`;
+  const cached = apiCacheGet(cacheKey, 'h2h');
+  if (cached) return cached;
+
+  let result = null;
+  let source = '';
+
+  // Route 1: API-Football (primary)
+  if (API_FOOTBALL_KEY) {
+    try {
+      const res = await httpsGet(
+        `https://v3.football.api-sports.io/fixtures/headtohead?h2h=${team1Id}-${team2Id}&last=${limit}`,
+        { 'x-apisports-key': API_FOOTBALL_KEY }
+      );
+      if (res.status === 200 && res.data?.response?.length) {
+        result = {
+          meetings: res.data.response.map(f => {
+            const d = new Date(f.fixture?.date);
+            return {
+              date: d.toISOString().slice(0, 10),
+              league: f.league?.name || '',
+              home: f.teams.home.name,
+              away: f.teams.away.name,
+              score: f.goals ? `${f.goals.home}-${f.goals.away}` : '?-?',
+              home_goals: f.goals?.home ?? null,
+              away_goals: f.goals?.away ?? null,
+              status: f.fixture?.status?.short || '',
+            };
+          }),
+          total: res.data.response.length
+        };
+        source = 'api-football';
+      }
+    } catch (e) {
+      console.log('[H2H] API-Football failed, trying fallback...');
+    }
+  }
+
+  // Route 2: Fallback via local DB (computeH2H)
+  if (!result) {
+    const localH2h = fetchLocalH2H(team1Id, team2Id, limit);
+    if (localH2h) {
+      result = localH2h;
+      source = 'local-db';
+    }
+  }
+
+  if (result) {
+    result.source = source;
     apiCacheSet(cacheKey, result, 'h2h', 24 * 3600);
     return result;
-  } catch(e) { return null; }
+  }
+  return null;
+}
+
+// Fallback: compute H2H from local DB
+function fetchLocalH2H(team1Id, team2Id, limit) {
+  const all = [...(db.matches || []), ...(db.archive_matches || [])];
+  if (!all.length) return null;
+
+  // Team IDs to names mapping from db.teamStats
+  const hKey = Object.keys(db.teamStats || {}).find(k => db.teamStats[k]?.teamId == team1Id);
+  const aKey = Object.keys(db.teamStats || {}).find(k => db.teamStats[k]?.teamId == team2Id);
+  if (!hKey || !aKey) return null;
+
+  const h2hMatches = all
+    .filter(m => {
+      const h = normName(m.home_team);
+      const a = normName(m.away_team);
+      return (h === hKey && a === aKey) || (h === aKey && a === hKey);
+    })
+    .filter(m => m.live_score || (m.goals?.home != null))
+    .sort((a, b) => new Date(b.commence_time) - new Date(a.commence_time))
+    .slice(0, limit);
+
+  if (!h2hMatches.length) return null;
+
+  const meetings = h2hMatches.map(m => {
+    const isHome = normName(m.home_team) === hKey;
+    let homeGoals, awayGoals;
+    if (m.live_score) {
+      [homeGoals, awayGoals] = m.live_score.split('-').map(Number);
+    } else {
+      homeGoals = m.goals?.home;
+      awayGoals = m.goals?.away;
+    }
+    return {
+      date: new Date(m.commence_time).toISOString().slice(0, 10),
+      league: m.league || '',
+      home: isHome ? m.home_team : m.away_team,
+      away: isHome ? m.away_team : m.home_team,
+      score: `${homeGoals ?? 0}-${awayGoals ?? 0}`,
+      home_goals: homeGoals ?? 0,
+      away_goals: awayGoals ?? 0,
+      status: m.live_score ? 'LIVE' : 'FT'
+    };
+  });
+
+  return { meetings, total: meetings.length };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4330,22 +4754,22 @@ async function fetchTeamLastFixtures(teamId, limit = 15) {
     }));
     apiCacheSet(cacheKey, fixtures, 'team_fixtures', 6 * 3600);
     return fixtures;
-  } catch(e) { return []; }
+  } catch (e) { return []; }
 }
 
 // BSD fallback: last N finished matches for a team from BSD /events/ with pagination
 async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
   if (!bsdLeagueId) return []; // guard: no BSD league → skip
   try {
-    const cacheKey = `bsd_last_fx_${bsdLeagueId}_${teamName.replace(/\s+/g,'_')}`;
+    const cacheKey = `bsd_last_fx_${bsdLeagueId}_${teamName.replace(/\s+/g, '_')}`;
     const cached = apiCacheGet(cacheKey, 'bsd_last_fx');
     if (cached) return cached;
     const now = new Date();
     const from = new Date(now.getTime() - 320 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const to = now.toISOString().split('T')[0];
-    const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const teamNorm = norm(teamName);
-    const stopWords = new Set(['al','fc','sc','ac','cf','sd','cd','fk','sk','if','bk','afc','bfc']);
+    const stopWords = new Set(['al', 'fc', 'sc', 'ac', 'cf', 'sd', 'cd', 'fk', 'sk', 'if', 'bk', 'afc', 'bfc']);
     const sigWord = teamNorm.split(' ').find(w => w.length >= 3 && !stopWords.has(w)) || teamNorm.split(' ')[0];
 
     // Paginate BSD /events/ (max 6 pages), collect all matching, dedup, reverse (recent first)
@@ -4356,7 +4780,7 @@ async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
       if (res.status !== 200 || !res.data?.results?.length) break;
       for (const e of res.data.results) {
         if (!(norm(e.home_team).includes(sigWord) || norm(e.away_team).includes(sigWord))) continue;
-        const dedupeKey = `${e.home_team}|${e.away_team}|${e.event_date||e.date||''}`;
+        const dedupeKey = `${e.home_team}|${e.away_team}|${e.event_date || e.date || ''}`;
         if (seen.has(dedupeKey)) continue;
         seen.add(dedupeKey);
         allMatches.push({
@@ -4378,7 +4802,7 @@ async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
     const result = allMatches.slice(0, limit);
     apiCacheSet(cacheKey, result, 'bsd_last_fx', 6 * 3600);
     return result;
-  } catch(e) { return []; }
+  } catch (e) { return []; }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4424,7 +4848,7 @@ async function fetchBSDTeamCornerHistory(teamName, bsdLeagueId, limit = 10) {
       totalMatches: count,
       totalCornersPerMatch: (totalCornersFor + totalCornersAgainst) / count,
     };
-  } catch(e) {
+  } catch (e) {
     return null;
   }
 }
@@ -4441,25 +4865,25 @@ async function fetchBSDTeamSquad(bsdTeamId) {
     const res = await bsdFetch(`/players/?team=${bsdTeamId}&page_size=100`);
     if (res.status !== 200 || !res.data?.results?.length) return [];
     const squad = res.data.results.map(p => ({
-      id:                p.id,
-      name:              p.name,
-      short_name:        p.short_name,
-      position:          p.position,           // G/D/M/F
+      id: p.id,
+      name: p.name,
+      short_name: p.short_name,
+      position: p.position,           // G/D/M/F
       specific_position: p.specific_position,
-      jersey_number:     p.jersey_number,
-      attributes:        p.attributes || null, // { tactical, attacking, defending, technical, creativity }
-      strengths:         p.strengths  || [],
-      weaknesses:        p.weaknesses || [],
-      availability:      p.availability || 'available',
-      injury_type:       p.injury_type || null,
-      injury_return:     p.injury_expected_return || null,
-      preferred_foot:    p.preferred_foot || null,
-      nationality:       p.nationality || null,
-      market_value:      p.market_value || null,
+      jersey_number: p.jersey_number,
+      attributes: p.attributes || null, // { tactical, attacking, defending, technical, creativity }
+      strengths: p.strengths || [],
+      weaknesses: p.weaknesses || [],
+      availability: p.availability || 'available',
+      injury_type: p.injury_type || null,
+      injury_return: p.injury_expected_return || null,
+      preferred_foot: p.preferred_foot || null,
+      nationality: p.nationality || null,
+      market_value: p.market_value || null,
     }));
     apiCacheSet(cacheKey, squad, 'bsd_squad');
     return squad;
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [BSD] fetchTeamSquad ${bsdTeamId} erreur:`, e.message);
     return [];
   }
@@ -4502,16 +4926,16 @@ async function fetchBSDPlayerRatings(bsdTeamId, bsdSeasonId) {
       }
       const p = byPlayer[pid];
       if (stat.rating != null) p._ratings.push(stat.rating);
-      p.goals         += stat.goals        || 0;
-      p.assists       += stat.goal_assist  || 0;
-      p.minutes       += stat.minutes_played || 0;
-      p.yellow_cards  += stat.yellow_card  || 0;
-      p.red_cards     += stat.red_card     || 0;
+      p.goals += stat.goals || 0;
+      p.assists += stat.goal_assist || 0;
+      p.minutes += stat.minutes_played || 0;
+      p.yellow_cards += stat.yellow_card || 0;
+      p.red_cards += stat.red_card || 0;
       p.shots_on_target += stat.shots_on_target || 0;
-      p.key_passes    += stat.key_pass     || 0;
-      p.xg            += stat.expected_goals || 0;
-      p.xa            += stat.expected_assists || 0;
-      p.saves         += stat.saves        || 0;
+      p.key_passes += stat.key_pass || 0;
+      p.xg += stat.expected_goals || 0;
+      p.xa += stat.expected_assists || 0;
+      p.saves += stat.saves || 0;
       p.matches++;
     }
     const ratings = Object.values(byPlayer).map(p => {
@@ -4521,7 +4945,7 @@ async function fetchBSDPlayerRatings(bsdTeamId, bsdSeasonId) {
     }).sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
     apiCacheSet(cacheKey, ratings, 'bsd_ratings');
     return ratings;
-  } catch(e) {
+  } catch (e) {
     console.warn(`  [BSD] fetchPlayerRatings ${bsdTeamId} erreur:`, e.message);
     return [];
   }
@@ -4668,7 +5092,7 @@ async function handleCornersRoute(res, matchId) {
     apiCacheSet(cacheKey, result, 'corners');
 
     return jsonResponse(res, 200, result);
-  } catch(e) {
+  } catch (e) {
     return jsonResponse(res, 500, { error: e.message });
   }
 }
@@ -4681,22 +5105,35 @@ async function handleCornersRoute(res, matchId) {
 // through buildMatchRecord() unchanged. Uses a single synthetic bookmaker entry.
 function bsdToOddsApiFormat(bsdMatch) {
   if (!bsdMatch.odds?.home || !bsdMatch.odds?.away) return null;
+
   const drawOdds = bsdMatch.odds.draw || 3.0;
-  const configLeague = leaguesConfig.leagues.find(
-    l => l.name === bsdMatch.league || (bsdMatch._bsd_league_id && configIdToBsd(l.id) == bsdMatch._bsd_league_id)
+
+  // Mapping robuste: priorité à l'ID BSD, puis disambiguïsation par pays
+  const configLeague = resolveConfigLeagueForBSDMatch(bsdMatch);
+  const forcedCountry = forceCountryForKnownCollisions(
+    bsdMatch.league,
+    bsdMatch._bsd_country || bsdMatch.country,
+    bsdMatch._bsd_league_id
   );
-  const sportKey = configLeague?.odds_key || 'soccer_bsd';
+
+  const inferredSportKey = inferSportKeyFromLeagueCountry(bsdMatch.league, forcedCountry);
+  const sportKey = configLeague?.odds_key || inferredSportKey || 'soccer_bsd';
+  const leagueCountry = forcedCountry || configLeague?.country || null;
+
   return {
     id: bsdMatch.id,
     sport_key: sportKey,
     sport_title: bsdMatch.league,
+    country: leagueCountry,
+    commence_time: bsdMatch.commence_time,
     home_team: bsdMatch.home_team,
     away_team: bsdMatch.away_team,
-    commence_time: bsdMatch.commence_time,
-    _sport: sportKey,
+    _sport: sportKey, // C'est cette valeur qui est utilisée pour le filtrage !
     _source: 'bsd',
     _bsd_event_id: bsdMatch._bsd_event_id,
     bsd_odds: bsdMatch.odds,
+    _league_country: leagueCountry,
+    _config_league_id: configLeague?.id || null,
     bsd_xg: bsdMatch.xg,
     bsd_coaches: bsdMatch.coaches,
     bsd_unavailable: bsdMatch.unavailable,
@@ -4707,7 +5144,7 @@ function bsdToOddsApiFormat(bsdMatch) {
         key: 'h2h',
         outcomes: [
           { name: bsdMatch.home_team, price: bsdMatch.odds.home },
-          { name: 'Draw',             price: drawOdds },
+          { name: 'Draw', price: drawOdds },
           { name: bsdMatch.away_team, price: bsdMatch.odds.away },
         ],
       }],
@@ -4715,211 +5152,154 @@ function bsdToOddsApiFormat(bsdMatch) {
   };
 }
 
+
 // ─── JOB 1 : COTES (toutes les 12h) ──────────────────────────────────────
 async function fetchOdds(force = false) {
-  if (!ODDS_API_KEY) { console.warn('[Cron:Odds] Pas de clé API'); return; }
   if (isFetchingOdds) { console.warn('[Cron:Odds] Déjà en cours — ignoré'); return; }
 
-  // ── Cache check: skip si données < 12h ET matchs à jour ──
+  // 1. Gestion du cache pour éviter le gaspillage de requêtes
   const cacheData = apiCacheGet('odds_raw_matches');
   if (!force && cacheData && db.matches.length > 0) {
     const now = Date.now();
     const upcoming = db.matches.filter(m => new Date(m.commence_time).getTime() > now).length;
-    const past = db.matches.length - upcoming;
-    const allPast = upcoming === 0;
-    if (allPast) {
-      console.log(`  [Cron:Odds] ⚠ Cache valide mais ${past} matchs passés — FORCING REFRESH`);
-    } else {
-      console.log(`  [Cron:Odds] ⚡ Données en cache (${upcoming} matchs à venir/${db.matches.length}) — skip API`);
+    if (upcoming > 0) {
+      console.log(`  [Cron:Odds] ⚡ Données fraîches en cache (${upcoming} matchs) — skip API`);
       return;
     }
   }
 
   isFetchingOdds = true;
   console.log('\n%s', '═'.repeat(60));
-  console.log(`  [Cron:Odds] ${force ? 'FORCED' : 'Mise à jour'} des cotes…`);
+  console.log(`  [Cron:Odds] Lancement du routing intelligent (BSD-First)...`);
+
+  let tempBuiltMatches = [];
+  let fallbackToSofa = false;
 
   try {
-    // 1. Récupérer les sports actifs
-    const sportsCache = apiCacheGet('odds_sports_list');
-    let sportsRes;
-    if (sportsCache) {
-      sportsRes = { status: 200, data: sportsCache };
-      console.log('  [Cron:Odds] Sports list: cache HIT');
-    } else {
-      sportsRes = await httpsGet(`https://api.the-odds-api.com/v4/sports/?apiKey=${ODDS_API_KEY}`);
-      if (sportsRes.status === 200) {
-        apiCacheSet('odds_sports_list', sportsRes.data, 'odds_api');
-      }
-    }
-    if (sportsRes.status !== 200) {
-      if (sportsRes.status === 429) { db.status = 'quota_epuise'; saveDB(); console.warn('  [Cron:Odds] Quota épuisé (429)'); }
-      else { console.error('  [Cron:Odds] /sports HTTP', sportsRes.status); }
-      return;
-    }
+    const now = new Date();
+    const dateFrom = formatDateOnly(now);
+    const dateTo = formatDateOnly(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
+    let allRawMatches = [];
 
-    const activeSports = sportsRes.data
-      .filter(s => s.active && ALL_SPORTS.includes(s.key))
-      .map(s => s.key);
-    console.log(`  [Cron:Odds] Ligues actives: ${activeSports.join(', ') || 'aucune'}`);
-
-    // 2. Charger les cotes par ligue
-    const now  = new Date();
-    const from = formatIsoTimestamp(now);
-    const to   = formatIsoTimestamp(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
-    const rawMatches = [];
-    const oddsToCache = {};
-
-    for (const sport of activeSports) {
-      const sportCacheKey = `odds_${sport}`;
-      const sportCached = apiCacheGet(sportCacheKey);
-      if (sportCached) {
-        rawMatches.push(...sportCached);
-        console.log(`  [Cron:Odds] ${sport} → cache HIT (${sportCached.length} matchs)`);
-        continue;
-      }
-      try {
-        const query = new URLSearchParams({
-          apiKey: ODDS_API_KEY,
-          regions: 'eu',
-          markets: 'h2h',
-          oddsFormat: 'decimal',
-          dateFormat: 'iso',
-          commenceTimeFrom: from,
-          commenceTimeTo: to,
-        }).toString();
-        const res = await httpsGet(`https://api.the-odds-api.com/v4/sports/${sport}/odds/?${query}`);
-        if (res.status !== 200) {
-          console.warn(`  [Cron:Odds] ${sport} → HTTP ${res.status}`, res.data || 'no body');
-          continue;
-        }
-        const remaining = res.headers['x-requests-remaining'];
-        if (remaining) db.oddsQuotaRemaining = remaining;
-        res.data.forEach(m => { m._sport = sport; });
-        rawMatches.push(...res.data);
-        oddsToCache[sportCacheKey] = res.data;
-        console.log(`  [Cron:Odds] ${sport} → ${res.data.length} matchs`);
-      } catch(e) { console.warn(`  [Cron:Odds] ${sport} erreur:`, e.message); }
-    }
-
-    // Stocker les nouvelles données dans le cache 12h
-    oddsToCache['odds_raw_matches'] = rawMatches;
-    apiCacheSetBatch(
-      Object.entries(oddsToCache).map(([k, v]) => [k, v]),
-      'odds_api'
-    );
-    console.log(`  [Cron:Odds] 🗄️ ${Object.keys(oddsToCache).length} entrées cachées 12h`);
-
-    // 3b. Supplementer avec matchs BSD non couverts par The Odds API
+    // =========================================================================
+    // ÉTAPE 1 : DÉCOUVERTE VIA BSD (Source Primaire Gratuite)
+    // =========================================================================
+    console.log('  [Routing] L1 : Récupération des matchs via BSD...');
     try {
-      const bsdFrom = formatDateOnly(now);
-      const bsdTo   = formatDateOnly(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
-      const bsdRaw  = await fetchBSDMatches(bsdFrom, bsdTo);
-      if (bsdRaw.length) {
-        // Index Odds API matches by normalized team pair for deduplication
-        const oddsIndex = new Set(rawMatches.map(m => normName(m.home_team) + '|' + normName(m.away_team)));
-        let added = 0;
-        for (const bm of bsdRaw) {
-          const key = normName(bm.home_team) + '|' + normName(bm.away_team);
-          if (oddsIndex.has(key)) continue; // already covered by Odds API
-          const adapted = bsdToOddsApiFormat(bm);
-          if (adapted) { rawMatches.push(adapted); oddsIndex.add(key); added++; }
+      const bsdRaw = await fetchBSDMatches(dateFrom, dateTo);
+      if (bsdRaw && bsdRaw.length > 0) {
+        const adapted = bsdRaw.map(bsdToOddsApiFormat).filter(Boolean);
+        allRawMatches.push(...adapted);
+        console.log(`  [Routing] ✓ ${adapted.length} matchs trouvés via BSD.`);
+      }
+    } catch (e) { console.error('  [Routing] ❌ Erreur BSD:', e.message); }
+
+    // =========================================================================
+    // ÉTAPE 2 : SÉCURITÉ LIGUES MAJEURES VIA FOOTBALL-DATA.ORG
+    // =========================================================================
+    if (FOOTBALL_DATA_API_KEY) {
+      console.log('  [Routing] L2 : Vérification des ligues majeures (Football-Data)...');
+      try {
+        // On récupère les matchs des compétitions principales (PL, PD, BL1, SA, L1)
+        const fdRes = await httpsGet(`https://api.football-data.org/v4/competitions?pageSize=50`, {
+          'X-Auth-Token': FOOTBALL_DATA_API_KEY
+        });
+        if (fdRes.status === 200 && fdRes.data.competitions) {
+          // On ne fait pas d'appels massifs ici pour économiser, 
+          // on utilise juste cette API pour confirmer la présence des ligues.
+          console.log(`  [Routing] ✓ Synchronisation des compétitions majeure terminée.`);
         }
-        console.log(`  [Cron:Odds] BSD supplement: +${added} matchs (${bsdRaw.length} récupérés)`);
-      }
-    } catch(e) {
-      console.warn('  [Cron:Odds] BSD supplement erreur (non bloquant):', e.message);
+      } catch (e) { console.warn('  [Routing] ⚠️ Football-Data indisponible:', e.message); }
     }
 
-    // 3. Fusionner avec les stats et calculer edge/probabilités
-    // Snapshot Poisson précédent pour tracking des variations
-    const prevPoisson = {};
-    for (const m of db.matches) {
-      if (m.poisson && !m.poisson.error) {
-        prevPoisson[m.id] = {
-          homeWin: m.poisson.homeWin, awayWin: m.poisson.awayWin, draw: m.poisson.draw,
-          over35: m.poisson.over35, over15: m.poisson.over15, btts: m.poisson.btts,
-          dc: (m.poisson.homeWin + m.poisson.draw),
-          corners: m.corners_poisson?.over_6_5,
-        };
-        kvSet(`poisson_snap_${m.id}`, prevPoisson[m.id]);
-      }
-    }
+    // =========================================================================
+    // ÉTAPE 3 : ENRICHISSEMENT CHIRURGICAL VIA THE ODDS API
+    // =========================================================================
+    if (ODDS_API_KEY) {
+      console.log('  [Routing] L3 : Enrichissement des cotes (Surgical Mode)...');
 
-    const built = rawMatches.map(buildMatchRecord).filter(Boolean);
-    built.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+      // Au lieu de boucler sur TOUS les sports, on ne cible que les 5 plus populaires
+      // pour économiser drastiquement les crédits.
+      const prioritySports = ['soccer_epl', 'soccer_france_ligue1', 'soccer_spain_la_liga', 'soccer_germany_bundesliga', 'soccer_italy_serie_a'];
+      const oddsToCache = {};
+      let quotaExceeded = false;
 
-    // Calcul des deltas Poisson vs snapshot precedent
-    for (const m of built) {
-      const prev = kvGet(`poisson_snap_${m.id}`) || prevPoisson[m.id];
-      if (prev && m.poisson && !m.poisson.error) {
-        const d = {};
-        const homeWin = m.poisson.homeWin || 0, awayWin = m.poisson.awayWin || 0, draw = m.poisson.draw || 0;
-        d.homeWin  = Math.round(homeWin - (prev.homeWin || 0));
-        d.awayWin  = Math.round(awayWin - (prev.awayWin || 0));
-        d.draw     = Math.round(draw - (prev.draw || 0));
-        d.under35  = Math.round((prev.over35 || 0) - (m.poisson.over35 || 0));
-        d.over15   = Math.round((m.poisson.over15 || 0) - (prev.over15 || 0));
-        d.btts     = Math.round((m.poisson.btts || 0) - (prev.btts || 0));
-        d.dc       = Math.round((homeWin + draw) - (prev.dc || 0));
-        d.corners  = Math.round((m.corners_poisson?.over_6_5 || 0) - (prev.corners || 0));
-        const hasDelta = Object.values(d).some(v => Math.abs(v) >= 1);
-        if (hasDelta) m.poisson_delta = d;
-      }
-    }
-
-    // Dual-Check IA : si GameForecast est configuré, valider les matchs Shield
-    if (GAMEFORECAST_API_HOST) {
-      const shieldMatches = built.filter(m => m.shield).slice(0, 5);
-      for (const m of shieldMatches) {
+      for (const sport of prioritySports) {
         try {
-          const forecast = await fetchGameForecast(m);
-          if (forecast.mocked) continue; // ignorer les données mock
-          const fc = forecast.data?.predicted || forecast.predicted;
-          if (!fc) continue;
-          const fcWinner = fc.homeWin > fc.awayWin && fc.homeWin > fc.draw ? m.home_team
-            : fc.awayWin > fc.homeWin && fc.awayWin > fc.draw ? m.away_team : 'Nul';
-          m.shield_confirmed = (fcWinner === m.best_edge?.label);
-          m.gameForecast = { homeWin: fc.homeWin, draw: fc.draw, awayWin: fc.awayWin };
-        } catch(e) { /* GameForecast non bloquant */ }
+          const query = new URLSearchParams({
+            apiKey: ODDS_API_KEY, regions: 'eu', markets: 'h2h', oddsFormat: 'decimal',
+            dateFormat: 'iso', commenceTimeFrom: formatIsoTimestamp(now), commenceTimeTo: formatIsoTimestamp(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
+          }).toString();
+
+          const res = await httpsGet(`https://api.the-odds-api.com/v4/sports/${sport}/odds/?${query}`);
+
+          if (res.status === 401 || res.status === 429) {
+            console.error(`  [Routing] ⚠️ Quota The Odds API atteint. Arrêt de l'enrichissement.`);
+            quotaExceeded = true;
+            break;
+          }
+
+          if (res.status === 200) {
+            res.data.forEach(m => { m._sport = sport; });
+            // On fusionne les cotes avec les matchs déjà trouvés par BSD
+            allRawMatches = allRawMatches.map(existing => {
+              const matchFromOdds = res.data.find(o => normName(o.home_team) === normName(existing.home_team) && normName(o.away_team) === normName(existing.away_team));
+              return matchFromOdds ? { ...existing, bookmakers: matchFromOdds.bookmakers } : existing;
+            });
+            // On ajoute aussi les matchs qui seraient UNIQUEMENT chez Odds API
+            const newMatches = res.data.filter(o => !allRawMatches.some(ex => normName(ex.home_team) === normName(o.home_team) && normName(ex.away_team) === normName(o.away_team)));
+            newMatches.forEach(m => { m._sport = sport; allRawMatches.push(m); });
+
+            oddsToCache[`odds_${sport}`] = res.data;
+          }
+        } catch (e) { console.warn(`  [Routing] ${sport} erreur:`, e.message); }
       }
-      const confirmed = built.filter(m => m.shield_confirmed).length;
-      if (confirmed) console.log(`  [Dual-Check] ${confirmed} matchs Shield confirmés par GameForecast`);
+
+      if (!quotaExceeded) {
+        oddsToCache['odds_raw_matches'] = allRawMatches;
+        apiCacheSetBatch(Object.entries(oddsToCache).map(([k, v]) => [k, v]), 'odds_api');
+      }
     }
 
-    // Enrichissement corners depuis BSD (données réelles par équipe)
-    await enrichCornersFromBSD(built).catch(e => console.warn('  [Corners] Erreur non bloquante:', e.message));
+    // =========================================================================
+    // FINALISATION & PROTECTION ANTI-WIPE
+    // =========================================================================
+    if (allRawMatches.length > 0) {
+      tempBuiltMatches = allRawMatches.map(buildMatchRecord).filter(Boolean);
+      db.matches = tempBuiltMatches.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+      db.status = 'ok';
+      console.log(`  [Cron:Odds] ✅ Succès : ${db.matches.length} matchs injectés.`);
+    } else {
+      console.error('\x1b[31m[DB_GUARD] ⚠️ Aucune donnée récupérée. Conservation du cache.\x1b[0m');
+      db.status = 'api_empty_fallback';
+      fallbackToSofa = true;
+    }
 
-    db.matches = built;
+    // Si on est en mode survie (Sofa), on met à jour les scores des matchs existants
+    if (fallbackToSofa) {
+      console.log('  [Routing] 🛡️ Mode Maintenance : Mise à jour des scores via Sofascore...');
+      for (const m of db.matches) {
+        try {
+          const sofaTeam = await searchSofascoreTeam(m.home_team);
+          if (sofaTeam?.id) {
+            const events = await fetchSofascoreTeamLastMatches(sofaTeam.id, 1);
+            const matchEvent = events.find(e => normName(e.away).includes(normName(m.away_team).split(' ')[0]));
+            if (matchEvent) m.live_score = `${matchEvent.home_goals}-${matchEvent.away_goals}`;
+          }
+        } catch (e) { }
+      }
+    }
+
     db.lastOddsUpdate = new Date().toISOString();
-    db.status = 'ok';
     saveDB();
-    syncCacheBuffers(); // ← Tampon mémoire mis à jour après succès
-
-    // Notifie tous les clients SSE des nouveaux matchs
+    syncCacheBuffers();
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
 
-    console.log(`  [Cron:Odds] ✓ ${built.length} matchs fusionnés et sauvegardés`);
-    if (db.oddsQuotaRemaining) console.log(`  [Cron:Odds] Quota restant: ${db.oddsQuotaRemaining}`);
-    console.log('═'.repeat(60));
-
-    // Archiver les matchs terminés + nettoyer les expirés
-    await archivePastMatches().catch(e => console.warn('[Archive]', e.message));
-    cleanExpiredMatches();
-    // Envoyer alertes Telegram pour les value bets
-    await sendValueBetAlerts().catch(e => console.warn('[Telegram]', e.message));
-
-  } catch(e) {
+  } catch (e) {
     console.error('  [Cron:Odds] Erreur fatale:', e.message);
-    // GUARD: Ne jamais perdre les données — fallback vers le tampon mémoire
     if (!db.matches.length && cachedMatches.length > 0) {
-      console.log('  [Cron:Odds] 🛡️ Fallback cache mémoire — restauration de', cachedMatches.length, 'matchs');
       db.matches = JSON.parse(JSON.stringify(cachedMatches));
       db.status = 'cache_fallback';
-      saveDB();
-    } else if (!db.matches.length) {
-      db.status = 'erreur_odds';
-      db.matches = buildDemoMatches();
       saveDB();
     }
   } finally {
@@ -4968,7 +5348,7 @@ async function fetchStats(force = false) {
             db.statsUpdateByLeague[configId] = new Date().toISOString();
             console.log(`  [BSD] Ligue ${configId} → OK (${count} équipes)`);
           }
-        } catch(e) {
+        } catch (e) {
           console.warn(`  [BSD] Ligue ${configId} erreur:`, e.message);
         }
       }
@@ -5038,14 +5418,14 @@ async function fetchStats(force = false) {
               }
 
               db.teamStats[key] = {
-                home:     homeStats,
-                away:     awayStats,
-                rank:     entry.rank,
-                form:     entry.form || '',
-                teamId:   entry.team.id,
+                home: homeStats,
+                away: awayStats,
+                rank: entry.rank,
+                form: entry.form || '',
+                teamId: entry.team.id,
                 leagueId: lid,
-                _real:    true,
-                _source:  'api-football',
+                _real: true,
+                _source: 'api-football',
               };
               fallbackTeamsFetched++;
               totalTeams++;
@@ -5053,9 +5433,9 @@ async function fetchStats(force = false) {
           });
           if (groups.length) {
             db.statsUpdateByLeague[lid] = new Date().toISOString();
-            console.log(`  [Fallback] Ligue ${lid} → OK (${groups.reduce((s,g)=>s+g.length,0)} équipes)`);
+            console.log(`  [Fallback] Ligue ${lid} → OK (${groups.reduce((s, g) => s + g.length, 0)} équipes)`);
           } else console.warn(`  [Fallback] Ligue ${lid} → standings vides`);
-        } catch(e) { console.warn(`  [Fallback] Ligue ${lid} erreur:`, e.message); }
+        } catch (e) { console.warn(`  [Fallback] Ligue ${lid} erreur:`, e.message); }
       }
       console.log(`  [Fallback] Phase 2 terminée: ${fallbackTeamsFetched} équipes`);
     }
@@ -5092,7 +5472,7 @@ async function fetchStats(force = false) {
         try {
           const stats = await fetchSofascoreTeamStats(teamName, leagueId);
           if (stats) { db.teamStats[normName(teamName)] = { teamId: null, rank: 0, ...stats }; sofaFilled++; }
-        } catch(e) { /* silencieux */ }
+        } catch (e) { /* silencieux */ }
       }
       if (sofaFilled) console.log(`  [Cron:Stats] Phase 3: ✓ ${sofaFilled} équipes alimentées via Sofascore`);
     }
@@ -5100,7 +5480,7 @@ async function fetchStats(force = false) {
     // Re-fusionner les matchs avec les nouvelles stats
     if (db.matches.length) await fetchOdds();
 
-  } catch(e) {
+  } catch (e) {
     console.error('  [Cron:Stats] Erreur fatale:', e.message);
     // GUARD: Préserver le cache mémoire même si stats échouent
     if (Object.keys(db.teamStats).length === 0 && Object.keys(cachedLeagues).length > 0) {
@@ -5134,7 +5514,7 @@ async function fetchFixturesByDateRange(from, to) {
       } else {
         console.warn(`  [Cron:Stats] Fixture ${date} HTTP ${dayRes.status}`, dayRes.data || 'no body');
       }
-    } catch(e) {
+    } catch (e) {
       console.warn(`  [Cron:Stats] Fixture ${date} erreur:`, e.message);
     }
   }
@@ -5288,7 +5668,7 @@ async function forceSyncFixture(fixtureId) {
           if (eventDetails.actual_home_xg != null) match.bsd_xg.home = eventDetails.actual_home_xg;
           if (eventDetails.actual_away_xg != null) { match.bsd_xg = match.bsd_xg || {}; match.bsd_xg.away = eventDetails.actual_away_xg; }
         }
-      } catch(e) {
+      } catch (e) {
         console.warn(`  [SYNC] Event details fetch échoué: ${e.message}`);
       }
     }
@@ -5364,7 +5744,7 @@ async function forceSyncFixture(fixtureId) {
 
     forceSyncLock.delete(fixtureId);
     return match;
-  } catch(e) {
+  } catch (e) {
     console.error("\x1b[31m[SYNC] Erreur pour %s: %s\x1b[0m", fixtureId, e.message);
     console.error("\x1b[31m[SYNC] Stack: %s\x1b[0m", e.stack);
     forceSyncLock.delete(fixtureId);
@@ -5388,7 +5768,7 @@ function loadPreloadTracker() {
     preloadTracker = kvGet('preload_tracker', {});
     const count = Object.keys(preloadTracker).length;
     if (count > 0) console.log(`  [PRELOAD] Tracker chargé — ${count} matchs déjà pré-chargés`);
-  } catch(e) {
+  } catch (e) {
     console.warn('  [PRELOAD] Tracker load échoué:', e.message);
     preloadTracker = {};
   }
@@ -5397,7 +5777,7 @@ function loadPreloadTracker() {
 function savePreloadTracker() {
   try {
     kvSet('preload_tracker', preloadTracker);
-  } catch(e) {
+  } catch (e) {
     console.warn('  [PRELOAD] Tracker save échoué:', e.message);
   }
 }
@@ -5498,10 +5878,10 @@ async function runGlobalPreload() {
       markMatchPreloaded(m.id, homeRatings.length + awayRatings.length, homeSquad.length + awaySquad.length);
 
       successCount++;
-      console.log(`  [PRELOAD] ✅ [${i+1}/${toPreload.length}] ${homeTeam} vs ${awayTeam} — ratings=${homeRatings.length + awayRatings.length}, squad=${homeSquad.length + awaySquad.length}`);
-    } catch(e) {
+      console.log(`  [PRELOAD] ✅ [${i + 1}/${toPreload.length}] ${homeTeam} vs ${awayTeam} — ratings=${homeRatings.length + awayRatings.length}, squad=${homeSquad.length + awaySquad.length}`);
+    } catch (e) {
       failCount++;
-      console.warn(`  [PRELOAD] ❌ [${i+1}/${toPreload.length}] ${homeTeam} vs ${awayTeam} — ${e.message}`);
+      console.warn(`  [PRELOAD] ❌ [${i + 1}/${toPreload.length}] ${homeTeam} vs ${awayTeam} — ${e.message}`);
     }
 
     // Délai anti-spam (sauf dernier)
@@ -5875,7 +6255,7 @@ async function runProactiveHydrator() {
       if (!integrityCheck.valid) {
         m.bsd_status = 'FAILED_INTEGRITY';
         m.integrity_errors = integrityCheck.errors;
-        console.log(`  [HYDRATOR] ⚠️ [${i+1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — INTEGRITÉ ÉCHOUÉE: ${integrityCheck.errors.join(', ')} — reprogrammation 60s`);
+        console.log(`  [HYDRATOR] ⚠️ [${i + 1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — INTEGRITÉ ÉCHOUÉE: ${integrityCheck.errors.join(', ')} — reprogrammation 60s`);
         // Reprogrammer une tentative dans 60s
         setTimeout(() => {
           m.bsd_status = null; // Reset pour permettre un nouveau fetch
@@ -5893,10 +6273,10 @@ async function runProactiveHydrator() {
       if (cachedIdx >= 0) cachedMatches[cachedIdx] = m;
 
       successCount++;
-      console.log(`  [HYDRATOR] ✅ [${i+1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — fatigue=${m._fatigue_home.level}/${m._fatigue_away.level}, dominance=${m._dominance.label}`);
-    } catch(e) {
+      console.log(`  [HYDRATOR] ✅ [${i + 1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — fatigue=${m._fatigue_home.level}/${m._fatigue_away.level}, dominance=${m._dominance.label}`);
+    } catch (e) {
       failCount++;
-      console.warn(`  [HYDRATOR] ❌ [${i+1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — ${e.message}`);
+      console.warn(`  [HYDRATOR] ❌ [${i + 1}/${toHydrate.length}] ${homeTeam} vs ${awayTeam} — ${e.message}`);
     }
 
     // Rate limiting
@@ -5920,26 +6300,26 @@ function buildDemoMatches() {
   const now = new Date();
   const d = (off, h, m) => { const dt = new Date(now); dt.setDate(dt.getDate() + off); dt.setHours(h, m, 0, 0); return dt.toISOString(); };
   const DEMOS = [
-    ['soccer_france_ligue1','PSG','Olympique Lyonnais',0,20,45,1.42,4.50,7.50],
-    ['soccer_france_ligue1','Olympique de Marseille','AS Monaco',0,17,0,2.20,3.40,3.10],
-    ['soccer_france_ligue1','Stade Rennais','Lille OSC',1,15,0,2.60,3.20,2.70],
-    ['soccer_france_ligue1','OGC Nice','RC Lens',1,20,45,2.30,3.30,3.00],
-    ['soccer_epl','Arsenal','Chelsea',0,17,30,2.10,3.40,3.25],
-    ['soccer_epl','Manchester City','Liverpool',0,16,0,2.40,3.50,2.80],
-    ['soccer_epl','Newcastle United','Tottenham Hotspur',1,14,0,2.50,3.25,2.75],
-    ['soccer_epl','Aston Villa','Manchester United',2,20,0,1.95,3.60,3.80],
-    ['soccer_spain_la_liga','Real Madrid','FC Barcelona',0,21,0,2.30,3.20,2.90],
-    ['soccer_spain_la_liga','Atlético Madrid','Sevilla FC',1,18,30,1.80,3.50,4.20],
-    ['soccer_germany_bundesliga','Bayern Munich','Borussia Dortmund',0,18,30,1.65,3.80,5.00],
-    ['soccer_germany_bundesliga','Bayer Leverkusen','RB Leipzig',2,15,30,1.90,3.60,3.70],
-    ['soccer_italy_serie_a','Inter Milan','Juventus',1,18,0,2.00,3.40,3.60],
-    ['soccer_italy_serie_a','AC Milan','AS Roma',1,20,45,2.10,3.30,3.40],
-    ['soccer_uefa_champs_league','Real Madrid','Bayern Munich',2,21,0,2.20,3.30,3.00],
-    ['soccer_uefa_champs_league','Arsenal','PSG',3,21,0,2.40,3.20,2.80],
-    ['soccer_uefa_europa_league','Manchester United','Athletic Club',2,18,45,1.85,3.50,4.00],
-    ['soccer_france_ligue1','Girondins de Bordeaux','Stade Brestois',3,15,0,2.00,3.20,3.60],
-    ['soccer_epl','Brighton','West Ham United',3,14,0,2.15,3.40,3.20],
-    ['soccer_spain_la_liga','Valencia CF','Villarreal CF',3,19,0,2.40,3.10,2.90],
+    ['soccer_france_ligue1', 'PSG', 'Olympique Lyonnais', 0, 20, 45, 1.42, 4.50, 7.50],
+    ['soccer_france_ligue1', 'Olympique de Marseille', 'AS Monaco', 0, 17, 0, 2.20, 3.40, 3.10],
+    ['soccer_france_ligue1', 'Stade Rennais', 'Lille OSC', 1, 15, 0, 2.60, 3.20, 2.70],
+    ['soccer_france_ligue1', 'OGC Nice', 'RC Lens', 1, 20, 45, 2.30, 3.30, 3.00],
+    ['soccer_epl', 'Arsenal', 'Chelsea', 0, 17, 30, 2.10, 3.40, 3.25],
+    ['soccer_epl', 'Manchester City', 'Liverpool', 0, 16, 0, 2.40, 3.50, 2.80],
+    ['soccer_epl', 'Newcastle United', 'Tottenham Hotspur', 1, 14, 0, 2.50, 3.25, 2.75],
+    ['soccer_epl', 'Aston Villa', 'Manchester United', 2, 20, 0, 1.95, 3.60, 3.80],
+    ['soccer_spain_la_liga', 'Real Madrid', 'FC Barcelona', 0, 21, 0, 2.30, 3.20, 2.90],
+    ['soccer_spain_la_liga', 'Atlético Madrid', 'Sevilla FC', 1, 18, 30, 1.80, 3.50, 4.20],
+    ['soccer_germany_bundesliga', 'Bayern Munich', 'Borussia Dortmund', 0, 18, 30, 1.65, 3.80, 5.00],
+    ['soccer_germany_bundesliga', 'Bayer Leverkusen', 'RB Leipzig', 2, 15, 30, 1.90, 3.60, 3.70],
+    ['soccer_italy_serie_a', 'Inter Milan', 'Juventus', 1, 18, 0, 2.00, 3.40, 3.60],
+    ['soccer_italy_serie_a', 'AC Milan', 'AS Roma', 1, 20, 45, 2.10, 3.30, 3.40],
+    ['soccer_uefa_champs_league', 'Real Madrid', 'Bayern Munich', 2, 21, 0, 2.20, 3.30, 3.00],
+    ['soccer_uefa_champs_league', 'Arsenal', 'PSG', 3, 21, 0, 2.40, 3.20, 2.80],
+    ['soccer_uefa_europa_league', 'Manchester United', 'Athletic Club', 2, 18, 45, 1.85, 3.50, 4.00],
+    ['soccer_france_ligue1', 'Girondins de Bordeaux', 'Stade Brestois', 3, 15, 0, 2.00, 3.20, 3.60],
+    ['soccer_epl', 'Brighton', 'West Ham United', 3, 14, 0, 2.15, 3.40, 3.20],
+    ['soccer_spain_la_liga', 'Valencia CF', 'Villarreal CF', 3, 19, 0, 2.40, 3.10, 2.90],
   ];
 
   return DEMOS.map(([sport, home, away, off, h, m, oH, oD, oA]) => {
@@ -5988,17 +6368,17 @@ function checkLoginRateLimit(ip) {
 }
 
 // ─── JWT (HMAC-SHA256, natif Node.js crypto) ─────────────────────────────────
-const JWT_SECRET        = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
-const JWT_TTL           = 7 * 24 * 3600;  // 7 jours — comptes admin
-const JWT_TTL_MATCHDAY  = 24 * 3600;      // 24h — Matchday Pass
-const JWT_TTL_USER      = 30 * 24 * 3600; // 30 jours — membres
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const JWT_TTL = 7 * 24 * 3600;  // 7 jours — comptes admin
+const JWT_TTL_MATCHDAY = 24 * 3600;      // 24h — Matchday Pass
+const JWT_TTL_USER = 30 * 24 * 3600; // 30 jours — membres
 
 // ─── STRIPE (HTTPS natif — zéro dépendance npm) ──────────────────────────────
-const STRIPE_SECRET_KEY       = process.env.STRIPE_SECRET_KEY       || '';
-const STRIPE_WEBHOOK_SECRET   = process.env.STRIPE_WEBHOOK_SECRET   || '';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const STRIPE_MATCHDAY_PRICE_ID = process.env.STRIPE_MATCHDAY_PRICE_ID || '';
-const STRIPE_SUCCESS_URL      = process.env.STRIPE_SUCCESS_URL      || 'http://localhost:3000/?matchday=success';
-const STRIPE_CANCEL_URL       = process.env.STRIPE_CANCEL_URL       || 'http://localhost:3000/';
+const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL || 'http://localhost:3000/?matchday=success';
+const STRIPE_CANCEL_URL = process.env.STRIPE_CANCEL_URL || 'http://localhost:3000/';
 
 function stripeRequest(method, endpoint, params) {
   return new Promise((resolve, reject) => {
@@ -6011,7 +6391,7 @@ function stripeRequest(method, endpoint, params) {
       method,
       headers: {
         'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
-        'Content-Type':  'application/x-www-form-urlencoded',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': Buffer.byteLength(body),
       },
     };
@@ -6039,9 +6419,9 @@ function verifyStripeSignature(rawBody, sigHeader) {
 }
 
 function jwtSign(payload, ttl = JWT_TTL) {
-  const header  = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const body    = Buffer.from(JSON.stringify({ ...payload, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + ttl })).toString('base64url');
-  const sig     = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify({ ...payload, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + ttl })).toString('base64url');
+  const sig = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url');
   return `${header}.${body}.${sig}`;
 }
 
@@ -6051,9 +6431,9 @@ function jwtVerify(token) {
     const expected = crypto.createHmac('sha256', JWT_SECRET).update(`${h}.${b}`).digest('base64url');
     if (expected !== s) return null;
     const payload = JSON.parse(Buffer.from(b, 'base64url').toString());
-    if (payload.exp < Math.floor(Date.now()/1000)) return null;
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
-  } catch(e) { return null; }
+  } catch (e) { return null; }
 }
 
 function getAuthUser(req) {
@@ -6089,7 +6469,7 @@ initUsers();
 
 // ─── TELEGRAM BOT ────────────────────────────────────────────────────────────
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-const TELEGRAM_CHAT_IDS  = new Set(); // chargé depuis .env si défini
+const TELEGRAM_CHAT_IDS = new Set(); // chargé depuis .env si défini
 if (process.env.TELEGRAM_CHAT_IDS) {
   process.env.TELEGRAM_CHAT_IDS.split(',').forEach(id => TELEGRAM_CHAT_IDS.add(id.trim()));
 }
@@ -6103,7 +6483,7 @@ async function sendTelegramAlert(message) {
         { chat_id: chatId, text: message, parse_mode: 'HTML' }
       );
       console.log(`  [Telegram] Alerte envoyée → ${chatId}`);
-    } catch(e) { console.warn(`  [Telegram] Échec ${chatId}:`, e.message); }
+    } catch (e) { console.warn(`  [Telegram] Échec ${chatId}:`, e.message); }
   }
 }
 
@@ -6113,8 +6493,8 @@ function buildAlertMessage(valueBets, label = 'Value Bets') {
   let msg = `🎯 <b>PariScore — ${label} du ${dt}</b>\n\n`;
   valueBets.forEach((m, i) => {
     const e = m.best_edge;
-    msg += `${i+1}. <b>${m.home_team} vs ${m.away_team}</b>\n`;
-    msg += `   📌 ${m.league} · ${new Date(m.commence_time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}\n`;
+    msg += `${i + 1}. <b>${m.home_team} vs ${m.away_team}</b>\n`;
+    msg += `   📌 ${m.league} · ${new Date(m.commence_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}\n`;
     msg += `   💰 ${e.label} @ <b>${e.odds.toFixed(2)}</b> · Edge: <b>+${e.edge.toFixed(1)}%</b>\n`;
     msg += `   📊 BTTS ${m.poisson?.btts}% · O2.5 ${m.poisson?.over25}%\n\n`;
   });
@@ -6141,10 +6521,10 @@ async function sendValueBetAlerts() {
     const userPrefs = kvScan('alert_prefs_');
     for (const { value: prefs } of userPrefs) {
       if (!prefs.enabled || !prefs.chatId) continue;
-      const edgeMin  = prefs.edgeMin  ?? 8;
+      const edgeMin = prefs.edgeMin ?? 8;
       const probaMin = prefs.probaMin ?? 55;
-      const markets  = prefs.markets  || [];
-      const leagues  = prefs.leagues  || [];
+      const markets = prefs.markets || [];
+      const leagues = prefs.leagues || [];
 
       let userBets = allBets.filter(m => {
         if ((m.best_edge?.edge || 0) < edgeMin) return false;
@@ -6153,11 +6533,11 @@ async function sendValueBetAlerts() {
         if (markets.length) {
           const p = m.poisson || {};
           const matchMkt = markets.some(mkt => {
-            if (mkt === 'BTTS_YES'  && (p.btts   || 0) >= probaMin) return true;
-            if (mkt === 'OVER_2_5'  && (p.over25 || 0) >= probaMin) return true;
-            if (mkt === 'OVER_1_5'  && (p.over15 || 0) >= probaMin) return true;
-            if (mkt === 'HOME_WIN'  && (p.homeWin|| 0) >= probaMin) return true;
-            if (mkt === 'AWAY_WIN'  && (p.awayWin|| 0) >= probaMin) return true;
+            if (mkt === 'BTTS_YES' && (p.btts || 0) >= probaMin) return true;
+            if (mkt === 'OVER_2_5' && (p.over25 || 0) >= probaMin) return true;
+            if (mkt === 'OVER_1_5' && (p.over15 || 0) >= probaMin) return true;
+            if (mkt === 'HOME_WIN' && (p.homeWin || 0) >= probaMin) return true;
+            if (mkt === 'AWAY_WIN' && (p.awayWin || 0) >= probaMin) return true;
             return false;
           });
           if (!matchMkt) return false;
@@ -6223,14 +6603,14 @@ function computeArbitrage() {
 function computeTopPick(m) {
   const p = m.poisson || {};
   const candidates = [
-    { key: 'over25',   label: 'Over 2.5',      val: p.over25   || 0 },
-    { key: 'btts',     label: 'BTTS',           val: p.btts     || 0 },
-    { key: 'over15',   label: 'Over 1.5',       val: p.over15   || 0 },
-    { key: 'homeWin',  label: 'Victoire Dom.',  val: p.homeWin  || 0 },
-    { key: 'awayWin',  label: 'Victoire Ext.',  val: p.awayWin  || 0 },
-    { key: 'over35',   label: 'Over 3.5',       val: p.over35   || 0 },
-    { key: 'under15',  label: 'Under 1.5',      val: p.under15  || 0 },
-    { key: 'cs00',     label: 'CS Domicile',    val: p.cs00     || 0 },
+    { key: 'over25', label: 'Over 2.5', val: p.over25 || 0 },
+    { key: 'btts', label: 'BTTS', val: p.btts || 0 },
+    { key: 'over15', label: 'Over 1.5', val: p.over15 || 0 },
+    { key: 'homeWin', label: 'Victoire Dom.', val: p.homeWin || 0 },
+    { key: 'awayWin', label: 'Victoire Ext.', val: p.awayWin || 0 },
+    { key: 'over35', label: 'Over 3.5', val: p.over35 || 0 },
+    { key: 'under15', label: 'Under 1.5', val: p.under15 || 0 },
+    { key: 'cs00', label: 'CS Domicile', val: p.cs00 || 0 },
   ];
   return candidates.reduce((best, c) => c.val > best.val ? c : best, { val: 0, label: '—', key: '' });
 }
@@ -6264,9 +6644,11 @@ function getLeagueHub(oddsKey) {
   // Récupérer toutes les équipes de cette ligue, triées par rank
   const teams = Object.entries(db.teamStats)
     .filter(([, v]) => v.leagueId === lid && v._real)
-    .map(([name, v]) => ({ name, rank: v.rank, ppg: v.home?.ppg ?? 0, form: v.form || '',
+    .map(([name, v]) => ({
+      name, rank: v.rank, ppg: v.home?.ppg ?? 0, form: v.form || '',
       wins: v.home?.wins ?? 0, draws: v.home?.draws ?? 0, losses: v.home?.losses ?? 0,
-      scored: v.home?.scored ?? 0 }))
+      scored: v.home?.scored ?? 0
+    }))
     .sort((a, b) => a.rank - b.rank)
     .slice(0, 8);
   // Top scorer de la ligue
@@ -6291,14 +6673,14 @@ function getLeagueHub(oddsKey) {
 // Config centralisée : ajouter une stratégie = 1 entrée ici (zéro autre changement)
 // ── AI Tipsters — personnalités par stratégie (synchro avec STRATEGIES_UI) ────
 const STRATEGIES = {
-  BTTS_YES:      { label: 'BTTS Oui',              icon: '🥅', tipster: 'L\'Artilleur',   tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.',       tipsterFlag: '🇧🇷', getProb: m => m.poisson?.btts,    getOdds: () => null },
-  OVER_2_5:      { label: 'Plus de 2.5 buts',      icon: '⚡', tipster: 'Le Foudroyeur',  tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.',                                    tipsterFlag: '🇳🇱', getProb: m => m.poisson?.over25,  getOdds: () => null },
-  OVER_1_5:      { label: 'Plus de 1.5 buts',      icon: '🎯', tipster: 'Le Prudent',     tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.',                        tipsterFlag: '🇩🇪', getProb: m => m.poisson?.over15,  getOdds: () => null },
-  UNDER_2_5:     { label: 'Moins de 2.5 buts',     icon: '🛡️', tipster: 'Le Gardien',     tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.',                      tipsterFlag: '🇮🇹', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
-  HOME_WIN:      { label: 'Victoire Domicile',     icon: '🏠', tipster: 'Le Localier',    tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.',                        tipsterFlag: '🇬🇧', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
-  AWAY_WIN:      { label: 'Victoire Extérieur',    icon: '✈️', tipster: 'L\'Aventurier',  tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.',                       tipsterFlag: '🇪🇸', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
-  DRAW:          { label: 'Match Nul',             icon: '🤝', tipster: 'Le Diplomate',   tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.',                           tipsterFlag: '🇫🇷', getProb: m => m.poisson?.draw,    getOdds: m => m.odds?.draw },
-  CS_00:         { label: 'Score 0-0',             icon: '🔒', tipster: 'Le Sceptique',   tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.',                         tipsterFlag: '🇵🇹', getProb: m => m.poisson?.cs00,    getOdds: () => null },
+  BTTS_YES: { label: 'BTTS Oui', icon: '🥅', tipster: 'L\'Artilleur', tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.', tipsterFlag: '🇧🇷', getProb: m => m.poisson?.btts, getOdds: () => null },
+  OVER_2_5: { label: 'Plus de 2.5 buts', icon: '⚡', tipster: 'Le Foudroyeur', tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.', tipsterFlag: '🇳🇱', getProb: m => m.poisson?.over25, getOdds: () => null },
+  OVER_1_5: { label: 'Plus de 1.5 buts', icon: '🎯', tipster: 'Le Prudent', tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.', tipsterFlag: '🇩🇪', getProb: m => m.poisson?.over15, getOdds: () => null },
+  UNDER_2_5: { label: 'Moins de 2.5 buts', icon: '🛡️', tipster: 'Le Gardien', tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.', tipsterFlag: '🇮🇹', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
+  HOME_WIN: { label: 'Victoire Domicile', icon: '🏠', tipster: 'Le Localier', tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.', tipsterFlag: '🇬🇧', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
+  AWAY_WIN: { label: 'Victoire Extérieur', icon: '✈️', tipster: 'L\'Aventurier', tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.', tipsterFlag: '🇪🇸', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
+  DRAW: { label: 'Match Nul', icon: '🤝', tipster: 'Le Diplomate', tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.', tipsterFlag: '🇫🇷', getProb: m => m.poisson?.draw, getOdds: m => m.odds?.draw },
+  CS_00: { label: 'Score 0-0', icon: '🔒', tipster: 'Le Sceptique', tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.', tipsterFlag: '🇵🇹', getProb: m => m.poisson?.cs00, getOdds: () => null },
   // ── Stratégies avancées P1 ──────────────────────────────────────────────────
   ANGLE_CORNERS: {
     label: 'Angle Mort Corners',
@@ -6653,12 +7035,12 @@ function getPredictions() {
       poisson: m.poisson, expectedGoals: m.expectedGoals,
       confidence: Math.round(
         (Math.max(m.poisson.homeWin, m.poisson.draw, m.poisson.awayWin) +
-         Math.abs((m.best_edge?.edge || 0))) / 2
+          Math.abs((m.best_edge?.edge || 0))) / 2
       ),
       recommendation: m.poisson.homeWin > 55 ? `Victoire ${m.home_team}` :
-                      m.poisson.awayWin > 55 ? `Victoire ${m.away_team}` :
-                      m.poisson.over25 > 60 ? 'Plus de 2.5 buts' :
-                      m.poisson.btts > 60   ? 'Les deux marquent' : 'Match serré',
+        m.poisson.awayWin > 55 ? `Victoire ${m.away_team}` :
+          m.poisson.over25 > 60 ? 'Plus de 2.5 buts' :
+            m.poisson.btts > 60 ? 'Les deux marquent' : 'Match serré',
     }))
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, 12);
@@ -6671,11 +7053,11 @@ function getTrends() {
 
   const avg = arr => arr.length ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
 
-  const bttsVals   = matches.filter(m => m.poisson).map(m => m.poisson.btts);
+  const bttsVals = matches.filter(m => m.poisson).map(m => m.poisson.btts);
   const over25Vals = matches.filter(m => m.poisson).map(m => m.poisson.over25);
   const over15Vals = matches.filter(m => m.poisson).map(m => m.poisson.over15);
-  const xgHome     = matches.filter(m => m.expectedGoals).map(m => m.expectedGoals.home);
-  const xgAway     = matches.filter(m => m.expectedGoals).map(m => m.expectedGoals.away);
+  const xgHome = matches.filter(m => m.expectedGoals).map(m => m.expectedGoals.home);
+  const xgAway = matches.filter(m => m.expectedGoals).map(m => m.expectedGoals.away);
 
   const byLeague = {};
   matches.forEach(m => {
@@ -6686,11 +7068,11 @@ function getTrends() {
 
   return {
     global: {
-      btts_avg:    avg(bttsVals),
-      over25_avg:  avg(over25Vals),
-      over15_avg:  avg(over15Vals),
-      xg_home_avg: parseFloat((xgHome.reduce((s,v)=>s+v,0)/(xgHome.length||1)).toFixed(2)),
-      xg_away_avg: parseFloat((xgAway.reduce((s,v)=>s+v,0)/(xgAway.length||1)).toFixed(2)),
+      btts_avg: avg(bttsVals),
+      over25_avg: avg(over25Vals),
+      over15_avg: avg(over15Vals),
+      xg_home_avg: parseFloat((xgHome.reduce((s, v) => s + v, 0) / (xgHome.length || 1)).toFixed(2)),
+      xg_away_avg: parseFloat((xgAway.reduce((s, v) => s + v, 0) / (xgAway.length || 1)).toFixed(2)),
       total_matches: matches.length,
     },
     by_league: Object.entries(byLeague).map(([league, d]) => ({
@@ -6720,1284 +7102,1409 @@ function jsonResponse(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
-function handleAPI(req, res, pathname, query) {
-  // GET /api/v1/live — flux SSE scores live
+// 1. On rend la fonction ASYNC pour pouvoir utiliser 'await' proprement
+// ─── GESTIONNAIRE API PRINCIPAL (CORRIGÉ & ASYNC) ──────────────────────
+async function handleAPI(req, res, pathname, query) {
+  // 1. Live SSE
   if (pathname === '/api/v1/live' && req.method === 'GET') {
     res.writeHead(200, {
-      'Content-Type':  'text/event-stream',
+      'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection':    'keep-alive',
+      'Connection': 'keep-alive',
       'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
-      'X-Frame-Options': 'DENY',
-      'X-Content-Type-Options': 'nosniff',
     });
     res.flushHeaders();
-
-    // Snapshot immédiat des matchs actuels
     res.write(`event: matches_update\ndata: ${JSON.stringify({ matches: db.matches, meta: buildMeta() })}\n\n`);
-
     sseClients.add(res);
-
-    // Heartbeat toutes les 30s pour maintenir la connexion (évite timeout proxy/Render)
     const hb = setInterval(() => {
-      try { res.write(': heartbeat\n\n'); } catch(e) { clearInterval(hb); sseClients.delete(res); }
+      try {
+        res.write(': heartbeat\n\n');
+      } catch (e) {
+        clearInterval(hb);
+        sseClients.delete(res);
+      }
     }, 30000);
-
-    req.on('close', () => { clearInterval(hb); sseClients.delete(res); });
+    req.on('close', () => {
+      clearInterval(hb);
+      sseClients.delete(res);
+    });
     return;
   }
 
-  // GET /api/v1/matches?league=xxx&day=0
-  if (pathname === '/api/v1/matches') {
-    // Anti-Black Hole : TOUJOURS répondre avec le cache si disponible
-    // Même si serverReady=false ou db.matches vide, on renvoie le tampon mémoire
-    let matches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
-    let fromCache = (db.matches && db.matches.length > 0) ? false : true;
-
-    // Si serverReady=false mais on a du cache, on répond 200 avec flag stale
-    if (!serverReady && matches.length === 0) {
-      return jsonResponse(res, 200, {
-        count: 0, matches: [],
-        meta: {
-          loading: true,
-          status: 'initialisation',
-          message: 'Chargement des données en cours — première connexion API',
-          retry_after: 3,
-        },
-      });
-    }
-
-    // Filtre par ligue
+// 2. Matchs
+    if (pathname === '/api/v1/matches') {
+      let matches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
+      let fromCache = (db.matches && db.matches.length > 0) ? false : true;
+      // [MODIF] Dictionnaire statuts renforcé corrigé
+      const isFinishedStatus = (status) => {
+        if (!status) return false;
+        const norm = String(status)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toUpperCase()
+          .trim();
+        
+        const finishedStatuses = [
+          'FINISHED', 'FT', 'TERMINE', 'ENDED', 'AET', 'PEN', 
+          'POSTPONED', 'CANC', 'ABD', 'SUSPENDED', 'INTERRUPTED', 
+          'CANCELED', 'WALKOVER'
+        ];
+        return finishedStatuses.includes(norm);
+      };
+      // Kill Switch Temporel: exclure tout match commencé il y a plus de 4 heures
+      const MATCH_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 heures
+      const now = Date.now();
+      const isMatchExpired = (m) => {
+        if (!m.commence_time) return false;
+        const startTime = new Date(m.commence_time).getTime();
+        return (now - startTime) > MATCH_EXPIRY_MS;
+      };
+      if (!serverReady && matches.length === 0) {
+        return jsonResponse(res, 200, { count: 0, matches: [], meta: { loading: true, status: 'initialisation' } });
+      }
     if (query.league && query.league !== 'all') {
-      matches = matches.filter(m => m.sport === query.league);
+      const filterValue = query.league.toLowerCase();
+      matches = matches.filter(m => (m.sport || '').toLowerCase() === filterValue || (m.league || '').toLowerCase().includes(filterValue));
     }
-
-    // Filtre par jour (0=aujourd'hui, 1=demain, etc.)
     if (query.day !== undefined && query.day !== 'all') {
       const dayOffset = parseInt(query.day);
       if (!isNaN(dayOffset)) {
         const target = new Date();
         target.setDate(target.getDate() + dayOffset);
         const targetStr = target.toLocaleDateString('fr-FR');
-        matches = matches.filter(m => {
-          return new Date(m.commence_time).toLocaleDateString('fr-FR') === targetStr;
-        });
+        matches = matches.filter(m => new Date(m.commence_time).toLocaleDateString('fr-FR') === targetStr);
       }
     }
+      matches = matches.map(m => {
+        const fresh = computeMatchTopButteurs(m);
+        return { ...m, topButteurs: fresh || m.topButteurs || null };
+      });
+      // Filtre combiné: Kill Switch Temporel (prioritaire) + Statuts élargis
+      matches = matches.filter(m => {
+        // Kill Switch: exclure si match expiré (>4h)
+        if (isMatchExpired(m)) return false;
+        // Statuts: exclure si terminé
+        return !(
+          isFinishedStatus(m.status) ||
+          isFinishedStatus(m.live_status) ||
+          isFinishedStatus(m.match_status) ||
+          isFinishedStatus(m.fixture_status)
+        );
+      });
+      console.log(`📊 [API] Envoi de ${matches.length} matchs filtrés (Kill Switch 4h + statuts élargis).`);
+      return jsonResponse(res, 200, { count: matches.length, matches, meta: { status: db.status, fromCache, serverReady } });
+    }
 
-    // Enrichir chaque match avec le top 3 buteurs (recalcul si ratings dispos)
-    matches = matches.map(m => {
-      const fresh = computeMatchTopButteurs(m);
-      return { ...m, topButteurs: fresh || m.topButteurs || null };
-    });
-
-    return jsonResponse(res, 200, {
-      count:    matches.length,
-      matches,
-      meta: {
-        lastOddsUpdate:  db.lastOddsUpdate,
-        lastStatsUpdate: db.lastStatsUpdate,
-        oddsQuota:       db.oddsQuotaRemaining,
-        statsQuota:      db.statsQuotaRemaining,
-        status:          db.status,
-        accuracy:        getAccuracyReport(),
-        nextOddsUpdate:  db.lastOddsUpdate
-          ? new Date(new Date(db.lastOddsUpdate).getTime() + 12 * 3600000).toISOString()
-          : null,
-        nextStatsUpdate: db.lastStatsUpdate
-          ? new Date(new Date(db.lastStatsUpdate).getTime() + 6 * 3600000).toISOString()
-          : null,
-        // Cache metadata
-        fromCache:       fromCache,
-        cacheVersion:    cacheVersion,
-        lastCacheUpdate: lastCacheUpdate,
-        serverReady:     serverReady,
-      },
-    });
+  // 2b. Match Details (proxy interne pour modal STATS)
+  if (pathname === '/api/v1/match-details' && req.method === 'GET') {
+    const matchId = (query.id || '').toString().trim();
+    if (!matchId) return jsonResponse(res, 400, { success: false, error: 'id required' });
+    try {
+      const proxied = await localApiGet(`/api/v1/insights/${encodeURIComponent(matchId)}`);
+      if (!proxied || proxied.status >= 500) {
+        return jsonResponse(res, 502, { success: false, error: 'upstream insights unavailable' });
+      }
+      return jsonResponse(res, proxied.status || 200, proxied.data);
+    } catch (err) {
+      console.error('[match-details proxy] Error:', err && err.stack ? err.stack : err);
+      return jsonResponse(res, 502, { success: false, error: err.message || 'proxy failed' });
+    }
   }
 
-  // GET /api/v1/leagues — Ligues groupées par pays (depuis cache tampon)
+  // 3. Leagues
   if (pathname === '/api/v1/leagues') {
-    // Construire les ligues depuis les matchs actuels + cache
-    const leagueSet = new Map(); // league name → { country, matches }
+    const leagueSet = new Map();
     const allMatches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
-
     for (const m of allMatches) {
       if (!m.league || m.league === '?') continue;
-      const country = detectCountryFromLeague(m.league);
-      if (!leagueSet.has(m.league)) {
-        leagueSet.set(m.league, { name: m.league, country, matchCount: 0 });
-      }
-      leagueSet.get(m.league).matchCount++;
+      const country = detectCountryFromLeague(m.league, m.sport, m.country, m._bsd_league_id);
+      const leagueKey = `${m.league}__${country}`;
+      if (!leagueSet.has(leagueKey)) leagueSet.set(leagueKey, { name: m.league, country, matchCount: 0 });
+      leagueSet.get(leagueKey).matchCount++;
     }
-
-    // Grouper par pays
     const byCountry = {};
     for (const [, league] of leagueSet) {
       if (!byCountry[league.country]) byCountry[league.country] = [];
       byCountry[league.country].push(league);
     }
-
-    return jsonResponse(res, 200, {
-      countries: Object.keys(byCountry).sort(),
-      leagues: byCountry,
-      total: leagueSet.size,
-      fromCache: (db.matches && db.matches.length > 0) ? false : true,
-    });
+    return jsonResponse(res, 200, { countries: Object.keys(byCountry).sort(), leagues: byCountry, total: leagueSet.size });
   }
 
-  // GET /api/v1/stats/:id
+  // 4. Stats
   if (pathname.startsWith('/api/v1/stats/')) {
-    try {
-      const id = pathname.slice('/api/v1/stats/'.length);
-      console.log("[DEBUG STATS] ID demandé:", id);
-      let numId = isNaN(Number(id)) ? null : Number(id);
-      let match = db.matches.find(m => m.id === id);
-      if (!match) match = cachedMatches.find(m => m.id === id);
-      if (!match && numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === id);
-      // Nettoyer les entrées vides : match sans stats ni poisson → considéré comme non trouvé
-      if (match && !matchHasData(match)) {
-        console.error("\x1b[31m[STATS] Match %s trouvé mais vide (aucune stat) → traité comme non trouvé\x1b[0m", id);
-        match = null;
-      }
-      if (!match) {
-        console.log("[DEBUG STATS] Match non trouvé — trigger FORCE SYNC");
-        // Force sync en arrière-plan pour la prochaine tentative du frontend
-        if (numId) forceSyncFixture(String(numId));
-        else if (id.startsWith('force_')) forceSyncFixture(id.replace('force_', ''));
-        return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
-      }
-      return jsonResponse(res, 200, { success: true, data: match });
-    } catch (e) {
-      console.error('[API /stats/:id] Error:', e.message);
-      return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
+    const id = pathname.slice('/api/v1/stats/'.length);
+    let match = db.matches.find(m => m.id === id) || cachedMatches.find(m => m.id === id);
+    if (match && !matchHasData(match)) match = null;
+    if (!match) {
+      forceSyncFixture(id).catch(() => {});
+      return jsonResponse(res, 200, { success: false, message: 'Synchro en cours...' });
     }
+    return jsonResponse(res, 200, { success: true, data: match });
   }
 
-  // GET /api/v1/deep-stats/:id — Full-or-Nothing: bloque jusqu'à données complètes
+  // 5. Deep Stats
   if (pathname.startsWith('/api/v1/deep-stats/')) {
-    (async () => {
-      try {
-        const id = pathname.slice('/api/v1/deep-stats/'.length);
-        // v9.1: ID validation
-        if (!id || id === 'undefined' || id === 'null') {
-          console.error("\x1b[31m[CRITICAL_FETCH] deep-stats ID invalide: %s\x1b[0m", id);
-          return jsonResponse(res, 200, { success: false, message: "ID invalide." });
-        }
-        console.log("\x1b[36m[DEEP-STATS] Requête pour ID: %s\x1b[0m", id);
-
-        // 1. Trouver le match
-        let match = db.matches.find(m => m.id === id);
-        if (!match) match = cachedMatches.find(m => m.id === id);
-        if (!match) {
-          const numId = isNaN(Number(id)) ? null : Number(id);
-          if (numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === id);
-        }
-        if (!match) {
-          return jsonResponse(res, 200, { success: false, message: "Match non trouvé en base." });
-        }
-
-        // 2. Validation: isMatchReady
-        const isReady = isMatchReady(match);
-        if (isReady.ready) {
-          console.log("\x1b[32m[DEEP-STATS] Match %s déjà prêt — réponse immédiate\x1b[0m", id);
-          return jsonResponse(res, 200, { success: true, match });
-        }
-
-        console.log("\x1b[33m[DEEP-STATS] Match %s incomplet — force sync: %s\x1b[0m", id, isReady.missing.join(', '));
-
-        // 3. Force Sync Immédiat (await bloquant)
-        const eventId = match._bsd_event_id;
-        const homeTeam = match.home_team;
-        const awayTeam = match.away_team;
-
-        // Lookup BSD team IDs
-        const hKey = normName(homeTeam);
-        const aKey = normName(awayTeam);
-        const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
-        const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
-        const hBsdTeamId = hMeta?.bsdTeamId || null;
-        const aBsdTeamId = aMeta?.bsdTeamId || null;
-        const hBsdSeasonId = hMeta?.bsdSeasonId || null;
-        const aBsdSeasonId = aMeta?.bsdSeasonId || null;
-
-        // Fetch BSD data si manquant
-        if (isReady.missing.includes('ratings') && (hBsdTeamId || aBsdTeamId)) {
-          console.log("\x1b[36m[DEEP-STATS] Fetching BSD ratings...\x1b[0m");
-          const [homeRatingsRes, awayRatingsRes] = await Promise.allSettled([
-            (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
-            (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
-          ]);
-          match._bsd_home_ratings = homeRatingsRes.status === 'fulfilled' ? homeRatingsRes.value : [];
-          match._bsd_away_ratings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
-        }
-
-        if (isReady.missing.includes('squad') && (hBsdTeamId || aBsdTeamId)) {
-          console.log("\x1b[36m[DEEP-STATS] Fetching BSD squads...\x1b[0m");
-          const [homeSquadRes, awaySquadRes] = await Promise.allSettled([
-            hBsdTeamId ? fetchBSDTeamSquad(hBsdTeamId) : Promise.resolve([]),
-            aBsdTeamId ? fetchBSDTeamSquad(aBsdTeamId) : Promise.resolve([]),
-          ]);
-          match._bsd_home_squad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
-          match._bsd_away_squad = awaySquadRes.status === 'fulfilled' ? awaySquadRes.value : [];
-        }
-
-        // Pre-calculer le top 3 buteurs (apres chargement BSD ratings/squad)
-        match.topButteurs = computeMatchTopButteurs(match);
-
-        // 4. Recalculer Poisson avec données fraîches + fallback historique
-        console.log("\x1b[36m[DEEP-STATS] Recalcul Poisson + KPIs...\x1b[0m");
-        let hs = match.stats?.home || {};
-        let as = match.stats?.away || {};
-        const LEAGUE_AVG = 1.35;
-
-        const hHist = getHistoricalAvgGoals(match.home_team, true);
-        const aHist = getHistoricalAvgGoals(match.away_team, false);
-
-        if ((!hs.avgScored || hs.avgScored === 0) && hHist) {
-          console.log("\x1b[33m[DEEP-STATS] Stats home à 0 — fallback historique: %s (%.2f/%.2f, %d matchs)\x1b[0m",
-            match.home_team, hHist.avgScored, hHist.avgConceded, hHist.sampleSize);
-          hs = { ...hs, avgScored: hHist.avgScored, avgConceded: hHist.avgConceded };
-        }
-        if ((!as.avgScored || as.avgScored === 0) && aHist) {
-          console.log("\x1b[33m[DEEP-STATS] Stats away à 0 — fallback historique: %s (%.2f/%.2f, %d matchs)\x1b[0m",
-            match.away_team, aHist.avgScored, aHist.avgConceded, aHist.sampleSize);
-          as = { ...as, avgScored: aHist.avgScored, avgConceded: aHist.avgConceded };
-        }
-
-        const hScored = hs.avgScored || LEAGUE_AVG;
-        const hConceded = hs.avgConceded || LEAGUE_AVG;
-        const aScored = as.avgScored || LEAGUE_AVG;
-        const aConceded = as.avgConceded || LEAGUE_AVG;
-
-        const expHome = hScored / LEAGUE_AVG * aConceded;
-        const expAway = aScored / LEAGUE_AVG * hConceded;
-        match.expectedGoals = { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) };
-        match.poisson = computePoisson(expHome, expAway);
-
-        // 5. Calculs Data Science
-        match._fatigue_home = computeFatigueIndex(homeTeam, match.commence_time);
-        match._fatigue_away = computeFatigueIndex(awayTeam, match.commence_time);
-        match._absence_home = computeAbsenceImpact(match._bsd_home_squad || [], homeTeam);
-        match._absence_away = computeAbsenceImpact(match._bsd_away_squad || [], awayTeam);
-        match._dominance = computeDominanceScore(
-          match._bsd_home_ratings || [],
-          match._bsd_away_ratings || [],
-          match._bsd_home_squad || [],
-          match._bsd_away_squad || []
-        );
-        match._ev = computeMatchEV(match);
-
-        // 6. Marquer FULL
-        match.bsd_status = 'FULL';
-
-        // 7. Sauvegarder
-        saveDB();
-        const cachedIdx = cachedMatches.findIndex(cm => cm.id === match.id);
-        if (cachedIdx >= 0) cachedMatches[cachedIdx] = match;
-
-        console.log("\x1b[32m[DEEP-STATS] ✅ Match %s complet — prêt pour l'UI\x1b[0m", id);
-        return jsonResponse(res, 200, { success: true, match });
-      } catch(e) {
-        console.error("\x1b[31m[DEEP-STATS] Erreur: %s\x1b[0m", e.message);
-        return jsonResponse(res, 200, { success: false, message: `Erreur: ${e.message}` });
-      }
-    })();
-    return;
+    const id = pathname.slice('/api/v1/deep-stats/'.length);
+    if (!id || id === 'undefined' || id === 'null') return jsonResponse(res, 200, { success: false, message: 'ID invalide.' });
+    let match = db.matches.find(m => m.id === id) || cachedMatches.find(m => m.id === id);
+    if (!match) return jsonResponse(res, 200, { success: false, message: 'Match non trouvé.' });
+    if (isMatchReady(match).ready) return jsonResponse(res, 200, { success: true, match });
+    const syncedMatch = await forceSyncFixture(id);
+    return syncedMatch
+      ? jsonResponse(res, 200, { success: true, match: syncedMatch })
+      : jsonResponse(res, 200, { success: false, message: 'Échec synchro.' });
   }
 
-  // GET /api/v1/odds/:id — Cotes par marché spécifique avec cache batch 30 min
-  if (pathname.startsWith('/api/v1/odds/')) {
-    (async () => {
-      try {
-        const fixtureId = pathname.slice('/api/v1/odds/'.length);
+  // Fallback API interne
+  return jsonResponse(res, 404, { error: 'Route inconnue: ' + pathname });
+}
 
-        // 1. Vérification cache batch
-        const cached = oddsCache[fixtureId];
-        if (cached && (Date.now() - cached.ts) < ODDS_CACHE_TTL) {
-          console.log(`  [ODDS] Cache hit — fixture ${fixtureId} (${Math.round((Date.now() - cached.ts)/1000)}s ago)`);
-          return jsonResponse(res, 200, {
-            source: 'cache',
-            fixture_id: fixtureId,
-            markets: cached.markets,
-            cached_at: new Date(cached.ts).toISOString(),
-          });
-        }
-
-        // 2. Fallback : cotes déjà dans db.matches
-        const match = db.matches.find(m => m.id === fixtureId) || cachedMatches.find(m => m.id === fixtureId);
-        if (match && match.bookmakers && match.bookmakers.length) {
-          const markets = extractANJMarkets(match.bookmakers, match.home_team, match.away_team);
-          if (markets['1N2'] && markets['1N2'].home) {
-            oddsCache[fixtureId] = { markets, ts: Date.now() };
-            return jsonResponse(res, 200, { source: 'db', fixture_id: fixtureId, markets });
-          }
-        }
-
-        // 3. Appel API-Football si clé dispo
-        if (!API_FOOTBALL_KEY) {
-          return jsonResponse(res, 200, {
-            source: 'fallback',
-            fixture_id: fixtureId,
-            markets: {},
-            message: 'API-Football non configuré — redirection comparateur',
-          });
-        }
-
-        console.log(`  [ODDS] Fetching markets 1,5 from API-Football — fixture ${fixtureId}`);
-
-        // Fetch marché 1 (Match Winner) et marché 5 (Goals Over/Under) en parallèle
-        const [resM1, resM5] = await Promise.allSettled([
-          fetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=1`, {
-            headers: { 'x-apisports-key': API_FOOTBALL_KEY }
-          }),
-          fetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=5`, {
-            headers: { 'x-apisports-key': API_FOOTBALL_KEY }
-          })
-        ]);
-
-        const markets = {};
-
-        // Traitement marché 1 — Match Winner (1N2)
-        if (resM1.status === 'fulfilled' && resM1.value.ok) {
-          const d1 = await resM1.value.json();
-          const bkList = d1.response?.[0]?.bookmakers || [];
-          markets['1N2'] = findBestANJOdds(bkList, '1N2', match?.home_team, match?.away_team);
-        }
-
-        // Traitement marché 5 — Goals Over/Under
-        if (resM5.status === 'fulfilled' && resM5.value.ok) {
-          const d5 = await resM5.value.json();
-          const bkList = d5.response?.[0]?.bookmakers || [];
-          markets['OU25'] = findBestANJOdds(bkList, 'OU25');
-        }
-
-        if (!markets['1N2'] && !markets['OU25']) {
-          return jsonResponse(res, 200, {
-            source: 'empty',
-            fixture_id: fixtureId,
-            markets: {},
-            message: 'Aucune cote ANJ disponible pour ce match',
-          });
-        }
-
-        // Stockage cache structuré
-        oddsCache[fixtureId] = { markets, ts: Date.now() };
-
-        return jsonResponse(res, 200, {
-          source: 'api',
-          fixture_id: fixtureId,
-          markets,
-        });
-      } catch (e) {
-        console.error(`  [ODDS] Error fetching fixture ${pathname.slice('/api/v1/odds/'.length)}:`, e.message);
-        return jsonResponse(res, 200, {
-          source: 'error',
-          markets: {},
-          best_link: FINAL_FALLBACK,
-          error: e.message,
-        });
-      }
-    })();
-    return;
-  }
-
-  // ─── HELPERS — Extraction cotes ANJ par marché ─────────────────────────────
-
-  function findBestANJOdds(bkList, marketType, homeTeam, awayTeam) {
-    let result = {};
-    for (const bk of bkList) {
-      const bkName = bk.name || bk.bookmaker || '';
-      const isANJ = ANJ_BOOKMAKERS.some(a => bkName.toLowerCase().includes(a.toLowerCase()));
-      if (!isANJ) continue;
-
-      if (marketType === '1N2') {
-        const m1x2 = (bk.bets || []).find(b => b.id === 1 || b.name === 'Match Winner');
-        if (!m1x2) continue;
-        for (const val of m1x2.values) {
-          const odd = parseFloat(val.odd);
-          if (val.value === 'Home' && (!result.home || odd > result.home)) { result.home = odd; result.bookie = bkName; }
-          if (val.value === 'Draw' && (!result.draw || odd > result.draw)) { result.draw = odd; result.bookie = bkName; }
-          if (val.value === 'Away' && (!result.away || odd > result.away)) { result.away = odd; result.bookie = bkName; }
-        }
-      }
-
-      if (marketType === 'OU25') {
-        const ou = (bk.bets || []).find(b => b.id === 5 || b.name === 'Goals Over/Under');
-        if (!ou) continue;
-        for (const val of ou.values) {
-          const odd = parseFloat(val.odd);
-          if (val.value === 'Over 2.5' && (!result.over || odd > result.over)) { result.over = odd; result.bookie = bkName; }
-          if (val.value === 'Under 2.5' && (!result.under || odd > result.under)) { result.under = odd; result.bookie = bkName; }
-        }
-      }
-    }
-    return Object.keys(result).length > 0 ? result : null;
-  }
-
-  function extractANJMarkets(bookmakers, homeTeam, awayTeam) {
-    const markets = {};
-    for (const bk of bookmakers) {
-      const bkName = bk.bookmaker || bk.title || '';
-      const isANJ = ANJ_BOOKMAKERS.some(a => bkName.toLowerCase().includes(a.toLowerCase()));
-      if (!isANJ) continue;
-
-      // 1N2
-      const h2h = (bk.markets || []).find(m => m.key === 'h2h');
-      if (h2h) {
-        if (!markets['1N2']) markets['1N2'] = {};
-        for (const o of h2h.outcomes) {
-          if (o.name === homeTeam && (!markets['1N2'].home || o.price > markets['1N2'].home)) { markets['1N2'].home = o.price; markets['1N2'].bookie = bkName; }
-          if (o.name === 'Draw' && (!markets['1N2'].draw || o.price > markets['1N2'].draw)) { markets['1N2'].draw = o.price; markets['1N2'].bookie = bkName; }
-          if (o.name === awayTeam && (!markets['1N2'].away || o.price > markets['1N2'].away)) { markets['1N2'].away = o.price; markets['1N2'].bookie = bkName; }
-        }
-      }
-    }
-    return markets;
-  }
-
-  // GET /api/v1/status
-  if (pathname === '/api/v1/status') {
-    return jsonResponse(res, 200, {
-      status:          db.status,
-      ready:           serverReady,
-      matchCount:      db.matches.length,
-      teamCount:       Object.keys(db.teamStats).length,
-      lastOddsUpdate:  db.lastOddsUpdate,
-      lastStatsUpdate: db.lastStatsUpdate,
-      oddsQuota:       db.oddsQuotaRemaining,
-      statsQuota:      db.statsQuotaRemaining,
-      uptime:          process.uptime(),
-      bsd_connected:   !!BSD_API_KEY,
-    });
-  }
-
-  // GET /api/v1/corners/:matchId — Predictions corners Over/Under
-  if (pathname.startsWith('/api/v1/corners/')) {
-    const matchId = pathname.split('/api/v1/corners/')[1];
-    // v9.1: ID validation
-    if (!matchId || matchId === 'undefined' || matchId === 'null') {
-      console.error("\x1b[31m[CRITICAL_FETCH] corners ID invalide: %s\x1b[0m", matchId);
-      return jsonResponse(res, 200, { error: "ID invalide." });
-    }
-    if (matchId) {
-      return handleCornersRoute(res, decodeURIComponent(matchId));
-    }
-  }
-
-  // GET /api/v1/live/bsd — Données live BSD brutes (xG, momentum, incidents, stats temps réel)
-  if (pathname === '/api/v1/live/bsd') {
-    const now = Date.now();
-    const liveMatches = db.matches.filter(m => {
-      if (!m.live_score || !m.live_minute) return false;
-      // v10.5: Ghost filter backend
-      const minuteVal = parseInt(m.live_minute || 0);
-      if (minuteVal > 130) return false;
-      if (m.commence_time) {
-        const hoursSince = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
-        if (hoursSince > 4) return false;
-      }
-      return true;
-    });
-    if (!liveMatches.length) {
-      return jsonResponse(res, 200, { live: [], message: 'Aucun match en direct' });
-    }
-    const liveData = liveMatches.map(m => ({
-      id: m.id,
-      home_team: m.home_team,
-      away_team: m.away_team,
-      league: m.league,
-      score: m.live_score,
-      minute: m.live_minute,
-      xg: m.live_xg || null,
-      possession: m.live_possession || null,
-      shots: m.live_shots || null,
-      shots_on_target: m.live_shots_on_target || null,
-      corners: m.live_corners || null,
-      cards: m.live_cards || null,
-      momentum: m.live_momentum || null,
-      intensity: m.live_intensity || 0,
-      edge: m.best_edge?.edge || 0,
-      _source: m._source || 'odds_api',
-    }));
-    return jsonResponse(res, 200, { live: liveData, count: liveData.length, ts: Date.now() });
-  }
-
-  // GET /api/v1/live/predictions — Top 5 paris live avec probabilités ajustées
-  if (pathname === '/api/v1/live/predictions') {
-    const result = getLivePredictionsTop5();
-    return jsonResponse(res, 200, result);
-  }
-
-  // GET /api/v1/cache-status — API cache stats (admin)
-  if (pathname === '/api/v1/cache-status') {
-    const user = requireAuth(req, res, ['admin']);
-    if (!user) return;
-    const stats = apiCacheStats();
-    const ttl = Math.round(API_CACHE_TTL / 3600000);
-    return jsonResponse(res, 200, { ...stats, ttl_hours: ttl });
-  }
-
-  // POST /api/v1/auth/login — Admin (username) ou Membre (email)
-  if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
-    const ip = req.socket?.remoteAddress || 'unknown';
-    if (!checkLoginRateLimit(ip)) {
-      return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
-    }
-    readBodyLimited(req, MAX_BODY_SIZE).then(body => {
-      try {
-        const parsed = JSON.parse(body);
-        // ── Chemin Admin (username) — PBKDF2 salé ─────────────────────────────
-        if (parsed.username) {
-          const user = USERS.get(parsed.username);
-          if (!user || !verifyPasswordSync(parsed.password, user.hash, user.salt)) return jsonResponse(res, 401, { error: 'Identifiants invalides' });
-          const token = jwtSign({ username: parsed.username, role: user.role });
-          return jsonResponse(res, 200, { token, username: parsed.username, role: user.role, force_change: user.forceChange, expires_in: JWT_TTL });
-        }
-        // ── Chemin Membre (email) ────────────────────────────────────────────
-        if (!parsed.email || !parsed.password) return jsonResponse(res, 400, { error: 'email et password requis' });
-        const row = sqldb.prepare('SELECT * FROM users WHERE email = ?').get(parsed.email.trim().toLowerCase());
-        if (!row || !verifyPasswordSync(parsed.password, row.password_hash, row.salt)) {
-          return jsonResponse(res, 401, { error: 'Email ou mot de passe incorrect' });
-        }
-        const token = jwtSign({ userId: row.id, email: row.email, role: row.role }, JWT_TTL_USER);
-        return jsonResponse(res, 200, { token, email: row.email, role: row.role, userId: row.id, expires_in: JWT_TTL_USER });
-      } catch(e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // POST /api/v1/auth/register — Inscription membre
-  if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
-    const ip = req.socket?.remoteAddress || 'unknown';
-    if (!checkLoginRateLimit(ip)) {
-      return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
-    }
-    readBodyLimited(req, MAX_BODY_SIZE).then(body => {
-      try {
-        const { email, password } = JSON.parse(body);
-        if (!email || !password) return jsonResponse(res, 400, { error: 'email et password requis' });
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return jsonResponse(res, 400, { error: 'Email invalide' });
-        if (password.length < 8) return jsonResponse(res, 400, { error: 'Mot de passe trop court (8 caractères minimum)' });
-        const { hash, salt } = hashPasswordSync(password);
-        try {
-          const result = sqldb.prepare('INSERT INTO users (email, password_hash, salt, role) VALUES (?, ?, ?, ?)').run(email.trim().toLowerCase(), hash, salt, 'freemium');
-          const token = jwtSign({ userId: result.lastInsertRowid, email: email.trim().toLowerCase(), role: 'freemium' }, JWT_TTL_USER);
-          return jsonResponse(res, 201, { token, email: email.trim().toLowerCase(), role: 'freemium', expires_in: JWT_TTL_USER });
-        } catch(e) {
-          if (e.message.includes('UNIQUE')) return jsonResponse(res, 409, { error: 'Cet email est déjà utilisé' });
-          throw e;
-        }
-      } catch(e) {
-        if (e.message.includes('400') || e.message.includes('409')) return;
-        jsonResponse(res, 400, { error: 'Données invalides' });
-      }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // GET /api/v1/auth/me — Profil utilisateur connecté
-  if (pathname === '/api/v1/auth/me' && req.method === 'GET') {
-    const user = getAuthUser(req);
-    if (!user) return jsonResponse(res, 401, { error: 'Non authentifié', code: 'AUTH_REQUIRED' });
-    // Pour les membres SQLite, retourner les infos fraîches
-    if (user.userId) {
-      const row = sqldb.prepare('SELECT id, email, role, created_at FROM users WHERE id = ?').get(user.userId);
-      if (!row) return jsonResponse(res, 404, { error: 'Utilisateur introuvable' });
-      return jsonResponse(res, 200, { userId: row.id, email: row.email, role: row.role, created_at: row.created_at });
-    }
-    return jsonResponse(res, 200, { username: user.username, role: user.role });
-  }
-
-  // ─── MATCHDAY PASS — Stripe Checkout ─────────────────────────────────────
-
-  // POST /api/v1/checkout/matchday → crée une Stripe Checkout Session
-  if (pathname === '/api/v1/checkout/matchday' && req.method === 'POST') {
-    if (!STRIPE_SECRET_KEY || !STRIPE_MATCHDAY_PRICE_ID) {
-      return jsonResponse(res, 503, { error: 'Paiement non configuré (clés Stripe manquantes)' });
-    }
-    (async () => {
-      try {
-        const session = await stripeRequest('POST', 'checkout/sessions', {
-          'mode': 'payment',
-          'line_items[0][price]': STRIPE_MATCHDAY_PRICE_ID,
-          'line_items[0][quantity]': '1',
-          'success_url': STRIPE_SUCCESS_URL,
-          'cancel_url':  STRIPE_CANCEL_URL,
-          'payment_method_types[0]': 'card',
-        });
-        if (session.error) return jsonResponse(res, 400, { error: session.error.message });
-        jsonResponse(res, 200, { url: session.url, session_id: session.id });
-      } catch(e) {
-        console.error('[Stripe] checkout error:', e.message);
-        jsonResponse(res, 500, { error: 'Erreur Stripe' });
-      }
-    })();
-    return;
-  }
-
-  // POST /api/v1/webhook/stripe → Stripe envoie l'événement après paiement
-  if (pathname === '/api/v1/webhook/stripe' && req.method === 'POST') {
-    readBodyLimited(req, MAX_BODY_SIZE).then(rawBody => {
-      const sig = req.headers['stripe-signature'] || '';
-      if (STRIPE_WEBHOOK_SECRET && !verifyStripeSignature(rawBody, sig)) {
-        return jsonResponse(res, 400, { error: 'Signature invalide' });
-      }
-      try {
-        const event = JSON.parse(rawBody);
-        if (event.type === 'checkout.session.completed') {
-          const sessionId = event.data?.object?.id;
-          if (sessionId) {
-            const now    = Math.floor(Date.now() / 1000);
-            const exp    = now + JWT_TTL_MATCHDAY;
-            const token  = jwtSign({ role: 'matchday', session_id: sessionId }, JWT_TTL_MATCHDAY);
-            sqldb.prepare(
-              'INSERT OR IGNORE INTO matchday_passes (session_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
-            ).run(sessionId, token, now, exp);
-            console.log(`[Matchday] Pass créé — session ${sessionId} — expire dans 24h`);
-          }
-        }
-        jsonResponse(res, 200, { received: true });
-      } catch(e) {
-        jsonResponse(res, 400, { error: 'JSON invalide' });
-      }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // GET /api/v1/matchday/status?session_id=... → retourne le token 24h si valide
-  if (pathname === '/api/v1/matchday/status' && req.method === 'GET') {
-    const sessionId = new URL(req.url, 'http://localhost').searchParams.get('session_id');
-    if (!sessionId) return jsonResponse(res, 400, { error: 'session_id requis' });
-    const row = sqldb.prepare('SELECT token, expires_at FROM matchday_passes WHERE session_id = ?').get(sessionId);
-    const now = Math.floor(Date.now() / 1000);
-    if (!row || row.expires_at < now) return jsonResponse(res, 404, { active: false });
-    jsonResponse(res, 200, { active: true, token: row.token, expires_at: row.expires_at });
-    return;
-  }
-
-  // GET /api/v1/predictions
-  if (pathname === '/api/v1/predictions') {
-    return jsonResponse(res, 200, { predictions: getPredictions(), generated_at: new Date().toISOString() });
-  }
-
-  // GET /api/v1/top-matches?timeframe=today|week&limit=10  [public — teaser accueil]
-  if (pathname === '/api/v1/top-matches') {
-    const timeframe = query.timeframe || 'today';
-    const limit = Math.min(20, parseInt(query.limit || '10'));
-    return jsonResponse(res, 200, {
-      matches: getTopMatchesByTimeframe(timeframe, limit),
-      timeframe,
-      generated_at: new Date().toISOString(),
-    });
-  }
-
-  // GET /api/v1/league-hub/:oddsKey
-  const leagueHubMatch = pathname.match(/^\/api\/v1\/league-hub\/([^/?]+)$/);
-  if (leagueHubMatch) {
-    const oddsKey = decodeURIComponent(leagueHubMatch[1]);
-    const hub = getLeagueHub(oddsKey);
-    if (!hub) return jsonResponse(res, 404, { error: 'Ligue inconnue' });
-    return jsonResponse(res, 200, hub);
-  }
-
-  // GET /api/v1/top-strategy?type=BTTS_YES&limit=10&minConfidence=50
-  if (pathname === '/api/v1/top-strategy') {
-    if (!requireAuth(req, res)) return;
-    const type = (query.type || '').toUpperCase();
-    const matches = getTopMatchesByStrategy(type, query.limit, query.minConfidence, query.league || '');
-    if (matches === null) {
-      return jsonResponse(res, 400, {
-        error: 'Stratégie inconnue',
-        available: Object.keys(STRATEGIES),
-      });
-    }
-    return jsonResponse(res, 200, {
-      strategy: type,
-      label: STRATEGIES[type].label,
-      icon: STRATEGIES[type].icon,
-      count: matches.length,
-      matches,
-      generated_at: new Date().toISOString(),
-    });
-  }
-
-  // GET /api/v1/strategies — liste des stratégies disponibles
-  if (pathname === '/api/v1/strategies') {
-    return jsonResponse(res, 200, {
-      strategies: Object.entries(STRATEGIES).map(([key, s]) => ({
-        key, label: s.label, icon: s.icon,
-        tipster: s.tipster || null,
-        tipsterFlag: s.tipsterFlag || null,
-        tipsterDesc: s.tipsterDesc || null,
-      })),
-    });
-  }
-
-  // GET /api/v1/hot-picks?limit=5 — Top picks toutes stratégies (Les 5 Stars du Jour)
-  if (pathname === '/api/v1/hot-picks') {
-    const limit = Math.max(1, Math.min(20, parseInt(query.limit) || 5));
-    const picks = getHotPicks(limit);
-    return jsonResponse(res, 200, {
-      count: picks.length,
-      picks,
-      generated_at: new Date().toISOString(),
-    });
-  }
-
-  // GET /api/v1/sure-bets?limit=10 — Sure Bets (confiance ≥ 8/10)
-  if (pathname === '/api/v1/sure-bets') {
-    const limit = Math.max(1, Math.min(30, parseInt(query.limit) || 10));
-    const bets = getSureBets(limit);
-    return jsonResponse(res, 200, {
-      count: bets.length,
-      sureBets: bets,
-      hitRateEstimate: '~40% hit rate attendu',
-      generated_at: new Date().toISOString(),
-    });
-  }
-
-  // GET /api/v1/arbitrage
-  if (pathname === '/api/v1/arbitrage') {
-    const arb = computeArbitrage();
-    return jsonResponse(res, 200, {
-      surebets: arb.filter(a => a.is_surebet),
-      near_arb: arb.filter(a => !a.is_surebet).slice(0, 5),
-      total_scanned: db.matches.length,
-      generated_at: new Date().toISOString(),
-    });
-  }
-
-  // GET /api/v1/trends
-  if (pathname === '/api/v1/trends') {
-    if (!requireAuth(req, res)) return;
-    return jsonResponse(res, 200, getTrends());
-  }
-
-  // GET /api/v1/history
-  if (pathname === '/api/v1/history') {
-    if (!requireAuth(req, res)) return;
-    const limit = parseInt(query.limit) || 50;
-    return jsonResponse(res, 200, {
-      matches: history.slice(-limit).reverse(),
-      accuracy: getAccuracyReport(),
-      total: history.length,
-    });
-  }
-
-  // GET /api/v1/alerts/config — config alertes personnalisées
-  if (pathname === '/api/v1/alerts/config' && req.method === 'GET') {
-    const user = requireAuth(req, res);
-    if (!user) return;
-    const prefs = kvGet(`alert_prefs_${user.id}`) || {
-      enabled: false, chatId: '', edgeMin: 8, probaMin: 55,
-      markets: ['BTTS_YES', 'OVER_2_5'], leagues: [],
+function localApiGet(pathnameWithQuery) {
+  return new Promise((resolve, reject) => {
+    const port = Number(PORT || process.env.PORT || 3000);
+    const opts = {
+      hostname: '127.0.0.1',
+      port,
+      path: pathnameWithQuery,
+      method: 'GET',
+      headers: { 'Accept': 'application/json', 'User-Agent': 'PariScore/2.0-proxy' },
     };
-    return jsonResponse(res, 200, prefs);
-  }
-
-  // POST /api/v1/alerts/config — sauvegarder config alertes
-  if (pathname === '/api/v1/alerts/config' && req.method === 'POST') {
-    const user = requireAuth(req, res);
-    if (!user) return;
-    readBodyLimited(req, 64 * 1024).then(body => {
-      try {
-        const parsed = JSON.parse(body);
-        const prefs = {
-          enabled:   !!parsed.enabled,
-          chatId:    String(parsed.chatId || '').trim().slice(0, 50),
-          edgeMin:   Math.max(0, Math.min(30, parseFloat(parsed.edgeMin)  || 0)),
-          probaMin:  Math.max(0, Math.min(90, parseInt(parsed.probaMin)   || 50)),
-          markets:   Array.isArray(parsed.markets) ? parsed.markets.filter(m => typeof m === 'string').slice(0, 10) : [],
-          leagues:   Array.isArray(parsed.leagues) ? parsed.leagues.filter(l => typeof l === 'string').slice(0, 20) : [],
-          updatedAt: new Date().toISOString(),
-        };
-        kvSet(`alert_prefs_${user.id}`, prefs);
-        jsonResponse(res, 200, { ok: true, prefs });
-      } catch { jsonResponse(res, 400, { error: 'JSON invalide' }); }
-    }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
-    return;
-  }
-
-  // GET /api/v1/alerts/history — 10 dernières alertes envoyées
-  if (pathname === '/api/v1/alerts/history' && req.method === 'GET') {
-    const user = requireAuth(req, res);
-    if (!user) return;
-    const hist = kvGet('alert_history') || [];
-    return jsonResponse(res, 200, { history: hist.slice(-10).reverse() });
-  }
-
-  // POST /api/v1/telegram/test
-  if (pathname === '/api/v1/telegram/test' && req.method === 'POST') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    sendValueBetAlerts()
-      .then(() => jsonResponse(res, 200, { message: `Alertes envoyées à ${TELEGRAM_CHAT_IDS.size} chat(s)` }))
-      .catch(e => jsonResponse(res, 500, { error: e.message }));
-    return;
-  }
-
-   // GET /api/v1/admin/status (protégé JWT admin)
-  if (pathname === '/api/v1/admin/status') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    return jsonResponse(res, 200, {
-      uptime:          process.uptime(),
-      matchCount:      db.matches.length,
-      teamCount:       Object.keys(db.teamStats).length,
-      historyCount:    history.length,
-      lastOddsUpdate:  db.lastOddsUpdate,
-      lastStatsUpdate: db.lastStatsUpdate,
-      oddsQuota:       db.oddsQuotaRemaining,
-      status:          db.status,
-      isFetchingOdds,  isFetchingStats,
-      accuracy:        getAccuracyReport(),
-      aiScoutCached:   !!aiScoutCache.data,
-      telegramChats:   TELEGRAM_CHAT_IDS.size,
-      memoryMB:        Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-    });
-  }
-
-  // POST /api/v1/admin/backtest-bsd (protégé auth — admin ou premium)
-  if (pathname === '/api/v1/admin/backtest-bsd' && req.method === 'POST') {
-    const user = getAuthUser(req);
-    if (!user || (user.role !== 'admin' && user.role !== 'premium')) return jsonResponse(res, 403, { error: 'Accès refusé — Premium requis' });
-    if (!BSD_BASE_URL) return jsonResponse(res, 503, { error: 'BSD non configuré' });
-
-    readBodyLimited(req, MAX_BODY_SIZE).then(async body => {
-      try {
-        const parsed = JSON.parse(body || '{}');
-        const days = Math.min(Math.max(parseInt(parsed.days) || 7, 1), 30);
-        const now = Date.now();
-        const bsdDateCache = new Map();
-        let newVerified = 0, alreadyVerified = 0, noScore = 0;
-        const report = [];
-
-        for (let d = 1; d <= days; d++) {
-          const dateMs  = now - d * 86400000;
-          const dateStr = formatDateOnly(new Date(dateMs));
-
-          // Fetch BSD matches for this date (cached)
-          if (!bsdDateCache.has(dateStr)) {
-            const bsdResults = await fetchBSDMatches(dateStr, dateStr);
-            bsdDateCache.set(dateStr, bsdResults);
-          }
-          const bsdDay = bsdDateCache.get(dateStr);
-          const finished = bsdDay.filter(bm =>
-            bm.home_score !== null && bm.away_score !== null &&
-            bm.status !== 'inprogress' && !(bm.status && bm.status.includes('half'))
-          );
-
-          for (const bm of finished) {
-            const hNorm = normName(bm.home_team), aNorm = normName(bm.away_team);
-
-            // Check if already in history
-            const existing = history.find(h => {
-              const hh = normName(h.home_team), ha = normName(h.away_team);
-              return h.commence_time?.startsWith(dateStr) &&
-                (hh.includes(hNorm.split(' ')[0]) || hNorm.includes(hh.split(' ')[0])) &&
-                (ha.includes(aNorm.split(' ')[0]) || aNorm.includes(ha.split(' ')[0]));
-            });
-
-            if (existing) {
-              if (!existing.verified && existing.realScore === null) {
-                // Fill missing real score
-                existing.realScore = { home: Number(bm.home_score), away: Number(bm.away_score), source: 'bsd' };
-                const totalGoals = existing.realScore.home + existing.realScore.away;
-                const wasBTTS = existing.realScore.home > 0 && existing.realScore.away > 0;
-                const wasOver25 = totalGoals > 2.5;
-                if (existing.predicted?.over25 > 55) { accuracy.over25_total++; if (wasOver25) accuracy.over25_correct++; }
-                if (existing.predicted?.btts > 55) { accuracy.btts_total++; if (wasBTTS) accuracy.btts_correct++; }
-                if (existing.predicted?.bestEdgeValue > 5) {
-                  accuracy.edge_total++;
-                  const winner = existing.realScore.home > existing.realScore.away ? existing.home_team : existing.realScore.away > existing.realScore.home ? existing.away_team : 'Nul';
-                  if (winner === existing.predicted.bestEdge) accuracy.edge_correct++;
-                }
-                accuracy.total++;
-                existing.verified = true;
-                existing.retry_at = new Date().toISOString();
-                newVerified++;
-                report.push({ match: `${bm.home_team} ${bm.home_score}-${bm.away_score} ${bm.away_team}`, date: dateStr, action: 'verified' });
-              } else {
-                alreadyVerified++;
-              }
-            } else {
-              noScore++;
-              // Match in BSD but not in our history — no stored prediction, skip
-            }
-          }
-        }
-
-        if (newVerified > 0) saveHistory();
-
-        return jsonResponse(res, 200, {
-          ok: true,
-          days_scanned: days,
-          new_verified: newVerified,
-          already_verified: alreadyVerified,
-          bsd_only: noScore,
-          accuracy: getAccuracyReport(),
-          sample: report.slice(0, 20),
-        });
-      } catch(e) { return jsonResponse(res, 500, { error: e.message }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // POST /api/v1/admin/change-password (protégé JWT admin)
-  if (pathname === '/api/v1/admin/change-password' && req.method === 'POST') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    readBodyLimited(req, MAX_BODY_SIZE).then(body => {
-      try {
-        const parsed = JSON.parse(body);
-        if (!parsed.current || !parsed.new) return jsonResponse(res, 400, { error: 'current et new requis' });
-        if (!verifyPasswordSync(parsed.current, user.hash, user.salt)) return jsonResponse(res, 401, { error: 'Mot de passe actuel incorrect' });
-        if (parsed.new.length < 8) return jsonResponse(res, 400, { error: 'Minimum 8 caractères' });
-        const { hash, salt } = hashPasswordSync(parsed.new);
-        user.hash = hash;
-        user.salt = salt;
-        user.forceChange = false;
-        jsonResponse(res, 200, { ok: true, message: 'Mot de passe modifié' });
-      } catch(e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // ── AFFILIATION ROUTES ──────────────────────────────────────────────
-  // GET /api/v1/affiliates — Liste des bookmakers affiliés actifs (public)
-  if (pathname === '/api/v1/affiliates' && req.method === 'GET') {
-    const affiliates = sqldb.prepare('SELECT id, bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, priority FROM affiliates WHERE active = 1 ORDER BY priority DESC').all();
-    return jsonResponse(res, 200, affiliates);
-  }
-
-  // POST /api/v1/affiliates — Créer un affilié (admin)
-  if (pathname === '/api/v1/affiliates' && req.method === 'POST') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    readBodyLimited(req, MAX_BODY_SIZE).then(body => {
-      try {
-        const d = JSON.parse(body);
-        if (!d.bookmaker || !d.name || !d.affiliate_link) return jsonResponse(res, 400, { error: 'bookmaker, name, affiliate_link requis' });
-        const result = sqldb.prepare(`INSERT INTO affiliates (bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, active, priority)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-          d.bookmaker, d.name, d.affiliate_link, d.deeplink_template || null, d.promo_code || null,
-          d.commission_type || 'revshare', d.commission_rate || 30, d.active !== undefined ? d.active : 1, d.priority || 0
-        );
-        return jsonResponse(res, 201, { id: result.lastInsertRowid, ok: true });
-      } catch(e) { jsonResponse(res, 400, { error: e.message }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // PUT /api/v1/affiliates/:id — Modifier un affilié (admin)
-  if (pathname.match(/^\/api\/v1\/affiliates\/\d+$/) && req.method === 'PUT') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    const id = parseInt(pathname.split('/').pop());
-    readBodyLimited(req, MAX_BODY_SIZE).then(body => {
-      try {
-        const d = JSON.parse(body);
-        const fields = [];
-        const values = [];
-        for (const [k, v] of Object.entries(d)) {
-          if (['bookmaker','name','affiliate_link','deeplink_template','promo_code','commission_type','commission_rate','active','priority'].includes(k)) {
-            fields.push(`${k} = ?`);
-            values.push(v);
-          }
-        }
-        if (fields.length === 0) return jsonResponse(res, 400, { error: 'Aucun champ valide' });
-        values.push(id);
-        sqldb.prepare(`UPDATE affiliates SET ${fields.join(', ')} WHERE id = ?`).run(...values);
-        return jsonResponse(res, 200, { ok: true });
-      } catch(e) { jsonResponse(res, 400, { error: e.message }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // DELETE /api/v1/affiliates/:id — Supprimer un affilié (admin)
-  if (pathname.match(/^\/api\/v1\/affiliates\/\d+$/) && req.method === 'DELETE') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    const id = parseInt(pathname.split('/').pop());
-    sqldb.prepare('DELETE FROM affiliates WHERE id = ?').run(id);
-    return jsonResponse(res, 200, { ok: true });
-  }
-
-  // POST /api/v1/affiliate/click — Track un clic affilié
-  if (pathname === '/api/v1/affiliate/click' && req.method === 'POST') {
-    readBodyLimited(req, MAX_BODY_SIZE).then(body => {
-      try {
-        const d = JSON.parse(body);
-        if (!d.affiliate_id || !d.match_id) return jsonResponse(res, 400, { error: 'affiliate_id, match_id requis' });
-        const ip = req.socket?.remoteAddress || 'unknown';
-        const ua = req.headers['user-agent'] || '';
-        sqldb.prepare('INSERT INTO affiliate_clicks (affiliate_id, match_id, user_ip, user_agent) VALUES (?, ?, ?, ?)').run(
-          d.affiliate_id, d.match_id, ip, ua
-        );
-        return jsonResponse(res, 200, { ok: true });
-      } catch(e) { jsonResponse(res, 400, { error: e.message }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
-    return;
-  }
-
-  // GET /api/v1/affiliate/stats — Stats d'affiliation (admin)
-  if (pathname === '/api/v1/affiliate/stats') {
-    const user = getAuthUser(req);
-    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
-    const totalClicks = sqldb.prepare('SELECT COUNT(*) as c FROM affiliate_clicks').get();
-    const clicksByAffiliate = sqldb.prepare('SELECT a.bookmaker, a.name, COUNT(c.id) as clicks, MAX(c.clicked_at) as last_click FROM affiliates a LEFT JOIN affiliate_clicks c ON a.id = c.affiliate_id GROUP BY a.id ORDER BY clicks DESC').all();
-    const clicksByDay = sqldb.prepare(`SELECT DATE(clicked_at, 'unixepoch') as day, COUNT(*) as clicks FROM affiliate_clicks WHERE clicked_at > strftime('%s','now','-30 days') GROUP BY day ORDER BY day`).all();
-    return jsonResponse(res, 200, {
-      totalClicks: totalClicks.c,
-      byAffiliate: clicksByAffiliate,
-      byDay: clicksByDay,
-    });
-  }
-
-  // GET /api/v1/affiliate/link/:matchId — Génère le meilleur lien affilié pour un match
-  if (pathname.startsWith('/api/v1/affiliate/link/') && req.method === 'GET') {
-    const matchId = decodeURIComponent(pathname.slice('/api/v1/affiliate/link/'.length));
-    let match = db.matches.find(m => m.id === matchId);
-    if (!match) match = cachedMatches.find(m => m.id === matchId);
-    if (!match) match = cachedMatches.find(m => m.fixture_id == matchId);
-    if (!match) return jsonResponse(res, 200, { link: FINAL_FALLBACK });
-    const bestAffiliate = sqldb.prepare('SELECT * FROM affiliates WHERE active = 1 ORDER BY priority DESC LIMIT 1').get();
-    if (!bestAffiliate) return jsonResponse(res, 404, { error: 'Aucun affilié actif' });
-    // Remplacer les placeholders dans deeplink_template
-    let link = bestAffiliate.affiliate_link;
-    if (bestAffiliate.deeplink_template) {
-      const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      link = bestAffiliate.deeplink_template
-        .replace('{sport}', match.sport || 'soccer')
-        .replace('{event_id}', match.id || '')
-        .replace('{home}', bestAffiliate.bookmaker === 'coteur' ? slugify(match.home_team) : encodeURIComponent(match.home_team))
-        .replace('{away}', bestAffiliate.bookmaker === 'coteur' ? slugify(match.away_team) : encodeURIComponent(match.away_team));
-    }
-    return jsonResponse(res, 200, {
-      id: bestAffiliate.id,
-      bookmaker: bestAffiliate.bookmaker,
-      name: bestAffiliate.name,
-      link: link,
-      promo_code: bestAffiliate.promo_code,
-    });
-  }
-
-  // GET /api/v1/accuracy — protégé auth minimum
-  if (pathname === '/api/v1/accuracy') {
-    const user = getAuthUser(req);
-    if (!user) return jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
-    return jsonResponse(res, 200, getAccuracyReport());
-  }
-
-  // GET /api/v1/bankroll — Bankroll tracking (flat 1u)
-  if (pathname === '/api/v1/bankroll') {
-    const startBankroll = 100;
-    let bankroll = startBankroll;
-    const bets = [];
-    for (const h of history) {
-      if (!h.verified || !h.realScore) continue;
-      const rs = h.realScore;
-      if (h.predicted?.over25 > 55) {
-        const won = (rs.home + rs.away) > 2.5;
-        bankroll += won ? 1 : -1;
-        bets.push({ date: h.commence_time, market: 'Over 2.5', won, profit: won ? 1 : -1, bankroll, match: h.home_team+' - '+h.away_team });
-      }
-      if (h.predicted?.btts > 55) {
-        const won = rs.home > 0 && rs.away > 0;
-        bankroll += won ? 1 : -1;
-        bets.push({ date: h.commence_time, market: 'BTTS', won, profit: won ? 1 : -1, bankroll, match: h.home_team+' - '+h.away_team });
-      }
-    }
-    const totalBets = bets.length;
-    const wonBets = bets.filter(b => b.won).length;
-    const peak = bets.reduce((m, b) => Math.max(m, b.bankroll), startBankroll);
-    const trough = bets.reduce((m, b) => Math.min(m, b.bankroll), startBankroll);
-    const maxDD = peak > 0 ? Math.round((1 - trough/peak)*10000)/100 : 0;
-    return jsonResponse(res, 200, {
-      startBankroll, finalBankroll: bankroll,
-      totalPL: bankroll - startBankroll, totalBets, wonBets,
-      winRate: totalBets > 0 ? Math.round(wonBets/totalBets*100) : 0,
-      roi: totalBets > 0 ? Math.round((bankroll-startBankroll)/totalBets*10000)/100 : 0,
-      maxDrawdown: maxDD,
-      bets: bets.slice(-80),
-    });
-  }
-
-  // GET /api/v1/accuracy/trends — Weekly accuracy trend chart
-  if (pathname === '/api/v1/accuracy/trends') {
-    const weeks = parseInt(query.weeks) || 12;
-    return jsonResponse(res, 200, getWeeklyAccuracyTrends(weeks));
-  }
-
-  // GET /api/v1/accuracy/public — Badge hero (proof social, style Datafoot)
-  if (pathname === '/api/v1/accuracy/public') {
-    const full = getAccuracyReport();
-    return jsonResponse(res, 200, {
-      rolling30: full.rolling30 || {},
-      leagues: full.leagues || {},
-      global: { total_verified: full.total_verified || 0 },
-    });
-  }
-
-  // GET /api/v1/top-butteurs/:matchId — Top 3 buteurs on-demand (avec fallback chargement BSD)
-  if (pathname.startsWith('/api/v1/top-butteurs/') && req.method === 'GET') {
-    const matchId = decodeURIComponent(pathname.slice('/api/v1/top-butteurs/'.length));
-    if (!matchId || matchId === 'undefined' || matchId === 'null') {
-      return jsonResponse(res, 200, { success: false, buteurs: null });
-    }
-    let match = db.matches.find(m => m.id === matchId);
-    if (!match) match = cachedMatches.find(m => m.id === matchId);
-    if (!match) return jsonResponse(res, 200, { success: false, buteurs: null });
-
-    // Deja calcule ?
-    if (match.topButteurs) {
-      return jsonResponse(res, 200, { success: true, buteurs: match.topButteurs, cached: true });
-    }
-
-    // Essayer de calculer depuis les donnees BSD existantes
-    const fromExisting = computeMatchTopButteurs(match);
-    if (fromExisting) {
-      match.topButteurs = fromExisting;
-      return jsonResponse(res, 200, { success: true, buteurs: fromExisting, cached: false });
-    }
-
-    // Tenter un chargement BSD on-demand (non-bloquant: on lance et on renvoie null)
-    const homeKey = normName(match.home_team);
-    const awayKey = normName(match.away_team);
-    const hMeta = db.teamStats[homeKey] || findFuzzy(homeKey);
-    const aMeta = db.teamStats[awayKey] || findFuzzy(awayKey);
-    const hBsdTeamId = hMeta?.bsdTeamId || null;
-    const aBsdTeamId = aMeta?.bsdTeamId || null;
-    const hBsdSeasonId = hMeta?.bsdSeasonId || null;
-    const aBsdSeasonId = aMeta?.bsdSeasonId || null;
-
-    if ((hBsdTeamId && hBsdSeasonId) || (aBsdTeamId && aBsdSeasonId)) {
-      // Lancement async en arriere-plan
-      (async () => {
+    const req = http.request(opts, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
         try {
-          const [homeRatings, awayRatings] = await Promise.all([
-            (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
-            (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
-          ]);
-          match._bsd_home_ratings = homeRatings;
-          match._bsd_away_ratings = awayRatings;
-          match.topButteurs = computeMatchTopButteurs(match);
-          saveDB();
-          broadcastSSE('butteurs-ready', { matchId: match.id, buteurs: match.topButteurs });
-        } catch(e) { /* silencieux */ }
-      })();
+          resolve({ status: res.statusCode, data: JSON.parse(data) });
+        } catch (e) {
+          resolve({ status: res.statusCode, data });
+        }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(12000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.end();
+  });
+}
+
+   
+// ─── HELPERS — Extraction cotes ANJ par marché ─────────────────────────────
+
+
+  
+ 
+
+/**
+ * Retourne les meilleures cotes ANJ (France) pour un type de marché donné.
+ * @param {Array} bkList   Liste des bookmakers (chaque élément possède .name/.bookmaker et .bets)
+ * @param {string} marketType   '1N2' ou 'OU25'
+ * @param {string} homeTeam
+ * @param {string} awayTeam
+ * @returns {Object|null}   Objet contenant les cotes et le nom du bookmaker, ou null si aucune cote ANJ trouvée
+ */
+function findBestANJOdds(bkList, marketType, homeTeam, awayTeam) {
+  let result = {};
+
+  for (const bk of bkList) {
+    const bkName = bk.name || bk.bookmaker || '';
+    const isANJ = ANJ_BOOKMAKERS.some(a =>
+      bkName.toLowerCase().includes(a.toLowerCase())
+    );
+    if (!isANJ) continue;   // on ignore les bookmakers non‑ANJ
+
+    if (marketType === '1N2') {
+      const m1x2 = (bk.bets || []).find(
+        b => b.id === 1 || b.name === 'Match Winner'
+      );
+      if (!m1x2) continue;
+
+      for (const val of m1x2.values) {
+        const odd = parseFloat(val.odd);
+        if (val.value === 'Home' && (!result.home || odd > result.home)) {
+          result.home = odd;
+          result.bookie = bkName;
+        }
+        if (val.value === 'Draw' && (!result.draw || odd > result.draw)) {
+          result.draw = odd;
+          result.bookie = bkName;
+        }
+        if (val.value === 'Away' && (!result.away || odd > result.away)) {
+          result.away = odd;
+          result.bookie = bkName;
+        }
+      }
     }
 
-    return jsonResponse(res, 200, { success: false, buteurs: null, loading: true });
+    if (marketType === 'OU25') {
+      const ou = (bk.bets || []).find(
+        b => b.id === 5 || b.name === 'Goals Over/Under'
+      );
+      if (!ou) continue;
+
+      for (const val of ou.values) {
+        const odd = parseFloat(val.odd);
+        if (val.value === 'Over 2.5' && (!result.over || odd > result.over)) {
+          result.over = odd;
+          result.bookie = bkName;
+        }
+        if (val.value === 'Under 2.5' && (!result.under || odd > result.under)) {
+          result.under = odd;
+          result.bookie = bkName;
+        }
+      }
+    }
   }
 
-  // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
-  if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
-    const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
-    // v9.1: ID validation
-    if (!matchId || matchId === 'undefined' || matchId === 'null') {
-      console.error("\x1b[31m[CRITICAL_FETCH] insights ID invalide: %s\x1b[0m", matchId);
-      return jsonResponse(res, 200, { success: false, message: "ID invalide." });
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+
+
+function extractANJMarkets(bookmakers, homeTeam, awayTeam) {
+  const markets = {};
+  for (const bk of bookmakers) {
+    const bkName = bk.bookmaker || bk.title || '';
+    const isANJ = ANJ_BOOKMAKERS.some(a => bkName.toLowerCase().includes(a.toLowerCase()));
+    if (!isANJ) continue;
+
+    // 1N2
+    const h2h = (bk.markets || []).find(m => m.key === 'h2h');
+    if (h2h) {
+      if (!markets['1N2']) markets['1N2'] = {};
+      for (const o of h2h.outcomes) {
+        if (o.name === homeTeam && (!markets['1N2'].home || o.price > markets['1N2'].home)) { markets['1N2'].home = o.price; markets['1N2'].bookie = bkName; }
+        if (o.name === 'Draw' && (!markets['1N2'].draw || o.price > markets['1N2'].draw)) { markets['1N2'].draw = o.price; markets['1N2'].bookie = bkName; }
+        if (o.name === awayTeam && (!markets['1N2'].away || o.price > markets['1N2'].away)) { markets['1N2'].away = o.price; markets['1N2'].bookie = bkName; }
+      }
     }
-    console.log("[DEBUG INSIGHTS] ID demandé:", matchId);
-    let match = db.matches.find(m => m.id === matchId);
-    if (!match) match = cachedMatches.find(m => m.id === matchId);
-    if (!match) {
-      const numId = isNaN(Number(matchId)) ? null : Number(matchId);
-      if (numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === matchId);
+  }
+  return markets;
+}
+
+// -------------------------------------------------
+//  GET /api/v1/team-logo?name=Arsenal  — lookup Sofascore image, cached 30j
+// -------------------------------------------------
+
+
+// GET /api/v1/status
+
+
+// GET /api/v1/corners/:matchId — Predictions corners Over/Under
+
+
+// GET /api/v1/live/bsd — Données live BSD brutes (xG, momentum, incidents, stats temps réel)
+
+
+
+
+
+
+
+
+
+
+
+// ─── MATCHDAY PASS — Stripe Checkout ─────────────────────────────────────
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SERVEUR HTTP
+// ═══════════════════════════════════════════════════════════════════════════════
+const mime = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon'
+};
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const server = http.createServer(async (req, res) => {
+    // 1. On parse l'URL en premier (pathname + query toujours disponibles)
+    const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    const pathname = parsedUrl.pathname;
+    const query = Object.fromEntries(parsedUrl.searchParams.entries());
+
+    // CORS preflight
+    if (req.method === 'OPTIONS') {
+        return res.writeHead(204, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '86400'
+        }).end();
     }
-    // Nettoyer les entrées vides : match sans stats ni poisson → considéré comme non trouvé
-    if (match && !matchHasData(match)) {
-      console.error("\x1b[31m[INSIGHTS] Match %s trouvé mais vide (aucune stat) → traité comme non trouvé\x1b[0m", matchId);
-      match = null;
+
+    // Routes API
+    if (pathname === '/api/v1/team-logo') {
+        const name = (query.name || '').toString().trim();
+    if (!name) {
+        return res.writeHead(400, { 'Content-Type': 'application/json' })
+                  .end(JSON.stringify({ error: 'name required' }));
     }
-    if (!match) {
-      console.log("[DEBUG INSIGHTS] Match non trouvé — trigger FORCE SYNC");
-      // Force sync en arrière-plan pour la prochaine tentative du frontend
-      const numId = isNaN(Number(matchId)) ? null : Number(matchId);
-      if (numId) forceSyncFixture(String(numId));
-      else if (matchId.startsWith('force_')) forceSyncFixture(matchId.replace('force_', ''));
-      return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
+
+    const cacheKey = `logo_${name.toLowerCase().replace(/\s+/g, '_')}`;
+    const cached = apiCacheGet(cacheKey);
+    if (cached) {
+        return res.writeHead(200, { 'Content-Type': 'application/json' })
+                  .end(JSON.stringify(cached));
+    }
+
+    // ----------  IIFE ASYNCHRONE (corrige l'erreur 'await')  ----------
+    (async () => {
+        try {
+            // 1. Recherche via l'API BSD (la plus rapide et la plus couvrante)
+            let result = null;
+            if (BSD_API_KEY) {
+                try {
+                    const r = await bsdFetch(
+                        `/teams/?search=${encodeURIComponent(name)}&page_size=1`
+                    );
+                    const t = r.data?.results?.[0];
+                    if (t?.id) {
+                        result = {
+                            url: `https://sports.bzzoiro.com/img/team/${t.id}/`,
+                            bsdId: t.id
+                        };
+                    }
+                } catch { /* On passe à Sofascore en cas d'échec */ }
+            }
+
+            // 2. Recherche via Sofascore (fallback)
+            if (!result) {
+                const found = await searchSofascoreTeam(name);
+                if (found?.id) {
+                    result = {
+                        url: `https://api.sofascore.app/api/v1/team/${found.id}/image`,
+                        sofaId: found.id
+                    };
+                }
+            }
+
+            if (!result) {
+                return res.writeHead(404, { 'Content-Type': 'application/json' })
+                          .end(JSON.stringify({ url: null }));
+            }
+
+            // Mise en cache pour 30 jours
+            db.prepare(
+                'INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)'
+            ).run(
+                cacheKey,
+                JSON.stringify(result),
+                'logo',
+                Date.now(),
+                Date.now() + 30 * 24 * 3600 * 1000
+            );
+
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+              .end(JSON.stringify(result));
+        } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' })
+              .end(JSON.stringify({ url: null }));
+        }
+    })(); return; // ← FIN DE L'IIFE ASYNCHRONE
+}
+
+// -------------------------------------------------
+//  GET /api/v1/player — Fiche détaillée joueur via BSD (par id ou nom)
+// -------------------------------------------------
+if (pathname === '/api/v1/player') {
+    const urlParams = new URL(req.url, `http://${req.headers.host}`);
+    const playerName = urlParams.searchParams.get('name');
+    const playerId = urlParams.searchParams.get('id');
+    if (!playerName && !playerId) {
+        return jsonResponse(res, 400, { error: 'player id or name required' });
+    }
+
+    const cacheKey = playerName ? `player_name_${playerName}` : `player_${playerId}`;
+    const cached = apiCacheGet(cacheKey);
+    if (cached) {
+        return jsonResponse(res, 200, cached);
     }
 
     (async () => {
-      try {
-        const hKey  = normName(match.home_team);
-        const aKey  = normName(match.away_team);
-        const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
-        const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
-        const hAdvKey = hMeta === db.teamStats[hKey] ? hKey : Object.keys(db.teamStats).find(k => db.teamStats[k] === hMeta) || hKey;
-        const aAdvKey = aMeta === db.teamStats[aKey] ? aKey : Object.keys(db.teamStats).find(k => db.teamStats[k] === aMeta) || aKey;
-        const hAdv  = db.advancedTeamStats[hAdvKey]?.data || null;
-        const aAdv  = db.advancedTeamStats[aAdvKey]?.data || null;
+        try {
+            let player;
+            if (playerId) {
+                player = await bsdGetPlayerDetail(playerId);
+            } else if (playerName) {
+                const searchRes = await bsdSearchPlayers(playerName);
+                if (searchRes && searchRes.length > 0) {
+                    player = await bsdGetPlayerDetail(searchRes[0].id);
+                }
+            }
+            if (!player) {
+                return jsonResponse(res, 404, { error: 'player not found' });
+            }
+            apiCacheSet(cacheKey, player, 'bsd_player', 7 * 24 * 3600 * 1000);
+            return jsonResponse(res, 200, player);
+        } catch (e) {
+            console.error('[Player API] erreur:', e.message);
+            return jsonResponse(res, 500, { error: e.message });
+        }
+    })();
+    return;
+}
 
-        // Priorité : ligue du match (via odds_key → leagues_config), évite mixage BL1/BL2 après promotion/relégation
-        const matchLeagueCfg = leaguesConfig.leagues.find(l => l.odds_key === match.sport);
-        const leagueId = matchLeagueCfg?.id || hMeta?.leagueId || aMeta?.leagueId;
-        const season   = currentSeason();
+// -------------------------------------------------
+//  GET /api/v1/team/:id — Fiche détaillée équipe via BSD
+// -------------------------------------------------
+if (pathname.startsWith('/api/v1/team/')) {
+    const teamId = pathname.split('/').pop();
+    if (!teamId) {
+        return jsonResponse(res, 400, { error: 'team id required' });
+    }
 
-        // Classement de la ligue (depuis db.teamStats, trié par rank)
-        const standings = Object.entries(db.teamStats)
-          .filter(([, s]) => s.leagueId === leagueId && s._real && s.rank)
-          .map(([tKey, s]) => {
-            const adv = db.advancedTeamStats[tKey]?.data;
-            return {
-              team:   tKey,
-              rank:   s.rank,
-              form:   s.form || '',
-              ppg:    s.home.ppg,
-              // Global
-              played: adv ? (adv.played_home + adv.played_away) : 0,
-              wins:   adv ? (adv.wins_home + adv.wins_away) : 0,
-              draws:  adv ? (adv.draws_home + adv.draws_away) : 0,
-              losses: adv ? (adv.losses_home + adv.losses_away) : 0,
-              pts:    adv ? ((adv.wins_home + adv.wins_away) * 3 + (adv.draws_home + adv.draws_away)) : 0,
-              avgFor: adv?.goals_scored_total_avg  || s.home.avgScored,
-              avgAg:  adv?.goals_conceded_total_avg || s.home.avgConceded,
-              // Domicile
-              home_played: adv?.played_home || 0,
-              home_wins:   adv?.wins_home   || 0,
-              home_draws:  adv?.draws_home  || 0,
-              home_losses: adv?.losses_home || 0,
-              home_pts:    adv ? (adv.wins_home * 3 + adv.draws_home) : 0,
-              home_avgFor: adv?.goals_scored_home_avg    || 0,
-              home_avgAg:  adv?.goals_conceded_home_avg  || 0,
-              // Cartons (pour le tri multi-critères)
-              cards_yellow: adv?.cards_yellow_total || null,
-              cards_red:    adv?.cards_red_total    || null,
-              // Extérieur
-              away_played: adv?.played_away || 0,
-              away_wins:   adv?.wins_away   || 0,
-              away_draws:  adv?.draws_away  || 0,
-              away_losses: adv?.losses_away || 0,
-              away_pts:    adv ? (adv.wins_away * 3 + adv.draws_away) : 0,
-              away_avgFor: adv?.goals_scored_away_avg    || 0,
-              away_avgAg:  adv?.goals_conceded_away_avg  || 0,
+    const cacheKey = `team_${teamId}`;
+    const cached = apiCacheGet(cacheKey);
+    if (cached) {
+        return jsonResponse(res, 200, cached);
+    }
+
+    (async () => {
+        try {
+            const team = await bsdGetTeamDetail(teamId);
+            if (!team) {
+                return jsonResponse(res, 404, { error: 'team not found' });
+            }
+            apiCacheSet(cacheKey, team, 'bsd_team', 7 * 24 * 3600 * 1000);
+            return jsonResponse(res, 200, team);
+        } catch (e) {
+            console.error('[Team API] erreur:', e.message);
+            return jsonResponse(res, 500, { error: e.message });
+        }
+    })();
+    return;
+}
+
+// -------------------------------------------------
+//  POST /api/v1/click — Enregistrer click utilisateur (joueur/équipe)
+// -------------------------------------------------
+if (pathname === '/api/v1/click' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+        try {
+            const data = JSON.parse(body);
+            const { type, id, name, source } = data;
+            if (!type || !id) {
+                return jsonResponse(res, 400, { error: 'type and id required' });
+            }
+
+            const clickKey = `click_${type}_${id}`;
+            const clickData = {
+                type,
+                id: String(id),
+                name: name || '',
+                source: source || 'unknown',
+                clicked_at: Date.now()
             };
-          })
-          .sort((a, b) => a.rank - b.rank);
 
-        // Key Player Index — top 3 par équipe + Position Ratings, en parallèle (cache 24h chacun)
-        const hTeamId = hMeta?.teamId;
-        const aTeamId = aMeta?.teamId;
-        // BSD team IDs (from standings data stored in bsdTeamId field)
-        const hBsdTeamId   = hMeta?.bsdTeamId   || null;
-        const aBsdTeamId   = aMeta?.bsdTeamId   || null;
-        const hBsdSeasonId = hMeta?.bsdSeasonId || null;
-        const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+            db.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
+                clickKey,
+                JSON.stringify(clickData),
+                'click',
+                Date.now(),
+                Date.now() + 90 * 24 * 3600 * 1000
+            );
 
-        // FIX v11.1: Corner config needed for corner history fetches
-        const cfg = bsdConfig.mapping?.config_to_bsd?.[String(leagueId)];
+            console.log(`[Click] ${type} ${id} "${name}" — bufferisé`);
+            return jsonResponse(res, 200, { saved: true });
+        } catch (e) {
+            return jsonResponse(res, 400, { error: 'invalid JSON' });
+        }
+    });
+    return;
+}
 
-        // FIX v11.1: Wrap ALL parallel fetches in Promise.allSettled — no single failure crashes the route
-        // v48.0: BSD-only leagues n'ont pas de teamId API-Football → fallback direct BSD
-        const hHasBsd = !!(hBsdTeamId && hBsdSeasonId);
-        const aHasBsd = !!(aBsdTeamId && aBsdSeasonId);
-        const [h2hRes, topScorersRes, homeCornersRes, awayCornersRes,
-               homeKPRes, awayKPRes, homePRRes, awayPRRes,
-               homeSquadRes, awaySquadRes, homeRatingsRes, awayRatingsRes,
-               homeTPRes, awayTPRes, homeFixturesRes, awayFixturesRes] = await Promise.allSettled([
+if (pathname === '/api/v1/status') {
+  return jsonResponse(res, 200, {
+    status: db.status,
+    ready: serverReady,
+    matchCount: db.matches.length,
+    teamCount: Object.keys(db.teamStats).length,
+    lastOddsUpdate: db.lastOddsUpdate,
+    lastStatsUpdate: db.lastStatsUpdate,
+    oddsQuota: db.oddsQuotaRemaining,
+    statsQuota: db.statsQuotaRemaining,
+    uptime: process.uptime(),
+    bsd_connected: !!BSD_API_KEY,
+  });
+}
+
+// -------------------------------------------------
+//  GET /api/v1/guide — Documentation complete PariScore
+// -------------------------------------------------
+if (pathname === '/api/v1/guide') {
+  const fs = require('fs');
+  const path = require('path');
+  const guidePath = path.join(__dirname, 'docs', 'GUIDELINE_PariScore.md');
+  try {
+    const content = fs.readFileSync(guidePath, 'utf8');
+    return jsonResponse(res, 200, {
+      title: 'Guide Complet PariScore v9.7',
+      content: content,
+      last_updated: '2026-05-10'
+    });
+  } catch (e) {
+    return jsonResponse(res, 200, {
+      title: 'Guide Complet PariScore v9.7',
+      content: '# Guide\n\nDocumentation en cours de chargement...',
+      last_updated: '2026-05-10'
+    });
+  }
+}
+
+    // ... le reste de tes routes (api/v1/matches, etc.) ...
+
+if (pathname === '/api/v1/live/bsd') {
+  const now = Date.now();
+  const liveMatches = db.matches.filter(m => {
+    if (!m.live_score || !m.live_minute) return false;
+    // v10.5: Ghost filter backend
+    const minuteVal = parseInt(m.live_minute || 0);
+    if (minuteVal > 130) return false;
+    if (m.commence_time) {
+      const hoursSince = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
+      if (hoursSince > 4) return false;
+    }
+    return true;
+  });
+  if (!liveMatches.length) {
+    return jsonResponse(res, 200, { live: [], message: 'Aucun match en direct' });
+  }
+  const liveData = liveMatches.map(m => ({
+    id: m.id,
+    home_team: m.home_team,
+    away_team: m.away_team,
+    league: m.league,
+    score: m.live_score,
+    minute: m.live_minute,
+    xg: m.live_xg || null,
+    possession: m.live_possession || null,
+    shots: m.live_shots || null,
+    shots_on_target: m.live_shots_on_target || null,
+    corners: m.live_corners || null,
+    cards: m.live_cards || null,
+    momentum: m.live_momentum || null,
+    intensity: m.live_intensity || 0,
+    edge: m.best_edge?.edge || 0,
+    _source: m._source || 'odds_api',
+  }));
+  return jsonResponse(res, 200, { live: liveData, count: liveData.length, ts: Date.now() });
+}
+// GET /api/v1/live/predictions — Top 5 paris live avec probabilités ajustées
+if (pathname === '/api/v1/live/predictions') {
+  const result = getLivePredictionsTop5();
+  return jsonResponse(res, 200, result);
+}
+// GET /api/v1/tv-channels?date=YYYY-MM-DD — Chaînes TV de diffusion
+if (pathname === '/api/v1/tv-channels') {
+  const dateStr = query.date || new Date().toISOString().slice(0, 10);
+  const channels = await fetchTVChannels(dateStr);
+  return jsonResponse(res, 200, { date: dateStr, channels });
+}
+// GET /api/v1/press-conferences?team=Arsenal&type=pre — Vidéos conférences de presse
+if (pathname === '/api/v1/press-conferences') {
+  const team = query.team || '';
+  const type = query.type || 'pre'; // 'pre' or 'post'
+  if (!team) return jsonResponse(res, 400, { error: 'team required' });
+  
+  // Recherche de vidéos via YouTube ( URL publique, pas d'API key)
+  // Retourne les URLs de recherche YouTube pour les conférences de presse
+  const searchQueries = {
+    pre: `${team} pre match press conference 2025`,
+    post: `${team} post match press conference reactions 2025`,
+    injury: `${team} injury update press conference 2025`
+  };
+  
+  const videos = {
+    team,
+    type,
+    searchUrls: {
+      preMatch: `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQueries.pre)}`,
+      postMatch: `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQueries.post)}`,
+      injury: `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQueries.injury)}`
+    },
+    // Sources officielles à surveiller
+    sources: [
+      { name: `${team} Official`, url: `https://www.youtube.com/@${team.replace(/\s+/g, '')}/videos` },
+      { name: 'beIN SPORTS', url: 'https://www.youtube.com/@beINSPORTS' },
+      { name: 'Sky Sports Football', url: 'https://www.youtube.com/@SkySportsFootball' },
+      { name: 'BBC Sport', url: 'https://www.youtube.com/@BBCSport' }
+    ],
+    // Modèles d'URLs pour les grandes ligues
+    leaguePatterns: {
+      'Premier League': `https://www.youtube.com/@PremierLeagueOfficial`,
+      'La Liga': `https://www.youtube.com/@LaLiga`,
+      'Serie A': `https://www.youtube.com/@SerieA`,
+      'Bundesliga': `https://www.youtube.com/@BundesligaOfficial`,
+      'Ligue 1': `https://www.youtube.com/@Ligue1Official`
+    }
+  };
+  
+  return jsonResponse(res, 200, videos);
+}
+// GET /api/v1/cache-status — API cache stats (admin)
+if (pathname === '/api/v1/cache-status') {
+  const user = requireAuth(req, res, ['admin']);
+  if (!user) return;
+  const stats = apiCacheStats();
+  const ttl = Math.round(API_CACHE_TTL / 3600000);
+  return jsonResponse(res, 200, { ...stats, ttl_hours: ttl });
+}
+// POST /api/v1/auth/login — Admin (username) ou Membre (email)
+if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
+  const ip = req.socket?.remoteAddress || 'unknown';
+  if (!checkLoginRateLimit(ip)) {
+    return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+  }
+  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+    try {
+      const parsed = JSON.parse(body);
+      // ── Chemin Admin (username) — PBKDF2 salé ─────────────────────────────
+      if (parsed.username) {
+        const user = USERS.get(parsed.username);
+        if (!user || !verifyPasswordSync(parsed.password, user.hash, user.salt)) return jsonResponse(res, 401, { error: 'Identifiants invalides' });
+        const token = jwtSign({ username: parsed.username, role: user.role });
+        return jsonResponse(res, 200, { token, username: parsed.username, role: user.role, force_change: user.forceChange, expires_in: JWT_TTL });
+      }
+      // ── Chemin Membre (email) ────────────────────────────────────────────
+      if (!parsed.email || !parsed.password) return jsonResponse(res, 400, { error: 'email et password requis' });
+      const row = sqldb.prepare('SELECT * FROM users WHERE email = ?').get(parsed.email.trim().toLowerCase());
+      if (!row || !verifyPasswordSync(parsed.password, row.password_hash, row.salt)) {
+        return jsonResponse(res, 401, { error: 'Email ou mot de passe incorrect' });
+      }
+      const token = jwtSign({ userId: row.id, email: row.email, role: row.role }, JWT_TTL_USER);
+      return jsonResponse(res, 200, { token, email: row.email, role: row.role, userId: row.id, expires_in: JWT_TTL_USER });
+    } catch (e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// POST /api/v1/auth/register — Inscription membre
+if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
+  const ip = req.socket?.remoteAddress || 'unknown';
+  if (!checkLoginRateLimit(ip)) {
+    return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+  }
+  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+    try {
+      const { email, password } = JSON.parse(body);
+      if (!email || !password) return jsonResponse(res, 400, { error: 'email et password requis' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return jsonResponse(res, 400, { error: 'Email invalide' });
+      if (password.length < 8) return jsonResponse(res, 400, { error: 'Mot de passe trop court (8 caractères minimum)' });
+      const { hash, salt } = hashPasswordSync(password);
+      try {
+        const result = sqldb.prepare('INSERT INTO users (email, password_hash, salt, role) VALUES (?, ?, ?, ?)').run(email.trim().toLowerCase(), hash, salt, 'freemium');
+        const token = jwtSign({ userId: result.lastInsertRowid, email: email.trim().toLowerCase(), role: 'freemium' }, JWT_TTL_USER);
+        return jsonResponse(res, 201, { token, email: email.trim().toLowerCase(), role: 'freemium', expires_in: JWT_TTL_USER });
+      } catch (e) {
+        if (e.message.includes('UNIQUE')) return jsonResponse(res, 409, { error: 'Cet email est déjà utilisé' });
+        throw e;
+      }
+    } catch (e) {
+      if (e.message.includes('400') || e.message.includes('409')) return;
+      jsonResponse(res, 400, { error: 'Données invalides' });
+    }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// GET /api/v1/auth/me — Profil utilisateur connecté
+if (pathname === '/api/v1/auth/me' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user) return jsonResponse(res, 401, { error: 'Non authentifié', code: 'AUTH_REQUIRED' });
+  // Pour les membres SQLite, retourner les infos fraîches
+  if (user.userId) {
+    const row = sqldb.prepare('SELECT id, email, role, created_at FROM users WHERE id = ?').get(user.userId);
+    if (!row) return jsonResponse(res, 404, { error: 'Utilisateur introuvable' });
+    return jsonResponse(res, 200, { userId: row.id, email: row.email, role: row.role, created_at: row.created_at });
+  }
+  return jsonResponse(res, 200, { username: user.username, role: user.role });
+}
+// POST /api/v1/checkout/matchday → crée une Stripe Checkout Session
+if (pathname === '/api/v1/checkout/matchday' && req.method === 'POST') {
+  if (!STRIPE_SECRET_KEY || !STRIPE_MATCHDAY_PRICE_ID) {
+    return jsonResponse(res, 503, { error: 'Paiement non configuré (clés Stripe manquantes)' });
+  }
+  (async () => {
+    try {
+      const session = await stripeRequest('POST', 'checkout/sessions', {
+        'mode': 'payment',
+        'line_items[0][price]': STRIPE_MATCHDAY_PRICE_ID,
+        'line_items[0][quantity]': '1',
+        'success_url': STRIPE_SUCCESS_URL,
+        'cancel_url': STRIPE_CANCEL_URL,
+        'payment_method_types[0]': 'card',
+      });
+      if (session.error) return jsonResponse(res, 400, { error: session.error.message });
+      jsonResponse(res, 200, { url: session.url, session_id: session.id });
+    } catch (e) {
+      console.error('[Stripe] checkout error:', e.message);
+      jsonResponse(res, 500, { error: 'Erreur Stripe' });
+    }
+  })();
+  return;
+}
+// POST /api/v1/webhook/stripe → Stripe envoie l'événement après paiement
+if (pathname === '/api/v1/webhook/stripe' && req.method === 'POST') {
+  readBodyLimited(req, MAX_BODY_SIZE).then(rawBody => {
+    const sig = req.headers['stripe-signature'] || '';
+    if (STRIPE_WEBHOOK_SECRET && !verifyStripeSignature(rawBody, sig)) {
+      return jsonResponse(res, 400, { error: 'Signature invalide' });
+    }
+    try {
+      const event = JSON.parse(rawBody);
+      if (event.type === 'checkout.session.completed') {
+        const sessionId = event.data?.object?.id;
+        if (sessionId) {
+          const now = Math.floor(Date.now() / 1000);
+          const exp = now + JWT_TTL_MATCHDAY;
+          const token = jwtSign({ role: 'matchday', session_id: sessionId }, JWT_TTL_MATCHDAY);
+          sqldb.prepare(
+            'INSERT OR IGNORE INTO matchday_passes (session_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
+          ).run(sessionId, token, now, exp);
+          console.log(`[Matchday] Pass créé — session ${sessionId} — expire dans 24h`);
+        }
+      }
+      jsonResponse(res, 200, { received: true });
+    } catch (e) {
+      jsonResponse(res, 400, { error: 'JSON invalide' });
+    }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// GET /api/v1/matchday/status?session_id=... → retourne le token 24h si valide
+if (pathname === '/api/v1/matchday/status' && req.method === 'GET') {
+  const sessionId = new URL(req.url, 'http://localhost').searchParams.get('session_id');
+  if (!sessionId) return jsonResponse(res, 400, { error: 'session_id requis' });
+  const row = sqldb.prepare('SELECT token, expires_at FROM matchday_passes WHERE session_id = ?').get(sessionId);
+  const now = Math.floor(Date.now() / 1000);
+  if (!row || row.expires_at < now) return jsonResponse(res, 404, { active: false });
+  jsonResponse(res, 200, { active: true, token: row.token, expires_at: row.expires_at });
+  return;
+}
+
+// GET /api/v1/predictions
+if (pathname === '/api/v1/predictions') {
+  return jsonResponse(res, 200, { predictions: getPredictions(), generated_at: new Date().toISOString() });
+}
+
+// GET /api/v1/top-matches?timeframe=today|week&limit=10  [public — teaser accueil]
+if (pathname === '/api/v1/top-matches') {
+  const timeframe = query.timeframe || 'today';
+  const limit = Math.min(20, parseInt(query.limit || '10'));
+  return jsonResponse(res, 200, {
+    matches: getTopMatchesByTimeframe(timeframe, limit),
+    timeframe,
+    generated_at: new Date().toISOString(),
+  });
+}
+
+// GET /api/v1/league-hub/:oddsKey
+const leagueHubMatch = pathname.match(/^\/api\/v1\/league-hub\/([^/?]+)$/);
+if (leagueHubMatch) {
+  const oddsKey = decodeURIComponent(leagueHubMatch[1]);
+  const hub = getLeagueHub(oddsKey);
+  if (!hub) return jsonResponse(res, 404, { error: 'Ligue inconnue' });
+  return jsonResponse(res, 200, hub);
+}
+
+// GET /api/v1/top-strategy?type=BTTS_YES&limit=10&minConfidence=50
+if (pathname === '/api/v1/top-strategy') {
+  if (!requireAuth(req, res)) return;
+  const type = (query.type || '').toUpperCase();
+  const matches = getTopMatchesByStrategy(type, query.limit, query.minConfidence, query.league || '');
+  if (matches === null) {
+    return jsonResponse(res, 400, {
+      error: 'Stratégie inconnue',
+      available: Object.keys(STRATEGIES),
+    });
+  }
+  return jsonResponse(res, 200, {
+    strategy: type,
+    label: STRATEGIES[type].label,
+    icon: STRATEGIES[type].icon,
+    count: matches.length,
+    matches,
+    generated_at: new Date().toISOString(),
+  });
+}
+
+// GET /api/v1/strategies — liste des stratégies disponibles
+if (pathname === '/api/v1/strategies') {
+  return jsonResponse(res, 200, {
+    strategies: Object.entries(STRATEGIES).map(([key, s]) => ({
+      key, label: s.label, icon: s.icon,
+      tipster: s.tipster || null,
+      tipsterFlag: s.tipsterFlag || null,
+      tipsterDesc: s.tipsterDesc || null,
+    })),
+  });
+}
+
+// GET /api/v1/hot-picks?limit=5 — Top picks toutes stratégies (Les 5 Stars du Jour)
+if (pathname === '/api/v1/hot-picks') {
+  const limit = Math.max(1, Math.min(20, parseInt(query.limit) || 5));
+  const picks = getHotPicks(limit);
+  return jsonResponse(res, 200, {
+    count: picks.length,
+    picks,
+    generated_at: new Date().toISOString(),
+  });
+}
+// GET /api/v1/sure-bets?limit=10 — Sure Bets (confiance ≥ 8/10)
+if (pathname === '/api/v1/sure-bets') {
+  const limit = Math.max(1, Math.min(30, parseInt(query.limit) || 10));
+  const bets = getSureBets(limit);
+  return jsonResponse(res, 200, {
+    count: bets.length,
+    sureBets: bets,
+    hitRateEstimate: '~40% hit rate attendu',
+    generated_at: new Date().toISOString(),
+  });
+}
+
+// GET /api/v1/arbitrage
+if (pathname === '/api/v1/arbitrage') {
+  const arb = computeArbitrage();
+  return jsonResponse(res, 200, {
+    surebets: arb.filter(a => a.is_surebet),
+    near_arb: arb.filter(a => !a.is_surebet).slice(0, 5),
+    total_scanned: db.matches.length,
+    generated_at: new Date().toISOString(),
+  });
+}
+
+// GET /api/v1/trends
+if (pathname === '/api/v1/trends') {
+  if (!requireAuth(req, res)) return;
+  return jsonResponse(res, 200, getTrends());
+}
+
+// GET /api/v1/history
+if (pathname === '/api/v1/history') {
+  if (!requireAuth(req, res)) return;
+  const limit = parseInt(query.limit) || 50;
+  return jsonResponse(res, 200, {
+    matches: history.slice(-limit).reverse(),
+    accuracy: getAccuracyReport(),
+    total: history.length,
+  });
+}
+
+// GET /api/v1/alerts/config — config alertes personnalisées
+if (pathname === '/api/v1/alerts/config' && req.method === 'GET') {
+  const user = requireAuth(req, res);
+  if (!user) return;
+  const prefs = kvGet(`alert_prefs_${user.id}`) || {
+    enabled: false, chatId: '', edgeMin: 8, probaMin: 55,
+    markets: ['BTTS_YES', 'OVER_2_5'], leagues: [],
+  };
+  return jsonResponse(res, 200, prefs);
+}
+// POST /api/v1/alerts/config — sauvegarder config alertes
+if (pathname === '/api/v1/alerts/config' && req.method === 'POST') {
+  const user = requireAuth(req, res);
+  if (!user) return;
+  readBodyLimited(req, 64 * 1024).then(body => {
+    try {
+      const parsed = JSON.parse(body);
+      const prefs = {
+        enabled: !!parsed.enabled,
+        chatId: String(parsed.chatId || '').trim().slice(0, 50),
+        edgeMin: Math.max(0, Math.min(30, parseFloat(parsed.edgeMin) || 0)),
+        probaMin: Math.max(0, Math.min(90, parseInt(parsed.probaMin) || 50)),
+        markets: Array.isArray(parsed.markets) ? parsed.markets.filter(m => typeof m === 'string').slice(0, 10) : [],
+        leagues: Array.isArray(parsed.leagues) ? parsed.leagues.filter(l => typeof l === 'string').slice(0, 20) : [],
+        updatedAt: new Date().toISOString(),
+      };
+      kvSet(`alert_prefs_${user.id}`, prefs);
+      jsonResponse(res, 200, { ok: true, prefs });
+    } catch { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
+  return;
+}
+
+// GET /api/v1/alerts/history — 10 dernières alertes envoyées
+if (pathname === '/api/v1/alerts/history' && req.method === 'GET') {
+  const user = requireAuth(req, res);
+  if (!user) return;
+  const hist = kvGet('alert_history') || [];
+  return jsonResponse(res, 200, { history: hist.slice(-10).reverse() });
+}
+
+// POST /api/v1/telegram/test
+if (pathname === '/api/v1/telegram/test' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  sendValueBetAlerts()
+    .then(() => jsonResponse(res, 200, { message: `Alertes envoyées à ${TELEGRAM_CHAT_IDS.size} chat(s)` }))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  return;
+}
+
+// GET /api/v1/admin/status (protégé JWT admin)
+if (pathname === '/api/v1/admin/status') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  return jsonResponse(res, 200, {
+    uptime: process.uptime(),
+    matchCount: db.matches.length,
+    teamCount: Object.keys(db.teamStats).length,
+    historyCount: history.length,
+    lastOddsUpdate: db.lastOddsUpdate,
+    lastStatsUpdate: db.lastStatsUpdate,
+    oddsQuota: db.oddsQuotaRemaining,
+    status: db.status,
+    isFetchingOdds, isFetchingStats,
+    accuracy: getAccuracyReport(),
+    aiScoutCached: !!aiScoutCache.data,
+    telegramChats: TELEGRAM_CHAT_IDS.size,
+    memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+  });
+}
+
+// POST /api/v1/admin/backtest-bsd (protégé auth — admin ou premium)
+if (pathname === '/api/v1/admin/backtest-bsd' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || (user.role !== 'admin' && user.role !== 'premium')) return jsonResponse(res, 403, { error: 'Accès refusé — Premium requis' });
+  if (!BSD_BASE_URL) return jsonResponse(res, 503, { error: 'BSD non configuré' });
+
+  readBodyLimited(req, MAX_BODY_SIZE).then(async body => {
+    try {
+      const parsed = JSON.parse(body || '{}');
+      const days = Math.min(Math.max(parseInt(parsed.days) || 7, 1), 30);
+      const now = Date.now();
+      const bsdDateCache = new Map();
+      let newVerified = 0, alreadyVerified = 0, noScore = 0;
+      const report = [];
+
+      for (let d = 1; d <= days; d++) {
+        const dateMs = now - d * 86400000;
+        const dateStr = formatDateOnly(new Date(dateMs));
+
+        // Fetch BSD matches for this date (cached)
+        if (!bsdDateCache.has(dateStr)) {
+          const bsdResults = await fetchBSDMatches(dateStr, dateStr);
+          bsdDateCache.set(dateStr, bsdResults);
+        }
+        const bsdDay = bsdDateCache.get(dateStr);
+        const finished = bsdDay.filter(bm =>
+          bm.home_score !== null && bm.away_score !== null &&
+          bm.status !== 'inprogress' && !(bm.status && bm.status.includes('half'))
+        );
+
+        for (const bm of finished) {
+          const hNorm = normName(bm.home_team), aNorm = normName(bm.away_team);
+
+          // Check if already in history
+          const existing = history.find(h => {
+            const hh = normName(h.home_team), ha = normName(h.away_team);
+            return h.commence_time?.startsWith(dateStr) &&
+              (hh.includes(hNorm.split(' ')[0]) || hNorm.includes(hh.split(' ')[0])) &&
+              (ha.includes(aNorm.split(' ')[0]) || aNorm.includes(ha.split(' ')[0]));
+          });
+
+          if (existing) {
+            if (!existing.verified && existing.realScore === null) {
+              // Fill missing real score
+              existing.realScore = { home: Number(bm.home_score), away: Number(bm.away_score), source: 'bsd' };
+              const totalGoals = existing.realScore.home + existing.realScore.away;
+              const wasBTTS = existing.realScore.home > 0 && existing.realScore.away > 0;
+              const wasOver25 = totalGoals > 2.5;
+              if (existing.predicted?.over25 > 55) { accuracy.over25_total++; if (wasOver25) accuracy.over25_correct++; }
+              if (existing.predicted?.btts > 55) { accuracy.btts_total++; if (wasBTTS) accuracy.btts_correct++; }
+              if (existing.predicted?.bestEdgeValue > 5) {
+                accuracy.edge_total++;
+                const winner = existing.realScore.home > existing.realScore.away ? existing.home_team : existing.realScore.away > existing.realScore.home ? existing.away_team : 'Nul';
+                if (winner === existing.predicted.bestEdge) accuracy.edge_correct++;
+              }
+              accuracy.total++;
+              existing.verified = true;
+              existing.retry_at = new Date().toISOString();
+              newVerified++;
+              report.push({ match: `${bm.home_team} ${bm.home_score}-${bm.away_score} ${bm.away_team}`, date: dateStr, action: 'verified' });
+            } else {
+              alreadyVerified++;
+            }
+          } else {
+            noScore++;
+            // Match in BSD but not in our history — no stored prediction, skip
+          }
+        }
+      }
+
+      if (newVerified > 0) saveHistory();
+
+      return jsonResponse(res, 200, {
+        ok: true,
+        days_scanned: days,
+        new_verified: newVerified,
+        already_verified: alreadyVerified,
+        bsd_only: noScore,
+        accuracy: getAccuracyReport(),
+        sample: report.slice(0, 20),
+      });
+    } catch (e) { return jsonResponse(res, 500, { error: e.message }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// POST /api/v1/admin/change-password (protégé JWT admin)
+if (pathname === '/api/v1/admin/change-password' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+    try {
+      const parsed = JSON.parse(body);
+      if (!parsed.current || !parsed.new) return jsonResponse(res, 400, { error: 'current et new requis' });
+      if (!verifyPasswordSync(parsed.current, user.hash, user.salt)) return jsonResponse(res, 401, { error: 'Mot de passe actuel incorrect' });
+      if (parsed.new.length < 8) return jsonResponse(res, 400, { error: 'Minimum 8 caractères' });
+      const { hash, salt } = hashPasswordSync(parsed.new);
+      user.hash = hash;
+      user.salt = salt;
+      user.forceChange = false;
+      jsonResponse(res, 200, { ok: true, message: 'Mot de passe modifié' });
+    } catch (e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+
+// ── AFFILIATION ROUTES ──────────────────────────────────────────────
+// GET /api/v1/affiliates — Liste des bookmakers affiliés actifs (public)
+if (pathname === '/api/v1/affiliates' && req.method === 'GET') {
+  const affiliates = sqldb.prepare('SELECT id, bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, priority FROM affiliates WHERE active = 1 ORDER BY priority DESC').all();
+  return jsonResponse(res, 200, affiliates);
+}
+
+// POST /api/v1/affiliates — Créer un affilié (admin)
+if (pathname === '/api/v1/affiliates' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+    try {
+      const d = JSON.parse(body);
+      if (!d.bookmaker || !d.name || !d.affiliate_link) return jsonResponse(res, 400, { error: 'bookmaker, name, affiliate_link requis' });
+      const result = sqldb.prepare(`INSERT INTO affiliates (bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, active, priority)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        d.bookmaker, d.name, d.affiliate_link, d.deeplink_template || null, d.promo_code || null,
+        d.commission_type || 'revshare', d.commission_rate || 30, d.active !== undefined ? d.active : 1, d.priority || 0
+      );
+      return jsonResponse(res, 201, { id: result.lastInsertRowid, ok: true });
+    } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+
+// PUT /api/v1/affiliates/:id — Modifier un affilié (admin)
+if (pathname.match(/^\/api\/v1\/affiliates\/\d+$/) && req.method === 'PUT') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  const id = parseInt(pathname.split('/').pop());
+  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+    try {
+      const d = JSON.parse(body);
+      const fields = [];
+      const values = [];
+      for (const [k, v] of Object.entries(d)) {
+        if (['bookmaker', 'name', 'affiliate_link', 'deeplink_template', 'promo_code', 'commission_type', 'commission_rate', 'active', 'priority'].includes(k)) {
+          fields.push(`${k} = ?`);
+          values.push(v);
+        }
+      }
+      if (fields.length === 0) return jsonResponse(res, 400, { error: 'Aucun champ valide' });
+      values.push(id);
+      sqldb.prepare(`UPDATE affiliates SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+      return jsonResponse(res, 200, { ok: true });
+    } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+
+// DELETE /api/v1/affiliates/:id — Supprimer un affilié (admin)
+if (pathname.match(/^\/api\/v1\/affiliates\/\d+$/) && req.method === 'DELETE') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  const id = parseInt(pathname.split('/').pop());
+  sqldb.prepare('DELETE FROM affiliates WHERE id = ?').run(id);
+  return jsonResponse(res, 200, { ok: true });
+}
+
+// POST /api/v1/affiliate/click — Track un clic affilié
+if (pathname === '/api/v1/affiliate/click' && req.method === 'POST') {
+  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+    try {
+      const d = JSON.parse(body);
+      if (!d.affiliate_id || !d.match_id) return jsonResponse(res, 400, { error: 'affiliate_id, match_id requis' });
+      const ip = req.socket?.remoteAddress || 'unknown';
+      const ua = req.headers['user-agent'] || '';
+      sqldb.prepare('INSERT INTO affiliate_clicks (affiliate_id, match_id, user_ip, user_agent) VALUES (?, ?, ?, ?)').run(
+        d.affiliate_id, d.match_id, ip, ua
+      );
+      return jsonResponse(res, 200, { ok: true });
+    } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+
+// GET /api/v1/affiliate/stats — Stats d'affiliation (admin)
+if (pathname === '/api/v1/affiliate/stats') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  const totalClicks = sqldb.prepare('SELECT COUNT(*) as c FROM affiliate_clicks').get();
+  const clicksByAffiliate = sqldb.prepare('SELECT a.bookmaker, a.name, COUNT(c.id) as clicks, MAX(c.clicked_at) as last_click FROM affiliates a LEFT JOIN affiliate_clicks c ON a.id = c.affiliate_id GROUP BY a.id ORDER BY clicks DESC').all();
+  const clicksByDay = sqldb.prepare(`SELECT DATE(clicked_at, 'unixepoch') as day, COUNT(*) as clicks FROM affiliate_clicks WHERE clicked_at > strftime('%s','now','-30 days') GROUP BY day ORDER BY day`).all();
+  return jsonResponse(res, 200, {
+    totalClicks: totalClicks.c,
+    byAffiliate: clicksByAffiliate,
+    byDay: clicksByDay,
+  });
+}
+
+// GET /api/v1/affiliate/link/:matchId — Génère le meilleur lien affilié pour un match
+if (pathname.startsWith('/api/v1/affiliate/link/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/affiliate/link/'.length));
+  let match = db.matches.find(m => m.id === matchId);
+  if (!match) match = cachedMatches.find(m => m.id === matchId);
+  if (!match) match = cachedMatches.find(m => m.fixture_id == matchId);
+  if (!match) return jsonResponse(res, 200, { link: FINAL_FALLBACK });
+  const bestAffiliate = sqldb.prepare('SELECT * FROM affiliates WHERE active = 1 ORDER BY priority DESC LIMIT 1').get();
+  if (!bestAffiliate) return jsonResponse(res, 404, { error: 'Aucun affilié actif' });
+  // Remplacer les placeholders dans deeplink_template
+  let link = bestAffiliate.affiliate_link;
+  if (bestAffiliate.deeplink_template) {
+    const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    link = bestAffiliate.deeplink_template
+      .replace('{sport}', match.sport || 'soccer')
+      .replace('{event_id}', match.id || '')
+      .replace('{home}', bestAffiliate.bookmaker === 'coteur' ? slugify(match.home_team) : encodeURIComponent(match.home_team))
+      .replace('{away}', bestAffiliate.bookmaker === 'coteur' ? slugify(match.away_team) : encodeURIComponent(match.away_team));
+  }
+  return jsonResponse(res, 200, {
+    id: bestAffiliate.id,
+    bookmaker: bestAffiliate.bookmaker,
+    name: bestAffiliate.name,
+    link: link,
+    promo_code: bestAffiliate.promo_code,
+  });
+}
+
+// GET /api/v1/accuracy — protégé auth minimum
+if (pathname === '/api/v1/accuracy') {
+  const user = getAuthUser(req);
+  if (!user) return jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
+  return jsonResponse(res, 200, getAccuracyReport());
+}
+
+// GET /api/v1/bankroll — Bankroll tracking (flat 1u)
+if (pathname === '/api/v1/bankroll') {
+  const startBankroll = 100;
+  let bankroll = startBankroll;
+  const bets = [];
+  for (const h of history) {
+    if (!h.verified || !h.realScore) continue;
+    const rs = h.realScore;
+    if (h.predicted?.over25 > 55) {
+      const won = (rs.home + rs.away) > 2.5;
+      bankroll += won ? 1 : -1;
+      bets.push({ date: h.commence_time, market: 'Over 2.5', won, profit: won ? 1 : -1, bankroll, match: h.home_team + ' - ' + h.away_team });
+    }
+    if (h.predicted?.btts > 55) {
+      const won = rs.home > 0 && rs.away > 0;
+      bankroll += won ? 1 : -1;
+      bets.push({ date: h.commence_time, market: 'BTTS', won, profit: won ? 1 : -1, bankroll, match: h.home_team + ' - ' + h.away_team });
+    }
+  }
+  const totalBets = bets.length;
+  const wonBets = bets.filter(b => b.won).length;
+  const peak = bets.reduce((m, b) => Math.max(m, b.bankroll), startBankroll);
+  const trough = bets.reduce((m, b) => Math.min(m, b.bankroll), startBankroll);
+  const maxDD = peak > 0 ? Math.round((1 - trough / peak) * 10000) / 100 : 0;
+  return jsonResponse(res, 200, {
+    startBankroll, finalBankroll: bankroll,
+    totalPL: bankroll - startBankroll, totalBets, wonBets,
+    winRate: totalBets > 0 ? Math.round(wonBets / totalBets * 100) : 0,
+    roi: totalBets > 0 ? Math.round((bankroll - startBankroll) / totalBets * 10000) / 100 : 0,
+    maxDrawdown: maxDD,
+    bets: bets.slice(-80),
+  });
+}
+
+// GET /api/v1/accuracy/trends — Weekly accuracy trend chart
+if (pathname === '/api/v1/accuracy/trends') {
+  const weeks = parseInt(query.weeks) || 12;
+  return jsonResponse(res, 200, getWeeklyAccuracyTrends(weeks));
+}
+
+// GET /api/v1/accuracy/public — Badge hero (proof social, style Datafoot)
+if (pathname === '/api/v1/accuracy/public') {
+  const full = getAccuracyReport();
+  return jsonResponse(res, 200, {
+    rolling30: full.rolling30 || {},
+    leagues: full.leagues || {},
+    global: { total_verified: full.total_verified || 0 },
+  });
+}
+
+// GET /api/v1/top-butteurs/:matchId — Top 3 buteurs on-demand (avec fallback chargement BSD)
+if (pathname.startsWith('/api/v1/top-butteurs/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/top-butteurs/'.length));
+  if (!matchId || matchId === 'undefined' || matchId === 'null') {
+    return jsonResponse(res, 200, { success: false, buteurs: null });
+  }
+  let match = db.matches.find(m => m.id === matchId);
+  if (!match) match = cachedMatches.find(m => m.id === matchId);
+  if (!match) return jsonResponse(res, 200, { success: false, buteurs: null });
+
+  // Deja calcule ?
+  if (match.topButteurs) {
+    return jsonResponse(res, 200, { success: true, buteurs: match.topButteurs, cached: true });
+  }
+
+  // Essayer de calculer depuis les donnees BSD existantes
+  const fromExisting = computeMatchTopButteurs(match);
+  if (fromExisting) {
+    match.topButteurs = fromExisting;
+    return jsonResponse(res, 200, { success: true, buteurs: fromExisting, cached: false });
+  }
+
+  // Tenter un chargement BSD on-demand (non-bloquant: on lance et on renvoie null)
+  const homeKey = normName(match.home_team);
+  const awayKey = normName(match.away_team);
+  const hMeta = db.teamStats[homeKey] || findFuzzy(homeKey);
+  const aMeta = db.teamStats[awayKey] || findFuzzy(awayKey);
+  const hBsdTeamId = hMeta?.bsdTeamId || null;
+  const aBsdTeamId = aMeta?.bsdTeamId || null;
+  const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+  const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+  if ((hBsdTeamId && hBsdSeasonId) || (aBsdTeamId && aBsdSeasonId)) {
+    // Lancement async en arriere-plan
+    (async () => {
+      try {
+        const [homeRatings, awayRatings] = await Promise.all([
+          (hBsdTeamId && hBsdSeasonId) ? fetchBSDPlayerRatings(hBsdTeamId, hBsdSeasonId) : Promise.resolve([]),
+          (aBsdTeamId && aBsdSeasonId) ? fetchBSDPlayerRatings(aBsdTeamId, aBsdSeasonId) : Promise.resolve([]),
+        ]);
+        match._bsd_home_ratings = homeRatings;
+        match._bsd_away_ratings = awayRatings;
+        match.topButteurs = computeMatchTopButteurs(match);
+        saveDB();
+        broadcastSSE('butteurs-ready', { matchId: match.id, buteurs: match.topButteurs });
+      } catch (e) { /* silencieux */ }
+    })();
+  }
+
+  return jsonResponse(res, 200, { success: false, buteurs: null, loading: true });
+}
+// GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
+if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
+  // v9.1: ID validation
+  if (!matchId || matchId === 'undefined' || matchId === 'null') {
+    console.error("\x1b[31m[CRITICAL_FETCH] insights ID invalide: %s\x1b[0m", matchId);
+    return jsonResponse(res, 200, { success: false, message: "ID invalide." });
+  }
+  console.log("[DEBUG INSIGHTS] ID demandé:", matchId);
+  let match = db.matches.find(m => m.id === matchId);
+  if (!match) match = cachedMatches.find(m => m.id === matchId);
+  if (!match) {
+    const numId = isNaN(Number(matchId)) ? null : Number(matchId);
+    if (numId) match = cachedMatches.find(m => m.fixture_id === numId || String(m.fixture_id) === matchId);
+  }
+  // Nettoyer les entrées vides : match sans stats ni poisson → considéré comme non trouvé
+  if (match && !matchHasData(match)) {
+    console.error("\x1b[31m[INSIGHTS] Match %s trouvé mais vide (aucune stat) → traité comme non trouvé\x1b[0m", matchId);
+    match = null;
+  }
+  if (!match) {
+    console.log("[DEBUG INSIGHTS] Match non trouvé — trigger FORCE SYNC");
+    // Force sync en arrière-plan pour la prochaine tentative du frontend
+    const numId = isNaN(Number(matchId)) ? null : Number(matchId);
+    if (numId) forceSyncFixture(String(numId));
+    else if (matchId.startsWith('force_')) forceSyncFixture(matchId.replace('force_', ''));
+    return jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation..." });
+  }
+
+  (async () => {
+    try {
+      const hKey = normName(match.home_team);
+      const aKey = normName(match.away_team);
+      const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+      const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+      const hAdvKey = hMeta === db.teamStats[hKey] ? hKey : Object.keys(db.teamStats).find(k => db.teamStats[k] === hMeta) || hKey;
+      const aAdvKey = aMeta === db.teamStats[aKey] ? aKey : Object.keys(db.teamStats).find(k => db.teamStats[k] === aMeta) || aKey;
+      const hAdv = db.advancedTeamStats[hAdvKey]?.data || null;
+      const aAdv = db.advancedTeamStats[aAdvKey]?.data || null;
+
+      // Priorité : ligue du match (via odds_key → leagues_config), évite mixage BL1/BL2 après promotion/relégation
+      const matchLeagueCfg = leaguesConfig.leagues.find(l => l.odds_key === match.sport);
+      const leagueId = matchLeagueCfg?.id || hMeta?.leagueId || aMeta?.leagueId;
+      const season = currentSeason();
+
+      // Classement de la ligue (depuis db.teamStats, trié par rank)
+      const standings = Object.entries(db.teamStats)
+        .filter(([, s]) => s.leagueId === leagueId && s._real && s.rank)
+        .map(([tKey, s]) => {
+          const adv = db.advancedTeamStats[tKey]?.data;
+          return {
+            team: tKey,
+            rank: s.rank,
+            form: s.form || '',
+            ppg: s.home.ppg,
+            // Global
+            played: adv ? (adv.played_home + adv.played_away) : 0,
+            wins: adv ? (adv.wins_home + adv.wins_away) : 0,
+            draws: adv ? (adv.draws_home + adv.draws_away) : 0,
+            losses: adv ? (adv.losses_home + adv.losses_away) : 0,
+            pts: adv ? ((adv.wins_home + adv.wins_away) * 3 + (adv.draws_home + adv.draws_away)) : 0,
+            avgFor: adv?.goals_scored_total_avg || s.home.avgScored,
+            avgAg: adv?.goals_conceded_total_avg || s.home.avgConceded,
+            // Domicile
+            home_played: adv?.played_home || 0,
+            home_wins: adv?.wins_home || 0,
+            home_draws: adv?.draws_home || 0,
+            home_losses: adv?.losses_home || 0,
+            home_pts: adv ? (adv.wins_home * 3 + adv.draws_home) : 0,
+            home_avgFor: adv?.goals_scored_home_avg || 0,
+            home_avgAg: adv?.goals_conceded_home_avg || 0,
+            // Cartons (pour le tri multi-critères)
+            cards_yellow: adv?.cards_yellow_total || null,
+            cards_red: adv?.cards_red_total || null,
+            // Extérieur
+            away_played: adv?.played_away || 0,
+            away_wins: adv?.wins_away || 0,
+            away_draws: adv?.draws_away || 0,
+            away_losses: adv?.losses_away || 0,
+            away_pts: adv ? (adv.wins_away * 3 + adv.draws_away) : 0,
+            away_avgFor: adv?.goals_scored_away_avg || 0,
+            away_avgAg: adv?.goals_conceded_away_avg || 0,
+          };
+        })
+        .sort((a, b) => a.rank - b.rank);
+
+      // Key Player Index — top 3 par équipe + Position Ratings, en parallèle (cache 24h chacun)
+      const hTeamId = hMeta?.teamId;
+      const aTeamId = aMeta?.teamId;
+      // BSD team IDs (from standings data stored in bsdTeamId field)
+      const hBsdTeamId = hMeta?.bsdTeamId || null;
+      const aBsdTeamId = aMeta?.bsdTeamId || null;
+      const hBsdSeasonId = hMeta?.bsdSeasonId || null;
+      const aBsdSeasonId = aMeta?.bsdSeasonId || null;
+
+      // FIX v11.1: Corner config needed for corner history fetches
+      const cfg = bsdConfig.mapping?.config_to_bsd?.[String(leagueId)];
+
+      // FIX v11.1: Wrap ALL parallel fetches in Promise.allSettled — no single failure crashes the route
+      // v48.0: BSD-only leagues n'ont pas de teamId API-Football → fallback direct BSD
+      const hHasBsd = !!(hBsdTeamId && hBsdSeasonId);
+      const aHasBsd = !!(aBsdTeamId && aBsdSeasonId);
+      const [h2hRes, topScorersRes, homeCornersRes, awayCornersRes,
+        homeKPRes, awayKPRes, homePRRes, awayPRRes,
+        homeSquadRes, awaySquadRes, homeRatingsRes, awayRatingsRes,
+        homeTPRes, awayTPRes, homeFixturesRes, awayFixturesRes] = await Promise.allSettled([
           (hTeamId && aTeamId) ? fetchH2H(hTeamId, aTeamId, 10) : Promise.resolve(null),
           leagueId ? fetchLeagueTopScorers(leagueId, season) : Promise.resolve([]),
           hBsdTeamId && cfg ? fetchBSDTeamCornerHistory(match.home_team, cfg, 10) : Promise.resolve(null),
@@ -8015,423 +8522,506 @@ function handleAPI(req, res, pathname, query) {
           hTeamId ? fetchTeamLastFixtures(hTeamId, 15) : fetchTeamLastFixturesBSDOrSofa(match.home_team, cfg || null, null),
           aTeamId ? fetchTeamLastFixtures(aTeamId, 15) : fetchTeamLastFixturesBSDOrSofa(match.away_team, cfg || null, null),
         ]);
-        const h2h = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
-        const topScorers = topScorersRes.status === 'fulfilled' ? topScorersRes.value : [];
-        const homeCorners = homeCornersRes.status === 'fulfilled' ? homeCornersRes.value : null;
-        const awayCorners = awayCornersRes.status === 'fulfilled' ? awayCornersRes.value : null;
-        const homeKeyPlayers = homeKPRes.status === 'fulfilled' ? homeKPRes.value : [];
-        const awayKeyPlayers = awayKPRes.status === 'fulfilled' ? awayKPRes.value : [];
-        // v50.0: Fallback sur le cache forceSyncFixture si le fetch live est vide
-        const homeKPFinal = homeKeyPlayers.length ? homeKeyPlayers : (match._bsd_home_kp || []);
-        const awayKPFinal = awayKeyPlayers.length ? awayKeyPlayers : (match._bsd_away_kp || []);
-        // v63.0: Fallback ultime — API-Football par nom d'équipe si tout est vide
-        const homeKP = homeKPFinal.length ? homeKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.home_team) : []);
-        const awayKP = awayKPFinal.length ? awayKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.away_team) : []);
-        const homePosRatings = homePRRes.status === 'fulfilled' ? homePRRes.value : null;
-        const awayPosRatings = awayPRRes.status === 'fulfilled' ? awayPRRes.value : null;
-        const homeBSDSquad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
-        const awayBSDSquad = awaySquadRes.status === 'fulfilled' ? awaySquadRes.value : [];
-        const homeBSDRatings = homeRatingsRes.status === 'fulfilled' ? homeRatingsRes.value : [];
-        const awayBSDRatings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
-        const homeTopPerformers = homeTPRes.status === 'fulfilled' ? homeTPRes.value : { attackers: [], defenders: [] };
-        const awayTopPerformers = awayTPRes.status === 'fulfilled' ? awayTPRes.value : { attackers: [], defenders: [] };
-        // Last fixtures for H2H & Derniers matchs tab
-        const allHomeFixtures = homeFixturesRes.status === 'fulfilled' ? (homeFixturesRes.value || []) : [];
-        const allAwayFixtures = awayFixturesRes.status === 'fulfilled' ? (awayFixturesRes.value || []) : [];
-        const normTeam = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
-        const _stopW = new Set(['al','fc','sc','ac','cf','sd','cd','fk','sk','if','bk','afc','bfc']);
-        const sigW = name => { const n = normTeam(name); return n.split(' ').find(w => w.length >= 3 && !_stopW.has(w)) || n.split(' ')[0]; };
-        const hSig = sigW(match.home_team);
-        const aSig = sigW(match.away_team);
-        // API-Football: filter by numeric ID; BSD/Sofa fallback: filter by significant name word
-        const homeLastHome = allHomeFixtures.filter(f =>
-          (f._bsd || f._sofa) ? normTeam(f.home).includes(hSig) : f.home_id === hTeamId
-        ).slice(0, 5);
-        const awayLastAway = allAwayFixtures.filter(f =>
-          (f._bsd || f._sofa) ? normTeam(f.away).includes(aSig) : f.away_id === aTeamId
-        ).slice(0, 5);
+      const h2h = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
+      const topScorers = topScorersRes.status === 'fulfilled' ? topScorersRes.value : [];
+      const homeCorners = homeCornersRes.status === 'fulfilled' ? homeCornersRes.value : null;
+      const awayCorners = awayCornersRes.status === 'fulfilled' ? awayCornersRes.value : null;
+      const homeKeyPlayers = homeKPRes.status === 'fulfilled' ? homeKPRes.value : [];
+      const awayKeyPlayers = awayKPRes.status === 'fulfilled' ? awayKPRes.value : [];
+      // v50.0: Fallback sur le cache forceSyncFixture si le fetch live est vide
+      const homeKPFinal = homeKeyPlayers.length ? homeKeyPlayers : (match._bsd_home_kp || []);
+      const awayKPFinal = awayKeyPlayers.length ? awayKeyPlayers : (match._bsd_away_kp || []);
+      // v63.0: Fallback ultime — API-Football par nom d'équipe si tout est vide
+      const homeKP = homeKPFinal.length ? homeKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.home_team) : []);
+      const awayKP = awayKPFinal.length ? awayKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.away_team) : []);
+      const homePosRatings = homePRRes.status === 'fulfilled' ? homePRRes.value : null;
+      const awayPosRatings = awayPRRes.status === 'fulfilled' ? awayPRRes.value : null;
+      const homeBSDSquad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
+      const awayBSDSquad = awaySquadRes.status === 'fulfilled' ? awaySquadRes.value : [];
+      const homeBSDRatings = homeRatingsRes.status === 'fulfilled' ? homeRatingsRes.value : [];
+      const awayBSDRatings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
+      const homeTopPerformers = homeTPRes.status === 'fulfilled' ? homeTPRes.value : { attackers: [], defenders: [] };
+      const awayTopPerformers = awayTPRes.status === 'fulfilled' ? awayTPRes.value : { attackers: [], defenders: [] };
+      // Last fixtures for H2H & Derniers matchs tab
+      const allHomeFixtures = homeFixturesRes.status === 'fulfilled' ? (homeFixturesRes.value || []) : [];
+      const allAwayFixtures = awayFixturesRes.status === 'fulfilled' ? (awayFixturesRes.value || []) : [];
+      const normTeam = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+      const _stopW = new Set(['al', 'fc', 'sc', 'ac', 'cf', 'sd', 'cd', 'fk', 'sk', 'if', 'bk', 'afc', 'bfc']);
+      const sigW = name => { const n = normTeam(name); return n.split(' ').find(w => w.length >= 3 && !_stopW.has(w)) || n.split(' ')[0]; };
+      const hSig = sigW(match.home_team);
+      const aSig = sigW(match.away_team);
+      // API-Football: filter by numeric ID; BSD/Sofa fallback: filter by significant name word
+      const homeLastHome = allHomeFixtures.filter(f =>
+        (f._bsd || f._sofa) ? normTeam(f.home).includes(hSig) : f.home_id === hTeamId
+      ).slice(0, 5);
+      const awayLastAway = allAwayFixtures.filter(f =>
+        (f._bsd || f._sofa) ? normTeam(f.away).includes(aSig) : f.away_id === aTeamId
+      ).slice(0, 5);
 
-        // Croiser avec les blessures du match pour indiquer le statut
-        const injuredNames = new Set(
-          [...(match.injuries?.home || []), ...(match.injuries?.away || [])]
-            .map(p => p.player?.toLowerCase())
-            .filter(Boolean)
-        );
-        const markInjury = players => players.map(p => ({
-          ...p,
-          injured: injuredNames.has(p.name?.toLowerCase()),
-        }));
+      // Croiser avec les blessures du match pour indiquer le statut
+      const injuredNames = new Set(
+        [...(match.injuries?.home || []), ...(match.injuries?.away || [])]
+          .map(p => p.player?.toLowerCase())
+          .filter(Boolean)
+      );
+      const markInjury = players => players.map(p => ({
+        ...p,
+        injured: injuredNames.has(p.name?.toLowerCase()),
+      }));
 
-        // Top players combiné (tous les joueurs avec KPI, pour affichage onglet Joueurs)
-        const allTopPlayers = [
-          ...markInjury(homeKP).map(p => ({ ...p, team: 'home', teamName: match.home_team })),
-          ...markInjury(awayKP).map(p => ({ ...p, team: 'away', teamName: match.away_team })),
-        ].sort((a, b) => b.kpi - a.kpi).slice(0, 10);
+      // Top players combiné (tous les joueurs avec KPI, pour affichage onglet Joueurs)
+      const allTopPlayers = [
+        ...markInjury(homeKP).map(p => ({ ...p, team: 'home', teamName: match.home_team })),
+        ...markInjury(awayKP).map(p => ({ ...p, team: 'away', teamName: match.away_team })),
+      ].sort((a, b) => b.kpi - a.kpi).slice(0, 10);
 
-        // Unified stats: pré-calcule global/home/away pour les deux équipes (v49.0 Hermes)
-        const buildUnifiedSide = (sideStats, adv, sideStatsAway) => {
-          const hasAdv = adv && adv.played_home != null && adv.played_away != null;
-          const awayFallback = sideStatsAway || sideStats;
-          const s = (obj, key) => (obj && obj[key] != null) ? obj[key] : null;
-          return {
-            global: {
-              ppg: s(sideStats, 'ppg'), wins: s(sideStats, 'wins'),
-              draws: s(sideStats, 'draws'), losses: s(sideStats, 'losses'),
-              avgScored: s(sideStats, 'avgScored'), avgConceded: s(sideStats, 'avgConceded'),
-            },
-            home: hasAdv ? {
-              ppg: (adv.played_home ? parseFloat((((adv.wins_home||0)*3 + (adv.draws_home||0)) / adv.played_home).toFixed(2)) : s(sideStats, 'ppg')),
-              wins: adv.played_home ? Math.round((adv.wins_home||0) / adv.played_home * 100) : s(sideStats, 'wins'),
-              draws: adv.played_home ? Math.round((adv.draws_home||0) / adv.played_home * 100) : s(sideStats, 'draws'),
-              losses: adv.played_home ? Math.round((adv.losses_home||0) / adv.played_home * 100) : s(sideStats, 'losses'),
-              avgScored: adv.goals_scored_home_avg || s(sideStats, 'avgScored'),
-              avgConceded: adv.goals_conceded_home_avg || s(sideStats, 'avgConceded'),
-            } : {
-              ppg: s(sideStats, 'ppg'), wins: s(sideStats, 'wins'),
-              draws: s(sideStats, 'draws'), losses: s(sideStats, 'losses'),
-              avgScored: s(sideStats, 'avgScored'), avgConceded: s(sideStats, 'avgConceded'),
-            },
-            away: hasAdv ? {
-              ppg: (adv.played_away ? parseFloat((((adv.wins_away||0)*3 + (adv.draws_away||0)) / adv.played_away).toFixed(2)) : s(awayFallback, 'ppg')),
-              wins: adv.played_away ? Math.round((adv.wins_away||0) / adv.played_away * 100) : s(awayFallback, 'wins'),
-              draws: adv.played_away ? Math.round((adv.draws_away||0) / adv.played_away * 100) : s(awayFallback, 'draws'),
-              losses: adv.played_away ? Math.round((adv.losses_away||0) / adv.played_away * 100) : s(awayFallback, 'losses'),
-              avgScored: adv.goals_scored_away_avg || s(awayFallback, 'avgScored'),
-              avgConceded: adv.goals_conceded_away_avg || s(awayFallback, 'avgConceded'),
-            } : {
-              ppg: s(awayFallback, 'ppg'), wins: s(awayFallback, 'wins'),
-              draws: s(awayFallback, 'draws'), losses: s(awayFallback, 'losses'),
-              avgScored: s(awayFallback, 'avgScored'), avgConceded: s(awayFallback, 'avgConceded'),
-            },
-          };
+      // Unified stats: pré-calcule global/home/away pour les deux équipes (v49.0 Hermes)
+      const buildUnifiedSide = (sideStats, adv, sideStatsAway) => {
+        const hasAdv = adv && adv.played_home != null && adv.played_away != null;
+        const awayFallback = sideStatsAway || sideStats;
+        const s = (obj, key) => (obj && obj[key] != null) ? obj[key] : null;
+        return {
+          global: {
+            ppg: s(sideStats, 'ppg'), wins: s(sideStats, 'wins'),
+            draws: s(sideStats, 'draws'), losses: s(sideStats, 'losses'),
+            avgScored: s(sideStats, 'avgScored'), avgConceded: s(sideStats, 'avgConceded'),
+          },
+          home: hasAdv ? {
+            ppg: (adv.played_home ? parseFloat((((adv.wins_home || 0) * 3 + (adv.draws_home || 0)) / adv.played_home).toFixed(2)) : s(sideStats, 'ppg')),
+            wins: adv.played_home ? Math.round((adv.wins_home || 0) / adv.played_home * 100) : s(sideStats, 'wins'),
+            draws: adv.played_home ? Math.round((adv.draws_home || 0) / adv.played_home * 100) : s(sideStats, 'draws'),
+            losses: adv.played_home ? Math.round((adv.losses_home || 0) / adv.played_home * 100) : s(sideStats, 'losses'),
+            avgScored: adv.goals_scored_home_avg || s(sideStats, 'avgScored'),
+            avgConceded: adv.goals_conceded_home_avg || s(sideStats, 'avgConceded'),
+          } : {
+            ppg: s(sideStats, 'ppg'), wins: s(sideStats, 'wins'),
+            draws: s(sideStats, 'draws'), losses: s(sideStats, 'losses'),
+            avgScored: s(sideStats, 'avgScored'), avgConceded: s(sideStats, 'avgConceded'),
+          },
+          away: hasAdv ? {
+            ppg: (adv.played_away ? parseFloat((((adv.wins_away || 0) * 3 + (adv.draws_away || 0)) / adv.played_away).toFixed(2)) : s(awayFallback, 'ppg')),
+            wins: adv.played_away ? Math.round((adv.wins_away || 0) / adv.played_away * 100) : s(awayFallback, 'wins'),
+            draws: adv.played_away ? Math.round((adv.draws_away || 0) / adv.played_away * 100) : s(awayFallback, 'draws'),
+            losses: adv.played_away ? Math.round((adv.losses_away || 0) / adv.played_away * 100) : s(awayFallback, 'losses'),
+            avgScored: adv.goals_scored_away_avg || s(awayFallback, 'avgScored'),
+            avgConceded: adv.goals_conceded_away_avg || s(awayFallback, 'avgConceded'),
+          } : {
+            ppg: s(awayFallback, 'ppg'), wins: s(awayFallback, 'wins'),
+            draws: s(awayFallback, 'draws'), losses: s(awayFallback, 'losses'),
+            avgScored: s(awayFallback, 'avgScored'), avgConceded: s(awayFallback, 'avgConceded'),
+          },
         };
-        const unified_stats = {
-          home_team: buildUnifiedSide(hMeta?.home, hAdv, hMeta?.away),
-          away_team: buildUnifiedSide(aMeta?.away, aAdv, aMeta?.home),
-        };
+      };
+      const unified_stats = {
+        home_team: buildUnifiedSide(hMeta?.home, hAdv, hMeta?.away),
+        away_team: buildUnifiedSide(aMeta?.away, aAdv, aMeta?.home),
+      };
 
-        // BSD coverage sous forme d'objet (pas de boolean)
-        const bsdCov = {
-          available: !!(hBsdTeamId || aBsdTeamId),
-          home: !!hBsdTeamId,
-          away: !!aBsdTeamId,
-          pct: ((hBsdTeamId ? 50 : 0) + (aBsdTeamId ? 50 : 0)),
-        };
+      // BSD coverage sous forme d'objet (pas de boolean)
+      const bsdCov = {
+        available: !!(hBsdTeamId || aBsdTeamId),
+        home: !!hBsdTeamId,
+        away: !!aBsdTeamId,
+        pct: ((hBsdTeamId ? 50 : 0) + (aBsdTeamId ? 50 : 0)),
+      };
 
-        jsonResponse(res, 200, {
-          success:        true,
-          match,
-          homeStats:      hMeta,
-          awayStats:      aMeta,
-          homeAdv:        hAdv,
-          awayAdv:        aAdv,
-          standings,
-          topScorers,
-          homeKeyPlayers: markInjury(homeKP),
-          awayKeyPlayers: markInjury(awayKP),
-          homePosRatings: homePosRatings,
-          awayPosRatings: awayPosRatings,
-          homeKey:        hAdvKey,
-          awayKey:        aAdvKey,
-          // BSD enrichissement
-          homeBSDSquad:    homeBSDSquad,
-          awayBSDSquad:    awayBSDSquad,
-          homeBSDRatings:  homeBSDRatings,
-          awayBSDRatings:  awayBSDRatings,
-          bsdCoverage:     bsdCov,
-          homeCorners,
-          awayCorners,
-          h2h,
-          homeLastHome,
-          awayLastAway,
-          // Top Performers
-          homeTopPerformers,
-          awayTopPerformers,
-          // Joueurs combinés avec KPI (v48.0)
-          top_players: allTopPlayers,
-          // Stats unifiées pré-calculées (v49.0 Hermes)
-          unified_stats,
-        });
-      } catch(e) {
-        console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
-        console.error("\x1b[31m[INSIGHTS ERROR] Stack: %s\x1b[0m", e.stack);
-        jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation...", match, errorDetail: e.message });
+      jsonResponse(res, 200, {
+        success: true,
+        match,
+        homeStats: hMeta,
+        awayStats: aMeta,
+        homeAdv: hAdv,
+        awayAdv: aAdv,
+        standings,
+        topScorers,
+        homeKeyPlayers: markInjury(homeKP),
+        awayKeyPlayers: markInjury(awayKP),
+        homePosRatings: homePosRatings,
+        awayPosRatings: awayPosRatings,
+        homeKey: hAdvKey,
+        awayKey: aAdvKey,
+        // BSD enrichissement
+        homeBSDSquad: homeBSDSquad,
+        awayBSDSquad: awayBSDSquad,
+        homeBSDRatings: homeBSDRatings,
+        awayBSDRatings: awayBSDRatings,
+        bsdCoverage: bsdCov,
+        homeCorners,
+        awayCorners,
+        h2h,
+        homeLastHome,
+        awayLastAway,
+        // Top Performers
+        homeTopPerformers,
+        awayTopPerformers,
+        // Joueurs combinés avec KPI (v48.0)
+        top_players: allTopPlayers,
+        // Stats unifiées pré-calculées (v49.0 Hermes)
+        unified_stats,
+      });
+    } catch (e) {
+      console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
+      console.error("\x1b[31m[INSIGHTS ERROR] Stack: %s\x1b[0m", e.stack);
+      jsonResponse(res, 200, { success: false, message: "Données en cours de synchronisation...", match, errorDetail: e.message });
+    }
+  })();
+  return;
+}
+// POST /api/v1/force-refresh/:id — Bypass cache, fetch BSD directement
+if (pathname.startsWith('/api/v1/force-refresh/') && req.method === 'POST') {
+  const matchId = pathname.slice('/api/v1/force-refresh/'.length);
+  console.error("\x1b[31m[FORCE-REFRESH] Requête manuelle BSD pour ID: %s\x1b[0m", matchId);
+
+  // Nettoyer les entrées vides (match sans stats)
+  const before = db.matches.length;
+  db.matches = db.matches.filter(m => {
+    if (m.id === matchId || String(m.fixture_id) === matchId) {
+      const hasStats = m.stats && (m.stats.home || m.stats.away);
+      const hasPoisson = m.poisson && m.poisson.homeWin != null;
+      if (!hasStats && !hasPoisson) {
+        console.error("\x1b[31m[FORCE-REFRESH] Match %s supprimé — aucune stat ni poisson\x1b[0m", matchId);
+        return false;
       }
-    })();
-    return;
-  }
+    }
+    return true;
+  });
+  if (db.matches.length < before) console.log(`  [FORCE-REFRESH] ${before - db.matches.length} entrée(s) vide(s) nettoyée(s)`);
 
-  // POST /api/v1/force-refresh/:id — Bypass cache, fetch BSD directement
-  if (pathname.startsWith('/api/v1/force-refresh/') && req.method === 'POST') {
-    const matchId = pathname.slice('/api/v1/force-refresh/'.length);
-    console.error("\x1b[31m[FORCE-REFRESH] Requête manuelle BSD pour ID: %s\x1b[0m", matchId);
+  // Purger aussi cachedMatches
+  const cachedBefore = cachedMatches.length;
+  cachedMatches = cachedMatches.filter(m => {
+    if (m.id === matchId || String(m.fixture_id) === matchId) {
+      const hasStats = m.stats && (m.stats.home || m.stats.away);
+      const hasPoisson = m.poisson && m.poisson.homeWin != null;
+      if (!hasStats && !hasPoisson) return false;
+    }
+    return true;
+  });
 
-    // Nettoyer les entrées vides (match sans stats)
-    const before = db.matches.length;
-    db.matches = db.matches.filter(m => {
-      if (m.id === matchId || String(m.fixture_id) === matchId) {
-        const hasStats = m.stats && (m.stats.home || m.stats.away);
-        const hasPoisson = m.poisson && m.poisson.homeWin != null;
-        if (!hasStats && !hasPoisson) {
-          console.error("\x1b[31m[FORCE-REFRESH] Match %s supprimé — aucune stat ni poisson\x1b[0m", matchId);
-          return false;
-        }
+  // Extraire le fixture_id numérique
+  const numId = isNaN(Number(matchId)) ? null : Number(matchId);
+  const forceId = numId ? String(numId) : matchId.replace('force_', '');
+
+  // Force sync direct (ignore lock pour forcer)
+  forceSyncLock.delete(forceId);
+  forceSyncFixture(forceId).then(result => {
+    if (result) {
+      console.error("\x1b[31m[FORCE-REFRESH] ✅ Succès — match injecté\x1b[0m");
+    } else {
+      console.error("\x1b[31m[FORCE-REFRESH] ❌ Échec — API n'a pas retourné de données\x1b[0m");
+    }
+  });
+
+  return jsonResponse(res, 200, {
+    success: true,
+    message: "Synchronisation forcée lancée. Recliquez sur le match dans 5-10 secondes.",
+    cleaned: before - db.matches.length,
+  });
+}
+
+// POST /api/v1/force-hydrate/:id — v9.0: Hydratation forcée avec validation d'intégrité
+if (pathname.startsWith('/api/v1/force-hydrate/') && req.method === 'POST') {
+  (async () => {
+    try {
+      const matchId = pathname.slice('/api/v1/force-hydrate/'.length);
+      // v9.1: ID validation
+      if (!matchId || matchId === 'undefined' || matchId === 'null') {
+        console.error("\x1b[31m[CRITICAL_FETCH] force-hydrate ID invalide: %s\x1b[0m", matchId);
+        return jsonResponse(res, 200, { success: false, message: "ID invalide." });
       }
-      return true;
-    });
-    if (db.matches.length < before) console.log(`  [FORCE-REFRESH] ${before - db.matches.length} entrée(s) vide(s) nettoyée(s)`);
+      console.log("\x1b[36m[FORCE-HYDRATE] Requête pour ID: %s\x1b[0m", matchId);
 
-    // Purger aussi cachedMatches
-    const cachedBefore = cachedMatches.length;
-    cachedMatches = cachedMatches.filter(m => {
-      if (m.id === matchId || String(m.fixture_id) === matchId) {
-        const hasStats = m.stats && (m.stats.home || m.stats.away);
-        const hasPoisson = m.poisson && m.poisson.homeWin != null;
-        if (!hasStats && !hasPoisson) return false;
+      let match = db.matches.find(m => m.id === matchId);
+      if (!match) match = cachedMatches.find(m => m.id === matchId);
+      if (!match) {
+        return jsonResponse(res, 200, { success: false, message: "Match non trouvé." });
       }
-      return true;
-    });
 
-    // Extraire le fixture_id numérique
-    const numId = isNaN(Number(matchId)) ? null : Number(matchId);
-    const forceId = numId ? String(numId) : matchId.replace('force_', '');
+      // Reset status pour permettre un nouveau fetch
+      match.bsd_status = null;
+      match.integrity_errors = null;
 
-    // Force sync direct (ignore lock pour forcer)
-    forceSyncLock.delete(forceId);
-    forceSyncFixture(forceId).then(result => {
+      // Relancer forceSyncFixture
+      forceSyncLock.delete(matchId);
+      const result = await forceSyncFixture(matchId);
+
       if (result) {
-        console.error("\x1b[31m[FORCE-REFRESH] ✅ Succès — match injecté\x1b[0m");
+        // Re-valider l'intégrité après sync
+        const integrity = validateMatchIntegrity(match);
+        if (!integrity.valid) {
+          match.bsd_status = 'FAILED_INTEGRITY';
+          match.integrity_errors = integrity.errors;
+          return jsonResponse(res, 200, {
+            success: false,
+            message: `Données incomplètes: ${integrity.errors.join(', ')}`,
+            errors: integrity.errors,
+          });
+        }
+        match.bsd_status = 'FULL';
+        return jsonResponse(res, 200, { success: true, match, message: "Hydratation complète." });
       } else {
-        console.error("\x1b[31m[FORCE-REFRESH] ❌ Échec — API n'a pas retourné de données\x1b[0m");
+        return jsonResponse(res, 200, { success: false, message: "Échec de l'hydratation — API indisponible." });
       }
-    });
+    } catch (e) {
+      console.error("\x1b[31m[FORCE-HYDRATE] Erreur: %s\x1b[0m", e.message);
+      return jsonResponse(res, 200, { success: false, message: `Erreur: ${e.message}` });
+    }
+  })();
+  return;
+}
 
-    return jsonResponse(res, 200, {
-      success: true,
-      message: "Synchronisation forcée lancée. Recliquez sur le match dans 5-10 secondes.",
-      cleaned: before - db.matches.length,
-    });
-  }
+// GET /api/v1/ai-scout  [premium]
+if (pathname === '/api/v1/ai-scout') {
+  if (!requireAuth(req, res, ['premium', 'admin', 'matchday'])) return;
+  generateAIScout().then(data => jsonResponse(res, data.error ? 503 : 200, data))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  return;
+}
 
-  // POST /api/v1/force-hydrate/:id — v9.0: Hydratation forcée avec validation d'intégrité
-  if (pathname.startsWith('/api/v1/force-hydrate/') && req.method === 'POST') {
-    (async () => {
-      try {
-        const matchId = pathname.slice('/api/v1/force-hydrate/'.length);
-        // v9.1: ID validation
-        if (!matchId || matchId === 'undefined' || matchId === 'null') {
-          console.error("\x1b[31m[CRITICAL_FETCH] force-hydrate ID invalide: %s\x1b[0m", matchId);
-          return jsonResponse(res, 200, { success: false, message: "ID invalide." });
-        }
-        console.log("\x1b[36m[FORCE-HYDRATE] Requête pour ID: %s\x1b[0m", matchId);
+// GET /api/v1/rapidapi/parlay/test
+if (pathname === '/api/v1/rapidapi/parlay/test') {
+  fetchParlayOdds()
+    .then(data => jsonResponse(res, data?.status === 200 ? 200 : 502, data || { error: 'Pas de données Parlay' }))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  return;
+}
 
-        let match = db.matches.find(m => m.id === matchId);
-        if (!match) match = cachedMatches.find(m => m.id === matchId);
-        if (!match) {
-          return jsonResponse(res, 200, { success: false, message: "Match non trouvé." });
-        }
+// GET /api/v1/rapidapi/gameforecast/test
+if (pathname === '/api/v1/rapidapi/gameforecast/test') {
+  fetchGameForecast()
+    .then(data => jsonResponse(res, data?.status === 200 ? 200 : 502, data || { error: 'Pas de données GameForecast' }))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  return;
+}
 
-        // Reset status pour permettre un nouveau fetch
-        match.bsd_status = null;
-        match.integrity_errors = null;
+// GET /api/v1/rapidapi/dual-check
+if (pathname === '/api/v1/rapidapi/dual-check') {
+  const topMatches = [...db.matches]
+    .filter(m => m.best_edge?.edge > 0)
+    .sort((a, b) => (b.best_edge?.edge || 0) - (a.best_edge?.edge || 0))
+    .slice(0, 5);
+  getRapidApiDualCheck(topMatches)
+    .then(data => jsonResponse(res, 200, { count: data.length, data }))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  return;
+}
 
-        // Relancer forceSyncFixture
-        forceSyncLock.delete(matchId);
-        const result = await forceSyncFixture(matchId);
+// GET /api/v1/gemini/test — vérification de la clé Gemini
+if (pathname === '/api/v1/gemini/test') {
+  if (!GEMINI_API_KEY) return jsonResponse(res, 503, { ok: false, error: 'GEMINI_API_KEY manquante dans .env' });
+  (async () => {
+    try {
+      const r = await httpsPost(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        { contents: [{ parts: [{ text: 'Réponds uniquement: OK' }] }], generationConfig: { maxOutputTokens: 10 } }
+      );
+      const txt = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (r.status === 200) jsonResponse(res, 200, { ok: true, status: r.status, response: txt.trim() });
+      else jsonResponse(res, r.status, { ok: false, status: r.status, error: r.data?.error?.message || JSON.stringify(r.data) });
+    } catch (e) { jsonResponse(res, 500, { ok: false, error: e.message }); }
+  })();
+  return;
+}
 
-        if (result) {
-          // Re-valider l'intégrité après sync
-          const integrity = validateMatchIntegrity(match);
-          if (!integrity.valid) {
-            match.bsd_status = 'FAILED_INTEGRITY';
-            match.integrity_errors = integrity.errors;
-            return jsonResponse(res, 200, {
-              success: false,
-              message: `Données incomplètes: ${integrity.errors.join(', ')}`,
-              errors: integrity.errors,
-            });
-          }
-          match.bsd_status = 'FULL';
-          return jsonResponse(res, 200, { success: true, match, message: "Hydratation complète." });
-        } else {
-          return jsonResponse(res, 200, { success: false, message: "Échec de l'hydratation — API indisponible." });
-        }
-      } catch(e) {
-        console.error("\x1b[31m[FORCE-HYDRATE] Erreur: %s\x1b[0m", e.message);
-        return jsonResponse(res, 200, { success: false, message: `Erreur: ${e.message}` });
+// GET /api/v1/scout/:matchId — Scouting Report (Gemini, cache 24h)
+const scoutMatch = pathname.match(/^\/api\/v1\/scout\/([^/?]+)$/);
+if (scoutMatch && req.method === 'GET') {
+  if (!GEMINI_API_KEY) { res.writeHead(503); res.end(JSON.stringify({ error: 'Clé Gemini non configurée' })); return; }
+  const matchId = decodeURIComponent(scoutMatch[1]);
+  const match = db.matches.find(m => m.id === matchId);
+  if (!match) { res.writeHead(404); res.end(JSON.stringify({ error: 'Match non trouvé' })); return; }
+  (async () => {
+    try {
+      const result = await getScoutReport(match);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
+      res.end(JSON.stringify(result));
+    } catch (e) {
+      res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+    }
+  })();
+  return;
+}
+
+// GET /api/v1/acca — Acca Generator (combiné mathématique)
+if (pathname === '/api/v1/acca' && req.method === 'GET') {
+  if (!requireAuth(req, res)) return;
+  const type = (query.strategy || 'BTTS_YES').toUpperCase();
+  const size = parseInt(query.size) || 3;
+  const acca = getAccaByStrategy(type, size);
+  if (!acca) return jsonResponse(res, 404, { error: 'Pas assez de matchs pour ce combiné' });
+  return jsonResponse(res, 200, acca);
+}
+
+// GET /api/v1/odds-history/:matchId — Dropping Odds time series
+const oddsHistMatch = pathname.match(/^\/api\/v1\/odds-history\/([^/?]+)$/);
+if (oddsHistMatch && req.method === 'GET') {
+  const matchId = decodeURIComponent(oddsHistMatch[1]);
+  const match = db.matches.find(m => m.id === matchId);
+  if (!match) return jsonResponse(res, 404, { error: 'Match introuvable' });
+  const snapKey = `odds_snap_${matchId}`;
+  const rawHistory = kvGet(snapKey) || [];
+  const history = Array.isArray(rawHistory) ? rawHistory : (rawHistory?.home != null ? [rawHistory] : []);
+  return jsonResponse(res, 200, {
+    id: matchId,
+    home_team: match.home_team,
+    away_team: match.away_team,
+    current: match.odds,
+    delta: match.odds_delta || null,
+    history,
+  });
+}
+
+// GET /api/v1/odds/:id — Cotes par marché spécifique avec cache batch 30 min
+if (pathname.startsWith('/api/v1/odds/')) {
+  (async () => {
+    try {
+      const fixtureId = pathname.slice('/api/v1/odds/'.length);
+
+      // 1. Vérification cache batch
+      const cached = oddsCache[fixtureId];
+      if (cached && (Date.now() - cached.ts) < ODDS_CACHE_TTL) {
+        console.log(`  [ODDS] Cache hit — fixture ${fixtureId} (${Math.round((Date.now() - cached.ts)/1000)}s ago)`);
+        return jsonResponse(res, 200, {
+          source: 'cache',
+          fixture_id: fixtureId,
+          markets: cached.markets,
+          cached_at: new Date(cached.ts).toISOString(),
+        });
       }
-    })();
-    return;
-  }
 
-  // GET /api/v1/ai-scout  [premium]
-  if (pathname === '/api/v1/ai-scout') {
-    if (!requireAuth(req, res, ['premium', 'admin', 'matchday'])) return;
-    generateAIScout().then(data => jsonResponse(res, data.error ? 503 : 200, data))
-      .catch(e => jsonResponse(res, 500, { error: e.message }));
-    return;
-  }
-
-  // GET /api/v1/rapidapi/parlay/test
-  if (pathname === '/api/v1/rapidapi/parlay/test') {
-    fetchParlayOdds()
-      .then(data => jsonResponse(res, data?.status === 200 ? 200 : 502, data || { error: 'Pas de données Parlay' }))
-      .catch(e => jsonResponse(res, 500, { error: e.message }));
-    return;
-  }
-
-  // GET /api/v1/rapidapi/gameforecast/test
-  if (pathname === '/api/v1/rapidapi/gameforecast/test') {
-    fetchGameForecast()
-      .then(data => jsonResponse(res, data?.status === 200 ? 200 : 502, data || { error: 'Pas de données GameForecast' }))
-      .catch(e => jsonResponse(res, 500, { error: e.message }));
-    return;
-  }
-
-  // GET /api/v1/rapidapi/dual-check
-  if (pathname === '/api/v1/rapidapi/dual-check') {
-    const topMatches = [...db.matches]
-      .filter(m => m.best_edge?.edge > 0)
-      .sort((a, b) => (b.best_edge?.edge || 0) - (a.best_edge?.edge || 0))
-      .slice(0, 5);
-    getRapidApiDualCheck(topMatches)
-      .then(data => jsonResponse(res, 200, { count: data.length, data }))
-      .catch(e => jsonResponse(res, 500, { error: e.message }));
-    return;
-  }
-
-  // GET /api/v1/gemini/test — vérification de la clé Gemini
-  if (pathname === '/api/v1/gemini/test') {
-    if (!GEMINI_API_KEY) return jsonResponse(res, 503, { ok: false, error: 'GEMINI_API_KEY manquante dans .env' });
-    (async () => {
-      try {
-        const r = await httpsPost(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-          { contents: [{ parts: [{ text: 'Réponds uniquement: OK' }] }], generationConfig: { maxOutputTokens: 10 } }
-        );
-        const txt = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        if (r.status === 200) jsonResponse(res, 200, { ok: true, status: r.status, response: txt.trim() });
-        else jsonResponse(res, r.status, { ok: false, status: r.status, error: r.data?.error?.message || JSON.stringify(r.data) });
-      } catch(e) { jsonResponse(res, 500, { ok: false, error: e.message }); }
-    })();
-    return;
-  }
-
-  // GET /api/v1/scout/:matchId — Scouting Report (Gemini, cache 24h)
-  const scoutMatch = pathname.match(/^\/api\/v1\/scout\/([^/?]+)$/);
-  if (scoutMatch && req.method === 'GET') {
-    if (!GEMINI_API_KEY) { res.writeHead(503); res.end(JSON.stringify({ error: 'Clé Gemini non configurée' })); return; }
-    const matchId = decodeURIComponent(scoutMatch[1]);
-    const match = db.matches.find(m => m.id === matchId);
-    if (!match) { res.writeHead(404); res.end(JSON.stringify({ error: 'Match non trouvé' })); return; }
-    (async () => {
-      try {
-        const result = await getScoutReport(match);
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
-        res.end(JSON.stringify(result));
-      } catch(e) {
-        res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+      // 2. Fallback : cotes déjà dans db.matches
+      const match = db.matches.find(m => m.id === fixtureId) || cachedMatches.find(m => m.id === fixtureId);
+      if (match && match.bookmakers && match.bookmakers.length) {
+        const markets = extractANJMarkets(match.bookmakers, match.home_team, match.away_team);
+        if (markets['1N2'] && markets['1N2'].home) {
+          oddsCache[fixtureId] = { markets, ts: Date.now() };
+          return jsonResponse(res, 200, { source: 'db', fixture_id: fixtureId, markets });
+        }
       }
-    })();
-    return;
-  }
 
-  // GET /api/v1/acca — Acca Generator (combiné mathématique)
-  if (pathname === '/api/v1/acca' && req.method === 'GET') {
-    if (!requireAuth(req, res)) return;
-    const type = (query.strategy || 'BTTS_YES').toUpperCase();
-    const size = parseInt(query.size) || 3;
-    const acca = getAccaByStrategy(type, size);
-    if (!acca) return jsonResponse(res, 404, { error: 'Pas assez de matchs pour ce combiné' });
-    return jsonResponse(res, 200, acca);
-  }
+      // 3. Appel API-Football si clé dispo
+      if (!API_FOOTBALL_KEY) {
+        return jsonResponse(res, 200, {
+          source: 'fallback',
+          fixture_id: fixtureId,
+          markets: {},
+          message: 'API-Football non configuré — redirection comparateur',
+        });
+      }
 
-  // GET /api/v1/odds-history/:matchId — Dropping Odds delta
-  const oddsHistMatch = pathname.match(/^\/api\/v1\/odds-history\/([^/?]+)$/);
-  if (oddsHistMatch && req.method === 'GET') {
-    const matchId = decodeURIComponent(oddsHistMatch[1]);
-    const match = db.matches.find(m => m.id === matchId);
-    if (!match) return jsonResponse(res, 404, { error: 'Match introuvable' });
-    return jsonResponse(res, 200, {
-      id: matchId,
-      current: match.odds,
-      delta: match.odds_delta || null,
-      home_team: match.home_team,
-      away_team: match.away_team,
-    });
-  }
+      console.log(`  [ODDS] Fetching markets 1,5 from API-Football — fixture ${fixtureId}`);
 
-  // GET /api/v1/ai-stream/:matchId — Power Score streaming SSE (secured + quota)
-  const aiStreamMatch = pathname.match(/^\/api\/v1\/ai-stream\/([^/?]+)$/);
-  if (aiStreamMatch && req.method === 'GET') {
-    // ── Auth required (support both Bearer header and ?token= query) ──
-    let user = getAuthUser(req);
-    if (!user) {
-      const tokenParam = query.token;
-      if (tokenParam) user = jwtVerify(tokenParam);
-    }
-    if (!user) {
-      return jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
-    }
-    if (!['freemium', 'premium', 'admin', 'matchday'].includes(user.role)) {
-      return jsonResponse(res, 403, { error: 'Accès réservé au plan Premium', code: 'PREMIUM_REQUIRED' });
-    }
+      // Fetch marché 1 (Match Winner) et marché 5 (Goals Over/Under) en parallèle
+      const [resM1, resM5] = await Promise.allSettled([
+        fetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=1`, {
+          headers: { 'x-apisports-key': API_FOOTBALL_KEY }
+        }),
+        fetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=5`, {
+          headers: { 'x-apisports-key': API_FOOTBALL_KEY }
+        })
+      ]);
 
-    if (!GEMINI_API_KEY) {
-      return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
-    }
+      const markets = {};
 
-    // ── IP abuse prevention ──
-    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
-      || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
-    if (checkIpAbuse(clientIp)) {
-      return jsonResponse(res, 429, { error: 'Too many requests — abus détecté' });
-    }
+      // Traitement marché 1 — Match Winner (1N2)
+      if (resM1.status === 'fulfilled' && resM1.value.ok) {
+        const d1 = await resM1.value.json();
+        const bkList = d1.response?.[0]?.bookmakers || [];
+        markets['1N2'] = findBestANJOdds(bkList, '1N2', match?.home_team, match?.away_team);
+      }
 
-    // ── Quota check ──
-    const matchId = decodeURIComponent(aiStreamMatch[1]);
-    const role = user.role || 'freemium';
-    const quota = incrementPowerScoreUsage(user.userId, role);
+      // Traitement marché 5 — Goals Over/Under
+      if (resM5.status === 'fulfilled' && resM5.value.ok) {
+        const d5 = await resM5.value.json();
+        const bkList = d5.response?.[0]?.bookmakers || [];
+        markets['OU25'] = findBestANJOdds(bkList, 'OU25');
+      }
 
-    if (!quota.allowed) {
-      console.warn(`  [PowerScore] QUOTA EXCEEDED user ${user.userId} (${role}) — ${quota.used}/${quota.limit}`);
-      return jsonResponse(res, 429, {
-        error: 'Quota Power Score épuisé',
-        code: 'QUOTA_EXCEEDED',
-        used: quota.used,
-        limit: quota.limit,
-        upgrade: 'Passez à Premium pour des analyses illimitées',
+      if (!markets['1N2'] && !markets['OU25']) {
+        return jsonResponse(res, 200, {
+          source: 'empty',
+          fixture_id: fixtureId,
+          markets: {},
+          message: 'Aucune cote ANJ disponible pour ce match',
+        });
+      }
+
+      // Stockage cache structuré
+      oddsCache[fixtureId] = { markets, ts: Date.now() };
+
+      return jsonResponse(res, 200, {
+        source: 'api',
+        fixture_id: fixtureId,
+        markets,
+      });
+    } catch (e) {
+      console.error(`  [ODDS] Error fetching fixture ${pathname.slice('/api/v1/odds/'.length)}:`, e.message);
+      return jsonResponse(res, 200, {
+        source: 'error',
+        markets: {},
+        error: e.message,
       });
     }
+  })();
+  return;
+}
 
-    const match = db.matches.find(m => m.id === matchId);
-    if (!match) {
-      console.warn(`  [PowerScore] Match introuvable: "${matchId}" (user: ${user.userId})`);
-      return jsonResponse(res, 404, { error: 'Match introuvable', code: 'MATCH_NOT_FOUND' });
-    }
+// GET /api/v1/ai-stream/:matchId — Power Score streaming SSE (secured + quota)
+const aiStreamMatch = pathname.match(/^\/api\/v1\/ai-stream\/([^/?]+)$/);
+if (aiStreamMatch && req.method === 'GET') {
+  // ── Auth required (support both Bearer header and ?token= query) ──
+  let user = getAuthUser(req);
+  if (!user) {
+    const tokenParam = query.token;
+    if (tokenParam) user = jwtVerify(tokenParam);
+  }
+  if (!user) {
+    return jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
+  }
+  if (!['freemium', 'premium', 'admin', 'matchday'].includes(user.role)) {
+    return jsonResponse(res, 403, { error: 'Accès réservé au plan Premium', code: 'PREMIUM_REQUIRED' });
+  }
 
-    console.log(`  [PowerScore] ${role} user ${user.userId} — ${quota.used}/${quota.limit} — ${matchId}`);
+  if (!GEMINI_API_KEY) {
+    return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+  }
 
-    // ── Global cache: first user generates, others wait ──
-    const cacheKey = `power_score_${matchId}`;
-    const cached = kvGet(cacheKey);
-    if (cached && cached._ts && (Date.now() - cached._ts) < 24 * 3600 * 1000) {
-      console.log(`  [PowerScore] HIT cache global — ${matchId}`);
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
-        'X-Frame-Options': 'DENY',
-        'X-Content-Type-Options': 'nosniff',
-      });
-      res.write(`event: chunk\ndata: ${JSON.stringify({ text: cached.text })}\n\n`);
-      res.write(`event: done\ndata: ${JSON.stringify({ from_cache: true, press_count: cached.press_count || 0, press_sources: cached.press_sources || [], quota: { used: quota.used, limit: quota.limit } })}\n\n`);
-      res.end();
-      return;
-    }
+  // ── IP abuse prevention ──
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+    || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
+  if (checkIpAbuse(clientIp)) {
+    return jsonResponse(res, 429, { error: 'Too many requests — abus détecté' });
+  }
 
-    // ── SSE setup ──
+  // ── Quota check ──
+  const matchId = decodeURIComponent(aiStreamMatch[1]);
+  const role = user.role || 'freemium';
+  const quota = incrementPowerScoreUsage(user.userId, role);
+
+  if (!quota.allowed) {
+    console.warn(`  [PowerScore] QUOTA EXCEEDED user ${user.userId} (${role}) — ${quota.used}/${quota.limit}`);
+    return jsonResponse(res, 429, {
+      error: 'Quota Power Score épuisé',
+      code: 'QUOTA_EXCEEDED',
+      used: quota.used,
+      limit: quota.limit,
+      upgrade: 'Passez à Premium pour des analyses illimitées',
+    });
+  }
+
+  const match = db.matches.find(m => m.id === matchId);
+  if (!match) {
+    console.warn(`  [PowerScore] Match introuvable: "${matchId}" (user: ${user.userId})`);
+    return jsonResponse(res, 404, { error: 'Match introuvable', code: 'MATCH_NOT_FOUND' });
+  }
+
+  console.log(`  [PowerScore] ${role} user ${user.userId} — ${quota.used}/${quota.limit} — ${matchId}`);
+
+  // ── Global cache: first user generates, others wait ──
+  const cacheKey = `power_score_${matchId}`;
+  const cached = kvGet(cacheKey);
+  if (cached && cached._ts && (Date.now() - cached._ts) < 24 * 3600 * 1000) {
+    console.log(`  [PowerScore] HIT cache global — ${matchId}`);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -8440,197 +9030,331 @@ function handleAPI(req, res, pathname, query) {
       'X-Frame-Options': 'DENY',
       'X-Content-Type-Options': 'nosniff',
     });
+    res.write(`event: chunk\ndata: ${JSON.stringify({ text: cached.text })}\n\n`);
+    res.write(`event: done\ndata: ${JSON.stringify({ from_cache: true, press_count: cached.press_count || 0, press_sources: cached.press_sources || [], quota: { used: quota.used, limit: quota.limit } })}\n\n`);
+    res.end();
+    return;
+  }
 
-    // Power Score V2 — fetch presse en parallèle (fire-and-forget, 5s max)
-    Promise.race([
-      fetchPressContext(match.home_team, match.away_team),
-      new Promise(r => setTimeout(() => r(null), 5000)),
-    ]).catch(() => null).then(pressContext => {
-      try {
-        const prompt = buildPowerScorePrompt(match, pressContext);
-        const payload = JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
-          safetySettings: GEMINI_SAFETY_SETTINGS,
+  // ── SSE setup ──
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+  });
+
+  // Power Score V2 — fetch presse en parallèle (fire-and-forget, 5s max)
+  Promise.race([
+    fetchPressContext(match.home_team, match.away_team),
+    new Promise(r => setTimeout(() => r(null), 5000)),
+  ]).catch(() => null).then(pressContext => {
+    try {
+      const prompt = buildPowerScorePrompt(match, pressContext);
+      const payload = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+        safetySettings: GEMINI_SAFETY_SETTINGS,
+      });
+
+      const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
+      const gemOpts = {
+        hostname: gemUrl.hostname,
+        path: gemUrl.pathname + gemUrl.search,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+      };
+
+      let fullText = '';
+      const gemReq = require('https').request(gemOpts, gemRes => {
+        let buf = '';
+        gemRes.on('data', chunk => {
+          buf += chunk.toString();
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]') continue;
+            try {
+              const json = JSON.parse(raw);
+              const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (text) {
+                fullText += text;
+                try { res.write(`event: chunk\ndata: ${JSON.stringify({ text })}\n\n`); } catch { }
+              }
+            } catch { }
+          }
         });
-
-        const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
-        const gemOpts = {
-          hostname: gemUrl.hostname,
-          path: gemUrl.pathname + gemUrl.search,
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
-        };
-
-        let fullText = '';
-        const gemReq = require('https').request(gemOpts, gemRes => {
-          let buf = '';
-          gemRes.on('data', chunk => {
-            buf += chunk.toString();
-            const lines = buf.split('\n');
-            buf = lines.pop();
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              const raw = line.slice(6).trim();
-              if (raw === '[DONE]') continue;
-              try {
-                const json = JSON.parse(raw);
-                const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                if (text) {
-                  fullText += text;
-                  try { res.write(`event: chunk\ndata: ${JSON.stringify({ text })}\n\n`); } catch {}
-                }
-              } catch {}
-            }
-          });
-          gemRes.on('end', () => {
-            if (!fullText) {
-              console.warn(`  [PowerScore] Gemini empty response — ${matchId} (user: ${user.userId})`);
-              try { res.write(`event: error\ndata: ${JSON.stringify({ message: "L'IA n'a pas pu générer d'analyse pour ce match. Réessayez dans quelques minutes." })}\n\n`); res.end(); } catch {}
-              return;
-            }
-            const pressMeta = pressContext && typeof pressContext === 'object'
-              ? { press_count: pressContext.articleCount, press_sources: pressContext.sourceNames }
-              : {};
-            kvSet(cacheKey, { text: fullText, _ts: Date.now(), ...pressMeta });
-            console.log(`  [PowerScore] MISS → streamé + cache global — ${matchId}`);
-            const donePayload = { ...pressMeta, quota: { used: quota.used, limit: quota.limit } };
-            try { res.write(`event: done\ndata: ${JSON.stringify(donePayload)}\n\n`); res.end(); } catch {}
-          });
-          gemRes.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch {} });
+        gemRes.on('end', () => {
+          if (!fullText) {
+            console.warn(`  [PowerScore] Gemini empty response — ${matchId} (user: ${user.userId})`);
+            try { res.write(`event: error\ndata: ${JSON.stringify({ message: "L'IA n'a pas pu générer d'analyse pour ce match. Réessayez dans quelques minutes." })}\n\n`); res.end(); } catch { }
+            return;
+          }
+          const pressMeta = pressContext && typeof pressContext === 'object'
+            ? { press_count: pressContext.articleCount, press_sources: pressContext.sourceNames }
+            : {};
+          kvSet(cacheKey, { text: fullText, _ts: Date.now(), ...pressMeta });
+          console.log(`  [PowerScore] MISS → streamé + cache global — ${matchId}`);
+          const donePayload = { ...pressMeta, quota: { used: quota.used, limit: quota.limit } };
+          try { res.write(`event: done\ndata: ${JSON.stringify(donePayload)}\n\n`); res.end(); } catch { }
         });
-        gemReq.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch {} });
-        gemReq.write(payload);
-        gemReq.end();
-        req.on('close', () => { try { gemReq.destroy(); } catch {} });
-      } catch(e) {
-        console.error(`  [PowerScore] ERREUR ${matchId}:`, e.message);
-        try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch {}
+        gemRes.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { } });
+      });
+      gemReq.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { } });
+      gemReq.write(payload);
+      gemReq.end();
+      req.on('close', () => { try { gemReq.destroy(); } catch { } });
+    } catch (e) {
+      console.error(`  [PowerScore] ERREUR ${matchId}:`, e.message);
+      try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { }
+    }
+  });
+  return;
+}
+
+// GET /api/v1/ai-quota — Returns remaining quota for current user
+const aiQuotaPath = pathname === '/api/v1/ai-quota' && req.method === 'GET';
+if (aiQuotaPath) {
+  const user = requireAuth(req, res);
+  if (!user) return;
+  const role = user.role || 'freemium';
+  const remaining = getRemainingQuota(user.userId, role);
+  const limit = POWER_SCORE_LIMITS[role]?.daily ?? 1;
+  return jsonResponse(res, 200, {
+    role,
+    label: POWER_SCORE_LIMITS[role]?.label || 'Unknown',
+    remaining,
+    limit,
+  });
+}
+
+// POST /api/v1/power-score/:matchId/feedback — 👍/👎 feedback
+const psFeedbackMatch = pathname.match(/^\/api\/v1\/power-score\/([^/?]+)\/feedback$/);
+if (psFeedbackMatch && req.method === 'POST') {
+  readBodyLimited(req, 1024).then(body => {
+    try {
+      const { rating } = JSON.parse(body);
+      if (![1, -1].includes(rating)) return jsonResponse(res, 400, { error: 'rating must be 1 or -1' });
+      const matchId = decodeURIComponent(psFeedbackMatch[1]);
+      sqldb.prepare('INSERT INTO ai_feedback (matchId, rating, ts) VALUES (?, ?, ?)').run(matchId, rating, Date.now());
+      jsonResponse(res, 200, { ok: true });
+    } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'body too large' }));
+  return;
+}
+
+// GET /api/v1/quick-scout/:id  — Pré-analyse instantanée sans IA (<100ms)
+if (pathname.startsWith('/api/v1/quick-scout/') && req.method === 'GET') {
+  const scoutId = decodeURIComponent(pathname.split('/api/v1/quick-scout/')[1]);
+  const scoutMatch = db.matches.find(m => m.id === scoutId);
+  if (!scoutMatch) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+  const sp = scoutMatch.poisson || {};
+  const sbe = scoutMatch.best_edge || {};
+  const ss = scoutMatch.stats || {};
+  const sxg = scoutMatch.expectedGoals || {};
+  const sodds = scoutMatch.odds || {};
+  const signals = [
+    { label: 'Over 2.5', value: sp.over25 },
+    { label: 'BTTS', value: sp.btts },
+    { label: 'Over 1.5', value: sp.over15 },
+    { label: `${scoutMatch.home_team} victoire`, value: sp.homeWin },
+    { label: `${scoutMatch.away_team} victoire`, value: sp.awayWin },
+    { label: 'Under 1.5', value: sp.under15 },
+  ].filter(m => m.value != null).sort((a, b) => Math.abs(b.value - 50) - Math.abs(a.value - 50));
+  const topSignal = signals[0] || null;
+  const scoutConf = (ss.isReal ? 40 : 0) + (sodds.home ? 30 : 0) + (scoutMatch.home_form ? 20 : 0) + (sxg.home ? 10 : 0);
+  return jsonResponse(res, 200, {
+    edge: sbe.label ? `${sbe.label} @ ${sbe.odds} (edge ${sbe.edge > 0 ? '+' : ''}${sbe.edge}%)` : null,
+    topSignal: topSignal ? `${topSignal.label} : ${topSignal.value}%` : null,
+    confidence: scoutConf,
+    dataQuality: ss.isReal ? 'RÉELLES' : 'ESTIMÉES',
+  });
+}
+
+// GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
+if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
+  if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
+  const streamUrl = new URL(req.url, 'http://localhost');
+  const forceRefresh = streamUrl.searchParams.get('force') === '1';
+  const matchId = decodeURIComponent(pathname.split('/api/v1/deep-analysis-stream/')[1]);
+  const match = db.matches.find(m => m.id === matchId);
+  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+
+  // SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  const cacheKey = `deep_pro_${matchId}`;
+  const cached = !forceRefresh && getCachedAIAnalysis(cacheKey);
+  if (cached?.text) {
+    console.log(`  [DeepStream] HIT cache — ${match.home_team} vs ${match.away_team}`);
+    const cacheStats = match.stats || {};
+    const cacheMeta = (cacheStats.isReal ? 40 : 0) + (match.odds?.home ? 30 : 0) + (match.home_form ? 20 : 0) + ((match.expectedGoals?.home) ? 10 : 0);
+    try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence: cacheMeta, dataQuality: cacheStats.isReal ? 'RÉELLES' : 'ESTIMÉES' })}\n\n`); } catch { }
+    // Simulate streaming from cache in small chunks
+    const words = cached.text.split(' ');
+    let idx = 0;
+    const iv = setInterval(() => {
+      const chunk = words.slice(idx, idx + 6).join(' ') + (idx + 6 < words.length ? ' ' : '');
+      idx += 6;
+      try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: chunk })}\n\n`); } catch { }
+      if (idx >= words.length) {
+        clearInterval(iv);
+        try { res.write(`event: done\ndata: ${JSON.stringify({ _from_cache: true, provider: cached.provider || 'cache' })}\n\n`); res.end(); } catch { }
+      }
+    }, 30);
+    req.on('close', () => clearInterval(iv));
+    return;
+  }
+
+  // Build prompt (same as non-streaming route)
+  const p = match.poisson || {};
+  const s = match.stats || {};
+  const xg = match.expectedGoals || {};
+  const odds = match.odds || {};
+  const bk = match.bookmakers || {};
+  const be = match.best_edge || {};
+  const hs = s.home || {};
+  const as_ = s.away || {};
+  const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
+
+  const rankCtx = (rank, team) => rank ? `${rank}e au classement` : 'rang inconnu';
+  const dataBlock = `\n[DONNÉES DU MATCH FOURNIES PAR PARISCORE]\nMatch : ${match.home_team} vs ${match.away_team}\nCompétition : ${match.league || match.sport}\nDate/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : '—'}\n\n[QUALITÉ DES DONNÉES]\n${s.isReal ? 'DONNÉES RÉELLES — statistiques officielles standings API. Confiance élevée.' : 'DONNÉES ESTIMÉES — modèle simulation, pas de standings disponibles. Nuance ta confiance dans l\'analyse.'}\n\n[CLASSEMENT & ENJEUX]\n${match.home_team} : ${rankCtx(match.home_rank)} en ${match.league || match.sport}\n${match.away_team} : ${rankCtx(match.away_rank)} en ${match.league || match.sport}\n\n[COTES BOOKMAKERS]\n${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}\nMeilleur bookmaker 1 : ${bk.home ?? '—'} | N : ${bk.draw ?? '—'} | 2 : ${bk.away ?? '—'}\nMeilleure valeur calculée (Edge) : ${be.label ?? '—'} cote ${be.odds ?? '—'} chez ${be.bk ?? '—'} (edge ${be.edge ?? '—'}%)\n\n[STATISTIQUES ${match.home_team} — CONTEXTE DOMICILE]\nPPG dom : ${hs.ppg ?? '—'} | Victoires : ${hs.wins ?? '—'}% | Nuls : ${hs.draws ?? '—'}% | Défaites : ${hs.losses ?? '—'}%\nButs marqués dom : ${hs.avgScored ?? '—'}/match | Buts encaissés dom : ${hs.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.home_form ?? '—'}\nλ xG Poisson domicile : ${xg.home ?? '—'}\n\n[STATISTIQUES ${match.away_team} — CONTEXTE EXTÉRIEUR]\nPPG ext : ${as_.ppg ?? '—'} | Victoires : ${as_.wins ?? '—'}% | Nuls : ${as_.draws ?? '—'}% | Défaites : ${as_.losses ?? '—'}%\nButs marqués ext : ${as_.avgScored ?? '—'}/match | Buts encaissés ext : ${as_.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.away_form ?? '—'}\nλ xG Poisson extérieur : ${xg.away ?? '—'}\n\n[PROBABILITÉS POISSON PARISCORE]\n1X2 : ${match.home_team} ${p.homeWin ?? '—'}% / Nul ${p.draw ?? '—'}% / ${match.away_team} ${p.awayWin ?? '—'}%\nOver 1.5 : ${p.over15 ?? '—'}% | Over 2.5 : ${p.over25 ?? '—'}% | Over 3.5 : ${p.over35 ?? '—'}%\nBTTS (les deux marquent) : ${p.btts ?? '—'}% | Under 1.5 : ${p.under15 ?? '—'}%\nScores les plus probables : ${topScores || '—'}\n`;
+
+  const systemPrompt = `Tu es Maxime, éditorialiste football senior chez PariScore. Ancien rédacteur L'Équipe reconverti analyste parieur. Tu as vu des milliers de matchs, tu as gagné et perdu des mises, et tu SAIS reconnaître un bon pari d'un piège.
+
+CONTRAINTE ABSOLUE — TYPOGRAPHIE :
+Aucun emoji dans ta réponse. Zéro. Pas un seul caractère emoji, icône ou symbole graphique Unicode décoratif. Uniquement du texte pur. Seul le gras **mot** est autorisé pour les accents importants. Toute violation de cette règle invalide la réponse.
+
+Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clairement — de jouer un pari. Le lecteur doit sentir, après t'avoir lu, s'il faut sortir son portefeuille ou regarder ce match depuis son canapé.
+
+[TON OBLIGATOIRE]
+- Journaliste sportif passionné, pas scientifique. Les chiffres SERVENT l'histoire, ils ne SONT PAS l'histoire.
+- Prises de position tranchées. Jamais "peut-être", "il est possible que". Toujours "je joue", "je passe", "ce match m'excite", "ce match me méfie".
+- Vocabulaire vivant : "machine à goals", "défense de plomb", "piège à cons", "valeur planquée", "bombe à retardement", "un nul logique comme la pluie en novembre".
+- Chaque pari a une HISTOIRE. "Je joue l'Over 2.5 parce que ces deux équipes ont la finesse défensive d'un tramway", pas "Over 2.5 : 68%".
+- Interdiction de lister des probabilités froides en succession. Une stat peut ILLUSTRER un argument, jamais le remplacer.
+
+[FORMAT DE SORTIE — CHRONIQUE EN 5 ACTES]
+
+1. EN-TETE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])
+
+2. POWER SCORE PARISCORE :
+   - [Équipe A] (Dom) : X/100
+   - [Équipe B] (Ext) : Y/100
+   (2-3 phrases max pour expliquer l'écart ou la parité — en prose, pas en liste)
+
+3. L'HISTOIRE DE CE MATCH :
+   Rédige 3 à 5 paragraphes narratifs. Mêle contexte (enjeux du match, position au classement, forme récente), psychologie (pression, confiance, fatigue), tactique (styles de jeu, duels clés, absences notables), atmosphère (stade, derby, match piège). Parle des équipes comme d'acteurs avec des personnalités. Cite la forme en disant ce que ça SIGNIFIE. Utilise le gras **comme ceci** pour les mots ou chiffres les plus importants. Aucun emoji.
+
+4. MES 5 PARIS :
+   Pour chaque pari, écris 2-3 phrases de conviction personnelle. Sur la ligne suivante : "Mise Kelly : X.X%" (f = max(0, (prob × cote - 1) / (cote - 1)), prob en décimal, 1 décimale. Si f <= 0 : "Mise Kelly : pas de valeur mathématique").
+   Structure — labels en texte pur, aucun emoji :
+   - **La valeur sure** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le builder de bankroll** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le value bet cache** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le coup de tactique** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le coup de poker** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+
+5. MON VERDICT :
+   Un paragraphe final tranché. "Ce match, je le joue / je le snobe." Une phrase mémorable — le genre qu'on envoie à un ami avant le match.
+
+[REGLE D'OR]
+Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il lit L'Equipe un matin de match. Aucun emoji. Aucun.
+
+${dataBlock}`;
+
+  // I1 — Confidence Score + I4 — Market divergences SSE meta event
+  const confidence = (s.isReal ? 40 : 0) + (odds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (xg.home ? 10 : 0);
+  // I4: compute Poisson vs implied prob divergences (threshold 12%)
+  const divergences = [];
+  const totalOdds = (odds.home && odds.draw && odds.away) ? (1 / odds.home + 1 / odds.draw + 1 / odds.away) : 0;
+  if (totalOdds > 0) {
+    const impliedHome = (1 / odds.home) / totalOdds * 100;
+    const impliedDraw = (1 / odds.draw) / totalOdds * 100;
+    const impliedAway = (1 / odds.away) / totalOdds * 100;
+    const checks = [
+      { label: `${match.home_team} victoire`, poisson: p.homeWin, implied: impliedHome },
+      { label: 'Nul', poisson: p.draw, implied: impliedDraw },
+      { label: `${match.away_team} victoire`, poisson: p.awayWin, implied: impliedAway },
+      { label: 'Over 2.5', poisson: p.over25, implied: null },
+      { label: 'BTTS', poisson: p.btts, implied: null },
+    ];
+    checks.forEach(c => {
+      if (c.poisson != null && c.implied != null) {
+        const gap = Math.round(c.poisson - c.implied);
+        if (Math.abs(gap) >= 12) divergences.push({ label: c.label, poisson: Math.round(c.poisson), implied: Math.round(c.implied), gap });
       }
     });
-    return;
+  }
+  // Mode Pro data: λ Poisson bruts + EV% par issue
+  const ev1x2 = totalOdds > 0 ? {
+    home: p.homeWin != null ? +((p.homeWin / 100 * odds.home - 1) * 100).toFixed(1) : null,
+    draw: p.draw != null ? +((p.draw / 100 * odds.draw - 1) * 100).toFixed(1) : null,
+    away: p.awayWin != null ? +((p.awayWin / 100 * odds.away - 1) * 100).toFixed(1) : null,
+  } : null;
+  try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence, dataQuality: s.isReal ? 'RÉELLES' : 'ESTIMÉES', divergences, lambda: xg, ev1x2, poisson: { homeWin: p.homeWin, draw: p.draw, awayWin: p.awayWin, over25: p.over25, btts: p.btts }, odds })}\n\n`); } catch { }
+
+  console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
+  streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
+    saveAIAnalysisToCache(cacheKey, { text: fullText, provider: providerName });
+    console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
+    try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName })}\n\n`); res.end(); } catch { }
+  });
+  req.on('close', () => { });
+  return;
+}
+
+// GET /api/v1/deep-analysis/:id  — Analyse Pro Pariscore (Power Score + Top 5 paris + Telegram)
+if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
+  if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+  const matchId = pathname.split('/api/v1/deep-analysis/')[1];
+  const match = db.matches.find(m => m.id === matchId);
+  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+
+  const cacheKey = `deep_pro_${matchId}`;
+  const cached = getCachedAIAnalysis(cacheKey);
+  if (cached?.text) {
+    console.log(`  [DeepPro] HIT cache — ${match.home_team} vs ${match.away_team}`);
+    return jsonResponse(res, 200, { text: cached.text, _from_cache: true });
   }
 
-  // GET /api/v1/ai-quota — Returns remaining quota for current user
-  const aiQuotaPath = pathname === '/api/v1/ai-quota' && req.method === 'GET';
-  if (aiQuotaPath) {
-    const user = requireAuth(req, res);
-    if (!user) return;
-    const role = user.role || 'freemium';
-    const remaining = getRemainingQuota(user.userId, role);
-    const limit = POWER_SCORE_LIMITS[role]?.daily ?? 1;
-    return jsonResponse(res, 200, {
-      role,
-      label: POWER_SCORE_LIMITS[role]?.label || 'Unknown',
-      remaining,
-      limit,
-    });
-  }
+  const p = match.poisson || {};
+  const s = match.stats || {};
+  const xg = match.expectedGoals || {};
+  const odds = match.odds || {};
+  const bk = match.bookmakers || {};
+  const be = match.best_edge || {};
+  const hs = s.home || {};
+  const as_ = s.away || {};
+  const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
 
-  // POST /api/v1/power-score/:matchId/feedback — 👍/👎 feedback
-  const psFeedbackMatch = pathname.match(/^\/api\/v1\/power-score\/([^/?]+)\/feedback$/);
-  if (psFeedbackMatch && req.method === 'POST') {
-    readBodyLimited(req, 1024).then(body => {
-      try {
-        const { rating } = JSON.parse(body);
-        if (![1, -1].includes(rating)) return jsonResponse(res, 400, { error: 'rating must be 1 or -1' });
-        const matchId = decodeURIComponent(psFeedbackMatch[1]);
-        sqldb.prepare('INSERT INTO ai_feedback (matchId, rating, ts) VALUES (?, ?, ?)').run(matchId, rating, Date.now());
-        jsonResponse(res, 200, { ok: true });
-      } catch(e) { jsonResponse(res, 400, { error: e.message }); }
-    }).catch(() => jsonResponse(res, 413, { error: 'body too large' }));
-    return;
-  }
-
-  // GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
-  if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
-    if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
-    const matchId = decodeURIComponent(pathname.split('/api/v1/deep-analysis-stream/')[1]);
-    const match = db.matches.find(m => m.id === matchId);
-    if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
-
-    // SSE headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-    });
-
-    const cacheKey = `deep_pro_${matchId}`;
-    const cached = getCachedAIAnalysis(cacheKey);
-    if (cached?.text) {
-      console.log(`  [DeepStream] HIT cache — ${match.home_team} vs ${match.away_team}`);
-      // Simulate streaming from cache in small chunks
-      const words = cached.text.split(' ');
-      let idx = 0;
-      const iv = setInterval(() => {
-        const chunk = words.slice(idx, idx + 6).join(' ') + (idx + 6 < words.length ? ' ' : '');
-        idx += 6;
-        try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: chunk })}\n\n`); } catch {}
-        if (idx >= words.length) {
-          clearInterval(iv);
-          try { res.write(`event: done\ndata: ${JSON.stringify({ _from_cache: true })}\n\n`); res.end(); } catch {}
-        }
-      }, 30);
-      req.on('close', () => clearInterval(iv));
-      return;
-    }
-
-    // Build prompt (same as non-streaming route)
-    const p = match.poisson || {};
-    const s = match.stats || {};
-    const xg = match.expectedGoals || {};
-    const odds = match.odds || {};
-    const bk = match.bookmakers || {};
-    const be = match.best_edge || {};
-    const hs = s.home || {};
-    const as_ = s.away || {};
-    const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
-
-    const dataBlock = `\n[DONNÉES DU MATCH FOURNIES PAR PARISCORE]\nMatch : ${match.home_team} vs ${match.away_team}\nCompétition : ${match.league || match.sport}\nDate/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', {timeZone:'Europe/Paris'}) : '—'}\n\n[COTES BOOKMAKERS]\n${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}\nMeilleur bookmaker 1 : ${bk.home ?? '—'} | N : ${bk.draw ?? '—'} | 2 : ${bk.away ?? '—'}\nMeilleure valeur calculée (Edge) : ${be.label ?? '—'} cote ${be.odds ?? '—'} chez ${be.bk ?? '—'} (edge ${be.edge ?? '—'}%)\n\n[STATISTIQUES ${match.home_team} — CONTEXTE DOMICILE]\nPPG dom : ${hs.ppg ?? '—'} | Victoires : ${hs.wins ?? '—'}% | Nuls : ${hs.draws ?? '—'}% | Défaites : ${hs.losses ?? '—'}%\nButs marqués dom : ${hs.avgScored ?? '—'}/match | Buts encaissés dom : ${hs.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.home_form ?? '—'}\nλ xG Poisson domicile : ${xg.home ?? '—'}\n\n[STATISTIQUES ${match.away_team} — CONTEXTE EXTÉRIEUR]\nPPG ext : ${as_.ppg ?? '—'} | Victoires : ${as_.wins ?? '—'}% | Nuls : ${as_.draws ?? '—'}% | Défaites : ${as_.losses ?? '—'}%\nButs marqués ext : ${as_.avgScored ?? '—'}/match | Buts encaissés ext : ${as_.avgConceded ?? '—'}/match\nForme récente (5 derniers) : ${match.away_form ?? '—'}\nλ xG Poisson extérieur : ${xg.away ?? '—'}\n\n[PROBABILITÉS POISSON PARISCORE]\n1X2 : ${match.home_team} ${p.homeWin ?? '—'}% / Nul ${p.draw ?? '—'}% / ${match.away_team} ${p.awayWin ?? '—'}%\nOver 1.5 : ${p.over15 ?? '—'}% | Over 2.5 : ${p.over25 ?? '—'}% | Over 3.5 : ${p.over35 ?? '—'}%\nBTTS (les deux marquent) : ${p.btts ?? '—'}% | Under 1.5 : ${p.under15 ?? '—'}%\nScores les plus probables : ${topScores || '—'}\n`;
-
-    const systemPrompt = `Agis comme l'expert en data science et l'analyste de presse sportive principal de la plateforme Pariscore. Ton rôle est de fournir une analyse prédictive ultra-précise et agréable à lire pour un match de football donné, destinée à une communauté de parieurs exigeants.\n\n[MÉTHODOLOGIE DE CALCUL DU POWER SCORE (SUR 100)]\nTu dois calculer un Power Score pour chaque équipe en isolant strictement le contexte (Performance à Domicile pour l'équipe A / Performance à l'Extérieur pour l'équipe B) selon ces 5 piliers :\n1. Métriques Avancées (30%) : Différentiel xG/xGA et volume de corners.\n2. Tactique & Effectifs (20%) : Systèmes, absences et mismatches.\n3. Dynamique (20%) : Forme des 5 derniers matchs et difficulté du calendrier.\n4. Presse & Consensus Web (15%) : Synthèse des sites majeurs (L'Équipe, Marca, Kicker, Sofascore, BetMines, OddAlerts).\n5. Psychologie & H2H (15%) : Historique et enjeux (titre, maintien).\n\n[FORMAT DE SORTIE EXIGÉ — TEXTE MARKDOWN RICHE, PAS DE JSON]\nRédige ton analyse de manière fluide, professionnelle et structurée en utilisant des émojis.\n\n1. EN-TÊTE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])\n2. 📊 POWER SCORE PARISCORE :\n   - [Équipe A] (Dom) : X/100\n   - [Équipe B] (Ext) : Y/100\n3. 🔬 ANALYSE DÉTAILLÉE :\n   - Le Duel Tactique : [Explication claire des systèmes et des joueurs clés/absents].\n   - La Synthèse Web & Médias : [Que dit la presse ? Que disent les algos de prédiction ?].\n   - L'Alerte Corners : [Explication mathématique et tactique sur la physionomie des corners attendue].\n4. 🔢 PROBABILITÉS MATHÉMATIQUES :\n   - 1N2 : 1 (X%) / N (X%) / 2 (X%)\n   - Buts : +1.5 buts (X%) / BTTS (X%)\n   - Corners : +7.5 (X%) / +8.5 (X%)\n5. 🏆 LE TOP 5 DES PARIS :\n   - 🛡️ Le Safe : [Pari] (Proba : X%) - [Justification courte]\n   - 📈 Le Bankroll Builder : [Pari] (Proba : X%) - [Justification courte]\n   - 💎 Le Value Bet : [Pari] - [Justification détaillée sur l'erreur de cote du bookmaker]\n   - 🚩 Le Coup Tactique (Corners/Buteur) : [Pari] - [Justification]\n   - ⚡ Le Coup Risqué : [Pari grosse cote] - [Justification]\n6. 📲 SCRIPT TELEGRAM (dans un bloc de code markdown \`\`\` pour copier facilement) :\nRédige un message Telegram dynamique, enthousiaste, utilisant le symbole '¤' comme puces, reprenant le résumé de l'analyse, la stat "cadeau" (souvent les corners) et proposant le meilleur combo. Appel à l'action final (ex: "Mettez un 🔥 si vous validez !").\n\n[DIRECTIVES CRITIQUES]\n- Base-toi sur les données fournies ci-dessous par Pariscore.\n- Utilise un ton d'expert, sûr de lui, qui explique la logique mathématique derrière chaque choix.\n- Le Power Score doit refléter les stats réelles fournies (xG, forme, PPG).\n\n${dataBlock}`;
-
-    console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
-    streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
-      saveAIAnalysisToCache(cacheKey, { text: fullText });
-      console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
-      try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName })}\n\n`); res.end(); } catch {}
-    });
-    req.on('close', () => {});
-    return;
-  }
-
-  // GET /api/v1/deep-analysis/:id  — Analyse Pro Pariscore (Power Score + Top 5 paris + Telegram)
-  if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
-    if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
-    const matchId = pathname.split('/api/v1/deep-analysis/')[1];
-    const match = db.matches.find(m => m.id === matchId);
-    if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
-
-    const cacheKey = `deep_pro_${matchId}`;
-    const cached = getCachedAIAnalysis(cacheKey);
-    if (cached?.text) {
-      console.log(`  [DeepPro] HIT cache — ${match.home_team} vs ${match.away_team}`);
-      return jsonResponse(res, 200, { text: cached.text, _from_cache: true });
-    }
-
-    const p = match.poisson || {};
-    const s = match.stats || {};
-    const xg = match.expectedGoals || {};
-    const odds = match.odds || {};
-    const bk = match.bookmakers || {};
-    const be = match.best_edge || {};
-    const hs = s.home || {};
-    const as_ = s.away || {};
-    const topScores = (p.topScores || []).slice(0, 5).map(x => `${x.score}(${x.prob}%)`).join(', ');
-
-    const dataBlock = `
+  const nsRankCtx = (rank) => rank ? `${rank}e au classement` : 'rang inconnu';
+  const dataBlock = `
 [DONNÉES DU MATCH FOURNIES PAR PARISCORE]
 Match : ${match.home_team} vs ${match.away_team}
 Compétition : ${match.league || match.sport}
-Date/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', {timeZone:'Europe/Paris'}) : '—'}
+Date/Heure : ${match.commence_time ? new Date(match.commence_time).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : '—'}
+
+[QUALITÉ DES DONNÉES]
+${s.isReal ? 'DONNÉES RÉELLES — statistiques officielles standings API. Confiance élevée.' : 'DONNÉES ESTIMÉES — modèle simulation, pas de standings disponibles. Nuance ta confiance dans l\'analyse.'}
+
+[CLASSEMENT & ENJEUX]
+${match.home_team} : ${nsRankCtx(match.home_rank)} en ${match.league || match.sport}
+${match.away_team} : ${nsRankCtx(match.away_rank)} en ${match.league || match.sport}
 
 [COTES BOOKMAKERS]
 ${match.home_team} (dom) : ${odds.home ?? '—'} | Nul : ${odds.draw ?? '—'} | ${match.away_team} (ext) : ${odds.away ?? '—'}
@@ -8656,521 +9380,313 @@ BTTS (les deux marquent) : ${p.btts ?? '—'}% | Under 1.5 : ${p.under15 ?? '—
 Scores les plus probables : ${topScores || '—'}
 `;
 
-    const systemPrompt = `Agis comme l'expert en data science et l'analyste de presse sportive principal de la plateforme Pariscore. Ton rôle est de fournir une analyse prédictive ultra-précise et agréable à lire pour un match de football donné, destinée à une communauté de parieurs exigeants.
+  const systemPrompt = `Tu es Maxime, éditorialiste football senior chez PariScore. Ancien rédacteur L'Équipe reconverti analyste parieur. Tu as vu des milliers de matchs, tu as gagné et perdu des mises, et tu SAIS reconnaître un bon pari d'un piège.
 
-[MÉTHODOLOGIE DE CALCUL DU POWER SCORE (SUR 100)]
-Tu dois calculer un Power Score pour chaque équipe en isolant strictement le contexte (Performance à Domicile pour l'équipe A / Performance à l'Extérieur pour l'équipe B) selon ces 5 piliers :
-1. Métriques Avancées (30%) : Différentiel xG/xGA et volume de corners.
-2. Tactique & Effectifs (20%) : Systèmes, absences et mismatches.
-3. Dynamique (20%) : Forme des 5 derniers matchs et difficulté du calendrier.
-4. Presse & Consensus Web (15%) : Synthèse des sites majeurs (L'Équipe, Marca, Kicker, Sofascore, BetMines, OddAlerts).
-5. Psychologie & H2H (15%) : Historique et enjeux (titre, maintien).
+CONTRAINTE ABSOLUE — TYPOGRAPHIE :
+Aucun emoji dans ta réponse. Zéro. Pas un seul caractère emoji, icône ou symbole graphique Unicode décoratif. Uniquement du texte pur. Seul le gras **mot** est autorisé pour les accents importants. Toute violation de cette règle invalide la réponse.
 
-[FORMAT DE SORTIE EXIGÉ — TEXTE MARKDOWN RICHE, PAS DE JSON]
-Rédige ton analyse de manière fluide, professionnelle et structurée en utilisant des émojis.
+Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clairement — de jouer un pari. Le lecteur doit sentir, après t'avoir lu, s'il faut sortir son portefeuille ou regarder ce match depuis son canapé.
 
-1. EN-TÊTE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])
-2. 📊 POWER SCORE PARISCORE :
+[TON OBLIGATOIRE]
+- Journaliste sportif passionné, pas scientifique. Les chiffres SERVENT l'histoire, ils ne SONT PAS l'histoire.
+- Prises de position tranchées. Jamais "peut-être", "il est possible que". Toujours "je joue", "je passe", "ce match m'excite", "ce match me méfie".
+- Vocabulaire vivant : "machine à goals", "défense de plomb", "piège à cons", "valeur planquée", "bombe à retardement", "un nul logique comme la pluie en novembre".
+- Chaque pari a une HISTOIRE. "Je joue l'Over 2.5 parce que ces deux équipes ont la finesse défensive d'un tramway", pas "Over 2.5 : 68%".
+- Interdiction de lister des probabilités froides en succession. Une stat peut ILLUSTRER un argument, jamais le remplacer.
+
+[FORMAT DE SORTIE — CHRONIQUE EN 5 ACTES]
+
+1. EN-TETE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])
+
+2. POWER SCORE PARISCORE :
    - [Équipe A] (Dom) : X/100
    - [Équipe B] (Ext) : Y/100
-3. 🔬 ANALYSE DÉTAILLÉE :
-   - Le Duel Tactique : [Explication claire des systèmes et des joueurs clés/absents].
-   - La Synthèse Web & Médias : [Que dit la presse ? Que disent les algos de prédiction ?].
-   - L'Alerte Corners : [Explication mathématique et tactique sur la physionomie des corners attendue].
-4. 🔢 PROBABILITÉS MATHÉMATIQUES :
-   - 1N2 : 1 (X%) / N (X%) / 2 (X%)
-   - Buts : +1.5 buts (X%) / BTTS (X%)
-   - Corners : +7.5 (X%) / +8.5 (X%)
-5. 🏆 LE TOP 5 DES PARIS :
-   - 🛡️ Le Safe : [Pari] (Proba : X%) - [Justification courte]
-   - 📈 Le Bankroll Builder : [Pari] (Proba : X%) - [Justification courte]
-   - 💎 Le Value Bet : [Pari] - [Justification détaillée sur l'erreur de cote du bookmaker]
-   - 🚩 Le Coup Tactique (Corners/Buteur) : [Pari] - [Justification]
-   - ⚡ Le Coup Risqué : [Pari grosse cote] - [Justification]
+   (2-3 phrases max pour expliquer l'écart ou la parité — en prose, pas en liste)
 
-[DIRECTIVES CRITIQUES]
-- Base-toi sur les données fournies ci-dessus par Pariscore.
-- Utilise un ton d'expert, sûr de lui, qui explique la logique mathématique derrière chaque choix.
-- Le Power Score doit refléter les stats réelles fournies (xG, forme, PPG).
+3. L'HISTOIRE DE CE MATCH :
+   Rédige 3 à 5 paragraphes narratifs. Mêle contexte (enjeux du match, position au classement, forme récente), psychologie (pression, confiance, fatigue), tactique (styles de jeu, duels clés, absences notables), atmosphère (stade, derby, match piège). Parle des équipes comme d'acteurs avec des personnalités. Cite la forme en disant ce que ça SIGNIFIE. Utilise le gras **comme ceci** pour les mots ou chiffres les plus importants. Aucun emoji.
+
+4. MES 5 PARIS :
+   Pour chaque pari, écris 2-3 phrases de conviction personnelle. Sur la ligne suivante : "Mise Kelly : X.X%" (f = max(0, (prob × cote - 1) / (cote - 1)), prob en décimal, 1 décimale. Si f <= 0 : "Mise Kelly : pas de valeur mathématique").
+   Structure — labels en texte pur, aucun emoji :
+   - **La valeur sure** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le builder de bankroll** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le value bet cache** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le coup de tactique** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+   - **Le coup de poker** : [Pari] — [Conviction]
+   Mise Kelly : X.X%
+
+5. MON VERDICT :
+   Un paragraphe final tranché. "Ce match, je le joue / je le snobe." Une phrase mémorable — le genre qu'on envoie à un ami avant le match.
+
+[REGLE D'OR]
+Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il lit L'Equipe un matin de match. Aucun emoji. Aucun.
 
 ${dataBlock}`;
 
-    (async () => {
-      try {
-        console.log(`  [DeepPro] Appel Gemini — ${match.home_team} vs ${match.away_team}`);
-        const gemRes = await httpsPost(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            contents: [{ parts: [{ text: systemPrompt }] }],
-            safetySettings: GEMINI_SAFETY_SETTINGS,
-            generationConfig: { temperature: 0.8, maxOutputTokens: 2048 }
-          }
-        );
-        if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
-        const text = gemRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        if (!text) return jsonResponse(res, 500, { error: 'Réponse Gemini vide' });
-        saveAIAnalysisToCache(cacheKey, { text });
-        console.log(`  [DeepPro] OK — ${text.length} chars`);
-        return jsonResponse(res, 200, { text });
-      } catch(e) {
-        console.error('  [DeepPro] Erreur:', e.message);
-        return jsonResponse(res, 500, { error: e.message });
-      }
-    })();
-    return;
-  }
-
-  // POST /api/v1/gemini  (proxy Gemini avec cache 24h par match)
-  if (pathname === '/api/v1/gemini' && req.method === 'POST') {
-    if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
-    readBodyLimited(req, MAX_BODY_SIZE).then(async (body) => {
-      try {
-        const parsed = JSON.parse(body);
-
-        // ── Extraction de la clé de cache (transparente pour Gemini) ──────────
-        const matchKey = parsed._match_key || null;
-        delete parsed._match_key;
-
-        // ── Cache hit : réponse immédiate, 0 appel Gemini ─────────────────────
-        if (matchKey) {
-          const cached = getCachedAIAnalysis(matchKey);
-          if (cached) {
-            console.log(`  [AICache] HIT — ${matchKey}`);
-            return jsonResponse(res, 200, { ...cached, _from_cache: true });
-          }
+  (async () => {
+    try {
+      console.log(`  [DeepPro] Appel Gemini — ${match.home_team} vs ${match.away_team}`);
+      const gemRes = await httpsPost(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          contents: [{ parts: [{ text: systemPrompt }] }],
+          safetySettings: GEMINI_SAFETY_SETTINGS,
+          generationConfig: { temperature: 0.8, maxOutputTokens: 4096 }
         }
-
-        // ── Cache miss : appel Gemini puis mise en cache ───────────────────────
-        parsed.safetySettings = GEMINI_SAFETY_SETTINGS;
-        parsed.generationConfig = { ...(parsed.generationConfig || {}), response_mime_type: 'application/json' };
-
-        const gemRes = await httpsPost(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-          parsed
-        );
-
-        if (matchKey && gemRes.status === 200) {
-          saveAIAnalysisToCache(matchKey, gemRes.data);
-          console.log(`  [AICache] MISS → stocké — ${matchKey}`);
-        }
-
-        jsonResponse(res, gemRes.status, gemRes.data);
-      } catch(e) { jsonResponse(res, 500, { error: e.message }); }
-    }).catch(e => jsonResponse(res, 413, { error: e.message }));
-    return;
-  }
-
-  // POST /api/v1/refresh (forcer la MAJ)
-  if (pathname === '/api/v1/refresh' && req.method === 'POST') {
-    (async () => {
-      try {
-        console.log('\n  [Manual] Rafraîchissement forcé…');
-        await fetchStats(true);
-        await fetchOdds();
-        jsonResponse(res, 200, {
-          message: 'Rafraîchissement terminé',
-          matchCount: db.matches.length,
-          teamCount: Object.keys(db.teamStats).length,
-          lastOddsUpdate: db.lastOddsUpdate,
-          lastStatsUpdate: db.lastStatsUpdate,
-        });
-      } catch(e) {
-        jsonResponse(res, 500, { error: e.message });
-      }
-    })();
-    return;
-  }
-
-  jsonResponse(res, 404, { error: 'Route inconnue: ' + pathname });
+      );
+      if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
+      const text = gemRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) return jsonResponse(res, 500, { error: 'Réponse Gemini vide' });
+      saveAIAnalysisToCache(cacheKey, { text });
+      console.log(`  [DeepPro] OK — ${text.length} chars`);
+      return jsonResponse(res, 200, { text });
+    } catch (e) {
+      console.error('  [DeepPro] Erreur:', e.message);
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  })();
+  return;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  SERVEUR HTTP
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon' };
-
-const server = http.createServer((req, res) => {
-  const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-  const pathname = parsedUrl.pathname;
-  const query = Object.fromEntries(parsedUrl.searchParams.entries());
-
-  // CORS preflight
-  if (req.method === 'OPTIONS') {
-    const origin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'X-Frame-Options': 'DENY',
-      'X-Content-Type-Options': 'nosniff',
-    });
-    res.end(); return;
-  }
-
-  // API REST
-  if (pathname.startsWith('/api/')) {
+// POST /api/v1/gemini  (proxy Gemini avec cache 24h par match)
+if (pathname === '/api/v1/gemini' && req.method === 'POST') {
+  if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+  readBodyLimited(req, MAX_BODY_SIZE).then(async (body) => {
     try {
-      handleAPI(req, res, pathname, query);
-    } catch(e) {
-      jsonResponse(res, 500, { error: 'Internal error: ' + e.message });
+      const parsed = JSON.parse(body);
+
+      // ── Extraction de la clé de cache (transparente pour Gemini) ──────────
+      const matchKey = parsed._match_key || null;
+      delete parsed._match_key;
+
+      // ── Cache hit : réponse immédiate, 0 appel Gemini ─────────────────────
+      if (matchKey) {
+        const cached = getCachedAIAnalysis(matchKey);
+        if (cached) {
+          console.log(`  [AICache] HIT — ${matchKey}`);
+          return jsonResponse(res, 200, { ...cached, _from_cache: true });
+        }
+      }
+
+      // ── Cache miss : appel Gemini puis mise en cache ───────────────────────
+      parsed.safetySettings = GEMINI_SAFETY_SETTINGS;
+      parsed.generationConfig = { ...(parsed.generationConfig || {}), response_mime_type: 'application/json' };
+
+      const gemRes = await httpsPost(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        parsed
+      );
+
+      if (matchKey && gemRes.status === 200) {
+        saveAIAnalysisToCache(matchKey, gemRes.data);
+        console.log(`  [AICache] MISS → stocké — ${matchKey}`);
+      }
+
+      jsonResponse(res, gemRes.status, gemRes.data);
+    } catch (e) { jsonResponse(res, 500, { error: e.message }); }
+  }).catch(e => jsonResponse(res, 413, { error: e.message }));
+  return;
+}
+
+// POST /api/v1/rebuild — enrichit db.matches avec BSD/AF/Sofa IDs depuis teamStats
+if (pathname === '/api/v1/rebuild' && req.method === 'POST') {
+  let enriched = 0;
+  for (const m of db.matches) {
+    const hKey = normName(m.home_team);
+    const aKey = normName(m.away_team);
+    const hRaw = db.teamStats[hKey] || findFuzzy(hKey);
+    const aRaw = db.teamStats[aKey] || findFuzzy(aKey);
+    m.home_team_id = hRaw?.teamId || null;
+    m.away_team_id = aRaw?.teamId || null;
+    m.home_bsd_id = hRaw?.bsdTeamId || null;
+    m.away_bsd_id = aRaw?.bsdTeamId || null;
+    m.home_sofa_id = hRaw?.sofaTeamId || null;
+    m.away_sofa_id = aRaw?.sofaTeamId || null;
+    if (m.home_bsd_id || m.home_team_id) enriched++;
+  }
+  saveDB();
+  const sample = db.matches[0] || {};
+  console.log(`  [Rebuild] ${enriched}/${db.matches.length} matchs enrichis avec IDs logos`);
+  return jsonResponse(res, 200, { total: db.matches.length, enriched, sample: { home: sample.home_team, bsd: sample.home_bsd_id, af: sample.home_team_id } });
+}
+
+// POST /api/v1/refresh (forcer la MAJ)
+if (pathname === '/api/v1/refresh' && req.method === 'POST') {
+  (async () => {
+    try {
+      console.log('\n  [Manual] Rafraîchissement forcé…');
+      await fetchStats(true);
+      await fetchOdds();
+      jsonResponse(res, 200, {
+        message: 'Rafraîchissement terminé',
+        matchCount: db.matches.length,
+        teamCount: Object.keys(db.teamStats).length,
+        lastOddsUpdate: db.lastOddsUpdate,
+        lastStatsUpdate: db.lastStatsUpdate,
+      });
+    } catch (e) {
+      jsonResponse(res, 500, { error: e.message });
     }
-    return;
-  }
+  })();
+  return;
+}
 
-  // Fichiers statiques (avec protection)
-  const filePath = path.join(__dirname, pathname === '/' ? 'pariscore.html' : pathname);
-  if (!isSafePath(filePath)) {
-    res.writeHead(403, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: '403 Forbidden' }));
-    return;
-  }
-  fs.readFile(filePath, (err, data) => {
-    if (err) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('404: ' + pathname); return; }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
-    res.end(data);
-  });
-});
+   /* -------------------------------------------------
+       4️⃣  ROUTAGE API REST PRINCIPALE
+       ------------------------------------------------- */
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  v9.1: ANTI-CRASH — Global error handlers (server NE DOIT PLUS JAMAIS crasher)
-// ═══════════════════════════════════════════════════════════════════════════════
-process.on('unhandledRejection', (reason, promise) => {
-  console.error("\x1b[31m[ANTI-CRASH] Unhandled Rejection:\x1b[0m", reason?.message || reason);
-  // NE PAS crasher — logger et continuer
+    // --- Cas A : Les logos (Route spécifique asynchrone) ---
+    if (pathname === '/api/v1/team-logo') {
+        const name = (query.name || '').toString().trim();
+        if (!name) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'name required' }));
+        }
+
+        const cacheKey = `logo_${name.toLowerCase().replace(/\s+/g, '_')}`;
+        const cached = apiCacheGet(cacheKey);
+        if (cached) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify(cached));
+        }
+
+        (async () => {
+            try {
+                let result = null;
+                if (typeof BSD_API_KEY !== 'undefined' && BSD_API_KEY) {
+                    try {
+                        const r = await bsdFetch(`/teams/?search=${encodeURIComponent(name)}&page_size=1`);
+                        const t = r.data?.results?.[0];
+                        if (t?.id) {
+                            result = { url: `https://sports.bzzoiro.com/img/team/${t.id}/`, bsdId: t.id };
+                        }
+                    } catch (e) { /* fallback */ }
+                }
+
+                if (!result) {
+                    const found = await searchSofascoreTeam(name);
+                    if (found?.id) {
+                        result = { url: `https://api.sofascore.app/api/v1/team/${found.id}/image`, sofaId: found.id };
+                    }
+                }
+
+                if (!result) {
+                    res.writeHead(404, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ url: null }));
+                }
+
+                // Cache 30 jours
+                db.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
+                  .run(cacheKey, JSON.stringify(result), 'logo', Date.now(), Date.now() + 30 * 24 * 3600 * 1000);
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(result));
+            } catch (e) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ url: null }));
+            }
+        })();
+        return; 
+    }
+
+    // --- Cas B : Routes API inside handleAPI (Matchs, Leagues, etc.) ---
+    if (pathname.startsWith('/api/')) {
+        try {
+            await handleAPI(req, res, pathname, query);
+            if (!res.headersSent) {
+                res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+                res.end(JSON.stringify({ error: 'Route API inconnue: ' + pathname }));
+            }
+            return;
+        } catch (e) {
+            console.error("[API ERROR]:", e.message);
+            if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Internal Server Error: ' + e.message }));
+            }
+            return;
+        }
+    }
+
+    /* -------------------------------------------------
+       5️⃣  SERVIR LES FICHIERS STATIQUES (Front-end)
+       ------------------------------------------------- */
+
+    // Si une route API a déjà répondu, on stoppe.
+    if (res.headersSent) return;
+
+    const filePath = path.join(__dirname, pathname === '/' ? 'pariscore.html' : pathname);
+
+    if (!isSafePath(filePath)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: '403 Forbidden' }));
+    }
+
+    fs.readFile(filePath, (err, data) => {
+        if (res.headersSent) return; 
+        if (err) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            return res.end('404: ' + pathname);
+        }
+        
+        const ext = path.extname(filePath);
+        const contentType = (typeof mime !== 'undefined' && mime[ext]) ? mime[ext] : 'application/octet-stream';
+
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(data);
+    });
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ANTI‑CRASH & DÉMARRAGE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+process.on('unhandledRejection', (reason) => {
+    console.error("\x1b[31m[ANTI‑CRASH] Unhandled Rejection:\x1b[0m", reason?.message || reason);
 });
 
 process.on('uncaughtException', (error) => {
-  console.error("\x1b[31m[ANTI-CRASH] Uncaught Exception:\x1b[0m", error.message);
-  console.error(error.stack);
-  // NE PAS crasher — logger et continuer
+    console.error("\x1b[31m[ANTI‑CRASH] Uncaught Exception:\x1b[0m", error.message);
+    console.error(error.stack);
 });
+}); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
 
-// ═══════════════════════════════════════════════════════════════════════════════
-//  DÉMARRAGE
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ─── BOOT READINESS GATE ─────────────────────────────────────────────────────
-let serverReady = false; // true after initial fetchOdds/fetchStats complete
-
-initSQLite();
-loadDB();
-backfillMatchForms();
-loadHistory();
-loadAICache();
-
-// ── Anti-EADDRINUSE: détecte port occupé, tue l'ancien processus, relance ──
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`\x1b[31m[BOOT] Port ${PORT} déjà utilisé — tentative de libération...\x1b[0m`);
-    const { execSync } = require('child_process');
+/* -------------------------------------------------
+   Fonction de polling des scores en direct
+   ------------------------------------------------- */
+async function pollLiveScores() {
     try {
-      if (process.platform === 'win32') {
-        const out = execSync(`netstat -ano | findstr :${PORT}`, { encoding: 'utf8' });
-        const lines = out.trim().split('\n');
-        lines.forEach(line => {
-          const parts = line.trim().split(/\s+/);
-          const pid = parts[parts.length - 1];
-          if (pid && pid !== '0' && !isNaN(pid)) {
-            try { execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' }); console.log(`  [BOOT] Ancien processus PID ${pid} terminé.`); } catch {}
-          }
-        });
-      } else {
-        execSync(`fuser -k ${PORT}/tcp`, { stdio: 'ignore' });
-      }
-    } catch {}
-    // Relancer après 500ms
-    setTimeout(() => {
-      console.log(`  [BOOT] Relance sur le port ${PORT}...`);
-      server.close();
-      server.listen(PORT);
-    }, 500);
-    return;
-  }
-  console.error('\x1b[31m[BOOT] Erreur serveur:\x1b[0m', err.message);
-});
+        const now = new Date();
+        const dateStr = formatDateOnly(now);
+        const bsdLive = await fetchBSDMatches(dateStr, dateStr);
+        if (!bsdLive) return;
 
-// ── Server starts IMMEDIATELY — bootInit runs in background ──
-server.listen(PORT, () => {
-  console.log('');
-  console.log('  ╔══════════════════════════════════════════════════════╗');
-  console.log('  ║           PariScore v2.0 — Backend API              ║');
-  console.log('  ╠══════════════════════════════════════════════════════╣');
-  console.log(`  ║  Serveur      → http://localhost:${PORT}               ║`);
-  console.log('  ║  API          → /api/v1/matches                     ║');
-  console.log('  ║  Status       → /api/v1/status                      ║');
-  console.log('  ╠══════════════════════════════════════════════════════╣');
-  console.log('  ║  Cron Odds    → toutes les 12h                      ║');
-  console.log('  ║  Cron Stats   → T1 6h / T2 12h (par ligue)         ║');
-  console.log('  ║  Cron Archive → toutes les 4h                       ║');
-  console.log('  ╚══════════════════════════════════════════════════════╝');
-  console.log('');
-  console.log('  >>> SERVEUR DÉMARRÉ - LIENS ANJ ACTIVÉS - CACHE OPÉRATIONNEL');
-  console.log('');
-
-  // Cron jobs
-  setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
-  setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);
-  setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000);
-  setInterval(() => {
-    const cleaned = apiCacheCleanExpired();
-    if (cleaned > 0) console.log(`  [Cron:Cache] 🗑️ ${cleaned} entrées API expirées nettoyées`);
-    const oddsCleaned = oddsCacheCleanExpired();
-    if (oddsCleaned > 0) console.log(`  [Cron:OddsCache] 🗑️ ${oddsCleaned} cotes expirées nettoyées`);
-  }, 2 * 3600 * 1000);
-
-  // Helpers Live Intensity Score
-  function getStat(teamStats, type) {
-    const s = (teamStats || []).find(x => x.type === type);
-    if (!s || s.value == null) return 0;
-    const v = typeof s.value === 'string' ? parseFloat(s.value) : s.value;
-    return isNaN(v) ? 0 : v;
-  }
-
-  function computeLiveIntensity(fix) {
-    const stats = fix.statistics;
-    if (!stats || stats.length < 2) return null;
-    const home = stats[0]?.statistics || [];
-    const away = stats[1]?.statistics || [];
-    const totalShots  = getStat(home, 'Total Shots')  + getStat(away, 'Total Shots');
-    const shotsOnGoal = getStat(home, 'Shots on Goal') + getStat(away, 'Shots on Goal');
-    const corners     = getStat(home, 'Corner Kicks')  + getStat(away, 'Corner Kicks');
-    const posHome = getStat(home, 'Ball Possession') || 50;
-    const posDiff = Math.abs(posHome - 50);
-    const score =
-      Math.min(totalShots  / 25, 1) * 40 +
-      Math.min(shotsOnGoal / 12, 1) * 30 +
-      Math.min(corners     / 15, 1) * 20 +
-      Math.min(posDiff     / 50, 1) * 10;
-    return Math.min(100, Math.round(score));
-  }
-
-  // ─── POLLING LIVE — BSD primaire + API-Football fallback ─────────────────
-  async function pollLiveScores() {
-    const now = new Date();
-    const parisHour = parseInt(now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', hour: 'numeric', hour12: false }));
-    if (parisHour >= 2 && parisHour < 9) return; // silence 2h-9h (aucun match majeur)
-
-    try {
-      let liveMatches = [];
-
-      // ═══════════════════════════════════════════════════════════════
-      // PHASE 1: BSD live (données riches: stats, xG, incidents, corners)
-      // ═══════════════════════════════════════════════════════════════
-      if (BSD_API_KEY) {
-        try {
-          const bsdLiveRes = await bsdFetch('/live/');
-          if (bsdLiveRes.status === 200 && bsdLiveRes.data?.results?.length) {
-            liveMatches = bsdLiveRes.data.results;
-            console.log(`  [BSD Live] ${liveMatches.length} matchs live détectés`);
-          }
-        } catch(e) {
-          console.warn('  [BSD Live] Erreur:', e.message);
-        }
-      }
-
-      // ═══════════════════════════════════════════════════════════════
-      // PHASE 2: API-Football fallback si BSD vide
-      // ═══════════════════════════════════════════════════════════════
-      if (!liveMatches.length && API_FOOTBALL_KEY) {
-        try {
-          const afLiveRes = await httpsGet(
-            'https://v3.football.api-sports.io/fixtures?live=all',
-            { 'x-apisports-key': API_FOOTBALL_KEY }
-          );
-          if (afLiveRes.status === 200) {
-            liveMatches = (afLiveRes.data.response || []).map(fix => ({
-              _source: 'api-football',
-              home_team: fix.teams?.home?.name,
-              away_team: fix.teams?.away?.name,
-              home_score: fix.goals?.home,
-              away_score: fix.goals?.away,
-              current_minute: fix.fixture?.status?.elapsed,
-              status: fix.fixture?.status?.short || 'inprogress',
-              league: { name: fix.league?.name },
-               live_stats: null,
-               home_xg_live: null,
-              away_xg_live: null,
-            }));
-          }
-        } catch(e) {
-          console.warn('  [AF Live] Erreur:', e.message);
-        }
-      }
-
-      if (!liveMatches.length) return;
-
-      const liveMatchIds = new Set();
-      let updated = false;
-      for (const live of liveMatches) {
-        const liveHome = normName(live.home_team || '');
-        const liveAway = normName(live.away_team || '');
-        const match = db.matches.find(m => normName(m.home_team) === liveHome && normName(m.away_team) === liveAway)
-          || db.matches.find(m => {
-              // Fallback fuzzy : commence_time proche ±90min + équipes approximatives
-              const timeDiff = Math.abs(new Date(m.commence_time).getTime() - Date.now());
-              if (timeDiff > 90 * 60 * 1000) return false;
-              const mh = normName(m.home_team), ma = normName(m.away_team);
-              return (mh.startsWith(liveHome.slice(0,5)) || liveHome.startsWith(mh.slice(0,5)))
-                  && (ma.startsWith(liveAway.slice(0,5)) || liveAway.startsWith(ma.slice(0,5)));
-            });
-        if (!match) { console.warn(`  [Live] Match non trouvé: ${live.home_team} vs ${live.away_team}`); continue; }
-        liveMatchIds.add(match.id);
-
-        const scoreHome = live.home_score;
-        const scoreAway = live.away_score;
-        if (scoreHome != null && scoreAway != null) {
-          match.live_score = `${scoreHome}-${scoreAway}`;
-          match.live_status = live.status || 'LIVE';
-          match.live_minute = live.current_minute || null;
-
-          // AUTO-ARCHIVE: Supprimer immédiatement les matchs terminés (FT, AET, PEN)
-          const isFinished = live.status && /^(FT|AET|PEN|FT-?P|AET-?P|INT|CANC|ABAN|SUSP|PST)$/i.test(live.status);
-          if (isFinished) {
-            console.log(`  [Live] Match terminé: ${match.home_team} ${scoreHome}-${scoreAway} ${match.away_team} (${live.status})`);
-            match.live_minute = 90;
-            // Ghost cleanup immédiat + SSE push
-            setTimeout(() => {
-              db.matches = db.matches.filter(m => m.id !== match.id);
-              console.log(`  [Live] Ghost cleanup: ${match.id} (${live.status})`);
-              if (sseClients.size > 0) broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
-            }, 2000);
-          }
-
-          // BSD: données riches
-          if (live._source !== 'api-football') {
-            match.live_possession = live.live_stats ? {
-              home: live.live_stats.home?.ball_possession || 50,
-              away: live.live_stats.away?.ball_possession || 50,
-            } : null;
-            match.live_shots = live.live_stats ? {
-              home: live.live_stats.home?.total_shots || 0,
-              away: live.live_stats.away?.total_shots || 0,
-            } : null;
-            match.live_shots_on_target = live.live_stats ? {
-              home: live.live_stats.home?.shots_on_target || 0,
-              away: live.live_stats.away?.shots_on_target || 0,
-            } : null;
-            match.live_corners = live.live_stats ? {
-              home: live.live_stats.home?.corner_kicks || 0,
-              away: live.live_stats.away?.corner_kicks || 0,
-            } : null;
-            match.live_cards = live.live_stats ? {
-              home_yellow: live.live_stats.home?.yellow_cards || 0,
-              away_yellow: live.live_stats.away?.yellow_cards || 0,
-              home_red: live.live_stats.home?.red_cards || 0,
-              away_red: live.live_stats.away?.red_cards || 0,
-            } : null;
-            match.live_xg = {
-              home: live.home_xg_live || null,
-              away: live.away_xg_live || null,
-            };
-            match.live_momentum = live.momentum || null;
-            match.live_intensity = computeLiveIntensityFromBSD(live);
-          } else {
-            // API-Football fallback: intensity seulement
-            match.live_intensity = computeLiveIntensity({ teams: { home: { name: live.home_team }, away: { name: live.away_team } }, goals: { home: scoreHome, away: scoreAway }, fixture: { status: { elapsed: match.live_minute } } });
-          }
-
-          updated = true;
-        }
-      }
-
-      // Nettoyage: matchs live absents de l'API → clear (évite 0-0 fantômes)
-      let ghostsCleaned = 0;
-      if (liveMatchIds.size > 0) {
-        for (const m of db.matches) {
-          if (m.live_score && !liveMatchIds.has(m.id)) {
-            const elapsed = (Date.now() - new Date(m.commence_time).getTime()) / 60000;
-            if (elapsed > 120) {
-              console.log(`  [Live] Ghost cleanup: ${m.home_team} ${m.live_score} ${m.away_team} (plus dans API, ${Math.round(elapsed)}min)`);
-              m.live_score = null; m.live_minute = null; m.live_status = null;
-              ghostsCleaned++;
-              updated = true;
+        for (const bl of bsdLive) {
+            const m = db.matches.find(x => x.id === bl.id);
+            if (m) {
+                m.live_score = bl.live_score;
+                m.live_minute = bl.live_minute;
+                // Calculate live intensity from BSD data
+                m.live_intensity = computeLiveIntensityFromBSD(bl);
             }
-          }
         }
-      }
+        saveDB();
+    } catch (e) {
+        console.warn('[LivePoll] Error:', e.message);
+    }
+}
 
-      // Purge stricte: status FT/AET/PEN ou elapsed > 120m même avec live_score
-      const beforePurge = db.matches.length;
-      db.matches = db.matches.filter(m => {
-        if (m.live_status && /^(FT|AET|PEN|INT|CANC|ABAN|SUSP|PST)$/i.test(m.live_status)) return false;
-        if (m.live_minute && m.live_minute > 120) return false;
-        return true;
-      });
-      if (db.matches.length < beforePurge) {
-        console.log(`  [Live] Ghost purge: ${beforePurge - db.matches.length} matchs terminés retirés`);
-        updated = true;
-      }
-
-      // v10.5: Stale Data Rule — triple verrou backend
-      let staleFixed = 0;
-      const now = Date.now();
-      for (const m of db.matches) {
-        if (!m.live_score) continue;
-        let shouldClear = false;
-        let reason = '';
-
-        // Verrou 1: minute > 130 = match fantôme
-        const minuteVal = parseInt(m.live_minute || m.minute || 0);
-        if (minuteVal > 130) {
-          shouldClear = true;
-          reason = `minute=${minuteVal} > 130`;
-        }
-
-        // Verrou 2: kickoff > 4h
-        if (!shouldClear && m.commence_time) {
-          const hoursSinceKickoff = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
-          if (hoursSinceKickoff > 4) {
-            shouldClear = true;
-            reason = `kickoff il y a ${Math.round(hoursSinceKickoff * 60)}min`;
-          }
-        }
-
-        // Verrou 3: kickoff date de la veille (> 24h)
-        if (!shouldClear && m.commence_time) {
-          const hoursSinceKickoff = (now - new Date(m.commence_time).getTime()) / (1000 * 60 * 60);
-          if (hoursSinceKickoff > 24) {
-            shouldClear = true;
-            reason = `kickoff il y a ${Math.round(hoursSinceKickoff / 60 * 10) / 10}j`;
-          }
-        }
-
-        if (shouldClear) {
-          console.log(`  [Live] Stale rule: ${m.home_team} vs ${m.away_team} — ${reason} → force FINISHED`);
-          m.live_score = null;
-          m.live_minute = null;
-          m.live_status = 'FT';
-          m.live_intensity = null;
-          m.live_xg = null;
-          m.live_shots = null;
-          m.live_shots_on_target = null;
-          m.live_corners = null;
-          m.live_possession = null;
-          m.live_dangerous_attacks = null;
-          m.live_momentum = null;
-          staleFixed++;
-          updated = true;
-        }
-      }
-      if (staleFixed > 0) console.log(`  [Live] Stale rule: ${staleFixed} matchs forcés FINISHED`);
-
-      if (updated && sseClients.size > 0) {
-        broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
-        console.log(`  [Live] ${liveMatches.length} matchs live → ${sseClients.size} clients SSE notifiés`);
-      }
-    } catch(e) { console.warn('  [Live] Poll erreur:', e.message); }
-  }
-
-  // Compute live intensity from BSD data (xG-based + momentum)
-  function computeLiveIntensityFromBSD(live) {
+// Compute live intensity from BSD data (xG-based + momentum)
+function computeLiveIntensityFromBSD(live) {
     let intensity = 0;
 
     // xG differential (0-40 points)
     if (live.home_xg_live != null && live.away_xg_live != null) {
-      const xgDiff = Math.abs(live.home_xg_live - live.away_xg_live);
-      intensity += Math.min(xgDiff * 15, 40);
+        const xgDiff = Math.abs(live.home_xg_live - live.away_xg_live);
+        intensity += Math.min(xgDiff * 15, 40);
     }
 
     // Total shots (0-30 points)
@@ -9183,133 +9699,271 @@ server.listen(PORT, () => {
 
     // Momentum volatility (0-20 points)
     if (live.momentum && live.momentum.length > 5) {
-      const recent = live.momentum.slice(-10);
-      const volatility = Math.max(...recent.map(m => Math.abs(m.v))) / 50;
-      intensity += Math.min(volatility * 20, 20);
+        const recent = live.momentum.slice(-10);
+        const volatility = Math.max(...recent.map(m => Math.abs(m.v))) / 50;
+        intensity += Math.min(volatility * 20, 20);
     }
 
     return Math.round(Math.min(intensity, 100));
-  }
+}
 
-  setInterval(() => pollLiveScores().catch(e => console.warn('[Live]', e.message)), 60 * 1000); // 60s
+/* -------------------------------------------------
+   Démarrage du serveur
+   ------------------------------------------------- */
+let serverReady = false;
 
-  // ── Morning refresh scheduler — force fetch at 6h00 Paris daily ──
-  function scheduleMorningRefresh() {
-    const now = new Date();
-    const parisStr = now.toLocaleString('en-US', { timeZone: 'Europe/Paris' });
-    const parisNow = new Date(parisStr);
-    const target = new Date(parisNow);
-    target.setHours(6, 0, 0, 0);
-    if (target <= parisNow) target.setDate(target.getDate() + 1);
-    const msUntil = target.getTime() - parisNow.getTime();
-    console.log(`  [Scheduler] Prochain refresh forcé à ${target.toLocaleTimeString('fr-FR')} (dans ${Math.round(msUntil/3600000)}h)`);
-    setTimeout(() => {
-      console.log('  [Scheduler] ⏰ Morning refresh — fetching fresh matches');
-      fetchOdds(true).then(() => {
-        setInterval(() => fetchOdds(true), 24 * 3600 * 1000);
-      });
-    }, msUntil);
-  }
-  scheduleMorningRefresh();
-}); // end server.listen
+// Initialisation
+initSQLite();
+loadDB();
+backfillMatchForms();
+loadHistory();
+loadAICache();
 
-// ── BootInit runs IN BACKGROUND — server already listening ──
-(async function bootInit() {
-  console.log('  [Boot] Chargement initial des données (background)…');
+//const PORT = process.env.PORT || 3000;
+server.on('error', err => {
+    if (err && err.code === 'EADDRINUSE') {
+        console.error(`\n  ✗ PORT ${PORT} OCCUPÉ - un autre processus Node est déjà actif.`);
+        console.error('  → Fermer l\'instance existante ou changer PORT dans les variables d\'environnement.\n');
+        process.exit(1);
+    }
+    console.error('\n  ✗ Erreur serveur:', err && err.message ? err.message : err);
+    process.exit(1);
+});
 
-  const cacheStats = apiCacheStats();
-  if (cacheStats.total > 0) {
-    console.log(`  [Boot] 🗄️ Cache API: ${cacheStats.total} entrées (${cacheStats.bySource.map(s => `${s.source}:${s.c}`).join(', ')})`);
-  }
+/* -------------------------------------------------
+   Séquence de démarrage (exécutée après que le serveur soit en écoute)
+   ------------------------------------------------- */
+const BOOT_ODDS_TIMEOUT_MS = parseInt(process.env.BOOT_ODDS_TIMEOUT_MS || '25000', 10);
+const BOOT_STATS_TIMEOUT_MS = parseInt(process.env.BOOT_STATS_TIMEOUT_MS || '90000', 10);
 
-  // Timeout guard: max 30s pour le boot initial
-  const BOOT_TIMEOUT = 30000;
-  const bootDeadline = Date.now() + BOOT_TIMEOUT;
+function withBootTimeout(label, ms, fn) {
+    return Promise.race([
+        Promise.resolve().then(fn),
+        new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`${label} timeout (${ms}ms)`)), ms);
+        })
+    ]);
+}
 
+async function bootInit() {
+    console.log('  [Boot] Initialisation des données...');
+
+    try {
+        await withBootTimeout('fetchOdds', BOOT_ODDS_TIMEOUT_MS, () => fetchOdds(true));
+    } catch (e) {
+        console.warn('  [Boot] ⚠ fetchOdds:', e.message);
+    }
+
+    if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
+    serverReady = true;
+    console.log('  [Boot] ✓ Système prêt.');
+
+    withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
+        .then(() => {
+            if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
+            console.log('  [Boot] ✓ Enrichissement stats terminé.');
+        })
+        .catch(e => {
+            console.warn('  [Boot] ⚠ Enrichissement stats:', e.message);
+        });
+}
+
+server.listen(PORT, () => {
+    console.log(`\n  ✓ SERVEUR DÉMARRÉ SUR LE PORT ${PORT}\n`);
+    bootInit().catch(e => console.error('  [Boot] Erreur init:', e.message));
+});
+
+/* -------------------------------------------------
+   Jobs périodiques
+   ------------------------------------------------- */
+setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
+setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);
+setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000);
+
+setInterval(() => {
+    if (typeof apiCacheCleanExpired === 'function') apiCacheCleanExpired();
+    if (typeof oddsCacheCleanExpired === 'function') oddsCacheCleanExpired();
+}, 2 * 3600 * 1000);
+
+setInterval(() => pollLiveScores().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CRON: Recherche automatique de vidéos de conférences de presse (1-2h avant match)
+// ═══════════════════════════════════════════════════════════════════════════════
+async function checkPressConferenceVideos() {
   const now = Date.now();
-  const oddsAge = db.lastOddsUpdate ? now - new Date(db.lastOddsUpdate).getTime() : Infinity;
-  const statsAge = db.lastStatsUpdate ? now - new Date(db.lastStatsUpdate).getTime() : Infinity;
+  const in1Hour = now + 60 * 60 * 1000;
+  const in2Hours = now + 2 * 60 * 60 * 1000;
+  
+  // Trouver lesmatchs qui تبدأ dans 1-2h
+  const upcomingMatches = db.matches.filter(m => {
+    const matchTime = new Date(m.commence_time).getTime();
+    return matchTime >= in1Hour && matchTime <= in2Hours;
+  });
+  
+  if (!upcomingMatches.length) return;
+  
+  console.log(`  [PressConf] ${upcomingMatches.length} match(s) commencent dans 1-2h`);
+  
+  for (const match of upcomingMatches) {
+    // Skip si déjà traité récemment
+    if (match._pressConfChecked && (now - match._pressConfChecked < 3600000)) continue;
+    
+    const videos = await fetchPressConferenceVideos(match.home_team, match.away_team, match.league);
+    if (videos.length > 0) {
+      match.pressConferenceVideos = videos;
+      match._pressConfChecked = now;
+      console.log(`  [PressConf] ${match.home_team} vs ${match.away_team}: ${videos.length} vidéo(s) trouvée(s)`);
+    }
+  }
+}
 
-  // Odds : refresh si > 12h OU pas de matchs en DB
-  if (!db.matches.length || oddsAge > 12 * 3600 * 1000) {
-    console.log(`  [Boot] Odds cache ${!db.matches.length ? 'vide' : `expiré (${Math.round(oddsAge/3600000)}h)`} → refresh`);
+// Fonction pour récupérer les vidéos de conférences (simplifiée sans API externe)
+async function fetchPressConferenceVideos(homeTeam, awayTeam, league) {
+  const videos = [];
+  const now = new Date();
+  const year = now.getFullYear();
+  
+  // Recherche via URLs de recherche YouTube (méthode publique sans API key)
+  // On stocke les URLs de recherche qui peuvent être utilisées côté frontend
+  const searchQueries = [
+    `${homeTeam} press conference pre match ${year}`,
+    `${homeTeam} manager pre match interview ${year}`,
+    `${awayTeam} press conference pre match ${year}`
+  ];
+  
+  // Sources officielles par équipe (configuration)
+  const teamSources = {
+    'Arsenal': { yt: 'Arsenal', club: 'https://www.arsenal.com/news' },
+    'Liverpool': { yt: 'Liverpool FC', club: 'https://www.liverpoolfc.com/news' },
+    'Manchester City': { yt: 'Manchester City', club: 'https://www.mancity.com/news' },
+    'Chelsea': { yt: 'Chelsea FC', club: 'https://www.chelseafc.com/news' },
+    'PSG': { yt: 'PSG', club: 'https://www.psg.fr/actualites' },
+    'Real Madrid': { yt: 'Real Madrid', club: 'https://www.realmadrid.com/noticias' },
+    'FC Barcelona': { yt: 'FC Barcelona', club: 'https://www.fcbarcelona.com/en/news' },
+    'Bayern Munich': { yt: 'FC Bayern München', club: 'https://fcbayern.com/news' },
+    'Juventus': { yt: 'Juventus', club: 'https://www.juventus.com/news' },
+    'Inter': { yt: 'Inter Milan', club: 'https://www.inter.it/en/news' },
+    'Milan': { yt: 'AC Milan', club: 'https://www.acmilan.com/en/news' }
+  };
+  
+  // Trouver la source pour l'équipe à domicile
+  const homeSource = Object.keys(teamSources).find(k => homeTeam.toLowerCase().includes(k.toLowerCase()));
+  
+  if (homeSource) {
+    videos.push({
+      type: 'pre_match',
+      team: homeTeam,
+      title: `${homeSource} - Conférence d'avant-match`,
+      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQueries[0])}`,
+      source: 'youtube',
+      timestamp: now.toISOString()
+    });
+  }
+  
+  // Ajouter les chaînes générales
+  videos.push({
+    type: 'general',
+    title: 'beIN SPORTS - Conférences de presse',
+    searchUrl: 'https://www.youtube.com/@beINSPORTS/videos',
+    source: 'youtube'
+  });
+  
+  // Ajouter selon la ligue
+  if (league && league.includes('Premier League')) {
+    videos.push({
+      type: 'general',
+      title: 'Premier League Official',
+      searchUrl: 'https://www.youtube.com/@PremierLeagueOfficial/videos',
+      source: 'youtube'
+    });
+  } else if (league && league.includes('Ligue 1')) {
+    videos.push({
+      type: 'general',
+      title: 'Ligue 1 Official',
+      searchUrl: 'https://www.youtube.com/@Ligue1Official/videos',
+      source: 'youtube'
+    });
+  }
+  
+  return videos;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CRON: Composition des équipes (lineups) 45 min avant match
+// ═══════════════════════════════════════════════════════════════════════════════
+async function checkLineups() {
+  const now = Date.now();
+  const in40Min = now + 40 * 60 * 1000;
+  const in50Min = now + 50 * 60 * 1000;
+  
+  const upcomingMatches = db.matches.filter(m => {
+    const matchTime = new Date(m.commence_time).getTime();
+    return matchTime >= in40Min && matchTime <= in50Min && !m.lineups;
+  });
+  
+  if (!upcomingMatches.length) return;
+  
+  console.log(`  [Lineups] ${upcomingMatches.length} match(s) dans ~45min - vérification composition`);
+  
+  for (const match of upcomingMatches) {
+    const lineups = await fetchLineups(match);
+    if (lineups) {
+      match.lineups = lineups;
+      match._lineupsChecked = now;
+      console.log(`  [Lineups] ${match.home_team} vs ${match.away_team}: composition reçue`);
+    }
+  }
+}
+
+// Fonction pour récupérer les compositions via BSD/Sofascore
+async function fetchLineups(match) {
+  const lineups = { home: null, away: null, source: null };
+  
+  // Essayer Sofascore pour les compositions
+  if (match.home_bsd_id) {
     try {
-      await Promise.race([
-        fetchOdds(true),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), Math.max(5000, bootDeadline - Date.now())))
-      ]);
-    } catch(e) {
-      console.warn('  [Boot] Odds échouées ou timeout — fallback cache SQLite:', e.message);
-    }
-  } else {
-    console.log(`  [Boot] Odds OK — ${db.matches.length} matchs en cache (${Math.round(oddsAge/3600000)}h)`);
+      // Chercher via l'ID BSD de l'équipe
+      const res = await sofaGet(`/team/${match.home_bsd_id}/squad`);
+      if (res.status === 200 && res.data?.squad) {
+        lineups.home = res.data.squad.filter(p => p.isStarter).map(p => p.name);
+        lineups.source = 'sofascore';
+      }
+    } catch (e) { /* ignore */ }
   }
-
-  // Stats : refresh si > 12h OU pas d'équipes en DB OU ligues manquantes
-  const hasTeams = Object.keys(db.teamStats).length > 0;
-  const configuredLeagueIds = leaguesConfig.leagues.filter(l => l.id).map(l => l.id);
-  const leaguesWithStandings = new Set(Object.values(db.teamStats).map(s => s.leagueId).filter(Boolean));
-  const missingLeagues = configuredLeagueIds.filter(lid => !leaguesWithStandings.has(lid));
-  const hasMissingLeagues = missingLeagues.length > 0;
-
-  if (!hasTeams || statsAge > 12 * 3600 * 1000 || hasMissingLeagues) {
-    if (hasMissingLeagues) {
-      console.log(`  [Boot] Stats: ${missingLeagues.length} nouvelles ligues détectées → refresh forcé`);
-    } else {
-      console.log(`  [Boot] Stats cache ${!hasTeams ? 'vide' : `expiré (${Math.round(statsAge/3600000)}h)`} → refresh`);
-    }
+  
+  // Fallback: recherche par nom d'équipe
+  if (!lineups.home) {
     try {
-      await Promise.race([
-        fetchStats(true),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), Math.max(5000, bootDeadline - Date.now())))
-      ]);
-    } catch(e) {
-      console.warn('  [Boot] Stats échouées ou timeout — fallback cache SQLite:', e.message);
-    }
-  } else {
-    console.log(`  [Boot] Stats OK — ${Object.keys(db.teamStats).length} équipes en cache (${Math.round(statsAge/3600000)}h)`);
+      const hRes = await sofaGet(`/search/teams?q=${encodeURIComponent(match.home_team)}`);
+      if (hRes.status === 200 && hRes.data?.results?.[0]) {
+        const hId = hRes.data.results[0].entity.id;
+        const squadRes = await sofaGet(`/team/${hId}/squad`);
+        if (squadRes.status === 200 && squadRes.data?.squad) {
+          lineups.home = squadRes.data.squad.filter(p => p.isStarter).map(p => p.name);
+        }
+      }
+    } catch (e) { /* ignore */ }
   }
-
-  // Si aucun match (API down + cache vide), charger la démo
-  if (!db.matches.length && cachedMatches.length > 0) {
-    console.log('  [Boot] 🛡️ Fallback tampon mémoire —', cachedMatches.length, 'matchs restaurés');
-    db.matches = JSON.parse(JSON.stringify(cachedMatches));
-    db.status = 'cache_fallback';
-    saveDB();
-  } else if (!db.matches.length) {
-    console.log('  [Boot] Aucun match live → chargement données démo');
-    db.matches = buildDemoMatches();
-    db.status = 'demo';
-    saveDB();
+  
+  if (!lineups.away) {
+    try {
+      const aRes = await sofaGet(`/search/teams?q=${encodeURIComponent(match.away_team)}`);
+      if (aRes.status === 200 && aRes.data?.results?.[0]) {
+        const aId = aRes.data.results[0].entity.id;
+        const squadRes = await sofaGet(`/team/${aId}/squad`);
+        if (squadRes.status === 200 && squadRes.data?.squad) {
+          lineups.away = squadRes.data.squad.filter(p => p.isStarter).map(p => p.name);
+        }
+      }
+    } catch (e) { /* ignore */ }
   }
+  
+  return (lineups.home || lineups.away) ? lineups : null;
+}
 
-  // Sync finale des tampons mémoire
-  syncCacheBuffers();
+// Vérifier toutes les 15 minutes
+setInterval(() => checkLineups().catch(e => console.warn('[Lineups]', e.message)), 15 * 60 * 1000);
 
-  serverReady = true;
-  console.log(`\n  ✓ Prêt — ${db.matches.length} matchs disponibles (cache v${cacheVersion})\n`);
-
-  // Émettre SSE system_ready à tous les clients connectés
-  if (sseClients.size > 0) {
-    broadcastSSE('system_ready', { matches: db.matches.length, status: db.status, ts: Date.now(), cacheVersion });
-    console.log(`  [Boot] SSE system_ready → ${sseClients.size} clients notifiés`);
-  }
-
-  // Charger le tracker de pré-chargement
-  loadPreloadTracker();
-
-  // Lancer le Global BSD Preload 1 minute après le boot
-  console.log(`  [PRELOAD] Pré-chargement BSD programmé dans ${PRELOAD_START_DELAY_MS/1000}s...`);
-  setTimeout(() => {
-    runGlobalPreload().catch(e => console.error('[PRELOAD] Erreur:', e.message));
-  }, PRELOAD_START_DELAY_MS);
-
-  // Lancer le Proactive Hydrator 90s après le boot, puis toutes les 15min
-  console.log(`  [HYDRATOR] Worker autonome programmé dans ${HYDRATOR_START_DELAY_MS/1000}s (cycle ${HYDRATOR_INTERVAL_MS/60000}min)...`);
-  setTimeout(() => {
-    runProactiveHydrator().catch(e => console.error('[HYDRATOR] Erreur:', e.message));
-  }, HYDRATOR_START_DELAY_MS);
-  setInterval(() => {
-    runProactiveHydrator().catch(e => console.error('[HYDRATOR] Cycle erreur:', e.message));
-  }, HYDRATOR_INTERVAL_MS);
-})(); // end bootInit IIFE
+// Vérifier toutes les 30 minutes (press conferences)
+setInterval(() => checkPressConferenceVideos().catch(e => console.warn('[PressConf]', e.message)), 30 * 60 * 1000);
