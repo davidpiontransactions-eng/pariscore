@@ -9756,6 +9756,7 @@ async function bootInit() {
 
     if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
     serverReady = true;
+    autoPurgeDatabase();
     console.log('  [Boot] ✓ Système prêt.');
 
     withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
@@ -9774,11 +9775,34 @@ server.listen(PORT, () => {
 });
 
 /* -------------------------------------------------
+   AutoPurge — supprime en mémoire les matchs expirés
+   (terminés ou > 4h après kick-off) sans appel API
+   ------------------------------------------------- */
+function autoPurgeDatabase() {
+    const now = Date.now();
+    const EXPIRY_MS = 4 * 3600000;
+    const FINISHED = ['FINISHED','FT','TERMINE','ENDED','AET','PEN','POSTPONED','CANC','ABD','SUSPENDED','INTERRUPTED','CANCELED','WALKOVER'];
+    const normS = s => s ? String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim() : '';
+    const before = db.matches.length;
+    db.matches = db.matches.filter(m => {
+        const elapsed = now - new Date(m.commence_time).getTime();
+        const isFinished = [m.status, m.live_status, m.match_status].some(s => FINISHED.includes(normS(s)));
+        return !isFinished && elapsed < EXPIRY_MS;
+    });
+    const removed = before - db.matches.length;
+    if (removed > 0) {
+        saveDB();
+        console.log(`  [AutoPurge] ${removed} matchs supprimés (${db.matches.length} restants)`);
+    }
+}
+
+/* -------------------------------------------------
    Jobs périodiques
    ------------------------------------------------- */
 setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
 setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);
 setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000);
+setInterval(() => autoPurgeDatabase(), 3600 * 1000);
 
 setInterval(() => {
     if (typeof apiCacheCleanExpired === 'function') apiCacheCleanExpired();

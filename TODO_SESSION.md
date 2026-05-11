@@ -74,6 +74,7 @@
 2. (Termine) Integrer clicks equipe/joueur
 3. Corriger bug PRO SCOUT v2 (en cours)
 4. Nettoyage automatique des matchs finis - BUG CORRIGE: db.archive_matches non initialise, maintenant synchronise
+- [x] Automatisation du nettoyage horaire (setInterval 1h) — autoPurgeDatabase() supprime matchs terminés/expirés (>4h) via filtre JS en mémoire + saveDB()
 
 ### 19. 🎨 UI/UX : Onglet Guide - Charte Graphique
 - [x] **Mettre la charte graphique sur l'onglet "Guide"**
