@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -7236,8 +7236,9 @@ function renderMatches(matches) {
   if (!matches) return;
   const tbody = document.getElementById('vb-body');
   if (!tbody) return;
+  // [FIX] Suppression du scroll force pour eviter le saut d'ecran en mode Live
+  const _savedScrollY = window.scrollY;
   tbody.innerHTML = '';
-  console.log('Tableau vidé');
 
   let filtered = matches;
 
@@ -7674,6 +7675,7 @@ const label = country
   buildExpertReport(matches);
   updateLiveCounters();
   resolvePendingLogos();
+  window.scrollTo(0, _savedScrollY); // [FIX] Restore scroll position apres rebuild DOM
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
