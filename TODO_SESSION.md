@@ -1,5 +1,9 @@
 # TODO - Prochaine Session PariScore
 
+## Priorité Haute
+
+- [ ] Fix du layout Guide : supprimer les chevauchements de texte et passer au design épuré L'Équipe.
+
 ## En Cours / A Finaliser
 
 ### 1. Page Guide/Documentation en ligne

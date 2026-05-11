@@ -2583,10 +2583,9 @@
   }
 
   .guide-container {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 32px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .guide-toc {
@@ -2943,6 +2942,13 @@
   .gs-img-placeholder { width:100%; height:190px; background:#1a1a1a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
   .gs-img-placeholder span { font-family:var(--font-head); font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:0.06em; color:#fff; }
   .gs-img-placeholder small { font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:#ed1c24; }
+  body:not(.dark-theme) .gs-img-placeholder { background:#f0f0f0; border:2px solid #e0e0e0; }
+  body:not(.dark-theme) .gs-img-placeholder span { color:#1a1a1a; }
+  body:not(.dark-theme) .gs-stat-block { border-color:#1a1a1a; }
+  body:not(.dark-theme) .gs-stat { border-right-color:#e0e0e0; }
+  body:not(.dark-theme) .gs-article { border-top-color:#e0e0e0; }
+  body:not(.dark-theme) .gs-article:last-of-type { border-bottom-color:#e0e0e0; }
+  body:not(.dark-theme) .gs-img-frame { border-color:#1a1a1a; }
   .gs-caption { font-size:9.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text3); margin-top:6px; font-style:italic; line-height:1.5; }
   /* ── end gs ─────────────────────────────────────────────────────────────── */
 
@@ -3033,7 +3039,7 @@
 
   @media (max-width: 900px) {
     .guide-container {
-      grid-template-columns: 1fr;
+      padding: 20px 14px;
     }
     .guide-toc {
       position: static;
@@ -3320,14 +3326,33 @@
     color: #1a1a1a;
   }
   body:not(.dark-theme) .guide-section-header {
-    border-bottom: 3px solid #ed1c24;
+    border-bottom: 2px solid #1a1a1a;
     border-top: none;
     background: none;
+    margin-top: 48px;
+    margin-bottom: 24px;
+    padding-bottom: 10px;
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  body:not(.dark-theme) .guide-section-header::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 26px;
+    background: #ed1c24;
+    flex-shrink: 0;
   }
   body:not(.dark-theme) .guide-section-header h2 {
     color: #1a1a1a;
-    font-size: 22px;
     font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0;
   }
   body:not(.dark-theme) .guide-section-icon { display: none; }
   /* Nav arrows guide */
@@ -4918,7 +4943,7 @@
     <div class="guide-hero-decoration"></div>
   </section>
 
-  <section class="guide-container" style="max-width:1200px;margin:0 auto;padding:32px 20px;">
+  <section class="guide-container" style="max-width:860px;margin:0 auto;padding:32px 28px 60px;">
     
     <div id="guide-stats-section" class="guide-section-header">
       <span class="guide-section-icon">📊</span>
