@@ -76,6 +76,7 @@
 4. Nettoyage automatique des matchs finis - BUG CORRIGE: db.archive_matches non initialise, maintenant synchronise
 - [x] Automatisation du nettoyage horaire (setInterval 1h) — autoPurgeDatabase() supprime matchs terminés/expirés (>4h) via filtre JS en mémoire + saveDB()
 - [x] Création du module de tutoriel/aide pour l'onglet 'Top Stratégies' (Définitions & Interprétation) — bouton "ℹ Aide & Guide" + modal glassmorphism 5 sections (Conf., Value, Edge, Over/BTTS, xG).
+- [x] Refonte UI Modale Stats : Compartimenter le 'Power Scout V2' dans l'onglet 'PRO SCOUT' uniquement, appliquer le thème clair 'L'Équipe' et supprimer les emojis IA.
 
 ### 19. 🎨 UI/UX : Onglet Guide - Charte Graphique
 - [x] **Mettre la charte graphique sur l'onglet "Guide"**

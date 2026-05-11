@@ -883,6 +883,14 @@
   .ins-section { margin-bottom: 20px; }
   .ins-section-title { font: 700 10px/1 var(--font-mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
   /* Poisson thermometer market cards */
+  /* Flat Poisson rows (L'Équipe style) */
+  .pois-flat-grid { display:flex; flex-direction:column; gap:7px; }
+  .pois-row { display:grid; grid-template-columns:110px 1fr 38px 48px; align-items:center; gap:8px; }
+  .pois-lbl { font-size:11.5px; font-weight:600; color:#333; white-space:nowrap; }
+  .pois-track { height:4px; background:#EBEBEB; border-radius:2px; overflow:hidden; }
+  .pois-fill { height:100%; border-radius:2px; transition:width .5s ease; }
+  .pois-pct { font:700 11px/1 var(--font-mono); text-align:right; }
+  .pois-badge { font-size:9px; font-weight:700; font-family:var(--font-mono); padding:2px 5px; border-radius:3px; border:1px solid; text-align:center; background:transparent; letter-spacing:.03em; }
   .poisson-thermo-grid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
   .poisson-thermo { flex:0 0 calc(25% - 6px); min-width:68px; display:flex; flex-direction:column; align-items:center; gap:7px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 6px 10px; transition:border-color .2s,transform .2s,box-shadow .2s; cursor:default; }
   .poisson-thermo:hover { border-color:rgba(255,255,255,0.14); transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.3); }
@@ -3893,16 +3901,38 @@
     box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
   }
 
-  /* Insights panel */
-  body:not(.dark-theme) #insights-panel {
-    background: #fff !important;
-    border-color: #EAEAEA !important;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.12) !important;
+  /* Insights panel — thème L'Équipe (forcé light, dark mode inclus) */
+  #insights-panel {
+    background: #FFFFFF !important;
+    border-color: #E0E0E0 !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18) !important;
+    color: #111111 !important;
   }
-  body:not(.dark-theme) .ins-tab.active {
-    border-bottom-color: #E2001A !important;
-    color: #E2001A !important;
-  }
+  #insights-panel-inner { color: #111111; }
+  #insights-panel .ins-teams { color: #111111 !important; font-family: var(--font-head); font-size: 22px; font-weight: 800; }
+  #insights-panel .ins-league { color: #888888 !important; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  #insights-panel .ins-tabs { border-bottom-color: #E0E0E0 !important; }
+  #insights-panel .ins-tab { color: #888888 !important; font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  #insights-panel .ins-tab:hover { color: #111111 !important; }
+  #insights-panel .ins-tab.active { color: #ED1C24 !important; border-bottom-color: #ED1C24 !important; }
+  #insights-panel .ins-section-title { color: #AAAAAA !important; font-size: 9px; letter-spacing: 2px; }
+  #insights-panel .ins-table th { color: #AAAAAA !important; border-bottom-color: #E8E8E8 !important; }
+  #insights-panel .ins-table td { border-bottom-color: #F0F0F0 !important; color: #333 !important; }
+  #insights-panel .ins-table tr:hover td { background: #F7F7F7 !important; }
+  #insights-panel .ins-table .row-label { color: #555555 !important; }
+  #insights-panel .cmp-label { color: #555555 !important; font-size: 11px; }
+  #insights-panel .cmp-val-home { color: #1558d6 !important; }
+  #insights-panel .cmp-val-away { color: #8e24aa !important; }
+  #insights-panel .cmp-track { background: #EEEEEE !important; }
+  #insights-panel .cmp-home { background: #1558d6 !important; }
+  #insights-panel .cmp-away { background: #8e24aa !important; }
+  #insights-panel .form-badge.form-W { background: #1a8c45 !important; color: #fff !important; }
+  #insights-panel .form-badge.form-D { background: #888 !important; color: #fff !important; }
+  #insights-panel .form-badge.form-L { background: #cc1a1a !important; color: #fff !important; }
+  #insights-panel .ps-report { color: #222222 !important; }
+  #insights-panel .ps-report h1, #insights-panel .ps-report h2, #insights-panel .ps-report h3 { color: #111111 !important; }
+  #insights-panel .modal-close { color: #666 !important; background: none !important; border: 1px solid #DDD !important; border-radius: 50% !important; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+  #insights-panel .modal-close:hover { border-color: #999 !important; color: #111 !important; }
 
 </style>
 </head>
@@ -5099,13 +5129,13 @@
       </div>
       <div class="ins-tabs">
         <div class="ins-tab active" onclick="insShowTab('resume')">Résumé</div>
-        <div class="ins-tab" onclick="insShowTab('stats')">📊 Stats</div>
-        <div class="ins-tab" onclick="insShowTab('scouting')">🕵️ PRO SCOUT</div>
+        <div class="ins-tab" onclick="insShowTab('stats')">Stats</div>
+        <div class="ins-tab" onclick="insShowTab('scouting')">PRO SCOUT</div>
         <div class="ins-tab" onclick="insShowTab('graphique')">Graphique</div>
         <div class="ins-tab" onclick="insShowTab('classement')">Classement</div>
-        <div class="ins-tab" onclick="insShowTab('corners')">🚩 Corners</div>
-        <div class="ins-tab" onclick="insShowTab('powerscore')">⚡ Power Score</div>
-        <div class="ins-tab" onclick="insShowTab('h2h')">⚔️ H2H</div>
+        <div class="ins-tab" onclick="insShowTab('corners')">Corners</div>
+        <div class="ins-tab" onclick="insShowTab('powerscore')">Power Score</div>
+        <div class="ins-tab" onclick="insShowTab('h2h')">H2H</div>
       </div>
       <div id="ins-tab-resume"></div>
       <div id="ins-tab-stats"      style="display:none"></div>
@@ -5114,9 +5144,8 @@
       <div id="ins-tab-classement" style="display:none"></div>
       <div id="ins-tab-corners"    style="display:none"></div>
       <div id="ins-tab-powerscore" style="display:none"></div>
-      <div id="ins-tab-scouting"   style="display:none"></div>
+      <div id="ins-tab-scouting"   style="display:none"><div id="scout-content" style="padding:16px"></div></div>
       <div id="ins-tab-h2h"        style="display:none"></div>
-        <div id="scout-content" style="padding:16px"></div>
       </div>
     </div>
   </div>
@@ -7904,14 +7933,17 @@ function buildResumeTab(d) {
 
     <div class="ins-section">
       <div class="ins-section-title">Marchés Poisson</div>
-      <div class="poisson-thermo-grid">
-        ${[['GG',p.btts],['O1.5',p.over15],['O2.5',p.over25],['O3.5',p.over35],['H',p.homeWin],['D',p.draw],['A',p.awayWin]].map(([lbl,val]) => {
-          const color = val > 65 ? 'var(--green)' : val > 45 ? 'var(--amber)' : 'var(--red)';
-          return val != null ? `<div class="poisson-thermo" style="--fill:${val}%;--color:${color}">
-            <div class="pt-value" style="color:${color}">${val}%</div>
-            <div class="pt-track"><div class="pt-fill"></div></div>
-            <div class="pt-label">${lbl}</div>
-          </div>` : '';
+      <div class="pois-flat-grid">
+        ${[['GG / BTTS',p.btts],['Over 1.5',p.over15],['Over 2.5',p.over25],['Over 3.5',p.over35],['Domicile',p.homeWin],['Nul',p.draw],['Extérieur',p.awayWin]].map(([lbl,val]) => {
+          if (val == null) return '';
+          const color = val > 65 ? '#1a8c45' : val > 45 ? '#b45309' : '#cc1a1a';
+          const badge = val > 65 ? 'Fort' : val > 45 ? 'Moyen' : 'Faible';
+          return `<div class="pois-row">
+            <span class="pois-lbl">${lbl}</span>
+            <div class="pois-track"><div class="pois-fill" style="width:${val}%;background:${color}"></div></div>
+            <span class="pois-pct" style="color:${color}">${val}%</span>
+            <span class="pois-badge" style="color:${color};border-color:${color}">${badge}</span>
+          </div>`;
         }).join('')}
       </div>
     </div>
@@ -8933,7 +8965,7 @@ async function buildScoutingTab(matchId) {
     el.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
         <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;background:var(--bg4);padding:3px 8px;border-radius:4px;letter-spacing:.05em;">
-          ${data.cached ? '⏱ CACHE 24H' : '⚡ PRO SCOUT v2'}
+          ${data.cached ? 'CACHE 24H' : 'PRO SCOUT v2'}
         </span>
         <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">5 PILIERS · GEMINI 2.0 FLASH</span>
       </div>
@@ -8943,10 +8975,10 @@ async function buildScoutingTab(matchId) {
       ${tgText ? `
       <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span style="font-size:12px;font-weight:700;color:var(--text2);">📲 Script Telegram</span>
+          <span style="font-size:12px;font-weight:700;color:var(--text2);">Script Telegram</span>
           <button id="scout-tg-btn" onclick="copyScoutTelegram()"
             style="background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:var(--green);border-radius:6px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s;font-family:'DM Mono',monospace;">
-            📋 Copier pour Telegram
+            Copier pour Telegram
           </button>
         </div>
         <div id="scout-tg-text"
@@ -8959,7 +8991,7 @@ async function buildScoutingTab(matchId) {
     // v69.0: Rapport synthétique de secours avec les données déjà chargées
     const d = insCurrentData;
     const m = d?.match;
-    if (!m) { el.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text3)"><div style="font-size:22px;margin-bottom:8px">📊</div>Analyse temporairement indisponible.<br><span style="font-size:11px">Réessayez dans quelques secondes.</span></div>`; return; }
+    if (!m) { el.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text3)">Analyse temporairement indisponible.<br><span style="font-size:11px">Réessayez dans quelques secondes.</span></div>`; return; }
     const p  = m.poisson        || {};
     const eg = m.expectedGoals  || {};
     const hs = m.stats?.home    || {};
@@ -8972,7 +9004,7 @@ async function buildScoutingTab(matchId) {
     el.innerHTML = `
       <div style="font-size:10px;color:var(--amber);margin-bottom:8px;font-family:'DM Mono',monospace">RAPPORT SYNTHÉTIQUE (fallback — IA indisponible)</div>
       <div class="ps-report" style="font-size:13px;line-height:1.8;color:var(--text2)">
-        <h3 style="color:var(--green);margin:0 0 12px">🕵️ Rapport Scouting — ${m.home_team} vs ${m.away_team}</h3>
+        <h3 style="color:var(--green);margin:0 0 12px">Rapport Scouting — ${m.home_team} vs ${m.away_team}</h3>
         <p><strong>Scénario :</strong> ${scenario} (xG ${safeFixed(eg.home)} — ${safeFixed(eg.away)})</p>
         <p><strong>Marchés :</strong> O2.5 ${p.over25||'?'}% · BTTS ${p.btts||'?'}% · 1X2 ${p.homeWin||'?'}/${p.draw||'?'}/${p.awayWin||'?'}%</p>
         ${topH ? `<p><strong>${m.home_team} :</strong> ${topH.name} (KPI ${safeFixed(topH.kpi,1)} · ${topH.goals||0} buts · ${topH.assists||0} passes)</p>` : ''}
