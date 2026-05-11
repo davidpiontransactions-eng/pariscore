@@ -462,6 +462,23 @@ async function searchSofascoreTeam(teamName) {
 // -------------------------------------------------
 //  BSD: Fiche détaillée joueur
 // -------------------------------------------------
+async function bsdSearchPlayers(name) {
+  if (!BSD_API_KEY || !name) return [];
+  try {
+    const res = await bsdFetch(`/players/?search=${encodeURIComponent(name)}&page_size=10`);
+    const results = res.data?.results || [];
+    return results.map(p => ({
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      team: p.team ? { id: p.team.id, name: p.team.name } : null,
+    }));
+  } catch (e) {
+    console.error('[bsdSearchPlayers] erreur:', e.message);
+    return [];
+  }
+}
+
 async function bsdGetPlayerDetail(playerId) {
   if (!BSD_API_KEY) return null;
   try {
