@@ -61,7 +61,14 @@
       "Bash(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
       "Bash(Select-Object Id, CPU, WorkingSet, CommandLine)",
       "Bash(curl -s http://localhost:3000/api/v1/matches)",
-      "Bash(bd dolt *)"
+      "Bash(bd dolt *)",
+      "Bash(Get-Process -Name node -ErrorAction SilentlyContinue)",
+      "Bash(Stop-Process -Force)",
+      "Bash(Start-Sleep 1)",
+      "Bash(Write-Host \"Killed\")",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell($data = Invoke-RestMethod http://localhost:3000/api/v1/matches; $data.matches | Select-Object -ExpandProperty country | Sort-Object -Unique)"
     ]
   }
 }
