@@ -7237,8 +7237,16 @@ function renderMatches(matches) {
   if (!matches) return;
   const tbody = document.getElementById('vb-body');
   if (!tbody) return;
-  // [FIX] Suppression du scroll force pour eviter le saut d'ecran en mode Live
-  const _savedScrollY = window.scrollY;
+  // [FIX] Body lock — physiquement impossible de scroller pendant le rebuild DOM
+  const _rmBodyWasLocked = _scrollLocked;
+  const _rmSavedScrollY = _rmBodyWasLocked
+    ? parseInt(document.body.style.top || '0') * -1
+    : window.scrollY;
+  if (!_rmBodyWasLocked) {
+    document.body.style.position = 'fixed';
+    document.body.style.top = '-' + _rmSavedScrollY + 'px';
+    document.body.style.width = '100%';
+  }
   tbody.innerHTML = '';
 
   let filtered = matches;
@@ -7676,10 +7684,13 @@ const label = country
   buildExpertReport(matches);
   updateLiveCounters();
   resolvePendingLogos();
-  // [FIX S1] Scroll restore instant — evite l'animation smooth visible
-  document.documentElement.style.scrollBehavior = 'auto';
-  window.scrollTo(0, _savedScrollY);
-  requestAnimationFrame(function() { document.documentElement.style.scrollBehavior = ''; });
+  // [FIX] Body unlock — restaure scroll instant sans animation
+  if (!_rmBodyWasLocked) {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo({ top: _rmSavedScrollY, behavior: 'instant' });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
