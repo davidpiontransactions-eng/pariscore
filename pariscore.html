@@ -7249,6 +7249,7 @@ function renderMatches(matches) {
   }
   tbody.innerHTML = '';
 
+  try {
   let filtered = matches;
 
   // Filtre par jour
@@ -7684,12 +7685,14 @@ const label = country
   buildExpertReport(matches);
   updateLiveCounters();
   resolvePendingLogos();
-  // [FIX] Body unlock — restaure scroll instant sans animation
-  if (!_rmBodyWasLocked) {
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo({ top: _rmSavedScrollY, behavior: 'instant' });
+  } finally {
+    // [FIX] Body unlock garanti — meme si erreur dans le render
+    if (!_rmBodyWasLocked) {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo({ top: _rmSavedScrollY, behavior: 'auto' });
+    }
   }
 }
 
