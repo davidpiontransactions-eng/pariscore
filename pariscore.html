@@ -85,8 +85,9 @@
     font-size: 15px;
     line-height: 1.6;
     overflow-x: hidden;
-    overflow-anchor: none; /* V72: désactive l'ancrage scroll natif — on gère nous-mêmes */
+    overflow-anchor: auto; /* [FIX S2] Restaure l'ancrage natif browser — desactive uniquement sur #vb-body */
   }
+  #vb-body { overflow-anchor: none; } /* [FIX S2] Table tbody: pas d'ancrage (rebuild complet) */
   a { color: inherit; text-decoration: none; }
   button { cursor: pointer; border: none; background: none; font-family: var(--font-body); }
 
@@ -7675,7 +7676,10 @@ const label = country
   buildExpertReport(matches);
   updateLiveCounters();
   resolvePendingLogos();
-  window.scrollTo(0, _savedScrollY); // [FIX] Restore scroll position apres rebuild DOM
+  // [FIX S1] Scroll restore instant — evite l'animation smooth visible
+  document.documentElement.style.scrollBehavior = 'auto';
+  window.scrollTo(0, _savedScrollY);
+  requestAnimationFrame(function() { document.documentElement.style.scrollBehavior = ''; });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
