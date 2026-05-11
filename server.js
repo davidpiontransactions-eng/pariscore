@@ -1,4 +1,4 @@
-﻿/*const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
+/*const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
 
  * ══════════════════════════════════════════════════════════════════════════════
  *  PariScore — Backend Serveur-Centrique v2.0
@@ -353,6 +353,7 @@ let isFetchingStats = false;
 
 // ─── SSE CLIENTS ─────────────────────────────────────────────────────────────
 const sseClients = new Set(); // connexions SSE actives
+const _livePatchSnapshot = new Map(); // [P2] snapshot dernier etat live envoye par SSE
 
 function broadcastSSE(eventName, data) {
   const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -9828,22 +9829,31 @@ async function pollLiveScores() {
         const bsdLive = await fetchBSDMatches(dateStr, dateStr);
         if (!bsdLive) return;
 
+        const patches = [];
         for (const bl of bsdLive) {
             const m = db.matches.find(x => x.id === bl.id);
-            if (m) {
-                m.live_score = bl.live_score;
-                m.live_minute = bl.live_minute;
-                // Calculate live intensity from BSD data
-                m.live_intensity = computeLiveIntensityFromBSD(bl);
-            }
+            if (!m) continue;
+            const newIntensity = computeLiveIntensityFromBSD(bl);
+            const sig = (bl.live_score||'') + ':' + (bl.live_minute||'') + ':' + newIntensity + ':' + (bl.status || m.status || '');
+            if (_livePatchSnapshot.get(m.id) === sig) continue; // pas de changement
+            m.live_score    = bl.live_score;
+            m.live_minute   = bl.live_minute;
+            m.live_intensity = newIntensity;
+            if (bl.status) m.status = bl.status;
+            _livePatchSnapshot.set(m.id, sig);
+            patches.push({ id: m.id, live_score: m.live_score, live_minute: m.live_minute,
+                           live_intensity: m.live_intensity, status: m.status });
         }
-        saveDB();
+
+        if (patches.length > 0) {
+            saveDB();
+            if (sseClients.size > 0) broadcastSSE('live_patch', { patches });
+            console.log('[LivePoll] ' + patches.length + ' patch(es) -> SSE broadcast');
+        }
     } catch (e) {
         console.warn('[LivePoll] Error:', e.message);
     }
 }
-
-// Compute live intensity from BSD data (xG-based + momentum)
 function computeLiveIntensityFromBSD(live) {
     let intensity = 0;
 

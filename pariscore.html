@@ -6128,6 +6128,27 @@ function initSSE() {
     } catch(err) { console.warn('[SSE] buteurs-ready parse error', err); }
   });
 
+  sseConnection.addEventListener('live_patch', e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (!data.patches || !data.patches.length) return;
+      data.patches.forEach(function(p) {
+        var m = allMatches.find(function(x) { return x.id === p.id; });
+        if (!m) return;
+        if (p.live_score !== undefined) m.live_score = p.live_score;
+        if (p.live_minute !== undefined) m.live_minute = p.live_minute;
+        if (p.live_intensity !== undefined) m.live_intensity = p.live_intensity;
+        if (p.status) m.status = p.status;
+      });
+      if (activeMatchTab === 'live') {
+        var needsRebuild = patchLiveMatches(allMatches);
+        if (needsRebuild) renderMatches(allMatches);
+        buildLiveTop5Panel();
+        flashLiveUpdateToast();
+      }
+    } catch(err) { console.warn('[SSE] live_patch error', err); }
+  });
+
   sseConnection.onopen = () => {
     console.log('[SSE] Connecté — polling 5min désactivé');
     if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
