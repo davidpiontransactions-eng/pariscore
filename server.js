@@ -6673,18 +6673,18 @@ function getLeagueHub(oddsKey) {
 // Config centralisée : ajouter une stratégie = 1 entrée ici (zéro autre changement)
 // ── AI Tipsters — personnalités par stratégie (synchro avec STRATEGIES_UI) ────
 const STRATEGIES = {
-  BTTS_YES: { label: 'BTTS Oui', icon: '🥅', tipster: 'L\'Artilleur', tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.', tipsterFlag: '🇧🇷', getProb: m => m.poisson?.btts, getOdds: () => null },
-  OVER_2_5: { label: 'Plus de 2.5 buts', icon: '⚡', tipster: 'Le Foudroyeur', tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.', tipsterFlag: '🇳🇱', getProb: m => m.poisson?.over25, getOdds: () => null },
-  OVER_1_5: { label: 'Plus de 1.5 buts', icon: '🎯', tipster: 'Le Prudent', tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.', tipsterFlag: '🇩🇪', getProb: m => m.poisson?.over15, getOdds: () => null },
-  UNDER_2_5: { label: 'Moins de 2.5 buts', icon: '🛡️', tipster: 'Le Gardien', tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.', tipsterFlag: '🇮🇹', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
-  HOME_WIN: { label: 'Victoire Domicile', icon: '🏠', tipster: 'Le Localier', tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.', tipsterFlag: '🇬🇧', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
-  AWAY_WIN: { label: 'Victoire Extérieur', icon: '✈️', tipster: 'L\'Aventurier', tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.', tipsterFlag: '🇪🇸', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
-  DRAW: { label: 'Match Nul', icon: '🤝', tipster: 'Le Diplomate', tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.', tipsterFlag: '🇫🇷', getProb: m => m.poisson?.draw, getOdds: m => m.odds?.draw },
-  CS_00: { label: 'Score 0-0', icon: '🔒', tipster: 'Le Sceptique', tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.', tipsterFlag: '🇵🇹', getProb: m => m.poisson?.cs00, getOdds: () => null },
+  BTTS_YES: { label: 'BTTS Oui', icon: '', tipster: 'L\'Artilleur', tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.', tipsterFlag: '🇧🇷', getProb: m => m.poisson?.btts, getOdds: () => null },
+  OVER_2_5: { label: 'Plus de 2.5 buts', icon: '', tipster: 'Le Foudroyeur', tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.', tipsterFlag: '🇳🇱', getProb: m => m.poisson?.over25, getOdds: () => null },
+  OVER_1_5: { label: 'Plus de 1.5 buts', icon: '', tipster: 'Le Prudent', tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.', tipsterFlag: '🇩🇪', getProb: m => m.poisson?.over15, getOdds: () => null },
+  UNDER_2_5: { label: 'Moins de 2.5 buts', icon: '', tipster: 'Le Gardien', tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.', tipsterFlag: '🇮🇹', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
+  HOME_WIN: { label: 'Victoire Domicile', icon: '', tipster: 'Le Localier', tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.', tipsterFlag: '🇬🇧', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
+  AWAY_WIN: { label: 'Victoire Extérieur', icon: '', tipster: 'L\'Aventurier', tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.', tipsterFlag: '🇪🇸', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
+  DRAW: { label: 'Match Nul', icon: '', tipster: 'Le Diplomate', tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.', tipsterFlag: '🇫🇷', getProb: m => m.poisson?.draw, getOdds: m => m.odds?.draw },
+  CS_00: { label: 'Score 0-0', icon: '', tipster: 'Le Sceptique', tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.', tipsterFlag: '🇵🇹', getProb: m => m.poisson?.cs00, getOdds: () => null },
   // ── Stratégies avancées P1 ──────────────────────────────────────────────────
   ANGLE_CORNERS: {
     label: 'Angle Mort Corners',
-    icon: '📐',
+    icon: '',
     tipster: 'Le Géomètre',
     tipsterDesc: 'Lit le jeu dans les corners. Over 6.5 corners sur matchs à fort xG.',
     tipsterFlag: '🇦🇷',
@@ -6697,7 +6697,7 @@ const STRATEGIES = {
   },
   VERROU_TACTIQUE: {
     label: 'Verrou Tactique (U3.5)',
-    icon: '🔐',
+    icon: '',
     tipster: 'Le Verrou',
     tipsterDesc: 'Maître du under. Détecte les défenses imperméables.',
     tipsterFlag: '🇬🇷',
@@ -6713,7 +6713,7 @@ const STRATEGIES = {
   },
   GOLDEN_PPG_GAP: {
     label: 'Golden PPG Gap',
-    icon: '⭐',
+    icon: '',
     tipster: 'L\'Éclaireur',
     tipsterDesc: 'Repère les déséquilibres de forme. PPG gap ≥ 1.2 = value assurée.',
     tipsterFlag: '🇧🇪',
@@ -6736,7 +6736,7 @@ const STRATEGIES = {
   // ── Double Chance ────────────────────────────────────────────────────────────
   DC_HOME: {
     label: 'Double Chance 1X',
-    icon: '🏠X',
+    icon: '',
     tipster: 'Le Couvreur',
     tipsterDesc: 'Double chance maison. 1X = 2 résultats sur 3.',
     tipsterFlag: '🇨🇭',
@@ -6750,7 +6750,7 @@ const STRATEGIES = {
   },
   DC_AWAY: {
     label: 'Double Chance X2',
-    icon: 'X✈️',
+    icon: '',
     tipster: 'L\'Assureur',
     tipsterDesc: 'Double chance extérieur. X2 = filet de sécurité.',
     tipsterFlag: '🇸🇪',
@@ -6764,7 +6764,7 @@ const STRATEGIES = {
   },
   HT_HOME_FT_HOME: {
     label: 'Mi-Temps Victoire Dom.',
-    icon: '⏱🏠',
+    icon: '',
     tipster: 'Le Sprint',
     tipsterDesc: 'Domicile dominant dès la 1ère MT. Home/Home assuré.',
     tipsterFlag: '🇺🇸',
@@ -6779,7 +6779,7 @@ const STRATEGIES = {
   },
   HT_UNDER_FT_OVER: {
     label: 'Explosion 2e Mi-Temps',
-    icon: '💥',
+    icon: '',
     tipster: 'Le Dynamiteur',
     tipsterDesc: '1ère MT calme, 2ème MT explosive. Son flair.',
     tipsterFlag: '🇭🇷',
