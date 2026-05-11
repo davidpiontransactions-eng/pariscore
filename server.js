@@ -486,35 +486,128 @@ async function bsdGetPlayerDetail(playerId) {
     const p = res.data;
     if (!p) return null;
 
-    // Récupérer les stats de la saison en cours
-    let stats = null;
+    let rawStats = [];
     try {
-      const statsRes = await bsdFetch(`/player-stats/?player=${playerId}&page_size=20`);
-      stats = statsRes.data?.results || [];
+      const statsRes = await bsdFetch(`/player-stats/?player=${playerId}&page_size=30`);
+      rawStats = statsRes.data?.results || [];
     } catch { /* ignore */ }
 
+    // Agrégats saison courante (rawStats trié par date DESC par BSD)
+    const currentSeason = rawStats[0]?.season?.name || null;
+    const seasonStats = currentSeason
+      ? rawStats.filter(s => s.season?.name === currentSeason)
+      : rawStats;
+
+    let totalGoals = 0, totalAssists = 0, totalMinutes = 0, totalMatches = 0;
+    let totalYellow = 0, totalRed = 0, totalSaves = 0;
+    let totalShotsOn = 0, totalKeyPasses = 0;
+    let totalXG = 0, totalXA = 0;
+    let totalShotsTotal = 0, totalShotsInBox = 0;
+    const ratings = [];
+
+    for (const s of seasonStats) {
+      totalGoals     += s.goals             || 0;
+      totalAssists   += s.goal_assist        || 0;
+      totalMinutes   += s.minutes_played     || 0;
+      totalMatches   += 1;
+      totalYellow    += s.yellow_card        || 0;
+      totalRed       += s.red_card           || 0;
+      totalSaves     += s.saves              || 0;
+      totalShotsOn   += s.shots_on_target    || 0;
+      totalKeyPasses += s.key_pass           || 0;
+      totalXG        += s.expected_goals     || s.xg || 0;
+      totalXA        += s.expected_assists   || s.xa || 0;
+      totalShotsTotal+= s.shots_total        || s.total_shots || 0;
+      totalShotsInBox+= s.shots_in_box       || s.shots_inside_box || 0;
+      if (s.rating != null) ratings.push(s.rating);
+    }
+
+    const avgRating = ratings.length
+      ? parseFloat((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2))
+      : null;
+    const per90 = Math.max(1, totalMinutes / 90);
+    const convRate = totalShotsTotal > 0
+      ? parseFloat(((totalGoals / totalShotsTotal) * 100).toFixed(1))
+      : null;
+    const kpi = parseFloat(
+      ((totalGoals * 3 + totalAssists * 2 + (avgRating || 0)) / per90).toFixed(2)
+    );
+
+    const form_l5 = rawStats.slice(0, 5).map(s => ({
+      date:            (s.date || s.started_at || s.event_date || '').slice(0, 10),
+      opponent:        s.opponent?.name || s.opponent || null,
+      is_home:         s.is_home !== undefined ? s.is_home : null,
+      minutes_played:  s.minutes_played  || 0,
+      goals:           s.goals           || 0,
+      assists:         s.goal_assist      || 0,
+      shots_total:     s.shots_total      || s.total_shots || 0,
+      shots_on_target: s.shots_on_target  || 0,
+      xg:              parseFloat((s.expected_goals || s.xg || 0).toFixed(3)),
+      rating:          s.rating           || null,
+    }));
+
     return {
-      id: p.id,
-      name: p.name,
-      position: p.position,
-      nationality: p.nationality,
-      age: p.age,
-      birthdate: p.birthdate,
-      photo: p.image_path ? `https://sports.bzzoiro.com${p.image_path}` : null,
-      team: p.team ? { id: p.team.id, name: p.team.name } : null,
-      height: p.height,
-      weight: p.weight,
-      stats: stats.slice(0, 5).map(s => ({
-        season: s.season?.name,
-        competition: s.league?.name,
-        matches: s.matches || 0,
-        goals: s.goals || 0,
-        assists: s.assists || 0,
-        minutes: s.minutes_played || 0,
-        rating: s.rating || null,
-        yellow_cards: s.yellow_cards || 0,
-        red_cards: s.red_cards || 0
-      }))
+      id:                p.id,
+      name:              p.name,
+      short_name:        p.short_name         || null,
+      position:          p.position,
+      specific_position: p.specific_position  || null,
+      nationality:       p.nationality,
+      age:               p.age,
+      birthdate:         p.birthdate,
+      photo:             p.image_path ? `https://sports.bzzoiro.com${p.image_path}` : null,
+      team:              p.team ? { id: p.team.id, name: p.team.name } : null,
+      height:            p.height,
+      weight:            p.weight,
+      preferred_foot:    p.preferred_foot || null,
+      market_value:      p.market_value   || null,
+
+      season_stats: {
+        season:      currentSeason,
+        competition: rawStats[0]?.league?.name || null,
+        season_id:   rawStats[0]?.season?.id   || null,
+
+        base: {
+          matches:      totalMatches,
+          minutes:      totalMinutes,
+          goals:        totalGoals,
+          assists:      totalAssists,
+          yellow_cards: totalYellow,
+          red_cards:    totalRed,
+          avg_rating:   avgRating,
+          saves:        totalSaves,
+        },
+        shooting: {
+          shots_total:               totalShotsTotal,
+          shots_on_target:           totalShotsOn,
+          shots_off_target:          totalShotsTotal > 0 ? totalShotsTotal - totalShotsOn : null,
+          shots_in_box:              totalShotsInBox || null,
+          conversion_rate:           convRate,
+          shots_per_game:            totalMatches > 0 ? parseFloat((totalShotsTotal / totalMatches).toFixed(2)) : null,
+          shots_on_target_per_game:  totalMatches > 0 ? parseFloat((totalShotsOn / totalMatches).toFixed(2)) : null,
+        },
+        expected: {
+          xg_total:           parseFloat(totalXG.toFixed(3)),
+          xa_total:           parseFloat(totalXA.toFixed(3)),
+          xg_per_game:        totalMatches > 0 ? parseFloat((totalXG / totalMatches).toFixed(3)) : null,
+          xa_per_game:        totalMatches > 0 ? parseFloat((totalXA / totalMatches).toFixed(3)) : null,
+          xg_overperformance: parseFloat((totalGoals - totalXG).toFixed(3)),
+          xg_per_shot:        totalShotsTotal > 0 ? parseFloat((totalXG / totalShotsTotal).toFixed(3)) : null,
+        },
+        creativity: {
+          key_passes:          totalKeyPasses,
+          key_passes_per_game: totalMatches > 0 ? parseFloat((totalKeyPasses / totalMatches).toFixed(2)) : null,
+        },
+        per90: {
+          goals_per90:   parseFloat((totalGoals   / per90).toFixed(3)),
+          xg_per90:      parseFloat((totalXG      / per90).toFixed(3)),
+          shots_per90:   totalShotsTotal > 0 ? parseFloat((totalShotsTotal / per90).toFixed(3)) : null,
+          assists_per90: parseFloat((totalAssists  / per90).toFixed(3)),
+        },
+        kpi_score: kpi,
+      },
+
+      form_l5,
     };
   } catch (e) {
     console.error('[bsdGetPlayerDetail] erreur:', e.message);
