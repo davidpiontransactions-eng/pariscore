@@ -1517,6 +1517,30 @@
   .strat-edge { color: var(--green); }
   .strat-edge.neg { color: var(--text3); }
 
+  /* ── STRATÉGIES HELP MODAL ──────────────────────────────────────────────── */
+  #strat-help-btn { display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid rgba(255,255,255,0.1);color:var(--text3);border-radius:20px;padding:5px 12px;font-size:11px;font-family:var(--font-body);cursor:pointer;transition:border-color .2s,color .2s;vertical-align:middle;margin-top:6px; }
+  #strat-help-btn:hover { border-color:rgba(41,182,246,0.4);color:var(--blue); }
+  #strat-help-overlay { position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px; }
+  #strat-help-modal { background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:strat-help-in .2s cubic-bezier(.4,0,.2,1); }
+  @keyframes strat-help-in { from { opacity:0;transform:translateY(16px); } to { opacity:1;transform:none; } }
+  #strat-help-modal .shm-head { display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border); }
+  #strat-help-modal .shm-title { font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--text); }
+  #strat-help-modal .shm-close { background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;transition:color .15s; }
+  #strat-help-modal .shm-close:hover { color:var(--text); }
+  #strat-help-modal .shm-body { padding:18px 20px 22px;display:flex;flex-direction:column;gap:14px; }
+  .shm-block { background:var(--bg3);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px; }
+  .shm-block-head { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
+  .shm-icon { font-size:18px;line-height:1; }
+  .shm-name { font-size:13px;font-weight:700;color:var(--text);font-family:var(--font-body); }
+  .shm-desc { font-size:12px;color:var(--text2);line-height:1.6;font-family:var(--font-body); }
+  .shm-scale { display:flex;gap:6px;flex-wrap:wrap;margin-top:8px; }
+  .shm-pip { display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;font-family:var(--font-mono); }
+  .shm-pip.green { background:rgba(0,230,118,0.12);color:#00e676;border:1px solid rgba(0,230,118,0.3); }
+  .shm-pip.amber { background:rgba(255,167,38,0.12);color:#ffa726;border:1px solid rgba(255,167,38,0.3); }
+  .shm-pip.red   { background:rgba(239,68,68,0.12);color:#ff5252;border:1px solid rgba(239,68,68,0.3); }
+  .shm-pip.blue  { background:rgba(41,182,246,0.12);color:#29b6f6;border:1px solid rgba(41,182,246,0.3); }
+  .shm-pip.grey  { background:var(--bg4);color:var(--text3);border:1px solid var(--border); }
+  .shm-example { margin-top:8px;padding:8px 10px;background:rgba(41,182,246,0.05);border-left:2px solid rgba(41,182,246,0.3);border-radius:0 6px 6px 0;font-size:11px;color:var(--text2);line-height:1.5; }
   /* ── STRATEGY COLOR BADGES — v10 design ────────────────────────────────── */
   .stg-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; font-family: var(--font-mono); letter-spacing: .3px; }
   .stg-badge.btts     { background: rgba(0,230,118,0.12); color: #00e676; border: 1px solid rgba(0,230,118,0.25); }
@@ -3411,6 +3435,14 @@
   /* Strat-conf-slider confiance → rouge */
   body:not(.dark-theme) #strat-conf-val { color: var(--accent) !important; }
 
+  /* Aide strat modal — light mode */
+  body:not(.dark-theme) #strat-help-modal { background:#ffffff; border-color:#e0e0e0; }
+  body:not(.dark-theme) .shm-block { background:#f5f5f5; border-color:#e8e8e8; }
+  body:not(.dark-theme) .shm-name { color:#1a1a1a; }
+  body:not(.dark-theme) .shm-desc { color:#444; }
+  body:not(.dark-theme) #strat-help-btn { color:#666; border-color:#ccc; }
+  body:not(.dark-theme) #strat-help-btn:hover { color:var(--accent); border-color:var(--accent); }
+
   /* ── TOUS LES GRIDS → flex colonne pill-cards ─────────────── */
   #hot-picks-grid,
   #sure-bets-grid,
@@ -4569,6 +4601,7 @@
   <div class="section-label">Top Stratégies</div>
   <div class="section-title">Les meilleurs paris<br>par stratégie.</div>
   <div class="section-sub">Sélectionnez un marché. PariScore vous classe instantanément les matchs à venir par % de confiance — du plus sûr au moins sûr.</div>
+  <button id="strat-help-btn" onclick="openStratHelp()">ℹ Aide &amp; Guide</button>
 
   <div class="strategy-pills" id="strategy-pills"></div>
           <div id="acca-panel" class="acca-panel" style="display:none;"></div>
@@ -10930,6 +10963,15 @@ function resetStratFilters() {
   loadStrategy(currentStrategy);
 }
 
+function openStratHelp() {
+  const el = document.getElementById('strat-help-overlay');
+  if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeStratHelp() {
+  const el = document.getElementById('strat-help-overlay');
+  if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
 function initStrategiesPage() {
   if (strategiesPageInitialized) { loadStrategy(currentStrategy); return; }
   const pills = document.getElementById('strategy-pills');
@@ -12841,6 +12883,7 @@ function dpCopy(btn) {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('deep-modal').classList.contains('open')) closeDeepAnalysis();
+  if (e.key === 'Escape' && document.getElementById('strat-help-overlay')?.style.display !== 'none') closeStratHelp();
 });
 
 /* ── Auto Theme (Light/Dark by hour) ── */
@@ -12916,6 +12959,69 @@ document.addEventListener('keydown', e => {
   <div id="team-detail-content" style="background:var(--bg2);border-radius:12px;padding:30px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;"></div>
 </div>
 <div id="odds-graph-tooltip"></div>
+
+<!-- MODAL : AIDE TOP STRATÉGIES -->
+<div id="strat-help-overlay" style="display:none;" onclick="if(event.target===this)closeStratHelp()">
+  <div id="strat-help-modal" role="dialog" aria-modal="true" aria-labelledby="shm-title-id">
+    <div class="shm-head">
+      <span class="shm-title" id="shm-title-id">📖 Guide — Top Stratégies</span>
+      <button class="shm-close" onclick="closeStratHelp()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="shm-body">
+
+      <div class="shm-block">
+        <div class="shm-block-head"><span class="shm-icon">🎯</span><span class="shm-name">Indice de Confiance</span></div>
+        <div class="shm-desc">Score composite <strong>0 → 100%</strong> calculé à partir de trois signaux : la probabilité Poisson du marché sélectionné, la forme récente des deux équipes (5 derniers matchs), et l'alignement entre probabilité mathématique et cote bookmaker.<br>Plus il est élevé, plus le signal est cohérent entre les sources.</div>
+        <div class="shm-scale">
+          <span class="shm-pip red">≥ 80% — Fort</span>
+          <span class="shm-pip amber">60–79% — Solide</span>
+          <span class="shm-pip grey">&lt; 60% — Prudence</span>
+        </div>
+        <div class="shm-example">💡 Conf. <strong>82%</strong> sur Over 2.5 → Poisson prédit 82 chances sur 100 que le match dépasse 2,5 buts, confirmé par la forme offensive des deux équipes.</div>
+      </div>
+
+      <div class="shm-block">
+        <div class="shm-block-head"><span class="shm-icon">💰</span><span class="shm-name">Value Index</span></div>
+        <div class="shm-desc">Mesure l'<strong>avantage mathématique</strong> sur le bookmaker. Calculé depuis l'edge no-vig : si votre probabilité réelle est de 70% mais que la cote implique seulement 60%, vous avez un avantage de +10 pts.<br>Un Value Index ≥ 40% signale une opportunité réelle.</div>
+        <div class="shm-scale">
+          <span class="shm-pip red">≥ 70% — Excellente value</span>
+          <span class="shm-pip amber">40–69% — Value correcte</span>
+          <span class="shm-pip grey">&lt; 40% — Neutre</span>
+        </div>
+        <div class="shm-example">💡 Cote <strong>1.60</strong> sur victoire à domicile avec 70% de probabilité réelle → Edge ≈ <strong>+12%</strong> → les maths sont en votre faveur sur le long terme.</div>
+      </div>
+
+      <div class="shm-block">
+        <div class="shm-block-head"><span class="shm-icon">📊</span><span class="shm-name">Edge % (badge cote)</span></div>
+        <div class="shm-desc">Écart entre la <strong>cote fair</strong> (sans marge bookmaker) et la meilleure cote disponible. Calculé via la méthode <strong>Shin-Hurley</strong> (dévigage). Edge positif = cote supérieure à la valeur réelle.</div>
+        <div class="shm-scale">
+          <span class="shm-pip green">+ vert — Cote au-dessus du fair</span>
+          <span class="shm-pip red">− rouge — Cote en dessous du fair</span>
+        </div>
+        <div class="shm-example">💡 Edge <strong>+4.2%</strong> → pour 100 paris identiques à long terme, vous gagnez en moyenne 4,20€ de plus que le bookmaker ne devrait vous payer.</div>
+      </div>
+
+      <div class="shm-block">
+        <div class="shm-block-head"><span class="shm-icon">⚽</span><span class="shm-name">Over / Under · BTTS</span></div>
+        <div class="shm-desc">Probabilités calculées par le <strong>modèle de Poisson Bivarié</strong> depuis les Expected Goals (xG). <strong>O2.5</strong> = plus de 2 buts au total. <strong>BTTS</strong> = les deux équipes marquent au moins une fois.</div>
+        <div class="shm-scale">
+          <span class="shm-pip green">≥ 75% — Très probable</span>
+          <span class="shm-pip amber">55–74% — Probable</span>
+          <span class="shm-pip grey">&lt; 55% — Incertain</span>
+        </div>
+        <div class="shm-example">💡 Si une équipe a joué Over 2.5 dans 4 matchs sur 5 et affiche xG ≥ 1.5, le signal Poisson est doublement renforcé.</div>
+      </div>
+
+      <div class="shm-block">
+        <div class="shm-block-head"><span class="shm-icon">📐</span><span class="shm-name">xG — Expected Goals</span></div>
+        <div class="shm-desc">Buts attendus par équipe selon la qualité des occasions. Paramètre λ qui alimente Poisson. <strong>xG 1.8 – 0.6</strong> = domicile nettement plus dangereux.</div>
+        <div class="shm-example">💡 xG élevé + Conf. ≥ 70% = signal fort. xG élevé + Conf. faible = stats offensives bonnes mais forme récente instable — à surveiller.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </script>
 </body>
 </html>
