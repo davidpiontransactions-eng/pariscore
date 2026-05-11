@@ -48,7 +48,20 @@
       "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\) || '{}'\\); console.log\\('ready:', d.ready, 'matches:', d.matchCount\\);\")",
       "Bash(curl -s \"http://localhost:3000/api/v1/matches\" -o /c/Users/david/mt4.json)",
       "Bash(awk -F: '$2 >= 2143 && $2 <= 3100')",
-      "Bash(node --check \"C:\\\\Users\\\\david\\\\Documents\\\\dev PariScore\\\\ParisScorebis\\\\pariscore.html\")"
+      "Bash(node --check \"C:\\\\Users\\\\david\\\\Documents\\\\dev PariScore\\\\ParisScorebis\\\\pariscore.html\")",
+      "Bash(bd list *)",
+      "Bash(bd show *)",
+      "Bash(awk -F: '$2 >= 7104 && $2 <= 7260')",
+      "Bash(node *)",
+      "Bash(awk -F: '$2 >= 7421 && $2 <= 8410')",
+      "Bash(bd close *)",
+      "Bash(bd stats *)",
+      "Bash(bd create *)",
+      "Bash(bd update *)",
+      "Bash(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object Id, CPU, WorkingSet, CommandLine)",
+      "Bash(curl -s http://localhost:3000/api/v1/matches)",
+      "Bash(bd dolt *)"
     ]
   }
 }

@@ -36,6 +36,57 @@ cp -rf source dest          # NOT: cp -r source dest
 - `apt-get` - use `-y` flag
 - `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
+## Project: PariScore
+
+**Zero-dependency Node.js backend.** No package.json — uses only Node.js native modules + `better-sqlite3` (C++ addon). DO NOT run `npm install` or add npm packages.
+
+### Startup
+```bash
+node server.js    # Port 3000, requires .env with API keys
+```
+.env must contain at minimum: `API_FOOTBALL_KEY`, `ODDS_API_KEY`, `GEMINI_API_KEY`.
+
+### Architecture
+- **`server.js`** (7578 lines) — monolithic backend: HTTP server, SQLite, data fusion, all API routes
+- **`pariscore.html`** (8507 lines) — single-page frontend, no framework, vanilla JS
+- **`admin.html`** — admin dashboard
+- **Database**: `better-sqlite3` → `pariscore.db` (single-file SQLite, WAL mode)
+
+### Code Conventions
+- French comments, camelCase identifiers, ES5 `require()` (not ES modules)
+- Server API routes: `GET/POST /api/v1/...`
+- Frontend fetches from `/api/v1/...`
+- Async pattern: `(async () => { ... })().catch(err => ...)` — never bare `await` at top level
+- **CRITICAL**: `STRATEGIES` object in server.js and `STRATEGIES_UI` array in pariscore.html must stay in sync
+
+### Quality & Testing
+- **No test suite, no linter, no typecheck.** Ad-hoc scripts only: `test-integrity.js`, `fix-matches.js`, `compare-apis.js`
+- **No build step.** `node server.js` is the only command.
+- **Manual verification**: start server, open `http://localhost:3000`, check browser console
+
+### Project-Specific Skills
+Available locally — use via `skill` tool for guided workflows:
+- `ps-add-strategy` — scaffold a new betting strategy
+- `ps-audit` — full project state audit
+- `ps-changelog` — update CHANGELOG.md after feature completion
+- `ps-deploy` — Render.com deployment checklist
+- `ps-test` — QA audit of a module
+
+### Context & History
+- **`CLAUDE.md`** — full roadmap, version history (v9.7 current), persona as "CTO & Lead Data Scientist"
+- **`CHANGELOG.md`** — detailed change log by version
+- **`render.yaml`** — Render.com Blueprint deploy config
+- **`.context/`** — audit reports, test reports, strategy docs
+
+### Deployment
+Render.com via `render.yaml` — detects automatically. Health check: `/api/v1/status`.
+Disk mount: `/app/data` for persistent SQLite DB.
+Required env vars listed in render.yaml.
+
+### Secrets
+- `.env` contains live API keys — **NEVER commit**
+- Git already ignores `.env`, `*.db`, `*.log`
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
 
