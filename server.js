@@ -10589,6 +10589,106 @@ process.on('uncaughtException', (error) => {
 }); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
 
 /* -------------------------------------------------
+   Sofascore — enrichissement stats live (possession, tirs, corners, xG, momentum)
+   ------------------------------------------------- */
+const _sofaLiveStatsCache = {};       // { sofaEventId: { ts, data } }
+const SOFA_LIVE_STATS_TTL = 60000;    // 1 min — données live
+
+function applyLiveStats(match, data) {
+  if (data.possession)        match.live_possession        = data.possession;
+  if (data.shots)             match.live_shots             = data.shots;
+  if (data.shots_on_target)   match.live_shots_on_target   = data.shots_on_target;
+  if (data.corners)           match.live_corners           = data.corners;
+  if (data.dangerous_attacks) match.live_dangerous_attacks = data.dangerous_attacks;
+  if (data.xg)                match.live_xg                = data.xg;
+  if (data.cards)             match.live_cards             = data.cards;
+  if (data.momentum)          match.live_momentum          = data.momentum;
+  match.live_intensity = computeLiveIntensityFromSofa(data, match);
+  match.live_stats = {
+    possessionHome:        data.possession?.home       ?? match.live_stats?.possessionHome       ?? 50,
+    possessionAway:        data.possession?.away       ?? match.live_stats?.possessionAway       ?? 50,
+    dangerousAttacksHome:  data.dangerous_attacks?.home ?? match.live_stats?.dangerousAttacksHome ?? 0,
+    dangerousAttacksAway:  data.dangerous_attacks?.away ?? match.live_stats?.dangerousAttacksAway ?? 0,
+    shotsOnTargetHome:     data.shots_on_target?.home  ?? match.live_stats?.shotsOnTargetHome    ?? 0,
+    shotsOnTargetAway:     data.shots_on_target?.away  ?? match.live_stats?.shotsOnTargetAway    ?? 0,
+  };
+}
+
+function computeLiveIntensityFromSofa(data, match) {
+  let intensity = 0;
+  if (data.xg) {
+    intensity += Math.min(Math.abs((data.xg.home||0) - (data.xg.away||0)) * 15, 40);
+  }
+  const totalShots = (data.shots?.home||0) + (data.shots?.away||0);
+  intensity += Math.min(totalShots * 1.5, 30);
+  const totalGoals = (match.live_score?.home||0) + (match.live_score?.away||0);
+  intensity += Math.min(totalGoals * 10, 30);
+  if (data.dangerous_attacks) {
+    const da = (data.dangerous_attacks.home||0) + (data.dangerous_attacks.away||0);
+    intensity += Math.min(da * 0.3, 20);
+  }
+  return Math.round(Math.min(intensity, 100));
+}
+
+async function enrichMatchWithSofaLiveStats(match) {
+  try {
+    const sofaEventId = await findSofaEventId(match);
+    if (!sofaEventId) return null;
+
+    const cacheKey = String(sofaEventId);
+    const cached = _sofaLiveStatsCache[cacheKey];
+    if (cached && Date.now() - cached.ts < SOFA_LIVE_STATS_TTL) {
+      applyLiveStats(match, cached.data);
+      return cached.data;
+    }
+
+    const [statsRes, graphRes] = await Promise.allSettled([
+      sofaGet(`/event/${sofaEventId}/statistics`),
+      sofaGet(`/event/${sofaEventId}/graph`),
+    ]);
+
+    const data = {};
+
+    if (statsRes.status === 'fulfilled' && statsRes.value.status === 200) {
+      const allPeriod = (statsRes.value.data?.statistics || []).find(p => p.period === 'ALL');
+      for (const group of allPeriod?.groups || []) {
+        for (const item of group.statisticsItems || []) {
+          const n = (item.name || '').toLowerCase();
+          if (n.includes('possession'))          data.possession        = { home: item.homeValue??50, away: item.awayValue??50 };
+          else if (n === 'total shots')          data.shots             = { home: item.homeValue??0,  away: item.awayValue??0  };
+          else if (n.includes('shots on target')) data.shots_on_target  = { home: item.homeValue??0,  away: item.awayValue??0  };
+          else if (n.includes('corner'))         data.corners           = { home: item.homeValue??0,  away: item.awayValue??0  };
+          else if (n.includes('dangerous attack'))data.dangerous_attacks= { home: item.homeValue??0,  away: item.awayValue??0  };
+          else if (n.includes('expected goal'))  data.xg                = { home: item.homeValue??0,  away: item.awayValue??0  };
+          else if (n.includes('yellow card')) {
+            if (!data.cards) data.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
+            data.cards.home_yellow = item.homeValue??0; data.cards.away_yellow = item.awayValue??0;
+          } else if (n.includes('red card')) {
+            if (!data.cards) data.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
+            data.cards.home_red = item.homeValue??0; data.cards.away_red = item.awayValue??0;
+          }
+        }
+      }
+    }
+
+    if (graphRes.status === 'fulfilled' && graphRes.value.status === 200) {
+      const pts = graphRes.value.data?.graphPoints || [];
+      data.momentum = pts.slice(-20).map(p => ({ team: (p.value??0) >= 0 ? 'home' : 'away', v: p.value??0 }));
+    }
+
+    if (Object.keys(data).length > 0) {
+      _sofaLiveStatsCache[cacheKey] = { ts: Date.now(), data };
+      applyLiveStats(match, data);
+      console.log(`  [SofaLive] event ${sofaEventId}: ${Object.keys(data).join(', ')}`);
+    }
+    return Object.keys(data).length > 0 ? data : null;
+  } catch (e) {
+    console.warn('[SofaLive]', e.message);
+    return null;
+  }
+}
+
+/* -------------------------------------------------
    Fonction de polling des scores en direct
    ------------------------------------------------- */
 async function pollLiveScores() {
@@ -10604,20 +10704,40 @@ async function pollLiveScores() {
             if (!m) continue;
             const newIntensity = computeLiveIntensityFromBSD(bl);
             const sig = (bl.live_score||'') + ':' + (bl.live_minute||'') + ':' + newIntensity + ':' + (bl.status || m.status || '');
-            if (_livePatchSnapshot.get(m.id) === sig) continue; // pas de changement
-            m.live_score    = bl.live_score;
-            m.live_minute   = bl.live_minute;
+            if (_livePatchSnapshot.get(m.id) === sig) continue;
+            m.live_score     = bl.live_score;
+            m.live_minute    = bl.live_minute;
             m.live_intensity = newIntensity;
             if (bl.status) m.status = bl.status;
             _livePatchSnapshot.set(m.id, sig);
-            patches.push({ id: m.id, live_score: m.live_score, live_minute: m.live_minute,
-                           live_intensity: m.live_intensity, status: m.status });
+            patches.push(m);
         }
 
-        if (patches.length > 0) {
+        // Enrichissement Sofascore pour chaque match live (stats + xG + momentum)
+        const liveNow = db.matches.filter(m => m.live_score && parseInt(m.live_minute||0) > 0 && parseInt(m.live_minute||0) < 130);
+        await Promise.allSettled(liveNow.map(m => enrichMatchWithSofaLiveStats(m)));
+
+        if (patches.length > 0 || liveNow.length > 0) {
             saveDB();
-            if (sseClients.size > 0) broadcastSSE('live_patch', { patches });
-            console.log('[LivePoll] ' + patches.length + ' patch(es) -> SSE broadcast');
+            // Broadcast patch enrichi avec tous les champs Sofascore
+            const fullPatches = (patches.length > 0 ? patches : liveNow).map(m => ({
+                id: m.id,
+                live_score:            m.live_score,
+                live_minute:           m.live_minute,
+                live_intensity:        m.live_intensity,
+                status:                m.status,
+                live_possession:       m.live_possession,
+                live_shots:            m.live_shots,
+                live_shots_on_target:  m.live_shots_on_target,
+                live_corners:          m.live_corners,
+                live_dangerous_attacks:m.live_dangerous_attacks,
+                live_xg:               m.live_xg,
+                live_cards:            m.live_cards,
+                live_momentum:         m.live_momentum,
+                live_stats:            m.live_stats,
+            }));
+            if (sseClients.size > 0) broadcastSSE('live_patch', { patches: fullPatches });
+            if (patches.length > 0) console.log('[LivePoll] ' + patches.length + ' BSD patch(es) + ' + liveNow.length + ' Sofa enrichi(s)');
         }
     } catch (e) {
         console.warn('[LivePoll] Error:', e.message);

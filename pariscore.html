@@ -6978,10 +6978,19 @@ function initSSE() {
       data.patches.forEach(function(p) {
         var m = allMatches.find(function(x) { return x.id === p.id; });
         if (!m) return;
-        if (p.live_score !== undefined) m.live_score = p.live_score;
-        if (p.live_minute !== undefined) m.live_minute = p.live_minute;
-        if (p.live_intensity !== undefined) m.live_intensity = p.live_intensity;
-        if (p.status) m.status = p.status;
+        if (p.live_score            !== undefined) m.live_score            = p.live_score;
+        if (p.live_minute           !== undefined) m.live_minute           = p.live_minute;
+        if (p.live_intensity        !== undefined) m.live_intensity        = p.live_intensity;
+        if (p.status)                              m.status                = p.status;
+        if (p.live_possession       !== undefined) m.live_possession       = p.live_possession;
+        if (p.live_shots            !== undefined) m.live_shots            = p.live_shots;
+        if (p.live_shots_on_target  !== undefined) m.live_shots_on_target  = p.live_shots_on_target;
+        if (p.live_corners          !== undefined) m.live_corners          = p.live_corners;
+        if (p.live_dangerous_attacks !== undefined) m.live_dangerous_attacks = p.live_dangerous_attacks;
+        if (p.live_xg               !== undefined) m.live_xg               = p.live_xg;
+        if (p.live_cards            !== undefined) m.live_cards            = p.live_cards;
+        if (p.live_momentum         !== undefined) m.live_momentum         = p.live_momentum;
+        if (p.live_stats            !== undefined) m.live_stats            = p.live_stats;
       });
       if (activeMatchTab === 'live') {
         updateLiveDashboard(allMatches);
