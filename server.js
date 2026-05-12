@@ -10673,7 +10673,7 @@ async function enrichMatchWithSofaLiveStats(match) {
 
     if (graphRes.status === 'fulfilled' && graphRes.value.status === 200) {
       const pts = graphRes.value.data?.graphPoints || [];
-      data.momentum = pts.slice(-20).map(p => ({ team: (p.value??0) >= 0 ? 'home' : 'away', v: p.value??0 }));
+      data.momentum = pts.map(p => ({ min: p.minute ?? 0, v: p.value ?? 0 }));
     }
 
     if (Object.keys(data).length > 0) {
