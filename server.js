@@ -12640,10 +12640,13 @@ async function fetchSofaMicroserviceEnrichment(match) {
 /* -------------------------------------------------
    Live Dashboard V2 — BSD sr_stats source + momentum synthétique (Sofascore 403 server-side)
    ------------------------------------------------- */
-const _liveMomentumHistory = new Map();     // matchId → [{ min, v }]  (in-memory replay)
-const _bsdEventDetailCache = new Map();     // bsdId → { ts, data }
-const BSD_EVENT_DETAIL_TTL = 25 * 1000;     // 25s cache pour absorber polls 30s sans hit excessif
+const _liveMomentumHistory = new Map();     // matchId → [{ min, v }]
+const _liveXGHistory = new Map();           // matchId → [{ min, xgH, xgA }]  v9.8.6
+const _livePressureHistory = new Map();     // matchId → [{ min, pi_home, pi_away }]  v9.8.6
+const _bsdEventDetailCache = new Map();
+const BSD_EVENT_DETAIL_TTL = 25 * 1000;
 const MOMENTUM_MAX_POINTS = 30;
+const XG_HISTORY_MAX = 90;                  // 1 point per minute max
 
 async function fetchBSDEventDetail(bsdId) {
   if (!BSD_API_KEY || !bsdId) return null;
@@ -12674,6 +12677,44 @@ function recordLiveMomentumSnapshot(matchId, minute, sr) {
   }
 }
 
+// v9.8.6 — Pressure Index 0-100 par équipe (formule maison BSD events, 5min rolling window)
+// Formule = (danger_attacks × 0.5) + (shots × 1.5) + (corners × 1.0) + (possession × 0.3)
+// Normalisé 0-100 par clamp et soustraction de la moyenne historique.
+function computePressureIndex(sr, match) {
+  if (!sr && !match.live_stats) return null;
+  const daH = sr?.dangerous_attack?.home || match.live_dangerous_attacks?.home || 0;
+  const daA = sr?.dangerous_attack?.away || match.live_dangerous_attacks?.away || 0;
+  const shH = match.live_shots?.home || 0;
+  const shA = match.live_shots?.away || 0;
+  const coH = match.live_corners?.home || 0;
+  const coA = match.live_corners?.away || 0;
+  const poH = sr?.ball_safe_pct?.home ?? match.live_possession?.home ?? 50;
+  const poA = sr?.ball_safe_pct?.away ?? match.live_possession?.away ?? 50;
+  const piH = Math.max(0, Math.min(100, Math.round((daH * 0.5) + (shH * 1.5) + (coH * 1.0) + (poH * 0.3))));
+  const piA = Math.max(0, Math.min(100, Math.round((daA * 0.5) + (shA * 1.5) + (coA * 1.0) + (poA * 0.3))));
+  return { home: piH, away: piA, delta: piH - piA };
+}
+
+function recordLivePressureSnapshot(matchId, minute, pi) {
+  if (!pi || !minute) return;
+  const hist = _livePressureHistory.get(matchId) || [];
+  if (!hist.length || hist[hist.length - 1].min !== minute) {
+    hist.push({ min: minute, pi_home: pi.home, pi_away: pi.away, delta: pi.delta });
+    if (hist.length > XG_HISTORY_MAX) hist.shift();
+    _livePressureHistory.set(matchId, hist);
+  }
+}
+
+function recordLiveXGSnapshot(matchId, minute, xgH, xgA) {
+  if (!minute || (xgH == null && xgA == null)) return;
+  const hist = _liveXGHistory.get(matchId) || [];
+  if (!hist.length || hist[hist.length - 1].min !== minute) {
+    hist.push({ min: minute, xgH: +(xgH || 0), xgA: +(xgA || 0) });
+    if (hist.length > XG_HISTORY_MAX) hist.shift();
+    _liveXGHistory.set(matchId, hist);
+  }
+}
+
 function buildLiveDashboardPayload(match, detail) {
   const sr = detail?.sr_stats || null;
   const minute = parseInt(detail?.current_minute ?? match.live_minute ?? 0) || 0;
@@ -12681,6 +12722,10 @@ function buildLiveDashboardPayload(match, detail) {
 
   const xgH = detail?.actual_home_xg ?? detail?.home_xg_live ?? null;
   const xgA = detail?.actual_away_xg ?? detail?.away_xg_live ?? null;
+  // v9.8.6 — snapshot xG cumulative + pressure index
+  recordLiveXGSnapshot(match.id, minute, xgH, xgA);
+  const pi = computePressureIndex(sr, match);
+  if (pi) recordLivePressureSnapshot(match.id, minute, pi);
   const possH = sr?.ball_safe_pct?.home;
   const possA = sr?.ball_safe_pct?.away;
   const attackH = sr?.attack?.home;
@@ -12715,6 +12760,10 @@ function buildLiveDashboardPayload(match, detail) {
     cards: match.live_cards || null,
     momentum: _liveMomentumHistory.get(match.id) || match.live_momentum || [],
     intensity: match.live_intensity || 0,
+    // v9.8.6 — innovations live dashboard
+    pressure_index: pi || null,                              // { home, away, delta } 0-100
+    pressure_history: _livePressureHistory.get(match.id) || [],  // [{ min, pi_home, pi_away, delta }]
+    xg_curve: _liveXGHistory.get(match.id) || [],            // [{ min, xgH, xgA }] cumulative
     _source: 'bsd_sr_stats',
     _enrichment_ready: !!(match.live_xg || match.live_shots || sr),
   };
