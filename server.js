@@ -12628,15 +12628,33 @@ process.on('uncaughtException', (error) => {
    (microservice Python expose ScraperFC + sofascore-wrapper en HTTP local)
    ------------------------------------------------- */
 const SOFA_SERVICE_BASE = process.env.SOFA_SERVICE_BASE || 'http://127.0.0.1:8765';
-const SOFA_SERVICE_TIMEOUT = 5000;
-const _sofaEventIdMapping = new Map();   // bsdId → { ts, sofaId }
+const SOFA_SERVICE_TIMEOUT = 15000;       // 15s — microservice ScraperFC cold-start lent
+const _sofaEventIdMapping = new Map();
 const SOFA_MAPPING_TTL = 24 * 60 * 60 * 1000;
 
+// v9.9.4 — fix Node 24 fetch IPv6/IPv4 race timeout : utilise http.request (IPv4 forcé via 127.0.0.1)
 function _sofaServiceFetch(path, timeoutMs = SOFA_SERVICE_TIMEOUT) {
-  return Promise.race([
-    fetch(`${SOFA_SERVICE_BASE}${path}`).then(r => r.ok ? r.json() : null).catch(() => null),
-    new Promise(resolve => setTimeout(() => resolve(null), timeoutMs)),
-  ]);
+  const url = `${SOFA_SERVICE_BASE}${path}`;
+  return new Promise((resolve) => {
+    try {
+      const u = new URL(url);
+      const lib = u.protocol === 'https:' ? require('https') : require('http');
+      const req = lib.request({
+        hostname: u.hostname, port: u.port, path: u.pathname + (u.search || ''),
+        method: 'GET', family: 4, // force IPv4
+      }, (res) => {
+        if (res.statusCode !== 200) { res.resume(); return resolve(null); }
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (c) => body += c);
+        res.on('end', () => { try { resolve(JSON.parse(body)); } catch { resolve(null); } });
+        res.on('error', () => resolve(null));
+      });
+      req.setTimeout(timeoutMs, () => { req.destroy(); resolve(null); });
+      req.on('error', () => resolve(null));
+      req.end();
+    } catch { resolve(null); }
+  });
 }
 
 async function resolveSofaEventId(match) {
