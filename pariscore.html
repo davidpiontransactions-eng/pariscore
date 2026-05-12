@@ -7779,6 +7779,20 @@ function trackClick(type, id, event, teamCtx) {
   if (type === 'player') openPlayerDetail(id, teamCtx);
 }
 
+// Helper sûr quote-escape : utilise dataset attributes (évite XSS sur noms avec apostrophe)
+function trackClickFromDataset(el, type, event) {
+  const id = el.dataset.playerName || el.dataset.teamName || '';
+  const teamCtx = el.dataset.teamName || '';
+  const leagueId = el.dataset.leagueId || '';
+  if (type === 'player') {
+    if (event) event.stopPropagation();
+    fetch('/api/v1/click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, id, team: teamCtx || null }) }).catch(() => {});
+    openPlayerDetail(id, teamCtx, leagueId);
+  } else {
+    trackClick(type, id, event, teamCtx);
+  }
+}
+
 function openTeamDetail(teamNameOrId) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité équipe en cours de développement.'); return; }
@@ -7809,7 +7823,7 @@ function openTeamDetail(teamNameOrId) {
     .catch(() => { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">Erreur chargement équipe</div>'; });
 }
 
-function openPlayerDetail(playerName, teamCtx) {
+function openPlayerDetail(playerName, teamCtx, leagueId) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité joueur en cours de développement.'); return; }
   modal.style.display = 'flex';
@@ -7819,7 +7833,8 @@ function openPlayerDetail(playerName, teamCtx) {
   _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">Chargement...</div>';
 
   const teamQ = teamCtx ? '&team=' + encodeURIComponent(teamCtx) : '';
-  fetch('/api/v1/player?name=' + encodeURIComponent(playerName) + teamQ)
+  const leagueQ = leagueId ? '&league=' + encodeURIComponent(leagueId) : '';
+  fetch('/api/v1/player?name=' + encodeURIComponent(playerName) + teamQ + leagueQ)
     .then(r => r.json())
     .then(data => {
       if (data.error) { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">' + data.error + '</div>'; return; }
@@ -8272,8 +8287,9 @@ function cornerProbFromXG(homeXG, awayXG) {
 
 function renderTopButteurs(buts, ctx) {
   if (!buts || !buts.length) return '<span style="color:var(--text3);font-size:11px;">—</span>';
-  const homeTeam = (ctx && ctx.home) ? String(ctx.home).replace(/'/g,"\\'") : '';
-  const awayTeam = (ctx && ctx.away) ? String(ctx.away).replace(/'/g,"\\'") : '';
+  const homeTeam = (ctx && ctx.home) ? String(ctx.home).replace(/"/g,'&quot;') : '';
+  const awayTeam = (ctx && ctx.away) ? String(ctx.away).replace(/"/g,'&quot;') : '';
+  const leagueId = ctx && ctx.leagueId ? ctx.leagueId : '';
   return buts.map(b => {
     const pct = b.probaMarquer || 0;
     const pctClr = pct >= 25 ? '#E2001A' : pct >= 15 ? '#1A1A1A' : '#888';
@@ -8292,7 +8308,7 @@ function renderTopButteurs(buts, ctx) {
     const perfLabel = totalXG > 0 && totalGoals > totalXG ? '⚠ Surperforme' : totalXG > 0 && totalGoals < totalXG ? '📈 Sous-performe (value)' : '';
     return `<div class="buteur-row" title="Buts: ${totalGoals} | xG: ${totalXG} | Matchs: ${matchCount}&#10;Ratio buts/xG: ${ratio} ${perfLabel}&#10;xG/match: ${xg} | Buts/match: ${gpM}">
       <span class="buteur-badge" style="background:${teamClr}20;color:${teamClr};border:1px solid ${teamClr}40;">${teamLbl}</span>
-      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" onclick="trackClick('player','${(b.name||'').replace(/'/g,"\\'")}',event,'${b.team === 'home' ? homeTeam : awayTeam}')" title="Voir fiche joueur">${b.name}</span>
+      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" data-player-name="${(b.name||'').replace(/"/g,'&quot;')}" data-team-name="${b.team === 'home' ? homeTeam : awayTeam}" data-league-id="${leagueId}" onclick="trackClickFromDataset(this,'player',event)" title="Voir fiche joueur">${b.name}</span>
       <span class="buteur-bar-wrap"><span class="buteur-bar" style="width:${barW}%;background:${barClr};"></span></span>
       <span class="buteur-xg" style="color:${barClr};">${xg.toFixed(2)}</span>
       <span class="buteur-pct" style="color:${pctClr};">${pct}%</span>
@@ -9095,7 +9111,7 @@ const label = country
         <div class="t3c-wrap">${top3}</div>
       </td>
       <td>
-        <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team })}</div>
+        <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}</div>
       </td>
       <td>
         <div style="display:flex;gap:5px;align-items:center;">

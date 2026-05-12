@@ -360,6 +360,156 @@ function suggestStakeCents(bankrollCents, prob, odds, multiplier = 1.0, cap = 0.
   return Math.max(0, Math.round(bankrollCents * f * multiplier));
 }
 
+// ─── API-FOOTBALL PLAYER ENRICHMENT (photo CDN + stats) ──────────────────────
+// CDN public api-sports : https://media.api-sports.io/football/players/{id}.png — pas de clé requise pour la photo.
+// Endpoint /players?search={name}&team={id}&season={year} pour stats + player.id (1 req).
+function apiFootballPlayerPhotoUrl(apiFootballPlayerId) {
+  if (!apiFootballPlayerId) return null;
+  return `https://media.api-sports.io/football/players/${apiFootballPlayerId}.png`;
+}
+function getAPIFootballTeamIdByName(teamName) {
+  if (!teamName) return null;
+  const key = normName(teamName);
+  if (db.teamStats[key]?.teamId) return db.teamStats[key].teamId;
+  const allKeys = Object.keys(db.teamStats);
+  const firstWord = key.split(' ')[0];
+  if (firstWord && firstWord.length >= 3) {
+    const fuzzyKey = allKeys.find(k => k.startsWith(firstWord) || k.includes(firstWord));
+    if (fuzzyKey && db.teamStats[fuzzyKey]?.teamId) return db.teamStats[fuzzyKey].teamId;
+  }
+  return null;
+}
+// Dynamic API-Football team_id lookup via /teams endpoint (cached 30 days)
+async function fetchAPIFootballTeamId(teamName, leagueId, season) {
+  if (!API_FOOTBALL_KEY || !teamName || !leagueId) return null;
+  const seasonY = season || bsdCurrentSeasonYear();
+  const cacheKey = `apif_teams_league_${leagueId}_${seasonY}`;
+  let teamsMap = apiCacheGet(cacheKey, 'apif_teams');
+  if (!teamsMap) {
+    try {
+      const url = `https://v3.football.api-sports.io/teams?league=${leagueId}&season=${seasonY}`;
+      const res = await httpsGet(url, { 'x-apisports-key': API_FOOTBALL_KEY });
+      if (res.status !== 200 || !res.data?.response?.length) {
+        // Try previous season if current fails (free plan limit)
+        if (seasonY > 2022) return fetchAPIFootballTeamId(teamName, leagueId, seasonY - 1);
+        apiCacheSet(cacheKey, {}, 'apif_teams', 24 * 3600 * 1000);
+        return null;
+      }
+      teamsMap = {};
+      for (const entry of res.data.response) {
+        const t = entry.team;
+        if (t?.id && t?.name) teamsMap[normName(t.name)] = t.id;
+      }
+      apiCacheSet(cacheKey, teamsMap, 'apif_teams', 30 * 24 * 3600 * 1000);
+    } catch (e) {
+      console.warn(`  [API-Football Teams] league ${leagueId} erreur:`, e.message);
+      return null;
+    }
+  }
+  const target = normName(teamName);
+  if (teamsMap[target]) return teamsMap[target];
+  // Fuzzy
+  const keys = Object.keys(teamsMap);
+  const fuzzy = keys.find(k => k.includes(target) || target.includes(k));
+  return fuzzy ? teamsMap[fuzzy] : null;
+}
+async function fetchAPIFootballPlayer(playerName, teamName, leagueId) {
+  if (!API_FOOTBALL_KEY || !playerName) return null;
+  let teamId = getAPIFootballTeamIdByName(teamName);
+  // Si pas de teamId via db.teamStats, lookup dynamique via API-Football /teams
+  if (!teamId && teamName && leagueId) {
+    teamId = await fetchAPIFootballTeamId(teamName, leagueId);
+  }
+  if (!teamId && !leagueId) return null;
+  // Strip accents — API-Football search field rejette diacritiques ("only alpha-numeric and spaces")
+  const stripAccents = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleanName = stripAccents(playerName);
+  if (cleanName.length < 4) return null;
+  // Cascade saisons : current → -1 → -2 (plan free limité 2022-2024)
+  const currentSeason = bsdCurrentSeasonYear();
+  const seasons = [currentSeason, currentSeason - 1, currentSeason - 2].filter(s => s >= 2022 && s <= 2024);
+  const targetNorm = normName(playerName);
+  for (const season of seasons) {
+    const cacheKey = `apif_player_${targetNorm}_${teamId || 'L'}_${leagueId || ''}_${season}`;
+    const cached = apiCacheGet(cacheKey, 'apif_player');
+    if (cached) return cached;
+    try {
+      // API-Football v3 n'accepte que `search` (min 4 chars). Pas de lastname param.
+      const tokens = cleanName.split(/\s+/);
+      const params = [`season=${season}`, `search=${encodeURIComponent(cleanName)}`];
+      if (teamId) params.push(`team=${teamId}`);
+      else if (leagueId) params.push(`league=${leagueId}`);
+      const url = `https://v3.football.api-sports.io/players?${params.join('&')}`;
+      const res = await httpsGet(url, { 'x-apisports-key': API_FOOTBALL_KEY });
+      if (res.status !== 200 || !res.data?.response?.length) {
+        apiCacheSet(cacheKey, null, 'apif_player', 12 * 3600 * 1000);
+        continue;
+      }
+      const entries = res.data.response;
+      const lastNameTarget = stripAccents(tokens[tokens.length - 1]).toLowerCase();
+      // Score chaque candidat : exact lastname + team_id match favorisés
+      const score = (e) => {
+        const pn = normName(e.player?.name || '');
+        const pln = (e.player?.lastname || '').toLowerCase();
+        const plnNorm = stripAccents(pln);
+        let s = 0;
+        if (pn === targetNorm) s += 100;
+        if (plnNorm === lastNameTarget) s += 50;
+        if (plnNorm.includes(lastNameTarget) || lastNameTarget.includes(plnNorm)) s += 10;
+        if (teamId && (e.statistics || []).some(st => Number(st.team?.id) === Number(teamId))) s += 30;
+        if (e.statistics?.[0]?.games?.appearences > 0) s += 5; // titulaire favorisé
+        return s;
+      };
+      const scored = entries.map(e => ({ e, s: score(e) })).sort((a, b) => b.s - a.s);
+      const best = scored[0]?.s > 0 ? scored[0].e : null;
+      if (!best) continue;
+      const p = best.player;
+      const stat = (best.statistics || [])[0] || {};
+      const enrichment = {
+        api_football_id: p.id,
+        photo: p.photo || apiFootballPlayerPhotoUrl(p.id),
+        name: p.name,
+        firstname: p.firstname,
+        lastname: p.lastname,
+        age: p.age,
+        birth: p.birth ? `${p.birth.date}${p.birth.place ? ' · ' + p.birth.place : ''}${p.birth.country ? ' (' + p.birth.country + ')' : ''}` : null,
+        nationality: p.nationality,
+        height: p.height,
+        weight: p.weight,
+        injured: p.injured || false,
+        team_name: stat.team?.name || null,
+        league_name: stat.league?.name || null,
+        season_year: season,
+        season_stats: {
+          appearances: stat.games?.appearences || 0,
+          minutes: stat.games?.minutes || 0,
+          position: stat.games?.position || null,
+          rating: stat.games?.rating ? parseFloat(stat.games.rating).toFixed(2) : null,
+          captain: stat.games?.captain || false,
+          goals: stat.goals?.total || 0,
+          assists: stat.goals?.assists || 0,
+          saves: stat.goals?.saves || 0,
+          shots_total: stat.shots?.total || 0,
+          shots_on: stat.shots?.on || 0,
+          passes_total: stat.passes?.total || 0,
+          passes_key: stat.passes?.key || 0,
+          passes_accuracy: stat.passes?.accuracy || 0,
+          yellow_cards: stat.cards?.yellow || 0,
+          red_cards: stat.cards?.red || 0,
+          dribbles_attempts: stat.dribbles?.attempts || 0,
+          dribbles_success: stat.dribbles?.success || 0,
+        },
+        _source: 'api-football',
+      };
+      apiCacheSet(cacheKey, enrichment, 'apif_player', 24 * 3600 * 1000);
+      return enrichment;
+    } catch (e) {
+      console.warn(`  [API-Football Player] ${playerName} (season ${season}) erreur:`, e.message);
+    }
+  }
+  return null;
+}
+
 // ─── BOOKMAKERS — ANJ FR + 1xbet ──────────────────────────────────────────────
 const ALLOWED_BOOKMAKERS = [
   '1xbet',
@@ -955,9 +1105,10 @@ async function bsdGetPlayerDetail(playerId) {
     const p = res.data;
     if (!p) return null;
 
+    // page_size=100 (was 30) — couvre vétérans 100+ matchs sans truncation
     let rawStats = [];
     try {
-      const statsRes = await bsdFetch(`/player-stats/?player=${playerId}&page_size=30`);
+      const statsRes = await bsdFetch(`/player-stats/?player=${playerId}&page_size=100`);
       rawStats = statsRes.data?.results || [];
     } catch { /* ignore */ }
 
@@ -8923,6 +9074,7 @@ if (pathname === '/api/v1/player') {
     const playerName = urlParams.searchParams.get('name');
     const playerId = urlParams.searchParams.get('id');
     const teamCtx = urlParams.searchParams.get('team') || urlParams.searchParams.get('team_name');
+    const leagueCtx = urlParams.searchParams.get('league'); // optionnel : config_id pour fallback
     if (!playerName && !playerId) {
         return jsonResponse(res, 400, { error: 'player id or name required' });
     }
@@ -8938,38 +9090,173 @@ if (pathname === '/api/v1/player') {
 
     (async () => {
         try {
-            let player;
+            let player = null;
+            // Étape 1 : API-Football d'abord si team_id ou league connus (couverture meilleure stars + photos CDN)
+            let apifPrimary = null;
+            if (playerName && (teamCtx || leagueCtx)) {
+              try {
+                apifPrimary = await fetchAPIFootballPlayer(playerName, teamCtx, leagueCtx ? parseInt(leagueCtx) : null);
+              } catch (e) { /* silence */ }
+            }
+            // Étape 2 : BSD (canonical pour stats détaillées + form_l5)
+            let bsdPlayer = null;
             if (playerId) {
-                player = await bsdGetPlayerDetail(playerId);
+                bsdPlayer = await bsdGetPlayerDetail(playerId);
             } else if (playerName) {
-                // Recherche prioritisée : nom + team d'abord, puis nom seul
                 let searchRes = teamCtx ? await bsdSearchPlayers(`${playerName} ${teamCtx}`) : [];
                 if (!searchRes || !searchRes.length) {
                     searchRes = await bsdSearchPlayers(playerName);
                 }
                 if (searchRes && searchRes.length > 0) {
-                    // Disambiguation par team_name si fourni
+                    // Multi-candidats : si on a API-Football match, on hydrate les top 3 BSD et on garde celui qui match le name de API-Football
                     let chosen = searchRes[0];
+                    if (apifPrimary?.name && searchRes.length > 1) {
+                      const apifNorm = normName(apifPrimary.name);
+                      const better = searchRes.find(p => normName(p.name) === apifNorm);
+                      if (better) chosen = better;
+                    }
                     if (teamCtx) {
                       const teamNorm = normName(teamCtx);
                       const match = searchRes.find(p => p.team && normName(p.team.name) === teamNorm);
                       if (match) chosen = match;
-                      else {
-                        // Fuzzy contains
-                        const fuzzy = searchRes.find(p => p.team && (normName(p.team.name).includes(teamNorm) || teamNorm.includes(normName(p.team.name))));
-                        if (fuzzy) chosen = fuzzy;
-                      }
                     }
-                    player = await bsdGetPlayerDetail(chosen.id);
+                    bsdPlayer = await bsdGetPlayerDetail(chosen.id);
                 }
             }
+            // Étape 3 : choisir source primaire — API-Football si nom matche search exactement, sinon BSD
+            if (apifPrimary) {
+              const searchedNorm = normName(playerName);
+              const apifNorm = normName(apifPrimary.name);
+              const apifLast = normName(apifPrimary.lastname || '');
+              const apifMatchesSearch = apifNorm === searchedNorm || apifLast === searchedNorm
+                || apifNorm.includes(searchedNorm) || searchedNorm.includes(apifNorm);
+              if (apifMatchesSearch) {
+                // API-Football primary
+                player = {
+                  id: apifPrimary.api_football_id,
+                  api_football_id: apifPrimary.api_football_id,
+                  name: apifPrimary.name,
+                  short_name: apifPrimary.firstname && apifPrimary.lastname ? apifPrimary.firstname.charAt(0) + '. ' + apifPrimary.lastname : null,
+                  position: apifPrimary.season_stats?.position || null,
+                  nationality: apifPrimary.nationality,
+                  age: apifPrimary.age,
+                  birthdate: apifPrimary.birth,
+                  photo: apifPrimary.photo,
+                  team: apifPrimary.team_name ? { name: apifPrimary.team_name } : null,
+                  height: apifPrimary.height,
+                  weight: apifPrimary.weight,
+                  preferred_foot: null,
+                  market_value: null,
+                  season_stats: {
+                    season: apifPrimary.season_year ? String(apifPrimary.season_year) + '/' + (apifPrimary.season_year + 1) : null,
+                    competition: apifPrimary.league_name,
+                    season_id: null,
+                    base: {
+                      matches: apifPrimary.season_stats.appearances,
+                      minutes: apifPrimary.season_stats.minutes,
+                      goals: apifPrimary.season_stats.goals,
+                      assists: apifPrimary.season_stats.assists,
+                      yellow_cards: apifPrimary.season_stats.yellow_cards,
+                      red_cards: apifPrimary.season_stats.red_cards,
+                      saves: apifPrimary.season_stats.saves,
+                      avg_rating: apifPrimary.season_stats.rating ? parseFloat(apifPrimary.season_stats.rating) : null,
+                    },
+                    shooting: {
+                      shots_total: apifPrimary.season_stats.shots_total,
+                      shots_on_target: apifPrimary.season_stats.shots_on,
+                      conversion_rate: apifPrimary.season_stats.shots_total ? (apifPrimary.season_stats.goals / apifPrimary.season_stats.shots_total) : null,
+                    },
+                    creativity: {
+                      key_passes: apifPrimary.season_stats.passes_key,
+                      key_passes_per_game: apifPrimary.season_stats.appearances ? (apifPrimary.season_stats.passes_key / apifPrimary.season_stats.appearances) : 0,
+                    },
+                    expected: { xg_total: 0, xg_per_game: 0, xa_total: 0, xa_per_game: 0, xg_overperformance: 0, xg_per_shot: null },
+                    per90: {
+                      goals_per90: apifPrimary.season_stats.minutes ? (apifPrimary.season_stats.goals * 90 / apifPrimary.season_stats.minutes) : 0,
+                      assists_per90: apifPrimary.season_stats.minutes ? (apifPrimary.season_stats.assists * 90 / apifPrimary.season_stats.minutes) : 0,
+                      xg_per90: 0,
+                      shots_per90: apifPrimary.season_stats.minutes ? (apifPrimary.season_stats.shots_total * 90 / apifPrimary.season_stats.minutes) : null,
+                    },
+                    kpi_score: 0,
+                  },
+                  form_l5: bsdPlayer?.form_l5 || [],
+                  _source: 'api-football',
+                  _photo_source: apifPrimary.photo ? 'api-football' : null,
+                  _enriched: bsdPlayer ? ['bsd-form'] : [],
+                };
+              }
+            }
+            // Sinon : utilise BSD comme primary
+            if (!player) player = bsdPlayer;
             if (!player) {
                 return jsonResponse(res, 404, { error: 'player not found' });
             }
-            // Note : Sofascore search endpoint bloqué par Cloudflare 403, fallback retiré.
-            // Si photo BSD null, frontend affiche silhouette + tag "Données limitées".
+            // Multi-source enrichment : si BSD photo null OU stats vides, tenter API-Football.
+            // CDN api-sports photos accessible sans clé : media.api-sports.io/football/players/{id}.png
+            const bsdMatchCount = player.season_stats?.base?.matches || 0;
+            const needsEnrich = !player.photo || bsdMatchCount < 3;
+            if (needsEnrich && (teamCtx || leagueCtx)) {
+              try {
+                // Use ORIGINAL search term (what user clicked) — not BSD-returned name (peut être mauvais joueur)
+                const apif = await fetchAPIFootballPlayer(playerName, teamCtx, leagueCtx ? parseInt(leagueCtx) : null);
+                // Garde-fou : si API-Football trouve un nom complètement différent du nom cherché, skip merge
+                const searchedNorm = normName(playerName);
+                const apifNorm = apif ? normName(apif.name) : '';
+                const apifFirstName = apif ? normName(apif.firstname || '') : '';
+                const apifLastName = apif ? normName(apif.lastname || '') : '';
+                const nameMatches = apif && (
+                  apifNorm === searchedNorm ||
+                  apifNorm.includes(searchedNorm) ||
+                  searchedNorm.includes(apifNorm) ||
+                  searchedNorm.includes(apifLastName) ||
+                  apifLastName.includes(searchedNorm)
+                );
+                if (apif && nameMatches) {
+                  // Si BSD a retourné un mauvais joueur (Mussa au lieu de Kylian par ex),
+                  // override aussi le name + identifiants si API-Football match exact la recherche
+                  const bsdNameMismatch = normName(player.name) !== searchedNorm && !normName(player.name).includes(searchedNorm);
+                  const apifExactMatch = apifNorm === searchedNorm || apifLastName === searchedNorm;
+                  if (bsdNameMismatch && apifExactMatch) {
+                    player.name = apif.name;
+                    player.short_name = apif.firstname && apif.lastname ? apif.firstname.charAt(0) + '. ' + apif.lastname : (player.short_name || null);
+                  }
+                  // Merge : prend photo + meta API-Football si BSD null
+                  if (!player.photo && apif.photo) {
+                    player.photo = apif.photo;
+                    player._photo_source = 'api-football';
+                  }
+                  // Enrich avec stats API-Football si BSD vide
+                  if (bsdMatchCount === 0 && apif.season_stats?.appearances > 0) {
+                    player.season_stats = player.season_stats || {};
+                    player.season_stats.base = player.season_stats.base || {};
+                    player.season_stats.base.matches = apif.season_stats.appearances;
+                    player.season_stats.base.minutes = apif.season_stats.minutes;
+                    player.season_stats.base.goals = apif.season_stats.goals;
+                    player.season_stats.base.assists = apif.season_stats.assists;
+                    player.season_stats.base.yellow_cards = apif.season_stats.yellow_cards;
+                    player.season_stats.base.red_cards = apif.season_stats.red_cards;
+                    player.season_stats.base.avg_rating = apif.season_stats.rating ? parseFloat(apif.season_stats.rating) : null;
+                    player.season_stats.shooting = player.season_stats.shooting || {};
+                    player.season_stats.shooting.shots_total = apif.season_stats.shots_total;
+                    player.season_stats.shooting.shots_on_target = apif.season_stats.shots_on;
+                    player.season_stats.creativity = player.season_stats.creativity || {};
+                    player.season_stats.creativity.key_passes = apif.season_stats.passes_key;
+                    player.season_stats.competition = apif.league_name || null;
+                  }
+                  // Meta : team_name, nationalité, taille, poids — prend si BSD null
+                  if (!player.team && apif.team_name) player.team = { name: apif.team_name };
+                  if (!player.nationality && apif.nationality) player.nationality = apif.nationality;
+                  if (!player.height && apif.height) player.height = apif.height;
+                  if (!player.weight && apif.weight) player.weight = apif.weight;
+                  if (!player.age && apif.age) player.age = apif.age;
+                  player.api_football_id = apif.api_football_id;
+                  player._enriched = (player._enriched || []).concat(['api-football']);
+                }
+              } catch (e) { /* fallback silencieux */ }
+            }
             player._photo_available = !!player.photo;
-            apiCacheSet(cacheKey, player, 'bsd_player', 7 * 24 * 3600 * 1000);
+            // TTL 24h pour joueurs actifs (was 7d → trop stale pour rating saison + form_l5)
+            apiCacheSet(cacheKey, player, 'bsd_player', 24 * 3600 * 1000);
             return jsonResponse(res, 200, player);
         } catch (e) {
             console.error('[Player API] erreur:', e.message);
