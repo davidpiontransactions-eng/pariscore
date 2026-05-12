@@ -12664,14 +12664,56 @@ async function fetchBSDEventDetail(bsdId) {
   }
 }
 
-function recordLiveMomentumSnapshot(matchId, minute, sr) {
-  if (!sr || !minute) return;
-  const homeDA = sr.dangerous_attack?.home || 0;
-  const awayDA = sr.dangerous_attack?.away || 0;
-  const v = homeDA - awayDA;
+// v9.8.7 — Momentum composite signed [-100, +100]
+// Formule = Σ(home_event × weight) - Σ(away_event × weight), squashed via tanh
+// Composantes : SOT × 8, shots × 3, corners × 5, DA × 0.4, possession_diff × 0.5
+// Smoothing EMA alpha 0.3 sur fenêtre rolling 3-min (delta vs snapshot 3-min ago)
+function computeCompositeMomentum(sr, match, prevSnapshot) {
+  const daH = sr?.dangerous_attack?.home ?? match.live_dangerous_attacks?.home ?? 0;
+  const daA = sr?.dangerous_attack?.away ?? match.live_dangerous_attacks?.away ?? 0;
+  const shH = match.live_shots?.home ?? 0;
+  const shA = match.live_shots?.away ?? 0;
+  const sotH = match.live_shots_on_target?.home ?? 0;
+  const sotA = match.live_shots_on_target?.away ?? 0;
+  const coH = match.live_corners?.home ?? 0;
+  const coA = match.live_corners?.away ?? 0;
+  const poH = sr?.ball_safe_pct?.home ?? match.live_possession?.home ?? 50;
+  const poA = sr?.ball_safe_pct?.away ?? match.live_possession?.away ?? 50;
+  // Delta vs snapshot 3-min ago si dispo (sinon delta absolu = cumul depuis 0')
+  const dDA  = (daH  - (prevSnapshot?.daH  || 0)) - (daA  - (prevSnapshot?.daA  || 0));
+  const dSH  = (shH  - (prevSnapshot?.shH  || 0)) - (shA  - (prevSnapshot?.shA  || 0));
+  const dSOT = (sotH - (prevSnapshot?.sotH || 0)) - (sotA - (prevSnapshot?.sotA || 0));
+  const dCO  = (coH  - (prevSnapshot?.coH  || 0)) - (coA  - (prevSnapshot?.coA  || 0));
+  const pDiff = poH - poA;
+  // Score signé : composite weighted
+  const raw = 8 * dSOT + 3 * dSH + 5 * dCO + 0.4 * dDA + 0.5 * pDiff;
+  // tanh squash : sortie en -100..+100, courbe en S sensible aux petits écarts
+  return Math.round(Math.tanh(raw / 15) * 100);
+}
+
+function recordLiveMomentumSnapshot(matchId, minute, sr, match) {
+  if (!minute) return;
+  // Snapshot 3-min ago pour calcul rolling delta
   const hist = _liveMomentumHistory.get(matchId) || [];
+  const prevPoint = hist.find(p => p.min === minute - 3) || hist[Math.max(0, hist.length - 3)];
+  const prev = prevPoint ? prevPoint.raw : null;
+  // Capture raw counters pour next delta
+  const raw = {
+    daH:  sr?.dangerous_attack?.home ?? match?.live_dangerous_attacks?.home ?? 0,
+    daA:  sr?.dangerous_attack?.away ?? match?.live_dangerous_attacks?.away ?? 0,
+    shH:  match?.live_shots?.home ?? 0,
+    shA:  match?.live_shots?.away ?? 0,
+    sotH: match?.live_shots_on_target?.home ?? 0,
+    sotA: match?.live_shots_on_target?.away ?? 0,
+    coH:  match?.live_corners?.home ?? 0,
+    coA:  match?.live_corners?.away ?? 0,
+  };
+  const v = computeCompositeMomentum(sr, match, prev);
+  // EMA smoothing alpha 0.3
+  const prevV = hist.length ? hist[hist.length - 1].v : 0;
+  const smoothed = Math.round(0.3 * v + 0.7 * prevV);
   if (!hist.length || hist[hist.length - 1].min !== minute) {
-    hist.push({ min: minute, v });
+    hist.push({ min: minute, v: smoothed, raw });
     if (hist.length > MOMENTUM_MAX_POINTS) hist.shift();
     _liveMomentumHistory.set(matchId, hist);
   }
@@ -12718,7 +12760,8 @@ function recordLiveXGSnapshot(matchId, minute, xgH, xgA) {
 function buildLiveDashboardPayload(match, detail) {
   const sr = detail?.sr_stats || null;
   const minute = parseInt(detail?.current_minute ?? match.live_minute ?? 0) || 0;
-  if (sr) recordLiveMomentumSnapshot(match.id, minute, sr);
+  // v9.8.7 : record momentum même sans sr si match.live_* disponibles (Sofa-enriched fallback)
+  if (minute) recordLiveMomentumSnapshot(match.id, minute, sr, match);
 
   const xgH = detail?.actual_home_xg ?? detail?.home_xg_live ?? null;
   const xgA = detail?.actual_away_xg ?? detail?.away_xg_live ?? null;

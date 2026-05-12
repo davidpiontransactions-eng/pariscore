@@ -11757,27 +11757,55 @@ function drawLDXGCurve(hist, m) {
   }
 }
 
+// v9.8.7 — momentum SVG : score signed -100..+100, area chart Sofascore-style + bars overlay
 function drawLDMomentumSVG(momArr) {
   const svg = document.getElementById('ldm-momentum-svg');
   if (!svg) return;
-  const W = 600, H = 140, midY = H / 2;
+  const W = 600, H = 140, midY = H / 2, padY = 6;
   const data = Array.isArray(momArr) ? momArr.slice(-30) : [];
-  if (!data.length) {
-    svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/><text x="${W/2}" y="${midY+4}" fill="var(--text3)" font-size="11" text-anchor="middle" font-family="var(--font-mono)">En attente de données momentum…</text>`;
+  // Empty state plus précis : <3 points = match trop tôt
+  if (data.length < 3) {
+    const msg = data.length === 0 ? 'En attente de données momentum…' : `Calcul en cours (${data.length}/3 points)…`;
+    svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/><text x="${W/2}" y="${midY+4}" fill="var(--text3)" font-size="11" text-anchor="middle" font-family="var(--font-mono)">${msg}</text>`;
     return;
   }
-  const step = W / data.length;
+  const step = W / Math.max(1, data.length - 1);
+  // Normalisation : v est déjà -100..+100 → scale linéaire vers Y pixels
+  const yScale = (v) => midY - (Math.max(-100, Math.min(100, v)) / 100) * (midY - padY);
+  // Build path area chart (bidirectionnel)
+  const points = data.map((pt, i) => {
+    const v = typeof pt === 'number' ? pt : (pt?.v ?? 0);
+    return { x: i * step, y: yScale(v), v };
+  });
+  const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  // Aire signée : remplit entre la courbe et la baseline midY
+  const areaHome = `${pathData} L${points[points.length-1].x.toFixed(1)},${midY} L${points[0].x.toFixed(1)},${midY} Z`;
+  // Bars overlay sur baseline pour ponctualité (1 bar par minute)
   let bars = '';
-  for (let i = 0; i < data.length; i++) {
-    const pt = data[i];
-    const v = typeof pt === 'number' ? pt : (pt && typeof pt.v === 'number' ? pt.v : 0);
-    const x = i * step;
-    const barH = Math.min(Math.abs(v) / 50, 1) * (midY - 6);
-    const y = v >= 0 ? midY - barH : midY;
-    const color = v >= 0 ? 'var(--blue)' : '#ffa726';
-    bars += `<rect x="${x + 1}" y="${y}" width="${Math.max(2, step - 2)}" height="${barH}" fill="${color}" rx="2"/>`;
+  for (const p of points) {
+    const barH = Math.abs(p.y - midY);
+    const y = p.v >= 0 ? p.y : midY;
+    const color = p.v >= 0 ? 'rgba(41,182,246,0.4)' : 'rgba(255,167,38,0.4)';
+    bars += `<rect x="${(p.x - step/2).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(2, step).toFixed(1)}" height="${barH.toFixed(1)}" fill="${color}"/>`;
   }
-  svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/>${bars}`;
+  // Gradient defs
+  const defs = `<defs>
+    <linearGradient id="momGradH" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="var(--blue)" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="var(--blue)" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="momGradA" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ffa726" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ffa726" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>`;
+  // Area home (positive only) + area away (negative only) via clipPath alternative : 2 paths bidirectionnels
+  // Plus simple : bars overlay (au-dessus = bleu, en-dessous = orange)
+  svg.innerHTML = `${defs}
+    <line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/>
+    ${bars}
+    <path d="${pathData}" fill="none" stroke="var(--text)" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+  `;
 }
 
 function updateLDVerdict(m) {
