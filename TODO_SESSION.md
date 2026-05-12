@@ -19,6 +19,7 @@
 - [ ] Fix UI : Rétablir l'affichage de la liste des matchs en direct via le filtre 'Live' du tableau principal.
 - [ ] Fix Dashboard Live : Remplacer le flux de données vide par un scraping/fetching des endpoints statistiques et momentum de SofaScore.
 - [ ] Étude API football complète (prematch + live + scraping sans anti-bot). Analyse comparative gratuit vs payant. Recommandation stack rapport qualité/économique pour 100 membres.
+- [ ] Étude couverture LIVE par ligue (K-League + toutes ligues PariScore) avec APIs/scraping. Rapport routing correct + double routing (primary/fallback).
 
 ## En cours / Debug
 - [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
