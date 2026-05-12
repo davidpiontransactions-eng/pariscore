@@ -6426,6 +6426,14 @@
         </div>
       </section>
 
+      <!-- v9.9.0 Phase 2 — STICKY ODDS BAR (cotes live + edge) -->
+      <section id="ldm-odds-bar" style="padding:10px 24px;border-bottom:1px solid var(--border);display:none;background:rgba(0,0,0,0.18);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font:600 11px/1 var(--font-mono);">
+          <span style="font:800 9px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text3);">Cotes Live + Edge</span>
+          <div id="ldm-odds-chips" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:flex-end;"></div>
+        </div>
+      </section>
+
       <!-- v9.9.0 — BETTING COCKPIT : Win Prob + Picks chiffrés + Top scores -->
       <section id="ldm-cockpit-section" style="padding:14px 24px;border-bottom:1px solid var(--border);display:none;background:linear-gradient(180deg,rgba(41,182,246,0.04) 0%,transparent 100%);">
         <!-- Win Probability live bar 3-segment -->
@@ -11745,8 +11753,41 @@ function drawLDCockpit(m) {
   const section = document.getElementById('ldm-cockpit-section');
   if (!section) return;
   const ls = m.live_scenarios;
-  if (!ls || !ls.win_prob) { section.style.display = 'none'; return; }
+  if (!ls || !ls.win_prob) { section.style.display = 'none'; document.getElementById('ldm-odds-bar').style.display = 'none'; return; }
   section.style.display = 'block';
+
+  // v9.9.0 Phase 2 — Sticky odds bar avec edge badges
+  const oddsBar = document.getElementById('ldm-odds-bar');
+  const oddsChips = document.getElementById('ldm-odds-chips');
+  const lo = ls.live_odds;
+  const eg = ls.edges;
+  const tr = ls.odds_trend;
+  if (lo && eg) {
+    oddsBar.style.display = 'block';
+    const chipDef = [
+      { label: '1', odd: lo.home, edge: eg.home, trend: tr?.home, color: 'var(--blue)' },
+      { label: 'N', odd: lo.draw, edge: eg.draw, trend: tr?.draw, color: 'var(--text2)' },
+      { label: '2', odd: lo.away, edge: eg.away, trend: tr?.away, color: '#ffa726' },
+      { label: 'O2.5', odd: lo.o25, edge: eg.o25, trend: tr?.o25, color: 'var(--green)' },
+      { label: 'U2.5', odd: lo.u25, edge: eg.u25, color: 'var(--text3)' },
+      { label: 'BTTS', odd: lo.btts_y, edge: eg.btts_y, trend: tr?.btts_y, color: 'var(--amber)' },
+    ];
+    oddsChips.innerHTML = chipDef.filter(c => c.odd).map(c => {
+      const edgeCls = c.edge >= 5 ? 'background:var(--green);color:#000;font-weight:800;'
+                    : c.edge <= -5 ? 'background:var(--red);color:#fff;'
+                    : 'background:var(--bg3);color:var(--text2);';
+      const edgeBadge = c.edge != null ? `<span style="${edgeCls}padding:1px 5px;border-radius:3px;font:700 9px/1 var(--font-mono);margin-left:4px;">${c.edge >= 0 ? '+' : ''}${c.edge}%</span>` : '';
+      const trendIcon = c.trend ? (c.trend.dir === 'drop' ? '<span style="color:var(--red);font-size:9px;">▼' + Math.abs(c.trend.pct).toFixed(0) + '%</span>' : c.trend.dir === 'rise' ? '<span style="color:var(--green);font-size:9px;">▲' + c.trend.pct.toFixed(0) + '%</span>' : '') : '';
+      return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;">
+        <b style="color:${c.color};">${c.label}</b>
+        <span style="color:var(--text);font-weight:800;">${c.odd.toFixed(2)}</span>
+        ${trendIcon}
+        ${edgeBadge}
+      </span>`;
+    }).join('');
+  } else {
+    oddsBar.style.display = 'none';
+  }
 
   // Win Prob bar 3-segment (flex grow proportional)
   const wp = ls.win_prob;
@@ -11786,20 +11827,25 @@ function drawLDCockpit(m) {
   if (!picks.length) {
     picksEl.innerHTML = `<div style="font-size:11px;color:var(--text3);font-style:italic;font-family:var(--font-mono);">Pas de pick fort détecté. Match équilibré ou trop tôt.</div>`;
   } else {
-    picksEl.innerHTML = picks.map(p => `
-      <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:6px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid ${p.prob >= 70 ? 'var(--green)' : p.prob >= 55 ? '#ffa726' : 'var(--text3)'};font:600 11px/1.2 var(--font-mono);">
+    picksEl.innerHTML = picks.map(p => {
+      const isValue = p._value || (p.edge != null && p.edge >= 5);
+      const borderColor = isValue ? 'var(--green)' : p.prob >= 70 ? 'var(--green)' : p.prob >= 55 ? '#ffa726' : 'var(--text3)';
+      const probColor = p.prob >= 70 ? 'var(--green)' : p.prob >= 55 ? '#ffa726' : 'var(--text2)';
+      const edgeBadge = p.edge != null ? `<span style="display:inline-block;background:${p.edge >= 5 ? 'var(--green)' : p.edge >= 0 ? 'var(--amber)' : 'var(--red)'};color:#000;padding:1px 5px;border-radius:3px;font:800 9px/1 var(--font-mono);margin-left:4px;">${p.edge >= 0 ? '+' : ''}${p.edge}% EV</span>` : '';
+      const liveOdd = p.live_odd ? `<span style="color:var(--text2);font-size:10px;">@${p.live_odd}</span>` : '';
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:6px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid ${borderColor};font:600 11px/1.2 var(--font-mono);${isValue ? 'box-shadow:0 0 0 1px rgba(0,230,118,0.2);' : ''}">
         <span style="font-size:14px;">${p.icon || '•'}</span>
         <div>
-          <div style="color:var(--text);font-weight:700;">${escapeHtml ? escapeHtml(p.market) : p.market}</div>
-          <div style="color:var(--text2);font-size:10px;">${escapeHtml ? escapeHtml(p.selection) : p.selection}</div>
+          <div style="color:var(--text);font-weight:700;">${escapeHtml ? escapeHtml(p.market) : p.market} ${liveOdd}</div>
+          <div style="color:var(--text2);font-size:10px;">${escapeHtml ? escapeHtml(p.selection) : p.selection}${edgeBadge}</div>
         </div>
         <div style="text-align:right;">
-          <div style="color:${p.prob >= 70 ? 'var(--green)' : p.prob >= 55 ? '#ffa726' : 'var(--text2)'};font-weight:800;font-size:13px;">${p.prob}%</div>
+          <div style="color:${probColor};font-weight:800;font-size:13px;">${p.prob}%</div>
           <div style="color:var(--text3);font-size:9px;">fair ${p.fair}</div>
         </div>
         <button onclick="quickAddBet(${JSON.stringify(p).replace(/"/g,'&quot;')},'${m.id || ''}')" title="Ajouter à Mes Paris" style="background:var(--green);color:#000;border:none;padding:4px 8px;border-radius:4px;font:700 9px/1 var(--font-mono);cursor:pointer;letter-spacing:.05em;">+ PARI</button>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 }
 

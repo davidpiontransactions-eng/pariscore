@@ -12819,6 +12819,45 @@ function buildLiveDashboardPayload(match, detail) {
   };
 }
 
+// v9.9.0 Phase 2 — Live odds snapshots (in-memory) pour trend detection drop >5%
+const _liveOddsHistory = new Map(); // matchId → [{ts, odds:{home,draw,away,o25,btts_y,btts_n}}]
+const LIVE_ODDS_HISTORY_MAX = 60; // ~30 minutes at 30s/snapshot
+
+function recordLiveOddsSnapshot(matchId, detail) {
+  if (!detail || detail.odds_home == null) return;
+  const snap = {
+    ts: Date.now(),
+    home: +detail.odds_home || null,
+    draw: +detail.odds_draw || null,
+    away: +detail.odds_away || null,
+    o25: +detail.odds_over_25 || null,
+    u25: +detail.odds_under_25 || null,
+    btts_y: +detail.odds_btts_yes || null,
+    btts_n: +detail.odds_btts_no || null,
+  };
+  const hist = _liveOddsHistory.get(matchId) || [];
+  hist.push(snap);
+  if (hist.length > LIVE_ODDS_HISTORY_MAX) hist.shift();
+  _liveOddsHistory.set(matchId, hist);
+}
+
+function computeOddsTrend(matchId) {
+  const hist = _liveOddsHistory.get(matchId) || [];
+  if (hist.length < 2) return null;
+  const now = hist[hist.length - 1];
+  // Compare avec snapshot ~5 min ago (10 snapshots back)
+  const past = hist[Math.max(0, hist.length - 10)];
+  const trend = {};
+  for (const k of ['home', 'draw', 'away', 'o25', 'btts_y']) {
+    if (now[k] != null && past[k] != null && past[k] > 0) {
+      const delta = now[k] - past[k];
+      const pct = +(delta / past[k] * 100).toFixed(1);
+      trend[k] = { delta: +delta.toFixed(2), pct, dir: pct < -3 ? 'drop' : pct > 3 ? 'rise' : 'flat' };
+    }
+  }
+  return trend;
+}
+
 // v9.9.0 — Live Betting Cockpit : Win Prob + Top scores + Picks chiffrés + events
 function buildLiveCockpit(match, detail, minute, xgH, xgA) {
   try {
@@ -12922,6 +12961,54 @@ function buildLiveCockpit(match, detail, minute, xgH, xgA) {
       verdict = `Favori : ${pHome > pAway ? match.home_team : match.away_team} (Win ${Math.round(Math.max(pHome, pAway) * 100)}%)`;
     }
 
+    // v9.9.0 Phase 2 — Edge calc vs cotes live BSD
+    recordLiveOddsSnapshot(match.id, detail);
+    const liveOdds = detail ? {
+      home: +detail.odds_home || null,
+      draw: +detail.odds_draw || null,
+      away: +detail.odds_away || null,
+      o25: +detail.odds_over_25 || null,
+      u25: +detail.odds_under_25 || null,
+      btts_y: +detail.odds_btts_yes || null,
+      btts_n: +detail.odds_btts_no || null,
+    } : null;
+    // Edge % = prob × odds - 1
+    const edges = liveOdds ? {
+      home: liveOdds.home ? +((pHome * liveOdds.home - 1) * 100).toFixed(1) : null,
+      draw: liveOdds.draw ? +((pDraw * liveOdds.draw - 1) * 100).toFixed(1) : null,
+      away: liveOdds.away ? +((pAway * liveOdds.away - 1) * 100).toFixed(1) : null,
+      o25: liveOdds.o25 ? +((pOver25 / 100 * liveOdds.o25 - 1) * 100).toFixed(1) : null,
+      u25: liveOdds.u25 ? +(((1 - pOver25 / 100) * liveOdds.u25 - 1) * 100).toFixed(1) : null,
+      btts_y: liveOdds.btts_y ? +((pBttsYes * liveOdds.btts_y - 1) * 100).toFixed(1) : null,
+      btts_n: liveOdds.btts_n ? +((pBttsNo * liveOdds.btts_n - 1) * 100).toFixed(1) : null,
+    } : null;
+    const trend = computeOddsTrend(match.id);
+    // Ajouter picks "value bet" si edge > 5% live
+    if (edges) {
+      const valueChecks = [
+        { key: 'home', market: '1X2', selection: match.home_team, prob: pHome, odd: liveOdds.home, edge: edges.home, icon: '🏠' },
+        { key: 'away', market: '1X2', selection: match.away_team, prob: pAway, odd: liveOdds.away, edge: edges.away, icon: '✈' },
+        { key: 'draw', market: '1X2', selection: 'Nul', prob: pDraw, odd: liveOdds.draw, edge: edges.draw, icon: '⚖' },
+        { key: 'o25', market: 'Over 2.5', selection: 'OUI', prob: pOver25 / 100, odd: liveOdds.o25, edge: edges.o25, icon: '📈' },
+        { key: 'u25', market: 'Under 2.5', selection: 'OUI', prob: 1 - pOver25 / 100, odd: liveOdds.u25, edge: edges.u25, icon: '📉' },
+        { key: 'btts_y', market: 'BTTS', selection: 'OUI', prob: pBttsYes, odd: liveOdds.btts_y, edge: edges.btts_y, icon: '⚔' },
+        { key: 'btts_n', market: 'BTTS', selection: 'NON', prob: pBttsNo, odd: liveOdds.btts_n, edge: edges.btts_n, icon: '🛡' },
+      ];
+      for (const v of valueChecks) {
+        if (v.edge != null && v.edge >= 5 && v.odd && v.odd >= 1.1) {
+          // Évite doublon si pick déjà inclus
+          if (!picks.some(p => p.market === v.market && p.selection === v.selection)) {
+            picks.push({
+              market: v.market, selection: v.selection, prob: Math.round(v.prob * 100),
+              fair: fairOdds(v.prob), live_odd: v.odd, edge: v.edge, icon: v.icon, _value: true,
+            });
+          }
+        }
+      }
+      // Re-sort by edge (value bets en haut), puis par prob
+      picks.sort((a, b) => (b.edge ?? -999) - (a.edge ?? -999) || b.prob - a.prob);
+    }
+
     return {
       win_prob: {
         home: Math.round(pHome * 100),
@@ -12929,6 +13016,9 @@ function buildLiveCockpit(match, detail, minute, xgH, xgA) {
         away: Math.round(pAway * 100),
       },
       fair_1x2: { home: fairOdds(pHome), draw: fairOdds(pDraw), away: fairOdds(pAway) },
+      live_odds: liveOdds,
+      edges,
+      odds_trend: trend,
       next_goal: {
         home: Math.round(pNextHome * 100),
         away: Math.round(pNextAway * 100),
