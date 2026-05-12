@@ -12809,12 +12809,143 @@ function buildLiveDashboardPayload(match, detail) {
     momentum: _liveMomentumHistory.get(match.id) || match.live_momentum || [],
     intensity: match.live_intensity || 0,
     // v9.8.6 — innovations live dashboard
-    pressure_index: pi || null,                              // { home, away, delta } 0-100
-    pressure_history: _livePressureHistory.get(match.id) || [],  // [{ min, pi_home, pi_away, delta }]
-    xg_curve: _liveXGHistory.get(match.id) || [],            // [{ min, xgH, xgA }] cumulative
+    pressure_index: pi || null,
+    pressure_history: _livePressureHistory.get(match.id) || [],
+    xg_curve: _liveXGHistory.get(match.id) || [],
+    // v9.9.0 — Phase 1 Betting Cockpit
+    live_scenarios: buildLiveCockpit(match, detail, minute, xgH, xgA),
     _source: 'bsd_sr_stats',
     _enrichment_ready: !!(match.live_xg || match.live_shots || sr),
   };
+}
+
+// v9.9.0 — Live Betting Cockpit : Win Prob + Top scores + Picks chiffrés + events
+function buildLiveCockpit(match, detail, minute, xgH, xgA) {
+  try {
+    const liveScore = detail
+      ? `${detail.home_score || 0}-${detail.away_score || 0}`
+      : (match.live_score || '0-0');
+    const scoreParts = String(liveScore).split('-').map(Number);
+    const homeGoals = scoreParts[0] || 0;
+    const awayGoals = scoreParts[1] || 0;
+    const minutesRemaining = Math.max(0, 90 - minute);
+
+    // Lambdas restants : xG_per_minute × minutes_remaining (Poisson time-inhomogène simplifié)
+    const xgPerMinH = minute > 0 ? (xgH || match.expectedGoals?.home || 1.2) / Math.max(1, minute) : 0.013;
+    const xgPerMinA = minute > 0 ? (xgA || match.expectedGoals?.away || 1.0) / Math.max(1, minute) : 0.011;
+    const lambdaH = Math.max(0.01, xgPerMinH * minutesRemaining);
+    const lambdaA = Math.max(0.01, xgPerMinA * minutesRemaining);
+
+    // Poisson matrix sur les buts RESTANTS (0..6 chacun)
+    const MAX = 7;
+    const matrix = [];
+    let totalP = 0;
+    for (let h = 0; h < MAX; h++) {
+      matrix[h] = [];
+      for (let a = 0; a < MAX; a++) {
+        const p = poissonPMF(lambdaH, h) * poissonPMF(lambdaA, a);
+        matrix[h][a] = p;
+        totalP += p;
+      }
+    }
+    // Normalize
+    if (totalP > 0) for (let h = 0; h < MAX; h++) for (let a = 0; a < MAX; a++) matrix[h][a] /= totalP;
+
+    // Win Prob = somme finalH > finalA / finalH === finalA / finalH < finalA
+    let pHome = 0, pDraw = 0, pAway = 0;
+    let pBttsNo = 0, pBttsYes = 0;
+    let pOver25 = 0, pOver15 = 0, pOver05Next15 = 0;
+    const topScoresMap = new Map();
+    const remainingTimeRatio = minutesRemaining / 90;
+    for (let h = 0; h < MAX; h++) {
+      for (let a = 0; a < MAX; a++) {
+        const p = matrix[h][a];
+        const fH = homeGoals + h;
+        const fA = awayGoals + a;
+        if (fH > fA) pHome += p;
+        else if (fH < fA) pAway += p;
+        else pDraw += p;
+        if (fH > 0 && fA > 0) pBttsYes += p; else pBttsNo += p;
+        const tot = fH + fA;
+        if (tot > 2.5) pOver25 += p;
+        if (tot > 1.5) pOver15 += p;
+        const scoreKey = `${fH}-${fA}`;
+        topScoresMap.set(scoreKey, (topScoresMap.get(scoreKey) || 0) + p);
+        // Over 0.5 next 15min : approx via lambda × 15/min_restant
+      }
+    }
+    // Top 3 scores
+    const topScores = Array.from(topScoresMap.entries())
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 3)
+      .map(([score, p]) => ({ score, prob: Math.round(p * 100) }));
+
+    // Next goal probas
+    let pNextHome = 0, pNextAway = 0, pNoMore = 0;
+    for (let h = 0; h < MAX; h++) {
+      for (let a = 0; a < MAX; a++) {
+        const p = matrix[h][a];
+        if (h > 0 && a === 0) pNextHome += p;
+        else if (h === 0 && a > 0) pNextAway += p;
+        else if (h === 0 && a === 0) pNoMore += p;
+      }
+    }
+    const nextTotal = pNextHome + pNextAway + pNoMore;
+    if (nextTotal > 0) { pNextHome /= nextTotal; pNextAway /= nextTotal; pNoMore /= nextTotal; }
+
+    // Over 0.5 next 15min approximation
+    const lambdaNext15 = (xgPerMinH + xgPerMinA) * Math.min(15, minutesRemaining);
+    pOver05Next15 = 1 - Math.exp(-lambdaNext15);
+
+    // Fair odds calculées depuis probas
+    const fairOdds = (prob) => prob > 0.01 ? +(1 / prob).toFixed(2) : 99.99;
+
+    // Picks chiffrés : seuls signaux > 55% probabilité (ou Win Prob extrême)
+    const picks = [];
+    if (pNextHome > 0.45) picks.push({ market: 'Next Goal', selection: match.home_team, prob: Math.round(pNextHome * 100), fair: fairOdds(pNextHome), icon: '⚽' });
+    if (pNextAway > 0.45) picks.push({ market: 'Next Goal', selection: match.away_team, prob: Math.round(pNextAway * 100), fair: fairOdds(pNextAway), icon: '⚽' });
+    if (pOver05Next15 > 0.55) picks.push({ market: `Over 0.5 next ${Math.min(15, minutesRemaining)}'`, selection: 'OUI', prob: Math.round(pOver05Next15 * 100), fair: fairOdds(pOver05Next15), icon: '🎯' });
+    if (pBttsYes > 0.65 && !(homeGoals > 0 && awayGoals > 0)) picks.push({ market: 'BTTS', selection: 'OUI', prob: Math.round(pBttsYes * 100), fair: fairOdds(pBttsYes), icon: '⚔' });
+    if (pBttsNo > 0.65 && (homeGoals === 0 || awayGoals === 0)) picks.push({ market: 'BTTS', selection: 'NON', prob: Math.round(pBttsNo * 100), fair: fairOdds(pBttsNo), icon: '🛡' });
+    if (pOver25 > 0.55) picks.push({ market: 'Over 2.5 FT', selection: 'OUI', prob: Math.round(pOver25 * 100), fair: fairOdds(pOver25), icon: '📈' });
+    if (pHome > 0.6) picks.push({ market: '1X2', selection: match.home_team, prob: Math.round(pHome * 100), fair: fairOdds(pHome), icon: '🏠' });
+    if (pAway > 0.6) picks.push({ market: '1X2', selection: match.away_team, prob: Math.round(pAway * 100), fair: fairOdds(pAway), icon: '✈' });
+
+    // Verdict actionnable : top pick OR phrase déduite
+    let verdict = null;
+    if (picks.length) {
+      const top = picks[0];
+      verdict = `${top.icon} ${top.market} ${top.selection} — ${top.prob}% (fair ${top.fair})`;
+    } else if (Math.abs(pHome - pAway) < 0.1) {
+      verdict = 'Match équilibré — pas de pick fort détecté';
+    } else {
+      verdict = `Favori : ${pHome > pAway ? match.home_team : match.away_team} (Win ${Math.round(Math.max(pHome, pAway) * 100)}%)`;
+    }
+
+    return {
+      win_prob: {
+        home: Math.round(pHome * 100),
+        draw: Math.round(pDraw * 100),
+        away: Math.round(pAway * 100),
+      },
+      fair_1x2: { home: fairOdds(pHome), draw: fairOdds(pDraw), away: fairOdds(pAway) },
+      next_goal: {
+        home: Math.round(pNextHome * 100),
+        away: Math.round(pNextAway * 100),
+        no_more: Math.round(pNoMore * 100),
+      },
+      top_scores: topScores,
+      btts: { yes: Math.round(pBttsYes * 100), no: Math.round(pBttsNo * 100) },
+      over: { o15: Math.round(pOver15 * 100), o25: Math.round(pOver25 * 100), o05_next15: Math.round(pOver05Next15 * 100) },
+      picks: picks.slice(0, 5),
+      verdict_actionable: verdict,
+      _minutes_remaining: minutesRemaining,
+      _lambda: { home: +lambdaH.toFixed(3), away: +lambdaA.toFixed(3) },
+    };
+  } catch (e) {
+    console.warn('[buildLiveCockpit] erreur:', e.message);
+    return null;
+  }
 }
 
 /* -------------------------------------------------
