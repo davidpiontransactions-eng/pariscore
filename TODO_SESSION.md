@@ -11,6 +11,8 @@
 - [ ] Tester avec des matchs ayant cotes `totals` / `both_teams_score` réelles (cycle fetchOdds suivant)
 - [ ] Vérifier affichage 1xbet dans section non-ANJ si présent dans The Odds API
 
+- [x] Mutation de l'onglet Live : Passage d'un flux scrollé à un Dashboard de Stratégie (Momentum + Intensity Gauge + Predictive Bet).
+
 ## Roadmap suivante
 - [ ] Filtres L5/L10/L25 dans tableau principal (PPG/forme X derniers matchs)
 - [ ] Onglet Tendances version Full (route `/api/v1/trends`)
