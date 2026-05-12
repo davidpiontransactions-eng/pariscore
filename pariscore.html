@@ -1257,7 +1257,10 @@
   .cotes-btn.cotes-best { border-color: #00ff88; color: #00ff88; background: rgba(0,255,136,0.08); }
 
   /* Top 3 Buteurs — colonne 3 (v2: xG bar + tooltip + streak) */
-  .buteurs-block { display: flex; flex-direction: column; gap: 3px; align-items: stretch; min-width: 190px; min-height: 75px; justify-content: center; }
+  .buteurs-block { display: flex; flex-direction: column; gap: 3px; align-items: stretch; min-width: 200px; min-height: 75px; justify-content: center; }
+  body:not(.dark-theme) .kpi-block-divider { border-top-color: #ddd !important; }
+  body.dark-theme .kpi-block-divider { border-top-color: rgba(255,255,255,0.15) !important; }
+  body.dark-theme .kpi-block-divider > div { color: rgba(255,255,255,0.5) !important; }
   .buteur-row { display: flex; align-items: center; gap: 4px; padding: 3px 5px; border-radius: 4px; background: var(--bg3); border: 1px solid transparent; transition: all .15s; cursor: default; position: relative; }
   .buteur-row:hover { border-color: var(--border); background: rgba(255,255,255,0.04); z-index: 2; }
   .buteur-badge { font-family: var(--font-mono); font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; min-width: 16px; text-align: center; flex-shrink: 0; }
@@ -8438,34 +8441,75 @@ function renderTopButteurs(buts, ctx) {
   }).join('');
 }
 
-// Charge les top buteurs en arriere-plan pour les matchs sans donnees BSD
+// v9.9.2 — Top 3 KPI joueurs (rating + goals + assists + key_passes composite)
+function renderTopKPI(kpi, ctx) {
+  if (!kpi || !kpi.length) return '';
+  const homeTeam = (ctx && ctx.home) ? String(ctx.home).replace(/"/g,'&quot;') : '';
+  const awayTeam = (ctx && ctx.away) ? String(ctx.away).replace(/"/g,'&quot;') : '';
+  const leagueId = ctx && ctx.leagueId ? ctx.leagueId : '';
+  const rows = kpi.map(k => {
+    const teamClr = k.team === 'home' ? '#E2001A' : '#1A1A1A';
+    const teamLbl = k.team === 'home' ? 'D' : 'E';
+    const kpiClr = k.kpi >= 8 ? '#E2001A' : k.kpi >= 7 ? '#1A1A1A' : '#888';
+    const ratingClr = k.rating >= 7.5 ? '#E2001A' : k.rating >= 6.8 ? '#1A1A1A' : '#888';
+    // Bar normalisée KPI 5-12 = 0-100%
+    const barW = Math.max(0, Math.min(100, Math.round((k.kpi - 5) / 7 * 100)));
+    return `<div class="buteur-row" title="KPI: ${k.kpi} | Rating: ${k.rating} | G/A/KP: ${k.goals}/${k.assists}/${k.key_passes} | ${k.matches} matchs">
+      <span class="buteur-badge" style="background:${teamClr}20;color:${teamClr};border:1px solid ${teamClr}40;">${teamLbl}</span>
+      <span class="buteur-badge" style="background:#f0f0f020;color:#666;border:1px solid #ccc;font-size:8px;">${k.position}</span>
+      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" data-player-name="${(k.name||'').replace(/"/g,'&quot;')}" data-team-name="${k.team === 'home' ? homeTeam : awayTeam}" data-league-id="${leagueId}" onclick="trackClickFromDataset(this,'player',event)" title="Voir fiche joueur">${k.name}</span>
+      <span class="buteur-bar-wrap"><span class="buteur-bar" style="width:${barW}%;background:${kpiClr};"></span></span>
+      <span class="buteur-xg" style="color:${kpiClr};">${k.kpi.toFixed(1)}</span>
+      <span class="buteur-pct" style="color:${ratingClr};">★${k.rating.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+  return `<div class="kpi-block-divider" style="border-top:1px dashed #ccc;margin:4px 0 3px;padding-top:3px;">
+    <div style="font:700 8px/1 var(--font-mono);color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;">★ TOP 3 KPI</div>
+    ${rows}
+  </div>`;
+}
+
+// Charge les top buteurs + top KPI en arriere-plan pour les matchs sans donnees BSD
 async function lazyLoadButeurs(matches) {
-  const missing = matches.filter(m => !m.topButteurs && m._bsd_event_id);
+  const missing = matches.filter(m => (!m.topButteurs || !m.topKPI) && m._bsd_event_id);
   if (!missing.length) return;
-  // Lancer en parallele (max 5 concurrents)
   const CONCURRENCY = 5;
   for (let i = 0; i < missing.length; i += CONCURRENCY) {
     const batch = missing.slice(i, i + CONCURRENCY);
     await Promise.allSettled(batch.map(async (m) => {
       try {
-        const res = await apiFetch(`/api/v1/top-butteurs/${encodeURIComponent(m.id)}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.buteurs) {
-          m.topButteurs = data.buteurs;
-          updateButeursCell(m.id, data.buteurs);
+        // Parallel : buteurs + KPI
+        const [butRes, kpiRes] = await Promise.all([
+          !m.topButteurs ? apiFetch(`/api/v1/top-butteurs/${encodeURIComponent(m.id)}`) : Promise.resolve(null),
+          !m.topKPI ? apiFetch(`/api/v1/top-kpi/${encodeURIComponent(m.id)}`) : Promise.resolve(null),
+        ]);
+        if (butRes && butRes.ok) {
+          const d = await butRes.json();
+          if (d.buteurs) m.topButteurs = d.buteurs;
+        }
+        if (kpiRes && kpiRes.ok) {
+          const d = await kpiRes.json();
+          if (d.kpi) m.topKPI = d.kpi;
+        }
+        if (m.topButteurs || m.topKPI) {
+          updateButeursCell(m.id, m.topButteurs, m.topKPI);
         }
       } catch(e) { /* silencieux */ }
     }));
   }
 }
 
-function updateButeursCell(matchId, buteurs) {
+function updateButeursCell(matchId, buteurs, kpi) {
   const cell = document.querySelector(`tr[data-match-id="${matchId}"] .buteurs-block`);
   if (cell) {
     const tr = cell.closest('tr');
     const ctx = tr ? { home: tr.dataset.homeTeam || '', away: tr.dataset.awayTeam || '' } : {};
-    cell.innerHTML = renderTopButteurs(buteurs, ctx);
+    // Si kpi pas passé, lire depuis allMatches
+    if (kpi === undefined) {
+      const m = (typeof allMatches !== 'undefined' ? allMatches : []).find(x => x.id === matchId);
+      kpi = m?.topKPI || null;
+    }
+    cell.innerHTML = renderTopButteurs(buteurs, ctx) + renderTopKPI(kpi, ctx);
   }
 }
 
@@ -9244,7 +9288,7 @@ const label = country
         <div class="t3c-wrap">${top3}</div>
       </td>
       <td>
-        <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}</div>
+        <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}${renderTopKPI(m.topKPI, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}</div>
       </td>
       <td>
         <div style="display:flex;gap:5px;align-items:center;">

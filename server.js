@@ -6525,6 +6525,49 @@ function computeMatchTopButteurs(m) {
   return attackers.slice(0, 3);
 }
 
+// v9.9.2 — Top 3 KPI joueurs (composite score, toutes positions confondues)
+// KPI = rating × 1.0 + goals_per_match × 2.5 + assists_per_match × 1.5 + key_passes_per_match × 0.3 + shots_per_match × 0.15
+function computeMatchTopKPI(m) {
+  const homeRatings = m._bsd_home_ratings || [];
+  const awayRatings = m._bsd_away_ratings || [];
+  if (!homeRatings.length && !awayRatings.length) return null;
+  const HOME_BOOST = 1.06;
+  const AWAY_PENALTY = 0.94;
+  const players = [];
+  const POS_LABEL = { G: 'G', D: 'D', M: 'M', F: 'A', Goalkeeper: 'G', Defender: 'D', Midfielder: 'M', Attacker: 'A' };
+  function process(ratings, team, teamName, boost) {
+    for (const p of ratings) {
+      if (!p.minutes || p.minutes < 90) continue;
+      const matches = p.matches || 1;
+      const rating = p.avg_rating || 0;
+      if (!rating) continue;
+      const gpm = (p.goals || 0) / matches;
+      const apm = (p.assists || 0) / matches;
+      const kpm = (p.key_passes || 0) / matches;
+      const spm = (p.shots_total || p.total_shots || 0) / matches;
+      const kpi = (rating * 1.0 + gpm * 2.5 + apm * 1.5 + kpm * 0.3 + spm * 0.15) * boost;
+      players.push({
+        name: p.short_name || p.name || '?',
+        id: p.id || null,
+        photo: p.image_path ? ('https://sports.bzzoiro.com' + p.image_path) : null,
+        team, teamName,
+        position: POS_LABEL[p.position] || p.position || '?',
+        kpi: Math.round(kpi * 100) / 100,
+        rating: Math.round(rating * 100) / 100,
+        goals: p.goals || 0,
+        assists: p.assists || 0,
+        key_passes: p.key_passes || 0,
+        matches,
+      });
+    }
+  }
+  process(homeRatings, 'home', m.home_team, HOME_BOOST);
+  process(awayRatings, 'away', m.away_team, AWAY_PENALTY);
+  if (!players.length) return null;
+  players.sort((a, b) => b.kpi - a.kpi);
+  return players.slice(0, 3);
+}
+
 // Top 3 joueurs par équipe — ratings BSD saison. Position: G/D/M/F
 function getTop3Players(match) {
   const POS_LABEL = { G: 'G', D: 'D', M: 'M', F: 'A', Goalkeeper: 'G', Defender: 'D', Midfielder: 'M', Attacker: 'A' };
@@ -7522,8 +7565,9 @@ async function forceSyncFixture(fixtureId) {
     match._bsd_home_kp = homeKP;
     match._bsd_away_kp = awayKP;
 
-    // Pre-calculer le top 3 buteurs
+    // Pre-calculer le top 3 buteurs + top 3 KPI (v9.9.2)
     match.topButteurs = computeMatchTopButteurs(match);
+    match.topKPI = computeMatchTopKPI(match);
 
     // 7. Recalculer edge si les cotes ont changé
     if (match.odds.home && match.odds.draw && match.odds.away) {
@@ -7675,8 +7719,9 @@ async function runGlobalPreload() {
       m._bsd_home_ratings = homeRatings;
       m._bsd_away_ratings = awayRatings;
 
-      // Pre-calculer le top 3 buteurs (persiste en DB avec le match)
+      // Pre-calculer le top 3 buteurs + top 3 KPI (persiste en DB avec le match)
       m.topButteurs = computeMatchTopButteurs(m);
+      m.topKPI = computeMatchTopKPI(m);
 
       // Mettre à jour cachedMatches aussi
       const cachedIdx = cachedMatches.findIndex(cm => cm.id === m.id);
@@ -8047,8 +8092,9 @@ async function runProactiveHydrator() {
       m._bsd_home_ratings = homeRatings;
       m._bsd_away_ratings = awayRatings;
 
-      // Pre-calculer le top 3 buteurs
+      // Pre-calculer le top 3 buteurs + top 3 KPI (v9.9.2)
       m.topButteurs = computeMatchTopButteurs(m);
+      m.topKPI = computeMatchTopKPI(m);
 
       // Calculs Data Science
       m._fatigue_home = computeFatigueIndex(homeTeam, m.commence_time);
@@ -11137,14 +11183,32 @@ if (pathname.startsWith('/api/v1/top-butteurs/') && req.method === 'GET') {
         match._bsd_home_ratings = homeRatings;
         match._bsd_away_ratings = awayRatings;
         match.topButteurs = computeMatchTopButteurs(match);
+        match.topKPI = computeMatchTopKPI(match);
         saveDB();
-        broadcastSSE('butteurs-ready', { matchId: match.id, buteurs: match.topButteurs });
+        broadcastSSE('butteurs-ready', { matchId: match.id, buteurs: match.topButteurs, kpi: match.topKPI });
       } catch (e) { /* silencieux */ }
     })();
   }
 
   return jsonResponse(res, 200, { success: false, buteurs: null, loading: true });
 }
+
+// v9.9.2 — GET /api/v1/top-kpi/:matchId — Top 3 joueurs par KPI composite (rating+goals+assists+key_passes)
+if (pathname.startsWith('/api/v1/top-kpi/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/top-kpi/'.length));
+  if (!matchId || matchId === 'undefined' || matchId === 'null') return jsonResponse(res, 200, { success: false, kpi: null });
+  let match = db.matches.find(m => m.id === matchId);
+  if (!match) match = cachedMatches.find(m => m.id === matchId);
+  if (!match) return jsonResponse(res, 200, { success: false, kpi: null });
+  if (match.topKPI) return jsonResponse(res, 200, { success: true, kpi: match.topKPI, cached: true });
+  const fromExisting = computeMatchTopKPI(match);
+  if (fromExisting) {
+    match.topKPI = fromExisting;
+    return jsonResponse(res, 200, { success: true, kpi: fromExisting, cached: false });
+  }
+  return jsonResponse(res, 200, { success: false, kpi: null, loading: true });
+}
+
 // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
   const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
