@@ -5905,46 +5905,46 @@
   <div id="live-detail-panel">
     <button class="modal-close" onclick="closeLiveDetail()" style="position:absolute;top:16px;right:16px;z-index:5;background:rgba(0,0,0,0.5);border:1px solid var(--border2);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;">×</button>
     <div id="live-detail-inner">
-      <header class="ld-header" style="padding:18px 24px;border-bottom:1px solid var(--border);background:var(--bg3);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;">
-        <div class="ld-mh-team home" style="text-align:left;">
-          <div class="ld-mh-name" id="ld-home-name" style="font:800 18px/1.2 var(--font-head);color:var(--text);">—</div>
+      <header style="padding:18px 24px;border-bottom:1px solid var(--border);background:var(--bg3);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;">
+        <div style="text-align:left;">
+          <div id="ldm-home-name" style="font:800 18px/1.2 var(--font-head);color:var(--text);">—</div>
         </div>
-        <div class="ld-mh-center" style="text-align:center;">
-          <div class="ld-mh-score" id="ld-score" style="font:900 36px/1 var(--font-mono);color:var(--text);letter-spacing:.04em;">0–0</div>
-          <div class="ld-mh-meta" style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--font-mono);">
-            <span id="ld-minute">—</span> · <span id="ld-league">—</span>
+        <div style="text-align:center;">
+          <div id="ldm-score" style="font:900 36px/1 var(--font-mono);color:var(--text);letter-spacing:.04em;">0–0</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--font-mono);">
+            <span id="ldm-minute">—</span> · <span id="ldm-league">—</span>
           </div>
           <div style="margin-top:8px;">
-            <span class="ld-intensity" id="ld-intensity" style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;font-family:var(--font-mono);background:rgba(41,182,246,0.12);color:var(--blue);">⚡ 0/100</span>
+            <span id="ldm-intensity" style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;font-family:var(--font-mono);background:rgba(41,182,246,0.12);color:var(--blue);">⚡ 0/100</span>
           </div>
         </div>
-        <div class="ld-mh-team away" style="text-align:right;">
-          <div class="ld-mh-name" id="ld-away-name" style="font:800 18px/1.2 var(--font-head);color:var(--text);">—</div>
+        <div style="text-align:right;">
+          <div id="ldm-away-name" style="font:800 18px/1.2 var(--font-head);color:var(--text);">—</div>
         </div>
       </header>
 
-      <section class="ld-momentum-section" style="padding:14px 24px 8px;border-bottom:1px solid var(--border);">
-        <div class="ld-momentum-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span class="ld-momentum-title" style="font:800 10px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text3);">Momentum du Match</span>
-          <div class="ld-mom-legend" style="display:flex;gap:14px;">
-            <span class="ld-mom-leg-item" style="display:flex;align-items:center;gap:5px;font:700 10px/1 var(--font-mono);color:var(--text2);"><span style="width:14px;height:5px;border-radius:2px;background:var(--blue);"></span>Domicile</span>
-            <span class="ld-mom-leg-item" style="display:flex;align-items:center;gap:5px;font:700 10px/1 var(--font-mono);color:var(--text2);"><span style="width:14px;height:5px;border-radius:2px;background:#ffa726;"></span>Extérieur</span>
+      <section style="padding:14px 24px 8px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font:800 10px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text3);">Momentum du Match</span>
+          <div style="display:flex;gap:14px;">
+            <span style="display:flex;align-items:center;gap:5px;font:700 10px/1 var(--font-mono);color:var(--text2);"><span style="width:14px;height:5px;border-radius:2px;background:var(--blue);"></span>Domicile</span>
+            <span style="display:flex;align-items:center;gap:5px;font:700 10px/1 var(--font-mono);color:var(--text2);"><span style="width:14px;height:5px;border-radius:2px;background:#ffa726;"></span>Extérieur</span>
           </div>
         </div>
-        <svg id="ld-momentum-svg" viewBox="0 0 600 140" preserveAspectRatio="none" style="width:100%;height:140px;display:block;"></svg>
-        <div class="ld-mom-axis" style="display:flex;justify-content:space-between;padding:2px 4px 0;margin-top:2px;font:400 9px/1 var(--font-mono);color:var(--text3);">
+        <svg id="ldm-momentum-svg" viewBox="0 0 600 140" preserveAspectRatio="none" style="width:100%;height:140px;display:block;"></svg>
+        <div style="display:flex;justify-content:space-between;padding:2px 4px 0;margin-top:2px;font:400 9px/1 var(--font-mono);color:var(--text3);">
           <span>0′</span><span>15′</span><span>30′</span><span>45′</span><span>60′</span><span>75′</span><span>90′</span>
         </div>
       </section>
 
-      <div class="ld-bottom-row" style="display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;min-height:0;">
-        <div class="ld-stats-panel" style="padding:16px 24px;border-right:1px solid var(--border);overflow-y:auto;">
-          <div class="ld-panel-title" style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Statistiques Live</div>
-          <div id="ld-stats-bars"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;min-height:0;">
+        <div style="padding:16px 24px;border-right:1px solid var(--border);overflow-y:auto;">
+          <div style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Statistiques Live</div>
+          <div id="ldm-stats-bars"></div>
         </div>
-        <div class="ld-bet-panel" style="padding:16px 24px;overflow-y:auto;">
-          <div class="ld-panel-title" style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Verdict Live</div>
-          <div id="ld-verdict-content" style="font-size:12px;color:var(--text2);line-height:1.6;">Analyse en cours…</div>
+        <div style="padding:16px 24px;overflow-y:auto;">
+          <div style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Verdict Live</div>
+          <div id="ldm-verdict-content" style="font-size:12px;color:var(--text2);line-height:1.6;">Analyse en cours…</div>
         </div>
       </div>
     </div>
@@ -6058,15 +6058,11 @@ function setMatchTab(tab, el) {
   el.classList.add('active');
   var tbl = document.getElementById('matches-table');
   var dash = document.getElementById('live-dashboard');
-  if (tab === 'live') {
-    if (tbl) tbl.style.display = 'none';
-    if (dash) dash.style.display = 'block';
-    updateLiveDashboard(allMatches);
-  } else {
-    if (tbl) tbl.style.display = 'block';
-    if (dash) dash.style.display = 'none';
-    renderMatches(allMatches);
-  }
+  // v10.7: tous les onglets utilisent le tableau filtré (renderMatches respecte activeMatchTab).
+  // Ancien #live-dashboard désactivé — remplacé par modale Dashboard V2 (openLiveDetail).
+  if (tbl) tbl.style.display = 'block';
+  if (dash) dash.style.display = 'none';
+  renderMatches(allMatches);
 }
 
 function setTeamSearch(val) {
@@ -10953,15 +10949,15 @@ async function openLiveDetail(matchId) {
   if (!modal) return;
   _liveDetailMatchId = matchId;
   modal.classList.add('open');
-  renderLiveDashboardSkeleton();
-  await refreshLiveDashboard(matchId, { force: false });
+  renderLiveDetailSkeleton();
+  await refreshLiveDetailModal(matchId, { force: false });
   if (_liveDetailInterval) clearInterval(_liveDetailInterval);
   _liveDetailInterval = setInterval(() => {
-    if (_liveDetailMatchId) refreshLiveDashboard(_liveDetailMatchId, { force: true });
+    if (_liveDetailMatchId) refreshLiveDetailModal(_liveDetailMatchId, { force: true });
   }, 30000);
 }
 
-async function refreshLiveDashboard(matchId, { force }) {
+async function refreshLiveDetailModal(matchId, { force }) {
   let m = null;
   try {
     const url = `/api/v1/live/bsd${force ? '?fresh=true' : ''}`;
@@ -10991,11 +10987,11 @@ async function refreshLiveDashboard(matchId, { force }) {
       };
     }
   }
-  if (m) updateLiveDashboard(m);
+  if (m) updateLiveDetailModal(m);
 }
 
-function renderLiveDashboardSkeleton() {
-  const cont = document.getElementById('ld-stats-bars');
+function renderLiveDetailSkeleton() {
+  const cont = document.getElementById('ldm-stats-bars');
   if (!cont) return;
   const rows = [
     { key:'possession', label:'Possession' },
@@ -11005,34 +11001,34 @@ function renderLiveDashboardSkeleton() {
     { key:'xg',         label:'xG' },
   ];
   cont.innerHTML = rows.map(r => `
-    <div class="ld-stat-row-v2" style="margin-bottom:14px;">
+    <div style="margin-bottom:14px;">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-bottom:5px;">
-        <span class="ld-stat-val-h" id="bar-${r.key}-vh" style="color:var(--blue);font-weight:700;text-align:left;">0</span>
+        <span id="barm-${r.key}-vh" style="color:var(--blue);font-weight:700;text-align:left;">0</span>
         <span style="color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-size:9px;font-weight:700;">${r.label}</span>
-        <span class="ld-stat-val-a" id="bar-${r.key}-va" style="color:#ffa726;font-weight:700;text-align:right;">0</span>
+        <span id="barm-${r.key}-va" style="color:#ffa726;font-weight:700;text-align:right;">0</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
         <div style="height:6px;background:rgba(41,182,246,0.12);border-radius:3px;overflow:hidden;direction:rtl;">
-          <div id="bar-${r.key}-h-fill" style="height:100%;background:var(--blue);width:0%;transition:width .4s ease;"></div>
+          <div id="barm-${r.key}-h-fill" style="height:100%;background:var(--blue);width:0%;transition:width .4s ease;"></div>
         </div>
         <div style="height:6px;background:rgba(255,167,38,0.12);border-radius:3px;overflow:hidden;">
-          <div id="bar-${r.key}-a-fill" style="height:100%;background:#ffa726;width:0%;transition:width .4s ease;"></div>
+          <div id="barm-${r.key}-a-fill" style="height:100%;background:#ffa726;width:0%;transition:width .4s ease;"></div>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-function updateLiveDashboard(m) {
-  setText('ld-home-name', m.home_team || '—');
-  setText('ld-away-name', m.away_team || '—');
-  setText('ld-score', m.score || m.live_score || '0–0');
+function updateLiveDetailModal(m) {
+  setText('ldm-home-name', m.home_team || '—');
+  setText('ldm-away-name', m.away_team || '—');
+  setText('ldm-score', m.score || m.live_score || '0–0');
   const min = m.minute || m.live_minute || 0;
-  setText('ld-minute', min ? `${min}′` : '—');
-  setText('ld-league', m.league || '');
+  setText('ldm-minute', min ? `${min}′` : '—');
+  setText('ldm-league', m.league || '');
 
   const intensity = m.intensity || m.live_intensity || 0;
-  const iEl = document.getElementById('ld-intensity');
+  const iEl = document.getElementById('ldm-intensity');
   if (iEl) {
     iEl.textContent = `⚡ ${intensity}/100`;
     const c = intensity >= 60 ? '#ff4d4d' : intensity >= 30 ? '#ffa726' : '#29b6f6';
@@ -11052,22 +11048,22 @@ function updateLiveDashboard(m) {
     const total = s.pct ? 100 : (s.h + s.a) || 1;
     const wH = Math.max(0, Math.min(100, (s.h / total) * 100));
     const wA = Math.max(0, Math.min(100, (s.a / total) * 100));
-    const fillH = document.getElementById(`bar-${s.key}-h-fill`);
-    const fillA = document.getElementById(`bar-${s.key}-a-fill`);
-    const valH  = document.getElementById(`bar-${s.key}-vh`);
-    const valA  = document.getElementById(`bar-${s.key}-va`);
+    const fillH = document.getElementById(`barm-${s.key}-h-fill`);
+    const fillA = document.getElementById(`barm-${s.key}-a-fill`);
+    const valH  = document.getElementById(`barm-${s.key}-vh`);
+    const valA  = document.getElementById(`barm-${s.key}-va`);
     if (fillH) fillH.style.width = wH + '%';
     if (fillA) fillA.style.width = wA + '%';
     if (valH)  valH.textContent  = s.dec ? s.h.toFixed(s.dec) : s.h;
     if (valA)  valA.textContent  = s.dec ? s.a.toFixed(s.dec) : s.a;
   }
 
-  drawMomentumSVG(m.momentum || []);
-  updateLiveVerdict(m);
+  drawLDMomentumSVG(m.momentum || []);
+  updateLDVerdict(m);
 }
 
-function drawMomentumSVG(momArr) {
-  const svg = document.getElementById('ld-momentum-svg');
+function drawLDMomentumSVG(momArr) {
+  const svg = document.getElementById('ldm-momentum-svg');
   if (!svg) return;
   const W = 600, H = 140, midY = H / 2;
   const data = Array.isArray(momArr) ? momArr.slice(-30) : [];
@@ -11089,8 +11085,8 @@ function drawMomentumSVG(momArr) {
   svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/>${bars}`;
 }
 
-function updateLiveVerdict(m) {
-  const el = document.getElementById('ld-verdict-content');
+function updateLDVerdict(m) {
+  const el = document.getElementById('ldm-verdict-content');
   if (!el) return;
   const xgH = +(m.xg?.home ?? 0), xgA = +(m.xg?.away ?? 0);
   const possH = m.possession?.home ?? 50;

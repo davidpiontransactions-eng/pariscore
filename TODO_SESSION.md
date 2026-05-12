@@ -16,6 +16,7 @@
 ## Live Dashboard V2 — Refonte Radicale
 - [ ] Destruction totale de l'ancienne boucle de rendu Live scrollable.
 - [ ] Implémentation du Dashboard Live V2 (Momentum SVG + Barres dynamiques + Polling partial-update sans flicker).
+- [ ] Fix UI : Rétablir l'affichage de la liste des matchs en direct via le filtre 'Live' du tableau principal.
 
 ## En cours / Debug
 - [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
