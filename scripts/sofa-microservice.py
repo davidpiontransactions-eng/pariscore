@@ -128,6 +128,26 @@ async def _wrapper_match_incidents(match_id: int):
         await api.close()
 
 
+async def _wrapper_match_channels(match_id: int, country: str = "FR"):
+    """Return [{id, name}] of broadcasters for a given country code (FR/UK/US/...)."""
+    api = SofascoreAPI()
+    try:
+        md = Match(api, match_id=match_id)
+        chans = await md.match_channels()
+        ids = (chans.get("countryChannels") or {}).get(country.upper(), [])
+        out = []
+        for cid in ids[:5]:  # cap to 5 channels max
+            try:
+                name = await md.get_channel(cid)
+            except Exception:
+                name = None
+            if name:
+                out.append({"id": cid, "name": name})
+        return {"country": country.upper(), "channels": out, "raw_ids": ids}
+    finally:
+        await api.close()
+
+
 def run_async(coro):
     return asyncio.run(coro)
 
@@ -254,6 +274,15 @@ class Handler(BaseHTTPRequestHandler):
                             _cache_set(key, payload)
                             return _json_response(self, 200, payload)
                         return _json_response(self, 503, {"error": "ScraperFC unavailable"})
+
+                    if sub == "channels":
+                        if HAVE_WRAPPER:
+                            country = (qs.get("country") or ["FR"])[0]
+                            data = run_async(_wrapper_match_channels(mid, country))
+                            payload = {"match_id": mid, **data}
+                            _cache_set(key, payload)
+                            return _json_response(self, 200, payload)
+                        return _json_response(self, 503, {"error": "wrapper unavailable"})
 
                     if sub == "shotmap":
                         if HAVE_SCRAPERFC:

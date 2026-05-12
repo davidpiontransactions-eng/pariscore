@@ -8513,6 +8513,59 @@ if (pathname === '/api/v1/live/predictions') {
   const result = getLivePredictionsTop5();
   return jsonResponse(res, 200, result);
 }
+// GET /api/v1/match/:matchId/tv-channel — TV broadcaster for a specific match (lazy enrichment via Sofa microservice, cache 6h)
+const tvChannelMatch = pathname.match(/^\/api\/v1\/match\/([^/?]+)\/tv-channel$/);
+if (tvChannelMatch && req.method === 'GET') {
+  const id = decodeURIComponent(tvChannelMatch[1]);
+  const country = (query.country || 'FR').toUpperCase();
+  const cacheKey = `tv_${id}_${country}`;
+  const cached = apiCacheGet(cacheKey, 'tv_channel');
+  if (cached) return jsonResponse(res, 200, { ...cached, _cached: true });
+
+  const match = db.matches.find(m => m.id === id);
+  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+  const sofaId = await resolveSofaEventId(match);
+  if (!sofaId) {
+    const empty = { match_id: id, country, channels: [], _source: 'no-mapping' };
+    apiCacheSet(cacheKey, empty, 'tv_channel', 6 * 3600);
+    return jsonResponse(res, 200, empty);
+  }
+  const data = await _sofaServiceFetch(`/match/${sofaId}/channels?country=${country}`, 8000);
+  if (!data || !Array.isArray(data.channels)) {
+    const empty = { match_id: id, country, channels: [], _source: 'sofa-miss' };
+    apiCacheSet(cacheKey, empty, 'tv_channel', 30 * 60); // shorter retry on miss
+    return jsonResponse(res, 200, empty);
+  }
+  // Enrich each channel with logo URL from local mapping (legacy fetchTVChannels)
+  const channelLogos = {
+    'beIN SPORTS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+    'beIN SPORTS 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+    'beIN SPORTS 2': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+    'beIN SPORTS 3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+    'beIN SPORTS MAX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+    'Canal+': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+    'Canal+ Foot': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+    'Canal+ Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+    'Canal+ Sport 360': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+    'Amazon Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
+    'Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
+    'DAZN': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/DAZN_Logo.svg/200px-DAZN_Logo.svg.png',
+    'RMC Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
+    'RMC Sport 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
+    "L'Équipe": 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/L_%C3%89quipe.svg/200px-L_%C3%89quipe.svg.png',
+    'M6': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/M6_logo.svg/200px-M6_logo.svg.png',
+    'TF1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/TF1_logo.svg/200px-TF1_logo.svg.png',
+  };
+  const channels = data.channels.map(c => ({
+    id: c.id,
+    name: c.name,
+    logo: channelLogos[c.name] || null,
+  }));
+  const payload = { match_id: id, country, channels, _source: 'sofa-microservice' };
+  apiCacheSet(cacheKey, payload, 'tv_channel', 6 * 3600);
+  return jsonResponse(res, 200, payload);
+}
+
 // GET /api/v1/tv-channels?date=YYYY-MM-DD — Chaînes TV de diffusion
 if (pathname === '/api/v1/tv-channels') {
   const dateStr = query.date || new Date().toISOString().slice(0, 10);

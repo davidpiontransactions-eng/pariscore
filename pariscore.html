@@ -8560,6 +8560,7 @@ const label = country
       <td style="min-width:60px;background:#ffffff !important;color:#1a1a1a !important;border-bottom:1px solid #EAEAEA !important;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:#1a1a1a !important;">${time}</div>
         <div style="font-size:10px;color:#888888 !important;margin-top:1px;">${date}</div>
+        <div data-tv-badge="${m.id}" style="margin-top:3px;font-size:9px;color:#555;display:none;align-items:center;gap:3px;"></div>
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;position:relative;">
         ${m.live_score ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
@@ -8663,6 +8664,37 @@ const label = country
       window.scrollTo({ top: _rmSavedScrollY, behavior: 'auto' });
     }
   }
+  // v10.8: enrichissement asynchrone des badges TV après render (cache localStorage 6h pour éviter spam)
+  enrichTVChannels();
+}
+
+// v10.8: async TV channel enricher — populates data-tv-badge slots after renderMatches
+const _tvBadgeFetched = new Set();
+async function enrichTVChannels() {
+  try {
+    const slots = document.querySelectorAll('[data-tv-badge]');
+    if (!slots.length) return;
+    const ids = Array.from(slots).map(el => el.getAttribute('data-tv-badge')).filter(Boolean);
+    const country = (navigator.language || 'fr').slice(0, 2).toUpperCase().replace('EN', 'FR'); // default FR
+    for (const id of ids) {
+      if (_tvBadgeFetched.has(id)) continue;
+      _tvBadgeFetched.add(id);
+      // Stagger 200ms to spread load on microservice (Playwright bottleneck)
+      await new Promise(r => setTimeout(r, 200));
+      try {
+        const res = await fetch(`/api/v1/match/${encodeURIComponent(id)}/tv-channel?country=${country}`);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const ch = (data.channels || [])[0];
+        if (!ch) continue;
+        const slot = document.querySelector(`[data-tv-badge="${id}"]`);
+        if (!slot) continue;
+        const logoHtml = ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" style="height:12px;max-width:24px;object-fit:contain;" loading="lazy">` : '📺';
+        slot.innerHTML = `${logoHtml} <span title="Diffuseur ${data.country}">${ch.name}</span>`;
+        slot.style.display = 'flex';
+      } catch {}
+    }
+  } catch {}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
