@@ -35,7 +35,8 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-PORT = int(os.environ.get("SOFA_PORT", 8765))
+PORT = int(os.environ.get("SOFA_PORT", os.environ.get("PORT", 8765)))
+BIND_HOST = os.environ.get("SOFA_BIND", "127.0.0.1")  # Set "0.0.0.0" in Render for internal service
 
 # Lazy imports — fail soft per provider
 try:
@@ -272,8 +273,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"[sofa-microservice] listening on http://127.0.0.1:{PORT}")
+    server = ThreadingHTTPServer((BIND_HOST, PORT), Handler)
+    print(f"[sofa-microservice] listening on http://{BIND_HOST}:{PORT}")
     print(f"  providers : ScraperFC={HAVE_SCRAPERFC} sofascore-wrapper={HAVE_WRAPPER}")
     print(f"  routes    : /health /live /match/<id>/{{stats,incidents,momentum,shotmap}}")
     try:

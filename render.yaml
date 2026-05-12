@@ -8,6 +8,23 @@
 # 4. Ajoutez les variables d'environnement dans le dashboard Render
 
 services:
+  # ── Worker Python privé — Sofascore microservice (Phase 2 Live Dashboard) ──
+  # Type: pserv (private service, joignable seulement via DNS interne Render)
+  # URL interne: http://pariscore-sofa:8765
+  - type: pserv
+    name: pariscore-sofa
+    runtime: python
+    plan: starter   # 512 MB RAM minimum pour Chromium Playwright
+    buildCommand: pip install -r requirements.txt && python -m playwright install chromium --with-deps
+    startCommand: python scripts/sofa-microservice.py
+    envVars:
+      - key: SOFA_PORT
+        value: "8765"
+      - key: SOFA_BIND
+        value: "0.0.0.0"   # OBLIGATOIRE pour traffic interne Render
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
   - type: web
     name: pariscore
     runtime: node
@@ -21,6 +38,9 @@ services:
         value: "3000"
       - key: NODE_ENV
         value: production
+      # URL interne du worker Python (Render résout via DNS interne)
+      - key: SOFA_SERVICE_BASE
+        value: "http://pariscore-sofa:8765"
 
       # ⚠ À renseigner manuellement dans le dashboard Render (onglet Environment)
       - key: ODDS_API_KEY
