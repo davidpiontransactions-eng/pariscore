@@ -964,7 +964,12 @@
   #live-detail-modal { position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1020;opacity:0;pointer-events:none;transition:opacity .2s; }
   #live-detail-modal.open { opacity:1;pointer-events:all; }
   #live-detail-panel { background:var(--bg2);border:1px solid var(--border2);border-radius:16px;position:relative;width:96vw;max-width:none;height:92vh;max-height:92vh;display:flex;flex-direction:column;overflow:hidden; }
-  #live-detail-inner { overflow:hidden;padding:0;flex:1;display:grid;grid-template-rows:auto auto 1fr;height:100%;min-height:0; }
+  /* v9.9.1 — scroll vertical pour voir TOUTES les sections (cockpit + momentum + innovations + stats + verdict) */
+  #live-detail-inner { overflow-y:auto;overflow-x:hidden;padding:0;flex:1;display:flex;flex-direction:column;min-height:0;scrollbar-width:thin;scrollbar-color:var(--border2) transparent; }
+  #live-detail-inner::-webkit-scrollbar { width:8px; }
+  #live-detail-inner::-webkit-scrollbar-track { background:transparent; }
+  #live-detail-inner::-webkit-scrollbar-thumb { background:var(--border2);border-radius:4px; }
+  #live-detail-inner::-webkit-scrollbar-thumb:hover { background:var(--text3); }
   .ld-header { margin-bottom:20px; }
   .ld-teams { font:800 20px/1.2 var(--font-head); }
   .ld-league { font-size:12px;color:var(--text3);margin-top:4px; }
