@@ -3849,12 +3849,34 @@ function deriveFormFromStats(stats) {
   return form || 'LLLLL';
 }
 
-// H2H — Dernières 5 confrontations directes entre deux équipes
+// H2H — Dernières 5 confrontations directes entre deux équipes (depuis history/archive)
+// v9.8.4 fix : filter matchs FINIS (score connu) AVANT slice, sinon matchs futurs polluent le top 5
 function computeH2H(homeTeam, awayTeam) {
-  const all = [...(db.matches || []), ...(db.archive_matches || [])];
   const hNorm = normName(homeTeam);
   const aNorm = normName(awayTeam);
-  const h2hMatches = all
+  // Scan SEULEMENT sources avec score : history (kvGet archive verified) + db.archive_matches finis
+  const histArr = (typeof history !== 'undefined' && Array.isArray(history)) ? history : [];
+  const archived = (db.archive_matches || []);
+  const pool = [
+    ...histArr.map(h => ({
+      home_team: h.home_team,
+      away_team: h.away_team,
+      commence_time: h.commence_time,
+      score: h.realScore ? `${h.realScore.home}-${h.realScore.away}` : null,
+      hs: h.realScore?.home,
+      as: h.realScore?.away,
+    })),
+    ...archived.map(a => ({
+      home_team: a.home_team,
+      away_team: a.away_team,
+      commence_time: a.commence_time,
+      score: a.live_score || (a.goals ? `${a.goals.home}-${a.goals.away}` : null),
+      hs: a.live_score ? Number(a.live_score.split('-')[0]) : a.goals?.home,
+      as: a.live_score ? Number(a.live_score.split('-')[1]) : a.goals?.away,
+    })),
+  ].filter(m => m.score && typeof m.hs === 'number' && typeof m.as === 'number' && !isNaN(m.hs) && !isNaN(m.as));
+
+  const h2hMatches = pool
     .filter(m => {
       const h = normName(m.home_team);
       const a = normName(m.away_team);
@@ -3867,26 +3889,32 @@ function computeH2H(homeTeam, awayTeam) {
 
   let w = 0, d = 0, l = 0;
   const formChars = [];
+  const meetings = [];
   for (const m of [...h2hMatches].reverse()) {
-    if (!m.live_score && (!m.goals?.home)) continue;
-    let hs, as;
-    if (m.live_score) { [hs, as] = m.live_score.split('-').map(Number); }
-    else { hs = m.goals.home; as = m.goals.away; }
-    if (isNaN(hs) || isNaN(as)) continue;
     const isHome = normName(m.home_team) === hNorm;
-    if (isHome) {
-      if (hs > as) { w++; formChars.push('W'); }
-      else if (hs === as) { d++; formChars.push('D'); }
-      else { l++; formChars.push('L'); }
-    } else {
-      if (as > hs) { w++; formChars.push('W'); }
-      else if (as === hs) { d++; formChars.push('D'); }
-      else { l++; formChars.push('L'); }
-    }
+    const hs = m.hs, as = m.as;
+    const myScore = isHome ? hs : as;
+    const oppScore = isHome ? as : hs;
+    if (myScore > oppScore) { w++; formChars.push('W'); }
+    else if (myScore === oppScore) { d++; formChars.push('D'); }
+    else { l++; formChars.push('L'); }
+    meetings.push({
+      date: (m.commence_time || '').slice(0, 10),
+      home: m.home_team,
+      away: m.away_team,
+      score: m.score,
+      home_goals: hs,
+      away_goals: as,
+    });
   }
 
-  const summary = `${w}W-${d}D-${l}L`;
-  return { summary, form: formChars.join(''), wins: w, draws: d, losses: l, total: w + d + l };
+  return {
+    summary: `${w}W-${d}D-${l}L`,
+    form: formChars.join(''),
+    wins: w, draws: d, losses: l, total: w + d + l,
+    meetings,
+    source: 'local',
+  };
 }
 
 function buildMatchRecord(raw) {
@@ -5825,6 +5853,39 @@ async function fetchH2H(team1Id, team2Id, limit = 10) {
 
   if (result) {
     result.source = source;
+    // v9.8.4 : enrichir avec summary/wins/draws/losses/form pour cohérence avec computeH2H()
+    if (result.meetings && result.meetings.length && (result.wins == null || result.summary == null)) {
+      let w = 0, d = 0, l = 0;
+      const formChars = [];
+      // Note : on ne sait pas quel team est "team1" vs "team2" depuis meetings (qui mélange home/away).
+      // On compte par rapport au PREMIER team_id passé (team1Id). Mais on n'a pas le team_id dans les meetings.
+      // Heuristique : déterminer "team1" via le team qui apparaît le plus comme home OU away dans le pool.
+      const teamCounts = {};
+      for (const m of result.meetings) {
+        teamCounts[m.home] = (teamCounts[m.home] || 0) + 1;
+        teamCounts[m.away] = (teamCounts[m.away] || 0) + 1;
+      }
+      const teams = Object.keys(teamCounts);
+      // Si exactement 2 équipes dans le pool, on a notre paire
+      if (teams.length === 2) {
+        // Choisir team1 arbitrairement (le 1er) — l'orientation est ambiguë sans contexte
+        const team1Name = teams[0];
+        for (const m of [...result.meetings].reverse()) {
+          if (typeof m.home_goals !== 'number' || typeof m.away_goals !== 'number') continue;
+          const isHome = m.home === team1Name;
+          const myScore = isHome ? m.home_goals : m.away_goals;
+          const oppScore = isHome ? m.away_goals : m.home_goals;
+          if (myScore > oppScore) { w++; formChars.push('W'); }
+          else if (myScore === oppScore) { d++; formChars.push('D'); }
+          else { l++; formChars.push('L'); }
+        }
+        result.summary = `${w}W-${d}D-${l}L`;
+        result.form = formChars.join('');
+        result.wins = w; result.draws = d; result.losses = l;
+        result.total = w + d + l;
+        result._oriented_to = team1Name;
+      }
+    }
     apiCacheSet(cacheKey, result, 'h2h', 24 * 3600);
     return result;
   }
