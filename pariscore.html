@@ -7579,6 +7579,13 @@ function initSSE() {
         buildLiveTop5Panel();
         flashLiveUpdateToast();
       }
+      // v9.8.8 — Modal Live Dashboard ouvert : push instant update (au lieu d'attendre polling 30s)
+      if (typeof _liveDetailMatchId !== 'undefined' && _liveDetailMatchId) {
+        const matchInPatch = data.patches.find(p => p.id === _liveDetailMatchId);
+        if (matchInPatch && typeof refreshLiveDetailModal === 'function') {
+          refreshLiveDetailModal(_liveDetailMatchId, { force: true }).catch(() => {});
+        }
+      }
     } catch(err) { console.warn('[SSE] live_patch error', err); }
   });
 
@@ -11763,21 +11770,23 @@ function drawLDMomentumSVG(momArr) {
   if (!svg) return;
   const W = 600, H = 140, midY = H / 2, padY = 6;
   const data = Array.isArray(momArr) ? momArr.slice(-30) : [];
-  // Empty state plus précis : <3 points = match trop tôt
-  if (data.length < 3) {
-    const msg = data.length === 0 ? 'En attente de données momentum…' : `Calcul en cours (${data.length}/3 points)…`;
+  // v9.8.8 — Render dès 2 points (bootstrap synth min=0 + actuel). Empty state seulement si 0 ou 1 point.
+  if (data.length < 2) {
+    const msg = data.length === 0 ? 'En attente de données momentum…' : `Calcul en cours (1 snapshot)…`;
     svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/><text x="${W/2}" y="${midY+4}" fill="var(--text3)" font-size="11" text-anchor="middle" font-family="var(--font-mono)">${msg}</text>`;
     return;
   }
-  const step = W / Math.max(1, data.length - 1);
-  // Normalisation : v est déjà -100..+100 → scale linéaire vers Y pixels
+  // v9.8.8 — x positioning par minute (0-90), pas par index → timeline réaliste
+  const MAX_MIN = 90;
+  const xScale = (min) => Math.max(0, Math.min(W, (min / MAX_MIN) * W));
   const yScale = (v) => midY - (Math.max(-100, Math.min(100, v)) / 100) * (midY - padY);
-  // Build path area chart (bidirectionnel)
-  const points = data.map((pt, i) => {
+  const points = data.map((pt) => {
     const v = typeof pt === 'number' ? pt : (pt?.v ?? 0);
-    return { x: i * step, y: yScale(v), v };
+    const m = typeof pt === 'object' && pt?.min != null ? pt.min : 0;
+    return { x: xScale(m), y: yScale(v), v, m };
   });
   const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const step = Math.max(4, W / 30); // bar width fallback
   // Aire signée : remplit entre la courbe et la baseline midY
   const areaHome = `${pathData} L${points[points.length-1].x.toFixed(1)},${midY} L${points[0].x.toFixed(1)},${midY} Z`;
   // Bars overlay sur baseline pour ponctualité (1 bar par minute)

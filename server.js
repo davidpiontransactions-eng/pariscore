@@ -12693,8 +12693,13 @@ function computeCompositeMomentum(sr, match, prevSnapshot) {
 
 function recordLiveMomentumSnapshot(matchId, minute, sr, match) {
   if (!minute) return;
+  let hist = _liveMomentumHistory.get(matchId) || [];
+  // v9.8.8 — Bootstrap : prepend synthetic baseline point min=0 si history vide pour démarrer la courbe
+  if (hist.length === 0 && minute > 0) {
+    hist.push({ min: 0, v: 0, raw: { daH: 0, daA: 0, shH: 0, shA: 0, sotH: 0, sotA: 0, coH: 0, coA: 0 } });
+    _liveMomentumHistory.set(matchId, hist);
+  }
   // Snapshot 3-min ago pour calcul rolling delta
-  const hist = _liveMomentumHistory.get(matchId) || [];
   const prevPoint = hist.find(p => p.min === minute - 3) || hist[Math.max(0, hist.length - 3)];
   const prev = prevPoint ? prevPoint.raw : null;
   // Capture raw counters pour next delta
@@ -12940,6 +12945,24 @@ async function pollLiveScores() {
         // Enrichissement Sofascore pour chaque match live (stats + xG + momentum)
         const liveNow = db.matches.filter(m => m.live_score && parseInt(m.live_minute||0) > 0 && parseInt(m.live_minute||0) < 130);
         await Promise.allSettled(liveNow.map(m => enrichMatchWithSofaLiveStats(m)));
+
+        // v9.8.8 — Record momentum snapshot pour CHAQUE match live (indépendant des modals ouvertes)
+        // Permet aux users qui ouvrent le modal à mi-match d'avoir un historique pré-rempli
+        for (const m of liveNow) {
+          try {
+            const detail = m._bsd_event_id ? await fetchBSDEventDetail(m._bsd_event_id) : null;
+            const sr = detail?.sr_stats || null;
+            const minute = parseInt(detail?.current_minute ?? m.live_minute ?? 0) || 0;
+            if (minute) {
+              recordLiveMomentumSnapshot(m.id, minute, sr, m);
+              const xgH = detail?.actual_home_xg ?? detail?.home_xg_live ?? null;
+              const xgA = detail?.actual_away_xg ?? detail?.away_xg_live ?? null;
+              recordLiveXGSnapshot(m.id, minute, xgH, xgA);
+              const pi = computePressureIndex(sr, m);
+              if (pi) recordLivePressureSnapshot(m.id, minute, pi);
+            }
+          } catch (e) { /* skip individual match errors */ }
+        }
 
         if (patches.length > 0 || liveNow.length > 0) {
             saveDB();
