@@ -11080,6 +11080,24 @@ function updateLiveDetailModal(m) {
     { key:'sot',        src:m.shots_on_target,   pct:false, dec:0 },
     { key:'corners',    src:m.corners,           pct:false, dec:0 },
   ];
+  // v10.9: detect zero-coverage case (ligues mineures, ex: Suomen Cup)
+  const hasAnyData = stats.some(s => s.src && s.src.home != null && s.src.away != null);
+  const noDataBanner = document.getElementById('ldm-no-data-banner');
+  if (!hasAnyData) {
+    if (!noDataBanner) {
+      const cont = document.getElementById('ldm-stats-bars');
+      if (cont) {
+        cont.insertAdjacentHTML('beforebegin', `
+          <div id="ldm-no-data-banner" style="padding:14px;margin-bottom:14px;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;font-size:12px;color:#b45309;line-height:1.55;">
+            ⚠️ <strong>Statistiques live indisponibles</strong> pour <em>${m.league || 'cette compétition'}</em>.
+            <br/><span style="font-size:11px;color:var(--text3);">Couverture data limitée pour les compétitions secondaires (coupes nationales, ligues mineures). Le score live et le résultat final restent fiables.</span>
+          </div>
+        `);
+      }
+    }
+  } else if (noDataBanner) {
+    noDataBanner.remove();
+  }
   for (const s of stats) {
     const row = document.getElementById(`barm-${s.key}-row`);
     if (!s.src || s.src.home == null || s.src.away == null) {
@@ -11131,6 +11149,12 @@ function drawLDMomentumSVG(momArr) {
 function updateLDVerdict(m) {
   const el = document.getElementById('ldm-verdict-content');
   if (!el) return;
+  // v10.9: skip si aucune source data (ligues mineures non couvertes)
+  const hasData = !!(m.xg || m.shots || m.possession || m.dangerous_attacks);
+  if (!hasData) {
+    el.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center;line-height:1.6;font-style:italic;">Analyse non disponible — couverture data live limitée pour ce championnat.</div>`;
+    return;
+  }
   const xgH = +(m.xg?.home ?? 0), xgA = +(m.xg?.away ?? 0);
   const possH = m.possession?.home ?? 50;
   const shotsH = m.shots?.home ?? 0, shotsA = m.shots?.away ?? 0;
