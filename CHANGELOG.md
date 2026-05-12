@@ -2,6 +2,77 @@
 
 ---
 
+## [v9.8.1] — 2026-05-12
+
+### Ajouté — Mes Paris : Plan 20%/jour + Import CSV sécurisé + Sport + Bookmakers ANJ
+
+**Plan bankroll (compound + split 50/50)**
+- Table `bankroll_plan` (user_id PK, starting_capital_cents 30000 default, daily_target_pct 20.0, profit_split_pct 50.0, start_date '2026-05-12', floor_cents)
+- Routes : `GET/PUT /api/v1/bankroll/plan`, `GET /api/v1/bankroll/daily-tracker`
+- Daily tracker calcule jour par jour : capital_cible (compound × 1.20), capital_réel, P&L jour, split 50% banque / 50% capital, cumul banque, écart cible, hit_target boolean
+- Onglet "Plan 20%/jour" dans Mes Paris : KPI row (capital départ/actuel/banque/total/cible/écart) + table jour-par-jour + pill statut
+- Modal `#plan-modal` : édition capital, target%, split%, start date, floor
+
+**Bookmakers — ANJ FR + 1xbet (11 books)**
+- Constante `ALLOWED_BOOKMAKERS` côté serveur, `normalizeBookmaker()` lookup case-insensitive
+- Dropdowns dans bet-modal, cash-modal, import-modal, paris-filters
+- Liste : 1xbet, Winamax, Betclic, Unibet, PMU, Parions Sport, ZEbet, NetBet, Vbet, Genybet, PartoucheSport
+- Cash modal accepte "banque" (épargne séparée)
+
+**Colonne sport (15 sports)**
+- Migration idempotente `ALTER TABLE user_bets ADD COLUMN sport TEXT DEFAULT 'football'` + `external_ref` + `source`
+- `ALLOWED_SPORTS` + `normalizeSport()` avec alias (foot/basket/tennis/mma/ufc/f1/lol/etc.)
+- POST + PATCH /bets acceptent `sport`, listUserBets filtre par sport
+- Dropdown sport dans bet-modal + filter dans paris-filters
+- Colonne emoji dans table (`SPORT_EMOJI` côté JS)
+- Export CSV inclut colonne `sport`
+
+**Import CSV bookmaker (sécurité renforcée)**
+- Route `POST /api/v1/auth/reverify` — exige mdp en clair, vérifie via `verifyPasswordSync`, émet token 32-byte hex single-use TTL 5 min, stockage Map en mémoire avec purge auto, log IP côté server
+- Route `POST /api/v1/bets/import` — exige JWT + `reverify_token` (consumed-on-use), CSV ≤ 500 Ko, dry_run mode, transactionnel via `sqldb.transaction()`, dédup via `external_ref` (user_id, date|event|odds)
+- Parser flexible `parseBetsCSV` : 10 alias colonnes (date/sport/event/market/selection/odds/stake/payout/status/bookmaker/league), séparateur auto-détecté (`,` `;` `\t`), gère "Historique" préfixe 1xbet, dates DD/MM/YYYY + ISO, normalisation status (won/lost/void/cashout/half_won/half_lost)
+- Table `bet_import_audit` (user_id, source, filename, rows_parsed/inserted/skipped, ip, user_agent) — forensique
+- Route `GET /api/v1/bets/import/audit` (last 50)
+- Modal `#import-modal` 2-step : (1) re-verify mdp, (2) upload fichier OU paste CSV + bookmaker default + dry-run/commit, tag "IMP" sur paris importés
+- POST /bets stocke `source='manual'` par défaut, import stocke `source='import'`
+
+**Bug TZ corrigé**
+- `computeDailyTracker` utilisait `new Date(start + 'T00:00:00')` → interprété en local → décalage 1 jour en CET. Remplacé par `Date.UTC(...split)` partout. Vérifié : daily_pnl correctement attribué au 2026-05-12.
+
+**Frontend (`pariscore.html`)**
+- 2 nouveaux modals (`#plan-modal`, `#import-modal`)
+- 4ème tab "Plan 20%/jour" + bouton toolbar "⚙ Plan" + "⬆ Importer 1xbet/ANJ"
+- Nouveau filtre "Sport" dans paris-filters
+- Colonne "Sport" (emoji) dans bets table
+- Tag "IMP" sur paris importés
+- `SPORT_EMOJI` map (15 entrées)
+
+### Modifié
+- `server.js` : +600 lignes (migrations idempotentes, constantes/helpers, 7 routes, parser CSV, reverify token, daily tracker compound)
+- `pariscore.html` : +500 lignes (CSS dropdowns, sport column, plan tab, 2 modals, JS handlers)
+- `CLAUDE.md` : version → v9.8.1, section v9.8.1 ajoutée
+
+### Sécurité
+- Reverify token : 32 bytes crypto-random, single-use, TTL 5 min, purge interval 60s
+- Import logs : IP + user_agent en audit pour forensique
+- CSV size ≤ 500 Ko (anti-DoS)
+- Transactional insert via better-sqlite3 transaction (rollback si crash)
+- Dedup hardened via external_ref (date|event|odds, slice 128)
+
+### Tests preview
+- Login test@pariscore.fr → plan auto-init (300€/20%/50%/2026-05-12) ✓
+- PUT plan → persisté ✓
+- Reverify mdp correct → token émis ✓
+- Reverify mdp incorrect → 401 + warn log ✓
+- Reuse reverify token → 403 ✓
+- Import CSV 3 paris (Football/Tennis/Basketball, won/lost/pending) → 3 inserted ✓
+- Re-import même CSV → 0 inserted (dedup external_ref) ✓
+- Daily tracker : PnL +3.50€ correctement attribué à 2026-05-12, split 1.75/1.75€, écart cible -56.50€ ✓
+- UI : emoji sport rendered ⚽🎾🏀, tag IMP visible, Plan tab avec KPI + table OK ✓
+- node --check server.js ✓
+
+---
+
 ## [v9.8.0] — 2026-05-12
 
 ### Ajouté — Module "Mes Paris" (Bet Tracking 1xbet + Bankroll réelle + Kelly + CSV)

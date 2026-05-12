@@ -4507,7 +4507,38 @@
       <input type="number" id="bet-stake" step="0.5" min="0.5" value="10">
     </label>
     <label>Bookmaker
-      <input type="text" id="bet-bookmaker" value="1xbet">
+      <select id="bet-bookmaker">
+        <option value="1xbet" selected>1xbet</option>
+        <option value="Winamax">Winamax (ANJ)</option>
+        <option value="Betclic">Betclic (ANJ)</option>
+        <option value="Unibet">Unibet (ANJ)</option>
+        <option value="PMU">PMU (ANJ)</option>
+        <option value="Parions Sport">Parions Sport (ANJ)</option>
+        <option value="ZEbet">ZEbet (ANJ)</option>
+        <option value="NetBet">NetBet (ANJ)</option>
+        <option value="Vbet">Vbet (ANJ)</option>
+        <option value="Genybet">Genybet (ANJ)</option>
+        <option value="PartoucheSport">PartoucheSport (ANJ)</option>
+      </select>
+    </label>
+    <label>Sport
+      <select id="bet-sport">
+        <option value="football" selected>Football</option>
+        <option value="basketball">Basketball</option>
+        <option value="tennis">Tennis</option>
+        <option value="rugby">Rugby</option>
+        <option value="hockey">Hockey</option>
+        <option value="baseball">Baseball</option>
+        <option value="mma">MMA</option>
+        <option value="boxe">Boxe</option>
+        <option value="cyclisme">Cyclisme</option>
+        <option value="formula1">F1</option>
+        <option value="volleyball">Volleyball</option>
+        <option value="handball">Handball</option>
+        <option value="esports">eSports</option>
+        <option value="golf">Golf</option>
+        <option value="autre">Autre</option>
+      </select>
     </label>
     <button class="btn-ghost" type="button" onclick="toggleKellyPanel()" style="margin-bottom:10px;">💡 Suggestion Kelly</button>
     <div class="kelly-panel" id="bet-kelly-panel" style="display:none;">
@@ -4585,7 +4616,20 @@
       <input type="number" id="cash-amount" step="0.01" min="0.01" value="100">
     </label>
     <label>Bookmaker
-      <input type="text" id="cash-bookmaker" value="1xbet">
+      <select id="cash-bookmaker">
+        <option value="1xbet" selected>1xbet</option>
+        <option value="Winamax">Winamax (ANJ)</option>
+        <option value="Betclic">Betclic (ANJ)</option>
+        <option value="Unibet">Unibet (ANJ)</option>
+        <option value="PMU">PMU (ANJ)</option>
+        <option value="Parions Sport">Parions Sport (ANJ)</option>
+        <option value="ZEbet">ZEbet (ANJ)</option>
+        <option value="NetBet">NetBet (ANJ)</option>
+        <option value="Vbet">Vbet (ANJ)</option>
+        <option value="Genybet">Genybet (ANJ)</option>
+        <option value="PartoucheSport">PartoucheSport (ANJ)</option>
+        <option value="banque">Banque (épargne)</option>
+      </select>
     </label>
     <label>Date
       <input type="date" id="cash-date">
@@ -4596,6 +4640,90 @@
     <div class="paris-modal-actions">
       <button class="btn-cancel" type="button" onclick="closeCashModal()">Annuler</button>
       <button class="btn-save" type="button" onclick="submitCash()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MES PARIS — MODAL : Plan bankroll (capital, objectif, split) -->
+<div id="plan-modal" class="paris-modal">
+  <div class="paris-modal-card">
+    <h3>⚙ Plan bankroll</h3>
+    <div class="paris-modal-err" id="plan-modal-err"></div>
+    <label>Capital de départ (€)
+      <input type="number" id="plan-capital" step="1" min="1" value="300">
+    </label>
+    <label>Objectif gain / jour (%)
+      <input type="number" id="plan-target" step="0.5" min="0.5" value="20">
+    </label>
+    <label>Split gains : % vers banque
+      <input type="number" id="plan-split" step="5" min="0" max="100" value="50">
+    </label>
+    <label>Date de démarrage
+      <input type="date" id="plan-start" value="2026-05-12">
+    </label>
+    <label>Plancher de sécurité (€) — paris suspendus si bankroll &lt; plancher
+      <input type="number" id="plan-floor" step="10" min="0" value="0">
+    </label>
+    <div style="background:rgba(41,182,246,.10);border:1px solid rgba(41,182,246,.3);padding:10px 12px;border-radius:6px;margin-bottom:12px;font-size:11px;color:var(--blue);font-family:var(--font-mono);">
+      ⚠ Compound 20 %/jour : 300 € → 535 € (J3) → 1 547 € (J10) → 7 982 € (J20). Variance réelle écrase souvent ces projections — la table "Plan" affiche capital théorique vs réel.
+    </div>
+    <div class="paris-modal-actions">
+      <button class="btn-cancel" type="button" onclick="closePlanModal()">Annuler</button>
+      <button class="btn-save" type="button" onclick="submitPlan()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MES PARIS — MODAL : Import CSV bookmaker (sécurisé re-verify mdp) -->
+<div id="import-modal" class="paris-modal">
+  <div class="paris-modal-card" style="max-width:680px;">
+    <h3>⬆ Importer paris bookmaker</h3>
+    <div class="paris-modal-err" id="import-modal-err"></div>
+    <div style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);padding:10px 12px;border-radius:6px;margin-bottom:14px;font-size:12px;font-family:var(--font-mono);">
+      🔒 <strong>Action sensible</strong> — re-confirmation mot de passe requise. Format accepté : CSV exporté depuis 1xbet / Winamax / Betclic / Unibet / PMU / autres ANJ. Colonnes auto-détectées (Date, Sport, Événement, Marché, Cote, Mise, Statut, Gain).
+    </div>
+
+    <div id="import-step-reverify">
+      <label>Mot de passe (re-confirmation)
+        <input type="password" id="import-password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') submitReverify()">
+      </label>
+      <div class="paris-modal-actions">
+        <button class="btn-cancel" type="button" onclick="closeImportModal()">Annuler</button>
+        <button class="btn-save" type="button" onclick="submitReverify()">Re-vérifier mdp →</button>
+      </div>
+    </div>
+
+    <div id="import-step-upload" style="display:none;">
+      <div style="background:var(--green-bg);color:var(--green);padding:8px 10px;border-radius:6px;margin-bottom:12px;font-size:11px;font-family:var(--font-mono);">
+        ✓ Mot de passe re-vérifié. Token valide 5 min, usage unique.
+      </div>
+      <label>Bookmaker source (par défaut si CSV ne précise pas)
+        <select id="import-bookmaker">
+          <option value="1xbet" selected>1xbet</option>
+          <option value="Winamax">Winamax</option>
+          <option value="Betclic">Betclic</option>
+          <option value="Unibet">Unibet</option>
+          <option value="PMU">PMU</option>
+          <option value="Parions Sport">Parions Sport</option>
+          <option value="ZEbet">ZEbet</option>
+          <option value="NetBet">NetBet</option>
+          <option value="Vbet">Vbet</option>
+          <option value="Genybet">Genybet</option>
+          <option value="PartoucheSport">PartoucheSport</option>
+        </select>
+      </label>
+      <label>Fichier CSV (max 500 Ko)
+        <input type="file" id="import-file" accept=".csv,text/csv">
+      </label>
+      <label>OU coller le contenu CSV
+        <textarea id="import-csv" placeholder="Date;Sport;Événement;Marché;Cote;Mise;Statut;Gain&#10;..." style="min-height:120px;font-size:11px;"></textarea>
+      </label>
+      <div class="paris-modal-actions">
+        <button class="btn-cancel" type="button" onclick="closeImportModal()">Annuler</button>
+        <button class="btn-ghost" type="button" onclick="submitImport(true)">🔍 Aperçu (dry-run)</button>
+        <button class="btn-save" type="button" onclick="submitImport(false)">Importer</button>
+      </div>
+      <div id="import-preview" style="margin-top:14px;font-size:11px;font-family:var(--font-mono);"></div>
     </div>
   </div>
 </div>
@@ -5277,7 +5405,9 @@
   <div class="paris-toolbar">
     <button class="btn-primary" onclick="openBetModal()">+ Nouveau pari</button>
     <button class="btn-ghost" onclick="openCashModal()">+ Dépôt / Retrait</button>
+    <button class="btn-ghost" onclick="openImportModal()">⬆ Importer 1xbet/ANJ</button>
     <button class="btn-ghost" onclick="exportBetsCsv()">⬇ Export CSV</button>
+    <button class="btn-ghost" onclick="openPlanModal()">⚙ Plan</button>
     <span class="bk-chip" id="paris-bk-chip">Bookmaker : 1xbet</span>
     <span style="margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--font-mono);" id="paris-last-refresh"></span>
   </div>
@@ -5293,6 +5423,7 @@
     <button class="paris-tab active" data-tab="open" onclick="setParisTab('open')">Paris ouverts</button>
     <button class="paris-tab" data-tab="settled" onclick="setParisTab('settled')">Historique</button>
     <button class="paris-tab" data-tab="cash" onclick="setParisTab('cash')">Trésorerie</button>
+    <button class="paris-tab" data-tab="plan" onclick="setParisTab('plan')">Plan 20 %/jour</button>
   </div>
 
   <div class="paris-filters" id="paris-filters">
@@ -5309,7 +5440,40 @@
       </select>
     </label>
     <label>Bookmaker
-      <input type="text" id="paris-f-bookmaker" placeholder="1xbet" onchange="applyParisFilters()">
+      <select id="paris-f-bookmaker" onchange="applyParisFilters()">
+        <option value="">Tous</option>
+        <option value="1xbet">1xbet</option>
+        <option value="Winamax">Winamax</option>
+        <option value="Betclic">Betclic</option>
+        <option value="Unibet">Unibet</option>
+        <option value="PMU">PMU</option>
+        <option value="Parions Sport">Parions Sport</option>
+        <option value="ZEbet">ZEbet</option>
+        <option value="NetBet">NetBet</option>
+        <option value="Vbet">Vbet</option>
+        <option value="Genybet">Genybet</option>
+        <option value="PartoucheSport">PartoucheSport</option>
+      </select>
+    </label>
+    <label>Sport
+      <select id="paris-f-sport" onchange="applyParisFilters()">
+        <option value="">Tous</option>
+        <option value="football">Football</option>
+        <option value="basketball">Basketball</option>
+        <option value="tennis">Tennis</option>
+        <option value="rugby">Rugby</option>
+        <option value="hockey">Hockey</option>
+        <option value="baseball">Baseball</option>
+        <option value="mma">MMA</option>
+        <option value="boxe">Boxe</option>
+        <option value="cyclisme">Cyclisme</option>
+        <option value="formula1">F1</option>
+        <option value="volleyball">Volleyball</option>
+        <option value="handball">Handball</option>
+        <option value="esports">eSports</option>
+        <option value="golf">Golf</option>
+        <option value="autre">Autre</option>
+      </select>
     </label>
     <label>Marché
       <input type="text" id="paris-f-market" placeholder="OVER_2_5..." onchange="applyParisFilters()">
@@ -5330,6 +5494,7 @@
       <thead>
         <tr>
           <th>Date</th>
+          <th>Sport</th>
           <th>Match</th>
           <th>Marché</th>
           <th>Cote</th>
@@ -5364,6 +5529,29 @@
     </table>
     <div id="paris-cash-empty" class="paris-empty" style="display:none;">
       Aucun mouvement de trésorerie.
+    </div>
+  </div>
+
+  <div class="hist-table-wrap" id="paris-plan-table-wrap" style="display:none;">
+    <div class="hist-kpi-row" id="paris-plan-summary" style="margin-bottom:16px;"></div>
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Capital cible</th>
+          <th>Capital réel</th>
+          <th>P&amp;L jour</th>
+          <th>→ Banque (50 %)</th>
+          <th>→ Capital (50 %)</th>
+          <th>Cumul banque</th>
+          <th>Écart cible</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody id="paris-plan-tbody"></tbody>
+    </table>
+    <div id="paris-plan-empty" class="paris-empty" style="display:none;">
+      Configure ton plan via le bouton ⚙ Plan.
     </div>
   </div>
 </section>
@@ -13011,16 +13199,23 @@ function onBetMatchInput() {
 function setParisTab(tab) {
   parisState.tab = tab;
   document.querySelectorAll('.paris-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.getElementById('paris-bets-table-wrap').style.display = (tab === 'cash') ? 'none' : 'block';
-  document.getElementById('paris-cash-table-wrap').style.display = (tab === 'cash') ? 'block' : 'none';
-  document.getElementById('paris-filters').style.display = (tab === 'cash') ? 'none' : 'grid';
-  if (tab !== 'cash') renderUserBetsTable();
+  const betsWrap = document.getElementById('paris-bets-table-wrap');
+  const cashWrap = document.getElementById('paris-cash-table-wrap');
+  const planWrap = document.getElementById('paris-plan-table-wrap');
+  const filtersEl = document.getElementById('paris-filters');
+  betsWrap.style.display = (tab === 'open' || tab === 'settled') ? 'block' : 'none';
+  cashWrap.style.display = (tab === 'cash') ? 'block' : 'none';
+  planWrap.style.display = (tab === 'plan') ? 'block' : 'none';
+  filtersEl.style.display = (tab === 'open' || tab === 'settled') ? 'grid' : 'none';
+  if (tab === 'open' || tab === 'settled') renderUserBetsTable();
+  if (tab === 'plan') loadDailyTracker();
 }
 
 function applyParisFilters() {
   parisState.filters = {
     status: document.getElementById('paris-f-status').value,
     bookmaker: document.getElementById('paris-f-bookmaker').value.trim(),
+    sport: document.getElementById('paris-f-sport').value,
     market: document.getElementById('paris-f-market').value.trim(),
     team: document.getElementById('paris-f-team').value.trim(),
     from: document.getElementById('paris-f-from').value,
@@ -13034,6 +13229,7 @@ function buildBetsQueryString() {
   const parts = [];
   if (f.status) parts.push('status=' + encodeURIComponent(f.status));
   if (f.bookmaker) parts.push('bookmaker=' + encodeURIComponent(f.bookmaker));
+  if (f.sport) parts.push('sport=' + encodeURIComponent(f.sport));
   if (f.market) parts.push('market=' + encodeURIComponent(f.market));
   if (f.team) parts.push('team=' + encodeURIComponent(f.team));
   if (f.from) parts.push('from=' + encodeURIComponent(f.from));
@@ -13041,6 +13237,12 @@ function buildBetsQueryString() {
   parts.push('limit=500');
   return parts.join('&');
 }
+
+const SPORT_EMOJI = {
+  football: '⚽', basketball: '🏀', tennis: '🎾', rugby: '🏉', hockey: '🏒',
+  baseball: '⚾', mma: '🥊', boxe: '🥊', cyclisme: '🚴', formula1: '🏎️',
+  volleyball: '🏐', handball: '🤾', esports: '🎮', golf: '⛳', autre: '🏆',
+};
 
 async function loadUserBets() {
   try {
@@ -13072,8 +13274,12 @@ function renderUserBetsTable() {
     const actions = b.status === 'pending'
       ? `<button onclick="openSettleModal(${b.id})">Régler</button><button class="danger" onclick="deleteBet(${b.id})">×</button>`
       : `<button class="danger" onclick="deleteBet(${b.id})">×</button>`;
+    const sport = b.sport || 'football';
+    const sportTag = `<span title="${escapeHtml(sport)}">${SPORT_EMOJI[sport] || '🏆'}</span>`;
+    const sourceTag = b.source === 'import' ? ' <span style="font-size:9px;background:rgba(41,182,246,.15);color:var(--blue);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);">IMP</span>' : '';
     return `<tr class="${rowCls}">
-      <td>${dateStr}</td>
+      <td>${dateStr}${sourceTag}</td>
+      <td style="font-size:16px;">${sportTag}</td>
       <td>${escapeHtml(match)}${b.league ? `<div style="font-size:10px;color:var(--text3);">${escapeHtml(b.league)}</div>` : ''}</td>
       <td>${escapeHtml(b.selection_label)}<div style="font-size:10px;color:var(--text3);">${escapeHtml(b.market)}</div></td>
       <td>${b.odds.toFixed(2)}</td>
@@ -13425,9 +13631,185 @@ async function exportBetsCsv() {
   } catch (e) { /* ignore */ }
 }
 
+// ─── PLAN BANKROLL ────────────────────────────────────────────────────────
+async function loadDailyTracker() {
+  try {
+    const res = await apiFetch('/api/v1/bankroll/daily-tracker');
+    if (!res.ok) return;
+    const data = await res.json();
+    renderPlanTable(data);
+  } catch (e) { /* ignore */ }
+}
+
+function renderPlanTable(data) {
+  const p = data.plan;
+  const tbody = document.getElementById('paris-plan-tbody');
+  const sum = document.getElementById('paris-plan-summary');
+  const totalValue = data.summary.total_value_cents;
+  const targetFinal = data.days.length ? data.days[data.days.length - 1].target_capital_cents : p.starting_capital_cents;
+  const gap = totalValue - targetFinal;
+  sum.innerHTML = [
+    { label: 'Capital départ', val: centsToEur(p.starting_capital_cents), color: 'var(--text2)' },
+    { label: 'Capital actuel', val: centsToEur(data.summary.current_capital_cents), color: 'var(--text)' },
+    { label: 'Banque cumulée', val: centsToEur(data.summary.cumul_bank_cents), color: 'var(--green)' },
+    { label: 'Total (cap. + banque)', val: centsToEur(totalValue), color: gap >= 0 ? 'var(--green)' : 'var(--red)' },
+    { label: 'Cible J+' + (data.days.length - 1), val: centsToEur(targetFinal), color: 'var(--blue)' },
+    { label: 'Écart cible', val: (gap >= 0 ? '+' : '') + (gap / 100).toFixed(2) + ' €', color: gap >= 0 ? 'var(--green)' : 'var(--red)' },
+  ].map(k => `<div class="hist-kpi"><div class="hist-kpi-label">${k.label}</div><div class="hist-kpi-val" style="color:${k.color};font-size:22px;">${k.val}</div></div>`).join('');
+  if (!data.days.length) {
+    tbody.innerHTML = '';
+    document.getElementById('paris-plan-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('paris-plan-empty').style.display = 'none';
+  tbody.innerHTML = data.days.map(d => {
+    const date = new Date(d.date).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+    const pnlCls = d.daily_pnl_cents >= 0 ? 'bet-pl-pos' : 'bet-pl-neg';
+    const gapCls = d.gap_vs_target_cents >= 0 ? 'bet-pl-pos' : 'bet-pl-neg';
+    const status = d.hit_target ? '<span class="bet-status-pill won">cible ✓</span>' : (d.daily_pnl_cents === 0 ? '<span class="bet-status-pill void">—</span>' : '<span class="bet-status-pill lost">sous cible</span>');
+    return `<tr>
+      <td>${date}</td>
+      <td>${centsToEur(d.target_capital_cents)}</td>
+      <td>${centsToEur(d.actual_capital_cents)}</td>
+      <td><span class="${pnlCls}">${eurFmt(d.daily_pnl_cents / 100)}</span></td>
+      <td>${centsToEur(d.gain_to_bank_cents)}</td>
+      <td>${centsToEur(d.gain_to_capital_cents)}</td>
+      <td>${centsToEur(d.cumul_bank_cents)}</td>
+      <td><span class="${gapCls}">${(d.gap_vs_target_cents >= 0 ? '+' : '') + (d.gap_vs_target_cents / 100).toFixed(2)} €</span></td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function openPlanModal() {
+  if (!psGetToken()) { openAuthModal('login'); return; }
+  document.getElementById('plan-modal-err').style.display = 'none';
+  try {
+    const res = await apiFetch('/api/v1/bankroll/plan');
+    if (res.ok) {
+      const p = await res.json();
+      document.getElementById('plan-capital').value = (p.starting_capital_cents / 100).toFixed(2);
+      document.getElementById('plan-target').value = p.daily_target_pct;
+      document.getElementById('plan-split').value = p.profit_split_pct;
+      document.getElementById('plan-start').value = p.start_date;
+      document.getElementById('plan-floor').value = (p.floor_cents / 100).toFixed(2);
+    }
+  } catch (e) { /* ignore */ }
+  document.getElementById('plan-modal').classList.add('open');
+}
+function closePlanModal() { document.getElementById('plan-modal').classList.remove('open'); }
+
+async function submitPlan() {
+  const errEl = document.getElementById('plan-modal-err');
+  errEl.style.display = 'none';
+  const capital = parseFloat(document.getElementById('plan-capital').value);
+  const target = parseFloat(document.getElementById('plan-target').value);
+  const split = parseFloat(document.getElementById('plan-split').value);
+  const start = document.getElementById('plan-start').value;
+  const floor = parseFloat(document.getElementById('plan-floor').value) || 0;
+  if (!capital || capital <= 0) { errEl.textContent = 'Capital invalide'; errEl.style.display = 'block'; return; }
+  if (isNaN(target) || target < 0) { errEl.textContent = 'Objectif invalide'; errEl.style.display = 'block'; return; }
+  if (isNaN(split) || split < 0 || split > 100) { errEl.textContent = 'Split doit être entre 0 et 100'; errEl.style.display = 'block'; return; }
+  try {
+    const res = await apiFetch('/api/v1/bankroll/plan', { method: 'PUT', body: { starting_capital: capital, daily_target_pct: target, profit_split_pct: split, start_date: start, floor } });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
+    closePlanModal();
+    if (parisState.tab === 'plan') loadDailyTracker();
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur réseau';
+    errEl.style.display = 'block';
+  }
+}
+
+// ─── IMPORT CSV BOOKMAKER (sécurisé re-verify mdp) ──────────────────────────
+let importReverifyToken = null;
+
+function openImportModal() {
+  if (!psGetToken()) { openAuthModal('login'); return; }
+  document.getElementById('import-modal-err').style.display = 'none';
+  document.getElementById('import-password').value = '';
+  document.getElementById('import-csv').value = '';
+  document.getElementById('import-file').value = '';
+  document.getElementById('import-preview').innerHTML = '';
+  document.getElementById('import-step-reverify').style.display = 'block';
+  document.getElementById('import-step-upload').style.display = 'none';
+  importReverifyToken = null;
+  document.getElementById('import-modal').classList.add('open');
+  setTimeout(() => document.getElementById('import-password').focus(), 80);
+}
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('open');
+  importReverifyToken = null;
+}
+
+async function submitReverify() {
+  const errEl = document.getElementById('import-modal-err');
+  errEl.style.display = 'none';
+  const pwd = document.getElementById('import-password').value;
+  if (!pwd) { errEl.textContent = 'Mot de passe requis'; errEl.style.display = 'block'; return; }
+  try {
+    const res = await apiFetch('/api/v1/auth/reverify', { method: 'POST', body: { password: pwd } });
+    document.getElementById('import-password').value = ''; // clear immédiat
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      errEl.textContent = j.error || 'Mot de passe incorrect';
+      errEl.style.display = 'block';
+      return;
+    }
+    const j = await res.json();
+    importReverifyToken = j.reverify_token;
+    document.getElementById('import-step-reverify').style.display = 'none';
+    document.getElementById('import-step-upload').style.display = 'block';
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur réseau';
+    errEl.style.display = 'block';
+  }
+}
+
+async function readImportFileText() {
+  const file = document.getElementById('import-file').files[0];
+  if (!file) return document.getElementById('import-csv').value;
+  if (file.size > 500 * 1024) throw new Error('Fichier trop gros (max 500 Ko)');
+  return await file.text();
+}
+
+async function submitImport(dryRun) {
+  const errEl = document.getElementById('import-modal-err');
+  const previewEl = document.getElementById('import-preview');
+  errEl.style.display = 'none';
+  if (!importReverifyToken) { errEl.textContent = 'Session de re-vérification expirée. Recommence.'; errEl.style.display = 'block'; return; }
+  let csv;
+  try { csv = (await readImportFileText() || '').trim(); }
+  catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; return; }
+  if (!csv) { errEl.textContent = 'CSV vide (ni fichier ni texte)'; errEl.style.display = 'block'; return; }
+  const bookmaker = document.getElementById('import-bookmaker').value;
+  try {
+    const res = await apiFetch('/api/v1/bets/import', { method: 'POST', body: { csv, default_bookmaker: bookmaker, dry_run: !!dryRun, reverify_token: importReverifyToken, filename: (document.getElementById('import-file').files[0] || {}).name } });
+    const j = await res.json();
+    if (!res.ok) {
+      errEl.textContent = j.error || 'Erreur ' + res.status;
+      errEl.style.display = 'block';
+      if (j.code === 'REVERIFY_REQUIRED') { importReverifyToken = null; document.getElementById('import-step-reverify').style.display = 'block'; document.getElementById('import-step-upload').style.display = 'none'; }
+      return;
+    }
+    if (dryRun) {
+      previewEl.innerHTML = `<div style="margin-top:10px;color:var(--text2);"><strong>${j.rows_parsed}</strong> ligne(s) parsées · <strong>${j.rows_skipped}</strong> erreur(s)</div>
+        <div style="max-height:200px;overflow:auto;background:var(--bg3);padding:8px;border-radius:6px;margin-top:6px;font-size:10px;">${(j.preview || []).slice(0,10).map(r => `${SPORT_EMOJI[r.sport]||'🏆'} ${escapeHtml((r.home_team||'?')+' — '+(r.away_team||'?'))} · ${escapeHtml(r.selection_label)} @ ${r.odds} · ${(r.stake_cents/100).toFixed(2)}€ · ${r.status}`).join('<br>')}</div>
+        ${j.errors && j.errors.length ? `<div style="color:var(--red);margin-top:6px;font-size:11px;">${j.errors.length} erreur(s) — ex : ${escapeHtml(j.errors[0].reason)} (ligne ${j.errors[0].line})</div>` : ''}`;
+    } else {
+      previewEl.innerHTML = `<div style="margin-top:10px;color:var(--green);">✓ Import terminé : <strong>${j.rows_inserted}</strong> pari(s) insérés / ${j.rows_parsed} parsés (${j.rows_skipped} erreurs)</div>`;
+      importReverifyToken = null; // single-use consumed serveur-side
+      setTimeout(() => { closeImportModal(); refreshParisPage(); }, 1500);
+    }
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur réseau';
+    errEl.style.display = 'block';
+  }
+}
+
 // Close modals on backdrop click
 document.addEventListener('click', (e) => {
-  ['bet-modal', 'settle-modal', 'cash-modal'].forEach(id => {
+  ['bet-modal', 'settle-modal', 'cash-modal', 'plan-modal', 'import-modal'].forEach(id => {
     const m = document.getElementById(id);
     if (m && e.target === m) m.classList.remove('open');
   });

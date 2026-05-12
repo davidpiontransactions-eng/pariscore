@@ -1,4 +1,4 @@
-# 🏟️ PariScore - Poste de Pilotage (v9.8 Mes Paris)
+# 🏟️ PariScore - Poste de Pilotage (v9.8.1 Mes Paris — Plan + Import + Sport)
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
@@ -25,6 +25,16 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - [x] **Filtres Pays→Ligues** : Navigation hiérarchique Oddalerts style. Pays → ligues + "🔙 Retour". 25 pays.
 - [x] **Dual Scrollbar** : `#top-scrollbar` + `#top-scroll-content`. Sync bidirectionnelle `scrollLeft` + width update.
 - [x] **Frontend Retry** : 503 → retry 2s. SSE `system_ready` → force reload. Erreur réseau → retry auto.
+
+### ✅ v9.8.1 — MES PARIS — Plan 20%/jour + Import sécurisé + Sport (COMPLÉTÉ)
+- [x] **Plan bankroll** : table `bankroll_plan` (capital départ 300€, target_pct 20/jour, split 50% banque / 50% capital, start_date 2026-05-12, floor optionnel). Routes `GET/PUT /api/v1/bankroll/plan` + `GET /bankroll/daily-tracker` (compound + split + écart cible par jour).
+- [x] **Onglet "Plan 20%/jour"** : KPI row (capital départ/actuel/banque/total/cible/écart) + table jour-par-jour avec statut cible.
+- [x] **Bookmakers ANJ + 1xbet** : 11 books — 1xbet, Winamax, Betclic, Unibet, PMU, Parions Sport, ZEbet, NetBet, Vbet, Genybet, PartoucheSport. Dropdowns dans bet-modal, cash-modal, import-modal, filtre. `normalizeBookmaker()` côté serveur.
+- [x] **Colonne sport** : 15 sports (football, basketball, tennis, rugby, hockey, baseball, mma, boxe, cyclisme, formula1, volleyball, handball, esports, golf, autre). `ALTER TABLE user_bets ADD COLUMN sport TEXT DEFAULT 'football'` idempotent. Emoji par sport en table, filtre dédié, normalisation alias serveur.
+- [x] **Import CSV sécurisé** : route `POST /api/v1/bets/import` exige **JWT + reverify_token** (token 5 min single-use issued by `POST /api/v1/auth/reverify` après re-confirmation mdp). CSV parser flexible (auto-détecte 10 alias colonnes, séparateur `,`/`;`/`\t`, dates DD/MM/YYYY + ISO). Dry-run mode pour preview. Dédup via `external_ref`. Audit log table `bet_import_audit` (user_id, ip, user_agent, filename, rows_parsed/inserted/skipped).
+- [x] **UI Import** : modal 2-step (re-verify mdp → upload fichier OU paste CSV + dry-run/commit), tag "IMP" sur paris importés.
+- [x] **Bug TZ corrigé** : `computeDailyTracker` utilise `Date.UTC()` pour parser `start_date` (évite décalage local).
+- [x] **Migration ALTER** : pragma table_info check avant ALTER (idempotent sur DB existante).
 
 ### ✅ v9.8 — MES PARIS — Bet Tracking 1xbet (COMPLÉTÉ)
 - [x] **Schéma SQLite** : `user_bets` (status pending/won/lost/void/cashout/half_won/half_lost + payout_cents) + `bankroll_transactions` (deposit/withdrawal/adjustment).
@@ -124,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 9.8 — Mes Paris (tracking 1xbet + bankroll réelle + Kelly + CSV).*
+*Dernière mise à jour : Version 9.8.1 — Mes Paris étendu : Plan 20%/jour + Import CSV sécurisé (reverify mdp) + colonne Sport + bookmakers ANJ FR + 1xbet.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
