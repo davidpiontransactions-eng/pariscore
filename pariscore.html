@@ -3055,6 +3055,42 @@
       padding: 32px 24px;
     }
   }
+  /* ── COMPARATEUR DE COTES — L'Équipe Style ──────────────────────────────── */
+  .comp-wrap{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.22);margin:0 0 24px}
+  .comp-header{background:#003f8a;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
+  .comp-header-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.08rem}
+  .comp-meta{font-family:'DM Mono',monospace;font-size:.78rem;opacity:.75;margin-top:3px}
+  .comp-table{width:100%;border-collapse:collapse;font-family:'Instrument Sans',sans-serif;color:#111;font-size:.9rem}
+  .comp-table thead{background:#f0f4f8}
+  .comp-table thead th{padding:10px 16px;text-align:center;font-size:.73rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #dde}
+  .comp-table thead th:first-child{text-align:left}
+  .comp-table tbody tr:nth-child(even){background:#f7f9fb}
+  .comp-table tbody tr:nth-child(odd){background:#fff}
+  .comp-table tbody tr:hover{background:#eef3ff}
+  .comp-table tbody tr.non-anj{opacity:.78}
+  .comp-table tbody tr.non-anj td{background:#fffbf0}
+  .comp-table td{padding:9px 16px;text-align:center;border-bottom:1px solid #e8ecf0}
+  .comp-table td:first-child{text-align:left;font-weight:600}
+  .comp-best-odd{font-weight:800;color:#c0392b}
+  .comp-bk-name{display:flex;align-items:center;gap:8px}
+  .comp-bk-logo{width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#f0f0f0;border:1px solid #e0e0e0;}
+  .comp-bk-logo-placeholder{width:20px;height:20px;border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font:700 8px/1 monospace;color:#fff;background:#aaa;}
+  .comp-badge-anj{font-size:.65rem;background:#e8f5e9;color:#2e7d32;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap}
+  .comp-badge-nonanj{font-size:.65rem;background:#fff3e0;color:#e65100;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap}
+  .comp-payout-hi{color:#2e7d32;font-weight:700}
+  .comp-payout-mid{color:#555}
+  .comp-payout-lo{color:#e65100}
+  .comp-sep-row td{background:#f0f0f0!important;font-size:.71rem;color:#888;font-style:italic;padding:4px 16px;text-align:left}
+  .comp-best-row{border-bottom:2px solid #c0392b}
+  .comp-best-row td{background:#fff5f5!important;font-weight:800}
+  .comp-best-row td:first-child{color:#c0392b}
+  .comp-avg-row td{background:#f5f5f5!important;color:#555;font-size:.86rem;font-style:italic}
+  .comp-avg-row td:first-child{font-weight:700;color:#333;font-style:normal}
+  .comp-fair-row td{background:#f3e8ff!important;color:#6d28d9;font-size:.83rem;font-style:italic}
+  .comp-selector{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .comp-selector select{padding:9px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);font-size:.9rem;min-width:240px;cursor:pointer}
+  .comp-empty{text-align:center;color:var(--text2);padding:48px 20px;font-style:italic;background:var(--bg2);border-radius:12px}
+  .comp-note{font-size:.75rem;color:var(--text3);margin-top:10px;padding:8px 12px;border-left:3px solid var(--bg4);background:var(--bg2);border-radius:0 6px 6px 0}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -4109,6 +4145,7 @@
     <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">Hot Picks</a>
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Matchs</a>
     <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets">Sure Bets</a>
+    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur">Comparateur</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
     <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions">Prédictions IA</a>
     <a href="#" onclick="showPage('historique',this);return false;" data-page="historique">Historique</a>
@@ -4700,12 +4737,12 @@
 <section class="section fade-up" id="historique" style="background: radial-gradient(ellipse 60% 30% at 50% 60%, rgba(0,230,118,0.03) 0%, transparent 60%);">
   <div class="section-label">Historique</div>
   <div class="section-title">Backtesting &amp;<br>Performance.</div>
-  <div class="section-sub">Chaque match passé est archivé et comparé à nos prédictions Poisson. Mesurez la précision de l'algorithme sur des données réelles.</div>
+  <div class="section-sub">Chaque match passé est archivé et comparé à nos prédictions. Mesurez la précision de l'algorithme sur des données réelles.</div>
 
   <!-- BACK-TEST CONTROLS — Premium/Admin -->
   <div id="backtest-section" style="display:none;margin-bottom:18px;padding:14px 18px;background:var(--bg3);border-radius:10px;border:1px solid var(--border2);">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="color:var(--text2);font-size:12px;font-weight:600;">⏪ Back-test BSD :</span>
+      <span style="color:var(--text2);font-size:12px;font-weight:600;">⏪ Back-test :</span>
       <select id="backtest-days" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:12px;">
         <option value="7">7 jours</option>
         <option value="14">14 jours</option>
@@ -4939,7 +4976,7 @@
         <span class="guide-date">Mai 2026</span>
       </div>
       <div class="guide-search-wrapper">
-        <input type="text" id="guide-search" class="guide-search-input" placeholder="Rechercher dans le guide... (ex: ELO, Poisson, xG)" autocomplete="off">
+        <input type="text" id="guide-search" class="guide-search-input" placeholder="Rechercher dans le guide... (ex: ELO, xG, Edge)" autocomplete="off">
         <span class="guide-search-icon">🔍</span>
       </div>
     </div>
@@ -4965,10 +5002,10 @@
       </div>
 
       <div id="poisson" class="guide-card-visual">
-        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Poisson+Distribution" alt="Poisson Distribution">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Distribution+Probabilités" alt="Distribution de Probabilités">
         <div class="guide-card-body">
           <div class="guide-card-icon">P(λ)</div>
-          <div class="guide-card-title">Distribution de Poisson</div>
+          <div class="guide-card-title">Distribution de Probabilités</div>
           <div class="guide-card-desc">Modèle probabiliste calculant la probabilité de chaque score basé sur la moyenne de buts attendus (xG) des deux équipes.</div>
           <a class="guide-card-link" onclick="scrollToSection('guide-filtres-section');return false;">Modes de jeu →</a>
         </div>
@@ -5040,11 +5077,11 @@
     <!-- Rubrique header -->
     <div class="gs-rubrique">
       <div class="gs-rubrique-bar"></div>
-      <div class="gs-rubrique-label">Analyse des tipsters — Modèle Poisson calibré</div>
+      <div class="gs-rubrique-label">Analyse des tipsters — Modèle quantitatif calibré</div>
     </div>
 
     <p class="gs-intro">
-      PariScore déploie des stratégies prédictives développées par une équipe d'analystes quantitatifs. Chaque tipster est une personnalité algorithmique calibrée sur des milliers de rencontres. Ses sélections quotidiennes reposent sur le modèle de Poisson bivarié, le dévigage Shin-Hurley et les données Expected Goals.
+      PariScore déploie des stratégies prédictives développées par une équipe d'analystes quantitatifs. Chaque tipster est une personnalité algorithmique calibrée sur des milliers de rencontres. Ses sélections quotidiennes reposent sur des modèles probabilistes bivariés, le dévigage Shin-Hurley et les données Expected Goals.
     </p>
 
     <!-- Stratégie 1 : L'Artilleur / BTTS -->
@@ -5057,7 +5094,7 @@
       <div class="gs-article-layout">
         <div class="gs-article-text">
           <p>L'Artilleur traque les confrontations à haut potentiel offensif où les deux formations sont condamnées à marquer. Sa méthode : croiser les moyennes de buts marqués/encaissés, l'historique BTTS sur les 10 derniers matchs et les données xG en temps réel.</p>
-          <p>Un match est sélectionné lorsque les deux équipes présentent simultanément une attaque au-dessus de la moyenne (xG > 1.0/match) et une défense perméable (buts encaissés > 1.1/match). La probabilité BTTS est extraite de la matrice de scores Poisson : P(dom ≥ 1 et ext ≥ 1).</p>
+          <p>Un match est sélectionné lorsque les deux équipes présentent simultanément une attaque au-dessus de la moyenne (xG > 1.0/match) et une défense perméable (buts encaissés > 1.1/match). La probabilité BTTS est extraite de la matrice de scores : P(dom ≥ 1 et ext ≥ 1).</p>
           <p>L'Artilleur exclut les rencontres où une équipe est en crise offensive marquée (0 but sur 3+ matchs consécutifs) pour limiter les faux positifs.</p>
           <div class="gs-stat-block">
             <div class="gs-stat"><div class="gs-stat-val">BTTS</div><div class="gs-stat-lbl">Critère central</div></div>
@@ -5074,7 +5111,7 @@
               <small>BTTS OUI</small>
             </div>
           </div>
-          <div class="gs-caption">Matrice de scores Poisson — probabilité BTTS calculée sur l'ensemble des configurations dom/ext (0-6 × 0-6).</div>
+          <div class="gs-caption">Matrice de scores — probabilité BTTS calculée sur l'ensemble des configurations dom/ext (0-6 × 0-6).</div>
         </div>
       </div>
     </article>
@@ -5089,12 +5126,12 @@
       <div class="gs-article-layout">
         <div class="gs-article-text">
           <p>Le Foudroyeur cible les matchs à explosion de buts. Il intègre les Expected Goals cumulés (λ = xGdom + xGext), le classement offensif des deux équipes et les statistiques de buts marqués sur les 5 dernières journées.</p>
-          <p>Sa force : le modèle de Poisson calcule P(total > 2) = Σ P(h,a) pour tout h+a > 2 dans la matrice de scores. Lorsque λ dépasse 2.6 avec un historique Over 2.5 > 60%, le Foudroyeur active la sélection.</p>
+          <p>Sa force : le modèle calcule P(total > 2) = Σ P(h,a) pour tout h+a > 2 dans la matrice de scores. Lorsque λ dépasse 2.6 avec un historique Over 2.5 > 60%, le Foudroyeur active la sélection.</p>
           <p>Particularité : le Foudroyeur évite les confrontations entre leaders défensifs — si les deux équipes concèdent moins de 0.8 but/match, il suspend sa sélection pour ne pas diluer son edge.</p>
           <div class="gs-stat-block">
             <div class="gs-stat"><div class="gs-stat-val">Over 2.5</div><div class="gs-stat-lbl">Marché cible</div></div>
             <div class="gs-stat"><div class="gs-stat-val">λ > 2.6</div><div class="gs-stat-lbl">xG cumulé</div></div>
-            <div class="gs-stat"><div class="gs-stat-val">≥ 60%</div><div class="gs-stat-lbl">Probabilité Poisson</div></div>
+            <div class="gs-stat"><div class="gs-stat-val">≥ 60%</div><div class="gs-stat-lbl">Probabilité</div></div>
           </div>
         </div>
         <div class="gs-article-media">
@@ -5106,7 +5143,7 @@
               <small>OVER 2.5 BUTS</small>
             </div>
           </div>
-          <div class="gs-caption">Courbe de distribution Poisson — probabilité cumulée Over 0.5 / 1.5 / 2.5 / 3.5 selon λ total.</div>
+          <div class="gs-caption">Courbe de distribution — probabilité cumulée Over 0.5 / 1.5 / 2.5 / 3.5 selon λ total.</div>
         </div>
       </div>
     </article>
@@ -5121,7 +5158,7 @@
       <div class="gs-article-layout">
         <div class="gs-article-text">
           <p>Le Corneriste est le spécialiste du trafic aérien. Il part d'un constat statistique : les matchs à fort xG génèrent mécaniquement plus de corners. Un tir dévié ou bloqué en corner est directement corrélé au volume d'actions offensives.</p>
-          <p>Sa formule propriétaire : Corners/match ∝ (Tirs cadrés + xG) × facteur pressing. Lorsque les données Poisson corners sont disponibles (via BSD), la probabilité Over 6.5 est calculée directement. En l'absence de données corners dédiées, le modèle estime la probabilité depuis le xG cumulé et l'Over 2.5 Poisson.</p>
+          <p>Sa formule propriétaire : Corners/match ∝ (Tirs cadrés + xG) × facteur pressing. Lorsque les données corners sont disponibles, la probabilité Over 6.5 est calculée directement. En l'absence de données corners dédiées, le modèle estime la probabilité depuis le xG cumulé et l'Over 2.5.</p>
           <p>Terrain d'excellence : les matchs entre équipes à pressing intensif avec possession partagée (55/45 à 60/40). Les équipes longues balles — cibles de corners — sont sur-représentées dans ses sélections.</p>
           <div class="gs-stat-block">
             <div class="gs-stat"><div class="gs-stat-val">Over 6.5</div><div class="gs-stat-lbl">Marché corners</div></div>
@@ -5506,6 +5543,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'strategies')  initStrategiesPage();
   if (pageId === 'tendances')   loadTrends();
   if (pageId === 'alertes')    initAlertesPage();
+  if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -8387,15 +8425,15 @@ function buildResumeTab(d) {
       ${cmpBar('Victoires', hs.wins, as.wins, '%')}
       ${cmpBar('Moy. Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
       ${cmpBar('Moy. Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
-      ${(xg.home != null || xg.away != null) ? cmpBar('xG (Modèle Poisson)', xg.home, xg.away, '', 2) : ''}
+      ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
       ${(xg.home != null && xg.away != null) ? `<div style="text-align:center;font-size:10px;color:var(--text3);margin-top:4px">
         xG Diff : <span style="color:${(xg.home - xg.away) > 0 ? 'var(--blue)' : '#ab47bc'};font-weight:700">${(xg.home - xg.away) > 0 ? '+' : ''}${safeFixed(xg.home - xg.away, 2)}</span>
-        ${Math.abs(xg.home - xg.away) >= 0.5 ? `<span style="color:var(--text3)"> · ${(xg.home - xg.away) > 0 ? m.home_team : m.away_team} favori Poisson</span>` : ''}
+        ${Math.abs(xg.home - xg.away) >= 0.5 ? `<span style="color:var(--text3)"> · ${(xg.home - xg.away) > 0 ? m.home_team : m.away_team} favori</span>` : ''}
       </div>` : ''}
     </div>
 
     <div class="ins-section">
-      <div class="ins-section-title">Marchés Poisson</div>
+      <div class="ins-section-title">Marchés</div>
       <div class="pois-flat-grid">
         ${[['GG / BTTS',p.btts],['Over 1.5',p.over15],['Over 2.5',p.over25],['Over 3.5',p.over35],['Domicile',p.homeWin],['Nul',p.draw],['Extérieur',p.awayWin]].map(([lbl,val]) => {
           if (val == null) return '';
@@ -8686,7 +8724,7 @@ function buildStatsTab(d) {
     ${cmpBar('Victoires %', hs.wins, as.wins, '%')}
     ${cmpBar('Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
     ${cmpBar('Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
-    ${(xg.home != null || xg.away != null) ? cmpBar('xG Poisson', xg.home, xg.away, '', 2) : ''}
+    ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
   `;
 
   // Marchés Poisson
@@ -8719,7 +8757,7 @@ function buildStatsTab(d) {
       </div>
 
       <div class="ins-section">
-        <div class="ins-section-title">Marchés Poisson</div>
+        <div class="ins-section-title">Marchés</div>
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">${poissonRows}</div>
       </div>
 
@@ -9532,7 +9570,7 @@ async function buildCornersTab(matchId) {
     return `<div class="cr-wrap">
       <div class="cr-header">
         <div class="cr-title">🚩 Prédictions Corners</div>
-        <div class="cr-sub">Modèle BSD Poisson · ${d.source === 'bsd' ? 'Données réelles' : 'Estimation'}</div>
+        <div class="cr-sub">Modèle prédictif · ${d.source === 'bsd' ? 'Données réelles' : 'Estimation'}</div>
       </div>
 
       <div class="cr-expected">
@@ -11568,7 +11606,7 @@ async function loadAccaPanel(key) {
       </div>
       <div class="acca-odds">${d.combinedOdds.toFixed(2)}<span>cote combinée estimée</span></div>
       ${matchRows}
-      <div style="margin-top:10px;font-size:10px;color:var(--text3);">Pari mathématique - responsabilité individuelle. Cotes estimées via probabilités Poisson.</div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text3);">Pari mathématique - responsabilité individuelle. Cotes estimées via modèle probabiliste.</div>
     `;
     panel.style.display = 'block';
   } catch {}
@@ -12037,8 +12075,8 @@ async function loadTrends() {
     if (data.error) throw new Error(data.error);
     const g = data.global;
     const trends = [
-      { name:'Les deux équipes marquent', sub:`Moyenne Poisson · ${g.total_matches} matchs`, pct: parseFloat(g.btts_avg), meta: `xG dom ${g.xg_home_avg} · xG ext ${g.xg_away_avg}`, tags: data.by_league.slice(0,3).map(l=>l.league) },
-      { name:'+2.5 buts (Poisson)',       sub:'Probabilité moyenne tous matchs',              pct: parseFloat(g.over25_avg), meta: `${data.value_bets_count} value bets actifs (edge >5%)`, tags: data.by_league.slice(0,3).map(l=>l.league) },
+      { name:'Les deux équipes marquent', sub:`Probabilité moyenne · ${g.total_matches} matchs`, pct: parseFloat(g.btts_avg), meta: `xG dom ${g.xg_home_avg} · xG ext ${g.xg_away_avg}`, tags: data.by_league.slice(0,3).map(l=>l.league) },
+      { name:'+2.5 buts',                sub:'Probabilité moyenne tous matchs',              pct: parseFloat(g.over25_avg), meta: `${data.value_bets_count} value bets actifs (edge >5%)`, tags: data.by_league.slice(0,3).map(l=>l.league) },
     ];
     data.by_league.slice(0, 4).forEach(l => {
       trends.push({ name: l.league, sub:`${l.count} matchs analysés`, pct: parseFloat(l.over25_avg), meta:`BTTS moy: ${l.btts_avg}%`, tags:[] });
@@ -12382,9 +12420,7 @@ function loadGuidePage() {
         { term: 'Draw No Bet', def: 'Victoire avec remboursement si match nul' },
         { term: 'Handicap', def: 'Avantage ou désavantage de points ajouté au score final' },
         { term: 'Arbitrage', def: 'Mise sur tous les résultats pour garantir un profit quelle que soit l\'issue' },
-        { term: 'Value Bet', def: 'Pari où la probabilité réelle est supérieure à la probabilité implicite de la cote' },
-        { term: 'Kelly Criterion', def: 'Formule de gestion de bankroll: mise = (edge × bankroll) / cote - 1' },
-        { term: 'Poisson', def: 'Distribution de probabilité 用于 prédire le nombre de buts' }
+        { term: 'Value Bet', def: 'Pari où la probabilité réelle est supérieure à la probabilité implicite de la cote' }
       ];
 
       const helpBtn = document.createElement('button');
@@ -13091,7 +13127,7 @@ function openDeepAnalysis(matchId, e, force) {
           `<div class="dp-div-row">
             <span class="dp-div-badge ${d.gap > 0 ? 'up' : 'down'}">DIVERGENCE ${d.gap > 0 ? '+' : ''}${d.gap}%</span>
             <span style="color:var(--text2)">${dpEsc(d.label)}</span>
-            <span style="color:var(--text3)">Poisson ${d.poisson}% vs marché ${d.implied}%</span>
+            <span style="color:var(--text3)">Modèle ${d.poisson}% vs marché ${d.implied}%</span>
           </div>`
         ).join('');
         divBlock.style.display = 'flex';
@@ -13190,7 +13226,7 @@ function renderProPanel(meta) {
   }).join('');
   document.getElementById('dp-pro-content').innerHTML = `
     <table class="dp-pro-table">
-      <thead><tr><th>Marché</th><th>Poisson</th><th>Cote</th><th>EV%</th></tr></thead>
+      <thead><tr><th>Marché</th><th>Proba</th><th>Cote</th><th>EV%</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
     ${λ.home != null ? `<div style="margin-top:10px;font:11px var(--font-mono);color:var(--text3)">λ domicile : ${λ.home} | λ extérieur : ${λ.away}</div>` : ''}
@@ -13210,7 +13246,7 @@ function updateKellyAmounts() {
   document.querySelectorAll('.dp-kelly-tag[data-kelly]').forEach(el => {
     const pct = parseFloat(el.dataset.kelly);
     const euros = bankroll > 0 ? (pct / 100 * bankroll).toFixed(0) : null;
-    const base = '📐 Mise Kelly : ' + pct.toFixed(1) + '%';
+    const base = '📐 Mise recommandée : ' + pct.toFixed(1) + '%';
     el.innerHTML = euros ? `${base} <span class="dp-kelly-eur">→ €${euros}</span>` : base;
   });
 }
@@ -13484,13 +13520,13 @@ document.addEventListener('keydown', e => {
 
       <div class="shm-block">
         <div class="shm-block-head"><span class="shm-name">Indice de Confiance</span></div>
-        <div class="shm-desc">Score composite <strong>0 → 100%</strong> calculé à partir de trois signaux : la probabilité Poisson du marché sélectionné, la forme récente des deux équipes (5 derniers matchs), et l'alignement entre probabilité mathématique et cote bookmaker.<br>Plus il est élevé, plus le signal est cohérent entre les sources.</div>
+        <div class="shm-desc">Score composite <strong>0 → 100%</strong> calculé à partir de trois signaux : la probabilité du marché sélectionné, la forme récente des deux équipes (5 derniers matchs), et l'alignement entre probabilité mathématique et cote bookmaker.<br>Plus il est élevé, plus le signal est cohérent entre les sources.</div>
         <div class="shm-scale">
           <span class="shm-pip red">≥ 80% — Fort</span>
           <span class="shm-pip amber">60–79% — Solide</span>
           <span class="shm-pip grey">&lt; 60% — Prudence</span>
         </div>
-        <div class="shm-example">Ex. Conf. <strong>82%</strong> sur Over 2.5 → Poisson prédit 82 chances sur 100 que le match dépasse 2,5 buts, confirmé par la forme offensive des deux équipes.</div>
+        <div class="shm-example">Ex. Conf. <strong>82%</strong> sur Over 2.5 → Le modèle prédit 82 chances sur 100 que le match dépasse 2,5 buts, confirmé par la forme offensive des deux équipes.</div>
       </div>
 
       <div class="shm-block">
@@ -13516,24 +13552,401 @@ document.addEventListener('keydown', e => {
 
       <div class="shm-block">
         <div class="shm-block-head"><span class="shm-name">Over / Under · BTTS</span></div>
-        <div class="shm-desc">Probabilités calculées par le <strong>modèle de Poisson Bivarié</strong> depuis les Expected Goals (xG). <strong>O2.5</strong> = plus de 2 buts au total. <strong>BTTS</strong> = les deux équipes marquent au moins une fois.</div>
+        <div class="shm-desc">Probabilités calculées depuis les Expected Goals (xG). <strong>O2.5</strong> = plus de 2 buts au total. <strong>BTTS</strong> = les deux équipes marquent au moins une fois.</div>
         <div class="shm-scale">
           <span class="shm-pip green">≥ 75% — Très probable</span>
           <span class="shm-pip amber">55–74% — Probable</span>
           <span class="shm-pip grey">&lt; 55% — Incertain</span>
         </div>
-        <div class="shm-example">Ex. Une équipe Over 2.5 dans 4 matchs sur 5 avec xG ≥ 1.5 renforce doublement le signal Poisson.</div>
+        <div class="shm-example">Ex. Une équipe Over 2.5 dans 4 matchs sur 5 avec xG ≥ 1.5 renforce doublement le signal.</div>
       </div>
 
       <div class="shm-block">
         <div class="shm-block-head"><span class="shm-name">xG — Expected Goals</span></div>
-        <div class="shm-desc">Buts attendus par équipe selon la qualité des occasions. Paramètre λ qui alimente Poisson. <strong>xG 1.8 – 0.6</strong> = domicile nettement plus dangereux.</div>
+        <div class="shm-desc">Buts attendus par équipe selon la qualité des occasions. Paramètre λ du modèle prédictif. <strong>xG 1.8 – 0.6</strong> = domicile nettement plus dangereux.</div>
         <div class="shm-example">Ex. xG élevé + Conf. ≥ 70% = signal fort. xG élevé + Conf. faible = stats offensives bonnes mais forme récente instable.</div>
       </div>
 
     </div>
   </div>
 </div>
+
+<!-- PAGE : COMPARATEUR DE COTES -->
+<div id="page-comparateur" data-page="comparateur" style="display:none;">
+<section class="section fade-up">
+  <div style="text-align:center;margin-bottom:28px;">
+    <div class="section-label" style="justify-content:center;">Comparateur de Cotes</div>
+    <div class="section-title">Meilleure cote, max valeur</div>
+    <div class="section-sub" style="max-width:520px;margin:0 auto;">Comparaison multi-bookmakers en temps réel — bookmakers ANJ France en priorité.</div>
+  </div>
+  <div class="comp-selector">
+    <select id="comp-match-select" onchange="loadComparateur(this.value)">
+      <option value="">— Choisir un match —</option>
+    </select>
+    <select id="comp-market-select" onchange="onCompMarketChange(this.value)" style="padding:9px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);font-size:.9rem;cursor:pointer;">
+      <optgroup label="Résultat">
+        <option value="1N2">1N2 (Résultat)</option>
+        <option value="HOME_WIN">Victoire Domicile</option>
+        <option value="DRAW">Match Nul</option>
+        <option value="AWAY_WIN">Victoire Extérieur</option>
+        <option value="DC">Double Chance (1X / X2 / 12)</option>
+      </optgroup>
+      <optgroup label="Buts">
+        <option value="OU15">Plus/Moins 1.5 buts</option>
+        <option value="OU25">Plus/Moins 2.5 buts</option>
+        <option value="OU35">Plus/Moins 3.5 buts</option>
+        <option value="BTTS">Les deux marquent</option>
+      </optgroup>
+    </select>
+    <button onclick="forceRefreshComparateur()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);cursor:pointer;font-size:.85rem;" title="Force fetchOdds() côté serveur puis recharge">🔄 Actualiser les cotes</button>
+    <span id="comp-status" style="font-size:.8rem;color:var(--text2);"></span>
+  </div>
+  <div id="comp-content">
+    <div class="comp-empty">Sélectionnez un match pour afficher la comparaison des cotes</div>
+  </div>
+  <div class="comp-note">⚠️ Les bookmakers non agréés ANJ (Autorité Nationale des Jeux) sont affichés à titre informatif uniquement. PariScore ne redirige vers aucun opérateur non autorisé en France. Jouez responsable — <strong>jeux-interdits-aux-mineurs.fr</strong></div>
+</section>
+</div>
+
+<script>
+// ── COMPARATEUR DE COTES ──────────────────────────────────────────────────────
+let _compMatchesCache = null;
+let _compLoaded = false;
+let _compMarket = '1N2';
+
+function onCompMarketChange(market) {
+  _compMarket = market;
+  const sel = document.getElementById('comp-match-select');
+  if (sel?.value) loadComparateur(sel.value);
+}
+
+async function forceRefreshComparateur() {
+  const status = document.getElementById('comp-status');
+  if (status) status.textContent = '⏳ Actualisation serveur...';
+  try {
+    await fetch('/api/v1/refresh', { method: 'POST' });
+    _compMatchesCache = null;
+    _compLoaded = false;
+    await initComparateur();
+    const sel = document.getElementById('comp-match-select');
+    if (sel?.value) loadComparateur(sel.value);
+  } catch (e) {
+    if (status) status.textContent = 'Erreur actualisation';
+  }
+}
+
+async function initComparateur() {
+  if (_compLoaded) return;
+  _compLoaded = true;
+  const status = document.getElementById('comp-status');
+  if (status) status.textContent = 'Chargement des matchs...';
+  try {
+    const r = await fetch('/api/v1/matches');
+    const data = await r.json();
+    _compMatchesCache = (Array.isArray(data) ? data : (data.matches || [])).filter(m => m.odds?.home);
+    populateCompSelector();
+    if (status) status.textContent = `${_compMatchesCache.length} matchs disponibles`;
+  } catch (e) {
+    if (status) status.textContent = 'Erreur chargement matchs';
+  }
+}
+
+function populateCompSelector() {
+  const sel = document.getElementById('comp-match-select');
+  if (!sel || !_compMatchesCache) return;
+  const now = Date.now();
+  const upcoming = _compMatchesCache
+    .filter(m => new Date(m.commence_time).getTime() > now - 3600000)
+    .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+  sel.innerHTML = '<option value="">— Choisir un match —</option>' +
+    upcoming.map(m => {
+      const dt = new Date(m.commence_time);
+      const hm = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const dm = dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      return `<option value="${m.id}">${m.home_team} vs ${m.away_team} — ${m.league} (${dm} ${hm})</option>`;
+    }).join('');
+}
+
+async function loadComparateur(matchId) {
+  if (!matchId) return;
+  const status = document.getElementById('comp-status');
+  const content = document.getElementById('comp-content');
+  if (status) status.textContent = 'Chargement...';
+  content.innerHTML = '<div class="comp-empty">⏳ Chargement des cotes...</div>';
+  try {
+    const r = await fetch(`/api/v1/comparateur/${encodeURIComponent(matchId)}?market=${_compMarket}`);
+    const d = await r.json();
+    const n = d.rows?.length || 0;
+    if (status) status.textContent = n
+      ? (d._fallback ? `Données partielles — ${n} source(s)` : `${n} bookmaker${n > 1 ? 's' : ''} trouvés`)
+      : 'Aucune donnée';
+    content.innerHTML = renderComparateur(d);
+  } catch (e) {
+    content.innerHTML = '<div class="comp-empty">❌ Erreur chargement — réessayez</div>';
+    if (status) status.textContent = '';
+  }
+}
+
+function renderComparateur(d) {
+  const { home_team, away_team, commence_time, league, fair, rows, avgRow, market, poisson } = d;
+  if (!rows || !rows.length) {
+    return '<div class="comp-empty">Aucune cote multi-bookmakers disponible pour ce match.<br><small>Les cotes détaillées sont collectées au cycle suivant (toutes les 12h). La cote actuelle est visible dans l\'onglet Matchs.</small></div>';
+  }
+
+  const dt = new Date(commence_time);
+  const dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const mkt = market || '1N2';
+
+  function fmtOdd(val, isBest) {
+    if (!val) return '<td style="color:#aaa">—</td>';
+    return isBest
+      ? `<td><strong class="comp-best-odd">${val.toFixed(2)} ★</strong></td>`
+      : `<td>${val.toFixed(2)}</td>`;
+  }
+  function fmtPayout(p) {
+    if (!p) return '<td>—</td>';
+    const cls = p >= 98 ? 'comp-payout-hi' : p >= 96 ? 'comp-payout-mid' : 'comp-payout-lo';
+    return `<td class="${cls}">${p.toFixed(1)}%</td>`;
+  }
+  const BK_LOGOS = {
+    winamax:      'https://www.google.com/s2/favicons?domain=winamax.fr&sz=32',
+    betclic:      'https://www.google.com/s2/favicons?domain=betclic.com&sz=32',
+    unibet:       'https://www.google.com/s2/favicons?domain=unibet.fr&sz=32',
+    pmu:          'https://www.google.com/s2/favicons?domain=pmu.fr&sz=32',
+    parionssport: 'https://www.google.com/s2/favicons?domain=parionssport.fdj.fr&sz=32',
+    zebet:        'https://www.google.com/s2/favicons?domain=zebet.fr&sz=32',
+    bwin:         'https://www.google.com/s2/favicons?domain=bwin.com&sz=32',
+    netbet:       'https://www.google.com/s2/favicons?domain=netbet.fr&sz=32',
+    bet365:       'https://www.google.com/s2/favicons?domain=bet365.com&sz=32',
+    pinnacle:     'https://www.google.com/s2/favicons?domain=pinnacle.com&sz=32',
+    '1xbet':      'https://www.google.com/s2/favicons?domain=1xbet.com&sz=32',
+    betsson:      'https://www.google.com/s2/favicons?domain=betsson.com&sz=32',
+    pokerstars:   'https://www.google.com/s2/favicons?domain=pokerstars.fr&sz=32',
+    feelingbet:   'https://www.google.com/s2/favicons?domain=feelingbet.fr&sz=32',
+    francepari:   'https://www.google.com/s2/favicons?domain=france-pari.fr&sz=32',
+  };
+
+  function bkLogoHTML(r) {
+    if (r.isAvg) return '';
+    const key = (r.key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const url = BK_LOGOS[key] || BK_LOGOS[Object.keys(BK_LOGOS).find(k => key.includes(k) || k.includes(key)) || ''];
+    if (url) {
+      const initials = (r.title || '?').slice(0, 2).toUpperCase();
+      return `<img class="comp-bk-logo" src="${url}" alt="${r.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="comp-bk-logo-placeholder" style="display:none">${initials}</span>`;
+    }
+    const initials = (r.title || '?').slice(0, 2).toUpperCase();
+    return `<span class="comp-bk-logo-placeholder">${initials}</span>`;
+  }
+
+  function bkBadge(r) {
+    if (r.isAvg) return '';
+    return r.isANJ
+      ? '<span class="comp-badge-anj">ANJ ✓</span>'
+      : '<span class="comp-badge-nonanj">⚠ non-ANJ</span>';
+  }
+  function nameCell(r) {
+    const badge = bkBadge(r);
+    const logo = bkLogoHTML(r);
+    return `<td><div class="comp-bk-name">${logo}${r.title}${badge ? ' ' + badge : ''}</div></td>`;
+  }
+  function sepRow(span) {
+    return `<tr class="comp-sep-row"><td colspan="${span}">Bookmakers non agréés — à titre informatif uniquement</td></tr>`;
+  }
+  function avgTr(cells) {
+    return avgRow ? `<tr class="comp-avg-row"><td><div class="comp-bk-name">≈ Moyenne du Marché</div></td>${cells}</tr>` : '';
+  }
+  function poissonFallback(label, prob) {
+    return `<div class="comp-wrap">
+      <div class="comp-header"><div>
+        <div class="comp-header-title">⚡ ${home_team} &nbsp;vs&nbsp; ${away_team}</div>
+        <div class="comp-meta">${league} · ${dateStr} à ${timeStr}</div>
+      </div></div>
+      <div style="padding:24px 20px;background:#fff;text-align:center;color:#666;font-size:.9rem;">
+        Cotes ${label} non disponibles pour ce match (prochain cycle dans 12h).${prob != null ? `<br><strong>Probabilité modèle : ${label} = ${prob}%</strong>` : ''}
+      </div></div>`;
+  }
+
+  function buildOUSection(lineStr, ovField, unField, payField, probField) {
+    const bestOv = Math.max(...rows.map(r => r[ovField] || 0));
+    const bestUn = Math.max(...rows.map(r => r[unField] || 0));
+    const bestP  = Math.max(...rows.map(r => r[payField] || 0));
+    if (!rows.some(r => r[ovField])) return { noData: true, prob: poisson?.[probField] };
+    const thead = `<tr>
+      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th>+ ${lineStr} (Over)</th><th>- ${lineStr} (Under)</th><th>Payout</th>
+    </tr>`;
+    const bestRow_ = `<tr class="comp-best-row">
+      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><strong class="comp-best-odd">${bestOv ? bestOv.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestUn ? bestUn.toFixed(2) : '—'}</strong></td>
+      <td class="comp-payout-hi"><strong>${bestP ? bestP.toFixed(1) + '%' : '—'}</strong></td>
+    </tr>`;
+    const renderRow = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+      ${fmtOdd(r[ovField], r[ovField] === bestOv && bestOv > 0)}
+      ${fmtOdd(r[unField], r[unField] === bestUn && bestUn > 0)}
+      ${fmtPayout(r[payField])}</tr>`;
+    const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
+    const data = anjR.map(r => renderRow(r)).join('') +
+      (nonR.length ? sepRow(4) + nonR.map(r => renderRow(r, 'non-anj')).join('') : '') +
+      avgTr(fmtOdd(avgRow?.[ovField], false) + fmtOdd(avgRow?.[unField], false) + fmtPayout(avgRow?.payout));
+    return { thead, bestRow: bestRow_, dataRows: data };
+  }
+
+  function buildSingleSection(label, field, avgField) {
+    const best = Math.max(...rows.map(r => r[field] || 0));
+    const thead = `<tr>
+      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th>${label}</th>
+    </tr>`;
+    const bestRow_ = `<tr class="comp-best-row">
+      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><strong class="comp-best-odd">${best ? best.toFixed(2) : '—'}</strong></td>
+    </tr>`;
+    const renderRow = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}${fmtOdd(r[field], r[field] === best && best > 0)}</tr>`;
+    const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
+    const data = anjR.map(r => renderRow(r)).join('') +
+      (nonR.length ? sepRow(2) + nonR.map(r => renderRow(r, 'non-anj')).join('') : '') +
+      avgTr(fmtOdd(avgRow?.[avgField || field], false));
+    return { thead, bestRow: bestRow_, dataRows: data };
+  }
+
+  let thead, bestRow, dataRows;
+
+  if (mkt === 'OU15') {
+    const res = buildOUSection('1.5', 'over15', 'under15', 'payoutOU15', 'over15');
+    if (res.noData) return poissonFallback('Over/Under 1.5', res.prob != null ? res.prob : null);
+    ({ thead, bestRow, dataRows } = res);
+
+  } else if (mkt === 'OU25') {
+    const res = buildOUSection('2.5', 'over25', 'under25', 'payoutOU', 'over25');
+    if (res.noData) return poissonFallback('Over/Under 2.5', poisson?.over25);
+    ({ thead, bestRow, dataRows } = res);
+
+  } else if (mkt === 'OU35') {
+    const res = buildOUSection('3.5', 'over35', 'under35', 'payoutOU35', 'over35');
+    if (res.noData) return poissonFallback('Over/Under 3.5', poisson?.over35);
+    ({ thead, bestRow, dataRows } = res);
+
+  } else if (mkt === 'BTTS') {
+    const bestYes = Math.max(...rows.map(r => r.bttsYes || 0));
+    const bestNo  = Math.max(...rows.map(r => r.bttsNo  || 0));
+    const bestP   = Math.max(...rows.map(r => r.payoutBTTS || 0));
+    if (!rows.some(r => r.bttsYes)) return poissonFallback('BTTS', poisson?.btts);
+    thead = `<tr>
+      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th>Les deux marquent (Oui)</th><th>Les deux marquent (Non)</th><th>Payout</th>
+    </tr>`;
+    bestRow = `<tr class="comp-best-row">
+      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><strong class="comp-best-odd">${bestYes ? bestYes.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestNo ? bestNo.toFixed(2) : '—'}</strong></td>
+      <td class="comp-payout-hi"><strong>${bestP ? bestP.toFixed(1) + '%' : '—'}</strong></td>
+    </tr>`;
+    const renderB = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+      ${fmtOdd(r.bttsYes, r.bttsYes === bestYes && bestYes > 0)}
+      ${fmtOdd(r.bttsNo,  r.bttsNo  === bestNo  && bestNo  > 0)}
+      ${fmtPayout(r.payoutBTTS)}</tr>`;
+    const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
+    dataRows = anjR.map(r => renderB(r)).join('') +
+      (nonR.length ? sepRow(4) + nonR.map(r => renderB(r, 'non-anj')).join('') : '') +
+      avgTr(fmtOdd(avgRow?.bttsYes, false) + fmtOdd(avgRow?.bttsNo, false) + fmtPayout(avgRow?.payout));
+
+  } else if (mkt === 'DC') {
+    const best1X  = Math.max(...rows.map(r => r.dc1X || 0));
+    const bestX2  = Math.max(...rows.map(r => r.dcX2 || 0));
+    const best12  = Math.max(...rows.map(r => r.dc12 || 0));
+    if (!rows.some(r => r.dc1X || r.dcX2)) return poissonFallback('Double Chance', null);
+    thead = `<tr>
+      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th>1X (Dom. ou Nul)</th><th>X2 (Ext. ou Nul)</th><th>12 (Dom. ou Ext.)</th>
+    </tr>`;
+    bestRow = `<tr class="comp-best-row">
+      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><strong class="comp-best-odd">${best1X ? best1X.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestX2 ? bestX2.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${best12 ? best12.toFixed(2) : '—'}</strong></td>
+    </tr>`;
+    const renderDC = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+      ${fmtOdd(r.dc1X, r.dc1X === best1X && best1X > 0)}
+      ${fmtOdd(r.dcX2, r.dcX2 === bestX2 && bestX2 > 0)}
+      ${fmtOdd(r.dc12, r.dc12 === best12 && best12 > 0)}</tr>`;
+    const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
+    dataRows = anjR.map(r => renderDC(r)).join('') +
+      (nonR.length ? sepRow(4) + nonR.map(r => renderDC(r, 'non-anj')).join('') : '') +
+      avgTr(fmtOdd(avgRow?.dc1X, false) + fmtOdd(avgRow?.dcX2, false) + fmtOdd(avgRow?.dc12, false));
+
+  } else if (mkt === 'HOME_WIN') {
+    ({ thead, bestRow, dataRows } = buildSingleSection(`Victoire ${home_team}`, 'home'));
+
+  } else if (mkt === 'DRAW') {
+    ({ thead, bestRow, dataRows } = buildSingleSection('Match Nul', 'draw'));
+
+  } else if (mkt === 'AWAY_WIN') {
+    ({ thead, bestRow, dataRows } = buildSingleSection(`Victoire ${away_team}`, 'away'));
+
+  } else {
+    // 1N2 (default)
+    const anjRows = rows.filter(r => r.isANJ), nonAnjRows = rows.filter(r => !r.isANJ);
+    const bestHome = Math.max(...rows.map(r => r.home || 0));
+    const drawVals = rows.map(r => r.draw).filter(v => v);
+    const bestDraw = drawVals.length ? Math.max(...drawVals) : null;
+    const bestAway = Math.max(...rows.map(r => r.away || 0));
+    const bestPayout = Math.max(...rows.map(r => r.payout || 0));
+    thead = `<tr>
+      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th>1 — ${home_team}</th><th>N</th><th>2 — ${away_team}</th><th>Payout</th>
+    </tr>`;
+    bestRow = `<tr class="comp-best-row">
+      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><strong class="comp-best-odd">${bestHome.toFixed(2)}</strong></td>
+      <td><strong class="comp-best-odd">${bestDraw ? bestDraw.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestAway.toFixed(2)}</strong></td>
+      <td class="comp-payout-hi"><strong>${bestPayout.toFixed(1)}%</strong></td>
+    </tr>`;
+    const render1N2 = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+      ${fmtOdd(r.home, r.home === bestHome)}
+      ${fmtOdd(r.draw, bestDraw !== null && r.draw === bestDraw)}
+      ${fmtOdd(r.away, r.away === bestAway)}
+      ${fmtPayout(r.payout)}</tr>`;
+    let fairSection = '';
+    if (fair) {
+      const toF = p => p && p > 0 ? (1 / p).toFixed(2) : '—';
+      fairSection = `<tr class="comp-fair-row">
+        <td><div class="comp-bk-name">≈ Cote fair (modèle)</div></td>
+        <td>${toF(fair.home)}</td><td>${toF(fair.draw)}</td><td>${toF(fair.away)}</td><td>—</td>
+      </tr>`;
+    }
+    dataRows = anjRows.map(r => render1N2(r)).join('') +
+      (nonAnjRows.length ? `<tr class="comp-sep-row"><td colspan="5">Bookmakers non agréés en France — données affichées à titre informatif, aucun lien de redirection</td></tr>` + nonAnjRows.map(r => render1N2(r, 'non-anj')).join('') : '') +
+      avgTr(fmtOdd(avgRow?.home, false) + fmtOdd(avgRow?.draw, false) + fmtOdd(avgRow?.away, false) + fmtPayout(avgRow?.payout)) +
+      fairSection;
+  }
+
+  const fallbackBanner = d._fallback
+    ? `<div style="background:#fff8e1;border-left:4px solid #ffa726;padding:10px 16px;font-size:.82rem;color:#6d4c00;">
+        ⚠️ <strong>Données partielles</strong> — multi-bookmakers non disponibles pour ce match (ligue non-prioritaire). La comparaison complète est disponible pour Ligue 1, Premier League, Liga, Bundesliga, Serie A et Champions League après le prochain cycle (12h).
+       </div>`
+    : '';
+
+  return `
+  <div class="comp-wrap">
+    ${fallbackBanner}
+    <div class="comp-header">
+      <div>
+        <div class="comp-header-title">⚡ ${home_team} &nbsp;vs&nbsp; ${away_team}</div>
+        <div class="comp-meta">${league} · ${dateStr} à ${timeStr}</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="comp-table">
+      <thead>${thead}</thead>
+      <tbody>${bestRow}${dataRows}</tbody>
+    </table>
+    </div>
+  </div>`;
+}
+</script>
 
 </body>
 </html>

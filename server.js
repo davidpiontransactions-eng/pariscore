@@ -3041,6 +3041,7 @@ function buildMatchRecord(raw) {
       isReal: isRealData,
     },
   };
+  record.all_bookmakers = processAllBookmakers(raw.bookmakers, raw.home_team, raw.away_team);
 
   // ── P1 QUANT — Bootstrap UQD + Reliability Score + Bet Signal ───────────────
   const playedHome = homeStats.played || 10;
@@ -6449,18 +6450,60 @@ function buildDemoMatches() {
     ['soccer_spain_la_liga', 'Valencia CF', 'Villarreal CF', 3, 19, 0, 2.40, 3.10, 2.90],
   ];
 
-  return DEMOS.map(([sport, home, away, off, h, m, oH, oD, oA]) => {
+  function demoBookmakers(home, away, oH, oD, oA, delta = 0) {
+    const bks = [
+      { key: 'winamax',    title: 'Winamax',    aNJ: true,  hd: -0.02, dd: 0,     ad: -0.02 },
+      { key: 'betclic',    title: 'Betclic',    aNJ: true,  hd: -0.01, dd: 0.03,  ad: -0.03 },
+      { key: 'unibet',     title: 'Unibet',     aNJ: true,  hd: -0.03, dd: 0.05,  ad: -0.05 },
+      { key: 'pmu',        title: 'PMU',        aNJ: true,  hd: -0.04, dd: 0.02,  ad: -0.04 },
+      { key: 'bet365',     title: 'Bet365',     aNJ: false, hd: 0,     dd: 0,     ad: 0     },
+      { key: 'pinnacle',   title: 'Pinnacle',   aNJ: false, hd: 0.02,  dd: 0.02,  ad: 0.03  },
+      { key: '1xbet',      title: '1xbet',      aNJ: false, hd: 0.05,  dd: 0.04,  ad: 0.06  },
+    ];
+    // Base Over/Under & BTTS & DC seeds dérivés des cotes 1N2
+    const probH = 1 / oH, probD = oD ? 1 / oD : 0, probA = 1 / oA;
+    const probO25 = Math.min(0.88, Math.max(0.38, (probH + probA) * 0.9 + 0.05));
+    const probBTTS = Math.min(0.78, Math.max(0.28, (probH + probA) * 0.7));
+    const o15 = parseFloat((1 / Math.min(0.95, probO25 + 0.18)).toFixed(2));
+    const u15 = parseFloat((1 / Math.max(0.05, 1 - (probO25 + 0.18))).toFixed(2));
+    const o25 = parseFloat((1 / probO25).toFixed(2));
+    const u25 = parseFloat((1 / (1 - probO25)).toFixed(2));
+    const o35 = parseFloat((1 / Math.max(0.08, probO25 - 0.22)).toFixed(2));
+    const u35 = parseFloat((1 / Math.min(0.92, 1 - (probO25 - 0.22))).toFixed(2));
+    const bY  = parseFloat((1 / probBTTS).toFixed(2));
+    const bN  = parseFloat((1 / (1 - probBTTS)).toFixed(2));
+    const dc1X = parseFloat((1 / Math.min(0.97, probH + probD)).toFixed(2));
+    const dcX2 = parseFloat((1 / Math.min(0.97, probD + probA)).toFixed(2));
+    const dc12 = parseFloat((1 / Math.min(0.97, probH + probA)).toFixed(2));
+
+    return bks.map(bk => {
+      const h = parseFloat((oH + bk.hd + delta * 0.01).toFixed(2));
+      const dr = oD ? parseFloat((oD + bk.dd + delta * 0.005).toFixed(2)) : null;
+      const a = parseFloat((oA + bk.ad + delta * 0.01).toFixed(2));
+      const vd = (v, noise) => parseFloat((v + noise * (Math.random() - 0.5) * 0.1).toFixed(2));
+      return {
+        key: bk.key, title: bk.title,
+        markets: [
+          { key: 'h2h', outcomes: [{ name: home, price: Math.max(1.01, h) }, ...(dr ? [{ name: 'Draw', price: Math.max(1.01, dr) }] : []), { name: away, price: Math.max(1.01, a) }] },
+          { key: 'totals', outcomes: [
+            { name: 'Over',  point: 1.5, price: vd(o15, 1) }, { name: 'Under', point: 1.5, price: vd(u15, 1) },
+            { name: 'Over',  point: 2.5, price: vd(o25, 1) }, { name: 'Under', point: 2.5, price: vd(u25, 1) },
+            { name: 'Over',  point: 3.5, price: vd(o35, 1) }, { name: 'Under', point: 3.5, price: vd(u35, 1) },
+          ]},
+          { key: 'both_teams_score', outcomes: [{ name: 'Yes', price: vd(bY, 1) }, { name: 'No', price: vd(bN, 1) }] },
+          { key: 'double_chance',    outcomes: [{ name: '1X', price: vd(dc1X, 0.5) }, { name: 'X2', price: vd(dcX2, 0.5) }, { name: '12', price: vd(dc12, 0.5) }] },
+        ],
+      };
+    });
+  }
+
+  return DEMOS.map(([sport, home, away, off, h, m, oH, oD, oA], idx) => {
     const raw = {
       id: Math.random().toString(36).slice(2),
       _sport: sport, sport_key: sport,
       commence_time: d(off, h, m),
       home_team: home, away_team: away,
-      bookmakers: [
-        { key: 'bet365', title: 'Bet365', markets: [{ key: 'h2h', outcomes: [{ name: home, price: oH }, { name: 'Draw', price: oD }, { name: away, price: oA }] }] },
-        { key: 'pinnacle', title: 'Pinnacle', markets: [{ key: 'h2h', outcomes: [{ name: home, price: oH + 0.02 }, { name: 'Draw', price: oD + 0.02 }, { name: away, price: oA + 0.03 }] }] },
-        { key: 'unibet', title: 'Unibet', markets: [{ key: 'h2h', outcomes: [{ name: home, price: oH - 0.03 }, { name: 'Draw', price: oD + 0.05 }, { name: away, price: oA - 0.05 }] }] },
-        { key: 'winamax', title: 'Winamax', markets: [{ key: 'h2h', outcomes: [{ name: home, price: oH - 0.02 }, { name: 'Draw', price: oD }, { name: away, price: oA - 0.02 }] }] },
-      ],
+      bookmakers: demoBookmakers(home, away, oH, oD, oA, idx),
     };
     return buildMatchRecord(raw);
   }).filter(Boolean);
@@ -7523,6 +7566,113 @@ function findBestANJOdds(bkList, marketType, homeTeam, awayTeam) {
 }
 
 
+
+const ANJ_KEYS_SET = new Set(['winamax', 'betclic', 'unibet', 'pmu', 'parionssport', 'zebet', 'bwin', 'netbet', 'betsson', 'feelingbet', 'francepari', 'pokerstars']);
+
+function processAllBookmakers(rawBookmakers, homeTeam, awayTeam) {
+  if (!Array.isArray(rawBookmakers) || !rawBookmakers.length) return [];
+  const rows = [];
+  for (const bk of rawBookmakers) {
+    const key = (bk.key || '').toLowerCase();
+    const title = bk.title || bk.key || 'Unknown';
+    const isANJ = [...ANJ_KEYS_SET].some(a => key.includes(a) || title.toLowerCase().includes(a));
+
+    // 1N2 (h2h) — gate: skip bookmaker if no h2h
+    const h2h = (bk.markets || []).find(m => m.key === 'h2h');
+    if (!h2h) continue;
+    let home = null, draw = null, away = null;
+    for (const o of h2h.outcomes) {
+      if (o.name === homeTeam) home = o.price;
+      else if (o.name === 'Draw') draw = o.price;
+      else if (o.name === awayTeam) away = o.price;
+    }
+    if (!home || !away) continue;
+    const payout = parseFloat((100 / (1/home + (draw ? 1/draw : 0) + 1/away)).toFixed(1));
+
+    // Over/Under (totals) — 1.5, 2.5, 3.5
+    const totals = (bk.markets || []).find(m => m.key === 'totals');
+    let over15 = null, under15 = null, over25 = null, under25 = null, over35 = null, under35 = null;
+    if (totals) {
+      for (const o of totals.outcomes) {
+        const pt = o.point != null ? o.point : 2.5;
+        if (o.name === 'Over') {
+          if (Math.abs(pt - 1.5) < 0.1) over15 = o.price;
+          else if (Math.abs(pt - 2.5) < 0.1) over25 = o.price;
+          else if (Math.abs(pt - 3.5) < 0.1) over35 = o.price;
+        } else if (o.name === 'Under') {
+          if (Math.abs(pt - 1.5) < 0.1) under15 = o.price;
+          else if (Math.abs(pt - 2.5) < 0.1) under25 = o.price;
+          else if (Math.abs(pt - 3.5) < 0.1) under35 = o.price;
+        }
+      }
+    }
+    const payoutOU25 = over25 && under25 ? parseFloat((100 / (1/over25 + 1/under25)).toFixed(1)) : null;
+    const payoutOU15 = over15 && under15 ? parseFloat((100 / (1/over15 + 1/under15)).toFixed(1)) : null;
+    const payoutOU35 = over35 && under35 ? parseFloat((100 / (1/over35 + 1/under35)).toFixed(1)) : null;
+
+    // Les deux marquent (BTTS)
+    const bttsMarket = (bk.markets || []).find(m => m.key === 'both_teams_score' || m.key === 'btts');
+    let bttsYes = null, bttsNo = null;
+    if (bttsMarket) {
+      const y = bttsMarket.outcomes.find(o => /yes/i.test(o.name));
+      const n = bttsMarket.outcomes.find(o => /no/i.test(o.name));
+      if (y) bttsYes = y.price;
+      if (n) bttsNo = n.price;
+    }
+    const payoutBTTS = bttsYes && bttsNo ? parseFloat((100 / (1/bttsYes + 1/bttsNo)).toFixed(1)) : null;
+
+    // Double Chance
+    const dcMarket = (bk.markets || []).find(m => m.key === 'double_chance');
+    let dc1X = null, dcX2 = null, dc12 = null;
+    if (dcMarket) {
+      for (const o of dcMarket.outcomes) {
+        const n = (o.name || '').replace(/\s/g, '');
+        if (/^(1X|Home.?Draw)/i.test(n)) dc1X = o.price;
+        else if (/^(X2|Draw.?Away)/i.test(n)) dcX2 = o.price;
+        else if (/^(12|Home.?Away)/i.test(n)) dc12 = o.price;
+      }
+    }
+
+    rows.push({ key, title, isANJ, home, draw, away, payout,
+      over15, under15, payoutOU15,
+      over25, under25, payoutOU: payoutOU25,
+      over35, under35, payoutOU35,
+      bttsYes, bttsNo, payoutBTTS,
+      dc1X, dcX2, dc12,
+    });
+  }
+  rows.sort((a, b) => {
+    if (a.isANJ !== b.isANJ) return (b.isANJ ? 1 : 0) - (a.isANJ ? 1 : 0);
+    return (b.payout || 0) - (a.payout || 0);
+  });
+  const bestHome = Math.max(...rows.map(r => r.home || 0));
+  const drawVals = rows.map(r => r.draw).filter(v => v);
+  const bestDraw = drawVals.length ? Math.max(...drawVals) : null;
+  const bestAway = Math.max(...rows.map(r => r.away || 0));
+  const best = field => { const v = rows.map(r => r[field]).filter(Boolean); return v.length ? Math.max(...v) : null; };
+  const bestOver15 = best('over15'), bestUnder15 = best('under15');
+  const bestOver25 = best('over25'), bestUnder25 = best('under25');
+  const bestOver35 = best('over35'), bestUnder35 = best('under35');
+  const bestBttsYes = best('bttsYes'), bestBttsNo = best('bttsNo');
+  const bestDc1X = best('dc1X'), bestDcX2 = best('dcX2'), bestDc12 = best('dc12');
+  return rows.map(r => ({
+    ...r,
+    isBestHome: r.home === bestHome,
+    isBestDraw: bestDraw !== null && r.draw === bestDraw,
+    isBestAway: r.away === bestAway,
+    isBestOver15: bestOver15 !== null && r.over15 === bestOver15,
+    isBestUnder15: bestUnder15 !== null && r.under15 === bestUnder15,
+    isBestOver25: bestOver25 !== null && r.over25 === bestOver25,
+    isBestUnder25: bestUnder25 !== null && r.under25 === bestUnder25,
+    isBestOver35: bestOver35 !== null && r.over35 === bestOver35,
+    isBestUnder35: bestUnder35 !== null && r.under35 === bestUnder35,
+    isBestBttsYes: bestBttsYes !== null && r.bttsYes === bestBttsYes,
+    isBestBttsNo: bestBttsNo !== null && r.bttsNo === bestBttsNo,
+    isBestDc1X: bestDc1X !== null && r.dc1X === bestDc1X,
+    isBestDcX2: bestDcX2 !== null && r.dcX2 === bestDcX2,
+    isBestDc12: bestDc12 !== null && r.dc12 === bestDc12,
+  }));
+}
 
 function extractANJMarkets(bookmakers, homeTeam, awayTeam) {
   const markets = {};
@@ -9033,6 +9183,103 @@ if (oddsHistMatch && req.method === 'GET') {
     current: match.odds,
     delta: match.odds_delta || null,
     history,
+  });
+}
+
+// GET /api/v1/comparateur/:matchId — Comparaison tous bookmakers (données locales, zéro appel API)
+const comparateurMatch = pathname.match(/^\/api\/v1\/comparateur\/([^/?]+)$/);
+if (comparateurMatch && req.method === 'GET') {
+  const matchId = decodeURIComponent(comparateurMatch[1]);
+  const match = db.matches.find(m => m.id === matchId) || (cachedMatches || []).find(m => m.id === matchId);
+  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé', matchId });
+  const marketParam = (query.market || '1N2').toUpperCase();
+  let rows = match.all_bookmakers || [];
+
+  // Fallback : si all_bookmakers vide, reconstituer depuis best-only odds
+  if (!rows.length && match.odds?.home && match.odds?.away) {
+    const o = match.odds;
+    const bk = match.bookmakers || {};
+    const payout = parseFloat((100 / (1/o.home + (o.draw ? 1/o.draw : 0) + 1/o.away)).toFixed(1));
+    const bkNames = [...new Set([bk.home, bk.draw, bk.away].filter(Boolean))];
+    if (bkNames.length === 0) bkNames.push('Bookmaker');
+    rows = bkNames.map(name => {
+      const key = name.toLowerCase().replace(/[^a-z]/g, '');
+      const isANJ = [...ANJ_KEYS_SET].some(a => key.includes(a) || name.toLowerCase().includes(a));
+      return {
+        key, title: name, isANJ,
+        home: bk.home === name ? o.home : null,
+        draw: bk.draw === name ? o.draw : null,
+        away: bk.away === name ? o.away : null,
+        payout: null,
+        isBestHome: bk.home === name, isBestDraw: bk.draw === name, isBestAway: bk.away === name,
+        _fallback: true,
+      };
+    });
+    if (o.home) rows.unshift({
+      key: '_best', title: 'Meilleure cote (toutes sources)',
+      isANJ: true, home: o.home, draw: o.draw, away: o.away, payout,
+      isBestHome: true, isBestDraw: true, isBestAway: true, _fallback: true,
+    });
+  }
+
+  // Calcul ligne "Moyenne du Marché"
+  let avgRow = null;
+  if (rows.length) {
+    const avg = arr => arr.length ? parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(2)) : null;
+    const p2 = (a, b) => a && b ? parseFloat((100 / (1/a + 1/b)).toFixed(1)) : null;
+    const p3 = (a, b, c) => a && c ? parseFloat((100 / (1/a + (b ? 1/b : 0) + 1/c)).toFixed(1)) : null;
+    if (marketParam === 'OU15') {
+      const ov = avg(rows.map(r => r.over15).filter(Boolean));
+      const un = avg(rows.map(r => r.under15).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, over15:ov, under15:un, payout:p2(ov,un) };
+    } else if (marketParam === 'OU25') {
+      const ov = avg(rows.map(r => r.over25).filter(Boolean));
+      const un = avg(rows.map(r => r.under25).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, over25:ov, under25:un, payout:p2(ov,un) };
+    } else if (marketParam === 'OU35') {
+      const ov = avg(rows.map(r => r.over35).filter(Boolean));
+      const un = avg(rows.map(r => r.under35).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, over35:ov, under35:un, payout:p2(ov,un) };
+    } else if (marketParam === 'BTTS') {
+      const y = avg(rows.map(r => r.bttsYes).filter(Boolean));
+      const n = avg(rows.map(r => r.bttsNo).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, bttsYes:y, bttsNo:n, payout:p2(y,n) };
+    } else if (marketParam === 'DC') {
+      const x1 = avg(rows.map(r => r.dc1X).filter(Boolean));
+      const x2 = avg(rows.map(r => r.dcX2).filter(Boolean));
+      const d12 = avg(rows.map(r => r.dc12).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, dc1X:x1, dcX2:x2, dc12:d12 };
+    } else if (marketParam === 'HOME_WIN') {
+      const h = avg(rows.map(r => r.home).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, home:h };
+    } else if (marketParam === 'DRAW') {
+      const d = avg(rows.map(r => r.draw).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, draw:d };
+    } else if (marketParam === 'AWAY_WIN') {
+      const a = avg(rows.map(r => r.away).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, away:a };
+    } else {
+      // 1N2
+      const h = avg(rows.map(r => r.home).filter(Boolean));
+      const d = avg(rows.map(r => r.draw).filter(Boolean));
+      const a = avg(rows.map(r => r.away).filter(Boolean));
+      avgRow = { key:'_avg', title:'Moyenne du Marché', isAvg:true, home:h, draw:d, away:a, payout:p3(h,d,a) };
+    }
+  }
+
+  return jsonResponse(res, 200, {
+    matchId,
+    home_team: match.home_team,
+    away_team: match.away_team,
+    commence_time: match.commence_time,
+    league: match.league,
+    fair: match.fair,
+    poisson: match.poisson,
+    rows,
+    avgRow,
+    market: marketParam,
+    source: rows.length ? (rows[0]?._fallback ? 'fallback' : 'db') : 'empty',
+    _fallback: rows[0]?._fallback || false,
   });
 }
 
