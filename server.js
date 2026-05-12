@@ -5277,6 +5277,164 @@ function getTop3Players(match) {
   return { home, away, homeAvg, awayAvg, available: home.length > 0 || away.length > 0 };
 }
 
+// ── Fallback API-Football pour ligues non couvertes par BSD ratings ──────────
+// Mapping BSD league_id → API-Football league_id (saison 2024 accessible Free)
+const BSD_TO_APIF_LEAGUE = {
+  50: 292,  // K League 1 (Corée)
+  49: 98,   // J1 League (Japon)
+  9:  71,   // Brasileirão Série A
+  34: 72,   // Brasileirão Série B
+  18: 253,  // MLS (USA)
+  19: 262,  // Liga MX
+  20: 262,  // Liga MX (Clausura — même ligue)
+  26: 113,  // Allsvenskan (Suède)
+  22: 172,  // Parva Liga (Bulgarie)
+  23: 283,  // Superliga Romania
+  25: 106,  // Ekstraklasa (Pologne)
+  52: 169,  // Chinese Super League
+};
+
+// Cache ratings API-Football par ligue — TTL 24h
+const _apifRatingsCache = {};
+const APIF_RATINGS_TTL = 24 * 3600 * 1000;
+
+async function fetchApifTopPlayersByLeague(apifLeagueId, season = 2024) {
+  const cacheKey = `${apifLeagueId}_${season}`;
+  const cached = _apifRatingsCache[cacheKey];
+  if (cached && Date.now() - cached.ts < APIF_RATINGS_TTL) return cached.players;
+
+  const key = process.env.API_FOOTBALL_KEY || '';
+  if (!key) return [];
+
+  try {
+    const POS = { Goalkeeper: 'G', Defender: 'D', Midfielder: 'M', Forward: 'F', Attacker: 'F' };
+    const headers = { 'x-apisports-key': key };
+    const [tsRes, taRes] = await Promise.allSettled([
+      httpsGet(`https://v3.football.api-sports.io/players/topscorers?league=${apifLeagueId}&season=${season}`, headers),
+      httpsGet(`https://v3.football.api-sports.io/players/topassists?league=${apifLeagueId}&season=${season}`, headers),
+    ]);
+
+    const byId = {};
+    for (const res of [tsRes, taRes]) {
+      if (res.status !== 'fulfilled' || res.value.status !== 200) continue;
+      for (const item of (res.value.data?.response || [])) {
+        const pid = item.player?.id;
+        if (!pid) continue;
+        const s = item.statistics?.[0];
+        const rating = s?.games?.rating ? parseFloat(parseFloat(s.games.rating).toFixed(2)) : null;
+        if (!rating) continue;
+        if (byId[pid]) continue; // déjà présent (topscorers prioritaire)
+        const lastName = item.player.lastname || item.player.name.split(' ').pop();
+        byId[pid] = {
+          id: pid,
+          name: item.player.name,
+          short_name: item.player.firstname
+            ? item.player.firstname.charAt(0) + '. ' + lastName
+            : item.player.name,
+          position: POS[s?.games?.position] || s?.games?.position?.charAt(0) || '?',
+          avg_rating: rating,
+          goals: s?.goals?.total || 0,
+          assists: s?.goals?.assists || 0,
+          xg: 0,
+          _norm: normName(item.player.name),
+          _norm_last: normName(lastName),
+        };
+      }
+    }
+
+    const players = Object.values(byId).sort((a, b) => b.avg_rating - a.avg_rating);
+    _apifRatingsCache[cacheKey] = { ts: Date.now(), players };
+    console.log(`  [ApifRatings] ligue ${apifLeagueId}/${season} → ${players.length} joueurs avec ratings`);
+    return players;
+  } catch (e) {
+    console.warn(`  [ApifRatings] erreur ${apifLeagueId}:`, e.message);
+    return [];
+  }
+}
+
+// Fuzzy name match : "P. Seung-Ho" ↔ "Paik Seung-Ho" → true
+function _nameMatchesPlayer(lineupName, ratedPlayer) {
+  const ln = normName(lineupName);
+  if (ln === ratedPlayer._norm) return true;
+  // Suffix match sur les 2 derniers mots normalisés (noms coréens, japonais, etc.)
+  const lnWords = ln.split(/\s+/).filter(w => w.length > 1);
+  const rpWords = ratedPlayer._norm.split(/\s+/).filter(w => w.length > 1);
+  // Last word (nom de famille ou dernier prénom) > 3 chars
+  if (lnWords.length && rpWords.length) {
+    const lLast = lnWords[lnWords.length - 1];
+    const rLast = rpWords[rpWords.length - 1];
+    if (lLast.length > 3 && lLast === rLast) return true;
+    // 2 derniers mots coïncident
+    const l2 = lnWords.slice(-2).join(' ');
+    const r2 = rpWords.slice(-2).join(' ');
+    if (l2.length > 4 && l2 === r2) return true;
+  }
+  // Initiale + nom de famille : "P. Seung-Ho" → "p" + "seungho", "Paik Seung-Ho" → "paik" + "seungho"
+  if (ratedPlayer._norm_last && normName(ratedPlayer._norm_last).length > 3) {
+    if (ln.includes(ratedPlayer._norm_last)) return true;
+  }
+  return false;
+}
+
+// Fallback complet : BSD ratings → API-Football lineup+ratings
+async function getTop3PlayersWithFallback(match) {
+  // 1. BSD ratings (ligues majeures EU)
+  const bsd = getTop3Players(match);
+  if (bsd.available) return { ...bsd, _source: 'bsd' };
+
+  // 2. API-Football fallback (ligues non couvertes BSD)
+  const bsdLeagueId = match._bsd_league_id;
+  const apifLeagueId = bsdLeagueId ? BSD_TO_APIF_LEAGUE[bsdLeagueId] : null;
+  const eventId = match._bsd_event_id;
+  if (!apifLeagueId || !eventId) return { ...bsd, _source: 'unavailable' };
+
+  try {
+    const [lineupRes, ratedPlayers] = await Promise.allSettled([
+      bsdFetch(`/api/v2/events/${eventId}/lineups/`),
+      fetchApifTopPlayersByLeague(apifLeagueId, 2024),
+    ]);
+
+    if (lineupRes.status !== 'fulfilled' || ratedPlayers.status !== 'fulfilled') return bsd;
+
+    const lineupData = lineupRes.value.data;
+    const rated = ratedPlayers.value;
+    if (!rated.length) return bsd;
+
+    const POS_LABEL = { G: 'G', D: 'D', M: 'M', F: 'A' };
+    const matchTeam = (players) => players
+      .map(lp => {
+        const found = rated.find(rp => _nameMatchesPlayer(lp.name, rp));
+        if (!found) return null;
+        return {
+          name: found.short_name,
+          avg_rating: found.avg_rating,
+          position: POS_LABEL[lp.position] || lp.position || found.position,
+          goals: found.goals,
+          assists: found.assists,
+          xg: 0,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.avg_rating - a.avg_rating)
+      .slice(0, 3);
+
+    const home = matchTeam(lineupData?.lineups?.home?.players || []);
+    const away = matchTeam(lineupData?.lineups?.away?.players || []);
+    const avg = (arr) => arr.length ? parseFloat((arr.reduce((s, p) => s + p.avg_rating, 0) / arr.length).toFixed(2)) : null;
+
+    return {
+      home, away,
+      homeAvg: avg(home),
+      awayAvg: avg(away),
+      available: home.length > 0 || away.length > 0,
+      _source: 'apif_2024',
+    };
+  } catch (e) {
+    console.warn('[Top3Fallback] erreur:', e.message);
+    return bsd;
+  }
+}
+
 function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5]) {
   // Expected total corners = average of both teams' averages
   const expectedTotal = (homeAvg + awayAvg) / 2;
@@ -8197,7 +8355,7 @@ if (pathname.startsWith('/api/v1/live-players/')) {
     ? testMatch
     : (db.matches.find(m => m.id === id) || null);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
-  const top3 = getTop3Players(match);
+  const top3 = await getTop3PlayersWithFallback(match);
   return jsonResponse(res, 200, { success: true, matchId: id, top3 });
 }
 
