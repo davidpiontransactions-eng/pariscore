@@ -8429,6 +8429,23 @@ if (pathname.startsWith('/api/v1/live-players/')) {
   return jsonResponse(res, 200, { success: true, matchId: id, top3 });
 }
 
+// ── GET /api/v1/live-dashboard/:matchId — Modal V2 data source (BSD sr_stats + momentum synthétique) ──
+if (pathname.startsWith('/api/v1/live-dashboard/')) {
+  const id = pathname.slice('/api/v1/live-dashboard/'.length);
+  if (!id || id === 'undefined') return jsonResponse(res, 400, { error: 'ID invalide' });
+  const match = (mockActive && testMatch && testMatch.id === id)
+    ? testMatch
+    : (db.matches.find(m => m.id === id) || null);
+  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé', id });
+  const bsdId = match._bsd_event_id || (id.startsWith('bsd_') ? id.slice(4) : null);
+  if (!bsdId) {
+    // Fallback: pas de mapping BSD — retourne payload minimal depuis db.matches
+    return jsonResponse(res, 200, buildLiveDashboardPayload(match, null));
+  }
+  const detail = await fetchBSDEventDetail(bsdId);
+  return jsonResponse(res, 200, buildLiveDashboardPayload(match, detail));
+}
+
 if (pathname === '/api/v1/live/bsd') {
   // v10.6: fresh=true → force pollLiveScores avant réponse (Dashboard V2 polling 30s)
   if (query.fresh === 'true' && typeof pollLiveScores === 'function') {
@@ -10598,7 +10615,81 @@ process.on('uncaughtException', (error) => {
 }); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
 
 /* -------------------------------------------------
-   Sofascore — enrichissement stats live (possession, tirs, corners, xG, momentum)
+   Live Dashboard V2 — BSD sr_stats source + momentum synthétique (Sofascore 403 server-side)
+   ------------------------------------------------- */
+const _liveMomentumHistory = new Map();     // matchId → [{ min, v }]  (in-memory replay)
+const _bsdEventDetailCache = new Map();     // bsdId → { ts, data }
+const BSD_EVENT_DETAIL_TTL = 25 * 1000;     // 25s cache pour absorber polls 30s sans hit excessif
+const MOMENTUM_MAX_POINTS = 30;
+
+async function fetchBSDEventDetail(bsdId) {
+  if (!BSD_API_KEY || !bsdId) return null;
+  const key = String(bsdId);
+  const cached = _bsdEventDetailCache.get(key);
+  if (cached && Date.now() - cached.ts < BSD_EVENT_DETAIL_TTL) return cached.data;
+  try {
+    const res = await bsdFetch(`/events/${bsdId}/`);
+    if (res.status !== 200 || !res.data) return null;
+    _bsdEventDetailCache.set(key, { ts: Date.now(), data: res.data });
+    return res.data;
+  } catch (e) {
+    console.warn('[BSD detail]', bsdId, e.message);
+    return null;
+  }
+}
+
+function recordLiveMomentumSnapshot(matchId, minute, sr) {
+  if (!sr || !minute) return;
+  const homeDA = sr.dangerous_attack?.home || 0;
+  const awayDA = sr.dangerous_attack?.away || 0;
+  const v = homeDA - awayDA;
+  const hist = _liveMomentumHistory.get(matchId) || [];
+  if (!hist.length || hist[hist.length - 1].min !== minute) {
+    hist.push({ min: minute, v });
+    if (hist.length > MOMENTUM_MAX_POINTS) hist.shift();
+    _liveMomentumHistory.set(matchId, hist);
+  }
+}
+
+function buildLiveDashboardPayload(match, detail) {
+  const sr = detail?.sr_stats || null;
+  const minute = parseInt(detail?.current_minute ?? match.live_minute ?? 0) || 0;
+  if (sr) recordLiveMomentumSnapshot(match.id, minute, sr);
+
+  const xgH = detail?.actual_home_xg ?? detail?.home_xg_live ?? null;
+  const xgA = detail?.actual_away_xg ?? detail?.away_xg_live ?? null;
+  const possH = sr?.ball_safe_pct?.home;
+  const possA = sr?.ball_safe_pct?.away;
+  const attackH = sr?.attack?.home;
+  const attackA = sr?.attack?.away;
+  const daH = sr?.dangerous_attack?.home;
+  const daA = sr?.dangerous_attack?.away;
+
+  return {
+    id: match.id,
+    home_team: detail?.home_team || match.home_team,
+    away_team: detail?.away_team || match.away_team,
+    league: detail?.league?.name || match.league,
+    score: detail
+      ? `${detail.home_score || 0}-${detail.away_score || 0}`
+      : (match.live_score || '0-0'),
+    minute,
+    status: detail?.status || match.status || null,
+    xg: (xgH != null || xgA != null) ? { home: +(xgH || 0), away: +(xgA || 0) } : null,
+    possession: (possH != null && possA != null) ? { home: possH, away: possA } : null,
+    attack: (attackH != null && attackA != null) ? { home: attackH, away: attackA } : null,
+    dangerous_attacks: (daH != null && daA != null) ? { home: daH, away: daA } : null,
+    shots: null,
+    shots_on_target: null,
+    corners: null,
+    momentum: _liveMomentumHistory.get(match.id) || [],
+    intensity: match.live_intensity || 0,
+    _source: 'bsd_sr_stats',
+  };
+}
+
+/* -------------------------------------------------
+   Sofascore — enrichissement stats live (legacy, 403 server-side — conservé pour ligues majeures futures via proxy)
    ------------------------------------------------- */
 const _sofaLiveStatsCache = {};       // { sofaEventId: { ts, data } }
 const SOFA_LIVE_STATS_TTL = 60000;    // 1 min — données live

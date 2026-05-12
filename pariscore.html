@@ -10960,12 +10960,8 @@ async function openLiveDetail(matchId) {
 async function refreshLiveDetailModal(matchId, { force }) {
   let m = null;
   try {
-    const url = `/api/v1/live/bsd${force ? '?fresh=true' : ''}`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      m = (data.live || []).find(x => x.id === matchId) || null;
-    }
+    const res = await fetch(`/api/v1/live-dashboard/${encodeURIComponent(matchId)}`);
+    if (res.ok) m = await res.json();
   } catch {}
   if (!m) {
     const fb = (typeof allMatches !== 'undefined' ? allMatches : []).find(x => x.id === matchId);
@@ -10979,6 +10975,8 @@ async function refreshLiveDetailModal(matchId, { force }) {
         minute: fb.live_minute,
         xg: fb.live_xg || null,
         possession: fb.live_possession || null,
+        attack: null,
+        dangerous_attacks: null,
         shots: fb.live_shots || null,
         shots_on_target: fb.live_shots_on_target || null,
         corners: fb.live_corners || null,
@@ -10993,15 +10991,18 @@ async function refreshLiveDetailModal(matchId, { force }) {
 function renderLiveDetailSkeleton() {
   const cont = document.getElementById('ldm-stats-bars');
   if (!cont) return;
+  // v10.7: barres adaptées au flux BSD réel (sr_stats). Shots/Corners hidden quand null.
   const rows = [
-    { key:'possession', label:'Possession' },
+    { key:'possession', label:'Possession (%)' },
+    { key:'attack',     label:'Volume Attaque' },
+    { key:'danger',     label:'Attaques Dangereuses' },
+    { key:'xg',         label:'xG Live' },
     { key:'shots',      label:'Tirs' },
     { key:'sot',        label:'Tirs cadrés' },
     { key:'corners',    label:'Corners' },
-    { key:'xg',         label:'xG' },
   ];
   cont.innerHTML = rows.map(r => `
-    <div style="margin-bottom:14px;">
+    <div id="barm-${r.key}-row" style="margin-bottom:14px;">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-bottom:5px;">
         <span id="barm-${r.key}-vh" style="color:var(--blue);font-weight:700;text-align:left;">0</span>
         <span style="color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-size:9px;font-weight:700;">${r.label}</span>
@@ -11037,25 +11038,35 @@ function updateLiveDetailModal(m) {
     iEl.style.background = bg;
   }
 
+  // v10.7: stat keys alignées sur payload BSD sr_stats. Rangée masquée si source null.
   const stats = [
-    { key:'possession', h:(m.possession?.home ?? 50), a:(m.possession?.away ?? 50), pct:true, dec:0 },
-    { key:'shots',      h:(m.shots?.home ?? 0),      a:(m.shots?.away ?? 0),      pct:false, dec:0 },
-    { key:'sot',        h:(m.shots_on_target?.home ?? 0), a:(m.shots_on_target?.away ?? 0), pct:false, dec:0 },
-    { key:'corners',    h:(m.corners?.home ?? 0),    a:(m.corners?.away ?? 0),    pct:false, dec:0 },
-    { key:'xg',         h:+(m.xg?.home ?? 0),         a:+(m.xg?.away ?? 0),         pct:false, dec:2 },
+    { key:'possession', src:m.possession,        pct:true,  dec:0 },
+    { key:'attack',     src:m.attack,            pct:false, dec:0 },
+    { key:'danger',     src:m.dangerous_attacks, pct:false, dec:0 },
+    { key:'xg',         src:m.xg,                pct:false, dec:2 },
+    { key:'shots',      src:m.shots,             pct:false, dec:0 },
+    { key:'sot',        src:m.shots_on_target,   pct:false, dec:0 },
+    { key:'corners',    src:m.corners,           pct:false, dec:0 },
   ];
   for (const s of stats) {
-    const total = s.pct ? 100 : (s.h + s.a) || 1;
-    const wH = Math.max(0, Math.min(100, (s.h / total) * 100));
-    const wA = Math.max(0, Math.min(100, (s.a / total) * 100));
+    const row = document.getElementById(`barm-${s.key}-row`);
+    if (!s.src || s.src.home == null || s.src.away == null) {
+      if (row) row.style.display = 'none';
+      continue;
+    }
+    if (row) row.style.display = '';
+    const h = +s.src.home, a = +s.src.away;
+    const total = s.pct ? 100 : (h + a) || 1;
+    const wH = Math.max(0, Math.min(100, (h / total) * 100));
+    const wA = Math.max(0, Math.min(100, (a / total) * 100));
     const fillH = document.getElementById(`barm-${s.key}-h-fill`);
     const fillA = document.getElementById(`barm-${s.key}-a-fill`);
     const valH  = document.getElementById(`barm-${s.key}-vh`);
     const valA  = document.getElementById(`barm-${s.key}-va`);
     if (fillH) fillH.style.width = wH + '%';
     if (fillA) fillA.style.width = wA + '%';
-    if (valH)  valH.textContent  = s.dec ? s.h.toFixed(s.dec) : s.h;
-    if (valA)  valA.textContent  = s.dec ? s.a.toFixed(s.dec) : s.a;
+    if (valH)  valH.textContent  = s.dec ? h.toFixed(s.dec) : h;
+    if (valA)  valA.textContent  = s.dec ? a.toFixed(s.dec) : a;
   }
 
   drawLDMomentumSVG(m.momentum || []);
