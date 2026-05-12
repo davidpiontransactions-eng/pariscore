@@ -1153,20 +1153,55 @@ async function bsdGetPlayerDetail(playerId) {
       ((totalGoals * 3 + totalAssists * 2 + (avgRating || 0)) / per90).toFixed(2)
     );
 
-    const form_l5 = rawStats.slice(0, 5).map(s => ({
-      date:            (s.date || s.started_at || s.event_date || '').slice(0, 10),
-      opponent:        s.opponent?.name || (typeof s.opponent === 'string' ? s.opponent : null),
-      opponent_logo:   s.opponent?.image_path ? 'https://sports.bzzoiro.com' + s.opponent.image_path : null,
-      is_home:         s.is_home !== undefined ? s.is_home : null,
-      result:          s.result || null,
-      minutes_played:  s.minutes_played  || 0,
-      goals:           s.goals           || 0,
-      assists:         s.goal_assist      || 0,
-      shots_total:     s.shots_total      || s.total_shots || 0,
-      shots_on_target: s.shots_on_target  || 0,
-      xg:              parseFloat((s.expected_goals || s.xg || 0).toFixed(3)),
-      rating:          s.rating           || null,
-    }));
+    // BSD player-stats structure : { event: { home_team, away_team, event_date, home_score, away_score }, player: { team }, ... }
+    const form_l5 = rawStats.slice(0, 5).map(s => {
+      const ev = s.event || {};
+      const playerTeam = s.player?.team || null;
+      const eventHomeTeam = ev.home_team || null;
+      const eventAwayTeam = ev.away_team || null;
+      // Détermine is_home + opponent + result via player.team vs event teams
+      let isHome = null, opponent = null, opponentLogo = null, result = null;
+      if (playerTeam && eventHomeTeam && eventAwayTeam) {
+        const ptNorm = normName(playerTeam);
+        const htNorm = normName(eventHomeTeam);
+        if (ptNorm === htNorm || htNorm.includes(ptNorm) || ptNorm.includes(htNorm)) {
+          isHome = true;
+          opponent = eventAwayTeam;
+        } else {
+          isHome = false;
+          opponent = eventHomeTeam;
+        }
+        // Compute result
+        if (typeof ev.home_score === 'number' && typeof ev.away_score === 'number') {
+          const playerScore = isHome ? ev.home_score : ev.away_score;
+          const oppScore    = isHome ? ev.away_score : ev.home_score;
+          result = playerScore > oppScore ? 'W' : playerScore < oppScore ? 'L' : 'D';
+        }
+      } else if (typeof s.opponent === 'object' && s.opponent) {
+        opponent = s.opponent.name;
+        opponentLogo = s.opponent.image_path ? 'https://sports.bzzoiro.com' + s.opponent.image_path : null;
+      } else if (typeof s.opponent === 'string') {
+        opponent = s.opponent;
+      }
+      const dateRaw = ev.event_date || s.date || s.started_at || s.event_date || '';
+      const score = (typeof ev.home_score === 'number' && typeof ev.away_score === 'number')
+        ? `${ev.home_score}-${ev.away_score}` : null;
+      return {
+        date: dateRaw ? String(dateRaw).slice(0, 10) : '',
+        opponent,
+        opponent_logo: opponentLogo,
+        is_home: isHome,
+        result,
+        score,
+        minutes_played: s.minutes_played  || 0,
+        goals:          s.goals           || 0,
+        assists:        s.goal_assist      || 0,
+        shots_total:    s.shots_total      || s.total_shots || 0,
+        shots_on_target: s.shots_on_target || 0,
+        xg:             parseFloat((s.expected_goals || s.xg || 0).toFixed(3)),
+        rating:         s.rating           || null,
+      };
+    });
 
     return {
       id:                p.id,
@@ -9108,11 +9143,23 @@ if (pathname === '/api/v1/player') {
                     searchRes = await bsdSearchPlayers(playerName);
                 }
                 if (searchRes && searchRes.length > 0) {
-                    // Multi-candidats : si on a API-Football match, on hydrate les top 3 BSD et on garde celui qui match le name de API-Football
                     let chosen = searchRes[0];
-                    if (apifPrimary?.name && searchRes.length > 1) {
-                      const apifNorm = normName(apifPrimary.name);
-                      const better = searchRes.find(p => normName(p.name) === apifNorm);
+                    if (apifPrimary && searchRes.length > 1) {
+                      const apifFull = normName(apifPrimary.name);
+                      const apifLastNorm = normName(apifPrimary.lastname || '');
+                      // Premier token du firstname (ignore middle names "Jude Victor William" → "jude")
+                      const apifFirstToken = normName((apifPrimary.firstname || '').split(' ')[0] || '');
+                      let better = searchRes.find(p => normName(p.name) === apifFull);
+                      if (!better && apifFirstToken && apifLastNorm) {
+                        better = searchRes.find(p => {
+                          const pn = normName(p.name);
+                          return pn.includes(apifFirstToken) && pn.includes(apifLastNorm);
+                        });
+                      }
+                      if (!better && apifLastNorm) {
+                        const lastMatches = searchRes.filter(p => normName(p.name).includes(apifLastNorm));
+                        if (lastMatches.length === 1) better = lastMatches[0];
+                      }
                       if (better) chosen = better;
                     }
                     if (teamCtx) {
@@ -9132,10 +9179,16 @@ if (pathname === '/api/v1/player') {
                 || apifNorm.includes(searchedNorm) || searchedNorm.includes(apifNorm);
               if (apifMatchesSearch) {
                 // API-Football primary
+                // Construit name complet : préfère "Firstname Lastname" si dispo (sinon BSD short "J. Bellingham" pas idéal)
+                const fullName = (apifPrimary.firstname && apifPrimary.lastname)
+                  ? `${apifPrimary.firstname.split(' ')[0]} ${apifPrimary.lastname}`
+                  : apifPrimary.name;
                 player = {
                   id: apifPrimary.api_football_id,
                   api_football_id: apifPrimary.api_football_id,
-                  name: apifPrimary.name,
+                  name: fullName,
+                  firstname: apifPrimary.firstname,
+                  lastname: apifPrimary.lastname,
                   short_name: apifPrimary.firstname && apifPrimary.lastname ? apifPrimary.firstname.charAt(0) + '. ' + apifPrimary.lastname : null,
                   position: apifPrimary.season_stats?.position || null,
                   nationality: apifPrimary.nationality,
