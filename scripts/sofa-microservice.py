@@ -100,6 +100,15 @@ async def _wrapper_live_games():
         await api.close()
 
 
+async def _wrapper_games_by_date(date: str):
+    api = SofascoreAPI()
+    try:
+        m = Match(api)
+        return await m.games_by_date(sport="football", date=date)
+    finally:
+        await api.close()
+
+
 async def _wrapper_match_stats(match_id: int):
     api = SofascoreAPI()
     try:
@@ -129,6 +138,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         u = urlparse(self.path)
         path = u.path.rstrip("/") or "/"
+        from urllib.parse import parse_qs
+        qs = parse_qs(u.query)
         try:
             if path == "/health":
                 _json_response(self, 200, {
@@ -140,6 +151,47 @@ class Handler(BaseHTTPRequestHandler):
                     "cache_size": len(_cache),
                 })
                 return
+
+            if path == "/find-match":
+                # GET /find-match?home=Gangwon&away=Daejeon&date=2026-05-12 → returns Sofascore event id
+                home = (qs.get("home") or [""])[0].lower()
+                away = (qs.get("away") or [""])[0].lower()
+                date = (qs.get("date") or [""])[0]
+                if not home or not away:
+                    return _json_response(self, 400, {"error": "missing home/away param"})
+                key = f"find:{home}:{away}:{date}"
+                cached = _cache_get(key, _CACHE_TTL_LIVE)
+                if cached:
+                    return _json_response(self, 200, cached)
+                if not HAVE_WRAPPER:
+                    return _json_response(self, 503, {"error": "wrapper unavailable"})
+                if date:
+                    raw = run_async(_wrapper_games_by_date(date))
+                else:
+                    raw = run_async(_wrapper_live_games())
+                events = raw.get("events", []) if isinstance(raw, dict) else []
+                def norm(s):
+                    return "".join(c for c in (s or "").lower() if c.isalnum())
+                hn, an = norm(home), norm(away)
+                found = None
+                for e in events:
+                    eh = norm(e.get("homeTeam", {}).get("name"))
+                    ea = norm(e.get("awayTeam", {}).get("name"))
+                    # match if home/away substring matches
+                    if (hn in eh or eh in hn) and (an in ea or ea in an):
+                        found = e
+                        break
+                payload = {
+                    "matched": bool(found),
+                    "sofa_event_id": found.get("id") if found else None,
+                    "sofa_home": found.get("homeTeam", {}).get("name") if found else None,
+                    "sofa_away": found.get("awayTeam", {}).get("name") if found else None,
+                    "sofa_league": found.get("tournament", {}).get("name") if found else None,
+                    "query": {"home": home, "away": away, "date": date},
+                    "candidates_searched": len(events),
+                }
+                _cache_set(key, payload)
+                return _json_response(self, 200, payload)
 
             if path == "/live":
                 cached = _cache_get("live", _CACHE_TTL_LIVE)

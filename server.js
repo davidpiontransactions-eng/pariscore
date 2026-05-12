@@ -8429,7 +8429,7 @@ if (pathname.startsWith('/api/v1/live-players/')) {
   return jsonResponse(res, 200, { success: true, matchId: id, top3 });
 }
 
-// ── GET /api/v1/live-dashboard/:matchId — Modal V2 data source (BSD sr_stats + momentum synthétique) ──
+// ── GET /api/v1/live-dashboard/:matchId — Modal V2 data source (BSD sr_stats + Sofa enrichment + momentum synthétique) ──
 if (pathname.startsWith('/api/v1/live-dashboard/')) {
   const id = pathname.slice('/api/v1/live-dashboard/'.length);
   if (!id || id === 'undefined') return jsonResponse(res, 400, { error: 'ID invalide' });
@@ -8438,12 +8438,24 @@ if (pathname.startsWith('/api/v1/live-dashboard/')) {
     : (db.matches.find(m => m.id === id) || null);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé', id });
   const bsdId = match._bsd_event_id || (id.startsWith('bsd_') ? id.slice(4) : null);
-  if (!bsdId) {
-    // Fallback: pas de mapping BSD — retourne payload minimal depuis db.matches
-    return jsonResponse(res, 200, buildLiveDashboardPayload(match, null));
+  const [detail, sofaEnrich] = await Promise.all([
+    bsdId ? fetchBSDEventDetail(bsdId) : Promise.resolve(null),
+    fetchSofaMicroserviceEnrichment(match).catch(() => null),
+  ]);
+  const payload = buildLiveDashboardPayload(match, detail);
+  // Sofa overrides : si Sofa a la donnée, elle prime sur BSD synthétique
+  if (sofaEnrich) {
+    if (sofaEnrich.possession)        payload.possession        = sofaEnrich.possession;
+    if (sofaEnrich.shots)             payload.shots             = sofaEnrich.shots;
+    if (sofaEnrich.shots_on_target)   payload.shots_on_target   = sofaEnrich.shots_on_target;
+    if (sofaEnrich.corners)           payload.corners           = sofaEnrich.corners;
+    if (sofaEnrich.xg)                payload.xg                = sofaEnrich.xg;
+    if (sofaEnrich.momentum && sofaEnrich.momentum.length) payload.momentum = sofaEnrich.momentum;
+    if (sofaEnrich.shotmap && sofaEnrich.shotmap.length)   payload.shotmap  = sofaEnrich.shotmap;
+    payload._sofa_event_id = sofaEnrich.sofa_event_id;
+    payload._source = `${payload._source || 'bsd'}+sofa`;
   }
-  const detail = await fetchBSDEventDetail(bsdId);
-  return jsonResponse(res, 200, buildLiveDashboardPayload(match, detail));
+  return jsonResponse(res, 200, payload);
 }
 
 if (pathname === '/api/v1/live/bsd') {
@@ -10613,6 +10625,84 @@ process.on('uncaughtException', (error) => {
     console.error(error.stack);
 });
 }); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
+
+/* -------------------------------------------------
+   Sofascore microservice client — Phase 1 enrichment via Python wrapper
+   (microservice Python expose ScraperFC + sofascore-wrapper en HTTP local)
+   ------------------------------------------------- */
+const SOFA_SERVICE_BASE = process.env.SOFA_SERVICE_BASE || 'http://127.0.0.1:8765';
+const SOFA_SERVICE_TIMEOUT = 5000;
+const _sofaEventIdMapping = new Map();   // bsdId → { ts, sofaId }
+const SOFA_MAPPING_TTL = 24 * 60 * 60 * 1000;
+
+function _sofaServiceFetch(path, timeoutMs = SOFA_SERVICE_TIMEOUT) {
+  return Promise.race([
+    fetch(`${SOFA_SERVICE_BASE}${path}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    new Promise(resolve => setTimeout(() => resolve(null), timeoutMs)),
+  ]);
+}
+
+async function resolveSofaEventId(match) {
+  if (!match) return null;
+  const key = String(match.id);
+  const cached = _sofaEventIdMapping.get(key);
+  if (cached && Date.now() - cached.ts < SOFA_MAPPING_TTL) return cached.sofaId;
+  const date = (match.commence_time || '').slice(0, 10);
+  const home = encodeURIComponent(match.home_team || '');
+  const away = encodeURIComponent(match.away_team || '');
+  if (!home || !away) return null;
+  const data = await _sofaServiceFetch(`/find-match?home=${home}&away=${away}&date=${date}`);
+  const sofaId = data?.matched ? data.sofa_event_id : null;
+  _sofaEventIdMapping.set(key, { ts: Date.now(), sofaId });
+  return sofaId;
+}
+
+async function fetchSofaMicroserviceEnrichment(match) {
+  const sofaId = await resolveSofaEventId(match);
+  if (!sofaId) return null;
+  const [stats, momentum, shotmap] = await Promise.all([
+    _sofaServiceFetch(`/match/${sofaId}/stats`),
+    _sofaServiceFetch(`/match/${sofaId}/momentum`),
+    _sofaServiceFetch(`/match/${sofaId}/shotmap`),
+  ]);
+  // Map Sofascore raw stats → frontend shape
+  const out = { sofa_event_id: sofaId, _source: 'sofascore-microservice' };
+  if (stats && stats.statistics) {
+    const all = (stats.statistics || []).find(p => p.period === 'ALL');
+    const num = v => {
+      if (v == null) return 0;
+      if (typeof v === 'number') return v;
+      const m = String(v).match(/-?\d+(\.\d+)?/);
+      return m ? parseFloat(m[0]) : 0;
+    };
+    if (all) {
+      for (const g of all.groups || []) {
+        for (const it of g.statisticsItems || []) {
+          const n = (it.name || '').toLowerCase();
+          // Sofa raw payload uses `home`/`away` (string with %) not `homeValue`/`awayValue`
+          const rawH = it.home ?? it.homeValue;
+          const rawA = it.away ?? it.awayValue;
+          if (n.includes('possession'))           out.possession        = { home: num(rawH), away: num(rawA) };
+          else if (n === 'total shots')           out.shots             = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('shots on target')) out.shots_on_target   = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('corner kicks'))    out.corners           = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('expected goal'))   out.xg                = { home: num(rawH), away: num(rawA) };
+        }
+      }
+    }
+  }
+  if (momentum && Array.isArray(momentum.points)) {
+    out.momentum = momentum.points.map(p => ({ min: p.minute || 0, v: p.value || 0 }));
+  }
+  if (shotmap && Array.isArray(shotmap.shots)) {
+    out.shotmap = shotmap.shots.map(s => ({
+      minute: s.minute, player: s.player?.name, isHome: s.isHome,
+      situation: s.situation, body: s.bodyPart, xg: s.xg, xgot: s.xgot,
+      x: s.playerCoordinates?.x, y: s.playerCoordinates?.y,
+    }));
+  }
+  return out;
+}
 
 /* -------------------------------------------------
    Live Dashboard V2 — BSD sr_stats source + momentum synthétique (Sofascore 403 server-side)
