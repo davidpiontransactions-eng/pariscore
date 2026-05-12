@@ -8382,16 +8382,35 @@ if (process.env.TELEGRAM_CHAT_IDS) {
   process.env.TELEGRAM_CHAT_IDS.split(',').forEach(id => TELEGRAM_CHAT_IDS.add(id.trim()));
 }
 
-async function sendTelegramAlert(message) {
+async function sendTelegramAlert(chatId, messageHtml) {
+  if (!TELEGRAM_BOT_TOKEN || !chatId || !messageHtml) return false;
+  try {
+    const result = await httpsPost(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        chat_id: chatId,
+        text: messageHtml,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }
+    );
+    if (result && result.status >= 400) {
+      const errDesc = (result.data && result.data.description) || `HTTP ${result.status}`;
+      console.warn(`  [Telegram] Échec chat ${chatId}: ${errDesc}`);
+      return false;
+    }
+    console.log(`  [Telegram] Alerte envoyée → ${chatId}`);
+    return true;
+  } catch (e) {
+    console.warn(`  [Telegram] Échec chat ${chatId}:`, e.message);
+    return false;
+  }
+}
+
+async function broadcastTelegramAlert(messageHtml) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_IDS.size) return;
   for (const chatId of TELEGRAM_CHAT_IDS) {
-    try {
-      await httpsPost(
-        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-        { chat_id: chatId, text: message, parse_mode: 'HTML' }
-      );
-      console.log(`  [Telegram] Alerte envoyée → ${chatId}`);
-    } catch (e) { console.warn(`  [Telegram] Échec ${chatId}:`, e.message); }
+    await sendTelegramAlert(chatId, messageHtml);
   }
 }
 
@@ -8421,7 +8440,7 @@ async function sendValueBetAlerts() {
 
   // ── Broadcast global (admin — TELEGRAM_CHAT_IDS du .env) ─────────────────
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size) {
-    await sendTelegramAlert(buildAlertMessage(topBets));
+    await broadcastTelegramAlert(buildAlertMessage(topBets));
   }
 
   // ── Alertes personnalisées par utilisateur ────────────────────────────────
@@ -8454,11 +8473,8 @@ async function sendValueBetAlerts() {
       }).slice(0, 5);
 
       if (!userBets.length) continue;
-      try {
-        const payload = JSON.stringify({ chat_id: prefs.chatId, text: buildAlertMessage(userBets, 'Vos Alertes'), parse_mode: 'HTML' });
-        await httpsPost(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, payload, { 'Content-Type': 'application/json' });
-        console.log(`  [TG:User] Alerte envoyée → chat ${prefs.chatId} (${userBets.length} matchs)`);
-      } catch (e) { console.warn(`  [TG:User] Erreur chat ${prefs.chatId}:`, e.message); }
+      const ok = await sendTelegramAlert(prefs.chatId, buildAlertMessage(userBets, 'Vos Alertes'));
+      if (ok) console.log(`  [TG:User] Alerte envoyée → chat ${prefs.chatId} (${userBets.length} matchs)`);
     }
   }
 
@@ -10430,6 +10446,7 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'GET') {
   const prefs = kvGet(`alert_prefs_${user.id}`) || {
     enabled: false, chatId: '', edgeMin: 8, probaMin: 55,
     markets: ['BTTS_YES', 'OVER_2_5'], leagues: [],
+    liveEnabled: false, intensityMin: 70, pressureDeltaMin: 35,
   };
   return jsonResponse(res, 200, prefs);
 }
@@ -10447,10 +10464,35 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'POST') {
         probaMin: Math.max(0, Math.min(90, parseInt(parsed.probaMin) || 50)),
         markets: Array.isArray(parsed.markets) ? parsed.markets.filter(m => typeof m === 'string').slice(0, 10) : [],
         leagues: Array.isArray(parsed.leagues) ? parsed.leagues.filter(l => typeof l === 'string').slice(0, 20) : [],
+        liveEnabled: !!parsed.liveEnabled,
+        intensityMin: Math.max(50, Math.min(100, parseInt(parsed.intensityMin) || 70)),
+        pressureDeltaMin: Math.max(15, Math.min(80, parseInt(parsed.pressureDeltaMin) || 35)),
         updatedAt: new Date().toISOString(),
       };
       kvSet(`alert_prefs_${user.id}`, prefs);
       jsonResponse(res, 200, { ok: true, prefs });
+    } catch { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
+  return;
+}
+
+// POST /api/v1/alerts/test — envoyer un message test Telegram (user-scoped)
+if (pathname === '/api/v1/alerts/test' && req.method === 'POST') {
+  const user = requireUserAuth(req, res);
+  if (!user) return;
+  readBodyLimited(req, 4 * 1024).then(async body => {
+    try {
+      const parsed = body ? JSON.parse(body) : {};
+      const prefs = kvGet(`alert_prefs_${user.id}`) || {};
+      const chatId = String(parsed.chatId || prefs.chatId || '').trim();
+      if (!chatId) return jsonResponse(res, 400, { error: 'Chat ID manquant' });
+      if (!TELEGRAM_BOT_TOKEN) return jsonResponse(res, 503, { error: 'Bot Telegram non configuré côté serveur' });
+      const ok = await sendTelegramAlert(
+        chatId,
+        '✅ <b>PariScore</b> : Connexion Telegram réussie !\n\nVos alertes personnalisées seront envoyées ici.'
+      );
+      if (!ok) return jsonResponse(res, 502, { error: 'Échec envoi Telegram — vérifiez votre Chat ID' });
+      jsonResponse(res, 200, { ok: true });
     } catch { jsonResponse(res, 400, { error: 'JSON invalide' }); }
   }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
   return;
@@ -13244,6 +13286,73 @@ async function enrichMatchWithSofaLiveStats(match) {
 }
 
 /* -------------------------------------------------
+   Moteur d'alertes Live Momentum/Pressure (v9.9.5)
+   Cooldown 15min par (user, match) — anti-spam
+   ------------------------------------------------- */
+const LIVE_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+const _liveAlertCooldowns = new Map(); // key: `${userId}:${matchId}` → lastSentMs
+
+function isLiveAlertOnCooldown(userId, matchId) {
+  const last = _liveAlertCooldowns.get(`${userId}:${matchId}`) || 0;
+  return Date.now() - last < LIVE_ALERT_COOLDOWN_MS;
+}
+
+function markLiveAlertSent(userId, matchId) {
+  _liveAlertCooldowns.set(`${userId}:${matchId}`, Date.now());
+}
+
+function buildLiveAlertMessage(match, trigger) {
+  const min = match.live_minute || '?';
+  const score = match.live_score || '0-0';
+  const reason = trigger.kind === 'intensity'
+    ? `Intensité ${trigger.value}/100`
+    : `Domination ${trigger.side} (Δ pression ${trigger.value})`;
+  return `🔥 <b>ALERTE LIVE</b>\n\n<b>${match.home_team}</b> vs <b>${match.away_team}</b>\n📌 ${match.league}\n⚽ Score ${score} · ${min}'\n📈 ${reason}\n\nMatch à surveiller !`;
+}
+
+function evaluateLiveTrigger(match) {
+  const intensity = parseInt(match.live_intensity || 0);
+  let pressureDelta = 0;
+  let pressureSide = '';
+  const piHist = _livePressureHistory.get(match.id);
+  if (piHist && piHist.length) {
+    const last = piHist[piHist.length - 1];
+    pressureDelta = Math.abs(last.delta || 0);
+    pressureSide = (last.delta || 0) > 0 ? match.home_team : match.away_team;
+  }
+  return { intensity, pressureDelta, pressureSide };
+}
+
+async function sendLiveMomentumAlerts(liveMatches) {
+  if (!TELEGRAM_BOT_TOKEN || !liveMatches || !liveMatches.length) return;
+  const userPrefs = kvScan('alert_prefs_');
+  if (!userPrefs.length) return;
+  for (const { key, value: prefs } of userPrefs) {
+    if (!prefs || !prefs.liveEnabled || !prefs.chatId) continue;
+    const userId = key.replace('alert_prefs_', '');
+    const iMin = prefs.intensityMin || 70;
+    const dMin = prefs.pressureDeltaMin || 35;
+    for (const m of liveMatches) {
+      if (prefs.leagues && prefs.leagues.length && !prefs.leagues.includes(m.sport)) continue;
+      if (isLiveAlertOnCooldown(userId, m.id)) continue;
+      const t = evaluateLiveTrigger(m);
+      let trigger = null;
+      if (t.intensity >= iMin) {
+        trigger = { kind: 'intensity', value: t.intensity };
+      } else if (t.pressureDelta >= dMin) {
+        trigger = { kind: 'pressure', value: t.pressureDelta, side: t.pressureSide };
+      }
+      if (!trigger) continue;
+      const ok = await sendTelegramAlert(prefs.chatId, buildLiveAlertMessage(m, trigger));
+      if (ok) {
+        markLiveAlertSent(userId, m.id);
+        console.log(`  [LiveAlert] → user=${userId} match=${m.home_team}-${m.away_team} ${trigger.kind}=${trigger.value}`);
+      }
+    }
+  }
+}
+
+/* -------------------------------------------------
    Fonction de polling des scores en direct
    ------------------------------------------------- */
 async function pollLiveScores() {
@@ -13312,6 +13421,9 @@ async function pollLiveScores() {
             if (sseClients.size > 0) broadcastSSE('live_patch', { patches: fullPatches });
             if (patches.length > 0) console.log('[LivePoll] ' + patches.length + ' BSD patch(es) + ' + liveNow.length + ' Sofa enrichi(s)');
         }
+
+        // v9.9.5 — déclenchement alertes live momentum/pressure (fire-and-forget)
+        sendLiveMomentumAlerts(liveNow).catch(e => console.warn('[LiveAlert]', e.message));
     } catch (e) {
         console.warn('[LivePoll] Error:', e.message);
     }

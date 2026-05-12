@@ -597,11 +597,16 @@ open http://localhost:3000
   - Cache 24h pour éviter rate limiting
   - Fallback gracieux si scraping échoue
 
-- [ ] **Dashboard "Mes Alertes"** (temps dev: 1-2 jours)
-  - Page dédiée pour configurer alertes Telegram par utilisateur
+- [x] **Dashboard "Mes Alertes"** (v9.9.5 — livré 2026-05-13)
+  - Page dédiée pour configurer alertes Telegram par utilisateur (`#page-alertes`)
   - Filtres personnalisés : Sport, Ligue, Marché, Edge min, Proba min
-  - Toggle ON/OFF par alerte
-  - Preview dernières alertes envoyées
+  - Toggle ON/OFF par alerte (value bets + live)
+  - Preview dernières alertes envoyées (`/api/v1/alerts/history`)
+  - Bouton "Tester l'alerte" → `/api/v1/alerts/test` (user-scoped, message simple)
+  - Moteur alertes live momentum/pressure dans `pollLiveScores` (60s)
+  - Cooldown 15min par (user, match) — anti-spam
+  - Trigger : `live_intensity ≥ intensityMin` OU `|pressure.delta| ≥ pressureDeltaMin`
+  - Persistance DB (kv `alert_prefs_<userId>`) + miroir localStorage (chatId)
 
 - [ ] **Système de favoris** (temps dev: 2h)
   - Star icon sur chaque match

@@ -5659,10 +5659,12 @@
       <div class="alert-cfg-sub">Envoyez <code style="color:var(--text2);background:var(--bg4);padding:1px 6px;border-radius:4px;">/start</code> à <strong>@PariScoreBot</strong> sur Telegram pour obtenir votre Chat ID, puis collez-le ci-dessous.</div>
       <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
         <input id="al-chatid" class="al-chatid-input" type="text" placeholder="Votre Chat ID Telegram (ex: 123456789)">
+        <button id="al-test-btn" type="button" onclick="testTelegramAlert()" style="padding:8px 14px;background:var(--bg4);border:1px solid var(--text3);color:var(--text);border-radius:6px;cursor:pointer;font-size:13px;">✉️ Tester l'alerte</button>
         <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleAlertEnabled()">
           <div id="al-enabled-toggle" class="toggle"></div>
           <span id="al-enabled-label" style="font-size:13px;color:var(--text2);">Alertes désactivées</span>
         </div>
+        <span id="al-test-msg" style="display:none;font-size:13px;width:100%;margin-top:6px;"></span>
       </div>
     </div>
 
@@ -5681,6 +5683,24 @@
         <span class="al-slider-label">Proba. min :</span>
         <input type="range" id="al-proba-slider" class="al-slider" min="50" max="90" step="5" value="55" oninput="document.getElementById('al-proba-val').textContent=this.value+'%'">
         <span id="al-proba-val" class="al-slider-val">55%</span>
+      </div>
+
+      <div class="al-slider-row" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--bg3);">
+        <span class="al-slider-label">📊 Alertes Live :</span>
+        <div onclick="toggleAlertLiveEnabled()" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <div id="al-live-toggle" class="toggle"></div>
+          <span id="al-live-label" style="font-size:13px;color:var(--text2);">Désactivées</span>
+        </div>
+      </div>
+      <div class="al-slider-row">
+        <span class="al-slider-label">Intensité min :</span>
+        <input type="range" id="al-intensity-slider" class="al-slider" min="50" max="100" step="5" value="70" oninput="document.getElementById('al-intensity-val').textContent=this.value+'/100'">
+        <span id="al-intensity-val" class="al-slider-val">70/100</span>
+      </div>
+      <div class="al-slider-row">
+        <span class="al-slider-label">Δ pression min :</span>
+        <input type="range" id="al-pressure-slider" class="al-slider" min="15" max="80" step="5" value="35" oninput="document.getElementById('al-pressure-val').textContent=this.value">
+        <span id="al-pressure-val" class="al-slider-val">35</span>
       </div>
 
       <div style="margin-top:16px;">
@@ -15174,6 +15194,13 @@ function initAlertesPage() {
 }
 
 async function loadAlertConfig() {
+  // 1. Miroir localStorage — préchargement instantané chatId
+  try {
+    const cached = JSON.parse(localStorage.getItem('ps_alert_prefs') || '{}');
+    const chatEl0 = document.getElementById('al-chatid');
+    if (chatEl0 && cached.chatId) chatEl0.value = cached.chatId;
+  } catch {}
+  // 2. Fetch DB authoritative
   try {
     const r = await apiFetch('/api/v1/alerts/config');
     if (!r.ok) return;
@@ -15199,6 +15226,20 @@ async function loadAlertConfig() {
     document.querySelectorAll('#al-markets .al-chip').forEach(c => {
       c.classList.toggle('active', mkts.includes(c.dataset.mkt));
     });
+    // v9.9.5 — alertes live momentum/pressure
+    const liveTog = document.getElementById('al-live-toggle');
+    const liveLab = document.getElementById('al-live-label');
+    if (liveTog && liveLab) {
+      liveTog.classList.toggle('on', !!p.liveEnabled);
+      liveLab.textContent = p.liveEnabled ? 'Activées' : 'Désactivées';
+      liveLab.style.color = p.liveEnabled ? 'var(--green)' : 'var(--text2)';
+    }
+    const intEl = document.getElementById('al-intensity-slider');
+    const intVal = document.getElementById('al-intensity-val');
+    if (intEl && intVal) { intEl.value = p.intensityMin ?? 70; intVal.textContent = (p.intensityMin ?? 70) + '/100'; }
+    const prEl = document.getElementById('al-pressure-slider');
+    const prVal = document.getElementById('al-pressure-val');
+    if (prEl && prVal) { prEl.value = p.pressureDeltaMin ?? 35; prVal.textContent = (p.pressureDeltaMin ?? 35); }
     loadAlertHistory();
   } catch {}
 }
@@ -15212,11 +15253,63 @@ function toggleAlertEnabled() {
   label.style.color = on ? 'var(--green)' : 'var(--text2)';
 }
 
+function toggleAlertLiveEnabled() {
+  const toggle = document.getElementById('al-live-toggle');
+  const label  = document.getElementById('al-live-label');
+  if (!toggle) return;
+  const on = toggle.classList.toggle('on');
+  label.textContent = on ? 'Activées' : 'Désactivées';
+  label.style.color = on ? 'var(--green)' : 'var(--text2)';
+}
+
+async function testTelegramAlert() {
+  const chatId = (document.getElementById('al-chatid')?.value || '').trim();
+  const btn = document.getElementById('al-test-btn');
+  const msg = document.getElementById('al-test-msg');
+  if (!msg || !btn) return;
+  if (!chatId) {
+    msg.textContent = '⚠️ Saisissez votre Chat ID avant de tester';
+    msg.style.color = 'var(--amber)';
+    msg.style.display = 'inline-block';
+    setTimeout(() => { msg.style.display = 'none'; }, 4000);
+    return;
+  }
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = '⏳ Envoi…';
+  try {
+    const r = await apiFetch('/api/v1/alerts/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) {
+      msg.textContent = '✓ Message envoyé — vérifiez Telegram';
+      msg.style.color = 'var(--green)';
+    } else {
+      msg.textContent = '✗ ' + (data.error || 'Échec de l\'envoi');
+      msg.style.color = 'var(--red)';
+    }
+  } catch {
+    msg.textContent = '✗ Erreur réseau — serveur injoignable';
+    msg.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+    msg.style.display = 'inline-block';
+    setTimeout(() => { msg.style.display = 'none'; }, 5000);
+  }
+}
+
 async function saveAlertConfig() {
   const chatId   = (document.getElementById('al-chatid')?.value || '').trim();
   const enabled  = document.getElementById('al-enabled-toggle')?.classList.contains('on') || false;
+  const liveEnabled = document.getElementById('al-live-toggle')?.classList.contains('on') || false;
   const edgeMin  = parseFloat(document.getElementById('al-edge-slider')?.value)  || 0;
   const probaMin = parseInt(document.getElementById('al-proba-slider')?.value) || 50;
+  const intensityMin = parseInt(document.getElementById('al-intensity-slider')?.value) || 70;
+  const pressureDeltaMin = parseInt(document.getElementById('al-pressure-slider')?.value) || 35;
   const markets  = [...document.querySelectorAll('#al-markets .al-chip.active')].map(c => c.dataset.mkt);
   const leagVal  = document.getElementById('al-league-select')?.value || '';
   const leagues  = leagVal ? [leagVal] : [];
@@ -15224,9 +15317,10 @@ async function saveAlertConfig() {
     const r = await apiFetch('/api/v1/alerts/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enabled, chatId, edgeMin, probaMin, markets, leagues }),
+      body: JSON.stringify({ enabled, chatId, edgeMin, probaMin, markets, leagues, liveEnabled, intensityMin, pressureDeltaMin }),
     });
     if (!r.ok) throw new Error();
+    try { localStorage.setItem('ps_alert_prefs', JSON.stringify({ chatId, enabled, liveEnabled })); } catch {}
     const msg = document.getElementById('al-save-msg');
     if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2500); }
   } catch { alert('Erreur lors de la sauvegarde. Vérifiez que le serveur est lancé.'); }
