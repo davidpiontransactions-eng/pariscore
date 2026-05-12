@@ -11702,7 +11702,9 @@ function renderLiveDetailSkeleton() {
     { key:'xg',         label:'xG Live' },
     { key:'shots',      label:'Tirs' },
     { key:'sot',        label:'Tirs cadrés' },
-    { key:'corners',    label:'Corners' },
+    { key:'corners',    label:'⛳ Corners' },
+    { key:'bigchances', label:'🎯 Big Chances' },
+    { key:'cards',      label:'🟨 Cartons' },
   ];
   cont.innerHTML = rows.map(r => `
     <div id="barm-${r.key}-row" style="margin-bottom:14px;">
@@ -11750,6 +11752,8 @@ function updateLiveDetailModal(m) {
     { key:'shots',      src:m.shots,             pct:false, dec:0 },
     { key:'sot',        src:m.shots_on_target,   pct:false, dec:0 },
     { key:'corners',    src:m.corners,           pct:false, dec:0 },
+    { key:'bigchances', src:m.big_chances ? { home: m.big_chances.home, away: m.big_chances.away } : null, pct:false, dec:0 },
+    { key:'cards',      src:m.cards ? { home: (m.cards.home_yellow || 0) + (m.cards.home_red || 0) * 2, away: (m.cards.away_yellow || 0) + (m.cards.away_red || 0) * 2 } : null, pct:false, dec:0 },
   ];
   // v9.8.3: distingue "early game data en cours" vs "ligue mineure non couverte"
   const hasAnyData = stats.some(s => s.src && s.src.home != null && s.src.away != null);

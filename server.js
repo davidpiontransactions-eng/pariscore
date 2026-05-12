@@ -12865,11 +12865,34 @@ function buildLiveDashboardPayload(match, detail) {
     dangerous_attacks: (daH != null && daA != null)
       ? { home: daH, away: daA }
       : (match.live_dangerous_attacks && match.live_dangerous_attacks.home != null ? match.live_dangerous_attacks : null),
-    // v9.8.3 fix: populate from match.live_* (Sofascore-enriched) instead of hardcoded null
-    shots: (match.live_shots && match.live_shots.home != null) ? match.live_shots : null,
-    shots_on_target: (match.live_shots_on_target && match.live_shots_on_target.home != null) ? match.live_shots_on_target : null,
-    corners: (match.live_corners && match.live_corners.home != null) ? match.live_corners : null,
-    cards: match.live_cards || null,
+    // v9.9.3 — populate depuis detail.live_stats (BSD full stats : corner_kicks, total_shots, shots_on_target, yellow/red cards)
+    shots: (detail?.live_stats?.home?.total_shots != null)
+      ? { home: detail.live_stats.home.total_shots, away: detail.live_stats.away.total_shots }
+      : (match.live_shots?.home != null ? match.live_shots : null),
+    shots_on_target: (detail?.live_stats?.home?.shots_on_target != null)
+      ? { home: detail.live_stats.home.shots_on_target, away: detail.live_stats.away.shots_on_target }
+      : (match.live_shots_on_target?.home != null ? match.live_shots_on_target : null),
+    corners: (detail?.live_stats?.home?.corner_kicks != null)
+      ? { home: detail.live_stats.home.corner_kicks, away: detail.live_stats.away.corner_kicks }
+      : (match.live_corners?.home != null ? match.live_corners : null),
+    cards: (detail?.live_stats?.home?.yellow_cards != null)
+      ? {
+          home_yellow: detail.live_stats.home.yellow_cards,
+          away_yellow: detail.live_stats.away.yellow_cards,
+          home_red: detail.live_stats.home.red_cards || 0,
+          away_red: detail.live_stats.away.red_cards || 0,
+        }
+      : (match.live_cards || null),
+    big_chances: (detail?.live_stats?.home?.big_chances != null)
+      ? {
+          home: detail.live_stats.home.big_chances,
+          away: detail.live_stats.away.big_chances,
+          home_scored: detail.live_stats.home.big_chances_scored || 0,
+          away_scored: detail.live_stats.away.big_chances_scored || 0,
+          home_missed: detail.live_stats.home.big_chances_missed || 0,
+          away_missed: detail.live_stats.away.big_chances_missed || 0,
+        }
+      : null,
     momentum: _liveMomentumHistory.get(match.id) || match.live_momentum || [],
     intensity: match.live_intensity || 0,
     // v9.8.6 — innovations live dashboard
