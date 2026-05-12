@@ -8922,11 +8922,15 @@ if (pathname === '/api/v1/player') {
     const urlParams = new URL(req.url, `http://${req.headers.host}`);
     const playerName = urlParams.searchParams.get('name');
     const playerId = urlParams.searchParams.get('id');
+    const teamCtx = urlParams.searchParams.get('team') || urlParams.searchParams.get('team_name');
     if (!playerName && !playerId) {
         return jsonResponse(res, 400, { error: 'player id or name required' });
     }
 
-    const cacheKey = playerName ? `player_name_${playerName}` : `player_${playerId}`;
+    // Cache key inclut team context pour disambiguation
+    const cacheKey = playerId
+      ? `player_${playerId}`
+      : `player_name_${normName ? normName(playerName) : playerName.toLowerCase()}_t_${teamCtx ? (normName ? normName(teamCtx) : teamCtx.toLowerCase()) : 'any'}`;
     const cached = apiCacheGet(cacheKey);
     if (cached) {
         return jsonResponse(res, 200, cached);
@@ -8938,14 +8942,33 @@ if (pathname === '/api/v1/player') {
             if (playerId) {
                 player = await bsdGetPlayerDetail(playerId);
             } else if (playerName) {
-                const searchRes = await bsdSearchPlayers(playerName);
+                // Recherche prioritisée : nom + team d'abord, puis nom seul
+                let searchRes = teamCtx ? await bsdSearchPlayers(`${playerName} ${teamCtx}`) : [];
+                if (!searchRes || !searchRes.length) {
+                    searchRes = await bsdSearchPlayers(playerName);
+                }
                 if (searchRes && searchRes.length > 0) {
-                    player = await bsdGetPlayerDetail(searchRes[0].id);
+                    // Disambiguation par team_name si fourni
+                    let chosen = searchRes[0];
+                    if (teamCtx) {
+                      const teamNorm = normName(teamCtx);
+                      const match = searchRes.find(p => p.team && normName(p.team.name) === teamNorm);
+                      if (match) chosen = match;
+                      else {
+                        // Fuzzy contains
+                        const fuzzy = searchRes.find(p => p.team && (normName(p.team.name).includes(teamNorm) || teamNorm.includes(normName(p.team.name))));
+                        if (fuzzy) chosen = fuzzy;
+                      }
+                    }
+                    player = await bsdGetPlayerDetail(chosen.id);
                 }
             }
             if (!player) {
                 return jsonResponse(res, 404, { error: 'player not found' });
             }
+            // Note : Sofascore search endpoint bloqué par Cloudflare 403, fallback retiré.
+            // Si photo BSD null, frontend affiche silhouette + tag "Données limitées".
+            player._photo_available = !!player.photo;
             apiCacheSet(cacheKey, player, 'bsd_player', 7 * 24 * 3600 * 1000);
             return jsonResponse(res, 200, player);
         } catch (e) {

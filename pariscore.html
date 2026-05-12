@@ -7768,15 +7768,15 @@ function toggleFavorite(matchId, el) {
   localStorage.setItem('ps_fav', JSON.stringify([...favoriteMatchIds]));
 }
 
-function trackClick(type, id, event) {
+function trackClick(type, id, event, teamCtx) {
   if (event) event.stopPropagation();
   fetch('/api/v1/click', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: type, id: String(id) })
+    body: JSON.stringify({ type: type, id: String(id), team: teamCtx || null })
   }).catch(() => {});
   if (type === 'team') openTeamDetail(id);
-  if (type === 'player') openPlayerDetail(id);
+  if (type === 'player') openPlayerDetail(id, teamCtx);
 }
 
 function openTeamDetail(teamNameOrId) {
@@ -7809,7 +7809,7 @@ function openTeamDetail(teamNameOrId) {
     .catch(() => { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">Erreur chargement équipe</div>'; });
 }
 
-function openPlayerDetail(playerName) {
+function openPlayerDetail(playerName, teamCtx) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité joueur en cours de développement.'); return; }
   modal.style.display = 'flex';
@@ -7818,7 +7818,8 @@ function openPlayerDetail(playerName) {
   _pdContent.style.padding = '0';
   _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">Chargement...</div>';
 
-  fetch('/api/v1/player?name=' + encodeURIComponent(playerName))
+  const teamQ = teamCtx ? '&team=' + encodeURIComponent(teamCtx) : '';
+  fetch('/api/v1/player?name=' + encodeURIComponent(playerName) + teamQ)
     .then(r => r.json())
     .then(data => {
       if (data.error) { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;">' + data.error + '</div>'; return; }
@@ -7941,6 +7942,7 @@ function openPlayerDetail(playerName) {
             </div>` : ''}
           </div>
 
+          ${(!p.photo && (base.matches || 0) < 5) ? `<div style="background:#FFF7ED;border-left:3px solid #FB923C;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#9A3412;font-family:'DM Mono',monospace;">⚠ Données joueur limitées chez le fournisseur (jeune/réserviste). Photo non disponible.</div>` : ''}
           <!-- KPIs 3x2 -->
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
             ${kpis.map(k => `<div style="background:#f8f8f8;padding:10px 8px;text-align:center;border-top:3px solid ${k.color};">
@@ -8268,8 +8270,10 @@ function cornerProbFromXG(homeXG, awayXG) {
   return Math.round(Math.max(0, Math.min(99, (1 - cumulative) * 100)));
 }
 
-function renderTopButteurs(buts) {
+function renderTopButteurs(buts, ctx) {
   if (!buts || !buts.length) return '<span style="color:var(--text3);font-size:11px;">—</span>';
+  const homeTeam = (ctx && ctx.home) ? String(ctx.home).replace(/'/g,"\\'") : '';
+  const awayTeam = (ctx && ctx.away) ? String(ctx.away).replace(/'/g,"\\'") : '';
   return buts.map(b => {
     const pct = b.probaMarquer || 0;
     const pctClr = pct >= 25 ? '#E2001A' : pct >= 15 ? '#1A1A1A' : '#888';
@@ -8288,7 +8292,7 @@ function renderTopButteurs(buts) {
     const perfLabel = totalXG > 0 && totalGoals > totalXG ? '⚠ Surperforme' : totalXG > 0 && totalGoals < totalXG ? '📈 Sous-performe (value)' : '';
     return `<div class="buteur-row" title="Buts: ${totalGoals} | xG: ${totalXG} | Matchs: ${matchCount}&#10;Ratio buts/xG: ${ratio} ${perfLabel}&#10;xG/match: ${xg} | Buts/match: ${gpM}">
       <span class="buteur-badge" style="background:${teamClr}20;color:${teamClr};border:1px solid ${teamClr}40;">${teamLbl}</span>
-      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" onclick="trackClick('player','${(b.name||'').replace(/'/g,"\\'")}',event)" title="Voir fiche joueur">${b.name}</span>
+      <span class="buteur-name" style="cursor:pointer;text-decoration:underline" onclick="trackClick('player','${(b.name||'').replace(/'/g,"\\'")}',event,'${b.team === 'home' ? homeTeam : awayTeam}')" title="Voir fiche joueur">${b.name}</span>
       <span class="buteur-bar-wrap"><span class="buteur-bar" style="width:${barW}%;background:${barClr};"></span></span>
       <span class="buteur-xg" style="color:${barClr};">${xg.toFixed(2)}</span>
       <span class="buteur-pct" style="color:${pctClr};">${pct}%</span>
@@ -8320,7 +8324,11 @@ async function lazyLoadButeurs(matches) {
 
 function updateButeursCell(matchId, buteurs) {
   const cell = document.querySelector(`tr[data-match-id="${matchId}"] .buteurs-block`);
-  if (cell) cell.innerHTML = renderTopButteurs(buteurs);
+  if (cell) {
+    const tr = cell.closest('tr');
+    const ctx = tr ? { home: tr.dataset.homeTeam || '', away: tr.dataset.awayTeam || '' } : {};
+    cell.innerHTML = renderTopButteurs(buteurs, ctx);
+  }
 }
 
 function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
@@ -8360,19 +8368,16 @@ function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
   const aCls = awayWin >= 45 ? 't3c-value' : 't3c-risky';
   rows.push(`<div class="t3c-row"><span class="t3c-label">1X2</span>${barBadgeSm(hCls, '1', homeWin)}${barBadgeSm(dCls, 'N', draw)}${barBadgeSm(aCls, '2', awayWin)}</div>`);
 
-  // Double Chance
+  // Double Chance — toujours 1X / X2 / 12 (jamais 1 ou 2 seul, par définition du marché DC).
+  // Sélectionne le combo le PLUS PROBABLE et applique le seuil pour la couleur.
   const dc1X = homeWin + draw;
   const dcX2 = awayWin + draw;
   const dc12 = homeWin + awayWin;
-  let dcLabel, dcProb, dcCls;
-  if (dc1X >= 75) { dcLabel = '1X'; dcProb = dc1X; dcCls = 't3c-safe'; }
-  else if (dcX2 >= 75) { dcLabel = 'X2'; dcProb = dcX2; dcCls = 't3c-safe'; }
-  else if (dc12 >= 80) { dcLabel = '12'; dcProb = dc12; dcCls = 't3c-safe'; }
-  else if (homeWin >= 50) { dcLabel = '1'; dcProb = homeWin; dcCls = 't3c-value'; }
-  else if (awayWin >= 50) { dcLabel = '2'; dcProb = awayWin; dcCls = 't3c-value'; }
-  else if (dc1X >= 60) { dcLabel = '1X'; dcProb = dc1X; dcCls = 't3c-value'; }
-  else if (dcX2 >= 60) { dcLabel = 'X2'; dcProb = dcX2; dcCls = 't3c-value'; }
-  else { dcLabel = homeWin > awayWin ? '1' : awayWin > homeWin ? '2' : 'X'; dcProb = Math.max(homeWin, awayWin, draw); dcCls = 't3c-risky'; }
+  let dcLabel, dcProb;
+  if      (dc1X >= dcX2 && dc1X >= dc12) { dcLabel = '1X'; dcProb = dc1X; }
+  else if (dcX2 >= dc12)                  { dcLabel = 'X2'; dcProb = dcX2; }
+  else                                    { dcLabel = '12'; dcProb = dc12; }
+  const dcCls = dcProb >= 80 ? 't3c-safe' : dcProb >= 65 ? 't3c-value' : 't3c-risky';
   rows.push(`<div class="t3c-row"><span class="t3c-label">DC</span>${barBadge(dcCls, dcLabel, dcProb, 'dc')}</div>`);
 
   // Under 3.5 buts
@@ -9035,6 +9040,8 @@ const label = country
     const tr = document.createElement('tr');
     tr.className = m.live_score ? 'match-row-live' : '';
     tr.setAttribute('data-match-id', m.id);
+    if (m.home_team) tr.setAttribute('data-home-team', m.home_team);
+    if (m.away_team) tr.setAttribute('data-away-team', m.away_team);
     tr.innerHTML = `
       <td style="min-width:60px;background:#ffffff !important;color:#1a1a1a !important;border-bottom:1px solid #EAEAEA !important;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:#1a1a1a !important;">${time}</div>
@@ -9088,7 +9095,7 @@ const label = country
         <div class="t3c-wrap">${top3}</div>
       </td>
       <td>
-        <div class="buteurs-block">${renderTopButteurs(m.topButteurs)}</div>
+        <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team })}</div>
       </td>
       <td>
         <div style="display:flex;gap:5px;align-items:center;">
