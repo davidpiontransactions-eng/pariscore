@@ -8430,6 +8430,15 @@ if (pathname.startsWith('/api/v1/live-players/')) {
 }
 
 if (pathname === '/api/v1/live/bsd') {
+  // v10.6: fresh=true → force pollLiveScores avant réponse (Dashboard V2 polling 30s)
+  if (query.fresh === 'true' && typeof pollLiveScores === 'function') {
+    try {
+      await Promise.race([
+        pollLiveScores(),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ]);
+    } catch {}
+  }
   const now = Date.now();
   const liveMatches = db.matches.filter(m => {
     if (!m.live_score || !m.live_minute) return false;

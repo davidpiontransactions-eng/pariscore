@@ -963,8 +963,8 @@
   /* Live Detail Modal */
   #live-detail-modal { position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1020;opacity:0;pointer-events:none;transition:opacity .2s; }
   #live-detail-modal.open { opacity:1;pointer-events:all; }
-  #live-detail-panel { background:var(--bg2);border:1px solid var(--border2);border-radius:16px;position:relative;width:94%;max-width:900px;max-height:90vh;display:flex;flex-direction:column; }
-  #live-detail-inner { overflow-y:auto;padding:28px 28px 24px;flex:1; }
+  #live-detail-panel { background:var(--bg2);border:1px solid var(--border2);border-radius:16px;position:relative;width:96vw;max-width:none;height:92vh;max-height:92vh;display:flex;flex-direction:column;overflow:hidden; }
+  #live-detail-inner { overflow:hidden;padding:0;flex:1;display:grid;grid-template-rows:auto auto 1fr;height:100%;min-height:0; }
   .ld-header { margin-bottom:20px; }
   .ld-teams { font:800 20px/1.2 var(--font-head); }
   .ld-league { font-size:12px;color:var(--text3);margin-top:4px; }
@@ -5903,29 +5903,50 @@
 
 <div id="live-detail-modal" onclick="if(event.target===this)closeLiveDetail()">
   <div id="live-detail-panel">
-    <button class="modal-close" onclick="closeLiveDetail()" style="position:absolute;top:16px;right:16px;">×</button>
+    <button class="modal-close" onclick="closeLiveDetail()" style="position:absolute;top:16px;right:16px;z-index:5;background:rgba(0,0,0,0.5);border:1px solid var(--border2);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;">×</button>
     <div id="live-detail-inner">
-      <div class="ld-header">
-        <div class="ld-teams" id="ld-teams">—</div>
-        <div class="ld-league" id="ld-league">—</div>
-        <div class="ld-score-row">
-          <span class="ld-score" id="ld-score">—</span>
-          <span class="ld-minute" id="ld-minute">—</span>
-          <span class="ld-intensity" id="ld-intensity">—</span>
+      <header class="ld-header" style="padding:18px 24px;border-bottom:1px solid var(--border);background:var(--bg3);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;">
+        <div class="ld-mh-team home" style="text-align:left;">
+          <div class="ld-mh-name" id="ld-home-name" style="font:800 18px/1.2 var(--font-head);color:var(--text);">—</div>
+        </div>
+        <div class="ld-mh-center" style="text-align:center;">
+          <div class="ld-mh-score" id="ld-score" style="font:900 36px/1 var(--font-mono);color:var(--text);letter-spacing:.04em;">0–0</div>
+          <div class="ld-mh-meta" style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--font-mono);">
+            <span id="ld-minute">—</span> · <span id="ld-league">—</span>
+          </div>
+          <div style="margin-top:8px;">
+            <span class="ld-intensity" id="ld-intensity" style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;font-family:var(--font-mono);background:rgba(41,182,246,0.12);color:var(--blue);">⚡ 0/100</span>
+          </div>
+        </div>
+        <div class="ld-mh-team away" style="text-align:right;">
+          <div class="ld-mh-name" id="ld-away-name" style="font:800 18px/1.2 var(--font-head);color:var(--text);">—</div>
+        </div>
+      </header>
+
+      <section class="ld-momentum-section" style="padding:14px 24px 8px;border-bottom:1px solid var(--border);">
+        <div class="ld-momentum-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span class="ld-momentum-title" style="font:800 10px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text3);">Momentum du Match</span>
+          <div class="ld-mom-legend" style="display:flex;gap:14px;">
+            <span class="ld-mom-leg-item" style="display:flex;align-items:center;gap:5px;font:700 10px/1 var(--font-mono);color:var(--text2);"><span style="width:14px;height:5px;border-radius:2px;background:var(--blue);"></span>Domicile</span>
+            <span class="ld-mom-leg-item" style="display:flex;align-items:center;gap:5px;font:700 10px/1 var(--font-mono);color:var(--text2);"><span style="width:14px;height:5px;border-radius:2px;background:#ffa726;"></span>Extérieur</span>
+          </div>
+        </div>
+        <svg id="ld-momentum-svg" viewBox="0 0 600 140" preserveAspectRatio="none" style="width:100%;height:140px;display:block;"></svg>
+        <div class="ld-mom-axis" style="display:flex;justify-content:space-between;padding:2px 4px 0;margin-top:2px;font:400 9px/1 var(--font-mono);color:var(--text3);">
+          <span>0′</span><span>15′</span><span>30′</span><span>45′</span><span>60′</span><span>75′</span><span>90′</span>
+        </div>
+      </section>
+
+      <div class="ld-bottom-row" style="display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;min-height:0;">
+        <div class="ld-stats-panel" style="padding:16px 24px;border-right:1px solid var(--border);overflow-y:auto;">
+          <div class="ld-panel-title" style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Statistiques Live</div>
+          <div id="ld-stats-bars"></div>
+        </div>
+        <div class="ld-bet-panel" style="padding:16px 24px;overflow-y:auto;">
+          <div class="ld-panel-title" style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Verdict Live</div>
+          <div id="ld-verdict-content" style="font-size:12px;color:var(--text2);line-height:1.6;">Analyse en cours…</div>
         </div>
       </div>
-      <div class="ld-charts">
-        <div class="ld-chart-block">
-          <div class="ld-chart-title">Expected Goals (xG) — Timeline</div>
-          <canvas id="ld-xg-chart" height="220"></canvas>
-        </div>
-        <div class="ld-chart-block">
-          <div class="ld-chart-title">Momentum du Match</div>
-          <canvas id="ld-momentum-chart" height="220"></canvas>
-        </div>
-      </div>
-      <div class="ld-stats-grid" id="ld-stats-grid"></div>
-      <div class="ld-incidents" id="ld-incidents"></div>
     </div>
   </div>
 </div>
@@ -10920,39 +10941,192 @@ function closeInsights() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  LIVE DETAIL MODAL — xG chart + momentum graph
+//  LIVE DETAIL DASHBOARD V2 — fixed grid, SVG momentum, partial-update polling
+//  (Chart.js eradicated — no scroll, no flicker, 30s refresh via ?fresh=true)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let ldXGChart = null;
-let ldMomentumChart = null;
+let _liveDetailInterval = null;
+let _liveDetailMatchId = null;
 
 async function openLiveDetail(matchId) {
   const modal = document.getElementById('live-detail-modal');
   if (!modal) return;
+  _liveDetailMatchId = matchId;
+  modal.classList.add('open');
+  renderLiveDashboardSkeleton();
+  await refreshLiveDashboard(matchId, { force: false });
+  if (_liveDetailInterval) clearInterval(_liveDetailInterval);
+  _liveDetailInterval = setInterval(() => {
+    if (_liveDetailMatchId) refreshLiveDashboard(_liveDetailMatchId, { force: true });
+  }, 30000);
+}
 
-  // Fetch live data
+async function refreshLiveDashboard(matchId, { force }) {
+  let m = null;
   try {
-    const res = await fetch('/api/v1/live/bsd');
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    const match = data.live.find(m => m.id === matchId);
-    if (!match) {
-      // Fallback: find in allMatches
-      const m = allMatches.find(x => x.id === matchId);
-      if (!m || !m.live_score) return;
-      renderLiveDetailPanel(m);
-      modal.classList.add('open');
-      return;
+    const url = `/api/v1/live/bsd${force ? '?fresh=true' : ''}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      m = (data.live || []).find(x => x.id === matchId) || null;
     }
-    renderLiveDetailPanel(match);
-    modal.classList.add('open');
-    renderLDCharts(match);
-  } catch {
-    const m = allMatches.find(x => x.id === matchId);
-    if (!m || !m.live_score) return;
-    renderLiveDetailPanel(m);
-    modal.classList.add('open');
+  } catch {}
+  if (!m) {
+    const fb = (typeof allMatches !== 'undefined' ? allMatches : []).find(x => x.id === matchId);
+    if (fb && fb.live_score) {
+      m = {
+        id: fb.id,
+        home_team: fb.home_team,
+        away_team: fb.away_team,
+        league: fb.league,
+        score: fb.live_score,
+        minute: fb.live_minute,
+        xg: fb.live_xg || null,
+        possession: fb.live_possession || null,
+        shots: fb.live_shots || null,
+        shots_on_target: fb.live_shots_on_target || null,
+        corners: fb.live_corners || null,
+        momentum: fb.live_momentum || null,
+        intensity: fb.live_intensity || 0,
+      };
+    }
   }
+  if (m) updateLiveDashboard(m);
+}
+
+function renderLiveDashboardSkeleton() {
+  const cont = document.getElementById('ld-stats-bars');
+  if (!cont) return;
+  const rows = [
+    { key:'possession', label:'Possession' },
+    { key:'shots',      label:'Tirs' },
+    { key:'sot',        label:'Tirs cadrés' },
+    { key:'corners',    label:'Corners' },
+    { key:'xg',         label:'xG' },
+  ];
+  cont.innerHTML = rows.map(r => `
+    <div class="ld-stat-row-v2" style="margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-bottom:5px;">
+        <span class="ld-stat-val-h" id="bar-${r.key}-vh" style="color:var(--blue);font-weight:700;text-align:left;">0</span>
+        <span style="color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-size:9px;font-weight:700;">${r.label}</span>
+        <span class="ld-stat-val-a" id="bar-${r.key}-va" style="color:#ffa726;font-weight:700;text-align:right;">0</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <div style="height:6px;background:rgba(41,182,246,0.12);border-radius:3px;overflow:hidden;direction:rtl;">
+          <div id="bar-${r.key}-h-fill" style="height:100%;background:var(--blue);width:0%;transition:width .4s ease;"></div>
+        </div>
+        <div style="height:6px;background:rgba(255,167,38,0.12);border-radius:3px;overflow:hidden;">
+          <div id="bar-${r.key}-a-fill" style="height:100%;background:#ffa726;width:0%;transition:width .4s ease;"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateLiveDashboard(m) {
+  setText('ld-home-name', m.home_team || '—');
+  setText('ld-away-name', m.away_team || '—');
+  setText('ld-score', m.score || m.live_score || '0–0');
+  const min = m.minute || m.live_minute || 0;
+  setText('ld-minute', min ? `${min}′` : '—');
+  setText('ld-league', m.league || '');
+
+  const intensity = m.intensity || m.live_intensity || 0;
+  const iEl = document.getElementById('ld-intensity');
+  if (iEl) {
+    iEl.textContent = `⚡ ${intensity}/100`;
+    const c = intensity >= 60 ? '#ff4d4d' : intensity >= 30 ? '#ffa726' : '#29b6f6';
+    const bg = intensity >= 60 ? 'rgba(255,77,77,0.15)' : intensity >= 30 ? 'rgba(255,167,38,0.12)' : 'rgba(41,182,246,0.12)';
+    iEl.style.color = c;
+    iEl.style.background = bg;
+  }
+
+  const stats = [
+    { key:'possession', h:(m.possession?.home ?? 50), a:(m.possession?.away ?? 50), pct:true, dec:0 },
+    { key:'shots',      h:(m.shots?.home ?? 0),      a:(m.shots?.away ?? 0),      pct:false, dec:0 },
+    { key:'sot',        h:(m.shots_on_target?.home ?? 0), a:(m.shots_on_target?.away ?? 0), pct:false, dec:0 },
+    { key:'corners',    h:(m.corners?.home ?? 0),    a:(m.corners?.away ?? 0),    pct:false, dec:0 },
+    { key:'xg',         h:+(m.xg?.home ?? 0),         a:+(m.xg?.away ?? 0),         pct:false, dec:2 },
+  ];
+  for (const s of stats) {
+    const total = s.pct ? 100 : (s.h + s.a) || 1;
+    const wH = Math.max(0, Math.min(100, (s.h / total) * 100));
+    const wA = Math.max(0, Math.min(100, (s.a / total) * 100));
+    const fillH = document.getElementById(`bar-${s.key}-h-fill`);
+    const fillA = document.getElementById(`bar-${s.key}-a-fill`);
+    const valH  = document.getElementById(`bar-${s.key}-vh`);
+    const valA  = document.getElementById(`bar-${s.key}-va`);
+    if (fillH) fillH.style.width = wH + '%';
+    if (fillA) fillA.style.width = wA + '%';
+    if (valH)  valH.textContent  = s.dec ? s.h.toFixed(s.dec) : s.h;
+    if (valA)  valA.textContent  = s.dec ? s.a.toFixed(s.dec) : s.a;
+  }
+
+  drawMomentumSVG(m.momentum || []);
+  updateLiveVerdict(m);
+}
+
+function drawMomentumSVG(momArr) {
+  const svg = document.getElementById('ld-momentum-svg');
+  if (!svg) return;
+  const W = 600, H = 140, midY = H / 2;
+  const data = Array.isArray(momArr) ? momArr.slice(-30) : [];
+  if (!data.length) {
+    svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/><text x="${W/2}" y="${midY+4}" fill="var(--text3)" font-size="11" text-anchor="middle" font-family="var(--font-mono)">En attente de données momentum…</text>`;
+    return;
+  }
+  const step = W / data.length;
+  let bars = '';
+  for (let i = 0; i < data.length; i++) {
+    const pt = data[i];
+    const v = typeof pt === 'number' ? pt : (pt && typeof pt.v === 'number' ? pt.v : 0);
+    const x = i * step;
+    const barH = Math.min(Math.abs(v) / 50, 1) * (midY - 6);
+    const y = v >= 0 ? midY - barH : midY;
+    const color = v >= 0 ? 'var(--blue)' : '#ffa726';
+    bars += `<rect x="${x + 1}" y="${y}" width="${Math.max(2, step - 2)}" height="${barH}" fill="${color}" rx="2"/>`;
+  }
+  svg.innerHTML = `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/>${bars}`;
+}
+
+function updateLiveVerdict(m) {
+  const el = document.getElementById('ld-verdict-content');
+  if (!el) return;
+  const xgH = +(m.xg?.home ?? 0), xgA = +(m.xg?.away ?? 0);
+  const possH = m.possession?.home ?? 50;
+  const shotsH = m.shots?.home ?? 0, shotsA = m.shots?.away ?? 0;
+  const intensity = m.intensity || m.live_intensity || 0;
+  const xgDiff = xgH - xgA;
+  const dominantSide = xgDiff > 0.3 ? 'home' : xgDiff < -0.3 ? 'away' : 'balanced';
+  const teamName = dominantSide === 'home' ? (m.home_team || 'Domicile') : dominantSide === 'away' ? (m.away_team || 'Extérieur') : null;
+  const verdictColor = intensity >= 60 ? '#ff4d4d' : intensity >= 30 ? '#ffa726' : '#29b6f6';
+  const verdictLabel = intensity >= 60 ? 'HOT' : intensity >= 30 ? 'MEDIUM' : 'COLD';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:12px;">
+      <span style="font:800 9px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:5px;color:#fff;background:${verdictColor};">${verdictLabel}</span>
+      <span style="font:700 12px/1.35 var(--font-body);color:var(--text);">
+        ${teamName ? `Pression offensive ${teamName} (xG +${Math.abs(xgDiff).toFixed(2)})` : 'Match équilibré — pas de favori live'}
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:rgba(41,182,246,0.06);border:1px solid rgba(41,182,246,0.18);border-radius:8px;padding:9px 11px;">
+        <div style="font:800 10px/1 var(--font-mono);color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">xG Diff</div>
+        <div style="font:800 17px/1 var(--font-mono);color:var(--text);">${(xgDiff >= 0 ? '+' : '') + xgDiff.toFixed(2)}</div>
+      </div>
+      <div style="background:rgba(255,167,38,0.06);border:1px solid rgba(255,167,38,0.18);border-radius:8px;padding:9px 11px;">
+        <div style="font:800 10px/1 var(--font-mono);color:#ffa726;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Tirs Totaux</div>
+        <div style="font:800 17px/1 var(--font-mono);color:var(--text);">${shotsH + shotsA}</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);line-height:1.55;">
+      Possession ${possH}% côté domicile · Intensité ${intensity}/100 · Mise à jour auto toutes les 30s.
+    </div>
+  `;
+}
+
+function setText(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = v;
 }
 
 function buildH2HTab(d) {
@@ -11118,144 +11292,11 @@ function buildH2HTab(d) {
   </div>`;
 }
 
-function renderLiveDetailPanel(m) {
-  document.getElementById('ld-teams').textContent = `${m.home_team} — ${m.away_team}`;
-  document.getElementById('ld-league').textContent = `${m.league || ''}`;
-  document.getElementById('ld-score').textContent = m.score || m.live_score || '?';
-  document.getElementById('ld-minute').textContent = m.minute || m.live_minute ? `${m.minute || m.live_minute}′` : '';
-
-  const intensityEl = document.getElementById('ld-intensity');
-  const intensity = m.intensity || m.live_intensity || 0;
-  const iColor = intensity >= 60 ? '#ff4d4d' : intensity >= 30 ? '#ffa726' : '#29b6f6';
-  const iBg = intensity >= 60 ? 'rgba(255,77,77,0.15)' : intensity >= 30 ? 'rgba(255,167,38,0.12)' : 'rgba(41,182,246,0.1)';
-  intensityEl.textContent = `⚡ ${intensity}/100`;
-  intensityEl.style.color = iColor;
-  intensityEl.style.background = iBg;
-
-  // Stats grid
-  const grid = document.getElementById('ld-stats-grid');
-  const xgH = m.xg?.home || 0, xgA = m.xg?.away || 0;
-  const possH = m.possession?.home || 50, possA = m.possession?.away || 50;
-  const shotsH = m.shots?.home || 0, shotsA = m.shots?.away || 0;
-  const sotsH = m.shots_on_target?.home || 0, sotsA = m.shots_on_target?.away || 0;
-  const cornersH = m.corners?.home || 0, cornersA = m.corners?.away || 0;
-  const cardsH = m.cards?.home_yellow || 0, cardsA = m.cards?.away_yellow || 0;
-
-  grid.innerHTML = [
-    { label: 'xG', home: xgH.toFixed(2), away: xgA.toFixed(2) },
-    { label: 'Possession', home: `${possH}%`, away: `${possA}%` },
-    { label: 'Tirs', home: shotsH, away: shotsA },
-    { label: 'Tirs cadrés', home: sotsH, away: sotsA },
-    { label: 'Corners', home: cornersH, away: cornersA },
-    { label: 'Cartons J.', home: cardsH, away: cardsA },
-  ].map(s => `
-    <div class="ld-stat-card">
-      <div class="ld-stat-val"><span style="color:var(--green)">${s.home}</span> <span style="color:var(--text3);font-size:14px;">—</span> <span style="color:#ab47bc">${s.away}</span></div>
-      <div class="ld-stat-label">${s.label}</div>
-    </div>
-  `).join('');
-
-  // Incidents
-  const incEl = document.getElementById('ld-incidents');
-  if (m.incidents && m.incidents.length) {
-    incEl.innerHTML = `<div class="ld-inc-title">Événements</div>` +
-      m.incidents.slice(-10).map(inc => {
-        const icon = inc.type === 'goal' ? '⚽' : inc.type === 'card' && inc.detail === 'yellow' ? '🟨' : inc.type === 'card' && inc.detail === 'red' ? '🟥' : inc.type === 'substitution' ? '🔄' : '•';
-        const team = inc.team === 'home' ? m.home_team : m.away_team;
-        return `<div class="ld-incident">
-          <span class="ld-inc-time">${inc.elapsed || '?'}′</span>
-          <span class="ld-inc-icon">${icon}</span>
-          <span class="ld-inc-team">${team}</span>
-          <span style="color:var(--text2)">${inc.player_name || ''}</span>
-        </div>`;
-      }).join('');
-  } else {
-    incEl.innerHTML = '';
-  }
-}
-
-function renderLDCharts(m) {
-  if (ldXGChart) { ldXGChart.destroy(); ldXGChart = null; }
-  if (ldMomentumChart) { ldMomentumChart.destroy(); ldMomentumChart = null; }
-
-  // xG timeline — simulate cumulative curve from current totals
-  const minute = m.minute || m.live_minute || 45;
-  const xgH = m.xg?.home || 0, xgA = m.xg?.away || 0;
-  const points = Math.min(Math.floor(minute / 5), 18);
-  const labels = Array.from({ length: points }, (_, i) => (i + 1) * 5);
-  const xgHData = labels.map((_, i) => xgH * ((i + 1) / points) + (Math.random() * 0.1 - 0.05));
-  const xgAData = labels.map((_, i) => xgA * ((i + 1) / points) + (Math.random() * 0.1 - 0.05));
-  xgHData[xgHData.length - 1] = xgH;
-  xgAData[xgAData.length - 1] = xgA;
-
-  const xgCtx = document.getElementById('ld-xg-chart');
-  if (xgCtx && typeof Chart !== 'undefined') {
-    ldXGChart = new Chart(xgCtx, {
-      type: 'line',
-      data: {
-        labels: labels.map(l => `${l}′`),
-        datasets: [
-          { label: m.home_team, data: xgHData, borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,0.08)', fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 },
-          { label: m.away_team, data: xgAData, borderColor: '#ab47bc', backgroundColor: 'rgba(171,71,188,0.08)', fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 },
-        ],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#b0b0b0', font: { size: 10 } } } },
-        scales: {
-          x: { ticks: { color: '#666', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          y: { ticks: { color: '#666', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        },
-      },
-    });
-  }
-
-  // Momentum — from BSD data or generate from score/xg
-  const momCtx = document.getElementById('ld-momentum-chart');
-  if (momCtx && typeof Chart !== 'undefined') {
-    let momData;
-    if (m.momentum && m.momentum.length > 2) {
-      momData = m.momentum.slice(-30).map(pt => pt.v);
-    } else {
-      // Generate simulated momentum based on xG and goals
-      const totalMom = points * 2;
-      momData = Array.from({ length: totalMom }, (_, i) => {
-        const base = Math.sin(i * 0.4) * 20;
-        const xgBias = xgH > xgA ? 10 : xgA > xgH ? -10 : 0;
-        return base + xgBias + (Math.random() * 10 - 5);
-      });
-    }
-    const momLabels = momData.map((_, i) => `${Math.round((i / momData.length) * minute)}′`);
-
-    ldMomentumChart = new Chart(momCtx, {
-      type: 'bar',
-      data: {
-        labels: momLabels,
-        datasets: [{
-          label: 'Momentum',
-          data: momData,
-          backgroundColor: momData.map(v => v >= 0 ? 'rgba(0,230,118,0.6)' : 'rgba(171,71,188,0.6)'),
-          borderColor: momData.map(v => v >= 0 ? '#00e676' : '#ab47bc'),
-          borderWidth: 1,
-          borderRadius: 2,
-        }],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#666', font: { size: 8 }, maxTicksLimit: 10 }, grid: { display: false } },
-          y: { ticks: { color: '#666', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        },
-      },
-    });
-  }
-}
-
 function closeLiveDetail() {
-  if (ldXGChart) { ldXGChart.destroy(); ldXGChart = null; }
-  if (ldMomentumChart) { ldMomentumChart.destroy(); ldMomentumChart = null; }
-  document.getElementById('live-detail-modal').classList.remove('open');
+  if (_liveDetailInterval) { clearInterval(_liveDetailInterval); _liveDetailInterval = null; }
+  _liveDetailMatchId = null;
+  const modal = document.getElementById('live-detail-modal');
+  if (modal) modal.classList.remove('open');
 }
 
 function renderTeamRadar(m) {

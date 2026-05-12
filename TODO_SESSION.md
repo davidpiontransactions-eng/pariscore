@@ -14,8 +14,8 @@
 - [x] Mutation de l'onglet Live : Passage d'un flux scrollé à un Dashboard de Stratégie (Momentum + Intensity Gauge + Predictive Bet).
 
 ## Live Dashboard V2 — Refonte Radicale
-- [x] Destruction totale de l'ancienne boucle de rendu Live scrollable.
-- [x] Implémentation du Dashboard Live V2 (Momentum SVG Sofascore + Barres de stats dynamiques avec Polling réel).
+- [ ] Destruction totale de l'ancienne boucle de rendu Live scrollable.
+- [ ] Implémentation du Dashboard Live V2 (Momentum SVG + Barres dynamiques + Polling partial-update sans flicker).
 
 ## En cours / Debug
 - [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
