@@ -7958,6 +7958,7 @@ function openPlayerDetail(playerName, teamCtx, leagueId) {
           </div>
 
           ${(!p.photo && (base.matches || 0) < 5) ? `<div style="background:#FFF7ED;border-left:3px solid #FB923C;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#9A3412;font-family:'DM Mono',monospace;">⚠ Données joueur limitées chez le fournisseur (jeune/réserviste). Photo non disponible.</div>` : ''}
+          ${(!p.photo && (base.matches || 0) >= 5) ? `<div style="background:#FFFBEB;border-left:3px solid #F59E0B;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#92400E;font-family:'DM Mono',monospace;">⚠ Photo non disponible (quota API du jour atteint, plan FREE 100 req/jour). Stats récupérées via BSD. Upgrade API-Football PRO pour photos système-wide.</div>` : ''}
           <!-- KPIs 3x2 -->
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
             ${kpis.map(k => `<div style="background:#f8f8f8;padding:10px 8px;text-align:center;border-top:3px solid ${k.color};">

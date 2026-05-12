@@ -389,8 +389,12 @@ async function fetchAPIFootballTeamId(teamName, leagueId, season) {
     try {
       const url = `https://v3.football.api-sports.io/teams?league=${leagueId}&season=${seasonY}`;
       const res = await httpsGet(url, { 'x-apisports-key': API_FOOTBALL_KEY });
+      if (res.data?.errors?.requests) {
+        console.warn(`  [API-Football] QUOTA ÉPUISÉ /teams league ${leagueId}. Upgrade PRO requis.`);
+        apiCacheSet(cacheKey, {}, 'apif_teams', 1 * 3600 * 1000);
+        return null;
+      }
       if (res.status !== 200 || !res.data?.response?.length) {
-        // Try previous season if current fails (free plan limit)
         if (seasonY > 2022) return fetchAPIFootballTeamId(teamName, leagueId, seasonY - 1);
         apiCacheSet(cacheKey, {}, 'apif_teams', 24 * 3600 * 1000);
         return null;
@@ -441,6 +445,12 @@ async function fetchAPIFootballPlayer(playerName, teamName, leagueId) {
       else if (leagueId) params.push(`league=${leagueId}`);
       const url = `https://v3.football.api-sports.io/players?${params.join('&')}`;
       const res = await httpsGet(url, { 'x-apisports-key': API_FOOTBALL_KEY });
+      // Quota épuisé : log alerte + cache court (1h, reset le lendemain)
+      if (res.data?.errors?.requests) {
+        console.warn(`  [API-Football] QUOTA ÉPUISÉ (100/j free plan) — ${playerName}. Upgrade PRO requis pour usage prod. Reset à 00:00 UTC.`);
+        apiCacheSet(cacheKey, null, 'apif_player', 1 * 3600 * 1000);
+        return null; // pas la peine d'essayer d'autres seasons
+      }
       if (res.status !== 200 || !res.data?.response?.length) {
         apiCacheSet(cacheKey, null, 'apif_player', 12 * 3600 * 1000);
         continue;
@@ -9170,19 +9180,48 @@ if (pathname === '/api/v1/player') {
                     bsdPlayer = await bsdGetPlayerDetail(chosen.id);
                 }
             }
-            // Étape 3 : choisir source primaire — API-Football si nom matche search exactement, sinon BSD
+            // Étape 3 : choisir source primaire — API-Football si nom matche search, sinon BSD
             if (apifPrimary) {
               const searchedNorm = normName(playerName);
               const apifNorm = normName(apifPrimary.name);
               const apifLast = normName(apifPrimary.lastname || '');
-              const apifMatchesSearch = apifNorm === searchedNorm || apifLast === searchedNorm
-                || apifNorm.includes(searchedNorm) || searchedNorm.includes(apifNorm);
+              // Tokens du search : la dernière partie est usuellement le lastname
+              const searchTokens = searchedNorm.split(/\s+/).filter(Boolean);
+              const searchLast = searchTokens[searchTokens.length - 1] || '';
+              const apifMatchesSearch =
+                apifNorm === searchedNorm
+                || apifLast === searchedNorm
+                || apifLast === searchLast
+                || apifNorm.includes(searchedNorm)
+                || searchedNorm.includes(apifLast)
+                || (searchLast.length >= 4 && apifLast.includes(searchLast));
+              console.log(`  [Player] search="${playerName}" apif="${apifPrimary.name}" (id ${apifPrimary.api_football_id}) match=${apifMatchesSearch}`);
               if (apifMatchesSearch) {
                 // API-Football primary
-                // Construit name complet : préfère "Firstname Lastname" si dispo (sinon BSD short "J. Bellingham" pas idéal)
-                const fullName = (apifPrimary.firstname && apifPrimary.lastname)
-                  ? `${apifPrimary.firstname.split(' ')[0]} ${apifPrimary.lastname}`
-                  : apifPrimary.name;
+                // Construit fullName :
+                // - Si name déjà complet (sans initiale ".") → keep as is
+                // - Si name commence par "X." (initiale) → cherche token du firstname avec cette initiale
+                //   sinon premier token. Évite "Masour Dembélé" (firstname="Masour Ousmane" + Ousmane est le bon)
+                // - Vérifie aussi avec BSD's name si on a un match BSD propre (firstname matche initiale)
+                let fullName = apifPrimary.name;
+                if (apifPrimary.firstname && apifPrimary.lastname) {
+                  const apifShort = apifPrimary.name;
+                  const initialMatch = apifShort.match(/^([A-Z])\./);
+                  if (initialMatch) {
+                    const initialChar = initialMatch[1].toLowerCase();
+                    const tokens = apifPrimary.firstname.split(/\s+/).filter(Boolean);
+                    let correctFirst = tokens.find(t => t.charAt(0).toLowerCase() === initialChar);
+                    // Si BSD a trouvé un candidat dont le PREMIER token commence par cette initiale, préfère-le (BSD usuellement nom commun "Ousmane Dembélé")
+                    if (bsdPlayer && bsdPlayer.name) {
+                      const bsdFirst = bsdPlayer.name.split(/\s+/)[0];
+                      if (bsdFirst && bsdFirst.charAt(0).toLowerCase() === initialChar) {
+                        correctFirst = bsdFirst;
+                      }
+                    }
+                    if (correctFirst) fullName = `${correctFirst} ${apifPrimary.lastname}`;
+                  }
+                  // else : name déjà complet ex "Robert Lewandowski" → keep
+                }
                 player = {
                   id: apifPrimary.api_football_id,
                   api_football_id: apifPrimary.api_football_id,
