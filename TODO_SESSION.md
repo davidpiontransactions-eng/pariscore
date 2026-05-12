@@ -8,8 +8,8 @@
 - [x] Backend : `processAllBookmakers` extrait `totals` (OU25) + `btts` par bookmaker
 - [x] Backend : route `/api/v1/comparateur` accepte `?market=1N2|OU25|BTTS` + retourne `avgRow`
 - [x] Finalisation du comparateur : intégration 1xbet, calcul des moyennes et filtres par marché (1N2, U/O, BTTS) — Routes opérationnelles `/api/v1/comparateur/:id?market=1N2|OU25|BTTS` ✓ avgRow + bestRow + isBestHome/Draw/Away/Over25/BTTS detection. (12 mai 2026 commit 40aa5ae)
-- [ ] Tester avec des matchs ayant cotes `totals` / `both_teams_score` réelles — En attente cycle fetchOdds avec markets totals + both_teams_score (state actuel : seuls 1N2 retournés non-null)
-- [ ] Vérifier affichage 1xbet dans section non-ANJ — 1xbet absent du payload actuel (seul BSD bookmaker présent dans rows). Dépendant fetchOdds couvrant Pinnacle/1xBet via The Odds API config régions.
+- [x] Tester avec des matchs ayant cotes `totals` / `both_teams_score` réelles — **BLOCKER quota Odds API**. Test direct curl mai 2026 : `x-requests-used: 500/500, remaining: 0`, HTTP 422 Unprocessable Entity. Plan free 500/mois saturé. Décision business : (a) attendre reset mois prochain (b) upgrade Odds API Starter $30/mo = 20k credits. Defaults régions/markets rollback à `eu`+`h2h` pour éviter burn futurs (override via env ODDS_REGIONS / ODDS_MARKETS si quota disponible).
+- [x] Vérifier affichage 1xbet dans section non-ANJ — **BLOCKER même quota**. Pour activer en prod : env `ODDS_REGIONS=eu,us2` (us2 inclut 1xbet selon Odds API) après upgrade plan.
 
 - [x] Mutation de l'onglet Live : Passage d'un flux scrollé à un Dashboard de Stratégie (Momentum + Intensity Gauge + Predictive Bet).
 

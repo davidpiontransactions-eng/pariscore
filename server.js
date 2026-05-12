@@ -5743,12 +5743,13 @@ async function fetchOdds(force = false) {
 
       for (const sport of prioritySports) {
         try {
-          // v10.8: élargissement régions + marchés OU25/BTTS pour comparateur
-          // Coût quota = 3 markets × 1 région = 3 credits/call (vs 1 avant). Cycle 12h → ~360 credits/mois sur 5 ligues.
+          // v10.8: élargissement régions/markets opt-in via env (par défaut: eu+h2h = 1 credit/call, sustainable plan free 500/mois).
+          // Pour activer comparateur OU25/BTTS : Render env ODDS_MARKETS=h2h,totals,both_teams_score (coût ×3) + upgrade Odds Starter $30/mo (20k credits).
+          // Pour 1xbet : ODDS_REGIONS=eu,us2 (couvre 1xbet via region us2 selon Odds API).
           const query = new URLSearchParams({
             apiKey: ODDS_API_KEY,
-            regions: process.env.ODDS_REGIONS || 'eu,uk',
-            markets: process.env.ODDS_MARKETS || 'h2h,totals,both_teams_score',
+            regions: process.env.ODDS_REGIONS || 'eu',
+            markets: process.env.ODDS_MARKETS || 'h2h',
             oddsFormat: 'decimal',
             dateFormat: 'iso', commenceTimeFrom: formatIsoTimestamp(now), commenceTimeTo: formatIsoTimestamp(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
           }).toString();
