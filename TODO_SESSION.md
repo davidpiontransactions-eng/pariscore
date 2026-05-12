@@ -18,6 +18,7 @@
 - [ ] Implémentation du Dashboard Live V2 (Momentum SVG + Barres dynamiques + Polling partial-update sans flicker).
 - [ ] Fix UI : Rétablir l'affichage de la liste des matchs en direct via le filtre 'Live' du tableau principal.
 - [ ] Fix Dashboard Live : Remplacer le flux de données vide par un scraping/fetching des endpoints statistiques et momentum de SofaScore.
+- [ ] Étude API football complète (prematch + live + scraping sans anti-bot). Analyse comparative gratuit vs payant. Recommandation stack rapport qualité/économique pour 100 membres.
 
 ## En cours / Debug
 - [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
