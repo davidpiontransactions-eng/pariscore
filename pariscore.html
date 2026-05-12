@@ -3056,37 +3056,69 @@
     }
   }
   /* ── COMPARATEUR DE COTES — L'Équipe Style ──────────────────────────────── */
-  .comp-wrap{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.22);margin:0 0 24px}
-  .comp-header{background:#003f8a;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
-  .comp-header-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.08rem}
-  .comp-meta{font-family:'DM Mono',monospace;font-size:.78rem;opacity:.75;margin-top:3px}
-  .comp-table{width:100%;border-collapse:collapse;font-family:'Instrument Sans',sans-serif;color:#111;font-size:.9rem}
-  .comp-table thead{background:#f0f4f8}
-  .comp-table thead th{padding:10px 16px;text-align:center;font-size:.73rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #dde}
+  /* ── COMPARATEUR DE COTES — style L'Equipe ── */
+  .comp-wrap{background:#fff;border-radius:10px;overflow:hidden;border:1.5px solid #E8E8E8;margin:0 0 24px}
+  /* Header match */
+  .comp-header{background:#fff;color:#111;padding:16px 20px 12px;border-bottom:3px solid #E2001A;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .comp-header-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.12rem;color:#111}
+  .comp-meta{font-family:'DM Mono',monospace;font-size:.75rem;color:#888;margin-top:3px}
+  .comp-header-badges{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-top:4px}
+  /* IC Badge */
+  .comp-ic-badge{font-size:.68rem;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.04em}
+  .comp-ic-high{background:#E8F5E9;color:#1B5E20}
+  .comp-ic-mid{background:#FFF3E0;color:#E65100}
+  .comp-ic-low{background:#FCE4EC;color:#B71C1C}
+  /* Surebet badge */
+  .comp-surebet-badge{background:#E2001A;color:#fff;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:.05em;animation:pulse 1.5s infinite}
+  /* Market tabs */
+  .comp-market-tabs{display:flex;gap:0;border:1.5px solid #E8E8E8;border-radius:8px;overflow:hidden;flex-wrap:wrap;background:#fff}
+  .comp-market-tab{padding:8px 14px;font-size:.78rem;font-weight:700;color:#555;background:#fff;border:none;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;border-right:1px solid #E8E8E8;font-family:'Instrument Sans',sans-serif}
+  .comp-market-tab:last-child{border-right:none}
+  .comp-market-tab:hover{background:#FFF5F5;color:#E2001A}
+  .comp-market-tab.active{background:#E2001A;color:#fff}
+  /* Table */
+  .comp-table{width:100%;border-collapse:collapse;font-family:'Instrument Sans',sans-serif;color:#111;font-size:.88rem}
+  .comp-table thead{background:#FAFAFA}
+  .comp-table thead th{padding:9px 16px;text-align:center;font-size:.7rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #E8E8E8}
   .comp-table thead th:first-child{text-align:left}
-  .comp-table tbody tr:nth-child(even){background:#f7f9fb}
-  .comp-table tbody tr:nth-child(odd){background:#fff}
-  .comp-table tbody tr:hover{background:#eef3ff}
-  .comp-table tbody tr.non-anj{opacity:.78}
-  .comp-table tbody tr.non-anj td{background:#fffbf0}
-  .comp-table td{padding:9px 16px;text-align:center;border-bottom:1px solid #e8ecf0}
+  .comp-table tbody tr{border-bottom:1px solid #F2F2F2}
+  .comp-table tbody tr:hover{background:#FAFAFA}
+  .comp-table tbody tr.non-anj{opacity:.72}
+  .comp-table tbody tr.non-anj td{background:#FFFBF0}
+  .comp-table td{padding:10px 16px;text-align:center}
   .comp-table td:first-child{text-align:left;font-weight:600}
-  .comp-best-odd{font-weight:800;color:#c0392b}
+  /* Best odd highlight */
+  .comp-best-odd{font-weight:800;color:#E2001A;font-size:1.01em}
+  /* BK name cell */
   .comp-bk-name{display:flex;align-items:center;gap:8px}
-  .comp-bk-logo{width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#f0f0f0;border:1px solid #e0e0e0;}
-  .comp-bk-logo-placeholder{width:20px;height:20px;border-radius:4px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font:700 8px/1 monospace;color:#fff;background:#aaa;}
-  .comp-badge-anj{font-size:.65rem;background:#e8f5e9;color:#2e7d32;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap}
-  .comp-badge-nonanj{font-size:.65rem;background:#fff3e0;color:#e65100;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap}
-  .comp-payout-hi{color:#2e7d32;font-weight:700}
+  .comp-bk-logo{width:24px;height:24px;border-radius:5px;object-fit:contain;flex-shrink:0;background:#F5F5F5;border:1px solid #E0E0E0}
+  .comp-bk-logo-placeholder{width:24px;height:24px;border-radius:5px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font:700 9px/1 monospace;color:#fff;background:#999}
+  /* Badges ANJ */
+  .comp-badge-anj{font-size:.6rem;background:#E8F5E9;color:#2E7D32;border-radius:3px;padding:1px 5px;font-weight:700;white-space:nowrap}
+  .comp-badge-nonanj{font-size:.6rem;background:#FFF3E0;color:#E65100;border-radius:3px;padding:1px 5px;font-weight:700;white-space:nowrap}
+  /* Payout coloring */
+  .comp-payout-hi{color:#1B5E20;font-weight:700}
   .comp-payout-mid{color:#555}
-  .comp-payout-lo{color:#e65100}
-  .comp-sep-row td{background:#f0f0f0!important;font-size:.71rem;color:#888;font-style:italic;padding:4px 16px;text-align:left}
-  .comp-best-row{border-bottom:2px solid #c0392b}
-  .comp-best-row td{background:#fff5f5!important;font-weight:800}
-  .comp-best-row td:first-child{color:#c0392b}
-  .comp-avg-row td{background:#f5f5f5!important;color:#555;font-size:.86rem;font-style:italic}
+  .comp-payout-lo{color:#B71C1C}
+  /* Separator non-ANJ */
+  .comp-sep-row td{background:#F8F8F8!important;font-size:.7rem;color:#999;font-style:italic;padding:4px 16px;text-align:left;border-top:1px solid #EEE}
+  /* Meilleure cote — flagship row */
+  .comp-best-row{border-top:2px solid #E2001A!important;border-bottom:2px solid #E2001A!important}
+  .comp-best-row td{background:#FFF5F5!important}
+  .comp-best-row td:first-child{color:#E2001A;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+  /* WFV row */
+  .comp-wfv-row td{background:#EEF6FF!important;color:#1565C0;font-size:.83rem}
+  .comp-wfv-row td:first-child{font-weight:700;color:#1565C0;font-style:normal}
+  /* Average row */
+  .comp-avg-row td{background:#F5F5F5!important;color:#555;font-size:.84rem;font-style:italic}
   .comp-avg-row td:first-child{font-weight:700;color:#333;font-style:normal}
-  .comp-fair-row td{background:#f3e8ff!important;color:#6d28d9;font-size:.83rem;font-style:italic}
+  /* Fair/modèle row */
+  .comp-fair-row td{background:#F3E8FF!important;color:#6D28D9;font-size:.82rem}
+  /* Delta cotes */
+  .comp-delta{font-size:.7rem;font-weight:700;margin-left:3px}
+  .comp-delta-up{color:#1B5E20}
+  .comp-delta-dn{color:#E2001A}
+  /* Selector area */
   .comp-selector{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
   .comp-selector select{padding:9px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);font-size:.9rem;min-width:240px;cursor:pointer}
   .comp-empty{text-align:center;color:var(--text2);padding:48px 20px;font-style:italic;background:var(--bg2);border-radius:12px}
@@ -13961,23 +13993,20 @@ document.addEventListener('keydown', e => {
     <select id="comp-match-select" onchange="loadComparateur(this.value)">
       <option value="">— Choisir un match —</option>
     </select>
-    <select id="comp-market-select" onchange="onCompMarketChange(this.value)" style="padding:9px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);font-size:.9rem;cursor:pointer;">
-      <optgroup label="Résultat">
-        <option value="1N2">1N2 (Résultat)</option>
-        <option value="HOME_WIN">Victoire Domicile</option>
-        <option value="DRAW">Match Nul</option>
-        <option value="AWAY_WIN">Victoire Extérieur</option>
-        <option value="DC">Double Chance (1X / X2 / 12)</option>
-      </optgroup>
-      <optgroup label="Buts">
-        <option value="OU15">Plus/Moins 1.5 buts</option>
-        <option value="OU25">Plus/Moins 2.5 buts</option>
-        <option value="OU35">Plus/Moins 3.5 buts</option>
-        <option value="BTTS">Les deux marquent</option>
-      </optgroup>
-    </select>
-    <button onclick="forceRefreshComparateur()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);cursor:pointer;font-size:.85rem;" title="Force fetchOdds() côté serveur puis recharge">🔄 Actualiser les cotes</button>
+    <button onclick="forceRefreshComparateur()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);cursor:pointer;font-size:.85rem;" title="Force actualisation cotes">Actualiser</button>
     <span id="comp-status" style="font-size:.8rem;color:var(--text2);"></span>
+  </div>
+  <!-- Onglets marché -->
+  <div class="comp-market-tabs" id="comp-market-tabs" style="margin-bottom:18px;">
+    <button class="comp-market-tab active" data-market="1N2"      onclick="setCompMarket('1N2',this)">1N2</button>
+    <button class="comp-market-tab"        data-market="HOME_WIN" onclick="setCompMarket('HOME_WIN',this)">Dom.</button>
+    <button class="comp-market-tab"        data-market="DRAW"     onclick="setCompMarket('DRAW',this)">Nul</button>
+    <button class="comp-market-tab"        data-market="AWAY_WIN" onclick="setCompMarket('AWAY_WIN',this)">Ext.</button>
+    <button class="comp-market-tab"        data-market="DC"       onclick="setCompMarket('DC',this)">Double Chance</button>
+    <button class="comp-market-tab"        data-market="OU15"     onclick="setCompMarket('OU15',this)">+/- 1.5</button>
+    <button class="comp-market-tab"        data-market="OU25"     onclick="setCompMarket('OU25',this)">+/- 2.5</button>
+    <button class="comp-market-tab"        data-market="OU35"     onclick="setCompMarket('OU35',this)">+/- 3.5</button>
+    <button class="comp-market-tab"        data-market="BTTS"     onclick="setCompMarket('BTTS',this)">BTTS</button>
   </div>
   <div id="comp-content">
     <div class="comp-empty">Sélectionnez un match pour afficher la comparaison des cotes</div>
@@ -13992,8 +14021,15 @@ let _compMatchesCache = null;
 let _compLoaded = false;
 let _compMarket = '1N2';
 
-function onCompMarketChange(market) {
+function onCompMarketChange(market) { setCompMarket(market); }
+function setCompMarket(market, el) {
   _compMarket = market;
+  document.querySelectorAll('.comp-market-tab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const t = document.querySelector(`.comp-market-tab[data-market="${market}"]`);
+    if (t) t.classList.add('active');
+  }
   const sel = document.getElementById('comp-match-select');
   if (sel?.value) loadComparateur(sel.value);
 }
@@ -14066,9 +14102,9 @@ async function loadComparateur(matchId) {
 }
 
 function renderComparateur(d) {
-  const { home_team, away_team, commence_time, league, fair, rows, avgRow, market, poisson } = d;
+  const { home_team, away_team, commence_time, league, fair, rows, avgRow, market, poisson, wfv, ic, surebet, oddsHistory } = d;
   if (!rows || !rows.length) {
-    return '<div class="comp-empty">Aucune cote multi-bookmakers disponible pour ce match.<br><small>Les cotes détaillées sont collectées au cycle suivant (toutes les 12h). La cote actuelle est visible dans l\'onglet Matchs.</small></div>';
+    return '<div class="comp-empty">Aucune cote multi-bookmakers disponible pour ce match.<br><small>Les cotes détaillées sont collectées au cycle suivant (toutes les 12h).</small></div>';
   }
 
   const dt = new Date(commence_time);
@@ -14076,68 +14112,69 @@ function renderComparateur(d) {
   const timeStr = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const mkt = market || '1N2';
 
+  // ── Helpers ──
   function fmtOdd(val, isBest) {
-    if (!val) return '<td style="color:#aaa">—</td>';
+    if (!val) return '<td style="color:#ccc">—</td>';
     return isBest
-      ? `<td><strong class="comp-best-odd">${val.toFixed(2)} ★</strong></td>`
+      ? `<td><strong class="comp-best-odd">${val.toFixed(2)}</strong></td>`
       : `<td>${val.toFixed(2)}</td>`;
   }
   function fmtPayout(p) {
-    if (!p) return '<td>—</td>';
+    if (!p) return '<td style="color:#ccc">—</td>';
     const cls = p >= 98 ? 'comp-payout-hi' : p >= 96 ? 'comp-payout-mid' : 'comp-payout-lo';
     return `<td class="${cls}">${p.toFixed(1)}%</td>`;
   }
-  const BK_LOGOS = {
-    winamax:      'https://www.google.com/s2/favicons?domain=winamax.fr&sz=32',
-    betclic:      'https://www.google.com/s2/favicons?domain=betclic.com&sz=32',
-    unibet:       'https://www.google.com/s2/favicons?domain=unibet.fr&sz=32',
-    pmu:          'https://www.google.com/s2/favicons?domain=pmu.fr&sz=32',
-    parionssport: 'https://www.google.com/s2/favicons?domain=parionssport.fdj.fr&sz=32',
-    zebet:        'https://www.google.com/s2/favicons?domain=zebet.fr&sz=32',
-    bwin:         'https://www.google.com/s2/favicons?domain=bwin.com&sz=32',
-    netbet:       'https://www.google.com/s2/favicons?domain=netbet.fr&sz=32',
-    bet365:       'https://www.google.com/s2/favicons?domain=bet365.com&sz=32',
-    pinnacle:     'https://www.google.com/s2/favicons?domain=pinnacle.com&sz=32',
-    '1xbet':      'https://www.google.com/s2/favicons?domain=1xbet.com&sz=32',
-    betsson:      'https://www.google.com/s2/favicons?domain=betsson.com&sz=32',
-    pokerstars:   'https://www.google.com/s2/favicons?domain=pokerstars.fr&sz=32',
-    feelingbet:   'https://www.google.com/s2/favicons?domain=feelingbet.fr&sz=32',
-    francepari:   'https://www.google.com/s2/favicons?domain=france-pari.fr&sz=32',
-  };
+  function deltaSpan(delta) {
+    if (delta == null || delta === 0) return '';
+    const sign = delta > 0 ? '+' : '';
+    const cls  = delta > 0 ? 'comp-delta-up' : 'comp-delta-dn';
+    return `<span class="comp-delta ${cls}">(${sign}${delta.toFixed(2)})</span>`;
+  }
 
+  const BK_LOGOS = {
+    winamax:'https://www.google.com/s2/favicons?domain=winamax.fr&sz=32',
+    betclic:'https://www.google.com/s2/favicons?domain=betclic.com&sz=32',
+    unibet:'https://www.google.com/s2/favicons?domain=unibet.fr&sz=32',
+    pmu:'https://www.google.com/s2/favicons?domain=pmu.fr&sz=32',
+    parionssport:'https://www.google.com/s2/favicons?domain=parionssport.fdj.fr&sz=32',
+    zebet:'https://www.google.com/s2/favicons?domain=zebet.fr&sz=32',
+    bwin:'https://www.google.com/s2/favicons?domain=bwin.com&sz=32',
+    netbet:'https://www.google.com/s2/favicons?domain=netbet.fr&sz=32',
+    bet365:'https://www.google.com/s2/favicons?domain=bet365.com&sz=32',
+    pinnacle:'https://www.google.com/s2/favicons?domain=pinnacle.com&sz=32',
+    '1xbet':'https://www.google.com/s2/favicons?domain=1xbet.com&sz=32',
+    betsson:'https://www.google.com/s2/favicons?domain=betsson.com&sz=32',
+    pokerstars:'https://www.google.com/s2/favicons?domain=pokerstars.fr&sz=32',
+    feelingbet:'https://www.google.com/s2/favicons?domain=feelingbet.fr&sz=32',
+    francepari:'https://www.google.com/s2/favicons?domain=france-pari.fr&sz=32',
+  };
   function bkLogoHTML(r) {
     if (r.isAvg) return '';
     const key = (r.key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     const url = BK_LOGOS[key] || BK_LOGOS[Object.keys(BK_LOGOS).find(k => key.includes(k) || k.includes(key)) || ''];
-    if (url) {
-      const initials = (r.title || '?').slice(0, 2).toUpperCase();
-      return `<img class="comp-bk-logo" src="${url}" alt="${r.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="comp-bk-logo-placeholder" style="display:none">${initials}</span>`;
-    }
     const initials = (r.title || '?').slice(0, 2).toUpperCase();
+    if (url) return `<img class="comp-bk-logo" src="${url}" alt="${r.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="comp-bk-logo-placeholder" style="display:none">${initials}</span>`;
     return `<span class="comp-bk-logo-placeholder">${initials}</span>`;
   }
-
   function bkBadge(r) {
     if (r.isAvg) return '';
-    return r.isANJ
-      ? '<span class="comp-badge-anj">ANJ ✓</span>'
-      : '<span class="comp-badge-nonanj">⚠ non-ANJ</span>';
+    return r.isANJ ? '<span class="comp-badge-anj">ANJ</span>' : '<span class="comp-badge-nonanj">non-ANJ</span>';
   }
   function nameCell(r) {
-    const badge = bkBadge(r);
-    const logo = bkLogoHTML(r);
-    return `<td><div class="comp-bk-name">${logo}${r.title}${badge ? ' ' + badge : ''}</div></td>`;
+    return `<td><div class="comp-bk-name">${bkLogoHTML(r)}${r.title}${bkBadge(r) ? ' ' + bkBadge(r) : ''}</div></td>`;
   }
   function sepRow(span) {
-    return `<tr class="comp-sep-row"><td colspan="${span}">Bookmakers non agréés — à titre informatif uniquement</td></tr>`;
+    return `<tr class="comp-sep-row"><td colspan="${span}">Bookmakers non agréés en France — informatif uniquement</td></tr>`;
   }
   function avgTr(cells) {
-    return avgRow ? `<tr class="comp-avg-row"><td><div class="comp-bk-name">≈ Moyenne du Marché</div></td>${cells}</tr>` : '';
+    return avgRow ? `<tr class="comp-avg-row"><td><div class="comp-bk-name">Moyenne du Marché</div></td>${cells}</tr>` : '';
+  }
+  function wfvTr(cells) {
+    return wfv ? `<tr class="comp-wfv-row"><td><div class="comp-bk-name" title="Moyenne pondérée no-vig par liquidité book">Val. Marché Pondérée</div></td>${cells}</tr>` : '';
   }
   function poissonFallback(label, prob) {
-    return `<div class="comp-wrap">
-      <div class="comp-header"><div>
-        <div class="comp-header-title">⚡ ${home_team} &nbsp;vs&nbsp; ${away_team}</div>
+    return `<div class="comp-wrap"><div class="comp-header"><div>
+        <div class="comp-header-title">${home_team} vs ${away_team}</div>
         <div class="comp-meta">${league} · ${dateStr} à ${timeStr}</div>
       </div></div>
       <div style="padding:24px 20px;background:#fff;text-align:center;color:#666;font-size:.9rem;">
@@ -14145,47 +14182,58 @@ function renderComparateur(d) {
       </div></div>`;
   }
 
+  // ── IC badge ──
+  let icBadge = '';
+  if (ic != null) {
+    const icPct = Math.round(ic * 100);
+    const icCls = icPct >= 80 ? 'comp-ic-high' : icPct >= 60 ? 'comp-ic-mid' : 'comp-ic-low';
+    const icLbl = icPct >= 80 ? 'Consensus fort' : icPct >= 60 ? 'Consensus moyen' : 'Marché divisé';
+    icBadge = `<span class="comp-ic-badge ${icCls}" title="Indice de Consensus — mesure l'accord entre bookmakers">IC ${icPct}% — ${icLbl}</span>`;
+  }
+  const surebetBadge = surebet != null ? `<span class="comp-surebet-badge" title="Arbitrage détecté — couverture rentable">ARBI +${surebet.toFixed(2)}%</span>` : '';
+
+  // ── Market sections ──
   function buildOUSection(lineStr, ovField, unField, payField, probField) {
     const bestOv = Math.max(...rows.map(r => r[ovField] || 0));
     const bestUn = Math.max(...rows.map(r => r[unField] || 0));
     const bestP  = Math.max(...rows.map(r => r[payField] || 0));
     if (!rows.some(r => r[ovField])) return { noData: true, prob: poisson?.[probField] };
     const thead = `<tr>
-      <th style="width:230px;text-align:left;">Bookmaker</th>
-      <th>+ ${lineStr} (Over)</th><th>- ${lineStr} (Under)</th><th>Payout</th>
+      <th style="min-width:220px;text-align:left;">Bookmaker</th>
+      <th>+ ${lineStr} buts (Over)</th><th>- ${lineStr} buts (Under)</th><th>Payout</th>
     </tr>`;
     const bestRow_ = `<tr class="comp-best-row">
-      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><div class="comp-bk-name">Meilleure cote</div></td>
       <td><strong class="comp-best-odd">${bestOv ? bestOv.toFixed(2) : '—'}</strong></td>
       <td><strong class="comp-best-odd">${bestUn ? bestUn.toFixed(2) : '—'}</strong></td>
       <td class="comp-payout-hi"><strong>${bestP ? bestP.toFixed(1) + '%' : '—'}</strong></td>
     </tr>`;
-    const renderRow = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+    const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r[ovField], r[ovField] === bestOv && bestOv > 0)}
       ${fmtOdd(r[unField], r[unField] === bestUn && bestUn > 0)}
       ${fmtPayout(r[payField])}</tr>`;
     const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
-    const data = anjR.map(r => renderRow(r)).join('') +
-      (nonR.length ? sepRow(4) + nonR.map(r => renderRow(r, 'non-anj')).join('') : '') +
-      avgTr(fmtOdd(avgRow?.[ovField], false) + fmtOdd(avgRow?.[unField], false) + fmtPayout(avgRow?.payout));
+    const data = anjR.map(r => rr(r)).join('')
+      + (nonR.length ? sepRow(4) + nonR.map(r => rr(r, 'non-anj')).join('') : '')
+      + avgTr(fmtOdd(avgRow?.[ovField], false) + fmtOdd(avgRow?.[unField], false) + fmtPayout(avgRow?.payout));
     return { thead, bestRow: bestRow_, dataRows: data };
   }
 
-  function buildSingleSection(label, field, avgField) {
+  function buildSingleSection(label, field) {
     const best = Math.max(...rows.map(r => r[field] || 0));
     const thead = `<tr>
-      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th style="min-width:220px;text-align:left;">Bookmaker</th>
       <th>${label}</th>
     </tr>`;
     const bestRow_ = `<tr class="comp-best-row">
-      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><div class="comp-bk-name">Meilleure cote</div></td>
       <td><strong class="comp-best-odd">${best ? best.toFixed(2) : '—'}</strong></td>
     </tr>`;
-    const renderRow = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}${fmtOdd(r[field], r[field] === best && best > 0)}</tr>`;
+    const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}${fmtOdd(r[field], r[field] === best && best > 0)}</tr>`;
     const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
-    const data = anjR.map(r => renderRow(r)).join('') +
-      (nonR.length ? sepRow(2) + nonR.map(r => renderRow(r, 'non-anj')).join('') : '') +
-      avgTr(fmtOdd(avgRow?.[avgField || field], false));
+    const data = anjR.map(r => rr(r)).join('')
+      + (nonR.length ? sepRow(2) + nonR.map(r => rr(r, 'non-anj')).join('') : '')
+      + avgTr(fmtOdd(avgRow?.[field], false));
     return { thead, bestRow: bestRow_, dataRows: data };
   }
 
@@ -14193,7 +14241,7 @@ function renderComparateur(d) {
 
   if (mkt === 'OU15') {
     const res = buildOUSection('1.5', 'over15', 'under15', 'payoutOU15', 'over15');
-    if (res.noData) return poissonFallback('Over/Under 1.5', res.prob != null ? res.prob : null);
+    if (res.noData) return poissonFallback('Over/Under 1.5', res.prob ?? null);
     ({ thead, bestRow, dataRows } = res);
 
   } else if (mkt === 'OU25') {
@@ -14212,23 +14260,23 @@ function renderComparateur(d) {
     const bestP   = Math.max(...rows.map(r => r.payoutBTTS || 0));
     if (!rows.some(r => r.bttsYes)) return poissonFallback('BTTS', poisson?.btts);
     thead = `<tr>
-      <th style="width:230px;text-align:left;">Bookmaker</th>
-      <th>Les deux marquent (Oui)</th><th>Les deux marquent (Non)</th><th>Payout</th>
+      <th style="min-width:220px;text-align:left;">Bookmaker</th>
+      <th>Les deux marquent — Oui</th><th>Les deux marquent — Non</th><th>Payout</th>
     </tr>`;
     bestRow = `<tr class="comp-best-row">
-      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><div class="comp-bk-name">Meilleure cote</div></td>
       <td><strong class="comp-best-odd">${bestYes ? bestYes.toFixed(2) : '—'}</strong></td>
       <td><strong class="comp-best-odd">${bestNo ? bestNo.toFixed(2) : '—'}</strong></td>
       <td class="comp-payout-hi"><strong>${bestP ? bestP.toFixed(1) + '%' : '—'}</strong></td>
     </tr>`;
-    const renderB = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+    const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r.bttsYes, r.bttsYes === bestYes && bestYes > 0)}
       ${fmtOdd(r.bttsNo,  r.bttsNo  === bestNo  && bestNo  > 0)}
       ${fmtPayout(r.payoutBTTS)}</tr>`;
     const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
-    dataRows = anjR.map(r => renderB(r)).join('') +
-      (nonR.length ? sepRow(4) + nonR.map(r => renderB(r, 'non-anj')).join('') : '') +
-      avgTr(fmtOdd(avgRow?.bttsYes, false) + fmtOdd(avgRow?.bttsNo, false) + fmtPayout(avgRow?.payout));
+    dataRows = anjR.map(r => rr(r)).join('')
+      + (nonR.length ? sepRow(4) + nonR.map(r => rr(r, 'non-anj')).join('') : '')
+      + avgTr(fmtOdd(avgRow?.bttsYes, false) + fmtOdd(avgRow?.bttsNo, false) + fmtPayout(avgRow?.payout));
 
   } else if (mkt === 'DC') {
     const best1X  = Math.max(...rows.map(r => r.dc1X || 0));
@@ -14236,74 +14284,85 @@ function renderComparateur(d) {
     const best12  = Math.max(...rows.map(r => r.dc12 || 0));
     if (!rows.some(r => r.dc1X || r.dcX2)) return poissonFallback('Double Chance', null);
     thead = `<tr>
-      <th style="width:230px;text-align:left;">Bookmaker</th>
-      <th>1X (Dom. ou Nul)</th><th>X2 (Ext. ou Nul)</th><th>12 (Dom. ou Ext.)</th>
+      <th style="min-width:220px;text-align:left;">Bookmaker</th>
+      <th>1X — Dom. ou Nul</th><th>X2 — Ext. ou Nul</th><th>12 — Dom. ou Ext.</th>
     </tr>`;
     bestRow = `<tr class="comp-best-row">
-      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
+      <td><div class="comp-bk-name">Meilleure cote</div></td>
       <td><strong class="comp-best-odd">${best1X ? best1X.toFixed(2) : '—'}</strong></td>
       <td><strong class="comp-best-odd">${bestX2 ? bestX2.toFixed(2) : '—'}</strong></td>
       <td><strong class="comp-best-odd">${best12 ? best12.toFixed(2) : '—'}</strong></td>
     </tr>`;
-    const renderDC = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+    const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r.dc1X, r.dc1X === best1X && best1X > 0)}
       ${fmtOdd(r.dcX2, r.dcX2 === bestX2 && bestX2 > 0)}
       ${fmtOdd(r.dc12, r.dc12 === best12 && best12 > 0)}</tr>`;
     const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
-    dataRows = anjR.map(r => renderDC(r)).join('') +
-      (nonR.length ? sepRow(4) + nonR.map(r => renderDC(r, 'non-anj')).join('') : '') +
-      avgTr(fmtOdd(avgRow?.dc1X, false) + fmtOdd(avgRow?.dcX2, false) + fmtOdd(avgRow?.dc12, false));
+    dataRows = anjR.map(r => rr(r)).join('')
+      + (nonR.length ? sepRow(4) + nonR.map(r => rr(r, 'non-anj')).join('') : '')
+      + avgTr(fmtOdd(avgRow?.dc1X, false) + fmtOdd(avgRow?.dcX2, false) + fmtOdd(avgRow?.dc12, false));
 
   } else if (mkt === 'HOME_WIN') {
     ({ thead, bestRow, dataRows } = buildSingleSection(`Victoire ${home_team}`, 'home'));
-
   } else if (mkt === 'DRAW') {
     ({ thead, bestRow, dataRows } = buildSingleSection('Match Nul', 'draw'));
-
   } else if (mkt === 'AWAY_WIN') {
     ({ thead, bestRow, dataRows } = buildSingleSection(`Victoire ${away_team}`, 'away'));
 
   } else {
-    // 1N2 (default)
+    // 1N2 (default) — with WFV row + Surebet + Delta
     const anjRows = rows.filter(r => r.isANJ), nonAnjRows = rows.filter(r => !r.isANJ);
-    const bestHome = Math.max(...rows.map(r => r.home || 0));
-    const drawVals = rows.map(r => r.draw).filter(v => v);
-    const bestDraw = drawVals.length ? Math.max(...drawVals) : null;
-    const bestAway = Math.max(...rows.map(r => r.away || 0));
+    const bestHome   = Math.max(...rows.map(r => r.home || 0));
+    const drawVals   = rows.map(r => r.draw).filter(v => v);
+    const bestDraw   = drawVals.length ? Math.max(...drawVals) : null;
+    const bestAway   = Math.max(...rows.map(r => r.away || 0));
     const bestPayout = Math.max(...rows.map(r => r.payout || 0));
+
+    const dH = oddsHistory?.deltaHome, dD = oddsHistory?.deltaHome != null ? oddsHistory.deltaDraw : null, dA = oddsHistory?.deltaAway;
+    const deltaInfo = oddsHistory ? `<span style="font-size:.72rem;color:#888;margin-left:6px;">Δ vs ${oddsHistory.ageMin}min ago</span>` : '';
+
     thead = `<tr>
-      <th style="width:230px;text-align:left;">Bookmaker</th>
+      <th style="min-width:220px;text-align:left;">Bookmaker</th>
       <th>1 — ${home_team}</th><th>N</th><th>2 — ${away_team}</th><th>Payout</th>
     </tr>`;
     bestRow = `<tr class="comp-best-row">
-      <td><div class="comp-bk-name">🏆 Meilleure cote disponible</div></td>
-      <td><strong class="comp-best-odd">${bestHome.toFixed(2)}</strong></td>
-      <td><strong class="comp-best-odd">${bestDraw ? bestDraw.toFixed(2) : '—'}</strong></td>
-      <td><strong class="comp-best-odd">${bestAway.toFixed(2)}</strong></td>
+      <td><div class="comp-bk-name">Meilleure cote${deltaInfo}</div></td>
+      <td><strong class="comp-best-odd">${bestHome.toFixed(2)}</strong>${deltaSpan(dH)}</td>
+      <td><strong class="comp-best-odd">${bestDraw ? bestDraw.toFixed(2) : '—'}</strong>${deltaSpan(dD)}</td>
+      <td><strong class="comp-best-odd">${bestAway.toFixed(2)}</strong>${deltaSpan(dA)}</td>
       <td class="comp-payout-hi"><strong>${bestPayout.toFixed(1)}%</strong></td>
     </tr>`;
-    const render1N2 = (r, cls = '') => `<tr class="${cls}">${nameCell(r)}
+    const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r.home, r.home === bestHome)}
       ${fmtOdd(r.draw, bestDraw !== null && r.draw === bestDraw)}
       ${fmtOdd(r.away, r.away === bestAway)}
       ${fmtPayout(r.payout)}</tr>`;
+
+    // WFV row: convert prob to fair odd
+    const wfvCells = wfv
+      ? `<td>${wfv.home > 0 ? (1/wfv.home).toFixed(2) : '—'}</td>`
+        + `<td>${wfv.draw > 0 ? (1/wfv.draw).toFixed(2) : '—'}</td>`
+        + `<td>${wfv.away > 0 ? (1/wfv.away).toFixed(2) : '—'}</td><td>—</td>` : '';
+
     let fairSection = '';
     if (fair) {
-      const toF = p => p && p > 0 ? (1 / p).toFixed(2) : '—';
+      const toF = p => p && p > 0 ? (1/p).toFixed(2) : '—';
       fairSection = `<tr class="comp-fair-row">
-        <td><div class="comp-bk-name">≈ Cote fair (modèle)</div></td>
+        <td><div class="comp-bk-name">Cote modèle (no-vig)</div></td>
         <td>${toF(fair.home)}</td><td>${toF(fair.draw)}</td><td>${toF(fair.away)}</td><td>—</td>
       </tr>`;
     }
-    dataRows = anjRows.map(r => render1N2(r)).join('') +
-      (nonAnjRows.length ? `<tr class="comp-sep-row"><td colspan="5">Bookmakers non agréés en France — données affichées à titre informatif, aucun lien de redirection</td></tr>` + nonAnjRows.map(r => render1N2(r, 'non-anj')).join('') : '') +
-      avgTr(fmtOdd(avgRow?.home, false) + fmtOdd(avgRow?.draw, false) + fmtOdd(avgRow?.away, false) + fmtPayout(avgRow?.payout)) +
-      fairSection;
+
+    dataRows = anjRows.map(r => rr(r)).join('')
+      + (nonAnjRows.length ? `<tr class="comp-sep-row"><td colspan="5">Bookmakers non agréés en France — aucun lien de redirection</td></tr>` + nonAnjRows.map(r => rr(r, 'non-anj')).join('') : '')
+      + avgTr(fmtOdd(avgRow?.home, false) + fmtOdd(avgRow?.draw, false) + fmtOdd(avgRow?.away, false) + fmtPayout(avgRow?.payout))
+      + wfvTr(wfvCells)
+      + fairSection;
   }
 
   const fallbackBanner = d._fallback
-    ? `<div style="background:#fff8e1;border-left:4px solid #ffa726;padding:10px 16px;font-size:.82rem;color:#6d4c00;">
-        ⚠️ <strong>Données partielles</strong> — multi-bookmakers non disponibles pour ce match (ligue non-prioritaire). La comparaison complète est disponible pour Ligue 1, Premier League, Liga, Bundesliga, Serie A et Champions League après le prochain cycle (12h).
+    ? `<div style="background:#FFF8E1;border-left:4px solid #FFA726;padding:10px 16px;font-size:.82rem;color:#6D4C00;">
+        <strong>Données partielles</strong> — cotes multi-bookmakers non disponibles (ligue secondaire). Cycle suivant dans 12h.
        </div>`
     : '';
 
@@ -14312,9 +14371,10 @@ function renderComparateur(d) {
     ${fallbackBanner}
     <div class="comp-header">
       <div>
-        <div class="comp-header-title">⚡ ${home_team} &nbsp;vs&nbsp; ${away_team}</div>
+        <div class="comp-header-title">${home_team} vs ${away_team}</div>
         <div class="comp-meta">${league} · ${dateStr} à ${timeStr}</div>
       </div>
+      <div class="comp-header-badges">${icBadge}${surebetBadge}</div>
     </div>
     <div style="overflow-x:auto;">
     <table class="comp-table">

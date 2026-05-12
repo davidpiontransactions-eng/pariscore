@@ -7569,6 +7569,18 @@ function findBestANJOdds(bkList, marketType, homeTeam, awayTeam) {
 
 const ANJ_KEYS_SET = new Set(['winamax', 'betclic', 'unibet', 'pmu', 'parionssport', 'zebet', 'bwin', 'netbet', 'betsson', 'feelingbet', 'francepari', 'pokerstars']);
 
+// Poids par book pour Weighted Fair Value (price-makers > price-takers)
+const BOOK_WEIGHTS = {
+  pinnacle: 4.0, betfair: 3.5, bet365: 2.5,
+  winamax: 1.5, unibet: 1.5,
+  betclic: 1.0, pmu: 1.0, parionssport: 1.0, zebet: 1.0,
+  netbet: 0.7, bwin: 0.7, betsson: 0.7, feelingbet: 0.6, francepari: 0.6,
+};
+function getBookWeight(key) {
+  const k = String(key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return BOOK_WEIGHTS[k] || BOOK_WEIGHTS[Object.keys(BOOK_WEIGHTS).find(bk => k.includes(bk) || bk.includes(k)) || ''] || 0.5;
+}
+
 function processAllBookmakers(rawBookmakers, homeTeam, awayTeam) {
   if (!Array.isArray(rawBookmakers) || !rawBookmakers.length) return [];
   const rows = [];
@@ -9222,6 +9234,64 @@ if (comparateurMatch && req.method === 'GET') {
     });
   }
 
+  // ── Weighted Fair Value (WFV) — moyenne pondérée no-vig par book ──────────
+  function computeWFV1N2(bkRows) {
+    let sw = 0, sh = 0, sd = 0, sa = 0;
+    bkRows.forEach(r => {
+      if (!r.home || !r.away) return;
+      const rawH = 1 / r.home, rawD = r.draw ? 1 / r.draw : 0, rawA = 1 / r.away;
+      const s = rawH + rawD + rawA; if (!s) return;
+      const w = getBookWeight(r.key);
+      sw += w; sh += w * (rawH / s); sd += w * (rawD / s); sa += w * (rawA / s);
+    });
+    if (!sw) return null;
+    return { home: sh / sw, draw: sd / sw, away: sa / sw };
+  }
+  // IC — Indice de Consensus : 1 - 5×écart-type des probas no-vig home (1N2)
+  function computeIC1N2(bkRows) {
+    const probs = bkRows.filter(r => r.home && r.away).map(r => {
+      const s = 1/r.home + (r.draw ? 1/r.draw : 0) + 1/r.away;
+      return s ? (1/r.home) / s : null;
+    }).filter(p => p != null);
+    if (probs.length < 2) return null;
+    const mean = probs.reduce((a, b) => a + b, 0) / probs.length;
+    const sd = Math.sqrt(probs.reduce((a, b) => a + (b - mean) ** 2, 0) / probs.length);
+    return Math.max(0, Math.min(1, 1 - sd * 5));
+  }
+  // Surebet : sum of (1/bestOdds per outcome) < 1 → arbitrage possible
+  function detectSurebet1N2(bkRows) {
+    const bH = Math.max(...bkRows.map(r => r.home || 0));
+    const dv = bkRows.map(r => r.draw).filter(Boolean);
+    const bD = dv.length ? Math.max(...dv) : 0;
+    const bA = Math.max(...bkRows.map(r => r.away || 0));
+    if (!bH || !bA) return null;
+    const total = 1/bH + (bD ? 1/bD : 0) + 1/bA;
+    const margin = parseFloat(((1 - total) * 100).toFixed(2));
+    return margin > 0 ? margin : null;
+  }
+  const wfv = computeWFV1N2(rows);
+  const ic  = computeIC1N2(rows);
+  const surebet = detectSurebet1N2(rows);
+
+  // Δ Cotes — snapshot des meilleures cotes 1N2, comparé à la visite précédente
+  if (!db.oddsSnapshots) db.oddsSnapshots = {};
+  const prevSnap = db.oddsSnapshots[matchId];
+  const bestH1N2 = rows.length ? Math.max(...rows.map(r => r.home || 0)) : null;
+  const bestD1N2 = rows.some(r => r.draw) ? Math.max(...rows.map(r => r.draw || 0)) : null;
+  const bestA1N2 = rows.length ? Math.max(...rows.map(r => r.away || 0)) : null;
+  let oddsHistory = null;
+  if (prevSnap && prevSnap.ts && (Date.now() - prevSnap.ts) > 60000) {
+    const ageMin = Math.round((Date.now() - prevSnap.ts) / 60000);
+    oddsHistory = {
+      deltaHome: bestH1N2 != null && prevSnap.home != null ? parseFloat((bestH1N2 - prevSnap.home).toFixed(2)) : null,
+      deltaDraw: bestD1N2 != null && prevSnap.draw != null ? parseFloat((bestD1N2 - prevSnap.draw).toFixed(2)) : null,
+      deltaAway: bestA1N2 != null && prevSnap.away != null ? parseFloat((bestA1N2 - prevSnap.away).toFixed(2)) : null,
+      prevTs: prevSnap.ts, ageMin,
+    };
+  }
+  db.oddsSnapshots[matchId] = { ts: Date.now(), home: bestH1N2, draw: bestD1N2, away: bestA1N2 };
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // Calcul ligne "Moyenne du Marché"
   let avgRow = null;
   if (rows.length) {
@@ -9277,6 +9347,10 @@ if (comparateurMatch && req.method === 'GET') {
     poisson: match.poisson,
     rows,
     avgRow,
+    wfv,
+    ic,
+    surebet,
+    oddsHistory,
     market: marketParam,
     source: rows.length ? (rows[0]?._fallback ? 'fallback' : 'db') : 'empty',
     _fallback: rows[0]?._fallback || false,
