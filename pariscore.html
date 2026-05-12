@@ -9188,6 +9188,14 @@ const label = country
         <div style="display:flex;align-items:center;gap:4px;">
           ${awayLogoImg}<span style="font-size:12px;font-weight:600;cursor:pointer;" onclick="trackClick('team','${(m.away_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.away_team}</span>${awayLiveScoreHtml(m)}
         </div>
+        ${m.live_score ? (() => {
+          const xgH = m.live_xg?.home ?? m.expectedGoals?.home ?? null;
+          const xgA = m.live_xg?.away ?? m.expectedGoals?.away ?? null;
+          const xgRow = (xgH !== null && xgA !== null)
+            ? `<div class="live-btn-xg"><span class="xg-h">xG ${(+xgH).toFixed(1)}</span><span style="color:var(--text3)">|</span><span class="xg-a">${(+xgA).toFixed(1)}</span></div>`
+            : '';
+          return `<div style="margin-top:5px;"><button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG Dom/Ext">🔴 LIVE${xgRow}</button></div>`;
+        })() : ''}
       </td>
       <td style="min-width:70px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;">
         <div style="margin-bottom:2px;">
@@ -9231,14 +9239,6 @@ const label = country
           <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
           <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
           <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
-          ${m.live_score ? (() => {
-            const xgH = m.live_xg?.home ?? m.expectedGoals?.home ?? null;
-            const xgA = m.live_xg?.away ?? m.expectedGoals?.away ?? null;
-            const xgRow = (xgH !== null && xgA !== null)
-              ? `<div class="live-btn-xg"><span class="xg-h">xG ${(+xgH).toFixed(1)}</span><span style="color:var(--text3)">|</span><span class="xg-a">${(+xgA).toFixed(1)}</span></div>`
-              : '';
-            return `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG Dom/Ext">🔴${xgRow}</button>`;
-          })() : ''}
           <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
         </div>
       </td>
