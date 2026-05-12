@@ -1425,6 +1425,97 @@ function inferSportKeyFromLeagueCountry(leagueName, country) {
   return null;
 }
 
+// ─── BSD MISTAG DETECTION ─────────────────────────────────────────────────────
+// BSD ne sépare pas certaines divisions T2 (Ligue 2 FR, Bundesliga 2, Serie B IT) :
+// il tag TOUS les matchs du pays sous le T1. On corrige via canonical T1 team list :
+// si NI home NI away dans canonical T1 → match T2 mistaggé → override vers T2 odds_key.
+const BSD_T1_CANONICAL_TEAMS = {
+  // BSD 6 = Ligue 1 FR (2025-2026)
+  '6': [
+    'paris saint germain', 'paris saint-germain', 'psg', 'paris sg',
+    'olympique de marseille', 'olympique marseille', 'marseille', 'om',
+    'as monaco', 'monaco',
+    'olympique lyonnais', 'olympique lyon', 'lyon', 'ol',
+    'lille osc', 'lille', 'losc',
+    'rc lens', 'lens',
+    'ogc nice', 'nice',
+    'stade rennais', 'rennes',
+    'rc strasbourg alsace', 'rc strasbourg', 'strasbourg',
+    'stade brestois', 'brest',
+    'fc nantes', 'nantes',
+    'toulouse fc', 'toulouse',
+    'aj auxerre', 'auxerre',
+    'angers sco', 'angers',
+    'le havre ac', 'le havre',
+    'fc metz', 'metz',
+    'paris fc',
+    'lorient', 'fc lorient'
+  ],
+  // BSD 5 = Bundesliga DE
+  '5': [
+    'fc bayern munchen', 'fc bayern munich', 'bayern munich', 'bayern munchen', 'bayern',
+    'borussia dortmund', 'dortmund', 'bvb',
+    'rb leipzig', 'leipzig',
+    'vfb stuttgart', 'stuttgart',
+    'tsg hoffenheim', 'hoffenheim',
+    'bayer 04 leverkusen', 'bayer leverkusen', 'leverkusen',
+    'sc freiburg', 'freiburg',
+    'eintracht frankfurt', 'frankfurt',
+    'fc augsburg', 'augsburg',
+    '1 fsv mainz 05', 'fsv mainz', 'mainz',
+    'hamburger sv', 'hamburg', 'hsv',
+    '1 fc union berlin', 'union berlin',
+    'borussia m gladbach', 'borussia mgladbach', 'monchengladbach',
+    '1 fc koln', 'koln', 'cologne',
+    'sv werder bremen', 'werder bremen', 'bremen',
+    'vfl wolfsburg', 'wolfsburg',
+    '1 fc heidenheim', 'heidenheim',
+    'fc st pauli', 'st pauli'
+  ],
+  // BSD 4 = Serie A IT
+  '4': [
+    'inter', 'inter milan', 'internazionale',
+    'ssc napoli', 'napoli',
+    'juventus',
+    'as roma', 'roma',
+    'milan', 'ac milan',
+    'como',
+    'atalanta',
+    'bologna',
+    'lazio',
+    'udinese',
+    'sassuolo',
+    'torino',
+    'parma',
+    'genoa',
+    'fiorentina',
+    'cagliari',
+    'lecce',
+    'cremonese',
+    'hellas verona', 'verona',
+    'pisa'
+  ],
+};
+function isLikelyBSDMistag(bsdLeagueId, homeTeam, awayTeam) {
+  const list = BSD_T1_CANONICAL_TEAMS[String(bsdLeagueId)];
+  if (!list || !list.length) return false;
+  const h = normText(homeTeam);
+  const a = normText(awayTeam);
+  if (!h || !a) return false;
+  const homeIn = list.some(t => h === t || h.includes(t) || t.includes(h));
+  const awayIn = list.some(t => a === t || a.includes(t) || t.includes(a));
+  // Both teams absent from T1 canonical list → very likely T2 mistag by BSD
+  return !homeIn && !awayIn;
+}
+// Mapping T1 sport_key → T2 sport_key pour override mistag
+const T1_TO_T2_KEY = {
+  'soccer_france_ligue_one':    'soccer_france_ligue_two',
+  'soccer_germany_bundesliga':  'soccer_germany_bundesliga2',
+  'soccer_italy_serie_a':       'soccer_italy_serie_b',
+  // soccer_epl, soccer_spain_la_liga : BSD a Championship (id 12) et Segunda (id 38) séparés
+  //   → pas de mistag attendu. Pas d'entrée nécessaire.
+};
+
 // Obtenir la saison courante BSD (année de début)
 function bsdCurrentSeasonYear() {
   const now = new Date();
@@ -6183,12 +6274,26 @@ function bsdToOddsApiFormat(bsdMatch) {
   const drawOdds = bsdMatch.odds.draw || 3.0;
 
   // Mapping robuste: priorité à l'ID BSD, puis disambiguïsation par pays
-  const configLeague = resolveConfigLeagueForBSDMatch(bsdMatch);
+  let configLeague = resolveConfigLeagueForBSDMatch(bsdMatch);
   const forcedCountry = forceCountryForKnownCollisions(
     bsdMatch.league,
     bsdMatch._bsd_country || bsdMatch.country,
     bsdMatch._bsd_league_id
   );
+
+  // BSD mistag correction : Ligue 2 / Bundesliga 2 / Serie B IT tagged comme T1 par BSD.
+  // Si NI home NI away dans canonical T1 → override vers T2.
+  if (configLeague && isLikelyBSDMistag(bsdMatch._bsd_league_id, bsdMatch.home_team, bsdMatch.away_team)) {
+    const t2Key = T1_TO_T2_KEY[configLeague.odds_key];
+    if (t2Key) {
+      const t2Config = leaguesConfig.leagues.find(l => l.odds_key === t2Key);
+      if (t2Config) {
+        console.log(`  [BSD Mistag] ${bsdMatch.home_team} vs ${bsdMatch.away_team} : BSD a tagué "${configLeague.name}" mais teams absentes du T1 canonical → override "${t2Config.name}"`);
+        configLeague = t2Config;
+        bsdMatch.league = t2Config.name;
+      }
+    }
+  }
 
   const inferredSportKey = inferSportKeyFromLeagueCountry(bsdMatch.league, forcedCountry);
   const sportKey = configLeague?.odds_key || inferredSportKey || 'soccer_bsd';
