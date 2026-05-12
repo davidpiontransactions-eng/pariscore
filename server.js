@@ -417,6 +417,55 @@ async function fetchAPIFootballTeamId(teamName, leagueId, season) {
   const fuzzy = keys.find(k => k.includes(target) || target.includes(k));
   return fuzzy ? teamsMap[fuzzy] : null;
 }
+// ─── THESPORTSDB PHOTO FALLBACK ─────────────────────────────────────────────
+// Free public API key=3 demo. Photo cutout/thumb gratuit. Coverage moyenne, fallback acceptable.
+// Filtre strict par team name normalisé pour éviter homonymes.
+async function fetchTheSportsDBPlayerPhoto(playerName, teamName) {
+  if (!playerName) return null;
+  const cacheKey = `tsdb_player_${normName(playerName)}_${teamName ? normName(teamName) : 'any'}`;
+  const cached = apiCacheGet(cacheKey, 'tsdb_player');
+  if (cached !== null) return cached;
+  try {
+    const url = `https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p=${encodeURIComponent(playerName)}`;
+    const res = await httpsGet(url, { 'User-Agent': 'Mozilla/5.0 (compatible; PariScore/1.0)' });
+    if (res.status !== 200 || !res.data?.player) {
+      apiCacheSet(cacheKey, false, 'tsdb_player', 24 * 3600 * 1000);
+      return null;
+    }
+    let players = res.data.player.filter(p => /soccer|football/i.test(p.strSport || ''));
+    if (!players.length) players = res.data.player;
+    let chosen = null;
+    if (teamName) {
+      const tNorm = normName(teamName);
+      chosen = players.find(p => p.strTeam && normName(p.strTeam) === tNorm);
+      if (!chosen) chosen = players.find(p => p.strTeam && (normName(p.strTeam).includes(tNorm) || tNorm.includes(normName(p.strTeam))));
+    }
+    if (!chosen) chosen = players[0];
+    if (!chosen || (!chosen.strThumb && !chosen.strCutout)) {
+      apiCacheSet(cacheKey, false, 'tsdb_player', 24 * 3600 * 1000);
+      return null;
+    }
+    const enriched = {
+      photo: chosen.strCutout || chosen.strThumb,
+      thumb: chosen.strThumb || null,
+      cutout: chosen.strCutout || null,
+      name: chosen.strPlayer,
+      team: chosen.strTeam,
+      nationality: chosen.strNationality,
+      position: chosen.strPosition,
+      height: chosen.strHeight,
+      weight: chosen.strWeight,
+      birthdate: chosen.dateBorn,
+      _source: 'thesportsdb',
+    };
+    apiCacheSet(cacheKey, enriched, 'tsdb_player', 7 * 24 * 3600 * 1000);
+    return enriched;
+  } catch (e) {
+    console.warn(`  [TheSportsDB] ${playerName} erreur:`, e.message);
+    return null;
+  }
+}
+
 async function fetchAPIFootballPlayer(playerName, teamName, leagueId) {
   if (!API_FOOTBALL_KEY || !playerName) return null;
   let teamId = getAPIFootballTeamIdByName(teamName);
@@ -9345,6 +9394,21 @@ if (pathname === '/api/v1/player') {
                   player._enriched = (player._enriched || []).concat(['api-football']);
                 }
               } catch (e) { /* fallback silencieux */ }
+            }
+            // 3e source : TheSportsDB (photo fallback gratuit, sans quota)
+            if (!player.photo) {
+              try {
+                const tsdb = await fetchTheSportsDBPlayerPhoto(player.name || playerName, teamCtx);
+                if (tsdb && tsdb.photo) {
+                  player.photo = tsdb.photo;
+                  player._photo_source = 'thesportsdb';
+                  player._enriched = (player._enriched || []).concat(['thesportsdb-photo']);
+                  if (!player.nationality && tsdb.nationality) player.nationality = tsdb.nationality;
+                  if (!player.height && tsdb.height) player.height = tsdb.height;
+                  if (!player.weight && tsdb.weight) player.weight = tsdb.weight;
+                  if (!player.birthdate && tsdb.birthdate) player.birthdate = tsdb.birthdate;
+                }
+              } catch (e) { /* silence */ }
             }
             player._photo_available = !!player.photo;
             // TTL 24h pour joueurs actifs (was 7d → trop stale pour rating saison + form_l5)
