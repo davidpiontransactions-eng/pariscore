@@ -133,6 +133,24 @@
       </div>
     </div>
 
+    <!-- MOCK LIVE -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">🧪 Simulateur Match Live (Dev)</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div class="status-row"><span>Statut simulateur</span><span class="badge" id="mock-status-badge">—</span></div>
+          <div class="status-row"><span>Minute</span><span style="font-family:var(--font-mono);font-size:13px;" id="mock-minute">—</span></div>
+          <div class="status-row"><span>Score</span><span style="font-family:var(--font-mono);font-size:13px;font-weight:700;" id="mock-score">—</span></div>
+          <div class="status-row" style="border-bottom:none;"><span>Match</span><span style="font-size:12px;color:var(--text3);">PariScore FC vs Test United</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
+          <button id="mock-toggle-btn" class="btn-green" onclick="toggleMock()" style="padding:10px 18px;font-size:13px;">Activer le mock</button>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);line-height:1.5;">Injecte un match fictif en direct<br>dès la 60ème minute. Updates SSE<br>toutes les 10s. Kill auto à 90'.</div>
+        </div>
+      </div>
+      <div class="log" id="mock-log" style="margin-top:12px;"></div>
+    </div>
+
     <!-- VALUE BETS -->
     <div class="card" style="margin-bottom:24px;">
       <div class="card-title">Top Value Bets actifs</div>
@@ -208,6 +226,7 @@ function renderStatus(d) {
   renderBool('fetching-odds', d.isFetchingOdds);
   renderBool('fetching-stats', d.isFetchingStats);
   renderBool('ai-cached', d.aiScoutCached, true);
+  renderMockStatus(d.mock);
 
   // Accuracy
   const acc = d.accuracy;
@@ -278,6 +297,47 @@ async function sendTelegramTest() {
     const data = await res.json();
     log(data.message || data.error || 'Réponse reçue');
   } catch(e) { log('⚠ Erreur: ' + e.message); }
+}
+
+// ─── MOCK LIVE ────────────────────────────────────────────────────────────────
+function renderMockStatus(mock) {
+  if (!mock) return;
+  const badge = document.getElementById('mock-status-badge');
+  const btn   = document.getElementById('mock-toggle-btn');
+  const minEl = document.getElementById('mock-minute');
+  const scEl  = document.getElementById('mock-score');
+  if (mock.active) {
+    badge.className = 'badge badge-green'; badge.textContent = 'ACTIF';
+    btn.textContent = 'Désactiver le mock'; btn.style.background = 'rgba(255,77,77,0.15)'; btn.style.color = 'var(--red)'; btn.style.border = '1px solid rgba(255,77,77,0.3)';
+    minEl.textContent = mock.minute != null ? mock.minute + "'" : '—';
+    if (mock.score) scEl.textContent = mock.score.home + ' – ' + mock.score.away;
+    else scEl.textContent = '—';
+  } else {
+    badge.className = 'badge badge-amber'; badge.textContent = 'INACTIF';
+    btn.textContent = 'Activer le mock'; btn.style.background = 'var(--green)'; btn.style.color = '#000'; btn.style.border = 'none';
+    minEl.textContent = '—'; scEl.textContent = '—';
+  }
+}
+
+async function toggleMock() {
+  const btn = document.getElementById('mock-toggle-btn');
+  const isActive = btn.textContent.includes('Désactiver');
+  const route = isActive ? '/api/v1/test/disable-mock' : '/api/v1/test/enable-mock';
+  const action = isActive ? '🛑 Désactivation mock…' : '🧪 Activation mock…';
+  mockLog(action);
+  try {
+    const res = await fetch(route, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok) { mockLog('⚠ ' + (data.error || 'Erreur')); return; }
+    mockLog('✓ ' + data.message + (data.minute ? ' — ' + data.minute + "'" : ''));
+    await loadStatus();
+  } catch(e) { mockLog('⚠ Erreur: ' + e.message); }
+}
+
+function mockLog(msg) {
+  const el = document.getElementById('mock-log');
+  const time = new Date().toLocaleTimeString('fr-FR');
+  el.innerHTML = `<span style="color:var(--text2)">[${time}]</span> ${msg}\n` + el.innerHTML;
 }
 
 function log(msg) {

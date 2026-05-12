@@ -362,6 +362,15 @@ function broadcastSSE(eventName, data) {
   }
 }
 
+// Retourne db.matches avec le mock injecté en tête si actif
+function matchesForBroadcast() {
+  const base = db.matches || [];
+  if (mockActive && testMatch && testMatch.live_status !== 'FT') {
+    return [testMatch, ...base.filter(m => m.id !== testMatch.id)];
+  }
+  return base;
+}
+
 function buildMeta() {
   return {
     lastOddsUpdate: db.lastOddsUpdate,
@@ -975,6 +984,137 @@ let lastCacheUpdate = null;   // Timestamp du dernier refresh réussi
 // ─── ODDS BATCH CACHE — TTL 30 min pour préserver crédits API ───────────────
 let oddsCache = {};           // { [fixture_id]: { data, ts, bestLink, bookmaker } }
 const ODDS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+// ─── MOCK MATCH — Environnement de test live haute fidélité ──────────────────
+// Mettre à true pour activer au démarrage, ou via POST /api/v1/test/enable-mock
+const MOCK_MODE = false;
+let mockActive = MOCK_MODE;
+let testMatch = null;
+let _mockInterval = null;
+
+function buildInitialMockMatch() {
+  return {
+    id: 'mock-pariscore-001',
+    sport: 'soccer_france_ligue1',
+    league: 'Ligue 1',
+    country: 'France',
+    home_team: 'PariScore FC',
+    away_team: 'Test United',
+    home_rank: 3,
+    away_rank: 7,
+    home_form: 'WWDWL',
+    away_form: 'LDWDW',
+    commence_time: new Date(Date.now() - 65 * 60 * 1000).toISOString(), // ~65 min ago
+    status: '2H',
+    live_status: '2H',
+    live_minute: 60,
+    live_score: { home: 1, away: 0 },
+    live_intensity: 62,
+    live_possession: { home: 55, away: 45 },
+    live_shots: { home: 8, away: 4 },
+    live_shots_on_target: { home: 4, away: 1 },
+    live_corners: { home: 5, away: 2 },
+    live_dangerous_attacks: { home: 42, away: 18 },
+    live_xg: { home: 1.4, away: 0.6 },
+    live_stats: {
+      possessionHome: 55, possessionAway: 45,
+      dangerousAttacksHome: 42, dangerousAttacksAway: 18,
+      shotsOnTargetHome: 4, shotsOnTargetAway: 1,
+    },
+    live_momentum: [
+      { team: 'home' }, { team: 'home' }, { team: 'away' },
+      { team: 'home' }, { team: 'home' }, { team: 'away' },
+    ],
+    odds: { home: 1.55, draw: 3.80, away: 5.20 },
+    poisson: {
+      over05: 98, over15: 85, over25: 58, over35: 32,
+      btts: 44, under15: 15, cs00: 2,
+      homeWin: 64, draw: 21, awayWin: 15,
+      topScores: [
+        { score: '1-0', prob: 18 }, { score: '2-0', prob: 14 },
+        { score: '1-1', prob: 11 }, { score: '2-1', prob: 9 }, { score: '3-0', prob: 6 },
+      ],
+      method: 'poisson',
+    },
+    expectedGoals: { home: 1.9, away: 0.8 },
+    stats: {
+      home: { ppg: 2.1, wins: 60, draws: 15, losses: 25, scored: 62, conceded: 28, avgScored: 1.9, avgConceded: 0.8, isReal: false },
+      away: { ppg: 1.4, wins: 40, draws: 20, losses: 40, scored: 44, conceded: 50, avgScored: 1.2, avgConceded: 1.4, isReal: false },
+      isReal: false,
+    },
+    best_edge: { label: '1', odds: 1.55, edge: 4.2, bk: 'Winamax' },
+    edge: { home: 4.2, draw: -1.1, away: -3.8 },
+    fair: { home: 0.614, draw: 0.215, away: 0.171 },
+    bookmakers: { home: 'Winamax', draw: 'Betclic', away: 'Unibet' },
+    _bsd_home_ratings: [
+      { name: 'K. Benzema',  short_name: 'Benzema',  position: 'F', avg_rating: 8.3, goals: 12, assists: 5, xg: 9.8 },
+      { name: 'A. Tchouaméni', short_name: 'Tchouaméni', position: 'M', avg_rating: 7.8, goals: 2, assists: 3, xg: 1.4 },
+      { name: 'L. Hernandez', short_name: 'L. Hernandez', position: 'D', avg_rating: 7.4, goals: 1, assists: 1, xg: 0.6 },
+    ],
+    _bsd_away_ratings: [
+      { name: 'M. Salah',    short_name: 'Salah',    position: 'F', avg_rating: 7.6, goals: 8, assists: 6, xg: 7.2 },
+      { name: 'T. Alexander-Arnold', short_name: 'T.A-Arnold', position: 'D', avg_rating: 7.1, goals: 3, assists: 7, xg: 2.1 },
+      { name: 'F. Diaz',     short_name: 'F. Diaz',  position: 'M', avg_rating: 6.9, goals: 5, assists: 2, xg: 4.3 },
+    ],
+    _isMock: true,
+  };
+}
+
+function updateMockMatch() {
+  if (!testMatch) return;
+  const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  testMatch.live_minute = Math.min(testMatch.live_minute + 1, 90);
+  testMatch.commence_time = new Date(Date.now() - testMatch.live_minute * 60 * 1000).toISOString();
+  // Occasional goal
+  if (Math.random() < 0.04) testMatch.live_score.home++;
+  if (Math.random() < 0.025) testMatch.live_score.away++;
+  // Stats drift
+  testMatch.live_shots.home += rnd(0, 1);
+  testMatch.live_shots.away += rnd(0, 1);
+  testMatch.live_shots_on_target.home += Math.random() < 0.35 ? 1 : 0;
+  testMatch.live_shots_on_target.away += Math.random() < 0.2 ? 1 : 0;
+  testMatch.live_corners.home += Math.random() < 0.15 ? 1 : 0;
+  testMatch.live_corners.away += Math.random() < 0.1 ? 1 : 0;
+  testMatch.live_dangerous_attacks.home += rnd(0, 2);
+  testMatch.live_dangerous_attacks.away += rnd(0, 1);
+  const homePos = Math.min(75, Math.max(35, testMatch.live_possession.home + rnd(-3, 3)));
+  testMatch.live_possession = { home: homePos, away: 100 - homePos };
+  // Intensity based on recent action
+  const da = testMatch.live_dangerous_attacks;
+  testMatch.live_intensity = Math.min(100, Math.round((da.home + da.away) * 0.6 + testMatch.live_shots.home * 1.2));
+  // Momentum point
+  const dominant = da.home > da.away * 1.3 ? 'home' : da.away > da.home * 1.3 ? 'away' : (Math.random() > 0.5 ? 'home' : 'away');
+  testMatch.live_momentum.push({ team: dominant });
+  if (testMatch.live_momentum.length > 20) testMatch.live_momentum.shift();
+  // Sync live_stats mirror
+  testMatch.live_stats = {
+    possessionHome: testMatch.live_possession.home,
+    possessionAway: testMatch.live_possession.away,
+    dangerousAttacksHome: testMatch.live_dangerous_attacks.home,
+    dangerousAttacksAway: testMatch.live_dangerous_attacks.away,
+    shotsOnTargetHome: testMatch.live_shots_on_target.home,
+    shotsOnTargetAway: testMatch.live_shots_on_target.away,
+  };
+  // xG drift
+  testMatch.live_xg.home = parseFloat((testMatch.live_xg.home + (Math.random() < 0.3 ? 0.1 : 0)).toFixed(2));
+  testMatch.live_xg.away = parseFloat((testMatch.live_xg.away + (Math.random() < 0.15 ? 0.1 : 0)).toFixed(2));
+  // End match at 90
+  if (testMatch.live_minute >= 90) {
+    testMatch.status = 'FT';
+    testMatch.live_status = 'FT';
+    if (_mockInterval) { clearInterval(_mockInterval); _mockInterval = null; }
+    console.log('[MOCK] Match terminé — arrêt du simulateur.');
+  }
+  console.log(`[MOCK] ${testMatch.live_minute}' — Score: ${testMatch.live_score.home}-${testMatch.live_score.away} | DA: ${testMatch.live_dangerous_attacks.home}-${testMatch.live_dangerous_attacks.away}`);
+  // Push SSE pour que le frontend voie les stats sans attendre le polling 5min
+  if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
+}
+
+if (MOCK_MODE) {
+  testMatch = buildInitialMockMatch();
+  _mockInterval = setInterval(updateMockMatch, 10000);
+  console.log('[MOCK] Mode test activé au démarrage — PariScore FC vs Test United');
+}
 
 // ANJ bookmakers reconnus (France régulée)
 const ANJ_BOOKMAKERS = ['Winamax', 'Betclic', 'Unibet', 'PMU', 'ParionsSport', 'ZEbet', 'Winamax'];
@@ -5115,6 +5255,28 @@ function computeMatchTopButteurs(m) {
   return attackers.slice(0, 3);
 }
 
+// Top 3 joueurs par équipe — ratings BSD saison. Position: G/D/M/F
+function getTop3Players(match) {
+  const POS_LABEL = { G: 'G', D: 'D', M: 'M', F: 'A', Goalkeeper: 'G', Defender: 'D', Midfielder: 'M', Attacker: 'A' };
+  const top3 = (arr) => (arr || [])
+    .filter(p => p.avg_rating != null)
+    .sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0))
+    .slice(0, 3)
+    .map(p => ({
+      name: p.short_name || p.name || '?',
+      avg_rating: p.avg_rating,
+      position: POS_LABEL[p.position] || p.position || '?',
+      goals: p.goals || 0,
+      assists: p.assists || 0,
+      xg: p.xg ? parseFloat(p.xg.toFixed(2)) : 0,
+    }));
+  const home = top3(match._bsd_home_ratings);
+  const away = top3(match._bsd_away_ratings);
+  const homeAvg = home.length ? parseFloat((home.reduce((s, p) => s + p.avg_rating, 0) / home.length).toFixed(2)) : null;
+  const awayAvg = away.length ? parseFloat((away.reduce((s, p) => s + p.avg_rating, 0) / away.length).toFixed(2)) : null;
+  return { home, away, homeAvg, awayAvg, available: home.length > 0 || away.length > 0 };
+}
+
 function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5]) {
   // Expected total corners = average of both teams' averages
   const expectedTotal = (homeAvg + awayAvg) / 2;
@@ -5421,7 +5583,7 @@ async function fetchOdds(force = false) {
     autoPurgeDatabase(); // purge immédiate après chaque injection BSD
     saveDB();
     syncCacheBuffers();
-    if (sseClients.size > 0) broadcastSSE('matches_update', { matches: db.matches, meta: buildMeta() });
+    if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
     console.error('  [Cron:Odds] Erreur fatale:', e.message);
@@ -6452,13 +6614,14 @@ function buildDemoMatches() {
 
   function demoBookmakers(home, away, oH, oD, oA, delta = 0) {
     const bks = [
-      { key: 'winamax',    title: 'Winamax',    aNJ: true,  hd: -0.02, dd: 0,     ad: -0.02 },
-      { key: 'betclic',    title: 'Betclic',    aNJ: true,  hd: -0.01, dd: 0.03,  ad: -0.03 },
-      { key: 'unibet',     title: 'Unibet',     aNJ: true,  hd: -0.03, dd: 0.05,  ad: -0.05 },
-      { key: 'pmu',        title: 'PMU',        aNJ: true,  hd: -0.04, dd: 0.02,  ad: -0.04 },
-      { key: 'bet365',     title: 'Bet365',     aNJ: false, hd: 0,     dd: 0,     ad: 0     },
-      { key: 'pinnacle',   title: 'Pinnacle',   aNJ: false, hd: 0.02,  dd: 0.02,  ad: 0.03  },
-      { key: '1xbet',      title: '1xbet',      aNJ: false, hd: 0.05,  dd: 0.04,  ad: 0.06  },
+      { key: 'winamax',      title: 'Winamax',          aNJ: true,  hd: 0,     dd: 0,     ad: 0     },
+      { key: 'betclic',      title: 'Betclic',          aNJ: true,  hd: -0.01, dd: 0.03,  ad: -0.03 },
+      { key: 'unibet',       title: 'Unibet',           aNJ: true,  hd: -0.03, dd: 0.05,  ad: -0.05 },
+      { key: 'parions_sport',title: 'Parions Sport',    aNJ: true,  hd: -0.04, dd: 0.02,  ad: -0.04 },
+      { key: 'bet365',       title: 'Bet365',           aNJ: false, hd: 0.03,  dd: 0.01,  ad: 0.02  },
+      { key: 'pinnacle',     title: 'Pinnacle',         aNJ: false, hd: 0.05,  dd: 0.03,  ad: 0.05  },
+      { key: '1xbet',        title: '1xbet',            aNJ: false, hd: 0.15,  dd: 0.06,  ad: 0.14  },
+      { key: 'betfair',      title: 'Betfair Exchange', aNJ: false, hd: 0.12,  dd: 0.05,  ad: 0.11  },
     ];
     // Base Over/Under & BTTS & DC seeds dérivés des cotes 1N2
     const probH = 1 / oH, probD = oD ? 1 / oD : 0, probA = 1 / oA;
@@ -7304,7 +7467,7 @@ async function handleAPI(req, res, pathname, query) {
       'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
     });
     res.flushHeaders();
-    res.write(`event: matches_update\ndata: ${JSON.stringify({ matches: db.matches, meta: buildMeta() })}\n\n`);
+    res.write(`event: matches_update\ndata: ${JSON.stringify({ matches: matchesForBroadcast(), meta: buildMeta() })}\n\n`);
     sseClients.add(res);
     const hb = setInterval(() => {
       try {
@@ -7363,10 +7526,14 @@ async function handleAPI(req, res, pathname, query) {
 
       // [FIX - 2026-05-11] ?live=true → retourne UNIQUEMENT les matchs en direct
       if (query.live === 'true') {
-        const liveMatches = matches.filter(m => isLiveMatch(m));
-        console.log('[DEBUG LIVE] Matchs en BDD: ' + matches.length + ', Matchs renvoyés après filtre: ' + liveMatches.length + ' | statuts: ' + matches.map(function(m){ return m.status || '?'; }).slice(0,10).join(','));
+        let liveMatches = matches.filter(m => isLiveMatch(m));
+        // [MOCK] Injection du match de test en tête de liste si actif
+        if (mockActive && testMatch && testMatch.live_status !== 'FT') {
+          liveMatches = [testMatch, ...liveMatches.filter(m => m.id !== testMatch.id)];
+        }
+        console.log('[DEBUG LIVE] Matchs en BDD: ' + matches.length + ', Matchs renvoyés après filtre: ' + liveMatches.length + (mockActive ? ' [MOCK actif]' : '') + ' | statuts: ' + matches.map(function(m){ return m.status || '?'; }).slice(0,10).join(','));
         console.log(`📊 [API] Filtre LIVE actif — ${liveMatches.length} matchs en direct.`);
-        return jsonResponse(res, 200, { count: liveMatches.length, matches: liveMatches, meta: { status: db.status, fromCache, serverReady, liveOnly: true } });
+        return jsonResponse(res, 200, { count: liveMatches.length, matches: liveMatches, meta: { status: db.status, fromCache, serverReady, liveOnly: true, mockActive } });
       }
 
       if (query.league && query.league !== 'all') {
@@ -7398,6 +7565,11 @@ async function handleAPI(req, res, pathname, query) {
           isFinishedStatus(m.fixture_status)
         );
       });
+
+      // [MOCK] Injection dans la liste principale pour que allMatches frontend le voie
+      if (mockActive && testMatch && testMatch.live_status !== 'FT') {
+        matches = [testMatch, ...matches.filter(m => m.id !== testMatch.id)];
+      }
 
       console.log(`📊 [API] Envoi de ${matches.length} matchs filtrés (Kill Switch 4h bypass LIVE + statuts élargis).`);
       return jsonResponse(res, 200, { count: matches.length, matches, meta: { status: db.status, fromCache, serverReady } });
@@ -7987,6 +8159,48 @@ if (pathname === '/api/v1/guide') {
 
     // ... le reste de tes routes (api/v1/matches, etc.) ...
 
+// ─── ROUTE TEST : Activation / Désactivation du Mock Match ───────────────────
+if (pathname === '/api/v1/test/enable-mock') {
+  if (req.method === 'POST' || req.method === 'GET') {
+    const user = getAuthUser(req);
+    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès réservé admin' });
+    if (!mockActive) {
+      mockActive = true;
+      testMatch = buildInitialMockMatch();
+      if (_mockInterval) clearInterval(_mockInterval);
+      _mockInterval = setInterval(updateMockMatch, 10000);
+      console.log('[MOCK] ✅ Mock activé via route — PariScore FC vs Test United (60ème minute)');
+      return jsonResponse(res, 200, { success: true, message: 'Mock match activé', match_id: testMatch.id, minute: testMatch.live_minute });
+    } else {
+      return jsonResponse(res, 200, { success: true, message: 'Mock déjà actif', match_id: testMatch?.id, minute: testMatch?.live_minute });
+    }
+  }
+}
+
+if (pathname === '/api/v1/test/disable-mock') {
+  if (req.method === 'POST' || req.method === 'GET') {
+    const user = getAuthUser(req);
+    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès réservé admin' });
+    mockActive = false;
+    if (_mockInterval) { clearInterval(_mockInterval); _mockInterval = null; }
+    testMatch = null;
+    console.log('[MOCK] 🛑 Mock désactivé via route');
+    return jsonResponse(res, 200, { success: true, message: 'Mock désactivé' });
+  }
+}
+
+// ── GET /api/v1/live-players/:id — Top 3 joueurs par équipe (ratings BSD saison) ──
+if (pathname.startsWith('/api/v1/live-players/')) {
+  const id = pathname.slice('/api/v1/live-players/'.length);
+  if (!id || id === 'undefined') return jsonResponse(res, 400, { error: 'ID invalide' });
+  const match = (mockActive && testMatch && testMatch.id === id)
+    ? testMatch
+    : (db.matches.find(m => m.id === id) || null);
+  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+  const top3 = getTop3Players(match);
+  return jsonResponse(res, 200, { success: true, matchId: id, top3 });
+}
+
 if (pathname === '/api/v1/live/bsd') {
   const now = Date.now();
   const liveMatches = db.matches.filter(m => {
@@ -8391,6 +8605,12 @@ if (pathname === '/api/v1/admin/status') {
     aiScoutCached: !!aiScoutCache.data,
     telegramChats: TELEGRAM_CHAT_IDS.size,
     memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    mock: {
+      active: mockActive,
+      minute: testMatch?.live_minute ?? null,
+      score: testMatch?.live_score ?? null,
+      status: testMatch?.live_status ?? null,
+    },
   });
 }
 

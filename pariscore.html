@@ -1893,14 +1893,18 @@
   }
   .bet-btn:hover { background: rgba(255,167,38,0.2); border-color: rgba(255,167,38,0.4); transform: scale(1.1); }
   .live-btn {
-    display:inline-flex;align-items:center;justify-content:center;
-    padding:4px 7px;border-radius:5px;
+    display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:4px 8px;border-radius:5px;
     font:700 9px/1 var(--font-mono);letter-spacing:.5px;
     background:rgba(255,77,77,0.1);color:#ff4d4d;
     border:1px solid rgba(255,77,77,0.3);
     cursor:pointer;transition:all .15s;white-space:nowrap;
   }
   .live-btn:hover { background:rgba(255,77,77,0.2);border-color:#ff4d4d;transform:scale(1.05); }
+  .live-btn-xg { display:flex;gap:5px;align-items:center; }
+  .live-btn-xg span { font:500 9px/1 var(--font-mono);letter-spacing:0; }
+  .live-btn-xg .xg-h { color:#00e676; }
+  .live-btn-xg .xg-a { color:#7c4dff; }
   /* DROPPING ODDS */
   .odds-delta-pill { display:inline-flex;align-items:center;gap:3px;font:700 10px/1 var(--font-mono);padding:3px 7px;border-radius:4px;cursor:pointer;transition:opacity .15s;white-space:nowrap; }
   .odds-delta-pill.drop { background:rgba(255,77,77,0.12);border:1px solid rgba(255,77,77,0.3);color:#ff5252; }
@@ -2585,6 +2589,98 @@
     cursor: not-allowed;
   }
 
+  /* ── Glossaire de Marché ──────────────────────────────────────────────────── */
+  .guide-glossaire-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 0 32px 0;
+  }
+  .guide-gloss-entry {
+    border-left: 3px solid #ed1c24;
+    padding: 24px 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .guide-gloss-entry:last-child { border-bottom: none; }
+  .guide-gloss-term {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+  .guide-gloss-num {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: #ed1c24;
+    background: rgba(237,28,36,0.1);
+    border: 1px solid rgba(237,28,36,0.25);
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 1px;
+  }
+  .guide-gloss-body p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin: 0 0 14px 0;
+    max-width: 680px;
+  }
+  .guide-gloss-formula {
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 0 0 14px 0;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .guide-gloss-formula code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--blue);
+    background: none;
+    padding: 0;
+  }
+  .guide-gloss-example {
+    background: rgba(237,28,36,0.04);
+    border: 1px solid rgba(237,28,36,0.15);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    max-width: 640px;
+  }
+  .guide-gloss-ex-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #ed1c24;
+    margin-bottom: 8px;
+  }
+  code.guide-gloss-result {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    background: rgba(0,230,118,0.1);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+  body:not(.dark-theme) .guide-gloss-entry { border-left-color: #ed1c24; }
+  body:not(.dark-theme) .guide-gloss-formula { background: #f5f5f5; border-color: #ddd; }
+  body:not(.dark-theme) .guide-gloss-example { background: rgba(237,28,36,0.03); border-color: rgba(237,28,36,0.2); }
+  body:not(.dark-theme) .guide-gloss-body p { color: #444; }
+  /* ── end glossaire ───────────────────────────────────────────────────────── */
+
   .guide-container {
     display: flex;
     flex-direction: column;
@@ -3124,59 +3220,83 @@
   .comp-empty{text-align:center;color:var(--text2);padding:48px 20px;font-style:italic;background:var(--bg2);border-radius:12px}
   .comp-note{font-size:.75rem;color:var(--text3);margin-top:10px;padding:8px 12px;border-left:3px solid var(--bg4);background:var(--bg2);border-radius:0 6px 6px 0}
 
-  /* ── LIVE STRATEGY DASHBOARD ── */
+  /* ── LIVE STRATEGY DASHBOARD v2 — AiScore Style ── */
   #live-dashboard { width:100%; }
   #ld-empty { padding:56px 20px;text-align:center;color:var(--text3);font-size:14px;font-style:italic; }
-  /* Match selector strip */
+  /* Strip sélecteur matchs */
   .ld-strip { display:flex;gap:8px;padding:10px 0 14px;overflow-x:auto;scrollbar-width:none; }
   .ld-strip::-webkit-scrollbar { display:none; }
   .ld-strip-card { flex-shrink:0;padding:8px 14px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s;min-width:160px; }
-  .ld-strip-card:hover { border-color:rgba(255,77,77,0.5); }
-  .ld-strip-card.active { border-color:#E2001A;background:rgba(226,0,26,0.07); }
+  .ld-strip-card:hover { border-color:rgba(0,230,118,0.4); }
+  .ld-strip-card.active { border-color:var(--green);background:rgba(0,230,118,0.06); }
   .ld-strip-match { font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px; }
-  .ld-strip-score { font-size:15px;font-weight:800;font-family:var(--font-mono);color:#E2001A;margin-bottom:2px; }
+  .ld-strip-score { font-size:15px;font-weight:800;font-family:var(--font-mono);color:var(--green);margin-bottom:2px; }
   .ld-strip-min { font-size:10px;color:var(--text3); }
-  /* Main 2×2 grid */
-  .ld-grid { display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:14px; }
-  @media(max-width:700px) { .ld-grid { grid-template-columns:1fr; } }
-  .ld-card { background:#ffffff;border:1px solid #e8e8e8;border-radius:12px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.06); }
-  .ld-card-title { font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:12px; }
-  /* Momentum SVG */
-  #ld-momentum-svg { width:100%;height:80px;overflow:visible; }
-  .ld-mom-line-home { stroke:#E2001A;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round; }
-  .ld-mom-line-away { stroke:#1a1a2e;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round; }
-  .ld-mom-fill-home { fill:rgba(226,0,26,0.12); }
-  .ld-mom-fill-away { fill:rgba(26,26,46,0.08); }
-  .ld-mom-legend { display:flex;gap:16px;margin-top:8px;font-size:11px;font-weight:600; }
-  .ld-mom-legend span { display:flex;align-items:center;gap:5px; }
-  .ld-mom-legend-dot { display:inline-block;width:8px;height:8px;border-radius:50%; }
-  /* Stats Flash */
-  .ld-stats-row { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
-  .ld-stats-label { font-size:11px;color:#555;font-weight:600;min-width:120px; }
-  .ld-stats-bars { flex:1;display:flex;flex-direction:column;gap:4px; }
-  .ld-bar-wrap { display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--font-mono); }
-  .ld-bar-track { flex:1;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden; }
-  .ld-bar-fill { height:100%;border-radius:3px;transition:width .4s ease; }
-  .ld-bar-fill.home { background:#E2001A; }
-  .ld-bar-fill.away { background:#1a1a2e; }
-  .ld-bar-val { min-width:28px;text-align:right;color:#333;font-weight:700; }
-  /* Intensity Gauge */
-  .ld-gauge-track { height:20px;border-radius:10px;background:linear-gradient(90deg,#bdbdbd 0%,#ffd600 35%,#ff8c00 65%,#E2001A 100%);position:relative;overflow:hidden;margin-bottom:10px; }
-  .ld-gauge-mask { position:absolute;top:0;right:0;height:100%;background:rgba(255,255,255,0.75);transition:width .5s ease;border-radius:0 10px 10px 0; }
-  .ld-gauge-needle { display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#888;margin-bottom:12px; }
-  .ld-gauge-value { font-size:36px;font-weight:900;font-family:var(--font-mono);text-align:center;line-height:1;margin-bottom:4px; }
-  .ld-gauge-label { font-size:11px;font-weight:700;text-align:center;letter-spacing:.05em;text-transform:uppercase; }
-  /* Bet Prédictif */
-  .ld-bet-verdict { display:flex;align-items:center;gap:12px;background:#1a1a1a;border-radius:10px;padding:14px 16px;margin-bottom:12px; }
-  .ld-bet-badge { font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:5px;background:#E2001A;color:#fff;flex-shrink:0; }
-  .ld-bet-desc { font-size:13px;font-weight:700;color:#fff;line-height:1.3; }
-  .ld-bet-prob { font-size:28px;font-weight:900;font-family:var(--font-mono);text-align:center;margin-bottom:4px; }
-  .ld-bet-prob-label { font-size:11px;color:#888;text-align:center;margin-bottom:12px; }
-  .ld-bet-edge { display:flex;gap:8px; }
-  .ld-bet-edge-item { flex:1;background:#f7f7f7;border-radius:8px;padding:8px;text-align:center; }
-  .ld-bet-edge-val { font-size:16px;font-weight:800;font-family:var(--font-mono);color:#111; }
-  .ld-bet-edge-label { font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-top:2px; }
-  .ld-no-data { color:#aaa;font-size:13px;text-align:center;padding:20px 0;font-style:italic; }
+  /* Carte principale */
+  .ld-main { background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px; }
+  /* Header score */
+  .ld-header { display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);background:var(--bg3);gap:12px; }
+  .ld-mh-team { flex:1;display:flex;flex-direction:column; }
+  .ld-mh-team.home { align-items:flex-start; }
+  .ld-mh-team.away { align-items:flex-end; }
+  .ld-mh-name { font-size:15px;font-weight:800;font-family:var(--font-head);color:var(--text);line-height:1.2; }
+  .ld-mh-sub { font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--font-mono); }
+  .ld-mh-center { text-align:center;flex-shrink:0; }
+  .ld-mh-score { font-size:44px;font-weight:900;font-family:var(--font-mono);color:var(--text);line-height:1;letter-spacing:.04em; }
+  .ld-mh-meta { font-size:11px;color:var(--text3);margin-top:5px;font-family:var(--font-mono); }
+  .ld-mh-intensity { margin-top:6px; }
+  /* Momentum chart */
+  .ld-momentum-section { padding:16px 20px 6px; }
+  .ld-momentum-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
+  .ld-momentum-title { font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text3); }
+  .ld-mom-legend { display:flex;gap:14px; }
+  .ld-mom-leg-item { display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;font-family:var(--font-mono); }
+  .ld-mom-leg-dot { width:10px;height:5px;border-radius:2px;display:inline-block; }
+  #ld-momentum-svg { width:100%;display:block; }
+  .ld-mom-axis { display:flex;justify-content:space-between;padding:2px 10px 0;margin-top:2px; }
+  .ld-mom-axis span { font-size:9px;font-family:var(--font-mono);color:var(--text3); }
+  /* Bas : stats + bet + performers */
+  .ld-bottom-row { display:grid;grid-template-columns:1fr 1fr 220px;border-top:1px solid var(--border); }
+  @media(max-width:900px) { .ld-bottom-row { grid-template-columns:1fr 1fr; } .ld-performers-panel { display:none; } }
+  @media(max-width:640px) { .ld-bottom-row { grid-template-columns:1fr; } }
+  .ld-stats-panel { padding:16px 20px;border-right:1px solid var(--border); }
+  .ld-bet-panel { padding:16px 20px;border-right:1px solid var(--border); }
+  .ld-performers-panel { padding:14px 16px; }
+  /* Performers */
+  .ld-perf-team { font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
+  .ld-perf-team.home { color:var(--green); }
+  .ld-perf-team.away { color:#7c4dff; }
+  .ld-perf-row { display:flex;align-items:center;gap:5px;margin-bottom:5px; }
+  .ld-perf-pos { font-size:8px;font-weight:700;font-family:var(--font-mono);background:var(--bg4);border-radius:3px;padding:1px 4px;color:var(--text3);flex-shrink:0;min-width:14px;text-align:center; }
+  .ld-perf-name { font-size:11px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .ld-perf-badge { font-size:10px;font-weight:800;font-family:var(--font-mono);padding:2px 5px;border-radius:4px;flex-shrink:0; }
+  .ld-perf-badge.great { background:rgba(0,230,118,0.18);color:#00e676; }
+  .ld-perf-badge.good  { background:rgba(255,214,0,0.15);color:#ffd600; }
+  .ld-perf-badge.avg   { background:rgba(255,255,255,0.07);color:var(--text3); }
+  .ld-perf-sep { height:1px;background:var(--border);margin:7px 0; }
+  .ld-perf-boost { font-size:9px;color:#00e676;font-weight:700;margin-top:6px;padding:3px 6px;background:rgba(0,230,118,0.08);border-radius:4px;text-align:center; }
+  .ld-panel-title { font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:12px; }
+  /* Stat rows */
+  .ld-stat-row { display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;gap:8px;margin-bottom:9px; }
+  .ld-stat-label { font-size:9px;color:var(--text3);text-align:center;font-family:var(--font-mono);letter-spacing:.05em;text-transform:uppercase; }
+  .ld-stat-val-h { font-size:12px;font-weight:700;font-family:var(--font-mono);color:var(--green); }
+  .ld-stat-val-a { font-size:12px;font-weight:700;font-family:var(--font-mono);color:var(--blue);text-align:right; }
+  .ld-stat-bar-h { height:4px;background:rgba(0,230,118,0.15);border-radius:2px;overflow:hidden;margin-top:3px; }
+  .ld-stat-bar-h-fill { height:100%;background:var(--green);border-radius:2px;transition:width .4s; }
+  .ld-stat-bar-a { height:4px;background:rgba(41,182,246,0.15);border-radius:2px;overflow:hidden;margin-top:3px; }
+  .ld-stat-bar-a-fill { height:100%;background:var(--blue);border-radius:2px;transition:width .4s; }
+  /* Bet */
+  .ld-bet-verdict { display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:10px; }
+  .ld-bet-badge { font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:5px;color:#fff;flex-shrink:0; }
+  .ld-bet-desc { font-size:12px;font-weight:700;color:var(--text);line-height:1.3; }
+  .ld-bet-prob-row { display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px; }
+  .ld-bet-prob { font-size:28px;font-weight:900;font-family:var(--font-mono);line-height:1; }
+  .ld-bet-prob-lbl { font-size:10px;color:var(--text3);margin-bottom:4px; }
+  .ld-bet-edge-row { display:flex;gap:6px; }
+  .ld-bet-edge-item { flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;padding:7px 4px;text-align:center; }
+  .ld-bet-edge-val { font-size:13px;font-weight:800;font-family:var(--font-mono); }
+  .ld-bet-edge-lbl { font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px; }
+  .ld-no-data { color:var(--text3);font-size:13px;text-align:center;padding:20px 0;font-style:italic; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -4737,61 +4857,63 @@
       <div id="ld-empty">Aucun match en direct actuellement.</div>
       <div id="ld-content" style="display:none;">
         <div class="ld-strip" id="ld-strip"></div>
-        <div class="ld-grid">
 
-          <!-- A. Momentum -->
-          <div class="ld-card" id="ld-momentum-card">
-            <div class="ld-card-title">📈 Momentum — 10 dernières minutes</div>
-            <svg id="ld-momentum-svg" viewBox="0 0 300 80" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="gradHome" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#E2001A" stop-opacity="0.25"/>
-                  <stop offset="100%" stop-color="#E2001A" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="gradAway" x1="0" x2="0" y1="1" y2="0">
-                  <stop offset="0%" stop-color="#1a1a2e" stop-opacity="0.18"/>
-                  <stop offset="100%" stop-color="#1a1a2e" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <line x1="0" y1="40" x2="300" y2="40" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 3"/>
-              <text x="296" y="38" font-size="7" fill="#bbb" text-anchor="end">50</text>
-              <path id="ld-mom-fill-home" class="ld-mom-fill-home"/>
-              <path id="ld-mom-fill-away" class="ld-mom-fill-away"/>
-              <polyline id="ld-mom-line-home" class="ld-mom-line-home" points=""/>
-              <polyline id="ld-mom-line-away" class="ld-mom-line-away" points=""/>
-            </svg>
-            <div class="ld-mom-legend">
-              <span><span class="ld-mom-legend-dot" style="background:#E2001A;"></span><span id="ld-mom-home-label">Domicile</span></span>
-              <span><span class="ld-mom-legend-dot" style="background:#1a1a2e;"></span><span id="ld-mom-away-label">Extérieur</span></span>
+        <div class="ld-main">
+          <!-- Score Header -->
+          <div class="ld-header">
+            <div class="ld-mh-team home">
+              <span class="ld-mh-name" id="ld-home-name">—</span>
+              <span class="ld-mh-sub" id="ld-home-sub" style="color:var(--green);">DOM</span>
+            </div>
+            <div class="ld-mh-center">
+              <div class="ld-mh-score" id="ld-score-display">— : —</div>
+              <div class="ld-mh-meta" id="ld-min-display">—</div>
+              <div class="ld-mh-intensity" id="ld-intensity-display"></div>
+            </div>
+            <div class="ld-mh-team away">
+              <span class="ld-mh-name" id="ld-away-name">—</span>
+              <span class="ld-mh-sub" id="ld-away-sub" style="color:var(--blue);">EXT</span>
             </div>
           </div>
 
-          <!-- B. Stats Flash -->
-          <div class="ld-card" id="ld-stats-card">
-            <div class="ld-card-title">⚡ Stats Flash</div>
-            <div id="ld-stats-body"><div class="ld-no-data">En attente de données…</div></div>
-          </div>
-
-          <!-- C. Intensité -->
-          <div class="ld-card" id="ld-gauge-card">
-            <div class="ld-card-title">🌡️ Intensité du Match</div>
-            <div id="ld-gauge-value" class="ld-gauge-value" style="color:#bbb;">—</div>
-            <div id="ld-gauge-label" class="ld-gauge-label" style="color:#bbb;">En attente</div>
-            <div style="margin:14px 0 4px;">
-              <div class="ld-gauge-track">
-                <div class="ld-gauge-mask" id="ld-gauge-mask" style="width:100%;"></div>
+          <!-- Momentum Chart — pleine largeur 0-90' -->
+          <div class="ld-momentum-section">
+            <div class="ld-momentum-header">
+              <span class="ld-momentum-title">MOMENTUM DU MATCH</span>
+              <div class="ld-mom-legend">
+                <div class="ld-mom-leg-item">
+                  <div class="ld-mom-leg-dot" style="background:var(--green);"></div>
+                  <span id="ld-mom-home-lbl" style="color:var(--green);">DOM</span>
+                </div>
+                <div class="ld-mom-leg-item">
+                  <div class="ld-mom-leg-dot" style="background:var(--blue);"></div>
+                  <span id="ld-mom-away-lbl" style="color:var(--blue);">EXT</span>
+                </div>
               </div>
-              <div class="ld-gauge-needle"><span>Calme</span><span>Moyen</span><span>Intense</span><span>🔥 Feu</span></div>
+            </div>
+            <svg id="ld-momentum-svg" viewBox="0 0 940 110" preserveAspectRatio="none" height="110"></svg>
+            <div class="ld-mom-axis">
+              <span>0'</span><span>15'</span><span>30'</span><span>MT</span><span>60'</span><span>75'</span><span>90'</span>
             </div>
           </div>
 
-          <!-- D. Bet Prédictif -->
-          <div class="ld-card" id="ld-bet-card">
-            <div class="ld-card-title">🎯 Bet Prédictif</div>
-            <div id="ld-bet-body"><div class="ld-no-data">En attente de données…</div></div>
+          <!-- Stats + Bet + Performers -->
+          <div class="ld-bottom-row">
+            <div class="ld-stats-panel">
+              <div class="ld-panel-title">STATISTIQUES</div>
+              <div id="ld-stats-body"><div class="ld-no-data">En attente…</div></div>
+            </div>
+            <div class="ld-bet-panel">
+              <div class="ld-panel-title">BET PRÉDICTIF</div>
+              <div id="ld-bet-body"><div class="ld-no-data">En attente…</div></div>
+            </div>
+            <div class="ld-performers-panel">
+              <div class="ld-panel-title">TOP PERFORMERS</div>
+              <div id="ld-performers-body"><div class="ld-no-data" style="font-size:10px;">En attente…</div></div>
+            </div>
           </div>
-
         </div>
+
       </div>
     </div><!-- /live-dashboard -->
 
@@ -5194,7 +5316,7 @@
           <div class="guide-card-icon">LIVE</div>
           <div class="guide-card-title">Mode Live</div>
           <div class="guide-card-desc">Suivez les matchs en cours avec scores réels, statistiques live (possession, tirs, xG) et mises à jour minute par minute.</div>
-          <a class="guide-card-link" onclick="scrollToSection('guide-strategies');return false;">Stratégies →</a>
+          <a class="guide-card-link" onclick="scrollToSection('guide-intensite');return false;">Jauge d'intensité →</a>
         </div>
       </div>
 
@@ -5218,6 +5340,109 @@
         </div>
       </div>
     </div>
+
+    <!-- ── JAUGE D'INTENSITÉ ─────────────────────────────────────────────── -->
+    <div id="guide-intensite" class="gs-article" style="border-top:none;padding-top:8px;">
+      <div class="gs-article-head">
+        <div class="gs-article-category">Lecture des Matchs Live</div>
+        <div class="gs-article-title">
+          <div class="gs-title-bar"></div>
+          Jauge d'Intensité de Match
+        </div>
+        <div class="gs-article-subtitle">Le thermomètre qui dicte le moment d'entrer en jeu</div>
+      </div>
+
+      <div class="gs-article-layout">
+        <div class="gs-article-text">
+          <p>L'Intensité est un score composite <strong>0 → 100</strong> recalculé à chaque tick live. Il synthétise quatre signaux bruts : l'écart de xG entre les deux équipes, le volume total de tirs, le nombre de buts inscrits, et la volatilité du momentum des 10 dernières minutes. Un seul chiffre pour répondre à la question : <em>"ce match vaut-il mon attention ?"</em></p>
+
+          <p><strong>Décomposition du score :</strong><br>
+          — xG différentiel × 15 → max 40 pts (pression offensive déséquilibrée)<br>
+          — Tirs totaux × 1,5 → max 30 pts (volume d'actions)<br>
+          — Buts marqués × 10 → max 30 pts (match ouvert)<br>
+          — Volatilité momentum 10 dernières min → max 20 pts (retournements)<br>
+          <em>Plafonné à 100.</em></p>
+
+          <p>La valeur brute entre parenthèses — ex. <strong>⚡ Intensif (47)</strong> — est le score exact. Deux matchs "Intensif" à 41 et 67 ne se ressemblent pas : le second est en train de basculer.</p>
+
+          <!-- TABLEAU DES SEUILS -->
+          <div style="margin:18px 0;border:1px solid var(--border2);border-radius:6px;overflow:hidden;font-family:var(--font-mono);">
+            <div style="display:grid;grid-template-columns:70px 110px 1fr 1fr;background:var(--bg4);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;">
+              <span>Score</span><span>Label</span><span>Ce qui se passe</span><span>Action parieur</span>
+            </div>
+            <div style="display:grid;grid-template-columns:70px 110px 1fr 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;">
+              <span style="color:var(--text3);font-weight:700;">0 – 19</span>
+              <span style="color:#8d9399;">😴 Calme</span>
+              <span style="color:var(--text2);">Peu d'actions. Match fermé, équipes qui s'observent.</span>
+              <span style="color:var(--text3);">Ne pas entrer. Attendre évolution.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:70px 110px 1fr 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;">
+              <span style="color:#ffd600;font-weight:700;">20 – 39</span>
+              <span style="color:#ffd600;">🟡 Animé</span>
+              <span style="color:var(--text2);">Quelques tirs, possession travaillée. Match qui se construit.</span>
+              <span style="color:var(--text3);">Surveiller. Valable pour Under si score nul proche de la mi-temps.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:70px 110px 1fr 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;background:rgba(255,140,0,0.06);">
+              <span style="color:#ff8c00;font-weight:700;">40 – 69</span>
+              <span style="color:#ff8c00;">⚡ Intensif</span>
+              <span style="color:var(--text2);">Tirs réguliers, xG qui monte, match ouvert. Pression visible d'un côté.</span>
+              <span style="color:#ff8c00;font-weight:600;">Zone d'entrée principale. Confirmer avec xG et momentum.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:70px 110px 1fr 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;background:rgba(255,77,77,0.07);">
+              <span style="color:#ff4d4d;font-weight:700;">70 – 100</span>
+              <span style="color:#ff4d4d;">🔥 Bouillant</span>
+              <span style="color:var(--text2);">Buts multiples, tirs constants, momentum qui bascule toutes les 5 min.</span>
+              <span style="color:#ff4d4d;font-weight:600;">Agir vite — les cotes bougent. Priorité marchés Over et BTTS.</span>
+            </div>
+          </div>
+
+          <p><strong>Quand entrer ?</strong> Le signal optimal est le passage de <em>Animé → Intensif</em> (franchissement du seuil 40) avec un xG déséquilibré en faveur de l'équipe qui ne mène pas. C'est la signature d'un retournement imminent : l'équipe domine les stats mais pas le score. Les bookmakers n'ont pas encore ajusté — c'est la fenêtre de value.</p>
+
+          <p><strong>Règle des 3 confirmations avant de parier en live :</strong><br>
+          1. Intensité ≥ 40 (match vivant)<br>
+          2. xG Dom ou xG Ext supérieur au score réel de cette équipe<br>
+          3. Momentum dashboard orienté vers l'équipe sous-cotée dans les 15 dernières minutes</p>
+        </div>
+
+        <!-- PANNEAU LATÉRAL SIGNAL -->
+        <div>
+          <div style="border:1px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:16px;">
+            <div style="background:var(--bg4);padding:10px 14px;font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);">Signal Type — "Faux Score"</div>
+            <div style="padding:14px;font-size:12.5px;line-height:1.8;color:var(--text2);">
+              Intensité <span style="color:#ff8c00;font-weight:700;">⚡ 54</span><br>
+              Score : 0 – 1 (favori perdant)<br>
+              xG Dom : <span style="color:#00e676;font-weight:700;">1.8</span> / xG Ext : <span style="color:#7c4dff;font-weight:700;">0.4</span><br>
+              <span style="color:#ff8c00;margin-top:8px;display:block;font-weight:600;">→ Pari : Retour dom ou BTTS</span>
+              <span style="color:var(--text3);font-size:11px;">Le score ment. Les xG indiquent qui domine réellement.</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid rgba(255,77,77,0.3);border-radius:8px;overflow:hidden;margin-bottom:16px;">
+            <div style="background:rgba(255,77,77,0.08);padding:10px 14px;font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#ff4d4d;">Signal Type — "Avalanche"</div>
+            <div style="padding:14px;font-size:12.5px;line-height:1.8;color:var(--text2);">
+              Intensité <span style="color:#ff4d4d;font-weight:700;">🔥 82</span><br>
+              Score : 1 – 1, 65ème minute<br>
+              xG cumulés : <span style="color:#00e676;font-weight:700;">2.3</span> / <span style="color:#7c4dff;font-weight:700;">1.9</span><br>
+              <span style="color:#ff4d4d;margin-top:8px;display:block;font-weight:600;">→ Pari : Over 2.5 ou Over 3.5</span>
+              <span style="color:var(--text3);font-size:11px;">Match très ouvert, défenses poreuses, 25 min restantes.</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid var(--border2);border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:var(--text3);">
+            <strong style="color:var(--text2);display:block;margin-bottom:6px;">⚠️ Signal à éviter</strong>
+            Intensité élevée <strong style="color:#ff4d4d;">🔥 74</strong> mais due uniquement aux buts (3 – 2, 80ème min). xG plats. Momentum stable. Le score explique tout — les cotes ne bougent plus. Aucune inefficience à exploiter.
+          </div>
+        </div>
+      </div>
+
+      <div class="gs-stat-block" style="margin-top:24px;">
+        <div class="gs-stat"><div class="gs-stat-val" style="color:#8d9399;">😴 0–19</div><div class="gs-stat-lbl">Passer son tour</div></div>
+        <div class="gs-stat"><div class="gs-stat-val" style="color:#ffd600;">🟡 20–39</div><div class="gs-stat-lbl">Surveiller</div></div>
+        <div class="gs-stat"><div class="gs-stat-val" style="color:#ff8c00;">⚡ 40–69</div><div class="gs-stat-lbl">Zone d'entrée</div></div>
+        <div class="gs-stat" style="border-right:none;"><div class="gs-stat-val" style="color:#ff4d4d;">🔥 70–100</div><div class="gs-stat-lbl">Agir immédiatement</div></div>
+      </div>
+    </div>
+    <!-- ── FIN JAUGE D'INTENSITÉ ──────────────────────────────────────────── -->
 
     <div id="guide-strategies" class="guide-section-header">
       <span class="guide-section-icon">🧠</span>
@@ -5346,6 +5571,103 @@
         </div>
         <a class="guide-card-link" onclick="scrollToSection('guide-stats-section');return false;">Revenir au début →</a>
       </div>
+    </div>
+
+    <div id="guide-glossaire" class="guide-section-header">
+      <span class="guide-section-icon">📖</span>
+      <h2>Glossaire de Marché</h2>
+    </div>
+
+    <div class="gs-rubrique">
+      <div class="gs-rubrique-bar"></div>
+      <div class="gs-rubrique-label">Terminologie quantitative — Les métriques clés du comparateur</div>
+    </div>
+
+    <div class="guide-glossaire-list">
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">01</span>
+          Moyenne du Marché
+        </div>
+        <div class="guide-gloss-body">
+          <p>La moyenne arithmétique simple des cotes proposées par l'ensemble des bookmakers suivis pour un résultat donné. Elle reflète le consensus brut du marché.</p>
+          <div class="guide-gloss-formula">
+            <code>Moyenne = (cote₁ + cote₂ + … + coteₙ) / n</code>
+          </div>
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret :</span>
+            Winamax <strong>2.10</strong> · Betclic <strong>2.09</strong> · Unibet <strong>2.07</strong> · Parions Sport <strong>2.06</strong> · Pinnacle <strong>2.15</strong> · 1xbet <strong>2.25</strong> · Betfair <strong>2.22</strong><br>
+            → Moyenne = (2.10 + 2.09 + 2.07 + 2.06 + 2.15 + 2.25 + 2.22) / 7 = <code class="guide-gloss-result">2.13</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">02</span>
+          Val. Marché Pondérée
+        </div>
+        <div class="guide-gloss-body">
+          <p>Valeur ajustée donnant plus de poids aux bookmakers "Sharp" (Betfair Exchange, Pinnacle) pour identifier la tendance réelle du marché mondial. Les bookmakers sharp ont des marges très faibles et reflètent la probabilité la plus juste.</p>
+          <div class="guide-gloss-formula">
+            <code>Val. Pondérée = Σ(coteᵢ × poidsᵢ) / Σ(poidsᵢ)</code><br>
+            <small style="color:var(--text2);">Poids : Betfair / Pinnacle = 3 &nbsp;·&nbsp; autres bookmakers = 1</small>
+          </div>
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret :</span>
+            Pinnacle 2.15 (×3) + Betfair 2.22 (×3) + 5 autres à 2.11 moy. (×1 chacun)<br>
+            → Numérateur = (2.15×3) + (2.22×3) + (5×2.11) = 6.45 + 6.66 + 10.55 = 23.66<br>
+            → Dénominateur = 3 + 3 + 5 = 11<br>
+            → Val. Pondérée = 23.66 / 11 = <code class="guide-gloss-result">2.15</code> <em style="color:var(--text2);font-size:12px;">(le marché "vrai" est plus élevé que la moyenne brute)</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">03</span>
+          Cote Modèle (No-Vig)
+        </div>
+        <div class="guide-gloss-body">
+          <p>La cote "pure" calculée en retirant la marge du bookmaker (vig). C'est la probabilité réelle estimée par le marché, sans le surcoût prélevé par l'opérateur.</p>
+          <div class="guide-gloss-formula">
+            <code>Prob_brute = 1 / cote</code><br>
+            <code>Marge = (Prob₁ + Prob₂ + Prob₃) − 1</code><br>
+            <code>Prob_juste = Prob_brute / (Prob₁ + Prob₂ + Prob₃)</code><br>
+            <code>Cote_modèle = 1 / Prob_juste</code>
+          </div>
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret (Winamax 1×2) :</span>
+            Cotes : <strong>2.10</strong> / <strong>3.40</strong> / <strong>3.25</strong><br>
+            → Prob brutes : 0.476 + 0.294 + 0.308 = 1.078 → Marge bookmaker = <strong>7.8 %</strong><br>
+            → Prob juste domicile : 0.476 / 1.078 = 0.441<br>
+            → Cote modèle domicile = 1 / 0.441 = <code class="guide-gloss-result">2.27</code> <em style="color:var(--text2);font-size:12px;">(vs 2.10 affiché — la vig coûte 0.17)</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">04</span>
+          Edge / Value
+        </div>
+        <div class="guide-gloss-body">
+          <p>Différentiel entre la Cote Modèle (probabilité réelle) et la cote proposée par un bookmaker. Un Edge positif signifie que le bookmaker sous-évalue la probabilité réelle — c'est une opportunité mathématique à saisir.</p>
+          <div class="guide-gloss-formula">
+            <code>Edge % = (cote_bookmaker × Prob_juste − 1) × 100</code>
+          </div>
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret :</span>
+            Prob juste domicile : <strong>0.441</strong> (calculée ci-dessus)<br>
+            Betfair Exchange propose : <strong>2.22</strong><br>
+            → Edge = (2.22 × 0.441 − 1) × 100 = (0.979 − 1) × 100 = <code style="color:var(--red);">−2.1 %</code> — pas de value<br><br>
+            Si Betfair propose <strong>2.35</strong> sur ce même résultat :<br>
+            → Edge = (2.35 × 0.441 − 1) × 100 = (1.036 − 1) × 100 = <code class="guide-gloss-result">+3.6 %</code> ✅ — <strong>value bet détecté</strong>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Navigation guide -->
@@ -6228,40 +6550,99 @@ function stopMinuteTick(matchId) {
   if (_minuteTimers[matchId]) { clearInterval(_minuteTimers[matchId].tid); delete _minuteTimers[matchId]; }
 }
 
-// ── LIVE STRATEGY DASHBOARD ──────────────────────────────────────────────────
+// ── LIVE STRATEGY DASHBOARD v2 — AiScore Style ───────────────────────────────
 var _activeLiveDashMatch = null;
-var _momentumHistory = {}; // matchId → [{minute, homePressure, awayPressure}]
-var _MOMENTUM_MAX_POINTS = 10;
+var _fullMomentumData = {}; // matchId → { windows:[{min,home,away}], goals:[{min,team}], lastScore:[h,a] }
 
 function _parseScore(scoreStr) {
   if (!scoreStr) return [0, 0];
-  var p = String(scoreStr).split('-');
-  return [parseInt(p[0]) || 0, parseInt(p[1]) || 0];
+  if (typeof scoreStr === 'object') return [parseInt(scoreStr.home)||0, parseInt(scoreStr.away)||0];
+  var p = String(scoreStr).split(/[-:]/);
+  return [parseInt(p[0])||0, parseInt(p[1])||0];
 }
 
-// Compute home pressure 0-100 from match data (approximation)
 function _computeHomePressure(m) {
   var sc = _parseScore(m.live_score);
-  var scoreBias = (sc[0] - sc[1]) * 12; // +12 per home goal advantage
+  var scoreBias = (sc[0] - sc[1]) * 12;
   var intensity = m.live_intensity != null ? parseInt(m.live_intensity) : 50;
-  // Assume intensity reflects whichever team is pressing; score bias shifts midpoint
-  var base = 50 + scoreBias;
-  return Math.max(5, Math.min(95, base + (intensity - 50) * 0.3));
+  var da = m.live_dangerous_attacks;
+  if (da && (da.home || da.away)) {
+    var tot = (da.home||0) + (da.away||0);
+    if (tot > 0) return Math.max(5, Math.min(95, Math.round(da.home/tot*100) + scoreBias*0.3));
+  }
+  return Math.max(5, Math.min(95, 50 + scoreBias + (intensity-50)*0.3));
 }
 
-// Push a momentum reading for match
 function _recordMomentum(m) {
   if (!m || !m.id) return;
-  if (!_momentumHistory[m.id]) _momentumHistory[m.id] = [];
-  var hist = _momentumHistory[m.id];
-  var homePres = _computeHomePressure(m);
-  var awayPres = 100 - homePres;
+  var id = m.id;
+  if (!_fullMomentumData[id]) _fullMomentumData[id] = { windows:[], goals:[], lastScore:[0,0] };
+  var data = _fullMomentumData[id];
   var min = parseInt(m.live_minute) || 0;
-  hist.push({ minute: min, homePressure: homePres, awayPressure: awayPres });
-  if (hist.length > _MOMENTUM_MAX_POINTS) hist.shift();
+  var hp = _computeHomePressure(m);
+  // Détection buts
+  var sc = _parseScore(m.live_score);
+  if (sc[0] > data.lastScore[0]) for (var i=0;i<sc[0]-data.lastScore[0];i++) data.goals.push({min:min,team:'home'});
+  if (sc[1] > data.lastScore[1]) for (var i=0;i<sc[1]-data.lastScore[1];i++) data.goals.push({min:min,team:'away'});
+  data.lastScore = sc;
+  // Stocke par minute
+  var ex = data.windows.find(function(w){return w.min===min;});
+  if (ex) { ex.home=hp; ex.away=100-hp; }
+  else { data.windows.push({min:min,home:hp,away:100-hp}); data.windows.sort(function(a,b){return a.min-b.min;}); }
 }
 
-function calculateLiveEdge(m) {
+// Cache ratings par matchId — évite re-fetch à chaque tick SSE
+var _livePlayersCache = {};
+
+function _fetchLivePlayers(matchId, callback) {
+  if (_livePlayersCache[matchId]) { callback(_livePlayersCache[matchId]); return; }
+  fetch('/api/v1/live-players/' + matchId)
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+      if (d && d.success && d.top3) {
+        _livePlayersCache[matchId] = d.top3;
+        callback(d.top3);
+      } else {
+        callback(null);
+      }
+    })
+    .catch(function() { callback(null); });
+}
+
+function _renderTopPerformers(m) {
+  var el = document.getElementById('ld-performers-body');
+  if (!el) return;
+  _fetchLivePlayers(m.id, function(top3) {
+    if (!top3 || (!top3.home.length && !top3.away.length)) {
+      el.innerHTML = '<div class="ld-no-data" style="font-size:10px;">Stats joueurs<br>indisponibles</div>';
+      return;
+    }
+    function badgeClass(r) { return r >= 7.5 ? 'great' : r >= 6.5 ? 'good' : 'avg'; }
+    function rows(players) {
+      return players.map(function(p) {
+        return '<div class="ld-perf-row">'
+          + '<span class="ld-perf-pos">' + p.position + '</span>'
+          + '<span class="ld-perf-name">' + p.name + '</span>'
+          + '<span class="ld-perf-badge ' + badgeClass(p.avg_rating) + '">' + p.avg_rating.toFixed(1) + '</span>'
+          + '</div>';
+      }).join('');
+    }
+    var boostHome = top3.homeAvg != null && top3.homeAvg > 8.0;
+    var boostAway = top3.awayAvg != null && top3.awayAvg > 8.0;
+    var html = '<div class="ld-perf-team home">' + (m.home_team || 'DOM').split(' ').slice(0,2).join(' ') + '</div>'
+      + rows(top3.home)
+      + '<div class="ld-perf-sep"></div>'
+      + '<div class="ld-perf-team away">' + (m.away_team || 'EXT').split(' ').slice(0,2).join(' ') + '</div>'
+      + rows(top3.away);
+    if (boostHome) html += '<div class="ld-perf-boost">⚡ DOM en forme (+EV)</div>';
+    else if (boostAway) html += '<div class="ld-perf-boost">⚡ EXT en forme (+EV)</div>';
+    el.innerHTML = html;
+    // Re-render bet panel with performers boost
+    _renderBetPredictif(m, top3);
+  });
+}
+
+function calculateLiveEdge(m, top3) {
   if (!m || !m.fair || !m.odds) return null;
   var sc = _parseScore(m.live_score);
   var minute = parseInt(m.live_minute) || 0;
@@ -6273,20 +6654,25 @@ function calculateLiveEdge(m) {
   var fairDraw = m.fair.draw || 0.33;
   var fairAway = m.fair.away || 0.33;
 
-  // Score likelihood: if home is ahead, boost home win probability
   var scoreFactor = homeGoals - awayGoals;
-  var timeWeight = 1 - remaining; // how "done" the match is
+  var timeWeight = 1 - remaining;
 
   var adjHome = fairHome + scoreFactor * 0.12 * timeWeight;
   var adjDraw = fairDraw - Math.abs(scoreFactor) * 0.08 * timeWeight;
   var adjAway = fairAway - scoreFactor * 0.12 * timeWeight;
 
-  // Normalise
+  // Top performers boost (+4pp si top3 avg > 8.0, re-normalisé)
+  var perfBoostHome = false, perfBoostAway = false;
+  if (top3) {
+    var hAvg = top3.homeAvg || 0, aAvg = top3.awayAvg || 0;
+    if (hAvg > 8.0) { adjHome += 0.04; adjDraw -= 0.015; adjAway -= 0.025; perfBoostHome = true; }
+    if (aAvg > 8.0) { adjAway += 0.04; adjDraw -= 0.015; adjHome -= 0.025; perfBoostAway = true; }
+  }
+
   var total = adjHome + adjDraw + adjAway;
   if (total <= 0) return null;
   adjHome /= total; adjDraw /= total; adjAway /= total;
 
-  // Best edge vs current bookmaker odds
   var edges = [
     { label: m.home_team || 'Domicile', market: '1', adjProb: adjHome, odds: m.odds.home },
     { label: 'Nul', market: 'N', adjProb: adjDraw, odds: m.odds.draw },
@@ -6296,145 +6682,153 @@ function calculateLiveEdge(m) {
     return e;
   }).sort(function(a, b) { return b.edge - a.edge; });
 
-  return { best: edges[0], adjHome: adjHome, adjDraw: adjDraw, adjAway: adjAway, remaining: remaining };
+  return { best: edges[0], adjHome: adjHome, adjDraw: adjDraw, adjAway: adjAway, remaining: remaining, perfBoostHome: perfBoostHome, perfBoostAway: perfBoostAway };
 }
 
-function _renderMomentumSVG(matchId, homeTeam, awayTeam) {
-  var hist = _momentumHistory[matchId] || [];
+function _renderScoreHeader(m) {
+  var sc = _parseScore(m.live_score);
+  var el = function(id){return document.getElementById(id);};
+  if (el('ld-home-name')) el('ld-home-name').textContent = m.home_team || '—';
+  if (el('ld-away-name')) el('ld-away-name').textContent = m.away_team || '—';
+  if (el('ld-home-sub')) el('ld-home-sub').textContent = m.home_rank ? 'Rang #'+m.home_rank : 'Domicile';
+  if (el('ld-away-sub')) el('ld-away-sub').textContent = m.away_rank ? 'Rang #'+m.away_rank : 'Extérieur';
+  if (el('ld-score-display')) el('ld-score-display').textContent = sc[0]+' : '+sc[1];
+  if (el('ld-min-display')) {
+    var st = (m.live_status||m.status||'').toUpperCase();
+    var stLbl = st==='2H'?'2ème MT':st==='1H'?'1ère MT':st==='HT'?'Mi-Temps':st;
+    el('ld-min-display').textContent = (m.live_minute||0)+"' · "+stLbl;
+  }
+  if (el('ld-intensity-display')) {
+    var iv = parseInt(m.live_intensity)||0;
+    var col = iv>=70?'#ff4d4d':iv>=40?'#ff8c00':iv>=20?'#ffd600':'var(--text3)';
+    var lbl = iv>=70?'🔥 Bouillant':iv>=40?'⚡ Intensif':iv>=20?'🟡 Animé':'😴 Calme';
+    el('ld-intensity-display').innerHTML = '<span style="font-size:12px;font-weight:700;color:'+col+';">'+lbl+' ('+iv+')</span>';
+  }
+}
+
+function _renderMomentumBars(matchId, homeTeam, awayTeam) {
+  var data = _fullMomentumData[matchId] || { windows:[], goals:[] };
   var svg = document.getElementById('ld-momentum-svg');
-  var lineHome = document.getElementById('ld-mom-line-home');
-  var lineAway = document.getElementById('ld-mom-line-away');
-  var fillHome = document.getElementById('ld-mom-fill-home');
-  var fillAway = document.getElementById('ld-mom-fill-away');
-  if (!svg || !lineHome) return;
+  if (!svg) return;
+  var homeLbl = document.getElementById('ld-mom-home-lbl');
+  var awayLbl = document.getElementById('ld-mom-away-lbl');
+  if (homeLbl) homeLbl.textContent = (homeTeam||'DOM').split(' ').slice(0,2).join(' ');
+  if (awayLbl) awayLbl.textContent = (awayTeam||'EXT').split(' ').slice(0,2).join(' ');
 
-  document.getElementById('ld-mom-home-label').textContent = homeTeam || 'Domicile';
-  document.getElementById('ld-mom-away-label').textContent = awayTeam || 'Extérieur';
+  var W=940,H=110,mL=10,mR=10,cY=54,maxH=cY-5;
+  var minW=(W-mL-mR)/90;
+  var bW=Math.max(minW*0.72,3);
+  var s='';
 
-  if (hist.length < 2) {
-    lineHome.setAttribute('points', '');
-    lineAway.setAttribute('points', '');
-    fillHome.setAttribute('d', '');
-    fillAway.setAttribute('d', '');
-    return;
+  // Lignes de quart (15,30,60,75)
+  [15,30,60,75].forEach(function(mn){
+    var x=(mL+mn*minW).toFixed(1);
+    s+='<line x1="'+x+'" y1="4" x2="'+x+'" y2="'+(H-4)+'" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>';
+  });
+  // Ligne centrale
+  s+='<line x1="'+mL+'" y1="'+cY+'" x2="'+(W-mR)+'" y2="'+cY+'" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>';
+  // Labels DOM / EXT
+  s+='<text x="'+(mL+2)+'" y="'+(cY-6)+'" font-size="8" fill="rgba(0,230,118,0.5)" font-family="monospace">DOM</text>';
+  s+='<text x="'+(mL+2)+'" y="'+(cY+13)+'" font-size="8" fill="rgba(41,182,246,0.5)" font-family="monospace">EXT</text>';
+  // Ligne MT
+  var htX=(mL+45*minW).toFixed(1);
+  s+='<line x1="'+htX+'" y1="4" x2="'+htX+'" y2="'+(H-4)+'" stroke="rgba(255,255,255,0.28)" stroke-width="1.5" stroke-dasharray="3 3"/>';
+  s+='<text x="'+(parseFloat(htX)+4)+'" y="14" font-size="8" fill="rgba(255,255,255,0.4)" font-family="monospace">MT</text>';
+
+  // Barres
+  data.windows.forEach(function(w){
+    var x=(mL+(w.min-0.5)*minW-bW/2).toFixed(1);
+    var hH=((w.home/100)*maxH).toFixed(1);
+    var aH=((w.away/100)*maxH).toFixed(1);
+    if (parseFloat(hH)>0.5) s+='<rect x="'+x+'" y="'+(cY-parseFloat(hH)).toFixed(1)+'" width="'+bW.toFixed(1)+'" height="'+hH+'" fill="rgba(0,230,118,0.7)" rx="1"/>';
+    if (parseFloat(aH)>0.5) s+='<rect x="'+x+'" y="'+cY+'" width="'+bW.toFixed(1)+'" height="'+aH+'" fill="rgba(41,182,246,0.7)" rx="1"/>';
+  });
+
+  // Marqueurs buts
+  data.goals.forEach(function(g){
+    var gx=(mL+g.min*minW).toFixed(1);
+    var isH=g.team==='home';
+    var gy=isH?(cY-maxH-6).toFixed(1):(cY+maxH+6).toFixed(1);
+    var clr=isH?'#00e676':'#29b6f6';
+    s+='<circle cx="'+gx+'" cy="'+gy+'" r="6" fill="'+clr+'" opacity="0.9"/>';
+    s+='<text x="'+gx+'" y="'+(parseFloat(gy)+4)+'" font-size="9" fill="white" text-anchor="middle">⚽</text>';
+  });
+
+  // Indicateur minute courante
+  if (data.windows.length>0){
+    var last=data.windows[data.windows.length-1];
+    var curX=(mL+last.min*minW).toFixed(1);
+    s+='<line x1="'+curX+'" y1="4" x2="'+curX+'" y2="'+(H-4)+'" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>';
+    s+='<circle cx="'+curX+'" cy="'+cY+'" r="3" fill="white" opacity="0.85"/>';
+    s+='<text x="'+curX+'" y="'+(H)+'" font-size="8" fill="rgba(255,255,255,0.45)" text-anchor="middle" font-family="monospace">'+last.min+"'</text>";
   }
 
-  var W = 300, H = 80;
-  var step = W / (hist.length - 1);
-
-  function toY(pressure) { return H - (pressure / 100) * H; }
-
-  var ptsHome = hist.map(function(h, i) { return (i * step) + ',' + toY(h.homePressure); }).join(' ');
-  var ptsAway = hist.map(function(h, i) { return (i * step) + ',' + toY(h.awayPressure); }).join(' ');
-
-  lineHome.setAttribute('points', ptsHome);
-  lineAway.setAttribute('points', ptsAway);
-
-  // Fill paths (closed polygon)
-  var homePoints = hist.map(function(h, i) { return (i * step) + ' ' + toY(h.homePressure); });
-  var dHome = 'M 0 ' + H + ' L ' + homePoints.join(' L ') + ' L ' + (W) + ' ' + H + ' Z';
-  fillHome.setAttribute('d', dHome);
-  fillHome.setAttribute('fill', 'url(#gradHome)');
-
-  var awayPoints = hist.map(function(h, i) { return (i * step) + ' ' + toY(h.awayPressure); });
-  var dAway = 'M 0 ' + H + ' L ' + awayPoints.join(' L ') + ' L ' + (W) + ' ' + H + ' Z';
-  fillAway.setAttribute('d', dAway);
-  fillAway.setAttribute('fill', 'url(#gradAway)');
+  svg.innerHTML=s;
 }
 
 function _renderStatsFlash(m) {
   var el = document.getElementById('ld-stats-body');
   if (!el) return;
-  var ls = m.live_stats || {};
-  var stats = [
-    { label: 'Possession', homeVal: ls.possessionHome || m.possession_home || null, awayVal: ls.possessionAway || m.possession_away || null, unit: '%' },
-    { label: 'Att. Dang.', homeVal: ls.dangerousAttacksHome || null, awayVal: ls.dangerousAttacksAway || null, unit: '' },
-    { label: 'Tirs Cadrés', homeVal: ls.shotsOnTargetHome || null, awayVal: ls.shotsOnTargetAway || null, unit: '' },
-    { label: 'Corners', homeVal: ls.cornersHome || null, awayVal: ls.cornersAway || null, unit: '' }
+  var ls = m.live_stats||{}, pos=m.live_possession||{}, sh=m.live_shots||{};
+  var sot=m.live_shots_on_target||{}, co=m.live_corners||{}, da=m.live_dangerous_attacks||{};
+  var stats=[
+    {label:'Possession', h:pos.home||ls.possessionHome||50, a:pos.away||ls.possessionAway||50, unit:'%', pct:true},
+    {label:'Att. Dang.', h:da.home||ls.dangerousAttacksHome||0, a:da.away||ls.dangerousAttacksAway||0},
+    {label:'Tirs',       h:sh.home||0, a:sh.away||0},
+    {label:'Cadrés',    h:sot.home||ls.shotsOnTargetHome||0, a:sot.away||ls.shotsOnTargetAway||0},
+    {label:'Corners',   h:co.home||0, a:co.away||0},
   ];
-
-  var hasAny = stats.some(function(s) { return s.homeVal != null || s.awayVal != null; });
-  if (!hasAny) {
-    // Derive from intensity & score as approximation
-    var sc = _parseScore(m.live_score);
-    var intensity = m.live_intensity || 30;
-    stats[0].homeVal = Math.round(50 + (sc[0] - sc[1]) * 8);
-    stats[0].awayVal = 100 - stats[0].homeVal;
-    stats[1].homeVal = Math.round(intensity * 0.6 * (0.5 + (sc[0] - sc[1]) * 0.1));
-    stats[1].awayVal = Math.round(intensity * 0.6 * (0.5 - (sc[0] - sc[1]) * 0.1));
-    stats[2].homeVal = sc[0]; stats[2].awayVal = sc[1];
-    stats[3].homeVal = Math.round(intensity * 0.15 + sc[0]);
-    stats[3].awayVal = Math.round(intensity * 0.15 + sc[1]);
-  }
-
-  el.innerHTML = stats.map(function(s) {
-    var hv = s.homeVal != null ? s.homeVal : 0;
-    var av = s.awayVal != null ? s.awayVal : 0;
-    var maxV = Math.max(hv + av, 1);
-    var hPct = Math.round(hv / maxV * 100);
-    var aPct = 100 - hPct;
-    return '<div class="ld-stats-row">'
-      + '<div class="ld-stats-label">' + s.label + '</div>'
-      + '<div class="ld-stats-bars">'
-      + '<div class="ld-bar-wrap"><div class="ld-bar-val">' + hv + s.unit + '</div>'
-      + '<div class="ld-bar-track"><div class="ld-bar-fill home" style="width:' + hPct + '%;"></div></div></div>'
-      + '<div class="ld-bar-wrap"><div class="ld-bar-val">' + av + s.unit + '</div>'
-      + '<div class="ld-bar-track"><div class="ld-bar-fill away" style="width:' + aPct + '%;"></div></div></div>'
-      + '</div></div>';
+  el.innerHTML=stats.map(function(s){
+    var tot=s.pct?100:Math.max(s.h+s.a,1);
+    var hPct=Math.round(s.h/tot*100); var aPct=100-hPct;
+    return '<div class="ld-stat-row">'
+      +'<div><div class="ld-stat-val-h">'+s.h+(s.unit||'')+'</div>'
+      +'<div class="ld-stat-bar-h"><div class="ld-stat-bar-h-fill" style="width:'+hPct+'%;"></div></div></div>'
+      +'<div class="ld-stat-label">'+s.label+'</div>'
+      +'<div style="text-align:right;"><div class="ld-stat-val-a">'+s.a+(s.unit||'')+'</div>'
+      +'<div class="ld-stat-bar-a"><div class="ld-stat-bar-a-fill" style="width:'+aPct+'%;"></div></div></div>'
+      +'</div>';
   }).join('');
 }
 
-function _renderGauge(intensity) {
-  var valEl = document.getElementById('ld-gauge-value');
-  var labelEl = document.getElementById('ld-gauge-label');
-  var maskEl = document.getElementById('ld-gauge-mask');
-  if (!valEl) return;
-  var iv = Math.max(0, Math.min(100, parseInt(intensity) || 0));
-  var color = iv >= 70 ? '#E2001A' : iv >= 40 ? '#ff8c00' : iv >= 20 ? '#ffd600' : '#bdbdbd';
-  var label = iv >= 70 ? '🔥 Match Bouillant' : iv >= 40 ? '⚡ Intensif' : iv >= 20 ? '🟡 Animé' : '😴 Calme';
-  valEl.textContent = iv;
-  valEl.style.color = color;
-  labelEl.textContent = label;
-  labelEl.style.color = color;
-  if (maskEl) maskEl.style.width = (100 - iv) + '%';
-}
-
-function _renderBetPredictif(m) {
+function _renderBetPredictif(m, top3) {
   var el = document.getElementById('ld-bet-body');
   if (!el) return;
-  var edge = calculateLiveEdge(m);
-  if (!edge || !edge.best) { el.innerHTML = '<div class="ld-no-data">Cotes non disponibles.</div>'; return; }
-
-  var best = edge.best;
-  var edgePct = best.edge.toFixed(1);
-  var prob = Math.round(best.adjProb * 100);
-  var isPositive = best.edge > 3;
-  var badgeColor = isPositive ? '#E2001A' : '#888';
-  var adjHomeP = Math.round(edge.adjHome * 100);
-  var adjDrawP = Math.round(edge.adjDraw * 100);
-  var adjAwayP = Math.round(edge.adjAway * 100);
-
-  el.innerHTML = '<div class="ld-bet-verdict">'
-    + '<span class="ld-bet-badge" style="background:' + badgeColor + ';">' + (isPositive ? 'BET' : 'SKIP') + '</span>'
-    + '<span class="ld-bet-desc">' + best.label + (best.odds ? ' @ ' + best.odds.toFixed(2) : '') + '</span>'
-    + '</div>'
-    + '<div class="ld-bet-prob" style="color:' + badgeColor + ';">' + prob + '%</div>'
-    + '<div class="ld-bet-prob-label">Probabilité ajustée (live)</div>'
-    + '<div class="ld-bet-edge">'
-    + '<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:#E2001A;">' + adjHomeP + '%</div><div class="ld-bet-edge-label">Dom.</div></div>'
-    + '<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:#555;">' + adjDrawP + '%</div><div class="ld-bet-edge-label">Nul</div></div>'
-    + '<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:#1a1a2e;">' + adjAwayP + '%</div><div class="ld-bet-edge-label">Ext.</div></div>'
-    + '<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:' + (best.edge > 0 ? '#00a843' : '#E2001A') + ';">' + (best.edge > 0 ? '+' : '') + edgePct + '%</div><div class="ld-bet-edge-label">Edge</div></div>'
-    + '</div>';
+  var edge = calculateLiveEdge(m, top3 || null);
+  if (!edge||!edge.best) { el.innerHTML='<div class="ld-no-data">Cotes non disponibles.</div>'; return; }
+  var best=edge.best, pos=best.edge>3, eStr=(best.edge>0?'+':'')+best.edge.toFixed(1)+'%';
+  var prob=Math.round(best.adjProb*100);
+  var bCol=pos?'#00e676':'#555', probCol=pos?'var(--green)':'var(--text2)';
+  var eCol=best.edge>0?'var(--green)':'var(--red)';
+  var bgCol=pos?'rgba(0,230,118,0.2)':'rgba(255,255,255,0.06)';
+  var txtCol=pos?'var(--green)':'var(--text3)';
+  var boostTag = (edge.perfBoostHome||edge.perfBoostAway)
+    ? '<div style="font-size:9px;color:#ffd600;margin-top:4px;text-align:center;">⚡ Boost performers actif</div>'
+    : '';
+  el.innerHTML='<div class="ld-bet-verdict">'
+    +'<span class="ld-bet-badge" style="background:'+bgCol+';color:'+txtCol+';">'+(pos?'✓ BET':'✗ SKIP')+'</span>'
+    +'<span class="ld-bet-desc">'+best.label+(best.odds?' @ '+best.odds.toFixed(2):'')+'</span>'
+    +'</div>'
+    +'<div class="ld-bet-prob-row">'
+    +'<div><div class="ld-bet-prob" style="color:'+probCol+';">'+prob+'%</div><div class="ld-bet-prob-lbl">Proba ajustée</div></div>'
+    +'<div style="text-align:right;"><div class="ld-bet-prob" style="color:'+eCol+';">'+eStr+'</div><div class="ld-bet-prob-lbl">Edge no-vig</div></div>'
+    +'</div>'
+    +'<div class="ld-bet-edge-row">'
+    +'<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:var(--green);">'+Math.round(edge.adjHome*100)+'%</div><div class="ld-bet-edge-lbl">Dom.</div></div>'
+    +'<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:var(--text2);">'+Math.round(edge.adjDraw*100)+'%</div><div class="ld-bet-edge-lbl">Nul</div></div>'
+    +'<div class="ld-bet-edge-item"><div class="ld-bet-edge-val" style="color:var(--blue);">'+Math.round(edge.adjAway*100)+'%</div><div class="ld-bet-edge-lbl">Ext.</div></div>'
+    +'</div>'
+    +boostTag;
 }
 
 function _renderDashForMatch(m) {
   if (!m) return;
   _recordMomentum(m);
-  _renderMomentumSVG(m.id, m.home_team, m.away_team);
+  _renderScoreHeader(m);
+  _renderMomentumBars(m.id, m.home_team, m.away_team);
   _renderStatsFlash(m);
-  _renderGauge(m.live_intensity || 0);
-  _renderBetPredictif(m);
+  _renderBetPredictif(m, _livePlayersCache[m.id] || null);
+  _renderTopPerformers(m);
 }
 
 function updateLiveDashboard(matches) {
@@ -8154,7 +8548,14 @@ const label = country
           <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
           <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
           <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
-          ${m.live_score ? `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live">🔴</button>` : ''}
+          ${m.live_score ? (() => {
+            const xgH = m.live_xg?.home ?? m.expectedGoals?.home ?? null;
+            const xgA = m.live_xg?.away ?? m.expectedGoals?.away ?? null;
+            const xgRow = (xgH !== null && xgA !== null)
+              ? `<div class="live-btn-xg"><span class="xg-h">xG ${(+xgH).toFixed(1)}</span><span style="color:var(--text3)">|</span><span class="xg-a">${(+xgA).toFixed(1)}</span></div>`
+              : '';
+            return `<button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG Dom/Ext">🔴${xgRow}</button>`;
+          })() : ''}
           <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
         </div>
       </td>

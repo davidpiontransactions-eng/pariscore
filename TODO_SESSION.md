@@ -13,6 +13,12 @@
 
 - [x] Mutation de l'onglet Live : Passage d'un flux scrollé à un Dashboard de Stratégie (Momentum + Intensity Gauge + Predictive Bet).
 
+## En cours / Debug
+- [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
+- [x] Intégration du module Top 3 Joueurs (Ratings Live BSD) dans le Dashboard Live.
+
 ## Roadmap suivante
 - [ ] Filtres L5/L10/L25 dans tableau principal (PPG/forme X derniers matchs)
 - [ ] Onglet Tendances version Full (route `/api/v1/trends`)
+- [x] Rédaction du glossaire expert dans le Guide
+- [x] Injection de matchs de test avec couverture bookmakers totale (ANJ, 1x, Betfair)
