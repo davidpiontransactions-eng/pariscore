@@ -5277,6 +5277,72 @@ function getTop3Players(match) {
   return { home, away, homeAvg, awayAvg, available: home.length > 0 || away.length > 0 };
 }
 
+// ── Sofascore live ratings — via /event/{id}/lineups (ratings live par joueur) ──
+const _sofaEventsCache = {};    // { dateStr: { ts, events[] } }
+const _sofaEventIdCache = {};   // { matchId: sofaEventId }
+const SOFA_EVENTS_TTL = 30 * 60 * 1000; // 30 min
+
+async function getSofaScheduledEvents(dateStr) {
+  const cached = _sofaEventsCache[dateStr];
+  if (cached && Date.now() - cached.ts < SOFA_EVENTS_TTL) return cached.events;
+  try {
+    const res = await sofaGet(`/sport/football/scheduled-events/${dateStr}`);
+    if (res.status !== 200 || !res.data?.events) return [];
+    _sofaEventsCache[dateStr] = { ts: Date.now(), events: res.data.events };
+    return res.data.events;
+  } catch (e) { return []; }
+}
+
+async function findSofaEventId(match) {
+  const cacheKey = match.id;
+  if (_sofaEventIdCache[cacheKey]) return _sofaEventIdCache[cacheKey];
+  const dateStr = match.commence_time
+    ? new Date(match.commence_time).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  const events = await getSofaScheduledEvents(dateStr);
+  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const found = events.find(e => {
+    if (match.home_sofa_id && match.away_sofa_id) {
+      return e.homeTeam?.id === match.home_sofa_id && e.awayTeam?.id === match.away_sofa_id;
+    }
+    return norm(e.homeTeam?.name) === norm(match.home_team) &&
+           norm(e.awayTeam?.name) === norm(match.away_team);
+  });
+  if (found?.id) _sofaEventIdCache[cacheKey] = found.id;
+  return found?.id || null;
+}
+
+async function getTop3PlayersFromSofa(match) {
+  try {
+    const sofaEventId = await findSofaEventId(match);
+    if (!sofaEventId) return null;
+    const res = await sofaGet(`/event/${sofaEventId}/lineups`);
+    if (res.status !== 200 || !res.data) return null;
+    const POS_MAP = { G: 'G', D: 'D', M: 'M', F: 'A', Goalkeeper: 'G', Defender: 'D', Midfielder: 'M', Forward: 'A', Attacker: 'A' };
+    const extractTop3 = (players) => (players || [])
+      .filter(p => p.statistics?.rating != null && p.statistics.rating > 0)
+      .map(p => ({
+        name: p.player?.shortName || p.player?.name || '',
+        avg_rating: parseFloat(Number(p.statistics.rating).toFixed(1)),
+        position: POS_MAP[p.position?.name] || 'M',
+        goals: p.statistics?.goals || 0,
+        assists: p.statistics?.goalAssists || 0,
+        xg: parseFloat((p.statistics?.expectedGoals || 0).toFixed(2)),
+      }))
+      .sort((a, b) => b.avg_rating - a.avg_rating)
+      .slice(0, 3);
+    const home = extractTop3(res.data.home?.players);
+    const away = extractTop3(res.data.away?.players);
+    if (!home.length && !away.length) return null;
+    const avg = arr => arr.length ? parseFloat((arr.reduce((s, p) => s + p.avg_rating, 0) / arr.length).toFixed(2)) : null;
+    console.log(`  [SofaRatings] event ${sofaEventId} → home:${home.length} away:${away.length}`);
+    return { home, away, homeAvg: avg(home), awayAvg: avg(away), available: true, _source: 'sofascore', _sofaEventId: sofaEventId };
+  } catch (e) {
+    console.warn('[SofaRatings]', e.message);
+    return null;
+  }
+}
+
 // ── Fallback API-Football pour ligues non couvertes par BSD ratings ──────────
 // Mapping BSD league_id → API-Football league_id (saison 2024 accessible Free)
 const BSD_TO_APIF_LEAGUE = {
@@ -5382,7 +5448,11 @@ async function getTop3PlayersWithFallback(match) {
   const bsd = getTop3Players(match);
   if (bsd.available) return { ...bsd, _source: 'bsd' };
 
-  // 2. API-Football fallback (ligues non couvertes BSD)
+  // 2. Sofascore live ratings (mise à jour chaque minute, couvre toutes les ligues)
+  const sofa = await getTop3PlayersFromSofa(match);
+  if (sofa) return sofa;
+
+  // 3. API-Football fallback (ligues non couvertes BSD)
   const bsdLeagueId = match._bsd_league_id;
   const apifLeagueId = bsdLeagueId ? BSD_TO_APIF_LEAGUE[bsdLeagueId] : null;
   const eventId = match._bsd_event_id;
