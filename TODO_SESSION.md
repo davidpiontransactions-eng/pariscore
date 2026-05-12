@@ -29,6 +29,7 @@
 ## Roadmap suivante
 - [x] Filtres L5/L10/L25 dans tableau principal (PPG/forme X derniers matchs) — Existant L4747-4755 pariscore.html (filter-chip Saison/L5/L10/L25). setPeriod(period) toggle activePeriod + renderMatches re-trigger. ppgFromFormStr(form, n) calcule PPG sur N derniers matchs. Verified preview port 61772 : 4 boutons, click L5 → activePeriod='l5' + periodNote 'Calculé sur les 5 derniers matchs'.
 - [ ] Onglet Tendances version Full (route `/api/v1/trends`)
+- [ ] Intégrer sur chaque ligne du tableau Matchs le logo de la chaîne TV qui diffuse le match. Route backend `/api/v1/tv-channels` déjà existante (server.js:8512). À câbler côté frontend : enrichir payload `/api/v1/matches` avec champ `tv_channel` (id + name + logo_url) puis rendre dans renderMatches (ajouter colonne ou badge sous heure de coup d'envoi). Fallback gracieux si pas de diffuseur connu.
 - [x] Élargissement régions/markets fetchOdds — server.js:5747 régions `eu,uk` + markets `h2h,totals,both_teams_score` (config override via env ODDS_REGIONS / ODDS_MARKETS). Coût quota multiplié par 3 (markets) × 2 (régions) = 6x — surveillance quota nécessaire pour plan 500 credits/mois.
 - [x] Rédaction du glossaire expert dans le Guide
 - [x] Injection de matchs de test avec couverture bookmakers totale (ANJ, 1x, Betfair)
