@@ -645,12 +645,11 @@ open http://localhost:3000
   - Alertes configurables : "Cote Home > 2.00 + domicile a 60% possession"
   - Décision : Reporter après monétisation (plan Pro)
 
-- [ ] **Bet Tracking Utilisateur** (temps dev: 1 semaine)
-  - Prérequis : SQLite migration (remplace database.json)
-  - CRUD paris : date, match, marché, cote, mise, statut
-  - Auto-settlement après match terminé
-  - Dashboard P&L graphique (Chart.js)
-  - Support multiples, bet builders, accumulators
+- [x] **Bet Tracking Utilisateur** (v9.8 — livré 2026-05-12)
+  - Page `Mes Paris` : KPIs + chart bankroll réelle + 3 tabs + filtres + modals (saisie/règlement/dépôt) + Kelly + export CSV
+  - Tables `user_bets` + `bankroll_transactions`, scope `user_id`, INTEGER cents
+  - Auto-suggestion de règlement quand match archivé verified (jamais auto-applied)
+  - Reste hors scope : combinés/parlay, scraping 1xbet, cashout live
 
 - [ ] **API Publique Documentée** (temps dev: 3-4 jours)
   - Swagger/OpenAPI auto-généré

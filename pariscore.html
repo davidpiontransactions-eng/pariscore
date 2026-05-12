@@ -1606,6 +1606,56 @@
   .hist-kpi-val.red { color: var(--red); }
   .hist-kpi-val.neutral { color: var(--text); }
   .hist-kpi-sub { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+
+  /* ─── MES PARIS ────────────────────────────────────────────────────────── */
+  .paris-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 12px; align-items: center; }
+  .paris-toolbar .btn-primary { background: var(--green); color: #000; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .5px; }
+  .paris-toolbar .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 7px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--font-mono); }
+  .paris-toolbar .btn-ghost:hover { border-color: var(--blue); }
+  .paris-tabs { display: flex; gap: 4px; margin: 14px 0 8px; border-bottom: 1px solid var(--border); }
+  .paris-tab { background: transparent; border: none; padding: 8px 14px; font-size: 11px; font-family: var(--font-mono); color: var(--text2); cursor: pointer; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid transparent; }
+  .paris-tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .paris-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 14px; padding: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; }
+  .paris-filters label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); text-transform: uppercase; display: flex; flex-direction: column; gap: 4px; }
+  .paris-filters select, .paris-filters input { background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 4px; font-size: 12px; font-family: var(--font-mono); }
+  .bet-status-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font: 600 10px/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: .5px; }
+  .bet-status-pill.pending   { background: rgba(245,158,11,.18); color: var(--amber); }
+  .bet-status-pill.won       { background: rgba(0,230,118,.16); color: var(--green); }
+  .bet-status-pill.lost      { background: rgba(255,77,77,.16); color: var(--red); }
+  .bet-status-pill.void      { background: var(--bg4); color: var(--text3); }
+  .bet-status-pill.cashout   { background: rgba(41,182,246,.16); color: var(--blue); }
+  .bet-status-pill.half_won  { background: rgba(0,230,118,.10); color: var(--green); }
+  .bet-status-pill.half_lost { background: rgba(255,77,77,.10); color: var(--red); }
+  .bet-pl-pos { color: var(--green); font-family: var(--font-mono); font-weight: 700; }
+  .bet-pl-neg { color: var(--red); font-family: var(--font-mono); font-weight: 700; }
+  .bet-row-suggest td { box-shadow: inset 3px 0 0 var(--amber); }
+  .bet-actions { display: flex; gap: 6px; }
+  .bet-actions button { background: var(--bg3); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; color: var(--text); font-family: var(--font-mono); }
+  .bet-actions button:hover { border-color: var(--blue); }
+  .bet-actions button.danger:hover { border-color: var(--red); color: var(--red); }
+  .kelly-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-top: 8px; }
+  .kelly-panel .k-row { display: flex; gap: 8px; margin-top: 6px; }
+  .kelly-panel .k-btn { flex: 1; background: var(--bg4); border: 1px solid var(--border); border-radius: 6px; padding: 8px 6px; cursor: pointer; font-family: var(--font-mono); font-size: 11px; color: var(--text); }
+  .kelly-panel .k-btn:hover { border-color: var(--blue); }
+  .kelly-panel .k-btn.primary { border-color: var(--blue); background: rgba(41,182,246,.12); font-weight: 700; }
+  .kelly-panel .k-label { font-size: 10px; color: var(--text3); display: block; }
+  .kelly-panel .k-val { font-size: 14px; font-weight: 800; color: var(--text); }
+  .paris-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .paris-modal.open { display: flex; }
+  .paris-modal-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto; padding: 22px 24px; }
+  .paris-modal-card h3 { font-family: var(--font-head); font-size: 20px; margin: 0 0 16px; color: var(--text); }
+  .paris-modal-card label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .paris-modal-card input, .paris-modal-card select, .paris-modal-card textarea { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 13px; font-family: var(--font-mono); }
+  .paris-modal-card textarea { min-height: 60px; resize: vertical; }
+  .paris-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .paris-modal-actions button { padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .5px; }
+  .paris-modal-actions .btn-cancel { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .paris-modal-actions .btn-save { background: var(--green); color: #000; border: none; }
+  .paris-modal-err { background: rgba(255,77,77,.10); color: var(--red); padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; display: none; }
+  .paris-suggest-banner { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.4); padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; display: none; }
+  .paris-suggest-banner.show { display: block; }
+  .paris-empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; font-family: var(--font-mono); }
+  .bk-chip { display: inline-block; background: var(--bg3); border: 1px solid var(--border); padding: 2px 8px; border-radius: 10px; font-size: 10px; font-family: var(--font-mono); color: var(--text2); }
   .league-badge { font-size: 10px; font-family: var(--font-mono); color: var(--text2); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; display: inline-flex; gap: 4px; align-items: center; }
   .league-badge b { color: var(--green); }
   .league-badge small { color: var(--text3); }
@@ -4355,6 +4405,7 @@
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
     <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions">Prédictions IA</a>
     <a href="#" onclick="showPage('historique',this);return false;" data-page="historique">Historique</a>
+    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris">Mes Paris</a>
     <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances">Tendances</a>
     <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes">Alertes</a>
     <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs">Tarifs</a>
@@ -4408,6 +4459,143 @@
       </div>
       <div class="auth-error" id="reg-error"></div>
       <button class="auth-submit" id="reg-btn" onclick="submitRegister()">Créer mon compte →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MES PARIS — MODAL : Nouveau pari -->
+<div id="bet-modal" class="paris-modal">
+  <div class="paris-modal-card">
+    <h3>Nouveau pari</h3>
+    <div class="paris-modal-err" id="bet-modal-err"></div>
+    <input type="hidden" id="bet-match-id">
+    <label>Match (autocomplete depuis matchs PariScore)
+      <input list="bet-match-list" id="bet-match-search" placeholder="Tape une équipe..." oninput="onBetMatchInput()">
+      <datalist id="bet-match-list"></datalist>
+    </label>
+    <label>Ligue
+      <input type="text" id="bet-league" placeholder="ex : Ligue 1">
+    </label>
+    <label>Marché
+      <select id="bet-market" onchange="onBetMarketChange()">
+        <option value="1X2:HOME">1X2 — Victoire domicile</option>
+        <option value="1X2:DRAW">1X2 — Nul</option>
+        <option value="1X2:AWAY">1X2 — Victoire extérieur</option>
+        <option value="OVER_0_5">Over 0.5 buts</option>
+        <option value="OVER_1_5">Over 1.5 buts</option>
+        <option value="OVER_2_5" selected>Over 2.5 buts</option>
+        <option value="OVER_3_5">Over 3.5 buts</option>
+        <option value="UNDER_2_5">Under 2.5 buts</option>
+        <option value="UNDER_3_5">Under 3.5 buts</option>
+        <option value="BTTS:YES">BTTS — Oui</option>
+        <option value="BTTS:NO">BTTS — Non</option>
+        <option value="DC:1X">Double chance 1X</option>
+        <option value="DC:X2">Double chance X2</option>
+        <option value="DC:12">Double chance 12</option>
+        <option value="AH:HOME:-0.5">AH -0.5 Dom</option>
+        <option value="AH:AWAY:-0.5">AH -0.5 Ext</option>
+        <option value="FREE">Autre (libre)</option>
+      </select>
+    </label>
+    <label>Libellé sélection
+      <input type="text" id="bet-selection" placeholder="ex : Over 2.5">
+    </label>
+    <label>Cote
+      <input type="number" id="bet-odds" step="0.01" min="1.01" value="1.85">
+    </label>
+    <label>Mise (€)
+      <input type="number" id="bet-stake" step="0.5" min="0.5" value="10">
+    </label>
+    <label>Bookmaker
+      <input type="text" id="bet-bookmaker" value="1xbet">
+    </label>
+    <button class="btn-ghost" type="button" onclick="toggleKellyPanel()" style="margin-bottom:10px;">💡 Suggestion Kelly</button>
+    <div class="kelly-panel" id="bet-kelly-panel" style="display:none;">
+      <label style="margin-bottom:6px;">Probabilité estimée du modèle (0 → 1)
+        <input type="number" id="bet-prob" step="0.01" min="0.01" max="0.99" value="0.55" onchange="recomputeKelly()">
+      </label>
+      <div class="k-row">
+        <div class="k-btn primary" onclick="applyKelly('full')">
+          <span class="k-label">Full Kelly</span>
+          <span class="k-val" id="k-full">—</span>
+        </div>
+        <div class="k-btn" onclick="applyKelly('half')">
+          <span class="k-label">Half Kelly</span>
+          <span class="k-val" id="k-half">—</span>
+        </div>
+        <div class="k-btn" onclick="applyKelly('quarter')">
+          <span class="k-label">Quarter</span>
+          <span class="k-val" id="k-quarter">—</span>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--font-mono);">Plafond Kelly = 25 % bankroll. Edge = <span id="k-edge">—</span></div>
+    </div>
+    <label>Notes (optionnel)
+      <textarea id="bet-notes" maxlength="500" placeholder="Conviction, source, observation..."></textarea>
+    </label>
+    <div class="paris-modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeBetModal()">Annuler</button>
+      <button class="btn-save" type="button" id="bet-save-btn" onclick="submitBet()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MES PARIS — MODAL : Règlement d'un pari -->
+<div id="settle-modal" class="paris-modal">
+  <div class="paris-modal-card">
+    <h3>Régler le pari</h3>
+    <div class="paris-modal-err" id="settle-modal-err"></div>
+    <div class="paris-suggest-banner" id="settle-suggest-banner"></div>
+    <input type="hidden" id="settle-bet-id">
+    <div id="settle-bet-summary" style="background:var(--bg3);padding:10px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;font-family:var(--font-mono);color:var(--text2);"></div>
+    <label>Statut final
+      <select id="settle-status" onchange="onSettleStatusChange()">
+        <option value="won">Gagné</option>
+        <option value="lost">Perdu</option>
+        <option value="void">Annulé / Remboursé</option>
+        <option value="half_won">Demi-gagné (AH)</option>
+        <option value="half_lost">Demi-perdu (AH)</option>
+        <option value="cashout">Cashout</option>
+      </select>
+    </label>
+    <label id="settle-cashout-wrap" style="display:none;">Montant cashout reçu (€)
+      <input type="number" id="settle-cashout" step="0.01" min="0" value="0">
+    </label>
+    <div id="settle-payout-preview" style="font-size:12px;color:var(--text2);font-family:var(--font-mono);margin-bottom:12px;"></div>
+    <div class="paris-modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeSettleModal()">Annuler</button>
+      <button class="btn-save" type="button" onclick="submitSettle()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MES PARIS — MODAL : Dépôt / Retrait -->
+<div id="cash-modal" class="paris-modal">
+  <div class="paris-modal-card">
+    <h3>Mouvement de trésorerie</h3>
+    <div class="paris-modal-err" id="cash-modal-err"></div>
+    <label>Type
+      <select id="cash-kind">
+        <option value="deposit">Dépôt</option>
+        <option value="withdrawal">Retrait</option>
+        <option value="adjustment">Ajustement</option>
+      </select>
+    </label>
+    <label>Montant (€)
+      <input type="number" id="cash-amount" step="0.01" min="0.01" value="100">
+    </label>
+    <label>Bookmaker
+      <input type="text" id="cash-bookmaker" value="1xbet">
+    </label>
+    <label>Date
+      <input type="date" id="cash-date">
+    </label>
+    <label>Note (optionnel)
+      <input type="text" id="cash-note" maxlength="200">
+    </label>
+    <div class="paris-modal-actions">
+      <button class="btn-cancel" type="button" onclick="closeCashModal()">Annuler</button>
+      <button class="btn-save" type="button" onclick="submitCash()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -5078,6 +5266,108 @@
   </div>
 </section>
 </div><!-- /page-historique -->
+
+<!-- PAGE : MES PARIS -->
+<div id="page-paris" data-page="paris" style="display:none;">
+<section class="section fade-up" id="paris" style="background: radial-gradient(ellipse 60% 30% at 50% 60%, rgba(41,182,246,0.03) 0%, transparent 60%);">
+  <div class="section-label">Mes Paris</div>
+  <div class="section-title">Suivi personnel<br>&amp; Bankroll.</div>
+  <div class="section-sub">Saisissez vos paris réels (1xbet par défaut). PariScore calcule P&amp;L, ROI, drawdown, et propose des mises selon Kelly.</div>
+
+  <div class="paris-toolbar">
+    <button class="btn-primary" onclick="openBetModal()">+ Nouveau pari</button>
+    <button class="btn-ghost" onclick="openCashModal()">+ Dépôt / Retrait</button>
+    <button class="btn-ghost" onclick="exportBetsCsv()">⬇ Export CSV</button>
+    <span class="bk-chip" id="paris-bk-chip">Bookmaker : 1xbet</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--font-mono);" id="paris-last-refresh"></span>
+  </div>
+
+  <div class="hist-kpi-row" id="paris-kpis"></div>
+
+  <div class="hist-chart-wrap" id="paris-chart-wrap" style="display:none;">
+    <div class="hist-chart-title">Évolution Bankroll — courbe réelle</div>
+    <canvas id="user-bankroll-chart" style="width:100%;height:200px;"></canvas>
+  </div>
+
+  <div class="paris-tabs">
+    <button class="paris-tab active" data-tab="open" onclick="setParisTab('open')">Paris ouverts</button>
+    <button class="paris-tab" data-tab="settled" onclick="setParisTab('settled')">Historique</button>
+    <button class="paris-tab" data-tab="cash" onclick="setParisTab('cash')">Trésorerie</button>
+  </div>
+
+  <div class="paris-filters" id="paris-filters">
+    <label>Statut
+      <select id="paris-f-status" onchange="applyParisFilters()">
+        <option value="">Tous</option>
+        <option value="pending">En attente</option>
+        <option value="won">Gagné</option>
+        <option value="lost">Perdu</option>
+        <option value="void">Annulé</option>
+        <option value="cashout">Cashout</option>
+        <option value="half_won">Demi-gagné</option>
+        <option value="half_lost">Demi-perdu</option>
+      </select>
+    </label>
+    <label>Bookmaker
+      <input type="text" id="paris-f-bookmaker" placeholder="1xbet" onchange="applyParisFilters()">
+    </label>
+    <label>Marché
+      <input type="text" id="paris-f-market" placeholder="OVER_2_5..." onchange="applyParisFilters()">
+    </label>
+    <label>Équipe
+      <input type="text" id="paris-f-team" placeholder="Nom équipe" onchange="applyParisFilters()">
+    </label>
+    <label>Du
+      <input type="date" id="paris-f-from" onchange="applyParisFilters()">
+    </label>
+    <label>Au
+      <input type="date" id="paris-f-to" onchange="applyParisFilters()">
+    </label>
+  </div>
+
+  <div class="hist-table-wrap" id="paris-bets-table-wrap">
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Match</th>
+          <th>Marché</th>
+          <th>Cote</th>
+          <th>Mise</th>
+          <th>Bookie</th>
+          <th>Statut</th>
+          <th>P&amp;L</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="paris-bets-tbody"></tbody>
+    </table>
+    <div id="paris-empty" class="paris-empty" style="display:none;">
+      Aucun pari pour le moment.<br>
+      <span style="font-size:11px;">Clique "+ Nouveau pari" pour commencer.</span>
+    </div>
+  </div>
+
+  <div class="hist-table-wrap" id="paris-cash-table-wrap" style="display:none;">
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Montant</th>
+          <th>Bookmaker</th>
+          <th>Note</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="paris-cash-tbody"></tbody>
+    </table>
+    <div id="paris-cash-empty" class="paris-empty" style="display:none;">
+      Aucun mouvement de trésorerie.
+    </div>
+  </div>
+</section>
+</div><!-- /page-paris -->
 
 <!-- PAGE : TOP STRATÉGIES -->
 <div id="page-strategies" data-page="strategies" style="display:none;">
@@ -6032,6 +6322,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'matchs') initMatchdayBanner();
   if (pageId === 'predictions') loadPredictions();
   if (pageId === 'historique')  initHistoriquePage();
+  if (pageId === 'paris')       initParisPage();
   if (pageId === 'strategies')  initStrategiesPage();
   if (pageId === 'tendances')   loadTrends();
   if (pageId === 'alertes')    initAlertesPage();
@@ -12665,6 +12956,483 @@ function histKpiColor(rate) {
   return rate >= 65 ? 'green' : rate >= 55 ? 'amber' : 'red';
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MES PARIS — Bet tracking + bankroll réel + Kelly + CSV
+// ═══════════════════════════════════════════════════════════════════════════════
+let userBankrollChart = null;
+let parisState = {
+  loaded: false,
+  tab: 'open',
+  matchesCache: [],
+  filters: {},
+  summary: null,
+  lastBets: [],
+};
+
+function centsToEur(c) { if (typeof c !== 'number') return '—'; return (c / 100).toFixed(2) + ' €'; }
+function eurFmt(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + ' €'; }
+
+async function initParisPage() {
+  if (!psGetToken()) { openAuthModal('login'); return; }
+  if (parisState.loaded) { refreshParisPage(); return; }
+  parisState.loaded = true;
+  await Promise.all([loadParisMatchesCache(), refreshParisPage()]);
+}
+
+async function refreshParisPage() {
+  await Promise.all([loadBankrollSummary(), loadUserBets(), loadCashTx()]);
+  document.getElementById('paris-last-refresh').textContent = 'Mise à jour : ' + new Date().toLocaleTimeString('fr-FR');
+}
+
+async function loadParisMatchesCache() {
+  try {
+    const res = await fetch('/api/v1/matches');
+    if (!res.ok) return;
+    const data = await res.json();
+    parisState.matchesCache = (data.matches || data || []).slice(0, 200);
+    const dl = document.getElementById('bet-match-list');
+    if (dl) {
+      dl.innerHTML = parisState.matchesCache.map(m =>
+        `<option data-id="${m.id}" data-league="${m.league || ''}" data-commence="${m.commence_time || ''}" value="${m.home_team} — ${m.away_team}">`
+      ).join('');
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function onBetMatchInput() {
+  const val = document.getElementById('bet-match-search').value;
+  const match = parisState.matchesCache.find(m => `${m.home_team} — ${m.away_team}` === val);
+  if (match) {
+    document.getElementById('bet-match-id').value = match.id || '';
+    document.getElementById('bet-league').value = match.league || '';
+  }
+}
+
+function setParisTab(tab) {
+  parisState.tab = tab;
+  document.querySelectorAll('.paris-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('paris-bets-table-wrap').style.display = (tab === 'cash') ? 'none' : 'block';
+  document.getElementById('paris-cash-table-wrap').style.display = (tab === 'cash') ? 'block' : 'none';
+  document.getElementById('paris-filters').style.display = (tab === 'cash') ? 'none' : 'grid';
+  if (tab !== 'cash') renderUserBetsTable();
+}
+
+function applyParisFilters() {
+  parisState.filters = {
+    status: document.getElementById('paris-f-status').value,
+    bookmaker: document.getElementById('paris-f-bookmaker').value.trim(),
+    market: document.getElementById('paris-f-market').value.trim(),
+    team: document.getElementById('paris-f-team').value.trim(),
+    from: document.getElementById('paris-f-from').value,
+    to: document.getElementById('paris-f-to').value,
+  };
+  loadUserBets();
+}
+
+function buildBetsQueryString() {
+  const f = parisState.filters || {};
+  const parts = [];
+  if (f.status) parts.push('status=' + encodeURIComponent(f.status));
+  if (f.bookmaker) parts.push('bookmaker=' + encodeURIComponent(f.bookmaker));
+  if (f.market) parts.push('market=' + encodeURIComponent(f.market));
+  if (f.team) parts.push('team=' + encodeURIComponent(f.team));
+  if (f.from) parts.push('from=' + encodeURIComponent(f.from));
+  if (f.to) parts.push('to=' + encodeURIComponent(f.to));
+  parts.push('limit=500');
+  return parts.join('&');
+}
+
+async function loadUserBets() {
+  try {
+    const res = await apiFetch('/api/v1/bets?' + buildBetsQueryString());
+    if (!res.ok) return;
+    const data = await res.json();
+    parisState.lastBets = data.bets || [];
+    renderUserBetsTable();
+  } catch (e) { /* AUTH_REQUIRED already opened modal */ }
+}
+
+function renderUserBetsTable() {
+  const tbody = document.getElementById('paris-bets-tbody');
+  const emptyEl = document.getElementById('paris-empty');
+  if (!tbody) return;
+  const filtered = parisState.lastBets.filter(b => parisState.tab === 'open' ? b.status === 'pending' : b.status !== 'pending');
+  if (!filtered.length) { tbody.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+  const now = Math.floor(Date.now() / 1000);
+  tbody.innerHTML = filtered.map(b => {
+    const d = b.commence_time ? new Date(b.commence_time) : new Date(b.created_at * 1000);
+    const dateStr = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const match = (b.home_team || '?') + ' — ' + (b.away_team || '?');
+    const pl = (b.payout_cents !== null && b.payout_cents !== undefined)
+      ? `<span class="${b.payout_cents >= 0 ? 'bet-pl-pos' : 'bet-pl-neg'}">${eurFmt(b.payout_cents / 100)}</span>`
+      : '<span style="color:var(--text3);">—</span>';
+    const settleable = b.status === 'pending' && b.match_id && b.commence_time && (new Date(b.commence_time).getTime() / 1000 + 2 * 3600) < now;
+    const rowCls = settleable ? 'bet-row-suggest' : '';
+    const actions = b.status === 'pending'
+      ? `<button onclick="openSettleModal(${b.id})">Régler</button><button class="danger" onclick="deleteBet(${b.id})">×</button>`
+      : `<button class="danger" onclick="deleteBet(${b.id})">×</button>`;
+    return `<tr class="${rowCls}">
+      <td>${dateStr}</td>
+      <td>${escapeHtml(match)}${b.league ? `<div style="font-size:10px;color:var(--text3);">${escapeHtml(b.league)}</div>` : ''}</td>
+      <td>${escapeHtml(b.selection_label)}<div style="font-size:10px;color:var(--text3);">${escapeHtml(b.market)}</div></td>
+      <td>${b.odds.toFixed(2)}</td>
+      <td>${centsToEur(b.stake_cents)}</td>
+      <td>${escapeHtml(b.bookmaker)}</td>
+      <td><span class="bet-status-pill ${b.status}">${b.status}</span></td>
+      <td>${pl}</td>
+      <td class="bet-actions">${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function loadCashTx() {
+  try {
+    const res = await apiFetch('/api/v1/bankroll/tx');
+    if (!res.ok) return;
+    const data = await res.json();
+    const tbody = document.getElementById('paris-cash-tbody');
+    const emptyEl = document.getElementById('paris-cash-empty');
+    if (!data.tx || !data.tx.length) { tbody.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+    emptyEl.style.display = 'none';
+    tbody.innerHTML = data.tx.map(t => {
+      const date = new Date(t.occurred_at * 1000).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' });
+      const amount = t.amount_cents / 100;
+      const cls = amount >= 0 ? 'bet-pl-pos' : 'bet-pl-neg';
+      return `<tr>
+        <td>${date}</td>
+        <td><span class="bet-status-pill ${t.kind === 'deposit' ? 'won' : t.kind === 'withdrawal' ? 'lost' : 'void'}">${t.kind}</span></td>
+        <td><span class="${cls}">${eurFmt(amount)}</span></td>
+        <td>${escapeHtml(t.bookmaker || '—')}</td>
+        <td>${escapeHtml(t.note || '')}</td>
+        <td class="bet-actions"><button class="danger" onclick="deleteCashTx(${t.id})">×</button></td>
+      </tr>`;
+    }).join('');
+  } catch (e) { /* ignore */ }
+}
+
+async function loadBankrollSummary() {
+  try {
+    const res = await apiFetch('/api/v1/bankroll/summary');
+    if (!res.ok) return;
+    const s = await res.json();
+    parisState.summary = s;
+    const plCls = s.settled_pl_cents >= 0 ? 'green' : 'red';
+    const roiCls = s.roi_pct >= 0 ? 'green' : 'red';
+    document.getElementById('paris-kpis').innerHTML = [
+      { label: 'Bankroll', val: centsToEur(s.current_cents), color: 'var(--text)' },
+      { label: 'Disponible', val: centsToEur(s.free_cents), color: 'var(--blue)', sub: s.open_stake_cents ? `(en jeu : ${centsToEur(s.open_stake_cents)})` : '' },
+      { label: 'P&L cumul', val: eurFmt(s.settled_pl_cents / 100), color: 'var(--' + (s.settled_pl_cents >= 0 ? 'green' : 'red') + ')' },
+      { label: 'ROI', val: (s.roi_pct >= 0 ? '+' : '') + s.roi_pct + '%', color: 'var(--' + (s.roi_pct >= 0 ? 'green' : 'red') + ')' },
+      { label: 'Win Rate', val: (s.win_rate * 100).toFixed(1) + '%', color: 'var(--text2)', sub: `${s.totals.won}W / ${s.totals.lost}L` },
+      { label: 'Drawdown max', val: '-' + s.max_drawdown_pct + '%', color: 'var(--amber)', sub: 'risk : -' + s.raw_drawdown_pct + '%' },
+      { label: 'Ouverts', val: s.totals.pending, color: 'var(--text2)' },
+      { label: 'Longest streak', val: s.longest_win_streak + ' / ' + s.longest_loss_streak, color: 'var(--text2)', sub: 'W / L' },
+    ].map(k => `<div class="hist-kpi"><div class="hist-kpi-label">${k.label}</div><div class="hist-kpi-val" style="color:${k.color}">${k.val}</div>${k.sub ? `<div class="hist-kpi-sub">${k.sub}</div>` : ''}</div>`).join('');
+    renderUserBankrollChart(s);
+  } catch (e) { /* ignore */ }
+}
+
+function renderUserBankrollChart(s) {
+  const wrap = document.getElementById('paris-chart-wrap');
+  if (!wrap) return;
+  if (!s.daily_series || !s.daily_series.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const ctx = document.getElementById('user-bankroll-chart').getContext('2d');
+  if (userBankrollChart) { userBankrollChart.destroy(); userBankrollChart = null; }
+  const labels = s.daily_series.map(d => new Date(d.date).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }));
+  const values = s.daily_series.map(d => d.bankroll_cents / 100);
+  const deposits = s.daily_series.map((d, i) => d.deposit_cents > 0 ? { x: i, y: d.bankroll_cents / 100 } : null).filter(Boolean);
+  const withdrawals = s.daily_series.map((d, i) => d.withdrawal_cents > 0 ? { x: i, y: d.bankroll_cents / 100 } : null).filter(Boolean);
+  userBankrollChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Bankroll', data: values, borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.07)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 },
+        { label: 'Dépôts', type: 'scatter', data: deposits, backgroundColor: '#00e676', borderColor: '#00e676', pointStyle: 'triangle', pointRadius: 7, showLine: false },
+        { label: 'Retraits', type: 'scatter', data: withdrawals, backgroundColor: '#ff4d4d', borderColor: '#ff4d4d', pointStyle: 'triangle', pointRadius: 7, rotation: 180, showLine: false },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#8d9399', font: { size: 10 }, boxWidth: 12, padding: 12, filter: (li) => li.text !== 'Bankroll' || true } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toFixed(2) + ' €' } },
+      },
+      scales: {
+        x: { ticks: { color: '#5a6068', font: { size: 9 }, maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,.04)' } },
+        y: { ticks: { color: '#5a6068', font: { size: 9 }, callback: v => v.toFixed(0) + ' €' }, grid: { color: 'rgba(255,255,255,.04)' } },
+      },
+    },
+  });
+}
+
+// ─── MODAL : Nouveau pari ───────────────────────────────────────────────────
+function openBetModal() {
+  if (!psGetToken()) { openAuthModal('login'); return; }
+  document.getElementById('bet-modal-err').style.display = 'none';
+  document.getElementById('bet-match-search').value = '';
+  document.getElementById('bet-match-id').value = '';
+  document.getElementById('bet-league').value = '';
+  document.getElementById('bet-selection').value = 'Over 2.5';
+  document.getElementById('bet-odds').value = '1.85';
+  document.getElementById('bet-stake').value = '10';
+  document.getElementById('bet-bookmaker').value = '1xbet';
+  document.getElementById('bet-notes').value = '';
+  document.getElementById('bet-kelly-panel').style.display = 'none';
+  document.getElementById('bet-modal').classList.add('open');
+}
+function closeBetModal() { document.getElementById('bet-modal').classList.remove('open'); }
+
+function onBetMarketChange() {
+  const m = document.getElementById('bet-market').value;
+  const labels = {
+    '1X2:HOME': 'Victoire domicile', '1X2:DRAW': 'Match nul', '1X2:AWAY': 'Victoire extérieur',
+    'OVER_0_5': 'Over 0.5', 'OVER_1_5': 'Over 1.5', 'OVER_2_5': 'Over 2.5', 'OVER_3_5': 'Over 3.5',
+    'UNDER_2_5': 'Under 2.5', 'UNDER_3_5': 'Under 3.5',
+    'BTTS:YES': 'BTTS Oui', 'BTTS:NO': 'BTTS Non',
+    'DC:1X': 'Double chance 1X', 'DC:X2': 'Double chance X2', 'DC:12': 'Double chance 12',
+    'AH:HOME:-0.5': 'AH -0.5 Dom', 'AH:AWAY:-0.5': 'AH -0.5 Ext',
+    'FREE': '',
+  };
+  if (labels[m] !== undefined) document.getElementById('bet-selection').value = labels[m];
+}
+
+function toggleKellyPanel() {
+  const p = document.getElementById('bet-kelly-panel');
+  const visible = p.style.display !== 'none';
+  p.style.display = visible ? 'none' : 'block';
+  if (!visible) recomputeKelly();
+}
+
+async function recomputeKelly() {
+  const prob = parseFloat(document.getElementById('bet-prob').value);
+  const odds = parseFloat(document.getElementById('bet-odds').value);
+  const bankrollCents = parisState.summary ? parisState.summary.free_cents : 0;
+  if (!bankrollCents || bankrollCents <= 0) {
+    document.getElementById('k-full').textContent = 'Bankroll = 0';
+    document.getElementById('k-half').textContent = '—';
+    document.getElementById('k-quarter').textContent = '—';
+    document.getElementById('k-edge').textContent = '—';
+    return;
+  }
+  try {
+    const res = await apiFetch(`/api/v1/bets/kelly?prob=${prob}&odds=${odds}&bankroll_cents=${bankrollCents}`);
+    if (!res.ok) return;
+    const k = await res.json();
+    document.getElementById('k-full').textContent = centsToEur(k.full_kelly_cents);
+    document.getElementById('k-half').textContent = centsToEur(k.half_kelly_cents);
+    document.getElementById('k-quarter').textContent = centsToEur(k.quarter_kelly_cents);
+    const edge = ((prob * odds - 1) * 100).toFixed(2);
+    document.getElementById('k-edge').textContent = edge + '%';
+  } catch (e) { /* ignore */ }
+}
+
+function applyKelly(level) {
+  const map = { full: 'k-full', half: 'k-half', quarter: 'k-quarter' };
+  const txt = document.getElementById(map[level]).textContent;
+  const num = parseFloat(txt.replace(/[^\d.,-]/g, '').replace(',', '.'));
+  if (!isNaN(num) && num > 0) document.getElementById('bet-stake').value = num.toFixed(2);
+}
+
+async function submitBet() {
+  const errEl = document.getElementById('bet-modal-err');
+  const btn = document.getElementById('bet-save-btn');
+  errEl.style.display = 'none';
+  const market = document.getElementById('bet-market').value;
+  const selection = document.getElementById('bet-selection').value.trim();
+  const odds = parseFloat(document.getElementById('bet-odds').value);
+  const stake = parseFloat(document.getElementById('bet-stake').value);
+  const bookmaker = document.getElementById('bet-bookmaker').value.trim();
+  const matchId = document.getElementById('bet-match-id').value;
+  const search = document.getElementById('bet-match-search').value;
+  const matchObj = parisState.matchesCache.find(m => `${m.home_team} — ${m.away_team}` === search);
+  if (!selection) { errEl.textContent = 'Libellé sélection requis'; errEl.style.display = 'block'; return; }
+  if (!odds || odds < 1.01) { errEl.textContent = 'Cote invalide'; errEl.style.display = 'block'; return; }
+  if (!stake || stake <= 0) { errEl.textContent = 'Mise invalide'; errEl.style.display = 'block'; return; }
+  const probInput = parseFloat(document.getElementById('bet-prob').value);
+  const body = {
+    match_id: matchId || null,
+    home_team: matchObj ? matchObj.home_team : null,
+    away_team: matchObj ? matchObj.away_team : null,
+    league: document.getElementById('bet-league').value.trim() || null,
+    commence_time: matchObj ? matchObj.commence_time : null,
+    market,
+    selection_label: selection,
+    odds,
+    stake,
+    bookmaker: bookmaker || '1xbet',
+    notes: document.getElementById('bet-notes').value.trim() || null,
+    model_prob: !isNaN(probInput) ? probInput : null,
+    edge_pct: !isNaN(probInput) ? (probInput * odds - 1) * 100 : null,
+  };
+  btn.disabled = true;
+  try {
+    const res = await apiFetch('/api/v1/bets', { method: 'POST', body });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
+    closeBetModal();
+    await refreshParisPage();
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur réseau';
+    errEl.style.display = 'block';
+  } finally { btn.disabled = false; }
+}
+
+async function deleteBet(id) {
+  if (!confirm('Supprimer ce pari ?')) return;
+  try {
+    const res = await apiFetch('/api/v1/bets/' + id, { method: 'DELETE' });
+    if (res.ok) refreshParisPage();
+  } catch (e) { /* ignore */ }
+}
+
+// ─── MODAL : Règlement ──────────────────────────────────────────────────────
+async function openSettleModal(id) {
+  const bet = parisState.lastBets.find(b => b.id === id);
+  if (!bet) return;
+  document.getElementById('settle-bet-id').value = id;
+  document.getElementById('settle-modal-err').style.display = 'none';
+  document.getElementById('settle-bet-summary').innerHTML =
+    `${escapeHtml((bet.home_team||'?') + ' — ' + (bet.away_team||'?'))}<br>` +
+    `<span style="color:var(--text);">${escapeHtml(bet.selection_label)} @ ${bet.odds.toFixed(2)}</span> · ` +
+    `Mise ${centsToEur(bet.stake_cents)}`;
+  document.getElementById('settle-status').value = 'won';
+  document.getElementById('settle-cashout').value = '0';
+  document.getElementById('settle-cashout-wrap').style.display = 'none';
+  const banner = document.getElementById('settle-suggest-banner');
+  banner.classList.remove('show');
+  banner.innerHTML = '';
+  // Fetch suggestion
+  try {
+    const res = await apiFetch('/api/v1/bets/suggest-settlement/' + id);
+    if (res.ok) {
+      const sug = await res.json();
+      if (sug.suggested_status) {
+        banner.innerHTML = `<strong>Score ${sug.score}</strong> → Suggéré : <strong>${sug.suggested_status}</strong> <button class="btn-ghost" style="margin-left:8px;padding:3px 8px;font-size:10px;" onclick="acceptSuggestion('${sug.suggested_status}')">Accepter</button>`;
+        banner.classList.add('show');
+      }
+    }
+  } catch (e) { /* ignore */ }
+  document.getElementById('settle-modal').classList.add('open');
+  updateSettlePayoutPreview();
+}
+function closeSettleModal() { document.getElementById('settle-modal').classList.remove('open'); }
+function acceptSuggestion(status) { document.getElementById('settle-status').value = status; onSettleStatusChange(); }
+function onSettleStatusChange() {
+  const status = document.getElementById('settle-status').value;
+  document.getElementById('settle-cashout-wrap').style.display = status === 'cashout' ? 'block' : 'none';
+  updateSettlePayoutPreview();
+}
+function updateSettlePayoutPreview() {
+  const id = parseInt(document.getElementById('settle-bet-id').value);
+  const bet = parisState.lastBets.find(b => b.id === id);
+  if (!bet) return;
+  const status = document.getElementById('settle-status').value;
+  const cashout = parseFloat(document.getElementById('settle-cashout').value) || 0;
+  let payout = 0;
+  switch (status) {
+    case 'won': payout = bet.stake_cents * (bet.odds - 1); break;
+    case 'lost': payout = -bet.stake_cents; break;
+    case 'void': payout = 0; break;
+    case 'half_won': payout = bet.stake_cents * (bet.odds - 1) / 2; break;
+    case 'half_lost': payout = -bet.stake_cents / 2; break;
+    case 'cashout': payout = cashout * 100 - bet.stake_cents; break;
+  }
+  const cls = payout >= 0 ? 'bet-pl-pos' : 'bet-pl-neg';
+  document.getElementById('settle-payout-preview').innerHTML =
+    `P&L prévu : <span class="${cls}">${eurFmt(payout / 100)}</span>`;
+}
+
+async function submitSettle() {
+  const id = parseInt(document.getElementById('settle-bet-id').value);
+  const status = document.getElementById('settle-status').value;
+  const cashout = parseFloat(document.getElementById('settle-cashout').value) || 0;
+  const errEl = document.getElementById('settle-modal-err');
+  errEl.style.display = 'none';
+  try {
+    const res = await apiFetch('/api/v1/bets/' + id + '/settle', { method: 'POST', body: { status, cashout_amount: cashout } });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
+    closeSettleModal();
+    await refreshParisPage();
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur réseau';
+    errEl.style.display = 'block';
+  }
+}
+
+// ─── MODAL : Trésorerie ─────────────────────────────────────────────────────
+function openCashModal() {
+  if (!psGetToken()) { openAuthModal('login'); return; }
+  document.getElementById('cash-modal-err').style.display = 'none';
+  document.getElementById('cash-kind').value = 'deposit';
+  document.getElementById('cash-amount').value = '100';
+  document.getElementById('cash-bookmaker').value = '1xbet';
+  document.getElementById('cash-note').value = '';
+  document.getElementById('cash-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('cash-modal').classList.add('open');
+}
+function closeCashModal() { document.getElementById('cash-modal').classList.remove('open'); }
+
+async function submitCash() {
+  const errEl = document.getElementById('cash-modal-err');
+  errEl.style.display = 'none';
+  const kind = document.getElementById('cash-kind').value;
+  const amount = parseFloat(document.getElementById('cash-amount').value);
+  const bookmaker = document.getElementById('cash-bookmaker').value.trim();
+  const note = document.getElementById('cash-note').value.trim();
+  const dateStr = document.getElementById('cash-date').value;
+  if (!amount || amount <= 0) { errEl.textContent = 'Montant invalide'; errEl.style.display = 'block'; return; }
+  const occurredAt = dateStr ? Math.floor(new Date(dateStr + 'T12:00:00').getTime() / 1000) : Math.floor(Date.now() / 1000);
+  try {
+    const res = await apiFetch('/api/v1/bankroll/tx', { method: 'POST', body: { kind, amount, bookmaker, note, occurred_at: occurredAt } });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
+    closeCashModal();
+    await refreshParisPage();
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur réseau';
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteCashTx(id) {
+  if (!confirm('Supprimer cette transaction ?')) return;
+  try {
+    const res = await apiFetch('/api/v1/bankroll/tx/' + id, { method: 'DELETE' });
+    if (res.ok) refreshParisPage();
+  } catch (e) { /* ignore */ }
+}
+
+// ─── EXPORT CSV ─────────────────────────────────────────────────────────────
+async function exportBetsCsv() {
+  try {
+    const res = await apiFetch('/api/v1/bets/export.csv?' + buildBetsQueryString());
+    if (!res.ok) { alert('Export impossible'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'paris-pariscore-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) { /* ignore */ }
+}
+
+// Close modals on backdrop click
+document.addEventListener('click', (e) => {
+  ['bet-modal', 'settle-modal', 'cash-modal'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m && e.target === m) m.classList.remove('open');
+  });
+});
+
 async function initHistoriquePage() {
   if (histPageLoaded) return;
   histPageLoaded = true;
@@ -12831,7 +13599,7 @@ async function renderBankrollChart() {
   const wrap = document.getElementById('bankroll-wrap');
   if (!wrap) return;
   try {
-    const res = await fetch('/api/v1/bankroll');
+    const res = await fetch('/api/v1/bankroll/simulated');
     if (!res.ok) { wrap.style.display = 'none'; return; }
     const d = await res.json();
     if (!d.bets || !d.bets.length) { wrap.style.display = 'none'; return; }

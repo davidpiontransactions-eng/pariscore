@@ -347,6 +347,194 @@ function readBodyLimited(req, maxSize) {
   });
 }
 
+// ─── KELLY CRITERION — Sizing helper pour module Mes Paris ────────────────────
+// cap=0.25 limite Kelly à 25% bankroll même si edge absurde. multiplier=1.0 (Full Kelly, choix user).
+function computeKellyFraction(prob, odds, cap = 0.25) {
+  if (typeof prob !== 'number' || typeof odds !== 'number') return 0;
+  if (prob <= 0 || prob >= 1 || odds <= 1) return 0;
+  const f = (prob * odds - 1) / (odds - 1);
+  return Math.max(0, Math.min(cap, f));
+}
+function suggestStakeCents(bankrollCents, prob, odds, multiplier = 1.0, cap = 0.25) {
+  const f = computeKellyFraction(prob, odds, cap);
+  return Math.max(0, Math.round(bankrollCents * f * multiplier));
+}
+
+// ─── MES PARIS — Helpers ──────────────────────────────────────────────────────
+function buildBetsWhere(userId, q) {
+  const where = ['user_id = ?'];
+  const vals = [userId];
+  if (q.status) {
+    const statuses = String(q.status).split(',').map(s => s.trim()).filter(Boolean);
+    if (statuses.length === 1) { where.push('status = ?'); vals.push(statuses[0]); }
+    else if (statuses.length > 1) { where.push(`status IN (${statuses.map(() => '?').join(',')})`); vals.push(...statuses); }
+  }
+  if (q.bookmaker) { where.push('bookmaker = ?'); vals.push(q.bookmaker); }
+  if (q.market) { where.push('market = ?'); vals.push(q.market); }
+  if (q.league) { where.push('league = ?'); vals.push(q.league); }
+  if (q.team) { where.push('(home_team LIKE ? OR away_team LIKE ?)'); const pat = `%${q.team}%`; vals.push(pat, pat); }
+  const dateField = q.dateField === 'settled' ? 'settled_at' : 'commence_time';
+  if (q.from) { where.push(`${dateField} >= ?`); vals.push(dateField === 'settled_at' ? parseInt(q.from) : q.from); }
+  if (q.to)   { where.push(`${dateField} <= ?`); vals.push(dateField === 'settled_at' ? parseInt(q.to)   : q.to); }
+  return { where: where.join(' AND '), vals };
+}
+function listUserBets(userId, q, limit, offset) {
+  const { where, vals } = buildBetsWhere(userId, q);
+  return sqldb.prepare(`SELECT * FROM user_bets WHERE ${where} ORDER BY COALESCE(commence_time, created_at) DESC LIMIT ? OFFSET ?`)
+    .all(...vals, limit, offset);
+}
+function countUserBets(userId, q) {
+  const { where, vals } = buildBetsWhere(userId, q);
+  const r = sqldb.prepare(`SELECT COUNT(*) AS n FROM user_bets WHERE ${where}`).get(...vals);
+  return r ? r.n : 0;
+}
+function computePayoutCents(bet, newStatus, cashoutAmount) {
+  const stake = bet.stake_cents;
+  switch (newStatus) {
+    case 'won':       return Math.round(stake * (bet.odds - 1));
+    case 'lost':      return -stake;
+    case 'void':      return 0;
+    case 'half_won':  return Math.round(stake * (bet.odds - 1) / 2);
+    case 'half_lost': return -Math.round(stake / 2);
+    case 'cashout': {
+      const amount = typeof cashoutAmount === 'number' ? cashoutAmount : 0;
+      return Math.round(amount * 100) - stake;
+    }
+    default: return 0;
+  }
+}
+function suggestBetSettlement(bet) {
+  if (!bet.match_id) return { suggested_status: null, reason: 'no_match_id' };
+  const histArr = (typeof history !== 'undefined' && Array.isArray(history)) ? history : [];
+  const h = histArr.find(x => x.id === bet.match_id);
+  if (!h || !h.verified || !h.realScore) return { suggested_status: null, reason: 'not_yet_verified' };
+  const hg = h.realScore.home, ag = h.realScore.away, total = hg + ag;
+  const market = (bet.market || '').toUpperCase();
+  const label = (bet.selection_label || '').toLowerCase();
+  let suggested = null;
+  // Markets : OVER_X_Y, UNDER_X_Y, BTTS:YES/NO, 1X2:HOME/DRAW/AWAY, AH:±N, DC:1X/12/X2
+  const overMatch = market.match(/^OVER_(\d+)_(\d+)$/);
+  const underMatch = market.match(/^UNDER_(\d+)_(\d+)$/);
+  if (overMatch) {
+    const line = parseFloat(`${overMatch[1]}.${overMatch[2]}`);
+    suggested = total > line ? 'won' : (total === line ? 'void' : 'lost');
+  } else if (underMatch) {
+    const line = parseFloat(`${underMatch[1]}.${underMatch[2]}`);
+    suggested = total < line ? 'won' : (total === line ? 'void' : 'lost');
+  } else if (market.startsWith('BTTS')) {
+    const yes = hg > 0 && ag > 0;
+    const wantYes = market.includes('YES') || label.includes('oui');
+    suggested = (yes === wantYes) ? 'won' : 'lost';
+  } else if (market.startsWith('1X2') || market.startsWith('WINNER')) {
+    const winner = hg > ag ? 'HOME' : (ag > hg ? 'AWAY' : 'DRAW');
+    let want = null;
+    if (market.includes('HOME') || label.includes(String(bet.home_team || '').toLowerCase())) want = 'HOME';
+    else if (market.includes('AWAY') || label.includes(String(bet.away_team || '').toLowerCase())) want = 'AWAY';
+    else if (market.includes('DRAW') || label.includes('nul')) want = 'DRAW';
+    if (want) suggested = (winner === want) ? 'won' : 'lost';
+  } else if (market.startsWith('DC')) {
+    const winner = hg > ag ? 'HOME' : (ag > hg ? 'AWAY' : 'DRAW');
+    if (market.includes('1X')) suggested = (winner !== 'AWAY') ? 'won' : 'lost';
+    else if (market.includes('X2')) suggested = (winner !== 'HOME') ? 'won' : 'lost';
+    else if (market.includes('12')) suggested = (winner !== 'DRAW') ? 'won' : 'lost';
+  }
+  return { suggested_status: suggested, score: `${hg}-${ag}`, source: h.realScore.source || 'archive', verified: true };
+}
+function computeBankrollSummary(userId, q) {
+  const txWhere = ['user_id = ?']; const txVals = [userId];
+  const betWhere = ['user_id = ?']; const betVals = [userId];
+  if (q.from) { txWhere.push('occurred_at >= ?'); txVals.push(parseInt(q.from)); betWhere.push('created_at >= ?'); betVals.push(parseInt(q.from)); }
+  if (q.to)   { txWhere.push('occurred_at <= ?'); txVals.push(parseInt(q.to));   betWhere.push('created_at <= ?'); betVals.push(parseInt(q.to)); }
+  // Tx aggregates
+  const tx = sqldb.prepare(`SELECT * FROM bankroll_transactions WHERE ${txWhere.join(' AND ')} ORDER BY occurred_at ASC`).all(...txVals);
+  let deposited = 0, withdrawn = 0;
+  for (const t of tx) {
+    if (t.kind === 'deposit') deposited += t.amount_cents;
+    else if (t.kind === 'withdrawal') withdrawn += -t.amount_cents; // stored negative
+    else { // adjustment
+      if (t.amount_cents > 0) deposited += t.amount_cents;
+      else withdrawn += -t.amount_cents;
+    }
+  }
+  // Bets aggregates
+  const allBets = sqldb.prepare(`SELECT * FROM user_bets WHERE ${betWhere.join(' AND ')} ORDER BY COALESCE(settled_at, created_at) ASC`).all(...betVals);
+  let settledPL = 0, openStake = 0, totalStakeSettled = 0;
+  const totals = { total_bets: allBets.length, won: 0, lost: 0, void: 0, pending: 0, cashout: 0, half_won: 0, half_lost: 0 };
+  for (const b of allBets) {
+    totals[b.status] = (totals[b.status] || 0) + 1;
+    if (b.status === 'pending') { openStake += b.stake_cents; }
+    else {
+      settledPL += b.payout_cents || 0;
+      if (b.status !== 'void') totalStakeSettled += b.stake_cents;
+    }
+  }
+  const currentCents = deposited - withdrawn + settledPL;
+  const freeCents = currentCents - openStake;
+  const roiPct = totalStakeSettled > 0 ? Math.round(settledPL / totalStakeSettled * 10000) / 100 : 0;
+  const decided = totals.won + totals.lost + totals.half_won + totals.half_lost;
+  const winRate = decided > 0 ? Math.round((totals.won + 0.5 * totals.half_won) / decided * 10000) / 10000 : 0;
+  // Streaks (ordre settled_at)
+  const settledBets = allBets.filter(b => b.status !== 'pending').sort((a, b) => (a.settled_at || 0) - (b.settled_at || 0));
+  let longestWin = 0, longestLoss = 0, curW = 0, curL = 0;
+  for (const b of settledBets) {
+    const win = b.status === 'won' || b.status === 'half_won' || (b.status === 'cashout' && (b.payout_cents || 0) > 0);
+    const loss = b.status === 'lost' || b.status === 'half_lost' || (b.status === 'cashout' && (b.payout_cents || 0) < 0);
+    if (win) { curW++; curL = 0; longestWin = Math.max(longestWin, curW); }
+    else if (loss) { curL++; curW = 0; longestLoss = Math.max(longestLoss, curL); }
+    else { curW = 0; curL = 0; }
+  }
+  // Daily series (bankroll = cumul deposits - withdrawals + settled PL par jour, ordered)
+  const events = [];
+  for (const t of tx) {
+    const d = new Date(t.occurred_at * 1000).toISOString().slice(0, 10);
+    events.push({ date: d, ts: t.occurred_at, delta: t.amount_cents, type: t.kind });
+  }
+  for (const b of settledBets) {
+    const d = new Date((b.settled_at || b.created_at) * 1000).toISOString().slice(0, 10);
+    events.push({ date: d, ts: b.settled_at || b.created_at, delta: b.payout_cents || 0, type: 'bet' });
+  }
+  events.sort((a, b) => a.ts - b.ts);
+  const dailyMap = new Map();
+  let running = 0, peak = 0, trough = 0, maxDD = 0;
+  let runningRisk = 0, peakRisk = 0, maxDDRisk = 0;
+  for (const e of events) {
+    running += e.delta;
+    if (e.type === 'bet') {
+      runningRisk += e.delta;
+      if (runningRisk > peakRisk) peakRisk = runningRisk;
+      const ddRisk = peakRisk - runningRisk;
+      if (ddRisk > maxDDRisk) maxDDRisk = ddRisk;
+    }
+    if (running > peak) peak = running;
+    const dd = peak > 0 ? (peak - running) / peak * 100 : 0;
+    if (dd > maxDD) maxDD = dd;
+    const prev = dailyMap.get(e.date) || { date: e.date, bankroll_cents: 0, pl_cents: 0, deposit_cents: 0, withdrawal_cents: 0 };
+    prev.bankroll_cents = running;
+    if (e.type === 'deposit') prev.deposit_cents += e.delta;
+    else if (e.type === 'withdrawal') prev.withdrawal_cents += -e.delta;
+    else if (e.type === 'bet') prev.pl_cents += e.delta;
+    dailyMap.set(e.date, prev);
+  }
+  const dailySeries = Array.from(dailyMap.values());
+  const rawDDPct = peakRisk > 0 ? Math.round(maxDDRisk / peakRisk * 10000) / 100 : 0;
+  return {
+    current_cents: currentCents,
+    free_cents: freeCents,
+    open_stake_cents: openStake,
+    deposited_cents: deposited,
+    withdrawn_cents: withdrawn,
+    settled_pl_cents: settledPL,
+    roi_pct: roiPct,
+    win_rate: winRate,
+    totals,
+    longest_win_streak: longestWin,
+    longest_loss_streak: longestLoss,
+    max_drawdown_pct: Math.round(maxDD * 100) / 100,
+    raw_drawdown_pct: rawDDPct,
+    daily_series: dailySeries,
+  };
+}
+
 // ─── VERROU ANTI-RACE-CONDITION ──────────────────────────────────────────────
 let isFetchingOdds = false;
 let isFetchingStats = false;
@@ -1188,6 +1376,48 @@ function initSQLite() {
     clicked_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_date ON affiliate_clicks(clicked_at)`);
+  // ── Mes Paris — tracking personnel des paris utilisateur + bankroll ──
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS user_bets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    match_id TEXT,
+    home_team TEXT,
+    away_team TEXT,
+    league TEXT,
+    commence_time TEXT,
+    market TEXT NOT NULL,
+    selection_label TEXT NOT NULL,
+    odds REAL NOT NULL,
+    stake_cents INTEGER NOT NULL,
+    bookmaker TEXT NOT NULL DEFAULT '1xbet',
+    notes TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK (status IN ('pending','won','lost','void','cashout','half_won','half_lost')),
+    payout_cents INTEGER,
+    settled_at INTEGER,
+    model_prob REAL,
+    edge_pct REAL,
+    kelly_fraction REAL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_bets_user_status  ON user_bets(user_id, status)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_bets_user_settled ON user_bets(user_id, settled_at)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_bets_match        ON user_bets(match_id)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_bets_commence     ON user_bets(user_id, commence_time)`);
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS bankroll_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('deposit','withdrawal','adjustment')),
+    amount_cents INTEGER NOT NULL,
+    bookmaker TEXT,
+    note TEXT,
+    occurred_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_bk_tx_user_date ON bankroll_transactions(user_id, occurred_at)`);
   // Seed Coteur — comparateur de cotes légal ANJ France
   const hasCoteur = sqldb.prepare('SELECT id FROM affiliates WHERE bookmaker = ?').get('coteur');
   if (!hasCoteur) {
@@ -3508,6 +3738,14 @@ async function archivePastMatches() {
 
       history.push(record);
       archived++;
+      // Hook Mes Paris : flag les paris pending sur ce match pour suggestion settlement côté UI
+      if (record.verified && record.realScore && sqldb) {
+        try {
+          sqldb.prepare(
+            "UPDATE user_bets SET updated_at = strftime('%s','now') WHERE match_id = ? AND status = 'pending'"
+          ).run(record.id);
+        } catch (e) { /* table absente sur ancien deploy */ }
+      }
     }
 
     const archivedIds = new Set(past.map(m => m.id));
@@ -7025,6 +7263,17 @@ function requireAuth(req, res, allowedRoles = ['freemium', 'premium', 'admin', '
   return user;
 }
 
+// Variante stricte : exige un user.userId (exclut admin/matchday qui n'ont pas d'ID utilisateur).
+function requireUserAuth(req, res) {
+  const user = requireAuth(req, res, ['freemium', 'premium', 'admin']);
+  if (!user) return null;
+  if (!user.userId) {
+    jsonResponse(res, 403, { error: 'Compte membre requis pour les paris', code: 'MEMBER_REQUIRED' });
+    return null;
+  }
+  return user;
+}
+
 // Utilisateurs admin en mémoire (admin panel) — PBKDF2 salé
 const USERS = new Map(); // { username: { hash, salt, role, forceChange: bool } }
 function initUsers() {
@@ -9202,6 +9451,258 @@ if (pathname === '/api/v1/bankroll') {
     maxDrawdown: maxDD,
     bets: bets.slice(-80),
   });
+}
+
+// GET /api/v1/bankroll/simulated — Alias explicite du bankroll simulé (marketing)
+if (pathname === '/api/v1/bankroll/simulated') {
+  const startBankroll = 100;
+  let bankroll = startBankroll;
+  const bets = [];
+  for (const h of history) {
+    if (!h.verified || !h.realScore) continue;
+    const rs = h.realScore;
+    if (h.predicted?.over25 > 55) {
+      const won = (rs.home + rs.away) > 2.5;
+      bankroll += won ? 1 : -1;
+      bets.push({ date: h.commence_time, market: 'Over 2.5', won, profit: won ? 1 : -1, bankroll, match: h.home_team + ' - ' + h.away_team });
+    }
+    if (h.predicted?.btts > 55) {
+      const won = rs.home > 0 && rs.away > 0;
+      bankroll += won ? 1 : -1;
+      bets.push({ date: h.commence_time, market: 'BTTS', won, profit: won ? 1 : -1, bankroll, match: h.home_team + ' - ' + h.away_team });
+    }
+  }
+  const totalBets = bets.length;
+  const wonBets = bets.filter(b => b.won).length;
+  const peak = bets.reduce((m, b) => Math.max(m, b.bankroll), startBankroll);
+  const trough = bets.reduce((m, b) => Math.min(m, b.bankroll), startBankroll);
+  const maxDD = peak > 0 ? Math.round((1 - trough / peak) * 10000) / 100 : 0;
+  return jsonResponse(res, 200, {
+    startBankroll, finalBankroll: bankroll,
+    totalPL: bankroll - startBankroll, totalBets, wonBets,
+    winRate: totalBets > 0 ? Math.round(wonBets / totalBets * 100) : 0,
+    roi: totalBets > 0 ? Math.round((bankroll - startBankroll) / totalBets * 10000) / 100 : 0,
+    maxDrawdown: maxDD,
+    bets: bets.slice(-80),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MODULE "MES PARIS" — Tracking personnel + bankroll réelle + Kelly + CSV
+// Schéma : user_bets, bankroll_transactions
+// ════════════════════════════════════════════════════════════════════════════
+
+// GET /api/v1/bets/kelly?prob=0.55&odds=1.85&bankroll_cents=10000&cap=0.25
+if (pathname === '/api/v1/bets/kelly' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const prob = parseFloat(query.prob);
+  const odds = parseFloat(query.odds);
+  const bankrollCents = parseInt(query.bankroll_cents) || 0;
+  const cap = query.cap !== undefined ? parseFloat(query.cap) : 0.25;
+  const fraction = computeKellyFraction(prob, odds, cap);
+  return jsonResponse(res, 200, {
+    fraction,
+    full_kelly_cents:    suggestStakeCents(bankrollCents, prob, odds, 1.0,  cap),
+    half_kelly_cents:    suggestStakeCents(bankrollCents, prob, odds, 0.5,  cap),
+    quarter_kelly_cents: suggestStakeCents(bankrollCents, prob, odds, 0.25, cap),
+    suggested_stake_cents: suggestStakeCents(bankrollCents, prob, odds, 1.0, cap),
+    cap,
+  });
+}
+
+// GET /api/v1/bets/export.csv — DOIT être avant /api/v1/bets/:id et /api/v1/bets
+if (pathname === '/api/v1/bets/export.csv' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const rows = listUserBets(user.userId, query, 5000, 0);
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+  res.writeHead(200, {
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': 'attachment; filename="paris-pariscore.csv"',
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  });
+  const esc = (v) => {
+    if (v === null || v === undefined) return '';
+    let s = String(v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s; // OWASP CSV injection guard
+    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  };
+  const cols = ['id','created_at','commence_time','match','league','market','selection','odds','stake_eur','bookmaker','status','payout_eur','model_prob','edge_pct','kelly_fraction','settled_at','notes'];
+  res.write(cols.join(',') + '\n');
+  for (const b of rows) {
+    const match = (b.home_team || '') + ' - ' + (b.away_team || '');
+    const stake = (b.stake_cents / 100).toFixed(2);
+    const payout = b.payout_cents !== null && b.payout_cents !== undefined ? (b.payout_cents / 100).toFixed(2) : '';
+    const created = b.created_at ? new Date(b.created_at * 1000).toISOString() : '';
+    const settled = b.settled_at ? new Date(b.settled_at * 1000).toISOString() : '';
+    res.write([
+      b.id, created, b.commence_time || '', match, b.league || '', b.market,
+      b.selection_label, b.odds, stake, b.bookmaker, b.status, payout,
+      b.model_prob ?? '', b.edge_pct ?? '', b.kelly_fraction ?? '', settled, b.notes || '',
+    ].map(esc).join(',') + '\n');
+  }
+  res.end();
+  return;
+}
+
+// GET /api/v1/bets/suggest-settlement/:id
+if (pathname.startsWith('/api/v1/bets/suggest-settlement/') && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const betId = parseInt(pathname.split('/').pop());
+  if (!betId) return jsonResponse(res, 400, { error: 'ID invalide' });
+  const bet = sqldb.prepare('SELECT * FROM user_bets WHERE id = ? AND user_id = ?').get(betId, user.userId);
+  if (!bet) return jsonResponse(res, 404, { error: 'Pari introuvable' });
+  const suggestion = suggestBetSettlement(bet);
+  return jsonResponse(res, 200, suggestion);
+}
+
+// POST /api/v1/bets/:id/settle
+if (pathname.match(/^\/api\/v1\/bets\/\d+\/settle$/) && req.method === 'POST') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const betId = parseInt(pathname.split('/')[4]);
+  let body;
+  try { body = JSON.parse(await readBodyLimited(req, MAX_BODY_SIZE)); }
+  catch { return jsonResponse(res, 400, { error: 'Body JSON invalide' }); }
+  const validStatuses = ['won','lost','void','cashout','half_won','half_lost'];
+  if (!validStatuses.includes(body.status)) {
+    return jsonResponse(res, 400, { error: 'Statut invalide. Attendu: ' + validStatuses.join('|') });
+  }
+  const bet = sqldb.prepare('SELECT * FROM user_bets WHERE id = ? AND user_id = ?').get(betId, user.userId);
+  if (!bet) return jsonResponse(res, 404, { error: 'Pari introuvable' });
+  if (bet.status !== 'pending') return jsonResponse(res, 409, { error: 'Pari déjà réglé', status: bet.status });
+  const payoutCents = computePayoutCents(bet, body.status, body.cashout_amount);
+  sqldb.prepare(`UPDATE user_bets SET status = ?, payout_cents = ?, settled_at = strftime('%s','now'),
+                 updated_at = strftime('%s','now') WHERE id = ? AND user_id = ?`)
+       .run(body.status, payoutCents, betId, user.userId);
+  const updated = sqldb.prepare('SELECT * FROM user_bets WHERE id = ?').get(betId);
+  return jsonResponse(res, 200, updated);
+}
+
+// GET / PATCH / DELETE /api/v1/bets/:id
+if (pathname.match(/^\/api\/v1\/bets\/\d+$/) && (req.method === 'GET' || req.method === 'PATCH' || req.method === 'DELETE')) {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const betId = parseInt(pathname.split('/').pop());
+  const bet = sqldb.prepare('SELECT * FROM user_bets WHERE id = ? AND user_id = ?').get(betId, user.userId);
+  if (!bet) return jsonResponse(res, 404, { error: 'Pari introuvable' });
+  if (req.method === 'GET') return jsonResponse(res, 200, bet);
+  if (req.method === 'DELETE') {
+    sqldb.prepare('DELETE FROM user_bets WHERE id = ? AND user_id = ?').run(betId, user.userId);
+    return jsonResponse(res, 200, { deleted: true, id: betId });
+  }
+  // PATCH — uniquement si pending, champs limités
+  if (bet.status !== 'pending') return jsonResponse(res, 409, { error: 'Pari déjà réglé, édition impossible' });
+  let body;
+  try { body = JSON.parse(await readBodyLimited(req, MAX_BODY_SIZE)); }
+  catch { return jsonResponse(res, 400, { error: 'Body JSON invalide' }); }
+  const updates = [];
+  const values = [];
+  if (typeof body.odds === 'number' && body.odds >= 1.01) { updates.push('odds = ?'); values.push(body.odds); }
+  if (typeof body.stake === 'number' && body.stake > 0) { updates.push('stake_cents = ?'); values.push(Math.round(body.stake * 100)); }
+  if (typeof body.bookmaker === 'string' && body.bookmaker.trim()) { updates.push('bookmaker = ?'); values.push(body.bookmaker.trim().slice(0, 32)); }
+  if (typeof body.notes === 'string') { updates.push('notes = ?'); values.push(body.notes.slice(0, 500)); }
+  if (!updates.length) return jsonResponse(res, 400, { error: 'Aucun champ valide à mettre à jour' });
+  updates.push("updated_at = strftime('%s','now')");
+  values.push(betId, user.userId);
+  sqldb.prepare(`UPDATE user_bets SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).run(...values);
+  return jsonResponse(res, 200, sqldb.prepare('SELECT * FROM user_bets WHERE id = ?').get(betId));
+}
+
+// GET /api/v1/bets — liste paginée + filtres
+if (pathname === '/api/v1/bets' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const limit = Math.min(parseInt(query.limit) || 50, 500);
+  const offset = parseInt(query.offset) || 0;
+  const bets = listUserBets(user.userId, query, limit, offset);
+  const total = countUserBets(user.userId, query);
+  return jsonResponse(res, 200, { bets, total, limit, offset });
+}
+
+// POST /api/v1/bets — création
+if (pathname === '/api/v1/bets' && req.method === 'POST') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  let body;
+  try { body = JSON.parse(await readBodyLimited(req, MAX_BODY_SIZE)); }
+  catch { return jsonResponse(res, 400, { error: 'Body JSON invalide' }); }
+  if (!body.market || typeof body.market !== 'string') return jsonResponse(res, 400, { error: 'market requis' });
+  if (!body.selection_label || typeof body.selection_label !== 'string') return jsonResponse(res, 400, { error: 'selection_label requis' });
+  if (typeof body.odds !== 'number' || body.odds < 1.01) return jsonResponse(res, 400, { error: 'odds invalide (>=1.01)' });
+  if (typeof body.stake !== 'number' || body.stake <= 0) return jsonResponse(res, 400, { error: 'stake invalide (>0)' });
+  const stakeCents = Math.round(body.stake * 100);
+  const bookmaker = (typeof body.bookmaker === 'string' && body.bookmaker.trim()) ? body.bookmaker.trim().slice(0, 32) : '1xbet';
+  const result = sqldb.prepare(`INSERT INTO user_bets
+    (user_id, match_id, home_team, away_team, league, commence_time, market, selection_label,
+     odds, stake_cents, bookmaker, notes, model_prob, edge_pct, kelly_fraction)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    user.userId,
+    body.match_id || null,
+    body.home_team || null,
+    body.away_team || null,
+    body.league || null,
+    body.commence_time || null,
+    body.market.slice(0, 32),
+    body.selection_label.slice(0, 64),
+    body.odds,
+    stakeCents,
+    bookmaker,
+    typeof body.notes === 'string' ? body.notes.slice(0, 500) : null,
+    typeof body.model_prob === 'number' ? body.model_prob : null,
+    typeof body.edge_pct === 'number' ? body.edge_pct : null,
+    typeof body.kelly_fraction === 'number' ? body.kelly_fraction : null,
+  );
+  const inserted = sqldb.prepare('SELECT * FROM user_bets WHERE id = ?').get(result.lastInsertRowid);
+  return jsonResponse(res, 201, inserted);
+}
+
+// GET /api/v1/bankroll/summary
+if (pathname === '/api/v1/bankroll/summary' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  return jsonResponse(res, 200, computeBankrollSummary(user.userId, query));
+}
+
+// GET /api/v1/bankroll/tx
+if (pathname === '/api/v1/bankroll/tx' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const where = ['user_id = ?'];
+  const vals = [user.userId];
+  if (query.kind) { where.push('kind = ?'); vals.push(query.kind); }
+  if (query.from) { where.push('occurred_at >= ?'); vals.push(parseInt(query.from)); }
+  if (query.to)   { where.push('occurred_at <= ?'); vals.push(parseInt(query.to)); }
+  const tx = sqldb.prepare(`SELECT * FROM bankroll_transactions WHERE ${where.join(' AND ')} ORDER BY occurred_at DESC LIMIT 500`).all(...vals);
+  return jsonResponse(res, 200, { tx });
+}
+
+// POST /api/v1/bankroll/tx
+if (pathname === '/api/v1/bankroll/tx' && req.method === 'POST') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  let body;
+  try { body = JSON.parse(await readBodyLimited(req, MAX_BODY_SIZE)); }
+  catch { return jsonResponse(res, 400, { error: 'Body JSON invalide' }); }
+  const validKinds = ['deposit','withdrawal','adjustment'];
+  if (!validKinds.includes(body.kind)) return jsonResponse(res, 400, { error: 'kind invalide (deposit|withdrawal|adjustment)' });
+  if (typeof body.amount !== 'number' || body.amount === 0) return jsonResponse(res, 400, { error: 'amount requis (number != 0)' });
+  let amountCents = Math.round(Math.abs(body.amount) * 100);
+  if (body.kind === 'withdrawal') amountCents = -amountCents;
+  else if (body.kind === 'adjustment' && body.amount < 0) amountCents = -amountCents;
+  const occurredAt = parseInt(body.occurred_at) || Math.floor(Date.now() / 1000);
+  const result = sqldb.prepare(`INSERT INTO bankroll_transactions
+    (user_id, kind, amount_cents, bookmaker, note, occurred_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+    user.userId, body.kind, amountCents,
+    typeof body.bookmaker === 'string' ? body.bookmaker.trim().slice(0, 32) : null,
+    typeof body.note === 'string' ? body.note.slice(0, 200) : null,
+    occurredAt,
+  );
+  const inserted = sqldb.prepare('SELECT * FROM bankroll_transactions WHERE id = ?').get(result.lastInsertRowid);
+  return jsonResponse(res, 201, inserted);
+}
+
+// DELETE /api/v1/bankroll/tx/:id
+if (pathname.match(/^\/api\/v1\/bankroll\/tx\/\d+$/) && req.method === 'DELETE') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const txId = parseInt(pathname.split('/').pop());
+  const result = sqldb.prepare('DELETE FROM bankroll_transactions WHERE id = ? AND user_id = ?').run(txId, user.userId);
+  if (result.changes === 0) return jsonResponse(res, 404, { error: 'Transaction introuvable' });
+  return jsonResponse(res, 200, { deleted: true, id: txId });
 }
 
 // GET /api/v1/accuracy/trends — Weekly accuracy trend chart

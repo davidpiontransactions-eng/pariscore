@@ -1,4 +1,4 @@
-# 🏟️ PariScore - Poste de Pilotage (v9.7 Live Danger Matrix)
+# 🏟️ PariScore - Poste de Pilotage (v9.8 Mes Paris)
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
@@ -25,6 +25,19 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - [x] **Filtres Pays→Ligues** : Navigation hiérarchique Oddalerts style. Pays → ligues + "🔙 Retour". 25 pays.
 - [x] **Dual Scrollbar** : `#top-scrollbar` + `#top-scroll-content`. Sync bidirectionnelle `scrollLeft` + width update.
 - [x] **Frontend Retry** : 503 → retry 2s. SSE `system_ready` → force reload. Erreur réseau → retry auto.
+
+### ✅ v9.8 — MES PARIS — Bet Tracking 1xbet (COMPLÉTÉ)
+- [x] **Schéma SQLite** : `user_bets` (status pending/won/lost/void/cashout/half_won/half_lost + payout_cents) + `bankroll_transactions` (deposit/withdrawal/adjustment).
+- [x] **Routes CRUD** : `/api/v1/bets` (GET/POST/PATCH/DELETE), `/bets/:id/settle`, `/bets/suggest-settlement/:id`, `/bets/kelly`, `/bets/export.csv`, `/bankroll/tx` (GET/POST/DELETE), `/bankroll/summary` (synthèse complète + daily_series).
+- [x] **Page `Mes Paris`** dans nav SPA : 8 KPI tiles (Bankroll/Disponible/P&L/ROI/WinRate/Drawdown/Ouverts/Streak), chart Chart.js bankroll réelle (#29b6f6) + markers dépôts/retraits (triangle vert/rouge), 3 tabs (Paris ouverts / Historique / Trésorerie), filtres (statut/bookmaker/marché/équipe/date).
+- [x] **Modals** : Nouveau pari (autocomplete matchs + Kelly helper Full/Half/Quarter, défaut Full Kelly 1.0, cap 25%), Règlement (suggestion auto si match archivé verified + bandeau "Accepter"), Dépôt/Retrait.
+- [x] **Kelly** : `computeKellyFraction(prob,odds,cap)` + `suggestStakeCents(bankrollCents,prob,odds,mult,cap)`. Default mult=1.0 (Full Kelly), cap=0.25.
+- [x] **Hook archive** : `archivePastMatches` flag les paris pending sur match archivé via `updated_at`, bande jaune `.bet-row-suggest` côté UI.
+- [x] **Export CSV** : OWASP injection guard (préfixe `'` si cellule commence par `= + - @`), Content-Disposition attachment, blob download avec Bearer.
+- [x] **Alias `/api/v1/bankroll/simulated`** : route simulée renommée explicitement (marketing), `/api/v1/bankroll` reste comme legacy 1 release.
+- [x] **Sécurité multi-user** : `requireUserAuth` (exige user.userId), `WHERE user_id = ?` sur 100% des queries.
+- [x] **Devise** : INTEGER cents partout, formatter unique `centsToEur`.
+- [x] **Drawdown** : 2 métriques — `max_drawdown_pct` (raw bankroll curve) + `raw_drawdown_pct` (risk DD sur cumul P&L paris seuls).
 
 ### ✅ v9.7 — LIVE DANGER MATRIX (COMPLÉTÉ)
 - [x] **Suppression Événements** : Panneau "Événements" (textuel, instable) supprimé HTML/CSS/JS.
@@ -111,7 +124,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 9.7 — Live Danger Matrix (Événements supprimés + Grille métriques brutes).*
+*Dernière mise à jour : Version 9.8 — Mes Paris (tracking 1xbet + bankroll réelle + Kelly + CSV).*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->

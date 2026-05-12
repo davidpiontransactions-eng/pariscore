@@ -2,6 +2,52 @@
 
 ---
 
+## [v9.8.0] — 2026-05-12
+
+### Ajouté — Module "Mes Paris" (Bet Tracking 1xbet + Bankroll réelle + Kelly + CSV)
+
+**Schéma SQLite**
+- Table `user_bets` (FK `users`, 7 statuts via CHECK : pending/won/lost/void/cashout/half_won/half_lost, `payout_cents` persisté, snapshot `model_prob`/`edge_pct`/`kelly_fraction`, INTEGER cents partout)
+- Table `bankroll_transactions` (kind : deposit/withdrawal/adjustment, `amount_cents` signé)
+- 5 index : `idx_user_bets_user_status`, `idx_user_bets_user_settled`, `idx_user_bets_match`, `idx_user_bets_commence`, `idx_bk_tx_user_date`
+
+**Backend** (`server.js`)
+- Helpers : `computeKellyFraction(prob,odds,cap=0.25)`, `suggestStakeCents(bankrollCents,prob,odds,mult=1.0,cap=0.25)`, `requireUserAuth` (exige `user.userId`), `buildBetsWhere`, `listUserBets`, `countUserBets`, `computePayoutCents`, `suggestBetSettlement`, `computeBankrollSummary`
+- Routes : `GET/POST/PATCH/DELETE /api/v1/bets`, `POST /api/v1/bets/:id/settle`, `GET /api/v1/bets/suggest-settlement/:id`, `GET /api/v1/bets/kelly`, `GET /api/v1/bets/export.csv`, `GET/POST/DELETE /api/v1/bankroll/tx`, `GET /api/v1/bankroll/summary`
+- Alias explicite `GET /api/v1/bankroll/simulated` (route simulée renommée, l'ancienne `/bankroll` reste comme legacy 1 release)
+- Hook dans `archivePastMatches` : `UPDATE user_bets SET updated_at` quand match archivé verified → bande jaune `.bet-row-suggest` côté UI (pas d'auto-settle)
+- Sécurité : `WHERE user_id = ?` sur 100 % des queries, isolation cross-user validée
+
+**Frontend** (`pariscore.html`)
+- Lien nav "Mes Paris" + dispatch `showPage` → `initParisPage`
+- Page `#page-paris` : header + toolbar (Nouveau pari / Dépôt-Retrait / Export CSV / chip bookmaker / timestamp)
+- 8 KPI tiles : Bankroll, Disponible (avec montant en jeu), P&L cumul, ROI, Win Rate, Drawdown (raw + risk), Ouverts, Longest streak W/L
+- Chart Chart.js bankroll réelle (ligne `#29b6f6` + scatter markers triangle vert dépôts / rouge retraits, Y-axis `EUR`, destroy/recreate)
+- 3 tabs : Paris ouverts / Historique / Trésorerie
+- Filtres : statut, bookmaker, marché, équipe, plage date
+- Modal `#bet-modal` : autocomplete matchs (`/api/v1/matches`), 19 préselections marché (1X2/Over/Under/BTTS/DC/AH/FREE), Kelly panel collapsible Full (mis en avant, choix user) / Half / Quarter, edge affiché
+- Modal `#settle-modal` : bandeau suggestion auto si match archivé verified + bouton Accepter, radio statut, preview P&L live
+- Modal `#cash-modal` : dépôt/retrait/ajustement avec date éditable
+- Export CSV : `fetch + blob + a.download`, headers Bearer, OWASP injection guard côté serveur (préfixe `'` si cellule commence par `= + - @`)
+- CSS : 60 lignes (`.bet-status-pill` par statut, `.bet-pl-pos/neg`, `.bet-row-suggest` bande jaune, `.kelly-panel`, `.paris-modal`, etc.)
+- Patch `/api/v1/bankroll` → `/api/v1/bankroll/simulated` dans `renderBankrollChart` (ligne 12834)
+
+### Modifié
+- `server.js` : +900 lignes (schéma, helpers, 13 routes, hook archivage)
+- `pariscore.html` : +900 lignes (CSS + nav + page + 3 modals + JS init/render/handlers + Kelly + CSV download)
+- `CLAUDE.md` : version → v9.8, section v9.8 ajoutée
+- `.claude/CLAUDE.md` : roadmap P2-P3 "Bet Tracking Utilisateur" cochée
+
+### Verrouillé pour la suite (hors scope v9.8)
+- Combinés / parlay (junction table `user_bet_legs`)
+- Import CSV 1xbet
+- Scraping API 1xbet (ToS-incompatible)
+- Cashout live suggestion (streaming odds + live model)
+- Multi-devise, export fiscalité FR détaillé
+- Notification Telegram sur règlement
+
+---
+
 ## [v4.6.0] — 2026-04-30
 
 ### Ajouté — Wave 6 : Scouting Intelligence (Injuries + Scouting Report)
