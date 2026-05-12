@@ -7,20 +7,20 @@
 - [x] Design : ligne "Meilleure cote" rouge léger, ligne "Moyenne" gris clair
 - [x] Backend : `processAllBookmakers` extrait `totals` (OU25) + `btts` par bookmaker
 - [x] Backend : route `/api/v1/comparateur` accepte `?market=1N2|OU25|BTTS` + retourne `avgRow`
-- [ ] Finalisation du comparateur : intégration 1xbet, calcul des moyennes et filtres par marché (1N2, U/O, BTTS)
-- [ ] Tester avec des matchs ayant cotes `totals` / `both_teams_score` réelles (cycle fetchOdds suivant)
-- [ ] Vérifier affichage 1xbet dans section non-ANJ si présent dans The Odds API
+- [x] Finalisation du comparateur : intégration 1xbet, calcul des moyennes et filtres par marché (1N2, U/O, BTTS) — Routes opérationnelles `/api/v1/comparateur/:id?market=1N2|OU25|BTTS` ✓ avgRow + bestRow + isBestHome/Draw/Away/Over25/BTTS detection. (12 mai 2026 commit 40aa5ae)
+- [ ] Tester avec des matchs ayant cotes `totals` / `both_teams_score` réelles — En attente cycle fetchOdds avec markets totals + both_teams_score (state actuel : seuls 1N2 retournés non-null)
+- [ ] Vérifier affichage 1xbet dans section non-ANJ — 1xbet absent du payload actuel (seul BSD bookmaker présent dans rows). Dépendant fetchOdds couvrant Pinnacle/1xBet via The Odds API config régions.
 
 - [x] Mutation de l'onglet Live : Passage d'un flux scrollé à un Dashboard de Stratégie (Momentum + Intensity Gauge + Predictive Bet).
 
 ## Live Dashboard V2 — Refonte Radicale
-- [ ] Destruction totale de l'ancienne boucle de rendu Live scrollable.
-- [ ] Implémentation du Dashboard Live V2 (Momentum SVG + Barres dynamiques + Polling partial-update sans flicker).
-- [ ] Fix UI : Rétablir l'affichage de la liste des matchs en direct via le filtre 'Live' du tableau principal.
-- [ ] Fix Dashboard Live : Remplacer le flux de données vide par un scraping/fetching des endpoints statistiques et momentum de SofaScore.
-- [ ] Étude API football complète (prematch + live + scraping sans anti-bot). Analyse comparative gratuit vs payant. Recommandation stack rapport qualité/économique pour 100 membres.
-- [ ] Étude couverture LIVE par ligue (K-League + toutes ligues PariScore) avec APIs/scraping. Rapport routing correct + double routing (primary/fallback).
-- [ ] Installer skill : `npx skills add machina-sports/sports-skills`
+- [x] Destruction totale de l'ancienne boucle de rendu Live scrollable. (commit b9e5e23)
+- [x] Implémentation du Dashboard Live V2 (Momentum SVG + Barres dynamiques + Polling partial-update sans flicker). (commits b9e5e23 + 179bc40 Phase 1)
+- [x] Fix UI : Rétablir l'affichage de la liste des matchs en direct via le filtre 'Live' du tableau principal. (commit d971c6b)
+- [x] Fix Dashboard Live : Remplacer le flux de données vide par un scraping/fetching des endpoints statistiques et momentum de SofaScore. (Phase 1 commit 179bc40 + Phase 2 commit a14f7aa)
+- [x] Étude API football complète (prematch + live + scraping sans anti-bot). Analyse comparative gratuit vs payant. Recommandation stack rapport qualité/économique pour 100 membres. (.context/API-STUDY-FOOTBALL-2026.md commit db8b51f)
+- [x] Étude couverture LIVE par ligue (K-League + toutes ligues PariScore) avec APIs/scraping. Rapport routing correct + double routing (primary/fallback). (.context/ROUTING-LIVE-COVERAGE-2026.md commit 79c71fb)
+- [x] Installer skill : `npx skills add machina-sports/sports-skills` — 17 skills installés dans .agents/skills/ (betting, football-data, kalshi, polymarket, sports-news, sports-reporter, mlb/nba/nfl/nhl/cbb/cfb/golf/tennis/wnba/volleyball/xctf-data, markets)
 
 ## En cours / Debug
 - [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
