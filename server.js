@@ -12258,16 +12258,25 @@ function buildLiveDashboardPayload(match, detail) {
       : (match.live_score || '0-0'),
     minute,
     status: detail?.status || match.status || null,
-    xg: (xgH != null || xgA != null) ? { home: +(xgH || 0), away: +(xgA || 0) } : null,
-    possession: (possH != null && possA != null) ? { home: possH, away: possA } : null,
+    xg: (xgH != null || xgA != null)
+      ? { home: +(xgH || 0), away: +(xgA || 0) }
+      : (match.live_xg && (match.live_xg.home != null || match.live_xg.away != null) ? match.live_xg : null),
+    possession: (possH != null && possA != null)
+      ? { home: possH, away: possA }
+      : (match.live_possession && match.live_possession.home != null ? match.live_possession : null),
     attack: (attackH != null && attackA != null) ? { home: attackH, away: attackA } : null,
-    dangerous_attacks: (daH != null && daA != null) ? { home: daH, away: daA } : null,
-    shots: null,
-    shots_on_target: null,
-    corners: null,
-    momentum: _liveMomentumHistory.get(match.id) || [],
+    dangerous_attacks: (daH != null && daA != null)
+      ? { home: daH, away: daA }
+      : (match.live_dangerous_attacks && match.live_dangerous_attacks.home != null ? match.live_dangerous_attacks : null),
+    // v9.8.3 fix: populate from match.live_* (Sofascore-enriched) instead of hardcoded null
+    shots: (match.live_shots && match.live_shots.home != null) ? match.live_shots : null,
+    shots_on_target: (match.live_shots_on_target && match.live_shots_on_target.home != null) ? match.live_shots_on_target : null,
+    corners: (match.live_corners && match.live_corners.home != null) ? match.live_corners : null,
+    cards: match.live_cards || null,
+    momentum: _liveMomentumHistory.get(match.id) || match.live_momentum || [],
     intensity: match.live_intensity || 0,
     _source: 'bsd_sr_stats',
+    _enrichment_ready: !!(match.live_xg || match.live_shots || sr),
   };
 }
 

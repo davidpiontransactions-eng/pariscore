@@ -11583,20 +11583,27 @@ function updateLiveDetailModal(m) {
     { key:'sot',        src:m.shots_on_target,   pct:false, dec:0 },
     { key:'corners',    src:m.corners,           pct:false, dec:0 },
   ];
-  // v10.9: detect zero-coverage case (ligues mineures, ex: Suomen Cup)
+  // v9.8.3: distingue "early game data en cours" vs "ligue mineure non couverte"
   const hasAnyData = stats.some(s => s.src && s.src.home != null && s.src.away != null);
   const noDataBanner = document.getElementById('ldm-no-data-banner');
+  const matchMinute = parseInt(m.minute || 0);
+  const isEarlyGame = matchMinute > 0 && matchMinute < 15;
   if (!hasAnyData) {
-    if (!noDataBanner) {
+    const earlyHtml = `
+      <div id="ldm-no-data-banner" style="padding:14px;margin-bottom:14px;background:rgba(41,182,246,0.08);border:1px solid rgba(41,182,246,0.3);border-radius:8px;font-size:12px;color:#0277bd;line-height:1.55;">
+        ⏳ <strong>Stats live en cours de récupération…</strong>
+        <br/><span style="font-size:11px;color:var(--text3);">Match à ${matchMinute}' — les données détaillées (xG, attaques, tirs) arrivent progressivement. Rafraîchissement auto toutes les 30 s. Score live fiable dès maintenant.</span>
+      </div>`;
+    const limitedHtml = `
+      <div id="ldm-no-data-banner" style="padding:14px;margin-bottom:14px;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;font-size:12px;color:#b45309;line-height:1.55;">
+        ⚠️ <strong>Statistiques live indisponibles</strong> pour <em>${m.league || 'cette compétition'}</em>.
+        <br/><span style="font-size:11px;color:var(--text3);">Couverture data limitée pour cette compétition (data provider). Le score live et le résultat final restent fiables.</span>
+      </div>`;
+    const html = isEarlyGame ? earlyHtml : limitedHtml;
+    if (noDataBanner) noDataBanner.outerHTML = html;
+    else {
       const cont = document.getElementById('ldm-stats-bars');
-      if (cont) {
-        cont.insertAdjacentHTML('beforebegin', `
-          <div id="ldm-no-data-banner" style="padding:14px;margin-bottom:14px;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;font-size:12px;color:#b45309;line-height:1.55;">
-            ⚠️ <strong>Statistiques live indisponibles</strong> pour <em>${m.league || 'cette compétition'}</em>.
-            <br/><span style="font-size:11px;color:var(--text3);">Couverture data limitée pour les compétitions secondaires (coupes nationales, ligues mineures). Le score live et le résultat final restent fiables.</span>
-          </div>
-        `);
-      }
+      if (cont) cont.insertAdjacentHTML('beforebegin', html);
     }
   } else if (noDataBanner) {
     noDataBanner.remove();
@@ -11652,10 +11659,15 @@ function drawLDMomentumSVG(momArr) {
 function updateLDVerdict(m) {
   const el = document.getElementById('ldm-verdict-content');
   if (!el) return;
-  // v10.9: skip si aucune source data (ligues mineures non couvertes)
-  const hasData = !!(m.xg || m.shots || m.possession || m.dangerous_attacks);
+  // v9.8.3: hasData vérifie les VALEURS (pas juste truthiness object), distingue early game
+  const fieldHasValue = (f) => f && (f.home != null || f.away != null);
+  const hasData = fieldHasValue(m.xg) || fieldHasValue(m.shots) || fieldHasValue(m.possession) || fieldHasValue(m.dangerous_attacks);
   if (!hasData) {
-    el.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center;line-height:1.6;font-style:italic;">Analyse non disponible — couverture data live limitée pour ce championnat.</div>`;
+    const matchMinute = parseInt(m.minute || 0);
+    const earlyGame = matchMinute > 0 && matchMinute < 15;
+    el.innerHTML = earlyGame
+      ? `<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center;line-height:1.6;font-style:italic;">⏳ Analyse en cours… match à ${matchMinute}', les stats arrivent dans quelques minutes.</div>`
+      : `<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center;line-height:1.6;font-style:italic;">Analyse non disponible — couverture data live limitée pour ce championnat.</div>`;
     return;
   }
   const xgH = +(m.xg?.home ?? 0), xgA = +(m.xg?.away ?? 0);
