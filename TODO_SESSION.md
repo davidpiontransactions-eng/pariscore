@@ -27,7 +27,8 @@
 - [x] Intégration du module Top 3 Joueurs (Ratings Live BSD) dans le Dashboard Live.
 
 ## Roadmap suivante
-- [ ] Filtres L5/L10/L25 dans tableau principal (PPG/forme X derniers matchs)
+- [x] Filtres L5/L10/L25 dans tableau principal (PPG/forme X derniers matchs) — Existant L4747-4755 pariscore.html (filter-chip Saison/L5/L10/L25). setPeriod(period) toggle activePeriod + renderMatches re-trigger. ppgFromFormStr(form, n) calcule PPG sur N derniers matchs. Verified preview port 61772 : 4 boutons, click L5 → activePeriod='l5' + periodNote 'Calculé sur les 5 derniers matchs'.
 - [ ] Onglet Tendances version Full (route `/api/v1/trends`)
+- [x] Élargissement régions/markets fetchOdds — server.js:5747 régions `eu,uk` + markets `h2h,totals,both_teams_score` (config override via env ODDS_REGIONS / ODDS_MARKETS). Coût quota multiplié par 3 (markets) × 2 (régions) = 6x — surveillance quota nécessaire pour plan 500 credits/mois.
 - [x] Rédaction du glossaire expert dans le Guide
 - [x] Injection de matchs de test avec couverture bookmakers totale (ANJ, 1x, Betfair)
