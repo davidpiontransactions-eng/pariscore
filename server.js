@@ -65,7 +65,59 @@ const PARLAY_API_KEY = process.env.PARLAY_API_KEY;
 const GAMEFORECAST_API_HOST = process.env.GAMEFORECAST_API_HOST;
 const GAMEFORECAST_API_PATH = process.env.GAMEFORECAST_API_PATH || '/forecast';
 const GAMEFORECAST_API_KEY = process.env.GAMEFORECAST_API_KEY;
-const FOOTBALL_DATA_API_KEY = process.env.FOOTBALL_DATA_API_KEY || '';
+// Defensive sanitize : strip inline-comments + whitespace ; reject if non printable-ASCII.
+// Some .env parsers leak "# comment" into the value → invalid HTTP header chars.
+const FOOTBALL_DATA_API_KEY = (() => {
+  const raw = process.env.FOOTBALL_DATA_API_KEY || '';
+  const cleaned = raw.split('#')[0].trim();
+  if (!cleaned || !/^[A-Za-z0-9._-]+$/.test(cleaned)) return '';
+  return cleaned;
+})();
+
+// TheSportsDB key. Free demo key "3" returns ONLY Arsenal mock data (heavy restriction).
+// Set TSDB_API_KEY to a registered/Patreon key for full coverage (kits/stadiums/colors/desc).
+const TSDB_API_KEY = (() => {
+  const raw = process.env.TSDB_API_KEY || '';
+  const cleaned = raw.split('#')[0].trim();
+  return /^[A-Za-z0-9._-]+$/.test(cleaned) ? cleaned : '3';
+})();
+const TSDB_IS_DEMO_KEY = TSDB_API_KEY === '3';
+
+// ─── Football-Data.org (L2 enrichissement fixtures top 12 free forever) ──────
+// Free tier : 10 calls/min. 12 compétitions free forever (PL/PD/BL1/SA/FL1/CL/EC/WC/DED/PPL/ELC/BSA).
+// Endpoint principal : /v4/matches?dateFrom=&dateTo=&competitions=
+const FOOTBALL_DATA_BASE = 'https://api.football-data.org/v4';
+const FOOTBALL_DATA_COMPETITIONS = {
+  PL:  { name: 'Premier League',     country: 'England', sport_key: 'soccer_epl' },
+  PD:  { name: 'La Liga',            country: 'Spain',   sport_key: 'soccer_spain_la_liga' },
+  BL1: { name: 'Bundesliga',         country: 'Germany', sport_key: 'soccer_germany_bundesliga' },
+  SA:  { name: 'Serie A',            country: 'Italy',   sport_key: 'soccer_italy_serie_a' },
+  FL1: { name: 'Ligue 1',            country: 'France',  sport_key: 'soccer_france_ligue1' },
+  CL:  { name: 'UEFA Champions League', country: 'Europe', sport_key: 'soccer_uefa_champs_league' },
+  EC:  { name: 'European Championship', country: 'Europe', sport_key: 'soccer_uefa_european_championship' },
+  WC:  { name: 'FIFA World Cup',     country: 'World',   sport_key: 'soccer_fifa_world_cup' },
+  DED: { name: 'Eredivisie',         country: 'Netherlands', sport_key: 'soccer_netherlands_eredivisie' },
+  PPL: { name: 'Primeira Liga',      country: 'Portugal',sport_key: 'soccer_portugal_primeira_liga' },
+  ELC: { name: 'Championship',       country: 'England', sport_key: 'soccer_efl_champ' },
+  BSA: { name: 'Brasileirão',        country: 'Brazil',  sport_key: 'soccer_brazil_campeonato' },
+};
+const FOOTBALL_DATA_TTL_MS = 6 * 3600 * 1000;
+const FOOTBALL_DATA_DETAIL_TTL_MS = 24 * 3600 * 1000;
+
+// ─── OpenFootball GitHub (L4 zero-key fallback) ──────────────────────────────
+// Repo public domain : github.com/openfootball/football.json
+// Format : raw.githubusercontent.com/openfootball/football.json/master/{season}/{code}.json
+// Pas de clé requise. Cache 12h. Top 5 ligues européennes + WC 2026.
+const OPENFOOTBALL_BASE = 'https://raw.githubusercontent.com/openfootball/football.json/master';
+const OPENFOOTBALL_LEAGUES = [
+  { code: 'en.1', country: 'England', name: 'Premier League',   sport_key: 'soccer_epl' },
+  { code: 'es.1', country: 'Spain',   name: 'La Liga',          sport_key: 'soccer_spain_la_liga' },
+  { code: 'de.1', country: 'Germany', name: 'Bundesliga',       sport_key: 'soccer_germany_bundesliga' },
+  { code: 'it.1', country: 'Italy',   name: 'Serie A',          sport_key: 'soccer_italy_serie_a' },
+  { code: 'fr.1', country: 'France',  name: 'Ligue 1',          sport_key: 'soccer_france_ligue1' },
+];
+const OPENFOOTBALL_TTL_MS = 12 * 3600 * 1000;
+const OPENFOOTBALL_NEG_TTL_MS = 6 * 3600 * 1000;
 
 // ── AI Provider chain (Deep Analysis) — premier disponible utilisé ──────────
 // Ordre : Gemini → Groq → Grok (xAI) → OpenRouter
@@ -462,6 +514,122 @@ async function fetchTheSportsDBPlayerPhoto(playerName, teamName) {
     return enriched;
   } catch (e) {
     console.warn(`  [TheSportsDB] ${playerName} erreur:`, e.message);
+    return null;
+  }
+}
+
+// ─── THESPORTSDB TEAM BRANDING (P1bis) ───────────────────────────────────────
+// Endpoint : /searchteams.php?t={teamName}. Free key=3 demo (no register).
+// Apporte : kits home/away/third, badge/logo HD, stadium image+location+description,
+// team colors hex, description multilangue, socials, formation year.
+// Cache 7j positif / 24h négatif. Filtre soccer + match country si fourni.
+async function fetchTheSportsDBTeamBranding(teamName, country) {
+  if (!teamName) return null;
+  // TheSportsDB demo key "3" returns ONLY Arsenal — skip non-Arsenal queries to
+  // avoid Arsenal pollution. Real coverage requires TSDB_API_KEY env var.
+  if (TSDB_IS_DEMO_KEY && !/arsenal/i.test(teamName)) {
+    return null;
+  }
+  const cacheKey = `tsdb_team_v2_${normName(teamName)}_${country ? normName(country) : 'any'}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached !== null) return cached === '__NEG__' ? null : cached;
+  try {
+    const url = `https://www.thesportsdb.com/api/v1/json/${TSDB_API_KEY}/searchteams.php?t=${encodeURIComponent(teamName)}`;
+    const res = await httpsGet(url, { 'User-Agent': 'Mozilla/5.0 (compatible; PariScore/1.0)' });
+    if (res.status !== 200 || !res.data?.teams) {
+      apiCacheSet(cacheKey, '__NEG__', 'tsdb_team', 24 * 3600 * 1000);
+      return null;
+    }
+    let teams = res.data.teams.filter(t => /soccer|football/i.test(t.strSport || ''));
+    if (!teams.length) teams = res.data.teams;
+    let chosen = null;
+    const targetNorm = normName(teamName);
+    if (country) {
+      const cNorm = normName(country);
+      chosen = teams.find(t => t.strCountry && normName(t.strCountry) === cNorm);
+      if (!chosen) chosen = teams.find(t => t.strCountry && (normName(t.strCountry).includes(cNorm) || cNorm.includes(normName(t.strCountry))));
+      // If country is provided but no team matches that country, reject to avoid
+      // mismatches like "Almere City FC" → "Arsenal" because of broad search.
+      if (!chosen) {
+        apiCacheSet(cacheKey, '__NEG__', 'tsdb_team', 24 * 3600 * 1000);
+        return null;
+      }
+    }
+    if (!chosen) {
+      // No country filter — require strong name match before accepting first result.
+      chosen = teams.find(t => t.strTeam && normName(t.strTeam) === targetNorm);
+      if (!chosen) chosen = teams.find(t => t.strTeam && (normName(t.strTeam).includes(targetNorm) || targetNorm.includes(normName(t.strTeam))));
+    }
+    if (!chosen) {
+      apiCacheSet(cacheKey, '__NEG__', 'tsdb_team', 24 * 3600 * 1000);
+      return null;
+    }
+    // Final safety net : verify the chosen team's name reasonably matches the query
+    // (avoid TheSportsDB returning a famous team for a fuzzy query).
+    const chosenNorm = normName(chosen.strTeam || '');
+    if (chosenNorm && !chosenNorm.includes(targetNorm) && !targetNorm.includes(chosenNorm)) {
+      // Cheap edit-distance heuristic via shared word prefix
+      const firstWordTarget = targetNorm.split(' ')[0];
+      const firstWordChosen = chosenNorm.split(' ')[0];
+      if (firstWordTarget.length >= 4 && firstWordTarget !== firstWordChosen) {
+        apiCacheSet(cacheKey, '__NEG__', 'tsdb_team', 24 * 3600 * 1000);
+        return null;
+      }
+    }
+    const intOrNull = (v) => {
+      const n = parseInt(v, 10);
+      return Number.isFinite(n) ? n : null;
+    };
+    const out = {
+      id: chosen.idTeam || null,
+      name: chosen.strTeam || null,
+      alternate: chosen.strAlternate || null,
+      country: chosen.strCountry || null,
+      league: chosen.strLeague || null,
+      formed_year: intOrNull(chosen.intFormedYear),
+      badge_hd: chosen.strTeamBadge || chosen.strBadge || null,
+      logo_hd: chosen.strTeamLogo || chosen.strLogo || null,
+      jersey: chosen.strTeamJersey || null,
+      banner: chosen.strTeamBanner || null,
+      fanart: [chosen.strTeamFanart1, chosen.strTeamFanart2, chosen.strTeamFanart3, chosen.strTeamFanart4].filter(Boolean),
+      kits: {
+        home: chosen.strKitHome || null,
+        away: chosen.strKitAway || null,
+        third: chosen.strKitThird || null,
+      },
+      stadium: {
+        name: chosen.strStadium || null,
+        image: chosen.strStadiumThumb || null,
+        location: chosen.strStadiumLocation || null,
+        capacity: intOrNull(chosen.intStadiumCapacity),
+        description: chosen.strStadiumDescription || null,
+      },
+      colors: {
+        primary: chosen.strColour1 || null,
+        secondary: chosen.strColour2 || null,
+        tertiary: chosen.strColour3 || null,
+      },
+      description: {
+        en: chosen.strDescriptionEN || null,
+        fr: chosen.strDescriptionFR || null,
+        es: chosen.strDescriptionES || null,
+        de: chosen.strDescriptionDE || null,
+        it: chosen.strDescriptionIT || null,
+        pt: chosen.strDescriptionPT || null,
+      },
+      socials: {
+        website: chosen.strWebsite || null,
+        facebook: chosen.strFacebook || null,
+        twitter: chosen.strTwitter || null,
+        instagram: chosen.strInstagram || null,
+        youtube: chosen.strYoutube || null,
+      },
+      _source: 'thesportsdb',
+    };
+    apiCacheSet(cacheKey, out, 'tsdb_team', 7 * 24 * 3600 * 1000);
+    return out;
+  } catch (e) {
+    console.warn(`  [TheSportsDB team] ${teamName} erreur:`, e.message);
     return null;
   }
 }
@@ -1098,6 +1266,335 @@ const BSD_BSD_TO_CONFIG = bsdConfig.mapping?.bsd_to_config || {};
 const BSD_FALLBACK_NEEDED = bsdConfig.mapping?.fallback_needed || [];
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  TV BROADCASTERS — Routing externe (Sportmonks / TheSportsDB) + static fallback
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SPORTMONKS_API_KEY = process.env.SPORTMONKS_API_KEY || '';
+const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3/football';
+const THESPORTSDB_KEY = process.env.THESPORTSDB_KEY || '3'; // '3' = test key public free
+
+// Sportmonks v3 — récupère TV stations d'un match via date + équipes.
+// Plan free : 3 ligues uniquement. Plan payant : couverture mondiale.
+// Renvoie [{name, logo, country}] ou null en cas d'échec / 0 résultats.
+async function fetchSportmonksTvChannels(match, country) {
+  if (!SPORTMONKS_API_KEY) return null;
+  try {
+    const date = (match.commence_time || '').slice(0, 10);
+    if (!date) return null;
+    const url = `${SPORTMONKS_BASE}/fixtures/date/${date}?api_token=${encodeURIComponent(SPORTMONKS_API_KEY)}&include=tvStations;participants`;
+    const res = await httpsGet(url);
+    if (res.status === 401 || res.status === 403) {
+      console.warn(`  [TV/Sportmonks] Plan insuffisant (HTTP ${res.status}) — skip`);
+      return null;
+    }
+    if (res.status !== 200 || !res.data?.data) return null;
+    const homeN = normName(match.home_team);
+    const awayN = normName(match.away_team);
+    const fixture = res.data.data.find(f => {
+      const parts = (f.participants || []).map(p => normName(p.name));
+      return parts.length === 2 && parts.includes(homeN) && parts.includes(awayN);
+    });
+    if (!fixture) return null;
+    const tvs = fixture.tvstations || fixture.tvStations || [];
+    const filtered = country
+      ? tvs.filter(t => !t.country_code || t.country_code.toUpperCase() === country)
+      : tvs;
+    if (!filtered.length) return null;
+    return filtered.map(t => ({
+      name: t.tvstation?.name || t.name || 'Unknown',
+      logo: t.tvstation?.image_path || t.image_path || null,
+      country: t.country_code || country,
+    }));
+  } catch (e) {
+    console.warn(`  [TV/Sportmonks] erreur: ${e.message}`);
+    return null;
+  }
+}
+
+// TheSportsDB v1 — free public API (clé '3' = test gratuit).
+// Recherche event par nom équipes puis lookup eventtv.
+// Renvoie [{name, logo, country}] ou null.
+async function fetchTheSportsDbTvChannels(match, country) {
+  try {
+    const date = (match.commence_time || '').slice(0, 10);
+    const home = (match.home_team || '').replace(/\s+/g, '_');
+    const away = (match.away_team || '').replace(/\s+/g, '_');
+    if (!home || !away) return null;
+    // 1) Search event
+    const searchUrl = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_KEY}/searchevents.php?e=${encodeURIComponent(home)}_vs_${encodeURIComponent(away)}`;
+    const searchRes = await httpsGet(searchUrl);
+    if (searchRes.status !== 200 || !searchRes.data?.event) return null;
+    const events = searchRes.data.event;
+    // Match by date (DD/MM/YYYY or YYYY-MM-DD)
+    const ev = events.find(e => e.dateEvent === date) || events[0];
+    if (!ev?.idEvent) return null;
+    // 2) Lookup TV channels
+    const tvUrl = `https://www.thesportsdb.com/api/v1/json/${THESPORTSDB_KEY}/eventtv.php?id=${ev.idEvent}`;
+    const tvRes = await httpsGet(tvUrl);
+    if (tvRes.status !== 200 || !Array.isArray(tvRes.data?.tvevent)) return null;
+    const list = tvRes.data.tvevent;
+    const filtered = country
+      ? list.filter(t => !t.strCountry || t.strCountry.toUpperCase().slice(0, 2) === country.slice(0, 2))
+      : list;
+    if (!filtered.length) return null;
+    return filtered.map(t => ({
+      name: t.strChannel || 'Unknown',
+      logo: t.strLogo || null,
+      country: (t.strCountry || country).slice(0, 2).toUpperCase(),
+    }));
+  } catch (e) {
+    console.warn(`  [TV/TheSportsDB] erreur: ${e.message}`);
+    return null;
+  }
+}
+
+
+
+// Logos centralisés. Réutilisés par /api/v1/match/:id/tv-channel.
+const TV_CHANNEL_LOGOS = {
+  // France
+  'beIN SPORTS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+  'beIN SPORTS 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+  'beIN SPORTS 2': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+  'beIN SPORTS 3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+  'beIN SPORTS MAX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+  'Canal+': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+  'Canal+ Foot': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+  'Canal+ Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+  'Canal+ Sport 360': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+  'Amazon Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
+  'Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
+  'DAZN': 'https://cdn.simpleicons.org/dazn/F8002E',
+  'RMC Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
+  'RMC Sport 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
+  "L'Équipe": 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/L_%C3%89quipe.svg/200px-L_%C3%89quipe.svg.png',
+  'M6': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/M6_logo.svg/200px-M6_logo.svg.png',
+  'TF1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/TF1_logo.svg/200px-TF1_logo.svg.png',
+  // Japon — J1 League (droits primaires DAZN Japan 2022-2028)
+  'DAZN Japan': 'https://cdn.simpleicons.org/dazn/F8002E',
+  'J Sports': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/J_Sports_logo.svg/200px-J_Sports_logo.svg.png',
+  'J Sports 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/J_Sports_logo.svg/200px-J_Sports_logo.svg.png',
+  'J Sports 2': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/J_Sports_logo.svg/200px-J_Sports_logo.svg.png',
+  'J Sports 3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/J_Sports_logo.svg/200px-J_Sports_logo.svg.png',
+  'J Sports 4': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/J_Sports_logo.svg/200px-J_Sports_logo.svg.png',
+  'NHK BS1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/NHK_logo_2020.svg/200px-NHK_logo_2020.svg.png',
+  'NHK BS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/NHK_logo_2020.svg/200px-NHK_logo_2020.svg.png',
+  'Fuji TV': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Fuji_TV_logo.svg/200px-Fuji_TV_logo.svg.png',
+  'TBS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/TBS_television_logo.svg/200px-TBS_television_logo.svg.png',
+  // Corée du Sud — K-League 1
+  'Coupang Play': 'https://cdn.simpleicons.org/coupang/F8002E',
+  'SPOTV': null,
+  // France — nouveaux (Ligue 1 platform)
+  'Ligue1+': null,
+  // Pays-Bas — Eredivisie
+  'ESPN NL': 'https://cdn.simpleicons.org/espn/D60000',
+  // Portugal — Primeira Liga
+  'Sport TV': null,
+  // Arabie Saoudite
+  'SSC': null,
+  // USA — MLS
+  'Apple TV MLS': 'https://cdn.simpleicons.org/appletv/000000',
+  // Mexique
+  'Televisa': null,
+  'TUDN': null,
+  // Brésil
+  'Premiere': null,
+  'Globo': null,
+  // Turquie
+  'beIN SPORTS TR': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
+  // UK — Scottish Premiership
+  'Sky Sports': 'https://cdn.simpleicons.org/sky/0072C9',
+  'Premier Sports': null,
+  // Norvège
+  'TV 2 Sport NO': null,
+  // Suède
+  'TV4 Sport': null,
+  'Discovery+': 'https://cdn.simpleicons.org/discoveryplus/2175D9',
+  // Pologne
+  'Canal+ Sport PL': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
+  // Maroc
+  'Arryadia': null,
+  'Al Kass': null,
+  // Argentine
+  'TNT Sports AR': null,
+  'ESPN AR': 'https://cdn.simpleicons.org/espn/D60000',
+  // Brésil
+  'ESPN BR': 'https://cdn.simpleicons.org/espn/D60000',
+  // Afrique du Sud
+  'SuperSport': null,
+  // Conference League
+  'RMC Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
+  // ── Phase 1 extended — broadcasters multi-pays
+  'LaLiga Hypermotion': null,
+  'Movistar+': 'https://cdn.simpleicons.org/movistar/019DF4',
+  'Sky Sport Bundesliga': 'https://cdn.simpleicons.org/sky/0072C9',
+  'DAZN IT': 'https://cdn.simpleicons.org/dazn/F8002E',
+  'SporTV': null,
+  'BBC Scotland': 'https://cdn.simpleicons.org/bbc/000000',
+  'blue Sport': null,
+  'SRG SSR': null,
+  'Cosmote Sport': null,
+  'Play Sports': null,
+  'Eleven Sports BE': null,
+  'Sky Sport Austria': 'https://cdn.simpleicons.org/sky/0072C9',
+  'O2 TV Sport': null,
+  'TV3 Sport DK': null,
+  'MEGOGO': null,
+  'Setanta Sports UA': null,
+  'MAXSport': null,
+  'Arena Sport RS': null,
+  'M4 Sport': null,
+  'Nova Sport SK': null,
+  'Ruutu': null,
+  'C More FI': null,
+  'LOITV': null,
+  'RTÉ Sport': 'https://cdn.simpleicons.org/rte/00A1DE',
+  'Diema Sport': null,
+  'Digi Sport': null,
+  'Prima Sport': null,
+  'CCTV-5': null,
+  'iQiyi Sport': 'https://cdn.simpleicons.org/iqiyi/00BE06',
+  'EPTV Sport': null,
+  'Azteca 7': null,
+  'ESPN+': 'https://cdn.simpleicons.org/espn/D60000',
+  'Apple TV+': 'https://cdn.simpleicons.org/appletv/000000',
+  'TyC Sports': null,
+  'TNT Sports CL': null,
+  'ESPN CL': 'https://cdn.simpleicons.org/espn/D60000',
+  'Win Sports': null,
+  'GolTV EC': null,
+  'DirecTV Sports': null,
+  'Tigo Sports': null,
+  // Italie — Coppa Italia (free TV finale)
+  'Mediaset': null,
+  'Canale 5': null,
+};
+
+// Fallback statique league → broadcasters par pays. Clé = `id` config (leagues_config.json).
+// Source : droits TV saison 2025-2026 publics, vérifiés (à mettre à jour saison +1).
+// Stratégie : prioriser pays de la ligue + ajouter FR si rights français existants.
+// Denylist équipes mal-classifiées par BSD (data error standings).
+// Format: config_id → Set normalisé (lowercase, trim) des équipes à exclure.
+// Source bug : BSD season 317 (Ligue 1) inclut Rodez AF + Red Star FC qui sont en Ligue 2.
+const LEAGUE_TEAM_DENYLIST = {
+  61: new Set(['rodez af', 'red star fc']),  // Ligue 1 — exclure équipes L2 misclassifiées
+};
+
+const LEAGUE_TV_FALLBACK = {
+  // J1 League (98) — droits exclusifs DAZN Japan 2022-2028. Pas de diffuseur FR linéaire.
+  98: { JP: ['DAZN Japan'] },
+  // Ligue 1 (61) — Ligue1+ plateforme LFP (8 matchs/sem) + beIN SPORTS (1/sem) 2025-26. Canal+ a abandonné mi-2024.
+  61: { FR: ['Ligue1+', 'beIN SPORTS'] },
+  // Premier League (39) — Canal+ FR (sous-licence beIN) 2025-26 ✓
+  39: { FR: ['Canal+'] },
+  // La Liga (140) — beIN SPORTS FR ✓
+  140: { FR: ['beIN SPORTS'] },
+  // Serie A (135) — beIN SPORTS FR ✓
+  135: { FR: ['beIN SPORTS'] },
+  // Coppa Italia (137) — beIN SPORTS FR (sélection) + Mediaset/Canale 5 IT (finale free TV)
+  137: { FR: ['beIN SPORTS'], IT: ['Mediaset', 'Canale 5'] },
+  // Bundesliga (78) — beIN SPORTS FR ✓
+  78: { FR: ['beIN SPORTS'] },
+  // Champions League (2) — Canal+ FR + beIN SPORTS (split) 2024-2027
+  2: { FR: ['Canal+', 'beIN SPORTS'] },
+  // Europa League (3) — Canal+ FR + beIN SPORTS (split)
+  3: { FR: ['Canal+', 'beIN SPORTS'] },
+  // Conference League (848) — RMC Sport FR
+  848: { FR: ['RMC Sport'] },
+  // K-League 1 (292) — Coupang Play exclusif KR 2024-2026 + SPOTV select matchs. DAZN Japan NE COUVRE PAS la K-League.
+  292: { KR: ['Coupang Play', 'SPOTV'] },
+  // Eredivisie (88) — pas de FR linéaire, ESPN NL primaire
+  88: { NL: ['ESPN NL'] },
+  // Primeira Liga (94) — pas de FR linéaire, Sport TV PT primaire
+  94: { PT: ['Sport TV'] },
+  // Saudi Pro League (307) — beIN SPORTS FR (sous-licence) + SSC SA primaire
+  307: { FR: ['beIN SPORTS'], SA: ['SSC'] },
+  // MLS (253) — Apple TV global (MLS Season Pass) ; FR via Apple TV+
+  253: { US: ['Apple TV MLS'], FR: ['Apple TV MLS'] },
+  // Liga MX (218) — TUDN US + Azteca/Televisa MX
+  218: { MX: ['Televisa', 'TUDN'], US: ['TUDN'] },
+  // Brasileirão (71) — Premiere/Globo BR primaire
+  71: { BR: ['Premiere', 'Globo'] },
+  // Süper Lig Turquie (203) — beIN SPORTS Turkey + beIN SPORTS FR (rights variables)
+  203: { TR: ['beIN SPORTS TR'], FR: ['beIN SPORTS'] },
+  // Scottish Premiership (188) — Sky Sports UK + Premier Sports
+  188: { UK: ['Sky Sports', 'Premier Sports'] },
+  // Eliteserien (103) — TV 2 NO primaire
+  103: { NO: ['TV 2 Sport NO'] },
+  // Allsvenskan (113) — TV4/Discovery+ SE
+  113: { SE: ['TV4 Sport', 'Discovery+'] },
+  // Ekstraklasa (106) — Canal+ Sport Polska
+  106: { PL: ['Canal+ Sport PL'] },
+  // Botola Pro (200) — Arryadia MA + Al Kass QA
+  200: { MA: ['Arryadia'], QA: ['Al Kass'] },
+  // Liga Profesional Argentina (128) — TNT Sports AR + ESPN AR
+  128: { AR: ['TNT Sports AR', 'ESPN AR'] },
+  // Copa Libertadores (13) — beIN SPORTS FR + ESPN LATAM
+  13: { FR: ['beIN SPORTS'], BR: ['ESPN BR'] },
+  // Copa Sudamericana (11) — beIN SPORTS FR + ESPN LATAM
+  11: { FR: ['beIN SPORTS'], BR: ['ESPN BR'] },
+  // CAF Champions League (12) — beIN SPORTS FR + SuperSport ZA
+  12: { FR: ['beIN SPORTS'], ZA: ['SuperSport'] },
+
+  // ── 2e divisions européennes (Phase 1 extended)
+  62: { FR: ['beIN SPORTS', 'Canal+'] },                         // Ligue 2
+  40: { FR: ['beIN SPORTS'], UK: ['Sky Sports'] },               // Championship (UK)
+  141: { ES: ['LaLiga Hypermotion', 'Movistar+'] },              // Segunda División (ES)
+  79: { DE: ['Sky Sport Bundesliga'] },                          // Bundesliga 2 (DE)
+  136: { IT: ['DAZN IT'] },                                      // Serie B (IT)
+  72: { BR: ['Premiere', 'SporTV'] },                            // Brasileirão Serie B (BR)
+  189: { UK: ['BBC Scotland', 'Premier Sports'] },               // Scottish Championship
+  208: { CH: ['blue Sport', 'SRG SSR'] },                        // Swiss Challenge League
+  319: { GR: ['Cosmote Sport'] },                                // Greek Super League 2
+  319: { GR: ['Cosmote Sport'] },
+  114: { SE: ['TV4 Sport'] },                                    // Superettan (SE)
+  107: { PL: ['Canal+ Sport PL'] },                              // I Liga (PL)
+  284: { RO: ['Digi Sport', 'Prima Sport'] },                    // Liga 2 Romania
+  145: { BE: ['Play Sports'] },                                  // Challenger Pro League (BE)
+
+  // ── Ligues nationales additionnelles top tier
+  144: { BE: ['Play Sports', 'Eleven Sports BE'] },              // Jupiler Pro League (BE)
+  318: { GR: ['Cosmote Sport'] },                                // Super League Greece
+  207: { CH: ['blue Sport', 'SRG SSR'] },                        // Swiss Super League
+  262: { AT: ['Sky Sport Austria'] },                            // Austrian Bundesliga
+  345: { CZ: ['O2 TV Sport'] },                                  // Czech First League
+  119: { DK: ['TV3 Sport DK', 'Discovery+'] },                   // Danish Superliga
+  333: { UA: ['MEGOGO', 'Setanta Sports UA'] },                  // Ukrainian Premier League
+  210: { HR: ['MAXSport'] },                                     // Prva HNL Croatia
+  269: { RS: ['Arena Sport RS'] },                               // SuperLiga Serbia
+  271: { HU: ['M4 Sport'] },                                     // OTP Bank Liga (HU)
+  332: { SK: ['Nova Sport SK'] },                                // Fortuna Liga (SK)
+  244: { FI: ['Ruutu', 'C More FI'] },                           // Veikkausliiga (FI)
+  192: { IE: ['LOITV', 'RTÉ Sport'] },                           // Irish Premier Division
+  172: { BG: ['Diema Sport'] },                                  // Parva Liga (BG)
+  283: { RO: ['Digi Sport', 'Prima Sport'] },                    // Superliga Romania
+  169: { CN: ['CCTV-5', 'iQiyi Sport'] },                        // Chinese Super League
+  383: { DZ: ['EPTV Sport'] },                                   // Algerian Ligue 1
+  103: { NO: ['TV 2 Sport NO', 'Discovery+'] },                  // Eliteserien (refresh)
+
+  // ── J2 / K2 / Liga MX Expansión etc.
+  99: { JP: ['DAZN Japan'] },                                    // J2 League
+  293: { KR: ['Coupang Play', 'SPOTV'] },                        // K-League 2
+  219: { MX: ['TUDN', 'Azteca 7'] },                             // Liga MX Expansión
+  254: { US: ['ESPN+', 'Apple TV+'] },                           // USL Championship
+  308: { SA: ['SSC'] },                                          // Saudi First Division
+
+  // ── Amériques additionnelles
+  129: { AR: ['TyC Sports', 'ESPN AR'] },                        // Primera Nacional ARG
+  265: { CL: ['TNT Sports CL', 'ESPN CL'] },                     // Campeonato Nacional Chile
+  266: { CL: ['ESPN CL'] },                                      // Primera B Chile
+  239: { CO: ['Win Sports'] },                                   // Liga BetPlay Colombia
+  241: { CO: ['Win Sports'] },                                   // Primera B Colombia
+  240: { EC: ['GolTV EC', 'DirecTV Sports'] },                   // LigaPro Ecuador
+  242: { EC: ['DirecTV Sports'] },                               // Serie B Ecuador
+  480: { PY: ['Tigo Sports'] },                                  // Paraguay Primera
+  481: { PY: ['Tigo Sports'] },                                  // Paraguay Segunda
+
+  // ── Compétitions internationales
+  35: { BR: ['SporTV', 'Premiere'] },                            // Copa do Brasil (note: pas dans leagues_config actuellement)
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  SOFASCORE — Fallback pour ligues exotiques sans données API-Football/BSD
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1559,6 +2056,15 @@ function configIdToBsd(configId) {
 function bsdIdToConfig(bsdId) {
   const entry = BSD_BSD_TO_CONFIG[String(bsdId)];
   return entry ? entry.config_id : null;
+}
+
+// True si la ligue (par odds_key) est couverte par BSD — utilisé pour signaler un loader frontend
+// pendant la fenêtre d'hydratation du cron stats.
+function isLeagueCoveredByBSD(sportKey) {
+  if (!sportKey) return false;
+  const cfg = leaguesConfig.leagues.find(l => l.odds_key === sportKey);
+  if (!cfg) return false;
+  return BSD_CONFIG_TO_BSD[String(cfg.id)] != null;
 }
 
 function normText(s) {
@@ -2462,10 +2968,11 @@ function apiCacheGet(key) {
   try { return JSON.parse(row.data); } catch { return null; }
 }
 
-function apiCacheSet(key, data, source) {
+function apiCacheSet(key, data, source, ttlMs) {
   const now = Date.now();
+  const expires = now + (typeof ttlMs === 'number' && ttlMs > 0 ? ttlMs : API_CACHE_TTL);
   sqldb.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
-    key, JSON.stringify(data), source, now, now + API_CACHE_TTL
+    key, JSON.stringify(data), source, now, expires
   );
 }
 
@@ -3042,21 +3549,26 @@ function levenshtein(a, b) {
   return dp[m][n];
 }
 
-function findFuzzy(key) {
+function findFuzzy(key, { skipExact = false, excludeEntry = null } = {}) {
   const keys = Object.keys(db.teamStats);
   if (!keys.length || !key) return null;
-  // 1. Match exact d'abord
-  if (db.teamStats[key]) return db.teamStats[key];
+  // 1. Match exact d'abord (sauf si skipExact)
+  if (!skipExact && db.teamStats[key] && db.teamStats[key] !== excludeEntry) {
+    return db.teamStats[key];
+  }
   // 2. Prefix match : la DB entry doit commencer par le premier mot de key (4+ chars)
   const firstWord = key.split(' ')[0];
   if (firstWord.length >= 4) {
     for (const k of keys) {
-      if (k.startsWith(firstWord)) return db.teamStats[k];
+      if (k === key && skipExact) continue;
+      if (k.startsWith(firstWord) && db.teamStats[k] !== excludeEntry) return db.teamStats[k];
     }
   }
   // 3. Levenshtein strict : ≤1 pour noms courts (≤4), ≤2 sinon
   let best = null, bestDist = Infinity;
   for (const k of keys) {
+    if (k === key && skipExact) continue;
+    if (db.teamStats[k] === excludeEntry) continue;
     const dist = levenshtein(k, key);
     const threshold = key.length <= 4 ? 1 : 2;
     if (dist < bestDist && dist <= threshold) { bestDist = dist; best = k; }
@@ -4232,14 +4744,73 @@ function computeH2H(homeTeam, awayTeam) {
   };
 }
 
+// Minimal record for odds-less fallback sources (P3 OpenFootball, P2bis Football-Data).
+// Returns null if even fixture metadata is incomplete. No edge/odds/poisson — UI handles null.
+function buildFallbackMatchRecord(raw) {
+  if (!raw?.home_team || !raw?.away_team || !raw?.commence_time) return null;
+  const hKey = normName(raw.home_team);
+  const aKey = normName(raw.away_team);
+  let hRaw = db.teamStats[hKey] || findFuzzy(hKey);
+  let aRaw = db.teamStats[aKey] || findFuzzy(aKey);
+  if (hRaw && aRaw && hRaw === aRaw) aRaw = null;
+  const homeStats = hRaw?.home || simStats(raw.home_team, true);
+  const awayStats = aRaw?.away || simStats(raw.away_team, false);
+  return {
+    id: raw.id,
+    sport: raw._sport || raw.sport_key || null,
+    league: raw.sport_title || null,
+    country: raw._league_country || raw.country || null,
+    commence_time: raw.commence_time,
+    home_team: raw.home_team,
+    away_team: raw.away_team,
+    home_rank: hRaw?.rank || null,
+    away_rank: aRaw?.rank || null,
+    odds: { home: null, draw: null, away: null },
+    bookmakers: { home: null, draw: null, away: null },
+    fair: null,
+    edge: null,
+    best_edge: null,
+    poisson: null,
+    expectedGoals: null,
+    stats: { home: homeStats, away: awayStats, isReal: !!(hRaw?._real && aRaw?._real) },
+    status: raw.status || 'scheduled',
+    home_score: raw.home_score ?? null,
+    away_score: raw.away_score ?? null,
+    referee_name: raw.referee_name || null,
+    _source: raw._source,
+    _fd_match_id: raw._fd_match_id || null,
+    _fd_competition: raw._fd_competition || null,
+    _no_odds: true,
+  };
+}
+
+const FALLBACK_NOODDS_SOURCES = new Set(['openfootball', 'football_data']);
+
 function buildMatchRecord(raw) {
   const edge = computeEdge(raw);
-  if (!edge) return null;
+  if (!edge) {
+    if (raw?._source && FALLBACK_NOODDS_SOURCES.has(raw._source)) {
+      return buildFallbackMatchRecord(raw);
+    }
+    return null;
+  }
 
   const hKey = normName(raw.home_team);
   const aKey = normName(raw.away_team);
   let hRaw = db.teamStats[hKey] || findFuzzy(hKey);
   let aRaw = db.teamStats[aKey] || findFuzzy(aKey);
+
+  // Si exact match retourne une entrée sans rank réel (ex: stub BSD fixtures sans standings),
+  // tenter fuzzy en excluant cet exact pour préférer une entrée standings _real
+  // (cas "Kyoto Sanga FC" → stub BSD rank=0 vs "Kyoto Sanga" API-Football rank=14)
+  if (hRaw && (!hRaw._real || !hRaw.rank)) {
+    const fuzz = findFuzzy(hKey, { skipExact: true, excludeEntry: hRaw });
+    if (fuzz && fuzz._real && fuzz.rank) hRaw = fuzz;
+  }
+  if (aRaw && (!aRaw._real || !aRaw.rank)) {
+    const fuzz = findFuzzy(aKey, { skipExact: true, excludeEntry: aRaw });
+    if (fuzz && fuzz._real && fuzz.rank) aRaw = fuzz;
+  }
 
   // H2H — 5 dernières confrontations
   const h2h = computeH2H(raw.home_team, raw.away_team);
@@ -4378,6 +4949,11 @@ function buildMatchRecord(raw) {
     away_team: raw.away_team,
     home_rank: hRaw?.rank || null,
     away_rank: aRaw?.rank || null,
+    league_size: (() => {
+      const lid = hRaw?.leagueId || aRaw?.leagueId;
+      return lid ? (db._leagueSizes?.[lid] || null) : null;
+    })(),
+    _standings_loading: (!hRaw?.rank || !aRaw?.rank) && isLeagueCoveredByBSD(raw._sport || raw.sport_key),
     status: raw.status || null,
     home_team_id: hRaw?.teamId || null,
     away_team_id: aRaw?.teamId || null,
@@ -5974,37 +6550,81 @@ async function generateAIScout() {
 
 // Fetch BSD standings pour une ligue (convertit au format db.teamStats)
 async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
+  const leagueName = leaguesConfig.leagues.find(l => l.id === configLeagueId)?.name || `config ${configLeagueId}`;
+  console.log(`  [DATA AUDIT] "${leagueName}" (BSD ${bsdLeagueId} / config ${configLeagueId}) — Standings sync started.`);
+  console.log(`  [DEBUG STANDINGS] Fetching league BSD ${bsdLeagueId} (config ${configLeagueId})…`);
   try {
-    // 1. Trouver la saison courante BSD
-    const seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&current=true`);
-    if (seasonsRes.status !== 200 || !seasonsRes.data?.results?.length) {
-      console.warn(`  [BSD] Saisons non trouvées pour ligue BSD ${bsdLeagueId}`);
-      return null;
-    }
-    const season = seasonsRes.data.results[0];
-    const seasonId = season.id;
+    // 1. Stratégie A: saison courante
+    let seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&current=true`);
+    let seasonId = (seasonsRes?.status === 200 && seasonsRes?.data?.results?.length)
+      ? seasonsRes.data.results[0].id
+      : null;
 
-    // 2. Fetch standings
-    const standingsRes = await bsdFetch(`/leagues/${bsdLeagueId}/standings/?season=${seasonId}`);
-    if (standingsRes.status !== 200 || !standingsRes.data?.standings?.length) {
-      console.warn(`  [BSD] Standings vides pour ligue BSD ${bsdLeagueId} saison ${seasonId}`);
+    // 1b. Stratégie B: saison la plus récente (ordering=-year)
+    if (!seasonId) {
+      console.warn(`  [DEBUG STANDINGS] Pas de current season pour BSD ${bsdLeagueId} — tentative ordering=-year`);
+      seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&ordering=-year`);
+      if (seasonsRes?.status === 200 && seasonsRes?.data?.results?.length) {
+        seasonId = seasonsRes.data.results[0].id;
+      }
+    }
+
+    // 1c. Stratégie C: liste brute des saisons, prendre la première
+    if (!seasonId) {
+      console.warn(`  [DEBUG STANDINGS] Pas de saison via ordering pour BSD ${bsdLeagueId} — tentative liste brute`);
+      seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}`);
+      if (seasonsRes?.status === 200 && Array.isArray(seasonsRes?.data?.results) && seasonsRes.data.results.length) {
+        const sorted = [...seasonsRes.data.results].sort((a, b) => (b.year || 0) - (a.year || 0));
+        seasonId = sorted[0].id;
+      }
+    }
+
+    if (!seasonId) {
+      console.warn(`  [DEBUG STANDINGS] Aucune saison trouvée pour BSD ${bsdLeagueId} — fallback API-Football requis`);
       return null;
     }
+    console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → seasonId=${seasonId}`);
+
+    // 2. Fetch standings — supporte les variantes de shape (.standings, .results, payload brut tableau)
+    const standingsRes = await bsdFetch(`/leagues/${bsdLeagueId}/standings/?season=${seasonId}`);
+    let rows = [];
+    if (standingsRes?.status === 200 && standingsRes?.data) {
+      if (Array.isArray(standingsRes.data.standings) && standingsRes.data.standings.length) {
+        rows = standingsRes.data.standings;
+      } else if (Array.isArray(standingsRes.data.results) && standingsRes.data.results.length) {
+        rows = standingsRes.data.results;
+      } else if (Array.isArray(standingsRes.data) && standingsRes.data.length) {
+        rows = standingsRes.data;
+      }
+    }
+    if (!rows.length) {
+      console.warn(`  [DEBUG STANDINGS] Standings vides BSD ${bsdLeagueId} saison ${seasonId} status=${standingsRes?.status}`);
+      return null;
+    }
+    console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → ${rows.length} équipes reçues`);
 
     // 3. Convertir au format db.teamStats
     const teams = {};
-    const firstEntry = standingsRes.data.standings[0];
+    const firstEntry = rows[0];
     console.log(`  [DATA MAPPING] BSD standings sample — keys: ${Object.keys(firstEntry).join(', ')}`);
     console.log(`  [DATA MAPPING] BSD sample: team=${firstEntry.team}, played=${firstEntry.played}, gf=${firstEntry.gf}, ga=${firstEntry.ga}, form=${firstEntry.form}`);
 
-    standingsRes.data.standings.forEach(entry => {
+    const denylist = LEAGUE_TEAM_DENYLIST[configLeagueId] || null;
+    rows.forEach(entry => {
       const key = normName(entry.team);
+      // Skip équipes misclassifiées par BSD (data error)
+      if (denylist && denylist.has(key)) {
+        console.warn(`  [DENYLIST] Exclu "${entry.team}" (key:"${key}") de ligue ${configLeagueId} — équipe misclassifiée par BSD`);
+        return;
+      }
 
       // Vérifier si BSD fournit les vrais splits domicile/extérieur
       const hasHomeFields = entry.played_home !== undefined && entry.played_away !== undefined;
       const hasGoalHomeFields = entry.gf_home !== undefined && entry.gf_away !== undefined;
 
       let homeStats, awayStats;
+      // Raw splits — préservés pour /insights standings et /standings buildRows
+      let rawHome = null, rawAway = null;
       if (hasHomeFields) {
         const hPlayed = entry.played_home || 0;
         const aPlayed = entry.played_away || 0;
@@ -6014,13 +6634,40 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
         const aDrawn = entry.drawn_away || 0;
         const hLost = entry.lost_home || 0;
         const aLost = entry.lost_away || 0;
-        homeStats = buildSideStats({ played: hPlayed, win: hWon, draw: hDrawn, lose: hLost, goals_for: hasGoalHomeFields ? (entry.gf_home || 0) : Math.floor((entry.gf || 0) * hPlayed / Math.max(1, entry.played)), goals_against: hasGoalHomeFields ? (entry.ga_home || 0) : Math.floor((entry.ga || 0) * hPlayed / Math.max(1, entry.played)) });
-        awayStats = buildSideStats({ played: aPlayed, win: aWon, draw: aDrawn, lose: aLost, goals_for: hasGoalHomeFields ? (entry.gf_away || 0) : Math.floor((entry.gf || 0) * aPlayed / Math.max(1, entry.played)), goals_against: hasGoalHomeFields ? (entry.ga_away || 0) : Math.floor((entry.ga || 0) * aPlayed / Math.max(1, entry.played)) });
+        const hGf = hasGoalHomeFields ? (entry.gf_home || 0) : Math.floor((entry.gf || 0) * hPlayed / Math.max(1, entry.played));
+        const hGa = hasGoalHomeFields ? (entry.ga_home || 0) : Math.floor((entry.ga || 0) * hPlayed / Math.max(1, entry.played));
+        const aGf = hasGoalHomeFields ? (entry.gf_away || 0) : Math.floor((entry.gf || 0) * aPlayed / Math.max(1, entry.played));
+        const aGa = hasGoalHomeFields ? (entry.ga_away || 0) : Math.floor((entry.ga || 0) * aPlayed / Math.max(1, entry.played));
+        homeStats = buildSideStats({ played: hPlayed, win: hWon, draw: hDrawn, lose: hLost, goals_for: hGf, goals_against: hGa });
+        awayStats = buildSideStats({ played: aPlayed, win: aWon, draw: aDrawn, lose: aLost, goals_for: aGf, goals_against: aGa });
+        rawHome = { played: hPlayed, wins: hWon, draws: hDrawn, losses: hLost, gf: hGf, ga: hGa, pts: hWon * 3 + hDrawn };
+        rawAway = { played: aPlayed, wins: aWon, draws: aDrawn, losses: aLost, gf: aGf, ga: aGa, pts: aWon * 3 + aDrawn };
         console.log(`  [BSD] Splits réels Domicile/Extérieur pour ${entry.team}: ${hPlayed}D/${aPlayed}E`);
       } else {
+        // BSD ne fournit pas splits — estimation 50/50 sur raw entry totals
+        const totalP = entry.played || 0;
+        const hP = Math.ceil(totalP / 2);
+        const aP = totalP - hP;
+        const totalW = entry.won || 0;
+        const hW = Math.round(totalW * (hP / Math.max(1, totalP)));
+        const aW = totalW - hW;
+        const totalD = entry.drawn || 0;
+        const hD = Math.round(totalD * (hP / Math.max(1, totalP)));
+        const aD = totalD - hD;
+        const totalL = entry.lost || 0;
+        const hL = Math.round(totalL * (hP / Math.max(1, totalP)));
+        const aL = totalL - hL;
+        const totalGf = entry.gf || 0;
+        const hGf2 = Math.round(totalGf * (hP / Math.max(1, totalP)));
+        const aGf2 = totalGf - hGf2;
+        const totalGa = entry.ga || 0;
+        const hGa2 = Math.round(totalGa * (hP / Math.max(1, totalP)));
+        const aGa2 = totalGa - hGa2;
         homeStats = buildSideStats({ played: entry.played, win: entry.won, draw: entry.drawn, lose: entry.lost, goals_for: entry.gf, goals_against: entry.ga });
         awayStats = buildSideStats({ played: Math.floor(entry.played / 2), win: Math.floor(entry.won / 2), draw: Math.floor(entry.drawn / 2), lose: Math.floor(entry.lost / 2), goals_for: Math.floor(entry.gf / 2), goals_against: Math.floor(entry.ga / 2) });
-        console.log(`  [BSD] Splits estimés (÷2) pour ${entry.team} — BSD ne fournit pas played_home/played_away`);
+        rawHome = { played: hP, wins: hW, draws: hD, losses: hL, gf: hGf2, ga: hGa2, pts: hW * 3 + hD, _estimated: true };
+        rawAway = { played: aP, wins: aW, draws: aD, losses: aL, gf: aGf2, ga: aGa2, pts: aW * 3 + aD, _estimated: true };
+        console.log(`  [BSD] Splits estimés (50/50 ratio) pour ${entry.team} — BSD ne fournit pas played_home/played_away`);
       }
 
       // Debug log for first team only
@@ -6031,7 +6678,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
       teams[key] = {
         home: homeStats,
         away: awayStats,
-        rank: entry.position,
+        rank: entry.position || entry.rank || entry.place || null,
         form: entry.form || '',
         leagueId: configLeagueId,
         bsdTeamId: entry.team_id || null,
@@ -6039,6 +6686,19 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
         bsdLeagueId: bsdLeagueId,
         xgFor: entry.xgf || null,
         xgAgainst: entry.xga || null,
+        // RAW totals — utilisés par /api/v1/standings buildRows + /insights standings home/away
+        // home/away top-level contiennent des PERCENTAGES (via buildSideStats), pas des raw counts.
+        _raw: {
+          played: entry.played != null ? entry.played : null,
+          wins: entry.won != null ? entry.won : null,
+          draws: entry.drawn != null ? entry.drawn : null,
+          losses: entry.lost != null ? entry.lost : null,
+          gf: entry.gf != null ? entry.gf : null,
+          ga: entry.ga != null ? entry.ga : null,
+          pts: entry.pts != null ? entry.pts : (entry.won != null && entry.drawn != null ? entry.won * 3 + entry.drawn : null),
+          home: rawHome,
+          away: rawAway,
+        },
         _real: true,
         _source: 'bsd',
       };
@@ -6929,6 +7589,182 @@ const BSD_FINISHED_STATUSES = new Set([
   'interrupted','suspended'
 ]);
 
+// ─── Football-Data.org (L2 enrichissement fixtures + match detail) ───────────
+async function fetchFootballDataMatches(dateFrom, dateTo) {
+  if (!FOOTBALL_DATA_API_KEY) return [];
+  const cacheKey = `fd_matches_${dateFrom}_${dateTo}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  try {
+    const codes = Object.keys(FOOTBALL_DATA_COMPETITIONS).join(',');
+    const url = `${FOOTBALL_DATA_BASE}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}&competitions=${codes}`;
+    const res = await httpsGet(url, { 'X-Auth-Token': FOOTBALL_DATA_API_KEY });
+    if (res.status === 429) {
+      console.warn('  [Football-Data] 429 rate-limited (10/min free) — backoff cache négatif 5min');
+      apiCacheSet(cacheKey, [], 'football_data', 5 * 60 * 1000);
+      return [];
+    }
+    if (res.status !== 200 || !Array.isArray(res.data?.matches)) {
+      apiCacheSet(cacheKey, [], 'football_data', 30 * 60 * 1000);
+      return [];
+    }
+    const adapted = res.data.matches.map(footballDataToOddsApiFormat).filter(Boolean);
+    apiCacheSet(cacheKey, adapted, 'football_data', FOOTBALL_DATA_TTL_MS);
+    return adapted;
+  } catch (e) {
+    console.warn('  [Football-Data] fetchMatches erreur:', e.message);
+    return [];
+  }
+}
+
+function footballDataToOddsApiFormat(m) {
+  if (!m || !m.utcDate || !m.homeTeam?.name || !m.awayTeam?.name) return null;
+  const compCode = m.competition?.code;
+  const meta = compCode ? FOOTBALL_DATA_COMPETITIONS[compCode] : null;
+  if (!meta) return null;
+  const ft = m.score?.fullTime || {};
+  const homeScore = typeof ft.home === 'number' ? ft.home : null;
+  const awayScore = typeof ft.away === 'number' ? ft.away : null;
+  const finished = m.status === 'FINISHED';
+  return {
+    id: `fd_${m.id}`,
+    sport_key: meta.sport_key,
+    sport_title: meta.name,
+    country: meta.country,
+    commence_time: m.utcDate,
+    home_team: m.homeTeam.name,
+    away_team: m.awayTeam.name,
+    _sport: meta.sport_key,
+    _source: 'football_data',
+    _fd_match_id: m.id,
+    _fd_competition: compCode,
+    _league_country: meta.country,
+    status: finished ? 'finished' : (m.status || 'scheduled').toLowerCase(),
+    home_score: homeScore,
+    away_score: awayScore,
+    referee_name: Array.isArray(m.referees) && m.referees[0]?.name ? m.referees[0].name : null,
+    bookmakers: [],
+  };
+}
+
+async function fetchFootballDataMatchDetail(fdMatchId) {
+  if (!FOOTBALL_DATA_API_KEY || !fdMatchId) return null;
+  const cacheKey = `fd_detail_${fdMatchId}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached === '__NEG__' ? null : cached;
+  try {
+    const res = await httpsGet(`${FOOTBALL_DATA_BASE}/matches/${fdMatchId}`, {
+      'X-Auth-Token': FOOTBALL_DATA_API_KEY,
+    });
+    if (res.status !== 200 || !res.data) {
+      apiCacheSet(cacheKey, '__NEG__', 'football_data', 60 * 60 * 1000);
+      return null;
+    }
+    const out = {
+      id: res.data.id,
+      competition: res.data.competition?.name || null,
+      utcDate: res.data.utcDate || null,
+      status: res.data.status || null,
+      minute: res.data.minute || null,
+      home: {
+        name: res.data.homeTeam?.name || null,
+        formation: res.data.homeTeam?.formation || null,
+        lineup: Array.isArray(res.data.homeTeam?.lineup) ? res.data.homeTeam.lineup : [],
+        bench: Array.isArray(res.data.homeTeam?.bench) ? res.data.homeTeam.bench : [],
+        coach: res.data.homeTeam?.coach?.name || null,
+      },
+      away: {
+        name: res.data.awayTeam?.name || null,
+        formation: res.data.awayTeam?.formation || null,
+        lineup: Array.isArray(res.data.awayTeam?.lineup) ? res.data.awayTeam.lineup : [],
+        bench: Array.isArray(res.data.awayTeam?.bench) ? res.data.awayTeam.bench : [],
+        coach: res.data.awayTeam?.coach?.name || null,
+      },
+      score: res.data.score || null,
+      goals: Array.isArray(res.data.goals) ? res.data.goals : [],
+      bookings: Array.isArray(res.data.bookings) ? res.data.bookings : [],
+      substitutions: Array.isArray(res.data.substitutions) ? res.data.substitutions : [],
+      referees: Array.isArray(res.data.referees) ? res.data.referees : [],
+      _source: 'football_data',
+    };
+    apiCacheSet(cacheKey, out, 'football_data', FOOTBALL_DATA_DETAIL_TTL_MS);
+    return out;
+  } catch (e) {
+    console.warn(`  [Football-Data] detail ${fdMatchId} erreur:`, e.message);
+    return null;
+  }
+}
+
+// ─── OpenFootball GitHub (L4 zero-key fallback) ──────────────────────────────
+function openFootballCurrentSeason() {
+  const y = bsdCurrentSeasonYear();
+  return `${y}-${String((y + 1) % 100).padStart(2, '0')}`;
+}
+
+async function fetchOpenFootballLeague(leagueMeta) {
+  const season = openFootballCurrentSeason();
+  const cacheKey = `openfootball_${leagueMeta.code}_${season}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached === '__NEG__' ? null : cached;
+  try {
+    const url = `${OPENFOOTBALL_BASE}/${season}/${leagueMeta.code}.json`;
+    const res = await httpsGet(url);
+    if (res.status !== 200 || !res.data || typeof res.data !== 'object' || !Array.isArray(res.data.matches)) {
+      apiCacheSet(cacheKey, '__NEG__', 'openfootball', OPENFOOTBALL_NEG_TTL_MS);
+      return null;
+    }
+    apiCacheSet(cacheKey, res.data, 'openfootball', OPENFOOTBALL_TTL_MS);
+    return res.data;
+  } catch (e) {
+    console.warn(`  [OpenFootball] ${leagueMeta.code} erreur:`, e.message);
+    return null;
+  }
+}
+
+function openFootballMatchToOddsApiFormat(m, leagueMeta) {
+  if (!m || !m.date || !m.team1 || !m.team2) return null;
+  const time = (typeof m.time === 'string' && /^\d{1,2}:\d{2}/.test(m.time)) ? m.time.slice(0, 5) : '15:00';
+  const commenceTime = `${m.date}T${time}:00Z`;
+  const idSeed = `${leagueMeta.code}_${m.date}_${normName(m.team1)}_${normName(m.team2)}`.replace(/[^a-z0-9_]/gi, '_');
+  const ft = Array.isArray(m.score?.ft) ? m.score.ft : null;
+  const hasScore = ft && typeof ft[0] === 'number' && typeof ft[1] === 'number';
+  return {
+    id: `of_${idSeed}`,
+    sport_key: leagueMeta.sport_key,
+    sport_title: leagueMeta.name,
+    country: leagueMeta.country,
+    commence_time: commenceTime,
+    home_team: m.team1,
+    away_team: m.team2,
+    _sport: leagueMeta.sport_key,
+    _source: 'openfootball',
+    _league_country: leagueMeta.country,
+    status: hasScore ? 'finished' : 'scheduled',
+    home_score: hasScore ? ft[0] : null,
+    away_score: hasScore ? ft[1] : null,
+    bookmakers: [],
+  };
+}
+
+async function fetchOpenFootballMatches(dateFrom, dateTo) {
+  const out = [];
+  const fromTs = new Date(`${dateFrom}T00:00:00Z`).getTime();
+  const toTs = new Date(`${dateTo}T23:59:59Z`).getTime();
+  if (!Number.isFinite(fromTs) || !Number.isFinite(toTs)) return out;
+  for (const lg of OPENFOOTBALL_LEAGUES) {
+    const data = await fetchOpenFootballLeague(lg);
+    if (!data?.matches) continue;
+    for (const m of data.matches) {
+      if (!m?.date) continue;
+      const ts = new Date(`${m.date}T12:00:00Z`).getTime();
+      if (!Number.isFinite(ts) || ts < fromTs || ts > toTs) continue;
+      const adapted = openFootballMatchToOddsApiFormat(m, lg);
+      if (adapted) out.push(adapted);
+    }
+  }
+  return out;
+}
+
 function bsdToOddsApiFormat(bsdMatch) {
   if (!bsdMatch.odds?.home || !bsdMatch.odds?.away) return null;
   // Exclure à la source les matchs déjà terminés côté BSD
@@ -7042,16 +7878,33 @@ async function fetchOdds(force = false) {
     // ÉTAPE 2 : SÉCURITÉ LIGUES MAJEURES VIA FOOTBALL-DATA.ORG
     // =========================================================================
     if (FOOTBALL_DATA_API_KEY) {
-      console.log('  [Routing] L2 : Vérification des ligues majeures (Football-Data)...');
+      console.log('  [Routing] L2 : Football-Data.org fixtures (top 12 free forever)...');
       try {
-        // On récupère les matchs des compétitions principales (PL, PD, BL1, SA, L1)
-        const fdRes = await httpsGet(`https://api.football-data.org/v4/competitions?pageSize=50`, {
-          'X-Auth-Token': FOOTBALL_DATA_API_KEY
-        });
-        if (fdRes.status === 200 && fdRes.data.competitions) {
-          // On ne fait pas d'appels massifs ici pour économiser, 
-          // on utilise juste cette API pour confirmer la présence des ligues.
-          console.log(`  [Routing] ✓ Synchronisation des compétitions majeure terminée.`);
+        const fdRaw = await fetchFootballDataMatches(dateFrom, dateTo);
+        if (fdRaw && fdRaw.length > 0) {
+          let added = 0;
+          let enriched = 0;
+          for (const fdMatch of fdRaw) {
+            const dup = allRawMatches.find(ex =>
+              normName(ex.home_team) === normName(fdMatch.home_team) &&
+              normName(ex.away_team) === normName(fdMatch.away_team) &&
+              Math.abs(new Date(ex.commence_time).getTime() - new Date(fdMatch.commence_time).getTime()) < 24 * 3600 * 1000
+            );
+            if (dup) {
+              if (!dup._fd_match_id && fdMatch._fd_match_id) {
+                dup._fd_match_id = fdMatch._fd_match_id;
+                dup._fd_competition = fdMatch._fd_competition;
+                if (!dup.referee_name && fdMatch.referee_name) dup.referee_name = fdMatch.referee_name;
+                enriched++;
+              }
+            } else {
+              allRawMatches.push(fdMatch);
+              added++;
+            }
+          }
+          console.log(`  [Routing] ✓ Football-Data : ${added} ajoutés, ${enriched} enrichis (_fd_match_id/referee) sur ${fdRaw.length} total.`);
+        } else {
+          console.log('  [Routing] Football-Data : aucun match retourné.');
         }
       } catch (e) { console.warn('  [Routing] ⚠️ Football-Data indisponible:', e.message); }
     }
@@ -7110,6 +7963,32 @@ async function fetchOdds(force = false) {
         apiCacheSetBatch(Object.entries(oddsToCache).map(([k, v]) => [k, v]), 'odds_api');
       }
     }
+
+    // =========================================================================
+    // ÉTAPE 4 : OPENFOOTBALL GITHUB (L4 zero-key fallback)
+    // Public domain, sans clé. Cache 12h. Ajoute uniquement les matchs absents.
+    // =========================================================================
+    console.log('  [Routing] L4 : OpenFootball GitHub (zero-key fallback)...');
+    try {
+      const ofRaw = await fetchOpenFootballMatches(dateFrom, dateTo);
+      if (ofRaw && ofRaw.length > 0) {
+        let added = 0;
+        for (const ofMatch of ofRaw) {
+          const dup = allRawMatches.some(ex =>
+            normName(ex.home_team) === normName(ofMatch.home_team) &&
+            normName(ex.away_team) === normName(ofMatch.away_team) &&
+            Math.abs(new Date(ex.commence_time).getTime() - new Date(ofMatch.commence_time).getTime()) < 24 * 3600 * 1000
+          );
+          if (!dup) {
+            allRawMatches.push(ofMatch);
+            added++;
+          }
+        }
+        console.log(`  [Routing] ✓ OpenFootball : ${added} matchs ajoutés (${ofRaw.length - added} doublons skipped sur ${ofRaw.length} total).`);
+      } else {
+        console.log('  [Routing] OpenFootball : aucun match dans la fenêtre.');
+      }
+    } catch (e) { console.warn('  [Routing] ❌ OpenFootball:', e.message); }
 
     // =========================================================================
     // FINALISATION & PROTECTION ANTI-WIPE
@@ -7175,6 +8054,7 @@ async function fetchStats(force = false) {
     // ═══════════════════════════════════════════════════════════════
     // PHASE 1: BSD — Standings pour ligues couvertes (zéro quota)
     // ═══════════════════════════════════════════════════════════════
+    const bsdFailedLeagues = [];
     if (BSD_API_KEY) {
       console.log('  [Cron:Stats] Phase 1: BSD standings (ligues couvertes)…');
       const bsdLeagues = Object.entries(BSD_CONFIG_TO_BSD);
@@ -7192,28 +8072,43 @@ async function fetchStats(force = false) {
 
           const teams = await fetchBSDStandings(bsdId, configId);
           if (teams && Object.keys(teams).length) {
+            // Purge denylist équipes mal-classifiées (data error BSD)
+            const denylist = LEAGUE_TEAM_DENYLIST[configId];
+            if (denylist) {
+              for (const k of denylist) {
+                if (db.teamStats[k]?.leagueId === configId) {
+                  delete db.teamStats[k];
+                  console.warn(`  [DENYLIST] purgé "${k}" de db.teamStats (ligue ${configId})`);
+                }
+              }
+            }
             Object.assign(db.teamStats, teams);
             const count = Object.keys(teams).length;
             bsdTeamsFetched += count;
             totalTeams += count;
             db.statsUpdateByLeague[configId] = new Date().toISOString();
             console.log(`  [BSD] Ligue ${configId} → OK (${count} équipes)`);
+          } else {
+            bsdFailedLeagues.push(configId);
+            console.warn(`  [DEBUG STANDINGS] BSD KO pour ligue ${configId} — ajout au fallback API-Football`);
           }
         } catch (e) {
+          bsdFailedLeagues.push(configId);
           console.warn(`  [BSD] Ligue ${configId} erreur:`, e.message);
         }
       }
-      console.log(`  [BSD] Phase 1 terminée: ${bsdTeamsFetched} équipes`);
+      console.log(`  [BSD] Phase 1 terminée: ${bsdTeamsFetched} équipes (échecs à fallback: ${bsdFailedLeagues.length})`);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // PHASE 2: API-Football fallback — ligues non couvertes par BSD
     // ═══════════════════════════════════════════════════════════════
-    if (API_FOOTBALL_KEY && BSD_FALLBACK_NEEDED.length) {
-      console.log(`  [Cron:Stats] Phase 2: API-Football fallback (${BSD_FALLBACK_NEEDED.length} ligues)…`);
+    const fallbackTargets = Array.from(new Set([...(BSD_FALLBACK_NEEDED || []), ...bsdFailedLeagues]));
+    if (API_FOOTBALL_KEY && fallbackTargets.length) {
+      console.log(`  [Cron:Stats] Phase 2: API-Football fallback (${fallbackTargets.length} ligues, dont ${bsdFailedLeagues.length} échecs BSD)…`);
       let activeSeason = currentSeason();
 
-      for (const lid of BSD_FALLBACK_NEEDED) {
+      for (const lid of fallbackTargets) {
         try {
           // Respect du cycle T1 (6h) vs T2 (12h)
           const leagueCronMs = LEAGUE_CRON_MS[lid] || (6 * 3600000);
@@ -7268,6 +8163,39 @@ async function fetchStats(force = false) {
                 console.log(`  [DATA MAPPING] Buts extraits pour ${entry.team.name} : ${homeStats.avgScored} marqués, ${homeStats.avgConceded} encaissés (home) | ${awayStats.avgScored} marqués, ${awayStats.avgConceded} encaissés (away) | form: ${entry.form || '(vide)'}`);
               }
 
+              // Extraction raw counts API-Football (all.played, all.win, etc.)
+              const allRaw = entry.all || {};
+              const goalsRaw = allRaw.goals || {};
+              const wins = allRaw.win != null ? allRaw.win : (entry.home?.win || 0) + (entry.away?.win || 0);
+              const draws = allRaw.draw != null ? allRaw.draw : (entry.home?.draw || 0) + (entry.away?.draw || 0);
+              const losses = allRaw.lose != null ? allRaw.lose : (entry.home?.lose || 0) + (entry.away?.lose || 0);
+              const played = allRaw.played != null ? allRaw.played : (wins + draws + losses);
+              const gf = typeof goalsRaw.for === 'number' ? goalsRaw.for : (typeof goalsRaw.for?.total === 'number' ? goalsRaw.for.total : 0);
+              const ga = typeof goalsRaw.against === 'number' ? goalsRaw.against : (typeof goalsRaw.against?.total === 'number' ? goalsRaw.against.total : 0);
+              // Splits home/away depuis API-Football (entry.home / entry.away)
+              const hRaw = entry.home || {};
+              const aRaw = entry.away || {};
+              const hGoals = hRaw.goals || {};
+              const aGoals = aRaw.goals || {};
+              const extractAFgoals = (g) => typeof g === 'number' ? g : (typeof g?.total === 'number' ? g.total : 0);
+              const rawHomeAPI = (hRaw.played != null) ? {
+                played: hRaw.played || 0,
+                wins: hRaw.win || 0,
+                draws: hRaw.draw || 0,
+                losses: hRaw.lose || 0,
+                gf: extractAFgoals(hGoals.for),
+                ga: extractAFgoals(hGoals.against),
+                pts: (hRaw.win || 0) * 3 + (hRaw.draw || 0),
+              } : null;
+              const rawAwayAPI = (aRaw.played != null) ? {
+                played: aRaw.played || 0,
+                wins: aRaw.win || 0,
+                draws: aRaw.draw || 0,
+                losses: aRaw.lose || 0,
+                gf: extractAFgoals(aGoals.for),
+                ga: extractAFgoals(aGoals.against),
+                pts: (aRaw.win || 0) * 3 + (aRaw.draw || 0),
+              } : null;
               db.teamStats[key] = {
                 home: homeStats,
                 away: awayStats,
@@ -7275,6 +8203,18 @@ async function fetchStats(force = false) {
                 form: entry.form || '',
                 teamId: entry.team.id,
                 leagueId: lid,
+                // RAW totals + splits home/away — pour /api/v1/standings buildRows + /insights
+                _raw: {
+                  played: played || null,
+                  wins: wins || 0,
+                  draws: draws || 0,
+                  losses: losses || 0,
+                  gf: gf || 0,
+                  ga: ga || 0,
+                  pts: entry.points != null ? entry.points : (wins * 3 + draws),
+                  home: rawHomeAPI,
+                  away: rawAwayAPI,
+                },
                 _real: true,
                 _source: 'api-football',
               };
@@ -7290,6 +8230,14 @@ async function fetchStats(force = false) {
       }
       console.log(`  [Fallback] Phase 2 terminée: ${fallbackTeamsFetched} équipes`);
     }
+
+    // Pré-calcul league_size par leagueId (utilisé pour normaliser ELO frontend)
+    db._leagueSizes = {};
+    for (const s of Object.values(db.teamStats)) {
+      if (!s?._real || !s?.rank || !s?.leagueId) continue;
+      db._leagueSizes[s.leagueId] = (db._leagueSizes[s.leagueId] || 0) + 1;
+    }
+    console.log(`  [DATA AUDIT] League sizes computed: ${Object.entries(db._leagueSizes).map(([k,v])=>`${k}:${v}`).join(', ')}`);
 
     db.lastStatsUpdate = new Date().toISOString();
     db.status = 'ok';
@@ -9869,7 +10817,7 @@ if (pathname.startsWith('/api/v1/team/')) {
         return jsonResponse(res, 400, { error: 'team id required' });
     }
 
-    const cacheKey = `team_${teamId}`;
+    const cacheKey = `team_v2_${teamId}`;
     const cached = apiCacheGet(cacheKey);
     if (cached) {
         return jsonResponse(res, 200, cached);
@@ -9881,7 +10829,34 @@ if (pathname.startsWith('/api/v1/team/')) {
             if (!team) {
                 return jsonResponse(res, 404, { error: 'team not found' });
             }
-            apiCacheSet(cacheKey, team, 'bsd_team', 7 * 24 * 3600 * 1000);
+            // P1bis : enrich BSD team payload with TheSportsDB branding (kits, stadium image,
+            // logo HD, colors, description multilangue). BSD reste source de vérité ;
+            // TheSportsDB ne remplit que ce qui manque.
+            try {
+                const branding = await fetchTheSportsDBTeamBranding(team.name, team.country);
+                if (branding) {
+                    team.branding = {
+                        badge_hd: branding.badge_hd,
+                        logo_hd: branding.logo_hd,
+                        jersey: branding.jersey,
+                        banner: branding.banner,
+                        fanart: branding.fanart,
+                        kits: branding.kits,
+                        colors: branding.colors,
+                        description: branding.description,
+                        socials: branding.socials,
+                        _source: branding._source,
+                    };
+                    if (!team.stadium && branding.stadium?.name) team.stadium = branding.stadium.name;
+                    if (!team.stadium_capacity && branding.stadium?.capacity) team.stadium_capacity = branding.stadium.capacity;
+                    if (branding.stadium?.image) team.stadium_image = branding.stadium.image;
+                    if (branding.stadium?.location) team.stadium_location = branding.stadium.location;
+                    if (!team.founded && branding.formed_year) team.founded = branding.formed_year;
+                }
+            } catch (brandErr) {
+                console.warn('[Team API] branding erreur (ignoré):', brandErr.message);
+            }
+            apiCacheSet(cacheKey, team, 'bsd_team_v2', 7 * 24 * 3600 * 1000);
             return jsonResponse(res, 200, team);
         } catch (e) {
             console.error('[Team API] erreur:', e.message);
@@ -10092,56 +11067,80 @@ if (pathname === '/api/v1/live/predictions') {
   const result = getLivePredictionsTop5();
   return jsonResponse(res, 200, result);
 }
-// GET /api/v1/match/:matchId/tv-channel — TV broadcaster for a specific match (lazy enrichment via Sofa microservice, cache 6h)
+// GET /api/v1/match/:matchId/tv-channel — TV broadcaster for a specific match.
+// Stratégie : Sofa microservice d'abord (data live officielle), puis fallback static league→broadcaster
+// si Sofa indisponible OU retourne 0 channels. Évite "no-mapping" bloquant en local quand microservice down.
 const tvChannelMatch = pathname.match(/^\/api\/v1\/match\/([^/?]+)\/tv-channel$/);
 if (tvChannelMatch && req.method === 'GET') {
   const id = decodeURIComponent(tvChannelMatch[1]);
   const country = (query.country || 'FR').toUpperCase();
-  const cacheKey = `tv_${id}_${country}`;
-  const cached = apiCacheGet(cacheKey, 'tv_channel');
+  const force = query.force === '1';
+  const cacheKey = `tv_${id}_${country}_v6`; // v6 = Phase 1 extended : 60+ ligues fallback (2e divisions, Amériques, ligues secondaires UE/Asie) ; v5 refresh top 26 ligues
+  const cached = !force ? apiCacheGet(cacheKey) : null;
   if (cached) return jsonResponse(res, 200, { ...cached, _cached: true });
 
   const match = db.matches.find(m => m.id === id);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
-  const sofaId = await resolveSofaEventId(match);
-  if (!sofaId) {
-    const empty = { match_id: id, country, channels: [], _source: 'no-mapping' };
-    apiCacheSet(cacheKey, empty, 'tv_channel', 6 * 3600);
+
+  // Pipeline 4-layer (cascade) :
+  //  1) Sofa microservice (data live officielle quand pserv up)
+  //  2) Sportmonks v3 /fixtures + tvStations (payant, plan free = 3 ligues)
+  //  3) TheSportsDB v1 (free public, couverture large mais data parfois partielle)
+  //  4) Static LEAGUE_TV_FALLBACK (hardcoded prod-ready par ligue×pays)
+  let rawChannels = null;
+  let source = null;
+
+  // 1) Sofa
+  try {
+    const sofaId = await resolveSofaEventId(match);
+    if (sofaId) {
+      const data = await _sofaServiceFetch(`/match/${sofaId}/channels?country=${country}`, 8000);
+      if (data && Array.isArray(data.channels) && data.channels.length) {
+        rawChannels = data.channels;
+        source = 'sofa-microservice';
+      }
+    }
+  } catch (e) {
+    console.warn(`  [TV] Sofa fetch failed pour ${id}: ${e.message}`);
+  }
+
+  // 2) Sportmonks (si SPORTMONKS_API_KEY set)
+  if (!rawChannels) {
+    const sm = await fetchSportmonksTvChannels(match, country);
+    if (sm && sm.length) { rawChannels = sm; source = 'sportmonks'; }
+  }
+
+  // 3) TheSportsDB (free public)
+  if (!rawChannels) {
+    const tsdb = await fetchTheSportsDbTvChannels(match, country);
+    if (tsdb && tsdb.length) { rawChannels = tsdb; source = 'thesportsdb'; }
+  }
+
+  // 4) Static fallback par ligue
+  if (!rawChannels || !rawChannels.length) {
+    const cfg = leaguesConfig.leagues.find(l => l.odds_key === match.sport);
+    const staticMap = LEAGUE_TV_FALLBACK[cfg?.id] || LEAGUE_TV_FALLBACK[match.sport] || null;
+    const staticNames = staticMap?.[country] || null;
+    if (staticNames && staticNames.length) {
+      rawChannels = staticNames.map(name => ({ id: null, name }));
+      source = 'static-fallback';
+    }
+  }
+
+  if (!rawChannels || !rawChannels.length) {
+    const empty = { match_id: id, country, channels: [], _source: 'no-broadcast' };
+    apiCacheSet(cacheKey, empty, 'tv_channel', 30 * 60 * 1000); // 30min retry
     return jsonResponse(res, 200, empty);
   }
-  const data = await _sofaServiceFetch(`/match/${sofaId}/channels?country=${country}`, 8000);
-  if (!data || !Array.isArray(data.channels)) {
-    const empty = { match_id: id, country, channels: [], _source: 'sofa-miss' };
-    apiCacheSet(cacheKey, empty, 'tv_channel', 30 * 60); // shorter retry on miss
-    return jsonResponse(res, 200, empty);
-  }
-  // Enrich each channel with logo URL from local mapping (legacy fetchTVChannels)
-  const channelLogos = {
-    'beIN SPORTS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
-    'beIN SPORTS 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
-    'beIN SPORTS 2': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
-    'beIN SPORTS 3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
-    'beIN SPORTS MAX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/BeIN_Sports_2017.svg/200px-BeIN_Sports_2017.svg.png',
-    'Canal+': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
-    'Canal+ Foot': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
-    'Canal+ Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
-    'Canal+ Sport 360': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Canal%2B.svg/200px-Canal%2B.svg.png',
-    'Amazon Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
-    'Prime Video': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Amazon_Prime_Video_logo.jpg/200px-Amazon_Prime_Video_logo.jpg',
-    'DAZN': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/DAZN_Logo.svg/200px-DAZN_Logo.svg.png',
-    'RMC Sport': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
-    'RMC Sport 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/RMC_Sport.svg/200px-RMC_Sport.svg.png',
-    "L'Équipe": 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/L_%C3%89quipe.svg/200px-L_%C3%89quipe.svg.png',
-    'M6': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/M6_logo.svg/200px-M6_logo.svg.png',
-    'TF1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/TF1_logo.svg/200px-TF1_logo.svg.png',
-  };
-  const channels = data.channels.map(c => ({
-    id: c.id,
+
+  const channels = rawChannels.map(c => ({
+    id: c.id || null,
     name: c.name,
-    logo: channelLogos[c.name] || null,
+    // Priorité : logo fourni par la source externe (Sportmonks/TSDB) > mapping local TV_CHANNEL_LOGOS
+    logo: c.logo || TV_CHANNEL_LOGOS[c.name] || null,
   }));
-  const payload = { match_id: id, country, channels, _source: 'sofa-microservice' };
-  apiCacheSet(cacheKey, payload, 'tv_channel', 6 * 3600);
+  const payload = { match_id: id, country, channels, _source: source };
+  apiCacheSet(cacheKey, payload, 'tv_channel', 6 * 3600 * 1000); // 6h
   return jsonResponse(res, 200, payload);
 }
 
@@ -10428,9 +11427,10 @@ if (pathname === '/api/v1/trends') {
   return jsonResponse(res, 200, getTrends());
 }
 
-// GET /api/v1/history
+// GET /api/v1/history — public read (history matches anonymisés, pas de PII)
+// Si Pro feature ré-activable plus tard via flag env HISTORY_AUTH_REQUIRED
 if (pathname === '/api/v1/history') {
-  if (!requireAuth(req, res)) return;
+  if (process.env.HISTORY_AUTH_REQUIRED === '1' && !requireAuth(req, res)) return;
   const limit = parseInt(query.limit) || 50;
   return jsonResponse(res, 200, {
     matches: history.slice(-limit).reverse(),
@@ -11251,6 +12251,189 @@ if (pathname.startsWith('/api/v1/top-kpi/') && req.method === 'GET') {
   return jsonResponse(res, 200, { success: false, kpi: null, loading: true });
 }
 
+// GET /api/v1/league/:configId/strategies-ranking?strategy=KEY — Hit Rate réel par équipe sur matchs archivés
+if (pathname.startsWith('/api/v1/league/') && pathname.endsWith('/strategies-ranking') && req.method === 'GET') {
+  const m = pathname.match(/^\/api\/v1\/league\/([^/]+)\/strategies-ranking$/);
+  if (!m) return jsonResponse(res, 400, { error: 'Path invalide' });
+  let configId = parseInt(m[1]);
+  // Disambiguation BSD id → config_id
+  const bsdMap = bsdConfig.mapping?.bsd_to_config?.[m[1]];
+  if (bsdMap?.config_id) configId = bsdMap.config_id;
+  const strategyKey = query.strategy || 'BTTS_YES';
+  const leagueCfg = leaguesConfig.leagues.find(l => l.id === configId);
+  if (!leagueCfg) return jsonResponse(res, 404, { error: 'Ligue introuvable', configId });
+
+  const oddsKey = leagueCfg.odds_key;
+  const archived = (db.archive_matches || []).filter(a => a.sport === oddsKey);
+
+  // Predicate function par stratégie
+  const predicates = {
+    BTTS_YES:   (hs, as, isHome) => hs > 0 && as > 0,
+    OVER_2_5:   (hs, as)         => (hs + as) >= 3,
+    OVER_1_5:   (hs, as)         => (hs + as) >= 2,
+    UNDER_2_5:  (hs, as)         => (hs + as) <= 2,
+    VERROU_TACTIQUE: (hs, as)    => (hs + as) <= 3,
+    CS_00:      (hs, as)         => hs === 0 && as === 0,
+    DRAW:       (hs, as)         => hs === as,
+    HOME_WIN:   (hs, as, isHome) => isHome === true && hs > as,
+    AWAY_WIN:   (hs, as, isHome) => isHome === false && as > hs,
+    DC_HOME:    (hs, as, isHome) => isHome === true && hs >= as,
+    DC_AWAY:    (hs, as, isHome) => isHome === false && as >= hs,
+  };
+  // Stratégies non-supportées (corners / mi-temps / golden gap)
+  const unsupported = ['ANGLE_CORNERS', 'OVER_6_5_CORNERS', 'GOLDEN_PPG_GAP', 'HT_HOME_FT_HOME', 'HT_UNDER_FT_OVER'];
+  if (unsupported.includes(strategyKey)) {
+    return jsonResponse(res, 200, {
+      success: true, leagueId: configId, strategy: strategyKey,
+      unsupported: true,
+      reason: 'Données corners / mi-temps non disponibles dans archive_matches',
+      ranking: [],
+    });
+  }
+  const predicate = predicates[strategyKey];
+  if (!predicate) return jsonResponse(res, 400, { error: 'Stratégie inconnue', strategy: strategyKey });
+
+  // Extraction score depuis live_score ou goals
+  const extractScore = (m) => {
+    if (m.live_score) {
+      const [h, a] = m.live_score.split('-').map(s => parseInt(s));
+      if (!isNaN(h) && !isNaN(a)) return [h, a];
+    }
+    if (m.goals && typeof m.goals.home === 'number' && typeof m.goals.away === 'number') {
+      return [m.goals.home, m.goals.away];
+    }
+    return null;
+  };
+
+  // Agréger per team
+  const stats = new Map();
+  for (const match of archived) {
+    const sc = extractScore(match);
+    if (!sc) continue;
+    const [hs, as] = sc;
+    const hTeam = match.home_team;
+    const aTeam = match.away_team;
+    if (!hTeam || !aTeam) continue;
+    // Home team
+    if (!stats.has(hTeam)) stats.set(hTeam, { team: hTeam, played: 0, validated: 0 });
+    const hS = stats.get(hTeam);
+    hS.played++;
+    if (predicate(hs, as, true)) hS.validated++;
+    // Away team
+    if (!stats.has(aTeam)) stats.set(aTeam, { team: aTeam, played: 0, validated: 0 });
+    const aS = stats.get(aTeam);
+    aS.played++;
+    if (predicate(hs, as, false)) aS.validated++;
+  }
+
+  // Convertir en ranking
+  const ranking = [...stats.values()]
+    .filter(s => s.played > 0)
+    .map(s => ({
+      team: s.team,
+      played: s.played,
+      validated: s.validated,
+      hitRate: Math.round((s.validated / s.played) * 100),
+    }))
+    .sort((a, b) => b.hitRate - a.hitRate || b.played - a.played)
+    .map((s, i) => ({ ...s, rank: i + 1 }));
+
+  return jsonResponse(res, 200, {
+    success: true,
+    leagueId: configId,
+    strategy: strategyKey,
+    sampleSize: archived.length,
+    ranking,
+  });
+}
+
+// GET /api/v1/standings/:leagueId — classement consolidé (accepte config_id OU BSD id)
+if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/standings/'.length));
+  console.log(`  [DEBUG STANDINGS] Route called id=${rawId}`);
+  if (!rawId || rawId === 'undefined' || rawId === 'null' || isNaN(parseInt(rawId))) {
+    return jsonResponse(res, 400, { success: false, message: 'leagueId invalide' });
+  }
+  let configId = parseInt(rawId);
+  const bsdMapEntry = bsdConfig.mapping?.bsd_to_config?.[String(rawId)];
+  if (bsdMapEntry?.config_id) configId = bsdMapEntry.config_id;
+
+  const buildRows = () => Object.entries(db.teamStats)
+    .filter(([, s]) => s.leagueId === configId && s._real && s.rank)
+    .map(([tKey, s]) => {
+      // PRIORITÉ raw counts (s._raw) — sinon fallback home/away (qui contiennent des %, peu fiable)
+      const raw = s._raw || {};
+      const played = raw.played != null ? raw.played : (s?.home?.played || 0);
+      const wins = raw.wins != null ? raw.wins : null;
+      const draws = raw.draws != null ? raw.draws : null;
+      const losses = raw.losses != null ? raw.losses : null;
+      const gf = raw.gf != null ? raw.gf : null;
+      const ga = raw.ga != null ? raw.ga : null;
+      const pts = raw.pts != null ? raw.pts : (wins != null && draws != null ? wins * 3 + draws : null);
+      const ppg = (played && pts != null) ? parseFloat((pts / played).toFixed(2)) : (s?.home?.ppg ?? null);
+      const avgFor = (played && gf != null) ? parseFloat((gf / played).toFixed(2)) : (s?.home?.avgScored ?? null);
+      const avgAg  = (played && ga != null) ? parseFloat((ga / played).toFixed(2)) : (s?.home?.avgConceded ?? null);
+      return {
+        team: tKey,
+        rank: s.rank,
+        form: s.form || '',
+        ppg,
+        played,
+        wins,
+        draws,
+        losses,
+        pts,
+        gf,
+        ga,
+        avgFor,
+        avgAg,
+        _source: s._source || null,
+      };
+    })
+    .sort((a, b) => (a.rank || 99) - (b.rank || 99));
+
+  let rows = buildRows();
+  let refetched = false;
+
+  // On-demand fetch si vide — rate-limited à 60s par ligue
+  if (!rows.length) {
+    db._standingsRefetchTs = db._standingsRefetchTs || {};
+    const last = db._standingsRefetchTs[configId] || 0;
+    const bsdId = BSD_CONFIG_TO_BSD[String(configId)];
+    if (bsdId && BSD_API_KEY && (Date.now() - last) > 60_000) {
+      db._standingsRefetchTs[configId] = Date.now();
+      try {
+        const teams = await fetchBSDStandings(bsdId, configId);
+        if (teams && Object.keys(teams).length) {
+          Object.assign(db.teamStats, teams);
+          db.statsUpdateByLeague[configId] = new Date().toISOString();
+          refetched = true;
+          rows = buildRows();
+        }
+      } catch (e) {
+        console.warn(`  [DEBUG STANDINGS] on-demand refetch ligue ${configId} erreur:`, e.message);
+      }
+    }
+  }
+
+  return jsonResponse(res, 200, {
+    success: true,
+    leagueId: configId,
+    count: rows.length,
+    refetched,
+    standings: rows,
+  });
+}
+
+// GET /api/v1/corners/:matchId — Corner predictions (BSD history + Poisson)
+if (pathname.startsWith('/api/v1/corners/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/corners/'.length));
+  if (!matchId || matchId === 'undefined' || matchId === 'null') {
+    return jsonResponse(res, 400, { error: 'matchId invalide' });
+  }
+  return handleCornersRoute(res, matchId);
+}
+
 // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
   const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
@@ -11284,10 +12467,20 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
     try {
       const hKey = normName(match.home_team);
       const aKey = normName(match.away_team);
-      const hMeta = db.teamStats[hKey] || findFuzzy(hKey);
-      const aMeta = db.teamStats[aKey] || findFuzzy(aKey);
-      const hAdvKey = hMeta === db.teamStats[hKey] ? hKey : Object.keys(db.teamStats).find(k => db.teamStats[k] === hMeta) || hKey;
-      const aAdvKey = aMeta === db.teamStats[aKey] ? aKey : Object.keys(db.teamStats).find(k => db.teamStats[k] === aMeta) || aKey;
+      let hMeta = db.teamStats[hKey] || findFuzzy(hKey);
+      let aMeta = db.teamStats[aKey] || findFuzzy(aKey);
+      // Si exact match retourne un stub sans _real+rank (ex: BSD fixtures stub "kyoto sanga fc" rank=0),
+      // chercher un meilleur match via fuzzy (préfère entry standings _real comme "kyoto sanga" rank=14)
+      if (hMeta && (!hMeta._real || !hMeta.rank)) {
+        const fuzz = findFuzzy(hKey, { skipExact: true, excludeEntry: hMeta });
+        if (fuzz && fuzz._real && fuzz.rank) hMeta = fuzz;
+      }
+      if (aMeta && (!aMeta._real || !aMeta.rank)) {
+        const fuzz = findFuzzy(aKey, { skipExact: true, excludeEntry: aMeta });
+        if (fuzz && fuzz._real && fuzz.rank) aMeta = fuzz;
+      }
+      const hAdvKey = Object.keys(db.teamStats).find(k => db.teamStats[k] === hMeta) || hKey;
+      const aAdvKey = Object.keys(db.teamStats).find(k => db.teamStats[k] === aMeta) || aKey;
       const hAdv = db.advancedTeamStats[hAdvKey]?.data || null;
       const aAdv = db.advancedTeamStats[aAdvKey]?.data || null;
 
@@ -11301,41 +12494,65 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         .filter(([, s]) => s.leagueId === leagueId && s._real && s.rank)
         .map(([tKey, s]) => {
           const adv = db.advancedTeamStats[tKey]?.data;
+          const raw = s._raw || {};
+          // Priorité : adv (API-Football Ultra splits) → _raw (BSD/API-Football fallback) → 0
+          const played = adv ? (adv.played_home + adv.played_away) : (raw.played || 0);
+          const wins   = adv ? (adv.wins_home + adv.wins_away)     : (raw.wins   || 0);
+          const draws  = adv ? (adv.draws_home + adv.draws_away)   : (raw.draws  || 0);
+          const losses = adv ? (adv.losses_home + adv.losses_away) : (raw.losses || 0);
+          const pts    = adv ? ((adv.wins_home + adv.wins_away) * 3 + (adv.draws_home + adv.draws_away)) : (raw.pts || (wins * 3 + draws));
+          const avgFor = adv?.goals_scored_total_avg ?? (raw.gf != null && played ? raw.gf / played : s.home.avgScored);
+          const avgAg  = adv?.goals_conceded_total_avg ?? (raw.ga != null && played ? raw.ga / played : s.home.avgConceded);
           return {
             team: tKey,
             rank: s.rank,
             form: s.form || '',
-            ppg: s.home.ppg,
+            ppg: played ? parseFloat((pts / played).toFixed(2)) : s.home.ppg,
             // Global
-            played: adv ? (adv.played_home + adv.played_away) : 0,
-            wins: adv ? (adv.wins_home + adv.wins_away) : 0,
-            draws: adv ? (adv.draws_home + adv.draws_away) : 0,
-            losses: adv ? (adv.losses_home + adv.losses_away) : 0,
-            pts: adv ? ((adv.wins_home + adv.wins_away) * 3 + (adv.draws_home + adv.draws_away)) : 0,
-            avgFor: adv?.goals_scored_total_avg || s.home.avgScored,
-            avgAg: adv?.goals_conceded_total_avg || s.home.avgConceded,
-            // Domicile
-            home_played: adv?.played_home || 0,
-            home_wins: adv?.wins_home || 0,
-            home_draws: adv?.draws_home || 0,
-            home_losses: adv?.losses_home || 0,
-            home_pts: adv ? (adv.wins_home * 3 + adv.draws_home) : 0,
-            home_avgFor: adv?.goals_scored_home_avg || 0,
-            home_avgAg: adv?.goals_conceded_home_avg || 0,
+            played,
+            wins,
+            draws,
+            losses,
+            pts,
+            avgFor,
+            avgAg,
+            // Domicile — priorité adv (API-Football Ultra) → _raw.home (BSD/API-Football fallback) → 0
+            home_played: adv?.played_home ?? raw.home?.played ?? 0,
+            home_wins:   adv?.wins_home   ?? raw.home?.wins   ?? 0,
+            home_draws:  adv?.draws_home  ?? raw.home?.draws  ?? 0,
+            home_losses: adv?.losses_home ?? raw.home?.losses ?? 0,
+            home_pts:    adv ? (adv.wins_home * 3 + adv.draws_home) : (raw.home?.pts ?? 0),
+            home_avgFor: adv?.goals_scored_home_avg ?? (raw.home?.played && raw.home?.gf != null ? parseFloat((raw.home.gf / raw.home.played).toFixed(2)) : 0),
+            home_avgAg:  adv?.goals_conceded_home_avg ?? (raw.home?.played && raw.home?.ga != null ? parseFloat((raw.home.ga / raw.home.played).toFixed(2)) : 0),
             // Cartons (pour le tri multi-critères)
             cards_yellow: adv?.cards_yellow_total || null,
             cards_red: adv?.cards_red_total || null,
-            // Extérieur
-            away_played: adv?.played_away || 0,
-            away_wins: adv?.wins_away || 0,
-            away_draws: adv?.draws_away || 0,
-            away_losses: adv?.losses_away || 0,
-            away_pts: adv ? (adv.wins_away * 3 + adv.draws_away) : 0,
-            away_avgFor: adv?.goals_scored_away_avg || 0,
-            away_avgAg: adv?.goals_conceded_away_avg || 0,
+            // Extérieur — priorité adv → _raw.away → 0
+            away_played: adv?.played_away ?? raw.away?.played ?? 0,
+            away_wins:   adv?.wins_away   ?? raw.away?.wins   ?? 0,
+            away_draws:  adv?.draws_away  ?? raw.away?.draws  ?? 0,
+            away_losses: adv?.losses_away ?? raw.away?.losses ?? 0,
+            away_pts:    adv ? (adv.wins_away * 3 + adv.draws_away) : (raw.away?.pts ?? 0),
+            away_avgFor: adv?.goals_scored_away_avg ?? (raw.away?.played && raw.away?.gf != null ? parseFloat((raw.away.gf / raw.away.played).toFixed(2)) : 0),
+            away_avgAg:  adv?.goals_conceded_away_avg ?? (raw.away?.played && raw.away?.ga != null ? parseFloat((raw.away.ga / raw.away.played).toFixed(2)) : 0),
           };
         })
         .sort((a, b) => a.rank - b.rank);
+
+      // Classement Attaque/Défense par ligue — dérivé des avgFor / avgAg
+      const attackOrder = [...standings].sort((a, b) => (b.avgFor || 0) - (a.avgFor || 0));
+      const defenseOrder = [...standings].sort((a, b) => (a.avgAg || 99) - (b.avgAg || 99));
+      const sectorRankOf = (teamKey) => {
+        const aIdx = attackOrder.findIndex(s => s.team === teamKey);
+        const dIdx = defenseOrder.findIndex(s => s.team === teamKey);
+        return {
+          attack: aIdx >= 0 ? aIdx + 1 : null,
+          defense: dIdx >= 0 ? dIdx + 1 : null,
+          total: standings.length,
+        };
+      };
+      const homeSectorRank = sectorRankOf(hAdvKey);
+      const awaySectorRank = sectorRankOf(aAdvKey);
 
       // Key Player Index — top 3 par équipe + Position Ratings, en parallèle (cache 24h chacun)
       const hTeamId = hMeta?.teamId;
@@ -11490,6 +12707,8 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         awayKeyPlayers: markInjury(awayKP),
         homePosRatings: homePosRatings,
         awayPosRatings: awayPosRatings,
+        homeSectorRank,
+        awaySectorRank,
         homeKey: hAdvKey,
         awayKey: aAdvKey,
         // BSD enrichissement
@@ -11503,6 +12722,9 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         h2h,
         homeLastHome,
         awayLastAway,
+        // v10.x — Form Spine: full last 15 fixtures all venues, normalized for frontend
+        homeAllFixtures: (allHomeFixtures || []).slice(0, 15),
+        awayAllFixtures: (allAwayFixtures || []).slice(0, 15),
         // Top Performers
         homeTopPerformers,
         awayTopPerformers,
