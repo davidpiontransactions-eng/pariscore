@@ -3829,6 +3829,30 @@ function devig1X2(homeOdds, drawOdds, awayOdds, method = 'shin') {
   };
 }
 
+// Devigage 2-way (Tennis h2h, MMA, etc.) — pas de nul possible
+// Retourne { p1, p2, margin, method } en probabilités fair normalisées.
+function devig2way(p1Odds, p2Odds, method = 'shin') {
+  if (!p1Odds || !p2Odds || p1Odds <= 1 || p2Odds <= 1) return null;
+  const odds = [p1Odds, p2Odds];
+
+  let fairProbs;
+  if (method === 'shin') fairProbs = devigShinHurley(odds);
+  else if (method === 'power') fairProbs = devigPower(odds);
+  else fairProbs = devigAdditive(odds).map(p => p || 0.01);
+
+  const sum = fairProbs.reduce((s, p) => s + p, 0);
+  const norm = fairProbs.map(p => p / sum);
+
+  const margin = ((1 / p1Odds + 1 / p2Odds) - 1) * 100;
+
+  return {
+    p1: norm[0],
+    p2: norm[1],
+    margin: parseFloat(margin.toFixed(2)),
+    method,
+  };
+}
+
 // ── BAYESIAN MODEL BLENDER — Fusion de 3 modèles ─────────────────────────────
 
 // Elo dynamique (simplifié, basé sur les stats BSD)
@@ -11151,6 +11175,150 @@ async function pollTennisLive() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS ODDS — The Odds API (h2h pre-match, ATP/WTA tournaments)
+//  Budget cible : free tier 500 credits/mois. 1 credit = 1 market × 1 region par call.
+//  Stratégie : discovery /v4/sports (gratuite) + fetch h2h+eu sur sports actifs.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TENNIS_ODDS_TTL_MS = 4 * 60 * 60 * 1000; // 4h
+const TENNIS_ODDS_DISCOVERY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+let _tennisOddsCache = { ts: 0, data: {} };          // { sportKey: [rawMatch...] }
+let _activeTennisSports = [];                         // ['tennis_atp_french_open', ...]
+let _activeTennisSportsTs = 0;
+let _isFetchingTennisOdds = false;
+
+// Discover currently active tennis sport keys from The Odds API.
+// /v4/sports is a free endpoint (does not consume request credits).
+async function discoverActiveTennisSports() {
+  if (!ODDS_API_KEY) return [];
+  try {
+    const res = await httpsGet(`https://api.the-odds-api.com/v4/sports/?apiKey=${ODDS_API_KEY}&all=false`);
+    if (!res || res.status !== 200 || !Array.isArray(res.data)) return [];
+    return res.data
+      .filter(s => s && s.group === 'Tennis' && s.active === true && !s.has_outrights)
+      .map(s => s.key);
+  } catch (e) {
+    console.warn('  [Tennis Odds] Discovery failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchTennisOddsAPI() {
+  if (!ODDS_API_KEY) return {};
+  if (_isFetchingTennisOdds) return _tennisOddsCache.data || {};
+  _isFetchingTennisOdds = true;
+
+  try {
+    // Refresh discovery cache once per 24h
+    if (_activeTennisSports.length === 0 || Date.now() - _activeTennisSportsTs > TENNIS_ODDS_DISCOVERY_TTL_MS) {
+      _activeTennisSports = await discoverActiveTennisSports();
+      _activeTennisSportsTs = Date.now();
+      if (_activeTennisSports.length > 0) {
+        console.log(`  [Tennis Odds] Discovered ${_activeTennisSports.length} active tennis sports: ${_activeTennisSports.join(', ')}`);
+      } else {
+        console.log('  [Tennis Odds] No active tennis sports right now (off-season or quota issue).');
+      }
+    }
+
+    const out = {};
+    const now = new Date();
+    let quotaHit = false;
+
+    for (const sport of _activeTennisSports) {
+      try {
+        const query = new URLSearchParams({
+          apiKey: ODDS_API_KEY,
+          regions: process.env.ODDS_REGIONS || 'eu',
+          markets: 'h2h',
+          oddsFormat: 'decimal',
+          dateFormat: 'iso',
+          commenceTimeFrom: formatIsoTimestamp(now),
+          commenceTimeTo: formatIsoTimestamp(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
+        }).toString();
+
+        const res = await httpsGet(`https://api.the-odds-api.com/v4/sports/${sport}/odds/?${query}`);
+        if (!res) continue;
+
+        if (res.status === 401 || res.status === 429) {
+          console.warn(`  [Tennis Odds] ⚠️ Quota Odds API atteint (${sport}). Arrêt fetch tennis.`);
+          quotaHit = true;
+          break;
+        }
+
+        if (res.status === 200 && Array.isArray(res.data)) {
+          out[sport] = res.data.map(m => ({ ...m, _sport: sport }));
+          console.log(`  [Tennis Odds] ${sport} → ${res.data.length} matches`);
+        }
+      } catch (e) {
+        console.warn(`  [Tennis Odds] ${sport} error: ${e.message}`);
+      }
+    }
+
+    if (!quotaHit) {
+      _tennisOddsCache = { ts: Date.now(), data: out };
+    } else if (Object.keys(out).length > 0) {
+      // Partial result before quota hit — keep what we got
+      _tennisOddsCache = { ts: Date.now(), data: out };
+    }
+    return _tennisOddsCache.data || {};
+  } finally {
+    _isFetchingTennisOdds = false;
+  }
+}
+
+// Lazy accessor : déclenche un fetch en arrière-plan si cache > TTL.
+function getTennisOddsCache() {
+  if (Date.now() - _tennisOddsCache.ts > TENNIS_ODDS_TTL_MS) {
+    fetchTennisOddsAPI().catch(() => {});
+  }
+  return _tennisOddsCache.data || {};
+}
+
+// Extract best h2h quotes across bookmakers for one match record returned
+// by /v4/sports/{tennis_xxx}/odds. Returns { p1:{odds,book}, p2:{odds,book} } or null.
+function extractBestTennisH2H(match) {
+  if (!match || !Array.isArray(match.bookmakers) || !match.home_team || !match.away_team) return null;
+  const p1Name = normName(match.home_team);
+  const p2Name = normName(match.away_team);
+  let bestP1 = { odds: 0, book: null };
+  let bestP2 = { odds: 0, book: null };
+
+  for (const bk of match.bookmakers) {
+    const markets = Array.isArray(bk.markets) ? bk.markets : [];
+    const h2h = markets.find(m => m && m.key === 'h2h');
+    if (!h2h || !Array.isArray(h2h.outcomes)) continue;
+    for (const o of h2h.outcomes) {
+      if (!o || !o.name || typeof o.price !== 'number') continue;
+      const n = normName(o.name);
+      if (n === p1Name && o.price > bestP1.odds) bestP1 = { odds: o.price, book: bk.title || bk.key };
+      else if (n === p2Name && o.price > bestP2.odds) bestP2 = { odds: o.price, book: bk.title || bk.key };
+    }
+  }
+  if (!bestP1.odds || !bestP2.odds) return null;
+  return { p1: bestP1, p2: bestP2 };
+}
+
+// Helper : retrouve un match Odds API par paires de joueurs normalisés.
+// Utilisé par buildTennisMatchRecord (T2) pour merger BSD + Odds API.
+function findTennisOddsForPlayers(player1Name, player2Name) {
+  if (!player1Name || !player2Name) return null;
+  const cache = getTennisOddsCache();
+  const p1 = normName(player1Name);
+  const p2 = normName(player2Name);
+  for (const sport of Object.keys(cache)) {
+    const matches = cache[sport] || [];
+    for (const m of matches) {
+      const mh = normName(m.home_team);
+      const ma = normName(m.away_team);
+      if ((mh === p1 && ma === p2) || (mh === p2 && ma === p1)) {
+        return { match: m, swapped: mh === p2 };
+      }
+    }
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -13175,6 +13343,161 @@ if (pathname.startsWith('/api/v1/corners/') && req.method === 'GET') {
 
 // ─── BSD Tennis — REST proxy + MCP passthrough ($5/mo Sports Addon) ─────────
 // Flag BSD_TENNIS_ENABLED gate sans appel réseau. 402 BSD → 402 propre côté UI.
+
+// Extrait la liste des matchs depuis la réponse BSD (paginée ou tableau direct).
+function _extractBsdMatchesList(body) {
+  if (!body) return [];
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body.results)) return body.results;
+  if (Array.isArray(body.matches)) return body.matches;
+  return [];
+}
+
+// Construit la liste enrichie value-bets tennis :
+// BSD matches scheduled  +  The Odds API h2h  →  devig 2-way  →  EV%  →  best_edge.
+// Fallback ESPN si BSD désactivé ou en erreur (mode dégradé, sans surface ni rank).
+async function buildTennisValueBets({ date }) {
+  const dateClean = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
+  let bsdMatches = [];
+  let matchSource = 'bsd';
+
+  if (BSD_TENNIS_ENABLED) {
+    const suffix = dateClean
+      ? `/api/v2/matches/?date=${encodeURIComponent(dateClean)}&status=scheduled&limit=200`
+      : `/api/v2/matches/?status=scheduled&limit=200`;
+    const ck = `bsd_tennis_value_bets_${dateClean || 'today'}`;
+    const bsd = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
+    if (bsd.status === 200) {
+      bsdMatches = _extractBsdMatchesList(bsd.body);
+    } else if (bsd.status !== 503 && bsd.status !== 402) {
+      // Vraie erreur upstream BSD (5xx) → propager.
+      return { status: bsd.status, body: bsd.body };
+    }
+    // 402/503 → tombe en fallback ESPN ci-dessous (mode dégradé).
+  }
+
+  if (bsdMatches.length === 0) {
+    // Fallback ESPN scoreboard (déjà câblé v10.3) : forme limitée, pas de surface ni rank.
+    if (Date.now() - _tennisLiveCache.ts > TENNIS_LIVE_TTL_MS) {
+      try { await pollTennisLive(); } catch (e) { /* swallow */ }
+    }
+    const espnRaw = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+    // Mappe au schéma attendu par la boucle d'enrichissement ci-dessous.
+    // ESPN ne fournit pas la surface réelle (Hard/Clay/Grass) — sera enrichi par Sackmann (T3+T4).
+    bsdMatches = espnRaw.map(m => ({
+      id: m.id,
+      tournament: m.tournament || null,
+      surface: null,
+      court: m.court || null,
+      tour: m.tour || null,
+      round: m.round || null,
+      start_time: m.start_time || null,
+      status: m.status || null,
+      player1: { name: m.player1 && m.player1.name, country: m.player1 && m.player1.country, flag: m.player1 && m.player1.flag },
+      player2: { name: m.player2 && m.player2.name, country: m.player2 && m.player2.country, flag: m.player2 && m.player2.flag },
+    }));
+    matchSource = 'espn';
+  }
+
+  // Force refresh odds cache si stale (await pour que les odds soient prêts pour cette requête)
+  if (Date.now() - _tennisOddsCache.ts > TENNIS_ODDS_TTL_MS) {
+    try { await fetchTennisOddsAPI(); } catch (e) { /* swallow */ }
+  }
+
+  const enriched = [];
+  for (const m of bsdMatches) {
+    const p1Name = (m.player1 && (m.player1.name || m.player1.full_name)) || m.player1_name || '';
+    const p2Name = (m.player2 && (m.player2.name || m.player2.full_name)) || m.player2_name || '';
+    if (!p1Name || !p2Name) {
+      enriched.push({
+        id: m.id,
+        tournament: m.tournament || null,
+        surface: m.surface || null,
+        round: m.round || null,
+        start_time: m.start_time || m.commence_time || null,
+        status: m.status || null,
+        player1: m.player1 || { name: p1Name || null },
+        player2: m.player2 || { name: p2Name || null },
+        odds: null, fair: null, edge: null, best_edge: null,
+        bsd_prediction: m.prediction || null,
+        bsd_ml_score: m.ml_score || m.prediction_score || null,
+        sources: { match: matchSource, odds: null },
+      });
+      continue;
+    }
+
+    let odds = null, fair = null, edge = null, bestEdge = null, oddsSource = null;
+    const found = findTennisOddsForPlayers(p1Name, p2Name);
+    if (found) {
+      const raw = extractBestTennisH2H(found.match);
+      if (raw) {
+        // Réoriente p1/p2 selon l'ordre BSD (Odds API peut inverser home/away).
+        const p1Odds = found.swapped ? raw.p2.odds : raw.p1.odds;
+        const p2Odds = found.swapped ? raw.p1.odds : raw.p2.odds;
+        const p1Book = found.swapped ? raw.p2.book : raw.p1.book;
+        const p2Book = found.swapped ? raw.p1.book : raw.p2.book;
+
+        odds = { p1: { odds: p1Odds, book: p1Book }, p2: { odds: p2Odds, book: p2Book } };
+        const dev = devig2way(p1Odds, p2Odds, 'shin');
+        if (dev) {
+          const evP1 = (p1Odds * dev.p1 - 1) * 100;
+          const evP2 = (p2Odds * dev.p2 - 1) * 100;
+          fair = {
+            p1: parseFloat((dev.p1 * 100).toFixed(2)),
+            p2: parseFloat((dev.p2 * 100).toFixed(2)),
+            margin: dev.margin,
+            method: dev.method,
+          };
+          edge = {
+            p1: parseFloat(evP1.toFixed(2)),
+            p2: parseFloat(evP2.toFixed(2)),
+          };
+          bestEdge = evP1 >= evP2
+            ? { side: 'p1', player: p1Name, odds: p1Odds, book: p1Book, edge: edge.p1 }
+            : { side: 'p2', player: p2Name, odds: p2Odds, book: p2Book, edge: edge.p2 };
+        }
+        oddsSource = 'theoddsapi';
+      }
+    }
+
+    enriched.push({
+      id: m.id,
+      tournament: m.tournament || null,
+      surface: m.surface || null,
+      court: m.court || null,
+      tour: m.tour || null,
+      round: m.round || null,
+      start_time: m.start_time || m.commence_time || null,
+      status: m.status || null,
+      player1: m.player1 || { name: p1Name },
+      player2: m.player2 || { name: p2Name },
+      odds,
+      fair,
+      edge,
+      best_edge: bestEdge,
+      bsd_prediction: m.prediction || null,
+      bsd_ml_score: m.ml_score || m.prediction_score || null,
+      sources: { match: matchSource, odds: oddsSource },
+    });
+  }
+
+  return {
+    status: 200,
+    body: {
+      count: enriched.length,
+      matches: enriched,
+      meta: {
+        match_source: matchSource,
+        odds_sports_active: _activeTennisSports,
+        odds_cache_age_s: _tennisOddsCache.ts ? Math.floor((Date.now() - _tennisOddsCache.ts) / 1000) : null,
+        bsd_enabled: BSD_TENNIS_ENABLED,
+        odds_api_enabled: !!ODDS_API_KEY,
+        devig_method: 'shin-hurley',
+      },
+    },
+  };
+}
+
 async function handleTennisBSD(pathSuffix, cacheKey, ttlMs) {
   if (!BSD_TENNIS_ENABLED) {
     return { status: 503, body: { error: 'tennis_bsd_disabled', fallback: 'espn', detail: 'BSD_TENNIS_ENABLED=false' } };
@@ -13243,6 +13566,11 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
     return jsonResponse(res, 400, { error: 'invalid_match_id' });
   }
   const out = await handleTennisBSD(`/api/v2/predictions/${encodeURIComponent(matchId)}/`, `bsd_tennis_pred_${matchId}`, 5 * 60 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+// Route enrichie value-bets : BSD scheduled matches + The Odds API h2h + devig 2-way + EV%.
+if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
+  const out = await buildTennisValueBets({ date: query.date });
   return jsonResponse(res, out.status, out.body);
 }
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
