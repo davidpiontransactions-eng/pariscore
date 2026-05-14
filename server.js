@@ -7036,11 +7036,177 @@ async function generateAIScout() {
 //  BSD (Bzzoiro) — Fonctions de récupération données
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Dérive le classement d'une ligue depuis l'endpoint /events/ (matchs finis)
+// Utilisé pour LaLiga (BSD ID 3) où l'endpoint /standings/ classique échoue.
+// Agrège played/wins/draws/losses/gf/ga par équipe, calcule splits home/away, dérive le rank par pts puis goal-diff.
+async function fetchBSDStandingsFromEvents(bsdLeagueId, configLeagueId) {
+  try {
+    const denylist = LEAGUE_TEAM_DENYLIST[configLeagueId] || null;
+    const agg = {}; // normKey → { name, totals, home, away, formArr:[{date,letter}] }
+    const ensure = (key, displayName) => {
+      if (!agg[key]) {
+        agg[key] = {
+          name: displayName,
+          totals: { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0 },
+          home:   { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0 },
+          away:   { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0 },
+          formArr: [],
+        };
+      }
+      return agg[key];
+    };
+
+    // Fenêtre : dernière saison complète + saison en cours (≈ 380 matchs LaLiga / saison)
+    const now = new Date();
+    const from = new Date(now.getTime() - 420 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const to = now.toISOString().split('T')[0];
+
+    let totalEventsParsed = 0;
+    const MAX_PAGES = 20; // garde-fou
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const res = await bsdFetch(`/events/?league=${bsdLeagueId}&date_from=${from}&date_to=${to}&status=finished&page_size=50&page=${page}`);
+      if (!res || res.status !== 200) {
+        if (page === 1) {
+          console.warn(`  [DEBUG LIGA] /events/?league=${bsdLeagueId} a renvoyé status=${res?.status} — impossible de dériver le classement`);
+          return null;
+        }
+        break;
+      }
+      const rows = Array.isArray(res.data?.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []);
+      if (!rows.length) break;
+
+      for (const e of rows) {
+        const homeName = (e.home_team || '').trim();
+        const awayName = (e.away_team || '').trim();
+        if (!homeName || !awayName) continue;
+        const hScore = Number(e.home_score);
+        const aScore = Number(e.away_score);
+        if (!Number.isFinite(hScore) || !Number.isFinite(aScore)) continue;
+
+        const hKey = normName(homeName);
+        const aKey = normName(awayName);
+        if (denylist && (denylist.has(hKey) || denylist.has(aKey))) continue;
+
+        const hAgg = ensure(hKey, homeName);
+        const aAgg = ensure(aKey, awayName);
+
+        // Home totals + home split
+        hAgg.totals.played++;
+        hAgg.home.played++;
+        hAgg.totals.gf += hScore; hAgg.totals.ga += aScore;
+        hAgg.home.gf   += hScore; hAgg.home.ga   += aScore;
+
+        // Away totals + away split
+        aAgg.totals.played++;
+        aAgg.away.played++;
+        aAgg.totals.gf += aScore; aAgg.totals.ga += hScore;
+        aAgg.away.gf   += aScore; aAgg.away.ga   += hScore;
+
+        let hLetter, aLetter;
+        if (hScore > aScore)      { hAgg.totals.wins++;   hAgg.home.wins++;   aAgg.totals.losses++; aAgg.away.losses++; hLetter = 'W'; aLetter = 'L'; }
+        else if (hScore < aScore) { aAgg.totals.wins++;   aAgg.away.wins++;   hAgg.totals.losses++; hAgg.home.losses++; hLetter = 'L'; aLetter = 'W'; }
+        else                       { hAgg.totals.draws++;  hAgg.home.draws++;  aAgg.totals.draws++;  aAgg.away.draws++;  hLetter = 'D'; aLetter = 'D'; }
+
+        const evDate = (e.event_date || e.date || e.start_time || '').slice(0, 10);
+        hAgg.formArr.push({ date: evDate, letter: hLetter });
+        aAgg.formArr.push({ date: evDate, letter: aLetter });
+
+        totalEventsParsed++;
+      }
+      if (!res.data?.next) break;
+    }
+
+    const aggKeys = Object.keys(agg);
+    if (!aggKeys.length) {
+      console.warn(`  [DEBUG LIGA] /events/?league=${bsdLeagueId} parsé mais 0 équipe agrégée (events=${totalEventsParsed})`);
+      return null;
+    }
+    console.log(`  [DEBUG LIGA] /events/?league=${bsdLeagueId} → ${totalEventsParsed} matchs parsés, ${aggKeys.length} équipes agrégées`);
+
+    // Calcul des points, tri pour le rank
+    const ranked = aggKeys.map(key => {
+      const a = agg[key];
+      const pts = a.totals.wins * 3 + a.totals.draws;
+      const gd = a.totals.gf - a.totals.ga;
+      return { key, agg: a, pts, gd };
+    }).sort((x, y) => (y.pts - x.pts) || (y.gd - x.gd) || (y.agg.totals.gf - x.agg.totals.gf));
+
+    const teams = {};
+    ranked.forEach((row, idx) => {
+      const a = row.agg;
+      const homeStats = buildSideStats({
+        played: a.home.played, win: a.home.wins, draw: a.home.draws, lose: a.home.losses,
+        goals_for: a.home.gf, goals_against: a.home.ga,
+      });
+      const awayStats = buildSideStats({
+        played: a.away.played, win: a.away.wins, draw: a.away.draws, lose: a.away.losses,
+        goals_for: a.away.gf, goals_against: a.away.ga,
+      });
+      const recentForm = a.formArr
+        .filter(f => f.date)
+        .sort((p, q) => q.date.localeCompare(p.date))
+        .slice(0, 5)
+        .map(f => f.letter)
+        .reverse()
+        .join('');
+      const rawHome = {
+        played: a.home.played, wins: a.home.wins, draws: a.home.draws, losses: a.home.losses,
+        gf: a.home.gf, ga: a.home.ga, pts: a.home.wins * 3 + a.home.draws,
+      };
+      const rawAway = {
+        played: a.away.played, wins: a.away.wins, draws: a.away.draws, losses: a.away.losses,
+        gf: a.away.gf, ga: a.away.ga, pts: a.away.wins * 3 + a.away.draws,
+      };
+      teams[row.key] = {
+        home: homeStats,
+        away: awayStats,
+        rank: idx + 1,
+        form: recentForm,
+        leagueId: configLeagueId,
+        bsdTeamId: null,
+        bsdSeasonId: null,
+        bsdLeagueId: bsdLeagueId,
+        xgFor: null,
+        xgAgainst: null,
+        _raw: {
+          played: a.totals.played,
+          wins: a.totals.wins,
+          draws: a.totals.draws,
+          losses: a.totals.losses,
+          gf: a.totals.gf,
+          ga: a.totals.ga,
+          pts: row.pts,
+          home: rawHome,
+          away: rawAway,
+        },
+        _real: true,
+        _source: 'bsd_events',
+      };
+    });
+    return teams;
+  } catch (e) {
+    console.warn(`  [DEBUG LIGA] fetchBSDStandingsFromEvents erreur:`, e.message);
+    return null;
+  }
+}
+
 // Fetch BSD standings pour une ligue (convertit au format db.teamStats)
 async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
   const leagueName = leaguesConfig.leagues.find(l => l.id === configLeagueId)?.name || `config ${configLeagueId}`;
   console.log(`  [DATA AUDIT] "${leagueName}" (BSD ${bsdLeagueId} / config ${configLeagueId}) — Standings sync started.`);
   console.log(`  [DEBUG STANDINGS] Fetching league BSD ${bsdLeagueId} (config ${configLeagueId})…`);
+
+  // ─── Routage spécifique LIGA (BSD ID 3) — /standings/ classique échoue ───
+  // Priorité endpoint /events/?league=3 → dérive le classement depuis les matchs finis.
+  if (Number(bsdLeagueId) === 3) {
+    const teamsFromEvents = await fetchBSDStandingsFromEvents(bsdLeagueId, configLeagueId);
+    if (teamsFromEvents && Object.keys(teamsFromEvents).length) {
+      console.log("[DEBUG LIGA] Classement récupéré avec succès via l'endpoint Events (ID 3)");
+      return teamsFromEvents;
+    }
+    console.warn("  [DEBUG LIGA] Endpoint Events vide pour LIGA (BSD 3) — fallback vers /standings/ classique");
+  }
+
   try {
     // 1. Stratégie A: saison courante
     let seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&current=true`);
@@ -14376,6 +14542,161 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
 if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
   const out = await buildTennisValueBets({ date: query.date });
   return jsonResponse(res, out.status, out.body);
+}
+// AI-AL Tennis — analyse Gemini "Deep Data" formatée Telegram. Lookup match via buildTennisValueBets.
+if (pathname.startsWith('/api/v1/ai/tennis-analyze/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.split('/api/v1/ai/tennis-analyze/')[1] || '').trim();
+  console.log('[AI TENNIS] Requête reçue pour le match ID: ' + matchId);
+  if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+  if (!matchId) return jsonResponse(res, 400, { error: 'matchId requis' });
+
+  const cacheKey = `deep_tennis_v1_${matchId}`;
+  const cached = getCachedAIAnalysis(cacheKey);
+  if (cached?.text) {
+    console.log(`  [TennisAI] HIT cache — ${matchId}`);
+    return jsonResponse(res, 200, { text: cached.text, provider: cached.provider || 'cache', _from_cache: true });
+  }
+
+  let match = null;
+  try {
+    const out = await buildTennisValueBets({});
+    const list = (out && out.body && Array.isArray(out.body.matches)) ? out.body.matches : [];
+    match = list.find(m => String(m.id) === String(matchId));
+  } catch (e) {
+    console.warn('  [TennisAI] buildTennisValueBets erreur:', e.message);
+  }
+  if (!match) return jsonResponse(res, 404, { error: 'Match tennis non trouvé', matchId });
+
+  const p1 = (match.player1 && match.player1.name) || '—';
+  const p2 = (match.player2 && match.player2.name) || '—';
+  const p1Country = (match.player1 && match.player1.country) || '';
+  const p2Country = (match.player2 && match.player2.country) || '';
+  const tournament = match.tournament || '—';
+  const round = match.round || '';
+  const surface = match.surface || 'Surface non précisée';
+  const tour = match.tour || '—';
+  const court = match.court || '';
+  const startTime = match.start_time
+    ? new Date(match.start_time).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', dateStyle: 'full', timeStyle: 'short' })
+    : '—';
+
+  const odds = match.odds || {};
+  const fair = match.fair || {};
+  const edge = match.edge || {};
+  const evModel = match.ev_model || {};
+  const bestEv = match.best_ev_model || {};
+  const elo = (match.predictions && match.predictions.elo) || null;
+  const blended = (match.predictions && match.predictions.blended) || null;
+  const setProbs = (match.predictions && match.predictions.set_probs) || null;
+
+  const fmtPct = (v) => (v == null ? '—' : (typeof v === 'number' ? (v <= 1 ? (v * 100).toFixed(1) + '%' : v.toFixed(1) + '%') : '—'));
+  const dataBlock = `
+[DONNÉES DU MATCH FOURNIES PAR PARISCORE]
+Tournoi : ${tournament}${round ? ' — ' + round : ''}
+Tour : ${tour}${court ? ' · Court : ' + court : ''}
+Surface : ${surface}
+Date/Heure (Paris) : ${startTime}
+
+[JOUEURS]
+${p1}${p1Country ? ' (' + p1Country + ')' : ''}
+${p2}${p2Country ? ' (' + p2Country + ')' : ''}
+
+[COTES BOOKMAKERS H2H]
+${p1} : ${odds.p1 ? odds.p1.odds + ' (' + (odds.p1.book || '—') + ')' : '—'}
+${p2} : ${odds.p2 ? odds.p2.odds + ' (' + (odds.p2.book || '—') + ')' : '—'}
+
+[PROBABILITÉS DEVIGED (Shin-Hurley)]
+${p1} : ${fair.p1 != null ? fair.p1.toFixed(1) + '%' : '—'} | ${p2} : ${fair.p2 != null ? fair.p2.toFixed(1) + '%' : '—'} | Marge book : ${fair.margin != null ? fair.margin.toFixed(2) + '%' : '—'}
+
+[ELO SURFACE-SPLIT]
+${p1} : ${elo && elo.p1_elo != null ? Math.round(elo.p1_elo) : '—'}
+${p2} : ${elo && elo.p2_elo != null ? Math.round(elo.p2_elo) : '—'}
+P(${p1} gagne) Elo : ${elo ? fmtPct(elo.p1) : '—'}
+
+[PROBABILITÉ BLENDED (Elo + BSD ML si dispo)]
+${p1} : ${blended ? fmtPct(blended.p1) : '—'} | ${p2} : ${blended ? fmtPct(blended.p2) : '—'}
+
+[EV MODÈLE vs MARCHÉ]
+${p1} EV : ${evModel.p1 != null ? evModel.p1.toFixed(2) + '%' : '—'}
+${p2} EV : ${evModel.p2 != null ? evModel.p2.toFixed(2) + '%' : '—'}
+Best EV : ${bestEv.side === 'p1' ? p1 : (bestEv.side === 'p2' ? p2 : '—')} ${bestEv.ev != null ? bestEv.ev.toFixed(2) + '%' : '—'} @ cote ${bestEv.odds ?? '—'} (${bestEv.book ?? '—'})
+
+[MARKOV — PROBABILITÉS DE SET]
+P(2-0) : ${setProbs ? fmtPct(setProbs.p_2_0) : '—'} | P(2-1) : ${setProbs ? fmtPct(setProbs.p_2_1) : '—'}
+P(0-2) : ${setProbs ? fmtPct(setProbs.p_0_2) : '—'} | P(1-2) : ${setProbs ? fmtPct(setProbs.p_1_2) : '—'}
+`;
+
+  const systemPrompt = `Agis comme un expert en paris sportifs (Tennis) et un data analyst. Je vais te fournir les données d'un match (avec les cotes, les joueurs, et parfois la météo/horaire). Génère une analyse "Deep Data" et rédige un message prêt à être publié sur Telegram.
+     CONTRAINTES STRICTES :
+     1. Ne mentionne JAMAIS et n'utilise JAMAIS de sources de données spécifiques externes comme "Tennis Abstract".
+     2. Le message final doit être intégralement encapsulé dans un bloc de code brut (\`\`\`text ... \`\`\`) pour que je puisse le copier facilement sans casser le formatage.
+     3. Le ton doit être professionnel, analytique et orienté "Value Bet" (Trader).
+     STRUCTURE OBLIGATOIRE DU MESSAGE TELEGRAM :
+     - TITRE : Accrocheur, avec le nom du tournoi, le stade de la compétition et des émojis.
+     - INTRO : Courte présentation du contexte et des cotes affichées.
+     - 📊 DEEP DATA & PROJECTIONS : Estime de manière cohérente pour les deux joueurs : Le PowerScore (sur 100), La probabilité de victoire finale du tournoi (W%), Le principal atout sur cette surface précise.
+     - 📰 REVUE DE PRESSE : Rédige de manière réaliste et pertinente l'avis de 5 médias sportifs différents (ex: L'Équipe, Eurosport, Marca, Gazzetta dello Sport, etc.) sur la tactique attendue.
+
+     - 💰 TOP 3 PARIS À JOUER : Propose 3 paris pertinents basés sur les cotes ou estimés : 1. Le Bankroll Builder (Pari très "safe") + Analyse courte. 2. La Value (Le meilleur rapport risque/gain) + Analyse courte. 3. Le Risk (Grosse cote / Pari fun) + Analyse courte.
+     - ⚠️ L'AVIS DU TRADER : Un avertissement ou un conseil final sur le piège à éviter dans ce match.
+
+${dataBlock}`;
+
+  try {
+    console.log(`  [TennisAI] Appel Gemini — ${p1} vs ${p2}`);
+    const gemRes = await httpsPost(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [{ parts: [{ text: systemPrompt }] }],
+        safetySettings: GEMINI_SAFETY_SETTINGS,
+        generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
+      }
+    );
+    let text = '';
+    let provider = 'gemini';
+    if (gemRes.status === 200) {
+      text = (gemRes.data && gemRes.data.candidates && gemRes.data.candidates[0] && gemRes.data.candidates[0].content && gemRes.data.candidates[0].content.parts && gemRes.data.candidates[0].content.parts[0] && gemRes.data.candidates[0].content.parts[0].text) || '';
+    } else {
+      console.warn(`  [TennisAI] Gemini KO (${gemRes.status}) — tentative fallback providers`);
+    }
+    // Fallback : Groq / Grok / OpenRouter si Gemini KO ou vide.
+    if (!text) {
+      for (const prov of AI_DEEP_PROVIDERS) {
+        if (prov.type !== 'openai') continue;
+        try {
+          console.log(`  [TennisAI] Fallback → ${prov.name}`);
+          const r = await httpsPost(`https://${prov.host}${prov.path}`, {
+            model: prov.model,
+            messages: [{ role: 'user', content: systemPrompt }],
+            temperature: 0.8,
+            max_tokens: 4096,
+          }, {
+            'Authorization': `Bearer ${prov.key}`,
+            'HTTP-Referer': 'https://pariscore.io',
+            'X-Title': 'PariScore AI-AL Tennis',
+          });
+          if (r.status === 200) {
+            const t = (r.data && r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || '';
+            if (t) { text = t; provider = prov.name; break; }
+          } else {
+            console.warn(`  [TennisAI] ${prov.name} → HTTP ${r.status}`);
+          }
+        } catch (provErr) {
+          console.warn(`  [TennisAI] ${prov.name} → ${provErr.message}`);
+        }
+      }
+    }
+    if (!text) {
+      if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
+      return jsonResponse(res, 500, { error: 'Tous les providers IA ont échoué ou renvoyé une réponse vide' });
+    }
+    saveAIAnalysisToCache(cacheKey, { text, provider });
+    console.log(`  [TennisAI] OK via ${provider} — ${text.length} chars`);
+    return jsonResponse(res, 200, { text, provider });
+  } catch (e) {
+    console.error('  [TennisAI] Erreur:', e.message);
+    return jsonResponse(res, 500, { error: e.message });
+  }
 }
 // Status Sackmann historique : nombre de matchs par tour/year + dernière sync.
 if (pathname === '/api/v1/tennis/sackmann/status' && req.method === 'GET') {

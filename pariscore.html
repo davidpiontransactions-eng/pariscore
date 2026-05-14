@@ -5828,6 +5828,7 @@
         <thead>
           <tr style="background:var(--bg3,#181c20);">
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Tournoi</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Date/Heure</th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Tour</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Surf.</th>
             <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Joueur 1</th>
@@ -5841,10 +5842,11 @@
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;">Edge%</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;">EV mod.</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Best</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:#E2001A;font-family:'DM Mono',monospace;text-transform:uppercase;">AI-AL</th>
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="14" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -5898,7 +5900,34 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal AI-AL Tennis -->
+  <div id="tennis-ai-modal" class="tennis-modal" style="display:none;">
+    <div class="tennis-modal-backdrop" onclick="closeTennisAIModal()"></div>
+    <div class="tennis-modal-card" role="dialog" aria-modal="true" aria-labelledby="tennis-ai-title" style="max-width:920px;">
+      <button class="tennis-modal-close" onclick="closeTennisAIModal()" aria-label="Fermer">✕</button>
+      <div style="padding:16px 20px;border-bottom:1px solid var(--bg4,#1e2328);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div id="tennis-ai-title" style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;color:var(--text,#e8eaed);">🎾 AI-AL Tennis — Deep Data</div>
+          <div id="tennis-ai-subtitle" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text2,#8d9399);margin-top:4px;">Analyse prête à publier sur Telegram</div>
+        </div>
+        <button id="tennis-ai-copy-btn" onclick="copyTennisAIText()" disabled style="padding:8px 14px;background:#E2001A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;opacity:.4;">📋 Copier le bloc Telegram</button>
+      </div>
+      <div id="tennis-ai-body" style="padding:20px;max-height:70vh;overflow-y:auto;">
+        <div id="tennis-ai-loading" style="padding:48px;text-align:center;color:var(--text2,#8d9399);">
+          <div class="tennis-ai-spinner" style="display:inline-block;width:36px;height:36px;border:3px solid var(--bg4,#1e2328);border-top-color:#E2001A;border-radius:50%;animation:tennisAISpin 0.8s linear infinite;margin-bottom:16px;"></div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;">Analyse IA en cours… (10-25s)</div>
+        </div>
+        <pre id="tennis-ai-output" style="display:none;white-space:pre-wrap;word-wrap:break-word;font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;color:var(--text,#e8eaed);background:var(--bg,#0a0d0f);padding:16px;border:1px solid var(--bg4,#1e2328);border-radius:6px;margin:0;"></pre>
+        <div id="tennis-ai-error" style="display:none;padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:13px;"></div>
+      </div>
+    </div>
+  </div>
 </div><!-- /page-tennis -->
+
+<style>
+  @keyframes tennisAISpin { to { transform: rotate(360deg); } }
+</style>
 
 <style>
   /* ── T6 Tennis Value Bets styles ── */
@@ -7259,7 +7288,7 @@ function renderTennisValueBets(matches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="14" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -7284,9 +7313,18 @@ function renderTennisValueBets(matches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="14" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
+
+  const _fmtTennisDate = (iso) => {
+    if (!iso) return '<span style="color:var(--text3,#5a6068);">—</span>';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '<span style="color:var(--text3,#5a6068);">—</span>';
+    const date = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return `<span class="tvb-mono" style="font-family:'DM Mono',monospace;font-size:12px;">${date}<span class="tvb-book">${time}</span></span>`;
+  };
 
   // Tri : EV modèle décroissant (best opportunities en haut), puis Elo écart.
   filtered.sort((a, b) => {
@@ -7341,9 +7379,13 @@ function renderTennisValueBets(matches) {
 
     const matchId = _escTennis(m.id || '');
     const onclick = matchId ? `onclick="openTennisDetail('${matchId}')"` : '';
+    const aiBtn = matchId
+      ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
+      : '<span style="color:var(--text3,#5a6068);">—</span>';
 
     return `<tr class="tennis-vb-row" ${onclick}>
       <td>${_escTennis(m.tournament || '—')}${m.round ? '<span class="tvb-book">' + _escTennis(m.round) + '</span>' : ''}</td>
+      <td>${_fmtTennisDate(m.start_time || m.commence_time)}</td>
       <td>${_tvbTourBadge(m.tour)}</td>
       <td style="text-align:center;"><span class="${_tvbSurfaceCls(m.surface)}">${_tvbSurfaceIcon(m.surface)}</span></td>
       <td>${p1Flag}${p1Name}</td>
@@ -7357,8 +7399,89 @@ function renderTennisValueBets(matches) {
       <td style="text-align:center;"><span class="${edgeCls}">${edgeText}</span></td>
       <td style="text-align:center;">${evCell}</td>
       <td style="text-align:center;">${bestCell}</td>
+      <td style="text-align:center;">${aiBtn}</td>
     </tr>`;
   }).join('');
+}
+
+// ── AI-AL Tennis ────────────────────────────────────────────────────────────
+let _tennisAICurrentRawText = '';
+
+function openTennisAIModal() {
+  const modal = document.getElementById('tennis-ai-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeTennisAIModal() {
+  const modal = document.getElementById('tennis-ai-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+  _tennisAICurrentRawText = '';
+}
+
+function _extractTennisTextBlock(raw) {
+  if (!raw) return '';
+  const m = raw.match(/```(?:text)?\s*\n?([\s\S]*?)\n?```/);
+  return m ? m[1].trim() : raw.trim();
+}
+
+async function copyTennisAIText() {
+  const btn = document.getElementById('tennis-ai-copy-btn');
+  if (!_tennisAICurrentRawText) return;
+  const block = _extractTennisTextBlock(_tennisAICurrentRawText);
+  try {
+    await navigator.clipboard.writeText(block);
+    if (btn) { const orig = btn.innerHTML; btn.innerHTML = '✅ Copié !'; setTimeout(() => { btn.innerHTML = orig; }, 1800); }
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = block; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); if (btn) { btn.innerHTML = '✅ Copié !'; setTimeout(() => { btn.innerHTML = '📋 Copier le bloc Telegram'; }, 1800); } } catch (_) {}
+    document.body.removeChild(ta);
+  }
+}
+
+async function analyzeTennisMatch(matchId) {
+  if (!matchId) return;
+  openTennisAIModal();
+  const loading = document.getElementById('tennis-ai-loading');
+  const output = document.getElementById('tennis-ai-output');
+  const errBox = document.getElementById('tennis-ai-error');
+  const copyBtn = document.getElementById('tennis-ai-copy-btn');
+  const subtitle = document.getElementById('tennis-ai-subtitle');
+  if (loading) loading.style.display = 'block';
+  if (output) { output.style.display = 'none'; output.textContent = ''; }
+  if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+  if (copyBtn) { copyBtn.disabled = true; copyBtn.style.opacity = '.4'; }
+  _tennisAICurrentRawText = '';
+
+  // Subtitle from last fetch context if available
+  try {
+    const last = Array.isArray(window._tennisVbLastFetch) ? window._tennisVbLastFetch : [];
+    const m = last.find(x => String(x.id) === String(matchId));
+    if (m && subtitle) {
+      const p1 = (m.player1 && m.player1.name) || '—';
+      const p2 = (m.player2 && m.player2.name) || '—';
+      subtitle.textContent = `${p1} vs ${p2} · ${m.tournament || '—'}${m.round ? ' · ' + m.round : ''}`;
+    }
+  } catch (_) {}
+
+  try {
+    const r = await fetch('/api/v1/ai/tennis-analyze/' + encodeURIComponent(matchId), { headers: { 'Accept': 'application/json' } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    const text = data.text || '';
+    if (!text) throw new Error('Réponse IA vide');
+    _tennisAICurrentRawText = text;
+    if (loading) loading.style.display = 'none';
+    if (output) { output.textContent = text; output.style.display = 'block'; }
+    if (copyBtn) { copyBtn.disabled = false; copyBtn.style.opacity = '1'; }
+  } catch (e) {
+    console.warn('[TennisAI] erreur:', e.message);
+    if (loading) loading.style.display = 'none';
+    if (errBox) { errBox.textContent = 'Erreur : ' + (e.message || e); errBox.style.display = 'block'; }
+  }
 }
 
 async function tickTennisValueBets() {

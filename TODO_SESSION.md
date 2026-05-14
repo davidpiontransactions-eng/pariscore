@@ -23,8 +23,11 @@
 - [x] Installer skill : `npx skills add machina-sports/sports-skills` — 17 skills installés dans .agents/skills/ (betting, football-data, kalshi, polymarket, sports-news, sports-reporter, mlb/nba/nfl/nhl/cbb/cfb/golf/tennis/wnba/volleyball/xctf-data, markets)
 
 ## En cours / Debug
+- [ ] Intégration Agent AI-AL Tennis (Bouton UI + Route API + Prompt Telegram).
 - [x] Création d'un environnement de test (Mock Match) pour simuler une physionomie de match en direct.
 - [x] Intégration du module Top 3 Joueurs (Ratings Live BSD) dans le Dashboard Live.
+- [ ] Fix Data Tennis : Résoudre le bug d'affichage ATP/WTA sur les matchs féminins lors des tournois mixtes.
+- [ ] Fix Routage LIGA : Modifier la récupération du classement (ID 3) via l'endpoint /api/events/.
 
 ## Roadmap suivante
 - [x] Filtres L5/L10/L25 dans tableau principal (PPG/forme X derniers matchs) — Existant L4747-4755 pariscore.html (filter-chip Saison/L5/L10/L25). setPeriod(period) toggle activePeriod + renderMatches re-trigger. ppgFromFormStr(form, n) calcule PPG sur N derniers matchs. Verified preview port 61772 : 4 boutons, click L5 → activePeriod='l5' + periodNote 'Calculé sur les 5 derniers matchs'.
