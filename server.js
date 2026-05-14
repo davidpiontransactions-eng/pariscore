@@ -3289,7 +3289,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
     // ── Gemini SSE ──────────────────────────────────────────────────────────
     const payload = JSON.stringify({
       contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
+      generationConfig: { temperature: 0.8, maxOutputTokens: 5500 },
       safetySettings: GEMINI_SAFETY_SETTINGS,
     });
     const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
@@ -3329,7 +3329,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
       model: prov.model,
       messages: [{ role: 'user', content: promptText }],
       temperature: 0.8,
-      max_tokens: 4096,
+      max_tokens: 5500,
       stream: true,
     });
     const opts = {
@@ -7925,23 +7925,39 @@ function bsdToOddsApiFormat(bsdMatch) {
 
 
 // ─── JOB 1 : COTES (toutes les 12h) ──────────────────────────────────────
-async function fetchOdds(force = false) {
+// opts.bsdLeagueIds:    number[]    → BSD league IDs to target (bypasses bulk fetch)
+// opts.configLeagueIds: number[]    → PariScore config league IDs (mapped via configIdToBsd)
+// opts.skipEnrichment:  boolean     → skip L2/L3/L4 (default true when any league filter set)
+async function fetchOdds(force = false, opts = {}) {
   if (isFetchingOdds) { console.warn('[Cron:Odds] Déjà en cours — ignoré'); return; }
 
+  // Resolve targeted BSD league IDs (union of bsdLeagueIds + mapped configLeagueIds)
+  const rawBsdIds = Array.isArray(opts.bsdLeagueIds) ? opts.bsdLeagueIds : [];
+  const rawConfigIds = Array.isArray(opts.configLeagueIds) ? opts.configLeagueIds : [];
+  const mappedFromConfig = rawConfigIds.map(id => configIdToBsd(id)).filter(v => v != null);
+  const targetBsdIds = Array.from(new Set([...rawBsdIds, ...mappedFromConfig].map(Number).filter(n => Number.isFinite(n) && n > 0))).sort((a, b) => a - b);
+  const isTargeted = targetBsdIds.length > 0;
+  const skipEnrichment = opts.skipEnrichment != null ? !!opts.skipEnrichment : isTargeted;
+  const cacheKey = isTargeted ? `odds_raw_matches:bsd:${targetBsdIds.join(',')}` : 'odds_raw_matches';
+
   // 1. Gestion du cache pour éviter le gaspillage de requêtes
-  const cacheData = apiCacheGet('odds_raw_matches');
+  const cacheData = apiCacheGet(cacheKey);
   if (!force && cacheData && db.matches.length > 0) {
     const now = Date.now();
     const upcoming = db.matches.filter(m => new Date(m.commence_time).getTime() > now).length;
     if (upcoming > 0) {
-      console.log(`  [Cron:Odds] ⚡ Données fraîches en cache (${upcoming} matchs) — skip API`);
+      console.log(`  [Cron:Odds] ⚡ Données fraîches en cache (${upcoming} matchs) — skip API [key=${cacheKey}]`);
       return;
     }
   }
 
   isFetchingOdds = true;
   console.log('\n%s', '═'.repeat(60));
-  console.log(`  [Cron:Odds] Lancement du routing intelligent (BSD-First)...`);
+  if (isTargeted) {
+    console.log(`  [Cron:Odds] 🎯 Targeted refresh — BSD leagues [${targetBsdIds.join(',')}]${skipEnrichment ? ' (L2/L3/L4 skipped)' : ''}`);
+  } else {
+    console.log(`  [Cron:Odds] Lancement du routing intelligent (BSD-First)...`);
+  }
 
   let tempBuiltMatches = [];
   let fallbackToSofa = false;
@@ -7955,9 +7971,24 @@ async function fetchOdds(force = false) {
     // =========================================================================
     // ÉTAPE 1 : DÉCOUVERTE VIA BSD (Source Primaire Gratuite)
     // =========================================================================
-    console.log('  [Routing] L1 : Récupération des matchs via BSD...');
+    console.log(`  [Routing] L1 : Récupération des matchs via BSD${isTargeted ? ` (target: [${targetBsdIds.join(',')}])` : ''}...`);
     try {
-      const bsdRaw = await fetchBSDMatches(dateFrom, dateTo);
+      let bsdRaw = [];
+      if (isTargeted) {
+        for (const bsdId of targetBsdIds) {
+          try {
+            const part = await fetchBSDMatches(dateFrom, dateTo, bsdId);
+            if (part && part.length > 0) {
+              bsdRaw.push(...part);
+              console.log(`  [Routing]   • BSD league=${bsdId} → ${part.length} matchs`);
+            } else {
+              console.log(`  [Routing]   • BSD league=${bsdId} → 0 match`);
+            }
+          } catch (innerErr) { console.warn(`  [Routing]   • BSD league=${bsdId} erreur:`, innerErr.message); }
+        }
+      } else {
+        bsdRaw = await fetchBSDMatches(dateFrom, dateTo);
+      }
       if (bsdRaw && bsdRaw.length > 0) {
         const adapted = bsdRaw.map(bsdToOddsApiFormat).filter(Boolean);
         allRawMatches.push(...adapted);
@@ -7968,7 +7999,7 @@ async function fetchOdds(force = false) {
     // =========================================================================
     // ÉTAPE 2 : SÉCURITÉ LIGUES MAJEURES VIA FOOTBALL-DATA.ORG
     // =========================================================================
-    if (FOOTBALL_DATA_API_KEY) {
+    if (!skipEnrichment && FOOTBALL_DATA_API_KEY) {
       console.log('  [Routing] L2 : Football-Data.org fixtures (top 12 free forever)...');
       try {
         const fdRaw = await fetchFootballDataMatches(dateFrom, dateTo);
@@ -8003,7 +8034,7 @@ async function fetchOdds(force = false) {
     // =========================================================================
     // ÉTAPE 3 : ENRICHISSEMENT CHIRURGICAL VIA THE ODDS API
     // =========================================================================
-    if (ODDS_API_KEY) {
+    if (!skipEnrichment && ODDS_API_KEY) {
       console.log('  [Routing] L3 : Enrichissement des cotes (Surgical Mode)...');
 
       // Au lieu de boucler sur TOUS les sports, on ne cible que les 5 plus populaires
@@ -8059,6 +8090,7 @@ async function fetchOdds(force = false) {
     // ÉTAPE 4 : OPENFOOTBALL GITHUB (L4 zero-key fallback)
     // Public domain, sans clé. Cache 12h. Ajoute uniquement les matchs absents.
     // =========================================================================
+    if (!skipEnrichment) {
     console.log('  [Routing] L4 : OpenFootball GitHub (zero-key fallback)...');
     try {
       const ofRaw = await fetchOpenFootballMatches(dateFrom, dateTo);
@@ -8080,15 +8112,34 @@ async function fetchOdds(force = false) {
         console.log('  [Routing] OpenFootball : aucun match dans la fenêtre.');
       }
     } catch (e) { console.warn('  [Routing] ❌ OpenFootball:', e.message); }
+    } // end !skipEnrichment guard
 
     // =========================================================================
     // FINALISATION & PROTECTION ANTI-WIPE
     // =========================================================================
     if (allRawMatches.length > 0) {
       tempBuiltMatches = allRawMatches.map(buildMatchRecord).filter(Boolean);
-      db.matches = tempBuiltMatches.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+      if (isTargeted) {
+        // Targeted refresh: keep matches of other leagues, replace only matches in target set.
+        const targetSet = new Set(targetBsdIds.map(Number));
+        const keep = (db.matches || []).filter(m => {
+          const lid = m && m._bsd_league_id != null ? Number(m._bsd_league_id) : null;
+          return lid == null || !targetSet.has(lid);
+        });
+        // Drop any incoming match whose BSD league ID isn't in the target set (defensive).
+        const replacements = tempBuiltMatches.filter(m => {
+          const lid = m && m._bsd_league_id != null ? Number(m._bsd_league_id) : null;
+          return lid == null || targetSet.has(lid);
+        });
+        db.matches = [...keep, ...replacements].sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+        console.log(`  [Cron:Odds] ✅ Succès (targeted) : ${replacements.length} matchs ciblés injectés, ${keep.length} matchs conservés (autres ligues).`);
+        // Persist targeted cache for short-circuit on next call
+        try { apiCacheSet(cacheKey, allRawMatches, 'bsd_targeted'); } catch (_) {}
+      } else {
+        db.matches = tempBuiltMatches.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+        console.log(`  [Cron:Odds] ✅ Succès : ${db.matches.length} matchs injectés.`);
+      }
       db.status = 'ok';
-      console.log(`  [Cron:Odds] ✅ Succès : ${db.matches.length} matchs injectés.`);
     } else {
       console.error('\x1b[31m[DB_GUARD] ⚠️ Aucune donnée récupérée. Conservation du cache.\x1b[0m');
       db.status = 'api_empty_fallback';
@@ -10205,6 +10256,43 @@ async function handleAPI(req, res, pathname, query) {
       return jsonResponse(res, 200, { count: matches.length, matches, meta: { status: db.status, fromCache, serverReady } });
     }
 
+    // ─── Tennis live (ESPN ATP+WTA) — isolé du pipeline football ──────────────
+    if (pathname === '/tennis/api/v2/matches/live/' || pathname === '/tennis/api/v2/matches/live') {
+      // Lazy refresh si cache stale au-delà du TTL
+      if (Date.now() - _tennisLiveCache.ts > TENNIS_LIVE_TTL_MS) {
+        pollTennisLive().catch(() => {});
+      }
+      const raw = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+      const onlyLive = query.live === 'true';
+      const filtered = onlyLive ? raw.filter(m => m.is_live) : raw;
+      // Sample shape (player1/player2/_sets/current_point) + extension (sets[], status, tournament)
+      const payload = filtered.map(m => ({
+        id: m.id,
+        tour: m.tour,
+        tournament: m.tournament,
+        court: m.court,
+        status: m.status,
+        is_live: m.is_live,
+        player1: { name: m.player1.name, country: m.player1.country, flag: m.player1.flag },
+        player2: { name: m.player2.name, country: m.player2.country, flag: m.player2.flag },
+        player1_sets: m.player1_sets,
+        player2_sets: m.player2_sets,
+        sets: m.sets,
+        current_set_index: m.current_set_index,
+        current_point: m.current_point,
+        serving: m.serving,
+        notes: m.notes,
+        start_time: m.start_time,
+        last_update_ts: m.last_update_ts
+      }));
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store'
+      });
+      return res.end(JSON.stringify(payload));
+    }
+
   // 2b. Match Details (proxy interne pour modal STATS)
   if (pathname === '/api/v1/match-details' && req.method === 'GET') {
     const matchId = (query.id || '').toString().trim();
@@ -10546,6 +10634,119 @@ const mime = {
   '.png': 'image/png',
   '.ico': 'image/x-icon'
 };
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS LIVE — ESPN scoreboard (ATP + WTA). Isolated from football pipeline.
+//  Route exposée : /tennis/api/v2/matches/live/  (poll côté client toutes les 30 s)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TENNIS_LIVE_TTL_MS = 30 * 1000;
+const TENNIS_ESPN_ENDPOINTS = [
+  { tour: 'ATP', url: 'https://site.api.espn.com/apis/site/v2/sports/tennis/atp/scoreboard' },
+  { tour: 'WTA', url: 'https://site.api.espn.com/apis/site/v2/sports/tennis/wta/scoreboard' }
+];
+let _tennisLiveCache = { ts: 0, data: [] };
+let _isFetchingTennis = false;
+
+function _tennisStateLabel(state, detail, period) {
+  const s = String(state || '').toLowerCase();
+  if (s === 'pre') return 'À VENIR';
+  if (s === 'post') return 'TERMINÉ';
+  if (s === 'in') {
+    if (period > 0) return `SET ${period}`;
+    return 'EN COURS';
+  }
+  return String(detail || state || '').toUpperCase() || 'INCONNU';
+}
+
+function _normalizeESPNTennisCompetition(comp, tour, tournamentName) {
+  if (!comp || !Array.isArray(comp.competitors) || comp.competitors.length < 2) return null;
+  const status = comp.status || {};
+  const stype = status.type || {};
+  const state = stype.state;
+  // Trie homeAway: 'home' = player1, 'away' = player2 (fallback : order)
+  const p1Raw = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
+  const p2Raw = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
+  const ls1 = Array.isArray(p1Raw.linescores) ? p1Raw.linescores : [];
+  const ls2 = Array.isArray(p2Raw.linescores) ? p2Raw.linescores : [];
+  const maxSets = Math.max(ls1.length, ls2.length);
+  const sets = [];
+  for (let i = 0; i < maxSets; i++) {
+    sets.push({
+      p1: Number(ls1[i]?.value ?? 0),
+      p2: Number(ls2[i]?.value ?? 0)
+    });
+  }
+  const player1_sets = sets.filter(s => s.p1 > s.p2).length;
+  const player2_sets = sets.filter(s => s.p2 > s.p1).length;
+  return {
+    id: String(comp.id || comp.uid || ''),
+    tour,
+    tournament: tournamentName || '',
+    court: comp.venue?.court || '',
+    surface: comp.venue?.fullName || '',
+    status: _tennisStateLabel(state, stype.detail, status.period),
+    is_live: state === 'in',
+    player1: {
+      name: p1Raw.athlete?.displayName || p1Raw.athlete?.shortName || '?',
+      country: p1Raw.athlete?.flag?.alt || '',
+      flag: p1Raw.athlete?.flag?.href || null
+    },
+    player2: {
+      name: p2Raw.athlete?.displayName || p2Raw.athlete?.shortName || '?',
+      country: p2Raw.athlete?.flag?.alt || '',
+      flag: p2Raw.athlete?.flag?.href || null
+    },
+    player1_sets,
+    player2_sets,
+    sets,
+    current_set_index: sets.length > 0 ? sets.length - 1 : 0,
+    current_point: null, // ESPN public scoreboard ne livre pas le point en cours
+    serving: null,
+    notes: Array.isArray(comp.notes) && comp.notes.length ? String(comp.notes[0].text || '') : '',
+    start_time: comp.startDate || comp.date || null,
+    last_update_ts: Date.now(),
+    _espn_competition_id: String(comp.id || '')
+  };
+}
+
+async function fetchESPNTennisLive() {
+  const all = [];
+  for (const ep of TENNIS_ESPN_ENDPOINTS) {
+    try {
+      const res = await httpsGet(ep.url);
+      if (res.status !== 200 || !res.data) continue;
+      const events = Array.isArray(res.data.events) ? res.data.events : [];
+      for (const ev of events) {
+        const tournamentName = ev.name || ev.shortName || '';
+        const groupings = Array.isArray(ev.groupings) ? ev.groupings : [];
+        for (const g of groupings) {
+          const comps = Array.isArray(g.competitions) ? g.competitions : [];
+          for (const c of comps) {
+            const norm = _normalizeESPNTennisCompetition(c, ep.tour, tournamentName);
+            if (norm) all.push(norm);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`  [Tennis] ESPN ${ep.tour} fetch failed: ${e.message}`);
+    }
+  }
+  return all;
+}
+
+async function pollTennisLive() {
+  if (_isFetchingTennis) return;
+  _isFetchingTennis = true;
+  try {
+    const data = await fetchESPNTennisLive();
+    _tennisLiveCache = { ts: Date.now(), data };
+  } catch (e) {
+    console.warn('  [Tennis] poll error:', e.message);
+  } finally {
+    _isFetchingTennis = false;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13594,7 +13795,7 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
 - Chaque pari a une HISTOIRE. "Je joue l'Over 2.5 parce que ces deux équipes ont la finesse défensive d'un tramway", pas "Over 2.5 : 68%".
 - Interdiction de lister des probabilités froides en succession. Une stat peut ILLUSTRER un argument, jamais le remplacer.
 
-[FORMAT DE SORTIE — CHRONIQUE EN 5 ACTES]
+[FORMAT DE SORTIE — CHRONIQUE EN 6 ACTES]
 
 1. EN-TETE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])
 
@@ -13620,7 +13821,17 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    - **Le coup de poker** : [Pari] — [Conviction]
    Mise Kelly : X.X%
 
-5. MON VERDICT :
+5. REVUE DE PRESSE (AVIS MEDIAS) :
+   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.).
+   Format strict, 5 items numerotes sur 1 a 2 lignes maximum chacun, aucun emoji :
+   1. **[Nom du Media]** : "Citation ou analyse resumee sur la dynamique d'une des deux equipes."
+   2. **[Nom du Media]** : "..."
+   3. **[Nom du Media]** : "..."
+   4. **[Nom du Media]** : "..."
+   5. **[Nom du Media]** : "..."
+   Varie les angles : forme actuelle, absences/blessures probables, enjeux psychologiques, pari le plus debattu, cote sous-evaluee, tactique attendue.
+
+6. MON VERDICT :
    Un paragraphe final tranché. "Ce match, je le joue / je le snobe." Une phrase mémorable — le genre qu'on envoie à un ami avant le match.
 
 [REGLE D'OR]
@@ -13745,7 +13956,7 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
 - Chaque pari a une HISTOIRE. "Je joue l'Over 2.5 parce que ces deux équipes ont la finesse défensive d'un tramway", pas "Over 2.5 : 68%".
 - Interdiction de lister des probabilités froides en succession. Une stat peut ILLUSTRER un argument, jamais le remplacer.
 
-[FORMAT DE SORTIE — CHRONIQUE EN 5 ACTES]
+[FORMAT DE SORTIE — CHRONIQUE EN 6 ACTES]
 
 1. EN-TETE DU MATCH : [Équipe A] vs [Équipe B] ([Compétition])
 
@@ -13771,7 +13982,17 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    - **Le coup de poker** : [Pari] — [Conviction]
    Mise Kelly : X.X%
 
-5. MON VERDICT :
+5. REVUE DE PRESSE (AVIS MEDIAS) :
+   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.).
+   Format strict, 5 items numerotes sur 1 a 2 lignes maximum chacun, aucun emoji :
+   1. **[Nom du Media]** : "Citation ou analyse resumee sur la dynamique d'une des deux equipes."
+   2. **[Nom du Media]** : "..."
+   3. **[Nom du Media]** : "..."
+   4. **[Nom du Media]** : "..."
+   5. **[Nom du Media]** : "..."
+   Varie les angles : forme actuelle, absences/blessures probables, enjeux psychologiques, pari le plus debattu, cote sous-evaluee, tactique attendue.
+
+6. MON VERDICT :
    Un paragraphe final tranché. "Ce match, je le joue / je le snobe." Une phrase mémorable — le genre qu'on envoie à un ami avant le match.
 
 [REGLE D'OR]
@@ -13867,14 +14088,42 @@ if (pathname === '/api/v1/rebuild' && req.method === 'POST') {
 }
 
 // POST /api/v1/refresh (forcer la MAJ)
+// Query params (optional):
+//   ?league=15           → target BSD league ID 15
+//   ?league=15,6,3       → target multiple BSD league IDs
+//   ?league=207&scheme=config → resolve via configIdToBsd
+//   (no league)          → full global refresh (legacy behaviour)
 if (pathname === '/api/v1/refresh' && req.method === 'POST') {
   (async () => {
     try {
-      console.log('\n  [Manual] Rafraîchissement forcé…');
-      await fetchStats(true);
-      await fetchOdds();
+      const rawLeague = (query.league || '').toString().trim();
+      const scheme = ((query.scheme || 'bsd').toString().toLowerCase() === 'config') ? 'config' : 'bsd';
+      const parsedIds = rawLeague
+        ? rawLeague.split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n) && n > 0)
+        : [];
+      const opts = {};
+      let targetedBsd = null;
+      if (parsedIds.length > 0) {
+        if (scheme === 'config') {
+          opts.configLeagueIds = parsedIds;
+          targetedBsd = parsedIds.map(id => configIdToBsd(id)).filter(v => v != null);
+        } else {
+          opts.bsdLeagueIds = parsedIds;
+          targetedBsd = parsedIds;
+        }
+        console.log(`\n  [Manual] Rafraîchissement ciblé — scheme=${scheme}, ids=[${parsedIds.join(',')}] → BSD=[${targetedBsd.join(',')}]`);
+      } else {
+        console.log('\n  [Manual] Rafraîchissement forcé (global)…');
+      }
+      // Stats refresh stays league-agnostic (standings); skip when targeted refresh of odds only.
+      if (parsedIds.length === 0) {
+        await fetchStats(true);
+      }
+      await fetchOdds(true, opts);
       jsonResponse(res, 200, {
-        message: 'Rafraîchissement terminé',
+        message: parsedIds.length > 0 ? 'Rafraîchissement ciblé terminé' : 'Rafraîchissement terminé',
+        targetedLeagues: targetedBsd,
+        scheme: parsedIds.length > 0 ? scheme : null,
         matchCount: db.matches.length,
         teamCount: Object.keys(db.teamStats).length,
         lastOddsUpdate: db.lastOddsUpdate,
@@ -13946,7 +14195,7 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
     }
 
     // --- Cas B : Routes API inside handleAPI (Matchs, Leagues, etc.) ---
-    if (pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/') || pathname.startsWith('/tennis/')) {
         try {
             await handleAPI(req, res, pathname, query);
             if (!res.headersSent) {
@@ -15108,6 +15357,10 @@ setInterval(() => {
 }, 2 * 3600 * 1000);
 
 setInterval(() => pollLiveScores().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+
+// Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
+setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
+pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  CRON: Recherche automatique de vidéos de conférences de presse (1-2h avant match)

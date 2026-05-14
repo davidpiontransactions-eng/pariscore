@@ -849,6 +849,15 @@
   #dp-bankroll-input:focus { border-color:#ab47bc; }
   .dp-kelly-hint { font:11px var(--font-mono); color:var(--text3); }
   .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#ce93d8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:4px 10px; margin:12px 0 0; margin-left:29px; }
+  /* ── Revue de presse (section 5) — cartes médias ─────────────── */
+  .dp-press-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 26px; counter-reset: press-counter; }
+  .dp-press-item { padding: 12px 16px 12px 18px; border-left: 3px solid #c0392b; background: rgba(192,57,43,0.05); border-radius: 0 6px 6px 0; counter-increment: press-counter; position: relative; }
+  .dp-press-item::before { content: counter(press-counter); position: absolute; top: 10px; right: 12px; font: 700 10px/1 var(--font-mono); color: rgba(192,57,43,0.45); }
+  .dp-press-media { font: 700 12px/1.2 var(--font-eq-title); color: #c0392b; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+  .dp-press-quote { font: 400 14.5px/1.65 var(--font-eq-body); color: var(--text2); font-style: italic; }
+  .dp-press-quote strong { color: var(--text); font-weight: 600; font-style: normal; }
+  body:not(.dark-theme) .dp-press-item { background: rgba(192,57,43,0.04); }
+  body:not(.dark-theme) .dp-press-quote { color: #404040; }
   /* ── Verdict final — pull quote ─────────────────────────────── */
   .dp-verdict-body { font: 400 17px/1.9 var(--font-eq-body); color: var(--text); font-style: italic; margin: 0 0 22px; padding: 22px 24px; background: rgba(192,57,43,0.06); border-radius: 8px; border-left: 3px solid #c0392b; }
   .dp-verdict-body strong { color: #c0392b; font-weight: 600; font-style: normal; }
@@ -959,7 +968,7 @@
   .standings-table tr:hover td { background: rgba(255,255,255,0.02); }
   /* Rankings List */
   .rk-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-  .rk-view-tabs { display: flex; gap: 0; background: var(--bg3); border-radius: 8px; padding: 3px; }
+  .rk-view-tabs { display: inline-flex; gap: 8px; background: var(--bg3); border-radius: 8px; padding: 4px; }
   /* Live Detail Modal */
   #live-detail-modal { position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:1020;opacity:0;pointer-events:none;transition:opacity .2s; }
   #live-detail-modal.open { opacity:1;pointer-events:all; }
@@ -991,7 +1000,7 @@
   .ld-inc-icon { font-size:16px; }
   .ld-inc-team { color:var(--text2); }
   .ld-empty { color:var(--text3);font-size:12px;text-align:center;padding:40px 0; }
-  .rk-view-tab { flex: 1; padding: 7px 0; text-align: center; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all .15s; color: var(--text3); user-select: none; }
+  .rk-view-tab { flex: 0 0 auto; min-width: 110px; padding: 8px 22px; text-align: center; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all .15s; color: var(--text3); user-select: none; white-space: nowrap; }
   .rk-view-tab.active { background: var(--bg4); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .rk-selects { display: flex; gap: 8px; }
   .rk-select { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; color: var(--text2); font-size: 12px; padding: 7px 10px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6068'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; }
@@ -1013,6 +1022,8 @@
   .rk-badge-s.rk-mid { background:rgba(255,167,38,0.15);color:#ffa726;border:1px solid rgba(255,167,38,0.3); }
   .rk-badge-s.rk-low { background:rgba(255,255,255,0.06);color:var(--text2);border:1px solid rgba(255,255,255,0.1); }
   .rk-badge-s.rk-none { background:rgba(255,255,255,0.03);color:var(--text3);border:1px dashed rgba(255,255,255,0.08); }
+  .rk-loading { display:inline-block;min-width:14px;color:var(--text3);opacity:.6;animation:rk-pulse 1.2s ease-in-out infinite; }
+  @keyframes rk-pulse { 0%,100%{opacity:.3} 50%{opacity:.8} }
   .rk-val { width: 38px; text-align: right; font-family: var(--font-mono); font-size: 12px; font-weight: 700; flex-shrink: 0; }
   .rk-bar { width: 64px; flex-shrink: 0; }
   .rk-bar-track { background: var(--bg4); height: 3px; border-radius: 2px; overflow: hidden; }
@@ -1154,9 +1165,26 @@
     background: var(--bg2);
   }
   #vb-table thead th:first-child { z-index: 6; }
+  /* Col 2 (Équipes) — sticky juste après col 1 (offset = 60px width effectif col 1) */
+  #vb-table th:nth-child(2), #vb-table td:nth-child(2) {
+    position: sticky; left: 60px; z-index: 2;
+    background: var(--bg2);
+  }
+  #vb-table thead th:nth-child(2) { z-index: 6; }
+  /* Light theme: forcer fond blanc opaque sur col 1+2 sticky */
+  body:not(.dark-theme) #vb-table td:first-child,
+  body:not(.dark-theme) #vb-table td:nth-child(2) { background: #ffffff; }
+  body:not(.dark-theme) #vb-table thead th:first-child,
+  body:not(.dark-theme) #vb-table thead th:nth-child(2) { background: #ffffff; }
+  /* Ombre droite col 2 pour signaler la zone scrollable */
+  #vb-table td:nth-child(2)::after {
+    content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
+    width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.12), transparent);
+    pointer-events: none;
+  }
   #vb-table td:first-child::after {
     content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
-    width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.15), transparent);
+    width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.06), transparent);
     pointer-events: none;
   }
   .table-header {
@@ -4423,19 +4451,20 @@
     PariScore
   </div>
   <div class="nav-links">
-    <a href="#" class="active" onclick="showPage('accueil',this);return false;" data-page="accueil">Accueil</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">Hot Picks</a>
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Matchs</a>
+    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis">🎾 Tennis</a>
+    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
+    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">Hot Picks</a>
+    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris">Mes Paris</a>
+    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide">📖 Guide</a>
     <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets">Sure Bets</a>
     <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur">Comparateur</a>
-    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
     <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions">Prédictions IA</a>
-    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique">Historique</a>
-    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris">Mes Paris</a>
     <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances">Tendances</a>
     <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes">Alertes</a>
+    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique">Historique</a>
+    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil">Accueil</a>
     <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs">Tarifs</a>
-    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide">📖 Guide</a>
     <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres">⚙️</a>
   </div>
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
@@ -5745,6 +5774,56 @@
 </section>
 </div><!-- /page-alertes -->
 
+<!-- PAGE : TENNIS LIVE (ESPN ATP+WTA) -->
+<div id="page-tennis" data-page="tennis" style="display:none;">
+  <section class="section fade-up" id="tennis-live-section">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:28px;">🎾 Tennis — Live</h2>
+        <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">ATP + WTA · Données ESPN · Rafraîchi toutes les 30 s</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="tennis-live-status" style="font-size:12px;color:var(--text3,#5a6068);">—</span>
+        <button onclick="tickTennisLive()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;">🔄 Actualiser</button>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);">
+          <input type="checkbox" id="tennis-live-only" checked onchange="renderTennisLive(window._tennisLastFetch||[])"> Live uniquement
+        </label>
+      </div>
+    </div>
+    <div style="overflow-x:auto;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;">
+      <table id="tennis-live-table" style="width:100%;border-collapse:collapse;min-width:900px;">
+        <thead>
+          <tr style="background:var(--bg3,#181c20);">
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tournoi</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tour</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 1</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 2</th>
+            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Sets</th>
+            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Jeux</th>
+            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Point</th>
+            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Statut</th>
+          </tr>
+        </thead>
+        <tbody id="tennis-live-tbody">
+          <tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div><!-- /page-tennis -->
+
+<style>
+  #tennis-live-table td { padding:10px 12px; border-top:1px solid var(--bg4,#1e2328); font-size:13px; color:var(--text,#e8eaed); }
+  #tennis-live-table tr:hover { background:var(--bg3,#181c20); }
+  #tennis-live-table .tennis-serving { font-weight:700; color:#22c55e; }
+  #tennis-live-table .tennis-set-score { font-family:'DM Mono',monospace; font-size:14px; color:var(--blue,#29b6f6); }
+  #tennis-live-table .tennis-games { font-family:'DM Mono',monospace; font-size:13px; color:var(--text2,#8d9399); }
+  #tennis-live-table .tennis-point { font-family:'DM Mono',monospace; font-weight:700; color:var(--green,#00e676); }
+  #tennis-live-table .tennis-status-live { color:var(--red,#ff4d4d); font-weight:700; }
+  #tennis-live-table .tennis-status-final { color:var(--text3,#5a6068); }
+  #tennis-live-table .tennis-flag { width:18px; height:12px; object-fit:cover; vertical-align:middle; margin-right:6px; border-radius:2px; }
+</style>
+
 <!-- PAGE : TARIFS -->
 <div id="page-tarifs" data-page="tarifs" style="display:none;">
 <!-- TARIFS -->
@@ -5823,6 +5902,26 @@
           <div class="guide-card-title">Forme Récente (Sparkline)</div>
           <div class="guide-card-desc">Visualisation compacte des 5 derniers résultats: W (victoire), D (nul), L (défaite). Identifiez rapidement la dynamique d'une équipe.</div>
           <a class="guide-card-link" onclick="scrollToSection('guide-filtres-section');return false;">Modes de jeu →</a>
+        </div>
+      </div>
+
+      <div id="pwr" class="guide-card-visual">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=PWR+Score+V44" alt="PWR Score">
+        <div class="guide-card-body">
+          <div class="guide-card-icon">PWR</div>
+          <div class="guide-card-title">PWR Score (PowerScore V44)</div>
+          <div class="guide-card-desc">Score composite 0–100 affiché dans la colonne Classement du tableau Matchs. Synthèse 4 piliers : forme pondérée par adversaire (40%), streak court 3 derniers (25%), qualité offensive/défensive xG (20%), force de l'opposition (15%).</div>
+          <a class="guide-card-link" onclick="scrollToSection('guide-glossaire');return false;">Détail formule →</a>
+        </div>
+      </div>
+
+      <div id="forme-tab" class="guide-card-visual">
+        <img src="https://placehold.co/600x300/f5f5f5/ed1c24?text=Onglet+Forme" alt="Onglet Forme">
+        <div class="guide-card-body">
+          <div class="guide-card-icon">FORM</div>
+          <div class="guide-card-title">Onglet "Forme" (Modal Insights)</div>
+          <div class="guide-card-desc">Snapshot 3 zones pour décision parieur pro &lt;10 sec : Triple KPI Header (Form Score 0-100 + PPG L5 + xG diff), Form Barcode 10 derniers matchs avec récence pondérée + adversaire Top 5 + venue, Verdict IA NLG auto-généré avec recommandation marché.</div>
+          <a class="guide-card-link" onclick="scrollToSection('guide-glossaire');return false;">Détail composants →</a>
         </div>
       </div>
     </div>
@@ -6191,6 +6290,212 @@
         </div>
       </div>
 
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">05</span>
+          PWR Score (PowerScore V44)
+        </div>
+        <div class="guide-gloss-body">
+          <p>Score composite <strong>0 → 100</strong> affiché dans la colonne <em>Classement</em> du tableau Matchs (ligne D pour le domicile, ligne E pour l'extérieur). Synthétise en un seul chiffre la dynamique récente d'une équipe pondérée par la qualité des adversaires affrontés. Code couleur : <span style="color:#E2001A;font-weight:700;">≥65 fort</span> · <span style="color:#1A1A1A;font-weight:700;">45–64 moyen</span> · <span style="color:#888;font-weight:700;">&lt;45 faible</span>.</p>
+
+          <div class="guide-gloss-formula">
+            <code>PWR = Piller_A + Piller_B + Piller_C + Piller_D</code><br>
+            <code>borné à [5, 100]</code>
+          </div>
+
+          <p><strong>Décomposition par pilier :</strong></p>
+
+          <div style="margin:14px 0;border:1px solid var(--border2);border-radius:6px;overflow:hidden;font-family:var(--font-mono);">
+            <div style="display:grid;grid-template-columns:90px 80px 1fr;background:var(--bg4);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;">
+              <span>Pilier</span><span>Poids</span><span>Critère</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 80px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;">
+              <span style="color:#E2001A;font-weight:700;">A — Résultats</span>
+              <span style="font-weight:700;">40 pts</span>
+              <span style="color:var(--text2);">Σ(R × Wt × Wopp) sur les 5 derniers — points par résultat pondérés par récence et par classement adversaire.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 80px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;background:rgba(0,0,0,0.02);">
+              <span style="color:#ff8c00;font-weight:700;">B — Streak</span>
+              <span style="font-weight:700;">25 pts</span>
+              <span style="color:var(--text2);">Dynamique sur les 3 derniers matchs. 3 victoires → 25 pts · 2V → 20–22 · 1V → 10–14 · 0V → 2–8.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 80px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;">
+              <span style="color:#15803D;font-weight:700;">C — Qualité Off/Déf</span>
+              <span style="font-weight:700;">20 pts</span>
+              <span style="color:var(--text2);">xG (cap 10) + score défensif (clean sheet rate, cap 6) + efficacité buts pour/total (cap 4).</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 80px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;background:rgba(0,0,0,0.02);">
+              <span style="color:#1976d2;font-weight:700;">D — Opposition</span>
+              <span style="font-weight:700;">15 pts</span>
+              <span style="color:var(--text2);">Force adversaire courant. Rang ≤2 → 15 · ≤4 → 12 · ≤6 → 9 · ≤8 → 6 · ≤12 → 4 · sinon 2.</span>
+            </div>
+          </div>
+
+          <p><strong>Détail formules clés :</strong></p>
+
+          <div class="guide-gloss-formula">
+            <code>// Pilier A — Performance pondérée</code><br>
+            <code>R = {W:3, D:1, L:0}  &nbsp;// points par résultat</code><br>
+            <code>Wt = 1.0, 0.8, 0.6, 0.4, 0.2  &nbsp;// récence (5 derniers)</code><br>
+            <code>Wopp = ≤2:1.5 · ≤4:1.3 · ≤6:1.15 · ≤8:1.05 · ≤12:0.95 · &gt;12:0.85</code><br>
+            <code>A = (Σ(R × Wt × Wopp) / Σ(3 × Wt × Wopp)) × 40</code><br><br>
+            <code>// Pilier C — Qualité</code><br>
+            <code>xG_sc = min(10, (xG / 3.5) × 10)</code><br>
+            <code>def_sc = avgConceded &lt; 0.6 ? 6 : &lt; 1.0 ? 4 : &lt; 1.4 ? 2 : 0</code><br>
+            <code>eff_sc = min(4, (gf / (gf+ga)) × 8)</code><br>
+            <code>C = min(20, xG_sc + def_sc + eff_sc)</code>
+          </div>
+
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret — Vissel Kobe (J1, rang 1, forme WWDWW vs adversaires 8/3/14/2/12) :</span>
+            Pilier A : 5 résultats forts contre top → <strong>~36 pts</strong><br>
+            Pilier B : 4W+1D sur les 3 derniers → <strong>22 pts</strong><br>
+            Pilier C : xG 1.9 + déf solide + efficacité haute → <strong>~16 pts</strong><br>
+            Pilier D : adversaire courant rang 14 → <strong>2 pts</strong><br>
+            → PWR = 36 + 22 + 16 + 2 = <code class="guide-gloss-result">76</code> (≥65 → rouge fort)
+          </div>
+
+          <p style="margin-top:14px;font-size:12px;color:var(--text2);">
+            <strong>À ne pas confondre :</strong> le <em>PWR Score</em> est un score frontend calculé instantanément côté client à partir des données du match. Il diffère du <em>Power Score IA</em> (modal Insights → onglet Power Score) qui est une analyse approfondie générée serveur via streaming AI.
+          </p>
+        </div>
+      </div>
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">06</span>
+          Top X% Ligue
+        </div>
+        <div class="guide-gloss-body">
+          <p>Chip affiché dans la colonne <em>Top Conseils IA</em> du tableau Matchs (ex. <strong>top 50% ligue</strong>). Indique le <strong>rang percentile</strong> du match parmi tous les matchs de la même ligue, classés par <em>Reliability Score</em> (= Confidence Score). Plus la valeur est <strong>petite</strong>, plus le match est <strong>fiable relativement à sa ligue</strong>.</p>
+
+          <div class="guide-gloss-formula">
+            <code>// Étape 1 : grouper les matchs par ligue</code><br>
+            <code>// Étape 2 : trier par reliability_score décroissant</code><br>
+            <code>rank = position du match dans le tri (1 = meilleur)</code><br>
+            <code>pct = round(rank / total_matchs_ligue × 100)</code>
+          </div>
+
+          <p><strong>Interprétation rapide :</strong></p>
+          <div style="margin:14px 0;border:1px solid var(--border2);border-radius:6px;overflow:hidden;font-family:var(--font-mono);">
+            <div style="display:grid;grid-template-columns:120px 1fr;background:var(--bg4);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;">
+              <span>Chip</span><span>Signification</span>
+            </div>
+            <div style="display:grid;grid-template-columns:120px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;">
+              <span style="color:#15803D;font-weight:700;">top 10–25%</span>
+              <span style="color:var(--text2);">Match parmi les plus fiables de sa ligue — données volumineuses + IC serrée + source réelle.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:120px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;background:rgba(0,0,0,0.02);">
+              <span style="color:#ff8c00;font-weight:700;">top 26–60%</span>
+              <span style="color:var(--text2);">Fiabilité moyenne. Croiser avec EV et BTTS accuracy avant de miser.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:120px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;">
+              <span style="color:#888;font-weight:700;">top 61–100%</span>
+              <span style="color:var(--text2);">Rang faible (peu de données / IC large / data simulée). Éviter les paris à fort enjeu.</span>
+            </div>
+          </div>
+
+          <p><strong>Composition du Reliability Score (Confidence) — 3 piliers :</strong></p>
+          <div class="guide-gloss-formula">
+            <code>volumeScore = min(100, avgPlayed / 20 × 100)   // 35%</code><br>
+            <code>// avgPlayed = (matchs joués Dom + matchs joués Ext) / 2 — 20+ matchs = max</code><br><br>
+            <code>stabilityScore = max(0, 100 − IC_width × 1.8)  // 35%</code><br>
+            <code>// IC_width = largeur de l'intervalle de confiance UQD sur Over 2.5 (bootstrap 500 iter)</code><br>
+            <code>// IC serrée → match stable → score haut</code><br><br>
+            <code>qualityScore = isRealData ? 85 : 28           // 30%</code><br>
+            <code>// 85 si standings BSD/API-Football, 28 si simStats() (badge SIM)</code><br><br>
+            <code>reliability = round(0.35 × vol + 0.35 × stab + 0.30 × qual)  // [0, 100]</code>
+          </div>
+
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret — J1 League (12 matchs aujourd'hui) :</span>
+            Vissel Kobe vs Kyoto (reliability = 82) → tri rang 1/12 → <strong>top 8% ligue</strong> ✅<br>
+            Machida vs Tokyo Verdy (reliability = 64) → tri rang 6/12 → <strong>top 50% ligue</strong> ⚠️<br>
+            Yokohama vs Sagan Tosu (reliability = 41) → tri rang 11/12 → <strong>top 92% ligue</strong> 🛑
+          </div>
+
+          <p style="margin-top:14px;font-size:12px;color:var(--text2);">
+            <strong>Note :</strong> le pourcentage est <em>relatif à la ligue du jour</em>, pas absolu. Une J1 avec 2 matchs aura toujours un "top 50%" et un "top 100%" — utiliser la chip <strong>+EV</strong> + <strong>BTTS/O2.5 accuracy</strong> côté droite comme confirmation indépendante avant de parier.
+          </p>
+        </div>
+      </div>
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">07</span>
+          Onglet "Forme" — Form Snapshot 3-2-1
+        </div>
+        <div class="guide-gloss-body">
+          <p>Onglet dédié <strong>"Forme"</strong> dans le modal Insights (anciennement "Graphique"). Conçu pour permettre au parieur pro de prendre une décision sur la dynamique des 2 équipes en <strong>moins de 10 secondes</strong>. Structure 3 zones verticales.</p>
+
+          <h4 style="margin:14px 0 8px;font-size:12px;font-weight:700;color:var(--blue)">Zone 1 — Triple KPI Header</h4>
+          <p>2 cartes côte-à-côte (Home / Away). Chaque carte affiche 3 KPI :</p>
+          <ul style="margin:8px 0 12px 18px;font-size:12px;color:var(--text2);line-height:1.7">
+            <li><strong>Form Score 0-100</strong> (gros chiffre 44px) — composite custom PariScore (voir formule ci-dessous). Badge <span style="color:var(--green);font-weight:700">FORT</span> ≥65 / <span style="color:var(--amber);font-weight:700">MOYEN</span> 45-64 / <span style="color:var(--red);font-weight:700">FAIBLE</span> &lt;45.</li>
+            <li><strong>PPG L5</strong> — Points Par Match sur les 5 derniers, avec delta vs PPG saison (↑+0.6 / →0 / ↓-0.4).</li>
+            <li><strong>xG diff</strong> — Différentiel xG (sur-perf attendue si &gt;+0.3, sous-perf si &lt;-0.3, équilibré sinon).</li>
+          </ul>
+
+          <h4 style="margin:14px 0 8px;font-size:12px;font-weight:700;color:var(--amber)">Zone 2 — Form Barcode</h4>
+          <p>10 segments par équipe représentant les 10 derniers matchs, du plus <strong>récent à gauche</strong> au plus ancien à droite. Hauteur de chaque case proportionnelle à la <strong>récence pondérée</strong> (récent = pleine hauteur, ancien = 10%). Indicateurs visuels :</p>
+          <ul style="margin:8px 0 12px 18px;font-size:12px;color:var(--text2);line-height:1.7">
+            <li><strong>Couleur</strong> : vert (W) / orange (D) / rouge (L)</li>
+            <li><strong>Bordure ambre</strong> = adversaire <em>Top 5 ligue</em> (signal "performance vs forts")</li>
+            <li><strong>Bordure basse rouge 3px</strong> = match joué à l'<em>extérieur</em></li>
+            <li>Tooltip riche au hover : <code>✈ Ext vs Real Madrid #3 → L 1-2</code></li>
+          </ul>
+
+          <h4 style="margin:14px 0 8px;font-size:12px;font-weight:700;color:var(--green)">Zone 3 — Verdict IA NLG</h4>
+          <p>Bloc texte généré automatiquement à partir des Zone 1 + Zone 2. 4 templates selon Δ Form Score :</p>
+          <div style="margin:10px 0;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-family:var(--font-mono)">
+            <div style="display:grid;grid-template-columns:90px 1fr;background:var(--bg4);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase">
+              <span>Δ Form</span><span>Verdict & Recommandation</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 1fr;padding:10px 12px;border-top:1px solid var(--border);font-size:12px;align-items:start;gap:4px">
+              <span style="color:var(--green);font-weight:700">&gt; +18</span>
+              <span style="color:var(--text2)"><strong>Home en pleine ascension</strong>. Pari recommandé : <strong>1 ou Double Chance 1X</strong>.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 1fr;padding:10px 12px;border-top:1px solid var(--border);font-size:12px;align-items:start;gap:4px;background:rgba(0,0,0,0.02)">
+              <span style="color:#ab47bc;font-weight:700">&lt; -18</span>
+              <span style="color:var(--text2)"><strong>Away en pleine forme</strong>. Pari : <strong>2 ou Double Chance X2</strong> (cote bonifiée habituelle).</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 1fr;padding:10px 12px;border-top:1px solid var(--border);font-size:12px;align-items:start;gap:4px">
+              <span style="color:var(--amber);font-weight:700">|Δ| &lt; 8</span>
+              <span style="color:var(--text2)"><strong>Forces équilibrées</strong>. Considérer marché <strong>Over 1.5 ou BTTS</strong> au lieu de 1N2.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:90px 1fr;padding:10px 12px;border-top:1px solid var(--border);font-size:12px;align-items:start;gap:4px;background:rgba(0,0,0,0.02)">
+              <span style="color:var(--text3);font-weight:700">8-18</span>
+              <span style="color:var(--text2)">Léger avantage. Edge modeste — vérifier <strong>EV</strong> et <strong>xG diff</strong> avant de miser.</span>
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--text3);margin-top:6px">Contextes additionnels auto-ajoutés : xG mismatch &gt;1 entre les 2 équipes, ou performance vs Top 8 &gt;60%. CTA "Voir Top 3 Conseils IA →" switch vers onglet Scouting.</p>
+
+          <h4 style="margin:18px 0 8px;font-size:12px;font-weight:700;color:var(--text)">Formule Form Score 0-100</h4>
+          <div class="guide-gloss-formula">
+            <code>formScore = clamp(0, 100, round(</code><br>
+            <code>&nbsp;&nbsp;PPG_L5 / 3 × 40         <span style="color:var(--text3)">// 40 pts max — points par match sur 5 derniers</span></code><br>
+            <code>&nbsp;&nbsp;+ (xgDiff + 2) / 4 × 30 <span style="color:var(--text3)">// 30 pts max — xG diff normalisé [-2, +2]</span></code><br>
+            <code>&nbsp;&nbsp;+ venueBonus × 20       <span style="color:var(--text3)">// 20 pts max — winRate domicile/extérieur</span></code><br>
+            <code>&nbsp;&nbsp;+ oppQualityBonus × 10  <span style="color:var(--text3)">// 10 pts max — % W vs adversaires Top 8</span></code><br>
+            <code>))</code>
+          </div>
+          <p style="font-size:11px;color:var(--text3);margin-top:8px">Si un pilier est null (ex: pas d'historique vs Top 8), le score est <strong>rescalé proportionnellement</strong> aux poids disponibles — pas de pénalité automatique.</p>
+
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">Exemple concret — Vissel Kobe (J1, 5 derniers : W W D W W) :</span>
+            PPG L5 = (3+3+1+3+3)/5 = <strong>2.6</strong> → 2.6/3 × 40 = <strong>34.7 pts</strong><br>
+            xG diff = 1.8 (sur-perf) → (1.8+2)/4 × 30 = <strong>28.5 pts</strong><br>
+            Venue (winRate dom) = 80% → 0.8 × 20 = <strong>16 pts</strong><br>
+            Opp Quality (4W/5 vs Top 8) = 0.8 → 0.8 × 10 = <strong>8 pts</strong><br>
+            → Form Score = 34.7 + 28.5 + 16 + 8 = <code class="guide-gloss-result">87</code> (badge FORT ✅)
+          </div>
+
+          <p style="margin-top:14px;font-size:12px;color:var(--text2)">
+            <strong>Différence avec PWR Score (entry 05) :</strong> Form Score (Forme tab) intègre <em>venue</em> et <em>opp quality</em>, exposé dans modal Insights. PWR Score (colonne 3 tableau Matchs) est plus compact, utilise pondération récence Wt × Wopp continue. Les 2 sont complémentaires : PWR pour scan rapide tableau, Form Score pour analyse approfondie en modal.
+          </p>
+        </div>
+      </div>
+
     </div>
 
     <!-- Navigation guide -->
@@ -6389,8 +6694,9 @@
       <div class="ins-tabs">
         <div class="ins-tab active" onclick="insShowTab('resume')">Résumé</div>
         <div class="ins-tab" onclick="insShowTab('stats')">Stats</div>
+        <div class="ins-tab" onclick="insShowTab('joueurs')">Stats Joueurs</div>
         <div class="ins-tab" onclick="insShowTab('scouting')">PRO SCOUT</div>
-        <div class="ins-tab" onclick="insShowTab('graphique')">Graphique</div>
+        <div class="ins-tab" onclick="insShowTab('graphique')">Forme</div>
         <div class="ins-tab" onclick="insShowTab('classement')">Classement</div>
         <div class="ins-tab" onclick="insShowTab('corners')">Corners</div>
         <div class="ins-tab" onclick="insShowTab('powerscore')">Power Score</div>
@@ -6617,6 +6923,8 @@ let matchesRetryTimer = null;   // retry auto si /api/v1/matches échoue
 
 // ─── PAGE ROUTER ─────────────────────────────────────────────────────────────
 function showPage(pageId, linkEl) {
+  // Stop tennis poll quand on quitte l'onglet
+  if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   document.querySelectorAll('div[data-page]').forEach(el => el.style.display = 'none');
   const page = document.getElementById('page-' + pageId);
   if (page) {
@@ -6642,7 +6950,87 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
+  if (pageId === 'tennis')   startTennisLive();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── TENNIS LIVE (ESPN ATP+WTA, poll 30 s) ──────────────────────────────────
+let _tennisTimer = null;
+window._tennisLastFetch = [];
+
+function _escTennis(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function _tennisStatusClass(m) {
+  if (m.is_live) return 'tennis-status-live';
+  if (/termin|final/i.test(m.status || '')) return 'tennis-status-final';
+  return '';
+}
+
+function renderTennisLive(matches) {
+  const tbody = document.getElementById('tennis-live-tbody');
+  if (!tbody) return;
+  const onlyLive = document.getElementById('tennis-live-only')?.checked;
+  const list = onlyLive ? (matches || []).filter(m => m.is_live) : (matches || []);
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement.' : 'Aucun match disponible.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(m => {
+    const sets = Array.isArray(m.sets) ? m.sets : [];
+    const lastSet = sets[m.current_set_index] || sets[sets.length - 1] || { p1: 0, p2: 0 };
+    const setsScore = `${m.player1_sets ?? 0}-${m.player2_sets ?? 0}`;
+    const gamesScore = sets.length ? `${lastSet.p1 ?? 0}-${lastSet.p2 ?? 0}` : '—';
+    const point = m.current_point || '—';
+    const allSets = sets.length ? sets.map(s => `${s.p1}-${s.p2}`).join(' ') : '—';
+    const p1Flag = m.player1?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player1.flag)}" alt="">` : '';
+    const p2Flag = m.player2?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player2.flag)}" alt="">` : '';
+    const p1Cls = m.serving === 1 ? 'tennis-serving' : '';
+    const p2Cls = m.serving === 2 ? 'tennis-serving' : '';
+    return `<tr>
+      <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}</td>
+      <td>${_escTennis(m.tour || '')}</td>
+      <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}</td>
+      <td class="${p2Cls}">${p2Flag}${_escTennis(m.player2?.name)}</td>
+      <td style="text-align:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></td>
+      <td style="text-align:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span></td>
+      <td style="text-align:center;"><span class="tennis-point">${_escTennis(point)}</span></td>
+      <td style="text-align:center;" class="${_tennisStatusClass(m)}">${_escTennis(m.status)}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function tickTennisLive() {
+  const statusEl = document.getElementById('tennis-live-status');
+  try {
+    if (statusEl) statusEl.textContent = 'Mise à jour…';
+    const r = await fetch('/tennis/api/v2/matches/live/', { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    window._tennisLastFetch = Array.isArray(data) ? data : [];
+    renderTennisLive(window._tennisLastFetch);
+    if (statusEl) statusEl.textContent = `${window._tennisLastFetch.length} match(s) · ${new Date().toLocaleTimeString('fr-FR')}`;
+  } catch (e) {
+    console.warn('[Tennis] fetch error:', e.message);
+    if (statusEl) statusEl.textContent = 'Erreur réseau';
+    const tbody = document.getElementById('tennis-live-tbody');
+    if (tbody && !window._tennisLastFetch.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</td></tr>';
+    }
+  }
+}
+
+function startTennisLive() {
+  tickTennisLive();
+  if (_tennisTimer) clearInterval(_tennisTimer);
+  _tennisTimer = setInterval(tickTennisLive, 30 * 1000);
+}
+
+function stopTennisLive() {
+  if (_tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
 }
 
 // ─── INIT DAY FILTERS ────────────────────────────────────────────────────────
@@ -8693,44 +9081,46 @@ function buildTop5Prematch(matches) {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  POWERSCORE V44 — Σ(R × Wt × Wopp) → 4 piliers pondérés
 // ═══════════════════════════════════════════════════════════════════════════════
-function calcPowerScoreV44(formStr, stats, xgVal, opponentRank) {
+// Retourne breakdown des 4 piliers + total. Utilisé par radar Power Score modal.
+function calcPowerScoreV44Detailed(formStr, stats, xgVal, opponentRank) {
   const T = Math.min((formStr || '').length, 5);
   if (T === 0) {
     const ppg = stats?.ppg || 0;
-    return Math.min(100, Math.max(10, Math.round(ppg / 3 * 100)));
+    const fallback = Math.min(100, Math.max(10, Math.round(ppg / 3 * 100)));
+    return { total: fallback, pillerA: fallback * 0.4, pillerB: fallback * 0.25, pillerC: fallback * 0.2, pillerD: fallback * 0.15 };
   }
-
-  // Piller A — Performance de Résultat (40%) : Σ(R × Wt × Wopp)
+  // Piller A
   let totalPts = 0, maxPts = 0;
   for (let i = 0; i < T; i++) {
     const R = formStr[i] === 'W' ? 3 : formStr[i] === 'D' ? 1 : 0;
-    const Wt = 1.0 - i * 0.2; // Récence: 1.0, 0.8, 0.6, 0.4, 0.2
+    const Wt = 1.0 - i * 0.2;
     const rank = opponentRank || 10;
     const Wopp = rank <= 2 ? 1.5 : rank <= 4 ? 1.3 : rank <= 6 ? 1.15 : rank <= 8 ? 1.05 : rank <= 12 ? 0.95 : 0.85;
     totalPts += R * Wt * Wopp;
     maxPts += 3 * Wt * Wopp;
   }
   const pillerA = maxPts > 0 ? (totalPts / maxPts) * 40 : 20;
-
-  // Piller B — Dynamique Temporelle (25%) : streak des 3 derniers
+  // Piller B
   const last3 = formStr.slice(0, Math.min(3, T));
   const wins3 = (last3.match(/W/g) || []).length;
   const draws3 = (last3.match(/D/g) || []).length;
   const pillerB = wins3 >= 3 ? 25 : wins3 >= 2 ? (draws3 > 0 ? 22 : 20) : wins3 >= 1 ? (draws3 >= 2 ? 14 : draws3 >= 1 ? 12 : 10) : draws3 >= 2 ? 8 : draws3 >= 1 ? 5 : 2;
-
-  // Piller C — Qualité Off & Déf (20%) : xG + Clean Sheet + Efficacité
+  // Piller C
   const xgSc = Math.min(10, Math.max(0, ((xgVal || stats?.avgScored || 1) / 3.5) * 10));
   const defSc = (stats?.avgConceded || 2) < 0.6 ? 6 : (stats?.avgConceded || 2) < 1.0 ? 4 : (stats?.avgConceded || 2) < 1.4 ? 2 : 0;
   const goalsFor = stats?.avgScored || 1;
   const goalsAgainst = stats?.avgConceded || 1;
   const effSc = Math.min(4, (goalsFor / Math.max(goalsFor + goalsAgainst, 1)) * 4 * 2);
   const pillerC = Math.min(20, xgSc + defSc + effSc);
-
-  // Piller D — Force de l'Opposition (15%) : selon classement adverse
+  // Piller D
   const oRank = opponentRank || 10;
   const pillerD = oRank <= 2 ? 15 : oRank <= 4 ? 12 : oRank <= 6 ? 9 : oRank <= 8 ? 6 : oRank <= 12 ? 4 : 2;
+  const total = Math.min(100, Math.max(5, Math.round(pillerA + pillerB + pillerC + pillerD)));
+  return { total, pillerA: Math.round(pillerA*10)/10, pillerB: Math.round(pillerB*10)/10, pillerC: Math.round(pillerC*10)/10, pillerD: Math.round(pillerD*10)/10 };
+}
 
-  return Math.min(100, Math.max(5, Math.round(pillerA + pillerB + pillerC + pillerD)));
+function calcPowerScoreV44(formStr, stats, xgVal, opponentRank) {
+  return calcPowerScoreV44Detailed(formStr, stats, xgVal, opponentRank).total;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -8794,11 +9184,15 @@ function estimateRankLabel(rank, ppg) {
 }
 
 // Calcul ELO approche (style soccer-rating.com base sur rank + PPG)
-function calcElo(rank, ppg) {
-  const r = typeof rank === 'number' ? rank : 10;
+function calcElo(rank, ppg, leagueSize) {
+  const r = typeof rank === 'number' && rank > 0 ? rank : 10;
   const p = typeof ppg === 'number' ? ppg : 1.5;
-  // ELO approx: base 1500 + (20 - rank) * 50 + ppg * 100
-const elo = Math.round(1500 + (20 - r) * 50 + p * 100);
+  const N = typeof leagueSize === 'number' && leagueSize >= 4 ? leagueSize : 20;
+  // ELO normalisé par taille ligue : base 1500 + (1 − rank/N) × 1000 + ppg × 100
+  // - rang 1/N → bonus max 1000 (×(1−1/N))
+  // - rang N/N → bonus 0
+  // Empêche dérive sur petites ligues (K-League 12, Bundesliga 18) ou grandes (MLS 30, CAF CL 62)
+  const elo = Math.round(1500 + (1 - r / N) * 1000 + p * 100);
   return elo;
 }
 
@@ -9248,9 +9642,9 @@ const label = country
       <td style="min-width:60px;background:#ffffff !important;color:#1a1a1a !important;border-bottom:1px solid #EAEAEA !important;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:#1a1a1a !important;">${time}</div>
         <div style="font-size:10px;color:#888888 !important;margin-top:1px;">${date}</div>
-        <div data-tv-badge="${m.id}" style="margin-top:3px;font-size:9px;color:#555;display:none;align-items:center;gap:3px;"></div>
       </td>
-      <td style="text-align:left;min-width:180px;padding:4px 8px !important;position:relative;">
+      <td style="text-align:left;min-width:180px;padding:4px 8px !important;">
+        <div data-tv-badge="${m.id}" style="position:absolute;bottom:4px;right:4px;font-size:9px;color:#555;display:none;align-items:center;gap:3px;background:rgba(255,255,255,0.95);border:1px solid #EAEAEA;border-radius:4px;padding:2px 5px;z-index:2;" title="Diffuseur TV"></div>
         ${m.live_score ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
           <span data-live="${m.id}" style="font-size:9px;font-weight:700;color:#ff4d4d;background:rgba(255,77,77,0.15);padding:1px 5px;border-radius:4px;animation:pulse 1.5s infinite;">🔴 ${m.live_score || 'LIVE'}</span>
           <div style="width:50px;height:4px;background:#EAEAEA;border-radius:2px;overflow:hidden;" title="Intensité: ${m.live_intensity||0}/100">
@@ -9275,15 +9669,15 @@ const label = country
       </td>
       <td style="min-width:70px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;">
         <div style="margin-bottom:2px;">
-          <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : '-'}</span>
+          <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
           <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof homePpgL5==='number'?homePpgL5.toFixed(1):'-'}</span>
-          <br><span style="color:var(--text3);font-size:7px;">ELO:</span><span style="color:var(--accent);font-weight:600;">${typeof homePpgL5==='number' && m.home_rank ? calcElo(m.home_rank, homePpgL5) : '-'}</span>
+          <br><span style="color:var(--text3);font-size:7px;">ELO:</span><span style="color:var(--accent);font-weight:600;">${typeof homePpgL5==='number' && m.home_rank ? calcElo(m.home_rank, homePpgL5, m.league_size) : '-'}</span>
           <span style="color:var(--text3);font-size:7px;">PWR:</span><span style="color:${homePower>=65?'#E2001A':homePower>=45?'#1A1A1A':'#888'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
         </div>
         <div>
-          <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : '-'}</span>
+          <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
           <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof awayPpgL5==='number'?awayPpgL5.toFixed(1):'-'}</span>
-          <br><span style="color:var(--text3);font-size:7px;">ELO:</span><span style="color:var(--accent);font-weight:600;">${typeof awayPpgL5==='number' && m.away_rank ? calcElo(m.away_rank, awayPpgL5) : '-'}</span>
+          <br><span style="color:var(--text3);font-size:7px;">ELO:</span><span style="color:var(--accent);font-weight:600;">${typeof awayPpgL5==='number' && m.away_rank ? calcElo(m.away_rank, awayPpgL5, m.league_size) : '-'}</span>
           <span style="color:var(--text3);font-size:7px;">PWR:</span><span style="color:${awayPower>=65?'#E2001A':awayPower>=45?'#1A1A1A':'#888'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
         </div>
       </td>
@@ -9361,29 +9755,157 @@ const label = country
 
 // v10.8: async TV channel enricher — populates data-tv-badge slots after renderMatches
 const _tvBadgeFetched = new Set();
+// Deep-link streaming par broadcaster (mobile/desktop)
+const TV_DEEPLINKS = {
+  'DAZN': 'https://www.dazn.com',
+  'DAZN Japan': 'https://www.dazn.com/ja-JP',
+  'DAZN IT': 'https://www.dazn.com/it-IT',
+  'Canal+': 'https://www.canalplus.com',
+  'Canal+ Foot': 'https://www.canalplus.com',
+  'Canal+ Sport': 'https://www.canalplus.com',
+  'Canal+ Sport 360': 'https://www.canalplus.com',
+  'Canal+ Sport PL': 'https://www.canalplussport.pl',
+  'beIN SPORTS': 'https://www.beinsports.com/fr',
+  'beIN SPORTS 1': 'https://www.beinsports.com/fr',
+  'beIN SPORTS 2': 'https://www.beinsports.com/fr',
+  'beIN SPORTS 3': 'https://www.beinsports.com/fr',
+  'beIN SPORTS MAX': 'https://www.beinsports.com/fr',
+  'beIN SPORTS TR': 'https://www.beinsports.com.tr',
+  'RMC Sport': 'https://rmcsport.bfmtv.com',
+  'RMC Sport 1': 'https://rmcsport.bfmtv.com',
+  "L'Équipe": 'https://www.lequipe.fr',
+  'M6': 'https://www.6play.fr',
+  'TF1': 'https://www.tf1.fr',
+  'Amazon Prime Video': 'https://www.primevideo.com',
+  'Prime Video': 'https://www.primevideo.com',
+  'Apple TV MLS': 'https://tv.apple.com/mls',
+  'Apple TV+': 'https://tv.apple.com',
+  'Ligue1+': 'https://www.ligue1.fr',
+  'Coupang Play': 'https://www.coupangplay.com',
+  'SPOTV': 'https://www.spotvnow.co.kr',
+  'J Sports': 'https://www.jsports.co.jp',
+  'J Sports 1': 'https://www.jsports.co.jp',
+  'J Sports 2': 'https://www.jsports.co.jp',
+  'J Sports 3': 'https://www.jsports.co.jp',
+  'J Sports 4': 'https://www.jsports.co.jp',
+  'NHK BS1': 'https://www.nhk.or.jp',
+  'NHK BS': 'https://www.nhk.or.jp',
+  'Fuji TV': 'https://www.fujitv.co.jp',
+  'TBS': 'https://www.tbs.co.jp',
+  'Sky Sports': 'https://www.skysports.com',
+  'Sky Sport Bundesliga': 'https://www.sky.de',
+  'Sky Sport Austria': 'https://www.skysportaustria.at',
+  'BBC Scotland': 'https://www.bbc.co.uk/sport',
+  'ESPN NL': 'https://www.espn.nl',
+  'ESPN BR': 'https://www.espn.com.br',
+  'ESPN AR': 'https://www.espn.com.ar',
+  'ESPN CL': 'https://www.espn.cl',
+  'ESPN+': 'https://plus.espn.com',
+  'SSC': 'https://thmanyah.com',
+  'Sport TV': 'https://www.sporttv.pt',
+  'TUDN': 'https://www.tudn.com',
+  'Televisa': 'https://www.televisa.com',
+  'Premiere': 'https://globoplay.globo.com/premiere',
+  'Globo': 'https://globoplay.globo.com',
+  'TV 2 Sport NO': 'https://www.tv2.no/sport',
+  'TV4 Sport': 'https://www.tv4.se',
+  'Discovery+': 'https://www.discoveryplus.com',
+  'Win Sports': 'https://www.winsportsonline.com',
+  'GolTV EC': 'https://www.goltv.tv',
+  'DirecTV Sports': 'https://www.directv.com',
+  'TNT Sports AR': 'https://www.tntsports.com.ar',
+  'TNT Sports CL': 'https://www.tntsports.cl',
+  'TyC Sports': 'https://www.tycsports.com',
+  'Tigo Sports': 'https://www.tigosports.com.py',
+  'SuperSport': 'https://www.supersport.com',
+  'Cosmote Sport': 'https://www.cosmotetv.gr',
+  'blue Sport': 'https://www.blue.ch',
+  'O2 TV Sport': 'https://www.o2tv.cz',
+  'MEGOGO': 'https://megogo.net',
+  'MAXSport': 'https://maxsport.tv',
+  'Arena Sport RS': 'https://www.arenasport.rs',
+  'M4 Sport': 'https://m4sport.hu',
+  'Nova Sport SK': 'https://novasport.markiza.sk',
+  'Premier Sports': 'https://www.premiersports.com',
+  'Ruutu': 'https://www.ruutu.fi',
+  'C More FI': 'https://www.cmore.fi',
+  'CCTV-5': 'https://tv.cctv.com',
+  'iQiyi Sport': 'https://sports.iq.com',
+};
+
+// Geo-detection user country via timezone → mapping Intl
+function detectUserCountry() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const tzMap = {
+      'Europe/Paris': 'FR', 'Europe/London': 'UK', 'Europe/Madrid': 'ES', 'Europe/Berlin': 'DE',
+      'Europe/Rome': 'IT', 'Europe/Amsterdam': 'NL', 'Europe/Lisbon': 'PT', 'Europe/Brussels': 'BE',
+      'Europe/Athens': 'GR', 'Europe/Zurich': 'CH', 'Europe/Vienna': 'AT', 'Europe/Prague': 'CZ',
+      'Europe/Copenhagen': 'DK', 'Europe/Kiev': 'UA', 'Europe/Zagreb': 'HR', 'Europe/Belgrade': 'RS',
+      'Europe/Budapest': 'HU', 'Europe/Bratislava': 'SK', 'Europe/Helsinki': 'FI', 'Europe/Dublin': 'IE',
+      'Europe/Sofia': 'BG', 'Europe/Bucharest': 'RO', 'Europe/Warsaw': 'PL', 'Europe/Stockholm': 'SE',
+      'Europe/Oslo': 'NO', 'Europe/Istanbul': 'TR',
+      'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Shanghai': 'CN', 'Asia/Riyadh': 'SA',
+      'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
+      'America/Mexico_City': 'MX', 'America/Sao_Paulo': 'BR', 'America/Argentina/Buenos_Aires': 'AR',
+      'America/Santiago': 'CL', 'America/Bogota': 'CO', 'America/Guayaquil': 'EC', 'America/Asuncion': 'PY',
+      'Africa/Casablanca': 'MA', 'Africa/Algiers': 'DZ', 'Africa/Johannesburg': 'ZA',
+    };
+    return tzMap[tz] || (navigator.language || 'fr').slice(3, 5).toUpperCase() || 'FR';
+  } catch { return 'FR'; }
+}
+
 async function enrichTVChannels() {
   try {
     const slots = document.querySelectorAll('[data-tv-badge]');
     if (!slots.length) return;
     const ids = Array.from(slots).map(el => el.getAttribute('data-tv-badge')).filter(Boolean);
-    const country = (navigator.language || 'fr').slice(0, 2).toUpperCase().replace('EN', 'FR'); // default FR
+    // Geo-detection : pays user d'abord, puis FR, puis 30+ fallbacks
+    const userCountry = detectUserCountry();
+    const baseChain = [
+      'FR', 'JP', 'KR', 'NL', 'PT', 'SA', 'US', 'MX', 'BR', 'TR', 'UK', 'NO', 'SE', 'PL', 'MA', 'AR', 'ZA',
+      'ES', 'DE', 'IT', 'BE', 'GR', 'CH', 'AT', 'CZ', 'DK', 'UA', 'HR', 'RS', 'HU', 'SK', 'FI', 'IE',
+      'BG', 'RO', 'CN', 'DZ', 'CL', 'CO', 'EC', 'PY',
+    ];
+    // userCountry en tête, puis baseChain (dédupliqué)
+    const countries = [userCountry, ...baseChain.filter(c => c !== userCountry)];
+
     for (const id of ids) {
       if (_tvBadgeFetched.has(id)) continue;
       _tvBadgeFetched.add(id);
-      // Stagger 200ms to spread load on microservice (Playwright bottleneck)
-      await new Promise(r => setTimeout(r, 200));
-      try {
-        const res = await fetch(`/api/v1/match/${encodeURIComponent(id)}/tv-channel?country=${country}`);
-        if (!res.ok) continue;
-        const data = await res.json();
-        const ch = (data.channels || [])[0];
-        if (!ch) continue;
-        const slot = document.querySelector(`[data-tv-badge="${id}"]`);
-        if (!slot) continue;
-        const logoHtml = ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" style="height:12px;max-width:24px;object-fit:contain;" loading="lazy">` : '📺';
-        slot.innerHTML = `${logoHtml} <span title="Diffuseur ${data.country}">${ch.name}</span>`;
-        slot.style.display = 'flex';
-      } catch {}
+      await new Promise(r => setTimeout(r, 200)); // Stagger
+      let chosenChannels = null;
+      let chosenCountry = null;
+      for (const country of countries) {
+        try {
+          const res = await fetch(`/api/v1/match/${encodeURIComponent(id)}/tv-channel?country=${country}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          const channels = (data.channels || []);
+          if (channels.length) { chosenChannels = channels; chosenCountry = data.country || country; break; }
+        } catch {}
+      }
+      if (!chosenChannels) continue;
+      const slot = document.querySelector(`[data-tv-badge="${id}"]`);
+      if (!slot) continue;
+      // Multi-broadcaster display : afficher jusqu'à 3 diffuseurs avec deep-link clickable
+      const renderChannel = (ch) => {
+        const url = TV_DEEPLINKS[ch.name] || null;
+        const logoHtml = ch.logo
+          ? `<img src="${ch.logo}" alt="${ch.name}" style="height:12px;max-width:24px;object-fit:contain;" loading="lazy" onerror="this.outerHTML='📺'">`
+          : '📺';
+        const tag = `<span title="${chosenCountry} — Diffuseur ${ch.name}${url ? ' (cliquer pour ouvrir)' : ''}">${ch.name}</span>`;
+        const inner = `${logoHtml} ${tag}`;
+        if (url) {
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;text-decoration:none;color:inherit;cursor:pointer">${inner}</a>`;
+        }
+        return `<span style="display:inline-flex;align-items:center;gap:3px">${inner}</span>`;
+      };
+      const items = chosenChannels.slice(0, 3).map(renderChannel).join('<span style="opacity:.4;margin:0 3px">·</span>');
+      slot.innerHTML = items;
+      slot.style.display = 'flex';
+      slot.style.flexWrap = 'wrap';
+      slot.style.gap = '3px';
     }
   } catch {}
 }
@@ -9833,6 +10355,11 @@ let insStandingsMode  = 'global';   // global | home | away
 let insTablesView     = 'rankings'; // rankings | standings
 let insRankingStat    = 'ppg';      // ppg | avgFor | avgAg | cards
 let insRankingPeriod  = 'season';   // season | l5 | l10 | l25
+// Smart Standings V2 — dual mode + strategy
+let insSmartMode      = 'sportif';  // sportif | strategies
+let insSmartStrategy  = 'BTTS_YES'; // clé STRATEGIES_UI (Top Stratégies)
+let insSmartPeriod    = 'season';   // season | l5 | l10
+let insSmartLieu      = 'global';   // global | home | away
 
 function _rebuildClassement() {
   if (insCurrentData) document.getElementById('ins-tab-classement').innerHTML = buildClassementTab(insCurrentData);
@@ -9841,15 +10368,20 @@ function insSetMode(v)        { insStandingsMode = v; _rebuildClassement(); }
 function insSetTabView(v)     { insTablesView    = v; _rebuildClassement(); }
 function insSetRankStat(v)    { insRankingStat   = v; _rebuildClassement(); }
 function insSetRankPeriod(v)  { insRankingPeriod = v; _rebuildClassement(); }
+// Smart Standings V2 setters
+function insSetSmartMode(v)     { insSmartMode = v; _rebuildClassement(); }
+function insSetSmartStrategy(v) { insSmartStrategy = v; _rebuildClassement(); }
+function insSetSmartPeriod(v)   { insSmartPeriod = v; _rebuildClassement(); }
+function insSetSmartLieu(v)     { insSmartLieu = v; _rebuildClassement(); }
 
 function insShowTab(tab) {
   if (tab !== 'powerscore' && psEventSource) { psEventSource.close(); psEventSource = null; }
-  ['resume','stats','scouting','graphique','classement','corners','powerscore','h2h'].forEach(t => {
+  const tabs = ['resume','stats','joueurs','scouting','graphique','classement','corners','powerscore','h2h'];
+  tabs.forEach(t => {
     const el = document.getElementById(`ins-tab-${t}`);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
   document.querySelectorAll('.ins-tab').forEach((el, i) => {
-    const tabs = ['resume','stats','scouting','graphique','classement','corners','powerscore','h2h'];
     el.classList.toggle('active', tabs[i] === tab);
   });
   if (tab === 'powerscore') {
@@ -9865,6 +10397,13 @@ function insShowTab(tab) {
     if (container && container.dataset.loaded !== '1') {
       container.dataset.loaded = '1';
       if (insCurrentData && insCurrentData.match) buildScoutingTab(insCurrentData.match.id);
+    }
+  }
+  if (tab === 'joueurs') {
+    const container = document.getElementById('ins-tab-joueurs');
+    if (container && container.dataset.loaded !== '1' && insCurrentData) {
+      container.dataset.loaded = '1';
+      container.innerHTML = buildJoueursTab(insCurrentData);
     }
   }
 }
@@ -10036,7 +10575,24 @@ function buildResumeTab(d) {
     <div class="ins-section">
       <div class="ins-section-title">Marchés</div>
       <div class="pois-flat-grid">
-        ${[['GG / BTTS',p.btts],['Over 1.5',p.over15],['Over 2.5',p.over25],['Over 3.5',p.over35],['Domicile',p.homeWin],['Nul',p.draw],['Extérieur',p.awayWin]].map(([lbl,val]) => {
+        ${(() => {
+          // Double Chance dérivé des probas 1N2 calibrées
+          const dc1x = (p.homeWin != null && p.draw != null) ? Math.round(p.homeWin + p.draw) : null;
+          const dc12 = (p.homeWin != null && p.awayWin != null) ? Math.round(p.homeWin + p.awayWin) : null;
+          const dcX2 = (p.draw != null && p.awayWin != null) ? Math.round(p.draw + p.awayWin) : null;
+          const marketsArr = [
+            ['GG / BTTS', p.btts],
+            ['Over 1.5', p.over15],
+            ['Over 2.5', p.over25],
+            ['Over 3.5', p.over35],
+            ['Domicile', p.homeWin],
+            ['Nul', p.draw],
+            ['Extérieur', p.awayWin],
+            ['Double Chance 1X', dc1x],
+            ['Double Chance 12', dc12],
+            ['Double Chance X2', dcX2],
+          ];
+          return marketsArr.map(([lbl, val]) => {
           if (val == null) return '';
           const color = val > 65 ? '#1a8c45' : val > 45 ? '#b45309' : '#cc1a1a';
           const badge = val > 65 ? 'Fort' : val > 45 ? 'Moyen' : 'Faible';
@@ -10046,7 +10602,8 @@ function buildResumeTab(d) {
             <span class="pois-pct" style="color:${color}">${val}%</span>
             <span class="pois-badge" style="color:${color};border-color:${color}">${badge}</span>
           </div>`;
-        }).join('')}
+          }).join('');
+        })()}
       </div>
     </div>
 
@@ -10055,34 +10612,43 @@ function buildResumeTab(d) {
       ${(() => {
         const hPR = d.homePosRatings;
         const aPR = d.awayPosRatings;
+        const hSR = d.homeSectorRank || {};
+        const aSR = d.awaySectorRank || {};
         const hasReal = hPR || aPR;
         const hasAny = hasReal || (hs.avgScored != null || as.avgScored != null);
-        const sectorBar = (label, val, color) => {
+        const rankChip = (rank, total) => {
+          if (!rank || !total) return '';
+          const cls = rank <= 3 ? 'rk-top' : rank <= Math.ceil(total/2) ? 'rk-mid' : 'rk-low';
+          return `<span class="rk-badge-s ${cls}" style="font-size:9px;margin-left:6px;padding:1px 5px;height:14px;min-width:auto;" title="Rang ligue ${rank}/${total}">#${rank}/${total}</span>`;
+        };
+        const sectorBar = (label, val, color, rankHtml = '') => {
           if (val == null) return '';
           const pct = Math.round(val * 10);
           return `<div style="margin-bottom:7px">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:3px">
-              <span>${label}</span><span style="color:${color};font-weight:700">${safeFixed(val, 1)}/10</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text2);margin-bottom:3px">
+              <span>${label}${rankHtml}</span><span style="color:${color};font-weight:700">${safeFixed(val, 1)}/10</span>
             </div>
             <div style="background:var(--bg4);border-radius:4px;height:5px">
               <div style="width:${pct}%;background:${color};border-radius:4px;height:100%"></div>
             </div>
           </div>`;
         };
-        const ratingCol = (pr, avgScored, avgConceded) => {
+        const ratingCol = (pr, avgScored, avgConceded, sr) => {
+          const atkChip = rankChip(sr.attack, sr.total);
+          const defChip = rankChip(sr.defense, sr.total);
           if (pr && pr.G != null) {
             const posLabel = { G: 'Gardiens', D: 'Défense', M: 'Milieu', A: 'Attaque' };
             const posColor = (v) => v >= 7.2 ? 'var(--green)' : v >= 5.0 ? 'var(--amber)' : 'var(--red)';
-            return `${sectorBar(posLabel.G, pr.G, posColor(pr.G))}${sectorBar(posLabel.D, pr.D, posColor(pr.D))}${sectorBar(posLabel.M, pr.M, posColor(pr.M))}${sectorBar(posLabel.A, pr.A, posColor(pr.A))}`;
+            return `${sectorBar(posLabel.G, pr.G, posColor(pr.G))}${sectorBar(posLabel.D, pr.D, posColor(pr.D), defChip)}${sectorBar(posLabel.M, pr.M, posColor(pr.M))}${sectorBar(posLabel.A, pr.A, posColor(pr.A), atkChip)}`;
           }
           const atk = avgScored != null ? Math.min(10, avgScored * (10/3)) : null;
           const def = avgConceded != null ? Math.max(0, 10 - avgConceded * (10/3)) : null;
-          return `${sectorBar('Attaque (proxy)', atk, atk >= 7.2 ? 'var(--green)' : atk >= 5.0 ? 'var(--amber)' : 'var(--red)')}${sectorBar('Défense (proxy)', def, def >= 7.2 ? 'var(--green)' : def >= 5.0 ? 'var(--amber)' : 'var(--red)')}`;
+          return `${sectorBar('Attaque (proxy)', atk, atk >= 7.2 ? 'var(--green)' : atk >= 5.0 ? 'var(--amber)' : 'var(--red)', atkChip)}${sectorBar('Défense (proxy)', def, def >= 7.2 ? 'var(--green)' : def >= 5.0 ? 'var(--amber)' : 'var(--red)', defChip)}`;
         };
         if (!hasAny) return '<span style="color:var(--text3);font-size:11px">—</span>';
         return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-          <div><div style="font-size:10px;color:var(--blue);font-weight:600;margin-bottom:8px">${m.home_team}</div>${ratingCol(hPR, hs.avgScored, hs.avgConceded)}</div>
-          <div><div style="font-size:10px;color:#ab47bc;font-weight:600;margin-bottom:8px">${m.away_team}</div>${ratingCol(aPR, as.avgScored, as.avgConceded)}</div>
+          <div><div style="font-size:10px;color:var(--blue);font-weight:600;margin-bottom:8px">${m.home_team}</div>${ratingCol(hPR, hs.avgScored, hs.avgConceded, hSR)}</div>
+          <div><div style="font-size:10px;color:#ab47bc;font-weight:600;margin-bottom:8px">${m.away_team}</div>${ratingCol(aPR, as.avgScored, as.avgConceded, aSR)}</div>
         </div>`;
       })()}
     </div>
@@ -10320,12 +10886,22 @@ function buildStatsTab(d) {
     </div>` : '';
 
   // Stats Équipe
+  const hCorn = d.homeCorners || {};
+  const aCorn = d.awayCorners || {};
+  const cornersForRow = (hCorn.avgCornersFor != null || aCorn.avgCornersFor != null)
+    ? cmpBar('Corners Obtenus', hCorn.avgCornersFor, aCorn.avgCornersFor, '', 2)
+    : '';
+  const cornersAgainstRow = (hCorn.avgCornersAgainst != null || aCorn.avgCornersAgainst != null)
+    ? cmpBar('Corners Concédés', hCorn.avgCornersAgainst, aCorn.avgCornersAgainst, '', 2)
+    : '';
   const statsRows = `
     ${cmpBar('PPG', hs.ppg, as.ppg, '', 2)}
     ${cmpBar('Victoires %', hs.wins, as.wins, '%')}
     ${cmpBar('Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
     ${cmpBar('Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
     ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
+    ${cornersForRow}
+    ${cornersAgainstRow}
   `;
 
   // Marchés Poisson
@@ -10710,76 +11286,250 @@ function buildJoueursTab(d) {
 }
 
 // ─── ONGLET GRAPHIQUE — Évolution de forme + Bilan saison (inspiré Datafoot) ──
+// PROP ALPHA — Form Snapshot 3-2-1 : décision parieur pro en <10 sec.
+// Zone 1 (Triple KPI Header) → Zone 2 (Form Barcode) → Zone 3 (Verdict IA NLG).
 function buildGraphiqueTab(d) {
-  const m    = d.match;
-  const hs   = d.homeStats?.home || d.match.stats?.home || {};
-  const as   = d.awayStats?.away || d.match.stats?.away || {};
+  const m = d.match;
+  const hs = d.homeStats?.home || d.match.stats?.home || {};
+  const as = d.awayStats?.away || d.match.stats?.away || {};
   const hForm = d.homeStats?.form || '';
   const aForm = d.awayStats?.form || '';
+  const hFixtures = (d.homeAllFixtures || []).slice(0, 10);
+  const aFixtures = (d.awayAllFixtures || []).slice(0, 10);
+  const standings = d.standings || [];
+  const xg = m.expectedGoals || {};
 
-  function formChart(form, label, color) {
-    const chars = [...(form || '')].slice(-15);
-    if (chars.length < 2) return `<div class="ins-empty" style="padding:16px 0;font-size:12px;">Données de forme insuffisantes.</div>`;
-    const pts = chars.map(c => c==='W'?1:c==='D'?0.5:0);
-    const W = 100, H = 56, PX = 3, PY = 5;
-    const step = (W - PX*2) / (pts.length - 1);
-    const y = v => safeFixed(PY + (1-v)*(H - PY*2), 1);
-    const linePoints = pts.map((v,i) => `${safeFixed(PX + i*step, 1)},${y(v)}`).join(' ');
-    const dots = pts.map((v,i) => {
-      const dc = chars[i]==='W'?'#00c45a':chars[i]==='D'?'#ffa726':'#ff4d4d';
-      return `<circle cx="${safeFixed(PX+i*step, 1)}" cy="${y(v)}" r="3" fill="${dc}" stroke="var(--bg2)" stroke-width="1.5"/>`;
+  // ── Lookup utilitaires ─────────────────────────────────────────────────
+  const rankMap = new Map();
+  standings.forEach(s => rankMap.set((s.team || '').toLowerCase().trim(), s.rank));
+  const lookupRank = (n) => rankMap.get((n || '').toLowerCase().trim()) || null;
+  const norm = s => (s || '').toLowerCase().trim();
+
+  // ── Extraction perspective équipe (fixture → result/venue/oppRank/score) ─
+  const fixtureCells = (fixtures, teamName) => {
+    if (!fixtures?.length) return [];
+    const tN = norm(teamName);
+    return fixtures.map(f => {
+      const homeName = f.home || f.home_team || f.homeTeam || '';
+      const awayName = f.away || f.away_team || f.awayTeam || '';
+      const hScore = f.home_score ?? f.homeScore ?? f.score?.home ?? null;
+      const aScore = f.away_score ?? f.awayScore ?? f.score?.away ?? null;
+      const isHome = norm(homeName) === tN || norm(homeName).includes(tN.split(' ')[0]);
+      const opponent = isHome ? awayName : homeName;
+      const teamScore = isHome ? hScore : aScore;
+      const oppScore = isHome ? aScore : hScore;
+      let result = 'U';
+      if (teamScore != null && oppScore != null) {
+        result = teamScore > oppScore ? 'W' : teamScore === oppScore ? 'D' : 'L';
+      }
+      return { result, score: (teamScore != null && oppScore != null) ? `${teamScore}-${oppScore}` : '—', opponent, oppRank: lookupRank(opponent), isHome, teamScore, oppScore };
+    });
+  };
+  const fallbackCells = (form) => [...(form || '')].slice(0, 10).map(c => ({ result: c, score: '—', opponent: '', oppRank: null, isHome: null }));
+  const hC = (fixtureCells(hFixtures, m.home_team).length ? fixtureCells(hFixtures, m.home_team) : fallbackCells(hForm)).slice(0, 10);
+  const aC = (fixtureCells(aFixtures, m.away_team).length ? fixtureCells(aFixtures, m.away_team) : fallbackCells(aForm)).slice(0, 10);
+
+  // ── Form Score 0-100 composite (formule Alpha) ──────────────────────────
+  const ppgL5From = (form) => {
+    const last5 = (form || '').slice(0, 5);
+    if (!last5.length) return null;
+    return [...last5].reduce((s, c) => s + (c === 'W' ? 3 : c === 'D' ? 1 : 0), 0) / last5.length;
+  };
+  const xgDiffFrom = (st, xgVal) => {
+    if (xgVal != null) {
+      const conc = st?.avgConceded ?? 1.2;
+      return xgVal - conc;
+    }
+    const sc = st?.avgScored, cc = st?.avgConceded;
+    if (sc != null && cc != null) return sc - cc;
+    return null;
+  };
+  const venueBonusFrom = (st, isHomeSide) => {
+    const wins = st?.wins;
+    if (wins == null) return null;
+    return wins / 100;
+  };
+  const oppQualityFrom = (cells) => {
+    if (!cells.length) return null;
+    const vsTop8 = cells.filter(c => c.oppRank && c.oppRank <= 8);
+    if (!vsTop8.length) return null;
+    const winsTop8 = vsTop8.filter(c => c.result === 'W').length;
+    return winsTop8 / vsTop8.length;
+  };
+  const formScore = (ppg, xgDiff, venue, oppQual) => {
+    let score = 0, weightUsed = 0;
+    if (ppg != null) { score += (ppg / 3) * 40; weightUsed += 40; }
+    if (xgDiff != null) { score += Math.max(0, Math.min(1, (xgDiff + 2) / 4)) * 30; weightUsed += 30; }
+    if (venue != null) { score += venue * 20; weightUsed += 20; }
+    if (oppQual != null) { score += oppQual * 10; weightUsed += 10; }
+    if (weightUsed === 0) return null;
+    return Math.round(Math.max(0, Math.min(100, score * (100 / weightUsed))));
+  };
+  const hPpgL5 = ppgL5From(hForm);
+  const aPpgL5 = ppgL5From(aForm);
+  const hXgDiff = xgDiffFrom(hs, xg.home);
+  const aXgDiff = xgDiffFrom(as, xg.away);
+  const hVenue = venueBonusFrom(hs, true);
+  const aVenue = venueBonusFrom(as, false);
+  const hOppQual = oppQualityFrom(hC);
+  const aOppQual = oppQualityFrom(aC);
+  const hScore = formScore(hPpgL5, hXgDiff, hVenue, hOppQual);
+  const aScore = formScore(aPpgL5, aXgDiff, aVenue, aOppQual);
+
+  // ── Couleurs (CSS vars — respecte charte light/dark) ────────────────────
+  const HOME_COL = 'var(--blue)';
+  const AWAY_COL = '#ab47bc';
+  const scoreCol = (v) => v == null ? 'var(--text3)' : v >= 65 ? 'var(--green)' : v >= 45 ? 'var(--amber)' : 'var(--red)';
+  const scoreLabel = (v) => v == null ? '—' : v >= 65 ? 'FORT' : v >= 45 ? 'MOYEN' : 'FAIBLE';
+  const arrowFor = (delta) => {
+    if (delta == null) return '';
+    if (delta > 0.2) return `<span style="color:var(--green);font-weight:700">↑+${delta.toFixed(1)}</span>`;
+    if (delta < -0.2) return `<span style="color:var(--red);font-weight:700">↓${delta.toFixed(1)}</span>`;
+    return `<span style="color:var(--text3)">→ ${delta.toFixed(1)}</span>`;
+  };
+
+  // ── ZONE 1 — Triple KPI Header ──────────────────────────────────────────
+  const renderTripleKPI = (label, color, score, ppgL5, ppgSeason, xgDiff) => {
+    const delta = (ppgL5 != null && ppgSeason != null) ? (ppgL5 - ppgSeason) : null;
+    const xgCol = xgDiff == null ? 'var(--text3)' : xgDiff > 0.3 ? 'var(--green)' : xgDiff < -0.3 ? 'var(--red)' : 'var(--amber)';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;border-top:3px solid ${color}">
+      <div style="font:700 11px/1 var(--font-mono);color:${color};margin-bottom:12px;text-transform:uppercase;letter-spacing:1.2px">${label}</div>
+      <div style="display:flex;align-items:flex-end;gap:14px;margin-bottom:6px">
+        <div style="text-align:center">
+          <div style="font:800 44px/1 var(--font-head);color:${scoreCol(score)}">${score != null ? score : '—'}</div>
+          <div style="font:700 9px/1 var(--font-mono);color:${scoreCol(score)};margin-top:4px;letter-spacing:1.5px">${scoreLabel(score)}</div>
+          <div style="font:400 8px/1 var(--font-mono);color:var(--text3);margin-top:3px;letter-spacing:1px">FORM SCORE /100</div>
+        </div>
+        <div style="border-left:1px solid var(--border);padding-left:14px">
+          <div>
+            <span style="font:800 22px/1 var(--font-head);color:${color}">${ppgL5 != null ? ppgL5.toFixed(2) : '—'}</span>
+            <span style="font:400 9px/1 var(--font-mono);color:var(--text3);margin-left:4px;letter-spacing:.5px">PPG L5</span>
+          </div>
+          <div style="font:400 10px/1.3 var(--font-mono);color:var(--text2);margin-top:5px">saison <span style="color:var(--text3)">${ppgSeason != null ? ppgSeason.toFixed(2) : '—'}</span> ${arrowFor(delta)}</div>
+        </div>
+        <div style="border-left:1px solid var(--border);padding-left:14px">
+          <div>
+            <span style="font:800 22px/1 var(--font-head);color:${xgCol}">${xgDiff != null ? (xgDiff >= 0 ? '+' : '') + xgDiff.toFixed(2) : '—'}</span>
+            <span style="font:400 9px/1 var(--font-mono);color:var(--text3);margin-left:4px;letter-spacing:.5px">xG diff</span>
+          </div>
+          <div style="font:400 10px/1.3 var(--font-mono);color:var(--text3);margin-top:5px">${xgDiff == null ? '' : xgDiff > 0.3 ? 'sur-perf' : xgDiff < -0.3 ? 'sous-perf' : 'équilibré'}</div>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // ── ZONE 2 — Form Barcode ───────────────────────────────────────────────
+  const renderBarcode = (label, color, cells) => {
+    // Couleurs résultats via vars charte
+    const cellCol = (r) => r === 'W' ? 'var(--green)' : r === 'D' ? 'var(--amber)' : r === 'L' ? 'var(--red)' : 'var(--text3)';
+    // Fills semi-transparents pour respecter dark/light theme automatiquement
+    const cellBg = (r) => {
+      if (r === 'W') return 'color-mix(in srgb, var(--green) 18%, transparent)';
+      if (r === 'D') return 'color-mix(in srgb, var(--amber) 18%, transparent)';
+      if (r === 'L') return 'color-mix(in srgb, var(--red) 18%, transparent)';
+      return 'var(--bg4)';
+    };
+    const totalCells = Math.min(10, cells.length);
+    if (!totalCells) return `<div style="font:400 11px/1 var(--font-mono);color:var(--text3);padding:8px">Forme indisponible</div>`;
+    const cellsHtml = cells.slice(0, totalCells).map((c, i) => {
+      const heightPct = Math.round(((totalCells - i) / totalCells) * 100);
+      const goldBorder = c.oppRank && c.oppRank <= 5;
+      const isAwayMatch = c.isHome === false;
+      const oppText = c.opponent ? `${c.opponent}${c.oppRank ? ' #' + c.oppRank : ''}` : '';
+      const tip = c.opponent
+        ? `${isAwayMatch ? '✈ Ext' : c.isHome === true ? '🏠 Dom' : ''} vs ${oppText} → ${c.result} ${c.score}`
+        : `J-${i+1} : ${c.result}`;
+      const borderTop = goldBorder ? '1px solid var(--amber)' : '1px solid ' + cellCol(c.result);
+      const borderBottom = isAwayMatch ? '3px solid var(--red)' : '1px solid ' + cellCol(c.result);
+      return `<div title="${tip}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:48px;align-items:center;gap:3px">
+        <div style="width:100%;height:${heightPct}%;background:${cellBg(c.result)};border:${borderTop};border-bottom:${borderBottom};border-left:1px solid ${cellCol(c.result)};border-right:1px solid ${cellCol(c.result)};border-radius:2px;display:flex;align-items:center;justify-content:center;font:800 10px/1 var(--font-mono);color:${cellCol(c.result)}">${c.result}</div>
+        <div style="font:400 8px/1 var(--font-mono);color:var(--text3);letter-spacing:.5px">J-${i+1}</div>
+      </div>`;
     }).join('');
-    const badges = chars.map(c => `<span class="form-badge form-${c}" style="width:18px;height:18px;font-size:8px;line-height:18px;">${c}</span>`).join('');
-    return `
-      <div style="margin-bottom:20px;">
-        <div style="font-size:10px;font-weight:700;color:${color};font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">${label}</div>
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:72px;display:block;overflow:visible">
-          <line x1="${PX}" y1="${y(1)}" x2="${W-PX}" y2="${y(1)}" stroke="rgba(0,196,90,.12)" stroke-width="1" stroke-dasharray="3,3"/>
-          <line x1="${PX}" y1="${y(.5)}" x2="${W-PX}" y2="${y(.5)}" stroke="rgba(255,167,38,.12)" stroke-width="1" stroke-dasharray="3,3"/>
-          <line x1="${PX}" y1="${y(0)}" x2="${W-PX}" y2="${y(0)}" stroke="rgba(255,77,77,.12)" stroke-width="1" stroke-dasharray="3,3"/>
-          <polyline points="${linePoints}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
-          ${dots}
-        </svg>
-        <div style="display:flex;gap:3px;margin-top:6px;flex-wrap:wrap;">${badges}</div>
-      </div>`;
-  }
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font:700 10px/1 var(--font-mono);color:${color};text-transform:uppercase;letter-spacing:1.2px">${label}</span>
+        <span style="font:400 9px/1 var(--font-mono);color:var(--text3);letter-spacing:.4px">récent ← → ancien</span>
+      </div>
+      <div style="display:flex;gap:3px;align-items:flex-end">${cellsHtml}</div>
+    </div>`;
+  };
 
-  function seasonBar(label, st) {
-    const total = (st.wins||0)+(st.draws||0)+(st.losses||0);
-    if (!total) return '';
-    const wP = Math.round((st.wins||0)/total*100);
-    const dP = Math.round((st.draws||0)/total*100);
-    const lP = 100 - wP - dP;
-    return `
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-          <span style="font-size:11px;font-weight:600;">${label}</span>
-          <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);">${total} matchs · PPG ${safeFixed(st.ppg, 2)}</span>
-        </div>
-        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:1px;">
-          <div style="width:${wP}%;background:#00c45a;" title="V ${wP}%"></div>
-          <div style="width:${dP}%;background:#ffa726;" title="N ${dP}%"></div>
-          <div style="width:${lP}%;background:#ff4d4d;" title="D ${lP}%"></div>
-        </div>
-        <div style="display:flex;gap:14px;margin-top:5px;font-size:10px;font-family:var(--font-mono);">
-          <span style="color:#00c45a">V ${st.wins||0} (${wP}%)</span>
-          <span style="color:#ffa726">N ${st.draws||0} (${dP}%)</span>
-          <span style="color:#ff4d4d">D ${st.losses||0} (${lP}%)</span>
-        </div>
-      </div>`;
-  }
+  // ── ZONE 3 — Verdict IA NLG ─────────────────────────────────────────────
+  const verdictNLG = (() => {
+    if (hScore == null && aScore == null) return { text: 'Données insuffisantes pour générer un verdict.', accent: 'var(--text3)', tone: 'neutral', recommend: null };
+    const diff = (hScore || 0) - (aScore || 0);
+    const parts = [];
+    let recommend = null;
+    let accent = 'var(--text3)';
+    let tone = 'neutral';
 
-  const hasForm = hForm.length > 1 || aForm.length > 1;
+    if (diff > 18) {
+      parts.push(`<strong>${m.home_team}</strong> en pleine ascension (Form ${hScore || '—'} vs ${aScore || '—'}).`);
+      recommend = `Domicile favorable. Pari recommandé : <strong>1 ou Double Chance 1X</strong>.`;
+      accent = 'var(--green)'; tone = 'home';
+    } else if (diff < -18) {
+      parts.push(`<strong>${m.away_team}</strong> en pleine forme (Form ${aScore || '—'} vs ${hScore || '—'}).`);
+      recommend = `Extérieur favorable. Pari à considérer : <strong>2 ou Double Chance X2</strong> (cote bonifiée habituelle).`;
+      accent = AWAY_COL; tone = 'away';
+    } else if (Math.abs(diff) < 8) {
+      parts.push(`Forces équilibrées (Form ${hScore || '—'} vs ${aScore || '—'}).`);
+      recommend = `Match incertain. Considérer marché <strong>Over 1.5 ou BTTS</strong> au lieu de 1N2.`;
+      accent = 'var(--amber)'; tone = 'balanced';
+    } else {
+      const fav = diff > 0 ? m.home_team : m.away_team;
+      parts.push(`Léger avantage <strong>${fav}</strong> (Δ ${Math.abs(diff)} points).`);
+      recommend = `Edge modeste. Vérifier <strong>EV</strong> et <strong>xG diff</strong> avant de miser.`;
+      accent = diff > 0 ? 'var(--green)' : AWAY_COL; tone = diff > 0 ? 'home' : 'away';
+    }
+
+    if (hXgDiff != null && aXgDiff != null && Math.abs(hXgDiff - aXgDiff) > 1) {
+      const better = hXgDiff > aXgDiff ? m.home_team : m.away_team;
+      parts.push(`xG différentiel favorise <strong>${better}</strong> — bookmakers pourraient sous-évaluer.`);
+    }
+    if (hOppQual != null && hOppQual >= 0.6) parts.push(`${m.home_team} performant vs Top 8 (${Math.round(hOppQual * 100)}% W).`);
+    if (aOppQual != null && aOppQual >= 0.6) parts.push(`${m.away_team} performant vs Top 8 (${Math.round(aOppQual * 100)}% W).`);
+
+    return { text: parts.join(' '), recommend, accent, tone };
+  })();
+
+  // ── Render final (pattern ins-section + CSS vars charte) ────────────────
   return `
-    <div style="padding:4px 4px 16px;">
-      <div style="font-size:10px;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Évolution de Forme (${Math.max(hForm.length, aForm.length)} derniers matchs)</div>
-      ${hasForm
-        ? formChart(hForm, m.home_team, 'var(--blue)') + formChart(aForm, m.away_team, '#ab47bc')
-        : '<div class="ins-empty">Données de forme non disponibles.</div>'}
-      <div style="height:1px;background:var(--border);margin:16px 0;"></div>
-      <div style="font-size:10px;font-family:var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;">Bilan de Saison</div>
-      ${seasonBar(m.home_team, hs)}
-      ${seasonBar(m.away_team, as)}
+    <div style="padding:4px 0 16px">
+      <!-- ZONE 1 — Triple KPI Header -->
+      <div class="ins-section">
+        <div class="ins-section-title">Form Snapshot — Lecture rapide</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          ${renderTripleKPI(m.home_team, HOME_COL, hScore, hPpgL5, hs.ppg, hXgDiff)}
+          ${renderTripleKPI(m.away_team, AWAY_COL, aScore, aPpgL5, as.ppg, aXgDiff)}
+        </div>
+      </div>
+
+      <!-- ZONE 2 — Form Barcode -->
+      <div class="ins-section">
+        <div class="ins-section-title">Form Barcode — 10 derniers matchs</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font:400 9px/1.5 var(--font-mono);color:var(--text3);margin-bottom:10px;display:flex;gap:14px;flex-wrap:wrap">
+            <span><span style="display:inline-block;width:10px;height:10px;border:1px solid var(--amber);border-radius:2px;vertical-align:middle"></span> Adversaire Top 5</span>
+            <span><span style="display:inline-block;width:10px;height:6px;border-bottom:3px solid var(--red);vertical-align:middle"></span> Match à l'extérieur</span>
+            <span style="color:var(--text3)">Hauteur = pondération récence</span>
+          </div>
+          ${renderBarcode(m.home_team, HOME_COL, hC)}
+          ${renderBarcode(m.away_team, AWAY_COL, aC)}
+        </div>
+      </div>
+
+      <!-- ZONE 3 — Verdict NLG -->
+      <div class="ins-section" style="margin-bottom:0">
+        <div class="ins-section-title">Verdict Forme</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid ${verdictNLG.accent};border-radius:8px;padding:14px">
+          <div style="font:400 13px/1.6 var(--font-mono);color:var(--text);margin-bottom:8px">${verdictNLG.text}</div>
+          ${verdictNLG.recommend ? `<div style="font:400 12px/1.6 var(--font-mono);color:var(--text2);padding-top:10px;border-top:1px solid var(--border)">${verdictNLG.recommend}</div>` : ''}
+          <div style="text-align:right;margin-top:10px">
+            <a onclick="insShowTab('scouting');return false;" style="font:700 11px/1 var(--font-mono);color:${verdictNLG.accent};cursor:pointer;text-decoration:none;letter-spacing:.5px">Voir Top 3 Conseils IA →</a>
+          </div>
+        </div>
+      </div>
     </div>`;
 }
 
@@ -10819,6 +11569,362 @@ function buildClassementTab(d) {
     return `<div class="ins-empty">Classement non disponible pour cette compétition.</div>`;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  SMART STANDINGS V2 — Dual Mode (Sportif / Stratégies) + Heatmap
+  // ═══════════════════════════════════════════════════════════════════════════
+  const m       = d.match;
+  const hKey    = d.homeKey;
+  const aKey    = d.awayKey;
+  const smartMode = insSmartMode;
+  const lieu      = insSmartLieu;
+  const period    = insSmartPeriod;
+  const strategy  = insSmartStrategy;
+
+  // ── Utilitaires ──────────────────────────────────────────────────────────
+  const dName = (key) => (key || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const badge = (r) => r.team === hKey
+    ? '<span class="rk-badge rk-badge-H">H</span>'
+    : r.team === aKey ? '<span class="rk-badge rk-badge-A">A</span>' : '';
+
+  // ── Stats par équipe selon lieu + période ────────────────────────────────
+  // Period L5/L10 : déduit W/D/L counts depuis form string (récent → ancien)
+  const statsFromForm = (form, n) => {
+    const chars = [...(form || '')].slice(0, n);
+    if (!chars.length) return null;
+    let w = 0, d = 0, l = 0;
+    chars.forEach(c => { if (c === 'W') w++; else if (c === 'D') d++; else if (c === 'L') l++; });
+    return { played: chars.length, wins: w, draws: d, losses: l, pts: w * 3 + d };
+  };
+  const getSt = (r) => {
+    // Period L5/L10 : recompute counts depuis form string
+    if (period === 'l5' || period === 'l10') {
+      const n = period === 'l5' ? 5 : 10;
+      const fs = statsFromForm(r.form, n);
+      if (fs) {
+        // avgFor/avgAg saison conservés (L5/L10 buts non trackés form string)
+        return { ...fs, avgFor: r.avgFor, avgAg: r.avgAg };
+      }
+    }
+    // Saison : selon lieu
+    return lieu === 'home'
+      ? { played: r.home_played, wins: r.home_wins, draws: r.home_draws, losses: r.home_losses, pts: r.home_pts, avgFor: r.home_avgFor, avgAg: r.home_avgAg }
+      : lieu === 'away'
+      ? { played: r.away_played, wins: r.away_wins, draws: r.away_draws, losses: r.away_losses, pts: r.away_pts, avgFor: r.away_avgFor, avgAg: r.away_avgAg }
+      : { played: r.played, wins: r.wins, draws: r.draws, losses: r.losses, pts: r.pts, avgFor: r.avgFor, avgAg: r.avgAg };
+  };
+
+  // ── Sparkline mini-bars (5 derniers résultats) ──────────────────────────
+  const sparkline = (form) => {
+    const chars = [...(form || '')].slice(0, 5);
+    if (!chars.length) return '<span style="color:var(--text3);font:400 10px/1 var(--font-mono)">—</span>';
+    const valueMap = { W: 1.0, D: 0.5, L: 0.15 };
+    const colorMap = { W: 'var(--green)', D: 'var(--amber)', L: 'var(--red)' };
+    const bars = chars.map(c => {
+      const h = Math.round((valueMap[c] || 0) * 22);
+      const col = colorMap[c] || 'var(--text3)';
+      return `<span style="display:inline-block;width:5px;height:24px;background:var(--bg4);border-radius:1px;position:relative;vertical-align:middle">
+        <span style="position:absolute;bottom:0;left:0;right:0;height:${h}px;background:${col};border-radius:1px"></span>
+      </span>`;
+    }).join('<span style="display:inline-block;width:2px"></span>');
+    return `<span style="display:inline-flex;align-items:flex-end;gap:0;height:24px">${bars}</span>`;
+  };
+
+  // ── Agrégateurs % marchés (Over 2.5, BTTS, Draws) — proxy Poisson ────────
+  // Si l'API BSD ne fournit pas les % réels, on les calcule via avgFor/avgAg
+  // par équipe. Approximation Poisson : P(Over 2.5) = 1 - poissonCDF(2, λ)
+  const poissonPMF = (k, lambda) => {
+    if (lambda <= 0) return k === 0 ? 1 : 0;
+    let v = Math.exp(-lambda);
+    for (let i = 1; i <= k; i++) v *= lambda / i;
+    return v;
+  };
+  const poissonCDF = (k, lambda) => {
+    let sum = 0;
+    for (let i = 0; i <= k; i++) sum += poissonPMF(i, lambda);
+    return sum;
+  };
+  const computeStrategyPct = (r, strat) => {
+    const s = getSt(r);
+    const af = s.avgFor || 0;
+    const ag = s.avgAg || 0;
+    const lambda = af + ag;
+    switch (strat) {
+      case 'BTTS_YES': {
+        if (af + ag <= 0) return null;
+        return Math.round((1 - Math.exp(-af)) * (1 - Math.exp(-ag)) * 100);
+      }
+      case 'OVER_2_5': {
+        if (lambda <= 0) return null;
+        return Math.round((1 - poissonCDF(2, lambda)) * 100);
+      }
+      case 'OVER_1_5': {
+        if (lambda <= 0) return null;
+        return Math.round((1 - poissonCDF(1, lambda)) * 100);
+      }
+      case 'UNDER_2_5': {
+        if (lambda <= 0) return null;
+        return Math.round(poissonCDF(2, lambda) * 100);
+      }
+      case 'VERROU_TACTIQUE': {
+        // U3.5
+        if (lambda <= 0) return null;
+        return Math.round(poissonCDF(3, lambda) * 100);
+      }
+      case 'CS_00': {
+        if (af + ag <= 0) return null;
+        return Math.round(poissonPMF(0, af) * poissonPMF(0, ag) * 100);
+      }
+      case 'HOME_WIN': {
+        return s.played > 0 ? Math.round((s.wins / s.played) * 100) : null;
+      }
+      case 'AWAY_WIN': {
+        return s.played > 0 ? Math.round((s.wins / s.played) * 100) : null;
+      }
+      case 'DRAW': {
+        return s.played > 0 ? Math.round((s.draws / s.played) * 100) : null;
+      }
+      case 'DC_HOME': {
+        // Double Chance 1X = victoires + nuls
+        return s.played > 0 ? Math.round(((s.wins + s.draws) / s.played) * 100) : null;
+      }
+      case 'DC_AWAY': {
+        // Double Chance X2 (proxy avec wins+draws en lieu away)
+        return s.played > 0 ? Math.round(((s.wins + s.draws) / s.played) * 100) : null;
+      }
+      // Stratégies non calculables depuis standings (data manquante)
+      case 'ANGLE_CORNERS':
+      case 'OVER_6_5_CORNERS':
+      case 'GOLDEN_PPG_GAP':
+      case 'HT_HOME_FT_HOME':
+      case 'HT_UNDER_FT_OVER':
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  // ── Heatmap couleur cellule % ────────────────────────────────────────────
+  const heatBg = (pct) => {
+    if (pct == null) return 'transparent';
+    if (pct >= 65) return 'color-mix(in srgb, var(--green) 22%, transparent)';
+    if (pct >= 45) return 'color-mix(in srgb, var(--amber) 22%, transparent)';
+    if (pct < 30) return 'color-mix(in srgb, var(--red) 22%, transparent)';
+    return 'color-mix(in srgb, var(--red) 12%, transparent)';
+  };
+  const heatTxt = (pct) => {
+    if (pct == null) return 'var(--text3)';
+    if (pct >= 65) return 'var(--green)';
+    if (pct >= 45) return 'var(--amber)';
+    return 'var(--red)';
+  };
+
+  // ── PPG L5/L10 depuis form string (period switch) ────────────────────────
+  const ppgFromForm = (form, n) => {
+    const chars = [...(form || '')].slice(0, n);
+    if (!chars.length) return null;
+    return parseFloat((chars.reduce((s, c) => s + (c === 'W' ? 3 : c === 'D' ? 1 : 0), 0) / chars.length).toFixed(2));
+  };
+
+  // ── Contrôles UI : Toggle + 3 dropdowns ──────────────────────────────────
+  const controls = `
+    <div class="rk-controls" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:center;margin-bottom:10px">
+        <div class="rk-view-tabs" style="display:inline-flex">
+          <div class="rk-view-tab ${smartMode === 'sportif' ? 'active' : ''}" onclick="insSetSmartMode('sportif')">Sportif</div>
+          <div class="rk-view-tab ${smartMode === 'strategies' ? 'active' : ''}" onclick="insSetSmartMode('strategies')">Stratégies</div>
+        </div>
+      </div>
+      <div class="rk-selects" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <select class="rk-select" onchange="insSetSmartLieu(this.value)">
+          <option value="global" ${lieu === 'global' ? 'selected' : ''}>Lieu : Global</option>
+          <option value="home"   ${lieu === 'home'   ? 'selected' : ''}>Lieu : Domicile</option>
+          <option value="away"   ${lieu === 'away'   ? 'selected' : ''}>Lieu : Extérieur</option>
+        </select>
+        <select class="rk-select" onchange="insSetSmartPeriod(this.value)">
+          <option value="season" ${period === 'season' ? 'selected' : ''}>Période : Saison</option>
+          <option value="l10"    ${period === 'l10'    ? 'selected' : ''}>Période : L10</option>
+          <option value="l5"     ${period === 'l5'     ? 'selected' : ''}>Période : L5</option>
+        </select>
+        ${smartMode === 'strategies' ? `<select class="rk-select" onchange="insSetSmartStrategy(this.value)">
+          ${(typeof STRATEGIES_UI !== 'undefined' ? STRATEGIES_UI : []).map(s => `<option value="${s.key}" ${strategy === s.key ? 'selected' : ''}>${s.tipster} — ${s.label}</option>`).join('')}
+        </select>` : ''}
+      </div>
+    </div>`;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  MODE SPORTIF — Tableau classique épuré avec sparkline
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (smartMode === 'sportif') {
+    const sortedSt = (lieu === 'global' && period === 'season')
+      ? [...rows]
+      : [...rows].sort((a, b) => (getSt(b).pts || 0) - (getSt(a).pts || 0));
+
+    return controls + `
+      <table class="standings-table" style="font-family:var(--font-mono)">
+        <thead><tr>
+          <th>Pos</th><th style="text-align:left">Équipe</th>
+          <th>Pts</th><th>J</th>
+          <th style="color:var(--green)">V</th><th style="color:var(--amber)">N</th><th style="color:var(--red)">D</th>
+          <th>Buts</th><th>Forme</th>
+        </tr></thead>
+        <tbody>
+          ${sortedSt.map((r, i) => {
+            const isH = r.team === hKey;
+            const isA = r.team === aKey;
+            const s = getSt(r);
+            const butsCol = (s.avgFor != null && s.avgAg != null)
+              ? `<span style="color:var(--green)">${(s.avgFor * (s.played || 0)).toFixed(0)}</span>:<span style="color:var(--red)">${(s.avgAg * (s.played || 0)).toFixed(0)}</span>`
+              : '—';
+            return `<tr class="${isH || isA ? 'st-highlighted' : ''}">
+              <td class="st-rank">${(lieu === 'global' && period === 'season') ? r.rank : i + 1}</td>
+              <td class="st-team">${isH || isA ? `<strong>${dName(r.team)}</strong>` : dName(r.team)} ${badge(r)}</td>
+              <td class="st-pts">${s.pts != null ? s.pts : '—'}</td>
+              <td>${s.played || '—'}</td>
+              <td style="color:var(--green)">${s.wins != null ? s.wins : '—'}</td>
+              <td style="color:var(--amber)">${s.draws != null ? s.draws : '—'}</td>
+              <td style="color:var(--red)">${s.losses != null ? s.losses : '—'}</td>
+              <td>${butsCol}</td>
+              <td>${sparkline(r.form)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  MODE STRATÉGIES — Heatmap colorée + tendance L5 vs Saison
+  // ═══════════════════════════════════════════════════════════════════════════
+  const stratUiEntry = (typeof STRATEGIES_UI !== 'undefined' ? STRATEGIES_UI : []).find(s => s.key === strategy);
+  const strategyLabel = stratUiEntry ? `${stratUiEntry.tipster} — ${stratUiEntry.label}` : strategy;
+  const unavailable = ['ANGLE_CORNERS', 'OVER_6_5_CORNERS', 'GOLDEN_PPG_GAP', 'HT_HOME_FT_HOME', 'HT_UNDER_FT_OVER'].includes(strategy);
+
+  if (unavailable) {
+    return controls + `
+      <div class="ins-empty" style="padding:30px 0">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${strategyLabel}</div>
+        <div style="font-size:11px;color:var(--text3)">Données non disponibles depuis le classement statique pour cette stratégie.</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">→ Voir l'onglet <strong>Top Stratégies</strong> du menu principal pour la version complète match-par-match.</div>
+      </div>`;
+  }
+
+  // ── HIT RATE RÉEL — fetch async backend `/api/v1/league/:id/strategies-ranking`
+  // Affiche placeholder en attendant, hydrate au callback
+  const placeholderId = `strat-rank-${strategy}-${Date.now()}`;
+  (async () => {
+    try {
+      const cfg = (typeof leaguesConfigFront !== 'undefined') ? leaguesConfigFront : null;
+      let configId = null;
+      if (m?.sport) {
+        // Récupérer configId via mapping client OU appel direct
+        const res = await fetch(`/api/v1/league/${encodeURIComponent(m.sport)}/strategies-ranking?strategy=${strategy}`).catch(() => null);
+        // Fallback : essayer via leagueId déduit (server gère sport_key dans pathname mais nous attendons configId)
+      }
+      // Tentative directe via standings count + match.sport
+      const stRes = await fetch(`/api/v1/match/${encodeURIComponent(m.id)}/league-id`).catch(() => null);
+      // Plus simple : déduire configId depuis homeStats.leagueId si dispo
+      const lid = d.homeStats?.leagueId || d.awayStats?.leagueId;
+      if (!lid) return;
+      const res2 = await fetch(`/api/v1/league/${lid}/strategies-ranking?strategy=${strategy}`);
+      if (!res2.ok) return;
+      const payload = await res2.json();
+      const container = document.getElementById(placeholderId);
+      if (!container) return;
+      if (!payload.ranking?.length || payload.sampleSize === 0) {
+        container.innerHTML = `<div class="ins-empty" style="padding:20px 0">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">${strategyLabel}</div>
+          <div style="font-size:11px;color:var(--text3)">Pas assez de matchs archivés (${payload.sampleSize} matchs) pour calculer Hit Rate réel.</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">→ Affichage Poisson estimate ci-dessous.</div>
+        </div>`;
+        return;
+      }
+      const heatBg2 = (pct) => pct >= 70 ? 'color-mix(in srgb, var(--green) 22%, transparent)' : pct >= 50 ? 'color-mix(in srgb, var(--amber) 22%, transparent)' : 'color-mix(in srgb, var(--red) 22%, transparent)';
+      const heatTxt2 = (pct) => pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+      const rowsHtml = payload.ranking.map(r => {
+        const isH = normName(r.team) === hKey;
+        const isA = normName(r.team) === aKey;
+        return `<tr class="${isH || isA ? 'st-highlighted' : ''}">
+          <td class="st-rank">${r.rank}</td>
+          <td class="st-team">${isH || isA ? `<strong>${dName(normName(r.team))}</strong>` : dName(normName(r.team))} ${badge({ team: normName(r.team) })}</td>
+          <td style="background:${heatBg2(r.hitRate)};color:${heatTxt2(r.hitRate)};font-weight:800;font-size:13px;text-align:center;border-radius:4px">${r.hitRate}%</td>
+          <td style="text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text2)">${r.validated} / ${r.played}</td>
+        </tr>`;
+      }).join('');
+      container.innerHTML = `
+        <table class="standings-table" style="font-family:var(--font-mono)">
+          <thead><tr>
+            <th>Pos</th><th style="text-align:left">Équipe</th>
+            <th>Hit Rate ${strategyLabel}</th>
+            <th>Validés / Joués</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>`;
+    } catch (e) {
+      console.warn('[StratRanking] fetch error', e);
+    }
+  })();
+
+  // Calcul %  pour chaque équipe + tendance L5 vs Saison
+  const ranked = rows.map(r => {
+    const seasonPct = computeStrategyPct(r, strategy);
+    // L5 proxy : si form contient W/D/L, on ne peut pas dériver Over/BTTS sans scores. On utilise % saison comme baseline + ajustement PPG-L5.
+    const ppgSeason = r.ppg || null;
+    const ppgL5 = ppgFromForm(r.form, period === 'l5' ? 5 : period === 'l10' ? 10 : 5);
+    let displayPct = seasonPct;
+    let trend = null;
+    if (seasonPct != null && ppgSeason && ppgL5 != null) {
+      const ratio = ppgL5 / ppgSeason;
+      const adjusted = Math.max(0, Math.min(100, Math.round(seasonPct * ratio * 0.5 + seasonPct * 0.5)));
+      if (period !== 'season') displayPct = adjusted;
+      trend = adjusted - seasonPct;
+    }
+    return { ...r, _pct: displayPct, _trend: trend, _seasonPct: seasonPct };
+  })
+    .filter(r => r._pct != null)
+    .sort((a, b) => (b._pct || 0) - (a._pct || 0));
+
+  const trendArrow = (t) => {
+    if (t == null || Math.abs(t) < 3) return `<span style="color:var(--text3);font-size:10px">→ stable</span>`;
+    if (t > 0) return `<span style="color:var(--green);font-size:10px;font-weight:700">↑ +${t}%</span>`;
+    return `<span style="color:var(--red);font-size:10px;font-weight:700">↓ ${t}%</span>`;
+  };
+
+  if (!ranked.length) {
+    return controls + `
+      <div id="${placeholderId}" style="margin-bottom:18px"><div class="ins-empty" style="padding:14px 0;font-size:11px;color:var(--text3)">⏳ Chargement Hit Rate réel sur matchs archivés…</div></div>
+      <div class="ins-empty" style="padding:30px 0">
+        <div style="font-size:13px;color:var(--text2)">Pas de données Poisson suffisantes pour "${strategyLabel}".</div>
+      </div>`;
+  }
+
+  return controls + `
+    <div id="${placeholderId}" style="margin-bottom:18px"><div class="ins-empty" style="padding:14px 0;font-size:11px;color:var(--text3)">⏳ Chargement Hit Rate réel sur matchs archivés…</div></div>
+    <table class="standings-table" style="font-family:var(--font-mono)">
+      <thead><tr>
+        <th>Pos</th><th style="text-align:left">Équipe</th>
+        <th>Matchs Joués</th>
+        <th>% ${strategyLabel} (${period === 'season' ? 'Saison' : period.toUpperCase()})</th>
+        <th>Tendance L5 vs Saison</th>
+      </tr></thead>
+      <tbody>
+        ${ranked.map((r, i) => {
+          const isH = r.team === hKey;
+          const isA = r.team === aKey;
+          const s = getSt(r);
+          return `<tr class="${isH || isA ? 'st-highlighted' : ''}">
+            <td class="st-rank">${i + 1}</td>
+            <td class="st-team">${isH || isA ? `<strong>${dName(r.team)}</strong>` : dName(r.team)} ${badge(r)}</td>
+            <td>${s.played || '—'}</td>
+            <td style="background:${heatBg(r._pct)};color:${heatTxt(r._pct)};font-weight:800;font-size:13px;text-align:center;border-radius:4px">${r._pct}%</td>
+            <td>${trendArrow(r._trend)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+// Legacy buildClassementTab kept below (deprecated by V2 above)
+function _buildClassementTabLegacy(d) {
+  const rows = d.standings || [];
   const m      = d.match;
   const hKey   = d.homeKey;
   const aKey   = d.awayKey;
@@ -11408,6 +12514,152 @@ function buildStaticInsightLayer(d) {
   </div>`;
 }
 
+// PROP C — 4-Petal Radar : compare Home vs Away sur les 4 piliers PowerScore V44
+function buildTeamRadarSection(d) {
+  if (!d || !d.match) return '';
+  const m = d.match;
+  const hs = d.homeStats?.home || m.stats?.home || {};
+  const as = d.awayStats?.away || m.stats?.away || {};
+  const hForm = d.homeStats?.form || '';
+  const aForm = d.awayStats?.form || '';
+  const xg = m.expectedGoals || {};
+  const hRank = d.homeStats?.rank || null;
+  const aRank = d.awayStats?.rank || null;
+  // V44 expects opponent rank
+  const hP = calcPowerScoreV44Detailed(hForm, hs, xg.home, aRank);
+  const aP = calcPowerScoreV44Detailed(aForm, as, xg.away, hRank);
+  const delta = hP.total - aP.total;
+  const deltaSign = delta > 0 ? '+' : '';
+  const deltaCol = delta > 10 ? '#15803D' : delta < -10 ? '#B91C1C' : '#888';
+
+  const card = (label, hVal, aVal, max, weight) => {
+    const hPct = Math.round((hVal / max) * 100);
+    const aPct = Math.round((aVal / max) * 100);
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center">
+      <div style="font:700 11px/1 var(--font-mono);color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.2px">${label}<span style="color:var(--text3);margin-left:4px;font-weight:400">${weight}%</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-family:var(--font-mono)">
+        <span style="color:#E2001A;font-weight:800;font-size:14px">${hVal.toFixed(1)}</span>
+        <span style="font-size:9px;color:var(--text3)">vs</span>
+        <span style="color:#1A1A1A;font-weight:800;font-size:14px">${aVal.toFixed(1)}</span>
+      </div>
+      <div style="display:flex;height:4px;border-radius:2px;overflow:hidden;background:var(--bg4);margin-top:6px">
+        <div style="width:${hPct/2}%;background:#E2001A"></div>
+        <div style="width:${aPct/2}%;background:#1A1A1A;margin-left:auto"></div>
+      </div>
+    </div>`;
+  };
+
+  // Verdict textuel auto
+  const verdicts = [];
+  if (hP.pillerA - aP.pillerA > 8) verdicts.push(`Résultats dominants <strong>${m.home_team}</strong> (+${(hP.pillerA - aP.pillerA).toFixed(0)})`);
+  else if (aP.pillerA - hP.pillerA > 8) verdicts.push(`Résultats dominants <strong>${m.away_team}</strong> (+${(aP.pillerA - hP.pillerA).toFixed(0)})`);
+  if (hP.pillerC - aP.pillerC > 5) verdicts.push(`Qualité offensive/défensive <strong>${m.home_team}</strong>`);
+  else if (aP.pillerC - hP.pillerC > 5) verdicts.push(`Qualité offensive/défensive <strong>${m.away_team}</strong>`);
+  if (!verdicts.length) verdicts.push('Forces équilibrées');
+
+  return `
+    <div style="background:linear-gradient(180deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font:700 10px/1 var(--font-mono);color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Power Score V44 — Comparatif</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">4 piliers : Résultats · Streak · Qualité · Opposition</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font:800 28px/1 var(--font-head);color:${deltaCol}">${deltaSign}${delta}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">Avantage</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div style="text-align:center">
+          <div style="font:700 10px/1.2 var(--font-mono);color:#E2001A;margin-bottom:4px">${m.home_team}</div>
+          <div style="font:900 36px/1 var(--font-head);color:#E2001A">${hP.total}</div>
+          <div style="font-size:9px;color:var(--text3)">PWR /100</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font:700 10px/1.2 var(--font-mono);color:#1A1A1A;margin-bottom:4px">${m.away_team}</div>
+          <div style="font:900 36px/1 var(--font-head);color:#1A1A1A">${aP.total}</div>
+          <div style="font-size:9px;color:var(--text3)">PWR /100</div>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;max-width:340px;margin:0 auto 14px;height:260px">
+        <canvas id="ps-team-radar"></canvas>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+        ${card('Résultats', hP.pillerA, aP.pillerA, 40, 40)}
+        ${card('Streak', hP.pillerB, aP.pillerB, 25, 25)}
+        ${card('Qualité', hP.pillerC, aP.pillerC, 20, 20)}
+        ${card('Opposition', hP.pillerD, aP.pillerD, 15, 15)}
+      </div>
+      <div style="background:var(--bg4);border-radius:6px;padding:10px;font-size:11px;color:var(--text2);line-height:1.5">
+        <strong style="color:var(--text)">Verdict :</strong> ${verdicts.join(' · ')}
+      </div>
+    </div>
+  `;
+}
+
+// Init Chart.js radar — appelé après insertion HTML
+function initPowerScoreRadar() {
+  const canvas = document.getElementById('ps-team-radar');
+  if (!canvas || typeof Chart === 'undefined' || !insCurrentData?.match) return;
+  if (canvas._psChart) { canvas._psChart.destroy(); canvas._psChart = null; }
+  const d = insCurrentData;
+  const m = d.match;
+  const hs = d.homeStats?.home || m.stats?.home || {};
+  const as = d.awayStats?.away || m.stats?.away || {};
+  const hForm = d.homeStats?.form || '';
+  const aForm = d.awayStats?.form || '';
+  const xg = m.expectedGoals || {};
+  const hP = calcPowerScoreV44Detailed(hForm, hs, xg.home, d.awayStats?.rank);
+  const aP = calcPowerScoreV44Detailed(aForm, as, xg.away, d.homeStats?.rank);
+  // Normaliser à 100 pour visualiser sur la même échelle
+  const norm = (v, max) => (v / max) * 100;
+  canvas._psChart = new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: ['Résultats (40%)', 'Streak (25%)', 'Qualité (20%)', 'Opposition (15%)'],
+      datasets: [
+        {
+          label: m.home_team,
+          data: [norm(hP.pillerA, 40), norm(hP.pillerB, 25), norm(hP.pillerC, 20), norm(hP.pillerD, 15)],
+          backgroundColor: 'rgba(226, 0, 26, 0.25)',
+          borderColor: '#E2001A',
+          borderWidth: 2,
+          pointBackgroundColor: '#E2001A',
+          pointRadius: 4,
+        },
+        {
+          label: m.away_team,
+          data: [norm(aP.pillerA, 40), norm(aP.pillerB, 25), norm(aP.pillerC, 20), norm(aP.pillerD, 15)],
+          backgroundColor: 'rgba(26, 26, 26, 0.20)',
+          borderColor: '#1A1A1A',
+          borderWidth: 2,
+          pointBackgroundColor: '#1A1A1A',
+          pointRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.r.toFixed(0)}%` } },
+      },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { display: false, stepSize: 25 },
+          grid: { color: 'rgba(255,255,255,0.08)' },
+          angleLines: { color: 'rgba(255,255,255,0.12)' },
+          pointLabels: { font: { size: 10, weight: 600 }, color: 'var(--text2)' },
+        },
+      },
+    },
+  });
+}
+
 function buildPowerScoreTab(matchId) {
   insCurrentMatchId = matchId;
   // v64.0: Quick Insights depuis les données Joueurs déjà chargées
@@ -11491,9 +12743,13 @@ function buildPowerScoreTab(matchId) {
     </div>
   ` : '';
   const staticLayer = buildStaticInsightLayer(insCurrentData);
+  const teamRadar = buildTeamRadarSection(insCurrentData);
+  // Init Chart.js radar après insertion DOM (innerHTML ne run pas les <script>)
+  setTimeout(initPowerScoreRadar, 50);
 
   return `
     <div id="ps-wrap" style="padding:4px 0;">
+      ${teamRadar}
       ${quickPanel}
       ${staticLayer}
       <div id="ps-status" style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;margin-bottom:14px;">
@@ -14341,9 +15597,12 @@ async function initHistoriquePage() {
     const data = await res.json();
     renderHistorique(data);
   } catch(e) {
+    const isAuth = e?.status === 401;
     document.getElementById('hist-kpis').innerHTML =
-      `<div style="grid-column:1/-1;color:var(--text3);font-family:var(--font-mono);font-size:13px;padding:20px 0;">
-        Lancez <code style="color:var(--text2);">node server.js</code> pour accéder à l'historique.
+      `<div style="grid-column:1/-1;color:var(--text3);font-family:var(--font-mono);font-size:13px;padding:20px 0;text-align:center;">
+        ${isAuth
+          ? '🔒 Connexion requise pour accéder à l\'historique.<br><a onclick="openAuthModal(\'login\');return false;" style="color:var(--blue);cursor:pointer;text-decoration:underline">Se connecter →</a>'
+          : '⚠️ Historique temporairement indisponible.<br><span style="font-size:11px;">' + (e.message || 'Erreur API') + '</span><br><a onclick="histPageLoaded=false;initHistoriquePage();return false;" style="color:var(--blue);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;">↻ Réessayer</a>'}
       </div>`;
   }
 }
@@ -15971,20 +17230,22 @@ function renderDeepAnalysis(text) {
     // ── Parse line by line ────────────────────────────────────────────────
     const lines = seg.split('\n');
     let i = 0;
-    let currentSection = 0;   // 1=entête 2=power 3=analyse 4=probas 5=top5 6=telegram
+    let currentSection = 0;   // 1=entête 2=power 3=analyse 4=top5 paris 5=revue presse 6=verdict
     let betListOpen = false;
+    let pressListOpen = false;
     let probaBlockOpen = false;
     let pendingPara = '';
 
     const flushPara = () => {
       if (pendingPara.trim()) {
-        const cls = currentSection === 5 ? 'dp-verdict-body' : 'dp-body';
+        const cls = currentSection === 6 ? 'dp-verdict-body' : 'dp-body';
         html += `<p class="${cls}">${dpBold(dpEsc(pendingPara.trim()))}</p>`;
         pendingPara = '';
       }
     };
     const closeBlocks = () => {
       if (betListOpen)   { html += '</div>'; betListOpen = false; }
+      if (pressListOpen) { html += '</div>'; pressListOpen = false; }
       if (probaBlockOpen){ html += '</div>'; probaBlockOpen = false; }
     };
 
@@ -15997,7 +17258,7 @@ function renderDeepAnalysis(text) {
 
       // ── Section header: "1. TITRE", "**1. TITRE**", "## 1. TITRE" ────────
       const cleanLine = line.replace(/^#+\s*/, '').replace(/^\*+\s*/, '').replace(/\*+$/, '').trim();
-      const secM = cleanLine.match(/^(\d+)\.\s+(.*)/);
+      const secM = cleanLine.match(/^(\d+)\.\s+(?!\*\*)(.*)/);
       if (secM) {
         flushPara(); closeBlocks();
         const num = parseInt(secM[1]);
@@ -16008,6 +17269,12 @@ function renderDeepAnalysis(text) {
         if (num === 1) {
           const matchTitle = titleRaw.replace(/^EN-T[ÊE]TE DU MATCH\s*:\s*/i, '').trim();
           html += `<div class="dp-match-title">${dpEsc(matchTitle)}</div>`;
+        } else if (num === 5) {
+          // Section 5 = REVUE DE PRESSE — header customisé avec icône presse
+          html += `<div class="dp-section-hdr">
+            <span class="dp-section-num">${num}</span>
+            <span class="dp-section-title">📰 Revue de presse — Avis médias</span>
+          </div>`;
         } else {
           html += `<div class="dp-section-hdr">
             <span class="dp-section-num">${num}</span>
@@ -16019,6 +17286,11 @@ function renderDeepAnalysis(text) {
         if (num === 4) {
           html += '<div class="dp-bet-list">';
           betListOpen = true;
+        }
+        // Section 5 = REVUE DE PRESSE — ouvre le container press list
+        if (num === 5) {
+          html += '<div class="dp-press-list">';
+          pressListOpen = true;
         }
         continue;
       }
@@ -16075,6 +17347,23 @@ function renderDeepAnalysis(text) {
           } else {
             html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(stripped))}</div></div>`;
           }
+          continue;
+        }
+      }
+
+      // ── Press items (section 5): "N. **Média** : "Citation"" ───────────
+      if (currentSection === 5) {
+        const stripped = line.replace(/^-\s*/, '');
+        const pressM = stripped.match(/^\d+\.\s+\*\*(.+?)\*\*\s*:\s*[«"'"`]?\s*(.+?)\s*[»"'"`]?\.?\s*$/);
+        if (pressM) {
+          flushPara();
+          const media = pressM[1].trim();
+          let quote = pressM[2].trim();
+          quote = quote.replace(/^[«"'"`]\s*/, '').replace(/\s*[»"'"`]\.?\s*$/, '');
+          html += `<div class="dp-press-item">
+            <div class="dp-press-media">${dpEsc(media)}</div>
+            <div class="dp-press-quote">«&nbsp;${dpBold(dpEsc(quote))}&nbsp;»</div>
+          </div>`;
           continue;
         }
       }
