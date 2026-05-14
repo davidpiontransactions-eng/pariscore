@@ -4839,6 +4839,29 @@ function buildFallbackMatchRecord(raw) {
   if (hRaw && aRaw && hRaw === aRaw) aRaw = null;
   const homeStats = hRaw?.home || simStats(raw.home_team, true);
   const awayStats = aRaw?.away || simStats(raw.away_team, false);
+  const isReal = !!(hRaw?._real && aRaw?._real);
+
+  // v10.7 — Patch fallback Poisson local : compute lambdas from cached stats
+  // when no odds source available (OpenFootball/Football-Data) but real stats exist.
+  // Skip if either team's avgScored is 0 (anti-zero guard) or stats are simulated.
+  let poisson = null;
+  let expectedGoals = null;
+  if (isReal
+      && Number.isFinite(homeStats?.avgScored) && homeStats.avgScored > 0
+      && Number.isFinite(awayStats?.avgScored) && awayStats.avgScored > 0) {
+    const LEAGUE_AVG = 1.35;
+    const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG);
+    const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG);
+    if (expHome > 0 || expAway > 0) {
+      try {
+        poisson = computePoisson(expHome, expAway);
+        expectedGoals = { home: expHome, away: expAway };
+      } catch (e) {
+        console.warn(`[Fallback Poisson] ${raw.home_team} vs ${raw.away_team} — calcul échoué: ${e.message}`);
+      }
+    }
+  }
+
   return {
     id: raw.id,
     sport: raw._sport || raw.sport_key || null,
@@ -4854,9 +4877,9 @@ function buildFallbackMatchRecord(raw) {
     fair: null,
     edge: null,
     best_edge: null,
-    poisson: null,
-    expectedGoals: null,
-    stats: { home: homeStats, away: awayStats, isReal: !!(hRaw?._real && aRaw?._real) },
+    poisson,
+    expectedGoals,
+    stats: { home: homeStats, away: awayStats, isReal },
     status: raw.status || 'scheduled',
     home_score: raw.home_score ?? null,
     away_score: raw.away_score ?? null,

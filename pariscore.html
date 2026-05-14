@@ -7318,11 +7318,10 @@ function renderTennisValueBets(matches) {
   }
 
   const _fmtTennisDate = (iso) => {
-    if (!iso) return '<span style="color:var(--text3,#5a6068);">—</span>';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '<span style="color:var(--text3,#5a6068);">—</span>';
-    const date = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const d = parseKickoff(iso);
+    if (!d) return '<span style="color:var(--text3,#5a6068);">—</span>';
+    const date = d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit' });
+    const time = d.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' });
     return `<span class="tvb-mono" style="font-family:'DM Mono',monospace;font-size:12px;">${date}<span class="tvb-book">${time}</span></span>`;
   };
 
@@ -9469,6 +9468,43 @@ function ppgFromFormStr(form, n) {
   return parseFloat((chars.reduce((s, c) => s + (c==='W'?3:c==='D'?1:0), 0) / chars.length).toFixed(2));
 }
 
+// ── Kickoff time helpers — normalize to Europe/Paris ─────────────────────────
+function parseKickoff(raw) {
+  if (raw == null || raw === '' || raw === 'TBD' || raw === 'TBA') return null;
+  if (typeof raw === 'number') {
+    // UNIX seconds (10 digits) vs ms (13 digits)
+    const ms = raw < 1e12 ? raw * 1000 : raw;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw === 'string') {
+    if (/^\d{10}$/.test(raw)) return new Date(parseInt(raw, 10) * 1000);
+    if (/^\d{13}$/.test(raw)) return new Date(parseInt(raw, 10));
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+  return null;
+}
+function fmtKickoffTime(raw, fallback = 'À déf.') {
+  const d = parseKickoff(raw);
+  if (!d) return fallback;
+  try {
+    return d.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' });
+  } catch (_) { return fallback; }
+}
+function fmtKickoffDate(raw, opts = { weekday: 'short', day: 'numeric', month: 'short' }, fallback = 'Reporté') {
+  const d = parseKickoff(raw);
+  if (!d) return fallback;
+  try {
+    return d.toLocaleDateString('fr-FR', Object.assign({ timeZone: 'Europe/Paris' }, opts));
+  } catch (_) { return fallback; }
+}
+function kickoffMs(raw) {
+  const d = parseKickoff(raw);
+  return d ? d.getTime() : NaN;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  LIVE STATS PANEL — Side-by-side avec barres comparatives par équipe
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -10152,12 +10188,15 @@ function renderMatches(matches) {
   try {
   let filtered = matches;
 
-  // Filtre par jour
+  // Filtre par jour (référence: fuseau Europe/Paris)
   if (activeDay !== 'all') {
     const target = new Date();
     target.setDate(target.getDate() + activeDay);
-    const targetDate = target.toLocaleDateString('fr-FR');
-    filtered = matches.filter(m => new Date(m.commence_time).toLocaleDateString('fr-FR') === targetDate);
+    const targetDate = target.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
+    filtered = matches.filter(m => {
+      const d = parseKickoff(m.commence_time);
+      return d && d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) === targetDate;
+    });
   }
 
   // Filtre par pays (multi-selection — toutes les ligues des pays choisis)
@@ -10282,9 +10321,12 @@ function renderMatches(matches) {
     if (!btn) return;
     const target = new Date();
     target.setDate(target.getDate() + d);
-    const tDate = target.toLocaleDateString('fr-FR');
-    const dayLabel = d === 0 ? "Aujourd'hui" : d === 1 ? 'Demain' : target.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-    const cnt = matches.filter(m => new Date(m.commence_time).toLocaleDateString('fr-FR') === tDate).length;
+    const tDate = target.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
+    const dayLabel = d === 0 ? "Aujourd'hui" : d === 1 ? 'Demain' : target.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short' });
+    const cnt = matches.filter(m => {
+      const dk = parseKickoff(m.commence_time);
+      return dk && dk.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) === tDate;
+    }).length;
     btn.textContent = cnt > 0 ? `${dayLabel} (${cnt})` : dayLabel;
   });
 
@@ -10334,7 +10376,15 @@ function renderMatches(matches) {
 
   // Tri : par colonne stat si active, sinon par date
   if (!sortKey) {
-    filtered.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+    filtered.sort((a, b) => {
+      const ta = kickoffMs(a.commence_time);
+      const tb = kickoffMs(b.commence_time);
+      // Invalides en fin de liste
+      if (isNaN(ta) && isNaN(tb)) return 0;
+      if (isNaN(ta)) return 1;
+      if (isNaN(tb)) return -1;
+      return ta - tb;
+    });
   }
   if (mt) { mt.style.display = ''; mt.classList.toggle('no-live', !filtered.some(m => !!m.live_score)); }
   if (es) es.style.display = 'none';
@@ -10405,9 +10455,8 @@ const label = country
       tbody.appendChild(hdrTr);
     }
 
-    const dt   = new Date(m.commence_time);
-    const time = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const date = dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    const time = fmtKickoffTime(m.commence_time);
+    const date = fmtKickoffDate(m.commence_time);
 
     const hs   = m.stats?.home || {};
     const as   = m.stats?.away || {};
@@ -10890,8 +10939,7 @@ function openGemini(matchId) {
 function _openGeminiModal(matchId, m) {
   gmCurrentMatchId = matchId;
   document.getElementById('gm-title').textContent = `${m.home_team} vs ${m.away_team}`;
-  const dt = new Date(m.commence_time);
-  document.getElementById('gm-sub').textContent = `${m.league} · ${dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})} à ${dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+  document.getElementById('gm-sub').textContent = `${m.league} · ${fmtKickoffDate(m.commence_time)} à ${fmtKickoffTime(m.commence_time)}`;
 
   // Show quota badge
   const qb = document.getElementById('gm-quota-badge');
@@ -11093,8 +11141,7 @@ function openAttributesRadar(matchId) {
 
   document.getElementById('attributes-modal').classList.add('open');
   document.getElementById('attr-title').textContent = `${m.home_team} vs ${m.away_team}`;
-  const dt = new Date(m.commence_time);
-  document.getElementById('attr-sub').textContent = `${m.league} · ${dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})} à ${dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+  document.getElementById('attr-sub').textContent = `${m.league} · ${fmtKickoffDate(m.commence_time)} à ${fmtKickoffTime(m.commence_time)}`;
 
   renderAttributesRadar(m);
 }
@@ -12931,7 +12978,7 @@ async function openInsights(matchId) {
     ? ` · ⚡ Intensité <strong style="color:${m.live_intensity >= 60 ? '#ff4d4d' : m.live_intensity >= 30 ? '#ffa726' : '#29b6f6'}">${m.live_intensity}/100</strong>`
     : '';
   document.getElementById('ins-teams').textContent = `${m.home_team} — ${m.away_team}${insLiveScore}`;
-  document.getElementById('ins-league').innerHTML = `${m.league} · ${new Date(m.commence_time).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}${insIntensity}`;
+  document.getElementById('ins-league').innerHTML = `${m.league} · ${fmtKickoffDate(m.commence_time, { weekday: 'long', day: 'numeric', month: 'long' })}${insIntensity}`;
 
   ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore'].forEach(id => {
     const el = document.getElementById(id);
@@ -15323,9 +15370,8 @@ function renderTopMatchesGrid(matches) {
   grid.innerHTML = matches.map(m => {
     const pick = m.topPick || {};
     const conf = pick.val || 0;
-    const dt = new Date(m.commence_time);
-    const time = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const day  = dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+    const time = fmtKickoffTime(m.commence_time);
+    const day  = fmtKickoffDate(m.commence_time, { weekday: 'short', day: 'numeric' });
     const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0, 4).toUpperCase() || '?';
     const odds = m.best_edge?.odds != null
       ? Number(m.best_edge.odds).toFixed(2)
@@ -15446,9 +15492,8 @@ async function loadPredictions() {
     grid.style.flexDirection = 'column';
     grid.style.gap = '8px';
     grid.innerHTML = preds.map(p => {
-      const dt = new Date(p.commence_time);
-      const day  = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
-      const time = dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const day  = fmtKickoffDate(p.commence_time, { weekday:'short', day:'numeric', month:'short' });
+      const time = fmtKickoffTime(p.commence_time);
       const league = (p.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
       const hw = p.poisson?.homeWin ?? 0;
       const aw = p.poisson?.awayWin ?? 0;
@@ -15634,8 +15679,7 @@ async function loadAccaPanel(key) {
     const d = await res.json();
     if (!d.matches || d.matches.length < 2) return;
     const matchRows = d.matches.map(m => {
-      const t = new Date(m.commence_time);
-      const timeStr = t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const timeStr = fmtKickoffTime(m.commence_time);
       return `<div class="acca-match">
         <span class="acca-match-teams">${m.home_team} <span style="color:var(--text3);font-weight:400">vs</span> ${m.away_team}</span>
         <span style="display:flex;gap:12px;align-items:center;">
@@ -15683,8 +15727,7 @@ async function loadStrategy(key) {
     }
 
     grid.innerHTML = matches.map(m => {
-      const dt = new Date(m.commence_time);
-      const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const dateStr = fmtKickoffDate(m.commence_time, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + fmtKickoffTime(m.commence_time);
       const odd = m.odds != null ? Number(m.odds).toFixed(2) : m.implied_odds != null ? `~${Number(m.implied_odds).toFixed(2)}` : '—';
       const edge = m.best_edge?.edge;
       const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
@@ -15869,8 +15912,8 @@ function renderUserBetsTable() {
   emptyEl.style.display = 'none';
   const now = Math.floor(Date.now() / 1000);
   tbody.innerHTML = filtered.map(b => {
-    const d = b.commence_time ? new Date(b.commence_time) : new Date(b.created_at * 1000);
-    const dateStr = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const rawTs = b.commence_time || (b.created_at ? b.created_at * 1000 : null);
+    const dateStr = fmtKickoffDate(rawTs, { day:'numeric', month:'short', year:'2-digit' }) + ' ' + fmtKickoffTime(rawTs);
     const match = (b.home_team || '?') + ' — ' + (b.away_team || '?');
     const pl = (b.payout_cents !== null && b.payout_cents !== undefined)
       ? `<span class="${b.payout_cents >= 0 ? 'bet-pl-pos' : 'bet-pl-neg'}">${eurFmt(b.payout_cents / 100)}</span>`
@@ -16510,8 +16553,7 @@ function renderHistChart(matches) {
   bets.forEach(m => {
     const total = (m.realScore.home || 0) + (m.realScore.away || 0);
     cumul += total > 2.5 ? 1 : -1;
-    const d = new Date(m.commence_time);
-    labels.push(d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
+    labels.push(fmtKickoffDate(m.commence_time, { day: 'numeric', month: 'short' }, '—'));
     values.push(cumul);
   });
 
@@ -16555,7 +16597,7 @@ function renderBttsChart(matches) {
     const rs = m.realScore;
     const wasBTTS = (rs.home || 0) > 0 && (rs.away || 0) > 0;
     cumul += wasBTTS ? 1 : -1;
-    labels.push(new Date(m.commence_time).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
+    labels.push(fmtKickoffDate(m.commence_time, { day: 'numeric', month: 'short' }, '—'));
     values.push(cumul);
   });
 
@@ -16683,8 +16725,7 @@ function renderHistTable(matches) {
   emptyEl.style.display = 'none';
 
   tbody.innerHTML = matches.map(m => {
-    const d       = new Date(m.commence_time);
-    const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    const dateStr = fmtKickoffDate(m.commence_time, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     const score   = m.realScore != null
       ? `<span class="hist-score">${m.realScore.home}&nbsp;-&nbsp;${m.realScore.away}</span>`
       : `<span class="hist-score unverified">—</span>`;
@@ -17665,8 +17706,7 @@ async function loadHotPicks() {
     </div>`;
 
     grid.innerHTML = picks.map((p, i) => {
-      const dt = new Date(p.commence_time);
-      const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const dateStr = fmtKickoffDate(p.commence_time, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + fmtKickoffTime(p.commence_time);
       const vi = p.valueIndex || 0;
       const ci = p.confidenceIndex || 0;
       const edge = p.best_edge?.edge;
@@ -17733,8 +17773,7 @@ async function loadSureBets() {
       </div>`;
     }
     grid.innerHTML = bets.map(b => {
-      const dt = new Date(b.commence_time);
-      const dateStr = dt.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + ' · ' + dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const dateStr = fmtKickoffDate(b.commence_time, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + fmtKickoffTime(b.commence_time);
       const lvl = b.sureLevel || 8;
       const vi  = b.valueIndex || 0;
       const ci  = b.confidenceIndex || 0;
