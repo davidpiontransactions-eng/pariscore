@@ -18343,6 +18343,36 @@ pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
 setInterval(() => {
   syncSackmannData().catch(e => console.warn('[Sackmann cron]', e.message));
 }, SACKMANN_SYNC_INTERVAL_MS);
+// Tennis Abstract — refresh quotidien 10:00 Europe/Paris (cache warmer + sanity log).
+function _msUntilNextParisHour(targetHour) {
+  const nowParisStr = new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris', hour12: false });
+  const nowParis = new Date(nowParisStr);
+  const target = new Date(nowParis);
+  target.setHours(targetHour, 0, 0, 0);
+  if (target.getTime() <= nowParis.getTime()) target.setDate(target.getDate() + 1);
+  return target.getTime() - nowParis.getTime();
+}
+async function _runTennisAbstractDailyRefresh() {
+  const slugs = Object.keys(TENNIS_ABSTRACT_EVENTS);
+  console.log(`  [Cron:TennisAbstract] Refresh ${slugs.length} event(s) à 10:00 Europe/Paris…`);
+  for (const slug of slugs) {
+    try {
+      tennisAbstractCache.delete(slug); // force refresh
+      const data = await fetchTennisAbstractTournament(slug);
+      const top = (data.players || [])
+        .filter(p => !p.eliminated && p.pctWin != null)
+        .sort((a, b) => (b.pctWin || 0) - (a.pctWin || 0))[0];
+      console.log(`  [Cron:TennisAbstract] ✓ ${slug} — ${data.players?.length || 0} players · top: ${top ? `${top.name} ${top.pctWin}%W` : 'n/a'}`);
+    } catch (e) {
+      console.warn(`  [Cron:TennisAbstract] ⚠ ${slug} échec: ${e.message}`);
+    }
+  }
+}
+setTimeout(() => {
+  _runTennisAbstractDailyRefresh().catch(e => console.warn('[Cron:TennisAbstract]', e.message));
+  setInterval(() => _runTennisAbstractDailyRefresh().catch(e => console.warn('[Cron:TennisAbstract]', e.message)), 24 * 3600 * 1000);
+}, _msUntilNextParisHour(10));
+
 // Matchstat resolver — cron 7d + boot sync si data absente.
 if (MATCHSTAT_ENABLED) {
   setInterval(() => {
