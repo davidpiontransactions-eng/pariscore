@@ -6176,6 +6176,99 @@ async function callGemini(prompt, maxTokens = 600) {
 // fetchTeamInjuries() removed — injuries now sourced from BSD unavailable_players
 // in buildMatchRecord(). API-Football /injuries endpoint no longer called.
 
+// ─── AF ENRICHMENTS — predictions + transfers (cache 6h/24h) ──────────────
+// Active des endpoints API-Football PRO inexploités (7500 req/jour budget).
+// Apport: 2e source AI-prediction indépendante de BSD (cross-check Poisson)
+// + transferts hivernaux pour contexte tactique.
+const AF_BASE_URL = 'https://v3.football.api-sports.io';
+const AF_PREDICTIONS_TTL_MS = 6 * 3600 * 1000;
+const AF_TRANSFERS_TTL_MS   = 24 * 3600 * 1000;
+
+async function fetchAFPredictions(fixtureId) {
+  if (!API_FOOTBALL_KEY || !fixtureId) return null;
+  const cacheKey = `af_pred_${fixtureId}`;
+  const cached = apiCacheGet(cacheKey, 'apif_predictions');
+  if (cached !== null && cached !== undefined) {
+    return cached === '__NEG__' ? null : cached;
+  }
+  try {
+    const r = await httpsGet(
+      `${AF_BASE_URL}/predictions?fixture=${encodeURIComponent(fixtureId)}`,
+      { 'x-apisports-key': API_FOOTBALL_KEY }
+    );
+    const arr = r?.data?.response;
+    if (!Array.isArray(arr) || arr.length === 0) {
+      apiCacheSet(cacheKey, '__NEG__', 'apif_predictions', AF_PREDICTIONS_TTL_MS);
+      return null;
+    }
+    const p = arr[0]?.predictions || {};
+    const cleaned = {
+      winner_id:      p.winner?.id ?? null,
+      winner_name:    p.winner?.name ?? null,
+      winner_comment: p.winner?.comment ?? null,
+      win_or_draw:    !!p.win_or_draw,
+      under_over:     p.under_over ?? null,
+      goals_home:     p.goals?.home ?? null,
+      goals_away:     p.goals?.away ?? null,
+      advice:         p.advice ?? null,
+      percent_home:   p.percent?.home ?? null,
+      percent_draw:   p.percent?.draw ?? null,
+      percent_away:   p.percent?.away ?? null,
+      fetched_at:     Date.now(),
+      source:         'api-football',
+    };
+    apiCacheSet(cacheKey, cleaned, 'apif_predictions', AF_PREDICTIONS_TTL_MS);
+    return cleaned;
+  } catch (e) {
+    console.warn(`  [AF/predictions] fixture=${fixtureId} erreur:`, e.message);
+    return null;
+  }
+}
+
+async function fetchAFTransfers(teamId, sinceDays = 180) {
+  if (!API_FOOTBALL_KEY || !teamId) return null;
+  const cacheKey = `af_trans_${teamId}_${sinceDays}`;
+  const cached = apiCacheGet(cacheKey, 'apif_transfers');
+  if (cached !== null && cached !== undefined) {
+    return cached === '__NEG__' ? null : cached;
+  }
+  try {
+    const r = await httpsGet(
+      `${AF_BASE_URL}/transfers?team=${encodeURIComponent(teamId)}`,
+      { 'x-apisports-key': API_FOOTBALL_KEY }
+    );
+    const arr = r?.data?.response;
+    if (!Array.isArray(arr) || arr.length === 0) {
+      apiCacheSet(cacheKey, '__NEG__', 'apif_transfers', AF_TRANSFERS_TTL_MS);
+      return null;
+    }
+    const cutoff = Date.now() - (sinceDays * 24 * 3600 * 1000);
+    const transfers = [];
+    for (const player of arr) {
+      const playerName = player?.player?.name || null;
+      const playerId   = player?.player?.id   || null;
+      for (const t of player?.transfers || []) {
+        const ts = t.date ? new Date(t.date).getTime() : 0;
+        if (!Number.isFinite(ts) || ts < cutoff) continue;
+        transfers.push({
+          player_id:   playerId,
+          player_name: playerName,
+          date:        t.date,
+          type:        t.type ?? null,
+          team_in:     t.teams?.in?.name  ?? null,
+          team_out:    t.teams?.out?.name ?? null,
+        });
+      }
+    }
+    transfers.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    apiCacheSet(cacheKey, transfers, 'apif_transfers', AF_TRANSFERS_TTL_MS);
+    return transfers;
+  } catch (e) {
+    console.warn(`  [AF/transfers] team=${teamId} erreur:`, e.message);
+    return null;
+  }
+}
+
 // ─── SCOUTING REPORT (Gemini, cache 24h) ─────────────────────────────────────
 
 // ── Prompt Système "Brain" du Scout Pro — 5 Piliers ─────────────────────────
@@ -15301,6 +15394,35 @@ if (pathname === '/api/v1/rapidapi/dual-check') {
     .then(data => jsonResponse(res, 200, { count: data.length, data }))
     .catch(e => jsonResponse(res, 500, { error: e.message }));
   return;
+}
+
+// GET /api/v1/af/predictions/:fixtureId — AF AI prediction (cross-check Poisson)
+{
+  const m = pathname.match(/^\/api\/v1\/af\/predictions\/([0-9]+)$/);
+  if (m) {
+    const fixtureId = parseInt(m[1], 10);
+    if (!fixtureId || fixtureId < 1) return jsonResponse(res, 400, { error: 'fixtureId invalide' });
+    if (!API_FOOTBALL_KEY) return jsonResponse(res, 503, { error: 'API_FOOTBALL_KEY manquante' });
+    fetchAFPredictions(fixtureId)
+      .then(data => jsonResponse(res, data ? 200 : 404, data || { error: 'Aucune prédiction', fixtureId }))
+      .catch(e => jsonResponse(res, 500, { error: e.message }));
+    return;
+  }
+}
+
+// GET /api/v1/af/transfers/:teamId?since=180 — transferts récents (contexte tactique)
+{
+  const m = pathname.match(/^\/api\/v1\/af\/transfers\/([0-9]+)$/);
+  if (m) {
+    const teamId = parseInt(m[1], 10);
+    if (!teamId || teamId < 1) return jsonResponse(res, 400, { error: 'teamId invalide' });
+    if (!API_FOOTBALL_KEY) return jsonResponse(res, 503, { error: 'API_FOOTBALL_KEY manquante' });
+    const sinceDays = Math.min(365, Math.max(1, parseInt(query.since, 10) || 180));
+    fetchAFTransfers(teamId, sinceDays)
+      .then(data => jsonResponse(res, data ? 200 : 404, data ? { count: data.length, sinceDays, transfers: data } : { error: 'Aucun transfert', teamId }))
+      .catch(e => jsonResponse(res, 500, { error: e.message }));
+    return;
+  }
 }
 
 // GET /api/v1/gemini/test — vérification de la clé Gemini
