@@ -11319,6 +11319,236 @@ function findTennisOddsForPlayers(player1Name, player2Name) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS HISTORICAL — Jeff Sackmann CSV  (github.com/JeffSackmann/tennis_atp,
+//  tennis_wta). License CC BY-NC-SA 4.0 — server-side only, never expose raw
+//  rows via API. Used for in-house surface Elo training (T4) + backtest (T9).
+//  Model outputs (probabilities, Elo) sont des œuvres dérivées, pas le dataset.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SACKMANN_REPOS = {
+  ATP: 'https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_',
+  WTA: 'https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_',
+};
+const SACKMANN_YEARS_BACK = 5;
+const SACKMANN_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const SACKMANN_STALE_THRESHOLD_MS = 48 * 60 * 60 * 1000;
+let _sackmannSyncInProgress = false;
+let _sackmannLastSyncTs = 0;
+
+// Crée la table tennis_matches si absente. Schéma calé sur columns Sackmann.
+function _initTennisSackmannSchema() {
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_matches (
+    tour TEXT NOT NULL,
+    tourney_id TEXT NOT NULL,
+    match_num INTEGER NOT NULL,
+    tourney_name TEXT,
+    surface TEXT,
+    draw_size INTEGER,
+    tourney_level TEXT,
+    tourney_date INTEGER,
+    winner_id INTEGER,
+    winner_seed TEXT,
+    winner_entry TEXT,
+    winner_name TEXT,
+    winner_hand TEXT,
+    winner_ht INTEGER,
+    winner_ioc TEXT,
+    winner_age REAL,
+    loser_id INTEGER,
+    loser_seed TEXT,
+    loser_entry TEXT,
+    loser_name TEXT,
+    loser_hand TEXT,
+    loser_ht INTEGER,
+    loser_ioc TEXT,
+    loser_age REAL,
+    score TEXT,
+    best_of INTEGER,
+    round TEXT,
+    minutes INTEGER,
+    w_ace INTEGER, w_df INTEGER, w_svpt INTEGER, w_1stIn INTEGER, w_1stWon INTEGER,
+    w_2ndWon INTEGER, w_SvGms INTEGER, w_bpSaved INTEGER, w_bpFaced INTEGER,
+    l_ace INTEGER, l_df INTEGER, l_svpt INTEGER, l_1stIn INTEGER, l_1stWon INTEGER,
+    l_2ndWon INTEGER, l_SvGms INTEGER, l_bpSaved INTEGER, l_bpFaced INTEGER,
+    winner_rank INTEGER, winner_rank_points INTEGER,
+    loser_rank INTEGER, loser_rank_points INTEGER,
+    imported_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    PRIMARY KEY (tour, tourney_id, match_num)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_date ON tennis_matches(tourney_date)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_winner_id ON tennis_matches(winner_id, surface)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_loser_id ON tennis_matches(loser_id, surface)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_winner_name ON tennis_matches(winner_name)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_loser_name ON tennis_matches(loser_name)`);
+}
+
+// Récupère un fichier texte via HTTPS (https.get raw — httpsGet auto-parse JSON).
+function fetchRawText(url, timeoutMs = 30000) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { timeout: timeoutMs }, (res) => {
+      if (res.statusCode === 404) { res.resume(); return resolve(null); }
+      if (res.statusCode !== 200) {
+        res.resume();
+        return reject(new Error(`HTTP ${res.statusCode}`));
+      }
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      res.on('error', reject);
+    });
+    req.on('timeout', () => { req.destroy(new Error('timeout')); });
+    req.on('error', reject);
+  });
+}
+
+// CSV parser minimal — gère champs cités avec virgules + double-quote escape.
+function _parseCsvLine(line) {
+  const out = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++; }
+        else { inQuote = false; }
+      } else { cur += ch; }
+    } else {
+      if (ch === ',') { out.push(cur); cur = ''; }
+      else if (ch === '"' && cur === '') { inQuote = true; }
+      else { cur += ch; }
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseSackmannCSV(text, tour) {
+  if (!text) return [];
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headerCols = lines[0].split(',');
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const cols = _parseCsvLine(line);
+    const row = { tour };
+    for (let c = 0; c < headerCols.length; c++) {
+      row[headerCols[c]] = cols[c] != null ? cols[c] : '';
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+// YYYYMMDD string → integer (sortable, comparable). Null si malformé.
+function _parseTourneyDate(s) {
+  if (!s || !/^\d{8}$/.test(s)) return null;
+  return parseInt(s, 10);
+}
+
+// INSERT OR REPLACE en transaction — idempotent via PK (tour, tourney_id, match_num).
+function upsertSackmannMatches(rows) {
+  if (!rows || rows.length === 0) return { inserted: 0, skipped: 0 };
+  const stmt = sqldb.prepare(`INSERT OR REPLACE INTO tennis_matches (
+    tour, tourney_id, match_num, tourney_name, surface, draw_size, tourney_level, tourney_date,
+    winner_id, winner_seed, winner_entry, winner_name, winner_hand, winner_ht, winner_ioc, winner_age,
+    loser_id, loser_seed, loser_entry, loser_name, loser_hand, loser_ht, loser_ioc, loser_age,
+    score, best_of, round, minutes,
+    w_ace, w_df, w_svpt, w_1stIn, w_1stWon, w_2ndWon, w_SvGms, w_bpSaved, w_bpFaced,
+    l_ace, l_df, l_svpt, l_1stIn, l_1stWon, l_2ndWon, l_SvGms, l_bpSaved, l_bpFaced,
+    winner_rank, winner_rank_points, loser_rank, loser_rank_points
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+  const nz = v => (v === '' || v === undefined) ? null : v;
+  const nzi = v => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; };
+  const nzf = v => { const f = parseFloat(v); return Number.isFinite(f) ? f : null; };
+
+  let inserted = 0, skipped = 0;
+  const tx = sqldb.transaction((batch) => {
+    for (const r of batch) {
+      const tournId = r.tourney_id;
+      const matchNum = nzi(r.match_num);
+      if (!tournId || matchNum === null) { skipped++; continue; }
+      stmt.run(
+        r.tour, tournId, matchNum,
+        nz(r.tourney_name), nz(r.surface), nzi(r.draw_size), nz(r.tourney_level), _parseTourneyDate(r.tourney_date),
+        nzi(r.winner_id), nz(r.winner_seed), nz(r.winner_entry), nz(r.winner_name), nz(r.winner_hand),
+        nzi(r.winner_ht), nz(r.winner_ioc), nzf(r.winner_age),
+        nzi(r.loser_id), nz(r.loser_seed), nz(r.loser_entry), nz(r.loser_name), nz(r.loser_hand),
+        nzi(r.loser_ht), nz(r.loser_ioc), nzf(r.loser_age),
+        nz(r.score), nzi(r.best_of), nz(r.round), nzi(r.minutes),
+        nzi(r.w_ace), nzi(r.w_df), nzi(r.w_svpt), nzi(r.w_1stIn), nzi(r.w_1stWon),
+        nzi(r.w_2ndWon), nzi(r.w_SvGms), nzi(r.w_bpSaved), nzi(r.w_bpFaced),
+        nzi(r.l_ace), nzi(r.l_df), nzi(r.l_svpt), nzi(r.l_1stIn), nzi(r.l_1stWon),
+        nzi(r.l_2ndWon), nzi(r.l_SvGms), nzi(r.l_bpSaved), nzi(r.l_bpFaced),
+        nzi(r.winner_rank), nzi(r.winner_rank_points), nzi(r.loser_rank), nzi(r.loser_rank_points)
+      );
+      inserted++;
+    }
+  });
+  tx(rows);
+  return { inserted, skipped };
+}
+
+// Sync orchestrator. Boucle ATP+WTA × N années récentes.
+async function syncSackmannData({ yearsBack = SACKMANN_YEARS_BACK } = {}) {
+  if (_sackmannSyncInProgress) return { skipped: 'in_progress' };
+  _sackmannSyncInProgress = true;
+
+  try {
+    _initTennisSackmannSchema();
+    const currentYear = new Date().getUTCFullYear();
+    const years = [];
+    for (let y = currentYear; y > currentYear - yearsBack; y--) years.push(y);
+
+    const summary = { ATP: {}, WTA: {}, totalInserted: 0, errors: [] };
+
+    for (const tour of ['ATP', 'WTA']) {
+      const repoBase = SACKMANN_REPOS[tour];
+      for (const year of years) {
+        const url = `${repoBase}${year}.csv`;
+        try {
+          const csv = await fetchRawText(url);
+          if (!csv) {
+            console.log(`  [Sackmann] ${tour} ${year} → 404 (file not yet published)`);
+            continue;
+          }
+          const rows = parseSackmannCSV(csv, tour);
+          if (rows.length === 0) {
+            console.log(`  [Sackmann] ${tour} ${year} → 0 rows parsed`);
+            continue;
+          }
+          const result = upsertSackmannMatches(rows);
+          summary[tour][year] = result.inserted;
+          summary.totalInserted += result.inserted;
+          console.log(`  [Sackmann] ${tour} ${year} → ${result.inserted} matches (${result.skipped} skipped)`);
+        } catch (e) {
+          console.warn(`  [Sackmann] ${tour} ${year} error: ${e.message}`);
+          summary.errors.push({ tour, year, error: e.message });
+        }
+      }
+    }
+    _sackmannLastSyncTs = Date.now();
+    try { kvSet('tennis_sackmann_last_sync', _sackmannLastSyncTs); } catch (_) { /* swallow */ }
+    console.log(`  [Sackmann] ✓ Sync complete — ${summary.totalInserted} matches ATP+WTA × ${yearsBack} years.`);
+    return summary;
+  } finally {
+    _sackmannSyncInProgress = false;
+  }
+}
+
+function getSackmannLastSync() {
+  if (_sackmannLastSyncTs) return _sackmannLastSyncTs;
+  try {
+    const stored = kvGet('tennis_sackmann_last_sync', null);
+    if (stored) _sackmannLastSyncTs = stored;
+  } catch (_) { /* swallow */ }
+  return _sackmannLastSyncTs;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -13572,6 +13802,40 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
 if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
   const out = await buildTennisValueBets({ date: query.date });
   return jsonResponse(res, out.status, out.body);
+}
+// Status Sackmann historique : nombre de matchs par tour/year + dernière sync.
+if (pathname === '/api/v1/tennis/sackmann/status' && req.method === 'GET') {
+  try {
+    _initTennisSackmannSchema();
+    const rows = sqldb.prepare(`
+      SELECT tour, CAST(tourney_date / 10000 AS INTEGER) AS year, COUNT(*) AS n
+      FROM tennis_matches
+      WHERE tourney_date IS NOT NULL
+      GROUP BY tour, year
+      ORDER BY tour, year DESC
+    `).all();
+    const total = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_matches').get().n;
+    const last = getSackmannLastSync();
+    return jsonResponse(res, 200, {
+      total_matches: total,
+      breakdown: rows,
+      last_sync_ts: last || null,
+      last_sync_age_h: last ? Math.floor((Date.now() - last) / (60 * 60 * 1000)) : null,
+      in_progress: _sackmannSyncInProgress,
+      years_back: SACKMANN_YEARS_BACK,
+      license: 'CC BY-NC-SA 4.0 — Jeff Sackmann (server-side use only)',
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'sackmann_status_error', detail: e.message });
+  }
+}
+// Force sync Sackmann (admin only — JWT admin role requis).
+if (pathname === '/api/v1/tennis/sackmann/sync' && req.method === 'POST') {
+  const user = requireAuth(req, res, ['admin']);
+  if (!user) return; // requireAuth a déjà renvoyé 401/403
+  // Fire-and-forget — pas d'await pour ne pas bloquer la requête.
+  syncSackmannData().catch(e => console.warn('[Sackmann manual]', e.message));
+  return jsonResponse(res, 202, { status: 'sync_started', check: '/api/v1/tennis/sackmann/status' });
 }
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
   if (!BSD_TENNIS_ENABLED) {
@@ -16247,6 +16511,24 @@ setInterval(() => pollLiveScores().catch(e => console.warn('[Live]', e.message))
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
 pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
+
+// Tennis historical (Sackmann CSV) — cron nightly + initial sync si data stale (>48h).
+// Server-side only (CC BY-NC-SA NC). Used by Elo (T4) + backtest (T9).
+setInterval(() => {
+  syncSackmannData().catch(e => console.warn('[Sackmann cron]', e.message));
+}, SACKMANN_SYNC_INTERVAL_MS);
+(function _sackmannBootSync() {
+  const last = getSackmannLastSync();
+  if (!last || Date.now() - last > SACKMANN_STALE_THRESHOLD_MS) {
+    console.log('  [Sackmann] Boot sync (data stale or absent)…');
+    setTimeout(() => {
+      syncSackmannData().catch(e => console.warn('[Sackmann boot]', e.message));
+    }, 10000); // delay 10s to let main boot finish first
+  } else {
+    const ageH = Math.floor((Date.now() - last) / (60 * 60 * 1000));
+    console.log(`  [Sackmann] Last sync ${ageH}h ago — skipping boot sync.`);
+  }
+})();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  CRON: Recherche automatique de vidéos de conférences de presse (1-2h avant match)
