@@ -5963,6 +5963,42 @@
     </div>
     <div id="ta-rome-upcoming" style="margin-top:14px;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;"></div>
   </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TENNIS EXPLORER — Odds Drift (open → current) ATP + WTA fixtures jour.
+       Source: tennisexplorer.com — scraped server-side, cache 30min.
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section fade-up" id="tennis-tex-section" style="margin-top:24px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:24px;">📈 Odds Drift — Tennis Explorer</h2>
+        <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">
+          Open vs Current odds (player 1) · Δ% positif = chute favori · <a href="https://www.tennisexplorer.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a> · Cache 30min · Clic joueur = profil
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:6px;">
+          <button class="tex-tour-btn is-active" data-tour="ATP" onclick="setTexTour('ATP')" style="padding:6px 12px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;">ATP</button>
+          <button class="tex-tour-btn" data-tour="WTA" onclick="setTexTour('WTA')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;">WTA</button>
+        </div>
+        <span id="tex-status" style="font-size:12px;color:var(--text3,#5a6068);">—</span>
+        <button onclick="loadTexMatches()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;">🔄</button>
+      </div>
+    </div>
+    <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
+      <div id="tex-body" style="overflow:auto;max-height:600px;">
+        <div style="padding:32px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Player profile modal (Tennis Explorer) -->
+  <div id="tex-player-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:520px;width:100%;padding:20px;position:relative;">
+      <button onclick="document.getElementById('tex-player-modal').style.display='none'" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;">✕</button>
+      <div id="tex-player-modal-body" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text,#e8eaed);">Chargement…</div>
+    </div>
+  </div>
 </div><!-- /page-tennis -->
 
 <style>
@@ -5974,6 +6010,16 @@
   .ta-rome-table td.ta-prob { text-align:right; font-weight:600; }
   .ta-rome-table td.ta-prob-w { color:var(--green,#00e676); }
   .ta-rome-seed { display:inline-block; min-width:24px; padding:1px 5px; background:var(--bg3,#181c20); border-radius:3px; text-align:center; font-size:10px; color:var(--blue,#29b6f6); margin-right:6px; }
+  .tex-tour-btn.is-active { background:var(--bg3,#181c20) !important; color:var(--text,#e8eaed) !important; }
+  .tex-table { width:100%; min-width:780px; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; }
+  .tex-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:0.05em; position:sticky; top:0; background:var(--bg2,#111417); }
+  .tex-table td { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text,#e8eaed); vertical-align:middle; }
+  .tex-table tr:hover td { background:rgba(255,255,255,0.02); }
+  .tex-player-link { color:var(--text,#e8eaed); cursor:pointer; text-decoration:none; }
+  .tex-player-link:hover { color:var(--blue,#29b6f6); text-decoration:underline; }
+  .tex-drift-up   { color:var(--red,#ff4d4d); font-weight:600; }
+  .tex-drift-down { color:var(--green,#00e676); font-weight:600; }
+  .tex-drift-flat { color:var(--text3,#5a6068); }
 </style>
 
 <style>
@@ -7184,7 +7230,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -7602,6 +7648,125 @@ function _renderTennisAbstractTable(data, bodyId, metaId) {
 
 function _escapeHtmlSafe(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+// ─── Tennis Explorer — Odds Drift & Player Profile (v10.9 MVP A+B) ──────
+let _texCurrentTour = 'ATP';
+
+function setTexTour(tour) {
+  _texCurrentTour = (tour || 'ATP').toUpperCase();
+  document.querySelectorAll('.tex-tour-btn').forEach(b => {
+    b.classList.toggle('is-active', b.dataset.tour === _texCurrentTour);
+  });
+  loadTexMatches();
+}
+
+function _texFmtDrift(pct) {
+  if (pct == null || !Number.isFinite(pct)) return '<span class="tex-drift-flat">—</span>';
+  const abs = Math.abs(pct);
+  const cls = abs < 2 ? 'tex-drift-flat' : (pct > 0 ? 'tex-drift-up' : 'tex-drift-down');
+  const arrow = abs < 2 ? '→' : (pct > 0 ? '▲' : '▼');
+  return `<span class="${cls}">${arrow} ${(pct > 0 ? '+' : '')}${pct.toFixed(1)}%</span>`;
+}
+
+function _texFmtOdds(v) {
+  return v == null ? '—' : Number(v).toFixed(2);
+}
+
+async function loadTexMatches() {
+  const body = document.getElementById('tex-body');
+  const status = document.getElementById('tex-status');
+  if (status) status.textContent = 'Chargement…';
+  try {
+    const tour = _texCurrentTour.toLowerCase();
+    const res = await fetch(`/api/v1/tennis/tex/matches?tour=${tour}`).then(r => r.json());
+    if (res.error) throw new Error(res.detail || res.error);
+    const matches = res.matches || [];
+    if (!matches.length) {
+      body.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Aucun match disponible.</div>';
+      if (status) status.textContent = '0 matchs';
+      return;
+    }
+    // Sort: matchs avec drift en premier, ordre = ampleur abs desc
+    const sorted = [...matches].sort((a, b) => {
+      const da = Math.abs(a.odds_drift_pct?.p1 ?? -1);
+      const db = Math.abs(b.odds_drift_pct?.p1 ?? -1);
+      if (da === -1 && db === -1) return 0;
+      if (da === -1) return 1;
+      if (db === -1) return -1;
+      return db - da;
+    });
+    const rows = sorted.map(m => {
+      const p1 = m.player1, p2 = m.player2;
+      const open = m.odds_open?.p1, curr = m.odds_current?.p1;
+      const drift = m.odds_drift_pct?.p1;
+      const fav = (curr != null && curr < 2) ? `<span style="color:var(--green,#00e676);font-size:9px;margin-left:4px;">FAV</span>` : '';
+      return `<tr>
+        <td style="white-space:nowrap;color:var(--text2,#8d9399);">${_escapeHtmlSafe(m.time_utc || '—')} UTC</td>
+        <td><a class="tex-player-link" onclick="openTexPlayerModal('${_escapeHtmlSafe(p1.slug)}')">${_escapeHtmlSafe(p1.name)}</a>${fav}</td>
+        <td style="color:var(--text2,#8d9399);">vs</td>
+        <td><a class="tex-player-link" onclick="openTexPlayerModal('${_escapeHtmlSafe(p2.slug)}')">${_escapeHtmlSafe(p2.name)}</a></td>
+        <td style="text-align:right;">${_texFmtOdds(open)}</td>
+        <td style="text-align:right;font-weight:600;">${_texFmtOdds(curr)}</td>
+        <td style="text-align:right;">${_texFmtDrift(drift)}</td>
+        <td>${m.tex_match_id ? `<a href="https://www.tennisexplorer.com/match-detail/?id=${m.tex_match_id}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);font-size:10px;">↗</a>` : ''}</td>
+      </tr>`;
+    }).join('');
+    body.innerHTML = `<table class="tex-table">
+      <thead><tr>
+        <th>Heure</th><th>Joueur 1</th><th></th><th>Joueur 2</th>
+        <th style="text-align:right;">Open</th><th style="text-align:right;">Current</th>
+        <th style="text-align:right;">Δ P1</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+    if (status) {
+      const driftCount = matches.filter(m => m.odds_drift_pct?.p1 != null).length;
+      status.textContent = `${matches.length} matchs · ${driftCount} avec drift · MAJ ${fmtKickoffTime(res.fetched_at)}`;
+    }
+  } catch (e) {
+    body.innerHTML = `<div style="padding:32px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
+    if (status) status.textContent = 'Erreur';
+  }
+}
+
+async function openTexPlayerModal(slug) {
+  const modal = document.getElementById('tex-player-modal');
+  const body = document.getElementById('tex-player-modal-body');
+  if (!modal || !body || !slug) return;
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement profil…</div>';
+  try {
+    const p = await fetch(`/api/v1/tennis/tex/player?slug=${encodeURIComponent(slug)}`).then(r => r.json());
+    if (p.error) throw new Error(p.detail || p.error);
+    const rankS = p.rank_singles ? `${p.rank_singles.current ?? '—'} (haut: ${p.rank_singles.highest ?? '—'})` : '—';
+    const rankD = p.rank_doubles ? `${p.rank_doubles.current ?? '—'} (haut: ${p.rank_doubles.highest ?? '—'})` : '—';
+    const age = p.dob ? (() => {
+      const d = new Date(p.dob);
+      const now = new Date();
+      let a = now.getFullYear() - d.getFullYear();
+      if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) a--;
+      return a;
+    })() : '—';
+    const hw = (p.height_cm && p.weight_kg) ? `${p.height_cm} cm / ${p.weight_kg} kg` : '—';
+    body.innerHTML = `
+      <h3 style="margin:0 0 12px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--text,#e8eaed);">${_escapeHtmlSafe(p.name || slug)}</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Pays</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.country || '—')}</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Date naissance</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.dob || '—')} · ${age} ans</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Sexe</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.sex || '—')}</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Main</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.plays || '—')}</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Taille/Poids</td><td style="padding:4px 8px;">${hw}</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank simple</td><td style="padding:4px 8px;color:var(--green,#00e676);font-weight:600;">${rankS}</td></tr>
+        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank double</td><td style="padding:4px 8px;">${rankD}</td></tr>
+      </table>
+      <div style="margin-top:14px;font-size:11px;color:var(--text3,#5a6068);">
+        <a href="${_escapeHtmlSafe(p.source_url || '#')}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir profile complet ↗</a>
+      </div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
+  }
 }
 
 async function loadTennisAbstractRome() {

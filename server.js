@@ -12483,6 +12483,145 @@ async function fetchTennisAbstractTournament(slug) {
   return data;
 }
 
+// ─── Tennis Explorer scraper (matches/?type= + player/<slug>) ───────────────
+// Source: tennisexplorer.com — server-rendered HTML, robots.txt permissif.
+// Fournit : open + current odds + Δ% drift, player profiles (rank/DOB/hand).
+// User-Agent identifié + cookie my_timezone=0 (UTC) pour parsing TZ-safe.
+const TEX_BASE = 'https://www.tennisexplorer.com';
+const TEX_MATCHES_TTL_MS = 30 * 60 * 1000;   // 30min
+const TEX_PLAYER_TTL_MS = 24 * 3600 * 1000;  // 24h
+const texMatchesCache = new Map();
+const texPlayerCache = new Map();
+
+function _texFmtDate(d) {
+  // Tennis Explorer date format: YYYY-MM-DD via ?year=YYYY&month=MM&day=DD
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+async function _texFetchHtml(pathSuffix) {
+  const url = `${TEX_BASE}${pathSuffix}`;
+  const res = await httpsGet(url, {
+    'Accept': 'text/html,application/xhtml+xml',
+    'User-Agent': 'Mozilla/5.0 (PariScore/2.0 +https://pariscore.render.com)',
+    'Cookie': 'my_timezone=0',
+  });
+  if (res.status !== 200 || typeof res.data !== 'string') {
+    throw new Error(`tennisexplorer HTTP ${res.status} for ${pathSuffix}`);
+  }
+  return res.data;
+}
+
+function _texParseMatchesPage(html) {
+  if (!html) return [];
+  const out = [];
+  // Capture paired rows: <tr id="s<N>">...</tr> + <tr id="s<N>b">...</tr>
+  const trRe = /<tr id="s(\d+)"[^>]*class="(one|two)[^"]*"[^>]*>([\s\S]*?)<\/tr>\s*<tr id="s\1b"[^>]*>([\s\S]*?)<\/tr>/g;
+  let m;
+  while ((m = trRe.exec(html)) !== null) {
+    const [, idx, , row1, row2] = m;
+    const timeM = row1.match(/class="first time"[^>]*>([^<]+)</);
+    const p1M = row1.match(/class="t-name"><a href="\/player\/([^"]+)\/?"[^>]*>([^<]+)<\/a>/);
+    const p2M = row2.match(/class="t-name"><a href="\/player\/([^"]+)\/?"[^>]*>([^<]+)<\/a>/);
+    if (!p1M || !p2M) continue;
+    const scoresP1 = [...row1.matchAll(/class="score"[^>]*>([^<]*)</g)]
+      .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
+    const scoresP2 = [...row2.matchAll(/class="score"[^>]*>([^<]*)</g)]
+      .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
+    const oddsOpen = [...row1.matchAll(/class="coursew"[^>]*>([^<]+)</g)]
+      .map(x => parseFloat(x[1])).filter(v => Number.isFinite(v));
+    const oddsCurr = [...row1.matchAll(/class="course"[^>]*>([^<]+)</g)]
+      .map(x => parseFloat(x[1])).filter(v => Number.isFinite(v));
+    const matchIdM = row1.match(/href="\/match-detail\/\?id=(\d+)"/);
+    const time = timeM ? timeM[1].trim() : null;
+    const driftP1 = (oddsOpen[0] && oddsCurr[0]) ? ((oddsCurr[0] - oddsOpen[0]) / oddsOpen[0] * 100) : null;
+    const driftP2 = (oddsOpen[1] && oddsCurr[1]) ? ((oddsCurr[1] - oddsOpen[1]) / oddsOpen[1] * 100) : null;
+    out.push({
+      id: matchIdM ? `tex_${matchIdM[1]}` : `tex_idx_${idx}`,
+      tex_match_id: matchIdM ? parseInt(matchIdM[1], 10) : null,
+      time_utc: time, // HH:MM en UTC (cookie my_timezone=0)
+      player1: { slug: p1M[1], name: p1M[2].trim(), scores: scoresP1 },
+      player2: { slug: p2M[1], name: p2M[2].trim(), scores: scoresP2 },
+      // NOTE: page /matches/ affiche les odds de player1 seul (favori display).
+      // Pour récupérer p2 odds → fetch /match-detail/?id=N (non implémenté MVP).
+      odds_open: (oddsOpen.length > 0) ? { p1: oddsOpen[0] ?? null, p2: oddsOpen[1] ?? null } : null,
+      odds_current: (oddsCurr.length > 0) ? { p1: oddsCurr[0] ?? null, p2: oddsCurr[1] ?? null } : null,
+      odds_drift_pct: (driftP1 != null || driftP2 != null) ? { p1: driftP1, p2: driftP2 } : null,
+    });
+  }
+  return out;
+}
+
+function _texParsePlayerPage(html, slug) {
+  if (!html) return null;
+  const block = html.match(/<table class="plDetail">([\s\S]*?)<\/table>/);
+  if (!block) return null;
+  const text = block[1].replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const get = (re) => { const m = text.match(re); return m ? m[1].trim() : null; };
+  const name = (html.match(/<h1 class="bg">([^<]+) - profile<\/h1>/) || [])[1];
+  const country = get(/Country:\s*([A-Za-z][A-Za-z .\-]+?)\s+(?:Height|Age|Current|Sex|Plays|$)/);
+  const dobRaw = get(/Age:\s*\d+\s*\(([^)]+)\)/);
+  const heightM = text.match(/Height\s*\/\s*Weight:\s*(\d+)\s*cm\s*\/\s*(\d+)\s*kg/i);
+  const rankSinglesM = text.match(/Current\/Highest rank - singles:\s*([\-\d]+)\.?\s*\/\s*([\-\d]+)\.?/);
+  const rankDoublesM = text.match(/Current\/Highest rank - doubles:\s*([\-\d]+)\.?\s*\/\s*([\-\d]+)\.?/);
+  const sex = get(/Sex:\s*(man|woman)/);
+  const plays = get(/Plays:\s*(right|left)/);
+  // Parse DOB "D. M. YYYY" → ISO
+  let dobIso = null;
+  if (dobRaw) {
+    const parts = dobRaw.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+    if (parts) {
+      dobIso = `${parts[3]}-${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+    }
+  }
+  const parseRank = v => (v == null || v === '-') ? null : parseInt(v, 10);
+  return {
+    slug,
+    name: name ? name.trim() : null,
+    country,
+    dob: dobIso,
+    height_cm: heightM ? parseInt(heightM[1], 10) : null,
+    weight_kg: heightM ? parseInt(heightM[2], 10) : null,
+    rank_singles: rankSinglesM ? { current: parseRank(rankSinglesM[1]), highest: parseRank(rankSinglesM[2]) } : null,
+    rank_doubles: rankDoublesM ? { current: parseRank(rankDoublesM[1]), highest: parseRank(rankDoublesM[2]) } : null,
+    sex,
+    plays,
+    source_url: `${TEX_BASE}/player/${slug}/`,
+    fetched_at: new Date().toISOString(),
+  };
+}
+
+async function fetchTexMatches(tour, dateISO) {
+  const tourNorm = (tour || 'atp').toLowerCase() === 'wta' ? 'wta' : 'atp';
+  const datePart = dateISO ? `&year=${dateISO.slice(0, 4)}&month=${dateISO.slice(5, 7)}&day=${dateISO.slice(8, 10)}` : '';
+  const cacheKey = `${tourNorm}|${dateISO || 'today'}`;
+  const cached = texMatchesCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < TEX_MATCHES_TTL_MS) return cached.data;
+  const path = `/matches/?type=${tourNorm}-single${datePart}`;
+  const html = await _texFetchHtml(path);
+  const matches = _texParseMatchesPage(html);
+  const data = {
+    tour: tourNorm.toUpperCase(),
+    date: dateISO || _texFmtDate(new Date()),
+    source_url: `${TEX_BASE}${path}`,
+    fetched_at: new Date().toISOString(),
+    matches,
+  };
+  texMatchesCache.set(cacheKey, { ts: Date.now(), data });
+  return data;
+}
+
+async function fetchTexPlayer(slug) {
+  if (!slug || !/^[a-z0-9-]+$/i.test(slug)) throw new Error('invalid_slug');
+  const cached = texPlayerCache.get(slug);
+  if (cached && Date.now() - cached.ts < TEX_PLAYER_TTL_MS) return cached.data;
+  const html = await _texFetchHtml(`/player/${slug}/`);
+  const data = _texParsePlayerPage(html, slug);
+  if (!data || !data.name) throw new Error('player_not_found');
+  texPlayerCache.set(slug, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── MatchStat Tennis API (RapidAPI) — module-scope helpers ─────────────────
 async function matchstatFetch(pathSuffix, ttlMs = 12 * 3600 * 1000, ck = null) {
   if (!MATCHSTAT_ENABLED) {
@@ -15577,6 +15716,34 @@ if (pathname === '/api/v1/tennis/elo/lookup' && req.method === 'GET') {
     return jsonResponse(res, 500, { error: 'tennis_elo_lookup_error', detail: e.message });
   }
 }
+// Tennis Explorer — fixtures du jour avec odds open/current + drift %.
+// Query: ?tour=atp|wta (def atp), ?date=YYYY-MM-DD (def aujourd'hui).
+if (pathname === '/api/v1/tennis/tex/matches' && req.method === 'GET') {
+  try {
+    const tour = (query.tour || 'atp').toString();
+    const date = (query.date || '').toString().trim() || null;
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return jsonResponse(res, 400, { error: 'invalid_date', detail: 'Format YYYY-MM-DD' });
+    }
+    const data = await fetchTexMatches(tour, date);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tex_matches_error', detail: e.message });
+  }
+}
+// Tennis Explorer — profile joueur (rank current/highest singles+doubles, DOB, hand).
+// Query: ?slug=<player-slug>
+if (pathname === '/api/v1/tennis/tex/player' && req.method === 'GET') {
+  try {
+    const slug = (query.slug || '').toString().trim();
+    if (!slug) return jsonResponse(res, 400, { error: 'slug_required' });
+    const data = await fetchTexPlayer(slug);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    const code = e.message === 'player_not_found' ? 404 : 500;
+    return jsonResponse(res, code, { error: 'tex_player_error', detail: e.message });
+  }
+}
 // Tennis Abstract — current tournament forecasts (scraped, cache 6h).
 // Query: ?event=wta-rome-2026 | atp-rome-2026  (omit to list available events).
 if (pathname === '/api/v1/tennis-abstract' && req.method === 'GET') {
@@ -18372,6 +18539,24 @@ setTimeout(() => {
   _runTennisAbstractDailyRefresh().catch(e => console.warn('[Cron:TennisAbstract]', e.message));
   setInterval(() => _runTennisAbstractDailyRefresh().catch(e => console.warn('[Cron:TennisAbstract]', e.message)), 24 * 3600 * 1000);
 }, _msUntilNextParisHour(10));
+
+// Tennis Explorer — refresh quotidien 06:00 Europe/Paris (cache warmer matches du jour).
+async function _runTexDailyRefresh() {
+  console.log(`  [Cron:TennisExplorer] Refresh matches du jour ATP + WTA à 06:00 Europe/Paris…`);
+  for (const tour of ['atp', 'wta']) {
+    try {
+      texMatchesCache.clear();
+      const data = await fetchTexMatches(tour, null);
+      console.log(`  [Cron:TennisExplorer] ✓ ${tour.toUpperCase()} — ${data.matches?.length || 0} matchs (drift dispo: ${data.matches?.filter(m => m.odds_drift_pct).length || 0})`);
+    } catch (e) {
+      console.warn(`  [Cron:TennisExplorer] ⚠ ${tour} échec: ${e.message}`);
+    }
+  }
+}
+setTimeout(() => {
+  _runTexDailyRefresh().catch(e => console.warn('[Cron:TennisExplorer]', e.message));
+  setInterval(() => _runTexDailyRefresh().catch(e => console.warn('[Cron:TennisExplorer]', e.message)), 24 * 3600 * 1000);
+}, _msUntilNextParisHour(6));
 
 // Matchstat resolver — cron 7d + boot sync si data absente.
 if (MATCHSTAT_ENABLED) {
