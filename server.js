@@ -11543,6 +11543,9 @@ async function syncSackmannData({ yearsBack = SACKMANN_YEARS_BACK } = {}) {
       summary.elo_error = e.message;
     }
 
+    // Invalide le cache stats serve (T8) — Sackmann data peut avoir bougé.
+    try { _invalidateTennisServeStatsCache(); } catch (_) { /* swallow */ }
+
     return summary;
   } finally {
     _sackmannSyncInProgress = false;
@@ -11740,6 +11743,164 @@ function blendTennisProbs(eloProb, bsdProb) {
     weights: { elo: w_elo, bsd: w_bsd },
     method: 'blend',
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS MARKOV SETS (T8) — service-based set/match probabilities.
+//  Construit sur tennis_matches Sackmann : aggrège SPW (serve points won)
+//  d'un joueur sur surface, en déduit le hold rate, puis P(set) + P(match 2-0/
+//  2-1/0-2/1-2) via DP exact sur game-by-game state machine.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const _TENNIS_SERVE_STATS_CACHE = new Map();
+const TENNIS_SERVE_LASTN = 50;
+
+// Récupère stats serve d'un joueur sur N derniers matchs (surface filterable).
+// Renvoie {spw, firstInRate, firstWonRate, secondWonRate, sampleSize, totalSvpt}.
+function computePlayerServeStats(playerName, tour, surface = 'ALL', lastN = TENNIS_SERVE_LASTN) {
+  if (!playerName || !tour) return null;
+  const cacheKey = `${tour}|${playerName.toLowerCase()}|${surface}|${lastN}`;
+  if (_TENNIS_SERVE_STATS_CACHE.has(cacheKey)) return _TENNIS_SERVE_STATS_CACHE.get(cacheKey);
+
+  try {
+    _initTennisSackmannSchema();
+    const rows = sqldb.prepare(`
+      SELECT
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_svpt ELSE l_svpt END AS svpt,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_1stIn ELSE l_1stIn END AS firstIn,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_1stWon ELSE l_1stWon END AS firstWon,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_2ndWon ELSE l_2ndWon END AS secondWon
+      FROM tennis_matches
+      WHERE (LOWER(winner_name) = LOWER(?) OR LOWER(loser_name) = LOWER(?))
+        AND tour = ?
+        AND (? = 'ALL' OR surface = ?)
+        AND w_svpt IS NOT NULL
+      ORDER BY tourney_date DESC, match_num DESC
+      LIMIT ?
+    `).all(playerName, playerName, playerName, playerName, playerName, playerName, tour, surface, surface, lastN);
+
+    if (rows.length < 5) {
+      _TENNIS_SERVE_STATS_CACHE.set(cacheKey, null);
+      return null;
+    }
+
+    let totalSvpt = 0, totalFirstIn = 0, totalFirstWon = 0, totalSecondWon = 0;
+    let validRows = 0;
+    for (const r of rows) {
+      if (!r.svpt || r.svpt <= 0) continue;
+      totalSvpt += r.svpt;
+      totalFirstIn += r.firstIn || 0;
+      totalFirstWon += r.firstWon || 0;
+      totalSecondWon += r.secondWon || 0;
+      validRows++;
+    }
+    if (totalSvpt === 0 || validRows < 5) {
+      _TENNIS_SERVE_STATS_CACHE.set(cacheKey, null);
+      return null;
+    }
+
+    const firstInRate = totalFirstIn / totalSvpt;
+    const firstWonRate = totalFirstIn > 0 ? totalFirstWon / totalFirstIn : 0.6;
+    const secondPts = totalSvpt - totalFirstIn;
+    const secondWonRate = secondPts > 0 ? totalSecondWon / secondPts : 0.5;
+    const spw = firstInRate * firstWonRate + (1 - firstInRate) * secondWonRate;
+
+    const result = {
+      spw: parseFloat(spw.toFixed(4)),
+      firstInRate: parseFloat(firstInRate.toFixed(4)),
+      firstWonRate: parseFloat(firstWonRate.toFixed(4)),
+      secondWonRate: parseFloat(secondWonRate.toFixed(4)),
+      sampleSize: validRows,
+      totalSvpt,
+    };
+    _TENNIS_SERVE_STATS_CACHE.set(cacheKey, result);
+    return result;
+  } catch (e) {
+    console.warn('  [Tennis Markov] serve stats error:', e.message);
+    return null;
+  }
+}
+
+// Closed-form P(joueur tient son service game | SPW = p).
+// Standard scoring + deuce loop. Référence : O'Malley (2008).
+function gameHoldProb(spw) {
+  const p = Math.max(0.1, Math.min(0.99, spw));
+  const q = 1 - p;
+  const denom = p * p + q * q;
+  if (denom === 0) return p;
+  const deuce = (p * p) / denom; // P(win deuce loop)
+  return Math.pow(p, 4)
+    + 4 * Math.pow(p, 4) * q
+    + 10 * Math.pow(p, 4) * q * q
+    + 20 * Math.pow(p, 3) * Math.pow(q, 3) * deuce;
+}
+
+// DP exact sur game state (gA, gB, isAserving). P(A wins set).
+// Tiebreak approximé : pA / (pA + (1 - pB)) avec garde-fous [0.01, 0.99].
+function setWinProb(holdA, holdB) {
+  const hA = Math.max(0.01, Math.min(0.99, holdA));
+  const hB = Math.max(0.01, Math.min(0.99, holdB));
+  const memo = new Map();
+  const tieAprob = Math.max(0.05, Math.min(0.95, hA / (hA + (1 - hB) + 1e-9)));
+
+  function P(gA, gB, isA) {
+    if (gA >= 6 && gA - gB >= 2) return 1;
+    if (gB >= 6 && gB - gA >= 2) return 0;
+    if (gA === 6 && gB === 6) return tieAprob;
+    const key = `${gA}|${gB}|${isA ? 1 : 0}`;
+    if (memo.has(key)) return memo.get(key);
+    const winProb = isA ? hA : (1 - hB);
+    const result = winProb * P(gA + 1, gB, !isA) + (1 - winProb) * P(gA, gB + 1, !isA);
+    memo.set(key, result);
+    return result;
+  }
+  return P(0, 0, true);
+}
+
+// P(2-0 / 2-1 / 0-2 / 1-2) en best-of-3 + P(set) bru.
+function matchSetProbs(holdA, holdB) {
+  const pSet = setWinProb(holdA, holdB);
+  const q = 1 - pSet;
+  return {
+    p1_2_0: parseFloat((pSet * pSet).toFixed(4)),
+    p1_2_1: parseFloat((2 * pSet * pSet * q).toFixed(4)),
+    p2_2_0: parseFloat((q * q).toFixed(4)),
+    p2_2_1: parseFloat((2 * q * q * pSet).toFixed(4)),
+    p1_set_win: parseFloat(pSet.toFixed(4)),
+    p1_match_win: parseFloat((pSet * pSet + 2 * pSet * pSet * q).toFixed(4)),
+    p2_match_win: parseFloat((q * q + 2 * q * q * pSet).toFixed(4)),
+  };
+}
+
+// Pipeline complet pour 1 match : joue les SPW, hold, set probs.
+// Renvoie object {p1_spw, p2_spw, p1_hold, p2_hold, p1_2_0, ...} ou null si data insuffisante.
+function computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface) {
+  if (!p1Name || !p2Name || !tour) return null;
+  const surfaceClean = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+
+  const p1Stats = computePlayerServeStats(p1Name, tour, surfaceClean, TENNIS_SERVE_LASTN);
+  const p2Stats = computePlayerServeStats(p2Name, tour, surfaceClean, TENNIS_SERVE_LASTN);
+  if (!p1Stats || !p2Stats) return null;
+
+  const p1Hold = gameHoldProb(p1Stats.spw);
+  const p2Hold = gameHoldProb(p2Stats.spw);
+  const probs = matchSetProbs(p1Hold, p2Hold);
+
+  return {
+    ...probs,
+    p1_hold: parseFloat(p1Hold.toFixed(4)),
+    p2_hold: parseFloat(p2Hold.toFixed(4)),
+    p1_spw: p1Stats.spw,
+    p2_spw: p2Stats.spw,
+    surface_used: surfaceClean,
+    sample_size: Math.min(p1Stats.sampleSize, p2Stats.sampleSize),
+    method: 'markov_setprob',
+  };
+}
+
+// Invalide cache stats serve après recompute Sackmann (data peut avoir changé).
+function _invalidateTennisServeStatsCache() {
+  _TENNIS_SERVE_STATS_CACHE.clear();
 }
 
 // Helper : récupère Elo p1+p2 (ALL + surface) + Elo prob. Retourne null si data absente.
@@ -13919,8 +14080,11 @@ async function buildTennisValueBets({ date }) {
     const tourGuess = (m.tour && ['ATP', 'WTA'].includes(String(m.tour).toUpperCase())) ? String(m.tour).toUpperCase() : null;
     const surfaceClean = (m.surface && TENNIS_ELO_SURFACES.includes(m.surface)) ? m.surface : null;
     let eloProb = null;
+    let setProbs = null;
     if (tourGuess) {
       eloProb = _tennisLookupEloPair(p1Name, p2Name, tourGuess, surfaceClean);
+      // ── T8 : Markov set probabilities (P 2-0 / 2-1 / 0-2 / 1-2) ─────────
+      setProbs = computeTennisMarkovSetProbs(p1Name, p2Name, tourGuess, surfaceClean);
     }
     // BSD prediction left null in list view (N+1 fetch impractical). Detail route
     // /api/v1/tennis/predictions/{id} expose BSD per-match; UI peut fetch puis re-blend.
@@ -13961,6 +14125,7 @@ async function buildTennisValueBets({ date }) {
         elo: eloProb,
         bsd: bsdProb,
         blended,
+        set_probs: setProbs,
       },
       ev_model: evModel,
       best_ev_model: bestEvModel,
@@ -14123,6 +14288,28 @@ if (pathname === '/api/v1/tennis/elo/top' && req.method === 'GET') {
     });
   } catch (e) {
     return jsonResponse(res, 500, { error: 'tennis_elo_error', detail: e.message });
+  }
+}
+// Tennis Markov set probs lookup — P(2-0/2-1/0-2/1-2) + holds + SPW.
+if (pathname === '/api/v1/tennis/markov/lookup' && req.method === 'GET') {
+  try {
+    _initTennisSackmannSchema();
+    const p1Name = (query.p1 || '').toString().trim();
+    const p2Name = (query.p2 || '').toString().trim();
+    const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : 'ATP';
+    const surface = ['Hard', 'Clay', 'Grass', 'Carpet', 'ALL'].includes(String(query.surface || '')) ? String(query.surface) : 'ALL';
+    if (!p1Name || !p2Name) return jsonResponse(res, 400, { error: 'p1 and p2 names required' });
+    const p1Stats = computePlayerServeStats(p1Name, tour, surface);
+    const p2Stats = computePlayerServeStats(p2Name, tour, surface);
+    const setProbs = computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface);
+    return jsonResponse(res, 200, {
+      tour, surface,
+      p1: { name: p1Name, serve_stats: p1Stats },
+      p2: { name: p2Name, serve_stats: p2Stats },
+      set_probs: setProbs,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tennis_markov_lookup_error', detail: e.message });
   }
 }
 // Tennis Elo lookup pair — utile pour preview prédiction sans value-bet.
