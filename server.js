@@ -11533,6 +11533,16 @@ async function syncSackmannData({ yearsBack = SACKMANN_YEARS_BACK } = {}) {
     _sackmannLastSyncTs = Date.now();
     try { kvSet('tennis_sackmann_last_sync', _sackmannLastSyncTs); } catch (_) { /* swallow */ }
     console.log(`  [Sackmann] ✓ Sync complete — ${summary.totalInserted} matches ATP+WTA × ${yearsBack} years.`);
+
+    // Recalcule l'Elo immédiatement après ingestion (synchrone — block ~quelques sec).
+    try {
+      const eloRes = computeTennisElo();
+      summary.elo = eloRes;
+    } catch (e) {
+      console.warn('  [Elo] compute after sync failed:', e.message);
+      summary.elo_error = e.message;
+    }
+
     return summary;
   } finally {
     _sackmannSyncInProgress = false;
@@ -11546,6 +11556,160 @@ function getSackmannLastSync() {
     if (stored) _sackmannLastSyncTs = stored;
   } catch (_) { /* swallow */ }
   return _sackmannLastSyncTs;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS ELO — Surface-split rating engine (hElo / cElo / gElo / ALL blended)
+//  Computed from tennis_matches (Sackmann). Re-computed from scratch each sync.
+//  K=32 général, K=24 surface (moins de data par surface = K plus bas pour
+//  stabilité). Recency naturellement intégrée (matchs récents = derniers updates).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TENNIS_ELO_INITIAL = 1500;
+const TENNIS_ELO_K_GENERAL = 32;
+const TENNIS_ELO_K_SURFACE = 24;
+const TENNIS_ELO_SURFACES = ['Hard', 'Clay', 'Grass', 'Carpet'];
+let _tennisEloComputing = false;
+let _tennisEloLastComputeTs = 0;
+
+function _initTennisEloSchema() {
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_elo (
+    player_id INTEGER NOT NULL,
+    player_name TEXT,
+    tour TEXT NOT NULL,
+    surface TEXT NOT NULL,
+    elo REAL NOT NULL,
+    matches_count INTEGER NOT NULL DEFAULT 0,
+    last_match_date INTEGER,
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    PRIMARY KEY (player_id, tour, surface)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_elo_player_name ON tennis_elo(player_name)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_elo_rank ON tennis_elo(tour, surface, elo DESC)`);
+}
+
+function _eloExpected(eloA, eloB) {
+  return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+}
+
+function _eloUpdate(eloWinner, eloLoser, K) {
+  const expW = _eloExpected(eloWinner, eloLoser);
+  return {
+    winner: eloWinner + K * (1 - expW),
+    loser: eloLoser - K * (1 - expW),
+  };
+}
+
+// Recompute Elo from scratch over tennis_matches ordered chronologiquement.
+// Renvoie {players, matches, elapsed_ms}.
+function computeTennisElo() {
+  if (_tennisEloComputing) return { skipped: 'in_progress' };
+  _tennisEloComputing = true;
+  const t0 = Date.now();
+  try {
+    _initTennisEloSchema();
+    sqldb.exec('DELETE FROM tennis_elo');
+
+    const elos = new Map(); // key: `${tour}|${playerId}|${surface}` → {elo, matches, lastDate, name}
+    const rows = sqldb.prepare(`
+      SELECT tour, surface, tourney_date,
+             winner_id, winner_name, loser_id, loser_name
+      FROM tennis_matches
+      WHERE winner_id IS NOT NULL AND loser_id IS NOT NULL
+        AND tourney_date IS NOT NULL
+      ORDER BY tourney_date ASC, tourney_id ASC, match_num ASC
+    `).all();
+
+    let processed = 0;
+    for (const m of rows) {
+      const tour = m.tour;
+      if (!tour) continue;
+      const wId = m.winner_id;
+      const lId = m.loser_id;
+      const wName = m.winner_name || null;
+      const lName = m.loser_name || null;
+      const surface = m.surface && TENNIS_ELO_SURFACES.includes(m.surface) ? m.surface : null;
+
+      // Blended (ALL)
+      const allKeyW = `${tour}|${wId}|ALL`;
+      const allKeyL = `${tour}|${lId}|ALL`;
+      const allW = elos.get(allKeyW) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: wName };
+      const allL = elos.get(allKeyL) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: lName };
+      const allRes = _eloUpdate(allW.elo, allL.elo, TENNIS_ELO_K_GENERAL);
+      elos.set(allKeyW, { elo: allRes.winner, matches: allW.matches + 1, lastDate: m.tourney_date, name: wName || allW.name });
+      elos.set(allKeyL, { elo: allRes.loser, matches: allL.matches + 1, lastDate: m.tourney_date, name: lName || allL.name });
+
+      if (surface) {
+        const sKeyW = `${tour}|${wId}|${surface}`;
+        const sKeyL = `${tour}|${lId}|${surface}`;
+        const sW = elos.get(sKeyW) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: wName };
+        const sL = elos.get(sKeyL) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: lName };
+        const sRes = _eloUpdate(sW.elo, sL.elo, TENNIS_ELO_K_SURFACE);
+        elos.set(sKeyW, { elo: sRes.winner, matches: sW.matches + 1, lastDate: m.tourney_date, name: wName || sW.name });
+        elos.set(sKeyL, { elo: sRes.loser, matches: sL.matches + 1, lastDate: m.tourney_date, name: lName || sL.name });
+      }
+      processed++;
+    }
+
+    const stmt = sqldb.prepare(`INSERT OR REPLACE INTO tennis_elo
+      (player_id, player_name, tour, surface, elo, matches_count, last_match_date, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+    const now = Math.floor(Date.now() / 1000);
+    const tx = sqldb.transaction(() => {
+      for (const [key, val] of elos.entries()) {
+        const [tour, playerId, surface] = key.split('|');
+        stmt.run(parseInt(playerId, 10), val.name, tour, surface, val.elo, val.matches, val.lastDate || null, now);
+      }
+    });
+    tx();
+
+    _tennisEloLastComputeTs = Date.now();
+    try { kvSet('tennis_elo_last_compute', _tennisEloLastComputeTs); } catch (_) { /* swallow */ }
+
+    const elapsed = Date.now() - t0;
+    console.log(`  [Elo] ✓ ${elos.size} ratings computed depuis ${processed} matchs (${elapsed} ms)`);
+    return { players: elos.size, matches: processed, elapsed_ms: elapsed };
+  } finally {
+    _tennisEloComputing = false;
+  }
+}
+
+function getTennisEloLastCompute() {
+  if (_tennisEloLastComputeTs) return _tennisEloLastComputeTs;
+  try {
+    const stored = kvGet('tennis_elo_last_compute', null);
+    if (stored) _tennisEloLastComputeTs = stored;
+  } catch (_) { /* swallow */ }
+  return _tennisEloLastComputeTs;
+}
+
+// Lookup par nom (case-insensitive). Surface défaut 'ALL' (blended).
+function getTennisEloByName(playerName, tour, surface = 'ALL') {
+  if (!playerName || !tour) return null;
+  try {
+    return sqldb.prepare(
+      `SELECT * FROM tennis_elo
+       WHERE LOWER(player_name) = LOWER(?) AND tour = ? AND surface = ?
+       LIMIT 1`
+    ).get(playerName.trim(), tour, surface) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Calcule P(p1 wins) à partir de 2 Elo rows. Renvoie {p1, p2, method}.
+function predictTennisEloProb(p1EloRow, p2EloRow) {
+  if (!p1EloRow || !p2EloRow) return null;
+  const p1 = _eloExpected(p1EloRow.elo, p2EloRow.elo);
+  return {
+    p1: parseFloat(p1.toFixed(4)),
+    p2: parseFloat((1 - p1).toFixed(4)),
+    method: 'tennis_elo',
+    p1_elo: Math.round(p1EloRow.elo),
+    p2_elo: Math.round(p2EloRow.elo),
+    p1_matches: p1EloRow.matches_count || 0,
+    p2_matches: p2EloRow.matches_count || 0,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13836,6 +14000,63 @@ if (pathname === '/api/v1/tennis/sackmann/sync' && req.method === 'POST') {
   // Fire-and-forget — pas d'await pour ne pas bloquer la requête.
   syncSackmannData().catch(e => console.warn('[Sackmann manual]', e.message));
   return jsonResponse(res, 202, { status: 'sync_started', check: '/api/v1/tennis/sackmann/status' });
+}
+// Tennis Elo — top N par surface/tour. Lecture seule.
+if (pathname === '/api/v1/tennis/elo/top' && req.method === 'GET') {
+  try {
+    _initTennisEloSchema();
+    const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : 'ATP';
+    const surface = ['Hard', 'Clay', 'Grass', 'Carpet', 'ALL'].includes(String(query.surface || '')) ? String(query.surface) : 'ALL';
+    const limit = Math.max(1, Math.min(100, parseInt(query.limit, 10) || 50));
+    const minMatches = Math.max(0, Math.min(100, parseInt(query.min_matches, 10) || 10));
+    const rows = sqldb.prepare(`
+      SELECT player_id, player_name, tour, surface, elo, matches_count, last_match_date
+      FROM tennis_elo
+      WHERE tour = ? AND surface = ? AND matches_count >= ?
+      ORDER BY elo DESC
+      LIMIT ?
+    `).all(tour, surface, minMatches, limit);
+    return jsonResponse(res, 200, {
+      tour, surface, limit, min_matches: minMatches,
+      last_compute_ts: getTennisEloLastCompute() || null,
+      count: rows.length,
+      players: rows.map(r => ({
+        player_id: r.player_id,
+        player_name: r.player_name,
+        elo: Math.round(r.elo),
+        matches: r.matches_count,
+        last_match_date: r.last_match_date,
+      })),
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tennis_elo_error', detail: e.message });
+  }
+}
+// Tennis Elo lookup pair — utile pour preview prédiction sans value-bet.
+if (pathname === '/api/v1/tennis/elo/lookup' && req.method === 'GET') {
+  try {
+    _initTennisEloSchema();
+    const p1Name = (query.p1 || '').toString().trim();
+    const p2Name = (query.p2 || '').toString().trim();
+    const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : 'ATP';
+    const surface = ['Hard', 'Clay', 'Grass', 'Carpet', 'ALL'].includes(String(query.surface || '')) ? String(query.surface) : 'ALL';
+    if (!p1Name || !p2Name) return jsonResponse(res, 400, { error: 'p1 and p2 names required' });
+    const p1All = getTennisEloByName(p1Name, tour, 'ALL');
+    const p2All = getTennisEloByName(p2Name, tour, 'ALL');
+    const p1Surf = surface !== 'ALL' ? getTennisEloByName(p1Name, tour, surface) : null;
+    const p2Surf = surface !== 'ALL' ? getTennisEloByName(p2Name, tour, surface) : null;
+    const predAll = predictTennisEloProb(p1All, p2All);
+    const predSurf = (p1Surf && p2Surf) ? predictTennisEloProb(p1Surf, p2Surf) : null;
+    return jsonResponse(res, 200, {
+      tour, surface,
+      p1: { name: p1Name, all: p1All, surface: p1Surf },
+      p2: { name: p2Name, all: p2All, surface: p2Surf },
+      prediction_blended: predAll,
+      prediction_surface: predSurf,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tennis_elo_lookup_error', detail: e.message });
+  }
 }
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
   if (!BSD_TENNIS_ENABLED) {
@@ -16523,10 +16744,25 @@ setInterval(() => {
     console.log('  [Sackmann] Boot sync (data stale or absent)…');
     setTimeout(() => {
       syncSackmannData().catch(e => console.warn('[Sackmann boot]', e.message));
-    }, 10000); // delay 10s to let main boot finish first
+    }, 10000);
   } else {
     const ageH = Math.floor((Date.now() - last) / (60 * 60 * 1000));
     console.log(`  [Sackmann] Last sync ${ageH}h ago — skipping boot sync.`);
+    // Si tennis_elo est vide mais data Sackmann présente, déclencher compute Elo.
+    setTimeout(() => {
+      try {
+        _initTennisEloSchema();
+        const eloRow = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_elo').get();
+        if (!eloRow || eloRow.n === 0) {
+          console.log('  [Elo] Boot compute (tennis_elo vide, data Sackmann présente)…');
+          computeTennisElo();
+        } else {
+          console.log(`  [Elo] tennis_elo contient ${eloRow.n} ratings — skip boot compute.`);
+        }
+      } catch (e) {
+        console.warn('  [Elo] boot compute check failed:', e.message);
+      }
+    }, 5000);
   }
 })();
 
