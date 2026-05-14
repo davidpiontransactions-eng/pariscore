@@ -12383,6 +12383,106 @@ function _tennisLookupEloPair(p1Name, p2Name, tour, surface) {
   };
 }
 
+// ─── Tennis Abstract scraper (current tournament forecasts) ─────────────────
+// Source: tennisabstract.com/current/<YEAR><TOUR><CITY>.html
+// Page inlines JS string vars: projCurrent (HTML table seed/name/CTR/F%/W%),
+// upcomingSingles, completedSingles. Scrape + parse + cache 6h.
+const TENNIS_ABSTRACT_BASE = 'https://www.tennisabstract.com/current';
+const TENNIS_ABSTRACT_TTL_MS = 6 * 3600 * 1000;
+const TENNIS_ABSTRACT_EVENTS = {
+  'wta-rome-2026': { file: '2026WTARome.html', tour: 'WTA', city: 'Rome', year: 2026 },
+  'atp-rome-2026': { file: '2026ATPRome.html', tour: 'ATP', city: 'Rome', year: 2026 },
+};
+const tennisAbstractCache = new Map();
+
+function _taExtractVar(html, name) {
+  const re = new RegExp("var " + name + " ?= ?'((?:\\\\'|[^'])*)';", 'm');
+  const m = html.match(re);
+  return m ? m[1] : null;
+}
+
+function _taParseProjCurrent(blob) {
+  if (!blob) return { rounds: [], players: [] };
+  const players = [];
+  const headRowM = blob.match(/<tr>([\s\S]*?)<\/tr>/);
+  let rounds = [];
+  if (headRowM) {
+    const headerCells = [...headRowM[1].matchAll(/<td[^>]*>([^<]*)<\/td>/g)]
+      .map(m => m[1].replace(/&nbsp;/g, '').trim());
+    rounds = headerCells.filter(c => /^(R\d+|QF|SF|F|W)$/.test(c));
+  }
+  const trRe = /<tr>([\s\S]*?)<\/tr>/g;
+  let trMatch;
+  while ((trMatch = trRe.exec(blob)) !== null) {
+    const tr = trMatch[1];
+    if (tr.includes('>Player<')) continue;
+    if (tr.includes('>Bye<')) continue;
+    const isEliminated = /<i>[\s\S]*?<a/.test(tr);
+    const seedM = tr.match(/\((\d+)\)<a/) || tr.match(/\((\d+)\)<i>/);
+    const playerM = tr.match(/<a [^>]*p=([^"]+)"[^>]*>([^<]+)<\/a>\s*\(([A-Z]{3})\)/);
+    if (!playerM) continue;
+    const pcts = [...tr.matchAll(/(\d+\.\d)%/g)].map(m => parseFloat(m[1]));
+    const obj = {
+      seed: seedM ? parseInt(seedM[1], 10) : null,
+      slug: playerM[1],
+      name: playerM[2].trim(),
+      country: playerM[3],
+      eliminated: isEliminated,
+    };
+    if (rounds.length && pcts.length === rounds.length) {
+      const probs = {};
+      rounds.forEach((r, i) => { probs[r] = pcts[i]; });
+      obj.probs = probs;
+    }
+    obj.pctFinal = pcts.length >= 2 ? pcts[pcts.length - 2] : null;
+    obj.pctWin = pcts.length >= 1 ? pcts[pcts.length - 1] : null;
+    players.push(obj);
+  }
+  return { rounds, players };
+}
+
+function _taParseMatches(blob) {
+  if (!blob) return [];
+  const lines = blob.split(/<br\s*\/?\s*>/i).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  for (const ln of lines) {
+    if (ln === '&nbsp;') continue;
+    const cleaned = ln.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    if (cleaned) out.push(cleaned);
+  }
+  return out;
+}
+
+async function fetchTennisAbstractTournament(slug) {
+  const meta = TENNIS_ABSTRACT_EVENTS[slug];
+  if (!meta) throw new Error(`Unknown tennis-abstract event: ${slug}`);
+  const cached = tennisAbstractCache.get(slug);
+  if (cached && Date.now() - cached.ts < TENNIS_ABSTRACT_TTL_MS) return cached.data;
+  const url = `${TENNIS_ABSTRACT_BASE}/${meta.file}`;
+  const res = await httpsGet(url, { 'Accept': 'text/html', 'User-Agent': 'Mozilla/5.0 (PariScore)' });
+  if (res.status !== 200 || typeof res.data !== 'string') {
+    throw new Error(`Tennis Abstract HTTP ${res.status} for ${slug}`);
+  }
+  const html = res.data;
+  const proj = _taParseProjCurrent(_taExtractVar(html, 'projCurrent'));
+  const upcoming = _taParseMatches(_taExtractVar(html, 'upcomingSingles'));
+  const completed = _taParseMatches(_taExtractVar(html, 'completedSingles'));
+  const data = {
+    slug,
+    tour: meta.tour,
+    city: meta.city,
+    year: meta.year,
+    source_url: url,
+    fetched_at: new Date().toISOString(),
+    rounds: proj.rounds,
+    players: proj.players,
+    upcoming_matches: upcoming,
+    completed_matches: completed,
+  };
+  tennisAbstractCache.set(slug, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── MatchStat Tennis API (RapidAPI) — module-scope helpers ─────────────────
 async function matchstatFetch(pathSuffix, ttlMs = 12 * 3600 * 1000, ck = null) {
   if (!MATCHSTAT_ENABLED) {
@@ -15475,6 +15575,25 @@ if (pathname === '/api/v1/tennis/elo/lookup' && req.method === 'GET') {
     });
   } catch (e) {
     return jsonResponse(res, 500, { error: 'tennis_elo_lookup_error', detail: e.message });
+  }
+}
+// Tennis Abstract — current tournament forecasts (scraped, cache 6h).
+// Query: ?event=wta-rome-2026 | atp-rome-2026  (omit to list available events).
+if (pathname === '/api/v1/tennis-abstract' && req.method === 'GET') {
+  try {
+    const slug = (query.event || '').toString().trim();
+    if (!slug) {
+      return jsonResponse(res, 200, {
+        events: Object.entries(TENNIS_ABSTRACT_EVENTS).map(([k, v]) => ({ slug: k, ...v }))
+      });
+    }
+    if (!TENNIS_ABSTRACT_EVENTS[slug]) {
+      return jsonResponse(res, 404, { error: 'unknown_event', detail: `Available: ${Object.keys(TENNIS_ABSTRACT_EVENTS).join(', ')}` });
+    }
+    const data = await fetchTennisAbstractTournament(slug);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tennis_abstract_error', detail: e.message });
   }
 }
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {

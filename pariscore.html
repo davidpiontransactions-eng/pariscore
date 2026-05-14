@@ -5923,10 +5923,57 @@
       </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TENNIS ABSTRACT — Rome 2026 (ATP + WTA) forecasts
+       Source: tennisabstract.com — scraped server-side, cache 6h.
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section fade-up" id="tennis-abstract-section" style="margin-top:24px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:24px;">🏛️ Rome 2026 — Forecasts</h2>
+        <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">
+          Probabilités tournoi par tour (R64→W) · Source <a href="https://www.tennisabstract.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Tennis Abstract</a> · Cache 6h
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="ta-rome-status" style="font-size:12px;color:var(--text3,#5a6068);">—</span>
+        <button onclick="loadTennisAbstractRome()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;">🔄 Actualiser</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px;">
+      <div class="ta-rome-card" style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <h3 style="margin:0;font-family:Syne,sans-serif;font-weight:700;font-size:16px;">ATP Rome</h3>
+          <span id="ta-rome-atp-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">—</span>
+        </div>
+        <div id="ta-rome-atp-body" style="overflow:auto;max-height:520px;">
+          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement…</div>
+        </div>
+      </div>
+      <div class="ta-rome-card" style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <h3 style="margin:0;font-family:Syne,sans-serif;font-weight:700;font-size:16px;">WTA Rome</h3>
+          <span id="ta-rome-wta-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">—</span>
+        </div>
+        <div id="ta-rome-wta-body" style="overflow:auto;max-height:520px;">
+          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement…</div>
+        </div>
+      </div>
+    </div>
+    <div id="ta-rome-upcoming" style="margin-top:14px;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;"></div>
+  </section>
 </div><!-- /page-tennis -->
 
 <style>
   @keyframes tennisAISpin { to { transform: rotate(360deg); } }
+  .ta-rome-table { width:100%; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; }
+  .ta-rome-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:0.05em; }
+  .ta-rome-table td { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text,#e8eaed); }
+  .ta-rome-table tr.ta-elim td { color:var(--text3,#5a6068); text-decoration:line-through; }
+  .ta-rome-table td.ta-prob { text-align:right; font-weight:600; }
+  .ta-rome-table td.ta-prob-w { color:var(--green,#00e676); }
+  .ta-rome-seed { display:inline-block; min-width:24px; padding:1px 5px; background:var(--bg3,#181c20); border-radius:3px; text-align:center; font-size:10px; color:var(--blue,#29b6f6); margin-right:6px; }
 </style>
 
 <style>
@@ -7137,7 +7184,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -7516,6 +7563,74 @@ function startTennisValueBets() {
 
 function stopTennisValueBets() {
   if (_tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
+}
+
+// ─── Tennis Abstract Rome 2026 (ATP+WTA) — forecasts ─────────────────────
+function _renderTennisAbstractTable(data, bodyId, metaId) {
+  const body = document.getElementById(bodyId);
+  const meta = document.getElementById(metaId);
+  if (!body) return;
+  if (!data || !Array.isArray(data.players) || !data.players.length) {
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Aucune donnée disponible.</div>';
+    if (meta) meta.textContent = '—';
+    return;
+  }
+  if (meta) {
+    const stage = data.rounds && data.rounds.length
+      ? `${data.players.length} joueurs · ${data.rounds.join('→')}`
+      : `${data.players.length} joueurs`;
+    meta.textContent = stage;
+  }
+  const sorted = [...data.players].sort((a, b) => (b.pctWin ?? -1) - (a.pctWin ?? -1));
+  const rows = sorted.map(p => {
+    const seedHtml = p.seed != null ? `<span class="ta-rome-seed">${p.seed}</span>` : '';
+    const ctrFlag = p.country || '—';
+    const pctF = p.pctFinal != null ? p.pctFinal.toFixed(1) + '%' : '—';
+    const pctW = p.pctWin != null ? p.pctWin.toFixed(1) + '%' : '—';
+    return `<tr class="${p.eliminated ? 'ta-elim' : ''}">
+      <td>${seedHtml}${_escapeHtmlSafe(p.name)}</td>
+      <td style="color:var(--text2,#8d9399);">${_escapeHtmlSafe(ctrFlag)}</td>
+      <td class="ta-prob">${pctF}</td>
+      <td class="ta-prob ta-prob-w">${pctW}</td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = `<table class="ta-rome-table">
+    <thead><tr><th>Joueur</th><th>Pays</th><th style="text-align:right;">Finale</th><th style="text-align:right;">Titre</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function _escapeHtmlSafe(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+async function loadTennisAbstractRome() {
+  const statusEl = document.getElementById('ta-rome-status');
+  const upcomingEl = document.getElementById('ta-rome-upcoming');
+  if (statusEl) statusEl.textContent = 'Chargement…';
+  try {
+    const [atpRes, wtaRes] = await Promise.all([
+      fetch('/api/v1/tennis-abstract?event=atp-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
+      fetch('/api/v1/tennis-abstract?event=wta-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
+    ]);
+    _renderTennisAbstractTable(atpRes, 'ta-rome-atp-body', 'ta-rome-atp-meta');
+    _renderTennisAbstractTable(wtaRes, 'ta-rome-wta-body', 'ta-rome-wta-meta');
+    if (upcomingEl) {
+      const upATP = (atpRes.upcoming_matches || []).slice(0, 3);
+      const upWTA = (wtaRes.upcoming_matches || []).slice(0, 3);
+      const blocks = [];
+      if (upATP.length) blocks.push(`<strong style="color:var(--text,#e8eaed);">ATP à venir :</strong> ${upATP.map(_escapeHtmlSafe).join(' · ')}`);
+      if (upWTA.length) blocks.push(`<strong style="color:var(--text,#e8eaed);">WTA à venir :</strong> ${upWTA.map(_escapeHtmlSafe).join(' · ')}`);
+      upcomingEl.innerHTML = blocks.join('<br/>');
+    }
+    if (statusEl) {
+      const ts = atpRes.fetched_at || wtaRes.fetched_at;
+      statusEl.textContent = ts ? 'MAJ ' + fmtKickoffTime(ts) : 'OK';
+    }
+  } catch (e) {
+    if (statusEl) statusEl.textContent = 'Erreur';
+    console.error('[TennisAbstract] load failed', e);
+  }
 }
 
 // ─── Modal détail tennis (BSD augmenté — Sports Addon) ────────────────────
