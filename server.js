@@ -1270,7 +1270,13 @@ try {
   console.warn('  ⚠ bsd_config.json introuvable — BSD désactivé');
 }
 
-const BSD_API_KEY = bsdConfig.api_key || process.env.BSD_API_KEY || '';
+// Précédence env d'abord (defense in depth) — bsdConfig.api_key DOIT rester vide en repo public.
+// Si la valeur de bsdConfig.api_key reste populée → warning critique (clé probablement leakée).
+const BSD_API_KEY = process.env.BSD_API_KEY || bsdConfig.api_key || '';
+if (bsdConfig.api_key && bsdConfig.api_key.length > 0) {
+  console.warn('  ⚠ SÉCURITÉ : bsd_config.json contient une api_key non vide. À retirer + rotater côté dashboard BSD.');
+}
+if (!BSD_API_KEY) console.warn('  ⚠ BSD_API_KEY manquante — définir dans .env');
 const BSD_BASE_URL = bsdConfig.base_url || 'https://sports.bzzoiro.com/api';
 const BSD_CONFIG_TO_BSD = bsdConfig.mapping?.config_to_bsd || {};
 const BSD_BSD_TO_CONFIG = bsdConfig.mapping?.bsd_to_config || {};

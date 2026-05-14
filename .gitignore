@@ -40,3 +40,18 @@ build/
 # Beads / Dolt files (added by bd init)
 .dolt/
 .beads-credential-key
+
+# Claude Code worktrees + lock files
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Installers / archives ne pas committer
+*.exe
+*.zip
+
+# Hermes / autres agents context locaux
+.hermes_context.md
+
+# Skills installs (per-user, pas tracker)
+.agents/skills/
+.claude/skills/

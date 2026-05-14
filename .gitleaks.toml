@@ -1,0 +1,41 @@
+# Gitleaks config PariScore — allowlist false positives
+# Doc : https://github.com/gitleaks/gitleaks#configuration
+# Étend ruleset par défaut (extend.useDefault = true).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "PariScore false positives — sport identifiers + doc placeholders"
+
+# Identifiants publics Odds API (sport_key / odds_key) — pas des secrets.
+# Format : 'soccer_xxx', 'soccer_france_ligue1', etc.
+regexes = [
+  '''(sport_key|odds_key)["']?\s*[:=]\s*["']soccer_[a-z0-9_]+["']''',
+  '''(sport_key|odds_key)["']?\s*[:=]\s*["'][a-z]+_[a-z0-9_]+["']''',
+]
+
+# Fichiers exclus du scan (docs scrappées + dumps placeholders).
+paths = [
+  '''\.context/.*\.html$''',
+  '''\.context/.*\.htm$''',
+  '''\.context/bsd_api_doc_dump\.html$''',
+  '''.*\.docx$''',
+  '''.*\.pdf$''',
+  '''node_modules/''',
+  '''\.claude/worktrees/''',
+  '''open-design/''',
+  '''downloaded_files/''',
+  '''package-lock\.json$''',
+]
+
+# Tokens de doc/exemples manifestes — placeholders type abc123def456, YOUR_API_KEY, xxx, etc.
+stopwords = [
+  "abc123def456",
+  "YOUR_API_KEY",
+  "your_api_key",
+  "xxxxxxxx",
+  "REDACTED",
+  "placeholder",
+  "example_token",
+]
