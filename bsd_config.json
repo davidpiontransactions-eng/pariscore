@@ -32,7 +32,13 @@
       "22":  {"config_id": 172, "name": "Parva Liga"},
       "23":  {"config_id": 283, "name": "Superliga Romania"},
       "25":  {"config_id": 106, "name": "Ekstraklasa"},
-      "52":  {"config_id": 169, "name": "Chinese Super League"}
+      "52":  {"config_id": 169, "name": "Chinese Super League"},
+      "29":  {"config_id": 12,  "name": "CAF Champions League"},
+      "32":  {"config_id": 13,  "name": "Copa Libertadores"},
+      "33":  {"config_id": 11,  "name": "Copa Sudamericana"},
+      "53":  {"config_id": 200, "name": "Botola Pro"},
+      "54":  {"config_id": 103, "name": "Eliteserien"},
+      "42":  {"config_id": 137, "name": "Coppa Italia"}
     },
     "config_to_bsd": {
       "39":  1,
@@ -62,7 +68,13 @@
       "172": 22,
       "283": 23,
       "106": 25,
-      "169": 52
+      "169": 52,
+      "12":  29,
+      "13":  32,
+      "11":  33,
+      "200": 53,
+      "103": 54,
+      "137": 42
     },
     "fallback_needed": []
   }
