@@ -5776,6 +5776,83 @@
 
 <!-- PAGE : TENNIS LIVE (ESPN ATP+WTA) -->
 <div id="page-tennis" data-page="tennis" style="display:none;">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TENNIS VALUE BETS — T6 : Elo surface-split + Odds devig + EV model
+       Données /api/v1/tennis/value-bets (BSD primaire, ESPN fallback,
+       Sackmann Elo + The Odds API h2h + Shin-Hurley devig + 0.6·Elo+0.4·BSD).
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section fade-up" id="tennis-valuebets-section" style="margin-bottom:24px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:28px;">🎾 Tennis — Value Bets</h2>
+        <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">
+          ATP + WTA · Elo surface-split (Sackmann CC BY-NC-SA, server-side) · Devig Shin-Hurley · Blend 60/40 Elo/BSD
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="tennis-vb-status" style="font-size:12px;color:var(--text3,#5a6068);">—</span>
+        <button onclick="tickTennisValueBets()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;">🔄 Actualiser</button>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="tennis-vb-filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Tour</span>
+        <button class="tennis-vb-filter-btn is-active" data-filter="tour" data-value="ALL" onclick="applyTennisFilter(this)">Tous</button>
+        <button class="tennis-vb-filter-btn" data-filter="tour" data-value="ATP" onclick="applyTennisFilter(this)">ATP</button>
+        <button class="tennis-vb-filter-btn" data-filter="tour" data-value="WTA" onclick="applyTennisFilter(this)">WTA</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Surface</span>
+        <button class="tennis-vb-filter-btn is-active" data-filter="surface" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
+        <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Hard" onclick="applyTennisFilter(this)">🏟️ Hard</button>
+        <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Clay" onclick="applyTennisFilter(this)">🟧 Clay</button>
+        <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Grass" onclick="applyTennisFilter(this)">🟩 Grass</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
+        <input type="checkbox" id="tennis-vb-elo-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Avec Elo seulement
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
+        <input type="checkbox" id="tennis-vb-positive-ev" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> EV modèle > 0
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
+        <input type="checkbox" id="tennis-vb-hide-finished" checked onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Masquer terminés
+      </label>
+    </div>
+
+    <!-- Tableau value-bets -->
+    <div style="overflow-x:auto;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;">
+      <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1200px;">
+        <thead>
+          <tr style="background:var(--bg3,#181c20);">
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Tournoi</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Tour</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Surf.</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Joueur 1</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Joueur 2</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Elo P1</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Elo P2</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Prob</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Cote P1</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Cote P2</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Fair</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;">Edge%</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;">EV mod.</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Best</th>
+          </tr>
+        </thead>
+        <tbody id="tennis-vb-tbody">
+          <tr><td colspan="14" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text3,#5a6068);margin-top:8px;font-family:'DM Mono',monospace;">
+      Historique : <a href="https://github.com/JeffSackmann/tennis_atp" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Jeff Sackmann tennis_atp/wta</a> (CC BY-NC-SA, research use)
+    </div>
+  </section>
+
   <section class="section fade-up" id="tennis-live-section">
     <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
@@ -5824,6 +5901,34 @@
 </div><!-- /page-tennis -->
 
 <style>
+  /* ── T6 Tennis Value Bets styles ── */
+  .tennis-vb-filter-btn { padding:5px 11px; background:var(--bg3,#181c20); color:var(--text2,#8d9399); border:1px solid var(--bg4,#1e2328); border-radius:14px; cursor:pointer; font-family:'DM Mono',monospace; font-size:11px; transition:all 120ms ease; }
+  .tennis-vb-filter-btn:hover { background:var(--bg4,#1e2328); color:var(--text,#e8eaed); }
+  .tennis-vb-filter-btn.is-active { background:var(--green,#00e676); color:#0a0d0f; border-color:var(--green,#00e676); font-weight:700; }
+  #tennis-vb-table td { padding:9px 12px; border-top:1px solid var(--bg4,#1e2328); font-size:12.5px; color:var(--text,#e8eaed); }
+  #tennis-vb-table tr.tennis-vb-row { cursor:pointer; transition:background 80ms ease; }
+  #tennis-vb-table tr.tennis-vb-row:hover { background:var(--bg3,#181c20); }
+  #tennis-vb-table .tvb-mono { font-family:'DM Mono',monospace; }
+  #tennis-vb-table .tvb-elo { font-family:'DM Mono',monospace; font-size:13px; color:var(--blue,#29b6f6); font-weight:600; }
+  #tennis-vb-table .tvb-elo-fav { color:var(--green,#00e676); }
+  #tennis-vb-table .tvb-prob-bar { position:relative; width:80px; height:18px; background:var(--bg4,#1e2328); border-radius:9px; overflow:hidden; margin:0 auto; }
+  #tennis-vb-table .tvb-prob-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, rgba(41,182,246,0.6), rgba(0,230,118,0.7)); }
+  #tennis-vb-table .tvb-prob-label { position:relative; z-index:2; display:flex; align-items:center; justify-content:center; height:18px; font-family:'DM Mono',monospace; font-size:10px; color:#fff; font-weight:700; mix-blend-mode:difference; }
+  #tennis-vb-table .tvb-odds { font-family:'DM Mono',monospace; font-size:13px; color:var(--text,#e8eaed); font-weight:600; }
+  #tennis-vb-table .tvb-book { display:block; font-size:9px; color:var(--text3,#5a6068); margin-top:2px; }
+  #tennis-vb-table .tvb-edge { font-family:'DM Mono',monospace; font-size:12px; font-weight:700; padding:3px 8px; border-radius:10px; display:inline-block; min-width:42px; }
+  #tennis-vb-table .tvb-edge-pos { color:var(--green,#00e676); background:rgba(0,230,118,0.12); }
+  #tennis-vb-table .tvb-edge-strong { color:#fff; background:var(--green,#00e676); }
+  #tennis-vb-table .tvb-edge-neg { color:var(--text3,#5a6068); background:transparent; }
+  #tennis-vb-table .tvb-best-badge { display:inline-block; padding:3px 8px; border-radius:10px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; color:#0a0d0f; background:linear-gradient(135deg, #00e676, #ffa726); }
+  #tennis-vb-table .tvb-best-badge.tvb-best-neg { background:var(--bg4,#1e2328); color:var(--text3,#5a6068); }
+  #tennis-vb-table .tvb-surface { display:inline-block; padding:2px 6px; border-radius:8px; font-family:'DM Mono',monospace; font-size:10px; }
+  #tennis-vb-table .tvb-surface-hard { background:rgba(41,182,246,0.15); color:var(--blue,#29b6f6); border:1px solid rgba(41,182,246,0.3); }
+  #tennis-vb-table .tvb-surface-clay { background:rgba(245,158,11,0.15); color:var(--amber,#ffa726); border:1px solid rgba(245,158,11,0.3); }
+  #tennis-vb-table .tvb-surface-grass { background:rgba(0,230,118,0.15); color:var(--green,#00e676); border:1px solid rgba(0,230,118,0.3); }
+  #tennis-vb-table .tvb-surface-na { color:var(--text3,#5a6068); }
+  .tennis-vb-meta-bar { display:flex; gap:14px; font-size:11px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; padding:4px 0 10px; }
+  .tennis-vb-meta-bar .tvb-meta-key { color:var(--text2,#8d9399); }
   #tennis-live-table td { padding:10px 12px; border-top:1px solid var(--bg4,#1e2328); font-size:13px; color:var(--text,#e8eaed); }
   #tennis-live-table tr:hover { background:var(--bg3,#181c20); }
   #tennis-live-table .tennis-serving { font-weight:700; color:#22c55e; }
@@ -5832,7 +5937,7 @@
   #tennis-live-table .tennis-point { font-family:'DM Mono',monospace; font-weight:700; color:var(--green,#00e676); }
   #tennis-live-table .tennis-status-live { color:var(--red,#ff4d4d); font-weight:700; }
   #tennis-live-table .tennis-status-final { color:var(--text3,#5a6068); }
-  #tennis-live-table .tennis-flag { width:18px; height:12px; object-fit:cover; vertical-align:middle; margin-right:6px; border-radius:2px; }
+  #tennis-live-table .tennis-flag, #tennis-vb-table .tennis-flag { width:18px; height:12px; object-fit:cover; vertical-align:middle; margin-right:6px; border-radius:2px; }
   #tennis-live-table .tennis-tour { display:inline-block; padding:2px 8px; border-radius:10px; font-family:'DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.5px; }
   #tennis-live-table .tennis-tour-atp { background:rgba(41,182,246,0.18); color:var(--blue,#29b6f6); border:1px solid rgba(41,182,246,0.4); }
   #tennis-live-table .tennis-tour-wta { background:rgba(236,72,153,0.18); color:#ec4899; border:1px solid rgba(236,72,153,0.4); }
@@ -6977,6 +7082,7 @@ let matchesRetryTimer = null;   // retry auto si /api/v1/matches échoue
 function showPage(pageId, linkEl) {
   // Stop tennis poll quand on quitte l'onglet
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
+  if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
   document.querySelectorAll('div[data-page]').forEach(el => el.style.display = 'none');
   const page = document.getElementById('page-' + pageId);
   if (page) {
@@ -7002,7 +7108,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   startTennisLive();
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -7087,6 +7193,207 @@ function startTennisLive() {
 
 function stopTennisLive() {
   if (_tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
+}
+
+// ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
+window._tennisVbLastFetch = [];
+window._tennisVbFilters = { tour: 'ALL', surface: 'ALL' };
+let _tennisVbTimer = null;
+
+function applyTennisFilter(btnEl) {
+  const filterName = btnEl.dataset.filter;
+  const value = btnEl.dataset.value;
+  if (!filterName) return;
+  window._tennisVbFilters[filterName] = value;
+  document.querySelectorAll(`.tennis-vb-filter-btn[data-filter="${filterName}"]`).forEach(b => b.classList.remove('is-active'));
+  btnEl.classList.add('is-active');
+  renderTennisValueBets(window._tennisVbLastFetch || []);
+}
+
+function _tvbSurfaceCls(surface) {
+  if (!surface) return 'tvb-surface tvb-surface-na';
+  const s = String(surface).toLowerCase();
+  if (s === 'hard') return 'tvb-surface tvb-surface-hard';
+  if (s === 'clay') return 'tvb-surface tvb-surface-clay';
+  if (s === 'grass') return 'tvb-surface tvb-surface-grass';
+  return 'tvb-surface tvb-surface-na';
+}
+
+function _tvbSurfaceIcon(surface) {
+  if (!surface) return '—';
+  const s = String(surface).toLowerCase();
+  if (s === 'hard') return '🏟️ Hard';
+  if (s === 'clay') return '🟧 Clay';
+  if (s === 'grass') return '🟩 Grass';
+  if (s === 'carpet') return '🟪 Carpet';
+  return _escTennis(surface);
+}
+
+function _tvbEdgeCls(ev) {
+  if (ev == null || !Number.isFinite(ev)) return 'tvb-edge tvb-edge-neg';
+  if (ev >= 5) return 'tvb-edge tvb-edge-strong';
+  if (ev > 0) return 'tvb-edge tvb-edge-pos';
+  return 'tvb-edge tvb-edge-neg';
+}
+
+function _tvbFmtPct(v, withPct = true) {
+  if (v == null || !Number.isFinite(v)) return '—';
+  const n = Math.round(v * (Math.abs(v) <= 1 ? 100 : 1));
+  return withPct ? `${n}%` : `${n}`;
+}
+
+function _tvbFmtEv(v) {
+  if (v == null || !Number.isFinite(v)) return '—';
+  const sign = v > 0 ? '+' : '';
+  return `${sign}${v.toFixed(1)}%`;
+}
+
+function _tvbTourBadge(tour) {
+  if (!tour) return '<span class="tennis-tour tvb-mono">—</span>';
+  const t = String(tour).toUpperCase();
+  const cls = t === 'ATP' ? 'tennis-tour-atp' : t === 'WTA' ? 'tennis-tour-wta' : 'tennis-tour-mixed';
+  return `<span class="tennis-tour ${cls}">${t}</span>`;
+}
+
+function renderTennisValueBets(matches) {
+  const tbody = document.getElementById('tennis-vb-tbody');
+  if (!tbody) return;
+  if (!Array.isArray(matches) || matches.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="14" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    return;
+  }
+
+  const f = window._tennisVbFilters || { tour: 'ALL', surface: 'ALL' };
+  const eloOnly = document.getElementById('tennis-vb-elo-only')?.checked;
+  const positiveEv = document.getElementById('tennis-vb-positive-ev')?.checked;
+  const hideFinished = document.getElementById('tennis-vb-hide-finished')?.checked;
+
+  const filtered = matches.filter(m => {
+    if (f.tour !== 'ALL' && String(m.tour || '').toUpperCase() !== f.tour) return false;
+    if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
+    if (eloOnly && !(m.predictions && m.predictions.elo)) return false;
+    if (positiveEv) {
+      const ev = m.best_ev_model && m.best_ev_model.ev;
+      if (ev == null || ev <= 0) return false;
+    }
+    if (hideFinished) {
+      const s = String(m.status || '').toUpperCase();
+      if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="14" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    return;
+  }
+
+  // Tri : EV modèle décroissant (best opportunities en haut), puis Elo écart.
+  filtered.sort((a, b) => {
+    const evA = a.best_ev_model?.ev ?? -999;
+    const evB = b.best_ev_model?.ev ?? -999;
+    if (evB !== evA) return evB - evA;
+    const eloA = a.predictions?.elo?.p1_elo || 0;
+    const eloB = b.predictions?.elo?.p1_elo || 0;
+    return eloB - eloA;
+  });
+
+  tbody.innerHTML = filtered.slice(0, 200).map(m => {
+    const elo = m.predictions?.elo;
+    const blended = m.predictions?.blended;
+    const odds = m.odds;
+    const fair = m.fair;
+    const edge = m.edge;
+    const evModel = m.ev_model;
+    const bestEv = m.best_ev_model;
+
+    const p1Name = _escTennis(m.player1?.name || '—');
+    const p2Name = _escTennis(m.player2?.name || '—');
+    const p1Flag = m.player1?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player1.flag)}" alt="" onerror="this.style.display='none'"> ` : '';
+    const p2Flag = m.player2?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player2.flag)}" alt="" onerror="this.style.display='none'"> ` : '';
+
+    const eloP1 = elo?.p1_elo ?? null;
+    const eloP2 = elo?.p2_elo ?? null;
+    const eloP1Cls = (eloP1 != null && eloP2 != null && eloP1 > eloP2) ? 'tvb-elo tvb-elo-fav' : 'tvb-elo';
+    const eloP2Cls = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? 'tvb-elo tvb-elo-fav' : 'tvb-elo';
+
+    const probP1 = blended ? Math.round(blended.p1 * 100) : null;
+    const probHtml = probP1 != null
+      ? `<div class="tvb-prob-bar"><div class="tvb-prob-fill" style="width:${probP1}%;"></div><div class="tvb-prob-label">${probP1}% / ${100 - probP1}%</div></div>`
+      : '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
+
+    const oddsP1 = odds?.p1 ? `${odds.p1.odds.toFixed(2)}<span class="tvb-book">${_escTennis(odds.p1.book || '')}</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
+    const oddsP2 = odds?.p2 ? `${odds.p2.odds.toFixed(2)}<span class="tvb-book">${_escTennis(odds.p2.book || '')}</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
+
+    const fairCell = fair ? `${fair.p1.toFixed(0)}% / ${fair.p2.toFixed(0)}%<span class="tvb-book">marge ${fair.margin.toFixed(1)}%</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
+
+    const bestEdgeNum = bestEv?.ev;
+    const edgeText = edge ? `${edge.p1 > edge.p2 ? edge.p1.toFixed(1) : edge.p2.toFixed(1)}%` : '—';
+    const edgeCls = edge ? _tvbEdgeCls(Math.max(edge.p1 || -999, edge.p2 || -999)) : 'tvb-edge tvb-edge-neg';
+
+    const evCell = evModel
+      ? `<span class="${_tvbEdgeCls(Math.max(evModel.p1, evModel.p2))}">${_tvbFmtEv(Math.max(evModel.p1, evModel.p2))}</span>`
+      : '<span class="tvb-edge tvb-edge-neg">—</span>';
+
+    const bestCell = bestEv
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      : '<span class="tvb-best-badge tvb-best-neg">—</span>';
+
+    const matchId = _escTennis(m.id || '');
+    const onclick = matchId ? `onclick="openTennisDetail('${matchId}')"` : '';
+
+    return `<tr class="tennis-vb-row" ${onclick}>
+      <td>${_escTennis(m.tournament || '—')}${m.round ? '<span class="tvb-book">' + _escTennis(m.round) + '</span>' : ''}</td>
+      <td>${_tvbTourBadge(m.tour)}</td>
+      <td style="text-align:center;"><span class="${_tvbSurfaceCls(m.surface)}">${_tvbSurfaceIcon(m.surface)}</span></td>
+      <td>${p1Flag}${p1Name}</td>
+      <td>${p2Flag}${p2Name}</td>
+      <td style="text-align:center;" class="${eloP1Cls}">${eloP1 != null ? eloP1 : '—'}</td>
+      <td style="text-align:center;" class="${eloP2Cls}">${eloP2 != null ? eloP2 : '—'}</td>
+      <td style="text-align:center;">${probHtml}</td>
+      <td style="text-align:center;" class="tvb-odds">${oddsP1}</td>
+      <td style="text-align:center;" class="tvb-odds">${oddsP2}</td>
+      <td style="text-align:center;" class="tvb-mono" style="font-size:11px;color:var(--text2,#8d9399);">${fairCell}</td>
+      <td style="text-align:center;"><span class="${edgeCls}">${edgeText}</span></td>
+      <td style="text-align:center;">${evCell}</td>
+      <td style="text-align:center;">${bestCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function tickTennisValueBets() {
+  const statusEl = document.getElementById('tennis-vb-status');
+  try {
+    if (statusEl) statusEl.textContent = 'Chargement…';
+    const r = await fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const matches = Array.isArray(data.matches) ? data.matches : [];
+    window._tennisVbLastFetch = matches;
+    renderTennisValueBets(matches);
+    if (statusEl) {
+      const withElo = matches.filter(m => m.predictions && m.predictions.elo).length;
+      const src = data.meta?.match_source || '?';
+      statusEl.textContent = `${matches.length} matchs · ${withElo} avec Elo · src=${src} · ${new Date().toLocaleTimeString('fr-FR')}`;
+    }
+  } catch (e) {
+    console.warn('[TennisVB] fetch error:', e.message);
+    if (statusEl) statusEl.textContent = 'Erreur réseau';
+    const tbody = document.getElementById('tennis-vb-tbody');
+    if (tbody && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
+      tbody.innerHTML = '<tr><td colspan="14" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement.</td></tr>';
+    }
+  }
+}
+
+function startTennisValueBets() {
+  tickTennisValueBets();
+  if (_tennisVbTimer) clearInterval(_tennisVbTimer);
+  _tennisVbTimer = setInterval(tickTennisValueBets, 5 * 60 * 1000);
+}
+
+function stopTennisValueBets() {
+  if (_tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
 }
 
 // ─── Modal détail tennis (BSD augmenté — Sports Addon) ────────────────────
