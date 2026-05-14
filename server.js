@@ -12685,6 +12685,112 @@ async function fetchTexPlayer(slug) {
   return data;
 }
 
+// ─── Tennis Explorer match-detail (Option α v10.11) ─────────────────────────
+// Source: /match-detail/?id=<N> — multi-bookmakers odds + H2H + opening odds.
+const TEX_MATCH_DETAIL_TTL_MS = 6 * 3600 * 1000;
+const texMatchDetailCache = new Map();
+
+function _texParseMatchDetail(html) {
+  if (!html) return null;
+  // Header players
+  const titleM = html.match(/<h1 class="bg">([^<]+)<\/h1>/);
+  let p1Name = null, p2Name = null;
+  if (titleM) {
+    const parts = titleM[1].split(/\s*-\s*/);
+    p1Name = (parts[0] || '').trim();
+    p2Name = (parts[1] || '').trim();
+  }
+  // Find first odds tab data (Home/Away) — table.result.balance under oddsMenu-1-data
+  const oddsBlock = html.match(/<div id="oddsMenu-1-data">([\s\S]*?)<\/div>\s*<div id="oddsMenu-2-data"/);
+  const books = [];
+  let avgP1 = null, avgP2 = null;
+  if (oddsBlock) {
+    // Note: nested <tr> in opening-odds tooltip → use lookahead boundary
+    const trRe = /<tr class="(one|two|average|head)"[^>]*>([\s\S]*?)(?=<tr class="(?:one|two|average|head)"|<\/tbody>)/g;
+    let trMatch;
+    while ((trMatch = trRe.exec(oddsBlock[1])) !== null) {
+      const rowClass = trMatch[1];
+      const tr = trMatch[2];
+      if (rowClass === 'head') continue;
+      // Bookmaker name
+      const bookM = tr.match(/<span class="t">([^<]+)<\/span>/);
+      // Odd cells : k1 (player1) k2 (player2). Extract first number from each odds-in div.
+      const oddsCells = [...tr.matchAll(/class="k([12])[^"]*"><div class="odds-in[^"]*">(\d+\.\d+)/g)];
+      const oddP1 = oddsCells.find(c => c[1] === '1');
+      const oddP2 = oddsCells.find(c => c[1] === '2');
+      const odd1 = oddP1 ? parseFloat(oddP1[2]) : null;
+      const odd2 = oddP2 ? parseFloat(oddP2[2]) : null;
+      // Opening odds via odds-change-div table (first row = current, rows after "Opening odds" = open)
+      const openM = [...tr.matchAll(/<td colspan="3" class="title">Opening odds<\/td>[\s\S]*?<tr><td>[^<]+<\/td><td class="bold">(\d+\.\d+)/g)];
+      const open1 = openM[0] ? parseFloat(openM[0][1]) : null;
+      const open2 = openM[1] ? parseFloat(openM[1][1]) : null;
+      const bestP1 = /class="k1 best-betrate"/.test(tr);
+      const bestP2 = /class="k2 best-betrate"/.test(tr);
+      if (rowClass === 'average') {
+        avgP1 = odd1; avgP2 = odd2;
+      } else if (bookM && (odd1 != null || odd2 != null)) {
+        books.push({
+          bookmaker: bookM[1].trim(),
+          odd_p1: odd1,
+          odd_p2: odd2,
+          open_p1: open1,
+          open_p2: open2,
+          drift_p1_pct: (open1 && odd1) ? ((odd1 - open1) / open1 * 100) : null,
+          drift_p2_pct: (open2 && odd2) ? ((odd2 - open2) / open2 * 100) : null,
+          best_p1: bestP1,
+          best_p2: bestP2,
+        });
+      }
+    }
+  }
+  // H2H summary
+  const h2hM = html.match(/<h2 class="bg">Head-to-head<\/h2>([\s\S]*?)<h2 class="bg">/);
+  let h2hSummary = null;
+  if (h2hM) {
+    const noDataM = h2hM[1].match(/<div class="no-data">([^<]+)<\/div>/);
+    if (noDataM) {
+      h2hSummary = noDataM[1].trim();
+    } else {
+      // try to extract a count/text snapshot
+      const matchesCount = (h2hM[1].match(/<tr/g) || []).length - 1; // minus header
+      h2hSummary = `${matchesCount > 0 ? matchesCount + ' match(s)' : 'unknown'}`;
+    }
+  }
+  // Best odds per player (highest)
+  const bestP1Book = books.filter(b => b.odd_p1 != null).sort((a, b) => b.odd_p1 - a.odd_p1)[0];
+  const bestP2Book = books.filter(b => b.odd_p2 != null).sort((a, b) => b.odd_p2 - a.odd_p2)[0];
+  return {
+    player1: p1Name,
+    player2: p2Name,
+    bookmakers: books,
+    avg_odds: { p1: avgP1, p2: avgP2 },
+    best_odds: {
+      p1: bestP1Book ? { book: bestP1Book.bookmaker, odd: bestP1Book.odd_p1 } : null,
+      p2: bestP2Book ? { book: bestP2Book.bookmaker, odd: bestP2Book.odd_p2 } : null,
+    },
+    book_count: books.length,
+    h2h_summary: h2hSummary,
+  };
+}
+
+async function fetchTexMatchDetail(matchId) {
+  const id = String(matchId || '').trim();
+  if (!/^\d+$/.test(id)) throw new Error('invalid_match_id');
+  const cached = texMatchDetailCache.get(id);
+  if (cached && Date.now() - cached.ts < TEX_MATCH_DETAIL_TTL_MS) return cached.data;
+  const html = await _texFetchHtml(`/match-detail/?id=${id}`);
+  const parsed = _texParseMatchDetail(html);
+  if (!parsed) throw new Error('parse_failed');
+  const data = {
+    tex_match_id: parseInt(id, 10),
+    source_url: `${TEX_BASE}/match-detail/?id=${id}`,
+    fetched_at: new Date().toISOString(),
+    ...parsed,
+  };
+  texMatchDetailCache.set(id, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── MatchStat Tennis API (RapidAPI) — module-scope helpers ─────────────────
 async function matchstatFetch(pathSuffix, ttlMs = 12 * 3600 * 1000, ck = null) {
   if (!MATCHSTAT_ENABLED) {
@@ -15796,6 +15902,19 @@ if (pathname === '/api/v1/tennis/tex/matches' && req.method === 'GET') {
 }
 // Tennis Explorer — profile joueur (rank current/highest singles+doubles, DOB, hand).
 // Query: ?slug=<player-slug>
+// Tennis Explorer — détail match (multi-bookmakers + H2H + drift opening) v10.11
+// Query: ?id=<tex_match_id>
+if (pathname === '/api/v1/tennis/tex/match-detail' && req.method === 'GET') {
+  try {
+    const id = (query.id || '').toString().trim();
+    if (!id) return jsonResponse(res, 400, { error: 'id_required' });
+    const data = await fetchTexMatchDetail(id);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    const code = e.message === 'invalid_match_id' ? 400 : 500;
+    return jsonResponse(res, code, { error: 'tex_match_detail_error', detail: e.message });
+  }
+}
 if (pathname === '/api/v1/tennis/tex/player' && req.method === 'GET') {
   try {
     const slug = (query.slug || '').toString().trim();

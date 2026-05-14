@@ -6017,6 +6017,14 @@
     </div>
   </section>
 
+  <!-- Multi-bookmakers modal (Tennis Explorer match-detail v10.11) -->
+  <div id="tex-books-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:760px;width:100%;max-height:80vh;overflow:auto;padding:20px;position:relative;">
+      <button onclick="document.getElementById('tex-books-modal').style.display='none'" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;">✕</button>
+      <div id="tex-books-modal-body" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">Chargement…</div>
+    </div>
+  </div>
+
   <!-- Player profile modal (Tennis Explorer) -->
   <div id="tex-player-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:520px;width:100%;padding:20px;position:relative;">
@@ -7757,7 +7765,7 @@ async function loadTexMatches() {
         <td style="text-align:right;">${_texFmtOdds(open)}</td>
         <td style="text-align:right;font-weight:600;">${_texFmtOdds(curr)}</td>
         <td style="text-align:right;">${_texFmtDrift(drift)}</td>
-        <td>${m.tex_match_id ? `<a href="https://www.tennisexplorer.com/match-detail/?id=${m.tex_match_id}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);font-size:10px;">↗</a>` : ''}</td>
+        <td>${m.tex_match_id ? `<button onclick="openTexBooksModal('${m.tex_match_id}')" style="padding:2px 6px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:3px;cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;" title="Multi-books comparison">📊</button>` : ''}</td>
       </tr>`;
     }).join('');
     body.innerHTML = `<table class="tex-table">
@@ -7775,6 +7783,70 @@ async function loadTexMatches() {
   } catch (e) {
     body.innerHTML = `<div style="padding:32px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
     if (status) status.textContent = 'Erreur';
+  }
+}
+
+async function openTexBooksModal(matchId) {
+  const modal = document.getElementById('tex-books-modal');
+  const body = document.getElementById('tex-books-modal-body');
+  if (!modal || !body || !matchId) return;
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement multi-books…</div>';
+  try {
+    const r = await fetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json());
+    if (r.error) throw new Error(r.detail || r.error);
+    const books = r.bookmakers || [];
+    const fmtO = v => v == null ? '—' : Number(v).toFixed(2);
+    const fmtD = d => {
+      if (d == null) return '<span class="tex-drift-flat">—</span>';
+      const cls = Math.abs(d) < 2 ? 'tex-drift-flat' : (d > 0 ? 'tex-drift-up' : 'tex-drift-down');
+      return `<span class="${cls}">${d > 0 ? '+' : ''}${d.toFixed(1)}%</span>`;
+    };
+    const rows = books.map(b => `<tr>
+      <td>${_escapeHtmlSafe(b.bookmaker)}</td>
+      <td style="text-align:right;${b.best_p1 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p1)}</td>
+      <td style="text-align:right;color:var(--text3,#5a6068);">${fmtO(b.open_p1)}</td>
+      <td style="text-align:right;">${fmtD(b.drift_p1_pct)}</td>
+      <td style="text-align:right;${b.best_p2 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p2)}</td>
+      <td style="text-align:right;color:var(--text3,#5a6068);">${fmtO(b.open_p2)}</td>
+      <td style="text-align:right;">${fmtD(b.drift_p2_pct)}</td>
+    </tr>`).join('');
+    const bestStr = (b) => b ? `<strong style="color:var(--green,#00e676);">${b.odd.toFixed(2)}</strong> @ ${_escapeHtmlSafe(b.book)}` : '—';
+    body.innerHTML = `
+      <h3 style="margin:0 0 10px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;">📊 ${_escapeHtmlSafe(r.player1)} vs ${_escapeHtmlSafe(r.player2)}</h3>
+      <div style="margin-bottom:14px;font-size:11px;color:var(--text2,#8d9399);">
+        ${r.book_count} bookmaker(s) · H2H: ${_escapeHtmlSafe(r.h2h_summary || '—')}
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;background:var(--bg3,#181c20);padding:8px 12px;border-radius:6px;">
+          <div style="color:var(--text3,#5a6068);font-size:10px;text-transform:uppercase;">Best Player 1</div>
+          <div>${bestStr(r.best_odds?.p1)}</div>
+          <div style="color:var(--text3,#5a6068);font-size:10px;margin-top:4px;">avg ${r.avg_odds?.p1?.toFixed(2) || '—'}</div>
+        </div>
+        <div style="flex:1;min-width:200px;background:var(--bg3,#181c20);padding:8px 12px;border-radius:6px;">
+          <div style="color:var(--text3,#5a6068);font-size:10px;text-transform:uppercase;">Best Player 2</div>
+          <div>${bestStr(r.best_odds?.p2)}</div>
+          <div style="color:var(--text3,#5a6068);font-size:10px;margin-top:4px;">avg ${r.avg_odds?.p2?.toFixed(2) || '—'}</div>
+        </div>
+      </div>
+      ${books.length ? `<table class="tex-table" style="min-width:0;">
+        <thead><tr>
+          <th>Bookmaker</th>
+          <th style="text-align:right;">P1 odd</th>
+          <th style="text-align:right;">Open</th>
+          <th style="text-align:right;">Δ</th>
+          <th style="text-align:right;">P2 odd</th>
+          <th style="text-align:right;">Open</th>
+          <th style="text-align:right;">Δ</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>` : '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Aucune cote disponible pour ce match.</div>'}
+      <div style="margin-top:12px;font-size:10px;color:var(--text3,#5a6068);">
+        <a href="${r.source_url}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir détail complet ↗</a>
+      </div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
   }
 }
 
