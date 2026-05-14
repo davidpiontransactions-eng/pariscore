@@ -11712,6 +11712,67 @@ function predictTennisEloProb(p1EloRow, p2EloRow) {
   };
 }
 
+// Bayesian-flavor blend : p_final = 0.6·Elo + 0.4·BSD_XGBoost (poids fixes par
+// défaut, à recalibrer par Brier score future). Renvoie {p1, p2, weights, method}.
+// Si une source manque, on retombe sur l'autre avec poids 1.0.
+function blendTennisProbs(eloProb, bsdProb) {
+  if (!eloProb && !bsdProb) return null;
+  if (!bsdProb) {
+    return {
+      p1: eloProb.p1, p2: eloProb.p2,
+      weights: { elo: 1.0, bsd: 0.0 },
+      method: 'elo_only',
+    };
+  }
+  if (!eloProb) {
+    return {
+      p1: bsdProb.p1, p2: bsdProb.p2,
+      weights: { elo: 0.0, bsd: 1.0 },
+      method: 'bsd_only',
+    };
+  }
+  const w_elo = 0.6, w_bsd = 0.4;
+  const p1 = w_elo * eloProb.p1 + w_bsd * bsdProb.p1;
+  const p2 = w_elo * eloProb.p2 + w_bsd * bsdProb.p2;
+  return {
+    p1: parseFloat(p1.toFixed(4)),
+    p2: parseFloat(p2.toFixed(4)),
+    weights: { elo: w_elo, bsd: w_bsd },
+    method: 'blend',
+  };
+}
+
+// Helper : récupère Elo p1+p2 (ALL + surface) + Elo prob. Retourne null si data absente.
+function _tennisLookupEloPair(p1Name, p2Name, tour, surface) {
+  if (!p1Name || !p2Name || !tour) return null;
+  const p1All = getTennisEloByName(p1Name, tour, 'ALL');
+  const p2All = getTennisEloByName(p2Name, tour, 'ALL');
+  if (!p1All || !p2All) return null;
+
+  let p1Surf = null, p2Surf = null, predSurf = null;
+  if (surface && TENNIS_ELO_SURFACES.includes(surface)) {
+    p1Surf = getTennisEloByName(p1Name, tour, surface);
+    p2Surf = getTennisEloByName(p2Name, tour, surface);
+    if (p1Surf && p2Surf) predSurf = predictTennisEloProb(p1Surf, p2Surf);
+  }
+  const predAll = predictTennisEloProb(p1All, p2All);
+  // Préfère surface-specific si dispo + assez de matchs (min 10 chaque), sinon ALL.
+  let chosen = predAll;
+  let surfaceUsed = 'ALL';
+  if (predSurf && p1Surf.matches_count >= 10 && p2Surf.matches_count >= 10) {
+    chosen = predSurf;
+    surfaceUsed = surface;
+  }
+  return {
+    ...chosen,
+    surface_used: surfaceUsed,
+    p1_all: p1All ? { elo: Math.round(p1All.elo), matches: p1All.matches_count } : null,
+    p2_all: p2All ? { elo: Math.round(p2All.elo), matches: p2All.matches_count } : null,
+    p1_surface: p1Surf ? { elo: Math.round(p1Surf.elo), matches: p1Surf.matches_count, surface } : null,
+    p2_surface: p2Surf ? { elo: Math.round(p2Surf.elo), matches: p2Surf.matches_count, surface } : null,
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13854,6 +13915,31 @@ async function buildTennisValueBets({ date }) {
       }
     }
 
+    // ── T5 : Predictions Elo + BSD blend + EV model ────────────────────────
+    const tourGuess = (m.tour && ['ATP', 'WTA'].includes(String(m.tour).toUpperCase())) ? String(m.tour).toUpperCase() : null;
+    const surfaceClean = (m.surface && TENNIS_ELO_SURFACES.includes(m.surface)) ? m.surface : null;
+    let eloProb = null;
+    if (tourGuess) {
+      eloProb = _tennisLookupEloPair(p1Name, p2Name, tourGuess, surfaceClean);
+    }
+    // BSD prediction left null in list view (N+1 fetch impractical). Detail route
+    // /api/v1/tennis/predictions/{id} expose BSD per-match; UI peut fetch puis re-blend.
+    const bsdProb = null;
+    const blended = blendTennisProbs(eloProb, bsdProb);
+
+    let evModel = null, bestEvModel = null;
+    if (blended && odds && odds.p1 && odds.p2) {
+      const evP1 = (odds.p1.odds * blended.p1 - 1) * 100;
+      const evP2 = (odds.p2.odds * blended.p2 - 1) * 100;
+      evModel = {
+        p1: parseFloat(evP1.toFixed(2)),
+        p2: parseFloat(evP2.toFixed(2)),
+      };
+      bestEvModel = evP1 >= evP2
+        ? { side: 'p1', player: p1Name, odds: odds.p1.odds, book: odds.p1.book, ev: evModel.p1, p_model: blended.p1 }
+        : { side: 'p2', player: p2Name, odds: odds.p2.odds, book: odds.p2.book, ev: evModel.p2, p_model: blended.p2 };
+    }
+
     enriched.push({
       id: m.id,
       tournament: m.tournament || null,
@@ -13871,7 +13957,14 @@ async function buildTennisValueBets({ date }) {
       best_edge: bestEdge,
       bsd_prediction: m.prediction || null,
       bsd_ml_score: m.ml_score || m.prediction_score || null,
-      sources: { match: matchSource, odds: oddsSource },
+      predictions: {
+        elo: eloProb,
+        bsd: bsdProb,
+        blended,
+      },
+      ev_model: evModel,
+      best_ev_model: bestEvModel,
+      sources: { match: matchSource, odds: oddsSource, predictions: eloProb ? 'elo' : null },
     });
   }
 
