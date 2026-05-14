@@ -5526,6 +5526,337 @@ async function archivePastMatches() {
   }
 }
 
+// Backfill history depuis db.archive_matches : récupère les matchs qui ont été
+// purgés sans passer par archivePastMatches() (race autoPurge vs archive).
+// Idempotent — saute les matchs déjà présents dans history.
+function backfillHistoryFromArchive() {
+  if (!db.archive_matches || !db.archive_matches.length) {
+    console.log(`  [Backfill] db.archive_matches vide — rien à récupérer`);
+    return 0;
+  }
+  const knownIds = new Set(history.map(h => h.id));
+  let added = 0;
+
+  for (const m of db.archive_matches) {
+    if (!m || !m.id || knownIds.has(m.id)) continue;
+
+    // Extraction du score réel — supporte string "1-0", objet {home,away}, ou m.goals
+    let realScore = null;
+    if (typeof m.live_score === 'string' && /^\d+-\d+$/.test(m.live_score)) {
+      const [h, a] = m.live_score.split('-').map(Number);
+      if (Number.isFinite(h) && Number.isFinite(a)) {
+        realScore = { home: h, away: a, source: 'archive_live' };
+      }
+    } else if (m.live_score && typeof m.live_score === 'object' &&
+               Number.isFinite(m.live_score.home) && Number.isFinite(m.live_score.away)) {
+      realScore = { home: m.live_score.home, away: m.live_score.away, source: 'archive_live' };
+    } else if (m.goals && Number.isFinite(m.goals.home) && Number.isFinite(m.goals.away)) {
+      realScore = { home: m.goals.home, away: m.goals.away, source: 'archive_goals' };
+    }
+    if (!realScore) continue;
+
+    const record = {
+      id: m.id,
+      home_team: m.home_team,
+      away_team: m.away_team,
+      league: m.league,
+      commence_time: m.commence_time,
+      predicted: {
+        over25: m.poisson?.over25,
+        btts: m.poisson?.btts,
+        bestEdge: m.best_edge?.label,
+        bestEdgeValue: m.best_edge?.edge,
+      },
+      realScore,
+      archived_at: m.archived_at || new Date().toISOString(),
+      verified: true,
+      backfilled: true,
+    };
+
+    const totalGoals = realScore.home + realScore.away;
+    const wasBTTS = realScore.home > 0 && realScore.away > 0;
+    const wasOver25 = totalGoals > 2.5;
+    if (m.poisson?.over25 > 55) { accuracy.over25_total++; if (wasOver25) accuracy.over25_correct++; }
+    if (m.poisson?.btts > 55) { accuracy.btts_total++; if (wasBTTS) accuracy.btts_correct++; }
+    if (m.best_edge?.edge > 5) {
+      accuracy.edge_total++;
+      const winner = realScore.home > realScore.away ? m.home_team
+                   : realScore.away > realScore.home ? m.away_team : 'Nul';
+      if (winner === m.best_edge.label) accuracy.edge_correct++;
+    }
+    accuracy.total++;
+
+    history.push(record);
+    knownIds.add(m.id);
+    added++;
+  }
+
+  if (added > 0) {
+    saveHistory();
+    console.log(`  [Backfill] ✓ ${added} matchs récupérés depuis db.archive_matches (history: ${history.length})`);
+  } else {
+    console.log(`  [Backfill] Aucun match exploitable dans db.archive_matches (${db.archive_matches.length} entrées scannées)`);
+  }
+  return added;
+}
+
+// Devig 2-way market : retourne probabilité fair en % (entier) de A vs B.
+function devigTwoWay(oddsA, oddsB) {
+  if (!Number.isFinite(oddsA) || !Number.isFinite(oddsB)) return null;
+  if (oddsA <= 1 || oddsB <= 1) return null;
+  const ia = 1 / oddsA, ib = 1 / oddsB;
+  const total = ia + ib;
+  if (total <= 0) return null;
+  return Math.round((ia / total) * 100);
+}
+
+// Recompute global accuracy from current history. Idempotent.
+function recomputeAccuracy() {
+  accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
+  for (const h of history) {
+    if (!h.verified || !h.realScore) continue;
+    const rs = h.realScore;
+    accuracy.total++;
+    const wasOver25 = (rs.home + rs.away) > 2.5;
+    const wasBTTS = rs.home > 0 && rs.away > 0;
+    if (Number.isFinite(h.predicted?.over25) && h.predicted.over25 > 55) {
+      accuracy.over25_total++;
+      if (wasOver25) accuracy.over25_correct++;
+    }
+    if (Number.isFinite(h.predicted?.btts) && h.predicted.btts > 55) {
+      accuracy.btts_total++;
+      if (wasBTTS) accuracy.btts_correct++;
+    }
+    if (Number.isFinite(h.predicted?.bestEdgeValue) && h.predicted.bestEdgeValue > 5) {
+      accuracy.edge_total++;
+      const winner = rs.home > rs.away ? h.home_team
+                   : rs.away > rs.home ? h.away_team : 'Nul';
+      if (winner === h.predicted.bestEdge) accuracy.edge_correct++;
+    }
+  }
+}
+
+// Backfill via BSD : récupère N jours de matchs terminés et reconstruit `predicted`
+// depuis les cotes BSD pré-match (devig over25/under25 ; 1/odds_btts_yes).
+// opts.force = true → purge les records `backfilled:'bsd'` existants sans predicted valide,
+// puis ré-injecte avec la nouvelle logique cotes.
+async function backfillHistoryFromBSD(daysBack = 14, opts = {}) {
+  if (typeof BSD_BASE_URL === 'undefined' || !BSD_BASE_URL) {
+    console.warn('  [BackfillBSD] BSD_BASE_URL absent — skip');
+    return 0;
+  }
+  const force = !!opts.force;
+
+  if (force) {
+    const before = history.length;
+    history = history.filter(h => !(h.backfilled === 'bsd' && !Number.isFinite(h.predicted?.over25)));
+    const purged = before - history.length;
+    if (purged > 0) console.log(`  [BackfillBSD] force=true — purgé ${purged} records sans predicted`);
+    recomputeAccuracy();
+  }
+
+  const now = Date.now();
+  const knownIds = new Set(history.map(h => h.id));
+  let added = 0, withPoisson = 0;
+  const LEAGUE_AVG = 1.35;
+  const finishedSet = new Set(['ended','finished','ft','aet','pen','ENDED','FINISHED','FT','AET','PEN']);
+
+  for (let i = 1; i <= daysBack; i++) {
+    const d = new Date(now - i * 86400000);
+    const dateStr = d.toISOString().split('T')[0];
+    let matches = [];
+    try {
+      matches = await fetchBSDMatches(dateStr, dateStr);
+    } catch (e) {
+      console.warn(`  [BackfillBSD] ${dateStr}:`, e.message);
+      continue;
+    }
+    for (const m of matches) {
+      if (!finishedSet.has(String(m.status || ''))) continue;
+      if (!Number.isFinite(m.home_score) || !Number.isFinite(m.away_score)) continue;
+
+      const id = m.id || `bsd_${m._bsd_event_id || ''}_${dateStr}`;
+      if (knownIds.has(id)) continue;
+
+      // STRATÉGIE 1 — predicted depuis cotes BSD pré-match (devig 2-way)
+      let probOver25 = null, probBTTS = null;
+      if (m.odds) {
+        probOver25 = devigTwoWay(m.odds.over25, m.odds.under25);
+        if (Number.isFinite(m.odds.btts) && m.odds.btts > 1) {
+          probBTTS = Math.round((1 / m.odds.btts) * 100); // raw vig'd — BSD ne mappe que BTTS yes
+        }
+      }
+
+      // STRATÉGIE 2 — fallback Poisson via teamStats fuzzy (si cotes absentes)
+      if (probOver25 == null || probBTTS == null) {
+        const hKey = normName(m.home_team);
+        const aKey = normName(m.away_team);
+        const hStats = (db.teamStats && (db.teamStats[hKey] || (typeof findFuzzy === 'function' ? findFuzzy(hKey) : null))) || null;
+        const aStats = (db.teamStats && (db.teamStats[aKey] || (typeof findFuzzy === 'function' ? findFuzzy(aKey) : null))) || null;
+        if (hStats && aStats &&
+            Number.isFinite(hStats.avgScored) && Number.isFinite(aStats.avgConceded) &&
+            Number.isFinite(aStats.avgScored) && Number.isFinite(hStats.avgConceded)) {
+          const lh = (hStats.avgScored / LEAGUE_AVG) * aStats.avgConceded;
+          const la = (aStats.avgScored / LEAGUE_AVG) * hStats.avgConceded;
+          if (lh > 0 && la > 0) {
+            try {
+              const poisson = computePoisson(lh, la);
+              if (probOver25 == null) probOver25 = poisson.over25;
+              if (probBTTS == null)  probBTTS  = poisson.btts;
+            } catch { /* ignore */ }
+          }
+        }
+      }
+
+      // Skip si aucune prédiction trouvée (ni cotes ni teamStats)
+      if (probOver25 == null && probBTTS == null) continue;
+
+      const realScore = { home: m.home_score, away: m.away_score, source: 'backfill_bsd' };
+      const record = {
+        id, home_team: m.home_team, away_team: m.away_team,
+        league: m.league, commence_time: m.commence_time,
+        predicted: {
+          over25: probOver25,
+          btts: probBTTS,
+          bestEdge: null,
+          bestEdgeValue: null,
+        },
+        odds_snapshot: m.odds || null,
+        realScore,
+        archived_at: new Date().toISOString(),
+        verified: true,
+        backfilled: 'bsd',
+        predicted_source: (m.odds && (m.odds.over25 || m.odds.btts)) ? 'bsd_odds' : 'poisson_teamstats',
+      };
+
+      const wasOver25 = (realScore.home + realScore.away) > 2.5;
+      const wasBTTS = realScore.home > 0 && realScore.away > 0;
+      if (Number.isFinite(probOver25) && probOver25 > 55) {
+        accuracy.over25_total++;
+        if (wasOver25) accuracy.over25_correct++;
+      }
+      if (Number.isFinite(probBTTS) && probBTTS > 55) {
+        accuracy.btts_total++;
+        if (wasBTTS) accuracy.btts_correct++;
+      }
+      accuracy.total++;
+
+      history.push(record);
+      knownIds.add(id);
+      added++;
+      if (Number.isFinite(probOver25)) withPoisson++;
+    }
+    // BSD rate-limit safe pause
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  if (added > 0) {
+    saveHistory();
+    console.log(`  [BackfillBSD] ✓ ${added} matchs récupérés sur ${daysBack}j (avec predicted: ${withPoisson}/${added} ; history: ${history.length} ; over25_total: ${accuracy.over25_total} ; btts_total: ${accuracy.btts_total})`);
+  } else {
+    console.log(`  [BackfillBSD] Aucun match exploitable sur ${daysBack}j`);
+  }
+  return added;
+}
+
+// Enrich history records sans predicted.over25 : 2 stratégies cascadées :
+//   (1) cotes BSD stockées dans odds_snapshot (devig)
+//   (2) Poisson rétrospectif via teamStats courants (fuzzy)
+// Appelé après fetchStats() — non-destructif (skip si predicted déjà rempli).
+function enrichHistoryPoisson() {
+  if (!history.length) return 0;
+  let enriched_odds = 0, enriched_poisson = 0, skipped = 0;
+  const LEAGUE_AVG = 1.35;
+  const hasTeamStats = db.teamStats && Object.keys(db.teamStats).length > 0;
+
+  for (const h of history) {
+    if (!h.verified || !h.realScore) continue;
+    if (Number.isFinite(h.predicted?.over25) && Number.isFinite(h.predicted?.btts)) continue;
+
+    let probOver25 = h.predicted?.over25;
+    let probBTTS = h.predicted?.btts;
+    let source = null;
+
+    // STRATÉGIE 1 — odds_snapshot
+    if (h.odds_snapshot) {
+      if (!Number.isFinite(probOver25)) {
+        const p = devigTwoWay(h.odds_snapshot.over25, h.odds_snapshot.under25);
+        if (Number.isFinite(p)) { probOver25 = p; source = 'odds'; }
+      }
+      if (!Number.isFinite(probBTTS) && Number.isFinite(h.odds_snapshot.btts) && h.odds_snapshot.btts > 1) {
+        probBTTS = Math.round((1 / h.odds_snapshot.btts) * 100);
+        source = source || 'odds';
+      }
+    }
+
+    // STRATÉGIE 2 — Poisson teamStats fuzzy
+    if ((!Number.isFinite(probOver25) || !Number.isFinite(probBTTS)) && hasTeamStats) {
+      const hKey = normName(h.home_team);
+      const aKey = normName(h.away_team);
+      const hStats = db.teamStats[hKey] || findFuzzy(hKey);
+      const aStats = db.teamStats[aKey] || findFuzzy(aKey);
+      if (hStats && aStats &&
+          Number.isFinite(hStats.avgScored) && Number.isFinite(aStats.avgConceded) &&
+          Number.isFinite(aStats.avgScored) && Number.isFinite(hStats.avgConceded)) {
+        const lh = (hStats.avgScored / LEAGUE_AVG) * aStats.avgConceded;
+        const la = (aStats.avgScored / LEAGUE_AVG) * hStats.avgConceded;
+        if (lh > 0 && la > 0) {
+          try {
+            const poisson = computePoisson(lh, la);
+            if (!Number.isFinite(probOver25)) { probOver25 = poisson.over25; source = source || 'poisson'; }
+            if (!Number.isFinite(probBTTS))   { probBTTS  = poisson.btts;   source = source || 'poisson'; }
+          } catch { /* ignore */ }
+        }
+      }
+    }
+
+    if (!Number.isFinite(probOver25) && !Number.isFinite(probBTTS)) { skipped++; continue; }
+
+    h.predicted = h.predicted || {};
+    if (Number.isFinite(probOver25)) h.predicted.over25 = probOver25;
+    if (Number.isFinite(probBTTS))   h.predicted.btts = probBTTS;
+    h.enriched = source;
+    if (source === 'odds') enriched_odds++;
+    else enriched_poisson++;
+
+    const rs = h.realScore;
+    const wasOver25 = (rs.home + rs.away) > 2.5;
+    const wasBTTS = rs.home > 0 && rs.away > 0;
+    if (Number.isFinite(probOver25) && probOver25 > 55) {
+      accuracy.over25_total++;
+      if (wasOver25) accuracy.over25_correct++;
+    }
+    if (Number.isFinite(probBTTS) && probBTTS > 55) {
+      accuracy.btts_total++;
+      if (wasBTTS) accuracy.btts_correct++;
+    }
+  }
+
+  const enriched = enriched_odds + enriched_poisson;
+  if (enriched > 0) {
+    saveHistory();
+    console.log(`  [EnrichHistory] ✓ ${enriched} matchs enrichis (odds: ${enriched_odds}, poisson: ${enriched_poisson}, skipped: ${skipped}) — over25_total: ${accuracy.over25_total}, btts_total: ${accuracy.btts_total}`);
+  } else {
+    console.log(`  [EnrichHistory] 0 enrichis sur ${history.length} (skipped: ${skipped})`);
+  }
+  return enriched;
+}
+
+// Wrapper : archive AVANT purge — empêche autoPurge de wiper les matchs
+// terminés avant qu'ils soient résolus et poussés dans history.
+async function archiveThenPurge(label = 'cron') {
+  try {
+    await archivePastMatches();
+  } catch (e) {
+    console.warn(`  [Archive:${label}] erreur :`, e.message);
+  }
+  try {
+    autoPurgeDatabase();
+  } catch (e) {
+    console.warn(`  [Purge:${label}] erreur :`, e.message);
+  }
+}
+
 function getWeeklyAccuracyTrends(weeks = 12) {
   const getWeek = dateStr => {
     const d = new Date(dateStr);
@@ -8204,7 +8535,8 @@ async function fetchOdds(force = false, opts = {}) {
     }
 
     db.lastOddsUpdate = new Date().toISOString();
-    autoPurgeDatabase(); // purge immédiate après chaque injection BSD
+    // FIX historique : archiver AVANT purge pour éviter le wipe des matchs terminés
+    await archiveThenPurge('post-fetchOdds');
     saveDB();
     syncCacheBuffers();
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
@@ -8477,6 +8809,10 @@ async function fetchStats(force = false) {
     }
   } finally {
     isFetchingStats = false;
+    // FIX historique : rattrape les history records sans Poisson après chaque cycle stats
+    try {
+      if (typeof enrichHistoryPoisson === 'function') enrichHistoryPoisson();
+    } catch (e) { console.warn('[Stats] enrichHistoryPoisson:', e.message); }
   }
 }
 
@@ -11898,6 +12234,23 @@ if (pathname === '/api/v1/telegram/test' && req.method === 'POST') {
   if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
   sendValueBetAlerts()
     .then(() => jsonResponse(res, 200, { message: `Alertes envoyées à ${TELEGRAM_CHAT_IDS.size} chat(s)` }))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  return;
+}
+
+// POST /api/v1/admin/backfill-history?days=N — déclenche backfill BSD manuel (admin)
+if (pathname === '/api/v1/admin/backfill-history' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  const days = Math.max(1, Math.min(60, parseInt(query.days) || 14));
+  backfillHistoryFromBSD(days)
+    .then(added => jsonResponse(res, 200, {
+      ok: true,
+      added,
+      history_size: history.length,
+      accuracy: getAccuracyReport(),
+      days,
+    }))
     .catch(e => jsonResponse(res, 500, { error: e.message }));
   return;
 }
@@ -15470,13 +15823,38 @@ async function bootInit() {
 
     if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
     serverReady = true;
-    autoPurgeDatabase();
+
+    // FIX historique : récupère les matchs déjà perdus dans db.archive_matches
+    try {
+      backfillHistoryFromArchive();
+    } catch (e) {
+      console.warn('  [Boot] ⚠ backfillHistoryFromArchive:', e.message);
+    }
+
+    // FIX historique : archive avant la purge (sinon autoPurge wipe les matchs finis avant résolution)
+    await archiveThenPurge('boot');
+
+    // FIX historique : trigger backfill BSD si history vide OU si records backfilled sans predicted
+    if (process.env.HISTORY_BACKFILL_DISABLE !== '1') {
+      const brokenBackfilled = history.filter(h => h.backfilled === 'bsd' && !Number.isFinite(h.predicted?.over25)).length;
+      if (!history.length) {
+        console.log('  [Boot] History vide — déclenchement backfill BSD…');
+        backfillHistoryFromBSD(14).catch(e => console.warn('  [Boot] ⚠ backfillBSD:', e.message));
+      } else if (brokenBackfilled > 0) {
+        console.log(`  [Boot] ${brokenBackfilled} records backfilled sans predicted — re-backfill force=true…`);
+        backfillHistoryFromBSD(14, { force: true }).catch(e => console.warn('  [Boot] ⚠ backfillBSD force:', e.message));
+      }
+    }
+
     console.log('  [Boot] ✓ Système prêt.');
 
     withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
         .then(() => {
             if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
             console.log('  [Boot] ✓ Enrichissement stats terminé.');
+            // FIX historique : Poisson rétrospectif sur history une fois teamStats prêt
+            try { enrichHistoryPoisson(); }
+            catch (e) { console.warn('  [Boot] ⚠ enrichHistoryPoisson:', e.message); }
         })
         .catch(e => {
             console.warn('  [Boot] ⚠ Enrichissement stats:', e.message);
@@ -15528,7 +15906,8 @@ function autoPurgeDatabase() {
 setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
 setInterval(() => fetchStats().catch(e => console.error('[Cron] Stats:', e.message)), 12 * 3600 * 1000);
 setInterval(() => archivePastMatches().catch(e => console.error('[Cron] Archive:', e.message)), 4 * 3600 * 1000);
-setInterval(() => autoPurgeDatabase(), 15 * 60 * 1000); // toutes les 15 min
+// FIX historique : chaque purge 15min déclenche d'abord l'archive pour éviter le wipe prématuré
+setInterval(() => archiveThenPurge('15min').catch(e => console.error('[Cron] ArchiveThenPurge:', e.message)), 15 * 60 * 1000);
 
 setInterval(() => {
     if (typeof apiCacheCleanExpired === 'function') apiCacheCleanExpired();
