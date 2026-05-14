@@ -10269,6 +10269,7 @@ async function handleAPI(req, res, pathname, query) {
       const payload = filtered.map(m => ({
         id: m.id,
         tour: m.tour,
+        discipline: m.discipline || '',
         tournament: m.tournament,
         court: m.court,
         status: m.status,
@@ -10658,7 +10659,22 @@ function _tennisStateLabel(state, detail, period) {
   return String(detail || state || '').toUpperCase() || 'INCONNU';
 }
 
-function _normalizeESPNTennisCompetition(comp, tour, tournamentName) {
+// Détermine le circuit (ATP / WTA / MIXED / autre) en croisant la grouping ESPN
+// (mens-singles / womens-doubles / mixed-doubles) avec l'endpoint d'origine.
+// La grouping est source de vérité — l'endpoint n'est qu'un fallback puisque le
+// scoreboard ATP renvoie aussi les tableaux WTA lors des tournois combinés.
+function _resolveTennisTour(grouping, endpointTour) {
+  const slug = String(grouping?.slug || '').toLowerCase();
+  const label = String(grouping?.displayName || '').toLowerCase();
+  const text = `${slug} ${label}`;
+  if (/mixed/.test(text)) return 'MIXED';
+  if (/women|ladies|female|\bwta\b|wom-/.test(text)) return 'WTA';
+  if (/\bmen\b|mens|male|gentlemen|\batp\b/.test(text)) return 'ATP';
+  // Fallback : origine de l'endpoint (rare — slugs ESPN couvrent tous les cas connus)
+  return endpointTour || 'ATP';
+}
+
+function _normalizeESPNTennisCompetition(comp, tour, tournamentName, groupingMeta) {
   if (!comp || !Array.isArray(comp.competitors) || comp.competitors.length < 2) return null;
   const status = comp.status || {};
   const stype = status.type || {};
@@ -10681,6 +10697,7 @@ function _normalizeESPNTennisCompetition(comp, tour, tournamentName) {
   return {
     id: String(comp.id || comp.uid || ''),
     tour,
+    discipline: groupingMeta?.displayName || groupingMeta?.slug || '',
     tournament: tournamentName || '',
     court: comp.venue?.court || '',
     surface: comp.venue?.fullName || '',
@@ -10710,7 +10727,10 @@ function _normalizeESPNTennisCompetition(comp, tour, tournamentName) {
 }
 
 async function fetchESPNTennisLive() {
-  const all = [];
+  // Dédup par competition id : un même match en tournoi mixte (ex. Internazionali BNL d'Italia)
+  // est exposé sur les deux scoreboards ATP et WTA — on conserve la 1re occurrence et
+  // on préfère la version dont le tour est résolu via grouping (non-fallback).
+  const byId = new Map();
   for (const ep of TENNIS_ESPN_ENDPOINTS) {
     try {
       const res = await httpsGet(ep.url);
@@ -10720,10 +10740,15 @@ async function fetchESPNTennisLive() {
         const tournamentName = ev.name || ev.shortName || '';
         const groupings = Array.isArray(ev.groupings) ? ev.groupings : [];
         for (const g of groupings) {
+          const resolvedTour = _resolveTennisTour(g.grouping, ep.tour);
           const comps = Array.isArray(g.competitions) ? g.competitions : [];
           for (const c of comps) {
-            const norm = _normalizeESPNTennisCompetition(c, ep.tour, tournamentName);
-            if (norm) all.push(norm);
+            const norm = _normalizeESPNTennisCompetition(c, resolvedTour, tournamentName, g.grouping);
+            if (!norm) continue;
+            if (!norm.id) { byId.set(`${tournamentName}-${norm.player1.name}-${norm.player2.name}`, norm); continue; }
+            // Garde la 1re entrée (les tournois mixtes apparaissent ATP en premier mais grouping
+            // résoud déjà le bon tour — le doublon WTA est strictement identique).
+            if (!byId.has(norm.id)) byId.set(norm.id, norm);
           }
         }
       }
@@ -10731,7 +10756,7 @@ async function fetchESPNTennisLive() {
       console.warn(`  [Tennis] ESPN ${ep.tour} fetch failed: ${e.message}`);
     }
   }
-  return all;
+  return Array.from(byId.values());
 }
 
 async function pollTennisLive() {
@@ -13744,7 +13769,7 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
     'Access-Control-Allow-Origin': '*',
   });
 
-  const cacheKey = `deep_pro_${matchId}`;
+  const cacheKey = `deep_pro_v2_${matchId}`;
   const cached = !forceRefresh && getCachedAIAnalysis(cacheKey);
   if (cached?.text) {
     console.log(`  [DeepStream] HIT cache — ${match.home_team} vs ${match.away_team}`);
@@ -13837,6 +13862,8 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
 [REGLE D'OR]
 Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il lit L'Equipe un matin de match. Aucun emoji. Aucun.
 
+RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
+
 ${dataBlock}`;
 
   // I1 — Confidence Score + I4 — Market divergences SSE meta event
@@ -13872,9 +13899,17 @@ ${dataBlock}`;
 
   console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
   streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
+    // === MOUCHARD : audit brut sortie LLM ===
+    console.log('=== RAW AI OUTPUT ===', (fullText || '').substring(0, 500) + '...');
+    const hasRevue = /REVUE\s+DE\s+PRESSE/i.test(fullText || '');
+    if (!hasRevue) {
+      console.warn('ALERTE : Le LLM a ignoré la consigne de la Revue de Presse !');
+    } else {
+      console.log(`  [DeepStream] Revue de Presse détectée OK (provider=${providerName})`);
+    }
     saveAIAnalysisToCache(cacheKey, { text: fullText, provider: providerName });
     console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
-    try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName })}\n\n`); res.end(); } catch { }
+    try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName, hasRevue })}\n\n`); res.end(); } catch { }
   });
   req.on('close', () => { });
   return;
@@ -13887,7 +13922,7 @@ if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
   const match = db.matches.find(m => m.id === matchId);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
 
-  const cacheKey = `deep_pro_${matchId}`;
+  const cacheKey = `deep_pro_v2_${matchId}`;
   const cached = getCachedAIAnalysis(cacheKey);
   if (cached?.text) {
     console.log(`  [DeepPro] HIT cache — ${match.home_team} vs ${match.away_team}`);
@@ -13997,6 +14032,8 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
 
 [REGLE D'OR]
 Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il lit L'Equipe un matin de match. Aucun emoji. Aucun.
+
+RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
 ${dataBlock}`;
 
