@@ -12360,6 +12360,183 @@ function _tennisLookupEloPair(p1Name, p2Name, tour, surface) {
   };
 }
 
+// ─── MatchStat Tennis API (RapidAPI) — module-scope helpers ─────────────────
+async function matchstatFetch(pathSuffix, ttlMs = 12 * 3600 * 1000, ck = null) {
+  if (!MATCHSTAT_ENABLED) {
+    return { status: 503, body: { error: 'matchstat_disabled', detail: 'MATCHSTAT_API_KEY env var manquante' } };
+  }
+  const cacheKey = ck || `matchstat_${pathSuffix}`;
+  if (ttlMs > 0) {
+    const cached = apiCacheGet(cacheKey);
+    if (cached) return { status: 200, body: cached, cache: 'hit' };
+  }
+  return new Promise((resolve) => {
+    const opts = {
+      hostname: MATCHSTAT_HOST,
+      port: 443,
+      path: pathSuffix,
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': MATCHSTAT_API_KEY,
+        'X-RapidAPI-Host': MATCHSTAT_HOST,
+        'Accept': 'application/json',
+      },
+    };
+    const reqMs = https.request(opts, r => {
+      let buf = '';
+      r.on('data', c => buf += c);
+      r.on('end', () => {
+        let parsed;
+        try { parsed = JSON.parse(buf); } catch { parsed = buf; }
+        if (r.statusCode === 200 && ttlMs > 0) {
+          try { apiCacheSet(cacheKey, parsed, 'matchstat_tennis', ttlMs); } catch (_) {}
+        }
+        resolve({ status: r.statusCode, body: parsed, cache: 'miss' });
+      });
+    });
+    reqMs.on('error', e => resolve({ status: 502, body: { error: 'matchstat_upstream_error', detail: e.message } }));
+    reqMs.setTimeout(15000, () => { reqMs.destroy(); resolve({ status: 504, body: { error: 'matchstat_timeout' } }); });
+    reqMs.end();
+  });
+}
+
+function _msTour(query) {
+  const t = String((query && query.tour) || 'atp').toLowerCase();
+  return ['atp', 'wta'].includes(t) ? t : 'atp';
+}
+
+function _msBuildQs(query, allowed) {
+  const parts = [];
+  for (const k of allowed) {
+    if (query[k] != null && String(query[k]).trim() !== '') {
+      parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(query[k]))}`);
+    }
+  }
+  return parts.length ? '?' + parts.join('&') : '';
+}
+
+let _msSyncInProgress = false;
+function _msInitPlayersSchema() {
+  sqldb.exec(`
+    CREATE TABLE IF NOT EXISTS matchstat_players (
+      name_norm TEXT NOT NULL,
+      tour TEXT NOT NULL,
+      ms_id INTEGER NOT NULL,
+      full_name TEXT,
+      country_acr TEXT,
+      current_rank INTEGER,
+      last_seen INTEGER,
+      PRIMARY KEY (name_norm, tour)
+    );
+    CREATE INDEX IF NOT EXISTS idx_msplayers_ms_id ON matchstat_players(ms_id);
+    CREATE INDEX IF NOT EXISTS idx_msplayers_tour_rank ON matchstat_players(tour, current_rank);
+    CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
+  `);
+}
+
+async function syncMatchstatPlayers() {
+  if (!MATCHSTAT_ENABLED) return { skipped: 'disabled' };
+  if (_msSyncInProgress) return { skipped: 'in_progress' };
+  _msSyncInProgress = true;
+  _msInitPlayersSchema();
+  try {
+    const upsert = sqldb.prepare(`
+      INSERT INTO matchstat_players (name_norm, tour, ms_id, full_name, country_acr, current_rank, last_seen)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(name_norm, tour) DO UPDATE SET
+        ms_id = excluded.ms_id,
+        full_name = excluded.full_name,
+        country_acr = excluded.country_acr,
+        current_rank = excluded.current_rank,
+        last_seen = excluded.last_seen
+    `);
+    let inserted = 0;
+    for (const tour of ['atp', 'wta']) {
+      for (let pageNo = 1; pageNo <= 5; pageNo++) {
+        const r = await matchstatFetch(`/tennis/v2/${tour}/ranking/singles?pageSize=500&pageNo=${pageNo}`, 0, `ms_sync_rank_${tour}_${pageNo}`);
+        if (r.status !== 200 || !r.body || !Array.isArray(r.body.data)) break;
+        const rows = r.body.data;
+        if (rows.length === 0) break;
+        const now = Date.now();
+        const tx = sqldb.transaction(() => {
+          for (const row of rows) {
+            const p = row.player || {};
+            const name = (p.name || '').trim();
+            if (!name || !p.id) continue;
+            upsert.run(normName(name), tour, p.id, name, p.countryAcr || null, p.currentRank ?? row.position ?? null, now);
+            inserted++;
+          }
+        });
+        tx();
+        if (rows.length < 500) break;
+      }
+    }
+    sqldb.prepare('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)').run('matchstat_players_last_sync', String(Date.now()));
+    console.log(`  [Matchstat] Resolver sync OK — ${inserted} joueurs indexés (ATP+WTA).`);
+    return { inserted };
+  } catch (e) {
+    console.warn('  [Matchstat] Resolver sync ERR:', e.message);
+    return { error: e.message };
+  } finally {
+    _msSyncInProgress = false;
+  }
+}
+
+async function _msResolvePlayerId(name, tour) {
+  if (!MATCHSTAT_ENABLED || !name) return null;
+  _msInitPlayersSchema();
+  const tourClean = ['atp', 'wta'].includes(tour) ? tour : 'atp';
+  const nameNorm = normName(name);
+  if (!nameNorm) return null;
+
+  let row = sqldb.prepare('SELECT ms_id FROM matchstat_players WHERE name_norm = ? AND tour = ?').get(nameNorm, tourClean);
+  if (row) return row.ms_id;
+
+  const parts = nameNorm.split(' ').filter(Boolean);
+  if (parts.length >= 2) {
+    const reversed = [parts.slice(1).join(' '), parts[0]].join(' ');
+    row = sqldb.prepare('SELECT ms_id FROM matchstat_players WHERE name_norm = ? AND tour = ?').get(reversed, tourClean);
+    if (row) return row.ms_id;
+  }
+
+  if (parts.length >= 2) {
+    const lastname = parts[parts.length - 1];
+    if (lastname.length >= 4) {
+      const candidates = sqldb.prepare("SELECT ms_id, name_norm FROM matchstat_players WHERE tour = ? AND name_norm LIKE ? LIMIT 10")
+        .all(tourClean, `%${lastname}%`);
+      const firstToken = parts[0];
+      const best = candidates.find(c => c.name_norm.split(' ').includes(lastname) && c.name_norm.includes(firstToken));
+      if (best) return best.ms_id;
+      if (candidates.length === 1) return candidates[0].ms_id;
+    }
+  }
+
+  if (nameNorm.length >= 4) {
+    try {
+      const lastname = parts.length >= 2 ? parts[parts.length - 1] : nameNorm;
+      const sr = await matchstatFetch(`/tennis/v2/search?search=${encodeURIComponent(lastname)}`, 7 * 24 * 3600 * 1000);
+      if (sr.status === 200 && sr.body && Array.isArray(sr.body.data)) {
+        const bucket = sr.body.data.find(d => d.category === `player_${tourClean}`);
+        if (bucket && Array.isArray(bucket.result) && bucket.result.length > 0) {
+          for (const cand of bucket.result) {
+            const candNorm = normName(cand.name);
+            const hit = sqldb.prepare('SELECT ms_id FROM matchstat_players WHERE name_norm = ? AND tour = ?').get(candNorm, tourClean);
+            if (hit) {
+              const now = Date.now();
+              try {
+                sqldb.prepare(`INSERT OR REPLACE INTO matchstat_players (name_norm, tour, ms_id, full_name, country_acr, current_rank, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+                  .run(nameNorm, tourClean, hit.ms_id, cand.name, cand.countryAcr || null, null, now);
+              } catch (_) {}
+              return hit.ms_id;
+            }
+          }
+        }
+      }
+    } catch (_) { /* swallow */ }
+  }
+  return null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -14807,195 +14984,7 @@ ${dataBlock}`;
   }
 }
 
-// ─── MatchStat Tennis API (RapidAPI) — routing layer ────────────────────────
-// Helper de fetch avec cache SQLite (apiCacheGet/Set). Source 'matchstat_tennis' pour purge ciblée.
-async function matchstatFetch(pathSuffix, ttlMs = 12 * 3600 * 1000, ck = null) {
-  if (!MATCHSTAT_ENABLED) {
-    return { status: 503, body: { error: 'matchstat_disabled', detail: 'MATCHSTAT_API_KEY env var manquante' } };
-  }
-  const cacheKey = ck || `matchstat_${pathSuffix}`;
-  if (ttlMs > 0) {
-    const cached = apiCacheGet(cacheKey);
-    if (cached) return { status: 200, body: cached, cache: 'hit' };
-  }
-  return new Promise((resolve) => {
-    const opts = {
-      hostname: MATCHSTAT_HOST,
-      port: 443,
-      path: pathSuffix,
-      method: 'GET',
-      headers: {
-        'X-RapidAPI-Key': MATCHSTAT_API_KEY,
-        'X-RapidAPI-Host': MATCHSTAT_HOST,
-        'Accept': 'application/json',
-      },
-    };
-    const reqMs = https.request(opts, r => {
-      let buf = '';
-      r.on('data', c => buf += c);
-      r.on('end', () => {
-        let parsed;
-        try { parsed = JSON.parse(buf); } catch { parsed = buf; }
-        if (r.statusCode === 200 && ttlMs > 0) {
-          try { apiCacheSet(cacheKey, parsed, 'matchstat_tennis', ttlMs); } catch (_) {}
-        }
-        resolve({ status: r.statusCode, body: parsed, cache: 'miss' });
-      });
-    });
-    reqMs.on('error', e => resolve({ status: 502, body: { error: 'matchstat_upstream_error', detail: e.message } }));
-    reqMs.setTimeout(15000, () => { reqMs.destroy(); resolve({ status: 504, body: { error: 'matchstat_timeout' } }); });
-    reqMs.end();
-  });
-}
-
-function _msTour(query) {
-  const t = String((query && query.tour) || 'atp').toLowerCase();
-  return ['atp', 'wta'].includes(t) ? t : 'atp';
-}
-
-// ── Player ID resolver (name → MatchStat ID) ─────────────────────────────────
-// Schéma SQLite + sync rankings → populate ~top 2000 joueurs par tour.
-let _msSyncInProgress = false;
-function _msInitPlayersSchema() {
-  sqldb.exec(`
-    CREATE TABLE IF NOT EXISTS matchstat_players (
-      name_norm TEXT NOT NULL,
-      tour TEXT NOT NULL,
-      ms_id INTEGER NOT NULL,
-      full_name TEXT,
-      country_acr TEXT,
-      current_rank INTEGER,
-      last_seen INTEGER,
-      PRIMARY KEY (name_norm, tour)
-    );
-    CREATE INDEX IF NOT EXISTS idx_msplayers_ms_id ON matchstat_players(ms_id);
-    CREATE INDEX IF NOT EXISTS idx_msplayers_tour_rank ON matchstat_players(tour, current_rank);
-    CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
-  `);
-}
-
-async function syncMatchstatPlayers() {
-  if (!MATCHSTAT_ENABLED) return { skipped: 'disabled' };
-  if (_msSyncInProgress) return { skipped: 'in_progress' };
-  _msSyncInProgress = true;
-  _msInitPlayersSchema();
-  try {
-    const upsert = sqldb.prepare(`
-      INSERT INTO matchstat_players (name_norm, tour, ms_id, full_name, country_acr, current_rank, last_seen)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(name_norm, tour) DO UPDATE SET
-        ms_id = excluded.ms_id,
-        full_name = excluded.full_name,
-        country_acr = excluded.country_acr,
-        current_rank = excluded.current_rank,
-        last_seen = excluded.last_seen
-    `);
-    let inserted = 0;
-    for (const tour of ['atp', 'wta']) {
-      for (let pageNo = 1; pageNo <= 5; pageNo++) {
-        const r = await matchstatFetch(`/tennis/v2/${tour}/ranking/singles?pageSize=500&pageNo=${pageNo}`, 0, `ms_sync_rank_${tour}_${pageNo}`);
-        if (r.status !== 200 || !r.body || !Array.isArray(r.body.data)) break;
-        const rows = r.body.data;
-        if (rows.length === 0) break;
-        const now = Date.now();
-        const tx = sqldb.transaction(() => {
-          for (const row of rows) {
-            const p = row.player || {};
-            const name = (p.name || '').trim();
-            if (!name || !p.id) continue;
-            upsert.run(normName(name), tour, p.id, name, p.countryAcr || null, p.currentRank ?? row.position ?? null, now);
-            inserted++;
-          }
-        });
-        tx();
-        if (rows.length < 500) break;
-      }
-    }
-    sqldb.prepare('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)').run('matchstat_players_last_sync', String(Date.now()));
-    console.log(`  [Matchstat] Resolver sync OK — ${inserted} joueurs indexés (ATP+WTA).`);
-    return { inserted };
-  } catch (e) {
-    console.warn('  [Matchstat] Resolver sync ERR:', e.message);
-    return { error: e.message };
-  } finally {
-    _msSyncInProgress = false;
-  }
-}
-
-async function _msResolvePlayerId(name, tour) {
-  if (!MATCHSTAT_ENABLED || !name) return null;
-  _msInitPlayersSchema();
-  const tourClean = ['atp', 'wta'].includes(tour) ? tour : 'atp';
-  const nameNorm = normName(name);
-  if (!nameNorm) return null;
-
-  // Exact match
-  let row = sqldb.prepare('SELECT ms_id FROM matchstat_players WHERE name_norm = ? AND tour = ?').get(nameNorm, tourClean);
-  if (row) return row.ms_id;
-
-  // Reverse "Lastname Firstname" → "Firstname Lastname"
-  const parts = nameNorm.split(' ').filter(Boolean);
-  if (parts.length >= 2) {
-    const reversed = [parts.slice(1).join(' '), parts[0]].join(' ');
-    row = sqldb.prepare('SELECT ms_id FROM matchstat_players WHERE name_norm = ? AND tour = ?').get(reversed, tourClean);
-    if (row) return row.ms_id;
-  }
-
-  // Fuzzy : lastname-only match (BSD names parfois "Last F.")
-  if (parts.length >= 2) {
-    const lastname = parts[parts.length - 1];
-    if (lastname.length >= 4) {
-      const candidates = sqldb.prepare("SELECT ms_id, name_norm FROM matchstat_players WHERE tour = ? AND name_norm LIKE ? LIMIT 10")
-        .all(tourClean, `%${lastname}%`);
-      // Prefer first candidate where ALL provided firstname/lastname tokens overlap
-      const firstToken = parts[0];
-      const best = candidates.find(c => c.name_norm.split(' ').includes(lastname) && c.name_norm.includes(firstToken));
-      if (best) return best.ms_id;
-      if (candidates.length === 1) return candidates[0].ms_id;
-    }
-  }
-
-  // On-demand fallback : /search (returns names sans ID upstream — donc on cross-ref avec full player list).
-  // Cost : 1 call. On évite si nameNorm très court (<4 chars).
-  if (nameNorm.length >= 4) {
-    try {
-      const lastname = parts.length >= 2 ? parts[parts.length - 1] : nameNorm;
-      const sr = await matchstatFetch(`/tennis/v2/search?search=${encodeURIComponent(lastname)}`, 7 * 24 * 3600 * 1000);
-      if (sr.status === 200 && sr.body && Array.isArray(sr.body.data)) {
-        const bucket = sr.body.data.find(d => d.category === `player_${tourClean}`);
-        if (bucket && Array.isArray(bucket.result) && bucket.result.length > 0) {
-          // Search renvoie {name, birthday, countryAcr} sans id. Re-query player list filtré au besoin.
-          // Strategy : pour chaque résultat candidat, on tente normName lookup une fois plus.
-          for (const cand of bucket.result) {
-            const candNorm = normName(cand.name);
-            const hit = sqldb.prepare('SELECT ms_id FROM matchstat_players WHERE name_norm = ? AND tour = ?').get(candNorm, tourClean);
-            if (hit) {
-              // Cache l'alias BSD → ms_id pour résolutions futures.
-              const now = Date.now();
-              try {
-                sqldb.prepare(`INSERT OR REPLACE INTO matchstat_players (name_norm, tour, ms_id, full_name, country_acr, current_rank, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-                  .run(nameNorm, tourClean, hit.ms_id, cand.name, cand.countryAcr || null, null, now);
-              } catch (_) {}
-              return hit.ms_id;
-            }
-          }
-        }
-      }
-    } catch (_) { /* swallow */ }
-  }
-  return null;
-}
-
-function _msBuildQs(query, allowed) {
-  const parts = [];
-  for (const k of allowed) {
-    if (query[k] != null && String(query[k]).trim() !== '') {
-      parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(query[k]))}`);
-    }
-  }
-  return parts.length ? '?' + parts.join('&') : '';
-}
-
+// ─── MatchStat Tennis API helpers — voir module scope (au-dessus de createServer)
 // Status + introspection
 if (pathname === '/api/v1/tennis/matchstat/status' && req.method === 'GET') {
   return jsonResponse(res, 200, {
@@ -15273,7 +15262,7 @@ if ((m = pathname.match(/^\/api\/v1\/tennis\/matchstat\/enrich\/(.+)$/)) && req.
   const matchId = decodeURIComponent(m[1] || '').trim();
   if (!matchId) return jsonResponse(res, 400, { error: 'matchId requis' });
   try {
-    const ck = `matchstat_enrich_${matchId}`;
+    const ck = `matchstat_enrich_v2_${matchId}`;
     const cached = apiCacheGet(ck);
     if (cached) return jsonResponse(res, 200, { ...cached, _from_cache: true });
 
@@ -15295,19 +15284,31 @@ if ((m = pathname.match(/^\/api\/v1\/tennis\/matchstat\/enrich\/(.+)$/)) && req.
       const payload = { p1: { name: p1Name, ms_id: p1Id }, p2: { name: p2Name, ms_id: p2Id }, error: 'resolver_partial' };
       return jsonResponse(res, 206, payload);
     }
-    const [h2hInfo, h2hStats, perfP1, perfP2, profP1, profP2] = await Promise.all([
+    const [h2hInfo, h2hStats, perfP1, perfP2, profP1, profP2, surfP1, surfP2] = await Promise.all([
       matchstatFetch(`/tennis/v2/${tour}/h2h/info/${p1Id}/${p2Id}`, 12 * 3600 * 1000),
       matchstatFetch(`/tennis/v2/${tour}/h2h/stats/${p1Id}/${p2Id}`, 12 * 3600 * 1000),
       matchstatFetch(`/tennis/v2/${tour}/player/perf-breakdown/${p1Id}`, 24 * 3600 * 1000),
       matchstatFetch(`/tennis/v2/${tour}/player/perf-breakdown/${p2Id}`, 24 * 3600 * 1000),
       matchstatFetch(`/tennis/v2/${tour}/player/profile/${p1Id}`, 24 * 3600 * 1000),
       matchstatFetch(`/tennis/v2/${tour}/player/profile/${p2Id}`, 24 * 3600 * 1000),
+      matchstatFetch(`/tennis/v2/${tour}/player/surface-summary/${p1Id}`, 24 * 3600 * 1000),
+      matchstatFetch(`/tennis/v2/${tour}/player/surface-summary/${p2Id}`, 24 * 3600 * 1000),
     ]);
     const payload = {
       tour,
       match_id: matchId,
-      p1: { name: p1Name, ms_id: p1Id, profile: profP1.status === 200 ? profP1.body : null, perf: perfP1.status === 200 ? perfP1.body : null },
-      p2: { name: p2Name, ms_id: p2Id, profile: profP2.status === 200 ? profP2.body : null, perf: perfP2.status === 200 ? perfP2.body : null },
+      p1: {
+        name: p1Name, ms_id: p1Id,
+        profile: profP1.status === 200 ? profP1.body : null,
+        perf: perfP1.status === 200 ? perfP1.body : null,
+        surface: surfP1.status === 200 ? surfP1.body : null,
+      },
+      p2: {
+        name: p2Name, ms_id: p2Id,
+        profile: profP2.status === 200 ? profP2.body : null,
+        perf: perfP2.status === 200 ? perfP2.body : null,
+        surface: surfP2.status === 200 ? surfP2.body : null,
+      },
       h2h: {
         info: h2hInfo.status === 200 ? h2hInfo.body : null,
         stats: h2hStats.status === 200 ? h2hStats.body : null,

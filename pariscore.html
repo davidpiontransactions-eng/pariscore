@@ -7548,6 +7548,7 @@ function closeTennisDetail() {
 async function _fetchAndRenderTennisDetail(matchId) {
   const body = document.getElementById('tennis-detail-body');
   if (!body) return;
+  const ENRICH_PLACEHOLDER = '<div id="tennis-matchstat-enrich" style="margin-top:24px;"><div class="tennis-empty-state" style="opacity:.6;font-size:12px;">📊 MatchStat — chargement H2H + perf-breakdown…</div></div>';
   try {
     const [matchRes, predRes] = await Promise.all([
       fetch(`/api/v1/tennis/match/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } }),
@@ -7559,7 +7560,8 @@ async function _fetchAndRenderTennisDetail(matchId) {
         <div><strong>Détail BSD désactivé</strong></div>
         <div style="margin-top:6px;">La liste live ESPN reste disponible. Pour activer le détail point-par-point, définir <code>BSD_TENNIS_ENABLED=true</code> et souscrire au Sports Addon.</div>
         <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener">Voir l'addon $5/mo</a>
-      </div>`;
+      </div>` + ENRICH_PLACEHOLDER;
+      fetchTennisMatchstatEnrich(matchId);
       return;
     }
     if (matchRes.status === 402) {
@@ -7568,20 +7570,22 @@ async function _fetchAndRenderTennisDetail(matchId) {
         <div><strong>Sports Addon requis</strong></div>
         <div style="margin-top:6px;">Les détails tennis BSD (point-par-point, serve stats, ML predictions) nécessitent l'addon $5/mo.</div>
         <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener">Souscrire</a>
-      </div>`;
+      </div>` + ENRICH_PLACEHOLDER;
+      fetchTennisMatchstatEnrich(matchId);
       return;
     }
     if (!matchRes.ok) {
-      body.innerHTML = `<div class="tennis-empty-state">Erreur ${matchRes.status} — flux BSD indisponible.</div>`;
+      body.innerHTML = `<div class="tennis-empty-state">Erreur ${matchRes.status} — flux BSD indisponible.</div>` + ENRICH_PLACEHOLDER;
+      fetchTennisMatchstatEnrich(matchId);
       return;
     }
     const matchData = await matchRes.json();
     const predData = predRes.ok ? await predRes.json().catch(() => null) : null;
-    body.innerHTML = renderTennisDashboard(matchData, predData)
-      + '<div id="tennis-matchstat-enrich" style="margin-top:24px;"><div class="tennis-empty-state" style="opacity:.6;font-size:12px;">📊 MatchStat — chargement H2H + perf-breakdown…</div></div>';
+    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
   } catch (e) {
-    body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>`;
+    body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>` + ENRICH_PLACEHOLDER;
+    fetchTennisMatchstatEnrich(matchId);
   }
 }
 
@@ -7610,104 +7614,163 @@ function renderTennisMatchstatEnrich(d) {
   const p1Name = _escTennis(p1.name || '—');
   const p2Name = _escTennis(p2.name || '—');
 
-  // H2H summary
-  const h2hInfo = (d.h2h && d.h2h.info && d.h2h.info.data) || null;
-  const h2hStats = (d.h2h && d.h2h.stats && d.h2h.stats.data) || null;
+  // ── H2H lifetime ─────────────────────────────────────────────────────────
+  // MatchStat retourne array par surface : [{courtId, court, player1wins, player2wins}] (strings).
   let h2hBlock = '';
-  if (h2hInfo) {
-    const info = Array.isArray(h2hInfo) ? h2hInfo[0] : h2hInfo;
-    const p1Wins = info.player1Wins ?? info.p1_wins ?? info.player1_wins ?? 0;
-    const p2Wins = info.player2Wins ?? info.p2_wins ?? info.player2_wins ?? 0;
-    const total = (p1Wins || 0) + (p2Wins || 0);
-    const p1Pct = total ? Math.round((p1Wins / total) * 100) : 0;
-    h2hBlock = `
-      <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:16px;margin-bottom:12px;">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;margin-bottom:10px;">📊 MatchStat · Head-to-Head lifetime</div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="flex:1;text-align:right;">
-            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--text,#e8eaed);">${p1Name}</div>
-            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--green,#00e676);font-weight:700;">${p1Wins}</div>
-          </div>
-          <div style="flex:2;">
-            <div style="height:8px;background:var(--bg4,#1e2328);border-radius:4px;overflow:hidden;display:flex;">
-              <div style="height:100%;width:${p1Pct}%;background:var(--green,#00e676);"></div>
-              <div style="height:100%;width:${100 - p1Pct}%;background:#a020f0;"></div>
-            </div>
-            <div style="text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);margin-top:4px;">${total} matchs · ${p1Pct}% / ${100 - p1Pct}%</div>
-          </div>
-          <div style="flex:1;text-align:left;">
-            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--text,#e8eaed);">${p2Name}</div>
-            <div style="font-family:'DM Mono',monospace;font-size:24px;color:#a020f0;font-weight:700;">${p2Wins}</div>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  // H2H stats granulaires (serve/return percentages)
-  let statsBlock = '';
-  if (h2hStats) {
-    const s = Array.isArray(h2hStats) ? h2hStats[0] : h2hStats;
-    const rows = [];
-    const tryPair = (label, k1, k2) => {
-      const v1 = s[k1]; const v2 = s[k2];
-      if (v1 != null || v2 != null) rows.push({ label, v1, v2 });
-    };
-    tryPair('Aces / match', 'player1Aces', 'player2Aces');
-    tryPair('Double fautes', 'player1DoubleFaults', 'player2DoubleFaults');
-    tryPair('1er service %', 'player1FirstServePercent', 'player2FirstServePercent');
-    tryPair('Pts gagnés 1er srv %', 'player1FirstServeWon', 'player2FirstServeWon');
-    tryPair('Pts gagnés 2e srv %', 'player1SecondServeWon', 'player2SecondServeWon');
-    tryPair('Break points sauvés %', 'player1BreakPointsSaved', 'player2BreakPointsSaved');
-    tryPair('Break points convertis %', 'player1BreakPointsConverted', 'player2BreakPointsConverted');
-    if (rows.length) {
-      statsBlock = `
+  const h2hInfoRaw = d.h2h && d.h2h.info && d.h2h.info.data;
+  if (h2hInfoRaw) {
+    const arr = Array.isArray(h2hInfoRaw) ? h2hInfoRaw : [h2hInfoRaw];
+    const surfaceBreakdown = [];
+    let p1Wins = 0, p2Wins = 0;
+    for (const row of arr) {
+      const a = Number(row.player1wins ?? row.player1Wins ?? row.p1Wins ?? 0) || 0;
+      const b = Number(row.player2wins ?? row.player2Wins ?? row.p2Wins ?? 0) || 0;
+      p1Wins += a; p2Wins += b;
+      if ((a || b) && row.court) surfaceBreakdown.push({ court: row.court, a, b });
+    }
+    if (p1Wins || p2Wins) {
+      const total = p1Wins + p2Wins;
+      const p1Pct = total ? Math.round((p1Wins / total) * 100) : 0;
+      h2hBlock = `
         <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:16px;margin-bottom:12px;">
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;margin-bottom:10px;">📊 MatchStat · Stats H2H agrégées</div>
-          <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px;">
-            <thead><tr><th style="text-align:right;padding:6px 8px;color:var(--green,#00e676);">${p1Name}</th><th style="text-align:center;padding:6px 8px;color:var(--text2,#8d9399);font-weight:400;">Métrique</th><th style="text-align:left;padding:6px 8px;color:#a020f0;">${p2Name}</th></tr></thead>
-            <tbody>
-              ${rows.map(r => `<tr><td style="text-align:right;padding:4px 8px;color:var(--text,#e8eaed);">${r.v1 ?? '—'}</td><td style="text-align:center;padding:4px 8px;color:var(--text3,#5a6068);font-size:11px;">${_escTennis(r.label)}</td><td style="text-align:left;padding:4px 8px;color:var(--text,#e8eaed);">${r.v2 ?? '—'}</td></tr>`).join('')}
-            </tbody>
-          </table>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;margin-bottom:10px;">📊 MatchStat · Head-to-Head lifetime</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="flex:1;text-align:right;">
+              <div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--text,#e8eaed);">${p1Name}</div>
+              <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--green,#00e676);font-weight:700;">${p1Wins}</div>
+            </div>
+            <div style="flex:2;">
+              <div style="height:8px;background:var(--bg4,#1e2328);border-radius:4px;overflow:hidden;display:flex;">
+                <div style="height:100%;width:${p1Pct}%;background:var(--green,#00e676);"></div>
+                <div style="height:100%;width:${100 - p1Pct}%;background:#a020f0;"></div>
+              </div>
+              <div style="text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);margin-top:4px;">${total} matchs · ${p1Pct}% / ${100 - p1Pct}%</div>
+            </div>
+            <div style="flex:1;text-align:left;">
+              <div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--text,#e8eaed);">${p2Name}</div>
+              <div style="font-family:'DM Mono',monospace;font-size:24px;color:#a020f0;font-weight:700;">${p2Wins}</div>
+            </div>
+          </div>
+          ${surfaceBreakdown.length ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bg4,#1e2328);font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;">${surfaceBreakdown.map(s => `${_escTennis(s.court)}: <span style="color:var(--green,#00e676);">${s.a}</span>-<span style="color:#a020f0;">${s.b}</span>`).join(' · ')}</div>` : ''}
         </div>`;
     }
   }
 
-  // Perf-breakdown (PowerScore-ready)
-  const perfRow = (label, k1, k2) => {
-    const p = (d.p1.perf && d.p1.perf.data) || {};
-    const q = (d.p2.perf && d.p2.perf.data) || {};
-    const pArr = Array.isArray(p) ? p[0] : p;
-    const qArr = Array.isArray(q) ? q[0] : q;
-    const v1 = pArr ? pArr[k1] : null;
-    const v2 = qArr ? qArr[k1] : null;
-    return (v1 != null || v2 != null) ? { label, v1, v2 } : null;
+  // ── Surface summary (current year W-L per court) ─────────────────────────
+  let surfaceBlock = '';
+  const sumSurface = (surfData) => {
+    const acc = { Hard: [0, 0], Clay: [0, 0], Grass: [0, 0], 'I.hard': [0, 0] };
+    const arr = (surfData && surfData.data) ? surfData.data : [];
+    const latest = Array.isArray(arr) ? arr[0] : null;
+    if (latest && Array.isArray(latest.surfaces)) {
+      for (const s of latest.surfaces) {
+        const key = s.court || '';
+        if (acc[key]) { acc[key][0] += (s.courtWins || 0); acc[key][1] += (s.courtLosses || 0); }
+      }
+      return { year: latest.year, surfaces: acc };
+    }
+    return null;
   };
-  const perfRows = [
-    perfRow('Hold serve %', 'holdServicePercent'),
-    perfRow('Break opponent %', 'breakServicePercent'),
-    perfRow('Set wins %', 'setWinPercent'),
-    perfRow('Tiebreaks gagnés %', 'tiebreakWinPercent'),
-    perfRow('Décisifs gagnés %', 'decidingSetWinPercent'),
-  ].filter(Boolean);
-  let perfBlock = '';
-  if (perfRows.length) {
-    perfBlock = `
+  const s1 = sumSurface(p1.surface);
+  const s2 = sumSurface(p2.surface);
+  if (s1 || s2) {
+    const surfaces = ['Hard', 'Clay', 'Grass', 'I.hard'];
+    const pctOrDash = (w, l) => { const t = w + l; return t ? Math.round((w / t) * 100) + '%' : '—'; };
+    const formatCell = (sObj, surf) => {
+      if (!sObj) return '<td style="padding:4px 8px;color:var(--text3,#5a6068);">—</td>';
+      const [w, l] = sObj.surfaces[surf];
+      const t = w + l;
+      return `<td style="padding:4px 8px;color:var(--text,#e8eaed);text-align:center;font-family:'DM Mono',monospace;">${t ? `${w}-${l} (${pctOrDash(w, l)})` : '—'}</td>`;
+    };
+    const year = s1?.year || s2?.year || new Date().getFullYear();
+    surfaceBlock = `
       <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:16px;margin-bottom:12px;">
-        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;margin-bottom:10px;">📊 MatchStat · PowerScore breakdown</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;margin-bottom:10px;">📊 MatchStat · W-L par surface (${year})</div>
         <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px;">
-          <thead><tr><th style="text-align:right;padding:6px 8px;color:var(--green,#00e676);">${p1Name}</th><th style="text-align:center;padding:6px 8px;color:var(--text2,#8d9399);font-weight:400;">Métrique</th><th style="text-align:left;padding:6px 8px;color:#a020f0;">${p2Name}</th></tr></thead>
+          <thead><tr><th style="text-align:right;padding:6px 8px;color:var(--green,#00e676);">${p1Name}</th>${surfaces.map(s => `<th style="text-align:center;padding:6px 8px;color:var(--text2,#8d9399);font-weight:400;">${_escTennis(s === 'I.hard' ? 'Indoor Hard' : s)}</th>`).join('')}<th style="text-align:left;padding:6px 8px;color:#a020f0;">${p2Name}</th></tr></thead>
           <tbody>
-            ${perfRows.map(r => `<tr><td style="text-align:right;padding:4px 8px;color:var(--text,#e8eaed);">${r.v1 ?? '—'}</td><td style="text-align:center;padding:4px 8px;color:var(--text3,#5a6068);font-size:11px;">${_escTennis(r.label)}</td><td style="text-align:left;padding:4px 8px;color:var(--text,#e8eaed);">${r.v2 ?? '—'}</td></tr>`).join('')}
+            <tr><td style="text-align:right;padding:4px 8px;color:var(--green,#00e676);font-weight:600;">P1</td>${surfaces.map(s => formatCell(s1, s)).join('')}<td></td></tr>
+            <tr><td></td>${surfaces.map(s => formatCell(s2, s)).join('')}<td style="text-align:left;padding:4px 8px;color:#a020f0;font-weight:600;">P2</td></tr>
           </tbody>
         </table>
       </div>`;
   }
 
-  if (!h2hBlock && !statsBlock && !perfBlock) {
-    return '<div class="tennis-empty-state" style="font-size:11px;opacity:.6;">MatchStat — pas de données H2H ou breakdown pour cette paire.</div>';
+  // ── Performance breakdown (latest year, level/round splits) ──────────────
+  let perfBlock = '';
+  const extractLatestLevel = (perfRaw) => {
+    if (!perfRaw || !perfRaw.data) return null;
+    const data = perfRaw.data;
+    const years = Object.keys(data).filter(y => /^\d{4}$/.test(y)).sort();
+    if (!years.length) return null;
+    const latest = data[years[years.length - 1]];
+    if (!latest || !latest.level) return null;
+    const lvl = latest.level;
+    const lvls = ['grandSlam', 'masters', 'mainTour', 'challengers', 'futures'];
+    const out = { year: years[years.length - 1] };
+    for (const k of lvls) {
+      const r = lvl[k];
+      if (r && (r.aw || r.al)) out[k] = { w: r.aw || 0, l: r.al || 0 };
+    }
+    const total = lvl.total;
+    if (total && (total.aw || total.al)) out.total = { w: total.aw || 0, l: total.al || 0 };
+    return out;
+  };
+  const lv1 = extractLatestLevel(p1.perf);
+  const lv2 = extractLatestLevel(p2.perf);
+  if (lv1 || lv2) {
+    const lvls = [
+      ['grandSlam', 'Grand Slam'],
+      ['masters', 'Masters 1000'],
+      ['mainTour', 'Main Tour'],
+      ['challengers', 'Challengers'],
+      ['total', 'TOTAL'],
+    ];
+    const fmt = (lvObj, k) => {
+      if (!lvObj || !lvObj[k]) return '<span style="color:var(--text3,#5a6068);">—</span>';
+      const r = lvObj[k]; const t = r.w + r.l;
+      const pct = t ? Math.round((r.w / t) * 100) : 0;
+      return `<span style="font-family:'DM Mono',monospace;">${r.w}-${r.l} (${pct}%)</span>`;
+    };
+    const year = lv1?.year || lv2?.year || new Date().getFullYear();
+    perfBlock = `
+      <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:16px;margin-bottom:12px;">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;margin-bottom:10px;">📊 MatchStat · Performance par niveau (${year})</div>
+        <table style="width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px;">
+          <thead><tr><th style="text-align:right;padding:6px 8px;color:var(--green,#00e676);">${p1Name}</th><th style="text-align:center;padding:6px 8px;color:var(--text2,#8d9399);font-weight:400;">Niveau</th><th style="text-align:left;padding:6px 8px;color:#a020f0;">${p2Name}</th></tr></thead>
+          <tbody>
+            ${lvls.map(([k, lbl]) => `<tr style="${k === 'total' ? 'border-top:1px solid var(--bg4,#1e2328);font-weight:700;' : ''}"><td style="text-align:right;padding:4px 8px;color:var(--text,#e8eaed);">${fmt(lv1, k)}</td><td style="text-align:center;padding:4px 8px;color:var(--text3,#5a6068);font-size:11px;">${_escTennis(lbl)}</td><td style="text-align:left;padding:4px 8px;color:var(--text,#e8eaed);">${fmt(lv2, k)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
   }
-  return h2hBlock + statsBlock + perfBlock;
+
+  // ── Profile mini (rank actuel, points, age) ──────────────────────────────
+  let profileBlock = '';
+  const prof = (raw) => {
+    if (!raw || !raw.data) return null;
+    const p = raw.data;
+    const age = p.birthday ? Math.floor((Date.now() - new Date(p.birthday).getTime()) / (365.25 * 86400000)) : null;
+    return { name: p.name, rank: p.currentRank, points: p.points, country: p.countryAcr, age, progress: p.progress };
+  };
+  const pp1 = prof(p1.profile); const pp2 = prof(p2.profile);
+  if (pp1 || pp2) {
+    const fmtP = (p) => p
+      ? `<div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">#${p.rank ?? '—'} · ${p.points ?? '—'} pts · ${p.country || '—'}${p.age ? ' · ' + p.age + 'a' : ''}${p.progress != null && p.progress !== 0 ? ` · <span style="color:${p.progress > 0 ? 'var(--green,#00e676)' : 'var(--red,#ff4d4d)'};">${p.progress > 0 ? '↑' : '↓'}${Math.abs(p.progress)}</span>` : ''}</div>`
+      : '<div style="color:var(--text3,#5a6068);">—</div>';
+    profileBlock = `
+      <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;flex-basis:80px;">📊 Profile</div>
+        <div style="flex:1;text-align:right;color:var(--green,#00e676);">${fmtP(pp1)}</div>
+        <div style="color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:11px;">vs</div>
+        <div style="flex:1;text-align:left;color:#a020f0;">${fmtP(pp2)}</div>
+      </div>`;
+  }
+
+  if (!h2hBlock && !surfaceBlock && !perfBlock && !profileBlock) {
+    return '<div class="tennis-empty-state" style="font-size:11px;opacity:.6;">MatchStat — pas de données enrichies pour cette paire.</div>';
+  }
+  return profileBlock + h2hBlock + surfaceBlock + perfBlock;
 }
 
 function renderTennisDashboard(data, preds) {
