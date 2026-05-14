@@ -17220,6 +17220,44 @@ async function sendLiveMomentumAlerts(liveMatches) {
 }
 
 /* -------------------------------------------------
+   Smart Polling gate — skip BSD calls quand pas de contexte live
+   actif (zero in-play, zero kickoff <4h, zero just-finished <135min).
+   Data-driven (multi-leagues monde entier, TZ-safe).
+   ------------------------------------------------- */
+const LIVE_CTX_LOOKAHEAD_MS = 4 * 60 * 60 * 1000;   // 4h avant kickoff
+const LIVE_CTX_LOOKBACK_MS  = 135 * 60 * 1000;       // 2h15 après kickoff
+let _liveIdleSkipCount = 0;
+function hasActiveLiveContext() {
+  if (!db?.matches?.length) return false;
+  const now = Date.now();
+  for (const m of db.matches) {
+    if (!m) continue;
+    const minute = parseInt(m.live_minute || 0) || 0;
+    if (m.live_score && minute > 0 && minute < 130) return true;
+    const ko = m.commence_time ? new Date(m.commence_time).getTime() : NaN;
+    if (!Number.isFinite(ko)) continue;
+    const delta = ko - now;
+    if (delta > 0 && delta < LIVE_CTX_LOOKAHEAD_MS) return true;
+    if (delta <= 0 && -delta < LIVE_CTX_LOOKBACK_MS) return true;
+  }
+  return false;
+}
+async function pollLiveScoresSmart() {
+  if (!hasActiveLiveContext()) {
+    _liveIdleSkipCount++;
+    if (_liveIdleSkipCount % 30 === 1) {
+      console.log(`  [Live] idle skip ×${_liveIdleSkipCount} (no in-play / no kickoff <4h / no just-finished)`);
+    }
+    return;
+  }
+  if (_liveIdleSkipCount > 0) {
+    console.log(`  [Live] resume after ${_liveIdleSkipCount} idle skips`);
+    _liveIdleSkipCount = 0;
+  }
+  return pollLiveScores();
+}
+
+/* -------------------------------------------------
    Fonction de polling des scores en direct
    ------------------------------------------------- */
 async function pollLiveScores() {
@@ -17498,7 +17536,7 @@ setInterval(() => {
     if (typeof oddsCacheCleanExpired === 'function') oddsCacheCleanExpired();
 }, 2 * 3600 * 1000);
 
-setInterval(() => pollLiveScores().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
 
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
