@@ -12483,6 +12483,69 @@ async function fetchTennisAbstractTournament(slug) {
   return data;
 }
 
+// ─── Tennis Abstract — Reports catalog (Elo / MCP / Lottery / Birthdays) ────
+// Extension v10.10 : parser générique tablesorter pour /reports/*.html
+const TENNIS_ABSTRACT_REPORTS = {
+  'atp-elo':              { path: '/reports/atp_elo_ratings.html',          ttl: 24 * 3600 * 1000 },
+  'wta-elo':              { path: '/reports/wta_elo_ratings.html',          ttl: 24 * 3600 * 1000 },
+  'atp-lottery':          { path: '/reports/atp_lottery_matches.html',      ttl: 7 * 24 * 3600 * 1000 },
+  'wta-lottery':          { path: '/reports/wta_lottery_matches.html',      ttl: 7 * 24 * 3600 * 1000 },
+  'mcp-serve-men-52':     { path: '/reports/mcp_leaders_serve_men_last52.html',  ttl: 7 * 24 * 3600 * 1000 },
+  'mcp-serve-women-52':   { path: '/reports/mcp_leaders_serve_women_last52.html',ttl: 7 * 24 * 3600 * 1000 },
+  'mcp-return-men-52':    { path: '/reports/mcp_leaders_return_men_last52.html', ttl: 7 * 24 * 3600 * 1000 },
+  'mcp-return-women-52':  { path: '/reports/mcp_leaders_return_women_last52.html',ttl: 7 * 24 * 3600 * 1000 },
+  'birthdays':            { path: '/reports/todays_birthdays.html',         ttl: 12 * 3600 * 1000 },
+};
+const tennisAbstractReportsCache = new Map();
+
+function _taParseReportTable(html) {
+  if (!html) return { headers: [], rows: [], playerSlugs: [] };
+  const tableM = html.match(/<table[^>]*id="reportable"[\s\S]*?<\/table>/);
+  if (!tableM) return { headers: [], rows: [], playerSlugs: [] };
+  const block = tableM[0];
+  const headM = block.match(/<thead>([\s\S]*?)<\/thead>/);
+  const cleanCell = (s) => s.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const headers = headM ? [...headM[1].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => cleanCell(m[1])) : [];
+  // Match all <tr> after </thead>
+  const afterThead = block.split(/<\/thead>/)[1] || block;
+  const trRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+  const rows = [];
+  const playerSlugs = [];
+  let trMatch;
+  while ((trMatch = trRe.exec(afterThead)) !== null) {
+    const tr = trMatch[1];
+    // Skip header rows that may sneak in
+    if (/<th[^>]*>/.test(tr)) continue;
+    const tds = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m => cleanCell(m[1]));
+    if (!tds.length) continue;
+    rows.push(tds);
+    const slugM = tr.match(/href="[^"]*player\.cgi\?p=([^"&]+)"/);
+    playerSlugs.push(slugM ? slugM[1] : null);
+  }
+  return { headers, rows, playerSlugs };
+}
+
+async function fetchTennisAbstractReport(slug) {
+  const meta = TENNIS_ABSTRACT_REPORTS[slug];
+  if (!meta) throw new Error(`Unknown TA report: ${slug}`);
+  const cached = tennisAbstractReportsCache.get(slug);
+  if (cached && Date.now() - cached.ts < meta.ttl) return cached.data;
+  const url = `${TENNIS_ABSTRACT_BASE.replace('/current', '')}${meta.path}`;
+  const res = await httpsGet(url, { 'Accept': 'text/html', 'User-Agent': 'Mozilla/5.0 (PariScore)' });
+  if (res.status !== 200 || typeof res.data !== 'string') {
+    throw new Error(`TA report HTTP ${res.status} for ${slug}`);
+  }
+  const parsed = _taParseReportTable(res.data);
+  const data = {
+    slug,
+    source_url: url,
+    fetched_at: new Date().toISOString(),
+    ...parsed,
+  };
+  tennisAbstractReportsCache.set(slug, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── Tennis Explorer scraper (matches/?type= + player/<slug>) ───────────────
 // Source: tennisexplorer.com — server-rendered HTML, robots.txt permissif.
 // Fournit : open + current odds + Δ% drift, player profiles (rank/DOB/hand).
@@ -15763,6 +15826,23 @@ if (pathname === '/api/v1/tennis-abstract' && req.method === 'GET') {
     return jsonResponse(res, 500, { error: 'tennis_abstract_error', detail: e.message });
   }
 }
+// Tennis Abstract — reports (Elo / MCP leaders / Lottery / Birthdays).
+// Query: ?slug=atp-elo|wta-elo|atp-lottery|wta-lottery|mcp-{serve|return}-{men|women}-52|birthdays
+if (pathname === '/api/v1/tennis-abstract/report' && req.method === 'GET') {
+  try {
+    const slug = (query.slug || '').toString().trim();
+    if (!slug) {
+      return jsonResponse(res, 200, { reports: Object.keys(TENNIS_ABSTRACT_REPORTS) });
+    }
+    if (!TENNIS_ABSTRACT_REPORTS[slug]) {
+      return jsonResponse(res, 404, { error: 'unknown_report', detail: `Available: ${Object.keys(TENNIS_ABSTRACT_REPORTS).join(', ')}` });
+    }
+    const data = await fetchTennisAbstractReport(slug);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'ta_report_error', detail: e.message });
+  }
+}
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
   if (!BSD_TENNIS_ENABLED) {
     return jsonResponse(res, 503, { error: 'tennis_bsd_disabled', fallback: 'espn' });
@@ -18521,7 +18601,7 @@ function _msUntilNextParisHour(targetHour) {
 }
 async function _runTennisAbstractDailyRefresh() {
   const slugs = Object.keys(TENNIS_ABSTRACT_EVENTS);
-  console.log(`  [Cron:TennisAbstract] Refresh ${slugs.length} event(s) à 10:00 Europe/Paris…`);
+  console.log(`  [Cron:TennisAbstract] Refresh ${slugs.length} event(s) + reports daily à 10:00 Europe/Paris…`);
   for (const slug of slugs) {
     try {
       tennisAbstractCache.delete(slug); // force refresh
@@ -18532,6 +18612,16 @@ async function _runTennisAbstractDailyRefresh() {
       console.log(`  [Cron:TennisAbstract] ✓ ${slug} — ${data.players?.length || 0} players · top: ${top ? `${top.name} ${top.pctWin}%W` : 'n/a'}`);
     } catch (e) {
       console.warn(`  [Cron:TennisAbstract] ⚠ ${slug} échec: ${e.message}`);
+    }
+  }
+  // Reports daily refresh : Elo + birthdays
+  for (const slug of ['atp-elo', 'wta-elo', 'birthdays']) {
+    try {
+      tennisAbstractReportsCache.delete(slug);
+      const r = await fetchTennisAbstractReport(slug);
+      console.log(`  [Cron:TennisAbstract] ✓ report ${slug} — ${r.rows?.length || 0} rows`);
+    } catch (e) {
+      console.warn(`  [Cron:TennisAbstract] ⚠ report ${slug} échec: ${e.message}`);
     }
   }
 }

@@ -5777,6 +5777,9 @@
 <!-- PAGE : TENNIS LIVE (ESPN ATP+WTA) -->
 <div id="page-tennis" data-page="tennis" style="display:none;">
 
+  <!-- UC-5 Today's birthdays ribbon (Tennis Abstract) -->
+  <div id="ta-birthdays-ribbon" style="display:none;margin-bottom:12px;"></div>
+
   <!-- ═══════════════════════════════════════════════════════════════════════
        TENNIS VALUE BETS — T6 : Elo surface-split + Odds devig + EV model
        Données /api/v1/tennis/value-bets (BSD primaire, ESPN fallback,
@@ -5992,6 +5995,28 @@
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TENNIS ABSTRACT — MCP Ladder (UC-4) Serve + Return last 52w
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section fade-up" id="tennis-mcp-section" style="margin-top:24px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:22px;">🎯 MCP Leaders — Serve & Return (52w)</h2>
+        <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:12px;">
+          Match Charting Project · Top 10 par effectivité serve/return sur 52 dernières semaines · <a href="https://www.tennisabstract.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a>
+        </p>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="ta-mcp-tour-btn is-active" data-tour="men" onclick="setTaMcpTour('men')" style="padding:6px 12px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;">Hommes</button>
+        <button class="ta-mcp-tour-btn" data-tour="women" onclick="setTaMcpTour('women')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;">Femmes</button>
+        <span id="ta-mcp-status" style="font-size:11px;color:var(--text3,#5a6068);margin-left:6px;">—</span>
+      </div>
+    </div>
+    <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
+      <div id="ta-mcp-body"></div>
+    </div>
+  </section>
+
   <!-- Player profile modal (Tennis Explorer) -->
   <div id="tex-player-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:520px;width:100%;padding:20px;position:relative;">
@@ -6020,6 +6045,26 @@
   .tex-drift-up   { color:var(--red,#ff4d4d); font-weight:600; }
   .tex-drift-down { color:var(--green,#00e676); font-weight:600; }
   .tex-drift-flat { color:var(--text3,#5a6068); }
+  /* UC-1 Elo tooltip (Tennis Abstract) */
+  .ta-elo-cell { position:relative; cursor:help; }
+  .ta-elo-cell::after {
+    content: attr(data-ta-tooltip);
+    position:absolute; bottom:100%; left:50%; transform:translateX(-50%);
+    background:var(--bg,#0a0d0f); color:var(--text,#e8eaed);
+    border:1px solid var(--bg4,#1e2328); border-radius:6px;
+    padding:6px 10px; font-size:10px; font-family:'DM Mono',monospace;
+    white-space:nowrap; opacity:0; pointer-events:none; z-index:10;
+    transition:opacity 0.15s; box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    max-width:520px; white-space:normal;
+  }
+  .ta-elo-cell:hover::after { opacity:1; }
+  /* UC-2 Surface specialist badges */
+  .ta-surf-badge { display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; background:var(--bg3,#181c20); color:var(--blue,#29b6f6); margin-left:4px; cursor:help; }
+  /* UC-4 MCP ladder */
+  .ta-mcp-tour-btn.is-active { background:var(--bg3,#181c20) !important; color:var(--text,#e8eaed) !important; }
+  .ta-mcp-table { width:100%; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; }
+  .ta-mcp-table th { text-align:left; padding:5px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:9px; }
+  .ta-mcp-table td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text,#e8eaed); }
 </style>
 
 <style>
@@ -7230,7 +7275,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -7427,6 +7472,9 @@ function renderTennisValueBets(matches) {
     const eloB = b.predictions?.elo?.p1_elo || 0;
     return eloB - eloA;
   });
+
+  // Hook : enrich rows with TA Elo tooltips + surface badges après render (UC-1+UC-2)
+  setTimeout(() => { try { enrichTennisVbWithTA(); } catch (_) {} }, 50);
 
   tbody.innerHTML = filtered.slice(0, 200).map(m => {
     const elo = m.predictions?.elo;
@@ -7749,6 +7797,11 @@ async function openTexPlayerModal(slug) {
       return a;
     })() : '—';
     const hw = (p.height_cm && p.weight_kg) ? `${p.height_cm} cm / ${p.weight_kg} kg` : '—';
+    // UC-3 : Lottery profile depuis indices TA pré-chargés
+    const lot = getTaLotteryProfile(p.name || slug.replace(/-/g, ' '));
+    const lotLine = lot
+      ? `<tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Lottery (7j)</td><td style="padding:4px 8px;color:var(--amber,#ffa726);">${lot.wins}W / ${lot.losses}L · ${lot.total} close matches</td></tr>`
+      : '';
     body.innerHTML = `
       <h3 style="margin:0 0 12px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--text,#e8eaed);">${_escapeHtmlSafe(p.name || slug)}</h3>
       <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -7759,6 +7812,7 @@ async function openTexPlayerModal(slug) {
         <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Taille/Poids</td><td style="padding:4px 8px;">${hw}</td></tr>
         <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank simple</td><td style="padding:4px 8px;color:var(--green,#00e676);font-weight:600;">${rankS}</td></tr>
         <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank double</td><td style="padding:4px 8px;">${rankD}</td></tr>
+        ${lotLine}
       </table>
       <div style="margin-top:14px;font-size:11px;color:var(--text3,#5a6068);">
         <a href="${_escapeHtmlSafe(p.source_url || '#')}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir profile complet ↗</a>
@@ -7795,6 +7849,246 @@ async function loadTennisAbstractRome() {
   } catch (e) {
     if (statusEl) statusEl.textContent = 'Erreur';
     console.error('[TennisAbstract] load failed', e);
+  }
+}
+
+// ─── Tennis Abstract — Reports extension (UC-1 to UC-5, v10.10) ───────────
+// Indices client-side construits une fois par chargement page, partagés.
+window._taEloIdx = window._taEloIdx || new Map();        // normName → eloData
+window._taLotteryIdx = window._taLotteryIdx || new Map(); // normName → { losses, total }
+window._taIndicesLoaded = false;
+
+function _taNormName(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z]/g, '')
+    .toLowerCase();
+}
+
+async function loadTaEloIndices() {
+  if (window._taIndicesLoaded) return; // load once per session
+  try {
+    const [atpRes, wtaRes] = await Promise.all([
+      fetch('/api/v1/tennis-abstract/report?slug=atp-elo').then(r => r.json()).catch(() => null),
+      fetch('/api/v1/tennis-abstract/report?slug=wta-elo').then(r => r.json()).catch(() => null),
+    ]);
+    const buildIdx = (res, tour) => {
+      if (!res || !Array.isArray(res.rows)) return;
+      const headers = res.headers || [];
+      const colIdx = (label) => headers.findIndex(h => h.replace(/\s+/g, '').toLowerCase() === label.replace(/\s+/g, '').toLowerCase());
+      const iRank = colIdx('Elo Rank');
+      const iPlayer = colIdx('Player');
+      const iAge = colIdx('Age');
+      const iElo = colIdx('Elo');
+      const iHEloRank = colIdx('hElo Rank');
+      const iHElo = colIdx('hElo');
+      const iCEloRank = colIdx('cElo Rank');
+      const iCElo = colIdx('cElo');
+      const iGEloRank = colIdx('gElo Rank');
+      const iGElo = colIdx('gElo');
+      const iPeakElo = colIdx('Peak Elo');
+      const iPeakMonth = colIdx('Peak Month');
+      const iAtpRank = colIdx('ATP Rank') !== -1 ? colIdx('ATP Rank') : colIdx('WTA Rank');
+      const iLogDiff = colIdx('Log diff');
+      const num = v => { const f = parseFloat(v); return Number.isFinite(f) ? f : null; };
+      const intg = v => { const i = parseInt(v, 10); return Number.isFinite(i) ? i : null; };
+      res.rows.forEach((r, idx) => {
+        const name = r[iPlayer]; if (!name) return;
+        const slug = res.playerSlugs?.[idx] || null;
+        const data = {
+          tour, slug,
+          name,
+          eloRank: intg(r[iRank]),
+          age: num(r[iAge]),
+          elo: num(r[iElo]),
+          hEloRank: intg(r[iHEloRank]),
+          hElo: num(r[iHElo]),
+          cEloRank: intg(r[iCEloRank]),
+          cElo: num(r[iCElo]),
+          gEloRank: intg(r[iGEloRank]),
+          gElo: num(r[iGElo]),
+          peakElo: num(r[iPeakElo]),
+          peakMonth: r[iPeakMonth] || null,
+          officialRank: intg(r[iAtpRank]),
+          logDiff: num(r[iLogDiff]),
+        };
+        window._taEloIdx.set(_taNormName(name), data);
+      });
+    };
+    buildIdx(atpRes, 'ATP');
+    buildIdx(wtaRes, 'WTA');
+    window._taIndicesLoaded = true;
+  } catch (e) {
+    console.warn('[TA Indices] load failed', e.message);
+  }
+}
+
+async function loadTaLotteryIndices() {
+  try {
+    const [atpRes, wtaRes] = await Promise.all([
+      fetch('/api/v1/tennis-abstract/report?slug=atp-lottery').then(r => r.json()).catch(() => null),
+      fetch('/api/v1/tennis-abstract/report?slug=wta-lottery').then(r => r.json()).catch(() => null),
+    ]);
+    const counts = window._taLotteryIdx;
+    const ingest = (res) => {
+      if (!res || !Array.isArray(res.rows)) return;
+      const headers = res.headers || [];
+      const iWin = headers.findIndex(h => h.toLowerCase() === 'winner');
+      const iLos = headers.findIndex(h => h.toLowerCase() === 'loser');
+      res.rows.forEach(r => {
+        if (iWin >= 0 && r[iWin]) {
+          const k = _taNormName(r[iWin]);
+          const o = counts.get(k) || { wins: 0, losses: 0, total: 0 };
+          o.wins++; o.total++;
+          counts.set(k, o);
+        }
+        if (iLos >= 0 && r[iLos]) {
+          const k = _taNormName(r[iLos]);
+          const o = counts.get(k) || { wins: 0, losses: 0, total: 0 };
+          o.losses++; o.total++;
+          counts.set(k, o);
+        }
+      });
+    };
+    ingest(atpRes); ingest(wtaRes);
+  } catch (e) {
+    console.warn('[TA Lottery] load failed', e.message);
+  }
+}
+
+// UC-1 + UC-2 : enrich tennis-vb rows with Elo tooltip + surface badge
+function enrichTennisVbWithTA() {
+  if (!window._taIndicesLoaded || window._taEloIdx.size === 0) return;
+  const tbody = document.getElementById('tennis-vb-tbody');
+  if (!tbody) return;
+  // Need surface context per row; tennis-vb table has data in window._tennisVbLastFetch
+  const matchesById = new Map();
+  (window._tennisVbLastFetch || []).forEach(m => matchesById.set(String(m.id || ''), m));
+  tbody.querySelectorAll('tr.tennis-vb-row').forEach(tr => {
+    if (tr.dataset.taEnriched) return;
+    const onclick = tr.getAttribute('onclick') || '';
+    const idM = onclick.match(/openTennisDetail\('([^']+)'\)/);
+    const matchId = idM ? idM[1] : null;
+    const m = matchId ? matchesById.get(matchId) : null;
+    if (!m) return;
+    const surface = (m.surface || '').toLowerCase(); // hard|clay|grass
+    const surfBadgeFor = (eloData) => {
+      if (!eloData) return '';
+      // Top 10 sur surface = specialist
+      if (surface === 'clay' && eloData.cEloRank && eloData.cEloRank <= 10) return ' <span class="ta-surf-badge" title="Top 10 cElo">🟫 Clay</span>';
+      if (surface === 'grass' && eloData.gEloRank && eloData.gEloRank <= 10) return ' <span class="ta-surf-badge" title="Top 10 gElo">🌱 Grass</span>';
+      if (surface === 'hard' && eloData.hEloRank && eloData.hEloRank <= 10) return ' <span class="ta-surf-badge" title="Top 10 hElo">⚡ Hard</span>';
+      return '';
+    };
+    const tooltip = (eloData) => {
+      if (!eloData) return 'data-ta-tooltip="—"';
+      const fmt = (v, r) => v != null ? `${Math.round(v)}${r ? ` (${r})` : ''}` : '—';
+      const text = `Elo ${fmt(eloData.elo, eloData.eloRank)} · hElo ${fmt(eloData.hElo, eloData.hEloRank)} · cElo ${fmt(eloData.cElo, eloData.cEloRank)} · gElo ${fmt(eloData.gElo, eloData.gEloRank)} · Peak ${fmt(eloData.peakElo)} ${eloData.peakMonth ? '(' + eloData.peakMonth + ')' : ''} · ATP rank ${eloData.officialRank ?? '—'}`;
+      return `data-ta-tooltip="${text.replace(/"/g, '&quot;')}"`;
+    };
+    const p1Key = _taNormName(m.player1?.name || '');
+    const p2Key = _taNormName(m.player2?.name || '');
+    const e1 = window._taEloIdx.get(p1Key);
+    const e2 = window._taEloIdx.get(p2Key);
+    const cells = tr.querySelectorAll('td');
+    // Player cells: typically cells[2] et cells[3] (P1 / P2). Find by content match.
+    cells.forEach(td => {
+      const txt = td.textContent || '';
+      if (e1 && txt.includes(m.player1?.name || '___NA___')) {
+        td.innerHTML += surfBadgeFor(e1);
+        td.classList.add('ta-elo-cell');
+        td.setAttribute('data-ta-tooltip', tooltip(e1).match(/data-ta-tooltip="([^"]*)"/)?.[1] || '');
+      }
+      if (e2 && txt.includes(m.player2?.name || '___NA___')) {
+        td.innerHTML += surfBadgeFor(e2);
+        td.classList.add('ta-elo-cell');
+        td.setAttribute('data-ta-tooltip', tooltip(e2).match(/data-ta-tooltip="([^"]*)"/)?.[1] || '');
+      }
+    });
+    tr.dataset.taEnriched = '1';
+  });
+}
+
+// UC-3 : compute lottery profile for a player (used in Tex modal)
+function getTaLotteryProfile(playerName) {
+  const k = _taNormName(playerName);
+  return window._taLotteryIdx.get(k) || null;
+}
+
+// UC-4 : MCP ladder render
+async function loadTaMCPLadder(tour = 'men') {
+  const tourN = tour.toLowerCase() === 'women' ? 'women' : 'men';
+  const body = document.getElementById('ta-mcp-body');
+  const status = document.getElementById('ta-mcp-status');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement MCP…</div>';
+  try {
+    const [serveRes, returnRes] = await Promise.all([
+      fetch(`/api/v1/tennis-abstract/report?slug=mcp-serve-${tourN}-52`).then(r => r.json()),
+      fetch(`/api/v1/tennis-abstract/report?slug=mcp-return-${tourN}-52`).then(r => r.json()),
+    ]);
+    const buildList = (res, label, limit = 10) => {
+      if (!res?.rows?.length) return '';
+      const headers = res.headers || [];
+      const iPlayer = headers.findIndex(h => h.toLowerCase() === 'player');
+      const iMatch = headers.findIndex(h => h.toLowerCase() === 'matches');
+      const iSecond = 2; // typically the most representative stat column 2
+      const top = res.rows.slice(0, limit).map((r, idx) => `<tr>
+        <td style="color:var(--text3,#5a6068);width:24px;">${idx + 1}</td>
+        <td>${_escapeHtmlSafe(r[iPlayer] || '—')}</td>
+        <td style="text-align:right;color:var(--text2,#8d9399);">${_escapeHtmlSafe(r[iMatch] || '—')}m</td>
+        <td style="text-align:right;font-weight:600;color:var(--green,#00e676);">${_escapeHtmlSafe(r[iSecond] || '—')}</td>
+      </tr>`).join('');
+      const headerLabel = headers[iSecond] || '—';
+      return `<div style="flex:1;min-width:280px;">
+        <div style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;margin-bottom:6px;color:var(--text,#e8eaed);">${label}</div>
+        <table class="ta-mcp-table"><thead><tr><th>#</th><th>Joueur</th><th style="text-align:right;">M</th><th style="text-align:right;">${_escapeHtmlSafe(headerLabel)}</th></tr></thead><tbody>${top}</tbody></table>
+      </div>`;
+    };
+    body.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap;">
+      ${buildList(serveRes, '🎾 Top Serve (52w)')}
+      ${buildList(returnRes, '↩ Top Return (52w)')}
+    </div>`;
+    if (status) status.textContent = `${tourN === 'men' ? 'ATP' : 'WTA'} · ${serveRes?.rows?.length || 0}/${returnRes?.rows?.length || 0} players`;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
+  }
+}
+
+function setTaMcpTour(tour) {
+  document.querySelectorAll('.ta-mcp-tour-btn').forEach(b => {
+    b.classList.toggle('is-active', b.dataset.tour === tour);
+  });
+  loadTaMCPLadder(tour);
+}
+
+// UC-5 : Today's birthdays ribbon
+async function loadTaBirthdaysRibbon() {
+  const ribbon = document.getElementById('ta-birthdays-ribbon');
+  if (!ribbon) return;
+  try {
+    const res = await fetch('/api/v1/tennis-abstract/report?slug=birthdays').then(r => r.json());
+    const rows = res?.rows || [];
+    if (!rows.length) { ribbon.style.display = 'none'; return; }
+    const headers = res.headers || [];
+    const iName = headers.findIndex(h => h.toLowerCase() === 'player');
+    const iCountry = headers.findIndex(h => h.toLowerCase() === 'country');
+    const iAge = headers.findIndex(h => h.toLowerCase() === 'age');
+    const iRank = headers.findIndex(h => h.toLowerCase().includes('current rank'));
+    // Filter : trier par rank croissant, garder top 8 (peu importe rank — affichage info)
+    const sortable = rows
+      .map(r => ({ row: r, rank: parseInt(r[iRank], 10) }))
+      .filter(o => Number.isFinite(o.rank))
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 8)
+      .map(o => o.row);
+    const top = sortable.length ? sortable : rows.slice(0, 8);
+    if (!top.length) { ribbon.style.display = 'none'; return; }
+    const items = top.map(r => `<span style="margin-right:14px;">🎂 <strong>${_escapeHtmlSafe(r[iName])}</strong> (${_escapeHtmlSafe(r[iCountry])}) · ${_escapeHtmlSafe(r[iAge])} ans · rank ${_escapeHtmlSafe(r[iRank])}</span>`).join('');
+    ribbon.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:12px;overflow-x:auto;white-space:nowrap;padding:8px 12px;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:6px;color:var(--text,#e8eaed);">${items}</div>`;
+    ribbon.style.display = 'block';
+  } catch (e) {
+    ribbon.style.display = 'none';
   }
 }
 
