@@ -32,6 +32,8 @@ const SQLITE_FILE = process.env.DATABASE_PATH || path.join(__dirname, 'pariscore
 // Conservés uniquement pour migration one-shot depuis les anciens fichiers JSON
 const DB_FILE = path.join(__dirname, 'database.json');
 const AI_CACHE_FILE = path.join(__dirname, 'ai_cache.json');
+const FBREF_ADVANCED_DIR = path.join(__dirname, 'data', 'fbref_advanced');
+const FBREF_RELOAD_INTERVAL_MS = 24 * 3600 * 1000;
 
 // Charger .env manuellement (pas de dotenv)
 function loadEnv() {
@@ -3222,6 +3224,7 @@ function loadDB() {
   db.teamStats = kvGet('db_team_stats', {});
   db.advancedTeamStats = kvGet('db_adv_stats', {});
   db.topScorers = kvGet('db_top_scorers', {});
+  db.fbrefStats = {};
   const meta = kvGet('db_meta', {});
   db.status = meta.status || 'initialisation';
   db.lastOddsUpdate = meta.lastOddsUpdate || null;
@@ -5194,6 +5197,94 @@ function loadAICache() {
 
 function saveAICache() {
   kvSet('ai_cache', aiCache);
+}
+
+// ─── FBref Advanced Stats — Pattern B Loader (P4) ────────────────────────────
+// Lit les JSON produits par scripts/scrape_advanced_stats.py et merge dans
+// db.fbrefStats keyed by normName(team). Réload toutes les 24h.
+let _fbrefLastLoad = 0;
+let _fbrefLoading = false;
+
+function loadAdvancedFBrefStats() {
+  if (_fbrefLoading) return;
+  _fbrefLoading = true;
+  try {
+    if (!fs.existsSync(FBREF_ADVANCED_DIR)) {
+      db.fbrefStats = db.fbrefStats || {};
+      return;
+    }
+    const files = fs.readdirSync(FBREF_ADVANCED_DIR)
+      .filter(f => f.endsWith('.json') && !f.startsWith('_'));
+    if (!files.length) {
+      db.fbrefStats = db.fbrefStats || {};
+      _fbrefLastLoad = Date.now();
+      return;
+    }
+    const merged = {};
+    let totalRows = 0;
+    let totalTeams = 0;
+    for (const file of files) {
+      try {
+        const raw = fs.readFileSync(path.join(FBREF_ADVANCED_DIR, file), 'utf-8');
+        const data = JSON.parse(raw);
+        const meta = data._meta || {};
+        const stats = data.team_season_stats || {};
+        // Anchor on 'standard' rows to enumerate teams; other stat_types merge by team name.
+        const standard = Array.isArray(stats.standard) ? stats.standard : [];
+        for (const row of standard) {
+          const teamName = row.team || row.Team || row.squad || row.Squad || null;
+          if (!teamName) continue;
+          const key = normName(teamName);
+          if (!merged[key]) {
+            merged[key] = {
+              team: teamName,
+              league: meta.league || null,
+              season: meta.season || null,
+              fetchedAt: meta.fetched_at || null,
+              source: meta.source || 'fbref-soccerdata',
+              stats: {},
+            };
+            totalTeams++;
+          }
+          merged[key].stats.standard = row;
+          totalRows++;
+        }
+        // FBref 1.9.0 read_team_season_stats supported: standard/shooting/keeper/playing_time/misc
+        for (const statType of ['shooting', 'keeper', 'playing_time', 'misc']) {
+          const rows = Array.isArray(stats[statType]) ? stats[statType] : [];
+          for (const row of rows) {
+            const teamName = row.team || row.Team || row.squad || row.Squad || null;
+            if (!teamName) continue;
+            const key = normName(teamName);
+            if (!merged[key]) continue;
+            merged[key].stats[statType] = row;
+            totalRows++;
+          }
+        }
+      } catch (e) {
+        console.warn(`  [FBref] ${file} parse erreur:`, e.message);
+      }
+    }
+    db.fbrefStats = merged;
+    _fbrefLastLoad = Date.now();
+    console.log(`  ✓ FBref advanced stats : ${totalTeams} équipes (${totalRows} stat rows) depuis ${files.length} fichiers`);
+  } catch (e) {
+    console.warn('  [FBref] loadAdvancedFBrefStats erreur:', e.message);
+  } finally {
+    _fbrefLoading = false;
+  }
+}
+
+function maybeReloadFBrefStats() {
+  if (!_fbrefLastLoad || Date.now() - _fbrefLastLoad > FBREF_RELOAD_INTERVAL_MS) {
+    loadAdvancedFBrefStats();
+  }
+}
+
+function getFBrefStatsForTeam(teamName) {
+  if (!teamName || !db.fbrefStats) return null;
+  const key = normName(teamName);
+  return db.fbrefStats[key] || null;
 }
 
 /**
@@ -10918,7 +11009,34 @@ if (pathname === '/api/v1/status') {
     statsQuota: db.statsQuotaRemaining,
     uptime: process.uptime(),
     bsd_connected: !!BSD_API_KEY,
+    fbref_advanced: {
+      teams: db.fbrefStats ? Object.keys(db.fbrefStats).length : 0,
+      last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null,
+    },
   });
+}
+
+// -------------------------------------------------
+//  GET /api/v1/fbref/team/:name — FBref advanced stats team query (P4 Pattern B)
+// -------------------------------------------------
+if (pathname.startsWith('/api/v1/fbref/team/')) {
+  const teamName = decodeURIComponent(pathname.slice('/api/v1/fbref/team/'.length));
+  if (!teamName) return jsonResponse(res, 400, { error: 'team name required' });
+  maybeReloadFBrefStats();
+  const entry = getFBrefStatsForTeam(teamName);
+  if (!entry) return jsonResponse(res, 404, { error: 'team not found in FBref dataset', team: teamName });
+  return jsonResponse(res, 200, entry);
+}
+
+// -------------------------------------------------
+//  GET /api/v1/fbref/teams — list all FBref-tracked teams
+// -------------------------------------------------
+if (pathname === '/api/v1/fbref/teams') {
+  maybeReloadFBrefStats();
+  const teams = Object.values(db.fbrefStats || {}).map(t => ({
+    team: t.team, league: t.league, season: t.season, fetchedAt: t.fetchedAt,
+  }));
+  return jsonResponse(res, 200, { count: teams.length, last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null, teams });
 }
 
 // -------------------------------------------------
@@ -14413,23 +14531,138 @@ function buildLiveCockpit(match, detail, minute, xgH, xgA) {
 const _sofaLiveStatsCache = {};       // { sofaEventId: { ts, data } }
 const SOFA_LIVE_STATS_TTL = 60000;    // 1 min — données live
 
+// Extract Sofa-shape stats object depuis BSD event detail (priorité 1 routing)
+// Renvoie même structure que extract Sofa, fields manquants restent undefined
+function extractBSDLiveStats(detail, srStats) {
+  if (!detail) return {};
+  const ls = detail.live_stats || {};
+  const lh = ls.home || {};
+  const la = ls.away || {};
+  const out = {};
+  const has = (v) => v != null;
+  // Top stats
+  if (has(lh.total_shots) || has(la.total_shots))
+    out.shots = { home: lh.total_shots || 0, away: la.total_shots || 0 };
+  if (has(lh.shots_on_target) || has(la.shots_on_target))
+    out.shots_on_target = { home: lh.shots_on_target || 0, away: la.shots_on_target || 0 };
+  if (has(lh.shots_off_target) || has(la.shots_off_target))
+    out.shots_off_target = { home: lh.shots_off_target || 0, away: la.shots_off_target || 0 };
+  if (has(lh.blocked_shots) || has(la.blocked_shots) || has(lh.shots_blocked) || has(la.shots_blocked))
+    out.shots_blocked = { home: lh.blocked_shots || lh.shots_blocked || 0, away: la.blocked_shots || la.shots_blocked || 0 };
+  if (has(lh.shots_inside_box) || has(la.shots_inside_box))
+    out.shots_inside_box = { home: lh.shots_inside_box || 0, away: la.shots_inside_box || 0 };
+  if (has(lh.shots_outside_box) || has(la.shots_outside_box))
+    out.shots_outside_box = { home: lh.shots_outside_box || 0, away: la.shots_outside_box || 0 };
+  if (has(lh.corner_kicks) || has(la.corner_kicks))
+    out.corners = { home: lh.corner_kicks || 0, away: la.corner_kicks || 0 };
+  if (has(lh.big_chances) || has(la.big_chances))
+    out.big_chances = { home: lh.big_chances || 0, away: la.big_chances || 0 };
+  if (has(lh.big_chances_scored) || has(la.big_chances_scored))
+    out.big_chances_scored = { home: lh.big_chances_scored || 0, away: la.big_chances_scored || 0 };
+  if (has(lh.big_chances_missed) || has(la.big_chances_missed))
+    out.big_chances_missed = { home: lh.big_chances_missed || 0, away: la.big_chances_missed || 0 };
+  if (has(lh.fouls) || has(la.fouls))
+    out.fouls = { home: lh.fouls || 0, away: la.fouls || 0 };
+  if (has(lh.offsides) || has(la.offsides))
+    out.offsides = { home: lh.offsides || 0, away: la.offsides || 0 };
+  if (has(lh.yellow_cards) || has(la.yellow_cards) || has(lh.red_cards) || has(la.red_cards)) {
+    out.cards = {
+      home_yellow: lh.yellow_cards || 0, away_yellow: la.yellow_cards || 0,
+      home_red: lh.red_cards || 0, away_red: la.red_cards || 0,
+    };
+  }
+  // xG depuis top-level BSD detail
+  const xgH = detail.actual_home_xg ?? detail.home_xg_live ?? null;
+  const xgA = detail.actual_away_xg ?? detail.away_xg_live ?? null;
+  if (xgH != null || xgA != null) out.xg = { home: xgH || 0, away: xgA || 0 };
+  // Possession + dangerous attacks depuis sr_stats
+  if (srStats) {
+    if (srStats.ball_safe_pct?.home != null || srStats.ball_safe_pct?.away != null)
+      out.possession = { home: srStats.ball_safe_pct.home || 50, away: srStats.ball_safe_pct.away || 50 };
+    if (srStats.dangerous_attack?.home != null || srStats.dangerous_attack?.away != null)
+      out.dangerous_attacks = { home: srStats.dangerous_attack.home || 0, away: srStats.dangerous_attack.away || 0 };
+  }
+  return out;
+}
+
+// Merge 2 stats objects : primary wins per field, secondary fills gaps.
+function mergeLiveStatsData(primary, secondary) {
+  const out = { ...secondary, ...primary };
+  // Champs objets nested (cards) — préserve fusion fine
+  if (secondary?.cards || primary?.cards) {
+    out.cards = { ...(secondary?.cards || {}), ...(primary?.cards || {}) };
+  }
+  return out;
+}
+
 function applyLiveStats(match, data) {
-  if (data.possession)        match.live_possession        = data.possession;
-  if (data.shots)             match.live_shots             = data.shots;
-  if (data.shots_on_target)   match.live_shots_on_target   = data.shots_on_target;
-  if (data.corners)           match.live_corners           = data.corners;
-  if (data.dangerous_attacks) match.live_dangerous_attacks = data.dangerous_attacks;
-  if (data.xg)                match.live_xg                = data.xg;
-  if (data.cards)             match.live_cards             = data.cards;
-  if (data.momentum)          match.live_momentum          = data.momentum;
+  if (data.possession)         match.live_possession         = data.possession;
+  if (data.shots)              match.live_shots              = data.shots;
+  if (data.shots_on_target)    match.live_shots_on_target    = data.shots_on_target;
+  if (data.shots_off_target)   match.live_shots_off_target   = data.shots_off_target;
+  if (data.shots_blocked)      match.live_shots_blocked      = data.shots_blocked;
+  if (data.shots_inside_box)   match.live_shots_inside_box   = data.shots_inside_box;
+  if (data.shots_outside_box)  match.live_shots_outside_box  = data.shots_outside_box;
+  if (data.shots_woodwork)     match.live_shots_woodwork     = data.shots_woodwork;
+  if (data.big_chances)        match.live_big_chances        = data.big_chances;
+  if (data.big_chances_scored) match.live_big_chances_scored = data.big_chances_scored;
+  if (data.big_chances_missed) match.live_big_chances_missed = data.big_chances_missed;
+  if (data.touches_opp_box)    match.live_touches_opp_box    = data.touches_opp_box;
+  if (data.corners)            match.live_corners            = data.corners;
+  if (data.dangerous_attacks)  match.live_dangerous_attacks  = data.dangerous_attacks;
+  if (data.xg)                 match.live_xg                 = data.xg;
+  if (data.xgot)               match.live_xgot               = data.xgot;
+  if (data.passes)             match.live_passes             = data.passes;
+  if (data.fouls)              match.live_fouls              = data.fouls;
+  if (data.offsides)           match.live_offsides           = data.offsides;
+  if (data.cards)              match.live_cards              = data.cards;
+  if (data.momentum)           match.live_momentum           = data.momentum;
   match.live_intensity = computeLiveIntensityFromSofa(data, match);
   match.live_stats = {
+    // Compatibilité existante
     possessionHome:        data.possession?.home       ?? match.live_stats?.possessionHome       ?? 50,
     possessionAway:        data.possession?.away       ?? match.live_stats?.possessionAway       ?? 50,
     dangerousAttacksHome:  data.dangerous_attacks?.home ?? match.live_stats?.dangerousAttacksHome ?? 0,
     dangerousAttacksAway:  data.dangerous_attacks?.away ?? match.live_stats?.dangerousAttacksAway ?? 0,
     shotsOnTargetHome:     data.shots_on_target?.home  ?? match.live_stats?.shotsOnTargetHome    ?? 0,
     shotsOnTargetAway:     data.shots_on_target?.away  ?? match.live_stats?.shotsOnTargetAway    ?? 0,
+    // Extension FlashScore/SofaScore-style
+    shotsHome:             data.shots?.home             ?? match.live_stats?.shotsHome             ?? 0,
+    shotsAway:             data.shots?.away             ?? match.live_stats?.shotsAway             ?? 0,
+    shotsOffTargetHome:    data.shots_off_target?.home  ?? match.live_stats?.shotsOffTargetHome    ?? 0,
+    shotsOffTargetAway:    data.shots_off_target?.away  ?? match.live_stats?.shotsOffTargetAway    ?? 0,
+    shotsBlockedHome:      data.shots_blocked?.home     ?? match.live_stats?.shotsBlockedHome      ?? 0,
+    shotsBlockedAway:      data.shots_blocked?.away     ?? match.live_stats?.shotsBlockedAway      ?? 0,
+    shotsInsideBoxHome:    data.shots_inside_box?.home  ?? match.live_stats?.shotsInsideBoxHome    ?? 0,
+    shotsInsideBoxAway:    data.shots_inside_box?.away  ?? match.live_stats?.shotsInsideBoxAway    ?? 0,
+    shotsOutsideBoxHome:   data.shots_outside_box?.home ?? match.live_stats?.shotsOutsideBoxHome   ?? 0,
+    shotsOutsideBoxAway:   data.shots_outside_box?.away ?? match.live_stats?.shotsOutsideBoxAway   ?? 0,
+    shotsWoodworkHome:     data.shots_woodwork?.home    ?? match.live_stats?.shotsWoodworkHome     ?? 0,
+    shotsWoodworkAway:     data.shots_woodwork?.away    ?? match.live_stats?.shotsWoodworkAway     ?? 0,
+    bigChancesHome:        data.big_chances?.home       ?? match.live_stats?.bigChancesHome        ?? 0,
+    bigChancesAway:        data.big_chances?.away       ?? match.live_stats?.bigChancesAway        ?? 0,
+    bigChancesScoredHome:  data.big_chances_scored?.home  ?? match.live_stats?.bigChancesScoredHome  ?? 0,
+    bigChancesScoredAway:  data.big_chances_scored?.away  ?? match.live_stats?.bigChancesScoredAway  ?? 0,
+    bigChancesMissedHome:  data.big_chances_missed?.home  ?? match.live_stats?.bigChancesMissedHome  ?? 0,
+    bigChancesMissedAway:  data.big_chances_missed?.away  ?? match.live_stats?.bigChancesMissedAway  ?? 0,
+    touchesOppBoxHome:     data.touches_opp_box?.home   ?? match.live_stats?.touchesOppBoxHome     ?? 0,
+    touchesOppBoxAway:     data.touches_opp_box?.away   ?? match.live_stats?.touchesOppBoxAway     ?? 0,
+    cornersHome:           data.corners?.home           ?? match.live_stats?.cornersHome           ?? 0,
+    cornersAway:           data.corners?.away           ?? match.live_stats?.cornersAway           ?? 0,
+    xgHome:                data.xg?.home                ?? match.live_stats?.xgHome                ?? 0,
+    xgAway:                data.xg?.away                ?? match.live_stats?.xgAway                ?? 0,
+    xgotHome:              data.xgot?.home              ?? match.live_stats?.xgotHome              ?? 0,
+    xgotAway:              data.xgot?.away              ?? match.live_stats?.xgotAway              ?? 0,
+    passesHomeMade:        data.passes?.home?.made      ?? match.live_stats?.passesHomeMade        ?? 0,
+    passesHomeTotal:       data.passes?.home?.total     ?? match.live_stats?.passesHomeTotal       ?? 0,
+    passesHomePct:         data.passes?.home?.pct       ?? match.live_stats?.passesHomePct         ?? null,
+    passesAwayMade:        data.passes?.away?.made      ?? match.live_stats?.passesAwayMade        ?? 0,
+    passesAwayTotal:       data.passes?.away?.total     ?? match.live_stats?.passesAwayTotal       ?? 0,
+    passesAwayPct:         data.passes?.away?.pct       ?? match.live_stats?.passesAwayPct         ?? null,
+    foulsHome:             data.fouls?.home             ?? match.live_stats?.foulsHome             ?? 0,
+    foulsAway:             data.fouls?.away             ?? match.live_stats?.foulsAway             ?? 0,
+    offsidesHome:          data.offsides?.home          ?? match.live_stats?.offsidesHome          ?? 0,
+    offsidesAway:          data.offsides?.away          ?? match.live_stats?.offsidesAway          ?? 0,
   };
 }
 
@@ -14449,7 +14682,7 @@ function computeLiveIntensityFromSofa(data, match) {
   return Math.round(Math.min(intensity, 100));
 }
 
-async function enrichMatchWithSofaLiveStats(match) {
+async function enrichMatchWithSofaLiveStats(match, { skipApply = false } = {}) {
   try {
     const sofaEventId = await findSofaEventId(match);
     if (!sofaEventId) return null;
@@ -14457,7 +14690,7 @@ async function enrichMatchWithSofaLiveStats(match) {
     const cacheKey = String(sofaEventId);
     const cached = _sofaLiveStatsCache[cacheKey];
     if (cached && Date.now() - cached.ts < SOFA_LIVE_STATS_TTL) {
-      applyLiveStats(match, cached.data);
+      if (!skipApply) applyLiveStats(match, cached.data);
       return cached.data;
     }
 
@@ -14470,21 +14703,68 @@ async function enrichMatchWithSofaLiveStats(match) {
 
     if (statsRes.status === 'fulfilled' && statsRes.value.status === 200) {
       const allPeriod = (statsRes.value.data?.statistics || []).find(p => p.period === 'ALL');
+      // Helper: extract numeric value + handle "X/Y" passes format
+      const numVal = (v) => {
+        if (v == null) return 0;
+        if (typeof v === 'number') return v;
+        const s = String(v);
+        const m = s.match(/^-?\d+(\.\d+)?/);
+        return m ? parseFloat(m[0]) : 0;
+      };
+      const passesPair = (v) => {
+        // ex: "128/140 (91%)" → {made:128,total:140,pct:91}
+        if (!v) return null;
+        const s = String(v);
+        const m = s.match(/(\d+)\s*\/\s*(\d+)/);
+        const p = s.match(/(\d+)\s*%/);
+        return { made: m ? parseInt(m[1]) : 0, total: m ? parseInt(m[2]) : 0, pct: p ? parseInt(p[1]) : null };
+      };
       for (const group of allPeriod?.groups || []) {
         for (const item of group.statisticsItems || []) {
           const n = (item.name || '').toLowerCase();
-          if (n.includes('possession'))          data.possession        = { home: item.homeValue??50, away: item.awayValue??50 };
-          else if (n === 'total shots')          data.shots             = { home: item.homeValue??0,  away: item.awayValue??0  };
-          else if (n.includes('shots on target')) data.shots_on_target  = { home: item.homeValue??0,  away: item.awayValue??0  };
-          else if (n.includes('corner'))         data.corners           = { home: item.homeValue??0,  away: item.awayValue??0  };
-          else if (n.includes('dangerous attack'))data.dangerous_attacks= { home: item.homeValue??0,  away: item.awayValue??0  };
-          else if (n.includes('expected goal'))  data.xg                = { home: item.homeValue??0,  away: item.awayValue??0  };
+          const hv = item.homeValue, av = item.awayValue;
+          if (n.includes('possession'))            data.possession        = { home: numVal(hv)||50, away: numVal(av)||50 };
+          else if (n === 'total shots' || n === 'shots')
+                                                   data.shots             = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('shots on target') || n.includes('on goal'))
+                                                   data.shots_on_target   = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('shots off target') || n.includes('off goal'))
+                                                   data.shots_off_target  = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('blocked shots') || n === 'blocked')
+                                                   data.shots_blocked     = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('shots inside') || n.includes('inside box'))
+                                                   data.shots_inside_box  = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('shots outside') || n.includes('outside box'))
+                                                   data.shots_outside_box = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('hit woodwork') || n.includes('woodwork'))
+                                                   data.shots_woodwork    = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('big chance') && !n.includes('miss') && !n.includes('scored'))
+                                                   data.big_chances       = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('big chance scored'))data.big_chances_scored= { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('big chance miss'))  data.big_chances_missed= { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('touches in opposition') || n.includes('touches in box') || n.includes('touches in opp'))
+                                                   data.touches_opp_box   = { home: numVal(hv), away: numVal(av) };
+          else if (n === 'corner kicks' || n.includes('corner'))
+                                                   data.corners           = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('dangerous attack')) data.dangerous_attacks = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('expected goals on target') || n.includes('xgot'))
+                                                   data.xgot              = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('expected goal') || n === 'xg')
+                                                   data.xg                = { home: numVal(hv), away: numVal(av) };
+          else if (n === 'passes' || n.includes('passes accurate')) {
+            // "128/140 (91%)" or numeric
+            const hp = passesPair(hv) || { made: numVal(hv), total: 0, pct: null };
+            const ap = passesPair(av) || { made: numVal(av), total: 0, pct: null };
+            data.passes = { home: hp, away: ap };
+          }
+          else if (n.includes('fouls'))            data.fouls             = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('offsides'))         data.offsides          = { home: numVal(hv), away: numVal(av) };
           else if (n.includes('yellow card')) {
             if (!data.cards) data.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
-            data.cards.home_yellow = item.homeValue??0; data.cards.away_yellow = item.awayValue??0;
+            data.cards.home_yellow = numVal(hv); data.cards.away_yellow = numVal(av);
           } else if (n.includes('red card')) {
             if (!data.cards) data.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
-            data.cards.home_red = item.homeValue??0; data.cards.away_red = item.awayValue??0;
+            data.cards.home_red = numVal(hv); data.cards.away_red = numVal(av);
           }
         }
       }
@@ -14497,7 +14777,7 @@ async function enrichMatchWithSofaLiveStats(match) {
 
     if (Object.keys(data).length > 0) {
       _sofaLiveStatsCache[cacheKey] = { ts: Date.now(), data };
-      applyLiveStats(match, data);
+      if (!skipApply) applyLiveStats(match, data);
       console.log(`  [SofaLive] event ${sofaEventId}: ${Object.keys(data).join(', ')}`);
     }
     return Object.keys(data).length > 0 ? data : null;
@@ -14599,16 +14879,37 @@ async function pollLiveScores() {
             patches.push(m);
         }
 
-        // Enrichissement Sofascore pour chaque match live (stats + xG + momentum)
+        // Double routing live stats : BSD primary → Sofa fills gaps
         const liveNow = db.matches.filter(m => m.live_score && parseInt(m.live_minute||0) > 0 && parseInt(m.live_minute||0) < 130);
-        await Promise.allSettled(liveNow.map(m => enrichMatchWithSofaLiveStats(m)));
 
-        // v9.8.8 — Record momentum snapshot pour CHAQUE match live (indépendant des modals ouvertes)
-        // Permet aux users qui ouvrent le modal à mi-match d'avoir un historique pré-rempli
-        for (const m of liveNow) {
+        // Loop unique : fetch BSD detail + extract → Sofa enrich gaps → record snapshots
+        await Promise.allSettled(liveNow.map(async m => {
           try {
+            // L1 BSD primary : detail + extraction Sofa-shape
             const detail = m._bsd_event_id ? await fetchBSDEventDetail(m._bsd_event_id) : null;
             const sr = detail?.sr_stats || null;
+            const bsdData = extractBSDLiveStats(detail, sr);
+            const bsdFields = Object.keys(bsdData);
+
+            // L2 Sofa fallback : enrich uniquement champs manquants BSD
+            let sofaData = null;
+            try { sofaData = await enrichMatchWithSofaLiveStats(m, { skipApply: true }); } catch {}
+
+            // Merge BSD primary (priority) + Sofa secondary (fills gaps)
+            const merged = mergeLiveStatsData(bsdData, sofaData || {});
+            if (Object.keys(merged).length > 0) {
+              applyLiveStats(m, merged);
+              if (bsdFields.length && sofaData) {
+                const sofaOnlyFields = Object.keys(sofaData).filter(k => !bsdFields.includes(k));
+                if (sofaOnlyFields.length) console.log(`  [LiveDualRoute] match ${m.id} BSD:${bsdFields.length} fields + Sofa fills:${sofaOnlyFields.join(',')}`);
+              } else if (bsdFields.length) {
+                console.log(`  [LiveDualRoute] match ${m.id} BSD only:${bsdFields.length} fields`);
+              } else if (sofaData) {
+                console.log(`  [LiveDualRoute] match ${m.id} Sofa only:${Object.keys(sofaData).length} fields (BSD empty)`);
+              }
+            }
+
+            // Snapshots momentum/xG/pressure (indépendant)
             const minute = parseInt(detail?.current_minute ?? m.live_minute ?? 0) || 0;
             if (minute) {
               recordLiveMomentumSnapshot(m.id, minute, sr, m);
@@ -14619,7 +14920,7 @@ async function pollLiveScores() {
               if (pi) recordLivePressureSnapshot(m.id, minute, pi);
             }
           } catch (e) { /* skip individual match errors */ }
-        }
+        }));
 
         if (patches.length > 0 || liveNow.length > 0) {
             saveDB();
@@ -14633,9 +14934,22 @@ async function pollLiveScores() {
                 live_possession:       m.live_possession,
                 live_shots:            m.live_shots,
                 live_shots_on_target:  m.live_shots_on_target,
+                live_shots_off_target: m.live_shots_off_target,
+                live_shots_blocked:    m.live_shots_blocked,
+                live_shots_inside_box: m.live_shots_inside_box,
+                live_shots_outside_box:m.live_shots_outside_box,
+                live_shots_woodwork:   m.live_shots_woodwork,
+                live_big_chances:      m.live_big_chances,
+                live_big_chances_scored: m.live_big_chances_scored,
+                live_big_chances_missed: m.live_big_chances_missed,
+                live_touches_opp_box:  m.live_touches_opp_box,
                 live_corners:          m.live_corners,
                 live_dangerous_attacks:m.live_dangerous_attacks,
                 live_xg:               m.live_xg,
+                live_xgot:             m.live_xgot,
+                live_passes:           m.live_passes,
+                live_fouls:            m.live_fouls,
+                live_offsides:         m.live_offsides,
                 live_cards:            m.live_cards,
                 live_momentum:         m.live_momentum,
                 live_stats:            m.live_stats,
@@ -14688,6 +15002,8 @@ loadDB();
 backfillMatchForms();
 loadHistory();
 loadAICache();
+loadAdvancedFBrefStats();
+setInterval(maybeReloadFBrefStats, 3600 * 1000);
 
 //const PORT = process.env.PORT || 3000;
 server.on('error', err => {

@@ -1,0 +1,2 @@
+# Cible des dumps JSON produits par scripts/scrape_advanced_stats.py.
+# Files .json générés via cron nightly (Pattern B). Voir scripts/README-fbref-cron.md.

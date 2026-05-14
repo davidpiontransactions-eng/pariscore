@@ -1,0 +1,16 @@
+{
+  "season": "2025-2026",
+  "started_at": "2026-05-14T13:29:28.549935+00:00",
+  "leagues": [
+    {
+      "league": "ENG-Premier League",
+      "slug": "en_premier_league",
+      "file": "en_premier_league_2025-2026.json",
+      "size_bytes": 73339,
+      "status": "ok"
+    }
+  ],
+  "finished_at": "2026-05-14T13:31:09.253012+00:00",
+  "successes": 1,
+  "total": 1
+}
