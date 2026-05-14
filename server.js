@@ -1267,6 +1267,14 @@ const BSD_CONFIG_TO_BSD = bsdConfig.mapping?.config_to_bsd || {};
 const BSD_BSD_TO_CONFIG = bsdConfig.mapping?.bsd_to_config || {};
 const BSD_FALLBACK_NEEDED = bsdConfig.mapping?.fallback_needed || [];
 
+// ─── BSD Tennis (Sports Addon $5/mo) ─────────────────────────────────────────
+// /tennis/api/v2/* = REST · /tennis/mcp/ = JSON-RPC MCP server pour clients LLM.
+// Flag par défaut OFF — passer BSD_TENNIS_ENABLED=true dans .env après souscription.
+const BSD_TENNIS_ENABLED = String(process.env.BSD_TENNIS_ENABLED || 'false').toLowerCase() === 'true';
+const BSD_TENNIS_BASE = 'https://sports.bzzoiro.com/tennis';
+const BSD_TENNIS_MCP_URL = 'https://sports.bzzoiro.com/tennis/mcp/';
+const BSD_TENNIS_UPGRADE_URL = 'https://sports.bzzoiro.com/pricing/';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TV BROADCASTERS — Routing externe (Sportmonks / TheSportsDB) + static fallback
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2040,6 +2048,40 @@ async function bsdFetch(endpoint, retries = 2) {
       }
       return res;
     } catch (e) {
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+// ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
+// Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
+// pour renvoyer 402 propre au frontend (pas un crash).
+async function bsdTennisFetch(pathSuffix, retries = 2) {
+  const url = `${BSD_TENNIS_BASE}${pathSuffix}`;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await httpsGet(url, { 'Authorization': `Token ${BSD_API_KEY}` });
+      if (res && res.status === 402) {
+        const code = (res.data && (res.data.code || res.data.error)) || '';
+        if (String(code).toLowerCase().includes('addon')) {
+          const err = new Error('Sports Addon required');
+          err.code = 'ADDON_REQUIRED';
+          err.upgradeUrl = BSD_TENNIS_UPGRADE_URL;
+          throw err;
+        }
+      }
+      if (res && res.status === 200) return res;
+      if (attempt < retries && res && (res.status >= 500 || res.status === 429)) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      if (e && e.code === 'ADDON_REQUIRED') throw e;
       if (attempt < retries) {
         await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         continue;
@@ -12776,6 +12818,106 @@ if (pathname.startsWith('/api/v1/corners/') && req.method === 'GET') {
     return jsonResponse(res, 400, { error: 'matchId invalide' });
   }
   return handleCornersRoute(res, matchId);
+}
+
+// ─── BSD Tennis — REST proxy + MCP passthrough ($5/mo Sports Addon) ─────────
+// Flag BSD_TENNIS_ENABLED gate sans appel réseau. 402 BSD → 402 propre côté UI.
+async function handleTennisBSD(pathSuffix, cacheKey, ttlMs) {
+  if (!BSD_TENNIS_ENABLED) {
+    return { status: 503, body: { error: 'tennis_bsd_disabled', fallback: 'espn', detail: 'BSD_TENNIS_ENABLED=false' } };
+  }
+  if (ttlMs > 0 && cacheKey) {
+    const cached = apiCacheGet(cacheKey);
+    if (cached) return { status: 200, body: cached, cache: 'hit' };
+  }
+  try {
+    const r = await bsdTennisFetch(pathSuffix);
+    if (!r) return { status: 502, body: { error: 'bsd_upstream_error', detail: 'empty response' } };
+    if (r.status === 200) {
+      if (ttlMs > 0 && cacheKey) apiCacheSet(cacheKey, r.data, 'bsd_tennis', ttlMs);
+      return { status: 200, body: r.data, cache: 'miss' };
+    }
+    return { status: r.status || 502, body: { error: 'bsd_upstream_error', upstream_status: r.status, detail: r.data } };
+  } catch (e) {
+    if (e && e.code === 'ADDON_REQUIRED') {
+      return { status: 402, body: { error: 'addon_required', upgrade_url: e.upgradeUrl, detail: e.message } };
+    }
+    return { status: 502, body: { error: 'bsd_upstream_error', detail: e.message || String(e) } };
+  }
+}
+
+if (pathname === '/api/v1/tennis/live' && req.method === 'GET') {
+  const out = await handleTennisBSD('/api/v2/matches/live/', null, 0);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname === '/api/v1/tennis/matches' && req.method === 'GET') {
+  const dateParam = String(query.date || '').replace(/[^0-9-]/g, '').slice(0, 10);
+  const suffix = dateParam ? `/api/v2/matches/?date=${encodeURIComponent(dateParam)}` : '/api/v2/matches/';
+  const ck = `bsd_tennis_matches_${dateParam || 'today'}`;
+  const out = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname === '/api/v1/tennis/rankings' && req.method === 'GET') {
+  const tour = ['ATP','WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : '';
+  const suffix = tour ? `/api/v2/rankings/?tour=${tour}` : '/api/v2/rankings/';
+  const ck = `bsd_tennis_rankings_${tour || 'all'}`;
+  const out = await handleTennisBSD(suffix, ck, 6 * 3600 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname === '/api/v1/tennis/tournaments' && req.method === 'GET') {
+  const out = await handleTennisBSD('/api/v2/tournaments/', 'bsd_tennis_tournaments', 6 * 3600 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname.startsWith('/api/v1/tennis/match/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/match/'.length));
+  if (!matchId || !/^[A-Za-z0-9_-]+$/.test(matchId)) {
+    return jsonResponse(res, 400, { error: 'invalid_match_id' });
+  }
+  const out = await handleTennisBSD(`/api/v2/matches/${encodeURIComponent(matchId)}/`, `bsd_tennis_match_${matchId}`, 5 * 60 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname.startsWith('/api/v1/tennis/players/') && req.method === 'GET') {
+  const playerId = decodeURIComponent(pathname.slice('/api/v1/tennis/players/'.length));
+  if (!playerId || !/^[A-Za-z0-9_-]+$/.test(playerId)) {
+    return jsonResponse(res, 400, { error: 'invalid_player_id' });
+  }
+  const out = await handleTennisBSD(`/api/v2/players/${encodeURIComponent(playerId)}/`, `bsd_tennis_player_${playerId}`, 3600 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/predictions/'.length));
+  if (!matchId || !/^[A-Za-z0-9_-]+$/.test(matchId)) {
+    return jsonResponse(res, 400, { error: 'invalid_match_id' });
+  }
+  const out = await handleTennisBSD(`/api/v2/predictions/${encodeURIComponent(matchId)}/`, `bsd_tennis_pred_${matchId}`, 5 * 60 * 1000);
+  return jsonResponse(res, out.status, out.body);
+}
+if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
+  if (!BSD_TENNIS_ENABLED) {
+    return jsonResponse(res, 503, { error: 'tennis_bsd_disabled', fallback: 'espn' });
+  }
+  try {
+    const raw = await readBodyLimited(req, 1024 * 1024);
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch { return jsonResponse(res, 400, { error: 'invalid_json' }); }
+    const upstream = await httpsPost(BSD_TENNIS_MCP_URL, parsed, {
+      'Authorization': `Token ${BSD_API_KEY}`,
+      'Accept': 'application/json'
+    });
+    if (upstream.status === 402) {
+      const code = (upstream.data && (upstream.data.code || upstream.data.error)) || '';
+      if (String(code).toLowerCase().includes('addon')) {
+        return jsonResponse(res, 402, { error: 'addon_required', upgrade_url: BSD_TENNIS_UPGRADE_URL });
+      }
+    }
+    return jsonResponse(res, upstream.status || 502, upstream.data ?? { error: 'empty_upstream' });
+  } catch (e) {
+    if (String(e.message || '').includes('Payload trop volumineux')) {
+      return jsonResponse(res, 413, { error: 'payload_too_large' });
+    }
+    return jsonResponse(res, 502, { error: 'bsd_upstream_error', detail: e.message || String(e) });
+  }
 }
 
 // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)

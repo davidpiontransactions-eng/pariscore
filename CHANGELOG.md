@@ -2,6 +2,83 @@
 
 ---
 
+## [v10.3] — 2026-05-14
+
+### Ajouté — Tennis BSD (REST proxy + MCP passthrough + fallback ESPN)
+
+**Découverte source**
+- `/tennis/mcp/` = serveur Model Context Protocol JSON-RPC pour clients LLM (Claude Desktop, ChatGPT, Gemini) — pas un flux REST de données.
+- Vraies routes REST tennis BSD : `/tennis/api/v2/matches/` `/matches/live/` `/players/` `/rankings/` `/tournaments/` `/predictions/`.
+- Gating : Sports Addon $5/mo. Probe HTTP 402 `{"code":"addon_required"}`.
+
+**Backend (server.js)**
+- Constantes `BSD_TENNIS_ENABLED` (flag env, défaut OFF), `BSD_TENNIS_BASE`, `BSD_TENNIS_MCP_URL`, `BSD_TENNIS_UPGRADE_URL`.
+- Helper `bsdTennisFetch(pathSuffix, retries=2)` — GET authentifié (`Authorization: Token …`) avec retry exponentiel et mapping `402 addon_required` → throw `ADDON_REQUIRED`.
+- Wrapper `handleTennisBSD(suffix, cacheKey, ttlMs)` : gate 503 si flag OFF, cache via `apiCacheGet/Set`, mapping erreurs (402 addon, 502 upstream).
+- 7 routes proxy REST + 1 passthrough MCP :
+  - `GET /api/v1/tennis/live` (no cache)
+  - `GET /api/v1/tennis/matches?date=YYYY-MM-DD` (TTL 30 min)
+  - `GET /api/v1/tennis/match/:id` (TTL 5 min, ID validé `[A-Za-z0-9_-]+`)
+  - `GET /api/v1/tennis/rankings?tour=ATP|WTA` (TTL 6h)
+  - `GET /api/v1/tennis/tournaments` (TTL 6h)
+  - `GET /api/v1/tennis/players/:id` (TTL 1h, ID validé)
+  - `GET /api/v1/tennis/predictions/:id` (TTL 5 min, ID validé)
+  - `POST /api/v1/tennis/mcp` — passthrough JSON-RPC brut vers `/tennis/mcp/`, body `readBodyLimited` 1 Mo.
+- Path traversal/injection bloqué : regex `/^[A-Za-z0-9_-]+$/` sur match/player IDs → 400 `invalid_match_id`/`invalid_player_id` avant tout appel BSD.
+
+**Frontend (pariscore.html)**
+- Nouveau modal `#tennis-detail-modal` (backdrop blur, animation slide-in, close button) + ~30 lignes CSS dédiées.
+- Fonctions `openTennisDetail(matchId)`, `closeTennisDetail()`, `renderTennisDashboard(data, preds)`, `_fetchAndRenderTennisDetail(id)`.
+- Polling 30 s automatique tant que modal ouverte, cleared à la fermeture (`_tennisDetailInterval`).
+- Dashboard rendu : header (joueurs + ranks + tournoi/round/surface), tableau sets-by-sets, grille serve stats (aces, double fautes, % 1er svc, breakpoints), barre ML prédiction (player1 vs player2 win %), timeline point-by-point (30 derniers).
+- États 503/402 : CTA upgrade vers `https://sports.bzzoiro.com/pricing/`.
+- `renderTennisLive` : lignes clickables (`tennis-row-clickable` + `onclick="openTennisDetail(id)"`) → ouvre modal détail BSD au clic.
+
+**Configuration**
+- Variable env `BSD_TENNIS_ENABLED=false` par défaut — passer à `true` après souscription addon.
+
+**Vérifications réalisées**
+- `node --check server.js` — OK.
+- Toutes routes BSD avec flag OFF → 503 `{"error":"tennis_bsd_disabled","fallback":"espn"}` (7 REST + MCP POST).
+- Path traversal `/api/v1/tennis/match/..%2F..%2Fetc%2Fpasswd` → 400 `invalid_match_id` (regex guard antérieur au call BSD).
+- UI : `openTennisDetail('abc123')` → modal s'ouvre, affiche état "Détail BSD désactivé" + CTA addon. `closeTennisDetail()` → interval purgé, `display:none`.
+
+---
+
+## [v10.2] — 2026-05-14
+
+### Ajouté — Tennis live (ESPN ATP+WTA) — onglet dédié + route isolée
+
+**Backend (server.js)**
+- Nouvelle route `GET /tennis/api/v2/matches/live/` — retourne tableau JSON normalisé (player1/player2/player1_sets/player2_sets/current_point) + extensions `sets[]`, `current_set_index`, `status`, `tournament`, `court`, `tour`, `serving`, `is_live`, drapeaux pays.
+- Source : ESPN public scoreboard ATP + WTA (`site.api.espn.com/.../tennis/{atp,wta}/scoreboard`) — zéro clé API.
+- Helpers `fetchESPNTennisLive`, `_normalizeESPNTennisCompetition`, `_tennisStateLabel` + cache module `_tennisLiveCache` (TTL 30 s, mutex `_isFetchingTennis`).
+- Poll dédié `pollTennisLive()` toutes les 30 s + bootstrap au boot, indépendant de `pollLiveScores` football.
+- Dispatcher d'API étendu pour router `/tennis/*` vers `handleAPI()` (ajout `pathname.startsWith('/tennis/')`).
+- Filtre `?live=true` côté route pour ne renvoyer que les compétitions ESPN en état `in`.
+- Isolation totale : aucun match tennis n'entre dans `db.matches`, `buildMatchRecord`, Poisson, edge, Football-Data, ou TheSportsDB. `/api/v1/matches?league=tennis` reste `[]`.
+
+**Frontend (pariscore.html)**
+- Nouvel onglet `🎾 Tennis` dans la barre de navigation principale.
+- Page dédiée `#page-tennis` avec table `#tennis-live-table` (colonnes : Tournoi · Tour · Joueur 1 · Joueur 2 · Sets · Jeux · Point · Statut).
+- Renderer `renderTennisLive` + format `formatTennisScore` (`sets | jeux | point`, ex. `1-1 | 4-3 | 40-40` quand disponible — point ESPN public non livré, dégradé `—`).
+- Poll client `tickTennisLive()` toutes les 30 s, `startTennisLive` / `stopTennisLive` montés/démontés via `showPage('tennis')`.
+- Toggle "Live uniquement" (coché par défaut), bouton 🔄 Actualiser, indicateur d'horodatage live.
+- Styles : drapeau pays 18×12 px, vert sur joueur au service (`serving=1|2`), statut LIVE en rouge.
+
+**Vérifications réalisées**
+- `node -c server.js` — OK.
+- `curl /tennis/api/v2/matches/live/` — JSON array conforme, 5 matchs en direct détectés (Internazionali BNL d'Italia, Parma Ladies Open).
+- UI : tab 🎾 Tennis charge 5 lignes en direct, format Sets/Jeux/Point conforme, polling 30 s actif.
+- `/api/v1/matches?league=tennis` → `{count:0}` (isolation confirmée).
+- Aucune erreur console, aucune régression sur l'onglet Matchs.
+
+**Notes ESPN public scoreboard**
+- Point en cours (`40-40`) non disponible en API publique gratuite → frontend affiche `—`. Pour le point live il faudrait `summary?event={id}` ou un partenariat data.
+- ESPN agrège ATP+WTA ; doublons rares possibles si même rencontre exposée sur les deux scoreboards. Filtrage future ID-based si problème.
+
+---
+
 ## [v9.8.1] — 2026-05-12
 
 ### Ajouté — Mes Paris : Plan 20%/jour + Import CSV sécurisé + Sport + Bookmakers ANJ

@@ -5810,6 +5810,17 @@
       </table>
     </div>
   </section>
+
+  <!-- Modal détail tennis (BSD augmenté — Sports Addon $5/mo) -->
+  <div id="tennis-detail-modal" class="tennis-modal" style="display:none;">
+    <div class="tennis-modal-backdrop" onclick="closeTennisDetail()"></div>
+    <div class="tennis-modal-card" role="dialog" aria-modal="true" aria-labelledby="tennis-detail-title">
+      <button class="tennis-modal-close" onclick="closeTennisDetail()" aria-label="Fermer">✕</button>
+      <div id="tennis-detail-body">
+        <div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>
+      </div>
+    </div>
+  </div>
 </div><!-- /page-tennis -->
 
 <style>
@@ -5827,6 +5838,42 @@
   #tennis-live-table .tennis-tour-wta { background:rgba(236,72,153,0.18); color:#ec4899; border:1px solid rgba(236,72,153,0.4); }
   #tennis-live-table .tennis-tour-mixed { background:rgba(245,158,11,0.18); color:var(--amber,#ffa726); border:1px solid rgba(245,158,11,0.4); }
   #tennis-live-table .tennis-discipline { display:block; font-size:10px; color:var(--text3,#5a6068); font-family:'Instrument Sans',sans-serif; margin-top:2px; }
+  #tennis-live-table tr.tennis-row-clickable { cursor:pointer; }
+  #tennis-live-table tr.tennis-row-clickable:hover { background:var(--bg3,#181c20); }
+  /* Modal détail tennis (BSD) */
+  .tennis-modal { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; }
+  .tennis-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); }
+  .tennis-modal-card { position:relative; background:var(--bg2,#111417); border:1px solid var(--bg4,#1e2328); border-radius:12px; width:min(960px, 94vw); max-height:88vh; overflow-y:auto; padding:24px 28px; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:tennisModalIn 220ms ease-out; }
+  @keyframes tennisModalIn { from { opacity:0; transform:translateY(8px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+  .tennis-modal-close { position:absolute; top:12px; right:14px; width:32px; height:32px; border-radius:50%; border:1px solid var(--bg4,#1e2328); background:var(--bg3,#181c20); color:var(--text,#e8eaed); cursor:pointer; font-size:14px; }
+  .tennis-modal-close:hover { background:var(--red,#ff4d4d); color:#fff; }
+  .tennis-detail-header { display:flex; align-items:center; gap:16px; padding-bottom:16px; border-bottom:1px solid var(--bg4,#1e2328); margin-bottom:16px; }
+  .tennis-detail-versus { display:flex; align-items:center; gap:12px; flex:1; }
+  .tennis-detail-player { display:flex; flex-direction:column; gap:4px; }
+  .tennis-detail-player .tp-name { font-family:Syne,sans-serif; font-weight:800; font-size:20px; color:var(--text,#e8eaed); }
+  .tennis-detail-player .tp-rank { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); }
+  .tennis-detail-meta { font-family:'DM Mono',monospace; font-size:12px; color:var(--text2,#8d9399); display:flex; gap:10px; flex-wrap:wrap; }
+  .tennis-sets-table { width:100%; border-collapse:collapse; margin:12px 0; }
+  .tennis-sets-table th, .tennis-sets-table td { padding:8px 10px; border-bottom:1px solid var(--bg4,#1e2328); font-family:'DM Mono',monospace; font-size:13px; text-align:center; }
+  .tennis-sets-table th { color:var(--text3,#5a6068); font-weight:500; font-size:11px; }
+  .tennis-sets-table .ts-player { text-align:left; color:var(--text,#e8eaed); font-weight:600; }
+  .tennis-sets-table .ts-winner { color:var(--green,#00e676); font-weight:700; }
+  .tennis-serve-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+  .tennis-serve-card { background:var(--bg3,#181c20); border:1px solid var(--bg4,#1e2328); border-radius:8px; padding:12px 14px; }
+  .tennis-serve-card h4 { margin:0 0 8px; font-family:Syne,sans-serif; font-size:14px; color:var(--blue,#29b6f6); }
+  .tennis-serve-row { display:flex; justify-content:space-between; padding:4px 0; font-family:'DM Mono',monospace; font-size:12px; }
+  .tennis-serve-row .tsr-label { color:var(--text3,#5a6068); }
+  .tennis-serve-row .tsr-value { color:var(--text,#e8eaed); }
+  .tennis-pred-bar { position:relative; height:28px; background:var(--bg3,#181c20); border-radius:14px; overflow:hidden; margin:8px 0; }
+  .tennis-pred-bar .tpb-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, var(--blue,#29b6f6), var(--green,#00e676)); transition:width 400ms ease; }
+  .tennis-pred-bar .tpb-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; padding:0 12px; font-family:'DM Mono',monospace; font-size:12px; color:#fff; }
+  .tennis-pbp { max-height:240px; overflow-y:auto; background:var(--bg3,#181c20); border:1px solid var(--bg4,#1e2328); border-radius:8px; padding:10px 14px; font-family:'DM Mono',monospace; font-size:12px; }
+  .tennis-pbp-row { padding:4px 0; border-bottom:1px dashed rgba(255,255,255,0.04); display:flex; gap:10px; }
+  .tennis-pbp-row:last-child { border-bottom:none; }
+  .tennis-detail-section h3 { font-family:Syne,sans-serif; font-size:14px; color:var(--text2,#8d9399); text-transform:uppercase; letter-spacing:0.6px; margin:16px 0 8px; }
+  .tennis-empty-state { text-align:center; padding:32px; color:var(--text3,#5a6068); font-size:13px; }
+  .tennis-upgrade-cta { display:inline-block; margin-top:12px; padding:10px 18px; background:var(--green,#00e676); color:#0a0d0f; border-radius:6px; font-family:Syne,sans-serif; font-weight:800; text-decoration:none; font-size:13px; }
+  .tennis-upgrade-cta:hover { background:#22c55e; }
 </style>
 
 <!-- PAGE : TARIFS -->
@@ -6998,7 +7045,8 @@ function renderTennisLive(matches) {
     const tour = String(m.tour || '').toUpperCase();
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';
-    return `<tr>
+    const safeId = _escTennis(String(m.id ?? ''));
+    return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" onclick="openTennisDetail('${safeId}')" title="Voir détail BSD (point-par-point, serve stats, ML pred)">
       <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}</td>
       <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
       <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}</td>
@@ -7039,6 +7087,173 @@ function startTennisLive() {
 
 function stopTennisLive() {
   if (_tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
+}
+
+// ─── Modal détail tennis (BSD augmenté — Sports Addon) ────────────────────
+let _tennisDetailInterval = null;
+let _tennisDetailCurrentId = null;
+
+async function openTennisDetail(matchId) {
+  if (!matchId) return;
+  _tennisDetailCurrentId = String(matchId);
+  const modal = document.getElementById('tennis-detail-modal');
+  const body = document.getElementById('tennis-detail-body');
+  if (!modal || !body) return;
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">Chargement détail…</div>';
+  await _fetchAndRenderTennisDetail(_tennisDetailCurrentId);
+  if (_tennisDetailInterval) clearInterval(_tennisDetailInterval);
+  _tennisDetailInterval = setInterval(() => {
+    if (_tennisDetailCurrentId) _fetchAndRenderTennisDetail(_tennisDetailCurrentId);
+  }, 30 * 1000);
+}
+
+function closeTennisDetail() {
+  const modal = document.getElementById('tennis-detail-modal');
+  if (modal) modal.style.display = 'none';
+  if (_tennisDetailInterval) { clearInterval(_tennisDetailInterval); _tennisDetailInterval = null; }
+  _tennisDetailCurrentId = null;
+}
+
+async function _fetchAndRenderTennisDetail(matchId) {
+  const body = document.getElementById('tennis-detail-body');
+  if (!body) return;
+  try {
+    const [matchRes, predRes] = await Promise.all([
+      fetch(`/api/v1/tennis/match/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } }),
+      fetch(`/api/v1/tennis/predictions/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } })
+    ]);
+    if (matchRes.status === 503) {
+      body.innerHTML = `<div class="tennis-empty-state">
+        <div style="font-size:32px;margin-bottom:8px;">🚧</div>
+        <div><strong>Détail BSD désactivé</strong></div>
+        <div style="margin-top:6px;">La liste live ESPN reste disponible. Pour activer le détail point-par-point, définir <code>BSD_TENNIS_ENABLED=true</code> et souscrire au Sports Addon.</div>
+        <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener">Voir l'addon $5/mo</a>
+      </div>`;
+      return;
+    }
+    if (matchRes.status === 402) {
+      body.innerHTML = `<div class="tennis-empty-state">
+        <div style="font-size:32px;margin-bottom:8px;">🎾</div>
+        <div><strong>Sports Addon requis</strong></div>
+        <div style="margin-top:6px;">Les détails tennis BSD (point-par-point, serve stats, ML predictions) nécessitent l'addon $5/mo.</div>
+        <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener">Souscrire</a>
+      </div>`;
+      return;
+    }
+    if (!matchRes.ok) {
+      body.innerHTML = `<div class="tennis-empty-state">Erreur ${matchRes.status} — flux BSD indisponible.</div>`;
+      return;
+    }
+    const matchData = await matchRes.json();
+    const predData = predRes.ok ? await predRes.json().catch(() => null) : null;
+    body.innerHTML = renderTennisDashboard(matchData, predData);
+  } catch (e) {
+    body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>`;
+  }
+}
+
+function renderTennisDashboard(data, preds) {
+  if (!data || typeof data !== 'object') {
+    return '<div class="tennis-empty-state">Réponse vide.</div>';
+  }
+  const p1 = data.player1 || data.home_player || data.players?.[0] || {};
+  const p2 = data.player2 || data.away_player || data.players?.[1] || {};
+  const p1Name = p1.name || p1.full_name || '—';
+  const p2Name = p2.name || p2.full_name || '—';
+  const p1Rank = p1.rank || p1.ranking ? `Rank #${p1.rank || p1.ranking}` : '';
+  const p2Rank = p2.rank || p2.ranking ? `Rank #${p2.rank || p2.ranking}` : '';
+  const tournament = data.tournament?.name || data.tournament || '—';
+  const round = data.round?.name || data.round || '';
+  const surface = data.surface || data.tournament?.surface || '';
+  const status = data.status || data.match_status || '';
+
+  // Sets
+  const sets = Array.isArray(data.sets) ? data.sets : [];
+  const setsHtml = sets.length ? `
+    <table class="tennis-sets-table">
+      <thead><tr><th>Joueur</th>${sets.map((_, i) => `<th>Set ${i+1}</th>`).join('')}<th>Total</th></tr></thead>
+      <tbody>
+        <tr><td class="ts-player">${_escTennis(p1Name)}</td>${sets.map(s => `<td class="${s.p1_winner ? 'ts-winner' : ''}">${_escTennis(String(s.p1 ?? '-'))}</td>`).join('')}<td class="ts-winner">${_escTennis(String(data.player1_sets ?? sets.filter(s => s.p1_winner).length))}</td></tr>
+        <tr><td class="ts-player">${_escTennis(p2Name)}</td>${sets.map(s => `<td class="${s.p2_winner ? 'ts-winner' : ''}">${_escTennis(String(s.p2 ?? '-'))}</td>`).join('')}<td class="ts-winner">${_escTennis(String(data.player2_sets ?? sets.filter(s => s.p2_winner).length))}</td></tr>
+      </tbody>
+    </table>` : '<div style="color:var(--text3,#5a6068);font-size:12px;padding:8px 0;">Aucun set enregistré.</div>';
+
+  // Serve stats
+  const serve1 = data.serve_stats?.player1 || data.statistics?.player1 || {};
+  const serve2 = data.serve_stats?.player2 || data.statistics?.player2 || {};
+  const serveRows = [
+    ['Aces', 'aces'],
+    ['Double fautes', 'double_faults'],
+    ['1er service %', 'first_serve_pct'],
+    ['% pts gagnés 1er svc', 'first_serve_won_pct'],
+    ['% pts gagnés 2nd svc', 'second_serve_won_pct'],
+    ['Breakpoints sauvés', 'break_points_saved'],
+    ['Breakpoints convertis', 'break_points_converted']
+  ];
+  const renderServeCard = (player, stats) => `
+    <div class="tennis-serve-card">
+      <h4>${_escTennis(player)}</h4>
+      ${serveRows.map(([label, key]) => {
+        const v = stats[key];
+        const display = v == null ? '—' : (typeof v === 'number' && /pct/.test(key) ? v + '%' : String(v));
+        return `<div class="tennis-serve-row"><span class="tsr-label">${_escTennis(label)}</span><span class="tsr-value">${_escTennis(display)}</span></div>`;
+      }).join('')}
+    </div>`;
+
+  // ML predictions
+  let predHtml = '';
+  if (preds && (preds.player1_win_prob != null || preds.predictions)) {
+    const p1Prob = Number(preds.player1_win_prob ?? preds.predictions?.player1_win ?? 0);
+    const p2Prob = Number(preds.player2_win_prob ?? preds.predictions?.player2_win ?? (1 - p1Prob));
+    const p1Pct = Math.round(p1Prob * (p1Prob > 1 ? 1 : 100));
+    const p2Pct = Math.round(p2Prob * (p2Prob > 1 ? 1 : 100));
+    predHtml = `
+      <div class="tennis-detail-section">
+        <h3>🤖 Prédiction ML</h3>
+        <div class="tennis-pred-bar">
+          <div class="tpb-fill" style="width:${p1Pct}%;"></div>
+          <div class="tpb-label"><span>${_escTennis(p1Name)} · ${p1Pct}%</span><span>${p2Pct}% · ${_escTennis(p2Name)}</span></div>
+        </div>
+        ${preds.confidence ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);">Confiance modèle : ${_escTennis(String(preds.confidence))}</div>` : ''}
+      </div>`;
+  }
+
+  // Point-by-point
+  const pbp = Array.isArray(data.point_by_point) ? data.point_by_point.slice(-30).reverse() : [];
+  const pbpHtml = pbp.length ? `
+    <div class="tennis-detail-section">
+      <h3>🎯 Derniers points</h3>
+      <div class="tennis-pbp">
+        ${pbp.map(p => `<div class="tennis-pbp-row"><span style="color:var(--blue,#29b6f6);">${_escTennis(p.set_number || '')}.${_escTennis(p.game_number || '')}</span><span>${_escTennis(p.description || p.point_winner || '')}</span><span style="margin-left:auto;color:var(--text3,#5a6068);">${_escTennis(p.score || '')}</span></div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const metaBits = [tournament, round, surface, status].filter(Boolean).map(_escTennis);
+  return `
+    <div class="tennis-detail-header">
+      <div class="tennis-detail-versus">
+        <div class="tennis-detail-player">
+          <span class="tp-name" id="tennis-detail-title">${_escTennis(p1Name)} <span style="color:var(--text3,#5a6068);font-size:14px;">vs</span> ${_escTennis(p2Name)}</span>
+          <span class="tp-rank">${_escTennis(p1Rank)}${p1Rank && p2Rank ? ' · ' : ''}${_escTennis(p2Rank)}</span>
+        </div>
+      </div>
+      <div class="tennis-detail-meta">${metaBits.map(b => `<span>${b}</span>`).join('')}</div>
+    </div>
+    <div class="tennis-detail-section">
+      <h3>📊 Score par set</h3>
+      ${setsHtml}
+    </div>
+    <div class="tennis-detail-section">
+      <h3>🎾 Service & breakpoints</h3>
+      <div class="tennis-serve-grid">
+        ${renderServeCard(p1Name, serve1)}
+        ${renderServeCard(p2Name, serve2)}
+      </div>
+    </div>
+    ${predHtml}
+    ${pbpHtml}
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);font-size:10px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Source : BSD · Rafraîchi toutes les 30s</div>`;
 }
 
 // ─── INIT DAY FILTERS ────────────────────────────────────────────────────────
