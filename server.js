@@ -11903,6 +11903,158 @@ function _invalidateTennisServeStatsCache() {
   _TENNIS_SERVE_STATS_CACHE.clear();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS BACKTEST (T9) — Model accuracy walk-forward sur tennis_matches.
+//  ATTENTION : Sackmann ne fournit pas d'odds historiques → backtest = ACCURACY
+//  (Brier, log loss, hit rate, breakdown surface). PAS de ROI ici.
+//  Pour ROI il faudrait ingerer OddsPortal closing lines (hors scope T9).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _tennisBacktestRunning = false;
+
+function backtestTennisStrategies({ years_back = 1, min_matches_general = 10, min_matches_surface = 5 } = {}) {
+  if (_tennisBacktestRunning) return { error: 'already_running' };
+  _tennisBacktestRunning = true;
+  const t0 = Date.now();
+  try {
+    _initTennisSackmannSchema();
+    const currentYear = new Date().getUTCFullYear();
+    const cutoffYear = currentYear - years_back;
+    const testYearStart = cutoffYear * 10000; // YYYYMMDD format
+
+    const all = sqldb.prepare(`
+      SELECT tour, surface, tourney_date, winner_id, winner_name, loser_id, loser_name
+      FROM tennis_matches
+      WHERE winner_id IS NOT NULL AND loser_id IS NOT NULL AND tourney_date IS NOT NULL
+      ORDER BY tourney_date ASC, tourney_id ASC, match_num ASC
+    `).all();
+
+    const elos = new Map();
+    const stats = {
+      total_train: 0,
+      total_test: 0,
+      correct: 0,
+      brier_sum: 0,
+      log_loss_sum: 0,
+      by_surface: {},
+      by_tour: {},
+    };
+
+    for (const m of all) {
+      const tour = m.tour;
+      if (!tour) continue;
+      const wId = m.winner_id;
+      const lId = m.loser_id;
+      const surface = m.surface && TENNIS_ELO_SURFACES.includes(m.surface) ? m.surface : null;
+
+      const allKeyW = `${tour}|${wId}|ALL`;
+      const allKeyL = `${tour}|${lId}|ALL`;
+      const allW = elos.get(allKeyW) || { elo: TENNIS_ELO_INITIAL, matches: 0 };
+      const allL = elos.get(allKeyL) || { elo: TENNIS_ELO_INITIAL, matches: 0 };
+
+      let predElo = null;
+      if (allW.matches >= min_matches_general && allL.matches >= min_matches_general) {
+        predElo = _eloExpected(allW.elo, allL.elo);
+      }
+
+      let predSurf = null;
+      let sW = null, sL = null;
+      if (surface) {
+        const sKeyW = `${tour}|${wId}|${surface}`;
+        const sKeyL = `${tour}|${lId}|${surface}`;
+        sW = elos.get(sKeyW) || { elo: TENNIS_ELO_INITIAL, matches: 0 };
+        sL = elos.get(sKeyL) || { elo: TENNIS_ELO_INITIAL, matches: 0 };
+        if (sW.matches >= min_matches_surface && sL.matches >= min_matches_surface) {
+          predSurf = _eloExpected(sW.elo, sL.elo);
+        }
+      }
+
+      // Préfère surface si dispo (cohérent avec _tennisLookupEloPair)
+      const pred = predSurf != null ? predSurf : predElo;
+
+      if (m.tourney_date >= testYearStart) {
+        if (pred != null) {
+          const safe = Math.max(0.001, Math.min(0.999, pred));
+          const err = (1 - safe) * (1 - safe);
+          stats.brier_sum += err;
+          stats.log_loss_sum += -Math.log(safe);
+          if (safe >= 0.5) stats.correct++;
+          stats.total_test++;
+
+          const sKey = surface || 'Unknown';
+          if (!stats.by_surface[sKey]) stats.by_surface[sKey] = { total: 0, correct: 0, brier: 0, logloss: 0 };
+          stats.by_surface[sKey].total++;
+          if (safe >= 0.5) stats.by_surface[sKey].correct++;
+          stats.by_surface[sKey].brier += err;
+          stats.by_surface[sKey].logloss += -Math.log(safe);
+
+          if (!stats.by_tour[tour]) stats.by_tour[tour] = { total: 0, correct: 0, brier: 0, logloss: 0 };
+          stats.by_tour[tour].total++;
+          if (safe >= 0.5) stats.by_tour[tour].correct++;
+          stats.by_tour[tour].brier += err;
+          stats.by_tour[tour].logloss += -Math.log(safe);
+        }
+      } else {
+        stats.total_train++;
+      }
+
+      // Update Elo (after recording test prediction)
+      const allRes = _eloUpdate(allW.elo, allL.elo, TENNIS_ELO_K_GENERAL);
+      elos.set(allKeyW, { elo: allRes.winner, matches: allW.matches + 1 });
+      elos.set(allKeyL, { elo: allRes.loser, matches: allL.matches + 1 });
+      if (surface) {
+        const sRes = _eloUpdate(sW.elo, sL.elo, TENNIS_ELO_K_SURFACE);
+        elos.set(`${tour}|${wId}|${surface}`, { elo: sRes.winner, matches: sW.matches + 1 });
+        elos.set(`${tour}|${lId}|${surface}`, { elo: sRes.loser, matches: sL.matches + 1 });
+      }
+    }
+
+    const result = {
+      years_back,
+      train_year_max: cutoffYear - 1,
+      test_year_start: cutoffYear,
+      test_year_end: currentYear,
+      train_matches: stats.total_train,
+      test_matches: stats.total_test,
+      accuracy: stats.total_test ? parseFloat((stats.correct / stats.total_test).toFixed(4)) : null,
+      brier_score: stats.total_test ? parseFloat((stats.brier_sum / stats.total_test).toFixed(5)) : null,
+      log_loss: stats.total_test ? parseFloat((stats.log_loss_sum / stats.total_test).toFixed(5)) : null,
+      by_surface: {},
+      by_tour: {},
+      method: 'walk_forward_elo',
+      note: 'No ROI : Sackmann manque odds. Brier + accuracy seulement.',
+      elapsed_ms: Date.now() - t0,
+      ts: Date.now(),
+    };
+    for (const [s, st] of Object.entries(stats.by_surface)) {
+      result.by_surface[s] = {
+        total: st.total,
+        accuracy: parseFloat((st.correct / st.total).toFixed(4)),
+        brier_score: parseFloat((st.brier / st.total).toFixed(5)),
+        log_loss: parseFloat((st.logloss / st.total).toFixed(5)),
+      };
+    }
+    for (const [t, st] of Object.entries(stats.by_tour)) {
+      result.by_tour[t] = {
+        total: st.total,
+        accuracy: parseFloat((st.correct / st.total).toFixed(4)),
+        brier_score: parseFloat((st.brier / st.total).toFixed(5)),
+        log_loss: parseFloat((st.logloss / st.total).toFixed(5)),
+      };
+    }
+
+    try { kvSet('tennis_backtest_last', result); } catch (_) { /* swallow */ }
+    console.log(`  [Backtest] ✓ Tennis: ${result.test_matches} test matchs, accuracy ${(result.accuracy * 100).toFixed(1)}%, brier ${result.brier_score} (${result.elapsed_ms} ms)`);
+    return result;
+  } finally {
+    _tennisBacktestRunning = false;
+  }
+}
+
+function getTennisBacktestLast() {
+  try { return kvGet('tennis_backtest_last', null); } catch (_) { return null; }
+}
+
 // Helper : récupère Elo p1+p2 (ALL + surface) + Elo prob. Retourne null si data absente.
 function _tennisLookupEloPair(p1Name, p2Name, tour, surface) {
   if (!p1Name || !p2Name || !tour) return null;
@@ -14289,6 +14441,24 @@ if (pathname === '/api/v1/tennis/elo/top' && req.method === 'GET') {
   } catch (e) {
     return jsonResponse(res, 500, { error: 'tennis_elo_error', detail: e.message });
   }
+}
+// Tennis backtest — admin only. Lance backtest walk-forward Elo sur N années.
+if (pathname === '/api/v1/tennis/backtest' && req.method === 'POST') {
+  const user = requireAuth(req, res, ['admin']);
+  if (!user) return;
+  const yearsBack = Math.max(1, Math.min(5, parseInt(query.years_back, 10) || 1));
+  // Fire-and-forget (synchrone mais peut prendre ~5-10s sur 25k matchs).
+  setTimeout(() => {
+    try { backtestTennisStrategies({ years_back: yearsBack }); }
+    catch (e) { console.warn('[Backtest tennis]', e.message); }
+  }, 10);
+  return jsonResponse(res, 202, { status: 'backtest_started', years_back: yearsBack, check: '/api/v1/tennis/backtest/last' });
+}
+// Tennis backtest — lecture dernier résultat (public, lecture seule).
+if (pathname === '/api/v1/tennis/backtest/last' && req.method === 'GET') {
+  const last = getTennisBacktestLast();
+  if (!last) return jsonResponse(res, 404, { error: 'no_backtest_yet', hint: 'POST /api/v1/tennis/backtest with admin JWT to launch' });
+  return jsonResponse(res, 200, last);
 }
 // Tennis Markov set probs lookup — P(2-0/2-1/0-2/1-2) + holds + SPW.
 if (pathname === '/api/v1/tennis/markov/lookup' && req.method === 'GET') {
