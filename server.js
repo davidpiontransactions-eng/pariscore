@@ -17484,6 +17484,60 @@ if (oddsHistMatch && req.method === 'GET') {
   });
 }
 
+// GET /api/v1/comparateur/feed — Liste matchs style OddsPortal (grille, zéro appel API)
+if (pathname === '/api/v1/comparateur/feed' && req.method === 'GET') {
+  const src = (db.matches && db.matches.length) ? db.matches : (cachedMatches || []);
+  const FIN = new Set(['FINISHED','FT','TERMINE','ENDED','AET','PEN','POSTPONED','CANC','ABD','SUSPENDED','CANCELED','WALKOVER']);
+  const now = Date.now();
+  const sportFamily = (s) => {
+    const v = String(s || '').toLowerCase();
+    if (v.startsWith('tennis') || v.includes('atp') || v.includes('wta')) return 'tennis';
+    if (v.startsWith('basketball') || v.includes('nba')) return 'basketball';
+    return 'football';
+  };
+  const out = [];
+  for (const m of src) {
+    if (!m || !m.commence_time) continue;
+    const st = String(m.status || '').toUpperCase().trim();
+    if (FIN.has(st)) continue;
+    const t = new Date(m.commence_time).getTime();
+    if (isNaN(t) || (now - t) > 4 * 3600 * 1000) continue; // pas les matchs vieux >4h
+    let rows = Array.isArray(m.all_bookmakers) ? m.all_bookmakers.filter(r => r && (r.home || r.away) && !r._fallback) : [];
+    let best1 = null, bestN = null, best2 = null, anj1 = false, nbBooks = rows.length;
+    if (rows.length) {
+      for (const r of rows) {
+        if (r.home && (best1 == null || r.home > best1)) { best1 = r.home; anj1 = !!r.isANJ; }
+        if (r.draw && (bestN == null || r.draw > bestN)) bestN = r.draw;
+        if (r.away && (best2 == null || r.away > best2)) best2 = r.away;
+      }
+    } else if (m.odds && m.odds.home && m.odds.away) {
+      best1 = m.odds.home; bestN = m.odds.draw || null; best2 = m.odds.away;
+      nbBooks = new Set([m.bookmakers?.home, m.bookmakers?.draw, m.bookmakers?.away].filter(Boolean)).size || 1;
+      anj1 = m.bookmakers?.home ? [...ANJ_KEYS_SET].some(a => String(m.bookmakers.home).toLowerCase().includes(a)) : false;
+    }
+    if (!best1 || !best2) continue;
+    const inv = 1 / best1 + (bestN ? 1 / bestN : 0) + 1 / best2;
+    const trj = inv > 0 ? parseFloat((100 / inv).toFixed(1)) : null;
+    const surebet = inv < 1 ? parseFloat(((1 - inv) * 100).toFixed(2)) : null;
+    const valuebet = m.best_edge && m.best_edge.edge != null ? parseFloat(Number(m.best_edge.edge).toFixed(1)) : null;
+    const snap = db.oddsSnapshots && db.oddsSnapshots[m.id];
+    let decote = null;
+    if (snap && snap.home != null && best1 != null) {
+      const d = parseFloat((best1 - snap.home).toFixed(2));
+      if (d < -0.05) decote = d;
+    }
+    out.push({
+      id: m.id, sport: sportFamily(m.sport), sport_raw: m.sport || '',
+      league: m.league || '—', home_team: m.home_team, away_team: m.away_team,
+      commence_time: m.commence_time, best1, bestN, best2, anj1, nbBooks, trj,
+      surebet, valuebet, decote,
+    });
+  }
+  out.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+  const sports = [...new Set(out.map(o => o.sport))];
+  return jsonResponse(res, 200, { count: out.length, sports, matches: out, generated: new Date().toISOString() });
+}
+
 // GET /api/v1/comparateur/:matchId — Comparaison tous bookmakers (données locales, zéro appel API)
 const comparateurMatch = pathname.match(/^\/api\/v1\/comparateur\/([^/?]+)$/);
 if (comparateurMatch && req.method === 'GET') {
