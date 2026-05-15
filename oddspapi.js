@@ -147,6 +147,32 @@ function normalizeToBookmakers(raw, homeTeam, awayTeam) {
   return rows;
 }
 
+// Mapping ligues PariScore → tournamentId OddsPapi (relevé live /tournaments
+// sportId=10 ; IDs partagés natif/RapidAPI). Étendre au besoin.
+const LEAGUE_TOURNAMENTS = {
+  'ligue1': 34, 'frenchligue1': 34, 'soccerfranceligue1': 34,
+  'premierleague': 17, 'epl': 17, 'soccerepl': 17, 'englishpremierleague': 17,
+  'laliga': 8, 'spainlaliga': 8, 'soccerspainlaliga': 8,
+  'bundesliga': 35, 'germanybundesliga': 35, 'soccergermanybundesliga': 35,
+  'seriea': 23, 'italyseriea': 23, 'socceritalyseriea': 23,
+  'championsleague': 7, 'uefachampionsleague': 7, 'socceruefachampsleague': 7,
+  'europaleague': 679, 'uefaeuropaleague': 679, 'socceruefaeuropaleague': 679,
+};
+function resolveTournamentId(match) {
+  if (!match) return null;
+  if (match.oddspapi_tournament_id || match.tournamentId) {
+    return match.oddspapi_tournament_id || match.tournamentId;
+  }
+  for (const v of [match.league, match.sport]) {
+    const k = norm(v);
+    if (!k) continue;
+    if (LEAGUE_TOURNAMENTS[k]) return LEAGUE_TOURNAMENTS[k];
+    const hit = Object.keys(LEAGUE_TOURNAMENTS).find(t => k.includes(t) || t.includes(k));
+    if (hit) return LEAGUE_TOURNAMENTS[hit];
+  }
+  return null;
+}
+
 // Récupère + normalise les cotes OddsPapi pour un match (cache 15 min).
 // Best-effort : toute erreur → [] (le Comparateur garde The Odds API).
 async function fetchMatchRows(match) {
@@ -156,7 +182,7 @@ async function fetchMatchRows(match) {
   if (c && (Date.now() - c.ts) < CACHE_TTL_MS) return c.rows;
   let rows = [];
   try {
-    const tournamentId = match.oddspapi_tournament_id || match.tournamentId;
+    const tournamentId = resolveTournamentId(match);
     let raw;
     if (tournamentId) {
       raw = await getJSON(PATH_ODDS(), { tournamentIds: tournamentId, oddsFormat: 'decimal' });
@@ -185,4 +211,4 @@ function mergeRows(existing, extra) {
   return base;
 }
 
-module.exports = { enabled, getJSON, normalizeToBookmakers, fetchMatchRows, mergeRows, isANJ };
+module.exports = { enabled, getJSON, normalizeToBookmakers, fetchMatchRows, mergeRows, isANJ, resolveTournamentId };
