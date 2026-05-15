@@ -3330,6 +3330,72 @@
   .comp-empty{text-align:center;color:var(--text2);padding:48px 20px;font-style:italic;background:var(--bg2);border-radius:12px}
   .comp-note{font-size:.75rem;color:var(--text3);margin-top:10px;padding:8px 12px;border-left:3px solid var(--bg4);background:var(--bg2);border-radius:0 6px 6px 0}
 
+  /* ── COMPARATEUR v2 — moteur OddsPortal · charte L'Équipe (clair) / dark toggle ── */
+  .comp-root{--cq-red:#D61E00;--cq-black:#1D1D1B;--cq-white:#F8F8F8;--cq-line:#DDDDDD;--cq-zebra:#EEEEEE;--cq-g6:#7B7B7A;--cq-g5:#909090;--cq-green:#1B7A2E;
+    --cq-bg:var(--cq-white);--cq-fg:var(--cq-black);--cq-card:#fff;--cq-mut:var(--cq-g6);--cq-div:var(--cq-line);--cq-row:#fff;--cq-rowh:#F1F1F1;--cq-zeb:var(--cq-zebra);
+    font-family:'Source Sans 3','Instrument Sans',sans-serif}
+  .comp-root.comp-dark{--cq-bg:var(--bg);--cq-fg:var(--text);--cq-card:var(--bg2);--cq-mut:var(--text3);--cq-div:var(--border);--cq-row:var(--bg2);--cq-rowh:var(--bg3);--cq-zeb:var(--bg2);--cq-green:#00e676}
+  .comp-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .comp-theme-btn{margin-left:auto;padding:7px 13px;border-radius:999px;border:1px solid var(--cq-div);background:var(--cq-card);color:var(--cq-fg);font:700 .74rem/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
+  .comp-theme-btn:hover{border-color:var(--cq-red);color:var(--cq-red)}
+  .comp-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-chip{padding:6px 13px;border-radius:999px;border:1px solid var(--cq-div);background:var(--cq-card);color:var(--cq-mut);font:700 .73rem/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;white-space:nowrap}
+  .comp-chip:hover{color:var(--cq-fg)}
+  .comp-chip.active{background:var(--cq-black);color:#fff;border-color:var(--cq-black)}
+  .comp-root.comp-dark .comp-chip.active{background:var(--cq-green);color:#04210f;border-color:var(--cq-green)}
+  .comp-chip[data-mode="surebet"].active,.comp-chip[data-mode="decote"].active{background:var(--cq-red);color:#fff;border-color:var(--cq-red)}
+  .comp-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+  .comp-controls select,.comp-controls input{padding:7px 11px;border-radius:6px;border:1px solid var(--cq-div);background:var(--cq-card);color:var(--cq-fg);font-size:.82rem}
+  .comp-grid-wrap{background:var(--cq-card);border:1px solid var(--cq-div);border-radius:8px;overflow:hidden}
+  .comp-gleague{display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--cq-zeb);border-bottom:1px solid var(--cq-div);font:800 .76rem/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--cq-fg)}
+  .comp-grow{display:grid;grid-template-columns:54px 1fr 70px 70px 70px 64px 70px;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid var(--cq-div);cursor:pointer;color:var(--cq-fg)}
+  .comp-grow:hover{background:var(--cq-rowh)}
+  .comp-grow:last-child{border-bottom:none}
+  .comp-ghead{grid-template-columns:54px 1fr 70px 70px 70px 64px 70px;cursor:default;background:var(--cq-card);border-bottom:2px solid var(--cq-black);font:700 .64rem/1.1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--cq-mut);padding:9px 16px}
+  .comp-root.comp-dark .comp-ghead{border-bottom-color:var(--cq-green)}
+  .comp-grow:hover .comp-gtime,.comp-ghead{}
+  .comp-gtime{font:700 .82rem/1.1 'Barlow Condensed',sans-serif;color:var(--cq-mut);text-align:center}
+  .comp-gtime b{display:block;color:var(--cq-fg);font-size:.92rem}
+  .comp-gteams{font-weight:600;font-size:.9rem;overflow:hidden}
+  .comp-gteams small{display:block;color:var(--cq-mut);font-size:.7rem;font-weight:500;margin-top:2px}
+  .comp-godd{text-align:center;font:700 .9rem/1 'Barlow Condensed',sans-serif;color:var(--cq-fg)}
+  .comp-godd.best{color:var(--cq-red)}
+  .comp-root.comp-dark .comp-godd.best{color:var(--cq-green)}
+  .comp-gtrj{text-align:center;font:800 .82rem/1 'Barlow Condensed',sans-serif;color:var(--cq-green)}
+  .comp-gnb{text-align:center;font-size:.72rem;color:var(--cq-mut)}
+  .comp-gflags{display:flex;gap:4px;justify-content:flex-end}
+  .comp-gflag{font-size:.58rem;font-weight:800;padding:2px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.03em}
+  .comp-gflag.anj{background:#E8F5E9;color:#2E7D32}
+  .comp-gflag.sb{background:var(--cq-red);color:#fff}
+  .comp-gflag.vb{background:#E3F2FD;color:#1565C0}
+  .comp-gflag.dc{background:#FFF3E0;color:#E65100}
+  .comp-root.comp-dark .comp-gflag.anj{background:rgba(0,230,118,.15);color:#00e676}
+  .comp-detail-back{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;padding:7px 14px;border-radius:6px;border:1px solid var(--cq-div);background:var(--cq-card);color:var(--cq-fg);font:700 .76rem/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+  .comp-detail-back:hover{border-color:var(--cq-red);color:var(--cq-red)}
+  .comp-ph-row td{background:repeating-linear-gradient(45deg,#FAFAFA,#FAFAFA 8px,#F2F2F2 8px,#F2F2F2 16px)!important;color:#aaa!important;font-style:italic;font-size:.78rem}
+  .comp-root.comp-dark .comp-ph-row td{background:var(--bg3)!important;color:var(--text3)!important}
+  /* Dark overrides for the (light-by-default) detail table */
+  .comp-root.comp-dark .comp-wrap{background:var(--bg2);border-color:var(--border)}
+  .comp-root.comp-dark .comp-header{background:var(--bg2);color:var(--text);border-bottom-color:var(--cq-red)}
+  .comp-root.comp-dark .comp-header-title{color:var(--text)}
+  .comp-root.comp-dark .comp-table{color:var(--text)}
+  .comp-root.comp-dark .comp-table thead{background:var(--bg3)}
+  .comp-root.comp-dark .comp-table thead th{color:var(--text3);border-bottom-color:var(--border)}
+  .comp-root.comp-dark .comp-table tbody tr{border-bottom-color:var(--border)}
+  .comp-root.comp-dark .comp-table tbody tr:hover{background:var(--bg3)}
+  .comp-root.comp-dark .comp-table tbody tr.non-anj td{background:rgba(255,167,38,.06)}
+  .comp-root.comp-dark .comp-best-odd{color:#00e676}
+  .comp-root.comp-dark .comp-best-row td{background:rgba(0,230,118,.08)!important}
+  .comp-root.comp-dark .comp-best-row{border-color:#00e676!important}
+  .comp-root.comp-dark .comp-best-row td:first-child{color:#00e676}
+  .comp-root.comp-dark .comp-avg-row td{background:var(--bg3)!important;color:var(--text2)}
+  .comp-root.comp-dark .comp-wfv-row td{background:rgba(41,182,246,.08)!important;color:#29b6f6}
+  .comp-root.comp-dark .comp-sep-row td{background:var(--bg3)!important;color:var(--text3)}
+  .comp-root.comp-dark .comp-market-tabs{background:var(--bg2);border-color:var(--border)}
+  .comp-root.comp-dark .comp-market-tab{background:var(--bg2);color:var(--text2);border-color:var(--border)}
+  .comp-root.comp-dark .comp-market-tab.active{background:#00e676;color:#04210f}
+  @media(max-width:680px){.comp-grow,.comp-ghead{grid-template-columns:46px 1fr 54px 54px 54px;}.comp-gnb,.comp-gflags{display:none}}
+
   /* ── LIVE STRATEGY DASHBOARD v2 — AiScore Style ── */
   #live-dashboard { width:100%; }
   #ld-empty { padding:56px 20px;text-align:center;color:var(--text3);font-size:14px;font-style:italic; }
@@ -19826,27 +19892,55 @@ document.addEventListener('keydown', e => {
     <div class="section-title">Meilleure cote, max valeur</div>
     <div class="section-sub" style="max-width:520px;margin:0 auto;">Comparaison multi-bookmakers en temps réel — bookmakers ANJ France en priorité.</div>
   </div>
-  <div class="comp-selector">
-    <select id="comp-match-select" onchange="loadComparateur(this.value)">
-      <option value="">— Choisir un match —</option>
-    </select>
-    <button onclick="forceRefreshComparateur()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--bg4);background:var(--bg2);color:var(--text);cursor:pointer;font-size:.85rem;" title="Force actualisation cotes">Actualiser</button>
-    <span id="comp-status" style="font-size:.8rem;color:var(--text2);"></span>
-  </div>
-  <!-- Onglets marché -->
-  <div class="comp-market-tabs" id="comp-market-tabs" style="margin-bottom:18px;">
-    <button class="comp-market-tab active" data-market="1N2"      onclick="setCompMarket('1N2',this)">1N2</button>
-    <button class="comp-market-tab"        data-market="HOME_WIN" onclick="setCompMarket('HOME_WIN',this)">Dom.</button>
-    <button class="comp-market-tab"        data-market="DRAW"     onclick="setCompMarket('DRAW',this)">Nul</button>
-    <button class="comp-market-tab"        data-market="AWAY_WIN" onclick="setCompMarket('AWAY_WIN',this)">Ext.</button>
-    <button class="comp-market-tab"        data-market="DC"       onclick="setCompMarket('DC',this)">Double Chance</button>
-    <button class="comp-market-tab"        data-market="OU15"     onclick="setCompMarket('OU15',this)">+/- 1.5</button>
-    <button class="comp-market-tab"        data-market="OU25"     onclick="setCompMarket('OU25',this)">+/- 2.5</button>
-    <button class="comp-market-tab"        data-market="OU35"     onclick="setCompMarket('OU35',this)">+/- 3.5</button>
-    <button class="comp-market-tab"        data-market="BTTS"     onclick="setCompMarket('BTTS',this)">BTTS</button>
-  </div>
-  <div id="comp-content">
-    <div class="comp-empty">Sélectionnez un match pour afficher la comparaison des cotes</div>
+  <div id="comp-root" class="comp-root comp-light">
+    <!-- Vue LISTE (grille style OddsPortal) -->
+    <div id="comp-list-view">
+      <div class="comp-toolbar">
+        <div class="comp-chips" id="comp-mode-chips">
+          <button class="comp-chip active" data-mode="all"     onclick="setCompMode('all',this)">Tous</button>
+          <button class="comp-chip"        data-mode="surebet" onclick="setCompMode('surebet',this)">Surebet</button>
+          <button class="comp-chip"        data-mode="value"   onclick="setCompMode('value',this)">ValueBet</button>
+          <button class="comp-chip"        data-mode="decote"  onclick="setCompMode('decote',this)">Décote</button>
+        </div>
+        <button class="comp-theme-btn" id="comp-theme-btn" onclick="toggleCompTheme()">◐ Thème</button>
+      </div>
+      <div class="comp-controls">
+        <select id="comp-f-sport" onchange="renderCompGrid()"><option value="">Tous sports</option></select>
+        <select id="comp-f-day" onchange="renderCompGrid()">
+          <option value="all">Tous les jours</option>
+          <option value="today">Aujourd'hui</option>
+          <option value="tomorrow">Demain</option>
+          <option value="j2">J+2</option>
+        </select>
+        <select id="comp-f-sort" onchange="renderCompGrid()">
+          <option value="time">Tri : Heure</option>
+          <option value="trj">Tri : TRJ ↓</option>
+          <option value="books">Tri : Nb books ↓</option>
+        </select>
+        <input id="comp-f-q" type="search" placeholder="Équipe…" oninput="renderCompGrid()" style="flex:1;min-width:140px;">
+        <button class="comp-chip" onclick="forceRefreshComparateur()" title="Force actualisation cotes serveur">↻ Actualiser</button>
+        <span id="comp-status" style="font-size:.78rem;color:var(--cq-mut);"></span>
+      </div>
+      <div id="comp-grid" class="comp-grid-wrap">
+        <div class="comp-empty">⏳ Chargement des matchs…</div>
+      </div>
+    </div>
+    <!-- Vue DÉTAIL (un match, multi-bookmakers) -->
+    <div id="comp-detail-view" style="display:none;">
+      <button class="comp-detail-back" onclick="closeCompDetail()">← Retour à la liste</button>
+      <div class="comp-market-tabs" id="comp-market-tabs" style="margin-bottom:18px;">
+        <button class="comp-market-tab active" data-market="1N2"      onclick="setCompMarket('1N2',this)">1N2</button>
+        <button class="comp-market-tab"        data-market="HOME_WIN" onclick="setCompMarket('HOME_WIN',this)">Dom.</button>
+        <button class="comp-market-tab"        data-market="DRAW"     onclick="setCompMarket('DRAW',this)">Nul</button>
+        <button class="comp-market-tab"        data-market="AWAY_WIN" onclick="setCompMarket('AWAY_WIN',this)">Ext.</button>
+        <button class="comp-market-tab"        data-market="DC"       onclick="setCompMarket('DC',this)">Double Chance</button>
+        <button class="comp-market-tab"        data-market="OU15"     onclick="setCompMarket('OU15',this)">+/- 1.5</button>
+        <button class="comp-market-tab"        data-market="OU25"     onclick="setCompMarket('OU25',this)">+/- 2.5</button>
+        <button class="comp-market-tab"        data-market="OU35"     onclick="setCompMarket('OU35',this)">+/- 3.5</button>
+        <button class="comp-market-tab"        data-market="BTTS"     onclick="setCompMarket('BTTS',this)">BTTS</button>
+      </div>
+      <div id="comp-content"><div class="comp-empty">Chargement…</div></div>
+    </div>
   </div>
   <div class="comp-note">⚠️ Les bookmakers non agréés ANJ (Autorité Nationale des Jeux) sont affichés à titre informatif uniquement. PariScore ne redirige vers aucun opérateur non autorisé en France. Jouez responsable — <strong>jeux-interdits-aux-mineurs.fr</strong></div>
 </section>
@@ -19854,11 +19948,35 @@ document.addEventListener('keydown', e => {
 
 <script>
 // ── COMPARATEUR DE COTES ──────────────────────────────────────────────────────
-let _compMatchesCache = null;
+let _compFeed = null;          // [{id,sport,league,home_team,away_team,commence_time,best1,bestN,best2,anj1,nbBooks,trj,surebet,valuebet,decote}]
 let _compLoaded = false;
 let _compMarket = '1N2';
+let _compMode = 'all';
+let _compCurrentId = null;
+const SPORT_LBL = { football: '⚽ Football', tennis: '🎾 Tennis', basketball: '🏀 Basket' };
 
-function onCompMarketChange(market) { setCompMarket(market); }
+function applyCompTheme() {
+  const root = document.getElementById('comp-root');
+  if (!root) return;
+  const dark = localStorage.getItem('ps_comp_theme') === 'dark';
+  root.classList.toggle('comp-dark', dark);
+  root.classList.toggle('comp-light', !dark);
+  const b = document.getElementById('comp-theme-btn');
+  if (b) b.textContent = dark ? '☀ Thème clair' : '◐ Thème L\'Équipe';
+}
+function toggleCompTheme() {
+  const cur = localStorage.getItem('ps_comp_theme') === 'dark';
+  localStorage.setItem('ps_comp_theme', cur ? 'light' : 'dark');
+  applyCompTheme();
+}
+
+function setCompMode(mode, el) {
+  _compMode = mode;
+  document.querySelectorAll('#comp-mode-chips .comp-chip').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderCompGrid();
+}
+
 function setCompMarket(market, el) {
   _compMarket = market;
   document.querySelectorAll('.comp-market-tab').forEach(b => b.classList.remove('active'));
@@ -19867,8 +19985,7 @@ function setCompMarket(market, el) {
     const t = document.querySelector(`.comp-market-tab[data-market="${market}"]`);
     if (t) t.classList.add('active');
   }
-  const sel = document.getElementById('comp-match-select');
-  if (sel?.value) loadComparateur(sel.value);
+  if (_compCurrentId) loadComparateur(_compCurrentId);
 }
 
 async function forceRefreshComparateur() {
@@ -19876,65 +19993,131 @@ async function forceRefreshComparateur() {
   if (status) status.textContent = '⏳ Actualisation serveur...';
   try {
     await fetch('/api/v1/refresh', { method: 'POST' });
-    _compMatchesCache = null;
     _compLoaded = false;
-    await initComparateur();
-    const sel = document.getElementById('comp-match-select');
-    if (sel?.value) loadComparateur(sel.value);
+    await initComparateur(true);
   } catch (e) {
     if (status) status.textContent = 'Erreur actualisation';
   }
 }
 
-async function initComparateur() {
-  if (_compLoaded) return;
+async function initComparateur(force) {
+  applyCompTheme();
+  if (_compLoaded && !force) { renderCompGrid(); return; }
   _compLoaded = true;
   const status = document.getElementById('comp-status');
   if (status) status.textContent = 'Chargement des matchs...';
   try {
-    const r = await fetch('/api/v1/matches');
+    const r = await fetch('/api/v1/comparateur/feed');
     const data = await r.json();
-    _compMatchesCache = (Array.isArray(data) ? data : (data.matches || [])).filter(m => m.odds?.home);
-    populateCompSelector();
-    if (status) status.textContent = `${_compMatchesCache.length} matchs disponibles`;
+    _compFeed = Array.isArray(data.matches) ? data.matches : [];
+    const sportSel = document.getElementById('comp-f-sport');
+    if (sportSel) {
+      const cur = sportSel.value;
+      sportSel.innerHTML = '<option value="">Tous sports</option>' +
+        (data.sports || []).map(s => `<option value="${s}">${SPORT_LBL[s] || s}</option>`).join('');
+      sportSel.value = cur;
+    }
+    if (status) status.textContent = `${_compFeed.length} matchs · ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+    renderCompGrid();
   } catch (e) {
     if (status) status.textContent = 'Erreur chargement matchs';
+    const g = document.getElementById('comp-grid');
+    if (g) g.innerHTML = '<div class="comp-empty">❌ Erreur chargement — réessayez</div>';
   }
 }
 
-function populateCompSelector() {
-  const sel = document.getElementById('comp-match-select');
-  if (!sel || !_compMatchesCache) return;
-  const now = Date.now();
-  const upcoming = _compMatchesCache
-    .filter(m => new Date(m.commence_time).getTime() > now - 3600000)
-    .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
-  sel.innerHTML = '<option value="">— Choisir un match —</option>' +
-    upcoming.map(m => {
-      const dt = new Date(m.commence_time);
-      const hm = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      const dm = dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-      return `<option value="${m.id}">${m.home_team} vs ${m.away_team} — ${m.league} (${dm} ${hm})</option>`;
-    }).join('');
+function _compDayKey(d) {
+  const x = new Date(d), n = new Date();
+  const md = new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const m0 = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  const diff = Math.round((md - m0) / 86400000);
+  if (diff <= 0) return 'today';
+  if (diff === 1) return 'tomorrow';
+  if (diff === 2) return 'j2';
+  return 'later';
+}
+
+function renderCompGrid() {
+  const g = document.getElementById('comp-grid');
+  if (!g || !_compFeed) return;
+  const sport = document.getElementById('comp-f-sport')?.value || '';
+  const day   = document.getElementById('comp-f-day')?.value || 'all';
+  const sort  = document.getElementById('comp-f-sort')?.value || 'time';
+  const q     = (document.getElementById('comp-f-q')?.value || '').toLowerCase().trim();
+
+  let list = _compFeed.slice();
+  if (sport) list = list.filter(m => m.sport === sport);
+  if (day !== 'all') list = list.filter(m => _compDayKey(m.commence_time) === day);
+  if (q) list = list.filter(m => (m.home_team + ' ' + m.away_team).toLowerCase().includes(q));
+  if (_compMode === 'surebet') list = list.filter(m => m.surebet != null);
+  else if (_compMode === 'value') list = list.filter(m => m.valuebet != null && m.valuebet >= 3);
+  else if (_compMode === 'decote') list = list.filter(m => m.decote != null);
+
+  if (sort === 'trj') list.sort((a, b) => (b.trj || 0) - (a.trj || 0));
+  else if (sort === 'books') list.sort((a, b) => (b.nbBooks || 0) - (a.nbBooks || 0));
+  else list.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+
+  if (!list.length) {
+    g.innerHTML = '<div class="comp-empty">Aucun match pour ces filtres.</div>';
+    return;
+  }
+
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const od = v => v ? Number(v).toFixed(2) : '—';
+  const head = `<div class="comp-grow comp-ghead"><div>Heure</div><div>Match</div><div style="text-align:center">1</div><div style="text-align:center">N</div><div style="text-align:center">2</div><div style="text-align:center">TRJ</div><div style="text-align:right">Books</div></div>`;
+
+  let html = '', curLeague = null;
+  for (const m of list) {
+    if (m.league !== curLeague) {
+      curLeague = m.league;
+      const cnt = list.filter(x => x.league === curLeague).length;
+      html += `<div class="comp-gleague">${SPORT_LBL[m.sport] ? SPORT_LBL[m.sport].slice(0,2) : ''} ${esc(curLeague)} <span style="color:var(--cq-mut);font-weight:600;">· ${cnt}</span></div>` + head;
+    }
+    const dt = new Date(m.commence_time);
+    const hm = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dm = dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const flags = [];
+    if (m.anj1) flags.push('<span class="comp-gflag anj">ANJ</span>');
+    if (m.surebet != null) flags.push(`<span class="comp-gflag sb" title="Arbitrage +${m.surebet}%">SURE</span>`);
+    if (m.valuebet != null && m.valuebet >= 3) flags.push(`<span class="comp-gflag vb" title="Edge ${m.valuebet}%">VALUE</span>`);
+    if (m.decote != null) flags.push(`<span class="comp-gflag dc" title="Cote 1 ${m.decote}">DÉCOTE</span>`);
+    html += `<div class="comp-grow" onclick="openCompDetail('${m.id}')">
+      <div class="comp-gtime">${dm}<b>${hm}</b></div>
+      <div class="comp-gteams">${esc(m.home_team)} <span style="color:var(--cq-mut)">v</span> ${esc(m.away_team)}<small>${esc(m.league)}</small></div>
+      <div class="comp-godd best">${od(m.best1)}</div>
+      <div class="comp-godd">${od(m.bestN)}</div>
+      <div class="comp-godd best">${od(m.best2)}</div>
+      <div class="comp-gtrj">${m.trj != null ? m.trj + '%' : '—'}</div>
+      <div class="comp-gflags">${flags.join('')}<span class="comp-gnb">${m.nbBooks}</span></div>
+    </div>`;
+  }
+  g.innerHTML = html;
+}
+
+function openCompDetail(matchId) {
+  _compCurrentId = matchId;
+  document.getElementById('comp-list-view').style.display = 'none';
+  document.getElementById('comp-detail-view').style.display = '';
+  loadComparateur(matchId);
+}
+function closeCompDetail() {
+  _compCurrentId = null;
+  document.getElementById('comp-detail-view').style.display = 'none';
+  document.getElementById('comp-list-view').style.display = '';
+  renderCompGrid();
 }
 
 async function loadComparateur(matchId) {
   if (!matchId) return;
   const status = document.getElementById('comp-status');
   const content = document.getElementById('comp-content');
-  if (status) status.textContent = 'Chargement...';
   content.innerHTML = '<div class="comp-empty">⏳ Chargement des cotes...</div>';
   try {
     const r = await fetch(`/api/v1/comparateur/${encodeURIComponent(matchId)}?market=${_compMarket}`);
     const d = await r.json();
-    const n = d.rows?.length || 0;
-    if (status) status.textContent = n
-      ? (d._fallback ? `Données partielles — ${n} source(s)` : `${n} bookmaker${n > 1 ? 's' : ''} trouvés`)
-      : 'Aucune donnée';
     content.innerHTML = renderComparateur(d);
   } catch (e) {
     content.innerHTML = '<div class="comp-empty">❌ Erreur chargement — réessayez</div>';
-    if (status) status.textContent = '';
   }
 }
 
@@ -20190,8 +20373,12 @@ function renderComparateur(d) {
       </tr>`;
     }
 
+    const phRows = ['Bet365 (FR)', 'Bookmakers Belgique', 'Bookmakers Suisse']
+      .map(n => `<tr class="comp-ph-row"><td><div class="comp-bk-name">${n}</div></td><td>—</td><td>—</td><td>—</td><td>bientôt</td></tr>`)
+      .join('');
     dataRows = anjRows.map(r => rr(r)).join('')
       + (nonAnjRows.length ? `<tr class="comp-sep-row"><td colspan="5">Bookmakers non agréés en France — aucun lien de redirection</td></tr>` + nonAnjRows.map(r => rr(r, 'non-anj')).join('') : '')
+      + `<tr class="comp-sep-row"><td colspan="5">Sources non disponibles — intégration ultérieure</td></tr>` + phRows
       + avgTr(fmtOdd(avgRow?.home, false) + fmtOdd(avgRow?.draw, false) + fmtOdd(avgRow?.away, false) + fmtPayout(avgRow?.payout))
       + wfvTr(wfvCells)
       + fairSection;
