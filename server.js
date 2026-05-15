@@ -10182,6 +10182,10 @@ function psTestFreeActive() {
   return now >= PS_TEST_FREE_START && now < PS_TEST_FREE_END;
 }
 
+// Compte beta partagé (login: betatesteur) — accès total jusqu'au lundi 18/05/2026 00:00 Paris
+const BETA_TESTER_USER = 'betatesteur';
+const BETA_TESTER_EXPIRY = Date.parse('2026-05-18T00:00:00+02:00');
+
 function srvAccess(req) {
   const u = getAuthUser(req);
   const role = u ? u.role : null;
@@ -10241,6 +10245,10 @@ function initUsers() {
   const adminPass = process.env.ADMIN_PASSWORD || 'pariscore2026';
   const { hash, salt } = hashPasswordSync(adminPass);
   USERS.set('admin', { hash, salt, role: 'admin', forceChange: !process.env.ADMIN_PASSWORD });
+  // Compte beta partagé — accès total (pro_all), expiration gérée au login
+  const betaPass = process.env.BETA_TESTER_PASSWORD || 'Beta2026';
+  const b = hashPasswordSync(betaPass);
+  USERS.set(BETA_TESTER_USER, { hash: b.hash, salt: b.salt, role: 'pro_all', forceChange: false });
 }
 initUsers();
 
@@ -14454,8 +14462,15 @@ if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
       if (parsed.username) {
         const user = USERS.get(parsed.username);
         if (!user || !verifyPasswordSync(parsed.password, user.hash, user.salt)) return jsonResponse(res, 401, { error: 'Identifiants invalides' });
-        const token = jwtSign({ username: parsed.username, role: user.role });
-        return jsonResponse(res, 200, { token, username: parsed.username, role: user.role, force_change: user.forceChange, expires_in: JWT_TTL });
+        // Compte beta : refus après expiration + token limité à la fenêtre
+        let ttl = JWT_TTL;
+        if (parsed.username === BETA_TESTER_USER) {
+          const remaining = Math.floor((BETA_TESTER_EXPIRY - Date.now()) / 1000);
+          if (remaining <= 0) return jsonResponse(res, 403, { error: 'Période beta terminée (expirée le 18/05/2026).', code: 'BETA_EXPIRED' });
+          ttl = Math.min(JWT_TTL, remaining);
+        }
+        const token = jwtSign({ username: parsed.username, role: user.role }, ttl);
+        return jsonResponse(res, 200, { token, username: parsed.username, role: user.role, force_change: user.forceChange, expires_in: ttl });
       }
       // ── Chemin Membre (email) ────────────────────────────────────────────
       if (!parsed.email || !parsed.password) return jsonResponse(res, 400, { error: 'email et password requis' });
