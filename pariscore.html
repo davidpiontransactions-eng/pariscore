@@ -16166,6 +16166,14 @@ async function submitRegister() {
   const btn      = document.getElementById('reg-btn');
   errEl.textContent = '';
   if (!email || !password) { errEl.textContent = 'Tous les champs sont requis'; return; }
+  // Identifiant sans "@" = compte admin/bêta → pas une inscription
+  if (!email.includes('@')) {
+    switchAuthTab('login');
+    document.getElementById('login-email').value = email;
+    document.getElementById('login-password').value = password;
+    document.getElementById('login-error').textContent = 'Compte admin / bêta : utilise « Se connecter » (pas d\'inscription). Identifiants pré-remplis — clique Se connecter.';
+    return;
+  }
   if (password.length < 8) { errEl.textContent = 'Mot de passe trop court (8 caractères min.)'; return; }
   btn.disabled = true; btn.textContent = 'Création…';
   try {
