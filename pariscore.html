@@ -7734,7 +7734,7 @@ async function tickTennisValueBets() {
   const statusEl = document.getElementById('tennis-vb-status');
   try {
     if (statusEl) statusEl.textContent = 'Chargement…';
-    const r = await fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } });
+    const r = await apiFetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     const matches = Array.isArray(data.matches) ? data.matches : [];
@@ -7845,7 +7845,7 @@ async function loadTexMatches() {
       d.setDate(d.getDate() + _texCurrentDayOffset);
       dateParam = `&date=${d.toISOString().slice(0, 10)}`;
     }
-    const res = await fetch(`/api/v1/tennis/tex/matches?tour=${tour}${dateParam}`).then(r => r.json());
+    const res = await apiFetch(`/api/v1/tennis/tex/matches?tour=${tour}${dateParam}`).then(r => r.json());
     if (res.error) throw new Error(res.detail || res.error);
     const matches = res.matches || [];
     if (!matches.length) {
@@ -8077,7 +8077,7 @@ async function loadTexCalendar() {
   if (!body) return;
   body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement…</div>';
   try {
-    const r = await fetch(`/api/v1/tennis/tex/calendar?tour=${_texCalTour}`).then(r => r.json());
+    const r = await apiFetch(`/api/v1/tennis/tex/calendar?tour=${_texCalTour}`).then(r => r.json());
     if (r.error) throw new Error(r.detail || r.error);
     const surfColor = (s) => ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068';
     const rows = (r.tournaments || []).map(t => `<tr>
@@ -8157,8 +8157,8 @@ async function openTexBooksModal(matchId) {
   body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement multi-books…</div>';
   try {
     const [r, history] = await Promise.all([
-      fetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json()),
-      fetch(`/api/v1/tennis/tex/odds-history?id=${encodeURIComponent(matchId)}`).then(r => r.json()).catch(() => null),
+      apiFetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json()),
+      apiFetch(`/api/v1/tennis/tex/odds-history?id=${encodeURIComponent(matchId)}`).then(r => r.json()).catch(() => null),
     ]);
     if (r.error) throw new Error(r.detail || r.error);
     const books = r.bookmakers || [];
@@ -8227,7 +8227,7 @@ async function openTexPlayerModal(slug) {
   modal.style.display = 'flex';
   body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement profil…</div>';
   try {
-    const p = await fetch(`/api/v1/tennis/tex/player?slug=${encodeURIComponent(slug)}`).then(r => r.json());
+    const p = await apiFetch(`/api/v1/tennis/tex/player?slug=${encodeURIComponent(slug)}`).then(r => r.json());
     if (p.error) throw new Error(p.detail || p.error);
     const rankS = p.rank_singles ? `${p.rank_singles.current ?? '—'} (haut: ${p.rank_singles.highest ?? '—'})` : '—';
     const rankD = p.rank_doubles ? `${p.rank_doubles.current ?? '—'} (haut: ${p.rank_doubles.highest ?? '—'})` : '—';
@@ -8286,8 +8286,8 @@ async function loadTennisAbstractRome() {
   if (statusEl) statusEl.textContent = 'Chargement…';
   try {
     const [atpRes, wtaRes] = await Promise.all([
-      fetch('/api/v1/tennis-abstract?event=atp-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
-      fetch('/api/v1/tennis-abstract?event=wta-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
+      apiFetch('/api/v1/tennis-abstract?event=atp-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
+      apiFetch('/api/v1/tennis-abstract?event=wta-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
     ]);
     _renderTennisAbstractTable(atpRes, 'ta-rome-atp-body', 'ta-rome-atp-meta');
     _renderTennisAbstractTable(wtaRes, 'ta-rome-wta-body', 'ta-rome-wta-meta');
@@ -8326,8 +8326,8 @@ async function loadTaEloIndices() {
   if (window._taIndicesLoaded) return; // load once per session
   try {
     const [atpRes, wtaRes] = await Promise.all([
-      fetch('/api/v1/tennis-abstract/report?slug=atp-elo').then(r => r.json()).catch(() => null),
-      fetch('/api/v1/tennis-abstract/report?slug=wta-elo').then(r => r.json()).catch(() => null),
+      apiFetch('/api/v1/tennis-abstract/report?slug=atp-elo').then(r => r.json()).catch(() => null),
+      apiFetch('/api/v1/tennis-abstract/report?slug=wta-elo').then(r => r.json()).catch(() => null),
     ]);
     const buildIdx = (res, tour) => {
       if (!res || !Array.isArray(res.rows)) return;
@@ -8383,8 +8383,8 @@ async function loadTaEloIndices() {
 async function loadTaLotteryIndices() {
   try {
     const [atpRes, wtaRes] = await Promise.all([
-      fetch('/api/v1/tennis-abstract/report?slug=atp-lottery').then(r => r.json()).catch(() => null),
-      fetch('/api/v1/tennis-abstract/report?slug=wta-lottery').then(r => r.json()).catch(() => null),
+      apiFetch('/api/v1/tennis-abstract/report?slug=atp-lottery').then(r => r.json()).catch(() => null),
+      apiFetch('/api/v1/tennis-abstract/report?slug=wta-lottery').then(r => r.json()).catch(() => null),
     ]);
     const counts = window._taLotteryIdx;
     const ingest = (res) => {
@@ -8481,8 +8481,8 @@ async function loadTaMCPLadder(tour = 'men') {
   body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement MCP…</div>';
   try {
     const [serveRes, returnRes] = await Promise.all([
-      fetch(`/api/v1/tennis-abstract/report?slug=mcp-serve-${tourN}-52`).then(r => r.json()),
-      fetch(`/api/v1/tennis-abstract/report?slug=mcp-return-${tourN}-52`).then(r => r.json()),
+      apiFetch(`/api/v1/tennis-abstract/report?slug=mcp-serve-${tourN}-52`).then(r => r.json()),
+      apiFetch(`/api/v1/tennis-abstract/report?slug=mcp-return-${tourN}-52`).then(r => r.json()),
     ]);
     const buildList = (res, label, limit = 10) => {
       if (!res?.rows?.length) return '';
@@ -8524,7 +8524,7 @@ async function loadTaBirthdaysRibbon() {
   const ribbon = document.getElementById('ta-birthdays-ribbon');
   if (!ribbon) return;
   try {
-    const res = await fetch('/api/v1/tennis-abstract/report?slug=birthdays').then(r => r.json());
+    const res = await apiFetch('/api/v1/tennis-abstract/report?slug=birthdays').then(r => r.json());
     const rows = res?.rows || [];
     if (!rows.length) { ribbon.style.display = 'none'; return; }
     const headers = res.headers || [];
@@ -8581,8 +8581,8 @@ async function _fetchAndRenderTennisDetail(matchId) {
   const ENRICH_PLACEHOLDER = '<div id="tennis-matchstat-enrich" style="margin-top:24px;"><div class="tennis-empty-state" style="opacity:.6;font-size:12px;">📊 MatchStat — chargement H2H + perf-breakdown…</div></div>';
   try {
     const [matchRes, predRes] = await Promise.all([
-      fetch(`/api/v1/tennis/match/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } }),
-      fetch(`/api/v1/tennis/predictions/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } })
+      apiFetch(`/api/v1/tennis/match/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } }),
+      apiFetch(`/api/v1/tennis/predictions/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } })
     ]);
     if (matchRes.status === 503) {
       body.innerHTML = `<div class="tennis-empty-state">
@@ -8623,7 +8623,7 @@ async function fetchTennisMatchstatEnrich(matchId) {
   const target = document.getElementById('tennis-matchstat-enrich');
   if (!target) return;
   try {
-    const r = await fetch(`/api/v1/tennis/matchstat/enrich/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } });
+    const r = await apiFetch(`/api/v1/tennis/matchstat/enrich/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } });
     if (r.status === 503) { target.innerHTML = '<div class="tennis-empty-state" style="font-size:11px;opacity:.5;">MatchStat désactivé (MATCHSTAT_API_KEY manquante).</div>'; return; }
     if (r.status === 206) {
       const d = await r.json();
@@ -14046,7 +14046,7 @@ async function openInsights(matchId) {
   insShowTab('resume');
 
   try {
-    const res = await fetch(`/api/v1/insights/${encodeURIComponent(m.id)}`);
+    const res = await apiFetch(`/api/v1/insights/${encodeURIComponent(m.id)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const d = await res.json();
     insCurrentData = d;

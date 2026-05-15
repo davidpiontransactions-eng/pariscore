@@ -10231,6 +10231,8 @@ function srvPlanGate(req, res, pathname) {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
+  // Bankroll simulé = vitrine marketing publique (jamais de données user)
+  if (pathname === '/api/v1/bankroll/simulated' || pathname === '/api/v1/bankroll') return false;
   // Mes Paris + bankroll + alertes → un plan Pro quelconque
   if (pathname.startsWith('/api/v1/bets') || pathname.startsWith('/api/v1/bankroll') || pathname.startsWith('/api/v1/alerts')) {
     if (!a.anyPro) { jsonResponse(res, 403, { error: 'Module réservé Pro', code: 'PLAN_REQUIRED' }); return true; }
