@@ -75,6 +75,7 @@
     { "id": 103,  "name": "Eliteserien",          "country": "Norway",         "type": "T1", "odds_key": "soccer_norway_eliteserien",                   "cron_hours": 12, "sofa_id": 221   },
     { "id": 210,  "name": "Prva HNL",             "country": "Croatia",        "type": "T1", "odds_key": "soccer_croatia_primera_hnl",                  "cron_hours": 12, "sofa_id": 170   },
     { "id": 269,  "name": "SuperLiga",            "country": "Serbia",         "type": "T1", "odds_key": "soccer_serbia_super_liga",                    "cron_hours": 12, "sofa_id": 210   },
-    { "id": 137,  "name": "Coppa Italia",         "country": "Italy",          "type": "CUP","odds_key": "soccer_italy_coppa_italia",                    "cron_hours": 24, "sofa_id": null  }
+    { "id": 137,  "name": "Coppa Italia",         "country": "Italy",          "type": "CUP","odds_key": "soccer_italy_coppa_italia",                    "cron_hours": 24, "sofa_id": null  },
+    { "id": 900,  "name": "A-League",             "country": "Australia",      "type": "T2", "odds_key": "soccer_australia_aleague",                    "cron_hours": 24, "sofa_id": null, "rapid_league_id": 113, "exotic": true }
   ]
 }

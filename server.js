@@ -57,6 +57,8 @@ loadEnv();
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY;
+const FREE_FOOTBALL_RAPIDAPI_KEY = process.env.FREE_FOOTBALL_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY || '';
+const FREE_FOOTBALL_RAPIDAPI_HOST = 'free-api-live-football-data.p.rapidapi.com';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;       // free: api.groq.com
 const XAI_API_KEY = process.env.XAI_API_KEY;        // free tier: api.x.ai (Grok)
@@ -4935,6 +4937,7 @@ function buildFallbackMatchRecord(raw) {
     expectedGoals,
     stats: { home: homeStats, away: awayStats, isReal },
     status: raw.status || 'scheduled',
+    exotic: raw._exotic || (leaguesConfig.leagues.find(l => l.odds_key === (raw._sport || raw.sport_key))?.exotic) || false,
     home_score: raw.home_score ?? null,
     away_score: raw.away_score ?? null,
     referee_name: raw.referee_name || null,
@@ -4945,7 +4948,7 @@ function buildFallbackMatchRecord(raw) {
   };
 }
 
-const FALLBACK_NOODDS_SOURCES = new Set(['openfootball', 'football_data']);
+const FALLBACK_NOODDS_SOURCES = new Set(['openfootball', 'football_data', 'rapidfree']);
 
 function buildMatchRecord(raw) {
   const edge = computeEdge(raw);
@@ -5115,6 +5118,7 @@ function buildMatchRecord(raw) {
       return lid ? (db._leagueSizes?.[lid] || null) : null;
     })(),
     _standings_loading: (!hRaw?.rank || !aRaw?.rank) && isLeagueCoveredByBSD(raw._sport || raw.sport_key),
+    exotic: raw._exotic || (leaguesConfig.leagues.find(l => l.odds_key === (raw._sport || raw.sport_key))?.exotic) || false,
     status: raw.status || null,
     home_team_id: hRaw?.teamId || null,
     away_team_id: aRaw?.teamId || null,
@@ -8671,6 +8675,65 @@ function bsdToOddsApiFormat(bsdMatch) {
   };
 }
 
+// ─── RapidAPI "Free API Live Football Data" (FotMob) — ligues exotiques (ex: A-League AU) ───
+// Couverture limitée : fixtures + scores + live uniquement. Pas de standings/xG/lineups.
+function rapidFreeToOddsApiFormat(rm, cfg) {
+  try {
+    const st = rm.status || {};
+    if (st.cancelled || st.finished) return null;          // garder uniquement à venir / en cours
+    if (!rm.home?.name || !rm.away?.name || !st.utcTime) return null;
+    return {
+      id: 'raf_' + rm.id,
+      sport_key: cfg.odds_key,
+      sport_title: cfg.name,
+      country: cfg.country || 'Australia',
+      commence_time: st.utcTime,
+      home_team: rm.home.name,
+      away_team: rm.away.name,
+      _sport: cfg.odds_key,
+      _source: 'rapidfree',
+      _config_league_id: cfg.id,
+      _exotic: !!cfg.exotic,
+      status: st.started ? 'inprogress' : 'notstarted',
+      bookmakers: [],
+    };
+  } catch (_) { return null; }
+}
+
+async function fetchRapidFreeFootballMatches(dateFrom, dateTo) {
+  if (!FREE_FOOTBALL_RAPIDAPI_KEY) return [];
+  const leagues = leaguesConfig.leagues.filter(l => l.rapid_league_id);
+  if (!leagues.length) return [];
+  const out = [];
+  const fromMs = dateFrom ? new Date(dateFrom + 'T00:00:00Z').getTime() : Date.now();
+  const toMs = dateTo ? new Date(dateTo + 'T23:59:59Z').getTime() : (Date.now() + 7 * 24 * 3600 * 1000);
+  for (const cfg of leagues) {
+    try {
+      const url = `https://${FREE_FOOTBALL_RAPIDAPI_HOST}/football-get-all-matches-by-league?leagueid=${cfg.rapid_league_id}`;
+      const res = await httpsGet(url, {
+        'x-rapidapi-key': FREE_FOOTBALL_RAPIDAPI_KEY,
+        'x-rapidapi-host': FREE_FOOTBALL_RAPIDAPI_HOST,
+      });
+      const matches = res && res.data && res.data.response && res.data.response.matches;
+      if (!Array.isArray(matches)) {
+        console.warn(`  [RapidFree] ${cfg.name}: réponse inattendue (HTTP ${res && res.status})`);
+        continue;
+      }
+      let kept = 0;
+      for (const rm of matches) {
+        const t = rm.status && rm.status.utcTime ? new Date(rm.status.utcTime).getTime() : NaN;
+        if (!Number.isFinite(t) || t < fromMs || t > toMs) continue;
+        const a = rapidFreeToOddsApiFormat(rm, cfg);
+        if (a) { out.push(a); kept++; }
+      }
+      console.log(`  [RapidFree] ${cfg.name} (rapid ${cfg.rapid_league_id}) → ${kept} matchs fenêtre`);
+    } catch (e) {
+      console.warn(`  [RapidFree] ${cfg.name} erreur: ${e.message}`);
+    }
+  }
+  return out;
+}
+
 
 // ─── JOB 1 : COTES (toutes les 12h) ──────────────────────────────────────
 // opts.bsdLeagueIds:    number[]    → BSD league IDs to target (bypasses bulk fetch)
@@ -8743,6 +8806,18 @@ async function fetchOdds(force = false, opts = {}) {
         console.log(`  [Routing] ✓ ${adapted.length} matchs trouvés via BSD.`);
       }
     } catch (e) { console.error('  [Routing] ❌ Erreur BSD:', e.message); }
+
+    // =========================================================================
+    // ÉTAPE 1.5 : LIGUES EXOTIQUES via RapidAPI Free Football (FotMob) — ex A-League AU
+    // BSD ne couvre pas ces ligues. Fixtures only (cotes via The Odds API plus bas).
+    // =========================================================================
+    try {
+      const rafMatches = await fetchRapidFreeFootballMatches(dateFrom, dateTo);
+      if (rafMatches.length) {
+        allRawMatches.push(...rafMatches);
+        console.log(`  [Routing] ✓ ${rafMatches.length} matchs via RapidAPI Free Football (ligues exotiques).`);
+      }
+    } catch (e) { console.error('  [Routing] ❌ Erreur RapidFree:', e.message); }
 
     // =========================================================================
     // ÉTAPE 2 : SÉCURITÉ LIGUES MAJEURES VIA FOOTBALL-DATA.ORG
