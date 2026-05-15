@@ -2,6 +2,32 @@
 
 ---
 
+## [v10.15] — 2026-05-15
+
+### Ajouté — Gamme tarifaire par sport + paywall réel (client + serveur)
+
+**Tarifs (pariscore.html)**
+- Grille unique 8 offres segmentées par sport : GRATUIT 0€ · MATCHDAY FOOT 1,50€/24h · MATCHDAY TENNIS 1,50€/24h · DUO MATCHDAY 2,50€/24h · PRO FOOT 19,5€/mois · PRO TENNIS 19,5€/mois · DUO PRO 30€/mois · ANNUEL DUO 22€/mois (-27%).
+- Réconciliation des 3 surfaces tarifaires divergentes (grille / bannière / upsell quota).
+- Inscription obligatoire : `openModal()` redirige vers le vrai formulaire `openAuthModal('register')` ; faux `#modal` neutralisé.
+
+**Verrou client (Phase 1)**
+- `psAccess()` dérive foot/tennis/pro du rôle JWT. `showPage()` bloque tout module non autorisé → page verrou + CTA. Liens nav masqués selon le tier.
+- Matchs freemium : 5 ligues UE uniquement, AI Scout + boutons IA masqués (`body.ps-free`).
+
+**Verrou serveur (Phase 2 — vrai paywall)**
+- `srvAccess(req)` + `srvPlanGate()` centralisé en tête de `http.createServer`.
+- `/api/v1/matches` exige un compte (401 sinon) + filtre 5 ligues UE serveur si pas footPro.
+- Tennis / ai-scout / strategies / hot-picks / sure-bets / trends / predictions / insights / deep-stats / bets / bankroll / alerts → 403 hors plan.
+- Rôles étendus : `pro_foot/pro_tennis/pro_all/matchday_foot/matchday_tennis/matchday_duo` (back-compat `premium`=`pro_all`, `matchday`=foot).
+
+**Quota freemium**
+- 10 consultations `/api/v1/matches` par jour et par compte (`incrementMatchesView`, reset 24h). Au-delà → 403 `FREEMIUM_VIEW_QUOTA` + panneau upsell front. Polls live non décomptés.
+
+**Limite connue** : attribution des nouveaux rôles à l'achat non câblée (Stripe : 1 seul price ID, webhook signe `matchday`). Nécessite price IDs distincts + metadata sport → rôle.
+
+---
+
 ## [v10.3] — 2026-05-14
 
 ### Ajouté — Tennis BSD (REST proxy + MCP passthrough + fallback ESPN)

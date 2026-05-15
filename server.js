@@ -3128,6 +3128,21 @@ function getRemainingQuota(userId, role) {
   return Math.max(0, limit - usage.count);
 }
 
+// ─── QUOTA VUES TABLEAU MATCHS — Freemium : 10 vues / jour ────────────────
+const FREEMIUM_MATCHES_DAILY = 10;
+function getMatchesViewUsage(userId) {
+  const raw = kvGet(`mv_usage_${userId}`);
+  if (!raw || Date.now() > raw.reset) return { count: 0, reset: Date.now() + 24 * 3600 * 1000 };
+  return raw;
+}
+function incrementMatchesView(userId) {
+  const u = getMatchesViewUsage(userId);
+  if (u.count >= FREEMIUM_MATCHES_DAILY) return { allowed: false, used: u.count, limit: FREEMIUM_MATCHES_DAILY };
+  u.count += 1;
+  kvSet(`mv_usage_${userId}`, u);
+  return { allowed: true, used: u.count, limit: FREEMIUM_MATCHES_DAILY };
+}
+
 function kvScan(prefix) {
   return sqldb.prepare("SELECT key, value FROM kv WHERE key LIKE ?").all(prefix + '%')
     .map(row => { try { return { key: row.key, value: JSON.parse(row.value) }; } catch { return null; } })
@@ -10131,7 +10146,8 @@ function getAuthUser(req) {
 // ─── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
 // Retourne le payload JWT ou envoie 401/403 et retourne null.
 // allowedRoles: tableau de rôles autorisés — ex. ['freemium','premium','admin']
-function requireAuth(req, res, allowedRoles = ['freemium', 'premium', 'admin', 'matchday']) {
+const PS_ALL_ROLES = ['freemium', 'premium', 'admin', 'matchday', 'pro_foot', 'pro_tennis', 'pro_all', 'matchday_foot', 'matchday_tennis', 'matchday_duo'];
+function requireAuth(req, res, allowedRoles = PS_ALL_ROLES) {
   const user = getAuthUser(req);
   if (!user) {
     jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
@@ -10146,13 +10162,66 @@ function requireAuth(req, res, allowedRoles = ['freemium', 'premium', 'admin', '
 
 // Variante stricte : exige un user.userId (exclut admin/matchday qui n'ont pas d'ID utilisateur).
 function requireUserAuth(req, res) {
-  const user = requireAuth(req, res, ['freemium', 'premium', 'admin']);
+  const user = requireAuth(req, res, ['freemium', 'premium', 'admin', 'pro_foot', 'pro_tennis', 'pro_all']);
   if (!user) return null;
   if (!user.userId) {
     jsonResponse(res, 403, { error: 'Compte membre requis pour les paris', code: 'MEMBER_REQUIRED' });
     return null;
   }
   return user;
+}
+
+// ─── PLAN ACCESS ENGINE (Phase 2 serveur) ───────────────────────────────────
+// Dérive l'accès foot/tennis/pro depuis le rôle JWT. Miroir de psAccess() client.
+function srvAccess(req) {
+  const u = getAuthUser(req);
+  const role = u ? u.role : null;
+  let footPro = false, tennisPro = false;
+  if (role === 'admin' || role === 'premium' || role === 'pro_all') { footPro = true; tennisPro = true; }
+  else if (role === 'pro_foot') footPro = true;
+  else if (role === 'pro_tennis') tennisPro = true;
+  else if (role === 'matchday' || role === 'matchday_foot') footPro = true;
+  else if (role === 'matchday_tennis') tennisPro = true;
+  else if (role === 'matchday_duo') { footPro = true; tennisPro = true; }
+  return { user: u, role, loggedIn: !!u, footPro, tennisPro, anyPro: footPro || tennisPro };
+}
+
+const PS_FREE_LEAGUES = ['soccer_france_ligue1', 'soccer_epl', 'soccer_spain_la_liga', 'soccer_germany_bundesliga', 'soccer_italy_serie_a'];
+
+// Verrou serveur centralisé. Retourne true si la requête a été refusée (réponse déjà envoyée).
+function srvPlanGate(req, res, pathname) {
+  if (!pathname.startsWith('/api/v1/')) return false;            // assets statiques
+  if (pathname.startsWith('/api/v1/admin')) return false;        // routes admin auto-gardées
+  const PUBLIC = new Set([
+    '/api/v1/status', '/api/v1/accuracy', '/api/v1/auth/login', '/api/v1/auth/register',
+    '/api/v1/auth/me', '/api/v1/checkout/matchday', '/api/v1/webhook/stripe',
+    '/api/v1/matchday/status', '/api/v1/team-logo'
+  ]);
+  if (PUBLIC.has(pathname)) return false;
+  const a = srvAccess(req);
+
+  // Inscription obligatoire dès le freemium : le tableau Matchs exige un compte
+  if (pathname === '/api/v1/matches') {
+    if (!a.loggedIn) { jsonResponse(res, 401, { error: 'Inscription requise', code: 'AUTH_REQUIRED' }); return true; }
+    return false; // filtrage 5 ligues UE appliqué dans la route
+  }
+  // Tennis (données) → accès Tennis (Pro Tennis / Duo / admin)
+  if (pathname.startsWith('/api/v1/tennis')) {
+    if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
+    return false;
+  }
+  // Analytics Foot Pro
+  const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/')) {
+    if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
+    return false;
+  }
+  // Mes Paris + bankroll + alertes → un plan Pro quelconque
+  if (pathname.startsWith('/api/v1/bets') || pathname.startsWith('/api/v1/bankroll') || pathname.startsWith('/api/v1/alerts')) {
+    if (!a.anyPro) { jsonResponse(res, 403, { error: 'Module réservé Pro', code: 'PLAN_REQUIRED' }); return true; }
+    return false;
+  }
+  return false;
 }
 
 // Utilisateurs admin en mémoire (admin panel) — PBKDF2 salé
@@ -10928,6 +10997,21 @@ async function handleAPI(req, res, pathname, query) {
           const targetStr = target.toLocaleDateString('fr-FR');
           matches = matches.filter(m => new Date(m.commence_time).toLocaleDateString('fr-FR') === targetStr);
         }
+      }
+
+      // Verrou freemium serveur : 10 vues/jour + 5 grandes ligues UE
+      const _accM = srvAccess(req);
+      if (!_accM.footPro) {
+        if (_accM.user && _accM.user.userId) {
+          const q = incrementMatchesView(_accM.user.userId);
+          if (!q.allowed) {
+            return jsonResponse(res, 403, {
+              error: 'Quota freemium atteint : 10 consultations / jour. Passez Pro pour un accès illimité.',
+              code: 'FREEMIUM_VIEW_QUOTA', used: q.used, limit: q.limit
+            });
+          }
+        }
+        matches = matches.filter(m => PS_FREE_LEAGUES.includes(m.sport));
       }
 
       matches = matches.map(m => {
@@ -13577,6 +13661,9 @@ const server = http.createServer(async (req, res) => {
             'Access-Control-Max-Age': '86400'
         }).end();
     }
+
+    // Verrou plan/sport centralisé (Phase 2) — refuse avant tout traitement
+    try { if (srvPlanGate(req, res, pathname)) return; } catch (e) { console.error('[srvPlanGate]', e.message); }
 
     // Routes API
     if (pathname === '/api/v1/team-logo') {
@@ -19575,7 +19662,9 @@ async function bootInit() {
 }
 
 server.listen(PORT, () => {
-    console.log(`\n  ✓ SERVEUR DÉMARRÉ SUR LE PORT ${PORT}\n`);
+    const ENV = process.env.NODE_ENV || 'development';
+    console.log(`\n  ✓ PariScore Server running on port ${PORT} [env: ${ENV}]`);
+    console.log(`  ✓ SQLite DB: ${SQLITE_FILE}\n`);
     bootInit().catch(e => console.error('  [Boot] Erreur init:', e.message));
 });
 

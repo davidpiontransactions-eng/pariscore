@@ -3401,6 +3401,9 @@
   .ld-bet-edge-val { font-size:13px;font-weight:800;font-family:var(--font-mono); }
   .ld-bet-edge-lbl { font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px; }
   .ld-no-data { color:var(--text3);font-size:13px;text-align:center;padding:20px 0;font-style:italic; }
+  /* Verrou freemium foot : pas d'IA / AI Scout dans le tableau */
+  body.ps-free #ai-scout-panel,
+  body.ps-free .ins-btn { display: none !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -5900,9 +5903,6 @@
         </tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:var(--text3,#5a6068);margin-top:8px;font-family:'DM Mono',monospace;">
-      Historique : <a href="https://github.com/JeffSackmann/tennis_atp" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Jeff Sackmann tennis_atp/wta</a> (CC BY-NC-SA, research use)
-    </div>
   </section>
 
   <section class="section fade-up" id="tennis-live-section">
@@ -5983,7 +5983,7 @@
       <div>
         <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:24px;">🏛️ Rome 2026 — Forecasts</h2>
         <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">
-          Probabilités tournoi par tour (R64→W) · Source <a href="https://www.tennisabstract.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Tennis Abstract</a> · Cache 6h
+          Probabilités tournoi par tour (R64→W) · Cache 6h
         </p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -6021,9 +6021,9 @@
   <section class="section fade-up" id="tennis-tex-section" style="margin-top:24px;">
     <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
-        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:24px;">📈 Odds Drift — Tennis Explorer</h2>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:24px;">📈 Odds Drift</h2>
         <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">
-          Open vs Current odds (player 1) · Δ% positif = chute favori · <a href="https://www.tennisexplorer.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a> · Cache 30min · Clic joueur = profil
+          Open vs Current odds (player 1) · Δ% positif = chute favori · Cache 30min · Clic joueur = profil
         </p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -6062,7 +6062,7 @@
       <div>
         <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:22px;">🎯 MCP Leaders — Serve & Return (52w)</h2>
         <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:12px;">
-          Match Charting Project · Top 10 par effectivité serve/return sur 52 dernières semaines · <a href="https://www.tennisabstract.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a>
+          Match Charting Project · Top 10 par effectivité serve/return sur 52 dernières semaines
         </p>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
@@ -6082,9 +6082,9 @@
   <section class="section fade-up" id="tennis-tex-calendar-section" style="margin-top:24px;">
     <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
       <div>
-        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:22px;">🗓️ Calendrier Tournois — Tennis Explorer</h2>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:22px;">🗓️ Calendrier Tournois</h2>
         <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:12px;">
-          Tournois en cours · prize money + surface + draw · <a href="https://www.tennisexplorer.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a>
+          Tournois en cours · prize money + surface + draw
         </p>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
@@ -7347,7 +7347,14 @@ function showPage(pageId, linkEl) {
   // Stop tennis poll quand on quitte l'onglet
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
+  // Verrou tier/sport — bloque les modules non accessibles
+  if (typeof psPageBlocked === 'function') {
+    const _blk = psPageBlocked(pageId);
+    if (_blk) { renderLockedPage(pageId, _blk); return; }
+  }
   document.querySelectorAll('div[data-page]').forEach(el => el.style.display = 'none');
+  const _lk = document.getElementById('page-locked');
+  if (_lk) _lk.style.display = 'none';
   const page = document.getElementById('page-' + pageId);
   if (page) {
     page.style.display = 'block';
@@ -9237,10 +9244,33 @@ async function loadMatches() {
         console.error('Erreur Fetch/Render:', err);
         throw err;
       });
+      if (res.status === 403) {
+        var errJson = null;
+        try { errJson = await res.json(); } catch {}
+        if (errJson && errJson.code === 'FREEMIUM_VIEW_QUOTA') {
+          setLoading(false);
+          var vb = document.getElementById('vb-body');
+          if (vb) vb.innerHTML = '<tr><td colspan="30" style="padding:48px 20px;text-align:center;">'
+            + '<div style="font-size:42px;margin-bottom:12px;">🔒</div>'
+            + '<div style="font-family:var(--font-head);font-size:20px;font-weight:800;margin-bottom:6px;">Quota gratuit atteint</div>'
+            + '<div style="color:var(--text3);font-size:14px;margin-bottom:20px;">10 consultations / jour en freemium (' + (errJson.used||10) + '/' + (errJson.limit||10) + '). Réinitialisation sous 24h.</div>'
+            + '<button class="price-btn price-btn-green" style="padding:11px 22px;" onclick="showPage(\'tarifs\')">Passer Pro →</button> '
+            + '<button class="price-btn price-btn-amber" style="padding:11px 22px;" onclick="buyMatchdayPass()">Matchday 1,50€</button>'
+            + '</td></tr>';
+          return;
+        }
+      }
       if (!res.ok) throw new Error('Serveur HTTP ' + res.status);
 
       var json = await res.json();
       allMatches = json.matches || [];
+      // Verrou freemium : tableau foot limité à 5 ligues UE
+      var _accM = (typeof psAccess === 'function') ? psAccess() : { footPro: true };
+      document.body.classList.toggle('ps-free', !_accM.footPro);
+      if (!_accM.footPro) {
+        var PS_FREE_LEAGUES = ['soccer_france_ligue1','soccer_epl','soccer_spain_la_liga','soccer_germany_bundesliga','soccer_italy_serie_a'];
+        allMatches = allMatches.filter(function(m) { return PS_FREE_LEAGUES.includes(m.sport); });
+      }
 
       // Construire la map odds_key → ISO code (silencieux si fichier absent)
       try {
@@ -9256,7 +9286,7 @@ async function loadMatches() {
       updateStatusBar(json.meta);
       renderMatches(allMatches);
       document.getElementById('table-title').textContent = 'Matchs à venir — ' + allMatches.length + ' matchs';
-      loadAIScout();
+      if (_accM.footPro) loadAIScout();
       lazyLoadButeurs(allMatches);
       startLiveTop5Refresh();
       startLivePredictionsRefresh();
@@ -12010,17 +12040,17 @@ function showQuotaUpsell(q) {
         <div onclick="buyMatchdayPass();this.closest('#ps-quota-upsell').remove();" style="background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.3);border-radius:10px;padding:16px;cursor:pointer;transition:background .15s;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div>
-              <div style="font-weight:700;font-size:14px;color:var(--amber);">🎫 Matchday Pass — €4.99</div>
-              <div style="font-size:12px;color:var(--text3);margin-top:2px;">5 analyses Power Score + accès Pro 24h</div>
+              <div style="font-weight:700;font-size:14px;color:var(--amber);">🎫 Matchday Foot — 1,50€ / 24h</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px;">Tout le Foot Pro pendant 24h</div>
             </div>
             <div style="font-size:12px;color:var(--amber);font-weight:600;">Acheter →</div>
           </div>
         </div>
-        <div onclick="openModal('premium');this.closest('#ps-quota-upsell').remove();" style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.3);border-radius:10px;padding:16px;cursor:pointer;transition:background .15s;">
+        <div onclick="openModal();this.closest('#ps-quota-upsell').remove();" style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.3);border-radius:10px;padding:16px;cursor:pointer;transition:background .15s;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div>
-              <div style="font-weight:700;font-size:14px;color:var(--green);">👑 Premium — €9.99/mois</div>
-              <div style="font-size:12px;color:var(--text3);margin-top:2px;">Analyses illimitées + toutes les fonctionnalités</div>
+              <div style="font-weight:700;font-size:14px;color:var(--green);">👑 Pro Foot — 19,5€/mois</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px;">Foot illimité + IA + toutes les fonctionnalités</div>
             </div>
             <div style="font-size:12px;color:var(--green);font-weight:600;">S'abonner →</div>
           </div>
@@ -16172,6 +16202,7 @@ function updateNavAuthState() {
       <button class="nav-auth-btn" onclick="psLogout()" style="padding:4px 10px;">Déco.</button>
     </div>`;
   }
+  if (typeof psSyncNav === 'function') psSyncNav();
 }
 
 // Fermer le modal auth en cliquant hors de la box
@@ -18578,10 +18609,14 @@ async function loadAlertHistory() {
 
 // PRICING
 const PLANS = [
-  { name:'GRATUIT',       price:'0',    period:'/ mois',      desc:"Pour decouvrir PariScore.",          features:['10 paris de valeur par jour','Predictions IA (3 matchs/j)','Comparateur de cotes (basique)','Tendances (5 derniers matchs)'], disabled:['Alertes Telegram','Filtres & backtesting','Cotes Pinnacle','Rapport quotidien'], btn:'Commencer',            featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
-  { name:'MATCHDAY PASS', price:'1,50', period:'/ 24h',        desc:"Acces Pro complet pour aujourd'hui.", features:['Tout le plan Pro pendant 24h','AI Scout illimite','Power Score IA','Alertes Telegram','Filtres avances & backtesting'], disabled:[], btn:'Acheter le Pass du Jour', featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
-  { name:'PRO',           price:'19',   period:'/ mois',       desc:"Pour les parieurs serieux.",         features:['Paris de valeur illimites','Alertes Telegram en temps reel','Filtres avances & backtesting','Predictions IA illimitees','Cotes Pinnacle + mouvements','Rapport quotidien 8h','Comparateur 20+ bookmakers','Acces Discord'], disabled:[], btn:"Commencer l'essai gratuit", featured:true,  matchday:false, btnClass:'price-btn-green',  onclick:'openModal()' },
-  { name:'ANNUEL',        price:'14',   period:'/ mois - 26%', desc:"Economisez 60 euros/an.",            features:['Tout le plan Pro inclus','Acces anticipe nouvelles fonctions','Backtesting 2 ans','Export CSV / API','Alertes prioritaires'], disabled:[], btn:'Choisir Annuel',          featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
+  { name:'GRATUIT',           price:'0',    period:'/ mois',       desc:"Inscription requise. Foot seul.",       features:['Tableau Matchs Foot','5 grandes ligues UE (L1, PL, Liga, Bundesliga, Serie A)','Cotes & probabilités Poisson'], disabled:['Tennis','IA / Power Score','Top Stratégies','Alertes Telegram','Mes Paris & bankroll','Toutes les ligues'], btn:'Créer mon compte',       featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
+  { name:'MATCHDAY FOOT',     price:'1,50', period:'/ 24h',        desc:"Tout le Foot Pro pendant 24h.",         features:['Foot illimité 24h','Toutes les ligues','IA / Power Score','Top Stratégies','Alertes Telegram','Mes Paris & bankroll'], disabled:['Tennis'], btn:'Pass Foot du Jour',      featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
+  { name:'MATCHDAY TENNIS',   price:'1,50', period:'/ 24h',        desc:"Tout le Tennis Pro pendant 24h.",       features:['Tennis illimité 24h','Value bets & Elo Tennis','IA Tennis','Top Stratégies Tennis','Alertes Telegram'], disabled:['Foot Pro'], btn:'Pass Tennis du Jour',    featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
+  { name:'DUO MATCHDAY',      price:'2,50', period:'/ 24h',        desc:"Foot + Tennis Pro pendant 24h.",        features:['Foot + Tennis illimités 24h','Toutes les ligues + ATP/WTA','IA / Power Score','Top Stratégies (2 sports)','Alertes Telegram'], disabled:[], btn:'Pass Duo du Jour',       featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
+  { name:'PRO FOOT',          price:'19,5', period:'/ mois',       desc:"Pour les parieurs Foot.",               features:['Foot illimité — toutes les ligues','IA / Power Score illimité','Top Stratégies','Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j','BetMines best picks IA','Comparateur 20+ bookmakers'], disabled:['Tennis'], btn:'Choisir Pro Foot',       featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
+  { name:'PRO TENNIS',        price:'19,5', period:'/ mois',       desc:"Pour les parieurs Tennis.",             features:['Tennis illimité — ATP / WTA','Value bets & indices Elo','IA Tennis','Top Stratégies Tennis','Alertes Telegram temps réel','Mes Paris & bankroll'], disabled:['Foot Pro (reste niveau gratuit)'], btn:'Choisir Pro Tennis',     featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
+  { name:'DUO PRO',           price:'30',   period:'/ mois',       desc:"Les 2 sports, tout illimité.",          features:['Foot + Tennis illimités','Toutes les ligues + ATP/WTA','IA / Power Score illimité','Top Stratégies (2 sports)','Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j','BetMines + Comparateur','Accès Discord'], disabled:[], btn:"Commencer l'essai gratuit", featured:true, matchday:false, btnClass:'price-btn-green', onclick:'openModal()' },
+  { name:'ANNUEL DUO',        price:'22',   period:'/ mois - 27%', desc:"Duo Pro annuel — économisez ~96€/an.",  features:['Tout Duo Pro inclus','Accès anticipé nouvelles fonctions','Backtesting 2 ans','Export CSV / API','Alertes prioritaires'], disabled:[], btn:'Choisir Annuel',         featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
 ];
 const pricingGrid = document.getElementById('pricing-grid');
 PLANS.forEach(p => {
@@ -18652,8 +18687,95 @@ async function buyMatchdayPass() {
   setTimeout(poll, 1500);
 })();
 
-// MODAL
-function openModal() { document.getElementById('modal').classList.add('open'); }
+// ─── ACCESS ENGINE — verrous par sport/tier (Phase 1 client) ───────────────
+// Rôles JWT : freemium | matchday | matchday_foot | matchday_tennis |
+//             pro_foot | pro_tennis | pro_all | premium(legacy=pro_all) | admin
+function psAccess() {
+  const u = (typeof psGetUser === 'function') ? psGetUser() : null;
+  const role = (u && u.role) || 'guest';
+  let footPro = false, tennisPro = false;
+  if (role === 'admin' || role === 'premium' || role === 'pro_all') { footPro = true; tennisPro = true; }
+  else if (role === 'pro_foot') footPro = true;
+  else if (role === 'pro_tennis') tennisPro = true;
+  else if (role === 'matchday' || role === 'matchday_foot') footPro = true;
+  else if (role === 'matchday_tennis') tennisPro = true;
+  // Pass Matchday localStorage (legacy = foot)
+  if (typeof hasMatchdayAccess === 'function' && hasMatchdayAccess()) footPro = true;
+  return {
+    role, loggedIn: !!u,
+    footPro, tennisPro,
+    anyPro: footPro || tennisPro,
+    footAccess: true,          // tableau foot = niveau gratuit (inscription requise)
+    tennisAccess: tennisPro    // tennis = uniquement Pro Tennis / Pro 2 sports
+  };
+}
+
+// Pages toujours ouvertes (marketing / compte / doc)
+const PS_OPEN_PAGES = ['accueil', 'tarifs', 'parametres', 'guide'];
+
+// Retourne null si autorisé, sinon { need:'register'|'pro', sport? }
+function psPageBlocked(pageId) {
+  if (PS_OPEN_PAGES.includes(pageId)) return null;
+  const a = psAccess();
+  if (pageId === 'matchs') return a.loggedIn ? null : { need: 'register' };
+  if (pageId === 'tennis') return a.tennisAccess ? null : { need: 'pro', sport: 'tennis' };
+  return a.anyPro ? null : { need: 'pro' };
+}
+
+function renderLockedPage(pageId, block) {
+  document.querySelectorAll('div[data-page]').forEach(el => el.style.display = 'none');
+  let host = document.getElementById('page-locked');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'page-locked';
+    host.setAttribute('data-page', 'locked');
+    document.querySelector('main')?.appendChild(host) || document.body.appendChild(host);
+  }
+  const isReg = block.need === 'register';
+  const title = isReg ? 'Inscription requise' : 'Module réservé Pro';
+  const sub = isReg
+    ? 'Créez votre compte gratuit pour accéder au tableau des matchs.'
+    : (block.sport === 'tennis'
+        ? 'Le module Tennis est inclus dans Pro Tennis et Pro Foot &amp; Tennis.'
+        : 'Ce module est réservé aux abonnés Pro et Matchday Pass.');
+  host.style.display = 'block';
+  host.innerHTML = `
+    <section class="section fade-up visible" style="text-align:center;max-width:560px;margin:60px auto;">
+      <div style="font-size:46px;margin-bottom:14px;">🔒</div>
+      <div class="section-title">${title}</div>
+      <div class="section-sub" style="margin:10px auto 26px;">${sub}</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        ${isReg
+          ? `<button class="price-btn price-btn-green" style="padding:12px 22px;" onclick="openAuthModal('register')">Créer mon compte →</button>`
+          : `<button class="price-btn price-btn-green" style="padding:12px 22px;" onclick="showPage('tarifs')">Voir les offres →</button>
+             <button class="price-btn price-btn-amber" style="padding:12px 22px;" onclick="buyMatchdayPass()">Matchday Pass 1,50€</button>`}
+        <button class="price-btn price-btn-ghost" style="padding:12px 22px;" onclick="openAuthModal('login')">Se connecter</button>
+      </div>
+    </section>`;
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const l = document.querySelector(`.nav-links a[data-page="${pageId}"]`);
+  if (l) l.classList.add('active');
+}
+
+// Masque les liens nav non accessibles selon le tier
+function psSyncNav() {
+  const a = psAccess();
+  document.querySelectorAll('.nav-links a[data-page]').forEach(link => {
+    const p = link.getAttribute('data-page');
+    let show = true;
+    if (PS_OPEN_PAGES.includes(p)) show = true;
+    else if (p === 'matchs') show = true;          // visible (push inscription au clic)
+    else if (p === 'tennis') show = a.tennisAccess;
+    else show = a.anyPro;
+    link.style.display = show ? '' : 'none';
+  });
+}
+
+// MODAL — inscription obligatoire : tout CTA "compte" → vrai formulaire register
+function openModal() {
+  if (typeof openAuthModal === 'function') openAuthModal('register');
+  else document.getElementById('modal').classList.add('open');
+}
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
 // SCROLL ANIMATIONS
