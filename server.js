@@ -12546,6 +12546,272 @@ async function fetchTennisAbstractReport(slug) {
   return data;
 }
 
+// ─── AiScore — Protobuf-decoded API (P1+P2+P3, v10.12) ─────────────────────
+// API : https://api.aiscore.com/v1/web/api/... — réponses en protobuf wire format.
+// Bypass Cloudflare via headers Origin + Referer browser-like. Cache 5min live, 1h fixtures.
+const AISCORE_API_BASE = 'https://api.aiscore.com';
+const AISCORE_WWW = 'https://www.aiscore.com';
+const AISCORE_TTL_LIVE_MS = 5 * 60 * 1000;
+const AISCORE_TTL_FIXTURES_MS = 60 * 60 * 1000;
+const aiscoreCache = new Map();
+
+// Protobuf wire format zero-dep parser (varint + length-delimited + fixed)
+// Reference: https://protobuf.dev/programming-guides/encoding/
+function _aiscoreParseVarint(buf, off) {
+  let result = 0n, shift = 0n, byte;
+  do {
+    byte = buf[off++];
+    result |= BigInt(byte & 0x7f) << shift;
+    shift += 7n;
+    if (shift > 64n) throw new Error('varint overflow');
+  } while (byte & 0x80);
+  return { value: result, next: off };
+}
+
+function _aiscoreParseField(buf, off) {
+  const tagR = _aiscoreParseVarint(buf, off);
+  const tag = Number(tagR.value);
+  const fieldNum = tag >>> 3;
+  const wireType = tag & 0x7;
+  off = tagR.next;
+  let value;
+  switch (wireType) {
+    case 0: { // varint
+      const v = _aiscoreParseVarint(buf, off);
+      value = v.value;
+      off = v.next;
+      break;
+    }
+    case 1: { // fixed64
+      value = buf.readDoubleLE(off);
+      off += 8;
+      break;
+    }
+    case 2: { // length-delimited (string, bytes, sub-message)
+      const lenR = _aiscoreParseVarint(buf, off);
+      const len = Number(lenR.value);
+      off = lenR.next;
+      value = buf.slice(off, off + len);
+      off += len;
+      break;
+    }
+    case 5: { // fixed32
+      value = buf.readFloatLE(off);
+      off += 4;
+      break;
+    }
+    default:
+      throw new Error(`unknown wire type ${wireType} at offset ${off}`);
+  }
+  return { fieldNum, wireType, value, next: off };
+}
+
+function _aiscoreDecodeMessage(buf) {
+  const out = {};
+  let off = 0;
+  while (off < buf.length) {
+    const f = _aiscoreParseField(buf, off);
+    const key = `f${f.fieldNum}`;
+    let v = f.value;
+    if (f.wireType === 0) {
+      v = (typeof v === 'bigint' && v <= 9007199254740991n) ? Number(v) : v.toString();
+    } else if (f.wireType === 2) {
+      // Try decode as UTF-8 string first; if not printable, leave as Buffer
+      const str = v.toString('utf8');
+      const printable = /^[\x20-\x7E -￿\s]*$/.test(str);
+      if (printable && str.length > 0) {
+        v = str;
+      } else {
+        // Try recurse as nested message
+        try {
+          v = _aiscoreDecodeMessage(v);
+        } catch (_) {
+          v = '[bytes:' + v.length + ']';
+        }
+      }
+    }
+    if (out[key] === undefined) {
+      out[key] = v;
+    } else if (Array.isArray(out[key])) {
+      out[key].push(v);
+    } else {
+      out[key] = [out[key], v];
+    }
+    off = f.next;
+  }
+  return out;
+}
+
+async function _aiscoreApiFetch(endpoint, params = {}, referer = AISCORE_WWW + '/') {
+  const url = new URL(AISCORE_API_BASE + endpoint);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const u = new URL(url.toString());
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: u.hostname, port: 443,
+      path: u.pathname + (u.search || ''),
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json,application/octet-stream',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Origin': AISCORE_WWW,
+        'Referer': referer,
+      },
+    }, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const body = Buffer.concat(chunks);
+        // Cloudflare challenge detection (HTML body when JSON/octet expected)
+        if (res.statusCode === 403 || res.statusCode === 429) {
+          const sniff = body.slice(0, 256).toString('utf8');
+          if (/Just a moment|cf-mitigated|Cloudflare/i.test(sniff)) {
+            const e = new Error('cloudflare_challenge');
+            e.status = res.statusCode;
+            return reject(e);
+          }
+        }
+        resolve({ status: res.statusCode, headers: res.headers, body });
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout aiscore')); });
+    req.end();
+  });
+}
+
+// Common field mapping heuristics (observed from sample decodes)
+function _aiscoreMapMatchData(decoded) {
+  // Top-level wraps in f1 → nested match object
+  const m = decoded.f1 || decoded;
+  // Field positions discovered empirically (string-based pattern matching):
+  const match_id = typeof m.f1 === 'string' ? m.f1 : null;
+  const status_id = typeof m.f2 === 'number' ? m.f2 : null;
+  const competition = (m.f4 && typeof m.f4 === 'object') ? m.f4 : null;
+  const home_team = (m.f6 && typeof m.f6 === 'object') ? m.f6 : null;
+  const away_team = (m.f7 && typeof m.f7 === 'object') ? m.f7 : null;
+  const venue = (m.f9 && typeof m.f9 === 'object') ? m.f9 : null;
+  const flatString = (o) => o ? Object.values(o).filter(v => typeof v === 'string')[0] : null;
+  return {
+    match_id,
+    status_id,
+    competition: competition ? {
+      id: typeof competition.f1 === 'string' ? competition.f1 : null,
+      name: typeof competition.f3 === 'string' ? competition.f3 : flatString(competition),
+      slug: typeof competition.f5 === 'string' ? competition.f5 : null,
+    } : null,
+    home_team: home_team ? {
+      id: typeof home_team.f1 === 'string' ? home_team.f1 : null,
+      name: typeof home_team.f2 === 'string' ? home_team.f2 : flatString(home_team),
+      slug: typeof home_team.f5 === 'string' ? home_team.f5 : null,
+    } : null,
+    away_team: away_team ? {
+      id: typeof away_team.f1 === 'string' ? away_team.f1 : null,
+      name: typeof away_team.f2 === 'string' ? away_team.f2 : flatString(away_team),
+      slug: typeof away_team.f5 === 'string' ? away_team.f5 : null,
+    } : null,
+    venue: venue ? {
+      name: typeof venue.f1 === 'string' ? venue.f1 : flatString(venue),
+      city: typeof venue.f2 === 'string' ? venue.f2 : null,
+      country: typeof venue.f3 === 'string' ? venue.f3 : null,
+    } : null,
+    raw: decoded, // expose raw for downstream inspection
+  };
+}
+
+async function fetchAiscoreMatchData(matchId, slugHint = '') {
+  if (!matchId || !/^[a-z0-9]+$/.test(matchId)) throw new Error('invalid_match_id');
+  const cacheKey = `match:${matchId}`;
+  const cached = aiscoreCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < AISCORE_TTL_LIVE_MS) return cached.data;
+  const referer = slugHint
+    ? `${AISCORE_WWW}/match-${slugHint}/${matchId}`
+    : `${AISCORE_WWW}/`;
+  const res = await _aiscoreApiFetch('/v1/web/api/match/data', { match_id: matchId, lang: 'en' }, referer);
+  if (res.status !== 200) throw new Error(`aiscore HTTP ${res.status}`);
+  const decoded = _aiscoreDecodeMessage(res.body);
+  const mapped = _aiscoreMapMatchData(decoded);
+  const data = {
+    source_url: `${AISCORE_API_BASE}/v1/web/api/match/data?match_id=${matchId}`,
+    fetched_at: new Date().toISOString(),
+    ...mapped,
+  };
+  aiscoreCache.set(cacheKey, { ts: Date.now(), data });
+  return data;
+}
+
+async function fetchAiscoreMatchOdds(matchId) {
+  if (!matchId || !/^[a-z0-9]+$/.test(matchId)) throw new Error('invalid_match_id');
+  const cacheKey = `odds:${matchId}`;
+  const cached = aiscoreCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < AISCORE_TTL_LIVE_MS) return cached.data;
+  const res = await _aiscoreApiFetch('/v1/web/api/match/odds_list', { match_id: matchId }, `${AISCORE_WWW}/`);
+  if (res.status !== 200) throw new Error(`aiscore odds HTTP ${res.status}`);
+  const decoded = _aiscoreDecodeMessage(res.body);
+  const data = {
+    source_url: `${AISCORE_API_BASE}/v1/web/api/match/odds_list?match_id=${matchId}`,
+    fetched_at: new Date().toISOString(),
+    decoded, // raw decoded message — frontend can walk fields
+  };
+  aiscoreCache.set(cacheKey, { ts: Date.now(), data });
+  return data;
+}
+
+// P3 — sports nouveaux : sitemap-driven fixture discovery
+const AISCORE_SPORTS_SITEMAPS = {
+  handball:    'https://www.aiscore.com/sitemap/handballmatches.xml',
+  volleyball:  'https://www.aiscore.com/sitemap/volleyballmatches.xml',
+  snooker:     'https://www.aiscore.com/sitemap/snookermatches.xml',
+  tabletennis: 'https://www.aiscore.com/sitemap/tabletennismatches.xml',
+};
+
+async function fetchAiscoreSportFixtures(sport, maxItems = 50) {
+  const url = AISCORE_SPORTS_SITEMAPS[sport];
+  if (!url) throw new Error('unknown_sport');
+  const cacheKey = `sport_fixtures:${sport}`;
+  const cached = aiscoreCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < AISCORE_TTL_FIXTURES_MS) return cached.data;
+  const res = await httpsGet(url, {
+    'Accept': 'application/xml',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+  });
+  if (res.status !== 200 || typeof res.data !== 'string') {
+    throw new Error(`aiscore sitemap HTTP ${res.status}`);
+  }
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const tomorrow = new Date(today.getTime() + 86400000).toISOString().slice(0, 10);
+  // Extract <url><loc>...</loc><lastmod>...</lastmod></url> blocks
+  const urlRe = /<url>\s*<loc>([^<]+)<\/loc>[\s\S]*?<lastmod>([^<]+)<\/lastmod>\s*<\/url>/g;
+  const items = [];
+  let m;
+  while ((m = urlRe.exec(res.data)) !== null && items.length < maxItems) {
+    const loc = m[1];
+    const lastmod = m[2];
+    // Skip H2H/stats sub-pages, language variants
+    if (loc.includes('/h2h') || loc.includes('/stats') || loc.includes('/lineups')) continue;
+    if (loc.match(/\/[a-z]{2,3}\/match-/)) continue; // language-prefixed
+    // Extract match_id (last path segment before query or end)
+    const idM = loc.match(/\/match-[a-z0-9-]+\/([a-z0-9]+)$/);
+    if (!idM) continue;
+    if (lastmod >= todayStr) {
+      const slugM = loc.match(/\/match-([a-z0-9-]+)\//);
+      items.push({
+        match_id: idM[1],
+        slug: slugM ? slugM[1] : null,
+        url: loc,
+        lastmod,
+        is_today: lastmod === todayStr,
+        is_tomorrow: lastmod === tomorrow,
+      });
+    }
+  }
+  const data = { sport, fetched_at: new Date().toISOString(), count: items.length, items };
+  aiscoreCache.set(cacheKey, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── Tennis Explorer scraper (matches/?type= + player/<slug>) ───────────────
 // Source: tennisexplorer.com — server-rendered HTML, robots.txt permissif.
 // Fournit : open + current odds + Δ% drift, player profiles (rank/DOB/hand).
@@ -12638,6 +12904,32 @@ function _texParsePlayerPage(html, slug) {
     }
   }
   const parseRank = v => (v == null || v === '-') ? null : parseInt(v, 10);
+  // T3 v10.12 — Player's record (W/L by surface)
+  const recordM = html.match(/<h2 class="bg">Player's record<\/h2>([\s\S]*?)<\/div>\s*<div class="clr">/);
+  let surface_record = null;
+  if (recordM) {
+    // Match "Summary:" row : Summary | total | Clay | Hard | Indoors | Grass | Not set
+    // Header order from earlier: Year, Summary, Clay, Hard, Indoors, Grass, Not set
+    const summaryRow = recordM[1].match(/Summary:<\/td>([\s\S]*?)<\/tr>/);
+    if (summaryRow) {
+      const cells = [...summaryRow[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)]
+        .map(c => c[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
+      const parse = (s) => {
+        const m = (s || '').match(/^(\d+)\/(\d+)$/);
+        return m ? { wins: parseInt(m[1], 10), losses: parseInt(m[2], 10) } : null;
+      };
+      if (cells.length >= 6) {
+        surface_record = {
+          all: parse(cells[0]),
+          clay: parse(cells[1]),
+          hard: parse(cells[2]),
+          indoors: parse(cells[3]),
+          grass: parse(cells[4]),
+          unknown: parse(cells[5]),
+        };
+      }
+    }
+  }
   return {
     slug,
     name: name ? name.trim() : null,
@@ -12649,6 +12941,7 @@ function _texParsePlayerPage(html, slug) {
     rank_doubles: rankDoublesM ? { current: parseRank(rankDoublesM[1]), highest: parseRank(rankDoublesM[2]) } : null,
     sex,
     plays,
+    surface_record, // T3
     source_url: `${TEX_BASE}/player/${slug}/`,
     fetched_at: new Date().toISOString(),
   };
@@ -12759,6 +13052,53 @@ function _texParseMatchDetail(html) {
   // Best odds per player (highest)
   const bestP1Book = books.filter(b => b.odd_p1 != null).sort((a, b) => b.odd_p1 - a.odd_p1)[0];
   const bestP2Book = books.filter(b => b.odd_p2 != null).sort((a, b) => b.odd_p2 - a.odd_p2)[0];
+
+  // T1 v10.12 — multi-markets : parse oddsMenu-2 (O/U), 3 (AH), 4 (CS)
+  const markets = {};
+  const marketKeys = ['home_away', 'over_under', 'asian_handicap', 'correct_score'];
+  for (let menu = 2; menu <= 4; menu++) {
+    const nextMenu = menu === 4 ? null : menu + 1;
+    const blockRe = nextMenu
+      ? new RegExp(`<div id="oddsMenu-${menu}-data"[^>]*>([\\s\\S]*?)<div id="oddsMenu-${nextMenu}-data"`)
+      : new RegExp(`<div id="oddsMenu-${menu}-data"[^>]*>([\\s\\S]*?)<\\/div>\\s*<\\/div>\\s*<\\/div>`);
+    const blockM = html.match(blockRe);
+    if (!blockM || /class="none"[^>]*>[\s\S]{0,200}No odds/.test(blockM[0])) continue;
+    const block = blockM[1];
+    const titleM2 = block.match(/<tr class="odds-type"[^>]*>\s*<td[^>]*>([^<]+)<\/td>/);
+    const marketTitle = titleM2 ? titleM2[1].trim() : null;
+    const trRe2 = /<tr class="(one|two|average)"[^>]*>([\s\S]*?)(?=<tr class="(?:one|two|average|head|odds-)"|<\/tbody>)/g;
+    const rows = [];
+    let avgP1m = null, avgP2m = null;
+    let trMatch2;
+    while ((trMatch2 = trRe2.exec(block)) !== null) {
+      const rowClass = trMatch2[1];
+      const tr2 = trMatch2[2];
+      const bookM2 = tr2.match(/<span class="t">([^<]+)<\/span>/);
+      const valueM = tr2.match(/<td class="value"[^>]*>([^<]+)<\/td>/);
+      const oddsCells2 = [...tr2.matchAll(/class="k([12])[^"]*"><div class="odds-in[^"]*">(\d+\.\d+)/g)];
+      const oddP1c = oddsCells2.find(c => c[1] === '1');
+      const oddP2c = oddsCells2.find(c => c[1] === '2');
+      const odd1m = oddP1c ? parseFloat(oddP1c[2]) : null;
+      const odd2m = oddP2c ? parseFloat(oddP2c[2]) : null;
+      if (rowClass === 'average') { avgP1m = odd1m; avgP2m = odd2m; continue; }
+      if (bookM2) rows.push({
+        bookmaker: bookM2[1].trim(),
+        line: valueM ? valueM[1].trim().replace(/&nbsp;/g, '').trim() : null,
+        odd_p1: odd1m,
+        odd_p2: odd2m,
+        best_p1: /class="k1 best-betrate"/.test(tr2),
+        best_p2: /class="k2 best-betrate"/.test(tr2),
+      });
+    }
+    if (rows.length || marketTitle) {
+      markets[marketKeys[menu - 1]] = {
+        title: marketTitle,
+        bookmakers: rows,
+        avg_odds: { p1: avgP1m, p2: avgP2m },
+        book_count: rows.length,
+      };
+    }
+  }
   return {
     player1: p1Name,
     player2: p2Name,
@@ -12769,8 +13109,53 @@ function _texParseMatchDetail(html) {
       p2: bestP2Book ? { book: bestP2Book.bookmaker, odd: bestP2Book.odd_p2 } : null,
     },
     book_count: books.length,
+    markets, // T1: { over_under, asian_handicap, correct_score }
     h2h_summary: h2hSummary,
   };
+}
+
+// T5 v10.12 — Live Odds Tracker (snapshots /matches/ → per match_id Δ over time)
+const TEX_ODDS_HISTORY_MAX = 24; // last 24 snapshots per match (~6h @ 4/jour)
+const texOddsHistory = new Map(); // match_id → [{ ts, p1_curr, p1_open }, ...]
+
+function _texRecordSnapshot(matches) {
+  if (!Array.isArray(matches)) return;
+  const now = Date.now();
+  for (const m of matches) {
+    if (!m.tex_match_id || !m.odds_current || m.odds_current.p1 == null) continue;
+    const arr = texOddsHistory.get(m.tex_match_id) || [];
+    const last = arr[arr.length - 1];
+    // Skip if no change since last snapshot
+    if (last && last.p1_curr === m.odds_current.p1) continue;
+    arr.push({
+      ts: now,
+      p1_curr: m.odds_current.p1,
+      p1_open: m.odds_open ? m.odds_open.p1 : null,
+    });
+    if (arr.length > TEX_ODDS_HISTORY_MAX) arr.shift();
+    texOddsHistory.set(m.tex_match_id, arr);
+  }
+}
+
+function getTexOddsHistory(matchId) {
+  return texOddsHistory.get(parseInt(matchId, 10)) || [];
+}
+
+async function _runTexOddsSnapshotJob() {
+  console.log(`  [Cron:TexOdds] Snapshot tour ATP+WTA…`);
+  let totalRecorded = 0;
+  for (const tour of ['atp', 'wta']) {
+    try {
+      texMatchesCache.delete(`${tour}|today`);
+      texMatchesCache.delete(`${tour}|null`);
+      const data = await fetchTexMatches(tour, null);
+      _texRecordSnapshot(data.matches || []);
+      totalRecorded += data.matches?.length || 0;
+    } catch (e) {
+      console.warn(`  [Cron:TexOdds] ⚠ ${tour}: ${e.message}`);
+    }
+  }
+  console.log(`  [Cron:TexOdds] ✓ ${totalRecorded} matchs traités, ${texOddsHistory.size} matchs avec historique`);
 }
 
 async function fetchTexMatchDetail(matchId) {
@@ -13547,7 +13932,21 @@ if (pathname.startsWith('/api/v1/live-dashboard/')) {
     if (sofaEnrich.possession)        payload.possession        = sofaEnrich.possession;
     if (sofaEnrich.shots)             payload.shots             = sofaEnrich.shots;
     if (sofaEnrich.shots_on_target)   payload.shots_on_target   = sofaEnrich.shots_on_target;
+    if (sofaEnrich.shots_off_target)  payload.shots_off_target  = sofaEnrich.shots_off_target;
+    if (sofaEnrich.shots_blocked)     payload.shots_blocked     = sofaEnrich.shots_blocked;
     if (sofaEnrich.corners)           payload.corners           = sofaEnrich.corners;
+    if (sofaEnrich.fouls)             payload.fouls             = sofaEnrich.fouls;
+    if (sofaEnrich.offsides)          payload.offsides          = sofaEnrich.offsides;
+    if (sofaEnrich.passes)            payload.passes            = sofaEnrich.passes;
+    if (sofaEnrich.key_passes)        payload.key_passes        = sofaEnrich.key_passes;
+    if (sofaEnrich.crosses)           payload.crosses           = sofaEnrich.crosses;
+    if (sofaEnrich.long_balls)        payload.long_balls        = sofaEnrich.long_balls;
+    if (sofaEnrich.tackles)           payload.tackles           = sofaEnrich.tackles;
+    if (sofaEnrich.interceptions)     payload.interceptions     = sofaEnrich.interceptions;
+    if (sofaEnrich.clearances)        payload.clearances        = sofaEnrich.clearances;
+    if (sofaEnrich.saves)             payload.saves             = sofaEnrich.saves;
+    if (sofaEnrich.penalties)         payload.penalties         = sofaEnrich.penalties;
+    if (sofaEnrich.cards)             payload.cards             = sofaEnrich.cards;
     if (sofaEnrich.xg)                payload.xg                = sofaEnrich.xg;
     if (sofaEnrich.momentum && sofaEnrich.momentum.length) payload.momentum = sofaEnrich.momentum;
     if (sofaEnrich.shotmap && sofaEnrich.shotmap.length)   payload.shotmap  = sofaEnrich.shotmap;
@@ -15902,6 +16301,63 @@ if (pathname === '/api/v1/tennis/tex/matches' && req.method === 'GET') {
 }
 // Tennis Explorer — profile joueur (rank current/highest singles+doubles, DOB, hand).
 // Query: ?slug=<player-slug>
+// AiScore — match data + odds (P1+P2 v10.12) via protobuf decoder.
+// Query: ?match_id=<id>&slug=<slug-hint>
+if (pathname === '/api/v1/aiscore/match' && req.method === 'GET') {
+  try {
+    const matchId = (query.match_id || '').toString().trim();
+    const slug = (query.slug || '').toString().trim();
+    if (!matchId) return jsonResponse(res, 400, { error: 'match_id_required' });
+    const data = await fetchAiscoreMatchData(matchId, slug);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    const code = e.message === 'cloudflare_challenge' ? 503 : 500;
+    return jsonResponse(res, code, { error: 'aiscore_match_error', detail: e.message });
+  }
+}
+if (pathname === '/api/v1/aiscore/odds' && req.method === 'GET') {
+  try {
+    const matchId = (query.match_id || '').toString().trim();
+    if (!matchId) return jsonResponse(res, 400, { error: 'match_id_required' });
+    const data = await fetchAiscoreMatchOdds(matchId);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    const code = e.message === 'cloudflare_challenge' ? 503 : 500;
+    return jsonResponse(res, code, { error: 'aiscore_odds_error', detail: e.message });
+  }
+}
+// AiScore — fixtures sport (P3) : handball | volleyball | snooker | tabletennis
+if (pathname === '/api/v1/aiscore/fixtures' && req.method === 'GET') {
+  try {
+    const sport = (query.sport || '').toString().trim().toLowerCase();
+    if (!sport) {
+      return jsonResponse(res, 200, { sports: Object.keys(AISCORE_SPORTS_SITEMAPS) });
+    }
+    if (!AISCORE_SPORTS_SITEMAPS[sport]) {
+      return jsonResponse(res, 404, { error: 'unknown_sport', detail: `Available: ${Object.keys(AISCORE_SPORTS_SITEMAPS).join(', ')}` });
+    }
+    const maxItems = Math.min(parseInt(query.limit, 10) || 50, 200);
+    const data = await fetchAiscoreSportFixtures(sport, maxItems);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'aiscore_fixtures_error', detail: e.message });
+  }
+}
+// Tennis Explorer — odds history snapshots (T5 v10.12) graphe drift court terme.
+if (pathname === '/api/v1/tennis/tex/odds-history' && req.method === 'GET') {
+  try {
+    const id = (query.id || '').toString().trim();
+    if (!id) return jsonResponse(res, 400, { error: 'id_required' });
+    const history = getTexOddsHistory(id);
+    return jsonResponse(res, 200, {
+      tex_match_id: parseInt(id, 10),
+      count: history.length,
+      snapshots: history,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tex_odds_history_error', detail: e.message });
+  }
+}
 // Tennis Explorer — détail match (multi-bookmakers + H2H + drift opening) v10.11
 // Query: ?id=<tex_match_id>
 if (pathname === '/api/v1/tennis/tex/match-detail' && req.method === 'GET') {
@@ -17606,11 +18062,58 @@ async function fetchSofaMicroserviceEnrichment(match) {
           // Sofa raw payload uses `home`/`away` (string with %) not `homeValue`/`awayValue`
           const rawH = it.home ?? it.homeValue;
           const rawA = it.away ?? it.awayValue;
+          const passesPair = (v) => {
+            if (!v) return null;
+            const s = String(v);
+            const mm = s.match(/(\d+)\s*\/\s*(\d+)/);
+            const pp = s.match(/(\d+)\s*%/);
+            return mm ? { made: parseInt(mm[1]), total: parseInt(mm[2]), pct: pp ? parseInt(pp[1]) : null } : null;
+          };
           if (n.includes('possession'))           out.possession        = { home: num(rawH), away: num(rawA) };
-          else if (n === 'total shots')           out.shots             = { home: num(rawH), away: num(rawA) };
-          else if (n.includes('shots on target')) out.shots_on_target   = { home: num(rawH), away: num(rawA) };
-          else if (n.includes('corner kicks'))    out.corners           = { home: num(rawH), away: num(rawA) };
+          else if (n === 'total shots' || n === 'shots')
+                                                  out.shots             = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('shots on target') || n.includes('on goal'))
+                                                  out.shots_on_target   = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('shots off target') || n.includes('off goal'))
+                                                  out.shots_off_target  = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('blocked shots') || n === 'blocked')
+                                                  out.shots_blocked     = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('corner kicks') || n === 'corners')
+                                                  out.corners           = { home: num(rawH), away: num(rawA) };
           else if (n.includes('expected goal'))   out.xg                = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('fouls'))           out.fouls             = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('offsides'))        out.offsides          = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('yellow card')) {
+            if (!out.cards) out.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
+            out.cards.home_yellow = num(rawH); out.cards.away_yellow = num(rawA);
+          } else if (n.includes('red card')) {
+            if (!out.cards) out.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
+            out.cards.home_red = num(rawH); out.cards.away_red = num(rawA);
+          }
+          else if (n === 'passes' || n.includes('passes accurate')) {
+            const hp = passesPair(rawH) || { made: num(rawH), total: 0, pct: null };
+            const ap = passesPair(rawA) || { made: num(rawA), total: 0, pct: null };
+            out.passes = { home: hp, away: ap };
+          }
+          else if (n.includes('key pass'))        out.key_passes        = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('long ball')) {
+            const hp = passesPair(rawH) || { made: num(rawH), total: 0, pct: null };
+            const ap = passesPair(rawA) || { made: num(rawA), total: 0, pct: null };
+            out.long_balls = { home: hp, away: ap };
+          }
+          else if (n.includes('cross') && !n.includes('crossbar')) {
+            const hp = passesPair(rawH) || { made: num(rawH), total: 0, pct: null };
+            const ap = passesPair(rawA) || { made: num(rawA), total: 0, pct: null };
+            out.crosses = { home: hp, away: ap };
+          }
+          else if (n.includes('total tackles') || n === 'tackles' || n.includes('tackles won'))
+                                                  out.tackles           = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('interception'))    out.interceptions     = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('clearance'))       out.clearances        = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('goalkeeper save') || n === 'saves')
+                                                  out.saves             = { home: num(rawH), away: num(rawA) };
+          else if (n.includes('penalt') && !n.includes('shootout'))
+                                                  out.penalties         = { home: num(rawH), away: num(rawA) };
         }
       }
     }
@@ -17820,6 +18323,103 @@ function buildLiveDashboardPayload(match, detail) {
           away_missed: detail.live_stats.away.big_chances_missed || 0,
         }
       : null,
+    // v10.12 — Live Stats parity Sofa/Flashscore : shots_off_target, shots_blocked, fouls, offsides,
+    // total passes + accuracy %, key passes, crosses, long balls, tackles, interceptions, clearances, saves, penalties
+    shots_off_target: (detail?.live_stats?.home?.shots_off_target != null)
+      ? { home: detail.live_stats.home.shots_off_target, away: detail.live_stats.away.shots_off_target }
+      : (match.live_shots_off_target?.home != null ? match.live_shots_off_target : null),
+    shots_blocked: (detail?.live_stats?.home?.blocked_shots != null || detail?.live_stats?.home?.shots_blocked != null)
+      ? {
+          home: detail.live_stats.home.blocked_shots ?? detail.live_stats.home.shots_blocked ?? 0,
+          away: detail.live_stats.away.blocked_shots ?? detail.live_stats.away.shots_blocked ?? 0,
+        }
+      : (match.live_shots_blocked?.home != null ? match.live_shots_blocked : null),
+    fouls: (detail?.live_stats?.home?.fouls != null)
+      ? { home: detail.live_stats.home.fouls, away: detail.live_stats.away.fouls }
+      : (match.live_fouls?.home != null ? match.live_fouls : null),
+    offsides: (detail?.live_stats?.home?.offsides != null)
+      ? { home: detail.live_stats.home.offsides, away: detail.live_stats.away.offsides }
+      : (match.live_offsides?.home != null ? match.live_offsides : null),
+    passes: (() => {
+      const lhP = detail?.live_stats?.home;
+      const laP = detail?.live_stats?.away;
+      if (lhP && (lhP.passes_total != null || lhP.passes != null)) {
+        const hMade = lhP.passes_accurate ?? lhP.accurate_passes ?? 0;
+        const hTotal = lhP.passes_total ?? lhP.passes ?? 0;
+        const aMade = laP.passes_accurate ?? laP.accurate_passes ?? 0;
+        const aTotal = laP.passes_total ?? laP.passes ?? 0;
+        return {
+          home: { made: hMade, total: hTotal, pct: hTotal > 0 ? Math.round(hMade / hTotal * 100) : null },
+          away: { made: aMade, total: aTotal, pct: aTotal > 0 ? Math.round(aMade / aTotal * 100) : null },
+        };
+      }
+      return match.live_passes || null;
+    })(),
+    key_passes: (detail?.live_stats?.home?.key_passes != null)
+      ? { home: detail.live_stats.home.key_passes, away: detail.live_stats.away.key_passes }
+      : (match.live_key_passes?.home != null ? match.live_key_passes : null),
+    crosses: (() => {
+      const parsePair = (v, accField) => {
+        if (v && typeof v === 'object' && v.made != null) return v;
+        if (typeof v === 'string') {
+          const mm = v.match(/(\d+)\s*\/\s*(\d+)/);
+          const pp = v.match(/(\d+)\s*%/);
+          if (mm) return { made: parseInt(mm[1]), total: parseInt(mm[2]), pct: pp ? parseInt(pp[1]) : null };
+        }
+        if (typeof v === 'number' && accField != null) {
+          return { made: accField, total: v, pct: v > 0 ? Math.round(accField / v * 100) : null };
+        }
+        return null;
+      };
+      const lhP = detail?.live_stats?.home;
+      const laP = detail?.live_stats?.away;
+      if (lhP && (lhP.accurate_crosses != null || lhP.crosses != null)) {
+        const h = parsePair(lhP.crosses, lhP.accurate_crosses || 0);
+        const a = parsePair(laP.crosses, laP.accurate_crosses || 0);
+        if (h || a) return { home: h || { made:0, total:0, pct:null }, away: a || { made:0, total:0, pct:null } };
+      }
+      return match.live_crosses || null;
+    })(),
+    long_balls: (() => {
+      const parsePair = (v, accField) => {
+        if (v && typeof v === 'object' && v.made != null) return v;
+        if (typeof v === 'string') {
+          const mm = v.match(/(\d+)\s*\/\s*(\d+)/);
+          const pp = v.match(/(\d+)\s*%/);
+          if (mm) return { made: parseInt(mm[1]), total: parseInt(mm[2]), pct: pp ? parseInt(pp[1]) : null };
+        }
+        if (typeof v === 'number' && accField != null) {
+          return { made: accField, total: v, pct: v > 0 ? Math.round(accField / v * 100) : null };
+        }
+        return null;
+      };
+      const lhP = detail?.live_stats?.home;
+      const laP = detail?.live_stats?.away;
+      if (lhP && (lhP.accurate_long_balls != null || lhP.long_balls != null)) {
+        const h = parsePair(lhP.long_balls, lhP.accurate_long_balls || 0);
+        const a = parsePair(laP.long_balls, laP.accurate_long_balls || 0);
+        if (h || a) return { home: h || { made:0, total:0, pct:null }, away: a || { made:0, total:0, pct:null } };
+      }
+      return match.live_long_balls || null;
+    })(),
+    tackles: (detail?.live_stats?.home?.tackles != null)
+      ? { home: detail.live_stats.home.tackles, away: detail.live_stats.away.tackles }
+      : (match.live_tackles?.home != null ? match.live_tackles : null),
+    interceptions: (detail?.live_stats?.home?.interceptions != null)
+      ? { home: detail.live_stats.home.interceptions, away: detail.live_stats.away.interceptions }
+      : (match.live_interceptions?.home != null ? match.live_interceptions : null),
+    clearances: (detail?.live_stats?.home?.clearances != null)
+      ? { home: detail.live_stats.home.clearances, away: detail.live_stats.away.clearances }
+      : (match.live_clearances?.home != null ? match.live_clearances : null),
+    saves: (detail?.live_stats?.home?.goalkeeper_saves != null || detail?.live_stats?.home?.saves != null)
+      ? {
+          home: detail.live_stats.home.goalkeeper_saves ?? detail.live_stats.home.saves ?? 0,
+          away: detail.live_stats.away.goalkeeper_saves ?? detail.live_stats.away.saves ?? 0,
+        }
+      : (match.live_saves?.home != null ? match.live_saves : null),
+    penalties: (detail?.live_stats?.home?.penalties != null)
+      ? { home: detail.live_stats.home.penalties, away: detail.live_stats.away.penalties }
+      : (match.live_penalties?.home != null ? match.live_penalties : null),
     momentum: _liveMomentumHistory.get(match.id) || match.live_momentum || [],
     intensity: match.live_intensity || 0,
     // v9.8.6 — innovations live dashboard
@@ -18092,6 +18692,39 @@ function extractBSDLiveStats(detail, srStats) {
     out.fouls = { home: lh.fouls || 0, away: la.fouls || 0 };
   if (has(lh.offsides) || has(la.offsides))
     out.offsides = { home: lh.offsides || 0, away: la.offsides || 0 };
+  if (has(lh.tackles) || has(la.tackles))
+    out.tackles = { home: lh.tackles || 0, away: la.tackles || 0 };
+  if (has(lh.interceptions) || has(la.interceptions))
+    out.interceptions = { home: lh.interceptions || 0, away: la.interceptions || 0 };
+  if (has(lh.clearances) || has(la.clearances))
+    out.clearances = { home: lh.clearances || 0, away: la.clearances || 0 };
+  if (has(lh.goalkeeper_saves) || has(la.goalkeeper_saves) || has(lh.saves) || has(la.saves))
+    out.saves = { home: lh.goalkeeper_saves || lh.saves || 0, away: la.goalkeeper_saves || la.saves || 0 };
+  if (has(lh.key_passes) || has(la.key_passes))
+    out.key_passes = { home: lh.key_passes || 0, away: la.key_passes || 0 };
+  if (has(lh.passes_total) || has(la.passes_total) || has(lh.passes) || has(la.passes)) {
+    const hMade = lh.passes_accurate ?? lh.accurate_passes ?? 0;
+    const hTotal = lh.passes_total ?? lh.passes ?? 0;
+    const hPct = hTotal > 0 ? Math.round((hMade / hTotal) * 100) : null;
+    const aMade = la.passes_accurate ?? la.accurate_passes ?? 0;
+    const aTotal = la.passes_total ?? la.passes ?? 0;
+    const aPct = aTotal > 0 ? Math.round((aMade / aTotal) * 100) : null;
+    out.passes = { home: { made: hMade, total: hTotal, pct: hPct }, away: { made: aMade, total: aTotal, pct: aPct } };
+  }
+  if (has(lh.accurate_long_balls) || has(la.accurate_long_balls) || has(lh.long_balls) || has(la.long_balls)) {
+    out.long_balls = {
+      home: { made: lh.accurate_long_balls || 0, total: lh.long_balls || 0, pct: (lh.long_balls > 0 ? Math.round((lh.accurate_long_balls || 0) / lh.long_balls * 100) : null) },
+      away: { made: la.accurate_long_balls || 0, total: la.long_balls || 0, pct: (la.long_balls > 0 ? Math.round((la.accurate_long_balls || 0) / la.long_balls * 100) : null) },
+    };
+  }
+  if (has(lh.accurate_crosses) || has(la.accurate_crosses) || has(lh.crosses) || has(la.crosses)) {
+    out.crosses = {
+      home: { made: lh.accurate_crosses || 0, total: lh.crosses || 0, pct: (lh.crosses > 0 ? Math.round((lh.accurate_crosses || 0) / lh.crosses * 100) : null) },
+      away: { made: la.accurate_crosses || 0, total: la.crosses || 0, pct: (la.crosses > 0 ? Math.round((la.accurate_crosses || 0) / la.crosses * 100) : null) },
+    };
+  }
+  if (has(lh.penalties) || has(la.penalties))
+    out.penalties = { home: lh.penalties || 0, away: la.penalties || 0 };
   if (has(lh.yellow_cards) || has(la.yellow_cards) || has(lh.red_cards) || has(la.red_cards)) {
     out.cards = {
       home_yellow: lh.yellow_cards || 0, away_yellow: la.yellow_cards || 0,
@@ -18142,6 +18775,14 @@ function applyLiveStats(match, data) {
   if (data.passes)             match.live_passes             = data.passes;
   if (data.fouls)              match.live_fouls              = data.fouls;
   if (data.offsides)           match.live_offsides           = data.offsides;
+  if (data.tackles)            match.live_tackles            = data.tackles;
+  if (data.interceptions)      match.live_interceptions      = data.interceptions;
+  if (data.clearances)         match.live_clearances         = data.clearances;
+  if (data.saves)              match.live_saves              = data.saves;
+  if (data.key_passes)         match.live_key_passes         = data.key_passes;
+  if (data.long_balls)         match.live_long_balls         = data.long_balls;
+  if (data.crosses)            match.live_crosses            = data.crosses;
+  if (data.penalties)          match.live_penalties          = data.penalties;
   if (data.cards)              match.live_cards              = data.cards;
   if (data.momentum)           match.live_momentum           = data.momentum;
   match.live_intensity = computeLiveIntensityFromSofa(data, match);
@@ -18286,6 +18927,26 @@ async function enrichMatchWithSofaLiveStats(match, { skipApply = false } = {}) {
           }
           else if (n.includes('fouls'))            data.fouls             = { home: numVal(hv), away: numVal(av) };
           else if (n.includes('offsides'))         data.offsides          = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('total tackles') || n === 'tackles' || n.includes('tackles won'))
+                                                   data.tackles           = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('interception'))     data.interceptions     = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('clearance'))        data.clearances        = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('goalkeeper save') || n === 'saves' || n === 'goalkeeper saves')
+                                                   data.saves             = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('key pass'))         data.key_passes        = { home: numVal(hv), away: numVal(av) };
+          else if (n.includes('long ball')) {
+            const hp = passesPair(hv) || { made: numVal(hv), total: 0, pct: null };
+            const ap = passesPair(av) || { made: numVal(av), total: 0, pct: null };
+            data.long_balls = { home: hp, away: ap };
+          }
+          else if (n.includes('cross') && !n.includes('crossbar')) {
+            const hp = passesPair(hv) || { made: numVal(hv), total: 0, pct: null };
+            const ap = passesPair(av) || { made: numVal(av), total: 0, pct: null };
+            data.crosses = { home: hp, away: ap };
+          }
+          else if (n.includes('penalt') && !n.includes('shootout')) {
+            data.penalties = { home: numVal(hv), away: numVal(av) };
+          }
           else if (n.includes('yellow card')) {
             if (!data.cards) data.cards = { home_yellow:0, home_red:0, away_yellow:0, away_red:0 };
             data.cards.home_yellow = numVal(hv); data.cards.away_yellow = numVal(av);
@@ -18766,6 +19427,11 @@ setTimeout(() => {
   _runTexDailyRefresh().catch(e => console.warn('[Cron:TennisExplorer]', e.message));
   setInterval(() => _runTexDailyRefresh().catch(e => console.warn('[Cron:TennisExplorer]', e.message)), 24 * 3600 * 1000);
 }, _msUntilNextParisHour(6));
+// T5 v10.12 — Live odds snapshots toutes les 6h (= 4 snapshots/jour) pour graphe drift court terme
+setTimeout(() => {
+  _runTexOddsSnapshotJob().catch(e => console.warn('[Cron:TexOdds]', e.message));
+  setInterval(() => _runTexOddsSnapshotJob().catch(e => console.warn('[Cron:TexOdds]', e.message)), 6 * 3600 * 1000);
+}, 60 * 1000); // first run 60s after boot
 
 // Matchstat resolver — cron 7d + boot sync si data absente.
 if (MATCHSTAT_ENABLED) {

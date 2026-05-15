@@ -7786,6 +7786,57 @@ async function loadTexMatches() {
   }
 }
 
+function _texRenderMarketTable(market, label) {
+  if (!market || !market.bookmakers?.length) return '';
+  const fmtO = v => v == null ? '—' : Number(v).toFixed(2);
+  const hasLine = !!market.bookmakers[0]?.line;
+  const rows = market.bookmakers.slice(0, 30).map(b => `<tr>
+    <td>${_escapeHtmlSafe(b.bookmaker)}</td>
+    ${hasLine ? `<td style="color:var(--text2,#8d9399);">${_escapeHtmlSafe(b.line || '')}</td>` : ''}
+    <td style="text-align:right;${b.best_p1 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p1)}</td>
+    <td style="text-align:right;${b.best_p2 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p2)}</td>
+  </tr>`).join('');
+  return `<div style="margin-top:18px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;margin-bottom:6px;">${_escapeHtmlSafe(label)} <span style="color:var(--text3,#5a6068);font-size:10px;font-family:'DM Mono',monospace;font-weight:400;">${_escapeHtmlSafe(market.title || '')} · ${market.book_count} books · avg ${fmtO(market.avg_odds?.p1)}/${fmtO(market.avg_odds?.p2)}</span></div>
+    <table class="tex-table" style="min-width:0;">
+      <thead><tr><th>Bookmaker</th>${hasLine ? '<th>Line</th>' : ''}<th style="text-align:right;">Odd 1</th><th style="text-align:right;">Odd 2</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function _texRenderOddsHistory(history) {
+  if (!history || !history.snapshots?.length || history.snapshots.length < 2) return '';
+  const snaps = history.snapshots;
+  const min = Math.min(...snaps.map(s => s.p1_curr));
+  const max = Math.max(...snaps.map(s => s.p1_curr));
+  const range = max - min || 1;
+  const width = 240, height = 48;
+  const step = width / (snaps.length - 1);
+  const points = snaps.map((s, i) => `${(i * step).toFixed(1)},${(height - ((s.p1_curr - min) / range) * height).toFixed(1)}`).join(' ');
+  const first = snaps[0].p1_curr;
+  const last = snaps[snaps.length - 1].p1_curr;
+  const trend = last > first ? 'up' : last < first ? 'down' : 'flat';
+  const color = trend === 'up' ? '#ff4d4d' : trend === 'down' ? '#00e676' : '#5a6068';
+  const arrow = trend === 'up' ? '▲' : trend === 'down' ? '▼' : '→';
+  const pct = ((last - first) / first * 100);
+  const firstTs = new Date(snaps[0].ts).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const lastTs = new Date(snaps[snaps.length - 1].ts).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  return `<div style="margin-top:14px;padding:10px;background:var(--bg3,#181c20);border-radius:6px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;">📈 Odds P1 Drift (${snaps.length} snapshots)</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:${color};font-weight:600;">${arrow} ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</div>
+    </div>
+    <svg width="${width}" height="${height}" style="display:block;">
+      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5"/>
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3,#5a6068);margin-top:4px;">
+      <span>${firstTs} · ${first.toFixed(2)}</span>
+      <span>${lastTs} · ${last.toFixed(2)}</span>
+    </div>
+  </div>`;
+}
+
 async function openTexBooksModal(matchId) {
   const modal = document.getElementById('tex-books-modal');
   const body = document.getElementById('tex-books-modal-body');
@@ -7793,7 +7844,10 @@ async function openTexBooksModal(matchId) {
   modal.style.display = 'flex';
   body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement multi-books…</div>';
   try {
-    const r = await fetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json());
+    const [r, history] = await Promise.all([
+      fetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json()),
+      fetch(`/api/v1/tennis/tex/odds-history?id=${encodeURIComponent(matchId)}`).then(r => r.json()).catch(() => null),
+    ]);
     if (r.error) throw new Error(r.detail || r.error);
     const books = r.bookmakers || [];
     const fmtO = v => v == null ? '—' : Number(v).toFixed(2);
@@ -7841,6 +7895,10 @@ async function openTexBooksModal(matchId) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>` : '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Aucune cote disponible pour ce match.</div>'}
+      ${_texRenderOddsHistory(history)}
+      ${_texRenderMarketTable(r.markets?.over_under, '🎯 Over / Under (sets)')}
+      ${_texRenderMarketTable(r.markets?.asian_handicap, '⚖️ Asian Handicap')}
+      ${_texRenderMarketTable(r.markets?.correct_score, '🔢 Correct Score')}
       <div style="margin-top:12px;font-size:10px;color:var(--text3,#5a6068);">
         <a href="${r.source_url}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir détail complet ↗</a>
       </div>
@@ -7886,6 +7944,21 @@ async function openTexPlayerModal(slug) {
         <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank double</td><td style="padding:4px 8px;">${rankD}</td></tr>
         ${lotLine}
       </table>
+      ${(() => {
+        const sr = p.surface_record;
+        if (!sr) return '';
+        const fmtSurf = (s) => s ? `${s.wins}/${s.losses} <span style="color:var(--text3,#5a6068);">(${(s.wins/(s.wins+s.losses)*100).toFixed(0)}%)</span>` : '—';
+        return `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bg4,#1e2328);">
+          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;margin-bottom:6px;">🎾 Career W/L par surface</div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">All</td><td style="padding:3px 6px;color:var(--green,#00e676);font-weight:600;">${fmtSurf(sr.all)}</td></tr>
+            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">🟫 Clay</td><td style="padding:3px 6px;">${fmtSurf(sr.clay)}</td></tr>
+            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">⚡ Hard</td><td style="padding:3px 6px;">${fmtSurf(sr.hard)}</td></tr>
+            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">🏢 Indoors</td><td style="padding:3px 6px;">${fmtSurf(sr.indoors)}</td></tr>
+            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">🌱 Grass</td><td style="padding:3px 6px;">${fmtSurf(sr.grass)}</td></tr>
+          </table>
+        </div>`;
+      })()}
       <div style="margin-top:14px;font-size:11px;color:var(--text3,#5a6068);">
         <a href="${_escapeHtmlSafe(p.source_url || '#')}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir profile complet ↗</a>
       </div>
@@ -14506,19 +14579,36 @@ async function refreshLiveDetailModal(matchId, { force }) {
 function renderLiveDetailSkeleton() {
   const cont = document.getElementById('ldm-stats-bars');
   if (!cont) return;
-  // v10.7: barres adaptées au flux BSD réel (sr_stats). Shots/Corners hidden quand null.
-  const rows = [
+  // v10.12: bar rows (jauges visuelles) + text rows (alignement [home] -- label -- [away])
+  const barRows = [
     { key:'possession', label:'Possession (%)' },
     { key:'attack',     label:'Volume Attaque' },
     { key:'danger',     label:'Attaques Dangereuses' },
     { key:'xg',         label:'xG Live' },
     { key:'shots',      label:'Tirs' },
     { key:'sot',        label:'Tirs cadrés' },
+    { key:'soff',       label:'Tirs non cadrés' },
+    { key:'sblk',       label:'Tirs contrés' },
     { key:'corners',    label:'⛳ Corners' },
     { key:'bigchances', label:'🎯 Big Chances' },
-    { key:'cards',      label:'🟨 Cartons' },
   ];
-  cont.innerHTML = rows.map(r => `
+  const textRows = [
+    { key:'penalty',  label:'Penalty' },
+    { key:'fouls',    label:'Fautes' },
+    { key:'cy',       label:'Cartons jaunes' },
+    { key:'cr',       label:'Cartons rouges' },
+    { key:'offsides', label:'Hors-jeux' },
+    { key:'passes_total',    label:'Total Passes' },
+    { key:'key_passes',      label:'Passes clés' },
+    { key:'passes_accurate', label:'Passes réussies' },
+    { key:'crosses',         label:'Centres réussies' },
+    { key:'long_balls',      label:'Passes Longues réussies' },
+    { key:'tackles',       label:'Tacles' },
+    { key:'interceptions', label:'Interceptions' },
+    { key:'clearances',    label:'Dégagements' },
+    { key:'saves',         label:'Parades' },
+  ];
+  const bars = barRows.map(r => `
     <div id="barm-${r.key}-row" style="margin-bottom:14px;">
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:11px;color:var(--text2);font-family:var(--font-mono);margin-bottom:5px;">
         <span id="barm-${r.key}-vh" style="color:var(--blue);font-weight:700;text-align:left;">0</span>
@@ -14535,6 +14625,14 @@ function renderLiveDetailSkeleton() {
       </div>
     </div>
   `).join('');
+  const list = textRows.map(r => `
+    <div id="statrow-${r.key}" class="ldm-statrow" style="display:none;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-family:var(--font-mono);font-size:12px;">
+      <span id="statrow-${r.key}-h" style="color:var(--blue);font-weight:700;text-align:left;">—</span>
+      <span style="color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:700;text-align:center;">${r.label}</span>
+      <span id="statrow-${r.key}-a" style="color:#ffa726;font-weight:700;text-align:right;">—</span>
+    </div>
+  `).join('');
+  cont.innerHTML = bars + '<div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">' + list + '</div>';
 }
 
 function updateLiveDetailModal(m) {
@@ -14555,7 +14653,7 @@ function updateLiveDetailModal(m) {
     iEl.style.background = bg;
   }
 
-  // v10.7: stat keys alignées sur payload BSD sr_stats. Rangée masquée si source null.
+  // v10.12: stats bars + text rows. Rangée masquée si source null pour les deux équipes.
   const stats = [
     { key:'possession', src:m.possession,        pct:true,  dec:0 },
     { key:'attack',     src:m.attack,            pct:false, dec:0 },
@@ -14563,9 +14661,10 @@ function updateLiveDetailModal(m) {
     { key:'xg',         src:m.xg,                pct:false, dec:2 },
     { key:'shots',      src:m.shots,             pct:false, dec:0 },
     { key:'sot',        src:m.shots_on_target,   pct:false, dec:0 },
+    { key:'soff',       src:m.shots_off_target,  pct:false, dec:0 },
+    { key:'sblk',       src:m.shots_blocked,     pct:false, dec:0 },
     { key:'corners',    src:m.corners,           pct:false, dec:0 },
     { key:'bigchances', src:m.big_chances ? { home: m.big_chances.home, away: m.big_chances.away } : null, pct:false, dec:0 },
-    { key:'cards',      src:m.cards ? { home: (m.cards.home_yellow || 0) + (m.cards.home_red || 0) * 2, away: (m.cards.away_yellow || 0) + (m.cards.away_red || 0) * 2 } : null, pct:false, dec:0 },
   ];
   // v9.8.3: distingue "early game data en cours" vs "ligue mineure non couverte"
   const hasAnyData = stats.some(s => s.src && s.src.home != null && s.src.away != null);
@@ -14612,6 +14711,41 @@ function updateLiveDetailModal(m) {
     if (valH)  valH.textContent  = s.dec ? h.toFixed(s.dec) : h;
     if (valA)  valA.textContent  = s.dec ? a.toFixed(s.dec) : a;
   }
+
+  // v10.12 — Text rows: [home] -- label -- [away]. Hide if both null.
+  const fmtPair = (p) => {
+    if (!p) return null;
+    if (typeof p === 'object' && p.made != null && p.total != null) {
+      return p.pct != null ? `${p.made} (${p.pct}%)` : `${p.made}/${p.total}`;
+    }
+    return String(p);
+  };
+  const renderStatRow = (key, hVal, aVal) => {
+    const row = document.getElementById(`statrow-${key}`);
+    if (!row) return;
+    const hNull = hVal == null || hVal === '';
+    const aNull = aVal == null || aVal === '';
+    if (hNull && aNull) { row.style.display = 'none'; return; }
+    row.style.display = 'grid';
+    const hEl = document.getElementById(`statrow-${key}-h`);
+    const aEl = document.getElementById(`statrow-${key}-a`);
+    if (hEl) hEl.textContent = hNull ? '0' : hVal;
+    if (aEl) aEl.textContent = aNull ? '0' : aVal;
+  };
+  renderStatRow('penalty',  m.penalties ? m.penalties.home : null, m.penalties ? m.penalties.away : null);
+  renderStatRow('fouls',    m.fouls ? m.fouls.home : null, m.fouls ? m.fouls.away : null);
+  renderStatRow('cy',       m.cards ? m.cards.home_yellow : null, m.cards ? m.cards.away_yellow : null);
+  renderStatRow('cr',       m.cards ? m.cards.home_red : null, m.cards ? m.cards.away_red : null);
+  renderStatRow('offsides', m.offsides ? m.offsides.home : null, m.offsides ? m.offsides.away : null);
+  renderStatRow('passes_total',    m.passes?.home?.total ?? null, m.passes?.away?.total ?? null);
+  renderStatRow('key_passes',      m.key_passes ? m.key_passes.home : null, m.key_passes ? m.key_passes.away : null);
+  renderStatRow('passes_accurate', fmtPair(m.passes?.home), fmtPair(m.passes?.away));
+  renderStatRow('crosses',         fmtPair(m.crosses?.home), fmtPair(m.crosses?.away));
+  renderStatRow('long_balls',      fmtPair(m.long_balls?.home), fmtPair(m.long_balls?.away));
+  renderStatRow('tackles',       m.tackles ? m.tackles.home : null, m.tackles ? m.tackles.away : null);
+  renderStatRow('interceptions', m.interceptions ? m.interceptions.home : null, m.interceptions ? m.interceptions.away : null);
+  renderStatRow('clearances',    m.clearances ? m.clearances.home : null, m.clearances ? m.clearances.away : null);
+  renderStatRow('saves',         m.saves ? m.saves.home : null, m.saves ? m.saves.away : null);
 
   drawLDMomentumSVG(m.momentum || []);
   drawLDPressureIndex(m.pressure_index);
