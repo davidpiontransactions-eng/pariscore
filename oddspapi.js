@@ -1,18 +1,23 @@
 'use strict';
-// ─── OddsPapi (RapidAPI) — adaptateur Comparateur ─────────────────────────────
+// ─── OddsPapi — adaptateur Comparateur (dual-mode native / RapidAPI) ──────────
 // Source secondaire de cotes. Inerte si ODDSPAPI_KEY absent (zéro impact).
-// Endpoint prix RapidAPI non confirmé publiquement → chemin configurable via
-// ODDSPAPI_ODDS_PATH. Tant qu'il est faux, fetchTournamentOdds() renvoie [] et
-// la table reste alimentée par The Odds API (fallback silencieux).
+//
+// Mode "native" (DÉFAUT, recommandé) : api.oddspapi.io, auth ?apiKey=, endpoint
+//   documenté v4/odds-by-tournaments, structure prix connue (bookmakerOdds).
+// Mode "rapidapi" : odds-api1.p.rapidapi.com, headers x-rapidapi-*, endpoint
+//   prix non confirmé (playground) → ODDSPAPI_ODDS_PATH ajustable.
+// Bascule via ODDSPAPI_MODE=native|rapidapi.
 const https = require('https');
 
 // Lecture lazy : server.js parse .env (loadEnv) APRÈS le require de ce module.
-// Capturer en const au load donnerait des valeurs vides → on lit à l'appel.
+const MODE = () => (process.env.ODDSPAPI_MODE || 'native').toLowerCase();
 const KEY  = () => process.env.ODDSPAPI_KEY || '';
-const HOST = () => process.env.ODDSPAPI_HOST || 'odds-api1.p.rapidapi.com';
-// NON confirmé (doc native: /v4/odds-by-tournaments). Ajustable sans code :
-// ODDSPAPI_ODDS_PATH=... ; défensif → [] si réponse inattendue.
-const PATH_ODDS = () => process.env.ODDSPAPI_ODDS_PATH || 'odds-by-tournaments';
+const HOST = () => process.env.ODDSPAPI_HOST ||
+  (MODE() === 'rapidapi' ? 'odds-api1.p.rapidapi.com' : 'api.oddspapi.io');
+const PATH_ODDS = () => process.env.ODDSPAPI_ODDS_PATH ||
+  (MODE() === 'rapidapi' ? 'odds-by-tournaments' : 'v4/odds-by-tournaments');
+const PATH_TOURNAMENTS = () => process.env.ODDSPAPI_TOURNAMENTS_PATH ||
+  (MODE() === 'rapidapi' ? 'tournaments' : 'v4/tournaments');
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const _cache = new Map(); // key → { ts, rows }
@@ -26,12 +31,17 @@ function enabled() { return !!KEY(); }
 
 function getJSON(pathname, params) {
   return new Promise((resolve, reject) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     const h = HOST();
+    const rapid = MODE() === 'rapidapi';
+    const p = Object.assign({}, params || {});
+    if (!rapid) p.apiKey = KEY(); // natif : auth en query param
+    const qs = Object.keys(p).length ? '?' + new URLSearchParams(p).toString() : '';
+    const headers = rapid
+      ? { 'x-rapidapi-host': h, 'x-rapidapi-key': KEY(), 'Content-Type': 'application/json' }
+      : { 'Content-Type': 'application/json' };
     const req = https.request({
       host: h, path: '/' + pathname + qs, method: 'GET',
-      headers: { 'x-rapidapi-host': h, 'x-rapidapi-key': KEY(), 'Content-Type': 'application/json' },
-      timeout: 12000,
+      headers, timeout: 12000,
     }, res => {
       let b = '';
       res.on('data', c => b += c);
@@ -62,7 +72,50 @@ function normalizeToBookmakers(raw, homeTeam, awayTeam) {
     if (!byBook.has(bk)) byBook.set(bk, { key: norm(bk), title: bk, isANJ: isANJ(bk) });
     byBook.get(bk)[k] = Number(v);
   };
+  // outcomeId → champ row (catalogue OddsPapi : 101-103 1X2, 104/105 BTTS,
+  // 106/107 Totals 2.5). Fallback par libellé pour formes alternatives.
+  const OUT = { 101: 'home', 102: 'draw', 103: 'away', 104: 'bttsYes',
+    105: 'bttsNo', 106: 'over25', 107: 'under25' };
+  const priceOf = o => {
+    if (o == null) return null;
+    if (o.price != null) return o.price;
+    if (o.odds != null) return o.odds;
+    if (o.value != null) return o.value;
+    if (Array.isArray(o.players) && o.players[0]) return o.players[0].price ?? o.players[0].odds;
+    return null;
+  };
+  const byLabel = (outs, nm) => {
+    const arr = Array.isArray(outs) ? outs : Object.values(outs || {});
+    const x = arr.find(e => String(e.outcomeName || e.name || '').toLowerCase() === nm.toLowerCase());
+    return priceOf(x);
+  };
   for (const fx of fixtures) {
+    // ── Forme NATIVE : fixture.bookmakerOdds{slug}.markets{mid}.outcomes{oid} ──
+    const bo = fx.bookmakerOdds || fx.bookmaker_odds;
+    if (bo && typeof bo === 'object') {
+      for (const [bk, bdata] of Object.entries(bo)) {
+        const mkts = bdata && (bdata.markets || bdata.odds);
+        if (!mkts) continue;
+        const mlist = Array.isArray(mkts) ? mkts : Object.entries(mkts).map(([mid, m]) =>
+          Object.assign({ marketId: Number(mid) }, m));
+        for (const m of mlist) {
+          const mid = Number(m.marketId != null ? m.marketId : m.id);
+          const outs = m.outcomes || m.prices || {};
+          const oentries = Array.isArray(outs)
+            ? outs.map(o => [o.outcomeId, o]) : Object.entries(outs);
+          for (const [oid, o] of oentries) {
+            const field = OUT[Number(oid)] || OUT[Number(o && o.outcomeId)];
+            if (field) pick(bk, field, priceOf(o));
+          }
+          // garde-fou libellé si IDs absents
+          if (mid === 101) { pick(bk,'home',byLabel(outs,'1')); pick(bk,'draw',byLabel(outs,'X')); pick(bk,'away',byLabel(outs,'2')); }
+          else if (mid === 104) { pick(bk,'bttsYes',byLabel(outs,'Yes')); pick(bk,'bttsNo',byLabel(outs,'No')); }
+          else if (mid === 106) { pick(bk,'over25',byLabel(outs,'Over')); pick(bk,'under25',byLabel(outs,'Under')); }
+        }
+      }
+      continue;
+    }
+    // ── Forme alternative : liste d'objets {bookmaker, marketId, outcomes[]} ──
     const odds = fx.odds || fx.markets || [];
     const list = Array.isArray(odds) ? odds : Object.values(odds);
     for (const o of list) {
@@ -71,11 +124,7 @@ function normalizeToBookmakers(raw, homeTeam, awayTeam) {
       const mid = o.marketId != null ? Number(o.marketId) : null;
       const mt = String(o.marketType || o.market || '').toLowerCase();
       const outs = o.outcomes || o.prices || [];
-      const val = nm => {
-        const x = (Array.isArray(outs) ? outs : []).find(e =>
-          String(e.outcomeName || e.name || e.outcomeId) .toLowerCase() === String(nm).toLowerCase());
-        return x ? (x.price ?? x.odds ?? x.value) : null;
-      };
+      const val = nm => byLabel(outs, nm);
       if (mid === 101 || mt === '1x2') {
         pick(bk, 'home', val('1')); pick(bk, 'draw', val('X')); pick(bk, 'away', val('2'));
       } else if (mid === 104 || mt.includes('bothteams') || mt === 'btts') {
