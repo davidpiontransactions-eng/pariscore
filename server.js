@@ -12844,14 +12844,16 @@ async function _texFetchHtml(pathSuffix) {
 function _texParseMatchesPage(html) {
   if (!html) return [];
   const out = [];
-  // Capture paired rows: <tr id="s<N>">...</tr> + <tr id="s<N>b">...</tr>
-  const trRe = /<tr id="s(\d+)"[^>]*class="(one|two)[^"]*"[^>]*>([\s\S]*?)<\/tr>\s*<tr id="s\1b"[^>]*>([\s\S]*?)<\/tr>/g;
+  // Capture paired rows: <tr id="s<N>" or "r<N>"> + <tr id="s<N>b" or "r<N>b">
+  // Singles use s prefix, doubles use r prefix (T4 v10.13)
+  const trRe = /<tr id="([sr])(\d+)"[^>]*class="(one|two)[^"]*"[^>]*>([\s\S]*?)<\/tr>\s*<tr id="\1\2b"[^>]*>([\s\S]*?)<\/tr>/g;
   let m;
   while ((m = trRe.exec(html)) !== null) {
-    const [, idx, , row1, row2] = m;
+    const [, , idx, , row1, row2] = m; // [prefix, num, class, row1, row2] post-T4
     const timeM = row1.match(/class="first time"[^>]*>([^<]+)</);
-    const p1M = row1.match(/class="t-name"><a href="\/player\/([^"]+)\/?"[^>]*>([^<]+)<\/a>/);
-    const p2M = row2.match(/class="t-name"><a href="\/player\/([^"]+)\/?"[^>]*>([^<]+)<\/a>/);
+    // T4: accept /player/<slug> (singles) OR /doubles-team/<slug1>/<slug2> (doubles)
+    const p1M = row1.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
+    const p2M = row2.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     if (!p1M || !p2M) continue;
     const scoresP1 = [...row1.matchAll(/class="score"[^>]*>([^<]*)</g)]
       .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
@@ -12948,22 +12950,97 @@ function _texParsePlayerPage(html, slug) {
 }
 
 async function fetchTexMatches(tour, dateISO) {
-  const tourNorm = (tour || 'atp').toLowerCase() === 'wta' ? 'wta' : 'atp';
+  // T4 v10.13 : accept atp-single / atp-double / wta-single / wta-double directly
+  const raw = (tour || 'atp').toLowerCase();
+  let type;
+  if (/^(atp|wta)-(single|double)$/.test(raw)) {
+    type = raw;
+  } else if (raw === 'wta') {
+    type = 'wta-single';
+  } else {
+    type = 'atp-single';
+  }
   const datePart = dateISO ? `&year=${dateISO.slice(0, 4)}&month=${dateISO.slice(5, 7)}&day=${dateISO.slice(8, 10)}` : '';
-  const cacheKey = `${tourNorm}|${dateISO || 'today'}`;
+  const cacheKey = `${type}|${dateISO || 'today'}`;
   const cached = texMatchesCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < TEX_MATCHES_TTL_MS) return cached.data;
-  const path = `/matches/?type=${tourNorm}-single${datePart}`;
+  const path = `/matches/?type=${type}${datePart}`;
   const html = await _texFetchHtml(path);
   const matches = _texParseMatchesPage(html);
   const data = {
-    tour: tourNorm.toUpperCase(),
+    tour: type.split('-')[0].toUpperCase(),
+    format: type.split('-')[1], // single | double
     date: dateISO || _texFmtDate(new Date()),
     source_url: `${TEX_BASE}${path}`,
     fetched_at: new Date().toISOString(),
     matches,
   };
   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
+  return data;
+}
+
+// T6 v10.13 — Tennis calendar saison (tournaments par tour)
+const TEX_CALENDAR_TTL_MS = 24 * 3600 * 1000;
+const texCalendarCache = new Map();
+
+function _texParseCalendar(html) {
+  if (!html) return [];
+  const out = [];
+  // T6 v10.13 — calendar table marked by id="tournamentList"
+  const tableM = html.match(/<table id="tournamentList"[^>]*>([\s\S]*)/);
+  if (!tableM) return out;
+  const trRe = /<tr[^>]+class="(one|two) actual"[^>]*>([\s\S]*?)(?=<tr |<\/tbody>)/g;
+  let m;
+  let pending = null;
+  while ((m = trRe.exec(tableM[1])) !== null) {
+    const tr = m[2];
+    const dateM = tr.match(/<td class="first shortdate[^"]*"[^>]*>([^<]*?)<br\s*\/?\s*>?([^<]*)</);
+    if (dateM) {
+      // First row of tournament pair (singles)
+      const nameM = tr.match(/<a href="(\/[^"]+)"[^>]*><strong><span title="([^"]+)">([^<]+)</);
+      const surfM = tr.match(/<span title="(Clay|Hard|Grass|Carpet|Indoor)"[^>]*style="background-color:([^"]+)"/);
+      const prizeM = tr.match(/<td class="tr"[^>]*>([^<]+)</);
+      const drawM = tr.match(/<td class="draw"[^>]*>(\d+)<\/td>/);
+      const winnerM = tr.match(/<td class="winner"[^>]*>([^<]+)</) || tr.match(/<td>([^<]*-?[^<]*)<\/td>/);
+      pending = {
+        start_date: ((dateM[1] || '').trim() + (dateM[2] || '').trim()).replace(/\.$/, ''),
+        url: nameM ? `${TEX_BASE}${nameM[1]}` : null,
+        name: nameM ? nameM[2].trim() : null,
+        short: nameM ? nameM[3].trim() : null,
+        surface: surfM ? surfM[1] : null,
+        prize: prizeM ? prizeM[1].trim() : null,
+        singles_draw: drawM ? parseInt(drawM[1], 10) : null,
+        singles_winner: winnerM ? winnerM[1].replace(/&nbsp;/g, ' ').trim() : null,
+      };
+      out.push(pending);
+    } else if (pending) {
+      // Second row = doubles draw + winner
+      const drawM = tr.match(/<td class="draw"[^>]*>(\d+)<\/td>/);
+      const winnerM = tr.match(/<td class="winner"[^>]*>([^<]+)</);
+      pending.doubles_draw = drawM ? parseInt(drawM[1], 10) : null;
+      pending.doubles_winner = winnerM ? winnerM[1].replace(/&nbsp;/g, ' ').trim() : null;
+      pending = null;
+    }
+  }
+  return out;
+}
+
+async function fetchTexCalendar(tour) {
+  const tourNorm = (tour || 'atp').toLowerCase() === 'wta' ? 'wta-women' : 'atp-men';
+  const cacheKey = tourNorm;
+  const cached = texCalendarCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < TEX_CALENDAR_TTL_MS) return cached.data;
+  const path = `/calendar/${tourNorm}/`;
+  const html = await _texFetchHtml(path);
+  const tournaments = _texParseCalendar(html);
+  const data = {
+    tour: tourNorm.split('-')[0].toUpperCase(),
+    source_url: `${TEX_BASE}${path}`,
+    fetched_at: new Date().toISOString(),
+    count: tournaments.length,
+    tournaments,
+  };
+  texCalendarCache.set(cacheKey, { ts: Date.now(), data });
   return data;
 }
 
@@ -16341,6 +16418,16 @@ if (pathname === '/api/v1/aiscore/fixtures' && req.method === 'GET') {
     return jsonResponse(res, 200, data);
   } catch (e) {
     return jsonResponse(res, 500, { error: 'aiscore_fixtures_error', detail: e.message });
+  }
+}
+// Tennis Explorer — calendar saison (T6 v10.13). Query: ?tour=atp|wta
+if (pathname === '/api/v1/tennis/tex/calendar' && req.method === 'GET') {
+  try {
+    const tour = (query.tour || 'atp').toString();
+    const data = await fetchTexCalendar(tour);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tex_calendar_error', detail: e.message });
   }
 }
 // Tennis Explorer — odds history snapshots (T5 v10.12) graphe drift court terme.

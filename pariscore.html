@@ -5980,9 +5980,21 @@
         </p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <div style="display:flex;gap:6px;">
-          <button class="tex-tour-btn is-active" data-tour="ATP" onclick="setTexTour('ATP')" style="padding:6px 12px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;">ATP</button>
-          <button class="tex-tour-btn" data-tour="WTA" onclick="setTexTour('WTA')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;">WTA</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="tex-tour-btn is-active" data-tour="atp-single" onclick="setTexTour('atp-single')" style="padding:6px 12px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;">ATP</button>
+          <button class="tex-tour-btn" data-tour="wta-single" onclick="setTexTour('wta-single')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;">WTA</button>
+          <button class="tex-tour-btn" data-tour="atp-double" onclick="setTexTour('atp-double')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;" title="Doubles ATP">2×ATP</button>
+          <button class="tex-tour-btn" data-tour="wta-double" onclick="setTexTour('wta-double')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;" title="Doubles WTA">2×WTA</button>
+          <select id="tex-day-select" onchange="setTexDay(this.value)" style="padding:6px 10px;background:var(--bg2,#111417);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;font-family:'Instrument Sans',sans-serif;font-size:12px;">
+            <option value="0">Aujourd'hui</option>
+            <option value="1">Demain</option>
+            <option value="2">J+2</option>
+            <option value="3">J+3</option>
+            <option value="4">J+4</option>
+            <option value="5">J+5</option>
+            <option value="6">J+6</option>
+            <option value="7">J+7</option>
+          </select>
         </div>
         <span id="tex-status" style="font-size:12px;color:var(--text3,#5a6068);">—</span>
         <button onclick="loadTexMatches()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;">🔄</button>
@@ -6014,6 +6026,28 @@
     </div>
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
       <div id="ta-mcp-body"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TENNIS EXPLORER — Calendar saison (T6 v10.13) ATP/WTA tournaments
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section fade-up" id="tennis-tex-calendar-section" style="margin-top:24px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+      <div>
+        <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:22px;">🗓️ Calendrier Tournois — Tennis Explorer</h2>
+        <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:12px;">
+          Tournois en cours · prize money + surface + draw · <a href="https://www.tennisexplorer.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a>
+        </p>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="tex-cal-tour-btn is-active" data-tour="atp" onclick="setTexCalTour('atp')" style="padding:6px 12px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:600;">ATP</button>
+        <button class="tex-cal-tour-btn" data-tour="wta" onclick="setTexCalTour('wta')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;">WTA</button>
+        <span id="tex-cal-status" style="font-size:11px;color:var(--text3,#5a6068);">—</span>
+      </div>
+    </div>
+    <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
+      <div id="tex-cal-body" style="overflow:auto;"></div>
     </div>
   </section>
 
@@ -7283,7 +7317,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -7706,14 +7740,20 @@ function _escapeHtmlSafe(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-// ─── Tennis Explorer — Odds Drift & Player Profile (v10.9 MVP A+B) ──────
-let _texCurrentTour = 'ATP';
+// ─── Tennis Explorer — Odds Drift & Player Profile (v10.9 MVP A+B + T2/T4/T6 v10.13) ──────
+let _texCurrentTour = 'atp-single';
+let _texCurrentDayOffset = 0;
 
 function setTexTour(tour) {
-  _texCurrentTour = (tour || 'ATP').toUpperCase();
+  _texCurrentTour = (tour || 'atp-single').toLowerCase();
   document.querySelectorAll('.tex-tour-btn').forEach(b => {
     b.classList.toggle('is-active', b.dataset.tour === _texCurrentTour);
   });
+  loadTexMatches();
+}
+
+function setTexDay(offset) {
+  _texCurrentDayOffset = parseInt(offset, 10) || 0;
   loadTexMatches();
 }
 
@@ -7734,8 +7774,14 @@ async function loadTexMatches() {
   const status = document.getElementById('tex-status');
   if (status) status.textContent = 'Chargement…';
   try {
-    const tour = _texCurrentTour.toLowerCase();
-    const res = await fetch(`/api/v1/tennis/tex/matches?tour=${tour}`).then(r => r.json());
+    const tour = _texCurrentTour;
+    let dateParam = '';
+    if (_texCurrentDayOffset > 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + _texCurrentDayOffset);
+      dateParam = `&date=${d.toISOString().slice(0, 10)}`;
+    }
+    const res = await fetch(`/api/v1/tennis/tex/matches?tour=${tour}${dateParam}`).then(r => r.json());
     if (res.error) throw new Error(res.detail || res.error);
     const matches = res.matches || [];
     if (!matches.length) {
@@ -7783,6 +7829,44 @@ async function loadTexMatches() {
   } catch (e) {
     body.innerHTML = `<div style="padding:32px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
     if (status) status.textContent = 'Erreur';
+  }
+}
+
+// T6 v10.13 — Tennis Explorer calendar saison
+let _texCalTour = 'atp';
+
+function setTexCalTour(tour) {
+  _texCalTour = (tour || 'atp').toLowerCase();
+  document.querySelectorAll('.tex-cal-tour-btn').forEach(b => {
+    b.classList.toggle('is-active', b.dataset.tour === _texCalTour);
+  });
+  loadTexCalendar();
+}
+
+async function loadTexCalendar() {
+  const body = document.getElementById('tex-cal-body');
+  const status = document.getElementById('tex-cal-status');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement…</div>';
+  try {
+    const r = await fetch(`/api/v1/tennis/tex/calendar?tour=${_texCalTour}`).then(r => r.json());
+    if (r.error) throw new Error(r.detail || r.error);
+    const surfColor = (s) => ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068';
+    const rows = (r.tournaments || []).map(t => `<tr>
+      <td style="white-space:nowrap;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:10px;">${_escapeHtmlSafe(t.start_date || '—')}</td>
+      <td><a href="${_escapeHtmlSafe(t.url || '#')}" target="_blank" rel="noopener" style="color:var(--text,#e8eaed);">${_escapeHtmlSafe(t.name || '—')}</a></td>
+      <td style="text-align:center;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${surfColor(t.surface)};vertical-align:middle;" title="${_escapeHtmlSafe(t.surface || '')}"></span> <span style="font-size:10px;color:var(--text2,#8d9399);">${_escapeHtmlSafe(t.surface || '')}</span></td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--green,#00e676);">${_escapeHtmlSafe(t.prize || '—')}</td>
+      <td style="text-align:right;">${t.singles_draw || '—'}<span style="color:var(--text3,#5a6068);font-size:9px;"> s</span></td>
+      <td style="text-align:right;">${t.doubles_draw || '—'}<span style="color:var(--text3,#5a6068);font-size:9px;"> d</span></td>
+    </tr>`).join('');
+    body.innerHTML = `<table class="tex-table" style="min-width:0;">
+      <thead><tr><th>Start</th><th>Tournoi</th><th style="text-align:center;">Surface</th><th style="text-align:right;">Prize</th><th style="text-align:right;">S Draw</th><th style="text-align:right;">D Draw</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+    if (status) status.textContent = `${r.count} actifs · MAJ ${fmtKickoffTime(r.fetched_at)}`;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
   }
 }
 
