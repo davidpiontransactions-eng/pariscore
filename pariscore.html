@@ -18703,6 +18703,13 @@ function psAccess() {
   else if (role === 'matchday_tennis') tennisPro = true;
   // Pass Matchday localStorage (legacy = foot)
   if (typeof hasMatchdayAccess === 'function' && hasMatchdayAccess()) footPro = true;
+  // Fenêtre test gratuite : ven 15/05/2026 → lun 18/05/2026 inclus (compte connecté = accès total)
+  if (u) {
+    const _now = Date.now();
+    if (_now >= Date.parse('2026-05-15T00:00:00+02:00') && _now < Date.parse('2026-05-19T00:00:00+02:00')) {
+      footPro = true; tennisPro = true;
+    }
+  }
   return {
     role, loggedIn: !!u,
     footPro, tennisPro,

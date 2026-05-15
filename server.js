@@ -10173,6 +10173,15 @@ function requireUserAuth(req, res) {
 
 // ─── PLAN ACCESS ENGINE (Phase 2 serveur) ───────────────────────────────────
 // Dérive l'accès foot/tennis/pro depuis le rôle JWT. Miroir de psAccess() client.
+// Période test gratuite : vendredi 15/05/2026 → lundi 18/05/2026 inclus
+// (tout membre connecté a accès à tout, quota levé). Heure Paris ≈ UTC+2.
+const PS_TEST_FREE_START = Date.parse('2026-05-15T00:00:00+02:00');
+const PS_TEST_FREE_END   = Date.parse('2026-05-19T00:00:00+02:00'); // exclusif → couvre tout le 18
+function psTestFreeActive() {
+  const now = Date.now();
+  return now >= PS_TEST_FREE_START && now < PS_TEST_FREE_END;
+}
+
 function srvAccess(req) {
   const u = getAuthUser(req);
   const role = u ? u.role : null;
@@ -10183,6 +10192,8 @@ function srvAccess(req) {
   else if (role === 'matchday' || role === 'matchday_foot') footPro = true;
   else if (role === 'matchday_tennis') tennisPro = true;
   else if (role === 'matchday_duo') { footPro = true; tennisPro = true; }
+  // Fenêtre test : tout compte connecté = accès total
+  if (u && psTestFreeActive()) { footPro = true; tennisPro = true; }
   return { user: u, role, loggedIn: !!u, footPro, tennisPro, anyPro: footPro || tennisPro };
 }
 
@@ -17213,7 +17224,8 @@ if (pathname.startsWith('/api/v1/force-hydrate/') && req.method === 'POST') {
 
 // GET /api/v1/ai-scout  [premium]
 if (pathname === '/api/v1/ai-scout') {
-  if (!requireAuth(req, res, ['premium', 'admin', 'matchday'])) return;
+  // Entitlement déjà appliqué par srvPlanGate (footPro requis). Ici : auth seule.
+  if (!requireAuth(req, res, PS_ALL_ROLES)) return;
   generateAIScout().then(data => jsonResponse(res, data.error ? 503 : 200, data))
     .catch(e => jsonResponse(res, 500, { error: e.message }));
   return;
