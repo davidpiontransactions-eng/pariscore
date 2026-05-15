@@ -3,6 +3,7 @@
 .env.local
 *.pem
 *.key
+ACCES_MEMO.md
 
 # Database
 *.db
