@@ -6389,6 +6389,16 @@
           <a class="guide-card-link" onclick="scrollToSection('guide-strategies');return false;">Stratégies →</a>
         </div>
       </div>
+
+      <div id="ai-al" class="guide-card-visual">
+        <img src="https://placehold.co/600x300/1a0a1f/ce93d8?text=AI-AL+Analyse+Pro+IA" alt="AI-AL">
+        <div class="guide-card-body">
+          <div class="guide-card-icon">AI-AL</div>
+          <div class="guide-card-title">Bouton AI-AL — Analyse Pro IA</div>
+          <div class="guide-card-desc">Bouton violet en bout de ligne (Foot &amp; Tennis). Ouvre un terminal IA streaming : Power Score IA, Top 5 paris classés, indice de confiance et divergence modèle ↔ marché. L'analyse experte du match en un clic.</div>
+          <a class="guide-card-link" onclick="scrollToSection('guide-glossaire');return false;">Définition &amp; exemples →</a>
+        </div>
+      </div>
     </div>
 
     <!-- ── JAUGE D'INTENSITÉ ─────────────────────────────────────────────── -->
@@ -6920,6 +6930,52 @@
 
           <p style="margin-top:14px;font-size:12px;color:var(--text2)">
             <strong>Différence avec PWR Score (entry 05) :</strong> Form Score (Forme tab) intègre <em>venue</em> et <em>opp quality</em>, exposé dans modal Insights. PWR Score (colonne 3 tableau Matchs) est plus compact, utilise pondération récence Wt × Wopp continue. Les 2 sont complémentaires : PWR pour scan rapide tableau, Form Score pour analyse approfondie en modal.
+          </p>
+        </div>
+      </div>
+
+      <div class="guide-gloss-entry">
+        <div class="guide-gloss-term">
+          <span class="guide-gloss-num">08</span>
+          Bouton AI-AL — Analyse Pro IA
+        </div>
+        <div class="guide-gloss-body">
+          <p>Le bouton <strong style="color:#ce93d8">AI-AL</strong> (violet, dernière colonne de chaque ligne de match — Foot &amp; Tennis) déclenche l'<strong>Analyse Pro IA</strong> : un moteur d'agrégation qui fusionne le modèle mathématique PariScore (Poisson/Elo dévigé) avec une couche de raisonnement IA, puis restitue un verdict actionnable en &lt; 5 secondes via un terminal streaming.</p>
+
+          <h4 style="margin:14px 0 8px;font-size:12px;font-weight:700;color:#ce93d8">Ce que produit AI-AL (4 blocs)</h4>
+          <ul style="margin:8px 0 12px 18px;font-size:12px;color:var(--text2);line-height:1.7">
+            <li><strong>Power Score IA</strong> — note de domination 0-100 par camp, recalculée serveur (forme pondérée + xG + qualité adverse + contexte). À ne pas confondre avec le <em>PWR Score</em> (entry 05) calculé côté client.</li>
+            <li><strong>Top 5 Paris</strong> — les 5 marchés au meilleur couple <em>probabilité × valeur (EV)</em>, classés, avec cote conseillée.</li>
+            <li><strong>Indice de Confiance</strong> — badge 0-100 (volume data + stabilité modèle + calibration backtest).</li>
+            <li><strong>Divergence Modèle ↔ Marché</strong> — écart entre la proba IA et la proba dévigée des bookmakers. Forte divergence = value potentielle <em>ou</em> piège (info manquante).</li>
+          </ul>
+
+          <div class="guide-gloss-formula">
+            <code>AI-AL = Modèle(Poisson · Elo · xG dévigés)  ⊕  Couche IA(forme · contexte · H2H)</code><br>
+            <code>Top5 = tri décroissant sur  (proba_calibrée × edge_no_vig)</code><br>
+            <small style="color:var(--text2);">Streaming SSE : Quick-Scout (&lt;100 ms) → analyse complète → mode rendu</small>
+          </div>
+
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">⚽ Exemple FOOT — Çaykur Rizespor vs Beşiktaş (Süper Lig) :</span>
+            Clic <strong style="color:#ce93d8">AI-AL</strong> sur la ligne →<br>
+            → <strong>Power Score IA</strong> : Rizespor <strong>41</strong> · Beşiktaş <strong>69</strong> (domination extérieure nette)<br>
+            → <strong>Top 5 Paris</strong> : 1) <strong>2</strong> (Beşiktaş) @1.90 · 2) <strong>X2</strong> @1.28 · 3) <strong>+1.5 Beşiktaş</strong> · 4) <strong>BTTS Oui</strong> 59% · 5) <strong>Over 2.5</strong> 55%<br>
+            → <strong>Confiance</strong> : <code class="guide-gloss-result">72/100</code> · <strong>Divergence</strong> : modèle 53% vs marché 50% sur le « 2 » → léger edge <strong>+6.2%</strong><br>
+            <em style="color:var(--text2);font-size:12px;">Lecture pro : favori extérieur fiable, jouer le <strong>2</strong> ou sécuriser en <strong>X2</strong> si frilleux.</em>
+          </div>
+
+          <div class="guide-gloss-example">
+            <span class="guide-gloss-ex-label">🎾 Exemple TENNIS — J. Sinner vs C. Alcaraz (ATP, dur) :</span>
+            Le bouton AI-AL existe aussi sur l'onglet Tennis. Clic →<br>
+            → <strong>Power Score IA</strong> : Sinner <strong>58</strong> · Alcaraz <strong>54</strong> (quasi-équilibre, surface dur favorise Sinner)<br>
+            → <strong>Top 5 Paris</strong> : 1) <strong>Vainqueur Sinner</strong> @1.85 · 2) <strong>Over 22.5 jeux</strong> · 3) <strong>Set handicap Sinner -1.5</strong> · 4) <strong>Match en 3 sets</strong> · 5) <strong>Tie-break dans le match</strong><br>
+            → <strong>Confiance</strong> : <code class="guide-gloss-result">61/100</code> (H2H serré, échantillon dur réduit) · <strong>Divergence</strong> : modèle 56% vs marché 54% sur Sinner → edge marginal <strong>+2.1%</strong><br>
+            <em style="color:var(--text2);font-size:12px;">Lecture pro : confiance moyenne + edge faible → préférer un marché <strong>jeux/sets</strong> (volatilité plus lisible) plutôt que le vainqueur sec.</em>
+          </div>
+
+          <p style="margin-top:14px;font-size:12px;color:var(--text2)">
+            <strong>Quand l'utiliser :</strong> après le scan rapide du tableau (PWR + Verdict colonne), l'AI-AL est l'étape de <em>confirmation approfondie</em> avant la mise. Confiance ≥70 + edge &gt;5% + divergence cohérente = signal fort. Confiance &lt;60 ou divergence extrême sans raison = s'abstenir. <span style="color:var(--text3)">Feature Pro (Matchday/abonnement) — quota Power Score applicable.</span>
           </p>
         </div>
       </div>
