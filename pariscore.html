@@ -5384,6 +5384,7 @@
       </p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button id="bm-live-toggle" onclick="toggleBetminesLive()" style="padding:6px 10px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-size:12px;" title="Filtre LIVE only">🔴 Live</button>
       <label style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Min Proba</label>
       <select id="bm-min-prob" onchange="loadBetminesPicks()" style="padding:6px 10px;background:var(--bg2,#111417);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;font-size:12px;">
         <option value="60">60%</option>
@@ -7898,32 +7899,65 @@ const BM_MARKET_LABELS = {
 };
 function _bmMarketLabel(m) { return BM_MARKET_LABELS[m] || m || '—'; }
 
+window._bmLiveOnly = false;
+function toggleBetminesLive() {
+  window._bmLiveOnly = !window._bmLiveOnly;
+  const btn = document.getElementById('bm-live-toggle');
+  if (btn) {
+    btn.style.background = window._bmLiveOnly ? 'var(--red,#ff4d4d)' : 'var(--bg2,#111417)';
+    btn.style.color = window._bmLiveOnly ? '#fff' : 'var(--text2,#8d9399)';
+  }
+  loadBetminesPicks();
+}
+
 async function loadBetminesPicks() {
   const body = document.getElementById('bm-body');
   const status = document.getElementById('bm-status');
   if (!body) return;
   const minProb = document.getElementById('bm-min-prob')?.value || '75';
   const minValue = document.getElementById('bm-min-value')?.value || '1.10';
+  const liveOnly = window._bmLiveOnly;
   body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>';
   try {
-    const r = await fetch(`/api/v1/betmines/best-bets?min_prob=${minProb}&min_value=${minValue}`).then(r => r.json());
+    // Si liveOnly : fetch raw fixtures et filter, sinon best-bets pre-match
+    const endpoint = liveOnly
+      ? '/api/v1/betmines/fixtures'
+      : `/api/v1/betmines/best-bets?min_prob=${minProb}&min_value=${minValue}`;
+    const r = await fetch(endpoint).then(r => r.json());
     if (r.error) throw new Error(r.detail || r.error);
-    const picks = r.picks || [];
+    let picks = r.picks || r.fixtures || [];
+    if (liveOnly) {
+      picks = picks.filter(f => f.status === 'LIVE' || f.status === 'HT' || (f.minute > 0 && f.minute < 130 && f.status !== 'AWARDED' && f.status !== 'NS'));
+    }
     if (!picks.length) {
       body.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucune prédiction au-dessus du seuil.</div>';
       if (status) status.textContent = '0 picks';
       return;
     }
-    const probColor = (p) => p >= 85 ? 'var(--green,#00e676)' : p >= 75 ? '#ffa726' : 'var(--text2,#8d9399)';
+    const probColor = (p) => p == null ? 'var(--text3,#5a6068)' : p >= 85 ? 'var(--green,#00e676)' : p >= 75 ? '#ffa726' : 'var(--text2,#8d9399)';
     const rows = picks.slice(0, 100).map(p => {
       const time = fmtKickoffTime(p.commence_time);
       const date = fmtKickoffDate(p.commence_time, { day:'2-digit', month:'2-digit' });
+      const isLive = p.status === 'LIVE' || p.status === 'HT';
+      const liveBadge = isLive
+        ? `<span style="display:inline-block;padding:1px 6px;background:rgba(255,77,77,0.15);border:1px solid var(--red,#ff4d4d);border-radius:3px;color:var(--red,#ff4d4d);font-size:9px;font-weight:600;margin-right:4px;">🔴 ${p.status === 'HT' ? 'HT' : p.minute + "'"}</span>`
+        : '';
+      const score = (p.home_score != null && p.away_score != null && (p.status === 'LIVE' || p.status === 'HT' || p.status === 'FT'))
+        ? `<strong style="color:var(--green,#00e676);">${p.home_score} - ${p.away_score}</strong>`
+        : '';
+      const pickCell = p.best_pick?.market
+        ? `<span class="bm-pick-badge">${_escapeHtmlSafe(_bmMarketLabel(p.best_pick.market))}</span>`
+        : '<span style="color:var(--text3,#5a6068);">—</span>';
+      const oddCell = p.best_pick?.odd_value != null ? p.best_pick.odd_value.toFixed(2) : '—';
+      const probCell = p.best_pick?.probability != null
+        ? `<span class="bm-prob-pill" style="background:rgba(0,230,118,0.1);color:${probColor(p.best_pick.probability)};">${p.best_pick.probability}%</span>`
+        : '<span style="color:var(--text3,#5a6068);">—</span>';
       return `<tr onclick="openBetminesModal('${p.bm_match_id}')">
-        <td style="white-space:nowrap;color:var(--text3,#5a6068);font-size:10px;">${date} ${time}</td>
-        <td><div style="font-weight:600;">${_escapeHtmlSafe(p.home_team)} <span style="color:var(--text3,#5a6068);">vs</span> ${_escapeHtmlSafe(p.away_team)}</div><div style="font-size:9px;color:var(--text3,#5a6068);">${_escapeHtmlSafe(p.country || '')} · ${_escapeHtmlSafe(p.league || '')}</div></td>
-        <td style="text-align:center;"><span class="bm-pick-badge">${_escapeHtmlSafe(_bmMarketLabel(p.best_pick.market))}</span></td>
-        <td style="text-align:right;font-weight:600;">${p.best_pick.odd_value?.toFixed(2)}</td>
-        <td style="text-align:right;"><span class="bm-prob-pill" style="background:rgba(0,230,118,0.1);color:${probColor(p.best_pick.probability)};">${p.best_pick.probability}%</span></td>
+        <td style="white-space:nowrap;font-size:10px;">${liveBadge}<span style="color:var(--text3,#5a6068);">${date} ${time}</span></td>
+        <td><div style="font-weight:600;">${_escapeHtmlSafe(p.home_team)} ${score} <span style="color:var(--text3,#5a6068);">vs</span> ${_escapeHtmlSafe(p.away_team)}</div><div style="font-size:9px;color:var(--text3,#5a6068);">${_escapeHtmlSafe(p.country || '')} · ${_escapeHtmlSafe(p.league || '')}</div></td>
+        <td style="text-align:center;">${pickCell}</td>
+        <td style="text-align:right;font-weight:600;">${oddCell}</td>
+        <td style="text-align:right;">${probCell}</td>
       </tr>`;
     }).join('');
     body.innerHTML = `<table class="bm-table">
@@ -7936,7 +7970,9 @@ async function loadBetminesPicks() {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
-    if (status) status.textContent = `${picks.length} picks · ≥${minProb}% & ≥${minValue}`;
+    if (status) status.textContent = liveOnly
+      ? `${picks.length} matchs LIVE · MAJ ${fmtKickoffTime(new Date().toISOString())}`
+      : `${picks.length} picks · ≥${minProb}% & ≥${minValue}`;
   } catch (e) {
     body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
     if (status) status.textContent = 'Erreur';
