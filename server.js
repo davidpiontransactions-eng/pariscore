@@ -17504,14 +17504,16 @@ if (pathname === '/api/v1/comparateur/feed' && req.method === 'GET') {
     if (isNaN(t) || (now - t) > 4 * 3600 * 1000) continue; // pas les matchs vieux >4h
     let rows = Array.isArray(m.all_bookmakers) ? m.all_bookmakers.filter(r => r && (r.home || r.away) && !r._fallback) : [];
     let best1 = null, bestN = null, best2 = null, anj1 = false, nbBooks = rows.length;
+    let bk1 = null, bkN = null, bk2 = null;
     if (rows.length) {
       for (const r of rows) {
-        if (r.home && (best1 == null || r.home > best1)) { best1 = r.home; anj1 = !!r.isANJ; }
-        if (r.draw && (bestN == null || r.draw > bestN)) bestN = r.draw;
-        if (r.away && (best2 == null || r.away > best2)) best2 = r.away;
+        if (r.home && (best1 == null || r.home > best1)) { best1 = r.home; anj1 = !!r.isANJ; bk1 = r.title || r.key || null; }
+        if (r.draw && (bestN == null || r.draw > bestN)) { bestN = r.draw; bkN = r.title || r.key || null; }
+        if (r.away && (best2 == null || r.away > best2)) { best2 = r.away; bk2 = r.title || r.key || null; }
       }
     } else if (m.odds && m.odds.home && m.odds.away) {
       best1 = m.odds.home; bestN = m.odds.draw || null; best2 = m.odds.away;
+      bk1 = m.bookmakers?.home || null; bkN = m.bookmakers?.draw || null; bk2 = m.bookmakers?.away || null;
       nbBooks = new Set([m.bookmakers?.home, m.bookmakers?.draw, m.bookmakers?.away].filter(Boolean)).size || 1;
       anj1 = m.bookmakers?.home ? [...ANJ_KEYS_SET].some(a => String(m.bookmakers.home).toLowerCase().includes(a)) : false;
     }
@@ -17529,7 +17531,7 @@ if (pathname === '/api/v1/comparateur/feed' && req.method === 'GET') {
     out.push({
       id: m.id, sport: sportFamily(m.sport), sport_raw: m.sport || '',
       league: m.league || '—', home_team: m.home_team, away_team: m.away_team,
-      commence_time: m.commence_time, best1, bestN, best2, anj1, nbBooks, trj,
+      commence_time: m.commence_time, best1, bestN, best2, bk1, bkN, bk2, anj1, nbBooks, trj,
       surebet, valuebet, decote,
     });
   }
