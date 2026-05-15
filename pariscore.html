@@ -16134,12 +16134,14 @@ async function submitLogin() {
   const errEl    = document.getElementById('login-error');
   const btn      = document.getElementById('login-btn');
   errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'Email et mot de passe requis'; return; }
+  if (!email || !password) { errEl.textContent = 'Identifiant et mot de passe requis'; return; }
   btn.disabled = true; btn.textContent = 'Connexion…';
   try {
+    // Identifiant sans "@" → compte admin (username) ; sinon membre (email)
+    const payload = email.includes('@') ? { email, password } : { username: email, password };
     const r = await fetch('/api/v1/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(payload),
     });
     const data = await r.json();
     if (!r.ok) { errEl.textContent = data.error || 'Erreur de connexion'; return; }
