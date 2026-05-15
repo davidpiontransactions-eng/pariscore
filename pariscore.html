@@ -3299,6 +3299,11 @@
   .comp-bk-name{display:flex;align-items:center;gap:8px}
   .comp-bk-logo{width:24px;height:24px;border-radius:5px;object-fit:contain;flex-shrink:0;background:#F5F5F5;border:1px solid #E0E0E0}
   .comp-bk-logo-placeholder{width:24px;height:24px;border-radius:5px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font:700 9px/1 monospace;color:#fff;background:#999}
+  /* Mini-logo bookmaker sous la cote (grille + ligne meilleure cote) */
+  .comp-odd-bk{display:block;margin:3px auto 0;line-height:0}
+  .comp-odd-bk-img{width:18px;height:18px;border-radius:3px;object-fit:contain;background:#F5F5F5;border:1px solid #E0E0E0;display:inline-block;vertical-align:middle}
+  .comp-odd-bk-img-placeholder{width:18px;height:18px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font:700 7px/1 monospace;color:#fff;background:#999;vertical-align:middle}
+  .comp-root.comp-dark .comp-odd-bk-img{background:var(--bg3);border-color:var(--border)}
   /* Badges ANJ */
   .comp-badge-anj{font-size:.6rem;background:#E8F5E9;color:#2E7D32;border-radius:3px;padding:1px 5px;font-weight:700;white-space:nowrap}
   .comp-badge-nonanj{font-size:.6rem;background:#FFF3E0;color:#E65100;border-radius:3px;padding:1px 5px;font-weight:700;white-space:nowrap}
@@ -19955,6 +19960,43 @@ let _compMode = 'all';
 let _compCurrentId = null;
 const SPORT_LBL = { football: '⚽ Football', tennis: '🎾 Tennis', basketball: '🏀 Basket' };
 
+// ── Logos bookmakers (favicon service — clé normalisée → domaine) ──────────────
+const BK_DOMAINS = {
+  winamax:'winamax.fr', betclic:'betclic.fr', unibet:'unibet.fr', pmu:'pmu.fr',
+  parionssport:'enligne.parionssport.fdj.fr', parionssportfdj:'enligne.parionssport.fdj.fr',
+  fdj:'enligne.parionssport.fdj.fr', zebet:'zebet.fr', bwin:'bwin.fr', netbet:'netbet.fr',
+  vbet:'vbet.fr', genybet:'genybet.fr', partouche:'partouchesport.fr', partouchesport:'partouchesport.fr',
+  pokerstars:'pokerstars.fr', feelingbet:'feelingbet.fr', francepari:'france-pari.fr', betsson:'betsson.com',
+  bet365:'bet365.com', '1xbet':'1xbet.com', onexbet:'1xbet.com', pinnacle:'pinnacle.com',
+  pinnaclesports:'pinnacle.com', betfair:'betfair.com', betfairexchange:'betfair.com',
+};
+function bkKeyNorm(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+function bkDomain(nameOrKey) {
+  const k = bkKeyNorm(nameOrKey);
+  if (!k) return null;
+  if (BK_DOMAINS[k]) return BK_DOMAINS[k];
+  const hit = Object.keys(BK_DOMAINS).find(d => k.includes(d) || d.includes(k));
+  return hit ? BK_DOMAINS[hit] : null;
+}
+// Renvoie <img>+placeholder. cls: classe CSS. sz: taille px du favicon.
+function compBkLogo(nameOrKey, cls, sz) {
+  cls = cls || 'comp-bk-logo';
+  sz = sz || 64;
+  const dom = bkDomain(nameOrKey);
+  const init = (String(nameOrKey || '?').replace(/[^A-Za-z0-9]/g, '') || '?').slice(0, 2).toUpperCase();
+  const phCls = cls + '-placeholder';
+  if (dom) {
+    return `<img class="${cls}" src="https://www.google.com/s2/favicons?domain=${dom}&sz=${sz}" alt="${nameOrKey}" title="${nameOrKey}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="${phCls}" style="display:none">${init}</span>`;
+  }
+  return `<span class="${phCls}" title="${nameOrKey}">${init}</span>`;
+}
+// Logo "sous la cote" — n'affiche RIEN si la source n'est pas un vrai bookmaker connu
+function compOddBk(nameOrKey) {
+  return bkDomain(nameOrKey) ? `<span class="comp-odd-bk">${compBkLogo(nameOrKey,'comp-odd-bk-img',32)}</span>` : '';
+}
+
 function applyCompTheme() {
   const root = document.getElementById('comp-root');
   if (!root) return;
@@ -20084,9 +20126,9 @@ function renderCompGrid() {
     html += `<div class="comp-grow" onclick="openCompDetail('${m.id}')">
       <div class="comp-gtime">${dm}<b>${hm}</b></div>
       <div class="comp-gteams">${esc(m.home_team)} <span style="color:var(--cq-mut)">v</span> ${esc(m.away_team)}<small>${esc(m.league)}</small></div>
-      <div class="comp-godd best">${od(m.best1)}</div>
-      <div class="comp-godd">${od(m.bestN)}</div>
-      <div class="comp-godd best">${od(m.best2)}</div>
+      <div class="comp-godd best">${od(m.best1)}${m.best1 ? compOddBk(m.bk1) : ''}</div>
+      <div class="comp-godd">${od(m.bestN)}${m.bestN ? compOddBk(m.bkN) : ''}</div>
+      <div class="comp-godd best">${od(m.best2)}${m.best2 ? compOddBk(m.bk2) : ''}</div>
       <div class="comp-gtrj">${m.trj != null ? m.trj + '%' : '—'}</div>
       <div class="comp-gflags">${flags.join('')}<span class="comp-gnb">${m.nbBooks}</span></div>
     </div>`;
@@ -20151,30 +20193,9 @@ function renderComparateur(d) {
     return `<span class="comp-delta ${cls}">(${sign}${delta.toFixed(2)})</span>`;
   }
 
-  const BK_LOGOS = {
-    winamax:'https://www.google.com/s2/favicons?domain=winamax.fr&sz=32',
-    betclic:'https://www.google.com/s2/favicons?domain=betclic.com&sz=32',
-    unibet:'https://www.google.com/s2/favicons?domain=unibet.fr&sz=32',
-    pmu:'https://www.google.com/s2/favicons?domain=pmu.fr&sz=32',
-    parionssport:'https://www.google.com/s2/favicons?domain=parionssport.fdj.fr&sz=32',
-    zebet:'https://www.google.com/s2/favicons?domain=zebet.fr&sz=32',
-    bwin:'https://www.google.com/s2/favicons?domain=bwin.com&sz=32',
-    netbet:'https://www.google.com/s2/favicons?domain=netbet.fr&sz=32',
-    bet365:'https://www.google.com/s2/favicons?domain=bet365.com&sz=32',
-    pinnacle:'https://www.google.com/s2/favicons?domain=pinnacle.com&sz=32',
-    '1xbet':'https://www.google.com/s2/favicons?domain=1xbet.com&sz=32',
-    betsson:'https://www.google.com/s2/favicons?domain=betsson.com&sz=32',
-    pokerstars:'https://www.google.com/s2/favicons?domain=pokerstars.fr&sz=32',
-    feelingbet:'https://www.google.com/s2/favicons?domain=feelingbet.fr&sz=32',
-    francepari:'https://www.google.com/s2/favicons?domain=france-pari.fr&sz=32',
-  };
   function bkLogoHTML(r) {
     if (r.isAvg) return '';
-    const key = (r.key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const url = BK_LOGOS[key] || BK_LOGOS[Object.keys(BK_LOGOS).find(k => key.includes(k) || k.includes(key)) || ''];
-    const initials = (r.title || '?').slice(0, 2).toUpperCase();
-    if (url) return `<img class="comp-bk-logo" src="${url}" alt="${r.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="comp-bk-logo-placeholder" style="display:none">${initials}</span>`;
-    return `<span class="comp-bk-logo-placeholder">${initials}</span>`;
+    return compBkLogo(r.key || r.title, 'comp-bk-logo', 64);
   }
   function bkBadge(r) {
     if (r.isAvg) return '';
@@ -20345,11 +20366,12 @@ function renderComparateur(d) {
       <th style="min-width:220px;text-align:left;">Bookmaker</th>
       <th>1 — ${home_team}</th><th>N</th><th>2 — ${away_team}</th><th>Payout</th>
     </tr>`;
+    const bkOf = (field, val) => { if (!val) return ''; const r = rows.find(x => x[field] === val && !x.isAvg && x.key !== '_best'); return r ? compOddBk(r.key || r.title) : ''; };
     bestRow = `<tr class="comp-best-row">
       <td><div class="comp-bk-name">Meilleure cote${deltaInfo}</div></td>
-      <td><strong class="comp-best-odd">${bestHome.toFixed(2)}</strong>${deltaSpan(dH)}</td>
-      <td><strong class="comp-best-odd">${bestDraw ? bestDraw.toFixed(2) : '—'}</strong>${deltaSpan(dD)}</td>
-      <td><strong class="comp-best-odd">${bestAway.toFixed(2)}</strong>${deltaSpan(dA)}</td>
+      <td><strong class="comp-best-odd">${bestHome.toFixed(2)}</strong>${deltaSpan(dH)}${bkOf('home', bestHome)}</td>
+      <td><strong class="comp-best-odd">${bestDraw ? bestDraw.toFixed(2) : '—'}</strong>${deltaSpan(dD)}${bkOf('draw', bestDraw)}</td>
+      <td><strong class="comp-best-odd">${bestAway.toFixed(2)}</strong>${deltaSpan(dA)}${bkOf('away', bestAway)}</td>
       <td class="comp-payout-hi"><strong>${bestPayout.toFixed(1)}%</strong></td>
     </tr>`;
     const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
