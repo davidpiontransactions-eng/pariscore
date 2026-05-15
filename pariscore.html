@@ -3404,6 +3404,8 @@
   /* Verrou freemium foot : pas d'IA / AI Scout dans le tableau */
   body.ps-free #ai-scout-panel,
   body.ps-free .ins-btn { display: none !important; }
+  .nav-links a.nav-locked { opacity: .55; }
+  .nav-links a.nav-locked:hover { opacity: .85; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -18757,17 +18759,19 @@ function renderLockedPage(pageId, block) {
   if (l) l.classList.add('active');
 }
 
-// Masque les liens nav non accessibles selon le tier
+// Onglets toujours visibles — cadenas 🔒 si non accessible (clic → page verrou)
 function psSyncNav() {
   const a = psAccess();
   document.querySelectorAll('.nav-links a[data-page]').forEach(link => {
     const p = link.getAttribute('data-page');
-    let show = true;
-    if (PS_OPEN_PAGES.includes(p)) show = true;
-    else if (p === 'matchs') show = true;          // visible (push inscription au clic)
-    else if (p === 'tennis') show = a.tennisAccess;
-    else show = a.anyPro;
-    link.style.display = show ? '' : 'none';
+    link.style.display = '';
+    let locked = false;
+    if (PS_OPEN_PAGES.includes(p) || p === 'matchs') locked = false;
+    else if (p === 'tennis') locked = !a.tennisAccess;
+    else locked = !a.anyPro;
+    if (!link.dataset.label) link.dataset.label = link.textContent.replace(/^🔒\s*/, '');
+    link.textContent = (locked ? '🔒 ' : '') + link.dataset.label;
+    link.classList.toggle('nav-locked', locked);
   });
 }
 
