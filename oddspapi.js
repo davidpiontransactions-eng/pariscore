@@ -6,14 +6,13 @@
 // la table reste alimentée par The Odds API (fallback silencieux).
 const https = require('https');
 
-const KEY  = process.env.ODDSPAPI_KEY || '';
-const HOST = process.env.ODDSPAPI_HOST || 'odds-api1.p.rapidapi.com';
-// Confirmés en test : sports/bookmakers/tournaments/fixtures/markets.
-const PATH_TOURNAMENTS = process.env.ODDSPAPI_TOURNAMENTS_PATH || 'tournaments';
-const PATH_FIXTURES    = process.env.ODDSPAPI_FIXTURES_PATH || 'fixtures';
-// NON confirmé (doc native: /v4/odds-by-tournaments). À ajuster une fois le
-// vrai nom RapidAPI connu, sans changer le code : ODDSPAPI_ODDS_PATH=...
-const PATH_ODDS = process.env.ODDSPAPI_ODDS_PATH || 'odds-by-tournaments';
+// Lecture lazy : server.js parse .env (loadEnv) APRÈS le require de ce module.
+// Capturer en const au load donnerait des valeurs vides → on lit à l'appel.
+const KEY  = () => process.env.ODDSPAPI_KEY || '';
+const HOST = () => process.env.ODDSPAPI_HOST || 'odds-api1.p.rapidapi.com';
+// NON confirmé (doc native: /v4/odds-by-tournaments). Ajustable sans code :
+// ODDSPAPI_ODDS_PATH=... ; défensif → [] si réponse inattendue.
+const PATH_ODDS = () => process.env.ODDSPAPI_ODDS_PATH || 'odds-by-tournaments';
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const _cache = new Map(); // key → { ts, rows }
@@ -23,14 +22,15 @@ const ANJ = ['winamax', 'betclic', 'unibet', 'pmu', 'parionssport', 'fdj',
   'zebet', 'netbet', 'bwin', 'genybet', 'vbet', 'circusbet', 'feelingbet',
   'pokerstars', 'fairpari'];
 
-function enabled() { return !!KEY; }
+function enabled() { return !!KEY(); }
 
 function getJSON(pathname, params) {
   return new Promise((resolve, reject) => {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    const h = HOST();
     const req = https.request({
-      host: HOST, path: '/' + pathname + qs, method: 'GET',
-      headers: { 'x-rapidapi-host': HOST, 'x-rapidapi-key': KEY, 'Content-Type': 'application/json' },
+      host: h, path: '/' + pathname + qs, method: 'GET',
+      headers: { 'x-rapidapi-host': h, 'x-rapidapi-key': KEY(), 'Content-Type': 'application/json' },
       timeout: 12000,
     }, res => {
       let b = '';
@@ -110,9 +110,9 @@ async function fetchMatchRows(match) {
     const tournamentId = match.oddspapi_tournament_id || match.tournamentId;
     let raw;
     if (tournamentId) {
-      raw = await getJSON(PATH_ODDS, { tournamentIds: tournamentId, oddsFormat: 'decimal' });
+      raw = await getJSON(PATH_ODDS(), { tournamentIds: tournamentId, oddsFormat: 'decimal' });
     } else if (match.oddspapi_fixture_id) {
-      raw = await getJSON(PATH_ODDS, { fixtureId: match.oddspapi_fixture_id, oddsFormat: 'decimal' });
+      raw = await getJSON(PATH_ODDS(), { fixtureId: match.oddspapi_fixture_id, oddsFormat: 'decimal' });
     } else {
       _cache.set(ck, { ts: Date.now(), rows: [] });
       return [];
