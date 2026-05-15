@@ -249,7 +249,10 @@
     display: flex; align-items: center; gap: 8px;
   }
   .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
-  .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; }
+  .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+  .nav-links::-webkit-scrollbar { height: 4px; }
+  .nav-links::-webkit-scrollbar-thumb { background: var(--bg4, #1e2328); border-radius: 2px; }
+  .nav-links a { flex: 0 0 auto; white-space: nowrap; }
   .nav-links a {
     position: relative;
     display: flex; align-items: center;
