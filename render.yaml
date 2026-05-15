@@ -14,6 +14,8 @@ services:
   - type: pserv
     name: pariscore-sofa
     runtime: python
+    branch: main
+    autoDeploy: true
     plan: starter   # 512 MB RAM minimum pour Chromium Playwright
     buildCommand: pip install -r requirements.txt && python -m playwright install chromium --with-deps
     startCommand: python scripts/sofa-microservice.py
@@ -28,6 +30,8 @@ services:
   - type: web
     name: pariscore
     runtime: node
+    branch: main
+    autoDeploy: true   # redéploie automatiquement à chaque push sur main
     buildCommand: echo "No build step required"
     startCommand: node server.js
     healthCheckPath: /api/v1/status
@@ -62,7 +66,7 @@ services:
 
       # Restreindre CORS à votre domaine en production
       - key: ALLOWED_ORIGIN
-        value: "https://pariscorebis.onrender.com"
+        value: "https://pariscore.fr"
       - key: DATABASE_PATH
         value: "/app/data/pariscore.db"
 
@@ -75,9 +79,9 @@ services:
       - key: STRIPE_MATCHDAY_PRICE_ID
         sync: false   # price_... (ID du prix €1,50 créé sur Stripe)
       - key: STRIPE_SUCCESS_URL
-        value: "https://pariscorebis.onrender.com/?matchday=success"
+        value: "https://pariscore.fr/?matchday=success"
       - key: STRIPE_CANCEL_URL
-        value: "https://pariscorebis.onrender.com/"
+        value: "https://pariscore.fr/"
 
       # GNews API — Power Score V2 (optionnel, 100 req/jour gratuit sur gnews.io)
       - key: GNEWS_API_KEY
