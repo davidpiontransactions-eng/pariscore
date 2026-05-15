@@ -5372,6 +5372,52 @@
   <div class="pred-grid" id="pred-grid"></div>
 </section>
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     BETMINES — Best picks IA externe (v10.14) — public api.betmines.com
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section class="section fade-up" id="betmines-section" style="margin-top:24px;">
+  <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+    <div>
+      <h2 style="margin:0;font-family:Syne,sans-serif;font-weight:800;font-size:24px;">⛏️ BetMines Top Picks</h2>
+      <p style="margin:4px 0 0;color:var(--text2,#8d9399);font-size:13px;">
+        Prédictions IA externe · Marchés HT/FT, Corners, BTTS, O/U · <a href="https://www.betmines.com/" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Source</a> · Cache 30min
+      </p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Min Proba</label>
+      <select id="bm-min-prob" onchange="loadBetminesPicks()" style="padding:6px 10px;background:var(--bg2,#111417);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;font-size:12px;">
+        <option value="60">60%</option>
+        <option value="70">70%</option>
+        <option value="75" selected>75%</option>
+        <option value="80">80%</option>
+        <option value="85">85%</option>
+        <option value="90">90%</option>
+      </select>
+      <label style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Min Value</label>
+      <select id="bm-min-value" onchange="loadBetminesPicks()" style="padding:6px 10px;background:var(--bg2,#111417);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;font-size:12px;">
+        <option value="1.05">1.05</option>
+        <option value="1.10" selected>1.10</option>
+        <option value="1.20">1.20</option>
+        <option value="1.40">1.40</option>
+        <option value="1.60">1.60</option>
+      </select>
+      <button onclick="loadBetminesPicks()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-size:13px;">🔄</button>
+      <span id="bm-status" style="font-size:11px;color:var(--text3,#5a6068);">—</span>
+    </div>
+  </div>
+  <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
+    <div id="bm-body" style="overflow:auto;max-height:600px;"></div>
+  </div>
+</section>
+
+<!-- Modal détail BetMines (HT/FT matrix + corners + BTTS by side) -->
+<div id="bm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:720px;width:100%;max-height:85vh;overflow:auto;padding:20px;position:relative;">
+    <button onclick="document.getElementById('bm-modal').style.display='none'" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;">✕</button>
+    <div id="bm-modal-body" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">Chargement…</div>
+  </div>
+</div>
+
 </div><!-- /page-predictions -->
 
 <!-- PAGE : HISTORIQUE -->
@@ -6107,6 +6153,14 @@
   .ta-mcp-table { width:100%; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; }
   .ta-mcp-table th { text-align:left; padding:5px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:9px; }
   .ta-mcp-table td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text,#e8eaed); }
+  /* BetMines table v10.14 */
+  .bm-table { width:100%; min-width:780px; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; }
+  .bm-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:10px; position:sticky; top:0; background:var(--bg2,#111417); }
+  .bm-table td { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text,#e8eaed); vertical-align:middle; }
+  .bm-table tr:hover td { background:rgba(255,255,255,0.02); cursor:pointer; }
+  .bm-pick-badge { display:inline-block; padding:2px 6px; border-radius:3px; background:var(--bg3,#181c20); color:var(--green,#00e676); font-weight:600; font-size:10px; }
+  .bm-prob-pill { display:inline-block; padding:2px 6px; border-radius:10px; font-size:10px; font-weight:600; }
+  .bm-ht-ft-cell { padding:8px;text-align:center;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);font-family:'DM Mono',monospace;font-size:11px; }
 </style>
 
 <style>
@@ -7309,7 +7363,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'sure-bets' && !sureBetsLoaded) { sureBetsLoaded = true; loadSureBets(); }
   if (pageId === 'matchs' && !matchesLoaded) { matchesLoaded = true; loadMatches(); }
   if (pageId === 'matchs') initMatchdayBanner();
-  if (pageId === 'predictions') loadPredictions();
+  if (pageId === 'predictions') { loadPredictions(); loadBetminesPicks(); }
   if (pageId === 'historique')  initHistoriquePage();
   if (pageId === 'paris')       initParisPage();
   if (pageId === 'strategies')  initStrategiesPage();
@@ -7829,6 +7883,135 @@ async function loadTexMatches() {
   } catch (e) {
     body.innerHTML = `<div style="padding:32px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
     if (status) status.textContent = 'Erreur';
+  }
+}
+
+// ─── BetMines integration v10.14 ──────────────────────────────────────────
+const BM_MARKET_LABELS = {
+  '1': 'Home Win', 'X': 'Draw', '2': 'Away Win',
+  '1X': 'Home or Draw', '12': 'Home or Away', 'X2': 'Draw or Away',
+  'O05': 'Over 0.5', 'O15': 'Over 1.5', 'O25': 'Over 2.5', 'O35': 'Over 3.5', 'O45': 'Over 4.5',
+  'U05': 'Under 0.5', 'U15': 'Under 1.5', 'U25': 'Under 2.5', 'U35': 'Under 3.5', 'U45': 'Under 4.5',
+  'GG': 'BTTS Yes', 'NG': 'BTTS No',
+  'CO95': 'Corners Over 9.5', 'CU95': 'Corners Under 9.5',
+  'CO105': 'Corners Over 10.5', 'CU105': 'Corners Under 10.5',
+};
+function _bmMarketLabel(m) { return BM_MARKET_LABELS[m] || m || '—'; }
+
+async function loadBetminesPicks() {
+  const body = document.getElementById('bm-body');
+  const status = document.getElementById('bm-status');
+  if (!body) return;
+  const minProb = document.getElementById('bm-min-prob')?.value || '75';
+  const minValue = document.getElementById('bm-min-value')?.value || '1.10';
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>';
+  try {
+    const r = await fetch(`/api/v1/betmines/best-bets?min_prob=${minProb}&min_value=${minValue}`).then(r => r.json());
+    if (r.error) throw new Error(r.detail || r.error);
+    const picks = r.picks || [];
+    if (!picks.length) {
+      body.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucune prédiction au-dessus du seuil.</div>';
+      if (status) status.textContent = '0 picks';
+      return;
+    }
+    const probColor = (p) => p >= 85 ? 'var(--green,#00e676)' : p >= 75 ? '#ffa726' : 'var(--text2,#8d9399)';
+    const rows = picks.slice(0, 100).map(p => {
+      const time = fmtKickoffTime(p.commence_time);
+      const date = fmtKickoffDate(p.commence_time, { day:'2-digit', month:'2-digit' });
+      return `<tr onclick="openBetminesModal('${p.bm_match_id}')">
+        <td style="white-space:nowrap;color:var(--text3,#5a6068);font-size:10px;">${date} ${time}</td>
+        <td><div style="font-weight:600;">${_escapeHtmlSafe(p.home_team)} <span style="color:var(--text3,#5a6068);">vs</span> ${_escapeHtmlSafe(p.away_team)}</div><div style="font-size:9px;color:var(--text3,#5a6068);">${_escapeHtmlSafe(p.country || '')} · ${_escapeHtmlSafe(p.league || '')}</div></td>
+        <td style="text-align:center;"><span class="bm-pick-badge">${_escapeHtmlSafe(_bmMarketLabel(p.best_pick.market))}</span></td>
+        <td style="text-align:right;font-weight:600;">${p.best_pick.odd_value?.toFixed(2)}</td>
+        <td style="text-align:right;"><span class="bm-prob-pill" style="background:rgba(0,230,118,0.1);color:${probColor(p.best_pick.probability)};">${p.best_pick.probability}%</span></td>
+      </tr>`;
+    }).join('');
+    body.innerHTML = `<table class="bm-table">
+      <thead><tr>
+        <th>Date</th>
+        <th>Match</th>
+        <th style="text-align:center;">Pick</th>
+        <th style="text-align:right;">Cote</th>
+        <th style="text-align:right;">Proba</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+    if (status) status.textContent = `${picks.length} picks · ≥${minProb}% & ≥${minValue}`;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
+    if (status) status.textContent = 'Erreur';
+  }
+}
+
+async function openBetminesModal(matchId) {
+  const modal = document.getElementById('bm-modal');
+  const body = document.getElementById('bm-modal-body');
+  if (!modal || !body || !matchId) return;
+  modal.style.display = 'flex';
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>';
+  try {
+    const m = await fetch(`/api/v1/betmines/match?id=${encodeURIComponent(matchId)}`).then(r => r.json());
+    if (m.error) throw new Error(m.detail || m.error);
+    const fmtO = v => v == null ? '—' : Number(v).toFixed(2);
+    const time = fmtKickoffTime(m.commence_time);
+    const date = fmtKickoffDate(m.commence_time);
+    // HT/FT 3×3 matrix
+    const ftLabels = ['1', 'x', '2'];
+    const htLabels = ['1', 'x', '2'];
+    const cells = htLabels.map(ht =>
+      `<tr>${ftLabels.map(ft => `<td class="bm-ht-ft-cell"><div style="color:var(--text3,#5a6068);font-size:9px;">HT${ht.toUpperCase()}/FT${ft.toUpperCase()}</div><div style="font-weight:600;color:var(--green,#00e676);margin-top:2px;">${fmtO(m.ht_ft[ht + '/' + ft])}</div></td>`).join('')}</tr>`
+    ).join('');
+    body.innerHTML = `
+      <h3 style="margin:0 0 8px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;">⛏️ ${_escapeHtmlSafe(m.home_team)} vs ${_escapeHtmlSafe(m.away_team)}</h3>
+      <div style="margin-bottom:14px;font-size:11px;color:var(--text2,#8d9399);">
+        ${_escapeHtmlSafe(m.country || '—')} · ${_escapeHtmlSafe(m.league || '—')} · ${date} ${time}
+      </div>
+      <div style="background:var(--bg3,#181c20);padding:10px 14px;border-radius:6px;margin-bottom:14px;">
+        <div style="color:var(--text3,#5a6068);font-size:10px;text-transform:uppercase;">Best Pick (BetMines IA)</div>
+        <div style="font-size:16px;font-weight:700;margin:4px 0;">
+          <span class="bm-pick-badge" style="font-size:13px;padding:4px 10px;">${_escapeHtmlSafe(_bmMarketLabel(m.best_pick?.market))}</span>
+          @ <span style="color:var(--green,#00e676);">${m.best_pick?.odd_value?.toFixed(2) || '—'}</span>
+          <span style="color:var(--text3,#5a6068);font-size:12px;">· Proba ${m.best_pick?.probability || '—'}%</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+        <div>
+          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;margin-bottom:6px;">1X2</div>
+          <div style="display:flex;gap:6px;">
+            <span class="bm-ht-ft-cell" style="flex:1;">1 <strong>${fmtO(m.odds?.home)}</strong></span>
+            <span class="bm-ht-ft-cell" style="flex:1;">X <strong>${fmtO(m.odds?.draw)}</strong></span>
+            <span class="bm-ht-ft-cell" style="flex:1;">2 <strong>${fmtO(m.odds?.away)}</strong></span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;margin-bottom:6px;">BTTS</div>
+          <div style="display:flex;gap:6px;">
+            <span class="bm-ht-ft-cell" style="flex:1;">Yes <strong>${fmtO(m.btts?.yes)}</strong></span>
+            <span class="bm-ht-ft-cell" style="flex:1;">No <strong>${fmtO(m.btts?.no)}</strong></span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;margin-bottom:6px;">Over/Under 2.5</div>
+          <div style="display:flex;gap:6px;">
+            <span class="bm-ht-ft-cell" style="flex:1;">O 2.5 <strong>${fmtO(m.over_under?.['over_2.5'])}</strong></span>
+            <span class="bm-ht-ft-cell" style="flex:1;">U 2.5 <strong>${fmtO(m.over_under?.['under_2.5'])}</strong></span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;margin-bottom:6px;">Corners 9.5</div>
+          <div style="display:flex;gap:6px;">
+            <span class="bm-ht-ft-cell" style="flex:1;">O <strong>${fmtO(m.corners?.['over_9.5'])}</strong></span>
+            <span class="bm-ht-ft-cell" style="flex:1;">U <strong>${fmtO(m.corners?.['under_9.5'])}</strong></span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;margin-bottom:6px;">🔢 HT/FT Matrix (9 combos)</div>
+        <table style="width:100%;border-collapse:collapse;">${cells}</table>
+      </div>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
   }
 }
 

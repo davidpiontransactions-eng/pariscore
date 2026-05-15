@@ -12546,6 +12546,134 @@ async function fetchTennisAbstractReport(slug) {
   return data;
 }
 
+// ─── BetMines — Public API (v10.14) ────────────────────────────────────────
+// Source: api.betmines.com/betmines/v1 — open API, no auth, browser headers OK.
+// Endpoint: /fixtures?from=YYYY-MM-DD&to=YYYY-MM-DD → 200 OK array of fixtures.
+// 96 keys/fixture : 1X2 + DC + O/U + BTTS + HT/FT 9 combos + corners + bestOdd.
+const BETMINES_API = 'https://api.betmines.com/betmines/v1';
+const BETMINES_TTL_MS = 30 * 60 * 1000;
+const betminesCache = new Map();
+
+async function fetchBetminesFixtures(dateFrom, dateTo) {
+  const from = dateFrom || _texFmtDate(new Date());
+  const to = dateTo || from;
+  const cacheKey = `${from}|${to}`;
+  const cached = betminesCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < BETMINES_TTL_MS) return cached.data;
+  const u = new URL(`${BETMINES_API}/fixtures`);
+  u.searchParams.set('from', from);
+  u.searchParams.set('to', to);
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: u.hostname, port: 443,
+      path: u.pathname + (u.search || ''),
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Origin': 'https://www.betmines.com',
+        'Referer': 'https://www.betmines.com/',
+      },
+    }, (res) => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        if (res.statusCode !== 200) return reject(new Error(`betmines HTTP ${res.statusCode}`));
+        try {
+          const arr = JSON.parse(body);
+          if (!Array.isArray(arr)) return reject(new Error('betmines: non-array response'));
+          betminesCache.set(cacheKey, { ts: Date.now(), data: arr });
+          resolve(arr);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout betmines')); });
+    req.end();
+  });
+}
+
+function adaptBetminesFixture(fx) {
+  if (!fx) return null;
+  const market = (k) => (typeof fx[k] === 'string' || typeof fx[k] === 'number') ? parseFloat(fx[k]) : null;
+  return {
+    id: `bm_${fx.id}`,
+    bm_match_id: fx.id,
+    home_team: fx.localTeam?.name || fx.localTeamName || null,
+    away_team: fx.visitorTeam?.name || fx.visitorTeamName || null,
+    league: fx.league?.name || null,
+    country: fx.league?.country?.name || null,
+    commence_time: fx.dateTime || fx.date,
+    home_rank: fx.localTeamPosition || null,
+    away_rank: fx.visitorTeamPosition || null,
+    home_score: fx.localTeamScore ?? null,
+    away_score: fx.visitorTeamScore ?? null,
+    minute: fx.minute || null,
+    status: fx.timeStatus || null,
+    odds: { home: market('odd1'), draw: market('oddx'), away: market('odd2') },
+    double_chance: { '1x': market('odd1x'), '12': market('odd12'), 'x2': market('oddx2') },
+    over_under: {
+      'over_0.5': market('oddOver05'), 'under_0.5': market('oddUnder05'),
+      'over_1.5': market('oddOver15'), 'under_1.5': market('oddUnder15'),
+      'over_2.5': market('oddOver25'), 'under_2.5': market('oddUnder25'),
+      'over_3.5': market('oddOver35'), 'under_3.5': market('oddUnder35'),
+      'over_4.5': market('oddOver45'), 'under_4.5': market('oddUnder45'),
+    },
+    over_under_ht: {
+      'over_0.5_ht': market('oddOver05HT'), 'under_0.5_ht': market('oddUnder05HT'),
+      'over_1.5_ht': market('oddOver15HT'), 'under_1.5_ht': market('oddUnder15HT'),
+    },
+    btts: { yes: market('oddGoal'), no: market('oddNoGoal') },
+    btts_by_side: {
+      home_yes: market('homeGG'), home_no: market('homeNG'),
+      away_yes: market('awayGG'), away_no: market('awayNG'),
+      draw_yes: market('drawGG'), draw_no: market('drawNG'),
+    },
+    ht_ft: { // 9 combos
+      '1/1': market('HT1FT1'), '1/x': market('HT1FTx'), '1/2': market('HT1FT2'),
+      'x/1': market('HTxFT1'), 'x/x': market('HTxFTx'), 'x/2': market('HTxFT2'),
+      '2/1': market('HT2FT1'), '2/x': market('HT2FTx'), '2/2': market('HT2FT2'),
+    },
+    corners: {
+      'home_1x2': market('corner1'), 'draw_1x2': market('cornerx'), 'away_1x2': market('corner2'),
+      'over_9.5': market('cornerOver95'), 'under_9.5': market('cornerUnder95'),
+      'over_10.5': market('cornerOver105'), 'under_10.5': market('cornerUnder105'),
+    },
+    best_pick: {
+      market: fx.bestOdd, // ex: "O15"
+      probability: typeof fx.bestOddProbability === 'number' ? fx.bestOddProbability : null,
+      odd_value: typeof fx.bestOddValue === 'number' ? fx.bestOddValue : (typeof fx.bestOddValue === 'string' ? parseFloat(fx.bestOddValue) : null),
+    },
+    _source: 'betmines',
+  };
+}
+
+function _bmFilterBestBets(fixtures, opts = {}) {
+  const minProb = parseFloat(opts.min_prob) || 70;
+  const minValue = parseFloat(opts.min_value) || 1.10;
+  return fixtures
+    .map(adaptBetminesFixture)
+    .filter(f => f && f.best_pick.probability != null && f.best_pick.probability >= minProb && f.best_pick.odd_value >= minValue)
+    .sort((a, b) => (b.best_pick.probability || 0) - (a.best_pick.probability || 0));
+}
+
+// Cron BetMines refresh — toutes les 30min refresh today + tomorrow
+async function _runBetminesRefresh() {
+  try {
+    const today = _texFmtDate(new Date());
+    const tomorrow = _texFmtDate(new Date(Date.now() + 86400000));
+    betminesCache.clear();
+    const [d1, d2] = await Promise.all([
+      fetchBetminesFixtures(today, today).catch(e => { console.warn('[Cron:BetMines] today:', e.message); return []; }),
+      fetchBetminesFixtures(tomorrow, tomorrow).catch(e => { console.warn('[Cron:BetMines] tomorrow:', e.message); return []; }),
+    ]);
+    console.log(`  [Cron:BetMines] ✓ today: ${d1.length} fixtures · tomorrow: ${d2.length} fixtures`);
+  } catch (e) {
+    console.warn('[Cron:BetMines]', e.message);
+  }
+}
+
 // ─── AiScore — Protobuf-decoded API (P1+P2+P3, v10.12) ─────────────────────
 // API : https://api.aiscore.com/v1/web/api/... — réponses en protobuf wire format.
 // Bypass Cloudflare via headers Origin + Referer browser-like. Cache 5min live, 1h fixtures.
@@ -16380,6 +16508,59 @@ if (pathname === '/api/v1/tennis/tex/matches' && req.method === 'GET') {
 // Query: ?slug=<player-slug>
 // AiScore — match data + odds (P1+P2 v10.12) via protobuf decoder.
 // Query: ?match_id=<id>&slug=<slug-hint>
+// BetMines — fixtures multi-markets (v10.14). Query: ?from=&to= (def aujourd'hui)
+if (pathname === '/api/v1/betmines/fixtures' && req.method === 'GET') {
+  try {
+    const from = (query.from || '').toString().trim() || null;
+    const to = (query.to || '').toString().trim() || from;
+    const raw = await fetchBetminesFixtures(from, to);
+    const adapted = raw.map(adaptBetminesFixture).filter(Boolean);
+    return jsonResponse(res, 200, {
+      from: from || _texFmtDate(new Date()),
+      to: to || from || _texFmtDate(new Date()),
+      count: adapted.length,
+      fixtures: adapted,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'betmines_fixtures_error', detail: e.message });
+  }
+}
+// BetMines — top picks filtrés. Query: ?date=YYYY-MM-DD&min_prob=70&min_value=1.10
+if (pathname === '/api/v1/betmines/best-bets' && req.method === 'GET') {
+  try {
+    const date = (query.date || '').toString().trim() || null;
+    const raw = await fetchBetminesFixtures(date, date);
+    const picks = _bmFilterBestBets(raw, query);
+    return jsonResponse(res, 200, {
+      date: date || _texFmtDate(new Date()),
+      min_prob: parseFloat(query.min_prob) || 70,
+      min_value: parseFloat(query.min_value) || 1.10,
+      count: picks.length,
+      picks,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'betmines_best_bets_error', detail: e.message });
+  }
+}
+// BetMines — détail match par id
+if (pathname === '/api/v1/betmines/match' && req.method === 'GET') {
+  try {
+    const id = (query.id || '').toString().trim();
+    if (!id) return jsonResponse(res, 400, { error: 'id_required' });
+    const today = _texFmtDate(new Date());
+    const tomorrow = _texFmtDate(new Date(Date.now() + 86400000));
+    const [d1, d2] = await Promise.all([
+      fetchBetminesFixtures(today, today),
+      fetchBetminesFixtures(tomorrow, tomorrow).catch(() => []),
+    ]);
+    const all = [...d1, ...d2];
+    const fx = all.find(f => String(f.id) === id);
+    if (!fx) return jsonResponse(res, 404, { error: 'match_not_found' });
+    return jsonResponse(res, 200, adaptBetminesFixture(fx));
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'betmines_match_error', detail: e.message });
+  }
+}
 if (pathname === '/api/v1/aiscore/match' && req.method === 'GET') {
   try {
     const matchId = (query.match_id || '').toString().trim();
@@ -19519,6 +19700,12 @@ setTimeout(() => {
   _runTexOddsSnapshotJob().catch(e => console.warn('[Cron:TexOdds]', e.message));
   setInterval(() => _runTexOddsSnapshotJob().catch(e => console.warn('[Cron:TexOdds]', e.message)), 6 * 3600 * 1000);
 }, 60 * 1000); // first run 60s after boot
+
+// BetMines v10.14 — refresh 30min today + tomorrow
+setTimeout(() => {
+  _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message));
+  setInterval(() => _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message)), 30 * 60 * 1000);
+}, 90 * 1000);
 
 // Matchstat resolver — cron 7d + boot sync si data absente.
 if (MATCHSTAT_ENABLED) {
