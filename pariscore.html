@@ -1294,6 +1294,9 @@
   body.dark-theme .kpi-block-divider > div { color: rgba(255,255,255,0.5) !important; }
   .buteur-row { display: flex; align-items: center; gap: 4px; padding: 3px 5px; border-radius: 4px; background: var(--bg3); border: 1px solid transparent; transition: all .15s; cursor: default; position: relative; }
   .buteur-row:hover { border-color: var(--border); background: rgba(255,255,255,0.04); z-index: 2; }
+  /* L3 — KPI condensé : lignes 2+ masquées, dépliées au survol du bloc */
+  .kpi-extra { max-height: 0; overflow: hidden; opacity: 0; transition: max-height .2s ease, opacity .15s ease; display: flex; flex-direction: column; gap: 3px; }
+  .buteurs-block:hover .kpi-extra { max-height: 160px; opacity: 1; margin-top: 3px; }
   .buteur-badge { font-family: var(--font-mono); font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; min-width: 16px; text-align: center; flex-shrink: 0; }
   .buteur-name { font-size: 10.5px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
   .buteur-bar-wrap { width: 28px; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; flex-shrink: 0; overflow: hidden; }
@@ -4222,7 +4225,7 @@
     border-color: #E8E8E8 !important;
   }
   body:not(.dark-theme) .t3c-label { color: #888 !important; font-weight: 600 !important; }
-  body:not(.dark-theme) .t3c-pro-chip.ev   { background: rgba(226,0,26,0.08) !important; color: #E2001A !important; border-color: rgba(226,0,26,0.2) !important; }
+  body:not(.dark-theme) .t3c-pro-chip.ev   { background: #DCFCE7 !important; color: #15803D !important; border-color: rgba(21,128,61,0.3) !important; }
   body:not(.dark-theme) .t3c-pro-chip       { background: #F4F4F4 !important; color: #888 !important; border-color: #E8E8E8 !important; }
   body:not(.dark-theme) .t3c-pro-sep { border-color: #EAEAEA !important; }
 
@@ -10442,6 +10445,10 @@ function renderOddsDeltaCell(m) {
     { label: '2', v: d.away, curr: m.odds?.away },
   ].filter(x => x.v != null && x.curr != null);
   if (!vals.length) return '<span style="color:var(--text3);font-size:10px;font-family:var(--font-mono);">—</span>';
+  // Mouvement nul (|Δ| < 0.01 sur tous) = bruit. On affiche un tiret, pas "1 ●0.00".
+  if (vals.every(x => Math.abs(x.v) < 0.01)) {
+    return '<span style="color:var(--text3);font-size:10px;font-family:var(--font-mono);">—</span>';
+  }
   const drops = vals.filter(x => x.v < 0).sort((a, b) => a.v - b.v);
   const best = drops[0] || vals.sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0];
   const prev = best.curr - best.v;
@@ -10791,10 +10798,10 @@ function renderTopKPI(kpi, ctx) {
   const awayTeam = (ctx && ctx.away) ? String(ctx.away).replace(/"/g,'&quot;') : '';
   const leagueId = ctx && ctx.leagueId ? ctx.leagueId : '';
   const rows = kpi.map(k => {
-    const teamClr = k.team === 'home' ? '#E2001A' : '#1A1A1A';
+    const teamClr = k.team === 'home' ? '#1A1A1A' : '#888';
     const teamLbl = k.team === 'home' ? 'D' : 'E';
-    const kpiClr = k.kpi >= 8 ? '#E2001A' : k.kpi >= 7 ? '#1A1A1A' : '#888';
-    const ratingClr = k.rating >= 7.5 ? '#E2001A' : k.rating >= 6.8 ? '#1A1A1A' : '#888';
+    const kpiClr = k.kpi >= 8 ? '#15803D' : k.kpi >= 7 ? '#B45309' : '#888';
+    const ratingClr = k.rating >= 7.5 ? '#15803D' : k.rating >= 6.8 ? '#B45309' : '#888';
     // Bar normalisée KPI 5-12 = 0-100%
     const barW = Math.max(0, Math.min(100, Math.round((k.kpi - 5) / 7 * 100)));
     return `<div class="buteur-row" title="KPI: ${k.kpi} | Rating: ${k.rating} | G/A/KP: ${k.goals}/${k.assists}/${k.key_passes} | ${k.matches} matchs">
@@ -10805,10 +10812,13 @@ function renderTopKPI(kpi, ctx) {
       <span class="buteur-xg" style="color:${kpiClr};">${k.kpi.toFixed(1)}</span>
       <span class="buteur-pct" style="color:${ratingClr};">★${k.rating.toFixed(1)}</span>
     </div>`;
-  }).join('');
+  });
+  const first = rows[0] || '';
+  const extra = rows.slice(1).join('');
   return `<div class="kpi-block-divider" style="border-top:1px dashed #ccc;margin:4px 0 3px;padding-top:3px;">
-    <div style="font:700 8px/1 var(--font-mono);color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;">★ TOP 3 KPI</div>
-    ${rows}
+    <div style="font:700 8px/1 var(--font-mono);color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;">★ TOP KPI ${rows.length > 1 ? `<span style="opacity:.6;font-weight:600;">(+${rows.length - 1} au survol)</span>` : ''}</div>
+    ${first}
+    ${extra ? `<div class="kpi-extra">${extra}</div>` : ''}
   </div>`;
 }
 
@@ -10936,15 +10946,29 @@ function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
   const ov25Acc = accuracy?.over25?.rate;
   const bestAcc = bttsAcc != null ? { mkt: 'BTTS', rate: bttsAcc } : ov25Acc != null ? { mkt: 'O2.5', rate: ov25Acc } : null;
 
+  // L1 garde-fou frontend : EV affichée seulement si valide (marché 1X2, borne ≤ 60%).
+  // Mappe le label serveur → marché lisible pour le parieur (quoi parier, pas juste combien).
+  const EV_MKT = { homeWin: '1', draw: 'N', awayWin: '2' };
+  const evMkt = ev && EV_MKT[ev.label] ? EV_MKT[ev.label] : null;
+  const evValid = evPct > 0 && evPct <= 60 && evMkt;
+
+  // L2 — Score Confiance Global + Indice Volatilité
+  const conf = calcConfidenceScore(m, p, accuracy);
+  const confClr = conf >= 70 ? '#15803D' : conf >= 50 ? '#B45309' : '#B91C1C';
+  const confBg  = conf >= 70 ? '#DCFCE7' : conf >= 50 ? '#FEF3C7' : '#FEE2E2';
+  const vol = calcVolatility(m, p);
+  const volClr = vol.score < 34 ? '#15803D' : vol.score < 67 ? '#B45309' : '#B91C1C';
+
   rows.push(`<div class="t3c-pro-sep"></div>`);
   rows.push(`<div class="t3c-row t3c-pro-row">
-    ${evPct > 0 ? `<span class="t3c-pro-chip ev">+EV ${evPct.toFixed(1)}%</span>` : ''}
+    <span class="t3c-pro-chip conf" style="background:${confBg};color:${confClr};border:1px solid ${confClr}55;font-weight:800;" title="Score de Confiance Global /100 — décisivité modèle + volume data + convergence + calibration">⬤ ${conf}<span style="opacity:.6;font-size:7px;">/100</span></span>
+    <span class="t3c-pro-chip vol" style="color:${volClr};" title="Indice de Volatilité — ${vol.label} (élevé = match ouvert/incertain)">σ ${vol.label}</span>
     ${m.shield ? `<span class="t3c-pro-chip shield" title="Convergence modèle + marché">🛡️</span>` : ''}
-    ${steamDrop != null ? `<span class="t3c-pro-chip steam" style="color:#ff5252;">▼${Math.abs(steamDrop).toFixed(2)}</span>` : ''}
   </div>`);
   rows.push(`<div class="t3c-row t3c-pro-row">
-    ${pctRank != null ? `<span class="t3c-pro-chip pct">top ${pctRank}% ligue</span>` : ''}
-    ${bestAcc ? `<span class="t3c-pro-chip acc" style="color:${bestAcc.rate>=60?'#E2001A':bestAcc.rate>=50?'#1A1A1A':'#888'};">✓${bestAcc.mkt} ${bestAcc.rate}%</span>` : ''}
+    ${evValid ? `<span class="t3c-pro-chip ev" title="Expected Value dévigée — marché à cote réelle">+EV ${evMkt} ${evPct.toFixed(1)}%</span>` : ''}
+    ${steamDrop != null ? `<span class="t3c-pro-chip steam" style="color:#ff5252;" title="Steam / drop de cote">▼${Math.abs(steamDrop).toFixed(2)}</span>` : ''}
+    ${bestAcc ? `<span class="t3c-pro-chip acc" style="color:${bestAcc.rate>=60?'#15803D':bestAcc.rate>=50?'#B45309':'#888'};" title="Précision historique backtest">✓${bestAcc.mkt} ${bestAcc.rate}%</span>` : ''}
   </div>`);
 
   return rows.join('');
@@ -11056,6 +11080,47 @@ function calcPowerScoreV44Detailed(formStr, stats, xgVal, opponentRank) {
 
 function calcPowerScoreV44(formStr, stats, xgVal, opponentRank) {
   return calcPowerScoreV44Detailed(formStr, stats, xgVal, opponentRank).total;
+}
+
+// ── Score de Confiance Global /100 ─────────────────────────────────────────
+// Pondère : décision du modèle + volume données + convergence modèle/marché + calibration.
+// Pré-figure l'UQD (roadmap P1) sans Bootstrap : signal synthétique unique pour le parieur.
+function calcConfidenceScore(m, p, accuracy) {
+  p = p || m.poisson || {};
+  // 1. Décisivité modèle (0-40) — un favori net = forte confiance
+  const probs = [p.homeWin || 0, p.draw || 0, p.awayWin || 0];
+  const top = Math.max(...probs);
+  const decisiveness = Math.min(40, Math.max(0, (top - 33) / 47 * 40)); // 33%→0, 80%→40
+  // 2. Volume / qualité données (0-25)
+  const s = m.stats?.home || {};
+  const games = (s.wins || 0) + (s.draws || 0) + (s.losses || 0);
+  const volume = Math.min(15, games / 20 * 15);
+  const realBonus = m.stats?.isReal ? 10 : 0;
+  // 3. Convergence modèle ↔ marché (0-20)
+  const shieldBonus = m.shield ? 20 : 0;
+  // 4. Calibration historique du marché du jour (0-15)
+  const accRate = accuracy?.over25?.rate ?? accuracy?.btts?.rate ?? null;
+  const calib = accRate != null ? Math.min(15, Math.max(0, (accRate - 45) / 35 * 15)) : 5;
+  const total = Math.round(decisiveness + volume + realBonus + shieldBonus + calib);
+  return Math.min(100, Math.max(0, total));
+}
+
+// ── Indice de Volatilité 0-100 ─────────────────────────────────────────────
+// Élevé = match ouvert / résultat incertain. Bas = favori net, faible dispersion.
+function calcVolatility(m, p) {
+  p = p || m.poisson || {};
+  const hw = p.homeWin || 0, dr = p.draw || 0, aw = p.awayWin || 0;
+  // Spread favori : écart faible entre 1 et 2 → ouvert
+  const spread = Math.abs(hw - aw); // 0 = totalement ouvert, ~80 = écrasant
+  const spreadVol = Math.max(0, 1 - spread / 70) * 55;
+  // Poids du nul : nul élevé → incertitude
+  const drawVol = Math.min(25, dr / 35 * 25);
+  // Concentration du score le plus probable
+  const topProb = (p.topScores && p.topScores[0]?.prob) || 0;
+  const scoreVol = Math.max(0, 1 - topProb / 22) * 20;
+  const score = Math.round(Math.min(100, Math.max(0, spreadVol + drawVol + scoreVol)));
+  const label = score < 34 ? 'Stable' : score < 67 ? 'Modéré' : 'Volatil';
+  return { score, label };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -11593,6 +11658,14 @@ const label = country
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;">
         <div data-tv-badge="${m.id}" style="position:absolute;bottom:4px;right:4px;font-size:9px;color:#555;display:none;align-items:center;gap:3px;background:rgba(255,255,255,0.95);border:1px solid #EAEAEA;border-radius:4px;padding:2px 5px;z-index:2;" title="Diffuseur TV"></div>
+        ${!m.live_score && best.label ? (() => {
+          const vConf = calcConfidenceScore(m, p, globalAccuracy);
+          const vClr = vConf >= 70 ? '#15803D' : vConf >= 50 ? '#B45309' : '#B91C1C';
+          const vBg  = vConf >= 70 ? '#DCFCE7' : vConf >= 50 ? '#FEF3C7' : '#FEE2E2';
+          const vOdds = best.odds != null ? (typeof best.odds === 'number' ? best.odds.toFixed(2) : best.odds) : '';
+          const vEv = best.edge > 0 ? ` · <span style="color:#15803D;">+${best.edge.toFixed(1)}%</span>` : '';
+          return `<div style="display:inline-flex;align-items:center;gap:5px;background:${vBg};border:1px solid ${vClr}55;border-radius:5px;padding:2px 7px;margin-bottom:4px;font:800 10px/1 var(--font-mono);color:${vClr};" title="Verdict — pari conseillé · cote · confiance /100${best.bk?' · '+best.bk:''}">🎯 ${best.label}${vOdds?` @${vOdds}`:''} · ⬤${vConf}${vEv}</div>`;
+        })() : ''}
         ${m.live_score ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
           <span data-live="${m.id}" style="font-size:9px;font-weight:700;color:#ff4d4d;background:rgba(255,77,77,0.15);padding:1px 5px;border-radius:4px;animation:pulse 1.5s infinite;">🔴 ${m.live_score || 'LIVE'}</span>
           <div style="width:50px;height:4px;background:#EAEAEA;border-radius:2px;overflow:hidden;" title="Intensité: ${m.live_intensity||0}/100">
@@ -11619,14 +11692,12 @@ const label = country
         <div style="margin-bottom:2px;">
           <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
           <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof homePpgL5==='number'?homePpgL5.toFixed(1):'-'}</span>
-          <br><span style="color:var(--text3);font-size:7px;">ELO:</span><span style="color:var(--accent);font-weight:600;">${typeof homePpgL5==='number' && m.home_rank ? calcElo(m.home_rank, homePpgL5, m.league_size) : '-'}</span>
-          <span style="color:var(--text3);font-size:7px;">PWR:</span><span style="color:${homePower>=65?'#E2001A':homePower>=45?'#1A1A1A':'#888'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
+          <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${homePower>=65?'#15803D':homePower>=45?'#B45309':'#B91C1C'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
         </div>
         <div>
           <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
           <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof awayPpgL5==='number'?awayPpgL5.toFixed(1):'-'}</span>
-          <br><span style="color:var(--text3);font-size:7px;">ELO:</span><span style="color:var(--accent);font-weight:600;">${typeof awayPpgL5==='number' && m.away_rank ? calcElo(m.away_rank, awayPpgL5, m.league_size) : '-'}</span>
-          <span style="color:var(--text3);font-size:7px;">PWR:</span><span style="color:${awayPower>=65?'#E2001A':awayPower>=45?'#1A1A1A':'#888'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
+          <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${awayPower>=65?'#15803D':awayPower>=45?'#B45309':'#B91C1C'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
         </div>
       </td>
       <td style="min-width:70px;padding:4px 6px !important;">
@@ -11639,8 +11710,8 @@ const label = country
           <span style="margin-left:auto;cursor:pointer;" onclick="openRadarModal('${m.id}')" title="Stats avancées">📊</span>
         </div>
         ${m.h2h && m.h2h.total > 0
-          ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#E2001A':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
-          : `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);opacity:.55;">H2H: <span style="font-style:italic;">aucun historique</span></div>`}
+          ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
+          : ''}
         ${formatTopScores(m.poisson?.topScores, 3)}
         ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span></div>` : ''}</td>
       <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
@@ -11837,11 +11908,21 @@ async function enrichTVChannels() {
       const slot = document.querySelector(`[data-tv-badge="${id}"]`);
       if (!slot) continue;
       // Multi-broadcaster display : afficher jusqu'à 3 diffuseurs avec deep-link clickable
+      // Monogramme coloré déterministe (hash nom → teinte) — fallback propre si pas de logo
+      const tvMonogram = (name) => {
+        const n = String(name || '?').trim();
+        let h = 0;
+        for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+        const hue = h % 360;
+        const letter = (n[0] || '?').toUpperCase();
+        return `<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:3px;background:hsl(${hue},55%,45%);color:#fff;font:800 9px/1 var(--font-mono);flex-shrink:0;">${letter}</span>`;
+      };
       const renderChannel = (ch) => {
         const url = TV_DEEPLINKS[ch.name] || null;
+        const fallback = tvMonogram(ch.name);
         const logoHtml = ch.logo
-          ? `<img src="${ch.logo}" alt="${ch.name}" style="height:12px;max-width:24px;object-fit:contain;" loading="lazy" onerror="this.outerHTML='📺'">`
-          : '📺';
+          ? `<img src="${ch.logo}" alt="${ch.name}" style="height:14px;max-width:28px;object-fit:contain;" loading="lazy" onerror="this.outerHTML='${fallback.replace(/'/g, "\\'")}'">`
+          : fallback;
         const tag = `<span title="${chosenCountry} — Diffuseur ${ch.name}${url ? ' (cliquer pour ouvrir)' : ''}">${ch.name}</span>`;
         const inner = `${logoHtml} ${tag}`;
         if (url) {

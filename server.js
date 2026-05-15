@@ -1495,6 +1495,36 @@ const TV_CHANNEL_LOGOS = {
   'Canale 5': null,
 };
 
+// Logos de marque par mot-clé (fallback quand la chaîne exacte n'a pas de logo curé).
+// simpleicons.org sert un SVG vectoriel propre par slug + couleur de marque.
+const TV_BRAND_ICONS = [
+  { kw: ['canal+', 'canal +', 'canalplus', 'canal plus'], url: 'https://cdn.simpleicons.org/canalplus/000000' },
+  { kw: ['dazn'], url: 'https://cdn.simpleicons.org/dazn/F8002E' },
+  { kw: ['espn'], url: 'https://cdn.simpleicons.org/espn/E32526' },
+  { kw: ['sky sport', 'sky sports', 'skysport'], url: 'https://cdn.simpleicons.org/sky/0072C9' },
+  { kw: ['amazon', 'prime video', 'prime'], url: 'https://cdn.simpleicons.org/primevideo/1A98FF' },
+  { kw: ['apple tv', 'appletv'], url: 'https://cdn.simpleicons.org/appletv/000000' },
+  { kw: ['movistar'], url: 'https://cdn.simpleicons.org/movistar/019DF4' },
+  { kw: ['discovery'], url: 'https://cdn.simpleicons.org/discoveryplus/2175D9' },
+  { kw: ['hbo', 'max'], url: 'https://cdn.simpleicons.org/hbo/000000' },
+  { kw: ['netflix'], url: 'https://cdn.simpleicons.org/netflix/E50914' },
+  { kw: ['youtube'], url: 'https://cdn.simpleicons.org/youtube/FF0000' },
+  { kw: ['bbc'], url: 'https://cdn.simpleicons.org/bbc/000000' },
+  { kw: ['itv'], url: 'https://cdn.simpleicons.org/itv/EF0086' },
+  { kw: ['rte', 'rté'], url: 'https://cdn.simpleicons.org/rte/00A1DE' },
+];
+
+// Résout le meilleur logo pour une chaîne : source externe > mapping curé > marque par mot-clé.
+function resolveTvLogo(name, srcLogo) {
+  if (srcLogo) return srcLogo;
+  if (name && TV_CHANNEL_LOGOS[name]) return TV_CHANNEL_LOGOS[name];
+  const lc = String(name || '').toLowerCase();
+  for (const b of TV_BRAND_ICONS) {
+    if (b.kw.some(k => lc.includes(k))) return b.url;
+  }
+  return null;
+}
+
 // Fallback statique league → broadcasters par pays. Clé = `id` config (leagues_config.json).
 // Source : droits TV saison 2025-2026 publics, vérifiés (à mettre à jour saison +1).
 // Stratégie : prioriser pays de la ligue + ajouter FR si rights français existants.
@@ -4227,7 +4257,12 @@ function calcEV(modelProb, marketOdds, fairProb) {
   // EV = (fairProb × odds) - 1
   // fairProb = probabilité dévigée du marché
   if (!modelProb || !marketOdds || !fairProb) return null;
+  // Garde-fou cotes : une cote ≤ 1.01 ou aberrante = donnée invalide
+  if (marketOdds <= 1.01 || marketOdds > 1000) return null;
   const ev = (fairProb * marketOdds - 1) * 100;
+  // Sur un marché correctement dévigé, |EV| > 60% = donnée corrompue
+  // (cote implicite fabriquée, fairProb hors borne). On rejette plutôt que d'afficher un faux signal.
+  if (!isFinite(ev) || ev < -100 || ev > 60) return null;
   return parseFloat(ev.toFixed(1));
 }
 
@@ -4274,10 +4309,14 @@ function calcAllEVs(blendedProbs, odds, fairProbs) {
     }
   }
 
-  // Best EV
+  // Best EV — UNIQUEMENT marchés à cotes marché réelles (1X2).
+  // over25/btts utilisent des cotes implicites heuristiques (×0.6×0.5) → EV non fiable,
+  // exclus du "best" (cause du faux +EV 132.9%). Toujours exposés individuellement.
+  const REAL_ODDS_MARKETS = ['homeWin', 'draw', 'awayWin'];
   let bestEV = null;
   let bestEVLabel = '';
-  for (const [key, val] of Object.entries(evs)) {
+  for (const key of REAL_ODDS_MARKETS) {
+    const val = evs[key];
     if (val != null && (bestEV === null || val > bestEV)) {
       bestEV = val;
       bestEVLabel = key;
@@ -14327,7 +14366,7 @@ if (tvChannelMatch && req.method === 'GET') {
   const id = decodeURIComponent(tvChannelMatch[1]);
   const country = (query.country || 'FR').toUpperCase();
   const force = query.force === '1';
-  const cacheKey = `tv_${id}_${country}_v6`; // v6 = Phase 1 extended : 60+ ligues fallback (2e divisions, Amériques, ligues secondaires UE/Asie) ; v5 refresh top 26 ligues
+  const cacheKey = `tv_${id}_${country}_v7`; // v7 = résolveur logo (marque par mot-clé) — invalide payloads logo:null en cache ; v6 = Phase 1 extended 60+ ligues fallback
   const cached = !force ? apiCacheGet(cacheKey) : null;
   if (cached) return jsonResponse(res, 200, { ...cached, _cached: true });
 
@@ -14388,8 +14427,8 @@ if (tvChannelMatch && req.method === 'GET') {
   const channels = rawChannels.map(c => ({
     id: c.id || null,
     name: c.name,
-    // Priorité : logo fourni par la source externe (Sportmonks/TSDB) > mapping local TV_CHANNEL_LOGOS
-    logo: c.logo || TV_CHANNEL_LOGOS[c.name] || null,
+    // Priorité : logo source externe (Sportmonks/TSDB) > mapping curé > logo de marque par mot-clé
+    logo: resolveTvLogo(c.name, c.logo),
   }));
   const payload = { match_id: id, country, channels, _source: source };
   apiCacheSet(cacheKey, payload, 'tv_channel', 6 * 3600 * 1000); // 6h
