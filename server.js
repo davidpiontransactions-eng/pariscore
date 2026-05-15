@@ -25,6 +25,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
+const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -17574,6 +17575,15 @@ if (comparateurMatch && req.method === 'GET') {
       isANJ: true, home: o.home, draw: o.draw, away: o.away, payout,
       isBestHome: true, isBestDraw: true, isBestAway: true, _fallback: true,
     });
+  }
+
+  // ── Enrichissement OddsPapi (source secondaire, best-effort) ──────────────
+  // Inerte si ODDSPAPI_KEY absent. Échec → rows inchangées (Odds API conservé).
+  if (oddspapi.enabled()) {
+    try {
+      const extra = await oddspapi.fetchMatchRows(match);
+      if (extra.length) rows = oddspapi.mergeRows(rows.filter(r => !r._fallback), extra);
+    } catch (e) { console.warn('[OddsPapi] enrich skip — ' + e.message); }
   }
 
   // ── Weighted Fair Value (WFV) — moyenne pondérée no-vig par book ──────────
