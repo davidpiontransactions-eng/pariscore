@@ -1,6 +1,6 @@
 /* PariScore Service Worker — shell offline + bypass API/SSE.
    Bump CACHE version à chaque release frontend pour invalider. */
-const CACHE = 'pariscore-shell-v3';
+const CACHE = 'pariscore-shell-v4';
 const SHELL = [
   '/',
   '/pariscore.html',
