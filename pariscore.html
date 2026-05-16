@@ -6236,6 +6236,30 @@
         <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Clay" onclick="applyTennisFilter(this)">🟧 Clay</button>
         <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Grass" onclick="applyTennisFilter(this)">🟩 Grass</button>
       </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Catégorie</span>
+        <button class="tennis-vb-filter-btn is-active" data-filter="tier" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
+        <button class="tennis-vb-filter-btn" data-filter="tier" data-value="GS" onclick="applyTennisFilter(this)" title="Grand Chelem">GC</button>
+        <button class="tennis-vb-filter-btn" data-filter="tier" data-value="1000" onclick="applyTennisFilter(this)" title="Masters 1000 / WTA 1000">1000</button>
+        <button class="tennis-vb-filter-btn" data-filter="tier" data-value="500" onclick="applyTennisFilter(this)">500</button>
+        <button class="tennis-vb-filter-btn" data-filter="tier" data-value="250" onclick="applyTennisFilter(this)">250</button>
+        <button class="tennis-vb-filter-btn" data-filter="tier" data-value="125" onclick="applyTennisFilter(this)" title="Challenger / WTA 125">125</button>
+        <button class="tennis-vb-filter-btn" data-filter="tier" data-value="ITF" onclick="applyTennisFilter(this)" title="ITF World Tennis Tour / Futures">ITF</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Compétition</span>
+        <select id="tennis-vb-comp" class="tvb-select" onchange="window._tennisVbFilters.comp=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])"><option value="ALL">Toutes</option></select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Trier</span>
+        <select id="tennis-vb-sort" class="tvb-select" onchange="window._tennisVbFilters.sort=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])">
+          <option value="time">Heure ↑</option>
+          <option value="ev">Value EV+ ↓</option>
+          <option value="prob">Proba match ↓</option>
+          <option value="set1">Gain Set 1 ↓</option>
+          <option value="elo">Elo P1 ↓</option>
+        </select>
+      </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
         <input type="checkbox" id="tennis-vb-elo-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Avec Elo seulement
       </label>
@@ -6654,6 +6678,9 @@
   #tennis-vb-table .tmental b { color:var(--text,#e8eaed); font-weight:700; }
   #tennis-vb-table .tmental-sep { color:var(--text3,#5a6068); margin:0 3px; }
   #tennis-vb-table .tvb-market-na { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); }
+  .tennis-vb-filters .tvb-select { background:var(--bg3,#181c20); color:var(--text,#e8eaed); border:1px solid var(--bg4,#1e2328); border-radius:8px; padding:5px 9px; font-family:'DM Mono',monospace; font-size:11px; cursor:pointer; max-width:240px; }
+  .tennis-vb-filters .tvb-select:hover { border-color:var(--green,#00e676); }
+  .tennis-vb-filters .tvb-select:focus { outline:none; border-color:var(--green,#00e676); }
 </style>
 
 <!-- PAGE : TARIFS -->
@@ -7935,7 +7962,7 @@ function stopTennisLive() {
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
 window._tennisVbLastFetch = [];
-window._tennisVbFilters = { tour: 'ALL', surface: 'ALL' };
+window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time' };
 let _tennisVbTimer = null;
 
 function applyTennisFilter(btnEl) {
@@ -7946,6 +7973,20 @@ function applyTennisFilter(btnEl) {
   document.querySelectorAll(`.tennis-vb-filter-btn[data-filter="${filterName}"]`).forEach(b => b.classList.remove('is-active'));
   btnEl.classList.add('is-active');
   renderTennisValueBets(window._tennisVbLastFetch || []);
+}
+
+// Classifie le tier d'un tournoi depuis son nom (heuristique mots-clés).
+// GS=Grand Chelem · 1000 · 500 · 250 · 125=Challenger/WTA125 · ITF · OTHER.
+function _tvbTier(name) {
+  if (!name) return 'OTHER';
+  const n = String(name).toLowerCase();
+  if (/roland.?garros|wimbledon|us open|australian open|french open/.test(n)) return 'GS';
+  if (/\bitf\b|\b[wm](15|25|35|40|50|60|75|80|100|125)\b|world tennis tour|futures/.test(n)) return 'ITF';
+  if (/challenger|\b125\b|wta\s*125/.test(n)) return '125';
+  if (/\b1000\b|masters|indian wells|miami open|monte.?carlo|madrid open|mutua madrid|internazionali|italian open|rome masters|cincinnati|western\s*&\s*southern|shanghai|canadian open|national bank|rolex paris|paris masters|dubai duty|qatar total|doha open|beijing|china open|wuhan|guadalajara/.test(n)) return '1000';
+  if (/\b500\b|atp\s*500|wta\s*500|barcelona open|queen|halle|hamburg|washington open|tokyo|vienna open|swiss indoors|basel|acapulco|rio open|rotterdam|strasbourg|stuttgart|berlin|eastbourne|adelaide international/.test(n)) return '500';
+  if (/\b250\b|atp\s*250|wta\s*250|geneva open|gonet geneva|parma ladies|lalla meryem|rabat|troph[ée]+ clarins|estoril|munich|marrakech|kitzb[üu]hel|gstaad|umag|bucharest|winston-salem|chengdu|hangzhou|metz|moselle|brisbane|hobart|auckland|cordoba|santiago|houston|s-hertogenbosch|mallorca|newport|atlanta|los cabos|bastad|nottingham|cluj|jiangxi|hua hin|guangzhou|seoul|tokyo open/.test(n)) return '250';
+  return 'OTHER';
 }
 
 function _tvbSurfaceCls(surface) {
@@ -8105,14 +8146,28 @@ function renderTennisValueBets(matches) {
     return;
   }
 
-  const f = window._tennisVbFilters || { tour: 'ALL', surface: 'ALL' };
+  const f = window._tennisVbFilters || { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time' };
   const eloOnly = document.getElementById('tennis-vb-elo-only')?.checked;
   const positiveEv = document.getElementById('tennis-vb-positive-ev')?.checked;
   const hideFinished = document.getElementById('tennis-vb-hide-finished')?.checked;
 
+  // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
+  const _compSel = document.getElementById('tennis-vb-comp');
+  if (_compSel) {
+    const names = [...new Set(matches.map(x => x && x.tournament).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+    const sig = names.join('|');
+    if (_compSel.dataset.sig !== sig) {
+      _compSel.innerHTML = '<option value="ALL">Toutes</option>' + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+      _compSel.dataset.sig = sig;
+    }
+    _compSel.value = (f.comp && names.includes(f.comp)) ? f.comp : 'ALL';
+  }
+
   const filtered = matches.filter(m => {
     if (f.tour !== 'ALL' && String(m.tour || '').toUpperCase() !== f.tour) return false;
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
+    if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
+    if (f.comp && f.comp !== 'ALL' && String(m.tournament || '') !== f.comp) return false;
     if (eloOnly && !(m.predictions && m.predictions.elo)) return false;
     if (positiveEv) {
       const ev = m.best_ev_model && m.best_ev_model.ev;
@@ -8138,14 +8193,28 @@ function renderTennisValueBets(matches) {
     return `<span class="tvb-mono" style="font-family:'DM Mono',monospace;font-size:12px;">${date}<span class="tvb-book">${time}</span></span>`;
   };
 
-  // Tri : EV modèle décroissant (best opportunities en haut), puis Elo écart.
+  // Tri sélectionnable (défaut : heure de match croissante).
+  const _sortBy = (f && f.sort) || 'time';
   filtered.sort((a, b) => {
-    const evA = a.best_ev_model?.ev ?? -999;
-    const evB = b.best_ev_model?.ev ?? -999;
-    if (evB !== evA) return evB - evA;
-    const eloA = a.predictions?.elo?.p1_elo || 0;
-    const eloB = b.predictions?.elo?.p1_elo || 0;
-    return eloB - eloA;
+    switch (_sortBy) {
+      case 'ev':
+        return (b.best_ev_model?.ev ?? -999) - (a.best_ev_model?.ev ?? -999);
+      case 'prob': {
+        const pa = a.predictions?.blended?.p1 ?? a.predictions?.elo?.p1 ?? 0;
+        const pb = b.predictions?.blended?.p1 ?? b.predictions?.elo?.p1 ?? 0;
+        return pb - pa;
+      }
+      case 'set1':
+        return (b.set_model?.set1?.p1_pct ?? -1) - (a.set_model?.set1?.p1_pct ?? -1);
+      case 'elo':
+        return (b.predictions?.elo?.p1_elo || 0) - (a.predictions?.elo?.p1_elo || 0);
+      case 'time':
+      default: {
+        const ta = Date.parse(a.start_time || a.commence_time || '') || Infinity;
+        const tb = Date.parse(b.start_time || b.commence_time || '') || Infinity;
+        return ta - tb;
+      }
+    }
   });
 
   // Hook : enrich rows with TA Elo tooltips + surface badges après render (UC-1+UC-2)
