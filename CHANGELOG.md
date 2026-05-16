@@ -2,6 +2,42 @@
 
 ---
 
+## [v10.17] — 2026-05-16
+
+### Corrigé — Classement J1 League (Japon) vide : source de secours ESPN
+
+**Cause racine (panne à 3 couches)**
+- BSD ne couvre pas la J-League : `/seasons/?league=49` renvoie 0 saison (3 stratégies KO).
+- Clé API-Football sur plan **FREE** (≤ saison 2024) + quota journalier épuisé → saison J1 2026 inaccessible.
+- `currentSeason()` suppose un calendrier européen août→mai ; la J-League est calendaire (fév→déc) → saison mal calculée (2025 au lieu de 2026).
+
+**Backend (server.js)**
+- `ESPN_STANDINGS_SLUG` : map `configId → slug` ESPN (98→`jpn.1`, 99→`jpn.2`). Source publique gratuite, sans clé, servant toujours la saison en cours → contourne le bug de calcul de saison.
+- `fetchESPNStandings()` : adaptateur format `db.teamStats`. Fusionne les children ESPN (J-League scindée *Group East/West* 2×10) puis re-classe globalement par points/diff. de buts. Splits dom/ext estimés 50/50.
+- `fetchStats()` : ESPN tenté après échec BSD pour les ligues mappées, avant le fallback API-Football (zéro quota). Purge des lignes périmées avant injection.
+- Route `GET /api/v1/standings/:id` : pour ligues ESPN, refetch si vide **ou** lignes non-ESPN périmées (API-Football saison terminée). ESPN prioritaire, BSD en repli.
+
+**Vérifié** : `/api/v1/standings/98` → 20 équipes saison 2026 (`espn`), Kashima Antlers 1er. Ligue 1 inchangée (BSD). Rapport : `.context/rapport-j1-classement-espn-2026.md`.
+
+---
+
+## [v10.16] — 2026-05-16
+
+### Ajouté — Logos diffuseurs TV par ligne (cascade favicon domaine)
+
+**Backend (server.js)**
+- `TV_DOMAIN_RULES` : 40+ diffuseurs FR + Europe mappés vers leur domaine officiel → logo via favicon Google `sz=64` (beIN SPORTS, RMC Sport, Ligue1+, L'Équipe, Sport TV, SSC, Coupang Play, Mediaset, Premier Sports, blue Sport…).
+- `resolveTvLogo` étendu : source externe → simpleicons curé → marque mot-clé → **favicon domaine** → null (monogramme frontend).
+- Couverture logos servis : ~20% → ~95%.
+
+### Corrigé
+- `TV_BRAND_ICONS` mot-clé `'max'` (HBO Max) trop glouton : `beIN SPORTS MAX` résolvait vers logo HBO. Restreint à `'hbo max' / 'hbomax' / 'hbo'`.
+- Cache key `tv-channel` bumpée `v7 → v8` (invalide payloads `logo:null`).
+
+> Le slot `[data-tv-badge]` par ligne + `enrichTVChannels()` (v10.8) étaient déjà en place ; seule la résolution logo manquait. Détail : `.context/rapport-tv-broadcasters-2026.md` §9.
+
+---
+
 ## [v10.15] — 2026-05-15
 
 ### Ajouté — Gamme tarifaire par sport + paywall réel (client + serveur)
