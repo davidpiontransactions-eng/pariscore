@@ -238,25 +238,43 @@
   /* NAV */
   nav {
     position: sticky; top: 0; z-index: 100;
-    background: var(--bg2);
+    background: linear-gradient(180deg, var(--bg2) 0%, var(--bg2) 70%, rgba(226,0,26,0.05) 100%);
     backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border2);
+    border-bottom: 3px solid #E2001A;
     padding: 0 32px;
-    height: 60px;
+    height: 66px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 1px 0 var(--border);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.22), 0 1px 0 rgba(255,255,255,0.04) inset;
   }
   body.dark-theme nav {
-    background: rgba(10,13,15,0.95);
+    background: linear-gradient(180deg, rgba(10,13,15,0.97) 0%, rgba(10,13,15,0.97) 70%, rgba(226,0,26,0.10) 100%);
   }
   .logo {
     font-family: var(--font-head);
-    font-size: 22px; font-weight: 800;
+    font-size: 28px; font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 10px;
   }
-  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .logo-dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #E2001A; box-shadow: 0 0 10px #E2001A;
+    position: relative; flex: 0 0 auto;
+    animation: logoPulse 1.8s ease-out infinite;
+  }
+  .logo-dot::after {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%;
+    border: 2px solid #E2001A; opacity: 0;
+    animation: logoRing 1.8s ease-out infinite;
+  }
+  @keyframes logoPulse {
+    0%,100% { box-shadow: 0 0 8px #E2001A; }
+    50% { box-shadow: 0 0 16px #E2001A, 0 0 26px rgba(226,0,26,0.55); }
+  }
+  @keyframes logoRing {
+    0% { opacity: .8; transform: scale(.6); }
+    70%,100% { opacity: 0; transform: scale(1.6); }
+  }
   .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
   .nav-links::-webkit-scrollbar { height: 4px; }
   .nav-links::-webkit-scrollbar-thumb { background: var(--bg4, #1e2328); border-radius: 2px; }
@@ -264,13 +282,15 @@
   .nav-links a {
     position: relative;
     display: flex; align-items: center;
-    padding: 0 16px;
-    font-size: 13px; font-weight: 500; color: var(--text2);
-    font-family: var(--font-body);
+    padding: 0 15px;
+    font-size: 12.5px; font-weight: 700; color: var(--text2);
+    font-family: var(--font-head);
+    text-transform: uppercase; letter-spacing: 0.04em;
     white-space: nowrap;
-    transition: color .18s;
+    transition: color .18s, transform .12s;
     /* barre rouge en bas */
   }
+  .nav-links a:hover { transform: translateY(-1px); }
   .nav-links a::after {
     content: '';
     position: absolute;
@@ -284,8 +304,9 @@
   }
   .nav-links a:hover { color: var(--text); }
   .nav-links a:hover::after { transform: scaleX(1); }
-  .nav-links a.active { color: var(--text); font-weight: 600; }
-  .nav-links a.active::after { transform: scaleX(1); }
+  .nav-links a.active { color: #E2001A; font-weight: 800; }
+  .nav-links a.active::after { transform: scaleX(1); height: 4px;
+    box-shadow: 0 -1px 6px rgba(226,0,26,0.55); }
   .nav-cta {
     background: var(--accent); color: #fff;
     font-family: var(--font-body); font-weight: 600;
@@ -2232,29 +2253,46 @@
   #auth-modal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.75);
     align-items:center; justify-content:center; }
   #auth-modal.open { display:flex; }
-  .auth-box { background:var(--bg2); border:1px solid var(--bg3); border-radius:14px;
-    padding:32px; width:380px; max-width:95vw; }
-  .auth-box h2 { font-family:var(--font-head); font-size:20px; margin-bottom:4px; color:var(--text); }
-  .auth-subtitle { font-size:12px; color:var(--text3); margin-bottom:24px; }
-  .auth-tabs { display:flex; gap:0; margin-bottom:24px; border:1px solid var(--bg3); border-radius:8px; overflow:hidden; }
+  .auth-box { background:var(--bg2); border:1px solid var(--bg3); border-radius:24px;
+    padding:32px; width:380px; max-width:95vw; text-align:center;
+    box-shadow:0 18px 50px rgba(0,0,0,.45), 0 2px 0 rgba(255,255,255,.04) inset; }
+  .auth-box h2 { font-family:var(--font-head); font-size:44px; line-height:1; margin:0 0 12px;
+    font-weight:800; text-transform:uppercase; letter-spacing:-1.5px; color:var(--text);
+    display:block; text-align:center; position:relative;
+    text-shadow:0 1px 0 #c8000f, 0 2px 0 #b3000d, 0 3px 0 #9c000b,
+      0 4px 0 #850009, 0 5px 8px rgba(226,0,26,.45), 0 8px 18px rgba(0,0,0,.40); }
+  .auth-box h2::after { content:""; display:block; width:64px; height:4px; margin:10px auto 0;
+    background:#E2001A; border-radius:2px; box-shadow:0 1px 4px rgba(226,0,26,.55); }
+  .auth-subtitle { font-size:12px; color:var(--text3); margin:0 auto 26px; max-width:300px;
+    text-transform:uppercase; letter-spacing:1px; font-family:var(--font-mono); font-weight:600;
+    line-height:1.6; }
+  .auth-tabs, .auth-field, .auth-error { text-align:left; }
+  .auth-tabs { display:flex; gap:0; margin-bottom:24px; border:1px solid var(--bg3); border-radius:14px; overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.18) inset; }
   .auth-tab { flex:1; padding:9px; text-align:center; font-size:13px; cursor:pointer; background:transparent;
     color:var(--text2); border:none; font-family:var(--font-body); transition:all .2s; }
   .auth-tab.active { background:var(--green); color:#000; font-weight:700; }
   .auth-field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
   .auth-field label { font-size:11px; font-family:var(--font-mono); color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
-  .auth-field input { background:var(--bg4); border:1px solid var(--bg3); border-radius:7px;
-    padding:10px 12px; color:var(--text); font-size:14px; font-family:var(--font-body); width:100%; box-sizing:border-box; }
-  .auth-field input:focus { outline:none; border-color:rgba(0,230,118,0.5); }
+  .auth-field input { background:var(--bg4); border:1px solid var(--bg3); border-radius:14px;
+    padding:13px 16px; color:var(--text); font-size:14px; font-family:var(--font-body); width:100%; box-sizing:border-box;
+    box-shadow:0 2px 5px rgba(0,0,0,.18) inset, 0 1px 0 rgba(255,255,255,.05);
+    transition:box-shadow .2s, border-color .2s; }
+  .auth-field input:focus { outline:none; border-color:#E2001A;
+    box-shadow:0 0 0 3px rgba(226,0,26,.18), 0 2px 5px rgba(0,0,0,.18) inset; }
   .pwd-wrap { position:relative; display:flex; }
   .pwd-wrap input { padding-right:42px !important; }
   .pwd-eye { position:absolute; right:6px; top:50%; transform:translateY(-50%);
     background:none; border:none; padding:6px; cursor:pointer; color:var(--text3);
     display:flex; align-items:center; justify-content:center; line-height:0; }
   .pwd-eye:hover { color:var(--text); }
-  .auth-submit { width:100%; padding:12px; background:var(--green); color:#000; font-weight:700;
-    font-size:14px; border:none; border-radius:8px; cursor:pointer; font-family:var(--font-body);
-    transition:opacity .2s; margin-top:4px; }
-  .auth-submit:hover { opacity:.9; }
+  .auth-submit { width:100%; padding:14px; background:var(--green); color:#000; font-weight:700;
+    font-size:14px; border:none; border-radius:14px; cursor:pointer; font-family:var(--font-body);
+    transition:opacity .2s, transform .12s, box-shadow .2s; margin-top:4px;
+    box-shadow:0 6px 16px rgba(0,0,0,.30), 0 1px 0 rgba(255,255,255,.10) inset; }
+  .auth-submit:hover { opacity:.95; transform:translateY(-1px);
+    box-shadow:0 9px 22px rgba(0,0,0,.38), 0 1px 0 rgba(255,255,255,.10) inset; }
+  .auth-submit:active { transform:translateY(1px); }
   .auth-submit:disabled { opacity:.5; cursor:not-allowed; }
   .auth-error { color:var(--red); font-size:12px; margin-top:8px; min-height:16px; }
   .auth-close { float:right; background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer; margin-top:-4px; }
@@ -3534,7 +3572,7 @@
 
   /* Logo : uppercase extra-bold Barlow Condensed */
   .logo {
-    font-size: 24px;
+    font-size: 30px;
     font-weight: 900;
     letter-spacing: 0.06em;
     color: var(--text);
@@ -4831,7 +4869,7 @@
   <div class="auth-box">
     <button class="auth-close" onclick="closeAuthModal()">×</button>
     <h2>PariScore</h2>
-    <p class="auth-subtitle">Accédez à l'analyse mathématique des matchs</p>
+    <p class="auth-subtitle">Le sport décodé par les chiffres — détectez l'edge avant les bookmakers</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Se connecter</button>
       <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">S'inscrire</button>
@@ -6262,6 +6300,16 @@
         <button class="tennis-vb-filter-btn" data-filter="tier" data-value="ITF" onclick="applyTennisFilter(this)" title="ITF World Tennis Tour / Futures">ITF</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Recherche</span>
+        <span class="tvb-search-wrap">
+          <input type="text" id="tennis-vb-search" class="tvb-search" placeholder="Joueur, tournoi, round…" autocomplete="off" spellcheck="false"
+            oninput="window._tennisVbFilters.q=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])"
+            onkeydown="if(event.key==='Escape'){this.value='';window._tennisVbFilters.q='';renderTennisValueBets(window._tennisVbLastFetch||[]);}">
+          <button type="button" class="tvb-search-clear" title="Effacer" aria-label="Effacer la recherche"
+            onclick="var i=document.getElementById('tennis-vb-search');if(i){i.value='';}window._tennisVbFilters.q='';renderTennisValueBets(window._tennisVbLastFetch||[]);">✕</button>
+        </span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Compétition</span>
         <select id="tennis-vb-comp" class="tvb-select" onchange="window._tennisVbFilters.comp=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])"><option value="ALL">Toutes</option></select>
       </div>
@@ -6847,6 +6895,13 @@
   .tennis-vb-filters .tvb-select { background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:9px; padding:6px 11px; font-family:var(--font-mono); font-size:11px; font-weight:600; cursor:pointer; max-width:260px; box-shadow:var(--card-shadow); transition:border-color 140ms ease, box-shadow 140ms ease; }
   .tennis-vb-filters .tvb-select:hover { border-color:var(--accent); }
   .tennis-vb-filters .tvb-select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg), var(--card-shadow); }
+  .tennis-vb-filters .tvb-search-wrap { position:relative; display:inline-flex; align-items:center; }
+  .tennis-vb-filters .tvb-search { background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:9px; padding:6px 26px 6px 11px; font-family:var(--font-mono); font-size:11px; font-weight:600; width:200px; box-shadow:var(--card-shadow); transition:border-color 140ms ease, box-shadow 140ms ease, width 160ms ease; }
+  .tennis-vb-filters .tvb-search::placeholder { color:var(--text3,#5a6068); font-weight:500; }
+  .tennis-vb-filters .tvb-search:hover { border-color:var(--accent); }
+  .tennis-vb-filters .tvb-search:focus { outline:none; border-color:var(--accent); width:240px; box-shadow:0 0 0 3px var(--accent-bg), var(--card-shadow); }
+  .tennis-vb-filters .tvb-search-clear { position:absolute; right:6px; top:50%; transform:translateY(-50%); width:16px; height:16px; padding:0; border:none; border-radius:50%; background:transparent; color:var(--text3,#5a6068); font-size:10px; font-weight:800; line-height:16px; cursor:pointer; transition:color 120ms ease, background 120ms ease; }
+  .tennis-vb-filters .tvb-search-clear:hover { color:#fff; background:var(--red,#ff4d4d); }
   .tennis-vb-filters label { font-weight:600; color:var(--text2); }
   .tennis-vb-filters label input[type=checkbox] { accent-color:var(--accent); width:14px; height:14px; }
   /* ── Partie B : tableau theme-aware 3D (header sticky + variantes thème) ── */
@@ -8237,7 +8292,7 @@ function stopTennisLive() {
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
 window._tennisVbLastFetch = [];
-window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time' };
+window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time', q: '' };
 let _tennisVbTimer = null;
 
 function applyTennisFilter(btnEl) {
@@ -8601,11 +8656,19 @@ function renderTennisValueBets(matches) {
     _compSel.value = (f.comp && names.includes(f.comp)) ? f.comp : 'ALL';
   }
 
+  // Recherche texte : normalise (minuscule + sans accents), tous les termes (AND).
+  const _norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const _qTerms = _norm(f.q).split(/\s+/).filter(Boolean);
+
   const filtered = matches.filter(m => {
     // Exclut les matchs sans joueurs identifiés (TBD / qualifs ESPN → "?").
     const _n1 = String((m.player1 && m.player1.name) || '').trim();
     const _n2 = String((m.player2 && m.player2.name) || '').trim();
     if (!_n1 || !_n2 || _n1 === '?' || _n2 === '?' || /^(tbd|n\/a|bye|qualifier|q\.?)$/i.test(_n1) || /^(tbd|n\/a|bye|qualifier|q\.?)$/i.test(_n2)) return false;
+    if (_qTerms.length) {
+      const hay = _norm([_n1, _n2, m.tournament, m.round, m.tour, m.surface].filter(Boolean).join(' '));
+      if (!_qTerms.every(t => hay.includes(t))) return false;
+    }
     if (f.tour !== 'ALL' && String(m.tour || '').toUpperCase() !== f.tour) return false;
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
     if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
