@@ -4542,11 +4542,13 @@
     }
     #bottom-nav a {
       flex: 1; display: flex; align-items: center; justify-content: center;
-      padding: 14px 2px 13px; text-decoration: none; color: var(--text3);
-      font-family: var(--font-head); font-size: 13px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .4px;
+      padding: 14px 1px 13px; text-decoration: none; color: var(--text3);
+      font-family: var(--font-head); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1px; white-space: nowrap;
       transition: color .15s; position: relative; -webkit-tap-highlight-color: transparent;
+      min-width: 0; overflow: hidden;
     }
+    #bottom-nav .bn-lbl { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     #bottom-nav a.active { color: var(--accent); }
     #bottom-nav a.active::before {
       content: ''; position: absolute; top: -1px; left: 14%; right: 14%;
@@ -4761,14 +4763,17 @@
   <a href="#" data-page="matchs" onclick="bnGo('matchs',this);return false;">
     <span class="bn-lbl">Football</span>
   </a>
+  <a href="#" data-page="tennis" onclick="bnGo('tennis',this);return false;">
+    <span class="bn-lbl">Tennis</span>
+  </a>
+  <a href="#" data-page="strategies" onclick="bnGo('strategies',this);return false;">
+    <span class="bn-lbl">Stratégies</span>
+  </a>
   <a href="#" data-page="__live" onclick="bnGo('__live',this);return false;">
     <span class="bn-lbl">Live<span id="bn-live-badge" class="bn-badge" style="display:none;">0</span></span>
   </a>
   <a href="#" data-page="paris" onclick="bnGo('paris',this);return false;">
-    <span class="bn-lbl">Mes Paris</span>
-  </a>
-  <a href="#" data-page="alertes" onclick="bnGo('alertes',this);return false;">
-    <span class="bn-lbl">Alertes</span>
+    <span class="bn-lbl">Paris</span>
   </a>
   <a href="#" data-page="__more" onclick="bnGo('__more',this);return false;">
     <span class="bn-lbl">Plus</span>
@@ -4781,14 +4786,13 @@
   <div class="bn-more-grab"></div>
   <div class="bn-more-title">Plus</div>
   <div class="bn-more-grid">
-    <a href="#" onclick="bnGo('strategies',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg></span>Stratégies</a>
+    <a href="#" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>Alertes</a>
     <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span>Hot Picks</a>
     <a href="#" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Sure Bets</a>
     <a href="#" onclick="bnGo('comparateur',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8h14M12 4l-7 4 7 4 7-4z"/><path d="M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/></svg></span>Comparateur</a>
     <a href="#" onclick="bnGo('predictions',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/><path d="M9 15h6M12 6V3M9 3h6M3 10h3M3 14h3M18 10h3M18 14h3M9 21h6"/></svg></span>Prédictions IA</a>
     <a href="#" onclick="bnGo('tendances',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 4 7-7"/><path d="M15 7h5v5"/></svg></span>Tendances</a>
     <a href="#" onclick="bnGo('historique',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 18v-4h4"/><path d="M12 8v4l3 2"/></svg></span>Historique</a>
-    <a href="#" onclick="bnGo('tennis',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5 5c4 3 4 11 0 14M19 5c-4 3-4 11 0 14"/></svg></span>Tennis</a>
     <a href="#" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span>Guide</a>
     <a href="#" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span>Tarifs</a>
     <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Accueil</a>
@@ -20797,9 +20801,8 @@ function renderComparateur(d) {
     window.showPage = function (pageId, linkEl) {
       var r = _origShowPage.apply(this, arguments);
       try {
-        var map = { matchs: 'matchs', paris: 'paris', alertes: 'alertes' };
-        var top4 = ['matchs', 'paris', 'alertes'];
-        bnSetActive(top4.indexOf(pageId) >= 0 ? pageId : '__more');
+        var bnPages = ['matchs', 'tennis', 'strategies', 'paris'];
+        bnSetActive(bnPages.indexOf(pageId) >= 0 ? pageId : '__more');
       } catch (e) {}
       return r;
     };
