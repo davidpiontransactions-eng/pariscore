@@ -4576,15 +4576,35 @@
     .bn-more-grab { width: 36px; height: 4px; border-radius: 2px; background: var(--border2); margin: 6px auto 14px; }
     .bn-more-title { font-family: var(--font-head); font-weight: 800; font-size: 17px;
       text-transform: uppercase; letter-spacing: .5px; color: var(--text); margin: 0 2px 14px; }
-    .bn-more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .bn-more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
     .bn-more-grid a {
-      display: flex; align-items: center; justify-content: center; text-align: center;
-      padding: 16px 6px; background: var(--bg2); border: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 11px; text-align: center; padding: 18px 6px 15px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
       text-decoration: none; color: var(--text); font-family: var(--font-head);
-      font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+      font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
     }
-    .bn-more-grid a span { display: none; }
-    .bn-more-grid a:active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+    .bn-more-grid a span.bn3d {
+      display: flex; align-items: center; justify-content: center;
+      width: 54px; height: 54px; border-radius: 16px;
+      background: linear-gradient(155deg, #ff6065 0%, var(--accent) 46%, var(--accent-dim) 100%);
+      box-shadow:
+        0 7px 16px rgba(237,28,36,0.34),
+        0 2px 5px rgba(0,0,0,0.22),
+        inset 0 2px 3px rgba(255,255,255,0.5),
+        inset 0 -4px 7px rgba(0,0,0,0.28);
+      transform: perspective(240px) rotateX(9deg);
+      transition: transform .14s, box-shadow .14s;
+    }
+    .bn-more-grid a span.bn3d svg {
+      width: 27px; height: 27px; display: block;
+      filter: drop-shadow(0 1.5px 1px rgba(0,0,0,0.4));
+    }
+    .bn-more-grid a:active span.bn3d {
+      transform: perspective(240px) rotateX(9deg) translateY(3px) scale(0.97);
+      box-shadow: 0 3px 8px rgba(237,28,36,0.3), inset 0 2px 3px rgba(255,255,255,0.4), inset 0 -3px 6px rgba(0,0,0,0.3);
+    }
+    .bn-more-grid a:active { color: var(--accent); border-color: var(--accent); }
 
     /* — Toolbar mobile : tri + chips — */
     #mob-toolbar {
@@ -4761,18 +4781,18 @@
   <div class="bn-more-grab"></div>
   <div class="bn-more-title">Plus</div>
   <div class="bn-more-grid">
-    <a href="#" onclick="bnGo('strategies',this);return false;"><span>📊</span>Stratégies</a>
-    <a href="#" onclick="bnGo('hot-picks',this);return false;"><span>🔥</span>Hot Picks</a>
-    <a href="#" onclick="bnGo('sure-bets',this);return false;"><span>✅</span>Sure Bets</a>
-    <a href="#" onclick="bnGo('comparateur',this);return false;"><span>⚖️</span>Comparateur</a>
-    <a href="#" onclick="bnGo('predictions',this);return false;"><span>🤖</span>Prédictions IA</a>
-    <a href="#" onclick="bnGo('tendances',this);return false;"><span>📈</span>Tendances</a>
-    <a href="#" onclick="bnGo('historique',this);return false;"><span>🗂️</span>Historique</a>
-    <a href="#" onclick="bnGo('tennis',this);return false;"><span>🎾</span>Tennis</a>
-    <a href="#" onclick="bnGo('guide',this);return false;"><span>📖</span>Guide</a>
-    <a href="#" onclick="bnGo('tarifs',this);return false;"><span>💎</span>Tarifs</a>
-    <a href="#" onclick="bnGo('accueil',this);return false;"><span>🏠</span>Accueil</a>
-    <a href="#" onclick="bnGo('parametres',this);return false;"><span>⚙️</span>Réglages</a>
+    <a href="#" onclick="bnGo('strategies',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg></span>Stratégies</a>
+    <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span>Hot Picks</a>
+    <a href="#" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Sure Bets</a>
+    <a href="#" onclick="bnGo('comparateur',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8h14M12 4l-7 4 7 4 7-4z"/><path d="M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/></svg></span>Comparateur</a>
+    <a href="#" onclick="bnGo('predictions',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/><path d="M9 15h6M12 6V3M9 3h6M3 10h3M3 14h3M18 10h3M18 14h3M9 21h6"/></svg></span>Prédictions IA</a>
+    <a href="#" onclick="bnGo('tendances',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 4 7-7"/><path d="M15 7h5v5"/></svg></span>Tendances</a>
+    <a href="#" onclick="bnGo('historique',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 18v-4h4"/><path d="M12 8v4l3 2"/></svg></span>Historique</a>
+    <a href="#" onclick="bnGo('tennis',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5 5c4 3 4 11 0 14M19 5c-4 3-4 11 0 14"/></svg></span>Tennis</a>
+    <a href="#" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span>Guide</a>
+    <a href="#" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span>Tarifs</a>
+    <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Accueil</a>
+    <a href="#" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span>Réglages</a>
   </div>
 </div>
 
