@@ -4,6 +4,8 @@
     { "id": 62,   "name": "Ligue 2",              "country": "France",         "type": "T2", "odds_key": "soccer_france_ligue_two",                     "cron_hours": 12, "sofa_id": 182   },
     { "id": 39,   "name": "Premier League",       "country": "England",        "type": "T1", "odds_key": "soccer_epl",                                  "cron_hours": 6,  "sofa_id": 17    },
     { "id": 40,   "name": "Championship",         "country": "England",        "type": "T2", "odds_key": "soccer_england_championship",                 "cron_hours": 12, "sofa_id": 18    },
+    { "id": 45,   "name": "FA Cup",               "country": "England",        "type": "CUP","odds_key": "soccer_fa_cup",                               "cron_hours": 24, "sofa_id": null  },
+    { "id": 48,   "name": "Carabao Cup",          "country": "England",        "type": "CUP","odds_key": "soccer_england_efl_cup",                      "cron_hours": 24, "sofa_id": null  },
     { "id": 140,  "name": "La Liga",              "country": "Spain",          "type": "T1", "odds_key": "soccer_spain_la_liga",                        "cron_hours": 6,  "sofa_id": 8     },
     { "id": 141,  "name": "Segunda Division",     "country": "Spain",          "type": "T2", "odds_key": "soccer_spain_segunda_division",               "cron_hours": 12, "sofa_id": 9     },
     { "id": 78,   "name": "Bundesliga",           "country": "Germany",        "type": "T1", "odds_key": "soccer_germany_bundesliga",                   "cron_hours": 6,  "sofa_id": 35    },
