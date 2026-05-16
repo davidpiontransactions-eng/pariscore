@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0a0d0f"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#00e676" stroke-width="14" opacity="0.35"/>
+  <circle cx="256" cy="150" r="26" fill="#00e676"/>
+  <text x="256" y="320" font-family="'Syne','Trebuchet MS',sans-serif" font-size="150" font-weight="800" fill="#e8eaed" text-anchor="middle">PS</text>
+  <text x="256" y="392" font-family="'DM Mono',monospace" font-size="42" font-weight="500" fill="#00e676" text-anchor="middle" letter-spacing="6">PARI</text>
+</svg>
