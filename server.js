@@ -10586,6 +10586,14 @@ if (process.env.TELEGRAM_CHAT_IDS) {
   process.env.TELEGRAM_CHAT_IDS.split(',').forEach(id => TELEGRAM_CHAT_IDS.add(id.trim()));
 }
 
+// Garde-fou anti multi-instance : seuls les broadcasts automatiques d'une
+// instance PRODUCTION sont émis. Empêche un process dev/test/zombie partageant
+// le même TELEGRAM_BOT_TOKEN d'envoyer en parallèle (formats divergents + doublons).
+function automatedAlertsAllowed() {
+  if (process.env.TELEGRAM_FORCE_ALERTS === '1') return true; // override explicite (debug)
+  return process.env.NODE_ENV === 'production';
+}
+
 async function sendTelegramAlert(chatId, messageHtml) {
   if (!TELEGRAM_BOT_TOKEN || !chatId || !messageHtml) return false;
   try {
@@ -10634,12 +10642,29 @@ function computeConfidenceStars(probaPct, evPlusPct) {
   return { stars: 0, label: 'Sous seuil', glyph: '' };
 }
 
-// Extrait LE meilleur pari prédictif (1X2 vs Over2.5 vs BTTS) par EV+ croisé proba
+// Parse score live "2-1" → { h, a, total } ; null si invalide
+function parseLiveScore(s) {
+  const mt = String(s || '').match(/^\s*(\d+)\s*[-:]\s*(\d+)\s*$/);
+  if (!mt) return null;
+  const h = parseInt(mt[1], 10), a = parseInt(mt[2], 10);
+  if (!Number.isFinite(h) || !Number.isFinite(a)) return null;
+  return { h, a, total: h + a };
+}
+
+// Extrait LE meilleur pari prédictif (1X2 vs Over2.5 vs BTTS) par EV+ croisé proba.
+// En contexte LIVE : exclut tout marché déjà tranché par le score courant
+// (Over2.5 si ≥3 buts, BTTS si les 2 ont marqué, 1X2 pré-match invalide en live).
 function pickPredictiveBet(m) {
   const p = m.poisson || {};
   const fair = m.fair || {};
+  const minute = parseInt(m.live_minute || 0, 10) || 0;
+  const ls = parseLiveScore(m.live_score);
+  const isLive = !!(ls && minute > 0 && minute < 130);
+
   const cands = [];
-  if (m.best_edge && m.best_edge.odds) {
+
+  // 1X2 — fair pré-match : valide UNIQUEMENT hors live (pas de modèle live ici)
+  if (!isLive && m.best_edge && m.best_edge.odds) {
     const probMap = { 'Domicile': fair.home, 'Nul': fair.draw, 'Extérieur': fair.away };
     const lbl = m.best_edge.label;
     const pick = lbl === 'Domicile' ? `Victoire ${m.home_team}`
@@ -10647,11 +10672,75 @@ function pickPredictiveBet(m) {
                : 'Match nul';
     cands.push({ pick, prob: (probMap[lbl] ?? 0) * 100, odds: m.best_edge.odds, bk: m.best_edge.bk });
   }
-  if (p.over25) cands.push({ pick: 'Plus de 2.5 buts', prob: p.over25, odds: +(100 / p.over25).toFixed(2), bk: 'Poisson' });
-  if (p.btts)   cands.push({ pick: 'Les deux équipes marquent', prob: p.btts, odds: +(100 / p.btts).toFixed(2), bk: 'Poisson' });
+
+  // Over 2.5 — exclu en live si déjà ≥ 3 buts (pari déjà gagné = non prédictif)
+  if (p.over25 && !(isLive && ls.total >= 3)) {
+    cands.push({ pick: 'Plus de 2.5 buts', prob: p.over25, odds: +(100 / p.over25).toFixed(2), bk: 'Poisson' });
+  }
+
+  // BTTS — exclu en live si les 2 équipes ont déjà marqué (déjà OUI = non prédictif)
+  if (p.btts && !(isLive && ls.h > 0 && ls.a > 0)) {
+    cands.push({ pick: 'Les deux équipes marquent', prob: p.btts, odds: +(100 / p.btts).toFixed(2), bk: 'Poisson' });
+  }
+
   if (!cands.length) return null;
   cands.forEach(c => { c.evPlus = (c.prob / 100) * c.odds * 100; });
   return cands.sort((a, b) => b.evPlus - a.evPlus)[0];
+}
+
+/* -------------------------------------------------
+   Bet prédictif LIVE — modèle Poisson CONDITIONNEL sur le temps restant.
+   Contrôle long terme score↔bet : ne propose QUE des marchés encore OUVERTS
+   (jamais déjà tranchés par le score), proba recalculée minute par minute.
+   ------------------------------------------------- */
+function pickLivePredictiveBet(m) {
+  const ls = parseLiveScore(m.live_score);
+  const minute = parseInt(m.live_minute || 0, 10) || 0;
+  if (!ls || minute <= 0 || minute >= 130) return null; // pas de contexte live exploitable
+
+  const minutesLeft = Math.max(1, Math.min(90, 90 - minute));
+  const frac = minutesLeft / 90;
+
+  // Expected goals plein-match (source réelle si dispo, sinon moyenne ligue ~2.6)
+  const eg = m.expectedGoals || {};
+  const egH = Number.isFinite(eg.home) ? eg.home : 1.3;
+  const egA = Number.isFinite(eg.away) ? eg.away : 1.3;
+  const lamH = Math.max(0.01, egH * frac); // buts restants attendus domicile
+  const lamA = Math.max(0.01, egA * frac); // buts restants attendus extérieur
+  const lamT = lamH + lamA;
+
+  const pAtLeast1 = lam => 1 - Math.exp(-lam);
+  const pAtLeast2 = lam => 1 - Math.exp(-lam) * (1 + lam);
+
+  const cands = [];
+
+  // 1) Over ligne suivante — toujours OUVERT (seuil = total actuel + 0.5 → besoin ≥1 but de plus)
+  {
+    const line = ls.total + 0.5;
+    const prob = pAtLeast1(lamT) * 100;
+    cands.push({ pick: `Plus de ${line} buts`, prob });
+  }
+  // 2) Over +1 ligne — alternative plus haute cote (besoin ≥2 buts de plus)
+  {
+    const line = ls.total + 1.5;
+    const prob = pAtLeast2(lamT) * 100;
+    cands.push({ pick: `Plus de ${line} buts`, prob });
+  }
+  // 3) BTTS — seulement si PAS encore résolu (les 2 ont déjà marqué = OUI tranché → exclu)
+  if (!(ls.h > 0 && ls.a > 0)) {
+    let prob;
+    if (ls.h === 0 && ls.a === 0)      prob = pAtLeast1(lamH) * pAtLeast1(lamA) * 100;
+    else if (ls.h === 0)               prob = pAtLeast1(lamH) * 100; // manque but domicile
+    else                               prob = pAtLeast1(lamA) * 100; // manque but extérieur
+    cands.push({ pick: 'Les deux équipes marquent', prob });
+  }
+
+  // proba bornée [5,95], cote = juste 100/proba (pas de book live), EV+ neutre
+  const valid = cands
+    .map(c => ({ ...c, prob: Math.round(Math.max(5, Math.min(95, c.prob))) }))
+    .map(c => ({ ...c, odds: +(100 / c.prob).toFixed(2), bk: 'Modèle live', evPlus: 100 }));
+  if (!valid.length) return null;
+  return valid.sort((a, b) => b.prob - a.prob)[0]; // le plus probable parmi marchés ouverts
 }
 
 function matchUrl(m) {
@@ -10700,7 +10789,17 @@ function buildAlertMessage(valueBets, label = 'Value Bets') {
     + `\n\n⚠️ Pariez de manière responsable. 18+`;
 }
 
+// Dedup value alerts — évite ré-envoi du même (match,marché) à chaque tick scheduler.
+// TTL long (odds cron 12h) : on n'alerte qu'une fois par bet sur la fenêtre.
+const _VALUE_ALERT_TTL_MS = parseInt(process.env.VALUE_ALERT_TTL_MS || String(6 * 60 * 60 * 1000), 10);
+const _valueAlertCooldowns = new Map(); // `${scope}:${matchId}:${label}` → lastSentMs
+function _vaKey(scope, m) { return `${scope}:${m.id}:${m.best_edge?.label || ''}`; }
+function _vaOnCooldown(scope, m) { return Date.now() - (_valueAlertCooldowns.get(_vaKey(scope, m)) || 0) < _VALUE_ALERT_TTL_MS; }
+function _vaMark(scope, m) { _valueAlertCooldowns.set(_vaKey(scope, m), Date.now()); }
+function _vaUnmark(scope, m) { _valueAlertCooldowns.delete(_vaKey(scope, m)); }
+
 async function sendValueBetAlerts() {
+  if (!automatedAlertsAllowed()) { console.log('  [TG] skip value alerts (instance non-prod)'); return; }
   const threshold = parseFloat(process.env.ALERT_EDGE_THRESHOLD || '8');
   const allBets = db.matches
     .filter(m => (m.best_edge?.edge || 0) >= threshold)
@@ -10711,8 +10810,13 @@ async function sendValueBetAlerts() {
 
   // ── Broadcast global (admin — TELEGRAM_CHAT_IDS du .env) ─────────────────
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size) {
-    const msg = buildAlertMessage(topBets);
-    if (msg) await broadcastTelegramAlert(msg);
+    const fresh = topBets.filter(m => !_vaOnCooldown('bcast', m));
+    if (fresh.length) {
+      fresh.forEach(m => _vaMark('bcast', m)); // mark AVANT await (anti-doublon concurrent)
+      const msg = buildAlertMessage(fresh);
+      if (msg) await broadcastTelegramAlert(msg);
+      else fresh.forEach(m => _vaUnmark('bcast', m)); // rien ≥3★ → libère pour retry
+    }
   }
 
   // ── Alertes personnalisées par utilisateur ────────────────────────────────
@@ -10744,11 +10848,15 @@ async function sendValueBetAlerts() {
         return true;
       }).slice(0, 5);
 
+      const userScope = 'u:' + prefs.chatId;
+      userBets = userBets.filter(m => !_vaOnCooldown(userScope, m));
       if (!userBets.length) continue;
+      userBets.forEach(m => _vaMark(userScope, m)); // mark AVANT await
       const userMsg = buildAlertMessage(userBets, 'Vos Alertes');
-      if (!userMsg) continue;
+      if (!userMsg) { userBets.forEach(m => _vaUnmark(userScope, m)); continue; }
       const ok = await sendTelegramAlert(prefs.chatId, userMsg);
       if (ok) console.log(`  [TG:User] Alerte envoyée → chat ${prefs.chatId} (${userBets.length} matchs)`);
+      else userBets.forEach(m => _vaUnmark(userScope, m)); // échec → retry prochain tick
     }
   }
 
@@ -13118,6 +13226,184 @@ function computeTennisSetModel(p1Name, p2Name, tour, surface, markovSetProbs) {
 
 // Invalidation cache profils set après resync Sackmann.
 function _invalidateTennisSetProfileCache() { _TENNIS_SET_PROFILE_CACHE.clear(); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS OVER/UNDER JEUX PAR SET (games_pmf_dp_v1)
+//  PMF exacte du total de jeux d'UN set via DP serve/return, puis seuils
+//  O7.5 / O8.5 / O9.5 / U12.5 (= pas de tie-break) / O12.5 (= tie-break).
+//  Gate Combined Hold (≥170 % → boost O9.5/tie-break ; <145 % → boost Under).
+//  Best-of-5 Grand Chelem : décote physique sur O9.5 aux sets 4 & 5 sauf
+//  profils gros serveurs (Ace % > 15 %). 100 % local (Sackmann).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TENNIS_BIG_SERVER_ACE_PCT = 15;          // seuil "gros serveur"
+const TENNIS_PHYS_DECAY_BASE = 0.93;           // O9.5 décote ^(setNo-3) GS B05
+const TENNIS_FATIGUE_HOLD_DROP = 0.02;         // -2 % hold set ≥2 si joueur fatigué
+
+// Grand Chelem détecté par nom (matchs programmés ESPN/BSD n'ont pas tourney_level).
+// Miroir serveur de _tvbTier() front (regex slams).
+function _tennisIsGrandSlam(tournamentName) {
+  if (!tournamentName) return false;
+  const n = String(tournamentName).toLowerCase();
+  return /roland.?garros|french open|wimbledon|us open|australian open/.test(n);
+}
+
+// Ace % d'un joueur = aces / points de service, sur N derniers matchs (surface
+// filterable). Réutilise le cache serve stats. Null si échantillon < 5.
+function computePlayerAceRate(playerName, tour, surface = 'ALL', lastN = TENNIS_SERVE_LASTN) {
+  if (!playerName || !tour) return null;
+  const ck = `ACE|${tour}|${playerName.toLowerCase()}|${surface}|${lastN}`;
+  if (_TENNIS_SERVE_STATS_CACHE.has(ck)) return _TENNIS_SERVE_STATS_CACHE.get(ck);
+  try {
+    _initTennisSackmannSchema();
+    const rows = sqldb.prepare(`
+      SELECT
+        CASE WHEN LOWER(winner_name)=LOWER(?) THEN w_ace ELSE l_ace END AS ace,
+        CASE WHEN LOWER(winner_name)=LOWER(?) THEN w_svpt ELSE l_svpt END AS svpt
+      FROM tennis_matches
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?))
+        AND tour=? AND (?='ALL' OR surface=?) AND w_svpt IS NOT NULL
+      ORDER BY tourney_date DESC, match_num DESC LIMIT ?
+    `).all(playerName, playerName, playerName, playerName, tour, surface, surface, lastN);
+    let ace = 0, svpt = 0, n = 0;
+    for (const r of rows) {
+      if (!r.svpt || r.svpt <= 0) continue;
+      ace += r.ace || 0; svpt += r.svpt; n++;
+    }
+    if (svpt === 0 || n < 5) { _TENNIS_SERVE_STATS_CACHE.set(ck, null); return null; }
+    const res = { ace_pct: parseFloat(((ace / svpt) * 100).toFixed(2)), sample: n };
+    _TENNIS_SERVE_STATS_CACHE.set(ck, res);
+    return res;
+  } catch (e) {
+    console.warn('  [Tennis] ace rate error:', e.message);
+    return null;
+  }
+}
+
+// PMF du total de jeux d'un set. holdA/holdB = P(tenue de service). Retourne
+// { pmf, total } : pmf[k] = P(set se termine en k jeux), k ∈ [6..13] (13 = set
+// à tie-break, compté 7-6). Arbre ≤ 13 niveaux → énumération directe.
+function _tennisGamesSetPMF(holdA, holdB) {
+  const a = Math.max(0.01, Math.min(0.99, holdA));
+  const b = Math.max(0.01, Math.min(0.99, holdB));
+  const pmf = {};
+  function rec(gA, gB, isA, prob) {
+    if (prob < 1e-9) return;
+    if (gA >= 6 && gA - gB >= 2) { const t = gA + gB; pmf[t] = (pmf[t] || 0) + prob; return; }
+    if (gB >= 6 && gB - gA >= 2) { const t = gA + gB; pmf[t] = (pmf[t] || 0) + prob; return; }
+    if (gA === 6 && gB === 6) { pmf[13] = (pmf[13] || 0) + prob; return; } // tie-break set
+    const win = isA ? a : (1 - b);  // P(jeu gagné par A)
+    rec(gA + 1, gB, !isA, prob * win);
+    rec(gA, gB + 1, !isA, prob * (1 - win));
+  }
+  rec(0, 0, true, 1);
+  let total = 0;
+  for (const k of Object.keys(pmf)) total += Number(k) * pmf[k];
+  return { pmf, total };
+}
+
+// Métriques O/U d'un set depuis une PMF + gate Combined Hold + décote phys.
+function _tennisSetGamesMetrics(holdA, holdB, combinedHoldPct, opts = {}) {
+  const { pmf, total } = _tennisGamesSetPMF(holdA, holdB);
+  const sumGE = (kMin) => {
+    let s = 0;
+    for (const k of Object.keys(pmf)) if (Number(k) >= kMin) s += pmf[k];
+    return s;
+  };
+  let o75 = sumGE(8) * 100;          // total ≥ 8
+  let o85 = sumGE(9) * 100;          // total ≥ 9
+  let o95 = sumGE(10) * 100;         // total ≥ 10
+  let o125 = (pmf[13] || 0) * 100;   // set à tie-break
+  let u125 = 100 - o125;             // pas de tie-break (≤ 12 jeux)
+
+  // Gate Combined Hold (seuils métier).
+  if (combinedHoldPct >= 170) {
+    o95 *= 1.08;
+    o125 *= 1.15;
+    u125 = 100 - o125;
+  } else if (combinedHoldPct < 145) {
+    o75 *= 0.92; o85 *= 0.92; o95 *= 0.90;
+  }
+
+  // Décote physique GS best-of-5 sets 4/5 sur O9.5 (sauf gros serveur).
+  let physDecay = null, bigServerBypass = false;
+  if (opts.physSetNo && opts.physSetNo >= 4) {
+    bigServerBypass = !!opts.bigServer;
+    if (!bigServerBypass) {
+      physDecay = parseFloat(Math.pow(TENNIS_PHYS_DECAY_BASE, opts.physSetNo - 3).toFixed(4));
+      o95 *= physDecay;
+    }
+  }
+
+  const clamp = v => parseFloat(Math.max(1, Math.min(99, v)).toFixed(0));
+  o75 = clamp(o75); o85 = clamp(o85); o95 = clamp(o95);
+  o125 = clamp(o125); u125 = clamp(u125);
+
+  const cands = [
+    { label: 'O 7.5', prob: o75 },
+    { label: 'O 8.5', prob: o85 },
+    { label: 'O 9.5', prob: o95 },
+    { label: 'U 12.5', prob: u125 },
+  ];
+  const best = cands.reduce((x, y) => (y.prob > x.prob ? y : x));
+  best.tier = best.prob >= 65 ? 'strong' : best.prob >= 50 ? 'mid' : 'low';
+
+  const out = {
+    exp_games: parseFloat(total.toFixed(2)),
+    o75, o85, o95, u125, o125,
+    best,
+  };
+  if (physDecay != null) out.phys_decay = physDecay;
+  if (opts.physSetNo && opts.physSetNo >= 4) out.big_server_bypass = bigServerBypass;
+  return out;
+}
+
+// Modèle O/U jeux par set. Set1 = holds base ; Set2/3 = holds ajustés fatigue
+// (set_model.profiles) ; Set4/5 = + décote physique (GS best-of-5 uniquement).
+function computeTennisGamesOverUnder({ p1Hold, p2Hold, tournament, tour, surface, setModel, aceP1, aceP2 }) {
+  if (!Number.isFinite(p1Hold) || !Number.isFinite(p2Hold)) return null;
+  const isGS = _tennisIsGrandSlam(tournament);
+  const bestOf = isGS ? 5 : 3;
+  const combinedHoldPct = parseFloat(((p1Hold + p2Hold) * 100).toFixed(1));
+  const prof = setModel && setModel.profiles ? setModel.profiles : null;
+  const fat1 = !!(prof && prof.p1 && prof.p1.fatigue);
+  const fat2 = !!(prof && prof.p2 && prof.p2.fatigue);
+  const bigServer = (Number.isFinite(aceP1) && aceP1 > TENNIS_BIG_SERVER_ACE_PCT)
+                 || (Number.isFinite(aceP2) && aceP2 > TENNIS_BIG_SERVER_ACE_PCT);
+
+  // Holds ajustés fatigue pour sets ≥ 2 (efficacité service dégradée).
+  const hA2 = p1Hold - (fat1 ? TENNIS_FATIGUE_HOLD_DROP : 0);
+  const hB2 = p2Hold - (fat2 ? TENNIS_FATIGUE_HOLD_DROP : 0);
+
+  const sets = {
+    set1: _tennisSetGamesMetrics(p1Hold, p2Hold, combinedHoldPct),
+    set2: _tennisSetGamesMetrics(hA2, hB2, combinedHoldPct),
+    set3: _tennisSetGamesMetrics(hA2, hB2, combinedHoldPct),
+    set4: null,
+    set5: null,
+  };
+  if (isGS) {
+    sets.set4 = _tennisSetGamesMetrics(hA2, hB2, combinedHoldPct, { physSetNo: 4, bigServer });
+    sets.set5 = _tennisSetGamesMetrics(hA2, hB2, combinedHoldPct, { physSetNo: 5, bigServer });
+  }
+
+  return {
+    method: 'games_pmf_dp_v1',
+    combined_hold_pct: combinedHoldPct,
+    is_grand_slam: isGS,
+    best_of: bestOf,
+    sets,
+    inputs: {
+      p1_hold: parseFloat(p1Hold.toFixed(4)),
+      p2_hold: parseFloat(p2Hold.toFixed(4)),
+      p1_ace_pct: Number.isFinite(aceP1) ? aceP1 : null,
+      p2_ace_pct: Number.isFinite(aceP2) ? aceP2 : null,
+      big_server: bigServer,
+      surface: surface || null,
+      tour: tour || null,
+    },
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TENNIS BACKTEST (T9) — Model accuracy walk-forward sur tennis_matches.
@@ -17029,6 +17315,22 @@ async function _buildTennisValueBetsCore({ date }) {
       // ── set_profile_v1 : modèle 1er/2e set (profils + transition + fatigue) ─
       setModel = computeTennisSetModel(p1Name, p2Name, tourGuess, surfaceClean, setProbs);
     }
+    // ── games_pmf_dp_v1 : O/U jeux par set (S1-S3 + S4/S5 si Grand Chelem) ───
+    let gamesOU = null;
+    if (tourGuess && setProbs && Number.isFinite(setProbs.p1_hold) && Number.isFinite(setProbs.p2_hold)) {
+      const _aceP1 = computePlayerAceRate(p1Name, tourGuess, surfaceClean || 'ALL');
+      const _aceP2 = computePlayerAceRate(p2Name, tourGuess, surfaceClean || 'ALL');
+      gamesOU = computeTennisGamesOverUnder({
+        p1Hold: setProbs.p1_hold,
+        p2Hold: setProbs.p2_hold,
+        tournament: m.tournament,
+        tour: tourGuess,
+        surface: surfaceClean,
+        setModel,
+        aceP1: _aceP1 ? _aceP1.ace_pct : null,
+        aceP2: _aceP2 ? _aceP2.ace_pct : null,
+      });
+    }
     // BSD prediction left null in list view (N+1 fetch impractical). Detail route
     // /api/v1/tennis/predictions/{id} expose BSD per-match; UI peut fetch puis re-blend.
     const bsdProb = null;
@@ -17081,6 +17383,7 @@ async function _buildTennisValueBetsCore({ date }) {
         p2: computePlayerFatigue(p2Name, tourGuess),
       } : null,
       set_model: setModel,
+      over_under_set_calculations: gamesOU,
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: eloProb ? 'elo' : null },
@@ -17169,6 +17472,7 @@ function toCanonicalTennisMatch(e) {
     surface_speed: e.surface_speed || null,
     fatigue: e.fatigue || null,
     set_model: e.set_model || null,
+    over_under_set_calculations: e.over_under_set_calculations || null,
     sources: e.sources || null,
   };
 }
@@ -19726,8 +20030,13 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(data);
     });
+}); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    ANTI‑CRASH & DÉMARRAGE
+   Listeners process enregistrés UNE SEULE FOIS au top-level.
+   (Bug v9.9.x : étaient dans le handler http.createServer → +2 listeners/requête
+    → MaxListenersExceededWarning + fuite mémoire + anti-crash dupliqué.)
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 process.on('unhandledRejection', (reason) => {
@@ -19738,7 +20047,6 @@ process.on('uncaughtException', (error) => {
     console.error("\x1b[31m[ANTI‑CRASH] Uncaught Exception:\x1b[0m", error.message);
     console.error(error.stack);
 });
-}); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
 
 /* -------------------------------------------------
    Sofascore microservice client — Phase 1 enrichment via Python wrapper
@@ -20743,13 +21051,38 @@ function markLiveAlertSent(userId, matchId) {
   _liveAlertCooldowns.set(`${userId}:${matchId}`, Date.now());
 }
 
+// Lien vers la vue LIVE du match sur le site
+function liveMatchUrl(m) {
+  return m && m.id ? `https://pariscore.fr/?match=${encodeURIComponent(m.id)}&tab=live` : 'https://pariscore.fr';
+}
+
 function buildLiveAlertMessage(match, trigger) {
   const min = match.live_minute || '?';
   const score = match.live_score || '0-0';
   const reason = trigger.kind === 'intensity'
     ? `Intensité ${trigger.value}/100`
-    : `Domination ${trigger.side} (Δ pression ${trigger.value})`;
-  return `🔥 <b>ALERTE LIVE</b>\n\n<b>${match.home_team}</b> vs <b>${match.away_team}</b>\n📌 ${match.league}\n⚽ Score ${score} · ${min}'\n📈 ${reason}\n\nMatch à surveiller !`;
+    : `Domination ${escTg(trigger.side)} (Δ pression ${trigger.value})`;
+
+  let betLine = '';
+  const bet = pickLivePredictiveBet(match); // modèle conditionnel score+temps (jamais marché tranché)
+  if (bet) {
+    const conf = computeConfidenceStars(bet.prob, bet.evPlus);
+    if (conf.stars >= 3) {
+      betLine =
+        `\n\n🎯 <b>LE BET PRÉDICTIF :</b> <b>${escTg(bet.pick)}</b>\n` +
+        `🔥 <b>Confiance :</b> ${conf.glyph} <i>(${conf.label})</i>\n` +
+        `📊 <b>Proba live :</b> <b>${bet.prob}%</b> <i>(cote équiv. ${bet.odds.toFixed(2)} · ${escTg(bet.bk)})</i>`;
+    }
+  }
+
+  return `🔥 <b>ALERTE LIVE - PARISCORE</b>\n\n` +
+    `⚽ <b>${escTg(match.home_team)}</b> 🆚 <b>${escTg(match.away_team)}</b>\n` +
+    `📌 ${escTg(match.league)}\n` +
+    `⚽ Score ${escTg(score)} · ${min}'\n` +
+    `📈 ${reason}` +
+    betLine +
+    `\n\n👉 <b>Suivre le live :</b> ${liveMatchUrl(match)}\n\n` +
+    `⚠️ Pariez de manière responsable. 18+`;
 }
 
 function evaluateLiveTrigger(match) {
@@ -20766,6 +21099,7 @@ function evaluateLiveTrigger(match) {
 }
 
 async function sendLiveMomentumAlerts(liveMatches) {
+  if (!automatedAlertsAllowed()) return; // anti multi-instance (dev/test/zombie)
   if (!TELEGRAM_BOT_TOKEN || !liveMatches || !liveMatches.length) return;
   const userPrefs = kvScan('alert_prefs_');
   if (!userPrefs.length) return;
@@ -20785,10 +21119,13 @@ async function sendLiveMomentumAlerts(liveMatches) {
         trigger = { kind: 'pressure', value: t.pressureDelta, side: t.pressureSide };
       }
       if (!trigger) continue;
+      // claim cooldown AVANT l'await (atomique, pas de gap check-then-act → anti-doublon concurrent)
+      markLiveAlertSent(userId, m.id);
       const ok = await sendTelegramAlert(prefs.chatId, buildLiveAlertMessage(m, trigger));
       if (ok) {
-        markLiveAlertSent(userId, m.id);
         console.log(`  [LiveAlert] → user=${userId} match=${m.home_team}-${m.away_team} ${trigger.kind}=${trigger.value}`);
+      } else {
+        _liveAlertCooldowns.delete(`${userId}:${m.id}`); // échec envoi → rollback pour retry prochain poll
       }
     }
   }
@@ -20835,7 +21172,10 @@ async function pollLiveScoresSmart() {
 /* -------------------------------------------------
    Fonction de polling des scores en direct
    ------------------------------------------------- */
+let _isPollingLive = false; // mutex anti-concurrence (setInterval 60s + route ?fresh=true 30s)
 async function pollLiveScores() {
+    if (_isPollingLive) return; // skip si poll déjà en cours → évite doublons alertes
+    _isPollingLive = true;
     try {
         const now = new Date();
         const dateStr = formatDateOnly(now);
@@ -20940,6 +21280,8 @@ async function pollLiveScores() {
         sendLiveMomentumAlerts(liveNow).catch(e => console.warn('[LiveAlert]', e.message));
     } catch (e) {
         console.warn('[LivePoll] Error:', e.message);
+    } finally {
+        _isPollingLive = false;
     }
 }
 function computeLiveIntensityFromBSD(live) {
@@ -21114,6 +21456,11 @@ setInterval(() => {
 }, 2 * 3600 * 1000);
 
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+
+// Value bet alerts — scheduler auto (gate prod + dedup TTL anti-spam intégrés).
+// Avant : sendValueBetAlerts() seulement via route admin manuelle → aucune alerte value auto sur VPS.
+const VALUE_ALERT_INTERVAL_MS = parseInt(process.env.VALUE_ALERT_INTERVAL_MS || String(30 * 60 * 1000), 10);
+setInterval(() => sendValueBetAlerts().catch(e => console.warn('[ValueAlert]', e.message)), VALUE_ALERT_INTERVAL_MS);
 
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
