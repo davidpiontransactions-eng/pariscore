@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* ── Light Premium — L'Équipe × Flashscore ── */
@@ -6304,6 +6304,7 @@
             <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Issue du match en sets (best-of-3) — barre : J1 2-0 / J1 2-1 / J2 2-1 / J2 2-0 · chip = issue la plus probable. Ce ne sont PAS des scores de jeux."><svg class="i3d-th"><use href="#i3d-bars"></use></svg>Issue Sets</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 1 (profil Sprinter/Diesel, surface 52 sem.). Halo = EV+ ≥ 110 %"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>Gain Set 1</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 2 (pondéré Réaction/Enchaînement + fatigue)"><svg class="i3d-th"><use href="#i3d-bolt2"></use></svg>Gain Set 2</th>
+            <th class="tvb-th tgou-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Over/Under jeux par set (PMF DP serve/return + gate Combined Hold). Cliquer Sx pour le détail O7.5 / O8.5 / O9.5 / U12.5"><span class="tgou-hwrap">Jeux O/U<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisGamesGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Jeux O/U">i</button></span></th>
             <th class="tvb-th" style="text-align:center;color:#a78bfa;" title="Mental — Réaction = set 2 gagné après set 1 perdu · Enchaîne = set 2 gagné après set 1 gagné"><svg class="i3d-th"><use href="#i3d-brain"></use></svg>Mental</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Cote marché + value EV+ modèle. « Cotes indispo » si quota Odds API épuisé"><svg class="i3d-th"><use href="#i3d-trend"></use></svg>Value (EV+)</th>
             <th class="tvb-th" style="text-align:center;color:var(--amber,#ffa726);" title="Indice de confiance = plus petit échantillon Elo surface des 2 joueurs · RkΔ en infobulle"><svg class="i3d-th"><use href="#i3d-star"></use></svg>Confiance</th>
@@ -6311,7 +6312,7 @@
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -6525,6 +6526,15 @@
       <div id="tex-player-modal-body" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text,#e8eaed);">Chargement…</div>
     </div>
   </div>
+
+  <!-- Popup O/U Jeux par set -->
+  <div id="tennis-games-modal" class="tennis-modal" style="display:none;">
+    <div class="tennis-modal-backdrop" onclick="closeTennisGamesPopup()"></div>
+    <div class="tennis-modal-card" role="dialog" aria-modal="true" style="width:min(460px,92vw);padding:22px 24px;">
+      <button class="tennis-modal-close" onclick="closeTennisGamesPopup()" aria-label="Fermer">✕</button>
+      <div id="tennis-games-body"></div>
+    </div>
+  </div>
 </div><!-- /page-tennis -->
 
 <style>
@@ -6678,6 +6688,47 @@
   #tennis-vb-table .tset-glow { outline:1px solid rgba(0,230,118,0.75); animation:tvbSetGlow 1.6s ease-in-out infinite; }
   #tennis-vb-table .tset-cell { display:inline-flex; flex-direction:column; align-items:center; gap:4px; }
   #tennis-vb-table .tset-pl { font-family:'DM Mono',monospace; font-size:10px; font-weight:800; letter-spacing:0.2px; color:var(--text2,#8d9399); max-width:96px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* ── O/U Jeux par set — colonne unique, lignes Sx cliquables ── */
+  #tennis-vb-table .tgou-stack { display:inline-flex; flex-direction:column; gap:4px; min-width:118px; }
+  #tennis-vb-table .tgou-srow { position:relative; overflow:hidden; display:flex; align-items:center; gap:7px; padding:4px 9px; border-radius:8px; cursor:pointer; font-family:'JetBrains Mono','Roboto Mono','DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.03em; border:1px solid rgba(255,255,255,0.15); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.35); transition:transform 90ms ease, filter 140ms ease; }
+  #tennis-vb-table .tgou-srow::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.10) 0%,transparent 45%); pointer-events:none; }
+  #tennis-vb-table .tgou-srow:hover { transform:translateY(-1px); filter:brightness(1.10); }
+  #tennis-vb-table .tgou-srow:active { transform:translateY(1px); }
+  #tennis-vb-table .tgou-stag { font-weight:800; opacity:0.85; padding:1px 6px; border-radius:5px; background:rgba(0,0,0,0.28); }
+  #tennis-vb-table .tgou-sbest { flex:1; text-align:right; white-space:nowrap; }
+  #tennis-vb-table .tgou-strong { color:#d6ffe8; background:linear-gradient(160deg,rgba(0,230,118,0.28),rgba(0,120,70,0.16)); border-color:rgba(0,230,118,0.40); }
+  #tennis-vb-table .tgou-mid { color:#fff0d6; background:linear-gradient(160deg,rgba(255,167,38,0.26),rgba(150,90,10,0.15)); border-color:rgba(255,167,38,0.38); }
+  #tennis-vb-table .tgou-low { color:var(--text2,#8d9399); background:linear-gradient(160deg,rgba(120,130,140,0.14),rgba(40,46,52,0.12)); border-color:rgba(255,255,255,0.10); }
+  #tennis-vb-table .tgou-na { font-family:'JetBrains Mono','DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); }
+  #tennis-vb-table .tgou-hwrap { display:inline-flex; align-items:center; gap:6px; }
+  #tennis-vb-table .tgou-info { width:16px; height:16px; flex:none; padding:0; border-radius:50%; border:1px solid currentColor; background:transparent; color:var(--blue,#29b6f6); font-family:'JetBrains Mono','DM Mono',monospace; font-size:10px; font-weight:800; font-style:italic; line-height:14px; cursor:pointer; opacity:0.75; transition:opacity 120ms ease, background 120ms ease; }
+  #tennis-vb-table .tgou-info:hover { opacity:1; background:rgba(41,182,246,0.18); }
+  /* Guide colonne */
+  #tennis-games-modal .tgg { font-family:'Source Sans 3','Instrument Sans',sans-serif; font-size:13px; line-height:1.65; color:var(--text2,#8d9399); }
+  #tennis-games-modal .tgg p { margin:0 0 12px; }
+  #tennis-games-modal .tgg b { color:var(--text,#e8eaed); }
+  #tennis-games-modal .tgg-ul { margin:0 0 12px; padding-left:18px; }
+  #tennis-games-modal .tgg-ul li { margin:3px 0; }
+  #tennis-games-modal .tgg-k { font-family:'JetBrains Mono','DM Mono',monospace; font-size:11.5px; font-weight:700; color:var(--blue,#29b6f6); background:rgba(41,182,246,0.12); padding:1px 6px; border-radius:5px; }
+  #tennis-games-modal .tgg-leg { margin-top:16px; padding-top:12px; border-top:1px solid var(--bg4,#1e2328); font-size:12px; }
+  #tennis-games-modal .tgg-c { display:inline-block; font-family:'JetBrains Mono','DM Mono',monospace; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px; border:1px solid rgba(255,255,255,0.15); margin:0 4px; }
+  /* Popup O/U Jeux */
+  #tennis-games-modal .tgmp-head { margin-bottom:18px; }
+  #tennis-games-modal .tgmp-title { font-family:Syne,sans-serif; font-weight:800; font-size:19px; color:var(--text,#e8eaed); }
+  #tennis-games-modal .tgmp-sub { font-family:'JetBrains Mono','DM Mono',monospace; font-size:12px; color:var(--text2,#8d9399); margin-top:5px; }
+  #tennis-games-modal .tgmp-grid { display:flex; flex-direction:column; gap:11px; }
+  #tennis-games-modal .tgmp-row { display:grid; grid-template-columns:84px 1fr 52px; align-items:center; gap:12px; }
+  #tennis-games-modal .tgmp-lab { font-family:'JetBrains Mono','DM Mono',monospace; font-size:12.5px; font-weight:700; color:var(--text,#e8eaed); }
+  #tennis-games-modal .tgmp-bar { height:13px; border-radius:7px; background:var(--bg4,#1e2328); overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,0.06); }
+  #tennis-games-modal .tgmp-fill { display:block; height:100%; border-radius:7px; transition:width 280ms ease; }
+  #tennis-games-modal .tgmp-fill.tgou-strong { background:linear-gradient(90deg,rgba(0,230,118,0.55),rgba(0,200,100,0.95)); }
+  #tennis-games-modal .tgmp-fill.tgou-mid { background:linear-gradient(90deg,rgba(255,167,38,0.50),rgba(255,167,38,0.92)); }
+  #tennis-games-modal .tgmp-fill.tgou-low { background:linear-gradient(90deg,rgba(120,130,140,0.40),rgba(120,130,140,0.70)); }
+  #tennis-games-modal .tgmp-val { font-family:'JetBrains Mono','DM Mono',monospace; font-size:13px; font-weight:800; text-align:right; }
+  #tennis-games-modal .tgmp-val.tgou-strong { color:#2be58a; }
+  #tennis-games-modal .tgmp-val.tgou-mid { color:#ffb74d; }
+  #tennis-games-modal .tgmp-val.tgou-low { color:var(--text2,#8d9399); }
+  #tennis-games-modal .tgmp-meta { margin-top:18px; padding-top:14px; border-top:1px solid var(--bg4,#1e2328); font-family:'JetBrains Mono','DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); line-height:1.6; }
   #tennis-vb-table .tsd-wrap { display:inline-flex; flex-direction:column; align-items:center; gap:6px; min-width:122px; }
   #tennis-vb-table .tsd-bar { display:flex; width:118px; height:15px; border-radius:8px; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10); background:var(--bg4,#1e2328); }
   #tennis-vb-table .tsd-seg { height:100%; transition:width 200ms ease; }
@@ -8223,6 +8274,119 @@ function _tvbSetSide(sm, key, p1, p2, extraTip) {
 function _tvbSet1Cell(sm, p1, p2) { return _tvbSetSide(sm, 'set1', p1, p2, ''); }
 function _tvbSet2Cell(sm, p1, p2) { return _tvbSetSide(sm, 'set2', p1, p2, ' · pondéré Réaction/Enchaîne + fatigue'); }
 
+// games_pmf_dp_v1 — Colonne unique : lignes S1/S2/S3 (+S4/S5 si Grand Chelem)
+// cliquables → popup détail O7.5 / O8.5 / O9.5 / U12.5 du set.
+function _tvbGamesOUStack(ouc, matchId) {
+  if (!ouc || !ouc.sets) return '<span class="tgou-na">—</span>';
+  const order = ['set1', 'set2', 'set3', 'set4', 'set5'];
+  const rows = [];
+  for (const k of order) {
+    const s = ouc.sets[k];
+    if (!s || !s.best) continue;
+    const cls = s.best.tier === 'strong' ? 'tgou-strong' : s.best.tier === 'mid' ? 'tgou-mid' : 'tgou-low';
+    const lbl = 'S' + k.slice(-1);
+    rows.push(`<button type="button" class="tgou-srow ${cls}" onclick="event.stopPropagation();openTennisGamesPopup('${_escTennis(String(matchId || ''))}','${k}')" title="Détail Over/Under jeux — ${lbl}">`
+      + `<span class="tgou-stag">${lbl}</span>`
+      + `<span class="tgou-sbest">${s.best.label} ${s.best.prob}%</span></button>`);
+  }
+  if (!rows.length) return '<span class="tgou-na">—</span>';
+  return `<span class="tgou-stack">${rows.join('')}</span>`;
+}
+
+// Popup détail O/U jeux d'un set : barres O7.5 / O8.5 / O9.5 / U12.5.
+function openTennisGamesPopup(matchId, setKey) {
+  const list = window._tennisVbLastFetch || [];
+  const m = list.find(x => x && String(x.id) === String(matchId));
+  const ouc = m && m.over_under_set_calculations;
+  const s = ouc && ouc.sets && ouc.sets[setKey];
+  const modal = document.getElementById('tennis-games-modal');
+  const body = document.getElementById('tennis-games-body');
+  if (!modal || !body) return;
+  if (!s || !m) {
+    body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3,#5a6068);font-family:\'JetBrains Mono\',\'DM Mono\',monospace;">Données indisponibles.</div>';
+  } else {
+    const setNo = setKey.slice(-1);
+    const p1 = _escTennis((m.player1 && m.player1.name) || 'J1');
+    const p2 = _escTennis((m.player2 && m.player2.name) || 'J2');
+    const tn = _escTennis(m.tournament || '');
+    const defs = [['Over 7.5', s.o75], ['Over 8.5', s.o85], ['Over 9.5', s.o95], ['Under 12.5', s.u125]];
+    const bars = defs.map(([lab, v]) => {
+      const t = v >= 65 ? 'tgou-strong' : v >= 50 ? 'tgou-mid' : 'tgou-low';
+      return `<div class="tgmp-row"><span class="tgmp-lab">${lab}</span>`
+        + `<span class="tgmp-bar"><i class="tgmp-fill ${t}" style="width:${Math.max(2, Math.min(100, v))}%"></i></span>`
+        + `<span class="tgmp-val ${t}">${v}%</span></div>`;
+    }).join('');
+    let meta = `x&#772; ${s.exp_games} jeux · Tie-break ${s.o125}%`;
+    if (ouc.combined_hold_pct != null) meta += ` · Combined Hold ${ouc.combined_hold_pct}%`;
+    if (s.phys_decay != null) meta += ` · décote phys ×${s.phys_decay}`;
+    if (s.big_server_bypass) meta += ` · gros serveur (pas de décote)`;
+    body.innerHTML = `<div class="tgmp-head"><div class="tgmp-title">Set ${setNo} — Jeux Over / Under</div>`
+      + `<div class="tgmp-sub">${p1} vs ${p2}${tn ? ' · ' + tn : ''}${ouc.is_grand_slam ? ' · Grand Chelem (BO5)' : ''}</div></div>`
+      + `<div class="tgmp-grid">${bars}</div>`
+      + `<div class="tgmp-meta">${meta}</div>`;
+  }
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeTennisGamesPopup() {
+  const modal = document.getElementById('tennis-games-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Tuto colonne "Jeux O/U" — définition + méthode de calcul (réutilise le popup).
+function openTennisGamesGuide() {
+  const modal = document.getElementById('tennis-games-modal');
+  const body = document.getElementById('tennis-games-body');
+  if (!modal || !body) return;
+  body.innerHTML = `
+    <div class="tgmp-head">
+      <div class="tgmp-title">Colonne « Jeux O/U » — Guide</div>
+      <div class="tgmp-sub">Over / Under du nombre de jeux, set par set</div>
+    </div>
+    <div class="tgg">
+      <p><b>Ce que c'est.</b> Pour chaque set (S1, S2, S3, et S4/S5 en Grand Chelem) on estime
+      la probabilité de réussite des seuils <b>Over 7.5</b>, <b>Over 8.5</b>, <b>Over 9.5</b>
+      et <b>Under 12.5</b> (= set sans tie-break). La ligne affiche le seuil le plus marqué ;
+      cliquez un <span class="tgg-k">Sx</span> pour les 4 probabilités détaillées.</p>
+
+      <p><b>1 · Probabilité de tenue de service (hold).</b> Depuis les stats Sackmann
+      (50 derniers matchs, filtrées surface) on calcule le <i>Serve Points Won</i> de chaque
+      joueur, ajusté du <i>Return Points Won</i> adverse et de la vitesse du court. Formule
+      fermée d'O'Malley → P(le serveur conserve son jeu).</p>
+
+      <p><b>2 · Distribution exacte des jeux du set (PMF).</b> Une programmation dynamique
+      énumère tous les déroulés de jeux (service alterné, règle des 2 jeux d'écart,
+      6-6 → tie-break = 13 jeux) et somme les probabilités par total de jeux. On en tire :</p>
+      <ul class="tgg-ul">
+        <li><span class="tgg-k">O 7.5</span> = P(total ≥ 8 jeux)</li>
+        <li><span class="tgg-k">O 8.5</span> = P(total ≥ 9 jeux)</li>
+        <li><span class="tgg-k">O 9.5</span> = P(total ≥ 10 jeux)</li>
+        <li><span class="tgg-k">U 12.5</span> = P(pas de tie-break) = 1 − P(set à 6-6)</li>
+      </ul>
+
+      <p><b>3 · Gate « Combined Hold ».</b> Combined Hold = (hold J1 + hold J2) × 100.
+      <span class="tgg-k">≥ 170 %</span> → service ultra-dominant : O 9.5 et tie-break boostés.
+      <span class="tgg-k">&lt; 145 %</span> → beaucoup de breaks : O 7.5/8.5 atténués, Under renforcé.</p>
+
+      <p><b>4 · Sets 2 &amp; 3.</b> Holds ré-ajustés par la fatigue (dernier match &gt; 150 min
+      → −2 % d'efficacité service).</p>
+
+      <p><b>5 · Grand Chelem (Best-of-5).</b> Sets 4 et 5 affichés uniquement en Grand Chelem.
+      Décote physique sur O 9.5 : ×0,93 au set 4, ×0,93² au set 5 — sauf <i>gros serveur</i>
+      (Ace &gt; 15 %) qui maintient son service.</p>
+
+      <p class="tgg-leg"><b>Couleurs.</b>
+      <span class="tgg-c tgou-strong">vert ≥ 65 %</span>
+      <span class="tgg-c tgou-mid">ambre 50-64 %</span>
+      <span class="tgg-c tgou-low">gris &lt; 50 %</span>
+      &nbsp;· 100 % local (données Jeff Sackmann), aucune cote marché par set.</p>
+    </div>`;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
 // set_profile_v1 — Mental : Réaction (bounce-back) / Enchaîne (kill) J1·J2.
 function _tvbMentalCell(sm) {
   if (!sm || !sm.profiles) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
@@ -8279,7 +8443,7 @@ function renderTennisValueBets(matches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -8322,7 +8486,7 @@ function renderTennisValueBets(matches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
 
@@ -8437,6 +8601,7 @@ function renderTennisValueBets(matches) {
       <td style="text-align:center;">${_tvbSetDistCell(m.predictions?.set_probs, m.player1?.name, m.player2?.name)}</td>
       <td style="text-align:center;">${_tvbSet1Cell(sm, m.player1?.name, m.player2?.name)}</td>
       <td style="text-align:center;">${_tvbSet2Cell(sm, m.player1?.name, m.player2?.name)}</td>
+      <td style="text-align:center;">${_tvbGamesOUStack(m.over_under_set_calculations, m.id)}</td>
       <td style="text-align:center;">${_tvbMentalCell(sm)}</td>
       <td style="text-align:center;">${_tvbMarketCell(odds, bestEv)}</td>
       <td style="text-align:center;">${_tvbConfCell(elo, m.log_diff)}</td>
