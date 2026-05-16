@@ -6852,6 +6852,80 @@
       </div>
     </div>
 
+    <div id="guide-tennis-section" class="guide-section-header">
+      <span class="guide-section-icon">🎾</span>
+      <h2>Onglet Tennis — Modèle Sets</h2>
+    </div>
+
+    <div id="guide-tennis" class="gs-article" style="border-top:none;padding-top:8px;">
+      <div class="gs-article-head">
+        <div class="gs-article-category">Module Tennis PariScore</div>
+        <div class="gs-article-title">
+          <div class="gs-title-bar"></div>
+          Lire le tableau Value Bets Tennis
+        </div>
+        <div class="gs-article-subtitle">Modèle propriétaire set 1 / set 2 — chaque colonne expliquée</div>
+      </div>
+
+      <div class="gs-article-layout">
+        <div class="gs-article-text">
+          <p>Le tableau Tennis applique le modèle interne PariScore <strong>set_profile_v1</strong> : il décompose chaque match non pas en « qui gagne » mais <em>set par set</em>. Toutes les valeurs sont calculées par PariScore à partir de son propre historique de matchs (5 ans, ATP + WTA), sans dépendance à un service tiers.</p>
+
+          <p><strong>Profils joueurs (52 semaines glissantes, par surface) :</strong><br>
+          — <strong>Taux set 1</strong> : fréquence de gain du 1er set. Un « Sprinter » démarre fort, un « Diesel » monte en régime.<br>
+          — <strong>Réaction (Bounce-back)</strong> : % de set 2 gagnés <em>après avoir perdu</em> le set 1. Le mental de rebond.<br>
+          — <strong>Enchaîne (Kill)</strong> : % de set 2 gagnés <em>après avoir gagné</em> le set 1. La capacité à plier le match.<br>
+          — <strong>Transition surface</strong> : malus si le joueur dispute son 1er ou 2e match de la saison sur cette surface (pas encore les repères).<br>
+          — <strong>Fatigue</strong> : malus sur le set 2 si le dernier match a dépassé 2 h 30.</p>
+
+          <div style="margin:18px 0;border:1px solid var(--border2);border-radius:6px;overflow:hidden;font-family:var(--font-mono);">
+            <div style="display:grid;grid-template-columns:130px 1fr;background:var(--bg4);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;">
+              <span>Colonne</span><span>Définition</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Proba Match</span>
+              <span style="color:var(--text2);">Probabilité de victoire du match (modèle Elo de surface + blend). Barre J1 / J2.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Issue Sets</span>
+              <span style="color:var(--text2);">Barre empilée 4 segments : J1 en 2-0, J1 en 2-1, J2 en 2-1, J2 en 2-0. Le chip indique l'issue la <strong>plus probable</strong> (ex. « Sinner 2-0 · 63 % »). Ce ne sont pas des scores de jeux.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Gain Set 1</span>
+              <span style="color:var(--text2);">Probabilité d'empocher le 1er set. Le badge affiche le <strong>favori du set</strong> avec son nom dessous. Vert ≥ 65 % · orange 55-64 % · gris &lt; 55 %. Halo = value détectée.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Gain Set 2</span>
+              <span style="color:var(--text2);">Idem set 2, pondéré par Réaction / Enchaîne + malus fatigue. Le profil mental change la donne quand le set 1 est serré.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Mental</span>
+              <span style="color:var(--text2);">↩ Réaction (bounce-back) / ⚡ Enchaîne (kill), format J1 / J2. Un joueur fort en Réaction est dangereux mené ; fort en Enchaîne, il tue le match.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Value (EV+)</span>
+              <span style="color:var(--text2);">Écart entre la probabilité du modèle et la cote dérivée du moteur serve/return interne. EV ≥ 110 % = anomalie de valeur, signalée par un halo sur le set.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Confiance</span>
+              <span style="color:var(--text2);">Fiabilité du calcul = taille du plus petit échantillon Elo surface des 2 joueurs. HIGH ≥ 40 matchs, MED ≥ 15, LOW ≥ 5. L'écart Elo ↔ rang officiel est en infobulle.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;gap:6px;">
+              <span style="color:var(--text);font-weight:700;">Alertes</span>
+              <span style="color:var(--text2);">Icône fatigue (dernier match &gt; 2 h 30) et icône transition surface, posées sur le nom du joueur concerné. Infobulle chiffrée au survol.</span>
+            </div>
+          </div>
+
+          <p><strong>Filtres &amp; tri :</strong><br>
+          — <strong>Catégorie</strong> : GC (Grand Chelem) · 1000 · 500 · 250 · 125 (Challenger) · ITF.<br>
+          — <strong>Compétition</strong> : liste des tournois réellement présents dans le feed du jour.<br>
+          — <strong>Tri « Plus proche de maintenant »</strong> (défaut) : remonte le match dont l'heure est la plus proche de l'instant présent — live et imminents en tête. Autres tris : Chronologique, Value EV+, Proba, Gain Set 1, Elo.</p>
+
+          <p><strong>Méthode de lecture conseillée :</strong> repérez d'abord un <em>profil asymétrique</em> — un joueur à fort taux set 1 face à un adversaire faible Réaction : le set 1 est l'angle. À l'inverse, un gros « Enchaîne » qui mène souvent 2-0 est l'angle Issue Sets. Croisez toujours avec Confiance (échantillon suffisant) et le halo Value avant de valider.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- ── JAUGE D'INTENSITÉ ─────────────────────────────────────────────── -->
     <div id="guide-intensite" class="gs-article" style="border-top:none;padding-top:8px;">
       <div class="gs-article-head">
