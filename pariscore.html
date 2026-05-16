@@ -6302,6 +6302,7 @@
             <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Elo surface — favori en vert">Elo</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité de victoire du match (modèle Elo/blend)"><svg class="i3d-th"><use href="#i3d-target"></use></svg>Proba Match</th>
             <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Issue du match en sets (best-of-3) — barre : J1 2-0 / J1 2-1 / J2 2-1 / J2 2-0 · chip = issue la plus probable. Ce ne sont PAS des scores de jeux."><svg class="i3d-th"><use href="#i3d-bars"></use></svg>Issue Sets</th>
+            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité pré-match qu'un joueur gagne AU MOINS UN SET (Markov serve/return Sackmann × split Tennis Abstract, surface 52 sem.)"><svg class="i3d-th"><use href="#i3d-bars"></use></svg>≥ 1 Set (%)</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 1 (profil Sprinter/Diesel, surface 52 sem.). Halo = EV+ ≥ 110 %"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>Gain Set 1</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 2 (pondéré Réaction/Enchaînement + fatigue)"><svg class="i3d-th"><use href="#i3d-bolt2"></use></svg>Gain Set 2</th>
             <th class="tvb-th tgou-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Over/Under jeux par set (PMF DP serve/return + gate Combined Hold). Cliquer Sx pour le détail O7.5 / O8.5 / O9.5 / U12.5"><span class="tgou-hwrap">Jeux O/U<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisGamesGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Jeux O/U">i</button></span></th>
@@ -6312,7 +6313,7 @@
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="13" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -6688,6 +6689,49 @@
   #tennis-vb-table .tset-glow { outline:1px solid rgba(0,230,118,0.75); animation:tvbSetGlow 1.6s ease-in-out infinite; }
   #tennis-vb-table .tset-cell { display:inline-flex; flex-direction:column; align-items:center; gap:4px; }
   #tennis-vb-table .tset-pl { font-family:'DM Mono',monospace; font-size:10px; font-weight:800; letter-spacing:0.2px; color:var(--text2,#8d9399); max-width:96px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* ── ≥ 1 Set (%) — 2 joueurs empilés, badges 3D glassmorphism ── */
+  #tennis-vb-table .a1s-stack { display:inline-flex; flex-direction:column; gap:5px; min-width:138px; }
+  #tennis-vb-table .a1s-row {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:3px 6px; border-radius:7px;
+    background:linear-gradient(155deg,rgba(255,255,255,0.045),rgba(255,255,255,0.015));
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.45);
+  }
+  #tennis-vb-table .a1s-name {
+    font-family:'Plus Jakarta Sans','SF Pro Display','Instrument Sans',sans-serif;
+    font-size:11px; font-weight:600; color:var(--text2,#8d9399);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:88px;
+  }
+  #tennis-vb-table .a1s-name.a1s-fav { color:var(--text,#e8eaed); font-weight:700; }
+  #tennis-vb-table .a1s-pct {
+    position:relative; overflow:hidden;
+    font-family:'JetBrains Mono','Roboto Mono','DM Mono',monospace;
+    font-size:12px; font-weight:800; letter-spacing:-0.02em;
+    padding:2px 8px; border-radius:6px; min-width:56px; text-align:right;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 2px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.4);
+  }
+  #tennis-vb-table .a1s-pct::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(135deg,rgba(255,255,255,0.16) 0%,transparent 48%);
+  }
+  #tennis-vb-table .a1s-strong {
+    color:#0a1f14;
+    background:linear-gradient(160deg,#34f5a0 0%,#00c864 55%,#019a4b 100%);
+    border:1px solid rgba(0,230,118,0.55);
+    text-shadow:0 1px 0 rgba(255,255,255,0.25);
+  }
+  #tennis-vb-table .a1s-mid {
+    color:#dff2ff;
+    background:linear-gradient(160deg,rgba(41,182,246,0.42),rgba(20,110,170,0.30));
+    border:1px solid rgba(41,182,246,0.50);
+  }
+  #tennis-vb-table .a1s-low {
+    color:var(--text2,#8d9399);
+    background:linear-gradient(160deg,rgba(120,130,140,0.16),rgba(40,46,52,0.12));
+    border:1px solid rgba(255,255,255,0.10);
+  }
+
   /* ── O/U Jeux par set — colonne unique, lignes Sx cliquables ── */
   #tennis-vb-table .tgou-stack { display:inline-flex; flex-direction:column; gap:4px; min-width:118px; }
   #tennis-vb-table .tgou-srow { position:relative; overflow:hidden; display:flex; align-items:center; gap:7px; padding:4px 9px; border-radius:8px; cursor:pointer; font-family:'JetBrains Mono','Roboto Mono','DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.03em; border:1px solid rgba(255,255,255,0.15); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.35); transition:transform 90ms ease, filter 140ms ease; }
@@ -8439,11 +8483,30 @@ function _tvbConfCell(elo, ld) {
   return `<span class="tvb-mono" style="font-size:10px;font-weight:700;color:${col};" title="min(échantillon Elo surface) = ${mn}${rk}">${tier}</span>`;
 }
 
+// Cellule "≥ 1 Set (%)" — 2 joueurs empilés, badges 3D glassmorphism.
+function _tvbAtLeastSetCell(a, p1Name, p2Name, p1Fav, p2Fav) {
+  if (!a || a.p1_pct == null || a.p2_pct == null) {
+    return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
+  }
+  const tier = (v) => v >= 75 ? 'a1s-strong' : v >= 50 ? 'a1s-mid' : 'a1s-low';
+  const fmt = (v) => (Math.round(v * 10) / 10).toFixed(1);
+  const bo = a.best_of === 5 ? 'BO5' : 'BO3';
+  const row = (name, pct, fav) =>
+    `<div class="a1s-row">`
+    + `<span class="a1s-name${fav ? ' a1s-fav' : ''}" title="${name}">${name}</span>`
+    + `<span class="a1s-pct ${tier(pct)}">${fmt(pct)}%</span>`
+    + `</div>`;
+  return `<div class="a1s-stack" title="P(gagne ≥ 1 set) — ${bo} · ${a.method || 'markov'}">`
+    + row(p1Name, a.p1_pct, p1Fav)
+    + row(p2Name, a.p2_pct, p2Fav)
+    + `</div>`;
+}
+
 function renderTennisValueBets(matches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -8486,7 +8549,7 @@ function renderTennisValueBets(matches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
 
@@ -8599,6 +8662,7 @@ function renderTennisValueBets(matches) {
       <td style="text-align:center;"><span class="tvb-elo-vs"><span class="${(eloP1 != null && eloP2 != null && eloP1 > eloP2) ? 'e-fav' : ''}">${eloP1 != null ? eloP1 : '—'}</span><span class="e-sep">▸</span><span class="${(eloP1 != null && eloP2 != null && eloP2 > eloP1) ? 'e-fav' : ''}">${eloP2 != null ? eloP2 : '—'}</span></span></td>
       <td style="text-align:center;">${probHtml}</td>
       <td style="text-align:center;">${_tvbSetDistCell(m.predictions?.set_probs, m.player1?.name, m.player2?.name)}</td>
+      <td style="text-align:center;">${_tvbAtLeastSetCell(m.predictions?.at_least_one_set, p1Name, p2Name, !!p1Fav, !!p2Fav)}</td>
       <td style="text-align:center;">${_tvbSet1Cell(sm, m.player1?.name, m.player2?.name)}</td>
       <td style="text-align:center;">${_tvbSet2Cell(sm, m.player1?.name, m.player2?.name)}</td>
       <td style="text-align:center;">${_tvbGamesOUStack(m.over_under_set_calculations, m.id)}</td>

@@ -12896,6 +12896,254 @@ function matchSetProbs(holdA, holdB) {
   };
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+//  TENNIS ABSTRACT — résolveur d'URL + scraper léger "≥ 1 set"
+//  Source : tennisabstract.com/cgi-bin/{w}player.cgi?p={id}/{First-Last}
+//  La page embarque `var matchmx = [[...]]` (match log). On en dérive les taux
+//  empiriques de "sweep" (gagner sans céder de set) et "take-set" (prendre au
+//  moins un set en défaite), croisés avec le Markov serve/return (set_probs).
+//  Backbone fiable = split local Sackmann (tennis_matches) — toujours dispo,
+//  même source que TA en amont. Le fetch TA enrichit/valide en arrière-plan.
+// ───────────────────────────────────────────────────────────────────────────
+const TENNIS_TA_BASE = 'https://www.tennisabstract.com/cgi-bin';
+const TENNIS_TA_TTL_MS = 24 * 60 * 60 * 1000;
+const _taInFlight = new Set();
+const _taSplitCache = new Map(); // key name|tour|surface → split local (mémoïsé)
+
+function _initTennisTaSchema() {
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_ta_cache (
+    name_key TEXT NOT NULL,
+    tour TEXT NOT NULL,
+    surface TEXT NOT NULL,
+    ta_id TEXT,
+    ta_url TEXT,
+    take_set_rate REAL,
+    sweep_rate REAL,
+    sample INTEGER,
+    source TEXT,
+    fetched_at INTEGER NOT NULL,
+    PRIMARY KEY (name_key, tour, surface)
+  )`);
+}
+
+function _taNameKey(name) {
+  return String(name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// "Coco Gauff" → "Coco-Gauff" (slug TA, accents retirés, casse d'origine).
+function _taSlug(name) {
+  return String(name || '').trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9 -]/g, '').replace(/\s+/g, ' ').trim().replace(/ /g, '-');
+}
+
+// Sackmann player_id (= id Tennis Abstract) depuis tennis_matches.
+function _taResolveId(name, tour) {
+  try {
+    _initTennisSackmannSchema();
+    const r = sqldb.prepare(`
+      SELECT winner_id AS id FROM tennis_matches
+        WHERE tour=? AND LOWER(winner_name)=LOWER(?) AND winner_id IS NOT NULL
+      UNION ALL
+      SELECT loser_id AS id FROM tennis_matches
+        WHERE tour=? AND LOWER(loser_name)=LOWER(?) AND loser_id IS NOT NULL
+      LIMIT 1
+    `).get(tour, name, tour, name);
+    return r && r.id ? String(r.id) : null;
+  } catch (_) { return null; }
+}
+
+// Parse un score Sackmann/TA ("6-4 7-6(5) 3-6 ...") → sets gagnant/perdant.
+function _taParseScore(score) {
+  const s = String(score || '').trim();
+  if (!s || /^(w\/o|walkover|def|def\.)$/i.test(s)) return { valid: false };
+  let wSets = 0, lSets = 0, parsed = 0;
+  for (const tok of s.split(/\s+/)) {
+    const m = tok.replace(/\(\d+\)/g, '').match(/^(\d+)-(\d+)$/);
+    if (!m) continue;
+    const a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || (a === 0 && b === 0)) continue;
+    if (a > b) wSets++; else if (b > a) lSets++;
+    parsed++;
+  }
+  if (parsed < 2) return { valid: false };
+  return { valid: true, wSets, lSets, sweep: lSets === 0 };
+}
+
+// Split local Sackmann : taux "prend ≥1 set en défaite" + "gagne en sweep".
+function computeSweepSplitLocal(name, tour, surface) {
+  if (!name || !tour) return null;
+  const surf = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+  const ck = `${tour}|${_taNameKey(name)}|${surf}`;
+  if (_taSplitCache.has(ck)) return _taSplitCache.get(ck);
+  try {
+    _initTennisSackmannSchema();
+    const rows = sqldb.prepare(`
+      SELECT winner_name, loser_name, score FROM tennis_matches
+      WHERE tour=? AND (?='ALL' OR surface=?)
+        AND (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?))
+      ORDER BY tourney_date DESC, match_num DESC LIMIT 120
+    `).all(tour, surf, surf, name, name);
+    let wins = 0, sweepWins = 0, losses = 0, lossWithSet = 0;
+    for (const r of rows) {
+      const sc = _taParseScore(r.score);
+      if (!sc.valid) continue;
+      const isWinner = String(r.winner_name || '').toLowerCase() === String(name).toLowerCase();
+      if (isWinner) { wins++; if (sc.sweep) sweepWins++; }
+      else { losses++; if (sc.lSets > 0) lossWithSet++; }
+    }
+    if (wins + losses < 5) { _taSplitCache.set(ck, null); return null; }
+    const res = {
+      take_set_rate: losses > 0 ? parseFloat((lossWithSet / losses).toFixed(4)) : null,
+      sweep_rate: wins > 0 ? parseFloat((sweepWins / wins).toFixed(4)) : null,
+      wins, losses, sample: wins + losses, source: 'sackmann_local',
+    };
+    _taSplitCache.set(ck, res);
+    return res;
+  } catch (e) {
+    console.warn('  [TA] split local error:', e.message);
+    return null;
+  }
+}
+
+// Lecture cache TA SQLite (overlay empirique scrapé). Peut être null si froid.
+function getTaOverlayCached(name, tour, surface) {
+  try {
+    _initTennisTaSchema();
+    const surf = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+    const r = sqldb.prepare(`SELECT * FROM tennis_ta_cache WHERE name_key=? AND tour=? AND surface=?`)
+      .get(_taNameKey(name), tour, surf);
+    if (!r) return null;
+    if (Date.now() - r.fetched_at > TENNIS_TA_TTL_MS) return { ...r, stale: true };
+    return r;
+  } catch (_) { return null; }
+}
+
+// Fetch + parse fiche Tennis Abstract (best-effort, async, 24h TTL).
+async function fetchTennisAbstractPlayer(name, tour, surface) {
+  if (!name || !tour) return null;
+  const surf = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+  const nameKey = _taNameKey(name);
+  const flightKey = `${tour}|${nameKey}|${surf}`;
+  if (_taInFlight.has(flightKey)) return null;
+  const cached = getTaOverlayCached(name, tour, surf);
+  if (cached && !cached.stale) return cached;
+  _taInFlight.add(flightKey);
+  try {
+    const taId = _taResolveId(name, tour);
+    if (!taId) return null;
+    const cgi = tour === 'WTA' ? 'wplayer.cgi' : 'player.cgi';
+    const url = `${TENNIS_TA_BASE}/${cgi}?p=${taId}/${encodeURIComponent(_taSlug(name))}`;
+    const resp = await httpsGet(url, { 'Accept': 'text/html,*/*' });
+    const html = typeof resp.data === 'string' ? resp.data : '';
+    let take = null, sweep = null, sample = 0, source = 'ta_scrape';
+    const mx = html.match(/var\s+matchmx\s*=\s*(\[[\s\S]*?\]);/);
+    if (mx) {
+      let rows = null;
+      try { rows = JSON.parse(mx[1]); } catch (_) { rows = null; }
+      if (Array.isArray(rows) && rows.length) {
+        let wins = 0, sweepWins = 0, losses = 0, lossWithSet = 0;
+        for (const row of rows) {
+          if (!Array.isArray(row)) continue;
+          const rowStr = row.map(x => String(x == null ? '' : x));
+          const surfCell = rowStr.find(c => /^(hard|clay|grass|carpet)$/i.test(c.trim()));
+          if (surf !== 'ALL' && surfCell && surfCell.trim().toLowerCase() !== surf.toLowerCase()) continue;
+          const wl = rowStr.find(c => /^[WL]$/.test(c.trim()));
+          const scoreCell = rowStr.find(c => /\d-\d/.test(c) && /^[\d\s()\-]+$/.test(c.replace(/RET|ret/g, '').trim()));
+          if (!wl || !scoreCell) continue;
+          const sc = _taParseScore(scoreCell);
+          if (!sc.valid) continue;
+          if (wl.trim() === 'W') { wins++; if (sc.sweep) sweepWins++; }
+          else { losses++; if (sc.lSets > 0) lossWithSet++; }
+        }
+        if (wins + losses >= 5) {
+          take = losses > 0 ? parseFloat((lossWithSet / losses).toFixed(4)) : null;
+          sweep = wins > 0 ? parseFloat((sweepWins / wins).toFixed(4)) : null;
+          sample = wins + losses;
+        }
+      }
+    }
+    // Fallback : si matchmx illisible/insuffisant → split local (même source amont).
+    if (sample < 5) {
+      const loc = computeSweepSplitLocal(name, tour, surf);
+      if (loc) { take = loc.take_set_rate; sweep = loc.sweep_rate; sample = loc.sample; source = 'sackmann_fallback'; }
+    }
+    if (sample < 5) return null;
+    _initTennisTaSchema();
+    sqldb.prepare(`INSERT OR REPLACE INTO tennis_ta_cache
+      (name_key,tour,surface,ta_id,ta_url,take_set_rate,sweep_rate,sample,source,fetched_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?)`)
+      .run(nameKey, tour, surf, taId, url, take, sweep, sample, source, Date.now());
+    return { name_key: nameKey, tour, surface: surf, ta_id: taId, ta_url: url,
+      take_set_rate: take, sweep_rate: sweep, sample, source, fetched_at: Date.now() };
+  } catch (e) {
+    console.warn(`  [TA] fetch ${name} error: ${e.message}`);
+    return null;
+  } finally {
+    _taInFlight.delete(flightKey);
+  }
+}
+
+// Best-of selon tour + tournoi (Grand Chelem masculin = 5 sets).
+function _tennisBestOf(tour, tournament) {
+  if (String(tour || '').toUpperCase() !== 'ATP') return 3;
+  const t = String(tournament || '').toLowerCase();
+  if (/australian open|roland.?garros|french open|wimbledon|us open|u\.s\. open/.test(t)) return 5;
+  return 3;
+}
+
+// P(joueur gagne ≥ 1 set) = 1 − P(adversaire sweep).
+// Théorique : P(opp sweep) = (1 − pSet_self)^k (Markov serve/return).
+// Empirique : P(opp sweep) = P(opp gagne le match) × P(straight | opp gagne),
+//   estimé par opp.sweep_rate ET (1 − self.take_set_rate). Les taux TA/Sackmann
+//   étant CONDITIONNELS à l'issue, on les multiplie par P(opp gagne) — sinon
+//   surestimation massive des sweeps (bug v1).
+function computeAtLeastOneSet(setProbs, bestOf, splitP1, splitP2) {
+  if (!setProbs || !Number.isFinite(setProbs.p1_set_win)) return null;
+  const k = bestOf === 5 ? 3 : 2; // sets gagnants requis (BO3=2, BO5=3)
+  const pS1 = Math.max(0.02, Math.min(0.98, setProbs.p1_set_win));
+  const pS2 = 1 - pS1;
+
+  // P(gagne le match) cohérente avec k, dérivée de la proba de set.
+  const matchWin = (p) => {
+    const q = 1 - p;
+    return k === 2 ? p * p + 2 * p * p * q
+                   : p * p * p * (1 + 3 * q + 6 * q * q);
+  };
+
+  function side(pSetSelf, splitSelf, splitOpp) {
+    const markovOppSweep = Math.pow(1 - pSetSelf, k);
+    const pOppWins = matchWin(1 - pSetSelf);
+    let blended = markovOppSweep, wSample = 0;
+    const emp = [];
+    if (splitOpp && Number.isFinite(splitOpp.sweep_rate)) {
+      emp.push(pOppWins * splitOpp.sweep_rate);
+      wSample = Math.max(wSample, splitOpp.sample || 0);
+    }
+    if (splitSelf && Number.isFinite(splitSelf.take_set_rate)) {
+      emp.push(pOppWins * (1 - splitSelf.take_set_rate));
+      wSample = Math.max(wSample, splitSelf.sample || 0);
+    }
+    if (emp.length) {
+      const empSweep = emp.reduce((a, b) => a + b, 0) / emp.length;
+      const w = Math.min(wSample, 40) / 40; // confiance ∝ taille échantillon
+      blended = (1 - w) * markovOppSweep + w * empSweep;
+    }
+    blended = Math.max(0.005, Math.min(0.85, blended));
+    return parseFloat(((1 - blended) * 100).toFixed(1));
+  }
+
+  const src = (splitP1 && splitP1.source) || (splitP2 && splitP2.source) || 'markov';
+  return {
+    p1_pct: side(pS1, splitP1, splitP2),
+    p2_pct: side(pS2, splitP2, splitP1),
+    best_of: k === 3 ? 5 : 3,
+    method: `markov+${src}`,
+    sample_p1: (splitP1 && splitP1.sample) || 0,
+    sample_p2: (splitP2 && splitP2.sample) || 0,
+  };
+}
+
 // Pipeline complet pour 1 match : joue les SPW, hold, set probs.
 // Renvoie object {p1_spw, p2_spw, p1_hold, p2_hold, p1_2_0, ...} ou null si data insuffisante.
 // P1-1 — Return points won (RPW) d'un joueur = points gagnés en retour, depuis
@@ -17315,6 +17563,19 @@ async function _buildTennisValueBetsCore({ date }) {
       // ── set_profile_v1 : modèle 1er/2e set (profils + transition + fatigue) ─
       setModel = computeTennisSetModel(p1Name, p2Name, tourGuess, surfaceClean, setProbs);
     }
+    // ── at_least_one_set : Markov set_probs × split empirique TA/Sackmann ────
+    let atLeastOneSet = null;
+    if (tourGuess && setProbs) {
+      const _surfKey = surfaceClean || 'ALL';
+      const _taP1 = getTaOverlayCached(p1Name, tourGuess, _surfKey);
+      const _taP2 = getTaOverlayCached(p2Name, tourGuess, _surfKey);
+      const _splitP1 = _taP1 || computeSweepSplitLocal(p1Name, tourGuess, _surfKey);
+      const _splitP2 = _taP2 || computeSweepSplitLocal(p2Name, tourGuess, _surfKey);
+      atLeastOneSet = computeAtLeastOneSet(setProbs, _tennisBestOf(tourGuess, m.tournament), _splitP1, _splitP2);
+      // Rafraîchit le scrape TA en arrière-plan (best-effort, ne bloque pas le rendu).
+      if (!_taP1 || _taP1.stale) fetchTennisAbstractPlayer(p1Name, tourGuess, _surfKey).catch(() => {});
+      if (!_taP2 || _taP2.stale) fetchTennisAbstractPlayer(p2Name, tourGuess, _surfKey).catch(() => {});
+    }
     // ── games_pmf_dp_v1 : O/U jeux par set (S1-S3 + S4/S5 si Grand Chelem) ───
     let gamesOU = null;
     if (tourGuess && setProbs && Number.isFinite(setProbs.p1_hold) && Number.isFinite(setProbs.p2_hold)) {
@@ -17372,6 +17633,7 @@ async function _buildTennisValueBetsCore({ date }) {
         bsd: bsdProb,
         blended,
         set_probs: setProbs,
+        at_least_one_set: atLeastOneSet,
       },
       log_diff: tourGuess ? {
         p1: tennisLogDiff(p1Name, tourGuess),
@@ -18088,6 +18350,27 @@ if (pathname === '/api/v1/tennis/sackmann/sync' && req.method === 'POST') {
   // Fire-and-forget — pas d'await pour ne pas bloquer la requête.
   syncSackmannData().catch(e => console.warn('[Sackmann manual]', e.message));
   return jsonResponse(res, 202, { status: 'sync_started', check: '/api/v1/tennis/sackmann/status' });
+}
+// Tennis Abstract — inspecter le split "≥1 set" d'un joueur (audit/transparence).
+if (pathname === '/api/v1/tennis/ta' && req.method === 'GET') {
+  try {
+    const name = String(query.name || '').trim();
+    const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : 'ATP';
+    const surface = ['Hard', 'Clay', 'Grass', 'Carpet', 'ALL'].includes(String(query.surface || '')) ? String(query.surface) : 'ALL';
+    if (!name) return jsonResponse(res, 400, { error: 'name_required' });
+    const cached = getTaOverlayCached(name, tour, surface);
+    const local = computeSweepSplitLocal(name, tour, surface);
+    if (String(query.refresh || '') === '1') fetchTennisAbstractPlayer(name, tour, surface).catch(() => {});
+    return jsonResponse(res, 200, {
+      name, tour, surface,
+      ta_id: _taResolveId(name, tour),
+      ta_overlay: cached || null,
+      sackmann_local: local || null,
+      refreshing: String(query.refresh || '') === '1',
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'ta_error', detail: e.message });
+  }
 }
 // Tennis Elo — top N par surface/tour. Lecture seule.
 if (pathname === '/api/v1/tennis/elo/top' && req.method === 'GET') {
@@ -21575,6 +21858,7 @@ if (MATCHSTAT_ENABLED) {
     setTimeout(() => {
       try {
         _initTennisEloSchema();
+        _initTennisTaSchema();
         const eloRow = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_elo').get();
         if (!eloRow || eloRow.n === 0) {
           console.log('  [Elo] Boot compute (tennis_elo vide, data Sackmann présente)…');
