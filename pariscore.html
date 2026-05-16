@@ -6247,36 +6247,46 @@
       </label>
     </div>
 
+    <!-- Icônes 3D (defs partagées : gradients + symbols réutilisés via <use>) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+      <linearGradient id="g3dGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5cffae"/><stop offset="1" stop-color="#00b257"/></linearGradient>
+      <linearGradient id="g3dBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd6ff"/><stop offset="1" stop-color="#1787c9"/></linearGradient>
+      <linearGradient id="g3dAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27f"/><stop offset="1" stop-color="#e08a00"/></linearGradient>
+      <linearGradient id="g3dViolet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#6d4ad6"/></linearGradient>
+      <linearGradient id="g3dRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a8a"/><stop offset="1" stop-color="#d11f1f"/></linearGradient>
+      <radialGradient id="g3dHi" cx="0.35" cy="0.3" r="0.75"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.65" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <symbol id="i3d-target" viewBox="0 0 24 24"><circle cx="12" cy="13" r="9" fill="#000" opacity=".25"/><circle cx="12" cy="12" r="9" fill="url(#g3dGreen)"/><circle cx="12" cy="12" r="5.4" fill="#04351c"/><circle cx="12" cy="12" r="2.3" fill="url(#g3dGreen)"/><ellipse cx="9.5" cy="9" rx="6" ry="4" fill="url(#g3dHi)"/></symbol>
+      <symbol id="i3d-bars" viewBox="0 0 24 24"><rect x="3.5" y="13" width="4.6" height="8" rx="1" fill="url(#g3dBlue)"/><rect x="9.7" y="9" width="4.6" height="12" rx="1" fill="url(#g3dBlue)"/><rect x="15.9" y="5" width="4.6" height="16" rx="1" fill="url(#g3dBlue)"/><rect x="3.5" y="13" width="4.6" height="2.3" fill="#cdeeff" opacity=".6"/><rect x="9.7" y="9" width="4.6" height="2.3" fill="#cdeeff" opacity=".6"/><rect x="15.9" y="5" width="4.6" height="2.3" fill="#cdeeff" opacity=".6"/></symbol>
+      <symbol id="i3d-bolt" viewBox="0 0 24 24"><path d="M14 3 L5 14 H11 L9 22 L19 10 H12 Z" fill="#000" opacity=".25"/><path d="M14 2 L5 13 H11 L9 21 L19 9 H12 Z" fill="url(#g3dGreen)"/><path d="M14 2 L5 13 H11 Z" fill="#fff" opacity=".32"/></symbol>
+      <symbol id="i3d-bolt2" viewBox="0 0 24 24"><path d="M12 2 L4 13 H9 L7 22 L16 10 H10 Z" fill="url(#g3dGreen)"/><path d="M19 6 L14 13 H17 L15 21 L22 11 H18 Z" fill="url(#g3dGreen)" opacity=".7"/><path d="M12 2 L4 13 H9 Z" fill="#fff" opacity=".30"/></symbol>
+      <symbol id="i3d-brain" viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="8.4" ry="8" fill="#000" opacity=".22"/><path d="M12 4c4.5 0 8 3 8 7 0 3.6-3 6.5-8 6.5S4 14.6 4 11c0-4 3.5-7 8-7Z" fill="url(#g3dViolet)"/><path d="M12 5c2 2 2 4 0 6s-2 4 0 6" stroke="#3a2a78" stroke-width="1.3" fill="none" opacity=".7"/><ellipse cx="9.5" cy="9" rx="5" ry="3.3" fill="url(#g3dHi)"/></symbol>
+      <symbol id="i3d-trend" viewBox="0 0 24 24"><rect x="3" y="19" width="18" height="3" rx="1" fill="#04351c"/><path d="M5 16 L11 10 L14 13 L20 6" stroke="url(#g3dGreen)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 6 H20 V10" stroke="url(#g3dGreen)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i3d-star" viewBox="0 0 24 24"><path d="M12 3 14.8 9.4 22 9.9 16.6 14.3 18.4 21 12 17.3 5.6 21 7.4 14.3 2 9.9 9.2 9.4 Z" fill="#000" opacity=".25"/><path d="M12 2 14.8 8.4 22 8.9 16.6 13.3 18.4 20 12 16.3 5.6 20 7.4 13.3 2 8.9 9.2 8.4 Z" fill="url(#g3dAmber)"/><path d="M12 2 14.8 8.4 12 10 9.2 8.4 Z" fill="#fff" opacity=".38"/></symbol>
+      <symbol id="i3d-ai" viewBox="0 0 24 24"><rect x="5" y="6" width="14" height="14" rx="3.5" fill="#000" opacity=".25"/><rect x="5" y="5" width="14" height="14" rx="3.5" fill="url(#g3dRed)"/><path d="M12 8 13.5 11 16.5 12 13.5 13 12 16 10.5 13 7.5 12 10.5 11 Z" fill="#fff" opacity=".9"/><rect x="5" y="5" width="14" height="5" rx="3.5" fill="#fff" opacity=".18"/></symbol>
+      <symbol id="i3d-fatigue" viewBox="0 0 24 24"><path d="M12 4 L21 20 H3 Z" fill="#000" opacity=".25"/><path d="M12 3 L21 19 H3 Z" fill="url(#g3dAmber)"/><rect x="11" y="8.5" width="2" height="6" rx="1" fill="#3a2602"/><circle cx="12" cy="17" r="1.3" fill="#3a2602"/></symbol>
+      <symbol id="i3d-frost" viewBox="0 0 24 24"><g stroke="url(#g3dBlue)" stroke-width="2.2" stroke-linecap="round"><path d="M12 3 V21"/><path d="M4 7.5 L20 16.5"/><path d="M20 7.5 L4 16.5"/></g><circle cx="12" cy="12" r="2.3" fill="url(#g3dBlue)"/></symbol>
+    </defs></svg>
+
     <!-- Tableau value-bets -->
     <div style="overflow-x:auto;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;">
-      <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1200px;">
+      <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1020px;">
         <thead>
           <tr style="background:var(--bg3,#181c20);">
-            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Tournoi</th>
-            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Date/Heure</th>
-            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Tour</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Surf.</th>
-            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Joueur 1</th>
-            <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Joueur 2</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Elo P1</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Elo P2</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Prob</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Distribution sets Markov — P1 (2-0/2-1) · P2 (2-0/2-1)">Sets ≈</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Start % — proba P1 d'empocher le set 1 / set 2 (profil Sprinter/Diesel, surface 52 sem.). Halo vert = EV+ set ≥ 110 %">Start S1/S2</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Mental — Bounce-back (set 2 gagné après set 1 perdu) / Kill (set 2 gagné après set 1 gagné). FAT = dernier match > 150 min">Mental BB/K</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Cote P1</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Cote P2</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Fair</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;">Edge%</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;">EV mod.</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Best</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Fiabilité = plus petit échantillon Elo surface des 2 joueurs">Conf.</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Log-diff = ln(rang officiel) − ln(rang Elo). > 0 → Elo classe mieux que le rang officiel = book sous-cote">RkΔ</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;color:#E2001A;font-family:'DM Mono',monospace;text-transform:uppercase;">AI-AL</th>
+            <th class="tvb-th" style="text-align:left;">Match</th>
+            <th class="tvb-th" style="text-align:left;">Contexte</th>
+            <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Elo surface — favori en vert">Elo</th>
+            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité de victoire du match (modèle Elo/blend)"><svg class="i3d-th"><use href="#i3d-target"></use></svg>Proba Match</th>
+            <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Score le plus probable (distribution sets Markov : P1 2-0/2-1 · P2 2-0/2-1)"><svg class="i3d-th"><use href="#i3d-bars"></use></svg>Score Estimé</th>
+            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 1 (profil Sprinter/Diesel, surface 52 sem.). Halo = EV+ ≥ 110 %"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>Gain Set 1</th>
+            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 2 (pondéré Réaction/Enchaînement + fatigue)"><svg class="i3d-th"><use href="#i3d-bolt2"></use></svg>Gain Set 2</th>
+            <th class="tvb-th" style="text-align:center;color:#a78bfa;" title="Mental — Réaction = set 2 gagné après set 1 perdu · Enchaîne = set 2 gagné après set 1 gagné"><svg class="i3d-th"><use href="#i3d-brain"></use></svg>Mental</th>
+            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Cote marché + value EV+ modèle. « Cotes indispo » si quota Odds API épuisé"><svg class="i3d-th"><use href="#i3d-trend"></use></svg>Value (EV+)</th>
+            <th class="tvb-th" style="text-align:center;color:var(--amber,#ffa726);" title="Indice de confiance = plus petit échantillon Elo surface des 2 joueurs · RkΔ en infobulle"><svg class="i3d-th"><use href="#i3d-star"></use></svg>Confiance</th>
+            <th class="tvb-th" style="text-align:center;color:#E2001A;" title="Analyse Deep Data IA — prêt Telegram"><svg class="i3d-th"><use href="#i3d-ai"></use></svg>Alerte IA</th>
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="21" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -6622,6 +6632,28 @@
   .tennis-empty-state { text-align:center; padding:32px; color:var(--text3,#5a6068); font-size:13px; }
   .tennis-upgrade-cta { display:inline-block; margin-top:12px; padding:10px 18px; background:var(--green,#00e676); color:#0a0d0f; border-radius:6px; font-family:Syne,sans-serif; font-weight:800; text-decoration:none; font-size:13px; }
   .tennis-upgrade-cta:hover { background:#22c55e; }
+  /* ── Refonte Tennis VB : headers 3D + badges sets + mental ── */
+  #tennis-vb-table th.tvb-th { padding:11px 12px; font-size:11px; color:var(--text2,#8d9399); font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+  #tennis-vb-table .i3d-th { width:18px; height:18px; vertical-align:-4px; margin-right:6px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.55)); }
+  #tennis-vb-table .i3d-al svg { width:15px; height:15px; vertical-align:-3px; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.5)); }
+  #tennis-vb-table .i3d-al { cursor:help; margin-left:3px; }
+  #tennis-vb-table .tvb-pname { font-weight:700; color:var(--text,#e8eaed); }
+  #tennis-vb-table .tvb-pname.tvb-pfav { color:var(--green,#00e676); }
+  #tennis-vb-table .tvb-ctx { font-family:'DM Mono',monospace; font-size:11px; color:var(--text2,#8d9399); line-height:1.5; }
+  #tennis-vb-table .tvb-elo-vs { font-family:'DM Mono',monospace; font-size:13px; font-weight:700; color:var(--blue,#29b6f6); white-space:nowrap; }
+  #tennis-vb-table .tvb-elo-vs .e-fav { color:var(--green,#00e676); }
+  #tennis-vb-table .tvb-elo-vs .e-sep { color:var(--text3,#5a6068); margin:0 4px; font-weight:400; }
+  #tennis-vb-table .tset-badge { display:inline-block; min-width:48px; padding:5px 10px; border-radius:11px; font-family:'DM Mono',monospace; font-size:12.5px; font-weight:800; box-shadow:0 2px 5px rgba(0,0,0,0.35); }
+  #tennis-vb-table .tset-hot { color:#04210f; background:linear-gradient(135deg,#5cffae,#00b257); }
+  #tennis-vb-table .tset-mid { color:#2a1c02; background:linear-gradient(135deg,#ffd27f,#e08a00); }
+  #tennis-vb-table .tset-low { color:var(--text3,#5a6068); background:var(--bg4,#1e2328); box-shadow:none; }
+  #tennis-vb-table .tset-glow { outline:1px solid rgba(0,230,118,0.75); animation:tvbSetGlow 1.6s ease-in-out infinite; }
+  #tennis-vb-table .tmental { display:inline-flex; flex-direction:column; gap:3px; font-family:'DM Mono',monospace; font-size:11px; color:var(--text2,#8d9399); text-align:left; }
+  #tennis-vb-table .tmental-row { white-space:nowrap; }
+  #tennis-vb-table .tmental-ic { display:inline-block; width:14px; text-align:center; margin-right:3px; }
+  #tennis-vb-table .tmental b { color:var(--text,#e8eaed); font-weight:700; }
+  #tennis-vb-table .tmental-sep { color:var(--text3,#5a6068); margin:0 3px; }
+  #tennis-vb-table .tvb-market-na { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); }
 </style>
 
 <!-- PAGE : TARIFS -->
@@ -7991,39 +8023,61 @@ function _tvbSetCell(sp) {
     + `<span style="color:var(--blue,#29b6f6);">${pc(sp.p2_2_0)}·${pc(sp.p2_2_1)}</span></span>`;
 }
 
-// set_profile_v1 — Start % : proba P1 set 1 (barre) + set 2 inline.
-// Halo vert (.set-value-glow) si EV+ set (dérivé Markov) ≥ 110.
-function _tvbStartCell(sm) {
+// set_profile_v1 — Badge set coloré : vert ≥65 / orange 50-64 / gris <50.
+function _tvbSetBadge(pct, evMax) {
+  if (pct == null || !Number.isFinite(pct)) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
+  const r = Math.round(pct);
+  const cls = r >= 65 ? 'tset-badge tset-hot' : r >= 50 ? 'tset-badge tset-mid' : 'tset-badge tset-low';
+  const glow = (evMax != null && Number.isFinite(evMax) && evMax >= 110) ? ' tset-glow' : '';
+  return `<span class="${cls}${glow}">${r}%</span>`;
+}
+function _tvbSet1Cell(sm) {
   if (!sm || !sm.set1) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
-  const a = sm.set1.p1_pct, a2 = sm.set2 ? sm.set2.p1_pct : null;
-  const evMax = Math.max(
-    sm.set1.ev_p1 ?? -999, sm.set1.ev_p2 ?? -999,
-    sm.set2 ? (sm.set2.ev_p1 ?? -999) : -999, sm.set2 ? (sm.set2.ev_p2 ?? -999) : -999
-  );
-  const glow = (evMax >= 110) ? ' set-value-glow' : '';
-  const tip = `Set 1 ${a}% / ${sm.set1.p2_pct}% · Set 2 ${a2 != null ? a2 + '%' : '—'} · échantillon ${sm.sample_size}`
-    + (sm.ev_basis ? ` · EV vs cote Markov (max ${evMax >= -998 ? evMax + '%' : 'n/a'})` : '');
-  return `<div class="tvb-prob-bar${glow}" title="${tip}">`
-    + `<div class="tvb-prob-fill" style="width:${a}%;"></div>`
-    + `<div class="tvb-prob-label">S1 ${Math.round(a)} · S2 ${a2 != null ? Math.round(a2) : '—'}</div></div>`;
+  const ev = Math.max(sm.set1.ev_p1 ?? -999, sm.set1.ev_p2 ?? -999);
+  const tip = `Set 1 — J1 ${sm.set1.p1_pct}% / J2 ${sm.set1.p2_pct}% · échantillon ${sm.sample_size}`
+    + (sm.ev_basis ? ` · EV vs cote Markov max ${ev > -998 ? ev + '%' : 'n/a'}` : '');
+  return `<span title="${tip}">${_tvbSetBadge(sm.set1.p1_pct, ev)}</span>`;
+}
+function _tvbSet2Cell(sm) {
+  if (!sm || !sm.set2) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
+  const ev = Math.max(sm.set2.ev_p1 ?? -999, sm.set2.ev_p2 ?? -999);
+  const tip = `Set 2 — J1 ${sm.set2.p1_pct}% / J2 ${sm.set2.p2_pct}% · pondéré Réaction/Enchaîne + fatigue · échantillon ${sm.sample_size}`;
+  return `<span title="${tip}">${_tvbSetBadge(sm.set2.p1_pct, ev)}</span>`;
 }
 
-// set_profile_v1 — Mental : Bounce-back / Kill rate P1·P2 + flag fatigue.
+// set_profile_v1 — Mental : Réaction (bounce-back) / Enchaîne (kill) J1·J2.
 function _tvbMentalCell(sm) {
   if (!sm || !sm.profiles) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
   const p1 = sm.profiles.p1 || {}, p2 = sm.profiles.p2 || {};
-  const v = x => (x == null ? '—' : Math.round(x));
-  const fat = (a, b) => (a || b)
-    ? ` <span style="color:var(--amber,#ffa726);cursor:help;" title="Fatigue — dernier match > 150 min : ${a ? 'P1' : ''}${a && b ? ' + ' : ''}${b ? 'P2' : ''}">FAT</span>`
-    : '';
-  return `<span class="tvb-mono" style="font-size:11px;" title="Bounce-back = % set 2 gagné après set 1 perdu · Kill = % set 2 gagné après set 1 gagné">`
-    + `<span style="color:var(--green,#00e676);">BB ${v(p1.bounce_back)}/${v(p2.bounce_back)}</span>`
-    + `<span class="tvb-book">Kill ${v(p1.kill_rate)}/${v(p2.kill_rate)}${fat(p1.fatigue, p2.fatigue)}</span></span>`;
+  const v = x => (x == null ? '—' : Math.round(x) + '%');
+  return `<span class="tmental" title="Réaction = set 2 gagné après set 1 PERDU (bounce-back) · Enchaîne = set 2 gagné après set 1 GAGNÉ (kill). Format J1 / J2.">`
+    + `<span class="tmental-row"><span class="tmental-ic">↩</span>Réac <b>${v(p1.bounce_back)}</b><span class="tmental-sep">/</span>${v(p2.bounce_back)}</span>`
+    + `<span class="tmental-row"><span class="tmental-ic">⚡</span>Ench <b>${v(p1.kill_rate)}</b><span class="tmental-sep">/</span>${v(p2.kill_rate)}</span></span>`;
 }
 
-// P0-2 — Badge confiance (miroir serveur _tennisConfidence) depuis le plus
-// petit échantillon Elo surface des 2 joueurs.
-function _tvbConfCell(elo) {
+// Alertes 3D par joueur (fatigue / transition surface) depuis set_model.profiles.
+function _tvbPlayerAlerts(sm, side) {
+  if (!sm || !sm.profiles || !sm.profiles[side]) return '';
+  const p = sm.profiles[side];
+  let h = '';
+  if (p.fatigue) h += `<span class="i3d-al" title="Fatigue — dernier match > 150 min (tenue physique set 2 dégradée)"><svg viewBox="0 0 24 24"><use href="#i3d-fatigue"></use></svg></span>`;
+  if (p.surface_transition && p.surface_transition < 0) h += `<span class="i3d-al" title="Transition surface — 1er/2e match sur cette surface cette saison (malus ${p.surface_transition}% set 1)"><svg viewBox="0 0 24 24"><use href="#i3d-frost"></use></svg></span>`;
+  return h;
+}
+
+// Marché replié : cote J1·J2 + best EV+ ; sinon état « indispo » (quota Odds).
+function _tvbMarketCell(odds, bestEv) {
+  if (odds && odds.p1 && odds.p2 && odds.p1.odds != null && odds.p2.odds != null) {
+    const best = bestEv
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      : '';
+    return `<span class="tvb-odds">${odds.p1.odds.toFixed(2)} · ${odds.p2.odds.toFixed(2)}</span>${best ? '<span class="tvb-book">' + best + '</span>' : ''}`;
+  }
+  return '<span class="tvb-market-na">Cotes indispo<span class="tvb-book">quota Odds API</span></span>';
+}
+
+// P0-2 — Badge confiance + RkΔ (log-diff Elo↔rang) en infobulle.
+function _tvbConfCell(elo, ld) {
   const mn = elo ? Math.min(elo.p1_matches || 0, elo.p2_matches || 0) : 0;
   let tier, col;
   if (!elo) { tier = '—'; col = 'var(--text3,#5a6068)'; }
@@ -8031,14 +8085,23 @@ function _tvbConfCell(elo) {
   else if (mn >= 15) { tier = 'MED'; col = 'var(--amber,#ffa726)'; }
   else if (mn >= 5) { tier = 'LOW'; col = 'var(--red,#ff4d4d)'; }
   else { tier = 'SPARSE'; col = 'var(--text3,#5a6068)'; }
-  return `<span class="tvb-mono" style="font-size:10px;font-weight:700;color:${col};" title="min(échantillon Elo surface) = ${mn}">${tier}</span>`;
+  let rk = '';
+  if (ld) {
+    const c = [ld.p1, ld.p2].filter(x => x && Number.isFinite(x.log_diff));
+    if (c.length) {
+      const b = c.reduce((a, z) => (z.log_diff > a.log_diff ? z : a));
+      const ar = b.log_diff > 0 ? '▲' : b.log_diff < 0 ? '▼' : '·';
+      rk = ` · RkΔ ${ar}${b.log_diff.toFixed(2)} (Elo #${b.elo_rank} vs rang #${b.official_rank})`;
+    }
+  }
+  return `<span class="tvb-mono" style="font-size:10px;font-weight:700;color:${col};" title="min(échantillon Elo surface) = ${mn}${rk}">${tier}</span>`;
 }
 
 function renderTennisValueBets(matches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="21" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -8063,7 +8126,7 @@ function renderTennisValueBets(matches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="21" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
 
@@ -8135,27 +8198,28 @@ function renderTennisValueBets(matches) {
       ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
       : '<span style="color:var(--text3,#5a6068);">—</span>';
 
+    const sm = m.set_model;
+    const p1Fav = (eloP1 != null && eloP2 != null && eloP1 > eloP2) ? ' tvb-pfav' : '';
+    const p2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? ' tvb-pfav' : '';
+    const ctxDate = _fmtTennisDate(m.start_time || m.commence_time);
+    const tournLine = m.tournament
+      ? `<div class="tvb-ctx" style="font-size:10px;color:var(--text3,#5a6068);margin-top:3px;">${_escTennis(m.tournament)}${m.round ? ' · ' + _escTennis(m.round) : ''}</div>`
+      : '';
     return `<tr class="tennis-vb-row" ${onclick}>
-      <td>${_escTennis(m.tournament || '—')}${m.round ? '<span class="tvb-book">' + _escTennis(m.round) + '</span>' : ''}</td>
-      <td>${_fmtTennisDate(m.start_time || m.commence_time)}</td>
-      <td>${_tvbTourBadge(m.tour)}</td>
-      <td style="text-align:center;"><span class="${_tvbSurfaceCls(m.surface)}">${_tvbSurfaceIcon(m.surface)}</span></td>
-      <td>${p1Flag}${p1Name}${_tvbFatFlag(m.fatigue?.p1)}</td>
-      <td>${p2Flag}${p2Name}${_tvbFatFlag(m.fatigue?.p2)}</td>
-      <td style="text-align:center;" class="${eloP1Cls}">${eloP1 != null ? eloP1 : '—'}</td>
-      <td style="text-align:center;" class="${eloP2Cls}">${eloP2 != null ? eloP2 : '—'}</td>
+      <td>
+        <div><span class="tvb-pname${p1Fav}">${p1Flag}${p1Name}</span>${_tvbPlayerAlerts(sm, 'p1')}</div>
+        <div style="margin-top:3px;"><span class="tvb-pname${p2Fav}">${p2Flag}${p2Name}</span>${_tvbPlayerAlerts(sm, 'p2')}</div>
+        ${tournLine}
+      </td>
+      <td><div class="tvb-ctx">${_tvbTourBadge(m.tour)} <span class="${_tvbSurfaceCls(m.surface)}">${_tvbSurfaceIcon(m.surface)}</span><div style="margin-top:4px;">${ctxDate}</div></div></td>
+      <td style="text-align:center;"><span class="tvb-elo-vs"><span class="${(eloP1 != null && eloP2 != null && eloP1 > eloP2) ? 'e-fav' : ''}">${eloP1 != null ? eloP1 : '—'}</span><span class="e-sep">▸</span><span class="${(eloP1 != null && eloP2 != null && eloP2 > eloP1) ? 'e-fav' : ''}">${eloP2 != null ? eloP2 : '—'}</span></span></td>
       <td style="text-align:center;">${probHtml}</td>
       <td style="text-align:center;">${_tvbSetCell(m.predictions?.set_probs)}</td>
-      <td style="text-align:center;">${_tvbStartCell(m.set_model)}</td>
-      <td style="text-align:center;">${_tvbMentalCell(m.set_model)}</td>
-      <td style="text-align:center;" class="tvb-odds">${oddsP1}</td>
-      <td style="text-align:center;" class="tvb-odds">${oddsP2}</td>
-      <td style="text-align:center;" class="tvb-mono" style="font-size:11px;color:var(--text2,#8d9399);">${fairCell}</td>
-      <td style="text-align:center;"><span class="${edgeCls}">${edgeText}</span></td>
-      <td style="text-align:center;">${evCell}</td>
-      <td style="text-align:center;">${bestCell}</td>
-      <td style="text-align:center;">${_tvbConfCell(elo)}</td>
-      <td style="text-align:center;">${_tvbLogDiffCell(m.log_diff)}</td>
+      <td style="text-align:center;">${_tvbSet1Cell(sm)}</td>
+      <td style="text-align:center;">${_tvbSet2Cell(sm)}</td>
+      <td style="text-align:center;">${_tvbMentalCell(sm)}</td>
+      <td style="text-align:center;">${_tvbMarketCell(odds, bestEv)}</td>
+      <td style="text-align:center;">${_tvbConfCell(elo, m.log_diff)}</td>
       <td style="text-align:center;">${aiBtn}</td>
     </tr>`;
   }).join('');
