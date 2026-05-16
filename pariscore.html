@@ -2245,6 +2245,12 @@
   .auth-field input { background:var(--bg4); border:1px solid var(--bg3); border-radius:7px;
     padding:10px 12px; color:var(--text); font-size:14px; font-family:var(--font-body); width:100%; box-sizing:border-box; }
   .auth-field input:focus { outline:none; border-color:rgba(0,230,118,0.5); }
+  .pwd-wrap { position:relative; display:flex; }
+  .pwd-wrap input { padding-right:42px !important; }
+  .pwd-eye { position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    background:none; border:none; padding:6px; cursor:pointer; color:var(--text3);
+    display:flex; align-items:center; justify-content:center; line-height:0; }
+  .pwd-eye:hover { color:var(--text); }
   .auth-submit { width:100%; padding:12px; background:var(--green); color:#000; font-weight:700;
     font-size:14px; border:none; border-radius:8px; cursor:pointer; font-family:var(--font-body);
     transition:opacity .2s; margin-top:4px; }
@@ -4838,8 +4844,11 @@
       </div>
       <div class="auth-field">
         <label>Mot de passe</label>
-        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
-          onkeydown="if(event.key==='Enter') submitLogin()">
+        <div class="pwd-wrap">
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter') submitLogin()">
+          <button type="button" class="pwd-eye" aria-label="Afficher le mot de passe" onclick="togglePwd(this,'login-password')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </div>
       <div class="auth-error" id="login-error"></div>
       <button class="auth-submit" id="login-btn" onclick="submitLogin()">Se connecter →</button>
@@ -4852,8 +4861,11 @@
       </div>
       <div class="auth-field">
         <label>Mot de passe <span style="color:var(--text3)">(8 caractères min.)</span></label>
-        <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password"
-          onkeydown="if(event.key==='Enter') submitRegister()">
+        <div class="pwd-wrap">
+          <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password"
+            onkeydown="if(event.key==='Enter') submitRegister()">
+          <button type="button" class="pwd-eye" aria-label="Afficher le mot de passe" onclick="togglePwd(this,'reg-password')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </div>
       <div class="auth-error" id="reg-error"></div>
       <button class="auth-submit" id="reg-btn" onclick="submitRegister()">Créer mon compte →</button>
@@ -5083,7 +5095,10 @@
 
     <div id="import-step-reverify">
       <label>Mot de passe (re-confirmation)
-        <input type="password" id="import-password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') submitReverify()">
+        <div class="pwd-wrap">
+          <input type="password" id="import-password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') submitReverify()">
+          <button type="button" class="pwd-eye" aria-label="Afficher le mot de passe" onclick="togglePwd(this,'import-password')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </label>
       <div class="paris-modal-actions">
         <button class="btn-cancel" type="button" onclick="closeImportModal()">Annuler</button>
@@ -8046,7 +8061,10 @@
       </div>
       <div class="form-group">
         <label class="form-label">Mot de passe</label>
-        <input class="form-input" type="password" placeholder="8 caractères minimum">
+        <div class="pwd-wrap">
+          <input class="form-input" type="password" id="signup-modal-password" placeholder="8 caractères minimum">
+          <button type="button" class="pwd-eye" aria-label="Afficher le mot de passe" onclick="togglePwd(this,'signup-modal-password')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
       </div>
       <button class="btn-primary" style="width:100%; padding:12px; font-size:15px; border-radius:8px; justify-content:center;" onclick="closeModal()">
         Créer mon compte gratuit →
@@ -17294,6 +17312,17 @@ function switchAuthTab(tab) {
   document.getElementById('tab-register').classList.toggle('active', tab === 'register');
   document.getElementById('login-error').textContent = '';
   document.getElementById('reg-error').textContent   = '';
+}
+
+function togglePwd(btn, inputId) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 }
 
 async function submitLogin() {
