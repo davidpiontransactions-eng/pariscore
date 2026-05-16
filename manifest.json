@@ -1,0 +1,26 @@
+{
+  "name": "PariScore — Value Bets & Analyse Football",
+  "short_name": "PariScore",
+  "description": "Détection de value bets, modèle Poisson, cotes live. Décidez vite, en déplacement.",
+  "start_url": "/?pwa=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0d0f",
+  "theme_color": "#0a0d0f",
+  "lang": "fr",
+  "categories": ["sports", "finance"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Value Bets du jour", "url": "/?pwa=1#matchs" },
+    { "name": "Matchs Live", "url": "/?pwa=1#live" },
+    { "name": "Mes Paris", "url": "/?pwa=1#paris" }
+  ]
+}
