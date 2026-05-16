@@ -7722,15 +7722,25 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
 // Fetch BSD matches (fixtures + odds intégrés)
 async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
   try {
-    let endpoint = `/events/?date_from=${dateFrom}&date_to=${dateTo}`;
-    if (leagueId) endpoint += `&league=${leagueId}`;
+    // BSD /events est paginé. Sans pagination, le fetch bulk (sans league)
+    // ne ramène que la 1ère page (~50) → matchs au-delà perdus (ex: finale FA Cup).
+    const PAGE_SIZE = 100;
+    const MAX_PAGES = 20; // garde-fou anti-runaway (≤ 2000 events/fenêtre 7j)
+    const baseEndpoint = `/events/?date_from=${dateFrom}&date_to=${dateTo}${leagueId ? `&league=${leagueId}` : ''}&page_size=${PAGE_SIZE}`;
 
-    const res = await bsdFetch(endpoint);
-    if (res.status !== 200 || !res.data?.results?.length) {
-      return [];
+    const collected = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const res = await bsdFetch(`${baseEndpoint}&page=${page}`);
+      if (res.status !== 200) break;
+      const results = res.data?.results;
+      if (!results?.length) break;
+      collected.push(...results);
+      // Dernière page atteinte : pas de `next` OU lot incomplet
+      if (!res.data.next || results.length < PAGE_SIZE) break;
     }
+    if (!collected.length) return [];
 
-    return res.data.results.map(e => ({
+    return collected.map(e => ({
       id: `bsd_${e.id}`,
       home_team: e.home_team,
       away_team: e.away_team,
@@ -12937,6 +12947,35 @@ function _taSlug(name) {
     .replace(/[^A-Za-z0-9 -]/g, '').replace(/\s+/g, ' ').trim().replace(/ /g, '-');
 }
 
+// "Pedro Martinez" → "PedroMartinez" (slug player-classic.cgi : concat, 0 sép).
+function _taSlugConcat(name) {
+  return String(name || '').trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9]/g, '');
+}
+
+// Extraction `var matchmx = [[...]]` par comptage de crochets (string-aware).
+// Le regex non-greedy casse : matchmx contient des `]]` internes → JSON tronqué.
+function _taExtractMatchmx(html) {
+  if (!html) return null;
+  const k = html.indexOf('var matchmx');
+  if (k < 0) return null;
+  const i = html.indexOf('[', k);
+  if (i < 0) return null;
+  let depth = 0, inStr = false, q = '';
+  for (let j = i; j < html.length; j++) {
+    const c = html[j];
+    if (inStr) {
+      if (c === '\\') { j++; continue; }
+      if (c === q) inStr = false;
+      continue;
+    }
+    if (c === '"' || c === "'") { inStr = true; q = c; continue; }
+    if (c === '[') depth++;
+    else if (c === ']') { depth--; if (depth === 0) return html.slice(i, j + 1); }
+  }
+  return null;
+}
+
 // Sackmann player_id (= id Tennis Abstract) depuis tennis_matches.
 function _taResolveId(name, tour) {
   try {
@@ -13032,15 +13071,16 @@ async function fetchTennisAbstractPlayer(name, tour, surface) {
   try {
     const taId = _taResolveId(name, tour);
     if (!taId) return null;
-    const cgi = tour === 'WTA' ? 'wplayer.cgi' : 'player.cgi';
-    const url = `${TENNIS_TA_BASE}/${cgi}?p=${taId}/${encodeURIComponent(_taSlug(name))}`;
-    const resp = await httpsGet(url, { 'Accept': 'text/html,*/*' });
+    // player-classic.cgi : seul endpoint TA exposant `var matchmx` côté HTML
+    // (player.cgi charge les stats via /jsfrags/ — bloqué robots + 0 matchmx).
+    const url = `${TENNIS_TA_BASE}/player-classic.cgi?p=${encodeURIComponent(_taSlugConcat(name))}`;
+    const resp = await httpsGet(url, { 'Accept': 'text/html,*/*', 'User-Agent': 'Mozilla/5.0 (PariScore)' });
     const html = typeof resp.data === 'string' ? resp.data : '';
     let take = null, sweep = null, sample = 0, source = 'ta_scrape';
-    const mx = html.match(/var\s+matchmx\s*=\s*(\[[\s\S]*?\]);/);
-    if (mx) {
+    const mxRaw = _taExtractMatchmx(html);
+    if (mxRaw) {
       let rows = null;
-      try { rows = JSON.parse(mx[1]); } catch (_) { rows = null; }
+      try { rows = JSON.parse(mxRaw); } catch (_) { rows = null; }
       if (Array.isArray(rows) && rows.length) {
         let wins = 0, sweepWins = 0, losses = 0, lossWithSet = 0;
         for (const row of rows) {
@@ -13526,6 +13566,251 @@ function computePlayerAceRate(playerName, tour, surface = 'ALL', lastN = TENNIS_
     console.warn('  [Tennis] ace rate error:', e.message);
     return null;
   }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+//  KING OF ACES — marché pré-match "Most Aces" (source : Tennis Abstract)
+//  player-classic.cgi expose `var matchmx` (log par-match BRUT, frais, tagué
+//  surface) — robots.txt n'interdit que /jsfrags/ /jsmatches/ /jsplayers/.
+//  Layout Sackmann : [0]date(YYYYMMDD) [2]surface [4]W/L · bloc vainqueur
+//  [21]ace [23]svpt [25]1stWon [26]2ndWon [27]SvGms [28]bpSaved [29]bpFaced ·
+//  bloc perdant décalé +9 ([30..38]). Le joueur = bloc vainqueur si row[4]='W',
+//  sinon bloc perdant. Aucun fallback Sackmann local (DB locale MAJ tardive).
+// ───────────────────────────────────────────────────────────────────────────
+const TENNIS_KOA_W = { ace: 21, svpt: 23, f1w: 25, f2w: 26, svgms: 27, bps: 28, bpf: 29 };
+const TENNIS_KOA_L = { ace: 30, svpt: 32, f1w: 34, f2w: 35, svgms: 36, bps: 37, bpf: 38 };
+const _koaMatchmxInflight = new Set();
+// File d'attente concurrence-limitée : 648 matchs × 2 joueurs en parallèle
+// = self-DOS (tous timeout 15s). On draine 2 fetch à la fois, dédupe inclus.
+const _koaQueue = [];
+const _koaQueued = new Set();
+let _koaActive = 0;
+const KOA_MAX_CONCURRENT = 2;
+function _koaDrain() {
+  while (_koaActive < KOA_MAX_CONCURRENT && _koaQueue.length) {
+    const { name, tour, key } = _koaQueue.shift();
+    _koaQueued.delete(key);
+    _koaActive++;
+    fetchTennisAbstractMatchmx(name, tour)
+      .catch(() => {})
+      .finally(() => { _koaActive--; _koaDrain(); });
+  }
+}
+function _koaEnqueue(name, tour) {
+  if (!name || !tour) return;
+  const key = `${tour}|${_taNameKey(name)}`;
+  if (_koaQueued.has(key) || _koaMatchmxInflight.has(key)) return;
+  _koaQueued.add(key);
+  _koaQueue.push({ name, tour, key });
+  _koaDrain();
+}
+
+function _initTennisKoaSchema() {
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_koa_matchmx (
+    name_key TEXT NOT NULL,
+    tour TEXT NOT NULL,
+    rows_json TEXT NOT NULL,
+    ta_url TEXT,
+    fetched_at INTEGER NOT NULL,
+    PRIMARY KEY (name_key, tour)
+  )`);
+}
+
+// Lecture cache matchmx (24h TTL). { rows, stale } ou null si froid.
+function getKoaMatchmxCached(name, tour) {
+  try {
+    _initTennisKoaSchema();
+    const r = sqldb.prepare(`SELECT * FROM tennis_koa_matchmx WHERE name_key=? AND tour=?`)
+      .get(_taNameKey(name), tour);
+    if (!r) return null;
+    let rows = null;
+    try { rows = JSON.parse(r.rows_json); } catch (_) { return null; }
+    if (!Array.isArray(rows) || !rows.length) return null;
+    const stale = Date.now() - r.fetched_at > TENNIS_TA_TTL_MS;
+    return { rows, stale, ta_url: r.ta_url };
+  } catch (_) { return null; }
+}
+
+// Fetch + parse matchmx depuis player-classic.cgi (best-effort, 24h TTL).
+async function fetchTennisAbstractMatchmx(name, tour) {
+  if (!name || !tour) return null;
+  const nameKey = _taNameKey(name);
+  const flightKey = `${tour}|${nameKey}`;
+  if (_koaMatchmxInflight.has(flightKey)) return getKoaMatchmxCached(name, tour);
+  const cached = getKoaMatchmxCached(name, tour);
+  if (cached && !cached.stale) return cached;
+  _koaMatchmxInflight.add(flightKey);
+  try {
+    const taId = _taResolveId(name, tour);
+    if (!taId) return cached || null;
+    const url = `${TENNIS_TA_BASE}/player-classic.cgi?p=${encodeURIComponent(_taSlugConcat(name))}`;
+    const resp = await httpsGet(url, { 'Accept': 'text/html,*/*', 'User-Agent': 'Mozilla/5.0 (PariScore)' });
+    const html = typeof resp.data === 'string' ? resp.data : '';
+    const mxRaw = _taExtractMatchmx(html);
+    if (!mxRaw) return cached || null;
+    let rows = null;
+    try { rows = JSON.parse(mxRaw); } catch (_) { return cached || null; }
+    if (!Array.isArray(rows) || !rows.length) return cached || null;
+    _initTennisKoaSchema();
+    sqldb.prepare(`INSERT OR REPLACE INTO tennis_koa_matchmx
+      (name_key,tour,rows_json,ta_url,fetched_at) VALUES (?,?,?,?,?)`)
+      .run(nameKey, tour, JSON.stringify(rows), url, Date.now());
+    return { rows, stale: false, ta_url: url };
+  } catch (e) {
+    console.warn(`  [KOA] matchmx ${name} error: ${e.message}`);
+    return cached || null;
+  } finally {
+    _koaMatchmxInflight.delete(flightKey);
+  }
+}
+
+// Cutoff YYYYMMDD (entier) il y a `days` jours.
+function _koaDateCutoff(days) {
+  const d = new Date(Date.now() - days * 86400000);
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
+
+// Rows valides (stats présentes) filtrées surface, triées date décroissante.
+function _koaSurfaceRows(rows, surface) {
+  const out = [];
+  for (const r of rows) {
+    if (!Array.isArray(r) || r.length < 39) continue;
+    const res = String(r[4] || '').toUpperCase();
+    if (res !== 'W' && res !== 'L') continue;
+    const surf = String(r[2] || '').trim();
+    if (surface && surface !== 'ALL' && surf.toLowerCase() !== surface.toLowerCase()) continue;
+    const blk = res === 'W' ? TENNIS_KOA_W : TENNIS_KOA_L;
+    const svpt = parseInt(r[blk.svpt], 10);
+    if (!Number.isFinite(svpt) || svpt <= 0) continue;
+    const dateNum = parseInt(String(r[0] || '').slice(0, 8), 10);
+    if (!Number.isFinite(dateNum)) continue;
+    out.push({ r, res, blk, dateNum });
+  }
+  out.sort((a, b) => b.dateNum - a.dateNum);
+  return out;
+}
+
+// A% ajusté forme : base 52 sem vs 5 derniers (±15 % → coef 1.10 / 0.90).
+function _koaAceProfile(rows, surface) {
+  const surfRows = _koaSurfaceRows(rows, surface);
+  if (surfRows.length < 5) return null;
+  const cut = _koaDateCutoff(364);
+  let ace52 = 0, svpt52 = 0, n52 = 0;
+  for (const x of surfRows) {
+    if (x.dateNum < cut) continue;
+    const a = parseInt(x.r[x.blk.ace], 10), s = parseInt(x.r[x.blk.svpt], 10);
+    if (!Number.isFinite(a) || !Number.isFinite(s) || s <= 0) continue;
+    ace52 += a; svpt52 += s; n52++;
+  }
+  // Fallback si <5 sur 52 sem : prend les 30 plus récents toutes dates.
+  if (n52 < 5) {
+    ace52 = 0; svpt52 = 0; n52 = 0;
+    for (const x of surfRows.slice(0, 30)) {
+      const a = parseInt(x.r[x.blk.ace], 10), s = parseInt(x.r[x.blk.svpt], 10);
+      if (!Number.isFinite(a) || !Number.isFinite(s) || s <= 0) continue;
+      ace52 += a; svpt52 += s; n52++;
+    }
+  }
+  if (n52 < 5 || svpt52 <= 0) return null;
+  const base = (ace52 / svpt52) * 100;
+  let aceL5 = 0, svptL5 = 0, n5 = 0;
+  for (const x of surfRows.slice(0, 5)) {
+    const a = parseInt(x.r[x.blk.ace], 10), s = parseInt(x.r[x.blk.svpt], 10);
+    if (!Number.isFinite(a) || !Number.isFinite(s) || s <= 0) continue;
+    aceL5 += a; svptL5 += s; n5++;
+  }
+  let formFactor = 1.0;
+  if (n5 >= 3 && svptL5 > 0 && base > 0) {
+    const ratio = ((aceL5 / svptL5) * 100) / base;
+    formFactor = ratio > 1.15 ? 1.10 : ratio < 0.85 ? 0.90 : 1.00;
+  }
+  return {
+    ace_pct_raw: parseFloat(base.toFixed(2)),
+    ace_pct_adj: parseFloat((base * formFactor).toFixed(2)),
+    form_factor: formFactor,
+    mean_svpt: parseFloat((svpt52 / n52).toFixed(1)),
+    sample: n52,
+  };
+}
+
+// RPW% + Brk% du joueur en RETOUR (bloc adverse de chaque row), surface.
+function _koaReturnProfile(rows, surface) {
+  const surfRows = _koaSurfaceRows(rows, surface);
+  if (surfRows.length < 5) return null;
+  let oppSvpt = 0, oppWon = 0, oppBpFaced = 0, oppBpSaved = 0, oppSvGms = 0, n = 0;
+  for (const x of surfRows.slice(0, 60)) {
+    const opp = x.res === 'W' ? TENNIS_KOA_L : TENNIS_KOA_W;
+    const sv = parseInt(x.r[opp.svpt], 10);
+    const w1 = parseInt(x.r[opp.f1w], 10) || 0;
+    const w2 = parseInt(x.r[opp.f2w], 10) || 0;
+    const bpf = parseInt(x.r[opp.bpf], 10);
+    const bps = parseInt(x.r[opp.bps], 10);
+    const sg = parseInt(x.r[opp.svgms], 10);
+    if (!Number.isFinite(sv) || sv <= 0) continue;
+    oppSvpt += sv; oppWon += w1 + w2; n++;
+    if (Number.isFinite(bpf) && Number.isFinite(bps) && Number.isFinite(sg) && sg > 0) {
+      oppBpFaced += bpf; oppBpSaved += bps; oppSvGms += sg;
+    }
+  }
+  if (n < 5 || oppSvpt <= 0) return null;
+  const rpw = (oppSvpt - oppWon) / oppSvpt;
+  const brk = oppSvGms > 0 ? Math.max(0, (oppBpFaced - oppBpSaved)) / oppSvGms : null;
+  return {
+    rpw: parseFloat(rpw.toFixed(4)),
+    brk: brk != null ? parseFloat(brk.toFixed(4)) : null,
+    sample: n,
+  };
+}
+
+// Φ(z) — CDF normale standard (approximation Abramowitz-Stegun 7.1.26).
+function _koaNormCdf(z) {
+  const s = z < 0 ? -1 : 1;
+  const x = Math.abs(z) / Math.SQRT2;
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return 0.5 * (1 + s * y);
+}
+
+// Marché Most Aces : favori aces + P(aces favori > aces adversaire) 0–100.
+// Neutralisation : relanceur RPW>42 % ou Brk élevé décote l'Ace % attaquant.
+function computeMostAcesMatchup(p1Name, p2Name, tour, surface, rowsP1, rowsP2) {
+  if (!p1Name || !p2Name || !rowsP1 || !rowsP2) return null;
+  const surf = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+  const a1 = _koaAceProfile(rowsP1, surf);
+  const a2 = _koaAceProfile(rowsP2, surf);
+  if (!a1 || !a2) return null;
+  const ret1 = _koaReturnProfile(rowsP1, surf);
+  const ret2 = _koaReturnProfile(rowsP2, surf);
+
+  // Coef réducteur appliqué à l'attaquant = f(retour de SON adversaire).
+  const redCoef = (oppRet) => {
+    if (!oppRet) return 1.0;
+    const rpwTerm = (oppRet.rpw - 0.42) * 3.5;
+    const brkTerm = (oppRet.brk != null ? oppRet.brk : 0) * 1.2;
+    return Math.max(0.70, Math.min(1.0, 1 - (rpwTerm + brkTerm)));
+  };
+  const aceFinal1 = a1.ace_pct_adj * redCoef(ret2);
+  const aceFinal2 = a2.ace_pct_adj * redCoef(ret1);
+
+  // λ = aces attendus = (A% final / 100) × svpt moyen du joueur.
+  const sv = (a1.mean_svpt + a2.mean_svpt) / 2 || 60;
+  const lam1 = Math.max(0.05, (aceFinal1 / 100) * sv);
+  const lam2 = Math.max(0.05, (aceFinal2 / 100) * sv);
+  // Diff de 2 Poisson ≈ Normale(λ1−λ2, λ1+λ2), continuité 0.5.
+  const z = (lam1 - lam2 - 0.5) / Math.sqrt(lam1 + lam2);
+  let pP1 = _koaNormCdf(z) * 100;
+  pP1 = Math.max(1, Math.min(99, pP1));
+  const p1IsFav = aceFinal1 >= aceFinal2;
+  return {
+    favorite: p1IsFav ? p1Name : p2Name,
+    pct: parseFloat((p1IsFav ? pP1 : 100 - pP1).toFixed(1)),
+    p1: { ace_pct_raw: a1.ace_pct_raw, ace_pct_adj: parseFloat(aceFinal1.toFixed(2)), form_factor: a1.form_factor },
+    p2: { ace_pct_raw: a2.ace_pct_raw, ace_pct_adj: parseFloat(aceFinal2.toFixed(2)), form_factor: a2.form_factor },
+    surface: surf,
+    method: 'ace_v1_ta_matchmx',
+    sample: Math.min(a1.sample, a2.sample),
+    source: 'tennisabstract',
+  };
 }
 
 // PMF du total de jeux d'un set. holdA/holdB = P(tenue de service). Retourne
@@ -17576,6 +17861,18 @@ async function _buildTennisValueBetsCore({ date }) {
       if (!_taP1 || _taP1.stale) fetchTennisAbstractPlayer(p1Name, tourGuess, _surfKey).catch(() => {});
       if (!_taP2 || _taP2.stale) fetchTennisAbstractPlayer(p2Name, tourGuess, _surfKey).catch(() => {});
     }
+    // ── most_aces : King of Aces — Tennis Abstract matchmx (frais, no fallback) ─
+    let mostAces = null;
+    if (tourGuess) {
+      const _koaSurf = surfaceClean || 'ALL';
+      const _koaC1 = getKoaMatchmxCached(p1Name, tourGuess);
+      const _koaC2 = getKoaMatchmxCached(p2Name, tourGuess);
+      if (_koaC1 && _koaC2) {
+        mostAces = computeMostAcesMatchup(p1Name, p2Name, tourGuess, _koaSurf, _koaC1.rows, _koaC2.rows);
+      }
+      if (!_koaC1 || _koaC1.stale) _koaEnqueue(p1Name, tourGuess);
+      if (!_koaC2 || _koaC2.stale) _koaEnqueue(p2Name, tourGuess);
+    }
     // ── games_pmf_dp_v1 : O/U jeux par set (S1-S3 + S4/S5 si Grand Chelem) ───
     let gamesOU = null;
     if (tourGuess && setProbs && Number.isFinite(setProbs.p1_hold) && Number.isFinite(setProbs.p2_hold)) {
@@ -17634,6 +17931,7 @@ async function _buildTennisValueBetsCore({ date }) {
         blended,
         set_probs: setProbs,
         at_least_one_set: atLeastOneSet,
+        most_aces: mostAces,
       },
       log_diff: tourGuess ? {
         p1: tennisLogDiff(p1Name, tourGuess),
