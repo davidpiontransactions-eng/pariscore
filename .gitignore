@@ -1,6 +1,7 @@
 # Secrets & Config
 .env
 .env.local
+.jwt_secret
 *.pem
 *.key
 ACCES_MEMO.md

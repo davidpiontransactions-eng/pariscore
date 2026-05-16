@@ -10376,7 +10376,25 @@ function checkLoginRateLimit(ip) {
 }
 
 // ─── JWT (HMAC-SHA256, natif Node.js crypto) ─────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+// JWT_SECRET : env prioritaire. Sinon secret PERSISTÉ sur disque (.jwt_secret,
+// gitignored, mode 600) — sans ça chaque restart pm2 régénérait un secret
+// aléatoire et invalidait TOUTES les sessions (admin + membres) → 403 partout.
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  try {
+    const p = path.join(__dirname, '.jwt_secret');
+    if (fs.existsSync(p)) {
+      const s = fs.readFileSync(p, 'utf8').trim();
+      if (s.length >= 32) return s;
+    }
+    const gen = crypto.randomBytes(32).toString('hex');
+    fs.writeFileSync(p, gen, { mode: 0o600 });
+    console.warn('  [JWT] JWT_SECRET absent de .env — secret persistant créé (.jwt_secret). Ajoute JWT_SECRET au .env pour le maîtriser.');
+    return gen;
+  } catch (e) {
+    console.warn('  [JWT] persistance .jwt_secret impossible (' + e.message + ') — fallback éphémère : sessions invalidées au restart.');
+    return crypto.randomBytes(32).toString('hex');
+  }
+})();
 const JWT_TTL = 7 * 24 * 3600;  // 7 jours — comptes admin
 const JWT_TTL_MATCHDAY = 24 * 3600;      // 24h — Matchday Pass
 const JWT_TTL_USER = 30 * 24 * 3600; // 30 jours — membres
