@@ -8270,6 +8270,10 @@ function renderTennisValueBets(matches) {
   }
 
   const filtered = matches.filter(m => {
+    // Exclut les matchs sans joueurs identifiés (TBD / qualifs ESPN → "?").
+    const _n1 = String((m.player1 && m.player1.name) || '').trim();
+    const _n2 = String((m.player2 && m.player2.name) || '').trim();
+    if (!_n1 || !_n2 || _n1 === '?' || _n2 === '?' || /^(tbd|n\/a|bye|qualifier|q\.?)$/i.test(_n1) || /^(tbd|n\/a|bye|qualifier|q\.?)$/i.test(_n2)) return false;
     if (f.tour !== 'ALL' && String(m.tour || '').toUpperCase() !== f.tour) return false;
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
     if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
