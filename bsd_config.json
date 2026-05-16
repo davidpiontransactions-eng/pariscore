@@ -38,7 +38,9 @@
       "33":  {"config_id": 11,  "name": "Copa Sudamericana"},
       "53":  {"config_id": 200, "name": "Botola Pro"},
       "54":  {"config_id": 103, "name": "Eliteserien"},
-      "42":  {"config_id": 137, "name": "Coppa Italia"}
+      "42":  {"config_id": 137, "name": "Coppa Italia"},
+      "39":  {"config_id": 45,  "name": "FA Cup"},
+      "40":  {"config_id": 48,  "name": "Carabao Cup"}
     },
     "config_to_bsd": {
       "39":  1,
@@ -74,7 +76,9 @@
       "11":  33,
       "200": 53,
       "103": 54,
-      "137": 42
+      "137": 42,
+      "45":  39,
+      "48":  40
     },
     "fallback_needed": []
   }
