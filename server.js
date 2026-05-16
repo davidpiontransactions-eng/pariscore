@@ -1285,6 +1285,17 @@ const BSD_CONFIG_TO_BSD = bsdConfig.mapping?.config_to_bsd || {};
 const BSD_BSD_TO_CONFIG = bsdConfig.mapping?.bsd_to_config || {};
 const BSD_FALLBACK_NEEDED = bsdConfig.mapping?.fallback_needed || [];
 
+// ─── ESPN public standings fallback (zéro clé, zéro quota) ───────────────────
+// Source de secours pour les ligues absentes de BSD ET inaccessibles via le plan
+// API-Football courant (notamment ligues à saison calendaire : J-League JP, etc.).
+// ESPN sert toujours la saison EN COURS — contourne le bug saison européenne
+// (currentSeason() suppose un calendrier août→mai, faux pour le Japon fév→déc).
+// Clé = configLeagueId (leagues_config.json) → slug ESPN soccer.
+const ESPN_STANDINGS_SLUG = {
+  98: 'jpn.1',   // J1 League (BSD 49 sans saison + API-Football free plan ≤ 2024)
+  99: 'jpn.2',   // J2 League (même limitation)
+};
+
 // ─── BSD Tennis (Sports Addon $5/mo) ─────────────────────────────────────────
 // /tennis/api/v2/* = REST · /tennis/mcp/ = JSON-RPC MCP server pour clients LLM.
 // Flag par défaut OFF — passer BSD_TENNIS_ENABLED=true dans .env après souscription.
@@ -1509,7 +1520,7 @@ const TV_BRAND_ICONS = [
   { kw: ['apple tv', 'appletv'], url: 'https://cdn.simpleicons.org/appletv/000000' },
   { kw: ['movistar'], url: 'https://cdn.simpleicons.org/movistar/019DF4' },
   { kw: ['discovery'], url: 'https://cdn.simpleicons.org/discoveryplus/2175D9' },
-  { kw: ['hbo', 'max'], url: 'https://cdn.simpleicons.org/hbo/000000' },
+  { kw: ['hbo max', 'hbomax', 'hbo'], url: 'https://cdn.simpleicons.org/hbo/000000' },
   { kw: ['netflix'], url: 'https://cdn.simpleicons.org/netflix/E50914' },
   { kw: ['youtube'], url: 'https://cdn.simpleicons.org/youtube/FF0000' },
   { kw: ['bbc'], url: 'https://cdn.simpleicons.org/bbc/000000' },
@@ -1517,13 +1528,75 @@ const TV_BRAND_ICONS = [
   { kw: ['rte', 'rté'], url: 'https://cdn.simpleicons.org/rte/00A1DE' },
 ];
 
-// Résout le meilleur logo pour une chaîne : source externe > mapping curé > marque par mot-clé.
+// Domaine officiel par mot-clé chaîne → logo via favicon Google (sz=64).
+// Couvre les diffuseurs FR + Europe absents de simpleicons (beIN, RMC, Ligue1+, L'Équipe…).
+// Robuste : pas de blocage hotlink, pas de CDN tiers fragile, zéro maintenance saison.
+const TV_DOMAIN_RULES = [
+  // France
+  { kw: ['bein'], domain: 'beinsports.com' },
+  { kw: ['rmc'], domain: 'rmcsport.bfmtv.com' },
+  { kw: ['ligue1', 'ligue 1+'], domain: 'ligue1.fr' },
+  { kw: ["l'équipe", 'lequipe', "l'equipe"], domain: 'lequipe.fr' },
+  { kw: ['m6'], domain: 'm6.fr' },
+  { kw: ['tf1'], domain: 'tf1.fr' },
+  // Europe — UK / IE
+  { kw: ['premier sports'], domain: 'premiersports.com' },
+  // Pays-Bas / Portugal / Espagne
+  { kw: ['sport tv'], domain: 'sporttv.pt' },
+  { kw: ['laliga'], domain: 'laliga.com' },
+  // Italie
+  { kw: ['mediaset', 'canale 5'], domain: 'mediaset.it' },
+  // Suisse / Belgique / Grèce / Autriche
+  { kw: ['blue sport'], domain: 'blue.ch' },
+  { kw: ['srg', 'ssr'], domain: 'srgssr.ch' },
+  { kw: ['cosmote'], domain: 'cosmote.gr' },
+  { kw: ['play sports'], domain: 'playsports.be' },
+  { kw: ['eleven'], domain: 'elevensports.be' },
+  // Scandinavie
+  { kw: ['tv 2', 'tv2'], domain: 'tv2.no' },
+  { kw: ['tv4'], domain: 'tv4.se' },
+  // Europe de l'Est
+  { kw: ['digi sport'], domain: 'digisport.ro' },
+  { kw: ['prima sport'], domain: 'primasport.ro' },
+  { kw: ['diema'], domain: 'diema.bg' },
+  { kw: ['setanta'], domain: 'setantasports.com' },
+  { kw: ['arena sport'], domain: 'arenasport.rs' },
+  { kw: ['m4 sport'], domain: 'm4sport.hu' },
+  // Asie
+  { kw: ['coupang'], domain: 'coupangplay.com' },
+  { kw: ['spotv'], domain: 'spotv.net' },
+  { kw: ['al kass'], domain: 'alkass.net' },
+  { kw: ['cctv'], domain: 'cctv.com' },
+  // Amériques
+  { kw: ['televisa'], domain: 'televisa.com' },
+  { kw: ['tudn'], domain: 'tudn.com' },
+  { kw: ['globo', 'premiere'], domain: 'globo.com' },
+  { kw: ['tyc'], domain: 'tycsports.com' },
+  { kw: ['win sports'], domain: 'winsports.co' },
+  { kw: ['directv'], domain: 'directvgo.com' },
+  { kw: ['tnt sports'], domain: 'tntsports.com.ar' },
+  // Afrique
+  { kw: ['supersport'], domain: 'supersport.com' },
+  { kw: ['arryadia', 'snrt'], domain: 'snrt.ma' },
+  // Moyen-Orient
+  { kw: ['ssc'], domain: 'ssc.sa' },
+];
+
+function tvFaviconUrl(domain) {
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+}
+
+// Résout le meilleur logo pour une chaîne :
+// source externe > mapping curé simpleicons > marque par mot-clé > favicon domaine officiel.
 function resolveTvLogo(name, srcLogo) {
   if (srcLogo) return srcLogo;
   if (name && TV_CHANNEL_LOGOS[name]) return TV_CHANNEL_LOGOS[name];
   const lc = String(name || '').toLowerCase();
   for (const b of TV_BRAND_ICONS) {
     if (b.kw.some(k => lc.includes(k))) return b.url;
+  }
+  for (const d of TV_DOMAIN_RULES) {
+    if (d.kw.some(k => lc.includes(k))) return tvFaviconUrl(d.domain);
   }
   return null;
 }
@@ -7380,6 +7453,98 @@ async function fetchBSDStandingsFromEvents(bsdLeagueId, configLeagueId) {
   }
 }
 
+// Fetch ESPN public standings (secours zéro-quota pour ligues hors BSD/API-Football).
+// ESPN ne fournit pas les splits domicile/extérieur → estimation 50/50 ratio
+// (même stratégie que la branche BSD sans splits). Saison = toujours en cours côté ESPN.
+async function fetchESPNStandings(slug, configLeagueId) {
+  const leagueName = leaguesConfig.leagues.find(l => l.id === configLeagueId)?.name || `config ${configLeagueId}`;
+  try {
+    const res = await httpsGet(`https://site.api.espn.com/apis/v2/sports/soccer/${slug}/standings`);
+    if (res.status !== 200 || !res.data || typeof res.data !== 'object') {
+      console.warn(`  [ESPN] ${leagueName} (${slug}) — HTTP ${res.status}`);
+      return null;
+    }
+    // ESPN scinde certaines ligues en groupes géographiques (J-League : Group
+    // East/West) alors que le championnat est une table unique → fusionner TOUS
+    // les children puis re-classer globalement par points (puis diff. de buts).
+    let entries = [];
+    if (Array.isArray(res.data.children) && res.data.children.length) {
+      for (const c of res.data.children) {
+        const ce = c?.standings?.entries;
+        if (Array.isArray(ce)) entries = entries.concat(ce);
+      }
+    } else if (Array.isArray(res.data.standings?.entries)) {
+      entries = res.data.standings.entries;
+    }
+    if (!entries.length) {
+      console.warn(`  [ESPN] ${leagueName} (${slug}) — standings vides`);
+      return null;
+    }
+    const stat = (e, name) => {
+      const s = (e.stats || []).find(x => x.name === name || x.type === name);
+      return s && s.value != null ? Number(s.value) : 0;
+    };
+    // Classement global : points desc, puis différence de buts desc
+    entries.sort((a, b) => {
+      const pb = stat(b, 'points') - stat(a, 'points');
+      if (pb) return pb;
+      return (stat(b, 'pointsFor') - stat(b, 'pointsAgainst')) -
+             (stat(a, 'pointsFor') - stat(a, 'pointsAgainst'));
+    });
+    const teams = {};
+    entries.forEach((e, idx) => {
+      const name = e.team?.displayName || e.team?.name;
+      if (!name) return;
+      const key = normName(name);
+      const played = stat(e, 'gamesPlayed');
+      const won = stat(e, 'wins');
+      const drawn = stat(e, 'ties');
+      const lost = stat(e, 'losses');
+      const gf = stat(e, 'pointsFor');
+      const ga = stat(e, 'pointsAgainst');
+      const pts = stat(e, 'points');
+
+      // Splits domicile/extérieur estimés (ESPN ne les fournit pas) — ratio 50/50
+      const hP = Math.ceil(played / 2), aP = played - hP;
+      const r = hP / Math.max(1, played);
+      const hW = Math.round(won * r), aW = won - hW;
+      const hD = Math.round(drawn * r), aD = drawn - hD;
+      const hL = Math.round(lost * r), aL = lost - hL;
+      const hGf = Math.round(gf * r), aGf = gf - hGf;
+      const hGa = Math.round(ga * r), aGa = ga - hGa;
+
+      const homeStats = buildSideStats({ played: hP, win: hW, draw: hD, lose: hL, goals_for: hGf, goals_against: hGa });
+      const awayStats = buildSideStats({ played: aP, win: aW, draw: aD, lose: aL, goals_for: aGf, goals_against: aGa });
+
+      teams[key] = {
+        home: homeStats,
+        away: awayStats,
+        rank: idx + 1,
+        form: '',
+        leagueId: configLeagueId,
+        bsdTeamId: null,
+        bsdSeasonId: null,
+        bsdLeagueId: null,
+        xgFor: null,
+        xgAgainst: null,
+        _raw: {
+          played, wins: won, draws: drawn, losses: lost, gf, ga,
+          pts: pts || (won * 3 + drawn),
+          home: { played: hP, wins: hW, draws: hD, losses: hL, gf: hGf, ga: hGa, pts: hW * 3 + hD, _estimated: true },
+          away: { played: aP, wins: aW, draws: aD, losses: aL, gf: aGf, ga: aGa, pts: aW * 3 + aD, _estimated: true },
+        },
+        _real: true,
+        _source: 'espn',
+      };
+    });
+    console.log(`  [ESPN] ${leagueName} (${slug}) → OK (${Object.keys(teams).length} équipes, saison en cours)`);
+    return Object.keys(teams).length ? teams : null;
+  } catch (e) {
+    console.warn(`  [ESPN] ${leagueName} (${slug}) erreur:`, e.message);
+    return null;
+  }
+}
+
 // Fetch BSD standings pour une ligue (convertit au format db.teamStats)
 async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
   const leagueName = leaguesConfig.leagues.find(l => l.id === configLeagueId)?.name || `config ${configLeagueId}`;
@@ -9022,6 +9187,26 @@ async function fetchStats(force = false) {
     // PHASE 1: BSD — Standings pour ligues couvertes (zéro quota)
     // ═══════════════════════════════════════════════════════════════
     const bsdFailedLeagues = [];
+
+    // Secours ESPN (zéro clé/quota) pour ligues hors BSD — mute db.teamStats + compteurs
+    const tryESPNStandings = async (configId) => {
+      const slug = ESPN_STANDINGS_SLUG[configId];
+      if (!slug) return false;
+      const espnTeams = await fetchESPNStandings(slug, configId);
+      if (!espnTeams || !Object.keys(espnTeams).length) return false;
+      // ESPN renvoie la table COMPLÈTE et à jour → purge des entrées périmées
+      // de cette ligue (ex: anciennes lignes API-Football saison terminée 2024).
+      for (const k of Object.keys(db.teamStats)) {
+        if (db.teamStats[k]?.leagueId === configId) delete db.teamStats[k];
+      }
+      Object.assign(db.teamStats, espnTeams);
+      const count = Object.keys(espnTeams).length;
+      bsdTeamsFetched += count;
+      totalTeams += count;
+      db.statsUpdateByLeague[configId] = new Date().toISOString();
+      return true;
+    };
+
     if (BSD_API_KEY) {
       console.log('  [Cron:Stats] Phase 1: BSD standings (ligues couvertes)…');
       const bsdLeagues = Object.entries(BSD_CONFIG_TO_BSD);
@@ -9055,13 +9240,20 @@ async function fetchStats(force = false) {
             totalTeams += count;
             db.statsUpdateByLeague[configId] = new Date().toISOString();
             console.log(`  [BSD] Ligue ${configId} → OK (${count} équipes)`);
+          } else if (ESPN_STANDINGS_SLUG[configId] &&
+                     await tryESPNStandings(configId)) {
+            // BSD KO mais ESPN couvre cette ligue (ex: J-League) — pas de fallback
           } else {
             bsdFailedLeagues.push(configId);
             console.warn(`  [DEBUG STANDINGS] BSD KO pour ligue ${configId} — ajout au fallback API-Football`);
           }
         } catch (e) {
-          bsdFailedLeagues.push(configId);
-          console.warn(`  [BSD] Ligue ${configId} erreur:`, e.message);
+          if (ESPN_STANDINGS_SLUG[configId] && await tryESPNStandings(configId)) {
+            console.warn(`  [BSD] Ligue ${configId} erreur (${e.message}) — récupéré via ESPN`);
+          } else {
+            bsdFailedLeagues.push(configId);
+            console.warn(`  [BSD] Ligue ${configId} erreur:`, e.message);
+          }
         }
       }
       console.log(`  [BSD] Phase 1 terminée: ${bsdTeamsFetched} équipes (échecs à fallback: ${bsdFailedLeagues.length})`);
@@ -12062,6 +12254,7 @@ async function syncSackmannData({ yearsBack = SACKMANN_YEARS_BACK } = {}) {
 
     // Invalide le cache stats serve (T8) — Sackmann data peut avoir bougé.
     try { _invalidateTennisServeStatsCache(); } catch (_) { /* swallow */ }
+    try { _invalidateTennisSetProfileCache(); } catch (_) { /* swallow */ }
 
     return summary;
   } finally {
@@ -12120,6 +12313,67 @@ function _eloUpdate(eloWinner, eloLoser, K) {
   };
 }
 
+// ─── P0-3 — Elo v2 : K-expérience + MoV + seed rang + régression inactivité ──
+// K Sackmann-style : débutants volatils, vétérans stables. base ≈ 250 (ALL),
+// 200 (surface — moins réactif car échantillon plus petit).
+const TENNIS_ELO_KBASE_GENERAL = 250;
+const TENNIS_ELO_KBASE_SURFACE = 200;
+function _eloKExp(matches, base) {
+  return base / Math.pow((matches || 0) + 5, 0.4);
+}
+
+// Somme des jeux par camp depuis le score brut ("6-4 7-6(5)", "6-3 2-1 RET"…).
+function _parseScoreGames(score) {
+  if (!score) return null;
+  const sets = String(score).replace(/\([^)]*\)/g, '').trim().split(/\s+/);
+  let w = 0, l = 0, valid = 0;
+  for (const s of sets) {
+    const mm = s.match(/^(\d{1,2})-(\d{1,2})$/);
+    if (!mm) continue;
+    w += parseInt(mm[1], 10); l += parseInt(mm[2], 10); valid++;
+  }
+  return valid ? { w, l } : null;
+}
+
+// Multiplicateur margin-of-victory façon 538 : amplifie les dominations,
+// corrige l'autocorrélation (favori large → gain atténué, upset → amplifié).
+function _eloMov(score, eloDiffWinnerPersp) {
+  const g = _parseScoreGames(score);
+  if (!g) return 1;
+  const diff = Math.max(1, Math.abs(g.w - g.l));
+  const corr = 2.2 / (eloDiffWinnerPersp * 0.001 + 2.2);
+  const mult = Math.log(diff + 1) * corr;
+  return Math.max(0.5, Math.min(mult, 1.8));
+}
+
+// Seed bayésien depuis le rang officiel (réduit l'erreur cold-start).
+function _rankToElo(rank) {
+  if (!rank || rank < 1) return TENNIS_ELO_INITIAL;
+  const e = 2200 - 130 * Math.log(rank);
+  return Math.max(1400, Math.min(2350, e));
+}
+
+// tourney_date Sackmann = entier YYYYMMDD → jours depuis epoch (approx).
+function _ymdToDays(ymd) {
+  if (!ymd) return null;
+  const s = String(ymd);
+  if (s.length < 8) return null;
+  const y = +s.slice(0, 4), mo = +s.slice(4, 6), d = +s.slice(6, 8);
+  const t = Date.UTC(y, (mo || 1) - 1, d || 1);
+  return Number.isFinite(t) ? Math.floor(t / 86400000) : null;
+}
+
+// Régression vers la moyenne après une longue inactivité (blessure/retraite
+// partielle) : > 365 j d'écart → on rapproche l'Elo de 1500.
+function _eloInactivityRegress(elo, lastYmd, curYmd) {
+  const a = _ymdToDays(lastYmd), b = _ymdToDays(curYmd);
+  if (a == null || b == null) return elo;
+  const gap = b - a;
+  if (gap <= 365) return elo;
+  const r = Math.max(0.5, 1 - (gap - 365) / 1825); // 6 ans → ×0.5
+  return TENNIS_ELO_INITIAL + (elo - TENNIS_ELO_INITIAL) * r;
+}
+
 // Recompute Elo from scratch over tennis_matches ordered chronologiquement.
 // Renvoie {players, matches, elapsed_ms}.
 function computeTennisElo() {
@@ -12132,8 +12386,9 @@ function computeTennisElo() {
 
     const elos = new Map(); // key: `${tour}|${playerId}|${surface}` → {elo, matches, lastDate, name}
     const rows = sqldb.prepare(`
-      SELECT tour, surface, tourney_date,
-             winner_id, winner_name, loser_id, loser_name
+      SELECT tour, surface, tourney_date, score,
+             winner_id, winner_name, winner_rank,
+             loser_id, loser_name, loser_rank
       FROM tennis_matches
       WHERE winner_id IS NOT NULL AND loser_id IS NOT NULL
         AND tourney_date IS NOT NULL
@@ -12149,24 +12404,34 @@ function computeTennisElo() {
       const wName = m.winner_name || null;
       const lName = m.loser_name || null;
       const surface = m.surface && TENNIS_ELO_SURFACES.includes(m.surface) ? m.surface : null;
+      const ymd = m.tourney_date;
 
-      // Blended (ALL)
+      // ── Blended (ALL) ──────────────────────────────────────────────────
       const allKeyW = `${tour}|${wId}|ALL`;
       const allKeyL = `${tour}|${lId}|ALL`;
-      const allW = elos.get(allKeyW) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: wName };
-      const allL = elos.get(allKeyL) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: lName };
-      const allRes = _eloUpdate(allW.elo, allL.elo, TENNIS_ELO_K_GENERAL);
-      elos.set(allKeyW, { elo: allRes.winner, matches: allW.matches + 1, lastDate: m.tourney_date, name: wName || allW.name });
-      elos.set(allKeyL, { elo: allRes.loser, matches: allL.matches + 1, lastDate: m.tourney_date, name: lName || allL.name });
+      const allW = elos.get(allKeyW) || { elo: _rankToElo(m.winner_rank), matches: 0, lastDate: 0, name: wName };
+      const allL = elos.get(allKeyL) || { elo: _rankToElo(m.loser_rank), matches: 0, lastDate: 0, name: lName };
+      // Régression inactivité avant la mise à jour.
+      const aWElo = _eloInactivityRegress(allW.elo, allW.lastDate, ymd);
+      const aLElo = _eloInactivityRegress(allL.elo, allL.lastDate, ymd);
+      const aK = _eloKExp(Math.min(allW.matches, allL.matches), TENNIS_ELO_KBASE_GENERAL)
+               * _eloMov(m.score, aWElo - aLElo);
+      const allRes = _eloUpdate(aWElo, aLElo, aK);
+      elos.set(allKeyW, { elo: allRes.winner, matches: allW.matches + 1, lastDate: ymd, name: wName || allW.name });
+      elos.set(allKeyL, { elo: allRes.loser, matches: allL.matches + 1, lastDate: ymd, name: lName || allL.name });
 
       if (surface) {
         const sKeyW = `${tour}|${wId}|${surface}`;
         const sKeyL = `${tour}|${lId}|${surface}`;
-        const sW = elos.get(sKeyW) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: wName };
-        const sL = elos.get(sKeyL) || { elo: TENNIS_ELO_INITIAL, matches: 0, lastDate: 0, name: lName };
-        const sRes = _eloUpdate(sW.elo, sL.elo, TENNIS_ELO_K_SURFACE);
-        elos.set(sKeyW, { elo: sRes.winner, matches: sW.matches + 1, lastDate: m.tourney_date, name: wName || sW.name });
-        elos.set(sKeyL, { elo: sRes.loser, matches: sL.matches + 1, lastDate: m.tourney_date, name: lName || sL.name });
+        const sW = elos.get(sKeyW) || { elo: _rankToElo(m.winner_rank), matches: 0, lastDate: 0, name: wName };
+        const sL = elos.get(sKeyL) || { elo: _rankToElo(m.loser_rank), matches: 0, lastDate: 0, name: lName };
+        const sWElo = _eloInactivityRegress(sW.elo, sW.lastDate, ymd);
+        const sLElo = _eloInactivityRegress(sL.elo, sL.lastDate, ymd);
+        const sK = _eloKExp(Math.min(sW.matches, sL.matches), TENNIS_ELO_KBASE_SURFACE)
+                 * _eloMov(m.score, sWElo - sLElo);
+        const sRes = _eloUpdate(sWElo, sLElo, sK);
+        elos.set(sKeyW, { elo: sRes.winner, matches: sW.matches + 1, lastDate: ymd, name: wName || sW.name });
+        elos.set(sKeyL, { elo: sRes.loser, matches: sL.matches + 1, lastDate: ymd, name: lName || sL.name });
       }
       processed++;
     }
@@ -12391,7 +12656,87 @@ function matchSetProbs(holdA, holdB) {
 
 // Pipeline complet pour 1 match : joue les SPW, hold, set probs.
 // Renvoie object {p1_spw, p2_spw, p1_hold, p2_hold, p1_2_0, ...} ou null si data insuffisante.
-function computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface) {
+// P1-1 — Return points won (RPW) d'un joueur = points gagnés en retour, depuis
+// les points de service de l'adversaire dans tennis_matches.
+function computePlayerReturnStats(playerName, tour, surface = 'ALL', lastN = TENNIS_SERVE_LASTN) {
+  if (!playerName || !tour) return null;
+  const cacheKey = `RPW|${tour}|${playerName.toLowerCase()}|${surface}|${lastN}`;
+  if (_TENNIS_SERVE_STATS_CACHE.has(cacheKey)) return _TENNIS_SERVE_STATS_CACHE.get(cacheKey);
+  try {
+    _initTennisSackmannSchema();
+    // Quand le joueur GAGNE → adversaire = loser (sert l_svpt). Sinon → winner.
+    const rows = sqldb.prepare(`
+      SELECT
+        CASE WHEN LOWER(winner_name)=LOWER(?) THEN l_svpt ELSE w_svpt END AS oppSvpt,
+        CASE WHEN LOWER(winner_name)=LOWER(?) THEN COALESCE(l_1stWon,0)+COALESCE(l_2ndWon,0)
+             ELSE COALESCE(w_1stWon,0)+COALESCE(w_2ndWon,0) END AS oppServeWon
+      FROM tennis_matches
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?))
+        AND tour=? AND (?='ALL' OR surface=?) AND w_svpt IS NOT NULL
+      ORDER BY tourney_date DESC, match_num DESC LIMIT ?
+    `).all(playerName, playerName, playerName, playerName, tour, surface, surface, lastN);
+    let oppSvpt = 0, oppWon = 0, n = 0;
+    for (const r of rows) {
+      if (!r.oppSvpt || r.oppSvpt <= 0) continue;
+      oppSvpt += r.oppSvpt; oppWon += r.oppServeWon || 0; n++;
+    }
+    if (oppSvpt === 0 || n < 5) { _TENNIS_SERVE_STATS_CACHE.set(cacheKey, null); return null; }
+    const rpw = (oppSvpt - oppWon) / oppSvpt;
+    const result = { rpw: parseFloat(rpw.toFixed(4)), sampleSize: n };
+    _TENNIS_SERVE_STATS_CACHE.set(cacheKey, result);
+    return result;
+  } catch (e) {
+    console.warn('  [Tennis] return stats error:', e.message);
+    return null;
+  }
+}
+
+// Moyenne SPW du tour/surface (cache) — pivot pour combiner serve vs return.
+const _tennisAvgServeCache = new Map();
+function _tennisAvgServe(tour, surface) {
+  const k = `${tour}|${surface}`;
+  if (_tennisAvgServeCache.has(k)) return _tennisAvgServeCache.get(k);
+  let avg = tour === 'WTA' ? 0.565 : 0.635; // défauts littérature
+  try {
+    const r = sqldb.prepare(`
+      SELECT SUM(COALESCE(w_1stWon,0)+COALESCE(w_2ndWon,0)+COALESCE(l_1stWon,0)+COALESCE(l_2ndWon,0)) AS won,
+             SUM(COALESCE(w_svpt,0)+COALESCE(l_svpt,0)) AS svpt
+      FROM tennis_matches WHERE tour=? AND (?='ALL' OR surface=?) AND w_svpt IS NOT NULL
+    `).get(tour, surface, surface);
+    if (r && r.svpt > 0) avg = r.won / r.svpt;
+  } catch (_) { /* défaut */ }
+  _tennisAvgServeCache.set(k, avg);
+  return avg;
+}
+
+// Espérance de jeux par joueur dans 1 set (DP mémoïsé, tie-break ≈ 13 jeux 7-6).
+function setGameExpect(hA, hB) {
+  const a = Math.max(0.01, Math.min(0.99, hA));
+  const b = Math.max(0.01, Math.min(0.99, hB));
+  const memo = new Map();
+  function P(gA, gB, isA) {
+    if (gA >= 6 && gA - gB >= 2) return { p: 1, ga: gA, gb: gB };
+    if (gB >= 6 && gB - gA >= 2) return { p: 1, ga: gA, gb: gB };
+    if (gA === 6 && gB === 6) {
+      const tieA = Math.max(0.05, Math.min(0.95, a / (a + (1 - b) + 1e-9)));
+      return { p: 1, ga: gA + (tieA >= 0.5 ? 1 : 0), gb: gB + (tieA >= 0.5 ? 0 : 1), _tie: tieA };
+    }
+    const key = `${gA}|${gB}|${isA ? 1 : 0}`;
+    if (memo.has(key)) return memo.get(key);
+    const win = isA ? a : (1 - b);
+    const w = P(gA + 1, gB, !isA);
+    const l = P(gA, gB + 1, !isA);
+    const ega = win * w.ga + (1 - win) * l.ga;
+    const egb = win * w.gb + (1 - win) * l.gb;
+    const out = { p: 1, ga: ega, gb: egb };
+    memo.set(key, out);
+    return out;
+  }
+  const r = P(0, 0, true);
+  return { egA: r.ga, egB: r.gb, total: r.ga + r.gb };
+}
+
+function computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface, surfaceSpeed) {
   if (!p1Name || !p2Name || !tour) return null;
   const surfaceClean = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
 
@@ -12399,9 +12744,28 @@ function computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface) {
   const p2Stats = computePlayerServeStats(p2Name, tour, surfaceClean, TENNIS_SERVE_LASTN);
   if (!p1Stats || !p2Stats) return null;
 
-  const p1Hold = gameHoldProb(p1Stats.spw);
-  const p2Hold = gameHoldProb(p2Stats.spw);
+  // ── P1-1 : serve effectif = SPW ajusté du retour adverse + vitesse court ──
+  const p1Ret = computePlayerReturnStats(p1Name, tour, surfaceClean, TENNIS_SERVE_LASTN);
+  const p2Ret = computePlayerReturnStats(p2Name, tour, surfaceClean, TENNIS_SERVE_LASTN);
+  const avgSPW = _tennisAvgServe(tour, surfaceClean);
+  const avgRPW = 1 - avgSPW;
+  // Nudge vitesse : court rapide (index>100) → +serve. k=0.04 sur ±50 % d'index.
+  const spd = surfaceSpeed && Number.isFinite(surfaceSpeed.index) ? surfaceSpeed.index : 100;
+  const speedNudge = 0.04 * ((spd - 100) / 100);
+  const clamp = v => Math.max(0.3, Math.min(0.9, v));
+  const p1Eff = clamp(p1Stats.spw - ((p2Ret ? p2Ret.rpw : avgRPW) - avgRPW) + speedNudge);
+  const p2Eff = clamp(p2Stats.spw - ((p1Ret ? p1Ret.rpw : avgRPW) - avgRPW) + speedNudge);
+
+  const p1Hold = gameHoldProb(p1Eff);
+  const p2Hold = gameHoldProb(p2Eff);
   const probs = matchSetProbs(p1Hold, p2Hold);
+
+  // ── Marchés dérivés : jeux totaux + suprématie jeux ──────────────────────
+  const sg = setGameExpect(p1Hold, p2Hold);
+  const pSet = probs.p1_set_win;
+  const eSets = 2 * (pSet * pSet + (1 - pSet) * (1 - pSet)) + 3 * (1 - (pSet * pSet + (1 - pSet) * (1 - pSet)));
+  const expTotalGames = parseFloat((sg.total * eSets).toFixed(2));
+  const gamesSupremacy = parseFloat(((sg.egA - sg.egB) * eSets).toFixed(2));
 
   return {
     ...probs,
@@ -12409,9 +12773,18 @@ function computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface) {
     p2_hold: parseFloat(p2Hold.toFixed(4)),
     p1_spw: p1Stats.spw,
     p2_spw: p2Stats.spw,
+    p1_serve_eff: parseFloat(p1Eff.toFixed(4)),
+    p2_serve_eff: parseFloat(p2Eff.toFixed(4)),
+    p1_rpw: p1Ret ? p1Ret.rpw : null,
+    p2_rpw: p2Ret ? p2Ret.rpw : null,
+    avg_spw: parseFloat(avgSPW.toFixed(4)),
+    surface_speed_index: spd,
+    exp_total_games: expTotalGames,
+    games_supremacy: gamesSupremacy,
+    exp_sets: parseFloat(eSets.toFixed(3)),
     surface_used: surfaceClean,
     sample_size: Math.min(p1Stats.sampleSize, p2Stats.sampleSize),
-    method: 'markov_setprob',
+    method: 'markov_serve_return_v2',
   };
 }
 
@@ -12419,6 +12792,198 @@ function computeTennisMarkovSetProbs(p1Name, p2Name, tour, surface) {
 function _invalidateTennisServeStatsCache() {
   _TENNIS_SERVE_STATS_CACHE.clear();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TENNIS SET MODEL (set_profile_v1) — modélisation 1er/2e set.
+//  Profils "Sprinter/Diesel" (set 1) + "Réaction/Lâcheur" (set 2) dérivés du
+//  champ `score` Sackmann (ex: "6-4 3-6 7-6(5)"). Aucune source externe : tout
+//  vient de tennis_matches déjà ingéré. EV+ : pas de cote marché par set →
+//  on dérive une cote set implicite depuis le modèle Markov serve/return
+//  (computeTennisMarkovSetProbs.p1_set_win) et on mesure l'écart vs profil.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const _TENNIS_SET_PROFILE_CACHE = new Map();
+const TENNIS_SET_WEEKS = 52;
+const TENNIS_SET_TRANSITION_PCT = 3;   // malus ±3 % si <2 matchs surface dans la saison
+const TENNIS_SET_FATIGUE_PCT = 5;      // malus −5 % set 2 si dernier match > 150 min
+const TENNIS_SET_FATIGUE_MIN = 150;
+const TENNIS_SET_MIN_SAMPLE = 5;
+
+// Parse "6-4 3-6 7-6(5) RET" → [{a,b},...] du POV winner. Null si W/O ou vide.
+function parseSetScore(score) {
+  if (!score || typeof score !== 'string') return null;
+  const s = score.trim();
+  if (!s || /^(W\/O|WO|DEF|ABD|UNK)/i.test(s)) return null;
+  const sets = [];
+  for (const tok of s.split(/\s+/)) {
+    if (/^(RET|RETIRED|DEF|W\/O|WO|ABD|UNK|N\/A)$/i.test(tok)) break;
+    const m = tok.match(/^(\d{1,2})-(\d{1,2})/);
+    if (!m) continue;
+    const a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    sets.push({ a, b });
+  }
+  return sets.length ? sets : null;
+}
+
+// tourney_date stocké INTEGER YYYYMMDD → seuil 52 semaines en YYYYMMDD.
+function _tennisCutoffYmd(weeks) {
+  const d = new Date(Date.now() - weeks * 7 * 86400 * 1000);
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
+
+// Profil set d'un joueur sur 52 sem glissantes (surface donnée ou ALL).
+// Retourne {s1_win_rate, bounce_back_rate, kill_rate, sample} en % ou null.
+function computePlayerSetProfile(playerName, tour, surface = 'ALL') {
+  if (!playerName || !tour) return null;
+  const surf = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+  const cutoffYmd = _tennisCutoffYmd(TENNIS_SET_WEEKS);
+  const cacheKey = `SETPROF|${tour}|${playerName.toLowerCase()}|${surf}|${cutoffYmd}`;
+  if (_TENNIS_SET_PROFILE_CACHE.has(cacheKey)) return _TENNIS_SET_PROFILE_CACHE.get(cacheKey);
+  try {
+    _initTennisSackmannSchema();
+    const rows = sqldb.prepare(`
+      SELECT score, CASE WHEN LOWER(winner_name)=LOWER(?) THEN 1 ELSE 0 END AS isWinner
+      FROM tennis_matches
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?))
+        AND tour=? AND (?='ALL' OR surface=?)
+        AND tourney_date >= ? AND score IS NOT NULL
+      ORDER BY tourney_date DESC, match_num DESC
+    `).all(playerName, playerName, playerName, tour, surf, surf, cutoffYmd);
+
+    let s1Played = 0, s1Won = 0;
+    let afterS1Loss = 0, bounceBack = 0;
+    let afterS1Win = 0, kill = 0;
+    for (const r of rows) {
+      const sets = parseSetScore(r.score);
+      if (!sets || sets.length < 1) continue;
+      const s1 = sets[0];
+      const p1g = r.isWinner ? s1.a : s1.b;
+      const p2g = r.isWinner ? s1.b : s1.a;
+      if (p1g === p2g) continue;          // set 1 incomplet / abandon
+      s1Played++;
+      const wonS1 = p1g > p2g;
+      if (wonS1) s1Won++;
+      if (sets.length >= 2) {
+        const s2 = sets[1];
+        const q1 = r.isWinner ? s2.a : s2.b;
+        const q2 = r.isWinner ? s2.b : s2.a;
+        if (q1 !== q2) {
+          const wonS2 = q1 > q2;
+          if (wonS1) { afterS1Win++; if (wonS2) kill++; }
+          else { afterS1Loss++; if (wonS2) bounceBack++; }
+        }
+      }
+    }
+    if (s1Played < TENNIS_SET_MIN_SAMPLE) { _TENNIS_SET_PROFILE_CACHE.set(cacheKey, null); return null; }
+    const pct = (n, d) => d > 0 ? parseFloat(((n / d) * 100).toFixed(1)) : null;
+    const result = {
+      s1_win_rate: pct(s1Won, s1Played),
+      bounce_back_rate: pct(bounceBack, afterS1Loss),
+      kill_rate: pct(kill, afterS1Win),
+      sample: s1Played,
+      surface_used: surf,
+    };
+    _TENNIS_SET_PROFILE_CACHE.set(cacheKey, result);
+    return result;
+  } catch (e) {
+    console.warn('  [Tennis SetProfile] error:', e.message);
+    return null;
+  }
+}
+
+// Nb de matchs joués sur `surface` depuis le 1er janvier (détection transition).
+function _tennisSurfaceSeasonCount(playerName, tour, surface) {
+  if (!playerName || !tour || !surface || surface === 'ALL') return null;
+  try {
+    const yStart = new Date().getUTCFullYear() * 10000 + 101;
+    const r = sqldb.prepare(`
+      SELECT COUNT(*) AS n FROM tennis_matches
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?))
+        AND tour=? AND surface=? AND tourney_date >= ?
+    `).get(playerName, playerName, tour, surface, yStart);
+    return r ? r.n : 0;
+  } catch (_) { return null; }
+}
+
+// Minutes du dernier match (tous tournois confondus) → fatigue set 2.
+function _tennisLastMatchMinutes(playerName, tour) {
+  try {
+    const r = sqldb.prepare(`
+      SELECT minutes FROM tennis_matches
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?)) AND tour=?
+      ORDER BY tourney_date DESC, match_num DESC LIMIT 1
+    `).get(playerName, playerName, tour);
+    return r && Number.isFinite(r.minutes) ? r.minutes : null;
+  } catch (_) { return null; }
+}
+
+// Modèle set 1 & set 2 — combine profils + transition surface + fatigue.
+// EV dérivé de la cote set implicite Markov (markovSetProbs.p1_set_win).
+function computeTennisSetModel(p1Name, p2Name, tour, surface, markovSetProbs) {
+  if (!p1Name || !p2Name || !tour) return null;
+  const surf = (surface && TENNIS_ELO_SURFACES.includes(surface)) ? surface : 'ALL';
+  const pr1 = computePlayerSetProfile(p1Name, tour, surf);
+  const pr2 = computePlayerSetProfile(p2Name, tour, surf);
+  if (!pr1 || !pr2) return null;
+
+  // Transition surface : < 2 matchs saison sur la surface → joueur "froid".
+  const c1 = surf !== 'ALL' ? _tennisSurfaceSeasonCount(p1Name, tour, surf) : null;
+  const c2 = surf !== 'ALL' ? _tennisSurfaceSeasonCount(p2Name, tour, surf) : null;
+  const trans1 = (c1 != null && c1 < 2) ? -TENNIS_SET_TRANSITION_PCT : 0;
+  const trans2 = (c2 != null && c2 < 2) ? -TENNIS_SET_TRANSITION_PCT : 0;
+
+  // ── Set 1 : moyenne taux brut symétrique + ajustement transition ──────────
+  const r1 = pr1.s1_win_rate != null ? pr1.s1_win_rate : 50;
+  const r2 = pr2.s1_win_rate != null ? pr2.s1_win_rate : 50;
+  let set1P1 = (r1 + (100 - r2)) / 2 + trans1 - trans2;
+  set1P1 = Math.max(5, Math.min(95, set1P1));
+  const set1P2 = 100 - set1P1;
+
+  // ── Set 2 : pondéré scénario — gagne S1 → kill ; perd S1 → bounce back ────
+  const pS1 = set1P1 / 100;
+  const kill1 = pr1.kill_rate != null ? pr1.kill_rate / 100 : 0.62;
+  const bb1 = pr1.bounce_back_rate != null ? pr1.bounce_back_rate / 100 : 0.38;
+  let set2P1 = (pS1 * kill1 + (1 - pS1) * bb1) * 100;
+
+  // Fatigue : dernier match > 150 min → malus tenue physique set 2.
+  const m1 = _tennisLastMatchMinutes(p1Name, tour);
+  const m2 = _tennisLastMatchMinutes(p2Name, tour);
+  const fat1 = (m1 != null && m1 > TENNIS_SET_FATIGUE_MIN);
+  const fat2 = (m2 != null && m2 > TENNIS_SET_FATIGUE_MIN);
+  if (fat1) set2P1 -= TENNIS_SET_FATIGUE_PCT;
+  if (fat2) set2P1 += TENNIS_SET_FATIGUE_PCT;
+  set2P1 = Math.max(5, Math.min(95, set2P1));
+  const set2P2 = 100 - set2P1;
+
+  // ── EV+ : cote set implicite dérivée du modèle Markov (pas de cote marché) ─
+  const evCalc = (oP, prob) => parseFloat((oP * (prob / 100) * 100).toFixed(1));
+  let ev = { set1: { p1: null, p2: null }, set2: { p1: null, p2: null } };
+  if (markovSetProbs && Number.isFinite(markovSetProbs.p1_set_win)) {
+    const mk1 = Math.max(0.05, Math.min(0.95, markovSetProbs.p1_set_win));
+    const oP1 = 1 / mk1, oP2 = 1 / (1 - mk1);
+    ev = {
+      set1: { p1: evCalc(oP1, set1P1), p2: evCalc(oP2, set1P2) },
+      set2: { p1: evCalc(oP1, set2P1), p2: evCalc(oP2, set2P2) },
+    };
+  }
+
+  return {
+    set1: { p1_pct: parseFloat(set1P1.toFixed(1)), p2_pct: parseFloat(set1P2.toFixed(1)), ev_p1: ev.set1.p1, ev_p2: ev.set1.p2 },
+    set2: { p1_pct: parseFloat(set2P1.toFixed(1)), p2_pct: parseFloat(set2P2.toFixed(1)), ev_p1: ev.set2.p1, ev_p2: ev.set2.p2 },
+    profiles: {
+      p1: { s1_win_rate: pr1.s1_win_rate, bounce_back: pr1.bounce_back_rate, kill_rate: pr1.kill_rate, fatigue: fat1, surface_transition: trans1, sample: pr1.sample },
+      p2: { s1_win_rate: pr2.s1_win_rate, bounce_back: pr2.bounce_back_rate, kill_rate: pr2.kill_rate, fatigue: fat2, surface_transition: trans2, sample: pr2.sample },
+    },
+    sample_size: Math.min(pr1.sample, pr2.sample),
+    surface_used: surf,
+    ev_basis: (markovSetProbs && Number.isFinite(markovSetProbs.p1_set_win)) ? 'markov_implied' : null,
+    method: 'set_profile_v1',
+  };
+}
+
+// Invalidation cache profils set après resync Sackmann.
+function _invalidateTennisSetProfileCache() { _TENNIS_SET_PROFILE_CACHE.clear(); }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TENNIS BACKTEST (T9) — Model accuracy walk-forward sur tennis_matches.
@@ -13390,6 +13955,115 @@ async function fetchTexCalendar(tour) {
   };
   texCalendarCache.set(cacheKey, { ts: Date.now(), data });
   return data;
+}
+
+// ─── P0-4 — Résolution surface via calendrier Tennis Explorer ────────────────
+// BSD désactivé (arbitrage DG) → m.surface souvent null (fallback ESPN). On
+// indexe les tournois TE (ATP+WTA) par nom normalisé puis on mappe le nom de
+// tournoi du match vers Hard/Clay/Grass/Carpet. Indoor → Hard (l'Elo n'a pas
+// de surface Indoor). Pré-requis dur de l'Elo v2 surface (P0-3).
+const TEX_SURFACE_INDEX_TTL_MS = 24 * 3600 * 1000;
+const _texSurfaceIndex = { map: null, ts: 0 };
+
+function _normTournName(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(atp|wta|itf|masters|open|cup|championships|trophy|\d{4})\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function _mapSurfaceToElo(surf) {
+  if (!surf) return null;
+  const s = String(surf).toLowerCase();
+  if (s.includes('clay')) return 'Clay';
+  if (s.includes('grass')) return 'Grass';
+  if (s.includes('carpet')) return 'Carpet';
+  if (s.includes('hard') || s.includes('indoor')) return 'Hard';
+  return null;
+}
+
+// Heuristique mots-clés — couvre les cas où le nom du flux ≠ nom Sackmann
+// (ex: "Internazionali BNL d'Italia" = Rome = Clay) et la surface par défaut
+// d'une swing. Dernier recours seulement.
+const _TENNIS_SURFACE_KEYWORDS = [
+  ['Clay', ['roland garros', 'french open', 'internazionali', ' rome', 'madrid', 'monte carlo', 'monte-carlo', 'montecarlo', 'hamburg', 'barcelona', 'estoril', 'munich', 'bastad', 'gstaad', 'kitzbuhel', 'umag', 'bucharest', 'geneva', 'lyon', 'cordoba', 'buenos aires', ' rio ', 'santiago', 'houston', 'marrakech', 'oeiras', 'bordeaux', 'roma', 'clarins', 'parma', 'saint-malo', 'saint malo', 'iasi', 'florence', 'turin clay']],
+  ['Grass', ['wimbledon', 'halle', 'queen', 'hertogenbosch', 'eastbourne', 'newport', 'mallorca', 'bad homburg', ' berlin', 'birmingham', 'nottingham', 'stuttgart open', 'libema']],
+  ['Carpet', ['carpet']],
+];
+
+function _surfaceFromKeywords(name) {
+  const s = ' ' + String(name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '') + ' ';
+  for (const [surf, kws] of _TENNIS_SURFACE_KEYWORDS) {
+    for (const kw of kws) { if (s.includes(kw)) return surf; }
+  }
+  return null;
+}
+
+// Index Sackmann (tennis_matches local) : nom tournoi normalisé → surface la
+// plus récente. Source primaire fiable, 0 réseau.
+function _buildSackmannSurfaceIndex() {
+  const map = new Map();
+  let rows;
+  try {
+    rows = sqldb.prepare(`
+      SELECT tourney_name AS name, surface, MAX(tourney_date) AS d
+      FROM tennis_matches
+      WHERE tourney_name IS NOT NULL AND surface IS NOT NULL
+      GROUP BY LOWER(tourney_name)
+    `).all();
+  } catch (_) { return map; }
+  for (const r of rows) {
+    const surf = _mapSurfaceToElo(r.surface);
+    if (!surf) continue;
+    const n = _normTournName(r.name);
+    if (n) map.set(n, surf);
+  }
+  return map;
+}
+
+// Index fusionné Sackmann (primaire) + calendrier TE (secondaire). Caché 24h.
+async function _buildTennisSurfaceIndex() {
+  if (_texSurfaceIndex.map && Date.now() - _texSurfaceIndex.ts < TEX_SURFACE_INDEX_TTL_MS) {
+    return _texSurfaceIndex.map;
+  }
+  const map = _buildSackmannSurfaceIndex();
+  for (const tour of ['atp', 'wta']) {
+    try {
+      const cal = await fetchTexCalendar(tour);
+      for (const t of (cal.tournaments || [])) {
+        const surf = _mapSurfaceToElo(t.surface);
+        if (!surf) continue;
+        for (const key of [t.short, t.name]) {
+          const n = _normTournName(key);
+          if (n && !map.has(n)) map.set(n, surf); // Sackmann a priorité
+        }
+      }
+    } catch (_) { /* calendrier TE indisponible */ }
+  }
+  if (map.size > 0) { _texSurfaceIndex.map = map; _texSurfaceIndex.ts = Date.now(); }
+  return map;
+}
+
+// Résout la surface d'un match depuis le nom de tournoi. Ordre : exact →
+// fuzzy (index Sackmann+TE) → heuristique mots-clés. Renvoie une valeur de
+// TENNIS_ELO_SURFACES ou null.
+async function resolveTennisSurface(tournamentName) {
+  if (!tournamentName) return null;
+  let idx;
+  try { idx = await _buildTennisSurfaceIndex(); } catch (_) { idx = null; }
+  const target = _normTournName(tournamentName);
+  if (idx && idx.size > 0 && target) {
+    if (idx.has(target)) return { surface: idx.get(target), source: 'sackmann_tex' };
+    for (const [n, surf] of idx.entries()) {
+      if (n.length >= 5 && (target.includes(n) || n.includes(target))) {
+        return { surface: surf, source: 'sackmann_tex_fuzzy' };
+      }
+    }
+  }
+  const kw = _surfaceFromKeywords(tournamentName);
+  return kw ? { surface: kw, source: 'keyword' } : null;
 }
 
 async function fetchTexPlayer(slug) {
@@ -14442,7 +15116,7 @@ if (tvChannelMatch && req.method === 'GET') {
   const id = decodeURIComponent(tvChannelMatch[1]);
   const country = (query.country || 'FR').toUpperCase();
   const force = query.force === '1';
-  const cacheKey = `tv_${id}_${country}_v7`; // v7 = résolveur logo (marque par mot-clé) — invalide payloads logo:null en cache ; v6 = Phase 1 extended 60+ ligues fallback
+  const cacheKey = `tv_${id}_${country}_v8`; // v8 = fallback favicon domaine (beIN/RMC/Ligue1+/L'Équipe…) — invalide payloads logo:null ; v7 = résolveur marque mot-clé ; v6 = Phase 1 extended
   const cached = !force ? apiCacheGet(cacheKey) : null;
   if (cached) return jsonResponse(res, 200, { ...cached, _cached: true });
 
@@ -15786,15 +16460,33 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
   let rows = buildRows();
   let refetched = false;
 
-  // On-demand fetch si vide — rate-limited à 60s par ligue
-  if (!rows.length) {
+  // Ligues ESPN (J-League…) : source autoritaire saison en cours. On rafraîchit
+  // même si des lignes existent quand elles ne proviennent pas d'ESPN (lignes
+  // API-Football périmées d'une saison terminée).
+  const espnSlug = ESPN_STANDINGS_SLUG[configId];
+  const stale = espnSlug && rows.length && rows.some(r => r._source !== 'espn');
+
+  // On-demand fetch si vide OU périmé — rate-limited à 60s par ligue
+  if (!rows.length || stale) {
     db._standingsRefetchTs = db._standingsRefetchTs || {};
     const last = db._standingsRefetchTs[configId] || 0;
-    const bsdId = BSD_CONFIG_TO_BSD[String(configId)];
-    if (bsdId && BSD_API_KEY && (Date.now() - last) > 60_000) {
+    if ((Date.now() - last) > 60_000) {
       db._standingsRefetchTs[configId] = Date.now();
       try {
-        const teams = await fetchBSDStandings(bsdId, configId);
+        let teams = null;
+        if (espnSlug) {
+          teams = await fetchESPNStandings(espnSlug, configId);
+          if (teams && Object.keys(teams).length) {
+            // Purge lignes périmées (autre source / saison terminée)
+            for (const k of Object.keys(db.teamStats)) {
+              if (db.teamStats[k]?.leagueId === configId) delete db.teamStats[k];
+            }
+          }
+        }
+        if (!teams || !Object.keys(teams).length) {
+          const bsdId = BSD_CONFIG_TO_BSD[String(configId)];
+          if (bsdId && BSD_API_KEY) teams = await fetchBSDStandings(bsdId, configId);
+        }
         if (teams && Object.keys(teams).length) {
           Object.assign(db.teamStats, teams);
           db.statsUpdateByLeague[configId] = new Date().toISOString();
@@ -15837,10 +16529,240 @@ function _extractBsdMatchesList(body) {
   return [];
 }
 
+// ─── P0-5 — Log-diff : rang implicite Elo vs rang officiel ──────────────────
+// Edge direct : les books pricent souvent au rang ATP/WTA. Si l'Elo classe un
+// joueur bien mieux que son rang officiel → le book le sous-cote. 100 % local.
+const _TENNIS_RANK_TTL_MS = 6 * 3600 * 1000;
+const _tennisRankIndex = { ts: 0, byTour: null };
+
+function _buildTennisRankIndex() {
+  if (_tennisRankIndex.byTour && Date.now() - _tennisRankIndex.ts < _TENNIS_RANK_TTL_MS) {
+    return _tennisRankIndex.byTour;
+  }
+  const byTour = {}; // tour → { eloPos:Map(lname→pos), official:Map(lname→{rank,d}) }
+  for (const tour of ['ATP', 'WTA']) {
+    const eloPos = new Map();
+    const official = new Map();
+    try {
+      // Rang Elo restreint aux joueurs actifs (≈ 14 derniers mois) pour être
+      // comparable à l'échelle du rang officiel courant (sinon les milliers de
+      // joueurs historiques faussent la position).
+      const cD = new Date(Date.now() - 425 * 86400000);
+      const cutoffYmd = cD.getUTCFullYear() * 10000 + (cD.getUTCMonth() + 1) * 100 + cD.getUTCDate();
+      const eloRows = sqldb.prepare(
+        `SELECT player_name FROM tennis_elo
+         WHERE tour = ? AND surface = 'ALL'
+           AND last_match_date IS NOT NULL AND last_match_date >= ?
+         ORDER BY elo DESC`
+      ).all(tour, cutoffYmd);
+      eloRows.forEach((r, i) => {
+        if (r.player_name) eloPos.set(r.player_name.toLowerCase(), i + 1);
+      });
+      for (const side of ['winner', 'loser']) {
+        const rows = sqldb.prepare(
+          `SELECT LOWER(${side}_name) AS n, ${side}_rank AS rank, MAX(tourney_date) AS d
+           FROM tennis_matches
+           WHERE tour = ? AND ${side}_rank IS NOT NULL AND ${side}_name IS NOT NULL
+           GROUP BY LOWER(${side}_name)`
+        ).all(tour);
+        for (const r of rows) {
+          const prev = official.get(r.n);
+          if (!prev || (r.d || 0) > prev.d) official.set(r.n, { rank: r.rank, d: r.d || 0 });
+        }
+      }
+    } catch (_) { /* tables absentes — log-diff restera null */ }
+    byTour[tour] = { eloPos, official };
+  }
+  _tennisRankIndex.byTour = byTour;
+  _tennisRankIndex.ts = Date.now();
+  return byTour;
+}
+
+// log_diff > 0 → Elo classe le joueur mieux que son rang officiel (value).
+function tennisLogDiff(playerName, tour) {
+  if (!playerName || !tour) return null;
+  const T = String(tour).toUpperCase();
+  const idx = _buildTennisRankIndex()[T];
+  if (!idx) return null;
+  const ln = playerName.trim().toLowerCase();
+  const eloRank = idx.eloPos.get(ln);
+  const off = idx.official.get(ln);
+  if (!eloRank || !off || !off.rank) return null;
+  return {
+    elo_rank: eloRank,
+    official_rank: off.rank,
+    log_diff: parseFloat((Math.log(off.rank) - Math.log(eloRank)).toFixed(3)),
+  };
+}
+
+// ─── P1-3 — Surface Speed Index (méthodo Tennis Abstract) ───────────────────
+// Vitesse d'un tournoi = taux d'aces du tournoi rapporté à la moyenne de sa
+// surface. > 100 = plus rapide (plus d'aces → avantage serveur). 100 % local.
+// v1 : normalisation surface (l'ajustement serveur/retourneur individuel est
+// une raffinement P1-3.1). Consommé par le modèle point-par-point P1-1.
+const _TENNIS_SPEED_TTL_MS = 24 * 3600 * 1000;
+const _tennisSpeedIndex = { ts: 0, byTourney: null };
+
+function _buildSurfaceSpeedIndex() {
+  if (_tennisSpeedIndex.byTourney && Date.now() - _tennisSpeedIndex.ts < _TENNIS_SPEED_TTL_MS) {
+    return _tennisSpeedIndex.byTourney;
+  }
+  const byTourney = new Map(); // normTourneyName → { index, surface, samples }
+  try {
+    const surfAvg = {};
+    for (const r of sqldb.prepare(
+      `SELECT surface,
+              SUM(COALESCE(w_ace,0)+COALESCE(l_ace,0)) AS aces,
+              SUM(COALESCE(w_svpt,0)+COALESCE(l_svpt,0)) AS svpt
+       FROM tennis_matches
+       WHERE surface IS NOT NULL AND w_svpt IS NOT NULL
+       GROUP BY surface`).all()) {
+      if (r.svpt > 0) surfAvg[r.surface] = r.aces / r.svpt;
+    }
+    const rows = sqldb.prepare(
+      `SELECT tourney_name AS name, surface,
+              SUM(COALESCE(w_ace,0)+COALESCE(l_ace,0)) AS aces,
+              SUM(COALESCE(w_svpt,0)+COALESCE(l_svpt,0)) AS svpt,
+              COUNT(*) AS n
+       FROM tennis_matches
+       WHERE tourney_name IS NOT NULL AND surface IS NOT NULL AND w_svpt IS NOT NULL
+       GROUP BY LOWER(tourney_name), surface
+       HAVING svpt > 800`).all();
+    for (const r of rows) {
+      const base = surfAvg[r.surface];
+      if (!base || base <= 0 || !r.svpt) continue;
+      const idx = Math.round(100 * (r.aces / r.svpt) / base);
+      const key = _normTournName(r.name);
+      if (!key) continue;
+      const prev = byTourney.get(key);
+      if (!prev || r.n > prev.samples) {
+        byTourney.set(key, { index: idx, surface: _mapSurfaceToElo(r.surface), samples: r.n });
+      }
+    }
+  } catch (_) { /* tennis_matches absent — speed index indisponible */ }
+  _tennisSpeedIndex.byTourney = byTourney;
+  _tennisSpeedIndex.ts = Date.now();
+  return byTourney;
+}
+
+// Renvoie { index, surface, samples } ou null. index 100 = vitesse moyenne
+// de la surface ; > 100 rapide (boost serveur), < 100 lent.
+function getTennisSurfaceSpeed(tournamentName) {
+  if (!tournamentName) return null;
+  const idx = _buildSurfaceSpeedIndex();
+  if (!idx || idx.size === 0) return null;
+  const t = _normTournName(tournamentName);
+  if (!t) return null;
+  if (idx.has(t)) return idx.get(t);
+  for (const [n, v] of idx.entries()) {
+    if (n.length >= 5 && (t.includes(n) || n.includes(t))) return v;
+  }
+  return null;
+}
+
+// ─── P1-4 — Fatigue & contexte joueur ──────────────────────────────────────
+// Depuis tennis_matches (Sackmann peut accuser un léger retard) : charge des
+// derniers matchs + rust + abandons récents → drapeaux anti-piège. 100 % local.
+const _TENNIS_FATIGUE_TTL_MS = 12 * 3600 * 1000;
+const _tennisFatigueCache = new Map();
+
+function _ymdDaysAgo(ymd) {
+  const d = _ymdToDays(ymd);
+  if (d == null) return null;
+  return Math.floor(Date.now() / 86400000) - d;
+}
+
+function computePlayerFatigue(playerName, tour) {
+  if (!playerName || !tour) return null;
+  const ck = `FAT|${tour}|${playerName.toLowerCase()}`;
+  const cached = _tennisFatigueCache.get(ck);
+  if (cached && Date.now() - cached.ts < _TENNIS_FATIGUE_TTL_MS) return cached.v;
+  let v = null;
+  try {
+    const rows = sqldb.prepare(`
+      SELECT tourney_date AS d, minutes, score,
+        CASE WHEN LOWER(winner_name)=LOWER(?) THEN 1 ELSE 0 END AS won
+      FROM tennis_matches
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?)) AND tour=?
+      ORDER BY tourney_date DESC, match_num DESC LIMIT 12
+    `).all(playerName, playerName, playerName, tour);
+    if (rows.length) {
+      const lastD = rows[0].d;
+      const daysSince = _ymdDaysAgo(lastD);
+      const lastDdays = _ymdToDays(lastD);
+      let min14 = 0, m14 = 0, min5 = 0;
+      let recentRet = false;
+      rows.forEach((r, i) => {
+        const rd = _ymdToDays(r.d);
+        if (lastDdays != null && rd != null && (lastDdays - rd) <= 14) {
+          min14 += r.minutes || 0; m14++;
+        }
+        if (i < 5) {
+          min5 += r.minutes || 0;
+          if (r.score && /RET|W\/O|DEF|ABN/i.test(r.score)) recentRet = true;
+        }
+      });
+      const flags = [];
+      if (daysSince != null && daysSince > 60) flags.push('rust');       // longue inactivité
+      if (recentRet) flags.push('recent_ret');                            // abandon récent (blessure)
+      if (m14 >= 5 || min14 >= 600) flags.push('heavy_load');             // surcharge calendrier
+      v = {
+        days_since_last: daysSince,
+        matches_14d: m14,
+        minutes_14d: min14,
+        minutes_last5: min5,
+        recent_ret: recentRet,
+        risk_flags: flags,
+      };
+    }
+  } catch (_) { v = null; }
+  _tennisFatigueCache.set(ck, { ts: Date.now(), v });
+  return v;
+}
+
 // Construit la liste enrichie value-bets tennis :
 // BSD matches scheduled  +  The Odds API h2h  →  devig 2-way  →  EV%  →  best_edge.
 // Fallback ESPN si BSD désactivé ou en erreur (mode dégradé, sans surface ni rank).
-async function buildTennisValueBets({ date }) {
+// Cache du body assemblé : le build cold = ~20 s (420 matchs × helpers
+// Elo/RPW/fatigue/logdiff). Sans ce cache le front time-out → "Erreur de
+// chargement". Warm au boot. TTL court (cotes fraîches).
+const _TENNIS_VB_TTL_MS = 4 * 60 * 1000;
+// ⚠ Ces déclarations vivent dans la closure requête (ré-évaluées par appel).
+// Singleton via globalThis pour persister le cache sur la vie du process.
+const _tnsVBState = (globalThis.__tnsVBState ||= { cache: new Map(), rebuilding: new Set() });
+const _tennisVBCache = _tnsVBState.cache;
+const _tennisVBRebuilding = _tnsVBState.rebuilding;
+
+// Wrapper stale-while-revalidate : le build cold = ~15-20 s (420 matchs ×
+// helpers Elo/RPW/fatigue/logdiff). On sert toujours le cache (même périmé)
+// instantanément + rebuild en arrière-plan. Seul le tout 1er appel (sans
+// cache) est lent → couvert par le warm-up au boot. Évite le timeout UI.
+async function buildTennisValueBets(opts = {}) {
+  const dateClean = opts.date ? String(opts.date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
+  const key = dateClean || 'today';
+  const hit = _tennisVBCache.get(key);
+  if (hit && Date.now() - hit.ts < _TENNIS_VB_TTL_MS) return hit.result;
+  if (hit) {
+    // Périmé : sert le stale tout de suite, rebuild en tâche de fond.
+    if (!_tennisVBRebuilding.has(key)) {
+      _tennisVBRebuilding.add(key);
+      _buildTennisValueBetsCore(opts)
+        .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
+        .catch(e => console.warn('  [TennisVB] rebuild bg échec:', e.message))
+        .finally(() => _tennisVBRebuilding.delete(key));
+    }
+    return hit.result;
+  }
+  // Aucun cache (1er appel / boot warm) : build synchrone.
+  const r = await _buildTennisValueBetsCore(opts);
+  if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r });
+  return r;
+}
+// Pont scope : le warm-up boot (_sackmannBootSync IIFE) ne voit pas cette
+// closure → on expose la fn via globalThis pour le warm-up.
+try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */ }
+
+async function _buildTennisValueBetsCore({ date }) {
   const dateClean = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   let bsdMatches = [];
   let matchSource = 'bsd';
@@ -15946,13 +16868,25 @@ async function buildTennisValueBets({ date }) {
 
     // ── T5 : Predictions Elo + BSD blend + EV model ────────────────────────
     const tourGuess = (m.tour && ['ATP', 'WTA'].includes(String(m.tour).toUpperCase())) ? String(m.tour).toUpperCase() : null;
-    const surfaceClean = (m.surface && TENNIS_ELO_SURFACES.includes(m.surface)) ? m.surface : null;
+    let surfaceClean = (m.surface && TENNIS_ELO_SURFACES.includes(m.surface)) ? m.surface : null;
+    let surfaceSource = surfaceClean ? matchSource : null;
+    if (!surfaceClean && m.tournament) {
+      const resolved = await resolveTennisSurface(m.tournament);
+      if (resolved && TENNIS_ELO_SURFACES.includes(resolved.surface)) {
+        surfaceClean = resolved.surface;
+        surfaceSource = resolved.source;
+      }
+    }
     let eloProb = null;
     let setProbs = null;
+    let setModel = null;
+    const _surfSpeed = getTennisSurfaceSpeed(m.tournament);
     if (tourGuess) {
       eloProb = _tennisLookupEloPair(p1Name, p2Name, tourGuess, surfaceClean);
-      // ── T8 : Markov set probabilities (P 2-0 / 2-1 / 0-2 / 1-2) ─────────
-      setProbs = computeTennisMarkovSetProbs(p1Name, p2Name, tourGuess, surfaceClean);
+      // ── P1-1 : Markov serve/return v2 + marchés dérivés jeux ───────────
+      setProbs = computeTennisMarkovSetProbs(p1Name, p2Name, tourGuess, surfaceClean, _surfSpeed);
+      // ── set_profile_v1 : modèle 1er/2e set (profils + transition + fatigue) ─
+      setModel = computeTennisSetModel(p1Name, p2Name, tourGuess, surfaceClean, setProbs);
     }
     // BSD prediction left null in list view (N+1 fetch impractical). Detail route
     // /api/v1/tennis/predictions/{id} expose BSD per-match; UI peut fetch puis re-blend.
@@ -15975,7 +16909,8 @@ async function buildTennisValueBets({ date }) {
     enriched.push({
       id: m.id,
       tournament: m.tournament || null,
-      surface: m.surface || null,
+      surface: surfaceClean || m.surface || null,
+      surface_source: surfaceSource,
       court: m.court || null,
       tour: m.tour || null,
       round: m.round || null,
@@ -15995,6 +16930,16 @@ async function buildTennisValueBets({ date }) {
         blended,
         set_probs: setProbs,
       },
+      log_diff: tourGuess ? {
+        p1: tennisLogDiff(p1Name, tourGuess),
+        p2: tennisLogDiff(p2Name, tourGuess),
+      } : null,
+      surface_speed: getTennisSurfaceSpeed(m.tournament),
+      fatigue: tourGuess ? {
+        p1: computePlayerFatigue(p1Name, tourGuess),
+        p2: computePlayerFatigue(p2Name, tourGuess),
+      } : null,
+      set_model: setModel,
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: eloProb ? 'elo' : null },
@@ -16013,8 +16958,77 @@ async function buildTennisValueBets({ date }) {
         bsd_enabled: BSD_TENNIS_ENABLED,
         odds_api_enabled: !!ODDS_API_KEY,
         devig_method: 'shin-hurley',
+        built_ts: Date.now(),
       },
     },
+  };
+}
+
+// ─── P0-1 — Objet tennisMatch canonique (miroir de l'objet match football) ──
+// Aplatit l'objet enrichi buildTennisValueBets en un schéma stable et
+// table-friendly consommé par l'onglet Tennis consolidé (P0-2).
+function _tennisConfidence(eloProb) {
+  if (!eloProb) return { tier: 'none', score: 0 };
+  const mn = Math.min(eloProb.p1_matches || 0, eloProb.p2_matches || 0);
+  if (mn >= 40) return { tier: 'high', score: 90 };
+  if (mn >= 15) return { tier: 'medium', score: 65 };
+  if (mn >= 5) return { tier: 'low', score: 40 };
+  return { tier: 'sparse', score: 20 };
+}
+
+function toCanonicalTennisMatch(e) {
+  const elo = (e.predictions && e.predictions.elo) || null;
+  const blended = (e.predictions && e.predictions.blended) || null;
+  const pModel = blended
+    ? { p1: blended.p1, p2: blended.p2, method: blended.method }
+    : (elo ? { p1: elo.p1, p2: elo.p2, method: elo.method } : null);
+  const p1 = e.player1 || {};
+  const p2 = e.player2 || {};
+  const rnd = (o) => (o && Number.isFinite(o.elo) ? Math.round(o.elo) : null);
+  return {
+    id: e.id,
+    tour: e.tour || null,
+    tournament: e.tournament || null,
+    round: e.round || null,
+    surface: e.surface || null,
+    surface_source: e.surface_source || null,
+    start_time: e.start_time || null,
+    status: e.status || null,
+    players: {
+      p1: {
+        name: p1.name || null, country: p1.country || null, flag: p1.flag || null,
+        elo_all: elo ? rnd(elo.p1_all) : null,
+        elo_surface: elo ? rnd(elo.p1_surface) : null,
+        elo_matches: elo ? (elo.p1_matches || 0) : null,
+      },
+      p2: {
+        name: p2.name || null, country: p2.country || null, flag: p2.flag || null,
+        elo_all: elo ? rnd(elo.p2_all) : null,
+        elo_surface: elo ? rnd(elo.p2_surface) : null,
+        elo_matches: elo ? (elo.p2_matches || 0) : null,
+      },
+    },
+    model: pModel ? {
+      p1: pModel.p1, p2: pModel.p2, method: pModel.method,
+      set_probs: (e.predictions && e.predictions.set_probs) || null,
+    } : null,
+    market: e.odds ? {
+      p1_odds: e.odds.p1 && e.odds.p1.odds, p1_book: e.odds.p1 && e.odds.p1.book,
+      p2_odds: e.odds.p2 && e.odds.p2.odds, p2_book: e.odds.p2 && e.odds.p2.book,
+      fair: e.fair || null,
+    } : null,
+    value: {
+      edge: e.edge || null,
+      ev_model: e.ev_model || null,
+      best_market: e.best_edge || null,
+      best_model: e.best_ev_model || null,
+    },
+    confidence: _tennisConfidence(elo),
+    log_diff: e.log_diff || null,
+    surface_speed: e.surface_speed || null,
+    fatigue: e.fatigue || null,
+    set_model: e.set_model || null,
+    sources: e.sources || null,
   };
 }
 
@@ -16092,6 +17106,14 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
 if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
   const out = await buildTennisValueBets({ date: query.date });
   return jsonResponse(res, out.status, out.body);
+}
+// P0-1 — Onglet Tennis consolidé : objet canonique unique (miroir /api/v1/matches
+// football). Path /board pour ne pas collisionner le passthrough BSD brut /matches.
+if (pathname === '/api/v1/tennis/board' && req.method === 'GET') {
+  const out = await buildTennisValueBets({ date: query.date });
+  if (out.status !== 200) return jsonResponse(res, out.status, out.body);
+  const matches = (out.body.matches || []).map(toCanonicalTennisMatch);
+  return jsonResponse(res, 200, { count: matches.length, matches, meta: out.body.meta });
 }
 // AI-AL Tennis — analyse Gemini "Deep Data" formatée Telegram. Lookup match via buildTennisValueBets.
 if (pathname.startsWith('/api/v1/ai/tennis-analyze/') && req.method === 'GET') {
@@ -16670,6 +17692,31 @@ if (pathname === '/api/v1/tennis/backtest/last' && req.method === 'GET') {
   const last = getTennisBacktestLast();
   if (!last) return jsonResponse(res, 404, { error: 'no_backtest_yet', hint: 'POST /api/v1/tennis/backtest with admin JWT to launch' });
   return jsonResponse(res, 200, last);
+}
+// P1-2 — Accuracy tennis (miroir /api/v1/accuracy football). Public, read-only :
+// résumé calibration du dernier backtest walk-forward (Brier/log-loss/accuracy).
+if (pathname === '/api/v1/tennis/accuracy' && req.method === 'GET') {
+  const last = getTennisBacktestLast();
+  if (!last) {
+    return jsonResponse(res, 200, {
+      ready: false,
+      hint: 'Backtest pas encore exécuté — warm-up au boot ou POST admin /api/v1/tennis/backtest',
+    });
+  }
+  return jsonResponse(res, 200, {
+    ready: true,
+    accuracy: last.accuracy,
+    brier_score: last.brier_score,
+    log_loss: last.log_loss,
+    test_matches: last.test_matches,
+    by_surface: last.by_surface,
+    by_tour: last.by_tour,
+    method: last.method,
+    computed_at: last.ts,
+    // BSD désactivé → modèle = Elo seul (single source). Calibration des poids
+    // du blend non applicable tant qu'aucune 2e source (BSD) n'est active.
+    blend_calibration: 'n/a_single_source_elo_only',
+  });
 }
 // Tennis Markov set probs lookup — P(2-0/2-1/0-2/1-2) + holds + SPW.
 if (pathname === '/api/v1/tennis/markov/lookup' && req.method === 'GET') {
@@ -20047,6 +21094,27 @@ if (MATCHSTAT_ENABLED) {
         } else {
           console.log(`  [Elo] tennis_elo contient ${eloRow.n} ratings — skip boot compute.`);
         }
+        // P1-2 — Warm backtest accuracy si aucun résultat caché (différé pour
+        // ne pas allonger le boot ; ~5-10 s sur 25k matchs).
+        if (!getTennisBacktestLast()) {
+          setTimeout(() => {
+            try { console.log('  [Backtest] Warm-up tennis accuracy (aucun résultat caché)…'); backtestTennisStrategies({ years_back: 1 }); }
+            catch (e) { console.warn('  [Backtest] warm-up échec:', e.message); }
+          }, 15000);
+        }
+        // Warm le body value-bets (build cold ~20 s) pour que la 1ère requête
+        // utilisateur tape le cache, jamais le build froid → pas de timeout UI.
+        // buildTennisValueBets vit dans la closure requête (hors scope ici) →
+        // pont via globalThis (enregistré à sa définition).
+        setTimeout(() => {
+          try {
+            const warm = globalThis.__tennisVBWarm;
+            if (typeof warm !== 'function') { console.warn('  [TennisVB] warm indisponible (pont non prêt)'); return; }
+            console.log('  [TennisVB] Warm-up build value-bets…');
+            warm({}).then(() => console.log('  [TennisVB] ✓ cache chaud'))
+              .catch(e => console.warn('  [TennisVB] warm-up échec:', e.message));
+          } catch (e) { console.warn('  [TennisVB] warm-up exception:', e.message); }
+        }, 22000);
       } catch (e) {
         console.warn('  [Elo] boot compute check failed:', e.message);
       }
