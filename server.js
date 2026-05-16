@@ -15406,6 +15406,608 @@ async function _msResolvePlayerId(name, tour) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  PROGRAMMATIC SEO — Pages match dynamiques  /pronostic-{home}-vs-{away}-{id}
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Slug URL-safe : minuscules, sans accents, mots séparés par tirets.
+function seoSlug(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')   // accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')                          // non-alnum → tiret
+    .replace(/^-+|-+$/g, '')                              // trim tirets
+    .replace(/-{2,}/g, '-') || 'match';
+}
+
+// Échappement HTML (anti-injection : noms d'équipe / ligue dans le DOM).
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Retrouve un match (à venir OU archivé) par id pour le rendu SEO.
+function findMatchForSeo(id) {
+  if (!id) return null;
+  const pool = [...(db.matches || []), ...(db.archive_matches || [])];
+  return pool.find(m => String(m.id) === String(id)) || null;
+}
+
+// URL canonique d'une page match.
+function seoMatchUrl(m, origin) {
+  return `${origin}/pronostic-${seoSlug(m.home_team)}-vs-${seoSlug(m.away_team)}-${m.id}`;
+}
+
+// JSON-LD schema.org SportsEvent (injecté dans le <head>).
+function buildMatchJsonLd(m, canonical) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SportsEvent',
+    name: `${m.home_team} vs ${m.away_team}`,
+    sport: 'Soccer',
+    startDate: m.commence_time || undefined,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    url: canonical,
+    description: `Pronostic, statistiques data-science, xG et Power Score pour ${m.home_team} contre ${m.away_team}.`,
+    competitor: [
+      { '@type': 'SportsTeam', name: m.home_team },
+      { '@type': 'SportsTeam', name: m.away_team }
+    ],
+    superEvent: { '@type': 'SportsOrganization', name: m.league || 'Football' },
+    location: { '@type': 'Place', name: m.league || 'Stade' },
+    organizer: { '@type': 'Organization', name: 'PariScore', url: origin0() }
+  };
+}
+function origin0() { return 'https://pariscore.fr'; }
+
+// Détecte le sport d'un enregistrement match (tennis vs football).
+function seoDetectSport(m) {
+  const s = String(m.sport || m.tour || '').toLowerCase();
+  if (/tennis|atp|wta/.test(s) || m.player1 || m.player_1 || m.p1) return 'tennis';
+  return 'football';
+}
+
+// Génère l'article SEO rédactionnel (prose continue, >300 mots, HTML injectable).
+// Déterministe : aucune dépendance LLM, transforme le JSON en texte d'expert.
+function buildSeoArticleHtml(m) {
+  const sport = seoDetectSport(m);
+  const p = m.poisson || {};
+  const ps = m.power_score || {};
+  const be = m.best_edge || {};
+  const od = m.odds || {};
+  const eg = m.expectedGoals || {};
+  const co = m.live_corners || {};
+  const pct = v => (v == null || isNaN(v)) ? null : Math.round(Number(v));
+  const num = v => (v == null || isNaN(v)) ? null : Number(v).toFixed(2);
+
+  if (sport === 'tennis') {
+    const A = escHtml(m.player1 || m.player_1 || m.p1 || m.home_team || 'Joueur A');
+    const B = escHtml(m.player2 || m.player_2 || m.p2 || m.away_team || 'Joueur B');
+    const comp = escHtml(m.league || m.tournament || m.tour || 'ATP / WTA');
+    const surface = escHtml(m.surface || m.court_surface || 'la surface du tournoi');
+    const psA = num(ps.home ?? ps.p1 ?? 50), psB = num(ps.away ?? ps.p2 ?? 50);
+    const winA = pct(p.homeWin ?? p.p1Win), winB = pct(p.awayWin ?? p.p2Win);
+    const favTennis = (winA != null && winB != null)
+      ? (winA >= winB ? A : B) : ((Number(psA) >= Number(psB)) ? A : B);
+    const favProb = (winA != null && winB != null) ? Math.max(winA, winB) : null;
+    const tb = pct(p.tiebreak ?? p.tb);
+    const over3sets = pct(p.over3sets ?? p.sets3);
+    const valueLabel = be.label ? escHtml(be.label) : `victoire ${favTennis}`;
+    const valueOdds = num(be.odds), valueEdge = num(be.edge);
+    return `<p><strong>Introduction :</strong> Le choc <strong>${A}</strong> contre <strong>${B}</strong> en <strong>${comp}</strong> promet une bataille tendue où chaque jeu comptera. Avant le premier service, l'algorithme PariScore a passé au crible les statistiques approfondies de la rencontre — historique sur surface, ratio d'aces et tenue dans les moments clés. Voici notre <strong>pronostic tennis</strong> data-driven.</p>
+
+<h2>Analyse Sportive et Power Score PariScore</h2>
+<p>Notre <strong>analyse surface</strong> attribue un <strong>Power Score</strong> de <strong>${psA}</strong> à ${A} face à <strong>${psB}</strong> pour ${B}, un indicateur propriétaire qui pondère la forme récente, le rendement au service et l'efficacité en retour. Sur ${surface}, le style de jeu devient déterminant : un gros serveur tirera profit de points courts et d'un fort pourcentage d'aces, tandis qu'un joueur de fond de court cherchera à allonger les échanges pour user son adversaire. ${favTennis} aborde ce duel avec l'ascendant statistique${favProb != null ? `, notre modèle lui accordant près de <strong>${favProb}%</strong> de chances de l'emporter` : ''}, mais l'état de forme et la gestion de la pression en fin de set peuvent rebattre les cartes du <strong>pronostic tennis</strong>.</p>
+
+<h2>Prédictions Mathématiques et Statistiques Clés</h2>
+<p>Au-delà du simple vainqueur, notre <strong>prédiction algorithme</strong> éclaire les marchés annexes les plus rentables. Le modèle évalue à <strong>${over3sets != null ? over3sets + '%' : 'un niveau notable'}</strong> la probabilité d'un match basculant au-delà de deux sets, signe d'un rapport de force serré, et situe la probabilité de <strong>tie-break</strong> autour de <strong>${tb != null ? tb + '%' : 'la moyenne du circuit'}</strong>. Concrètement, le marché du <strong>nombre de jeux</strong> et les <strong>handicaps de jeux</strong> offrent une lecture plus fine que le simple money-line : une rencontre à fort taux de tenue de service tend à produire des sets accrochés et un total de jeux élevé, là où un écart de niveau marqué favorise un handicap sec. Ces <strong>statistiques avancées</strong> orientent directement notre sélection.</p>
+
+<h2>Notre Pronostic Expert et Value Bet</h2>
+<p>Le pari le plus sécurisé reste la <strong>victoire de ${favTennis}</strong>${favProb != null ? `, soutenue par une probabilité calculée de <strong>${favProb}%</strong>` : ''} : un choix prudent, idéal pour stabiliser une stratégie de mise. Le véritable <strong>value bet</strong> se niche toutefois sur le marché <strong>${valueLabel}</strong>${valueOdds ? ` à la cote de <strong>${valueOdds}</strong>` : ''}${valueEdge ? `, où la cote des bookmakers sous-estime la probabilité réelle estimée par notre <strong>Power Score</strong> (edge de ${valueEdge}%)` : ''}. C'est précisément cet écart entre probabilité de marché et probabilité réelle que le parieur averti doit exploiter pour générer du rendement sur le long terme.</p>`;
+  }
+
+  // ---------- FOOTBALL ----------
+  const A = escHtml(m.home_team || 'Équipe A');
+  const B = escHtml(m.away_team || 'Équipe B');
+  const comp = escHtml(m.league || 'Football');
+  const psA = num(ps.home ?? 50), psB = num(ps.away ?? 50);
+  const winH = pct(p.homeWin), winD = pct(p.draw), winA = pct(p.awayWin);
+  const over25 = pct(p.over25), btts = pct(p.btts), over15 = pct(p.over15);
+  const egH = num(eg.home), egA = num(eg.away);
+  const totalCorners = (co.home || 0) + (co.away || 0);
+  // Pari "safe" = marché à plus forte probabilité.
+  const candidates = [
+    { label: `victoire de ${A}`, prob: winH },
+    { label: 'match nul', prob: winD },
+    { label: `victoire de ${B}`, prob: winA },
+    { label: 'plus de 2,5 buts', prob: over25 },
+    { label: 'les deux équipes marquent', prob: btts }
+  ].filter(c => c.prob != null);
+  const ranked = candidates.sort((a, b) => b.prob - a.prob);
+  const safe = ranked[0] || { label: `victoire de ${A}`, prob: null };
+  const altValue = ranked[1] || safe;
+  const fav = (winH != null && winA != null) ? (winH >= winA ? A : B) : A;
+  const valueLabel = be.label ? escHtml(be.label) : escHtml(altValue.label);
+  const valueOdds = num(be.odds), valueEdge = num(be.edge), valueBk = be.bk ? escHtml(be.bk) : null;
+  const styleA = (Number(psA) >= Number(psB)) ? 'imposer son rythme et la possession' : 'jouer la transition rapide et le pressing';
+
+  return `<p><strong>Introduction :</strong> La rencontre entre <strong>${A}</strong> et <strong>${B}</strong> en <strong>${comp}</strong> s'annonce comme un rendez-vous clé de la journée. Avant le coup d'envoi, l'algorithme PariScore a analysé les statistiques approfondies de la rencontre — forme, <strong>xG</strong>, volume de <strong>corners</strong> et solidité défensive — pour livrer un <strong>pronostic foot</strong> argumenté et chiffré.</p>
+
+<h2>Analyse Sportive et Power Score PariScore</h2>
+<p>Notre <strong>analyse tactique</strong> attribue un <strong>Power Score</strong> de <strong>${psA}</strong> à ${A} contre <strong>${psB}</strong> pour ${B}. Cet indice propriétaire synthétise le différentiel d'<strong>xG</strong> (Expected Goals : ${egH != null ? egH : 'n.d.'} à domicile, ${egA != null ? egA : 'n.d.'} à l'extérieur), le rendement offensif et la discipline défensive. Le rapport de force penche ainsi du côté de ceux qui sauront ${styleA} : ${A} cherchera à dicter le tempo dans son antre quand ${B} tentera de verrouiller les espaces pour exploiter chaque contre-attaque. Ce duel de styles, plus que les noms, façonne la physionomie probable du match et nourrit l'ensemble de notre <strong>prédiction algorithme</strong>.</p>
+
+<h2>Prédictions Mathématiques et Statistiques Clés</h2>
+<p>Notre modèle prédictif indique une probabilité de <strong>${winH != null ? winH + '%' : 'n.d.'}</strong> de victoire pour ${A}, contre <strong>${winA != null ? winA + '%' : 'n.d.'}</strong> pour ${B} et <strong>${winD != null ? winD + '%' : 'n.d.'}</strong> de match nul. Sur le plan des <strong>buts</strong>, la probabilité de voir plus de 2,5 réalisations s'établit à <strong>${over25 != null ? over25 + '%' : 'n.d.'}</strong> et celle des deux équipes qui marquent à <strong>${btts != null ? btts + '%' : 'n.d.'}</strong>, esquissant ${over25 != null && over25 >= 55 ? 'une rencontre ouverte et prolifique' : 'un scénario plutôt fermé et tactique'}. La lecture des <strong>corners</strong> complète le tableau : le rythme offensif attendu${totalCorners ? ` (déjà ${totalCorners} corners cumulés en direct)` : ''} laisse présager une pression soutenue sur les ailes, marché souvent sous-coté par les bookmakers et donc riche en <strong>statistiques avancées</strong> exploitables.</p>
+
+<h2>Notre Pronostic Expert et Value Bet</h2>
+<p>Pour le parieur prudent, le pari le plus sûr est <strong>${escHtml(safe.label)}</strong>${safe.prob != null ? `, porté par une probabilité de <strong>${safe.prob}%</strong> issue de notre <strong>Power Score</strong>` : ''} : un socle fiable pour sécuriser le ticket. Le <strong>value bet</strong> du match se situe néanmoins sur le marché <strong>${valueLabel}</strong>${valueOdds ? ` à la cote de <strong>${valueOdds}</strong>${valueBk ? ` chez ${valueBk}` : ''}` : ''}. ${valueEdge ? `La cote proposée par les bookmakers sous-estime la probabilité réelle calculée par notre algorithme, dégageant un edge positif de <strong>${valueEdge}%</strong>` : 'Notre algorithme y détecte une inefficacité de marché exploitable'} : c'est ce différentiel de valeur, et non l'intuition, qui construit la rentabilité sur la durée. Misez avec méthode, jamais avec l'émotion.</p>`;
+}
+
+// Génère la page HTML complète optimisée SEO d'un match.
+function renderMatchSeoPage(m, origin) {
+  const home = escHtml(m.home_team), away = escHtml(m.away_team);
+  const league = escHtml(m.league || 'Football');
+  const canonical = seoMatchUrl(m, origin);
+  const p = m.poisson || {};
+  const eg = m.expectedGoals || {};
+  const ps = m.power_score || {};
+  const be = m.best_edge || {};
+  const od = m.odds || {};
+  const co = m.live_corners || {};
+  const dateLabel = m.commence_time
+    ? new Date(m.commence_time).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })
+    : 'date à confirmer';
+  const pct = v => (v == null || isNaN(v)) ? '—' : `${Math.round(v)} %`;
+  const num = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(2);
+
+  const _clamp = (s, n) => { s = String(s || ''); return s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…'; };
+  const title = _clamp(`Pronostic ${m.home_team} vs ${m.away_team} - PariScore`, 60);
+  const desc = _clamp(`Pronostic ${m.home_team} vs ${m.away_team} : analyse data-science, xG, Power Score et value bet par l'algorithme PariScore.`, 155);
+  const jsonLd = JSON.stringify(buildMatchJsonLd(m, canonical));
+  const breadcrumbLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${origin}/` },
+      { '@type': 'ListItem', position: 2, name: m.league || 'Football', item: m.league ? `${origin}/pronostics/${seoSlug(m.league)}` : `${origin}/pronostics` },
+      { '@type': 'ListItem', position: 3, name: `${m.home_team} vs ${m.away_team}`, item: canonical }
+    ]
+  });
+
+  // FAQ schema — questions naturelles indexables (rich result + requêtes vocales).
+  const _r = v => (v == null || isNaN(v)) ? null : Math.round(Number(v));
+  const _fav = (_r(p.homeWin) != null && _r(p.awayWin) != null)
+    ? (_r(p.homeWin) >= _r(p.awayWin) ? m.home_team : m.away_team) : m.home_team;
+  const _favP = (_r(p.homeWin) != null && _r(p.awayWin) != null)
+    ? Math.max(_r(p.homeWin), _r(p.awayWin)) : null;
+  const faqQA = [
+    {
+      q: `Qui va gagner entre ${m.home_team} et ${m.away_team} ?`,
+      a: `Selon l'algorithme PariScore, ${_fav} est favori${_favP != null ? ` avec environ ${_favP}% de probabilité de victoire` : ''}. Probabilités : ${m.home_team} ${_r(p.homeWin) ?? '–'}%, nul ${_r(p.draw) ?? '–'}%, ${m.away_team} ${_r(p.awayWin) ?? '–'}%.`
+    },
+    {
+      q: `Y aura-t-il plus de 2,5 buts dans ${m.home_team} - ${m.away_team} ?`,
+      a: `Notre modèle de Poisson estime la probabilité de plus de 2,5 buts à ${_r(p.over25) ?? '–'}% et celle des deux équipes qui marquent (BTTS) à ${_r(p.btts) ?? '–'}%.`
+    },
+    {
+      q: `Quel est le meilleur pari (value bet) sur ce match ?`,
+      a: be.label
+        ? `Le value bet détecté est « ${be.label} »${be.odds ? ` à la cote de ${Number(be.odds).toFixed(2)}` : ''}${be.edge ? `, avec un edge positif de ${Number(be.edge).toFixed(1)}%` : ''} d'après le Power Score PariScore.`
+        : `Le pari le plus probable statistiquement est la victoire de ${_fav}. Aucune inefficacité de marché majeure n'est détectée sur ce match.`
+    }
+  ];
+  const faqLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqQA.map(x => ({
+      '@type': 'Question', name: x.q,
+      acceptedAnswer: { '@type': 'Answer', text: x.a }
+    }))
+  });
+
+  // Maillage interne : 3 autres matchs de la même compétition.
+  const siblings = (db.matches || [])
+    .filter(x => x.league === m.league && String(x.id) !== String(m.id))
+    .slice(0, 3);
+  const siblingLinks = siblings.length
+    ? siblings.map(s =>
+        `<li><a href="${seoMatchUrl(s, origin).replace(origin, '')}">` +
+        `${escHtml(s.home_team)} vs ${escHtml(s.away_team)}</a></li>`).join('')
+    : '<li><a href="/">Tous les matchs analysés</a></li>';
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="${escHtml(canonical)}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="${escHtml(title)}">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:url" content="${escHtml(canonical)}">
+<meta name="robots" content="index,follow">
+<script type="application/ld+json">${jsonLd}</script>
+<script type="application/ld+json">${breadcrumbLd}</script>
+<script type="application/ld+json">${faqLd}</script>
+<style>
+:root{--bg:#0a0d0f;--bg2:#111417;--green:#00e676;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',system-ui,sans-serif;line-height:1.6}
+.wrap{max-width:840px;margin:0 auto;padding:32px 20px}
+h1{font-size:1.9rem;margin:0 0 6px}h2{color:var(--blue);font-size:1.25rem;margin:32px 0 12px;border-bottom:1px solid #1e2328;padding-bottom:6px}
+.meta{color:var(--text2);font-size:.95rem;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--bg2);border:1px solid #1e2328;border-radius:10px;padding:14px}
+.card .k{color:var(--text2);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.card .v{font-size:1.4rem;font-weight:700;font-family:'DM Mono',monospace;margin-top:4px}
+.green{color:var(--green)}a{color:var(--blue)}
+.bc{font-size:.82rem;color:var(--text2);margin-bottom:10px}.bc a{text-decoration:none}.bc span{color:var(--text)}
+ul.silo{list-style:none;padding:0}ul.silo li{margin:6px 0}
+.cta{display:inline-block;margin-top:20px;background:var(--green);color:#04110a;font-weight:700;padding:11px 20px;border-radius:8px;text-decoration:none}
+footer{margin-top:40px;color:var(--text2);font-size:.85rem;border-top:1px solid #1e2328;padding-top:16px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Fil d'Ariane" class="bc"><a href="/">Accueil</a> › <a href="/pronostics">Pronostics</a> › <a href="${m.league ? '/pronostics/' + seoSlug(m.league) : '/pronostics'}">${league}</a> › <span>${home} vs ${away}</span></nav>
+<p class="meta">${league} · ${escHtml(dateLabel)}</p>
+<h1>Pronostic et Statistiques : ${home} contre ${away}</h1>
+${buildSeoArticleHtml(m)}
+
+<h2>Données chiffrées du match</h2>
+<div class="grid">
+  <div class="card"><div class="k">Power Score ${home}</div><div class="v green">${num(ps.home ?? 50)}</div></div>
+  <div class="card"><div class="k">Power Score ${away}</div><div class="v">${num(ps.away ?? 50)}</div></div>
+  <div class="card"><div class="k">xG ${home}</div><div class="v">${num(eg.home)}</div></div>
+  <div class="card"><div class="k">xG ${away}</div><div class="v">${num(eg.away)}</div></div>
+  <div class="card"><div class="k">Victoire ${home}</div><div class="v">${pct(p.homeWin)}</div></div>
+  <div class="card"><div class="k">Match nul</div><div class="v">${pct(p.draw)}</div></div>
+  <div class="card"><div class="k">Victoire ${away}</div><div class="v">${pct(p.awayWin)}</div></div>
+  <div class="card"><div class="k">Over 2.5 buts</div><div class="v">${pct(p.over25)}</div></div>
+  <div class="card"><div class="k">BTTS</div><div class="v">${pct(p.btts)}</div></div>
+  <div class="card"><div class="k">Corners (live)</div><div class="v">${(co.home||0)+(co.away||0)}</div></div>
+  <div class="card"><div class="k">Cotes 1 / N / 2</div><div class="v">${num(od.home)} · ${num(od.draw)} · ${num(od.away)}</div></div>
+  ${be.label ? `<div class="card"><div class="k">Best edge</div><div class="v green">${escHtml(be.label)} @ ${num(be.odds)}</div></div>` : ''}
+</div>
+
+<a class="cta" href="/?match=${encodeURIComponent(m.id)}">Voir l'analyse complète en temps réel →</a>
+
+<h2>Questions fréquentes</h2>
+${faqQA.map(x => `<h3>${escHtml(x.q)}</h3><p>${escHtml(x.a)}</p>`).join('\n')}
+
+<h2>Autres matchs de ${league}</h2>
+<ul class="silo">${siblingLinks}</ul>
+
+<footer>
+<p>PariScore — analyse data-science football. Les pronostics sont des estimations
+statistiques, pas des garanties. Jouez avec modération.</p>
+<p><a href="/">Accueil</a> · <a href="/pronostics">Tous les pronostics</a> · <a href="/guides">Guides paris</a></p>
+</footer>
+</main>
+</body>
+</html>`;
+}
+
+// Page pilier /pronostics — hub server-rendered, groupé par compétition.
+function renderPronosticsHubPage(origin) {
+  const pool = (db.matches || []).filter(m => m && m.id && m.home_team && m.away_team);
+  const byLeague = {};
+  for (const m of pool) {
+    const lg = m.league || 'Autres';
+    (byLeague[lg] = byLeague[lg] || []).push(m);
+  }
+  const leagues = Object.keys(byLeague).sort();
+  const canonical = `${origin}/pronostics`;
+  const total = pool.length;
+  const sections = leagues.map(lg => {
+    const items = byLeague[lg]
+      .sort((a, b) => new Date(a.commence_time || 0) - new Date(b.commence_time || 0))
+      .map(m => {
+        const d = m.commence_time
+          ? new Date(m.commence_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+          : '';
+        return `<li><a href="${seoMatchUrl(m, origin).replace(origin, '')}">` +
+          `${escHtml(m.home_team)} vs ${escHtml(m.away_team)}</a>` +
+          `${d ? ` <span class="d">${escHtml(d)}</span>` : ''}</li>`;
+      }).join('');
+    const lgUrl = `/pronostics/${seoSlug(lg)}`;
+    return `<section><h2><a href="${lgUrl}">${escHtml(lg)}</a></h2><ul class="hl">${items}</ul></section>`;
+  }).join('');
+  const itemList = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: 'Pronostics football & tennis', url: canonical,
+    description: 'Tous les pronostics PariScore analysés par algorithme.'
+  });
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pronostics Foot & Tennis du jour | Power Score - PariScore</title>
+<meta name="description" content="Tous les pronostics foot et tennis analysés par l'algorithme PariScore : Power Score, xG, value bets dévigés. ${total} matchs analysés.">
+<link rel="canonical" href="${escHtml(canonical)}">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Pronostics Foot & Tennis | PariScore">
+<meta property="og:url" content="${escHtml(canonical)}">
+<script type="application/ld+json">${itemList}</script>
+<style>
+:root{--bg:#0a0d0f;--bg2:#111417;--green:#00e676;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',system-ui,sans-serif;line-height:1.6}
+.wrap{max-width:880px;margin:0 auto;padding:32px 20px}
+h1{font-size:1.9rem;margin:0 0 6px}h2{color:var(--blue);font-size:1.2rem;margin:28px 0 10px;border-bottom:1px solid #1e2328;padding-bottom:6px}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+ul.hl{list-style:none;padding:0;margin:0}ul.hl li{margin:5px 0}
+.d{color:var(--text2);font-size:.82rem}
+.bc{font-size:.82rem;color:var(--text2);margin-bottom:10px}.bc span{color:var(--text)}
+.intro{color:var(--text2)}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Fil d'Ariane" class="bc"><a href="/">Accueil</a> › <span>Pronostics</span></nav>
+<h1>Pronostics Football & Tennis — Analyse Algorithmique</h1>
+<p class="intro">${total} matchs analysés par le <strong>Power Score</strong> PariScore :
+probabilités dévigées, Expected Goals (xG) et détection de <strong>value bets</strong>.
+Sélectionnez une rencontre pour le pronostic détaillé.</p>
+${sections || '<p>Aucun match disponible pour le moment. Revenez bientôt.</p>'}
+<footer style="margin-top:40px;color:var(--text2);font-size:.85rem;border-top:1px solid #1e2328;padding-top:16px">
+<p><a href="/">Accueil</a> · <a href="/guides">Guides paris</a> — Jouez avec modération.</p>
+</footer>
+</main>
+</body>
+</html>`;
+}
+
+// Tronque un titre proprement (coupe au mot, ellipse).
+function _clampTitle(s, n) {
+  s = String(s || '');
+  return s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…';
+}
+
+// Résout un slug de ligue vers son nom réel (scan db.matches).
+function resolveLeagueSlug(slug) {
+  const pool = (db.matches || []);
+  for (const m of pool) {
+    if (m && m.league && seoSlug(m.league) === slug) return m.league;
+  }
+  return null;
+}
+
+// Hub ligue dédié /pronostics/{slug} — siloing profond, capte requêtes ligue.
+function renderLeagueHubPage(origin, leagueName) {
+  const items = (db.matches || [])
+    .filter(m => m && m.id && m.home_team && m.away_team && m.league === leagueName)
+    .sort((a, b) => new Date(a.commence_time || 0) - new Date(b.commence_time || 0));
+  const slug = seoSlug(leagueName);
+  const canonical = `${origin}/pronostics/${slug}`;
+  const lg = escHtml(leagueName);
+  const list = items.map(m => {
+    const d = m.commence_time
+      ? new Date(m.commence_time).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+      : '';
+    return `<li><a href="${seoMatchUrl(m, origin).replace(origin, '')}">` +
+      `${escHtml(m.home_team)} vs ${escHtml(m.away_team)}</a>` +
+      `${d ? ` <span class="d">${escHtml(d)}</span>` : ''}</li>`;
+  }).join('');
+  const ld = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: `Pronostics ${leagueName}`, url: canonical,
+    description: `Tous les pronostics ${leagueName} analysés par l'algorithme PariScore.`
+  });
+  const bc = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${origin}/` },
+      { '@type': 'ListItem', position: 2, name: 'Pronostics', item: `${origin}/pronostics` },
+      { '@type': 'ListItem', position: 3, name: leagueName, item: canonical }
+    ]
+  });
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${_clampTitle(`Pronostics ${leagueName} - PariScore`, 60)}</title>
+<meta name="description" content="${escHtml(`Pronostics ${leagueName} : analyse data-science, Power Score, xG et value bets dévigés par l'algorithme PariScore. ${items.length} matchs analysés.`)}">
+<link rel="canonical" href="${escHtml(canonical)}">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${escHtml(`Pronostics ${leagueName} | PariScore`)}">
+<meta property="og:url" content="${escHtml(canonical)}">
+<script type="application/ld+json">${ld}</script>
+<script type="application/ld+json">${bc}</script>
+<style>
+:root{--bg:#0a0d0f;--green:#00e676;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',system-ui,sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:32px 20px}
+h1{font-size:1.8rem;margin:0 0 8px}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+ul.hl{list-style:none;padding:0;margin:18px 0}ul.hl li{margin:6px 0}.d{color:var(--text2);font-size:.82rem}
+.bc{font-size:.82rem;color:var(--text2);margin-bottom:10px}.bc span{color:var(--text)}.intro{color:var(--text2)}
+footer{margin-top:40px;color:var(--text2);font-size:.85rem;border-top:1px solid #1e2328;padding-top:16px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Fil d'Ariane" class="bc"><a href="/">Accueil</a> › <a href="/pronostics">Pronostics</a> › <span>${lg}</span></nav>
+<h1>Pronostics ${lg} — Analyse Algorithmique</h1>
+<p class="intro">${items.length} matchs de ${lg} analysés par le <strong>Power Score</strong> PariScore :
+probabilités dévigées, <strong>Expected Goals</strong> et détection de <strong>value bets</strong>.</p>
+<ul class="hl">${list || '<li>Aucun match ' + lg + ' disponible actuellement.</li>'}</ul>
+<footer><p><a href="/pronostics">← Tous les pronostics</a> · <a href="/guides">Guides paris</a> · <a href="/">Accueil</a> — Jouez avec modération.</p></footer>
+</main>
+</body>
+</html>`;
+}
+
+// Guides éditoriaux — pages piliers longue traîne (server-rendered).
+const SEO_GUIDES = {
+  'value-bet': {
+    title: "Value Bet : définition et méthode de calcul",
+    h1: "Qu'est-ce qu'un value bet et comment le détecter ?",
+    desc: "Value bet : définition, calcul de l'edge, dévigage des cotes et méthode PariScore pour parier avec un avantage mathématique sur les bookmakers.",
+    body: `<p>Un <strong>value bet</strong> (pari de valeur) est un pari dont la probabilité réelle de gain est supérieure à celle implicite dans la cote proposée par le bookmaker. Autrement dit, la cote est trop élevée par rapport au risque réel : sur le long terme, miser systématiquement sur ces situations dégage un rendement positif.</p>
+<h2>Le calcul de l'edge</h2>
+<p>La cote d'un bookmaker contient une marge (le « vig » ou « juice »). Pour estimer la vraie probabilité, on procède au <strong>dévigage</strong> : on retire cette marge des cotes pour obtenir des probabilités « fair ». L'edge se calcule alors ainsi : <em>edge = (cote × probabilité réelle) − 1</em>. Un edge positif signale un value bet exploitable.</p>
+<h2>La méthode PariScore</h2>
+<p>PariScore croise un modèle de Poisson dévigé, les Expected Goals (xG) et un <strong>Power Score</strong> propriétaire pour estimer la probabilité réelle de chaque issue, puis la compare aux meilleures cotes du marché. Quand l'écart dépasse un seuil, le pari est signalé comme value bet. Cette discipline statistique, et non l'intuition, construit la rentabilité sur la durée.</p>
+<p>Pour appliquer concrètement cette méthode, consultez nos <a href="/pronostics">pronostics du jour</a> où chaque value bet détecté est explicité, ainsi que notre guide sur le <a href="/guide/power-score">Power Score</a>.</p>`
+  },
+  'power-score': {
+    title: "Power Score PariScore : comment ça marche",
+    h1: "Le Power Score PariScore expliqué",
+    desc: "Power Score : indicateur propriétaire PariScore agrégeant xG, forme, corners et solidité défensive pour quantifier le rapport de force d'un match.",
+    body: `<p>Le <strong>Power Score</strong> est un indice propriétaire, noté sur une échelle centrée à 50, qui synthétise en un seul chiffre la force d'une équipe ou d'un joueur à l'instant du match.</p>
+<h2>Les composantes</h2>
+<p>Il agrège le différentiel d'<strong>Expected Goals</strong> (xG marqués vs concédés), le volume et la qualité des occasions, le rendement offensif et défensif récent, ainsi que des signaux contextuels comme la dynamique de forme. Un écart marqué entre les deux Power Scores traduit un déséquilibre tactique exploitable pour le pari.</p>
+<h2>Comment l'utiliser</h2>
+<p>Le Power Score ne remplace pas la probabilité : il l'éclaire. Couplé au modèle de Poisson et à la détection de <a href="/guide/value-bet">value bets</a>, il aide à distinguer un favori solide d'un favori fragile. Retrouvez-le sur chaque page de nos <a href="/pronostics">pronostics</a>.</p>`
+  },
+  'xg-explique': {
+    title: "Les Expected Goals (xG) expliqués simplement",
+    h1: "Expected Goals (xG) : comprendre la statistique reine",
+    desc: "Expected Goals (xG) : définition, interprétation et utilisation des xG pour analyser un match de football et affiner ses pronostics.",
+    body: `<p>Les <strong>Expected Goals</strong> (xG) mesurent la qualité des occasions créées : chaque tir reçoit une probabilité de finir au fond des filets selon sa position, l'angle, le type d'action. La somme des xG d'une équipe estime le nombre de buts qu'elle « aurait dû » marquer.</p>
+<h2>Pourquoi c'est crucial</h2>
+<p>Le score brut ment souvent : une équipe peut gagner 1-0 en ayant subi le jeu. Les xG révèlent la performance réelle et sont bien plus prédictifs que les résultats passés pour anticiper les matchs futurs. Une équipe qui surperforme nettement ses xG régresse statistiquement vers la moyenne.</p>
+<h2>xG et pronostics</h2>
+<p>PariScore intègre les xG dans son modèle de Poisson et son <a href="/guide/power-score">Power Score</a> pour estimer les probabilités de buts, de BTTS et d'over/under. Voyez l'application sur nos <a href="/pronostics">pronostics</a> et notre méthode <a href="/guide/value-bet">value bet</a>.</p>`
+  },
+  'critere-kelly': {
+    title: "Critère de Kelly : optimiser sa mise",
+    h1: "Le critère de Kelly pour gérer sa bankroll",
+    desc: "Critère de Kelly : formule de mise optimale selon l'edge et la cote, variantes Half/Quarter Kelly et gestion de bankroll pour parieur rationnel.",
+    body: `<p>Le <strong>critère de Kelly</strong> détermine la fraction optimale de bankroll à miser pour maximiser la croissance du capital sur le long terme, en fonction de l'avantage (edge) et de la cote.</p>
+<h2>La formule</h2>
+<p>Fraction de Kelly = <em>(cote × probabilité − 1) / (cote − 1)</em>. Plus l'edge est grand, plus la mise recommandée est élevée ; sans edge, Kelly recommande de ne pas miser.</p>
+<h2>Half / Quarter Kelly</h2>
+<p>Le Full Kelly est volatil. Les parieurs prudents appliquent un multiplicateur (Half = 0,5, Quarter = 0,25) pour lisser la variance, au prix d'une croissance plus lente. PariScore plafonne la mise suggérée et propose ces variantes dans le module « Mes Paris ».</p>
+<p>Kelly ne vaut que sur de vrais <a href="/guide/value-bet">value bets</a> : une probabilité fiable est indispensable. Appliquez-le sur nos <a href="/pronostics">pronostics</a>.</p>`
+  },
+  'btts-explique': {
+    title: "Pari BTTS (les deux équipes marquent) expliqué",
+    h1: "Le pari BTTS : définition, stratégie et statistiques",
+    desc: "Pari BTTS « les deux équipes marquent » : définition, comment l'analyser avec les xG et le modèle de Poisson, et quand il offre de la valeur.",
+    body: `<p>Le pari <strong>BTTS</strong> (Both Teams To Score, « les deux équipes marquent ») gagne si chaque équipe inscrit au moins un but, quel que soit le résultat final. Marché populaire car indépendant du vainqueur.</p>
+<h2>Comment l'analyser</h2>
+<p>La probabilité BTTS dépend de la force offensive ET défensive des deux équipes. Le modèle de <strong>Poisson</strong> de PariScore la dérive des Expected Goals : deux attaques prolifiques face à des défenses perméables font grimper la probabilité. Une équipe qui encaisse peu écrase le marché.</p>
+<h2>Quand il offre de la valeur</h2>
+<p>Le BTTS est souvent mal coté sur les matchs déséquilibrés (gros favori vs petit). Comparez toujours la probabilité <a href="/guide/value-bet">value bet</a> calculée à la cote. Voyez le pourcentage BTTS sur chaque <a href="/pronostics">pronostic</a> et notre guide <a href="/guide/xg-explique">xG</a>.</p>`
+  },
+  'arbitrage-paris': {
+    title: "Arbitrage (surebet) : pari sans risque expliqué",
+    h1: "L'arbitrage sportif (surebet) : principe et limites",
+    desc: "Arbitrage sportif (surebet) : miser sur toutes les issues chez différents bookmakers pour un gain garanti. Méthode, calcul et limites réelles.",
+    body: `<p>L'<strong>arbitrage</strong> (ou surebet) consiste à miser sur toutes les issues d'un événement chez des bookmakers différents, quand l'écart de cotes garantit un profit quel que soit le résultat.</p>
+<h2>Le calcul</h2>
+<p>On calcule la somme des probabilités implicites (1/cote) de chaque issue chez le meilleur book. Si cette somme est inférieure à 1 (100 %), un surebet existe : la répartition des mises proportionnelle verrouille un gain.</p>
+<h2>Limites réelles</h2>
+<p>Marges faibles (1-3 %), fenêtres courtes, limitation des comptes par les bookmakers, capital immobilisé. L'arbitrage pur est fragile : la détection de <a href="/guide/value-bet">value bets</a> via un modèle propre, comme le <a href="/guide/power-score">Power Score</a> PariScore, est plus durable. Voir nos <a href="/pronostics">pronostics</a>.</p>`
+  },
+  'gerer-sa-bankroll': {
+    title: "Gérer sa bankroll : la règle d'or du parieur",
+    h1: "Gestion de bankroll : durer pour gagner",
+    desc: "Gestion de bankroll au paris sportifs : staking plan, mise fixe vs Kelly, drawdown et discipline pour survivre à la variance et être rentable.",
+    body: `<p>La <strong>bankroll</strong> est le capital dédié aux paris. Sa gestion détermine la survie face à la variance : même un parieur à edge positif fait faillite avec un staking mal calibré.</p>
+<h2>Staking plans</h2>
+<p>Mise fixe (1-2 % par pari) : simple, robuste. Mise proportionnelle : suit la bankroll. <a href="/guide/critere-kelly">Kelly</a> : optimal mais volatil, à fractionner (Half/Quarter).</p>
+<h2>Drawdown et discipline</h2>
+<p>Le drawdown (baisse depuis un pic) est inévitable. Plafonner la mise (PariScore cape à 25 %), ne jamais « chasser » ses pertes, ne miser que des <a href="/guide/value-bet">value bets</a> identifiés. Le module « Mes Paris » suit ROI, drawdown et streak. Méthode appliquée sur les <a href="/pronostics">pronostics</a>.</p>`
+  }
+};
+
+function _seoGuideShell(slug, g, origin) {
+  const canonical = `${origin}/guide/${slug}`;
+  const others = Object.keys(SEO_GUIDES).filter(s => s !== slug)
+    .map(s => `<li><a href="/guide/${s}">${escHtml(SEO_GUIDES[s].title)}</a></li>`).join('');
+  const ld = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'Article',
+    headline: g.h1, description: g.desc, url: canonical,
+    author: { '@type': 'Organization', name: 'PariScore' },
+    publisher: { '@type': 'Organization', name: 'PariScore', logo: { '@type': 'ImageObject', url: `${origin}/icon.svg` } },
+    mainEntityOfPage: canonical
+  });
+  const bc = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${origin}/` },
+      { '@type': 'ListItem', position: 2, name: 'Guides', item: `${origin}/guides` },
+      { '@type': 'ListItem', position: 3, name: g.title, item: canonical }
+    ]
+  });
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escHtml(g.title)} - PariScore</title>
+<meta name="description" content="${escHtml(g.desc)}">
+<link rel="canonical" href="${escHtml(canonical)}">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="article">
+<meta property="og:title" content="${escHtml(g.title)}">
+<meta property="og:url" content="${escHtml(canonical)}">
+<script type="application/ld+json">${ld}</script>
+<script type="application/ld+json">${bc}</script>
+<style>
+:root{--bg:#0a0d0f;--bg2:#111417;--green:#00e676;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',system-ui,sans-serif;line-height:1.7}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px}
+h1{font-size:1.9rem;margin:0 0 14px}h2{color:var(--blue);font-size:1.3rem;margin:28px 0 10px}
+a{color:var(--blue)}.bc{font-size:.82rem;color:var(--text2);margin-bottom:10px}.bc span{color:var(--text)}
+ul.rel{list-style:none;padding:0}ul.rel li{margin:6px 0}
+footer{margin-top:40px;color:var(--text2);font-size:.85rem;border-top:1px solid #1e2328;padding-top:16px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Fil d'Ariane" class="bc"><a href="/">Accueil</a> › <a href="/guides">Guides</a> › <span>${escHtml(g.title)}</span></nav>
+<h1>${escHtml(g.h1)}</h1>
+${g.body}
+<h2>Autres guides PariScore</h2>
+<ul class="rel">${others}<li><a href="/pronostics">→ Voir tous les pronostics du jour</a></li></ul>
+<footer><p><a href="/">Accueil PariScore</a> · <a href="/pronostics">Pronostics</a> — Jouez avec modération.</p></footer>
+</main>
+</body>
+</html>`;
+}
+
+function renderGuidesIndexPage(origin) {
+  const canonical = `${origin}/guides`;
+  const items = Object.keys(SEO_GUIDES).map(s =>
+    `<li><a href="/guide/${s}">${escHtml(SEO_GUIDES[s].title)}</a><br><span class="d">${escHtml(SEO_GUIDES[s].desc)}</span></li>`).join('');
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guides Paris Sportifs : value bet, xG, Kelly | PariScore</title>
+<meta name="description" content="Guides PariScore pour parier avec les maths : value bet, Power Score, Expected Goals (xG) et critère de Kelly expliqués simplement.">
+<link rel="canonical" href="${escHtml(canonical)}">
+<meta name="robots" content="index,follow">
+<style>
+:root{--bg:#0a0d0f;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',system-ui,sans-serif;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px}h1{font-size:1.9rem}a{color:var(--blue);text-decoration:none}
+ul{list-style:none;padding:0}li{margin:16px 0}.d{color:var(--text2);font-size:.9rem}
+.bc{font-size:.82rem;color:var(--text2);margin-bottom:10px}.bc span{color:var(--text)}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Fil d'Ariane" class="bc"><a href="/">Accueil</a> › <span>Guides</span></nav>
+<h1>Guides Paris Sportifs — Parier avec les Maths</h1>
+<p>Comprendre la méthode PariScore : probabilités, value bets et gestion de bankroll.</p>
+<ul>${items}</ul>
+<p><a href="/pronostics">→ Tous les pronostics du jour</a></p>
+</main>
+</body>
+</html>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -20585,6 +21187,187 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
     }
 
     /* -------------------------------------------------
+       4️⃣a  FONDATION CRAWL — robots.txt + sitemap.xml
+       ------------------------------------------------- */
+    if (!res.headersSent && pathname === '/robots.txt') {
+        const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+        const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+        const body = [
+            'User-agent: *',
+            'Allow: /',
+            'Disallow: /api/',
+            'Disallow: /tennis/api/',
+            'Disallow: /admin.html',
+            'Disallow: /*?match=',
+            '',
+            `Sitemap: ${origin}/sitemap.xml`,
+            ''
+        ].join('\n');
+        res.writeHead(200, {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Cache-Control': 'public, max-age=86400'
+        });
+        return res.end(body);
+    }
+
+    if (!res.headersSent && pathname === '/sitemap.xml') {
+        try {
+            const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+            const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+            const xmlEsc = s => String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+            const nowIso = new Date().toISOString();
+
+            // Pages statiques prioritaires
+            const urls = [
+                { loc: `${origin}/`, changefreq: 'hourly', priority: '1.0', lastmod: nowIso },
+                { loc: `${origin}/pronostics`, changefreq: 'hourly', priority: '0.9', lastmod: nowIso },
+                { loc: `${origin}/guides`, changefreq: 'weekly', priority: '0.7', lastmod: nowIso }
+            ];
+            for (const gslug of Object.keys(SEO_GUIDES)) {
+                urls.push({ loc: `${origin}/guide/${gslug}`, changefreq: 'monthly', priority: '0.6', lastmod: nowIso });
+            }
+            // Hubs ligue (siloing) — distinct leagues présentes en matchs à venir
+            const _lgSeen = new Set();
+            for (const _m of (db.matches || [])) {
+                if (!_m || !_m.league) continue;
+                const _ls = seoSlug(_m.league);
+                if (_lgSeen.has(_ls)) continue;
+                _lgSeen.add(_ls);
+                urls.push({ loc: `${origin}/pronostics/${_ls}`, changefreq: 'daily', priority: '0.85', lastmod: nowIso });
+            }
+
+            // Pages match programmatiques (à venir + archivées), dédupliquées, cap 45 000
+            const seen = new Set();
+            const pool = [...(db.matches || []), ...(db.archive_matches || [])];
+            for (const mm of pool) {
+                if (!mm || !mm.id || !mm.home_team || !mm.away_team) continue;
+                if (seen.has(String(mm.id))) continue;
+                seen.add(String(mm.id));
+                if (urls.length >= 45000) break;
+                const lm = mm.updated_at
+                    ? new Date(mm.updated_at).toISOString()
+                    : (mm.commence_time ? new Date(mm.commence_time).toISOString() : nowIso);
+                urls.push({
+                    loc: seoMatchUrl(mm, origin),
+                    changefreq: 'daily',
+                    priority: '0.8',
+                    lastmod: lm
+                });
+            }
+
+            const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+                urls.map(u =>
+                    `  <url><loc>${xmlEsc(u.loc)}</loc>` +
+                    `<lastmod>${u.lastmod}</lastmod>` +
+                    `<changefreq>${u.changefreq}</changefreq>` +
+                    `<priority>${u.priority}</priority></url>`
+                ).join('\n') +
+                '\n</urlset>\n';
+
+            res.writeHead(200, {
+                'Content-Type': 'application/xml; charset=utf-8',
+                'Cache-Control': 'public, max-age=3600'
+            });
+            return res.end(xml);
+        } catch (e) {
+            console.error('[SITEMAP]', e.message);
+            if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                return res.end('sitemap error');
+            }
+            return;
+        }
+    }
+
+    /* -------------------------------------------------
+       4️⃣a2  GUIDES ÉDITORIAUX  /guides  +  /guide/{slug}
+       ------------------------------------------------- */
+    if (!res.headersSent && (pathname === '/guides' || pathname === '/guides/')) {
+        const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+        const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=86400' });
+        return res.end(renderGuidesIndexPage(origin));
+    }
+    if (!res.headersSent && pathname.startsWith('/guide/')) {
+        const slug = pathname.slice('/guide/'.length).replace(/\/$/, '');
+        const g = SEO_GUIDES[slug];
+        if (!g) {
+            res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+            return res.end('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Guide introuvable</title><meta name="robots" content="noindex"></head><body><h1>404</h1><p><a href="/guides">Tous les guides</a></p></body></html>');
+        }
+        const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+        const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=86400' });
+        return res.end(_seoGuideShell(slug, g, origin));
+    }
+
+    /* -------------------------------------------------
+       4️⃣b  PAGE PILIER  /pronostics  (hub server-rendered)
+       ------------------------------------------------- */
+    if (!res.headersSent && (pathname === '/pronostics' || pathname.startsWith('/pronostics/'))) {
+        try {
+            const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+            const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+            const sub = pathname === '/pronostics' || pathname === '/pronostics/'
+                ? null
+                : decodeURIComponent(pathname.slice('/pronostics/'.length).replace(/\/$/, ''));
+            if (sub) {
+                const league = resolveLeagueSlug(sub);
+                if (!league) {
+                    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+                    return res.end('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Compétition introuvable</title><meta name="robots" content="noindex"></head><body><h1>404</h1><p><a href="/pronostics">Tous les pronostics</a></p></body></html>');
+                }
+                res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=900' });
+                return res.end(renderLeagueHubPage(origin, league));
+            }
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'public, max-age=900'
+            });
+            return res.end(renderPronosticsHubPage(origin));
+        } catch (e) {
+            console.error('[HUB]', e.message);
+            if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+                return res.end('Erreur hub pronostics');
+            }
+            return;
+        }
+    }
+
+    /* -------------------------------------------------
+       4️⃣bis  PAGES SEO MATCHS  /pronostic-{home}-vs-{away}-{id}
+       ------------------------------------------------- */
+    if (!res.headersSent && pathname.startsWith('/pronostic-')) {
+        try {
+            const id = pathname.slice('/pronostic-'.length).split('-').pop();
+            const m = findMatchForSeo(id);
+            if (!m) {
+                res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+                return res.end('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">' +
+                    '<title>Match introuvable - PariScore</title><meta name="robots" content="noindex">' +
+                    '</head><body><h1>404 — Match introuvable</h1>' +
+                    '<p><a href="/">Retour à PariScore</a></p></body></html>');
+            }
+            const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+            const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+            const html = renderMatchSeoPage(m, origin);
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            return res.end(html);
+        } catch (e) {
+            console.error('[SEO PAGE]', e.message);
+            if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+                return res.end('Erreur génération page match');
+            }
+            return;
+        }
+    }
+
+    /* -------------------------------------------------
        5️⃣  SERVIR LES FICHIERS STATIQUES (Front-end)
        ------------------------------------------------- */
 
@@ -20599,16 +21382,46 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
     }
 
     fs.readFile(filePath, (err, data) => {
-        if (res.headersSent) return; 
+        if (res.headersSent) return;
         if (err) {
             res.writeHead(404, { 'Content-Type': 'text/plain' });
             return res.end('404: ' + pathname);
         }
-        
+
         const ext = path.extname(filePath);
         const contentType = (typeof mime !== 'undefined' && mime[ext]) ? mime[ext] : 'application/octet-stream';
 
-        res.writeHead(200, { 'Content-Type': contentType });
+        // Cache-Control : HTML court + revalidation, assets longue durée immutable.
+        const isHtml = ext === '.html' || ext === '';
+        const headers = {
+            'Content-Type': contentType,
+            'Cache-Control': isHtml
+                ? 'public, max-age=300, must-revalidate'
+                : 'public, max-age=31536000, immutable',
+            'Vary': 'Accept-Encoding'
+        };
+
+        // admin.html : jamais indexé (défense + budget crawl).
+        if (filePath.toLowerCase().endsWith('admin.html')) {
+            headers['X-Robots-Tag'] = 'noindex, nofollow';
+        }
+
+        // Compression gzip pour types texte si client la supporte.
+        const compressible = /\b(text\/|javascript|json|svg)\b/.test(contentType);
+        const acceptsGzip = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+        if (compressible && acceptsGzip && data.length > 512) {
+            const zlib = require('zlib');
+            zlib.gzip(data, (gzErr, gz) => {
+                if (res.headersSent) return;
+                if (gzErr) { res.writeHead(200, headers); return res.end(data); }
+                headers['Content-Encoding'] = 'gzip';
+                res.writeHead(200, headers);
+                res.end(gz);
+            });
+            return;
+        }
+
+        res.writeHead(200, headers);
         res.end(data);
     });
 }); // <=== FERMETURE OFFICIELLE DU SERVEUR HTTP (http.createServer)
