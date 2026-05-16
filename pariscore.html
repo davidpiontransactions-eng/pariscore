@@ -6262,6 +6262,8 @@
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Elo P2</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;">Prob</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--blue,#29b6f6);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Distribution sets Markov — P1 (2-0/2-1) · P2 (2-0/2-1)">Sets ≈</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Start % — proba P1 d'empocher le set 1 / set 2 (profil Sprinter/Diesel, surface 52 sem.). Halo vert = EV+ set ≥ 110 %">Start S1/S2</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--green,#00e676);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Mental — Bounce-back (set 2 gagné après set 1 perdu) / Kill (set 2 gagné après set 1 gagné). FAT = dernier match > 150 min">Mental BB/K</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Cote P1</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Cote P2</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;text-transform:uppercase;">Fair</th>
@@ -6274,7 +6276,7 @@
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="21" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -6552,6 +6554,8 @@
   #tennis-vb-table .tvb-elo-fav { color:var(--green,#00e676); }
   #tennis-vb-table .tvb-prob-bar { position:relative; width:80px; height:18px; background:var(--bg4,#1e2328); border-radius:9px; overflow:hidden; margin:0 auto; }
   #tennis-vb-table .tvb-prob-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, rgba(41,182,246,0.6), rgba(0,230,118,0.7)); }
+  #tennis-vb-table .tvb-prob-bar.set-value-glow { border:1px solid var(--green,#00e676); box-shadow:0 0 7px 1px rgba(0,230,118,0.65); animation:tvbSetGlow 1.6s ease-in-out infinite; }
+  @keyframes tvbSetGlow { 0%,100% { box-shadow:0 0 5px 0 rgba(0,230,118,0.45); } 50% { box-shadow:0 0 11px 2px rgba(0,230,118,0.85); } }
   #tennis-vb-table .tvb-prob-label { position:relative; z-index:2; display:flex; align-items:center; justify-content:center; height:18px; font-family:'DM Mono',monospace; font-size:10px; color:#fff; font-weight:700; mix-blend-mode:difference; }
   #tennis-vb-table .tvb-odds { font-family:'DM Mono',monospace; font-size:13px; color:var(--text,#e8eaed); font-weight:600; }
   #tennis-vb-table .tvb-book { display:block; font-size:9px; color:var(--text3,#5a6068); margin-top:2px; }
@@ -7987,6 +7991,36 @@ function _tvbSetCell(sp) {
     + `<span style="color:var(--blue,#29b6f6);">${pc(sp.p2_2_0)}·${pc(sp.p2_2_1)}</span></span>`;
 }
 
+// set_profile_v1 — Start % : proba P1 set 1 (barre) + set 2 inline.
+// Halo vert (.set-value-glow) si EV+ set (dérivé Markov) ≥ 110.
+function _tvbStartCell(sm) {
+  if (!sm || !sm.set1) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
+  const a = sm.set1.p1_pct, a2 = sm.set2 ? sm.set2.p1_pct : null;
+  const evMax = Math.max(
+    sm.set1.ev_p1 ?? -999, sm.set1.ev_p2 ?? -999,
+    sm.set2 ? (sm.set2.ev_p1 ?? -999) : -999, sm.set2 ? (sm.set2.ev_p2 ?? -999) : -999
+  );
+  const glow = (evMax >= 110) ? ' set-value-glow' : '';
+  const tip = `Set 1 ${a}% / ${sm.set1.p2_pct}% · Set 2 ${a2 != null ? a2 + '%' : '—'} · échantillon ${sm.sample_size}`
+    + (sm.ev_basis ? ` · EV vs cote Markov (max ${evMax >= -998 ? evMax + '%' : 'n/a'})` : '');
+  return `<div class="tvb-prob-bar${glow}" title="${tip}">`
+    + `<div class="tvb-prob-fill" style="width:${a}%;"></div>`
+    + `<div class="tvb-prob-label">S1 ${Math.round(a)} · S2 ${a2 != null ? Math.round(a2) : '—'}</div></div>`;
+}
+
+// set_profile_v1 — Mental : Bounce-back / Kill rate P1·P2 + flag fatigue.
+function _tvbMentalCell(sm) {
+  if (!sm || !sm.profiles) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
+  const p1 = sm.profiles.p1 || {}, p2 = sm.profiles.p2 || {};
+  const v = x => (x == null ? '—' : Math.round(x));
+  const fat = (a, b) => (a || b)
+    ? ` <span style="color:var(--amber,#ffa726);cursor:help;" title="Fatigue — dernier match > 150 min : ${a ? 'P1' : ''}${a && b ? ' + ' : ''}${b ? 'P2' : ''}">FAT</span>`
+    : '';
+  return `<span class="tvb-mono" style="font-size:11px;" title="Bounce-back = % set 2 gagné après set 1 perdu · Kill = % set 2 gagné après set 1 gagné">`
+    + `<span style="color:var(--green,#00e676);">BB ${v(p1.bounce_back)}/${v(p2.bounce_back)}</span>`
+    + `<span class="tvb-book">Kill ${v(p1.kill_rate)}/${v(p2.kill_rate)}${fat(p1.fatigue, p2.fatigue)}</span></span>`;
+}
+
 // P0-2 — Badge confiance (miroir serveur _tennisConfidence) depuis le plus
 // petit échantillon Elo surface des 2 joueurs.
 function _tvbConfCell(elo) {
@@ -8004,7 +8038,7 @@ function renderTennisValueBets(matches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="21" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -8029,7 +8063,7 @@ function renderTennisValueBets(matches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="21" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
 
@@ -8112,6 +8146,8 @@ function renderTennisValueBets(matches) {
       <td style="text-align:center;" class="${eloP2Cls}">${eloP2 != null ? eloP2 : '—'}</td>
       <td style="text-align:center;">${probHtml}</td>
       <td style="text-align:center;">${_tvbSetCell(m.predictions?.set_probs)}</td>
+      <td style="text-align:center;">${_tvbStartCell(m.set_model)}</td>
+      <td style="text-align:center;">${_tvbMentalCell(m.set_model)}</td>
       <td style="text-align:center;" class="tvb-odds">${oddsP1}</td>
       <td style="text-align:center;" class="tvb-odds">${oddsP2}</td>
       <td style="text-align:center;" class="tvb-mono" style="font-size:11px;color:var(--text2,#8d9399);">${fairCell}</td>
