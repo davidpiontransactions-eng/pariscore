@@ -10601,18 +10601,85 @@ async function broadcastTelegramAlert(messageHtml) {
 }
 
 // Envoyer alertes pour les value bets avec edge > seuil
+
+function escTg(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Croise proba modèle (%) + EV+ (ratio value en %, ex: 125 = cote*prob = 1.25)
+function computeConfidenceStars(probaPct, evPlusPct) {
+  const p = Number(probaPct) || 0;
+  const ev = Number(evPlusPct) || 0;
+  if (p > 65 && ev > 125) return { stars: 5, label: 'Ultra Safe / Énorme Value', glyph: '⭐⭐⭐⭐⭐' };
+  if (p > 55 && ev > 115) return { stars: 4, label: 'Confiance Forte',          glyph: '⭐⭐⭐⭐☆' };
+  if (p > 50 || ev > 105) return { stars: 3, label: 'Value Intéressante',       glyph: '⭐⭐⭐☆☆' };
+  return { stars: 0, label: 'Sous seuil', glyph: '' };
+}
+
+// Extrait LE meilleur pari prédictif (1X2 vs Over2.5 vs BTTS) par EV+ croisé proba
+function pickPredictiveBet(m) {
+  const p = m.poisson || {};
+  const fair = m.fair || {};
+  const cands = [];
+  if (m.best_edge && m.best_edge.odds) {
+    const probMap = { 'Domicile': fair.home, 'Nul': fair.draw, 'Extérieur': fair.away };
+    const lbl = m.best_edge.label;
+    const pick = lbl === 'Domicile' ? `Victoire ${m.home_team}`
+               : lbl === 'Extérieur' ? `Victoire ${m.away_team}`
+               : 'Match nul';
+    cands.push({ pick, prob: (probMap[lbl] ?? 0) * 100, odds: m.best_edge.odds, bk: m.best_edge.bk });
+  }
+  if (p.over25) cands.push({ pick: 'Plus de 2.5 buts', prob: p.over25, odds: +(100 / p.over25).toFixed(2), bk: 'Poisson' });
+  if (p.btts)   cands.push({ pick: 'Les deux équipes marquent', prob: p.btts, odds: +(100 / p.btts).toFixed(2), bk: 'Poisson' });
+  if (!cands.length) return null;
+  cands.forEach(c => { c.evPlus = (c.prob / 100) * c.odds * 100; });
+  return cands.sort((a, b) => b.evPlus - a.evPlus)[0];
+}
+
+function matchUrl(m) {
+  return m && m.id ? `https://pariscore.fr/?match=${encodeURIComponent(m.id)}` : 'https://pariscore.fr';
+}
+
+// Liste groupée — retourne null si aucun pari ≥ 3★ (ne pas envoyer)
 function buildAlertMessage(valueBets, label = 'Value Bets') {
   const dt = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  let msg = `🎯 <b>PariScore — ${label} du ${dt}</b>\n\n`;
-  valueBets.forEach((m, i) => {
-    const e = m.best_edge;
-    msg += `${i + 1}. <b>${m.home_team} vs ${m.away_team}</b>\n`;
-    msg += `   📌 ${m.league} · ${new Date(m.commence_time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}\n`;
-    msg += `   💰 ${e.label} @ <b>${e.odds.toFixed(2)}</b> · Edge: <b>+${e.edge.toFixed(1)}%</b>\n`;
-    msg += `   📊 BTTS ${m.poisson?.btts}% · O2.5 ${m.poisson?.over25}%\n\n`;
-  });
-  msg += '⚠️ Pariez de manière responsable. 18+';
-  return msg;
+  const blocks = [];
+
+  for (const m of valueBets) {
+    const bet = pickPredictiveBet(m);
+    if (!bet) continue;
+    const conf = computeConfidenceStars(bet.prob, bet.evPlus);
+    if (conf.stars < 3) continue; // gate canal principal
+
+    const ko = new Date(m.commence_time).toLocaleString('fr-FR',
+      { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const evDisplay = (bet.evPlus - 100).toFixed(1);
+
+    const args = [];
+    if (m.poisson?.over25) args.push(`Modèle Poisson : ${m.poisson.over25}% buts > 2.5`);
+    if (m.poisson?.btts)   args.push(`Probabilité BTTS : ${m.poisson.btts}%`);
+    if (m.best_edge)       args.push(`Cote ${bet.odds} détectée vs marché (${escTg(bet.bk)})`);
+    while (args.length < 3) args.push('Convergence Poisson + Edge no-vig positive');
+
+    blocks.push(
+      `🚨 <b>ALERTE HAUTE VALUE - PARISCORE</b> 🚨\n` +
+      `⚽ <b>${escTg(m.league)} : ${escTg(m.home_team)} 🆚 ${escTg(m.away_team)}</b>\n` +
+      `⏱ <i>Coup d'envoi : ${ko}</i>\n\n` +
+      `🎯 <b>LE BET PRÉDICTIF :</b> <b>${escTg(bet.pick)}</b>\n` +
+      `🔥 <b>Indice de Confiance :</b> ${conf.glyph} <i>(${conf.label})</i>\n` +
+      `📈 <b>Avantage (EV+) :</b> <b>+${evDisplay}%</b> <i>(Cote ${bet.odds.toFixed(2)} vs Bookmakers)</i>\n\n` +
+      `📊 <b>L'ŒIL DE L'IA (Data Express) :</b>\n` +
+      args.slice(0, 3).map(a => `• ${escTg(a)}`).join('\n') + `\n\n` +
+      `⚡ <i>Prenez l'avantage sur les books en 2 secondes chrono !</i>\n` +
+      `👉 <b>Voir le match :</b> ${matchUrl(m)}`
+    );
+  }
+
+  if (!blocks.length) return null;
+
+  return `🎯 <b>PariScore — ${escTg(label)} du ${dt}</b>\n\n`
+    + blocks.join('\n\n━━━━━━━━━━━━━━━\n\n')
+    + `\n\n⚠️ Pariez de manière responsable. 18+`;
 }
 
 async function sendValueBetAlerts() {
@@ -10626,7 +10693,8 @@ async function sendValueBetAlerts() {
 
   // ── Broadcast global (admin — TELEGRAM_CHAT_IDS du .env) ─────────────────
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size) {
-    await broadcastTelegramAlert(buildAlertMessage(topBets));
+    const msg = buildAlertMessage(topBets);
+    if (msg) await broadcastTelegramAlert(msg);
   }
 
   // ── Alertes personnalisées par utilisateur ────────────────────────────────
@@ -10659,7 +10727,9 @@ async function sendValueBetAlerts() {
       }).slice(0, 5);
 
       if (!userBets.length) continue;
-      const ok = await sendTelegramAlert(prefs.chatId, buildAlertMessage(userBets, 'Vos Alertes'));
+      const userMsg = buildAlertMessage(userBets, 'Vos Alertes');
+      if (!userMsg) continue;
+      const ok = await sendTelegramAlert(prefs.chatId, userMsg);
       if (ok) console.log(`  [TG:User] Alerte envoyée → chat ${prefs.chatId} (${userBets.length} matchs)`);
     }
   }
@@ -11837,37 +11907,83 @@ function _normalizeESPNTennisCompetition(comp, tour, tournamentName, groupingMet
   };
 }
 
+// Parse une réponse scoreboard ESPN tennis dans byId (muté). Factorisé : réutilisé
+// par le poll live (sans date) ET le fetch schedule (par date). Dédup par
+// competition id — un match en tournoi mixte apparaît sur les 2 scoreboards.
+function _ingestESPNTennisEvents(resData, epTour, byId) {
+  const events = Array.isArray(resData && resData.events) ? resData.events : [];
+  for (const ev of events) {
+    const tournamentName = ev.name || ev.shortName || '';
+    const groupings = Array.isArray(ev.groupings) ? ev.groupings : [];
+    for (const g of groupings) {
+      const resolvedTour = _resolveTennisTour(g.grouping, epTour);
+      const comps = Array.isArray(g.competitions) ? g.competitions : [];
+      for (const c of comps) {
+        const norm = _normalizeESPNTennisCompetition(c, resolvedTour, tournamentName, g.grouping);
+        if (!norm) continue;
+        if (!norm.id) { byId.set(`${tournamentName}-${norm.player1.name}-${norm.player2.name}`, norm); continue; }
+        // Garde la 1re entrée (grouping résoud déjà le bon tour ; doublon WTA identique).
+        if (!byId.has(norm.id)) byId.set(norm.id, norm);
+      }
+    }
+  }
+}
+
 async function fetchESPNTennisLive() {
-  // Dédup par competition id : un même match en tournoi mixte (ex. Internazionali BNL d'Italia)
-  // est exposé sur les deux scoreboards ATP et WTA — on conserve la 1re occurrence et
-  // on préfère la version dont le tour est résolu via grouping (non-fallback).
   const byId = new Map();
   for (const ep of TENNIS_ESPN_ENDPOINTS) {
     try {
       const res = await httpsGet(ep.url);
       if (res.status !== 200 || !res.data) continue;
-      const events = Array.isArray(res.data.events) ? res.data.events : [];
-      for (const ev of events) {
-        const tournamentName = ev.name || ev.shortName || '';
-        const groupings = Array.isArray(ev.groupings) ? ev.groupings : [];
-        for (const g of groupings) {
-          const resolvedTour = _resolveTennisTour(g.grouping, ep.tour);
-          const comps = Array.isArray(g.competitions) ? g.competitions : [];
-          for (const c of comps) {
-            const norm = _normalizeESPNTennisCompetition(c, resolvedTour, tournamentName, g.grouping);
-            if (!norm) continue;
-            if (!norm.id) { byId.set(`${tournamentName}-${norm.player1.name}-${norm.player2.name}`, norm); continue; }
-            // Garde la 1re entrée (les tournois mixtes apparaissent ATP en premier mais grouping
-            // résoud déjà le bon tour — le doublon WTA est strictement identique).
-            if (!byId.has(norm.id)) byId.set(norm.id, norm);
-          }
-        }
-      }
+      _ingestESPNTennisEvents(res.data, ep.tour, byId);
     } catch (e) {
       console.warn(`  [Tennis] ESPN ${ep.tour} fetch failed: ${e.message}`);
     }
   }
   return Array.from(byId.values());
+}
+
+// ── Option C : schedule ESPN par date (J → J+N). Gratuit, zéro quota. Fait
+// remonter les matchs PROGRAMMÉS (state=pre) que le scoreboard live n'expose
+// pas. Source de matchs tennis quand BSD off + Odds API quota épuisé.
+const TENNIS_SCHEDULE_TTL_MS = 15 * 60 * 1000;
+const TENNIS_SCHEDULE_DAYS = 3;
+let _tennisScheduleCache = { ts: 0, data: [] };
+
+function _tennisYmd(d) {
+  return d.getUTCFullYear() * 1e4 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
+
+async function fetchESPNTennisSchedule(days = TENNIS_SCHEDULE_DAYS) {
+  const byId = new Map();
+  const now = new Date();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + i));
+    const ymd = _tennisYmd(d);
+    for (const ep of TENNIS_ESPN_ENDPOINTS) {
+      try {
+        const res = await httpsGet(`${ep.url}?dates=${ymd}`);
+        if (res.status !== 200 || !res.data) continue;
+        _ingestESPNTennisEvents(res.data, ep.tour, byId);
+      } catch (e) {
+        console.warn(`  [Tennis] ESPN schedule ${ep.tour} ${ymd} failed: ${e.message}`);
+      }
+    }
+  }
+  return Array.from(byId.values());
+}
+
+async function getTennisScheduleCached() {
+  if (Date.now() - _tennisScheduleCache.ts < TENNIS_SCHEDULE_TTL_MS && _tennisScheduleCache.data.length) {
+    return _tennisScheduleCache.data;
+  }
+  try {
+    const data = await fetchESPNTennisSchedule();
+    if (data.length) _tennisScheduleCache = { ts: Date.now(), data };
+  } catch (e) {
+    console.warn('  [Tennis] schedule fetch error:', e.message);
+  }
+  return _tennisScheduleCache.data;
 }
 
 async function pollTennisLive() {
@@ -16783,11 +16899,18 @@ async function _buildTennisValueBetsCore({ date }) {
   }
 
   if (bsdMatches.length === 0) {
-    // Fallback ESPN scoreboard (déjà câblé v10.3) : forme limitée, pas de surface ni rank.
+    // Fallback ESPN : live scoreboard (scores à jour) + schedule J→J+N (option C,
+    // fait remonter les programmés). Merge dédup, live prioritaire sur programmé.
     if (Date.now() - _tennisLiveCache.ts > TENNIS_LIVE_TTL_MS) {
       try { await pollTennisLive(); } catch (e) { /* swallow */ }
     }
-    const espnRaw = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+    const liveRaw = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+    let schedRaw = [];
+    try { schedRaw = await getTennisScheduleCached(); } catch (e) { /* swallow */ }
+    const _mById = new Map();
+    for (const m of schedRaw) if (m && m.id) _mById.set(m.id, m);
+    for (const m of liveRaw) if (m && m.id) _mById.set(m.id, m); // live écrase programmé
+    const espnRaw = _mById.size ? Array.from(_mById.values()) : liveRaw;
     // Mappe au schéma attendu par la boucle d'enrichissement ci-dessous.
     // ESPN ne fournit pas la surface réelle (Hard/Clay/Grass) — sera enrichi par Sackmann (T3+T4).
     bsdMatches = espnRaw.map(m => ({
