@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PariScore — Vote Logo (3 designs)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@600;700;800;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#E2001A; --red-d:#b3000d;
+    --ink:#0a0d0f; --paper:#f4f5f6;
+    --font-head:'Barlow Condensed',sans-serif;
+    --font-body:'Source Sans 3',sans-serif;
+    --font-mono:'DM Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-body);background:#16181b;color:#e8eaed;padding:48px 20px;line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-family:var(--font-head);font-size:42px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-bottom:6px}
+  h1 span{color:var(--red)}
+  .lead{color:#9aa0a6;font-family:var(--font-mono);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:40px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:#1d2024;border:1px solid #2a2e33;border-radius:20px;overflow:hidden;
+    box-shadow:0 14px 40px rgba(0,0,0,.4);display:flex;flex-direction:column}
+  .badge{font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--red);padding:16px 20px 0}
+  .cname{font-family:var(--font-head);font-size:24px;font-weight:800;text-transform:uppercase;
+    padding:2px 20px 0;letter-spacing:.02em}
+  .desc{color:#9aa0a6;font-size:13px;padding:8px 20px 18px;min-height:62px}
+  .stage{padding:34px 20px;display:flex;align-items:center;justify-content:center;min-height:150px}
+  .stage.light{background:var(--paper)}
+  .stage.dark{background:var(--ink);border-top:1px solid #2a2e33}
+  .swlabel{font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;color:#6b7177;
+    text-transform:uppercase;padding:10px 20px 0}
+  .vote{margin:auto 16px 18px;padding:13px;border-radius:12px;background:var(--red);color:#fff;
+    font-family:var(--font-head);font-weight:800;font-size:16px;text-transform:uppercase;
+    letter-spacing:.04em;text-align:center;cursor:pointer;border:none;transition:transform .12s,filter .15s}
+  .vote:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .vote:active{transform:translateY(1px)}
+
+  /* ---- shared wordmark ---- */
+  .wm{font-family:var(--font-head);font-weight:900;text-transform:uppercase;
+    font-size:40px;line-height:1;letter-spacing:.01em;display:flex;align-items:center;gap:11px}
+  .light .wm{color:#0a0d0f}
+  .dark  .wm{color:#fff}
+
+  /* ===== CONCEPT 1 — SPLIT ===== */
+  .c1 .pari{color:var(--red)}
+  .light.c1 .score{color:#0a0d0f}
+  .dark.c1  .score{color:#fff}
+  .c1 .dot{width:13px;height:13px;border-radius:50%;background:var(--red);
+    box-shadow:0 0 10px var(--red);position:relative}
+  .c1 .dot::after{content:'';position:absolute;inset:-5px;border-radius:50%;
+    border:2px solid var(--red);opacity:0;animation:ring 1.8s ease-out infinite}
+  @keyframes ring{0%{opacity:.8;transform:scale(.6)}70%,100%{opacity:0;transform:scale(1.7)}}
+
+  /* ===== CONCEPT 2 — EDGE BARS ===== */
+  .bars{display:flex;align-items:flex-end;gap:4px;height:42px}
+  .bars i{width:9px;border-radius:3px 3px 0 0;display:block;
+    background:linear-gradient(180deg,var(--red),var(--red-d))}
+  .bars i:nth-child(1){height:40%}
+  .bars i:nth-child(2){height:62%}
+  .bars i:nth-child(3){height:85%}
+  .bars i:nth-child(4){height:100%}
+  .c2 .arrow{color:var(--red);font-size:26px;font-weight:900;margin-left:-2px}
+
+  /* ===== CONCEPT 3 — TARGET ARC ===== */
+  .arc{position:relative;width:54px;height:54px;flex:0 0 auto}
+  .arc svg{transform:rotate(-90deg)}
+  .arc .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-head);font-weight:900;font-size:26px}
+  .light.c3 .arc .mono{color:#0a0d0f}
+  .dark.c3  .arc .mono{color:#fff}
+
+  .note{margin-top:36px;padding:18px 20px;border-left:3px solid var(--red);
+    background:#1d2024;border-radius:0 12px 12px 0;color:#9aa0a6;font-size:13px}
+  .note b{color:#e8eaed}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PARI<span>SCORE</span> — Vote Logo</h1>
+  <p class="lead">3 directions · Paris sportifs &amp; analyse de données · Charte L'Équipe (rouge #E2001A)</p>
+
+  <div class="grid">
+
+    <!-- CONCEPT 1 -->
+    <div class="card">
+      <div class="badge">Concept 01</div>
+      <div class="cname">Split Signal</div>
+      <div class="desc">Wordmark bicolore : <b style="color:var(--red)">PARI</b> rouge / SCORE encre. Point pulsé = signal live, cote qui tombe. Direct, lisible, ADN presse sportive.</div>
+      <div class="swlabel">— Fond clair</div>
+      <div class="stage light c1">
+        <div class="wm"><span class="dot"></span><span class="pari">PARI</span><span class="score">SCORE</span></div>
+      </div>
+      <div class="swlabel">— Fond sombre</div>
+      <div class="stage dark c1">
+        <div class="wm"><span class="dot"></span><span class="pari">PARI</span><span class="score">SCORE</span></div>
+      </div>
+      <button class="vote" onclick="voter('Split Signal')">Voter Concept 01</button>
+    </div>
+
+    <!-- CONCEPT 2 -->
+    <div class="card">
+      <div class="badge">Concept 02</div>
+      <div class="cname">Edge Bars</div>
+      <div class="desc">Histogramme ascendant + flèche = data analytics, edge croissant, ROI. Le pari piloté par la stat. Icône réutilisable seule (favicon/app).</div>
+      <div class="swlabel">— Fond clair</div>
+      <div class="stage light c2">
+        <div class="wm"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="arrow">&#9650;</span>PARISCORE</div>
+      </div>
+      <div class="swlabel">— Fond sombre</div>
+      <div class="stage dark c2">
+        <div class="wm"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="arrow">&#9650;</span>PARISCORE</div>
+      </div>
+      <button class="vote" onclick="voter('Edge Bars')">Voter Concept 02</button>
+    </div>
+
+    <!-- CONCEPT 3 -->
+    <div class="card">
+      <div class="badge">Concept 03</div>
+      <div class="cname">Probability Target</div>
+      <div class="desc">Arc de jauge (probabilité Poisson) cerclant le « P ». Précision, modèle calibré, cible value bet. Premium &amp; tech.</div>
+      <div class="swlabel">— Fond clair</div>
+      <div class="stage light c3">
+        <div class="wm">
+          <span class="arc">
+            <svg width="54" height="54" viewBox="0 0 54 54">
+              <circle cx="27" cy="27" r="23" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="5"/>
+              <circle cx="27" cy="27" r="23" fill="none" stroke="#E2001A" stroke-width="5"
+                stroke-linecap="round" stroke-dasharray="108 145"/>
+            </svg>
+            <span class="mono">P</span>
+          </span>PARISCORE
+        </div>
+      </div>
+      <div class="swlabel">— Fond sombre</div>
+      <div class="stage dark c3">
+        <div class="wm">
+          <span class="arc">
+            <svg width="54" height="54" viewBox="0 0 54 54">
+              <circle cx="27" cy="27" r="23" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="5"/>
+              <circle cx="27" cy="27" r="23" fill="none" stroke="#E2001A" stroke-width="5"
+                stroke-linecap="round" stroke-dasharray="108 145"/>
+            </svg>
+            <span class="mono">P</span>
+          </span>PARISCORE
+        </div>
+      </div>
+      <button class="vote" onclick="voter('Probability Target')">Voter Concept 03</button>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <b>Pour le vote communautaire :</b> partage cette page (capture ou lien). Bouton « Voter » = placeholder —
+    branche-le sur un sondage (Telegram poll / Google Form / route <code>/api/v1/logo-vote</code>) selon le canal choisi.
+    Police identique au site (<b>Barlow Condensed</b>), rouge charte <b>#E2001A</b>, déclinable clair/sombre + favicon.
+  </div>
+</div>
+<script>
+  function voter(name){ alert('Vote enregistré (démo) : ' + name + '\n\nÀ brancher sur le sondage communautaire.'); }
+</script>
+</body>
+</html>

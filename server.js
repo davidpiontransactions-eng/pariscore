@@ -3266,6 +3266,26 @@ function saveDB() {
     return;
   }
 
+  // v9.9 #7 : ne pas persister des stats corrompues (cumuls saison / Poisson 0%)
+  // — on garde le match (planning) mais on neutralise les valeurs fausses + flag.
+  try {
+    if (Array.isArray(db.matches)) {
+      for (const _m of db.matches) {
+        if (!_m || !_m.stats) continue;
+        const _h = _m.stats.home || {}, _a = _m.stats.away || {};
+        const _bad = [_h.avgScored, _a.avgScored, _h.avgConceded, _a.avgConceded]
+          .some(v => typeof v === 'number' && v > 8) ||
+          (_m.expectedGoals && (_m.expectedGoals.home > 8 || _m.expectedGoals.away > 8)) ||
+          (_m.poisson && _m.poisson.homeWin === 0 && _m.poisson.draw === 0 && _m.poisson.awayWin === 0);
+        if (_bad) {
+          _m.bsd_status = 'FAILED_INTEGRITY';
+          _m.poisson = { error: 'BAD_LAMBDA', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
+          _m.expectedGoals = { home: 0, away: 0 };
+        }
+      }
+    }
+  } catch (_e) { /* sanitation best-effort */ }
+
   try {
     kvSetBatch([
       ['db_matches', db.matches],
@@ -4716,7 +4736,16 @@ function getLivePredictionsTop5() {
 }
 
 function buildSideStats(s) {
-  const played = s?.played || 1;
+  // v9.9: ne JAMAIS diviser par un "played" fabriqué (=1) → sinon totaux saison
+  // pris pour des moyennes. Résoudre le vrai nombre de matchs joués (alias multi-source).
+  const playedRaw = s?.played ?? s?.matches_played ?? s?.games ?? s?.mp ?? s?.matchsPlayed ?? null;
+  const played = (playedRaw != null && !isNaN(playedRaw) && +playedRaw > 0) ? +playedRaw : 0;
+  if (!played) {
+    // Données insuffisantes : renvoyer zéro (validateMatchIntegrity bloquera) plutôt
+    // que des cumuls saison déguisés en moyennes.
+    return { ppg: 0, wins: 0, draws: 0, losses: 0, scored: 0, conceded: 0,
+             avgScored: 0, avgConceded: 0, played: 0 };
+  }
   const w = s?.win || 0, d = s?.draw || 0, l = s?.lose || 0;
 
   // v9.2: Deep mapping — handle BOTH API-Football (nested) and BSD (flat) formats
@@ -4982,7 +5011,8 @@ function buildFallbackMatchRecord(raw) {
     const LEAGUE_AVG = 1.35;
     const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG);
     const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG);
-    if (expHome > 0 || expAway > 0) {
+    if ((expHome > 0 || expAway > 0) && Number.isFinite(expHome) && Number.isFinite(expAway)
+        && expHome <= 8 && expAway <= 8) {
       try {
         poisson = computePoisson(expHome, expAway);
         expectedGoals = { home: expHome, away: expAway };
@@ -5123,11 +5153,14 @@ function buildMatchRecord(raw) {
   const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG);
   const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG);
 
-  // v9.0: Anti-Zero Poisson — interdire calcul si moyennes à 0
+  // v9.0/v9.9: Anti-Zero + Sanity λ — bloquer si moyennes à 0 OU λ aberrant
+  // (cumuls saison pris pour moyennes → expHome≈136 → matrice Poisson sous-flow = 0%).
   let poisson;
-  if (expHome === 0 && expAway === 0) {
-    console.error("\x1b[31m[POISSON] Anti-Zero: expHome=0 et expAway=0 pour %s vs %s — calcul bloqué\x1b[0m", raw.home_team, raw.away_team);
-    poisson = { error: 'ZERO_STATS', message: 'Moyennes de buts à 0 — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
+  const _lamBad = !Number.isFinite(expHome) || !Number.isFinite(expAway) ||
+                  expHome > 8 || expAway > 8 || (expHome === 0 && expAway === 0);
+  if (_lamBad) {
+    console.error("\x1b[31m[POISSON] λ invalide (expHome=%s expAway=%s) pour %s vs %s — calcul bloqué\x1b[0m", expHome, expAway, raw.home_team, raw.away_team);
+    poisson = { error: 'BAD_LAMBDA', message: 'Moyennes invalides — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
   } else {
     poisson = computePoisson(expHome, expAway);
   }
@@ -7672,8 +7705,10 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
         const totalGa = entry.ga || 0;
         const hGa2 = Math.round(totalGa * (hP / Math.max(1, totalP)));
         const aGa2 = totalGa - hGa2;
-        homeStats = buildSideStats({ played: entry.played, win: entry.won, draw: entry.drawn, lose: entry.lost, goals_for: entry.gf, goals_against: entry.ga });
-        awayStats = buildSideStats({ played: Math.floor(entry.played / 2), win: Math.floor(entry.won / 2), draw: Math.floor(entry.drawn / 2), lose: Math.floor(entry.lost / 2), goals_for: Math.floor(entry.gf / 2), goals_against: Math.floor(entry.ga / 2) });
+        const _ep = entry.played ?? entry.matches_played ?? entry.games ?? entry.mp ?? entry.matchsPlayed ?? null;
+        const _epN = (_ep != null && !isNaN(_ep) && +_ep > 0) ? +_ep : 0;
+        homeStats = buildSideStats({ played: _epN, win: entry.won, draw: entry.drawn, lose: entry.lost, goals_for: entry.gf, goals_against: entry.ga });
+        awayStats = buildSideStats({ played: Math.floor(_epN / 2), win: Math.floor((entry.won||0) / 2), draw: Math.floor((entry.drawn||0) / 2), lose: Math.floor((entry.lost||0) / 2), goals_for: Math.floor((entry.gf||0) / 2), goals_against: Math.floor((entry.ga||0) / 2) });
         rawHome = { played: hP, wins: hW, draws: hD, losses: hL, gf: hGf2, ga: hGa2, pts: hW * 3 + hD, _estimated: true };
         rawAway = { played: aP, wins: aW, draws: aD, losses: aL, gf: aGf2, ga: aGa2, pts: aW * 3 + aD, _estimated: true };
         console.log(`  [BSD] Splits estimés (50/50 ratio) pour ${entry.team} — BSD ne fournit pas played_home/played_away`);
@@ -9531,10 +9566,12 @@ function validateMatchIntegrity(m) {
   const hs = m.stats?.home || {};
   const as = m.stats?.away || {};
 
-  if (typeof hs.avgScored !== 'number' || isNaN(hs.avgScored) || hs.avgScored === 0) errors.push(`home_avgScored=${hs.avgScored ?? 'null'} (type: ${typeof hs.avgScored})`);
-  if (typeof as.avgScored !== 'number' || isNaN(as.avgScored) || as.avgScored === 0) errors.push(`away_avgScored=${as.avgScored ?? 'null'} (type: ${typeof as.avgScored})`);
-  if (typeof hs.avgConceded !== 'number' || isNaN(hs.avgConceded) || hs.avgConceded === 0) errors.push(`home_avgConceded=${hs.avgConceded ?? 'null'}`);
-  if (typeof as.avgConceded !== 'number' || isNaN(as.avgConceded) || as.avgConceded === 0) errors.push(`away_avgConceded=${as.avgConceded ?? 'null'}`);
+  // v9.9: borne haute — une moyenne > 8 buts/match = cumul saison mal mappé
+  const _badAvg = (v) => typeof v !== 'number' || isNaN(v) || v === 0 || v > 8;
+  if (_badAvg(hs.avgScored)) errors.push(`home_avgScored=${hs.avgScored ?? 'null'} (type: ${typeof hs.avgScored})`);
+  if (_badAvg(as.avgScored)) errors.push(`away_avgScored=${as.avgScored ?? 'null'} (type: ${typeof as.avgScored})`);
+  if (_badAvg(hs.avgConceded)) errors.push(`home_avgConceded=${hs.avgConceded ?? 'null'}`);
+  if (_badAvg(as.avgConceded)) errors.push(`away_avgConceded=${as.avgConceded ?? 'null'}`);
 
   // Vérifier ratings BSD
   if (!m._bsd_home_ratings?.length) errors.push('home_ratings_empty');
@@ -9674,8 +9711,15 @@ async function forceSyncFixture(fixtureId) {
 
     const expHome = hScored / LEAGUE_AVG * aConceded;
     const expAway = aScored / LEAGUE_AVG * hConceded;
-    match.expectedGoals = { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) };
-    match.poisson = computePoisson(expHome, expAway);
+    // v9.9: garde sanity λ — refuser cumuls saison (λ aberrant) plutôt que matrice 0%
+    if (!Number.isFinite(expHome) || !Number.isFinite(expAway) || expHome > 8 || expAway > 8) {
+      console.error("\x1b[31m[SYNC] λ aberrant (%s/%s) %s vs %s — poisson non recalculé\x1b[0m", expHome, expAway, match.home_team, match.away_team);
+      match.expectedGoals = { home: 0, away: 0 };
+      match.poisson = { error: 'BAD_LAMBDA', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
+    } else {
+      match.expectedGoals = { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) };
+      match.poisson = computePoisson(expHome, expAway);
+    }
 
     // 6. Injecter les données BSD enrichies (v50.0: + key players KPI)
     match._bsd_prediction = prediction;
@@ -10140,7 +10184,17 @@ async function runProactiveHydrator() {
   const toHydrate = upcomingMatches.filter(m => {
     if (m.bsd_status === 'FULL') return false;
     if (m.bsd_status === 'NO_COVERAGE') return false; // Pas de BSD pour cette ligue
-    if (m.bsd_status === 'FAILED_INTEGRITY') return true; // v9.0: Retenter les matchs échoués
+    if (m.bsd_status === 'FAILED_INTEGRITY') {
+      // v9.9 #8 : cap retry — après 3 échecs (ligue non couverte), arrêter
+      // (sinon retry toutes les 60s à l'infini → spam logs + quota API gaspillé).
+      m._integrityRetries = (m._integrityRetries || 0) + 1;
+      if (m._integrityRetries > 3) {
+        m.bsd_status = 'NO_COVERAGE';
+        console.warn(`[HYDRATE] ${m.home_team} vs ${m.away_team} — 3 échecs intégrité, ligue marquée non couverte (stop retry)`);
+        return false;
+      }
+      return true;
+    }
 
     // États partiels — ne pas re-fetch si on a déjà quelque chose
     const hasRatings = m._bsd_home_ratings?.length || m._bsd_away_ratings?.length;
