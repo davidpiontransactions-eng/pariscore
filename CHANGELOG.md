@@ -21,6 +21,22 @@
 
 ---
 
+## [v10.56] — 2026-05-17
+
+### Ajouté — Routing standings ligues non-BSD : ESPN (+9) + API-Football fallback (7 sans ESPN)
+
+Recherche sources gratuites : TheSportsDB free (clé '3') gaté `{"countries":null}` ; openfootball partiel/sans live ; scraping Sofascore/FBref écarté (risque blocage IP VPS OVH). Décision : ESPN hidden API pour ligues couvertes, API-Football (déjà PRO 7500/j, routing pur) pour les 7 sans ESPN.
+
+**Backend**
+- `ESPN_STANDINGS_SLUG` (server.js) +9 slugs confirmés (test live entries>0) → Phase 1bis, zéro clé/quota : `128 arg.1, 239 col.1, 265 chi.1, 240 ecu.1, 480 par.1, 262 aut.1, 119 den.1, 900 aus.1, 103 nor.1`.
+- `bsd_config.json` `mapping.fallback_needed = [200,333,210,269,383,99,345]` → Phase 2 API-Football : Botola Maroc (200), Ukrainian Premier (333), Prva HNL Croatie (210), SuperLiga Serbie (269), Ligue Pro Algérie (383), J2 League Japon (99), Czech First League (345). ESPN ne couvre pas ces 7 (slugs mar.1/ukr.1/cro.1/srb.1/alg.1/jpn.2/cze.1 → ERR/0 au test).
+
+**Vérifié** : `node --check server.js` OK, JSON valide, mapping noms/pays exacts. Coupes (Coppa Italia 137…) hors standings = normal (élimination directe).
+
+**Correctif post-logs prod** : `[BSD] Ligue 200 → OK (16 équipes)` → Botola **fonctionne via BSD** (/standings/ sans season réussit malgré « Aucune saison BSD 53 »). `200` **retiré** de `fallback_needed` (évite quota API-Football inutile). `fallback_needed` final = `[333, 210, 269, 383, 99, 345]` (Ukraine, Croatie, Serbie, Algérie, J2, Tchéquie). `[ESPN] Ligue 99 jpn.2 → vide/échec` confirme J2 sans ESPN → API-Football (présent). ESPN 103 (nor.1) inoffensif : Phase 1bis exclut les BSD-mappés (103→BSD 54 OK).
+
+---
+
 ## [v10.55] — 2026-05-17
 
 ### Corrigé — Matchs live sans bouton LIVE (source de vérité incohérente)
