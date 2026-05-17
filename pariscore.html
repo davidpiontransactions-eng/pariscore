@@ -28,7 +28,7 @@
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* ── Light Premium — L'Équipe × Flashscore ── */
@@ -1201,11 +1201,42 @@
   }
   #vb-table thead { position: sticky; top: 0; z-index: 5; }
   #vb-table thead tr { background: var(--bg2); }
+  /* ── En-tête « Hybride Hero-Chip » (Concept C) ── */
   #vb-table thead th {
-    font-size: 9.5px; font-family: var(--font-mono);
-    color: var(--text3); letter-spacing: .3px; text-align: center;
-    padding: 5px 6px; border-bottom: 1px solid var(--border);
-    font-weight: 400; white-space: nowrap; background: var(--bg2);
+    font-family: 'Barlow Condensed', var(--font-head, sans-serif);
+    font-size: 12px; font-weight: 800; letter-spacing: .04em;
+    text-transform: uppercase; text-align: center;
+    color: #5A5A5A; white-space: nowrap;
+    padding: 8px 8px; background: #F4F4F4;
+    border-bottom: 2px solid var(--accent, #E2001A);
+  }
+  /* Colonnes structurelles = noir fort */
+  #vb-table thead th:first-child,
+  #vb-table thead th:nth-child(2) { color: #1A1A1A; }
+  /* Colonnes hero (Cote ▼ / VALUE) = chip rouge — texte au-dessus via z-index */
+  #vb-table thead th.th-hero {
+    position: relative; isolation: isolate;
+    color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.30);
+    background: #F4F4F4;
+  }
+  #vb-table thead th.th-hero::before {
+    content: ''; position: absolute; inset: 4px 5px; z-index: -1;
+    background: linear-gradient(180deg, #ff2a33 0%, var(--accent-dim,#c4151e) 100%);
+    border-radius: 7px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 4px rgba(237,28,36,0.35);
+  }
+  /* Affordance tri : soulignement rouge animé */
+  #vb-table thead th.sortable { cursor: pointer; }
+  #vb-table thead th.sortable::after {
+    content: ''; position: absolute; left: 8px; right: 8px; bottom: 3px;
+    height: 2px; background: var(--accent, #E2001A);
+    transform: scaleX(0); transform-origin: center; transition: transform .15s;
+  }
+  #vb-table thead th.sortable:hover::after,
+  #vb-table thead th.sortable.sort-asc::after,
+  #vb-table thead th.sortable.sort-desc::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: reduce) {
+    #vb-table thead th.sortable::after { transition: none; }
   }
   #vb-table thead tr.stat-header-sub th {
     font-size: 8.5px; color: var(--text3); padding: 3px 5px;
@@ -1239,6 +1270,48 @@
     width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.06), transparent);
     pointer-events: none;
   }
+  /* ── VALUE-FIRST : chiffres mono tabulaires alignés ── */
+  #vb-table .sc, #vb-table td .vb-row-odds, #vb-table .vb-num,
+  #vb-table .vb-hero-value .vbh-edge, #vb-table .vb-hero-value .vbh-odds { font-variant-numeric: tabular-nums; }
+  /* ── Colonne VALUE héros — figée à droite (modèle OddAlerts/Datafoot) ── */
+  #vb-table th.vb-value-col, #vb-table td.vb-value-col {
+    position: sticky; right: 0; z-index: 2; min-width: 92px;
+    background: var(--bg2); border-left: 2px solid var(--border2);
+  }
+  #vb-table thead th.vb-value-col { z-index: 6; }
+  body:not(.dark-theme) #vb-table td.vb-value-col { background: #fff !important; border-left: 2px solid #E2001A33 !important; }
+  body:not(.dark-theme) #vb-table thead th.vb-value-col { background: #fff; border-left: 2px solid #E2001A33; }
+  #vb-table td.vb-value-col::before {
+    content: ''; position: absolute; left: -6px; top: 0; bottom: 0;
+    width: 6px; background: linear-gradient(270deg, rgba(0,0,0,0.08), transparent);
+    pointer-events: none;
+  }
+  .vb-hero-value {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+    font-family: var(--font-mono); line-height: 1.1;
+  }
+  .vb-hero-value .vbh-edge {
+    font-size: 14px; font-weight: 800; letter-spacing: -0.02em;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .vb-hero-value .vbh-pick { font-size: 9px; font-weight: 700; opacity: 0.85; max-width: 84px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vb-hero-value .vbh-odds { font-size: 9px; opacity: 0.6; }
+  .vb-hero-value.vbh-hot   .vbh-edge { color: #15803D; }
+  .vb-hero-value.vbh-go    .vbh-edge { color: #15803D; }
+  .vb-hero-value.vbh-try   .vbh-edge { color: #B45309; }
+  .vb-hero-value.vbh-neu   .vbh-edge { color: #6B7280; }
+  .vb-hero-value.vbh-no    .vbh-edge { color: #B91C1C; }
+  .vb-hero-value.vbh-na    .vbh-edge { color: #9CA3AF; }
+  .vb-hero-value .vbh-tag {
+    font-size: 8px; font-weight: 800; letter-spacing: 0.04em;
+    padding: 1px 5px; border-radius: 3px; text-transform: uppercase;
+  }
+  .vbh-hot .vbh-tag, .vbh-go .vbh-tag { background: #DCFCE7; color: #15803D; }
+  .vbh-try .vbh-tag { background: #FEF3C7; color: #B45309; }
+  .vbh-neu .vbh-tag { background: #F1F1F1; color: #6B7280; }
+  .vbh-no  .vbh-tag { background: #FEE2E2; color: #B91C1C; }
+  .vbh-na  .vbh-tag { background: #F1F1F1; color: #9CA3AF; }
   .table-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 16px 20px; border-bottom: 1px solid var(--border);
@@ -1261,15 +1334,15 @@
   .scroll-lock-btn.locked { background: rgba(255,77,77,0.12); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
   #matches-table.no-live .pressure-col { display: none; }
 
-  /* ── PACKBALL REBORN v45 — Pulse Live, Banding Colonnes, Hover Grad ── */
-  #vb-body tr { border-bottom: 1px solid rgba(255,255,255,0.08); transition: background .2s; contain: layout; }
-  #vb-body tr:nth-child(odd)  { background: #0f1215; }
-  #vb-body tr:nth-child(even) { background: #14181c; }
-  #vb-body tr:hover td {
-    background: linear-gradient(90deg, rgba(0,230,118,0.10) 0%, rgba(0,230,118,0.04) 40%, rgba(0,230,118,0.01) 100%);
-    border-color: rgba(0,230,118,0.25);
-  }
-  #vb-body tr:hover td:first-child { background: linear-gradient(90deg, rgba(0,230,118,0.12) 0%, rgba(0,230,118,0.04) 100%); }
+  /* ── VALUE-FIRST ROW v46 — zéro zébrure, divider 1px, couleur = sens only ── */
+  #vb-body tr { border-bottom: 1px solid rgba(255,255,255,0.08); transition: background .15s; contain: layout; }
+  #vb-body tr td { background: #11161b; }
+  /* Ligne value bet : accent gauche sémantique (pas une zébrure décorative) */
+  #vb-body tr.is-value td:first-child { box-shadow: inset 3px 0 0 0 var(--green); }
+  #vb-body tr.is-value-hot td:first-child { box-shadow: inset 3px 0 0 0 #00e676; }
+  #vb-body tr:hover td { background: #1a2127; }
+  #vb-body tr:focus-within td { background: #1a2127; }
+  @media (prefers-reduced-motion: reduce) { #vb-body tr { transition: none; } }
 
   /* Séparateurs verticaux entre groupes de colonnes */
   #vb-table th:nth-child(2),
@@ -1279,13 +1352,12 @@
   #vb-table th:nth-child(4),
   #vb-table td:nth-child(4) { border-right: 2px solid rgba(255,255,255,0.14); }
 
+  /* Barre verte supprimée — scrollbar haut masquée, thumb neutralisé */
+  #scrollbar-top { display: none !important; }
   #table-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
   #table-scroll::-webkit-scrollbar-track { background: var(--bg3); border-radius: 3px; }
-  #table-scroll::-webkit-scrollbar-thumb { background: #00ff88; border-radius: 3px; }
-  #table-scroll::-webkit-scrollbar-thumb:hover { background: #00e676; }
-  #scrollbar-top::-webkit-scrollbar { height: 6px; }
-  #scrollbar-top::-webkit-scrollbar-track { background: transparent; }
-  #scrollbar-top::-webkit-scrollbar-thumb { background: #00ff88; border-radius: 3px; }
+  #table-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); border-radius: 3px; }
+  #table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
 
   .match-tab.live-tab.active { background: rgba(255,77,77,0.12); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
 
@@ -1373,7 +1445,10 @@
     border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
   }
-  #league-filter-row { max-height: 120px; overflow-y: auto; }
+  /* 2e ligne filtres retirée — éléments gardés en DOM (caché) pour compat JS
+     (rebuildCountryChips/buildLeagueMS/setCountrySort réfèrent country-filter-row,
+     country-sort-select, country-mobile-select). Filtre ligues = #ml-league (ligne 1). */
+  #league-filter-row { display: none !important; }
   #league-search {
     background: var(--bg4); border: 1px solid var(--border); border-radius: 6px;
     color: var(--text); font-size: 11px; font-family: var(--font-mono);
@@ -1381,14 +1456,454 @@
   }
   #league-search::placeholder { color: var(--text3); }
   #league-search:focus { border-color: var(--border2); }
+  /* ── Design tokens — Graphite Trading-Chip 3D (scopés console) ── */
+  #filter-console {
+    --fc-font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --fc-font-num: 'JetBrains Mono', 'DM Mono', monospace;
+    /* Surface chip graphite (identique clair/dark — look terminal quant) */
+    --fc-graphite: linear-gradient(180deg, #363b43 0%, #20242a 52%, #181b20 100%);
+    --fc-graphite-hi: linear-gradient(180deg, #3e444d 0%, #262b31 52%, #1c1f25 100%);
+    --fc-ink: #cfd4db;          /* texte repos */
+    --fc-ink-dim: #8a909a;      /* texte secondaire */
+    /* Extrusion 3D : reflet haut + arête sombre bas + ombre portée profonde */
+    --fc-relief:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      inset 0 -1px 0 rgba(0,0,0,0.55),
+      0 1px 1px rgba(0,0,0,0.30),
+      0 4px 9px rgba(0,0,0,0.30),
+      0 9px 18px rgba(0,0,0,0.22);
+    --fc-relief-hi:
+      inset 0 1px 0 rgba(255,255,255,0.16),
+      inset 0 -1px 0 rgba(0,0,0,0.55),
+      0 3px 6px rgba(0,0,0,0.32),
+      0 10px 22px rgba(237,28,36,0.30);
+    --fc-press:
+      inset 0 3px 7px rgba(0,0,0,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.14);
+  }
+  body.dark-theme #filter-console {
+    --fc-graphite: linear-gradient(180deg, #2b2f36 0%, #181b20 52%, #101316 100%);
+    --fc-graphite-hi: linear-gradient(180deg, #333941 0%, #1d2126 52%, #14171b 100%);
+    --fc-relief:
+      inset 0 1px 0 rgba(255,255,255,0.07),
+      inset 0 -1px 0 rgba(0,0,0,0.65),
+      0 2px 6px rgba(0,0,0,0.55),
+      0 9px 18px rgba(0,0,0,0.45);
+    --fc-relief-hi:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 10px 22px rgba(237,28,36,0.34);
+    --fc-press: inset 0 3px 8px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  /* Pastille info « i » entourée — cliquable (renvoi Guide) */
+  .fc-info {
+    width: 15px; height: 15px; flex: 0 0 auto; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 1px solid currentColor;
+    background: transparent; color: var(--accent, #ed1c24);
+    font-family: 'JetBrains Mono','DM Mono',monospace;
+    font-size: 9px; font-weight: 800; font-style: italic; line-height: 1;
+    cursor: pointer; opacity: 0.8; transition: opacity .12s, background .12s;
+  }
+  .fc-info:hover, .fc-info:focus-visible {
+    opacity: 1; background: rgba(237,28,36,0.16); outline: none;
+  }
+  /* Potentiomètre « Degré Confiance » — mini-carte graphite premium */
+  .conf-wrap {
+    display: inline-flex; flex-direction: column; gap: 7px;
+    width: 232px; box-sizing: border-box; margin: 0 4px 0 12px;
+    padding: 9px 13px 8px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: var(--fc-graphite, linear-gradient(180deg,#363b43,#181b20));
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+  }
+  .conf-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .conf-title {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 700 10.5px/1 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: .02em; color: var(--fc-ink, #cfd4db);
+    white-space: nowrap;
+  }
+  .conf-info { width: 14px; height: 14px; font-size: 8px; color: #ff6168; }
+  .conf-info:hover, .conf-info:focus-visible { background: rgba(237,28,36,0.22); }
+  .conf-val {
+    font: 800 11px/1 'JetBrains Mono', monospace; color: #fff;
+    font-variant-numeric: tabular-nums;
+    min-width: 40px; text-align: center;
+    padding: 3px 7px; border-radius: 999px;
+    background: linear-gradient(180deg, #ff2a33 0%, var(--accent-dim) 100%);
+    box-shadow: 0 1px 4px rgba(237,28,36,0.40);
+  }
+  .conf-range {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 999px; display: block;
+    margin: 2px 0; cursor: pointer; outline: none;
+    background: linear-gradient(to right, var(--accent) 0%, rgba(255,255,255,0.13) 0%);
+  }
+  .conf-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 0 4px rgba(237,28,36,0.18);
+    cursor: pointer; transition: transform .12s;
+  }
+  .conf-range::-webkit-slider-thumb:hover { transform: scale(1.12); }
+  .conf-range::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5); cursor: pointer;
+  }
+  .conf-ticks {
+    display: flex; justify-content: space-between;
+    font: 700 8px/1 'JetBrains Mono', monospace; color: var(--text3);
+    letter-spacing: .02em; padding: 0 7px; /* ≈ demi-curseur → 0%/100% alignés sur la course */
+  }
+  .conf-ticks span { flex: 1; text-align: center; }
+  .conf-ticks span:first-child { text-align: left; }
+  .conf-ticks span:last-child { text-align: right; }
+  /* ── Bets prédictifs — design premium 3D (cellule Match) ── */
+  .pbet-wrap {
+    margin-top: 8px; display: flex; flex-direction: column; gap: 5px;
+    padding: 8px 8px 9px; border-radius: 12px;
+    background: linear-gradient(180deg,#FCFCFD 0%,#F1F2F4 100%);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.07);
+  }
+  .pbet-head {
+    text-align: center; font: 800 9.5px/1 'Barlow Condensed',sans-serif;
+    text-transform: uppercase; letter-spacing: .12em; color: #6A7077;
+    padding-bottom: 6px; margin-bottom: 2px; position: relative;
+  }
+  .pbet-head::after {
+    content: ''; position: absolute; left: 50%; bottom: 0; width: 34px; height: 2px;
+    transform: translateX(-50%); border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent,#E2001A), #ff5a61);
+  }
+  .pbet-wrap.pbet-live .pbet-head { color: var(--accent,#E2001A); }
+  .pb-livedot { display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--accent,#E2001A); margin-right:5px; vertical-align:middle;
+    box-shadow:0 0 0 0 rgba(226,0,26,0.6); animation:pbLive 1.4s infinite; }
+  @keyframes pbLive { 0%{box-shadow:0 0 0 0 rgba(226,0,26,0.55);} 70%{box-shadow:0 0 0 6px rgba(226,0,26,0);} 100%{box-shadow:0 0 0 0 rgba(226,0,26,0);} }
+  @media (prefers-reduced-motion: reduce) { .pb-livedot { animation:none; } }
+  .pbet-row {
+    display: flex; align-items: center; gap: 7px;
+    font: 800 11px/1 'JetBrains Mono','DM Mono',monospace;
+    font-variant-numeric: tabular-nums;
+    padding: 7px 9px; border-radius: 9px;
+    background: linear-gradient(180deg,#FFFFFF 0%,#F3F4F6 100%);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.07), 0 3px 7px rgba(0,0,0,.06);
+    transition: transform .12s, box-shadow .12s;
+  }
+  .pbet-row:hover { transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 #fff, 0 4px 10px rgba(0,0,0,.12); }
+  .pbet-row.pb-top {
+    background: linear-gradient(180deg,#FFFFFF 0%,#FFF3F3 100%);
+    box-shadow: inset 0 1px 0 #fff, inset 3px 0 0 0 var(--accent,#E2001A),
+                0 2px 5px rgba(226,0,26,.10), 0 6px 14px rgba(226,0,26,.12);
+  }
+  .pbet-row .pb-rk {
+    width: 19px; height: 19px; flex: 0 0 auto; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font: 800 10px/1 'JetBrains Mono',monospace; color: #fff;
+    background: radial-gradient(circle at 35% 30%, #b9bfc6, #7d838b);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.6), inset 0 -1px 2px rgba(0,0,0,.35),
+                0 1px 2px rgba(0,0,0,.30);
+  }
+  .pbet-row.pb-top .pb-rk {
+    background: radial-gradient(circle at 35% 30%, #ff5a61, #c4151e);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.5), inset 0 -1px 2px rgba(0,0,0,.4),
+                0 1px 3px rgba(226,0,26,.5);
+  }
+  .pbet-row .pb-lbl { flex: 1; font-weight: 900; color: #14181C; letter-spacing: -.01em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pbet-row .pb-pr { color: #5A6068; font-weight: 700; }
+  .pbet-row .pb-cf { font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,.7); }
+  .pbet-row.pb-hi  .pb-cf { color: #15803D; }
+  .pbet-row.pb-mid .pb-cf { color: #B45309; }
+  .pbet-row.pb-lo  .pb-cf { color: #B91C1C; }
+  @media (prefers-reduced-motion: reduce) { .pbet-row { transition: none; } .pbet-row:hover { transform: none; } }
+  /* Dark / cartes mobile .mc — relief sombre */
+  body.dark-theme .pbet-wrap, .mc .pbet-wrap {
+    background: linear-gradient(180deg,#23272d 0%,#181b20 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 16px rgba(0,0,0,.45);
+  }
+  body.dark-theme .pbet-row, .mc .pbet-row {
+    background: linear-gradient(180deg,#2b2f36 0%,#1f2329 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 3px 7px rgba(0,0,0,.5);
+  }
+  body.dark-theme .pbet-row .pb-lbl, .mc .pbet-row .pb-lbl { color: #fff; }
+  body.dark-theme .pbet-row .pb-pr, .mc .pbet-row .pb-pr { color: #9aa0a8; }
+  body.dark-theme .pbet-row.pb-top, .mc .pbet-row.pb-top {
+    background: linear-gradient(180deg,#3a2326 0%,#241c1e 100%);
+  }
+  body.dark-theme .pbet-row.pb-hi .pb-cf,  .mc .pbet-row.pb-hi .pb-cf  { color:#34d399; }
+  body.dark-theme .pbet-row.pb-mid .pb-cf, .mc .pbet-row.pb-mid .pb-cf { color:#fbbf24; }
+  body.dark-theme .pbet-row.pb-lo .pb-cf,  .mc .pbet-row.pb-lo .pb-cf  { color:#f87171; }
+  /* Icône vectorielle filtre (remplace émojis) */
+  .fc-ic {
+    width: 13px; height: 13px; flex: 0 0 auto;
+    vertical-align: -2px; margin-right: 5px;
+    stroke: currentColor; stroke-width: 1.9;
+    stroke-linecap: round; stroke-linejoin: round; fill: none;
+  }
   .filter-chip {
-    font-size: 12px; padding: 5px 13px; border-radius: 20px;
-    border: 1px solid var(--border2); color: var(--text2);
-    background: transparent; transition: all .15s;
+    font: 600 12px/1 var(--fc-font-ui, 'Plus Jakarta Sans', sans-serif);
+    display: inline-flex; align-items: center;
+    padding: 8px 15px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--fc-ink, #cfd4db);
+    background: var(--fc-graphite, linear-gradient(180deg,#363b43,#181b20));
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+    transition: transform .13s, box-shadow .13s, color .13s, background .13s;
     cursor: pointer;
   }
-  .filter-chip.active { background: var(--text); color: var(--bg2); border-color: var(--text); }
-  .filter-chip:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+  .filter-chip:hover:not(.active) {
+    transform: translateY(-2px); color: #ff6168;
+    border-color: rgba(237,28,36,0.55);
+    background: var(--fc-graphite-hi, linear-gradient(180deg,#3e444d,#1c1f25));
+    box-shadow: var(--fc-relief-hi, 0 10px 22px rgba(237,28,36,0.30));
+  }
+  .filter-chip:focus-visible {
+    outline: none; border-color: var(--accent);
+    box-shadow: var(--fc-relief), 0 0 0 3px rgba(237,28,36,0.40);
+  }
+  .filter-chip:active { transform: translateY(0); }
+  .filter-chip.active {
+    transform: translateY(0); color: #fff;
+    border-color: #7a0d12;
+    background: linear-gradient(180deg, #ff2a33 0%, var(--accent) 45%, var(--accent-dim) 100%);
+    box-shadow:
+      var(--fc-press, inset 0 3px 7px rgba(0,0,0,0.55)),
+      0 2px 10px rgba(237,28,36,0.45);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+  }
+  /* Valeurs numériques filtres → JetBrains Mono, alignement pixel */
+  #filter-console [class*="-count"], #filter-console #edge-count,
+  #filter-console #period-note, #filter-console .adv-input,
+  #filter-console .filter-dd, #filter-console #country-mobile-select,
+  #filter-console #country-sort-select {
+    font-family: var(--fc-font-num, 'JetBrains Mono', monospace) !important;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .filter-chip { transition: none; }
+    .filter-chip:hover:not(.active) { transform: none; }
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     FILTER CONSOLE — panneau filtres 3D · charte L'Équipe
+     ════════════════════════════════════════════════════════════════ */
+  .filter-console {
+    position: relative;
+    background:
+      linear-gradient(180deg, #ffffff 0%, #f6f6f6 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 22px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  body.dark-theme .filter-console {
+    background: rgba(24,28,32,0.55);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    backdrop-filter: blur(10px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 28px rgba(0,0,0,.45);
+  }
+  /* Liseré rouge signature L'Équipe en haut */
+  .filter-console::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dim) 60%, var(--accent) 100%);
+    z-index: 2;
+  }
+  .fc-head {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 13px 20px 11px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(237,28,36,0.045) 0%, transparent 100%);
+  }
+  .fc-title {
+    font-family: 'Plus Jakarta Sans', var(--font-head); font-weight: 800;
+    font-size: 19px; letter-spacing: .02em; text-transform: uppercase;
+    color: var(--text); line-height: 1;
+    border-left: 3px solid var(--accent); padding-left: 10px;
+  }
+  .fc-sub {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 10.5px;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--text3);
+  }
+  /* Rangées internes — fusionnées, séparateurs discrets, zéro carte autonome */
+  .filter-console > .filter-row {
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 11px 20px !important;
+    gap: 10px; align-items: center;
+    transition: background .15s;
+  }
+  .filter-console > .filter-row:last-child { border-bottom: 0 !important; }
+  .filter-console > .filter-row:hover { background: rgba(0,0,0,0.018) !important; }
+  body.dark-theme .filter-console > .filter-row:hover { background: rgba(255,255,255,0.025) !important; }
+
+  /* Labels mono — colonne alignée, style "console" */
+  .filter-console .dd-lbl,
+  .filter-console .adv-label,
+  #league-filter-row > span:first-of-type {
+    font-family: var(--font-mono) !important;
+    font-size: 9.5px !important; font-weight: 500;
+    letter-spacing: .11em; text-transform: uppercase;
+    color: var(--text3) !important;
+    min-width: 84px; flex: 0 0 auto;
+  }
+
+  /* ── Dropdowns filtres (PC) — "control chip" relief 3D ── */
+  .filter-dd {
+    display: none;
+    -webkit-appearance: none; appearance: none;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ff3b3b' stroke-width='1.9' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center,
+      linear-gradient(180deg, #363b43 0%, #20242a 52%, #181b20 100%);
+    background-size: 12px 7px, 100% 100%;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    color: var(--fc-ink, #cfd4db); font-size: 12px; font-weight: 600;
+    font-family: var(--fc-font-num, 'JetBrains Mono', monospace);
+    padding: 9px 34px 9px 14px; outline: none; cursor: pointer;
+    max-width: 240px;
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+    transition: transform .13s, box-shadow .13s, border-color .13s, background-color .13s;
+  }
+  .filter-dd:hover {
+    transform: translateY(-2px);
+    border-color: rgba(237,28,36,0.55); color: #ff6168;
+    box-shadow: var(--fc-relief-hi, 0 10px 22px rgba(237,28,36,0.30));
+  }
+  .filter-dd:focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--fc-relief), 0 0 0 3px rgba(237,28,36,0.40);
+  }
+  .filter-dd:active { transform: translateY(0); }
+  /* Filtre non-défaut → liseré rouge + texte rouge (feedback "actif") */
+  .filter-dd.dd-on {
+    border-color: var(--accent) !important;
+    color: #ff6168 !important;
+    box-shadow:
+      var(--fc-relief),
+      inset 0 0 0 1px rgba(237,28,36,0.45),
+      0 4px 14px rgba(237,28,36,0.30) !important;
+  }
+  .filter-dd option { background: #1c1f24; color: #e8eaed; font-weight: 500; }
+  body.dark-theme .filter-dd { color: var(--fc-ink, #cfd4db); }
+  body.dark-theme .filter-dd option { background: #14171b; color: #e8eaed; }
+  .dd-lbl { display: none; }
+
+  /* Selects ligue/tri → même "control chip" 3D */
+  #league-filter-row #country-mobile-select,
+  #league-filter-row #country-sort-select {
+    -webkit-appearance: none; appearance: none;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23ff3b3b' stroke-width='1.9' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center,
+      linear-gradient(180deg, #363b43 0%, #20242a 52%, #181b20 100%);
+    background-size: 12px 7px, 100% 100%;
+    border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+    color: var(--fc-ink, #cfd4db); font-family: var(--fc-font-num, 'JetBrains Mono', monospace); font-weight: 600;
+    padding: 9px 34px 9px 14px; cursor: pointer;
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+    transition: transform .13s, box-shadow .13s, border-color .13s;
+  }
+  #league-filter-row #country-mobile-select { font-size: 12px; min-width: 230px; }
+  #league-filter-row #country-sort-select { font-size: 11px; }
+  #league-filter-row #country-mobile-select:hover,
+  #league-filter-row #country-sort-select:hover {
+    transform: translateY(-2px); border-color: rgba(237,28,36,0.55); color: #ff6168;
+    box-shadow: var(--fc-relief-hi, 0 10px 22px rgba(237,28,36,0.30));
+  }
+  #league-filter-row #country-mobile-select:focus-visible,
+  #league-filter-row #country-sort-select:focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--fc-relief), 0 0 0 3px rgba(237,28,36,0.40);
+  }
+  #league-filter-row #country-mobile-select option,
+  #league-filter-row #country-sort-select option { background: #1c1f24; color: #e8eaed; }
+
+  /* Boutons action — Graphite Trading-Chip */
+  #filter-console #fav-filter-chip,
+  #filter-console #steam-filter-chip,
+  #filter-console #adv-reset-btn {
+    font-family: var(--fc-font-ui, 'Plus Jakarta Sans', sans-serif); font-size: 11px; font-weight: 600;
+    letter-spacing: .02em;
+    padding: 8px 16px; border-radius: 12px;
+    background: var(--fc-graphite, linear-gradient(180deg,#363b43,#181b20));
+    border: 1px solid rgba(255,255,255,0.06); color: var(--fc-ink, #cfd4db);
+    cursor: pointer;
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+    transition: transform .13s, box-shadow .13s, color .13s, background .13s;
+  }
+  #filter-console #fav-filter-chip:hover,
+  #filter-console #steam-filter-chip:hover,
+  #filter-console #adv-reset-btn:hover {
+    transform: translateY(-2px); color: #ff6168;
+    border-color: rgba(237,28,36,0.55);
+    background: var(--fc-graphite-hi, linear-gradient(180deg,#3e444d,#1c1f25));
+    box-shadow: var(--fc-relief-hi, 0 10px 22px rgba(237,28,36,0.30));
+  }
+  #filter-console #fav-filter-chip:active,
+  #filter-console #steam-filter-chip:active,
+  #filter-console #adv-reset-btn:active { transform: translateY(0); }
+  #filter-console #fav-filter-chip.active,
+  #filter-console #steam-filter-chip.active {
+    background: linear-gradient(180deg, #ff2a33 0%, var(--accent) 45%, var(--accent-dim) 100%);
+    color: #fff; border-color: #7a0d12;
+    box-shadow:
+      var(--fc-press, inset 0 3px 7px rgba(0,0,0,0.55)),
+      0 2px 10px rgba(237,28,36,0.45);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+  }
+  /* État actif générique (couvre aussi les selects ligue/tri) */
+  #filter-console #country-mobile-select.dd-on,
+  #filter-console #country-sort-select.dd-on {
+    border-color: var(--accent) !important;
+    color: #ff6168 !important;
+    box-shadow:
+      var(--fc-relief),
+      inset 0 0 0 1px rgba(237,28,36,0.45),
+      0 4px 14px rgba(237,28,36,0.30) !important;
+  }
+
+  @media (min-width: 769px) {
+    #day-filter-row > .filter-chip[data-day],
+    #topn-filter-row > .filter-chip,
+    #topn-filter-row > span:not(.dd-lbl),
+    #period-filter-row > .filter-chip[data-period],
+    #period-filter-row > span:not(.dd-lbl):not(#period-note),
+    #kickoff-filter-row > .filter-chip[data-kick],
+    #kickoff-filter-row > span.adv-label { display: none !important; }
+    .filter-dd, .dd-lbl { display: inline-block; }
+  }
+  @media (max-width: 768px) { .filter-dd, .dd-lbl { display: none !important; } }
+
+  /* Responsive condensé — anti-overflow horizontal ≤430px */
+  @media (max-width: 430px) {
+    #filter-console > .filter-row {
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      padding: 9px 13px !important;
+    }
+    #filter-console .filter-chip,
+    #filter-console .preset-pill {
+      font-size: 11px; padding: 6px 11px;
+    }
+    #filter-console .fc-ic { width: 12px; height: 12px; margin-right: 4px; }
+    #filter-console #fav-filter-chip,
+    #filter-console #steam-filter-chip,
+    #filter-console #adv-reset-btn { margin-left: 0 !important; }
+    #league-filter-row #country-sort-select,
+    #league-filter-row #country-mobile-select { margin-left: 0 !important; min-width: 0; width: 100%; }
+    .fc-head { padding: 11px 13px 9px; flex-wrap: wrap; gap: 6px; }
+    .fc-title { font-size: 17px; }
+  }
 
   /* Top N best bets */
   .topn-chip.active { background: rgba(255,215,0,0.12); color: #ffd700; border-color: rgba(255,215,0,0.35); }
@@ -1452,33 +1967,158 @@
   .country-league-chip .league-tag {
     font-size: 8px; color: var(--text3); margin-left: auto; padding-left: 6px;
   }
-  /* Mobile select */
-  #country-mobile-select {
-    display: none;
-    background: var(--bg4); border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); font-size: 12px; font-family: var(--font-mono);
-    padding: 6px 8px; width: 100%; outline: none;
-  }
-  #country-mobile-select:focus { border-color: var(--border2); }
-  #country-mobile-select option { background: var(--bg2); color: var(--text); }
+  /* Select natif remplacé par #ml-league (multi-select) — masqué, gardé pour compat */
+  #country-mobile-select { display: none !important; }
+  /* PC : on masque les chips pays (liste déroulante à la place) */
+  #country-filter-row { display: none !important; }
+  #league-filter-row > .country-chip[data-country="all"] { display: none; }
+  #league-filter-row #league-search { display: none; }
   @media (max-width: 768px) {
-    #country-filter-row { display: none !important; }
-    #country-mobile-select { display: block; }
-    #league-filter-row #league-search { display: none; }
+    #country-mobile-select { width: 100%; max-width: none; }
     .country-chip-wrap { display: none; }
   }
 
-  /* Preset pills */
-  #preset-filter-row {
-    display: flex; gap: 6px; padding: 6px 16px; flex-wrap: wrap; align-items: center;
+  /* ── Multi-select Ligues (drapeaux + noms FR, sélection multiple) ── */
+  .mls { position: relative; display: inline-block; max-width: 280px; }
+  .mls-trigger {
+    display: inline-flex; align-items: center; justify-content: space-between;
+    min-width: 220px; max-width: 280px; gap: 8px;
+    font: 600 12px/1 var(--fc-font-num, 'JetBrains Mono', monospace);
+    color: var(--fc-ink, #cfd4db); cursor: pointer;
+    padding: 9px 14px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: var(--fc-graphite, linear-gradient(180deg,#363b43,#181b20));
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+    transition: transform .13s, box-shadow .13s, border-color .13s, color .13s;
   }
+  .mls-trigger:hover { transform: translateY(-2px); border-color: rgba(237,28,36,0.55); color: #ff6168;
+    box-shadow: var(--fc-relief-hi, 0 10px 22px rgba(237,28,36,0.30)); }
+  .mls-trigger:focus-visible { outline: none; border-color: var(--accent);
+    box-shadow: var(--fc-relief), 0 0 0 3px rgba(237,28,36,0.40); }
+  .mls.on .mls-trigger { border-color: var(--accent); color: #ff6168;
+    box-shadow: var(--fc-relief), inset 0 0 0 1px rgba(237,28,36,0.45), 0 4px 14px rgba(237,28,36,0.30); }
+  .mls-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; flex: 1; }
+  .mls.open .mls-caret { transform: rotate(180deg); }
+  .mls-caret { transition: transform .15s; }
+  /* Panneau en position:fixed → échappe à .filter-console{overflow:hidden} */
+  .mls-panel {
+    display: none; position: fixed; z-index: 9999;
+    width: 300px; max-height: 360px; overflow-y: auto;
+    background: linear-gradient(180deg,#22262c 0%,#181b20 100%);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.06);
+    padding: 8px;
+  }
+  .mls.open .mls-panel { display: block; }
+  .mls-search {
+    width: 100%; box-sizing: border-box; margin-bottom: 6px;
+    font: 500 12px/1 var(--fc-font-num, 'JetBrains Mono', monospace);
+    color: #e8eaed; background: #14171b;
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+    padding: 8px 10px; outline: none;
+  }
+  .mls-search:focus { border-color: var(--accent); }
+  .mls-search::placeholder { color: #6a7077; }
+  .mls-opt {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    font: 800 12px/1 'Plus Jakarta Sans', sans-serif; color: #cfd4db;
+    background: transparent; border: 0; border-radius: 8px;
+    padding: 9px; cursor: pointer; text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 4px;
+    transition: background .1s, color .1s;
+  }
+  .mls-opt:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .mls-all.sel { color: #ff6168; }
+  .mls-grp { border-radius: 8px; }
+  .mls-row {
+    display: flex; align-items: center; gap: 4px; border-radius: 8px;
+    transition: background .1s;
+  }
+  .mls-row:hover { background: rgba(255,255,255,0.05); }
+  .mls-rowmain {
+    display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0;
+    font: 600 12px/1 'Plus Jakarta Sans', sans-serif; color: #cfd4db;
+    background: transparent; border: 0; padding: 8px 6px 8px 9px;
+    cursor: pointer; text-align: left;
+  }
+  .mls-rowmain:hover { color: #fff; }
+  .mls-row .country-flag { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(0,0,0,0.4); }
+  .mls-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mls-cnt { font: 500 10px/1 var(--fc-font-num,'JetBrains Mono',monospace); color: #7a818b; }
+  .mls-check {
+    width: 16px; height: 16px; flex: 0 0 auto; border-radius: 5px;
+    border: 1.5px solid rgba(255,255,255,0.22); display: inline-flex;
+    align-items: center; justify-content: center; transition: all .12s;
+  }
+  .mls-row.sel .mls-rowmain { color: #fff; }
+  .mls-row.sel { background: rgba(237,28,36,0.10); }
+  .mls-row.sel .mls-check {
+    background: linear-gradient(180deg,#ff2a33,var(--accent-dim));
+    border-color: #7a0d12;
+  }
+  .mls-row.sel .mls-check::after { content: ''; width: 4px; height: 8px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translateY(-1px); }
+  .mls-exp {
+    flex: 0 0 auto; width: 26px; height: 30px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; color: #7a818b; cursor: pointer;
+    border-radius: 6px; transition: color .1s, transform .15s;
+  }
+  .mls-exp:hover { color: #ff6168; }
+  .mls-grp.exp .mls-exp { transform: rotate(180deg); color: #ff6168; }
+  .mls-leagues { display: none; padding: 2px 0 6px 30px; }
+  .mls-grp.exp .mls-leagues { display: block; }
+  .mls-league {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    font: 500 11px/1 var(--fc-font-num,'JetBrains Mono',monospace); color: #aab0b8;
+    background: transparent; border: 0; border-radius: 7px;
+    padding: 7px 9px; cursor: pointer; text-align: left;
+    transition: background .1s, color .1s;
+  }
+  .mls-league:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .mls-lcheck {
+    width: 14px; height: 14px; flex: 0 0 auto; border-radius: 4px;
+    border: 1.5px solid rgba(255,255,255,0.22); display: inline-flex;
+    align-items: center; justify-content: center; transition: all .12s;
+  }
+  .mls-lname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mls-ltag { font-size: 9px; color: #6a7077; padding-left: 6px; }
+  .mls-league.sel { color: #fff; background: rgba(237,28,36,0.16); }
+  .mls-league.sel .mls-lcheck {
+    background: linear-gradient(180deg,#ff2a33,var(--accent-dim)); border-color: #7a0d12;
+  }
+  .mls-league.sel .mls-lcheck::after { content: ''; width: 3.5px; height: 7px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translateY(-1px); }
+  .mls-empty { padding: 14px 10px; text-align: center; color: #7a818b; font: 500 11px/1 'Plus Jakarta Sans',sans-serif; }
+  @media (max-width: 768px) {
+    .mls, .mls-trigger { width: 100%; max-width: none; }
+    .mls-panel { width: 100%; }
+  }
+
   .preset-pill {
-    font-size: 11px; padding: 3px 10px; border-radius: 14px;
-    border: 1px dashed var(--border2); color: var(--text2);
-    background: transparent; cursor: pointer; white-space: nowrap; transition: all .15s;
+    font: 600 11px/1 'Plus Jakarta Sans', sans-serif;
+    display: inline-flex; align-items: center;
+    padding: 7px 13px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06); color: var(--fc-ink, #cfd4db);
+    background: var(--fc-graphite, linear-gradient(180deg,#363b43,#181b20));
+    box-shadow: var(--fc-relief, 0 4px 9px rgba(0,0,0,0.30));
+    cursor: pointer; white-space: nowrap;
+    transition: transform .13s, box-shadow .13s, color .13s, background .13s;
   }
-  .preset-pill:hover { border-color: var(--green); color: var(--green); }
-  .preset-pill.active { background: var(--green-bg); color: var(--green); border-color: rgba(0,230,118,0.3); border-style: solid; }
+  .preset-pill:hover:not(.active) {
+    transform: translateY(-2px); border-color: rgba(237,28,36,0.55); color: #ff6168;
+    background: var(--fc-graphite-hi, linear-gradient(180deg,#3e444d,#1c1f25));
+    box-shadow: var(--fc-relief-hi, 0 10px 22px rgba(237,28,36,0.30));
+  }
+  .preset-pill.active {
+    color: #fff; border-color: #7a0d12;
+    background: linear-gradient(180deg, #ff2a33 0%, var(--accent) 45%, var(--accent-dim) 100%);
+    box-shadow:
+      var(--fc-press, inset 0 3px 7px rgba(0,0,0,0.55)),
+      0 2px 10px rgba(237,28,36,0.45);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+  }
+  @media (prefers-reduced-motion: reduce) { .preset-pill { transition: none; } .preset-pill:hover:not(.active) { transform: none; } }
   /* Sort selector */
   #country-sort-select {
     background: var(--bg4); border: 1px solid var(--border); border-radius: 5px;
@@ -1488,7 +2128,6 @@
   #country-sort-select:focus { border-color: var(--border2); }
   #country-sort-select option { background: var(--bg2); color: var(--text); }
   @media (max-width: 768px) {
-    #preset-filter-row { display: none; }
     #country-sort-select { display: none; }
   }
 
@@ -4285,26 +4924,27 @@
     color: var(--text) !important;
   }
 
-  /* 2. Filtres chips actifs (Tous / +5% ★ / pays / edge…) → noir/blanc L'Équipe */
-  .filter-chip.active {
-    background: #1A1A1A !important;
+  /* 2. Filtres chips actifs → rouge pressé (Graphite Trading-Chip) */
+  .filter-chip.active,
+  .filter-chip[data-edge="5"].active {
+    background: linear-gradient(180deg, #ff2a33 0%, var(--accent) 45%, var(--accent-dim) 100%) !important;
     color: #fff !important;
-    border-color: #1A1A1A !important;
+    border-color: #7a0d12 !important;
     font-weight: 700 !important;
+    box-shadow:
+      var(--fc-press, inset 0 3px 7px rgba(0,0,0,0.55)),
+      0 2px 10px rgba(237,28,36,0.45) !important;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.35);
   }
   .filter-chip:hover:not(.active) {
-    border-color: #1A1A1A !important;
-    color: #1A1A1A !important;
+    border-color: rgba(237,28,36,0.55) !important;
+    color: #ff6168 !important;
+    background: var(--fc-graphite-hi, linear-gradient(180deg,#3e444d,#1c1f25)) !important;
   }
-  /* Chip +5% ★ inline style vert → neutralisé */
+  /* Chip +5% inline style vert → neutralisé */
   .filter-chip[data-edge="5"] {
     border-color: var(--border2) !important;
     color: var(--text2) !important;
-  }
-  .filter-chip[data-edge="5"].active {
-    background: #1A1A1A !important;
-    color: #fff !important;
-    border-color: #1A1A1A !important;
   }
 
   /* 3. Section Premium — "gratuitement" span → rouge */
@@ -4343,13 +4983,13 @@
   }
 
   /* ── ONGLET MATCHS : TABLE FOND BLANC ──────────────────── */
+  /* Value-First : zéro zébrure — fond uniforme, divider 1px, couleur = sens only */
   body:not(.dark-theme) #vb-body tr { background: #fff !important; }
-  body:not(.dark-theme) #vb-body tr:nth-child(odd)  { background: #fff !important; }
-  body:not(.dark-theme) #vb-body tr:nth-child(even) { background: #fafafa !important; }
-  body:not(.dark-theme) #vb-body tr:hover td { background: #f5f5f5 !important; }
-  body:not(.dark-theme) #vb-body tr:hover td:first-child {
-    background: linear-gradient(90deg, rgba(226,0,26,0.06) 0%, rgba(226,0,26,0.01) 100%) !important;
-  }
+  body:not(.dark-theme) #vb-body tr td { background: #fff !important; border-bottom: 1px solid #ECECEC !important; }
+  body:not(.dark-theme) #vb-body tr:hover td { background: #FAF7F7 !important; }
+  body:not(.dark-theme) #vb-body tr:focus-within td { background: #FAF7F7 !important; }
+  body:not(.dark-theme) #vb-body tr.is-value td:first-child,
+  body:not(.dark-theme) #vb-body tr.is-value-hot td:first-child { box-shadow: inset 3px 0 0 0 #E2001A !important; }
   body:not(.dark-theme) #vb-body td { color: #1A1A1A !important; }
 
   /* ── BADGES TOP CONSEILS (1X2, DC, U3.5, BTTS, Corners) ── */
@@ -5110,7 +5750,24 @@
     #mfs-body .filter-row {
       flex-wrap: wrap !important; margin-bottom: 10px !important;
       max-height: none !important;
+      padding: 10px 12px !important; gap: 8px !important; align-items: center;
     }
+    /* Filtres mobile — mêmes formes/fond graphite que desktop, pleine largeur, cibles tactiles */
+    #mfs-body #period-kickoff-row { gap: 12px !important; }
+    #mfs-body #period-filter-row, #mfs-body #kickoff-filter-row { width: 100%; }
+    #mfs-body .mls, #mfs-body .mls-trigger,
+    #mfs-body #ts-select, #mfs-body #ts-trigger,
+    #mfs-body .conf-wrap { width: 100% !important; max-width: none !important; min-width: 0 !important; box-sizing: border-box; }
+    #mfs-body .mls-trigger, #mfs-body #ts-trigger { justify-content: space-between; }
+    #mfs-body .filter-chip, #mfs-body .preset-pill,
+    #mfs-body #fav-filter-chip, #mfs-body #steam-filter-chip,
+    #mfs-body #adv-reset-btn { min-height: 38px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    #mfs-body .conf-range { height: 8px; }
+    #mfs-body .conf-range::-webkit-slider-thumb { width: 20px; height: 20px; }
+    #mfs-body .conf-range::-moz-range-thumb { width: 20px; height: 20px; }
+    #mfs-body .mls-panel, #mfs-body #ts-panel { z-index: 100000; }
+    /* O2.5 presets redondants : le slider « Degré Confiance » couvre déjà ce besoin */
+    #mfs-body .adv-chips-m .adv-chips-grp:first-child { display: none !important; }
     /* Refonte filtre Tennis mobile — propre, uniforme, lisible */
     body.tvbf-open #tennis-vb-filters { gap: 16px !important; padding: 14px !important; }
     #tennis-vb-filters > div {
@@ -5294,7 +5951,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     PariScore
   </div>
   <div class="nav-links">
-    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Matchs</a>
+    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Football</a>
     <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis">🎾 Tennis</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
     <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">Hot Picks</a>
@@ -5964,8 +6621,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <!-- TEAM SEARCH -->
   <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;gap:8px;">
     <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);white-space:nowrap;">Équipe :</span>
-    <input type="search" id="team-search" placeholder="🔍 PSG, Real Madrid..." oninput="setTeamSearch(this.value)" style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--font-mono);padding:4px 8px;width:200px;outline:none;transition:border-color .15s;" />
+    <input type="search" id="team-search" placeholder="PSG, Real Madrid…" oninput="setTeamSearch(this.value)" style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--font-mono);padding:4px 8px;width:200px;outline:none;transition:border-color .15s;" />
     <span id="team-search-count" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);"></span>
+  </div>
+
+  <!-- ═══ FILTER CONSOLE — panneau filtres 3D L'Équipe ═══ -->
+  <div class="filter-console" id="filter-console">
+  <div class="fc-head">
+    <span class="fc-title">Filtres</span>
+    <span class="fc-sub" id="fc-active-count">Affinez votre sélection</span>
   </div>
 
   <!-- DAY FILTERS -->
@@ -5975,93 +6639,93 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <button class="filter-chip" data-day="1" id="day-btn-1">Demain</button>
     <button class="filter-chip" data-day="2" id="day-btn-2">—</button>
     <button class="filter-chip" data-day="3" id="day-btn-3">—</button>
-  </div>
-
-  <!-- PRESET FILTERS — filtres rapides -->
-  <div class="filter-row" id="preset-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:6px 16px;">
-    <button class="preset-pill" data-preset="top5">🏆 Top 5 Europe</button>
-    <button class="preset-pill" data-preset="live">⚡ Live</button>
-    <button class="preset-pill" data-preset="t1">🌍 Toutes T1</button>
-    <button class="preset-pill" data-preset="scandinavia">❄️ Scandinavie</button>
-  </div>
-
-  <!-- TOP N BEST BETS FILTER -->
-  <div class="filter-row" id="topn-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:6px 16px;flex-wrap:wrap;gap:4px;align-items:center;">
-    <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">⭐ Top :</span>
-    <button class="filter-chip topn-chip active" data-topn="0">Tous</button>
-    <button class="filter-chip topn-chip" data-topn="10">10</button>
-    <button class="filter-chip topn-chip" data-topn="5">5</button>
-    <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3);margin:0 4px;">sur :</span>
-    <button class="filter-chip topm-chip" data-topmarket="1x2">1X2</button>
-    <button class="filter-chip topm-chip" data-topmarket="dc">DC</button>
-    <button class="filter-chip topm-chip" data-topmarket="over15">+1.5</button>
-    <button class="filter-chip topm-chip" data-topmarket="under35">-3.5</button>
-    <button class="filter-chip topm-chip" data-topmarket="attaque">Attaque</button>
-    <button class="filter-chip topm-chip" data-topmarket="defense">Défense</button>
-    <button class="filter-chip topm-chip" data-topmarket="btts">BTTS</button>
-    <button class="filter-chip topm-chip topm-smart" data-topmarket="smart">🧠Smart</button>
-    <button class="filter-chip topv-chip" data-topvalue="1" style="margin-left:4px;" title="Seulement les value bets (edge≥3%)">💰Value</button>
+    <select class="filter-dd" id="day-dd" onchange="pickChipDD(this)" aria-label="Jour"></select>
+    <div id="ml-league" class="mls" style="margin-left:auto;">
+      <button type="button" class="mls-trigger" id="ml-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="mlToggle(event)">
+        <span class="mls-label" id="ml-label">Toutes les ligues</span>
+        <svg class="fc-ic mls-caret" viewBox="0 0 10 6" aria-hidden="true" style="margin:0 0 0 8px;"><path d="M1 1l4 4 4-4" stroke="#ff3b3b" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="mls-panel" id="ml-panel" role="listbox" aria-multiselectable="true">
+        <input type="search" class="mls-search" id="ml-search" placeholder="Rechercher un pays…" oninput="mlFilter(this.value)" aria-label="Rechercher un pays">
+        <button type="button" class="mls-opt mls-all" id="ml-opt-all" onclick="mlPickAll()">Toutes les ligues</button>
+        <div class="mls-list" id="ml-list"></div>
+      </div>
+    </div>
+    <button id="fav-filter-chip" class="filter-chip" onclick="toggleFavFilter()" title="Afficher mes favoris uniquement" style="margin-left:6px;"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6L12 17l-5.4 2.6 1-6L3.3 9.4l6-.9Z"/></svg>Favoris</button>
+    <button id="steam-filter-chip" class="filter-chip" onclick="toggleSteamFilter()" title="Cotes en chute — dropping odds détectés" style="margin-left:4px;"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l6 6 4-4 7 7M17 16h4v-4"/></svg>Dropping Cotes</button>
   </div>
 
   <!-- COUNTRY + LEAGUE FILTERS — généré dynamiquement depuis leagues_config.json -->
   <div class="filter-row" id="league-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;flex-wrap:wrap;gap:6px;align-items:center;">
     <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;white-space:nowrap;">Ligue :</span>
-    <input type="search" id="league-search" placeholder="🔍 Rechercher..." oninput="filterLeagueChips(this.value)" />
-    <button class="filter-chip country-chip active" data-country="all">🌍 Toutes</button>
+    <input type="search" id="league-search" placeholder="Rechercher…" oninput="filterLeagueChips(this.value)" />
+    <button class="filter-chip country-chip active" data-country="all"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z"/></svg>Toutes</button>
     <div id="country-filter-row" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
     <select id="country-sort-select" onchange="setCountrySort(this.value)" style="margin-left:auto;">
-      <option value="priority">Priorité</option>
       <option value="matches">Matchs/jour ↓</option>
       <option value="edge">Edge moyen ↓</option>
     </select>
-    <select id="country-mobile-select" onchange="onCountryMobileSelect(this.value)"><option value="all">🌍 Toutes les ligues</option></select>
+    <select id="country-mobile-select" onchange="onCountryMobileSelect(this.value)" hidden aria-hidden="true"><option value="all">Toutes les ligues</option></select>
   </div>
 
-  <!-- EDGE FILTER -->
-  <div class="filter-row" id="edge-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;padding:10px 16px;">
-    <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Edge min :</span>
-    <button class="filter-chip active" data-edge="0">Tous</button>
-    <button class="filter-chip" data-edge="1">+1%</button>
-    <button class="filter-chip" data-edge="3">+3%</button>
-    <button class="filter-chip" data-edge="5">+5% ★</button>
-    <button class="filter-chip" data-edge="10">+10%</button>
-    <span style="font-size:11px;color:var(--text3);margin-left:8px;" id="edge-count"></span>
-    <button id="fav-filter-chip" class="filter-chip" onclick="toggleFavFilter()" title="Afficher mes favoris uniquement" style="margin-left:auto;">★ Favoris</button>
-    <button id="steam-filter-chip" class="filter-chip" onclick="toggleSteamFilter()" title="Cotes en chute — dropping odds détectés" style="margin-left:4px;">📉 Steam</button>
+  <!-- TOP N BEST BETS FILTER -->
+  <div class="filter-row" id="topn-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:6px 16px;flex-wrap:wrap;gap:4px;align-items:center;">
+    <button class="filter-chip topn-chip active" data-topn="0">Tous</button>
+    <button class="filter-chip topn-chip" data-topn="10">10</button>
+    <button class="filter-chip topn-chip" data-topn="5">5</button>
+    <span style="font-size:10px;font-family:var(--fc-font-ui,'Plus Jakarta Sans',sans-serif);font-weight:600;color:var(--text3);margin:0 4px 0 6px;">Top stratégies :</span>
+    <div id="ts-select" class="mls">
+      <button type="button" class="mls-trigger" id="ts-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="tsToggle(event)">
+        <span class="mls-label" id="ts-label">Toutes stratégies</span>
+        <svg class="fc-ic mls-caret" viewBox="0 0 10 6" aria-hidden="true" style="margin:0 0 0 8px;"><path d="M1 1l4 4 4-4" stroke="#ff3b3b" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="mls-panel" id="ts-panel" role="listbox" aria-multiselectable="true">
+        <input type="search" class="mls-search" id="ts-search" placeholder="Rechercher une stratégie…" oninput="tsFilter(this.value)" aria-label="Rechercher une stratégie">
+        <button type="button" class="mls-opt mls-all" id="ts-opt-all" onclick="tsPickAll()">Toutes stratégies</button>
+        <div class="mls-list" id="ts-list"></div>
+      </div>
+    </div>
+    <button type="button" class="fc-info" onclick="event.stopPropagation();openStrategiesGuide()" title="Voir la définition des stratégies (onglet Guide)" aria-label="Définition des stratégies — ouvrir le Guide" style="margin-left:2px;">i</button>
+    <div class="conf-wrap">
+      <div class="conf-head">
+        <span class="conf-title">Degré Confiance en %<button type="button" class="fc-info conf-info" onclick="event.stopPropagation();openStrategiesGuide()" title="À quoi sert ce curseur — il filtre selon le score des stratégies cochées dans « Toutes stratégies » (voir Guide)" aria-label="Aide : Degré de confiance — ouvrir le Guide">i</button></span>
+        <span id="o25-val" class="conf-val">0%</span>
+      </div>
+      <input type="range" id="o25-slider" class="adv-slider conf-range" min="0" max="100" step="5" value="0" aria-label="Degré de confiance minimum en %">
+      <div class="conf-ticks" aria-hidden="true"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+    </div>
+    <button class="filter-chip topv-chip" data-topvalue="1" style="margin-left:4px;" title="Seulement les value bets (edge≥3%)"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/></svg>Value</button>
+    <select class="filter-dd" id="topn-dd" onchange="pickChipDD(this)" aria-label="Top N"></select>
   </div>
 
-  <!-- PERIOD FILTER -->
-  <div class="filter-row" id="period-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
-    <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Période PPG :</span>
-    <button class="filter-chip active" data-period="season" onclick="setPeriod('season',this)">Saison</button>
-    <button class="filter-chip" data-period="l5" onclick="setPeriod('l5',this)">L5</button>
-    <button class="filter-chip" data-period="l10" onclick="setPeriod('l10',this)">L10</button>
-    <button class="filter-chip" data-period="l25" onclick="setPeriod('l25',this)">L25</button>
-    <span style="font-size:11px;color:var(--text3);margin-left:8px;font-family:var(--font-mono);" id="period-note"></span>
+  <!-- PERIOD + KICKOFF FILTER (même ligne) -->
+  <div class="filter-row" id="period-kickoff-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;gap:16px;align-items:center;flex-wrap:wrap;">
+    <div id="period-filter-row" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Période :</span>
+      <button class="filter-chip active" data-period="season" onclick="setPeriod('season',this)">Saison</button>
+      <button class="filter-chip" data-period="l5" onclick="setPeriod('l5',this)">L5</button>
+      <button class="filter-chip" data-period="l10" onclick="setPeriod('l10',this)">L10</button>
+      <button class="filter-chip" data-period="l25" onclick="setPeriod('l25',this)">L25</button>
+      <span class="dd-lbl" style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Période :</span>
+      <select class="filter-dd" id="period-dd" onchange="pickChipDD(this)" aria-label="Période"></select>
+      <span style="font-size:11px;color:var(--text3);margin-left:8px;font-family:var(--font-mono);" id="period-note"></span>
+    </div>
+    <div id="kickoff-filter-row" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span class="adv-label" style="margin-right:4px;">Kickoff :</span>
+      <button class="filter-chip active" data-kick="0">Tous</button>
+      <button class="filter-chip" data-kick="1">&lt; 1h</button>
+      <button class="filter-chip" data-kick="2">&lt; 2h</button>
+      <button class="filter-chip" data-kick="6">&lt; 6h</button>
+      <button class="filter-chip" data-kick="12">&lt; 12h</button>
+      <button class="filter-chip" data-kick="24">&lt; 24h</button>
+      <button class="filter-chip" data-kick="72">&lt; 3 jours</button>
+      <span class="dd-lbl" style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Kickoff :</span>
+      <select class="filter-dd" id="kick-dd" onchange="pickChipDD(this)" aria-label="Kickoff"></select>
+    </div>
   </div>
 
-  <!-- KICKOFF FILTER -->
-  <div class="filter-row" id="kickoff-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
-    <span class="adv-label" style="margin-right:4px;">Kickoff :</span>
-    <button class="filter-chip active" data-kick="0">Tous</button>
-    <button class="filter-chip" data-kick="1">&lt; 1h</button>
-    <button class="filter-chip" data-kick="2">&lt; 2h</button>
-    <button class="filter-chip" data-kick="6">&lt; 6h</button>
-    <button class="filter-chip" data-kick="12">&lt; 12h</button>
-    <button class="filter-chip" data-kick="24">&lt; 24h</button>
-    <button class="filter-chip" data-kick="72">&lt; 3 jours</button>
-  </div>
-
-  <!-- ADVANCED FILTERS : Poisson + Cotes -->
+  <!-- ADVANCED FILTERS : presets mobile + reset (Cote min→max desktop retiré — non fonctionnel) -->
   <div class="filter-row" id="adv-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;padding:10px 16px;align-items:center;">
-    <span class="adv-label adv-desktop" style="margin-right:6px;">O 2.5 min :</span>
-    <input type="range" id="o25-slider" class="adv-slider adv-desktop" min="0" max="85" step="5" value="0">
-    <span id="o25-val" class="adv-label adv-desktop" style="min-width:30px;color:var(--blue);margin-left:6px;">—</span>
-    <span class="adv-label adv-desktop" style="margin-left:20px;margin-right:6px;">Cote :</span>
-    <input type="number" id="cote-min" class="adv-input adv-desktop" min="1.01" max="20" step="0.1" placeholder="min">
-    <span class="adv-label adv-desktop" style="margin:0 4px;">→</span>
-    <input type="number" id="cote-max" class="adv-input adv-desktop" min="1.01" max="50" step="0.5" placeholder="max">
-
     <!-- Lot G : presets chips (mobile uniquement) -->
     <div class="adv-chips-m">
       <div class="adv-chips-grp">
@@ -6082,8 +6746,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </div>
     </div>
 
-    <button class="filter-chip" id="adv-reset-btn" style="margin-left:auto;">✕ Réinitialiser filtres</button>
+    <button class="filter-chip" id="adv-reset-btn" style="margin-left:auto;"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Réinitialiser filtres</button>
   </div>
+  </div><!-- /.filter-console -->
 
   <!-- LEAGUE HUB BANNER -->
   <div id="league-hub-banner">
@@ -6183,15 +6848,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <table id="vb-table" class="neu-table" style="min-width:900px;">
         <thead>
           <tr class="stat-header-main">
-            <th style="min-width:55px;">Heure</th>
-            <th style="text-align:left;min-width:180px;">Equipes</th>
-            <th style="min-width:70px;">Class.</th>
+            <th style="min-width:55px;">Date/H</th>
+            <th style="min-width:180px;">Match</th>
+            <th style="min-width:70px;">Rang</th>
             <th style="min-width:70px;">Forme</th>
-            <th style="min-width:100px;">Infos</th>
-            <th style="min-width:80px;text-align:center;">Δ Cotes</th>
-            <th style="min-width:200px;">Top Conseils IA</th>
-            <th style="min-width:150px;">Top 3 Butteurs</th>
+            <th style="min-width:100px;" title="Score prédictif pré-match (xG · H2H · forme)">Score prédictif prematch</th>
+            <th class="th-hero" style="min-width:80px;text-align:center;" title="Mouvement de cote — baisse détectée">Cote ▼</th>
+            <th style="min-width:200px;">Conseils IA</th>
+            <th style="min-width:150px;">Buteurs</th>
             <th style="min-width:100px;">Actions</th>
+            <th class="vb-value-col th-hero" title="Edge dévigé — métrique de valeur (modèle vs cote book)">VALUE</th>
             <th class="stats-col" style="display:none;min-width:50px;">PPG</th>
             <th class="stats-col" style="display:none;min-width:50px;">Rés.</th>
             <th class="stats-col" style="display:none;min-width:50px;">BTTS</th>
@@ -7215,9 +7881,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tennis-vb-filter-btn.is-active { color:#fff; font-weight:800; background:linear-gradient(180deg,var(--accent),var(--accent-dim)); border-color:var(--accent); box-shadow:0 4px 14px rgba(0,0,0,0.18), var(--card-shadow); text-shadow:0 1px 1px rgba(0,0,0,0.28); transform:translateY(-1px); }
   .tennis-vb-filter-btn.is-active:hover { filter:brightness(1.07); }
   #tennis-vb-table td { padding:11px 12px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text); }
+  /* Value-First : zéro zébrure — couleur = sens only */
   #tennis-vb-table tr.tennis-vb-row { cursor:pointer; transition:background 100ms ease, box-shadow 140ms ease; }
-  #tennis-vb-table tr.tennis-vb-row:nth-child(even) { background:var(--bg2); }
-  #tennis-vb-table tr.tennis-vb-row:hover { background:var(--accent-bg); box-shadow:inset 3px 0 0 0 var(--accent); }
+  #tennis-vb-table tr.tennis-vb-row td { background:var(--bg2); }
+  #tennis-vb-table tr.tennis-vb-row:hover td { background:var(--accent-bg); }
+  #tennis-vb-table tr.tennis-vb-row:hover { box-shadow:inset 3px 0 0 0 var(--accent); }
+  #tennis-vb-table tr.tennis-vb-row:focus-within td { background:var(--accent-bg); }
+  @media (prefers-reduced-motion: reduce) { #tennis-vb-table tr.tennis-vb-row { transition:none; } }
+  #tennis-vb-table .tvb-mono, #tennis-vb-table .tvb-elo,
+  #tennis-vb-table td { font-variant-numeric: tabular-nums; }
   #tennis-vb-table .tvb-mono { font-family:'DM Mono',monospace; }
   #tennis-vb-table .tvb-elo { font-family:'DM Mono',monospace; font-size:13px; color:var(--blue,#29b6f6); font-weight:600; }
   #tennis-vb-table .tvb-elo-fav { color:var(--green,#00e676); }
@@ -8711,12 +9383,15 @@ let activeDay   = 'all';
 let activeLeague= 'all';
 let activeCountry = 'all'; // rétrocompatibilité (utilisé comme fallback)
 let activeCountries = [];   // multi-sélection pays (vide = tous)
+let activeLeagues = [];     // multi-sélection ligues (odds_key) — union avec activeCountries
 let leaguesByCountry = {};  // { 'France': [{name,odds_key,...}, ...], ... }
-let countrySortMode = localStorage.getItem('ps_country_sort') || 'priority';
+let countrySortMode = localStorage.getItem('ps_country_sort') || 'matches';
+if (countrySortMode === 'priority') countrySortMode = 'matches'; // option "Priorité" retirée
 let allCountries = [];      // ordre des pays affichés
 let globalAccuracy = null; // stocke meta.accuracy pour colonne 2
 let activeTopN    = 0;        // Top N meilleurs paris (0 = tous)
-let activeTopMarket = '';    // '1x2' | 'dc' | 'over15' | 'under35' | 'attaque' | 'defense' | 'btts' | 'smart'
+let activeTopMarket = '';    // legacy (marché unique) — conservé pour compat
+let activeStrategies = [];   // multi-sélection clés STRATEGIES_UI (Top stratégies)
 let activeTopValue = 0;      // 1 = value bets only (edge ≥ 3%)
 let topRankMap = {};         // { matchId: rank } pour les badges de rang
 let activeEdge  = 0;       // filtre edge minimum (0 = tous)
@@ -10652,6 +11327,89 @@ function initDayFilters() {
   });
 }
 
+// ─── FILTRE DROPDOWNS PC (miroir des chips) ─────────────────────────────────
+var _ddRegistry = [];
+function _ddText(el) { return (el.textContent || '').replace(/\s+/g, ' ').trim(); }
+
+function buildFilterDropdowns() {
+  _ddRegistry = [];
+  var specs = [
+    { sel: 'day-dd',    row: 'day-filter-row',    chip: '.filter-chip[data-day]',     ph: null },
+    { sel: 'topn-dd',   row: 'topn-filter-row',   chip: '.topn-chip[data-topn]',      ph: null },
+    { sel: 'period-dd', row: 'period-filter-row', chip: '.filter-chip[data-period]',   ph: null },
+    { sel: 'kick-dd',   row: 'kickoff-filter-row',chip: '.filter-chip[data-kick]',     ph: null }
+  ];
+  specs.forEach(function(s) {
+    var select = document.getElementById(s.sel);
+    var row = document.getElementById(s.row);
+    if (!select || !row) return;
+    var chips = Array.prototype.slice.call(row.querySelectorAll(s.chip));
+    var html = '';
+    if (s.ph) html += '<option value="-1">' + s.ph + '</option>';
+    chips.forEach(function(c, i) { html += '<option value="' + i + '">' + _ddText(c) + '</option>'; });
+    select.innerHTML = html;
+    select._chips = chips;
+    _ddRegistry.push({ select: select, chips: chips, ph: !!s.ph });
+  });
+  resyncFilterDropdowns();
+  var fc = document.getElementById('filter-console');
+  if (fc && !fc._ddBound) {
+    fc._ddBound = true;
+    fc.addEventListener('change', function () { setTimeout(markFilterDD, 0); });
+    fc.addEventListener('click', function (e) {
+      if (e.target.closest('#fav-filter-chip,#steam-filter-chip,#adv-reset-btn,.filter-chip,.preset-pill,.country-chip,.country-league-chip')) {
+        setTimeout(markFilterDD, 0);
+      }
+    });
+  }
+  markFilterDD();
+}
+
+function resyncFilterDropdowns() {
+  _ddRegistry.forEach(function(r) {
+    var idx = -1;
+    r.chips.forEach(function(c, i) { if (c.classList.contains('active')) idx = i; });
+    r.select.value = (idx >= 0) ? String(idx) : (r.ph ? '-1' : '0');
+  });
+  var tv = document.getElementById('topv-dd');
+  var tvChip = document.querySelector('.topv-chip');
+  if (tv && tvChip) tv.value = tvChip.classList.contains('active') ? '1' : '0';
+  markFilterDD();
+}
+
+// Surligne en rouge les dropdowns dont la valeur n'est pas la valeur neutre
+function markFilterDD() {
+  var neutral = { 'topv-dd': '0', 'country-mobile-select': 'all', 'country-sort-select': 'priority' };
+  var n = 0;
+  document.querySelectorAll('#filter-console .filter-dd, #filter-console #country-mobile-select, #filter-console #country-sort-select').forEach(function(s) {
+    var nv = neutral[s.id];
+    var isPh = !!(s.options.length && s.options[0].value === '-1');
+    var off = (nv != null) ? (s.value === nv) : (isPh ? (s.value === '-1') : (s.selectedIndex <= 0));
+    s.classList.toggle('dd-on', !off);
+    if (!off) n++;
+  });
+  var fav = document.getElementById('fav-filter-chip');
+  var steam = document.getElementById('steam-filter-chip');
+  if (fav && fav.classList.contains('active')) n++;
+  if (steam && steam.classList.contains('active')) n++;
+  var lbl = document.getElementById('fc-active-count');
+  if (lbl) lbl.textContent = n ? (n + ' filtre' + (n > 1 ? 's' : '') + ' actif' + (n > 1 ? 's' : '')) : 'Affinez votre sélection';
+}
+
+function pickChipDD(sel) {
+  var i = parseInt(sel.value, 10);
+  if (isNaN(i) || i < 0) return;
+  if (sel._chips && sel._chips[i]) sel._chips[i].click();
+  resyncFilterDropdowns();
+}
+
+function pickTopvDD(sel) {
+  var want = sel.value === '1';
+  var chip = document.querySelector('.topv-chip');
+  if (chip && chip.classList.contains('active') !== want) chip.click();
+  resyncFilterDropdowns();
+}
+
 // ─── LEAGUE FILTERS — dynamique depuis leagues_config.json ──────────────────
 function setMatchTab(tab, el) {
   activeMatchTab = tab;
@@ -10688,6 +11446,320 @@ function filterLeagueChips(q) {
   });
 }
 
+// ── Pays : libellés français (clé EN leagues_config → FR affichage) ──
+const COUNTRY_FR = {
+  'France':'France','England':'Angleterre','Spain':'Espagne','Germany':'Allemagne',
+  'Italy':'Italie','Netherlands':'Pays-Bas','Belgium':'Belgique','Portugal':'Portugal',
+  'Scotland':'Écosse','Wales':'Pays de Galles','Turkey':'Turquie','Denmark':'Danemark',
+  'Norway':'Norvège','Sweden':'Suède','Greece':'Grèce','Switzerland':'Suisse',
+  'Czech Republic':'Tchéquie','Austria':'Autriche','Poland':'Pologne','Hungary':'Hongrie',
+  'Romania':'Roumanie','Croatia':'Croatie','Serbia':'Serbie','Slovakia':'Slovaquie',
+  'Finland':'Finlande','Ireland':'Irlande','Ukraine':'Ukraine','Russia':'Russie',
+  'Bulgaria':'Bulgarie','Slovenia':'Slovénie','Iceland':'Islande','Cyprus':'Chypre',
+  'Brazil':'Brésil','Argentina':'Argentine','Mexico':'Mexique','USA':'États-Unis',
+  'Canada':'Canada','Colombia':'Colombie','Chile':'Chili','Peru':'Pérou',
+  'Ecuador':'Équateur','Uruguay':'Uruguay','Paraguay':'Paraguay','Bolivia':'Bolivie',
+  'Venezuela':'Venezuela','Costa Rica':'Costa Rica',
+  'Japan':'Japon','South Korea':'Corée du Sud','Saudi Arabia':'Arabie Saoudite',
+  'UAE':'Émirats arabes unis','Qatar':'Qatar','China':'Chine','India':'Inde',
+  'Australia':'Australie','Thailand':'Thaïlande','Indonesia':'Indonésie',
+  'Morocco':'Maroc','Egypt':'Égypte','South Africa':'Afrique du Sud','Nigeria':'Nigéria',
+  'Senegal':'Sénégal','Ghana':'Ghana','Algeria':'Algérie','Tunisia':'Tunisie',
+  'Cameroon':'Cameroun','Ivory Coast':"Côte d'Ivoire","Côte d'Ivoire":"Côte d'Ivoire",
+  'World':'Monde','Europe':'Europe','S. America':'Amérique du Sud','International':'International',
+  'Autre':'Autre'
+};
+function frCountry(c) { return COUNTRY_FR[c] || c; }
+
+// ── Multi-select Ligues : panneau drapeaux + noms FR + sélection multiple ──
+function mlMatchCount(country) {
+  if (!allMatches || !allMatches.length) return 0;
+  var keys = (leaguesByCountry[country] || []).map(function(l) { return l.odds_key; });
+  if (!keys.length) return 0;
+  return allMatches.filter(function(m) { return keys.includes(m.sport); }).length;
+}
+function _mlEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function buildLeagueMS() {
+  var list = document.getElementById('ml-list');
+  if (!list) return;
+  var countries = (typeof allCountries !== 'undefined' && allCountries.length)
+    ? allCountries : Object.keys(leaguesByCountry);
+  var html = countries.map(function(c) {
+    var sel = activeCountries.indexOf(c) !== -1;
+    var n = mlMatchCount(c);
+    var leagues = leaguesByCountry[c] || [];
+    var lgHtml = leagues.map(function(l) {
+      var lsel = (typeof activeLeagues !== 'undefined' && activeLeagues.indexOf(l.odds_key) !== -1);
+      return '<button type="button" class="mls-league' + (lsel ? ' sel' : '') +
+        '" role="option" aria-selected="' + lsel + '" data-sport="' + _mlEsc(l.odds_key) +
+        '" data-lname="' + _mlEsc((l.name||'').toLowerCase()) +
+        '" onclick="event.stopPropagation();mlToggleLeague(this.dataset.sport)">' +
+        '<span class="mls-lcheck"></span><span class="mls-lname">' + _mlEsc(l.name) + '</span>' +
+        (l.type ? '<span class="mls-ltag">' + _mlEsc(l.type) + '</span>' : '') +
+      '</button>';
+    }).join('');
+    return '<div class="mls-grp" data-country="' + _mlEsc(c) +
+        '" data-fr="' + _mlEsc(frCountry(c).toLowerCase()) + '">' +
+      '<div class="mls-row' + (sel ? ' sel' : '') + '" role="option" aria-selected="' + sel + '">' +
+        '<button type="button" class="mls-rowmain" onclick="mlToggleCountry(\'' + _mlEsc(c).replace(/'/g,"\\'") + '\')">' +
+          '<span class="mls-check"></span>' + getCountryFlag(c) +
+          '<span class="mls-name">' + frCountry(c) + '</span>' +
+          (n ? '<span class="mls-cnt">' + n + '</span>' : '') +
+        '</button>' +
+        (leagues.length ? '<button type="button" class="mls-exp" aria-label="Voir les ligues" onclick="event.stopPropagation();mlExpand(this)"><svg viewBox="0 0 10 6" width="11" height="7" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></button>' : '') +
+      '</div>' +
+      (leagues.length ? '<div class="mls-leagues">' + lgHtml + '</div>' : '') +
+    '</div>';
+  }).join('');
+  list.innerHTML = html || '<div class="mls-empty">Aucune ligue</div>';
+  mlSyncUI();
+}
+function mlSyncUI() {
+  var lbl = document.getElementById('ml-label');
+  var wrap = document.getElementById('ml-league');
+  var allBtn = document.getElementById('ml-opt-all');
+  if (!lbl || !wrap) return;
+  var n = activeCountries.length;
+  var nl = (typeof activeLeagues !== 'undefined') ? activeLeagues.length : 0;
+  var legacy = (typeof activeLeague !== 'undefined' && activeLeague && activeLeague !== 'all') ? 1 : 0;
+  var total = n + nl + legacy;
+  function leagueName(key){ var nm=''; Object.keys(leaguesByCountry).some(function(c){ return (leaguesByCountry[c]||[]).some(function(l){ if(l.odds_key===key){ nm=l.name; return true; } }); }); return nm; }
+  if (total === 0) lbl.textContent = 'Toutes les ligues';
+  else if (n === 1 && nl === 0 && !legacy) lbl.textContent = frCountry(activeCountries[0]);
+  else if (n === 0 && nl === 1 && !legacy) lbl.textContent = leagueName(activeLeagues[0]) || 'Ligue';
+  else if (n === 0 && nl === 0 && legacy) lbl.textContent = leagueName(activeLeague) || 'Ligue';
+  else lbl.textContent = total + ' sélection' + (total > 1 ? 's' : '');
+  wrap.classList.toggle('on', total > 0);
+  if (allBtn) allBtn.classList.toggle('sel', total === 0);
+  document.querySelectorAll('#ml-list .mls-grp').forEach(function(g) {
+    var on = activeCountries.indexOf(g.dataset.country) !== -1;
+    var row = g.querySelector('.mls-row');
+    if (row) { row.classList.toggle('sel', on); row.setAttribute('aria-selected', on); }
+    g.querySelectorAll('.mls-league').forEach(function(L){
+      var ls = (typeof activeLeagues !== 'undefined' && activeLeagues.indexOf(L.dataset.sport) !== -1);
+      L.classList.toggle('sel', ls); L.setAttribute('aria-selected', ls);
+    });
+  });
+}
+function mlPosition() {
+  var wrap = document.getElementById('ml-league');
+  var panel = document.getElementById('ml-panel');
+  var trig = document.getElementById('ml-trigger');
+  if (!wrap || !panel || !trig || !wrap.classList.contains('open')) return;
+  var r = trig.getBoundingClientRect();
+  var pw = Math.max(r.width, 300);
+  var left = Math.min(r.left, window.innerWidth - pw - 8);
+  panel.style.width = pw + 'px';
+  panel.style.left = Math.max(8, left) + 'px';
+  panel.style.top = (r.bottom + 6) + 'px';
+  panel.style.maxHeight = Math.max(180, window.innerHeight - r.bottom - 24) + 'px';
+}
+function mlToggle(e) {
+  if (e) e.stopPropagation();
+  var wrap = document.getElementById('ml-league');
+  if (!wrap) return;
+  var open = wrap.classList.toggle('open');
+  var t = document.getElementById('ml-trigger');
+  if (t) t.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    mlPosition();
+    requestAnimationFrame(mlPosition);
+    setTimeout(mlPosition, 60);
+    var s = document.getElementById('ml-search');
+    if (s) { s.value = ''; mlFilter(''); setTimeout(function(){ s.focus(); }, 30); }
+  }
+}
+function mlClose() {
+  var wrap = document.getElementById('ml-league');
+  if (wrap) wrap.classList.remove('open');
+  var t = document.getElementById('ml-trigger');
+  if (t) t.setAttribute('aria-expanded', 'false');
+}
+function mlExpand(btn) {
+  var grp = btn.closest('.mls-grp');
+  if (grp) grp.classList.toggle('exp');
+}
+function mlFilter(q) {
+  q = (q || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  document.querySelectorAll('#ml-list .mls-grp').forEach(function(g) {
+    var fr = (g.dataset.fr || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    var en = (g.dataset.country || '').toLowerCase();
+    var cMatch = !q || fr.indexOf(q) !== -1 || en.indexOf(q) !== -1;
+    var lMatch = false;
+    g.querySelectorAll('.mls-league').forEach(function(L) {
+      var ln = (L.dataset.lname || '');
+      var show = cMatch || !q || ln.indexOf(q) !== -1;
+      L.style.display = show ? '' : 'none';
+      if (show && q) lMatch = true;
+    });
+    g.style.display = (cMatch || lMatch) ? '' : 'none';
+    if (q && lMatch && !cMatch) g.classList.add('exp');
+  });
+}
+function mlPickAll() {
+  activeCountries = [];
+  activeLeagues = [];
+  activeCountry = 'all';
+  activeLeague = 'all';
+  if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
+  mlSyncUI();
+  renderMatches(allMatches);
+}
+// Pays propriétaire d'une ligue (odds_key) via leaguesByCountry
+function _countryOfLeague(sport) {
+  var found = null;
+  Object.keys(leaguesByCountry).some(function (c) {
+    if ((leaguesByCountry[c] || []).some(function (l) { return l.odds_key === sport; })) { found = c; return true; }
+    return false;
+  });
+  return found;
+}
+function mlToggleCountry(country) {
+  var i = activeCountries.indexOf(country);
+  if (i === -1) {
+    activeCountries.push(country);
+    // Sélection pays = blanket → on retire les ligues spécifiques de CE pays
+    // d'activeLeagues (sinon doublon logique). Le pays couvre déjà tout.
+    if (typeof activeLeagues !== 'undefined') {
+      activeLeagues = activeLeagues.filter(function (s) { return _countryOfLeague(s) !== country; });
+    }
+  } else {
+    activeCountries.splice(i, 1);
+  }
+  activeCountry = activeCountries.length === 1 ? activeCountries[0] : 'all';
+  activeLeague = 'all';
+  if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
+  mlSyncUI();
+  renderMatches(allMatches);
+}
+// Multi-sélection ligues : toggle. Sélectionner une ligue précise ÉCRASE le
+// blanket pays (ex: Serie B seule ≠ tout Italie). Bug filtre championnats.
+function mlToggleLeague(sport) {
+  if (typeof activeLeagues === 'undefined') activeLeagues = [];
+  var i = activeLeagues.indexOf(sport);
+  if (i === -1) {
+    activeLeagues.push(sport);
+    // Si le pays parent était coché (blanket), on le décoche : l'utilisateur
+    // veut CETTE ligue précise, pas tout le championnat du pays.
+    var parent = _countryOfLeague(sport);
+    if (parent) {
+      var ci = activeCountries.indexOf(parent);
+      if (ci !== -1) activeCountries.splice(ci, 1);
+    }
+    activeCountry = activeCountries.length === 1 ? activeCountries[0] : 'all';
+  } else {
+    activeLeagues.splice(i, 1);
+  }
+  activeLeague = 'all';
+  if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
+  mlSyncUI();
+  renderMatches(allMatches);
+}
+// Fermeture clic extérieur + repositionnement panneau fixe
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('ml-league');
+  if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) mlClose();
+}, true);
+window.addEventListener('resize', function(){ mlPosition(); });
+window.addEventListener('scroll', function(){ mlPosition(); }, true);
+
+// ── Top stratégies : multi-select (réutilise styles .mls) ──
+function tsList() { return (typeof STRATEGIES_UI !== 'undefined') ? STRATEGIES_UI : []; }
+function buildTSList() {
+  var list = document.getElementById('ts-list');
+  if (!list) return;
+  var html = tsList().map(function(s) {
+    var sel = activeStrategies.indexOf(s.key) !== -1;
+    return '<div class="mls-row' + (sel ? ' sel' : '') + '" role="option" aria-selected="' + sel +
+      '" data-key="' + _mlEsc(s.key) + '" data-q="' + _mlEsc(((s.label||'')+' '+(s.tipster||'')).toLowerCase()) + '">' +
+      '<button type="button" class="mls-rowmain" onclick="tsToggleStrat(this.parentElement.dataset.key)">' +
+        '<span class="mls-check"></span>' +
+        '<span class="mls-name">' + _mlEsc(s.label) + '</span>' +
+        '<span class="mls-cnt">' + _mlEsc(s.tipster) + '</span>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+  list.innerHTML = html || '<div class="mls-empty">Aucune stratégie</div>';
+  tsSyncUI();
+}
+function tsSyncUI() {
+  var lbl = document.getElementById('ts-label');
+  var wrap = document.getElementById('ts-select');
+  var allBtn = document.getElementById('ts-opt-all');
+  if (!lbl || !wrap) return;
+  var n = activeStrategies.length;
+  if (n === 0) lbl.textContent = 'Toutes stratégies';
+  else if (n === 1) {
+    var e = tsList().find(function(s){ return s.key === activeStrategies[0]; });
+    lbl.textContent = e ? e.label : '1 stratégie';
+  } else lbl.textContent = n + ' stratégies';
+  wrap.classList.toggle('on', n > 0);
+  if (allBtn) allBtn.classList.toggle('sel', n === 0);
+  document.querySelectorAll('#ts-list .mls-row').forEach(function(r) {
+    var on = activeStrategies.indexOf(r.dataset.key) !== -1;
+    r.classList.toggle('sel', on); r.setAttribute('aria-selected', on);
+  });
+}
+function tsPosition() {
+  var wrap = document.getElementById('ts-select');
+  var panel = document.getElementById('ts-panel');
+  var trig = document.getElementById('ts-trigger');
+  if (!wrap || !panel || !trig || !wrap.classList.contains('open')) return;
+  var r = trig.getBoundingClientRect();
+  var pw = Math.max(r.width, 300);
+  var left = Math.min(r.left, window.innerWidth - pw - 8);
+  panel.style.width = pw + 'px';
+  panel.style.left = Math.max(8, left) + 'px';
+  panel.style.top = (r.bottom + 6) + 'px';
+  panel.style.maxHeight = Math.max(180, window.innerHeight - r.bottom - 24) + 'px';
+}
+function tsToggle(e) {
+  if (e) e.stopPropagation();
+  var wrap = document.getElementById('ts-select');
+  if (!wrap) return;
+  if (!document.querySelector('#ts-list .mls-row')) buildTSList();
+  var open = wrap.classList.toggle('open');
+  var t = document.getElementById('ts-trigger');
+  if (t) t.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    tsPosition(); requestAnimationFrame(tsPosition); setTimeout(tsPosition, 60);
+    var s = document.getElementById('ts-search');
+    if (s) { s.value = ''; tsFilter(''); setTimeout(function(){ s.focus(); }, 30); }
+  }
+}
+function tsClose() {
+  var wrap = document.getElementById('ts-select');
+  if (wrap) wrap.classList.remove('open');
+  var t = document.getElementById('ts-trigger');
+  if (t) t.setAttribute('aria-expanded', 'false');
+}
+function tsFilter(q) {
+  q = (q || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  document.querySelectorAll('#ts-list .mls-row').forEach(function(r) {
+    var s = (r.dataset.q || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    r.style.display = (!q || s.indexOf(q) !== -1) ? '' : 'none';
+  });
+}
+function tsPickAll() {
+  activeStrategies = [];
+  tsSyncUI();
+  renderMatches(allMatches);
+}
+function tsToggleStrat(key) {
+  var i = activeStrategies.indexOf(key);
+  if (i === -1) activeStrategies.push(key);
+  else activeStrategies.splice(i, 1);
+  activeTopMarket = ''; // strat prime sur marché legacy
+  tsSyncUI();
+  renderMatches(allMatches);
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('ts-select');
+  if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) tsClose();
+}, true);
+window.addEventListener('resize', function(){ tsPosition(); });
+window.addEventListener('scroll', function(){ tsPosition(); }, true);
+
 function onCountryMobileSelect(val) {
   if (val.startsWith('sport:')) {
     var sport = val.slice(6);
@@ -10707,6 +11779,7 @@ function onCountryMobileSelect(val) {
     activeLeague = 'all';
     renderMatches(allMatches);
   }
+  if (typeof mlSyncUI === 'function') mlSyncUI();
 }
 
 // Dictionnaire pays -> emoji drapeau (fallback 🏳️)
@@ -10777,6 +11850,7 @@ function setCountrySort(mode) {
   localStorage.setItem('ps_country_sort', mode);
   rebuildCountryChips();
 }
+
 
 function updateLiveCounters() {
   if (!allMatches || !allMatches.length) return;
@@ -10880,6 +11954,7 @@ function rebuildCountryChips() {
     mobileSelect.innerHTML = optHtml;
   }
   updateLiveCounters();
+  if (typeof buildLeagueMS === 'function') buildLeagueMS();
 }
 
 function syncCountryChipUI() {
@@ -12273,7 +13348,14 @@ function parseKickoff(raw) {
   if (typeof raw === 'string') {
     if (/^\d{10}$/.test(raw)) return new Date(parseInt(raw, 10) * 1000);
     if (/^\d{13}$/.test(raw)) return new Date(parseInt(raw, 10));
-    const d = new Date(raw);
+    let s = raw.trim();
+    // Datetime ISO SANS fuseau (ni 'Z' ni ±hh:mm) → l'API renvoie de l'UTC.
+    // Sans ce fix, new Date() l'interprète en heure LOCALE du navigateur →
+    // l'horaire affiché (même via toLocaleString Europe/Paris) est décalé.
+    if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(s) && !/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s)) {
+      s = s.replace(' ', 'T') + 'Z';
+    }
+    const d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
   }
   if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
@@ -12596,6 +13678,128 @@ function updateButeursCell(matchId, buteurs, kpi) {
   }
 }
 
+// ── Bets prédictifs (sous le bloc équipes) — score composite proba×calibration×(1+edge) ──
+function topPredictiveBets(m, n, opts) {
+  opts = opts || {};
+  var p   = m.calibrated || m.blended || m.poisson || {};
+  var raw = m.poisson || {};
+  var conf = (typeof calcConfidenceScore === 'function'
+    ? calcConfidenceScore(m, raw, (typeof globalAccuracy !== 'undefined' ? globalAccuracy : null)) : 60) / 100;
+  if (!(conf > 0)) conf = 0.5;
+  var be = m.best_edge || {};
+  var beLabel = String(be.label || '').toLowerCase();
+  var beEdge = (typeof be.edge === 'number') ? be.edge : 0;
+  function edgeFor(lbl) {
+    if (!beLabel) return 0;
+    var L = String(lbl).toLowerCase().replace(/\s|✓/g, '');
+    var B = beLabel.replace(/\s/g, '');
+    if (L === B) return beEdge;
+    if ((L === '1' && /1|dom|home/.test(B)) || (L === 'n' && /n|nul|x|draw/.test(B)) ||
+        (L === '2' && /2|ext|away/.test(B))) return beEdge;
+    return 0;
+  }
+  var live = !opts.prematch && ((typeof isMatchInProgress === 'function') ? isMatchInProgress(m) : !!m.live_score);
+  var cands;
+  if (live) {
+    var sp = String(m.live_score).split('-').map(function (x) { return parseInt(x, 10) || 0; });
+    var hg = sp[0] || 0, ag = sp[1] || 0, g = hg + ag;
+    var mn = parseInt(m.live_minute || 0, 10) || 0;
+    var iv = m.live_intensity || 0;
+    var tRem = Math.max(0, (95 - mn)) / 95;            // fraction temps restant
+    var lead = hg > ag ? '1' : ag > hg ? '2' : 'X';
+    // Pression par équipe (intensité côté Éq1 vs Éq2)
+    var DA = m.live_dangerous_attacks || {}, SH = m.live_shots || {}, CO = m.live_corners || {}, LX = m.live_xg || {};
+    var pH = (DA.home || 0) * 0.5 + (SH.home || 0) * 1.5 + (CO.home || 0) * 1 + (+LX.home || 0) * 8;
+    var pA = (DA.away || 0) * 0.5 + (SH.away || 0) * 1.5 + (CO.away || 0) * 1 + (+LX.away || 0) * 8;
+    var dom = pH - pA;                                  // >0 Éq1 domine · <0 Éq2 domine
+    var domSide = Math.abs(dom) >= 4 ? (dom > 0 ? '1' : '2') : null;
+    cands = [];
+    if (lead !== 'X') {
+      cands.push({ l: lead, pr: 55 + (Math.abs(hg - ag) >= 2 ? 26 : 13) + (1 - tRem) * 16 });
+      cands.push({ l: lead === '1' ? '1X' : 'X2', pr: 70 + (1 - tRem) * 18 });
+    } else {
+      cands.push({ l: '1X', pr: 58 }); cands.push({ l: 'X2', pr: 55 });
+      cands.push({ l: 'N', pr: 40 + (1 - tRem) * 28 });
+    }
+    if (g >= 3) cands.push({ l: '+2.5 ✓', pr: 99 });
+    else if (g === 2) cands.push({ l: '+2.5', pr: 55 + tRem * 30 + iv * 0.12 });
+    else cands.push({ l: '-2.5', pr: 52 + (1 - tRem) * 34 - iv * 0.1 });
+    if (hg > 0 && ag > 0) cands.push({ l: 'BTTS ✓', pr: 99 });
+    else cands.push({ l: 'BTTS Non', pr: 52 + (1 - tRem) * 30 - iv * 0.1 });
+    // Prochain buteur probable = équipe qui pousse (intensité côté Éq1/Éq2),
+    // sinon le meneur. Label "Prochain but Dom" / "Prochain but Ext".
+    var nextScorer = domSide || (dom > 1 ? '1' : dom < -1 ? '2' : (lead !== 'X' ? lead : null));
+    var nsLbl = function (s) { return 'Prochain but ' + (s === '1' ? 'Dom' : 'Ext'); };
+    if (nextScorer && (iv >= 55 || domSide || tRem < 0.5)) {
+      cands.push({ l: nsLbl(nextScorer), pr: 50 + Math.min(34, Math.abs(dom) * 1.3) + iv * 0.18 + (domSide ? 6 : 0) });
+    }
+    // Domination d'une équipe → renforce son issue
+    if (domSide) {
+      cands.push({ l: domSide, pr: 52 + Math.min(28, Math.abs(dom)) + (1 - tRem) * 10 });
+      // Équipe menée qui domine → scénario "ça va marquer"
+      if (lead !== 'X' && lead !== domSide) cands.push({ l: '+2.5', pr: 50 + tRem * 26 + Math.abs(dom) });
+    }
+    m._liveDecided = (Math.abs(hg - ag) >= 2) || (mn >= 80 && lead !== 'X' && (!domSide || domSide === lead));
+  } else {
+    cands = [
+      { l: '1',        pr: p.homeWin || raw.homeWin || 0 },
+      { l: 'N',        pr: p.draw || raw.draw || 0 },
+      { l: '2',        pr: p.awayWin || raw.awayWin || 0 },
+      { l: '1X',       pr: (p.homeWin || raw.homeWin || 0) + (p.draw || raw.draw || 0) },
+      { l: 'X2',       pr: (p.awayWin || raw.awayWin || 0) + (p.draw || raw.draw || 0) },
+      { l: '+1.5',     pr: p.over15 || raw.over15 || 0 },
+      { l: '+2.5',     pr: p.over25 || raw.over25 || 0 },
+      { l: '-2.5',     pr: 100 - (p.over25 || raw.over25 || 0) },
+      { l: '-3.5',     pr: 100 - (p.over35 || raw.over35 || 0) },
+      { l: 'BTTS',     pr: p.btts || raw.btts || 0 },
+      { l: 'BTTS Non', pr: 100 - (p.btts || raw.btts || 0) }
+    ];
+  }
+  var scored = cands
+    .filter(function (c) { return c.pr >= 50; })
+    .map(function (c) {
+      var e = Math.max(0, edgeFor(c.l));
+      var prob = Math.min(100, c.pr);
+      var sc = prob * conf * (1 + e / 100);
+      return { label: c.l, prob: Math.round(prob), conf: Math.round(Math.min(100, sc)), score: sc };
+    })
+    .sort(function (a, b) { return b.score - a.score; });
+  var seen = {}, out = [];
+  for (var i = 0; i < scored.length && out.length < n; i++) {
+    if (seen[scored[i].label]) continue;
+    seen[scored[i].label] = 1; out.push(scored[i]);
+  }
+  return out;
+}
+function renderPredBets(m) {
+  try {
+    var live = (typeof isMatchInProgress === 'function') ? isMatchInProgress(m) : !!m.live_score;
+    var bets = topPredictiveBets(m, live ? 2 : 3, { prematch: !live });
+    if (live && m._liveDecided && bets.length > 1) bets = bets.slice(0, 1); // match tranché → 1 seul bet live
+    if (!bets.length) return '';
+    var fmtBet = function (l) {
+      var done = / ✓$/.test(l) ? ' ✓' : '';
+      var core = l.replace(/ ✓$/, '');
+      if (/^[+\-]\d/.test(core)) return core + ' Buts' + done;       // +1.5 → +1.5 Buts
+      if (core === '1X' || core === 'X2') return 'DC: ' + core + done; // X2 → DC: X2
+      return l;
+    };
+    var rows = bets.map(function (b, i) {
+      var cls = b.conf >= 70 ? 'pb-hi' : b.conf >= 55 ? 'pb-mid' : 'pb-lo';
+      return '<div class="pbet-row ' + cls + (i === 0 ? ' pb-top' : '') + '">' +
+        '<span class="pb-rk">' + (i + 1) + '</span>' +
+        '<span class="pb-lbl">' + fmtBet(b.label) + '</span>' +
+        '<span class="pb-cf">●' + b.conf + '</span></div>';
+    }).join('');
+    var head = '<div class="pbet-head">' + (live
+      ? '<span class="pb-livedot"></span>Bets Live'
+      : 'Bets Prédictifs') + '</div>';
+    return '<div class="pbet-wrap' + (live ? ' pbet-live' : '') +
+      '" title="Bets prédictifs — confiance composite (proba × calibration × edge dévigé)' +
+      (live ? ' · recalculé en live (score · minute · intensité)' : '') + '">' + head + rows + '</div>';
+  } catch (e) { return ''; }
+}
+
 function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
   const rows = [];
   const homeWin = p.homeWin || 0;
@@ -12728,6 +13932,42 @@ function calcTopMarketScore(m, market) {
            + (p.btts || 0) * 0.10;
     default:         return 0;
   }
+}
+
+// Score poisson par clé stratégie (STRATEGIES_UI) — ranking client Top N
+function calcStrategyScore(m, key) {
+  var p = m.poisson || {};
+  var hw = p.homeWin || 0, aw = p.awayWin || 0, dr = p.draw || 0;
+  var hp = m.stats && m.stats.home ? (m.stats.home.ppg || 0) : 0;
+  var ap = m.stats && m.stats.away ? (m.stats.away.ppg || 0) : 0;
+  switch (key) {
+    case 'BTTS_YES':         return p.btts || 0;
+    case 'OVER_2_5':         return p.over25 || 0;
+    case 'OVER_1_5':         return p.over15 || 0;
+    case 'UNDER_2_5':        return 100 - (p.over25 || 50);
+    case 'HOME_WIN':         return hw;
+    case 'AWAY_WIN':         return aw;
+    case 'DRAW':             return dr;
+    case 'CS_00':            return p.cs00 != null ? p.cs00 : (100 - (p.over05 || 90));
+    case 'VERROU_TACTIQUE':  return 100 - (p.over35 || 50);
+    case 'DC_HOME':          return hw + dr;
+    case 'DC_AWAY':          return aw + dr;
+    case 'HT_HOME_FT_HOME':  return hw * 0.85;
+    case 'HT_UNDER_FT_OVER': return (p.over25 || 0) * 0.7;
+    case 'GOLDEN_PPG_GAP':   return Math.min(100, Math.abs(hp - ap) * 33);
+    case 'ANGLE_CORNERS':
+    case 'OVER_6_5_CORNERS': return (m.confidence_score || 0); // pas de poisson corners → proxy confiance
+    default:                 return (m.confidence_score || 0);
+  }
+}
+function calcTopStrategiesScore(m) {
+  if (!activeStrategies || !activeStrategies.length) return 0;
+  var best = 0;
+  for (var i = 0; i < activeStrategies.length; i++) {
+    var s = calcStrategyScore(m, activeStrategies[i]);
+    if (s > best) best = s;
+  }
+  return best;
 }
 
 function buildTop5Prematch(matches) {
@@ -13050,19 +14290,25 @@ function renderMatches(matches) {
     });
   }
 
-  // Filtre par pays (multi-selection — toutes les ligues des pays choisis)
+  // Filtre Ligues — union : ligues des pays choisis ∪ ligues sélectionnées ∪ ligue legacy
+  var _selKeys = [];
+  var _hasSpecific = (typeof activeLeagues !== 'undefined' && activeLeagues.length > 0);
   if (activeCountries.length > 0) {
-    var allOddsKeys = [];
     activeCountries.forEach(function(c) {
-      var keys = (leaguesByCountry[c] || []).map(function(l) { return l.odds_key; });
-      allOddsKeys = allOddsKeys.concat(keys);
+      var _cLeagues = (leaguesByCountry[c] || []).map(function(l) { return l.odds_key; });
+      // Garde anti-bug : si une ligue précise de CE pays est sélectionnée,
+      // on N'ajoute PAS le blanket pays (sinon Serie B → Serie A+B).
+      if (_hasSpecific && _cLeagues.some(function(k){ return activeLeagues.indexOf(k) !== -1; })) return;
+      _selKeys = _selKeys.concat(_cLeagues);
     });
-    filtered = filtered.filter(function(m) { return allOddsKeys.includes(m.sport); });
   }
-
-  // Filtre par ligue specifique (dropdown)
-  if (activeLeague !== 'all') {
-    filtered = filtered.filter(m => m.sport === activeLeague);
+  if (_hasSpecific) {
+    _selKeys = _selKeys.concat(activeLeagues);
+  }
+  if (activeLeague !== 'all') _selKeys.push(activeLeague);
+  if (_selKeys.length > 0) {
+    var _selSet = new Set(_selKeys);
+    filtered = filtered.filter(function(m) { return _selSet.has(m.sport); });
   }
 
   // Filtre onglet Live / Prematch / All
@@ -13130,9 +14376,14 @@ function renderMatches(matches) {
     });
   }
 
-  // Filtre O2.5 min (Poisson confidence)
+  // Filtre "Degré Confiance en %" — seuil sur le score des stratégies sélectionnées
+  // (si stratégies cochées → score max des stratégies ; sinon fallback Poisson over2.5)
   if (activeO25Min > 0) {
-    filtered = filtered.filter(m => (m.poisson?.over25 || 0) >= activeO25Min);
+    var _strSel = (typeof activeStrategies !== 'undefined' && activeStrategies.length > 0);
+    filtered = filtered.filter(function(m) {
+      var conf = _strSel ? calcTopStrategiesScore(m) : (m.poisson && m.poisson.over25 || 0);
+      return conf >= activeO25Min;
+    });
   }
 
   // Filtre cote min : au moins une cote du match >= coteMin
@@ -13151,11 +14402,15 @@ function renderMatches(matches) {
     });
   }
 
-  // Filtre Top N meilleurs paris par marché
+  // Filtre Top N meilleurs paris — par stratégies (multi) ou marché legacy
   topRankMap = {};
-  if (activeTopN > 0 && activeTopMarket) {
+  var _useStrat = (typeof activeStrategies !== 'undefined' && activeStrategies.length > 0);
+  if (activeTopN > 0 && (_useStrat || activeTopMarket)) {
+    var _scoreFn = _useStrat
+      ? function(x) { return calcTopStrategiesScore(x); }
+      : function(x) { return calcTopMarketScore(x, activeTopMarket); };
     filtered = [...filtered].sort(function(a, b) {
-      return calcTopMarketScore(b, activeTopMarket) - calcTopMarketScore(a, activeTopMarket);
+      return _scoreFn(b) - _scoreFn(a);
     });
     var topN = [];
     for (var i = 0; i < filtered.length && topN.length < activeTopN; i++) {
@@ -13379,28 +14634,42 @@ const label = country
       return `<td class="sc ${cls} stats-col" style="display:none;">${display}</td>`;
     };
 
+    // ── VALUE tier (edge dévigé) — métrique héros, couleur + tag (jamais couleur seule) ──
+    const _hasEdge = best && typeof best.edge === 'number' && !m.live_score;
+    let vbTier, vbTag;
+    if (!_hasEdge)            { vbTier = 'na';  vbTag = 'DATA'; }
+    else if (edge >= 5)       { vbTier = 'hot'; vbTag = 'VALUE'; }
+    else if (edge >= 1.5)     { vbTier = 'try'; vbTag = 'À TENTER'; }
+    else if (edge > 0)        { vbTier = 'neu'; vbTag = 'NEUTRE'; }
+    else                      { vbTier = 'no';  vbTag = 'ÉVITER'; }
+    const _vbOdds = (_hasEdge && best.odds != null)
+      ? (typeof best.odds === 'number' ? best.odds.toFixed(2) : best.odds) : '';
+    const vbHeroHtml = `<td class="vb-value-col">
+      <span class="vb-hero-value vbh-${vbTier}" title="Edge dévigé${best.bk ? ' · '+best.bk : ''} — ${vbTag}">
+        <span class="vbh-edge">${_hasEdge ? (edge > 0 ? '▲' : edge < 0 ? '▼' : '＝') : ''}${_hasEdge ? (edge > 0 ? '+' : '') + edge.toFixed(1) + '%' : '—'}</span>
+        ${best.label ? `<span class="vbh-pick">${best.label}${_vbOdds ? ' @'+_vbOdds : ''}</span>` : ''}
+        <span class="vbh-tag">${vbTag}</span>
+      </span>
+    </td>`;
+
+    // [FIX live] source unique de vérité = isMatchInProgress (status live OU
+    // live_score OU live_minute). Avant : gating sur m.live_score seul → matchs
+    // "en cours" sans score (0-0 / feed score absent) rendus en prematch.
+    const _live = (typeof isMatchInProgress === 'function') ? isMatchInProgress(m) : !!m.live_score;
     const tr = document.createElement('tr');
-    tr.className = m.live_score ? 'match-row-live' : '';
+    tr.className = _live ? 'match-row-live' : (vbTier === 'hot' ? 'is-value-hot' : (vbTier === 'try' ? 'is-value' : ''));
     tr.setAttribute('data-match-id', m.id);
     if (m.home_team) tr.setAttribute('data-home-team', m.home_team);
     if (m.away_team) tr.setAttribute('data-away-team', m.away_team);
     tr.innerHTML = `
-      <td style="min-width:60px;background:#ffffff !important;color:#1a1a1a !important;border-bottom:1px solid #EAEAEA !important;">
+      <td style="min-width:60px;background:#ffffff !important;color:#1a1a1a !important;border-bottom:1px solid #EAEAEA !important;text-align:center;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:#1a1a1a !important;">${time}</div>
         <div style="font-size:10px;color:#888888 !important;margin-top:1px;">${date}</div>
+        <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:none;justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV"></div>
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;">
-        <div data-tv-badge="${m.id}" style="position:absolute;bottom:4px;right:4px;font-size:9px;color:#555;display:none;align-items:center;gap:3px;background:rgba(255,255,255,0.95);border:1px solid #EAEAEA;border-radius:4px;padding:2px 5px;z-index:2;" title="Diffuseur TV"></div>
-        ${!m.live_score && best.label ? (() => {
-          const vConf = calcConfidenceScore(m, p, globalAccuracy);
-          const vClr = vConf >= 70 ? '#15803D' : vConf >= 50 ? '#B45309' : '#B91C1C';
-          const vBg  = vConf >= 70 ? '#DCFCE7' : vConf >= 50 ? '#FEF3C7' : '#FEE2E2';
-          const vOdds = best.odds != null ? (typeof best.odds === 'number' ? best.odds.toFixed(2) : best.odds) : '';
-          const vEv = best.edge > 0 ? ` · <span style="color:#15803D;">+${best.edge.toFixed(1)}%</span>` : '';
-          return `<div style="display:inline-flex;align-items:center;gap:5px;background:${vBg};border:1px solid ${vClr}55;border-radius:5px;padding:2px 7px;margin-bottom:4px;font:800 10px/1 var(--font-mono);color:${vClr};" title="Verdict — pari conseillé · cote · confiance /100${best.bk?' · '+best.bk:''}">🎯 ${best.label}${vOdds?` @${vOdds}`:''} · ⬤${vConf}${vEv}</div>`;
-        })() : ''}
-        ${m.live_score ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
-          <span data-live="${m.id}" style="font-size:9px;font-weight:700;color:#ff4d4d;background:rgba(255,77,77,0.15);padding:1px 5px;border-radius:4px;animation:pulse 1.5s infinite;">🔴 ${m.live_score || 'LIVE'}</span>
+        ${_live ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+          <span data-live="${m.id}" style="font-size:9px;font-weight:700;color:#ff4d4d;background:rgba(255,77,77,0.15);padding:1px 5px;border-radius:4px;animation:pulse 1.5s infinite;">🔴 ${m.live_score || (m.live_minute ? m.live_minute + "′" : 'LIVE')}</span>
           <div style="width:50px;height:4px;background:#EAEAEA;border-radius:2px;overflow:hidden;" title="Intensité: ${m.live_intensity||0}/100">
             <div data-intensity="${m.id}" style="width:${m.live_intensity||0}%;height:100%;background:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#ffa726':'#29b6f6'};border-radius:2px;"></div>
           </div>
@@ -13412,7 +14681,8 @@ const label = country
         <div style="display:flex;align-items:center;gap:4px;">
           ${awayLogoImg}<span style="font-size:12px;font-weight:600;cursor:pointer;" onclick="trackClick('team','${(m.away_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.away_team}</span>${awayLiveScoreHtml(m)}
         </div>
-        ${m.live_score ? (() => {
+        ${renderPredBets(m)}
+        ${_live ? (() => {
           const xgH = m.live_xg?.home ?? m.expectedGoals?.home ?? null;
           const xgA = m.live_xg?.away ?? m.expectedGoals?.away ?? null;
           const xgRow = (xgH !== null && xgA !== null)
@@ -13463,6 +14733,7 @@ const label = country
           <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
         </div>
       </td>
+      ${vbHeroHtml}
       ${sc(homePpg,'ppg')}${sc(hs.avgScored,'avg')}${sc(p.btts)}${sc(p.over25)}
       ${(()=>{
         const xgH = xg.home ?? '—';
@@ -17866,7 +19137,7 @@ document.addEventListener('click', function(e) {
     var sl = document.getElementById('o25-slider');
     if (sl) { sl.value = 0; updateSliderFill(sl); }
     var o25Val = document.getElementById('o25-val');
-    if (o25Val) o25Val.textContent = '—';
+    if (o25Val) o25Val.textContent = '0%';
     var cmin = document.getElementById('cote-min');
     var cmax = document.getElementById('cote-max');
     if (cmin) cmin.value = '';
@@ -17881,14 +19152,14 @@ document.addEventListener('click', function(e) {
 
 function updateSliderFill(sl) {
   const pct = ((sl.value - sl.min) / (sl.max - sl.min)) * 100;
-  sl.style.background = `linear-gradient(to right, var(--blue) ${pct}%, var(--bg4) ${pct}%)`;
+  sl.style.background = `linear-gradient(to right, var(--accent) ${pct}%, rgba(255,255,255,0.13) ${pct}%)`;
 }
 
 document.addEventListener('input', e => {
   if (e.target.id === 'o25-slider') {
     activeO25Min = parseInt(e.target.value);
     const o25Val = document.getElementById('o25-val');
-    if (o25Val) o25Val.textContent = activeO25Min > 0 ? activeO25Min + '%' : '—';
+    if (o25Val) o25Val.textContent = activeO25Min + '%';
     updateSliderFill(e.target);
     renderMatches(allMatches);
   }
@@ -17917,7 +19188,7 @@ function setO25Preset(v, btn) {
   var sl = document.getElementById('o25-slider');
   if (sl) { sl.value = activeO25Min; if (typeof updateSliderFill === 'function') updateSliderFill(sl); }
   var o25Val = document.getElementById('o25-val');
-  if (o25Val) o25Val.textContent = activeO25Min > 0 ? activeO25Min + '%' : '—';
+  if (o25Val) o25Val.textContent = activeO25Min + '%';
   _advChipActivate(btn);
   renderMatches(allMatches);
 }
@@ -18477,6 +19748,7 @@ window.addEventListener('DOMContentLoaded', () => {
   showPage('accueil', document.querySelector('[data-page="accueil"]'));
   initDayFilters();
   initLeagueFilters();
+  buildFilterDropdowns();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -19894,6 +21166,17 @@ function scrollToSection(sectionId) {
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+// Pastille « i » filtre Top stratégies → onglet Guide, section Stratégies
+function openStrategiesGuide() {
+  try { if (typeof tsClose === 'function') tsClose(); } catch (e) {}
+  try {
+    if (typeof showPage === 'function') showPage('guide');
+  } catch (e) {}
+  setTimeout(function () {
+    try { scrollToSection('guide-strategies'); } catch (e) {}
+  }, 250);
 }
 
 function initStaticGuideNav() {
@@ -22195,8 +23478,10 @@ function renderComparateur(d) {
     if (_mfsMoved) return;
     var body = document.getElementById('mfs-body');
     if (!body) return;
-    ['day-filter-row', 'league-filter-row', 'edge-filter-row',
-     'period-filter-row', 'kickoff-filter-row', 'adv-filter-row'].forEach(function (id) {
+    // Rows visibles à relocaliser dans le bottom-sheet mobile (ordre = affichage).
+    // Maj v10.43 : topn-filter-row (Top stratégies + slider Confiance) AJOUTÉ ;
+    // period-kickoff-row (fusion) ; league-filter-row exclu (display:none) ; edge supprimé.
+    ['day-filter-row', 'topn-filter-row', 'period-kickoff-row', 'adv-filter-row'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) body.appendChild(el); // déplace (handlers délégués → intacts)
     });
@@ -22306,8 +23591,8 @@ function renderComparateur(d) {
   }
   function fmtTime(m) {
     try {
-      var d = new Date(m.commence_time);
-      if (isNaN(d)) return '--:--';
+      var d = (typeof parseKickoff === 'function') ? parseKickoff(m.commence_time) : new Date(m.commence_time);
+      if (!d || isNaN(d)) return '--:--';
       return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
     } catch (e) { return '--:--'; }
   }
@@ -22426,6 +23711,7 @@ function renderComparateur(d) {
             '<div class="mc-team">' + rkH + '<span>' + esc(m.home_team) + '</span>' + scH + '</div>' +
             '<div class="mc-team">' + rkA + '<span>' + esc(m.away_team) + '</span>' + scA + '</div>' +
           '</div>' +
+          (function(){ try { return (typeof renderPredBets==='function') ? renderPredBets(m) : ''; } catch(e){ return ''; } })() +
           '<div class="mc-metrics">' +
             '<div class="mc-cell edge ' + edgeCls + '"><div class="mc-k">Edge</div><div class="mc-v">' + edgeTxt + '</div></div>' +
             '<div class="mc-cell"><div class="mc-k">O2.5</div><div class="mc-v">' + (po.over25 != null ? Math.round(po.over25) + '%' : '—') + '</div></div>' +

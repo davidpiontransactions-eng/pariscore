@@ -1294,6 +1294,8 @@ const BSD_FALLBACK_NEEDED = bsdConfig.mapping?.fallback_needed || [];
 const ESPN_STANDINGS_SLUG = {
   98: 'jpn.1',   // J1 League (BSD 49 sans saison + API-Football free plan ≤ 2024)
   99: 'jpn.2',   // J2 League (même limitation)
+  292: 'kor.1',  // K League 1 (BSD 50 sans saison — secours zéro quota si /standings/ sans season échoue)
+  136: 'ita.2',  // Serie B Italie — NON couverte BSD (BSD id 4 = Serie A only) → ESPN ita.2, zéro clé/quota
 };
 
 // ─── BSD Tennis (Sports Addon $5/mo) ─────────────────────────────────────────
@@ -3429,6 +3431,30 @@ function loadDB() {
   db.lastStatsUpdate = meta.lastStatsUpdate || null;
   db.statsUpdateByLeague = meta.statsUpdateByLeague || {};
   db.oddsQuotaRemaining = meta.oddsQuotaRemaining || null;
+
+  // ─── Sanitizer cross-source (one-shot boot) ───────────────────────────────
+  // Pour toute ligue couverte par BSD, on supprime les lignes `api-football`
+  // périmées (saison N-1 figée d'un ancien run) qui cohabitent et faussent le
+  // classement (doublons au mauvais rang, ex: K League). On efface aussi le
+  // gate de fraîcheur de ces ligues pour que fetchStats les repeuple via BSD.
+  try {
+    const bsdCovered = new Set(Object.keys(BSD_CONFIG_TO_BSD).map(k => parseInt(k)));
+    const contaminated = new Set();
+    for (const k of Object.keys(db.teamStats)) {
+      const s = db.teamStats[k];
+      if (s && s._source === 'api-football' && bsdCovered.has(s.leagueId)) {
+        contaminated.add(s.leagueId);
+        delete db.teamStats[k];
+      }
+    }
+    if (contaminated.size) {
+      for (const lid of contaminated) delete db.statsUpdateByLeague[lid];
+      console.warn(`  [SANITIZE] Lignes api-football périmées purgées pour ligues BSD: ${[...contaminated].join(', ')} (gate de fraîcheur réinitialisé)`);
+    }
+  } catch (e) {
+    console.warn('  [SANITIZE] erreur:', e.message);
+  }
+
   console.log(`  ✓ SQLite chargé (${db.matches.length} matchs, ${Object.keys(db.teamStats).length} équipes, ${Object.keys(db.advancedTeamStats).length} stats avancées)`);
   syncCacheBuffers(); // Populate buffers from SQLite on startup
 }
@@ -5078,6 +5104,14 @@ function buildMatchRecord(raw) {
   if (aRaw && (!aRaw._real || !aRaw.rank)) {
     const fuzz = findFuzzy(aKey, { skipExact: true, excludeEntry: aRaw });
     if (fuzz && fuzz._real && fuzz.rank) aRaw = fuzz;
+  }
+
+  // Ligue couverte BSD → on rejette toute entrée `api-football` (plan gratuit
+  // = classement saison N-1 TERMINÉE). Mieux vaut "chargement…" qu'un rang
+  // périmé. Corrige le bug "colonne Clsst figée" (K League, Serie A…).
+  if (isLeagueCoveredByBSD(raw._sport || raw.sport_key)) {
+    if (hRaw && hRaw._source === 'api-football') hRaw = null;
+    if (aRaw && aRaw._source === 'api-football') aRaw = null;
   }
 
   // H2H — 5 dernières confrontations
@@ -7621,14 +7655,21 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
       }
     }
 
+    // Certaines ligues (ex: K League 1 / BSD 50) n'exposent AUCUNE saison
+    // (`/seasons/?league=50` vide) mais `/leagues/50/standings/` renvoie quand
+    // même la table active si on omet le param `season`. On ne bail plus ici :
+    // on tente l'endpoint standings sans saison avant de lâcher.
     if (!seasonId) {
-      console.warn(`  [DEBUG STANDINGS] Aucune saison trouvée pour BSD ${bsdLeagueId} — fallback API-Football requis`);
-      return null;
+      console.warn(`  [DEBUG STANDINGS] Aucune saison BSD ${bsdLeagueId} — tentative /standings/ sans param season`);
+    } else {
+      console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → seasonId=${seasonId}`);
     }
-    console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → seasonId=${seasonId}`);
 
     // 2. Fetch standings — supporte les variantes de shape (.standings, .results, payload brut tableau)
-    const standingsRes = await bsdFetch(`/leagues/${bsdLeagueId}/standings/?season=${seasonId}`);
+    const standingsUrl = seasonId
+      ? `/leagues/${bsdLeagueId}/standings/?season=${seasonId}`
+      : `/leagues/${bsdLeagueId}/standings/`;
+    const standingsRes = await bsdFetch(standingsUrl);
     let rows = [];
     if (standingsRes?.status === 200 && standingsRes?.data) {
       if (Array.isArray(standingsRes.data.standings) && standingsRes.data.standings.length) {
@@ -7640,7 +7681,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
       }
     }
     if (!rows.length) {
-      console.warn(`  [DEBUG STANDINGS] Standings vides BSD ${bsdLeagueId} saison ${seasonId} status=${standingsRes?.status}`);
+      console.warn(`  [DEBUG STANDINGS] Standings vides BSD ${bsdLeagueId} saison ${seasonId || 'n/a'} status=${standingsRes?.status}`);
       return null;
     }
     console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → ${rows.length} équipes reçues`);
@@ -7648,15 +7689,23 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
     // 3. Convertir au format db.teamStats
     const teams = {};
     const firstEntry = rows[0];
+    // BSD standings expose le nom sous `team_name` (+ `team_id`). Anciennes
+    // variantes/objets imbriqués gérés en fallback pour rester robuste.
+    const teamLabel = (e) => e.team_name || e.team?.name || e.team || e.name || '';
     console.log(`  [DATA MAPPING] BSD standings sample — keys: ${Object.keys(firstEntry).join(', ')}`);
-    console.log(`  [DATA MAPPING] BSD sample: team=${firstEntry.team}, played=${firstEntry.played}, gf=${firstEntry.gf}, ga=${firstEntry.ga}, form=${firstEntry.form}`);
+    console.log(`  [DATA MAPPING] BSD sample: team=${teamLabel(firstEntry)}, played=${firstEntry.played}, gf=${firstEntry.gf}, ga=${firstEntry.ga}, form=${firstEntry.form}`);
 
     const denylist = LEAGUE_TEAM_DENYLIST[configLeagueId] || null;
     rows.forEach(entry => {
-      const key = normName(entry.team);
+      const teamName = teamLabel(entry);
+      const key = normName(teamName);
+      if (!key) {
+        console.warn(`  [DEBUG STANDINGS] Ligne standings sans nom d'équipe (keys: ${Object.keys(entry).join(',')}) — ignorée`);
+        return;
+      }
       // Skip équipes misclassifiées par BSD (data error)
       if (denylist && denylist.has(key)) {
-        console.warn(`  [DENYLIST] Exclu "${entry.team}" (key:"${key}") de ligue ${configLeagueId} — équipe misclassifiée par BSD`);
+        console.warn(`  [DENYLIST] Exclu "${teamName}" (key:"${key}") de ligue ${configLeagueId} — équipe misclassifiée par BSD`);
         return;
       }
 
@@ -7684,7 +7733,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
         awayStats = buildSideStats({ played: aPlayed, win: aWon, draw: aDrawn, lose: aLost, goals_for: aGf, goals_against: aGa });
         rawHome = { played: hPlayed, wins: hWon, draws: hDrawn, losses: hLost, gf: hGf, ga: hGa, pts: hWon * 3 + hDrawn };
         rawAway = { played: aPlayed, wins: aWon, draws: aDrawn, losses: aLost, gf: aGf, ga: aGa, pts: aWon * 3 + aDrawn };
-        console.log(`  [BSD] Splits réels Domicile/Extérieur pour ${entry.team}: ${hPlayed}D/${aPlayed}E`);
+        console.log(`  [BSD] Splits réels Domicile/Extérieur pour ${teamName}: ${hPlayed}D/${aPlayed}E`);
       } else {
         // BSD ne fournit pas splits — estimation 50/50 sur raw entry totals
         const totalP = entry.played || 0;
@@ -7711,12 +7760,12 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
         awayStats = buildSideStats({ played: Math.floor(_epN / 2), win: Math.floor((entry.won||0) / 2), draw: Math.floor((entry.drawn||0) / 2), lose: Math.floor((entry.lost||0) / 2), goals_for: Math.floor((entry.gf||0) / 2), goals_against: Math.floor((entry.ga||0) / 2) });
         rawHome = { played: hP, wins: hW, draws: hD, losses: hL, gf: hGf2, ga: hGa2, pts: hW * 3 + hD, _estimated: true };
         rawAway = { played: aP, wins: aW, draws: aD, losses: aL, gf: aGf2, ga: aGa2, pts: aW * 3 + aD, _estimated: true };
-        console.log(`  [BSD] Splits estimés (50/50 ratio) pour ${entry.team} — BSD ne fournit pas played_home/played_away`);
+        console.log(`  [BSD] Splits estimés (50/50 ratio) pour ${teamName} — BSD ne fournit pas played_home/played_away`);
       }
 
       // Debug log for first team only
       if (Object.keys(teams).length === 0) {
-        console.log(`  [DATA MAPPING] Buts extraits pour ${entry.team} : ${homeStats.avgScored} marqués, ${homeStats.avgConceded} encaissés (home) | ${awayStats.avgScored} marqués, ${awayStats.avgConceded} encaissés (away) | form: ${entry.form || '(vide)'}`);
+        console.log(`  [DATA MAPPING] Buts extraits pour ${teamName} : ${homeStats.avgScored} marqués, ${homeStats.avgConceded} encaissés (home) | ${awayStats.avgScored} marqués, ${awayStats.avgConceded} encaissés (away) | form: ${entry.form || '(vide)'}`);
       }
 
       teams[key] = {
@@ -9261,10 +9310,22 @@ async function fetchStats(force = false) {
           // Respect du cycle T1 (6h) vs T2 (12h)
           const leagueCronMs = LEAGUE_CRON_MS[configId] || (6 * 3600000);
           const lastLeagueUpdate = db.statsUpdateByLeague[configId];
-          if (!force && lastLeagueUpdate && (Date.now() - new Date(lastLeagueUpdate).getTime()) < leagueCronMs) {
+          // Contamination cross-source : si la ligue est couverte par BSD mais
+          // que db.teamStats contient encore des lignes `api-football`
+          // (saison N-1 figée d'un ancien run), on IGNORE le gate de fraîcheur
+          // pour forcer le refetch BSD + purge totale. Sinon le gate persiste
+          // en SQLite et la colonne classement reste figée à vie (ex: K League).
+          const hasStaleApiFootball = Object.values(db.teamStats).some(
+            s => s && s.leagueId === configId && s._source === 'api-football'
+          );
+          if (!force && !hasStaleApiFootball && lastLeagueUpdate &&
+              (Date.now() - new Date(lastLeagueUpdate).getTime()) < leagueCronMs) {
             const tier = leagueCronMs >= 12 * 3600000 ? 'T2' : 'T1';
             console.log(`  [BSD] Ligue ${configId} (${tier}) — données fraîches — saut`);
             continue;
+          }
+          if (hasStaleApiFootball) {
+            console.warn(`  [BSD] Ligue ${configId} — lignes api-football périmées détectées → refetch forcé (bypass gate)`);
           }
 
           const teams = await fetchBSDStandings(bsdId, configId);
@@ -9278,6 +9339,13 @@ async function fetchStats(force = false) {
                   console.warn(`  [DENYLIST] purgé "${k}" de db.teamStats (ligue ${configId})`);
                 }
               }
+            }
+            // BSD renvoie la table COMPLÈTE et à jour → purge TOTALE des
+            // entrées de cette ligue (anciennes lignes saison terminée /
+            // ancien fournisseur) avant injection, sinon des doublons au
+            // mauvais rang subsistent (ex: K League — Ulsan P33 saison N-1).
+            for (const k of Object.keys(db.teamStats)) {
+              if (db.teamStats[k]?.leagueId === configId) delete db.teamStats[k];
             }
             Object.assign(db.teamStats, teams);
             const count = Object.keys(teams).length;
@@ -9305,11 +9373,55 @@ async function fetchStats(force = false) {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // PHASE 1bis: ESPN standings — ligues ESPN-only NON couvertes BSD
+    // (Serie B IT 136 = ita.2, J2 99 = jpn.2…). Zéro clé/quota.
+    // ═══════════════════════════════════════════════════════════════
+    {
+      const espnOnly = Object.keys(ESPN_STANDINGS_SLUG)
+        .map(Number)
+        .filter(cid => !BSD_CONFIG_TO_BSD[String(cid)]); // exclut celles déjà gérées Phase 1 (BSD KO→ESPN)
+      if (espnOnly.length) {
+        console.log(`  [Cron:Stats] Phase 1bis: ESPN standings (ligues ESPN-only: ${espnOnly.join(', ')})…`);
+        for (const configId of espnOnly) {
+          try {
+            const leagueCronMs = LEAGUE_CRON_MS[configId] || (6 * 3600000);
+            const lastLeagueUpdate = db.statsUpdateByLeague[configId];
+            const hasStaleApiFootball = Object.values(db.teamStats).some(
+              s => s && s.leagueId === configId && s._source === 'api-football'
+            );
+            if (!force && !hasStaleApiFootball && lastLeagueUpdate &&
+                (Date.now() - new Date(lastLeagueUpdate).getTime()) < leagueCronMs) {
+              const tier = leagueCronMs >= 12 * 3600000 ? 'T2' : 'T1';
+              console.log(`  [ESPN] Ligue ${configId} (${tier}) — données fraîches — saut`);
+              continue;
+            }
+            const ok = await tryESPNStandings(configId);
+            if (ok) console.log(`  [ESPN] Ligue ${configId} → OK (slug ${ESPN_STANDINGS_SLUG[configId]})`);
+            else console.warn(`  [ESPN] Ligue ${configId} (slug ${ESPN_STANDINGS_SLUG[configId]}) → vide/échec`);
+          } catch (e) {
+            console.warn(`  [ESPN] Ligue ${configId} erreur:`, e.message);
+          }
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // PHASE 2: API-Football fallback — ligues non couvertes par BSD
     // ═══════════════════════════════════════════════════════════════
-    const fallbackTargets = Array.from(new Set([...(BSD_FALLBACK_NEEDED || []), ...bsdFailedLeagues]));
+    // IMPORTANT : on n'inclut PLUS `bsdFailedLeagues` dans le fallback
+    // API-Football. Le plan API-Football gratuit ne sert que ≤ saison 2024
+    // (saison TERMINÉE) → injecter ça pour une ligue couverte BSD écrase le
+    // classement avec une table N-1 figée (bug "Clsst ne se met pas à jour"
+    // sur K League / Serie A). En cas d'échec BSD transitoire, on conserve la
+    // dernière table BSD valable (purge uniquement sur succès) plutôt que
+    // d'afficher une saison périmée. Seul BSD_FALLBACK_NEEDED (liste curée de
+    // ligues réellement non couvertes BSD) est éligible au fallback.
+    const fallbackTargets = Array.from(new Set([...(BSD_FALLBACK_NEEDED || [])]));
+    if (bsdFailedLeagues.length) {
+      console.warn(`  [Cron:Stats] ${bsdFailedLeagues.length} ligue(s) BSD en échec (${bsdFailedLeagues.join(', ')}) — PAS de fallback API-Football (anti-contamination saison N-1), dernière table BSD conservée`);
+    }
     if (API_FOOTBALL_KEY && fallbackTargets.length) {
-      console.log(`  [Cron:Stats] Phase 2: API-Football fallback (${fallbackTargets.length} ligues, dont ${bsdFailedLeagues.length} échecs BSD)…`);
+      console.log(`  [Cron:Stats] Phase 2: API-Football fallback (${fallbackTargets.length} ligues curées non-BSD)…`);
       let activeSeason = currentSeason();
 
       for (const lid of fallbackTargets) {
@@ -18032,8 +18144,13 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
   const bsdMapEntry = bsdConfig.mapping?.bsd_to_config?.[String(rawId)];
   if (bsdMapEntry?.config_id) configId = bsdMapEntry.config_id;
 
+  // Ligue couverte BSD → on n'affiche QUE des lignes BSD/ESPN. Les lignes
+  // `api-football` (plan gratuit = saison N-1 TERMINÉE) sont ignorées : elles
+  // ne doivent jamais polluer le classement (cause du bug "Clsst figé").
+  const _bsdCoveredLeague = BSD_CONFIG_TO_BSD[String(configId)] != null;
   const buildRows = () => Object.entries(db.teamStats)
-    .filter(([, s]) => s.leagueId === configId && s._real && s.rank)
+    .filter(([, s]) => s.leagueId === configId && s._real && s.rank &&
+      !(_bsdCoveredLeague && s._source === 'api-football'))
     .map(([tKey, s]) => {
       // PRIORITÉ raw counts (s._raw) — sinon fallback home/away (qui contiennent des %, peu fiable)
       const raw = s._raw || {};
@@ -18074,9 +18191,15 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
   // API-Football périmées d'une saison terminée).
   const espnSlug = ESPN_STANDINGS_SLUG[configId];
   const stale = espnSlug && rows.length && rows.some(r => r._source !== 'espn');
+  // Ligues BSD : si la table mélange du BSD frais et des lignes API-Football
+  // périmées (saison terminée d'un ancien run), forcer un refetch + purge.
+  const bsdLeagueId = BSD_CONFIG_TO_BSD[String(configId)];
+  const mixedStale = !!bsdLeagueId && rows.length > 0 &&
+    rows.some(r => r._source === 'api-football') &&
+    rows.some(r => r._source === 'bsd');
 
   // On-demand fetch si vide OU périmé — rate-limited à 60s par ligue
-  if (!rows.length || stale) {
+  if (!rows.length || stale || mixedStale) {
     db._standingsRefetchTs = db._standingsRefetchTs || {};
     const last = db._standingsRefetchTs[configId] || 0;
     if ((Date.now() - last) > 60_000) {
@@ -18085,18 +18208,18 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
         let teams = null;
         if (espnSlug) {
           teams = await fetchESPNStandings(espnSlug, configId);
-          if (teams && Object.keys(teams).length) {
-            // Purge lignes périmées (autre source / saison terminée)
-            for (const k of Object.keys(db.teamStats)) {
-              if (db.teamStats[k]?.leagueId === configId) delete db.teamStats[k];
-            }
-          }
         }
         if (!teams || !Object.keys(teams).length) {
-          const bsdId = BSD_CONFIG_TO_BSD[String(configId)];
-          if (bsdId && BSD_API_KEY) teams = await fetchBSDStandings(bsdId, configId);
+          if (bsdLeagueId && BSD_API_KEY) teams = await fetchBSDStandings(bsdLeagueId, configId);
         }
         if (teams && Object.keys(teams).length) {
+          // Purge TOTALE des lignes de cette ligue avant injection : BSD/ESPN
+          // renvoient la table complète et autoritaire. Sans purge totale,
+          // des doublons au mauvais rang subsistent (ex: K League — lignes
+          // api-football P33 saison N-1 cohabitant avec BSD P15).
+          for (const k of Object.keys(db.teamStats)) {
+            if (db.teamStats[k]?.leagueId === configId) delete db.teamStats[k];
+          }
           Object.assign(db.teamStats, teams);
           db.statsUpdateByLeague[configId] = new Date().toISOString();
           refetched = true;
