@@ -4803,6 +4803,7 @@
   #match-tab-mob { display: none; }  /* dropdown onglets — mobile only */
   #ins-tab-mob { display: none; }    /* dropdown sections Insights — mobile only */
   #mob-quick { display: none; }      /* dropdown filtre rapide — mobile only */
+  #strat-mob { display: none; }      /* dropdown stratégie — mobile only */
   /* Toggle jour/nuit flottant : page d'accueil UNIQUEMENT (tous écrans) */
   #theme-toggle { display: none !important; }
   body[data-page="accueil"] #theme-toggle { display: inline-block !important; }
@@ -4879,6 +4880,16 @@
     }
     #mob-chips > *, .adv-chips-grp > *, .rk-view-tabs > *,
     .tm-tabs > *, .filter-row > * { flex: 0 0 auto; }
+
+    /* Stratégies : grille pills → dropdown */
+    #strategy-pills { display: none !important; }
+    #strat-mob {
+      display: block; width: 100%; box-sizing: border-box; margin: 4px 0 14px;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--border2); border-radius: 10px;
+      padding: 12px 14px; font-family: var(--font-head); font-weight: 800;
+      font-size: 16px; -webkit-tap-highlight-color: transparent;
+    }
 
     /* Filtre rapide : chips → dropdown */
     #mob-chips { display: none !important; }
@@ -6639,6 +6650,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <div class="section-sub">Sélectionnez un marché. PariScore vous classe instantanément les matchs à venir par % de confiance — du plus sûr au moins sûr.</div>
   <button id="strat-help-btn" onclick="openStratHelp()">ℹ Aide &amp; Guide</button>
 
+  <select id="strat-mob" aria-label="Stratégie" onchange="selectStrategy(this.value)"></select>
   <div class="strategy-pills" id="strategy-pills"></div>
           <div id="acca-panel" class="acca-panel" style="display:none;"></div>
   <div class="strategy-controls" id="strategy-controls" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:12px 0 4px;padding:10px 14px;background:var(--bg2);border-radius:10px;border:1px solid rgba(255,255,255,0.05);">
@@ -18598,6 +18610,12 @@ function initStrategiesPage() {
     const sub = `<span style="font-size:10px;opacity:0.65;display:block;">${s.label}</span>`;
     return `<div class="strategy-pill${s.key === currentStrategy ? ' active' : ''}" data-key="${s.key}" onclick="selectStrategy('${s.key}')">${tp}${sub}</div>`;
   }).join('');
+  const _ssel = document.getElementById('strat-mob');
+  if (_ssel) {
+    _ssel.innerHTML = STRATEGIES_UI.map(s =>
+      `<option value="${s.key}"${s.key === currentStrategy ? ' selected' : ''}>${s.tipster ? s.tipster + ' — ' : ''}${s.label}</option>`
+    ).join('');
+  }
   strategiesPageInitialized = true;
   loadStrategy(currentStrategy);
 }
@@ -18606,6 +18624,8 @@ function selectStrategy(key) {
   if (key === currentStrategy) return;
   currentStrategy = key;
   document.querySelectorAll('.strategy-pill').forEach(p => p.classList.toggle('active', p.dataset.key === key));
+  const _ssel = document.getElementById('strat-mob');
+  if (_ssel && _ssel.value !== key) _ssel.value = key;
   loadStrategy(key);
 }
 
