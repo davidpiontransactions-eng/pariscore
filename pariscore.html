@@ -4802,6 +4802,7 @@
   #mob-filter-overlay, #mob-filter-sheet, #mob-filter-btn { display: none; }
   #match-tab-mob { display: none; }  /* dropdown onglets — mobile only */
   #ins-tab-mob { display: none; }    /* dropdown sections Insights — mobile only */
+  #mob-quick { display: none; }      /* dropdown filtre rapide — mobile only */
   /* Toggle jour/nuit flottant : page d'accueil UNIQUEMENT (tous écrans) */
   #theme-toggle { display: none !important; }
   body[data-page="accueil"] #theme-toggle { display: inline-block !important; }
@@ -4878,6 +4879,16 @@
     }
     #mob-chips > *, .adv-chips-grp > *, .rk-view-tabs > *,
     .tm-tabs > *, .filter-row > * { flex: 0 0 auto; }
+
+    /* Filtre rapide : chips → dropdown */
+    #mob-chips { display: none !important; }
+    #mob-quick {
+      display: block; width: 100%; box-sizing: border-box; margin: 9px 0 0;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--border2); border-radius: 10px;
+      padding: 11px 14px; font-family: var(--font-head); font-weight: 800;
+      font-size: 16px; -webkit-tap-highlight-color: transparent;
+    }
 
     /* Onglets modal Insights → dropdown (mobile) */
     #insights-panel .ins-tabs { display: none !important; }
@@ -6131,6 +6142,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <button id="mob-filter-btn" onclick="openMobFilters()" aria-label="Filtres avancés">⚙ Filtres</button>
         </div>
       </div>
+      <select id="mob-quick" aria-label="Filtre rapide" onchange="mobQuickSel(this.value)">
+        <option value="">Tous les matchs</option>
+        <option value="live">🔴 Live</option>
+        <option value="edge5">Edge &gt; 5%</option>
+        <option value="today">Aujourd'hui</option>
+        <option value="o25">Over 2.5</option>
+        <option value="btts">BTTS</option>
+        <option value="fav">★ Favoris</option>
+      </select>
       <div id="mob-chips">
         <button class="mob-chip" data-mchip="live" onclick="mobChip('live',this)">Live</button>
         <button class="mob-chip" data-mchip="edge5" onclick="mobChip('edge5',this)">Edge&gt;5%</button>
@@ -22220,6 +22240,17 @@ function renderComparateur(d) {
         _mobRerender();
       }
     } catch (e) { console.warn('mobChip', key, e); }
+  };
+
+  /* — Filtre rapide en dropdown (remplace les chips) — */
+  window.mobQuickSel = function (val) {
+    try {
+      document.querySelectorAll('#mob-chips .mob-chip.on').forEach(function (b) { b.click(); });
+      if (val) {
+        var t = document.querySelector('#mob-chips .mob-chip[data-mchip="' + val + '"]');
+        if (t) t.click();
+      }
+    } catch (e) { console.warn('mobQuickSel', e); }
   };
 
   /* — Sélecteur de tri mobile — */
