@@ -4858,6 +4858,27 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
     .mc-grp { margin: 6px 0 2px; border-radius: 8px; }
+    /* Zéro scroll horizontal : tous les rails filtres/onglets passent en wrap
+       (sauf scrollers légitimes : tables, bottom-nav, ribbon anniversaires) */
+    #mob-chips,
+    .adv-chips-grp,
+    .rk-view-tabs,
+    .tm-tabs,
+    #page-tennis div:has(> .tex-tour-btn),
+    #page-tennis div:has(> .tex-cal-tour-btn),
+    #insights-panel .ins-tabs,
+    .match-tabs,
+    .filter-row {
+      flex-wrap: wrap !important;
+      overflow-x: visible !important;
+      white-space: normal !important;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+      scroll-snap-type: none !important;
+    }
+    #mob-chips > *, .adv-chips-grp > *, .rk-view-tabs > *,
+    .tm-tabs > *, .filter-row > * { flex: 0 0 auto; }
+
     /* Onglets modal Insights → dropdown (mobile) */
     #insights-panel .ins-tabs { display: none !important; }
     #ins-tab-mob {
