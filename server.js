@@ -12116,6 +12116,7 @@ async function handleAPI(req, res, pathname, query) {
         current_set_index: m.current_set_index,
         current_point: m.current_point,
         serving: m.serving,
+        serve_momentum: m.serve_momentum || null,
         notes: m.notes,
         start_time: m.start_time,
         last_update_ts: m.last_update_ts
@@ -12639,11 +12640,141 @@ async function getTennisScheduleCached() {
   return _tennisScheduleCache.data;
 }
 
+// ── BSD Tennis (Sports Addon actif) — source PRIMAIRE, ESPN en complément ──────
+// Normalise un match BSD tennis vers la forme interne unifiée (= shape ESPN
+// consommée par la route /tennis/api/v2/matches/live/ + onglet Tennis).
+function _normalizeBSDTennisMatch(m) {
+  if (!m || !m.player1 || !m.player2) return null;
+  const st = String(m.status || '').toLowerCase();
+  const finishedRx = /finish|complete|ended|cancel|walkover|retired|abandon|w_?o|post/;
+  const isLive = (/progress|live|playing|in_play|inplay|set/.test(st) && !finishedRx.test(st))
+    || (m.current_set != null && !finishedRx.test(st));
+  const sets = Array.isArray(m.sets_detail)
+    ? m.sets_detail.map(s => ({ p1: s.p1 ?? s.player1 ?? null, p2: s.p2 ?? s.player2 ?? null }))
+    : [];
+  const tn = m.tournament || {};
+  return {
+    id: `bsd_t_${m.id}`,
+    tour: tn.circuit || '',
+    discipline: tn.category || '',
+    tournament: tn.name || '',
+    court: m.round_name || '',
+    status: m.status || '',
+    is_live: !!isLive,
+    player1: { name: m.player1.name || m.player1.short_name || '?', country: m.player1.country_name || m.player1.country_code || '', flag: null },
+    player2: { name: m.player2.name || m.player2.short_name || '?', country: m.player2.country_name || m.player2.country_code || '', flag: null },
+    player1_sets: m.player1_sets ?? 0,
+    player2_sets: m.player2_sets ?? 0,
+    sets,
+    current_set_index: m.current_set != null ? Math.max(0, (parseInt(m.current_set, 10) || 1) - 1) : (sets.length ? sets.length - 1 : 0),
+    current_point: m.current_point || '',
+    serving: m.is_serving_p1 === true ? 1 : (m.is_serving_p1 === false ? 2 : null),
+    notes: m.round_name || '',
+    start_time: m.match_date || null,
+    last_update_ts: Date.now(),
+    _bsd_match_id: m.id,
+    _bsd_stats: {
+      p1_aces: m.p1_aces, p2_aces: m.p2_aces,
+      p1_df: m.p1_double_faults, p2_df: m.p2_double_faults,
+      p1_first_pct: m.p1_first_serve_pct, p2_first_pct: m.p2_first_serve_pct,
+    },
+  };
+}
+
+async function fetchBSDTennisLive() {
+  const res = await bsdTennisFetch('/api/v2/matches/live/');
+  if (!res || res.status !== 200) return [];
+  const arr = Array.isArray(res.data)
+    ? res.data
+    : (res.data && Array.isArray(res.data.results) ? res.data.results : []);
+  return arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+}
+
+function _tennisPairKey(m) {
+  const a = normName(m && m.player1 && m.player1.name);
+  const b = normName(m && m.player2 && m.player2.name);
+  return [a, b].sort().join('|');
+}
+// Fusion : BSD prioritaire (stats/service/point), ESPN ajoute les matchs absents.
+function _mergeTennisLive(primary, secondary) {
+  const out = primary.slice();
+  const seen = new Set(primary.map(_tennisPairKey));
+  for (const m of secondary) {
+    const k = _tennisPairKey(m);
+    if (k && k !== '|' && !seen.has(k)) { seen.add(k); out.push(m); }
+  }
+  return out;
+}
+
+// ── SPRINT 3 — Serve Momentum Live + lean modèle in-play ────────────────────
+// Snapshot par poll (30s) : jeux cumulés + qui sert. Dérive les 5 derniers
+// jeux (hold/break) + tendance. Aucune dépendance point-par-point fiable →
+// on infère break = jeu gagné par le NON-serveur entre 2 snapshots.
+const _tennisServeHist = new Map(); // id → [{ts,g1,g2,serving}]
+function _tennisGamesFromSets(m) {
+  let g1 = 0, g2 = 0;
+  for (const s of (Array.isArray(m.sets) ? m.sets : [])) {
+    g1 += Number(s.p1) || 0; g2 += Number(s.p2) || 0;
+  }
+  return { g1, g2 };
+}
+function recordTennisServe(m) {
+  if (!m || !m.id || !m.is_live) return null;
+  const { g1, g2 } = _tennisGamesFromSets(m);
+  const serving = m.serving === 1 ? 1 : m.serving === 2 ? 2 : null;
+  let hist = _tennisServeHist.get(m.id) || [];
+  const last = hist[hist.length - 1];
+  if (!last || last.g1 !== g1 || last.g2 !== g2 || last.serving !== serving) {
+    hist.push({ ts: Date.now(), g1, g2, serving });
+    if (hist.length > 14) hist = hist.slice(-14);
+    _tennisServeHist.set(m.id, hist);
+  }
+  // Dérive jeux récents : qui a pris chaque jeu + break si non-serveur gagne.
+  const games = [];
+  for (let i = 1; i < hist.length; i++) {
+    const a = hist[i - 1], b = hist[i];
+    const d1 = b.g1 - a.g1, d2 = b.g2 - a.g2;
+    if (d1 + d2 !== 1) continue; // saute si >1 jeu entre snapshots (poll lent)
+    const winner = d1 === 1 ? 1 : 2;
+    const srv = a.serving;
+    const isBreak = srv != null && winner !== srv;
+    games.push({ w: winner, brk: isBreak });
+  }
+  const recent = games.slice(-5);
+  const breaks = recent.filter(g => g.brk).length;
+  let streakW = 0, streakP = null;
+  for (let i = recent.length - 1; i >= 0; i--) {
+    if (streakP == null) { streakP = recent[i].w; streakW = 1; }
+    else if (recent[i].w === streakP) streakW++;
+    else break;
+  }
+  const trend = streakW >= 3 ? (streakP === 1 ? 'p1' : 'p2') : 'even';
+  return { games: recent, breaks_recent: breaks, run: { player: streakP, len: streakW }, trend, snapshots: hist.length };
+}
+
 async function pollTennisLive() {
   if (_isFetchingTennis) return;
   _isFetchingTennis = true;
   try {
-    const data = await fetchESPNTennisLive();
+    let bsd = [];
+    if (BSD_TENNIS_ENABLED) {
+      try {
+        bsd = await fetchBSDTennisLive();
+      } catch (e) {
+        if (e && e.code === 'ADDON_REQUIRED') console.warn('  [Tennis] BSD addon requis — fallback ESPN');
+        else console.warn('  [Tennis] BSD live error:', e.message);
+      }
+    }
+    let espn = [];
+    try { espn = await fetchESPNTennisLive(); } catch (e) { console.warn('  [Tennis] ESPN live error:', e.message); }
+    const data = _mergeTennisLive(bsd, espn);
+    // S3 : serve momentum par match live + purge des ids disparus.
+    const _liveIds = new Set();
+    for (const m of data) {
+      if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
+    }
+    for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
+    console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
   } catch (e) {
     console.warn('  [Tennis] poll error:', e.message);
@@ -18845,6 +18976,281 @@ async function buildTennisValueBets(opts = {}) {
 // closure → on expose la fn via globalThis pour le warm-up.
 try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */ }
 
+// ── BSD Tennis Predictions (ML CatBoost) — bulk → Map (PAS de N+1) ───────────
+// Branche les prédictions BSD au tableau : proba ML, confiance, O/U sets/jeux,
+// 1er set. /api/v2/predictions/ est paginé bulk → 1 fetch couvre tout le slate.
+function _tnNameKey(a, b) {
+  const x = normName(a), y = normName(b);
+  return [x, y].sort().join('|');
+}
+function _predListToMap(list) {
+  const m = new Map();
+  for (const p of (list || [])) {
+    const mt = p && p.match;
+    if (!mt) continue;
+    if (mt.id != null) m.set('id:' + mt.id, p);
+    const n1 = mt.player1 && (mt.player1.name || mt.player1.short_name);
+    const n2 = mt.player2 && (mt.player2.name || mt.player2.short_name);
+    if (n1 && n2) {
+      const k = 'pk:' + _tnNameKey(n1, n2);
+      if (!m.has(k)) m.set(k, p);
+    }
+  }
+  return m;
+}
+async function fetchBSDTennisPredictions(dateClean) {
+  if (!BSD_TENNIS_ENABLED) return new Map();
+  const ck = `bsd_tennis_preds_${dateClean || 'upcoming'}`;
+  const cached = apiCacheGet(ck);
+  if (cached) return _predListToMap(cached);
+  const out = [];
+  let suffix = dateClean
+    ? `/api/v2/predictions/?date_from=${encodeURIComponent(dateClean)}&date_to=${encodeURIComponent(dateClean)}&limit=200`
+    : `/api/v2/predictions/?upcoming=true&limit=200`;
+  for (let page = 0; page < 6 && suffix; page++) {
+    let r;
+    try { r = await bsdTennisFetch(suffix); } catch (e) { break; }
+    if (!r || r.status !== 200 || !r.data) break;
+    const res = Array.isArray(r.data) ? r.data : (Array.isArray(r.data.results) ? r.data.results : []);
+    if (!res.length) break;
+    out.push(...res);
+    const nx = r.data && r.data.next ? String(r.data.next) : null;
+    suffix = (nx && nx.includes('/tennis')) ? nx.slice(nx.indexOf('/tennis') + '/tennis'.length) : null;
+  }
+  if (out.length) apiCacheSet(ck, out, 'bsd_tennis', 30 * 60 * 1000);
+  console.log(`  [TennisPred BSD] ${out.length} prédictions chargées (${dateClean || 'upcoming'})`);
+  return _predListToMap(out);
+}
+
+// ── SPRINT 1 — Calibration ML BSD (via was_winner_correct backtest) ──────────
+// Mesure la fiabilité RÉELLE du modèle BSD : accuracy par bucket de confiance
+// + par surface. Alimente le badge confiance (S1) ET le blend dynamique (S2).
+let _bsdTennisCalib = { ts: 0, data: null };
+function _wilsonLow(p, n) {
+  if (!n) return 0;
+  const z = 1.96, ph = p, d = 1 + z * z / n;
+  const c = ph + z * z / (2 * n);
+  const m = z * Math.sqrt((ph * (1 - ph) + z * z / (4 * n)) / n);
+  return Math.max(0, (c - m) / d);
+}
+async function buildBSDTennisCalibration() {
+  if (!BSD_TENNIS_ENABLED) return null;
+  if (_bsdTennisCalib.data && Date.now() - _bsdTennisCalib.ts < 6 * 3600 * 1000) return _bsdTennisCalib.data;
+  const ck = 'bsd_tennis_calib_raw';
+  let raw = apiCacheGet(ck);
+  if (!raw) {
+    const out = [];
+    // upcoming=false = prédictions RÉGLÉES (was_winner_correct/actual_winner
+    // remplis). Le filtre date_from/date_to renvoie l'upcoming (tout null).
+    let suffix = `/api/v2/predictions/?upcoming=false&limit=200`;
+    for (let p = 0; p < 8 && suffix; p++) {
+      let r; try { r = await bsdTennisFetch(suffix); } catch (e) { break; }
+      if (!r || r.status !== 200 || !r.data) break;
+      const res = Array.isArray(r.data) ? r.data : (Array.isArray(r.data.results) ? r.data.results : []);
+      if (!res.length) break;
+      out.push(...res);
+      const nx = r.data && r.data.next ? String(r.data.next) : null;
+      suffix = (nx && nx.includes('/tennis')) ? nx.slice(nx.indexOf('/tennis') + '/tennis'.length) : null;
+    }
+    raw = out;
+    if (out.length) apiCacheSet(ck, out, 'bsd_tennis', 6 * 3600 * 1000);
+  }
+  const settled = (raw || []).filter(p => p && p.was_winner_correct != null && p.confidence != null);
+  const bucket = c => Math.min(9, Math.max(5, Math.floor(Number(c) / 10))); // 50-100 → 5..9
+  const byConf = {}; const bySurf = {}; let okN = 0, brierSum = 0, brierN = 0;
+  for (const p of settled) {
+    const ok = p.was_winner_correct === true || p.was_winner_correct === 1 ? 1 : 0;
+    okN += ok;
+    const bk = bucket(p.confidence);
+    (byConf[bk] = byConf[bk] || { ok: 0, n: 0 }).n++; byConf[bk].ok += ok;
+    const surf = (p.match && p.match.tournament && p.match.tournament.surface) || 'unknown';
+    (bySurf[surf] = bySurf[surf] || { ok: 0, n: 0 }).n++; bySurf[surf].ok += ok;
+    const pp = parseFloat(p.prob_player1_wins);
+    if (Number.isFinite(pp) && p.actual_winner != null) {
+      const y = (p.actual_winner === 1) ? 1 : 0;
+      brierSum += Math.pow(pp / 100 - y, 2); brierN++;
+    }
+  }
+  const fin = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, { acc: v.n ? v.ok / v.n : null, n: v.n, low: v.n ? _wilsonLow(v.ok / v.n, v.n) : 0 }]));
+  const data = {
+    n: settled.length,
+    accuracy: settled.length ? okN / settled.length : null,
+    brier: brierN ? parseFloat((brierSum / brierN).toFixed(4)) : null,
+    by_confidence: fin(byConf),
+    by_surface: fin(bySurf),
+  };
+  _bsdTennisCalib = { ts: Date.now(), data };
+  console.log(`  [TennisCalib BSD] n=${data.n} acc=${data.accuracy != null ? (data.accuracy * 100).toFixed(1) : '–'}% brier=${data.brier}`);
+  return data;
+}
+function _calibBadge(calib, confidence, surface) {
+  if (!calib || confidence == null) return null;
+  const bk = Math.min(9, Math.max(5, Math.floor(Number(confidence) / 10)));
+  const c = calib.by_confidence[bk];
+  const s = surface && calib.by_surface[surface];
+  const acc = (c && c.n >= 30) ? c.acc : (calib.accuracy);
+  const low = (c && c.n >= 30) ? c.low : 0;
+  const n = (c && c.n) || calib.n || 0;
+  let level = 'grey';
+  if (n >= 30 && low >= 0.58) level = 'green';
+  else if (n >= 20 && acc != null && acc >= 0.53) level = 'amber';
+  else if (n >= 20) level = 'red';
+  return {
+    level, accuracy: acc != null ? parseFloat((acc * 100).toFixed(1)) : null,
+    sample: n, ci_low: parseFloat((low * 100).toFixed(1)),
+    surface_acc: s && s.n >= 20 ? parseFloat((s.acc * 100).toFixed(1)) : null,
+    surface_n: s ? s.n : 0,
+  };
+}
+
+// ── SPRINT 1 — Rankings BSD (momentum) ───────────────────────────────────────
+let _bsdTennisRank = { ts: 0, byKey: null };
+async function buildBSDTennisRankIndex() {
+  if (!BSD_TENNIS_ENABLED) return new Map();
+  if (_bsdTennisRank.byKey && Date.now() - _bsdTennisRank.ts < 6 * 3600 * 1000) return _bsdTennisRank.byKey;
+  const byKey = new Map();
+  for (const type of ['ATP', 'WTA']) {
+    let suffix = `/api/v2/rankings/?type=${type}&limit=500`;
+    for (let p = 0; p < 4 && suffix; p++) {
+      let r; try { r = await bsdTennisFetch(suffix); } catch (e) { break; }
+      if (!r || r.status !== 200 || !r.data) break;
+      const res = Array.isArray(r.data) ? r.data : (Array.isArray(r.data.results) ? r.data.results : []);
+      if (!res.length) break;
+      for (const e of res) {
+        const nm = e.player && (e.player.name || e.player.short_name);
+        if (!nm) continue;
+        byKey.set(normName(nm), {
+          position: e.position ?? null, previous_position: e.previous_position ?? null,
+          points: e.points ?? null, previous_points: e.previous_points ?? null,
+          best_position: e.best_position ?? null, type,
+        });
+      }
+      const nx = r.data && r.data.next ? String(r.data.next) : null;
+      suffix = (nx && nx.includes('/tennis')) ? nx.slice(nx.indexOf('/tennis') + '/tennis'.length) : null;
+    }
+  }
+  _bsdTennisRank = { ts: Date.now(), byKey };
+  console.log(`  [TennisRank BSD] ${byKey.size} joueurs indexés`);
+  return byKey;
+}
+function _rankMomentum(rk) {
+  if (!rk) return null;
+  const dPos = (rk.previous_position != null && rk.position != null) ? (rk.previous_position - rk.position) : null;
+  const dPts = (rk.previous_points != null && rk.points != null) ? (rk.points - rk.previous_points) : null;
+  let trend = 'flat';
+  if (dPos != null) trend = dPos >= 3 ? 'up' : dPos <= -3 ? 'down' : 'flat';
+  return {
+    position: rk.position, best_position: rk.best_position,
+    delta_pos: dPos, delta_points: dPts,
+    ceiling_gap: (rk.best_position != null && rk.position != null) ? rk.position - rk.best_position : null,
+    trend,
+  };
+}
+
+// ── SPRINT 2 — Fiabilité calibrée → blend dynamique + edge confiance ─────────
+// reliability ∈ [0,1] dérivée de l'accuracy mesurée (was_winner_correct) pour
+// le bucket de confiance + la surface. Remplace le blend Elo/BSD fixe 60/40.
+function _calibReliability(calib, confidence, surface) {
+  if (!calib || confidence == null) return null;
+  const bk = Math.min(9, Math.max(5, Math.floor(Number(confidence) / 10)));
+  const c = calib.by_confidence && calib.by_confidence[bk];
+  const s = surface && calib.by_surface && calib.by_surface[surface];
+  let acc = (c && c.n >= 30) ? c.acc : (calib.accuracy != null ? calib.accuracy : null);
+  if (s && s.n >= 30 && s.acc != null) acc = (acc == null) ? s.acc : (acc * 0.6 + s.acc * 0.4);
+  if (acc == null) return null;
+  // 0.50 = pile/face → r=0 ; 0.90 → r=1. Brier global pénalise si mauvais.
+  let r = Math.max(0, Math.min(1, (acc - 0.50) / 0.40));
+  if (calib.brier != null) r *= Math.max(0.4, Math.min(1, 1 - (calib.brier - 0.18) / 0.30));
+  return parseFloat(r.toFixed(3));
+}
+function blendTennisProbsW(eloProb, bsdProb, wBsd) {
+  if (!eloProb && !bsdProb) return null;
+  if (!bsdProb) return { p1: eloProb.p1, p2: eloProb.p2, weights: { elo: 1, bsd: 0 }, method: 'elo_only' };
+  if (!eloProb) return { p1: bsdProb.p1, p2: bsdProb.p2, weights: { elo: 0, bsd: 1 }, method: 'bsd_only' };
+  if (wBsd == null) return blendTennisProbs(eloProb, bsdProb); // fallback statique 60/40
+  const wb = Math.max(0.15, Math.min(0.75, wBsd)), we = 1 - wb;
+  return {
+    p1: parseFloat((we * eloProb.p1 + wb * bsdProb.p1).toFixed(4)),
+    p2: parseFloat((we * eloProb.p2 + wb * bsdProb.p2).toFixed(4)),
+    weights: { elo: parseFloat(we.toFixed(2)), bsd: parseFloat(wb.toFixed(2)) },
+    method: 'blend_dynamic',
+  };
+}
+// Trap-bet : le marché price un favori que le modèle calibré contredit, OU
+// edge élevé sur un segment où le modèle BSD est peu fiable (badge red/grey).
+function _computeTrapBet(fair, blended, badge, bestEv) {
+  if (!fair || !blended) return null;
+  const mFav = fair.p1 >= fair.p2 ? 'p1' : 'p2';
+  const mFavPct = Math.max(fair.p1, fair.p2);
+  const modelFav = blended.p1 >= blended.p2 ? 'p1' : 'p2';
+  const modelFavPct = Math.max(blended.p1, blended.p2) * 100;
+  // Contradiction franche : marché favori ≥60% mais modèle penche l'autre côté ≥55%.
+  if (mFavPct >= 60 && modelFav !== mFav && modelFavPct >= 55) {
+    return { flag: true, type: 'model_contradicts_market', market_fav: mFav, model_fav: modelFav,
+      detail: `Marché ${mFavPct.toFixed(0)}% sur ${mFav} ; modèle ${modelFavPct.toFixed(0)}% sur ${modelFav}`, severity: 'high' };
+  }
+  // Edge "value" mais segment peu fiable → piège.
+  if (bestEv && bestEv.ev > 4 && badge && (badge.level === 'red' || badge.level === 'grey')) {
+    return { flag: true, type: 'unreliable_edge', detail: `EV +${bestEv.ev}% mais fiabilité modèle ${badge.accuracy != null ? badge.accuracy + '%' : 'n/d'} (n=${badge.sample})`, severity: 'medium' };
+  }
+  return { flag: false };
+}
+// Convergence totaux : O/U jeux BSD (expected_total_games) vs Markov local.
+function _computeTotalsConvergence(bsdPred, gamesOU) {
+  const exp = bsdPred && bsdPred.expected_total_games != null ? Number(bsdPred.expected_total_games) : null;
+  if (exp == null || !gamesOU || !gamesOU.sets) return null;
+  const setExp = [];
+  for (const k of Object.keys(gamesOU.sets)) {
+    const e = gamesOU.sets[k] && gamesOU.sets[k].exp_games;
+    if (Number.isFinite(e)) setExp.push(e);
+  }
+  if (!setExp.length) return null;
+  const meanSet = setExp.reduce((a, b) => a + b, 0) / setExp.length;
+  // Sets moyens joués : BO5 ≈ 3.6, BO3 ≈ 2.4 (moyennes empiriques tennis).
+  const expSets = gamesOU.best_of === 5 ? 3.6 : 2.4;
+  const mk = parseFloat((meanSet * expSets).toFixed(2));
+  const diff = parseFloat((exp - mk).toFixed(2));
+  const agree = Math.abs(diff) <= 2.0;
+  return { bsd_expected: exp, markov_ref: mk, diff, agree,
+    conviction: agree ? 'high' : (Math.abs(diff) <= 4 ? 'medium' : 'low') };
+}
+
+// ── SPRINT 1 — Serve Dominance Index (SDI) via matchmx TA déjà caché ─────────
+// Réutilise les rows KoA (tennis_koa_matchmx, scrape player-classic.cgi déjà
+// en place, queue concurrence 2). ZÉRO scraping neuf. Bloc service = vainqueur
+// si row[4]='W' sinon perdant (+9). Indices TENNIS_KOA_W / TENNIS_KOA_L.
+function computeServeDominance(rows, surface, lastN = 30) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const surf = (surface && surface !== 'ALL') ? String(surface).toLowerCase() : null;
+  let svpt = 0, ptsWon = 0, ace = 0, n = 0;
+  for (const x of rows) {
+    if (n >= lastN) break;
+    if (!Array.isArray(x)) continue;
+    const wl = String(x[4] == null ? '' : x[4]).trim();
+    if (wl !== 'W' && wl !== 'L') continue;
+    if (surf) {
+      const sc = String(x[2] == null ? '' : x[2]).trim().toLowerCase();
+      if (sc && sc !== surf) continue;
+    }
+    const o = wl === 'W' ? TENNIS_KOA_W : TENNIS_KOA_L;
+    const sp = Number(x[o.svpt]), f1 = Number(x[o.f1w]), f2 = Number(x[o.f2w]), a = Number(x[o.ace]);
+    if (!Number.isFinite(sp) || sp <= 0) continue;
+    svpt += sp; ptsWon += (Number.isFinite(f1) ? f1 : 0) + (Number.isFinite(f2) ? f2 : 0);
+    ace += Number.isFinite(a) ? a : 0; n++;
+  }
+  if (n < 5 || svpt <= 0) return null;
+  const spw = (ptsWon / svpt) * 100;
+  const acePct = (ace / svpt) * 100;
+  // SDI 0-100 : points gagnés au service (cœur du hold) + bonus aces gratuits.
+  const sdi = Math.max(0, Math.min(100, spw + 0.30 * acePct));
+  return {
+    sdi: parseFloat(sdi.toFixed(1)),
+    serve_pts_won_pct: parseFloat(spw.toFixed(1)),
+    ace_pct: parseFloat(acePct.toFixed(1)),
+    sample: n,
+  };
+}
+
 async function _buildTennisValueBetsCore({ date }) {
   const dateClean = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   let bsdMatches = [];
@@ -18899,6 +19305,26 @@ async function _buildTennisValueBetsCore({ date }) {
   if (Date.now() - _tennisOddsCache.ts > TENNIS_ODDS_TTL_MS) {
     try { await fetchTennisOddsAPI(); } catch (e) { /* swallow */ }
   }
+
+  // [FIX bug onglet tennis] Les 3 enrichissements BSD (predictions/calibration/
+  // rankings) étaient `await` SÉQUENTIELS sans timeout en tête du build : au
+  // cold cache (1er appel après restart) = jusqu'à ~24 pages BSD séquentielles
+  // → requête /tennis/value-bets pend → "Erreur réseau" + Chargement bloqué.
+  // → Parallélisé + time-box 4s chacun. Si non prêt : on rend SANS le signal
+  //   (null), le fetch finit en fond + remplit son cache → build suivant chaud.
+  const _raceT = (p, ms, fb) => Promise.race([
+    Promise.resolve().then(() => p).catch(() => fb),
+    new Promise(r => setTimeout(() => r(fb), ms)),
+  ]);
+  let predMap = new Map(), calib = null, rankIdx = new Map();
+  const [_pm, _cb, _rk] = await Promise.allSettled([
+    _raceT(fetchBSDTennisPredictions(dateClean), 4000, new Map()),
+    _raceT(buildBSDTennisCalibration(), 4000, null),
+    _raceT(buildBSDTennisRankIndex(), 4000, new Map()),
+  ]);
+  if (_pm.status === 'fulfilled' && _pm.value) predMap = _pm.value;
+  if (_cb.status === 'fulfilled') calib = _cb.value;
+  if (_rk.status === 'fulfilled' && _rk.value) rankIdx = _rk.value;
 
   const enriched = [];
   for (const m of bsdMatches) {
@@ -18993,12 +19419,21 @@ async function _buildTennisValueBetsCore({ date }) {
     }
     // ── most_aces : King of Aces — Tennis Abstract matchmx (frais, no fallback) ─
     let mostAces = null;
+    let serveDom = null;
     if (tourGuess) {
       const _koaSurf = surfaceClean || 'ALL';
       const _koaC1 = getKoaMatchmxCached(p1Name, tourGuess);
       const _koaC2 = getKoaMatchmxCached(p2Name, tourGuess);
       if (_koaC1 && _koaC2) {
         mostAces = computeMostAcesMatchup(p1Name, p2Name, tourGuess, _koaSurf, _koaC1.rows, _koaC2.rows);
+        // SDI : même rows matchmx (zéro fetch). Surface filtrée, fallback ALL.
+        let sd1 = computeServeDominance(_koaC1.rows, surfaceClean);
+        let sd2 = computeServeDominance(_koaC2.rows, surfaceClean);
+        if (!sd1) sd1 = computeServeDominance(_koaC1.rows, 'ALL');
+        if (!sd2) sd2 = computeServeDominance(_koaC2.rows, 'ALL');
+        if (sd1 && sd2) {
+          serveDom = { p1: sd1, p2: sd2, delta: parseFloat((sd1.sdi - sd2.sdi).toFixed(1)) };
+        }
       }
       if (!_koaC1 || _koaC1.stale) _koaEnqueue(p1Name, tourGuess);
       if (!_koaC2 || _koaC2.stale) _koaEnqueue(p2Name, tourGuess);
@@ -19019,10 +19454,40 @@ async function _buildTennisValueBetsCore({ date }) {
         aceP2: _aceP2 ? _aceP2.ace_pct : null,
       });
     }
-    // BSD prediction left null in list view (N+1 fetch impractical). Detail route
-    // /api/v1/tennis/predictions/{id} expose BSD per-match; UI peut fetch puis re-blend.
-    const bsdProb = null;
-    const blended = blendTennisProbs(eloProb, bsdProb);
+    // Prédiction ML BSD via Map bulk (clé id match ou paire joueurs) — plus de null.
+    let bsdProb = null, bsdPred = null;
+    const _pred = predMap.get('id:' + m.id) || predMap.get('pk:' + _tnNameKey(p1Name, p2Name));
+    if (_pred) {
+      const a = parseFloat(_pred.prob_player1_wins), b = parseFloat(_pred.prob_player2_wins);
+      if (Number.isFinite(a) && Number.isFinite(b) && (a + b) > 0) {
+        bsdProb = { p1: a / 100, p2: b / 100 };
+      }
+      bsdPred = {
+        predicted_winner: _pred.predicted_winner ?? null,
+        confidence: _pred.confidence ?? null,
+        expected_total_sets: _pred.expected_total_sets ?? null,
+        prob_over_2_5_sets: _pred.prob_over_2_5_sets ?? null,
+        expected_total_games: _pred.expected_total_games ?? null,
+        prob_over_20_5_games: _pred.prob_over_20_5_games ?? null,
+        prob_over_21_5_games: _pred.prob_over_21_5_games ?? null,
+        prob_over_22_5_games: _pred.prob_over_22_5_games ?? null,
+        prob_player1_wins_first_set: _pred.prob_player1_wins_first_set ?? null,
+      };
+    }
+    // Sprint 2 — blend dynamique : poids BSD ∝ fiabilité calibrée mesurée.
+    const _rel = _calibReliability(calib, bsdPred && bsdPred.confidence, surfaceClean);
+    const _wBsd = _rel != null ? parseFloat((0.20 + 0.50 * _rel).toFixed(3)) : null;
+    const blended = blendTennisProbsW(eloProb, bsdProb, _wBsd);
+
+    // ── Sprint 1 dérivés : badge confiance / divergence ML-marché / momentum ──
+    const _confBadge = _calibBadge(calib, bsdPred && bsdPred.confidence, surfaceClean);
+    let _mlMktDiv = null;
+    if (bsdProb && fair && fair.p1 != null) {
+      const d1 = parseFloat((bsdProb.p1 * 100 - fair.p1).toFixed(2));
+      _mlMktDiv = { p1: d1, p2: parseFloat((bsdProb.p2 * 100 - fair.p2).toFixed(2)), flag: Math.abs(d1) >= 8 };
+    }
+    const _rkP1 = _rankMomentum(rankIdx.get(normName(p1Name)));
+    const _rkP2 = _rankMomentum(rankIdx.get(normName(p2Name)));
 
     let evModel = null, bestEvModel = null;
     if (blended && odds && odds.p1 && odds.p2) {
@@ -19036,6 +19501,26 @@ async function _buildTennisValueBetsCore({ date }) {
         ? { side: 'p1', player: p1Name, odds: odds.p1.odds, book: odds.p1.book, ev: evModel.p1, p_model: blended.p1 }
         : { side: 'p2', player: p2Name, odds: odds.p2.odds, book: odds.p2.book, ev: evModel.p2, p_model: blended.p2 };
     }
+
+    // ── Sprint 2 dérivés : trap-bet / edge confiance / 1er set / totaux ──────
+    const _trap = _computeTrapBet(fair, blended, _confBadge, bestEvModel);
+    let _confEdge = null;
+    if (bestEvModel && _rel != null) {
+      const v = parseFloat((bestEvModel.ev * _rel).toFixed(2));
+      _confEdge = { value: v, reliability: _rel, actionable: (bestEvModel.ev > 0 && _rel >= 0.30 && v >= 2) };
+    }
+    let _firstSet = null;
+    if (bsdPred && bsdPred.prob_player1_wins_first_set != null) {
+      const fs1 = Number(bsdPred.prob_player1_wins_first_set);
+      const mp1 = blended ? blended.p1 * 100 : null;
+      _firstSet = {
+        p1_pct: parseFloat(fs1.toFixed(1)),
+        lean: fs1 >= 55 ? 'p1' : fs1 <= 45 ? 'p2' : 'even',
+        // Joueur favori au match mais pas au 1er set (ou inverse) = signal.
+        diverges_match: mp1 != null ? (Math.abs(fs1 - mp1) >= 10) : null,
+      };
+    }
+    const _totConv = _computeTotalsConvergence(bsdPred, gamesOU);
 
     enriched.push({
       id: m.id,
@@ -19055,6 +19540,15 @@ async function _buildTennisValueBetsCore({ date }) {
       best_edge: bestEdge,
       bsd_prediction: m.prediction || null,
       bsd_ml_score: m.ml_score || m.prediction_score || null,
+      bsd_markets: bsdPred,
+      confidence_badge: _confBadge,
+      ml_market_div: _mlMktDiv,
+      rank_momentum: { p1: _rkP1, p2: _rkP2 },
+      serve_dominance: serveDom,
+      trap_bet: _trap,
+      conf_edge: _confEdge,
+      first_set: _firstSet,
+      totals_convergence: _totConv,
       predictions: {
         elo: eloProb,
         bsd: bsdProb,
@@ -19076,7 +19570,7 @@ async function _buildTennisValueBetsCore({ date }) {
       over_under_set_calculations: gamesOU,
       ev_model: evModel,
       best_ev_model: bestEvModel,
-      sources: { match: matchSource, odds: oddsSource, predictions: eloProb ? 'elo' : null },
+      sources: { match: matchSource, odds: oddsSource, predictions: (eloProb && bsdProb) ? 'elo+bsd' : (eloProb ? 'elo' : (bsdProb ? 'bsd' : null)) },
     });
   }
 
@@ -19092,6 +19586,7 @@ async function _buildTennisValueBetsCore({ date }) {
         bsd_enabled: BSD_TENNIS_ENABLED,
         odds_api_enabled: !!ODDS_API_KEY,
         devig_method: 'shin-hurley',
+        bsd_calibration: calib ? { n: calib.n, accuracy: calib.accuracy, brier: calib.brier } : null,
         built_ts: Date.now(),
       },
     },
@@ -19201,6 +19696,63 @@ if (pathname === '/api/v1/tennis/matches' && req.method === 'GET') {
   const ck = `bsd_tennis_matches_${dateParam || 'today'}`;
   const out = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
   return jsonResponse(res, out.status, out.body);
+}
+// ── SPRINT 3 — Mini-bracket RG : chemin probable d'un joueur ────────────────
+async function resolveRgTournaments() {
+  const ck = 'bsd_tennis_rg_tournaments';
+  const cached = apiCacheGet(ck);
+  if (cached) return cached;
+  const out = await handleTennisBSD('/api/v2/tournaments/?category=grand_slam&limit=100', null, 0);
+  if (out.status !== 200) return [];
+  const list = (out.body && (Array.isArray(out.body) ? out.body : out.body.results)) || [];
+  const rg = list.filter(t => /roland\s*garros|french\s*open/i.test(String(t.name || ''))
+    && !/boys|girls|wheelchair|junior/i.test(String(t.name || '')))
+    .map(t => ({ id: t.id, name: t.name, circuit: t.circuit, surface: t.surface }));
+  apiCacheSet(ck, rg, 'bsd_tennis', 12 * 3600 * 1000);
+  return rg;
+}
+async function buildRgPath(playerName) {
+  if (!playerName) return { available: false, reason: 'player_required' };
+  const rgs = await resolveRgTournaments();
+  if (!rgs.length) return { available: false, reason: 'rg_not_found' };
+  const predMap = await fetchBSDTennisPredictions('').catch(() => new Map());
+  const key = normName(playerName);
+  const path = [];
+  let tournamentMeta = null;
+  for (const t of rgs) {
+    const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${t.id}&limit=300`, `bsd_rg_m_${t.id}`, 30 * 60 * 1000);
+    if (mo.status !== 200) continue;
+    const ms = (mo.body && (Array.isArray(mo.body) ? mo.body : mo.body.results)) || [];
+    const mine = ms.filter(m => {
+      const n1 = normName(m.player1 && (m.player1.name || m.player1.short_name));
+      const n2 = normName(m.player2 && (m.player2.name || m.player2.short_name));
+      return n1 === key || n2 === key;
+    }).sort((a, b) => String(a.match_date || '').localeCompare(String(b.match_date || '')));
+    if (mine.length) tournamentMeta = { id: t.id, name: t.name, circuit: t.circuit, surface: t.surface };
+    for (const m of mine) {
+      const isP1 = normName(m.player1 && (m.player1.name || m.player1.short_name)) === key;
+      const opp = (isP1 ? m.player2 : m.player1) || {};
+      const pr = predMap.get('id:' + m.id);
+      let pWin = null;
+      if (pr) {
+        const a = parseFloat(pr.prob_player1_wins), b = parseFloat(pr.prob_player2_wins);
+        if (Number.isFinite(a) && Number.isFinite(b)) pWin = parseFloat(((isP1 ? a : b)).toFixed(1));
+      }
+      path.push({
+        round: m.round_name || '', date: m.match_date || null,
+        opponent: opp.name || opp.short_name || 'TBD',
+        status: m.status || null, prob_win: pWin,
+      });
+    }
+  }
+  if (!path.length) return { available: false, reason: 'no_matches_for_player', tournaments: rgs };
+  let cum = 1;
+  for (const s of path) { if (s.prob_win != null) { cum *= s.prob_win / 100; s.cumulative = parseFloat((cum * 100).toFixed(1)); } else s.cumulative = null; }
+  return { available: true, player: playerName, tournament: tournamentMeta, path };
+}
+if (pathname === '/api/v1/tennis/rg-path' && req.method === 'GET') {
+  const out = await buildRgPath(String(query.player || '').trim());
+  return jsonResponse(res, 200, out);
 }
 if (pathname === '/api/v1/tennis/rankings' && req.method === 'GET') {
   const tour = ['ATP','WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : '';
