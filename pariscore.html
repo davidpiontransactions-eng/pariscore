@@ -12165,11 +12165,14 @@ function liveScoresChanged(matches) {
 }
 
 // [P0] isMatchInProgress global — accessible depuis patchLiveMatches ET renderMatches
-var _LIVE_STS = ['LIVE','IN_PLAY','INPLAY','1H','2H','HT','ET','P','BT',
-                 'EXTRA_TIME','BREAK_TIME','PENALTY','LIVE_1H','LIVE_2H',
+var _LIVE_STS = ['LIVE','IN_PLAY','INPLAY','IN_PROGRESS','INPROGRESS','PLAYING',
+                 '1H','2H','HT','ET','P','BT','AWAITING_ET','AWAITING_PENALTIES',
+                 'EXTRA_TIME','BREAK_TIME','PENALTY','PENALTIES','PEN_SHOOTOUT',
+                 'LIVE_1H','LIVE_2H','PAUSED','PAUSE','FIRSTHALF','SECONDHALF',
                  '1ST_HALF','2ND_HALF','HALFTIME','SECOND_HALF','FIRST_HALF','EXTRA_TIME_HALF'];
 function isMatchInProgress(m) {
-  var n = function(s) { return String(s || '').toUpperCase().trim(); };
+  // [FIX live] espace/tiret → underscore : aligne avec statuts bruts BSD ("2nd half").
+  var n = function(s) { return String(s || '').toUpperCase().replace(/[\s\-]+/g,'_').trim(); };
   if (_LIVE_STS.includes(n(m.status)) || _LIVE_STS.includes(n(m.live_status)) ||
       _LIVE_STS.includes(n(m.match_status)) || _LIVE_STS.includes(n(m.fixture_status))) return true;
   if (m.live_score) return parseInt(m.live_minute || 0) <= 130;
@@ -12786,10 +12789,11 @@ function initSSE() {
   };
 
   sseConnection.onerror = () => {
-    console.warn('[SSE] Erreur — fallback polling 5min');
-    sseConnection.close();
-    sseConnection = null;
-    startAutoRefresh(); // fallback si SSE échoue
+    // [FIX live] NE PAS close()/null : ça tue la reconnexion native EventSource
+    // → SSE mort pour toute la session. On garde la connexion (retry auto
+    // navigateur) + filet polling temporaire. onopen relancera et coupera le timer.
+    console.warn('[SSE] Erreur transitoire — reconnexion auto + filet polling');
+    startAutoRefresh(); // filet de sécurité, levé par onopen si SSE revient
   };
 }
 

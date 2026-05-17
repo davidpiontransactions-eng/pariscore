@@ -1308,6 +1308,39 @@ const ESPN_STANDINGS_SLUG = {
   103: 'nor.1',  // Eliteserien Norvège
 };
 
+// ─── ESPN soccer slugs — buteurs/joueurs clés zéro clé/quota ──────────────────
+// Couvre les ligues BSD majeures (recovery quand BSD season-id échoue) + reprend
+// les slugs ESPN_STANDINGS_SLUG via le merge ci-dessous. Clé = config league id.
+// Slugs ESPN soccer VÉRIFIÉS valides (probe scoreboard HTTP 200 — audit 2026-05-17).
+// Couvre data + cotes + buteurs zéro clé/quota. Slugs HTTP 400 (ESPN ne couvre
+// pas) volontairement omis : Hongrie, Slovaquie, Pologne, Ukraine, Croatie,
+// Serbie, Algérie, Bulgarie, Maroc, J2, K2, Saudi D2, Roumanie L2, Irlande D2,
+// Portugal L2, Belgique L2, Grèce L2 → repli BSD uniquement (cf. rapport).
+const ESPN_SOCCER_SLUG = Object.assign({}, ESPN_STANDINGS_SLUG, {
+  // Top-5 + divisions
+  61:  'fra.1',  62:  'fra.2',
+  39:  'eng.1',  40:  'eng.2',  45: 'eng.fa', 48: 'eng.league_cup',
+  140: 'esp.1',  141: 'esp.2',
+  78:  'ger.1',  79:  'ger.2',
+  135: 'ita.1',  136: 'ita.2',  137: 'ita.coppa_italia',
+  // Europe
+  88:  'ned.1',  94:  'por.1',  203: 'tur.1', 144: 'bel.1',
+  188: 'sco.1',  189: 'sco.2',  318: 'gre.1',
+  207: 'sui.1',  208: 'sui.2',  113: 'swe.1', 114: 'swe.2',
+  283: 'rou.1',  103: 'nor.1',  345: 'cze.1', 262: 'aut.1', 119: 'den.1',
+  244: 'fin.1',  192: 'irl.1',
+  // Amériques
+  71:  'bra.1',  72:  'bra.2',  128: 'arg.1',
+  265: 'chi.1',  266: 'chi.2',  239: 'col.1', 241: 'col.2',
+  240: 'ecu.1',  242: 'ecu.2',  480: 'par.1', 481: 'par.2',
+  253: 'usa.1',  254: 'usa.usl.1', 218: 'mex.1', 219: 'mex.2',
+  // Asie / Moyen-Orient / Océanie
+  98:  'jpn.1',  292: 'kor.1',  307: 'ksa.1', 900: 'aus.1',
+  // Continentales
+  2:   'uefa.champions', 3: 'uefa.europa', 848: 'uefa.europa.conf',
+  13:  'conmebol.libertadores', 11: 'conmebol.sudamericana', 12: 'caf.champions',
+});
+
 // ─── BSD Tennis (Sports Addon $5/mo) ─────────────────────────────────────────
 // /tennis/api/v2/* = REST · /tennis/mcp/ = JSON-RPC MCP server pour clients LLM.
 // Flag par défaut OFF — passer BSD_TENNIS_ENABLED=true dans .env après souscription.
@@ -6822,6 +6855,154 @@ ${be?.edge > 0
 }
 
 // ─── TOP BUTEURS PAR LIGUE (cache 24h, 1 req/ligue à la demande) ────────────
+// ─── ESPN recovery — buteurs ligue (zéro clé / zéro quota) ───────────────────
+// ESPN core API expose des $ref → résolution athlete + table équipes une fois.
+function espnRefId(ref) {
+  const m = String(ref || '').match(/\/(\d+)(?:\?|$)/);
+  return m ? m[1] : null;
+}
+
+async function fetchESPNTeamNameMap(slug) {
+  const cacheKey = `espn_teams_${slug}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  const map = {};
+  try {
+    const res = await httpsGet(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams`);
+    const teams = res?.data?.sports?.[0]?.leagues?.[0]?.teams || [];
+    for (const t of teams) {
+      const tm = t.team;
+      if (tm?.id) map[String(tm.id)] = tm.displayName || tm.name || tm.shortDisplayName || '';
+    }
+  } catch (e) {
+    console.warn(`  [ESPN teams] ${slug} erreur:`, e.message);
+  }
+  apiCacheSet(cacheKey, map, 'espn_teams', 7 * 24 * 3600 * 1000);
+  return map;
+}
+
+// Pool de résolution bornée (ESPN sans quota mais on évite le flood)
+async function espnResolveAthletes(refs) {
+  const out = {};
+  const list = [...new Set(refs.filter(Boolean))];
+  let i = 0;
+  const worker = async () => {
+    while (i < list.length) {
+      const url = list[i++];
+      const aid = espnRefId(url);
+      if (!aid) continue;
+      const ck = `espn_athlete_${aid}`;
+      const cc = apiCacheGet(ck);
+      if (cc) { out[aid] = cc; continue; }
+      try {
+        const r = await httpsGet(url.replace(/^http:/, 'https:'));
+        const d = r?.data || {};
+        const rec = { id: aid, name: d.displayName || d.fullName || d.shortName || '?' };
+        apiCacheSet(ck, rec, 'espn_athlete', 30 * 24 * 3600 * 1000);
+        out[aid] = rec;
+      } catch (e) { /* skip — joueur absent */ }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(6, list.length || 1) }, worker));
+  return out;
+}
+
+async function fetchESPNLeagueScorers(configLeagueId, season) {
+  const slug = ESPN_SOCCER_SLUG[configLeagueId];
+  if (!slug) return [];
+  const espnSeason = season || currentSeason();
+  const cacheKey = `espn_topscorers_${slug}_${espnSeason}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  try {
+    const res = await httpsGet(
+      `https://sports.core.api.espn.com/v2/sports/soccer/leagues/${slug}/seasons/${espnSeason}/types/1/leaders`
+    );
+    if (res.status !== 200 || !res.data?.categories) return [];
+    const cats = res.data.categories;
+    const goalsCat = cats.find(c => c.name === 'goalsLeaders');
+    const assistsCat = cats.find(c => c.name === 'assistsLeaders');
+    const matchesOf = (lead) => {
+      const m = String(lead.displayValue || '').match(/Matches:\s*(\d+)/i);
+      return m ? parseInt(m[1], 10) : 0;
+    };
+    const byId = {};
+    const ingest = (cat, field) => {
+      for (const ld of (cat?.leaders || []).slice(0, 30)) {
+        const aid = espnRefId(ld.athlete?.$ref);
+        if (!aid) continue;
+        if (!byId[aid]) byId[aid] = {
+          id: aid, name: '?', photo: `https://a.espncdn.com/i/headshots/soccer/players/full/${aid}.png`,
+          team: '', teamEspnId: espnRefId(ld.team?.$ref), goals: 0, assists: 0,
+          rating: null, appearances: matchesOf(ld),
+        };
+        byId[aid][field] = Math.round(ld.value || 0);
+        byId[aid].appearances = Math.max(byId[aid].appearances, matchesOf(ld));
+      }
+    };
+    ingest(goalsCat, 'goals');
+    ingest(assistsCat, 'assists');
+    const ids = Object.keys(byId);
+    if (!ids.length) return [];
+    const [athletes, teamMap] = await Promise.all([
+      espnResolveAthletes(
+        []
+          .concat((goalsCat?.leaders || []).slice(0, 30).map(l => l.athlete?.$ref))
+          .concat((assistsCat?.leaders || []).slice(0, 30).map(l => l.athlete?.$ref))
+      ),
+      fetchESPNTeamNameMap(slug),
+    ]);
+    const players = ids.map(aid => {
+      const p = byId[aid];
+      const minutes = Math.max(1, (p.appearances || 0) * 75);
+      const per90 = Math.max(1, minutes / 90);
+      return {
+        ...p,
+        name: athletes[aid]?.name || p.name,
+        team: teamMap[String(p.teamEspnId)] || '',
+        teamId: null,
+        kpi: parseFloat((((p.goals * 3 + p.assists * 2) / per90)).toFixed(2)),
+      };
+    }).sort((a, b) => b.goals - a.goals || b.assists - a.assists).slice(0, 15);
+    apiCacheSet(cacheKey, players, 'espn_topscorers', 24 * 3600 * 1000);
+    console.log(`  [TopScorers ESPN] ✓ ${slug} ${espnSeason} — ${players.length} joueurs (zéro quota)`);
+    return players;
+  } catch (e) {
+    console.warn(`  [TopScorers ESPN] ${slug} erreur:`, e.message);
+    return [];
+  }
+}
+
+// Joueurs clés d'une équipe dérivés des buteurs ESPN ligue (filtre par nom).
+async function fetchESPNTeamKeyPlayers(configLeagueId, teamName, season) {
+  if (!teamName || !ESPN_SOCCER_SLUG[configLeagueId]) return [];
+  const scorers = await fetchESPNLeagueScorers(configLeagueId, season);
+  if (!scorers.length) return [];
+  const _stop = new Set(['real','club','fc','cf','sd','cd','ud','ac','as','sc','rc','deportivo','atletico','sporting','balompie','de','la','el','los','calcio','ssc','afc','bk','if','fk','sk']);
+  const sig = name => {
+    const n = normName(name);
+    const w = n.split(' ').filter(x => x.length >= 3 && !_stop.has(x));
+    return w.sort((a, b) => b.length - a.length)[0] || n.split(' ')[0] || n;
+  };
+  const tgt = normName(teamName);
+  const tgtW = sig(teamName);
+  const players = scorers
+    .filter(p => {
+      const pt = normName(p.team);
+      if (!pt) return false;
+      return pt === tgt || pt.includes(tgtW) || tgtW.includes(sig(p.team)) || sig(p.team) === tgtW;
+    })
+    .sort((a, b) => b.kpi - a.kpi)
+    .slice(0, 3)
+    .map(p => ({
+      id: p.id, name: p.name, photo: p.photo, position: '',
+      goals: p.goals, assists: p.assists, rating: p.rating,
+      minutes: Math.max(1, (p.appearances || 0) * 75), kpi: p.kpi,
+    }));
+  if (players.length) console.log(`  [KeyPlayers ESPN] ✓ ${teamName} — ${players.length} joueurs (zéro quota)`);
+  return players;
+}
+
 async function fetchLeagueTopScorers(leagueId, season) {
   if (!leagueId) return [];
 
@@ -6879,7 +7060,11 @@ async function fetchLeagueTopScorers(leagueId, season) {
     }
   }
 
-  // 2. Fallback API-Football si BSD indisponible
+  // 2. Recovery ESPN — zéro clé / zéro quota (avant API-Football)
+  const espnScorers = await fetchESPNLeagueScorers(leagueId, season);
+  if (espnScorers.length) return espnScorers;
+
+  // 3. Fallback API-Football si BSD + ESPN indisponibles
   if (!API_FOOTBALL_KEY) return [];
   const seasonsToTry = [season, season - 1];
   for (const s of seasonsToTry) {
@@ -7824,17 +8009,41 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
     // jour (matchs finis du matin) étaient lus, les matchs LIVE/à venir
     // (pages 2+) JAMAIS → live mort. On pagine désormais tant que `next`.
     const PAGE_SIZE = 50; // = cap réel BSD
-    const MAX_PAGES = 40; // garde-fou (≤ 2000 events)
+    const MAX_PAGES = 40; // garde-fou
+    // [FIX live CRITIQUE] BSD IGNORE le param `&page=N` : page1/2/3 renvoient
+    // la MÊME fenêtre (firstId identique) mais `next` reste toujours truthy →
+    // l'ancien loop `&page=${page}` collectait 50 events finished × 40 pages =
+    // 2000 doublons "finished", les matchs LIVE (pages réelles suivantes via
+    // l'URL `next`) JAMAIS atteints → live mort (bsdEvents=2000 finished:2000).
+    // On suit désormais l'URL `next` renvoyée par BSD (vraie pagination) +
+    // dédup par id. Vérifié live : 112 events/jour dont ~18 in-play.
     const baseEndpoint = `/events/?date_from=${dateFrom}&date_to=${dateTo}${leagueId ? `&league=${leagueId}` : ''}&page_size=${PAGE_SIZE}`;
+    const toEndpoint = (u) => {
+      if (!u) return null;
+      const i = String(u).indexOf('/api');
+      return i >= 0 ? String(u).slice(i + 4) : null; // garde path+query après /api
+    };
 
     const collected = [];
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      const res = await bsdFetch(`${baseEndpoint}&page=${page}`);
+    const _seenIds = new Set();
+    let nextEndpoint = baseEndpoint;
+    for (let page = 1; page <= MAX_PAGES && nextEndpoint; page++) {
+      const res = await bsdFetch(nextEndpoint);
       if (res.status !== 200) break;
       const results = res.data?.results;
       if (!results?.length) break;
-      collected.push(...results);
-      if (!res.data.next) break; // dernière page = plus de `next`
+      let added = 0;
+      for (const ev of results) {
+        if (ev && ev.id != null && _seenIds.has(ev.id)) continue;
+        if (ev && ev.id != null) _seenIds.add(ev.id);
+        collected.push(ev);
+        added++;
+      }
+      const nxt = toEndpoint(res.data.next);
+      // Stop si plus de `next` OU page sans nouvel id (anti-boucle infinie sur
+      // l'ancien bug si BSD régressait sur le param page).
+      if (!nxt || added === 0) break;
+      nextEndpoint = nxt;
     }
     if (!collected.length) return [];
 
@@ -9018,6 +9227,129 @@ async function fetchRapidFreeFootballMatches(dateFrom, dateTo) {
 }
 
 
+// ─── ESPN cotes (zéro clé / zéro quota) — remplace The Odds API ──────────────
+// Scoreboard ESPN expose moneyline (1X2) + total (Over/Under) via DraftKings.
+// Cotes US (American) → conversion décimale. Couvre toutes les ligues du
+// ESPN_SOCCER_SLUG (Liga, top-5, coupes UEFA, etc.). Sortie au format Odds-API
+// pour transiter par buildMatchRecord() sans modification.
+function espnAmericanToDecimal(am) {
+  const n = parseInt(String(am).replace(/[^\d+-]/g, ''), 10);
+  if (!Number.isFinite(n) || n === 0) return null;
+  const dec = n > 0 ? (n / 100) + 1 : (100 / Math.abs(n)) + 1;
+  return parseFloat(dec.toFixed(3));
+}
+
+const ESPN_FINISHED_STATUSES = new Set([
+  'STATUS_FINAL', 'STATUS_FULL_TIME', 'STATUS_FULLTIME',
+  'STATUS_POSTPONED', 'STATUS_CANCELED', 'STATUS_ABANDONED', 'STATUS_FORFEIT',
+]);
+
+async function fetchESPNMatches(dateFrom, dateTo) {
+  const out = [];
+  const range = `${String(dateFrom).replace(/-/g, '')}-${String(dateTo).replace(/-/g, '')}`;
+  for (const [configIdStr, slug] of Object.entries(ESPN_SOCCER_SLUG)) {
+    const configId = Number(configIdStr);
+    const league = leaguesConfig.leagues.find(l => l.id === configId);
+    const sportKey = league?.odds_key
+      || inferSportKeyFromLeagueCountry(league?.name, league?.country)
+      || 'soccer_espn';
+    const cacheKey = `espn_odds_${slug}_${range}`;
+    let events = apiCacheGet(cacheKey);
+    if (!events) {
+      try {
+        const res = await httpsGet(
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${range}`
+        );
+        if (res.status !== 200 || !Array.isArray(res.data?.events)) { apiCacheSet(cacheKey, [], 'espn_odds', 30 * 60 * 1000); continue; }
+        events = res.data.events;
+        apiCacheSet(cacheKey, events, 'espn_odds', 30 * 60 * 1000);
+      } catch (e) {
+        console.warn(`  [ESPN odds] ${slug} erreur:`, e.message);
+        continue;
+      }
+    }
+    let built = 0;
+    for (const ev of events) {
+      try {
+        const comp = ev.competitions?.[0];
+        if (!comp) continue;
+        const stName = comp.status?.type?.name || '';
+        if (ESPN_FINISHED_STATUSES.has(stName)) continue;
+        const homeC = comp.competitors?.find(c => c.homeAway === 'home');
+        const awayC = comp.competitors?.find(c => c.homeAway === 'away');
+        const homeTeam = homeC?.team?.displayName || homeC?.team?.name;
+        const awayTeam = awayC?.team?.displayName || awayC?.team?.name;
+        if (!homeTeam || !awayTeam) continue;
+
+        const o = comp.odds?.[0] || null;
+        const pick = side => o?.moneyline?.[side]?.close?.odds ?? o?.moneyline?.[side]?.open?.odds ?? null;
+        const decH = o ? espnAmericanToDecimal(pick('home')) : null;
+        const decA = o ? espnAmericanToDecimal(pick('away')) : null;
+        let decD = o ? espnAmericanToDecimal(pick('draw')) : null;
+        if (decD == null && o?.drawOdds?.moneyLine != null) decD = espnAmericanToDecimal(o.drawOdds.moneyLine);
+
+        // Total Over/Under (une seule ligne fournie — souvent 2.5 ou 3.5)
+        const tot = o?.total || null;
+        const ouLineRaw = tot?.over?.close?.line ?? tot?.over?.open?.line ?? (o?.overUnder != null ? `o${o.overUnder}` : null);
+        const ouLine = ouLineRaw != null ? parseFloat(String(ouLineRaw).replace(/[^\d.]/g, '')) : null;
+        const decOver = tot ? espnAmericanToDecimal(tot?.over?.close?.odds ?? tot?.over?.open?.odds) : null;
+        const decUnder = tot ? espnAmericanToDecimal(tot?.under?.close?.odds ?? tot?.under?.open?.odds) : null;
+
+        const markets = [];
+        if (decH && decA) {
+          markets.push({
+            key: 'h2h',
+            outcomes: [
+              { name: homeTeam, price: decH },
+              { name: 'Draw', price: decD || 3.0 },
+              { name: awayTeam, price: decA },
+            ],
+          });
+        }
+        if (ouLine && decOver && decUnder) {
+          markets.push({
+            key: 'totals',
+            outcomes: [
+              { name: 'Over', price: decOver, point: ouLine },
+              { name: 'Under', price: decUnder, point: ouLine },
+            ],
+          });
+        }
+        if (!markets.length) continue; // pas de cote exploitable → on laisse BSD/poisson gérer
+
+        out.push({
+          id: `espn_${ev.id}`,
+          sport_key: sportKey,
+          sport_title: league?.name || ev.league?.name || slug,
+          country: league?.country || null,
+          commence_time: ev.date,
+          home_team: homeTeam,
+          away_team: awayTeam,
+          _sport: sportKey,
+          _source: 'espn',
+          _espn_event_id: String(ev.id),
+          _config_league_id: league?.id || null,
+          _league_country: league?.country || null,
+          status: stName || null,
+          bsd_odds: {
+            home: decH, draw: decD, away: decA,
+            over25: (ouLine === 2.5 && decOver) ? decOver : null,
+            btts: null,
+          },
+          bookmakers: [{
+            key: 'espn',
+            title: `ESPN/${o?.provider?.name || 'DraftKings'}`,
+            markets,
+          }],
+        });
+        built++;
+      } catch (e) { /* event malformé — skip */ }
+    }
+    if (built) console.log(`  [ESPN odds] ✓ ${slug} → ${built} matchs (zéro quota)`);
+  }
+  return out;
+}
+
 // ─── JOB 1 : COTES (toutes les 12h) ──────────────────────────────────────
 // opts.bsdLeagueIds:    number[]    → BSD league IDs to target (bypasses bulk fetch)
 // opts.configLeagueIds: number[]    → PariScore config league IDs (mapped via configIdToBsd)
@@ -9138,58 +9470,44 @@ async function fetchOdds(force = false, opts = {}) {
     }
 
     // =========================================================================
-    // ÉTAPE 3 : ENRICHISSEMENT CHIRURGICAL VIA THE ODDS API
+    // ÉTAPE 3 : ENRICHISSEMENT DES COTES VIA ESPN (zéro clé / zéro quota)
+    // Remplace The Odds API. Scoreboard ESPN → moneyline 1X2 + total O/U.
     // =========================================================================
-    if (!skipEnrichment && ODDS_API_KEY) {
-      console.log('  [Routing] L3 : Enrichissement des cotes (Surgical Mode)...');
-
-      // Au lieu de boucler sur TOUS les sports, on ne cible que les 5 plus populaires
-      // pour économiser drastiquement les crédits.
-      const prioritySports = ['soccer_epl', 'soccer_france_ligue1', 'soccer_spain_la_liga', 'soccer_germany_bundesliga', 'soccer_italy_serie_a'];
-      const oddsToCache = {};
-      let quotaExceeded = false;
-
-      for (const sport of prioritySports) {
-        try {
-          // v10.8: élargissement régions/markets opt-in via env (par défaut: eu+h2h = 1 credit/call, sustainable plan free 500/mois).
-          // Pour activer comparateur OU25/BTTS : Render env ODDS_MARKETS=h2h,totals,both_teams_score (coût ×3) + upgrade Odds Starter $30/mo (20k credits).
-          // Pour 1xbet : ODDS_REGIONS=eu,us2 (couvre 1xbet via region us2 selon Odds API).
-          const query = new URLSearchParams({
-            apiKey: ODDS_API_KEY,
-            regions: process.env.ODDS_REGIONS || 'eu',
-            markets: process.env.ODDS_MARKETS || 'h2h',
-            oddsFormat: 'decimal',
-            dateFormat: 'iso', commenceTimeFrom: formatIsoTimestamp(now), commenceTimeTo: formatIsoTimestamp(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
-          }).toString();
-
-          const res = await httpsGet(`https://api.the-odds-api.com/v4/sports/${sport}/odds/?${query}`);
-
-          if (res.status === 401 || res.status === 429) {
-            console.error(`  [Routing] ⚠️ Quota The Odds API atteint. Arrêt de l'enrichissement.`);
-            quotaExceeded = true;
-            break;
+    if (!skipEnrichment) {
+      console.log('  [Routing] L3 : Enrichissement des cotes via ESPN (zéro quota)...');
+      try {
+        const espnRaw = await fetchESPNMatches(dateFrom, dateTo);
+        if (espnRaw.length) {
+          let enriched = 0, added = 0;
+          for (const em of espnRaw) {
+            const dup = allRawMatches.find(ex =>
+              normName(ex.home_team) === normName(em.home_team) &&
+              normName(ex.away_team) === normName(em.away_team) &&
+              Math.abs(new Date(ex.commence_time).getTime() - new Date(em.commence_time).getTime()) < 24 * 3600 * 1000
+            );
+            if (dup) {
+              // Match déjà présent (BSD/Football-Data) sans cotes exploitables → injecter cotes ESPN
+              const hasOdds = (dup.bsd_odds && dup.bsd_odds.home && dup.bsd_odds.away)
+                || (Array.isArray(dup.bookmakers) && dup.bookmakers.some(b =>
+                  (b.markets || []).some(mk => mk.key === 'h2h' && (mk.outcomes || []).length >= 2)));
+              if (!hasOdds) {
+                dup.bookmakers = em.bookmakers;
+                dup.bsd_odds = dup.bsd_odds && dup.bsd_odds.home ? dup.bsd_odds : em.bsd_odds;
+                dup._espn_event_id = em._espn_event_id;
+                if (!dup.sport_key || dup.sport_key === 'soccer_bsd') dup.sport_key = em.sport_key;
+                enriched++;
+              }
+            } else {
+              allRawMatches.push(em);
+              added++;
+            }
           }
-
-          if (res.status === 200) {
-            res.data.forEach(m => { m._sport = sport; });
-            // On fusionne les cotes avec les matchs déjà trouvés par BSD
-            allRawMatches = allRawMatches.map(existing => {
-              const matchFromOdds = res.data.find(o => normName(o.home_team) === normName(existing.home_team) && normName(o.away_team) === normName(existing.away_team));
-              return matchFromOdds ? { ...existing, bookmakers: matchFromOdds.bookmakers } : existing;
-            });
-            // On ajoute aussi les matchs qui seraient UNIQUEMENT chez Odds API
-            const newMatches = res.data.filter(o => !allRawMatches.some(ex => normName(ex.home_team) === normName(o.home_team) && normName(ex.away_team) === normName(o.away_team)));
-            newMatches.forEach(m => { m._sport = sport; allRawMatches.push(m); });
-
-            oddsToCache[`odds_${sport}`] = res.data;
-          }
-        } catch (e) { console.warn(`  [Routing] ${sport} erreur:`, e.message); }
-      }
-
-      if (!quotaExceeded) {
-        oddsToCache['odds_raw_matches'] = allRawMatches;
-        apiCacheSetBatch(Object.entries(oddsToCache).map(([k, v]) => [k, v]), 'odds_api');
-      }
+          console.log(`  [Routing] ✓ ESPN : ${added} matchs ajoutés, ${enriched} enrichis (cotes) sur ${espnRaw.length} total.`);
+          apiCacheSet('odds_raw_matches', allRawMatches, 'espn_odds', 30 * 60 * 1000);
+        } else {
+          console.log('  [Routing] ESPN : aucune cote dans la fenêtre.');
+        }
+      } catch (e) { console.warn('  [Routing] ⚠️ ESPN indisponible:', e.message); }
     }
 
     // =========================================================================
@@ -11636,7 +11954,12 @@ async function handleAPI(req, res, pathname, query) {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+      // [FIX live] SSE = requête CORS sans credentials. L'ancien fallback
+      // 'http://localhost:3000' verrouillait le flux à localhost → en prod
+      // (domaine VPS) le navigateur bloquait EventSource → ZÉRO live.
+      // Wildcard cohérent avec /api/v1/matches (déjà en '*').
+      'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
+      'X-Accel-Buffering': 'no',
     });
     res.flushHeaders();
     res.write(`event: matches_update\ndata: ${JSON.stringify({ matches: matchesForBroadcast(), meta: buildMeta() })}\n\n`);
@@ -11661,13 +11984,18 @@ async function handleAPI(req, res, pathname, query) {
       let matches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
       let fromCache = (db.matches && db.matches.length > 0) ? false : true;
       // [FIX - 2026-05-11] Priorité au statut LIVE sur le Kill Switch temporel
-      const normalizeStatus = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+      // [FIX live] espace/tiret → underscore : BSD émet "2nd half"/"in progress"
+      // (espace) jamais "2ND_HALF" → ancien whitelist ratait → match non-live.
+      const normalizeStatus = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[\s\-]+/g, '_').trim();
 
       const isLiveStatus = (status) => {
         const norm = normalizeStatus(status);
-        return ['LIVE', 'IN_PLAY', 'INPLAY', '1H', '2H', 'HT', 'ET', 'P', 'BT',
-                'EXTRA_TIME', 'BREAK_TIME', 'PENALTY', 'LIVE_1H', 'LIVE_2H',
-                '1ST_HALF', '2ND_HALF', 'HALFTIME', 'SECOND_HALF', 'FIRST_HALF', 'EXTRA_TIME_HALF'].includes(norm);
+        return ['LIVE', 'IN_PLAY', 'INPLAY', 'IN_PROGRESS', 'INPROGRESS', 'PLAYING',
+                '1H', '2H', 'HT', 'ET', 'P', 'BT', 'AWAITING_ET', 'AWAITING_PENALTIES',
+                'EXTRA_TIME', 'BREAK_TIME', 'PENALTY', 'PENALTIES', 'PEN_SHOOTOUT',
+                'LIVE_1H', 'LIVE_2H', 'PAUSED', 'PAUSE',
+                '1ST_HALF', '2ND_HALF', 'FIRSTHALF', 'SECONDHALF',
+                'HALFTIME', 'SECOND_HALF', 'FIRST_HALF', 'EXTRA_TIME_HALF'].includes(norm);
       };
 
       const isFinishedStatus = (status) => {
@@ -19985,9 +20313,12 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
       // v50.0: Fallback sur le cache forceSyncFixture si le fetch live est vide
       const homeKPFinal = homeKeyPlayers.length ? homeKeyPlayers : (match._bsd_home_kp || []);
       const awayKPFinal = awayKeyPlayers.length ? awayKeyPlayers : (match._bsd_away_kp || []);
+      // Recovery ESPN — zéro clé / zéro quota (avant le fallback API-Football)
+      const homeKPEspn = homeKPFinal.length ? homeKPFinal : await fetchESPNTeamKeyPlayers(leagueId, match.home_team, season);
+      const awayKPEspn = awayKPFinal.length ? awayKPFinal : await fetchESPNTeamKeyPlayers(leagueId, match.away_team, season);
       // v63.0: Fallback ultime — API-Football par nom d'équipe si tout est vide
-      const homeKP = homeKPFinal.length ? homeKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.home_team) : []);
-      const awayKP = awayKPFinal.length ? awayKPFinal : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.away_team) : []);
+      const homeKP = homeKPEspn.length ? homeKPEspn : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.home_team) : []);
+      const awayKP = awayKPEspn.length ? awayKPEspn : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.away_team) : []);
       const homePosRatings = homePRRes.status === 'fulfilled' ? homePRRes.value : null;
       const awayPosRatings = awayPRRes.status === 'fulfilled' ? awayPRRes.value : null;
       const homeBSDSquad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
@@ -22785,28 +23116,58 @@ async function pollLiveScores() {
           _arr.forEach(x => { const s = String(x.status || 'null'); _st[s] = (_st[s] || 0) + 1; });
           const _liveN = _arr.filter(x => x.live_score).length;
           const _matched = _arr.filter(x => db.matches.find(mm => mm.id === x.id)).length;
-          console.log(`  [LiveDBG] date=${dateStr} bsdEvents=${_arr.length} avecLiveScore=${_liveN} matchedEnBase=${_matched} statuts=${JSON.stringify(_st).slice(0,260)}`);
+          console.log(`  [LiveDBG] build=livefix-v3 date=${dateStr} bsdEvents=${_arr.length} avecLiveScore=${_liveN} matchedEnBase=${_matched} statuts=${JSON.stringify(_st).slice(0,260)}`);
         } catch (e) { console.log('  [LiveDBG] err', e.message); }
         if (!bsdLive) return;
 
         // [FIX live cross-provider] index base par id, _bsd_event_id, et clé équipes+jour.
         // Le live BSD (id `bsd_*`) ne matchait jamais les matchs sourcés Odds/
         // football-data (id `fd_*`/`odds_*`) → matchedEnBase=0 → live mort.
-        const _byId = new Map(), _byBsd = new Map(), _byTeams = new Map();
+        // [FIX live] 4e tier de matching : clé mot-significatif. Les matchs
+        // re-routés ESPN (id `espn_*`, sans `_bsd_event_id`, displayNames ESPN
+        // type "Athletic Club"/"Inter Milan") ne matchaient JAMAIS le live BSD
+        // ("Athletic Bilbao"/"Inter") → live_score jamais écrit → live mort.
+        const _STOPW = new Set(['fc','cf','sc','ac','as','sd','cd','ud','rc','afc','bk','if','fk','sk','club','de','la','le','el','los','real','calcio','ssc','sv','vfb','vfl','tsg','fsv','ogc','rcd','cd']);
+        // 1er mot significatif (≥3, hors stopwords) : robuste aux suffixes/locales
+        // ("Real Betis"↔"Real Betis Balompié", "Bayern Munich"↔"Bayern München").
+        const _sigTok = name => {
+          const n = normName(name);
+          const w = n.split(' ').filter(x => x.length >= 3 && !_STOPW.has(x));
+          return w[0] || n.split(' ')[0] || n;
+        };
+        const _bsdIdNum = idStr => { const mm = String(idStr || '').match(/(\d+)/); return mm ? mm[1] : null; };
+        const _byId = new Map(), _byBsd = new Map(), _byTeams = new Map(), _bySig = new Map();
         for (const x of db.matches) {
           if (!x) continue;
           _byId.set(x.id, x);
           if (x._bsd_event_id != null) _byBsd.set(String(x._bsd_event_id), x);
           const kk = normName(x.home_team) + '@' + normName(x.away_team);
           if (kk !== '@') _byTeams.set(kk, x);
+          const sk = _sigTok(x.home_team) + '@' + _sigTok(x.away_team);
+          if (sk !== '@' && !_bySig.has(sk)) _bySig.set(sk, x);
         }
-        let _liveMatched = 0;
+        let _liveMatched = 0, _sigMatched = 0;
         const patches = [];
         for (const bl of bsdLive) {
+            // [FIX live CRITIQUE] NE patcher QUE les events réellement en cours.
+            // Sans cette garde, les events `finished` (2000 quand pagination
+            // BSD régresse) matchent par sig et écrasent m.status='finished'
+            // sur des matchs live/à venir → live tué + matchs purgés.
+            if (!bl.live_score) continue;
             let m = _byId.get(bl.id)
               || (bl._bsd_event_id != null && _byBsd.get(String(bl._bsd_event_id)))
               || _byTeams.get(normName(bl.home_team) + '@' + normName(bl.away_team));
+            if (!m) {
+              m = _bySig.get(_sigTok(bl.home_team) + '@' + _sigTok(bl.away_team));
+              if (m) _sigMatched++;
+            }
             if (!m) continue;
+            // Persiste l'event_id BSD sur le match (ESPN/Odds/FD) → polls suivants
+            // matchent en O(1) via _byBsd, plus de dépendance au nom.
+            if (m._bsd_event_id == null) {
+              const bid = (bl._bsd_event_id != null) ? bl._bsd_event_id : _bsdIdNum(bl.id);
+              if (bid != null) m._bsd_event_id = bid;
+            }
             _liveMatched++;
             const newIntensity = computeLiveIntensityFromBSD(bl);
             const sig = (bl.live_score||'') + ':' + (bl.live_minute||'') + ':' + newIntensity + ':' + (bl.status || m.status || '');
@@ -22818,7 +23179,7 @@ async function pollLiveScores() {
             _livePatchSnapshot.set(m.id, sig);
             patches.push(m);
         }
-        console.log(`  [LiveDBG] matchés(cross-provider)=${_liveMatched} patches=${patches.length}`);
+        console.log(`  [LiveDBG] matchés(cross-provider)=${_liveMatched} (dont sig=${_sigMatched}) patches=${patches.length}`);
 
         // Double routing live stats : BSD primary → Sofa fills gaps
         const liveNow = db.matches.filter(m => m.live_score && parseInt(m.live_minute||0) > 0 && parseInt(m.live_minute||0) < 130);
@@ -23053,7 +23414,14 @@ function autoPurgeDatabase() {
         if (elapsed <= 0) return true; // pas encore commencé
         const isFinished = [m.status, m.live_status, m.match_status, m.state, m.fixture_status]
             .some(s => s && (FINISHED_SET.has(s) || FINISHED_SET.has(normS(s))));
-        return !isFinished && elapsed < EXPIRY_MS;
+        if (isFinished) return false;
+        // [FIX live] match encore EN COURS (live_score + minute<150) : NE PAS
+        // purger même si elapsed>=150min (prolongations/temps additionnel/retard).
+        // Garde-fou anti-zombie : plafond dur 4h.
+        const liveMin = parseInt(m.live_minute || 0) || 0;
+        const stillLive = m.live_score && liveMin > 0 && liveMin < 150;
+        if (stillLive && elapsed < 4 * 60 * 60 * 1000) return true;
+        return elapsed < EXPIRY_MS;
     });
     const removed = before - db.matches.length;
     if (removed > 0) {
