@@ -134,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 9.8.1 — Mes Paris étendu : Plan 20%/jour + Import CSV sécurisé (reverify mdp) + colonne Sport + bookmakers ANJ FR + 1xbet.*
+*Dernière mise à jour : Version 10.55 — Fix matchs live sans bouton LIVE : source unique isMatchInProgress (était gaté m.live_score seul → matchs status-live sans score rendus prematch). renderMatches/renderPredBets/topPredictiveBets alignés. Suite v10.54. Note infra : serveur sert snapshot boot → restart pour vérifier preview. Voir CHANGELOG.md et `.context/sessions/`.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->

@@ -2,6 +2,545 @@
 
 ---
 
+## [v10.20] — 2026-05-17
+
+### Corrigé — Filtre championnats : ligue précise affichait tout le pays (Serie B → Serie A+B)
+
+**Cause racine**
+- Le filtre construit `_selKeys` en **union** : `blanket pays (toutes ligues) ∪ activeLeagues ∪ legacy` (pariscore.html ~14230).
+- Cocher une ligue précise (Serie B) via `mlToggleLeague` ajoutait `soccer_italy_serie_b` à `activeLeagues` **sans** retirer le pays parent de `activeCountries`. Si Italie était cochée (blanket), l'union ré-incluait Serie A + Coppa Italia.
+- Symétrie absente : `mlToggleCountry` ne purgeait pas non plus les ligues spécifiques du pays.
+
+**Frontend (pariscore.html)**
+- Helper `_countryOfLeague(odds_key)` → pays propriétaire via `leaguesByCountry`.
+- `mlToggleLeague` : sélectionner une ligue précise **décoche** le pays parent dans `activeCountries` (l'utilisateur veut CETTE ligue, pas tout le championnat).
+- `mlToggleCountry` : cocher un pays (blanket) **retire** les ligues spécifiques de ce pays d'`activeLeagues` (évite doublon logique).
+- **Garde anti-bug au niveau filtre** (défense multi-entrées : chips, dropdowns) : pour chaque pays de `activeCountries`, si une de ses ligues est présente dans `activeLeagues`, le blanket pays **n'est pas** ajouté à `_selKeys`. La sélection précise écrase toujours le blanket, par pays — généralisé à TOUS les championnats.
+
+**Vérifié** (preview, scénarios) : A) pays Italie puis Serie B → `selKeys=[serie_b]`. B) Serie B avec pays pré-coché → `[serie_b]`. C) garde seule (activeCountries résiduel) → `[serie_b]`. D) pays seul, aucune ligue → blanket complet intact `[serie_a, serie_b, coppa]`. 0 erreur console.
+
+---
+
+## [v10.55] — 2026-05-17
+
+### Corrigé — Matchs live sans bouton LIVE (source de vérité incohérente)
+
+**Bug** : badge « Live N » = `isMatchInProgress` (status live **OU** `live_score` **OU** `live_minute`), mais `renderMatches`, `renderPredBets`, `topPredictiveBets` et le bouton LIVE étaient gatés sur `m.live_score` **seul** → les matchs en cours **sans score** (feed score absent / 0-0) étaient rendus en prematch (ni bouton LIVE, ni Bets Live), d'où « 5 live mais aucun bouton ».
+
+**Fix (pariscore.html)** — source unique = `isMatchInProgress(m)` :
+- `renderMatches` : `_live = isMatchInProgress(m)` calculé une fois → classe `match-row-live`, conteneur badge live + intensité, bouton `live-btn` (au lieu de `m.live_score ?`). Badge score fallback `live_score || minute′ || 'LIVE'`.
+- `renderPredBets` : `live = isMatchInProgress(m)`.
+- `topPredictiveBets` : `live = !opts.prematch && isMatchInProgress(m)` (branche live robuste sans `live_score`, split → 0-0 par défaut).
+
+**Vérifié (serveur redémarré, mock)** : prematch → pas de LIVE, « Bets Prédictifs » ; **`status:'1H'` sans `live_score`** → `match-row-live` + bouton LIVE + badge + « Bets Live » ; live avec score → OK. **Zéro erreur console**.
+
+---
+
+## [v10.54] — 2026-05-17
+
+### Corrigé — Horaire matchs : fuseau France (bug parsing UTC naïf)
+
+**Bug** : `parseKickoff` faisait `new Date(raw)` sur des chaînes ISO **sans fuseau** (l'API renvoie de l'UTC sans `Z`). JS interprète alors la chaîne en **heure locale du navigateur** → l'horaire (col 1 Date/H + cartes mobile) était décalé même avec `toLocaleString('fr-FR',{timeZone:'Europe/Paris'})`.
+
+**Fix (pariscore.html)**
+- `parseKickoff` : si la chaîne matche `^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}` et n'a **ni `Z` ni offset `±hh:mm`** → normalisée UTC (`replace(' ','T') + 'Z'`) avant `new Date`. Z/offset/unix inchangés.
+- `fmtTime` (cartes mobile `.mc`) : utilise désormais `parseKickoff` au lieu de `new Date(m.commence_time)` brut (même bug).
+
+**Vérifié (serveur redémarré)** : 15:00 UTC → **17:00** (CEST Europe/Paris) pour TOUS les formats testés — `…Z`, ISO naïf `T`, naïf espace, offset `+02:00`, unix secondes. **Zéro erreur console**.
+
+---
+
+## [v10.53] — 2026-05-17
+
+### Ajouté — Bets Live : prochain buteur probable (intensité par équipe)
+
+`topPredictiveBets` (live) : `nextScorer` = `domSide` (|pH−pA|≥4) sinon signe de `dom` (>1 / <−1) sinon meneur. Candidat **« Prochain but Dom »** / **« Prochain but Ext »** poussé si `iv≥55` ou domination ou fin de match, score = 50 + min(34,|dom|×1.3) + iv×0.18 (+6 si domSide). Remplace l'ancien « Prochain but » générique (sans côté).
+
+**Vérifié (serveur redémarré, mock)** : Santos pousse à domicile (DA 42/14, xG 1.8/0.5) → top bet **« Prochain but Dom »** ; Coritiba pousse à l'extérieur 0-0 (DA 12/38) → **« Prochain but Ext »** + `2`. **Zéro erreur console**.
+
+---
+
+## [v10.52] — 2026-05-17
+
+### Modifié — Bets Prédictifs Live : ghost prematch + 1-2 bets selon déroulement & intensité par équipe
+
+Match live → bloc prematch **remplacé** par « 🔴 Bets Live » (pastille rouge pulsée `.pb-livedot`, `prefers-reduced-motion` géré), bouton LIVE conservé.
+
+**`topPredictiveBets` (branche live)** : ajout **pression par équipe** — `pH/pA` = dangerous_attacks×0.5 + shots×1.5 + corners×1 + xG×8 (côté home/away) ; `dom = pH−pA`, `domSide` si |dom|≥4. L'équipe dominante : issue (1/2) renforcée + « Prochain but » boosté ; équipe **menée mais dominante** → `+2.5`. Flag `m._liveDecided` = écart ≥2 OU (minute ≥80 & meneur & pas dominé).
+
+**`renderPredBets`** : live → si `_liveDecided` **1 bet**, sinon **2** ; prematch inchangé (3 bets, jamais affichés en live = ghost).
+
+**Vérifié (serveur redémarré, mock)** : prematch → 3 bets « Bets Prédictifs », no LIVE ; live 2-0 78′ (Éq1 domine) → « Bets Live » **1 bet `1`** + livedot + bouton LIVE ; live 1-1 63′ pression haute → **2 bets** + LIVE. **Zéro erreur console**.
+
+---
+
+## [v10.51] — 2026-05-17
+
+### Ajouté — Routage Serie B Italie via ESPN hidden API (ita.2)
+
+**Contexte** : Serie B IT (config 136) non couverte BSD → standings vides. Rapport `.doc` validé → solution ESPN `ita.2` (gratuit, zéro clé/quota, infra ESPN déjà présente).
+
+**Backend (server.js)**
+- `ESPN_STANDINGS_SLUG[136] = 'ita.2'` (Serie B Italie).
+- **Phase 1bis** dans `fetchStats` (entre Phase 1 BSD et Phase 2 API-Football) : itère `ESPN_STANDINGS_SLUG` filtré sur les ligues **non** présentes dans `BSD_CONFIG_TO_BSD` (= ESPN-only : 136 Serie B, 99 J2 ; 98/292 exclues car déjà gérées BSD). Gate fraîcheur T1/T2 + bypass si lignes `api-football` périmées, puis `tryESPNStandings(configId)` (purge totale lignes ligue + injection + `statsUpdateByLeague`).
+- Réutilise `fetchESPNStandings` (parser `children[].standings.entries`, classement points/diff) — déjà compatible.
+
+**Vérifié** : `node --check server.js` OK ; endpoint `site.api.espn.com/apis/v2/sports/soccer/ita.2/standings` → 1 groupe, **20 clubs** (Venezia…), stats `points/wins/ties/losses/pointsFor/pointsAgainst/ppg/rank` exploitables par le parser. Filtre Phase 1bis correct (136+99 inclus, 98/292 exclus).
+
+---
+
+## [v10.50] — 2026-05-17
+
+### Modifié — Logo diffuseur TV déplacé colonne 1 (sous Date/H, centré)
+
+Slot `[data-tv-badge]` retiré de la cellule Match (col 2, ex `position:absolute;bottom/right`) → placé dans la cellule **Date/H (col 1)**, sous heure+date, centré (`margin:5px auto 0`, `justify-content:center`, `flex-wrap`, td `text-align:center`). `enrichTVChannels` inchangé (cible `[data-tv-badge]`).
+
+**Vérifié (serveur redémarré)** : slot dans `td` index 0, absent col 2, parent `text-align:center`, `justify-content:center`, `margin:auto` ; **zéro erreur console**.
+
+---
+
+## [v10.49] — 2026-05-17
+
+### Modifié — Bets Prédictifs : libellés explicites + affichage confiance seule
+
+- **Libellés** : `fmtBet()` dans `renderPredBets` — O/U `+1.5`/`+2.5`/`-2.5`/`-3.5` → `… Buts` ; double chance `1X`/`X2` → `DC: 1X`/`DC: X2` (gère suffixe live ` ✓`). Logique interne `topPredictiveBets` inchangée (formatage à l'affichage → `edgeFor` non impacté).
+- **Affichage** : span `.pb-pr` (proba % brute) **retiré** des lignes — seule la **confiance composite** `●conf` est affichée (proba × calibration × (1+edge dévigé)). Seuils couleur inchangés : vert ≥70 · ambre ≥55 · rouge <55.
+
+**Vérifié (serveur redémarré)** : lignes = `+1.5 Buts / -3.5 Buts / DC: X2` (mock), `hasProb:false` (proba retirée), `●conf` présent ; **zéro erreur console**.
+
+---
+
+## [v10.48] — 2026-05-17
+
+### Refondu — Bloc Bets Prédictifs : titre centré + design 3D premium
+
+- **Titre** `.pbet-head` centré au-dessus du bloc : « Bets Prédictifs » (prematch) / « Bets Live » (live), Barlow Condensed 800 uppercase + soulignement dégradé rouge centré.
+- **3D premium** : `.pbet-wrap` carte en relief (gradient + `inset highlight` + ombre portée) ; `.pbet-row` lignes relief + hover `translateY(-1px)` ; pastille rang `.pb-rk` = jeton 3D embossé (radial-gradient + inset light/dark) — gris / **rouge pour #1** ; ligne #1 (`.pb-top`) gradient rouge clair + liseré + glow. `prefers-reduced-motion` géré.
+- Variantes `body.dark-theme` / `.mc` (cartes mobile) : relief sombre cohérent.
+
+**Vérifié (serveur redémarré)** : `.pbet-head` = « Bets Prédictifs », `text-align:center` ; 3 `.pbet-row` ; `.pbet-wrap` radius 12px + ombre ; `.pb-top` présent ; **zéro erreur console**.
+
+> Rappel sémantique valeurs : `① LABEL prob% ●conf` — rang composite, marché, probabilité modèle, confiance composite (proba×calibration×(1+edge)) ; couleur conf vert≥70/ambre≥55/rouge<55.
+
+---
+
+## [v10.47] — 2026-05-17
+
+### Refondu — Cellule « Match » : badge verdict → Bets Prédictifs Top 1-3 (prematch) / 1-2 (live)
+
+Brainstorm Design × Data Science × Parieur Pro → plan validé DG (5 décisions).
+
+**Frontend (pariscore.html)**
+- **En-tête** : `Match` recentré (`text-align:left` retiré du `<th>` → hérite `center`).
+- **Supprimé** : badge vert verdict `🎯 {best.label} @{cote} · ⬤{conf} · +{edge}%` (jugé sans valeur, redondant VALUE/Conseils IA/Cote ▼).
+- **`topPredictiveBets(m,n,opts)`** : score composite **proba × calibration (`calcConfidenceScore`/100) × (1 + edge dévigé/100)**, source `calibrated||blended||poisson`, filtre proba ≥ 50 %, dédup, tri desc. Prematch n=3 (1/N/2/1X/X2/+1.5/+2.5/-2.5/-3.5/BTTS/BTTS Non). **Live** n=2 : repondération auto sur score (leader → 1·1X / 2·X2 / N), minute (temps restant), intensité, buts marqués (+2.5/-2.5/BTTS/BTTS Non/Prochain but).
+- **`renderPredBets(m)`** : bloc `.pbet-wrap` sous le bloc Équipe1/Équipe2 ; lignes `① LABEL prob% ●conf`, couleur confiance (vert≥70 / ambre≥55 / rouge), #1 emphase (pastille + liseré rouge). Variante `.pbet-live` (liseré rouge, tooltip « recalculé live »).
+- **Desktop + mobile** : injecté dans `renderMatches` (cellule Match) **et** `buildCard` (cartes `.mc`) → cohérence 2 environnements.
+- Colonne `Conseils IA` **conservée** (différenciée : détail marchés vs paris à jouer).
+- CSS `.pbet-*` (clair table + variante dark/`.mc`), `tabular-nums`.
+
+**Vérifié (serveur redémarré)** : badge `🎯` absent ; `#vb-body` 2 `.pbet-wrap` ; prematch = 3 `.pbet-row`, live = 2 ; ex. prematch `[+1.5 88%, 1X 85%, -3.5 70%]`, live 1-0 70′ int64 → `[1, 1X]` ; **zéro erreur console**. (Confiance affichée scalée par `calcConfidenceScore` réel — mock = valeurs basses, ranking correct.)
+
+---
+
+## [v10.46] — 2026-05-17
+
+### Modifié — En-tête colonne 1 « Heure » → « Date/H »
+
+`#vb-table thead` : libellé `Heure` renommé **« Date/H »** (la cellule affiche heure + date). Aucun impact JS.
+
+**Vérifié (serveur redémarré)** : labels = `[Date/H,Match,Rang,Forme,Score prédictif prematch,Cote ▼,Conseils IA,Buteurs,Actions,VALUE]` ; **zéro erreur console**.
+
+---
+
+## [v10.45] — 2026-05-17
+
+### Modifié — En-tête colonne « xG·H2H » → « Score prédictif prematch »
+
+`#vb-table thead` : libellé `xG·H2H` renommé **« Score prédictif prematch »** (title : « Score prédictif pré-match (xG · H2H · forme) »). Aucun impact JS (colonne d'affichage).
+
+**Vérifié (serveur redémarré)** : labels = `[Heure,Match,Rang,Forme,Score prédictif prematch,Cote ▼,Conseils IA,Buteurs,Actions,VALUE]` ; **zéro erreur console**.
+
+---
+
+## [v10.44] — 2026-05-17
+
+### Refondu — En-tête tableau matchs « Hybride Hero-Chip » (Concept C, design-critique)
+
+Critique design (contraste #888/#efefef ≈2.6:1 échec WCAG, mono 9.5px fin, libellés cryptiques, zéro hiérarchie, incohérent charte) → refonte validée DG (Concept C, renommage OK, barre verte supprimée, football seul).
+
+**Frontend (pariscore.html) — `#vb-table thead` (desktop ; mobile = cartes, non impacté)**
+- **Typo** : `Barlow Condensed 800`, 12 px, `letter-spacing .04em`, uppercase. Couleurs sémantiques : structurel (`Heure`,`Match`) `#1A1A1A` ; secondaire `#5A5A5A` (≥4.5:1) ; hero blanc. Bordure bas 2 px `--accent`, fond `#F4F4F4`.
+- **Hero-chip** : `.th-hero` (Cote ▼, VALUE) → puce rouge dégradée (`::before` z-index:-1 sous le texte via `isolation:isolate`), texte blanc + ombre.
+- **Affordance tri** : `.sortable::after` soulignement rouge `scaleX` au hover/`.sort-asc/-desc` (+ `prefers-reduced-motion`).
+- **Renommage libellés** : `Equipes→Match`, `Class.→Rang`, `Infos→xG·H2H` (tooltip), `Δ Cotes→Cote ▼`, `Top Conseils IA→Conseils IA`, `Top 3 Butteurs→Buteurs` (+ accent corrigé). `Heure/Forme/Actions/VALUE` inchangés.
+- **Barre verte supprimée** : `#scrollbar-top { display:none !important }` ; thumb `#table-scroll` `#00ff88`→`rgba(0,0,0,.22)` (neutre, cohérent charte rouge).
+
+**Vérifié (serveur preview redémarré — cf. note)** : labels = `[Heure,Match,Rang,Forme,xG·H2H,Cote ▼,Conseils IA,Buteurs,Actions,VALUE]` ; font Barlow Condensed 800 12px ; `Heure` `#1A1A1A` ; bordure `rgb(237,28,36)` ; hero blanc + chip dégradé `::before` ; `#scrollbar-top` `display:none` ; **zéro erreur console**.
+
+> **Note infra** : le serveur `node server.js` sert un **snapshot HTML du boot** (pas le disque live) → toute vérif preview après édition HTML nécessite un **restart du serveur** (`preview_stop`+`preview_start`). Explique les « DOM stale » des vérifs précédentes (edits disque valides, preview en retard).
+
+---
+
+## [v10.43] — 2026-05-17
+
+### Corrigé — Filtres fonctionnels + cohérents sur mobile (Android/iOS) comme desktop
+
+**Bug** : `_mfsRelocate` (relocalise les rows desktop dans le bottom-sheet mobile `#mfs-body`) avait une liste périmée → `topn-filter-row` (Top stratégies + slider « Degré Confiance ») **jamais relocalisé** = inaccessible sur mobile ; `edge-filter-row` supprimé (v10.34) ; `period-filter-row`/`kickoff-filter-row` désormais imbriqués dans `#period-kickoff-row`.
+
+**Frontend (pariscore.html)**
+- `_mfsRelocate` liste → `['day-filter-row','topn-filter-row','period-kickoff-row','adv-filter-row']` (league-filter-row exclu — `display:none` v10.29).
+- `.conf-wrap` : classe `adv-desktop` retirée — elle était masquée `@media(max-width:768px)` → slider Confiance désormais visible/fonctionnel mobile.
+- CSS `@media(max-width:768px) #mfs-body` : `.mls`/`#ts-select`/`.conf-wrap` pleine largeur (`width:100%`, `box-sizing`) ; triggers `justify-content:space-between` ; chips/pills/boutons `min-height:38px` + `touch-action:manipulation` + `-webkit-tap-highlight-color` ; `.conf-range` piste 8px, thumb 20px (cible tactile) ; panels `.mls-panel`/`#ts-panel` `z-index:100000` (au-dessus du sheet) ; `period/kickoff` width 100% ; groupe presets O2.5 mobile masqué (redondant avec le slider).
+- Formes/fond : composants utilisent les tokens graphite partagés (`--fc-graphite`/`--fc-relief`) → rendu identique desktop et mobile.
+
+**Vérifié** : markup statique servi → `topn-filter-row` bien dans `#filter-console` (relocation runtime mobile uniquement) ; mobile `isMobile()` → `#mfs-body` = `[day,topn,period-kickoff,adv]`, `#ts-select`/`#ml-league` dans le sheet, slider input → valeur OK, `ts-trigger` ouvre le panneau ; `.conf-wrap` classe = `conf-wrap` (plus `adv-desktop`) ; **zéro erreur console**. (Mesures de largeur preview non fiables : sheet hors-flux + gate auth — vérif structurelle/fonctionnelle retenue.)
+
+---
+
+## [v10.42] — 2026-05-17
+
+### Supprimé — Inputs « Cote : min → max » desktop (non fonctionnels)
+
+Retirés d'`#adv-filter-row` : label « Cote : », `#cote-min`, flèche `→`, `#cote-max` (`.adv-desktop`). `activeCoteMin`/`activeCoteMax` restent 0 → filtre cote no-op ; handlers `change` cote-min/cote-max sans cible (jamais déclenchés) ; `adv-reset-btn` garde guards `if (cmin)`/`if (cmax)`. Presets cote mobile (`.adv-chips-m` `data-cote` → `setCotePreset`) **conservés**.
+
+**Vérifié (preview)** : `#cote-min`/`#cote-max` absents, label « Cote : » desktop absent, `#adv-reset-btn` présent et cliquable sans erreur, `.adv-chips-m` conservé ; **zéro erreur console**.
+
+---
+
+## [v10.41] — 2026-05-17
+
+### Modifié — Potentiomètre Confiance : échelle pleine 0 → 100
+
+Valeur `#o25-val` affiche toujours `N%` (suppression de l'état « — » : markup défaut `0%`, reset `0%`, handlers input `activeO25Min + '%'`). `.conf-ticks` padding `0 7px` (≈ demi-curseur) → labels `0%`/`100%` alignés sur les extrêmes de la course du thumb. Range déjà `min=0 max=100 step=5` (v10.38) ; remplissage `updateSliderFill` accent rouge 0→100%.
+
+**Vérifié (preview)** : `min=0`, `max=100`, valeur initiale `0%`, slider 100 → `100%` + remplissage plein, retour 0 → `0%` ; **zéro erreur console**.
+
+---
+
+## [v10.40] — 2026-05-17
+
+### Ajouté — Pastille « i » sur le potentiomètre Confiance → Guide
+
+Bouton `.fc-info.conf-info` dans `.conf-head` (à droite de l'intitulé « Degré Confiance en % »). `onclick="openStrategiesGuide()"` → onglet Guide, section `#guide-strategies`. `title`/`aria-label` expliquent le but : filtre selon le score des stratégies cochées dans « Toutes stratégies ». CSS `.conf-info` (14px, `#ff6168`, hover halo rouge), `.conf-title` passé en `inline-flex` (alignement i).
+
+**Vérifié (preview)** : `.conf-info` présent dans `#topn-filter-row .conf-wrap`, texte « i », visible (14px, `rgb(255,97,104)`), clic → `#page-guide` ouvert ; **zéro erreur console**.
+
+---
+
+## [v10.39] — 2026-05-17
+
+### Refondu — Potentiomètre « Degré Confiance » (forme premium)
+
+`.conf-wrap` repensé : **mini-carte graphite** (`--fc-graphite` + `--fc-relief`, radius 12px, largeur fixe 232px) cohérente Graphite Trading-Chip. En-tête `.conf-head` équilibré (`align-items:center`, space-between) : intitulé `.conf-title` (Plus Jakarta 700, casse normale, plus de capitales géantes) + **pastille valeur** `.conf-val` (gradient rouge, pill, texte blanc centré). Piste `.conf-range` 6px arrondie, remplissage rouge (`updateSliderFill` : `var(--blue)`→`var(--accent)`, track `rgba(255,255,255,.13)`), curseur blanc bordure rouge + halo + hover scale. Graduation `.conf-ticks` alignée (flex egaux, extrémités gauche/droite).
+
+**Vérifié (preview)** : `.conf-wrap` fond graphite `rgb(54,59,67)`, radius 12px, largeur 232px ; remplissage accent rouge ; valeur 50% ; ticks `['0%','25%','50%','75%','100%']` alignés ; **zéro erreur console**.
+
+---
+
+## [v10.38] — 2026-05-17
+
+### Corrigé — Potentiomètre Confiance : intitulé visible + échelle % graduée
+
+`#o25-slider` enveloppé dans `.conf-wrap` : `.conf-head` (intitulé « Degré Confiance en % » + valeur live `#o25-val` rouge mono) + range `.conf-range` (max 0→**100**, step 5) + `.conf-ticks` (graduation écrite `0% / 25% / 50% / 75% / 100%`). Conserve `adv-desktop` (desktop), ids/handlers (`activeO25Min`, input, reset, presets mobile) inchangés.
+
+**Vérifié (preview)** : intitulé « Degré Confiance en % » visible, ticks `['0%','25%','50%','75%','100%']`, `max=100`, slider 75 → `#o25-val`='75%', `activeO25Min`=75 ; **zéro erreur console**.
+
+---
+
+## [v10.37] — 2026-05-17
+
+### Modifié — Slider « Degré Confiance en % » lié aux stratégies sélectionnées
+
+`renderMatches` filtre `activeO25Min` : si `activeStrategies.length>0` → seuil appliqué à `calcTopStrategiesScore(m)` (score max des stratégies cochées) ; sinon fallback `poisson.over25`. Re-render déjà déclenché par l'`input` slider (handler existant) et par `tsToggleStrat` (sélection stratégie) → le potentiomètre se reconfigure dynamiquement selon le choix « Toutes stratégies ».
+
+**Vérifié (preview, mock)** : sans stratégie + seuil 60 → fallback over25 (match over25=80 gardé) ; `BTTS_YES` + seuil 60 → filtre sur btts (match btts=75 gardé, over25=55 exclu) ; `OVER_2_5` + seuil 60 → filtre sur over25. **Zéro erreur console**.
+
+---
+
+## [v10.36] — 2026-05-17
+
+### Modifié — Slider O2.5 → « Degré Confiance en % » déplacé ligne 2 (à côté Top stratégies)
+
+`#o25-slider` + `#o25-val` + label déplacés de `#adv-filter-row` vers `#topn-filter-row`, après `#ts-select`/`.fc-info` (ligne 2). Label « O 2.5 min : » → **« Degré Confiance en % : »**. Ids/handlers inchangés (`activeO25Min`, filtre `poisson.over25`, `updateSliderFill`, reset `adv-reset-btn`, presets mobile `data-o25` conservés dans `#adv-filter-row`). Ancien trio retiré d'`#adv-filter-row` (anti dup id).
+
+**Vérifié (preview)** : 1 seul `#o25-slider`, parent `#topn-filter-row`, label « Degré Confiance en % : », même ligne que `#ts-select` ; slider 60 → `#o25-val`='60%', `activeO25Min`=60 ; **zéro erreur console**.
+
+---
+
+## [v10.35] — 2026-05-17
+
+### Modifié — « Période PPG » → « Période » + Période/Kickoff sur même ligne
+
+`#period-filter-row` et `#kickoff-filter-row` fusionnés visuellement : conteneur `.filter-row#period-kickoff-row` (gap 16px) englobant 2 `<div>` inline-flex conservant les ids `#period-filter-row`/`#kickoff-filter-row` (compat `buildFilterDropdowns` specs + media `> .filter-chip[data-period/kick]`). Labels « Période PPG : » → « Période : » (span + `.dd-lbl` + `aria-label`).
+
+**Vérifié (preview)** : `#period-filter-row` & `#kickoff-filter-row` même parent `#period-kickoff-row`, même ligne (top identique 491) ; « Période PPG » absent, « Période : » présent ; `period-dd` 4 options, `kick-dd` 7 options (specs OK) ; **zéro erreur console**.
+
+---
+
+## [v10.34] — 2026-05-17
+
+### Modifié — Filtre Edge supprimé ; Favoris + « Dropping Cotes » remontés en 1ʳᵉ ligne
+
+- **Supprimé** : `#edge-filter-row` entier (label « Edge min : », chips `data-edge` Tous/+1/+3/+5/+10, `#edge-dd`, `#edge-count`) + spec `edge-dd` de `buildFilterDropdowns`. Filtre `activeEdge` reste à 0 (no-op) ; `renderMatches` `edge-count`/`activeEdge` gardés (guards `if(edgeEl && activeEdge>0)`). Handler `.filter-chip[data-edge]` mort inerte.
+- **Déplacé** : `#fav-filter-chip` + `#steam-filter-chip` dans `#day-filter-row` (ligne 1, après `#ml-league`). `#steam-filter-chip` renommé **« Dropping Cotes »** (logique `toggleSteamFilter`/`activeSteamFilter` inchangée).
+- **Fix masquage desktop** : règle `@media (min-width:769px) #day-filter-row > .filter-chip` → `#day-filter-row > .filter-chip[data-day]` (sinon fav/steam, `.filter-chip` enfants directs, masqués desktop). Lignes `#edge-filter-row` retirées du bloc media.
+
+**Vérifié (preview)** : `#edge-filter-row` absent ; `#fav-filter-chip`/`#steam-filter-chip` parent = `day-filter-row`, visibles desktop ; texte steam = « Dropping Cotes » ; `toggleFavFilter`→`activeFavFilter=true`, `toggleSteamFilter`→`activeSteamFilter=true` ; **zéro erreur console**.
+
+---
+
+## [v10.33] — 2026-05-17
+
+### Supprimé — Label « Top : » + étoile (topn-filter-row)
+
+2 spans label « Top : » (icône étoile `.fc-ic` + texte) retirés : variante mobile (span direct) + variante desktop (`.dd-lbl`). Chips `Tous/10/5` + `#topn-dd` conservés. « Top stratégies : » non affecté.
+
+**Vérifié (preview)** : aucun « Top : » dans `#topn-filter-row` (regex), 2 spans retirés, **zéro erreur console**.
+
+---
+
+## [v10.32] — 2026-05-17
+
+### Ajouté — Pastille info « i » sur le filtre Top stratégies → Guide
+
+Bouton `.fc-info` (cercle italique « i », accent rouge, hover) ajouté à droite du label « Top stratégies : ». `onclick="openStrategiesGuide()"` : ferme le popup (`tsClose`), `showPage('guide')`, puis `scrollToSection('guide-strategies')` (timeout 250 ms pour laisser la page Guide s'afficher). `aria-label` + `title` explicites, `event.stopPropagation()`.
+
+**Vérifié (preview)** : bouton `i` présent dans `#topn-filter-row`, clic → `#page-guide` visible, `#guide-strategies` existe, **zéro erreur console**.
+
+**Fix v10.32.1** : « i » invisible sur desktop — il était enfant du `<span>` label masqué par `@media (min-width:769px) #topn-filter-row > span:not(.dd-lbl){display:none}`. Déplacé hors du span, en `<button class="fc-info">` **sibling direct** de `#topn-filter-row` (après `#ts-select`) → non ciblé par la règle (ni span ni filter-chip). Vérifié : `display:flex`, 15×15, couleur `rgb(237,28,36)`, visible, à droite du trigger « Toutes stratégies ».
+
+---
+
+## [v10.31] — 2026-05-17
+
+### Supprimé — Bouton/dropdown « Tous paris » (`#topv-dd`)
+
+`<select id="topv-dd">` (Tous paris / Value only) retiré de `#topn-filter-row`. Chip `.topv-chip` « Value » conservé (contrôle distinct, `activeTopValue`). `resyncFilterDropdowns` gère l'absence (`if (tv && tvChip)`), `markFilterDD` neutral itère selects existants (entrée orpheline sans effet), `pickTopvDD` mort inerte (plus d'appelant).
+
+**Vérifié (preview)** : `#topv-dd` absent, `.topv-chip` présent, `resyncFilterDropdowns()` s'exécute sans erreur, **zéro erreur console**.
+
+---
+
+## [v10.30] — 2026-05-17
+
+### Modifié — Filtre « Marché » → multi-select « Top stratégies »
+
+**Demande** : renommer le filtre « Marché… » en « Top stratégies », remplacer la liste (marchés) par les stratégies de l'onglet Top Stratégies, multi-sélection.
+
+**Frontend (pariscore.html)**
+- **Supprimé** : 8 chips `.topm-chip[data-topmarket]` (1X2/DC/+1.5/-3.5/Attaque/Défense/BTTS/Smart) + `<select id="topm-dd">` + spec `topm-dd` de `buildFilterDropdowns`.
+- **Ajouté** : composant multi-select `#ts-select` (réutilise styles `.mls` graphite/popup fixed) — label « Top stratégies : », trigger « Toutes stratégies », popup recherche + bouton « Toutes stratégies » + 16 lignes `STRATEGIES_UI` (label + tipster). `tsToggleStrat` push/splice `activeStrategies[]` (multi), `tsPickAll` reset, `tsFilter` recherche label+tipster, `tsPosition` (fixed, anti-overflow), fermeture clic extérieur.
+- **Ranking** : `calcStrategyScore(m,key)` (mapping 16 clés → métriques poisson : BTTS_YES→btts, OVER_2_5→over25, UNDER_2_5→100-over25, DC_HOME→hw+dr, VERROU_TACTIQUE→100-over35, GOLDEN_PPG_GAP→|ΔPPG|, corners→proxy confiance, etc.) + `calcTopStrategiesScore` = max sur stratégies sélectionnées. `renderMatches` Top N : tri par stratégies si `activeStrategies.length`, sinon marché legacy (`activeTopMarket` conservé pour compat). Handler `.topm-chip` mort laissé inerte.
+
+**Vérifié (preview)** : `topm-dd`+chips absents ; `#ts-select` 16 stratégies (BTTS Oui/L'Artilleur…) ; multi OVER_2_5+BTTS_YES → `activeStrategies=['OVER_2_5','BTTS_YES']`, label « 2 stratégies », 2 lignes cochées ; `calcTopStrategiesScore` mock = 70 (max) ; recherche « artill » → BTTS_YES (tipster) ; untoggle/`tsPickAll` OK ; **zéro erreur console**.
+
+---
+
+## [v10.29] — 2026-05-17
+
+### Supprimé — 2ᵉ ligne de filtres (`#league-filter-row`) retirée de l'UI
+
+Ligne « LIGUE : » + select tri devenue redondante (filtre ligues = `#ml-league` en ligne 1 depuis v10.27). `#league-filter-row { display:none !important }` : ligne retirée visuellement, **markup conservé en DOM** car `rebuildCountryChips`/`buildLeagueMS`/`setCountrySort`/`syncCountryChipUI`/`initLeagueFilters` référencent `#country-filter-row`, `#country-sort-select`, `#country-mobile-select` (un retrait DOM → `rebuildCountryChips` early-return → `buildLeagueMS` jamais appelé → filtre ligues mort). Tri pays = `countrySortMode` (défaut `matches`, v10.28), pilotable en interne sans UI.
+
+**Vérifié (preview, données réelles)** : `#league-filter-row` `display:none` (offsetHeight 0) mais présent en DOM ; `#ml-league` toujours dans `day-filter-row` ; `buildLeagueMS` → 45 pays construits ; éléments JS présents ; **zéro erreur console**.
+
+---
+
+## [v10.28] — 2026-05-17
+
+### Supprimé — Option de tri « Priorité »
+
+`<option value="priority">Priorité</option>` retirée de `#country-sort-select` (reste : Matchs/jour ↓, Edge moyen ↓). Défaut `countrySortMode` : `'priority'` → `'matches'` ; coercition `localStorage ps_country_sort==='priority'` → `'matches'` (évite valeur orpheline sur le select). Branche `else` de `rebuildCountryChips` (tri priorité) conservée comme fallback interne d'ordonnancement, sans exposition UI.
+
+**Vérifié (preview)** : `#country-sort-select` options = `['matches','edge']`, `countrySortMode='matches'`, `select.value='matches'` valide, plus aucune option « Priorité ».
+
+---
+
+## [v10.27] — 2026-05-17
+
+### Modifié — Filtre « Toutes les ligues » repositionné en 1ʳᵉ ligne
+
+`#ml-league` (multi-select ligues) déplacé de `#league-filter-row` vers `#day-filter-row`, à droite de « Tous les jours » (`style="margin-left:auto"` → poussé à droite de la ligne 1 flex). `#league-filter-row` conserve label « Ligue : », `#country-sort-select` et machinerie pays masquée. Popup inchangé (`position:fixed`, `mlPosition` ancré au trigger → fonctionne quel que soit le parent).
+
+**Vérifié (preview)** : `#ml-league` parent = `day-filter-row` (dernier enfant, après day-dd), 1 seule instance, absent de `league-filter-row`, popup `position:fixed` largeur 300. Aucune erreur liée (logs `Failed to fetch` = artefacts evals test pendant reload).
+
+---
+
+## [v10.26] — 2026-05-17
+
+### Corrigé — Multi-sélection des championnats (ligues) par pays
+
+**Bug** : ligues mono-sélection (`mlPickLeague` → `activeLeague` unique + vidait `activeCountries` + fermait le popup). Impossible de cocher plusieurs championnats.
+
+**Frontend (pariscore.html)**
+- Nouvel état global `activeLeagues = []` (odds_key, multi).
+- **Filtre `renderMatches`** : ancien double filtre `activeCountries` puis `activeLeague===` remplacé par **union** : `Set(ligues des pays cochés ∪ activeLeagues ∪ activeLeague legacy)` → `filtered.filter(sport ∈ set)`. Combinaison pays + ligues individuelles supportée.
+- `mlToggleLeague(sport)` (remplace `mlPickLeague`) : push/splice dans `activeLeagues`, **panneau reste ouvert**, ne vide plus les pays. Lignes ligue = case à cocher `.mls-lcheck` (coche rouge si sélectionnée).
+- `mlSyncUI` : label intelligent (`Toutes les ligues` / nom pays / nom ligue / « N sélections » = pays+ligues), surbrillance lignes ligues via `activeLeagues`. `mlPickAll` vide aussi `activeLeagues`.
+
+**Vérifié (preview, données réelles)** : toggle Ligue 1 + Premier League → `activeLeagues=['soccer_france_ligue_one','soccer_epl']`, label « 2 sélections », 2 lignes cochées ; + pays Espagne → « 3 sélections », set filtre union = 4 clés ; décoche 1 → reste EPL ; `mlPickAll` → reset « Toutes les ligues ». Aucune erreur liée (les `Failed to fetch` console = artefacts de tests `initLeagueFilters` pendant reload, catch géré, pré-existant).
+
+---
+
+## [v10.25] — 2026-05-17
+
+### Corrigé / Ajouté — Popup filtre Ligues visible + sous-listes ligues par pays
+
+**Bug** : panneau `#ml-panel` (`position:absolute`) clippé par `.filter-console { overflow:hidden; isolation:isolate }` → invisible au 1er regard.
+
+**Frontend (pariscore.html)**
+- **Popup `position:fixed` + `z-index:9999`** : échappe à `overflow:hidden`. Positionné en JS (`mlPosition`) sous le trigger via `getBoundingClientRect` ; `max-height` = espace dispo sous le bouton (scroll interne) ; clamp horizontal anti-débordement. Reposition `requestAnimationFrame`+`setTimeout(60)` à l'ouverture (layout post-gate) + sur `resize`/`scroll` capture.
+- **Sous-listes ligues** : chaque pays = groupe `.mls-grp` → ligne pays (`.mls-rowmain` toggle multi-sélection + case) + bouton chevron `.mls-exp` qui déplie `.mls-leagues` (ligues du pays, `.mls-league` cliquables avec tag T1/T2). `mlExpand` toggle, `mlPickLeague(sport)` → `activeLeague`, vide `activeCountries`, `initLeagueHub`, ferme le popup.
+- **Recherche** étendue : filtre pays (FR+EN) **et** noms de ligues ; auto-déplie le groupe si match sur une ligue.
+- `mlSyncUI` gère état ligue active (label = nom ligue), surbrillance ligne/ligue sélectionnée.
+
+**Vérifié (preview, données réelles)** : panel `display:block position:fixed z-index:9999`, dans le viewport (top 461 / bottom 742 ≤ 760, `max-height` 281 + scroll), largeur 300. Expand France → 2 ligues (Ligue 1…). `mlPickLeague` → `activeLeague='soccer_france_ligue_one'`, label « Ligue 1 », popup fermé, `activeCountries` vidé. Multi-pays intact. **Zéro erreur console**.
+
+---
+
+## [v10.24] — 2026-05-17
+
+### Ajouté — Filtre Ligues : multi-sélection + drapeaux + noms FR
+
+**Contexte** : `#country-mobile-select` (select natif, mono-sélection, options sans drapeau, pays en anglais) jugé limité.
+
+**Frontend (pariscore.html)**
+- **Composant `#ml-league` (multi-select)** : remplace visuellement le `<select>` natif (gardé `hidden` pour compat `markFilterDD`/neutral). Trigger graphite trading-chip + panneau popover.
+- **Multi-sélection** : chaque pays = ligne cochable (case + drapeau + nom). Coche/décoche → `mlToggleCountry` push/splice dans `activeCountries[]` (pipeline `renderMatches` déjà multi-pays). « Toutes les ligues » (`mlPickAll`) reset. Label trigger : « Toutes les ligues » / « Pays » / « N pays sélectionnés ».
+- **Drapeaux** : `getCountryFlag()` (img flagcdn) rendu dans le panneau HTML (impossible dans `<option>` natif).
+- **Noms FR** : map `COUNTRY_FR` (EN→FR, ex. England→Angleterre, Germany→Allemagne, Saudi Arabia→Arabie Saoudite…) + `frCountry()`. Recherche `#ml-search` insensible accents/casse sur libellé FR **et** clé EN.
+- **Style** : popover graphite (cohérent v10.22), case cochée gradient rouge, hover, `:focus-visible`, responsive ≤768px pleine largeur. Fermeture clic extérieur. `aria-multiselectable`/`role=listbox`/`aria-selected`.
+- Sync : `buildLeagueMS()` appelé en fin de `rebuildCountryChips` ; `onCountryMobileSelect` appelle `mlSyncUI()` ; cohérence avec `syncCountryChipUI`/`activeCountries`.
+
+**Vérifié (preview, données réelles `/leagues_config.json`)** : 45 pays rendus, noms FR (Angleterre/Espagne/Allemagne…), drapeaux `img.country-flag` présents, select natif `hidden`. Multi : France+Spain → `activeCountries=['France','Spain']`, label « 2 pays sélectionnés », 2 lignes `sel` ; décoche → « Espagne » ; `mlPickAll` → reset « Toutes les ligues ». Recherche FR : « allem »→Germany, « angl »→England. **Zéro erreur console**.
+
+**Fix doublon** : règle CSS `#country-mobile-select { display:block }` écrasait l'attribut `hidden` → 2 boutons « Toutes les ligues » affichés. Remplacée par `display:none !important` (select natif conservé en DOM pour compat `markFilterDD`/neutral). Un seul contrôle visible (`#ml-league`).
+
+---
+
+## [v10.23] — 2026-05-17
+
+### Supprimé — Rangée « Filtre rapide » (et son remplacement) retirées
+
+**Contexte** : rangée « Filtre rapide » (presets Top 5 Europe / Live / Toutes T1 / Scandinavie + `preset-dd`) jugée inutile. Remplacement temporaire (`#quick-filter-row` : « Toutes les ligues » + « Matchs/jour ») également jugé non désiré par le DG → supprimé.
+
+**Frontend (pariscore.html)** — état final
+- **Supprimé** : `#preset-filter-row` (4 `.preset-pill` data-preset + `<select id="preset-dd">`) ; spec `preset-dd` retirée de `buildFilterDropdowns` ; `#quick-filter-row` + fonctions `qfAllLeagues`/`qfSortMatches` + sync DOMContentLoaded + règle CSS `#quick-filter-row`. Handler mort `.preset-pill[data-preset]` (l.18213) laissé inerte (jamais matché, zéro risque). Réfs CSS preset nettoyées (retrait masquage desktop/mobile).
+- Reset ligues + tri matchs/jour restent accessibles via les contrôles existants de `#league-filter-row` (chip pays « Toutes », `#country-sort-select`).
+
+**Vérifié (preview)** : `preset-filter-row`, `preset-dd`, `quick-filter-row` absents ; `qfAllLeagues` undefined ; **zéro erreur console**.
+
+### Modifié — `#league-filter-row` remonté en 2ᵉ position
+
+Rangée « Ligue : » (chips pays + `#country-sort-select` Matchs/jour + `#country-mobile-select` Toutes les ligues) déplacée juste après `#day-filter-row`. Ordre `#filter-console` final : day → **league** → topn → edge → period → kickoff → adv. Bloc HTML déplacé tel quel (ids/handlers inchangés). Vérifié : ordre correct, 1 seule instance, zéro erreur console.
+
+---
+
+## [v10.22] — 2026-05-17
+
+### Refondu — Bulles filtres « Graphite Trading-Chip » (suite v10.21)
+
+**Contexte** : forme/couleur des bulles de filtres jugée fade. DG a choisi (AskUserQuestion) le concept **C — Graphite Trading-Chip**, scope **tous les contrôles**.
+
+**Frontend (pariscore.html) — CSS, sélecteurs/ids inchangés (zéro impact JS)**
+- **Tokens graphite** : `--fc-graphite` / `--fc-graphite-hi` (dégradé anthracite 3 stops `#363b43→#20242a→#181b20`), `--fc-ink` `#cfd4db`. Relief 3D revu : reflet haut `inset rgba(255,255,255,.10)` + **arête sombre bas** `inset 0 -1px 0 rgba(0,0,0,.55)` + ombre portée profonde (extrusion terminal). `--fc-press` plus marqué (`inset 0 3px 7px`). Variantes `body.dark-theme`.
+- **Surface graphite identique clair/dark** (look terminal quant) sur : `.filter-chip`, `.filter-dd`, `#country-mobile-select`, `#country-sort-select`, `.preset-pill`, `#fav/#steam/#adv-reset`. Texte gris clair, chevron SVG rouge vif `#ff3b3b` (pop sur graphite), `<option>` fond `#1c1f24`.
+- **Forme** : `border-radius` 7/16/20px → **12px** uniforme (arrondi pro, moins « pilule plate »), padding +1px.
+- **États** : hover = `translateY(-2px)` + surface `--fc-graphite-hi` + texte/bord rouge `#ff6168` + halo rouge `rgba(237,28,36,.30)`. Actif = gradient rouge 3 stops `#ff2a33→accent→accent-dim` + **enfoncement** `--fc-press` + glow + `text-shadow`. `:focus-visible` anneau rouge. Override clair (ex-noir) aligné. `dd-on` = liseré rouge inset.
+
+**Vérifié (preview, computed-styles)** : chip/dd/preset = `linear-gradient(rgb(54,59,67)…)` graphite, texte `rgb(207,212,219)`, radius 12px, ombre `inset+drop` ; actif = `linear-gradient(rgb(255,42,51)…)` rouge texte blanc pressé ; chevron SVG rouge ; **zéro erreur console**. Identité Barlow/console globale intacte.
+
+---
+
+## [v10.21] — 2026-05-17
+
+### Refondu — Barre de filtres « 3D Glass-Neumorphism » (`#filter-console`)
+
+**Contexte** : barre de filtres jugée trop plate (« formulaire administratif »). Manque l'identité outil de trading quant. Refonte validée DG (workflow : audit localisation → rapport écrit → validation → impl). Recos appliquées (hybride, polices console-only, SVG, charte L'Équipe préservée).
+
+**Frontend (pariscore.html) — CSS**
+- **Tokens 3D scopés** `#filter-console` : `--fc-relief` / `--fc-relief-hi` / `--fc-press` (double ombre face lumineuse haut + face sombre bas) + variantes dark.
+- **Relief premium** sur `.filter-chip` et `.preset-pill` : repos = gradient blanc + relief sorti ; `:hover` = `translateY(-1px)` + ombre accentuée + accent rouge ; **`.active` = enfoncement mécanique** (`inset box-shadow` + gradient rouge `--accent`→`--accent-dim`, blanc). Override clair (ex-noir plat #1A1A1A) remplacé par rouge pressé.
+- **Verre dépoli dark-only** : `body.dark-theme .filter-console` → `backdrop-filter: blur(10px) saturate(140%)` + bordure translucide `rgba(255,255,255,0.10)`. Thème clair conservé opaque (préserve identité L'Équipe — mémoire « pas data-terminal dark »).
+- **Polices** : labels/titres → `Plus Jakarta Sans` (700/800) ; valeurs numériques + selects + `.filter-dd` → `JetBrains Mono` + `tabular-nums` (alignement pixel). Scopé console uniquement (identité Barlow globale intacte). Ajout `Plus Jakarta Sans` au `<link>` Google Fonts (JetBrains déjà chargé).
+- **`.fc-ic`** : classe icône vectorielle 13px, `stroke: currentColor`.
+- **Accessibilité** : `:focus-visible` accent, `@media (prefers-reduced-motion: reduce)` annule translate/transition.
+- **Responsive `@media (max-width:430px)`** : rangées `flex-wrap`, chips/icônes réduits, marges auto neutralisées, selects pleine largeur, `.fc-head` wrap — zéro overflow horizontal.
+
+**Frontend — Markup (zéro émoji)**
+- 9 émojis remplacés par SVG inline `.fc-ic` (trophy, bolt, globe, snowflake, star ×3, cpu/Smart, coin/Value, trending-down/Steam, x/Reset). Émojis dans `<option>`/placeholders (non-SVG-able) : texte nettoyé (`Value only`, `Rechercher…`, `PSG, Real Madrid…`, `Toutes les ligues`). Placeholder JS `ph` preset-dd : `⚡` retiré.
+
+**Vérifié (preview, computed-styles — autoritatif)** : 8 SVG `.fc-ic` rendus, **zéro émoji** (textNodes + options + placeholders), chip actif = gradient rouge + `inset` pressé, police chip = Plus Jakarta Sans, police `.filter-dd` = JetBrains Mono, thème clair sans backdrop (glass dark-only par design), responsive ≤430px, **zéro erreur/warning console**. Sélecteurs CSS/ids inchangés → zéro impact JS (`pickChipDD`/`toggleFavFilter`/`setPeriod`/`buildFilterDropdowns`). Inline styles `.filter-row` conservés (déjà neutralisés par `!important`, retrait jugé risqué pour `flex-wrap`/`gap` — décision pt4 reportée).
+
+---
+
+## [v10.20] — 2026-05-17
+
+### Ajouté / Refondu — Tableau matchs « Value-First » (Concept A desktop) + nettoyage tennis
+
+**Contexte** : tableau jugé peu attractif. Analyse concurrentielle (OddAlerts / Betmines / Datafoot) + best practices UX tableaux denses → rapport `.context/rapport-analyse-concurrentielle-tableau-2026.md`. Concept validé par le DG : **A (table Value-First) desktop + B (cartes) mobile**, scope football + tennis. Mobile (Concept B) déjà livré (`renderMobileCards`).
+
+**Frontend (pariscore.html) — football `#vb-table`**
+- **Colonne VALUE héros** figée à droite (`position:sticky;right:0`, modèle OddAlerts/Datafoot) : badge edge dévigé + flèche `▲/▼/＝` + pick @cote + tag tier. Ajoutée au `<thead>` (`.vb-value-col`) et au template `<tr>` (`vbHeroHtml`). `colspan` des en-têtes de ligue auto-recalculé (querySelectorAll th).
+- **Tiers décision** (réutilise la logique cartes mobile) : `hot/VALUE` (edge≥5), `try/À TENTER` (≥1.5), `neu/NEUTRE` (>0), `no/ÉVITER` (≤0), `na/DATA` (live/sans edge). Classe ligne `is-value-hot`/`is-value`.
+- **Zéro zébrure** : suppression `nth-child(odd/even)` (thème dark **et** clair). Fond uniforme, divider 1px, **couleur = sémantique uniquement** — accent gauche rouge (`box-shadow inset`) sur lignes value, pas de bandes décoratives.
+- **Accessibilité** : couleur jamais seule (flèche `▲▼` + tag texte), `font-variant-numeric: tabular-nums` sur colonnes numériques, état `:focus-within`, `@media (prefers-reduced-motion: reduce)`, `title` sur en-tête et badge, ellipsis sur le pick.
+- Hover simplifié (plus de dégradé), transition courte `background`.
+
+**Frontend — tennis `#tennis-vb-table` (refonte CSS-level)**
+- Zéro zébrure (`nth-child(even)` retiré → fond uniforme, accent hover conservé), `tabular-nums` sur cellules numériques, `:focus-within`, `prefers-reduced-motion`. Design dédié dark conservé (colonne Value EV+ déjà présente).
+
+**Vérifié (preview, données réelles)** : 113 lignes football rendues, 113 cellules VALUE, 18 value bets tier `hot`, tiers/flèches/tags corrects (mock + réel), zébrure tuée (fond uniforme), colonne VALUE `sticky right:0` 92px, `tabular-nums` actif, accent gauche `is-value-hot` = rouge inset, thème clair, **zéro erreur/warning console**. Tennis : table intacte (14 th), aucune régression. Conforme Web Interface Guidelines (Vercel).
+
+---
+
+## [v10.19] — 2026-05-17
+
+### Corrigé — Colonne Clsst figée : K League 1 (Corée) + anti-contamination saison N-1
+
+**Cause racine (panne multi-couches)**
+- **BSD sans saison** : `/seasons/?league=50` (K League, BSD id 50, config 292) renvoie **0 saison** (`is_current` absent, liste vide). `fetchBSDStandings` bailait au guard "Aucune saison" → `null`, alors que `/leagues/50/standings/` **sans** param `season` renvoie la table active (12 équipes).
+- **Contamination cross-source** : sur échec BSD, la Phase 2 `fetchStats` injectait le classement API-Football. Le plan gratuit ne sert que ≤ saison **2024 TERMINÉE** → table N-1 figée (P33, 61 pts) cohabitant avec la table BSD courante (P15) = doublons au mauvais rang, colonne Clsst jamais à jour.
+- **Gate persistant** : `db.statsUpdateByLeague[292]` persisté en SQLite → Phase 1 sautait la ligue "données fraîches" à vie, ne purgeant jamais les lignes périmées.
+
+**API source confirmée (BSD)** : K League 1 = **BSD id 50** (config 292), **aucune saison** exposée (appeler `/standings/` sans `season`). Champs : `position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, form, live` (xG = 0 pour cette ligue). FC Seoul #1 (P15, 32 pts) — conforme.
+
+**Backend (server.js)**
+- `fetchBSDStandings` : tente `/leagues/{id}/standings/` **sans** `season` quand aucune saison trouvée (au lieu de `return null`).
+- `ESPN_STANDINGS_SLUG[292]='kor.1'` — secours zéro quota.
+- Sanitizer one-shot au boot (`loadDB`) : purge les lignes `_source:'api-football'` des ligues couvertes BSD + reset du gate de fraîcheur.
+- `fetchStats` Phase 1 : bypass du gate si lignes `api-football` périmées détectées ; purge **totale** des lignes de la ligue avant injection BSD/ESPN.
+- `fetchStats` Phase 2 : **ne retombe plus** sur API-Football pour les ligues BSD en échec (anti-contamination N-1) — seule `BSD_FALLBACK_NEEDED` (liste curée) est éligible.
+- **Garde lecture autoritaire** (chokepoint) : route `/api/v1/standings/:id` (`buildRows`) **et** `buildMatchRecord` (colonne Clsst) ignorent toute entrée `_source:'api-football'` pour une ligue couverte BSD → rang BSD/ESPN uniquement, sinon "chargement…".
+
+**Vérifié** : `/api/v1/standings/292` → 12 équipes `srcs:['bsd']`, 0 ligne P>25, FC Seoul #1 P15 32pt ppg2.13. Serie A (`/135`) : toujours `bsd`, Como #6 65pt — pas de régression. `node --check` OK.
+
+---
+
+## [v10.18] — 2026-05-17
+
+### Corrigé — Colonne classement vide (rank "-") sur ligues BSD (ex: Serie A)
+
+**Cause racine**
+- `fetchBSDStandings()` lisait `entry.team` pour construire la clé `db.teamStats` (`normName(entry.team)`).
+- L'API BSD expose le nom de l'équipe sous **`team_name`** (+ `team_id`), pas `team`. Aucun champ `team` dans le payload standings.
+- Résultat : `normName(undefined)` → clé vide pour **toutes** les équipes → écrasement mutuel, `rank`/`ppg`/stats jamais résolus par le builder de match → affichage "-" et PPG générique.
+
+**API source confirmée (BSD)**
+- Serie A italienne = **BSD league id 4** (config 135), saison courante `358` ("Serie A 25/26"). Ne pas confondre avec id 9 (Brasileirão) ni 42 (Coppa Italia).
+- Champs standings BSD : `position, team_id, team_name, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live`. **Pas de splits domicile/extérieur** → estimation 50/50 conservée (comportement existant).
+
+**Backend (server.js — `fetchBSDStandings`)**
+- Helper `teamLabel(e)` = `e.team_name || e.team?.name || e.team || e.name || ''` (robuste aux variantes/objets imbriqués + rétro-compat).
+- `key = normName(teamName)` ; ligne ignorée avec warning si nom vide (au lieu de polluer `db.teamStats` avec une clé vide).
+- Logs `[DENYLIST]`/`[BSD] Splits`/`[DATA MAPPING]` utilisent désormais `teamName`.
+- Bénéficie aussi à la route `GET /api/v1/standings/:id` (même fonction).
+
+**Vérifié** : `/api/v1/standings/135` → 20 équipes `_source:bsd` — Inter #1 (85 pts, PPG 2.36), Como #6 (65 pts, PPG 1.81, GF/GA 60/28), Parma #13 (42 pts, PPG 1.17). Conforme à la vérité BSD. `node --check` OK.
+
+---
+
 ## [v10.17] — 2026-05-16
 
 ### Corrigé — Classement J1 League (Japon) vide : source de secours ESPN
