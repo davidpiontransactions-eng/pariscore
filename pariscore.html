@@ -12749,6 +12749,22 @@ function initSSE() {
         if (p.live_momentum         !== undefined) m.live_momentum         = p.live_momentum;
         if (p.live_stats            !== undefined) m.live_stats            = p.live_stats;
       });
+      // [FIX live] live_patch ne re-rendait jamais le tableau → un match qui
+      // passe LIVE en cours de session n'avait ni bouton LIVE ni Bets Live
+      // (fix v10.55 dans renderMatches contourné par ce chemin SSE). On force
+      // un renderMatches ciblé quand un match patché est live mais que sa
+      // ligne DOM n'a pas encore l'UI live (pas de .live-btn).
+      var _needRerender = data.patches.some(function (p) {
+        var mm = allMatches.find(function (x) { return x.id === p.id; });
+        if (!mm) return false;
+        var liveNow = (typeof isMatchInProgress === 'function') ? isMatchInProgress(mm) : !!mm.live_score;
+        if (!liveNow) return false;
+        var rw = document.querySelector('tr[data-match-id="' + p.id + '"]');
+        return !rw || !rw.querySelector('.live-btn');
+      });
+      if (_needRerender && typeof renderMatches === 'function') {
+        renderMatches(allMatches);
+      }
       if (activeMatchTab === 'live') {
         updateLiveDashboard(allMatches);
         buildLiveTop5Panel();

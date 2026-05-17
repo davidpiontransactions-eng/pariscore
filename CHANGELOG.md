@@ -21,6 +21,37 @@
 
 ---
 
+## [v10.58] — 2026-05-17
+
+### Corrigé — Module LIVE mort en prod : 3 causes racines (pagination BSD + cross-provider + null-status)
+
+Diagnostic via logs `[LiveDBG]` ajoutés à `pollLiveScores`/`pollLiveScoresSmart`.
+
+1. **Pagination BSD tronquée (cause principale)** : `fetchBSDMatches` demandait `page_size=100` mais BSD plafonne à **50/page** ; l'arrêt `results.length < PAGE_SIZE` (50<100) était toujours vrai → **stop après page 1** → seuls les 50 premiers events du jour (matchs finis du matin) lus, **matchs LIVE/à venir (pages 2+) jamais récupérés**. Fix : `PAGE_SIZE=50`, pagination tant que `res.data.next` (MAX_PAGES 40).
+2. **Mismatch d'ID inter-fournisseurs** : `pollLiveScores` joignait les events BSD (`id=bsd_*`) aux matchs affichés par id strict, or ceux-ci sont sourcés Odds/football-data (`id=fd_*`) → `matchedEnBase=0` → live jamais appliqué. Fix : matching multi-clé `id` → `_bsd_event_id` → équipes normalisées (home@away).
+3. **Crash null-status** : `e.status.includes('half')` throw si `e.status` null → catch global → `fetchBSDMatches` renvoie `[]`. Fix : `String(e.status||'')` + détection live élargie (inprogress/half/ht/playing/live/extra/penalt + minute en cours).
+4. **SSE `live_patch` ne re-rendait pas** (v10.57) : re-render ciblé sur transition prematch→live.
+
+`[LiveDBG]` : log diagnostic (bsdEvents/avecLiveScore/matchedEnBase/statuts + idle-skip avec contexte) — à retirer une fois la prod validée.
+
+**Vérifié** : `node --check` OK ; logique live_score table OK (null/finished/timed→null, inprogress/half/minute→score) ; fix présent sur VPS (grep lignes 7826/7837). Validation finale = pendant matchs en direct (logs `bsdEvents>50` + `avecLiveScore>0` + `matchés>0`).
+
+---
+
+## [v10.57] — 2026-05-17
+
+### Corrigé — Bug LIVE persistant : SSE live_patch ne re-rendait pas le tableau
+
+**Audit** : `patchLiveMatches` = code mort (jamais appelé). Vrai chemin = handler SSE **`live_patch`** : appliquait les champs `m.live_*`/`status` sur `allMatches` mais **n'appelait jamais `renderMatches`** → un match passant LIVE pendant la session restait rendu prematch (ni bouton LIVE, ni « Bets Live », ni classe `match-row-live`). Le fix v10.55 (renderMatches/isMatchInProgress) était correct mais **contourné** par ce chemin.
+
+**Fix (pariscore.html)** — handler `live_patch` : après application des patches, `renderMatches(allMatches)` déclenché **uniquement** si un match patché est `isMatchInProgress` ET que sa ligne DOM n'a pas encore `.live-btn` (transition prematch→live). Coût nul hors transition (pas de re-render à chaque tick).
+
+**Vérifié (serveur redémarré, simulation patch)** : ligne prematch (`live=false, btn=false, Bets Prédictifs`) → patch `status:'1H'` → re-render → `live=true, btn=true, Bets Live`. **Zéro erreur console**.
+
+> ⚠️ Bug côté `pariscore.html` : v10.55 + v10.57 ne sont effectifs sur le VPS qu'après **upload `pariscore.html`** (jusqu'ici seuls server.js/bsd_config poussés pour v10.56).
+
+---
+
 ## [v10.56] — 2026-05-17
 
 ### Ajouté — Routing standings ligues non-BSD : ESPN (+9) + API-Football fallback (7 sans ESPN)
