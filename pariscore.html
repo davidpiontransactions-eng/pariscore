@@ -1003,6 +1003,11 @@
   .player-rating { font: 600 10px/1 var(--font-mono); padding: 2px 5px; border-radius: 3px; margin-left: 6px; }
   .player-stat { font: 800 18px/1 var(--font-head); margin-left: auto; }
   .player-stat-lbl { font-size: 9px; color: var(--text3); text-align: right; }
+  /* Stats Joueurs — grille + formule + noms */
+  .ins-kp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+  .ins-kpi-formula { font-size: 10px; color: var(--text3); font-weight: 400;
+    letter-spacing: normal; text-transform: none; }
+  .player-name { overflow-wrap: break-word; }
   /* Standings */
   .standings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .standings-table th { font: 600 9px/1 var(--font-mono); letter-spacing: 1px; text-transform: uppercase; color: var(--text3); padding: 5px 8px; text-align: center; border-bottom: 1px solid var(--border); }
@@ -2872,6 +2877,7 @@
     border-radius: 12px;
     padding: 20px;
     max-height: calc(100vh - 120px);
+    max-height: calc(100svh - 120px);
     overflow-y: auto;
   }
   .toc-header {
@@ -4788,6 +4794,425 @@
     }
   }
 
+  /* ════════ MOBILE UX FIX (≤768px) — desktop strictement intact ════════ */
+  /* base : éléments mobile-only masqués hors mobile (ordre AVANT le @media) */
+  .tvb-filter-toggle { display: none; }
+  .bn-theme-toggle { display: none; }
+  .adv-chips-m { display: none; }  /* presets mobile only */
+  #mob-filter-overlay, #mob-filter-sheet, #mob-filter-btn { display: none; }
+  #match-tab-mob { display: none; }  /* dropdown onglets — mobile only */
+  #ins-tab-mob { display: none; }    /* dropdown sections Insights — mobile only */
+  /* Toggle jour/nuit flottant : page d'accueil UNIQUEMENT (tous écrans) */
+  #theme-toggle { display: none !important; }
+  body[data-page="accueil"] #theme-toggle { display: inline-block !important; }
+
+  @media (max-width: 768px) {
+    /* 1 — Anti-débordement horizontal global */
+    html, body { max-width: 100vw; overflow-x: hidden; }
+    .section, #tennis-valuebets-section, #vb-cards, .mc, .mc-metrics { max-width: 100vw; }
+    img, svg { max-width: 100%; height: auto; }
+    footer {
+      flex-direction: column; align-items: flex-start; gap: 14px;
+      padding: 28px 18px calc(80px + env(safe-area-inset-bottom)); text-align: left;
+    }
+    .footer-links { flex-wrap: wrap; gap: 12px 18px; }
+
+    /* 2 — TENNIS : accordéon « Filtres avancés » (réduit surcharge verticale) */
+    .tvb-filter-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; gap: 8px; margin: 0 0 10px;
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 13px 16px;
+      font-family: var(--font-head); font-weight: 800; font-size: 14px;
+      text-transform: uppercase; letter-spacing: .4px; color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tvb-ft-caret { color: var(--accent); transition: transform .2s; }
+    .tvb-filter-toggle.open .tvb-ft-caret { transform: rotate(180deg); }
+    #tennis-vb-filters { display: none !important; }
+    body.tvbf-open #tennis-vb-filters {
+      display: flex !important; flex-direction: column; align-items: stretch; gap: 10px;
+    }
+    /* chaque groupe de filtres = strip scroll horizontal propre + snap */
+    #tennis-vb-filters > div {
+      display: flex !important; flex-wrap: nowrap !important;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity; gap: 6px; width: 100%;
+      scrollbar-width: none; padding-bottom: 2px;
+    }
+    #tennis-vb-filters > div::-webkit-scrollbar { display: none; }
+    #tennis-vb-filters > div > * { flex: 0 0 auto; scroll-snap-align: start; }
+    #tennis-vb-filters .tvb-select,
+    #tennis-vb-filters .tvb-search { max-width: 66vw; }
+    /* indice visuel : dégradé bord droit = « ça scrolle » */
+    #tennis-vb-filters > div {
+      -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+              mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+    }
+
+    /* 3 — Cartes matchs aérées (padding + radius doux + séparation) */
+    #vb-cards { gap: 10px; padding: 10px 12px 16px; }
+    .mc {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .mc-grp { margin: 6px 0 2px; border-radius: 8px; }
+    /* Onglets modal Insights → dropdown (mobile) */
+    #insights-panel .ins-tabs { display: none !important; }
+    #ins-tab-mob {
+      display: block; width: 100%; box-sizing: border-box; margin: 0 0 14px;
+      background: #fff; color: #111; border: 1px solid #D0D0D0;
+      border-radius: 10px; padding: 12px 14px;
+      font-family: var(--font-head); font-weight: 800; font-size: 16px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Onglets matchs → dropdown (mobile) */
+    .table-header { flex-wrap: wrap; gap: 8px; }
+    .table-header > div:first-child { width: 100%; gap: 8px !important; }
+    .table-header-title { font-size: 14px; white-space: nowrap; }
+    .match-tabs { display: none !important; }
+    #match-tab-mob {
+      display: block; flex: 1; min-width: 140px;
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--border2); border-radius: 10px;
+      padding: 10px 14px; font-family: var(--font-head); font-weight: 700;
+      font-size: 16px; -webkit-tap-highlight-color: transparent;
+    }
+    .table-header .table-count { font-size: 11px; }
+
+    /* Panneau décision inline au tap (stats clés + pari conseillé) */
+    .mc-detail { display: none; margin-top: 10px; padding-top: 10px;
+      border-top: 1px dashed var(--border2); }
+    .mc.mc-open .mc-detail { display: block; }
+    .mc.mc-open { background: var(--bg2); }
+    .mcd-reco {
+      font-family: var(--font-head); font-weight: 700; font-size: 12.5px;
+      padding: 8px 10px; border-radius: 8px; margin-bottom: 10px;
+    }
+    .mcd-reco b { font-weight: 900; margin-right: 6px; }
+    .mcd-reco.mc-v-go  { background: rgba(10,143,60,.14); color: #16a34a; }
+    .mcd-reco.mc-v-try { background: var(--accent-bg); color: var(--accent); }
+    .mcd-reco.mc-v-neu, .mcd-reco.mc-v-no, .mcd-reco.mc-v-na {
+      background: var(--bg3); color: var(--text2); }
+    .mcd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .mcd-c {
+      background: var(--bg3); border-radius: 8px; padding: 8px 10px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .mcd-c span { font-family: var(--font-mono); font-size: 9.5px;
+      text-transform: uppercase; letter-spacing: .4px; color: var(--text3); }
+    .mcd-c b { font-family: var(--font-head); font-size: 14px; font-weight: 800; color: var(--text); }
+    .mcd-more {
+      width: 100%; margin-top: 10px; padding: 11px; border: 1px solid var(--accent);
+      background: transparent; color: var(--accent); border-radius: 10px;
+      font-family: var(--font-head); font-weight: 800; font-size: 13px;
+      text-transform: uppercase; letter-spacing: .4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* P1/P3/P4 — copie OddAlerts : pays→ligue, sections, ligne match */
+    .mc-ctry-h { background: #1a3a8f !important; color: #fff !important; font-size: 13px; }
+    .mc-lg-h { background: var(--bg3) !important; color: var(--text) !important;
+      font-size: 12px; padding-left: 18px !important; }
+    .mc-lq { font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+    .mc-lq-hi  { background: rgba(10,143,60,.2); color: #16a34a; }
+    .mc-lq-ok  { background: rgba(10,143,60,.14); color: #1f9d52; }
+    .mc-lq-mid { background: var(--accent-bg); color: var(--accent); }
+    .mc-lq-lo, .mc-lq-na { background: var(--bg4); color: var(--text3); }
+    .mc-sec-h { background: var(--accent) !important; color: #fff !important; }
+    .mc-lg .mc-acc-body { padding-left: 0; }
+    .mc-sec-link {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 13px 14px; margin: 0 0 2px;
+      background: var(--bg2); border: none; border-bottom: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-head); font-weight: 800;
+      font-size: 13px; text-transform: uppercase; letter-spacing: .4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mc-chip {
+      flex: 0 0 auto; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      background: var(--bg4); color: var(--text2); padding: 2px 7px;
+      border-radius: 999px; margin-right: 6px;
+    }
+    .mc-star {
+      flex: 0 0 auto; background: none; border: none; font-size: 17px;
+      color: var(--text3); padding: 0 4px; -webkit-tap-highlight-color: transparent;
+    }
+    .mc-star.active { color: #ffb400; }
+    .mc-chev { flex: 0 0 auto; color: var(--text3); font-size: 18px; margin-left: 2px; }
+    .mc.mc-open .mc-chev { transform: rotate(90deg); display: inline-block; }
+    #mob-search {
+      width: 100%; box-sizing: border-box; margin: 0 0 9px;
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: 999px;
+      color: var(--text); font-size: 16px; padding: 10px 16px; outline: none;
+    }
+
+    /* Accordéons groupes repliables (façon OddAlerts) */
+    .mc-acc-h {
+      display: flex !important; align-items: center; justify-content: space-between;
+      width: 100%; border: none; text-align: left; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mc-acc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mc-acc-meta {
+      display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+      font-family: var(--font-mono); font-size: 11px; opacity: .85;
+    }
+    .mc-acc-car { display: inline-block; transition: transform .2s; font-size: 11px; }
+    .mc-acc:not(.open) .mc-acc-car { transform: rotate(-90deg); }
+    .mc-acc:not(.open) .mc-acc-body { display: none; }
+
+    /* Verdict décision rapide (prendre/éviter un pari) */
+    .mc-verdict {
+      flex: 0 0 auto; font-family: var(--font-head); font-weight: 900;
+      font-size: 10px; letter-spacing: .5px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 5px; margin-right: 8px; color: #fff;
+    }
+    .mc-v-go  { background: #0a8f3c; }
+    .mc-v-try { background: var(--accent); }
+    .mc-v-neu { background: var(--bg4); color: var(--text2); }
+    .mc-v-no  { background: var(--bg4); color: var(--text3); }
+    .mc-v-na  { background: var(--bg4); color: var(--text3); }
+    .mc-pick {
+      margin-top: 6px; font-family: var(--font-mono); font-size: 11px;
+      font-weight: 700; padding: 5px 9px; border-radius: 6px;
+    }
+    .mc-pick.mc-v-go  { background: rgba(10,143,60,.14); color: #16a34a; }
+    .mc-pick.mc-v-try { background: var(--accent-bg); color: var(--accent); }
+    /* Lot B+C — bande « Paris du jour » + groupes Top/All */
+    .mc-cta-band {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin: 0 0 10px; padding: 16px 16px;
+      background: linear-gradient(135deg, #ff5560 0%, var(--accent) 52%, var(--accent-dim) 100%);
+      border-radius: 16px; color: #fff;
+      box-shadow: 0 8px 22px rgba(237,28,36,0.34);
+    }
+    .mc-cta-t {
+      font-family: var(--font-head); font-weight: 900; font-size: 20px;
+      text-transform: uppercase; letter-spacing: .5px; line-height: 1;
+      text-shadow: 0 1px 0 rgba(0,0,0,.25);
+    }
+    .mc-cta-s { font-size: 12px; opacity: .92; margin-top: 4px; font-weight: 600; }
+    .mc-cta-badge {
+      flex: 0 0 auto; font-family: var(--font-head); font-weight: 900; font-size: 22px;
+      background: rgba(255,255,255,.18); padding: 8px 14px; border-radius: 12px;
+      backdrop-filter: blur(2px);
+    }
+    .mc-cta-empty { background: var(--bg3); color: var(--text2); box-shadow: none;
+      border: 1px solid var(--border2); }
+    .mc-cta-empty .mc-cta-t { color: var(--text); text-shadow: none; }
+    .mc-grp-top {
+      background: var(--accent) !important; color: #fff !important;
+      font-weight: 900; letter-spacing: .6px;
+    }
+    .mc-grp-all { background: var(--text) !important; color: #fff !important; }
+
+    /* Lot G — sliders/ranges → presets chips */
+    .adv-desktop { display: none !important; }
+    #adv-filter-row { flex-direction: column; align-items: stretch; gap: 10px; }
+    #adv-filter-row #adv-reset-btn { margin-left: 0 !important; align-self: flex-start; }
+    .adv-chips-m { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .adv-chips-grp {
+      display: flex; flex-wrap: nowrap; align-items: center; gap: 6px;
+      overflow-x: auto; scrollbar-width: none;
+      scroll-snap-type: x proximity;
+      -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+              mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+    }
+    .adv-chips-grp::-webkit-scrollbar { display: none; }
+    .adv-chips-grp > .filter-chip { flex: 0 0 auto; scroll-snap-align: start; min-height: 44px; }
+    .adv-chips-lbl {
+      flex: 0 0 auto; font-family: var(--font-mono); font-size: 10px;
+      text-transform: uppercase; letter-spacing: .6px; color: var(--text3);
+      min-width: 62px;
+    }
+
+    /* Lot E — bottom-sheet Filtres */
+    #mob-filter-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 36px; padding: 7px 14px; border-radius: 999px;
+      background: var(--accent); color: #fff; border: none;
+      font-family: var(--font-head); font-weight: 800; font-size: 12px;
+      text-transform: uppercase; letter-spacing: .3px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #mob-filter-overlay {
+      display: block; position: fixed; inset: 0; z-index: 9100;
+      background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    #mob-filter-overlay.open { opacity: 1; pointer-events: auto; }
+    #mob-filter-sheet {
+      display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9200;
+      background: var(--bg); border-top: 3px solid var(--accent);
+      padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+      transform: translateY(110%); transition: transform .26s cubic-bezier(.4,0,.2,1);
+      max-height: 84dvh; overflow-y: auto; overscroll-behavior: contain;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.22);
+    }
+    #mob-filter-sheet.open { transform: translateY(0); }
+    .mfs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .mfs-close {
+      flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%;
+      background: var(--bg3); color: var(--text2); border: 1px solid var(--border2);
+      font-size: 15px; -webkit-tap-highlight-color: transparent;
+    }
+    .mfs-count {
+      font-family: var(--font-head); font-weight: 800; font-size: 14px;
+      color: var(--accent); text-transform: uppercase; letter-spacing: .3px;
+      margin: 6px 0 12px;
+    }
+    #mfs-body .filter-row {
+      flex-wrap: wrap !important; margin-bottom: 10px !important;
+      max-height: none !important;
+    }
+    /* Refonte filtre Tennis mobile — propre, uniforme, lisible */
+    body.tvbf-open #tennis-vb-filters { gap: 16px !important; padding: 14px !important; }
+    #tennis-vb-filters > div {
+      flex-direction: row !important; flex-wrap: wrap !important;
+      align-items: center !important; gap: 7px !important;
+      overflow: visible !important;
+      -webkit-mask-image: none !important; mask-image: none !important;
+    }
+    #tennis-vb-filters > div > span {
+      flex: 0 0 100% !important; padding-left: 0 !important;
+      font-size: 10.5px !important; font-weight: 800 !important;
+      letter-spacing: 1px !important; color: var(--text3) !important;
+      margin-bottom: 1px;
+    }
+    #tennis-vb-filters > div > span::before { display: none !important; }
+    #tennis-vb-filters .tennis-vb-filter-btn {
+      min-height: 36px !important; padding: 7px 13px !important;
+      font-size: 12px !important; border-radius: 8px !important;
+      box-shadow: none !important; transform: none !important;
+      flex: 0 0 auto;
+    }
+    #tennis-vb-filters .tennis-vb-filter-btn.is-active {
+      background: var(--accent) !important; border-color: var(--accent) !important;
+      color: #fff !important; transform: none !important; box-shadow: none !important;
+      filter: none !important;
+    }
+    #tennis-vb-filters .tvb-search-wrap { flex: 0 0 100% !important; width: 100% !important; }
+    #tennis-vb-filters .tvb-search-wrap::before { display: none !important; }
+    #tennis-vb-filters .tvb-search,
+    #tennis-vb-filters .tvb-select {
+      width: 100% !important; max-width: 100% !important; box-sizing: border-box;
+      height: 44px !important; border-radius: 10px !important;
+      font-size: 16px !important; padding: 10px 14px !important;
+    }
+    #tennis-vb-filters .tvb-search-clear { right: 12px !important; }
+    #tennis-vb-filters > label {
+      flex: 0 0 100% !important; width: 100%; min-height: 42px;
+      font-size: 13px !important; color: var(--text2) !important;
+      padding: 8px 2px; gap: 10px !important; margin: 0 !important;
+    }
+    #tennis-vb-filters > label input[type="checkbox"] {
+      width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--accent);
+    }
+
+    /* Audit form — tables larges scrollables (Mes Paris/Historique/Prédictions/Tennis) */
+    .tbl-scroll {
+      max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+              mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+    }
+    .tbl-scroll > table { min-width: max-content; }
+    #tennis-abstract-section [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+    #page-tennis .ta-rome-card { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Audit mobile — accueil : hero-stats déborde (3 items nowrap) */
+    .hero-stats {
+      display: grid !important; grid-template-columns: repeat(3, 1fr);
+      gap: 0 !important; margin-top: 24px; padding-top: 20px;
+    }
+    .stat-item { padding: 12px 6px !important; }
+    .stat-num { font-size: 22px !important; }
+    .stat-lbl { font-size: 10px !important; text-align: center; }
+
+    /* Audit mobile — guide : décoration absolue 400px hors écran */
+    .guide-hero-decoration { display: none !important; }
+    #page-guide pre, #page-guide code, #page-guide .gs-article-text {
+      white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+    #page-guide pre { overflow-x: auto; }
+
+    /* Stats Joueurs / Tendance forme / Radar / Buteurs — TOUTES grilles 1 col */
+    .ins-kp-grid { grid-template-columns: 1fr !important; gap: 10px; }
+    #insights-panel [style*="grid-template-columns"],
+    #deep-panel [style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+    }
+    .ins-kp-head { flex-wrap: wrap; }
+    .ins-kpi-formula { display: block; width: 100%; margin-top: 4px;
+      font-size: 11px; letter-spacing: normal; text-transform: none; }
+    #insights-panel .player-card, #deep-panel .player-card {
+      padding: 12px 14px; gap: 12px; align-items: center;
+    }
+    #insights-panel .player-card > div:nth-child(2),
+    #deep-panel .player-card > div:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+    #insights-panel .player-name, #deep-panel .player-name {
+      font-size: 14px; line-height: 1.3; white-space: normal;
+      overflow-wrap: break-word; word-break: normal; overflow: visible;
+    }
+    #insights-panel .player-stat, #deep-panel .player-stat { font-size: 17px; }
+
+    .mfs-apply {
+      position: sticky; bottom: 0; width: 100%; margin-top: 6px;
+      padding: 15px; border: none; border-radius: 14px;
+      background: var(--accent); color: #fff;
+      font-family: var(--font-head); font-weight: 900; font-size: 16px;
+      text-transform: uppercase; letter-spacing: .5px;
+      box-shadow: 0 -2px 14px rgba(0,0,0,0.3);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 4 — Onboarding : compteur value bets bien visible (repère nouvel user) */
+    #mob-bet-count {
+      font-size: 15px !important; padding: 5px 0;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #mob-bet-count::before { content: '🎯'; font-size: 15px; }
+
+    /* 5 — Theme toggle : drawer « Plus » (flottant géré globalement, accueil only) */
+    .bn-theme-toggle {
+      display: block; width: 100%; margin: 2px 0 16px;
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: var(--radius-lg); padding: 14px;
+      font-family: var(--font-head); font-weight: 800; font-size: 15px;
+      text-transform: uppercase; letter-spacing: .5px; color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bn-theme-toggle:active { border-color: var(--accent); color: var(--accent); }
+
+    /* 6 — Anti-zoom iOS : tout champ saisissable ≥16px */
+    input, select, textarea,
+    #league-search, #mob-sort-sel,
+    #tennis-vb-search, .tvb-select, .tvb-search { font-size: 16px !important; }
+
+    /* 7 — Cibles tactiles ≥44px (HIG/Material) */
+    .filter-chip, .mob-chip, .tennis-vb-filter-btn, .preset-pill,
+    .topn-chip, .topm-chip, .topv-chip, .country-chip, .tex-tour-btn,
+    .tex-cal-tour-btn, .auth-tab, .nav-auth-btn, .pwd-eye,
+    .tvb-filter-toggle, #bottom-nav a, .bn-more-grid a {
+      min-height: 44px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .pwd-eye { min-width: 44px; }
+    #bottom-nav a, .bn-more-grid a { display: flex; }
+
+    /* 8 — Viewport dynamique iOS : modales jamais clippées par la barre Safari */
+    #insights-panel, #deep-panel, #score-panel,
+    .paris-modal-card, .tennis-modal-card, #strat-help-modal {
+      max-height: 90dvh !important;
+    }
+    #live-detail-panel { height: 90dvh !important; max-height: 90dvh !important; }
+    #bn-more-sheet { max-height: 80dvh; }
+  }
+
 </style>
 </head>
 <body>
@@ -4878,6 +5303,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 <div id="bn-more-sheet" role="dialog" aria-label="Plus de pages">
   <div class="bn-more-grab"></div>
   <div class="bn-more-title">Plus</div>
+  <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()">☾ Mode Nuit</button>
   <div class="bn-more-grid">
     <a href="#" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>Alertes</a>
     <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span>Hot Picks</a>
@@ -4891,6 +5317,19 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Accueil</a>
     <a href="#" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span>Réglages</a>
   </div>
+</div>
+
+<!-- ░░ BOTTOM SHEET « Filtres » — mobile (Lot E) ░░ -->
+<div id="mob-filter-overlay" onclick="closeMobFilters()"></div>
+<div id="mob-filter-sheet" role="dialog" aria-label="Filtres avancés">
+  <div class="bn-more-grab"></div>
+  <div class="mfs-head">
+    <div class="bn-more-title" style="font-size:22px;margin:2px 0 0;">Filtres</div>
+    <button class="mfs-close" onclick="closeMobFilters()" aria-label="Fermer">✕</button>
+  </div>
+  <div id="mfs-count" class="mfs-count">—</div>
+  <div id="mfs-body"></div>
+  <button class="mfs-apply" onclick="closeMobFilters()">Voir les résultats</button>
 </div>
 
 <!-- AUTH MODAL -->
@@ -5487,7 +5926,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <!-- DAY FILTERS -->
-  <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
+  <div class="filter-row" id="day-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
     <button class="filter-chip active" data-day="all">Tous les jours</button>
     <button class="filter-chip" data-day="0" id="day-btn-0">Aujourd'hui</button>
     <button class="filter-chip" data-day="1" id="day-btn-1">Demain</button>
@@ -5536,7 +5975,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <!-- EDGE FILTER -->
-  <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;padding:10px 16px;">
+  <div class="filter-row" id="edge-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;padding:10px 16px;">
     <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Edge min :</span>
     <button class="filter-chip active" data-edge="0">Tous</button>
     <button class="filter-chip" data-edge="1">+1%</button>
@@ -5549,7 +5988,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <!-- PERIOD FILTER -->
-  <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
+  <div class="filter-row" id="period-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
     <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-right:4px;">Période PPG :</span>
     <button class="filter-chip active" data-period="season" onclick="setPeriod('season',this)">Saison</button>
     <button class="filter-chip" data-period="l5" onclick="setPeriod('l5',this)">L5</button>
@@ -5559,7 +5998,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <!-- KICKOFF FILTER -->
-  <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
+  <div class="filter-row" id="kickoff-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
     <span class="adv-label" style="margin-right:4px;">Kickoff :</span>
     <button class="filter-chip active" data-kick="0">Tous</button>
     <button class="filter-chip" data-kick="1">&lt; 1h</button>
@@ -5571,14 +6010,35 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <!-- ADVANCED FILTERS : Poisson + Cotes -->
-  <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;padding:10px 16px;align-items:center;">
-    <span class="adv-label" style="margin-right:6px;">O 2.5 min :</span>
-    <input type="range" id="o25-slider" class="adv-slider" min="0" max="85" step="5" value="0">
-    <span id="o25-val" class="adv-label" style="min-width:30px;color:var(--blue);margin-left:6px;">—</span>
-    <span class="adv-label" style="margin-left:20px;margin-right:6px;">Cote :</span>
-    <input type="number" id="cote-min" class="adv-input" min="1.01" max="20" step="0.1" placeholder="min">
-    <span class="adv-label" style="margin:0 4px;">→</span>
-    <input type="number" id="cote-max" class="adv-input" min="1.01" max="50" step="0.5" placeholder="max">
+  <div class="filter-row" id="adv-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;padding:10px 16px;align-items:center;">
+    <span class="adv-label adv-desktop" style="margin-right:6px;">O 2.5 min :</span>
+    <input type="range" id="o25-slider" class="adv-slider adv-desktop" min="0" max="85" step="5" value="0">
+    <span id="o25-val" class="adv-label adv-desktop" style="min-width:30px;color:var(--blue);margin-left:6px;">—</span>
+    <span class="adv-label adv-desktop" style="margin-left:20px;margin-right:6px;">Cote :</span>
+    <input type="number" id="cote-min" class="adv-input adv-desktop" min="1.01" max="20" step="0.1" placeholder="min">
+    <span class="adv-label adv-desktop" style="margin:0 4px;">→</span>
+    <input type="number" id="cote-max" class="adv-input adv-desktop" min="1.01" max="50" step="0.5" placeholder="max">
+
+    <!-- Lot G : presets chips (mobile uniquement) -->
+    <div class="adv-chips-m">
+      <div class="adv-chips-grp">
+        <span class="adv-chips-lbl">O 2.5 min</span>
+        <button class="filter-chip active" data-o25="0" onclick="setO25Preset(0,this)">Tous</button>
+        <button class="filter-chip" data-o25="50" onclick="setO25Preset(50,this)">50%</button>
+        <button class="filter-chip" data-o25="60" onclick="setO25Preset(60,this)">60%</button>
+        <button class="filter-chip" data-o25="70" onclick="setO25Preset(70,this)">70%</button>
+        <button class="filter-chip" data-o25="80" onclick="setO25Preset(80,this)">80%</button>
+      </div>
+      <div class="adv-chips-grp">
+        <span class="adv-chips-lbl">Cote</span>
+        <button class="filter-chip active" data-cote="0,0" onclick="setCotePreset(0,0,this)">Toutes</button>
+        <button class="filter-chip" data-cote="0,1.8" onclick="setCotePreset(0,1.8,this)">&lt; 1.80</button>
+        <button class="filter-chip" data-cote="1.8,2.5" onclick="setCotePreset(1.8,2.5,this)">1.80–2.50</button>
+        <button class="filter-chip" data-cote="2.5,4" onclick="setCotePreset(2.5,4,this)">2.50–4.00</button>
+        <button class="filter-chip" data-cote="4,0" onclick="setCotePreset(4,0,this)">4.00+</button>
+      </div>
+    </div>
+
     <button class="filter-chip" id="adv-reset-btn" style="margin-left:auto;">✕ Réinitialiser filtres</button>
   </div>
 
@@ -5603,6 +6063,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <button class="match-tab live-tab" id="tab-live" onclick="setMatchTab('live',this)">🔴 Live <span class="live-count-badge" id="live-count-badge" style="display:none;">0</span></button>
           <button class="match-tab" id="tab-prematch" onclick="setMatchTab('prematch',this)">Prematch</button>
         </div>
+        <select id="match-tab-mob" aria-label="Filtrer les matchs"
+          onchange="setMatchTab(this.value, document.getElementById('tab-'+this.value))">
+          <option value="all">Tous les matchs</option>
+          <option value="live">🔴 En direct</option>
+          <option value="prematch">Prematch</option>
+        </select>
       </div>
       <div class="table-count" id="bet-count"></div>
     </div>
@@ -5627,17 +6093,22 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
     <!-- ░░ MOBILE TOOLBAR — tri + chips presets (≤768px) ░░ -->
     <div id="mob-toolbar">
+      <input id="mob-search" type="search" placeholder="🔍 Équipe, ligue…"
+        oninput="setTeamSearch(this.value)" autocomplete="off">
       <div id="mob-sort-row">
         <span id="mob-bet-count"></span>
-        <label class="mob-sort">Trier&nbsp;:
-          <select id="mob-sort-sel" onchange="mobSetSort(this.value)">
-            <option value="edge">Edge ↓</option>
-            <option value="time">Heure ↑</option>
-            <option value="poisson_over25">Over 2.5 ↓</option>
-            <option value="poisson_btts">BTTS ↓</option>
-            <option value="pressure">Pression live ↓</option>
-          </select>
-        </label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label class="mob-sort">Trier&nbsp;:
+            <select id="mob-sort-sel" onchange="mobSetSort(this.value)">
+              <option value="edge">Edge ↓</option>
+              <option value="time">Heure ↑</option>
+              <option value="poisson_over25">Over 2.5 ↓</option>
+              <option value="poisson_btts">BTTS ↓</option>
+              <option value="pressure">Pression live ↓</option>
+            </select>
+          </label>
+          <button id="mob-filter-btn" onclick="openMobFilters()" aria-label="Filtres avancés">⚙ Filtres</button>
+        </div>
       </div>
       <div id="mob-chips">
         <button class="mob-chip" data-mchip="live" onclick="mobChip('live',this)">Live</button>
@@ -6304,7 +6775,10 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </div>
 
     <!-- Filtres -->
-    <div class="tennis-vb-filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+    <button type="button" class="tvb-filter-toggle" onclick="document.body.classList.toggle('tvbf-open');this.classList.toggle('open')" aria-label="Filtres avancés">
+      <span>⚙️ Filtres avancés</span><span class="tvb-ft-caret">▾</span>
+    </button>
+    <div class="tennis-vb-filters" id="tennis-vb-filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:12px 14px;margin-bottom:10px;">
       <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Tour</span>
         <button class="tennis-vb-filter-btn is-active" data-filter="tour" data-value="ALL" onclick="applyTennisFilter(this)">Tous</button>
@@ -7973,6 +8447,17 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <div class="ins-tab" onclick="insShowTab('powerscore')">Power Score</div>
         <div class="ins-tab" onclick="insShowTab('h2h')">H2H</div>
       </div>
+      <select id="ins-tab-mob" aria-label="Section" onchange="insShowTab(this.value)">
+        <option value="resume">Résumé</option>
+        <option value="stats">Stats</option>
+        <option value="joueurs">Stats Joueurs</option>
+        <option value="scouting">PRO SCOUT</option>
+        <option value="graphique">Forme</option>
+        <option value="classement">Classement</option>
+        <option value="corners">Corners</option>
+        <option value="powerscore">Power Score</option>
+        <option value="h2h">H2H</option>
+      </select>
       <div id="ins-tab-resume"></div>
       <div id="ins-tab-stats"      style="display:none"></div>
       <div id="ins-tab-joueurs"    style="display:none"></div>
@@ -8197,6 +8682,7 @@ let matchesRetryTimer = null;   // retry auto si /api/v1/matches échoue
 
 // ─── PAGE ROUTER ─────────────────────────────────────────────────────────────
 function showPage(pageId, linkEl) {
+  document.body.dataset.page = pageId;
   // Stop tennis poll quand on quitte l'onglet
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
@@ -12922,7 +13408,6 @@ const label = country
           <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
           <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
           <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
-          <button class="bet-btn" onclick="openBetLink('${m.id}')" title="Parier — Meilleures cotes bookmakers">🎰</button>
         </div>
       </td>
       ${sc(homePpg,'ppg')}${sc(hs.avgScored,'avg')}${sc(p.btts)}${sc(p.over25)}
@@ -13628,6 +14113,8 @@ function insShowTab(tab) {
       container.innerHTML = buildJoueursTab(insCurrentData);
     }
   }
+  var _its = document.getElementById('ins-tab-mob');
+  if (_its && _its.value !== tab) _its.value = tab;
 }
 
 function formBadges(form) {
@@ -13757,6 +14244,16 @@ function buildResumeTab(d) {
   const p  = m.poisson || {};
   const xg = m.expectedGoals || {};
 
+  // Garde intégrité : poisson vide OU stats aberrantes (cumuls saison au lieu de moyennes)
+  const _poiOK = ['btts','over15','over25','over35','homeWin','draw','awayWin']
+    .some(k => typeof p[k] === 'number' && p[k] > 0);
+  const _impl = v => v != null && !isNaN(v) && Math.abs(+v) > 12;
+  const _statsBad = _impl(hs.avgScored) || _impl(as.avgScored) ||
+    _impl(hs.avgConceded) || _impl(as.avgConceded) ||
+    (xg.home != null && Math.abs(+xg.home) > 15) ||
+    (xg.away != null && Math.abs(+xg.away) > 15);
+  const _dataNotice = '<div class="ins-empty" style="padding:18px;text-align:center;font-size:12px;color:var(--text3)">Données en cours de consolidation — le fournisseur ne couvre pas encore complètement cette ligue.</div>';
+
   const hForm = d.homeStats?.form || ha.form || '';
   const aForm = d.awayStats?.form || aa.form || '';
 
@@ -13785,19 +14282,20 @@ function buildResumeTab(d) {
       </div>
       ${cmpBar('PPG', hs.ppg, as.ppg, '', 2)}
       ${cmpBar('Victoires', hs.wins, as.wins, '%')}
-      ${cmpBar('Moy. Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
-      ${cmpBar('Moy. Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
-      ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
-      ${(xg.home != null && xg.away != null) ? `<div style="text-align:center;font-size:10px;color:var(--text3);margin-top:4px">
-        xG Diff : <span style="color:${(xg.home - xg.away) > 0 ? 'var(--blue)' : '#ab47bc'};font-weight:700">${(xg.home - xg.away) > 0 ? '+' : ''}${safeFixed(xg.home - xg.away, 2)}</span>
-        ${Math.abs(xg.home - xg.away) >= 0.5 ? `<span style="color:var(--text3)"> · ${(xg.home - xg.away) > 0 ? m.home_team : m.away_team} favori</span>` : ''}
-      </div>` : ''}
+      ${_statsBad ? _dataNotice : `
+        ${cmpBar('Moy. Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
+        ${cmpBar('Moy. Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
+        ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
+        ${(xg.home != null && xg.away != null) ? `<div style="text-align:center;font-size:10px;color:var(--text3);margin-top:4px">
+          xG Diff : <span style="color:${(xg.home - xg.away) > 0 ? 'var(--blue)' : '#ab47bc'};font-weight:700">${(xg.home - xg.away) > 0 ? '+' : ''}${safeFixed(xg.home - xg.away, 2)}</span>
+          ${Math.abs(xg.home - xg.away) >= 0.5 ? `<span style="color:var(--text3)"> · ${(xg.home - xg.away) > 0 ? m.home_team : m.away_team} favori</span>` : ''}
+        </div>` : ''}`}
     </div>
 
     <div class="ins-section">
       <div class="ins-section-title">Marchés</div>
       <div class="pois-flat-grid">
-        ${(() => {
+        ${!_poiOK ? _dataNotice : (() => {
           // Double Chance dérivé des probas 1N2 calibrées
           const dc1x = (p.homeWin != null && p.draw != null) ? Math.round(p.homeWin + p.draw) : null;
           const dc12 = (p.homeWin != null && p.awayWin != null) ? Math.round(p.homeWin + p.awayWin) : null;
@@ -14041,6 +14539,15 @@ function buildStatsTab(d) {
   const p = m.poisson || {};
   const xg = m.expectedGoals || {};
 
+  const _poiOK = ['btts','over15','over25','over35','homeWin','draw','awayWin']
+    .some(k => typeof p[k] === 'number' && p[k] > 0);
+  const _impl = v => v != null && !isNaN(v) && Math.abs(+v) > 12;
+  const _statsBad = _impl(hs.avgScored) || _impl(as.avgScored) ||
+    _impl(hs.avgConceded) || _impl(as.avgConceded) ||
+    (xg.home != null && Math.abs(+xg.home) > 15) ||
+    (xg.away != null && Math.abs(+xg.away) > 15);
+  const _dataNotice = '<div class="ins-empty" style="padding:18px;text-align:center;font-size:12px;color:var(--text3)">Données en cours de consolidation — le fournisseur ne couvre pas encore complètement cette ligue.</div>';
+
   const hForm = d.homeStats?.form || ha.form || '';
   const aForm = d.awayStats?.form || aa.form || '';
   const hRank = d.homeStats?.rank ? `#${d.homeStats.rank}` : '—';
@@ -14119,15 +14626,16 @@ function buildStatsTab(d) {
   const statsRows = `
     ${cmpBar('PPG', hs.ppg, as.ppg, '', 2)}
     ${cmpBar('Victoires %', hs.wins, as.wins, '%')}
-    ${cmpBar('Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
-    ${cmpBar('Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
-    ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
-    ${cornersForRow}
-    ${cornersAgainstRow}
+    ${_statsBad ? _dataNotice : `
+      ${cmpBar('Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
+      ${cmpBar('Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
+      ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
+      ${cornersForRow}
+      ${cornersAgainstRow}`}
   `;
 
   // Marchés Poisson
-  const poissonRows = `
+  const poissonRows = !_poiOK ? _dataNotice : `
     ${[['GG',p.btts],['O1.5',p.over15],['O2.5',p.over25],['O3.5',p.over35],['1',p.homeWin],['N',p.draw],['2',p.awayWin]].map(([lbl,val]) => {
       const color = val > 65 ? 'var(--green)' : val > 45 ? 'var(--amber)' : 'var(--red)';
       return val != null ? `<div style="text-align:center">
@@ -14212,7 +14720,7 @@ function buildJoueursTab(d) {
     <div class="player-card" style="${p.injured ? 'border:1px solid rgba(255,77,77,.35);background:rgba(255,77,77,.04);' : ''}">
       ${p.id ? `<img class="player-photo" src="${playerImgURL(p)}" alt="${p.name}" loading="lazy" data-name="${p.name}" data-bg="var(--bg4)" onerror="fixBrokenPlayerPhoto(this)">` : `<span style="width:38px;height:38px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3);flex-shrink:0">${playerInitials(p.name)}</span>`}
       <div style="flex:1;min-width:0">
-        <div class="player-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        <div class="player-name">
           ${p.injured ? '<span style="color:var(--red);margin-right:4px" title="Absent / blessé">⚠</span>' : ''}${p.name}
         </div>
         <div class="player-team" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:3px">
@@ -14232,11 +14740,11 @@ function buildJoueursTab(d) {
   const hasKeyPlayers = homeKeyPlayers.length || awayKeyPlayers.length;
   const keyPlayersSection = hasKeyPlayers ? `
     <div style="margin-bottom:20px">
-      <div class="ins-section-title" style="display:flex;align-items:center;gap:8px">
+      <div class="ins-section-title ins-kp-head" style="display:flex;align-items:center;gap:8px">
         Joueurs Clés
-        <span style="font-size:10px;color:var(--text3);font-weight:400">KPI = (buts×3 + passes×2 + note) / 90min</span>
+        <span class="ins-kpi-formula">KPI = (buts×3 + passes×2 + note) / 90min</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px">
+      <div class="ins-kp-grid">
         <div>
           <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:8px">${m.home_team}</div>
           ${homeKeyPlayers.length
@@ -17310,6 +17818,9 @@ document.addEventListener('click', function(e) {
     var cmax = document.getElementById('cote-max');
     if (cmin) cmin.value = '';
     if (cmax) cmax.value = '';
+    document.querySelectorAll('.adv-chips-grp').forEach(function (g) {
+      g.querySelectorAll('.filter-chip').forEach(function (c, i) { c.classList.toggle('active', i === 0); });
+    });
     renderMatches(allMatches);
   }
 });
@@ -17340,6 +17851,33 @@ document.addEventListener('change', e => {
     renderMatches(allMatches);
   }
 });
+
+// ── Lot G : presets chips mobile (O2.5 / Cote) — pilotent le même état ──
+function _advChipActivate(btn) {
+  if (!btn || !btn.parentElement) return;
+  btn.parentElement.querySelectorAll('.filter-chip').forEach(function (c) {
+    c.classList.toggle('active', c === btn);
+  });
+}
+function setO25Preset(v, btn) {
+  activeO25Min = parseInt(v) || 0;
+  var sl = document.getElementById('o25-slider');
+  if (sl) { sl.value = activeO25Min; if (typeof updateSliderFill === 'function') updateSliderFill(sl); }
+  var o25Val = document.getElementById('o25-val');
+  if (o25Val) o25Val.textContent = activeO25Min > 0 ? activeO25Min + '%' : '—';
+  _advChipActivate(btn);
+  renderMatches(allMatches);
+}
+function setCotePreset(min, max, btn) {
+  activeCoteMin = parseFloat(min) || 0;
+  activeCoteMax = parseFloat(max) || 0;
+  var cmin = document.getElementById('cote-min');
+  var cmax = document.getElementById('cote-max');
+  if (cmin) cmin.value = activeCoteMin || '';
+  if (cmax) cmax.value = activeCoteMax || '';
+  _advChipActivate(btn);
+  renderMatches(allMatches);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  AUTH — Sessions membres (JWT localStorage)
@@ -17806,7 +18344,6 @@ function renderTopMatchesGrid(matches) {
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
         <span class="${badgeCls}">${badgeText}</span>
         <div class="ppc-odds">${odds}</div>
-        <button class="tm-bet-btn" onclick="event.stopPropagation();openBetLink('${m.id}')">PARIER ›</button>
       </div>
     </div>`;
   }).join('');
@@ -20844,6 +21381,8 @@ document.addEventListener('keydown', e => {
     document.body.classList.toggle('dark-theme', dark);
     const btn = document.getElementById('theme-toggle');
     if (btn) btn.textContent = dark ? '☀ Jour' : '☾ Nuit';
+    const btnM = document.getElementById('theme-toggle-m');
+    if (btnM) btnM.textContent = dark ? '☀ Mode Jour' : '☾ Mode Nuit';
   }
 
   function init() {
@@ -21551,9 +22090,30 @@ function renderComparateur(d) {
         var bnPages = ['matchs', 'tennis', 'strategies', 'paris'];
         bnSetActive(bnPages.indexOf(pageId) >= 0 ? pageId : '__more');
       } catch (e) {}
+      try { window.psWrapWideTables(); setTimeout(window.psWrapWideTables, 600); } catch (e) {}
       return r;
     };
   }
+
+  /* — Audit form : tables larges → scroll horizontal (mobile only) — */
+  function _wrapScroll(sel) {
+    document.querySelectorAll(sel).forEach(function (t) {
+      var p = t.parentNode;
+      if (!p || (p.classList && p.classList.contains('tbl-scroll'))) return;
+      var w = document.createElement('div');
+      w.className = 'tbl-scroll';
+      p.insertBefore(w, t);
+      w.appendChild(t);
+    });
+  }
+  window.psWrapWideTables = function () {
+    if (!isMobile()) return;
+    try {
+      _wrapScroll('#tennis-vb-table, #tennis-live-table, .tex-table, ' +
+        '#page-paris .hist-table, #page-historique .hist-table, ' +
+        '#page-predictions .bm-table');
+    } catch (e) {}
+  };
 
   /* — Drawer "Plus" — */
   window.bnOpenMore = function () {
@@ -21567,6 +22127,41 @@ function renderComparateur(d) {
     if (o) o.classList.remove('open');
     if (s) s.classList.remove('open');
   };
+
+  /* — Lot E : bottom-sheet « Filtres » (relocalise les rows desktop) — */
+  var _mfsMoved = false;
+  function _mfsRelocate() {
+    if (_mfsMoved) return;
+    var body = document.getElementById('mfs-body');
+    if (!body) return;
+    ['day-filter-row', 'league-filter-row', 'edge-filter-row',
+     'period-filter-row', 'kickoff-filter-row', 'adv-filter-row'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) body.appendChild(el); // déplace (handlers délégués → intacts)
+    });
+    _mfsMoved = true;
+  }
+  window.openMobFilters = function () {
+    _mfsRelocate();
+    var o = document.getElementById('mob-filter-overlay');
+    var s = document.getElementById('mob-filter-sheet');
+    if (o) o.classList.add('open');
+    if (s) s.classList.add('open');
+    window.mfsSyncCount();
+  };
+  window.closeMobFilters = function () {
+    var o = document.getElementById('mob-filter-overlay');
+    var s = document.getElementById('mob-filter-sheet');
+    if (o) o.classList.remove('open');
+    if (s) s.classList.remove('open');
+  };
+  window.mfsSyncCount = function () {
+    var c = document.getElementById('mfs-count');
+    var src = document.getElementById('mob-bet-count');
+    if (c && src) c.textContent = src.textContent || '—';
+  };
+  // Relocalise dès le chargement en mobile (rows hors-flux tant que sheet fermée)
+  if (isMobile()) { try { _mfsRelocate(); } catch (e) {} }
 
   /* — Live badge sur bottom-nav (sync depuis le badge table existant) — */
   window.bnSyncLiveBadge = function (n) {
@@ -21675,14 +22270,7 @@ function renderComparateur(d) {
       return;
     }
 
-    var html = '';
-    var curGrp = null;
-    list.forEach(function (m) {
-      var grp = (m.league || m.sport || '');
-      if (grp !== curGrp) {
-        curGrp = grp;
-        html += '<div class="mc-grp">' + esc(grp) + '</div>';
-      }
+    function buildCard(m) {
       var live = isLive(m);
       var sc = m.live_score;
       var po = m.poisson || {};
@@ -21691,6 +22279,14 @@ function renderComparateur(d) {
       var edgeTxt = edge == null ? '—' : (edge > 0 ? '+' : '') + edge.toFixed(1) + '%';
       var o = m.odds || {};
       var be = m.best_edge || {};
+      // Verdict décision (edge dévigé — tiers transparents)
+      var vC, vT;
+      if (edge == null)      { vC = 'na';  vT = 'DATA —'; }
+      else if (edge >= 5)    { vC = 'go';  vT = 'VALUE'; }
+      else if (edge >= 1.5)  { vC = 'try'; vT = 'À TENTER'; }
+      else if (edge > 0)     { vC = 'neu'; vT = 'NEUTRE'; }
+      else                   { vC = 'no';  vT = 'ÉVITER'; }
+      var pickTxt = be.label ? ' ' + esc(String(be.label)).toUpperCase() : '';
       function oddCell(k, lbl) {
         var v = o[k];
         var best = be.label && (
@@ -21709,12 +22305,51 @@ function renderComparateur(d) {
         ? (esc(m.live_minute ? m.live_minute + "'" : 'LIVE'))
         : fmtTime(m);
 
-      html +=
-        '<div class="mc" onclick="mcOpen(\'' + esc(m.id) + '\')">' +
-          '<div class="mc-top">' +
-            '<span class="mc-league">' + esc(m.league || m.sport || '') + '</span>' +
-            '<span class="mc-time' + (live ? ' live' : '') + '">' + timeTxt + '</span>' +
+      var st = m.stats || {}, sh = st.home || {}, sa = st.away || {};
+      function num(v, d) { return (v == null || isNaN(v)) ? '—' : (typeof d === 'number' ? Number(v).toFixed(d) : v); }
+      function pct(v) { return v == null || isNaN(v) ? '—' : Math.round(v) + '%'; }
+      function wrate(s) {
+        var w = +s.wins || 0, dr = +s.draws || 0, l = +s.losses || 0, t = w + dr + l;
+        return t ? Math.round(w / t * 100) + '%' : '—';
+      }
+      var bestPick = be.label ? esc(String(be.label)) : '—';
+      var bestOdds = be.odds ? Number(be.odds).toFixed(2) : (be.bestOdds ? Number(be.bestOdds).toFixed(2) : '');
+      var reco = (vC === 'go' || vC === 'try')
+        ? bestPick + (bestOdds ? ' @ ' + bestOdds : '') + ' · ' + edgeTxt + ' edge'
+        : (vC === 'neu' ? 'Pas d\'edge net — prudence' : 'Aucune valeur — éviter');
+      var detail =
+        '<div class="mc-detail">' +
+          '<div class="mcd-reco mc-v-' + vC + '"><b>' + vT + '</b> ' + reco + '</div>' +
+          '<div class="mcd-grid">' +
+            '<div class="mcd-c"><span>PPG D/E</span><b>' + num(sh.ppg, 2) + ' / ' + num(sa.ppg, 2) + '</b></div>' +
+            '<div class="mcd-c"><span>Win% D/E</span><b>' + wrate(sh) + ' / ' + wrate(sa) + '</b></div>' +
+            '<div class="mcd-c"><span>Buts m. D/E</span><b>' + num(sh.avgScored, 2) + ' / ' + num(sa.avgScored, 2) + '</b></div>' +
+            '<div class="mcd-c"><span>Buts e. D/E</span><b>' + num(sh.avgConceded, 2) + ' / ' + num(sa.avgConceded, 2) + '</b></div>' +
+            '<div class="mcd-c"><span>1 N 2</span><b>' + pct(po.homeWin) + ' · ' + pct(po.draw) + ' · ' + pct(po.awayWin) + '</b></div>' +
+            '<div class="mcd-c"><span>O1.5/2.5/3.5</span><b>' + pct(po.over15) + ' · ' + pct(po.over25) + ' · ' + pct(po.over35) + '</b></div>' +
+            '<div class="mcd-c"><span>BTTS</span><b>' + pct(po.btts) + '</b></div>' +
+            '<div class="mcd-c"><span>Edge dévigé</span><b>' + edgeTxt + '</b></div>' +
           '</div>' +
+          '<button class="mcd-more" onclick="event.stopPropagation();mcOpen(\'' + esc(m.id) + '\')">Analyse complète →</button>' +
+        '</div>';
+      var isFav = (typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds && favoriteMatchIds.has)
+        ? favoriteMatchIds.has(m.id) : false;
+      var rankChip = (m.home_rank && m.away_rank)
+        ? '<span class="mc-chip">' + esc(m.home_rank) + 'e v ' + esc(m.away_rank) + 'e</span>' : '';
+      return (
+        '<div class="mc" onclick="mcToggle(this)">' +
+          '<div class="mc-top">' +
+            '<span class="mc-verdict mc-v-' + vC + '">' + vT + '</span>' +
+            '<span class="mc-league">' + esc(m.league || m.sport || '') + '</span>' +
+            rankChip +
+            '<span class="mc-time' + (live ? ' live' : '') + '">' + timeTxt + '</span>' +
+            '<button class="mc-star' + (isFav ? ' active' : '') + '" aria-label="Favori" ' +
+              'onclick="event.stopPropagation();toggleFavorite(\'' + esc(m.id) + '\',this)">★</button>' +
+            '<span class="mc-chev">›</span>' +
+          '</div>' +
+          (vC === 'go' || vC === 'try'
+            ? '<div class="mc-pick mc-v-' + vC + '">→ ' + edgeTxt + ' edge dévigé' + (pickTxt ? ' ·' + pickTxt : '') + '</div>'
+            : '') +
           '<div class="mc-teams">' +
             '<div class="mc-team">' + rkH + '<span>' + esc(m.home_team) + '</span>' + scH + '</div>' +
             '<div class="mc-team">' + rkA + '<span>' + esc(m.away_team) + '</span>' + scA + '</div>' +
@@ -21729,12 +22364,132 @@ function renderComparateur(d) {
             '<div class="mc-odds">' + oddCell('home', '1') + oddCell('draw', 'N') + oddCell('away', '2') + '</div>' +
             '<button class="mc-track" onclick="event.stopPropagation();mcTrack(\'' + esc(m.id) + '\')">+ Suivre</button>' +
           '</div>' +
+          detail +
+        '</div>'
+      );
+    }
+
+    // ── Lot B+C : bande "Paris du jour" + Top value bets curatées ──
+    var valueList = list.filter(function (m) {
+      return m.best_edge && typeof m.best_edge.edge === 'number' && m.best_edge.edge > 0;
+    }).sort(function (a, b) { return b.best_edge.edge - a.best_edge.edge; });
+    var TOPN = 6;
+    var topPicks = valueList.slice(0, TOPN);
+    var topIds = {};
+    topPicks.forEach(function (m) { topIds[m.id] = 1; });
+
+    var html = '';
+    if (topPicks.length) {
+      html +=
+        '<div class="mc-cta-band">' +
+          '<div class="mc-cta-l">' +
+            '<div class="mc-cta-t">PARIS DU JOUR</div>' +
+            '<div class="mc-cta-s">' + topPicks.length + ' value bet' + (topPicks.length > 1 ? 's' : '') +
+              ' · edge dévigé positif</div>' +
+          '</div>' +
+          '<div class="mc-cta-badge">+' + topPicks[0].best_edge.edge.toFixed(1) + '%</div>' +
         '</div>';
+      html += '<div class="mc-grp mc-grp-top">★ Top value — sélection PariScore</div>';
+      topPicks.forEach(function (m) { html += buildCard(m); });
+      html += '<div class="mc-grp mc-grp-all" id="mc-all-anchor">Tous les matchs</div>';
+    } else {
+      html +=
+        '<div class="mc-cta-band mc-cta-empty">' +
+          '<div class="mc-cta-l">' +
+            '<div class="mc-cta-t">PARIS DU JOUR</div>' +
+            '<div class="mc-cta-s">Aucun value bet sur ces filtres — liste complète ci-dessous</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // ── P3 : Favoris + raccourci Alertes ──
+    var favSet = (typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds && favoriteMatchIds.has)
+      ? favoriteMatchIds : null;
+    var favs = favSet ? list.filter(function (m) { return !topIds[m.id] && favSet.has(m.id); }) : [];
+    if (favs.length) {
+      html += '<div class="mc-acc mc-sec open" data-grp="__fav">' +
+        '<button type="button" class="mc-grp mc-acc-h mc-sec-h">' +
+          '<span class="mc-acc-name">★ Favoris</span>' +
+          '<span class="mc-acc-meta">' + favs.length + '<span class="mc-acc-car">▾</span></span>' +
+        '</button>' +
+        '<div class="mc-acc-body">' + favs.map(buildCard).join('') + '</div></div>';
+    }
+    html += '<button type="button" class="mc-sec-link" ' +
+      'onclick="event.stopPropagation();showPage(\'alertes\')">🔔 Mes alertes &rsaquo;</button>';
+
+    // ── P1 : hiérarchie Pays → Ligue (accordéons imbriqués) + badge qualité ──
+    function leagueQuality(items) {
+      var s = 0, n = 0;
+      items.forEach(function (m) {
+        if (m.best_edge && typeof m.best_edge.edge === 'number') { s += m.best_edge.edge; n++; }
+      });
+      var a = n ? s / n : null;
+      if (a == null) return { c: 'na', t: '—' };
+      if (a >= 4)   return { c: 'hi',  t: '⚡ Excellent' };
+      if (a >= 1.5) return { c: 'ok',  t: 'Bon' };
+      if (a > 0)    return { c: 'mid', t: 'Moyen' };
+      return { c: 'lo', t: 'Faible' };
+    }
+    var ctry = {}, ctryOrder = [];
+    list.forEach(function (m) {
+      if (topIds[m.id]) return;
+      var c = (m.country || m.league || m.sport || '—');
+      if (!ctry[c]) { ctry[c] = { name: c, sport: m.sport, leagues: {}, lgOrder: [], n: 0 }; ctryOrder.push(c); }
+      var C = ctry[c];
+      var lg = (m.league || '—');
+      if (!C.leagues[lg]) { C.leagues[lg] = { name: lg, items: [] }; C.lgOrder.push(lg); }
+      C.leagues[lg].items.push(m); C.n++;
+    });
+    ctryOrder.forEach(function (cn) {
+      var C = ctry[cn];
+      var ck = 'C|' + C.name;
+      var cCol = window._mcCollapsed && window._mcCollapsed[ck];
+      var flag = (typeof flagImg === 'function') ? flagImg(C.sport) : '';
+      html += '<div class="mc-acc mc-ctry' + (cCol ? '' : ' open') + '" data-grp="' + esc(ck) + '">' +
+        '<button type="button" class="mc-grp mc-acc-h mc-ctry-h">' +
+          '<span class="mc-acc-name">' + flag + ' ' + esc(C.name) + '</span>' +
+          '<span class="mc-acc-meta">' + C.n + '<span class="mc-acc-car">▾</span></span>' +
+        '</button>' +
+        '<div class="mc-acc-body">';
+      C.lgOrder.forEach(function (ln) {
+        var L = C.leagues[ln];
+        var lk = ck + '|' + L.name;
+        var lCol = window._mcCollapsed && window._mcCollapsed[lk];
+        var q = leagueQuality(L.items);
+        html += '<div class="mc-acc mc-lg' + (lCol ? '' : ' open') + '" data-grp="' + esc(lk) + '">' +
+          '<button type="button" class="mc-grp mc-acc-h mc-lg-h">' +
+            '<span class="mc-acc-name">' + esc(L.name) +
+              ' <span class="mc-lq mc-lq-' + q.c + '">' + q.t + '</span></span>' +
+            '<span class="mc-acc-meta">' + L.items.length + '<span class="mc-acc-car">▾</span></span>' +
+          '</button>' +
+          '<div class="mc-acc-body">' + L.items.map(buildCard).join('') + '</div>' +
+        '</div>';
+      });
+      html += '</div></div>';
     });
     box.innerHTML = html;
+    try { if (typeof window.mfsSyncCount === 'function') window.mfsSyncCount(); } catch (e) {}
   };
 
-  /* — Tap carte → détail (réutilise les modals existants) — */
+  // Accordéons groupes : clic en-tête = ouvrir/fermer (état mémorisé)
+  window._mcCollapsed = window._mcCollapsed || {};
+  document.addEventListener('click', function (e) {
+    var h = e.target && e.target.closest ? e.target.closest('.mc-acc-h') : null;
+    if (!h) return;
+    var acc = h.closest('.mc-acc');
+    if (!acc) return;
+    var open = acc.classList.toggle('open');
+    var g = acc.getAttribute('data-grp');
+    if (g) { if (open) delete window._mcCollapsed[g]; else window._mcCollapsed[g] = 1; }
+  });
+
+  /* — Tap carte → panneau décision inline (ouvrir/fermer) — */
+  window.mcToggle = function (el) {
+    if (!el) return;
+    el.classList.toggle('mc-open');
+  };
+
+  /* — Lien "Analyse complète" → détail modal existant — */
   window.mcOpen = function (id) {
     try {
       if (typeof openInsights === 'function') { openInsights(id); return; }
