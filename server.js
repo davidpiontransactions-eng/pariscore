@@ -1296,6 +1296,16 @@ const ESPN_STANDINGS_SLUG = {
   99: 'jpn.2',   // J2 League (même limitation)
   292: 'kor.1',  // K League 1 (BSD 50 sans saison — secours zéro quota si /standings/ sans season échoue)
   136: 'ita.2',  // Serie B Italie — NON couverte BSD (BSD id 4 = Serie A only) → ESPN ita.2, zéro clé/quota
+  // Ligues non-BSD avec slug ESPN confirmé (test live entries>0) — Phase 1bis, zéro clé/quota
+  128: 'arg.1',  // Liga Profesional Argentine
+  239: 'col.1',  // Liga BetPlay Colombie
+  265: 'chi.1',  // Campeonato Chili
+  240: 'ecu.1',  // LigaPro Équateur
+  480: 'par.1',  // División Profesional Paraguay
+  262: 'aut.1',  // Bundesliga Autriche
+  119: 'den.1',  // Danish Superliga
+  900: 'aus.1',  // A-League Australie
+  103: 'nor.1',  // Eliteserien Norvège
 };
 
 // ─── BSD Tennis (Sports Addon $5/mo) ─────────────────────────────────────────

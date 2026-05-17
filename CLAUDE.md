@@ -134,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 10.55 — Fix matchs live sans bouton LIVE : source unique isMatchInProgress (était gaté m.live_score seul → matchs status-live sans score rendus prematch). renderMatches/renderPredBets/topPredictiveBets alignés. Suite v10.54. Note infra : serveur sert snapshot boot → restart pour vérifier preview. Voir CHANGELOG.md et `.context/sessions/`.*
+*Dernière mise à jour : Version 10.56 — Routing standings non-BSD : +9 slugs ESPN (Phase 1bis : arg/col/chi/ecu/par/aut/den/aus/nor) + 7 ligues sans ESPN (Botola/Ukraine/Croatie/Serbie/Algérie/J2/Tchéquie) → API-Football fallback (bsd_config.fallback_needed). Suite v10.55. Note infra : restart Node VPS requis (server.js+bsd_config.json). Voir CHANGELOG.md.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
