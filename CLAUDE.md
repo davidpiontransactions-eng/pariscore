@@ -134,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 10.56 — Routing standings non-BSD : +9 slugs ESPN (Phase 1bis : arg/col/chi/ecu/par/aut/den/aus/nor) + 7 ligues sans ESPN (Botola/Ukraine/Croatie/Serbie/Algérie/J2/Tchéquie) → API-Football fallback (bsd_config.fallback_needed). Suite v10.55. Note infra : restart Node VPS requis (server.js+bsd_config.json). Voir CHANGELOG.md.*
+*Dernière mise à jour : Version 10.58 — Fix module LIVE mort en prod : 3 causes racines (pagination BSD 50-cap → boucle tant que res.data.next ; matching cross-provider id/_bsd_event_id/équipes normalisées ; crash null-status → String(e.status||'') + détection live élargie) + SSE live_patch re-render ciblé (v10.57). ⚠️ Nécessite upload server.js + pariscore.html sur VPS + pm2 restart. Validation finale = fenêtre matchs live réels (logs [LiveDBG]). Suite v10.57. Voir CHANGELOG.md.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->

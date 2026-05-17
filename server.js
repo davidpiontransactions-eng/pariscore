@@ -7818,8 +7818,13 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
   try {
     // BSD /events est paginé. Sans pagination, le fetch bulk (sans league)
     // ne ramène que la 1ère page (~50) → matchs au-delà perdus (ex: finale FA Cup).
-    const PAGE_SIZE = 100;
-    const MAX_PAGES = 20; // garde-fou anti-runaway (≤ 2000 events/fenêtre 7j)
+    // [FIX live] BSD plafonne à 50/page quel que soit page_size demandé.
+    // L'ancienne condition `results.length < PAGE_SIZE` (50 < 100) était
+    // TOUJOURS vraie → arrêt après la page 1 → seuls les 50 1ers events du
+    // jour (matchs finis du matin) étaient lus, les matchs LIVE/à venir
+    // (pages 2+) JAMAIS → live mort. On pagine désormais tant que `next`.
+    const PAGE_SIZE = 50; // = cap réel BSD
+    const MAX_PAGES = 40; // garde-fou (≤ 2000 events)
     const baseEndpoint = `/events/?date_from=${dateFrom}&date_to=${dateTo}${leagueId ? `&league=${leagueId}` : ''}&page_size=${PAGE_SIZE}`;
 
     const collected = [];
@@ -7829,8 +7834,7 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
       const results = res.data?.results;
       if (!results?.length) break;
       collected.push(...results);
-      // Dernière page atteinte : pas de `next` OU lot incomplet
-      if (!res.data.next || results.length < PAGE_SIZE) break;
+      if (!res.data.next) break; // dernière page = plus de `next`
     }
     if (!collected.length) return [];
 
@@ -7845,7 +7849,16 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
       home_score: e.home_score,
       away_score: e.away_score,
       live_minute: e.current_minute,
-      live_score: e.status === 'inprogress' || e.status.includes('half') ? `${e.home_score}-${e.away_score}` : null,
+      // [FIX EMERGENCY live] e.status peut être null/undefined → .includes() throw
+      // → catch global → fetchBSDMatches renvoie [] → pipeline live mort.
+      // Garde null + détection live élargie (statuts BSD variés + minute en cours).
+      live_score: (function () {
+        var st = String(e.status || '').toLowerCase();
+        var mn = parseInt(e.current_minute || 0, 10) || 0;
+        var isLive = /inprogress|in_progress|playing|live|half|ht|halftime|pause|break|extra|penalt/.test(st)
+          || (mn > 0 && mn < 130 && !/finish|ft|ended|after|cancel|postpon|abandon|sched|timed|notstarted/.test(st));
+        return isLive ? `${e.home_score}-${e.away_score}` : null;
+      })(),
       odds: {
         home: e.odds_home || null,
         draw: e.odds_draw || null,
@@ -22738,8 +22751,12 @@ function hasActiveLiveContext() {
 async function pollLiveScoresSmart() {
   if (!hasActiveLiveContext()) {
     _liveIdleSkipCount++;
-    if (_liveIdleSkipCount % 30 === 1) {
-      console.log(`  [Live] idle skip ×${_liveIdleSkipCount} (no in-play / no kickoff <4h / no just-finished)`);
+    // [LiveDBG] visibilité : pourquoi le poll ne tourne pas (contexte inactif)
+    if (_liveIdleSkipCount % 5 === 1) {
+      var _n = (db && db.matches && db.matches.length) || 0;
+      var _ko = 0; var _t = Date.now();
+      try { (db.matches||[]).forEach(function(m){ var k=m&&m.commence_time?new Date(m.commence_time).getTime():NaN; if(Number.isFinite(k)){var dd=k-_t; if(dd>0&&dd<4*3600000)_ko++;} }); } catch(e){}
+      console.log(`  [LiveDBG] idle-skip #${_liveIdleSkipCount} — matchsEnBase=${_n} kickoff<4h=${_ko} (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)`);
     }
     return;
   }
@@ -22761,12 +22778,36 @@ async function pollLiveScores() {
         const now = new Date();
         const dateStr = formatDateOnly(now);
         const bsdLive = await fetchBSDMatches(dateStr, dateStr);
+        // [LiveDBG] diagnostic clair : volume + statuts + live détectés + matchés en base
+        try {
+          const _arr = Array.isArray(bsdLive) ? bsdLive : [];
+          const _st = {};
+          _arr.forEach(x => { const s = String(x.status || 'null'); _st[s] = (_st[s] || 0) + 1; });
+          const _liveN = _arr.filter(x => x.live_score).length;
+          const _matched = _arr.filter(x => db.matches.find(mm => mm.id === x.id)).length;
+          console.log(`  [LiveDBG] date=${dateStr} bsdEvents=${_arr.length} avecLiveScore=${_liveN} matchedEnBase=${_matched} statuts=${JSON.stringify(_st).slice(0,260)}`);
+        } catch (e) { console.log('  [LiveDBG] err', e.message); }
         if (!bsdLive) return;
 
+        // [FIX live cross-provider] index base par id, _bsd_event_id, et clé équipes+jour.
+        // Le live BSD (id `bsd_*`) ne matchait jamais les matchs sourcés Odds/
+        // football-data (id `fd_*`/`odds_*`) → matchedEnBase=0 → live mort.
+        const _byId = new Map(), _byBsd = new Map(), _byTeams = new Map();
+        for (const x of db.matches) {
+          if (!x) continue;
+          _byId.set(x.id, x);
+          if (x._bsd_event_id != null) _byBsd.set(String(x._bsd_event_id), x);
+          const kk = normName(x.home_team) + '@' + normName(x.away_team);
+          if (kk !== '@') _byTeams.set(kk, x);
+        }
+        let _liveMatched = 0;
         const patches = [];
         for (const bl of bsdLive) {
-            const m = db.matches.find(x => x.id === bl.id);
+            let m = _byId.get(bl.id)
+              || (bl._bsd_event_id != null && _byBsd.get(String(bl._bsd_event_id)))
+              || _byTeams.get(normName(bl.home_team) + '@' + normName(bl.away_team));
             if (!m) continue;
+            _liveMatched++;
             const newIntensity = computeLiveIntensityFromBSD(bl);
             const sig = (bl.live_score||'') + ':' + (bl.live_minute||'') + ':' + newIntensity + ':' + (bl.status || m.status || '');
             if (_livePatchSnapshot.get(m.id) === sig) continue;
@@ -22777,6 +22818,7 @@ async function pollLiveScores() {
             _livePatchSnapshot.set(m.id, sig);
             patches.push(m);
         }
+        console.log(`  [LiveDBG] matchés(cross-provider)=${_liveMatched} patches=${patches.length}`);
 
         // Double routing live stats : BSD primary → Sofa fills gaps
         const liveNow = db.matches.filter(m => m.live_score && parseInt(m.live_minute||0) > 0 && parseInt(m.live_minute||0) < 130);
