@@ -1455,6 +1455,47 @@
   /* .mc (carte mobile) hérite du même look neon */
   .mc .t3c-ring::after { background:radial-gradient(circle at 50% 38%, #21262e, #0e1115); }
 
+  /* ── Scénario Neon Quant propagé à TOUTES les colonnes — Foot desktop ─── */
+  @media (min-width:769px){
+    #vb-table{ background:#0d0f13 !important; border-radius:13px; overflow:hidden;
+      box-shadow:0 12px 30px rgba(0,0,0,.45); border-collapse:separate; border-spacing:0; }
+    #vb-table thead th{ background:linear-gradient(180deg,#1b2027,#10131a) !important;
+      color:#9aa3af !important; text-transform:uppercase; letter-spacing:.07em;
+      font-family:var(--font-mono); font-size:9px !important; font-weight:800 !important;
+      border-bottom:2px solid rgba(226,0,26,.55) !important; padding:9px 8px !important; }
+    #vb-table thead th.th-hero{ color:#fb7185 !important; }
+    #vb-table tbody td{ background:linear-gradient(180deg,#15191d,#0f1216) !important;
+      color:#cbd5e1 !important; border-bottom:1px solid rgba(255,255,255,.05) !important;
+      border-right:1px solid rgba(255,255,255,.035); }
+    #vb-table tbody tr:hover td{ background:linear-gradient(180deg,#1c222b,#141821) !important; }
+    #vb-table tbody tr.is-value-hot td:first-child{ box-shadow:inset 3px 0 0 0 #22c55e !important; }
+    #vb-table tbody tr.is-value td:first-child{ box-shadow:inset 3px 0 0 0 #d99412 !important; }
+    #vb-table tbody tr.match-row-live td:first-child{ box-shadow:inset 3px 0 0 0 #E2001A !important; }
+    /* Texte : clair par défaut, neutralise les couleurs claires inline héritées */
+    #vb-table tbody td [style*="#1a1a1a"], #vb-table tbody td [style*="#1A1A1A"]{ color:#e8eaed !important; }
+    #vb-table tbody td [style*="#888888"], #vb-table tbody td [style*="#888"],
+    #vb-table tbody td .t3c-datesub{ color:#8b949e !important; }
+    #vb-table tbody td [style*="#555"]{ color:#7d8590 !important; }
+    /* Mini-panneaux par colonne = même fiche que CONSEILS IA */
+    #vb-table .cotes-block, #vb-table .buteurs-block{
+      background:linear-gradient(180deg,#1b2027,#12151a); border:1px solid rgba(255,255,255,.06);
+      border-radius:10px; padding:7px 8px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 4px 12px rgba(0,0,0,.3); }
+    #vb-table .rk-badge-s{ background:rgba(255,255,255,.07) !important;
+      border:1px solid rgba(255,255,255,.10) !important; border-radius:4px; }
+    #vb-table .vb-hero-value{ filter:drop-shadow(0 0 6px rgba(0,0,0,.4)); }
+    #vb-table .ins-btn, #vb-table .ai-gen-btn, #vb-table .fav-btn{
+      background:linear-gradient(180deg,#262b33,#181b21) !important; color:#cfd4db !important;
+      border:1px solid rgba(255,255,255,.10) !important; box-shadow:0 2px 6px rgba(0,0,0,.35) !important; }
+    #vb-table .ins-btn:hover, #vb-table .ai-gen-btn:hover{
+      border-color:#E2001A !important; color:#fff !important; }
+    /* 2 ids → bat les overrides clair `body:not(.dark-theme) #vb-body td` (1 id) */
+    #vb-table #vb-body td{ color:#cbd5e1 !important; }
+    #vb-table #vb-body td .cotes-block, #vb-table #vb-body td .buteurs-block{ color:#cbd5e1 !important; }
+    #vb-table #vb-body td [style*="#1A1A1A"], #vb-table #vb-body td [style*="#1a1a1a"]{ color:#e8eaed !important; }
+    #vb-table #vb-body td [style*="#888"]{ color:#8b949e !important; }
+  }
+
   /* Packball — Cotes 1N2 centrées */
   .cotes-block { display: flex; gap: 6px; align-items: center; justify-content: center; }
   .cotes-btn { font-family: var(--font-mono); font-weight: 600; font-size: 13px; padding: 4px 12px; border-radius: 5px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); min-width: 42px; text-align: center; cursor: pointer; transition: all .15s; }
@@ -15847,9 +15888,9 @@ const label = country
     if (m.home_team) tr.setAttribute('data-home-team', m.home_team);
     if (m.away_team) tr.setAttribute('data-away-team', m.away_team);
     tr.innerHTML = `
-      <td style="min-width:60px;background:#ffffff !important;color:#1a1a1a !important;border-bottom:1px solid #EAEAEA !important;text-align:center;">
-        <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:#1a1a1a !important;">${time}</div>
-        <div style="font-size:10px;color:#888888 !important;margin-top:1px;">${date}</div>
+      <td style="min-width:60px;text-align:center;">
+        <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
+        <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
         <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:none;justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV"></div>
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;">

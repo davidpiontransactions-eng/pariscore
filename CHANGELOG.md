@@ -2,6 +2,29 @@
 
 ---
 
+## [v10.61] — 2026-05-18
+
+### Propagation visuelle — Scénario Neon Quant à TOUTES les colonnes (tableau Foot desktop)
+
+Feedback DG : « appliques ce scénario dans toutes les colonnes du hub foot pour le bureau ». Le look CONSEILS IA v3 étendu à l'ensemble du tableau `#vb-table`.
+
+**CSS desktop `@media (min-width:769px)` scope `#vb-table` (pariscore.html)** :
+- Table : fond `#0d0f13`, radius 13px, ombre profonde, `border-spacing:0`.
+- thead : gradient sombre, mono uppercase `#9aa3af`, sous-ligne accent rouge L'Équipe ; `.th-hero` rose.
+- tbody td : gradient `#15191d→#0f1216`, texte `#cbd5e1`, séparateurs translucides ; hover plus clair.
+- Barres latérales 1ʳᵉ cellule : value-hot vert / value ambre / live rouge (inset 3px).
+- Mini-panneaux `.cotes-block`/`.buteurs-block` = même fiche que CONSEILS IA (gradient, bordure, radius 10, relief).
+- Boutons `.ins-btn`/`.ai-gen-btn`/`.fav-btn` graphite relief, hover bord rouge.
+- `rk-badge-s` translucide ; `.vb-hero-value` drop-shadow.
+- **Spécificité** : overrides `#vb-table #vb-body td` (2 ids) pour battre les règles claires héritées `body:not(.dark-theme) #vb-body td` (1 id) → neon en thème clair ET sombre.
+- Neutralisation des inline clair forcés (`#1A1A1A`/`#888`) via sélecteurs `[style*=...]`.
+
+**JS (pariscore.html)** : 1 seul `<td>` Date/H — retrait des inline `background:#ffffff/color:#1a1a1a/#888888 !important` (inline !important non overridable par CSS) + classe `.t3c-datesub`. Zéro changement structurel.
+
+**Vérifié** (preview 1440px, thème clair = cas critique, computed-styles) : table bg `#0d0f13`, thead gradient `#9aa3af`, td texte `#cbd5e1` (force-clair battue), buteurs-block tile gradient, barre value-hot inset vert. Zéro erreur JS.
+
+---
+
 ## [v10.60] — 2026-05-18
 
 ### Refonte visuelle — CONSEILS IA v3 « Neon Quant Terminal » (feedback DG : + flashy/sexy/accrocheur)
