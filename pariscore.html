@@ -137,12 +137,13 @@
   body:not(.dark-theme) #vb-table td:nth-child(2),
   body:not(.dark-theme) #vb-table td:nth-child(3),
   body:not(.dark-theme) #vb-table td:nth-child(4) { border-right-color: var(--border2); }
-  body:not(.dark-theme) .t3c-row:nth-child(odd)  { background: var(--bg3); }
-  body:not(.dark-theme) .t3c-row:nth-child(even) { background: var(--bg2); }
-  body:not(.dark-theme) .t3c-badge.t3c-risky,
-  body:not(.dark-theme) .t3c-badge-sm.t3c-risky { background: var(--bg4); border-color: var(--border2); color: var(--text2); }
-  body:not(.dark-theme) .t3c-pro-sep { background: var(--border2); }
-  body:not(.dark-theme) .t3c-pro-chip.acc { background: var(--bg4); border-color: var(--border2); }
+  body:not(.dark-theme) .t3c-wrap { background:linear-gradient(180deg,#fff,#fafafa); border-color:rgba(0,0,0,0.06); }
+  body:not(.dark-theme) .t3c-hdr { background:linear-gradient(180deg,#fff,#f1f1f1); border-bottom-color:rgba(0,0,0,0.07); }
+  body:not(.dark-theme) .t3c-ring { background:conic-gradient(var(--c) calc(var(--v)*1%), #e6e8eb 0); }
+  body:not(.dark-theme) .t3c-ring::after { background:#fff; }
+  body:not(.dark-theme) .t3c-row:nth-child(odd) { background:#f6f7f8; }
+  body:not(.dark-theme) .t3c-vol { background:#eef0f2; }
+  body:not(.dark-theme) .t3c-foot { border-top-color:rgba(0,0,0,0.07); }
   body:not(.dark-theme) .buteur-row:hover { background: var(--bg3); }
   body:not(.dark-theme) .buteur-bar-wrap { background: var(--border2); }
   body:not(.dark-theme) .sf-chip.sf-risky { background: var(--bg3); border-color: var(--border2); color: var(--text2); }
@@ -1387,28 +1388,62 @@
   body:not(.dark-theme) .ts-pill.ts-value { background: rgba(245,158,11,0.10); color: #B45309; border-color: rgba(245,158,11,0.3); }
   body:not(.dark-theme) .ts-pill.ts-cold  { background: var(--bg3); color: var(--text3); border-color: var(--border); }
 
-  /* Packball — Top Conseils IA */
-  .t3c-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 205px; }
-  .t3c-row { display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 4px; border-radius: 2px; }
-  .t3c-row:nth-child(odd)  { background: rgba(255,255,255,0.04); }
-  .t3c-row:nth-child(even) { background: rgba(255,255,255,0.10); }
-  .t3c-label { font-family: var(--font-mono); font-size: 9px; color: var(--text3); min-width: 38px; text-transform: uppercase; }
-  .t3c-badge { font-family: var(--font-mono); font-weight: 600; padding: 2px 6px; border-radius: 3px; font-size: 10px; white-space: nowrap; }
-  .t3c-badge-sm { font-family: var(--font-mono); font-weight: 600; padding: 1px 4px; border-radius: 3px; font-size: 9px; white-space: nowrap; }
-  .t3c-badge.t3c-safe, .t3c-badge-sm.t3c-safe { background: #DCFCE7; color: #15803D; font-weight: 800; border: 1px solid rgba(21,128,61,0.3); }
-  .t3c-badge.t3c-value, .t3c-badge-sm.t3c-value { background: #FEF3C7; color: #B45309; font-weight: 800; border: 1px solid rgba(180,83,9,0.3); }
-  .t3c-badge.t3c-risky, .t3c-badge-sm.t3c-risky { background: #FEE2E2; color: #B91C1C; font-weight: 800; border: 1px solid rgba(185,28,28,0.25); }
-  .t3c-cnr { font-family: var(--font-mono); font-weight: 800; padding: 2px 8px; border-radius: 3px; font-size: 10px; background: #FEE2E2; color: #B91C1C; border: 1px solid rgba(185,28,28,0.3); }
-
-  /* Pro Insights — EV, Shield, Steam, Percentile, Accuracy */
-  .t3c-pro-sep { height: 1px; background: rgba(255,255,255,0.10); margin: 2px 0; }
-  .t3c-pro-row { gap: 5px; justify-content: flex-start; }
-  .t3c-pro-chip { font-family: var(--font-mono); font-size: 8.5px; font-weight: 600; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
-  .t3c-pro-chip.ev { background: #DCFCE7; color: #15803D; font-weight: 800; border: 1px solid rgba(21,128,61,0.3); }
-  .t3c-pro-chip.shield { font-size: 11px; padding: 0 3px; background: rgba(255,215,0,0.10); border: 1px solid rgba(255,215,0,0.20); }
-  .t3c-pro-chip.steam { background: rgba(255,82,82,0.08); border: 1px solid rgba(255,82,82,0.18); }
-  .t3c-pro-chip.pct { background: rgba(100,180,255,0.08); color: #64b5f6; border: 1px solid rgba(100,180,255,0.18); }
-  .t3c-pro-chip.acc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  /* ── CONSEILS IA v2 — Fiche Quant ──────────────────────────────── */
+  .t3c-wrap { display:flex; flex-direction:column; gap:0; min-width:212px;
+    border-radius:10px; overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,0.05); }
+  .t3c-hdr { display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.04));
+    border-bottom:1px solid rgba(255,255,255,0.05); }
+  .t3c-ring { --v:0; --c:#15803D; width:34px; height:34px; flex:none; border-radius:50%;
+    background:conic-gradient(var(--c) calc(var(--v)*1%), rgba(255,255,255,.10) 0);
+    display:grid; place-items:center; position:relative; }
+  .t3c-ring::after { content:''; position:absolute; inset:3px; border-radius:50%;
+    background:var(--bg2,#111417); }
+  .t3c-ring b { position:relative; font-family:var(--font-mono); font-size:11px;
+    font-weight:800; color:var(--c); line-height:1; }
+  .t3c-hmeta { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+  .t3c-hmeta .t3c-htop { font-family:var(--font-mono); font-size:8px;
+    letter-spacing:.08em; color:var(--text3); text-transform:uppercase; }
+  .t3c-hmeta .t3c-hbot { display:flex; align-items:center; gap:5px; }
+  .t3c-vol { font-family:var(--font-mono); font-size:9px; font-weight:700;
+    padding:1px 6px; border-radius:4px; background:rgba(255,255,255,.05); }
+  .t3c-shield { font-size:12px; line-height:1; filter:drop-shadow(0 0 4px rgba(255,215,0,.4)); }
+  .t3c-ev { display:flex; align-items:center; gap:6px; padding:6px 9px;
+    font-family:var(--font-mono); font-size:10px; font-weight:800; color:#0a3d1f;
+    background:linear-gradient(90deg,#86efac,#bbf7d0);
+    border-bottom:1px solid rgba(21,128,61,.35); letter-spacing:.01em; }
+  .t3c-ev .t3c-evk { margin-left:auto; font-size:11px; }
+  .t3c-grid { display:flex; flex-direction:column; }
+  .t3c-row { display:flex; align-items:center; gap:5px; font-size:11px; padding:3px 9px; }
+  .t3c-row:nth-child(odd)  { background:rgba(255,255,255,0.035); }
+  .t3c-label { font-family:var(--font-mono); font-size:9px; color:var(--text3);
+    min-width:38px; text-transform:uppercase; letter-spacing:.04em; }
+  .t3c-badge, .t3c-badge-sm { font-family:var(--font-mono); font-weight:800;
+    border-radius:5px; white-space:nowrap; font-variant-numeric:tabular-nums;
+    box-shadow:0 1px 0 rgba(255,255,255,.35) inset, 0 1px 2px rgba(0,0,0,.10); }
+  .t3c-badge { padding:2px 7px; font-size:10px; }
+  .t3c-badge-sm { padding:2px 6px; font-size:9px; transition:opacity .12s,transform .12s; }
+  .t3c-badge.tier-hi ,.t3c-badge-sm.tier-hi  { background:#DCFCE7; color:#15803D; border:1px solid #86efac; }
+  .t3c-badge.tier-mid,.t3c-badge-sm.tier-mid { background:#FEF3C7; color:#B45309; border:1px solid #fcd34d; }
+  .t3c-badge.tier-lo ,.t3c-badge-sm.tier-lo  { background:#FEE2E2; color:#B91C1C; border:1px solid #fca5a5; }
+  .t3c-badge-sm.t3c-dim  { opacity:.42; filter:grayscale(.4); }
+  .t3c-badge-sm.t3c-pick { transform:scale(1.06);
+    box-shadow:0 0 0 1px #15803D, 0 0 8px rgba(21,128,61,.45), 0 1px 0 rgba(255,255,255,.4) inset; }
+  .t3c-foot { display:flex; align-items:center; gap:6px; padding:5px 9px;
+    border-top:1px solid rgba(255,255,255,0.05); }
+  .t3c-foot .t3c-pro-chip { font-family:var(--font-mono); font-size:8.5px;
+    font-weight:700; padding:1px 5px; border-radius:4px; }
+  .t3c-pro-chip.steam { color:#ff5252; background:rgba(255,82,82,.08); border:1px solid rgba(255,82,82,.18); }
+  .t3c-pro-chip.acc { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+  @media (prefers-reduced-motion:reduce){ .t3c-badge-sm{transition:none;} }
+  /* dark : trou anneau = surface sombre */
+  body.dark-theme .t3c-ring::after, .mc .t3c-ring::after { background:#15191d; }
+  body.dark-theme .t3c-wrap, .mc .t3c-wrap { border-color:rgba(255,255,255,0.06); }
+  body.dark-theme .t3c-ev, .mc .t3c-ev {
+    background:linear-gradient(90deg,rgba(21,128,61,.45),rgba(21,128,61,.22));
+    color:#bbf7d0; border-bottom-color:rgba(52,211,153,.30); }
 
   /* Packball — Cotes 1N2 centrées */
   .cotes-block { display: flex; gap: 6px; align-items: center; justify-content: center; }
@@ -5005,29 +5040,16 @@
   body:not(.dark-theme) #vb-body tr.is-value-hot td:first-child { box-shadow: inset 3px 0 0 0 #E2001A !important; }
   body:not(.dark-theme) #vb-body td { color: #1A1A1A !important; }
 
-  /* ── BADGES TOP CONSEILS (1X2, DC, U3.5, BTTS, Corners) ── */
-  body:not(.dark-theme) .t3c-badge.t3c-safe,
-  body:not(.dark-theme) .t3c-badge-sm.t3c-safe {
-    background: rgba(226,0,26,0.08) !important;
-    color: #E2001A !important;
-    border-color: rgba(226,0,26,0.22) !important;
-  }
-  body:not(.dark-theme) .t3c-badge.t3c-value,
-  body:not(.dark-theme) .t3c-badge-sm.t3c-value {
-    background: #F4F4F4 !important;
-    color: #1A1A1A !important;
-    border-color: #DCDCDC !important;
-  }
-  body:not(.dark-theme) .t3c-badge.t3c-risky,
-  body:not(.dark-theme) .t3c-badge-sm.t3c-risky {
-    background: #F4F4F4 !important;
-    color: #888 !important;
-    border-color: #E8E8E8 !important;
-  }
-  body:not(.dark-theme) .t3c-label { color: #888 !important; font-weight: 600 !important; }
-  body:not(.dark-theme) .t3c-pro-chip.ev   { background: #DCFCE7 !important; color: #15803D !important; border-color: rgba(21,128,61,0.3) !important; }
-  body:not(.dark-theme) .t3c-pro-chip       { background: #F4F4F4 !important; color: #888 !important; border-color: #E8E8E8 !important; }
-  body:not(.dark-theme) .t3c-pro-sep { border-color: #EAEAEA !important; }
+  /* ── CONSEILS IA v2 — paliers couleur clair (paliers 80/60) ── */
+  body:not(.dark-theme) .t3c-badge.tier-hi,
+  body:not(.dark-theme) .t3c-badge-sm.tier-hi  { background:#DCFCE7 !important; color:#15803D !important; border-color:#86efac !important; }
+  body:not(.dark-theme) .t3c-badge.tier-mid,
+  body:not(.dark-theme) .t3c-badge-sm.tier-mid { background:#FEF3C7 !important; color:#B45309 !important; border-color:#fcd34d !important; }
+  body:not(.dark-theme) .t3c-badge.tier-lo,
+  body:not(.dark-theme) .t3c-badge-sm.tier-lo  { background:#FEE2E2 !important; color:#B91C1C !important; border-color:#fca5a5 !important; }
+  body:not(.dark-theme) .t3c-label { color:#888 !important; font-weight:700 !important; }
+  body:not(.dark-theme) .t3c-pro-chip.steam { background:#FEECEC !important; color:#E2001A !important; border-color:#f8c4c4 !important; }
+  body:not(.dark-theme) .t3c-pro-chip.acc   { background:#F4F4F4 !important; border-color:#E2E2E2 !important; }
 
   /* ── BOUTONS ACTIONS (STATS, AI-AL) ───────────────────── */
   body:not(.dark-theme) .ins-btn {
@@ -6785,6 +6807,20 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </button>
   </div>
 </div>
+<script>
+  /* Garde desktop SYNCHRONE — hub = mobile only. S'exécute au parsing (avant
+     paint), donc immunisé contre : boot-snapshot HTML périmé, crash JS init
+     antérieur, @media non appliqué. Desktop ≥768 → nœud retiré du DOM. */
+  (function(){
+    try {
+      var desktop = (window.matchMedia && window.matchMedia('(min-width:768px)').matches);
+      if (desktop) {
+        var h = document.getElementById('sport-hub');
+        if (h && h.parentNode) h.parentNode.removeChild(h);
+      }
+    } catch (e) {}
+  })();
+</script>
 
 <!-- ═══ STRATEGY SETUP — page config intermédiaire (hub → filtres → dashboard) ═══ -->
 <style id="strategy-setup-css">
@@ -14977,111 +15013,73 @@ function renderPredBets(m) {
 }
 
 function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
-  const rows = [];
-  const homeWin = p.homeWin || 0;
-  const awayWin = p.awayWin || 0;
-  const draw = p.draw || 0;
-  const over15 = p.over15 || 0;
-  const btts = p.btts || 0;
+  const homeWin = p.homeWin || 0, awayWin = p.awayWin || 0, draw = p.draw || 0;
+  const over15 = p.over15 || 0, btts = p.btts || 0;
   const cornersOver = m.corners_poisson?.over_6_5 || cornerProbFromXG(m.expectedGoals?.home || 0, m.expectedGoals?.away || 0);
   const delta = m.poisson_delta || {};
+  const tier = v => v >= 80 ? 'tier-hi' : v >= 60 ? 'tier-mid' : 'tier-lo';
+  const arrowOf = k => { const d = delta[k]; return d == null ? ''
+    : d > 0.5 ? ` <span style="color:#E2001A;font-size:8px;">▲${Math.abs(d)}</span>`
+    : d < -0.5 ? ` <span style="color:#888;font-size:8px;">▼${Math.abs(d)}</span>` : ''; };
+  const badge = (label, pct, dk) => `<span class="t3c-badge ${tier(pct)}">${label} ${pct.toFixed(0)}%${arrowOf(dk)}</span>`;
+  const row = (lbl, inner) => `<div class="t3c-row"><span class="t3c-label">${lbl}</span>${inner}</div>`;
 
-  // Helper: badge avec barre de progression + fleche variation
-  const barBadge = (cls, label, pct, deltaKey) => {
-    let probStyle;
-    if (pct >= 75) probStyle = 'background-color:#DCFCE7 !important;color:#15803D !important;font-weight:900 !important;border:1px solid #86efac !important;';
-    else if (pct >= 60) probStyle = 'background-color:#FEF3C7 !important;color:#B45309 !important;font-weight:900 !important;border:1px solid #fcd34d !important;';
-    else probStyle = 'background-color:#FEE2E2 !important;color:#B91C1C !important;font-weight:900 !important;border:1px solid #fca5a5 !important;';
-    const d = delta[deltaKey];
-    const arrow = d != null ? (d > 0.5 ? ` <span style="color:#E2001A;font-size:8px;">▲${Math.abs(d)}</span>` : d < -0.5 ? ` <span style="color:#888;font-size:8px;">▼${Math.abs(d)}</span>` : '') : '';
-    return `<span class="t3c-badge ${cls}" style="${probStyle}">${label} ${pct.toFixed(0)}%${arrow}</span>`;
-  };
+  // ── 1X2 Smart Highlight : issue max = pick éclatant, autres éteintes
+  const o1x2 = [{ l:'1', v:homeWin }, { l:'N', v:draw }, { l:'2', v:awayWin }];
+  const pickIdx = o1x2.reduce((b,o,i,a) => o.v > a[b].v ? i : b, 0);
+  const sm1x2 = o1x2.map((o,i) => `<span class="t3c-badge-sm ${tier(o.v)} ${i===pickIdx?'t3c-pick':'t3c-dim'}">${o.l} ${o.v.toFixed(0)}%</span>`).join('');
 
-  const barBadgeSm = (cls, label, pct) => {
-    const fill = Math.max(4, Math.min(98, pct));
-    let colors;
-    let probStyleSm;
-    if (pct >= 75) probStyleSm = 'background-color:#DCFCE7 !important;color:#15803D !important;font-weight:900 !important;border:1px solid #86efac !important;';
-    else if (pct >= 60) probStyleSm = 'background-color:#FEF3C7 !important;color:#B45309 !important;font-weight:900 !important;border:1px solid #fcd34d !important;';
-    else probStyleSm = 'background-color:#FEE2E2 !important;color:#B91C1C !important;font-weight:900 !important;border:1px solid #fca5a5 !important;';
-    return `<span class="t3c-badge-sm ${cls}" style="${probStyleSm}">${label} ${pct.toFixed(0)}%</span>`;
-  };
-
-  // 1X2 individuel
-  const hCls = homeWin >= 45 ? 't3c-value' : 't3c-risky';
-  const dCls = draw >= 30 ? 't3c-value' : 't3c-risky';
-  const aCls = awayWin >= 45 ? 't3c-value' : 't3c-risky';
-  rows.push(`<div class="t3c-row"><span class="t3c-label">1X2</span>${barBadgeSm(hCls, '1', homeWin)}${barBadgeSm(dCls, 'N', draw)}${barBadgeSm(aCls, '2', awayWin)}</div>`);
-
-  // Double Chance — toujours 1X / X2 / 12 (jamais 1 ou 2 seul, par définition du marché DC).
-  // Sélectionne le combo le PLUS PROBABLE et applique le seuil pour la couleur.
-  const dc1X = homeWin + draw;
-  const dcX2 = awayWin + draw;
-  const dc12 = homeWin + awayWin;
+  // ── DC : combo le plus probable
+  const dc1X = homeWin + draw, dcX2 = awayWin + draw, dc12 = homeWin + awayWin;
   let dcLabel, dcProb;
   if      (dc1X >= dcX2 && dc1X >= dc12) { dcLabel = '1X'; dcProb = dc1X; }
   else if (dcX2 >= dc12)                  { dcLabel = 'X2'; dcProb = dcX2; }
   else                                    { dcLabel = '12'; dcProb = dc12; }
-  const dcCls = dcProb >= 80 ? 't3c-safe' : dcProb >= 65 ? 't3c-value' : 't3c-risky';
-  rows.push(`<div class="t3c-row"><span class="t3c-label">DC</span>${barBadge(dcCls, dcLabel, dcProb, 'dc')}</div>`);
-
-  // Under 3.5 buts
   const under35 = 100 - (p.over35 || 0);
-  let u35Cls = under35 >= 80 ? 't3c-safe' : under35 >= 65 ? 't3c-value' : 't3c-risky';
-  rows.push(`<div class="t3c-row"><span class="t3c-label">U3.5</span>${barBadge(u35Cls, '-3.5', under35, 'under35')}</div>`);
 
-  // Over 1.5 buts
-  let o15Cls = over15 >= 85 ? 't3c-safe' : over15 >= 70 ? 't3c-value' : 't3c-risky';
-  rows.push(`<div class="t3c-row"><span class="t3c-label">+1.5</span>${barBadge(o15Cls, '+1.5', over15, 'over15')}</div>`);
+  const grid = '<div class="t3c-grid">'
+    + row('1X2', sm1x2)
+    + row('DC',      badge(dcLabel, dcProb, 'dc'))
+    + row('U3.5',    badge('-3.5', under35, 'under35'))
+    + row('+1.5',    badge('+1.5', over15, 'over15'))
+    + row('BTTS',    badge('Oui', btts, 'btts'))
+    + row('Corners', badge('+6.5', cornersOver, 'corners'))
+    + '</div>';
 
-  // BTTS
-  let bttsCls = btts >= 65 ? 't3c-safe' : btts >= 50 ? 't3c-value' : 't3c-risky';
-  rows.push(`<div class="t3c-row"><span class="t3c-label">BTTS</span>${barBadge(bttsCls, 'Oui', btts, 'btts')}</div>`);
-
-  // Corners
-  let cnrCls;
-  if (cornersOver >= 75) { cnrCls = 't3c-safe'; }
-  else if (cornersOver >= 55) { cnrCls = 't3c-value'; }
-  else { cnrCls = 't3c-risky'; }
-  rows.push(`<div class="t3c-row"><span class="t3c-label">Corners</span>${barBadge(cnrCls, '+6.5', cornersOver, 'corners')}</div>`);
-
-  // ── PRO INSIGHTS ──────────────────────────────────────────────────────────
+  // ── Pro insights
   const ev = m.evs?.best;
   const evPct = ev?.value ? parseFloat(ev.value) : 0;
-  const oddsDelta = m.odds_delta;
-  const steamDrop = oddsDelta ? [oddsDelta.home, oddsDelta.draw, oddsDelta.away].filter(v => v != null && v < 0).sort((a,b) => a - b)[0] : null;
-
-  const pctRank = leaguePctMap ? leaguePctMap.get(m.id) : null;
-  const bttsAcc = accuracy?.btts?.rate;
-  const ov25Acc = accuracy?.over25?.rate;
-  const bestAcc = bttsAcc != null ? { mkt: 'BTTS', rate: bttsAcc } : ov25Acc != null ? { mkt: 'O2.5', rate: ov25Acc } : null;
-
-  // L1 garde-fou frontend : EV affichée seulement si valide (marché 1X2, borne ≤ 60%).
-  // Mappe le label serveur → marché lisible pour le parieur (quoi parier, pas juste combien).
-  const EV_MKT = { homeWin: '1', draw: 'N', awayWin: '2' };
+  const EV_MKT = { homeWin:'1', draw:'N', awayWin:'2' };
   const evMkt = ev && EV_MKT[ev.label] ? EV_MKT[ev.label] : null;
   const evValid = evPct > 0 && evPct <= 60 && evMkt;
-
-  // L2 — Score Confiance Global + Indice Volatilité
+  const oddsDelta = m.odds_delta;
+  const steamDrop = oddsDelta ? [oddsDelta.home, oddsDelta.draw, oddsDelta.away].filter(v => v != null && v < 0).sort((a,b) => a - b)[0] : null;
+  const bttsAcc = accuracy?.btts?.rate, ov25Acc = accuracy?.over25?.rate;
+  const bestAcc = bttsAcc != null ? { mkt:'BTTS', rate:bttsAcc } : ov25Acc != null ? { mkt:'O2.5', rate:ov25Acc } : null;
   const conf = calcConfidenceScore(m, p, accuracy);
   const confClr = conf >= 70 ? '#15803D' : conf >= 50 ? '#B45309' : '#B91C1C';
-  const confBg  = conf >= 70 ? '#DCFCE7' : conf >= 50 ? '#FEF3C7' : '#FEE2E2';
   const vol = calcVolatility(m, p);
   const volClr = vol.score < 34 ? '#15803D' : vol.score < 67 ? '#B45309' : '#B91C1C';
 
-  rows.push(`<div class="t3c-pro-sep"></div>`);
-  rows.push(`<div class="t3c-row t3c-pro-row">
-    <span class="t3c-pro-chip conf" style="background:${confBg};color:${confClr};border:1px solid ${confClr}55;font-weight:800;" title="Score de Confiance Global /100 — décisivité modèle + volume data + convergence + calibration">⬤ ${conf}<span style="opacity:.6;font-size:7px;">/100</span></span>
-    <span class="t3c-pro-chip vol" style="color:${volClr};" title="Indice de Volatilité — ${vol.label} (élevé = match ouvert/incertain)">σ ${vol.label}</span>
-    ${m.shield ? `<span class="t3c-pro-chip shield" title="Convergence modèle + marché">🛡️</span>` : ''}
-  </div>`);
-  rows.push(`<div class="t3c-row t3c-pro-row">
-    ${evValid ? `<span class="t3c-pro-chip ev" title="Expected Value dévigée — marché à cote réelle">+EV ${evMkt} ${evPct.toFixed(1)}%</span>` : ''}
-    ${steamDrop != null ? `<span class="t3c-pro-chip steam" style="color:#ff5252;" title="Steam / drop de cote">▼${Math.abs(steamDrop).toFixed(2)}</span>` : ''}
-    ${bestAcc ? `<span class="t3c-pro-chip acc" style="color:${bestAcc.rate>=60?'#15803D':bestAcc.rate>=50?'#B45309':'#888'};" title="Précision historique backtest">✓${bestAcc.mkt} ${bestAcc.rate}%</span>` : ''}
-  </div>`);
+  const header = `<div class="t3c-hdr">
+    <div class="t3c-ring" style="--v:${conf};--c:${confClr};" title="Score Confiance Global /100 — décisivité + volume data + convergence + calibration"><b>${conf}</b></div>
+    <div class="t3c-hmeta">
+      <span class="t3c-htop">Confiance IA · /100</span>
+      <span class="t3c-hbot">
+        <span class="t3c-vol" style="color:${volClr};" title="Volatilité — ${vol.label} (élevé = match ouvert)">σ ${vol.label}</span>
+        ${m.shield ? `<span class="t3c-shield" title="Convergence modèle + marché">🛡️</span>` : ''}
+      </span>
+    </div>
+  </div>`;
 
-  return rows.join('');
+  const evBanner = evValid ? `<div class="t3c-ev" title="Expected Value dévigée — marché à cote réelle">▲ +EV · Parier ${evMkt}<span class="t3c-evk">${evPct.toFixed(1)}%</span></div>` : '';
+
+  const foot = (steamDrop != null || bestAcc) ? `<div class="t3c-foot">
+    ${steamDrop != null ? `<span class="t3c-pro-chip steam" title="Steam / drop de cote">▼${Math.abs(steamDrop).toFixed(2)}</span>` : ''}
+    ${bestAcc ? `<span class="t3c-pro-chip acc" style="color:${bestAcc.rate>=60?'#15803D':bestAcc.rate>=50?'#B45309':'#888'};" title="Précision historique backtest">✓${bestAcc.mkt} ${bestAcc.rate}%</span>` : ''}
+  </div>` : '';
+
+  return header + evBanner + grid + foot;
 }
 
 // Score pour le filtre "Top N meilleurs paris" — par marché
@@ -20929,7 +20927,7 @@ window.addEventListener('DOMContentLoaded', () => {
   wireSportHub();
   const _hub = document.getElementById('sport-hub');
   if (_hub) {
-    if (window.innerWidth < 768) {
+    if (!(window.matchMedia && window.matchMedia('(min-width:768px)').matches)) {
       _hub.style.display = 'flex';
       _hub.classList.remove('hub-exit');
       hydrateHubCounters();
