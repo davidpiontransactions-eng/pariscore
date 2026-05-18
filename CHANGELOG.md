@@ -2,6 +2,23 @@
 
 ---
 
+## [v10.63] — 2026-05-18
+
+### Uniformisation desktop globale — Axe C « Élite Dark Trading » (filtres + bandeau + nav)
+
+Audit DG validé : fragmentation résiduelle = tout AU-DESSUS du tableau (nav + console filtres hybride bâtard + bandeau résultats) restait « Light Corporate » → choc lumineux vertical, hiérarchie inversée (chrome crie plus fort que la data). Axe C retenu (3 voix expertes concordantes) : nappe sombre continue.
+
+**CSS `@media (min-width:769px)` (pariscore.html)** — anchor 2 ids `#page-matchs #filter-console` (bat `body:not(.dark-theme) #page-matchs .x`) :
+- Console filtres → panneau `#0f172a`, bordure laser, `fc-head` accent rouge, labels `#8b949e`, chips/pills/selects/reset graphite `#262b33`, actif gradient rouge L'Équipe, slider conf lisible.
+- League hub banner → `#1b2027`.
+- Bandeau résultats (`.table-header`) → `#0f172a` + sous-ligne rouge (continuité thead), titre `#f1f5f9`, count `#8b949e`, `.match-tab` graphite, actif rouge, live-tab rouge translucide.
+- Nav top → `#0f172a` (sandwich fermé), liens `#cbd5e1`, actif/hover rouge `#E2001A` ; logo + ADN marque conservés.
+- Étanchéité mobile : tout sous `@media ≥769px` ; cartes `.mc` (<769) inchangées. Zéro JS.
+
+**Vérifié** (preview 1440px, thèmes CLAIR *et* DARK, computed-styles) : `#filter-console`/`table-header`/`nav` = `#0f172a` (override clair battu), chip non-actif graphite `#262b33` texte `#cfd4db`, actif gradient rouge, label `#8b949e`, titre `#f1f5f9`, league banner `#1b2027`. Zéro erreur JS.
+
+---
+
 ## [v10.62] — 2026-05-18
 
 ### Harmonisation grille desktop — Option B « Ligne 100% Dark Premium » (feedback DG : rupture d'uniformité)
