@@ -1532,6 +1532,82 @@
       border-color:#E2001A !important; color:#fff !important; }
   }
 
+  /* ── AXE C — Élite Dark Trading : filtres + bandeau + nav (Foot desktop) ──
+     Anchor 2 ids (#page-matchs #filter-console) → bat les overrides clair
+     `body:not(.dark-theme) #page-matchs .x`. Mobile (<769) totalement intact. */
+  @media (min-width:769px){
+    /* Console filtres → panneau dark premium */
+    #page-matchs #filter-console{
+      background:linear-gradient(180deg,#0f172a 0%,#0b1220 100%) !important;
+      border:1px solid rgba(255,255,255,0.07) !important;
+      box-shadow:0 10px 28px rgba(0,0,0,.45) !important; }
+    #page-matchs #filter-console .fc-head{
+      background:linear-gradient(180deg,rgba(226,0,26,.10),transparent) !important;
+      border-bottom:1px solid rgba(255,255,255,0.06) !important; }
+    #page-matchs #filter-console .fc-title{ color:#f1f5f9 !important; }
+    #page-matchs #filter-console .fc-sub{ color:#7d8590 !important; }
+    #page-matchs #filter-console > .filter-row{
+      border-bottom:1px solid rgba(255,255,255,0.05) !important; }
+    #page-matchs #filter-console > .filter-row:hover{
+      background:rgba(255,255,255,0.025) !important; }
+    #page-matchs #filter-console .dd-lbl,
+    #page-matchs #filter-console .adv-label,
+    #page-matchs #filter-console #league-filter-row > span:first-of-type{
+      color:#8b949e !important; }
+    #page-matchs #filter-console .filter-chip,
+    #page-matchs #filter-console .preset-pill,
+    #page-matchs #filter-console #adv-reset-btn,
+    #page-matchs #filter-console #fav-filter-chip,
+    #page-matchs #filter-console #steam-filter-chip{
+      background:linear-gradient(180deg,#262b33,#181b21) !important;
+      color:#cfd4db !important; border:1px solid rgba(255,255,255,0.10) !important; }
+    #page-matchs #filter-console .filter-chip.active,
+    #page-matchs #filter-console .preset-pill.active,
+    #page-matchs #filter-console #fav-filter-chip.active,
+    #page-matchs #filter-console #steam-filter-chip.active{
+      background:linear-gradient(180deg,#E2001A,#a30d12) !important;
+      color:#fff !important; border-color:transparent !important; }
+    #page-matchs #filter-console .adv-input,
+    #page-matchs #filter-console select,
+    #page-matchs #filter-console .filter-dd{
+      background:linear-gradient(180deg,#20242a,#15181d) !important;
+      color:#cfd4db !important; border:1px solid rgba(255,255,255,0.10) !important; }
+    #page-matchs #filter-console .conf-wrap,
+    #page-matchs #filter-console .conf-ticks span,
+    #page-matchs #filter-console .conf-info{ color:#8b949e !important; }
+    /* League hub banner → prolongement sombre */
+    #page-matchs #league-hub-banner{
+      background:linear-gradient(180deg,#1b2027,#12151a) !important;
+      border:1px solid rgba(255,255,255,0.06) !important; }
+    #page-matchs #league-hub-banner .lh-title{ color:#e8eaed !important; }
+    #page-matchs #league-hub-banner .lh-header span{ color:#8b949e !important; }
+    /* Bandeau résultats = nappe continue avec le thead */
+    #page-matchs .table-wrap{ background:transparent !important; }
+    #page-matchs .table-wrap .table-header{
+      background:linear-gradient(180deg,#0f172a,#0b1220) !important;
+      border:1px solid rgba(255,255,255,0.06) !important;
+      border-bottom:2px solid rgba(226,0,26,.5) !important;
+      border-radius:13px 13px 0 0; }
+    #page-matchs .table-wrap .table-header-title{ color:#f1f5f9 !important; }
+    #page-matchs .table-wrap .table-count,
+    #page-matchs .table-wrap #bet-count{ color:#8b949e !important; }
+    #page-matchs .table-wrap .match-tab{
+      background:linear-gradient(180deg,#262b33,#181b21) !important;
+      color:#cfd4db !important; border:1px solid rgba(255,255,255,0.10) !important; }
+    #page-matchs .table-wrap .match-tab.active{
+      background:linear-gradient(180deg,#E2001A,#a30d12) !important;
+      color:#fff !important; border-color:transparent !important; }
+    #page-matchs .table-wrap .match-tab.live-tab.active{
+      background:rgba(255,77,77,.18) !important; color:#ff6b6b !important;
+      border-color:rgba(255,77,77,.35) !important; }
+    /* Nav top → dark légère, accent rouge L'Équipe conservé */
+    nav:not([aria-label]){ background:#0f172a !important;
+      border-bottom:1px solid rgba(255,255,255,0.07) !important; }
+    nav:not([aria-label]) .nav-links a{ color:#cbd5e1 !important; }
+    nav:not([aria-label]) .nav-links a.active,
+    nav:not([aria-label]) .nav-links a:hover{ color:#E2001A !important; }
+  }
+
   /* Packball — Cotes 1N2 centrées */
   .cotes-block { display: flex; gap: 6px; align-items: center; justify-content: center; }
   .cotes-btn { font-family: var(--font-mono); font-weight: 600; font-size: 13px; padding: 4px 12px; border-radius: 5px; background: var(--bg3); border: 1px solid var(--border); color: var(--text); min-width: 42px; text-align: center; cursor: pointer; transition: all .15s; }
