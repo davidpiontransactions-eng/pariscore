@@ -28,7 +28,7 @@
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&family=Anton&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* ── Light Premium — L'Équipe × Flashscore ── */
@@ -289,6 +289,14 @@
   @keyframes logoRing {
     0% { opacity: .8; transform: scale(.6); }
     70%,100% { opacity: 0; transform: scale(1.6); }
+  }
+  .logo-mark { width: 30px; height: 30px; flex: 0 0 auto;
+    filter: drop-shadow(0 2px 5px rgba(226,0,26,0.22)); }
+  .logo-mark .lm-ring { transform-box: fill-box; transform-origin: center;
+    animation: lmPulse 1.8s ease-out infinite; }
+  @keyframes lmPulse {
+    0% { opacity: .85; transform: scale(.5); }
+    70%,100% { opacity: 0; transform: scale(1.55); }
   }
   .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
   .nav-links::-webkit-scrollbar { height: 4px; }
@@ -2538,6 +2546,11 @@
   #matchday-banner .mb-text strong { color: var(--amber); }
   #matchday-banner button { background: var(--amber); color: #000; border: none; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
   #matchday-banner button:hover { opacity: .85; }
+  @media (max-width: 767px) {
+    #matchday-banner { flex-direction: column; align-items: stretch; text-align: center;
+      gap: 10px; padding: 14px 16px; margin-bottom: 14px; }
+    #matchday-banner button { width: 100%; padding: 11px 18px; white-space: normal; }
+  }
   .price-card {
     background: var(--bg2); border: 1px solid var(--border);
     border-radius: var(--radius-lg); padding: 28px 24px;
@@ -5426,7 +5439,7 @@
     .hero-btns a, .hero-btns button { width: 100% !important; text-align: center !important; }
     .pricing-grid, .strategy-grid, .er-grid, .hist-kpi-row { grid-template-columns: 1fr !important; }
     html, body { overflow-x: hidden !important; }
-    #mob-home-cta { display: block !important; }
+    #mob-home-cta { display: none !important; }
 
     /* — Modals plein écran confort tactile — */
     #insights-panel, #deep-panel, #live-detail-panel, #score-panel {
@@ -5443,12 +5456,32 @@
   #match-tab-mob { display: none; }  /* dropdown onglets — mobile only */
   #ins-tab-mob { display: none; }    /* dropdown sections Insights — mobile only */
   #mob-quick { display: none; }      /* dropdown filtre rapide — mobile only */
+  .logo-tag-mob { display: none; }   /* tagline sous logo — mobile only */
   #strat-mob { display: none; }      /* dropdown stratégie — mobile only */
   /* Toggle jour/nuit flottant : page d'accueil UNIQUEMENT (tous écrans) */
   #theme-toggle { display: none !important; }
   body[data-page="accueil"] #theme-toggle { display: inline-block !important; }
 
   @media (max-width: 768px) {
+    /* ── CHANTIER 1 — Landing mobile épurée (hub-first) ── */
+    .hero-eyebrow, .hero h1, .hero-sub, .hero-btns, .hero-stats { display: none !important; }
+    nav { height: auto !important; min-height: 60px; padding-bottom: 7px; }
+    .logo { flex-wrap: wrap; }
+    .logo-tag-mob {
+      display: block; flex-basis: 100%; padding-left: 40px; margin-top: 1px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600;
+      font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase;
+      color: var(--text3); white-space: nowrap;
+    }
+    /* ── CHANTIER 2 — Header / nav tap targets ── */
+    .live-pill { padding: 5px 12px !important; min-height: 34px; font-size: 12px !important; }
+    .nav-auth-btn { padding: 9px 16px !important; min-height: 38px; font-size: 13px !important; }
+    .nav-role-badge { font-size: 11px !important; padding: 5px 9px !important; }
+    .nav-user-email { font-size: 12px !important; max-width: 120px; }
+    .nav-user-chip { gap: 10px !important; }
+    .nav-links { scroll-behavior: smooth; scroll-snap-type: x proximity; }
+    .nav-links a { scroll-snap-align: start; }
+
     /* 1 — Anti-débordement horizontal global */
     html, body { max-width: 100vw; overflow-x: hidden; }
     .section, #tennis-valuebets-section, #vb-cards, .mc, .mc-metrics { max-width: 100vw; }
@@ -5823,10 +5856,9 @@
     #tennis-abstract-section [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
     #page-tennis .ta-rome-card { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-    /* Audit mobile — accueil : hero-stats déborde (3 items nowrap) */
+    /* Chantier 1 — accueil mobile épurée : hero-stats masqué */
     .hero-stats {
-      display: grid !important; grid-template-columns: repeat(3, 1fr);
-      gap: 0 !important; margin-top: 24px; padding-top: 20px;
+      display: none !important;
     }
     .stat-item { padding: 12px 6px !important; }
     .stat-num { font-size: 22px !important; }
@@ -5914,6 +5946,14 @@
   }
 
 </style>
+<style>/*TN_UNIFY_CSS*/
+tr.tennis-vb-row{transition:background .4s ease;}
+tr.tennis-vb-row.is-live{position:relative;background:linear-gradient(90deg,rgba(255,77,77,.09),rgba(255,77,77,0) 60%);}
+tr.tennis-vb-row.is-live>td:first-child{box-shadow:inset 3px 0 0 0 var(--red,#ff4d4d),inset 7px 0 9px -6px rgba(255,77,77,.55);}
+.tn-live-ind{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--red,#ff4d4d);letter-spacing:.3px;animation:tnLivePulse 1.8s ease-in-out infinite;}
+@keyframes tnLivePulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media(prefers-reduced-motion:reduce){.tn-live-ind{animation:none}}
+</style>
 </head>
 <body>
 <noscript>
@@ -5947,8 +5987,31 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 <!-- NAVIGATION -->
 <nav>
   <div class="logo">
-    <div class="logo-dot"></div>
+    <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="lmEdge" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stop-color="#ff6a4d"/>
+          <stop offset="55%" stop-color="#E2001A"/>
+          <stop offset="100%" stop-color="#a30d12"/>
+        </linearGradient>
+        <radialGradient id="lmNode" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ff8a6a"/>
+          <stop offset="100%" stop-color="#E2001A"/>
+        </radialGradient>
+      </defs>
+      <line x1="12" y1="50" x2="46" y2="50" stroke="#9aa3ad" stroke-opacity=".4" stroke-width="2.4" stroke-linecap="round"/>
+      <g fill="#9aa3ad" fill-opacity=".32">
+        <rect x="14" y="38" width="6" height="10" rx="1.6"/>
+        <rect x="24" y="31" width="6" height="17" rx="1.6"/>
+        <rect x="34" y="24" width="6" height="24" rx="1.6"/>
+      </g>
+      <path d="M12 46 L26 33 L36 39 L52 16" fill="none" stroke="url(#lmEdge)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M43 16 L52 16 L52 25" fill="none" stroke="url(#lmEdge)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle class="lm-ring" cx="52" cy="16" r="9" fill="none" stroke="#E2001A" stroke-width="2.4"/>
+      <circle cx="52" cy="16" r="5.4" fill="url(#lmNode)"/>
+    </svg>
     PariScore
+    <span class="logo-tag-mob">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Football</a>
@@ -6532,6 +6595,510 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 </section>
 
 </div><!-- /page-accueil -->
+
+<!-- ═══ SPORT HUB — écran d'orientation par défaut ═══ -->
+<style id="sport-hub-css">
+#sport-hub{
+  position:fixed; inset:0; z-index:9000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(32px,6vh,64px); padding:24px;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 30%, var(--accent-bg) 0%, transparent 60%),
+    var(--bg);
+  opacity:1; transform:scale(1); will-change:opacity, transform;
+  transition:opacity .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1);
+}
+#sport-hub.hub-exit{ opacity:0; transform:scale(.95); pointer-events:none; }
+.hub-head{ text-align:center; }
+.hub-brand{
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+  font-size:clamp(22px,4vw,30px); letter-spacing:6px; color:var(--text);
+}
+.hub-tag{
+  margin-top:8px; font-family:var(--font-mono); font-size:12px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--text3);
+}
+.hub-grid{ display:flex; gap:clamp(18px,3vw,32px); width:100%; max-width:760px; }
+@media(max-width:640px){ .hub-grid{ flex-direction:column; max-width:420px; } }
+.hub-card{
+  flex:1; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px;
+  min-height:clamp(240px,40vh,320px); padding:28px;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:20px;
+  background:linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+  box-shadow:
+    -8px -8px 22px rgba(255,255,255,0.06),
+     10px 12px 30px rgba(0,0,0,0.40),
+     inset 0 1px 0 rgba(255,255,255,0.10),
+     inset 0 0 0 1px rgba(255,255,255,0.04);
+  cursor:pointer;
+  transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.hub-card::before{
+  content:""; position:absolute; inset:0; opacity:.18;
+  background:radial-gradient(circle at 70% 20%, var(--accent) 0%, transparent 55%);
+  transition:opacity .25s ease;
+}
+.hub-card--tennis::before{
+  background:radial-gradient(circle at 70% 20%, #b5d600 0%, transparent 55%);
+}
+.hub-card:hover{ transform:translateY(-4px); }
+.hub-card:hover::before{ opacity:.34; }
+.hub-card:active{
+  transform:translateY(2px) scale(.985);
+  box-shadow:
+    inset -6px -6px 16px rgba(255,255,255,0.06),
+    inset  8px  8px 22px rgba(0,0,0,0.55);
+}
+.hub-card-kicker{
+  position:relative; font-family:var(--font-mono); font-size:11px;
+  letter-spacing:3px; color:var(--text3); text-transform:uppercase;
+}
+.hub-card-title{
+  position:relative; font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+  font-size:clamp(34px,6vw,52px); letter-spacing:2px; line-height:1; color:var(--text);
+}
+.hub-card--foot .hub-card-title{
+  font-family:'Anton',sans-serif; font-weight:400;
+  font-size:clamp(40px,7vw,60px); letter-spacing:3px;
+  text-transform:uppercase;
+}
+.hub-card--tennis .hub-card-title{
+  font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:clamp(48px,8.4vw,72px); letter-spacing:6px;
+  text-transform:uppercase;
+}
+.hub-emblem{
+  position:relative;
+  width:clamp(82px,16vw,116px); height:auto; margin:2px 0 6px;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,0.18));
+  transition:transform .25s ease;
+}
+.hub-card:hover .hub-emblem{ transform:translateY(-3px) scale(1.04); }
+.hub-card-stats{
+  position:relative; display:flex; justify-content:center; gap:22px;
+  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text2);
+}
+.hub-card-stats b{ color:var(--accent); font-weight:800; font-size:15px; }
+.hub-card--tennis .hub-card-stats b{ color:#8aa300; }
+.hub-card-go{
+  position:relative; align-self:stretch; text-align:center;
+  padding:11px; border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background:rgba(255,255,255,0.05);
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase; font-size:13px; color:var(--text);
+}
+.hub-card:hover .hub-card-go{ background:var(--accent); color:#fff; border-color:transparent; }
+.hub-card--tennis:hover .hub-card-go{ background:#9bbf00; }
+</style>
+<div id="sport-hub" role="dialog" aria-label="Choix du sport">
+  <div class="hub-head">
+    <div class="hub-brand">PARISCORE</div>
+    <div class="hub-tag">Sélectionnez votre univers</div>
+  </div>
+  <div class="hub-grid">
+    <button class="hub-card hub-card--foot" type="button" aria-label="Football">
+      <span class="hub-card-title">FOOTBALL</span>
+      <svg class="hub-emblem" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="edgeFoot" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ff6a4d"/>
+            <stop offset="55%" stop-color="#ed1c24"/>
+            <stop offset="100%" stop-color="#a30d12"/>
+          </linearGradient>
+          <radialGradient id="nodeFoot" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff8a6a"/>
+            <stop offset="100%" stop-color="#ed1c24"/>
+          </radialGradient>
+        </defs>
+        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
+          fill="none" stroke="url(#edgeFoot)" stroke-width="3.4" stroke-linejoin="round"/>
+        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
+          fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1"/>
+        <g stroke="#9aa3ad" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round">
+          <line x1="40" y1="74" x2="80" y2="74"/>
+        </g>
+        <g fill="#9aa3ad" fill-opacity="0.35">
+          <rect x="44" y="60" width="6.5" height="14" rx="1.5"/>
+          <rect x="56.5" y="52" width="6.5" height="22" rx="1.5"/>
+          <rect x="69" y="44" width="6.5" height="30" rx="1.5"/>
+        </g>
+        <path d="M38 72 L50 60 L60 66 L80 38"
+          fill="none" stroke="url(#edgeFoot)" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="80" cy="38" r="12.5" fill="none" stroke="#ed1c24" stroke-opacity="0.28" stroke-width="2"/>
+        <circle cx="80" cy="38" r="8" fill="url(#nodeFoot)"/>
+        <g stroke="#1a0405" stroke-opacity="0.8" stroke-width="1.4" fill="none" stroke-linecap="round">
+          <path d="M80 34.6 L80 30.5 M83.2 36.9 L87.4 35.2 M82.0 40.7 L84.4 44.7 M78.0 40.7 L75.6 44.7 M76.8 36.9 L72.6 35.2"/>
+        </g>
+        <polygon points="80,34.6 83.2,36.9 82.0,40.7 78.0,40.7 76.8,36.9" fill="#15090a"/>
+      </svg>
+      <span class="hub-card-stats">
+        <span><b id="hub-foot-live">—</b> MATCHS LIVE</span>
+        <span><b id="hub-foot-vb">—</b> VALUE BETS</span>
+      </span>
+      <span class="hub-card-go">Entrer</span>
+    </button>
+    <button class="hub-card hub-card--tennis" type="button" aria-label="Tennis">
+      <span class="hub-card-title">TENNIS</span>
+      <svg class="hub-emblem" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="edgeTns" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#d9ec5e"/>
+            <stop offset="55%" stop-color="#9bbf00"/>
+            <stop offset="100%" stop-color="#5f7600"/>
+          </linearGradient>
+          <radialGradient id="nodeTns" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#e7f47e"/>
+            <stop offset="100%" stop-color="#9bbf00"/>
+          </radialGradient>
+        </defs>
+        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
+          fill="none" stroke="url(#edgeTns)" stroke-width="3.4" stroke-linejoin="round"/>
+        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
+          fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1"/>
+        <g stroke="#9aa3ad" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round">
+          <line x1="40" y1="74" x2="80" y2="74"/>
+        </g>
+        <g fill="#9aa3ad" fill-opacity="0.35">
+          <rect x="44" y="60" width="6.5" height="14" rx="1.5"/>
+          <rect x="56.5" y="52" width="6.5" height="22" rx="1.5"/>
+          <rect x="69" y="44" width="6.5" height="30" rx="1.5"/>
+        </g>
+        <path d="M38 72 L50 60 L60 66 L80 38"
+          fill="none" stroke="url(#edgeTns)" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="80" cy="38" r="12.5" fill="none" stroke="#9bbf00" stroke-opacity="0.28" stroke-width="2"/>
+        <circle cx="80" cy="38" r="8" fill="url(#nodeTns)"/>
+        <g fill="none" stroke="#ffffff" stroke-opacity="0.82" stroke-width="1.6" stroke-linecap="round">
+          <path d="M73.2 32.4 Q80 38 73.2 43.6"/>
+          <path d="M86.8 32.4 Q80 38 86.8 43.6"/>
+        </g>
+      </svg>
+      <span class="hub-card-stats">
+        <span><b id="hub-tns-live">—</b> MATCHS LIVE</span>
+        <span><b id="hub-tns-vb">—</b> VALUE BETS</span>
+      </span>
+      <span class="hub-card-go">Entrer</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ STRATEGY SETUP — page config intermédiaire (hub → filtres → dashboard) ═══ -->
+<style id="strategy-setup-css">
+#strategy-setup{
+  position:fixed; inset:0; z-index:9000;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  gap:22px; padding:28px 22px calc(28px + env(safe-area-inset-bottom));
+  background:radial-gradient(ellipse 70% 50% at 50% 25%, var(--accent-bg) 0%, transparent 60%), var(--bg);
+  opacity:1; transform:scale(1); will-change:opacity, transform; overflow-y:auto;
+  transition:opacity .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1);
+}
+#strategy-setup.hub-exit{ opacity:0; transform:scale(.96); pointer-events:none; }
+.ss-wrap{ width:100%; max-width:480px; display:flex; flex-direction:column; gap:20px; margin:auto; }
+.ss-head{ text-align:center; }
+.ss-kicker{ font-family:var(--font-mono); font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--text3); }
+.ss-title{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:clamp(26px,6vw,38px); letter-spacing:1px; color:var(--text); margin-top:6px; }
+.ss-card{
+  border:1px solid rgba(255,255,255,0.15); border-radius:18px; padding:20px;
+  background:linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+  box-shadow:-7px -7px 18px rgba(255,255,255,0.05), 9px 11px 26px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px rgba(255,255,255,0.04);
+  display:flex; flex-direction:column; gap:12px;
+}
+.ss-card-lbl{ font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); }
+.ss-chips{ display:flex; flex-wrap:wrap; gap:8px; pointer-events:auto; }
+.ss-chip, .ss-pill{
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:12px;
+  padding:9px 13px; min-height:40px; border-radius:10px; color:var(--text);
+  border:1px solid rgba(255,255,255,0.12);
+  background:linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 5px rgba(0,0,0,0.25);
+}
+.ss-chip b, .ss-pill b{ font-family:'JetBrains Mono',monospace; font-weight:800; }
+.ss-chip--on{ border-color:rgba(25,163,90,0.45); color:#19a35a; }
+/* Pills interactives — toggle 3D */
+.ss-pill{
+  cursor:pointer; pointer-events:auto !important; user-select:none;
+  -webkit-tap-highlight-color:transparent; position:relative; z-index:1;
+  transition:transform .12s ease, box-shadow .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+}
+.ss-pill[aria-pressed="false"]{
+  color:var(--text3);
+  background:linear-gradient(135deg, rgba(0,0,0,0.28), rgba(0,0,0,0.14));
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.04);
+  border-color:rgba(255,255,255,0.06);
+}
+.ss-pill[aria-pressed="true"]{
+  color:#06281a; font-weight:800;
+  background:linear-gradient(135deg,#9be15d 0%,#19a35a 100%);
+  box-shadow:0 4px 12px rgba(25,163,90,0.4), inset 0 2px 0 rgba(255,255,255,0.45), inset 0 -2px 5px rgba(0,0,0,0.2);
+  border-color:transparent;
+}
+#strategy-setup.ss-tennis .ss-pill[aria-pressed="true"]{
+  color:#04222b;
+  background:linear-gradient(135deg,#00d4ff 0%,#00e676 100%);
+  box-shadow:0 4px 12px rgba(0,200,200,0.42), inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -2px 5px rgba(0,0,0,0.2);
+}
+.ss-pill:active{ transform:translateY(1px) scale(.97); }
+.ss-pill--info{ cursor:default; pointer-events:none; opacity:.92; }
+.ss-card{ pointer-events:auto; }
+.ss-card::before, .ss-card::after{ pointer-events:none; }
+.ss-cta{
+  width:100%; border:none; cursor:pointer; border-radius:16px; padding:18px 20px;
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:15px;
+  letter-spacing:1px; text-transform:uppercase; color:#08210f;
+  background:linear-gradient(135deg,#ffd24a 0%,#9be15d 55%,#19a35a 100%);
+  box-shadow:0 10px 24px rgba(25,163,90,0.35), inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -3px 8px rgba(0,0,0,0.25);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.ss-cta:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(25,163,90,0.45), inset 0 2px 0 rgba(255,255,255,0.6), inset 0 -3px 8px rgba(0,0,0,0.25); }
+.ss-cta:active{ transform:translateY(2px) scale(.99); box-shadow:inset 0 3px 10px rgba(0,0,0,0.35); }
+/* CTA Tennis — dégradé cyan→néon distinct du foot (or→vert) */
+#strategy-setup.ss-tennis .ss-cta{
+  color:#04222b;
+  background:linear-gradient(135deg,#00d4ff 0%,#19e3c4 52%,#00e676 100%);
+  box-shadow:0 10px 24px rgba(0,200,180,0.38), inset 0 2px 0 rgba(255,255,255,0.55), inset 0 -3px 8px rgba(0,0,0,0.25);
+}
+#strategy-setup.ss-tennis .ss-cta:hover{
+  box-shadow:0 14px 30px rgba(0,210,255,0.48), inset 0 2px 0 rgba(255,255,255,0.65), inset 0 -3px 8px rgba(0,0,0,0.25);
+}
+#strategy-setup.ss-tennis .ss-cta:active{ box-shadow:inset 0 3px 10px rgba(0,0,0,0.38); }
+.ss-back{ background:none; border:none; cursor:pointer; align-self:center; color:var(--text3); font-family:var(--font-mono); font-size:12px; letter-spacing:1px; padding:8px; }
+.ss-back:hover{ color:var(--text); }
+/* Dropdowns 3D (jours / ligues / période) */
+.ss-select-wrap{
+  display:flex; flex-direction:column; gap:4px; min-width:130px; flex:1 1 130px;
+}
+.ss-select-wrap > span{
+  font-family:var(--font-mono); font-size:9px; letter-spacing:2px;
+  text-transform:uppercase; color:#7d8896; padding-left:2px;
+}
+.ss-select{
+  appearance:none; -webkit-appearance:none; cursor:pointer; width:100%;
+  font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:13px;
+  color:#eef2f6; padding:11px 30px 11px 13px; min-height:44px; border-radius:11px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:
+    linear-gradient(135deg,#1b2230 0%,#10151e 100%),
+    no-repeat right 11px center/10px url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%237d8896' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
+  background-blend-mode:normal;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 10px rgba(0,0,0,0.4);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.ss-select:focus{ outline:none; border-color:rgba(0,230,118,0.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 3px rgba(0,230,118,0.18); }
+.ss-select:active{ box-shadow:inset 0 3px 8px rgba(0,0,0,0.45); }
+.ss-select option{ background:#10151e; color:#eef2f6; }
+/* Filtre Famille (Top Stratégies) — MOBILE uniquement, desktop intact */
+.strat-fam-mob{ display:flex; margin:10px 0 4px; max-width:100%; }
+@media (min-width:768px){ .strat-fam-mob{ display:none !important; } }
+</style>
+<div id="strategy-setup" role="dialog" aria-label="Configuration de la stratégie">
+  <div class="ss-wrap">
+    <div class="ss-head">
+      <div class="ss-kicker">Stratégie pré-configurée</div>
+      <div class="ss-title" id="ss-title">FOOTBALL</div>
+    </div>
+    <div data-sport-panel="football">
+      <div class="ss-card">
+        <span class="ss-card-lbl">Filtres — touchez pour activer/désactiver</span>
+        <div class="ss-chips">
+          <button type="button" class="ss-pill" data-ssf="dropping" aria-pressed="true">Dropping Cotes</button>
+          <label class="ss-select-wrap"><span>Jours</span>
+            <select class="ss-select" data-ssf="days" aria-label="Filtre jours">
+              <option value="all">Tous les jours</option>
+              <option value="0">Aujourd'hui</option>
+              <option value="1">Demain</option>
+            </select></label>
+          <span class="ss-pill ss-pill--info">Ligues : <b>Toutes</b></span>
+          <label class="ss-select-wrap"><span>Période</span>
+            <select class="ss-select" data-ssf="period" aria-label="Filtre période">
+              <option value="season">Saison</option>
+              <option value="l5">5 derniers</option>
+              <option value="l10">10 derniers</option>
+              <option value="l25">25 derniers</option>
+            </select></label>
+          <label class="ss-select-wrap"><span>Kickoff</span>
+            <select class="ss-select" data-ssf="kickoff" aria-label="Filtre kickoff">
+              <option value="0">Tous</option>
+              <option value="1">&lt; 1h</option>
+              <option value="2">&lt; 2h</option>
+              <option value="6">&lt; 6h</option>
+              <option value="12">&lt; 12h</option>
+              <option value="24">&lt; 24h</option>
+              <option value="72">&lt; 3 jours</option>
+            </select></label>
+        </div>
+      </div>
+    </div>
+    <div data-sport-panel="tennis" style="display:none;">
+      <div class="ss-card">
+        <span class="ss-card-lbl">Filtres — touchez pour activer/désactiver</span>
+        <div class="ss-chips">
+          <button type="button" class="ss-pill" data-ssf="atp" aria-pressed="true">ATP</button>
+          <button type="button" class="ss-pill" data-ssf="wta" aria-pressed="true">WTA</button>
+          <button type="button" class="ss-pill" data-ssf="elo" aria-pressed="true">Avec Elo</button>
+          <label class="ss-select-wrap"><span>Surfaces</span>
+            <select class="ss-select" data-ssf="surface" aria-label="Filtre surface">
+              <option value="ALL">Toutes</option>
+              <option value="Clay">Terre</option>
+              <option value="Hard">Dur</option>
+              <option value="Grass">Gazon</option>
+            </select></label>
+          <label class="ss-select-wrap"><span>Catégorie</span>
+            <select class="ss-select" data-ssf="tier" aria-label="Filtre catégorie tournoi">
+              <option value="ALL">Toutes</option>
+              <option value="GS">Grand Chelem</option>
+              <option value="1000">Masters 1000</option>
+              <option value="500">500</option>
+              <option value="250">250</option>
+              <option value="125">125 / Challenger</option>
+              <option value="ITF">ITF</option>
+            </select></label>
+          <label class="ss-select-wrap"><span>Compétition</span>
+            <select class="ss-select" data-ssf="comp" id="ss-comp-sel" aria-label="Filtre compétition">
+              <option value="ALL">Toutes</option>
+            </select></label>
+          <span class="ss-pill ss-pill--info">Tri : <b>Plus proche</b></span>
+        </div>
+      </div>
+    </div>
+    <button class="ss-cta" type="button" onclick="confirmStrategy()">Appliquer la stratégie et voir les matchs</button>
+    <button class="ss-back" type="button" onclick="backToHub()">Changer de sport</button>
+  </div>
+</div>
+
+<!-- ═══ CHANTIER 3 — Filtres dashboard : relief 3D + glassmorphism (theme-var, additif) ═══ -->
+<style id="filters-3d-css">
+  /* Chips filtres (jours / période / value / steam) + boutons tennis */
+  #page-matchs .filter-chip,
+  #page-matchs #steam-filter-chip,
+  #tennis-vb-filters .tennis-vb-filter-btn {
+    background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 3px 7px rgba(0,0,0,0.28) !important;
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease !important;
+  }
+  #page-matchs .filter-chip:hover,
+  #page-matchs #steam-filter-chip:hover,
+  #tennis-vb-filters .tennis-vb-filter-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.14),
+      0 6px 13px rgba(0,0,0,0.34) !important;
+  }
+  /* État actif = bouton enfoncé (inset) + accent */
+  #page-matchs .filter-chip.active,
+  #page-matchs #steam-filter-chip.active,
+  #tennis-vb-filters .tennis-vb-filter-btn.is-active {
+    background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #000) 100%) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow:
+      inset 0 2px 6px rgba(0,0,0,0.42),
+      inset 0 -1px 0 rgba(255,255,255,0.18),
+      0 1px 2px rgba(0,0,0,0.25) !important;
+    transform: translateY(0) !important;
+  }
+  #page-matchs .filter-chip:active,
+  #tennis-vb-filters .tennis-vb-filter-btn:active {
+    transform: translateY(1px) scale(.985) !important;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.40) !important;
+  }
+  /* Selects (Top N foot, Tri tennis, surface dropdown) */
+  #page-matchs .filter-dd,
+  #tennis-vb-filters .tvb-select,
+  #tennis-vb-filters #tennis-vb-sort {
+    background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 3px 7px rgba(0,0,0,0.26) !important;
+    color: var(--text) !important;
+    padding: 8px 12px !important;
+  }
+  /* Slider Degré Confiance — rail creusé + thumb 3D */
+  .conf-range, .adv-slider {
+    -webkit-appearance: none !important; appearance: none !important;
+    height: 8px !important; border-radius: 999px !important;
+    background: linear-gradient(180deg, rgba(0,0,0,0.30), rgba(0,0,0,0.10)) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.45), inset 0 -1px 0 rgba(255,255,255,0.06) !important;
+  }
+  .conf-range::-webkit-slider-thumb,
+  .adv-slider::-webkit-slider-thumb {
+    -webkit-appearance: none !important; appearance: none !important;
+    width: 20px !important; height: 20px !important; border-radius: 50% !important;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 55%, color-mix(in srgb, var(--accent) 60%, #000) 100%) !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.6) !important;
+    cursor: pointer !important;
+  }
+  .conf-range::-moz-range-thumb,
+  .adv-slider::-moz-range-thumb {
+    width: 20px !important; height: 20px !important; border-radius: 50% !important; border: 1px solid rgba(255,255,255,0.4) !important;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 55%, #000 140%) !important;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.45), inset 0 1px 1px rgba(255,255,255,0.6) !important; cursor: pointer !important;
+  }
+  /* Cases à cocher tennis — accent + relief */
+  #tennis-vb-filters input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--accent);
+    border-radius: 5px; cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  /* Sélecteur ligues (mls) — surface glass */
+  #page-matchs .mls-btn, #page-matchs .mls-label {
+    background: linear-gradient(135deg, var(--bg3), var(--bg2)) !important;
+    border: 1px solid var(--border) !important; border-radius: 12px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 3px 7px rgba(0,0,0,0.26) !important;
+  }
+</style>
+
+<!-- Hub/Filtres : palette dark premium autonome (visible quel que soit le thème site) -->
+<style id="hub-dark-theme">
+  /* Hub + config stratégie = MOBILE uniquement — masquage radical desktop (≥768px) */
+  @media (min-width: 768px) {
+    #sport-hub, #strategy-setup { display: none !important; }
+  }
+  /* Écran lock — layout fixe plein viewport (indépendant du thème) */
+  #page-locked{
+    position:fixed !important; top:0 !important; left:0 !important;
+    right:0 !important; bottom:0 !important;
+    width:100vw !important; height:100vh !important; z-index:7000 !important;
+    flex-direction:column; align-items:center; justify-content:center;
+    overflow-y:auto; padding:24px; margin:0 !important;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 25%, rgba(0,230,118,0.07) 0%, transparent 60%),
+      var(--bg);
+  }
+  #page-locked .section-title{ color:var(--text); }
+  #page-locked .section-sub{ color:var(--text3); }
+  /* Hub + setup — fond + couleurs suivent le thème Jour/Nuit (var CSS) */
+  #sport-hub, #strategy-setup{
+    background:
+      radial-gradient(ellipse 80% 55% at 50% 22%, rgba(0,230,118,0.08) 0%, transparent 60%),
+      var(--bg);
+  }
+  #sport-hub .hub-brand{ color:var(--text); }
+  #sport-hub .hub-tag, #strategy-setup .ss-kicker, #strategy-setup .ss-card-lbl{ color:var(--text3); }
+  .hub-card, #strategy-setup .ss-card{
+    background:linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+    border:1px solid var(--border);
+    box-shadow:-6px -6px 18px rgba(255,255,255,0.04), 10px 12px 26px rgba(0,0,0,0.30),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .hub-card-title, #strategy-setup .ss-title{ color:var(--text); }
+  .hub-card-kicker{ color:var(--text3); }
+  .hub-card-go{ color:var(--text); border-color:var(--border); background:rgba(127,127,127,0.06); }
+  #strategy-setup .ss-pill--info{ color:var(--text2); }
+  #strategy-setup .ss-back{ color:var(--text3); }
+  #strategy-setup .ss-back:hover{ color:var(--text); }
+</style>
 
 <!-- PAGE : HOT PICKS (Les 5 Stars du Jour) -->
 <div id="page-hot-picks" data-page="hot-picks" style="display:none;">
@@ -7317,6 +7884,14 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <button id="strat-help-btn" onclick="openStratHelp()">ℹ Aide &amp; Guide</button>
 
   <select id="strat-mob" aria-label="Stratégie" onchange="selectStrategy(this.value)"></select>
+  <label class="ss-select-wrap strat-fam-mob"><span>Famille de stratégie</span>
+    <select class="ss-select" id="strat-fam-sel" aria-label="Famille de stratégie" onchange="psStratFamily(this.value)">
+      <option value="all">Toutes les familles</option>
+      <option value="buts">Buts (Over / Under / BTTS)</option>
+      <option value="issue">Issue (1X2 / Double Chance)</option>
+      <option value="corners">Corners</option>
+      <option value="mitemps">Mi-temps</option>
+    </select></label>
   <div class="strategy-pills" id="strategy-pills"></div>
           <div id="acca-panel" class="acca-panel" style="display:none;"></div>
   <div class="strategy-controls" id="strategy-controls" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:12px 0 4px;padding:10px 14px;background:var(--bg2);border-radius:10px;border:1px solid rgba(255,255,255,0.05);">
@@ -8575,8 +9150,6 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
         <div class="gs-article-media">
           <div class="gs-img-frame">
-            <img src="/placeholder-artilleur.jpg" alt="L'Artilleur BTTS"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="gs-img-placeholder">
               <span>L'ARTILLEUR</span>
               <small>BTTS OUI</small>
@@ -8607,8 +9180,6 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
         <div class="gs-article-media">
           <div class="gs-img-frame">
-            <img src="/placeholder-foudroyeur.jpg" alt="Le Foudroyeur Over 2.5"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="gs-img-placeholder">
               <span>LE FOUDROYEUR</span>
               <small>OVER 2.5 BUTS</small>
@@ -8639,8 +9210,6 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
         <div class="gs-article-media">
           <div class="gs-img-frame">
-            <img src="/placeholder-corneriste.jpg" alt="Le Corneriste Over 6.5 Corners"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="gs-img-placeholder">
               <span>LE CORNERISTE</span>
               <small>OVER 6.5 CORNERS</small>
@@ -9500,6 +10069,269 @@ function showPage(pageId, linkEl) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ─── SPORT HUB (écran d'orientation) ────────────────────────────────────────
+let _psStrategySport = 'football';
+
+// État live des filtres Page 2 (modifié par les pills, lu par confirmStrategy)
+window.psStrategyFilters = {
+  // Toggles (booléens)
+  dropping: true,
+  atp: true, wta: true, elo: true, ev: true, hide: true,
+  surface: 'Clay',
+  // Dropdowns (chaînes — valeur sélectionnée)
+  days: 'all', leagues: 'all', period: 'season',
+  kickoff: '0',                        // parité desktop foot
+  tier: 'ALL', comp: 'ALL'             // parité desktop tennis (catégorie + compétition)
+};
+
+// Délégation GLOBALE niveau document — installée 1× au parse, indépendante du DOM dynamique
+function wireStrategyPills() {
+  if (window.__ssPillsWired) return;
+  window.__ssPillsWired = true;
+  const toggle = (btn) => {
+    const k = btn.getAttribute('data-ssf');
+    if (!k) return;
+    const on = btn.getAttribute('aria-pressed') !== 'true';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    window.psStrategyFilters[k] = on;
+  };
+  const onTap = (ev) => {
+    const btn = ev.target.closest && ev.target.closest('.ss-pill[data-ssf]');
+    if (!btn) return;
+    ev.preventDefault();
+    if (btn.dataset.tapLock === '1') return;     // anti double (click + touchend)
+    btn.dataset.tapLock = '1';
+    setTimeout(() => { btn.dataset.tapLock = ''; }, 280);
+    toggle(btn);
+  };
+  document.addEventListener('click', onTap, true);
+  document.addEventListener('touchend', onTap, { passive: false, capture: true });
+  // Dropdowns 3D (days / leagues / period) → state string
+  document.addEventListener('change', (ev) => {
+    const sel = ev.target.closest && ev.target.closest('.ss-select[data-ssf]');
+    if (!sel) return;
+    window.psStrategyFilters[sel.getAttribute('data-ssf')] = sel.value;
+  }, true);
+  // CTA Appliquer : touchend mobile (anti-rebond) — onclick gère le clic souris,
+  // confirmStrategy idempotent via dataset.confirming (pas de double-déclenchement)
+  document.addEventListener('touchend', (ev) => {
+    const cta = ev.target.closest && ev.target.closest('#strategy-setup .ss-cta');
+    if (!cta) return;
+    ev.preventDefault();
+    if (typeof confirmStrategy === 'function') confirmStrategy();
+  }, { passive: false, capture: true });
+}
+wireStrategyPills();   // auto-install immédiat (ne dépend plus de chooseSport)
+
+function chooseSport(sport) {
+  const hub   = document.getElementById('sport-hub');
+  const setup = document.getElementById('strategy-setup');
+  _psStrategySport = sport === 'tennis' ? 'tennis' : 'football';
+  try { sessionStorage.setItem('ps_hub_seen', '1'); } catch (e) {}
+
+  const tEl = document.getElementById('ss-title');
+  if (tEl) tEl.textContent = _psStrategySport === 'tennis' ? 'TENNIS' : 'FOOTBALL';
+  document.querySelectorAll('#strategy-setup [data-sport-panel]').forEach(p => {
+    p.style.display = (p.getAttribute('data-sport-panel') === _psStrategySport) ? 'block' : 'none';
+  });
+  if (setup) {
+    setup.classList.toggle('ss-tennis', _psStrategySport === 'tennis');
+    setup.classList.toggle('ss-football', _psStrategySport === 'football');
+    wireStrategyPills();
+    // Compétition tennis : pré-charger données + cloner options dès dispo
+    if (_psStrategySport === 'tennis') {
+      const ssC = document.getElementById('ss-comp-sel');
+      const cloneComp = () => {
+        const real = document.getElementById('tennis-vb-comp');
+        if (real && ssC && real.options.length > 1) {
+          const keep = window.psStrategyFilters.comp || 'ALL';
+          ssC.innerHTML = real.innerHTML;
+          ssC.value = [...ssC.options].some(o => o.value === keep) ? keep : 'ALL';
+          window.psStrategyFilters.comp = ssC.value;
+          return true;
+        }
+        return false;
+      };
+      if (!cloneComp()) {
+        try { if (typeof startTennisValueBets === 'function') startTennisValueBets(); } catch (e) {}
+        let _n = 0;
+        const _iv = setInterval(() => { if (cloneComp() || ++_n > 25) clearInterval(_iv); }, 400);
+      }
+    }
+    setup.querySelectorAll('.ss-pill[data-ssf]').forEach(b => {
+      const k = b.getAttribute('data-ssf');
+      b.setAttribute('aria-pressed', window.psStrategyFilters[k] ? 'true' : 'false');
+    });
+    setup.querySelectorAll('.ss-select[data-ssf]').forEach(s => {
+      const v = window.psStrategyFilters[s.getAttribute('data-ssf')];
+      if (v != null) s.value = v;
+    });
+  }
+
+  if (window.__hubBusy) return;          // anti double-fire (click + touchend)
+  window.__hubBusy = true;
+
+  if (setup) {
+    setup.dataset.confirming = '';
+    setup.style.display = 'flex';
+    setup.classList.add('hub-exit');     // état caché initial
+    void setup.offsetWidth;              // reflow pour jouer la transition
+    setup.classList.remove('hub-exit');  // fade-in déterministe
+  }
+  if (hub) {
+    hub.classList.add('hub-exit');       // fade-out
+    setTimeout(() => { hub.style.display = 'none'; window.__hubBusy = false; }, 380);
+  } else {
+    window.__hubBusy = false;
+  }
+}
+
+function _ssFire(el, type) { try { el.dispatchEvent(new Event(type, { bubbles: true })); } catch (e) {} }
+
+function applyFootballPreset() {
+  try {
+    const F = window.psStrategyFilters || {};
+    const dayVal = F.days || 'all';
+    const dayBtn = document.querySelector('#page-matchs .filter-chip[data-day="' + dayVal + '"]');
+    if (dayBtn && !dayBtn.classList.contains('active')) dayBtn.click();
+    if ((F.leagues || 'all') === 'all' && typeof mlPickAll === 'function') mlPickAll();
+    const steam = document.getElementById('steam-filter-chip');
+    const steamOn = steam && steam.classList.contains('active');
+    if (steam && typeof toggleSteamFilter === 'function' && !!F.dropping !== !!steamOn) toggleSteamFilter();
+    const sl = document.getElementById('o25-slider');
+    if (sl) {
+      sl.step = '1'; sl.value = '8'; _ssFire(sl, 'input'); _ssFire(sl, 'change');
+      const v = document.getElementById('o25-val'); if (v) v.textContent = '8%';
+    }
+    const perVal = F.period || 'season';
+    const per = document.querySelector('#page-matchs .filter-chip[data-period="' + perVal + '"]');
+    if (per && !per.classList.contains('active') && typeof setPeriod === 'function') setPeriod(perVal, per);
+    // Kickoff
+    const kBtn = document.querySelector('#page-matchs .filter-chip[data-kick="' + (F.kickoff || '0') + '"]');
+    if (kBtn && !kBtn.classList.contains('active')) kBtn.click();
+    if (typeof renderMatches === 'function' && typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+      renderMatches(allMatches);
+    }
+  } catch (e) {}
+}
+
+function applyTennisPreset() {
+  try {
+    const F = window.psStrategyFilters || {};
+    ['ATP', 'WTA'].forEach(v => {
+      const want = (v === 'ATP') ? (F.atp !== false) : (F.wta !== false);
+      const b = document.querySelector(`.tennis-vb-filter-btn[data-filter="tour"][data-value="${v}"]`);
+      if (b && b.classList.contains('is-active') !== want) b.click();
+    });
+    const surfVal = F.surface || 'Clay';
+    const surfBtn = document.querySelector(`.tennis-vb-filter-btn[data-filter="surface"][data-value="${surfVal}"]`);
+    if (surfBtn && !surfBtn.classList.contains('is-active')) surfBtn.click();
+    // Catégorie / tier (incl. 125 = Challenger)
+    const tierVal = F.tier || 'ALL';
+    const tierBtn = document.querySelector(`.tennis-vb-filter-btn[data-filter="tier"][data-value="${tierVal}"]`);
+    if (tierBtn && !tierBtn.classList.contains('is-active')) tierBtn.click();
+    // Compétition
+    const compVal = F.comp || 'ALL';
+    const realComp = document.getElementById('tennis-vb-comp');
+    if (realComp) {
+      window._tennisVbFilters = window._tennisVbFilters || {};
+      window._tennisVbFilters.comp = compVal;
+      if (realComp.value !== compVal) { realComp.value = compVal; }
+      _ssFire(realComp, 'change');
+    }
+    const sort = document.getElementById('tennis-vb-sort');
+    if (sort) { sort.value = 'time'; _ssFire(sort, 'change'); }
+    [['tennis-vb-elo-only', F.elo], ['tennis-vb-positive-ev', F.ev], ['tennis-vb-hide-finished', F.hide]].forEach(([id, want]) => {
+      const c = document.getElementById(id);
+      if (c && c.checked !== (want !== false)) { c.checked = (want !== false); _ssFire(c, 'change'); }
+    });
+    if (typeof renderTennisValueBets === 'function') {
+      renderTennisValueBets((window._tennisVbLastFetch) || []);
+    }
+  } catch (e) {}
+}
+
+function confirmStrategy() {
+  const setup  = document.getElementById('strategy-setup');
+  const sport  = _psStrategySport || 'football';
+  const target = sport === 'tennis' ? 'tennis' : 'matchs';
+
+  const go = () => {
+    window.__hubBusy = false;
+    if (setup) setup.style.display = 'none';
+    showPage(target, document.querySelector(`[data-page="${target}"]`));
+    const applyFn = () => { sport === 'tennis' ? applyTennisPreset() : applyFootballPreset(); };
+    setTimeout(applyFn, 80);
+    setTimeout(applyFn, 700);   // re-apply après init async (loadMatches/loadTennis) qui peut reset les filtres
+  };
+
+  if (!setup) { go(); return; }
+  if (setup.dataset.confirming === '1') return;
+  setup.dataset.confirming = '1';
+  setup.classList.add('hub-exit');
+  setTimeout(go, 320);
+}
+
+function backToHub() {
+  const setup = document.getElementById('strategy-setup');
+  const hub   = document.getElementById('sport-hub');
+  window.__hubBusy = false;
+  if (setup) { setup.dataset.confirming = ''; setup.style.display = 'none'; }
+  if (hub) {
+    hub.style.display = 'flex';
+    hub.classList.add('hub-exit');
+    void hub.offsetWidth;
+    hub.classList.remove('hub-exit');
+  }
+}
+
+function wireSportHub() {
+  document.querySelectorAll('#sport-hub .hub-card').forEach(card => {
+    if (card.dataset.wired) return;
+    card.dataset.wired = '1';
+    const sport = card.classList.contains('hub-card--tennis') ? 'tennis' : 'football';
+    const go = (ev) => { ev.preventDefault(); chooseSport(sport); };
+    card.addEventListener('click', go);
+    card.addEventListener('touchend', go, { passive: false });
+  });
+}
+
+async function hydrateHubCounters() {
+  const _set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  // Barrière auth : anonyme → pas de requêtes privées (zéro 401/403 console)
+  let _anon = true;
+  try { _anon = !localStorage.getItem('ps_user_token'); } catch (e) {}
+  if (_anon) {
+    _set('hub-foot-live', '—'); _set('hub-foot-vb', '—');
+    _set('hub-tns-live', '—'); _set('hub-tns-vb', '—');
+    return;
+  }
+  // — Compteurs Football — failsafe : jamais throw, fallback "—"
+  try {
+    const r = await fetch('/api/v1/matches');
+    if (!r.ok) throw new Error('API Status: ' + r.status);
+    const ms = await r.json();
+    const arr = Array.isArray(ms) ? ms : (ms.matches || []);
+    _set('hub-foot-live', arr.filter(m => m && m.is_live).length);
+    _set('hub-foot-vb', arr.filter(m => m && m.best_edge && Number(m.best_edge.edge) > 5).length);
+  } catch (e) {
+    console.warn('⚠️ Failsafe — compteurs Foot indisponibles :', e.message);
+    _set('hub-foot-live', '—'); _set('hub-foot-vb', '—');
+  }
+  // — Compteurs Tennis — failsafe : jamais throw, fallback "—"
+  try {
+    const r = await fetch('/api/v1/tennis/value-bets');
+    if (!r.ok) throw new Error('API Status: ' + r.status);
+    const tj = await r.json();
+    const tarr = Array.isArray(tj) ? tj : (tj.value_bets || tj.matches || []);
+    _set('hub-tns-live', tarr.filter(m => m && m.is_live).length);
+    _set('hub-tns-vb', tarr.length);
+  } catch (e) {
+    console.warn('⚠️ Failsafe — compteurs Tennis indisponibles :', e.message);
+    _set('hub-tns-live', '—'); _set('hub-tns-vb', '—');
+  }
+}
+
 // ─── TENNIS LIVE (ESPN ATP+WTA, poll 30 s) ──────────────────────────────────
 let _tennisTimer = null;
 window._tennisLastFetch = [];
@@ -9577,6 +10409,7 @@ async function tickTennisLive() {
     const data = await r.json();
     window._tennisLastFetch = Array.isArray(data) ? data : [];
     renderTennisLive(window._tennisLastFetch);
+    try { patchTennisLive(); } catch (_) {}/*TN_UNIFY_TICK*/
     if (statusEl) statusEl.textContent = `${window._tennisLastFetch.length} match(s) · ${new Date().toLocaleTimeString('fr-FR')}`;
   } catch (e) {
     console.warn('[Tennis] fetch error:', e.message);
@@ -9990,9 +10823,44 @@ function _tvbTotConv(tc) {
   return '<div title="Totaux jeux — BSD ' + tc.bsd_expected + ' vs Markov ' + tc.markov_ref + ' (Δ' + tc.diff + ')" style="font-size:9px;color:' + col + ';margin-top:2px;">TOT ' + (tc.agree ? '✓' : '≠') + '</div>';
 }
 
-function renderTennisValueBets(matches) {
+/*TN_UNIFY_HELPERS*/
+function _tnNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+function _tnTournStr(t){return (t&&typeof t==='object')?(t.name||t.short_name||''):String(t||'');}
+function _tnJoinKey(m){return _tnNorm(m&&m.player1&&m.player1.name)+'|'+_tnNorm(m&&m.player2&&m.player2.name)+'|'+_tnNorm(_tnTournStr(m&&m.tournament));}
+function _tnRank(m){if(m._isLive)return 0;var x=String(m.status||'').toUpperCase();if(x==='TERMINÉ'||x==='TERMINE'||x==='FINAL'||x==='FINISHED'||x==='POST')return 2;return 1;}
+function _tnLiveLabel(lo){if(!lo)return '—';var sets=Array.isArray(lo.sets)?lo.sets:[];var idx=(typeof lo.current_set_index==='number')?lo.current_set_index:sets.length-1;var ls=sets[idx]||sets[sets.length-1]||{p1:0,p2:0};var setNo=((lo.player1_sets!=null?lo.player1_sets:0)+(lo.player2_sets!=null?lo.player2_sets:0))+1;return 'Set '+setNo+' · '+(ls.p1!=null?ls.p1:0)+'-'+(ls.p2!=null?ls.p2:0);}
+function _tnLiveIdSig(){var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];return live.filter(function(l){return l&&l.is_live===true;}).map(function(l){return String(l.id);}).sort().join(',');}
+function buildUnifiedTennis(vb){
+  var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];
+  var liveIdx=new Map();
+  for(var i=0;i<live.length;i++){var lo=live[i];if(lo&&lo.player1&&lo.player2)liveIdx.set(_tnJoinKey(lo),lo);}
+  var used=new Set();
+  var base=(Array.isArray(vb)?vb:[]).map(function(m){
+    var k=_tnJoinKey(m);var lo=liveIdx.get(k);
+    if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;}else{m._live=null;m._isLive=false;}
+    return m;
+  });
+  liveIdx.forEach(function(lo,k){
+    if(used.has(k)||lo.is_live!==true)return;
+    base.push({id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true});
+  });
+  window.psTennisMatches=base;
+  return base;
+}
+function patchTennisLive(){
+  var tbody=document.getElementById('tennis-vb-tbody');
+  if(!tbody)return;
+  var sig=_tnLiveIdSig();
+  if(sig!==window._tnLiveSig){window._tnLiveSig=sig;renderTennisValueBets(window._tennisVbLastFetch||[]);return;}
+  var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];
+  for(var i=0;i<live.length;i++){var lo=live[i];if(!lo||lo.is_live!==true)continue;var cell=tbody.querySelector('[data-tn-live="'+String(lo.id)+'"]');if(cell)cell.textContent=_tnLiveLabel(lo);}
+}
+
+function renderTennisValueBets(rawMatches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
+  const matches = buildUnifiedTennis(rawMatches);
+  window._tnLiveSig = _tnLiveIdSig();
   if (!Array.isArray(matches) || matches.length === 0) {
     tbody.innerHTML = '<tr><td colspan="13" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
@@ -10060,7 +10928,9 @@ function renderTennisValueBets(matches) {
 
   // Tri sélectionnable (défaut : heure de match croissante).
   const _sortBy = (f && f.sort) || 'time';
-  filtered.sort((a, b) => {
+  filtered.sort((a, b) => {/*TN_UNIFY_SORT*/
+    const _ra = _tnRank(a), _rb = _tnRank(b);
+    if (_ra !== _rb) return _ra - _rb;
     switch (_sortBy) {
       case 'ev':
         return (b.best_ev_model?.ev ?? -999) - (a.best_ev_model?.ev ?? -999);
@@ -10149,14 +11019,16 @@ function renderTennisValueBets(matches) {
     const tournLine = m.tournament
       ? `<div class="tvb-ctx" style="font-size:10px;color:var(--text3,#5a6068);margin-top:3px;">${_escTennis(m.tournament)}${m.round ? ' · ' + _escTennis(m.round) : ''}</div>`
       : '';
-    return `<tr class="tennis-vb-row" ${onclick}>
+    const _tnLiveId = m._live ? _escTennis(String(m._live.id || '')) : '';/*TN_UNIFY_ROW*/
+    const _tnRowCls = m._isLive ? ' is-live' : '';
+    return `<tr class="tennis-vb-row${_tnRowCls}" data-tn-row="${matchId}" ${onclick}>
       <td>
         ${_tvbTrap(m.trap_bet)}
         <div><span class="tvb-pname${p1Fav}">${p1Flag}${p1Name}</span>${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbPlayerAlerts(sm, 'p1')}</div>
         <div style="margin-top:3px;"><span class="tvb-pname${p2Fav}">${p2Flag}${p2Name}</span>${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbPlayerAlerts(sm, 'p2')}</div>
         ${tournLine}
       </td>
-      <td><div class="tvb-ctx">${_tvbTourBadge(m.tour)} <span class="${_tvbSurfaceCls(m.surface)}">${_tvbSurfaceIcon(m.surface)}</span><div style="margin-top:4px;">${ctxDate}</div></div></td>
+      <td><div class="tvb-ctx">${_tvbTourBadge(m.tour)} <span class="${_tvbSurfaceCls(m.surface)}">${_tvbSurfaceIcon(m.surface)}</span><div style="margin-top:4px;">${m._isLive ? ('<span class="tn-live-ind" data-tn-live="' + _tnLiveId + '">' + _escTennis(_tnLiveLabel(m._live)) + '</span>') : ctxDate}</div></div></td>/*TN_UNIFY_CTX*/
       <td style="text-align:center;"><span class="tvb-elo-vs"><span class="${(eloP1 != null && eloP2 != null && eloP1 > eloP2) ? 'e-fav' : ''}">${eloP1 != null ? eloP1 : '—'}</span><span class="e-sep">▸</span><span class="${(eloP1 != null && eloP2 != null && eloP2 > eloP1) ? 'e-fav' : ''}">${eloP2 != null ? eloP2 : '—'}</span></span>${_tvbSDI(m.serve_dominance)}</td>
       <td style="text-align:center;">${_tvbConfBadge(m.confidence_badge)}${probHtml}${_tvbMlDiv(m.ml_market_div)}</td>
       <td style="text-align:center;">${_tvbSetDistCell(m.predictions?.set_probs, m.player1?.name, m.player2?.name)}</td>
@@ -19918,7 +20790,56 @@ window.addEventListener('DOMContentLoaded', () => {
   initDayFilters();
   initLeagueFilters();
   buildFilterDropdowns();
+  // Sport Hub — MOBILE uniquement (< 768px). Desktop = dashboard direct, pas de hub.
+  wireSportHub();
+  const _hub = document.getElementById('sport-hub');
+  if (_hub) {
+    if (window.innerWidth < 768) {
+      _hub.style.display = 'flex';
+      _hub.classList.remove('hub-exit');
+      hydrateHubCounters();
+    } else {
+      _hub.style.display = 'none';
+    }
+  }
 });
+
+// ─── A11y : labels/noms garantis sur tous les champs (anti-warnings Chrome) ──
+(function ensureA11yLabels() {
+  function esc(s) { try { return CSS.escape(s); } catch (e) { return s; } }
+  function fix() {
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      if (el.type === 'hidden') return;
+      const named = (el.id && el.id.trim()) || (el.name && el.name.trim());
+      if (el.id && !el.name) el.name = el.id;
+      if (!named && !el.id && !el.name) {
+        el.name = 'fld-' + Math.random().toString(36).slice(2, 8);
+      }
+      const hasAria = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby');
+      const hasFor  = el.id && document.querySelector('label[for="' + esc(el.id) + '"]');
+      if (hasAria || hasFor || el.closest('label')) return;
+      let lbl = el.getAttribute('placeholder') || el.getAttribute('title');
+      const prev = el.previousElementSibling;
+      if (!lbl && prev && prev.tagName === 'LABEL') lbl = prev.textContent;
+      if (!lbl) lbl = el.name || el.id || el.type || 'champ';
+      el.setAttribute('aria-label', String(lbl).replace(/\s+/g, ' ').trim().slice(0, 80));
+    });
+    document.querySelectorAll('label').forEach(l => {
+      if (l.getAttribute('for') || l.querySelector('input, select, textarea')) return;
+      const scope = l.parentElement || document;
+      const fld = scope.querySelector('input, select, textarea');
+      if (fld) {
+        if (!fld.id) fld.id = 'a11y-' + Math.random().toString(36).slice(2, 8);
+        l.setAttribute('for', fld.id);
+      }
+    });
+  }
+  if (document.readyState !== 'loading') fix();
+  else document.addEventListener('DOMContentLoaded', fix);
+  // UI dynamique (modals, bascule pages) → re-run léger idempotent
+  let _t = null;
+  document.addEventListener('click', () => { clearTimeout(_t); _t = setTimeout(fix, 300); }, true);
+})();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SECTIONS STATIQUES (Prédictions, Tendances, Alertes, Comparateur, Tarifs)
@@ -20068,6 +20989,25 @@ function selectStrategy(key) {
   const _ssel = document.getElementById('strat-mob');
   if (_ssel && _ssel.value !== key) _ssel.value = key;
   loadStrategy(key);
+}
+
+// Filtre Famille (mobile Top Stratégies) — pilote état plat + masque pills hors famille
+const PS_STRAT_FAMILY = {
+  buts:    ['BTTS_YES', 'OVER_2_5', 'OVER_1_5', 'UNDER_2_5', 'CS_00', 'VERROU_TACTIQUE'],
+  issue:   ['HOME_WIN', 'AWAY_WIN', 'DRAW', 'DC_HOME', 'DC_AWAY', 'GOLDEN_PPG_GAP'],
+  corners: ['ANGLE_CORNERS', 'OVER_6_5_CORNERS'],
+  mitemps: ['HT_HOME_FT_HOME', 'HT_UNDER_FT_OVER']
+};
+function psStratFamily(val) {
+  window.psStrategyFilters = window.psStrategyFilters || {};
+  window.psStrategyFilters.stratFamily = val;
+  const keys = (val && val !== 'all') ? (PS_STRAT_FAMILY[val] || []) : null;
+  const pills = document.querySelectorAll('#strategy-pills .strategy-pill');
+  pills.forEach(p => { p.style.display = (!keys || keys.includes(p.dataset.key)) ? '' : 'none'; });
+  if (keys && !keys.includes(currentStrategy)) {
+    const first = [...pills].find(p => p.style.display !== 'none');
+    if (first) selectStrategy(first.dataset.key);
+  }
 }
 
 function renderStrategySkeletons(n = 6) {
@@ -22096,7 +23036,8 @@ function renderLockedPage(pageId, block) {
     : (block.sport === 'tennis'
         ? 'Le module Tennis est inclus dans Pro Tennis et Pro Foot &amp; Tennis.'
         : 'Ce module est réservé aux abonnés Pro et Matchday Pass.');
-  host.style.display = 'block';
+  host.style.display = 'flex';
+  try { window.scrollTo(0, 0); } catch (e) {}
   host.innerHTML = `
     <section class="section fade-up visible" style="text-align:center;max-width:560px;margin:60px auto;">
       <div style="font-size:46px;margin-bottom:14px;">🔒</div>

@@ -2968,6 +2968,12 @@ function initSQLite() {
   sqldb = new Database(SQLITE_FILE);
   sqldb.pragma('journal_mode = WAL');
   sqldb.pragma('synchronous = NORMAL');
+  // Fn SQLite unaccent : strip diacritiques (á→a, é→e…) pour matcher les noms
+  // accentués (BSD "Sebastián Báez") aux noms ASCII Sackmann/Elo.
+  try {
+    sqldb.function('unaccent', { deterministic: true }, (s) =>
+      s == null ? null : String(s).normalize('NFD').replace(/[̀-ͯ]/g, ''));
+  } catch (_) { /* déjà enregistré */ }
   sqldb.exec(`CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS ai_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, matchId TEXT NOT NULL, rating INTEGER NOT NULL, ts INTEGER NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS matchday_passes (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT UNIQUE NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`);
@@ -12468,6 +12474,8 @@ const mime = {
   '.css': 'text/css',
   '.json': 'application/json',
   '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.webmanifest': 'application/manifest+json',
   '.ico': 'image/x-icon'
 };
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -19300,6 +19308,32 @@ function computeServeDominance(rows, surface, lastN = 30) {
   };
 }
 
+// [FIX diacritiques] Mappe un nom accenté (BSD) vers le nom EXACT stocké dans
+// tennis_matches (ASCII Sackmann), via match accent-insensible (fn unaccent).
+// Une fois canonicalisé, TOUS les lookups (Elo/Markov/KoA/fatigue/logdiff)
+// matchent. Cache pour éviter la requête par-match.
+const _canonNameCache = new Map();
+function _canonTennisName(name, tour) {
+  if (!name || !tour) return null;
+  const ck = tour + '|' + name.toLowerCase();
+  if (_canonNameCache.has(ck)) return _canonNameCache.get(ck);
+  let out = null;
+  try {
+    const r = sqldb.prepare(`
+      SELECT n FROM (
+        SELECT winner_name AS n FROM tennis_matches
+          WHERE tour=? AND unaccent(LOWER(winner_name))=unaccent(LOWER(?))
+        UNION ALL
+        SELECT loser_name AS n FROM tennis_matches
+          WHERE tour=? AND unaccent(LOWER(loser_name))=unaccent(LOWER(?))
+      ) LIMIT 1
+    `).get(tour, name, tour, name);
+    if (r && r.n) out = r.n;
+  } catch (_) { out = null; }
+  _canonNameCache.set(ck, out);
+  return out;
+}
+
 async function _buildTennisValueBetsCore({ date }) {
   const dateClean = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   let bsdMatches = [];
@@ -19381,8 +19415,8 @@ async function _buildTennisValueBetsCore({ date }) {
     // Yield event-loop tous les 20 matchs : la boucle CPU bloquait le process
     // ~20s (autres routes/SSE gelées) et empêchait tout timeout de tirer.
     if (++_vbI % 20 === 0) await new Promise(r => setImmediate(r));
-    const p1Name = (m.player1 && (m.player1.name || m.player1.full_name)) || m.player1_name || '';
-    const p2Name = (m.player2 && (m.player2.name || m.player2.full_name)) || m.player2_name || '';
+    let p1Name = (m.player1 && (m.player1.name || m.player1.full_name)) || m.player1_name || '';
+    let p2Name = (m.player2 && (m.player2.name || m.player2.full_name)) || m.player2_name || '';
     // [FIX CRASH render] BSD renvoie tournament = OBJET {id,name,…} ; ESPN =
     // string. Le frontend faisait `tournament.localeCompare` → throw → render
     // KO → table figée "Chargement…" en boucle. On NORMALISE en string ici.
@@ -19450,6 +19484,12 @@ async function _buildTennisValueBetsCore({ date }) {
     const _tourN = m.tour || (_tObj && _tObj.circuit) || '';
     const _surfN = m.surface || (_tObj && _tObj.surface) || null;
     const tourGuess = ['ATP', 'WTA'].includes(String(_tourN).toUpperCase()) ? String(_tourN).toUpperCase() : null;
+    // Canonicalise les noms (accent-insensible) → nom ASCII stocké Sackmann/Elo.
+    // Tous les lookups en aval (Elo/Markov/KoA/fatigue/logdiff) matchent ensuite.
+    if (tourGuess) {
+      p1Name = _canonTennisName(p1Name, tourGuess) || p1Name;
+      p2Name = _canonTennisName(p2Name, tourGuess) || p2Name;
+    }
     let surfaceClean = (_surfN && TENNIS_ELO_SURFACES.includes(String(_surfN).toLowerCase())) ? String(_surfN).toLowerCase() : null;
     let surfaceSource = surfaceClean ? matchSource : null;
     if (!surfaceClean && _tName) {
@@ -22548,11 +22588,15 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
         const ext = path.extname(filePath);
         const contentType = (typeof mime !== 'undefined' && mime[ext]) ? mime[ext] : 'application/octet-stream';
 
-        // Cache-Control : HTML court + revalidation, assets longue durée immutable.
+        // Cache-Control : HTML + manifest/icône/SW → court + revalidation ; autres assets → immutable.
         const isHtml = ext === '.html' || ext === '';
+        const base = path.basename(filePath).toLowerCase();
+        const noLongCache = isHtml
+            || ext === '.json' || ext === '.webmanifest' || ext === '.svg'
+            || base === 'sw.js' || base === 'service-worker.js';
         const headers = {
             'Content-Type': contentType,
-            'Cache-Control': isHtml
+            'Cache-Control': noLongCache
                 ? 'public, max-age=300, must-revalidate'
                 : 'public, max-age=31536000, immutable',
             'Vary': 'Accept-Encoding'
