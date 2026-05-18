@@ -14788,6 +14788,230 @@ function _tennisLookupEloPair(p1Name, p2Name, tour, surface) {
   };
 }
 
+// ─── Colonne 2 enrichie : rang Elo surface + forme 90j même surface ─────────
+// Source 100 % locale (tennis_elo + tennis_matches déjà alimentés par le sync
+// Sackmann/Tennis Abstract). Aucun scrape live — cache mémoire TTL.
+const _TENNIS_SURF_RANK_TTL_MS = 30 * 60 * 1000;
+const _tennisSurfRankIdx = { ts: 0, by: null }; // `${tour}|${surface}` → Map(lname→pos) + _total
+const _tennisSurfFormCache = new Map();          // `${pid}|${surface}` → { ts, form }
+
+function _ymdNDaysAgo(n) {
+  const d = new Date(Date.now() - n * 86400000);
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
+
+function _buildTennisSurfRankIdx() {
+  if (_tennisSurfRankIdx.by && Date.now() - _tennisSurfRankIdx.ts < _TENNIS_SURF_RANK_TTL_MS) {
+    return _tennisSurfRankIdx.by;
+  }
+  const by = new Map();
+  try {
+    const activeCut = _ymdNDaysAgo(425); // joueurs actifs ≈ 14 mois (cohérent log-diff)
+    for (const tour of ['ATP', 'WTA']) {
+      for (const surface of TENNIS_ELO_SURFACES) {
+        const rows = sqldb.prepare(
+          `SELECT player_name FROM tennis_elo
+           WHERE tour = ? AND surface = ?
+             AND last_match_date IS NOT NULL AND last_match_date >= ?
+           ORDER BY elo DESC`
+        ).all(tour, surface, activeCut);
+        const map = new Map();
+        rows.forEach((r, i) => { if (r.player_name) map.set(r.player_name.toLowerCase(), i + 1); });
+        map._total = rows.length;
+        by.set(`${tour}|${surface}`, map);
+      }
+    }
+  } catch (_) { /* tables absentes — rang surface indisponible */ }
+  _tennisSurfRankIdx.by = by;
+  _tennisSurfRankIdx.ts = Date.now();
+  return by;
+}
+
+// Forme : 3 derniers matchs du joueur, surface == match du jour, ≤ 90 jours.
+// Renvoie ['W','L',...] (plus récent en premier) ou [].
+function _tennisSurfaceForm(playerId, surface) {
+  if (!playerId || !surface) return [];
+  const ck = `${playerId}|${surface}`;
+  const hit = _tennisSurfFormCache.get(ck);
+  if (hit && Date.now() - hit.ts < _TENNIS_SURF_RANK_TTL_MS) return hit.form;
+  let form = [];
+  try {
+    const cut90 = _ymdNDaysAgo(90);
+    const rows = sqldb.prepare(
+      `SELECT winner_id, tourney_date FROM tennis_matches
+       WHERE surface = ? AND tourney_date >= ?
+         AND (winner_id = ? OR loser_id = ?)
+       ORDER BY tourney_date DESC, match_num DESC
+       LIMIT 3`
+    ).all(surface, cut90, playerId, playerId);
+    form = rows.map(r => (r.winner_id === playerId ? 'W' : 'L'));
+  } catch (_) { form = []; }
+  _tennisSurfFormCache.set(ck, { ts: Date.now(), form });
+  return form;
+}
+
+// Barème points par victoire selon rang adversaire (défaite = 0).
+function _tnRankPts(oppRank) {
+  if (oppRank && oppRank >= 1 && oppRank <= 10) return 3;
+  if (oppRank && oppRank <= 50) return 2;
+  if (oppRank && oppRank <= 100) return 1;
+  return 0.5; // victoire vs >100 ou rang inconnu
+}
+
+// Forme pondérée (L5/L10 pts, même surface) + PowerScore surface /100.
+// PowerScore = 0.5·EloNorm + 0.3·WinRate52s + 0.2·FacteurFormePts.
+function _tennisPowerForm(playerId, surface, eloRow) {
+  const r = { l5_pts: null, l10_pts: null, powerscore: null };
+  if (!playerId || !surface) return r;
+  const ck = `pf|${playerId}|${surface}`;
+  const hit = _tennisSurfFormCache.get(ck);
+  if (hit && Date.now() - hit.ts < _TENNIS_SURF_RANK_TTL_MS) return hit.val;
+  try {
+    const rows = sqldb.prepare(
+      `SELECT winner_id, winner_rank, loser_rank, tourney_date FROM tennis_matches
+       WHERE surface = ? AND (winner_id = ? OR loser_id = ?)
+       ORDER BY tourney_date DESC, match_num DESC LIMIT 10`
+    ).all(surface, playerId, playerId);
+    if (rows.length) {
+      let l5 = 0, l10 = 0;
+      rows.forEach((m, i) => {
+        const won = m.winner_id === playerId;
+        const pts = won ? _tnRankPts(won ? m.loser_rank : m.winner_rank) : 0;
+        l10 += pts; if (i < 5) l5 += pts;
+      });
+      r.l5_pts = Math.round(l5 * 10) / 10;
+      r.l10_pts = Math.round(l10 * 10) / 10;
+      // WinRate surface 52 sem.
+      const cut364 = _ymdNDaysAgo(364);
+      const wr = sqldb.prepare(
+        `SELECT SUM(CASE WHEN winner_id = ? THEN 1 ELSE 0 END) AS wins, COUNT(*) AS tot
+         FROM tennis_matches
+         WHERE surface = ? AND tourney_date >= ? AND (winner_id = ? OR loser_id = ?)`
+      ).get(playerId, surface, cut364, playerId, playerId);
+      const winRate = (wr && wr.tot > 0) ? wr.wins / wr.tot : 0;
+      const eloNorm = eloRow && eloRow.elo
+        ? Math.max(0, Math.min(1, (eloRow.elo - 1500) / 900)) : 0;
+      const formFactor = Math.max(0, Math.min(1, l10 / 30)); // max L10 = 10×3
+      const power = Math.round(100 * (0.5 * eloNorm + 0.3 * winRate + 0.2 * formFactor));
+      r.powerscore = Math.max(0, Math.min(100, power));
+    }
+  } catch (_) { /* tennis_matches absent — power/form indispo */ }
+  _tennisSurfFormCache.set(ck, { ts: Date.now(), val: r });
+  return r;
+}
+
+// Classement PowerScore : tous les joueurs actifs (≤425j) d'un tour+surface,
+// triés par PowerScore décroissant. name(lower) → rang. Cache 30 min (lourd :
+// PowerScore calculé pour chaque joueur, mais _tennisPowerForm est mémoïsé).
+const _tennisPowerRankIdx = { ts: 0, by: null };
+function _buildTennisPowerRankIdx() {
+  if (_tennisPowerRankIdx.by && Date.now() - _tennisPowerRankIdx.ts < _TENNIS_SURF_RANK_TTL_MS) {
+    return _tennisPowerRankIdx.by;
+  }
+  const by = new Map();
+  try {
+    const activeCut = _ymdNDaysAgo(425);
+    for (const tour of ['ATP', 'WTA']) {
+      for (const surface of TENNIS_ELO_SURFACES) {
+        const rows = sqldb.prepare(
+          `SELECT player_id, player_name, elo FROM tennis_elo
+           WHERE tour = ? AND surface = ?
+             AND last_match_date IS NOT NULL AND last_match_date >= ?
+           ORDER BY elo DESC`
+        ).all(tour, surface, activeCut);
+        const scored = [];
+        for (const r of rows) {
+          if (!r.player_id || !r.player_name) continue;
+          const pf = _tennisPowerForm(r.player_id, surface, r);
+          if (pf.powerscore == null) continue;
+          scored.push({ n: r.player_name.toLowerCase(), ps: pf.powerscore });
+        }
+        scored.sort((a, b) => b.ps - a.ps);
+        const map = new Map();
+        scored.forEach((x, i) => { if (!map.has(x.n)) map.set(x.n, i + 1); });
+        map._total = scored.length;
+        by.set(`${tour}|${surface}`, map);
+      }
+    }
+  } catch (_) { /* tables absentes — classement PowerScore indispo */ }
+  _tennisPowerRankIdx.by = by;
+  _tennisPowerRankIdx.ts = Date.now();
+  return by;
+}
+
+// Enrichissement d'un joueur : rang surface, forme, L5/L10, PowerScore + rang PS.
+// surface = valeur capitalisée (Hard/Clay/Grass/Carpet) ; null → indicateur neutre.
+function getTennisSurfStats(playerName, tour, surface) {
+  const out = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null,
+                powerscore: null, ps_rank: null, ps_total: null };
+  if (!playerName || !tour || !surface || !TENNIS_ELO_SURFACES.includes(surface)) return out;
+  const T = String(tour).toUpperCase();
+  const idx = _buildTennisSurfRankIdx().get(`${T}|${surface}`);
+  if (idx) {
+    const pos = idx.get(playerName.trim().toLowerCase());
+    if (pos) { out.rk = pos; out.total = idx._total || null; }
+  }
+  const eloRow = getTennisEloByName(playerName, T, surface) || getTennisEloByName(playerName, T, 'ALL');
+  if (eloRow && eloRow.player_id) {
+    out.form = _tennisSurfaceForm(eloRow.player_id, surface);
+    const pf = _tennisPowerForm(eloRow.player_id, surface, eloRow);
+    out.l5_pts = pf.l5_pts; out.l10_pts = pf.l10_pts; out.powerscore = pf.powerscore;
+    if (pf.powerscore != null) {
+      const pidx = _buildTennisPowerRankIdx().get(`${T}|${surface}`);
+      if (pidx) {
+        const pr = pidx.get(playerName.trim().toLowerCase());
+        if (pr) { out.ps_rank = pr; out.ps_total = pidx._total || null; }
+      }
+    }
+  }
+  return out;
+}
+
+// Cache JSON disque 12h pour la route /api/v1/tennis/player-stats.
+const _TENNIS_PSTATS_FILE = path.join(__dirname, 'cache', 'tennis_player_stats.json');
+const _TENNIS_PSTATS_TTL_MS = 12 * 3600 * 1000;
+let _tennisPStatsDisk = null; // { [key]: { rk, total, form, cached_at_ms } }
+
+function _loadTennisPStatsDisk() {
+  if (_tennisPStatsDisk) return _tennisPStatsDisk;
+  try {
+    _tennisPStatsDisk = JSON.parse(fs.readFileSync(_TENNIS_PSTATS_FILE, 'utf8')) || {};
+  } catch (_) { _tennisPStatsDisk = {}; }
+  return _tennisPStatsDisk;
+}
+
+function _saveTennisPStatsDisk() {
+  try {
+    const dir = path.dirname(_TENNIS_PSTATS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(_TENNIS_PSTATS_FILE, JSON.stringify(_tennisPStatsDisk || {}), 'utf8');
+  } catch (_) { /* cache disque best-effort */ }
+}
+
+function getTennisPlayerStatsCached(name, tour, surface) {
+  const key = `${name.toLowerCase()}|${tour}|${surface}`;
+  const disk = _loadTennisPStatsDisk();
+  const hit = disk[key];
+  const now = Date.now();
+  // Schéma v3 : invalide les entrées disque sans ps_rank (ancien format).
+  if (hit && hit.cached_at_ms && hit.ps_rank !== undefined &&
+      now - hit.cached_at_ms < _TENNIS_PSTATS_TTL_MS) {
+    return { rk: hit.rk, total: hit.total, form: hit.form,
+             l5_pts: hit.l5_pts, l10_pts: hit.l10_pts, powerscore: hit.powerscore,
+             ps_rank: hit.ps_rank, ps_total: hit.ps_total,
+             cached_at: new Date(hit.cached_at_ms).toISOString(), ttl_h: 12, source: 'disk' };
+  }
+  const s = getTennisSurfStats(name, tour, surface); // lecture SQLite, zéro scrape
+  disk[key] = { rk: s.rk, total: s.total, form: s.form,
+                l5_pts: s.l5_pts, l10_pts: s.l10_pts, powerscore: s.powerscore,
+                ps_rank: s.ps_rank, ps_total: s.ps_total, cached_at_ms: now };
+  _saveTennisPStatsDisk();
+  return { rk: s.rk, total: s.total, form: s.form,
+           l5_pts: s.l5_pts, l10_pts: s.l10_pts, powerscore: s.powerscore,
+           ps_rank: s.ps_rank, ps_total: s.ps_total,
+           cached_at: new Date(now).toISOString(), ttl_h: 12, source: 'fresh' };
+}
+
 // ─── Tennis Abstract scraper (current tournament forecasts) ─────────────────
 // Source: tennisabstract.com/current/<YEAR><TOUR><CITY>.html
 // Page inlines JS string vars: projCurrent (HTML table seed/name/CTR/F%/W%),
@@ -19630,6 +19854,15 @@ async function _buildTennisValueBetsCore({ date }) {
       _totConv = _computeTotalsConvergence(bsdPred, gamesOU);
     } catch (e) { /* signaux S2 omis pour ce match — build continue */ }
 
+    let _p1ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
+    let _p2ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
+    if (tourGuess && surfaceClean) {
+      try {
+        _p1ss = getTennisSurfStats(p1Name, tourGuess, surfaceClean);
+        _p2ss = getTennisSurfStats(p2Name, tourGuess, surfaceClean);
+      } catch (_) { /* surf stats absents — colonne 2 affichera N/A */ }
+    }
+
     enriched.push({
       id: m.id,
       tournament: _tName,
@@ -19640,8 +19873,8 @@ async function _buildTennisValueBetsCore({ date }) {
       round: m.round || null,
       start_time: m.start_time || m.commence_time || null,
       status: m.status || null,
-      player1: m.player1 || { name: p1Name },
-      player2: m.player2 || { name: p2Name },
+      player1: Object.assign({ name: p1Name }, m.player1 || {}, { surf_rank: _p1ss.rk, surf_rank_total: _p1ss.total, surf_form: _p1ss.form, l5_pts: _p1ss.l5_pts, l10_pts: _p1ss.l10_pts, powerscore: _p1ss.powerscore, ps_rank: _p1ss.ps_rank, ps_total: _p1ss.ps_total }),
+      player2: Object.assign({ name: p2Name }, m.player2 || {}, { surf_rank: _p2ss.rk, surf_rank_total: _p2ss.total, surf_form: _p2ss.form, l5_pts: _p2ss.l5_pts, l10_pts: _p2ss.l10_pts, powerscore: _p2ss.powerscore, ps_rank: _p2ss.ps_rank, ps_total: _p2ss.ps_total }),
       odds,
       fair,
       edge,
@@ -19897,6 +20130,23 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
   }
   const out = await handleTennisBSD(`/api/v2/predictions/${encodeURIComponent(matchId)}/`, `bsd_tennis_pred_${matchId}`, 5 * 60 * 1000);
   return jsonResponse(res, out.status, out.body);
+}
+// Colonne 2 — rang Elo surface + forme 90j même surface. Lecture seule (SQLite
+// déjà syncé Sackmann/TA), cache JSON disque 12h, zéro scrape runtime → anti-ban.
+if (pathname === '/api/v1/tennis/player-stats' && req.method === 'GET') {
+  try {
+    const name = String(query.name || '').trim();
+    const tour = String(query.tour || '').toUpperCase();
+    const surface = String(query.surface || '').trim();
+    if (!name || name.length > 80 || !['ATP', 'WTA'].includes(tour) ||
+        !TENNIS_ELO_SURFACES.includes(surface)) {
+      return jsonResponse(res, 400, { error: 'invalid_params', code: 'BAD_REQUEST' });
+    }
+    const stats = getTennisPlayerStatsCached(name, tour, surface);
+    return jsonResponse(res, 200, stats);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'player_stats_failed', detail: String(e && e.message || e) });
+  }
 }
 // Route enrichie value-bets : BSD scheduled matches + The Odds API h2h + devig 2-way + EV%.
 if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
