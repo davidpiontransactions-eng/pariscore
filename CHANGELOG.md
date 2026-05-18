@@ -2,6 +2,36 @@
 
 ---
 
+## [v10.59] — 2026-05-18
+
+### Refonte — Colonne « CONSEILS IA » : Fiche Quant scannable (skills frontend-design + ui-ux-pro-max)
+
+**Problème UX** : 1X2 monochrome (3 issues rouges même si une domine), +EV enterré en bas, indicateurs risque (conf/σ/shield) flottants sans cadre, paliers couleur incohérents.
+
+**Frontend (pariscore.html)** — `calcTop3Conseils` réécrite + CSS `.t3c-*` v2 :
+- **Header fiche de confiance** : anneau conique `conf/100` (couleur tier, `--v`/`--c`), `σ` pilule, bouclier — en HAUT (gate cognitif avant pronostics).
+- **Smart-highlight 1X2** : issue max `.t3c-pick` (scale 1.06 + halo vert néon) ; perdants `.t3c-dim` (opacity .42 + grayscale).
+- **Bannière +EV élevée** : `.t3c-ev` pleine largeur sous header (gradient vert, `Parier {mkt} … {pct}%`).
+- **Paliers unifiés** `tier(v)` : ≥80 vert · 60–79 ambre · <60 rouge.
+- **Footer fin** : steam + accuracy backtest.
+- Charte dark graphite / light L'Équipe (`body.dark-theme`/`.mc`/`body:not(.dark-theme)`), `tabular-nums`, `prefers-reduced-motion`, zéro dépendance.
+- Code mort retiré (`barBadge`/`barBadgeSm`, classes `t3c-safe/value/risky`, `t3c-pro-sep/-row`, `.t3c-cnr`).
+
+**Vérifié** (preview, computed-styles) : header présent, anneau `--v` lié à conf, pick `scale(1.06)`, dim `opacity .42`, 6 lignes grille, bannière +EV gradient, footer steam `rgb(226,0,26)`, wrap radius 10px. Zéro erreur JS.
+
+### Corrigé — Sport-hub fuyait sur desktop (gate mobile-only)
+
+**Cause** : masquage desktop dépendait du CSS `@media(min-width:768px)` + JS `DOMContentLoaded` (`innerWidth<768`) — cassé si boot-snapshot HTML périmé, exception JS init antérieure, ou `innerWidth` faussé (iframe/zoom).
+
+**Fix (pariscore.html, 3 filets)** :
+1. Garde inline **synchrone** au parsing après `#sport-hub` : `matchMedia('(min-width:768px)')` → `removeChild`. Immunisé snapshot/crash/zoom.
+2. Init L~20946 : `innerWidth<768` → `matchMedia` (même base que le CSS `@media`).
+3. CSS `@media` conservé (3e filet).
+
+**Vérifié** (preview 1440px) : `mqDesktop=true`, hub `display:none` + nœud retirable. Mobile (<768) : hub intact.
+
+---
+
 ## [v10.20] — 2026-05-17
 
 ### Corrigé — Filtre championnats : ligue précise affichait tout le pays (Serie B → Serie A+B)

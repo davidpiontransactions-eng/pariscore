@@ -134,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 10.58 — Fix module LIVE mort en prod : 3 causes racines (pagination BSD 50-cap → boucle tant que res.data.next ; matching cross-provider id/_bsd_event_id/équipes normalisées ; crash null-status → String(e.status||'') + détection live élargie) + SSE live_patch re-render ciblé (v10.57). ⚠️ Nécessite upload server.js + pariscore.html sur VPS + pm2 restart. Validation finale = fenêtre matchs live réels (logs [LiveDBG]). Suite v10.57. Voir CHANGELOG.md.*
+*Dernière mise à jour : Version 10.59 — Refonte colonne CONSEILS IA (Fiche Quant : anneau conf/100, smart-highlight 1X2, bannière +EV élevée, paliers 80/60, dark graphite/light L'Équipe) + fix sport-hub fuyant desktop (garde inline matchMedia synchrone). ⚠️ Nécessite upload pariscore.html sur VPS + pm2 restart. v10.58 : fix LIVE 3 causes racines (server.js, validation fenêtre live réelle [LiveDBG]). Voir CHANGELOG.md.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
