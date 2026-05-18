@@ -7059,6 +7059,141 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   }
 </style>
 
+<!-- ═══ DESKTOP FILTERS — restauration teinte claire & plate (image_5 / image_12) ═══
+     Scopé STRICTEMENT ≥768px : annule le look graphite/neomorphic 3D sur le bureau.
+     Le mobile (<768px) garde son design sombre neomorphic intact. -->
+<style id="desktop-filters-flat">
+  @media (min-width: 768px) {
+    /* État inactif : bouton plat gris clair, texte foncé, sans relief */
+    #page-matchs .filter-chip,
+    #page-matchs #steam-filter-chip,
+    #page-matchs #fav-filter-chip,
+    #page-matchs .country-chip,
+    #page-matchs .filter-chip[data-edge="5"] {
+      background: #f8fafc !important;
+      color: #020617 !important;
+      border: 1px solid rgba(0,0,0,0.10) !important;
+      border-radius: 6px !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: background-color .15s ease-in-out, border-color .15s ease-in-out, color .15s ease-in-out !important;
+      transform: none !important;
+    }
+    /* Survol : léger gris, toujours plat (aucune lueur rouge néomorphique) */
+    #page-matchs .filter-chip:hover:not(.active),
+    #page-matchs #steam-filter-chip:hover:not(.active),
+    #page-matchs #fav-filter-chip:hover:not(.active),
+    #page-matchs .country-chip:hover:not(.active) {
+      background: #eef2f7 !important;
+      color: #020617 !important;
+      border-color: rgba(0,0,0,0.18) !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    /* État actif/sélectionné : vert très clair, bordure verte, texte foncé */
+    #page-matchs .filter-chip.active,
+    #page-matchs .filter-chip[data-edge="5"].active,
+    #page-matchs #steam-filter-chip.active,
+    #page-matchs #fav-filter-chip.active,
+    #page-matchs .country-chip.active {
+      background: #f1fdf5 !important;
+      color: #020617 !important;
+      border: 1px solid #4ade80 !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transform: none !important;
+    }
+    /* Focus clavier : anneau accessible, sans relief 3D */
+    #page-matchs .filter-chip:focus-visible,
+    #page-matchs .country-chip:focus-visible {
+      outline: none !important;
+      border-color: #4ade80 !important;
+      box-shadow: 0 0 0 3px rgba(74,222,128,0.35) !important;
+    }
+
+    /* ── Uniformisation : dropdowns ligues/stratégies + selects ──
+       (.mls-trigger = pilules sombres « Toutes les ligues / stratégies ») */
+    #page-matchs .mls-trigger,
+    #page-matchs .filter-dd,
+    #page-matchs .mls-search {
+      background: #f8fafc !important;
+      color: #020617 !important;
+      border: 1px solid rgba(0,0,0,0.10) !important;
+      border-radius: 6px !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: background-color .15s ease-in-out, border-color .15s ease-in-out !important;
+      transform: none !important;
+    }
+    #page-matchs .mls-trigger:hover,
+    #page-matchs .filter-dd:hover {
+      background: #eef2f7 !important;
+      border-color: rgba(0,0,0,0.18) !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    #page-matchs .mls-label {
+      color: #020617 !important;
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      border: 0 !important;
+      text-shadow: none !important;
+    }
+    /* Chevron : slate foncé au lieu du rouge (teinte uniforme) */
+    #page-matchs .mls-caret path { stroke: #475569 !important; }
+    /* Panneau déroulant ouvert + options */
+    #page-matchs .mls-panel {
+      background: #ffffff !important;
+      border: 1px solid rgba(0,0,0,0.12) !important;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+    }
+    #page-matchs .mls-opt { color: #020617 !important; background: transparent !important; }
+    #page-matchs .mls-opt:hover { background: #eef2f7 !important; }
+    #page-matchs .mls-opt[aria-selected="true"],
+    #page-matchs .mls-opt.is-on {
+      background: #f1fdf5 !important; color: #166534 !important;
+    }
+
+    /* ── Carte « Degré Confiance » : surface plate claire ── */
+    #page-matchs .conf-wrap {
+      background: #f8fafc !important;
+      border: 1px solid rgba(0,0,0,0.10) !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+    }
+    #page-matchs .conf-title { color: #334155 !important; }
+    /* Badge valeur : vert clair cohérent avec l'état actif (plus de rouge) */
+    #page-matchs .conf-val {
+      background: #f1fdf5 !important;
+      color: #166534 !important;
+      border: 1px solid #4ade80 !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    /* Slider : rail gris clair, pouce blanc bord vert (sans lueur rouge) */
+    #page-matchs .conf-range,
+    #page-matchs input.adv-slider.conf-range {
+      background: #e2e8f0 !important;
+      box-shadow: none !important;
+    }
+    #page-matchs .conf-range::-webkit-slider-thumb {
+      background: #ffffff !important;
+      border: 2px solid #4ade80 !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+    }
+    #page-matchs .conf-range::-moz-range-thumb {
+      background: #ffffff !important;
+      border: 2px solid #4ade80 !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+    }
+    #page-matchs .conf-ticks span { color: #64748b !important; }
+    #page-matchs .conf-info { color: #475569 !important; }
+  }
+</style>
+
 <!-- Hub/Filtres : palette dark premium autonome (visible quel que soit le thème site) -->
 <style id="hub-dark-theme">
   /* Hub + config stratégie = MOBILE uniquement — masquage radical desktop (≥768px) */
