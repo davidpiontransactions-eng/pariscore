@@ -12776,6 +12776,17 @@ async function pollTennisLive() {
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
+    // Warmer background : remplit les caches BSD (pred/calib/rank) HORS chemin
+    // requête /tennis/value-bets. Les builders s'auto-gatent (cache 6h/30min)
+    // → fetch réel rare. Fire-and-forget, ne bloque jamais le poll.
+    if (BSD_TENNIS_ENABLED) {
+      Promise.allSettled([
+        fetchBSDTennisPredictions(''),
+        buildBSDTennisCalibration(),
+        buildBSDTennisRankIndex(),
+        _buildTennisSurfaceIndex(), // warm index surface TE (scrape) hors chemin requête
+      ]).catch(() => {});
+    }
   } catch (e) {
     console.warn('  [Tennis] poll error:', e.message);
   } finally {
@@ -15661,6 +15672,34 @@ async function resolveTennisSurface(tournamentName) {
       if (n.length >= 5 && (target.includes(n) || n.includes(target))) {
         return { surface: surf, source: 'sackmann_tex_fuzzy' };
       }
+    }
+  }
+  const kw = _surfaceFromKeywords(tournamentName);
+  return kw ? { surface: kw, source: 'keyword' } : null;
+}
+
+// [FIX bug onglet tennis — v3] Version SYNCHRONE cache-only de resolveTennisSurface.
+// L'ancien `await resolveTennisSurface` par-match déclenchait _buildTennisSurfaceIndex
+// (2× scrape tennisexplorer 15s) NON caché si vide → runaway ~200 matchs → timeout
+// proxy → "Erreur réseau". Ici : aucun scrape, aucun await sur le chemin requête.
+// Index Sackmann mémoïsé 6h + index TE chaud (rempli par le warmer pollTennisLive).
+let _sackSurfIdx = { map: null, ts: 0 };
+const _SACK_SURF_TTL_MS = 6 * 3600 * 1000;
+function _getSackSurfIdxCached() {
+  if (_sackSurfIdx.map && Date.now() - _sackSurfIdx.ts < _SACK_SURF_TTL_MS) return _sackSurfIdx.map;
+  let m;
+  try { m = _buildSackmannSurfaceIndex(); } catch (_) { m = new Map(); }
+  _sackSurfIdx = { map: m || new Map(), ts: Date.now() };
+  return _sackSurfIdx.map;
+}
+function resolveTennisSurfaceSync(tournamentName) {
+  if (!tournamentName) return null;
+  const idx = (_texSurfaceIndex.map && _texSurfaceIndex.map.size) ? _texSurfaceIndex.map : _getSackSurfIdxCached();
+  const target = _normTournName(tournamentName);
+  if (idx && idx.size > 0 && target) {
+    if (idx.has(target)) return { surface: idx.get(target), source: 'surf_idx' };
+    for (const [n, surf] of idx.entries()) {
+      if (n.length >= 5 && (target.includes(n) || n.includes(target))) return { surface: surf, source: 'surf_idx_fuzzy' };
     }
   }
   const kw = _surfaceFromKeywords(tournamentName);
@@ -18967,10 +19006,20 @@ async function buildTennisValueBets(opts = {}) {
     }
     return hit.result;
   }
-  // Aucun cache (1er appel / boot warm) : build synchrone.
-  const r = await _buildTennisValueBetsCore(opts);
-  if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r });
-  return r;
+  // [FIX bug onglet tennis — v4] Aucun cache : NE PLUS bloquer la requête.
+  // Le build cold (~20 s, ~420 matchs, boucle CPU) dépassait le timeout
+  // proxy/UI → connexion coupée → "Erreur réseau" + Chargement figé, et la
+  // boucle synchrone empêchait tout Promise.race/timeout de tirer.
+  // → build lancé EN FOND (avec yields event-loop), réponse "loading"
+  //   immédiate. Le front ré-essaie ; dès cache prêt → vraies données.
+  if (!_tennisVBRebuilding.has(key)) {
+    _tennisVBRebuilding.add(key);
+    _buildTennisValueBetsCore(opts)
+      .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
+      .catch(e => console.warn('  [TennisVB] cold build bg échec:', e && e.message || e))
+      .finally(() => _tennisVBRebuilding.delete(key));
+  }
+  return { status: 200, body: { count: 0, matches: [], meta: { loading: true, building: true } } };
 }
 // Pont scope : le warm-up boot (_sackmannBootSync IIFE) ne voit pas cette
 // closure → on expose la fn via globalThis pour le warm-up.
@@ -19306,34 +19355,44 @@ async function _buildTennisValueBetsCore({ date }) {
     try { await fetchTennisOddsAPI(); } catch (e) { /* swallow */ }
   }
 
-  // [FIX bug onglet tennis] Les 3 enrichissements BSD (predictions/calibration/
-  // rankings) étaient `await` SÉQUENTIELS sans timeout en tête du build : au
-  // cold cache (1er appel après restart) = jusqu'à ~24 pages BSD séquentielles
-  // → requête /tennis/value-bets pend → "Erreur réseau" + Chargement bloqué.
-  // → Parallélisé + time-box 4s chacun. Si non prêt : on rend SANS le signal
-  //   (null), le fetch finit en fond + remplit son cache → build suivant chaud.
-  const _raceT = (p, ms, fb) => Promise.race([
-    Promise.resolve().then(() => p).catch(() => fb),
-    new Promise(r => setTimeout(() => r(fb), ms)),
-  ]);
+  // [FIX bug onglet tennis — v2] ZÉRO fetch BSD sur le chemin requête. Le cold
+  // build (302 matchs + Markov/TA) + les fetchs paginés faisaient dépasser le
+  // timeout client → "Erreur réseau". On lit UNIQUEMENT les caches déjà chauds
+  // (synchrone, instantané). Un warmer background (fin de pollTennisLive, 30s)
+  // remplit ces caches. Cold = signaux null → tableau s'affiche vite ;
+  // build suivant (cache chaud) = enrichi.
   let predMap = new Map(), calib = null, rankIdx = new Map();
-  const [_pm, _cb, _rk] = await Promise.allSettled([
-    _raceT(fetchBSDTennisPredictions(dateClean), 4000, new Map()),
-    _raceT(buildBSDTennisCalibration(), 4000, null),
-    _raceT(buildBSDTennisRankIndex(), 4000, new Map()),
-  ]);
-  if (_pm.status === 'fulfilled' && _pm.value) predMap = _pm.value;
-  if (_cb.status === 'fulfilled') calib = _cb.value;
-  if (_rk.status === 'fulfilled' && _rk.value) rankIdx = _rk.value;
+  try {
+    const _pc = apiCacheGet(`bsd_tennis_preds_${dateClean || 'upcoming'}`);
+    if (_pc) predMap = _predListToMap(_pc);
+  } catch (e) { /* pas de pred chaude */ }
+  try {
+    if (_bsdTennisCalib && _bsdTennisCalib.data && Date.now() - _bsdTennisCalib.ts < 6 * 3600 * 1000) calib = _bsdTennisCalib.data;
+  } catch (e) { /* pas de calib chaude */ }
+  try {
+    if (_bsdTennisRank && _bsdTennisRank.byKey && Date.now() - _bsdTennisRank.ts < 6 * 3600 * 1000) rankIdx = _bsdTennisRank.byKey;
+  } catch (e) { /* pas de rank chaud */ }
 
   const enriched = [];
+  const _vbT0 = Date.now();
+  let _vbI = 0;
+  console.log(`  [TennisVB] build start — ${bsdMatches.length} matchs (src=${matchSource})`);
   for (const m of bsdMatches) {
+    // Yield event-loop tous les 20 matchs : la boucle CPU bloquait le process
+    // ~20s (autres routes/SSE gelées) et empêchait tout timeout de tirer.
+    if (++_vbI % 20 === 0) await new Promise(r => setImmediate(r));
     const p1Name = (m.player1 && (m.player1.name || m.player1.full_name)) || m.player1_name || '';
     const p2Name = (m.player2 && (m.player2.name || m.player2.full_name)) || m.player2_name || '';
+    // [FIX CRASH render] BSD renvoie tournament = OBJET {id,name,…} ; ESPN =
+    // string. Le frontend faisait `tournament.localeCompare` → throw → render
+    // KO → table figée "Chargement…" en boucle. On NORMALISE en string ici.
+    const _tName = (m.tournament && typeof m.tournament === 'object')
+      ? (m.tournament.name || m.tournament.short_name || m.tournament.short || null)
+      : (m.tournament || null);
     if (!p1Name || !p2Name) {
       enriched.push({
         id: m.id,
-        tournament: m.tournament || null,
+        tournament: _tName,
         surface: m.surface || null,
         round: m.round || null,
         start_time: m.start_time || m.commence_time || null,
@@ -19383,11 +19442,18 @@ async function _buildTennisValueBetsCore({ date }) {
     }
 
     // ── T5 : Predictions Elo + BSD blend + EV model ────────────────────────
-    const tourGuess = (m.tour && ['ATP', 'WTA'].includes(String(m.tour).toUpperCase())) ? String(m.tour).toUpperCase() : null;
-    let surfaceClean = (m.surface && TENNIS_ELO_SURFACES.includes(m.surface)) ? m.surface : null;
+    // [FIX enrichissement vide] BSD = imbriqué (m.tournament.circuit/.surface,
+    // m.tournament=objet) ; ESPN = plat (m.tour/m.surface string). L'ancien code
+    // lisait UNIQUEMENT la forme ESPN → tourGuess null pour TOUS les matchs BSD
+    // → zéro Elo/Markov/KoA/Jeux (table "—" même sur ATP). On normalise les 2.
+    const _tObj = (m.tournament && typeof m.tournament === 'object') ? m.tournament : null;
+    const _tourN = m.tour || (_tObj && _tObj.circuit) || '';
+    const _surfN = m.surface || (_tObj && _tObj.surface) || null;
+    const tourGuess = ['ATP', 'WTA'].includes(String(_tourN).toUpperCase()) ? String(_tourN).toUpperCase() : null;
+    let surfaceClean = (_surfN && TENNIS_ELO_SURFACES.includes(String(_surfN).toLowerCase())) ? String(_surfN).toLowerCase() : null;
     let surfaceSource = surfaceClean ? matchSource : null;
-    if (!surfaceClean && m.tournament) {
-      const resolved = await resolveTennisSurface(m.tournament);
+    if (!surfaceClean && _tName) {
+      const resolved = resolveTennisSurfaceSync(_tName); // sync, zéro scrape (FIX timeout)
       if (resolved && TENNIS_ELO_SURFACES.includes(resolved.surface)) {
         surfaceClean = resolved.surface;
         surfaceSource = resolved.source;
@@ -19396,7 +19462,7 @@ async function _buildTennisValueBetsCore({ date }) {
     let eloProb = null;
     let setProbs = null;
     let setModel = null;
-    const _surfSpeed = getTennisSurfaceSpeed(m.tournament);
+    const _surfSpeed = getTennisSurfaceSpeed(_tName);
     if (tourGuess) {
       eloProb = _tennisLookupEloPair(p1Name, p2Name, tourGuess, surfaceClean);
       // ── P1-1 : Markov serve/return v2 + marchés dérivés jeux ───────────
@@ -19412,7 +19478,7 @@ async function _buildTennisValueBetsCore({ date }) {
       const _taP2 = getTaOverlayCached(p2Name, tourGuess, _surfKey);
       const _splitP1 = _taP1 || computeSweepSplitLocal(p1Name, tourGuess, _surfKey);
       const _splitP2 = _taP2 || computeSweepSplitLocal(p2Name, tourGuess, _surfKey);
-      atLeastOneSet = computeAtLeastOneSet(setProbs, _tennisBestOf(tourGuess, m.tournament), _splitP1, _splitP2);
+      atLeastOneSet = computeAtLeastOneSet(setProbs, _tennisBestOf(tourGuess, _tName), _splitP1, _splitP2);
       // Rafraîchit le scrape TA en arrière-plan (best-effort, ne bloque pas le rendu).
       if (!_taP1 || _taP1.stale) fetchTennisAbstractPlayer(p1Name, tourGuess, _surfKey).catch(() => {});
       if (!_taP2 || _taP2.stale) fetchTennisAbstractPlayer(p2Name, tourGuess, _surfKey).catch(() => {});
@@ -19426,14 +19492,14 @@ async function _buildTennisValueBetsCore({ date }) {
       const _koaC2 = getKoaMatchmxCached(p2Name, tourGuess);
       if (_koaC1 && _koaC2) {
         mostAces = computeMostAcesMatchup(p1Name, p2Name, tourGuess, _koaSurf, _koaC1.rows, _koaC2.rows);
-        // SDI : même rows matchmx (zéro fetch). Surface filtrée, fallback ALL.
-        let sd1 = computeServeDominance(_koaC1.rows, surfaceClean);
-        let sd2 = computeServeDominance(_koaC2.rows, surfaceClean);
-        if (!sd1) sd1 = computeServeDominance(_koaC1.rows, 'ALL');
-        if (!sd2) sd2 = computeServeDominance(_koaC2.rows, 'ALL');
-        if (sd1 && sd2) {
-          serveDom = { p1: sd1, p2: sd2, delta: parseFloat((sd1.sdi - sd2.sdi).toFixed(1)) };
-        }
+        // SDI : même rows matchmx (zéro fetch). Gardé : ne doit pas 500 le build.
+        try {
+          let sd1 = computeServeDominance(_koaC1.rows, surfaceClean);
+          let sd2 = computeServeDominance(_koaC2.rows, surfaceClean);
+          if (!sd1) sd1 = computeServeDominance(_koaC1.rows, 'ALL');
+          if (!sd2) sd2 = computeServeDominance(_koaC2.rows, 'ALL');
+          if (sd1 && sd2) serveDom = { p1: sd1, p2: sd2, delta: parseFloat((sd1.sdi - sd2.sdi).toFixed(1)) };
+        } catch (e) { /* SDI omis pour ce match */ }
       }
       if (!_koaC1 || _koaC1.stale) _koaEnqueue(p1Name, tourGuess);
       if (!_koaC2 || _koaC2.stale) _koaEnqueue(p2Name, tourGuess);
@@ -19446,7 +19512,7 @@ async function _buildTennisValueBetsCore({ date }) {
       gamesOU = computeTennisGamesOverUnder({
         p1Hold: setProbs.p1_hold,
         p2Hold: setProbs.p2_hold,
-        tournament: m.tournament,
+        tournament: _tName,
         tour: tourGuess,
         surface: surfaceClean,
         setModel,
@@ -19479,15 +19545,17 @@ async function _buildTennisValueBetsCore({ date }) {
     const _wBsd = _rel != null ? parseFloat((0.20 + 0.50 * _rel).toFixed(3)) : null;
     const blended = blendTennisProbsW(eloProb, bsdProb, _wBsd);
 
-    // ── Sprint 1 dérivés : badge confiance / divergence ML-marché / momentum ──
-    const _confBadge = _calibBadge(calib, bsdPred && bsdPred.confidence, surfaceClean);
-    let _mlMktDiv = null;
-    if (bsdProb && fair && fair.p1 != null) {
-      const d1 = parseFloat((bsdProb.p1 * 100 - fair.p1).toFixed(2));
-      _mlMktDiv = { p1: d1, p2: parseFloat((bsdProb.p2 * 100 - fair.p2).toFixed(2)), flag: Math.abs(d1) >= 8 };
-    }
-    const _rkP1 = _rankMomentum(rankIdx.get(normName(p1Name)));
-    const _rkP2 = _rankMomentum(rankIdx.get(normName(p2Name)));
+    // ── Sprint 1 dérivés (gardé : un throw ne doit jamais 500 le tableau) ────
+    let _confBadge = null, _mlMktDiv = null, _rkP1 = null, _rkP2 = null;
+    try {
+      _confBadge = _calibBadge(calib, bsdPred && bsdPred.confidence, surfaceClean);
+      if (bsdProb && fair && fair.p1 != null) {
+        const d1 = parseFloat((bsdProb.p1 * 100 - fair.p1).toFixed(2));
+        _mlMktDiv = { p1: d1, p2: parseFloat((bsdProb.p2 * 100 - fair.p2).toFixed(2)), flag: Math.abs(d1) >= 8 };
+      }
+      _rkP1 = _rankMomentum(rankIdx.get(normName(p1Name)));
+      _rkP2 = _rankMomentum(rankIdx.get(normName(p2Name)));
+    } catch (e) { /* signaux S1 omis pour ce match — build continue */ }
 
     let evModel = null, bestEvModel = null;
     if (blended && odds && odds.p1 && odds.p2) {
@@ -19502,33 +19570,33 @@ async function _buildTennisValueBetsCore({ date }) {
         : { side: 'p2', player: p2Name, odds: odds.p2.odds, book: odds.p2.book, ev: evModel.p2, p_model: blended.p2 };
     }
 
-    // ── Sprint 2 dérivés : trap-bet / edge confiance / 1er set / totaux ──────
-    const _trap = _computeTrapBet(fair, blended, _confBadge, bestEvModel);
-    let _confEdge = null;
-    if (bestEvModel && _rel != null) {
-      const v = parseFloat((bestEvModel.ev * _rel).toFixed(2));
-      _confEdge = { value: v, reliability: _rel, actionable: (bestEvModel.ev > 0 && _rel >= 0.30 && v >= 2) };
-    }
-    let _firstSet = null;
-    if (bsdPred && bsdPred.prob_player1_wins_first_set != null) {
-      const fs1 = Number(bsdPred.prob_player1_wins_first_set);
-      const mp1 = blended ? blended.p1 * 100 : null;
-      _firstSet = {
-        p1_pct: parseFloat(fs1.toFixed(1)),
-        lean: fs1 >= 55 ? 'p1' : fs1 <= 45 ? 'p2' : 'even',
-        // Joueur favori au match mais pas au 1er set (ou inverse) = signal.
-        diverges_match: mp1 != null ? (Math.abs(fs1 - mp1) >= 10) : null,
-      };
-    }
-    const _totConv = _computeTotalsConvergence(bsdPred, gamesOU);
+    // ── Sprint 2 dérivés (gardé idem) ───────────────────────────────────────
+    let _trap = null, _confEdge = null, _firstSet = null, _totConv = null;
+    try {
+      _trap = _computeTrapBet(fair, blended, _confBadge, bestEvModel);
+      if (bestEvModel && _rel != null) {
+        const v = parseFloat((bestEvModel.ev * _rel).toFixed(2));
+        _confEdge = { value: v, reliability: _rel, actionable: (bestEvModel.ev > 0 && _rel >= 0.30 && v >= 2) };
+      }
+      if (bsdPred && bsdPred.prob_player1_wins_first_set != null) {
+        const fs1 = Number(bsdPred.prob_player1_wins_first_set);
+        const mp1 = blended ? blended.p1 * 100 : null;
+        _firstSet = {
+          p1_pct: parseFloat(fs1.toFixed(1)),
+          lean: fs1 >= 55 ? 'p1' : fs1 <= 45 ? 'p2' : 'even',
+          diverges_match: mp1 != null ? (Math.abs(fs1 - mp1) >= 10) : null,
+        };
+      }
+      _totConv = _computeTotalsConvergence(bsdPred, gamesOU);
+    } catch (e) { /* signaux S2 omis pour ce match — build continue */ }
 
     enriched.push({
       id: m.id,
-      tournament: m.tournament || null,
-      surface: surfaceClean || m.surface || null,
+      tournament: _tName,
+      surface: surfaceClean || _surfN || null,
       surface_source: surfaceSource,
       court: m.court || null,
-      tour: m.tour || null,
+      tour: tourGuess || _tourN || null,
       round: m.round || null,
       start_time: m.start_time || m.commence_time || null,
       status: m.status || null,
@@ -19561,7 +19629,7 @@ async function _buildTennisValueBetsCore({ date }) {
         p1: tennisLogDiff(p1Name, tourGuess),
         p2: tennisLogDiff(p2Name, tourGuess),
       } : null,
-      surface_speed: getTennisSurfaceSpeed(m.tournament),
+      surface_speed: getTennisSurfaceSpeed(_tName),
       fatigue: tourGuess ? {
         p1: computePlayerFatigue(p1Name, tourGuess),
         p2: computePlayerFatigue(p2Name, tourGuess),
@@ -19574,6 +19642,7 @@ async function _buildTennisValueBetsCore({ date }) {
     });
   }
 
+  console.log(`  [TennisVB] build done — ${enriched.length} matchs en ${Date.now() - _vbT0}ms`);
   return {
     status: 200,
     body: {
@@ -19791,8 +19860,13 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
 }
 // Route enrichie value-bets : BSD scheduled matches + The Odds API h2h + devig 2-way + EV%.
 if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
-  const out = await buildTennisValueBets({ date: query.date });
-  return jsonResponse(res, out.status, out.body);
+  try {
+    const out = await buildTennisValueBets({ date: query.date });
+    return jsonResponse(res, out.status, out.body);
+  } catch (e) {
+    console.error('  [TennisVB] route erreur:', e && e.stack ? e.stack : e);
+    return jsonResponse(res, 200, { count: 0, matches: [], meta: { error: 'build_failed', detail: String(e && e.message || e) } });
+  }
 }
 // P0-1 — Onglet Tennis consolidé : objet canonique unique (miroir /api/v1/matches
 // football). Path /board pour ne pas collisionner le passthrough BSD brut /matches.
@@ -24138,15 +24212,35 @@ if (MATCHSTAT_ENABLED) {
         // utilisateur tape le cache, jamais le build froid → pas de timeout UI.
         // buildTennisValueBets vit dans la closure requête (hors scope ici) →
         // pont via globalThis (enregistré à sa définition).
-        setTimeout(() => {
-          try {
-            const warm = globalThis.__tennisVBWarm;
-            if (typeof warm !== 'function') { console.warn('  [TennisVB] warm indisponible (pont non prêt)'); return; }
-            console.log('  [TennisVB] Warm-up build value-bets…');
+        // [FIX bug onglet tennis — ROOT] Le pont globalThis.__tennisVBWarm est
+        // posé DANS la closure requête → indisponible tant qu'aucune requête
+        // HTTP n'a tourné. L'ancien one-shot 22s ratait toujours (boot < 1ère
+        // requête) → cache JAMAIS pré-chauffé → chaque restart = users cold
+        // path → timeout → "Erreur réseau". On RETRY + self-ping interne pour
+        // armer la closure, jusqu'à ce que le pont soit prêt, puis warm.
+        let _vbWarmTries = 0;
+        const _vbWarmTick = () => {
+          _vbWarmTries++;
+          const warm = globalThis.__tennisVBWarm;
+          if (typeof warm === 'function') {
+            console.log(`  [TennisVB] Warm-up build value-bets… (pont prêt après ${_vbWarmTries} essai${_vbWarmTries > 1 ? 's' : ''})`);
             warm({}).then(() => console.log('  [TennisVB] ✓ cache chaud'))
-              .catch(e => console.warn('  [TennisVB] warm-up échec:', e.message));
-          } catch (e) { console.warn('  [TennisVB] warm-up exception:', e.message); }
-        }, 22000);
+              .catch(e => console.warn('  [TennisVB] warm-up échec:', e && e.message || e));
+            return;
+          }
+          if (_vbWarmTries > 24) { console.warn('  [TennisVB] warm abandonné — pont jamais prêt (24 essais)'); return; }
+          // Self-ping un PATH INEXISTANT : les routes précoces (/api/v1/status)
+          // et /api/v1/tennis/* (gate auth 403 ~l.11066) `return` AVANT la
+          // ligne 19026 `globalThis.__tennisVBWarm = …` (expression non-hoistée)
+          // → pont jamais armé. Un path non matché fait traverser TOUT le
+          // routeur (exécute l.19026) puis 404 → pont armé.
+          try {
+            require('http').get({ host: '127.0.0.1', port: Number(PORT) || 3000, path: '/__tnsvbwarm_ping', timeout: 4000 },
+              r => { r.resume(); }).on('error', () => {}).on('timeout', function () { this.destroy(); });
+          } catch (_) { /* noop */ }
+          setTimeout(_vbWarmTick, 5000);
+        };
+        setTimeout(_vbWarmTick, 8000);
       } catch (e) {
         console.warn('  [Elo] boot compute check failed:', e.message);
       }
