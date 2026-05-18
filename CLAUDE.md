@@ -134,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 10.61 — Scénario Neon Quant propagé à TOUTES les colonnes du tableau Foot desktop (`@media min-width:769px` scope `#vb-table` : table sombre, thead accent rouge, td neon, tiles cotes/buteurs, boutons graphite, override 2-ids pour battre le thème clair). Suite v10.60 (CONSEILS IA v3 flashy) / v10.59 (Fiche Quant + fix sport-hub). ⚠️ Upload pariscore.html sur VPS + pm2 restart. v10.58 : fix LIVE server.js ([LiveDBG] fenêtre live réelle). Voir CHANGELOG.md.*
+*Dernière mise à jour : Version 10.62 — Harmonisation grille desktop Option B « Ligne 100% Dark Premium » : surface ligne unifiée (override 2-ids `#vb-table #vb-body td` bat `#fff!important` clair), CONSEILS IA encastré (chrome retiré, plus de bloc flottant), pbet/forme/scores en finition néon, vertical-align middle, sans hack absolu, mobile `.mc` étanche. Suite v10.61 (propagation neon) / v10.60 (v3 flashy) / v10.59 (Fiche Quant + fix sport-hub). ⚠️ Upload pariscore.html sur VPS + pm2 restart. v10.58 : fix LIVE server.js ([LiveDBG]). Voir CHANGELOG.md.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->

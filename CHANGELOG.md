@@ -2,6 +2,28 @@
 
 ---
 
+## [v10.62] — 2026-05-18
+
+### Harmonisation grille desktop — Option B « Ligne 100% Dark Premium » (feedback DG : rupture d'uniformité)
+
+Diagnostic DG : colonnes gauche (Match/Rang/Forme/Score) en tableur blanc vs widget CONSEILS IA = bloc noir flottant asymétrique → choc lumineux, scannabilité dégradée. v10.61 n'avait pas pris : `body:not(.dark-theme) #vb-body tr td{background:#fff!important}` (1 id + 1 classe) battait `#vb-table tbody td` (1 id) ; l'override 2-ids ne couvrait que `color`.
+
+**CSS `@media (min-width:769px)` (pariscore.html)** :
+- Surface ligne unifiée via `#vb-table #vb-body td` (2 ids) → bat le `#fff !important` du thème clair : gradient `#15191d→#0f1216`, texte `#cbd5e1`, `vertical-align:middle`, séparateurs laser `rgba(255,255,255,.05)`.
+- **CONSEILS IA encastré** : `.t3c-wrap` chrome retiré dans le tableau (`background:transparent`, `border:0`, `box-shadow:none`, `::before` masqué, `min-width:0`) → plus de carte noire flottante, fond = la ligne.
+- Carte blanche « BETS LIVE » (`.pbet-wrap`) → gradient dark + rows lisibles.
+- Pastilles forme `formBalls` class-ifiées (`.fb`/`.fb-W/D/L/N`) : base neutre globale (mobile/modals inchangés) + override desktop = relief néon (gradient + bord coloré + glow), cohérent badges IA.
+- `.ts-pill` (scores Poisson) dark, `.cotes-block`/`.buteurs-block` fiche unifiée, boutons `.ins/.ai-gen/.fav` graphite relief, `.rk-badge-s` translucide.
+- Barres latérales value-hot/value/live (inset 3px) en 2-ids.
+- **Sans hack** : aucun positionnement absolu ; grille native du tableau respectée.
+- **Étanchéité mobile** : tout sous `@media ≥769px` + scope `#vb-table`/`#vb-body` ; cartes `.mc` (<769) totalement préservées.
+
+**JS (pariscore.html)** : `formBalls` réécrit (style inline → classes). Zéro changement structurel.
+
+**Vérifié** (preview 1440px, thème CLAIR = cas critique, computed-styles) : td gradient dark (bat `#fff`), `vertical-align:middle`, `.t3c-wrap` bg transparent + bord 0 + ombre none (encastré), `.fb-W` gradient+bord néon, `.pbet-wrap` dark, `.ts-pill` dark, barre value-hot inset vert. Zéro erreur JS.
+
+---
+
 ## [v10.61] — 2026-05-18
 
 ### Propagation visuelle — Scénario Neon Quant à TOUTES les colonnes (tableau Foot desktop)
