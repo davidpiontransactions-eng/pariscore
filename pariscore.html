@@ -8461,6 +8461,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <option value="elo">⭐ Elo P1 ↓</option>
         </select>
       </div>
+      <label class="tvb-live-flt" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#ff4d4d;cursor:pointer;border:1px solid rgba(255,77,77,.35);background:rgba(255,77,77,.08);border-radius:8px;padding:5px 10px;">
+        <input type="checkbox" id="tennis-vb-live-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> <span class="tvb-live-dot"></span>Live
+      </label>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
         <input type="checkbox" id="tennis-vb-elo-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Avec Elo seulement
       </label>
@@ -8503,7 +8506,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
             <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Elo surface — favori en vert">Elo</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité de victoire du match (modèle Elo/blend)"><svg class="i3d-th"><use href="#i3d-target"></use></svg>Proba Vic match</th>
             <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Sets — Haut : issue best-of-3 (J1 2-0 / 2-1 / J2 2-1 / 2-0, chip = issue la + probable). Bas : P(chaque joueur gagne ≥ 1 set) Markov Sackmann × split TA surface 52 sem."><svg class="i3d-th"><use href="#i3d-bars"></use></svg>Score Sets<br><span class="tvb-th-sub">Gagne au moins 1 set</span></th>
-            <th class="tvb-th" style="text-align:center;color:var(--amber,#ffa726);" title="Forme pondérée même surface — points par victoire selon rang adversaire battu (Top10 +3 · Top50 +2 · Top100 +1 · sinon +0.5 · défaite 0) sur 5 (L5) et 10 (L10) derniers matchs. PowerScore /100 = 0.5·Elo surface normalisé + 0.3·WinRate 52 sem + 0.2·facteur forme.">Forme (Pts) / PowerScore <a class="tvb-th-info" href="#Guide-Tuto-" title="Aide — méthode Forme pondérée &amp; PowerScore. Cliquer pour le guide.">ⓘ</a></th>
+            <th class="tvb-th" style="text-align:center;color:var(--amber,#ffa726);" title="Forme pondérée même surface — points par victoire selon rang adversaire battu (Top10 +3 · Top50 +2 · Top100 +1 · sinon +0.5 · défaite 0) sur 5 (L5) et 10 (L10) derniers matchs. PowerScore /100 = 0.5·Elo surface normalisé + 0.3·WinRate 52 sem + 0.2·facteur forme.">Forme (Pts) / PowerScore <button type="button" class="tvb-th-info" onclick="event.stopPropagation();openTennisFormPowerGuide()" title="Aide — définitions &amp; calculs Forme pondérée + PowerScore. Ouvre le Guide." aria-label="Aide colonne Forme / PowerScore — ouvrir le Guide">ⓘ</button></th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Joueur pronostiqué pour le plus d'aces + P(ses aces > adversaire). A% ajusté forme (5 derniers vs 52 sem.) × neutralisation retour adverse (RPW/Brk). Source : Tennis Abstract (par-match, surface)"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>King of Aces</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 1 (profil Sprinter/Diesel, surface 52 sem.). Halo = EV+ ≥ 110 %"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>Gain Set 1</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 2 (pondéré Réaction/Enchaînement + fatigue)"><svg class="i3d-th"><use href="#i3d-bolt2"></use></svg>Gain Set 2</th>
@@ -8874,6 +8877,23 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-sb-tot { color:#e8eaed; background:#1e293b; border-radius:5px; padding:1px 7px; min-width:20px; }
   #tennis-vb-table .tn-sb-tot-lead { color:#4ade80; }
   #tennis-vb-table .tn-sb-empty span { color:var(--text3,#5a6068); }
+  #tennis-vb-table .tn-dr { grid-column:1/-1; display:flex; flex-direction:column; gap:3px; margin-top:5px; padding-top:5px; border-top:1px solid #1e293b; }
+  #tennis-vb-table .tn-dr-line { display:flex; align-items:center; justify-content:space-between; gap:8px; line-height:1.25; }
+  #tennis-vb-table .tn-dr-lab { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.5px; color:#64748b; }
+  #tennis-vb-table .tn-dr-val { font-family:'DM Mono',monospace; font-size:11px; font-weight:800; display:inline-flex; align-items:center; gap:3px; }
+  #tennis-vb-table .tn-dr-dom .tn-dr-val { color:#4ade80; }
+  #tennis-vb-table .tn-dr-bal .tn-dr-val { color:#ffa726; }
+  #tennis-vb-table .tn-dr-sub .tn-dr-val { color:#ff4d4d; }
+  #tennis-vb-table .tn-dr-arr { font-size:9px; }
+  #tennis-vb-table .tn-dr-up { color:#4ade80; }
+  #tennis-vb-table .tn-dr-down { color:#ff4d4d; }
+  #tennis-vb-table .tn-dr-flat { color:#64748b; }
+  #tennis-vb-table .tn-dr-exact .tn-dr-lab { color:#38bdf8; text-shadow:0 0 5px rgba(56,189,248,.55); }
+  #tennis-vb-table .tn-dr-i { padding:0; margin-left:4px; background:none; border:none; cursor:pointer; color:#38bdf8; opacity:.65; font-size:9px; line-height:1; vertical-align:baseline; }
+  #tennis-vb-table .tn-dr-i:hover { opacity:1; text-shadow:0 0 6px rgba(56,189,248,.7); }
+  .tvb-live-flt .tvb-live-dot { width:8px; height:8px; border-radius:50%; background:#ff4d4d; display:inline-block; animation:tnLivePulse 1.4s ease-in-out infinite; }
+  .tvb-live-flt:has(#tennis-vb-live-only:checked) { background:rgba(255,77,77,.2); border-color:rgba(255,77,77,.7); box-shadow:0 0 8px rgba(255,77,77,.35); }
+  @media (prefers-reduced-motion:reduce) { .tvb-live-flt .tvb-live-dot { animation:none; } }
   #tennis-vb-table .tvb-dtc-live { display:flex; justify-content:center; }
   #tennis-vb-table .tn-live-tag { display:inline-flex; align-items:center; gap:5px; font-family:'DM Mono',monospace; font-size:9px; font-weight:800; letter-spacing:.5px; color:#ff4d4d; background:rgba(255,77,77,.12); border:1px solid rgba(255,77,77,.35); border-radius:999px; padding:2px 8px; text-transform:uppercase; }
   #tennis-vb-table .tn-live-tag i { width:7px; height:7px; border-radius:50%; background:#ff4d4d; display:inline-block; flex:0 0 7px; animation:tnLivePulse 1.4s ease-in-out infinite; }
@@ -8894,7 +8914,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tsm-row { width:100%; display:flex; justify-content:center; }
   #tennis-vb-table .tsm-sep { width:72%; height:1px; background:var(--border); opacity:.55; }
   #tennis-vb-table .tvb-th-sub { display:inline-block; margin-top:2px; font-size:8px; font-weight:500; opacity:.7; text-transform:none; letter-spacing:0; color:var(--green,#00e676); }
-  #tennis-vb-table .tvb-th-info { display:inline-block; margin-left:4px; color:var(--blue,#29b6f6); text-decoration:none; font-size:11px; font-weight:700; cursor:help; opacity:.8; }
+  #tennis-vb-table .tvb-th-info { display:inline-block; margin-left:4px; padding:0; background:none; border:none; color:var(--blue,#29b6f6); text-decoration:none; font-size:11px; font-weight:700; cursor:pointer; opacity:.8; }
   #tennis-vb-table .tvb-th-info:hover { opacity:1; text-decoration:underline; }
   #tennis-vb-table .tpf-cell { display:flex; flex-direction:column; gap:5px; align-items:center; min-width:140px; }
   #tennis-vb-table .tpf-row { display:flex; align-items:center; gap:8px; justify-content:center; }
@@ -9517,6 +9537,67 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </div>
     </div>
     <!-- ── FIN JAUGE D'INTENSITÉ ──────────────────────────────────────────── -->
+
+    <div id="guide-forme-power" class="guide-section-header">
+      <span class="guide-section-icon">🎾</span>
+      <h2>Colonne « Forme (Pts) / PowerScore » — Tennis</h2>
+    </div>
+
+    <div class="gs-article" style="border:1px solid var(--border2);border-radius:10px;padding:20px 22px;margin:14px 0 28px;line-height:1.75;font-size:13px;color:var(--text2);">
+      <p class="gs-article-title" style="font-weight:800;color:var(--text);font-size:15px;margin-bottom:10px;">1 · Forme du moment pondérée (L5 / L10 pts)</p>
+      <p><b>Définition.</b> Mesure la qualité des résultats récents du joueur <b>sur la surface du match du jour</b> (Terre / Dur / Herbe). On prend ses <b>10 derniers matchs</b> sur cette surface ; <b>L5</b> = somme des points des 5 plus récents, <b>L10</b> = somme sur les 10.</p>
+      <p><b>Barème (points par match).</b> Une victoire rapporte selon le <i>classement de l'adversaire battu</i> ; une défaite rapporte 0 (quel que soit l'adversaire) :</p>
+      <div style="border:1px solid var(--border2);border-radius:8px;padding:12px 16px;margin:10px 0;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);">
+        Victoire vs Top 10 mondial &nbsp;&nbsp;→ <b style="color:#4ade80;">+3.0</b><br>
+        Victoire vs Top 11–50 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <b style="color:#4ade80;">+2.0</b><br>
+        Victoire vs Top 51–100 &nbsp;&nbsp;&nbsp;&nbsp;→ <b style="color:#4ade80;">+1.0</b><br>
+        Victoire vs &gt; 100 / rang inconnu → <b style="color:#4ade80;">+0.5</b><br>
+        Défaite (tout adversaire) &nbsp;&nbsp;&nbsp;→ <b style="color:#ff4d4d;">0</b>
+      </div>
+      <p><b>Lecture.</b> <code>L5 9.5 / L10 20</code> = 9,5 pts sur 5 derniers, 20 pts sur 10. Maximum théorique L10 = 10 × 3 = <b>30</b> (10 victoires d'affilée contre du Top 10).</p>
+
+      <p class="gs-article-title" style="font-weight:800;color:var(--text);font-size:15px;margin:22px 0 10px;">2 · PowerScore surface (/100)</p>
+      <p><b>Définition.</b> Indice de puissance composite, normalisé sur 100, propre à la surface du match. Fusionne niveau brut (Elo), régularité récente (taux de victoire) et dynamique de forme.</p>
+      <div style="border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);">
+        PowerScore = round( 100 × [ 0.5·EloNorm + 0.3·WinRate52s + 0.2·FacteurForme ] )
+      </div>
+      <ul style="margin:8px 0 8px 18px;">
+        <li><b>EloNorm</b> = clamp( (Elo_surface − 1500) / 900 , 0 → 1 ). Elo 2400 ≈ 1.0 ; Elo 1500 ≈ 0.</li>
+        <li><b>WinRate52s</b> = victoires / matchs joués sur la surface, <b>52 dernières semaines</b> (≤ 364 j).</li>
+        <li><b>FacteurForme</b> = clamp( L10 / 30 , 0 → 1 ) — réutilise la forme pondérée ci-dessus.</li>
+      </ul>
+      <p><b>Couleur du badge.</b> <span style="color:#4ade80;font-weight:700;">Vert &gt; 75</span> · <span style="color:#ffa726;font-weight:700;">Orange 50–75</span> · <span style="color:#ff4d4d;font-weight:700;">Rouge &lt; 50</span> · gris = données indisponibles.</p>
+
+      <p class="gs-article-title" style="font-weight:800;color:var(--text);font-size:15px;margin:22px 0 10px;">3 · Classement PowerScore mondial (#n)</p>
+      <p><b>Définition.</b> Rang du joueur dans le classement PowerScore de <b>tous les joueurs actifs</b> (au moins un match dans les <b>425 derniers jours</b>), <b>pour son circuit (ATP ou WTA) et la surface du match</b>. <code>#1</code> = meilleur PowerScore de la surface.</p>
+      <p><b>Calcul.</b> Tous les joueurs actifs du couple (circuit, surface) sont scorés par la formule PowerScore ci-dessus, triés décroissant ; le rang est la position dans cette liste (sur <code>ps_total</code> joueurs).</p>
+      <p><b>Données.</b> Source 100 % locale (historique Sackmann / Tennis Abstract synchronisé en base). Aucun scraping au chargement de page — cache 12 h. Le classement complet Top 100 par circuit/surface est exporté dans <code>CLASSEMENT_POWERSCORE.md</code> (régénérable : <code>node gen-powerscore-md.js</code>).</p>
+    </div>
+
+    <div id="guide-dr" class="guide-section-header">
+      <span class="guide-section-icon">⚔️</span>
+      <h2>Le Dominance Ratio (DR) Live</h2>
+    </div>
+
+    <div class="gs-article" style="border:1px solid var(--border2);border-radius:10px;padding:20px 22px;margin:14px 0 28px;line-height:1.75;font-size:13px;color:var(--text2);">
+      <h3 style="color:var(--text);font-size:15px;margin:0 0 10px;">Définition</h3>
+      <p>Le <b>Dominance Ratio</b> est l'indicateur ultime pour mesurer le <b>momentum d'un match de tennis en temps réel</b>. Contrairement au score brut, il évalue la capacité d'un joueur à gagner des points sur le service adverse par rapport aux points qu'il concède sur son propre engagement.</p>
+
+      <h3 style="color:var(--text);font-size:15px;margin:22px 0 10px;">Calcul Live</h3>
+      <div style="border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin:8px 0;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);">
+        <code>DR = (% de points gagnés au retour) / (% de points perdus au service)</code>
+      </div>
+      <p><i>Note : un DR supérieur à <code>1.00</code> indique que le joueur prend l'ascendant sur l'échange et « domine » statistiquement son adversaire, même si le score est serré.</i></p>
+      <p>Affichage <b>par joueur</b> dans le scoreboard (colonne 3) : <code>DR P1</code> et <code>DR P2</code> (réciproques). Le suffixe <code>~</code> signale le mode <i>proxy jeux+sets</i> (fallback) ; sans suffixe = valeur <b>exacte Sofascore</b> (points service + retour live). Couleur : <span style="color:#4ade80;font-weight:700;">vert &gt; 1.08 (domine)</span> · <span style="color:#ffa726;font-weight:700;">orange ~équilibré</span> · <span style="color:#ff4d4d;font-weight:700;">rouge &lt; 0.92 (subit)</span>.</p>
+
+      <h3 style="color:var(--text);font-size:15px;margin:22px 0 10px;">Interprétation des flèches</h3>
+      <ul style="margin:8px 0 8px 18px;">
+        <li><b style="color:#4ade80;">▲ Hausse</b> : le joueur intensifie sa pression au retour ou stabilise son service.</li>
+        <li><b style="color:#ff4d4d;">▼ Baisse</b> : le joueur subit davantage de pression ou commet plus de fautes directes sur ses engagements.</li>
+        <li><b style="color:#64748b;">► Stable</b> : momentum inchangé depuis le jeu précédent (variation &lt; 0.02).</li>
+      </ul>
+      <p>La tendance est calculée <b>indépendamment pour chaque joueur</b>, par comparaison au jeu précédent, et se rafraîchit à chaque mise à jour du flux live (SSE).</p>
+    </div>
 
     <div id="guide-strategies" class="guide-section-header">
       <span class="guide-section-icon">🧠</span>
@@ -10962,7 +11043,57 @@ function _tvbScoreCell(m) {
     return html;
   };
 
-  return `<div class="tn-sb" style="${gridStyle}">${rowHtml('p1')}${rowHtml('p2')}</div>`;
+  return `<div class="tn-sb" style="${gridStyle}">${rowHtml('p1')}${rowHtml('p2')}${_tvbDRLive(lo, sets, s1, s2)}</div>`;
+}
+
+// Dominance Ratio Live PAR JOUEUR (2 lignes, alignées J1/J2 du scoreboard).
+// DR_J1 = (pts service J1 + pts retour J1) / (pts service J2 + pts retour J2).
+// DR_J2 = réciproque. PRIORITÉ : exact Sofascore (lo.dr_exact) ; FALLBACK :
+// proxy jeux+sets. Flèche tendance propre à chaque joueur (vs jeu précédent).
+function _tvbDRLive(lo, sets, s1, s2) {
+  if (!lo) return '';
+  let drP1, exact = false;
+  const dx = lo.dr_exact;
+  if (dx && typeof dx.dr === 'number' && Number.isFinite(dx.dr) && dx.dr > 0) {
+    drP1 = dx.dr; exact = true;
+  } else {
+    let gA = 0, gB = 0;
+    (Array.isArray(sets) ? sets : []).forEach(st => {
+      if (st) { gA += Number(st.p1) || 0; gB += Number(st.p2) || 0; }
+    });
+    drP1 = (gA + 6 * (s1 || 0) + 0.5) / (gB + 6 * (s2 || 0) + 0.5);
+  }
+  if (!Number.isFinite(drP1) || drP1 <= 0) return '';
+  const drP2 = 1 / drP1;
+  const id = String(lo.id || lo._id || (lo.player1 && lo.player1.name) || '');
+  if (!window._tnDRHist) window._tnDRHist = {};
+  const suffix = exact ? '' : '~';
+
+  const line = (dr, side) => {
+    const lab = (side === 'p1' ? 'DR P1' : 'DR P2') + suffix;
+    const key = id + '|' + side;
+    const h = window._tnDRHist[key] || [];
+    const prev = h.length ? h[h.length - 1] : null;
+    let arrow = '►', acls = 'tn-dr-flat';
+    if (prev != null) {
+      if (dr - prev > 0.02) { arrow = '▲'; acls = 'tn-dr-up'; }
+      else if (prev - dr > 0.02) { arrow = '▼'; acls = 'tn-dr-down'; }
+    }
+    if (prev == null || Math.abs(dr - prev) > 0.001) {
+      h.push(dr); if (h.length > 3) h.shift(); window._tnDRHist[key] = h;
+    }
+    const cls = dr >= 1.08 ? 'tn-dr-dom' : dr > 0.92 ? 'tn-dr-bal' : 'tn-dr-sub';
+    const info = side === 'p1'
+      ? `<button type="button" class="tn-dr-i" onclick="event.stopPropagation();openTennisDRGuide()" title="Définition &amp; calcul du Dominance Ratio — ouvrir le Guide" aria-label="Aide Dominance Ratio">ⓘ</button>`
+      : '';
+    return `<div class="tn-dr-line ${cls}${exact ? ' tn-dr-exact' : ''}" `
+      + `title="Dominance Ratio ${side === 'p1' ? 'J1' : 'J2'} — ${exact ? 'Sofascore (pts service+retour)' : 'proxy jeux+sets'} · ${dr.toFixed(2)} · tendance ${arrow}">`
+      + `<span class="tn-dr-lab">${lab}${info}</span>`
+      + `<span class="tn-dr-val">${dr.toFixed(2)}<span class="tn-dr-arr ${acls}">${arrow}</span></span>`
+      + `</div>`;
+  };
+
+  return `<div class="tn-dr">${line(drP1, 'p1')}${line(drP2, 'p2')}</div>`;
 }
 
 function _tvbEdgeCls(ev) {
@@ -11418,6 +11549,7 @@ function renderTennisValueBets(rawMatches) {
   const eloOnly = document.getElementById('tennis-vb-elo-only')?.checked;
   const positiveEv = document.getElementById('tennis-vb-positive-ev')?.checked;
   const hideFinished = document.getElementById('tennis-vb-hide-finished')?.checked;
+  const liveOnly = document.getElementById('tennis-vb-live-only')?.checked;
 
   // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
   const _compSel = document.getElementById('tennis-vb-comp');
@@ -11449,6 +11581,7 @@ function renderTennisValueBets(rawMatches) {
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
     if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
     if (f.comp && f.comp !== 'ALL' && String(m.tournament || '') !== f.comp) return false;
+    if (liveOnly && !(m._isLive || m.is_live)) return false;
     if (eloOnly && !(m.predictions && m.predictions.elo)) return false;
     if (positiveEv) {
       const ev = m.best_ev_model && m.best_ev_model.ev;
@@ -22793,6 +22926,22 @@ function openStrategiesGuide() {
   } catch (e) {}
   setTimeout(function () {
     try { scrollToSection('guide-strategies'); } catch (e) {}
+  }, 250);
+}
+
+// Pastille « ⓘ » colonne Forme/PowerScore → onglet Guide, section dédiée
+function openTennisFormPowerGuide() {
+  try { if (typeof showPage === 'function') showPage('guide'); } catch (e) {}
+  setTimeout(function () {
+    try { scrollToSection('guide-forme-power'); } catch (e) {}
+  }, 250);
+}
+
+// Pastille « ⓘ » module DR Live (colonne 3) → Guide, section Dominance Ratio
+function openTennisDRGuide() {
+  try { if (typeof showPage === 'function') showPage('guide'); } catch (e) {}
+  setTimeout(function () {
+    try { scrollToSection('guide-dr'); } catch (e) {}
   }, 250);
 }
 

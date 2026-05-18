@@ -1787,6 +1787,96 @@ async function sofaGet(path) {
   return httpsGet(`https://api.sofascore.com/api/v1${path}`, SOFA_HEADERS);
 }
 
+// ─── DR Live EXACT via Sofascore (stats points service/retour) ──────────────
+// Formule : DR_A = (%pts retour A + %pts service A) / (%pts retour B + %pts
+// service B). Source : api.sofascore.com /event/{id}/statistics (live). Non
+// bloquant : refresh async, sert le cache (vide au 1er appel → fallback proxy).
+const _SOFA_DR_TTL = 60 * 1000;
+const _sofaLiveIdx = { ts: 0, map: null, loading: false }; // 'normHome|normAway' → eventId
+const _sofaDREvCache = new Map(); // eventId → { ts, home:{serve,ret}, away:{serve,ret}, dr_home }
+const _sofaDRByPair = new Map();  // 'normP1|normP2' → { ts, dr, p1_serve, p1_ret, p2_serve, p2_ret, source }
+
+function _sofaPctParse(v) { // "45/70 (64%)" | "64%" | 64 → 64
+  if (v == null) return null;
+  const s = String(v);
+  const m = s.match(/(\d+(?:\.\d+)?)\s*%/);
+  if (m) return parseFloat(m[1]);
+  const f = parseFloat(s);
+  return Number.isFinite(f) ? f : null;
+}
+
+async function _refreshSofaLiveIdx() {
+  if (_sofaLiveIdx.loading) return;
+  if (_sofaLiveIdx.map && Date.now() - _sofaLiveIdx.ts < _SOFA_DR_TTL) return;
+  _sofaLiveIdx.loading = true;
+  try {
+    const r = await sofaGet('/sport/tennis/events/live');
+    const ev = (r && r.status === 200 && r.data && Array.isArray(r.data.events)) ? r.data.events : [];
+    const map = new Map();
+    for (const e of ev) {
+      const h = e.homeTeam && (e.homeTeam.name || e.homeTeam.shortName);
+      const a = e.awayTeam && (e.awayTeam.name || e.awayTeam.shortName);
+      if (!h || !a || !e.id) continue;
+      map.set(`${normName(h)}|${normName(a)}`, e.id); // sens conservé (home|away)
+    }
+    _sofaLiveIdx.map = map;
+    _sofaLiveIdx.ts = Date.now();
+  } catch (_) { /* Sofascore indispo → fallback proxy DR */ }
+  finally { _sofaLiveIdx.loading = false; }
+}
+
+async function _refreshSofaDREvent(eventId) {
+  const c = _sofaDREvCache.get(eventId);
+  if (c && Date.now() - c.ts < _SOFA_DR_TTL) return c;
+  try {
+    const r = await sofaGet(`/event/${eventId}/statistics`);
+    if (!r || r.status !== 200 || !r.data || !Array.isArray(r.data.statistics)) return null;
+    const all = r.data.statistics.find(s => s.period === 'ALL') || r.data.statistics[0];
+    if (!all) return null;
+    let hS = null, aS = null, hR = null, aR = null;
+    for (const g of (all.groups || [])) {
+      for (const it of (g.statisticsItems || [])) {
+        const n = String(it.name || '').toLowerCase();
+        if (/service points won/.test(n)) { hS = _sofaPctParse(it.home); aS = _sofaPctParse(it.away); }
+        else if (/(receiver|return) points won/.test(n)) { hR = _sofaPctParse(it.home); aR = _sofaPctParse(it.away); }
+      }
+    }
+    if (hS == null || aS == null || hR == null || aR == null) return null;
+    const homeSum = hS + hR, awaySum = aS + aR;
+    if (homeSum <= 0 || awaySum <= 0) return null;
+    const out = { ts: Date.now(), home: { serve: hS, ret: hR }, away: { serve: aS, ret: aR }, dr_home: homeSum / awaySum };
+    _sofaDREvCache.set(eventId, out);
+    return out;
+  } catch (_) { return null; }
+}
+
+// Sert le DR exact en cache (non bloquant) ; déclenche un refresh async.
+function getSofascoreDRCached(p1Name, p2Name) {
+  if (!p1Name || !p2Name) return null;
+  const np1 = normName(p1Name), np2 = normName(p2Name);
+  const key = `${np1}|${np2}`;
+  const hit = _sofaDRByPair.get(key);
+  (async () => {
+    await _refreshSofaLiveIdx();
+    const idx = _sofaLiveIdx.map;
+    if (!idx) return;
+    let evId = idx.get(`${np1}|${np2}`); // p1 = home
+    let p1Home = true;
+    if (!evId) { evId = idx.get(`${np2}|${np1}`); p1Home = false; } // p1 = away
+    if (!evId) return;
+    const st = await _refreshSofaDREvent(evId);
+    if (!st) return;
+    const dr = p1Home ? st.dr_home : 1 / st.dr_home;
+    const A = p1Home ? st.home : st.away, B = p1Home ? st.away : st.home;
+    _sofaDRByPair.set(key, {
+      ts: Date.now(), dr: parseFloat(dr.toFixed(3)),
+      p1_serve: A.serve, p1_ret: A.ret, p2_serve: B.serve, p2_ret: B.ret, source: 'sofascore'
+    });
+  })().catch(() => { /* best-effort */ });
+  if (hit && Date.now() - hit.ts < _SOFA_DR_TTL * 5) return hit; // sert ≤ 5 min
+  return null;
+}
+
 // Find Sofascore team ID by name — cached 7 days
 async function searchSofascoreTeam(teamName) {
   try {
@@ -12123,6 +12213,7 @@ async function handleAPI(req, res, pathname, query) {
         current_point: m.current_point,
         serving: m.serving,
         serve_momentum: m.serve_momentum || null,
+        dr_exact: m.is_live ? getSofascoreDRCached(m.player1.name, m.player2.name) : null,
         notes: m.notes,
         start_time: m.start_time,
         last_update_ts: m.last_update_ts
