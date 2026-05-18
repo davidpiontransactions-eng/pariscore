@@ -2,6 +2,28 @@
 
 ---
 
+## [v10.60] — 2026-05-18
+
+### Refonte visuelle — CONSEILS IA v3 « Neon Quant Terminal » (feedback DG : + flashy/sexy/accrocheur)
+
+v2 jugée trop pâle/plate. Passage à un rendu terminal trading néon, **unifié dark + light** (carte = widget sombre embarqué dans les 2 thèmes).
+
+**CSS `.t3c-*` v3 (pariscore.html)** :
+- Wrap : gradient sombre `#1b2027→#0d0f13`, radius 13px, ombre profonde + sheen radial rouge L'Équipe en tête.
+- Header : barre d'accent rouge dégradée sous le titre.
+- Anneau confiance : 44px, halo `drop-shadow` coloré par `--c`, chiffre 14px 900 avec text-shadow glow, disque interne radial.
+- Badges paliers : gradients sombres + **glow néon** par tier (vert/ambre/rouge), bordure saturée, font 11px 900.
+- Smart-highlight 1X2 : pick `scale(1.1)` + gradient vert + **animation `t3cPickPulse`** (halo respirant 2.2s).
+- Bannière +EV : **`t3cShine`** (dégradé diagonal animé 3.4s, bg-size 220%), uppercase 11px 900.
+- Perdants : opacity .32 + grayscale .65 + scale .94.
+- Lignes : hover rouge L'Équipe ; footer chips tintés glow.
+- `prefers-reduced-motion` : animations coupées (pulse + shine + transitions).
+- Overrides clair : neutralisés (plus de blanchiment) + paliers/pick mirrorent le neon en `!important`.
+
+**Vérifié** (preview, computed-styles) : wrap gradient sombre, anneau 44px + filter glow, num 14px, pick `t3cPickPulse`+scale 1.1+gradient vert, tier-hi gradient+glow vert, +EV `t3cShine` bg-size 220%. Zéro erreur JS.
+
+---
+
 ## [v10.59] — 2026-05-18
 
 ### Refonte — Colonne « CONSEILS IA » : Fiche Quant scannable (skills frontend-design + ui-ux-pro-max)
