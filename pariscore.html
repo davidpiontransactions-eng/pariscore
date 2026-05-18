@@ -7351,6 +7351,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     #page-matchs .mls-opt.is-on {
       background: #f1fdf5 !important; color: #166534 !important;
     }
+    /* FIX visibilité : rangées stratégies (.mls-row) — texte foncé lisible
+       sur panneau blanc (le bloc ne stylait que .mls-opt, pas .mls-row). */
+    #page-matchs .mls-row .mls-rowmain,
+    #page-matchs .mls-row .mls-name { color: #020617 !important; }
+    #page-matchs .mls-cnt { color: #64748b !important; }
+    #page-matchs .mls-row:hover { background: #eef2f7 !important; }
+    #page-matchs .mls-row:hover .mls-rowmain { color: #020617 !important; }
+    #page-matchs .mls-row.sel { background: #f1fdf5 !important; }
+    #page-matchs .mls-row.sel .mls-rowmain,
+    #page-matchs .mls-row.sel .mls-name { color: #166534 !important; }
 
     /* ── Carte « Degré Confiance » : surface plate claire ── */
     #page-matchs .conf-wrap {

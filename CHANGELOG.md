@@ -2,6 +2,20 @@
 
 ---
 
+## [v10.65] — 2026-05-18
+
+### Correctif visuel — Dropdown stratégies illisible (texte clair sur panneau blanc)
+
+Feedback DG : liste déroulante « Toutes stratégies » — noms invisibles (gris pâle sur blanc) et item sélectionné « BTTS Oui » blanc sur rouge pâle.
+
+**Cause** : le bloc `<style id="desktop-filters-flat">` (@media ≥768px) restaure le panneau `.mls-panel` en blanc et restyle `.mls-opt`, mais **pas** `.mls-row`/`.mls-rowmain`/`.mls-name`/`.mls-cnt`/`.sel` — les rangées stratégies (rendues en `.mls-row`, build L13028) conservaient les couleurs de base conçues pour panneau sombre → invisibles.
+
+**Fix (pariscore.html)** : ajout dans le même bloc des règles claires `.mls-row` alignées sur `.mls-opt` — nom `#020617`, compteur `#64748b`, hover `#eef2f7`, sélection `#f1fdf5`/`#166534`. Desktop ≥768 + scope `#page-matchs` ; mobile intact.
+
+**Vérifié** (preview 1440px, thème CLAIR, computed-styles) : nom non-sél `#020617`, compteur `#64748b`, ligne sél bg `#f1fdf5`, nom sél `#166534`. Zéro erreur JS.
+
+---
+
 ## [v10.64] — 2026-05-18
 
 ### Correctif — Nav top laissée claire (logo PARISCORE illisible sur fond sombre)
