@@ -2,6 +2,14 @@
 
 ---
 
+## [v10.64] — 2026-05-18
+
+### Correctif — Nav top laissée claire (logo PARISCORE illisible sur fond sombre)
+
+Feedback DG : nav dark v10.63 rendait le logo « PARISCORE » (texte noir) invisible. Retrait des 4 règles `nav:not([aria-label])` de l'Axe C → nav conserve sa charte claire. Filtres + bandeau + league banner + tableau restent dark (nappe sombre intacte sous la nav claire). Vérifié preview 1440px : `nav` bg transparent (défaut clair), `#filter-console`/`table-header` toujours `#0f172a`.
+
+---
+
 ## [v10.63] — 2026-05-18
 
 ### Uniformisation desktop globale — Axe C « Élite Dark Trading » (filtres + bandeau + nav)
