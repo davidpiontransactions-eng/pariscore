@@ -10006,7 +10006,8 @@ function renderTennisValueBets(matches) {
   // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
   const _compSel = document.getElementById('tennis-vb-comp');
   if (_compSel) {
-    const names = [...new Set(matches.map(x => x && x.tournament).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+    const _tnStr = t => (t && typeof t === 'object') ? (t.name || t.short_name || '') : String(t || '');
+    const names = [...new Set(matches.map(x => _tnStr(x && x.tournament)).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr'));
     const sig = names.join('|');
     if (_compSel.dataset.sig !== sig) {
       _compSel.innerHTML = '<option value="ALL">Toutes</option>' + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
@@ -10255,8 +10256,12 @@ async function analyzeTennisMatch(matchId) {
 async function tickTennisValueBets() {
   const statusEl = document.getElementById('tennis-vb-status');
   try {
-    if (statusEl) statusEl.textContent = 'Chargement…';
-    const r = await apiFetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } });
+    if (statusEl && !window._tennisVbBuildRetries) statusEl.textContent = 'Chargement…';
+    // Timeout client 25s : une requête pendue ne doit pas figer l'UI.
+    const r = await Promise.race([
+      apiFetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('client_timeout')), 25000)),
+    ]);
     if (r.status === 401 || r.status === 403) {
       if (statusEl) statusEl.textContent = 'Accès réservé';
       const tbody = document.getElementById('tennis-vb-tbody');
@@ -10266,6 +10271,22 @@ async function tickTennisValueBets() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     const matches = Array.isArray(data.matches) ? data.matches : [];
+    // Cold : le serveur construit en fond et renvoie loading → on ré-essaie.
+    if (data.meta && (data.meta.loading || data.meta.building) && matches.length === 0) {
+      window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
+      const tb = document.getElementById('tennis-vb-tbody');
+      if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
+        tb.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</td></tr>';
+      }
+      if (window._tennisVbBuildRetries <= 15) {
+        if (statusEl) statusEl.textContent = `⏳ Préparation… (${window._tennisVbBuildRetries})`;
+        setTimeout(tickTennisValueBets, 6000);
+      } else if (statusEl) {
+        statusEl.textContent = 'Build trop long — réessaie plus tard';
+      }
+      return;
+    }
+    window._tennisVbBuildRetries = 0;
     window._tennisVbLastFetch = matches;
     renderTennisValueBets(matches);
     if (statusEl) {
@@ -10275,10 +10296,21 @@ async function tickTennisValueBets() {
     }
   } catch (e) {
     console.warn('[TennisVB] fetch error:', e.message);
-    if (statusEl) statusEl.textContent = 'Erreur réseau';
-    const tbody = document.getElementById('tennis-vb-tbody');
-    if (tbody && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-      tbody.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement.</td></tr>';
+    // Ne PAS rester bloqué sur "Erreur réseau" : retry borné automatique.
+    window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
+    if (window._tennisVbBuildRetries <= 15) {
+      if (statusEl) statusEl.textContent = `Reconnexion… (${window._tennisVbBuildRetries})`;
+      const tb = document.getElementById('tennis-vb-tbody');
+      if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
+        tb.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</td></tr>';
+      }
+      setTimeout(tickTennisValueBets, 6000);
+    } else {
+      if (statusEl) statusEl.textContent = 'Erreur réseau';
+      const tbody = document.getElementById('tennis-vb-tbody');
+      if (tbody && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
+        tbody.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement (build serveur indisponible).</td></tr>';
+      }
     }
   }
 }
