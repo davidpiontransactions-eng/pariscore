@@ -134,7 +134,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Limites** : Attention à l'usage de la RAM lors des 500 itérations Bootstrap (optimisation mémoire exigée).
 
 ---
-*Dernière mise à jour : Version 10.59 — Refonte colonne CONSEILS IA (Fiche Quant : anneau conf/100, smart-highlight 1X2, bannière +EV élevée, paliers 80/60, dark graphite/light L'Équipe) + fix sport-hub fuyant desktop (garde inline matchMedia synchrone). ⚠️ Nécessite upload pariscore.html sur VPS + pm2 restart. v10.58 : fix LIVE 3 causes racines (server.js, validation fenêtre live réelle [LiveDBG]). Voir CHANGELOG.md.*
+*Dernière mise à jour : Version 10.60 — CONSEILS IA v3 « Neon Quant Terminal » (feedback DG +flashy) : wrap sombre unifié dark+light, anneau 44px halo coloré, badges gradients+glow néon par palier, pick 1X2 animé (pulse), bannière +EV shine animée, prefers-reduced-motion. Suite v10.59 (refonte structure Fiche Quant + fix sport-hub desktop). ⚠️ Upload pariscore.html sur VPS + pm2 restart. v10.58 : fix LIVE server.js (validation [LiveDBG] fenêtre live réelle). Voir CHANGELOG.md.*
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
