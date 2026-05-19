@@ -2,6 +2,19 @@
 
 ---
 
+## [v10.75] — 2026-05-19
+
+### Feature — Prédictions : fallback BSD (orphelin API-Football couvert)
+
+`/api/v1/af/predictions/:fixtureId` : AF primaire si clé, sinon **fallback BSD gratuit** (lookup `fixture_id`/`_bsd_event_id` → `fetchBSDPrediction` → `normalizeBsdPrediction`). Gate dur 503 (clé AF absente) retiré.
+
+- `normalizeBsdPrediction(raw,match)` — mappe le brut BSD vers le shape AF (`percent_home/draw/away`, `winner_name`, `under_over`, `goals_home/away`, `advice`, `btts_yes`, `score_most_likely`, `confidence`). **STRICT** : pas de 1X2 dérivable → `null` (jamais inventé). Gère shape v2 documentée (`markets.match_result/over_under/btts/expected_goals/score`) + fallbacks plats + `raw.probabilities`. `_bsd_raw` conservé. Log `[BSD Pred] raw keys` 1× pour validation shape réelle sur VPS.
+- `fetchBsdPredictionNormalized(fixtureId)` — résolveur fixture→event BSD.
+- Additif, safe-fail `null`→404, aucun consumer frontend → blast radius nul, ne peut pas régresser. `node --check` + boot OK.
+- ⚠ Shape exacte BSD à confirmer sur 1er appel réel (logs `[BSD Pred]`) ; normalizer déjà tolérant multi-shape.
+
+---
+
 ## [v10.74] — 2026-05-19
 
 ### Feature — Bio joueur + blessure 100% via Transfermarkt (felipeall sidecar)
