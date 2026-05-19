@@ -2,6 +2,20 @@
 
 ---
 
+## [v10.72] — 2026-05-19
+
+### Feature — Cotes sur Bets Prédictifs (couche 1 + 3, solution économique)
+
+Chaque pari conseillé affiche désormais une cote. Stratégie validée DG pour 25 membres : **pas de scraping** (OddsPortal/Flashscore = mur Cloudflare, dette maintenance, contre consigne « Odds API only »). Couche 1 + 3 :
+
+- **Couche 1 — cote marché réelle** : Odds API h2h déjà intégrée → `@1.72` sur Vainqueur match, EV calculé contre cette cote.
+- **Couche 3 — cote équitable modèle** : `≈ 1/proba` (no-vig) sur tous les marchés non cotés (Set 1, score sets, ≥1 set, jeux O/U, aces, tie-break, live). Couverture **100 %**, 0 €, 0 quota, 0 réseau, 0 maintenance.
+- Couche 2 (Polymarket) écartée : couverture tennis mince + doublonne Couche 1.
+
+`computeTennisPredictiveBets` : champs `odds_fair` (=round(100/p,2)) + `odds_type` ('market'|'fair') par candidat. Frontend `_tnChip` : `<span class="oc">@x</span>` si cote marché sinon `<span class="fc">≈x</span>` (gris italique). `tnLiveBets` propage `odds_fair` (proba live). Guide enrichi (bloc « Cotes affichées » @ vs ≈). Vérifié node --check + test unitaire prematch/live (odds_fair/odds_type/EV corrects).
+
+---
+
 ## [v10.71] — 2026-05-19
 
 ### Feature — Colonne « Bets Prédictifs / 2e ligne conseillés » (onglet Tennis)
