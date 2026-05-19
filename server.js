@@ -1813,6 +1813,13 @@ function _sofaPctParse(v) { // "45/70 (64%)" | "64%" | 64 → 64
   const f = parseFloat(s);
   return Number.isFinite(f) ? f : null;
 }
+// "30/65 (46%)" → 65 (dénominateur = points joués) ; null si pas de fraction.
+// Sert de garde min-échantillon pour le DR du set en cours (bruit début de set).
+function _sofaFracTotal(v) {
+  if (v == null) return null;
+  const m = String(v).match(/\d+\s*\/\s*(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
 
 async function _refreshSofaLiveIdx() {
   if (_sofaLiveIdx.loading) return;
@@ -1840,20 +1847,36 @@ async function _refreshSofaDREvent(eventId) {
   try {
     const r = await sofaGet(`/event/${eventId}/statistics`);
     if (!r || r.status !== 200 || !r.data || !Array.isArray(r.data.statistics)) return null;
-    const all = r.data.statistics.find(s => s.period === 'ALL') || r.data.statistics[0];
-    if (!all) return null;
-    let hS = null, aS = null, hR = null, aR = null;
-    for (const g of (all.groups || [])) {
-      for (const it of (g.statisticsItems || [])) {
-        const n = String(it.name || '').toLowerCase();
-        if (/service points won/.test(n)) { hS = _sofaPctParse(it.home); aS = _sofaPctParse(it.away); }
-        else if (/(receiver|return) points won/.test(n)) { hR = _sofaPctParse(it.home); aR = _sofaPctParse(it.away); }
+    // Parse une période (ALL | 1ST | 2ND | …) → {home,away,dr_home,ret_n} ou null.
+    const parsePeriod = (p) => {
+      let hS = null, aS = null, hR = null, aR = null, hRn = null, aRn = null;
+      for (const g of (p.groups || [])) {
+        for (const it of (g.statisticsItems || [])) {
+          const n = String(it.name || '').toLowerCase();
+          if (/service points won/.test(n)) { hS = _sofaPctParse(it.home); aS = _sofaPctParse(it.away); }
+          else if (/(receiver|return) points won/.test(n)) {
+            hR = _sofaPctParse(it.home); aR = _sofaPctParse(it.away);
+            hRn = _sofaFracTotal(it.home); aRn = _sofaFracTotal(it.away);
+          }
+        }
       }
+      if (hS == null || aS == null || hR == null || aR == null) return null;
+      const homeSum = hS + hR, awaySum = aS + aR;
+      if (homeSum <= 0 || awaySum <= 0) return null;
+      const retN = (hRn != null && aRn != null) ? Math.min(hRn, aRn) : null;
+      return { home: { serve: hS, ret: hR }, away: { serve: aS, ret: aR }, dr_home: homeSum / awaySum, ret_n: retN };
+    };
+    const periods = {};
+    for (const p of r.data.statistics) {
+      const per = String(p && p.period || '').toUpperCase();
+      if (!per) continue;
+      const v = parsePeriod(p);
+      if (v) periods[per] = v;
     }
-    if (hS == null || aS == null || hR == null || aR == null) return null;
-    const homeSum = hS + hR, awaySum = aS + aR;
-    if (homeSum <= 0 || awaySum <= 0) return null;
-    const out = { ts: Date.now(), home: { serve: hS, ret: hR }, away: { serve: aS, ret: aR }, dr_home: homeSum / awaySum };
+    const all = periods.ALL || periods[Object.keys(periods)[0]];
+    if (!all) return null;
+    // Top-level = ALL (rétro-compat consommateurs existants). _periods = détail/set.
+    const out = { ts: Date.now(), home: all.home, away: all.away, dr_home: all.dr_home, _periods: periods };
     _sofaDREvCache.set(eventId, out);
     return out;
   } catch (_) { return null; }
@@ -1877,13 +1900,44 @@ function getSofascoreDRCached(p1Name, p2Name) {
     if (!st) return;
     const dr = p1Home ? st.dr_home : 1 / st.dr_home;
     const A = p1Home ? st.home : st.away, B = p1Home ? st.away : st.home;
+    // DR par set (numéroté 1..5) — orienté côté J1 comme le DR match.
+    const SET_MAP = { '1ST': 1, '2ND': 2, '3RD': 3, '4TH': 4, '5TH': 5 };
+    const drBySet = {};
+    for (const [per, v] of Object.entries(st._periods || {})) {
+      const sn = SET_MAP[per];
+      if (!sn) continue;
+      const drp = p1Home ? v.dr_home : 1 / v.dr_home;
+      const a = p1Home ? v.home : v.away, b = p1Home ? v.away : v.home;
+      drBySet[sn] = {
+        dr: parseFloat(drp.toFixed(3)),
+        p1_serve: a.serve, p1_ret: a.ret, p2_serve: b.serve, p2_ret: b.ret,
+        ret_n: v.ret_n
+      };
+    }
     _sofaDRByPair.set(key, {
       ts: Date.now(), dr: parseFloat(dr.toFixed(3)),
-      p1_serve: A.serve, p1_ret: A.ret, p2_serve: B.serve, p2_ret: B.ret, source: 'sofascore'
+      p1_serve: A.serve, p1_ret: A.ret, p2_serve: B.serve, p2_ret: B.ret,
+      dr_by_set: drBySet, source: 'sofascore'
     });
   })().catch(() => { /* best-effort */ });
   if (hit && Date.now() - hit.ts < _SOFA_DR_TTL * 5) return hit; // sert ≤ 5 min
   return null;
+}
+
+// Attache dr_set_courant à l'objet DR : DR du set en cours (depuis dr_by_set),
+// avec garde min-échantillon (≥6 pts retour) → reliable=false si trop tôt
+// dans le set (bruit). curSet = n° du set en cours (1-based) ou null.
+const _DR_SET_MIN_RET = 6;
+function _drAttachCurrentSet(dr, curSet) {
+  if (!dr || typeof dr !== 'object') return dr;
+  const bs = dr.dr_by_set || {};
+  let cur = null;
+  if (curSet && bs[curSet]) {
+    const s = bs[curSet];
+    const reliable = (s.ret_n == null) || (s.ret_n >= _DR_SET_MIN_RET);
+    cur = { set: curSet, dr: s.dr, ret_n: s.ret_n, reliable };
+  }
+  return { ...dr, dr_set_courant: cur };
 }
 
 // Find Sofascore team ID by name — cached 7 days
@@ -12584,7 +12638,11 @@ async function handleAPI(req, res, pathname, query) {
         current_point: m.current_point,
         serving: m.serving,
         serve_momentum: m.serve_momentum || null,
-        dr_exact: m.is_live ? getSofascoreDRCached(m.player1.name, m.player2.name) : null,
+        dr_exact: m.is_live ? _drAttachCurrentSet(
+          getSofascoreDRCached(m.player1.name, m.player2.name),
+          (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
+            : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null)
+        ) : null,
         notes: m.notes,
         start_time: m.start_time,
         last_update_ts: m.last_update_ts
