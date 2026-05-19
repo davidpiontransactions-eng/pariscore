@@ -10730,8 +10730,11 @@ function _ssFire(el, type) { try { el.dispatchEvent(new Event(type, { bubbles: t
 function applyFootballPreset() {
   try {
     const F = window.psStrategyFilters || {};
+    // Sélecteurs ancrés sur les IDs de row (resistants à _mfsRelocate sur mobile,
+    // qui déplace day-filter-row / topn-filter-row / period-kickoff-row /
+    // adv-filter-row hors de #page-matchs vers #mfs-body).
     const dayVal = F.days || 'all';
-    const dayBtn = document.querySelector('#page-matchs .filter-chip[data-day="' + dayVal + '"]');
+    const dayBtn = document.querySelector('#day-filter-row .filter-chip[data-day="' + dayVal + '"]');
     if (dayBtn && !dayBtn.classList.contains('active')) dayBtn.click();
     if ((F.leagues || 'all') === 'all' && typeof mlPickAll === 'function') mlPickAll();
     const steam = document.getElementById('steam-filter-chip');
@@ -10743,15 +10746,15 @@ function applyFootballPreset() {
       const v = document.getElementById('o25-val'); if (v) v.textContent = '8%';
     }
     const perVal = F.period || 'season';
-    const per = document.querySelector('#page-matchs .filter-chip[data-period="' + perVal + '"]');
+    const per = document.querySelector('#period-filter-row .filter-chip[data-period="' + perVal + '"]');
     if (per && !per.classList.contains('active') && typeof setPeriod === 'function') setPeriod(perVal, per);
     // Kickoff
-    const kBtn = document.querySelector('#page-matchs .filter-chip[data-kick="' + (F.kickoff || '0') + '"]');
+    const kBtn = document.querySelector('#kickoff-filter-row .filter-chip[data-kick="' + (F.kickoff || '0') + '"]');
     if (kBtn && !kBtn.classList.contains('active')) kBtn.click();
     if (typeof renderMatches === 'function' && typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
       renderMatches(allMatches);
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[applyFootballPreset]', e); }
 }
 
 function applyTennisPreset() {
@@ -21508,6 +21511,10 @@ async function apiFetch(url, opts = {}) {
   }
   const res = await fetch(url, { ...opts, headers });
   if (res.status === 401) {
+    // Forensic trace : 401 sur route Pro post-fenêtre test 15→18 mai peut
+    // donner perception « page blanche » côté mobile (cf. CR-F rapport bug
+    // mobile 2026-05-19).
+    try { console.warn('[apiFetch:401]', url, 'hadToken=', !!token); } catch (e) {}
     openAuthModal('login');
     throw Object.assign(new Error('AUTH_REQUIRED'), { status: 401 });
   }
@@ -21614,6 +21621,9 @@ async function submitRegister() {
 }
 
 function psLogout() {
+  // Forensic trace : capture toute remise à zéro de session (cf. CR-F rapport
+  // bug mobile 2026-05-19). À retirer une fois le chemin auto-logout identifié.
+  try { console.warn('[psLogout] called from:', new Error().stack); } catch (e) {}
   psClearToken();
   updateNavAuthState();
   // Reset état matchs pour forcer re-auth au prochain accès
@@ -25857,6 +25867,18 @@ function renderComparateur(d) {
     var s = document.getElementById('mob-filter-sheet');
     if (o) o.classList.remove('open');
     if (s) s.classList.remove('open');
+    // Force re-render des cartes mobile + feedback visuel : la nappe « Filtres »
+    // ne déclenchait aucune confirmation, l'utilisateur perd la main (cf. bug
+    // mobile 2026-05-19).
+    try {
+      if (typeof renderMatches === 'function' && typeof allMatches !== 'undefined'
+          && Array.isArray(allMatches)) {
+        renderMatches(allMatches);
+      }
+    } catch (e) {}
+    try {
+      if (typeof showNotification === 'function') showNotification('Filtres appliqués', 'green');
+    } catch (e) {}
   };
   window.mfsSyncCount = function () {
     var c = document.getElementById('mfs-count');
