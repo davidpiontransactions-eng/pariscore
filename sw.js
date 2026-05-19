@@ -2,7 +2,11 @@
    Bump CACHE version à chaque release frontend pour invalider. */
 // v10 (2026-05-19) : invalide v9 — embarque fix mobile bug page blanche post
 // param filtres (commit 18e5616 + radar BSD Live WS 3f3cc41).
-const CACHE = 'pariscore-shell-v10';
+// v11 (2026-05-20) : invalide v10 — embarque fix V3 page blanche (race DCL,
+// renderLockedPage, apiFetch 403, hub stuck, drawer Plus) commit e679586 +
+// affiliates 504 fix 5a62a5f. Force re-install après les commits intermédiaires
+// (cc03453 feat live+bsd) qui ont modifié pariscore.html sans bump.
+const CACHE = 'pariscore-shell-v11';
 const SHELL = [
   '/',
   '/pariscore.html',
