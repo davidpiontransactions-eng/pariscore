@@ -8906,6 +8906,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-dr-exact .tn-dr-lab { color:#38bdf8; text-shadow:0 0 5px rgba(56,189,248,.55); }
   #tennis-vb-table .tn-dr-i { padding:0; margin-left:4px; background:none; border:none; cursor:pointer; color:#38bdf8; opacity:.65; font-size:9px; line-height:1; vertical-align:baseline; }
   #tennis-vb-table .tn-dr-i:hover { opacity:1; text-shadow:0 0 6px rgba(56,189,248,.7); }
+  #tennis-vb-table .tn-drs { display:flex; flex-wrap:wrap; gap:3px; margin-top:2px; }
+  #tennis-vb-table .tn-drs-chip { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.3px; padding:1px 4px; border-radius:3px; border:1px solid #243044; background:#0f172a; color:#94a3b8; white-space:nowrap; }
+  #tennis-vb-table .tn-drs-dom { color:#4ade80; border-color:rgba(74,222,128,.4); }
+  #tennis-vb-table .tn-drs-bal { color:#ffa726; border-color:rgba(255,167,38,.4); }
+  #tennis-vb-table .tn-drs-sub { color:#ff4d4d; border-color:rgba(255,77,77,.4); }
+  #tennis-vb-table .tn-drs-cur { box-shadow:0 0 0 1px #38bdf8, 0 0 6px rgba(56,189,248,.5); background:rgba(56,189,248,.08); }
+  #tennis-vb-table .tn-drs-unrel { opacity:.5; font-style:italic; }
   .tvb-live-flt .tvb-live-dot { width:8px; height:8px; border-radius:50%; background:#ff4d4d; display:inline-block; animation:tnLivePulse 1.4s ease-in-out infinite; }
   .tvb-live-flt:has(#tennis-vb-live-only:checked) { background:rgba(255,77,77,.2); border-color:rgba(255,77,77,.7); box-shadow:0 0 8px rgba(255,77,77,.35); }
   @media (prefers-reduced-motion:reduce) { .tvb-live-flt .tvb-live-dot { animation:none; } }
@@ -11305,7 +11312,43 @@ function _tvbDRLive(lo, sets, s1, s2) {
       + `</div>`;
   };
 
-  return `<div class="tn-dr">${line(drP1, 'p1')}${line(drP2, 'p2')}</div>`;
+  // Bandeau DR par set (côté J1) + surbrillance du set en cours. Garde
+  // min-échantillon serveur : set courant peu fiable → "~" + style atténué.
+  let setStrip = '';
+  if (exact && dx && dx.dr_by_set && Object.keys(dx.dr_by_set).length) {
+    const cur = dx.dr_set_courant || null;
+    const chips = Object.keys(dx.dr_by_set)
+      .map(Number).sort((a, b) => a - b)
+      .map(sn => {
+        const v = dx.dr_by_set[sn].dr;
+        if (!Number.isFinite(v) || v <= 0) return '';
+        const isCur = cur && Number(cur.set) === sn;
+        const unrel = isCur && cur.reliable === false;
+        const c = v >= 1.08 ? 'tn-drs-dom' : v > 0.92 ? 'tn-drs-bal' : 'tn-drs-sub';
+        return `<span class="tn-drs-chip ${c}${isCur ? ' tn-drs-cur' : ''}${unrel ? ' tn-drs-unrel' : ''}" `
+          + `title="Set ${sn} — DR J1 ${v.toFixed(2)}${isCur ? ' · set en cours' : ''}${unrel ? ' · échantillon faible (peu fiable)' : ''}">`
+          + `S${sn} ${v.toFixed(2)}${unrel ? '~' : ''}</span>`;
+      }).join('');
+    if (chips) setStrip = `<div class="tn-drs" title="Dominance Ratio par set (côté J1) — Sofascore (pts service+retour) · set en cours surligné">${chips}</div>`;
+  } else if (Array.isArray(sets) && sets.length) {
+    // Fallback proxy : pas de DR Sofascore par set pour ce match → DR par set
+    // approximé depuis les jeux gagnés/set (tableau scoreboard). Marqué "~".
+    const curIdx = sets.length; // set en cours = dernier set présent
+    const chips = sets.map((st, i) => {
+      const g1 = Number(st && st.p1) || 0, g2 = Number(st && st.p2) || 0;
+      if (g1 + g2 === 0) return '';
+      const v = (g1 + 0.5) / (g2 + 0.5);
+      const sn = i + 1;
+      const isCur = sn === curIdx;
+      const c = v >= 1.08 ? 'tn-drs-dom' : v > 0.92 ? 'tn-drs-bal' : 'tn-drs-sub';
+      return `<span class="tn-drs-chip ${c}${isCur ? ' tn-drs-cur' : ''} tn-drs-unrel" `
+        + `title="Set ${sn} — DR J1 ≈ ${v.toFixed(2)} (proxy jeux/set${isCur ? ' · set en cours' : ''})">`
+        + `S${sn} ${v.toFixed(2)}~</span>`;
+    }).join('');
+    if (chips) setStrip = `<div class="tn-drs" title="Dominance Ratio par set (côté J1) — proxy jeux/set (Sofascore indispo) · set en cours surligné">${chips}</div>`;
+  }
+
+  return `<div class="tn-dr">${line(drP1, 'p1')}${line(drP2, 'p2')}${setStrip}</div>`;
 }
 
 function _tvbEdgeCls(ev) {
