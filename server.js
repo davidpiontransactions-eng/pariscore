@@ -18970,6 +18970,28 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'POST') {
   return;
 }
 
+// GET /api/v1/favorites — liste des matchs favoris (scope compte)
+if (pathname === '/api/v1/favorites' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const ids = kvGet(`fav_matches_${user.userId}`) || [];
+  return jsonResponse(res, 200, { ids: Array.isArray(ids) ? ids : [] });
+}
+// PUT /api/v1/favorites — remplace la liste des favoris (scope compte)
+if (pathname === '/api/v1/favorites' && req.method === 'PUT') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  readBodyLimited(req, 64 * 1024).then(body => {
+    try {
+      const parsed = JSON.parse(body || '{}');
+      const ids = Array.isArray(parsed.ids)
+        ? parsed.ids.filter(x => typeof x === 'string' && x.length <= 64).slice(0, 500)
+        : [];
+      kvSet(`fav_matches_${user.userId}`, ids);
+      jsonResponse(res, 200, { ok: true, count: ids.length });
+    } catch { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
+  return;
+}
+
 // POST /api/v1/alerts/test — envoyer un message test Telegram (user-scoped)
 if (pathname === '/api/v1/alerts/test' && req.method === 'POST') {
   const user = requireUserAuth(req, res);
@@ -25540,6 +25562,219 @@ function computeLiveIntensityFromBSD(live) {
 }
 
 /* -------------------------------------------------
+   BSD Live WebSocket (push <5s) — zero-dep RFC6455
+   Token: process.env.BSD_LIVE_TOKEN (jamais hardcodé/commité).
+   Désactivé silencieusement si token absent.
+   ------------------------------------------------- */
+const BSD_LIVE_TOKEN = process.env.BSD_LIVE_TOKEN || process.env.BSD_TOKEN || BSD_API_KEY || '';
+const BSD_LIVE_WS_ENABLED = !!BSD_LIVE_TOKEN && String(process.env.BSD_LIVE_WS_ENABLED || 'true').toLowerCase() !== 'false';
+const BSD_LIVE_WS_HOST = process.env.BSD_LIVE_WS_HOST || 'sports.bzzoiro.com';
+const BSD_LIVE_WS_PATH = (process.env.BSD_LIVE_WS_PATH || '/ws/live/');
+
+let _bsdWsSock = null;
+let _bsdWsBuf = Buffer.alloc(0);
+let _bsdWsBackoff = 2000;
+let _bsdWsRawLogged = 0;
+const _bsdWsLastBcast = new Map(); // matchId -> ts (throttle SSE)
+
+function _bsdWsLookupMatch(eid, home, away) {
+  if (eid != null) {
+    const s = String(eid);
+    const hit = db.matches.find(x => x && x._bsd_event_id != null && String(x._bsd_event_id) === s);
+    if (hit) return hit;
+  }
+  if (home && away) {
+    const hk = normName(home), ak = normName(away);
+    const hit = db.matches.find(x => x && normName(x.home_team) === hk && normName(x.away_team) === ak);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+// Extraction défensive : schéma BSD WS inconnu → on tente plusieurs noms de champs.
+function _bsdWsParse(msg) {
+  const eid = msg.event_id ?? msg.eventId ?? msg.match_id ?? msg.matchId ?? msg.id ?? null;
+  const home = msg.home_team ?? msg.homeTeam ?? msg.home ?? null;
+  const away = msg.away_team ?? msg.awayTeam ?? msg.away ?? null;
+  const score = msg.score ?? ((msg.home_score != null && msg.away_score != null) ? (msg.home_score + '-' + msg.away_score) : null);
+  const minute = msg.minute ?? msg.current_minute ?? msg.live_minute ?? msg.clock ?? null;
+  const status = msg.status ?? msg.match_status ?? null;
+  // Position ballon : {x,y} normalisé 0..100 si possible
+  let ball = null;
+  const bp = msg.ball ?? msg.ball_position ?? msg.ballPos ?? msg.position ?? null;
+  if (bp && typeof bp === 'object') {
+    let bx = bp.x ?? bp.X ?? bp[0], by = bp.y ?? bp.Y ?? bp[1];
+    if (bx != null && by != null) {
+      bx = Number(bx); by = Number(by);
+      if (Math.abs(bx) <= 1 && Math.abs(by) <= 1) { bx *= 100; by *= 100; } // 0..1 → 0..100
+      ball = { x: Math.max(0, Math.min(100, bx)), y: Math.max(0, Math.min(100, by)) };
+    }
+  }
+  // Situation : corner / penalty / dangerous attack / free kick / goal
+  let situation = null;
+  const sit = msg.situation ?? msg.event ?? msg.event_type ?? msg.type ?? null;
+  if (sit) {
+    const raw = String(sit).toLowerCase();
+    let type = null;
+    if (/penalt/.test(raw)) type = 'PENALTY';
+    else if (/danger/.test(raw)) type = 'ATTAQUE DANGER';
+    else if (/corner/.test(raw)) type = 'CORNER';
+    else if (/free.?kick|coup.?franc/.test(raw)) type = 'COUP FRANC';
+    else if (/goal|but/.test(raw)) type = 'BUT';
+    if (type) {
+      const team = msg.team ?? msg.side ?? msg.team_side ?? null;
+      situation = { type, team: team ? String(team).toLowerCase() : null, ts: Date.now() };
+    }
+  }
+  // Pression / momentum instantané (0..100 ou -100..100)
+  const pressureH = msg.home_pressure ?? msg.pressure_home ?? (msg.pressure && msg.pressure.home) ?? null;
+  const pressureA = msg.away_pressure ?? msg.pressure_away ?? (msg.pressure && msg.pressure.away) ?? null;
+  return { eid, home, away, score, minute, status, ball, situation, pressureH, pressureA };
+}
+
+function _bsdWsHandleJSON(msg) {
+  if (_bsdWsRawLogged < 3) {
+    _bsdWsRawLogged++;
+    try { console.log('  [BSD-WS] raw#' + _bsdWsRawLogged + ' ' + JSON.stringify(msg).slice(0, 400)); } catch (e) {}
+  }
+  const p = _bsdWsParse(msg);
+  const m = _bsdWsLookupMatch(p.eid, p.home, p.away);
+  if (!m) return;
+
+  if (p.score && /^\d+-\d+$/.test(String(p.score))) m.live_score = String(p.score);
+  if (p.minute != null) m.live_minute = parseInt(p.minute) || m.live_minute;
+  if (p.status) m.status = p.status;
+  m.live_ws = {
+    ball: p.ball || (m.live_ws && m.live_ws.ball) || null,
+    situation: p.situation || null,
+    pressureH: p.pressureH != null ? Number(p.pressureH) : (m.live_ws && m.live_ws.pressureH) || null,
+    pressureA: p.pressureA != null ? Number(p.pressureA) : (m.live_ws && m.live_ws.pressureA) || null,
+    ts: Date.now(),
+  };
+
+  // Flash value (proxy honnête) : situation très dangereuse côté pick value du match.
+  let valueFlash = null;
+  if (p.situation && (p.situation.type === 'PENALTY' || p.situation.type === 'BUT')) {
+    const lbl = (m.best_edge && m.best_edge.label || '').toLowerCase();
+    let side = p.situation.team;
+    if (side === 'home' || /dom|1|home/.test(lbl) && side == null) side = 'home';
+    if (side === 'away' || /ext|2|away/.test(lbl) && side == null) side = 'away';
+    if (m.best_edge && (m.best_edge.edge || 0) > 0) valueFlash = side || null;
+  }
+
+  // Throttle SSE par match (situations passent toujours, sinon 700ms min)
+  const now = Date.now();
+  const last = _bsdWsLastBcast.get(m.id) || 0;
+  if (!p.situation && now - last < 700) return;
+  _bsdWsLastBcast.set(m.id, now);
+
+  if (sseClients.size > 0) {
+    broadcastSSE('live_ws', {
+      id: m.id,
+      score: m.live_score || null,
+      minute: m.live_minute || null,
+      status: m.status || null,
+      ball: m.live_ws.ball,
+      situation: p.situation,
+      pressureH: m.live_ws.pressureH,
+      pressureA: m.live_ws.pressureA,
+      value_flash: valueFlash,
+    });
+  }
+}
+
+function _bsdWsSendFrame(sock, opcode, payload) {
+  const buf = Buffer.isBuffer(payload) ? payload : Buffer.from(payload || '');
+  const len = buf.length;
+  let header;
+  if (len < 126) header = Buffer.from([0x80 | opcode, 0x80 | len]);
+  else if (len < 65536) { header = Buffer.alloc(4); header[0] = 0x80 | opcode; header[1] = 0x80 | 126; header.writeUInt16BE(len, 2); }
+  else { header = Buffer.alloc(10); header[0] = 0x80 | opcode; header[1] = 0x80 | 127; header.writeBigUInt64BE(BigInt(len), 2); }
+  const mask = crypto.randomBytes(4);
+  const masked = Buffer.alloc(len);
+  for (let i = 0; i < len; i++) masked[i] = buf[i] ^ mask[i & 3];
+  try { sock.write(Buffer.concat([header, mask, masked])); } catch (e) {}
+}
+
+function _bsdWsConsume() {
+  while (_bsdWsBuf.length >= 2) {
+    const b0 = _bsdWsBuf[0], b1 = _bsdWsBuf[1];
+    const opcode = b0 & 0x0f;
+    const masked = (b1 & 0x80) !== 0;
+    let len = b1 & 0x7f;
+    let off = 2;
+    if (len === 126) { if (_bsdWsBuf.length < 4) return; len = _bsdWsBuf.readUInt16BE(2); off = 4; }
+    else if (len === 127) { if (_bsdWsBuf.length < 10) return; len = Number(_bsdWsBuf.readBigUInt64BE(2)); off = 10; }
+    const maskLen = masked ? 4 : 0;
+    if (_bsdWsBuf.length < off + maskLen + len) return;
+    let data = _bsdWsBuf.slice(off + maskLen, off + maskLen + len);
+    if (masked) { const mk = _bsdWsBuf.slice(off, off + 4); const d = Buffer.alloc(len); for (let i = 0; i < len; i++) d[i] = data[i] ^ mk[i & 3]; data = d; }
+    _bsdWsBuf = _bsdWsBuf.slice(off + maskLen + len);
+    if (opcode === 0x8) { try { _bsdWsSock && _bsdWsSock.end(); } catch (e) {} return; } // close
+    if (opcode === 0x9) { if (_bsdWsSock) _bsdWsSendFrame(_bsdWsSock, 0xA, data); continue; } // ping→pong
+    if (opcode === 0xA) continue; // pong
+    if (opcode === 0x1 || opcode === 0x0) {
+      const txt = data.toString('utf8');
+      try { const j = JSON.parse(txt); _bsdWsHandleJSON(j); }
+      catch (e) { /* message non-JSON ou fragment partiel ignoré */ }
+    }
+  }
+}
+
+function _bsdWsConnect() {
+  if (!BSD_LIVE_WS_ENABLED) return;
+  const tls = require('tls');
+  const key = crypto.randomBytes(16).toString('base64');
+  const path = BSD_LIVE_WS_PATH + (BSD_LIVE_WS_PATH.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(BSD_LIVE_TOKEN);
+  let handshakeDone = false;
+  const sock = tls.connect({ host: BSD_LIVE_WS_HOST, port: 443, servername: BSD_LIVE_WS_HOST }, () => {
+    const req =
+      'GET ' + path + ' HTTP/1.1\r\n' +
+      'Host: ' + BSD_LIVE_WS_HOST + '\r\n' +
+      'Upgrade: websocket\r\n' +
+      'Connection: Upgrade\r\n' +
+      'Sec-WebSocket-Key: ' + key + '\r\n' +
+      'Sec-WebSocket-Version: 13\r\n' +
+      'User-Agent: PariScore/1.0\r\n\r\n';
+    sock.write(req);
+  });
+  _bsdWsSock = sock;
+  _bsdWsBuf = Buffer.alloc(0);
+
+  sock.on('data', chunk => {
+    if (!handshakeDone) {
+      _bsdWsBuf = Buffer.concat([_bsdWsBuf, chunk]);
+      const idx = _bsdWsBuf.indexOf('\r\n\r\n');
+      if (idx === -1) return;
+      const head = _bsdWsBuf.slice(0, idx).toString('utf8');
+      if (!/HTTP\/1\.1 101/i.test(head)) {
+        console.warn('  [BSD-WS] handshake refusé: ' + head.split('\r\n')[0]);
+        try { sock.end(); } catch (e) {}
+        return;
+      }
+      handshakeDone = true;
+      _bsdWsBackoff = 2000;
+      console.log('  ✓ [BSD-WS] connecté (push live <5s)');
+      _bsdWsBuf = _bsdWsBuf.slice(idx + 4);
+      _bsdWsConsume();
+      return;
+    }
+    _bsdWsBuf = Buffer.concat([_bsdWsBuf, chunk]);
+    _bsdWsConsume();
+  });
+
+  const reconnect = () => {
+    if (_bsdWsSock === sock) _bsdWsSock = null;
+    const delay = _bsdWsBackoff;
+    _bsdWsBackoff = Math.min(_bsdWsBackoff * 2, 60000);
+    setTimeout(_bsdWsConnect, delay);
+  };
+  sock.on('error', e => { console.warn('  [BSD-WS] socket error: ' + e.message); });
+  sock.on('close', () => { console.warn('  [BSD-WS] déconnecté, reconnect dans ' + Math.round(_bsdWsBackoff / 1000) + 's'); reconnect(); });
+  sock.setTimeout(120000, () => { try { sock.end(); } catch (e) {} });
+}
+
+/* -------------------------------------------------
    Démarrage du serveur
    ------------------------------------------------- */
 let serverReady = false;
@@ -25691,6 +25926,14 @@ setInterval(() => {
 }, 2 * 3600 * 1000);
 
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+
+// BSD Live WebSocket (push <5s) — complète le poll 60s. No-op si BSD_LIVE_TOKEN absent.
+if (BSD_LIVE_WS_ENABLED) {
+  console.log('  [BSD-WS] activé — connexion ' + BSD_LIVE_WS_HOST + BSD_LIVE_WS_PATH);
+  setTimeout(_bsdWsConnect, 3000);
+} else {
+  console.log('  [BSD-WS] désactivé (BSD_LIVE_TOKEN absent)');
+}
 
 // Value bet alerts — scheduler auto (gate prod + dedup TTL anti-spam intégrés).
 // Avant : sendValueBetAlerts() seulement via route admin manuelle → aucune alerte value auto sur VPS.

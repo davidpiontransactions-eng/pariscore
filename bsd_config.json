@@ -38,6 +38,7 @@
       "33":  {"config_id": 11,  "name": "Copa Sudamericana"},
       "53":  {"config_id": 200, "name": "Botola Pro"},
       "54":  {"config_id": 103, "name": "Eliteserien"},
+      "55":  {"config_id": 244, "name": "Veikkausliiga"},
       "42":  {"config_id": 137, "name": "Coppa Italia"},
       "39":  {"config_id": 45,  "name": "FA Cup"},
       "40":  {"config_id": 48,  "name": "Carabao Cup"}
@@ -76,6 +77,7 @@
       "11":  33,
       "200": 53,
       "103": 54,
+      "244": 55,
       "137": 42,
       "45":  39,
       "48":  40
