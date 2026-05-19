@@ -2,6 +2,25 @@
 
 ---
 
+## [v10.71] — 2026-05-19
+
+### Feature — Colonne « Bets Prédictifs / 2e ligne conseillés » (onglet Tennis)
+
+KPI directif + 3 paris conseillés prematch, bascule auto en 3 paris LIVE selon le score quand le match passe en cours.
+
+**Moteur (server.js)** : `computeTennisPredictiveBets(e)` — 100 % dérivé des signaux déjà calculés par `buildTennisValueBets` (aucune nouvelle source réseau). Pool de 6 marchés candidats (Vainqueur match, Set 1, Score sets exact, Gagne ≥1 set Markov, Total jeux O/U, King of Aces) scorés par :
+- `PredScore = 0.45·norm(EV%) + 0.35·Confiance + 0.20·Accord(Elo,BSD)` (cote dispo)
+- `PredScore = 0.55·proba + 0.45·Confiance` (sans cote)
+- Confiance = calibration `confidence_badge.accuracy`, pénalité ×0.8 si `ml_market_div=HIGH`, ×0.6/×0.8 si échantillon faible.
+
+Top 3 trié desc. Verdict KPI : **BET FORT** (règle stricte CLAUDE.md : EV>5 % ET IC bas>0 ET badge vert) · **VALUE** (top1 EV>0 ou proba≥65) · **PASS**. Champ `predictive` ajouté à l'objet enrichi VB + `toCanonicalTennisMatch` (/board).
+
+**Frontend (pariscore.html)** : nouvelle colonne insérée **après Match** (onglet Value Bets, 15→16 col) + colonne dédiée onglet Live (8→9 col). `_tvbPredictiveCell` (KPI badge + 3 chips), `tnLiveBets` (signaux modèle re-conditionnés au score `_live` : winner re-pricé ±15/set, set en cours selon serveur, comeback ≥1 set ou total jeux), `tnLiveBetsFromScore` (onglet Live, heuristique score pur ESPN/LiveScore). `patchTennisLive` rafraîchit aussi `data-tn-pred` toutes les 30 s.
+
+Vérifié : `node --check server.js` OK · build 200 matchs zéro erreur/exception · test unitaire fonctions pures (prematch top3 + verdict, live re-pricing, onglet Live heuristique) tous corrects.
+
+---
+
 ## [v10.65] — 2026-05-18
 
 ### Correctif visuel — Dropdown stratégies illisible (texte clair sur panneau blanc)

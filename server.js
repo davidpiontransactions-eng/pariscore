@@ -20480,6 +20480,7 @@ async function _buildTennisValueBetsCore({ date }) {
     });
   }
 
+  for (const _e of enriched) { try { _e.predictive = computeTennisPredictiveBets(_e); } catch (_) { _e.predictive = null; } }
   console.log(`  [TennisVB] build done — ${enriched.length} matchs en ${Date.now() - _vbT0}ms`);
   return {
     status: 200,
@@ -20510,6 +20511,121 @@ function _tennisConfidence(eloProb) {
   if (mn >= 15) return { tier: 'medium', score: 65 };
   if (mn >= 5) return { tier: 'low', score: 40 };
   return { tier: 'sparse', score: 20 };
+}
+
+// ─── Bets Prédictifs Tennis — moteur PredScore composite ────────────────────
+// Évalue un pool de marchés candidats à partir des signaux DÉJÀ calculés par
+// buildTennisValueBets (Elo surface, BSD ML, blended, set_probs, Markov
+// Sackmann, set_model, most_aces, O/U jeux, EV/edge, confidence_badge) puis
+// sort le top 3 + un verdict KPI directif. Aucune nouvelle source réseau.
+//   PredScore = 0.45·norm(EV%) + 0.35·Confiance + 0.20·Accord(Elo,BSD)
+//   sans cote :  0.55·proba + 0.45·Confiance
+function _tnPct(x) {
+  if (x == null || !Number.isFinite(Number(x))) return null;
+  const v = Number(x);
+  return v <= 1 ? Math.round(v * 1000) / 10 : Math.round(v * 10) / 10;
+}
+function computeTennisPredictiveBets(e) {
+  try {
+    const P = _tnPct;
+    const pr = e.predictions || {};
+    const blended = pr.blended || pr.elo || null;
+    const elo = pr.elo || null, bsd = pr.bsd || null;
+    const conf = e.confidence_badge || null;
+    const div = e.ml_market_div || null;
+    const odds = e.odds || {};
+    const sm = e.set_model || {};
+    const n1 = (e.player1 && e.player1.name) || 'J1';
+    const n2 = (e.player2 && e.player2.name) || 'J2';
+
+    // Confiance 0..1 — calibration modèle, pénalité divergence + échantillon
+    let C = conf && Number.isFinite(conf.accuracy) ? Math.max(0, Math.min(1, conf.accuracy / 100)) : 0.5;
+    if (div === 'HIGH') C *= 0.8;
+    const samp = conf && Number.isFinite(conf.sample) ? conf.sample : null;
+    if (samp != null) { if (samp < 5) C *= 0.6; else if (samp < 15) C *= 0.8; }
+    // Accord Elo vs BSD ML (convergence des deux modèles)
+    let agree = 0.5;
+    if (elo && bsd) {
+      const e1 = P(elo.p1), b1 = P(bsd.p1);
+      if (e1 != null && b1 != null) agree = Math.max(0, 1 - Math.abs(e1 - b1) / 100);
+    }
+
+    const cands = [];
+    const push = (mkt, label, side, prob, dec, book) => {
+      const p = P(prob);
+      if (p == null || p <= 0) return;
+      let ev = null;
+      if (dec && Number.isFinite(dec) && dec > 1) ev = Math.round((p / 100 * dec - 1) * 1000) / 10;
+      const evN = ev != null ? Math.max(0, Math.min(1, ev / 20)) : null;
+      const score = ev != null
+        ? 0.45 * evN + 0.35 * C + 0.20 * agree
+        : 0.55 * (p / 100) + 0.45 * C;
+      cands.push({ mkt, label, side: side || null, prob: p,
+        odds: (dec && dec > 1) ? Math.round(dec * 100) / 100 : null,
+        book: book || null, ev, score: Math.round(score * 1000) / 1000 });
+    };
+
+    // 1 — Vainqueur match (cote marché → EV réel)
+    if (blended) {
+      const p1 = P(blended.p1), p2 = P(blended.p2);
+      if (p1 != null && p2 != null) {
+        const s1 = p1 >= p2;
+        push('ML', (s1 ? n1 : n2) + ' vainqueur', s1 ? 'p1' : 'p2', s1 ? p1 : p2,
+          s1 ? (odds.p1 && odds.p1.odds) : (odds.p2 && odds.p2.odds),
+          s1 ? (odds.p1 && odds.p1.book) : (odds.p2 && odds.p2.book));
+      }
+    }
+    // 2 — Vainqueur Set 1
+    if (sm.set1 && sm.set1.p1_pct != null) {
+      const s1p = P(sm.set1.p1_pct);
+      if (s1p != null) { const s1 = s1p >= 50; push('SET1', (s1 ? n1 : n2) + ' gagne Set 1', s1 ? 'p1' : 'p2', s1 ? s1p : 100 - s1p, null, null); }
+    }
+    // 3 — Score sets exact (issue best-of-3 la + probable)
+    if (Array.isArray(pr.set_probs) && pr.set_probs.length) {
+      let best = null;
+      for (const sp of pr.set_probs) {
+        const a = P(sp.p1) || 0, b = P(sp.p2) || 0;
+        const side = a >= b ? 'p1' : 'p2', val = Math.max(a, b);
+        if (!best || val > best.val) best = { val, side, out: sp.outcome };
+      }
+      if (best && best.val > 0) push('SETEXACT', 'Score ' + best.out + ' (' + (best.side === 'p1' ? n1 : n2) + ')', best.side, best.val, null, null);
+    }
+    // 4 — Gagne ≥1 set (value outsider — Markov Sackmann)
+    if (pr.at_least_one_set && blended) {
+      const p1 = P(blended.p1), p2 = P(blended.p2);
+      const out = (p1 != null && p2 != null && p1 < p2) ? 'p1' : 'p2';
+      const v = P(out === 'p1' ? pr.at_least_one_set.p1 : pr.at_least_one_set.p2);
+      if (v != null && v >= 55) push('SET1PLUS', (out === 'p1' ? n1 : n2) + ' gagne ≥1 set', out, v, null, null);
+    }
+    // 5 — Total jeux O/U (issue la + probable ≥ 55 %)
+    const gou = e.over_under_set_calculations || {};
+    {
+      const map = [['O7_5', '+7.5 jeux'], ['O8_5', '+8.5 jeux'], ['O9_5', '+9.5 jeux'], ['U12_5', '-12.5 jeux']];
+      let bestG = null;
+      for (const [k, lbl] of map) { const v = P(gou[k]); if (v != null && (!bestG || v > bestG.v)) bestG = { v, lbl }; }
+      if (bestG && bestG.v >= 55) push('GAMES', 'Total ' + bestG.lbl, null, bestG.v, null, null);
+    }
+    // 6 — King of Aces
+    if (pr.most_aces && pr.most_aces.favorite && pr.most_aces.pct != null) {
+      const fav = pr.most_aces.favorite === 'J1' ? 'p1' : 'p2';
+      const v = P(pr.most_aces.pct);
+      if (v != null && v >= 55) push('ACES', (fav === 'p1' ? n1 : n2) + " + d'aces", fav, v, null, null);
+    }
+
+    cands.sort((a, b) => b.score - a.score);
+    const top = cands.slice(0, 3);
+
+    // Verdict KPI directif — règle stricte CLAUDE.md (EV>5 ET IC bas>0 ET vert)
+    let verdict = 'PASS', tone = 'pass';
+    const strong = cands.some(b => b.ev != null && b.ev > 5 && conf && conf.ci_low > 0 && conf.level === 'green');
+    if (strong) { verdict = 'BET FORT'; tone = 'strong'; }
+    else if (top[0] && ((top[0].ev != null && top[0].ev > 0) || top[0].prob >= 65)) { verdict = 'VALUE'; tone = 'value'; }
+
+    return {
+      kpi: { verdict, tone, conf_pct: conf && Number.isFinite(conf.accuracy) ? Math.round(conf.accuracy) : null },
+      prematch: top,
+    };
+  } catch (_) { return null; }
 }
 
 function toCanonicalTennisMatch(e) {
@@ -20565,6 +20681,7 @@ function toCanonicalTennisMatch(e) {
     fatigue: e.fatigue || null,
     set_model: e.set_model || null,
     over_under_set_calculations: e.over_under_set_calculations || null,
+    predictive: e.predictive || null,
     sources: e.sources || null,
   };
 }

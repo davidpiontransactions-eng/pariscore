@@ -8503,6 +8503,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <tr style="background:var(--bg3,#181c20);">
             <th class="tvb-th tvb-dt-col" style="text-align:left;" title="Date · heure (Europe/Paris) · surface">Date<br>Heure<br>Surface</th>
             <th class="tvb-th" style="text-align:left;">Match</th>
+            <th class="tvb-th" style="text-align:left;color:#00e676;width:170px;" title="Bets Prédictifs — KPI directif (BET FORT / VALUE / PASS) + 3 paris conseillés (PredScore = EV modèle + confiance calibration + accord Elo/BSD). Bascule en 3 bets LIVE selon le score quand le match est en cours."><span class="tgou-hwrap" style="justify-content:flex-start;">Bets Prédictifs<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisPredictiveGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Bets Prédictifs">i</button></span><br><span class="tvb-th-sub">conseillés</span></th>
             <th class="tvb-th tvb-score-col" style="text-align:center;color:#38bdf8;width:120px;" title="Score live — Jeu (points) · Sets">Score</th>
             <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Elo surface — favori en vert">Elo</th>
             <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité de victoire du match (modèle Elo/blend)"><svg class="i3d-th"><use href="#i3d-target"></use></svg>Proba Vic match</th>
@@ -8519,7 +8520,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="15" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -8547,6 +8548,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tour</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 1</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 2</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#00e676;font-family:'DM Mono',monospace;" title="Bets prédictifs live — directive selon le score en cours (sets, serveur, jeux)">Bets Prédictifs</th>
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Sets</th>
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Jeux</th>
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Point</th>
@@ -8554,7 +8556,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           </tr>
         </thead>
         <tbody id="tennis-live-tbody">
-          <tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -8956,6 +8958,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tvb-edge-neg { color:var(--text3,#5a6068); background:transparent; }
   #tennis-vb-table .tvb-best-badge { display:inline-block; padding:3px 8px; border-radius:10px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; color:#0a0d0f; background:linear-gradient(135deg, #00e676, #ffa726); }
   #tennis-vb-table .tvb-best-badge.tvb-best-neg { background:var(--bg4,#1e2328); color:var(--text3,#5a6068); }
+  /* ── Bets Prédictifs (colonne après Match · VB + Live tab) ── */
+  .tvb-pred { display:flex; flex-direction:column; gap:3px; align-items:flex-start; min-width:150px; }
+  .tvb-pred-kpi { display:inline-block; font-family:'DM Mono',monospace; font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 7px; border-radius:6px; text-transform:uppercase; }
+  .tvb-pred-kpi.strong { color:#0a0d0f; background:linear-gradient(135deg,#00e676,#00c853); }
+  .tvb-pred-kpi.value  { color:#0a0d0f; background:linear-gradient(135deg,#ffa726,#fb8c00); }
+  .tvb-pred-kpi.pass   { color:var(--text3,#5a6068); background:var(--bg4,#1e2328); }
+  .tvb-pred-kpi.live   { color:#fff; background:linear-gradient(135deg,#ff4d4d,#e2001a); }
+  .tvb-pred-chip { font-family:'DM Mono',monospace; font-size:10px; line-height:1.4; color:var(--text2,#8d9399); white-space:nowrap; }
+  .tvb-pred-chip b { color:var(--text,#e8eaed); font-weight:700; }
+  .tvb-pred-chip .pp { color:#38bdf8; }
+  .tvb-pred-chip .ev { color:#00e676; font-weight:700; }
+  .tvb-pred-empty { font-size:10px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; }
   #tennis-vb-table .tvb-surface { display:inline-block; padding:2px 6px; border-radius:8px; font-family:'DM Mono',monospace; font-size:10px; }
   #tennis-vb-table .tvb-surface-hard { background:rgba(41,182,246,0.15); color:var(--blue,#29b6f6); border:1px solid rgba(41,182,246,0.3); }
   #tennis-vb-table .tvb-surface-clay { background:rgba(245,158,11,0.15); color:var(--amber,#ffa726); border:1px solid rgba(245,158,11,0.3); }
@@ -10905,7 +10919,7 @@ function renderTennisLive(matches) {
   const onlyLive = document.getElementById('tennis-live-only')?.checked;
   const list = onlyLive ? (matches || []).filter(m => m.is_live) : (matches || []);
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement.' : 'Aucun match disponible.'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement.' : 'Aucun match disponible.'}</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(m => {
@@ -10931,6 +10945,7 @@ function renderTennisLive(matches) {
       <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
       <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}</td>
       <td class="${p2Cls}">${p2Flag}${_escTennis(m.player2?.name)}</td>
+      <td style="text-align:left;vertical-align:middle;">${tnLiveBetsFromScore(m)}</td>
       <td style="text-align:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></td>
       <td style="text-align:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</td>
       <td style="text-align:center;"><span class="tennis-point">${_escTennis(point)}</span></td>
@@ -11392,6 +11407,63 @@ function openTennisGamesGuide() {
   document.body.style.overflow = 'hidden';
 }
 
+function openTennisPredictiveGuide() {
+  const modal = document.getElementById('tennis-games-modal');
+  const body = document.getElementById('tennis-games-body');
+  if (!modal || !body) return;
+  body.innerHTML = `
+    <div class="tgmp-head">
+      <div class="tgmp-title">Colonne « Bets Prédictifs » — Guide</div>
+      <div class="tgmp-sub">KPI directif + 3 paris conseillés, prematch &amp; live</div>
+    </div>
+    <div class="tgg">
+      <p><b>Ce que c'est.</b> Un moteur de décision qui condense tous les modèles
+      tennis déjà calculés en <b>un verdict unique</b> et <b>3 paris classés</b>.
+      Aucune nouvelle source : 100 % dérivé des colonnes existantes.</p>
+
+      <p><b>Ligne 1 — Verdict KPI.</b></p>
+      <ul class="tgg-ul">
+        <li><span class="tgg-k">BET FORT</span> = pari à EV &gt; 5 % <i>et</i> borne basse
+        de l'intervalle de confiance &gt; 0 <i>et</i> badge calibration vert (règle stricte).</li>
+        <li><span class="tgg-k">VALUE</span> = meilleur pari à EV &gt; 0 ou probabilité ≥ 65 %.</li>
+        <li><span class="tgg-k">PASS</span> = aucun edge fiable — s'abstenir.</li>
+        <li><span class="tgg-k">LIVE · X mène</span> = match en cours, paris recalculés au score.</li>
+      </ul>
+
+      <p><b>Ligne 2 — 3 paris « conseillés ».</b> Les 3 marchés au meilleur
+      <i>PredScore</i> parmi un pool de candidats :</p>
+      <ul class="tgg-ul">
+        <li><b>Prematch</b> : Vainqueur match · Vainqueur Set 1 · Score exact en sets ·
+        Gagne ≥ 1 set (Markov) · Total jeux O/U · King of Aces.</li>
+        <li><b>Live</b> (bascule auto quand le match démarre) : Vainqueur re-pricé
+        selon les sets acquis · Vainqueur du set en cours (serveur + écart jeux) ·
+        <b>O/U jeux du set en cours</b> (ligne 8.5 ajustée aux jeux déjà joués) ·
+        <b>O/U total jeux du match</b> (ligne 21.5) · Comeback ≥ 1 set ·
+        Tie-break du set en cours.</li>
+      </ul>
+
+      <p><b>PredScore — la formule.</b></p>
+      <ul class="tgg-ul">
+        <li>Avec cote marché : <span class="tgg-k">0,45 · norm(EV%) + 0,35 · Confiance + 0,20 · Accord(Elo,BSD)</span></li>
+        <li>Sans cote : <span class="tgg-k">0,55 · Probabilité + 0,45 · Confiance</span></li>
+      </ul>
+      <p><b>Confiance</b> = calibration du modèle (précision historique).
+      Pénalisée ×0,8 si les modèles Elo et BSD divergent fortement (HIGH),
+      ×0,6 / ×0,8 si l'échantillon de matchs est faible.
+      <b>Accord</b> = convergence entre Elo surface et ML BSD (1 = parfait accord).</p>
+
+      <p class="tgg-leg"><b>Live re-pricing.</b> Le vainqueur est ré-évalué
+      (± ~15 pts par set d'avance), le set en cours intègre le serveur et l'écart
+      de jeux, les O/U sont recalculés à partir des jeux déjà joués. Mise à jour
+      toutes les 30 s.</p>
+
+      <p class="tgg-leg"><b>Rappel.</b> Outil d'aide à la décision, pas une garantie.
+      « PASS » signifie : aucune valeur — ne pas forcer un pari.</p>
+    </div>`;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
 // set_profile_v1 — Mental : Réaction (bounce-back) / Enchaîne (kill) J1·J2.
 function _tvbMentalCell(sm) {
   if (!sm || !sm.profiles) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
@@ -11640,13 +11712,108 @@ function buildUnifiedTennis(vb){
   window.psTennisMatches=base;
   return base;
 }
+// ── Bets Prédictifs — rendu cellule (KPI directif + 3 chips), bascule live ──
+function _tnPctN(x){ if(x==null)return null; var v=Number(x); if(!isFinite(v))return null; return v<=1?Math.round(v*1000)/10:Math.round(v*10)/10; }
+function _tnChip(b){
+  var p=(b.prob!=null)?(' <span class="pp">'+Math.round(b.prob)+'%</span>'):'';
+  var o=(b.odds!=null)?(' @'+b.odds):'';
+  var ev=(b.ev!=null&&b.ev>0)?(' <span class="ev">EV+'+b.ev+'%</span>'):'';
+  return '<div class="tvb-pred-chip"><b>'+_escTennis(b.label)+'</b>'+p+o+ev+'</div>';
+}
+function _tvbPredictiveCell(m){
+  try{
+    if(m&&m._isLive){
+      var lb=tnLiveBets(m);
+      if(lb&&lb.length){
+        return '<div class="tvb-pred"><span class="tvb-pred-kpi live">LIVE · '+_escTennis(lb._verdict||'SUIVI')+'</span>'+lb.map(_tnChip).join('')+'</div>';
+      }
+    }
+    var pv=m&&m.predictive;
+    if(!pv||!pv.prematch||!pv.prematch.length)return '<span class="tvb-pred-empty">— pas de signal</span>';
+    var k=pv.kpi||{verdict:'PASS',tone:'pass'};
+    return '<div class="tvb-pred"><span class="tvb-pred-kpi '+(k.tone||'pass')+'">'+_escTennis(k.verdict||'PASS')+(k.conf_pct!=null?' · '+k.conf_pct+'%':'')+'</span>'+pv.prematch.map(_tnChip).join('')+'</div>';
+  }catch(_){ return '<span class="tvb-pred-empty">—</span>'; }
+}
+// Live VB : signaux modèle re-conditionnés au score courant (m._live)
+function tnLiveBets(m){
+  try{
+    var lv=m._live||{}, pr=m.predictions||{}, sm=m.set_model||{}, g=m.over_under_set_calculations||{};
+    var n1=(m.player1&&m.player1.name)||'J1', n2=(m.player2&&m.player2.name)||'J2';
+    var s1=Number(lv.player1_sets!=null?lv.player1_sets:(lv.p1_sets||0))||0;
+    var s2=Number(lv.player2_sets!=null?lv.player2_sets:(lv.p2_sets||0))||0;
+    var lead=s1-s2;
+    var bl=pr.blended||pr.elo||null;
+    var bp1=bl?_tnPctN(bl.p1):null, bp2=bl?_tnPctN(bl.p2):null;
+    // Jeux du set en cours + total match (depuis _live.sets)
+    var sets=Array.isArray(lv.sets)?lv.sets:[];
+    var ci=(lv.current_set_index!=null)?lv.current_set_index:(sets.length-1);
+    var ls=sets[ci]||sets[sets.length-1]||{p1:0,p2:0};
+    var gp1=Number(ls.p1)||0, gp2=Number(ls.p2)||0, gplayed=gp1+gp2;
+    var mtot=0; for(var k=0;k<sets.length;k++){ mtot+=(Number(sets[k].p1)||0)+(Number(sets[k].p2)||0); }
+    if(!sets.length) mtot=gplayed;
+    var cl=function(v){ return Math.max(5,Math.min(95,Math.round(v))); };
+    // Confiance live (calibration modèle, pénalité divergence)
+    var cb=m.confidence_badge||null;
+    var C=(cb&&isFinite(cb.accuracy))?Math.max(0,Math.min(1,cb.accuracy/100)):0.5;
+    if(m.ml_market_div==='HIGH') C*=0.8;
+    var pool=[];
+    var add=function(label,prob){ if(prob==null||!isFinite(prob)) return; var p=Math.round(prob); pool.push({label:label,prob:p,score:0.55*(p/100)+0.45*C}); };
+
+    // 1 — Vainqueur match re-pricé selon sets acquis
+    if(bp1!=null&&bp2!=null){ var lp1=cl(bp1+lead*15); var s=lp1>=50; add((s?n1:n2)+' vainqueur'+(lead?(' ('+s1+'-'+s2+')'):''),s?lp1:100-lp1); }
+    // 2 — Vainqueur du set en cours
+    var srv=lv.serving===1?'p1':(lv.serving===2?'p2':null);
+    var st1=sm.set1&&sm.set1.p1_pct!=null?_tnPctN(sm.set1.p1_pct):null;
+    var base=st1!=null?st1:(bp1!=null?bp1:50);
+    if(srv) base=srv==='p1'?Math.min(85,base+8):Math.max(15,base-8);
+    if(gp1!==gp2) base=cl(base+(gp1-gp2)*9);
+    var ss=base>=50; add((ss?n1:n2)+' gagne le set en cours',ss?base:100-base);
+    // 3 — O/U jeux SET EN COURS (ligne 8.5, ajustée aux jeux déjà joués)
+    var o85=_tnPctN(g.O8_5); if(o85!=null){ var sp=cl(o85+(gplayed-4)*7); if(sp>=50) add('Set en cours +8.5 jeux',sp); else add('Set en cours -8.5 jeux',100-sp); }
+    // 4 — O/U TOTAL jeux MATCH (proxy sets longs, ligne 21.5 bo3)
+    var o95=_tnPctN(g.O9_5); if(o95!=null){ var mp=cl(o95+(s1+s2-1)*5+(gplayed-4)*3); if(mp>=50) add('Total match +21.5 jeux',mp); else add('Total match -21.5 jeux',100-mp); }
+    // 5 — Comeback : joueur mené d'un set gagne ≥1 set
+    if(lead!==0&&pr.at_least_one_set){ var tr=lead>0?'p2':'p1'; add((tr==='p1'?n1:n2)+' gagne ≥1 set',_tnPctN(tr==='p1'?pr.at_least_one_set.p1:pr.at_least_one_set.p2)); }
+    // 6 — Tie-break set en cours : Oui (jeux serrés)
+    if(gp1>=5&&gp2>=5){ add('Tie-break set en cours : Oui',cl(55+(Math.min(gp1,gp2)-5)*8)); }
+
+    pool.sort(function(a,b){ return b.score-a.score; });
+    var res=pool.slice(0,3).map(function(b){ return {label:b.label,prob:b.prob}; });
+    res._verdict=lead>0?(n1+' mène'):(lead<0?(n2+' mène'):'serré');
+    return res;
+  }catch(_){ return []; }
+}
+// Onglet Live (flux ESPN/LiveScore, sans modèle) : directive heuristique score
+function tnLiveBetsFromScore(m){
+  try{
+    var n1=(m.player1&&m.player1.name)||'J1', n2=(m.player2&&m.player2.name)||'J2';
+    var s1=Number(m.player1_sets!=null?m.player1_sets:0)||0;
+    var s2=Number(m.player2_sets!=null?m.player2_sets:0)||0;
+    var sets=Array.isArray(m.sets)?m.sets:[];
+    var ls=sets[m.current_set_index]||sets[sets.length-1]||{p1:0,p2:0};
+    var lead=s1-s2, chips=[];
+    if(lead>0)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n1)+' vainqueur</b> <span class="pp">mène '+s1+'-'+s2+'</span></div>');
+    else if(lead<0)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n2)+' vainqueur</b> <span class="pp">mène '+s2+'-'+s1+'</span></div>');
+    else chips.push('<div class="tvb-pred-chip"><b>Set 1 décisif</b> <span class="pp">'+s1+'-'+s2+'</span></div>');
+    if(m.serving===1)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n1)+' tient son service</b></div>');
+    else if(m.serving===2)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n2)+' tient son service</b></div>');
+    var gp1=Number(ls.p1)||0, gp2=Number(ls.p2)||0;
+    chips.push('<div class="tvb-pred-chip"><b>'+((gp1+gp2)>=8?'Set long (tie-break ?)':'Set rapide')+'</b> <span class="pp">jeux '+gp1+'-'+gp2+'</span></div>');
+    var v=lead>0?(n1+' mène'):(lead<0?(n2+' mène'):'serré');
+    return '<div class="tvb-pred"><span class="tvb-pred-kpi '+(lead!==0?'live':'pass')+'">LIVE · '+_escTennis(v)+'</span>'+chips.slice(0,3).join('')+'</div>';
+  }catch(_){ return '<span class="tvb-pred-empty">—</span>'; }
+}
 function patchTennisLive(){
   var tbody=document.getElementById('tennis-vb-tbody');
   if(!tbody)return;
   var sig=_tnLiveIdSig();
   if(sig!==window._tnLiveSig){window._tnLiveSig=sig;renderTennisValueBets(window._tennisVbLastFetch||[]);return;}
   var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];
-  for(var i=0;i<live.length;i++){var lo=live[i];if(!lo||lo.is_live!==true)continue;var sc=tbody.querySelector('[data-tn-sc="'+String(lo.id)+'"]');if(sc)sc.innerHTML=_tvbScoreCell({_isLive:true,_live:lo});}
+  for(var i=0;i<live.length;i++){var lo=live[i];if(!lo||lo.is_live!==true)continue;
+    var sc=tbody.querySelector('[data-tn-sc="'+String(lo.id)+'"]');if(sc)sc.innerHTML=_tvbScoreCell({_isLive:true,_live:lo});
+    var pc=tbody.querySelector('[data-tn-pred="'+String(lo.id)+'"]');
+    if(pc){var bm=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bm)pc.innerHTML=_tvbPredictiveCell(bm);}
+  }
 }
 
 function renderTennisValueBets(rawMatches) {
@@ -11655,7 +11822,7 @@ function renderTennisValueBets(rawMatches) {
   const matches = buildUnifiedTennis(rawMatches);
   window._tnLiveSig = _tnLiveIdSig();
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="15" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -11709,7 +11876,7 @@ function renderTennisValueBets(rawMatches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="15" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
 
@@ -11814,7 +11981,11 @@ function renderTennisValueBets(rawMatches) {
       : '<span class="tvb-best-badge tvb-best-neg">—</span>';
 
     const matchId = _escTennis(m.id || '');
-    const onclick = matchId ? `onclick="openTennisDetail('${matchId}')"` : '';
+    // Ligne appariée à un évènement LiveScore live (m._live, id "ls:<eid>") →
+    // ouvrir le détail LiveScore (résolvable) plutôt que le détail BSD avec un
+    // id scheduled/ESPN non résolvable (sinon 404 "flux BSD indisponible").
+    const _tnDetailId = (m._live && m._live.id) ? _escTennis(String(m._live.id)) : matchId;
+    const onclick = _tnDetailId ? `onclick="openTennisDetail('${_tnDetailId}')"` : '';
     const aiBtn = matchId
       ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
       : '<span style="color:var(--text3,#5a6068);">—</span>';
@@ -11836,6 +12007,7 @@ function renderTennisValueBets(rawMatches) {
         <div style="margin-top:3px;"><span class="tvb-pname${p2Fav}">${p2Flag}${p2Name}</span>${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}${_tvbPlayerAlerts(sm, 'p2')}</div>
         ${tournLine}
       </td>
+      <td class="tvb-pred-col"${m._isLive && _tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''} style="text-align:left;vertical-align:middle;">${_tvbPredictiveCell(m)}</td>
       <td class="tvb-score-col"${m._isLive && _tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''} style="text-align:center;">${_tvbScoreCell(m)}</td>
       <td style="text-align:center;"><span class="tvb-elo-vs"><span class="${(eloP1 != null && eloP2 != null && eloP1 > eloP2) ? 'e-fav' : ''}">${eloP1 != null ? eloP1 : '—'}</span><span class="e-sep">▸</span><span class="${(eloP1 != null && eloP2 != null && eloP2 > eloP1) ? 'e-fav' : ''}">${eloP2 != null ? eloP2 : '—'}</span></span>${_tvbSDI(m.serve_dominance)}</td>
       <td style="text-align:center;">${_tvbConfBadge(m.confidence_badge)}${probHtml}${_tvbMlDiv(m.ml_market_div)}</td>
@@ -12902,6 +13074,17 @@ async function _fetchAndRenderTennisDetail(matchId) {
         <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener">Souscrire</a>
       </div>` + ENRICH_PLACEHOLDER;
       fetchTennisMatchstatEnrich(matchId);
+      return;
+    }
+    if (matchRes.status === 404) {
+      // Id non résolvable côté BSD (match issu du flux programmé/dégradé
+      // ESPN). MatchStat 404 sur le même id → on n'appelle PAS l'enrich
+      // (évite la 2ᵉ erreur trompeuse) et on guide vers l'onglet Live.
+      body.innerHTML = `<div class="tennis-empty-state">
+        <div style="font-size:32px;margin-bottom:8px;">🎾</div>
+        <div><strong>Détail enrichi indisponible pour ce match</strong></div>
+        <div style="margin-top:6px;">Match issu du flux programmé/dégradé : le point-par-point BSD n'est pas disponible. Score live et cotes restent visibles dans le tableau et l'onglet Live.</div>
+      </div>`;
       return;
     }
     if (!matchRes.ok) {
