@@ -8968,6 +8968,8 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tvb-pred-chip { font-family:'DM Mono',monospace; font-size:10px; line-height:1.4; color:var(--text2,#8d9399); white-space:nowrap; }
   .tvb-pred-chip b { color:var(--text,#e8eaed); font-weight:700; }
   .tvb-pred-chip .pp { color:#38bdf8; }
+  .tvb-pred-chip .oc { color:#e8eaed; font-weight:700; }
+  .tvb-pred-chip .fc { color:var(--text3,#5a6068); font-style:italic; }
   .tvb-pred-chip .ev { color:#00e676; font-weight:700; }
   .tvb-pred-empty { font-size:10px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; }
   #tennis-vb-table .tvb-surface { display:inline-block; padding:2px 6px; border-radius:8px; font-family:'DM Mono',monospace; font-size:10px; }
@@ -11457,6 +11459,14 @@ function openTennisPredictiveGuide() {
       de jeux, les O/U sont recalculés à partir des jeux déjà joués. Mise à jour
       toutes les 30 s.</p>
 
+      <p class="tgg-leg"><b>Cotes affichées.</b>
+      <span class="tgg-k">@1.72</span> = cote marché réelle (Odds API) — dispo
+      surtout sur Vainqueur match, EV calculé contre cette cote.
+      <span class="tgg-k">≈1.56</span> = cote équitable du modèle (sans marge
+      bookmaker) = 1 / probabilité — affichée sur les marchés non cotés
+      (Set 1, score sets, ≥1 set, jeux O/U, aces, tie-break, live).
+      C'est le prix « juste » : si ton book offre mieux, c'est de la value.</p>
+
       <p class="tgg-leg"><b>Rappel.</b> Outil d'aide à la décision, pas une garantie.
       « PASS » signifie : aucune valeur — ne pas forcer un pari.</p>
     </div>`;
@@ -11716,9 +11726,11 @@ function buildUnifiedTennis(vb){
 function _tnPctN(x){ if(x==null)return null; var v=Number(x); if(!isFinite(v))return null; return v<=1?Math.round(v*1000)/10:Math.round(v*10)/10; }
 function _tnChip(b){
   var p=(b.prob!=null)?(' <span class="pp">'+Math.round(b.prob)+'%</span>'):'';
-  var o=(b.odds!=null)?(' @'+b.odds):'';
+  var oc='';
+  if(b.odds!=null) oc=' <span class="oc" title="Cote marché (Odds API)">@'+b.odds+'</span>';
+  else if(b.odds_fair!=null) oc=' <span class="fc" title="Cote équitable modèle (no-vig) = 1/proba">≈'+b.odds_fair+'</span>';
   var ev=(b.ev!=null&&b.ev>0)?(' <span class="ev">EV+'+b.ev+'%</span>'):'';
-  return '<div class="tvb-pred-chip"><b>'+_escTennis(b.label)+'</b>'+p+o+ev+'</div>';
+  return '<div class="tvb-pred-chip"><b>'+_escTennis(b.label)+'</b>'+p+oc+ev+'</div>';
 }
 function _tvbPredictiveCell(m){
   try{
@@ -11757,7 +11769,7 @@ function tnLiveBets(m){
     var C=(cb&&isFinite(cb.accuracy))?Math.max(0,Math.min(1,cb.accuracy/100)):0.5;
     if(m.ml_market_div==='HIGH') C*=0.8;
     var pool=[];
-    var add=function(label,prob){ if(prob==null||!isFinite(prob)) return; var p=Math.round(prob); pool.push({label:label,prob:p,score:0.55*(p/100)+0.45*C}); };
+    var add=function(label,prob){ if(prob==null||!isFinite(prob)) return; var p=Math.round(prob); pool.push({label:label,prob:p,odds_fair:p>0?Math.round((100/p)*100)/100:null,score:0.55*(p/100)+0.45*C}); };
 
     // 1 — Vainqueur match re-pricé selon sets acquis
     if(bp1!=null&&bp2!=null){ var lp1=cl(bp1+lead*15); var s=lp1>=50; add((s?n1:n2)+' vainqueur'+(lead?(' ('+s1+'-'+s2+')'):''),s?lp1:100-lp1); }
@@ -11778,7 +11790,7 @@ function tnLiveBets(m){
     if(gp1>=5&&gp2>=5){ add('Tie-break set en cours : Oui',cl(55+(Math.min(gp1,gp2)-5)*8)); }
 
     pool.sort(function(a,b){ return b.score-a.score; });
-    var res=pool.slice(0,3).map(function(b){ return {label:b.label,prob:b.prob}; });
+    var res=pool.slice(0,3).map(function(b){ return {label:b.label,prob:b.prob,odds_fair:b.odds_fair}; });
     res._verdict=lead>0?(n1+' mène'):(lead<0?(n2+' mène'):'serré');
     return res;
   }catch(_){ return []; }

@@ -20560,8 +20560,11 @@ function computeTennisPredictiveBets(e) {
       const score = ev != null
         ? 0.45 * evN + 0.35 * C + 0.20 * agree
         : 0.55 * (p / 100) + 0.45 * C;
+      const hasMkt = (dec && dec > 1);
       cands.push({ mkt, label, side: side || null, prob: p,
-        odds: (dec && dec > 1) ? Math.round(dec * 100) / 100 : null,
+        odds: hasMkt ? Math.round(dec * 100) / 100 : null,
+        odds_fair: p > 0 ? Math.round((100 / p) * 100) / 100 : null,
+        odds_type: hasMkt ? 'market' : 'fair',
         book: book || null, ev, score: Math.round(score * 1000) / 1000 });
     };
 
