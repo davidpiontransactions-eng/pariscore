@@ -128,6 +128,66 @@ chk(
   'confirmStrategy : marque confirming="1" avant timeout'
 );
 
+// ─── Fix A (ParisScorebis-amc) — DCL race guard ─────────────────────────────
+chk(
+  /ps_user_navigated/.test(HTML),
+  'Fix A : flag sessionStorage ps_user_navigated présent dans pariscore.html'
+);
+const dclSrcMatch = HTML.match(
+  /window\.addEventListener\('DOMContentLoaded',\s*\(\)\s*=>\s*\{[\s\S]*?\}\s*\)\s*;/
+);
+chk(!!dclSrcMatch, 'Fix A : handler DOMContentLoaded trouvé');
+if (dclSrcMatch) {
+  chk(
+    /if\s*\(!_navFlag\)\s*\{[\s\S]{0,80}showPage\('accueil'/.test(dclSrcMatch[0]),
+    'Fix A : DCL ne route vers accueil QUE si ps_user_navigated absent'
+  );
+}
+
+// ─── Fix B (ParisScorebis-amc) — renderLockedPage body.dataset.page ─────────
+const renderLockedSrc = extractFn('renderLockedPage');
+chk(
+  /document\.body\.dataset\.page\s*=\s*pageId/.test(renderLockedSrc),
+  'Fix B : renderLockedPage met document.body.dataset.page = pageId'
+);
+
+// ─── Fix C (ParisScorebis-amc) — apiFetch handle 403 ────────────────────────
+const apiFetchMatch2 = HTML.match(/async function apiFetch\s*\([^)]*\)\s*\{[\s\S]*?\n\}/);
+chk(!!apiFetchMatch2, 'Fix C : apiFetch trouvé');
+if (apiFetchMatch2) {
+  chk(
+    /res\.status\s*===\s*403/.test(apiFetchMatch2[0]),
+    'Fix C : apiFetch handle 403'
+  );
+  chk(
+    /PLAN_REQUIRED|FREEMIUM_VIEW_QUOTA/.test(apiFetchMatch2[0]),
+    'Fix C : apiFetch reconnaît codes PLAN_REQUIRED / FREEMIUM_VIEW_QUOTA'
+  );
+  chk(
+    /\[apiFetch:403\]/.test(apiFetchMatch2[0]),
+    'Fix C : trace forensique [apiFetch:403] présente'
+  );
+}
+
+// ─── Fix D (ParisScorebis-amc) — showPage anti hub stuck ────────────────────
+const showPageSrc = extractFn('showPage');
+chk(
+  /sport-hub.*style\.display\s*=\s*['"]none['"]/s.test(showPageSrc) ||
+  /getElementById\(['"]sport-hub['"]\)[\s\S]*?display\s*=\s*['"]none['"]/.test(showPageSrc),
+  'Fix D : showPage force #sport-hub display:none hors flow init'
+);
+chk(
+  /strategy-setup[\s\S]*?display\s*=\s*['"]none['"]/.test(showPageSrc),
+  'Fix D : showPage force #strategy-setup display:none hors flow init'
+);
+
+// ─── Fix F (ParisScorebis-amc) — confirmStrategy close drawer Plus ──────────
+const confirmStrategySrc2 = extractFn('confirmStrategy');
+chk(
+  /bnCloseMore/.test(confirmStrategySrc2),
+  'Fix F : confirmStrategy appelle bnCloseMore avant transition'
+);
+
 // ─── Bilan ──────────────────────────────────────────────────────────────────
 console.log('\n=== bilan mobile-filter-flow ===');
 if (pass) {
