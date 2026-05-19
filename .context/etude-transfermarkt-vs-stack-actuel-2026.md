@@ -66,8 +66,28 @@ Pertinent SI le produit veut des **fiches joueur profondes** :
 | **A — Docker sidecar VPS** | moyen (Dockerfile fourni) | **casse zero-dep** : Python+Docker sur VPS OVH, +RAM, supervision pm2/docker | scrape TM côté service = anti-bot/CF (leur problème mais notre uptime) |
 | **B — demo fly.dev** | faible | aucune | ❌ "testing only", rate-limit, indispo observée — rejeté prod |
 | **C — port Node natif** | lourd (réécrire scraping TM) | aucune (zero-dep préservé) | anti-bot Transfermarkt à gérer nous-mêmes, maintenance DOM |
+| **D — Apify actor `curious_coder/transfermarkt`** | faible (httpsPost déjà dans server.js) | **aucune (zero-dep préservé)** — HTTP seul, même pattern que les actors Apify déjà utilisés | coût récurrent **$15/mois + usage**, couplage Apify (quota/token), output générique URL-based (parse par type de page, moins structuré que felipeall typé), latence run-sync (s→min) |
 
 ToS Transfermarkt hostile au scraping (flag légal/éthique, idem aiscore).
+
+### Voie D — détail (révise l'arbitrage zero-dep)
+Apify `curious_coder/transfermarkt` ($15/mo + usage, 2800+ users) :
+- Appel : `POST https://api.apify.com/v2/acts/curious_coder~transfermarkt/run-sync-get-dataset-items?token=<TOKEN>` → items JSON directs (blocking).
+- Input : `{startUrls:[...pages Transfermarkt...], proxyConfig, crawlDepth, pageDepth}`.
+- **Apify gère proxies/CF/anti-bot** → zéro dette scraping côté PariScore, zéro infra (vs Docker voie A).
+- **zero-dep PRÉSERVÉ** : server.js fait juste un `httpsPost` (helper existant L3767), pattern identique aux actors Apify déjà consommés (cf. flashscore/oddsportal/sofascore logs session).
+- Contreparties : (1) **coût récurrent** $15/mo+usage (vs felipeall = compute VPS seul), (2) couplage Apify (token à sécuriser hors .env exposé, quota), (3) output **générique** (scrape page → parser par type nous-mêmes, moins propre que les routes typées `/{id}/market_value` de felipeall), (4) latence run-sync non adaptée au live (OK pour fiches joueur cache 24h).
+
+### Arbitrage felipeall (A) vs Apify (D)
+| Critère | felipeall self-host (A) | Apify curious_coder (D) |
+|---------|------------------------|--------------------------|
+| zero-dep | ❌ casse (Python/Docker VPS) | ✅ préservé (HTTP seul) |
+| Coût | compute VPS (déjà payé) | $15/mo + usage récurrent |
+| Anti-bot/CF | à notre charge (uptime) | géré par Apify |
+| Structure données | ✅ endpoints typés propres | ⚠ générique URL, parse maison |
+| Infra/maintenance | Docker+supervision | zéro (SaaS) |
+| Couplage | aucun (self-host) | Apify (token/quota) |
+→ **D élimine le blocage zero-dep** qui était le verrou de l'étude initiale. Décision DG se reformule : **OPEX récurrent ($15/mo+usage, couplage Apify) vs dérogation archi+maintenance (Docker self-host)**.
 
 ---
 
@@ -78,10 +98,10 @@ ToS Transfermarkt hostile au scraping (flag légal/éthique, idem aiscore).
 Raisonnement :
 1. Recoupement partiel avec stack actuel (valeur instantanée + transferts récents déjà là, zéro coût).
 2. Value-add réel = **historique** (valeur marchande série, fee, blessures carrière) → utile seulement pour fiches joueur profondes, pas pour le cœur paris match-context actuel.
-3. Toute voie viable prod (A) **casse le zero-dep** (Python sidecar) → décision DG explicite requise, pas un quick win.
+3. ~~Toute voie viable prod (A) casse le zero-dep~~ → **RÉVISÉ** : voie D (Apify curious_coder) préserve zero-dep (HTTP seul). Le verrou archi initial saute. Reste un arbitrage **OPEX récurrent vs dérogation infra**.
 4. Voie C (port Node) = effort lourd + reprise dette anti-bot Transfermarkt — non prioritaire vs roadmap P0/P1.
 
-**Si priorisé** : voie A (Docker sidecar isolé, proxy `httpsGet localhost:8000`, cache agressif 24h+, fallback gracieux), scope limité à `/{id}/market_value` + `/{id}/injuries` + `/{id}/transfers` (les 3 value-add). Budget ~1j (Dockerfile fourni) + supervision.
+**Si priorisé — voie recommandée = D (Apify `curious_coder/transfermarkt`)** : zero-dep préservé, anti-bot délégué, intégration faible (httpsPost + parser par type page, cache 24h+, scope market_value/injuries/transfers). Coût $15/mo+usage à valider budget. Token Apify **jamais en clair** (cf. incident token exposé cette session — secret manager / env serveur, pas .env committé). Voie A (felipeall self-host) = alternative si refus OPEX Apify, mais casse zero-dep + maintenance anti-bot.
 
 **Sinon** : rester sur BSD/API-Football actuel — suffisant pour le périmètre paris match-context.
 
