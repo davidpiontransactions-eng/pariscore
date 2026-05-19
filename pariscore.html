@@ -13179,6 +13179,48 @@ async function _renderLivescoreDetail(eid) {
   }
 }
 
+// Panneau dégradé (D) : id non résolvable BSD → on NE refait AUCUNE requête,
+// on rend une synthèse depuis les données déjà en mémoire (window._tennisVbLastFetch).
+function _renderTennisDegradedDetail(matchId) {
+  const head = `<div class="tennis-empty-state" style="text-align:center;">
+    <div style="font-size:30px;margin-bottom:6px;">🎾</div>
+    <div><strong>Détail point-par-point BSD indisponible</strong></div>
+    <div style="margin-top:4px;font-size:12px;opacity:.75;">Match du flux programmé/dégradé. Synthèse ci-dessous depuis les données déjà chargées (zéro requête).</div>
+  </div>`;
+  const list = Array.isArray(window._tennisVbLastFetch) ? window._tennisVbLastFetch : [];
+  const m = list.find(x => x && String(x.id) === String(matchId));
+  if (!m) return head;
+  const p1 = m.player1 || {}, p2 = m.player2 || {};
+  const pr = m.predictions || {};
+  const elo = pr.elo || null, bl = pr.blended || null;
+  const od = m.odds || {};
+  const pc = v => (v == null ? null : Math.round(v <= 1 ? v * 100 : v) + '%');
+  const probLine = bl ? `${pc(bl.p1)} / ${pc(bl.p2)} (blended)` : (elo && elo.p1 != null ? `${pc(elo.p1)} / ${pc(elo.p2)} (Elo)` : null);
+  const eloLine = elo ? `${elo.p1_all ?? elo.p1_surface ?? '—'} / ${elo.p2_all ?? elo.p2_surface ?? '—'}` : null;
+  const oddsLine = (od.p1 && od.p2) ? `${od.p1.odds} ${_escTennis(od.p1.book || '')} / ${od.p2.odds} ${_escTennis(od.p2.book || '')}` : null;
+  const meta = [m.tour, m.tournament, m.round, m.surface].filter(Boolean).map(_escTennis).join(' · ');
+  const pv = m.predictive || null;
+  const verdict = pv && (pv.verdict || pv.verdict_label)
+    ? `<div style="margin-top:10px;text-align:center;"><span style="font-family:'DM Mono',monospace;font-size:13px;color:#E2001A;font-weight:700;">${_escTennis(pv.verdict || pv.verdict_label)}</span></div>` : '';
+  const betsArr = pv && Array.isArray(pv.bets) ? pv.bets : (pv && Array.isArray(pv.top3) ? pv.top3 : []);
+  const bets = betsArr.slice(0, 3).map(b => `<li style="margin:3px 0;">${_escTennis(b.label || b.market || b.name || '')}${b.pick ? ' · ' + _escTennis(b.pick) : ''}${b.ev != null ? ' · EV ' + (Math.round(b.ev * 10) / 10) + '%' : ''}</li>`).join('');
+  const row = (lbl, val) => val ? `<tr><td style="padding:5px 12px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;">${lbl}</td><td style="padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">${val}</td></tr>` : '';
+  return `${head}
+  <div style="max-width:560px;margin:14px auto 0;">
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:18px;text-align:center;color:var(--text,#e8eaed);">${_escTennis(p1.name || '—')} <span style="color:var(--text3,#5a6068);">vs</span> ${_escTennis(p2.name || '—')}</div>
+    <div style="text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2,#8d9399);margin:4px 0 12px;">${meta || '—'}</div>
+    <table style="width:100%;border-collapse:collapse;border:1px solid var(--bg4,#1e2328);">
+      ${row('Modèle', probLine)}
+      ${row('Elo', eloLine)}
+      ${row('Cotes', oddsLine)}
+      ${row('Statut', _escTennis(m.status || '—'))}
+    </table>
+    ${verdict}
+    ${bets ? `<ul style="margin:8px 0 0;padding-left:18px;font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--text2,#8d9399);">${bets}</ul>` : ''}
+    <div style="margin-top:12px;font-size:11px;color:var(--text3,#5a6068);text-align:center;">Score live → onglet Live. Point-par-point requiert le flux BSD.</div>
+  </div>`;
+}
+
 async function _fetchAndRenderTennisDetail(matchId) {
   const body = document.getElementById('tennis-detail-body');
   if (!body) return;
@@ -13208,14 +13250,9 @@ async function _fetchAndRenderTennisDetail(matchId) {
       return;
     }
     if (matchRes.status === 404) {
-      // Id non résolvable côté BSD (match issu du flux programmé/dégradé
-      // ESPN). MatchStat 404 sur le même id → on n'appelle PAS l'enrich
-      // (évite la 2ᵉ erreur trompeuse) et on guide vers l'onglet Live.
-      body.innerHTML = `<div class="tennis-empty-state">
-        <div style="font-size:32px;margin-bottom:8px;">🎾</div>
-        <div><strong>Détail enrichi indisponible pour ce match</strong></div>
-        <div style="margin-top:6px;">Match issu du flux programmé/dégradé : le point-par-point BSD n'est pas disponible. Score live et cotes restent visibles dans le tableau et l'onglet Live.</div>
-      </div>`;
+      // Id non résolvable BSD (flux programmé/dégradé ESPN). MatchStat 404 sur
+      // le même id → pas d'enrich réseau. Synthèse depuis données en mémoire (D).
+      body.innerHTML = _renderTennisDegradedDetail(matchId);
       return;
     }
     if (!matchRes.ok) {

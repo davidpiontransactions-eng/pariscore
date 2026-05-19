@@ -8071,6 +8071,9 @@ async function fetchESPNStandings(slug, configLeagueId) {
   }
 }
 
+// Cascade "pas de saison" attendue pour certaines ligues BSD (42/38/53/50…) :
+// 3 warns/ligue/cron = bruit pur. Gate derrière DEBUG_STANDINGS=1, sinon muet.
+const DBG_STANDINGS = process.env.DEBUG_STANDINGS === '1';
 // Fetch BSD standings pour une ligue (convertit au format db.teamStats)
 async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
   const leagueName = leaguesConfig.leagues.find(l => l.id === configLeagueId)?.name || `config ${configLeagueId}`;
@@ -8097,7 +8100,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
 
     // 1b. Stratégie B: saison la plus récente (ordering=-year)
     if (!seasonId) {
-      console.warn(`  [DEBUG STANDINGS] Pas de current season pour BSD ${bsdLeagueId} — tentative ordering=-year`);
+      if (DBG_STANDINGS) console.warn(`  [DEBUG STANDINGS] Pas de current season pour BSD ${bsdLeagueId} — tentative ordering=-year`);
       seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&ordering=-year`);
       if (seasonsRes?.status === 200 && seasonsRes?.data?.results?.length) {
         seasonId = seasonsRes.data.results[0].id;
@@ -8106,7 +8109,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
 
     // 1c. Stratégie C: liste brute des saisons, prendre la première
     if (!seasonId) {
-      console.warn(`  [DEBUG STANDINGS] Pas de saison via ordering pour BSD ${bsdLeagueId} — tentative liste brute`);
+      if (DBG_STANDINGS) console.warn(`  [DEBUG STANDINGS] Pas de saison via ordering pour BSD ${bsdLeagueId} — tentative liste brute`);
       seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}`);
       if (seasonsRes?.status === 200 && Array.isArray(seasonsRes?.data?.results) && seasonsRes.data.results.length) {
         const sorted = [...seasonsRes.data.results].sort((a, b) => (b.year || 0) - (a.year || 0));
@@ -8119,7 +8122,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
     // même la table active si on omet le param `season`. On ne bail plus ici :
     // on tente l'endpoint standings sans saison avant de lâcher.
     if (!seasonId) {
-      console.warn(`  [DEBUG STANDINGS] Aucune saison BSD ${bsdLeagueId} — tentative /standings/ sans param season`);
+      if (DBG_STANDINGS) console.warn(`  [DEBUG STANDINGS] Aucune saison BSD ${bsdLeagueId} — tentative /standings/ sans param season`);
     } else {
       console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → seasonId=${seasonId}`);
     }
@@ -13162,10 +13165,15 @@ async function pollTennisLive() {
 
 const TENNIS_ODDS_TTL_MS = 4 * 60 * 60 * 1000; // 4h
 const TENNIS_ODDS_DISCOVERY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+// Quota Odds API = mensuel : un 429/401 = épuisé. Sans circuit-breaker, le
+// cache n'est pas re-stampé → getTennisOddsCache() refire à chaque match →
+// spam 429. Cooldown : on coupe les tentatives 6h après un quota hit.
+const TENNIS_ODDS_QUOTA_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h
 let _tennisOddsCache = { ts: 0, data: {} };          // { sportKey: [rawMatch...] }
 let _activeTennisSports = [];                         // ['tennis_atp_french_open', ...]
 let _activeTennisSportsTs = 0;
 let _isFetchingTennisOdds = false;
+let _tennisOddsQuotaUntil = 0;                        // epoch ms — skip fetch si Date.now() < lui
 
 // Discover currently active tennis sport keys from The Odds API.
 // /v4/sports is a free endpoint (does not consume request credits).
@@ -13186,6 +13194,13 @@ async function discoverActiveTennisSports() {
 async function fetchTennisOddsAPI() {
   if (!ODDS_API_KEY) return {};
   if (_isFetchingTennisOdds) return _tennisOddsCache.data || {};
+  // Circuit-breaker quota : tant que le cooldown court, on ne retente pas
+  // (zéro HTTP, zéro log). On re-stampe le cache pour que le gate TTL de
+  // getTennisOddsCache() ne re-déclenche pas en boucle.
+  if (Date.now() < _tennisOddsQuotaUntil) {
+    _tennisOddsCache.ts = Date.now();
+    return _tennisOddsCache.data || {};
+  }
   _isFetchingTennisOdds = true;
 
   try {
@@ -13220,7 +13235,6 @@ async function fetchTennisOddsAPI() {
         if (!res) continue;
 
         if (res.status === 401 || res.status === 429) {
-          console.warn(`  [Tennis Odds] ⚠️ Quota Odds API atteint (${sport}). Arrêt fetch tennis.`);
           quotaHit = true;
           break;
         }
@@ -13236,9 +13250,18 @@ async function fetchTennisOddsAPI() {
 
     if (!quotaHit) {
       _tennisOddsCache = { ts: Date.now(), data: out };
-    } else if (Object.keys(out).length > 0) {
-      // Partial result before quota hit — keep what we got
-      _tennisOddsCache = { ts: Date.now(), data: out };
+    } else {
+      // Quota épuisé : arme le cooldown 6h + re-stampe le cache (sinon le
+      // gate TTL refire à chaque match → spam 429). Log UNE fois par fenêtre.
+      const firstHit = Date.now() >= _tennisOddsQuotaUntil;
+      _tennisOddsQuotaUntil = Date.now() + TENNIS_ODDS_QUOTA_COOLDOWN_MS;
+      const merged = Object.keys(out).length > 0
+        ? { ...(_tennisOddsCache.data || {}), ...out }
+        : (_tennisOddsCache.data || {});
+      _tennisOddsCache = { ts: Date.now(), data: merged };
+      if (firstHit) {
+        console.warn(`  [Tennis Odds] ⚠️ Quota Odds API épuisé. Fetch tennis suspendu ${TENNIS_ODDS_QUOTA_COOLDOWN_MS / 3600000}h (cotes marché → fallback cote équitable).`);
+      }
     }
     return _tennisOddsCache.data || {};
   } finally {
@@ -20005,8 +20028,12 @@ async function buildTennisValueBets(opts = {}) {
   const dateClean = opts.date ? String(opts.date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   const key = dateClean || 'today';
   const hit = _tennisVBCache.get(key);
-  if (hit && Date.now() - hit.ts < _TENNIS_VB_TTL_MS) return hit.result;
   if (hit) {
+    // Build dégradé ESPN (BSD KO ce cycle) : TTL court 60 s → réessaie BSD vite
+    // au lieu de figer des ids ESPN (detail mort) pendant 4 min.
+    const _deg = hit.result && hit.result.body && hit.result.body.meta && hit.result.body.meta.match_source && hit.result.body.meta.match_source !== 'bsd';
+    const _ttl = _deg ? 60 * 1000 : _TENNIS_VB_TTL_MS;
+    if (Date.now() - hit.ts < _ttl) return hit.result;
     // Périmé : sert le stale tout de suite, rebuild en tâche de fond.
     if (!_tennisVBRebuilding.has(key)) {
       _tennisVBRebuilding.add(key);
@@ -20077,7 +20104,9 @@ async function fetchBSDTennisPredictions(dateClean) {
     const nx = r.data && r.data.next ? String(r.data.next) : null;
     suffix = (nx && nx.includes('/tennis')) ? nx.slice(nx.indexOf('/tennis') + '/tennis'.length) : null;
   }
-  if (out.length) apiCacheSet(ck, out, 'bsd_tennis', 30 * 60 * 1000);
+  // Bzzoiro régénère les prédictions toutes les 15 min (job planifié) → cache
+  // aligné 15 min pour ne jamais servir une prédiction d'un cycle périmé.
+  if (out.length) apiCacheSet(ck, out, 'bsd_tennis', 15 * 60 * 1000);
   console.log(`  [TennisPred BSD] ${out.length} prédictions chargées (${dateClean || 'upcoming'})`);
   return _predListToMap(out);
 }
@@ -20131,6 +20160,23 @@ async function buildBSDTennisCalibration() {
       brierSum += Math.pow(pp / 100 - y, 2); brierN++;
     }
   }
+  // Bzzoiro expose 3 flags réglés : winner (ci-dessus) + over_sets + over_games.
+  // Les marchés totaux sont scorés par le modèle ML mais leur fiabilité RÉELLE
+  // n'était jamais mesurée → le moteur prédictif leur appliquait la confiance
+  // du vainqueur (biais). On mesure ici l'accuracy propre de chaque marché.
+  const mkt = { over_sets: { ok: 0, n: 0 }, over_games: { ok: 0, n: 0 } };
+  for (const p of (raw || [])) {
+    if (!p) continue;
+    if (p.was_over_sets_correct != null) {
+      mkt.over_sets.n++;
+      if (p.was_over_sets_correct === true || p.was_over_sets_correct === 1) mkt.over_sets.ok++;
+    }
+    if (p.was_over_games_correct != null) {
+      mkt.over_games.n++;
+      if (p.was_over_games_correct === true || p.was_over_games_correct === 1) mkt.over_games.ok++;
+    }
+  }
+  const finM = o => ({ acc: o.n ? o.ok / o.n : null, n: o.n, low: o.n ? _wilsonLow(o.ok / o.n, o.n) : 0 });
   const fin = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, { acc: v.n ? v.ok / v.n : null, n: v.n, low: v.n ? _wilsonLow(v.ok / v.n, v.n) : 0 }]));
   const data = {
     n: settled.length,
@@ -20138,9 +20184,11 @@ async function buildBSDTennisCalibration() {
     brier: brierN ? parseFloat((brierSum / brierN).toFixed(4)) : null,
     by_confidence: fin(byConf),
     by_surface: fin(bySurf),
+    by_market: { over_sets: finM(mkt.over_sets), over_games: finM(mkt.over_games) },
   };
   _bsdTennisCalib = { ts: Date.now(), data };
-  console.log(`  [TennisCalib BSD] n=${data.n} acc=${data.accuracy != null ? (data.accuracy * 100).toFixed(1) : '–'}% brier=${data.brier}`);
+  const _mAcc = m => (m && m.acc != null) ? `${(m.acc * 100).toFixed(1)}%/n${m.n}` : '–';
+  console.log(`  [TennisCalib BSD] n=${data.n} acc=${data.accuracy != null ? (data.accuracy * 100).toFixed(1) : '–'}% brier=${data.brier} | sets=${_mAcc(data.by_market.over_sets)} games=${_mAcc(data.by_market.over_games)}`);
   return data;
 }
 function _calibBadge(calib, confidence, surface) {
@@ -20236,6 +20284,16 @@ function _calibReliability(calib, confidence, surface) {
   // 0.50 = pile/face → r=0 ; 0.90 → r=1. Brier global pénalise si mauvais.
   let r = Math.max(0, Math.min(1, (acc - 0.50) / 0.40));
   if (calib.brier != null) r *= Math.max(0.4, Math.min(1, 1 - (calib.brier - 0.18) / 0.30));
+  return parseFloat(r.toFixed(3));
+}
+// Fiabilité ∈[0,1] d'un marché totaux (over_sets|over_games) dérivée de son
+// accuracy RÉELLE mesurée (Bzzoiro was_over_*_correct). null si échantillon
+// insuffisant (<20) → l'appelant applique alors une décote prudente.
+function _calibMarketRel(calib, market) {
+  if (!calib || !calib.by_market) return null;
+  const m = calib.by_market[market];
+  if (!m || m.acc == null || m.n < 20) return null;
+  const r = Math.max(0, Math.min(1, (m.acc - 0.50) / 0.40));
   return parseFloat(r.toFixed(3));
 }
 function blendTennisProbsW(eloProb, bsdProb, wBsd) {
@@ -20365,9 +20423,12 @@ async function _buildTennisValueBetsCore({ date }) {
     const bsd = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
     if (bsd.status === 200) {
       bsdMatches = _extractBsdMatchesList(bsd.body);
+      if (!bsdMatches.length) console.warn('  [TennisVB] BSD list HTTP 200 mais 0 match scheduled → fallback ESPN (slate vide ?)');
     } else if (bsd.status !== 503 && bsd.status !== 402) {
       // Vraie erreur upstream BSD (5xx) → propager.
       return { status: bsd.status, body: bsd.body };
+    } else {
+      console.warn(`  [TennisVB] fallback ESPN — BSD scheduled list status=${bsd.status} (${bsd.status === 402 ? 'addon requis' : 'indisponible'}) → ids ESPN, detail BSD KO ce cycle`);
     }
     // 402/503 → tombe en fallback ESPN ci-dessous (mode dégradé).
   }
@@ -20615,6 +20676,23 @@ async function _buildTennisValueBetsCore({ date }) {
       _rkP2 = _rankMomentum(rankIdx.get(normName(p2Name)));
     } catch (e) { /* signaux S1 omis pour ce match — build continue */ }
 
+    // Confiance calibrée PAR MARCHÉ totaux (sets/jeux) — accuracy réelle mesurée
+    // via was_over_*_correct. Consommée par computeTennisPredictiveBets pour ne
+    // plus appliquer la confiance vainqueur aux paris sets/jeux (G1+G2).
+    let _mktConf = null;
+    try {
+      if (calib && calib.by_market) {
+        const mk = (key) => {
+          const m = calib.by_market[key];
+          if (!m || m.acc == null || m.n < 20) return null;
+          return { acc: parseFloat((m.acc * 100).toFixed(1)), n: m.n,
+            ci_low: parseFloat((m.low * 100).toFixed(1)), rel: _calibMarketRel(calib, key) };
+        };
+        const os = mk('over_sets'), og = mk('over_games');
+        if (os || og) _mktConf = { over_sets: os, over_games: og };
+      }
+    } catch (e) { /* calib marché absente — décote prudente côté predictive */ }
+
     let evModel = null, bestEvModel = null;
     if (blended && odds && odds.p1 && odds.p2) {
       const evP1 = (odds.p1.odds * blended.p1 - 1) * 100;
@@ -20676,6 +20754,7 @@ async function _buildTennisValueBetsCore({ date }) {
       bsd_prediction: m.prediction || null,
       bsd_ml_score: m.ml_score || m.prediction_score || null,
       bsd_markets: bsdPred,
+      market_confidence: _mktConf,
       confidence_badge: _confBadge,
       ml_market_div: _mlMktDiv,
       rank_momentum: { p1: _rkP1, p2: _rkP2 },
@@ -20718,6 +20797,7 @@ async function _buildTennisValueBetsCore({ date }) {
       matches: enriched,
       meta: {
         match_source: matchSource,
+        degraded: matchSource !== 'bsd',
         odds_sports_active: _activeTennisSports,
         odds_cache_age_s: _tennisOddsCache.ts ? Math.floor((Date.now() - _tennisOddsCache.ts) / 1000) : null,
         bsd_enabled: BSD_TENNIS_ENABLED,
@@ -20766,6 +20846,8 @@ function computeTennisPredictiveBets(e) {
     const sm = e.set_model || {};
     const n1 = (e.player1 && e.player1.name) || 'J1';
     const n2 = (e.player2 && e.player2.name) || 'J2';
+    const bsdM = e.bsd_markets || null;        // prédictions ML natives BSD
+    const mktC = e.market_confidence || null;  // fiabilité réelle par marché totaux
 
     // Confiance 0..1 — calibration modèle, pénalité divergence + échantillon
     let C = conf && Number.isFinite(conf.accuracy) ? Math.max(0, Math.min(1, conf.accuracy / 100)) : 0.5;
@@ -20780,15 +20862,19 @@ function computeTennisPredictiveBets(e) {
     }
 
     const cands = [];
-    const push = (mkt, label, side, prob, dec, book) => {
+    // cOv : override confiance ∈[0,1] propre au marché (calibration sets/jeux
+    // mesurée). Absent → C vainqueur. Évite d'appliquer la fiabilité du
+    // modèle vainqueur à un pari totaux dont l'accuracy réelle diffère.
+    const push = (mkt, label, side, prob, dec, book, cOv) => {
       const p = P(prob);
       if (p == null || p <= 0) return;
+      const Cx = (cOv != null && Number.isFinite(cOv)) ? Math.max(0, Math.min(1, cOv)) : C;
       let ev = null;
       if (dec && Number.isFinite(dec) && dec > 1) ev = Math.round((p / 100 * dec - 1) * 1000) / 10;
       const evN = ev != null ? Math.max(0, Math.min(1, ev / 20)) : null;
       const score = ev != null
-        ? 0.45 * evN + 0.35 * C + 0.20 * agree
-        : 0.55 * (p / 100) + 0.45 * C;
+        ? 0.45 * evN + 0.35 * Cx + 0.20 * agree
+        : 0.55 * (p / 100) + 0.45 * Cx;
       const hasMkt = (dec && dec > 1);
       cands.push({ mkt, label, side: side || null, prob: p,
         odds: hasMkt ? Math.round(dec * 100) / 100 : null,
@@ -20807,10 +20893,18 @@ function computeTennisPredictiveBets(e) {
           s1 ? (odds.p1 && odds.p1.book) : (odds.p2 && odds.p2.book));
       }
     }
-    // 2 — Vainqueur Set 1
-    if (sm.set1 && sm.set1.p1_pct != null) {
-      const s1p = P(sm.set1.p1_pct);
-      if (s1p != null) { const s1 = s1p >= 50; push('SET1', (s1 ? n1 : n2) + ' gagne Set 1', s1 ? 'p1' : 'p2', s1 ? s1p : 100 - s1p, null, null); }
+    // 2 — Vainqueur Set 1 — prédiction ML BSD native prioritaire (sinon Markov
+    // local set_model). 1er set non couvert par les flags réglés Bzzoiro
+    // (winner/sets/games seuls) → confiance décotée 0.7·C (non mesurée).
+    {
+      let s1p = (bsdM && bsdM.prob_player1_wins_first_set != null) ? P(bsdM.prob_player1_wins_first_set) : null;
+      const fromBsd = s1p != null;
+      if (s1p == null && sm.set1 && sm.set1.p1_pct != null) s1p = P(sm.set1.p1_pct);
+      if (s1p != null) {
+        const s1 = s1p >= 50;
+        push('SET1', (s1 ? n1 : n2) + ' gagne Set 1' + (fromBsd ? ' (ML)' : ''),
+          s1 ? 'p1' : 'p2', s1 ? s1p : 100 - s1p, null, null, fromBsd ? C * 0.7 : null);
+      }
     }
     // 3 — Score sets exact (issue best-of-3 la + probable)
     if (Array.isArray(pr.set_probs) && pr.set_probs.length) {
@@ -20829,13 +20923,48 @@ function computeTennisPredictiveBets(e) {
       const v = P(out === 'p1' ? pr.at_least_one_set.p1 : pr.at_least_one_set.p2);
       if (v != null && v >= 55) push('SET1PLUS', (out === 'p1' ? n1 : n2) + ' gagne ≥1 set', out, v, null, null);
     }
-    // 5 — Total jeux O/U (issue la + probable ≥ 55 %)
-    const gou = e.over_under_set_calculations || {};
+    // 5 — Total jeux O/U — prédiction ML BSD native prioritaire (lignes 20.5 /
+    // 21.5 / 22.5), confiance = fiabilité RÉELLE marché over_games mesurée
+    // (was_over_games_correct) ; décote 0.7·C si calib indisponible. Sinon
+    // fallback Markov local over_under_set_calculations.
     {
-      const map = [['O7_5', '+7.5 jeux'], ['O8_5', '+8.5 jeux'], ['O9_5', '+9.5 jeux'], ['U12_5', '-12.5 jeux']];
-      let bestG = null;
-      for (const [k, lbl] of map) { const v = P(gou[k]); if (v != null && (!bestG || v > bestG.v)) bestG = { v, lbl }; }
-      if (bestG && bestG.v >= 55) push('GAMES', 'Total ' + bestG.lbl, null, bestG.v, null, null);
+      let pushed = false;
+      if (bsdM) {
+        const lines = [['prob_over_20_5_games', 20.5], ['prob_over_21_5_games', 21.5], ['prob_over_22_5_games', 22.5]];
+        let bestG = null;
+        for (const [k, ln] of lines) {
+          const ov = P(bsdM[k]);
+          if (ov == null) continue;
+          const over = { v: ov, lbl: '+' + ln + ' jeux (ML)' };
+          const under = { v: 100 - ov, lbl: '-' + ln + ' jeux (ML)' };
+          for (const c of [over, under]) if (!bestG || c.v > bestG.v) bestG = c;
+        }
+        if (bestG && bestG.v >= 55) {
+          const cOv = (mktC && mktC.over_games && mktC.over_games.rel != null) ? mktC.over_games.rel : C * 0.7;
+          push('GAMES', 'Total ' + bestG.lbl, null, bestG.v, null, null, cOv);
+          pushed = true;
+        }
+      }
+      if (!pushed) {
+        const gou = e.over_under_set_calculations || {};
+        const map = [['O7_5', '+7.5 jeux'], ['O8_5', '+8.5 jeux'], ['O9_5', '+9.5 jeux'], ['U12_5', '-12.5 jeux']];
+        let bestG = null;
+        for (const [k, lbl] of map) { const v = P(gou[k]); if (v != null && (!bestG || v > bestG.v)) bestG = { v, lbl }; }
+        if (bestG && bestG.v >= 55) push('GAMES', 'Total ' + bestG.lbl, null, bestG.v, null, null);
+      }
+    }
+    // 5b — Total sets O/U 2.5 — ML BSD natif, confiance = fiabilité réelle
+    // marché over_sets mesurée (was_over_sets_correct) ; décote 0.7·C sinon.
+    if (bsdM && bsdM.prob_over_2_5_sets != null) {
+      const ov = P(bsdM.prob_over_2_5_sets);
+      if (ov != null) {
+        const over = ov >= 50;
+        const v = over ? ov : 100 - ov;
+        if (v >= 55) {
+          const cOv = (mktC && mktC.over_sets && mktC.over_sets.rel != null) ? mktC.over_sets.rel : C * 0.7;
+          push('SETS', 'Total ' + (over ? '+2.5' : '-2.5') + ' sets (ML)', null, v, null, null, cOv);
+        }
+      }
     }
     // 6 — King of Aces
     if (pr.most_aces && pr.most_aces.favorite && pr.most_aces.pct != null) {
