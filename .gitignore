@@ -4,6 +4,7 @@
 .jwt_secret
 *.pem
 *.key
+.mcp.json
 ACCES_MEMO.md
 
 # Database
@@ -57,3 +58,6 @@ build/
 # Skills installs (per-user, pas tracker)
 .agents/skills/
 .claude/skills/
+
+# Sidecar Transfermarkt (felipeall, cloné localement — non versionné)
+transfermarkt-api/

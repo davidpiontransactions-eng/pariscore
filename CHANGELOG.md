@@ -2,6 +2,21 @@
 
 ---
 
+## [v10.73] — 2026-05-19
+
+### Feature — Transferts : Option A felipeall/transfermarkt-api (sidecar self-host)
+
+Champ orphelin « transferts » câblé via le microservice MIT felipeall/transfermarkt-api auto-hébergé en conteneur Docker. Scaffold Apify (actor payant $15/mo) **retiré** ; `fetchTransfermarkt` repointé sur le sidecar en HTTP clé-zéro (`httpsGet` natif → zero-dep npm du cœur préservé).
+
+- `fetchTransfermarkt(kind,id)` → `GET {TRANSFERMARKT_API_URL}/players/{id}/{profile|market_value|transfers|injuries}`. Env `TRANSFERMARKT_API_URL` (défaut `http://127.0.0.1:8000`). Cache 24h conservé. Réponse JSON propre (schemas Pydantic) sous `data:`.
+- Code mort supprimé : `_apifyRunSync`, `_tmBuildUrl`, `APIFY_TOKEN`, `APIFY_TM_ACTOR`. Route `/api/v1/transfermarkt/:kind` + gate footPro + cache inchangés. Mapping erreur → 503 si service injoignable/introuvable/5xx.
+- `docker-compose.transfermarkt.yml` ajouté (build depuis clone felipeall, bind 127.0.0.1:8000, rate-limit ON, healthcheck). `transfermarkt-api/` git-ignoré.
+- ⚠ **Rumeurs NON couvertes** (felipeall = transferts confirmés + valeurs + blessures uniquement) → follow-up bd (route custom /geruechte ou RapidAPI apidojo).
+
+Vérifié : `node --check` OK, boot OK, suppression Apify sans ref morte, route gate 403 anon (normal).
+
+---
+
 ## [v10.72] — 2026-05-19
 
 ### Feature — Cotes sur Bets Prédictifs (couche 1 + 3, solution économique)

@@ -6645,73 +6645,46 @@ async function fetchAFTransfers(teamId, sinceDays = 180) {
   }
 }
 
-// ─── Transfermarkt via Apify (voie D — zero-dep, scaffold) ──────────────────
-// Actor: curious_coder/transfermarkt ($15/mo Apify, location requise).
-// zero-dep préservé : httpsPost vers run-sync-get-dataset-items (blocking).
-// Apify gère proxies/CF/anti-bot. Token = env APIFY_TOKEN (JAMAIS en .env
-// committé). Cache 24h (data carrière joueur peu volatile).
-// ⚠ Parser = pass-through défensif : l'actor est générique URL-based, le
-// schéma exact est inconnu tant que l'actor n'est pas loué (run 403
-// "actor-is-not-rented" sinon). Finaliser le normalizer après 1er run réel.
-const APIFY_TOKEN = process.env.APIFY_TOKEN || '';
-const APIFY_TM_ACTOR = 'curious_coder~transfermarkt';
+// ─── Transfermarkt — cache (voie D : felipeall self-host, cf. fetchTransfermarkt) ─
+// Cache 24h (data carrière/valeurs peu volatile). Scaffold Apify retiré
+// (actor payant) au profit du sidecar felipeall/transfermarkt-api.
 const TM_TTL_MS = 24 * 3600 * 1000;
 const _tmCache = new Map();
 
-// Construit l'URL Transfermarkt selon le type de donnée voulu.
-// id = id numérique joueur Transfermarkt ; slug optionnel (cosmétique URL).
-function _tmBuildUrl(kind, id, slug) {
-  const s = (slug && /^[a-z0-9-]+$/i.test(slug)) ? slug : 'x';
-  const pid = String(id || '').replace(/\D/g, '');
-  if (!pid) return null;
-  const base = `https://www.transfermarkt.com/${s}`;
-  switch (kind) {
-    case 'profile':      return `${base}/profil/spieler/${pid}`;
-    case 'market_value': return `${base}/marktwertverlauf/spieler/${pid}`;
-    case 'transfers':    return `${base}/transfers/spieler/${pid}`;
-    case 'injuries':     return `${base}/verletzungen/spieler/${pid}`;
-    default:             return null;
-  }
-}
-
-// Appel générique Apify run-sync (items JSON directs). Réutilisable.
-async function _apifyRunSync(actor, input, timeoutMs = 90000) {
-  if (!APIFY_TOKEN) throw new Error('APIFY_TOKEN absent (env serveur)');
-  const url = `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items` +
-    `?token=${encodeURIComponent(APIFY_TOKEN)}&format=json&clean=true`;
-  const res = await httpsPost(url, input, { 'Content-Type': 'application/json' });
-  if (res.status === 403 && res.data && res.data.error &&
-      res.data.error.type === 'actor-is-not-rented') {
-    throw new Error('Apify actor non loué (rent requis $15/mo)');
-  }
-  if (res.status !== 200 && res.status !== 201) {
-    throw new Error(`Apify HTTP ${res.status}`);
-  }
-  return Array.isArray(res.data) ? res.data : [];
-}
+// ─── Option A : felipeall/transfermarkt-api auto-hébergé (sidecar Docker) ────
+// Microservice Python/FastAPI MIT déployé en conteneur ; Node l'appelle en
+// HTTP clé-zéro (zero-dep préservé, https natif). Schéma JSON propre (schemas
+// Pydantic). Endpoints : /players/{id}/{profile|market_value|transfers|injuries}.
+// ⚠ Pas d'endpoint « rumeurs » côté felipeall → transferts CONFIRMÉS + valeurs
+// uniquement (rumeurs = follow-up : route custom /geruechte ou RapidAPI apidojo).
+const TM_API_URL = (process.env.TRANSFERMARKT_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+const _TM_PATHS = { profile: 'profile', market_value: 'market_value', transfers: 'transfers', injuries: 'injuries' };
 
 async function fetchTransfermarkt(kind, id, slug) {
-  const allowed = ['profile', 'market_value', 'transfers', 'injuries'];
-  if (!allowed.includes(kind)) throw new Error(`kind invalide: ${kind}`);
-  const tmUrl = _tmBuildUrl(kind, id, slug);
-  if (!tmUrl) throw new Error('id Transfermarkt numérique requis');
-  const ck = `tm_${kind}_${String(id).replace(/\D/g, '')}`;
+  if (!_TM_PATHS[kind]) throw new Error(`kind invalide: ${kind}`);
+  const pid = String(id || '').replace(/\D/g, '');
+  if (!pid) throw new Error('id Transfermarkt numérique requis');
+  const ck = `tm_${kind}_${pid}`;
   const cached = _tmCache.get(ck);
   if (cached && Date.now() - cached.ts < TM_TTL_MS) return cached.data;
-  const items = await _apifyRunSync(APIFY_TM_ACTOR, {
-    startUrls: [{ url: tmUrl }],
-    proxyConfig: { useApifyProxy: true },
-  });
-  // Pass-through défensif (schéma actor non confirmé tant que non loué).
+  const url = `${TM_API_URL}/players/${pid}/${_TM_PATHS[kind]}`;
+  let res;
+  try {
+    res = await httpsGet(url, { Accept: 'application/json' });
+  } catch (e) {
+    throw new Error(`transfermarkt-api injoignable (${TM_API_URL}) : ${e.message}`);
+  }
+  if (res.status === 404) throw new Error('joueur introuvable Transfermarkt');
+  if (res.status !== 200) throw new Error(`transfermarkt-api HTTP ${res.status}`);
+  const body = (res.data && typeof res.data === 'object') ? res.data : null;
+  if (!body) throw new Error('réponse transfermarkt-api invalide');
   const data = {
     source: 'transfermarkt',
-    via: 'apify:curious_coder/transfermarkt',
+    via: 'felipeall/transfermarkt-api (self-host)',
     kind,
-    tm_id: String(id).replace(/\D/g, ''),
-    tm_url: tmUrl,
+    tm_id: pid,
     fetched_at: new Date().toISOString(),
-    items_count: items.length,
-    raw: items,            // brut tant que normalizer non finalisé
+    data: body,
   };
   _tmCache.set(ck, { ts: Date.now(), data });
   return data;
@@ -21848,7 +21821,7 @@ if (pathname.startsWith('/api/v1/transfermarkt/') && req.method === 'GET') {
     return jsonResponse(res, 200, await fetchTransfermarkt(kind, id, slug));
   } catch (e) {
     const msg = String(e.message || e);
-    const code = /non loué|APIFY_TOKEN absent/.test(msg) ? 503 : 502;
+    const code = /injoignable|introuvable|HTTP 5\d\d/.test(msg) ? 503 : 502;
     return jsonResponse(res, code, { error: 'transfermarkt_failed', message: msg });
   }
 }
