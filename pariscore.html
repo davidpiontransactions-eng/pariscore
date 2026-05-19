@@ -8878,6 +8878,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-sb-tot { color:#e8eaed; background:#1e293b; border-radius:5px; padding:1px 7px; min-width:20px; }
   #tennis-vb-table .tn-sb-tot-lead { color:#4ade80; }
   #tennis-vb-table .tn-sb-empty span { color:var(--text3,#5a6068); }
+  #tennis-vb-table .tn-sb-soon { display:inline-block; background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:6px 10px; font-family:'DM Mono',monospace; font-size:12px; font-weight:700; color:#ffa726; white-space:nowrap; }
   #tennis-vb-table .tn-dr { grid-column:1/-1; display:flex; flex-direction:column; gap:3px; margin-top:5px; padding-top:5px; border-top:1px solid #1e293b; }
   #tennis-vb-table .tn-dr-line { display:flex; align-items:center; justify-content:space-between; gap:8px; line-height:1.25; }
   #tennis-vb-table .tn-dr-lab { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.5px; color:#64748b; }
@@ -11079,6 +11080,16 @@ function _tvbScoreCell(m) {
   const gridStyle = `grid-template-columns:repeat(${nCols},auto);`;
 
   if (!m || !m._isLive || !lo) {
+    // Fix A : match non-live mais à venir → état « à venir HH:MM » explicite
+    // (distinct du « — » ambigu qui ne disait pas si bug ou simplement pas commencé).
+    const _st = m && (m.start_time || m.commence_time);
+    const _ts = _st ? Date.parse(_st) : NaN;
+    const _stUp = String((m && m.status) || '').toUpperCase();
+    const _done = _stUp === 'TERMINÉ' || _stUp === 'TERMINE' || _stUp === 'FINAL' || _stUp === 'FINISHED' || _stUp === 'POST';
+    if (Number.isFinite(_ts) && _ts > Date.now() && !_done) {
+      const _hm = new Date(_ts).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' });
+      return `<div class="tn-sb tn-sb-soon" title="Match non commencé — coup d'envoi ${_hm}">à venir ${_hm}</div>`;
+    }
     let cells = '';
     for (let r = 0; r < 2; r++) {
       cells += `<span class="tn-sb-pt">–</span>`;
@@ -11578,7 +11589,14 @@ function _tvbTotConv(tc) {
 /*TN_UNIFY_HELPERS*/
 function _tnNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
 function _tnTournStr(t){return (t&&typeof t==='object')?(t.name||t.short_name||''):String(t||'');}
-function _tnJoinKey(m){return _tnNorm(m&&m.player1&&m.player1.name)+'|'+_tnNorm(m&&m.player2&&m.player2.name)+'|'+_tnNorm(_tnTournStr(m&&m.tournament));}
+// Fix B : jointure live↔value-bets sur la PAIRE de joueurs uniquement, ordre-insensible.
+// Le tournoi était dans la clé → libellés divergents entre sources (« Internationaux de
+// Strasbourg presented by Mammotion » vs « Strasbourg ») faisaient échouer la jointure.
+// Deux mêmes joueurs ne peuvent être live simultanément sur 2 matchs → paire = clé sûre.
+function _tnLastName(n){var p=_tnNorm(n).split(/\s+/).filter(Boolean);return p.length?p[p.length-1]:'';}
+function _tnPairKey(m){return [_tnNorm(m&&m.player1&&m.player1.name),_tnNorm(m&&m.player2&&m.player2.name)].sort().join('|');}
+function _tnPairKeyLast(m){return [_tnLastName(m&&m.player1&&m.player1.name),_tnLastName(m&&m.player2&&m.player2.name)].sort().join('|');}
+function _tnJoinKey(m){return _tnPairKey(m);}
 // "Réellement live" : flag is_live insuffisant (ESPN/BSD marque state=in dès
 // l'échauffement / sur flux périmé → 0-0 statut vide). Exige du jeu effectif.
 function _tnActuallyLive(m){
@@ -11596,11 +11614,13 @@ function _tnLiveLabel(lo){if(!lo)return '—';var sets=Array.isArray(lo.sets)?lo
 function _tnLiveIdSig(){var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];return live.filter(function(l){return l&&l.is_live===true;}).map(function(l){return String(l.id);}).sort().join(',');}
 function buildUnifiedTennis(vb){
   var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];
-  var liveIdx=new Map();
-  for(var i=0;i<live.length;i++){var lo=live[i];if(lo&&lo.player1&&lo.player2)liveIdx.set(_tnJoinKey(lo),lo);}
+  var liveIdx=new Map();      // clé paire exacte
+  var liveIdxLast=new Map();  // fallback paire nom de famille
+  for(var i=0;i<live.length;i++){var lo=live[i];if(lo&&lo.player1&&lo.player2){liveIdx.set(_tnPairKey(lo),lo);liveIdxLast.set(_tnPairKeyLast(lo),lo);}}
   var used=new Set();
   var base=(Array.isArray(vb)?vb:[]).map(function(m){
-    var k=_tnJoinKey(m);var lo=liveIdx.get(k);
+    var k=_tnPairKey(m);var lo=liveIdx.get(k);
+    if(!lo){lo=liveIdxLast.get(_tnPairKeyLast(m));if(lo)k=_tnPairKey(lo);}
     if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;}else{m._live=null;m._isLive=false;}
     return m;
   });
