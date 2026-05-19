@@ -16216,10 +16216,9 @@ function _lsNormEvent(ev) {
       p2: ev.Tr2 != null ? parseInt(ev.Tr2, 10) : null,
     },
     sets: _lsSets(ev),
-    // Score de point live (15/30/40/AD) si exposé pendant le jeu en cours.
-    point_score: (ev.Tr1PS != null || ev.Tr2PS != null)
-      ? { p1: ev.Tr1PS != null ? String(ev.Tr1PS) : null, p2: ev.Tr2PS != null ? String(ev.Tr2PS) : null }
-      : null,
+    // NOTE: LiveScore tennis API n'expose PAS le score de point (15/30/40/AD),
+    // ni le serveur, ni le point-par-point — vérifié sur matchs Int./live.
+    // Pour le point-par-point + serve position → source aiscore (déjà intégrée).
   };
 }
 
