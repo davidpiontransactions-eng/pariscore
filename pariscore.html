@@ -8448,7 +8448,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Compétition</span>
-        <select id="tennis-vb-comp" class="tvb-select" onchange="window._tennisVbFilters.comp=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])"><option value="ALL">Toutes</option></select>
+        <select id="tennis-vb-comp" class="tvb-select" style="display:none;" onchange="tncFromLegacy(this.value)"><option value="ALL">Toutes</option></select>
+        <div id="tnc-ms" class="tnc-ms">
+          <button type="button" id="tnc-ms-btn" class="tvb-select tnc-ms-btn" aria-haspopup="true" aria-expanded="false" onclick="tncToggle(event)"><span id="tnc-ms-lbl">Toutes</span><span class="tnc-ms-cv">▾</span></button>
+          <div id="tnc-ms-pop" class="tnc-ms-pop" role="listbox" aria-multiselectable="true">
+            <div class="tnc-ms-bar">
+              <input type="text" id="tnc-ms-q" class="tnc-ms-q" placeholder="Filtrer un tournoi…" autocomplete="off" spellcheck="false" oninput="tncFilter(this.value)" onclick="event.stopPropagation()">
+              <button type="button" class="tnc-ms-a" onclick="tncAll(true)">Tout</button>
+              <button type="button" class="tnc-ms-a" onclick="tncAll(false)">Aucun</button>
+            </div>
+            <div id="tnc-ms-list" class="tnc-ms-list"></div>
+          </div>
+        </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Trier</span>
@@ -9196,6 +9207,23 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tennis-vb-filters .tvb-search:focus { outline:none; border-color:var(--accent); width:240px; box-shadow:0 0 0 3px var(--accent-bg), var(--card-shadow); }
   .tennis-vb-filters .tvb-search-clear { position:absolute; right:6px; top:50%; transform:translateY(-50%); width:16px; height:16px; padding:0; border:none; border-radius:50%; background:transparent; color:var(--text3,#5a6068); font-size:10px; font-weight:800; line-height:16px; cursor:pointer; transition:color 120ms ease, background 120ms ease; }
   .tennis-vb-filters .tvb-search-clear:hover { color:#fff; background:var(--red,#ff4d4d); }
+  .tennis-vb-filters .tnc-ms { position:relative; display:inline-block; }
+  .tennis-vb-filters .tnc-ms-btn { display:inline-flex; align-items:center; gap:8px; max-width:260px; }
+  .tennis-vb-filters .tnc-ms-btn #tnc-ms-lbl, .tennis-vb-filters .tnc-ms-btn span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:210px; }
+  .tennis-vb-filters .tnc-ms-cv { margin-left:auto; color:var(--text3,#5a6068); font-size:10px; }
+  .tennis-vb-filters .tnc-ms-pop { display:none; position:absolute; z-index:60; top:calc(100% + 6px); left:0; width:280px; max-width:78vw; background:var(--bg2); border:1px solid var(--border2); border-radius:11px; box-shadow:0 12px 32px rgba(0,0,0,.28); padding:10px; }
+  .tennis-vb-filters .tnc-ms-pop.open { display:block; }
+  .tennis-vb-filters .tnc-ms-bar { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
+  .tennis-vb-filters .tnc-ms-q { flex:1; min-width:0; background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:8px; padding:6px 9px; font-family:var(--font-mono); font-size:11px; }
+  .tennis-vb-filters .tnc-ms-q:focus { outline:none; border-color:var(--accent); }
+  .tennis-vb-filters .tnc-ms-a { background:var(--bg3); color:var(--text2,#8d9399); border:1px solid var(--border2); border-radius:8px; padding:6px 8px; font-family:var(--font-mono); font-size:10px; font-weight:700; cursor:pointer; }
+  .tennis-vb-filters .tnc-ms-a:hover { border-color:var(--accent); color:var(--text); }
+  .tennis-vb-filters .tnc-ms-list { max-height:280px; overflow-y:auto; display:flex; flex-direction:column; }
+  .tennis-vb-filters .tnc-ms-it { display:flex; align-items:center; gap:8px; padding:6px 6px; border-radius:7px; font-family:var(--font-mono); font-size:12px; color:var(--text); cursor:pointer; }
+  .tennis-vb-filters .tnc-ms-it:hover { background:var(--bg3); }
+  .tennis-vb-filters .tnc-ms-it input { accent-color:var(--accent); width:14px; height:14px; cursor:pointer; }
+  .tennis-vb-filters .tnc-ms-it span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tennis-vb-filters .tnc-ms-empty { padding:14px 6px; text-align:center; color:var(--text3,#5a6068); font-family:var(--font-mono); font-size:11px; }
   .tennis-vb-filters label { font-weight:600; color:var(--text2); }
   .tennis-vb-filters label input[type=checkbox] { accent-color:var(--accent); width:14px; height:14px; }
   /* ── Partie B : tableau theme-aware 3D (header sticky + variantes thème) ── */
@@ -11011,6 +11039,80 @@ window._tennisVbLastFetch = [];
 window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time', q: '' };
 let _tennisVbTimer = null;
 
+// ── Filtre Compétition multi-sélection (tennis) ──────────────────────────────
+// _tennisCompSel = tableau de noms de tournois sélectionnés. Vide = "Toutes".
+// f.comp reste compat : 'ALL' si vide, sinon tableau (filtre array-aware).
+window._tennisCompSel = window._tennisCompSel || [];
+window.__tnCompNames = window.__tnCompNames || [];
+function _tncNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function tncSync() {
+  const sel = Array.isArray(window._tennisCompSel) ? window._tennisCompSel : [];
+  window._tennisVbFilters = window._tennisVbFilters || {};
+  window._tennisVbFilters.comp = sel.length ? sel.slice() : 'ALL';
+  const lbl = document.getElementById('tnc-ms-lbl');
+  if (lbl) lbl.textContent = sel.length === 0 ? 'Toutes' : (sel.length === 1 ? sel[0] : sel.length + ' tournois');
+  const hidden = document.getElementById('tennis-vb-comp');
+  if (hidden) { const v = sel.length === 1 ? sel[0] : 'ALL'; if ([...(hidden.options||[])].some(o => o.value === v)) hidden.value = v; }
+  renderTennisValueBets(window._tennisVbLastFetch || []);
+}
+function tncRenderList(filterTxt) {
+  const wrap = document.getElementById('tnc-ms-list');
+  if (!wrap) return;
+  const names = Array.isArray(window.__tnCompNames) ? window.__tnCompNames : [];
+  const sel = new Set(Array.isArray(window._tennisCompSel) ? window._tennisCompSel : []);
+  const q = _tncNorm(filterTxt);
+  const rows = names.filter(n => !q || _tncNorm(n).includes(q)).map(n => {
+    const c = sel.has(n) ? 'checked' : '';
+    const safe = String(n).replace(/"/g, '&quot;');
+    return `<label class="tnc-ms-it"><input type="checkbox" ${c} value="${safe}" onchange="tncCheck(this)"><span>${_escTennis(n)}</span></label>`;
+  }).join('');
+  wrap.innerHTML = rows || '<div class="tnc-ms-empty">Aucun tournoi</div>';
+}
+function tncCheck(cb) {
+  const n = cb.value;
+  let sel = Array.isArray(window._tennisCompSel) ? window._tennisCompSel.slice() : [];
+  if (cb.checked) { if (!sel.includes(n)) sel.push(n); } else { sel = sel.filter(x => x !== n); }
+  window._tennisCompSel = sel;
+  tncSync();
+}
+function tncAll(on) {
+  window._tennisCompSel = on ? (Array.isArray(window.__tnCompNames) ? window.__tnCompNames.slice() : []) : [];
+  tncRenderList(document.getElementById('tnc-ms-q') ? document.getElementById('tnc-ms-q').value : '');
+  tncSync();
+}
+function tncFilter(v) { tncRenderList(v); }
+function tncOutside(ev) {
+  const w = document.getElementById('tnc-ms');
+  if (w && !w.contains(ev.target)) {
+    const pop = document.getElementById('tnc-ms-pop');
+    if (pop) pop.classList.remove('open');
+    const btn = document.getElementById('tnc-ms-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('mousedown', tncOutside, true);
+  }
+}
+function tncToggle(e) {
+  if (e) e.stopPropagation();
+  const pop = document.getElementById('tnc-ms-pop');
+  const btn = document.getElementById('tnc-ms-btn');
+  if (!pop) return;
+  const open = pop.classList.toggle('open');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    tncRenderList('');
+    const q = document.getElementById('tnc-ms-q');
+    if (q) { q.value = ''; setTimeout(() => q.focus(), 30); }
+    document.addEventListener('mousedown', tncOutside, true);
+  } else {
+    document.removeEventListener('mousedown', tncOutside, true);
+  }
+}
+// Pont legacy : <select> caché (preset mobile / clone strategy) → sélection mono.
+function tncFromLegacy(v) {
+  window._tennisCompSel = (!v || v === 'ALL') ? [] : [v];
+  tncSync();
+}
+
 function applyTennisFilter(btnEl) {
   const filterName = btnEl.dataset.filter;
   const value = btnEl.dataset.value;
@@ -11846,15 +11948,28 @@ function renderTennisValueBets(rawMatches) {
 
   // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
   const _compSel = document.getElementById('tennis-vb-comp');
-  if (_compSel) {
+  {
     const _tnStr = t => (t && typeof t === 'object') ? (t.name || t.short_name || '') : String(t || '');
     const names = [...new Set(matches.map(x => _tnStr(x && x.tournament)).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr'));
+    window.__tnCompNames = names;
     const sig = names.join('|');
-    if (_compSel.dataset.sig !== sig) {
+    if (_compSel && _compSel.dataset.sig !== sig) {
       _compSel.innerHTML = '<option value="ALL">Toutes</option>' + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
       _compSel.dataset.sig = sig;
     }
-    _compSel.value = (f.comp && names.includes(f.comp)) ? f.comp : 'ALL';
+    // Purge sélection périmée + recalcule f.comp/label SANS re-render (anti-récursion).
+    if (!Array.isArray(window._tennisCompSel)) window._tennisCompSel = [];
+    const _keep = window._tennisCompSel.filter(n => names.includes(n));
+    if (_keep.length !== window._tennisCompSel.length) window._tennisCompSel = _keep;
+    const _sel = window._tennisCompSel;
+    window._tennisVbFilters = window._tennisVbFilters || {};
+    window._tennisVbFilters.comp = _sel.length ? _sel.slice() : 'ALL';
+    f.comp = window._tennisVbFilters.comp;
+    const _lbl = document.getElementById('tnc-ms-lbl');
+    if (_lbl) _lbl.textContent = _sel.length === 0 ? 'Toutes' : (_sel.length === 1 ? _sel[0] : _sel.length + ' tournois');
+    if (_compSel) { const _v = _sel.length === 1 ? _sel[0] : 'ALL'; if ([...(_compSel.options||[])].some(o => o.value === _v)) _compSel.value = _v; }
+    const _pop = document.getElementById('tnc-ms-pop');
+    if (_pop && _pop.classList.contains('open')) tncRenderList(document.getElementById('tnc-ms-q') ? document.getElementById('tnc-ms-q').value : '');
   }
 
   // Recherche texte : normalise (minuscule + sans accents), tous les termes (AND).
@@ -11873,7 +11988,11 @@ function renderTennisValueBets(rawMatches) {
     if (f.tour !== 'ALL' && String(m.tour || '').toUpperCase() !== f.tour) return false;
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
     if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
-    if (f.comp && f.comp !== 'ALL' && String(m.tournament || '') !== f.comp) return false;
+    if (f.comp && f.comp !== 'ALL') {
+      const _ct = (m.tournament && typeof m.tournament === 'object') ? (m.tournament.name || m.tournament.short_name || '') : String(m.tournament || '');
+      if (Array.isArray(f.comp)) { if (!f.comp.includes(_ct)) return false; }
+      else if (_ct !== f.comp) return false;
+    }
     if (liveOnly && !_tnActuallyLive(m)) return false;
     if (eloOnly && !(m.predictions && m.predictions.elo)) return false;
     if (positiveEv) {
