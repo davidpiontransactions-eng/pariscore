@@ -10648,6 +10648,19 @@ let matchesRetryTimer = null;   // retry auto si /api/v1/matches échoue
 // ─── PAGE ROUTER ─────────────────────────────────────────────────────────────
 function showPage(pageId, linkEl) {
   document.body.dataset.page = pageId;
+  // Flag user-navigated : empêche DCL handler de re-router vers accueil après
+  // un confirmStrategy rapide (race ParisScorebis-amc Fix A).
+  try { sessionStorage.setItem('ps_user_navigated', '1'); } catch (e) {}
+  // Anti hub stuck : force fermeture sport-hub + strategy-setup à chaque nav
+  // hors flow d'init mobile (ParisScorebis-amc Fix D).
+  try {
+    if (pageId !== 'accueil') {
+      const _h = document.getElementById('sport-hub');
+      const _s = document.getElementById('strategy-setup');
+      if (_h) _h.style.display = 'none';
+      if (_s) { _s.style.display = 'none'; _s.dataset.confirming = ''; }
+    }
+  } catch (e) {}
   // Stop tennis poll quand on quitte l'onglet
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
@@ -10889,6 +10902,11 @@ function confirmStrategy() {
   if (!setup) { go(); return; }
   if (setup.dataset.confirming === '1') return;
   setup.dataset.confirming = '1';
+  // Fix F ParisScorebis-amc : si le drawer Plus était ouvert avant le flow
+  // hub→setup (tap erratique), le fermer avant la transition. Sinon
+  // bnSetActive('__more') reste actif → bottom-nav PLUS souligné rouge même
+  // après showPage('matchs') propre.
+  try { if (typeof bnCloseMore === 'function') bnCloseMore(); } catch (e) {}
   setup.classList.add('hub-exit');
   setTimeout(go, 320);
 }
@@ -21809,6 +21827,24 @@ async function apiFetch(url, opts = {}) {
     openAuthModal('login');
     throw Object.assign(new Error('AUTH_REQUIRED'), { status: 401 });
   }
+  // Fix C ParisScorebis-amc : handle 403 PLAN_REQUIRED / FREEMIUM_VIEW_QUOTA
+  // (sinon caller swallow → page render vide → perception « page sans nom »).
+  // On retourne `res` au caller (lecture du body possible) MAIS on log + on
+  // throw une erreur typée pour permettre catch ciblé. Caller peut faire
+  // `await apiFetch(...).catch(e => { if (e.code === 'PLAN_REQUIRED') {…} })`.
+  if (res.status === 403) {
+    try {
+      const j = await res.clone().json().catch(() => ({}));
+      const code = j && j.code;
+      if (code === 'PLAN_REQUIRED' || code === 'FREEMIUM_VIEW_QUOTA' ||
+          code === 'PRO_REQUIRED' || code === 'TENNIS_PRO_REQUIRED') {
+        try { console.warn('[apiFetch:403]', url, 'code=', code); } catch (e) {}
+        // On laisse le caller décider du rendu (loadMatches gère
+        // FREEMIUM_VIEW_QUOTA via res.status check). On ne throw pas pour
+        // éviter de casser les callers existants qui inspectent res.status.
+      }
+    } catch (e) {}
+  }
   return res;
 }
 
@@ -22318,7 +22354,15 @@ function renderLeagueHub(data) {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   updateNavAuthState();
-  showPage('accueil', document.querySelector('[data-page="accueil"]'));
+  // Race guard (ParisScorebis-amc Fix A) : si user a tap "Appliquer" pendant
+  // que le parse 26500 lignes complète, son showPage('matchs') a déjà posé le
+  // flag ps_user_navigated. On NE le re-route PAS vers accueil — sinon écran
+  // accueil + bottom-nav PLUS actif + toggle Nuit (cf. capture bug bd-6cv).
+  let _navFlag = null;
+  try { _navFlag = sessionStorage.getItem('ps_user_navigated'); } catch (e) {}
+  if (!_navFlag) {
+    showPage('accueil', document.querySelector('[data-page="accueil"]'));
+  }
   initDayFilters();
   initLeagueFilters();
   buildFilterDropdowns();
@@ -24569,6 +24613,10 @@ function psPageBlocked(pageId) {
 }
 
 function renderLockedPage(pageId, block) {
+  // Defensive (ParisScorebis-amc Fix B) : showPage set déjà dataset.page mais
+  // si renderLockedPage est appelé indépendamment, garder body cohérent — sinon
+  // bottom-nav wrap utilise pageId obsolète et active __more au lieu du sport.
+  document.body.dataset.page = pageId;
   document.querySelectorAll('div[data-page]').forEach(el => el.style.display = 'none');
   let host = document.getElementById('page-locked');
   if (!host) {
