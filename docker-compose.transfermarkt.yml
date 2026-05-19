@@ -1,0 +1,27 @@
+# Sidecar Transfermarkt (Option A — felipeall/transfermarkt-api, MIT)
+# Données « la bible » Transfermarkt : profil / valeur marchande / transferts
+# confirmés / blessures joueur. PariScore (Node) l'appelle en HTTP clé-zéro
+# via env TRANSFERMARKT_API_URL (zero-dep npm du cœur préservé).
+#
+# Prérequis (1x) :  git clone https://github.com/felipeall/transfermarkt-api.git
+# Lancement :   docker compose -f docker-compose.transfermarkt.yml up -d --build
+# Test :        curl http://127.0.0.1:8000/players/28003/transfers
+# PariScore :   export TRANSFERMARKT_API_URL=http://127.0.0.1:8000
+#
+# ⚠ Pas d'endpoint « rumeurs » côté felipeall (transferts CONFIRMÉS + valeurs
+#   seulement). Rumeurs = follow-up bd (route custom /geruechte ou RapidAPI).
+services:
+  transfermarkt-api:
+    build: ./transfermarkt-api          # repo felipeall cloné à côté
+    container_name: pariscore-transfermarkt
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"   # bind localhost only — pas exposé publiquement
+    environment:
+      RATE_LIMITING_ENABLE: "true"
+      RATE_LIMITING_FREQUENCY: "2/3 seconds"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
