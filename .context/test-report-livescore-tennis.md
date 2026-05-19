@@ -38,8 +38,8 @@ server.js module (natif httpsGet, zero-dep) + 3 routes Pro tennis :
 `?date=abc` → `replace(/\D/g,'')` → "" → branche défaut → 200 (mauvaise donnée masquée). Fix : distinguer param absent (→ aujourd'hui) vs param présent invalide (→ 400). Vérifié : `date=abc`→400, `date=123`→400, absent→200, `date=20260519`→200.
 
 ## ⚠️ Avertissements (non bloquants)
-### W1 — Point-by-point non confirmé
-Aucun match live à l'heure du test (`live/tennis` Stages vide 02:05 UTC). Le payload `scoreboard` d'un match NS ne porte ni point_score ni pbp. Mapping `point_score` (Tr1PS/Tr2PS) spéculatif — à valider sur match live réel. PBP fin de point probablement absent de cette API (LiveScore expose sets/jeux, pas la séquence point-par-point comme aiscore).
+### W1 — Point-by-point ABSENT de l'API (constat définitif, RÉSOLU)
+Re-test 02:11 UTC sur match en cours `Int.` Palan vs Isomura (Tr1=1, S1 6-4, S2 2-1) + endpoint `scoreboard` : **aucun champ point-score / serveur / pbp** (`Tr1PS`/`Scp`/`Serv` inexistants, même sur match interrompu en cours). LiveScore tennis API expose UNIQUEMENT sets gagnés + jeux par set + statut. Le mapping spéculatif `point_score` (Tr1PS/Tr2PS) a été **supprimé** (dead code, fausse capacité). Pour point-par-point + serve position → source **aiscore** (déjà intégrée, commit `9719361`). Pas une limitation bloquante : LiveScore = live score sets/jeux propre ; aiscore = granularité point. Complémentaires.
 ### W2 — Champ `country` = slug compétition
 `stage.country` mappé sur `CnmT` (translit nom compétition, ex "french-open"), pas un vrai code pays. Le vrai pays joueur est dans `scoreboard` `T{n}[0].CoNm/CoId` (exposé par route match, pas par day). Cosmétique.
 ### W3 — Statuts live non exhaustifs
