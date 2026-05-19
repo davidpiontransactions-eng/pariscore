@@ -8457,6 +8457,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <option value="chrono">📅 Chronologique ↑</option>
           <option value="ev">📈 Value EV+ ↓</option>
           <option value="prob">🎯 Proba match ↓</option>
+          <option value="powerscore">PowerScore ↓ (col. 7, meilleur → moins bon)</option>
           <option value="set1">💥 Gain Set 1 ↓</option>
           <option value="elo">⭐ Elo P1 ↓</option>
         </select>
@@ -11703,6 +11704,18 @@ function renderTennisValueBets(rawMatches) {
         const pa = a.predictions?.blended?.p1 ?? a.predictions?.elo?.p1 ?? 0;
         const pb = b.predictions?.blended?.p1 ?? b.predictions?.elo?.p1 ?? 0;
         return pb - pa;
+      }
+      case 'powerscore': {
+        // Colonne 7 — meilleur PowerScore au moins bon. Score match = max
+        // des PowerScore J1/J2 (le joueur le plus fort porte le match).
+        // PS absent → -1 (renvoyé en bas de liste).
+        const _ps = m => {
+          const a1 = m.player1 && m.player1.powerscore;
+          const a2 = m.player2 && m.player2.powerscore;
+          const v = Math.max(a1 == null ? -1 : a1, a2 == null ? -1 : a2);
+          return Number.isFinite(v) ? v : -1;
+        };
+        return _ps(b) - _ps(a);
       }
       case 'set1':
         return (b.set_model?.set1?.p1_pct ?? -1) - (a.set_model?.set1?.p1_pct ?? -1);
