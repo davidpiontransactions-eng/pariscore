@@ -12261,9 +12261,9 @@ async function tickTennisValueBets() {
       if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
         tb.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</td></tr>';
       }
-      if (window._tennisVbBuildRetries <= 15) {
+      if (window._tennisVbBuildRetries <= 30) {
         if (statusEl) statusEl.textContent = `⏳ Préparation… (${window._tennisVbBuildRetries})`;
-        setTimeout(tickTennisValueBets, 6000);
+        setTimeout(tickTennisValueBets, 2500);
       } else if (statusEl) {
         statusEl.textContent = 'Build trop long — réessaie plus tard';
       }
@@ -12281,13 +12281,13 @@ async function tickTennisValueBets() {
     console.warn('[TennisVB] fetch error:', e.message);
     // Ne PAS rester bloqué sur "Erreur réseau" : retry borné automatique.
     window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
-    if (window._tennisVbBuildRetries <= 15) {
+    if (window._tennisVbBuildRetries <= 30) {
       if (statusEl) statusEl.textContent = `Reconnexion… (${window._tennisVbBuildRetries})`;
       const tb = document.getElementById('tennis-vb-tbody');
       if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
         tb.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</td></tr>';
       }
-      setTimeout(tickTennisValueBets, 6000);
+      setTimeout(tickTennisValueBets, 2500);
     } else {
       if (statusEl) statusEl.textContent = 'Erreur réseau';
       const tbody = document.getElementById('tennis-vb-tbody');
