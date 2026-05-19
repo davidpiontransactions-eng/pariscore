@@ -8309,6 +8309,70 @@ async function fetchBSDPrediction(eventId) {
   }
 }
 
+// Normalise une prédiction BSD brute vers le shape AF (fallback orphelin
+// API-Football). STRICT : si pas de 1X2 dérivable → null (jamais inventé).
+// Gère shape v2 documentée (markets.*) + fallbacks plats. _bsd_raw conservé.
+let _bsdPredShapeLogged = false;
+function normalizeBsdPrediction(raw, match) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (!_bsdPredShapeLogged) {
+    _bsdPredShapeLogged = true;
+    try { console.log('[BSD Pred] raw keys:', JSON.stringify(Object.keys(raw)).slice(0, 300)); } catch (_) {}
+  }
+  const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const pct = v => { const n = num(v); return n == null ? null : (n <= 1 ? Math.round(n * 1000) / 10 : Math.round(n * 10) / 10); };
+  const mk = raw.markets || raw;
+  const mr = mk.match_result || mk.matchResult || raw.probabilities || raw;
+  const ph = pct(mr.prob_home ?? mr.home ?? mr.home_win ?? raw.prob_home ?? raw.home_win);
+  const pd = pct(mr.prob_draw ?? mr.draw ?? raw.prob_draw ?? raw.draw);
+  const pa = pct(mr.prob_away ?? mr.away ?? mr.away_win ?? raw.prob_away ?? raw.away_win);
+  if (ph == null || pd == null || pa == null) return null;
+  const ou = mk.over_under || mk.overUnder || {};
+  const o25 = pct(ou.prob_over_25 ?? ou.over_25 ?? raw.prob_over_25);
+  const btts = pct((mk.btts && (mk.btts.prob_yes ?? mk.btts.yes)) ?? raw.btts_yes ?? raw.prob_btts);
+  const eg = mk.expected_goals || mk.expectedGoals || {};
+  const gh = num(eg.home ?? raw.xg_home ?? raw.expected_goals_home);
+  const ga = num(eg.away ?? raw.xg_away ?? raw.expected_goals_away);
+  const sc = (mk.score && (mk.score.most_likely ?? mk.score.mostLikely)) ?? raw.most_likely_score ?? null;
+  const conf = num((raw.model && raw.model.confidence) ?? raw.confidence);
+  const hn = (match && match.home_team) || 'Home';
+  const an = (match && match.away_team) || 'Away';
+  const top = Math.max(ph, pd, pa);
+  const advice = raw.advice
+    ?? (Array.isArray(raw.recommendations) ? (raw.recommendations[0] && raw.recommendations[0].market)
+        : (raw.recommendations && raw.recommendations.primary)) ?? null;
+  return {
+    winner_id: null,
+    winner_name: top === ph ? hn : (top === pa ? an : null),
+    winner_comment: conf != null ? `confiance ${conf}` : null,
+    win_or_draw: (ph + pd) >= (pa + pd),
+    under_over: o25 != null ? (o25 >= 50 ? 'Over 2.5' : 'Under 2.5') : null,
+    goals_home: gh,
+    goals_away: ga,
+    advice,
+    percent_home: ph,
+    percent_draw: pd,
+    percent_away: pa,
+    btts_yes: btts,
+    score_most_likely: typeof sc === 'string' ? sc : ((sc && sc.label) || null),
+    confidence: conf,
+    fetched_at: Date.now(),
+    source: 'bsd',
+    _bsd_raw: raw,
+  };
+}
+
+// Fallback prédiction BSD pour une route AF (lookup fixture → _bsd_event_id).
+async function fetchBsdPredictionNormalized(fixtureId) {
+  let match = db.matches.find(m => String(m.fixture_id) === String(fixtureId));
+  if (!match) match = db.matches.find(m => String(m._bsd_event_id) === String(fixtureId));
+  const eventId = match && match._bsd_event_id;
+  if (!eventId) return null;
+  const raw = await fetchBSDPrediction(eventId);
+  if (!raw) return null;
+  return normalizeBsdPrediction(raw, match);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  H2H — Head-to-Head matchups via API-Football
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -22368,10 +22432,16 @@ if (pathname === '/api/v1/rapidapi/dual-check') {
   if (m) {
     const fixtureId = parseInt(m[1], 10);
     if (!fixtureId || fixtureId < 1) return jsonResponse(res, 400, { error: 'fixtureId invalide' });
-    if (!API_FOOTBALL_KEY) return jsonResponse(res, 503, { error: 'API_FOOTBALL_KEY manquante' });
-    fetchAFPredictions(fixtureId)
-      .then(data => jsonResponse(res, data ? 200 : 404, data || { error: 'Aucune prédiction', fixtureId }))
-      .catch(e => jsonResponse(res, 500, { error: e.message }));
+    (async () => {
+      try {
+        // AF primaire si clé ; fallback BSD si vide/absent (orphelin AF couvert)
+        let data = API_FOOTBALL_KEY ? await fetchAFPredictions(fixtureId) : null;
+        if (!data) data = await fetchBsdPredictionNormalized(fixtureId);
+        return jsonResponse(res, data ? 200 : 404, data || { error: 'Aucune prédiction', fixtureId });
+      } catch (e) {
+        return jsonResponse(res, 500, { error: e.message });
+      }
+    })();
     return;
   }
 }
