@@ -19183,9 +19183,21 @@ if (pathname === '/api/v1/admin/change-password' && req.method === 'POST') {
 
 // ── AFFILIATION ROUTES ──────────────────────────────────────────────
 // GET /api/v1/affiliates — Liste des bookmakers affiliés actifs (public)
+// Fix E ParisScorebis-amc : wrap try/catch + 200 [] fallback. Sans cela, si
+// la query throw (colonne manquante post-migration, sqldb undefined race
+// init, …), le handler async ne `return` jamais → nginx attend → 504 Gateway
+// Timeout côté client. Cf. front bug bd-6cv « tv-channel + affiliates 504 ».
 if (pathname === '/api/v1/affiliates' && req.method === 'GET') {
-  const affiliates = sqldb.prepare('SELECT id, bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, priority FROM affiliates WHERE active = 1 ORDER BY priority DESC').all();
-  return jsonResponse(res, 200, affiliates);
+  try {
+    if (!sqldb) return jsonResponse(res, 503, { error: 'DB not ready', items: [] });
+    const affiliates = sqldb.prepare(
+      'SELECT id, bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, priority FROM affiliates WHERE active = 1 ORDER BY priority DESC'
+    ).all();
+    return jsonResponse(res, 200, affiliates);
+  } catch (e) {
+    console.error('[/api/v1/affiliates GET]', e.message);
+    return jsonResponse(res, 200, []);
+  }
 }
 
 // POST /api/v1/affiliates — Créer un affilié (admin)
