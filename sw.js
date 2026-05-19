@@ -1,6 +1,8 @@
 /* PariScore Service Worker — shell offline + bypass API/SSE.
    Bump CACHE version à chaque release frontend pour invalider. */
-const CACHE = 'pariscore-shell-v9';
+// v10 (2026-05-19) : invalide v9 — embarque fix mobile bug page blanche post
+// param filtres (commit 18e5616 + radar BSD Live WS 3f3cc41).
+const CACHE = 'pariscore-shell-v10';
 const SHELL = [
   '/',
   '/pariscore.html',
