@@ -2103,6 +2103,67 @@ async function bsdGetPlayerDetail(playerId) {
   }
 }
 
+// ─── PROTOTYPE BSD transferts (Adriano 2026-05-19) ──────────────────────────
+// /api/v2/players/{id}/transfers/ — transferts CONFIRMÉS natifs BSD (date,
+// club from/to, fee, type). Candidat au retrait du sidecar felipeall (volet
+// transferts). PROTOTYPE : additif, safe-fail, zéro consumer frontend, zéro
+// retrait felipeall. But = valider le shape réel (log brut 1×) avant
+// migration. Cache 24h (carrière peu volatile). Rumeurs NON couvertes
+// (cohérent décision DG SUNSET) — confirmés seulement.
+let _bsdTransfersShapeLogged = false;
+function _bsdNormTransfers(raw) {
+  // BSD peut renvoyer un tableau direct, {results:[]} ou {transfers:[]}.
+  const list = Array.isArray(raw) ? raw
+    : (raw && Array.isArray(raw.results)) ? raw.results
+    : (raw && Array.isArray(raw.transfers)) ? raw.transfers
+    : [];
+  const pick = (o, ...ks) => { for (const k of ks) if (o && o[k] != null) return o[k]; return null; };
+  const clubName = (c) => (c == null ? null : (typeof c === 'object' ? (c.name || c.short_name || c.title || null) : c));
+  return list.map(t => ({
+    date: pick(t, 'date', 'transfer_date', 'announced_at'),
+    season: pick(t, 'season', 'season_name'),
+    from_club: clubName(pick(t, 'from_club', 'club_from', 'origin', 'from')),
+    to_club: clubName(pick(t, 'to_club', 'club_to', 'destination', 'to')),
+    fee: pick(t, 'fee', 'transfer_fee', 'amount'),
+    type: pick(t, 'type', 'transfer_type', 'movement'),
+    _raw: t,
+  })).filter(x => x.from_club || x.to_club || x.date);
+}
+async function fetchBSDPlayerTransfers(playerId) {
+  if (!BSD_API_KEY) return null;
+  const pid = String(playerId || '').replace(/\D/g, '');
+  if (!pid) return null;
+  const ck = `bsd_transfers_${pid}`;
+  const cached = apiCacheGet(ck);
+  if (cached) return cached;
+  let r;
+  try {
+    r = await bsdFetch(`/players/${pid}/transfers/`);
+  } catch (e) {
+    console.warn('  [BSD Transfers] fetch error:', e.message);
+    return null;
+  }
+  if (!r || r.status !== 200 || !r.data) {
+    if (r && r.status === 404) return { player_id: pid, source: 'bsd', transfers: [], note: 'not_found' };
+    return null;
+  }
+  if (!_bsdTransfersShapeLogged) {
+    _bsdTransfersShapeLogged = true;
+    const sample = Array.isArray(r.data) ? r.data[0]
+      : (r.data.results && r.data.results[0]) || (r.data.transfers && r.data.transfers[0]) || r.data;
+    console.log(`  [BSD Transfers] shape (pid=${pid}) topKeys=${Object.keys(r.data).join(',') || 'array'} item=${sample ? JSON.stringify(sample).slice(0, 400) : 'n/a'}`);
+  }
+  const out = {
+    player_id: pid,
+    source: 'bsd',
+    via: '/api/v2/players/{id}/transfers/',
+    fetched_at: new Date().toISOString(),
+    transfers: _bsdNormTransfers(r.data),
+  };
+  apiCacheSet(ck, out, 'bsd_transfers', 24 * 3600 * 1000);
+  return out;
+}
+
 // -------------------------------------------------
 //  BSD: Fiche détaillée équipe
 // -------------------------------------------------
@@ -3065,6 +3126,28 @@ let sqldb;
 
 function initSQLite() {
   sqldb = new Database(SQLITE_FILE);
+  // Garde anti-corruption : un fichier SQLite malformé fait crash-looper le
+  // process au boot (kvGet/exec throw SQLITE_CORRUPT — non catchable car
+  // exécuté au require-time, avant les handlers anti-crash). On met le fichier
+  // corrompu en quarantaine (rename, jamais delete → .recover offline possible)
+  // et on repart sur une base saine : service dégradé mais UP > outage total.
+  let _dbCorrupt = false;
+  try {
+    const r = sqldb.pragma('quick_check');
+    if (!(Array.isArray(r) && r[0] && String(r[0].quick_check).toLowerCase() === 'ok')) _dbCorrupt = true;
+  } catch (_) { _dbCorrupt = true; }
+  if (_dbCorrupt) {
+    try { sqldb.close(); } catch (_) {}
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    for (const suf of ['', '-wal', '-shm']) {
+      try {
+        if (fs.existsSync(SQLITE_FILE + suf))
+          fs.renameSync(SQLITE_FILE + suf, `${SQLITE_FILE}.corrupt-${stamp}${suf}`);
+      } catch (_) {}
+    }
+    console.error(`\x1b[31m[SQLITE_CORRUPT] Base corrompue → quarantaine ${SQLITE_FILE}.corrupt-${stamp} . Base saine recréée. Récupération données : sqlite3 ${SQLITE_FILE}.corrupt-${stamp} ".recover" | sqlite3 recovered.db\x1b[0m`);
+    sqldb = new Database(SQLITE_FILE);
+  }
   sqldb.pragma('journal_mode = WAL');
   sqldb.pragma('synchronous = NORMAL');
   // Fn SQLite unaccent : strip diacritiques (á→a, é→e…) pour matcher les noms
@@ -3909,6 +3992,38 @@ function normName(name) {
   return (name || '').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Codes de club courants (pr\u00e9fixe/suffixe) retir\u00e9s pour la d\u00e9dup cross-source.
+// normName("ACF Fiorentina") = "acf fiorentina" \u2260 "fiorentina" \u2192 faux doublon
+// sans ce strip. NE PAS utiliser pour l'affichage (purement comparaison).
+const _CLUB_AFFIX = new Set([
+  'fc', 'afc', 'cf', 'cfc', 'fco', 'ac', 'acf', 'as', 'aas', 'ss', 'ssc', 'ssd',
+  'us', 'usl', 'sc', 'scf', 'sco', 'sd', 'cd', 'ca', 'rc', 'rcd', 'ud', 'fk',
+  'sk', 'nk', 'if', 'bk', 'bfc', 'bc', 'bsc', 'sv', 'vfb', 'vfl', 'vfr', 'tsg',
+  'hsv', 'ogc', 'rco', 'spvgg', 'al', 'club', 'calcio'
+]);
+function teamKey(name) {
+  const n = normName(name);
+  if (!n) return '';
+  const toks = n.split(' ').filter(w => !_CLUB_AFFIX.has(w));
+  const k = toks.join(' ').trim();
+  return k || n; // si tout retir\u00e9 (nom = code seul), garder le nom brut
+}
+// Rapprochement tol\u00e9rant aux codes de club, sans sur-fusionner les vrais
+// homonymes partiels (ex. "Manchester United" vs "Manchester City" \u2192 faux).
+function xsTeamMatch(a, b) {
+  const ka = teamKey(a), kb = teamKey(b);
+  if (!ka || !kb) return false;
+  if (ka === kb) return true;
+  const ta = ka.split(' '), tb = kb.split(' ');
+  const [shrt, lng] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+  // tous les tokens du court pr\u00e9sents dans le long, au mot pr\u00e8s, \u22641 token d'\u00e9cart
+  return lng.length - shrt.length <= 1 && shrt.every(w => lng.includes(w));
+}
+function xsSameMatch(exH, exA, exT, mH, mA, mT) {
+  return xsTeamMatch(exH, mH) && xsTeamMatch(exA, mA) &&
+    Math.abs(new Date(exT).getTime() - new Date(mT).getTime()) < 24 * 3600 * 1000;
 }
 
 // Distance de Levenshtein pour fuzzy matching robuste
@@ -9801,9 +9916,8 @@ async function fetchOdds(force = false, opts = {}) {
           let enriched = 0;
           for (const fdMatch of fdRaw) {
             const dup = allRawMatches.find(ex =>
-              normName(ex.home_team) === normName(fdMatch.home_team) &&
-              normName(ex.away_team) === normName(fdMatch.away_team) &&
-              Math.abs(new Date(ex.commence_time).getTime() - new Date(fdMatch.commence_time).getTime()) < 24 * 3600 * 1000
+              xsSameMatch(ex.home_team, ex.away_team, ex.commence_time,
+                fdMatch.home_team, fdMatch.away_team, fdMatch.commence_time)
             );
             if (dup) {
               if (!dup._fd_match_id && fdMatch._fd_match_id) {
@@ -9836,9 +9950,8 @@ async function fetchOdds(force = false, opts = {}) {
           let enriched = 0, added = 0;
           for (const em of espnRaw) {
             const dup = allRawMatches.find(ex =>
-              normName(ex.home_team) === normName(em.home_team) &&
-              normName(ex.away_team) === normName(em.away_team) &&
-              Math.abs(new Date(ex.commence_time).getTime() - new Date(em.commence_time).getTime()) < 24 * 3600 * 1000
+              xsSameMatch(ex.home_team, ex.away_team, ex.commence_time,
+                em.home_team, em.away_team, em.commence_time)
             );
             if (dup) {
               // Match déjà présent (BSD/Football-Data) sans cotes exploitables → injecter cotes ESPN
@@ -9877,9 +9990,8 @@ async function fetchOdds(force = false, opts = {}) {
         let added = 0;
         for (const ofMatch of ofRaw) {
           const dup = allRawMatches.some(ex =>
-            normName(ex.home_team) === normName(ofMatch.home_team) &&
-            normName(ex.away_team) === normName(ofMatch.away_team) &&
-            Math.abs(new Date(ex.commence_time).getTime() - new Date(ofMatch.commence_time).getTime()) < 24 * 3600 * 1000
+            xsSameMatch(ex.home_team, ex.away_team, ex.commence_time,
+              ofMatch.home_team, ofMatch.away_team, ofMatch.commence_time)
           );
           if (!dup) {
             allRawMatches.push(ofMatch);
@@ -11424,7 +11536,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/')) {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/')) {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -22184,6 +22296,28 @@ if (pathname.startsWith('/api/v1/transfermarkt/') && req.method === 'GET') {
     const msg = String(e.message || e);
     const code = /injoignable|introuvable|HTTP 5\d\d/.test(msg) ? 503 : 502;
     return jsonResponse(res, code, { error: 'transfermarkt_failed', message: msg });
+  }
+}
+// PROTOTYPE BSD transferts confirmés natifs (gate footPro). Accepte
+// /api/v1/bsd/transfers/<bsdPlayerId> OU ?id= OU ?name= (résolu via
+// bsdSearchPlayers). Safe-fail. Pas encore consommé par le frontend.
+if (pathname.startsWith('/api/v1/bsd/transfers/') && req.method === 'GET') {
+  let pid = decodeURIComponent(pathname.slice('/api/v1/bsd/transfers/'.length)).trim()
+    || String(query.id || '').trim();
+  const nm = query.name ? String(query.name).trim() : null;
+  try {
+    if ((!pid || !/^\d+$/.test(pid)) && nm) {
+      const sr = await bsdSearchPlayers(nm);
+      if (sr && sr.length && sr[0].id != null) pid = String(sr[0].id);
+    }
+    if (!pid || !/^\d+$/.test(pid)) {
+      return jsonResponse(res, 400, { error: 'bad_id', message: 'BSD player id numérique requis (path, ?id= ou ?name=)' });
+    }
+    const out = await fetchBSDPlayerTransfers(pid);
+    if (!out) return jsonResponse(res, 502, { error: 'bsd_transfers_failed', message: 'upstream BSD indisponible' });
+    return jsonResponse(res, 200, out);
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_transfers_failed', message: String(e.message || e) });
   }
 }
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
