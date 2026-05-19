@@ -16142,6 +16142,159 @@ async function getAiscoreMatch(matchId, slug) {
   return data;
 }
 
+// ─── LiveScore tennis (API publique JSON) ───────────────────────────────────
+// Source: prod-cdn-public-api.livescore.com — JSON public officiel.
+// Node `https` natif passe (pas de Cloudflare/JA3) → zero-dep préservé,
+// AUCUNE dépendance curl (contrairement à aiscore). Pas de token.
+// Endpoints :
+//  /v1/api/app/date/tennis/{YYYYMMDD}/0  → liste jour (Stages→Events)
+//  /v1/api/app/live/tennis/0             → live uniquement
+//  /v1/api/app/scoreboard/tennis/{Eid}   → détail match
+// Champs : Tr1/Tr2=sets gagnés, Tr{n}S{k}=jeux set k, Eps=statut,
+//          Esd=YYYYMMDDHHMMSS, T1/T2[0]={Nm,Abr,ID,CoNm,CoId}.
+const LIVESCORE_API = 'https://prod-cdn-public-api.livescore.com';
+const LS_DAY_TTL_MS = 5 * 60 * 1000;     // 5min
+const LS_LIVE_TTL_MS = 30 * 1000;        // 30s
+const LS_MATCH_TTL_MS = 30 * 1000;       // 30s
+const livescoreCache = new Map();
+
+function _lsLabelStatus(eps) {
+  const s = String(eps || '').trim();
+  const map = {
+    'NS': 'not_started', 'FT': 'finished', 'Int.': 'interrupted',
+    'Canc.': 'cancelled', 'Postp.': 'postponed', 'Ret.': 'retired',
+    'Walkover': 'walkover', 'Abn.': 'abandoned',
+  };
+  return map[s] || (s ? s.toLowerCase().replace(/\s+/g, '_') : null);
+}
+
+function _lsParseStart(esd) {
+  // 20260519080000 → 2026-05-19T08:00:00Z (LiveScore Esd = UTC)
+  const m = String(esd || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+  if (!m) return null;
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
+}
+
+function _lsPlayer(arr) {
+  const p = Array.isArray(arr) ? arr[0] : null;
+  if (!p) return null;
+  return {
+    id: p.ID != null ? String(p.ID) : null,
+    name: p.Nm || null,
+    abbr: p.Abr || null,
+    country: p.CoNm || null,
+    country_code: p.CoId || null,
+  };
+}
+
+// Sets : agrège Tr1S1..Tr1S5 / Tr2S1..Tr2S5 (+ tiebreak Tr{n}S{k}T si présent).
+function _lsSets(ev) {
+  const sets = [];
+  for (let k = 1; k <= 7; k++) {
+    const a = ev[`Tr1S${k}`], b = ev[`Tr2S${k}`];
+    if (a == null && b == null) continue;
+    sets.push({
+      set: k,
+      p1: a != null ? parseInt(a, 10) : null,
+      p2: b != null ? parseInt(b, 10) : null,
+      p1_tiebreak: ev[`Tr1S${k}T`] != null ? parseInt(ev[`Tr1S${k}T`], 10) : null,
+      p2_tiebreak: ev[`Tr2S${k}T`] != null ? parseInt(ev[`Tr2S${k}T`], 10) : null,
+    });
+  }
+  return sets;
+}
+
+function _lsNormEvent(ev) {
+  return {
+    id: ev.Eid != null ? String(ev.Eid) : null,
+    status: _lsLabelStatus(ev.Eps),
+    status_raw: ev.Eps || null,
+    start_time: _lsParseStart(ev.Esd),
+    players: { p1: _lsPlayer(ev.T1), p2: _lsPlayer(ev.T2) },
+    sets_won: {
+      p1: ev.Tr1 != null ? parseInt(ev.Tr1, 10) : null,
+      p2: ev.Tr2 != null ? parseInt(ev.Tr2, 10) : null,
+    },
+    sets: _lsSets(ev),
+    // Score de point live (15/30/40/AD) si exposé pendant le jeu en cours.
+    point_score: (ev.Tr1PS != null || ev.Tr2PS != null)
+      ? { p1: ev.Tr1PS != null ? String(ev.Tr1PS) : null, p2: ev.Tr2PS != null ? String(ev.Tr2PS) : null }
+      : null,
+  };
+}
+
+function _lsNormStages(json) {
+  const stages = (json && json.Stages) || [];
+  const out = [];
+  for (const st of stages) {
+    out.push({
+      stage_id: st.Sid != null ? String(st.Sid) : null,
+      competition: st.Cnm || null,
+      stage: st.Snm || null,
+      country: st.CnmT || st.Ccd || null,
+      events: (st.Events || []).map(_lsNormEvent),
+    });
+  }
+  return out;
+}
+
+async function _lsFetch(path) {
+  const res = await httpsGet(`${LIVESCORE_API}${path}`, {
+    'Accept': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (PariScore/2.0 +https://pariscore.fr)',
+  });
+  if (res.status !== 200) throw new Error(`livescore HTTP ${res.status} for ${path}`);
+  if (!res.data || typeof res.data !== 'object') {
+    throw new Error(`livescore réponse non-JSON pour ${path}`);
+  }
+  return res.data;
+}
+
+// scope: 'day' (date YYYYMMDD requis) | 'live'
+async function getLivescoreTennis(scope, date) {
+  const isLive = scope === 'live';
+  const ck = isLive ? 'ls_tennis_live' : `ls_tennis_day_${date}`;
+  const ttl = isLive ? LS_LIVE_TTL_MS : LS_DAY_TTL_MS;
+  const cached = livescoreCache.get(ck);
+  if (cached && Date.now() - cached.ts < ttl) return cached.data;
+  const path = isLive
+    ? '/v1/api/app/live/tennis/0?locale=en&MD=1'
+    : `/v1/api/app/date/tennis/${date}/0?locale=en&MD=1`;
+  const json = await _lsFetch(path);
+  const stages = _lsNormStages(json);
+  const data = {
+    source: 'livescore',
+    sport: 'tennis',
+    scope: isLive ? 'live' : 'day',
+    date: isLive ? null : date,
+    fetched_at: new Date().toISOString(),
+    stages_count: stages.length,
+    events_count: stages.reduce((n, s) => n + s.events.length, 0),
+    stages,
+  };
+  livescoreCache.set(ck, { ts: Date.now(), data });
+  return data;
+}
+
+async function getLivescoreTennisMatch(eid) {
+  const ck = `ls_tennis_match_${eid}`;
+  const cached = livescoreCache.get(ck);
+  if (cached && Date.now() - cached.ts < LS_MATCH_TTL_MS) return cached.data;
+  const json = await _lsFetch(`/v1/api/app/scoreboard/tennis/${eid}?locale=en`);
+  const ev = _lsNormEvent(json);
+  const data = {
+    source: 'livescore',
+    sport: 'tennis',
+    fetched_at: new Date().toISOString(),
+    venue: json.Venue ? { id: json.Venue.id || null, name: json.Venue.Vnm || null } : null,
+    competition: json.Stg ? (json.Stg.Cnm || null) : null,
+    stage: json.Stg ? (json.Stg.Snm || null) : null,
+    ...ev,
+  };
+  livescoreCache.set(ck, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── P0-4 — Résolution surface via calendrier Tennis Explorer ────────────────
 // BSD désactivé (arbitrage DG) → m.surface souvent null (fallback ESPN). On
 // indexe les tournois TE (ATP+WTA) par nom normalisé puis on mappe le nom de
@@ -20459,6 +20612,43 @@ if (pathname.startsWith('/api/v1/tennis/aiscore/match/') && req.method === 'GET'
     const msg = String(e.message || e);
     const code = /Cloudflare|HTTP 4|HTTP 5/.test(msg) ? 502 : 404;
     return jsonResponse(res, code, { error: 'aiscore_match_failed', message: msg });
+  }
+}
+if (pathname === '/api/v1/tennis/livescore/day' && req.method === 'GET') {
+  const dParam = query.date != null ? String(query.date).trim() : '';
+  let d;
+  if (dParam === '') {
+    const n = new Date();
+    d = `${n.getUTCFullYear()}${String(n.getUTCMonth()+1).padStart(2,'0')}${String(n.getUTCDate()).padStart(2,'0')}`;
+  } else if (/^\d{8}$/.test(dParam)) {
+    d = dParam;
+  } else {
+    return jsonResponse(res, 400, { error: 'bad_date', message: 'date=YYYYMMDD (8 chiffres) requis' });
+  }
+  try {
+    return jsonResponse(res, 200, await getLivescoreTennis('day', d));
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'livescore_day_failed', message: String(e.message || e) });
+  }
+}
+if (pathname === '/api/v1/tennis/livescore/live' && req.method === 'GET') {
+  try {
+    return jsonResponse(res, 200, await getLivescoreTennis('live'));
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'livescore_live_failed', message: String(e.message || e) });
+  }
+}
+if (pathname.startsWith('/api/v1/tennis/livescore/match/') && req.method === 'GET') {
+  const eid = decodeURIComponent(pathname.slice('/api/v1/tennis/livescore/match/'.length)).trim();
+  if (!eid || !/^\d+$/.test(eid)) {
+    return jsonResponse(res, 400, { error: 'bad_eid', message: 'Eid numérique requis' });
+  }
+  try {
+    return jsonResponse(res, 200, await getLivescoreTennisMatch(eid));
+  } catch (e) {
+    const msg = String(e.message || e);
+    const code = /HTTP 4|HTTP 5/.test(msg) ? 502 : 404;
+    return jsonResponse(res, code, { error: 'livescore_match_failed', message: msg });
   }
 }
 if (pathname === '/api/v1/tennis/rankings' && req.method === 'GET') {
