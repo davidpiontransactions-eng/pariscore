@@ -2,6 +2,20 @@
 
 ---
 
+## [v10.77] — 2026-05-19
+
+### 🔴 BREAKING (maîtrisé) — API-Football RETIRÉ (kill-switch)
+
+`API_FOOTBALL_KEY` forcée vide via `const AF_REMOVED = true` → **plus aucun appel `v3.football.api-sports.io`** (zéro quota dépassé). Méthode kill-switch à la source (pas suppression brute des ~23 call sites = diff massif/régression). Toutes les fns AF gardent déjà `if(!API_FOOTBALL_KEY) return null` → les fallbacks non-AF livrés v10.72→v10.76 (BSD/ESPN/felipeall + calc interne) prennent le relais automatiquement.
+
+- CDN clé-zéro `media.api-sports.io` (photos/logos) **NON concerné** — continue de fonctionner.
+- Réversible : `const AF_REMOVED = false` réactive l'env.
+- Vérifié : `node --check` OK, boot OK, **271 matchs chargés sans AF** (BSD/ESPN), log `[AF] API-Football RETIRÉ`, zéro SyntaxError/ReferenceError/TypeError.
+- Routes ex-AF sans fallback (`/api/v1/af/transfers`) → 503 gracieux (transferts désormais via felipeall `/api/v1/transfermarkt`).
+- Bilan couverture : 9/9 champs traités (fallback livré, ou N/A honnête tirs/cartons/penalties/formation/clean-sheets, ou sunset rumeurs).
+
+---
+
 ## [v10.76] — 2026-05-19
 
 ### Feature — Stats avancées équipe : fallback BSD standings (dernier orphelin AF)
