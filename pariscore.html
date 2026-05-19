@@ -10847,6 +10847,56 @@ function _tvbServeSpark(sm) {
   return '<div title="' + t + '" style="margin-top:3px;white-space:nowrap;">' + sq + tr + '</div>';
 }
 
+// ── LiveScore fallback (source /api/v1/tennis/livescore) ──────────────────────
+// Statuts non-actifs : pas "en cours". 'interrupted' = pause mais reste affiché.
+function _lsIsLive(statusRaw) {
+  const dead = ['NS', 'FT', 'Canc.', 'Postp.', 'Walkover', 'Abn.', 'Ret.'];
+  return !dead.includes(String(statusRaw || '').trim());
+}
+function _lsTourFromStage(stageTxt) {
+  const s = String(stageTxt || '').toLowerCase();
+  if (/women|wta|dames|féminin/.test(s)) return 'WTA';
+  if (/men|atp|messieurs|masculin/.test(s)) return 'ATP';
+  return '';
+}
+// LiveScore normalisé → forme attendue par renderTennisLive. id préfixé "ls:".
+function _lsMapEvents(data) {
+  const stages = (data && Array.isArray(data.stages)) ? data.stages : [];
+  const out = [];
+  for (const st of stages) {
+    for (const ev of (st.events || [])) {
+      if (!ev || !ev.id) continue;
+      const sets = (Array.isArray(ev.sets) ? ev.sets : []).map(s => ({ p1: s.p1, p2: s.p2 }));
+      out.push({
+        id: 'ls:' + ev.id,
+        _src: 'livescore',
+        tournament: st.competition || '—',
+        court: st.stage || '',
+        tour: _lsTourFromStage(st.stage),
+        discipline: '',
+        player1: { name: (ev.players && ev.players.p1 && ev.players.p1.name) || '—', flag: '' },
+        player2: { name: (ev.players && ev.players.p2 && ev.players.p2.name) || '—', flag: '' },
+        player1_sets: (ev.sets_won && ev.sets_won.p1 != null) ? ev.sets_won.p1 : 0,
+        player2_sets: (ev.sets_won && ev.sets_won.p2 != null) ? ev.sets_won.p2 : 0,
+        sets,
+        current_set_index: sets.length ? sets.length - 1 : 0,
+        current_point: '—',          // LiveScore n'expose pas le score de point
+        serving: 0,                   // ni le serveur
+        serve_momentum: null,
+        status: ev.status_raw || ev.status || '—',
+        is_live: _lsIsLive(ev.status_raw),
+      });
+    }
+  }
+  // live d'abord, puis par heure de début
+  return out.sort((a, b) => (b.is_live - a.is_live));
+}
+async function _fetchLivescoreFallback() {
+  const r = await apiFetch('/api/v1/tennis/livescore/day', { headers: { 'Accept': 'application/json' } });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return _lsMapEvents(await r.json());
+}
+
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
@@ -10871,7 +10921,10 @@ function renderTennisLive(matches) {
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';
     const safeId = _escTennis(String(m.id ?? ''));
-    return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" onclick="openTennisDetail('${safeId}')" title="Voir détail BSD (point-par-point, serve stats, ML pred)">
+    const rowTitle = m._src === 'livescore'
+      ? 'Voir détail LiveScore (sets et jeux par set)'
+      : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
+    return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
       <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}</td>
       <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
       <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}</td>
@@ -10891,12 +10944,31 @@ async function tickTennisLive() {
     const r = await fetch('/tennis/api/v2/matches/live/', { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
-    window._tennisLastFetch = Array.isArray(data) ? data : [];
+    let list = Array.isArray(data) ? data : [];
+    let srcLabel = 'BSD';
+    if (!list.length) {
+      // BSD ne renvoie aucun match → bascule source LiveScore
+      try {
+        const ls = await _fetchLivescoreFallback();
+        if (ls.length) { list = ls; srcLabel = 'LiveScore'; }
+      } catch (lsErr) { console.warn('[Tennis] livescore fallback:', lsErr.message); }
+    }
+    window._tennisLastFetch = list;
     renderTennisLive(window._tennisLastFetch);
     try { patchTennisLive(); } catch (_) {}/*TN_UNIFY_TICK*/
-    if (statusEl) statusEl.textContent = `${window._tennisLastFetch.length} match(s) · ${new Date().toLocaleTimeString('fr-FR')}`;
+    if (statusEl) statusEl.textContent = `${list.length} match(s) · ${srcLabel} · ${new Date().toLocaleTimeString('fr-FR')}`;
   } catch (e) {
     console.warn('[Tennis] fetch error:', e.message);
+    // BSD KO → tente LiveScore avant d'afficher une erreur
+    try {
+      const ls = await _fetchLivescoreFallback();
+      if (ls.length) {
+        window._tennisLastFetch = ls;
+        renderTennisLive(ls);
+        if (statusEl) statusEl.textContent = `${ls.length} match(s) · LiveScore · ${new Date().toLocaleTimeString('fr-FR')}`;
+        return;
+      }
+    } catch (lsErr) { console.warn('[Tennis] livescore fallback (catch):', lsErr.message); }
     if (statusEl) statusEl.textContent = 'Erreur réseau';
     const tbody = document.getElementById('tennis-live-tbody');
     if (tbody && !window._tennisLastFetch.length) {
@@ -11506,7 +11578,19 @@ function _tvbTotConv(tc) {
 function _tnNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
 function _tnTournStr(t){return (t&&typeof t==='object')?(t.name||t.short_name||''):String(t||'');}
 function _tnJoinKey(m){return _tnNorm(m&&m.player1&&m.player1.name)+'|'+_tnNorm(m&&m.player2&&m.player2.name)+'|'+_tnNorm(_tnTournStr(m&&m.tournament));}
-function _tnRank(m){if(m._isLive)return 0;var x=String(m.status||'').toUpperCase();if(x==='TERMINÉ'||x==='TERMINE'||x==='FINAL'||x==='FINISHED'||x==='POST')return 2;return 1;}
+// "Réellement live" : flag is_live insuffisant (ESPN/BSD marque state=in dès
+// l'échauffement / sur flux périmé → 0-0 statut vide). Exige du jeu effectif.
+function _tnActuallyLive(m){
+  if(!m||!(m._isLive||m.is_live))return false;
+  var lo=m._live; if(!lo||lo.is_live!==true)return false;
+  var sets=Array.isArray(lo.sets)?lo.sets:[];
+  var played=sets.some(function(s){return s&&((Number(s.p1)||0)+(Number(s.p2)||0))>0;});
+  var setsWon=((Number(lo.player1_sets)||0)+(Number(lo.player2_sets)||0))>0;
+  var cp=lo.current_point;
+  var hasPoint=cp!=null&&cp!==''&&!(typeof cp==='object'&&cp.p1==null&&cp.p2==null&&cp.player1==null&&cp.player2==null);
+  return played||setsWon||hasPoint;
+}
+function _tnRank(m){if(_tnActuallyLive(m))return 0;var x=String(m.status||'').toUpperCase();if(x==='TERMINÉ'||x==='TERMINE'||x==='FINAL'||x==='FINISHED'||x==='POST')return 2;return 1;}
 function _tnLiveLabel(lo){if(!lo)return '—';var sets=Array.isArray(lo.sets)?lo.sets:[];var idx=(typeof lo.current_set_index==='number')?lo.current_set_index:sets.length-1;var ls=sets[idx]||sets[sets.length-1]||{p1:0,p2:0};var setNo=((lo.player1_sets!=null?lo.player1_sets:0)+(lo.player2_sets!=null?lo.player2_sets:0))+1;return 'Set '+setNo+' · '+(ls.p1!=null?ls.p1:0)+'-'+(ls.p2!=null?ls.p2:0);}
 function _tnLiveIdSig(){var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];return live.filter(function(l){return l&&l.is_live===true;}).map(function(l){return String(l.id);}).sort().join(',');}
 function buildUnifiedTennis(vb){
@@ -11581,7 +11665,7 @@ function renderTennisValueBets(rawMatches) {
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
     if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
     if (f.comp && f.comp !== 'ALL' && String(m.tournament || '') !== f.comp) return false;
-    if (liveOnly && !(m._isLive || m.is_live)) return false;
+    if (liveOnly && !_tnActuallyLive(m)) return false;
     if (eloOnly && !(m.predictions && m.predictions.elo)) return false;
     if (positiveEv) {
       const ev = m.best_ev_model && m.best_ev_model.ev;
@@ -11703,7 +11787,7 @@ function renderTennisValueBets(rawMatches) {
     const _tnLiveId = m._live ? _escTennis(String(m._live.id || '')) : '';/*TN_UNIFY_ROW*/
     const _tnRowCls = m._isLive ? ' is-live' : '';
     return `<tr class="tennis-vb-row${_tnRowCls}" data-tn-row="${matchId}" ${onclick}>
-      <td class="tvb-dt-col"><div class="tvb-dtc-stack"><div class="tvb-dtc-top">${ctxDate}</div><div class="tvb-dtc-mid">${_tvbTourBadge(m.tour)}</div><div class="tvb-dtc-bot">${_tvbSurfaceBadge(m.surface)}</div>${m._isLive ? '<div class="tvb-dtc-live"><span class="tn-live-tag"><i></i>LIVE</span></div>' : ''}</div></td>
+      <td class="tvb-dt-col"><div class="tvb-dtc-stack"><div class="tvb-dtc-top">${ctxDate}</div><div class="tvb-dtc-mid">${_tvbTourBadge(m.tour)}</div><div class="tvb-dtc-bot">${_tvbSurfaceBadge(m.surface)}</div>${_tnActuallyLive(m) ? '<div class="tvb-dtc-live"><span class="tn-live-tag"><i></i>LIVE</span></div>' : ''}</div></td>
       <td>
         ${_tvbTrap(m.trap_bet)}
         <div><span class="tvb-pname${p1Fav}">${p1Flag}${p1Name}</span>${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}${_tvbPlayerAlerts(sm, 'p1')}</div>
@@ -12675,6 +12759,17 @@ async function openTennisDetail(matchId) {
   if (!modal || !body) return;
   modal.style.display = 'flex';
   body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">Chargement détail…</div>';
+  // Lignes LiveScore (id "ls:<eid>") → détail dédié, pas le détail BSD
+  if (_tennisDetailCurrentId.startsWith('ls:')) {
+    await _renderLivescoreDetail(_tennisDetailCurrentId.slice(3));
+    if (_tennisDetailInterval) clearInterval(_tennisDetailInterval);
+    _tennisDetailInterval = setInterval(() => {
+      if (_tennisDetailCurrentId && _tennisDetailCurrentId.startsWith('ls:')) {
+        _renderLivescoreDetail(_tennisDetailCurrentId.slice(3));
+      }
+    }, 30 * 1000);
+    return;
+  }
   await _fetchAndRenderTennisDetail(_tennisDetailCurrentId);
   if (_tennisDetailInterval) clearInterval(_tennisDetailInterval);
   _tennisDetailInterval = setInterval(() => {
@@ -12687,6 +12782,56 @@ function closeTennisDetail() {
   if (modal) modal.style.display = 'none';
   if (_tennisDetailInterval) { clearInterval(_tennisDetailInterval); _tennisDetailInterval = null; }
   _tennisDetailCurrentId = null;
+}
+
+async function _renderLivescoreDetail(eid) {
+  const body = document.getElementById('tennis-detail-body');
+  if (!body) return;
+  try {
+    const r = await apiFetch(`/api/v1/tennis/livescore/match/${encodeURIComponent(eid)}`, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const m = await r.json();
+    const p1 = (m.players && m.players.p1) || {};
+    const p2 = (m.players && m.players.p2) || {};
+    const sets = Array.isArray(m.sets) ? m.sets : [];
+    const cell = v => (v == null ? '–' : _escTennis(String(v)));
+    const setCols = sets.map(s => `<th style="padding:6px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--text3,#5a6068);">S${s.set}</th>`).join('');
+    const row = (name, side) => {
+      const cells = sets.map(s => {
+        const g = side === 1 ? s.p1 : s.p2;
+        const tb = side === 1 ? s.p1_tiebreak : s.p2_tiebreak;
+        return `<td style="padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:15px;color:var(--text,#e8eaed);">${cell(g)}${tb != null ? `<sup style="font-size:10px;color:var(--text3,#5a6068);">${cell(tb)}</sup>` : ''}</td>`;
+      }).join('');
+      const won = side === 1 ? (m.sets_won && m.sets_won.p1) : (m.sets_won && m.sets_won.p2);
+      return `<tr>
+        <td style="padding:8px 14px;font-family:'Instrument Sans',sans-serif;font-weight:600;color:var(--text,#e8eaed);">${cell(name)}</td>
+        <td style="padding:8px 12px;text-align:center;font-family:Syne,sans-serif;font-weight:800;font-size:18px;color:#E2001A;">${cell(won)}</td>
+        ${cells}
+      </tr>`;
+    };
+    const meta = [m.competition, m.stage, m.venue && m.venue.name].filter(Boolean).map(_escTennis).join(' · ');
+    body.innerHTML = `
+      <div style="padding:18px 20px;">
+        <div style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;color:var(--text,#e8eaed);">
+          ${_escTennis(p1.name || '—')} <span style="color:var(--text3,#5a6068);">vs</span> ${_escTennis(p2.name || '—')}
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text2,#8d9399);margin:6px 0 4px;">${meta || '—'}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:#E2001A;font-weight:600;">${_escTennis(m.status_raw || m.status || '—')}</div>
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;border:1px solid var(--bg4,#1e2328);">
+          <thead><tr style="background:var(--bg2,#111417);">
+            <th style="padding:6px 14px;text-align:left;font-family:'DM Mono',monospace;font-size:12px;color:var(--text3,#5a6068);">Joueur</th>
+            <th style="padding:6px 12px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--text3,#5a6068);">Sets</th>
+            ${setCols}
+          </tr></thead>
+          <tbody>${row(p1.name, 1)}${row(p2.name, 2)}</tbody>
+        </table>
+        <div style="margin-top:14px;font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--text3,#5a6068);line-height:1.5;">
+          Source LiveScore — sets et jeux par set. Le point-par-point n'est pas exposé par cette source.
+        </div>
+      </div>`;
+  } catch (e) {
+    body.innerHTML = `<div style="padding:40px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:13px;">Détail LiveScore indisponible (${_escTennis(e.message)}).</div>`;
+  }
 }
 
 async function _fetchAndRenderTennisDetail(matchId) {
