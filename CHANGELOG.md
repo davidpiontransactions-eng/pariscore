@@ -2,6 +2,21 @@
 
 ---
 
+## [v10.74] — 2026-05-19
+
+### Feature — Bio joueur + blessure 100% via Transfermarkt (felipeall sidecar)
+
+Champs orphelins API-Football « bio » et « blessure » couverts via le sidecar felipeall déjà déployé (v10.73) — zéro nouvelle API, zéro coût.
+
+- `tmResolvePlayerId(name,{club,age})` — résolveur nom → id Transfermarkt via `/players/search/{name}`, désambiguïsation club→âge→1er résultat, cache 24h.
+- `getTransfermarktBio(name,hints)` — id → `/profile` (full_name, birthdate, age, nationalité, taille, pied, position, photo) + `/injuries` (blessure en cours = `until_date` null/≥aujourd'hui + historique 5).
+- Câblé en 4e source dans `/api/v1/player` (après API-Football/BSD/TheSportsDB), ne remplit QUE les champs manquants + pose `injured`/`current_injury`/`injury_history`. Sidecar down → try/catch gracieux, bio reste partielle, zéro crash.
+- Couverture ~100 % des joueurs présents sur Transfermarkt (quasi-exhaustif foot pro). httpsGet natif → zero-dep cœur préservé.
+
+Vérifié : `node --check` OK, boot OK, route joueur OK, no-op gracieux sidecar absent.
+
+---
+
 ## [v10.73] — 2026-05-19
 
 ### Feature — Transferts : Option A felipeall/transfermarkt-api (sidecar self-host)

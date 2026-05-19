@@ -6690,6 +6690,65 @@ async function fetchTransfermarkt(kind, id, slug) {
   return data;
 }
 
+// Résolveur nom → id Transfermarkt (felipeall /players/search/{name}).
+// Désambiguïse via indices club puis âge ; fallback 1er résultat. Cache 24h.
+async function tmResolvePlayerId(name, hints = {}) {
+  const q = String(name || '').trim();
+  if (!q) return null;
+  const ck = `tm_search_${(normName ? normName(q) : q.toLowerCase())}`;
+  const cached = _tmCache.get(ck);
+  if (cached && Date.now() - cached.ts < TM_TTL_MS) return cached.data;
+  let res;
+  try {
+    res = await httpsGet(`${TM_API_URL}/players/search/${encodeURIComponent(q)}?page_number=1`, { Accept: 'application/json' });
+  } catch (e) { return null; }
+  const results = (res && res.status === 200 && res.data && Array.isArray(res.data.results)) ? res.data.results : [];
+  if (!results.length) { _tmCache.set(ck, { ts: Date.now(), data: null }); return null; }
+  const nClub = (hints.club && normName) ? normName(hints.club) : null;
+  let pick = null;
+  if (nClub) pick = results.find(r => r.club && r.club.name && normName(r.club.name) &&
+    (normName(r.club.name).includes(nClub) || nClub.includes(normName(r.club.name))));
+  if (!pick && hints.age) pick = results.find(r => r.age && Math.abs(r.age - hints.age) <= 1);
+  if (!pick) pick = results[0];
+  const id = (pick && pick.id) ? String(pick.id) : null;
+  _tmCache.set(ck, { ts: Date.now(), data: id });
+  return id;
+}
+
+// Bio + blessure 100% via Transfermarkt (felipeall sidecar). Orphelin
+// API-Football : profil (la bible) + blessure en cours (until_date null).
+async function getTransfermarktBio(name, hints = {}) {
+  const id = await tmResolvePlayerId(name, hints);
+  if (!id) return null;
+  let prof = null, inj = null;
+  try { prof = await fetchTransfermarkt('profile', id); } catch (_) {}
+  try { inj = await fetchTransfermarkt('injuries', id); } catch (_) {}
+  const p = (prof && prof.data) ? prof.data : null;
+  const out = { tm_id: id };
+  if (p) {
+    out.full_name = p.full_name || p.name || null;
+    out.birthdate = p.date_of_birth || null;
+    if (p.age != null) out.age = p.age;
+    else if (p.date_of_birth) {
+      const d = new Date(p.date_of_birth);
+      if (!isNaN(d.getTime())) out.age = Math.floor((Date.now() - d.getTime()) / 31557600000);
+    }
+    out.nationality = Array.isArray(p.citizenship) ? (p.citizenship[0] || null)
+      : (p.citizenship || (p.place_of_birth && p.place_of_birth.country) || null);
+    out.height = p.height || null;
+    out.foot = p.foot || null;
+    out.position = (p.position && (p.position.main || (typeof p.position === 'string' ? p.position : null))) || null;
+    out.photo = p.image_url || null;
+  }
+  const injs = (inj && inj.data && Array.isArray(inj.data.injuries)) ? inj.data.injuries : [];
+  const today = new Date().toISOString().slice(0, 10);
+  const cur = injs.find(x => x && (!x.until_date || String(x.until_date) >= today));
+  out.injured = !!cur;
+  out.current_injury = cur ? { injury: cur.injury, since: cur.from_date, until: cur.until_date || null, days: cur.days } : null;
+  out.injury_history = injs.slice(0, 5);
+  return out;
+}
+
 // ─── SCOUTING REPORT (Gemini, cache 24h) ─────────────────────────────────────
 
 // ── Prompt Système "Brain" du Scout Pro — 5 Piliers ─────────────────────────
@@ -17832,6 +17891,31 @@ if (pathname === '/api/v1/player') {
                 }
               } catch (e) { /* silence */ }
             }
+            // 4e source : Transfermarkt via felipeall sidecar — bio complète
+            // « la bible » + blessure en cours (orphelin API-Football couvert).
+            try {
+              const needBio = !player.nationality || !player.height || player.age == null || !player.birthdate;
+              const needInj = player.injured == null;
+              if (needBio || needInj) {
+                const tm = await getTransfermarktBio(player.name || playerName, {
+                  club: (player.team && player.team.name) || teamCtx, age: player.age,
+                });
+                if (tm) {
+                  if (!player.nationality && tm.nationality) player.nationality = tm.nationality;
+                  if (!player.height && tm.height) player.height = tm.height;
+                  if (player.age == null && tm.age != null) player.age = tm.age;
+                  if (!player.birthdate && tm.birthdate) player.birthdate = tm.birthdate;
+                  if (!player.position && tm.position) player.position = tm.position;
+                  if (!player.foot && tm.foot) player.foot = tm.foot;
+                  if (!player.photo && tm.photo) { player.photo = tm.photo; player._photo_source = 'transfermarkt'; }
+                  player.injured = tm.injured;
+                  player.current_injury = tm.current_injury;
+                  player.injury_history = tm.injury_history;
+                  player.tm_id = tm.tm_id;
+                  player._enriched = (player._enriched || []).concat(['transfermarkt-bio']);
+                }
+              }
+            } catch (e) { /* felipeall down → bio reste partiel, pas de crash */ }
             player._photo_available = !!player.photo;
             // TTL 24h pour joueurs actifs (was 7d → trop stale pour rating saison + form_l5)
             apiCacheSet(cacheKey, player, 'bsd_player', 24 * 3600 * 1000);
