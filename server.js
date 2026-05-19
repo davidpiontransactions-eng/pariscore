@@ -15892,6 +15892,256 @@ async function fetchTexCalendar(tour) {
   return data;
 }
 
+// ─── AiScore tennis scraper (Option A — sitemap-driven) ─────────────────────
+// Source: aiscore.com — match-detail server-rendered (Nuxt SSR). Pas de headless.
+// Fournit : scoreboard sets/tiebreak, stats match (Aces/DF/BP/1st serve),
+// point-by-point + serve position. Pas d'odds (API privée 403).
+// ⚠ Cloudflare frontline → UA browser obligatoire + rate-limit 1 req / 2s.
+// ⚠ Pas d'Accept-Encoding (httpsGet ne gunzip pas) → réponse plain HTML.
+const AISCORE_BASE = 'https://www.aiscore.com';
+const AISCORE_SITEMAP = `${AISCORE_BASE}/sitemap/tennismatches.xml`;
+const AISCORE_MATCH_TTL_MS = 5 * 60 * 1000;       // 5min (anti-poisoning live)
+const AISCORE_INDEX_TTL_MS = 60 * 60 * 1000;      // 1h (sitemap discovery)
+const AISCORE_MIN_GAP_MS = 2000;                  // 1 req / 2s anti-CF-ban
+const aiscoreMatchCache = new Map();
+let _aiscoreIndexCache = null;
+let _aiscoreLastFetch = 0;
+
+const AISCORE_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// Gate séquentiel : garantit ≥ AISCORE_MIN_GAP_MS entre 2 hits aiscore.
+let _aiscoreGate = Promise.resolve();
+function _aiscoreThrottle() {
+  const run = _aiscoreGate.then(async () => {
+    const wait = AISCORE_MIN_GAP_MS - (Date.now() - _aiscoreLastFetch);
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    _aiscoreLastFetch = Date.now();
+  });
+  _aiscoreGate = run.catch(() => {});
+  return run;
+}
+
+// Cloudflare bloque le JA3/TLS de Node (https natif → 403 systématique même
+// avec headers browser complets). Le stack TLS de `curl` (OpenSSL) passe.
+// → on shell `curl` via execFile (args en array = pas de shell, injection-safe).
+// Seul scraper du repo à déroger au zero-dep ; justifié + isolé à aiscore.
+const { execFile } = require('child_process');
+function _curlFetch(url) {
+  return new Promise((resolve, reject) => {
+    // url whitelistée : https://www.aiscore.com/... uniquement
+    if (!/^https:\/\/www\.aiscore\.com\/[A-Za-z0-9/_.\-]*$/.test(url)) {
+      return reject(new Error(`aiscore URL refusée (charset): ${url}`));
+    }
+    execFile('curl', [
+      '-sS', '--compressed', '--max-time', '15', '--fail-with-body',
+      '-A', AISCORE_UA,
+      '-H', 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      '-H', 'Accept-Language: en-US,en;q=0.9',
+      url,
+    ], { maxBuffer: 8 * 1024 * 1024, timeout: 16000 }, (err, stdout) => {
+      if (err && !stdout) return reject(new Error(`aiscore curl échec: ${err.message}`));
+      resolve(String(stdout || ''));
+    });
+  });
+}
+
+async function _aiscoreFetch(url) {
+  await _aiscoreThrottle();
+  let html;
+  try {
+    html = await _curlFetch(url);
+  } catch (e) {
+    throw new Error(`aiscore fetch ${url} → ${e.message}`);
+  }
+  if (!html || html.length < 200) {
+    throw new Error(`aiscore réponse vide pour ${url}`);
+  }
+  if (/Just a moment|cf-browser-verification|Attention Required|Enable JavaScript and cookies/i.test(html)) {
+    throw new Error('aiscore Cloudflare challenge — scrape bloqué');
+  }
+  return html;
+}
+
+// Strip tous attributs Nuxt scoped (data-v-xxxx) + commentaires vides.
+function _aiscoreClean(s) {
+  return String(s || '')
+    .replace(/\sdata-v-[0-9a-f]+=?(?:""|"")?/g, '')
+    .replace(/<!---->/g, '');
+}
+function _aiscoreText(s) {
+  return _aiscoreClean(s).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+// Parse une page match-detail aiscore → objet structuré.
+function _aiscoreParseMatch(html, matchId) {
+  if (!html) return null;
+  const out = {
+    id: matchId || null,
+    sport: 'tennis',
+    source: 'aiscore',
+    tournament: null,
+    status: null,
+    players: [],
+    stats: {},
+    point_by_point: [],
+  };
+
+  // Tournoi + date (ligne .mediaTitle — texte APRÈS le <div class="split"> imbriqué)
+  const tourM = html.match(/class="mediaTitle[^"]*"[^>]*>[\s\S]*?<div class="split[^"]*"[^>]*><\/div>([\s\S]*?)<\/div>/);
+  if (tourM) {
+    const t = _aiscoreText(tourM[1]);
+    out.tournament = t || null;
+    const dM = t.match(/(\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2})/);
+    if (dM) {
+      out.start_time = dM[1].replace(/\//g, '-').replace(' ', 'T');
+      out.tournament = t.replace(dM[1], '').trim();
+    }
+  }
+
+  // Statut (live / terminé / programmé) — heuristique sur classes connues.
+  if (/class="[^"]*\bdetailLive\b[^"]*"/.test(html)) out.status = 'in_progress';
+  const stM = html.match(/class="matchStatus[^"]*"[^>]*>([\s\S]*?)<\/[a-z]+>/i);
+  if (stM) { const s = _aiscoreText(stM[1]); if (s) out.status = s; }
+
+  // Scoreboard : bloc .scoresDetails → .content (1 par joueur)
+  const board = html.match(/class="scoresDetails[^"]*"[\s\S]*?(?=<div class="mediaTitle|<div class="tennisScores|$)/);
+  const boardHtml = board ? board[0] : html;
+  const rowRe = /<div class="content"[^>]*>([\s\S]*?)(?=<div class="content"|<\/div><\/div><\/div>|$)/g;
+  let rm;
+  while ((rm = rowRe.exec(boardHtml)) !== null) {
+    const row = rm[1];
+    const nameBlock = row.match(/class="nameOver"[^>]*>([\s\S]*?)<\/div>/);
+    if (!nameBlock) continue;
+    const logoM = nameBlock[1].match(/src="([^"]+)"/);
+    const nameTxt = _aiscoreText(nameBlock[1]);
+    const ctryM = nameTxt.match(/\(([A-Z]{2,3})\)\s*$/);
+    const name = nameTxt.replace(/\([A-Z]{2,3}\)\s*$/, '').trim();
+    if (!name) continue;
+    const cells = [...row.matchAll(/<div class="flex-1[^"]*"[^>]*>([\s\S]*?)<\/div>/g)];
+    const sets = [];
+    let setsWon = null;
+    cells.forEach((c, i) => {
+      const sb = c[1].match(/class="scoresBox[^"]*"[^>]*>([\s\S]*?)<\/span>/);
+      if (sb) {
+        const tb = sb[1].match(/class="tieBreak"[^>]*>\s*(\d+)\s*</);
+        const g = _aiscoreText(sb[1].replace(/<span class="tieBreak[\s\S]*$/, ''));
+        sets.push({ games: g ? parseInt(g, 10) : null, tiebreak: tb ? parseInt(tb[1], 10) : null });
+      } else if (i === cells.length - 1) {
+        const v = _aiscoreText(c[1]);
+        if (/^\d+$/.test(v)) setsWon = parseInt(v, 10);
+      }
+    });
+    out.players.push({
+      name,
+      country: ctryM ? ctryM[1] : null,
+      logo: logoM ? logoM[1] : null,
+      sets,
+      sets_won: setsWon,
+    });
+  }
+
+  // Stats match : bloc .bs_info — Aces/DF (.mainContent_1) + lignes .midDes_text
+  const statBlock = html.match(/class="bs_info[^"]*"[\s\S]*?(?=<div class="tennisScores|$)/);
+  if (statBlock) {
+    const sb = statBlock[0];
+    const keyGroups = [...sb.matchAll(/class="[^"]*\bmainContent_1\b[^"]*"[^>]*>([\s\S]*?)(?=class="[^"]*\bmainContent_1\b|class="tennisScores|$)/g)];
+    const sidePairs = (grp) => [...grp.matchAll(/class="keyStyle"[^>]*>([\s\S]*?)<\/span>\s*<span class="textStyle"[^>]*>([\s\S]*?)<\/span>/g)]
+      .map(x => ({ label: _aiscoreText(x[2]), value: _aiscoreText(x[1]) }));
+    if (keyGroups[0]) sidePairs(keyGroups[0][1]).forEach(p => {
+      out.stats[p.label] = out.stats[p.label] || {}; out.stats[p.label].p1 = p.value;
+    });
+    if (keyGroups[1]) sidePairs(keyGroups[1][1]).forEach(p => {
+      out.stats[p.label] = out.stats[p.label] || {}; out.stats[p.label].p2 = p.value;
+    });
+    // Lignes pourcentage : proText(p1) … midDes_text(label) … proText(p2)
+    const rowsRe = /class="proText"[^>]*>\s*([\d.]+%?)\s*<[\s\S]*?class="midDes_text"[^>]*>([\s\S]*?)<\/div>[\s\S]*?class="proText"[^>]*>\s*([\d.]+%?)\s*</g;
+    let pr;
+    while ((pr = rowsRe.exec(sb)) !== null) {
+      const label = _aiscoreText(pr[2]);
+      if (label) out.stats[label] = { p1: pr[1], p2: pr[3] };
+    }
+  }
+
+  // Point-by-point : .tennisScores → chaque .setBox
+  const tsM = html.match(/class="tennisScores"[\s\S]*$/);
+  if (tsM) {
+    const setBoxes = [...tsM[0].matchAll(/class="setBox"[^>]*>([\s\S]*?)(?=class="setBox"|$)/g)];
+    for (const sbx of setBoxes) {
+      const seg = sbx[1];
+      const labM = seg.match(/class="set"[^>]*>([\s\S]*?)<\/div>/);
+      const gameCells = [...seg.matchAll(/class="w100 h text-center([^"]*)"[^>]*>([\s\S]*?)<\/div>/g)]
+        .map(g => ({
+          value: _aiscoreText(g[2].replace(/<svg[\s\S]*$/, '')),
+          winner: /colorGreen/.test(g[1]),
+          serve: /servePos/.test(g[2]),
+        }));
+      const pts = [...seg.matchAll(/class="point_item"[^>]*>([\s\S]*?)<\/div><\/div>/g)]
+        .map(pi => [...pi[1].matchAll(/class="item[^"]*"[^>]*>\s*([\d]+)\s*</g)].map(x => x[1]));
+      out.point_by_point.push({
+        set: labM ? _aiscoreText(labM[1]) : null,
+        game_score: gameCells,
+        points: pts,
+      });
+    }
+  }
+
+  return out;
+}
+
+// Discovery via sitemap : extrait les URLs match canoniques (pas /h2h, pas /lang/).
+async function getAiscoreTennisIndex() {
+  if (_aiscoreIndexCache && Date.now() - _aiscoreIndexCache.ts < AISCORE_INDEX_TTL_MS) {
+    return _aiscoreIndexCache.data;
+  }
+  const xml = await _aiscoreFetch(AISCORE_SITEMAP);
+  const seen = new Set();
+  const matches = [];
+  const locRe = /<loc>([^<]+)<\/loc>/g;
+  let lm;
+  while ((lm = locRe.exec(xml)) !== null) {
+    const url = lm[1];
+    // Canonique uniquement : /tennis/match-<slug>/<id>  (rejette /xx/ et /h2h)
+    const mm = url.match(/^https:\/\/www\.aiscore\.com\/tennis\/match-([^/]+)\/([0-9a-z]+)$/);
+    if (!mm) continue;
+    if (seen.has(mm[2])) continue;
+    seen.add(mm[2]);
+    matches.push({ id: mm[2], slug: mm[1], url });
+  }
+  const data = {
+    source: 'aiscore',
+    sport: 'tennis',
+    fetched_at: new Date().toISOString(),
+    count: matches.length,
+    matches,
+  };
+  _aiscoreIndexCache = { ts: Date.now(), data };
+  return data;
+}
+
+async function getAiscoreMatch(matchId, slug) {
+  const key = matchId;
+  const cached = aiscoreMatchCache.get(key);
+  if (cached && Date.now() - cached.ts < AISCORE_MATCH_TTL_MS) return cached.data;
+  // slug requis pour l'URL ; si absent, le résoudre via l'index sitemap.
+  let s = slug;
+  if (!s) {
+    try {
+      const idx = await getAiscoreTennisIndex();
+      const hit = idx.matches.find(m => m.id === matchId);
+      if (hit) s = hit.slug;
+    } catch (_) { /* fallback ci-dessous */ }
+  }
+  if (!s) throw new Error(`aiscore slug introuvable pour match ${matchId}`);
+  const url = `${AISCORE_BASE}/tennis/match-${s}/${matchId}`;
+  const html = await _aiscoreFetch(url);
+  const parsed = _aiscoreParseMatch(html, matchId);
+  const data = { ...parsed, source_url: url, fetched_at: new Date().toISOString() };
+  aiscoreMatchCache.set(key, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── P0-4 — Résolution surface via calendrier Tennis Explorer ────────────────
 // BSD désactivé (arbitrage DG) → m.surface souvent null (fallback ESPN). On
 // indexe les tournois TE (ATP+WTA) par nom normalisé puis on mappe le nom de
@@ -20186,6 +20436,30 @@ async function buildRgPath(playerName) {
 if (pathname === '/api/v1/tennis/rg-path' && req.method === 'GET') {
   const out = await buildRgPath(String(query.player || '').trim());
   return jsonResponse(res, 200, out);
+}
+if (pathname === '/api/v1/tennis/aiscore/index' && req.method === 'GET') {
+  try {
+    const idx = await getAiscoreTennisIndex();
+    const limit = Math.min(Math.max(parseInt(query.limit, 10) || 200, 1), 2000);
+    return jsonResponse(res, 200, { ...idx, matches: idx.matches.slice(0, limit), limit });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'aiscore_index_failed', message: String(e.message || e) });
+  }
+}
+if (pathname.startsWith('/api/v1/tennis/aiscore/match/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/aiscore/match/'.length)).trim();
+  if (!matchId || !/^[0-9a-z]+$/.test(matchId)) {
+    return jsonResponse(res, 400, { error: 'bad_match_id', message: 'matchId alphanumérique requis' });
+  }
+  try {
+    const slug = query.slug ? String(query.slug).trim() : null;
+    const data = await getAiscoreMatch(matchId, slug);
+    return jsonResponse(res, 200, data);
+  } catch (e) {
+    const msg = String(e.message || e);
+    const code = /Cloudflare|HTTP 4|HTTP 5/.test(msg) ? 502 : 404;
+    return jsonResponse(res, code, { error: 'aiscore_match_failed', message: msg });
+  }
 }
 if (pathname === '/api/v1/tennis/rankings' && req.method === 'GET') {
   const tour = ['ATP','WTA'].includes(String(query.tour || '').toUpperCase()) ? String(query.tour).toUpperCase() : '';
