@@ -2,6 +2,15 @@
 
 *2026-05-19 · PariScore zéro-dep · Sofascore exclu · BSD primaire conservé*
 
+> **DÉCISION DG 2026-05-19 — Rumeurs : SUNSET (option B).** apidojo = impasse
+> (abo client = API immobilier générique, pas TransferMarket ; abo TransferMarket
+> refusé). Aucune source rumeurs libre fiable zéro-dep. Le champ « transferts »
+> est couvert à 100 % par les **transferts CONFIRMÉS + valeurs** via felipeall
+> self-host (v10.73, déployé). Les **rumeurs** (nice-to-have, donnée la moins
+> fiable) sont abandonnées proprement — UI masquée, aucune dette scrape.
+> Issue `dj1` fermée « no viable free source ». Réactivable si budget RapidAPI
+> apidojo TransferMarket (abo BASIC) un jour souscrit.
+
 ## Synthèse
 
 - **Prédictions** : ✅ **résolu sans nouvelle source** — endpoint **BSD `/api/v2/predictions/` GRATUIT** : match_result (prob H/N/A), over_under 1.5/2.5/3.5, BTTS, expected_goals, score probable, recommendations, model.confidence (CatBoost v5, ré-entraîné/sem). Reco : source primaire + Poisson/Elo interne en cross-check. Zéro coût, zéro nouvelle dép.
