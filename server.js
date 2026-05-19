@@ -57,7 +57,16 @@ function loadEnv() {
 loadEnv();
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
-const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY;
+// ─── API-FOOTBALL RETIRÉ (v10.77) ───────────────────────────────────────────
+// Kill-switch à la source : clé forcée vide → toutes les fns AF early-return
+// null (elles gardent déjà `if(!API_FOOTBALL_KEY) return null`), les fallbacks
+// non-AF livrés (BSD/ESPN/felipeall + calc interne, v10.72→v10.76) prennent le
+// relais automatiquement. Plus aucun appel v3.football.api-sports.io → zéro
+// quota. CDN clé-zéro media.api-sports.io (photos/logos) NON concerné (continue).
+// Réversible : remettre `process.env.API_FOOTBALL_KEY` pour réactiver.
+const AF_REMOVED = true;
+const API_FOOTBALL_KEY = AF_REMOVED ? '' : process.env.API_FOOTBALL_KEY;
+if (AF_REMOVED) console.log('  [AF] API-Football RETIRÉ (kill-switch v10.77) — fallbacks BSD/ESPN/felipeall actifs');
 const FREE_FOOTBALL_RAPIDAPI_KEY = process.env.FREE_FOOTBALL_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY || '';
 const FREE_FOOTBALL_RAPIDAPI_HOST = 'free-api-live-football-data.p.rapidapi.com';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
