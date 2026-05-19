@@ -8906,7 +8906,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-dr-exact .tn-dr-lab { color:#38bdf8; text-shadow:0 0 5px rgba(56,189,248,.55); }
   #tennis-vb-table .tn-dr-i { padding:0; margin-left:4px; background:none; border:none; cursor:pointer; color:#38bdf8; opacity:.65; font-size:9px; line-height:1; vertical-align:baseline; }
   #tennis-vb-table .tn-dr-i:hover { opacity:1; text-shadow:0 0 6px rgba(56,189,248,.7); }
-  #tennis-vb-table .tn-drs { display:flex; flex-wrap:wrap; gap:3px; margin-top:2px; }
+  #tennis-vb-table .tn-drs-wrap { display:flex; flex-direction:column; gap:3px; margin-top:2px; }
+  #tennis-vb-table .tn-drs { display:flex; flex-wrap:wrap; align-items:center; gap:3px; }
+  #tennis-vb-table .tn-drs-lab { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.5px; color:#64748b; min-width:46px; }
   #tennis-vb-table .tn-drs-chip { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.3px; padding:1px 4px; border-radius:3px; border:1px solid #243044; background:#0f172a; color:#94a3b8; white-space:nowrap; }
   #tennis-vb-table .tn-drs-dom { color:#4ade80; border-color:rgba(74,222,128,.4); }
   #tennis-vb-table .tn-drs-bal { color:#ffa726; border-color:rgba(255,167,38,.4); }
@@ -11312,40 +11314,47 @@ function _tvbDRLive(lo, sets, s1, s2) {
       + `</div>`;
   };
 
-  // Bandeau DR par set (côté J1) + surbrillance du set en cours. Garde
-  // min-échantillon serveur : set courant peu fiable → "~" + style atténué.
-  let setStrip = '';
+  // Bandeau DR par set — 2 lignes J1/J2 (DR_J2 = 1/DR_J1, comme le DR match).
+  // Source : Sofascore (pts service+retour) si match matché, sinon proxy
+  // jeux/set. Set en cours surligné ; échantillon faible → "~" + atténué.
+  // Liste normalisée {sn, dr(J1), isCur, unrel} construite 1×, rendue ×2.
+  let entries = [], srcLab = '', proxy = false;
   if (exact && dx && dx.dr_by_set && Object.keys(dx.dr_by_set).length) {
     const cur = dx.dr_set_courant || null;
-    const chips = Object.keys(dx.dr_by_set)
-      .map(Number).sort((a, b) => a - b)
+    entries = Object.keys(dx.dr_by_set).map(Number).sort((a, b) => a - b)
       .map(sn => {
         const v = dx.dr_by_set[sn].dr;
-        if (!Number.isFinite(v) || v <= 0) return '';
-        const isCur = cur && Number(cur.set) === sn;
-        const unrel = isCur && cur.reliable === false;
-        const c = v >= 1.08 ? 'tn-drs-dom' : v > 0.92 ? 'tn-drs-bal' : 'tn-drs-sub';
-        return `<span class="tn-drs-chip ${c}${isCur ? ' tn-drs-cur' : ''}${unrel ? ' tn-drs-unrel' : ''}" `
-          + `title="Set ${sn} — DR J1 ${v.toFixed(2)}${isCur ? ' · set en cours' : ''}${unrel ? ' · échantillon faible (peu fiable)' : ''}">`
-          + `S${sn} ${v.toFixed(2)}${unrel ? '~' : ''}</span>`;
-      }).join('');
-    if (chips) setStrip = `<div class="tn-drs" title="Dominance Ratio par set (côté J1) — Sofascore (pts service+retour) · set en cours surligné">${chips}</div>`;
+        if (!Number.isFinite(v) || v <= 0) return null;
+        const isCur = !!(cur && Number(cur.set) === sn);
+        return { sn, dr: v, isCur, unrel: isCur && cur.reliable === false };
+      }).filter(Boolean);
+    srcLab = 'Sofascore (pts service+retour)';
   } else if (Array.isArray(sets) && sets.length) {
-    // Fallback proxy : pas de DR Sofascore par set pour ce match → DR par set
-    // approximé depuis les jeux gagnés/set (tableau scoreboard). Marqué "~".
     const curIdx = sets.length; // set en cours = dernier set présent
-    const chips = sets.map((st, i) => {
+    proxy = true;
+    entries = sets.map((st, i) => {
       const g1 = Number(st && st.p1) || 0, g2 = Number(st && st.p2) || 0;
-      if (g1 + g2 === 0) return '';
-      const v = (g1 + 0.5) / (g2 + 0.5);
-      const sn = i + 1;
-      const isCur = sn === curIdx;
-      const c = v >= 1.08 ? 'tn-drs-dom' : v > 0.92 ? 'tn-drs-bal' : 'tn-drs-sub';
-      return `<span class="tn-drs-chip ${c}${isCur ? ' tn-drs-cur' : ''} tn-drs-unrel" `
-        + `title="Set ${sn} — DR J1 ≈ ${v.toFixed(2)} (proxy jeux/set${isCur ? ' · set en cours' : ''})">`
-        + `S${sn} ${v.toFixed(2)}~</span>`;
-    }).join('');
-    if (chips) setStrip = `<div class="tn-drs" title="Dominance Ratio par set (côté J1) — proxy jeux/set (Sofascore indispo) · set en cours surligné">${chips}</div>`;
+      if (g1 + g2 === 0) return null;
+      return { sn: i + 1, dr: (g1 + 0.5) / (g2 + 0.5), isCur: (i + 1) === curIdx, unrel: true };
+    }).filter(Boolean);
+    srcLab = 'proxy jeux/set (Sofascore indispo)';
+  }
+  let setStrip = '';
+  if (entries.length) {
+    const sideRow = (side) => {
+      const lab = side === 'p1' ? 'J1' : 'J2';
+      const chips = entries.map(e => {
+        const v = side === 'p1' ? e.dr : 1 / e.dr;
+        if (!Number.isFinite(v) || v <= 0) return '';
+        const mark = (proxy || e.unrel) ? '~' : '';
+        const c = v >= 1.08 ? 'tn-drs-dom' : v > 0.92 ? 'tn-drs-bal' : 'tn-drs-sub';
+        return `<span class="tn-drs-chip ${c}${e.isCur ? ' tn-drs-cur' : ''}${(proxy || e.unrel) ? ' tn-drs-unrel' : ''}" `
+          + `title="Set ${e.sn} — DR ${lab} ${proxy ? '≈ ' : ''}${v.toFixed(2)}${e.isCur ? ' · set en cours' : ''}${e.unrel ? ' · échantillon faible (peu fiable)' : ''}">`
+          + `S${e.sn} ${v.toFixed(2)}${mark}</span>`;
+      }).join('');
+      return `<div class="tn-drs"><span class="tn-drs-lab">DR ${lab}/set</span>${chips}</div>`;
+    };
+    setStrip = `<div class="tn-drs-wrap" title="Dominance Ratio par set — ${srcLab} · set en cours surligné">${sideRow('p1')}${sideRow('p2')}</div>`;
   }
 
   return `<div class="tn-dr">${line(drP1, 'p1')}${line(drP2, 'p2')}${setStrip}</div>`;
