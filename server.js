@@ -13135,11 +13135,16 @@ async function pollTennisLive() {
     // requête /tennis/value-bets. Les builders s'auto-gatent (cache 6h/30min)
     // → fetch réel rare. Fire-and-forget, ne bloque jamais le poll.
     if (BSD_TENNIS_ENABLED) {
+      // [FIX bug 5o0] Résolution via pont globalThis.__tnWarmers (les symboles
+      // directs ne sont pas liés dans ce scope). typeof = safe sur identifiant
+      // non déclaré (ne throw pas). Warmer fire-and-forget : ne casse jamais le poll.
+      const _w = (globalThis.__tnWarmers) || {};
+      const _call = (fn) => { try { return (typeof fn === 'function') ? fn() : Promise.resolve(); } catch (_) { return Promise.resolve(); } };
       Promise.allSettled([
-        fetchBSDTennisPredictions(''),
-        buildBSDTennisCalibration(),
-        buildBSDTennisRankIndex(),
-        _buildTennisSurfaceIndex(), // warm index surface TE (scrape) hors chemin requête
+        (_w.fetchBSDTennisPredictions ? _w.fetchBSDTennisPredictions('') : Promise.resolve()),
+        _call(_w.buildBSDTennisCalibration),
+        _call(_w.buildBSDTennisRankIndex),
+        _call(_w._buildTennisSurfaceIndex), // warm index surface TE hors chemin requête
       ]).catch(() => {});
     }
   } catch (e) {
@@ -20188,6 +20193,21 @@ async function buildBSDTennisRankIndex() {
   console.log(`  [TennisRank BSD] ${byKey.size} joueurs indexés`);
   return byKey;
 }
+
+// [FIX bug 5o0] Pont globalThis pour les warmers tennis — même classe de bug
+// que __tennisVBWarm (cf. ~25492) : ces fns top-level ne sont pas résolues
+// depuis le scope de pollTennisLive (« fetchBSDTennisPredictions is not
+// defined »). On les expose ici (scope où elles sont liées) ; pollTennisLive
+// les appelle via globalThis avec garde typeof.
+try {
+  globalThis.__tnWarmers = {
+    fetchBSDTennisPredictions: (typeof fetchBSDTennisPredictions === 'function') ? fetchBSDTennisPredictions : null,
+    buildBSDTennisCalibration: (typeof buildBSDTennisCalibration === 'function') ? buildBSDTennisCalibration : null,
+    buildBSDTennisRankIndex: (typeof buildBSDTennisRankIndex === 'function') ? buildBSDTennisRankIndex : null,
+    _buildTennisSurfaceIndex: (typeof _buildTennisSurfaceIndex === 'function') ? _buildTennisSurfaceIndex : null,
+  };
+} catch (_) { /* noop */ }
+
 function _rankMomentum(rk) {
   if (!rk) return null;
   const dPos = (rk.previous_position != null && rk.position != null) ? (rk.previous_position - rk.position) : null;
@@ -25515,9 +25535,9 @@ if (MATCHSTAT_ENABLED) {
             require('http').get({ host: '127.0.0.1', port: Number(PORT) || 3000, path: '/__tnsvbwarm_ping', timeout: 4000 },
               r => { r.resume(); }).on('error', () => {}).on('timeout', function () { this.destroy(); });
           } catch (_) { /* noop */ }
-          setTimeout(_vbWarmTick, 5000);
+          setTimeout(_vbWarmTick, 2000);
         };
-        setTimeout(_vbWarmTick, 8000);
+        setTimeout(_vbWarmTick, 2000);
       } catch (e) {
         console.warn('  [Elo] boot compute check failed:', e.message);
       }

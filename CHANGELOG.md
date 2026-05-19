@@ -2,6 +2,18 @@
 
 ---
 
+## [v10.78] — 2026-05-19
+
+### Fix — Bug poll tennis `fetchBSDTennisPredictions is not defined` (5o0)
+
+`pollTennisLive` ne résolvait pas les 4 warmers tennis (fns top-level mais hors scope du poll — même classe de bug que le pont `__tennisVBWarm` existant). Referenceader synchrone sur `fetchBSDTennisPredictions('')` → tout le bloc warmer avorté (caches calibration/rank/surface jamais préchauffés). Pré-existant, non lié au retrait AF.
+
+- Pont `globalThis.__tnWarmers` posé après `buildBSDTennisRankIndex` (scope où les 4 fns sont liées), avec garde `typeof`.
+- `pollTennisLive` appelle les warmers via le pont + `typeof` (safe sur identifiant non déclaré, ne throw pas) → poll ne crashe plus, warmers actifs dès le pont initialisé.
+- Vérifié : `node --check` OK, boot OK, **`[Tennis] poll error` disparu**, zéro ReferenceError.
+
+---
+
 ## [v10.77] — 2026-05-19
 
 ### 🔴 BREAKING (maîtrisé) — API-Football RETIRÉ (kill-switch)
