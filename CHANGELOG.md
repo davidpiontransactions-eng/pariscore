@@ -2,6 +2,18 @@
 
 ---
 
+## [v10.76] — 2026-05-19
+
+### Feature — Stats avancées équipe : fallback BSD standings (dernier orphelin AF)
+
+`buildAdvancedStatsFromStandings(ts)` — dérive le shape `advancedTeamStats` depuis `db.teamStats[key]._raw` (counts dom/ext) + `form` + xG, **zéro réseau** (data déjà en mémoire). Calcul interne : moy buts marqués/encaissés dom/ext, played/W/D/L dom/ext, série en cours (parse `form`), totaux, xG. `getTeamAdvancedStats(teamKey,meta,leagueId,season)` — AF si `teamId`+clé, sinon fallback BSD (peuple `db.advancedTeamStats` en mémoire, sans saveDB). Câblé en remplacement des 2 `fetchTeamAdvancedStats` du builder AI Scout.
+
+- Champs **sans source libre = `null` HONNÊTE** (jamais inventé) : tirs, tirs cadrés, cartons J/R, penalties, formation, clean sheets → UI/prompt « N/A » (`fmtTeam` tolère null via `?? 'N/A'`).
+- Additif, safe-fail null, insights déjà null-safe (`adv?…:_raw`). `node --check` + boot OK + test unitaire (moy/streak/null) corrects.
+- Understat (xG/tirs/formation, 6 ligues) = enrichissement optionnel **différé** (réseau + parser fragile) — non livré.
+
+---
+
 ## [v10.75] — 2026-05-19
 
 ### Feature — Prédictions : fallback BSD (orphelin API-Football couvert)

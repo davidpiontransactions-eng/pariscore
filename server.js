@@ -6528,6 +6528,65 @@ async function fetchTeamAdvancedStats(teamKey, teamId, leagueId, season) {
   }
 }
 
+// Fallback stats avancées équipe SANS API-Football : dérivé des standings
+// BSD déjà en mémoire (db.teamStats[key]._raw + form). Zéro réseau. Champs
+// sans source libre (tirs/cartons/penalties/formation/clean sheets) = null
+// HONNÊTE (jamais inventé) → l'UI affiche « N/A ». Même shape que l'AF.
+function buildAdvancedStatsFromStandings(ts) {
+  if (!ts || !ts._raw) return null;
+  const R = ts._raw, h = R.home || {}, a = R.away || {};
+  const div = (n, d) => (d && d > 0 ? Math.round((n / d) * 100) / 100 : 0);
+  const form = String(ts.form || '');
+  let sw = 0, sd = 0, sl = 0;
+  if (form) {
+    const last = form.slice(-1).toUpperCase();
+    for (let i = form.length - 1; i >= 0; i--) {
+      if (form[i].toUpperCase() !== last) break;
+      if (last === 'W') sw++; else if (last === 'D') sd++; else if (last === 'L') sl++;
+    }
+  }
+  return {
+    goals_scored_home_avg: div(h.gf, h.played),
+    goals_scored_away_avg: div(a.gf, a.played),
+    goals_conceded_home_avg: div(h.ga, h.played),
+    goals_conceded_away_avg: div(a.ga, a.played),
+    form,
+    played_home: h.played || 0, played_away: a.played || 0,
+    wins_home: h.wins || 0, wins_away: a.wins || 0,
+    draws_home: h.draws || 0, draws_away: a.draws || 0,
+    losses_home: h.losses || 0, losses_away: a.losses || 0,
+    penalties_scored: null, penalties_missed: null,
+    biggest_win_home: '', biggest_win_away: '', biggest_loss_home: '', biggest_loss_away: '',
+    streak_wins: sw, streak_draws: sd, streak_losses: sl,
+    shots_on_home: null, shots_on_away: null, shots_on_total: null,
+    shots_total_home: null, shots_total_away: null,
+    main_formation: 'N/A',
+    cards_yellow_total: null, cards_red_total: null,
+    clean_sheet_home: null, clean_sheet_away: null, clean_sheet_total: null,
+    goals_scored_total_avg: div(R.gf, R.played),
+    goals_conceded_total_avg: div(R.ga, R.played),
+    xg_for: ts.xgFor != null ? ts.xgFor : null,
+    xg_against: ts.xgAgainst != null ? ts.xgAgainst : null,
+    _source: 'bsd-standings' + (h._estimated ? '-est' : ''),
+  };
+}
+
+// Stats avancées avec fallback : API-Football si dispo, sinon BSD standings.
+async function getTeamAdvancedStats(teamKey, meta, leagueId, season) {
+  let adv = (meta && meta.teamId && leagueId)
+    ? await fetchTeamAdvancedStats(teamKey, meta.teamId, leagueId, season)
+    : null;
+  if (adv) return adv;
+  const fb = buildAdvancedStatsFromStandings(db.teamStats[teamKey] || meta);
+  if (fb) {
+    db.advancedTeamStats[teamKey] = {
+      data: fb, fetchedAt: new Date().toISOString(),
+      teamId: (meta && meta.teamId) || null, leagueId: leagueId || null, _fallback: 'bsd',
+    };
+  }
+  return fb;
+}
+
 // ─── HELPER GEMINI (appel synchrone one-shot) ────────────────────────────────
 async function callGemini(prompt, maxTokens = 600) {
   if (!GEMINI_API_KEY) throw new Error('Cle Gemini non configuree');
@@ -7696,12 +7755,8 @@ async function generateAIScout() {
       || leaguesConfig.leagues.find(l => l.odds_key === m.sport)?.id;
 
     const [hAdv, aAdv] = await Promise.all([
-      (hMeta?.teamId && leagueId)
-        ? fetchTeamAdvancedStats(hKey, hMeta.teamId, leagueId, season)
-        : Promise.resolve(null),
-      (aMeta?.teamId && leagueId)
-        ? fetchTeamAdvancedStats(aKey, aMeta.teamId, leagueId, season)
-        : Promise.resolve(null),
+      getTeamAdvancedStats(hKey, hMeta, leagueId, season),
+      getTeamAdvancedStats(aKey, aMeta, leagueId, season),
     ]);
 
     if (!hAdv && !aAdv) return '';
@@ -7714,7 +7769,7 @@ async function generateAIScout() {
         `    [P1-Stabilité]  moy. buts marqués: ${(isHome ? adv.goals_scored_home_avg : adv.goals_scored_away_avg).toFixed(2)}/match · moy. buts concédés: ${(isHome ? adv.goals_conceded_home_avg : adv.goals_conceded_away_avg).toFixed(2)}/match`,
         `    [P2-Forme]      ${adv.form || 'N/A'} (5 derniers matchs: W=victoire, D=nul, L=défaite)`,
         `    [P3-Différentiel] ${isHome ? adv.wins_home : adv.wins_away}V ${isHome ? adv.draws_home : adv.draws_away}N ${isHome ? adv.losses_home : adv.losses_away}D sur ${isHome ? adv.played_home : adv.played_away} matchs ${side}`,
-        `    [P4-Spéculatif] série en cours: ${adv.streak_wins}W·${adv.streak_draws}D·${adv.streak_losses}L · pénaltys: ${adv.penalties_scored} marqués/${adv.penalties_missed} ratés · biggest win: ${isHome ? adv.biggest_win_home : adv.biggest_win_away}`,
+        `    [P4-Spéculatif] série en cours: ${adv.streak_wins}W·${adv.streak_draws}D·${adv.streak_losses}L · pénaltys: ${adv.penalties_scored ?? 'N/A'} marqués/${adv.penalties_missed ?? 'N/A'} ratés · biggest win: ${(isHome ? adv.biggest_win_home : adv.biggest_win_away) || 'N/A'}`,
         `    [P5-Tactique]   formation principale: ${adv.main_formation}`,
       ].join('\n');
     };
