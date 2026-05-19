@@ -6645,6 +6645,78 @@ async function fetchAFTransfers(teamId, sinceDays = 180) {
   }
 }
 
+// ─── Transfermarkt via Apify (voie D — zero-dep, scaffold) ──────────────────
+// Actor: curious_coder/transfermarkt ($15/mo Apify, location requise).
+// zero-dep préservé : httpsPost vers run-sync-get-dataset-items (blocking).
+// Apify gère proxies/CF/anti-bot. Token = env APIFY_TOKEN (JAMAIS en .env
+// committé). Cache 24h (data carrière joueur peu volatile).
+// ⚠ Parser = pass-through défensif : l'actor est générique URL-based, le
+// schéma exact est inconnu tant que l'actor n'est pas loué (run 403
+// "actor-is-not-rented" sinon). Finaliser le normalizer après 1er run réel.
+const APIFY_TOKEN = process.env.APIFY_TOKEN || '';
+const APIFY_TM_ACTOR = 'curious_coder~transfermarkt';
+const TM_TTL_MS = 24 * 3600 * 1000;
+const _tmCache = new Map();
+
+// Construit l'URL Transfermarkt selon le type de donnée voulu.
+// id = id numérique joueur Transfermarkt ; slug optionnel (cosmétique URL).
+function _tmBuildUrl(kind, id, slug) {
+  const s = (slug && /^[a-z0-9-]+$/i.test(slug)) ? slug : 'x';
+  const pid = String(id || '').replace(/\D/g, '');
+  if (!pid) return null;
+  const base = `https://www.transfermarkt.com/${s}`;
+  switch (kind) {
+    case 'profile':      return `${base}/profil/spieler/${pid}`;
+    case 'market_value': return `${base}/marktwertverlauf/spieler/${pid}`;
+    case 'transfers':    return `${base}/transfers/spieler/${pid}`;
+    case 'injuries':     return `${base}/verletzungen/spieler/${pid}`;
+    default:             return null;
+  }
+}
+
+// Appel générique Apify run-sync (items JSON directs). Réutilisable.
+async function _apifyRunSync(actor, input, timeoutMs = 90000) {
+  if (!APIFY_TOKEN) throw new Error('APIFY_TOKEN absent (env serveur)');
+  const url = `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items` +
+    `?token=${encodeURIComponent(APIFY_TOKEN)}&format=json&clean=true`;
+  const res = await httpsPost(url, input, { 'Content-Type': 'application/json' });
+  if (res.status === 403 && res.data && res.data.error &&
+      res.data.error.type === 'actor-is-not-rented') {
+    throw new Error('Apify actor non loué (rent requis $15/mo)');
+  }
+  if (res.status !== 200 && res.status !== 201) {
+    throw new Error(`Apify HTTP ${res.status}`);
+  }
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+async function fetchTransfermarkt(kind, id, slug) {
+  const allowed = ['profile', 'market_value', 'transfers', 'injuries'];
+  if (!allowed.includes(kind)) throw new Error(`kind invalide: ${kind}`);
+  const tmUrl = _tmBuildUrl(kind, id, slug);
+  if (!tmUrl) throw new Error('id Transfermarkt numérique requis');
+  const ck = `tm_${kind}_${String(id).replace(/\D/g, '')}`;
+  const cached = _tmCache.get(ck);
+  if (cached && Date.now() - cached.ts < TM_TTL_MS) return cached.data;
+  const items = await _apifyRunSync(APIFY_TM_ACTOR, {
+    startUrls: [{ url: tmUrl }],
+    proxyConfig: { useApifyProxy: true },
+  });
+  // Pass-through défensif (schéma actor non confirmé tant que non loué).
+  const data = {
+    source: 'transfermarkt',
+    via: 'apify:curious_coder/transfermarkt',
+    kind,
+    tm_id: String(id).replace(/\D/g, ''),
+    tm_url: tmUrl,
+    fetched_at: new Date().toISOString(),
+    items_count: items.length,
+    raw: items,            // brut tant que normalizer non finalisé
+  };
+  _tmCache.set(ck, { ts: Date.now(), data });
+  return data;
+}
+
 // ─── SCOUTING REPORT (Gemini, cache 24h) ─────────────────────────────────────
 
 // ── Prompt Système "Brain" du Scout Pro — 5 Piliers ─────────────────────────
@@ -11165,7 +11237,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/')) {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/')) {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -21618,6 +21690,24 @@ if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
 }
 
 // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
+if (pathname.startsWith('/api/v1/transfermarkt/') && req.method === 'GET') {
+  const kind = decodeURIComponent(pathname.slice('/api/v1/transfermarkt/'.length)).trim();
+  const id = String(query.id || '').trim();
+  const slug = query.slug ? String(query.slug).trim() : null;
+  if (!['profile', 'market_value', 'transfers', 'injuries'].includes(kind)) {
+    return jsonResponse(res, 400, { error: 'bad_kind', message: 'kind ∈ profile|market_value|transfers|injuries' });
+  }
+  if (!/^\d+$/.test(id)) {
+    return jsonResponse(res, 400, { error: 'bad_id', message: 'id Transfermarkt numérique requis (?id=)' });
+  }
+  try {
+    return jsonResponse(res, 200, await fetchTransfermarkt(kind, id, slug));
+  } catch (e) {
+    const msg = String(e.message || e);
+    const code = /non loué|APIFY_TOKEN absent/.test(msg) ? 503 : 502;
+    return jsonResponse(res, code, { error: 'transfermarkt_failed', message: msg });
+  }
+}
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
   const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
   // v9.1: ID validation
