@@ -11156,16 +11156,25 @@ function _tvbDRLive(lo, sets, s1, s2) {
   const line = (dr, side) => {
     const lab = (side === 'p1' ? 'DR P1' : 'DR P2') + suffix;
     const key = id + '|' + side;
-    const h = window._tnDRHist[key] || [];
-    const prev = h.length ? h[h.length - 1] : null;
+    // Persiste la DIRECTION (pas un historique re-lu/aplati à chaque render).
+    // Bug précédent : un re-render sans changement (tri/filtre/signature/patch)
+    // remettait la flèche à plat car dr==prev → tendance jamais visible.
+    // Ici la flèche ne change QUE sur mouvement significatif (>0.02) et
+    // conserve la dernière tendance tant qu'il n'y a pas de vrai mouvement.
+    const st = window._tnDRHist[key];
+    let dir = st ? st.dir : 'flat';
+    if (!st) {
+      window._tnDRHist[key] = { dr, dir: 'flat' };
+    } else if (dr - st.dr > 0.02) {
+      dir = 'up';   window._tnDRHist[key] = { dr, dir };
+    } else if (st.dr - dr > 0.02) {
+      dir = 'down'; window._tnDRHist[key] = { dr, dir };
+    } else {
+      dir = st.dir; // pas de mouvement significatif → conserver la tendance
+    }
     let arrow = '►', acls = 'tn-dr-flat';
-    if (prev != null) {
-      if (dr - prev > 0.02) { arrow = '▲'; acls = 'tn-dr-up'; }
-      else if (prev - dr > 0.02) { arrow = '▼'; acls = 'tn-dr-down'; }
-    }
-    if (prev == null || Math.abs(dr - prev) > 0.001) {
-      h.push(dr); if (h.length > 3) h.shift(); window._tnDRHist[key] = h;
-    }
+    if (dir === 'up') { arrow = '▲'; acls = 'tn-dr-up'; }
+    else if (dir === 'down') { arrow = '▼'; acls = 'tn-dr-down'; }
     const cls = dr >= 1.08 ? 'tn-dr-dom' : dr > 0.92 ? 'tn-dr-bal' : 'tn-dr-sub';
     const info = side === 'p1'
       ? `<button type="button" class="tn-dr-i" onclick="event.stopPropagation();openTennisDRGuide()" title="Définition &amp; calcul du Dominance Ratio — ouvrir le Guide" aria-label="Aide Dominance Ratio">ⓘ</button>`
