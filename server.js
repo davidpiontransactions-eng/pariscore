@@ -8639,6 +8639,30 @@ async function fetchBSDPlayerRatings(bsdTeamId, bsdSeasonId) {
   }
 }
 
+// Fallback ratings par poste {G,D,M,A} dérivé des ratings BSD par joueur
+// (réutilise les données déjà fetchées dans /insights — zéro appel réseau).
+// Miroir exact du shape de fetchTeamPositionRatings (orphelin API-Football).
+function aggregateBSDPositionRatings(ratings) {
+  if (!Array.isArray(ratings) || !ratings.length) return null;
+  const posMap = { G: 'G', GK: 'G', D: 'D', DEF: 'D', M: 'M', MID: 'M', F: 'A', FW: 'A', A: 'A', ATT: 'A' };
+  const groups = { G: [], D: [], M: [], A: [] };
+  for (const p of ratings) {
+    const r = parseFloat(p && p.avg_rating);
+    if (!Number.isFinite(r) || r <= 0) continue;
+    if ((p.minutes || 0) < 90) continue;
+    const raw = String((p.specific_position || p.position || '')).trim().toUpperCase();
+    const k = posMap[raw] || posMap[raw[0]] || null;
+    if (k) groups[k].push(r);
+  }
+  const out = {};
+  let any = false;
+  for (const [k, arr] of Object.entries(groups)) {
+    if (arr.length) { out[k] = parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)); any = true; }
+    else out[k] = null;
+  }
+  return any ? out : null;
+}
+
 // Calcule le top 3 des buteurs probables pour un match (cumul des 2 equipes)
 // Ponderation xG/match + buts/match, ajustee domicile/exterieur (+10%/-10%)
 // Retourne [{name, team, teamName, score, probaMarquer, xgPerMatch, goalsPerMatch, goals, xgTotal, matches}] ou null
@@ -21999,12 +22023,16 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
       // v63.0: Fallback ultime — API-Football par nom d'équipe si tout est vide
       const homeKP = homeKPEspn.length ? homeKPEspn : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.home_team) : []);
       const awayKP = awayKPEspn.length ? awayKPEspn : (API_FOOTBALL_KEY ? await fetchBackupPlayers(match.away_team) : []);
-      const homePosRatings = homePRRes.status === 'fulfilled' ? homePRRes.value : null;
-      const awayPosRatings = awayPRRes.status === 'fulfilled' ? awayPRRes.value : null;
+      let homePosRatings = homePRRes.status === 'fulfilled' ? homePRRes.value : null;
+      let awayPosRatings = awayPRRes.status === 'fulfilled' ? awayPRRes.value : null;
       const homeBSDSquad = homeSquadRes.status === 'fulfilled' ? homeSquadRes.value : [];
       const awayBSDSquad = awaySquadRes.status === 'fulfilled' ? awaySquadRes.value : [];
       const homeBSDRatings = homeRatingsRes.status === 'fulfilled' ? homeRatingsRes.value : [];
       const awayBSDRatings = awayRatingsRes.status === 'fulfilled' ? awayRatingsRes.value : [];
+      // Fallback orphelin API-Football : ratings par poste via BSD si AF vide/absent
+      const _prHas = o => o && [o.G, o.D, o.M, o.A].some(v => v != null);
+      if (!_prHas(homePosRatings)) { const f = aggregateBSDPositionRatings(homeBSDRatings); if (f) homePosRatings = f; }
+      if (!_prHas(awayPosRatings)) { const f = aggregateBSDPositionRatings(awayBSDRatings); if (f) awayPosRatings = f; }
       const homeTopPerformers = homeTPRes.status === 'fulfilled' ? homeTPRes.value : { attackers: [], defenders: [] };
       const awayTopPerformers = awayTPRes.status === 'fulfilled' ? awayTPRes.value : { attackers: [], defenders: [] };
       // Last fixtures for H2H & Derniers matchs tab
