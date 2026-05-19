@@ -537,6 +537,7 @@ open http://localhost:3000
 | IntersectionObserver + `display:none` | Contenu à `opacity:0`, invisible | Dans `showPage()`, forcer `.visible` sur tous les `.fade-up` |
 | Colonnes Poisson avec `rowspan="2"` | Style incohérent, pas de tri | Utiliser `colspan="5"` en ligne 1 + `<th sortable>` en ligne 2 |
 | Apostrophes dans strings JS | Double-échappement en cascade | Préférer les guillemets doubles pour les strings avec apostrophes |
+| BSD : ajout d'une ligue non couverte | **29 $ one-time À VIE par ligue** (frais infra/sourcing, demande via Discord/form) | Croiser audits orphelins avant de payer ; décision coût = DG |
 
 ---
 
