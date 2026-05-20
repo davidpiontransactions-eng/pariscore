@@ -6,7 +6,12 @@
 // renderLockedPage, apiFetch 403, hub stuck, drawer Plus) commit e679586 +
 // affiliates 504 fix 5a62a5f. Force re-install après les commits intermédiaires
 // (cc03453 feat live+bsd) qui ont modifié pariscore.html sans bump.
-const CACHE = 'pariscore-shell-v11';
+// v12 (2026-05-20) : invalide v11 — embarque fix V4 apiCache fail-soft
+// (7d32234), V5 apiFetch 401 clear token (f06ac0f), V6 tennis-abstract stub
+// (131ea49), sécurité blacklist server.js (4e02a6a) et V7 o25-slider=0 + CTA
+// reset inline (4da9d0c). Force re-install garantie pour purger anciens
+// pariscore.html pre-cached chez users coincés sur page vide.
+const CACHE = 'pariscore-shell-v12';
 const SHELL = [
   '/',
   '/pariscore.html',
