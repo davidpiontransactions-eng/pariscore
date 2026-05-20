@@ -7073,7 +7073,7 @@ function computeTennisBreakdown(entries) {
     };
   });
 
-  return { by_league: tournaments, by_market: markets, by_strategy: [] };
+  return { by_league: tournaments, by_market: markets, by_strategy: [], trap_teams: [] };
 }
 
 function computeTennisSeries(entries) {
@@ -7310,7 +7310,41 @@ function computeHistoryBreakdown(entries) {
   });
   strategies.sort((a, b) => b.sample - a.sample);
 
-  return { by_league: leagues, by_market: markets, by_strategy: strategies };
+  // H6 : Matchs Pièges — équipes où nos picks historiques sous-performent.
+  // Pour chaque équipe (dom OU ext), agrège picks et calcule WR.
+  // Trap = sample >= 5 picks ET winrate < 40%.
+  const byTeam = {};
+  for (const h of entries) {
+    if (!h.verified || !h.realScore) continue;
+    const picks = _historyPicksOf(h);
+    if (!picks.length) continue;
+    for (const team of [h.home_team, h.away_team]) {
+      if (!team) continue;
+      if (!byTeam[team]) byTeam[team] = { picks: [], leagues: new Set() };
+      byTeam[team].picks.push(...picks);
+      if (h.league) byTeam[team].leagues.add(h.league);
+    }
+  }
+  const trapTeams = Object.entries(byTeam)
+    .map(([team, d]) => {
+      const total = d.picks.length;
+      const wins = d.picks.reduce((s, p) => s + p.won, 0);
+      const wr = total ? wins / total : null;
+      const [lo, hi] = _bootstrapCI95(d.picks.map(p => p.won));
+      return {
+        team,
+        leagues: Array.from(d.leagues).slice(0, 3),
+        picks: total,
+        wins,
+        winrate: wr,
+        winrate_ic95: [lo, hi],
+      };
+    })
+    .filter(t => t.picks >= 5 && t.winrate !== null && t.winrate < 0.4)
+    .sort((a, b) => a.winrate - b.winrate)
+    .slice(0, 12);
+
+  return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams };
 }
 
 function computeHistorySeries(entries) {
