@@ -8989,11 +8989,45 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <button type="button" class="dh-view-btn" data-view="charts">📊 Graphiques</button>
         <button type="button" class="dh-view-btn" data-view="attribution">💰 Attribution</button>
         <button type="button" class="dh-view-btn" data-view="variance">🎲 Variance</button>
+        <button type="button" class="dh-view-btn" data-view="backtest">🧪 Backtest</button>
         <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies</button>
       </div>
 
       <div id="dh-view-variance" class="dh-view" style="display:none;">
         <div id="dh-variance-content"></div>
+      </div>
+
+      <div id="dh-view-backtest" class="dh-view" style="display:none;">
+        <div class="dh-exec-block" style="margin-bottom:18px;">
+          <div class="dh-exec-block-title">🧪 Backtest Simulator — utilise filtres actifs</div>
+          <div style="color:var(--dh-text-3);font-size:12px;margin-bottom:14px;">Lance une simulation sur les filtres latéraux (sport · ligues · marchés · stratégies · cotes · etc.) avec staking au choix.</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px;">
+            <label style="display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dh-text-4);text-transform:uppercase;letter-spacing:.7px;">
+              <span>Bankroll initiale</span>
+              <input type="number" id="dh-bt-bankroll" value="100" min="10" max="100000" step="10" style="background:var(--dh-bg-elev);border:1px solid var(--dh-border);color:var(--dh-text);padding:8px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dh-text-4);text-transform:uppercase;letter-spacing:.7px;">
+              <span>Staking</span>
+              <select id="dh-bt-staking" style="background:var(--dh-bg-elev);border:1px solid var(--dh-border);color:var(--dh-text);padding:8px 12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;">
+                <option value="flat_1u">Flat 1u (mise fixe)</option>
+                <option value="pct_1">% bankroll · 1%</option>
+                <option value="pct_2">% bankroll · 2%</option>
+                <option value="pct_5">% bankroll · 5%</option>
+                <option value="kelly_half">Kelly Half (recommandé)</option>
+                <option value="kelly_full">Kelly Full (agressif)</option>
+              </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dh-text-4);text-transform:uppercase;letter-spacing:.7px;">
+              <span>Nom à sauvegarder</span>
+              <input type="text" id="dh-bt-name" placeholder="Ex: BTTS L1 Edge 5%" maxlength="80" style="background:var(--dh-bg-elev);border:1px solid var(--dh-border);color:var(--dh-text);padding:8px 12px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;">
+            </label>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="dh-bt-run" class="dh-tool-btn" type="button" style="background:linear-gradient(135deg,var(--dh-cyan,#38bdf8) 0%,#0891b2 100%);color:#0f172a;font-weight:700;border-color:transparent;padding:10px 20px;">🧪 Lancer Backtest</button>
+            <button id="dh-bt-save" class="dh-tool-btn" type="button" style="background:linear-gradient(135deg,var(--dh-accent,#E2001A) 0%,#b8001a 100%);color:#fff;font-weight:700;border-color:transparent;padding:10px 20px;">💾 Sauvegarder Stratégie</button>
+          </div>
+        </div>
+        <div id="dh-bt-results"></div>
       </div>
 
       <div id="dh-view-attribution" class="dh-view" style="display:none;">
@@ -25202,6 +25236,105 @@ function dhRenderAll(data) {
   if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || [], data.breakdown?.trap_teams || []);
 }
 
+// R8 — Backtest payload : extrait filtres du dhState pour POST body
+function _dhBuildFiltersPayload() {
+  const f = {};
+  if (dhState.sport) f.sport = dhState.sport;
+  if (dhState.leagues?.length) f.leagues = dhState.leagues;
+  if (dhState.teams?.length) f.teams = dhState.teams;
+  if (dhState.markets?.length) f.markets = dhState.markets;
+  if (dhState.strategies?.length) f.strategies = dhState.strategies;
+  if (dhState.surfaces?.length) f.surfaces = dhState.surfaces;
+  if (dhState.confidence?.length) f.confidence = dhState.confidence;
+  if (dhState.outcome && dhState.outcome !== 'all') f.outcome = dhState.outcome;
+  if (dhState.minEV) f.minEV = dhState.minEV;
+  if (dhState.minProba) f.minProba = dhState.minProba;
+  if (dhState.minOdds > 1.10) f.minOdds = dhState.minOdds;
+  if (dhState.maxOdds < 10.00) f.maxOdds = dhState.maxOdds;
+  if (dhState.venue && dhState.venue !== 'all') f.venue = dhState.venue;
+  if (dhState.weekdays?.length) f.weekdays = dhState.weekdays;
+  if (dhState.fromDate) f.fromDate = dhState.fromDate;
+  if (dhState.toDate) f.toDate = dhState.toDate;
+  if (dhState.excludeLowLeagues) f.excludeLowLeagues = true;
+  return f;
+}
+
+// R8 — Render backtest results
+let _dhBacktestChart = null;
+function dhRenderBacktestResults(r) {
+  const wrap = document.getElementById('dh-bt-results');
+  if (!wrap) return;
+  if (!r || !r.sample) {
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">🧪 Aucun pick</div><div class="dh-soon-body">Les filtres actifs ne retournent aucun pick. Élargis pour simuler.</div></div>`;
+    return;
+  }
+  const pl = r.pl_units;
+  const pct = (x, d = 1) => x == null ? '—' : (x >= 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
+  wrap.innerHTML = `
+    <div class="dh-exec-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:16px;">
+      <div class="dh-exec-card ${pl >= 0 ? 'is-green' : 'is-red'}">
+        <div class="dh-exec-card-label">Bankroll finale</div>
+        <div class="dh-exec-card-val">${r.final_bankroll}u</div>
+        <div class="dh-exec-card-sub">départ ${r.start_bankroll}u · ${pl >= 0 ? '+' : ''}${pl}u</div>
+      </div>
+      <div class="dh-exec-card ${r.yield_pct >= 0.05 ? 'is-green' : r.yield_pct >= 0 ? 'is-amber' : 'is-red'}">
+        <div class="dh-exec-card-label">Yield</div>
+        <div class="dh-exec-card-val">${pct(r.yield_pct)}</div>
+        <div class="dh-exec-card-sub">${r.total_staked}u misés total</div>
+      </div>
+      <div class="dh-exec-card ${r.roi_pct >= 0 ? 'is-green' : 'is-red'}">
+        <div class="dh-exec-card-label">ROI Bankroll</div>
+        <div class="dh-exec-card-val">${pct(r.roi_pct)}</div>
+        <div class="dh-exec-card-sub">vs bankroll départ</div>
+      </div>
+      <div class="dh-exec-card ${r.max_drawdown_pct > 0.20 ? 'is-red' : r.max_drawdown_pct > 0.10 ? 'is-amber' : 'is-green'}">
+        <div class="dh-exec-card-label">Max Drawdown</div>
+        <div class="dh-exec-card-val">${pct(r.max_drawdown_pct)}</div>
+        <div class="dh-exec-card-sub">peak-to-trough</div>
+      </div>
+      <div class="dh-exec-card ${r.winrate >= 0.55 ? 'is-green' : r.winrate >= 0.5 ? 'is-amber' : 'is-red'}">
+        <div class="dh-exec-card-label">Winrate</div>
+        <div class="dh-exec-card-val">${pct(r.winrate, 0)}</div>
+        <div class="dh-exec-card-sub">${r.wins}W / ${r.losses}L · n=${r.sample}</div>
+      </div>
+      <div class="dh-exec-card ${r.sharpe >= 1 ? 'is-green' : r.sharpe >= 0 ? '' : 'is-red'}">
+        <div class="dh-exec-card-label">Sharpe</div>
+        <div class="dh-exec-card-val">${r.sharpe != null ? r.sharpe.toFixed(2) : '—'}</div>
+        <div class="dh-exec-card-sub">return / stddev</div>
+      </div>
+      <div class="dh-exec-card ${r.calmar >= 1 ? 'is-green' : r.calmar >= 0 ? '' : 'is-red'}">
+        <div class="dh-exec-card-label">Calmar</div>
+        <div class="dh-exec-card-val">${r.calmar != null ? r.calmar.toFixed(2) : '—'}</div>
+        <div class="dh-exec-card-sub">ROI / Max DD</div>
+      </div>
+    </div>
+    <div class="hist-chart-wrap">
+      <div class="hist-chart-title">Bankroll simulée — staking <code>${escapeHtml(r.staking)}</code></div>
+      <canvas id="dh-chart-backtest" style="width:100%;height:260px;"></canvas>
+    </div>
+  `;
+  if (_dhBacktestChart) { _dhBacktestChart.destroy(); _dhBacktestChart = null; }
+  const ctx = document.getElementById('dh-chart-backtest').getContext('2d');
+  const finalB = r.final_bankroll;
+  const lineColor = finalB >= r.start_bankroll ? '#10b981' : '#ef4444';
+  const fillColor = finalB >= r.start_bankroll ? 'rgba(16,185,129,0.10)' : 'rgba(239,68,68,0.10)';
+  _dhBacktestChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: r.curve.map(p => p.t),
+      datasets: [{ label: 'Bankroll', data: r.curve.map(p => p.bankroll), borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, pointRadius: r.curve.length > 50 ? 0 : 2, fill: true, tension: 0.25 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => 'Bankroll : ' + c.parsed.y + 'u' } } },
+      scales: {
+        x: { ticks: { color: '#5a6068', font: { size: 10 }, maxTicksLimit: 9 }, grid: { color: 'rgba(255,255,255,.04)' } },
+        y: { ticks: { color: '#5a6068', font: { size: 10 }, callback: v => v + 'u' }, grid: { color: 'rgba(255,255,255,.04)' } },
+      },
+    },
+  });
+}
+
 // R7 — Variance Tracker + Bad Beat Detector
 let _dhVarianceChart = null;
 function dhRenderVariance(bb) {
@@ -26404,6 +26537,41 @@ function _dhWireControls() {
     if (window._dhLastData?.series) dhRenderCharts(window._dhLastData.series);
   });
 
+  // R8 — Backtest Simulator
+  document.getElementById('dh-bt-run')?.addEventListener('click', async () => {
+    const btn = document.getElementById('dh-bt-run');
+    btn.disabled = true; btn.textContent = '⏳ Simulation…';
+    const filters = _dhBuildFiltersPayload();
+    const staking = document.getElementById('dh-bt-staking').value;
+    const startBankroll = parseInt(document.getElementById('dh-bt-bankroll').value) || 100;
+    try {
+      const r = await apiFetch('/api/v1/history/backtest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filters, staking, startBankroll }) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      dhRenderBacktestResults(data);
+    } catch (e) {
+      document.getElementById('dh-bt-results').innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">❌ Erreur backtest</div><div class="dh-soon-body">${escapeHtml(e.message || 'Erreur réseau')}</div></div>`;
+    }
+    btn.disabled = false; btn.textContent = '🧪 Lancer Backtest';
+  });
+  document.getElementById('dh-bt-save')?.addEventListener('click', async () => {
+    const name = document.getElementById('dh-bt-name').value.trim();
+    if (!name) { alert('Nom de stratégie requis'); return; }
+    const filters = _dhBuildFiltersPayload();
+    const staking = document.getElementById('dh-bt-staking').value;
+    try {
+      const r = await apiFetch('/api/v1/strategies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, filters, staking }) });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || 'HTTP ' + r.status);
+      }
+      const data = await r.json();
+      alert('Stratégie "' + name + '" sauvegardée (id ' + data.id + ').');
+    } catch (e) {
+      alert('Échec sauvegarde : ' + (e.message || 'Erreur réseau'));
+    }
+  });
+
   // Reset
   document.getElementById('dh-reset').addEventListener('click', () => {
     dhState.leagues = []; dhState.teams = []; dhState.markets = ['over25', 'btts', 'edge'];
@@ -26443,6 +26611,7 @@ function _dhWireControls() {
       document.getElementById('dh-view-charts').style.display = v === 'charts' ? '' : 'none';
       document.getElementById('dh-view-attribution').style.display = v === 'attribution' ? '' : 'none';
       document.getElementById('dh-view-variance').style.display = v === 'variance' ? '' : 'none';
+      document.getElementById('dh-view-backtest').style.display = v === 'backtest' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
       if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution' || v === 'variance') dhRefresh();
     });

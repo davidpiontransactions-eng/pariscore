@@ -3413,6 +3413,21 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_bet_import_audit_user ON bet_import_audit(user_id, created_at)`);
 
+  // R8 — user_strategies : sauvegarde stratégies backtest no-code
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS user_strategies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    filters_json TEXT NOT NULL,
+    staking TEXT NOT NULL DEFAULT 'flat_1u',
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    last_backtest_yield REAL,
+    last_backtest_winrate REAL,
+    last_backtest_sample INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_strategies_user ON user_strategies(user_id, created_at)`);
+
   // ── v9.9 migrations : Gambling-Affiliation network — sub-id tracking + S2S postback ──
   // affiliates : multi-réseau (direct | ga) + credentials GA (pid/bid) + template sub-id
   try {
@@ -7358,6 +7373,103 @@ function computeHistoryBreakdown(entries) {
     .slice(0, 12);
 
   return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams, heatmap };
+}
+
+// R8 — Backtesting Simulator : exécute filtres + applique staking system
+function runBacktestSimulation(filters, opts = {}) {
+  const staking = opts.staking || 'flat_1u'; // flat_1u | kelly_full | kelly_half | pct_1 | pct_2 | pct_5
+  const startBankroll = opts.startBankroll || 100;
+  // Reuse runHistoryQuery to get filtered pool
+  const queryParams = { ...filters, page: 1, pageSize: 10000, sort: 'date_asc' };
+  const data = runHistoryQuery(queryParams);
+  const sport = data.sport;
+  const pool = data.matches;
+  const allPicks = [];
+  for (const h of pool) {
+    const picks = sport === 'tennis' ? _tennisPicksOf(h) : _historyPicksOf(h);
+    for (const p of picks) allPicks.push(p);
+  }
+  allPicks.sort((a, b) => a.t - b.t);
+
+  let bankroll = startBankroll;
+  let peak = startBankroll;
+  let maxDD = 0;
+  let totalStaked = 0;
+  let wins = 0, losses = 0;
+  const curve = [];
+  const returns = [];
+
+  for (const pk of allPicks) {
+    // Calcul stake selon staking system
+    let stake = 0;
+    const odds = typeof pk.odds === 'number' && pk.odds > 1 ? pk.odds : null;
+    const proba = typeof pk.proba === 'number' ? pk.proba / 100 : null;
+    if (staking === 'flat_1u') {
+      stake = 1;
+    } else if (staking === 'pct_1') {
+      stake = bankroll * 0.01;
+    } else if (staking === 'pct_2') {
+      stake = bankroll * 0.02;
+    } else if (staking === 'pct_5') {
+      stake = bankroll * 0.05;
+    } else if ((staking === 'kelly_full' || staking === 'kelly_half') && odds && proba) {
+      const b = odds - 1;
+      const q = 1 - proba;
+      const kellyFrac = Math.max(0, (b * proba - q) / b);
+      const mult = staking === 'kelly_full' ? 1 : 0.5;
+      stake = bankroll * Math.min(kellyFrac * mult, 0.25); // cap 25%
+    } else {
+      stake = 1; // fallback flat
+    }
+    if (stake <= 0) continue;
+    totalStaked += stake;
+
+    // Apply outcome
+    if (pk.won === 1) {
+      const payout = odds ? stake * (odds - 1) : stake; // flat profit 1u for no-odds picks
+      bankroll += payout;
+      wins++;
+      returns.push(payout / stake);
+    } else {
+      bankroll -= stake;
+      losses++;
+      returns.push(-1);
+    }
+    if (bankroll > peak) peak = bankroll;
+    const dd = (peak - bankroll) / peak;
+    if (dd > maxDD) maxDD = dd;
+    curve.push({ t: new Date(pk.t).toISOString().split('T')[0], bankroll: Math.round(bankroll * 100) / 100 });
+  }
+
+  // KPIs
+  const sample = wins + losses;
+  const winrate = sample ? wins / sample : null;
+  const yieldPct = totalStaked ? (bankroll - startBankroll) / totalStaked : null;
+  const roi = startBankroll ? (bankroll - startBankroll) / startBankroll : null;
+  // Sharpe-like : mean / stddev of returns
+  let meanRet = 0, varRet = 0;
+  if (returns.length) {
+    meanRet = returns.reduce((s, v) => s + v, 0) / returns.length;
+    varRet = returns.reduce((s, v) => s + (v - meanRet) ** 2, 0) / returns.length;
+  }
+  const sharpe = varRet > 0 ? meanRet / Math.sqrt(varRet) : null;
+  const calmar = maxDD > 0 ? roi / maxDD : null;
+
+  return {
+    staking,
+    start_bankroll: startBankroll,
+    final_bankroll: Math.round(bankroll * 100) / 100,
+    pl_units: Math.round((bankroll - startBankroll) * 100) / 100,
+    total_staked: Math.round(totalStaked * 100) / 100,
+    sample, wins, losses,
+    winrate,
+    yield_pct: yieldPct,
+    roi_pct: roi,
+    max_drawdown_pct: maxDD,
+    sharpe,
+    calmar,
+    curve,
+  };
 }
 
 // R7 — Bad Beat Detector + Variance Tracker
@@ -20244,6 +20356,69 @@ if (pathname === '/api/v1/history/export.csv') {
     }
   }
   res.end();
+  return;
+}
+
+// POST /api/v1/history/backtest — R8 simulateur backtest no-code
+if (pathname === '/api/v1/history/backtest' && req.method === 'POST') {
+  if (process.env.HISTORY_AUTH_REQUIRED === '1' && !requireAuth(req, res)) return;
+  readBodyLimited(req, 32 * 1024).then(body => {
+    try {
+      const parsed = JSON.parse(body || '{}');
+      const filters = parsed.filters || {};
+      const staking = parsed.staking || 'flat_1u';
+      const startBankroll = Math.max(10, Math.min(100000, parsed.startBankroll || 100));
+      const result = runBacktestSimulation(filters, { staking, startBankroll });
+      jsonResponse(res, 200, result);
+    } catch (e) { jsonResponse(res, 400, { error: 'Backtest invalide : ' + e.message }); }
+  }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
+  return;
+}
+
+// GET /api/v1/strategies — liste stratégies sauvegardées de l'utilisateur
+if (pathname === '/api/v1/strategies' && req.method === 'GET') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  try {
+    const rows = sqldb.prepare(
+      'SELECT id, name, filters_json, staking, created_at, last_backtest_yield, last_backtest_winrate, last_backtest_sample FROM user_strategies WHERE user_id = ? ORDER BY created_at DESC LIMIT 50'
+    ).all(user.userId);
+    const list = rows.map(r => ({ ...r, filters: JSON.parse(r.filters_json || '{}') }));
+    jsonResponse(res, 200, { strategies: list });
+  } catch (e) { jsonResponse(res, 500, { error: e.message }); }
+  return;
+}
+// POST /api/v1/strategies — save stratégie
+if (pathname === '/api/v1/strategies' && req.method === 'POST') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  readBodyLimited(req, 32 * 1024).then(body => {
+    try {
+      const parsed = JSON.parse(body || '{}');
+      const name = String(parsed.name || '').trim().slice(0, 80);
+      if (!name) return jsonResponse(res, 400, { error: 'Nom requis' });
+      const filters = parsed.filters || {};
+      const staking = String(parsed.staking || 'flat_1u').slice(0, 20);
+      // Optional: run a quick backtest to seed metrics
+      let yieldPct = null, winrate = null, sample = null;
+      try {
+        const bt = runBacktestSimulation(filters, { staking });
+        yieldPct = bt.yield_pct; winrate = bt.winrate; sample = bt.sample;
+      } catch {}
+      const r = sqldb.prepare(
+        'INSERT INTO user_strategies (user_id, name, filters_json, staking, last_backtest_yield, last_backtest_winrate, last_backtest_sample) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(user.userId, name, JSON.stringify(filters), staking, yieldPct, winrate, sample);
+      jsonResponse(res, 200, { ok: true, id: r.lastInsertRowid });
+    } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+  }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
+  return;
+}
+// DELETE /api/v1/strategies/:id
+if (pathname.match(/^\/api\/v1\/strategies\/\d+$/) && req.method === 'DELETE') {
+  const user = requireUserAuth(req, res); if (!user) return;
+  const id = parseInt(pathname.split('/').pop());
+  try {
+    sqldb.prepare('DELETE FROM user_strategies WHERE id = ? AND user_id = ?').run(id, user.userId);
+    jsonResponse(res, 200, { ok: true });
+  } catch (e) { jsonResponse(res, 500, { error: e.message }); }
   return;
 }
 
