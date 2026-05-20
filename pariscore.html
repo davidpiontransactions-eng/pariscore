@@ -9019,8 +9019,32 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
       <div id="dh-view-charts" class="dh-view" style="display:none;">
         <div class="hist-chart-wrap">
-          <div class="hist-chart-title">P/L cumulé en unités (1u/pick, all picks)</div>
-          <canvas id="dh-chart-pl" style="width:100%;height:200px;"></canvas>
+          <div class="hist-chart-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>P/L cumulé en unités (1u/pick) — comparateur cohort</span>
+            <div class="dh-cohort-controls" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono', monospace;font-size:10.5px;color:var(--dh-text-3);">
+              <label>A
+                <select id="dh-cohort-a" style="background:var(--dh-bg-elev);border:1px solid var(--dh-border);color:var(--dh-text);padding:3px 8px;border-radius:5px;font-family:inherit;font-size:11px;">
+                  <option value="all">All</option>
+                  <option value="365">1 an</option>
+                  <option value="180">6 mois</option>
+                  <option value="90" selected>90j</option>
+                  <option value="30">30j</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+              <label>B
+                <select id="dh-cohort-b" style="background:var(--dh-bg-elev);border:1px solid var(--dh-border);color:var(--dh-text);padding:3px 8px;border-radius:5px;font-family:inherit;font-size:11px;">
+                  <option value="all">All</option>
+                  <option value="365">1 an</option>
+                  <option value="180">6 mois</option>
+                  <option value="90">90j</option>
+                  <option value="30" selected>30j</option>
+                  <option value="off">Off</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <canvas id="dh-chart-pl" style="width:100%;height:220px;"></canvas>
         </div>
         <div class="hist-chart-wrap">
           <div class="hist-chart-title">Drawdown (en unités, peak-to-trough)</div>
@@ -25955,6 +25979,20 @@ function _dhDestroyCharts() {
   }
 }
 
+function _dhSliceCohort(pl, days) {
+  if (days === 'off') return null;
+  if (days === 'all') return pl;
+  const n = parseInt(days);
+  if (!Number.isFinite(n) || n <= 0) return pl;
+  const cutoff = Date.now() - n * 86400000;
+  return pl.filter(p => new Date(p.date).getTime() >= cutoff);
+}
+function _dhRebase(pl) {
+  if (!pl?.length) return [];
+  const base = pl[0].units;
+  return pl.map(p => ({ date: p.date, units: p.units - base }));
+}
+
 function dhRenderCharts(series) {
   _dhDestroyCharts();
   if (!series) return;
@@ -25965,15 +26003,54 @@ function dhRenderCharts(series) {
   if (pl.length) {
     const ctx = document.getElementById('dh-chart-pl').getContext('2d');
     const final = pl[pl.length - 1].units;
-    const lineColor = final >= 0 ? '#00e676' : '#ff4d4d';
-    const fillColor = final >= 0 ? 'rgba(0,230,118,0.07)' : 'rgba(255,77,77,0.07)';
+    const lineColor = final >= 0 ? '#10b981' : '#ef4444';
+    const fillColor = final >= 0 ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)';
+
+    // R5 — Cohort comparison overlay
+    const cohortA = document.getElementById('dh-cohort-a')?.value || 'all';
+    const cohortB = document.getElementById('dh-cohort-b')?.value || 'off';
+    const sliceA = _dhSliceCohort(pl, cohortA);
+    const sliceB = _dhSliceCohort(pl, cohortB);
+    const datasets = [];
+    // Base series (full)
+    if (cohortA === 'off' && cohortB === 'off') {
+      datasets.push({ label: 'P/L', data: pl.map(p => p.units), borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, pointRadius: pl.length > 50 ? 0 : 2, fill: true, tension: 0.25 });
+    } else {
+      if (sliceA?.length) {
+        const reb = _dhRebase(sliceA);
+        datasets.push({
+          label: `Cohort A — ${cohortA === 'all' ? 'All' : cohortA + 'j'}`,
+          data: reb.map(p => ({ x: p.date, y: p.units })),
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.10)',
+          borderWidth: 2, pointRadius: reb.length > 50 ? 0 : 2, fill: false, tension: 0.25,
+        });
+      }
+      if (sliceB?.length) {
+        const reb = _dhRebase(sliceB);
+        datasets.push({
+          label: `Cohort B — ${cohortB === 'all' ? 'All' : cohortB + 'j'}`,
+          data: reb.map(p => ({ x: p.date, y: p.units })),
+          borderColor: '#E2001A',
+          backgroundColor: 'rgba(226, 0, 26, 0.08)',
+          borderWidth: 2, pointRadius: reb.length > 50 ? 0 : 2, fill: false, tension: 0.25,
+          borderDash: [5, 4],
+        });
+      }
+    }
     dhState._charts.pl = new Chart(ctx, {
       type: 'line',
-      data: {
-        labels: pl.map(p => p.date),
-        datasets: [{ data: pl.map(p => p.units), borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, pointRadius: pl.length > 50 ? 0 : 2, fill: true, tension: 0.25 }],
+      data: { datasets },
+      options: { ..._dhChartOpts(v => (v >= 0 ? '+' : '') + v + 'u'),
+        plugins: {
+          legend: { display: datasets.length > 1, labels: { color: '#cbd5e1', font: { family: 'JetBrains Mono, monospace', size: 10 } } },
+          tooltip: { callbacks: { label: c => c.dataset.label + ' : ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y + 'u' } },
+        },
+        scales: {
+          x: { type: 'category', ticks: { color: '#5a6068', font: { size: 10 }, maxTicksLimit: 9 }, grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { ticks: { color: '#5a6068', font: { size: 10 }, callback: v => (v >= 0 ? '+' : '') + v + 'u' }, grid: { color: 'rgba(255,255,255,.04)' }, border: { dash: [3, 3] } },
+        },
       },
-      options: _dhChartOpts(v => (v >= 0 ? '+' : '') + v + 'u'),
     });
   }
 
@@ -26185,6 +26262,14 @@ function _dhWireControls() {
       dhState.page = 1;
       dhRefreshDebounced();
     });
+  });
+
+  // R5 — Cohort selectors (re-render chart only, no refetch)
+  document.getElementById('dh-cohort-a')?.addEventListener('change', () => {
+    if (window._dhLastData?.series) dhRenderCharts(window._dhLastData.series);
+  });
+  document.getElementById('dh-cohort-b')?.addEventListener('change', () => {
+    if (window._dhLastData?.series) dhRenderCharts(window._dhLastData.series);
   });
 
   // Reset
