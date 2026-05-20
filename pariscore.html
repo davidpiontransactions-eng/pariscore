@@ -1372,6 +1372,42 @@
 
   .match-tab.live-tab.active { background: rgba(255,77,77,0.12); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
 
+  /* v11.0 — Badge néon WebSocket BSD (connecté/déconnecté) sur bouton LIVE */
+  .ws-status-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+    background: #5a6068;
+    transition: background 200ms, box-shadow 200ms;
+  }
+  .ws-status-dot.ws-on {
+    background: #00e676;
+    box-shadow: 0 0 6px #00e676, 0 0 10px rgba(0,230,118,0.6);
+    animation: ws-pulse 1.4s infinite;
+  }
+  .ws-status-dot.ws-off {
+    background: #ff4d4d;
+    box-shadow: 0 0 4px rgba(255,77,77,0.5);
+  }
+  @keyframes ws-pulse {
+    0%, 100% { box-shadow: 0 0 6px #00e676, 0 0 10px rgba(0,230,118,0.6); }
+    50%      { box-shadow: 0 0 10px #00e676, 0 0 18px rgba(0,230,118,0.9); }
+  }
+  .match-tab.live-tab.ws-connected {
+    border-color: rgba(0,230,118,0.45);
+  }
+  /* Flash cote live push WS */
+  tr.ws-odds-flash {
+    animation: ws-odds-flash 800ms ease-out;
+  }
+  @keyframes ws-odds-flash {
+    0%   { background: rgba(0,230,118,0.18); }
+    100% { background: transparent; }
+  }
+
   /* Packball — Stats Flash */
   .sf-wrap { margin-top: 3px; display: flex; flex-wrap: wrap; gap: 3px; }
   .sf-chip { font: 400 9.5px/1 var(--font-mono); padding: 2px 7px; border-radius: 3px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
@@ -7784,7 +7820,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <div class="table-header-title" id="table-title">Matchs à venir</div>
         <div class="match-tabs">
           <button class="match-tab active" id="tab-all" onclick="setMatchTab('all',this)">Tous</button>
-          <button class="match-tab live-tab" id="tab-live" onclick="setMatchTab('live',this)">🔴 Live <span class="live-count-badge" id="live-count-badge" style="display:none;">0</span></button>
+          <button class="match-tab live-tab" id="tab-live" onclick="setMatchTab('live',this)" title="🔴 Matchs en cours · ⚡ Propulsé WebSocket Bzzoiro : xG live, Momentum, Attaques Dangereuses, Cotes temps réel (push <5s)">🔴 Live <span class="live-count-badge" id="live-count-badge" style="display:none;">0</span><span class="ws-status-dot" id="ws-status-dot" title="WebSocket : statut inconnu"></span></button>
           <button class="match-tab" id="tab-prematch" onclick="setMatchTab('prematch',this)">Prematch</button>
         </div>
         <select id="match-tab-mob" aria-label="Filtrer les matchs"
@@ -8368,6 +8404,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <option value="mitemps">Mi-temps</option>
     </select></label>
   <div class="strategy-pills" id="strategy-pills"></div>
+  <div id="strat-multi-info" style="display:none;margin:-4px 0 10px;font-family:var(--font-mono);"></div>
           <div id="acca-panel" class="acca-panel" style="display:none;"></div>
   <div class="strategy-controls" id="strategy-controls" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:12px 0 4px;padding:10px 14px;background:var(--bg2);border-radius:10px;border:1px solid rgba(255,255,255,0.05);">
     <div style="display:flex;align-items:center;gap:8px;">
@@ -15289,9 +15326,37 @@ function startAutoRefresh() {
   }, 5 * 60 * 1000);
 }
 
+// v11.0 — Badge néon WebSocket BSD : helper + fetch initial
+function updateWsStatusBadge(connected, subsCount, pending) {
+  const dot = document.getElementById('ws-status-dot');
+  if (!dot) return;
+  dot.classList.remove('ws-on', 'ws-off');
+  dot.classList.add(connected ? 'ws-on' : 'ws-off');
+  const subs = Number(subsCount || 0), pend = Number(pending || 0);
+  if (connected) {
+    dot.title = '⚡ WebSocket BSD actif · ' + subs + ' match' + (subs > 1 ? 's' : '') + ' suivi' + (subs > 1 ? 's' : '') + ' en push <5s' + (pend ? ' (' + pend + ' en file)' : '');
+  } else {
+    dot.title = '⚠ WebSocket BSD déconnecté · fallback polling 60s';
+  }
+  const tab = document.getElementById('tab-live');
+  if (tab) tab.classList.toggle('ws-connected', !!connected);
+}
+
+function fetchWsStatus() {
+  fetch('/api/v1/live/ws-status')
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (!d) return;
+      updateWsStatusBadge(!!d.connected, (d.subs || []).length, d.pending || 0);
+    })
+    .catch(() => {});
+}
+
 // SSE — remplace le polling 5min quand disponible
 let sseConnection = null;
 function initSSE() {
+  fetchWsStatus();
+  setInterval(fetchWsStatus, 60000); // filet de sécurité si SSE ws_status manqué
   if (!window.EventSource) { startAutoRefresh(); return; } // fallback navigateurs anciens
   if (sseConnection) sseConnection.close();
 
@@ -15365,6 +15430,60 @@ function initSSE() {
         }
       }
     } catch(err) { console.warn('[SSE] live_patch error', err); }
+  });
+
+  // v11.0 — Badge néon WebSocket BSD (statut connexion)
+  sseConnection.addEventListener('ws_status', e => {
+    try {
+      const d = JSON.parse(e.data);
+      updateWsStatusBadge(!!d.connected, d.subs ? d.subs.length : 0, d.pending || 0);
+    } catch (err) { console.warn('[SSE] ws_status error', err); }
+  });
+
+  // v11.0 — Push stats event frame (~30s, BSD WebSocket schema officiel)
+  sseConnection.addEventListener('ws_event', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || !d.id) return;
+      const m = allMatches.find(x => x.id === d.id);
+      if (!m) return;
+      if (d.score) m.live_score = d.score;
+      if (d.minute != null) m.live_minute = d.minute;
+      if (d.status) m.status = d.status;
+      if (d.live_possession)        m.live_possession        = d.live_possession;
+      if (d.live_shots)              m.live_shots              = d.live_shots;
+      if (d.live_shots_on_target)    m.live_shots_on_target    = d.live_shots_on_target;
+      if (d.live_corners)            m.live_corners            = d.live_corners;
+      if (d.live_xg)                 m.live_xg                 = d.live_xg;
+      if (d.live_big_chances)        m.live_big_chances        = d.live_big_chances;
+      if (d.live_momentum)           m.live_momentum           = d.live_momentum;
+      if (d.live_cards)              m.live_cards              = d.live_cards;
+      if (d.live_dangerous_attacks)  m.live_dangerous_attacks  = d.live_dangerous_attacks;
+      if (d.live_touches_opp_box)    m.live_touches_opp_box    = d.live_touches_opp_box;
+      if (activeMatchTab === 'live' && typeof updateLiveDashboard === 'function') {
+        updateLiveDashboard(allMatches);
+      }
+      if (typeof _liveDetailMatchId !== 'undefined' && _liveDetailMatchId === d.id && typeof refreshLiveDetailModal === 'function') {
+        refreshLiveDetailModal(d.id, { force: true }).catch(() => {});
+      }
+    } catch (err) { console.warn('[SSE] ws_event error', err); }
+  });
+
+  // v11.0 — Push cotes live (BSD WebSocket schema officiel)
+  sseConnection.addEventListener('ws_odds', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || !d.id) return;
+      const m = allMatches.find(x => x.id === d.id);
+      if (!m) return;
+      m.odds_live = d.odds;
+      // Flash visuel sur ligne tableau si cellule cote présente
+      const row = document.querySelector('tr[data-match-id="' + d.id + '"]');
+      if (row) {
+        row.classList.add('ws-odds-flash');
+        setTimeout(() => row.classList.remove('ws-odds-flash'), 800);
+      }
+    } catch (err) { console.warn('[SSE] ws_odds error', err); }
   });
 
   sseConnection.addEventListener('live_ws', e => {
@@ -22605,21 +22724,21 @@ const STRATEGIES_UI = [
   { key: 'HT_HOME_FT_HOME',  label: 'Mi-Temps Victoire Dom.', icon: '', tipster: 'Le Sprint' },
   { key: 'HT_UNDER_FT_OVER', label: 'Explosion 2e Mi-Temps',  icon: '', tipster: 'Le Dynamiteur' },
 ];
-let currentStrategy = 'BTTS_YES';
+let currentStrategies = ['BTTS_YES'];
 let strategiesPageInitialized = false;
 let activeStratLeague = '';
 let activeStratConf = 50;
 
 function onStratLeagueChange(val) {
   activeStratLeague = val;
-  loadStrategy(currentStrategy);
+  loadStrategies();
 }
 
 function onStratConfChange(val) {
   activeStratConf = parseInt(val) || 50;
   const el = document.getElementById('strat-conf-val');
   if (el) el.textContent = activeStratConf + '%';
-  loadStrategy(currentStrategy);
+  loadStrategies();
 }
 
 function resetStratFilters() {
@@ -22631,7 +22750,7 @@ function resetStratFilters() {
   if (slider) slider.value = '50';
   const val = document.getElementById('strat-conf-val');
   if (val) val.textContent = '50%';
-  loadStrategy(currentStrategy);
+  loadStrategies();
 }
 
 function openStratHelp() {
@@ -22644,30 +22763,55 @@ function closeStratHelp() {
 }
 
 function initStrategiesPage() {
-  if (strategiesPageInitialized) { loadStrategy(currentStrategy); return; }
+  if (strategiesPageInitialized) { loadStrategies(); return; }
   const pills = document.getElementById('strategy-pills');
   pills.innerHTML = STRATEGIES_UI.map(s => {
     const tp = s.tipster ? `<span style="font-size:12px;font-weight:700;display:block;line-height:1.3;">${s.tipster}</span>` : '';
     const sub = `<span style="font-size:10px;opacity:0.65;display:block;">${s.label}</span>`;
-    return `<div class="strategy-pill${s.key === currentStrategy ? ' active' : ''}" data-key="${s.key}" onclick="selectStrategy('${s.key}')">${tp}${sub}</div>`;
+    return `<div class="strategy-pill${currentStrategies.includes(s.key) ? ' active' : ''}" data-key="${s.key}" onclick="toggleStrategy('${s.key}')">${tp}${sub}</div>`;
   }).join('');
   const _ssel = document.getElementById('strat-mob');
   if (_ssel) {
     _ssel.innerHTML = STRATEGIES_UI.map(s =>
-      `<option value="${s.key}"${s.key === currentStrategy ? ' selected' : ''}>${s.tipster ? s.tipster + ' — ' : ''}${s.label}</option>`
+      `<option value="${s.key}"${s.key === currentStrategies[0] ? ' selected' : ''}>${s.tipster ? s.tipster + ' — ' : ''}${s.label}</option>`
     ).join('');
   }
   strategiesPageInitialized = true;
-  loadStrategy(currentStrategy);
+  loadStrategies();
+}
+
+function toggleStrategy(key) {
+  const i = currentStrategies.indexOf(key);
+  if (i === -1) {
+    currentStrategies.push(key);
+  } else if (currentStrategies.length > 1) {
+    currentStrategies.splice(i, 1);
+  }
+  document.querySelectorAll('.strategy-pill').forEach(p =>
+    p.classList.toggle('active', currentStrategies.includes(p.dataset.key))
+  );
+  _stratSyncBadge();
+  loadStrategies();
 }
 
 function selectStrategy(key) {
-  if (key === currentStrategy) return;
-  currentStrategy = key;
+  // Called from mobile <select> — single-select
+  currentStrategies = [key];
   document.querySelectorAll('.strategy-pill').forEach(p => p.classList.toggle('active', p.dataset.key === key));
   const _ssel = document.getElementById('strat-mob');
   if (_ssel && _ssel.value !== key) _ssel.value = key;
-  loadStrategy(key);
+  _stratSyncBadge();
+  loadStrategies();
+}
+
+function _stratSyncBadge() {
+  const n = currentStrategies.length;
+  const badge = document.getElementById('strat-multi-info');
+  if (!badge) return;
+  if (n <= 1) { badge.style.display = 'none'; return; }
+  const labels = currentStrategies.map(k => STRATEGIES_UI.find(s => s.key === k)?.tipster || k).join(' · ');
+  badge.style.display = 'block';
+  badge.innerHTML = `<span style="background:rgba(237,28,36,0.10);border:1px solid rgba(237,28,36,0.25);border-radius:20px;padding:3px 10px;color:#E2001A;font-weight:700;font-size:11px;">${n} stratégies actives</span> <span style="margin-left:6px;color:var(--text3);font-size:11px;">${labels}</span>`;
 }
 
 // Filtre Famille (mobile Top Stratégies) — pilote état plat + masque pills hors famille
@@ -22683,9 +22827,17 @@ function psStratFamily(val) {
   const keys = (val && val !== 'all') ? (PS_STRAT_FAMILY[val] || []) : null;
   const pills = document.querySelectorAll('#strategy-pills .strategy-pill');
   pills.forEach(p => { p.style.display = (!keys || keys.includes(p.dataset.key)) ? '' : 'none'; });
-  if (keys && !keys.includes(currentStrategy)) {
-    const first = [...pills].find(p => p.style.display !== 'none');
-    if (first) selectStrategy(first.dataset.key);
+  if (keys) {
+    currentStrategies = currentStrategies.filter(k => keys.includes(k));
+    if (!currentStrategies.length) {
+      const first = [...pills].find(p => p.style.display !== 'none');
+      if (first) currentStrategies = [first.dataset.key];
+    }
+    document.querySelectorAll('.strategy-pill').forEach(p =>
+      p.classList.toggle('active', currentStrategies.includes(p.dataset.key))
+    );
+    _stratSyncBadge();
+    loadStrategies();
   }
 }
 
@@ -22740,6 +22892,90 @@ function tipsterAvatar(name, badgeCls) {
   const initials = name.replace(/^L'|^Le |^La /, '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const bg = strategyAvatarColor(badgeCls);
   return `<span class="tipster-avatar" style="background:${bg};">${initials}</span>`;
+}
+
+function _renderStratCard(m, key) {
+  const dateStr = fmtKickoffDate(m.commence_time, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + fmtKickoffTime(m.commence_time);
+  const odd = m.odds != null ? Number(m.odds).toFixed(2) : m.implied_odds != null ? `~${Number(m.implied_odds).toFixed(2)}` : '—';
+  const edge = m.best_edge?.edge;
+  const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
+  const vi = m.valueIndex ?? 0;
+  const ci = m.confidenceIndex ?? m.confidence;
+  const confColor = ci >= 80 ? '#E2001A' : ci >= 60 ? '#1A1A1A' : '#888';
+  const viColor   = vi >= 70 ? '#E2001A' : vi >= 40 ? '#1A1A1A' : '#888';
+  const ui = STRATEGIES_UI.find(s => s.key === key);
+  const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
+  const xg = m.expectedGoals ? `xG ${m.expectedGoals.home.toFixed(1)}-${m.expectedGoals.away.toFixed(1)}` : '';
+  return `<div class="ps-pill-card" onclick="openInsightsById('${m.id}')">
+    <div style="flex:1;min-width:0;overflow:hidden;">
+      <div class="ppc-league">${leagueShort} · ${dateStr}</div>
+      <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
+      <div class="ppc-sub">${ui?.label || key}${xg ? ' · ' + xg : ''}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+      <div style="display:flex;gap:10px;align-items:baseline;">
+        <div style="text-align:center;">
+          <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Conf.</div>
+          <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${confColor};line-height:1;">${ci}%</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Value</div>
+          <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${viColor};line-height:1;">${vi}%</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${edgeStr ? `<span class="ppc-badge">${edgeStr}</span>` : ''}
+        <div class="ppc-odds">${odd}</div>
+      </div>
+      <div style="display:flex;gap:4px;margin-top:2px;">
+        <button onclick="event.stopPropagation();openInsightsById('${m.id}')" style="background:#F4F4F4;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#1A1A1A;cursor:pointer;font-weight:600;">Stats</button>
+        <button onclick="event.stopPropagation();openPowerScore('${m.id}')" style="background:#1A1A1A;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;font-weight:600;">⚡ PS</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function loadStrategies() {
+  if (currentStrategies.length === 1) return loadStrategy(currentStrategies[0]);
+  const grid = document.getElementById('strategy-grid');
+  const meta = document.getElementById('strategy-meta');
+  meta.innerHTML = '';
+  loadAccaPanel(currentStrategies[0]);
+  renderStrategySkeletons();
+  try {
+    const leagueParam = activeStratLeague ? `&league=${encodeURIComponent(activeStratLeague)}` : '';
+    const results = await Promise.all(currentStrategies.map(key =>
+      apiFetch(`/api/v1/top-strategy?type=${encodeURIComponent(key)}&limit=12&minConfidence=${activeStratConf}${leagueParam}`)
+        .then(r => r.ok ? r.json() : { matches: [] })
+        .catch(() => ({ matches: [] }))
+    ));
+    const seen = new Map();
+    results.forEach((data, idx) => {
+      const key = currentStrategies[idx];
+      (data.matches || []).forEach(m => {
+        const ci = m.confidenceIndex ?? m.confidence ?? 0;
+        const prev = seen.get(m.id);
+        if (!prev || ci > (prev.confidenceIndex ?? prev.confidence ?? 0)) {
+          seen.set(m.id, { ...m, _stratKey: key });
+        }
+      });
+    });
+    const matches = [...seen.values()].sort((a, b) => {
+      const ca = a.confidenceIndex ?? a.confidence ?? 0;
+      const cb = b.confidenceIndex ?? b.confidence ?? 0;
+      return cb - ca;
+    });
+    const leagueLbl = activeStratLeague ? ` · ${document.getElementById('strat-league-select')?.selectedOptions[0]?.text || activeStratLeague}` : '';
+    const labels = currentStrategies.map(k => STRATEGIES_UI.find(s => s.key === k)?.label || k).join(' + ');
+    meta.innerHTML = `Stratégies : <strong>${labels}</strong> · ${matches.length} match${matches.length !== 1 ? 's' : ''} avec confiance ≥ ${activeStratConf}%${leagueLbl} · <span style="color:var(--text3)">Trié par confiance ↓</span>`;
+    if (!matches.length) {
+      grid.innerHTML = `<div class="strat-empty"><div class="ico">🔍</div>Aucun match avec une confiance suffisante pour ces stratégies.<br><span style="color:var(--text3);font-size:12px;">Essayez d'autres stratégies ou revenez plus tard.</span></div>`;
+      return;
+    }
+    grid.innerHTML = matches.map(m => _renderStratCard(m, m._stratKey || currentStrategies[0])).join('');
+  } catch (e) {
+    grid.innerHTML = `<div class="strat-empty"><div class="ico">⚠</div>Erreur lors du chargement des stratégies multiples.</div>`;
+  }
 }
 
 async function loadAccaPanel(key) {
@@ -22799,46 +23035,7 @@ async function loadStrategy(key) {
       return;
     }
 
-    grid.innerHTML = matches.map(m => {
-      const dateStr = fmtKickoffDate(m.commence_time, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + fmtKickoffTime(m.commence_time);
-      const odd = m.odds != null ? Number(m.odds).toFixed(2) : m.implied_odds != null ? `~${Number(m.implied_odds).toFixed(2)}` : '—';
-      const edge = m.best_edge?.edge;
-      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
-      const vi = m.valueIndex ?? 0;
-      const ci = m.confidenceIndex ?? m.confidence;
-      const confColor = ci >= 80 ? '#E2001A' : ci >= 60 ? '#1A1A1A' : '#888';
-      const viColor   = vi >= 70 ? '#E2001A' : vi >= 40 ? '#1A1A1A' : '#888';
-      const ui = STRATEGIES_UI.find(s => s.key === key);
-      const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
-      const xg = m.expectedGoals ? `xG ${m.expectedGoals.home.toFixed(1)}-${m.expectedGoals.away.toFixed(1)}` : '';
-      return `<div class="ps-pill-card" onclick="openInsightsById('${m.id}')">
-        <div style="flex:1;min-width:0;overflow:hidden;">
-          <div class="ppc-league">${leagueShort} · ${dateStr}</div>
-          <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
-          <div class="ppc-sub">${ui?.label || key}${xg ? ' · ' + xg : ''}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-          <div style="display:flex;gap:10px;align-items:baseline;">
-            <div style="text-align:center;">
-              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Conf.</div>
-              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${confColor};line-height:1;">${ci}%</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em;">Value</div>
-              <div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:${viColor};line-height:1;">${vi}%</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            ${edgeStr ? `<span class="ppc-badge">${edgeStr}</span>` : ''}
-            <div class="ppc-odds">${odd}</div>
-          </div>
-          <div style="display:flex;gap:4px;margin-top:2px;">
-            <button onclick="event.stopPropagation();openInsightsById('${m.id}')" style="background:#F4F4F4;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#1A1A1A;cursor:pointer;font-weight:600;">Stats</button>
-            <button onclick="event.stopPropagation();openPowerScore('${m.id}')" style="background:#1A1A1A;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;font-weight:600;">⚡ PS</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+    grid.innerHTML = matches.map(m => _renderStratCard(m, key)).join('');
   } catch (e) {
     grid.innerHTML = `<div class="strat-empty"><div class="ico">⚠</div>Lancez <code style="color:var(--text2);">node server.js</code> pour charger les stratégies.</div>`;
   }
@@ -25093,6 +25290,17 @@ function refreshDeepAnalysis() {
 function openDeepAnalysis(matchId, e, force) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
 
+  // #5 — Disable bouton immédiatement, anti-double-clic
+  const btn = e ? (e.currentTarget || e.target) : null;
+  const _reenableBtn = () => {
+    if (btn) { btn.disabled = false; btn.textContent = 'AI-AL'; }
+  };
+  if (btn && !force) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+  }
+
   const match = allMatches.find(m => m.id === matchId);
   const label = match ? `${match.home_team} vs ${match.away_team}` : matchId;
 
@@ -25103,6 +25311,7 @@ function openDeepAnalysis(matchId, e, force) {
 
   // Same match already analysed — show render directly, no re-fetch
   if (!force && _deepMatchId === matchId && _deepText) {
+    _reenableBtn();
     const term = document.getElementById('deep-terminal');
     term.style.display = 'none';
     document.getElementById('deep-mode-bar').style.display = 'flex';
@@ -25190,6 +25399,7 @@ function openDeepAnalysis(matchId, e, force) {
 
   _deepEvt.addEventListener('done', ev => {
     _deepEvt.close(); _deepEvt = null;
+    _reenableBtn();
     let providerName = '';
     try { const d = JSON.parse(ev.data); providerName = d.provider || ''; } catch {}
     // U6 — timestamp
@@ -25205,6 +25415,7 @@ function openDeepAnalysis(matchId, e, force) {
 
   _deepEvt.addEventListener('error', ev => {
     _deepEvt.close(); _deepEvt = null;
+    _reenableBtn();
     let msg = 'Connexion interrompue';
     try { msg = JSON.parse(ev.data).message; } catch {}
     term.textContent += '\n\n> ERREUR : ' + msg;
@@ -25213,6 +25424,7 @@ function openDeepAnalysis(matchId, e, force) {
 
   _deepEvt.onerror = () => {
     if (_deepEvt?.readyState === EventSource.CLOSED) return;
+    _reenableBtn();
     term.textContent += '\n\n> Connexion SSE perdue.';
     document.getElementById('deep-mode-bar').style.display = 'flex';
   };
