@@ -3498,6 +3498,60 @@ function initSQLite() {
   if (cleaned.changes > 0) console.log(`  ✓ ${cleaned.changes} affilié(s) non-ANJ désactivé(s) (cleanup sécurité)`);
   // Boost Coteur en priorité #1
   sqldb.prepare("UPDATE affiliates SET priority = 99 WHERE bookmaker = 'coteur'").run();
+
+  // ── v9.9 — Seeds Gambling-Affiliation (network='ga') depuis .env (jamais en dur) ──
+  // Si GA_PID absent : skip (fallback direct Coteur/Winamax reste actif).
+  // Si GA_BID_<BOOKMAKER> absent : ce bookmaker garde son network='direct'.
+  // Var env optionnelles:
+  //   GA_PID                     (partner ID commun — obligatoire pour activer GA)
+  //   GA_BID_WINAMAX             (brand ID Winamax)
+  //   GA_BID_BETCLIC             (brand ID Betclic)
+  //   GA_BID_UNIBET              (brand ID Unibet)
+  //   GA_BID_PMU                 (brand ID PMU)
+  //   GA_BID_PARIONS_SPORT       (brand ID ParionsSport FDJ)
+  //   GA_BID_ZEBET               (brand ID ZEbet)
+  //   GA_REDIRECT_BASE           (default https://media.gambling-affiliation.com/redirect.aspx)
+  //   GA_SUBID_TEMPLATE          (default ps_{user}_{sport}_{league}_{match}_{ctx})
+  //   GA_POSTBACK_TOKEN          (secret S2S — voir /cb/)
+  const GA_PID             = process.env.GA_PID || '';
+  const GA_REDIRECT_BASE   = process.env.GA_REDIRECT_BASE   || 'https://media.gambling-affiliation.com/redirect.aspx';
+  const GA_SUBID_TEMPLATE  = process.env.GA_SUBID_TEMPLATE  || 'ps_{user}_{sport}_{league}_{match}_{ctx}';
+  if (GA_PID) {
+    const GA_BOOKMAKERS = [
+      { bm: 'winamax',       name: 'Winamax — ANJ via Gambling-Affiliation',       env: 'GA_BID_WINAMAX',       priority: 95 },
+      { bm: 'betclic',       name: 'Betclic — ANJ via Gambling-Affiliation',       env: 'GA_BID_BETCLIC',       priority: 90 },
+      { bm: 'unibet',        name: 'Unibet — ANJ via Gambling-Affiliation',        env: 'GA_BID_UNIBET',        priority: 85 },
+      { bm: 'pmu',           name: 'PMU — ANJ via Gambling-Affiliation',           env: 'GA_BID_PMU',           priority: 80 },
+      { bm: 'parions_sport', name: 'ParionsSport (FDJ) via Gambling-Affiliation',  env: 'GA_BID_PARIONS_SPORT', priority: 75 },
+      { bm: 'zebet',         name: 'ZEbet — ANJ via Gambling-Affiliation',         env: 'GA_BID_ZEBET',         priority: 70 },
+    ];
+    let gaSeeded = 0, gaSkipped = 0;
+    for (const item of GA_BOOKMAKERS) {
+      const bid = process.env[item.env];
+      if (!bid) { gaSkipped++; continue; }  // bookmaker non configuré côté .env
+      const existing = sqldb.prepare('SELECT id FROM affiliates WHERE bookmaker = ?').get(item.bm);
+      if (existing) {
+        sqldb.prepare(`UPDATE affiliates SET
+          network = 'ga', name = ?, affiliate_link = ?, ga_pid = ?, ga_bid = ?,
+          subid_template = ?, active = 1, priority = ?
+          WHERE id = ?`).run(
+          item.name, GA_REDIRECT_BASE, GA_PID, bid, GA_SUBID_TEMPLATE, item.priority, existing.id
+        );
+      } else {
+        sqldb.prepare(`INSERT INTO affiliates
+          (bookmaker, name, affiliate_link, network, ga_pid, ga_bid, subid_template,
+           commission_type, commission_rate, active, priority)
+          VALUES (?, ?, ?, 'ga', ?, ?, ?, 'revshare', 30, 1, ?)`).run(
+          item.bm, item.name, GA_REDIRECT_BASE, GA_PID, bid, GA_SUBID_TEMPLATE, item.priority
+        );
+      }
+      gaSeeded++;
+    }
+    if (gaSeeded > 0) console.log(`  ✓ ${gaSeeded} bookmaker(s) GA seeded/updated via .env (${gaSkipped} skipped)`);
+  } else {
+    console.log('  i  GA_PID absent — seeds Gambling-Affiliation skip (fallback direct uniquement)');
+  }
+
   // Seed utilisateur de test (idempotent)
   const testEmail = 'test@pariscore.fr';
   const existing = sqldb.prepare('SELECT id FROM users WHERE email = ?').get(testEmail);
