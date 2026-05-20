@@ -3064,6 +3064,8 @@
   #page-historique #dh-f-team::placeholder { color: var(--dh-text-4); }
   #page-historique #dh-f-team:focus { outline: none; border-color: var(--dh-cyan); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
   #page-historique .dh-fr-section input[type="range"] { accent-color: var(--dh-cyan); }
+  #page-historique .dh-odds-range { display: flex; flex-direction: column; gap: 4px; }
+  #page-historique .dh-odds-range input[type="range"] { height: 4px; }
   #page-historique .dh-checkbox { color: var(--dh-text-3); }
   #page-historique .dh-checkbox input { accent-color: var(--dh-accent); }
   #page-historique .dh-reset-btn { background: transparent; border: 1px dashed var(--dh-border-2); color: var(--dh-text-3); font-family: 'JetBrains Mono', monospace; border-radius: 8px; transition: all .15s ease; }
@@ -8847,6 +8849,35 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <div class="dh-fr-section">
         <div class="dh-fr-title">Proba min <span id="dh-pr-val">55%</span></div>
         <input type="range" id="dh-f-proba" min="40" max="90" value="55" step="1" aria-label="Probabilité minimum">
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">💰 Cote min <span id="dh-odds-min-val">1.10</span> · max <span id="dh-odds-max-val">10.00</span></div>
+        <div class="dh-odds-range">
+          <input type="range" id="dh-f-odds-min" min="1.1" max="10" value="1.1" step="0.05" aria-label="Cote minimum">
+          <input type="range" id="dh-f-odds-max" min="1.1" max="10" value="10" step="0.05" aria-label="Cote maximum">
+        </div>
+        <div style="color:var(--dh-text-4,#64748b);font-size:9.5px;font-family:var(--font-mono);margin-top:4px;">Edge picks uniquement (cotes captées H2+)</div>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">🏠 Position (Edge picks)</div>
+        <div id="dh-f-venue" class="dh-chips">
+          <button type="button" data-venue="all" class="dh-chip active">Tous</button>
+          <button type="button" data-venue="home" class="dh-chip">Domicile</button>
+          <button type="button" data-venue="away" class="dh-chip">Extérieur</button>
+          <button type="button" data-venue="draw" class="dh-chip">Nul</button>
+        </div>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">📅 Jour semaine</div>
+        <div id="dh-f-weekday" class="dh-chips">
+          <button type="button" data-wd="1" class="dh-chip">L</button>
+          <button type="button" data-wd="2" class="dh-chip">M</button>
+          <button type="button" data-wd="3" class="dh-chip">M</button>
+          <button type="button" data-wd="4" class="dh-chip">J</button>
+          <button type="button" data-wd="5" class="dh-chip">V</button>
+          <button type="button" data-wd="6" class="dh-chip">S</button>
+          <button type="button" data-wd="0" class="dh-chip">D</button>
+        </div>
       </div>
       <div class="dh-fr-section">
         <label class="dh-checkbox"><input type="checkbox" id="dh-f-excludelow"> Cacher ligues WR&lt;50%</label>
@@ -24887,6 +24918,11 @@ const dhState = {
   outcome: 'all',
   minEV: 0,
   minProba: 55,
+  // R1 — Plage cotes + Venue + Weekday
+  minOdds: 1.10,
+  maxOdds: 10.00,
+  venue: 'all',
+  weekdays: [],
   excludeLowLeagues: false,
   period: '90',
   fromDate: null,
@@ -24963,6 +24999,11 @@ function _dhBuildUrl() {
   if (dhState.outcome && dhState.outcome !== 'all') p.set('outcome', dhState.outcome);
   if (dhState.minEV) p.set('minEV', dhState.minEV);
   if (dhState.minProba) p.set('minProba', dhState.minProba);
+  // R1 — Plage cotes / Venue / Weekday
+  if (dhState.minOdds > 1.10) p.set('minOdds', dhState.minOdds);
+  if (dhState.maxOdds < 10.00) p.set('maxOdds', dhState.maxOdds);
+  if (dhState.venue && dhState.venue !== 'all') p.set('venue', dhState.venue);
+  if (dhState.weekdays.length) p.set('weekdays', dhState.weekdays.join(','));
   if (dhState.excludeLowLeagues) p.set('excludeLowLeagues', '1');
   if (dhState.fromDate) p.set('fromDate', dhState.fromDate);
   if (dhState.toDate) p.set('toDate', dhState.toDate);
@@ -25778,12 +25819,57 @@ function _dhWireControls() {
     dhRefreshDebounced();
   });
 
+  // R1 — Plage cotes double-slider
+  const oddsMin = document.getElementById('dh-f-odds-min');
+  const oddsMax = document.getElementById('dh-f-odds-max');
+  const oddsMinLbl = document.getElementById('dh-odds-min-val');
+  const oddsMaxLbl = document.getElementById('dh-odds-max-val');
+  const updOddsLbl = () => { oddsMinLbl.textContent = parseFloat(oddsMin.value).toFixed(2); oddsMaxLbl.textContent = parseFloat(oddsMax.value).toFixed(2); };
+  oddsMin.addEventListener('input', () => {
+    if (parseFloat(oddsMin.value) > parseFloat(oddsMax.value) - 0.05) oddsMin.value = (parseFloat(oddsMax.value) - 0.05).toFixed(2);
+    updOddsLbl();
+  });
+  oddsMax.addEventListener('input', () => {
+    if (parseFloat(oddsMax.value) < parseFloat(oddsMin.value) + 0.05) oddsMax.value = (parseFloat(oddsMin.value) + 0.05).toFixed(2);
+    updOddsLbl();
+  });
+  const onOddsChange = () => {
+    dhState.minOdds = parseFloat(oddsMin.value);
+    dhState.maxOdds = parseFloat(oddsMax.value);
+    dhState.page = 1;
+    dhRefreshDebounced();
+  };
+  oddsMin.addEventListener('change', onOddsChange);
+  oddsMax.addEventListener('change', onOddsChange);
+
+  // R1 — Venue chips (single-select)
+  document.querySelectorAll('#dh-f-venue .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#dh-f-venue .dh-chip').forEach(c => c.classList.toggle('active', c === chip));
+      dhState.venue = chip.dataset.venue;
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+
+  // R1 — Weekday chips (multi)
+  document.querySelectorAll('#dh-f-weekday .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      dhState.weekdays = Array.from(document.querySelectorAll('#dh-f-weekday .dh-chip.active')).map(c => c.dataset.wd);
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+
   // Reset
   document.getElementById('dh-reset').addEventListener('click', () => {
     dhState.leagues = []; dhState.teams = []; dhState.markets = ['over25', 'btts', 'edge'];
     dhState.confidence = []; dhState.outcome = 'all'; dhState.minEV = 0; dhState.minProba = 55;
     dhState.excludeLowLeagues = false; dhState.fromDate = null; dhState.toDate = null;
     dhState.period = '90'; dhState.page = 1;
+    // R1 reset
+    dhState.minOdds = 1.10; dhState.maxOdds = 10.00; dhState.venue = 'all'; dhState.weekdays = [];
     // Reflect in DOM
     document.getElementById('dh-f-league').selectedIndex = -1;
     document.getElementById('dh-f-team').value = '';
@@ -25794,6 +25880,11 @@ function _dhWireControls() {
     document.getElementById('dh-f-proba').value = '55'; document.getElementById('dh-pr-val').textContent = '55%';
     document.getElementById('dh-f-excludelow').checked = false;
     document.getElementById('dh-from').value = ''; document.getElementById('dh-to').value = '';
+    // R1 reset DOM
+    document.getElementById('dh-f-odds-min').value = '1.10'; document.getElementById('dh-odds-min-val').textContent = '1.10';
+    document.getElementById('dh-f-odds-max').value = '10.00'; document.getElementById('dh-odds-max-val').textContent = '10.00';
+    document.querySelectorAll('#dh-f-venue .dh-chip').forEach(c => c.classList.toggle('active', c.dataset.venue === 'all'));
+    document.querySelectorAll('#dh-f-weekday .dh-chip').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === '90'));
     _dhApplyPeriod();
     dhRefresh();
