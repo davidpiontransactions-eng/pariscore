@@ -11448,6 +11448,160 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   }
   /* V2-END */
 
+  /* ============================================================
+     DESIGN V2 PHASE 2 — Foot + Tennis component refonte (2026-05-21)
+     bd ParisScorebis-t2x. Refonte composants avec V2 tokens.
+     ============================================================ */
+  /* PHASE2-START */
+
+  /* ── 1. Sticky col 2 standardisation (--cf-sticky-col2 = 80px) ── */
+  /* Override les valeurs heritage (60/90/140px) avec valeur unifiée.
+     Spec-bump :not(#__cf__):not(#__cf2__):not(#__cf3__) pour battre tous overrides. */
+  #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) th:nth-child(2),
+  #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td:nth-child(2) {
+    left: var(--cf-sticky-col2) !important;
+  }
+  #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) th:nth-child(2),
+  #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td:nth-child(2) {
+    left: var(--cf-sticky-col2) !important;
+  }
+  #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) th:nth-child(2),
+  #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td:nth-child(2) {
+    left: var(--cf-sticky-col2) !important;
+  }
+
+  /* ── 2. Progress bars — gradient cyan → emerald (au lieu de #F4F4F4) ── */
+  .cf-progress-bar {
+    background: linear-gradient(90deg, var(--cf-cyan), var(--cf-emerald)) !important;
+    border-radius: var(--cf-radius-chip);
+    box-shadow: 0 0 6px var(--cf-cyan-soft);
+  }
+  .cf-progress-bar-track {
+    background: var(--cf-glass-light);
+    border: 1px solid var(--cf-glass-border);
+    border-radius: var(--cf-radius-chip);
+    overflow: hidden;
+  }
+
+  /* ── 3. Hero VALUE col Foot — gradient emerald reactif tier ── */
+  #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.vb-value-col .vb-hero-value.vbh-hot {
+    background: linear-gradient(135deg, var(--cf-emerald-soft), rgba(74,222,128,.05)) !important;
+    border: 1px solid var(--cf-emerald) !important;
+    color: var(--cf-emerald) !important;
+    box-shadow: var(--cf-glow-emerald), inset 0 0 0 1px rgba(74,222,128,.20) !important;
+    text-shadow: 0 0 10px var(--cf-emerald-glow);
+  }
+  #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.vb-value-col .vb-hero-value.vbh-try {
+    background: linear-gradient(135deg, var(--cf-amber-soft), rgba(251,191,36,.05)) !important;
+    border: 1px solid var(--cf-amber) !important;
+    color: var(--cf-amber) !important;
+    box-shadow: var(--cf-glow-amber), inset 0 0 0 1px rgba(251,191,36,.20) !important;
+  }
+  #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.vb-value-col .vb-hero-value.vbh-no {
+    background: linear-gradient(135deg, var(--cf-coral-soft), rgba(255,56,86,.04)) !important;
+    border: 1px solid var(--cf-coral) !important;
+    color: var(--cf-coral) !important;
+    box-shadow: 0 0 8px var(--cf-coral-soft), inset 0 0 0 1px rgba(255,56,86,.18) !important;
+  }
+
+  /* ── 4. Tennis LCD scoreboard col Score (consolidation V2) ── */
+  #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.tvb-score-col,
+  #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.tvb-score-col {
+    background: linear-gradient(180deg, rgba(7,11,20,.92), rgba(15,23,42,.78)) !important;
+    border-radius: var(--cf-radius-card) !important;
+    box-shadow:
+      inset 0 0 0 1px var(--cf-cyan-soft),
+      inset 0 0 22px -8px var(--cf-cyan-glow) !important;
+    color: var(--cf-cyan) !important;
+    text-shadow: 0 0 8px var(--cf-cyan-glow) !important;
+    font-family: var(--cf-font-mono) !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  /* ── 5. DR bar gradient progressif réactif (tn-dr-line dom/bal/sub) ── */
+  /* Spec-bump pour battre v11.1 styles existants */
+  #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-line.tn-dr-dom {
+    background:
+      linear-gradient(90deg, var(--cf-emerald-soft) 0%, rgba(74,222,128,.04) 70%, transparent 100%),
+      linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    border: 1px solid var(--cf-emerald) !important;
+    color: var(--cf-emerald) !important;
+    box-shadow: inset 0 0 0 1px rgba(74,222,128,.25), var(--cf-glow-emerald) !important;
+  }
+  #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-line.tn-dr-bal {
+    background:
+      linear-gradient(90deg, var(--cf-amber-soft) 0%, rgba(251,191,36,.04) 70%, transparent 100%),
+      linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    border: 1px solid var(--cf-amber) !important;
+    color: var(--cf-amber) !important;
+    box-shadow: inset 0 0 0 1px rgba(251,191,36,.22), 0 0 12px -4px var(--cf-amber-glow) !important;
+  }
+  #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-line.tn-dr-sub {
+    background:
+      linear-gradient(90deg, var(--cf-coral-soft) 0%, rgba(255,56,86,.04) 70%, transparent 100%),
+      linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    border: 1px solid var(--cf-coral) !important;
+    color: var(--cf-coral) !important;
+    box-shadow: inset 0 0 0 1px rgba(255,56,86,.25), var(--cf-glow-coral) !important;
+  }
+
+  /* ── 6. Halo surface contextuel Tennis (radial subtle) ── */
+  /* Nouveau ::after pseudo avec gradient reactif sur hover */
+  @supports selector(:has(*)) {
+    #tennis-vb-table tr.tennis-vb-row {
+      position: relative;
+    }
+    #tennis-vb-table tr.tennis-vb-row::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--cf-dur-medium) var(--cf-ease);
+      z-index: 0;
+    }
+    #tennis-vb-table tr.tennis-vb-row:hover::after { opacity: 1; }
+    #tennis-vb-table tr.tennis-vb-row:has(.tvb-surface-clay)::after {
+      background: radial-gradient(120% 60% at 50% 100%, rgba(201,122,63,.10) 0%, transparent 60%);
+    }
+    #tennis-vb-table tr.tennis-vb-row:has(.tvb-surface-grass)::after {
+      background: radial-gradient(120% 60% at 50% 100%, rgba(22,163,74,.10) 0%, transparent 60%);
+    }
+    #tennis-vb-table tr.tennis-vb-row:has(.tvb-surface-hard)::after {
+      background: radial-gradient(120% 60% at 50% 100%, rgba(37,99,235,.10) 0%, transparent 60%);
+    }
+  }
+
+  /* ── 7. Live row pulse coral (Foot + Tennis unified via V2 token) ── */
+  #vb-body tr.match-row-live::before,
+  tr.tennis-vb-row.is-live > td:first-child::before {
+    box-shadow: var(--cf-glow-coral) !important;
+  }
+
+  /* ── 8. Hover row glow doux unifié (Foot + Tennis) ── */
+  #vb-body tr:hover,
+  #tennis-vb-table tr.tennis-vb-row:hover,
+  #tennis-live-table tr.tennis-vb-row:hover {
+    transform: translateY(-1px);
+    transition: transform var(--cf-dur-fast) var(--cf-ease),
+                box-shadow var(--cf-dur-fast) var(--cf-ease),
+                background var(--cf-dur-fast) var(--cf-ease);
+  }
+
+  /* ── 9. prefers-reduced-motion respect strict ── */
+  @media (prefers-reduced-motion: reduce) {
+    #vb-body tr:hover,
+    #tennis-vb-table tr.tennis-vb-row:hover,
+    #tennis-live-table tr.tennis-vb-row:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+    #tennis-vb-table tr.tennis-vb-row::after {
+      transition: none !important;
+    }
+  }
+  /* PHASE2-END */
+
   /* CF-END */
 </style>
 
