@@ -7674,6 +7674,30 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   filter:drop-shadow(0 6px 12px rgba(0,0,0,0.18));
   transition:transform .25s ease;
 }
+/* UI-018 — 3D translucent ball emblem (replaces edge-spike chart) */
+.hub-emblem-3d{
+  width:clamp(110px,22vw,160px);
+  height:clamp(110px,22vw,160px);
+  opacity:0.78;
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,0.35)) drop-shadow(0 0 18px rgba(255,255,255,0.08));
+  mix-blend-mode:screen;
+  transition:transform .35s cubic-bezier(.4,0,.2,1), opacity .25s ease, filter .25s ease;
+}
+.hub-card--foot .hub-emblem-3d{
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,0.45)) drop-shadow(0 0 22px rgba(237,28,36,0.18));
+  mix-blend-mode:normal;
+}
+.hub-card--tennis .hub-emblem-3d{
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,0.40)) drop-shadow(0 0 22px rgba(155,191,0,0.30));
+}
+.hub-card:hover .hub-emblem-3d{
+  transform:translateY(-4px) scale(1.08) rotate(8deg);
+  opacity:0.95;
+}
+@media (prefers-reduced-motion: reduce){
+  .hub-emblem-3d{ transition:none; }
+  .hub-card:hover .hub-emblem-3d{ transform:none; }
+}
 .hub-card:hover .hub-emblem{ transform:translateY(-3px) scale(1.04); }
 .hub-card-stats{
   position:relative; display:flex; justify-content:center; gap:22px;
@@ -7700,39 +7724,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <div class="hub-grid">
     <button class="hub-card hub-card--foot" type="button" aria-label="Football">
       <span class="hub-card-title">FOOTBALL</span>
-      <svg class="hub-emblem" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="edgeFoot" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#ff6a4d"/>
-            <stop offset="55%" stop-color="#ed1c24"/>
-            <stop offset="100%" stop-color="#a30d12"/>
-          </linearGradient>
-          <radialGradient id="nodeFoot" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#ff8a6a"/>
-            <stop offset="100%" stop-color="#ed1c24"/>
-          </radialGradient>
-        </defs>
-        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
-          fill="none" stroke="url(#edgeFoot)" stroke-width="3.4" stroke-linejoin="round"/>
-        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
-          fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1"/>
-        <g stroke="#9aa3ad" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round">
-          <line x1="40" y1="74" x2="80" y2="74"/>
-        </g>
-        <g fill="#9aa3ad" fill-opacity="0.35">
-          <rect x="44" y="60" width="6.5" height="14" rx="1.5"/>
-          <rect x="56.5" y="52" width="6.5" height="22" rx="1.5"/>
-          <rect x="69" y="44" width="6.5" height="30" rx="1.5"/>
-        </g>
-        <path d="M38 72 L50 60 L60 66 L80 38"
-          fill="none" stroke="url(#edgeFoot)" stroke-width="4"
-          stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="80" cy="38" r="12.5" fill="none" stroke="#ed1c24" stroke-opacity="0.28" stroke-width="2"/>
-        <circle cx="80" cy="38" r="8" fill="url(#nodeFoot)"/>
-        <g stroke="#1a0405" stroke-opacity="0.8" stroke-width="1.4" fill="none" stroke-linecap="round">
-          <path d="M80 34.6 L80 30.5 M83.2 36.9 L87.4 35.2 M82.0 40.7 L84.4 44.7 M78.0 40.7 L75.6 44.7 M76.8 36.9 L72.6 35.2"/>
-        </g>
-        <polygon points="80,34.6 83.2,36.9 82.0,40.7 78.0,40.7 76.8,36.9" fill="#15090a"/>
+      <!-- UI-018 — 3D translucent football emblem -->
+      <svg class="hub-emblem hub-emblem-3d" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <use href="#i3d-football"/>
       </svg>
       <span class="hub-card-stats">
         <span><b id="hub-foot-live">—</b> MATCHS LIVE</span>
@@ -7742,39 +7736,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </button>
     <button class="hub-card hub-card--tennis" type="button" aria-label="Tennis">
       <span class="hub-card-title">TENNIS</span>
-      <svg class="hub-emblem" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="edgeTns" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#d9ec5e"/>
-            <stop offset="55%" stop-color="#9bbf00"/>
-            <stop offset="100%" stop-color="#5f7600"/>
-          </linearGradient>
-          <radialGradient id="nodeTns" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#e7f47e"/>
-            <stop offset="100%" stop-color="#9bbf00"/>
-          </radialGradient>
-        </defs>
-        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
-          fill="none" stroke="url(#edgeTns)" stroke-width="3.4" stroke-linejoin="round"/>
-        <polygon points="60,8 96,29 96,71 60,92 24,71 24,29"
-          fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1"/>
-        <g stroke="#9aa3ad" stroke-opacity="0.45" stroke-width="1.4" stroke-linecap="round">
-          <line x1="40" y1="74" x2="80" y2="74"/>
-        </g>
-        <g fill="#9aa3ad" fill-opacity="0.35">
-          <rect x="44" y="60" width="6.5" height="14" rx="1.5"/>
-          <rect x="56.5" y="52" width="6.5" height="22" rx="1.5"/>
-          <rect x="69" y="44" width="6.5" height="30" rx="1.5"/>
-        </g>
-        <path d="M38 72 L50 60 L60 66 L80 38"
-          fill="none" stroke="url(#edgeTns)" stroke-width="4"
-          stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="80" cy="38" r="12.5" fill="none" stroke="#9bbf00" stroke-opacity="0.28" stroke-width="2"/>
-        <circle cx="80" cy="38" r="8" fill="url(#nodeTns)"/>
-        <g fill="none" stroke="#ffffff" stroke-opacity="0.82" stroke-width="1.6" stroke-linecap="round">
-          <path d="M73.2 32.4 Q80 38 73.2 43.6"/>
-          <path d="M86.8 32.4 Q80 38 86.8 43.6"/>
-        </g>
+      <!-- UI-018 — 3D translucent tennis ball emblem -->
+      <svg class="hub-emblem hub-emblem-3d" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <use href="#i3d-tennisball"/>
       </svg>
       <span class="hub-card-stats">
         <span><b id="hub-tns-live">—</b> MATCHS LIVE</span>
@@ -9634,6 +9598,42 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <symbol id="i3d-ai" viewBox="0 0 24 24"><rect x="5" y="6" width="14" height="14" rx="3.5" fill="#000" opacity=".25"/><rect x="5" y="5" width="14" height="14" rx="3.5" fill="url(#g3dRed)"/><path d="M12 8 13.5 11 16.5 12 13.5 13 12 16 10.5 13 7.5 12 10.5 11 Z" fill="#fff" opacity=".9"/><rect x="5" y="5" width="14" height="5" rx="3.5" fill="#fff" opacity=".18"/></symbol>
       <symbol id="i3d-fatigue" viewBox="0 0 24 24"><path d="M12 4 L21 20 H3 Z" fill="#000" opacity=".25"/><path d="M12 3 L21 19 H3 Z" fill="url(#g3dAmber)"/><rect x="11" y="8.5" width="2" height="6" rx="1" fill="#3a2602"/><circle cx="12" cy="17" r="1.3" fill="#3a2602"/></symbol>
       <symbol id="i3d-frost" viewBox="0 0 24 24"><g stroke="url(#g3dBlue)" stroke-width="2.2" stroke-linecap="round"><path d="M12 3 V21"/><path d="M4 7.5 L20 16.5"/><path d="M20 7.5 L4 16.5"/></g><circle cx="12" cy="12" r="2.3" fill="url(#g3dBlue)"/></symbol>
+      <!-- 3D Football Ball (page accueil emblem) — classic black/white panels -->
+      <radialGradient id="g3dFootball" cx="0.35" cy="0.30" r="0.85">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="0.55" stop-color="#e6e6e6"/>
+        <stop offset="0.90" stop-color="#8a8a8a"/>
+        <stop offset="1" stop-color="#3a3a3a"/>
+      </radialGradient>
+      <symbol id="i3d-football" viewBox="0 0 24 24">
+        <!-- shadow base -->
+        <ellipse cx="12" cy="21" rx="7" ry="1.4" fill="#000" opacity="0.30"/>
+        <!-- main sphere -->
+        <circle cx="12" cy="12" r="10" fill="url(#g3dFootball)"/>
+        <!-- central pentagon (black panel) -->
+        <polygon points="12,7.4 16.2,10.5 14.6,15.4 9.4,15.4 7.8,10.5" fill="#0a0a0a"/>
+        <!-- radiating connectors (other panels boundaries) -->
+        <g stroke="#0a0a0a" stroke-width="0.9" stroke-linecap="round" fill="none">
+          <line x1="12" y1="7.4" x2="12" y2="2.5"/>
+          <line x1="16.2" y1="10.5" x2="20.5" y2="9.0"/>
+          <line x1="14.6" y1="15.4" x2="17.5" y2="19.5"/>
+          <line x1="9.4" y1="15.4" x2="6.5" y2="19.5"/>
+          <line x1="7.8" y1="10.5" x2="3.5" y2="9.0"/>
+        </g>
+        <!-- outer pentagonal hints -->
+        <g fill="#0a0a0a" opacity="0.75">
+          <polygon points="12,2.5 14.7,3.2 13.7,5.6 10.3,5.6 9.3,3.2"/>
+          <polygon points="20.5,9 21.5,11.5 19.5,13.5 17.2,11.8 17.7,9.5"/>
+          <polygon points="17.5,19.5 16,21.0 13.7,20.2 13.8,17.8 16.3,17.5"/>
+          <polygon points="6.5,19.5 8.0,21.0 10.3,20.2 10.2,17.8 7.7,17.5"/>
+          <polygon points="3.5,9 2.5,11.5 4.5,13.5 6.8,11.8 6.3,9.5"/>
+        </g>
+        <!-- highlight reflection -->
+        <ellipse cx="8.5" cy="7.5" rx="4.2" ry="2.8" fill="url(#g3dBallHi)"/>
+        <!-- rim -->
+        <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="0.5"/>
+      </symbol>
+
       <!-- 3D Tennis Ball (serving indicator) — radial yellow-green + white seam -->
       <radialGradient id="g3dBall" cx="0.35" cy="0.30" r="0.85">
         <stop offset="0" stop-color="#f7ff7a"/>
