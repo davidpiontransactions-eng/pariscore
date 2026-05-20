@@ -24589,6 +24589,15 @@ function dhRenderKpis(kpis, totalMatches) {
   const totalWins = (kpis.over25.wins || 0) + (kpis.btts.wins || 0) + (kpis.edge.wins || 0);
   const aggWR = totalPicks ? totalWins / totalPicks : null;
   const aggLoss = totalPicks - totalWins;
+  // IC agrégat = moyenne pondérée par sample (proxy honnête côté UI)
+  const aggIc = (() => {
+    const ms = ['over25','btts','edge'];
+    const totW = ms.reduce((s,m) => s + (kpis[m].sample || 0), 0);
+    if (!totW) return null;
+    const lo = ms.reduce((s,m) => s + ((kpis[m].winrate_ic95?.[0] || 0) * (kpis[m].sample || 0)), 0) / totW;
+    const hi = ms.reduce((s,m) => s + ((kpis[m].winrate_ic95?.[1] || 0) * (kpis[m].sample || 0)), 0) / totW;
+    return [lo, hi];
+  })();
 
   const longestLoss = Math.max(kpis.over25.longest_losing_streak || 0, kpis.btts.longest_losing_streak || 0, kpis.edge.longest_losing_streak || 0);
   const avgEv = kpis.edge.avg_ev;
@@ -24597,17 +24606,43 @@ function dhRenderKpis(kpis, totalMatches) {
     return probas.length ? probas.reduce((s, v) => s + v, 0) / probas.length : null;
   })();
 
+  // H2 : Yield / Avg Odds / Strike B/E (adaptatif selon odds capturées)
+  const gy = kpis.global_yield || {};
+  const hasYield = gy.sample_with_odds > 0;
+  const yieldPct = gy.yield;
+  const breakEven = gy.break_even;
+  const icMethodAgg = totalPicks >= 30 ? 'bootstrap 500' : 'wilson n<30';
+
+  const yieldCard = hasYield ? {
+    label: 'Yield',
+    val: (yieldPct >= 0 ? '+' : '') + (yieldPct * 100).toFixed(1) + '%',
+    sub: gy.sample_with_odds + ' picks cotes · avg ' + gy.avg_odds.toFixed(2),
+    color: yieldPct >= 0.05 ? 'green' : yieldPct >= 0 ? 'amber' : 'red',
+  } : {
+    label: 'Picks totaux',
+    val: totalPicks,
+    sub: totalMatches + ' matchs · ' + totalWins + 'W / ' + aggLoss + 'L',
+    color: 'neutral',
+  };
+
+  const lastCard = (hasYield && breakEven != null) ? {
+    label: 'Strike B/E',
+    val: (breakEven * 100).toFixed(1) + '%',
+    sub: 'WR mini rentabilité · actuel ' + (aggWR != null ? Math.round(aggWR * 100) + '%' : '—'),
+    color: aggWR != null && aggWR > breakEven ? 'green' : 'red',
+  } : {
+    label: 'Avg Proba',
+    val: avgProba != null ? Math.round(avgProba) + '%' : '—',
+    sub: 'Over 2.5 + BTTS picks',
+    color: 'neutral',
+  };
+
   const items = [
-    {
-      label: 'Picks totaux',
-      val: totalPicks,
-      sub: totalMatches + ' matchs · ' + totalWins + 'W / ' + aggLoss + 'L',
-      color: 'neutral',
-    },
+    yieldCard,
     {
       label: 'Winrate global',
       val: _pctStr(aggWR),
-      sub: 'sur ' + totalPicks + ' picks',
+      sub: aggIc ? 'IC95 ' + _icStr(aggIc) + ' · ' + icMethodAgg : 'sur ' + totalPicks + ' picks',
       color: _wrColor(aggWR),
     },
     {
@@ -24628,12 +24663,7 @@ function dhRenderKpis(kpis, totalMatches) {
       sub: kpis.edge.sample + ' edge picks',
       color: avgEv != null && avgEv >= 7 ? 'green' : 'neutral',
     },
-    {
-      label: 'Avg Proba',
-      val: avgProba != null ? Math.round(avgProba) + '%' : '—',
-      sub: 'Over 2.5 + BTTS picks',
-      color: 'neutral',
-    },
+    lastCard,
   ];
 
   document.getElementById('dh-kpi-strip').innerHTML = items.map(k => `

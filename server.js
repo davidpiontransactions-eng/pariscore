@@ -6234,7 +6234,16 @@ async function archivePastMatches() {
       const record = {
         id: match.id, home_team: match.home_team, away_team: match.away_team,
         league: match.league, commence_time: match.commence_time,
-        predicted: { over25: match.poisson?.over25, btts: match.poisson?.btts, bestEdge: match.best_edge?.label, bestEdgeValue: match.best_edge?.edge },
+        predicted: {
+          over25: match.poisson?.over25,
+          btts: match.poisson?.btts,
+          bestEdge: match.best_edge?.label,
+          bestEdgeValue: match.best_edge?.edge,
+          // H2 instrumentation : capture cote réelle bookmaker + cote no-vig fair
+          bestEdgeOdds: match.best_edge?.odds ?? null,
+          bestEdgeBk: match.best_edge?.bk ?? null,
+          fair: match.fair ? { home: match.fair.home, draw: match.fair.draw, away: match.fair.away } : null,
+        },
         realScore, archived_at: new Date().toISOString(),
       };
 
@@ -6840,7 +6849,12 @@ function _historyPicksOf(h) {
   }
   const ev = h.predicted?.bestEdgeValue;
   if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) {
-    out.push({ id: h.id, market: 'edge', t: new Date(h.commence_time).getTime(), won: winnerLabel === h.predicted.bestEdge ? 1 : 0, ev, league: h.league });
+    out.push({
+      id: h.id, market: 'edge', t: new Date(h.commence_time).getTime(),
+      won: winnerLabel === h.predicted.bestEdge ? 1 : 0,
+      ev, league: h.league,
+      odds: typeof h.predicted.bestEdgeOdds === 'number' ? h.predicted.bestEdgeOdds : null, // H2
+    });
   }
   return out;
 }
@@ -6852,6 +6866,42 @@ function _wilsonCI95(wins, total) {
   const center = p + z * z / (2 * n);
   const margin = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n));
   return [(center - margin) / denom, (center + margin) / denom];
+}
+
+// Bootstrap 500 iter, retourne [p2.5, p97.5] sur winrate.
+// Plus précis que Wilson pour samples >= 30 ; pour <30 garde Wilson (Wilson plus robuste sur petits N).
+function _bootstrapCI95(seq, iters = 500) {
+  const n = seq.length;
+  if (!n) return [null, null];
+  if (n < 30) {
+    const wins = seq.reduce((s, v) => s + (v ? 1 : 0), 0);
+    return _wilsonCI95(wins, n);
+  }
+  const wrs = new Array(iters);
+  for (let i = 0; i < iters; i++) {
+    let w = 0;
+    for (let j = 0; j < n; j++) w += seq[(Math.random() * n) | 0] ? 1 : 0;
+    wrs[i] = w / n;
+  }
+  wrs.sort((a, b) => a - b);
+  return [wrs[Math.floor(iters * 0.025)], wrs[Math.floor(iters * 0.975)]];
+}
+
+// Yield (rendement %) : moyenne (won ? (odds-1) : -1) par pick.
+// Avg Odds : moyenne arithmétique des cotes des picks ayant odds.
+// Break-even Strike Rate : 1 / avg_odds → WR minimum pour rentabilité.
+function _yieldStats(picks) {
+  const withOdds = picks.filter(p => typeof p.odds === 'number' && p.odds > 1);
+  if (!withOdds.length) return { yield: null, avg_odds: null, break_even: null, sample_with_odds: 0 };
+  const ret = withOdds.reduce((s, p) => s + (p.won ? p.odds - 1 : -1), 0);
+  const sumOdds = withOdds.reduce((s, p) => s + p.odds, 0);
+  const avgOdds = sumOdds / withOdds.length;
+  return {
+    yield: ret / withOdds.length,
+    avg_odds: avgOdds,
+    break_even: 1 / avgOdds,
+    sample_with_odds: withOdds.length,
+  };
 }
 
 function _maxStreak(arr, target) {
@@ -6873,22 +6923,27 @@ function computeHistoryKpis(entries) {
     const sample = xs.length;
     const wins = xs.reduce((s, p) => s + p.won, 0);
     const wr = sample ? wins / sample : null;
-    const [lo, hi] = _wilsonCI95(wins, sample);
+    const seq = xs.map(p => p.won);
+    // H2 : bootstrap IC pour samples >= 30, Wilson sinon (fallback robuste)
+    const [lo, hi] = _bootstrapCI95(seq);
     const probas = xs.map(p => p.proba).filter(x => typeof x === 'number');
     const avgProba = probas.length ? probas.reduce((s, v) => s + v, 0) / probas.length : null;
     const evs = xs.map(p => p.ev).filter(x => typeof x === 'number');
     const avgEv = evs.length ? evs.reduce((s, v) => s + v, 0) / evs.length : null;
-    const seq = xs.map(p => p.won);
+    // H2 : Yield / Avg Odds / Break-even Strike Rate (sur picks avec odds capturées)
+    const yieldStats = _yieldStats(xs);
     return {
       sample,
       wins,
       losses: sample - wins,
       winrate: wr,
       winrate_ic95: [lo, hi],
+      ic_method: sample >= 30 ? 'bootstrap_500' : 'wilson',
       avg_proba: avgProba,
       avg_ev: avgEv,
       longest_winning_streak: _maxStreak(seq, 1),
       longest_losing_streak: _maxStreak(seq, 0),
+      ...yieldStats, // yield, avg_odds, break_even, sample_with_odds
     };
   };
 
@@ -6901,6 +6956,9 @@ function computeHistoryKpis(entries) {
     if (dd > ddMax) ddMax = dd;
   }
 
+  // H2 : Yield global tous marchés confondus (sur picks avec odds)
+  const globalYield = _yieldStats(allPicks);
+
   return {
     total_picks: allPicks.length,
     verified_matches: entries.filter(h => h.verified && h.realScore).length,
@@ -6909,6 +6967,7 @@ function computeHistoryKpis(entries) {
     edge: agg('edge'),
     max_drawdown_units: ddMax,
     final_pl_units: cumul,
+    global_yield: globalYield, // { yield, avg_odds, break_even, sample_with_odds }
   };
 }
 
@@ -6925,7 +6984,8 @@ function computeHistoryBreakdown(entries) {
     const wins = d.picks.reduce((s, p) => s + p.won, 0);
     const total = d.picks.length;
     const wr = total ? wins / total : null;
-    const [lo, hi] = _wilsonCI95(wins, total);
+    const [lo, hi] = _bootstrapCI95(d.picks.map(p => p.won));
+    const yieldStats = _yieldStats(d.picks);
     return {
       league: name,
       matches: d.sample,
@@ -6933,6 +6993,8 @@ function computeHistoryBreakdown(entries) {
       wins,
       winrate: wr,
       winrate_ic95: [lo, hi],
+      yield: yieldStats.yield,
+      avg_odds: yieldStats.avg_odds,
     };
   });
   leagues.sort((a, b) => b.picks - a.picks);
@@ -6941,13 +7003,17 @@ function computeHistoryBreakdown(entries) {
   const markets = ['over25', 'btts', 'edge'].map(mkt => {
     const xs = entries.flatMap(h => _historyPicksOf(h)).filter(p => p.market === mkt);
     const wins = xs.reduce((s, p) => s + p.won, 0);
-    const [lo, hi] = _wilsonCI95(wins, xs.length);
+    const [lo, hi] = _bootstrapCI95(xs.map(p => p.won));
+    const yieldStats = _yieldStats(xs);
     return {
       market: mkt,
       sample: xs.length,
       wins,
       winrate: xs.length ? wins / xs.length : null,
       winrate_ic95: [lo, hi],
+      yield: yieldStats.yield,
+      avg_odds: yieldStats.avg_odds,
+      break_even: yieldStats.break_even,
     };
   });
 
