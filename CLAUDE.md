@@ -26,6 +26,26 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - [x] **Dual Scrollbar** : `#top-scrollbar` + `#top-scroll-content`. Sync bidirectionnelle `scrollLeft` + width update.
 - [x] **Frontend Retry** : 503 → retry 2s. SSE `system_ready` → force reload. Erreur réseau → retry auto.
 
+### ✅ v9.9 — AFFILIATION GAMBLING-AFFILIATION.COM — Sub-ID + S2S Postback + CTA Premium (COMPLÉTÉ)
+- [x] **Migrations SQL** : `affiliates` +network/ga_pid/ga_bid/subid_template · `affiliate_clicks` +click_id UNIQUE/subid/sport/league/context/market/selection/user_id/converted_at/payout_cents/conversion_type. Indexes : clickid (UNIQUE anti-replay), user, converted, context. Idempotent via PRAGMA table_info.
+- [x] **Helpers serveur** : `slugifyAff()` ASCII lower-kebab cap 40 · `genClickId()` 12 bytes hex = 24 chars · `composeSubId(template, vars)` placeholders {user}/{sport}/{league}/{match}/{ctx}/{market}/{sel} cap 80 chars · `buildAffiliateRedirectUrl()` network='ga' → pid/bid/subid/cid, sinon append.
+- [x] **Route GET `/r/`** : 1st-party redirect Niveau 3 anti-AdBlock (endpoint anodin 1 char). Params `b=<bookmaker>|best|auto` + c/mid/sp/lg/m/s. INSERT affiliate_clicks best-effort + 302 Location. Aucun cookie posé → GDPR-safe by-design. srvPlanGate ignoré (hors /api/v1/*).
+- [x] **Route GET|POST `/cb/`** : S2S postback conversion ingest. `crypto.timingSafeEqual` sur env `GA_POSTBACK_TOKEN` (503 si absent). UPDATE WHERE click_id=? AND converted_at IS NULL — idempotent replay no-op. Parse payout auto-detect '12.50' (EUR) vs '1250' (cents). Ack 'OK' texte brut + Cache-Control: no-store.
+- [x] **Seeds GA env-driven** : 6 bookmakers ANJ (Winamax 95, Betclic 90, Unibet 85, PMU 80, ParionsSport 75, ZEbet 70). Active uniquement si GA_PID + GA_BID_<BOOKMAKER> présents en .env. Sinon fallback direct Coteur/Winamax.
+- [x] **Frontend helper** : `buildAffiliateUrl({bookmaker, context, match, market, selection})` → URL `/r/?b=&c=&mid=&sp=&lg=&h=&a=&m=&s=`. `_affSlug(s)` mirror serveur. `openBetLink` refactor sync (élimine round-trip JSON `/api/v1/affiliate/link/`).
+- [x] **CTA-1 inline 'Parier @cote'** : variants ok (Pari recommandé) + warn (Value potentielle) dans modal Insights betPill. Charte rouge L'Équipe `#E2001A` glassmorphism `backdrop-filter:blur(6px)`, hover glow `0 0 14px rgba(226,0,26,.40)`. Aucun CTA sur skip (honnêteté UX).
+- [x] **CTA-2 bandeau bonus** : `.aff-bonus-strip` footer modal Insights — icône ★ glow, montant Syne 800, mention ANJ "18+. Jouez responsablement", bouton `.aff-cta--lg` full rouge. Responsive pile vertical < 540px.
+- [x] **CTA AI Scout** : "Parier le combiné du jour →" sous panel Gemini. Sub-id daté `aiscout_combine_YYYYMMDD` pour analytics ROI par date.
+- [x] **Conformité Google 2020+** : `rel="nofollow sponsored noopener"` sur 5 liens commerciaux (4 partner-cards + tennis upgrade). Liens data/sources restent `noopener` (non-commerciaux).
+- [x] **Sub-ID taxonomy** : `modal_insights_ok|warn` · `modal_footer_bonus` · `aiscout_combine_<date>` · `partners_grid` · `row_button` → analytics A/B par surface dans dashboard GA.
+- [x] **Env requise (.env VPS uniquement, jamais commit)** :
+  - `GA_PID` (partner ID commun)
+  - `GA_BID_WINAMAX` / `GA_BID_BETCLIC` / `GA_BID_UNIBET` / `GA_BID_PMU` / `GA_BID_PARIONS_SPORT` / `GA_BID_ZEBET`
+  - `GA_REDIRECT_BASE` (default `https://media.gambling-affiliation.com/redirect.aspx`)
+  - `GA_SUBID_TEMPLATE` (default `ps_{user}_{sport}_{league}_{match}_{ctx}`)
+  - `GA_POSTBACK_TOKEN` (`openssl rand -hex 24`)
+- [x] **Postback URL à déclarer dashboard GA** : `https://pariscore.fr/cb/?token=<TOKEN>&cid={subid}&payout={amount}&type={type}`
+
 ### ✅ v9.8.1 — MES PARIS — Plan 20%/jour + Import sécurisé + Sport (COMPLÉTÉ)
 - [x] **Plan bankroll** : table `bankroll_plan` (capital départ 300€, target_pct 20/jour, split 50% banque / 50% capital, start_date 2026-05-12, floor optionnel). Routes `GET/PUT /api/v1/bankroll/plan` + `GET /bankroll/daily-tracker` (compound + split + écart cible par jour).
 - [x] **Onglet "Plan 20%/jour"** : KPI row (capital départ/actuel/banque/total/cible/écart) + table jour-par-jour avec statut cible.
