@@ -25,7 +25,9 @@
 // v17 (2026-05-20) : invalide v16 — embarque V12 éclaircissement tableau foot
 // (#vb-body td) : #11161b → #232a33, hover #1a2127 → #2d3540, override dark
 // trading linear-gradient #15191d/#0f1216 → #232a33/#1c222b.
-const CACHE = 'pariscore-shell-v17';
+// v18 (2026-05-20) : invalide v17 — V12 étendu cartes mobile .mc : background
+// var(--bg) → #232a33, alignement cross-vue (mobile natif + viewport=1280).
+const CACHE = 'pariscore-shell-v18';
 const SHELL = [
   '/',
   '/pariscore.html',
