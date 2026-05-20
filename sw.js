@@ -17,7 +17,10 @@
 // above fold.
 // v14 (2026-05-20) : invalide v13 — embarque V9 mob-toolbar compactage
 // (search 28px + sort-row 24px + chips 24px + mob-quick hidden) → ~70px total.
-const CACHE = 'pariscore-shell-v14';
+// v15 (2026-05-20) : invalide v14 — embarque V10 viewport=1280 forçage desktop
+// sur mobile (user demande vue desktop pure sur son téléphone). Toutes les
+// media queries mobile inactives — site rend comme desktop avec zoom out.
+const CACHE = 'pariscore-shell-v15';
 const SHELL = [
   '/',
   '/pariscore.html',
