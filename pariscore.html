@@ -5556,28 +5556,57 @@
     }
     .bn-more-grid a:active { color: var(--accent); border-color: var(--accent); }
 
-    /* — Toolbar mobile : tri + chips — */
+    /* — Toolbar mobile : tri + chips — V9 compact 186px→~70px (bd amc) ── */
     #mob-toolbar {
       display: block; position: sticky; top: 0; z-index: 50;
       background: var(--bg); border-bottom: 1px solid var(--border);
-      margin: 0 -16px 8px; padding: 9px 12px;
+      margin: 0 -16px 4px; padding: 4px 10px 5px;
     }
-    #mob-sort-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
-    #mob-bet-count { font-family: var(--font-head); font-size: 13px; color: var(--accent);
-      font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
-    .mob-sort { font-size: 12px; color: var(--text3); font-family: var(--font-body); display: flex; align-items: center; gap: 5px; }
+    /* mob-search input : compact 28px au lieu de 40+ */
+    #mob-search {
+      width: 100%; background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
+      padding: 5px 10px; font-size: 12px; font-family: var(--font-mono);
+      border-radius: var(--radius); outline: none; margin-bottom: 4px;
+      box-sizing: border-box; height: 28px;
+    }
+    /* sort-row + chips fusionnés sur 1 strip horizontal scrollable */
+    #mob-sort-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 6px; margin-bottom: 4px;
+    }
+    #mob-bet-count {
+      font-family: var(--font-head); font-size: 11px; color: var(--accent);
+      font-weight: 700; text-transform: uppercase; letter-spacing: .2px;
+      flex: 0 0 auto; white-space: nowrap;
+    }
+    .mob-sort {
+      font-size: 11px; color: var(--text3); font-family: var(--font-body);
+      display: flex; align-items: center; gap: 4px; flex: 0 0 auto;
+    }
     #mob-sort-sel {
       background: var(--bg2); color: var(--text); border: 1px solid var(--border2);
-      padding: 5px 8px; font-family: var(--font-mono); font-size: 11px; outline: none; border-radius: var(--radius);
+      padding: 3px 6px; font-family: var(--font-mono); font-size: 11px;
+      outline: none; border-radius: var(--radius); height: 24px;
     }
-    #mob-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    #mob-filter-btn {
+      background: var(--bg2); color: var(--text); border: 1px solid var(--border2);
+      padding: 3px 10px; font-size: 11px; font-weight: 700; border-radius: var(--radius);
+      height: 24px; cursor: pointer; white-space: nowrap;
+    }
+    /* mob-quick dropdown REDONDANT avec mob-chips → masqué */
+    #page-matchs #mob-quick { display: none !important; }
+    #mob-chips {
+      display: flex; gap: 5px; overflow-x: auto;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
     #mob-chips::-webkit-scrollbar { display: none; }
     .mob-chip {
       flex: 0 0 auto; background: var(--bg2); border: 1px solid var(--border2); color: var(--text2);
-      font-family: var(--font-head); font-size: 12px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .3px;
-      padding: 7px 13px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+      font-family: var(--font-head); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .2px;
+      padding: 4px 9px; border-radius: 999px; cursor: pointer; white-space: nowrap;
       transition: all .15s; -webkit-tap-highlight-color: transparent;
+      height: 24px; line-height: 14px;
     }
     .mob-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
