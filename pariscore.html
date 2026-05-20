@@ -11929,6 +11929,44 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #cf-profiles-modal { z-index: 9500 !important; }
   /* MAJ-Z-END */
 
+  /* UI-014 — Choke-O-Meter pastille foot (bd ParisScorebis-2l9) */
+  .cf-choke-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 3px;
+    padding: 1px 6px;
+    font-family: var(--cf-font-mono);
+    font-size: var(--cf-fs-xs);
+    font-weight: var(--cf-fw-bold);
+    letter-spacing: .04em;
+    border-radius: var(--cf-radius-chip);
+    line-height: 1.4;
+  }
+  .cf-choke-strong {
+    background: var(--cf-emerald-soft);
+    border: 1px solid rgba(74,222,128,.40);
+    color: var(--cf-emerald);
+  }
+  .cf-choke-mid {
+    background: var(--cf-amber-soft);
+    border: 1px solid rgba(251,191,36,.40);
+    color: var(--cf-amber);
+  }
+  .cf-choke-trap {
+    background: var(--cf-coral-soft);
+    border: 1px solid rgba(255,56,86,.40);
+    color: var(--cf-coral);
+    animation: cfChokeTrapPulse 2s ease-in-out infinite;
+  }
+  @keyframes cfChokeTrapPulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(255,56,86,.30); }
+    50%      { box-shadow: 0 0 10px rgba(255,56,86,.65); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cf-choke-trap { animation: none !important; }
+  }
+
   /* CF-END */
 </style>
 
@@ -20401,12 +20439,21 @@ const label = country
         <span class="cf-ic-bracket">[</span>${fmt(lo)}<span class="cf-ic-dot">•</span>${fmt(hi)}<span class="cf-ic-bracket">]</span>
       </span>`;
     }
+    /* UI-014 — Choke-O-Meter pastille (bd ParisScorebis-2l9, uses BD-DATA-005) */
+    let chokeHtml = '';
+    if (m.favorite_winrate && typeof m.favorite_winrate.hold_pct === 'number') {
+      const hp = m.favorite_winrate.hold_pct;
+      const cls = hp >= 70 ? 'cf-choke-strong' : hp >= 60 ? 'cf-choke-mid' : 'cf-choke-trap';
+      const title = `Favorite Win Rate ligue (90j, ${m.favorite_winrate.sample} matchs, cote ≤${m.favorite_winrate.threshold_odds}): ${hp}%${hp < 60 ? ' — pieges frequents (favorite_trap)' : ''}`;
+      chokeHtml = `<span class="cf-choke-dot ${cls}" title="${title}" aria-label="${title}">🎯 ${hp}%</span>`;
+    }
     const vbHeroHtml = `<td class="vb-value-col">
       <span class="vb-hero-value vbh-${vbTier}" title="Edge dévigé${best.bk ? ' · '+best.bk : ''} — ${vbTag}">
         <span class="vbh-edge">${_hasEdge ? (edge > 0 ? '▲' : edge < 0 ? '▼' : '＝') : ''}${_hasEdge ? (edge > 0 ? '+' : '') + edge.toFixed(1) + '%' : '—'}</span>
         ${best.label ? `<span class="vbh-pick">${best.label}${_vbOdds ? ' @'+_vbOdds : ''}</span>` : ''}
         <span class="vbh-tag">${vbTag}</span>
         ${icCorridorHtml}
+        ${chokeHtml}
       </span>
     </td>`;
 
