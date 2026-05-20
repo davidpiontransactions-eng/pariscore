@@ -2599,6 +2599,69 @@ function forceCountryForKnownCollisions(leagueName, country, bsdLeagueId) {
     return 'Brazil';
   }
 
+  // CONMEBOL — Copa Libertadores, Copa Sudamericana, Recopa, Copa America
+  // Fix bug bd ParisScorebis-t8r : ces tournois CONMEBOL etaient mal-classes
+  // sous Arabie Saoudite (feed BSD remontait parfois country erroné).
+  if (
+    leagueNorm.includes('libertadores') ||
+    leagueNorm.includes('sudamericana') ||
+    leagueNorm.includes('conmebol') ||
+    leagueNorm.includes('recopa sudamericana') ||
+    leagueNorm.includes('copa america')
+  ) {
+    return 'South America';
+  }
+
+  // CONCACAF — Champions League, Gold Cup, Nations League
+  if (
+    leagueNorm.includes('concacaf') ||
+    leagueNorm.includes('gold cup') ||
+    (leagueNorm.includes('champions cup') && leagueNorm.includes('concacaf')) ||
+    leagueNorm.includes('nations league concacaf')
+  ) {
+    return 'North America';
+  }
+
+  // UEFA — Champions League, Europa League, Conference League, Super Cup, Euros
+  if (
+    leagueNorm.includes('uefa champions league') ||
+    leagueNorm.includes('uefa europa league') ||
+    leagueNorm.includes('europa conference') ||
+    leagueNorm.includes('uefa super cup') ||
+    leagueNorm.includes('uefa nations league') ||
+    leagueNorm.includes('european championship') ||
+    leagueNorm.includes('euro qualif')
+  ) {
+    return 'Europe';
+  }
+
+  // CAF — Champions League Africa
+  if (
+    (leagueNorm.includes('caf') && leagueNorm.includes('champions')) ||
+    leagueNorm.includes('africa cup of nations') ||
+    leagueNorm.includes('coupe d\'afrique')
+  ) {
+    return 'Africa';
+  }
+
+  // AFC — Asian Champions League (NOT Saudi domestic)
+  if (
+    (leagueNorm.includes('afc') && leagueNorm.includes('champions')) ||
+    leagueNorm.includes('asian cup') ||
+    leagueNorm.includes('afc cup')
+  ) {
+    return 'Asia';
+  }
+
+  // FIFA — World Cup, Club World Cup
+  if (
+    leagueNorm.includes('fifa world cup') ||
+    leagueNorm.includes('club world cup') ||
+    leagueNorm.includes('coupe du monde')
+  ) {
+    return 'World';
+  }
+
   return country || null;
 }
 
