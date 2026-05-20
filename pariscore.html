@@ -8988,7 +8988,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <button type="button" class="dh-view-btn" data-view="table">📋 Tableau</button>
         <button type="button" class="dh-view-btn" data-view="charts">📊 Graphiques</button>
         <button type="button" class="dh-view-btn" data-view="attribution">💰 Attribution</button>
+        <button type="button" class="dh-view-btn" data-view="variance">🎲 Variance</button>
         <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies</button>
+      </div>
+
+      <div id="dh-view-variance" class="dh-view" style="display:none;">
+        <div id="dh-variance-content"></div>
       </div>
 
       <div id="dh-view-attribution" class="dh-view" style="display:none;">
@@ -25193,7 +25198,91 @@ function dhRenderAll(data) {
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
   if (dhState.view === 'attribution') dhRenderAttribution(data.attribution);
+  if (dhState.view === 'variance') dhRenderVariance(data.badbeats);
   if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || [], data.breakdown?.trap_teams || []);
+}
+
+// R7 — Variance Tracker + Bad Beat Detector
+let _dhVarianceChart = null;
+function dhRenderVariance(bb) {
+  const wrap = document.getElementById('dh-variance-content');
+  if (!wrap) return;
+  if (!bb || !bb.total_picks_lost) {
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">🎲 Variance Tracker</div><div class="dh-soon-body">Aucun pick perdu dans ce sous-ensemble. Élargis la période.</div></div>`;
+    return;
+  }
+  const headerKpis = `
+    <div class="dh-exec-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));margin-bottom:18px;">
+      <div class="dh-exec-card">
+        <div class="dh-exec-card-label">Bad Beats détectés</div>
+        <div class="dh-exec-card-val">${bb.bad_beats_count}</div>
+        <div class="dh-exec-card-sub">sur ${bb.total_picks_lost} picks perdus</div>
+      </div>
+      <div class="dh-exec-card ${bb.pl_actual_units >= 0 ? 'is-green' : 'is-red'}">
+        <div class="dh-exec-card-label">P/L réel</div>
+        <div class="dh-exec-card-val">${bb.pl_actual_units >= 0 ? '+' : ''}${bb.pl_actual_units}u</div>
+        <div class="dh-exec-card-sub">portefeuille actuel</div>
+      </div>
+      <div class="dh-exec-card is-green">
+        <div class="dh-exec-card-label">P/L sans Bad Beats</div>
+        <div class="dh-exec-card-val">${bb.pl_without_bad_beats_units >= 0 ? '+' : ''}${bb.pl_without_bad_beats_units}u</div>
+        <div class="dh-exec-card-sub">scénario chance neutre</div>
+      </div>
+      <div class="dh-exec-card ${bb.delta_units > 0 ? 'is-amber' : ''}">
+        <div class="dh-exec-card-label">Variance shortfall</div>
+        <div class="dh-exec-card-val">${bb.delta_units >= 0 ? '+' : ''}${bb.delta_units}u</div>
+        <div class="dh-exec-card-sub">manque-à-gagner variance</div>
+      </div>
+    </div>`;
+
+  const topList = bb.bad_beats_top?.length ? `
+    <div class="dh-exec-block">
+      <div class="dh-exec-block-title">🎲 Top 10 Bad Beats (unluck score décroissant)</div>
+      <table class="hist-table dh-table" style="width:100%;">
+        <thead><tr><th>Match</th><th>Ligue</th><th>Date</th><th>Marché</th><th>Pred %</th><th>Score</th><th>Unluck</th></tr></thead>
+        <tbody>
+          ${bb.bad_beats_top.map(b => {
+            const dt = fmtKickoffDate(b.commence_time, { day: '2-digit', month: 'short', year: '2-digit' }, '—');
+            const uColor = b.unluck_score >= 0.7 ? 'var(--dh-red)' : b.unluck_score >= 0.5 ? 'var(--dh-amber)' : 'var(--dh-text-3)';
+            return `<tr><td><strong>${escapeHtml(b.home_team)}</strong> – ${escapeHtml(b.away_team)}</td><td style="color:var(--dh-text-3);">${escapeHtml(b.league || '')}</td><td>${dt}</td><td><span class="dh-pred-pill loss">${b.market.toUpperCase()}</span></td><td>${Math.round(b.predicted_proba)}%</td><td style="font-family:var(--font-mono);">${b.real_score}</td><td style="color:${uColor};font-weight:700;font-family:var(--font-mono);">${(b.unluck_score * 100).toFixed(0)}%</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  wrap.innerHTML = `
+    ${headerKpis}
+    <div class="hist-chart-wrap" style="margin-bottom:18px;">
+      <div class="hist-chart-title">P/L cumul — Réel vs Sans Bad Beats</div>
+      <canvas id="dh-chart-variance" style="width:100%;height:240px;"></canvas>
+    </div>
+    ${topList}
+  `;
+
+  // Render variance chart
+  if (_dhVarianceChart) { _dhVarianceChart.destroy(); _dhVarianceChart = null; }
+  const ctx = document.getElementById('dh-chart-variance').getContext('2d');
+  _dhVarianceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: bb.series_actual.map(p => p.date),
+      datasets: [
+        { label: 'P/L réel', data: bb.series_actual.map(p => p.units), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.07)', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.25 },
+        { label: 'Sans Bad Beats', data: bb.series_no_bad_beats.map(p => p.units), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.07)', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.25, borderDash: [5, 4] },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#cbd5e1', font: { family: 'JetBrains Mono, monospace', size: 10 } } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ' : ' + (c.parsed.y >= 0 ? '+' : '') + c.parsed.y + 'u' } },
+      },
+      scales: {
+        x: { ticks: { color: '#5a6068', font: { size: 10 }, maxTicksLimit: 9 }, grid: { color: 'rgba(255,255,255,.04)' } },
+        y: { ticks: { color: '#5a6068', font: { size: 10 }, callback: v => (v >= 0 ? '+' : '') + v + 'u' }, grid: { color: 'rgba(255,255,255,.04)' } },
+      },
+    },
+  });
 }
 
 // R4 — Profit Attribution : décomposition P/L par marché × ligue × stratégie
@@ -26353,8 +26442,9 @@ function _dhWireControls() {
       document.getElementById('dh-view-table').style.display = v === 'table' ? '' : 'none';
       document.getElementById('dh-view-charts').style.display = v === 'charts' ? '' : 'none';
       document.getElementById('dh-view-attribution').style.display = v === 'attribution' ? '' : 'none';
+      document.getElementById('dh-view-variance').style.display = v === 'variance' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
-      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution') dhRefresh();
+      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution' || v === 'variance') dhRefresh();
     });
   });
 

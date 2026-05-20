@@ -7360,6 +7360,71 @@ function computeHistoryBreakdown(entries) {
   return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams, heatmap };
 }
 
+// R7 — Bad Beat Detector + Variance Tracker
+// Unluck score (proxy sans xG) :
+//   pour pick perdu : unluck = (predicted_proba - 50) / 50 ∈ [0, 1]
+//   pour pick gagné : unluck = 0 (peut être enrichi avec "luck" inverse plus tard)
+// Bad Beat = pick perdu AVEC predicted_proba >= 65 (proxy raisonnable).
+function computeBadBeats(entries) {
+  const lostBadBeats = [];
+  const allPicks = [];
+  for (const h of entries) {
+    if (!h.verified || !h.realScore) continue;
+    const rs = h.realScore;
+    const picks = _historyPicksOf(h);
+    for (const pk of picks) {
+      allPicks.push(pk);
+      if (pk.won === 1) continue;
+      // Only over25/btts have proba (edge has ev, treated differently)
+      const proba = pk.proba;
+      if (typeof proba !== 'number' || proba < 65) continue;
+      const unluck = Math.min((proba - 50) / 50, 1);
+      lostBadBeats.push({
+        match_id: h.id,
+        home_team: h.home_team,
+        away_team: h.away_team,
+        league: h.league,
+        market: pk.market,
+        predicted_proba: proba,
+        unluck_score: unluck,
+        real_score: rs.home + '-' + rs.away,
+        commence_time: h.commence_time,
+      });
+    }
+  }
+  lostBadBeats.sort((a, b) => b.unluck_score - a.unluck_score);
+
+  // Bankroll comparison : actual vs "without bad beats"
+  const sorted = allPicks.slice().sort((a, b) => a.t - b.t);
+  let cumReal = 0, cumNoBB = 0, peakReal = 0, peakNoBB = 0, ddReal = 0, ddNoBB = 0;
+  const seriesReal = [], seriesNoBB = [];
+  const badBeatIds = new Set(lostBadBeats.map(b => b.match_id + '|' + b.market));
+  for (const pk of sorted) {
+    const k = pk.id + '|' + pk.market;
+    cumReal += pk.won ? 1 : -1;
+    cumNoBB += (badBeatIds.has(k) && pk.won === 0) ? 1 : (pk.won ? 1 : -1);
+    if (cumReal > peakReal) peakReal = cumReal;
+    if (cumNoBB > peakNoBB) peakNoBB = cumNoBB;
+    if (peakReal - cumReal > ddReal) ddReal = peakReal - cumReal;
+    if (peakNoBB - cumNoBB > ddNoBB) ddNoBB = peakNoBB - cumNoBB;
+    seriesReal.push({ date: new Date(pk.t).toISOString().split('T')[0], units: cumReal });
+    seriesNoBB.push({ date: new Date(pk.t).toISOString().split('T')[0], units: cumNoBB });
+  }
+
+  return {
+    total_picks_lost: sorted.filter(p => p.won === 0).length,
+    bad_beats_count: lostBadBeats.length,
+    bad_beats_top: lostBadBeats.slice(0, 10),
+    pl_actual_units: cumReal,
+    pl_without_bad_beats_units: cumNoBB,
+    delta_units: cumNoBB - cumReal,
+    max_drawdown_actual: ddReal,
+    max_drawdown_no_bad_beats: ddNoBB,
+    series_actual: seriesReal,
+    series_no_bad_beats: seriesNoBB,
+  };
+}
+
 // R6 — Calibration plot : predicted proba bucket vs realized winrate
 function computeCalibration(entries) {
   const buckets = {};
@@ -7673,6 +7738,7 @@ function runHistoryQuery(p) {
   const alerts = sport === 'football' ? computeHistoryAlerts(pool) : []; // R2 Executive
   const attribution = sport === 'football' ? computeProfitAttribution(pool) : null; // R4
   const calibration = sport === 'football' ? computeCalibration(pool) : []; // R6
+  const badbeats = sport === 'football' ? computeBadBeats(pool) : null; // R7
 
   // Exclude low-WR leagues (BetMines-style)
   if (p.excludeLowLeagues) {
@@ -7703,7 +7769,7 @@ function runHistoryQuery(p) {
   const page = Math.max(1, p.page || 1);
   const matches = pool.slice((page - 1) * pageSize, page * pageSize);
 
-  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts, attribution, calibration };
+  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts, attribution, calibration, badbeats };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
