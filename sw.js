@@ -32,7 +32,12 @@
 // gradient bottom #1c222b → #2f3a47.
 // v20 (2026-05-20) : invalide v19 — V14 encore + clair : #3a4756 → #525c6b
 // (slate clair lisible), hover #4a5666 → #646e7d, gradient #2f3a47 → #3d4a5a.
-const CACHE = 'pariscore-shell-v20';
+// v21 (2026-05-20) : invalide v20 — V15 EDITORIAL_GRAPHITE warm-graphite après
+// audit Design Critique + Research concurrentielle (L'Équipe + Flashscore +
+// Marca). Pivot slate-froid → warm-graphite : #525c6b → #6b6864 (hue 30°,
+// L* 42), hover #646e7d → #7a7771, gradient #3d4a5a → #4a4844. Rouge L'Équipe
+// chante au lieu de vibrer.
+const CACHE = 'pariscore-shell-v21';
 const SHELL = [
   '/',
   '/pariscore.html',
