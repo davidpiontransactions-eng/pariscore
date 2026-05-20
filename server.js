@@ -158,8 +158,18 @@ if (PARLAY_API_HOST && !PARLAY_API_KEY) console.warn('  ⚠ PARLAY_API_KEY manqu
 if (GAMEFORECAST_API_HOST && !GAMEFORECAST_API_KEY) console.warn('  ⚠ GAMEFORECAST_API_KEY manquante pour GameForecast dans .env');
 
 // ─── SÉCURITÉ ────────────────────────────────────────────────────────────────
-const BLOCKED_FILES = ['.env', 'database.json', 'history.json', 'ai_cache.json', 'pariscore.db', 'package.json', 'package-lock.json', '.gitignore'];
-const BLOCKED_DIRS = ['.git', 'node_modules'];
+// Fix sécurité bd ParisScorebis-amc (audit prod 2026-05-20) : server.js était
+// servi en HTTP public via le catch-all static — exposition clés API, JWT_SECRET,
+// schemas DB, logique business. Ajout des fichiers internes au blacklist.
+const BLOCKED_FILES = [
+  '.env', '.env.example', '.env.local',
+  'database.json', 'history.json', 'ai_cache.json',
+  'pariscore.db', 'pariscore.db-wal', 'pariscore.db-shm',
+  'package.json', 'package-lock.json', '.gitignore',
+  'server.js', 'CLAUDE.md', 'CHANGELOG.md', 'AUDIT.md',
+  'render.yaml', 'fix-matches.js', 'test-integrity.js',
+];
+const BLOCKED_DIRS = ['.git', 'node_modules', '.context', '.planning', '.claude', '.beads', 'tests', 'transfermarkt-api'];
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 Mo
 const STATS_TTL = 6 * 3600000;    // 6h entre les mises à jour stats
 const ADV_STATS_TTL = 24 * 3600000;   // 24h cache stats avancées /teams/statistics
