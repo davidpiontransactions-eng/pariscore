@@ -3173,6 +3173,7 @@ const FINAL_FALLBACK = 'https://www.coteur.com/cotes/football';
 // ─── BASE DE DONNÉES EN MÉMOIRE ─────────────────────────────────────────────
 let db = {
   matches: [],   // matchs fusionnés (odds + stats)
+  matchIndex: new Map(), // id → match, rebuild par saveDB() — lookup O(1)
   archive_matches: [],   // matchs termines archives (nettoyage auto)
   teamStats: {},   // stats par équipe (standings API-Football)
   advancedTeamStats: {},   // stats avancées /teams/statistics — cache 24h
@@ -3626,6 +3627,8 @@ function saveDB() {
   } catch (e) {
     console.error('\x1b[31m[DB_ERROR] Échec critique de la sauvegarde SQLite :\x1b[0m', e.message);
   }
+  // Rebuild matchIndex pour lookups O(1)
+  db.matchIndex = new Map((db.matches || []).map(m => [m.id, m]));
 }
 
 function syncCacheBuffers() {
@@ -3834,7 +3837,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
     // ── Gemini SSE ──────────────────────────────────────────────────────────
     const payload = JSON.stringify({
       contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 5500 },
+      generationConfig: { temperature: 0.8, maxOutputTokens: 2800 },
       safetySettings: GEMINI_SAFETY_SETTINGS,
     });
     const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
@@ -5827,33 +5830,59 @@ function saveHistory() {
 let aiCache = {};  // { [matchKey]: { data, cachedAt } }
 
 function loadAICache() {
+  const now = Date.now();
+  let kept = 0;
+
   // Rétrocompat : migration one-shot depuis ai_cache.json
   if (fs.existsSync(AI_CACHE_FILE)) {
     try {
       const raw = JSON.parse(fs.readFileSync(AI_CACHE_FILE, 'utf8'));
-      const now = Date.now();
       for (const [key, entry] of Object.entries(raw)) {
-        if (now - new Date(entry.cachedAt).getTime() < AI_CACHE_TTL) aiCache[key] = entry;
+        if (now - new Date(entry.cachedAt).getTime() < AI_CACHE_TTL) {
+          aiCache[key] = entry;
+          kvSet('ai_e_' + key, entry);
+          kept++;
+        }
       }
-      saveAICache();
       fs.renameSync(AI_CACHE_FILE, AI_CACHE_FILE + '.migrated');
-      console.log(`  ✓ ai_cache.json migré vers SQLite (${Object.keys(aiCache).length} analyses valides)`);
+      console.log(`  ✓ ai_cache.json migré vers SQLite per-entry (${kept} analyses)`);
       return;
     } catch (e) { console.warn('[AICache] Migration JSON→SQLite:', e.message); }
   }
 
-  const raw = kvGet('ai_cache', {});
-  const now = Date.now();
-  let kept = 0;
-  for (const [key, entry] of Object.entries(raw)) {
-    if (now - new Date(entry.cachedAt).getTime() < AI_CACHE_TTL) { aiCache[key] = entry; kept++; }
+  // Migration one-shot depuis l'ancien blob monolithique 'ai_cache'
+  const oldBlob = kvGet('ai_cache', null);
+  if (oldBlob && typeof oldBlob === 'object') {
+    for (const [key, entry] of Object.entries(oldBlob)) {
+      if (now - new Date(entry.cachedAt).getTime() < AI_CACHE_TTL) {
+        aiCache[key] = entry;
+        kvSet('ai_e_' + key, entry);
+        kept++;
+      }
+    }
+    if (kept > 0) {
+      sqldb.prepare("DELETE FROM kv WHERE key = 'ai_cache'").run();
+      console.log(`  ✓ AI Cache blob migré vers per-entry (${kept} analyses)`);
+      return;
+    }
   }
-  console.log(`  ✓ AI Cache SQLite chargé (${kept} analyses valides)`);
+
+  // Lecture per-entry (chemin nominal)
+  try {
+    const rows = sqldb.prepare("SELECT key, value FROM kv WHERE key LIKE 'ai_e_%'").all();
+    for (const row of rows) {
+      const matchKey = row.key.slice(5);
+      try {
+        const entry = JSON.parse(row.value);
+        if (now - new Date(entry.cachedAt).getTime() < AI_CACHE_TTL) { aiCache[matchKey] = entry; kept++; }
+        else sqldb.prepare("DELETE FROM kv WHERE key = ?").run(row.key);
+      } catch { }
+    }
+  } catch (e) { console.warn('[AICache] Lecture per-entry:', e.message); }
+  console.log(`  ✓ AI Cache chargé per-entry (${kept} analyses valides)`);
 }
 
-function saveAICache() {
-  kvSet('ai_cache', aiCache);
-}
+function saveAICache() { /* no-op — écriture per-entry dans saveAIAnalysisToCache */ }
 
 // ─── FBref Advanced Stats — Pattern B Loader (P4) ────────────────────────────
 // Lit les JSON produits par scripts/scrape_advanced_stats.py et merge dans
@@ -5966,8 +5995,9 @@ function getCachedAIAnalysis(matchKey) {
  */
 function saveAIAnalysisToCache(matchKey, data) {
   if (!matchKey) return;
-  aiCache[matchKey] = { data, cachedAt: new Date().toISOString() };
-  saveAICache();
+  const entry = { data, cachedAt: new Date().toISOString() };
+  aiCache[matchKey] = entry;
+  kvSet('ai_e_' + matchKey, entry); // O(1) — une seule ligne SQLite
 }
 
 // BSD score lookup with per-call date cache — avoids redundant fetches within one archive pass
@@ -18540,6 +18570,23 @@ if (pathname.startsWith('/api/v1/live-dashboard/')) {
   return jsonResponse(res, 200, payload);
 }
 
+// v11.0 — Statut connexion BSD WebSocket (badge néon UI)
+if (pathname === '/api/v1/live/ws-status') {
+  return jsonResponse(res, 200, {
+    enabled: !!BSD_LIVE_WS_ENABLED,
+    has_token: !!BSD_LIVE_TOKEN,
+    connected: !!_bsdWsHandshakeDone,
+    subs: Array.from(_bsdWsSubs),
+    pending: _bsdWsPendingSubs.length,
+    cap: BSD_WS_SUB_CAP,
+    last_pong_ms: _bsdWsLastPong || 0,
+    last_pong_age_sec: _bsdWsLastPong ? Math.round((Date.now() - _bsdWsLastPong) / 1000) : null,
+    backoff_ms: _bsdWsBackoff,
+    host: BSD_LIVE_WS_HOST,
+    path: BSD_LIVE_WS_PATH,
+  });
+}
+
 if (pathname === '/api/v1/live/bsd') {
   // v10.6: fresh=true → force pollLiveScores avant réponse (Dashboard V2 polling 30s)
   if (query.fresh === 'true' && typeof pollLiveScores === 'function') {
@@ -23548,7 +23595,7 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
   const streamUrl = new URL(req.url, 'http://localhost');
   const forceRefresh = streamUrl.searchParams.get('force') === '1';
   const matchId = decodeURIComponent(pathname.split('/api/v1/deep-analysis-stream/')[1]);
-  const match = db.matches.find(m => m.id === matchId);
+  const match = db.matchIndex.get(matchId) || db.matches.find(m => m.id === matchId);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
 
   // SSE headers
@@ -23566,18 +23613,19 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
     const cacheStats = match.stats || {};
     const cacheMeta = (cacheStats.isReal ? 40 : 0) + (match.odds?.home ? 30 : 0) + (match.home_form ? 20 : 0) + ((match.expectedGoals?.home) ? 10 : 0);
     try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence: cacheMeta, dataQuality: cacheStats.isReal ? 'RÉELLES' : 'ESTIMÉES' })}\n\n`); } catch { }
-    // Simulate streaming from cache in small chunks
+    // Stream depuis cache en gros chunks (≈0.2s au lieu de 3.5s)
     const words = cached.text.split(' ');
+    const CHUNK_SIZE = 80;
     let idx = 0;
     const iv = setInterval(() => {
-      const chunk = words.slice(idx, idx + 6).join(' ') + (idx + 6 < words.length ? ' ' : '');
-      idx += 6;
+      const chunk = words.slice(idx, idx + CHUNK_SIZE).join(' ') + (idx + CHUNK_SIZE < words.length ? ' ' : '');
+      idx += CHUNK_SIZE;
       try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: chunk })}\n\n`); } catch { }
       if (idx >= words.length) {
         clearInterval(iv);
         try { res.write(`event: done\ndata: ${JSON.stringify({ _from_cache: true, provider: cached.provider || 'cache' })}\n\n`); res.end(); } catch { }
       }
-    }, 30);
+    }, 20);
     req.on('close', () => clearInterval(iv));
     return;
   }
@@ -25551,6 +25599,22 @@ async function pollLiveScores() {
           } catch (e) { /* skip individual match errors */ }
         }));
 
+        // v11.0 — Subscribe WS dynamique : matchs qui passent live cette itération
+        try {
+          if (typeof _bsdWsSubscribe === 'function' && _bsdWsHandshakeDone) {
+            for (const m of patches) {
+              if (m && m._bsd_event_id != null && !_bsdWsSubs.has(String(m._bsd_event_id))) {
+                _bsdWsSubscribe(m._bsd_event_id);
+              }
+            }
+            // Unsubscribe les matchs subscribed mais qui ne sont plus live
+            const liveIds = new Set(liveNow.map(m => m._bsd_event_id != null ? String(m._bsd_event_id) : null).filter(Boolean));
+            for (const eid of Array.from(_bsdWsSubs)) {
+              if (!liveIds.has(eid)) _bsdWsUnsubscribe(eid);
+            }
+          }
+        } catch (e) { console.warn('  [BSD-WS] dyn-sub err:', e.message); }
+
         if (patches.length > 0 || liveNow.length > 0) {
             saveDB();
             // Broadcast patch enrichi avec tous les champs Sofascore
@@ -25637,6 +25701,13 @@ let _bsdWsBuf = Buffer.alloc(0);
 let _bsdWsBackoff = 2000;
 let _bsdWsRawLogged = 0;
 const _bsdWsLastBcast = new Map(); // matchId -> ts (throttle SSE)
+// v11.0 — BSD spec compliance : subscribe loop + heartbeat + typed dispatch
+const _bsdWsSubs = new Set();         // event_ids actuellement subscribed
+const _bsdWsPendingSubs = [];         // file FIFO si cap 10 atteint
+const BSD_WS_SUB_CAP = 10;            // limite officielle BSD (10 matchs/socket)
+let _bsdWsLastPong = 0;
+let _bsdWsHeartbeatTimer = null;
+let _bsdWsHandshakeDone = false;
 
 function _bsdWsLookupMatch(eid, home, away) {
   if (eid != null) {
@@ -25693,11 +25764,149 @@ function _bsdWsParse(msg) {
   return { eid, home, away, score, minute, status, ball, situation, pressureH, pressureA };
 }
 
+// v11.0 — Mappe stats BSD WS event frame → champs live_* canoniques PariScore
+function _bsdWsApplyEventStats(m, stats) {
+  if (!stats || typeof stats !== 'object') return;
+  const h = stats.home || {}, a = stats.away || {};
+  const pair = (kh, ka) => {
+    if (kh == null && ka == null) return undefined;
+    return { home: kh == null ? null : Number(kh), away: ka == null ? null : Number(ka) };
+  };
+  const ap = v => (v && typeof v === 'object' && 'pct' in v) ? Number(v.pct) : (v == null ? null : Number(v));
+  const mp = (k, mapper) => { const v = mapper(h[k], a[k]); if (v !== undefined) return v; return undefined; };
+  // Possession
+  if (h.ball_possession != null || a.ball_possession != null) m.live_possession = pair(h.ball_possession, a.ball_possession);
+  // Tirs
+  if (h.total_shots != null || a.total_shots != null) m.live_shots = pair(h.total_shots, a.total_shots);
+  if (h.shots_on_target != null || a.shots_on_target != null) m.live_shots_on_target = pair(h.shots_on_target, a.shots_on_target);
+  if (h.shots_off_target != null || a.shots_off_target != null) m.live_shots_off_target = pair(h.shots_off_target, a.shots_off_target);
+  if (h.shots_inside_box != null || a.shots_inside_box != null) m.live_shots_inside_box = pair(h.shots_inside_box, a.shots_inside_box);
+  if (h.blocked_shots != null || a.blocked_shots != null) m.live_shots_blocked = pair(h.blocked_shots, a.blocked_shots);
+  // Corners / fautes / cartons
+  if (h.corner_kicks != null || a.corner_kicks != null) m.live_corners = pair(h.corner_kicks, a.corner_kicks);
+  if (h.fouls != null || a.fouls != null) m.live_fouls = pair(h.fouls, a.fouls);
+  if (h.offsides != null || a.offsides != null) m.live_offsides = pair(h.offsides, a.offsides);
+  if (h.yellow_cards != null || a.yellow_cards != null || h.red_cards != null || a.red_cards != null) {
+    m.live_cards = {
+      home: { yellow: Number(h.yellow_cards || 0), red: Number(h.red_cards || 0) },
+      away: { yellow: Number(a.yellow_cards || 0), red: Number(a.red_cards || 0) },
+    };
+  }
+  // Passes
+  if (h.passes != null || a.passes != null) m.live_passes = pair(h.passes, a.passes);
+  if (h.pass_accuracy_pct != null || a.pass_accuracy_pct != null) m.live_pass_accuracy = pair(ap(h.pass_accuracy_pct), ap(a.pass_accuracy_pct));
+  else if (h.accurate_passes || a.accurate_passes) m.live_pass_accuracy = pair(ap(h.accurate_passes), ap(a.accurate_passes));
+  // Occasions
+  if (h.big_chances != null || a.big_chances != null) m.live_big_chances = pair(h.big_chances, a.big_chances);
+  if (h.big_chances_missed != null || a.big_chances_missed != null) m.live_big_chances_missed = pair(h.big_chances_missed, a.big_chances_missed);
+  // xG
+  if (h.xg != null || a.xg != null) m.live_xg = pair(h.xg, a.xg);
+  // Pénétration zone
+  if (h.touches_in_penalty_area != null || a.touches_in_penalty_area != null) m.live_touches_opp_box = pair(h.touches_in_penalty_area, a.touches_in_penalty_area);
+  // Momentum premium (~2min refresh)
+  if (h.attack_pct != null || a.attack_pct != null || h.dangerous_attack_pct != null || a.dangerous_attack_pct != null) {
+    m.live_momentum = {
+      home: {
+        attack_pct: h.attack_pct == null ? null : Number(h.attack_pct),
+        dangerous_attack_pct: h.dangerous_attack_pct == null ? null : Number(h.dangerous_attack_pct),
+        ball_safe_pct: h.ball_safe_pct == null ? null : Number(h.ball_safe_pct),
+      },
+      away: {
+        attack_pct: a.attack_pct == null ? null : Number(a.attack_pct),
+        dangerous_attack_pct: a.dangerous_attack_pct == null ? null : Number(a.dangerous_attack_pct),
+        ball_safe_pct: a.ball_safe_pct == null ? null : Number(a.ball_safe_pct),
+      },
+    };
+  }
+  // Compteurs absolus (utiles pour danger attacks legacy)
+  if (h.dangerous_attack != null || a.dangerous_attack != null) m.live_dangerous_attacks = pair(h.dangerous_attack, a.dangerous_attack);
+}
+
 function _bsdWsHandleJSON(msg) {
   if (_bsdWsRawLogged < 3) {
     _bsdWsRawLogged++;
     try { console.log('  [BSD-WS] raw#' + _bsdWsRawLogged + ' ' + JSON.stringify(msg).slice(0, 400)); } catch (e) {}
   }
+  // v11.0 — Dispatch BSD-spec types officiels (event/livedata/odds/pong/error/subscribed/unsubscribed)
+  const t = msg && msg.type;
+  if (t === 'pong') { _bsdWsLastPong = Date.now(); return; }
+  if (t === 'subscribed') {
+    const eid = msg.event_id;
+    if (eid != null) { _bsdWsSubs.add(String(eid)); }
+    console.log('  [BSD-WS] subscribed event_id=' + eid + ' (subs=' + _bsdWsSubs.size + '/' + BSD_WS_SUB_CAP + ')');
+    return;
+  }
+  if (t === 'unsubscribed') {
+    const eid = msg.event_id;
+    if (eid != null) _bsdWsSubs.delete(String(eid));
+    // Promote pending sub si file non vide
+    if (_bsdWsPendingSubs.length && _bsdWsSubs.size < BSD_WS_SUB_CAP) {
+      const next = _bsdWsPendingSubs.shift();
+      _bsdWsSubscribe(next);
+    }
+    return;
+  }
+  if (t === 'error') {
+    console.warn('  [BSD-WS] error code=' + (msg.code || 'unknown') + ' eid=' + (msg.event_id || 'n/a'));
+    if (msg.code === 'not_tracked' && msg.event_id != null) _bsdWsSubs.delete(String(msg.event_id));
+    if (msg.code === 'limit') console.warn('  [BSD-WS] cap subscriptions atteint — pending=' + _bsdWsPendingSubs.length);
+    return;
+  }
+  // Frame event (~30s) → patch stats canoniques + broadcast SSE typé
+  if (t === 'event') {
+    const eid = msg.event_id;
+    const m = _bsdWsLookupMatch(eid, msg.home && msg.home.name, msg.away && msg.away.name);
+    if (!m) return;
+    if (msg.score) {
+      const hs = msg.score.home, as = msg.score.away;
+      if (hs != null && as != null) m.live_score = hs + '-' + as;
+    }
+    if (msg.time) {
+      if (msg.time.minute != null) m.live_minute = Number(msg.time.minute);
+      if (msg.time.status) m.status = msg.time.status;
+      if (msg.time.period) m.live_period = msg.time.period;
+    }
+    _bsdWsApplyEventStats(m, msg.stats);
+    if (sseClients.size > 0) {
+      broadcastSSE('ws_event', {
+        id: m.id,
+        event_id: eid,
+        score: m.live_score || null,
+        minute: m.live_minute || null,
+        status: m.status || null,
+        period: m.live_period || null,
+        live_possession: m.live_possession || null,
+        live_shots: m.live_shots || null,
+        live_shots_on_target: m.live_shots_on_target || null,
+        live_corners: m.live_corners || null,
+        live_xg: m.live_xg || null,
+        live_big_chances: m.live_big_chances || null,
+        live_momentum: m.live_momentum || null,
+        live_cards: m.live_cards || null,
+        live_dangerous_attacks: m.live_dangerous_attacks || null,
+        live_touches_opp_box: m.live_touches_opp_box || null,
+      });
+    }
+    return;
+  }
+  // Frame odds → patch odds_live + broadcast SSE typé
+  if (t === 'odds' || t === 'odds_book') {
+    const eid = msg.event_id;
+    const m = _bsdWsLookupMatch(eid, null, null);
+    if (!m) return;
+    m.odds_live = {
+      match_winner: (msg.odds && msg.odds.match_winner) || null,
+      over_under: (msg.odds && msg.odds.over_under) || null,
+      btts: (msg.odds && msg.odds.btts) || null,
+      updated_at: msg.updated_at || new Date().toISOString(),
+      bookmaker_slug: msg.bookmaker_slug || null,
+    };
+    if (sseClients.size > 0) {
+      broadcastSSE('ws_odds', { id: m.id, event_id: eid, odds: m.odds_live });
+    }
+    return;
+  }
+  // Frame livedata (par défaut) ou legacy → parser défensif existant
   const p = _bsdWsParse(msg);
   const m = _bsdWsLookupMatch(p.eid, p.home, p.away);
   if (!m) return;
@@ -25744,6 +25953,73 @@ function _bsdWsHandleJSON(msg) {
   }
 }
 
+// v11.0 — Subscribe / Unsubscribe / SubscribeAll / Heartbeat (BSD-spec)
+function _bsdWsSendJSON(obj) {
+  if (!_bsdWsSock || !_bsdWsHandshakeDone) return false;
+  try {
+    _bsdWsSendFrame(_bsdWsSock, 0x1, Buffer.from(JSON.stringify(obj), 'utf8'));
+    return true;
+  } catch (e) { console.warn('  [BSD-WS] send failed:', e.message); return false; }
+}
+
+function _bsdWsSubscribe(eventId, opts) {
+  if (eventId == null) return false;
+  const key = String(eventId);
+  if (_bsdWsSubs.has(key)) return true;
+  if (!_bsdWsHandshakeDone) {
+    if (!_bsdWsPendingSubs.includes(key)) _bsdWsPendingSubs.push(key);
+    return false;
+  }
+  if (_bsdWsSubs.size >= BSD_WS_SUB_CAP) {
+    if (!_bsdWsPendingSubs.includes(key)) _bsdWsPendingSubs.push(key);
+    return false;
+  }
+  const payload = { action: 'subscribe', event_id: Number(eventId) };
+  if (opts && opts.bookmaker_slug) payload.bookmaker_slug = String(opts.bookmaker_slug);
+  // Optimistic add (confirmé par frame 'subscribed', error/limit déclenche rollback)
+  _bsdWsSubs.add(key);
+  return _bsdWsSendJSON(payload);
+}
+
+function _bsdWsUnsubscribe(eventId) {
+  if (eventId == null) return false;
+  const key = String(eventId);
+  // Retire de la file pending même si pas encore subscribed
+  const pidx = _bsdWsPendingSubs.indexOf(key);
+  if (pidx !== -1) _bsdWsPendingSubs.splice(pidx, 1);
+  if (!_bsdWsSubs.has(key)) return false;
+  _bsdWsSubs.delete(key);
+  return _bsdWsSendJSON({ action: 'unsubscribe', event_id: Number(eventId) });
+}
+
+function _bsdWsSubscribeAll() {
+  if (!_bsdWsHandshakeDone) return 0;
+  // Liste matchs live actuellement (priorité EV/edge desc si > cap)
+  const candidates = db.matches.filter(m => m && m._bsd_event_id != null && (m.is_live || (m.live_score && parseInt(m.live_minute || 0) > 0)));
+  candidates.sort((a, b) => Math.abs((b.best_edge && b.best_edge.edge) || 0) - Math.abs((a.best_edge && a.best_edge.edge) || 0));
+  let sent = 0;
+  for (const m of candidates) {
+    if (_bsdWsSubs.size >= BSD_WS_SUB_CAP) {
+      const k = String(m._bsd_event_id);
+      if (!_bsdWsPendingSubs.includes(k)) _bsdWsPendingSubs.push(k);
+      continue;
+    }
+    if (_bsdWsSubscribe(m._bsd_event_id)) sent++;
+  }
+  console.log('  [BSD-WS] subscribeAll → ' + sent + ' subs envoyés (' + _bsdWsSubs.size + '/' + BSD_WS_SUB_CAP + ', pending=' + _bsdWsPendingSubs.length + ')');
+  return sent;
+}
+
+function _bsdWsHeartbeat() {
+  if (!_bsdWsHandshakeDone || !_bsdWsSock) return;
+  _bsdWsSendJSON({ action: 'ping' });
+  // Si dernier pong > 60s, force reconnect (socket zombie)
+  if (_bsdWsLastPong && Date.now() - _bsdWsLastPong > 60000) {
+    console.warn('  [BSD-WS] pong timeout (>60s) → force reconnect');
+    try { _bsdWsSock.end(); } catch (e) {}
+  }
+}
+
 function _bsdWsSendFrame(sock, opcode, payload) {
   const buf = Buffer.isBuffer(payload) ? payload : Buffer.from(payload || '');
   const len = buf.length;
@@ -25787,7 +26063,7 @@ function _bsdWsConnect() {
   const tls = require('tls');
   const key = crypto.randomBytes(16).toString('base64');
   const path = BSD_LIVE_WS_PATH + (BSD_LIVE_WS_PATH.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(BSD_LIVE_TOKEN);
-  let handshakeDone = false;
+  _bsdWsHandshakeDone = false;
   const sock = tls.connect({ host: BSD_LIVE_WS_HOST, port: 443, servername: BSD_LIVE_WS_HOST }, () => {
     const req =
       'GET ' + path + ' HTTP/1.1\r\n' +
@@ -25803,7 +26079,7 @@ function _bsdWsConnect() {
   _bsdWsBuf = Buffer.alloc(0);
 
   sock.on('data', chunk => {
-    if (!handshakeDone) {
+    if (!_bsdWsHandshakeDone) {
       _bsdWsBuf = Buffer.concat([_bsdWsBuf, chunk]);
       const idx = _bsdWsBuf.indexOf('\r\n\r\n');
       if (idx === -1) return;
@@ -25813,11 +26089,18 @@ function _bsdWsConnect() {
         try { sock.end(); } catch (e) {}
         return;
       }
-      handshakeDone = true;
+      _bsdWsHandshakeDone = true;
       _bsdWsBackoff = 2000;
-      console.log('  ✓ [BSD-WS] connecté (push live <5s)');
+      _bsdWsLastPong = Date.now();
+      console.log('  ✓ [BSD-WS] connecté (push live <5s) — démarrage subscribe loop');
       _bsdWsBuf = _bsdWsBuf.slice(idx + 4);
       _bsdWsConsume();
+      // v11.0 — Subscribe initial sur tous les matchs live + démarre heartbeat
+      try { _bsdWsSubscribeAll(); } catch (e) { console.warn('  [BSD-WS] subscribeAll err:', e.message); }
+      if (_bsdWsHeartbeatTimer) clearInterval(_bsdWsHeartbeatTimer);
+      _bsdWsHeartbeatTimer = setInterval(_bsdWsHeartbeat, 25000);
+      // Broadcast SSE status connected
+      try { if (sseClients.size > 0) broadcastSSE('ws_status', { connected: true, subs: Array.from(_bsdWsSubs), pending: _bsdWsPendingSubs.length }); } catch (e) {}
       return;
     }
     _bsdWsBuf = Buffer.concat([_bsdWsBuf, chunk]);
@@ -25826,6 +26109,15 @@ function _bsdWsConnect() {
 
   const reconnect = () => {
     if (_bsdWsSock === sock) _bsdWsSock = null;
+    _bsdWsHandshakeDone = false;
+    // Conserve _bsdWsSubs : on les re-subscribe au prochain handshake
+    if (_bsdWsHeartbeatTimer) { clearInterval(_bsdWsHeartbeatTimer); _bsdWsHeartbeatTimer = null; }
+    // Pousse les subs actuelles en pending pour re-subscribe au reconnect
+    for (const eid of _bsdWsSubs) {
+      if (!_bsdWsPendingSubs.includes(eid)) _bsdWsPendingSubs.push(eid);
+    }
+    _bsdWsSubs.clear();
+    try { if (sseClients.size > 0) broadcastSSE('ws_status', { connected: false, subs: [], pending: _bsdWsPendingSubs.length }); } catch (e) {}
     const delay = _bsdWsBackoff;
     _bsdWsBackoff = Math.min(_bsdWsBackoff * 2, 60000);
     setTimeout(_bsdWsConnect, delay);
