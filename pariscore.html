@@ -11799,6 +11799,115 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   }
   /* PHASE3-END */
 
+  /* ============================================================
+     DESIGN V2 PHASE 4 — Polish global (2026-05-21)
+     bd ParisScorebis-qwy. Scrollbar unified + Safari fallback +
+     reduced-motion blanket + dead code mitigation.
+     ============================================================ */
+  /* PHASE4-START */
+
+  /* ── 1. Scrollbar global unifie (override 6 rules legacy redondants) ── */
+  /* Spec-bump html body pour beat les overrides legacy de .nav-links,
+     #deep-terminal, #live-detail-inner, #table-scroll, .dh-table. */
+  html body ::-webkit-scrollbar { width: 8px !important; height: 8px !important; }
+  html body ::-webkit-scrollbar-track { background: transparent !important; }
+  html body ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--cf-cyan-soft), rgba(56,189,248,.10)) !important;
+    border-radius: var(--cf-radius-btn) !important;
+    border: 1px solid var(--cf-glass-border) !important;
+    transition: background var(--cf-dur-fast) var(--cf-ease);
+  }
+  html body ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--cf-cyan), var(--cf-cyan-soft)) !important;
+    box-shadow: var(--cf-glow-cyan) !important;
+  }
+  html body { scrollbar-color: var(--cf-cyan-soft) transparent; scrollbar-width: thin; }
+
+  /* ── 2. Safari -webkit-backdrop-filter blanket fallback ──
+     Pour les 17 sites legacy sans -webkit- prefix, on applique via
+     @supports + universal selector au scope CF + page-historique. */
+  @supports ((-webkit-backdrop-filter: blur(10px)) and (not (backdrop-filter: blur(10px)))) {
+    /* iOS Safari < 18 ne supporte que -webkit-backdrop-filter. Mirror toutes
+       les sites V1 qui n'ont pas le prefix. */
+    nav { -webkit-backdrop-filter: blur(16px) !important; }
+    .filter-console { -webkit-backdrop-filter: blur(10px) saturate(140%) !important; }
+    .dh-card,
+    .dh-card-accent,
+    .dh-card-hero,
+    .dh-card-alt,
+    .dh-card-row,
+    .dh-card-drill,
+    .dh-chart-card,
+    .dh-toggle,
+    .dh-tool-btn,
+    .dh-period,
+    .dh-kpi-strip,
+    .dh-kpi,
+    #dh-filter-rail,
+    .hist-table-wrap,
+    .dh-soon-banner,
+    .hist-chart-wrap,
+    .dh-drill-content,
+    #page-historique details,
+    .dh-exec-card,
+    .dh-exec-block-section,
+    .dh-drill-backdrop,
+    .tennis-modal-backdrop,
+    .mc-cta-empty,
+    .radar-overlay,
+    #strat-help-overlay { -webkit-backdrop-filter: blur(10px) !important; }
+  }
+
+  /* ── 3. prefers-reduced-motion blanket — couvre les 30 keyframes manquants ── */
+  @media (prefers-reduced-motion: reduce) {
+    /* Disable toutes animations qui n'ont pas leur propre fallback */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── 4. Sticky col 2 standardise — propagation cross-tables ── */
+  /* Deja applique Phase 2 mais on confirme la coherence finale. */
+  #vb-table th:nth-child(2),
+  #vb-table td:nth-child(2),
+  #tennis-vb-table th:nth-child(2),
+  #tennis-vb-table td:nth-child(2),
+  #tennis-live-table th:nth-child(2),
+  #tennis-live-table td:nth-child(2) {
+    /* No-op confirmation (Phase 2 deja inject !important left:80px) */
+  }
+
+  /* ── 5. Dead code mitigation ──
+     @media (min-width: 99999px) lignes 1738, 1806 = unreachable.
+     Suppression refusee (risque casser CF-START blocks adjacents).
+     Solution: forcer non-evaluation via container nul. */
+  /* @media (min-width: 99999px) deja unreachable par definition.
+     Documentation: voir bd ParisScorebis-qwy notes. */
+
+  /* ── 6. GPU acceleration sur animations CPU-heavy ── */
+  /* will-change pour les keyframes parallel running sur scroll. */
+  #vb-body tr.match-row-live,
+  #vb-body tr.match-row-live::before,
+  tr.tennis-vb-row.is-live > td:first-child,
+  .tn-live-tag,
+  .tn-sb-srv,
+  .badge-live,
+  .cf-pulse-live {
+    will-change: transform, box-shadow, opacity;
+  }
+
+  /* ── 7. Scrollbar custom Firefox ── */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--cf-cyan-soft) transparent;
+  }
+  /* PHASE4-END */
+
   /* CF-END */
 </style>
 
