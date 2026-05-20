@@ -787,6 +787,56 @@ function normalizeBookmaker(bk) {
   const found = ALLOWED_BOOKMAKERS.find(b => b.toLowerCase() === s.toLowerCase());
   return found || s.slice(0, 32);
 }
+
+// ─── AFFILIATION GA — helpers (sub-id composer + click_id + redirect URL) ─────
+// Slug normalisé pour sub-id : ASCII, lower, tirets, max 40 chars par segment
+function slugifyAff(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+}
+// click_id : 12 bytes hex = 24 chars, ~3e28 entropy — suffisant idempotence postback S2S
+function genClickId() {
+  return crypto.randomBytes(12).toString('hex');
+}
+// Compose sub-id à partir d'un template + variables match/user/contexte
+// Template défaut : ps_{user}_{sport}_{league}_{match}_{ctx} — placeholders supportés:
+//   {user}, {sport}, {league}, {match}, {ctx}, {market}, {sel}
+// Cap final 80 chars (limite réseaux iGaming standard), nettoyage doubles _.
+function composeSubId(template, vars) {
+  const tpl = template || 'ps_{user}_{sport}_{league}_{match}_{ctx}';
+  let s = tpl
+    .replace(/\{user\}/g,   vars.userId               || 'anon')
+    .replace(/\{sport\}/g,  slugifyAff(vars.sport)    || 'na')
+    .replace(/\{league\}/g, slugifyAff(vars.league)   || 'na')
+    .replace(/\{match\}/g,  slugifyAff(vars.matchId)  || 'na')
+    .replace(/\{ctx\}/g,    slugifyAff(vars.context)  || 'na')
+    .replace(/\{market\}/g, slugifyAff(vars.market)   || '')
+    .replace(/\{sel\}/g,    slugifyAff(vars.selection) || '');
+  s = s.replace(/_{2,}/g, '_').replace(/^_|_$/g, '').slice(0, 80);
+  return s || 'ps_anon';
+}
+// Construit URL finale affiliée — network='ga' utilise pid/bid, sinon append subid en query
+function buildAffiliateRedirectUrl(aff, subid, clickId) {
+  const base = aff && aff.affiliate_link;
+  if (!base) return null;
+  const sep = base.includes('?') ? '&' : '?';
+  if (aff.network === 'ga' && aff.ga_pid) {
+    const p = new URLSearchParams();
+    p.set('pid', aff.ga_pid);
+    if (aff.ga_bid) p.set('bid', aff.ga_bid);
+    p.set('subid', subid);
+    p.set('cid',   clickId);
+    return base + sep + p.toString();
+  }
+  // Direct (non-GA) : append best-effort, le bookmaker ignore si non supporté
+  return base + sep + 'subid=' + encodeURIComponent(subid) + '&cid=' + clickId;
+}
+
 function normalizeSport(sp) {
   if (!sp) return 'football';
   const s = String(sp).trim().toLowerCase();
@@ -19454,6 +19504,77 @@ if (pathname.startsWith('/api/v1/affiliate/link/') && req.method === 'GET') {
     link: link,
     promo_code: bestAffiliate.promo_code,
   });
+}
+
+// ─── GET /r/ — 1st-party redirect anti-AdBlock (Niveau 3, endpoint anodin) ───
+// Params: b=bookmaker, c=context, mid=matchId, sp=sport, lg=league, m=market, s=selection
+// Effet: lookup affiliate → compose sub-id → INSERT click → 302 vers URL finale (avec pid/bid/subid/cid GA)
+// Sécurité: aucun cookie posé côté pariscore.fr, GDPR-safe by-design.
+if (pathname === '/r/' || pathname === '/r') {
+  if (req.method !== 'GET') {
+    res.writeHead(405, { 'Allow': 'GET' });
+    return res.end();
+  }
+  const bookmaker = String(query.b || '').toLowerCase().trim();
+  if (!bookmaker) {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('missing b param');
+  }
+  let aff;
+  try {
+    aff = sqldb.prepare('SELECT * FROM affiliates WHERE bookmaker = ? AND active = 1').get(bookmaker);
+  } catch (e) {
+    console.error('[/r/] DB lookup failed:', e.message);
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('lookup failed');
+  }
+  if (!aff) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('affiliate not found');
+  }
+  const user = getAuthUser(req);
+  const clickId = genClickId();
+  const subid = composeSubId(aff.subid_template, {
+    userId:    user && user.userId ? `u${user.userId}` : 'anon',
+    sport:     query.sp,
+    league:    query.lg,
+    matchId:   query.mid,
+    context:   query.c,
+    market:    query.m,
+    selection: query.s,
+  });
+  const targetUrl = buildAffiliateRedirectUrl(aff, subid, clickId);
+  if (!targetUrl) {
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('affiliate URL build failed');
+  }
+  // INSERT click row best-effort — ne bloque pas le redirect si erreur
+  try {
+    sqldb.prepare(`INSERT INTO affiliate_clicks
+      (affiliate_id, match_id, user_ip, user_agent, click_id, subid, sport, league, context, market, selection, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      aff.id,
+      query.mid || 'unknown',
+      req.socket && req.socket.remoteAddress || 'unknown',
+      req.headers['user-agent'] || '',
+      clickId,
+      subid,
+      query.sp || null,
+      query.lg || null,
+      query.c  || null,
+      query.m  || null,
+      query.s  || null,
+      user && user.userId || null
+    );
+  } catch (e) {
+    console.error('[/r/] click INSERT failed:', e.message);
+  }
+  res.writeHead(302, {
+    'Location': targetUrl,
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache',
+  });
+  return res.end();
 }
 
 // GET /api/v1/accuracy — protégé auth minimum
