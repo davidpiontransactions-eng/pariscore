@@ -3409,32 +3409,58 @@ function kvSetBatch(entries) {
 
 const API_CACHE_TTL = 12 * 3600 * 1000; // 12 heures
 
-function apiCacheGet(key) {
-  const row = sqldb.prepare('SELECT data, expires_at FROM api_cache WHERE key = ?').get(key);
-  if (!row) return null;
-  if (Date.now() > row.expires_at) {
-    // Expiré — on supprime et retourne null
-    sqldb.prepare('DELETE FROM api_cache WHERE key = ?').run(key);
-    return null;
+// Fail-soft wrappers (bd ParisScorebis-amc — SQLITE_NOTADB runtime error
+// observé en prod sur tv-channel route). Si la DB est corrompue/indisponible
+// (disque plein, fichier overwritten, WAL/SHM cassé entre boot et runtime), on
+// log une fois par minute et on retourne un cache-miss au lieu de crash le
+// process. Cron de healthcheck VPS détecte le warn pour alerter ops.
+let _apiCacheDbWarnTs = 0;
+function _apiCacheDbWarn(ctx, err) {
+  const now = Date.now();
+  if (now - _apiCacheDbWarnTs > 60_000) {
+    _apiCacheDbWarnTs = now;
+    console.error(`[apiCache:${ctx}] DB error: ${err && err.code || ''} ${err && err.message || err}`);
   }
-  try { return JSON.parse(row.data); } catch { return null; }
+}
+
+function apiCacheGet(key) {
+  try {
+    const row = sqldb.prepare('SELECT data, expires_at FROM api_cache WHERE key = ?').get(key);
+    if (!row) return null;
+    if (Date.now() > row.expires_at) {
+      try { sqldb.prepare('DELETE FROM api_cache WHERE key = ?').run(key); } catch (_) {}
+      return null;
+    }
+    try { return JSON.parse(row.data); } catch { return null; }
+  } catch (e) {
+    _apiCacheDbWarn('get', e);
+    return null; // cache-miss fail-soft
+  }
 }
 
 function apiCacheSet(key, data, source, ttlMs) {
-  const now = Date.now();
-  const expires = now + (typeof ttlMs === 'number' && ttlMs > 0 ? ttlMs : API_CACHE_TTL);
-  sqldb.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
-    key, JSON.stringify(data), source, now, expires
-  );
+  try {
+    const now = Date.now();
+    const expires = now + (typeof ttlMs === 'number' && ttlMs > 0 ? ttlMs : API_CACHE_TTL);
+    sqldb.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
+      key, JSON.stringify(data), source, now, expires
+    );
+  } catch (e) {
+    _apiCacheDbWarn('set', e);
+  }
 }
 
 function apiCacheSetBatch(entries, source) {
-  const stmt = sqldb.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)');
-  const now = Date.now();
-  const exp = now + API_CACHE_TTL;
-  sqldb.transaction(() => {
-    for (const [key, data] of entries) stmt.run(key, JSON.stringify(data), source, now, exp);
-  })();
+  try {
+    const stmt = sqldb.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)');
+    const now = Date.now();
+    const exp = now + API_CACHE_TTL;
+    sqldb.transaction(() => {
+      for (const [key, data] of entries) stmt.run(key, JSON.stringify(data), source, now, exp);
+    })();
+  } catch (e) {
+    _apiCacheDbWarn('setBatch', e);
+  }
 }
 
 function apiCacheClear(source) {
