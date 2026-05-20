@@ -30,7 +30,9 @@
 // v19 (2026-05-20) : invalide v18 — V13 palette tableau encore plus claire :
 // #232a33 → #3a4756 (slate moyen), hover #2d3540 → #4a5666, dark trading
 // gradient bottom #1c222b → #2f3a47.
-const CACHE = 'pariscore-shell-v19';
+// v20 (2026-05-20) : invalide v19 — V14 encore + clair : #3a4756 → #525c6b
+// (slate clair lisible), hover #4a5666 → #646e7d, gradient #2f3a47 → #3d4a5a.
+const CACHE = 'pariscore-shell-v20';
 const SHELL = [
   '/',
   '/pariscore.html',
