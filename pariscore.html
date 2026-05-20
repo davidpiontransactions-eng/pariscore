@@ -8538,12 +8538,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
       </div>
       <div class="dh-fr-section">
-        <div class="dh-fr-title">🎯 Stratégie IA <span class="dh-soon">H4</span></div>
-        <div id="dh-f-strategy" class="dh-chips dh-disabled">
-          <button type="button" class="dh-chip" disabled>Artilleur</button>
-          <button type="button" class="dh-chip" disabled>Foudroyeur</button>
-          <button type="button" class="dh-chip" disabled>Sniper</button>
-          <button type="button" class="dh-chip" disabled>BVR</button>
+        <div class="dh-fr-title">🎯 Stratégie IA</div>
+        <div id="dh-f-strategy" class="dh-chips">
+          <button type="button" data-strat="BTTS_YES"  class="dh-chip">Artilleur</button>
+          <button type="button" data-strat="OVER_2_5"  class="dh-chip">Foudroyeur</button>
+          <button type="button" data-strat="OVER_1_5"  class="dh-chip">Prudent</button>
+          <button type="button" data-strat="UNDER_2_5" class="dh-chip">Gardien</button>
+          <button type="button" data-strat="HOME_WIN"  class="dh-chip">Localier</button>
+          <button type="button" data-strat="AWAY_WIN"  class="dh-chip">Aventurier</button>
+          <button type="button" data-strat="DRAW"      class="dh-chip">Diplomate</button>
+          <button type="button" data-strat="CS_00"     class="dh-chip">Sceptique</button>
         </div>
       </div>
       <div class="dh-fr-section">
@@ -8580,7 +8584,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <div id="dh-view-switch" class="dh-views">
         <button type="button" class="dh-view-btn active" data-view="table">📋 Tableau</button>
         <button type="button" class="dh-view-btn" data-view="charts">📊 Graphiques</button>
-        <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies <span class="dh-soon">H4</span></button>
+        <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies</button>
       </div>
 
       <div id="dh-view-table" class="dh-view">
@@ -8625,14 +8629,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </div>
 
       <div id="dh-view-strategy" class="dh-view" style="display:none;">
-        <div class="dh-soon-banner">
-          <div class="dh-soon-title">🎯 Strategy Tracker — Phase H4</div>
-          <div class="dh-soon-body">
-            Suivi ROI/Winrate temporel par stratégie IA (Artilleur · Foudroyeur · Sniper · PowerScore · Bayesian Value Radar · AI Scout).
-            Le tag <code>strategy_predicted</code> sera posé sur chaque nouvelle entrée archivée à partir de la release H4.
-            L'historique antérieur restera non taggé (compromis assumé — pas de tag rétroactif).
-          </div>
-        </div>
+        <div id="dh-strategy-tracker"></div>
       </div>
     </div>
   </div>
@@ -9068,6 +9065,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <button class="tennis-vb-filter-btn" data-filter="tier" data-value="125" onclick="applyTennisFilter(this)" title="Challenger / WTA 125">125</button>
         <button class="tennis-vb-filter-btn" data-filter="tier" data-value="ITF" onclick="applyTennisFilter(this)" title="ITF World Tennis Tour / Futures">ITF</button>
       </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:11px;color:#E2001A;font-family:'DM Mono',monospace;text-transform:uppercase;font-weight:800;letter-spacing:.06em;">Top Stratégies</span>
+        <button class="tennis-vb-filter-btn is-active" data-filter="strategy" data-value="ALL" onclick="applyTennisFilter(this)" title="Aucun preset — toutes stratégies">Toutes</button>
+        <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="SURFACE_SPEC" onclick="applyTennisFilter(this)" title="Pré-match — écart classement Elo surface ≥ 30 places entre les 2 joueurs">🎯 Spécialiste Surface</button>
+        <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="ACES_SHOCK" onclick="applyTennisFilter(this)" title="Pré-match — signal King of Aces (favori aces P≥60%)">⚡ Serveur Lourd / Choc Aces</button>
+        <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="FORM_VALUE" onclick="applyTennisFilter(this)" title="Pré-match — forme L5/L10 chaude (max pts ≥ 7) avec EV modèle ≥ 3%">📈 Value Forme L5/L10</button>
+        <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="DR_SPIKE" onclick="applyTennisFilter(this)" title="Live — bascule de momentum, |ΔDR| ≥ 0.30 sur le set en cours">🔥 Bascule Momentum (Spike DR)</button>
+        <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="FAVORITE_DANGER" onclick="applyTennisFilter(this)" title="Live — favori modèle (≥58%) mené en sets">⚠️ Favori en Danger</button>
+        <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="COMEBACK" onclick="applyTennisFilter(this)" title="Live — remontée algorithmique : score perdant mais momentum (DR) basculé">🔁 Remontée Algorithmique</button>
+      </div>
       <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Recherche</span>
         <span class="tvb-search-wrap">
@@ -9101,6 +9108,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <option value="ev">📈 Value EV+ ↓</option>
           <option value="prob">🎯 Proba match ↓</option>
           <option value="powerscore">PowerScore ↓ (col. 7, meilleur → moins bon)</option>
+          <option value="delta_dr">🔥 Δ DR live ↓ (set en cours · prematch en bas)</option>
           <option value="set1">💥 Gain Set 1 ↓</option>
           <option value="elo">⭐ Elo P1 ↓</option>
         </select>
@@ -11739,7 +11747,7 @@ function stopTennisLive() {
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
 window._tennisVbLastFetch = [];
-window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time', q: '' };
+window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', strategy: 'ALL', sort: 'time', q: '' };
 let _tennisVbTimer = null;
 
 // ── Filtre Compétition multi-sélection (tennis) ──────────────────────────────
@@ -12843,6 +12851,93 @@ function patchTennisLive(){
     var sc=tbody.querySelector('[data-tn-sc="'+String(lo.id)+'"]');if(sc)sc.innerHTML=_tvbScoreCell({_isLive:true,_live:lo});
     var pc=tbody.querySelector('[data-tn-pred="'+String(lo.id)+'"]');
     if(pc){var bm=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bm)pc.innerHTML=_tvbPredictiveCell(bm);}
+  }
+}
+
+// ── Top Stratégies & Δ DR (set en cours) — moteurs purs, mutualisés filtre+tri ──
+// DR_J1 calc miroir de _tvbDRLive : exact Sofascore (lo.dr_exact.dr) si dispo,
+// sinon proxy jeux+sets. Renvoie null hors live (pas de set en cours).
+function _tnComputeDR(m){
+  if (!m || !_tnActuallyLive(m)) return null;
+  const lo = m._live; if (!lo) return null;
+  let drP1 = null, exact = false;
+  const dx = lo.dr_exact;
+  if (dx && typeof dx.dr === 'number' && Number.isFinite(dx.dr) && dx.dr > 0) {
+    drP1 = dx.dr; exact = true;
+  } else {
+    const sets = Array.isArray(lo.sets) ? lo.sets : [];
+    let gA = 0, gB = 0;
+    for (const st of sets) { if (st) { gA += Number(st.p1)||0; gB += Number(st.p2)||0; } }
+    const s1 = Number(lo.player1_sets!=null?lo.player1_sets:(lo.p1_sets||0))||0;
+    const s2 = Number(lo.player2_sets!=null?lo.player2_sets:(lo.p2_sets||0))||0;
+    drP1 = (gA + 6*s1 + 0.5) / (gB + 6*s2 + 0.5);
+  }
+  if (!Number.isFinite(drP1) || drP1 <= 0) return null;
+  const drP2 = 1 / drP1;
+  const delta = Math.abs(drP1 - drP2);
+  return { drP1, drP2, delta, exact };
+}
+function _tnDeltaDR(m){ const d = _tnComputeDR(m); return d ? d.delta : -1; }
+
+// Returns true if match satisfies the requested expert strategy preset.
+// Conditions volontairement strictes pour livrer un set étroit, actionnable.
+function _tnStrategyMatch(m, strat){
+  if (!strat || strat === 'ALL') return true;
+  if (!m) return false;
+  switch (strat) {
+    case 'SURFACE_SPEC': {
+      const r1 = m.player1 && m.player1.surf_rank, r2 = m.player2 && m.player2.surf_rank;
+      if (r1 == null || r2 == null) return false;
+      return Math.abs(Number(r1) - Number(r2)) >= 30;
+    }
+    case 'ACES_SHOCK': {
+      const a = m.predictions && m.predictions.most_aces;
+      if (!a) return false;
+      const p = Number(a.prob != null ? a.prob : (a.p != null ? a.p : a.probability));
+      if (!Number.isFinite(p)) return !!(a.player || a.side);
+      const pct = p <= 1 ? p * 100 : p;
+      return pct >= 60;
+    }
+    case 'FORM_VALUE': {
+      const f = (p) => p ? Math.max(Number(p.l5_pts)||0, Number(p.l10_pts)||0) : 0;
+      const maxForm = Math.max(f(m.player1), f(m.player2));
+      if (maxForm < 7) return false;
+      const ev = m.best_ev_model && m.best_ev_model.ev;
+      const evModel = m.ev_model ? Math.max(Number(m.ev_model.p1)||-999, Number(m.ev_model.p2)||-999) : -999;
+      const evBest = Math.max(Number.isFinite(ev) ? ev : -999, evModel);
+      return evBest >= 3;
+    }
+    case 'DR_SPIKE': {
+      const d = _tnComputeDR(m);
+      return !!(d && d.delta >= 0.30);
+    }
+    case 'FAVORITE_DANGER': {
+      if (!_tnActuallyLive(m)) return false;
+      const bl = m.predictions && (m.predictions.blended || m.predictions.elo);
+      if (!bl) return false;
+      const lo = m._live || {};
+      const s1 = Number(lo.player1_sets!=null?lo.player1_sets:(lo.p1_sets||0))||0;
+      const s2 = Number(lo.player2_sets!=null?lo.player2_sets:(lo.p2_sets||0))||0;
+      const lead = s1 - s2;
+      if (lead === 0) return false;
+      const p1 = Number(bl.p1)||0;
+      const favP1 = p1 >= 0.58;
+      const favP2 = (1 - p1) >= 0.58;
+      return (favP1 && lead < 0) || (favP2 && lead > 0);
+    }
+    case 'COMEBACK': {
+      if (!_tnActuallyLive(m)) return false;
+      const d = _tnComputeDR(m);
+      if (!d) return false;
+      const lo = m._live || {};
+      const s1 = Number(lo.player1_sets!=null?lo.player1_sets:(lo.p1_sets||0))||0;
+      const s2 = Number(lo.player2_sets!=null?lo.player2_sets:(lo.p2_sets||0))||0;
+      const lead = s1 - s2;
+      if (lead === 0) return false;
+      // Joueur en retard au score mais DR > 1.05 (momentum basculé en sa faveur).
+      return (lead < 0 && d.drP1 >= 1.05) || (lead > 0 && d.drP2 >= 1.05);
+    }
+    default: return true;
   }
 }
 
@@ -24595,7 +24690,86 @@ function dhRenderAll(data) {
   dhPopulateLeagueOptions(data.breakdown?.by_league || []);
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
-  // strategy view is static H4 banner — no data render
+  if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || []);
+}
+
+// H4 : table de suivi des stratégies IA avec sparkline + trend
+const DH_STRATEGY_UI = {
+  BTTS_YES:  { label: 'L\'Artilleur', market: 'BTTS Oui', flag: '🇧🇷' },
+  OVER_2_5:  { label: 'Le Foudroyeur', market: 'Over 2.5', flag: '🇳🇱' },
+  OVER_1_5:  { label: 'Le Prudent', market: 'Over 1.5', flag: '🇩🇪' },
+  UNDER_2_5: { label: 'Le Gardien', market: 'Under 2.5', flag: '🇮🇹' },
+  HOME_WIN:  { label: 'Le Localier', market: 'Domicile', flag: '🇬🇧' },
+  AWAY_WIN:  { label: 'L\'Aventurier', market: 'Extérieur', flag: '🇪🇸' },
+  DRAW:      { label: 'Le Diplomate', market: 'Match Nul', flag: '🇫🇷' },
+  CS_00:     { label: 'Le Sceptique', market: '0-0', flag: '🇵🇹' },
+};
+
+function _dhSparkSvg(points, w = 80, h = 22) {
+  if (!points || points.length < 2) return '';
+  const min = Math.min(...points), max = Math.max(...points);
+  const range = max - min || 1;
+  const step = w / (points.length - 1);
+  const path = points.map((p, i) => `${i * step},${h - ((p - min) / range) * h}`).join(' ');
+  const last = points[points.length - 1];
+  const lineColor = last >= 0.55 ? '#00e676' : last >= 0.5 ? '#ffa726' : '#ff4d4d';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle;"><polyline fill="none" stroke="${lineColor}" stroke-width="1.5" points="${path}"/></svg>`;
+}
+
+function dhRenderStrategyTracker(strategies) {
+  const wrap = document.getElementById('dh-strategy-tracker');
+  if (!wrap) return;
+  if (!strategies.length) {
+    wrap.innerHTML = `
+      <div class="dh-soon-banner">
+        <div class="dh-soon-title">🎯 Strategy Tracker</div>
+        <div class="dh-soon-body">
+          Aucune stratégie taggée dans le sous-ensemble filtré.<br>
+          Le tag <code>predicted.strategies</code> est posé à partir de cette release (H4) sur chaque nouvelle entrée archivée.
+          L'historique antérieur reste non taggé (compromis assumé — pas de back-tag rétroactif).
+          Élargissez la période ou désactivez les filtres pour voir apparaître les stratégies dès qu'archives sont disponibles.
+        </div>
+      </div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="hist-table dh-table" style="width:100%;">
+        <thead>
+          <tr>
+            <th>Stratégie</th>
+            <th>Marché</th>
+            <th>Picks</th>
+            <th>Winrate</th>
+            <th>IC 95%</th>
+            <th>Trend</th>
+            <th>Sparkline</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${strategies.map(s => {
+            const ui = DH_STRATEGY_UI[s.strategy] || { label: s.strategy, market: '—', flag: '' };
+            const wrC = s.winrate >= 0.6 ? 'green' : s.winrate >= 0.5 ? 'amber' : 'red';
+            const ic = s.winrate_ic95;
+            const icStr = ic && ic[0] != null ? `${Math.round(ic[0] * 100)} – ${Math.round(ic[1] * 100)}` : '—';
+            const trendStr = s.trend == null ? '—' : (s.trend > 0.03 ? `<span style="color:var(--green);">↗ +${(s.trend * 100).toFixed(0)}pts</span>` : s.trend < -0.03 ? `<span style="color:var(--red);">↘ ${(s.trend * 100).toFixed(0)}pts</span>` : '<span style="color:var(--text3);">→ stable</span>');
+            return `<tr>
+              <td><strong>${ui.flag} ${escapeHtml(ui.label)}</strong></td>
+              <td style="color:var(--text2);">${escapeHtml(ui.market)}</td>
+              <td>${s.sample}</td>
+              <td class="dh-cell-${wrC === 'green' ? 'win' : wrC === 'red' ? 'loss' : ''}" style="${wrC === 'amber' ? 'color:var(--amber);font-weight:700;' : ''}">${Math.round(s.winrate * 100)}%</td>
+              <td style="font-family:var(--font-mono);font-size:10.5px;">${icStr}</td>
+              <td>${trendStr}</td>
+              <td>${_dhSparkSvg(s.sparkline || [])}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="color:var(--text3);font-size:11px;font-family:var(--font-mono);margin-top:10px;">
+      Tag posé depuis Phase H4. Stratégies sans data disponible dans le record archivé (corners, cartons, etc.) → exclues.
+    </div>`;
 }
 
 // H3 : KPI strip tennis-specific (6 marchés natifs)
@@ -25213,7 +25387,17 @@ function _dhWireControls() {
       document.getElementById('dh-view-table').style.display = v === 'table' ? '' : 'none';
       document.getElementById('dh-view-charts').style.display = v === 'charts' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
-      if (v === 'charts') dhRefresh();
+      if (v === 'charts' || v === 'strategy') dhRefresh();
+    });
+  });
+
+  // H4 : Strategy chips multi-select
+  document.querySelectorAll('#dh-f-strategy .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      dhState.strategies = Array.from(document.querySelectorAll('#dh-f-strategy .dh-chip.active')).map(c => c.dataset.strat);
+      dhState.page = 1;
+      dhRefreshDebounced();
     });
   });
 
