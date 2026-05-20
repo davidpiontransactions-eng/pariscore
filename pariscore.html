@@ -11116,6 +11116,34 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   @media (prefers-reduced-motion: reduce) {
     .tvb-ev-cell { transition: none; }
   }
+
+  /* UI-011 — Fatigue Index pastille col Rang Foot */
+  .cf-fat-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.20) inset;
+    cursor: help;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .cf-fat-dot:hover { transform: scale(1.4); }
+  .cf-fat-fresh    { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,.55); }
+  .cf-fat-normal   { background: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,.45); }
+  .cf-fat-tired    { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,.55); }
+  .cf-fat-critical {
+    background: #ff3856;
+    box-shadow: 0 0 8px rgba(255,56,86,.70);
+    animation: cfFatPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes cfFatPulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(255,56,86,.55); }
+    50%      { box-shadow: 0 0 12px rgba(255,56,86,.90); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cf-fat-critical { animation: none !important; }
+  }
   /* SPRINT2-END */
 
   /* CF-END */
@@ -19049,6 +19077,31 @@ function momentumArrow(formStr) {
   return '<span style="color:#ffa726;font-size:12px;margin-left:2px;" title="Stable">→</span>';
 }
 
+/* ── UI-011 — Fatigue Index pastille (Sprint 2 P1) ──
+   data: home_fatigue (0-100) + home_fatigue_level ('fresh'|'normal'|'tired'|'critical')
+   + home_fatigue_meta {hoursRest, in14d, upcoming}. */
+function renderFatigueDot(score, level, meta) {
+  if (typeof score !== 'number' || score < 0) return '';
+  var cls = 'cf-fat-fresh';
+  if (level === 'critical' || score >= 75) cls = 'cf-fat-critical';
+  else if (level === 'tired' || score >= 50) cls = 'cf-fat-tired';
+  else if (level === 'normal' || score >= 25) cls = 'cf-fat-normal';
+  var label = level === 'critical' ? 'Critique'
+    : level === 'tired' ? 'Élevé'
+    : level === 'normal' ? 'Modéré'
+    : 'Frais';
+  var detail = '';
+  if (meta) {
+    var bits = [];
+    if (meta.hoursRest != null && meta.hoursRest < 999) bits.push(meta.hoursRest + 'h repos');
+    if (meta.in14d != null) bits.push(meta.in14d + ' matchs/14j');
+    if (meta.upcoming) bits.push(meta.upcoming + ' à venir <72h');
+    detail = bits.length ? ' · ' + bits.join(' · ') : '';
+  }
+  var title = 'Fatigue ' + label + ' (' + score + '/100)' + detail;
+  return '<span class="cf-fat-dot ' + cls + '" title="' + title + '" aria-label="' + title + '"></span>';
+}
+
 function microRadar(hs, as) {
   const size = 40, cx = 20, cy = 20, r = 16;
   const axes = [
@@ -19600,11 +19653,13 @@ const label = country
           <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
           <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof homePpgL5==='number'?homePpgL5.toFixed(1):'-'}</span>
           <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${homePower>=65?'#15803D':homePower>=45?'#B45309':'#B91C1C'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
+          ${renderFatigueDot(m.home_fatigue, m.home_fatigue_level, m.home_fatigue_meta)}
         </div>
         <div>
           <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
           <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof awayPpgL5==='number'?awayPpgL5.toFixed(1):'-'}</span>
           <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${awayPower>=65?'#15803D':awayPower>=45?'#B45309':'#B91C1C'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
+          ${renderFatigueDot(m.away_fatigue, m.away_fatigue_level, m.away_fatigue_meta)}
         </div>
       </td>
       <td style="min-width:70px;padding:4px 6px !important;">
