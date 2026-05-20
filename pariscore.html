@@ -1297,8 +1297,10 @@
   /* TABLE WRAPPER */
   .table-wrap {
     background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); overflow: hidden;
-    contain: layout; /* V73: isole la table — ses changements n'affectent pas le scroll page */
+    border-radius: var(--radius-lg); overflow: clip;
+    /* v10.79 : `contain:layout` retiré (V73) — bloquait l'ascenseur horizontal du tableau Foot.
+       `overflow: clip` préserve le border-radius sans créer de containing block intrusif. */
+    position: relative;
   }
   #vb-table thead { position: sticky; top: 0; z-index: 5; }
   #vb-table thead tr { background: var(--bg2); }
@@ -1461,6 +1463,132 @@
   #table-scroll::-webkit-scrollbar-track { background: var(--bg3); border-radius: 3px; }
   #table-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); border-radius: 3px; }
   #table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     v10.79 — TABLE RESPONSIVE WRAPPER · Sticky Match Col + Custom Scrollbar
+     Cible : #tennis-vb-table, #tennis-live-table, et tout futur tableau data.
+     Innovation UX : 1ère/2e colonne figée gauche (joueurs/match) + scrollbar
+     dark-theme glassmorphism #38bdf8. Architecture validée trading-grade.
+  ═══════════════════════════════════════════════════════════════════ */
+  .table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg2, #111417);
+    border: 1px solid var(--bg4, #1e2328);
+    border-radius: 8px;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56,189,248,0.55) rgba(15,23,42,0.30);
+  }
+  .table-responsive-wrapper::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+  .table-responsive-wrapper::-webkit-scrollbar-track {
+    background: rgba(15,23,42,0.30);
+    border-radius: 5px;
+    margin: 0 4px;
+  }
+  .table-responsive-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56,189,248,0.60), rgba(56,189,248,0.35));
+    border-radius: 5px;
+    border: 1px solid rgba(56,189,248,0.20);
+    box-shadow: 0 0 6px rgba(56,189,248,0.25);
+  }
+  .table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(56,189,248,0.90), rgba(56,189,248,0.60));
+    box-shadow: 0 0 8px rgba(56,189,248,0.50);
+  }
+  .table-responsive-wrapper > table { min-width: max-content; }
+  body:not(.dark-theme) .table-responsive-wrapper {
+    background: #ffffff;
+    border-color: var(--border, #E5E5E5);
+    scrollbar-color: rgba(56,189,248,0.55) rgba(226,232,240,0.6);
+  }
+  body:not(.dark-theme) .table-responsive-wrapper::-webkit-scrollbar-track {
+    background: rgba(226,232,240,0.6);
+  }
+
+  /* Tennis VB : sticky col 1 (Date/Heure) + col 2 (Match joueurs) */
+  #tennis-vb-table th:nth-child(1), #tennis-vb-table td:nth-child(1) {
+    position: sticky; left: 0; z-index: 3;
+    background: var(--bg2, #111417);
+  }
+  #tennis-vb-table thead th:nth-child(1) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-vb-table th:nth-child(2), #tennis-vb-table td:nth-child(2) {
+    position: sticky; left: 90px; z-index: 3;
+    background: var(--bg2, #111417);
+  }
+  #tennis-vb-table thead th:nth-child(2) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-vb-table td:nth-child(2)::after {
+    content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
+    width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.18), transparent);
+    pointer-events: none;
+  }
+  #tennis-vb-table tr:hover td:nth-child(1),
+  #tennis-vb-table tr:hover td:nth-child(2) { background: var(--bg3, #181c20); }
+
+  /* Tennis Live : sticky col 1 (Tournoi) + col 2 (Tour) — joueurs cols 3+4 lisibles via scroll */
+  #tennis-live-table th:nth-child(1), #tennis-live-table td:nth-child(1) {
+    position: sticky; left: 0; z-index: 3;
+    background: var(--bg2, #111417);
+  }
+  #tennis-live-table thead th:nth-child(1) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-live-table th:nth-child(2), #tennis-live-table td:nth-child(2) {
+    position: sticky; left: 140px; z-index: 3;
+    background: var(--bg2, #111417);
+  }
+  #tennis-live-table thead th:nth-child(2) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-live-table td:nth-child(2)::after {
+    content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
+    width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.18), transparent);
+    pointer-events: none;
+  }
+  #tennis-live-table tr:hover td:nth-child(1),
+  #tennis-live-table tr:hover td:nth-child(2) { background: var(--bg3, #181c20); }
+
+  /* Light theme overrides : fonds opaques blancs sur sticky cols */
+  body:not(.dark-theme) #tennis-vb-table td:nth-child(1),
+  body:not(.dark-theme) #tennis-vb-table td:nth-child(2),
+  body:not(.dark-theme) #tennis-live-table td:nth-child(1),
+  body:not(.dark-theme) #tennis-live-table td:nth-child(2) { background: #ffffff; }
+  body:not(.dark-theme) #tennis-vb-table thead th:nth-child(1),
+  body:not(.dark-theme) #tennis-vb-table thead th:nth-child(2),
+  body:not(.dark-theme) #tennis-live-table thead th:nth-child(1),
+  body:not(.dark-theme) #tennis-live-table thead th:nth-child(2) { background: #f4f4f4; }
+  body:not(.dark-theme) #tennis-vb-table tr:hover td:nth-child(1),
+  body:not(.dark-theme) #tennis-vb-table tr:hover td:nth-child(2),
+  body:not(.dark-theme) #tennis-live-table tr:hover td:nth-child(1),
+  body:not(.dark-theme) #tennis-live-table tr:hover td:nth-child(2) { background: #f9f9f9; }
+
+  /* Mobile ≤768px : cards remplacent les tableaux — sticky désactivé proprement */
+  @media (max-width: 768px) {
+    .table-responsive-wrapper { border-radius: 0; }
+    #tennis-vb-table th:nth-child(1), #tennis-vb-table td:nth-child(1),
+    #tennis-vb-table th:nth-child(2), #tennis-vb-table td:nth-child(2),
+    #tennis-live-table th:nth-child(1), #tennis-live-table td:nth-child(1),
+    #tennis-live-table th:nth-child(2), #tennis-live-table td:nth-child(2) {
+      position: static;
+    }
+  }
+  /* Patch #table-scroll (Foot) : scrollbar plus visible 10px accent #38bdf8 */
+  #table-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56,189,248,0.55) rgba(15,23,42,0.30);
+  }
+  #table-scroll::-webkit-scrollbar { height: 10px !important; width: 10px !important; }
+  #table-scroll::-webkit-scrollbar-track { background: rgba(15,23,42,0.30) !important; border-radius: 5px !important; }
+  #table-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56,189,248,0.60), rgba(56,189,248,0.35)) !important;
+    border-radius: 5px !important; border: 1px solid rgba(56,189,248,0.20) !important;
+    box-shadow: 0 0 6px rgba(56,189,248,0.25);
+  }
+  #table-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(56,189,248,0.90), rgba(56,189,248,0.60)) !important;
+    box-shadow: 0 0 8px rgba(56,189,248,0.50);
+  }
 
   .match-tab.live-tab.active { background: rgba(255,77,77,0.12); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
 
@@ -2688,6 +2816,86 @@
   .hist-kpi-val.red { color: var(--red); }
   .hist-kpi-val.neutral { color: var(--text); }
   .hist-kpi-sub { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+
+  /* ─── DATA HUB HISTORIQUE (Phase H1) ─────────────────────────────────────── */
+  .dh-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .dh-toggle { display: inline-flex; background: var(--bg2); border: 1px solid var(--border); border-radius: 999px; padding: 4px; gap: 4px; }
+  .dh-toggle-btn { background: transparent; border: none; padding: 8px 18px; border-radius: 999px; font-family: var(--font-head); font-weight: 700; font-size: 13px; color: var(--text2); cursor: pointer; transition: all .15s ease; }
+  .dh-toggle-btn:hover { color: var(--text); }
+  .dh-toggle-btn.active { background: var(--red, #E2001A); color: #fff; box-shadow: 0 0 12px rgba(226,0,26,.30); }
+  .dh-tool-btn { background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; border-radius: 6px; font-size: 12px; font-family: var(--font-mono); cursor: pointer; }
+  .dh-tool-btn:hover { border-color: var(--red, #E2001A); color: var(--red, #E2001A); }
+  .dh-tool-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .dh-period { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; padding: 10px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; }
+  .dh-period-btn { background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 6px 12px; border-radius: 999px; font-family: var(--font-mono); font-size: 11px; cursor: pointer; transition: all .15s; }
+  .dh-period-btn:hover { color: var(--text); border-color: var(--text3); }
+  .dh-period-btn.active { background: var(--red, #E2001A); color: #fff; border-color: var(--red, #E2001A); }
+  .dh-period-divider { color: var(--text3); margin: 0 4px; }
+  .dh-period-custom { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: 11px; font-family: var(--font-mono); }
+  .dh-period-custom input[type="date"] { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; }
+
+  .dh-kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 1100px) { .dh-kpi-strip { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px)  { .dh-kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+  .dh-kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; }
+  .dh-kpi::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red, #E2001A); opacity: .55; }
+  .dh-kpi-label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+  .dh-kpi-val { font-family: var(--font-head); font-size: 26px; font-weight: 800; line-height: 1.05; color: var(--text); }
+  .dh-kpi-val.green { color: var(--green); }
+  .dh-kpi-val.amber { color: var(--amber); }
+  .dh-kpi-val.red   { color: var(--red); }
+  .dh-kpi-sub { font-size: 10.5px; color: var(--text3); font-family: var(--font-mono); }
+  .dh-kpi-ic  { font-size: 10px; color: var(--text3); font-family: var(--font-mono); opacity: .8; }
+
+  .dh-body { display: grid; grid-template-columns: 260px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .dh-body { grid-template-columns: 1fr; } }
+
+  #dh-filter-rail { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; position: sticky; top: 14px; max-height: calc(100vh - 28px); overflow-y: auto; }
+  @media (max-width: 980px) { #dh-filter-rail { position: relative; top: 0; max-height: none; } }
+  .dh-fr-section { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .dh-fr-section:last-of-type { border-bottom: none; }
+  .dh-fr-title { font-size: 10.5px; font-family: var(--font-mono); color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .dh-soon { background: rgba(226,0,26,.12); color: var(--red, #E2001A); padding: 1px 5px; border-radius: 3px; font-size: 9px; font-family: var(--font-mono); letter-spacing: .3px; }
+  .dh-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .dh-chip { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); padding: 5px 10px; border-radius: 999px; font-size: 11px; font-family: var(--font-mono); cursor: pointer; transition: all .12s; }
+  .dh-chip:hover:not(:disabled) { color: var(--text); border-color: var(--text3); }
+  .dh-chip.active { background: var(--red, #E2001A); color: #fff; border-color: var(--red, #E2001A); }
+  .dh-chip:disabled { opacity: .35; cursor: not-allowed; }
+  .dh-chips.dh-disabled { opacity: .6; }
+  #dh-f-league { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 6px; font-size: 11px; font-family: var(--font-mono); }
+  #dh-f-team { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 12px; }
+  .dh-fr-section input[type="range"] { width: 100%; accent-color: var(--red, #E2001A); }
+  .dh-checkbox { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); cursor: pointer; }
+  .dh-checkbox input { accent-color: var(--red, #E2001A); }
+  .dh-reset-btn { width: 100%; background: transparent; border: 1px dashed var(--border); color: var(--text2); padding: 8px; border-radius: 6px; font-size: 11px; font-family: var(--font-mono); cursor: pointer; margin-top: 10px; }
+  .dh-reset-btn:hover { color: var(--red, #E2001A); border-color: var(--red, #E2001A); }
+
+  .dh-main { min-width: 0; }
+  .dh-views { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .dh-view-btn { background: transparent; border: none; padding: 9px 16px; font-size: 12px; font-family: var(--font-mono); color: var(--text2); cursor: pointer; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid transparent; display: inline-flex; align-items: center; gap: 6px; }
+  .dh-view-btn:hover { color: var(--text); }
+  .dh-view-btn.active { color: var(--red, #E2001A); border-bottom-color: var(--red, #E2001A); }
+
+  .dh-table th, .dh-table td { padding: 8px 10px; font-size: 11.5px; }
+  .dh-table .dh-cell-win { color: var(--green); font-weight: 700; }
+  .dh-table .dh-cell-loss { color: var(--red); font-weight: 700; }
+  .dh-table .dh-pred-pill { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 10px; font-family: var(--font-mono); margin-right: 3px; }
+  .dh-table .dh-pred-pill.win { background: rgba(0,230,118,.16); color: var(--green); }
+  .dh-table .dh-pred-pill.loss { background: rgba(255,77,77,.14); color: var(--red); }
+  .dh-table .dh-pred-pill.na  { background: var(--bg4); color: var(--text3); }
+
+  .dh-pagination { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px; font-size: 11px; font-family: var(--font-mono); color: var(--text3); }
+  .dh-pagination button { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 5px; cursor: pointer; font-family: var(--font-mono); font-size: 11px; }
+  .dh-pagination button:disabled { opacity: .35; cursor: not-allowed; }
+  .dh-pagination button:not(:disabled):hover { border-color: var(--red, #E2001A); }
+
+  .dh-soon-banner { background: var(--bg2); border: 1px dashed var(--border); border-radius: 12px; padding: 28px; text-align: center; }
+  .dh-soon-title { font-family: var(--font-head); font-weight: 800; font-size: 20px; color: var(--red, #E2001A); margin-bottom: 10px; }
+  .dh-soon-body { color: var(--text2); font-size: 13px; line-height: 1.5; max-width: 580px; margin: 0 auto; }
+
+  .dh-empty { padding: 32px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+  .dh-empty .ico { font-size: 32px; margin-bottom: 8px; opacity: .5; }
 
   /* ─── MES PARIS ────────────────────────────────────────────────────────── */
   .paris-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 12px; align-items: center; }
@@ -8240,17 +8448,17 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
 </div><!-- /page-predictions -->
 
-<!-- PAGE : HISTORIQUE -->
+<!-- PAGE : HISTORIQUE — Data Hub (Phase H1+H2) -->
 <div id="page-historique" data-page="historique" style="display:none;">
-<section class="section fade-up" id="historique" style="background: radial-gradient(ellipse 60% 30% at 50% 60%, rgba(0,230,118,0.03) 0%, transparent 60%);">
-  <div class="section-label">Historique</div>
-  <div class="section-title">Backtesting &amp;<br>Performance.</div>
-  <div class="section-sub">Chaque match passé est archivé et comparé à nos prédictions. Mesurez la précision de l'algorithme sur des données réelles.</div>
+<section class="section fade-up" id="historique" style="background: radial-gradient(ellipse 60% 30% at 50% 60%, rgba(226,0,26,0.04) 0%, transparent 60%);">
+  <div class="section-label">Data Hub Historique</div>
+  <div class="section-title">Backtesting &amp;<br>Stratégies.</div>
+  <div class="section-sub">Foot &amp; Tennis séparés. Filtrez, comparez, exportez. Mesurez ROI, drawdown et streak réels.</div>
 
-  <!-- BACK-TEST CONTROLS — Premium/Admin -->
+  <!-- BACK-TEST CONTROLS — Premium/Admin (legacy) -->
   <div id="backtest-section" style="display:none;margin-bottom:18px;padding:14px 18px;background:var(--bg3);border-radius:10px;border:1px solid var(--border2);">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="color:var(--text2);font-size:12px;font-weight:600;">⏪ Back-test :</span>
+      <span style="color:var(--text2);font-size:12px;font-weight:600;">⏪ Back-test BSD :</span>
       <select id="backtest-days" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:12px;">
         <option value="7">7 jours</option>
         <option value="14">14 jours</option>
@@ -8263,6 +8471,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </div>
   </div>
 
+  <!-- Alerte précision combinée (legacy, gardée) -->
   <div id="hist-alert" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;background:rgba(255,77,77,0.12);border:1px solid rgba(255,77,77,0.3);font-size:13px;line-height:1.5;">
     <span style="font-size:16px;margin-right:8px;">⚠️</span>
     <strong style="color:var(--red);">Alerte précision</strong>
@@ -8270,49 +8479,199 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <span id="hist-alert-detail" style="display:block;color:var(--text3);font-size:11px;margin-top:4px;"></span>
   </div>
 
-  <div class="hist-kpi-row" id="hist-kpis"></div>
-
-  <div class="hist-chart-wrap">
-    <div class="hist-chart-title">Précision cumulée — Paris Over 2.5 (&gt;55% conf.) en unités</div>
-    <canvas id="hist-chart" style="width:100%;height:176px;"></canvas>
+  <!-- TOOLBAR : Sport toggle + Export -->
+  <div class="dh-toolbar">
+    <div id="dh-sport-toggle" class="dh-toggle" role="tablist">
+      <button class="dh-toggle-btn active" data-sport="football" type="button">⚽ Foot</button>
+      <button class="dh-toggle-btn" data-sport="tennis" type="button">🎾 Tennis</button>
+    </div>
+    <button id="dh-export-csv" class="dh-tool-btn" type="button" disabled title="Export CSV — Phase H5">⬇ Export CSV <span class="dh-soon">H5</span></button>
   </div>
 
-  <div class="hist-chart-wrap">
-    <div class="hist-chart-title">Précision cumulée — Paris BTTS (&gt;55% conf.) en unités</div>
-    <canvas id="hist-btts-chart" style="width:100%;height:176px;"></canvas>
+  <!-- PÉRIODE -->
+  <div class="dh-period" id="dh-period-bar">
+    <span style="color:var(--text3);font-size:10.5px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;">Période</span>
+    <button class="dh-period-btn" data-period="7" type="button">7j</button>
+    <button class="dh-period-btn" data-period="30" type="button">30j</button>
+    <button class="dh-period-btn active" data-period="90" type="button">90j</button>
+    <button class="dh-period-btn" data-period="180" type="button">6m</button>
+    <button class="dh-period-btn" data-period="365" type="button">1an</button>
+    <button class="dh-period-btn" data-period="all" type="button">All</button>
+    <span class="dh-period-divider">|</span>
+    <label class="dh-period-custom">
+      <span>📅</span>
+      <input type="date" id="dh-from" aria-label="Date début">
+      <span>→</span>
+      <input type="date" id="dh-to" aria-label="Date fin">
+    </label>
   </div>
 
-  <div class="hist-chart-wrap" id="accuracy-trend-wrap" style="display:none">
-    <div class="hist-chart-title">Tendance hebdomadaire — Taux de réussite</div>
-    <canvas id="hist-accuracy-trend" style="width:100%;height:176px;"></canvas>
-  </div>
+  <!-- BANDEAU KPI -->
+  <div id="dh-kpi-strip" class="dh-kpi-strip"></div>
 
-  <div class="hist-chart-wrap" id="bankroll-wrap" style="display:none">
-    <div class="hist-chart-title">Bankroll simulée — 1u/pari plat — 100u de départ</div>
-    <div id="bankroll-kpis" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;"></div>
-    <canvas id="hist-bankroll-chart" style="width:100%;height:176px;"></canvas>
-  </div>
+  <!-- CORPS : Filter Rail + Main -->
+  <div class="dh-body">
+    <aside id="dh-filter-rail" aria-label="Filtres">
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">🏆 Ligue / Tournoi</div>
+        <select id="dh-f-league" multiple size="6" aria-label="Filtrer par ligue"></select>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">🔍 Équipe / Joueur</div>
+        <input type="text" id="dh-f-team" placeholder="Ex: PSG, Sinner…" aria-label="Filtrer par équipe">
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">💹 Marché</div>
+        <div id="dh-f-market" class="dh-chips">
+          <button type="button" data-mkt="over25" class="dh-chip active">Over 2.5</button>
+          <button type="button" data-mkt="btts" class="dh-chip active">BTTS</button>
+          <button type="button" data-mkt="edge" class="dh-chip active">Edge</button>
+        </div>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">🎯 Stratégie IA <span class="dh-soon">H4</span></div>
+        <div id="dh-f-strategy" class="dh-chips dh-disabled">
+          <button type="button" class="dh-chip" disabled>Artilleur</button>
+          <button type="button" class="dh-chip" disabled>Foudroyeur</button>
+          <button type="button" class="dh-chip" disabled>Sniper</button>
+          <button type="button" class="dh-chip" disabled>BVR</button>
+        </div>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">⚡ Confiance</div>
+        <div id="dh-f-confidence" class="dh-chips">
+          <button type="button" data-conf="high" class="dh-chip">≥75%</button>
+          <button type="button" data-conf="medium" class="dh-chip">65-75%</button>
+          <button type="button" data-conf="low" class="dh-chip">55-65%</button>
+        </div>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">✓ Issue</div>
+        <div id="dh-f-outcome" class="dh-chips">
+          <button type="button" data-oc="all" class="dh-chip active">Tous</button>
+          <button type="button" data-oc="won" class="dh-chip">Gagnant</button>
+          <button type="button" data-oc="lost" class="dh-chip">Perdant</button>
+        </div>
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">EV min <span id="dh-ev-val">0%</span></div>
+        <input type="range" id="dh-f-ev" min="0" max="20" value="0" step="0.5" aria-label="EV minimum">
+      </div>
+      <div class="dh-fr-section">
+        <div class="dh-fr-title">Proba min <span id="dh-pr-val">55%</span></div>
+        <input type="range" id="dh-f-proba" min="40" max="90" value="55" step="1" aria-label="Probabilité minimum">
+      </div>
+      <div class="dh-fr-section">
+        <label class="dh-checkbox"><input type="checkbox" id="dh-f-excludelow"> Cacher ligues WR&lt;50%</label>
+      </div>
+      <button id="dh-reset" class="dh-reset-btn" type="button">↻ Reset filtres</button>
+    </aside>
 
-  <div class="hist-table-wrap">
-    <table class="hist-table">
-      <thead>
-        <tr>
-          <th>Match</th>
-          <th>Date</th>
-          <th>Score</th>
-          <th>Over 2.5 <span style="font-size:9px;opacity:.5;">≥55%</span></th>
-          <th>BTTS <span style="font-size:9px;opacity:.5;">≥55%</span></th>
-          <th>Edge prédit</th>
-        </tr>
-      </thead>
-      <tbody id="hist-tbody"></tbody>
-    </table>
-    <div id="hist-empty" class="hist-empty" style="display:none;">
-      <div class="ico">📊</div>
-      Aucun match archivé pour l'instant.<br>
-      <span style="font-size:11px;margin-top:4px;display:block;">Les matchs sont archivés automatiquement 3h après le coup d'envoi.<br>Les prédictions seront comparées aux vrais scores via API-Football.</span>
+    <div class="dh-main">
+      <div id="dh-view-switch" class="dh-views">
+        <button type="button" class="dh-view-btn active" data-view="table">📋 Tableau</button>
+        <button type="button" class="dh-view-btn" data-view="charts">📊 Graphiques</button>
+        <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies <span class="dh-soon">H4</span></button>
+      </div>
+
+      <div id="dh-view-table" class="dh-view">
+        <div class="hist-table-wrap">
+          <table class="hist-table dh-table">
+            <thead>
+              <tr>
+                <th>Match</th>
+                <th>Ligue</th>
+                <th>Date</th>
+                <th>Score</th>
+                <th>Over 2.5</th>
+                <th>BTTS</th>
+                <th>Edge</th>
+                <th>Issue</th>
+              </tr>
+            </thead>
+            <tbody id="dh-tbody"></tbody>
+          </table>
+          <div id="dh-empty" class="dh-empty" style="display:none;">
+            <div class="ico">📊</div>
+            Aucun match ne correspond aux filtres.<br>
+            <span style="font-size:11px;margin-top:4px;display:block;">Essayez de relâcher un filtre ou changez de période.</span>
+          </div>
+        </div>
+        <div id="dh-pagination" class="dh-pagination"></div>
+      </div>
+
+      <div id="dh-view-charts" class="dh-view" style="display:none;">
+        <div class="hist-chart-wrap">
+          <div class="hist-chart-title">P/L cumulé en unités (1u/pick, all picks)</div>
+          <canvas id="dh-chart-pl" style="width:100%;height:200px;"></canvas>
+        </div>
+        <div class="hist-chart-wrap">
+          <div class="hist-chart-title">Drawdown (en unités, peak-to-trough)</div>
+          <canvas id="dh-chart-dd" style="width:100%;height:160px;"></canvas>
+        </div>
+        <div class="hist-chart-wrap">
+          <div class="hist-chart-title">Rolling 30 picks — Winrate</div>
+          <canvas id="dh-chart-rolling" style="width:100%;height:160px;"></canvas>
+        </div>
+      </div>
+
+      <div id="dh-view-strategy" class="dh-view" style="display:none;">
+        <div class="dh-soon-banner">
+          <div class="dh-soon-title">🎯 Strategy Tracker — Phase H4</div>
+          <div class="dh-soon-body">
+            Suivi ROI/Winrate temporel par stratégie IA (Artilleur · Foudroyeur · Sniper · PowerScore · Bayesian Value Radar · AI Scout).
+            Le tag <code>strategy_predicted</code> sera posé sur chaque nouvelle entrée archivée à partir de la release H4.
+            L'historique antérieur restera non taggé (compromis assumé — pas de tag rétroactif).
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Vue héritage repliée (KPIs globaux + bankroll simulée legacy) -->
+  <details style="margin-top:24px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;">
+    <summary style="cursor:pointer;color:var(--text3);font-size:11px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;">Mode héritage — KPIs globaux + bankroll simulée</summary>
+    <div style="margin-top:14px;">
+      <div class="hist-kpi-row" id="hist-kpis"></div>
+      <div class="hist-chart-wrap">
+        <div class="hist-chart-title">Précision cumulée — Paris Over 2.5 (&gt;55% conf.) en unités</div>
+        <canvas id="hist-chart" style="width:100%;height:176px;"></canvas>
+      </div>
+      <div class="hist-chart-wrap">
+        <div class="hist-chart-title">Précision cumulée — Paris BTTS (&gt;55% conf.) en unités</div>
+        <canvas id="hist-btts-chart" style="width:100%;height:176px;"></canvas>
+      </div>
+      <div class="hist-chart-wrap" id="accuracy-trend-wrap" style="display:none">
+        <div class="hist-chart-title">Tendance hebdomadaire — Taux de réussite</div>
+        <canvas id="hist-accuracy-trend" style="width:100%;height:176px;"></canvas>
+      </div>
+      <div class="hist-chart-wrap" id="bankroll-wrap" style="display:none">
+        <div class="hist-chart-title">Bankroll simulée — 1u/pari plat — 100u de départ</div>
+        <div id="bankroll-kpis" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;"></div>
+        <canvas id="hist-bankroll-chart" style="width:100%;height:176px;"></canvas>
+      </div>
+      <div class="hist-table-wrap">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th>Match</th>
+              <th>Date</th>
+              <th>Score</th>
+              <th>Over 2.5 <span style="font-size:9px;opacity:.5;">≥55%</span></th>
+              <th>BTTS <span style="font-size:9px;opacity:.5;">≥55%</span></th>
+              <th>Edge prédit</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+        <div id="hist-empty" class="hist-empty" style="display:none;">
+          <div class="ico">📊</div>
+          Aucun match archivé pour l'instant.<br>
+          <span style="font-size:11px;margin-top:4px;display:block;">Les matchs sont archivés automatiquement 3h après le coup d'envoi.</span>
+        </div>
+      </div>
+    </div>
+  </details>
 </section>
 </div><!-- /page-historique -->
 
@@ -8772,7 +9131,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </defs></svg>
 
     <!-- Tableau value-bets -->
-    <div style="overflow-x:auto;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;">
+    <div class="table-responsive-wrapper">
       <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1020px;">
         <thead>
           <tr style="background:var(--bg3,#181c20);">
@@ -8815,7 +9174,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </label>
       </div>
     </div>
-    <div style="overflow-x:auto;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;">
+    <div class="table-responsive-wrapper">
       <table id="tennis-live-table" style="width:100%;border-collapse:collapse;min-width:900px;">
         <thead>
           <tr style="background:var(--bg3,#181c20);">
@@ -12168,6 +12527,152 @@ function _tnLastName(n){var p=_tnNorm(n).split(/\s+/).filter(Boolean);return p.l
 function _tnPairKey(m){return [_tnNorm(m&&m.player1&&m.player1.name),_tnNorm(m&&m.player2&&m.player2.name)].sort().join('|');}
 function _tnPairKeyLast(m){return [_tnLastName(m&&m.player1&&m.player1.name),_tnLastName(m&&m.player2&&m.player2.name)].sort().join('|');}
 function _tnJoinKey(m){return _tnPairKey(m);}
+// ── Snapshot prematch : préserve les analytiques (Conseils IA / PowerScore /
+// Forme / Elo / Predictive) quand le match passe LIVE et que le serveur cesse
+// de renvoyer l'enrichissement (status=scheduled only) → on injecte la version
+// figée capturée au dernier cycle prematch. Clé pair + lastname (fuzzy).
+var _TN_SNAP_TTL_MS = 12 * 3600 * 1000;
+var _TN_SNAP_STORAGE_KEY = '_tnPrematchSnapshotV1';
+if (!window._tnPrematchSnapshot) {
+  window._tnPrematchSnapshot = new Map();
+  try {
+    var _raw = sessionStorage.getItem(_TN_SNAP_STORAGE_KEY);
+    if (_raw) {
+      var _parsed = JSON.parse(_raw);
+      if (_parsed && typeof _parsed === 'object') {
+        var _now = Date.now();
+        for (var _k in _parsed) {
+          if (!Object.prototype.hasOwnProperty.call(_parsed, _k)) continue;
+          var _e = _parsed[_k];
+          if (_e && _e.ts && (_now - _e.ts) < _TN_SNAP_TTL_MS) window._tnPrematchSnapshot.set(_k, _e);
+        }
+      }
+    }
+  } catch (_) { /* sessionStorage indispo / JSON corrompu → ignore */ }
+}
+function _tnSnapshotPersist() {
+  try {
+    var obj = {};
+    window._tnPrematchSnapshot.forEach(function (v, k) { obj[k] = v; });
+    sessionStorage.setItem(_TN_SNAP_STORAGE_KEY, JSON.stringify(obj));
+  } catch (_) { /* quota / privacy → silencieux */ }
+}
+function _tnSnapshotPickFields(m) {
+  return {
+    predictions: m.predictions || null,
+    set_model: m.set_model || null,
+    confidence_badge: m.confidence_badge || null,
+    predictive: m.predictive || null,
+    rank_momentum: m.rank_momentum || null,
+    conf_edge: m.conf_edge || null,
+    log_diff: m.log_diff || null,
+    ml_market_div: m.ml_market_div || null,
+    ev_model: m.ev_model || null,
+    best_ev_model: m.best_ev_model || null,
+    trap_bet: m.trap_bet || null,
+    first_set: m.first_set || null,
+    over_under_set_calculations: m.over_under_set_calculations || null,
+    totals_convergence: m.totals_convergence || null,
+    serve_dominance: m.serve_dominance || null,
+    odds: m.odds || null,
+    fair: m.fair || null,
+    edge: m.edge || null,
+    best_edge: m.best_edge || null,
+    surface: m.surface || null,
+    _p1Power: m.player1 ? {
+      powerscore: m.player1.powerscore, l5_pts: m.player1.l5_pts, l10_pts: m.player1.l10_pts,
+      form: m.player1.form, elo_surface: m.player1.elo_surface, rank: m.player1.rank,
+      surf_rank: m.player1.surf_rank, surf_rank_total: m.player1.surf_rank_total,
+      surf_form: m.player1.surf_form, ps_rank: m.player1.ps_rank, ps_total: m.player1.ps_total,
+      flag: m.player1.flag, country: m.player1.country
+    } : null,
+    _p2Power: m.player2 ? {
+      powerscore: m.player2.powerscore, l5_pts: m.player2.l5_pts, l10_pts: m.player2.l10_pts,
+      form: m.player2.form, elo_surface: m.player2.elo_surface, rank: m.player2.rank,
+      surf_rank: m.player2.surf_rank, surf_rank_total: m.player2.surf_rank_total,
+      surf_form: m.player2.surf_form, ps_rank: m.player2.ps_rank, ps_total: m.player2.ps_total,
+      flag: m.player2.flag, country: m.player2.country
+    } : null,
+  };
+}
+function _tnSnapshotHasSignal(m) {
+  if (!m) return false;
+  if (m.predictions && (m.predictions.elo || m.predictions.blended)) return true;
+  if (m.predictive && m.predictive.prematch && m.predictive.prematch.length) return true;
+  if (m.set_model) return true;
+  if (m.confidence_badge) return true;
+  if (m.player1 && (m.player1.powerscore != null || m.player1.l5_pts != null)) return true;
+  if (m.player2 && (m.player2.powerscore != null || m.player2.l5_pts != null)) return true;
+  return false;
+}
+function _tnNameTokens(n) {
+  return _tnNorm(n).split(/\s+/).filter(function (t) { return t && t.length >= 3 && !/^[a-z]\.?$/.test(t); });
+}
+// Toutes les paires (token_p1, token_p2) possibles, triées — capte « Carlos Alcaraz »
+// ↔ « Alcaraz C. » ↔ « C. Alcaraz » ↔ « Alcaraz Carlos » sans collision de longueur.
+function _tnAllPairKeys(m) {
+  var t1 = _tnNameTokens(m && m.player1 && m.player1.name);
+  var t2 = _tnNameTokens(m && m.player2 && m.player2.name);
+  if (!t1.length || !t2.length) return [];
+  var out = [];
+  for (var i = 0; i < t1.length; i++) {
+    for (var j = 0; j < t2.length; j++) {
+      out.push([t1[i], t2[j]].sort().join('|'));
+    }
+  }
+  return out;
+}
+function _tnSnapshotStore(m) {
+  if (!_tnSnapshotHasSignal(m)) return;
+  var k = _tnPairKey(m);
+  var kl = _tnPairKeyLast(m);
+  var snap = { ts: Date.now(), data: _tnSnapshotPickFields(m) };
+  if (k) window._tnPrematchSnapshot.set('pk:' + k, snap);
+  if (kl && kl !== k) window._tnPrematchSnapshot.set('lk:' + kl, snap);
+  var pairs = _tnAllPairKeys(m);
+  for (var i = 0; i < pairs.length; i++) {
+    window._tnPrematchSnapshot.set('tk:' + pairs[i], snap);
+  }
+}
+function _tnSnapshotLookup(lo) {
+  if (!lo || !lo.player1 || !lo.player2) return null;
+  var k = _tnPairKey(lo);
+  var hit = k ? window._tnPrematchSnapshot.get('pk:' + k) : null;
+  if (!hit) {
+    var kl = _tnPairKeyLast(lo);
+    hit = kl ? window._tnPrematchSnapshot.get('lk:' + kl) : null;
+  }
+  if (!hit) {
+    var pairs = _tnAllPairKeys(lo);
+    for (var i = 0; i < pairs.length && !hit; i++) {
+      hit = window._tnPrematchSnapshot.get('tk:' + pairs[i]);
+    }
+  }
+  if (!hit) return null;
+  if (Date.now() - hit.ts > _TN_SNAP_TTL_MS) return null;
+  return hit.data;
+}
+function _tnApplySnapshot(target, snap) {
+  if (!target || !snap) return target;
+  var SCALAR = ['predictions','set_model','confidence_badge','predictive','rank_momentum','conf_edge','log_diff','ml_market_div','ev_model','best_ev_model','trap_bet','first_set','over_under_set_calculations','totals_convergence','serve_dominance','odds','fair','edge','best_edge','surface'];
+  for (var i = 0; i < SCALAR.length; i++) {
+    var k = SCALAR[i];
+    if ((target[k] == null) && snap[k] != null) target[k] = snap[k];
+  }
+  if (snap._p1Power && target.player1) {
+    for (var p1k in snap._p1Power) {
+      if (!Object.prototype.hasOwnProperty.call(snap._p1Power, p1k)) continue;
+      if (target.player1[p1k] == null && snap._p1Power[p1k] != null) target.player1[p1k] = snap._p1Power[p1k];
+    }
+  }
+  if (snap._p2Power && target.player2) {
+    for (var p2k in snap._p2Power) {
+      if (!Object.prototype.hasOwnProperty.call(snap._p2Power, p2k)) continue;
+      if (target.player2[p2k] == null && snap._p2Power[p2k] != null) target.player2[p2k] = snap._p2Power[p2k];
+    }
+  }
+  return target;
+}
 // "Réellement live" : flag is_live insuffisant (ESPN/BSD marque state=in dès
 // l'échauffement / sur flux périmé → 0-0 statut vide). Exige du jeu effectif.
 function _tnActuallyLive(m){
@@ -12193,12 +12698,36 @@ function buildUnifiedTennis(vb){
     var k=_tnPairKey(m);var lo=liveIdx.get(k);
     if(!lo){lo=liveIdxLast.get(_tnPairKeyLast(m));if(lo)k=_tnPairKey(lo);}
     if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;}else{m._live=null;m._isLive=false;}
+    // Snapshot : capture l'enrichissement prematch tant qu'il est complet (avant
+    // que le serveur ne le drop quand match passe live). Conserve TTL 12h.
+    try { _tnSnapshotStore(m); } catch (_) {}
+    // Réhydratation défensive : si vb a déjà perdu des champs (cycle dégradé),
+    // on tente de combler avec le snapshot stocké AVANT (sans écraser).
+    try {
+      if (m && m._isLive) {
+        var _snapBack = _tnSnapshotLookup(m);
+        if (_snapBack) _tnApplySnapshot(m, _snapBack);
+      }
+    } catch (_) {}
     return m;
   });
   liveIdx.forEach(function(lo,k){
     if(used.has(k)||lo.is_live!==true)return;
-    base.push({id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true});
+    var row={id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true};
+    // Live-only : pas de paire vb → réinjecte le snapshot prematch (Conseils
+    // IA, PowerScore, Forme, Elo, predictions, set_model, confidence_badge).
+    try {
+      var _snap = _tnSnapshotLookup(lo);
+      if (_snap) {
+        _tnApplySnapshot(row, _snap);
+        row._liveOnly = false; // enrichi → comportement normal (predictive cell live OK)
+        row._rehydrated = true;
+      }
+    } catch (_) {}
+    base.push(row);
   });
+  // Persiste le snapshot pour les prochains reloads / onglets.
+  try { _tnSnapshotPersist(); } catch (_) {}
   window.psTennisMatches=base;
   return base;
 }
@@ -23919,33 +24448,516 @@ document.addEventListener('click', (e) => {
   });
 });
 
+// ─── DATA HUB HISTORIQUE — State + Init (Phase H1+H2) ──────────────────────
+const dhState = {
+  sport: 'football',
+  leagues: [],
+  teams: [],
+  markets: ['over25', 'btts', 'edge'],
+  strategies: [],
+  confidence: [],
+  outcome: 'all',
+  minEV: 0,
+  minProba: 55,
+  excludeLowLeagues: false,
+  period: '90',
+  fromDate: null,
+  toDate: null,
+  view: 'table',
+  page: 1,
+  pageSize: 50,
+  sort: 'date_desc',
+  _booted: false,
+  _charts: { pl: null, dd: null, rolling: null },
+};
+
 async function initHistoriquePage() {
   if (histPageLoaded) return;
   histPageLoaded = true;
 
   _checkBacktestAccess();
 
-  document.getElementById('hist-kpis').innerHTML = Array(4).fill(0).map(() => `
-    <div class="hist-kpi">
+  // Skeleton KPI strip
+  document.getElementById('dh-kpi-strip').innerHTML = Array(6).fill(0).map(() => `
+    <div class="dh-kpi">
       <div class="skel-line short" style="margin-bottom:10px;"></div>
       <div class="skel-line tall"></div>
       <div class="skel-line short" style="margin-top:6px;width:55%;"></div>
     </div>`).join('');
 
+  // Wire controls once
+  if (!dhState._booted) {
+    _dhWireControls();
+    dhState._booted = true;
+  }
+
+  // Legacy hist-kpis loader (kept for accordion héritage)
+  const legacyKpis = document.getElementById('hist-kpis');
+  if (legacyKpis) legacyKpis.innerHTML = '<div style="color:var(--text3);font-size:11px;padding:10px 0;">Chargement legacy…</div>';
+
+  // Fetch legacy accuracy en parallèle (pour alert + hist-kpis legacy)
+  apiFetch('/api/v1/history?limit=100')
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d) _renderLegacyHistorique(d); })
+    .catch(() => {});
+
+  // Initial Data Hub query
+  await dhRefresh();
+}
+
+// Construit URL query string depuis dhState
+function _dhBuildUrl() {
+  const p = new URLSearchParams();
+  p.set('sport', dhState.sport);
+  if (dhState.leagues.length) p.set('leagues', dhState.leagues.join(','));
+  if (dhState.teams.length) p.set('teams', dhState.teams.join(','));
+  if (dhState.markets.length) p.set('markets', dhState.markets.join(','));
+  if (dhState.strategies.length) p.set('strategies', dhState.strategies.join(','));
+  if (dhState.confidence.length) p.set('confidence', dhState.confidence.join(','));
+  if (dhState.outcome && dhState.outcome !== 'all') p.set('outcome', dhState.outcome);
+  if (dhState.minEV) p.set('minEV', dhState.minEV);
+  if (dhState.minProba) p.set('minProba', dhState.minProba);
+  if (dhState.excludeLowLeagues) p.set('excludeLowLeagues', '1');
+  if (dhState.fromDate) p.set('fromDate', dhState.fromDate);
+  if (dhState.toDate) p.set('toDate', dhState.toDate);
+  p.set('page', String(dhState.page));
+  p.set('pageSize', String(dhState.pageSize));
+  p.set('sort', dhState.sort);
+  return '/api/v1/history/query?' + p.toString();
+}
+
+// Période preset → fromDate
+function _dhApplyPeriod() {
+  if (dhState.period === 'all') { dhState.fromDate = null; dhState.toDate = null; return; }
+  const days = parseInt(dhState.period);
+  if (!Number.isFinite(days)) return;
+  const now = new Date();
+  const from = new Date(now.getTime() - days * 86400000);
+  dhState.fromDate = from.toISOString().split('T')[0];
+  dhState.toDate = null;
+}
+
+let _dhDebounceTimer = null;
+function dhRefreshDebounced(ms = 200) {
+  clearTimeout(_dhDebounceTimer);
+  _dhDebounceTimer = setTimeout(dhRefresh, ms);
+}
+
+async function dhRefresh() {
   try {
-    const res = await apiFetch('/api/v1/history?limit=100');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    renderHistorique(data);
-  } catch(e) {
-    const isAuth = e?.status === 401;
-    document.getElementById('hist-kpis').innerHTML =
+    const r = await apiFetch(_dhBuildUrl());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    dhRenderAll(data);
+  } catch (e) {
+    document.getElementById('dh-kpi-strip').innerHTML =
       `<div style="grid-column:1/-1;color:var(--text3);font-family:var(--font-mono);font-size:13px;padding:20px 0;text-align:center;">
-        ${isAuth
-          ? '🔒 Connexion requise pour accéder à l\'historique.<br><a onclick="openAuthModal(\'login\');return false;" style="color:var(--blue);cursor:pointer;text-decoration:underline">Se connecter →</a>'
-          : '⚠️ Historique temporairement indisponible.<br><span style="font-size:11px;">' + (e.message || 'Erreur API') + '</span><br><a onclick="histPageLoaded=false;initHistoriquePage();return false;" style="color:var(--blue);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;">↻ Réessayer</a>'}
+        ⚠️ Data Hub indisponible — <span style="font-size:11px;">${(e && e.message) || 'Erreur API'}</span>
+        <br><a onclick="dhRefresh();return false;" style="color:var(--red,#E2001A);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;">↻ Réessayer</a>
       </div>`;
   }
+}
+
+function dhRenderAll(data) {
+  dhRenderKpis(data.kpis, data.total);
+  dhPopulateLeagueOptions(data.breakdown?.by_league || []);
+  if (dhState.view === 'table') dhRenderTable(data);
+  if (dhState.view === 'charts') dhRenderCharts(data.series);
+  // strategy view is static H4 banner — no data render
+}
+
+// ── KPI strip ──────────────────────────────────────────────────────────────
+function _pctStr(x, digits = 1) {
+  if (x == null || Number.isNaN(x)) return '—';
+  return (x * 100).toFixed(digits) + '%';
+}
+function _icStr(arr, digits = 0) {
+  if (!arr || arr[0] == null) return '';
+  return '[' + (arr[0] * 100).toFixed(digits) + ' ; ' + (arr[1] * 100).toFixed(digits) + ']';
+}
+function _wrColor(wr) {
+  if (wr == null) return 'neutral';
+  if (wr >= 0.6) return 'green';
+  if (wr >= 0.5) return 'amber';
+  return 'red';
+}
+
+function dhRenderKpis(kpis, totalMatches) {
+  if (!kpis) return;
+  // Aggregate winrate all markets
+  const totalPicks = kpis.total_picks || 0;
+  const totalWins = (kpis.over25.wins || 0) + (kpis.btts.wins || 0) + (kpis.edge.wins || 0);
+  const aggWR = totalPicks ? totalWins / totalPicks : null;
+  const aggLoss = totalPicks - totalWins;
+
+  const longestLoss = Math.max(kpis.over25.longest_losing_streak || 0, kpis.btts.longest_losing_streak || 0, kpis.edge.longest_losing_streak || 0);
+  const avgEv = kpis.edge.avg_ev;
+  const avgProba = (() => {
+    const probas = [kpis.over25.avg_proba, kpis.btts.avg_proba].filter(x => x != null);
+    return probas.length ? probas.reduce((s, v) => s + v, 0) / probas.length : null;
+  })();
+
+  const items = [
+    {
+      label: 'Picks totaux',
+      val: totalPicks,
+      sub: totalMatches + ' matchs · ' + totalWins + 'W / ' + aggLoss + 'L',
+      color: 'neutral',
+    },
+    {
+      label: 'Winrate global',
+      val: _pctStr(aggWR),
+      sub: 'sur ' + totalPicks + ' picks',
+      color: _wrColor(aggWR),
+    },
+    {
+      label: 'Max Drawdown',
+      val: '-' + (kpis.max_drawdown_units || 0) + 'u',
+      sub: 'P/L : ' + (kpis.final_pl_units >= 0 ? '+' : '') + (kpis.final_pl_units || 0) + 'u',
+      color: kpis.max_drawdown_units > 10 ? 'red' : kpis.max_drawdown_units > 5 ? 'amber' : 'green',
+    },
+    {
+      label: 'Longest Losing',
+      val: longestLoss,
+      sub: 'pertes consécutives',
+      color: longestLoss >= 6 ? 'red' : longestLoss >= 4 ? 'amber' : 'neutral',
+    },
+    {
+      label: 'Avg EV (Edge)',
+      val: avgEv != null ? '+' + avgEv.toFixed(1) + '%' : '—',
+      sub: kpis.edge.sample + ' edge picks',
+      color: avgEv != null && avgEv >= 7 ? 'green' : 'neutral',
+    },
+    {
+      label: 'Avg Proba',
+      val: avgProba != null ? Math.round(avgProba) + '%' : '—',
+      sub: 'Over 2.5 + BTTS picks',
+      color: 'neutral',
+    },
+  ];
+
+  document.getElementById('dh-kpi-strip').innerHTML = items.map(k => `
+    <div class="dh-kpi" title="${k.sub}">
+      <div class="dh-kpi-label">${k.label}</div>
+      <div class="dh-kpi-val ${k.color}">${k.val}</div>
+      <div class="dh-kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+// ── Populate league filter dropdown (idempotent) ──────────────────────────
+function dhPopulateLeagueOptions(byLeague) {
+  const sel = document.getElementById('dh-f-league');
+  if (!sel) return;
+  const existing = new Set(Array.from(sel.options).map(o => o.value));
+  const fresh = byLeague.map(l => l.league);
+  // Preserve selection across re-renders
+  const selected = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+  if (fresh.every(l => existing.has(l)) && existing.size === fresh.length) return;
+  sel.innerHTML = fresh.map(l => `<option value="${l}"${selected.has(l) ? ' selected' : ''}>${l}</option>`).join('');
+}
+
+// ── Table render ───────────────────────────────────────────────────────────
+function _dhMarketPill(label, predicted, predThresh, won) {
+  if (predicted == null || predicted < predThresh) return '<span class="dh-pred-pill na">—</span>';
+  if (won == null) return `<span class="dh-pred-pill na">${Math.round(predicted)}%</span>`;
+  return `<span class="dh-pred-pill ${won ? 'win' : 'loss'}">${Math.round(predicted)}%</span>`;
+}
+
+function dhRenderTable(data) {
+  const tbody = document.getElementById('dh-tbody');
+  const empty = document.getElementById('dh-empty');
+  const matches = data.matches || [];
+  if (!matches.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('dh-pagination').innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Edge raisonnable : [5%, 50%]. Au-delà = data legacy corrompue.
+  const DH_EDGE_MIN = 5, DH_EDGE_MAX = 50;
+  const edgeOk = (ev) => typeof ev === 'number' && ev >= DH_EDGE_MIN && ev <= DH_EDGE_MAX;
+
+  tbody.innerHTML = matches.map(m => {
+    const rs = m.realScore;
+    const wasOver25 = rs ? (rs.home + rs.away) > 2.5 : null;
+    const wasBTTS = rs ? (rs.home > 0 && rs.away > 0) : null;
+    const winnerLabel = rs ? (rs.home > rs.away ? m.home_team : rs.away > rs.home ? m.away_team : 'Nul') : null;
+    const evVal = m.predicted?.bestEdgeValue;
+    const hasEdgePick = edgeOk(evVal);
+    const edgeWon = (hasEdgePick && winnerLabel) ? (winnerLabel === m.predicted.bestEdge ? 1 : 0) : null;
+
+    const dt = fmtKickoffDate(m.commence_time, { day: '2-digit', month: 'short', year: '2-digit' }, '—');
+    const scoreCell = rs
+      ? `<span class="dh-cell-${(rs.home + rs.away) >= 2 ? 'win' : 'loss'}">${rs.home}-${rs.away}</span>`
+      : '<span style="color:var(--text3)">—</span>';
+
+    // Aggregate outcome — respects edge cap
+    let issueLabel = '<span style="color:var(--text3);">N/A</span>';
+    if (rs) {
+      const picks = [];
+      if (m.predicted?.over25 > 55 && m.predicted.over25 <= 100) picks.push(wasOver25 ? 1 : 0);
+      if (m.predicted?.btts > 55 && m.predicted.btts <= 100) picks.push(wasBTTS ? 1 : 0);
+      if (edgeWon != null) picks.push(edgeWon);
+      if (picks.length) {
+        const w = picks.filter(x => x === 1).length;
+        issueLabel = w === picks.length
+          ? '<span class="dh-cell-win">✓ ' + w + '/' + picks.length + '</span>'
+          : w === 0
+          ? '<span class="dh-cell-loss">✗ 0/' + picks.length + '</span>'
+          : '<span style="color:var(--amber);font-weight:700;">' + w + '/' + picks.length + '</span>';
+      }
+    }
+
+    return `<tr>
+      <td><strong>${escapeHtml(m.home_team)}</strong> – ${escapeHtml(m.away_team)}</td>
+      <td style="color:var(--text2);">${escapeHtml(m.league || '')}</td>
+      <td>${dt}</td>
+      <td>${scoreCell}</td>
+      <td>${_dhMarketPill('O2.5', m.predicted?.over25, 55, wasOver25)}</td>
+      <td>${_dhMarketPill('BTTS', m.predicted?.btts, 55, wasBTTS)}</td>
+      <td>${hasEdgePick
+        ? `<span class="dh-pred-pill ${edgeWon === 1 ? 'win' : edgeWon === 0 ? 'loss' : 'na'}">${escapeHtml(m.predicted.bestEdge)} +${evVal.toFixed(1)}%</span>`
+        : '<span class="dh-pred-pill na">—</span>'}</td>
+      <td>${issueLabel}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
+  document.getElementById('dh-pagination').innerHTML = `
+    <span>${data.total} matchs · page ${data.page}/${totalPages}</span>
+    <span>
+      <button type="button" ${data.page <= 1 ? 'disabled' : ''} onclick="dhGoToPage(${data.page - 1})">‹ Préc</button>
+      <button type="button" ${data.page >= totalPages ? 'disabled' : ''} onclick="dhGoToPage(${data.page + 1})">Suiv ›</button>
+    </span>`;
+}
+
+function dhGoToPage(p) {
+  dhState.page = p;
+  dhRefresh();
+}
+
+// ── Charts render ──────────────────────────────────────────────────────────
+function _dhDestroyCharts() {
+  for (const k of ['pl', 'dd', 'rolling']) {
+    if (dhState._charts[k]) { dhState._charts[k].destroy(); dhState._charts[k] = null; }
+  }
+}
+
+function dhRenderCharts(series) {
+  _dhDestroyCharts();
+  if (!series) return;
+  const pl = series.pl_cumulative || [];
+  const dd = series.drawdown_curve || [];
+  const rolling = series.rolling30_wr || [];
+
+  if (pl.length) {
+    const ctx = document.getElementById('dh-chart-pl').getContext('2d');
+    const final = pl[pl.length - 1].units;
+    const lineColor = final >= 0 ? '#00e676' : '#ff4d4d';
+    const fillColor = final >= 0 ? 'rgba(0,230,118,0.07)' : 'rgba(255,77,77,0.07)';
+    dhState._charts.pl = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: pl.map(p => p.date),
+        datasets: [{ data: pl.map(p => p.units), borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, pointRadius: pl.length > 50 ? 0 : 2, fill: true, tension: 0.25 }],
+      },
+      options: _dhChartOpts(v => (v >= 0 ? '+' : '') + v + 'u'),
+    });
+  }
+
+  if (dd.length) {
+    const ctx = document.getElementById('dh-chart-dd').getContext('2d');
+    dhState._charts.dd = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dd.map(p => p.date),
+        datasets: [{ data: dd.map(p => -p.dd), borderColor: '#ff4d4d', backgroundColor: 'rgba(255,77,77,0.10)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }],
+      },
+      options: _dhChartOpts(v => v + 'u'),
+    });
+  }
+
+  if (rolling.length) {
+    const ctx = document.getElementById('dh-chart-rolling').getContext('2d');
+    dhState._charts.rolling = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: rolling.map(p => p.date),
+        datasets: [{ data: rolling.map(p => Math.round(p.wr * 100)), borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }],
+      },
+      options: _dhChartOpts(v => v + '%', 0, 100),
+    });
+  }
+}
+
+function _dhChartOpts(fmt, yMin, yMax) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
+    scales: {
+      x: { ticks: { color: '#5a6068', font: { size: 10 }, maxTicksLimit: 9 }, grid: { color: 'rgba(255,255,255,.04)' } },
+      y: { ticks: { color: '#5a6068', font: { size: 10 }, callback: fmt }, min: yMin, max: yMax, grid: { color: 'rgba(255,255,255,.04)' }, border: { dash: [3, 3] } },
+    },
+  };
+}
+
+// ── Wire controls ─────────────────────────────────────────────────────────
+function _dhWireControls() {
+  // Sport toggle
+  document.querySelectorAll('#dh-sport-toggle .dh-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#dh-sport-toggle .dh-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+      dhState.sport = btn.dataset.sport;
+      dhState.page = 1;
+      dhRefresh();
+    });
+  });
+
+  // Period buttons
+  document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.toggle('active', b === btn));
+      dhState.period = btn.dataset.period;
+      _dhApplyPeriod();
+      document.getElementById('dh-from').value = dhState.fromDate || '';
+      document.getElementById('dh-to').value = dhState.toDate || '';
+      dhState.page = 1;
+      dhRefresh();
+    });
+  });
+
+  // Custom date pickers
+  document.getElementById('dh-from').addEventListener('change', e => {
+    dhState.fromDate = e.target.value || null;
+    document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.remove('active'));
+    dhState.page = 1;
+    dhRefreshDebounced();
+  });
+  document.getElementById('dh-to').addEventListener('change', e => {
+    dhState.toDate = e.target.value || null;
+    document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.remove('active'));
+    dhState.page = 1;
+    dhRefreshDebounced();
+  });
+
+  // League multi-select
+  document.getElementById('dh-f-league').addEventListener('change', e => {
+    dhState.leagues = Array.from(e.target.selectedOptions).map(o => o.value);
+    dhState.page = 1;
+    dhRefreshDebounced();
+  });
+
+  // Team search
+  document.getElementById('dh-f-team').addEventListener('input', e => {
+    const v = e.target.value.trim();
+    dhState.teams = v ? [v] : [];
+    dhState.page = 1;
+    dhRefreshDebounced(350);
+  });
+
+  // Market chips
+  document.querySelectorAll('#dh-f-market .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      const active = Array.from(document.querySelectorAll('#dh-f-market .dh-chip.active')).map(c => c.dataset.mkt);
+      dhState.markets = active;
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+
+  // Confidence chips (multi)
+  document.querySelectorAll('#dh-f-confidence .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      dhState.confidence = Array.from(document.querySelectorAll('#dh-f-confidence .dh-chip.active')).map(c => c.dataset.conf);
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+
+  // Outcome chips (single)
+  document.querySelectorAll('#dh-f-outcome .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#dh-f-outcome .dh-chip').forEach(c => c.classList.toggle('active', c === chip));
+      dhState.outcome = chip.dataset.oc;
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+
+  // EV slider
+  const evRange = document.getElementById('dh-f-ev');
+  const evVal = document.getElementById('dh-ev-val');
+  evRange.addEventListener('input', () => { evVal.textContent = evRange.value + '%'; });
+  evRange.addEventListener('change', () => {
+    dhState.minEV = parseFloat(evRange.value);
+    dhState.page = 1;
+    dhRefreshDebounced();
+  });
+
+  // Proba slider
+  const prRange = document.getElementById('dh-f-proba');
+  const prVal = document.getElementById('dh-pr-val');
+  prRange.addEventListener('input', () => { prVal.textContent = prRange.value + '%'; });
+  prRange.addEventListener('change', () => {
+    dhState.minProba = parseInt(prRange.value);
+    dhState.page = 1;
+    dhRefreshDebounced();
+  });
+
+  // Exclude low WR
+  document.getElementById('dh-f-excludelow').addEventListener('change', e => {
+    dhState.excludeLowLeagues = !!e.target.checked;
+    dhState.page = 1;
+    dhRefreshDebounced();
+  });
+
+  // Reset
+  document.getElementById('dh-reset').addEventListener('click', () => {
+    dhState.leagues = []; dhState.teams = []; dhState.markets = ['over25', 'btts', 'edge'];
+    dhState.confidence = []; dhState.outcome = 'all'; dhState.minEV = 0; dhState.minProba = 55;
+    dhState.excludeLowLeagues = false; dhState.fromDate = null; dhState.toDate = null;
+    dhState.period = '90'; dhState.page = 1;
+    // Reflect in DOM
+    document.getElementById('dh-f-league').selectedIndex = -1;
+    document.getElementById('dh-f-team').value = '';
+    document.querySelectorAll('#dh-f-market .dh-chip').forEach(c => c.classList.add('active'));
+    document.querySelectorAll('#dh-f-confidence .dh-chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('#dh-f-outcome .dh-chip').forEach(c => c.classList.toggle('active', c.dataset.oc === 'all'));
+    document.getElementById('dh-f-ev').value = '0'; document.getElementById('dh-ev-val').textContent = '0%';
+    document.getElementById('dh-f-proba').value = '55'; document.getElementById('dh-pr-val').textContent = '55%';
+    document.getElementById('dh-f-excludelow').checked = false;
+    document.getElementById('dh-from').value = ''; document.getElementById('dh-to').value = '';
+    document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === '90'));
+    _dhApplyPeriod();
+    dhRefresh();
+  });
+
+  // View switch
+  document.querySelectorAll('#dh-view-switch .dh-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#dh-view-switch .dh-view-btn').forEach(b => b.classList.toggle('active', b === btn));
+      const v = btn.dataset.view;
+      dhState.view = v;
+      document.getElementById('dh-view-table').style.display = v === 'table' ? '' : 'none';
+      document.getElementById('dh-view-charts').style.display = v === 'charts' ? '' : 'none';
+      document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
+      if (v === 'charts') dhRefresh();
+    });
+  });
+
+  // Apply default period now (90j)
+  _dhApplyPeriod();
+}
+
+function _renderLegacyHistorique(data) {
+  // Conserve l'ancien rendu (KPI + chart legacy + table legacy) pour le mode héritage déplié.
+  // Cette fonction est appelée en parallèle pour ne pas casser le bloc <details>.
+  renderHistorique(data);
 }
 
 function renderHistorique(data) {

@@ -6815,6 +6815,287 @@ function getAccuracyReport() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  DATA HUB HISTORIQUE — /api/v1/history/query
+//  Filtre + agrège + pagine history[] (foot v10.78+). Tennis brancé en Phase H3.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Edge raisonnable : [5%, 50%]. Au-delà = données legacy corrompues (bug ancien archive),
+// on les exclut du backtest pour ne pas polluer les KPIs.
+const HISTORY_EDGE_MIN = 5;
+const HISTORY_EDGE_MAX = 50;
+
+// Décompose un record archivé en picks-par-marché (1 entrée par pick).
+function _historyPicksOf(h) {
+  if (!h.verified || !h.realScore) return [];
+  const rs = h.realScore;
+  const wasOver25 = (rs.home + rs.away) > 2.5;
+  const wasBTTS = rs.home > 0 && rs.away > 0;
+  const winnerLabel = rs.home > rs.away ? h.home_team : rs.away > rs.home ? h.away_team : 'Nul';
+  const out = [];
+  if (h.predicted?.over25 > 55 && h.predicted.over25 <= 100) {
+    out.push({ id: h.id, market: 'over25', t: new Date(h.commence_time).getTime(), won: wasOver25 ? 1 : 0, proba: h.predicted.over25, league: h.league });
+  }
+  if (h.predicted?.btts > 55 && h.predicted.btts <= 100) {
+    out.push({ id: h.id, market: 'btts', t: new Date(h.commence_time).getTime(), won: wasBTTS ? 1 : 0, proba: h.predicted.btts, league: h.league });
+  }
+  const ev = h.predicted?.bestEdgeValue;
+  if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) {
+    out.push({ id: h.id, market: 'edge', t: new Date(h.commence_time).getTime(), won: winnerLabel === h.predicted.bestEdge ? 1 : 0, ev, league: h.league });
+  }
+  return out;
+}
+
+function _wilsonCI95(wins, total) {
+  if (!total) return [null, null];
+  const z = 1.96, p = wins / total, n = total;
+  const denom = 1 + z * z / n;
+  const center = p + z * z / (2 * n);
+  const margin = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n));
+  return [(center - margin) / denom, (center + margin) / denom];
+}
+
+function _maxStreak(arr, target) {
+  let cur = 0, max = 0;
+  for (const v of arr) {
+    if (v === target) { cur++; if (cur > max) max = cur; }
+    else { cur = 0; }
+  }
+  return max;
+}
+
+function computeHistoryKpis(entries) {
+  const allPicks = [];
+  for (const h of entries) allPicks.push(..._historyPicksOf(h));
+  allPicks.sort((a, b) => a.t - b.t);
+
+  const agg = (mkt) => {
+    const xs = allPicks.filter(p => p.market === mkt);
+    const sample = xs.length;
+    const wins = xs.reduce((s, p) => s + p.won, 0);
+    const wr = sample ? wins / sample : null;
+    const [lo, hi] = _wilsonCI95(wins, sample);
+    const probas = xs.map(p => p.proba).filter(x => typeof x === 'number');
+    const avgProba = probas.length ? probas.reduce((s, v) => s + v, 0) / probas.length : null;
+    const evs = xs.map(p => p.ev).filter(x => typeof x === 'number');
+    const avgEv = evs.length ? evs.reduce((s, v) => s + v, 0) / evs.length : null;
+    const seq = xs.map(p => p.won);
+    return {
+      sample,
+      wins,
+      losses: sample - wins,
+      winrate: wr,
+      winrate_ic95: [lo, hi],
+      avg_proba: avgProba,
+      avg_ev: avgEv,
+      longest_winning_streak: _maxStreak(seq, 1),
+      longest_losing_streak: _maxStreak(seq, 0),
+    };
+  };
+
+  // Drawdown sur P/L cumul tous picks confondus (1u flat)
+  let cumul = 0, peak = 0, ddMax = 0;
+  for (const p of allPicks) {
+    cumul += p.won ? 1 : -1;
+    if (cumul > peak) peak = cumul;
+    const dd = peak - cumul;
+    if (dd > ddMax) ddMax = dd;
+  }
+
+  return {
+    total_picks: allPicks.length,
+    verified_matches: entries.filter(h => h.verified && h.realScore).length,
+    over25: agg('over25'),
+    btts: agg('btts'),
+    edge: agg('edge'),
+    max_drawdown_units: ddMax,
+    final_pl_units: cumul,
+  };
+}
+
+function computeHistoryBreakdown(entries) {
+  const byLeague = {};
+  for (const h of entries) {
+    if (!h.verified || !h.realScore) continue;
+    const lg = h.league || 'Unknown';
+    if (!byLeague[lg]) byLeague[lg] = { sample: 0, picks: [] };
+    byLeague[lg].sample++;
+    byLeague[lg].picks.push(..._historyPicksOf(h));
+  }
+  const leagues = Object.entries(byLeague).map(([name, d]) => {
+    const wins = d.picks.reduce((s, p) => s + p.won, 0);
+    const total = d.picks.length;
+    const wr = total ? wins / total : null;
+    const [lo, hi] = _wilsonCI95(wins, total);
+    return {
+      league: name,
+      matches: d.sample,
+      picks: total,
+      wins,
+      winrate: wr,
+      winrate_ic95: [lo, hi],
+    };
+  });
+  leagues.sort((a, b) => b.picks - a.picks);
+
+  // Per-market breakdown
+  const markets = ['over25', 'btts', 'edge'].map(mkt => {
+    const xs = entries.flatMap(h => _historyPicksOf(h)).filter(p => p.market === mkt);
+    const wins = xs.reduce((s, p) => s + p.won, 0);
+    const [lo, hi] = _wilsonCI95(wins, xs.length);
+    return {
+      market: mkt,
+      sample: xs.length,
+      wins,
+      winrate: xs.length ? wins / xs.length : null,
+      winrate_ic95: [lo, hi],
+    };
+  });
+
+  // Strategy breakdown : v9 history n'a pas de tag — Phase H4 le rajoutera.
+  // Pour H1, on retourne tableau vide pour signaler "à venir".
+  const strategies = [];
+
+  return { by_league: leagues, by_market: markets, by_strategy: strategies };
+}
+
+function computeHistorySeries(entries) {
+  const verified = entries.filter(h => h.verified && h.realScore)
+    .slice()
+    .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+
+  const plCumulative = [];
+  const ddCurve = [];
+  let cumul = 0, peak = 0;
+  for (const h of verified) {
+    let delta = 0;
+    for (const p of _historyPicksOf(h)) delta += (p.won ? 1 : -1);
+    if (delta !== 0) cumul += delta;
+    if (cumul > peak) peak = cumul;
+    const dateKey = h.commence_time.split('T')[0];
+    plCumulative.push({ date: dateKey, units: cumul });
+    ddCurve.push({ date: dateKey, dd: peak - cumul });
+  }
+
+  // Rolling 30-pick winrate
+  const allPicks = [];
+  for (const h of verified) allPicks.push(..._historyPicksOf(h));
+  allPicks.sort((a, b) => a.t - b.t);
+  const rolling30 = [];
+  const W = 30;
+  for (let i = W - 1; i < allPicks.length; i++) {
+    const window = allPicks.slice(i - W + 1, i + 1);
+    const w = window.reduce((s, p) => s + p.won, 0);
+    rolling30.push({ date: new Date(window[window.length - 1].t).toISOString().split('T')[0], wr: w / W });
+  }
+
+  return { pl_cumulative: plCumulative, drawdown_curve: ddCurve, rolling30_wr: rolling30 };
+}
+
+function runHistoryQuery(p) {
+  const sport = p.sport === 'tennis' ? 'tennis' : 'football';
+  // Tennis backtest arrive en Phase H3 — H1 retourne shell vide
+  let pool = sport === 'football' ? history.slice() : [];
+
+  // ── Filters ────────────────────────────────────────────────────────────────
+  if (p.leagues?.length) {
+    const set = new Set(p.leagues.map(s => s.toLowerCase()));
+    pool = pool.filter(h => set.has(String(h.league || '').toLowerCase()));
+  }
+  if (p.teams?.length) {
+    const norm = p.teams.map(t => normName(t));
+    pool = pool.filter(h => {
+      const hN = normName(h.home_team || ''), aN = normName(h.away_team || '');
+      return norm.some(t => hN.includes(t) || aN.includes(t) || t.includes(hN) || t.includes(aN));
+    });
+  }
+  if (p.markets?.length) {
+    const wants = new Set(p.markets);
+    pool = pool.filter(h => {
+      if (!h.predicted) return false;
+      if (wants.has('over25') && h.predicted.over25 > 55 && h.predicted.over25 <= 100) return true;
+      if (wants.has('btts') && h.predicted.btts > 55 && h.predicted.btts <= 100) return true;
+      if (wants.has('edge')) {
+        const ev = h.predicted.bestEdgeValue;
+        if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) return true;
+      }
+      return false;
+    });
+  }
+  if (p.fromDate) {
+    const ts = Date.UTC(...p.fromDate.split('-').map((v, i) => i === 1 ? +v - 1 : +v));
+    if (!Number.isNaN(ts)) pool = pool.filter(h => new Date(h.commence_time).getTime() >= ts);
+  }
+  if (p.toDate) {
+    const parts = p.toDate.split('-').map((v, i) => i === 1 ? +v - 1 : +v);
+    const ts = Date.UTC(...parts) + 86400000;
+    if (!Number.isNaN(ts)) pool = pool.filter(h => new Date(h.commence_time).getTime() < ts);
+  }
+  if (p.minProba != null && !Number.isNaN(p.minProba)) {
+    pool = pool.filter(h => {
+      const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
+      return probs.some(x => x >= p.minProba);
+    });
+  }
+  if (p.minEV != null && !Number.isNaN(p.minEV)) {
+    pool = pool.filter(h => (h.predicted?.bestEdgeValue || 0) >= p.minEV);
+  }
+  if (p.outcome === 'won' || p.outcome === 'lost') {
+    pool = pool.filter(h => {
+      const picks = _historyPicksOf(h);
+      if (!picks.length) return false;
+      const allWon = picks.every(x => x.won === 1);
+      const anyLost = picks.some(x => x.won === 0);
+      return p.outcome === 'won' ? allWon : anyLost;
+    });
+  }
+  if (p.confidence?.length) {
+    const wants = new Set(p.confidence);
+    pool = pool.filter(h => {
+      const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
+      const max = probs.length ? Math.max(...probs) : 0;
+      const tier = max >= 75 ? 'high' : max >= 65 ? 'medium' : 'low';
+      return wants.has(tier);
+    });
+  }
+
+  // ── Aggregations PRE-pagination ────────────────────────────────────────────
+  const kpis = computeHistoryKpis(pool);
+  const breakdown = computeHistoryBreakdown(pool);
+  const series = computeHistorySeries(pool);
+
+  // Exclude low-WR leagues (BetMines-style)
+  if (p.excludeLowLeagues) {
+    const low = new Set(
+      breakdown.by_league
+        .filter(l => l.winrate !== null && l.picks >= 5 && l.winrate < 0.5)
+        .map(l => l.league)
+    );
+    pool = pool.filter(h => !low.has(h.league));
+  }
+
+  // ── Sort ───────────────────────────────────────────────────────────────────
+  const sort = p.sort || 'date_desc';
+  pool.sort((a, b) => {
+    if (sort === 'date_asc') return new Date(a.commence_time) - new Date(b.commence_time);
+    if (sort === 'ev_desc') return (b.predicted?.bestEdgeValue || 0) - (a.predicted?.bestEdgeValue || 0);
+    if (sort === 'proba_desc') {
+      const ap = Math.max(a.predicted?.over25 || 0, a.predicted?.btts || 0);
+      const bp = Math.max(b.predicted?.over25 || 0, b.predicted?.btts || 0);
+      return bp - ap;
+    }
+    return new Date(b.commence_time) - new Date(a.commence_time); // default date_desc
+  });
+
+  // ── Paginate ───────────────────────────────────────────────────────────────
+  const total = pool.length;
+  const pageSize = Math.max(10, Math.min(200, p.pageSize || 50));
+  const page = Math.max(1, p.page || 1);
+  const matches = pool.slice((page - 1) * pageSize, page * pageSize);
+
+  return { sport, matches, total, page, pageSize, kpis, breakdown, series };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  OPTION C — AI SCOUT (Top Value Bets → Gemini)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -19169,7 +19450,35 @@ if (pathname === '/api/v1/trends') {
   return jsonResponse(res, 200, getTrends());
 }
 
-// GET /api/v1/history — public read (history matches anonymisés, pas de PII)
+// GET /api/v1/history/query — Data Hub Historique (Phase H1)
+// Filtres avancés + agrégations + pagination. Tennis branché en Phase H3.
+if (pathname === '/api/v1/history/query') {
+  if (process.env.HISTORY_AUTH_REQUIRED === '1' && !requireAuth(req, res)) return;
+  const arr = (k) => query[k] ? String(query[k]).split(',').map(s => s.trim()).filter(Boolean) : [];
+  const num = (k) => (query[k] != null && query[k] !== '') ? parseFloat(query[k]) : null;
+  const p = {
+    sport: query.sport || 'football',
+    leagues: arr('leagues'),
+    teams: arr('teams'),
+    markets: arr('markets'),
+    strategies: arr('strategies'),
+    fromDate: query.fromDate || null,
+    toDate: query.toDate || null,
+    minOdds: num('minOdds'),
+    maxOdds: num('maxOdds'),
+    minEV: num('minEV'),
+    minProba: num('minProba'),
+    confidence: arr('confidence'),
+    outcome: query.outcome || 'all',
+    excludeLowLeagues: query.excludeLowLeagues === '1' || query.excludeLowLeagues === 'true',
+    page: parseInt(query.page) || 1,
+    pageSize: parseInt(query.pageSize) || 50,
+    sort: query.sort || 'date_desc',
+  };
+  return jsonResponse(res, 200, runHistoryQuery(p));
+}
+
+// GET /api/v1/history — legacy (alias) — gardé 1 release pour compat frontend Premium/Admin
 // Si Pro feature ré-activable plus tard via flag env HISTORY_AUTH_REQUIRED
 if (pathname === '/api/v1/history') {
   if (process.env.HISTORY_AUTH_REQUIRED === '1' && !requireAuth(req, res)) return;
@@ -20626,6 +20935,103 @@ const _tnsVBState = (globalThis.__tnsVBState ||= { cache: new Map(), rebuilding:
 const _tennisVBCache = _tnsVBState.cache;
 const _tennisVBRebuilding = _tnsVBState.rebuilding;
 
+// ─── Enrichment Snapshot (Solution A — Backend invincible) ──────────────────
+// BSD scheduled list DROP les matchs qui passent in_progress → `enriched[]`
+// perd l'enrichissement (predictions, set_model, predictive, powerscore,
+// confidence_badge) → frontend reçoit du vide → colonnes "—". Le snapshot
+// serveur conserve TOUJOURS la dernière version enrichie d'un match (par
+// id BSD + paires de noms multi-tokens) et la ré-injecte au build suivant
+// en mergeant le score live. Survit aux drops upstream, fonctionne au 1er
+// hit pour tout client (pas de bootstrap navigateur requis).
+const _TN_ENRICH_TTL_MS = 12 * 3600 * 1000;
+const _tennisEnrichSnap = (globalThis.__tnEnrichSnap ||= new Map());
+
+function _tnSrvNorm(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\s.-]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function _tnSrvLastName(n) {
+  const p = _tnSrvNorm(n).split(/\s+/).filter(Boolean);
+  return p.length ? p[p.length - 1] : '';
+}
+function _tnSrvTokens(n) {
+  return _tnSrvNorm(n).split(/\s+/).filter(t => t && t.length >= 3 && !/^[a-z]\.?$/.test(t));
+}
+function _tnSrvPairKey(p1, p2) {
+  const a = _tnSrvNorm(p1), b = _tnSrvNorm(p2);
+  if (!a || !b) return '';
+  return [a, b].sort().join('|');
+}
+function _tnSrvPairLastKey(p1, p2) {
+  const a = _tnSrvLastName(p1), b = _tnSrvLastName(p2);
+  if (!a || !b) return '';
+  return [a, b].sort().join('|');
+}
+function _tnSrvAllPairKeys(p1, p2) {
+  const t1 = _tnSrvTokens(p1), t2 = _tnSrvTokens(p2);
+  if (!t1.length || !t2.length) return [];
+  const out = [];
+  for (const a of t1) for (const b of t2) out.push([a, b].sort().join('|'));
+  return out;
+}
+function _tnSrvEnrichSignal(e) {
+  if (!e) return false;
+  if (e.predictions && (e.predictions.elo || e.predictions.blended)) return true;
+  if (e.predictive && e.predictive.prematch && e.predictive.prematch.length) return true;
+  if (e.set_model) return true;
+  if (e.confidence_badge) return true;
+  if (e.player1 && (e.player1.powerscore != null || e.player1.l5_pts != null)) return true;
+  if (e.player2 && (e.player2.powerscore != null || e.player2.l5_pts != null)) return true;
+  return false;
+}
+function _tnSrvStoreSnap(e) {
+  if (!e || !e.player1 || !e.player2) return;
+  if (!_tnSrvEnrichSignal(e)) return;
+  const p1 = e.player1.name, p2 = e.player2.name;
+  if (!p1 || !p2) return;
+  const entry = { ts: Date.now(), data: e };
+  if (e.id != null) _tennisEnrichSnap.set('id:' + e.id, entry);
+  const pk = _tnSrvPairKey(p1, p2); if (pk) _tennisEnrichSnap.set('pk:' + pk, entry);
+  const lk = _tnSrvPairLastKey(p1, p2); if (lk && lk !== pk) _tennisEnrichSnap.set('lk:' + lk, entry);
+  for (const k of _tnSrvAllPairKeys(p1, p2)) _tennisEnrichSnap.set('tk:' + k, entry);
+}
+function _tnSrvLookupSnap(lo) {
+  if (!lo) return null;
+  let hit = null;
+  if (lo.id != null) hit = _tennisEnrichSnap.get('id:' + lo.id);
+  const p1 = lo.player1 && lo.player1.name;
+  const p2 = lo.player2 && lo.player2.name;
+  if (!hit && p1 && p2) {
+    const pk = _tnSrvPairKey(p1, p2);
+    if (pk) hit = _tennisEnrichSnap.get('pk:' + pk);
+  }
+  if (!hit && p1 && p2) {
+    const lk = _tnSrvPairLastKey(p1, p2);
+    if (lk) hit = _tennisEnrichSnap.get('lk:' + lk);
+  }
+  if (!hit && p1 && p2) {
+    for (const k of _tnSrvAllPairKeys(p1, p2)) {
+      hit = _tennisEnrichSnap.get('tk:' + k);
+      if (hit) break;
+    }
+  }
+  if (!hit) return null;
+  if (Date.now() - hit.ts > _TN_ENRICH_TTL_MS) return null;
+  return hit.data;
+}
+function _tnSrvJanitor() {
+  const now = Date.now();
+  let dropped = 0;
+  for (const [k, v] of _tennisEnrichSnap) {
+    if (now - v.ts > _TN_ENRICH_TTL_MS) { _tennisEnrichSnap.delete(k); dropped++; }
+  }
+  if (dropped) console.log(`  [TennisSnap] janitor — ${dropped} entrées expirées`);
+}
+if (!globalThis.__tnSnapJanitorOn) {
+  globalThis.__tnSnapJanitorOn = true;
+  const _h = setInterval(_tnSrvJanitor, 60 * 60 * 1000);
+  if (_h && typeof _h.unref === 'function') _h.unref();
+}
+
 // Wrapper stale-while-revalidate : le build cold = ~15-20 s (420 matchs ×
 // helpers Elo/RPW/fatigue/logdiff). On sert toujours le cache (même périmé)
 // instantanément + rebuild en arrière-plan. Seul le tout 1er appel (sans
@@ -21394,8 +21800,46 @@ async function _buildTennisValueBetsCore({ date }) {
     });
   }
 
+  // Snapshot serveur : conserve chaque match enrichi en mémoire (par id BSD +
+  // paires de noms multi-tokens) pour pouvoir le ré-injecter quand BSD le
+  // drop de la liste scheduled lors du passage in_progress.
+  let _snapStored = 0;
+  for (const _e of enriched) {
+    try { _tnSrvStoreSnap(_e); _snapStored++; } catch (_) { /* snap non bloquant */ }
+  }
+
+  // Recall live-only : pour chaque match du live cache absent de enriched,
+  // tente une réhydratation depuis le snapshot persistant. Si trouvé, clone
+  // l'enrichissement + merge le bloc _live → push. Garantit zéro colonne vide
+  // sur transition prematch→live, indépendamment du bootstrap navigateur.
+  const _liveRaw = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+  const _presentIds = new Set();
+  const _presentPairs = new Set();
+  for (const _e of enriched) {
+    if (_e.id != null) _presentIds.add(String(_e.id));
+    const _pk = _tnSrvPairKey(_e.player1 && _e.player1.name, _e.player2 && _e.player2.name);
+    if (_pk) _presentPairs.add(_pk);
+  }
+  let _rehydratedLive = 0, _liveOrphans = 0;
+  for (const lo of _liveRaw) {
+    if (!lo || lo.is_live !== true) continue;
+    if (lo.id != null && _presentIds.has(String(lo.id))) continue;
+    const _lpk = _tnSrvPairKey(lo.player1 && lo.player1.name, lo.player2 && lo.player2.name);
+    if (_lpk && _presentPairs.has(_lpk)) continue;
+    const snap = _tnSrvLookupSnap(lo);
+    if (!snap) { _liveOrphans++; continue; }
+    let rehydrated;
+    try { rehydrated = JSON.parse(JSON.stringify(snap)); } catch (_) { continue; }
+    rehydrated.status = lo.status || 'LIVE';
+    rehydrated._live = lo;
+    rehydrated._isLive = true;
+    rehydrated._rehydrated_source = 'server_snap';
+    enriched.push(rehydrated);
+    _rehydratedLive++;
+  }
+
   for (const _e of enriched) { try { _e.predictive = computeTennisPredictiveBets(_e); } catch (_) { _e.predictive = null; } }
-  console.log(`  [TennisVB] build done — ${enriched.length} matchs en ${Date.now() - _vbT0}ms`);
+  console.log(`  [TennisVB] build done — ${enriched.length} matchs en ${Date.now() - _vbT0}ms · snap_stored=${_snapStored} · live_rehydrated=${_rehydratedLive} · live_orphans=${_liveOrphans} · snap_map_size=${_tennisEnrichSnap.size}`);
   return {
     status: 200,
     body: {
@@ -21411,6 +21855,10 @@ async function _buildTennisValueBetsCore({ date }) {
         devig_method: 'shin-hurley',
         bsd_calibration: calib ? { n: calib.n, accuracy: calib.accuracy, brier: calib.brier } : null,
         built_ts: Date.now(),
+        snap_stored: _snapStored,
+        live_rehydrated: _rehydratedLive,
+        live_orphans: _liveOrphans,
+        snap_map_size: _tennisEnrichSnap.size,
       },
     },
   };
@@ -21866,6 +22314,88 @@ if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
   } catch (e) {
     console.error('  [TennisVB] route erreur:', e && e.stack ? e.stack : e);
     return jsonResponse(res, 200, { count: 0, matches: [], meta: { error: 'build_failed', detail: String(e && e.message || e) } });
+  }
+}
+// DEBUG-ONLY : simule un match scheduled qui passe live pour valider le recall
+// snapshot. Pick un match enrichi du cache vb, injecte dans _tennisLiveCache
+// avec is_live=true, invalide vb cache, rebuild → la réponse doit contenir le
+// match avec _rehydrated_source='server_snap'. Réservée admin, désactivable.
+if (pathname === '/api/v1/_debug/tennis-rehydrate-test' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'admin only' });
+  try {
+    // 1) Récupère le cache vb actuel (déjà chaud)
+    const cached = _tennisVBCache.get('today');
+    if (!cached || !cached.result || !cached.result.body || !cached.result.body.matches || !cached.result.body.matches.length) {
+      return jsonResponse(res, 503, { error: 'no cached enriched matches available — wait for warm-up' });
+    }
+    const enrichedSrc = cached.result.body.matches;
+    // 2) Pick un match scheduled enrichi (pas déjà live)
+    const target = enrichedSrc.find(m => !m._isLive && m.predictions && m.player1 && m.player1.powerscore != null);
+    if (!target) return jsonResponse(res, 503, { error: 'no enriched scheduled match found' });
+    // 3) Injecte une entrée live FICTIVE dans _tennisLiveCache.data
+    const fakeLive = {
+      id: target.id, is_live: true, status: 'LIVE',
+      player1: { name: target.player1.name },
+      player2: { name: target.player2.name },
+      tournament: target.tournament, round: target.round, tour: target.tour, surface: target.surface,
+      start_time: target.start_time,
+      player1_sets: 1, player2_sets: 0,
+      sets: [{ p1: 6, p2: 4 }, { p1: 2, p2: 1 }],
+      current_set_index: 1, serving: 1,
+    };
+    // Snap target déjà stocké au build précédent → recall doit fire si on
+    // simule un drop BSD (target absent de enriched). Pour ça : substitute
+    // bsdMatches en excluant target. On hack le live cache + on invalide vb.
+    const liveBefore = (_tennisLiveCache.data || []).slice();
+    _tennisLiveCache.data = liveBefore.concat([fakeLive]);
+    _tennisLiveCache.ts = Date.now();
+    // Invalide vb cache pour forcer rebuild
+    const prevSize = _tennisEnrichSnap.size;
+    _tennisVBCache.delete('today');
+    // 4) Rebuild SYNCHRONE (await pour récupérer la réponse rehydratée)
+    const result = await _buildTennisValueBetsCore({ date: '' });
+    // 5) Restore live cache (sans le fake)
+    _tennisLiveCache.data = liveBefore;
+    _tennisLiveCache.ts = Date.now();
+    // 6) Inspect : la réponse devrait contenir le match avec _rehydrated_source
+    const all = result.body.matches || [];
+    // BSD aura probablement re-listé le target en scheduled (re-fetch) → on
+    // ne peut pas garantir qu'il est rehydraté plutôt qu'enrichi. Mais on
+    // peut compter le total + détecter doublons + sample du match.
+    const matched = all.filter(m => String(m.id) === String(target.id));
+    const rehydratedSample = matched.find(m => m._rehydrated_source === 'server_snap') || null;
+    const enrichedSample = matched.find(m => !m._rehydrated_source) || null;
+    return jsonResponse(res, 200, {
+      ok: true,
+      target_id: target.id,
+      target_players: [target.player1.name, target.player2.name],
+      snap_size_before: prevSize,
+      snap_size_after: _tennisEnrichSnap.size,
+      build_meta: result.body.meta,
+      total_matches: all.length,
+      target_occurrences: matched.length,
+      rehydrated_sample: rehydratedSample ? {
+        id: rehydratedSample.id,
+        _isLive: rehydratedSample._isLive,
+        _rehydrated_source: rehydratedSample._rehydrated_source,
+        p1_powerscore: rehydratedSample.player1 && rehydratedSample.player1.powerscore,
+        p2_powerscore: rehydratedSample.player2 && rehydratedSample.player2.powerscore,
+        predictions_elo_p1: rehydratedSample.predictions && rehydratedSample.predictions.elo && rehydratedSample.predictions.elo.p1,
+        confidence_level: rehydratedSample.confidence_badge && rehydratedSample.confidence_badge.level,
+        predictive_verdict: rehydratedSample.predictive && rehydratedSample.predictive.kpi && rehydratedSample.predictive.kpi.verdict,
+        live_sets_p1: rehydratedSample._live && rehydratedSample._live.player1_sets,
+        live_current_set: rehydratedSample._live && rehydratedSample._live.current_set_index,
+      } : null,
+      enriched_normal_sample: enrichedSample ? {
+        id: enrichedSample.id,
+        _isLive: enrichedSample._isLive,
+        p1_powerscore: enrichedSample.player1 && enrichedSample.player1.powerscore,
+      } : null,
+    });
+  } catch (e) {
+    console.error('  [TennisRehydrateTest]', e && e.stack ? e.stack : e);
+    return jsonResponse(res, 500, { error: 'test_failed', detail: String(e && e.message || e) });
   }
 }
 // P0-1 — Onglet Tennis consolidé : objet canonique unique (miroir /api/v1/matches
