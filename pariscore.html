@@ -9544,6 +9544,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-sb-tot-lead { color:#4ade80; }
   #tennis-vb-table .tn-sb-empty span { color:var(--text3,#5a6068); }
   #tennis-vb-table .tn-sb-soon { display:inline-block; background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:6px 10px; font-family:'DM Mono',monospace; font-size:12px; font-weight:700; color:#ffa726; white-space:nowrap; }
+  #tennis-vb-table .tn-sb-srv { color:#facc15; font-size:11px; line-height:1; min-width:14px; text-align:center; filter:drop-shadow(0 0 3px rgba(250,204,21,.65)); animation:tnSrvPulse 1.8s ease-in-out infinite; }
+  #tennis-vb-table .tn-sb-srv-off { color:transparent; min-width:14px; }
+  @keyframes tnSrvPulse { 0%,100%{ transform:scale(1); filter:drop-shadow(0 0 3px rgba(250,204,21,.55)); } 50%{ transform:scale(1.15); filter:drop-shadow(0 0 6px rgba(250,204,21,.85)); } }
+  #tennis-vb-table .tn-dr-delta { font-family:'DM Mono',monospace; font-size:9px; font-weight:800; letter-spacing:.3px; padding:1px 5px; border-radius:4px; margin-left:4px; background:rgba(148,163,184,.12); color:#94a3b8; white-space:nowrap; }
+  #tennis-vb-table .tn-dr-delta.up { background:rgba(74,222,128,.18); color:#4ade80; }
+  #tennis-vb-table .tn-dr-delta.down { background:rgba(255,77,77,.18); color:#ff4d4d; }
+  #tennis-vb-table .tn-dr-delta.flat { background:rgba(148,163,184,.12); color:#94a3b8; }
   #tennis-vb-table .tn-dr { grid-column:1/-1; display:flex; flex-direction:column; gap:3px; margin-top:5px; padding-top:5px; border-top:1px solid #1e293b; }
   #tennis-vb-table .tn-dr-line { display:flex; align-items:center; justify-content:space-between; gap:8px; line-height:1.25; }
   #tennis-vb-table .tn-dr-lab { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.5px; color:#64748b; }
@@ -11950,8 +11957,17 @@ function _tvbScoreCell(m) {
   if (j1 == null && j2 == null) { j1 = '–'; j2 = '–'; }
   else { j1 = j1 == null ? '–' : j1; j2 = j2 == null ? '–' : j2; }
 
+  // Serveur — 🎾 sur la ligne du joueur qui sert (lo.serving 1|2). Slot
+  // toujours présent (visible/transparent) pour alignement géométrique strict
+  // J1/J2 (grille CSS : même nombre de cellules par ligne, sinon décalage).
+  const _srv = (lo.serving === 1) ? 'p1' : (lo.serving === 2) ? 'p2' : null;
+  const ballCell = (who) => {
+    if (_srv === who) return `<span class="tn-sb-srv" title="${_escTennis(String((who === 'p1' ? m.player1?.name : m.player2?.name) || ''))} au service">🎾</span>`;
+    return `<span class="tn-sb-srv-off" aria-hidden="true">·</span>`;
+  };
   const rowHtml = (who) => {
-    let html = `<span class="tn-sb-pt">${_escTennis(String(who === 'p1' ? j1 : j2))}</span>`;
+    let html = ballCell(who);
+    html += `<span class="tn-sb-pt">${_escTennis(String(who === 'p1' ? j1 : j2))}</span>`;
     for (let s = 0; s < nSets; s++) {
       const set = sets[s];
       let val = '·', cls = 'tn-sb-g';
@@ -11969,7 +11985,9 @@ function _tvbScoreCell(m) {
     return html;
   };
 
-  return `<div class="tn-sb" style="${gridStyle}">${rowHtml('p1')}${rowHtml('p2')}${_tvbDRLive(lo, sets, s1, s2)}</div>`;
+  // Grille étendue : balle serveur + points + N sets + total.
+  const gridStyleExt = `grid-template-columns:auto repeat(${nCols},auto);`;
+  return `<div class="tn-sb" style="${gridStyleExt}">${rowHtml('p1')}${rowHtml('p2')}${_tvbDRLive(lo, sets, s1, s2)}</div>`;
 }
 
 // Dominance Ratio Live PAR JOUEUR (2 lignes, alignées J1/J2 du scoreboard).
@@ -11994,6 +12012,20 @@ function _tvbDRLive(lo, sets, s1, s2) {
   const id = String(lo.id || lo._id || (lo.player1 && lo.player1.name) || '');
   if (!window._tnDRHist) window._tnDRHist = {};
   const suffix = exact ? '' : '~';
+
+  // DR set en cours (J1) — priorité exact Sofascore (dr_set_courant), fallback
+  // proxy jeux du dernier set présent dans lo.sets[]. Renvoie null si le set
+  // courant n'a pas encore de jeu joué (delta non significatif).
+  let drSetP1 = null, setExact = false;
+  if (exact && dx && dx.dr_set_courant && typeof dx.dr_set_courant.dr === 'number' && Number.isFinite(dx.dr_set_courant.dr) && dx.dr_set_courant.dr > 0) {
+    drSetP1 = dx.dr_set_courant.dr; setExact = true;
+  } else if (Array.isArray(sets) && sets.length) {
+    const cur = sets[sets.length - 1];
+    const g1 = Number(cur && cur.p1) || 0, g2 = Number(cur && cur.p2) || 0;
+    if (g1 + g2 > 0) drSetP1 = (g1 + 0.5) / (g2 + 0.5);
+  }
+  // Δ_J1 = DR_set − DR_match (signed). Δ_J2 = −Δ_J1 (réciprocité).
+  const deltaP1 = (drSetP1 != null && Number.isFinite(drSetP1)) ? (drSetP1 - drP1) : null;
 
   const line = (dr, side) => {
     const lab = (side === 'p1' ? 'DR P1' : 'DR P2') + suffix;
@@ -12021,10 +12053,21 @@ function _tvbDRLive(lo, sets, s1, s2) {
     const info = side === 'p1'
       ? `<button type="button" class="tn-dr-i" onclick="event.stopPropagation();openTennisDRGuide()" title="Définition &amp; calcul du Dominance Ratio — ouvrir le Guide" aria-label="Aide Dominance Ratio">ⓘ</button>`
       : '';
+    // Δ DR set−match côté joueur : J1 = +deltaP1, J2 = −deltaP1 (réciproque).
+    // Seuil flat 0.05 (sinon up/down). Indicateur de momentum local (set en
+    // cours) vs cumulé (match) — positif = momentum basculé en faveur du joueur.
+    let deltaBadge = '';
+    if (deltaP1 != null) {
+      const dv = side === 'p1' ? deltaP1 : -deltaP1;
+      const cl = dv > 0.05 ? 'up' : dv < -0.05 ? 'down' : 'flat';
+      const sign = dv > 0 ? '+' : '';
+      const srcLab = setExact ? 'Sofascore' : 'proxy jeux';
+      deltaBadge = `<span class="tn-dr-delta ${cl}" title="Δ DR ${side === 'p1' ? 'J1' : 'J2'} — set en cours (${(side === 'p1' ? drSetP1 : 1/drSetP1).toFixed(2)}) − match (${dr.toFixed(2)}) = ${sign}${dv.toFixed(2)} · source ${srcLab}">Δ ${sign}${dv.toFixed(2)}</span>`;
+    }
     return `<div class="tn-dr-line ${cls}${exact ? ' tn-dr-exact' : ''}" `
       + `title="Dominance Ratio ${side === 'p1' ? 'J1' : 'J2'} — ${exact ? 'Sofascore (pts service+retour)' : 'proxy jeux+sets'} · ${dr.toFixed(2)} · tendance ${arrow}">`
       + `<span class="tn-dr-lab">${lab}${info}</span>`
-      + `<span class="tn-dr-val">${dr.toFixed(2)}<span class="tn-dr-arr ${acls}">${arrow}</span></span>`
+      + `<span class="tn-dr-val">${dr.toFixed(2)}<span class="tn-dr-arr ${acls}">${arrow}</span>${deltaBadge}</span>`
       + `</div>`;
   };
 
