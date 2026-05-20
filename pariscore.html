@@ -2,7 +2,13 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=1280, initial-scale=1.0, viewport-fit=cover">
+<!-- Bug bd ParisScorebis-amc V10 — viewport forcé desktop 1280px. Le mobile
+     rend la vue desktop (zoom out + scroll horizontal). Toutes les media
+     queries (max-width:768px) sont neutralisées : pas de sport-hub, pas de
+     strategy-setup, pas de bottom-nav, pas de mob-toolbar, pas de cartes
+     mobile. Juste le tableau desktop. Réversible : remettre
+     `width=device-width` pour réactiver le mode mobile. -->
 <title>PariScore — Paris de Valeur & Statistiques Football</title>
 <meta name="description" content="PariScore : pronostics foot &amp; tennis par algorithme. Power Score, xG, statistiques avancées et value bets dévigés pour parier avec les maths.">
 <link rel="canonical" href="https://pariscore.fr/">
