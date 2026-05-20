@@ -27,7 +27,10 @@
 // trading linear-gradient #15191d/#0f1216 → #232a33/#1c222b.
 // v18 (2026-05-20) : invalide v17 — V12 étendu cartes mobile .mc : background
 // var(--bg) → #232a33, alignement cross-vue (mobile natif + viewport=1280).
-const CACHE = 'pariscore-shell-v18';
+// v19 (2026-05-20) : invalide v18 — V13 palette tableau encore plus claire :
+// #232a33 → #3a4756 (slate moyen), hover #2d3540 → #4a5666, dark trading
+// gradient bottom #1c222b → #2f3a47.
+const CACHE = 'pariscore-shell-v19';
 const SHELL = [
   '/',
   '/pariscore.html',
