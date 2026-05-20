@@ -7459,6 +7459,38 @@ function runHistoryQuery(p) {
       return wants.has(tier);
     });
   }
+  // R1 — Plage de cotes (sur bestEdgeOdds quand dispo)
+  if (sport === 'football' && (p.minOdds != null || p.maxOdds != null)) {
+    const lo = p.minOdds != null ? p.minOdds : 1.0;
+    const hi = p.maxOdds != null ? p.maxOdds : 100;
+    pool = pool.filter(h => {
+      const o = h.predicted?.bestEdgeOdds;
+      // Si aucune cote captée (entry legacy), on garde par défaut quand range = défaut total.
+      if (typeof o !== 'number') return (lo <= 1.1 && hi >= 10);
+      return o >= lo && o <= hi;
+    });
+  }
+  // R1 — Venue filter (Edge picks = label home_team / away_team / Nul)
+  if (sport === 'football' && p.venue && p.venue !== 'all') {
+    pool = pool.filter(h => {
+      const lbl = h.predicted?.bestEdge;
+      if (!lbl) return false;
+      if (p.venue === 'home') return lbl === h.home_team;
+      if (p.venue === 'away') return lbl === h.away_team;
+      if (p.venue === 'draw') return lbl === 'Nul' || lbl === 'Draw';
+      return true;
+    });
+  }
+  // R1 — Weekday filter (0=dim..6=sam)
+  if (p.weekdays?.length) {
+    const wantsD = new Set(p.weekdays.map(d => parseInt(d)).filter(d => d >= 0 && d <= 6));
+    if (wantsD.size) {
+      pool = pool.filter(h => {
+        const d = new Date(h.commence_time).getDay();
+        return wantsD.has(d);
+      });
+    }
+  }
 
   // ── Aggregations PRE-pagination (branchées sport) ──────────────────────────
   const kpis = sport === 'tennis' ? computeTennisKpis(pool) : computeHistoryKpis(pool);
@@ -19874,6 +19906,8 @@ if (pathname === '/api/v1/history/query') {
     confidence: arr('confidence'),
     outcome: query.outcome || 'all',
     excludeLowLeagues: query.excludeLowLeagues === '1' || query.excludeLowLeagues === 'true',
+    venue: query.venue || 'all',                   // R1 : home / away / draw / all (edge picks)
+    weekdays: arr('weekdays'),                     // R1 : 0-6 (dim..sam), filtre commence_time getDay()
     page: parseInt(query.page) || 1,
     pageSize: parseInt(query.pageSize) || 50,
     sort: query.sort || 'date_desc',
@@ -19902,6 +19936,8 @@ if (pathname === '/api/v1/history/export.csv') {
     confidence: arr('confidence'),
     outcome: query.outcome || 'all',
     excludeLowLeagues: query.excludeLowLeagues === '1' || query.excludeLowLeagues === 'true',
+    venue: query.venue || 'all',
+    weekdays: arr('weekdays'),
     page: 1, pageSize: 10000, sort: 'date_desc',
   };
   const data = runHistoryQuery(p);
