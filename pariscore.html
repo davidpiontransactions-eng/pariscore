@@ -24709,7 +24709,7 @@ function dhRenderAll(data) {
   dhPopulateLeagueOptions(data.breakdown?.by_league || []);
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
-  if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || []);
+  if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || [], data.breakdown?.trap_teams || []);
 }
 
 // H5 : drill-down modal — affiche snapshot prédiction figé + score réel + stratégies tagguées
@@ -24796,60 +24796,96 @@ function _dhSparkSvg(points, w = 80, h = 22) {
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle;"><polyline fill="none" stroke="${lineColor}" stroke-width="1.5" points="${path}"/></svg>`;
 }
 
-function dhRenderStrategyTracker(strategies) {
+function dhRenderStrategyTracker(strategies, trapTeams = []) {
   const wrap = document.getElementById('dh-strategy-tracker');
   if (!wrap) return;
-  if (!strategies.length) {
-    wrap.innerHTML = `
-      <div class="dh-soon-banner">
-        <div class="dh-soon-title">🎯 Strategy Tracker</div>
-        <div class="dh-soon-body">
-          Aucune stratégie taggée dans le sous-ensemble filtré.<br>
-          Le tag <code>predicted.strategies</code> est posé à partir de cette release (H4) sur chaque nouvelle entrée archivée.
-          L'historique antérieur reste non taggé (compromis assumé — pas de back-tag rétroactif).
-          Élargissez la période ou désactivez les filtres pour voir apparaître les stratégies dès qu'archives sont disponibles.
-        </div>
-      </div>`;
-    return;
-  }
 
-  wrap.innerHTML = `
-    <div style="overflow-x:auto;">
-      <table class="hist-table dh-table" style="width:100%;">
-        <thead>
-          <tr>
-            <th>Stratégie</th>
-            <th>Marché</th>
-            <th>Picks</th>
-            <th>Winrate</th>
-            <th>IC 95%</th>
-            <th>Trend</th>
-            <th>Sparkline</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${strategies.map(s => {
-            const ui = DH_STRATEGY_UI[s.strategy] || { label: s.strategy, market: '—', flag: '' };
-            const wrC = s.winrate >= 0.6 ? 'green' : s.winrate >= 0.5 ? 'amber' : 'red';
-            const ic = s.winrate_ic95;
-            const icStr = ic && ic[0] != null ? `${Math.round(ic[0] * 100)} – ${Math.round(ic[1] * 100)}` : '—';
-            const trendStr = s.trend == null ? '—' : (s.trend > 0.03 ? `<span style="color:var(--green);">↗ +${(s.trend * 100).toFixed(0)}pts</span>` : s.trend < -0.03 ? `<span style="color:var(--red);">↘ ${(s.trend * 100).toFixed(0)}pts</span>` : '<span style="color:var(--text3);">→ stable</span>');
-            return `<tr>
-              <td><strong>${ui.flag} ${escapeHtml(ui.label)}</strong></td>
-              <td style="color:var(--text2);">${escapeHtml(ui.market)}</td>
-              <td>${s.sample}</td>
-              <td class="dh-cell-${wrC === 'green' ? 'win' : wrC === 'red' ? 'loss' : ''}" style="${wrC === 'amber' ? 'color:var(--amber);font-weight:700;' : ''}">${Math.round(s.winrate * 100)}%</td>
-              <td style="font-family:var(--font-mono);font-size:10.5px;">${icStr}</td>
-              <td>${trendStr}</td>
-              <td>${_dhSparkSvg(s.sparkline || [])}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div style="color:var(--text3);font-size:11px;font-family:var(--font-mono);margin-top:10px;">
-      Tag posé depuis Phase H4. Stratégies sans data disponible dans le record archivé (corners, cartons, etc.) → exclues.
+  const strategiesBlock = strategies.length ? `
+    <div style="margin-bottom:24px;">
+      <div style="font-family:var(--font-head);font-weight:800;font-size:18px;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">🎯 Stratégies IA</div>
+      <div style="overflow-x:auto;">
+        <table class="hist-table dh-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Stratégie</th>
+              <th>Marché</th>
+              <th>Picks</th>
+              <th>Winrate</th>
+              <th>IC 95%</th>
+              <th>Trend</th>
+              <th>Sparkline</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${strategies.map(s => {
+              const ui = DH_STRATEGY_UI[s.strategy] || { label: s.strategy, market: '—', flag: '' };
+              const wrC = s.winrate >= 0.6 ? 'green' : s.winrate >= 0.5 ? 'amber' : 'red';
+              const ic = s.winrate_ic95;
+              const icStr = ic && ic[0] != null ? `${Math.round(ic[0] * 100)} – ${Math.round(ic[1] * 100)}` : '—';
+              const trendStr = s.trend == null ? '—' : (s.trend > 0.03 ? `<span style="color:var(--green);">↗ +${(s.trend * 100).toFixed(0)}pts</span>` : s.trend < -0.03 ? `<span style="color:var(--red);">↘ ${(s.trend * 100).toFixed(0)}pts</span>` : '<span style="color:var(--text3);">→ stable</span>');
+              return `<tr>
+                <td><strong>${ui.flag} ${escapeHtml(ui.label)}</strong></td>
+                <td style="color:var(--text2);">${escapeHtml(ui.market)}</td>
+                <td>${s.sample}</td>
+                <td class="dh-cell-${wrC === 'green' ? 'win' : wrC === 'red' ? 'loss' : ''}" style="${wrC === 'amber' ? 'color:var(--amber);font-weight:700;' : ''}">${Math.round(s.winrate * 100)}%</td>
+                <td style="font-family:var(--font-mono);font-size:10.5px;">${icStr}</td>
+                <td>${trendStr}</td>
+                <td>${_dhSparkSvg(s.sparkline || [])}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="color:var(--text3);font-size:11px;font-family:var(--font-mono);margin-top:6px;">
+        Tag <code>predicted.strategies</code> posé depuis Phase H4. Stratégies sans data dans le record (corners, cartons, etc.) → exclues.
+      </div>
+    </div>` : `
+    <div class="dh-soon-banner" style="margin-bottom:24px;">
+      <div class="dh-soon-title">🎯 Stratégies IA</div>
+      <div class="dh-soon-body">
+        Aucune stratégie taggée dans ce filtre. Le tag <code>predicted.strategies</code> est posé à partir de Phase H4 sur chaque nouvelle entrée archivée. L'historique antérieur reste non taggé.
+      </div>
     </div>`;
+
+  const trapBlock = trapTeams.length ? `
+    <div>
+      <div style="font-family:var(--font-head);font-weight:800;font-size:18px;color:var(--red,#E2001A);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">🚫 Matchs Pièges</div>
+      <div style="color:var(--text2);font-size:12px;margin-bottom:10px;">Équipes où nos picks historiques sous-performent (sample ≥ 5 · WR &lt; 40%). À considérer pour exclusion des stratégies futures.</div>
+      <div style="overflow-x:auto;">
+        <table class="hist-table dh-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Équipe</th>
+              <th>Ligues</th>
+              <th>Picks</th>
+              <th>Winrate</th>
+              <th>IC 95%</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${trapTeams.map(t => {
+              const ic = t.winrate_ic95;
+              const icStr = ic && ic[0] != null ? `${Math.round(ic[0] * 100)} – ${Math.round(ic[1] * 100)}` : '—';
+              return `<tr>
+                <td><strong>${escapeHtml(t.team)}</strong></td>
+                <td style="color:var(--text2);font-size:11px;">${t.leagues.map(escapeHtml).join(' · ')}</td>
+                <td>${t.picks}</td>
+                <td class="dh-cell-loss">${Math.round(t.winrate * 100)}%</td>
+                <td style="font-family:var(--font-mono);font-size:10.5px;">${icStr}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : `
+    <div class="dh-soon-banner">
+      <div class="dh-soon-title">🚫 Matchs Pièges</div>
+      <div class="dh-soon-body">
+        Aucune équipe ne dépasse les seuils trap (sample ≥ 5 picks ET winrate &lt; 40%) sur le sous-ensemble filtré. Élargissez la période pour révéler les patterns.
+      </div>
+    </div>`;
+
+  wrap.innerHTML = strategiesBlock + trapBlock;
 }
 
 // H3 : KPI strip tennis-specific (6 marchés natifs)
