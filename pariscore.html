@@ -25153,6 +25153,57 @@ function dhRenderAll(data) {
   if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || [], data.breakdown?.trap_teams || []);
 }
 
+// R3 — Heatmap WR ligue × marché : SVG grid clic drill
+function _dhHeatmapColor(wr, sample) {
+  if (sample < 3 || wr == null) return 'rgba(100, 116, 139, 0.18)';
+  // Gradient red <-> emerald
+  if (wr >= 0.6) return `rgba(16, 185, 129, ${0.30 + Math.min((wr - 0.6) * 1.2, 0.55)})`;
+  if (wr >= 0.5) return `rgba(245, 158, 11, ${0.25 + (wr - 0.5) * 1.5})`;
+  return `rgba(239, 68, 68, ${0.30 + Math.min((0.5 - wr) * 1.2, 0.55)})`;
+}
+function _dhRenderHeatmap(heatmap) {
+  if (!heatmap?.length) return '';
+  const markets = ['over25', 'btts', 'edge'];
+  const mLabels = { over25: 'O 2.5', btts: 'BTTS', edge: 'EDGE' };
+  const rows = heatmap.slice(0, 14); // top 14 ligues
+  return `
+    <div class="dh-exec-block" style="margin-bottom:22px;">
+      <div class="dh-exec-block-title">🔥 Heatmap WR — Ligue × Marché</div>
+      <div style="overflow-x:auto;">
+        <table class="dh-heatmap" style="border-collapse:separate;border-spacing:4px;width:100%;font-family:'JetBrains Mono', monospace;">
+          <thead>
+            <tr>
+              <th style="text-align:left;color:var(--dh-text-4);font-size:10px;text-transform:uppercase;letter-spacing:.7px;padding:4px 8px;font-weight:500;">Ligue</th>
+              ${markets.map(m => `<th style="color:var(--dh-text-4);font-size:10px;text-transform:uppercase;letter-spacing:.7px;padding:4px 8px;font-weight:500;text-align:center;">${mLabels[m]}</th>`).join('')}
+              <th style="color:var(--dh-text-4);font-size:10px;text-transform:uppercase;letter-spacing:.7px;padding:4px 8px;font-weight:500;text-align:center;">Σ Picks</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              const cellsHtml = markets.map(mk => {
+                const cell = (r.cells || []).find(c => c.market === mk) || { winrate: null, sample: 0 };
+                const bg = _dhHeatmapColor(cell.winrate, cell.sample);
+                const txt = cell.sample < 3
+                  ? '—'
+                  : `${Math.round((cell.winrate || 0) * 100)}%`;
+                const sub = cell.sample < 3 ? '' : `<span style="font-size:9px;opacity:.7;display:block;">n=${cell.sample}</span>`;
+                return `<td style="background:${bg};border-radius:6px;text-align:center;padding:8px 10px;color:var(--dh-text);font-weight:700;font-size:13px;min-width:62px;" title="${mk} : ${cell.sample} picks">
+                  ${txt}${sub}
+                </td>`;
+              }).join('');
+              return `<tr>
+                <td style="color:var(--dh-text);font-weight:600;font-size:12px;padding:6px 8px;">${escapeHtml(r.league)}</td>
+                ${cellsHtml}
+                <td style="color:var(--dh-text-3);font-size:11px;text-align:center;padding:6px 8px;">${r.total_picks}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="color:var(--dh-text-4);font-size:10.5px;font-family:'JetBrains Mono', monospace;margin-top:8px;">Vert ≥60% · Ambre 50-60% · Rouge &lt;50% · Gris n&lt;3 (sample insuffisant)</div>
+    </div>`;
+}
+
 // R2 — Executive Summary : 7 KPIs primaires + 3 alertes + top breakdowns
 function dhRenderExecutive(data) {
   const wrap = document.getElementById('dh-exec-summary');
@@ -25247,6 +25298,8 @@ function dhRenderExecutive(data) {
     </div>
 
     ${alertHtml}
+
+    ${_dhRenderHeatmap(data.breakdown?.heatmap || [])}
 
     <div class="dh-exec-row">
       <div class="dh-exec-block">

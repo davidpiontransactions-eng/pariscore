@@ -7073,7 +7073,7 @@ function computeTennisBreakdown(entries) {
     };
   });
 
-  return { by_league: tournaments, by_market: markets, by_strategy: [], trap_teams: [] };
+  return { by_league: tournaments, by_market: markets, by_strategy: [], trap_teams: [], heatmap: [] };
 }
 
 function computeTennisSeries(entries) {
@@ -7310,6 +7310,19 @@ function computeHistoryBreakdown(entries) {
   });
   strategies.sort((a, b) => b.sample - a.sample);
 
+  // R3 : Heatmap WR ligue × marché (cellules : WR + sample par croisement)
+  const heatmap = [];
+  for (const [name, d] of Object.entries(byLeague)) {
+    const cells = ['over25', 'btts', 'edge'].map(mkt => {
+      const xs = d.picks.filter(p => p.market === mkt);
+      const total = xs.length;
+      const wins = xs.reduce((s, p) => s + p.won, 0);
+      return { market: mkt, sample: total, winrate: total ? wins / total : null };
+    });
+    heatmap.push({ league: name, total_picks: d.picks.length, cells });
+  }
+  heatmap.sort((a, b) => b.total_picks - a.total_picks);
+
   // H6 : Matchs Pièges — équipes où nos picks historiques sous-performent.
   // Pour chaque équipe (dom OU ext), agrège picks et calcule WR.
   // Trap = sample >= 5 picks ET winrate < 40%.
@@ -7344,7 +7357,7 @@ function computeHistoryBreakdown(entries) {
     .sort((a, b) => a.winrate - b.winrate)
     .slice(0, 12);
 
-  return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams };
+  return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams, heatmap };
 }
 
 // R2 — Alertes Executive : drift / bad beat streak / cohort divergence
