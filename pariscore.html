@@ -11909,6 +11909,26 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   }
   /* PHASE4-END */
 
+  /* ============================================================
+     QA FIX MAJ-7/8/9 — z-index hierarchy tier explicite
+     bd ParisScorebis-401 — fix 6 modals tied 9999 + deep/live-detail 1020 tie.
+     ============================================================ */
+  /* MAJ-Z-START */
+  #auth-modal       { z-index: 9999 !important; } /* TOP — highest priority */
+  .radar-overlay    { z-index: 9990 !important; }
+  #bm-modal         { z-index: 9980 !important; }
+  #tex-books-modal  { z-index: 9970 !important; }
+  #tex-player-modal { z-index: 9960 !important; }
+  #dh-drill-modal   { z-index: 9950 !important; }
+  /* Tier mid-modal */
+  #live-detail-modal { z-index: 1025 !important; } /* +5 over deep-modal to fix 1020 tie */
+  #deep-modal        { z-index: 1020 !important; }
+  #insights-modal    { z-index: 1010 !important; }
+  #score-modal       { z-index: 1000 !important; }
+  /* Profiles modal CF V2 (above mid-modal stack but below auth) */
+  #cf-profiles-modal { z-index: 9500 !important; }
+  /* MAJ-Z-END */
+
   /* CF-END */
 </style>
 
@@ -31952,6 +31972,34 @@ function renderComparateur(d) {
 
   /* expose for debug */
   window.cfApplyMode = cfApplyMode;
+
+  /* ── QA MAJ-4 fix — Multi-tab localStorage sync (rapport_qa_foot_tennis.md) ── */
+  /* Listen 'storage' event pour reflechir changements entre onglets:
+     - cf_mode (Trading/Analyse) toggle
+     - cf_tennis_profiles (modal profils)
+     - ps_fav (favoris foot/tennis) */
+  window.addEventListener('storage', function (e) {
+    if (!e || !e.key) return;
+    try {
+      if (e.key === 'cf_mode') {
+        cfApplyMode(e.newValue || 'analyse');
+      } else if (e.key === 'cf_tennis_profiles') {
+        /* Refresh modal list si ouvert */
+        var modalOpen = document.querySelector('#cf-profiles-modal');
+        if (modalOpen && modalOpen.style.display === 'flex') {
+          cfRefreshProfilesList();
+        }
+      } else if (e.key === 'ps_fav' && typeof window.favoriteMatchIds !== 'undefined') {
+        /* Resync favs Set + trigger re-render foot */
+        try {
+          window.favoriteMatchIds = new Set(JSON.parse(e.newValue || '[]'));
+          if (typeof window.renderMatches === 'function' && Array.isArray(window._matchsLastFetch)) {
+            window.renderMatches(window._matchsLastFetch);
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+  });
 })();
 </script>
 
