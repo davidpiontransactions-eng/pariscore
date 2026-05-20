@@ -5622,11 +5622,14 @@
     #matches-table, #scrollbar-top, #table-scroll { display: none !important; }
     #vb-cards { display: flex; flex-direction: column; gap: 0; padding: 0 0 8px; }
     .mc {
-      background: var(--bg); border-bottom: 1px solid var(--border);
+      /* V12 ParisScorebis-amc — cartes mobile alignées sur la palette tableau
+         #232a33 (slate aéré, plus claire que #0a0a0a noir profond). Cohérent
+         entre mobile natif et mobile viewport=1280 (desktop scalé). */
+      background: #232a33; border-bottom: 1px solid rgba(255,255,255,0.08);
       padding: 12px 4px; cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: background .12s;
     }
-    .mc:active { background: var(--bg2); }
+    .mc:active { background: #2d3540; }
     .mc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
     .mc-league { font-family: var(--font-head); font-size: 11px; font-weight: 700;
       color: var(--text3); text-transform: uppercase; letter-spacing: .5px; overflow: hidden;
