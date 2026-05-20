@@ -1346,13 +1346,13 @@
   /* ── VALUE-FIRST ROW v46 — zéro zébrure, divider 1px, couleur = sens only ── */
   #vb-body tr { border-bottom: 1px solid rgba(255,255,255,0.08); transition: background .15s; contain: layout; }
   /* V12 ParisScorebis-amc — éclaircissement tableau (user "noir trop sombre").
-     #11161b → #525c6b (slate plus aéré, garde contraste rouge L'Équipe). */
-  #vb-body tr td { background: #525c6b; }
+     #11161b → #6b6864 (slate plus aéré, garde contraste rouge L'Équipe). */
+  #vb-body tr td { background: #6b6864; }
   /* Ligne value bet : accent gauche sémantique (pas une zébrure décorative) */
   #vb-body tr.is-value td:first-child { box-shadow: inset 3px 0 0 0 var(--green); }
   #vb-body tr.is-value-hot td:first-child { box-shadow: inset 3px 0 0 0 #00e676; }
-  #vb-body tr:hover td { background: #646e7d; }
-  #vb-body tr:focus-within td { background: #646e7d; }
+  #vb-body tr:hover td { background: #7a7771; }
+  #vb-body tr:focus-within td { background: #7a7771; }
   @media (prefers-reduced-motion: reduce) { #vb-body tr { transition: none; } }
 
   /* Séparateurs verticaux entre groupes de colonnes */
@@ -1486,11 +1486,11 @@
       border-bottom:2px solid rgba(226,0,26,.55) !important; padding:9px 8px !important; }
     #vb-table thead th.th-hero{ color:#fb7185 !important; }
     /* Surface de ligne unifiée — 2 ids → bat #fff !important du thème clair */
-    #vb-table #vb-body td{ background:linear-gradient(180deg,#525c6b,#3d4a5a) !important;
+    #vb-table #vb-body td{ background:linear-gradient(180deg,#6b6864,#4a4844) !important;
       color:#cbd5e1 !important; border-bottom:1px solid rgba(255,255,255,.05) !important;
       border-right:1px solid rgba(255,255,255,.035) !important;
       vertical-align:middle !important; }
-    #vb-table #vb-body tr:hover td{ background:linear-gradient(180deg,#646e7d,#525c6b) !important; }
+    #vb-table #vb-body tr:hover td{ background:linear-gradient(180deg,#7a7771,#6b6864) !important; }
     #vb-table #vb-body tr.is-value-hot td:first-child{ box-shadow:inset 3px 0 0 0 #22c55e !important; }
     #vb-table #vb-body tr.is-value td:first-child{ box-shadow:inset 3px 0 0 0 #d99412 !important; }
     #vb-table #vb-body tr.match-row-live td:first-child{ box-shadow:inset 3px 0 0 0 #E2001A !important; }
@@ -5623,13 +5623,13 @@
     #vb-cards { display: flex; flex-direction: column; gap: 0; padding: 0 0 8px; }
     .mc {
       /* V12 ParisScorebis-amc — cartes mobile alignées sur la palette tableau
-         #525c6b (slate aéré, plus claire que #0a0a0a noir profond). Cohérent
+         #6b6864 (slate aéré, plus claire que #0a0a0a noir profond). Cohérent
          entre mobile natif et mobile viewport=1280 (desktop scalé). */
-      background: #525c6b; border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #6b6864; border-bottom: 1px solid rgba(255,255,255,0.08);
       padding: 12px 4px; cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: background .12s;
     }
-    .mc:active { background: #646e7d; }
+    .mc:active { background: #7a7771; }
     .mc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
     .mc-league { font-family: var(--font-head); font-size: 11px; font-weight: 700;
       color: var(--text3); text-transform: uppercase; letter-spacing: .5px; overflow: hidden;
