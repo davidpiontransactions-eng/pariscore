@@ -3158,6 +3158,95 @@
     color: var(--dh-cyan);
   }
 
+  /* R2 — Executive Summary view */
+  #page-historique .dh-exec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  #page-historique .dh-exec-card {
+    background: var(--dh-bg-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--dh-border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .15s ease, box-shadow .2s ease;
+  }
+  #page-historique .dh-exec-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, var(--dh-cyan) 0%, var(--dh-accent) 100%);
+  }
+  #page-historique .dh-exec-card.is-green::before { background: var(--dh-emerald); }
+  #page-historique .dh-exec-card.is-amber::before { background: var(--dh-amber); }
+  #page-historique .dh-exec-card.is-red::before { background: var(--dh-red); }
+  #page-historique .dh-exec-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.3), 0 0 22px rgba(56, 189, 248, 0.18);
+  }
+  #page-historique .dh-exec-card-label {
+    color: var(--dh-text-4);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  #page-historique .dh-exec-card-val {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    color: var(--dh-text);
+    line-height: 1.05;
+    margin-bottom: 4px;
+  }
+  #page-historique .dh-exec-card.is-green .dh-exec-card-val { color: var(--dh-emerald); text-shadow: 0 0 18px rgba(16, 185, 129, 0.4); }
+  #page-historique .dh-exec-card.is-amber .dh-exec-card-val { color: var(--dh-amber); }
+  #page-historique .dh-exec-card.is-red .dh-exec-card-val { color: var(--dh-red); text-shadow: 0 0 18px rgba(239, 68, 68, 0.35); }
+  #page-historique .dh-exec-card-sub { color: var(--dh-text-3); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
+  #page-historique .dh-exec-card-hero { grid-column: span 2; }
+  @media (max-width: 720px) { #page-historique .dh-exec-card-hero { grid-column: auto; } }
+
+  #page-historique .dh-exec-alerts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  #page-historique .dh-exec-alert {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid;
+    backdrop-filter: blur(10px);
+  }
+  #page-historique .dh-exec-alert-red { background: rgba(239, 68, 68, 0.10); border-color: rgba(239, 68, 68, 0.35); box-shadow: 0 0 18px rgba(239, 68, 68, 0.15); }
+  #page-historique .dh-exec-alert-amber { background: rgba(245, 158, 11, 0.10); border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 0 16px rgba(245, 158, 11, 0.12); }
+  #page-historique .dh-exec-alert-green { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.30); box-shadow: 0 0 14px rgba(16, 185, 129, 0.10); }
+  #page-historique .dh-exec-alert-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+  #page-historique .dh-exec-alert-kind { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; opacity: 0.85; margin-bottom: 3px; }
+  #page-historique .dh-exec-alert-red .dh-exec-alert-kind { color: var(--dh-red); }
+  #page-historique .dh-exec-alert-amber .dh-exec-alert-kind { color: var(--dh-amber); }
+  #page-historique .dh-exec-alert-green .dh-exec-alert-kind { color: var(--dh-emerald); }
+  #page-historique .dh-exec-alert-msg { color: var(--dh-text-2); font-size: 13px; line-height: 1.4; }
+
+  #page-historique .dh-exec-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 880px) { #page-historique .dh-exec-row { grid-template-columns: 1fr; } }
+  #page-historique .dh-exec-block {
+    background: var(--dh-bg-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--dh-border);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  #page-historique .dh-exec-block-title {
+    color: var(--dh-cyan);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  #page-historique .dh-exec-block table { background: transparent; }
+
   /* Bypass theme clair globalement pour cet onglet */
   body:not(.dark-theme) #page-historique { background: var(--dh-bg); color: var(--dh-text); }
 
@@ -8887,12 +8976,17 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
     <div class="dh-main">
       <div id="dh-view-switch" class="dh-views">
-        <button type="button" class="dh-view-btn active" data-view="table">📋 Tableau</button>
+        <button type="button" class="dh-view-btn active" data-view="executive">⭐ Executive</button>
+        <button type="button" class="dh-view-btn" data-view="table">📋 Tableau</button>
         <button type="button" class="dh-view-btn" data-view="charts">📊 Graphiques</button>
         <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies</button>
       </div>
 
-      <div id="dh-view-table" class="dh-view">
+      <div id="dh-view-executive" class="dh-view">
+        <div id="dh-exec-summary"></div>
+      </div>
+
+      <div id="dh-view-table" class="dh-view" style="display:none;">
         <div class="hist-table-wrap">
           <table class="hist-table dh-table">
             <thead>
@@ -24927,7 +25021,7 @@ const dhState = {
   period: '90',
   fromDate: null,
   toDate: null,
-  view: 'table',
+  view: 'executive',
   page: 1,
   pageSize: 50,
   sort: 'date_desc',
@@ -25053,9 +25147,135 @@ function dhRenderAll(data) {
     dhRenderKpis(data.kpis, data.total);
   }
   dhPopulateLeagueOptions(data.breakdown?.by_league || []);
+  if (dhState.view === 'executive') dhRenderExecutive(data);
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
   if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || [], data.breakdown?.trap_teams || []);
+}
+
+// R2 — Executive Summary : 7 KPIs primaires + 3 alertes + top breakdowns
+function dhRenderExecutive(data) {
+  const wrap = document.getElementById('dh-exec-summary');
+  if (!wrap) return;
+  const kpis = data.kpis || {};
+  const total = data.total || 0;
+  const alerts = data.alerts || [];
+  const byLeague = data.breakdown?.by_league || [];
+  const byMarket = data.breakdown?.by_market || [];
+
+  const gy = kpis.global_yield || {};
+  const totalPicks = kpis.total_picks || 0;
+  const totalWins = kpis.sport === 'tennis'
+    ? ['ml','set1','geq1_set','total_games','aces','tie_break'].reduce((s,m) => s + (kpis[m]?.wins || 0), 0)
+    : (kpis.over25?.wins || 0) + (kpis.btts?.wins || 0) + (kpis.edge?.wins || 0);
+  const aggWR = totalPicks ? totalWins / totalPicks : null;
+  const longestLoss = dhState.sport === 'tennis'
+    ? Math.max(...['ml','set1','geq1_set','total_games','aces','tie_break'].map(m => kpis[m]?.longest_losing_streak || 0))
+    : Math.max(kpis.over25?.longest_losing_streak || 0, kpis.btts?.longest_losing_streak || 0, kpis.edge?.longest_losing_streak || 0);
+
+  const topLeagues = byLeague.slice(0, 3);
+  const topMarkets = byMarket.slice().sort((a, b) => (b.winrate || 0) - (a.winrate || 0));
+
+  const alertHtml = alerts.length ? `
+    <div class="dh-exec-alerts">
+      ${alerts.map(a => `
+        <div class="dh-exec-alert dh-exec-alert-${a.severity || 'amber'}">
+          <div class="dh-exec-alert-icon">${a.severity === 'red' ? '🚨' : a.severity === 'green' ? '🎯' : '⚠️'}</div>
+          <div class="dh-exec-alert-body">
+            <div class="dh-exec-alert-kind">${(a.kind || 'alert').replace(/_/g,' ').toUpperCase()}</div>
+            <div class="dh-exec-alert-msg">${escapeHtml(a.msg || '')}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : `
+    <div class="dh-exec-alerts">
+      <div class="dh-exec-alert dh-exec-alert-green">
+        <div class="dh-exec-alert-icon">✅</div>
+        <div class="dh-exec-alert-body">
+          <div class="dh-exec-alert-kind">PORTFOLIO HEALTHY</div>
+          <div class="dh-exec-alert-msg">Aucun drift détecté · pas de bad streak · cohort stable.</div>
+        </div>
+      </div>
+    </div>`;
+
+  const fmtPct = (x) => x == null ? '—' : Math.round(x * 100) + '%';
+  const fmtPctSign = (x) => x == null ? '—' : (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
+
+  wrap.innerHTML = `
+    <div class="dh-exec-grid">
+      <div class="dh-exec-card dh-exec-card-hero">
+        <div class="dh-exec-card-label">Total Picks · Sample</div>
+        <div class="dh-exec-card-val">${totalPicks}</div>
+        <div class="dh-exec-card-sub">${total} matchs · ${totalWins}W / ${totalPicks - totalWins}L</div>
+      </div>
+      <div class="dh-exec-card ${aggWR >= 0.6 ? 'is-green' : aggWR >= 0.5 ? 'is-amber' : 'is-red'}">
+        <div class="dh-exec-card-label">Winrate Global</div>
+        <div class="dh-exec-card-val">${fmtPct(aggWR)}</div>
+        <div class="dh-exec-card-sub">tous marchés cumul</div>
+      </div>
+      ${gy.sample_with_odds > 0 ? `
+      <div class="dh-exec-card ${gy.yield >= 0.05 ? 'is-green' : gy.yield >= 0 ? 'is-amber' : 'is-red'}">
+        <div class="dh-exec-card-label">Yield</div>
+        <div class="dh-exec-card-val">${fmtPctSign(gy.yield)}</div>
+        <div class="dh-exec-card-sub">${gy.sample_with_odds} picks · avg ${gy.avg_odds?.toFixed(2)}</div>
+      </div>` : `
+      <div class="dh-exec-card">
+        <div class="dh-exec-card-label">Yield</div>
+        <div class="dh-exec-card-val">—</div>
+        <div class="dh-exec-card-sub">odds H2+ requis</div>
+      </div>`}
+      <div class="dh-exec-card ${(kpis.max_drawdown_units || 0) > 10 ? 'is-red' : (kpis.max_drawdown_units || 0) > 5 ? 'is-amber' : 'is-green'}">
+        <div class="dh-exec-card-label">Max Drawdown</div>
+        <div class="dh-exec-card-val">-${kpis.max_drawdown_units || 0}u</div>
+        <div class="dh-exec-card-sub">P/L ${(kpis.final_pl_units || 0) >= 0 ? '+' : ''}${kpis.final_pl_units || 0}u</div>
+      </div>
+      <div class="dh-exec-card ${longestLoss >= 6 ? 'is-red' : longestLoss >= 4 ? 'is-amber' : ''}">
+        <div class="dh-exec-card-label">Longest Losing Streak</div>
+        <div class="dh-exec-card-val">${longestLoss}</div>
+        <div class="dh-exec-card-sub">pertes consécutives</div>
+      </div>
+      ${gy.break_even != null ? `
+      <div class="dh-exec-card ${aggWR != null && aggWR > gy.break_even ? 'is-green' : 'is-red'}">
+        <div class="dh-exec-card-label">Strike Break-Even</div>
+        <div class="dh-exec-card-val">${(gy.break_even * 100).toFixed(1)}%</div>
+        <div class="dh-exec-card-sub">vs WR actuel ${fmtPct(aggWR)}</div>
+      </div>` : ''}
+      <div class="dh-exec-card">
+        <div class="dh-exec-card-label">Verified Matchs</div>
+        <div class="dh-exec-card-val">${kpis.verified_matches || 0}</div>
+        <div class="dh-exec-card-sub">backtest base</div>
+      </div>
+    </div>
+
+    ${alertHtml}
+
+    <div class="dh-exec-row">
+      <div class="dh-exec-block">
+        <div class="dh-exec-block-title">🏆 Top 3 Ligues (par sample)</div>
+        ${topLeagues.length ? `<table class="hist-table dh-table" style="width:100%;">
+          <thead><tr><th>Ligue</th><th>Picks</th><th>WR</th><th>IC 95%</th></tr></thead>
+          <tbody>
+            ${topLeagues.map(l => {
+              const ic = l.winrate_ic95;
+              const icStr = ic && ic[0] != null ? Math.round(ic[0]*100) + '–' + Math.round(ic[1]*100) + '%' : '—';
+              const wrC = l.winrate >= 0.6 ? 'win' : l.winrate >= 0.5 ? '' : 'loss';
+              return `<tr><td><strong>${escapeHtml(l.league)}</strong></td><td>${l.picks}</td><td class="${wrC ? 'dh-cell-' + wrC : ''}" style="${!wrC ? 'color:var(--dh-amber,#f59e0b);font-weight:700;' : ''}">${fmtPct(l.winrate)}</td><td style="font-family:var(--font-mono);font-size:10.5px;">${icStr}</td></tr>`;
+            }).join('')}
+          </tbody></table>` : '<div style="color:var(--dh-text-3);font-size:12px;padding:8px;">Aucune ligue</div>'}
+      </div>
+      <div class="dh-exec-block">
+        <div class="dh-exec-block-title">💹 Performance par Marché</div>
+        ${topMarkets.length ? `<table class="hist-table dh-table" style="width:100%;">
+          <thead><tr><th>Marché</th><th>Sample</th><th>WR</th><th>Yield</th></tr></thead>
+          <tbody>
+            ${topMarkets.map(m => {
+              const wrC = m.winrate >= 0.6 ? 'win' : m.winrate >= 0.5 ? '' : 'loss';
+              const yieldStr = m.yield != null ? fmtPctSign(m.yield) : '—';
+              return `<tr><td><strong>${escapeHtml(m.market.toUpperCase())}</strong></td><td>${m.sample}</td><td class="${wrC ? 'dh-cell-' + wrC : ''}" style="${!wrC ? 'color:var(--dh-amber,#f59e0b);font-weight:700;' : ''}">${fmtPct(m.winrate)}</td><td style="font-family:var(--font-mono);">${yieldStr}</td></tr>`;
+            }).join('')}
+          </tbody></table>` : '<div style="color:var(--dh-text-3);font-size:12px;padding:8px;">Aucun marché</div>'}
+      </div>
+    </div>
+  `;
 }
 
 // H5 : drill-down modal — affiche snapshot prédiction figé + score réel + stratégies tagguées
@@ -25896,10 +26116,11 @@ function _dhWireControls() {
       document.querySelectorAll('#dh-view-switch .dh-view-btn').forEach(b => b.classList.toggle('active', b === btn));
       const v = btn.dataset.view;
       dhState.view = v;
+      document.getElementById('dh-view-executive').style.display = v === 'executive' ? '' : 'none';
       document.getElementById('dh-view-table').style.display = v === 'table' ? '' : 'none';
       document.getElementById('dh-view-charts').style.display = v === 'charts' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
-      if (v === 'charts' || v === 'strategy') dhRefresh();
+      if (v === 'charts' || v === 'strategy' || v === 'executive') dhRefresh();
     });
   });
 
