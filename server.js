@@ -19577,6 +19577,83 @@ if (pathname === '/r/' || pathname === '/r') {
   return res.end();
 }
 
+// ─── /cb/ — S2S postback Gambling-Affiliation (conversion ingest) ────────────
+// Méthode: GET ou POST  (GA envoie souvent en GET, certains réseaux POST — on accepte les deux)
+// Params:
+//   token   = secret partagé (env GA_POSTBACK_TOKEN) — sinon route 503
+//   cid     = click_id (UUID renvoyé par /r/ — clé unique idempotence)
+//   payout  = montant conversion EUR (float, ex "12.50") OU centimes int (auto-detect)
+//   type    = 'cpa' | 'revshare' | 'cpl' | 'hybrid' (optionnel, déduit sinon)
+//   subid   = fallback si cid non fourni (lookup via subid)
+// Réponse: 200 'OK' (ack postback) ou status d'erreur en texte brut.
+// Idempotence: UPDATE WHERE converted_at IS NULL → replay = no-op silencieux.
+if (pathname === '/cb/' || pathname === '/cb') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.writeHead(405, { 'Allow': 'GET, POST' });
+    return res.end();
+  }
+  const expectedToken = process.env.GA_POSTBACK_TOKEN;
+  if (!expectedToken) {
+    console.error('[/cb/] GA_POSTBACK_TOKEN not set — postback disabled');
+    res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('postback disabled');
+  }
+  const providedToken = String(query.token || '');
+  // Comparaison time-safe pour éviter timing attack
+  if (providedToken.length !== expectedToken.length ||
+      !crypto.timingSafeEqual(Buffer.from(providedToken), Buffer.from(expectedToken))) {
+    console.warn('[/cb/] token mismatch from', req.socket && req.socket.remoteAddress);
+    res.writeHead(401, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('unauthorized');
+  }
+  const cid = String(query.cid || '').trim();
+  const subidFallback = String(query.subid || '').trim();
+  if (!cid && !subidFallback) {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('missing cid or subid');
+  }
+  // Parse payout — accepte "12.50" (EUR) ou "1250" (cents) — heuristique: contient '.' → EUR
+  let payoutCents = 0;
+  const payoutRaw = String(query.payout || '0').trim();
+  if (payoutRaw.includes('.') || payoutRaw.includes(',')) {
+    payoutCents = Math.round(parseFloat(payoutRaw.replace(',', '.')) * 100);
+  } else {
+    payoutCents = parseInt(payoutRaw, 10) || 0;
+  }
+  if (!Number.isFinite(payoutCents) || payoutCents < 0) payoutCents = 0;
+  const conversionType = String(query.type || 'cpa').toLowerCase().slice(0, 16);
+  // UPDATE idempotent : WHERE converted_at IS NULL → replay = 0 rows
+  try {
+    let info;
+    if (cid) {
+      info = sqldb.prepare(`UPDATE affiliate_clicks
+        SET converted_at = strftime('%s','now'), payout_cents = ?, conversion_type = ?
+        WHERE click_id = ? AND converted_at IS NULL`).run(payoutCents, conversionType, cid);
+    } else {
+      // Fallback subid (match le plus récent non converti)
+      info = sqldb.prepare(`UPDATE affiliate_clicks
+        SET converted_at = strftime('%s','now'), payout_cents = ?, conversion_type = ?
+        WHERE id = (
+          SELECT id FROM affiliate_clicks WHERE subid = ? AND converted_at IS NULL
+          ORDER BY clicked_at DESC LIMIT 1
+        )`).run(payoutCents, conversionType, subidFallback);
+    }
+    if (info.changes === 0) {
+      // Click introuvable OU déjà converti — log mais retour OK (GA n'a pas à savoir)
+      console.warn('[/cb/] no row updated — cid=', cid, 'subid=', subidFallback, '(unknown or replay)');
+    } else {
+      console.log('[/cb/] conversion ingested — cid=', cid || `subid:${subidFallback}`, 'payout_cents=', payoutCents, 'type=', conversionType);
+    }
+  } catch (e) {
+    console.error('[/cb/] UPDATE failed:', e.message);
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('update failed');
+  }
+  // Ack standard postback iGaming : "OK" en texte brut
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+  return res.end('OK');
+}
+
 // GET /api/v1/accuracy — protégé auth minimum
 if (pathname === '/api/v1/accuracy') {
   const user = getAuthUser(req);
