@@ -15,7 +15,9 @@
 // compactée (6d725fe). status-bar/team-search/league-hub-banner/fc-head cachés
 // mobile, ai-scout/matchday-banner/table-header compact → tableau visible
 // above fold.
-const CACHE = 'pariscore-shell-v13';
+// v14 (2026-05-20) : invalide v13 — embarque V9 mob-toolbar compactage
+// (search 28px + sort-row 24px + chips 24px + mob-quick hidden) → ~70px total.
+const CACHE = 'pariscore-shell-v14';
 const SHELL = [
   '/',
   '/pariscore.html',
