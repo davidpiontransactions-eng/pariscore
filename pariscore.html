@@ -10401,6 +10401,616 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   body.dark-theme #tennis-vb-table .tsd-top.t-p2 { color:#04243a; background:linear-gradient(135deg,#5cc8ff,#1787c9); }
   body.dark-theme #tennis-vb-table .tvb-prob-label { mix-blend-mode:difference; color:#fff; text-shadow:none; }
   body.dark-theme #tennis-vb-table thead th { box-shadow:0 2px 0 0 var(--accent), 0 8px 16px -8px rgba(0,0,0,0.6); }
+
+  /* ============================================================
+     CYBER-FINTECH OVERLAY — v11.0 (2026-05-20)
+     CSS-only visual upgrade. Scoped to body.dark-theme.
+     Sections: tokens · glass wrappers · football row widget ·
+     tennis row + LCD scoreboard · surface tint :has() ·
+     DR bar gradient · live pulse · scrollbar · skeleton shimmer.
+     Reversible: remove block between CF-START and CF-END.
+     ============================================================ */
+  /* CF-START — v11.1 (theme-agnostic: applies in BOTH light + dark mode) */
+  :root {
+    --cf-cyan:#38bdf8;
+    --cf-cyan-soft:rgba(56,189,248,.18);
+    --cf-cyan-glow:rgba(56,189,248,.55);
+    --cf-neon:#4ade80;
+    --cf-neon-soft:rgba(74,222,128,.18);
+    --cf-neon-glow:rgba(74,222,128,.55);
+    --cf-amber:#fbbf24;
+    --cf-red:#ff3856;
+    --cf-red-glow:rgba(255,56,86,.55);
+    --cf-clay:#c97a3f;
+    --cf-grass:#16a34a;
+    --cf-hard:#2563eb;
+    --cf-ink:#070b14;
+    --cf-panel:#0b1220;
+    --cf-panel2:#0f172a;
+    --cf-glass-bg:rgba(15,23,42,.78);
+    --cf-glass-border:rgba(56,189,248,.18);
+    --cf-text:#e8eaed;
+    --cf-text2:#94a3b8;
+    --cf-text3:#64748b;
+    --cf-blur:blur(12px);
+  }
+
+  /* 1. Glass wrappers — tables become DARK TRADING PANELS even in light theme */
+  #table-scroll,
+  #tennis-valuebets-section .table-responsive-wrapper,
+  #tennis-live-section .table-responsive-wrapper,
+  #page-tennis .table-responsive-wrapper,
+  .table-responsive-wrapper:has(#vb-table),
+  .table-responsive-wrapper:has(#tennis-vb-table),
+  .table-responsive-wrapper:has(#tennis-live-table) {
+    background:
+      radial-gradient(140% 100% at 0% 0%, rgba(56,189,248,.10), transparent 50%),
+      radial-gradient(140% 100% at 100% 0%, rgba(74,222,128,.06), transparent 55%),
+      linear-gradient(180deg, #0b1220 0%, #070b14 100%) !important;
+    backdrop-filter: var(--cf-blur);
+    -webkit-backdrop-filter: var(--cf-blur);
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: 14px !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 30px 60px -30px rgba(0,0,0,.55),
+      0 0 0 1px rgba(56,189,248,.05) !important;
+    /* re-theme tokens locally so child rules render dark-friendly */
+    --bg: #0a0d0f;
+    --bg2: transparent;
+    --bg3: rgba(56,189,248,.06);
+    --bg4: rgba(148,163,184,.08);
+    --text: #e8eaed;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,.07);
+    --border2: rgba(255,255,255,.12);
+    color: #e8eaed;
+  }
+
+  /* 2. Force dark text + transparent cells inside table region
+        Spec bump via :not(#__cf__) (always matches) = +1 id-weight to beat
+        existing body:not(.dark-theme) #vb-body tr td !important rules. */
+  #vb-table:not(#__cf__), #tennis-vb-table:not(#__cf__), #tennis-live-table:not(#__cf__) { color: #e8eaed !important; }
+  #vb-body:not(#__cf__) tr,
+  #vb-body:not(#__cf__) tr td,
+  #tennis-vb-table:not(#__cf__) tr.tennis-vb-row td,
+  #tennis-live-table:not(#__cf__) tr.tennis-vb-row td {
+    background: transparent !important;
+    background-image: none !important;
+    color: #e8eaed !important;
+    border-bottom: 1px solid rgba(148,163,184,.10) !important;
+  }
+  #vb-body:not(#__cf__) tr td,
+  #tennis-vb-table:not(#__cf__) tr.tennis-vb-row td { --text:#e8eaed; --text2:#94a3b8; --text3:#64748b; }
+  /* Inline color overrides on light-coded text (#1a1a1a, #888, #555) */
+  #vb-body:not(#__cf__) tr td [style*="#1a1a1a"],
+  #vb-body:not(#__cf__) tr td [style*="#1A1A1A"],
+  #vb-body:not(#__cf__) tr td [style*="#111"] { color: #e8eaed !important; }
+  #vb-body:not(#__cf__) tr td [style*="#888"],
+  #vb-body:not(#__cf__) tr td [style*="#555"],
+  #vb-body:not(#__cf__) tr td [style*="#4a4a4a"] { color: #94a3b8 !important; }
+
+  /* 3. Headers — uppercase tracked, dark gradient (spec-bumped) */
+  #vb-table:not(#__cf__) thead th,
+  #tennis-vb-table:not(#__cf__) thead th,
+  #tennis-live-table:not(#__cf__) thead th {
+    letter-spacing: .14em !important;
+    text-transform: uppercase !important;
+    font-size: 10.5px !important;
+    color: #cbd5e1 !important;
+    background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(7,11,20,.95)) !important;
+    border-bottom: 1px solid var(--cf-glass-border) !important;
+    text-shadow: 0 0 8px rgba(56,189,248,.20);
+  }
+
+  /* 4. Football rows — widget hover with cyan stripe */
+  #vb-body tr {
+    position: relative;
+    transition: background .18s ease, box-shadow .18s ease;
+  }
+  #vb-body tr::before {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 0; background: var(--cf-cyan);
+    box-shadow: 0 0 12px var(--cf-cyan-glow);
+    transition: width .18s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+  #vb-body tr:hover {
+    background: linear-gradient(90deg, rgba(56,189,248,.10), rgba(56,189,248,0) 65%) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(56,189,248,.15),
+      0 8px 22px -10px rgba(0,0,0,.55) !important;
+  }
+  #vb-body tr:hover::before { width: 3px; }
+  #vb-body tr.match-row-live::before {
+    width: 3px;
+    background: var(--cf-red);
+    box-shadow: 0 0 14px var(--cf-red-glow);
+    animation: cfLivePulse 1.6s ease-in-out infinite;
+  }
+  @keyframes cfLivePulse {
+    0%, 100% { opacity: 1;   box-shadow: 0 0 10px var(--cf-red-glow); }
+    50%      { opacity: .55; box-shadow: 0 0 22px var(--cf-red-glow); }
+  }
+
+  /* 5. Sticky team column — keep dark on dark surface (double spec-bump) */
+  #vb-table:not(#__cf__):not(#__cf2__) td:nth-child(1), #vb-table:not(#__cf__):not(#__cf2__) td:nth-child(2),
+  #tennis-vb-table:not(#__cf__):not(#__cf2__) td:nth-child(1), #tennis-vb-table:not(#__cf__):not(#__cf2__) td:nth-child(2),
+  #tennis-live-table:not(#__cf__):not(#__cf2__) td:nth-child(1), #tennis-live-table:not(#__cf__):not(#__cf2__) td:nth-child(2) {
+    background: linear-gradient(180deg, rgba(11,18,32,.92), rgba(7,11,20,.92)) !important;
+    border-right-color: rgba(56,189,248,.12) !important;
+    color: #e8eaed !important;
+  }
+  #vb-table:not(#__cf__):not(#__cf2__) thead th:nth-child(1),
+  #vb-table:not(#__cf__):not(#__cf2__) thead th:nth-child(2),
+  #tennis-vb-table:not(#__cf__):not(#__cf2__) thead th:nth-child(1),
+  #tennis-vb-table:not(#__cf__):not(#__cf2__) thead th:nth-child(2),
+  #tennis-live-table:not(#__cf__):not(#__cf2__) thead th:nth-child(1),
+  #tennis-live-table:not(#__cf__):not(#__cf2__) thead th:nth-child(2) {
+    background: linear-gradient(180deg, rgba(11,18,32,.98), rgba(7,11,20,.95)) !important;
+  }
+  /* Value col (right edge) — beat body:not(.dark-theme) #vb-table td.vb-value-col { background:#fff !important } */
+  #vb-table:not(#__cf__):not(#__cf2__) td.vb-value-col,
+  #vb-table:not(#__cf__):not(#__cf2__) thead th.vb-value-col {
+    background: linear-gradient(180deg, rgba(11,18,32,.92), rgba(7,11,20,.92)) !important;
+    border-left: 2px solid rgba(255,56,86,.30) !important;
+    color: #e8eaed !important;
+  }
+
+  /* 6. Tennis rows — same DNA, cyan hover */
+  #tennis-vb-table tr.tennis-vb-row:hover td,
+  #tennis-live-table tr.tennis-vb-row:hover td {
+    background: linear-gradient(90deg, rgba(56,189,248,.10), rgba(56,189,248,0) 65%) !important;
+  }
+  #tennis-vb-table tr.tennis-vb-row:hover,
+  #tennis-live-table tr.tennis-vb-row:hover {
+    box-shadow:
+      inset 3px 0 0 0 var(--cf-cyan),
+      inset 0 0 0 1px rgba(56,189,248,.15),
+      0 0 18px -6px var(--cf-cyan-glow) !important;
+  }
+
+  /* 7. LCD scoreboard — tennis score column (double spec-bump to beat section 2 cell-reset) */
+  #tennis-vb-table:not(#__cf__):not(#__cf2__) td.tvb-score-col,
+  #tennis-live-table:not(#__cf__):not(#__cf2__) td.tvb-score-col {
+    font-variant-numeric: tabular-nums !important;
+    color: var(--cf-cyan) !important;
+    text-shadow: 0 0 8px rgba(56,189,248,.55) !important;
+    background: linear-gradient(180deg, rgba(7,11,20,.92), rgba(15,23,42,.80)) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(56,189,248,.30),
+      inset 0 0 22px -8px rgba(56,189,248,.40) !important;
+    border-radius: 8px !important;
+  }
+  #tennis-vb-table tr.tennis-vb-row:hover td.tvb-score-col,
+  #tennis-live-table tr.tennis-vb-row:hover td.tvb-score-col {
+    box-shadow:
+      inset 0 0 0 1px rgba(56,189,248,.50),
+      inset 0 0 28px -6px rgba(56,189,248,.60) !important;
+  }
+
+  /* 8. Surface tint per row (via :has) */
+  @supports selector(:has(*)) {
+    #tennis-vb-table tr.tennis-vb-row:has(.tvb-surface-clay) td:first-child,
+    #tennis-live-table tr.tennis-vb-row:has(.tvb-surface-clay) td:first-child {
+      background: linear-gradient(90deg, rgba(201,122,63,.12), rgba(11,18,32,.92) 80%) !important;
+      box-shadow: inset 3px 0 0 0 rgba(201,122,63,.70), inset 12px 0 18px -8px rgba(201,122,63,.40) !important;
+    }
+    #tennis-vb-table tr.tennis-vb-row:has(.tvb-surface-grass) td:first-child,
+    #tennis-live-table tr.tennis-vb-row:has(.tvb-surface-grass) td:first-child {
+      background: linear-gradient(90deg, rgba(22,163,74,.12), rgba(11,18,32,.92) 80%) !important;
+      box-shadow: inset 3px 0 0 0 rgba(22,163,74,.70), inset 12px 0 18px -8px rgba(22,163,74,.38) !important;
+    }
+    #tennis-vb-table tr.tennis-vb-row:has(.tvb-surface-hard) td:first-child,
+    #tennis-live-table tr.tennis-vb-row:has(.tvb-surface-hard) td:first-child {
+      background: linear-gradient(90deg, rgba(37,99,235,.12), rgba(11,18,32,.92) 80%) !important;
+      box-shadow: inset 3px 0 0 0 rgba(37,99,235,.70), inset 12px 0 18px -8px rgba(37,99,235,.38) !important;
+    }
+  }
+
+  /* 9. Surface badges polish */
+  #tennis-vb-table .tvb-surface {
+    letter-spacing: .10em !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    backdrop-filter: blur(6px);
+  }
+  #tennis-vb-table .tvb-surface-hard {
+    background: linear-gradient(135deg, rgba(37,99,235,.28), rgba(37,99,235,.08)) !important;
+    border: 1px solid rgba(37,99,235,.55) !important;
+    color: #93c5fd !important;
+    text-shadow: 0 0 10px rgba(37,99,235,.55);
+  }
+  #tennis-vb-table .tvb-surface-clay {
+    background: linear-gradient(135deg, rgba(201,122,63,.30), rgba(201,122,63,.10)) !important;
+    border: 1px solid rgba(201,122,63,.60) !important;
+    color: #f4a261 !important;
+    text-shadow: 0 0 10px rgba(201,122,63,.60);
+  }
+  #tennis-vb-table .tvb-surface-grass {
+    background: linear-gradient(135deg, rgba(22,163,74,.30), rgba(22,163,74,.08)) !important;
+    border: 1px solid rgba(22,163,74,.60) !important;
+    color: #86efac !important;
+    text-shadow: 0 0 10px rgba(22,163,74,.55);
+  }
+
+  /* 10. DR bar — gradient reactive (magnificent) */
+  #tennis-vb-table .tn-dr {
+    border-top: 1px solid rgba(56,189,248,.14) !important;
+    padding-top: 7px;
+  }
+  #tennis-vb-table .tn-dr-line {
+    position: relative;
+    padding: 4px 8px !important;
+    border-radius: 8px !important;
+    background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    border: 1px solid rgba(56,189,248,.12) !important;
+    overflow: hidden;
+  }
+  #tennis-vb-table .tn-dr-line::before {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: .55;
+  }
+  #tennis-vb-table .tn-dr-line.tn-dr-dom {
+    color: var(--cf-neon) !important;
+    background: linear-gradient(90deg, rgba(74,222,128,.30), rgba(74,222,128,.06) 70%, transparent), linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    box-shadow: inset 0 0 0 1px rgba(74,222,128,.45), 0 0 14px -4px var(--cf-neon-glow) !important;
+  }
+  #tennis-vb-table .tn-dr-line.tn-dr-bal {
+    color: var(--cf-amber) !important;
+    background: linear-gradient(90deg, rgba(251,191,36,.24), rgba(251,191,36,.05) 70%, transparent), linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    box-shadow: inset 0 0 0 1px rgba(251,191,36,.42) !important;
+  }
+  #tennis-vb-table .tn-dr-line.tn-dr-sub {
+    color: var(--cf-red) !important;
+    background: linear-gradient(90deg, rgba(255,56,86,.24), rgba(255,56,86,.05) 70%, transparent), linear-gradient(180deg, rgba(15,23,42,.85), rgba(7,11,20,.85)) !important;
+    box-shadow: inset 0 0 0 1px rgba(255,56,86,.45) !important;
+  }
+  #tennis-vb-table .tn-dr-line.tn-dr-exact {
+    box-shadow: inset 0 0 0 1px var(--cf-cyan-glow), 0 0 16px -4px var(--cf-cyan-glow) !important;
+  }
+  #tennis-vb-table .tn-dr-val {
+    font-variant-numeric: tabular-nums !important;
+    text-shadow: 0 0 10px currentColor !important;
+    font-weight: 800;
+  }
+  #tennis-vb-table .tn-dr-lab { color: rgba(148,163,184,.85) !important; }
+
+  /* 11. DR per-set chips */
+  #tennis-vb-table .tn-drs-chip {
+    background: rgba(7,11,20,.85) !important;
+    border: 1px solid rgba(148,163,184,.28) !important;
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  #tennis-vb-table .tn-drs-chip:hover { transform: translateY(-1px); }
+  #tennis-vb-table .tn-drs-chip.tn-drs-dom { box-shadow: 0 0 10px rgba(74,222,128,.45) !important; border-color: rgba(74,222,128,.55) !important; }
+  #tennis-vb-table .tn-drs-chip.tn-drs-sub { box-shadow: 0 0 10px rgba(255,56,86,.45) !important; border-color: rgba(255,56,86,.55) !important; }
+  #tennis-vb-table .tn-drs-chip.tn-drs-bal { border-color: rgba(251,191,36,.55) !important; }
+  #tennis-vb-table .tn-drs-chip.tn-drs-cur {
+    background: linear-gradient(135deg, rgba(56,189,248,.28), rgba(56,189,248,.08)) !important;
+    box-shadow: 0 0 0 1px var(--cf-cyan), 0 0 14px var(--cf-cyan-glow) !important;
+  }
+  #tennis-vb-table .tn-drs-lab { color: rgba(148,163,184,.85) !important; }
+
+  /* 12. Predictive KPI chips glow upgrade */
+  .tvb-pred-kpi.strong { box-shadow: 0 0 16px rgba(74,222,128,.55), inset 0 0 0 1px rgba(0,0,0,.20) !important; }
+  .tvb-pred-kpi.value  { box-shadow: 0 0 16px rgba(251,158,38,.55), inset 0 0 0 1px rgba(0,0,0,.20) !important; }
+  .tvb-pred-kpi.live   {
+    box-shadow: 0 0 16px var(--cf-red-glow), inset 0 0 0 1px rgba(0,0,0,.30) !important;
+    animation: cfKpiPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes cfKpiPulse {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(1.18); }
+  }
+  .tvb-pred-chip { color: #cbd5e1 !important; }
+  .tvb-pred-chip b { color: #f1f5f9 !important; }
+
+  /* 13. Tennis live row override */
+  tr.tennis-vb-row.is-live {
+    background: linear-gradient(90deg, rgba(255,56,86,.18), rgba(255,56,86,0) 65%) !important;
+  }
+  tr.tennis-vb-row.is-live > td:first-child {
+    box-shadow:
+      inset 3px 0 0 0 var(--cf-red),
+      inset 12px 0 18px -8px var(--cf-red-glow) !important;
+    animation: cfLivePulse 1.7s ease-in-out infinite;
+  }
+
+  /* 14. LIVE badge polish */
+  .badge-live {
+    position: relative;
+    background: linear-gradient(135deg, #ff3856, #c4151e) !important;
+    color: #fff !important;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-shadow: 0 0 6px rgba(0,0,0,.5);
+    box-shadow: 0 0 14px var(--cf-red-glow), inset 0 0 0 1px rgba(255,255,255,.10) !important;
+    border-radius: 4px;
+  }
+  .badge-live::after {
+    content: "";
+    position: absolute; inset: -4px;
+    border-radius: 8px;
+    animation: cfRingPulse 1.8s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes cfRingPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,56,86,.55); opacity: .9; }
+    100% { box-shadow: 0 0 0 8px rgba(255,56,86,0);  opacity: 0; }
+  }
+
+  /* 15. Slim neon scrollbar — global */
+  ::-webkit-scrollbar { width: 8px !important; height: 8px !important; }
+  ::-webkit-scrollbar-track { background: rgba(7,11,20,.4) !important; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56,189,248,.65), rgba(56,189,248,.25)) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(56,189,248,.25) !important;
+    box-shadow: 0 0 8px rgba(56,189,248,.30) !important;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(56,189,248,.85), rgba(56,189,248,.40)) !important;
+    box-shadow: 0 0 12px rgba(56,189,248,.55) !important;
+  }
+  html { scrollbar-color: rgba(56,189,248,.50) rgba(7,11,20,.4); scrollbar-width: thin; }
+
+  /* 16. Skeleton shimmer */
+  .tm-skeleton, .pa-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(15,23,42,.70), rgba(30,41,59,.70), rgba(15,23,42,.70)) !important;
+    border: 1px solid rgba(56,189,248,.14) !important;
+    border-radius: 8px !important;
+  }
+  .tm-skeleton::after, .pa-skeleton::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,.18), transparent);
+    transform: translateX(-100%);
+    animation: cfShimmer 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes cfShimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* 17. League hub banner glassmorphism */
+  #league-hub-banner {
+    background:
+      radial-gradient(120% 100% at 0% 0%, rgba(56,189,248,.10), transparent 55%),
+      linear-gradient(180deg, #0b1220 0%, #070b14 100%) !important;
+    backdrop-filter: var(--cf-blur);
+    -webkit-backdrop-filter: var(--cf-blur);
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: 14px !important;
+    color: #e8eaed !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 20px 40px -20px rgba(0,0,0,.55) !important;
+  }
+  #league-hub-banner * { color: #e8eaed !important; }
+
+  /* 18. Filter chips hover/active glow */
+  #filter-console button:hover,
+  #filter-console [role="button"]:hover,
+  .filter-chip:hover,
+  #tennis-vb-filters button:hover {
+    box-shadow: 0 0 0 1px rgba(56,189,248,.50), 0 0 18px -4px var(--cf-cyan-glow) !important;
+    transition: box-shadow .15s ease, transform .15s ease;
+  }
+  #filter-console button[aria-pressed="true"],
+  #filter-console button.active,
+  .filter-chip.active,
+  #tennis-vb-filters button.active {
+    box-shadow: 0 0 0 1px rgba(56,189,248,.45), 0 0 16px -3px var(--cf-cyan-glow) !important;
+  }
+
+  /* 19. Reduce-motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    #vb-body tr.match-row-live::before,
+    tr.tennis-vb-row.is-live > td:first-child,
+    .tvb-pred-kpi.live,
+    .badge-live::after,
+    .tm-skeleton::after,
+    .pa-skeleton::after { animation: none !important; }
+  }
+
+  /* ============================================================
+     SPRINT 1 P0 — TOP 3 INNOVATIONS (2026-05-20)
+     Added: UI-001 Hero Value · UI-002 IC Corridor · UI-003 Mode
+     Dual Trading/Analyse · UI-004 Tennis Filters Accordion ·
+     UI-005 Mobile Card-View Tennis.
+     Reversible: remove block between SPRINT1-START and SPRINT1-END.
+     ============================================================ */
+  /* SPRINT1-START */
+
+  /* UI-003 — Mode Dual Trading / Analyse */
+  .cf-mode-toggle {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(7,11,20,.85);
+    border: 1px solid rgba(56,189,248,.30);
+    border-radius: 8px; padding: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .cf-mode-toggle button {
+    border: 0; background: transparent; color: #94a3b8;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .cf-mode-toggle button.active {
+    background: linear-gradient(135deg, rgba(56,189,248,.22), rgba(56,189,248,.08));
+    color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56,189,248,.35), inset 0 0 0 1px rgba(56,189,248,.40);
+  }
+  .cf-mode-toggle button:hover:not(.active) { color: #cbd5e1; }
+
+  /* Trading mode: hide non-critical Foot columns (3=Rang, 4=Forme, 5=Score pred,
+     8=Buteurs, 9=Actions) — keep: 1 Date, 2 Match, 6 Cote Δ, 7 Conseils IA, 10 VALUE */
+  body[data-cf-mode="trading"] #vb-table thead th:nth-child(3),
+  body[data-cf-mode="trading"] #vb-table thead th:nth-child(4),
+  body[data-cf-mode="trading"] #vb-table thead th:nth-child(5),
+  body[data-cf-mode="trading"] #vb-table thead th:nth-child(8),
+  body[data-cf-mode="trading"] #vb-table thead th:nth-child(9),
+  body[data-cf-mode="trading"] #vb-body tr td:nth-child(3),
+  body[data-cf-mode="trading"] #vb-body tr td:nth-child(4),
+  body[data-cf-mode="trading"] #vb-body tr td:nth-child(5),
+  body[data-cf-mode="trading"] #vb-body tr td:nth-child(8),
+  body[data-cf-mode="trading"] #vb-body tr td:nth-child(9) {
+    display: none !important;
+  }
+
+  /* Trading mode tennis: hide cols 8-13 (PowerScore, KingOfAces, Set1, Set2,
+     Jeux O/U, Mental) — keep: 1 Date/Surface, 2 Match, 3 Bets Pred, 4 Score,
+     5 Elo, 6 Proba, 7 ScoreSets, 14 Value EV+, 15 Confiance, 16 AI */
+  body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(8),
+  body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(9),
+  body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(10),
+  body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(11),
+  body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(12),
+  body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(13),
+  body[data-cf-mode="trading"] #tennis-vb-table tbody tr td:nth-child(8),
+  body[data-cf-mode="trading"] #tennis-vb-table tbody tr td:nth-child(9),
+  body[data-cf-mode="trading"] #tennis-vb-table tbody tr td:nth-child(10),
+  body[data-cf-mode="trading"] #tennis-vb-table tbody tr td:nth-child(11),
+  body[data-cf-mode="trading"] #tennis-vb-table tbody tr td:nth-child(12),
+  body[data-cf-mode="trading"] #tennis-vb-table tbody tr td:nth-child(13) {
+    display: none !important;
+  }
+
+  /* UI-001 — Hero Value Cell Foot — col VALUE plus large + monochrome others */
+  body[data-cf-mode="trading"] #vb-table th.vb-value-col,
+  body[data-cf-mode="trading"] #vb-table td.vb-value-col { min-width: 200px !important; }
+  body[data-cf-mode="trading"] #vb-body tr td:not(.vb-value-col) { filter: saturate(.55); }
+  body[data-cf-mode="trading"] #vb-body tr:hover td:not(.vb-value-col) { filter: saturate(.85); }
+  body[data-cf-mode="trading"] #vb-body tr td.vb-value-col { filter: none !important; }
+
+  /* UI-002 — IC Corridor inline (mini segment IC90 sous EV) */
+  .cf-ic-corridor {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px; font-weight: 700;
+    letter-spacing: .05em;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(7,11,20,.55);
+    border: 1px solid rgba(148,163,184,.15);
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+  .cf-ic-corridor.cf-ic-safe {
+    color: #4ade80;
+    border-color: rgba(74,222,128,.40);
+    background: rgba(74,222,128,.08);
+    box-shadow: 0 0 8px rgba(74,222,128,.20);
+  }
+  .cf-ic-corridor.cf-ic-warn {
+    color: #fbbf24;
+    border-color: rgba(251,191,36,.45);
+    background: rgba(251,191,36,.08);
+    box-shadow: 0 0 8px rgba(251,191,36,.20);
+  }
+  .cf-ic-corridor.cf-ic-trap {
+    color: #ff3856;
+    border-color: rgba(255,56,86,.45);
+    background: rgba(255,56,86,.08);
+    box-shadow: 0 0 8px rgba(255,56,86,.20);
+  }
+  .cf-ic-corridor .cf-ic-bracket { opacity: .55; }
+  .cf-ic-corridor .cf-ic-dot { font-size: 10px; }
+
+  /* UI-004 — Filtres Tennis Accordéon : 3 chips rapides visibles + reste replié */
+  body:not([data-cf-tennis-filters="expanded"]) #page-tennis [data-cf-filter-extra="true"] {
+    display: none !important;
+  }
+  .cf-tennis-filters-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(7,11,20,.85);
+    border: 1px solid rgba(56,189,248,.30);
+    color: #cbd5e1;
+    border-radius: 8px; padding: 5px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s, box-shadow .15s, color .15s;
+  }
+  .cf-tennis-filters-toggle:hover {
+    background: rgba(15,23,42,.95);
+    color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56,189,248,.30);
+  }
+  .cf-tennis-filters-toggle .cf-ft-count {
+    background: rgba(56,189,248,.20);
+    color: #38bdf8;
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  body[data-cf-tennis-filters="expanded"] .cf-tennis-filters-toggle .cf-ft-arrow { transform: rotate(180deg); }
+  .cf-tennis-filters-toggle .cf-ft-arrow {
+    display: inline-block;
+    transition: transform .25s;
+    font-size: 10px;
+  }
+
+  /* UI-005 — Mobile Card-View Tennis (cards en stack <768px) */
+  @media (max-width: 768px) {
+    #tennis-vb-table {
+      display: block; width: 100%;
+    }
+    #tennis-vb-table thead { display: none; }
+    #tennis-vb-table tbody { display: block; }
+    #tennis-vb-table tbody tr.tennis-vb-row {
+      display: grid !important;
+      grid-template-columns: 1fr auto;
+      grid-gap: 6px 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: linear-gradient(180deg, rgba(11,18,32,.92), rgba(7,11,20,.90)) !important;
+      border: 1px solid rgba(56,189,248,.18) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 24px -12px rgba(0,0,0,.55);
+    }
+    #tennis-vb-table tbody tr.tennis-vb-row td {
+      display: block;
+      background: transparent !important;
+      border: 0 !important;
+      padding: 2px 0 !important;
+    }
+    /* Mobile card : keep only KPIs essentiels — col 2 (Match), 4 (Score), 3 (Bets), 14 (Value EV+) */
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(1) { grid-column: 1/2; grid-row: 1; font-size: 10px; opacity: .8; }
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(2) { grid-column: 1/2; grid-row: 2; font-size: 13px; font-weight: 700; }
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(4) { grid-column: 2/3; grid-row: 1/3; align-self: center; }
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(3) { grid-column: 1/3; grid-row: 3; padding-top: 6px !important; border-top: 1px solid rgba(148,163,184,.15) !important; }
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(14) { grid-column: 1/3; grid-row: 4; }
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(5),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(6),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(7),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(8),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(9),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(10),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(11),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(12),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(13),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(15),
+    #tennis-vb-table tbody tr.tennis-vb-row td:nth-child(16) { display: none !important; }
+  }
+  /* SPRINT1-END */
+
+  /* CF-END */
 </style>
 
 <!-- PAGE : TARIFS -->
@@ -18724,11 +19334,23 @@ const label = country
     else                      { vbTier = 'no';  vbTag = 'ÉVITER'; }
     const _vbOdds = (_hasEdge && best.odds != null)
       ? (typeof best.odds === 'number' ? best.odds.toFixed(2) : best.odds) : '';
+    /* UI-002 — IC Corridor inline (Sprint 1 P0) — only if backend exposes best.ic90 */
+    let icCorridorHtml = '';
+    if (_hasEdge && best && best.ic90 && typeof best.ic90.low === 'number' && typeof best.ic90.high === 'number') {
+      const lo = best.ic90.low;
+      const hi = best.ic90.high;
+      const icCls = (lo > 0) ? 'cf-ic-safe' : (hi > 0 ? 'cf-ic-warn' : 'cf-ic-trap');
+      const fmt = (v) => (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+      icCorridorHtml = `<span class="cf-ic-corridor ${icCls}" title="Intervalle de confiance 90% sur EV — borne basse ${fmt(lo)} · borne haute ${fmt(hi)}. ${lo > 0 ? 'Statistiquement positif' : hi > 0 ? 'Borne basse négative (piège possible)' : 'Statistiquement négatif'}.">
+        <span class="cf-ic-bracket">[</span>${fmt(lo)}<span class="cf-ic-dot">•</span>${fmt(hi)}<span class="cf-ic-bracket">]</span>
+      </span>`;
+    }
     const vbHeroHtml = `<td class="vb-value-col">
       <span class="vb-hero-value vbh-${vbTier}" title="Edge dévigé${best.bk ? ' · '+best.bk : ''} — ${vbTag}">
         <span class="vbh-edge">${_hasEdge ? (edge > 0 ? '▲' : edge < 0 ? '▼' : '＝') : ''}${_hasEdge ? (edge > 0 ? '+' : '') + edge.toFixed(1) + '%' : '—'}</span>
         ${best.label ? `<span class="vbh-pick">${best.label}${_vbOdds ? ' @'+_vbOdds : ''}</span>` : ''}
         <span class="vbh-tag">${vbTag}</span>
+        ${icCorridorHtml}
       </span>
     </td>`;
 
@@ -29952,6 +30574,145 @@ function renderComparateur(d) {
     if (isMobile()) mobShowSkeletons();
     bnSetActive('matchs');
   });
+})();
+</script>
+
+<!-- ============================================================
+     SPRINT 1 P0 — JS bootstrap (Mode Dual + Tennis Accordion)
+     v11.2 — 2026-05-20 — Reversible: remove this <script id="cf-sprint1">.
+     ============================================================ -->
+<script id="cf-sprint1">
+(function () {
+  'use strict';
+
+  /* ── UI-003 — Mode Dual Trading / Analyse toggle ── */
+  function cfApplyMode(mode) {
+    var m = (mode === 'trading') ? 'trading' : 'analyse';
+    document.body.setAttribute('data-cf-mode', m);
+    try { localStorage.setItem('cf_mode', m); } catch (e) {}
+    document.querySelectorAll('.cf-mode-toggle button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-cf-mode') === m);
+    });
+  }
+  function cfBuildModeToggle() {
+    if (document.querySelector('.cf-mode-toggle')) return;
+    var html = ''
+      + '<div class="cf-mode-toggle" role="tablist" aria-label="Mode d\'affichage du tableau">'
+      + '  <button type="button" data-cf-mode="trading" role="tab" title="Mode Trading: 4-5 colonnes prioritaires (Pro)">Trading</button>'
+      + '  <button type="button" data-cf-mode="analyse" role="tab" title="Mode Analyse: layout complet">Analyse</button>'
+      + '</div>';
+    /* Insert before #vb-table wrapper in matchs + before #tennis-vb-table in tennis */
+    var anchors = [
+      { sel: '#page-matchs #filter-console', mode: 'foot' },
+      { sel: '#page-tennis #tennis-valuebets-section', mode: 'tennis' }
+    ];
+    anchors.forEach(function (a) {
+      var el = document.querySelector(a.sel);
+      if (!el || el.querySelector('.cf-mode-toggle')) return;
+      var tmp = document.createElement('div');
+      tmp.style.cssText = 'display:flex;justify-content:flex-end;padding:6px 12px 0;';
+      tmp.innerHTML = html;
+      el.parentNode.insertBefore(tmp, el);
+    });
+    document.querySelectorAll('.cf-mode-toggle button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        cfApplyMode(b.getAttribute('data-cf-mode'));
+      });
+    });
+  }
+
+  /* ── UI-004 — Tennis Filters Accordion ── */
+  function cfBuildTennisFilterAccordion() {
+    var page = document.querySelector('#page-tennis');
+    if (!page) return;
+    /* Find the filter row containers — each is the parent <div> of one filter group */
+    var filterGroups = page.querySelectorAll('.tnc-ms-pop, [data-filter], #tennis-vb-sort, #tennis-vb-live-only, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished');
+    /* Strategy: mark the parent <div style="display:flex;…"> of NON-essential filters as extra.
+       Essential (keep visible always): Tour (data-filter="tour"), Surface (data-filter="surface"), Live label. */
+    var essentialFilters = new Set(['tour', 'surface']);
+    page.querySelectorAll('[data-filter]').forEach(function (btn) {
+      var f = btn.getAttribute('data-filter');
+      if (!f || essentialFilters.has(f)) return;
+      var row = btn.closest('div[style*="display:flex"]');
+      if (row && !row.hasAttribute('data-cf-filter-extra')) {
+        row.setAttribute('data-cf-filter-extra', 'true');
+      }
+    });
+    /* Sort, multi-comp, search, checkboxes: mark all as extra except live */
+    page.querySelectorAll('#tennis-vb-comp, #tennis-vb-sort, #tnc-ms-btn, .tvb-search, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished').forEach(function (el) {
+      var row = el.closest('div[style*="display:flex"]') || el.closest('label');
+      if (row && !row.hasAttribute('data-cf-filter-extra')) {
+        row.setAttribute('data-cf-filter-extra', 'true');
+      }
+    });
+
+    /* Insert toggle button */
+    if (page.querySelector('.cf-tennis-filters-toggle')) return;
+    var container = page.querySelector('#tennis-valuebets-section');
+    if (!container) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cf-tennis-filters-toggle';
+    btn.innerHTML = '<span class="cf-ft-label">Plus de filtres</span> <span class="cf-ft-count" data-cf-ft-count style="display:none;">0</span> <span class="cf-ft-arrow">▼</span>';
+    btn.addEventListener('click', function () {
+      var expanded = document.body.getAttribute('data-cf-tennis-filters') === 'expanded';
+      if (expanded) {
+        document.body.removeAttribute('data-cf-tennis-filters');
+        btn.querySelector('.cf-ft-label').textContent = 'Plus de filtres';
+      } else {
+        document.body.setAttribute('data-cf-tennis-filters', 'expanded');
+        btn.querySelector('.cf-ft-label').textContent = 'Moins de filtres';
+      }
+    });
+    /* Insert at top right of filter zone */
+    var filterZone = container.querySelector('[style*="flex-wrap"]') || container;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;justify-content:flex-end;padding:6px 0;';
+    wrap.appendChild(btn);
+    filterZone.parentNode.insertBefore(wrap, filterZone);
+
+    /* Update active filter counter periodically */
+    function refreshCount() {
+      if (!window._tennisVbFilters) return;
+      var f = window._tennisVbFilters;
+      var n = 0;
+      ['comp', 'strategy', 'tier'].forEach(function (k) { if (f[k] && f[k] !== 'ALL') n++; });
+      if (f.q) n++;
+      if (f.sort && f.sort !== 'time') n++;
+      var cnt = document.querySelector('[data-cf-ft-count]');
+      if (!cnt) return;
+      if (n > 0) { cnt.style.display = ''; cnt.textContent = String(n); }
+      else { cnt.style.display = 'none'; }
+    }
+    setInterval(refreshCount, 1500);
+  }
+
+  /* ── Bootstrap ── */
+  function cfBootstrap() {
+    /* restore saved mode */
+    var saved = 'analyse';
+    try { saved = localStorage.getItem('cf_mode') || 'analyse'; } catch (e) {}
+    cfApplyMode(saved);
+    cfBuildModeToggle();
+    cfBuildTennisFilterAccordion();
+    /* Re-attempt builders after possible SPA navigation (page-locked → page-matchs) */
+    var attempts = 0;
+    var iv = setInterval(function () {
+      attempts++;
+      cfBuildModeToggle();
+      cfBuildTennisFilterAccordion();
+      if (attempts > 20) clearInterval(iv);
+    }, 750);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cfBootstrap);
+  } else {
+    cfBootstrap();
+  }
+
+  /* expose for debug */
+  window.cfApplyMode = cfApplyMode;
 })();
 </script>
 
