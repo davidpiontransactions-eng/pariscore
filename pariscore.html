@@ -11144,6 +11144,48 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   @media (prefers-reduced-motion: reduce) {
     .cf-fat-critical { animation: none !important; }
   }
+
+  /* UI-017 — Time-to-kickoff chip T-Xh Ym */
+  .cf-t2k {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 1px 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    border-radius: 4px;
+    line-height: 1.4;
+  }
+  .cf-t2k-imminent {
+    color: #ff3856;
+    background: rgba(255,56,86,.12);
+    border: 1px solid rgba(255,56,86,.45);
+    box-shadow: 0 0 6px rgba(255,56,86,.35);
+    animation: cfT2kBlink 1.4s ease-in-out infinite;
+  }
+  .cf-t2k-soon {
+    color: #fbbf24;
+    background: rgba(251,191,36,.12);
+    border: 1px solid rgba(251,191,36,.45);
+  }
+  .cf-t2k-today {
+    color: #38bdf8;
+    background: rgba(56,189,248,.10);
+    border: 1px solid rgba(56,189,248,.35);
+  }
+  .cf-t2k-far {
+    color: #94a3b8;
+    background: rgba(148,163,184,.08);
+    border: 1px solid rgba(148,163,184,.20);
+  }
+  @keyframes cfT2kBlink {
+    0%, 100% { box-shadow: 0 0 6px rgba(255,56,86,.30); }
+    50%      { box-shadow: 0 0 12px rgba(255,56,86,.70); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cf-t2k-imminent { animation: none !important; }
+  }
   /* SPRINT2-END */
 
   /* CF-END */
@@ -19622,6 +19664,7 @@ const label = country
       <td style="min-width:60px;text-align:center;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
         <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
+        ${_live ? '' : `<div class="cf-t2k" data-cf-t2k="${m.commence_time || ''}" style="display:none;"></div>`}
         <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:none;justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV"></div>
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;">
@@ -30944,6 +30987,41 @@ function renderComparateur(d) {
     setInterval(refreshCount, 1500);
   }
 
+  /* ── UI-017 — Time-to-kickoff chips (T-Xh Ym) ── */
+  function cfFormatT2K(deltaMs) {
+    if (deltaMs <= 0) return null;
+    var s = Math.floor(deltaMs / 1000);
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var d = Math.floor(h / 24);
+    if (d >= 2) return 'J+' + d;
+    if (h >= 24) return 'J+1';
+    if (h >= 1) return 'T-' + h + 'h' + (m < 10 ? '0' : '') + m;
+    if (m >= 1) return 'T-' + m + 'min';
+    return 'T-' + s + 's';
+  }
+  function cfRefreshT2K() {
+    var now = Date.now();
+    var chips = document.querySelectorAll('[data-cf-t2k]');
+    chips.forEach(function (chip) {
+      var iso = chip.getAttribute('data-cf-t2k');
+      if (!iso) { chip.style.display = 'none'; return; }
+      var ts = Date.parse(iso);
+      if (isNaN(ts)) { chip.style.display = 'none'; return; }
+      var delta = ts - now;
+      var label = cfFormatT2K(delta);
+      if (label === null) { chip.style.display = 'none'; return; }
+      chip.textContent = label;
+      /* color: red <30min, amber <2h, blue <24h, neutral else */
+      var cls = 'cf-t2k cf-t2k-far';
+      if (delta < 30 * 60 * 1000) cls = 'cf-t2k cf-t2k-imminent';
+      else if (delta < 2 * 3600 * 1000) cls = 'cf-t2k cf-t2k-soon';
+      else if (delta < 24 * 3600 * 1000) cls = 'cf-t2k cf-t2k-today';
+      chip.className = cls;
+      chip.style.display = '';
+    });
+  }
+
   /* ── Bootstrap ── */
   function cfBootstrap() {
     /* restore saved mode */
@@ -30958,8 +31036,11 @@ function renderComparateur(d) {
       attempts++;
       cfBuildModeToggle();
       cfBuildTennisFilterAccordion();
+      cfRefreshT2K();
       if (attempts > 20) clearInterval(iv);
     }, 750);
+    /* Steady T2K refresh — once per 30s once page settled */
+    setInterval(cfRefreshT2K, 30 * 1000);
   }
 
   if (document.readyState === 'loading') {
