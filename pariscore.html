@@ -1346,13 +1346,13 @@
   /* ── VALUE-FIRST ROW v46 — zéro zébrure, divider 1px, couleur = sens only ── */
   #vb-body tr { border-bottom: 1px solid rgba(255,255,255,0.08); transition: background .15s; contain: layout; }
   /* V12 ParisScorebis-amc — éclaircissement tableau (user "noir trop sombre").
-     #11161b → #6b6864 (slate plus aéré, garde contraste rouge L'Équipe). */
-  #vb-body tr td { background: #6b6864; }
+     #11161b → #ffffff (slate plus aéré, garde contraste rouge L'Équipe). */
+  #vb-body tr td { background: #ffffff; }
   /* Ligne value bet : accent gauche sémantique (pas une zébrure décorative) */
   #vb-body tr.is-value td:first-child { box-shadow: inset 3px 0 0 0 var(--green); }
   #vb-body tr.is-value-hot td:first-child { box-shadow: inset 3px 0 0 0 #00e676; }
-  #vb-body tr:hover td { background: #7a7771; }
-  #vb-body tr:focus-within td { background: #7a7771; }
+  #vb-body tr:hover td { background: #f7f7f7; }
+  #vb-body tr:focus-within td { background: #f7f7f7; }
   @media (prefers-reduced-motion: reduce) { #vb-body tr { transition: none; } }
 
   /* Séparateurs verticaux entre groupes de colonnes */
@@ -1477,7 +1477,9 @@
      Scope #vb-table + 2 ids (#vb-table #vb-body td) pour battre les
      overrides clair `body:not(.dark-theme) #vb-body tr td` (1 id). Mobile
      (<769px = cartes .mc) totalement préservé. */
-  @media (min-width:769px){
+  /* V16 user request : second bloc dark trading override (vb-table thead +
+     vb-body td) aussi neutralisé via media query impossible. */
+  @media (min-width:99999px){
     #vb-table{ background:#0d0f13 !important; border-radius:13px; overflow:hidden;
       box-shadow:0 12px 30px rgba(0,0,0,.45); border-collapse:separate; border-spacing:0; }
     #vb-table thead th{ background:linear-gradient(180deg,#1b2027,#10131a) !important;
@@ -1486,11 +1488,11 @@
       border-bottom:2px solid rgba(226,0,26,.55) !important; padding:9px 8px !important; }
     #vb-table thead th.th-hero{ color:#fb7185 !important; }
     /* Surface de ligne unifiée — 2 ids → bat #fff !important du thème clair */
-    #vb-table #vb-body td{ background:linear-gradient(180deg,#6b6864,#4a4844) !important;
+    #vb-table #vb-body td{ background:linear-gradient(180deg,#ffffff,#e4e4e4) !important;
       color:#cbd5e1 !important; border-bottom:1px solid rgba(255,255,255,.05) !important;
       border-right:1px solid rgba(255,255,255,.035) !important;
       vertical-align:middle !important; }
-    #vb-table #vb-body tr:hover td{ background:linear-gradient(180deg,#7a7771,#6b6864) !important; }
+    #vb-table #vb-body tr:hover td{ background:linear-gradient(180deg,#f7f7f7,#ffffff) !important; }
     #vb-table #vb-body tr.is-value-hot td:first-child{ box-shadow:inset 3px 0 0 0 #22c55e !important; }
     #vb-table #vb-body tr.is-value td:first-child{ box-shadow:inset 3px 0 0 0 #d99412 !important; }
     #vb-table #vb-body tr.match-row-live td:first-child{ box-shadow:inset 3px 0 0 0 #E2001A !important; }
@@ -1540,10 +1542,12 @@
       border-color:#E2001A !important; color:#fff !important; }
   }
 
-  /* ── AXE C — Élite Dark Trading : filtres + bandeau + nav (Foot desktop) ──
-     Anchor 2 ids (#page-matchs #filter-console) → bat les overrides clair
-     `body:not(.dark-theme) #page-matchs .x`. Mobile (<769) totalement intact. */
-  @media (min-width:769px){
+  /* ── AXE C — Élite Dark Trading : DÉSACTIVÉ (V16 user request 2026-05-20 :
+     « j'aime pas donc restes en blanc c'est tout »). Bloc neutralisé via
+     media query impossible (min-width:99999px). Retour theme light default
+     (#FFFFFF surface + texte noir). Réactivation : remplacer `99999` par
+     `769`. ── */
+  @media (min-width:99999px){
     /* Console filtres → panneau dark premium */
     #page-matchs #filter-console{
       background:linear-gradient(180deg,#0f172a 0%,#0b1220 100%) !important;
@@ -5623,13 +5627,13 @@
     #vb-cards { display: flex; flex-direction: column; gap: 0; padding: 0 0 8px; }
     .mc {
       /* V12 ParisScorebis-amc — cartes mobile alignées sur la palette tableau
-         #6b6864 (slate aéré, plus claire que #0a0a0a noir profond). Cohérent
+         #ffffff (slate aéré, plus claire que #0a0a0a noir profond). Cohérent
          entre mobile natif et mobile viewport=1280 (desktop scalé). */
-      background: #6b6864; border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #ffffff; border-bottom: 1px solid rgba(255,255,255,0.08);
       padding: 12px 4px; cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: background .12s;
     }
-    .mc:active { background: #7a7771; }
+    .mc:active { background: #f7f7f7; }
     .mc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
     .mc-league { font-family: var(--font-head); font-size: 11px; font-weight: 700;
       color: var(--text3); text-transform: uppercase; letter-spacing: .5px; overflow: hidden;

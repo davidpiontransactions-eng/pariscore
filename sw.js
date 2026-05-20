@@ -37,7 +37,11 @@
 // Marca). Pivot slate-froid → warm-graphite : #525c6b → #6b6864 (hue 30°,
 // L* 42), hover #646e7d → #7a7771, gradient #3d4a5a → #4a4844. Rouge L'Équipe
 // chante au lieu de vibrer.
-const CACHE = 'pariscore-shell-v21';
+// v22 (2026-05-20) : invalide v21 — V16 user request « j'aime pas restes en
+// blanc c'est tout ». Reset complet light theme : #6b6864 → #ffffff,
+// #7a7771 → #f7f7f7, #4a4844 → #e4e4e4. Blocs « Élite Dark Trading »
+// neutralisés via media query min-width:99999px (jamais match).
+const CACHE = 'pariscore-shell-v22';
 const SHELL = [
   '/',
   '/pariscore.html',
