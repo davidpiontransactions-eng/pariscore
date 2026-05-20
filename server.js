@@ -1958,7 +1958,8 @@ function getSofascoreDRCached(p1Name, p2Name) {
     if (!evId) return;
     const st = await _refreshSofaDREvent(evId);
     if (!st) return;
-    const dr = p1Home ? st.dr_home : 1 / st.dr_home;
+    // QA fix CRIT-1: guard division par zero (rapport_qa_foot_tennis.md)
+    const dr = p1Home ? st.dr_home : 1 / Math.max(1e-6, st.dr_home || 1e-6);
     const A = p1Home ? st.home : st.away, B = p1Home ? st.away : st.home;
     // DR par set (numéroté 1..5) — orienté côté J1 comme le DR match.
     const SET_MAP = { '1ST': 1, '2ND': 2, '3RD': 3, '4TH': 4, '5TH': 5 };
@@ -1966,7 +1967,7 @@ function getSofascoreDRCached(p1Name, p2Name) {
     for (const [per, v] of Object.entries(st._periods || {})) {
       const sn = SET_MAP[per];
       if (!sn) continue;
-      const drp = p1Home ? v.dr_home : 1 / v.dr_home;
+      const drp = p1Home ? v.dr_home : 1 / Math.max(1e-6, v.dr_home || 1e-6);
       const a = p1Home ? v.home : v.away, b = p1Home ? v.away : v.home;
       drBySet[sn] = {
         dr: parseFloat(drp.toFixed(3)),

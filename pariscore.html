@@ -14669,6 +14669,14 @@ function _tnSnapshotHasSignal(m) {
   if (m.player2 && (m.player2.powerscore != null || m.player2.l5_pts != null)) return true;
   return false;
 }
+// QA fix CRIT-4 (rapport_qa_foot_tennis.md): minimal snapshot pour matchs sans
+// signal mais avec player IDs. Permet lookup post-live sans perdre l'enrichment
+// si signal apparaît plus tard via patch SSE/poll.
+function _tnSnapshotHasMinimal(m) {
+  return !!(m && m.player1 && m.player2 &&
+            ((m.player1.name && m.player2.name) ||
+             (m.tournament && m.start_time)));
+}
 function _tnNameTokens(n) {
   return _tnNorm(n).split(/\s+/).filter(function (t) { return t && t.length >= 3 && !/^[a-z]\.?$/.test(t); });
 }
@@ -14687,10 +14695,12 @@ function _tnAllPairKeys(m) {
   return out;
 }
 function _tnSnapshotStore(m) {
-  if (!_tnSnapshotHasSignal(m)) return;
+  // QA fix CRIT-4: snapshot meme sans signal complet, tant que minimal IDs presents.
+  // Permet rehydration live↔prematch sur matchs ITF/nouveaux joueurs sans Elo prematch.
+  if (!_tnSnapshotHasSignal(m) && !_tnSnapshotHasMinimal(m)) return;
   var k = _tnPairKey(m);
   var kl = _tnPairKeyLast(m);
-  var snap = { ts: Date.now(), data: _tnSnapshotPickFields(m) };
+  var snap = { ts: Date.now(), data: _tnSnapshotPickFields(m), hasSignal: _tnSnapshotHasSignal(m) };
   if (k) window._tnPrematchSnapshot.set('pk:' + k, snap);
   if (kl && kl !== k) window._tnPrematchSnapshot.set('lk:' + kl, snap);
   var pairs = _tnAllPairKeys(m);
@@ -14985,6 +14995,14 @@ function patchTennisLive(){
     var sc=tbody.querySelector('[data-tn-sc="'+String(lo.id)+'"]');if(sc)sc.innerHTML=_tvbScoreCell({_isLive:true,_live:lo});
     var pc=tbody.querySelector('[data-tn-pred="'+String(lo.id)+'"]');
     if(pc){var bm=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bm)pc.innerHTML=_tvbPredictiveCell(bm);}
+    // QA fix CRIT-5 (rapport_qa_foot_tennis.md): si predictive cell absente
+    // (attribute data-tn-pred manquant), trigger full repaint via re-render
+    // au lieu de silent fail. Limit: max 1 fois/15s via flag pour eviter loop.
+    else if (!window._tnPredMissWarn || (Date.now() - window._tnPredMissWarn) > 15000) {
+      window._tnPredMissWarn = Date.now();
+      console.warn('[Tennis] predictive cell data-tn-pred missing for id='+lo.id+' — triggering full re-render');
+      try { renderTennisValueBets(window._tennisVbLastFetch || []); } catch(_) {}
+    }
   }
 }
 
