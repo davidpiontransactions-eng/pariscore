@@ -3428,6 +3428,31 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_strategies_user ON user_strategies(user_id, created_at)`);
 
+  // R10 — match_timeline_snapshots : capture minute-par-minute pendant cron live
+  // Rempli par le cron polling live (extension scope) → INSERT toutes 5min de match en cours.
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS match_timeline_snapshots (
+    match_id TEXT NOT NULL,
+    minute INTEGER NOT NULL,
+    captured_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    score_home INTEGER,
+    score_away INTEGER,
+    possession_home REAL,
+    dominance REAL,
+    xg_home REAL,
+    xg_away REAL,
+    pressure_home REAL,
+    pressure_away REAL,
+    shots_home INTEGER,
+    shots_away INTEGER,
+    corners_home INTEGER,
+    corners_away INTEGER,
+    odds_home REAL,
+    odds_draw REAL,
+    odds_away REAL,
+    PRIMARY KEY (match_id, minute)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_match_timeline_match ON match_timeline_snapshots(match_id)`);
+
   // ── v9.9 migrations : Gambling-Affiliation network — sub-id tracking + S2S postback ──
   // affiliates : multi-réseau (direct | ga) + credentials GA (pid/bid) + template sub-id
   try {
@@ -20434,6 +20459,27 @@ if (pathname.match(/^\/api\/v1\/strategies\/\d+$/) && req.method === 'DELETE') {
   try {
     sqldb.prepare('DELETE FROM user_strategies WHERE id = ? AND user_id = ?').run(id, user.userId);
     jsonResponse(res, 200, { ok: true });
+  } catch (e) { jsonResponse(res, 500, { error: e.message }); }
+  return;
+}
+
+// GET /api/v1/history/replay/:matchId — R10 timeline snapshots pour replay dynamique
+if (pathname.startsWith('/api/v1/history/replay/') && req.method === 'GET') {
+  if (process.env.HISTORY_AUTH_REQUIRED === '1' && !requireAuth(req, res)) return;
+  const matchId = decodeURIComponent(pathname.split('/').pop() || '').slice(0, 80);
+  if (!matchId) return jsonResponse(res, 400, { error: 'match_id requis' });
+  try {
+    const snapshots = sqldb.prepare(
+      'SELECT minute, score_home, score_away, possession_home, dominance, xg_home, xg_away, pressure_home, pressure_away, shots_home, shots_away, corners_home, corners_away, odds_home, odds_draw, odds_away FROM match_timeline_snapshots WHERE match_id = ? ORDER BY minute ASC'
+    ).all(matchId);
+    // Récupère match info depuis history pour contexte
+    const hist = history.find(h => h.id === matchId);
+    jsonResponse(res, 200, {
+      match_id: matchId,
+      match: hist ? { home_team: hist.home_team, away_team: hist.away_team, league: hist.league, commence_time: hist.commence_time, realScore: hist.realScore } : null,
+      snapshots,
+      snapshots_count: snapshots.length,
+    });
   } catch (e) { jsonResponse(res, 500, { error: e.message }); }
   return;
 }
