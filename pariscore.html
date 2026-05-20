@@ -11602,6 +11602,203 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   }
   /* PHASE2-END */
 
+  /* ============================================================
+     DESIGN V2 PHASE 3 — Historique migration .dh-* (2026-05-21)
+     bd ParisScorebis-21x. Data Hub Bloomberg-style.
+     Approche: alias --dh-* vers --cf-* tokens (zero risque cassure)
+     + nouvelles regles V2 layer pour Bloomberg-density.
+     ============================================================ */
+  /* PHASE3-START */
+
+  /* ── 1. Re-route --dh-* vars vers --cf-* tokens (alias-driven migration) ── */
+  /* Spec-bump :not(#__cf__) sur #page-historique pour battre les definitions
+     existantes lignes 2904-2923. Les rules CSS .dh-* continuent d'utiliser
+     var(--dh-*) mais resolvent maintenant vers tokens V2 centralises. */
+  #page-historique:not(#__cf__) {
+    --dh-bg:         var(--cf-bg-2);
+    --dh-bg-card:    var(--cf-glass-light);
+    --dh-bg-card-2:  var(--cf-glass-medium);
+    --dh-bg-elev:    var(--cf-glass-light);
+    --dh-border:     var(--cf-glass-border);
+    --dh-border-2:   var(--cf-glass-border-hot);
+    --dh-text:       var(--cf-text-strong);
+    --dh-text-2:     var(--cf-text-default);
+    --dh-text-3:     var(--cf-text-muted);
+    --dh-text-4:     var(--cf-text-dim);
+    --dh-cyan:       var(--cf-cyan);
+    --dh-emerald:    var(--cf-emerald);
+    --dh-emerald-bg: var(--cf-emerald-soft);
+    --dh-red:        var(--cf-coral);
+    --dh-red-bg:     var(--cf-coral-soft);
+    --dh-amber:      var(--cf-amber);
+    --dh-amber-bg:   var(--cf-amber-soft);
+    --dh-accent:     var(--cf-coral);
+  }
+
+  /* ── 2. Bloomberg-density layer — typographie + spacing optimises ── */
+  /* KPI tiles: label uppercase tracked + value display black tabular */
+  #page-historique:not(#__cf__) .dh-kpi-label,
+  #page-historique:not(#__cf__) .dh-fr-title,
+  #page-historique:not(#__cf__) .dh-toggle-btn {
+    letter-spacing: .12em !important;
+    text-transform: uppercase;
+    font-family: var(--cf-font-mono) !important;
+    font-weight: var(--cf-fw-bold);
+  }
+  #page-historique:not(#__cf__) .dh-kpi-value,
+  #page-historique:not(#__cf__) .dh-kpi-big {
+    font-family: var(--cf-font-display) !important;
+    font-weight: var(--cf-fw-black) !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── 3. Cards .dh-card / .dh-card-* — V2 glass treatment ── */
+  #page-historique:not(#__cf__) .dh-card,
+  #page-historique:not(#__cf__) .dh-card-accent,
+  #page-historique:not(#__cf__) .dh-card-hero,
+  #page-historique:not(#__cf__) .dh-card-alt,
+  #page-historique:not(#__cf__) .dh-card-row,
+  #page-historique:not(#__cf__) .dh-card-drill,
+  #page-historique:not(#__cf__) .dh-chart-card {
+    background: var(--cf-glass-medium) !important;
+    backdrop-filter: var(--cf-blur-medium) !important;
+    -webkit-backdrop-filter: var(--cf-blur-medium) !important;
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: var(--cf-radius-panel) !important;
+    box-shadow: var(--cf-shadow-md) !important;
+  }
+  #page-historique:not(#__cf__) .dh-card-hero {
+    background: var(--cf-glass-heavy) !important;
+    border-radius: var(--cf-radius-modal) !important;
+    box-shadow: var(--cf-shadow-lg) !important;
+  }
+
+  /* ── 4. KPI strip — Bloomberg grid 6 cols densifie ── */
+  #page-historique:not(#__cf__) .dh-kpi-strip {
+    gap: var(--cf-space-3) !important;
+    padding: var(--cf-space-3) !important;
+    background: var(--cf-glass-medium) !important;
+    backdrop-filter: var(--cf-blur-medium) !important;
+    -webkit-backdrop-filter: var(--cf-blur-medium) !important;
+    border-radius: var(--cf-radius-panel) !important;
+  }
+  #page-historique:not(#__cf__) .dh-kpi {
+    padding: var(--cf-space-3) var(--cf-space-4) !important;
+    background: var(--cf-glass-light) !important;
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: var(--cf-radius-card) !important;
+    transition: transform var(--cf-dur-fast) var(--cf-ease),
+                box-shadow var(--cf-dur-fast) var(--cf-ease);
+  }
+  #page-historique:not(#__cf__) .dh-kpi:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--cf-shadow-md), inset 0 0 0 1px var(--cf-cyan-soft);
+  }
+
+  /* ── 5. Chips strategie pilules translucides neon ── */
+  #page-historique:not(#__cf__) .dh-chip,
+  #page-historique:not(#__cf__) .dh-fr-chip {
+    background: var(--cf-glass-light) !important;
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: 9999px !important;
+    padding: var(--cf-space-1) var(--cf-space-3) !important;
+    font-family: var(--cf-font-mono) !important;
+    font-size: var(--cf-fs-xs) !important;
+    font-weight: var(--cf-fw-bold) !important;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    color: var(--cf-text-muted) !important;
+    transition: background var(--cf-dur-fast) var(--cf-ease),
+                color var(--cf-dur-fast) var(--cf-ease),
+                box-shadow var(--cf-dur-fast) var(--cf-ease);
+  }
+  #page-historique:not(#__cf__) .dh-chip.is-active,
+  #page-historique:not(#__cf__) .dh-chip[aria-pressed="true"],
+  #page-historique:not(#__cf__) .dh-fr-chip.is-active {
+    background: var(--cf-cyan-soft) !important;
+    border-color: var(--cf-cyan) !important;
+    color: var(--cf-cyan) !important;
+    box-shadow: var(--cf-glow-cyan) !important;
+  }
+  #page-historique:not(#__cf__) .dh-chip:hover:not(.is-active) {
+    background: var(--cf-glass-medium) !important;
+    color: var(--cf-text-strong) !important;
+  }
+
+  /* ── 6. Toggle + period buttons V2 ── */
+  #page-historique:not(#__cf__) .dh-toggle-btn,
+  #page-historique:not(#__cf__) .dh-period-btn,
+  #page-historique:not(#__cf__) .dh-view-btn {
+    background: var(--cf-glass-light) !important;
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: var(--cf-radius-btn) !important;
+    color: var(--cf-text-muted) !important;
+    padding: var(--cf-space-2) var(--cf-space-3) !important;
+    transition: all var(--cf-dur-fast) var(--cf-ease);
+  }
+  #page-historique:not(#__cf__) .dh-toggle-btn.is-active,
+  #page-historique:not(#__cf__) .dh-period-btn.is-active,
+  #page-historique:not(#__cf__) .dh-view-btn.is-active {
+    background: var(--cf-cyan-soft) !important;
+    border-color: var(--cf-cyan) !important;
+    color: var(--cf-cyan) !important;
+    box-shadow: var(--cf-glow-cyan) !important;
+  }
+
+  /* ── 7. Table data — densite Bloomberg-style ── */
+  #page-historique:not(#__cf__) .dh-table th,
+  #page-historique:not(#__cf__) .dh-table td {
+    padding: var(--cf-space-2) var(--cf-space-3) !important;
+    font-family: var(--cf-font-mono) !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  #page-historique:not(#__cf__) .dh-table th {
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-size: var(--cf-fs-xs) !important;
+    color: var(--cf-text-muted) !important;
+    background: var(--cf-glass-medium) !important;
+    border-bottom: 1px solid var(--cf-glass-border) !important;
+  }
+  #page-historique:not(#__cf__) .dh-table tbody tr {
+    transition: background var(--cf-dur-fast) var(--cf-ease);
+  }
+  #page-historique:not(#__cf__) .dh-table tbody tr:hover {
+    background: var(--cf-cyan-soft) !important;
+  }
+
+  /* ── 8. Drill modal V2 glass heavy ── */
+  #page-historique:not(#__cf__) .dh-drill-content {
+    background: var(--cf-glass-heavy) !important;
+    backdrop-filter: var(--cf-blur-heavy) !important;
+    -webkit-backdrop-filter: var(--cf-blur-heavy) !important;
+    border: 1px solid var(--cf-glass-border-hot) !important;
+    border-radius: var(--cf-radius-modal) !important;
+    box-shadow: var(--cf-shadow-lg) !important;
+  }
+
+  /* ── 9. Filter rail sticky V2 ── */
+  #page-historique:not(#__cf__) #dh-filter-rail {
+    background: var(--cf-glass-medium) !important;
+    backdrop-filter: var(--cf-blur-medium) !important;
+    -webkit-backdrop-filter: var(--cf-blur-medium) !important;
+    border: 1px solid var(--cf-glass-border) !important;
+    border-radius: var(--cf-radius-panel) !important;
+  }
+
+  /* ── 10. prefers-reduced-motion strict ── */
+  @media (prefers-reduced-motion: reduce) {
+    #page-historique:not(#__cf__) .dh-kpi,
+    #page-historique:not(#__cf__) .dh-chip,
+    #page-historique:not(#__cf__) .dh-toggle-btn,
+    #page-historique:not(#__cf__) .dh-table tbody tr {
+      transition: none !important;
+    }
+    #page-historique:not(#__cf__) .dh-kpi:hover { transform: none !important; }
+  }
+  /* PHASE3-END */
+
   /* CF-END */
 </style>
 
