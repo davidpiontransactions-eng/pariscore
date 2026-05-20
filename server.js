@@ -14791,11 +14791,18 @@ const TENNIS_ODDS_DISCOVERY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 // cache n'est pas re-stampé → getTennisOddsCache() refire à chaque match →
 // spam 429. Cooldown : on coupe les tentatives 6h après un quota hit.
 const TENNIS_ODDS_QUOTA_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h
+// v11.10 — Rate-limit prédictif : quand remaining < 50 → fetch fenêtre J+1
+// au lieu de J+7 + n'interroge plus les sports off-season.
+const TENNIS_ODDS_LOW_QUOTA_THRESHOLD = 50;
+// Alerte Telegram quand quota < 10% du quota mensuel par défaut (500 free / 20k pro)
+const TENNIS_ODDS_ALERT_THRESHOLD_RATIO = 0.10;
 let _tennisOddsCache = { ts: 0, data: {} };          // { sportKey: [rawMatch...] }
 let _activeTennisSports = [];                         // ['tennis_atp_french_open', ...]
 let _activeTennisSportsTs = 0;
 let _isFetchingTennisOdds = false;
 let _tennisOddsQuotaUntil = 0;                        // epoch ms — skip fetch si Date.now() < lui
+let _tennisOddsQuotaRemaining = null;                 // null = unknown, sinon int
+let _tennisOddsAlertSent = false;                     // anti-spam alerte Telegram
 
 // Discover currently active tennis sport keys from The Odds API.
 // /v4/sports is a free endpoint (does not consume request credits).
@@ -14841,6 +14848,14 @@ async function fetchTennisOddsAPI() {
     const now = new Date();
     let quotaHit = false;
 
+    // v11.10 — Fenêtre réduite à J+1 en mode low-quota pour économiser
+    // les requêtes (matchs lointains rarement utiles vs matchs du jour).
+    const lowQuotaMode = (_tennisOddsQuotaRemaining != null && _tennisOddsQuotaRemaining < TENNIS_ODDS_LOW_QUOTA_THRESHOLD);
+    const windowDays = lowQuotaMode ? 1 : 7;
+    if (lowQuotaMode) {
+      console.log(`  [Tennis Odds] ⚠️ Mode low-quota actif (remaining ${_tennisOddsQuotaRemaining}) — fenêtre réduite à J+${windowDays}.`);
+    }
+
     for (const sport of _activeTennisSports) {
       try {
         const query = new URLSearchParams({
@@ -14850,11 +14865,27 @@ async function fetchTennisOddsAPI() {
           oddsFormat: 'decimal',
           dateFormat: 'iso',
           commenceTimeFrom: formatIsoTimestamp(now),
-          commenceTimeTo: formatIsoTimestamp(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)),
+          commenceTimeTo: formatIsoTimestamp(new Date(now.getTime() + windowDays * 24 * 60 * 60 * 1000)),
         }).toString();
 
         const res = await httpsGet(`https://api.the-odds-api.com/v4/sports/${sport}/odds/?${query}`);
         if (!res) continue;
+
+        // v11.10 — Capture quota remaining (header x-requests-remaining)
+        if (res.headers && res.headers['x-requests-remaining']) {
+          const remain = parseInt(res.headers['x-requests-remaining'], 10);
+          if (!isNaN(remain)) {
+            _tennisOddsQuotaRemaining = remain;
+            // Alerte Telegram one-shot quand quota < 10%
+            const total = parseInt(res.headers['x-requests-used'], 10) + remain;
+            if (!isNaN(total) && total > 0 && (remain / total) < TENNIS_ODDS_ALERT_THRESHOLD_RATIO && !_tennisOddsAlertSent) {
+              _tennisOddsAlertSent = true;
+              const msg = `⚠️ PariScore — Odds API quota faible : ${remain}/${total} restants (<${Math.round(TENNIS_ODDS_ALERT_THRESHOLD_RATIO * 100)}%). Fetch tennis basculera en mode low-quota (fenêtre J+1).`;
+              console.warn(`  [Tennis Odds] ${msg}`);
+              try { if (typeof sendTelegramAlert === 'function') sendTelegramAlert(msg); } catch (_) {}
+            }
+          }
+        }
 
         if (res.status === 401 || res.status === 429) {
           quotaHit = true;
