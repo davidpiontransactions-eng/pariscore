@@ -22349,7 +22349,15 @@ if (pathname === '/api/v1/tennis-abstract' && req.method === 'GET') {
     const data = await fetchTennisAbstractTournament(slug);
     return jsonResponse(res, 200, data);
   } catch (e) {
-    return jsonResponse(res, 500, { error: 'tennis_abstract_error', detail: e.message });
+    // Fix V6 ParisScorebis-amc : tennisabstract.com external down/lent ne doit
+    // pas produire 500 (génère bruit console + perception page cassée). On
+    // retourne 200 avec stub vide + flag _stale pour que le front affiche un
+    // empty state propre au lieu de cascade .catch.
+    console.warn('[tennis-abstract] external fetch failed:', e.message);
+    return jsonResponse(res, 200, {
+      slug: query.event || null, _stale: true, _error: e.message,
+      rounds: [], players: [], upcoming_matches: [], completed_matches: [],
+    });
   }
 }
 // Tennis Abstract — reports (Elo / MCP leaders / Lottery / Birthdays).
@@ -22366,7 +22374,12 @@ if (pathname === '/api/v1/tennis-abstract/report' && req.method === 'GET') {
     const data = await fetchTennisAbstractReport(slug);
     return jsonResponse(res, 200, data);
   } catch (e) {
-    return jsonResponse(res, 500, { error: 'ta_report_error', detail: e.message });
+    // Fix V6 ParisScorebis-amc : idem fallback 200 stub.
+    console.warn('[tennis-abstract/report] external fetch failed:', e.message);
+    return jsonResponse(res, 200, {
+      slug: query.slug || null, _stale: true, _error: e.message,
+      headers: [], rows: [], playerSlugs: [],
+    });
   }
 }
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
