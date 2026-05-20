@@ -6888,28 +6888,28 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <p>PariScore s'appuie sur un réseau de partenaires engagés dans le sport, la data et les paris sportifs responsables.</p>
     </div>
     <div class="partners-grid">
-      <a href="https://www.bureau-des-tipsters.com/" target="_blank" rel="noopener" class="partner-card">
+      <a href="https://www.bureau-des-tipsters.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">BT</div>
         <div class="partner-info">
           <h3>Bureau des Tipsters</h3>
           <p>Communauté 30K+ membres. Pari responsable, discipline et gestion de bankroll.</p>
         </div>
       </a>
-      <a href="https://mediapronos.com/" target="_blank" rel="noopener" class="partner-card">
+      <a href="https://mediapronos.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">MP</div>
         <div class="partner-info">
           <h3>MediaPronos</h3>
           <p>Référence depuis 2012. Analyses pointues et résultats transparents.</p>
         </div>
       </a>
-      <a href="https://www.team-soccerbet.com/" target="_blank" rel="noopener" class="partner-card">
+      <a href="https://www.team-soccerbet.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">TSB</div>
         <div class="partner-info">
           <h3>Team Soccer Bet</h3>
           <p>Formation paris sportifs football. 10+ ans d'expérience, 9,700+ abonnés YouTube.</p>
         </div>
       </a>
-      <a href="https://x.com/Papa_rieur" target="_blank" rel="noopener" class="partner-card">
+      <a href="https://x.com/Papa_rieur" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">PR</div>
         <div class="partner-info">
           <h3>Papa_rieur</h3>
@@ -13517,7 +13517,7 @@ async function _fetchAndRenderTennisDetail(matchId) {
         <div style="font-size:32px;margin-bottom:8px;">🎾</div>
         <div><strong>Sports Addon requis</strong></div>
         <div style="margin-top:6px;">Les détails tennis BSD (point-par-point, serve stats, ML predictions) nécessitent l'addon $5/mo.</div>
-        <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener">Souscrire</a>
+        <a class="tennis-upgrade-cta" href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="nofollow sponsored noopener">Souscrire</a>
       </div>` + ENRICH_PLACEHOLDER;
       fetchTennisMatchstatEnrich(matchId);
       return;
@@ -22387,6 +22387,43 @@ async function loadHeroAccuracy() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  AFFILIATION GA — helper buildAffiliateUrl (1st-party redirect /r/ anti-AdBlock)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Slug client-side aligné serveur (slugifyAff)
+function _affSlug(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+}
+// Construit URL 1st-party /r/ — le serveur compose sub-id + click_id puis 302 vers bookmaker
+// Params attendus:
+//   bookmaker : 'winamax' | 'betclic' | ... | 'best' (auto-pick priority serveur)
+//   context   : 'row_button' | 'ai_scout' | 'partners_grid' | 'modal_insights' | ...
+//   match     : { id, sport_slug, league, home_team, away_team } (optionnel)
+//   market    : 'over_2_5' | 'btts_yes' | '1X2_home' | ... (optionnel)
+//   selection : libellé court de la sélection cliquée (optionnel)
+function buildAffiliateUrl({ bookmaker, context, match, market, selection }) {
+  const u = new URL('/r/', location.origin);
+  u.searchParams.set('b', String(bookmaker || 'best').toLowerCase());
+  u.searchParams.set('c', context || 'unknown');
+  if (match) {
+    if (match.id)         u.searchParams.set('mid', String(match.id));
+    if (match.sport_slug || match.sport)
+                          u.searchParams.set('sp',  _affSlug(match.sport_slug || match.sport));
+    if (match.league)     u.searchParams.set('lg',  _affSlug(match.league));
+    if (match.home_team)  u.searchParams.set('h',   _affSlug(match.home_team));
+    if (match.away_team)  u.searchParams.set('a',   _affSlug(match.away_team));
+  }
+  if (market)    u.searchParams.set('m', _affSlug(market));
+  if (selection) u.searchParams.set('s', _affSlug(selection));
+  return u.toString();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  PARTNER BOOKMAKERS — CPA inversé (style Datafoot)
 // ═══════════════════════════════════════════════════════════════════════════════
 let _partnersLoaded = false;
@@ -22404,7 +22441,7 @@ async function loadPartnerBookmakers() {
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:20px;">Aucun partenaire bookmaker disponible pour le moment.</div>';
       return;
     }
-    const icons = { '1xbet': '🎰', 'winamax': '🇫🇷', 'unibet': '🟢', 'betsson': '🔵', 'pmu': '🐎', 'pokerstars': '♠️', 'betclic': '🔴', 'parions_sport': '🏆' };
+    const icons = { '1xbet': '🎰', 'winamax': '🇫🇷', 'unibet': '🟢', 'betsson': '🔵', 'pmu': '🐎', 'pokerstars': '♠️', 'betclic': '🔴', 'parions_sport': '🏆', 'zebet': '🟡' };
     const descs = {
       '1xbet': 'Cotes parmi les plus hautes du marché. Bonus jusqu\'à €100.',
       'winamax': 'Bookmaker ANJ #1 en France. Application mobile primée.',
@@ -22414,16 +22451,18 @@ async function loadPartnerBookmakers() {
       'pokerstars': 'Bonus de bienvenue généreux. Cotes compétitives.',
       'betclic': 'Interface intuitive. Promotions régulières.',
       'parions_sport': '100% français FDJ. Paris responsables.',
+      'zebet': 'Bookmaker ANJ. Cotes boostées régulières.',
     };
     grid.innerHTML = affiliates.slice(0, 6).map(a => {
       const icon = icons[a.bookmaker.toLowerCase()] || '🎲';
       const desc = descs[a.bookmaker.toLowerCase()] || `Bookmaker partenaire. Cotes compétitives.`;
+      const href = buildAffiliateUrl({ bookmaker: a.bookmaker, context: 'partners_grid' });
       return `<div class="pa-card">
         <div class="pa-icon">${icon}</div>
         <div class="pa-details">
           <div class="pa-name">${a.name}</div>
           <div class="pa-desc">${desc}</div>
-          <a href="${a.affiliate_link}" target="_blank" rel="noopener" class="pa-btn" onclick="trackAffiliateClick(${a.id})">
+          <a href="${href}" target="_blank" rel="nofollow sponsored noopener" class="pa-btn">
             Accéder gratuitement →
           </a>
         </div>
@@ -22434,6 +22473,8 @@ async function loadPartnerBookmakers() {
   }
 }
 
+// Legacy stub — le tracking se fait désormais côté serveur via /r/ (1st-party).
+// Conservé pour rétro-compatibilité si du HTML externe l'appelle encore.
 async function trackAffiliateClick(affiliateId) {
   try {
     await fetch('/api/v1/affiliate/click', {
@@ -22445,27 +22486,18 @@ async function trackAffiliateClick(affiliateId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  BET BUTTON — Lien affilié dynamique par match
+//  BET BUTTON — Lien affilié dynamique par match (via /r/ 1st-party)
 // ═══════════════════════════════════════════════════════════════════════════════
-async function openBetLink(matchId) {
-  const m = allMatches.find(x => x.id === matchId);
-  if (!m) return;
-  try {
-    const r = await fetch(`/api/v1/affiliate/link/${matchId}`);
-    if (!r.ok) {
-      window.open('https://www.winamax.fr/paris-sportifs/sports/1', '_blank');
-      return;
-    }
-    const data = await r.json();
-    if (data.link) {
-      trackAffiliateClick(data.id);
-      window.open(data.link, '_blank');
-    } else {
-      window.open('https://www.winamax.fr/paris-sportifs/sports/1', '_blank');
-    }
-  } catch {
-    window.open('https://www.winamax.fr/paris-sportifs/sports/1', '_blank');
-  }
+function openBetLink(matchId) {
+  const m = (typeof allMatches !== 'undefined' && Array.isArray(allMatches))
+    ? allMatches.find(x => x.id === matchId)
+    : null;
+  const url = buildAffiliateUrl({
+    bookmaker: 'best',
+    context:   'row_button',
+    match:     m || { id: matchId },
+  });
+  window.open(url, '_blank', 'noopener');
 }
 
 function renderTopMatchesGrid(matches) {

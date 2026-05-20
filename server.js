@@ -19576,7 +19576,13 @@ if (pathname === '/r/' || pathname === '/r') {
   }
   let aff;
   try {
-    aff = sqldb.prepare('SELECT * FROM affiliates WHERE bookmaker = ? AND active = 1').get(bookmaker);
+    if (bookmaker === 'best' || bookmaker === 'auto') {
+      // Fallback meilleur affilié actif (priority DESC) — utile pour CTA contextuels qui veulent
+      // que la prio serveur (Coteur/GA/direct) tranche, pas le client.
+      aff = sqldb.prepare('SELECT * FROM affiliates WHERE active = 1 ORDER BY priority DESC LIMIT 1').get();
+    } else {
+      aff = sqldb.prepare('SELECT * FROM affiliates WHERE bookmaker = ? AND active = 1').get(bookmaker);
+    }
   } catch (e) {
     console.error('[/r/] DB lookup failed:', e.message);
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
