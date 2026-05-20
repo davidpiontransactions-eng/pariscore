@@ -7347,6 +7347,82 @@ function computeHistoryBreakdown(entries) {
   return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams };
 }
 
+// R2 — Alertes Executive : drift / bad beat streak / cohort divergence
+function computeHistoryAlerts(entries) {
+  const verified = entries.filter(h => h.verified && h.realScore)
+    .slice().sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+  if (!verified.length) return [];
+
+  const alerts = [];
+
+  // 1. Drift detection — WR rolling 30 picks vs all-time, par marché
+  const allPicks = [];
+  for (const h of verified) allPicks.push(..._historyPicksOf(h));
+  allPicks.sort((a, b) => a.t - b.t);
+  for (const mkt of ['over25', 'btts', 'edge']) {
+    const xs = allPicks.filter(p => p.market === mkt);
+    if (xs.length < 30) continue;
+    const recent30 = xs.slice(-30);
+    const wrAll = xs.reduce((s, p) => s + p.won, 0) / xs.length;
+    const wr30 = recent30.reduce((s, p) => s + p.won, 0) / 30;
+    const delta = wr30 - wrAll;
+    if (delta <= -0.10) {
+      alerts.push({
+        kind: 'drift',
+        severity: delta <= -0.20 ? 'red' : 'amber',
+        market: mkt,
+        wr_all: wrAll,
+        wr_recent30: wr30,
+        delta,
+        msg: `${mkt} : WR rolling 30 = ${Math.round(wr30 * 100)}% vs ${Math.round(wrAll * 100)}% all-time (${Math.round(delta * 100)}pts)`,
+      });
+    }
+  }
+
+  // 2. Bad beat streak — N consecutive losses sur edge picks (proxy)
+  const edgePicks = allPicks.filter(p => p.market === 'edge');
+  let curStreak = 0, maxStreakRecent = 0;
+  for (let i = edgePicks.length - 1; i >= 0; i--) {
+    if (edgePicks[i].won === 0) {
+      curStreak++;
+      maxStreakRecent = Math.max(maxStreakRecent, curStreak);
+    } else break;
+  }
+  if (curStreak >= 5) {
+    alerts.push({
+      kind: 'losing_streak',
+      severity: curStreak >= 8 ? 'red' : 'amber',
+      streak: curStreak,
+      market: 'edge',
+      msg: `${curStreak} edge picks perdants consécutifs (en cours)`,
+    });
+  }
+
+  // 3. Cohort divergence — WR last 30j vs prior 90j window (sliding)
+  const now = Date.now();
+  const last30 = allPicks.filter(p => now - p.t <= 30 * 86400e3);
+  const prior90 = allPicks.filter(p => now - p.t > 30 * 86400e3 && now - p.t <= 120 * 86400e3);
+  if (last30.length >= 15 && prior90.length >= 30) {
+    const wr30 = last30.reduce((s, p) => s + p.won, 0) / last30.length;
+    const wr90 = prior90.reduce((s, p) => s + p.won, 0) / prior90.length;
+    const delta = wr30 - wr90;
+    if (Math.abs(delta) >= 0.10) {
+      alerts.push({
+        kind: 'cohort_divergence',
+        severity: delta >= 0 ? 'green' : (delta <= -0.20 ? 'red' : 'amber'),
+        sample_30: last30.length,
+        sample_90: prior90.length,
+        wr_30: wr30,
+        wr_90: wr90,
+        delta,
+        msg: `Dernier mois ${Math.round(wr30 * 100)}% vs 90j précédents ${Math.round(wr90 * 100)}% (${delta >= 0 ? '+' : ''}${Math.round(delta * 100)}pts)`,
+      });
+    }
+  }
+
+  return alerts;
+}
+
 function computeHistorySeries(entries) {
   const verified = entries.filter(h => h.verified && h.realScore)
     .slice()
@@ -7496,6 +7572,7 @@ function runHistoryQuery(p) {
   const kpis = sport === 'tennis' ? computeTennisKpis(pool) : computeHistoryKpis(pool);
   const breakdown = sport === 'tennis' ? computeTennisBreakdown(pool) : computeHistoryBreakdown(pool);
   const series = sport === 'tennis' ? computeTennisSeries(pool) : computeHistorySeries(pool);
+  const alerts = sport === 'football' ? computeHistoryAlerts(pool) : []; // R2 Executive
 
   // Exclude low-WR leagues (BetMines-style)
   if (p.excludeLowLeagues) {
@@ -7526,7 +7603,7 @@ function runHistoryQuery(p) {
   const page = Math.max(1, p.page || 1);
   const matches = pool.slice((page - 1) * pageSize, page * pageSize);
 
-  return { sport, matches, total, page, pageSize, kpis, breakdown, series };
+  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
