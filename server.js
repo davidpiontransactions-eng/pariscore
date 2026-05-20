@@ -7360,6 +7360,65 @@ function computeHistoryBreakdown(entries) {
   return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams, heatmap };
 }
 
+// R4 — Profit Attribution : décompose P/L total par dim (marché × ligue × stratégie)
+function computeProfitAttribution(entries) {
+  const allPicks = [];
+  for (const h of entries) allPicks.push(..._historyPicksOf(h));
+  const totalPL = allPicks.reduce((s, p) => s + (p.won ? 1 : -1), 0);
+
+  const byMarket = ['over25', 'btts', 'edge'].map(mkt => {
+    const xs = allPicks.filter(p => p.market === mkt);
+    const wins = xs.reduce((s, p) => s + p.won, 0);
+    const pl = wins - (xs.length - wins);
+    return { dim: mkt, sample: xs.length, wins, losses: xs.length - wins, pl_units: pl };
+  }).filter(x => x.sample > 0);
+
+  const byLeague = {};
+  for (const p of allPicks) {
+    const k = p.league || 'Unknown';
+    if (!byLeague[k]) byLeague[k] = { sample: 0, wins: 0 };
+    byLeague[k].sample++;
+    byLeague[k].wins += p.won;
+  }
+  const leagueAttr = Object.entries(byLeague).map(([dim, d]) => ({
+    dim,
+    sample: d.sample,
+    wins: d.wins,
+    losses: d.sample - d.wins,
+    pl_units: d.wins - (d.sample - d.wins),
+  })).sort((a, b) => Math.abs(b.pl_units) - Math.abs(a.pl_units));
+
+  // Stratégies — depuis predicted.strategies tagging
+  const byStrategy = {};
+  for (const h of entries) {
+    if (!h.verified || !h.realScore) continue;
+    const strats = h.predicted?.strategies;
+    if (!Array.isArray(strats) || !strats.length) continue;
+    for (const sk of strats) {
+      const won = _strategyWonOf(sk, h);
+      if (won === null) continue;
+      if (!byStrategy[sk]) byStrategy[sk] = { sample: 0, wins: 0 };
+      byStrategy[sk].sample++;
+      byStrategy[sk].wins += won;
+    }
+  }
+  const strategyAttr = Object.entries(byStrategy).map(([dim, d]) => ({
+    dim,
+    sample: d.sample,
+    wins: d.wins,
+    losses: d.sample - d.wins,
+    pl_units: d.wins - (d.sample - d.wins),
+  })).sort((a, b) => Math.abs(b.pl_units) - Math.abs(a.pl_units));
+
+  return {
+    total_pl_units: totalPL,
+    total_picks: allPicks.length,
+    by_market: byMarket,
+    by_league: leagueAttr.slice(0, 15),
+    by_strategy: strategyAttr.slice(0, 12),
+  };
+}
+
 // R2 — Alertes Executive : drift / bad beat streak / cohort divergence
 function computeHistoryAlerts(entries) {
   const verified = entries.filter(h => h.verified && h.realScore)
@@ -7586,6 +7645,7 @@ function runHistoryQuery(p) {
   const breakdown = sport === 'tennis' ? computeTennisBreakdown(pool) : computeHistoryBreakdown(pool);
   const series = sport === 'tennis' ? computeTennisSeries(pool) : computeHistorySeries(pool);
   const alerts = sport === 'football' ? computeHistoryAlerts(pool) : []; // R2 Executive
+  const attribution = sport === 'football' ? computeProfitAttribution(pool) : null; // R4
 
   // Exclude low-WR leagues (BetMines-style)
   if (p.excludeLowLeagues) {
@@ -7616,7 +7676,7 @@ function runHistoryQuery(p) {
   const page = Math.max(1, p.page || 1);
   const matches = pool.slice((page - 1) * pageSize, page * pageSize);
 
-  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts };
+  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts, attribution };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

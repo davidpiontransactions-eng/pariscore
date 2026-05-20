@@ -8979,7 +8979,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <button type="button" class="dh-view-btn active" data-view="executive">⭐ Executive</button>
         <button type="button" class="dh-view-btn" data-view="table">📋 Tableau</button>
         <button type="button" class="dh-view-btn" data-view="charts">📊 Graphiques</button>
+        <button type="button" class="dh-view-btn" data-view="attribution">💰 Attribution</button>
         <button type="button" class="dh-view-btn" data-view="strategy">🎯 Stratégies</button>
+      </div>
+
+      <div id="dh-view-attribution" class="dh-view" style="display:none;">
+        <div id="dh-attribution-content"></div>
       </div>
 
       <div id="dh-view-executive" class="dh-view">
@@ -25150,7 +25155,54 @@ function dhRenderAll(data) {
   if (dhState.view === 'executive') dhRenderExecutive(data);
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
+  if (dhState.view === 'attribution') dhRenderAttribution(data.attribution);
   if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || [], data.breakdown?.trap_teams || []);
+}
+
+// R4 — Profit Attribution : décomposition P/L par marché × ligue × stratégie
+function dhRenderAttribution(attr) {
+  const wrap = document.getElementById('dh-attribution-content');
+  if (!wrap) return;
+  if (!attr || !attr.total_picks) {
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">💰 Profit Attribution</div><div class="dh-soon-body">Aucun pick dans ce sous-ensemble filtré. Élargis la période pour voir la décomposition P/L.</div></div>`;
+    return;
+  }
+  const totalPL = attr.total_pl_units;
+  const renderBar = (item, maxAbs) => {
+    const pct = maxAbs ? Math.abs(item.pl_units) / maxAbs * 100 : 0;
+    const color = item.pl_units >= 0 ? 'var(--dh-emerald)' : 'var(--dh-red)';
+    const dir = item.pl_units >= 0 ? 'left' : 'right';
+    const align = item.pl_units >= 0 ? 'flex-start' : 'flex-end';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;">
+      <div style="flex:0 0 140px;font-size:11.5px;color:var(--dh-text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.dim)}</div>
+      <div style="flex:0 0 70px;font-family:var(--font-mono);font-size:11px;color:var(--dh-text-3);">n=${item.sample}</div>
+      <div style="flex:1;height:14px;background:var(--dh-bg-elev);border-radius:4px;position:relative;display:flex;justify-content:${align};align-items:center;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};opacity:0.8;border-radius:4px;"></div>
+      </div>
+      <div style="flex:0 0 70px;text-align:right;font-family:var(--font-mono);font-weight:700;color:${color};font-size:12px;">${item.pl_units >= 0 ? '+' : ''}${item.pl_units}u</div>
+    </div>`;
+  };
+  const renderSection = (title, icon, list) => {
+    if (!list?.length) return `<div class="dh-exec-block"><div class="dh-exec-block-title">${icon} ${title}</div><div style="color:var(--dh-text-3);font-size:12px;">Aucune donnée</div></div>`;
+    const maxAbs = Math.max(...list.map(x => Math.abs(x.pl_units)), 1);
+    return `<div class="dh-exec-block">
+      <div class="dh-exec-block-title">${icon} ${title}</div>
+      ${list.map(item => renderBar(item, maxAbs)).join('')}
+    </div>`;
+  };
+  wrap.innerHTML = `
+    <div class="dh-exec-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));margin-bottom:18px;">
+      <div class="dh-exec-card ${totalPL >= 0 ? 'is-green' : 'is-red'}">
+        <div class="dh-exec-card-label">P/L Total</div>
+        <div class="dh-exec-card-val">${totalPL >= 0 ? '+' : ''}${totalPL}u</div>
+        <div class="dh-exec-card-sub">${attr.total_picks} picks tous marchés</div>
+      </div>
+    </div>
+    ${renderSection('Marché', '💹', attr.by_market)}
+    <div style="margin:18px 0;"></div>
+    ${renderSection('Top 15 Ligues', '🏆', attr.by_league)}
+    ${attr.by_strategy?.length ? `<div style="margin:18px 0;"></div>${renderSection('Stratégies IA', '🎯', attr.by_strategy)}` : ''}
+  `;
 }
 
 // R3 — Heatmap WR ligue × marché : SVG grid clic drill
@@ -26172,8 +26224,9 @@ function _dhWireControls() {
       document.getElementById('dh-view-executive').style.display = v === 'executive' ? '' : 'none';
       document.getElementById('dh-view-table').style.display = v === 'table' ? '' : 'none';
       document.getElementById('dh-view-charts').style.display = v === 'charts' ? '' : 'none';
+      document.getElementById('dh-view-attribution').style.display = v === 'attribution' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
-      if (v === 'charts' || v === 'strategy' || v === 'executive') dhRefresh();
+      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution') dhRefresh();
     });
   });
 
