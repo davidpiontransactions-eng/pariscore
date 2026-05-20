@@ -14512,6 +14512,16 @@ async function loadMatches() {
         setLoading(false);
         return;
       }
+      // Fix V5 (ParisScorebis-amc) : si AUTH_REQUIRED, le token est mort
+      // (déjà clear par apiFetch:401). Retry avec même token = boucle 401
+      // perpétuelle → modal auth qui se rouvre 4x. On stop et on rend la main
+      // au user (modal est déjà ouverte par apiFetch).
+      if (e.message === 'AUTH_REQUIRED' || (e.status === 401)) {
+        setLoading(false);
+        const _es = document.getElementById('empty-state');
+        if (_es) _es.textContent = 'Session expirée — reconnectez-vous pour voir les matchs.';
+        return;
+      }
       if (attempt < retries) {
         document.getElementById('empty-state').textContent = 'Tentative ' + (attempt + 1) + '/' + retries + ' — reconnexion dans ' + (delay / 1000) + 's...';
         await new Promise(function(r) { setTimeout(r, delay); });
@@ -21824,6 +21834,15 @@ async function apiFetch(url, opts = {}) {
     // donner perception « page blanche » côté mobile (cf. CR-F rapport bug
     // mobile 2026-05-19).
     try { console.warn('[apiFetch:401]', url, 'hadToken=', !!token); } catch (e) {}
+    // Fix V5 (ParisScorebis-amc) : si on AVAIT un token, le backend l'a
+    // rejeté (JWT_SECRET rotaté, token blacklisté, exp coté server désynchro).
+    // Il faut clear côté client SINON psGetUser() continue à retourner le
+    // payload "valide" → psPageBlocked laisse passer → boucle 401 perpétuelle
+    // → modal auth qui se rouvre → user perd la main.
+    if (token) {
+      try { psClearToken(); } catch (e) {}
+      try { if (typeof updateNavAuthState === 'function') updateNavAuthState(); } catch (e) {}
+    }
     openAuthModal('login');
     throw Object.assign(new Error('AUTH_REQUIRED'), { status: 401 });
   }
