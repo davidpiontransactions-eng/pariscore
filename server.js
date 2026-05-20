@@ -17876,13 +17876,27 @@ function _aiscoreParseMatch(html, matchId) {
         if (/^\d+$/.test(v)) setsWon = parseInt(v, 10);
       }
     });
+    // Serve indicator: row contains servePos class somewhere when player is currently serving.
+    // AiScore typically marks the serving player's row with .servePos on the name area or
+    // adjacent SVG. We probe with a permissive regex.
+    const isServing = /servePos|playerServing|class="[^"]*\bserving\b/i.test(row);
     out.players.push({
       name,
       country: ctryM ? ctryM[1] : null,
       logo: logoM ? logoM[1] : null,
       sets,
       sets_won: setsWon,
+      is_serving: isServing,
     });
+  }
+
+  // Derive top-level serving field (1 = P1 serving, 2 = P2 serving, null = unknown)
+  if (out.players.length === 2) {
+    if (out.players[0].is_serving && !out.players[1].is_serving) out.serving = 1;
+    else if (out.players[1].is_serving && !out.players[0].is_serving) out.serving = 2;
+    else out.serving = null;
+  } else {
+    out.serving = null;
   }
 
   // Stats match : bloc .bs_info — Aces/DF (.mainContent_1) + lignes .midDes_text

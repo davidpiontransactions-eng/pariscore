@@ -10058,6 +10058,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-sb-srv .tn-sb-ball { width:14px; height:14px; display:block; }
   #tennis-vb-table .tn-sb-srv .tn-sb-ball:hover { transform:scale(1.1); }
   #tennis-vb-table .tn-sb-srv-off { color:transparent; min-width:14px; }
+  /* Serving unknown badge — discreet "?" when data source omits serving info */
+  #tennis-vb-table .tn-sb-srv-unknown {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 14px; height: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: rgba(148,163,184,.55);
+    background: rgba(148,163,184,.08);
+    border: 1px dashed rgba(148,163,184,.30);
+    border-radius: 50%;
+    cursor: help;
+  }
   @keyframes tnSrvPulse {
     0%, 100% { transform: scale(1)    translateY(0);    filter: drop-shadow(0 0 4px rgba(212,230,13,.55)); }
     35%      { transform: scale(1.10) translateY(-2px); filter: drop-shadow(0 0 8px rgba(212,230,13,.85)); }
@@ -13096,6 +13108,10 @@ function _tvbScoreCell(m) {
   const _srv = (lo.serving === 1) ? 'p1' : (lo.serving === 2) ? 'p2' : null;
   const ballCell = (who) => {
     if (_srv === who) return `<span class="tn-sb-srv" title="${_escTennis(String((who === 'p1' ? m.player1?.name : m.player2?.name) || ''))} au service"><svg class="tn-sb-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg></span>`;
+    /* Serving unknown : badge "?" gris transparent — honnêteté UX (data source ESPN/LiveScore expose pas le serveur) */
+    if (_srv === null && (who === 'p1' || who === 'p2')) {
+      return `<span class="tn-sb-srv-unknown" title="Serveur inconnu — source data ne l'expose pas pour ce match" aria-label="Serveur inconnu">?</span>`;
+    }
     return `<span class="tn-sb-srv-off" aria-hidden="true">·</span>`;
   };
   const rowHtml = (who) => {
