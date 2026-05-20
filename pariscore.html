@@ -574,6 +574,35 @@
   .ps-bet-cta-bk     { font-size:10px; color:var(--text3); margin-top:1px; }
   .ps-bet-cta-ev     { display:flex; gap:6px; margin-top:7px; font-family:var(--font-mono); font-size:10px; flex-wrap:wrap; }
   .ps-bet-cta-ev span{ padding:2px 7px; border-radius:4px; }
+  /* ── CTA Affiliation inline — charte rouge L'Équipe glassmorphism ──────── */
+  .aff-cta { text-decoration:none; }
+  .aff-cta--inline {
+    display:inline-flex; align-items:center; gap:6px;
+    font:600 11px/1.2 var(--font-sans, 'Instrument Sans', system-ui, sans-serif);
+    padding:6px 12px; margin-top:9px;
+    border-radius:6px;
+    color:#fff;
+    background:linear-gradient(135deg, rgba(226,0,26,.22), rgba(226,0,26,.08));
+    border:1px solid rgba(226,0,26,.50);
+    backdrop-filter:blur(6px);
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .aff-cta--inline:hover {
+    background:linear-gradient(135deg, rgba(226,0,26,.34), rgba(226,0,26,.16));
+    box-shadow:0 0 14px rgba(226,0,26,.40);
+    transform:translateY(-1px);
+  }
+  .aff-cta--inline:focus-visible {
+    outline:2px solid rgba(226,0,26,.65);
+    outline-offset:2px;
+  }
+  .aff-cta--inline::after { content:"→"; font-family:var(--font-mono, ui-monospace, monospace); opacity:.9; }
+  .aff-cta--inline .aff-cta__odds { font-family:var(--font-mono, ui-monospace, monospace); font-weight:700; opacity:.95; }
+  /* Sur fond warn (orange) — discret pour ne pas crier "tenter" */
+  .ps-bet-cta.warn .aff-cta--inline {
+    background:linear-gradient(135deg, rgba(226,0,26,.14), rgba(226,0,26,.05));
+    border-color:rgba(226,0,26,.36);
+  }
   /* Player cards */
   .ps-player-bar-wrap { width:72px; height:4px; background:var(--bg2); border-radius:2px; margin:4px auto 0; }
   .ps-player-bar-fill { height:4px; border-radius:2px; transition:width .4s; }
@@ -20309,6 +20338,13 @@ function buildStaticInsightLayer(d) {
       ? (typeof m.best_edge.odds === 'number' ? m.best_edge.odds.toFixed(2) : m.best_edge.odds)
       : '—';
     if (bs.recommended) {
+      const affHrefOk = buildAffiliateUrl({
+        bookmaker: 'best',
+        context:   'modal_insights_ok',
+        match:     m,
+        market:    m.best_edge.label,
+        selection: m.best_edge.bk || '',
+      });
       return `<div class="ps-bet-cta ok">
         <div class="ps-bet-cta-title">🎯 Pari recommandé</div>
         <div class="ps-bet-cta-main">
@@ -20323,9 +20359,20 @@ function buildStaticInsightLayer(d) {
           <span style="background:rgba(0,230,118,0.07);color:var(--green);border:1px solid rgba(0,230,118,0.18)">✅ IC confirmé</span>
           ${rel != null ? `<span style="color:var(--text3);background:var(--bg4);border:1px solid var(--border)">Fiabilité ${rel}/100</span>` : ''}
         </div>
+        <a class="aff-cta aff-cta--inline" target="_blank" rel="nofollow sponsored noopener"
+           href="${affHrefOk}">
+          Parier <span class="aff-cta__odds">@${oddsStr}</span>
+        </a>
       </div>`;
     }
     if (ev >= 5) {
+      const affHrefWarn = buildAffiliateUrl({
+        bookmaker: 'best',
+        context:   'modal_insights_warn',
+        match:     m,
+        market:    m.best_edge.label,
+        selection: m.best_edge.bk || '',
+      });
       return `<div class="ps-bet-cta warn">
         <div class="ps-bet-cta-title">⚠️ Value potentielle — IC non confirmé</div>
         <div class="ps-bet-cta-main">
@@ -20340,6 +20387,10 @@ function buildStaticInsightLayer(d) {
           <span style="background:rgba(239,68,68,0.08);color:var(--red);border:1px solid rgba(239,68,68,0.2)">✗ EV pessimiste ≤ 0%</span>
         </div>
         ${bs.reason ? `<div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--font-mono);line-height:1.4">${bs.reason.slice(0,90)}</div>` : ''}
+        <a class="aff-cta aff-cta--inline" target="_blank" rel="nofollow sponsored noopener"
+           href="${affHrefWarn}">
+          Tenter <span class="aff-cta__odds">@${oddsStr}</span>
+        </a>
       </div>`;
     }
     return `<div class="ps-bet-cta skip">
