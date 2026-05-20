@@ -19847,6 +19847,93 @@ if (pathname === '/api/v1/history/query') {
   return jsonResponse(res, 200, runHistoryQuery(p));
 }
 
+// GET /api/v1/history/export.csv — H5 export CSV avec OWASP injection guard
+if (pathname === '/api/v1/history/export.csv') {
+  if (process.env.HISTORY_AUTH_REQUIRED === '1' && !requireAuth(req, res)) return;
+  const arr = (k) => query[k] ? String(query[k]).split(',').map(s => s.trim()).filter(Boolean) : [];
+  const num = (k) => (query[k] != null && query[k] !== '') ? parseFloat(query[k]) : null;
+  const p = {
+    sport: query.sport || 'football',
+    leagues: arr('leagues'),
+    teams: arr('teams'),
+    markets: arr('markets'),
+    strategies: arr('strategies'),
+    surfaces: arr('surfaces'),
+    fromDate: query.fromDate || null,
+    toDate: query.toDate || null,
+    minOdds: num('minOdds'),
+    maxOdds: num('maxOdds'),
+    minEV: num('minEV'),
+    minProba: num('minProba'),
+    confidence: arr('confidence'),
+    outcome: query.outcome || 'all',
+    excludeLowLeagues: query.excludeLowLeagues === '1' || query.excludeLowLeagues === 'true',
+    page: 1, pageSize: 10000, sort: 'date_desc',
+  };
+  const data = runHistoryQuery(p);
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+  const filename = 'historique-pariscore-' + data.sport + '-' + new Date().toISOString().split('T')[0] + '.csv';
+  res.writeHead(200, {
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': 'attachment; filename="' + filename + '"',
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  });
+  const esc = (v) => {
+    if (v === null || v === undefined) return '';
+    let s = String(v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s; // OWASP CSV injection guard
+    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  };
+  if (data.sport === 'tennis') {
+    const cols = ['id','date','tournament','surface','p1','p2','ml_pred','set1_pred','sets_score','winner','verified','strategies'];
+    res.write(cols.join(',') + '\n');
+    for (const m of data.matches) {
+      const r = m.realResult || {};
+      const setsScore = (r.sets || []).map(s => s.p1 + '-' + s.p2).join(' ');
+      const strats = Array.isArray(m.predicted?.strategies) ? m.predicted.strategies.join('|') : '';
+      res.write([
+        m.id, m.commence_time, m.tournament || m.league || '', m.surface || '',
+        m.p1 || '', m.p2 || '', m.predicted?.ml || '', m.predicted?.set1 || '',
+        setsScore, r.winner || '', m.verified ? 'yes' : 'no', strats,
+      ].map(esc).join(',') + '\n');
+    }
+  } else {
+    const cols = ['id','date','league','home_team','away_team','score','over25_pred','btts_pred','edge_label','edge_value','edge_odds','verified','strategies','outcome'];
+    res.write(cols.join(',') + '\n');
+    for (const m of data.matches) {
+      const rs = m.realScore || {};
+      const score = rs.home !== undefined ? rs.home + '-' + rs.away : '';
+      const strats = Array.isArray(m.predicted?.strategies) ? m.predicted.strategies.join('|') : '';
+      // Outcome aggregate
+      let outcome = '';
+      if (m.verified && rs.home !== undefined) {
+        const picks = [];
+        if (m.predicted?.over25 > 55) picks.push((rs.home + rs.away) > 2.5 ? 1 : 0);
+        if (m.predicted?.btts > 55) picks.push((rs.home > 0 && rs.away > 0) ? 1 : 0);
+        const ev = m.predicted?.bestEdgeValue;
+        if (typeof ev === 'number' && ev >= 5 && ev <= 50) {
+          const winner = rs.home > rs.away ? m.home_team : rs.away > rs.home ? m.away_team : 'Nul';
+          picks.push(winner === m.predicted.bestEdge ? 1 : 0);
+        }
+        if (picks.length) {
+          const w = picks.filter(x => x).length;
+          outcome = w + '/' + picks.length;
+        }
+      }
+      res.write([
+        m.id, m.commence_time, m.league || '', m.home_team || '', m.away_team || '',
+        score, m.predicted?.over25 ?? '', m.predicted?.btts ?? '',
+        m.predicted?.bestEdge || '', m.predicted?.bestEdgeValue ?? '',
+        m.predicted?.bestEdgeOdds ?? '', m.verified ? 'yes' : 'no', strats, outcome,
+      ].map(esc).join(',') + '\n');
+    }
+  }
+  res.end();
+  return;
+}
+
 // GET /api/v1/history — legacy (alias) — gardé 1 release pour compat frontend Premium/Admin
 // Si Pro feature ré-activable plus tard via flag env HISTORY_AUTH_REQUIRED
 if (pathname === '/api/v1/history') {
