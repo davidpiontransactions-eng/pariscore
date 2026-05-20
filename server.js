@@ -3225,6 +3225,7 @@ let db = {
   matches: [],   // matchs fusionnés (odds + stats)
   matchIndex: new Map(), // id → match, rebuild par saveDB() — lookup O(1)
   archive_matches: [],   // matchs termines archives (nettoyage auto)
+  archive_tennis_matches: [],   // H3 : tennis archive (rempli par cron tennis post-release)
   teamStats: {},   // stats par équipe (standings API-Football)
   advancedTeamStats: {},   // stats avancées /teams/statistics — cache 24h
   topScorers: {},   // top buteurs par ligue (leagueId_season) — cache 24h
@@ -3235,6 +3236,10 @@ let db = {
   statsQuotaRemaining: null,
   status: 'initialisation',
 };
+
+// H3 : Tennis history array (séparé pour ne pas polluer history football).
+// Sera persisté via sqldb kv si présent, ou en mémoire sinon.
+let tennisHistory = [];
 
 // ─── SQLITE — couche de persistance (remplace database.json / history.json / ai_cache.json) ──
 let sqldb;
@@ -6859,6 +6864,210 @@ function _historyPicksOf(h) {
   return out;
 }
 
+// H3 : décompose un record tennis en picks-par-marché.
+// Schema attendu (rempli progressivement par cron tennis post-release) :
+//   { id, p1, p2, tournament, surface, commence_time,
+//     predicted: { ml, set1, set1_p1, score_sets, geq1_set_dog, total_games, total_games_thr,
+//                  aces_total, aces_thr, tie_break,
+//                  ml_odds, set1_odds, total_games_odds, ... }, // odds H2 instrumentation
+//     realResult: { sets: [{p1,p2}], winner, total_games, aces_p1, aces_p2, had_tiebreak },
+//     archived_at, verified }
+function _tennisPicksOf(h) {
+  if (!h.verified || !h.realResult) return [];
+  const r = h.realResult;
+  const out = [];
+  const t = new Date(h.commence_time).getTime();
+  const p = h.predicted || {};
+  const tournament = h.tournament || h.league || null;
+
+  // Marché 1 : Moneyline (ML)
+  if (p.ml && (p.ml === h.p1 || p.ml === h.p2)) {
+    out.push({
+      id: h.id, market: 'ml', t,
+      won: r.winner === p.ml ? 1 : 0,
+      odds: typeof p.ml_odds === 'number' ? p.ml_odds : null,
+      league: tournament,
+    });
+  }
+  // Marché 2 : Set 1 winner
+  if (p.set1 && r.sets?.length) {
+    const s1 = r.sets[0];
+    const set1Winner = s1.p1 > s1.p2 ? h.p1 : h.p2;
+    out.push({
+      id: h.id, market: 'set1', t,
+      won: set1Winner === p.set1 ? 1 : 0,
+      odds: typeof p.set1_odds === 'number' ? p.set1_odds : null,
+      league: tournament,
+    });
+  }
+  // Marché 3 : ≥1 set pour l'outsider
+  if (p.geq1_set_dog && r.sets?.length) {
+    const dog = p.geq1_set_dog;
+    const setsWonByDog = r.sets.filter(s =>
+      (dog === h.p1 ? s.p1 > s.p2 : s.p2 > s.p1)
+    ).length;
+    out.push({
+      id: h.id, market: 'geq1_set', t,
+      won: setsWonByDog >= 1 ? 1 : 0,
+      odds: typeof p.geq1_set_odds === 'number' ? p.geq1_set_odds : null,
+      league: tournament,
+    });
+  }
+  // Marché 4 : Total jeux Over/Under
+  if (typeof p.total_games_thr === 'number' && typeof r.total_games === 'number') {
+    const direction = p.total_games_over ? 'over' : 'under';
+    const won = direction === 'over' ? (r.total_games > p.total_games_thr ? 1 : 0)
+                                     : (r.total_games < p.total_games_thr ? 1 : 0);
+    out.push({
+      id: h.id, market: 'total_games', t, won,
+      odds: typeof p.total_games_odds === 'number' ? p.total_games_odds : null,
+      league: tournament,
+    });
+  }
+  // Marché 5 : Aces total Over
+  if (typeof p.aces_thr === 'number' && (typeof r.aces_p1 === 'number' || typeof r.aces_p2 === 'number')) {
+    const totalAces = (r.aces_p1 || 0) + (r.aces_p2 || 0);
+    out.push({
+      id: h.id, market: 'aces', t,
+      won: totalAces > p.aces_thr ? 1 : 0,
+      odds: typeof p.aces_odds === 'number' ? p.aces_odds : null,
+      league: tournament,
+    });
+  }
+  // Marché 6 : Tie-break présent (oui/non)
+  if (typeof p.tie_break === 'boolean' && typeof r.had_tiebreak === 'boolean') {
+    out.push({
+      id: h.id, market: 'tie_break', t,
+      won: p.tie_break === r.had_tiebreak ? 1 : 0,
+      odds: typeof p.tie_break_odds === 'number' ? p.tie_break_odds : null,
+      league: tournament,
+    });
+  }
+  return out;
+}
+
+// KPIs tennis : reprend la structure foot mais sur _tennisPicksOf
+function computeTennisKpis(entries) {
+  const allPicks = [];
+  for (const h of entries) allPicks.push(..._tennisPicksOf(h));
+  allPicks.sort((a, b) => a.t - b.t);
+
+  const markets = ['ml', 'set1', 'geq1_set', 'total_games', 'aces', 'tie_break'];
+  const out = {
+    total_picks: allPicks.length,
+    verified_matches: entries.filter(h => h.verified && h.realResult).length,
+    max_drawdown_units: 0,
+    final_pl_units: 0,
+  };
+
+  let cumul = 0, peak = 0, ddMax = 0;
+  for (const p of allPicks) {
+    cumul += p.won ? 1 : -1;
+    if (cumul > peak) peak = cumul;
+    if (peak - cumul > ddMax) ddMax = peak - cumul;
+  }
+  out.max_drawdown_units = ddMax;
+  out.final_pl_units = cumul;
+
+  for (const mkt of markets) {
+    const xs = allPicks.filter(p => p.market === mkt);
+    const sample = xs.length;
+    const wins = xs.reduce((s, p) => s + p.won, 0);
+    const seq = xs.map(p => p.won);
+    const [lo, hi] = _bootstrapCI95(seq);
+    const yieldStats = _yieldStats(xs);
+    out[mkt] = {
+      sample,
+      wins,
+      losses: sample - wins,
+      winrate: sample ? wins / sample : null,
+      winrate_ic95: [lo, hi],
+      ic_method: sample >= 30 ? 'bootstrap_500' : 'wilson',
+      longest_winning_streak: _maxStreak(seq, 1),
+      longest_losing_streak: _maxStreak(seq, 0),
+      ...yieldStats,
+    };
+  }
+  out.global_yield = _yieldStats(allPicks);
+  return out;
+}
+
+function computeTennisBreakdown(entries) {
+  const byTournament = {};
+  for (const h of entries) {
+    if (!h.verified || !h.realResult) continue;
+    const key = h.tournament || h.league || 'Unknown';
+    if (!byTournament[key]) byTournament[key] = { sample: 0, picks: [] };
+    byTournament[key].sample++;
+    byTournament[key].picks.push(..._tennisPicksOf(h));
+  }
+  const tournaments = Object.entries(byTournament).map(([name, d]) => {
+    const wins = d.picks.reduce((s, p) => s + p.won, 0);
+    const total = d.picks.length;
+    const wr = total ? wins / total : null;
+    const [lo, hi] = _bootstrapCI95(d.picks.map(p => p.won));
+    const yieldStats = _yieldStats(d.picks);
+    return {
+      league: name,
+      matches: d.sample,
+      picks: total,
+      wins,
+      winrate: wr,
+      winrate_ic95: [lo, hi],
+      yield: yieldStats.yield,
+      avg_odds: yieldStats.avg_odds,
+    };
+  });
+  tournaments.sort((a, b) => b.picks - a.picks);
+
+  const markets = ['ml', 'set1', 'geq1_set', 'total_games', 'aces', 'tie_break'].map(mkt => {
+    const xs = entries.flatMap(h => _tennisPicksOf(h)).filter(p => p.market === mkt);
+    const wins = xs.reduce((s, p) => s + p.won, 0);
+    const [lo, hi] = _bootstrapCI95(xs.map(p => p.won));
+    const yieldStats = _yieldStats(xs);
+    return {
+      market: mkt,
+      sample: xs.length,
+      wins,
+      winrate: xs.length ? wins / xs.length : null,
+      winrate_ic95: [lo, hi],
+      yield: yieldStats.yield,
+      avg_odds: yieldStats.avg_odds,
+      break_even: yieldStats.break_even,
+    };
+  });
+
+  return { by_league: tournaments, by_market: markets, by_strategy: [] };
+}
+
+function computeTennisSeries(entries) {
+  const verified = entries.filter(h => h.verified && h.realResult)
+    .slice()
+    .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+  const plCumulative = [], ddCurve = [];
+  let cumul = 0, peak = 0;
+  for (const h of verified) {
+    let delta = 0;
+    for (const p of _tennisPicksOf(h)) delta += (p.won ? 1 : -1);
+    if (delta !== 0) cumul += delta;
+    if (cumul > peak) peak = cumul;
+    const dateKey = h.commence_time.split('T')[0];
+    plCumulative.push({ date: dateKey, units: cumul });
+    ddCurve.push({ date: dateKey, dd: peak - cumul });
+  }
+  const allPicks = [];
+  for (const h of verified) allPicks.push(..._tennisPicksOf(h));
+  allPicks.sort((a, b) => a.t - b.t);
+  const rolling30 = [];
+  const W = 30;
+  for (let i = W - 1; i < allPicks.length; i++) {
+    const window = allPicks.slice(i - W + 1, i + 1);
+    const w = window.reduce((s, p) => s + p.won, 0);
+    rolling30.push({ date: new Date(window[window.length - 1].t).toISOString().split('T')[0], wr: w / W });
+  }
+  return { pl_cumulative: plCumulative, drawdown_curve: ddCurve, rolling30_wr: rolling30 };
+}
+
 function _wilsonCI95(wins, total) {
   if (!total) return [null, null];
   const z = 1.96, p = wins / total, n = total;
@@ -7059,8 +7268,13 @@ function computeHistorySeries(entries) {
 
 function runHistoryQuery(p) {
   const sport = p.sport === 'tennis' ? 'tennis' : 'football';
-  // Tennis backtest arrive en Phase H3 — H1 retourne shell vide
-  let pool = sport === 'football' ? history.slice() : [];
+  // H3 : Tennis activé sur tennisHistory[] (rempli par cron tennis post-release)
+  let pool = sport === 'football' ? history.slice() : tennisHistory.slice();
+  // Surface filter (tennis-specific)
+  if (sport === 'tennis' && p.surfaces?.length) {
+    const set = new Set(p.surfaces.map(s => s.toLowerCase()));
+    pool = pool.filter(h => set.has(String(h.surface || '').toLowerCase()));
+  }
 
   // ── Filters ────────────────────────────────────────────────────────────────
   if (p.leagues?.length) {
@@ -7124,10 +7338,10 @@ function runHistoryQuery(p) {
     });
   }
 
-  // ── Aggregations PRE-pagination ────────────────────────────────────────────
-  const kpis = computeHistoryKpis(pool);
-  const breakdown = computeHistoryBreakdown(pool);
-  const series = computeHistorySeries(pool);
+  // ── Aggregations PRE-pagination (branchées sport) ──────────────────────────
+  const kpis = sport === 'tennis' ? computeTennisKpis(pool) : computeHistoryKpis(pool);
+  const breakdown = sport === 'tennis' ? computeTennisBreakdown(pool) : computeHistoryBreakdown(pool);
+  const series = sport === 'tennis' ? computeTennisSeries(pool) : computeHistorySeries(pool);
 
   // Exclude low-WR leagues (BetMines-style)
   if (p.excludeLowLeagues) {
@@ -19528,6 +19742,7 @@ if (pathname === '/api/v1/history/query') {
     teams: arr('teams'),
     markets: arr('markets'),
     strategies: arr('strategies'),
+    surfaces: arr('surfaces'), // H3 tennis-only
     fromDate: query.fromDate || null,
     toDate: query.toDate || null,
     minOdds: num('minOdds'),

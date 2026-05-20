@@ -8528,6 +8528,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <button type="button" data-mkt="edge" class="dh-chip active">Edge</button>
         </div>
       </div>
+      <div class="dh-fr-section" id="dh-fr-surface" style="display:none;">
+        <div class="dh-fr-title">🎾 Surface</div>
+        <div id="dh-f-surface" class="dh-chips">
+          <button type="button" data-surface="hard" class="dh-chip">Dur</button>
+          <button type="button" data-surface="clay" class="dh-chip">Terre battue</button>
+          <button type="button" data-surface="grass" class="dh-chip">Gazon</button>
+          <button type="button" data-surface="indoor" class="dh-chip">Indoor</button>
+        </div>
+      </div>
       <div class="dh-fr-section">
         <div class="dh-fr-title">🎯 Stratégie IA <span class="dh-soon">H4</span></div>
         <div id="dh-f-strategy" class="dh-chips dh-disabled">
@@ -24455,6 +24464,7 @@ const dhState = {
   teams: [],
   markets: ['over25', 'btts', 'edge'],
   strategies: [],
+  surfaces: [], // H3 tennis-only
   confidence: [],
   outcome: 'all',
   minEV: 0,
@@ -24469,6 +24479,23 @@ const dhState = {
   sort: 'date_desc',
   _booted: false,
   _charts: { pl: null, dd: null, rolling: null },
+};
+
+// Marchés disponibles par sport
+const DH_MARKETS_BY_SPORT = {
+  football: [
+    { key: 'over25', label: 'Over 2.5' },
+    { key: 'btts',   label: 'BTTS' },
+    { key: 'edge',   label: 'Edge' },
+  ],
+  tennis: [
+    { key: 'ml',          label: 'Moneyline' },
+    { key: 'set1',        label: 'Set 1' },
+    { key: 'geq1_set',    label: '≥1 set' },
+    { key: 'total_games', label: 'Tot. jeux' },
+    { key: 'aces',        label: 'Aces' },
+    { key: 'tie_break',   label: 'Tie-break' },
+  ],
 };
 
 async function initHistoriquePage() {
@@ -24513,6 +24540,7 @@ function _dhBuildUrl() {
   if (dhState.teams.length) p.set('teams', dhState.teams.join(','));
   if (dhState.markets.length) p.set('markets', dhState.markets.join(','));
   if (dhState.strategies.length) p.set('strategies', dhState.strategies.join(','));
+  if (dhState.surfaces.length) p.set('surfaces', dhState.surfaces.join(','));
   if (dhState.confidence.length) p.set('confidence', dhState.confidence.join(','));
   if (dhState.outcome && dhState.outcome !== 'all') p.set('outcome', dhState.outcome);
   if (dhState.minEV) p.set('minEV', dhState.minEV);
@@ -24559,11 +24587,90 @@ async function dhRefresh() {
 }
 
 function dhRenderAll(data) {
-  dhRenderKpis(data.kpis, data.total);
+  if (dhState.sport === 'tennis') {
+    dhRenderKpisTennis(data.kpis, data.total);
+  } else {
+    dhRenderKpis(data.kpis, data.total);
+  }
   dhPopulateLeagueOptions(data.breakdown?.by_league || []);
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
   // strategy view is static H4 banner — no data render
+}
+
+// H3 : KPI strip tennis-specific (6 marchés natifs)
+function dhRenderKpisTennis(kpis, totalMatches) {
+  if (!kpis) return;
+  const totalPicks = kpis.total_picks || 0;
+  const tennisMarkets = ['ml', 'set1', 'geq1_set', 'total_games', 'aces', 'tie_break'];
+  const totalWins = tennisMarkets.reduce((s, m) => s + ((kpis[m]?.wins) || 0), 0);
+  const aggWR = totalPicks ? totalWins / totalPicks : null;
+  const longestLoss = Math.max(...tennisMarkets.map(m => kpis[m]?.longest_losing_streak || 0));
+  const gy = kpis.global_yield || {};
+  const hasYield = gy.sample_with_odds > 0;
+  const yieldPct = gy.yield;
+  const breakEven = gy.break_even;
+  const icMethodAgg = totalPicks >= 30 ? 'bootstrap 500' : 'wilson n<30';
+
+  const yieldCard = hasYield ? {
+    label: 'Yield', val: (yieldPct >= 0 ? '+' : '') + (yieldPct * 100).toFixed(1) + '%',
+    sub: gy.sample_with_odds + ' picks cotes · avg ' + gy.avg_odds.toFixed(2),
+    color: yieldPct >= 0.05 ? 'green' : yieldPct >= 0 ? 'amber' : 'red',
+  } : {
+    label: 'Picks totaux', val: totalPicks,
+    sub: totalMatches + ' matchs tennis · ' + totalWins + 'W / ' + (totalPicks - totalWins) + 'L',
+    color: 'neutral',
+  };
+
+  const lastCard = (hasYield && breakEven != null) ? {
+    label: 'Strike B/E', val: (breakEven * 100).toFixed(1) + '%',
+    sub: 'WR mini · actuel ' + (aggWR != null ? Math.round(aggWR * 100) + '%' : '—'),
+    color: aggWR != null && aggWR > breakEven ? 'green' : 'red',
+  } : {
+    label: 'Tournois', val: (kpis.verified_matches || 0),
+    sub: 'matchs vérifiés',
+    color: 'neutral',
+  };
+
+  // ML est la KPI marché par défaut (équivalent edge en foot)
+  const mlSample = kpis.ml?.sample || 0;
+  const mlWR = kpis.ml?.winrate;
+
+  const items = [
+    yieldCard,
+    {
+      label: 'Winrate global',
+      val: _pctStr(aggWR),
+      sub: totalPicks + ' picks · ' + icMethodAgg,
+      color: _wrColor(aggWR),
+    },
+    {
+      label: 'Max Drawdown',
+      val: '-' + (kpis.max_drawdown_units || 0) + 'u',
+      sub: 'P/L : ' + (kpis.final_pl_units >= 0 ? '+' : '') + (kpis.final_pl_units || 0) + 'u',
+      color: kpis.max_drawdown_units > 10 ? 'red' : kpis.max_drawdown_units > 5 ? 'amber' : 'green',
+    },
+    {
+      label: 'Longest Losing',
+      val: longestLoss,
+      sub: 'pertes consécutives',
+      color: longestLoss >= 6 ? 'red' : longestLoss >= 4 ? 'amber' : 'neutral',
+    },
+    {
+      label: 'WR Moneyline',
+      val: _pctStr(mlWR),
+      sub: mlSample + ' picks ML',
+      color: _wrColor(mlWR),
+    },
+    lastCard,
+  ];
+
+  document.getElementById('dh-kpi-strip').innerHTML = items.map(k => `
+    <div class="dh-kpi" title="${k.sub}">
+      <div class="dh-kpi-label">${k.label}</div>
+      <div class="dh-kpi-val ${k.color}">${k.val}</div>
+      <div class="dh-kpi-sub">${k.sub}</div>
+    </div>`).join('');
 }
 
 // ── KPI strip ──────────────────────────────────────────────────────────────
@@ -24674,6 +24781,51 @@ function dhRenderKpis(kpis, totalMatches) {
     </div>`).join('');
 }
 
+// ── H3 : re-render market chips selon sport ────────────────────────────────
+function _dhRenderMarketChips() {
+  const wrap = document.getElementById('dh-f-market');
+  if (!wrap) return;
+  const list = DH_MARKETS_BY_SPORT[dhState.sport] || DH_MARKETS_BY_SPORT.football;
+  wrap.innerHTML = list.map(m => `<button type="button" data-mkt="${m.key}" class="dh-chip active">${m.label}</button>`).join('');
+  // Re-wire (les nouveaux nodes ont besoin de l'event handler)
+  wrap.querySelectorAll('.dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      const active = Array.from(wrap.querySelectorAll('.dh-chip.active')).map(c => c.dataset.mkt);
+      dhState.markets = active;
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+}
+
+// ── H3 : re-render table header selon sport ────────────────────────────────
+function _dhRenderTableHeader() {
+  const thead = document.querySelector('#dh-view-table .hist-table thead tr');
+  if (!thead) return;
+  if (dhState.sport === 'tennis') {
+    thead.innerHTML = `
+      <th>Match</th>
+      <th>Tournoi</th>
+      <th>Surface</th>
+      <th>Date</th>
+      <th>Sets</th>
+      <th>ML</th>
+      <th>Set 1</th>
+      <th>Issue</th>`;
+  } else {
+    thead.innerHTML = `
+      <th>Match</th>
+      <th>Ligue</th>
+      <th>Date</th>
+      <th>Score</th>
+      <th>Over 2.5</th>
+      <th>BTTS</th>
+      <th>Edge</th>
+      <th>Issue</th>`;
+  }
+}
+
 // ── Populate league filter dropdown (idempotent) ──────────────────────────
 function dhPopulateLeagueOptions(byLeague) {
   const sel = document.getElementById('dh-f-league');
@@ -24693,17 +24845,83 @@ function _dhMarketPill(label, predicted, predThresh, won) {
   return `<span class="dh-pred-pill ${won ? 'win' : 'loss'}">${Math.round(predicted)}%</span>`;
 }
 
+// H3 : tennis-specific row renderer
+function _dhRenderTableTennis(data) {
+  const tbody = document.getElementById('dh-tbody');
+  const matches = data.matches || [];
+
+  tbody.innerHTML = matches.map(m => {
+    const dt = fmtKickoffDate(m.commence_time, { day: '2-digit', month: 'short', year: '2-digit' }, '—');
+    const r = m.realResult || {};
+    const setsScore = (r.sets || []).map(s => s.p1 + '-' + s.p2).join(' ') || '—';
+    const winner = r.winner || '—';
+    const p = m.predicted || {};
+    const mlPick = p.ml || '—';
+    const mlWon = (p.ml && r.winner) ? (p.ml === r.winner ? 1 : 0) : null;
+    const set1Pick = p.set1 || '—';
+    let set1Won = null;
+    if (p.set1 && r.sets?.length) {
+      const s1 = r.sets[0];
+      const s1Winner = s1.p1 > s1.p2 ? m.p1 : m.p2;
+      set1Won = s1Winner === p.set1 ? 1 : 0;
+    }
+
+    const pillFor = (label, won) => {
+      const cls = won === 1 ? 'win' : won === 0 ? 'loss' : 'na';
+      return `<span class="dh-pred-pill ${cls}">${escapeHtml(label)}</span>`;
+    };
+
+    return `<tr>
+      <td><strong>${escapeHtml(m.p1 || '?')}</strong> – ${escapeHtml(m.p2 || '?')}</td>
+      <td style="color:var(--text2);">${escapeHtml(m.tournament || m.league || '')}</td>
+      <td style="color:var(--text2);">${escapeHtml(m.surface || '—')}</td>
+      <td>${dt}</td>
+      <td style="font-family:var(--font-mono);">${escapeHtml(setsScore)}</td>
+      <td>${mlPick !== '—' ? pillFor(mlPick, mlWon) : '<span class="dh-pred-pill na">—</span>'}</td>
+      <td>${set1Pick !== '—' ? pillFor(set1Pick, set1Won) : '<span class="dh-pred-pill na">—</span>'}</td>
+      <td>${winner !== '—' ? `<span class="dh-cell-${winner === p.ml ? 'win' : 'loss'}">${escapeHtml(winner)}</span>` : '<span style="color:var(--text3);">N/A</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
+  document.getElementById('dh-pagination').innerHTML = `
+    <span>${data.total} matchs · page ${data.page}/${totalPages}</span>
+    <span>
+      <button type="button" ${data.page <= 1 ? 'disabled' : ''} onclick="dhGoToPage(${data.page - 1})">‹ Préc</button>
+      <button type="button" ${data.page >= totalPages ? 'disabled' : ''} onclick="dhGoToPage(${data.page + 1})">Suiv ›</button>
+    </span>`;
+}
+
 function dhRenderTable(data) {
   const tbody = document.getElementById('dh-tbody');
   const empty = document.getElementById('dh-empty');
   const matches = data.matches || [];
   if (!matches.length) {
     tbody.innerHTML = '';
+    if (dhState.sport === 'tennis') {
+      empty.innerHTML = `
+        <div class="ico">🎾</div>
+        <strong style="color:var(--text2);">Tennis archive — scaffold actif</strong><br>
+        <span style="font-size:11.5px;color:var(--text3);margin-top:6px;display:inline-block;line-height:1.5;">
+          La structure backend est en place (Phase H3).<br>
+          L'historique tennis se rempliera progressivement à partir des prochains matchs terminés.<br>
+          6 marchés natifs ciblés : Moneyline · Set 1 · ≥1 set · Total jeux · Aces · Tie-break.
+        </span>`;
+    } else {
+      empty.innerHTML = `
+        <div class="ico">📊</div>
+        Aucun match ne correspond aux filtres.<br>
+        <span style="font-size:11px;margin-top:4px;display:block;">Essayez de relâcher un filtre ou changez de période.</span>`;
+    }
     empty.style.display = 'block';
     document.getElementById('dh-pagination').innerHTML = '';
     return;
   }
   empty.style.display = 'none';
+
+  if (dhState.sport === 'tennis') {
+    return _dhRenderTableTennis(data);
+  }
 
   // Edge raisonnable : [5%, 50%]. Au-delà = data legacy corrompue.
   const DH_EDGE_MIN = 5, DH_EDGE_MAX = 50;
@@ -24836,15 +25054,34 @@ function _dhChartOpts(fmt, yMin, yMax) {
 
 // ── Wire controls ─────────────────────────────────────────────────────────
 function _dhWireControls() {
-  // Sport toggle
+  // Sport toggle (H3 : re-render market chips + show/hide surface + update table cols)
   document.querySelectorAll('#dh-sport-toggle .dh-toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#dh-sport-toggle .dh-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
       dhState.sport = btn.dataset.sport;
       dhState.page = 1;
+      dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key); // reset to all-active
+      dhState.surfaces = [];
+      _dhRenderMarketChips();
+      _dhRenderTableHeader();
+      document.getElementById('dh-fr-surface').style.display = dhState.sport === 'tennis' ? '' : 'none';
       dhRefresh();
     });
   });
+
+  // Surface chips wiring (initial)
+  document.querySelectorAll('#dh-f-surface .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      dhState.surfaces = Array.from(document.querySelectorAll('#dh-f-surface .dh-chip.active')).map(c => c.dataset.surface);
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
+  });
+
+  // Initial render market chips (football)
+  _dhRenderMarketChips();
+  _dhRenderTableHeader();
 
   // Period buttons
   document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(btn => {
