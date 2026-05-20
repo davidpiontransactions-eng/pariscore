@@ -20,7 +20,9 @@
 // v15 (2026-05-20) : invalide v14 — embarque V10 viewport=1280 forçage desktop
 // sur mobile (user demande vue desktop pure sur son téléphone). Toutes les
 // media queries mobile inactives — site rend comme desktop avec zoom out.
-const CACHE = 'pariscore-shell-v15';
+// v16 (2026-05-20) : invalide v15 — embarque V11 initial-scale=0.3 + pinch
+// zoom 0.2→2.0. Desktop 1280px scalé pour rentrer largeur téléphone.
+const CACHE = 'pariscore-shell-v16';
 const SHELL = [
   '/',
   '/pariscore.html',
