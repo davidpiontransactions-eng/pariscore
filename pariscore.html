@@ -9634,6 +9634,39 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <symbol id="i3d-ai" viewBox="0 0 24 24"><rect x="5" y="6" width="14" height="14" rx="3.5" fill="#000" opacity=".25"/><rect x="5" y="5" width="14" height="14" rx="3.5" fill="url(#g3dRed)"/><path d="M12 8 13.5 11 16.5 12 13.5 13 12 16 10.5 13 7.5 12 10.5 11 Z" fill="#fff" opacity=".9"/><rect x="5" y="5" width="14" height="5" rx="3.5" fill="#fff" opacity=".18"/></symbol>
       <symbol id="i3d-fatigue" viewBox="0 0 24 24"><path d="M12 4 L21 20 H3 Z" fill="#000" opacity=".25"/><path d="M12 3 L21 19 H3 Z" fill="url(#g3dAmber)"/><rect x="11" y="8.5" width="2" height="6" rx="1" fill="#3a2602"/><circle cx="12" cy="17" r="1.3" fill="#3a2602"/></symbol>
       <symbol id="i3d-frost" viewBox="0 0 24 24"><g stroke="url(#g3dBlue)" stroke-width="2.2" stroke-linecap="round"><path d="M12 3 V21"/><path d="M4 7.5 L20 16.5"/><path d="M20 7.5 L4 16.5"/></g><circle cx="12" cy="12" r="2.3" fill="url(#g3dBlue)"/></symbol>
+      <!-- 3D Tennis Ball (serving indicator) — radial yellow-green + white seam -->
+      <radialGradient id="g3dBall" cx="0.35" cy="0.30" r="0.85">
+        <stop offset="0" stop-color="#f7ff7a"/>
+        <stop offset="0.45" stop-color="#d4e60d"/>
+        <stop offset="0.85" stop-color="#7a9a05"/>
+        <stop offset="1" stop-color="#4a6203"/>
+      </radialGradient>
+      <radialGradient id="g3dBallHi" cx="0.30" cy="0.25" r="0.50">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+        <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+      </radialGradient>
+      <symbol id="i3d-tennisball" viewBox="0 0 24 24">
+        <!-- shadow base -->
+        <ellipse cx="12" cy="21" rx="7" ry="1.4" fill="#000" opacity="0.30"/>
+        <!-- main ball sphere -->
+        <circle cx="12" cy="12" r="10" fill="url(#g3dBall)"/>
+        <!-- felt seams (two curved arcs) -->
+        <path d="M3.2 8.6 C 7.5 11, 16.5 11, 20.8 8.6" stroke="#fff" stroke-width="1.1" fill="none" opacity="0.92" stroke-linecap="round"/>
+        <path d="M3.2 15.4 C 7.5 13, 16.5 13, 20.8 15.4" stroke="#fff" stroke-width="1.1" fill="none" opacity="0.92" stroke-linecap="round"/>
+        <!-- felt micro-texture (subtle dots) -->
+        <g fill="#fff" opacity="0.10">
+          <circle cx="7" cy="7" r="0.35"/><circle cx="9" cy="6" r="0.30"/>
+          <circle cx="11" cy="5.5" r="0.30"/><circle cx="14" cy="6" r="0.35"/>
+          <circle cx="17" cy="7.5" r="0.30"/><circle cx="18" cy="10" r="0.35"/>
+          <circle cx="5.5" cy="10" r="0.30"/><circle cx="6.5" cy="14" r="0.30"/>
+          <circle cx="9" cy="17" r="0.35"/><circle cx="13" cy="18" r="0.30"/>
+          <circle cx="16" cy="17" r="0.30"/><circle cx="18.5" cy="14" r="0.30"/>
+        </g>
+        <!-- highlight glossy reflection -->
+        <ellipse cx="8.5" cy="7.5" rx="4.2" ry="2.8" fill="url(#g3dBallHi)"/>
+        <!-- rim glow -->
+        <circle cx="12" cy="12" r="10" fill="none" stroke="#ffff8a" stroke-width="0.5" opacity="0.45"/>
+      </symbol>
     </defs></svg>
 
     <!-- Tableau value-bets -->
@@ -10021,9 +10054,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-sb-tot-lead { color:#4ade80; }
   #tennis-vb-table .tn-sb-empty span { color:var(--text3,#5a6068); }
   #tennis-vb-table .tn-sb-soon { display:inline-block; background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:6px 10px; font-family:'DM Mono',monospace; font-size:12px; font-weight:700; color:#ffa726; white-space:nowrap; }
-  #tennis-vb-table .tn-sb-srv { color:#facc15; font-size:11px; line-height:1; min-width:14px; text-align:center; filter:drop-shadow(0 0 3px rgba(250,204,21,.65)); animation:tnSrvPulse 1.8s ease-in-out infinite; }
+  #tennis-vb-table .tn-sb-srv { display:inline-flex; align-items:center; justify-content:center; line-height:1; min-width:16px; text-align:center; filter:drop-shadow(0 0 4px rgba(212,230,13,.55)); animation:tnSrvPulse 1.4s ease-in-out infinite; }
+  #tennis-vb-table .tn-sb-srv .tn-sb-ball { width:14px; height:14px; display:block; }
+  #tennis-vb-table .tn-sb-srv .tn-sb-ball:hover { transform:scale(1.1); }
   #tennis-vb-table .tn-sb-srv-off { color:transparent; min-width:14px; }
-  @keyframes tnSrvPulse { 0%,100%{ transform:scale(1); filter:drop-shadow(0 0 3px rgba(250,204,21,.55)); } 50%{ transform:scale(1.15); filter:drop-shadow(0 0 6px rgba(250,204,21,.85)); } }
+  @keyframes tnSrvPulse {
+    0%, 100% { transform: scale(1)    translateY(0);    filter: drop-shadow(0 0 4px rgba(212,230,13,.55)); }
+    35%      { transform: scale(1.10) translateY(-2px); filter: drop-shadow(0 0 8px rgba(212,230,13,.85)); }
+    65%      { transform: scale(1.05) translateY(0);    filter: drop-shadow(0 0 6px rgba(212,230,13,.70)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #tennis-vb-table .tn-sb-srv { animation: none !important; }
+  }
   #tennis-vb-table .tn-dr-delta { font-family:'DM Mono',monospace; font-size:9px; font-weight:800; letter-spacing:.3px; padding:1px 5px; border-radius:4px; margin-left:4px; background:rgba(148,163,184,.12); color:#94a3b8; white-space:nowrap; }
   #tennis-vb-table .tn-dr-delta.up { background:rgba(74,222,128,.18); color:#4ade80; }
   #tennis-vb-table .tn-dr-delta.down { background:rgba(255,77,77,.18); color:#ff4d4d; }
@@ -10138,6 +10180,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-live-table td { padding:10px 12px; border-top:1px solid var(--bg4,#1e2328); font-size:13px; color:var(--text,#e8eaed); }
   #tennis-live-table tr:hover { background:var(--bg3,#181c20); }
   #tennis-live-table .tennis-serving { font-weight:700; color:#22c55e; }
+  #tennis-live-table .tn-live-ball { width:14px; height:14px; display:inline-block; vertical-align:middle; margin-left:6px; filter:drop-shadow(0 0 4px rgba(212,230,13,.55)); animation:tnSrvPulse 1.4s ease-in-out infinite; }
   #tennis-live-table .tennis-set-score { font-family:'DM Mono',monospace; font-size:14px; color:var(--blue,#29b6f6); }
   #tennis-live-table .tennis-games { font-family:'DM Mono',monospace; font-size:13px; color:var(--text2,#8d9399); }
   #tennis-live-table .tennis-point { font-family:'DM Mono',monospace; font-weight:700; color:var(--green,#00e676); }
@@ -12780,6 +12823,9 @@ function renderTennisLive(matches) {
     const p2Flag = m.player2?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player2.flag)}" alt="">` : '';
     const p1Cls = m.serving === 1 ? 'tennis-serving' : '';
     const p2Cls = m.serving === 2 ? 'tennis-serving' : '';
+    const _ballSvg = '<svg class="tn-live-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg>';
+    const p1Ball = m.serving === 1 ? _ballSvg : '';
+    const p2Ball = m.serving === 2 ? _ballSvg : '';
     const tour = String(m.tour || '').toUpperCase();
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';
@@ -12790,8 +12836,8 @@ function renderTennisLive(matches) {
     return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
       <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}</td>
       <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
-      <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}</td>
-      <td class="${p2Cls}">${p2Flag}${_escTennis(m.player2?.name)}</td>
+      <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}</td>
+      <td class="${p2Cls}">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}</td>
       <td style="text-align:left;vertical-align:middle;">${tnLiveBetsFromScore(m)}</td>
       <td style="text-align:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></td>
       <td style="text-align:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</td>
@@ -13049,7 +13095,7 @@ function _tvbScoreCell(m) {
   // J1/J2 (grille CSS : même nombre de cellules par ligne, sinon décalage).
   const _srv = (lo.serving === 1) ? 'p1' : (lo.serving === 2) ? 'p2' : null;
   const ballCell = (who) => {
-    if (_srv === who) return `<span class="tn-sb-srv" title="${_escTennis(String((who === 'p1' ? m.player1?.name : m.player2?.name) || ''))} au service">🎾</span>`;
+    if (_srv === who) return `<span class="tn-sb-srv" title="${_escTennis(String((who === 'p1' ? m.player1?.name : m.player2?.name) || ''))} au service"><svg class="tn-sb-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg></span>`;
     return `<span class="tn-sb-srv-off" aria-hidden="true">·</span>`;
   };
   const rowHtml = (who) => {
