@@ -8977,6 +8977,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
       </div>
       <div class="dh-fr-section">
+        <div class="dh-fr-title">☁️ Météo <span class="dh-soon" title="Enrichissement open-meteo via venue lat/lon — backlog post-R10">R11+</span></div>
+        <div id="dh-f-weather" class="dh-chips">
+          <button type="button" data-w="clear" class="dh-chip">☀️ Clair</button>
+          <button type="button" data-w="rain" class="dh-chip">🌧️ Pluie</button>
+          <button type="button" data-w="wind" class="dh-chip">💨 Vent</button>
+          <button type="button" data-w="snow" class="dh-chip">❄️ Neige</button>
+        </div>
+      </div>
+      <div class="dh-fr-section">
         <label class="dh-checkbox"><input type="checkbox" id="dh-f-excludelow"> Cacher ligues WR&lt;50%</label>
       </div>
       <button id="dh-reset" class="dh-reset-btn" type="button">↻ Reset filtres</button>
@@ -25089,6 +25098,7 @@ const dhState = {
   markets: ['over25', 'btts', 'edge'],
   strategies: [],
   surfaces: [], // H3 tennis-only
+  weather: [],  // R9 placeholder
   confidence: [],
   outcome: 'all',
   minEV: 0,
@@ -25170,6 +25180,7 @@ function _dhBuildUrl() {
   if (dhState.markets.length) p.set('markets', dhState.markets.join(','));
   if (dhState.strategies.length) p.set('strategies', dhState.strategies.join(','));
   if (dhState.surfaces.length) p.set('surfaces', dhState.surfaces.join(','));
+  if (dhState.weather.length) p.set('weather', dhState.weather.join(','));
   if (dhState.confidence.length) p.set('confidence', dhState.confidence.join(','));
   if (dhState.outcome && dhState.outcome !== 'all') p.set('outcome', dhState.outcome);
   if (dhState.minEV) p.set('minEV', dhState.minEV);
@@ -26535,6 +26546,16 @@ function _dhWireControls() {
   });
   document.getElementById('dh-cohort-b')?.addEventListener('change', () => {
     if (window._dhLastData?.series) dhRenderCharts(window._dhLastData.series);
+  });
+
+  // R9 — Weather chips multi-select (scaffold, data dep externe)
+  document.querySelectorAll('#dh-f-weather .dh-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      dhState.weather = Array.from(document.querySelectorAll('#dh-f-weather .dh-chip.active')).map(c => c.dataset.w);
+      dhState.page = 1;
+      dhRefreshDebounced();
+    });
   });
 
   // R8 — Backtest Simulator

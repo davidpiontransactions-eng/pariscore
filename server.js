@@ -7842,6 +7842,20 @@ function runHistoryQuery(p) {
       });
     }
   }
+  // R9 — Weather filter (predicted.weather.condition) — data dépendante de l'enrichissement
+  // archive externe (open-meteo via venue lat/lon). Tant que pipeline absent, filtre opère sur
+  // entries déjà tagguées seulement, sinon retourne pool inchangé si aucune entrée taggée.
+  if (p.weather?.length) {
+    const wants = new Set(p.weather.map(w => w.toLowerCase()));
+    const hasTaggedEntries = pool.some(h => h.predicted?.weather?.condition);
+    if (hasTaggedEntries) {
+      pool = pool.filter(h => {
+        const cond = h.predicted?.weather?.condition;
+        return cond && wants.has(String(cond).toLowerCase());
+      });
+    }
+    // Sinon : pool inchangé + frontend affichera bandeau "data météo absente"
+  }
 
   // ── Aggregations PRE-pagination (branchées sport) ──────────────────────────
   const kpis = sport === 'tennis' ? computeTennisKpis(pool) : computeHistoryKpis(pool);
@@ -20263,6 +20277,7 @@ if (pathname === '/api/v1/history/query') {
     excludeLowLeagues: query.excludeLowLeagues === '1' || query.excludeLowLeagues === 'true',
     venue: query.venue || 'all',                   // R1 : home / away / draw / all (edge picks)
     weekdays: arr('weekdays'),                     // R1 : 0-6 (dim..sam), filtre commence_time getDay()
+    weather: arr('weather'),                       // R9 : rain / wind / snow / clear (predicted.weather.condition)
     page: parseInt(query.page) || 1,
     pageSize: parseInt(query.pageSize) || 50,
     sort: query.sort || 'date_desc',
@@ -20293,6 +20308,7 @@ if (pathname === '/api/v1/history/export.csv') {
     excludeLowLeagues: query.excludeLowLeagues === '1' || query.excludeLowLeagues === 'true',
     venue: query.venue || 'all',
     weekdays: arr('weekdays'),
+    weather: arr('weather'),
     page: 1, pageSize: 10000, sort: 'date_desc',
   };
   const data = runHistoryQuery(p);
