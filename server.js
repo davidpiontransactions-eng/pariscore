@@ -3358,6 +3358,67 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_bet_import_audit_user ON bet_import_audit(user_id, created_at)`);
 
+  // ── v9.9 migrations : Gambling-Affiliation network — sub-id tracking + S2S postback ──
+  // affiliates : multi-réseau (direct | ga) + credentials GA (pid/bid) + template sub-id
+  try {
+    const cols = sqldb.prepare("PRAGMA table_info(affiliates)").all();
+    if (!cols.some(c => c.name === 'network')) {
+      sqldb.exec(`ALTER TABLE affiliates ADD COLUMN network TEXT NOT NULL DEFAULT 'direct'`);
+    }
+    if (!cols.some(c => c.name === 'ga_pid')) {
+      sqldb.exec(`ALTER TABLE affiliates ADD COLUMN ga_pid TEXT`);
+    }
+    if (!cols.some(c => c.name === 'ga_bid')) {
+      sqldb.exec(`ALTER TABLE affiliates ADD COLUMN ga_bid TEXT`);
+    }
+    if (!cols.some(c => c.name === 'subid_template')) {
+      sqldb.exec(`ALTER TABLE affiliates ADD COLUMN subid_template TEXT`);
+    }
+  } catch (e) { console.error('  [Migration v9.9] affiliates ALTER failed:', e.message); }
+
+  // affiliate_clicks : click_id UUID (postback key), contexte granulaire, conversion S2S
+  try {
+    const cols = sqldb.prepare("PRAGMA table_info(affiliate_clicks)").all();
+    if (!cols.some(c => c.name === 'click_id')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN click_id TEXT`);
+    }
+    if (!cols.some(c => c.name === 'subid')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN subid TEXT`);
+    }
+    if (!cols.some(c => c.name === 'sport')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN sport TEXT`);
+    }
+    if (!cols.some(c => c.name === 'league')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN league TEXT`);
+    }
+    if (!cols.some(c => c.name === 'context')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN context TEXT`);
+    }
+    if (!cols.some(c => c.name === 'market')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN market TEXT`);
+    }
+    if (!cols.some(c => c.name === 'selection')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN selection TEXT`);
+    }
+    if (!cols.some(c => c.name === 'user_id')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN user_id INTEGER`);
+    }
+    if (!cols.some(c => c.name === 'converted_at')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN converted_at INTEGER`);
+    }
+    if (!cols.some(c => c.name === 'payout_cents')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN payout_cents INTEGER`);
+    }
+    if (!cols.some(c => c.name === 'conversion_type')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN conversion_type TEXT`);
+    }
+    // UNIQUE click_id : SQLite autorise N NULL multiples par défaut → safe pour clicks legacy
+    sqldb.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_aff_clicks_clickid  ON affiliate_clicks(click_id)`);
+    sqldb.exec(`CREATE INDEX        IF NOT EXISTS idx_aff_clicks_user     ON affiliate_clicks(user_id, clicked_at)`);
+    sqldb.exec(`CREATE INDEX        IF NOT EXISTS idx_aff_clicks_converted ON affiliate_clicks(converted_at)`);
+    sqldb.exec(`CREATE INDEX        IF NOT EXISTS idx_aff_clicks_context  ON affiliate_clicks(context, clicked_at)`);
+  } catch (e) { console.error('  [Migration v9.9] affiliate_clicks ALTER failed:', e.message); }
+
   // Seed Coteur — comparateur de cotes légal ANJ France
   const hasCoteur = sqldb.prepare('SELECT id FROM affiliates WHERE bookmaker = ?').get('coteur');
   if (!hasCoteur) {
