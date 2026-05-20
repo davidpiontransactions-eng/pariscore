@@ -30987,6 +30987,167 @@ function renderComparateur(d) {
     setInterval(refreshCount, 1500);
   }
 
+  /* ── UI-012 — Profils filtres sauvegardés (tennis) ── */
+  var CF_PROFILE_KEY = 'cf_tennis_profiles';
+  function cfReadProfiles() {
+    try { return JSON.parse(localStorage.getItem(CF_PROFILE_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function cfWriteProfiles(arr) {
+    try { localStorage.setItem(CF_PROFILE_KEY, JSON.stringify(arr || [])); } catch (e) {}
+  }
+  function cfSnapshotCurrentTennisFilters() {
+    var f = window._tennisVbFilters || {};
+    return {
+      tour: f.tour || 'ALL',
+      surface: f.surface || 'ALL',
+      tier: f.tier || 'ALL',
+      strategy: f.strategy || 'ALL',
+      comp: f.comp || 'ALL',
+      sort: f.sort || 'time',
+      q: f.q || '',
+      live_only: !!document.querySelector('#tennis-vb-live-only')?.checked,
+      elo_only: !!document.querySelector('#tennis-vb-elo-only')?.checked,
+      positive_ev: !!document.querySelector('#tennis-vb-positive-ev')?.checked,
+      hide_finished: !!document.querySelector('#tennis-vb-hide-finished')?.checked,
+      cf_mode: document.body.getAttribute('data-cf-mode') || 'analyse'
+    };
+  }
+  function cfApplyTennisProfile(profile) {
+    if (!profile || !profile.filters) return false;
+    var f = profile.filters;
+    if (window._tennisVbFilters) {
+      window._tennisVbFilters.tour = f.tour || 'ALL';
+      window._tennisVbFilters.surface = f.surface || 'ALL';
+      window._tennisVbFilters.tier = f.tier || 'ALL';
+      window._tennisVbFilters.strategy = f.strategy || 'ALL';
+      window._tennisVbFilters.comp = f.comp || 'ALL';
+      window._tennisVbFilters.sort = f.sort || 'time';
+      window._tennisVbFilters.q = f.q || '';
+    }
+    /* Reflect in DOM controls */
+    var setChk = function (id, val) { var el = document.querySelector('#' + id); if (el) el.checked = !!val; };
+    setChk('tennis-vb-live-only', f.live_only);
+    setChk('tennis-vb-elo-only', f.elo_only);
+    setChk('tennis-vb-positive-ev', f.positive_ev);
+    setChk('tennis-vb-hide-finished', f.hide_finished);
+    var sortSel = document.querySelector('#tennis-vb-sort'); if (sortSel) sortSel.value = f.sort || 'time';
+    var searchInput = document.querySelector('#tennis-vb-search'); if (searchInput) searchInput.value = f.q || '';
+    /* Reflect filter button active state */
+    document.querySelectorAll('.tennis-vb-filter-btn').forEach(function (b) {
+      var key = b.getAttribute('data-filter'); var val = b.getAttribute('data-value');
+      var match = f[key] && f[key] === val;
+      b.classList.toggle('is-active', !!match);
+    });
+    if (f.cf_mode) cfApplyMode(f.cf_mode);
+    /* Trigger re-render */
+    if (typeof window.renderTennisValueBets === 'function') {
+      window.renderTennisValueBets(window._tennisVbLastFetch || []);
+    }
+    return true;
+  }
+  function cfBuildProfilesModal() {
+    if (document.querySelector('#cf-profiles-modal')) return;
+    var modal = document.createElement('div');
+    modal.id = 'cf-profiles-modal';
+    modal.className = 'cf-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML =
+      '<div class="cf-modal-box" style="background:#0b1220;border:1px solid #38bdf8;border-radius:14px;padding:24px;width:100%;max-width:480px;color:#e8eaed;font-family:Inter,sans-serif;">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      +     '<h3 style="margin:0;font-family:Syne,sans-serif;font-size:18px;letter-spacing:.04em;text-transform:uppercase;">Mes profils</h3>'
+      +     '<button type="button" class="cf-modal-close" style="background:transparent;border:0;color:#94a3b8;font-size:20px;cursor:pointer;">×</button>'
+      +   '</div>'
+      +   '<div id="cf-profiles-list" style="display:flex;flex-direction:column;gap:8px;"></div>'
+      +   '<div style="margin-top:18px;display:flex;gap:8px;">'
+      +     '<input type="text" id="cf-profile-name" placeholder="Nom du profil (ex: Clay GS Live)" style="flex:1;background:#0f172a;border:1px solid #1e293b;color:#e8eaed;padding:8px 12px;border-radius:8px;font-family:DM Mono,monospace;font-size:12px;">'
+      +     '<button type="button" id="cf-profile-save-btn" style="background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(56,189,248,.10));border:1px solid rgba(56,189,248,.50);color:#38bdf8;padding:8px 14px;border-radius:8px;font-family:DM Mono,monospace;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;">Sauvegarder</button>'
+      +   '</div>'
+      +   '<div style="margin-top:12px;font-size:11px;color:#64748b;font-family:DM Mono,monospace;">Capture: filtres tennis, sort, mode Trading/Analyse.</div>'
+      + '</div>';
+    document.body.appendChild(modal);
+    modal.querySelector('.cf-modal-close').addEventListener('click', function () { modal.style.display = 'none'; });
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.style.display = 'none'; });
+    document.querySelector('#cf-profile-save-btn').addEventListener('click', function () {
+      var nameInput = document.querySelector('#cf-profile-name');
+      var name = (nameInput.value || '').trim() || ('Profil ' + (new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })));
+      var profiles = cfReadProfiles();
+      profiles.push({ name: name, filters: cfSnapshotCurrentTennisFilters(), ts: Date.now() });
+      cfWriteProfiles(profiles);
+      nameInput.value = '';
+      cfRefreshProfilesList();
+    });
+  }
+  function cfRefreshProfilesList() {
+    var list = document.querySelector('#cf-profiles-list');
+    if (!list) return;
+    var profiles = cfReadProfiles();
+    if (!profiles.length) {
+      list.innerHTML = '<div style="font-size:12px;color:#64748b;font-family:DM Mono,monospace;padding:12px;text-align:center;border:1px dashed #1e293b;border-radius:8px;">Aucun profil sauvegardé. Configurez vos filtres puis cliquez Sauvegarder.</div>';
+      return;
+    }
+    list.innerHTML = profiles.map(function (p, i) {
+      var f = p.filters || {};
+      var summary = [];
+      if (f.surface && f.surface !== 'ALL') summary.push(f.surface);
+      if (f.tier && f.tier !== 'ALL') summary.push(f.tier);
+      if (f.tour && f.tour !== 'ALL') summary.push(f.tour);
+      if (f.live_only) summary.push('LIVE');
+      if (f.positive_ev) summary.push('EV+');
+      if (f.cf_mode === 'trading') summary.push('Trading');
+      var sumStr = summary.length ? summary.join(' · ') : 'Tous filtres';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;">'
+        + '<div style="flex:1;min-width:0;">'
+        +   '<div style="font-weight:700;font-size:13px;color:#e8eaed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.name || 'Profil') + '</div>'
+        +   '<div style="font-size:10px;color:#64748b;font-family:DM Mono,monospace;margin-top:2px;">' + sumStr + '</div>'
+        + '</div>'
+        + '<button type="button" data-cf-profile-apply="' + i + '" style="background:linear-gradient(135deg,rgba(74,222,128,.20),rgba(74,222,128,.05));border:1px solid rgba(74,222,128,.45);color:#4ade80;padding:5px 10px;border-radius:6px;font-family:DM Mono,monospace;font-size:10px;font-weight:700;text-transform:uppercase;cursor:pointer;">Charger</button>'
+        + '<button type="button" data-cf-profile-delete="' + i + '" style="background:transparent;border:1px solid rgba(255,56,86,.40);color:#ff3856;padding:5px 9px;border-radius:6px;font-family:DM Mono,monospace;font-size:10px;font-weight:700;cursor:pointer;">×</button>'
+        + '</div>';
+    }).join('');
+    list.querySelectorAll('[data-cf-profile-apply]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-cf-profile-apply'), 10);
+        var profiles = cfReadProfiles();
+        if (profiles[idx]) {
+          cfApplyTennisProfile(profiles[idx]);
+          document.querySelector('#cf-profiles-modal').style.display = 'none';
+        }
+      });
+    });
+    list.querySelectorAll('[data-cf-profile-delete]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-cf-profile-delete'), 10);
+        var profiles = cfReadProfiles();
+        profiles.splice(idx, 1);
+        cfWriteProfiles(profiles);
+        cfRefreshProfilesList();
+      });
+    });
+  }
+  function cfOpenProfilesModal() {
+    cfBuildProfilesModal();
+    cfRefreshProfilesList();
+    var m = document.querySelector('#cf-profiles-modal');
+    if (m) m.style.display = 'flex';
+  }
+  function cfBuildProfilesTrigger() {
+    var container = document.querySelector('#page-tennis #tennis-valuebets-section');
+    if (!container || container.querySelector('.cf-profiles-trigger')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cf-tennis-filters-toggle cf-profiles-trigger';
+    btn.style.marginLeft = '8px';
+    btn.innerHTML = '⭐ Profils';
+    btn.addEventListener('click', cfOpenProfilesModal);
+    var anchor = container.querySelector('.cf-tennis-filters-toggle');
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.appendChild(btn);
+    } else {
+      container.insertBefore(btn, container.firstChild);
+    }
+  }
+
   /* ── UI-017 — Time-to-kickoff chips (T-Xh Ym) ── */
   function cfFormatT2K(deltaMs) {
     if (deltaMs <= 0) return null;
@@ -31036,6 +31197,7 @@ function renderComparateur(d) {
       attempts++;
       cfBuildModeToggle();
       cfBuildTennisFilterAccordion();
+      cfBuildProfilesTrigger();
       cfRefreshT2K();
       if (attempts > 20) clearInterval(iv);
     }, 750);
