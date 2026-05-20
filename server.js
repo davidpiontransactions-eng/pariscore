@@ -5710,6 +5710,54 @@ function buildFallbackMatchRecord(raw) {
 
 const FALLBACK_NOODDS_SOURCES = new Set(['openfootball', 'football_data', 'rapidfree']);
 
+// ── bd ParisScorebis-hb7 / BD-DATA-005 — Choke-O-Meter heuristique ──
+// Approximation: "Favorite Win Rate" sur 90 jours par ligue.
+// Si favori (odd_min <= 1.50) gagne, c'est OK. Si non, "choke".
+// Limite: pas de "lead at 70'" stricte (pas de timeline stockee), mais
+// signal valuable + utilisable comme proxy.
+const _favWinRateCache = new Map(); // leagueKey → {sample, holdPct, ts}
+const FAV_WIN_RATE_TTL_MS = 24 * 3600 * 1000;
+const FAV_ODDS_THRESHOLD = 1.50;
+const FAV_WIN_RATE_WINDOW_DAYS = 90;
+const FAV_WIN_RATE_MIN_SAMPLE = 20;
+
+function computeFavoriteWinRateForLeague(leagueKey) {
+  if (!leagueKey) return null;
+  const cached = _favWinRateCache.get(leagueKey);
+  if (cached && (Date.now() - cached.ts) < FAV_WIN_RATE_TTL_MS) return cached;
+  try {
+    const cutoff = Date.now() - FAV_WIN_RATE_WINDOW_DAYS * 24 * 3600 * 1000;
+    const archived = (db.archive_matches || []).filter(m => {
+      if (!m || !m.live_score || (m.sport_key || m._sport || m.sport) !== leagueKey) return false;
+      const ts = new Date(m.commence_time || 0).getTime();
+      return ts >= cutoff;
+    });
+    let sample = 0;
+    let holds = 0;
+    for (const m of archived) {
+      const oh = m.odds?.home, oa = m.odds?.away;
+      if (typeof oh !== 'number' || typeof oa !== 'number') continue;
+      const minOdd = Math.min(oh, oa);
+      if (minOdd > FAV_ODDS_THRESHOLD) continue;
+      const favSide = oh <= oa ? 'home' : 'away';
+      const [hs, as] = String(m.live_score).split('-').map(Number);
+      if (isNaN(hs) || isNaN(as)) continue;
+      sample++;
+      const favWon = (favSide === 'home' && hs > as) || (favSide === 'away' && as > hs);
+      if (favWon) holds++;
+    }
+    const out = {
+      sample,
+      holdPct: sample >= FAV_WIN_RATE_MIN_SAMPLE ? Math.round((holds / sample) * 100) : null,
+      ts: Date.now(),
+    };
+    _favWinRateCache.set(leagueKey, out);
+    return out;
+  } catch (e) {
+    return null;
+  }
+}
+
 function buildMatchRecord(raw) {
   const edge = computeEdge(raw);
   if (!edge) {
@@ -5988,6 +6036,22 @@ function buildMatchRecord(raw) {
   } catch (e) {
     // never break record build on IC computation failure
   }
+
+  // ── BD-DATA-005 — Favorite Win Rate (Choke-O-Meter proxy) ──
+  try {
+    const lk = raw._sport || raw.sport_key;
+    if (lk) {
+      const fav = computeFavoriteWinRateForLeague(lk);
+      if (fav && fav.sample > 0) {
+        record.favorite_winrate = {
+          sample: fav.sample,
+          hold_pct: fav.holdPct,
+          threshold_odds: FAV_ODDS_THRESHOLD,
+          window_days: FAV_WIN_RATE_WINDOW_DAYS,
+        };
+      }
+    }
+  } catch (e) { /* optional decoration */ }
 
   // ── SPRINT 1 P0 — BD-DATA-002 — Expose Fatigue Index (0-100) on record ──
   // computeFatigueIndex returns {hoursRest, level, score, matchesIn14d, upcomingIn72h}
