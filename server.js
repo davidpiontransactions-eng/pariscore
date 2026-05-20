@@ -6236,6 +6236,15 @@ async function archivePastMatches() {
         } catch (e) { /* score unavailable */ }
       }
 
+      // H4 : tag stratégies IA qualifiées au moment de l'archive (snapshot prédictions)
+      const strategiesQualified = [];
+      try {
+        for (const [key, strat] of Object.entries(STRATEGIES)) {
+          const prob = strat.getProb?.(match);
+          if (typeof prob === 'number' && prob >= 55) strategiesQualified.push(key);
+        }
+      } catch (e) { /* STRATEGIES sont définies plus bas dans le fichier, garde-fou */ }
+
       const record = {
         id: match.id, home_team: match.home_team, away_team: match.away_team,
         league: match.league, commence_time: match.commence_time,
@@ -6248,6 +6257,13 @@ async function archivePastMatches() {
           bestEdgeOdds: match.best_edge?.odds ?? null,
           bestEdgeBk: match.best_edge?.bk ?? null,
           fair: match.fair ? { home: match.fair.home, draw: match.fair.draw, away: match.fair.away } : null,
+          // H4 : stratégies IA tagguées au moment de l'archive
+          strategies: strategiesQualified,
+          // Snapshot des probas dérivées pour pouvoir évaluer win/loss par stratégie
+          poisson_snapshot: match.poisson ? {
+            over25: match.poisson.over25, btts: match.poisson.btts, over15: match.poisson.over15,
+            cs00: match.poisson.cs00, homeWin: match.poisson.homeWin, draw: match.poisson.draw, awayWin: match.poisson.awayWin,
+          } : null,
         },
         realScore, archived_at: new Date().toISOString(),
       };
@@ -6864,6 +6880,26 @@ function _historyPicksOf(h) {
   return out;
 }
 
+// H4 : évaluation win/loss par stratégie sur record archivé foot.
+// Renvoie 1/0/null (null = pas de réponse définissable depuis les données disponibles).
+function _strategyWonOf(strategyKey, h) {
+  if (!h.realScore) return null;
+  const rs = h.realScore;
+  const total = rs.home + rs.away;
+  switch (strategyKey) {
+    case 'BTTS_YES':  return (rs.home > 0 && rs.away > 0) ? 1 : 0;
+    case 'OVER_2_5':  return total > 2.5 ? 1 : 0;
+    case 'OVER_1_5':  return total > 1.5 ? 1 : 0;
+    case 'UNDER_2_5': return total < 2.5 ? 1 : 0;
+    case 'HOME_WIN':  return rs.home > rs.away ? 1 : 0;
+    case 'AWAY_WIN':  return rs.away > rs.home ? 1 : 0;
+    case 'DRAW':      return rs.home === rs.away ? 1 : 0;
+    case 'CS_00':     return (rs.home === 0 && rs.away === 0) ? 1 : 0;
+    // Stratégies sans data dans le record archivé (corners, cartons, etc.) → null
+    default: return null;
+  }
+}
+
 // H3 : décompose un record tennis en picks-par-marché.
 // Schema attendu (rempli progressivement par cron tennis post-release) :
 //   { id, p1, p2, tournament, surface, commence_time,
@@ -7226,9 +7262,53 @@ function computeHistoryBreakdown(entries) {
     };
   });
 
-  // Strategy breakdown : v9 history n'a pas de tag — Phase H4 le rajoutera.
-  // Pour H1, on retourne tableau vide pour signaler "à venir".
-  const strategies = [];
+  // H4 : Strategy breakdown depuis tag predicted.strategies posé à l'archive
+  const stratPicks = {};
+  for (const h of entries) {
+    if (!h.verified || !h.realScore) continue;
+    const strats = h.predicted?.strategies;
+    if (!Array.isArray(strats) || !strats.length) continue;
+    for (const sk of strats) {
+      const won = _strategyWonOf(sk, h);
+      if (won === null) continue;
+      if (!stratPicks[sk]) stratPicks[sk] = [];
+      stratPicks[sk].push({ won, t: new Date(h.commence_time).getTime() });
+    }
+  }
+  const strategies = Object.entries(stratPicks).map(([key, picks]) => {
+    picks.sort((a, b) => a.t - b.t);
+    const wins = picks.reduce((s, p) => s + p.won, 0);
+    const total = picks.length;
+    const wr = total ? wins / total : null;
+    const [lo, hi] = _bootstrapCI95(picks.map(p => p.won));
+    // Trend : différence WR last-half vs first-half (proxy "edge dégradé / amélioré")
+    let trend = null;
+    if (total >= 10) {
+      const mid = Math.floor(total / 2);
+      const firstHalfWR = picks.slice(0, mid).reduce((s, p) => s + p.won, 0) / mid;
+      const lastHalfWR  = picks.slice(mid).reduce((s, p) => s + p.won, 0) / (total - mid);
+      trend = lastHalfWR - firstHalfWR;
+    }
+    // Sparkline data : WR cumulé tous les 5 picks
+    const sparkline = [];
+    let cumW = 0;
+    for (let i = 0; i < total; i++) {
+      cumW += picks[i].won;
+      if ((i + 1) % 5 === 0 || i === total - 1) {
+        sparkline.push(cumW / (i + 1));
+      }
+    }
+    return {
+      strategy: key,
+      sample: total,
+      wins,
+      winrate: wr,
+      winrate_ic95: [lo, hi],
+      trend,
+      sparkline,
+    };
+  });
+  strategies.sort((a, b) => b.sample - a.sample);
 
   return { by_league: leagues, by_market: markets, by_strategy: strategies };
 }
@@ -7299,6 +7379,14 @@ function runHistoryQuery(p) {
         if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) return true;
       }
       return false;
+    });
+  }
+  // H4 : Filtre stratégies (matche si record a au moins 1 stratégie active)
+  if (sport === 'football' && p.strategies?.length) {
+    const wants = new Set(p.strategies);
+    pool = pool.filter(h => {
+      const strats = h.predicted?.strategies;
+      return Array.isArray(strats) && strats.some(s => wants.has(s));
     });
   }
   if (p.fromDate) {
