@@ -11,7 +11,11 @@
 // (131ea49), sécurité blacklist server.js (4e02a6a) et V7 o25-slider=0 + CTA
 // reset inline (4da9d0c). Force re-install garantie pour purger anciens
 // pariscore.html pre-cached chez users coincés sur page vide.
-const CACHE = 'pariscore-shell-v12';
+// v13 (2026-05-20) : invalide v12 — embarque V8 page-matchs « barre du haut »
+// compactée (6d725fe). status-bar/team-search/league-hub-banner/fc-head cachés
+// mobile, ai-scout/matchday-banner/table-header compact → tableau visible
+// above fold.
+const CACHE = 'pariscore-shell-v13';
 const SHELL = [
   '/',
   '/pariscore.html',
