@@ -7360,6 +7360,32 @@ function computeHistoryBreakdown(entries) {
   return { by_league: leagues, by_market: markets, by_strategy: strategies, trap_teams: trapTeams, heatmap };
 }
 
+// R6 — Calibration plot : predicted proba bucket vs realized winrate
+function computeCalibration(entries) {
+  const buckets = {};
+  for (const h of entries) {
+    const picks = _historyPicksOf(h);
+    for (const p of picks) {
+      if (p.market !== 'over25' && p.market !== 'btts') continue;
+      const proba = p.proba;
+      if (typeof proba !== 'number' || proba < 0 || proba > 100) continue;
+      const bucket = Math.min(Math.floor(proba / 10) * 10, 90);
+      const key = `${bucket}-${bucket + 10}`;
+      if (!buckets[key]) buckets[key] = { pred_sum: 0, sample: 0, wins: 0, mid: bucket + 5 };
+      buckets[key].pred_sum += proba;
+      buckets[key].sample++;
+      buckets[key].wins += p.won;
+    }
+  }
+  return Object.entries(buckets).map(([range, d]) => ({
+    bucket: range,
+    bucket_mid: d.mid,
+    predicted_avg: d.sample ? d.pred_sum / d.sample : null,
+    realized_rate: d.sample ? d.wins / d.sample * 100 : null,
+    sample: d.sample,
+  })).sort((a, b) => a.bucket_mid - b.bucket_mid);
+}
+
 // R4 — Profit Attribution : décompose P/L total par dim (marché × ligue × stratégie)
 function computeProfitAttribution(entries) {
   const allPicks = [];
@@ -7646,6 +7672,7 @@ function runHistoryQuery(p) {
   const series = sport === 'tennis' ? computeTennisSeries(pool) : computeHistorySeries(pool);
   const alerts = sport === 'football' ? computeHistoryAlerts(pool) : []; // R2 Executive
   const attribution = sport === 'football' ? computeProfitAttribution(pool) : null; // R4
+  const calibration = sport === 'football' ? computeCalibration(pool) : []; // R6
 
   // Exclude low-WR leagues (BetMines-style)
   if (p.excludeLowLeagues) {
@@ -7676,7 +7703,7 @@ function runHistoryQuery(p) {
   const page = Math.max(1, p.page || 1);
   const matches = pool.slice((page - 1) * pageSize, page * pageSize);
 
-  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts, attribution };
+  return { sport, matches, total, page, pageSize, kpis, breakdown, series, alerts, attribution, calibration };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

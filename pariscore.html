@@ -3013,8 +3013,16 @@
   }
   #page-historique .dh-period-custom input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
 
-  /* KPI strip */
-  #page-historique .dh-kpi-strip { gap: 14px; margin-bottom: 22px; }
+  /* KPI strip — A1 sticky on scroll */
+  #page-historique .dh-kpi-strip {
+    gap: 14px;
+    margin-bottom: 22px;
+    position: sticky;
+    top: 8px;
+    z-index: 5;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
   #page-historique .dh-kpi {
     background: var(--dh-bg-card);
     backdrop-filter: blur(10px);
@@ -9053,6 +9061,11 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <div class="hist-chart-wrap">
           <div class="hist-chart-title">Rolling 30 picks — Winrate</div>
           <canvas id="dh-chart-rolling" style="width:100%;height:160px;"></canvas>
+        </div>
+        <div class="hist-chart-wrap">
+          <div class="hist-chart-title">Calibration Plot — Predicted % vs Realized % (Over 2.5 + BTTS)</div>
+          <canvas id="dh-chart-calibration" style="width:100%;height:240px;"></canvas>
+          <div style="color:var(--dh-text-4);font-size:10.5px;font-family:'JetBrains Mono', monospace;margin-top:6px;">Diagonale = calibration parfaite · au-dessus = modèle sous-confiant · au-dessous = sur-confiant</div>
         </div>
       </div>
 
@@ -25055,7 +25068,7 @@ const dhState = {
   pageSize: 50,
   sort: 'date_desc',
   _booted: false,
-  _charts: { pl: null, dd: null, rolling: null },
+  _charts: { pl: null, dd: null, rolling: null, calibration: null },
 };
 
 // Marchés disponibles par sport
@@ -25650,8 +25663,10 @@ function dhRenderKpisTennis(kpis, totalMatches) {
     lastCard,
   ];
 
-  document.getElementById('dh-kpi-strip').innerHTML = items.map(k => `
-    <div class="dh-kpi" title="${k.sub}">
+  // R6 A5 — tooltips data-density détaillés
+  const detailedTooltip = `Wins/Loss : ${totalWins}/${aggLoss}\nTotal picks : ${totalPicks}\nIC 95% : ${aggIc ? Math.round(aggIc[0]*100) + '–' + Math.round(aggIc[1]*100) + '%' : '—'}\nMéthode IC : ${icMethodAgg}\nMarchés : Over 2.5 (${kpis.over25?.sample || 0}) · BTTS (${kpis.btts?.sample || 0}) · Edge (${kpis.edge?.sample || 0})`;
+  document.getElementById('dh-kpi-strip').innerHTML = items.map((k, i) => `
+    <div class="dh-kpi" title="${i === 1 ? detailedTooltip : k.sub}">
       <div class="dh-kpi-label">${k.label}</div>
       <div class="dh-kpi-val ${k.color}">${k.val}</div>
       <div class="dh-kpi-sub">${k.sub}</div>
@@ -25974,7 +25989,7 @@ function dhGoToPage(p) {
 
 // ── Charts render ──────────────────────────────────────────────────────────
 function _dhDestroyCharts() {
-  for (const k of ['pl', 'dd', 'rolling']) {
+  for (const k of ['pl', 'dd', 'rolling', 'calibration']) {
     if (dhState._charts[k]) { dhState._charts[k].destroy(); dhState._charts[k] = null; }
   }
 }
@@ -26072,9 +26087,37 @@ function dhRenderCharts(series) {
       type: 'line',
       data: {
         labels: rolling.map(p => p.date),
-        datasets: [{ data: rolling.map(p => Math.round(p.wr * 100)), borderColor: '#29b6f6', backgroundColor: 'rgba(41,182,246,0.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }],
+        datasets: [{ data: rolling.map(p => Math.round(p.wr * 100)), borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.25 }],
       },
       options: _dhChartOpts(v => v + '%', 0, 100),
+    });
+  }
+
+  // R6 — Calibration Plot (scatter + diagonal reference)
+  const calib = (window._dhLastData?.calibration) || [];
+  if (calib.length) {
+    const ctxCal = document.getElementById('dh-chart-calibration').getContext('2d');
+    const points = calib.filter(c => c.predicted_avg != null && c.realized_rate != null && c.sample >= 3)
+      .map(c => ({ x: c.predicted_avg, y: c.realized_rate, sample: c.sample }));
+    dhState._charts.calibration = new Chart(ctxCal, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Modèle', data: points, backgroundColor: '#38bdf8', borderColor: '#38bdf8', pointRadius: points.map(p => Math.min(3 + Math.sqrt(p.sample), 12)), pointHoverRadius: 14 },
+          { label: 'Calibration parfaite', data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], type: 'line', borderColor: 'rgba(148, 163, 184, 0.45)', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, fill: false },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#cbd5e1', font: { family: 'JetBrains Mono, monospace', size: 10 } } },
+          tooltip: { callbacks: { label: c => c.dataset.label === 'Modèle' ? `pred ${Math.round(c.parsed.x)}% → realized ${Math.round(c.parsed.y)}% (n=${c.raw.sample})` : null } },
+        },
+        scales: {
+          x: { type: 'linear', min: 0, max: 100, title: { display: true, text: 'Predicted %', color: '#94a3b8', font: { family: 'JetBrains Mono, monospace', size: 10 } }, ticks: { color: '#5a6068', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.04)' } },
+          y: { type: 'linear', min: 0, max: 100, title: { display: true, text: 'Realized %', color: '#94a3b8', font: { family: 'JetBrains Mono, monospace', size: 10 } }, ticks: { color: '#5a6068', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.04)' } },
+        },
+      },
     });
   }
 }
