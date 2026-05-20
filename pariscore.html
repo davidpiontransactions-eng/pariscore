@@ -603,6 +603,68 @@
     background:linear-gradient(135deg, rgba(226,0,26,.14), rgba(226,0,26,.05));
     border-color:rgba(226,0,26,.36);
   }
+  /* ── CTA Affiliation bandeau bonus — footer modal Insights / AI Scout ── */
+  .aff-bonus-strip {
+    display:flex; align-items:center; gap:14px;
+    margin:18px 4px 6px;
+    padding:14px 16px;
+    border-radius:10px;
+    background:
+      linear-gradient(135deg, rgba(226,0,26,.10) 0%, rgba(15,23,42,.85) 70%);
+    border:1px solid rgba(226,0,26,.32);
+    backdrop-filter:blur(8px);
+    box-shadow:0 4px 18px rgba(0,0,0,.32);
+  }
+  .aff-bonus-strip__icon {
+    flex:0 0 auto;
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:linear-gradient(135deg, #E2001A, #8c0010);
+    color:#fff;
+    font:800 18px/1 var(--font-mono, monospace);
+    box-shadow:0 0 10px rgba(226,0,26,.45);
+  }
+  .aff-bonus-strip__body { flex:1 1 auto; min-width:0; }
+  .aff-bonus-strip__label {
+    font:600 10px/1 var(--font-sans, 'Instrument Sans', system-ui, sans-serif);
+    color:rgba(255,255,255,.55);
+    text-transform:uppercase; letter-spacing:.08em;
+    margin-bottom:3px;
+  }
+  .aff-bonus-strip__amount {
+    font:800 17px/1.15 var(--font-head, 'Syne', system-ui, serif);
+    color:#fff;
+    margin-bottom:2px;
+  }
+  .aff-bonus-strip__hint {
+    font:400 10.5px/1.4 var(--font-sans, 'Instrument Sans', system-ui, sans-serif);
+    color:rgba(255,255,255,.55);
+  }
+  .aff-cta--lg {
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; gap:6px;
+    font:700 12px/1.2 var(--font-sans, 'Instrument Sans', system-ui, sans-serif);
+    padding:10px 16px;
+    border-radius:8px;
+    color:#fff;
+    background:linear-gradient(135deg, #E2001A 0%, #a30015 100%);
+    border:1px solid rgba(226,0,26,.55);
+    box-shadow:0 0 16px rgba(226,0,26,.42);
+    transition:transform .15s ease, box-shadow .15s ease;
+    white-space:nowrap;
+  }
+  .aff-cta--lg:hover {
+    transform:translateY(-1px);
+    box-shadow:0 0 22px rgba(226,0,26,.65);
+  }
+  .aff-cta--lg::after { content:"→"; font-family:var(--font-mono, monospace); opacity:.9; }
+  /* Mobile : pile verticalement */
+  @media (max-width: 540px) {
+    .aff-bonus-strip { flex-direction:column; align-items:stretch; gap:10px; }
+    .aff-bonus-strip__icon { align-self:flex-start; }
+    .aff-cta--lg { justify-content:center; }
+  }
   /* Player cards */
   .ps-player-bar-wrap { width:72px; height:4px; background:var(--bg2); border-radius:2px; margin:4px auto 0; }
   .ps-player-bar-fill { height:4px; border-radius:2px; transition:width .4s; }
@@ -10551,6 +10613,19 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <div id="ins-tab-powerscore" style="display:none"></div>
       <div id="ins-tab-scouting"   style="display:none"><div id="scout-content" style="padding:16px"></div></div>
       <div id="ins-tab-h2h"        style="display:none"></div>
+      <!-- CTA-2 : bandeau bonus footer (populated par openInsights) -->
+      <div class="aff-bonus-strip" id="ins-aff-bonus-strip" style="display:none">
+        <div class="aff-bonus-strip__icon" aria-hidden="true">★</div>
+        <div class="aff-bonus-strip__body">
+          <div class="aff-bonus-strip__label">Bonus partenaire</div>
+          <div class="aff-bonus-strip__amount" id="ins-aff-bonus-amount">100 € offerts</div>
+          <div class="aff-bonus-strip__hint">Inscription chez un bookmaker ANJ partenaire — 18+. Jouez responsablement.</div>
+        </div>
+        <a class="aff-cta aff-cta--lg" id="ins-aff-bonus-link"
+           href="#" target="_blank" rel="nofollow sponsored noopener">
+          Activer le bonus
+        </a>
+      </div>
       </div>
     </div>
   </div>
@@ -15576,7 +15651,18 @@ async function loadAIScout() {
     const html  = data.text
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n/g, '<br>');
-    body.innerHTML = html;
+    // CTA AI Scout "Combiné du jour" — sub-id daté pour analytics par jour
+    const todaySlug = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const scoutHref = buildAffiliateUrl({
+      bookmaker: 'best',
+      context:   'aiscout_combine_' + todaySlug,
+    });
+    body.innerHTML = html + `
+      <div class="aff-scout-cta" style="margin-top:14px;text-align:right">
+        <a class="aff-cta aff-cta--inline" target="_blank" rel="nofollow sponsored noopener" href="${scoutHref}">
+          Parier le combiné du jour
+        </a>
+      </div>`;
     if (data.generated_at) {
       const ago = Math.floor((Date.now() - new Date(data.generated_at).getTime()) / 60000);
       time.textContent = `Généré il y a ${ago} min`;
@@ -19976,6 +20062,21 @@ async function openInsights(matchId) {
 
   document.getElementById('insights-modal').classList.add('open');
   insShowTab('resume');
+
+  // CTA-2 — bandeau bonus footer (active uniquement si match a un best_edge)
+  try {
+    const strip = document.getElementById('ins-aff-bonus-strip');
+    const link  = document.getElementById('ins-aff-bonus-link');
+    if (strip && link) {
+      link.href = buildAffiliateUrl({
+        bookmaker: 'best',
+        context:   'modal_footer_bonus',
+        match:     m,
+        market:    m.best_edge ? m.best_edge.label : '',
+      });
+      strip.style.display = 'flex';
+    }
+  } catch (e) { /* silencieux — bandeau best-effort */ }
 
   try {
     const res = await apiFetch(`/api/v1/insights/${encodeURIComponent(m.id)}`);
