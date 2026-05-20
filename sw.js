@@ -22,7 +22,10 @@
 // media queries mobile inactives — site rend comme desktop avec zoom out.
 // v16 (2026-05-20) : invalide v15 — embarque V11 initial-scale=0.3 + pinch
 // zoom 0.2→2.0. Desktop 1280px scalé pour rentrer largeur téléphone.
-const CACHE = 'pariscore-shell-v16';
+// v17 (2026-05-20) : invalide v16 — embarque V12 éclaircissement tableau foot
+// (#vb-body td) : #11161b → #232a33, hover #1a2127 → #2d3540, override dark
+// trading linear-gradient #15191d/#0f1216 → #232a33/#1c222b.
+const CACHE = 'pariscore-shell-v17';
 const SHELL = [
   '/',
   '/pariscore.html',

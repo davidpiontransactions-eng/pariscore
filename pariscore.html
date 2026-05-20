@@ -1345,12 +1345,14 @@
 
   /* ── VALUE-FIRST ROW v46 — zéro zébrure, divider 1px, couleur = sens only ── */
   #vb-body tr { border-bottom: 1px solid rgba(255,255,255,0.08); transition: background .15s; contain: layout; }
-  #vb-body tr td { background: #11161b; }
+  /* V12 ParisScorebis-amc — éclaircissement tableau (user "noir trop sombre").
+     #11161b → #232a33 (slate plus aéré, garde contraste rouge L'Équipe). */
+  #vb-body tr td { background: #232a33; }
   /* Ligne value bet : accent gauche sémantique (pas une zébrure décorative) */
   #vb-body tr.is-value td:first-child { box-shadow: inset 3px 0 0 0 var(--green); }
   #vb-body tr.is-value-hot td:first-child { box-shadow: inset 3px 0 0 0 #00e676; }
-  #vb-body tr:hover td { background: #1a2127; }
-  #vb-body tr:focus-within td { background: #1a2127; }
+  #vb-body tr:hover td { background: #2d3540; }
+  #vb-body tr:focus-within td { background: #2d3540; }
   @media (prefers-reduced-motion: reduce) { #vb-body tr { transition: none; } }
 
   /* Séparateurs verticaux entre groupes de colonnes */
@@ -1484,11 +1486,11 @@
       border-bottom:2px solid rgba(226,0,26,.55) !important; padding:9px 8px !important; }
     #vb-table thead th.th-hero{ color:#fb7185 !important; }
     /* Surface de ligne unifiée — 2 ids → bat #fff !important du thème clair */
-    #vb-table #vb-body td{ background:linear-gradient(180deg,#15191d,#0f1216) !important;
+    #vb-table #vb-body td{ background:linear-gradient(180deg,#232a33,#1c222b) !important;
       color:#cbd5e1 !important; border-bottom:1px solid rgba(255,255,255,.05) !important;
       border-right:1px solid rgba(255,255,255,.035) !important;
       vertical-align:middle !important; }
-    #vb-table #vb-body tr:hover td{ background:linear-gradient(180deg,#1c222b,#141821) !important; }
+    #vb-table #vb-body tr:hover td{ background:linear-gradient(180deg,#2d3540,#232a33) !important; }
     #vb-table #vb-body tr.is-value-hot td:first-child{ box-shadow:inset 3px 0 0 0 #22c55e !important; }
     #vb-table #vb-body tr.is-value td:first-child{ box-shadow:inset 3px 0 0 0 #d99412 !important; }
     #vb-table #vb-body tr.match-row-live td:first-child{ box-shadow:inset 3px 0 0 0 #E2001A !important; }
