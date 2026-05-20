@@ -5897,6 +5897,55 @@ function buildMatchRecord(raw) {
     kvSet(snapKey, [...arr, snap].slice(-12));
   }
 
+  // ── SPRINT 1 P0 — BD-DATA-001 — IC90 bornes sur best_edge (Normal-approx) ──
+  // Use best.prob (no-vig fair prob) + sample size from played to compute IC90% on EV.
+  // Z90 = 1.645. Real Bootstrap IC could replace later (record.uqd already exists).
+  try {
+    if (edge && edge.best && typeof edge.best.prob === 'number' && typeof edge.best.odds === 'number') {
+      const z90 = 1.645;
+      const playedH = (homeStats && typeof homeStats.played === 'number') ? homeStats.played : (playedHome || 30);
+      const playedA = (awayStats && typeof awayStats.played === 'number') ? awayStats.played : (playedAway || 30);
+      const nEff = Math.max(10, Math.min(playedH, playedA));
+      const p = edge.best.prob;
+      const stdP = Math.sqrt(Math.max(1e-9, p * (1 - p) / nEff));
+      const pLow = Math.max(0, p - z90 * stdP);
+      const pHigh = Math.min(1, p + z90 * stdP);
+      const icLow = (edge.best.odds * pLow - 1) * 100;
+      const icHigh = (edge.best.odds * pHigh - 1) * 100;
+      record.best_edge = Object.assign({}, edge.best, {
+        ic90: {
+          low: parseFloat(icLow.toFixed(2)),
+          high: parseFloat(icHigh.toFixed(2)),
+          n_eff: nEff,
+          method: 'normal_approx_v1'
+        }
+      });
+    }
+  } catch (e) {
+    // never break record build on IC computation failure
+  }
+
+  // ── SPRINT 1 P0 — BD-DATA-002 — Expose Fatigue Index (0-100) on record ──
+  // computeFatigueIndex returns {hoursRest, level, score, matchesIn14d, upcomingIn72h}
+  try {
+    if (typeof computeFatigueIndex === 'function') {
+      const fH = computeFatigueIndex(raw.home_team, raw.commence_time);
+      const fA = computeFatigueIndex(raw.away_team, raw.commence_time);
+      if (fH && typeof fH.score === 'number') {
+        record.home_fatigue = fH.score;
+        record.home_fatigue_level = fH.level;
+        record.home_fatigue_meta = { hoursRest: fH.hoursRest, in14d: fH.matchesIn14d, upcoming: fH.upcomingIn72h };
+      }
+      if (fA && typeof fA.score === 'number') {
+        record.away_fatigue = fA.score;
+        record.away_fatigue_level = fA.level;
+        record.away_fatigue_meta = { hoursRest: fA.hoursRest, in14d: fA.matchesIn14d, upcoming: fA.upcomingIn72h };
+      }
+    }
+  } catch (e) {
+    // fatigue is optional decoration
+  }
+
   // Injuries — mappées directement depuis le flux BSD (unavailable_players)
   // Plus besoin d'appel API-Football dédié → économie de quota
   const bsdUnavailable = raw._source === 'bsd' ? raw.unavailable : null;

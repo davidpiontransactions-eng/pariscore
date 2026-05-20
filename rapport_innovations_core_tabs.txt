@@ -1,0 +1,497 @@
+================================================================================
+RAPPORT D'INNOVATIONS — ONGLETS FOOTBALL & TENNIS (CORE TABS)
+================================================================================
+
+Date          : 20 mai 2026
+Document      : rapport_innovations_core_tabs.txt (version texte brut)
+Auteur        : Lead Product Manager PariScore — synthèse panel virtuel
+Statut        : DRAFT — en attente d'arbitrage du DG
+Périmètre     : pariscore.html -> #page-matchs + #page-tennis
+Périmètre exclu : Mes Paris, Stratégies, AI Scout, Alertes, Tarifs
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+CONSTAT
+-------
+Les onglets Football (9 colonnes visibles + 6 cachées) et Tennis (16 colonnes)
+sont déjà parmi les plus denses du marché francophone. PariScore expose
+14 métriques quantitatives actives (xG, Poisson, Elo, DR, PowerScore,
+Edge dévigé, EV, Bayésien blended, Bootstrap UQD, Calibration, Accuracy,
+Live Intensity, Momentum, Confiance) — ce qui dépasse Flashscore et SofaScore.
+
+MAIS : la densité a un coût. Le panel d'experts virtuels (Quant-Trader,
+Live-Data-Analyst, Fintech-UX-Lead) converge sur un diagnostic commun :
+trop d'information statique, pas assez de signal directionnel.
+Le parieur pro voit des chiffres mais pas l'anomalie. L'œil n'est pas
+guidé vers l'opportunité.
+
+VERDICT DES 3 EXPERTS
+---------------------
+Quant-Trader        : 6.5/10
+  "On expose la prédiction mais on cache l'asymétrie. Pas de borne IC
+   visible sur le tableau. Pas d'historique de calibration en cellule.
+   La cote n'est pas comparée au modèle visuellement."
+
+Live-Data-Analyst   : 7/10
+  "Live Intensity à 0-100 = top. Mais pas de direction. Pas de
+   sparkline. Pas de delta DR temps-réel sur foot. Polling 30s tennis
+   = ok mais on attend l'événement, on ne le voit pas venir."
+
+Fintech-UX-Lead     : 5.5/10
+  "16 colonnes tennis = surcharge cognitive. Bloomberg ne dépasse pas
+   8-9 colonnes prioritaires. Le scan visuel < 500ms est impossible
+   aujourd'hui. Trop de chips concurrents pour l'attention."
+
+3 AXES D'AMÉLIORATION RETENUS
+------------------------------
+1. VALUE-FIRST       : refonte hiérarchie visuelle, anomalie de cote en
+                       premier élément capté < 500 ms.
+2. MICRO-VIZ EN CELLULE : sparklines de pression, deltas DR, courbes Elo,
+                          jauges IC — directement dans le tableau, pas
+                          dans des modales.
+3. MOMENTUM ALERTS   : système d'alerte visuelle (néon clignotant,
+                       bordure pulse) déclenché par divergence
+                       modèle/marché en live ou bascule de DR > seuil.
+
+
+================================================================================
+2. ÉTAPE 1 — AUDIT CRITIQUE (LE DÉBAT)
+================================================================================
+
+2.1 — FOOTBALL
+==============
+
+[QUANT-TRADER]
+--------------
+"Je vois 9 colonnes. Lesquelles me servent à prendre une décision EV > 0
+en 2 secondes ? Réponse : 2. La colonne VALUE et la colonne Cote-Delta.
+Le reste, c'est du contexte. Et le contexte, je ne le veux pas dans une
+cellule, je le veux dans une modal de validation post-décision."
+
+CE QUI MANQUE (Quant) :
+  - Borne inférieure IC à 90% à côté de l'EV (aujourd'hui +8.4% sans
+    variance).
+  - Divergence modèle/marché temps réel : delta cote_courante -
+    cote_modèle_no_vig + pente 15 min. Pré-steam détecté.
+  - Closing Line Value (CLV) historique par stratégie. Seul vrai juge
+    de qualité du modèle.
+  - Kelly fraction suggérée par cellule (1/2 Kelly, 1/4 Kelly).
+
+CE QUI EST DU BRUIT (Quant) :
+  - Buteurs (col 8, 150px) : faible EV pre-match.
+  - Date/Heure prend 55px (75% des matchs du jour). Compresser en HH:MM.
+  - Forme L5 (col 4) : doublon partiel avec PowerScore (col 3).
+
+[LIVE-DATA-ANALYST]
+-------------------
+"Rien n'est dynamique dans le tableau football. SSE actif, on reçoit
+stats_frame, mais on l'utilise pour mettre à jour des chiffres figés.
+Aucun graphique temporel dans la cellule."
+
+CE QUI MANQUE (Live) :
+  - Sparkline de pression (20 derniers points temporels) en cellule
+    Match.
+  - Indice de Fatigue temps réel (déjà calculé v9.0, pas affiché).
+  - Score de Choke (favori menant après 80', historique tenue de
+    score).
+  - Bascule de cote vs bascule de jeu (corrélation cote/événement).
+
+[FINTECH-UX-LEAD]
+-----------------
+"On a un terminal Bloomberg avec 9 colonnes. Bloomberg, c'est 6 colonnes
+principales et 1-2 widgets latéraux. Notre œil ne sait pas où regarder.
+Aucune hiérarchie."
+
+CE QUI DOIT CHANGER (UX) :
+  - Hero column : col VALUE 2x plus large, contrastée, seule en couleur
+    saturée.
+  - Sticky inversé sur col VALUE à droite, pas seulement nom des
+    équipes à gauche.
+  - Densité ligne ~80px (acceptable si hiérarchie claire). Accepter
+    100-110px si sparkline.
+  - Mode condensé toggle [Trading] / [Analyse].
+
+
+2.2 — TENNIS
+============
+
+[QUANT-TRADER] sur tennis
+-------------------------
+"16 colonnes c'est trop. Mais chaque cellule a déjà un signal EV
+exploitable. Le problème : on ne sait pas lequel privilégier. Quand
+DR_SPIKE déclenche et Set1 EV > 5% et Total Jeux U convergent ->
+triple signal. Il faut un score agrégé visible."
+
+CE QUI MANQUE (Quant Tennis) :
+  - Composite Bet Score : agrégation pondérée (déjà calculée backend
+    via _tvbPredScore) — on affiche 3 chips finaux mais pas le gauge.
+  - EV decomposition : heatmap horizontale des 6 marchés candidats.
+  - Surface ELO différentiel (Elo P1 - Elo P2) plutôt qu'absolus.
+  - Time decay : T-2h12m visible (les EV se ferment vite).
+
+[LIVE-DATA-ANALYST] sur tennis
+------------------------------
+"Le tennis est NATIVEMENT live. DR par set, par jeu, par point. On a
+la donnée. Mais où est la visualisation point-by-point ?"
+
+CE QUI MANQUE (Live Tennis) :
+  - PBP sparkline dans cellule Score : courbe verticale par point.
+  - DR Live ∆ : delta set en cours vs DR match. Doit clignoter si > 0.30.
+  - Service stat live : % 1ers services 10 derniers, points gagnés
+    sur 2nd service.
+  - Pression "break point" : halo amber si proba break > 30%.
+
+[FINTECH-UX-LEAD] sur tennis
+----------------------------
+"16 colonnes, sans hiérarchie. Surtout : 17 filtres en haut. Les
+filtres ne sont pas un menu, ils sont une carte de décision. Le
+parieur n'utilise que 3-4 filtres récurrents. Le reste pollue.
+Idée : profil de filtre personnel sauvegardé."
+
+CE QUI DOIT CHANGER (UX Tennis) :
+  - Smart Default à 8 colonnes (Match, Score live, Bets Prédictifs,
+    EV, DR live, Surface/Tier, T-Restant, Confiance). Mode Expert
+    pour les 16.
+  - Filtres en accordéon : 3 rapides visibles (Tour, Surface, Live),
+    reste replié.
+  - Profils sauvegardés (3 slots : Pre-Match Clay, Live Aces,
+    Surprise Spike).
+  - Card-view mobile obligatoire (16 cols = catastrophe mobile).
+
+
+2.3 — Diagnostic transverse
+============================
+
+Problème                             | Foot      | Tennis
+-------------------------------------|-----------|---------------
+Hiérarchie visuelle plate            | NON       | NON
+Pas de signal directionnel live      | NON       | PARTIEL (DR ∆)
+Surcharge cognitive                  | ACCEPT.   | SÉVÈRE
+Borne IC absente du tableau          | NON       | NON
+Divergence modèle/marché non visible | NON       | PARTIEL (ML)
+Sparklines en cellule                | NON       | NON
+Profils filtres sauvegardés          | NON       | NON
+Mode condensé Trading vs Analyse     | NON       | NON
+
+
+================================================================================
+3. ÉTAPE 2 — INNOVATIONS "GAME CHANGER"
+================================================================================
+
+3.1 — Foot & Tennis communs
+============================
+
+INNOV-1 : CONFIDENCE CORRIDOR (borne IC en cellule)
+  À côté de l'EV (+8.4%), mini-segment horizontal IC90% mono :
+      EV  +8.4%  [├──●──┤]  IC90% [+2.1 ; +14.7]
+  Borne basse < 0 : segment ambre (warning piège).
+  > 0 : vert. Décision en 200ms sur la robustesse statistique.
+
+INNOV-2 : MARKET DIVERGENCE PULSE
+  Cote marché diverge du modèle de > X% en < Y min : cellule VALUE pulse :
+    - divergence positive (cote monte, modèle stable) -> pulse cyan
+    - divergence négative (cote chute, marché informé) -> pulse amber
+    - steam confirmé (2+ books bougent <5min) -> pulse rouge
+  Flux odds via SSE déjà disponible. Calcul backend trivial.
+
+INNOV-3 : SPARKLINE EN CELLULE
+  SVG inline 60×16px, 1 ligne mono couleur.
+  Foot : pression d'attaque dom/ext sur 15 dernières minutes.
+  Tennis : point-by-point du set en cours, hauteur = score différentiel.
+  Hover -> tooltip avec courbe agrandie.
+
+INNOV-4 : MODE DUAL Trading / Analyse
+  Bouton [Trading] / [Analyse] en haut du tableau.
+  Trading (Pro par défaut) : 4 cols Foot (Match, EV±IC, Cote∆,
+    Pression) — 5 cols Tennis (Match, Score live PBP, Bet Score,
+    DR ∆, T-Restant).
+  Analyse : layout actuel.
+  Toggle persistant en localStorage.
+
+INNOV-5 : PROFILS FILTRES SAUVEGARDÉS
+  Slots utilisateur (3 par défaut, illimité Pro).
+  Tennis : "ATP Live Aces", "Clay GS Pre-Match", "WTA Comeback Spike".
+  Foot : "Top 5 EV>5%", "Live <30min", "Dropping Odds Premier".
+  Sauvegarde tous filtres + sort + mode Trading/Analyse.
+
+
+3.2 — Foot spécifique
+======================
+
+INNOV-6 : FATIGUE INDEX & TRAVEL FACTOR EN CELLULE
+  Pastille colorée dans col Rang (sous PowerScore).
+    🟢 Frais (< 4j dernier match, pas de déplacement)
+    🟡 Modéré (5-7j OU 1 déplacement EU)
+    🟠 Élevé (3+ matchs en 7j)
+    🔴 Critique (3+ matchs en 7j + déplacement intercontinental)
+  Backend computeFatigueIndex existe (v9.0). À exposer + colorer.
+
+INNOV-7 : CHOKE-O-METER
+  Favoris cotés < 1.50 menant après 70'.
+  Historique Hold% sur 50 cas similaires (même ligue, même écart
+  classement). Pastille "🎯 Hold 82%" sur ligne live.
+  Si % < 60% -> halo amber (favorite_trap).
+  Trigger SSE alerte si live + favori mène + Hold < 65%.
+
+INNOV-8 : CLV TRACKER PAR STRATÉGIE
+  Mini-card footer : pour la stratégie active, "CLV moyen 30 jours :
+  +2.3%" (vert) ou "-0.8%" (rouge).
+  KPI ultime de qualité du modèle, plus parlant que accuracy seule.
+
+
+3.3 — Tennis spécifique
+========================
+
+INNOV-9 : BET SCORE GAUGE 0-100 + EV HEATMAP
+  Nouvelle col "Bet Score" (remplace/complète Bets Prédictifs).
+    - Gauge demi-circulaire 0-100 (vert > 65, amber 45-65, rouge < 45)
+    - Heatmap horizontale 6 cellules (ML, S1, Sets, ≥1Set, Jeux O/U,
+      Aces) — opacité = EV de chaque marché.
+  Vue d'ensemble du potentiel en 200ms.
+  Backend _tvbPredScore existe + computeTennisPredictiveBets calcule
+  déjà tout. Pure UI.
+
+INNOV-10 : DR LIVE PULSE & ALERTE DR SPIKE
+  DR set en cours diverge de DR match > 0.30 :
+    - Cellule DR clignote (CSS 1.5s, cyan -> amber).
+    - Push notification Pro.
+    - Couplé à _tnStrategyMatch('DR_SPIKE') existant.
+
+INNOV-11 : BREAK POINT PRESSURE INDEX
+  Indicateur live : proba que receveur break dans 3 jeux suivants.
+  Basé sur :
+    - % pts gagnés sur 2nd service adversaire (live)
+    - Historique joueur sur surface
+    - Score actuel du set
+  Affiché : halo amber pulse sur cellule joueur en pression.
+
+INNOV-12 : SERVE DOMINANCE LIVE STREAM
+  Sparkline mono % 1ers services réussis sur 10 derniers jeux, par
+  joueur, dans cellule Joueur. Tendance service-side en 1 coup d'œil.
+
+
+3.4 — Comparatif concurrence
+=============================
+
+Innovation              | Flashscore | SofaScore | OddsAlerts | PariScore cible
+EV avec IC visible      | NON        | NON       | PARTIEL    | OUI INNOV-1
+Market Divergence Pulse | NON        | NON       | NON        | OUI INNOV-2
+Sparkline en cellule    | NON        | modal     | NON        | OUI INNOV-3
+Mode Dual Trad/Analyse  | NON        | NON       | NON        | OUI INNOV-4
+Profils filtres         | NON        | favoris   | NON        | OUI INNOV-5
+Fatigue Index visible   | NON        | PARTIEL   | NON        | OUI INNOV-6
+Choke-O-Meter           | NON        | NON       | NON        | OUI INNOV-7
+CLV Tracker             | NON        | NON       | PARTIEL Pro| OUI INNOV-8
+Bet Score Gauge tennis  | NON        | NON       | NON        | OUI INNOV-9
+DR Live Pulse           | NON        | DR statiq | NON        | OUI INNOV-10
+Break Point Pressure    | NON        | NON       | NON        | OUI INNOV-11
+Serve Dominance live    | PARTIEL    | PARTIEL   | NON        | OUI INNOV-12
+
+Différenciation forte sur 10 des 12 innovations.
+
+
+================================================================================
+4. ÉTAPE 3 — RAPPORT DÉTAILLÉ & ROADMAP PRIORISÉE
+================================================================================
+
+4.1 — Bilan critique
+====================
+
+CE QUI FONCTIONNE (à garder absolument)
+---------------------------------------
+1. Edge dévigé Shin-Hurley (col VALUE) — métrique différenciante,
+   calibrée.
+2. Poisson + top 3 scores (col Score prédictif Foot) — accessible,
+   pédagogique.
+3. DR + DR par set chips (Tennis col Match) — innovation v10.71+, à
+   étendre.
+4. Predictive Bets engine 6 marchés (Tennis col 3) — best-in-class.
+5. Live Intensity 0-100 (Foot) — bonne base, à enrichir
+   directionnellement.
+6. SSE pour les cotes (Foot) — infra ready, sous-exploitée.
+7. Surface badge gradient (Tennis col 1) — visuellement net.
+
+CE QUI DOIT DISPARAÎTRE / SE DÉPLACER
+-------------------------------------
+Buteurs (Foot, col 8)    -> modale Insights (faible EV pre-match)
+Date complète (Foot)     -> HH:MM + tooltip
+Forme OU Rang/PWR (Foot) -> fusionner (doublon partiel)
+Mental (Tennis col 13)   -> tooltip de Set 2
+King of Aces (col 9)     -> Mode Expert uniquement
+17 filtres tennis        -> accordéon (3 rapides + reste replié)
+
+CE QUI DOIT ÊTRE REFONDU
+------------------------
+1. Col VALUE Foot -> ajouter IC corridor + Market Divergence pulse.
+2. Col Bets Prédictifs Tennis -> Bet Score gauge 0-100 + EV heatmap.
+3. Col Score Tennis -> PBP sparkline pour matchs live.
+4. Col Match Foot -> sparkline pression live.
+5. Col Rang Foot -> Fatigue Index pastille.
+6. Filtres tennis -> accordéon + profils sauvegardés.
+7. Layout global -> toggle [Trading] / [Analyse].
+
+
+4.2 — Roadmap DATA (Backend)
+=============================
+
+P0 — Quick wins (sprint 1, ~3 jours)
+------------------------------------
+BD-DATA-001 IC bornes inférieures      : exposer bornes IC90% (low,high)
+                                          pour chaque EV. Bootstrap déjà
+                                          existant. Backend interne.
+BD-DATA-002 Fatigue Index foot         : exposer score 0-100
+                                          (computeFatigueIndex v9.0)
+                                          dans home_fatigue/away_fatigue.
+BD-DATA-003 Market Divergence delta    : calculer cote_marché -
+                                          cote_modèle_no_vig + pente
+                                          15 min. SSE.
+BD-DATA-004 DR Live ∆ alerte           : émettre événement SSE dr_spike
+                                          quand DR_set_courant -
+                                          DR_match > 0.30.
+
+P1 — Innovations majeures (sprint 2, ~7 jours)
+----------------------------------------------
+BD-DATA-005 Choke-O-Meter              : Hold% historique sur 50 cas
+                                          similaires. DB historique +
+                                          cron quotidien.
+BD-DATA-006 CLV par stratégie          : CLV moyen 30 jours =
+                                          (cote_initiale - cote_closing) /
+                                          cote_closing × signe_pari.
+BD-DATA-007 Bet Score tennis composite : exposer score agrégé +
+                                          decomposition EV par marché.
+BD-DATA-008 Break Point Pressure       : P(break dans 3 jeux) = f(% pts
+                                          2nd serv adv, histo surface,
+                                          score).
+
+P2 — Long terme (~2 semaines)
+-----------------------------
+BD-DATA-009 Travel Factor foot         : distance + jet-lag + climat.
+BD-DATA-010 PBP point-by-point streaming: BSD WS ou SportRadar.
+BD-DATA-011 CLV tracker temps réel     : snapshot closing line de
+                                          chaque pari.
+BD-DATA-012 Steam detector multi-book  : 2+ bookmakers même direction
+                                          < 5min.
+
+
+4.3 — Roadmap UI/UX
+====================
+
+P0 — Refonte hiérarchie (sprint 1)
+----------------------------------
+UI-001 Hero Value Cell Foot       : col VALUE 2× (200px), suppression
+                                     couleur autres cols.
+UI-002 IC Corridor inline         : mini-segment IC90% mono 10px sous EV.
+UI-003 Mode Dual Trading/Analyse  : toggle [Trading]/[Analyse], CSS
+                                     Grid via data-mode.
+UI-004 Filtres Tennis Accordéon   : 3 filtres rapides visibles + reste
+                                     replié.
+UI-005 Mobile Card-View Tennis    : refonte card-view 6 KPI prioritaires.
+
+P1 — Innovations visuelles (sprint 2)
+-------------------------------------
+UI-006 Market Divergence Pulse    : animation CSS cellule VALUE,
+                                     3 couleurs.
+UI-007 Sparkline Foot live        : SVG 60×16px, pression dom/ext.
+UI-008 PBP Sparkline Tennis       : SVG col Score, point-by-point.
+UI-009 Bet Score Gauge Tennis     : demi-cercle 0-100 + heatmap 6
+                                     marchés.
+UI-010 DR Live Pulse              : animation CSS .tn-dr-delta.
+UI-011 Fatigue Index pastille     : pastille couleur 12px sous
+                                     PowerScore.
+
+P2 — Polish (~1 semaine)
+------------------------
+UI-012 Profils filtres sauvegardés : modal "Mes profils" + slots.
+UI-013 CLV Tracker footer          : mini-card sticky.
+UI-014 Choke-O-Meter               : pastille 🎯 Hold X% + halo amber.
+UI-015 Break Point Pressure halo   : halo amber CSS.
+UI-016 Serve Dominance sparkline   : SVG cellule Joueur.
+UI-017 Time-to-kickoff chip        : T-2h12m, actualisation 1s.
+
+
+4.4 — Règles de lisibilité (les 500 ms)
+========================================
+
+Hiérarchie tri-couleur : saturation forte VALUE/EV uniquement, reste
+                          monochrome dark, néon réservé alertes.
+Densité cellule max    : 3 éléments visuels max par cellule.
+Animations             : max 2 actives simultanément, prefers-reduced-
+                          motion respecté.
+Typographie            : mono 'DM Mono' chiffres + sans-serif labels.
+Tooltips               : tout détail secondaire en hover.
+Mobile-first           : sparklines OK en 60×16px mobile.
+
+
+4.5 — Estimation effort
+========================
+
+Phase          | Durée    | Tickets | Risque
+P0 Data + UI   | ~5 jours | 4 + 5 = 9 | Bas
+P1 Data + UI   | ~9 jours | 4 + 6 = 10| Moyen
+P2 Data + UI   | ~10 jours| 4 + 6 = 10| Moyen-haut
+-----------------------------------------------
+TOTAL          | ~24 jours| 29        |
+
+Livraison cible : fin juin 2026 (4-5 semaines).
+Preview internal sprint 1 : ~5 jours.
+
+
+================================================================================
+5. ÉTAPE 4 — TOP 3 RETENU POUR ARBITRAGE
+================================================================================
+
+🥇 TOP 1 — MARKET DIVERGENCE PULSE + IC CORRIDOR
+-------------------------------------------------
+POURQUOI : seule innovation qui transforme PariScore d'un outil
+            d'analyse en un outil de décision temps réel. Parieur pro
+            voit immédiatement si EV est robuste (IC > 0) ET si marché
+            commence à se réajuster (pulse). Asymétrie d'information
+            mise à nu.
+EFFORT  : P0 (5 jours dev). IC bornes + market divergence backend +
+            CSS pulse + IC corridor inline.
+KPI     : taux de clic VALUE × 3 ; temps de décision moyen / 2.
+
+🥈 TOP 2 — BET SCORE GAUGE 0-100 + EV HEATMAP TENNIS
+-----------------------------------------------------
+POURQUOI : 16 colonnes tennis = surcharge. Un gauge composite + une
+            heatmap horizontale 6 marchés résume tout le tableau en
+            1 cellule de 200px. Permet de réduire 16 cols à 8 en
+            Smart Default sans rien perdre.
+EFFORT  : P1 (3-4 jours dev). Backend Bet Score existe via
+            _tvbPredScore. Pure refonte UI.
+KPI     : taux de fermeture du tableau réduit ; temps moyen sur page
+            tennis +40%.
+
+🥉 TOP 3 — MODE DUAL Trading/Analyse + PROFILS SAUVEGARDÉS
+----------------------------------------------------------
+POURQUOI : résout 2 problèmes UX majeurs (surcharge cognitive +
+            profils hétérogènes). Pro voit dashboard ultra-condensé.
+            Récréatif garde analyse riche. Aucune donnée perdue,
+            juste réorganisation.
+EFFORT  : P0 (4 jours dev). CSS Grid via data-mode + localStorage +
+            3 slots + modal gestion.
+KPI     : rétention Pro × 1.5 ; NPS "facilité d'usage" 7.2 -> 8.5.
+
+
+================================================================================
+EN ATTENTE D'ARBITRAGE DG
+================================================================================
+
+AUCUNE modification appliquée au code. Rapport = proposition stratégique.
+
+ARBITRAGE DG (David) requis :
+  1. Quels TOPs valider (1, 2, 3 ou combinaison) ?
+  2. Quelle priorité P0/P1/P2 maintenir / réordonner ?
+  3. Quel sprint 1 lancer (5 jours) ?
+  4. Quelles innovations rejeter (si effort > valeur perçue) ?
+
+Sprint 1 démarre uniquement après "GO" explicite DG.
+
+================================================================================
+Rapport généré le 20 mai 2026 par Lead PM PariScore.
+Panel virtuel : Quant-Trader + Live-Data-Analyst + Fintech-UX-Lead.
+Source de vérité : pariscore.html (29 959 lignes) + server.js (28 499 lignes).
+Aucune modification fichier source pendant la rédaction.
+================================================================================
