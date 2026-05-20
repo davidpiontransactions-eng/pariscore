@@ -2897,6 +2897,18 @@
   .dh-empty { padding: 32px 16px; text-align: center; color: var(--text3); font-size: 13px; }
   .dh-empty .ico { font-size: 32px; margin-bottom: 8px; opacity: .5; }
 
+  /* H5 : drill-down modal */
+  #dh-tbody tr { cursor: pointer; transition: background .12s; }
+  #dh-tbody tr:hover { background: rgba(226,0,26,0.04); }
+  #dh-drill-modal { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+  .dh-drill-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(6px); }
+  .dh-drill-content { position: relative; background: var(--bg2); border: 1px solid var(--border); border-left: 4px solid var(--red, #E2001A); border-radius: 12px; padding: 24px 28px; max-width: 640px; width: 92%; max-height: 86vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  .dh-drill-close { position: absolute; top: 12px; right: 14px; background: transparent; border: none; color: var(--text3); font-size: 26px; cursor: pointer; line-height: 1; }
+  .dh-drill-close:hover { color: var(--red, #E2001A); }
+  .dh-drill-title { font-family: var(--font-head); font-weight: 800; font-size: 20px; color: var(--red, #E2001A); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px; }
+  .dh-drill-row { margin: 6px 0; font-size: 13px; color: var(--text); }
+  .dh-drill-row strong { color: var(--text); }
+
   /* ─── MES PARIS ────────────────────────────────────────────────────────── */
   .paris-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 12px; align-items: center; }
   .paris-toolbar .btn-primary { background: var(--green); color: #000; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .5px; }
@@ -8485,7 +8497,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <button class="dh-toggle-btn active" data-sport="football" type="button">⚽ Foot</button>
       <button class="dh-toggle-btn" data-sport="tennis" type="button">🎾 Tennis</button>
     </div>
-    <button id="dh-export-csv" class="dh-tool-btn" type="button" disabled title="Export CSV — Phase H5">⬇ Export CSV <span class="dh-soon">H5</span></button>
+    <button id="dh-export-csv" class="dh-tool-btn" type="button" title="Télécharger CSV avec filtres actuels">⬇ Export CSV</button>
   </div>
 
   <!-- PÉRIODE -->
@@ -13014,6 +13026,7 @@ function renderTennisValueBets(rawMatches) {
       const s = String(m.status || '').toUpperCase();
       if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
     }
+    if (f.strategy && f.strategy !== 'ALL' && !_tnStrategyMatch(m, f.strategy)) return false;
     return true;
   });
 
@@ -13054,6 +13067,11 @@ function renderTennisValueBets(rawMatches) {
           return Number.isFinite(v) ? v : -1;
         };
         return _ps(b) - _ps(a);
+      }
+      case 'delta_dr': {
+        // |DR_J1 − DR_J2| set en cours, max → min. Prematch sans DR : -1
+        // (relégué en fin de liste, conformément à la spec).
+        return _tnDeltaDR(b) - _tnDeltaDR(a);
       }
       case 'set1':
         return (b.set_model?.set1?.p1_pct ?? -1) - (a.set_model?.set1?.p1_pct ?? -1);
@@ -24682,6 +24700,7 @@ async function dhRefresh() {
 }
 
 function dhRenderAll(data) {
+  window._dhLastData = data; // H5 drill-down lookup
   if (dhState.sport === 'tennis') {
     dhRenderKpisTennis(data.kpis, data.total);
   } else {
@@ -24691,6 +24710,67 @@ function dhRenderAll(data) {
   if (dhState.view === 'table') dhRenderTable(data);
   if (dhState.view === 'charts') dhRenderCharts(data.series);
   if (dhState.view === 'strategy') dhRenderStrategyTracker(data.breakdown?.by_strategy || []);
+}
+
+// H5 : drill-down modal — affiche snapshot prédiction figé + score réel + stratégies tagguées
+function _dhOpenDrillModal(m) {
+  const existing = document.getElementById('dh-drill-modal');
+  if (existing) existing.remove();
+  const isTennis = dhState.sport === 'tennis';
+  const dt = fmtKickoffDate(m.commence_time, { weekday:'long', day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }, '—');
+  let bodyHtml;
+  if (isTennis) {
+    const r = m.realResult || {};
+    const setsScore = (r.sets || []).map(s => s.p1 + '-' + s.p2).join(' · ') || '—';
+    bodyHtml = `
+      <div class="dh-drill-row"><strong>${escapeHtml(m.p1 || '?')}</strong> vs <strong>${escapeHtml(m.p2 || '?')}</strong></div>
+      <div class="dh-drill-row" style="color:var(--text2);">${escapeHtml(m.tournament || m.league || '')} · ${escapeHtml(m.surface || '—')}</div>
+      <div class="dh-drill-row" style="font-family:var(--font-mono);font-size:12px;">${dt}</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+      <div class="dh-drill-row"><strong>Score final :</strong> ${escapeHtml(setsScore)} · vainqueur : <strong>${escapeHtml(r.winner || '—')}</strong></div>
+      <div class="dh-drill-row"><strong>Total jeux :</strong> ${r.total_games ?? '—'} · Aces : ${(r.aces_p1 ?? '?')}/${(r.aces_p2 ?? '?')} · Tie-break : ${r.had_tiebreak ? 'oui' : 'non'}</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+      <div class="dh-drill-row" style="color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Snapshot prédiction</div>
+      <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;overflow-x:auto;color:var(--text);">${escapeHtml(JSON.stringify(m.predicted || {}, null, 2))}</pre>`;
+  } else {
+    const rs = m.realScore || {};
+    const score = rs.home !== undefined ? rs.home + '-' + rs.away : '—';
+    const winner = rs.home !== undefined ? (rs.home > rs.away ? m.home_team : rs.away > rs.home ? m.away_team : 'Nul') : '—';
+    const strats = Array.isArray(m.predicted?.strategies) && m.predicted.strategies.length
+      ? m.predicted.strategies.map(s => `<span class="dh-pred-pill ${DH_STRATEGY_UI[s] ? 'win' : 'na'}">${escapeHtml((DH_STRATEGY_UI[s] && DH_STRATEGY_UI[s].label) || s)}</span>`).join(' ')
+      : '<span style="color:var(--text3);font-size:11px;">Aucune stratégie taggée (entrée pré-H4)</span>';
+    bodyHtml = `
+      <div class="dh-drill-row"><strong>${escapeHtml(m.home_team)}</strong> vs <strong>${escapeHtml(m.away_team)}</strong></div>
+      <div class="dh-drill-row" style="color:var(--text2);">${escapeHtml(m.league || '')}</div>
+      <div class="dh-drill-row" style="font-family:var(--font-mono);font-size:12px;">${dt}</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+      <div class="dh-drill-row"><strong>Score réel :</strong> ${score} · Vainqueur : <strong>${escapeHtml(winner)}</strong></div>
+      <div class="dh-drill-row"><strong>Prédictions au moment du pick :</strong></div>
+      <ul style="font-family:var(--font-mono);font-size:11.5px;padding-left:18px;margin:6px 0;">
+        <li>Over 2.5 : ${m.predicted?.over25 ?? '—'}%</li>
+        <li>BTTS : ${m.predicted?.btts ?? '—'}%</li>
+        <li>Best Edge : ${escapeHtml(m.predicted?.bestEdge || '—')} (${m.predicted?.bestEdgeValue?.toFixed(1) ?? '—'}%) ${m.predicted?.bestEdgeOdds ? `· cote ${m.predicted.bestEdgeOdds} (${escapeHtml(m.predicted.bestEdgeBk || '')})` : ''}</li>
+      </ul>
+      <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+      <div class="dh-drill-row" style="color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Stratégies IA tagguées</div>
+      <div class="dh-drill-row">${strats}</div>`;
+  }
+  const overlay = document.createElement('div');
+  overlay.id = 'dh-drill-modal';
+  overlay.innerHTML = `
+    <div class="dh-drill-backdrop"></div>
+    <div class="dh-drill-content">
+      <button class="dh-drill-close" type="button" aria-label="Fermer">×</button>
+      <div class="dh-drill-title">Détail match — backtest</div>
+      ${bodyHtml}
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector('.dh-drill-close').addEventListener('click', close);
+  overlay.querySelector('.dh-drill-backdrop').addEventListener('click', close);
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
 }
 
 // H4 : table de suivi des stratégies IA avec sparkline + trend
@@ -25399,6 +25479,37 @@ function _dhWireControls() {
       dhState.page = 1;
       dhRefreshDebounced();
     });
+  });
+
+  // H5 : Export CSV (avec auth Bearer si présent)
+  document.getElementById('dh-export-csv').addEventListener('click', async () => {
+    const url = _dhBuildUrl().replace('/history/query', '/history/export.csv');
+    try {
+      const r = await apiFetch(url);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const blob = await r.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      const cd = r.headers.get('Content-Disposition') || '';
+      const m = cd.match(/filename="([^"]+)"/);
+      a.download = m ? m[1] : 'historique-pariscore.csv';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(blobUrl); a.remove(); }, 1000);
+    } catch (e) {
+      alert('Export CSV échoué : ' + (e?.message || 'Erreur réseau'));
+    }
+  });
+
+  // H5 : Drill-down modal — clic ligne table → modal détail
+  document.getElementById('dh-tbody').addEventListener('click', (e) => {
+    const tr = e.target.closest('tr');
+    if (!tr) return;
+    const idx = Array.from(tr.parentNode.children).indexOf(tr);
+    if (idx < 0) return;
+    if (window._dhLastData?.matches?.[idx]) {
+      _dhOpenDrillModal(window._dhLastData.matches[idx]);
+    }
   });
 
   // Apply default period now (90j)
