@@ -28927,7 +28927,8 @@ function buildLiveDashboardPayload(match, detail) {
     penalties: (detail?.live_stats?.home?.penalties != null)
       ? { home: detail.live_stats.home.penalties, away: detail.live_stats.away.penalties }
       : (match.live_penalties?.home != null ? match.live_penalties : null),
-    momentum: _liveMomentumHistory.get(match.id) || match.live_momentum || [],
+    // bd 8c5 fix: Array.isArray guard pour eviter shape objet (BSD WS legacy) qui rend SVG vide.
+    momentum: _liveMomentumHistory.get(match.id) || (Array.isArray(match.live_momentum) ? match.live_momentum : []),
     intensity: match.live_intensity || 0,
     // v9.8.6 — innovations live dashboard
     pressure_index: pi || null,
@@ -29803,7 +29804,9 @@ async function pollLiveScores() {
                 live_fouls:            m.live_fouls,
                 live_offsides:         m.live_offsides,
                 live_cards:            m.live_cards,
-                live_momentum:         m.live_momentum,
+                // bd 8c5 fix: Array.isArray guard contre objet legacy ecraseur (BSD WS pre-fix).
+                live_momentum:         (Array.isArray(m.live_momentum) ? m.live_momentum : null),
+                live_momentum_pct:     m.live_momentum_pct || null,
                 live_stats:            m.live_stats,
             }));
             if (sseClients.size > 0) broadcastSSE('live_patch', { patches: fullPatches });
@@ -29963,8 +29966,13 @@ function _bsdWsApplyEventStats(m, stats) {
   // Pénétration zone
   if (h.touches_in_penalty_area != null || a.touches_in_penalty_area != null) m.live_touches_opp_box = pair(h.touches_in_penalty_area, a.touches_in_penalty_area);
   // Momentum premium (~2min refresh)
+  // bd 8c5 fix: BSD WS publie un OBJET {home,away} (percentages instantanes) qui ECRASAIT
+  // l'ARRAY [{min,v}] type Sofa attendu par le frontend (_renderMomentumBars + drawLDMomentumSVG).
+  // Resultat = barres momentum plates/vides La Liga (forte couverture BSD WS).
+  // Solution : champ dedie `live_momentum_pct` (objet) — preserve data BSD sans
+  // clobber l'array Sofa que le SVG consomme. Frontend continue de lire `live_momentum` array.
   if (h.attack_pct != null || a.attack_pct != null || h.dangerous_attack_pct != null || a.dangerous_attack_pct != null) {
-    m.live_momentum = {
+    m.live_momentum_pct = {
       home: {
         attack_pct: h.attack_pct == null ? null : Number(h.attack_pct),
         dangerous_attack_pct: h.dangerous_attack_pct == null ? null : Number(h.dangerous_attack_pct),
@@ -30040,7 +30048,10 @@ function _bsdWsHandleJSON(msg) {
         live_corners: m.live_corners || null,
         live_xg: m.live_xg || null,
         live_big_chances: m.live_big_chances || null,
-        live_momentum: m.live_momentum || null,
+        // bd 8c5 fix: garde Array.isArray pour proteger les consumers frontend (SVG)
+        // d'un eventuel objet legacy contaminant. live_momentum_pct expose separement.
+        live_momentum: (Array.isArray(m.live_momentum) ? m.live_momentum : null),
+        live_momentum_pct: m.live_momentum_pct || null,
         live_cards: m.live_cards || null,
         live_dangerous_attacks: m.live_dangerous_attacks || null,
         live_touches_opp_box: m.live_touches_opp_box || null,
