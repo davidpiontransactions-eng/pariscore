@@ -79,7 +79,58 @@
     --radius-lg: 6px;
     --radius-xl: 10px;
   }
-  /* ── Nuit Profonde ── */
+  /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
+  body[data-cf-light="1"] {
+    background: #ffffff !important;
+  }
+  /* Tennis scoreboard (.tn-sb dark slate) → light */
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb-pt,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb-pt { color: #0ea5e9 !important; }
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb-g,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb-g { color: #475569 !important; }
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb-tot,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb-tot {
+    color: #0f172a !important;
+    background: #e0f2fe !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb-tot-lead,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb-tot-lead { color: #15803d !important; }
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb-soon,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb-soon {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #b45309 !important;
+  }
+  /* Tennis score col bg gradient cyan terminal → flat light blue */
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.tvb-score-col,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.tvb-score-col {
+    background: #ffffff !important;
+    box-shadow: inset 0 0 0 1px #cbd5e1 !important;
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+  /* Conseils IA badges (.t3c-badge.tier-hi/mid/lo) → light variants */
+  body[data-cf-light="1"] .t3c-badge.tier-hi,
+  body[data-cf-light="1"] .t3c-badge-sm.tier-hi { background: #dcfce7 !important; color: #15803d !important; border-color: #4ade80 !important; box-shadow: none !important; }
+  body[data-cf-light="1"] .t3c-badge.tier-mid,
+  body[data-cf-light="1"] .t3c-badge-sm.tier-mid { background: #fef3c7 !important; color: #b45309 !important; border-color: #fbbf24 !important; box-shadow: none !important; }
+  body[data-cf-light="1"] .t3c-badge.tier-lo,
+  body[data-cf-light="1"] .t3c-badge-sm.tier-lo { background: #fee2e2 !important; color: #b91c1c !important; border-color: #fb7185 !important; box-shadow: none !important; }
+  body[data-cf-light="1"] .t3c-badge-sm.t3c-pick { background: #dcfce7 !important; color: #15803d !important; border-color: #22c55e !important; }
+  body[data-cf-light="1"] .t3c-label { color: #475569 !important; }
+  body[data-cf-light="1"] .t3c-pro-chip.steam { background: #fee2e2 !important; color: #b91c1c !important; border-color: #fb7185 !important; }
+  body[data-cf-light="1"] .t3c-pro-chip.acc { background: #f1f5f9 !important; color: #475569 !important; border-color: #cbd5e1 !important; }
+  /* Sharp money pill (bd u4ib) light variant */
+  body[data-cf-light="1"] .sharp-pill { background: #fee2e2 !important; color: #b91c1c !important; border-color: #fb7185 !important; }
+  /* Catboost ML chip light */
+  body[data-cf-light="1"] .t3c-badge-sm.ml-cat { background: #e0f2fe !important; color: #075985 !important; border-color: #38bdf8 !important; }
+
+  /* ── Nuit Profonde (LEGACY — désactivé bd z55o, conservé pour rollback) ── */
   body.dark-theme {
     --bg: #0a0a0a;
     --bg2: #111417;
@@ -31102,39 +31153,32 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('strat-help-overlay')?.style.display !== 'none') closeStratHelp();
 });
 
-/* ── Auto Theme (Light/Dark by hour) ── */
+/* ── bd z55o : light theme FORCÉ (aucun noir) — toggle désactivé ── */
 (function() {
-  const DARK_START = 19;
-  const DARK_END   = 7;
   const STORAGE_KEY = 'ps-theme-override';
 
-  function shouldBeDark() {
-    const h = new Date().getHours();
-    return h >= DARK_START || h < DARK_END;
-  }
+  function shouldBeDark() { return false; /* bd z55o force light */ }
 
-  function applyTheme(dark) {
-    document.body.classList.toggle('dark-theme', dark);
+  function applyTheme(_dark) {
+    // bd z55o : ignore param, force light toujours
+    document.body.classList.remove('dark-theme');
+    document.body.setAttribute('data-cf-light', '1');
     const btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = dark ? '☀ Jour' : '☾ Nuit';
+    if (btn) { btn.style.display = 'none'; }
     const btnM = document.getElementById('theme-toggle-m');
-    if (btnM) btnM.textContent = dark ? '☀ Mode Jour' : '☾ Mode Nuit';
+    if (btnM) { btnM.style.display = 'none'; }
   }
 
   function init() {
-    const override = localStorage.getItem(STORAGE_KEY);
-    if (override !== null) {
-      applyTheme(override === 'dark');
-    } else {
-      applyTheme(shouldBeDark());
-    }
+    // Clear any dark override historique
+    try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
+    applyTheme(false);
   }
 
   window.toggleTheme = function() {
-    const isDark = document.body.classList.contains('dark-theme');
-    console.log('[Theme] Toggle:', isDark ? 'dark->light' : 'light->dark');
-    localStorage.setItem(STORAGE_KEY, isDark ? 'light' : 'dark');
-    applyTheme(!isDark);
+    // bd z55o no-op (UX désactivée pour empêcher dark)
+    applyTheme(false);
+    return false;
   };
 
   // bd 21m7 — Module audio alertes trading (state tracking transitions positives)
