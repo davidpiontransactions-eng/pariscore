@@ -6199,6 +6199,7 @@ const HISTORY_FILE = path.join(__dirname, 'history.json');
 const HISTORIQUE_SEED_FILE = path.join(__dirname, 'historique_football.json'); // bd 9je ETL output
 const HISTORIQUE_TENNIS_SEED_FILE = path.join(__dirname, 'historique_tennis.json'); // bd rxh ETL output
 const HISTORIQUE_OPENFOOTBALL_FILE = path.join(__dirname, 'historique_openfootball.json'); // bd 6du6 ETL output
+const HISTORIQUE_FBREF_FILE = path.join(__dirname, 'historique_fbref.json'); // bd 8lqf ETL output (RESEARCH ONLY)
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
 
@@ -6379,6 +6380,58 @@ function loadHistory() {
       }
     } catch (e) {
       console.warn('[ETL Seed Load openfootball]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-8lqf — Merge historique_fbref.json (ETL via soccerdata).
+  // ⚠️ RESEARCH ONLY: Sports Reference ToS interdit commercial display.
+  // Gate via env: ETL_FBREF_LOAD=1 requis pour activer (defaut OFF prod commercial).
+  // Marker research_only=true sur chaque record → UI doit skip.
+  if (process.env.ETL_FBREF_LOAD === '1' && fs.existsSync(HISTORIQUE_FBREF_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_FBREF_FILE, 'utf8'));
+      if (seed && seed.leagues && typeof seed.leagues === 'object') {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const key of Object.keys(seed.leagues)) {
+          const leagueData = seed.leagues[key];
+          if (!leagueData || !Array.isArray(leagueData.matches)) continue;
+          for (const m of leagueData.matches) {
+            totalSeed++;
+            if (!m || !m.id || existingIds.has(String(m.id))) continue;
+            const archived = {
+              id: m.id,
+              sport: 'football',
+              sport_key: `fbref_${m.league_id}`,
+              league: m.league_name,
+              country: 'International',
+              commence_time: m.date,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              home_score: m.home_score,
+              away_score: m.away_score,
+              live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
+              status: 'finished',
+              season: m.season,
+              round: m.round,
+              venue: m.venue,
+              referee: m.referee,
+              _source: 'etl-fbref-research',
+              _research_only: true,
+              _attribution: m._attribution || 'sports-reference.com via soccerdata (research only)',
+            };
+            (db.archive_matches = db.archive_matches || []).push(archived);
+            existingIds.add(String(m.id));
+            totalAdded++;
+          }
+        }
+        if (totalSeed > 0) {
+          console.log(`  ⚠️ ETL seed merge (fbref RESEARCH): ${totalAdded}/${totalSeed} matchs ajoutes — flag _research_only=true (ne pas display UI commercial)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load fbref]', e.message);
     }
   }
 }
