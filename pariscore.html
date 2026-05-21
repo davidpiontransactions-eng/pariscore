@@ -20987,6 +20987,10 @@ const label = country
     const edgePct = safeFixed(edge, 1);
     const isHigh = edge >= 5, isPos = edge > 0;
 
+    // bd rlhf — Detecte transitions positives sur Conseils IA / Confiance / Edge
+    // et joue son alerte (no-op si toggle audio OFF ou si pas de transition).
+    try { if (typeof psCheckIndicatorTransitions === 'function') psCheckIndicatorTransitions(m, p, edge); } catch (_) {}
+
     const homePpg = periodN ? (ppgFromFormStr(m.home_form, periodN) ?? hs.ppg) : hs.ppg;
     const awayPpg = periodN ? (ppgFromFormStr(m.away_form, periodN) ?? as.ppg) : as.ppg;
 
@@ -31562,15 +31566,21 @@ document.addEventListener('keydown', e => {
     return false;
   };
 
-  // bd 21m7 — Module audio alertes trading (state tracking transitions positives)
-  // Joue son UNIQUEMENT sur Rouge→Jaune ou Jaune→Vert (positives), pas sur cellule
+  // bd 21m7 / rlhf — Module audio alertes trading (state tracking transitions positives)
+  // Joue son UNIQUEMENT sur Rouge/Neutre→Jaune ou Jaune→Vert (positives), pas sur cellule
   // simplement verte. Autoplay-safe: requiert UI unlock (toggle) + Promise wrap.
+  // Couvre 3 indicateurs: intensity (live), verdict (Conseils IA top pick), confidence
+  // (BSD confidence_badge.level), edge (Market Edge best_edge.edge).
   window._psAudio = window._psAudio || {
     enabled: localStorage.getItem('cf_audio_enabled') === '1',
     ctx: null,
     lastPlay: 0,
-    prevTiers: new Map(), // matchId → { intensity: 'red'|'amber'|'green' }
-    THROTTLE_MS: 2000,
+    // Map keyed par "<matchId>::<type>" → 'red'|'amber'|'green'
+    // types: 'intensity' | 'verdict' | 'confidence' | 'edge'
+    prevTiers: new Map(),
+    THROTTLE_MS: 1500, // anti-spam — 1 son max par fenetre 1500ms
+    queue: [],         // file pour decalage 200ms entre sons consecutifs (max 3)
+    queueTimer: null,
   };
   function _psIntensityTier(v) {
     if (v == null || isNaN(v)) return 'red';
@@ -31579,6 +31589,37 @@ document.addEventListener('keydown', e => {
     return 'red';
   }
   window._psIntensityTier = _psIntensityTier;
+  // bd rlhf — Mapping universel valeur→tier selon type indicateur.
+  // verdict = top pick Conseils IA % (75+ vert, 60-74 jaune)
+  // confidence = % conf BSD ou level deja calcule
+  // edge = best_edge.edge en % (5+ vert, 2+ jaune)
+  function _psTierFromValue(value, type) {
+    if (value == null) return 'red';
+    if (typeof value === 'string') {
+      // confidence_badge.level direct : 'green'|'amber'|'red'
+      var s = String(value).toLowerCase();
+      if (s === 'green' || s === 'amber' || s === 'red') return s;
+    }
+    var v = Number(value);
+    if (isNaN(v)) return 'red';
+    if (type === 'edge') {
+      if (v >= 5) return 'green';
+      if (v >= 2) return 'amber';
+      return 'red';
+    }
+    if (type === 'verdict') {
+      if (v >= 75) return 'green';
+      if (v >= 60) return 'amber';
+      return 'red';
+    }
+    if (type === 'confidence') {
+      if (v >= 70) return 'green';
+      if (v >= 50) return 'amber';
+      return 'red';
+    }
+    return _psIntensityTier(v);
+  }
+  window._psTierFromValue = _psTierFromValue;
   function _psAudioUnlock() {
     if (window._psAudio.ctx) return window._psAudio.ctx;
     try {
@@ -31625,19 +31666,73 @@ document.addEventListener('keydown', e => {
       } else { fire(); }
     } catch (e) { console.warn('[Audio] play failed:', e.message); }
   }
+  // bd rlhf — Helper interne : log transition tier sur un indicateur, retourne true si
+  // transition positive (rouge/neutral→amber ou amber→green) qui doit declencher son.
+  const _PS_ORDER = { red: 0, amber: 1, green: 2 };
+  function _psApplyTransition(matchId, type, newTier) {
+    if (!matchId || !type) return false;
+    const key = matchId + '::' + type;
+    const prev = window._psAudio.prevTiers.get(key);
+    window._psAudio.prevTiers.set(key, newTier);
+    if (!prev) return false; // 1er enregistrement, pas de transition
+    return _PS_ORDER[newTier] > _PS_ORDER[prev];
+  }
+  // bd rlhf — File de lecture decalee : si plusieurs transitions arrivent dans
+  // la meme tick render, joue 1 son tout de suite puis decale les suivants de
+  // 200ms (max 3 sons par burst). Le throttle THROTTLE_MS reste actif au sein
+  // de playTradingAlert pour eviter spam global.
+  function _psEnqueueAlert(tier) {
+    if (!window._psAudio.enabled) return;
+    window._psAudio.queue.push(tier);
+    if (window._psAudio.queueTimer) return; // deja en cours de drain
+    const drain = () => {
+      const next = window._psAudio.queue.shift();
+      if (!next) { window._psAudio.queueTimer = null; return; }
+      playTradingAlert(next);
+      // Limite a 3 sons par burst pour eviter saturation
+      if (window._psAudio.queue.length > 2) window._psAudio.queue.length = 2;
+      window._psAudio.queueTimer = setTimeout(drain, 200);
+    };
+    drain();
+  }
   // Detecte transition pour un match donne (sur live_intensity courant) et trigger son si positive.
   window.psCheckIntensityTransition = function(matchId, newIntensity) { return psCheckIntensityTransition(matchId, newIntensity); };
   function psCheckIntensityTransition(matchId, newIntensity) {
     if (!matchId) return;
     const newTier = _psIntensityTier(newIntensity);
-    const prev = window._psAudio.prevTiers.get(matchId);
-    window._psAudio.prevTiers.set(matchId, { intensity: newTier });
-    if (!prev) return; // 1er enregistrement, pas de transition
-    const order = { red: 0, amber: 1, green: 2 };
-    if (order[newTier] > order[prev.intensity]) {
-      // Transition positive
-      playTradingAlert(newTier);
+    if (_psApplyTransition(matchId, 'intensity', newTier)) {
+      _psEnqueueAlert(newTier);
     }
+  }
+  // bd rlhf — Orchestrateur transitions multi-indicateurs (Conseils IA / Confiance /
+  // Market Edge) appele par renderMatches() pour chaque match. Lit etat precedent,
+  // calcule nouveau tier par type, declenche son si transition positive.
+  // Args: m=match object, p=poisson, edgeValue=number (best_edge.edge)
+  window.psCheckIndicatorTransitions = function(m, p, edgeValue) { return psCheckIndicatorTransitions(m, p, edgeValue); };
+  function psCheckIndicatorTransitions(m, p, edgeValue) {
+    if (!m || !m.id || !window._psAudio.enabled) return;
+    try {
+      // 1) Verdict Conseils IA : top pick 1X2 (max homeWin/draw/awayWin)
+      if (p && (p.homeWin != null || p.draw != null || p.awayWin != null)) {
+        const topPick = Math.max(Number(p.homeWin) || 0, Number(p.draw) || 0, Number(p.awayWin) || 0);
+        const tVerdict = _psTierFromValue(topPick, 'verdict');
+        if (_psApplyTransition(m.id, 'verdict', tVerdict)) _psEnqueueAlert(tVerdict);
+      }
+      // 2) Confidence BSD : confidence_badge.level direct (green/amber/red) ou conf_pct
+      const cb = m.confidence_badge;
+      if (cb && cb.level) {
+        const tConf = _psTierFromValue(cb.level, 'confidence');
+        if (_psApplyTransition(m.id, 'confidence', tConf)) _psEnqueueAlert(tConf);
+      } else if (cb && cb.conf_pct != null) {
+        const tConf = _psTierFromValue(cb.conf_pct, 'confidence');
+        if (_psApplyTransition(m.id, 'confidence', tConf)) _psEnqueueAlert(tConf);
+      }
+      // 3) Market Edge : best_edge.edge (>=5 vert, >=2 jaune)
+      if (edgeValue != null && !isNaN(edgeValue)) {
+        const tEdge = _psTierFromValue(edgeValue, 'edge');
+        if (_psApplyTransition(m.id, 'edge', tEdge)) _psEnqueueAlert(tEdge);
+      }
+    } catch (e) { /* silencieux : ne casse pas le rendu */ }
   }
   // Toggle UI exposé global : appelable depuis bouton "🔊 Alertes sonores"
   window.psToggleAudioAlerts = function() {
