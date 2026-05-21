@@ -10156,7 +10156,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table th, #tennis-vb-table td { text-align:center !important; }
   #tennis-vb-table .tvb-dtc-stack { align-items:center !important; }
   #tennis-vb-table .tvb-dtc-top, #tennis-vb-table .tvb-dtc-mid, #tennis-vb-table .tvb-dtc-bot { justify-content:center !important; }
-  @media (max-width: 768px) { #tennis-vb-table .tvb-dt-col, #tennis-vb-table .tvb-score-col { display:none !important; } }
+  /* bd fa43 fix mobile : garder date/heure visible (col critique pour planifier paris).
+     Masquer seulement les sous-elements tour/surface badges (redondants avec col 2 Match). */
+  @media (max-width: 768px) {
+    #tennis-vb-table .tvb-score-col { display:none !important; }
+    #tennis-vb-table .tvb-dt-col { min-width:54px; max-width:62px; padding:6px 4px !important; }
+    #tennis-vb-table .tvb-dt-col .tvb-dtc-mid,
+    #tennis-vb-table .tvb-dt-col .tvb-dtc-bot { display:none !important; }
+    #tennis-vb-table .tvb-dt-col .tvb-mono { font-size:11px !important; }
+    #tennis-vb-table .tvb-dt-col .tvb-book { font-size:9px !important; opacity:.85; }
+  }
   /* Value-First : zéro zébrure — couleur = sens only */
   #tennis-vb-table tr.tennis-vb-row { cursor:pointer; transition:background 100ms ease, box-shadow 140ms ease; }
   #tennis-vb-table tr.tennis-vb-row td { background:var(--bg2); }
