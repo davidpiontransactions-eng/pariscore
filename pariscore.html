@@ -31731,6 +31731,71 @@ function renderComparateur(d) {
     });
   }
 
+  /* ── PWA Install Prompt UI (bd ParisScorebis-e7l polish) ──
+     Capture beforeinstallprompt event Chrome/Edge Android + Edge desktop.
+     Display custom install button quand criteria PWA installable rencontres.
+     iOS Safari ne fire pas beforeinstallprompt → fallback manual instructions. */
+  (function () {
+    var deferredPrompt = null;
+    var INSTALL_KEY = 'cf_pwa_install_dismissed';
+    var IS_STANDALONE = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+
+    if (IS_STANDALONE) return; // already installed
+
+    function createInstallButton() {
+      if (document.querySelector('.cf-pwa-install-btn')) return;
+      var btn = document.createElement('button');
+      btn.className = 'cf-pwa-install-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Installer PariScore comme app');
+      btn.innerHTML = '<span class="cf-pwa-icon">⬇</span><span class="cf-pwa-label">Installer PariScore</span><span class="cf-pwa-close" data-dismiss="1" aria-label="Plus tard">×</span>';
+      btn.style.cssText = 'position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));right:14px;z-index:9500;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:#0a0d0f;background:linear-gradient(135deg,#38bdf8,#4ade80);border:0;border-radius:24px;box-shadow:0 6px 16px rgba(0,0,0,.35),0 0 12px rgba(56,189,248,.45);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;';
+      btn.addEventListener('click', function (e) {
+        if (e.target && e.target.getAttribute('data-dismiss') === '1') {
+          try { localStorage.setItem(INSTALL_KEY, String(Date.now())); } catch (_) {}
+          btn.remove();
+          return;
+        }
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (choice) {
+          if (choice && choice.outcome === 'accepted') {
+            try { localStorage.setItem('cf_pwa_installed', '1'); } catch (_) {}
+            btn.remove();
+          } else {
+            try { localStorage.setItem(INSTALL_KEY, String(Date.now())); } catch (_) {}
+          }
+          deferredPrompt = null;
+        });
+      });
+      document.body.appendChild(btn);
+    }
+
+    /* Skip 7 jours apres dismiss user */
+    function isDismissedRecently() {
+      try {
+        var d = parseInt(localStorage.getItem(INSTALL_KEY) || '0', 10);
+        return d && (Date.now() - d) < 7 * 24 * 3600 * 1000;
+      } catch (_) { return false; }
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isDismissedRecently()) {
+        /* Delay 3s pour ne pas etre intrusif au boot */
+        setTimeout(createInstallButton, 3000);
+      }
+    });
+
+    window.addEventListener('appinstalled', function () {
+      try { localStorage.setItem('cf_pwa_installed', '1'); } catch (_) {}
+      var btn = document.querySelector('.cf-pwa-install-btn');
+      if (btn) btn.remove();
+    });
+  })();
+
   /* — Au boot : skeletons si on arrive direct sur matchs en mobile — */
   document.addEventListener('DOMContentLoaded', function () {
     if (isMobile()) mobShowSkeletons();
