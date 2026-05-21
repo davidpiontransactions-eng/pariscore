@@ -15356,6 +15356,50 @@ function _tennisGamesFromSets(m) {
   }
   return { g1, g2 };
 }
+// bd c5i — Cross-source merge : si BSD/ESPN serving=null, cherche dans aiscoreMatchCache
+// par normName des joueurs (déjà chauffé via warmer ou requêtes utilisateur). Mutation
+// in-place : copie serving 1|2 dans le match live. Retourne nb d'enrichissements.
+function enrichServingFromAiscoreCache(liveData) {
+  if (!Array.isArray(liveData) || liveData.length === 0) return 0;
+  // Index aiscore cache par paire de joueurs normalisée
+  const aiIdx = new Map();
+  try {
+    for (const [, entry] of aiscoreMatchCache) {
+      const d = entry && entry.data;
+      if (!d || !Array.isArray(d.players) || d.players.length !== 2) continue;
+      if (d.serving !== 1 && d.serving !== 2) continue;
+      const a = normName(d.players[0].name);
+      const b = normName(d.players[1].name);
+      if (!a || !b) continue;
+      const k = [a, b].sort().join('|');
+      // Conserve uniquement entrée la plus récente
+      const cur = aiIdx.get(k);
+      if (!cur || entry.ts > cur.ts) aiIdx.set(k, { ts: entry.ts, players: [a, b], serving: d.serving });
+    }
+  } catch (_) { return 0; }
+  if (aiIdx.size === 0) return 0;
+
+  let enriched = 0;
+  for (const m of liveData) {
+    if (!m || !m.is_live || m.serving === 1 || m.serving === 2) continue;
+    const a = normName(m.player1 && m.player1.name);
+    const b = normName(m.player2 && m.player2.name);
+    if (!a || !b) continue;
+    const k = [a, b].sort().join('|');
+    const hit = aiIdx.get(k);
+    if (!hit) continue;
+    // Réaligne serving aiscore (basé sur ordre [a,b] trié) vers ordre m.player1/player2
+    // Si tri inversé l'ordre, swap : aiscore p1 = m.player2 → swap serving
+    const aiP1Norm = hit.players[0];
+    const mP1Norm = a;
+    const aligned = (aiP1Norm === mP1Norm) ? hit.serving : (hit.serving === 1 ? 2 : 1);
+    m.serving = aligned;
+    m._serving_source = 'aiscore_cache';
+    enriched++;
+  }
+  return enriched;
+}
+
 // bd c5i — Inference serveur par parite des jeux quand source omet l'info.
 // Tennis: serveur alterne CHAQUE jeu. Si on a connu serveur a un snapshot
 // passe, on derive current serveur depuis (totalGames_now - totalGames_then)
@@ -15487,13 +15531,17 @@ async function pollTennisLive() {
     let espn = [];
     try { espn = await fetchESPNTennisLive(); } catch (e) { console.warn('  [Tennis] ESPN live error:', e.message); }
     const data = _mergeTennisLive(bsd, espn);
+    // bd c5i — Cross-source serving enrichment (aiscore cache hit) AVANT recordTennisServe
+    // pour que l'historique parite ait la donnée fraîche.
+    let _aiEnriched = 0;
+    try { _aiEnriched = enrichServingFromAiscoreCache(data); } catch (_) {}
     // S3 : serve momentum par match live + purge des ids disparus.
     const _liveIds = new Set();
     for (const m of data) {
       if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
     }
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
-    console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
+    console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiEnriched ? ` serving+${_aiEnriched}aiscore` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
