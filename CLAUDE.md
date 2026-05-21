@@ -95,6 +95,11 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `l9vk` | Marketing Affiliation 5 phases — 1xBet+Twitter+YouTube+Telegram+Stripe | open |
 | `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD | Phase 2A livré v12.65 commit `117c711` (`/api/v1/sources/health`) · Phases 2B/2C/2D ouvertes |
 | `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | open |
+| `j6pz` | **BSD coverage Phase 2** — Shotmap + best_odds + bookmakers (3 endpoints REST + UI shotmap SVG modal Live Dashboard) | open · 3-4h |
+| `ueg0` | **BSD coverage Phase 3** — Social items sentiment buzz match (badge cellule + section modal Insights) | open · 2h |
+| `82th` | **BSD coverage Phase 4** — Referees + Venues + Leagues dynamic (enrichissement modal Contexte stade/arbitre/ligue) | open · 3-4h |
+
+> **BSD MCP coverage roadmap (22/05/2026)** : 17/28 endpoints déjà plugués via `bsdFetch()` REST direct. 11 gaps découpés en 5 phases. Phase 1 TV broadcasters en cours (bg agent, bd ticket créé pendant exec). Phases 2-5 = `j6pz` `ueg0` `82th` `r0v3` (P3). Effort total 12-15h dev. Source: audit MCP `bsd-sports` 28 tools vs grep `bsdFetch()` server.js 22/05.
 
 **✓ FERMÉS session 22/05/2026 v12.65 (6)**
 
@@ -112,6 +117,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | ID | Titre |
 |---|---|
 | `gz7s` | Benchmark Rotowire Soccer — ideas to steal (orphan CLAUDE.md→bd) |
+| `r0v3` | BSD coverage Phase 5 — Squad endpoint + fixtures variant (proxies REST simples, LOW ROI, 1-2h) |
 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 >
