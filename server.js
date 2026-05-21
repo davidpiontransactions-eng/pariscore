@@ -26,6 +26,7 @@ const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
+const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -430,6 +431,18 @@ function readBodyLimited(req, maxSize) {
     req.on('end', () => resolve(body));
     req.on('error', reject);
   });
+}
+
+// ─── SAFE PARSE HELPERS (QA fix MAJ-1, rapport_qa_foot_tennis.md) ────────────
+// parseInt/parseFloat peuvent retourner NaN et se propager silencieusement dans
+// les calculs (IC90, EV, fatigue meta). Ces wrappers retournent un défaut sûr.
+function safeInt(v, dflt = 0) {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : dflt;
+}
+function safeFloat(v, dflt = 0) {
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : dflt;
 }
 
 // ─── KELLY CRITERION — Sizing helper pour module Mes Paris ────────────────────
@@ -1980,7 +1993,7 @@ function getSofascoreDRCached(p1Name, p2Name) {
       p1_serve: A.serve, p1_ret: A.ret, p2_serve: B.serve, p2_ret: B.ret,
       dr_by_set: drBySet, source: 'sofascore'
     });
-  })().catch(() => { /* best-effort */ });
+  })().catch((e) => { console.warn('[CATCH-01] sofaDR async best-effort:', e.message); });
   if (hit && Date.now() - hit.ts < _SOFA_DR_TTL * 5) return hit; // sert ≤ 5 min
   return null;
 }
@@ -2056,7 +2069,7 @@ async function bsdGetPlayerDetail(playerId) {
     try {
       const statsRes = await bsdFetch(`/player-stats/?player=${playerId}&page_size=100`);
       rawStats = statsRes.data?.results || [];
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('[CATCH-02] bsd player-stats fetch:', e.message); }
 
     // Agrégats saison courante (rawStats trié par date DESC par BSD)
     const currentSeason = rawStats[0]?.season?.name || null;
@@ -2301,7 +2314,7 @@ async function bsdGetTeamDetail(teamId) {
         status: m.status,
         date: m.started_at
       }));
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('[CATCH-03] bsd team recent-matches fetch:', e.message); }
 
     return {
       id: t.id,
@@ -7039,7 +7052,7 @@ async function backfillHistoryFromBSD(daysBack = 14, opts = {}) {
               const poisson = computePoisson(lh, la);
               if (probOver25 == null) probOver25 = poisson.over25;
               if (probBTTS == null)  probBTTS  = poisson.btts;
-            } catch { /* ignore */ }
+            } catch (e) { console.warn('[CATCH-04] computePoisson (buildValueBets):', e.message); }
           }
         }
       }
@@ -7141,7 +7154,7 @@ function enrichHistoryPoisson() {
             const poisson = computePoisson(lh, la);
             if (!Number.isFinite(probOver25)) { probOver25 = poisson.over25; source = source || 'poisson'; }
             if (!Number.isFinite(probBTTS))   { probBTTS  = poisson.btts;   source = source || 'poisson'; }
-          } catch { /* ignore */ }
+          } catch (e) { console.warn('[CATCH-05] computePoisson (backfill):', e.message); }
         }
       }
     }
@@ -11744,6 +11757,20 @@ async function fetchOdds(force = false, opts = {}) {
     } catch (e) { console.error('  [Routing] ❌ Erreur BSD:', e.message); }
 
     // =========================================================================
+    // ÉTAPE 1.2 : ENRICHISSEMENT COTES via odds-api1 RapidAPI (L1.5)
+    // Pour les matchs BSD sans cotes, tenter odds-api1 (RAPIDAPI_KEY partagée).
+    // Graceful : ignoré si clé absente ou API down.
+    // =========================================================================
+    if (oddsRapidApi.enabled() && allRawMatches.length > 0) {
+      console.log('  [Routing] L1.5 : Enrichissement cotes via odds-api1 (RapidAPI)...');
+      try {
+        await oddsRapidApi.enrichWithOdds(allRawMatches);
+      } catch (e) {
+        console.warn('  [Routing] ⚠️ odds-api1 indisponible:', e.message);
+      }
+    }
+
+    // =========================================================================
     // ÉTAPE 1.5 : LIGUES EXOTIQUES via RapidAPI Free Football (FotMob) — ex A-League AU
     // BSD ne couvre pas ces ligues. Fixtures only (cotes via The Odds API plus bas).
     // =========================================================================
@@ -12246,7 +12273,7 @@ async function fetchStats(force = false) {
         try {
           const stats = await fetchSofascoreTeamStats(teamName, leagueId);
           if (stats) { db.teamStats[normName(teamName)] = { teamId: null, rank: 0, ...stats }; sofaFilled++; }
-        } catch (e) { /* silencieux */ }
+        } catch (e) { console.warn('[CATCH-06] fetchSofascoreTeamStats:', teamName, e.message); }
       }
       if (sofaFilled) console.log(`  [Cron:Stats] Phase 3: ✓ ${sofaFilled} équipes alimentées via Sofascore`);
     }
@@ -13288,7 +13315,11 @@ function jwtSign(payload, ttl = JWT_TTL) {
 
 function jwtVerify(token) {
   try {
-    const [h, b, s] = token.split('.');
+    // QA fix CRIT-2 (rapport_qa_foot_tennis.md): bounds check avant destructuring
+    // Evite crash si token malformé (< 3 parts) → 401 propre au lieu de crash route.
+    const parts = token.split('.');
+    if (parts.length < 3) return null;
+    const [h, b, s] = parts;
     const expected = crypto.createHmac('sha256', JWT_SECRET).update(`${h}.${b}`).digest('base64url');
     if (expected !== s) return null;
     const payload = JSON.parse(Buffer.from(b, 'base64url').toString());
@@ -13404,10 +13435,16 @@ function srvPlanGate(req, res, pathname) {
 // Utilisateurs admin en mémoire (admin panel) — PBKDF2 salé
 const USERS = new Map(); // { username: { hash, salt, role, forceChange: bool } }
 function initUsers() {
+  if (!process.env.ADMIN_PASSWORD) {
+    console.error('  \x1b[31m[SECURITY] ADMIN_PASSWORD absent de .env — mot de passe par défaut DANGEREUX actif. Définir ADMIN_PASSWORD immédiatement.\x1b[0m');
+  }
   const adminPass = process.env.ADMIN_PASSWORD || 'pariscore2026';
   const { hash, salt } = hashPasswordSync(adminPass);
   USERS.set('admin', { hash, salt, role: 'admin', forceChange: !process.env.ADMIN_PASSWORD });
   // Compte beta partagé — accès total (pro_all), expiration gérée au login
+  if (!process.env.BETA_TESTER_PASSWORD) {
+    console.warn('  \x1b[33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif.\x1b[0m');
+  }
   const betaPass = process.env.BETA_TESTER_PASSWORD || 'Beta2026';
   const b = hashPasswordSync(betaPass);
   USERS.set(BETA_TESTER_USER, { hash: b.hash, salt: b.salt, role: 'pro_all', forceChange: false });
@@ -14259,6 +14296,8 @@ function jsonResponse(res, statusCode, data) {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Content-Security-Policy': "default-src 'self'; script-src 'none'; object-src 'none'",
   });
   res.end(JSON.stringify(data));
 }
@@ -19738,8 +19777,9 @@ const server = http.createServer(async (req, res) => {
 
     // CORS preflight
     if (req.method === 'OPTIONS') {
+        const _preflightOrigin = process.env.ALLOWED_ORIGIN || '*';
         return res.writeHead(204, {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': _preflightOrigin,
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '86400'
@@ -20053,7 +20093,7 @@ if (pathname === '/api/v1/player') {
                   player.api_football_id = apif.api_football_id;
                   player._enriched = (player._enriched || []).concat(['api-football']);
                 }
-              } catch (e) { /* fallback silencieux */ }
+              } catch (e) { console.warn('[CATCH-07] player enrich api-football fallback:', e.message); }
             }
             // 3e source : TheSportsDB (photo fallback gratuit, sans quota)
             if (!player.photo) {
@@ -20068,7 +20108,7 @@ if (pathname === '/api/v1/player') {
                   if (!player.weight && tsdb.weight) player.weight = tsdb.weight;
                   if (!player.birthdate && tsdb.birthdate) player.birthdate = tsdb.birthdate;
                 }
-              } catch (e) { /* silence */ }
+              } catch (e) { console.warn('[CATCH-08] thesportsdb photo fallback:', e.message); }
             }
             // 4e source : Transfermarkt via felipeall sidecar — bio complète
             // « la bible » + blessure en cours (orphelin API-Football couvert).
@@ -22003,7 +22043,7 @@ if (pathname.startsWith('/api/v1/top-butteurs/') && req.method === 'GET') {
         match.topKPI = computeMatchTopKPI(match);
         saveDB();
         broadcastSSE('butteurs-ready', { matchId: match.id, buteurs: match.topButteurs, kpi: match.topKPI });
-      } catch (e) { /* silencieux */ }
+      } catch (e) { console.warn('[CATCH-09] fetchBSDPlayerRatings/computeMatchTopButteurs:', e.message); }
     })();
   }
 
@@ -25971,7 +26011,8 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
+    'X-Content-Type-Options': 'nosniff',
   });
 
   const cacheKey = `deep_pro_v2_${matchId}`;
@@ -26696,8 +26737,24 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
             'Cache-Control': noLongCache
                 ? 'public, max-age=300, must-revalidate'
                 : 'public, max-age=31536000, immutable',
-            'Vary': 'Accept-Encoding'
+            'Vary': 'Accept-Encoding',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'SAMEORIGIN',
+            'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
         };
+
+        // HTML pages get a basic CSP
+        if (isHtml) {
+            headers['Content-Security-Policy'] =
+                "default-src 'self' https: data: blob:; " +
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://www.googletagmanager.com; " +
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
+                "font-src 'self' https://fonts.gstatic.com; " +
+                "img-src 'self' data: https: blob:; " +
+                "connect-src 'self' https: wss:; " +
+                "frame-ancestors 'none'; " +
+                "object-src 'none'";
+        }
 
         // admin.html : jamais indexé (défense + budget crawl).
         if (filePath.toLowerCase().endsWith('admin.html')) {
