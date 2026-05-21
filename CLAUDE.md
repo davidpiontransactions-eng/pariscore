@@ -66,6 +66,14 @@ Source autoritaire : `bd ready`. Snapshot 21/05/2026.
 | `e7l` | Version mobile PariScore (parieur nomade) — bottom nav + cartes + PWA |
 | `qe5` | Live Dashboard Betting Cockpit Phase 1 — Win Prob + Top3 picks + events markers + verdict |
 | `8c5` | Bug momentum du match plat/vide La Liga (et autres) |
+| `j5lb` | **[DECISION DG]** GO/NO-GO 6 études bloquées arbitrage (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing) |
+| `p2if` | AI-AL Revue de Presse Foot+Tennis — 5 avis presse panel Gemini |
+| `4cog` | Tennis Consolidation LOT P0 — tennisMatch canonique + Elo v2 + Surface + Log-diff |
+| `k3ex` | Bug Tennis ATP/WTA matchs féminins disparus tournois mixtes |
+| `lyku` | Bug Routage LIGA classement ID 3 cassé — refactor vers `/api/events/` |
+| `u8w9` | Bug Mobile page blanche filtres iOS Safari + Chrome Android |
+| `izsn` | Refacto safeFixed() wrapper sur 94 .toFixed() restants — anti NaN/null |
+| `c8zp` | Cron capture tennis score finals + cleanup history-edges legacy |
 
 ### P2 (queue)
 
@@ -77,6 +85,13 @@ Source autoritaire : `bd ready`. Snapshot 21/05/2026.
 | `ffh` | Spike 6 sources data (Transfermarkt + FBref + Sofascore + Fotmob + The Analyst + xvalue.ai) |
 | `qkx` | Spike eval odds-api1 RapidAPI candidate |
 | `k37` | Bug UI teinte rose tableau Foot (jour) |
+| `e3mr` | Tennis Consolidation LOT P1+P2 — Backtest Brier + Serve/Return point-level + UQD |
+| `l9vk` | Marketing Affiliation 5 phases — 1xBet+Twitter+YouTube+Telegram+Stripe |
+| `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD |
+| `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T |
+| `c9p4` | Roadmap v4.x backlog tableau principal — filtres + favoris + Dropping Odds + drapeaux |
+
+> **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
