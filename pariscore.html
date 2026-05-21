@@ -14193,12 +14193,12 @@ function _tvbDRLive(lo, sets, s1, s2) {
       const cl = dv > 0.05 ? 'up' : dv < -0.05 ? 'down' : 'flat';
       const sign = dv > 0 ? '+' : '';
       const srcLab = setExact ? 'Sofascore' : 'proxy jeux';
-      deltaBadge = `<span class="tn-dr-delta ${cl}" title="Δ DR ${side === 'p1' ? 'J1' : 'J2'} — set en cours (${(side === 'p1' ? drSetP1 : 1/drSetP1).toFixed(2)}) − match (${dr.toFixed(2)}) = ${sign}${dv.toFixed(2)} · source ${srcLab}">Δ ${sign}${dv.toFixed(2)}</span>`;
+      deltaBadge = `<span class="tn-dr-delta ${cl}" title="Δ DR ${side === 'p1' ? 'J1' : 'J2'} — set en cours (${(side === 'p1' ? drSetP1 : 1/drSetP1).toFixed(2)}) − match (${safeFixed(dr, 2)}) = ${sign}${safeFixed(dv, 2)} · source ${srcLab}">Δ ${sign}${safeFixed(dv, 2)}</span>`;
     }
     return `<div class="tn-dr-line ${cls}${exact ? ' tn-dr-exact' : ''}" `
-      + `title="Dominance Ratio ${side === 'p1' ? 'J1' : 'J2'} — ${exact ? 'Sofascore (pts service+retour)' : 'proxy jeux+sets'} · ${dr.toFixed(2)} · tendance ${arrow}">`
+      + `title="Dominance Ratio ${side === 'p1' ? 'J1' : 'J2'} — ${exact ? 'Sofascore (pts service+retour)' : 'proxy jeux+sets'} · ${safeFixed(dr, 2)} · tendance ${arrow}">`
       + `<span class="tn-dr-lab">${lab}${info}</span>`
-      + `<span class="tn-dr-val">${dr.toFixed(2)}<span class="tn-dr-arr ${acls}">${arrow}</span>${deltaBadge}</span>`
+      + `<span class="tn-dr-val">${safeFixed(dr, 2)}<span class="tn-dr-arr ${acls}">${arrow}</span>${deltaBadge}</span>`
       + `</div>`;
   };
 
@@ -14237,8 +14237,8 @@ function _tvbDRLive(lo, sets, s1, s2) {
         const mark = (proxy || e.unrel) ? '~' : '';
         const c = v >= 1.08 ? 'tn-drs-dom' : v > 0.92 ? 'tn-drs-bal' : 'tn-drs-sub';
         return `<span class="tn-drs-chip ${c}${e.isCur ? ' tn-drs-cur' : ''}${(proxy || e.unrel) ? ' tn-drs-unrel' : ''}" `
-          + `title="Set ${e.sn} — DR ${lab} ${proxy ? '≈ ' : ''}${v.toFixed(2)}${e.isCur ? ' · set en cours' : ''}${e.unrel ? ' · échantillon faible (peu fiable)' : ''}">`
-          + `S${e.sn} ${v.toFixed(2)}${mark}</span>`;
+          + `title="Set ${e.sn} — DR ${lab} ${proxy ? '≈ ' : ''}${safeFixed(v, 2)}${e.isCur ? ' · set en cours' : ''}${e.unrel ? ' · échantillon faible (peu fiable)' : ''}">`
+          + `S${e.sn} ${safeFixed(v, 2)}${mark}</span>`;
       }).join('');
       return `<div class="tn-drs"><span class="tn-drs-lab">DR ${lab}/set</span>${chips}</div>`;
     };
@@ -14264,7 +14264,7 @@ function _tvbFmtPct(v, withPct = true) {
 function _tvbFmtEv(v) {
   if (v == null || !Number.isFinite(v)) return '—';
   const sign = v > 0 ? '+' : '';
-  return `${sign}${v.toFixed(1)}%`;
+  return `${sign}${safeFixed(v, 1)}%`;
 }
 
 function _tvbTourBadge(tour) {
@@ -14283,7 +14283,7 @@ function _tvbLogDiffCell(ld) {
   const v = best.log_diff;
   const col = v >= 0.4 ? 'var(--green,#00e676)' : v > 0 ? 'var(--amber,#ffa726)' : 'var(--text3,#5a6068)';
   const arrow = v > 0 ? '▲' : v < 0 ? '▼' : '·';
-  return `<span class="tvb-mono" style="font-size:11px;font-weight:700;color:${col};" title="Elo #${best.elo_rank} vs rang officiel #${best.official_rank}">${arrow}${v.toFixed(2)}</span>`;
+  return `<span class="tvb-mono" style="font-size:11px;font-weight:700;color:${col};" title="Elo #${best.elo_rank} vs rang officiel #${best.official_rank}">${arrow}${safeFixed(v, 2)}</span>`;
 }
 
 // P1-4 — Glyphe anti-piège : fatigue / rust / abandon récent.
@@ -14568,7 +14568,7 @@ function _tvbMarketCell(odds, bestEv) {
     const best = bestEv
       ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '';
-    return `<span class="tvb-odds">${odds.p1.odds.toFixed(2)} · ${odds.p2.odds.toFixed(2)}</span>${best ? '<span class="tvb-book">' + best + '</span>' : ''}`;
+    return `<span class="tvb-odds">${safeFixed(odds.p1.odds, 2)} · ${safeFixed(odds.p2.odds, 2)}</span>${best ? '<span class="tvb-book">' + best + '</span>' : ''}`;
   }
   return '<span class="tvb-market-na">Cotes indispo<span class="tvb-book">quota Odds API</span></span>';
 }
@@ -14588,7 +14588,7 @@ function _tvbConfCell(elo, ld) {
     if (c.length) {
       const b = c.reduce((a, z) => (z.log_diff > a.log_diff ? z : a));
       const ar = b.log_diff > 0 ? '▲' : b.log_diff < 0 ? '▼' : '·';
-      rk = ` · RkΔ ${ar}${b.log_diff.toFixed(2)} (Elo #${b.elo_rank} vs rang #${b.official_rank})`;
+      rk = ` · RkΔ ${ar}${safeFixed(b.log_diff, 2)} (Elo #${b.elo_rank} vs rang #${b.official_rank})`;
     }
   }
   return `<span class="tvb-mono" style="font-size:10px;font-weight:700;color:${col};" title="min(échantillon Elo surface) = ${mn}${rk}">${tier}</span>`;
@@ -14664,7 +14664,7 @@ function _tvbKingOfAcesCell(ma) {
     + (ma.p2 ? ` | J2 ${ma.p2.ace_pct_adj}%${ff2}` : '');
   return `<div class="koa-cell" title="${esc(tip)}">`
     + `<span class="koa-name">${esc(ma.favorite)}</span>`
-    + `<span class="koa-badge ${tier}">${pct.toFixed(1)}%</span>`
+    + `<span class="koa-badge ${tier}">${safeFixed(pct, 1)}%</span>`
     + `</div>`;
 }
 
@@ -14978,7 +14978,7 @@ function _tvbBetScoreGauge(score, tone){
   var y2 = cy - r * Math.sin(ang);
   var largeArc = 0;
   var sweep = 1;
-  var path = 'M ' + (cx-r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' ' + sweep + ' ' + x2.toFixed(2) + ' ' + y2.toFixed(2);
+  var path = 'M ' + (cx-r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' ' + sweep + ' ' + safeFixed(x2, 2) + ' ' + safeFixed(y2, 2);
   var bgPath = 'M ' + (cx-r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx+r) + ' ' + cy;
   return '<svg class="tvb-gauge" viewBox="0 0 52 30" aria-label="Bet Score ' + s + '/100">'
     + '<path d="' + bgPath + '" stroke="' + colDim + '" stroke-width="' + sw + '" fill="none" stroke-linecap="round"/>'
@@ -15007,7 +15007,7 @@ function _tvbEvHeatmap(markets){
       col = p >= 65 ? '#4ade80' : (p >= 55 ? '#fbbf24' : '#475569');
     }
     var opacity = (0.18 + metric * 0.72).toFixed(2);
-    var tooltip = mk ? (mk.label || labels[i]) + (p != null ? ' · ' + p + '%' : '') + (ev != null ? ' · EV ' + (ev>0?'+':'') + ev.toFixed(1) + '%' : '') : labels[i] + ' · n/d';
+    var tooltip = mk ? (mk.label || labels[i]) + (p != null ? ' · ' + p + '%' : '') + (ev != null ? ' · EV ' + (ev>0?'+':'') + safeFixed(ev, 1) + '%' : '') : labels[i] + ' · n/d';
     cells += '<span class="tvb-ev-cell" style="background:' + col + ';opacity:' + opacity + ';" title="' + _escTennis(tooltip) + '">' + labels[i] + '</span>';
   }
   return '<div class="tvb-ev-heatmap" aria-label="EV decomposition par marché">' + cells + '</div>';
@@ -15418,13 +15418,13 @@ function renderTennisValueBets(rawMatches) {
       ? `<div class="tvb-prob-bar"><div class="tvb-prob-fill" style="width:${probP1}%;"></div><div class="tvb-prob-label">${probP1}% / ${100 - probP1}%</div></div>`
       : '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
 
-    const oddsP1 = odds?.p1 ? `${odds.p1.odds.toFixed(2)}<span class="tvb-book">${_escTennis(odds.p1.book || '')}</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
-    const oddsP2 = odds?.p2 ? `${odds.p2.odds.toFixed(2)}<span class="tvb-book">${_escTennis(odds.p2.book || '')}</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
+    const oddsP1 = odds?.p1 ? `${safeFixed(odds.p1.odds, 2)}<span class="tvb-book">${_escTennis(odds.p1.book || '')}</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
+    const oddsP2 = odds?.p2 ? `${safeFixed(odds.p2.odds, 2)}<span class="tvb-book">${_escTennis(odds.p2.book || '')}</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
 
-    const fairCell = fair ? `${fair.p1.toFixed(0)}% / ${fair.p2.toFixed(0)}%<span class="tvb-book">marge ${fair.margin.toFixed(1)}%</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
+    const fairCell = fair ? `${safeFixed(fair.p1, 0)}% / ${safeFixed(fair.p2, 0)}%<span class="tvb-book">marge ${safeFixed(fair.margin, 1)}%</span>` : '<span style="color:var(--text3,#5a6068);">—</span>';
 
     const bestEdgeNum = bestEv?.ev;
-    const edgeText = edge ? `${edge.p1 > edge.p2 ? edge.p1.toFixed(1) : edge.p2.toFixed(1)}%` : '—';
+    const edgeText = edge ? `${edge.p1 > edge.p2 ? safeFixed(edge.p1, 1) : safeFixed(edge.p2, 1)}%` : '—';
     const edgeCls = edge ? _tvbEdgeCls(Math.max(edge.p1 || -999, edge.p2 || -999)) : 'tvb-edge tvb-edge-neg';
 
     const evCell = evModel
@@ -15652,8 +15652,8 @@ function _renderTennisAbstractTable(data, bodyId, metaId) {
   const rows = sorted.map(p => {
     const seedHtml = p.seed != null ? `<span class="ta-rome-seed">${p.seed}</span>` : '';
     const ctrFlag = p.country || '—';
-    const pctF = p.pctFinal != null ? p.pctFinal.toFixed(1) + '%' : '—';
-    const pctW = p.pctWin != null ? p.pctWin.toFixed(1) + '%' : '—';
+    const pctF = p.pctFinal != null ? safeFixed(p.pctFinal, 1) + '%' : '—';
+    const pctW = p.pctWin != null ? safeFixed(p.pctWin, 1) + '%' : '—';
     return `<tr class="${p.eliminated ? 'ta-elim' : ''}">
       <td>${seedHtml}${_escapeHtmlSafe(p.name)}</td>
       <td style="color:var(--text2,#8d9399);">${_escapeHtmlSafe(ctrFlag)}</td>
@@ -15693,7 +15693,7 @@ function _texFmtDrift(pct) {
   const abs = Math.abs(pct);
   const cls = abs < 2 ? 'tex-drift-flat' : (pct > 0 ? 'tex-drift-up' : 'tex-drift-down');
   const arrow = abs < 2 ? '→' : (pct > 0 ? '▲' : '▼');
-  return `<span class="${cls}">${arrow} ${(pct > 0 ? '+' : '')}${pct.toFixed(1)}%</span>`;
+  return `<span class="${cls}">${arrow} ${(pct > 0 ? '+' : '')}${safeFixed(pct, 1)}%</span>`;
 }
 
 function _texFmtOdds(v) {
@@ -15824,7 +15824,7 @@ async function loadBetminesPicks() {
       const pickCell = p.best_pick?.market
         ? `<span class="bm-pick-badge">${_escapeHtmlSafe(_bmMarketLabel(p.best_pick.market))}</span>`
         : '<span style="color:var(--text3,#5a6068);">—</span>';
-      const oddCell = p.best_pick?.odd_value != null ? p.best_pick.odd_value.toFixed(2) : '—';
+      const oddCell = p.best_pick?.odd_value != null ? safeFixed(p.best_pick.odd_value, 2) : '—';
       const probCell = p.best_pick?.probability != null
         ? `<span class="bm-prob-pill" style="background:rgba(0,230,118,0.1);color:${probColor(p.best_pick.probability)};">${p.best_pick.probability}%</span>`
         : '<span style="color:var(--text3,#5a6068);">—</span>';
@@ -16004,14 +16004,14 @@ function _texRenderOddsHistory(history) {
   return `<div style="margin-top:14px;padding:10px;background:var(--bg3,#181c20);border-radius:6px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;">📈 Odds P1 Drift (${snaps.length} snapshots)</div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:${color};font-weight:600;">${arrow} ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:${color};font-weight:600;">${arrow} ${pct >= 0 ? '+' : ''}${safeFixed(pct, 1)}%</div>
     </div>
     <svg width="${width}" height="${height}" style="display:block;">
       <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5"/>
     </svg>
     <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3,#5a6068);margin-top:4px;">
-      <span>${firstTs} · ${first.toFixed(2)}</span>
-      <span>${lastTs} · ${last.toFixed(2)}</span>
+      <span>${firstTs} · ${safeFixed(first, 2)}</span>
+      <span>${lastTs} · ${safeFixed(last, 2)}</span>
     </div>
   </div>`;
 }
@@ -16033,7 +16033,7 @@ async function openTexBooksModal(matchId) {
     const fmtD = d => {
       if (d == null) return '<span class="tex-drift-flat">—</span>';
       const cls = Math.abs(d) < 2 ? 'tex-drift-flat' : (d > 0 ? 'tex-drift-up' : 'tex-drift-down');
-      return `<span class="${cls}">${d > 0 ? '+' : ''}${d.toFixed(1)}%</span>`;
+      return `<span class="${cls}">${d > 0 ? '+' : ''}${safeFixed(d, 1)}%</span>`;
     };
     const rows = books.map(b => `<tr>
       <td>${_escapeHtmlSafe(b.bookmaker)}</td>
@@ -16044,7 +16044,7 @@ async function openTexBooksModal(matchId) {
       <td style="text-align:right;color:var(--text3,#5a6068);">${fmtO(b.open_p2)}</td>
       <td style="text-align:right;">${fmtD(b.drift_p2_pct)}</td>
     </tr>`).join('');
-    const bestStr = (b) => b ? `<strong style="color:var(--green,#00e676);">${b.odd.toFixed(2)}</strong> @ ${_escapeHtmlSafe(b.book)}` : '—';
+    const bestStr = (b) => b ? `<strong style="color:var(--green,#00e676);">${safeFixed(b.odd, 2)}</strong> @ ${_escapeHtmlSafe(b.book)}` : '—';
     body.innerHTML = `
       <h3 style="margin:0 0 10px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;">📊 ${_escapeHtmlSafe(r.player1)} vs ${_escapeHtmlSafe(r.player2)}</h3>
       <div style="margin-bottom:14px;font-size:11px;color:var(--text2,#8d9399);">
@@ -17912,7 +17912,7 @@ function _renderTopPerformers(m) {
         return '<div class="ld-perf-row">'
           + '<span class="ld-perf-pos">' + p.position + '</span>'
           + '<span class="ld-perf-name">' + p.name + '</span>'
-          + '<span class="ld-perf-badge ' + badgeClass(p.avg_rating) + '">' + p.avg_rating.toFixed(1) + '</span>'
+          + '<span class="ld-perf-badge ' + badgeClass(p.avg_rating) + '">' + safeFixed(p.avg_rating, 1) + '</span>'
           + '</div>';
       }).join('');
     }
@@ -18034,10 +18034,10 @@ function _renderMomentumBars(m) {
       var v = Math.max(-100, Math.min(100, pt.v || 0));
       if (v > 0) {
         var hH = ((v/100) * maxH).toFixed(1);
-        if (parseFloat(hH) > 0.5) s+='<rect x="'+x+'" y="'+(cY-parseFloat(hH)).toFixed(1)+'" width="'+bW.toFixed(1)+'" height="'+hH+'" fill="rgba(0,230,118,0.75)" rx="1"/>';
+        if (parseFloat(hH) > 0.5) s+='<rect x="'+x+'" y="'+(cY-parseFloat(hH)).toFixed(1)+'" width="'+safeFixed(bW, 1)+'" height="'+hH+'" fill="rgba(0,230,118,0.75)" rx="1"/>';
       } else if (v < 0) {
         var aH = ((-v/100) * maxH).toFixed(1);
-        if (parseFloat(aH) > 0.5) s+='<rect x="'+x+'" y="'+cY+'" width="'+bW.toFixed(1)+'" height="'+aH+'" fill="rgba(41,182,246,0.75)" rx="1"/>';
+        if (parseFloat(aH) > 0.5) s+='<rect x="'+x+'" y="'+cY+'" width="'+safeFixed(bW, 1)+'" height="'+aH+'" fill="rgba(41,182,246,0.75)" rx="1"/>';
       }
     });
     // Indicateur minute courante
@@ -18124,7 +18124,7 @@ function _renderBetPredictif(m, top3) {
   if (!el) return;
   var edge = calculateLiveEdge(m, top3 || null);
   if (!edge||!edge.best) { el.innerHTML='<div class="ld-no-data">Cotes non disponibles.</div>'; return; }
-  var best=edge.best, pos=best.edge>3, eStr=(best.edge>0?'+':'')+best.edge.toFixed(1)+'%';
+  var best=edge.best, pos=best.edge>3, eStr=(best.edge>0?'+':'')+safeFixed(best.edge, 1)+'%';
   var prob=Math.round(best.adjProb*100);
   var bCol=pos?'#00e676':'#555', probCol=pos?'var(--green)':'var(--text2)';
   var eCol=best.edge>0?'var(--green)':'var(--red)';
@@ -18135,7 +18135,7 @@ function _renderBetPredictif(m, top3) {
     : '';
   el.innerHTML='<div class="ld-bet-verdict">'
     +'<span class="ld-bet-badge" style="background:'+bgCol+';color:'+txtCol+';">'+(pos?'✓ BET':'✗ SKIP')+'</span>'
-    +'<span class="ld-bet-desc">'+best.label+(best.odds?' @ '+best.odds.toFixed(2):'')+'</span>'
+    +'<span class="ld-bet-desc">'+best.label+(best.odds?' @ '+safeFixed(best.odds, 2):'')+'</span>'
     +'</div>'
     +'<div class="ld-bet-prob-row">'
     +'<div><div class="ld-bet-prob" style="color:'+probCol+';">'+prob+'%</div><div class="ld-bet-prob-lbl">Proba ajustée</div></div>'
@@ -18182,7 +18182,7 @@ function _renderLiveWSInto(P, m) {
     if (st.ball && st.ball.x != null) {
       var bx = Math.max(2, Math.min(98, st.ball.x));
       var by = Math.max(2, Math.min(62, (st.ball.y != null ? st.ball.y : 50) * 0.64));
-      s += '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="2.6" fill="#fff" stroke="#E2001A" stroke-width="0.8"><animate attributeName="r" values="2.6;3.4;2.6" dur="1s" repeatCount="indefinite"/></circle>';
+      s += '<circle cx="' + safeFixed(bx, 1) + '" cy="' + safeFixed(by, 1) + '" r="2.6" fill="#fff" stroke="#E2001A" stroke-width="0.8"><animate attributeName="r" values="2.6;3.4;2.6" dur="1s" repeatCount="indefinite"/></circle>';
     } else {
       s += '<text x="50" y="34" font-size="5" fill="rgba(255,255,255,.5)" text-anchor="middle" font-family="monospace">position ballon indisponible</text>';
     }
@@ -19272,7 +19272,7 @@ function buildLiveStatsPanel(m) {
       label: 'xG',
       home: m.live_xg?.home ?? 0,
       away: m.live_xg?.away ?? 0,
-      format: v => v.toFixed(2),
+      format: v => safeFixed(v, 2),
       highlight: true,
     });
   }
@@ -19473,7 +19473,7 @@ function renderTopButteurs(buts, ctx) {
       <span class="buteur-badge" style="background:${teamClr}20;color:${teamClr};border:1px solid ${teamClr}40;">${teamLbl}</span>
       <span class="buteur-name" style="cursor:pointer;text-decoration:underline" data-player-name="${(b.name||'').replace(/"/g,'&quot;')}" data-team-name="${b.team === 'home' ? homeTeam : awayTeam}" data-league-id="${leagueId}" onclick="trackClickFromDataset(this,'player',event)" title="Voir fiche joueur">${b.name}</span>
       <span class="buteur-bar-wrap"><span class="buteur-bar" style="width:${barW}%;background:${barClr};"></span></span>
-      <span class="buteur-xg" style="color:${barClr};">${xg.toFixed(2)}</span>
+      <span class="buteur-xg" style="color:${barClr};">${safeFixed(xg, 2)}</span>
       <span class="buteur-pct" style="color:${pctClr};">${pct}%</span>
     </div>`;
   }).join('');
@@ -19497,8 +19497,8 @@ function renderTopKPI(kpi, ctx) {
       <span class="buteur-badge" style="background:#f0f0f020;color:#666;border:1px solid #ccc;font-size:8px;">${k.position}</span>
       <span class="buteur-name" style="cursor:pointer;text-decoration:underline" data-player-name="${(k.name||'').replace(/"/g,'&quot;')}" data-team-name="${k.team === 'home' ? homeTeam : awayTeam}" data-league-id="${leagueId}" onclick="trackClickFromDataset(this,'player',event)" title="Voir fiche joueur">${k.name}</span>
       <span class="buteur-bar-wrap"><span class="buteur-bar" style="width:${barW}%;background:${kpiClr};"></span></span>
-      <span class="buteur-xg" style="color:${kpiClr};">${k.kpi.toFixed(1)}</span>
-      <span class="buteur-pct" style="color:${ratingClr};">★${k.rating.toFixed(1)}</span>
+      <span class="buteur-xg" style="color:${kpiClr};">${safeFixed(k.kpi, 1)}</span>
+      <span class="buteur-pct" style="color:${ratingClr};">★${safeFixed(k.rating, 1)}</span>
     </div>`;
   });
   const first = rows[0] || '';
@@ -19685,13 +19685,13 @@ function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
   const arrowOf = k => { const d = delta[k]; return d == null ? ''
     : d > 0.5 ? ` <span style="color:#E2001A;font-size:8px;">▲${Math.abs(d)}</span>`
     : d < -0.5 ? ` <span style="color:#888;font-size:8px;">▼${Math.abs(d)}</span>` : ''; };
-  const badge = (label, pct, dk) => `<span class="t3c-badge ${tier(pct)}">${label} ${pct.toFixed(0)}%${arrowOf(dk)}</span>`;
+  const badge = (label, pct, dk) => `<span class="t3c-badge ${tier(pct)}">${label} ${safeFixed(pct, 0)}%${arrowOf(dk)}</span>`;
   const row = (lbl, inner) => `<div class="t3c-row"><span class="t3c-label">${lbl}</span>${inner}</div>`;
 
   // ── 1X2 Smart Highlight : issue max = pick éclatant, autres éteintes
   const o1x2 = [{ l:'1', v:homeWin }, { l:'N', v:draw }, { l:'2', v:awayWin }];
   const pickIdx = o1x2.reduce((b,o,i,a) => o.v > a[b].v ? i : b, 0);
-  const sm1x2 = o1x2.map((o,i) => `<span class="t3c-badge-sm ${tier(o.v)} ${i===pickIdx?'t3c-pick':'t3c-dim'}">${o.l} ${o.v.toFixed(0)}%</span>`).join('');
+  const sm1x2 = o1x2.map((o,i) => `<span class="t3c-badge-sm ${tier(o.v)} ${i===pickIdx?'t3c-pick':'t3c-dim'}">${o.l} ${safeFixed(o.v, 0)}%</span>`).join('');
 
   // ── DC : combo le plus probable
   const dc1X = homeWin + draw, dcX2 = awayWin + draw, dc12 = homeWin + awayWin;
@@ -19736,7 +19736,7 @@ function calcTop3Conseils(m, p, leaguePctMap, accuracy) {
     </div>
   </div>`;
 
-  const evBanner = evValid ? `<div class="t3c-ev" title="Expected Value dévigée — marché à cote réelle">▲ +EV · Parier ${evMkt}<span class="t3c-evk">${evPct.toFixed(1)}%</span></div>` : '';
+  const evBanner = evValid ? `<div class="t3c-ev" title="Expected Value dévigée — marché à cote réelle">▲ +EV · Parier ${evMkt}<span class="t3c-evk">${safeFixed(evPct, 1)}%</span></div>` : '';
 
   const foot = (steamDrop != null || bestAcc) ? `<div class="t3c-foot">
     ${steamDrop != null ? `<span class="t3c-pro-chip steam" title="Steam / drop de cote">▼${Math.abs(steamDrop).toFixed(2)}</span>` : ''}
@@ -19840,7 +19840,7 @@ function buildTop5Prematch(matches) {
     const betCls = bestVal >= 75 ? 't3c-safe' : bestVal >= 55 ? 't3c-value' : 't3c-risky';
     return `<div class="lt5-card" onclick="openInsights('${m.id}')">
       <div class="lt5-match">${m.home_team} — ${m.away_team} <span style="color:var(--text3)">(${m.league})</span></div>
-      <div class="lt5-bet" style="background:${bestVal>=75?'rgba(226,0,26,0.08)':bestVal>=55?'#F4F4F4':'#F4F4F4'};color:${bestVal>=75?'#E2001A':bestVal>=55?'#1A1A1A':'#888'};">${bestLabel} · ${bestVal.toFixed(0)}%</div>
+      <div class="lt5-bet" style="background:${bestVal>=75?'rgba(226,0,26,0.08)':bestVal>=55?'#F4F4F4':'#F4F4F4'};color:${bestVal>=75?'#E2001A':bestVal>=55?'#1A1A1A':'#888'};">${bestLabel} · ${safeFixed(bestVal, 0)}%</div>
     </div>`;
   }).join('');
 }
@@ -19940,7 +19940,7 @@ function ppgBar(ppg) {
   const pct = Math.min(100, (ppg / 3) * 100);
   const clr = ppg >= 2.0 ? '#15803D' : ppg >= 1.3 ? '#B45309' : '#B91C1C';
   const bg  = ppg >= 2.0 ? '#DCFCE7'  : ppg >= 1.3 ? '#FEF3C7'  : '#FEE2E2';
-  return `<span style="display:inline-block;width:40px;height:5px;background:#EAEAEA;border-radius:3px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:3px;background:${clr};width:${pct}%;"></span></span><span style="background-color:${bg} !important;color:${clr} !important;font-size:8px;font-weight:900 !important;padding:1px 4px;border-radius:3px;">${pct.toFixed(0)}%</span>`;
+  return `<span style="display:inline-block;width:40px;height:5px;background:#EAEAEA;border-radius:3px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:3px;background:${clr};width:${pct}%;"></span></span><span style="background-color:${bg} !important;color:${clr} !important;font-size:8px;font-weight:900 !important;padding:1px 4px;border-radius:3px;">${safeFixed(pct, 0)}%</span>`;
 }
 
 function formBalls(formStr) {
@@ -20454,7 +20454,7 @@ const label = country
     const isReal = m.stats?.isReal;
     const best = m.best_edge || {};
     const edge = best.edge || 0;
-    const edgePct = edge.toFixed(1);
+    const edgePct = safeFixed(edge, 1);
     const isHigh = edge >= 5, isPos = edge > 0;
 
     const homePpg = periodN ? (ppgFromFormStr(m.home_form, periodN) ?? hs.ppg) : hs.ppg;
@@ -20510,7 +20510,7 @@ const label = country
       else if (type === 'avg')     cls = val >= 2.0 ? 'green' : val >= 1.2 ? 'orange' : 'red';
       else if (type === 'avg-neg') cls = val <= 1.0 ? 'green' : val <= 1.5 ? 'orange' : 'red';
       else                         cls = val > 75 ? 'green' : val > 50 ? 'orange' : 'red';
-      const display = typeof val === 'number' && val % 1 !== 0 ? val.toFixed(2) : (val ?? '—');
+      const display = typeof val === 'number' && val % 1 !== 0 ? safeFixed(val, 2) : (val ?? '—');
       return `<td class="sc ${cls} stats-col" style="display:none;">${display}</td>`;
     };
 
@@ -20523,14 +20523,14 @@ const label = country
     else if (edge > 0)        { vbTier = 'neu'; vbTag = 'NEUTRE'; }
     else                      { vbTier = 'no';  vbTag = 'ÉVITER'; }
     const _vbOdds = (_hasEdge && best.odds != null)
-      ? (typeof best.odds === 'number' ? best.odds.toFixed(2) : best.odds) : '';
+      ? (typeof best.odds === 'number' ? safeFixed(best.odds, 2) : best.odds) : '';
     /* UI-002 — IC Corridor inline (Sprint 1 P0) — only if backend exposes best.ic90 */
     let icCorridorHtml = '';
     if (_hasEdge && best && best.ic90 && typeof best.ic90.low === 'number' && typeof best.ic90.high === 'number') {
       const lo = best.ic90.low;
       const hi = best.ic90.high;
       const icCls = (lo > 0) ? 'cf-ic-safe' : (hi > 0 ? 'cf-ic-warn' : 'cf-ic-trap');
-      const fmt = (v) => (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+      const fmt = (v) => (v > 0 ? '+' : '') + safeFixed(v, 1) + '%';
       icCorridorHtml = `<span class="cf-ic-corridor ${icCls}" title="Intervalle de confiance 90% sur EV — borne basse ${fmt(lo)} · borne haute ${fmt(hi)}. ${lo > 0 ? 'Statistiquement positif' : hi > 0 ? 'Borne basse négative (piège possible)' : 'Statistiquement négatif'}.">
         <span class="cf-ic-bracket">[</span>${fmt(lo)}<span class="cf-ic-dot">•</span>${fmt(hi)}<span class="cf-ic-bracket">]</span>
       </span>`;
@@ -20545,7 +20545,7 @@ const label = country
     }
     const vbHeroHtml = `<td class="vb-value-col">
       <span class="vb-hero-value vbh-${vbTier}" title="Edge dévigé${best.bk ? ' · '+best.bk : ''} — ${vbTag}">
-        <span class="vbh-edge">${_hasEdge ? (edge > 0 ? '▲' : edge < 0 ? '▼' : '＝') : ''}${_hasEdge ? (edge > 0 ? '+' : '') + edge.toFixed(1) + '%' : '—'}</span>
+        <span class="vbh-edge">${_hasEdge ? (edge > 0 ? '▲' : edge < 0 ? '▼' : '＝') : ''}${_hasEdge ? (edge > 0 ? '+' : '') + safeFixed(edge, 1) + '%' : '—'}</span>
         ${best.label ? `<span class="vbh-pick">${best.label}${_vbOdds ? ' @'+_vbOdds : ''}</span>` : ''}
         <span class="vbh-tag">${vbTag}</span>
         ${icCorridorHtml}
@@ -20596,13 +20596,13 @@ const label = country
       <td style="min-width:70px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;">
         <div style="margin-bottom:2px;">
           <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
-          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof homePpgL5==='number'?homePpgL5.toFixed(1):'-'}</span>
+          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof homePpgL5==='number'?safeFixed(homePpgL5, 1):'-'}</span>
           <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${homePower>=65?'#15803D':homePower>=45?'#B45309':'#B91C1C'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
           ${renderFatigueDot(m.home_fatigue, m.home_fatigue_level, m.home_fatigue_meta)}
         </div>
         <div>
           <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
-          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof awayPpgL5==='number'?awayPpgL5.toFixed(1):'-'}</span>
+          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof awayPpgL5==='number'?safeFixed(awayPpgL5, 1):'-'}</span>
           <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${awayPower>=65?'#15803D':awayPower>=45?'#B45309':'#B91C1C'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
           ${renderFatigueDot(m.away_fatigue, m.away_fatigue_level, m.away_fatigue_meta)}
         </div>
@@ -21239,7 +21239,7 @@ function openScoreMatrix(matchId) {
         const opacity = (0.35 + 0.65 * (prob / maxProb)).toFixed(2);
         cells.push(`<div class="score-cell ${cls}${isTop ? ' score-cell-top' : ''}" style="opacity:${opacity}">
           <div style="font-weight:600">${h}-${a}</div>
-          <div style="font-size:9px;opacity:.8">${prob < 0.05 ? '<0.1%' : prob.toFixed(1) + '%'}</div>
+          <div style="font-size:9px;opacity:.8">${prob < 0.05 ? '<0.1%' : safeFixed(prob, 1) + '%'}</div>
         </div>`);
       }
       return `<div class="score-row">${cells.join('')}</div>`;
@@ -21248,7 +21248,7 @@ function openScoreMatrix(matchId) {
   }
 
   document.getElementById('score-match-title').textContent = `${m.home_team} vs ${m.away_team}`;
-  document.getElementById('score-match-sub').textContent = `${m.league} · λ dom: ${lH.toFixed(2)}, λ ext: ${lA.toFixed(2)}`;
+  document.getElementById('score-match-sub').textContent = `${m.league} · λ dom: ${safeFixed(lH, 2)}, λ ext: ${safeFixed(lA, 2)}`;
   document.getElementById('score-matrix-container').innerHTML = `
     <div class="score-matrix">
       ${buildSection([6,5,4,3,2,1], 'Victoire domicile')}
@@ -21259,18 +21259,18 @@ function openScoreMatrix(matchId) {
   document.getElementById('score-probas').innerHTML = `
     <div class="score-probas-grid">
       <div style="text-align:center;padding:12px;background:rgba(0,196,90,0.1);border-radius:8px;">
-        <div style="font-size:24px;font-weight:800;color:#00c45a">${pHome.toFixed(1)}%</div>
+        <div style="font-size:24px;font-weight:800;color:#00c45a">${safeFixed(pHome, 1)}%</div>
         <div style="font-size:11px;color:var(--text3);margin-top:4px">VICTOIRE ${m.home_team.toUpperCase()}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:6px">λ ${lH.toFixed(2)} xG</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px">λ ${safeFixed(lH, 2)} xG</div>
       </div>
       <div style="text-align:center;padding:12px;background:rgba(120,120,120,0.1);border-radius:8px;">
-        <div style="font-size:24px;font-weight:800;color:var(--text)">${pDraw.toFixed(1)}%</div>
+        <div style="font-size:24px;font-weight:800;color:var(--text)">${safeFixed(pDraw, 1)}%</div>
         <div style="font-size:11px;color:var(--text3);margin-top:4px">MATCH NUL</div>
       </div>
       <div style="text-align:center;padding:12px;background:rgba(41,182,246,0.1);border-radius:8px;">
-        <div style="font-size:24px;font-weight:800;color:#29b6f6">${pAway.toFixed(1)}%</div>
+        <div style="font-size:24px;font-weight:800;color:#29b6f6">${safeFixed(pAway, 1)}%</div>
         <div style="font-size:11px;color:var(--text3);margin-top:4px">VICTOIRE ${m.away_team.toUpperCase()}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:6px">λ ${lA.toFixed(2)} xG</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px">λ ${safeFixed(lA, 2)} xG</div>
       </div>
     </div>
   `;
@@ -21423,7 +21423,7 @@ function showRadarFullscreen() {
     return [CX + r*Math.cos(a), CY + r*Math.sin(a)];
   };
   const poly = (fn, color, opacity) => {
-    const pts = axes.map((ax, i) => { const [x,y] = pt(i, fn(ax), ax.max); return `${x.toFixed(1)},${y.toFixed(1)}`; }).join(' ');
+    const pts = axes.map((ax, i) => { const [x,y] = pt(i, fn(ax), ax.max); return `${safeFixed(x, 1)},${safeFixed(y, 1)}`; }).join(' ');
     return `<polygon points="${pts}" fill="${color}" opacity="${opacity}" stroke="${color}" stroke-width="2"/>`;
   };
   const grid = lvl => {
@@ -21433,11 +21433,11 @@ function showRadarFullscreen() {
   const vlabels = axes.map((ax, i) => {
     const a = angle(i); const lx = CX+(R+30)*Math.cos(a); const ly = CY+(R+30)*Math.sin(a);
     const ta = Math.abs(Math.cos(a))<0.3?'middle':Math.cos(a)>0?'start':'end';
-    return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${ta}" dominant-baseline="middle" font-size="12" fill="var(--text2)" font-family="var(--font-mono)">${ax.label}</text>`;
+    return `<text x="${safeFixed(lx, 1)}" y="${safeFixed(ly, 1)}" text-anchor="${ta}" dominant-baseline="middle" font-size="12" fill="var(--text2)" font-family="var(--font-mono)">${ax.label}</text>`;
   }).join('');
   const dots = (color, fn) => axes.map((ax, i) => {
     const [x,y] = pt(i, fn(ax), ax.max);
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${color}" stroke="var(--bg2)" stroke-width="2"/>`;
+    return `<circle cx="${safeFixed(x, 1)}" cy="${safeFixed(y, 1)}" r="5" fill="${color}" stroke="var(--bg2)" stroke-width="2"/>`;
   }).join('');
 
   const ov = document.createElement('div');
@@ -21447,7 +21447,7 @@ function showRadarFullscreen() {
     <button class="radar-close" onclick="closeRadar()">✕</button>
     <div style="font:700 14px/1 var(--font-head);margin-bottom:4px">${homeName.split(' ').pop()} vs ${awayName.split(' ').pop()}</div>
     <div style="font-size:10px;color:var(--text3);margin-bottom:16px">Comparateur 5 axes — valeurs exactes aux sommets</div>
-    <svg viewBox="0 0 320 300" style="max-width:500px;display:block;margin:0 auto">${[1,2,3,4,5].map(grid).join('')}${poly(ax=>ax.h,'var(--blue)',.15)}${poly(ax=>ax.a,'#ab47bc',.15)}${axes.map((ax,i)=>{const[x,y]=pt(i,ax.max,ax.max);return`<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border2)" stroke-width="0.5"/>`}).join('')}${vlabels}${dots('var(--blue)',ax=>ax.h)}${dots('#ab47bc',ax=>ax.a)}</svg>
+    <svg viewBox="0 0 320 300" style="max-width:500px;display:block;margin:0 auto">${[1,2,3,4,5].map(grid).join('')}${poly(ax=>ax.h,'var(--blue)',.15)}${poly(ax=>ax.a,'#ab47bc',.15)}${axes.map((ax,i)=>{const[x,y]=pt(i,ax.max,ax.max);return`<line x1="${CX}" y1="${CY}" x2="${safeFixed(x, 1)}" y2="${safeFixed(y, 1)}" stroke="var(--border2)" stroke-width="0.5"/>`}).join('')}${vlabels}${dots('var(--blue)',ax=>ax.h)}${dots('#ab47bc',ax=>ax.a)}</svg>
     <div style="display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:11px;font-family:var(--font-mono)">
       <div style="text-align:right"><div style="color:var(--blue);font-weight:700;margin-bottom:4px">${homeName}</div>${axes.map(ax=>`<div style="color:var(--text2)">${ax.label}: <b style="color:var(--blue)">${ax.h}</b></div>`).join('')}</div>
       <div style="text-align:right"><div style="color:#ab47bc;font-weight:700;margin-bottom:4px">${awayName}</div>${axes.map(ax=>`<div style="color:var(--text2)">${ax.label}: <b style="color:#ab47bc">${ax.a}</b></div>`).join('')}</div>
@@ -22127,7 +22127,7 @@ function buildJoueursTab(d) {
         <span class="bsd-player-name">${p.name || s.name || '?'}</span>
         <span class="bsd-player-pos" style="color:${posColor}">${posBadge}</span>
         <span class="bsd-player-rating" style="color:${rColor};font-weight:700">${rating ? safeFixed(rating, 1) : '—'}</span>
-        <span class="bsd-player-kpi" style="color:${kpiColor};font-weight:700" title="KPI Avancé: xG×3+xA×2+note×2+buts×1 / 90min">${kpiA ? kpiA.toFixed(1) : '—'}</span>
+        <span class="bsd-player-kpi" style="color:${kpiColor};font-weight:700" title="KPI Avancé: xG×3+xA×2+note×2+buts×1 / 90min">${kpiA ? safeFixed(kpiA, 1) : '—'}</span>
         <span class="bsd-player-stat">${goals}</span>
         <span class="bsd-player-stat">${xg ? safeFixed(xg, 1) : '—'}</span>
         ${injured ? '<span class="bsd-badge bsd-injured" title="Blessé">🏥</span>' : ''}
@@ -22345,9 +22345,9 @@ function buildGraphiqueTab(d) {
   const scoreLabel = (v) => v == null ? '—' : v >= 65 ? 'FORT' : v >= 45 ? 'MOYEN' : 'FAIBLE';
   const arrowFor = (delta) => {
     if (delta == null) return '';
-    if (delta > 0.2) return `<span style="color:var(--green);font-weight:700">↑+${delta.toFixed(1)}</span>`;
-    if (delta < -0.2) return `<span style="color:var(--red);font-weight:700">↓${delta.toFixed(1)}</span>`;
-    return `<span style="color:var(--text3)">→ ${delta.toFixed(1)}</span>`;
+    if (delta > 0.2) return `<span style="color:var(--green);font-weight:700">↑+${safeFixed(delta, 1)}</span>`;
+    if (delta < -0.2) return `<span style="color:var(--red);font-weight:700">↓${safeFixed(delta, 1)}</span>`;
+    return `<span style="color:var(--text3)">→ ${safeFixed(delta, 1)}</span>`;
   };
 
   // ── ZONE 1 — Triple KPI Header ──────────────────────────────────────────
@@ -22364,14 +22364,14 @@ function buildGraphiqueTab(d) {
         </div>
         <div style="border-left:1px solid var(--border);padding-left:14px">
           <div>
-            <span style="font:800 22px/1 var(--font-head);color:${color}">${ppgL5 != null ? ppgL5.toFixed(2) : '—'}</span>
+            <span style="font:800 22px/1 var(--font-head);color:${color}">${ppgL5 != null ? safeFixed(ppgL5, 2) : '—'}</span>
             <span style="font:400 9px/1 var(--font-mono);color:var(--text3);margin-left:4px;letter-spacing:.5px">PPG L5</span>
           </div>
-          <div style="font:400 10px/1.3 var(--font-mono);color:var(--text2);margin-top:5px">saison <span style="color:var(--text3)">${ppgSeason != null ? ppgSeason.toFixed(2) : '—'}</span> ${arrowFor(delta)}</div>
+          <div style="font:400 10px/1.3 var(--font-mono);color:var(--text2);margin-top:5px">saison <span style="color:var(--text3)">${ppgSeason != null ? safeFixed(ppgSeason, 2) : '—'}</span> ${arrowFor(delta)}</div>
         </div>
         <div style="border-left:1px solid var(--border);padding-left:14px">
           <div>
-            <span style="font:800 22px/1 var(--font-head);color:${xgCol}">${xgDiff != null ? (xgDiff >= 0 ? '+' : '') + xgDiff.toFixed(2) : '—'}</span>
+            <span style="font:800 22px/1 var(--font-head);color:${xgCol}">${xgDiff != null ? (xgDiff >= 0 ? '+' : '') + safeFixed(xgDiff, 2) : '—'}</span>
             <span style="font:400 9px/1 var(--font-mono);color:var(--text3);margin-left:4px;letter-spacing:.5px">xG diff</span>
           </div>
           <div style="font:400 10px/1.3 var(--font-mono);color:var(--text3);margin-top:5px">${xgDiff == null ? '' : xgDiff > 0.3 ? 'sur-perf' : xgDiff < -0.3 ? 'sous-perf' : 'équilibré'}</div>
@@ -23025,8 +23025,8 @@ function _buildClassementTabLegacy(d) {
             <td style="color:var(--green)">${s.wins||'—'}</td>
             <td style="color:var(--amber)">${s.draws||'—'}</td>
             <td style="color:var(--red)">${s.losses||'—'}</td>
-            <td style="font-family:var(--font-mono)">${s.avgFor>0?s.avgFor.toFixed(1):'—'}</td>
-            <td style="font-family:var(--font-mono)">${s.avgAg>0?s.avgAg.toFixed(1):'—'}</td>
+            <td style="font-family:var(--font-mono)">${s.avgFor>0?safeFixed(s.avgFor, 1):'—'}</td>
+            <td style="font-family:var(--font-mono)">${s.avgAg>0?safeFixed(s.avgAg, 1):'—'}</td>
             <td class="st-pts">${s.pts||'—'}</td>
             <td><div class="st-form">${formSm(r.form)}</div></td>
           </tr>`;
@@ -23344,8 +23344,8 @@ function buildStaticInsightLayer(d) {
       const delta   = Math.round(val - bookPct);
       const dcol    = delta > 3 ? 'var(--green)' : delta < -3 ? 'var(--red)' : 'var(--text3)';
       const dsign   = delta > 0 ? '+' : '';
-      bookHtml = `<div class="ps-gauge-bk" title="Cote bk: ${bookOdds.toFixed(2)} = ${bookPct}% implicite">
-        <span style="color:var(--text3)">${bookOdds.toFixed(2)}</span>
+      bookHtml = `<div class="ps-gauge-bk" title="Cote bk: ${safeFixed(bookOdds, 2)} = ${bookPct}% implicite">
+        <span style="color:var(--text3)">${safeFixed(bookOdds, 2)}</span>
         <span style="color:${dcol};font-weight:700">${dsign}${delta}%</span>
       </div>`;
     }
@@ -23417,7 +23417,7 @@ function buildStaticInsightLayer(d) {
     };
     const rows = [
       pos.home  != null ? bar(pos.home, pos.away, v => `${v}%`)  : '',
-      xg.home   != null ? bar(xg.home, xg.away,   v => v.toFixed ? v.toFixed(1) : v) : '',
+      xg.home   != null ? bar(xg.home, xg.away,   v => v.toFixed ? safeFixed(v, 1) : v) : '',
       sh.home   != null ? bar(sh.home, sh.away)   : '',
       co.home   != null ? bar(co.home, co.away)   : '',
       da.home   != null ? bar(da.home, da.away)   : '',
@@ -23436,7 +23436,7 @@ function buildStaticInsightLayer(d) {
     const ev = m.best_edge.edge;
     if (ev == null) return '';
     const oddsStr = m.best_edge.odds != null
-      ? (typeof m.best_edge.odds === 'number' ? m.best_edge.odds.toFixed(2) : m.best_edge.odds)
+      ? (typeof m.best_edge.odds === 'number' ? safeFixed(m.best_edge.odds, 2) : m.best_edge.odds)
       : '—';
     if (bs.recommended) {
       const affHrefOk = buildAffiliateUrl({
@@ -23456,7 +23456,7 @@ function buildStaticInsightLayer(d) {
           <div class="ps-bet-cta-odds" style="color:var(--green)">${oddsStr}</div>
         </div>
         <div class="ps-bet-cta-ev">
-          <span style="background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25)">EV +${ev.toFixed(1)}%</span>
+          <span style="background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25)">EV +${safeFixed(ev, 1)}%</span>
           <span style="background:rgba(0,230,118,0.07);color:var(--green);border:1px solid rgba(0,230,118,0.18)">✅ IC confirmé</span>
           ${rel != null ? `<span style="color:var(--text3);background:var(--bg4);border:1px solid var(--border)">Fiabilité ${rel}/100</span>` : ''}
         </div>
@@ -23484,7 +23484,7 @@ function buildStaticInsightLayer(d) {
           <div class="ps-bet-cta-odds" style="color:var(--amber)">${oddsStr}</div>
         </div>
         <div class="ps-bet-cta-ev">
-          <span style="background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25)">EV +${ev.toFixed(1)}%</span>
+          <span style="background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25)">EV +${safeFixed(ev, 1)}%</span>
           <span style="background:rgba(239,68,68,0.08);color:var(--red);border:1px solid rgba(239,68,68,0.2)">✗ EV pessimiste ≤ 0%</span>
         </div>
         ${bs.reason ? `<div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--font-mono);line-height:1.4">${bs.reason.slice(0,90)}</div>` : ''}
@@ -23537,9 +23537,9 @@ function buildTeamRadarSection(d) {
     return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center">
       <div style="font:700 11px/1 var(--font-mono);color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.2px">${label}<span style="color:var(--text3);margin-left:4px;font-weight:400">${weight}%</span></div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-family:var(--font-mono)">
-        <span style="color:#E2001A;font-weight:800;font-size:14px">${hVal.toFixed(1)}</span>
+        <span style="color:#E2001A;font-weight:800;font-size:14px">${safeFixed(hVal, 1)}</span>
         <span style="font-size:9px;color:var(--text3)">vs</span>
-        <span style="color:#1A1A1A;font-weight:800;font-size:14px">${aVal.toFixed(1)}</span>
+        <span style="color:#1A1A1A;font-weight:800;font-size:14px">${safeFixed(aVal, 1)}</span>
       </div>
       <div style="display:flex;height:4px;border-radius:2px;overflow:hidden;background:var(--bg4);margin-top:6px">
         <div style="width:${hPct/2}%;background:#E2001A"></div>
@@ -23643,7 +23643,7 @@ function initPowerScoreRadar() {
       animation: { duration: 400 },
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
-        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.r.toFixed(0)}%` } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${safeFixed(ctx.parsed.r, 0)}%` } },
       },
       scales: {
         r: {
@@ -23700,7 +23700,7 @@ function buildPowerScoreTab(matchId) {
     const sign  = delta >= 0 ? '+' : '';
     const col   = delta >= 4 ? 'var(--green)' : delta >= 1 ? 'var(--amber)' : delta >= 0 ? 'var(--text2)' : 'var(--red)';
     const ga    = `${p.goals||0}G / ${p.assists||0}A`;
-    return `<span style="color:${col};font-weight:700">${sign}${delta.toFixed(1)} vs moy.</span> &nbsp;·&nbsp; ${ga}`;
+    return `<span style="color:${col};font-weight:700">${sign}${safeFixed(delta, 1)} vs moy.</span> &nbsp;·&nbsp; ${ga}`;
   };
   // Mini sparkline L5 depuis forme équipe (proxy joueur)
   const formDots = (form) => {
@@ -23719,7 +23719,7 @@ function buildPowerScoreTab(matchId) {
     if (kpi == null || typeof kpi !== 'number') return '';
     const pct = Math.min(100, (kpi / 20) * 100).toFixed(0);
     const col = kpi >= 15 ? '#00e676' : kpi >= 12 ? '#ffa726' : '#ef4444';
-    return `<div class="ps-player-bar-wrap" title="${kpi.toFixed(1)}/20">
+    return `<div class="ps-player-bar-wrap" title="${safeFixed(kpi, 1)}/20">
       <div class="ps-player-bar-fill" style="width:${pct}%;background:${col}"></div>
     </div>`;
   };
@@ -24201,10 +24201,10 @@ function drawLDCockpit(m) {
                     : c.edge <= -5 ? 'background:var(--red);color:#fff;'
                     : 'background:var(--bg3);color:var(--text2);';
       const edgeBadge = c.edge != null ? `<span style="${edgeCls}padding:1px 5px;border-radius:3px;font:700 9px/1 var(--font-mono);margin-left:4px;">${c.edge >= 0 ? '+' : ''}${c.edge}%</span>` : '';
-      const trendIcon = c.trend ? (c.trend.dir === 'drop' ? '<span style="color:var(--red);font-size:9px;">▼' + Math.abs(c.trend.pct).toFixed(0) + '%</span>' : c.trend.dir === 'rise' ? '<span style="color:var(--green);font-size:9px;">▲' + c.trend.pct.toFixed(0) + '%</span>' : '') : '';
+      const trendIcon = c.trend ? (c.trend.dir === 'drop' ? '<span style="color:var(--red);font-size:9px;">▼' + Math.abs(c.trend.pct).toFixed(0) + '%</span>' : c.trend.dir === 'rise' ? '<span style="color:var(--green);font-size:9px;">▲' + safeFixed(c.trend.pct, 0) + '%</span>' : '') : '';
       return `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;">
         <b style="color:${c.color};">${c.label}</b>
-        <span style="color:var(--text);font-weight:800;">${c.odd.toFixed(2)}</span>
+        <span style="color:var(--text);font-weight:800;">${safeFixed(c.odd, 2)}</span>
         ${trendIcon}
         ${edgeBadge}
       </span>`;
@@ -24385,11 +24385,11 @@ function drawLDXGCurve(hist, m) {
     <line x1="${pad}" y1="${H - pad}" x2="${W - pad}" y2="${H - pad}" stroke="var(--border)" stroke-width="0.5"/>
     <path d="${pathHome}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>
     <path d="${pathAway}" fill="none" stroke="#ffa726" stroke-width="2" stroke-linejoin="round"/>
-    <text x="${pad + 2}" y="10" fill="var(--blue)" font-size="9" font-family="var(--font-mono)" font-weight="700">${xgH.toFixed(2)}</text>
-    <text x="${W - pad - 2}" y="10" fill="#ffa726" font-size="9" font-family="var(--font-mono)" font-weight="700" text-anchor="end">${xgA.toFixed(2)}</text>
+    <text x="${pad + 2}" y="10" fill="var(--blue)" font-size="9" font-family="var(--font-mono)" font-weight="700">${safeFixed(xgH, 2)}</text>
+    <text x="${W - pad - 2}" y="10" fill="#ffa726" font-size="9" font-family="var(--font-mono)" font-weight="700" text-anchor="end">${safeFixed(xgA, 2)}</text>
   `;
   if (diffEl) {
-    diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(2);
+    diffEl.textContent = (diff >= 0 ? '+' : '') + safeFixed(diff, 2);
     diffEl.style.color = Math.abs(diff) >= 0.5 ? (diff > 0 ? 'var(--blue)' : '#ffa726') : 'var(--text3)';
   }
 }
@@ -24415,17 +24415,17 @@ function drawLDMomentumSVG(momArr) {
     const m = typeof pt === 'object' && pt?.min != null ? pt.min : 0;
     return { x: xScale(m), y: yScale(v), v, m };
   });
-  const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${safeFixed(p.x, 1)},${safeFixed(p.y, 1)}`).join(' ');
   const step = Math.max(4, W / 30); // bar width fallback
   // Aire signée : remplit entre la courbe et la baseline midY
-  const areaHome = `${pathData} L${points[points.length-1].x.toFixed(1)},${midY} L${points[0].x.toFixed(1)},${midY} Z`;
+  const areaHome = `${pathData} L${safeFixed(points[points.length-1].x, 1)},${midY} L${safeFixed(points[0].x, 1)},${midY} Z`;
   // Bars overlay sur baseline pour ponctualité (1 bar par minute)
   let bars = '';
   for (const p of points) {
     const barH = Math.abs(p.y - midY);
     const y = p.v >= 0 ? p.y : midY;
     const color = p.v >= 0 ? 'rgba(41,182,246,0.4)' : 'rgba(255,167,38,0.4)';
-    bars += `<rect x="${(p.x - step/2).toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(2, step).toFixed(1)}" height="${barH.toFixed(1)}" fill="${color}"/>`;
+    bars += `<rect x="${(p.x - step/2).toFixed(1)}" y="${safeFixed(y, 1)}" width="${Math.max(2, step).toFixed(1)}" height="${safeFixed(barH, 1)}" fill="${color}"/>`;
   }
   // Gradient defs
   const defs = `<defs>
@@ -24480,7 +24480,7 @@ function updateLDVerdict(m) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div style="background:rgba(41,182,246,0.06);border:1px solid rgba(41,182,246,0.18);border-radius:8px;padding:9px 11px;">
         <div style="font:800 10px/1 var(--font-mono);color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">xG Diff</div>
-        <div style="font:800 17px/1 var(--font-mono);color:var(--text);">${(xgDiff >= 0 ? '+' : '') + xgDiff.toFixed(2)}</div>
+        <div style="font:800 17px/1 var(--font-mono);color:var(--text);">${(xgDiff >= 0 ? '+' : '') + safeFixed(xgDiff, 2)}</div>
       </div>
       <div style="background:rgba(255,167,38,0.06);border:1px solid rgba(255,167,38,0.18);border-radius:8px;padding:9px 11px;">
         <div style="font:800 10px/1 var(--font-mono);color:#ffa726;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Tirs Totaux</div>
@@ -25430,7 +25430,7 @@ function buildLiveTop5Panel() {
       <div class="lt5-match">${m.home_team} — ${m.away_team} <span style="color:var(--text3)">(${m.league})</span></div>
       <div class="lt5-score">${goalsH} - ${goalsA} <span style="font-size:10px;color:var(--text3)">(${m.live_minute}′)</span></div>
       <div class="lt5-bet" style="color:${betColor};background:${betBg};">${rec.label}</div>
-      <div class="lt5-reason">xG ${xgH.toFixed(1)} - ${xgA.toFixed(1)}${m.live_possession ? ` · Poss ${m.live_possession.home}%-${m.live_possession.away}%` : ''}</div>
+      <div class="lt5-reason">xG ${safeFixed(xgH, 1)} - ${safeFixed(xgA, 1)}${m.live_possession ? ` · Poss ${m.live_possession.home}%-${m.live_possession.away}%` : ''}</div>
     </div>`;
   }).join('');
 }
@@ -25671,7 +25671,7 @@ function renderTopMatchesGrid(matches) {
     const edge = m.best_edge?.edge || 0;
     const badgeText = conf >= 80
       ? `${conf}% conf.`
-      : edge > 0 ? `+${edge.toFixed(1)}% edge`
+      : edge > 0 ? `+${safeFixed(edge, 1)}% edge`
       : pick.label || '—';
     const badgeCls = (conf < 60 && edge <= 0) ? 'ppc-badge neutral' : 'ppc-badge';
     return `<div class="ps-pill-card" onclick="goToMatch('${m.id}')">
@@ -26082,14 +26082,14 @@ function _renderStratCard(m, key) {
   const dateStr = fmtKickoffDate(m.commence_time, { weekday:'short', day:'numeric', month:'short' }) + ' · ' + fmtKickoffTime(m.commence_time);
   const odd = m.odds != null ? Number(m.odds).toFixed(2) : m.implied_odds != null ? `~${Number(m.implied_odds).toFixed(2)}` : '—';
   const edge = m.best_edge?.edge;
-  const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
+  const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + safeFixed(edge, 1) + '%' : null;
   const vi = m.valueIndex ?? 0;
   const ci = m.confidenceIndex ?? m.confidence;
   const confColor = ci >= 80 ? '#E2001A' : ci >= 60 ? '#1A1A1A' : '#888';
   const viColor   = vi >= 70 ? '#E2001A' : vi >= 40 ? '#1A1A1A' : '#888';
   const ui = STRATEGIES_UI.find(s => s.key === key);
   const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
-  const xg = m.expectedGoals ? `xG ${m.expectedGoals.home.toFixed(1)}-${m.expectedGoals.away.toFixed(1)}` : '';
+  const xg = m.expectedGoals ? `xG ${safeFixed(m.expectedGoals.home, 1)}-${safeFixed(m.expectedGoals.away, 1)}` : '';
   return `<div class="ps-pill-card" onclick="openInsightsById('${m.id}')">
     <div style="flex:1;min-width:0;overflow:hidden;">
       <div class="ppc-league">${leagueShort} · ${dateStr}</div>
@@ -26188,7 +26188,7 @@ async function loadAccaPanel(key) {
           <div class="acca-meta">${d.size} matchs · confiance combinée ${d.combinedProb}%</div>
         </div>
       </div>
-      <div class="acca-odds">${d.combinedOdds.toFixed(2)}<span>cote combinée estimée</span></div>
+      <div class="acca-odds">${safeFixed(d.combinedOdds, 2)}<span>cote combinée estimée</span></div>
       ${matchRows}
       <div style="margin-top:10px;font-size:10px;color:var(--text3);">Pari mathématique - responsabilité individuelle. Cotes estimées via modèle probabiliste.</div>
     `;
@@ -26261,7 +26261,7 @@ let parisState = {
 };
 
 function centsToEur(c) { if (typeof c !== 'number') return '—'; return (c / 100).toFixed(2) + ' €'; }
-function eurFmt(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + ' €'; }
+function eurFmt(n) { return (n >= 0 ? '+' : '') + safeFixed(n, 2) + ' €'; }
 
 async function initParisPage() {
   if (!psGetToken()) { openAuthModal('login'); return; }
@@ -26385,7 +26385,7 @@ function renderUserBetsTable() {
       <td style="font-size:16px;">${sportTag}</td>
       <td>${escapeHtml(match)}${b.league ? `<div style="font-size:10px;color:var(--text3);">${escapeHtml(b.league)}</div>` : ''}</td>
       <td>${escapeHtml(b.selection_label)}<div style="font-size:10px;color:var(--text3);">${escapeHtml(b.market)}</div></td>
-      <td>${b.odds.toFixed(2)}</td>
+      <td>${safeFixed(b.odds, 2)}</td>
       <td>${centsToEur(b.stake_cents)}</td>
       <td>${escapeHtml(b.bookmaker)}</td>
       <td><span class="bet-status-pill ${b.status}">${b.status}</span></td>
@@ -26472,11 +26472,11 @@ function renderUserBankrollChart(s) {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: '#8d9399', font: { size: 10 }, boxWidth: 12, padding: 12, filter: (li) => li.text !== 'Bankroll' || true } },
-        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toFixed(2) + ' €' } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + safeFixed(c.parsed.y, 2) + ' €' } },
       },
       scales: {
         x: { ticks: { color: '#5a6068', font: { size: 9 }, maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,.04)' } },
-        y: { ticks: { color: '#5a6068', font: { size: 9 }, callback: v => v.toFixed(0) + ' €' }, grid: { color: 'rgba(255,255,255,.04)' } },
+        y: { ticks: { color: '#5a6068', font: { size: 9 }, callback: v => safeFixed(v, 0) + ' €' }, grid: { color: 'rgba(255,255,255,.04)' } },
       },
     },
   });
@@ -26547,7 +26547,7 @@ function applyKelly(level) {
   const map = { full: 'k-full', half: 'k-half', quarter: 'k-quarter' };
   const txt = document.getElementById(map[level]).textContent;
   const num = parseFloat(txt.replace(/[^\d.,-]/g, '').replace(',', '.'));
-  if (!isNaN(num) && num > 0) document.getElementById('bet-stake').value = num.toFixed(2);
+  if (!isNaN(num) && num > 0) document.getElementById('bet-stake').value = safeFixed(num, 2);
 }
 
 async function submitBet() {
@@ -26609,7 +26609,7 @@ async function openSettleModal(id) {
   document.getElementById('settle-modal-err').style.display = 'none';
   document.getElementById('settle-bet-summary').innerHTML =
     `${escapeHtml((bet.home_team||'?') + ' — ' + (bet.away_team||'?'))}<br>` +
-    `<span style="color:var(--text);">${escapeHtml(bet.selection_label)} @ ${bet.odds.toFixed(2)}</span> · ` +
+    `<span style="color:var(--text);">${escapeHtml(bet.selection_label)} @ ${safeFixed(bet.odds, 2)}</span> · ` +
     `Mise ${centsToEur(bet.stake_cents)}`;
   document.getElementById('settle-status').value = 'won';
   document.getElementById('settle-cashout').value = '0';
@@ -27138,12 +27138,12 @@ function dhRenderBacktestResults(r) {
       </div>
       <div class="dh-exec-card ${r.sharpe >= 1 ? 'is-green' : r.sharpe >= 0 ? '' : 'is-red'}">
         <div class="dh-exec-card-label">Sharpe</div>
-        <div class="dh-exec-card-val">${r.sharpe != null ? r.sharpe.toFixed(2) : '—'}</div>
+        <div class="dh-exec-card-val">${r.sharpe != null ? safeFixed(r.sharpe, 2) : '—'}</div>
         <div class="dh-exec-card-sub">return / stddev</div>
       </div>
       <div class="dh-exec-card ${r.calmar >= 1 ? 'is-green' : r.calmar >= 0 ? '' : 'is-red'}">
         <div class="dh-exec-card-label">Calmar</div>
-        <div class="dh-exec-card-val">${r.calmar != null ? r.calmar.toFixed(2) : '—'}</div>
+        <div class="dh-exec-card-val">${r.calmar != null ? safeFixed(r.calmar, 2) : '—'}</div>
         <div class="dh-exec-card-sub">ROI / Max DD</div>
       </div>
     </div>
@@ -27762,7 +27762,7 @@ function dhRenderKpisTennis(kpis, totalMatches) {
 
   const yieldCard = hasYield ? {
     label: 'Yield', val: (yieldPct >= 0 ? '+' : '') + (yieldPct * 100).toFixed(1) + '%',
-    sub: gy.sample_with_odds + ' picks cotes · avg ' + gy.avg_odds.toFixed(2),
+    sub: gy.sample_with_odds + ' picks cotes · avg ' + safeFixed(gy.avg_odds, 2),
     color: yieldPct >= 0.05 ? 'green' : yieldPct >= 0 ? 'amber' : 'red',
   } : {
     label: 'Picks totaux', val: totalPicks,
@@ -27873,7 +27873,7 @@ function dhRenderKpis(kpis, totalMatches) {
   const yieldCard = hasYield ? {
     label: 'Yield',
     val: (yieldPct >= 0 ? '+' : '') + (yieldPct * 100).toFixed(1) + '%',
-    sub: gy.sample_with_odds + ' picks cotes · avg ' + gy.avg_odds.toFixed(2),
+    sub: gy.sample_with_odds + ' picks cotes · avg ' + safeFixed(gy.avg_odds, 2),
     color: yieldPct >= 0.05 ? 'green' : yieldPct >= 0 ? 'amber' : 'red',
   } : {
     label: 'Picks totaux',
@@ -27916,7 +27916,7 @@ function dhRenderKpis(kpis, totalMatches) {
     },
     {
       label: 'Avg EV (Edge)',
-      val: avgEv != null ? '+' + avgEv.toFixed(1) + '%' : '—',
+      val: avgEv != null ? '+' + safeFixed(avgEv, 1) + '%' : '—',
       sub: kpis.edge.sample + ' edge picks',
       color: avgEv != null && avgEv >= 7 ? 'green' : 'neutral',
     },
@@ -28116,7 +28116,7 @@ function dhRenderTable(data) {
       <td>${_dhMarketPill('O2.5', m.predicted?.over25, 55, wasOver25)}</td>
       <td>${_dhMarketPill('BTTS', m.predicted?.btts, 55, wasBTTS)}</td>
       <td>${hasEdgePick
-        ? `<span class="dh-pred-pill ${edgeWon === 1 ? 'win' : edgeWon === 0 ? 'loss' : 'na'}">${escapeHtml(m.predicted.bestEdge)} +${evVal.toFixed(1)}%</span>`
+        ? `<span class="dh-pred-pill ${edgeWon === 1 ? 'win' : edgeWon === 0 ? 'loss' : 'na'}">${escapeHtml(m.predicted.bestEdge)} +${safeFixed(evVal, 1)}%</span>`
         : '<span class="dh-pred-pill na">—</span>'}</td>
       <td>${issueLabel}</td>
     </tr>`;
@@ -28854,7 +28854,7 @@ function renderHistTable(matches) {
     const edgeLabel = m.predicted?.bestEdge;
     const edgeVal   = m.predicted?.bestEdgeValue;
     const edgeStr   = edgeLabel
-      ? `${edgeLabel}${edgeVal != null ? ' <span style="color:var(--text3);">' + (edgeVal >= 0 ? '+' : '') + edgeVal.toFixed(1) + '%</span>' : ''}`
+      ? `${edgeLabel}${edgeVal != null ? ' <span style="color:var(--text3);">' + (edgeVal >= 0 ? '+' : '') + safeFixed(edgeVal, 1) + '%</span>' : ''}`
       : '—';
 
     return `<tr>
@@ -30017,7 +30017,7 @@ async function loadHotPicks() {
       const vi = p.valueIndex || 0;
       const ci = p.confidenceIndex || 0;
       const edge = p.best_edge?.edge;
-      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + edge.toFixed(1) + '%' : null;
+      const edgeStr = edge != null ? (edge >= 0 ? '+' : '') + safeFixed(edge, 1) + '%' : null;
       const odds = p.odds != null ? Number(p.odds).toFixed(2) : '—';
       const rankNum = `#${i+1}`;
       // Value color : rouge si haut, noir si moyen, gris si bas — AUCUN VERT
@@ -30402,7 +30402,7 @@ function updateKellyAmounts() {
   document.querySelectorAll('.dp-kelly-tag[data-kelly]').forEach(el => {
     const pct = parseFloat(el.dataset.kelly);
     const euros = bankroll > 0 ? (pct / 100 * bankroll).toFixed(0) : null;
-    const base = '📐 Mise recommandée : ' + pct.toFixed(1) + '%';
+    const base = '📐 Mise recommandée : ' + safeFixed(pct, 1) + '%';
     el.innerHTML = euros ? `${base} <span class="dp-kelly-eur">→ €${euros}</span>` : base;
   });
 }
@@ -31066,19 +31066,19 @@ function renderComparateur(d) {
   function fmtOdd(val, isBest) {
     if (!val) return '<td style="color:#ccc">—</td>';
     return isBest
-      ? `<td><strong class="comp-best-odd">${val.toFixed(2)}</strong></td>`
-      : `<td>${val.toFixed(2)}</td>`;
+      ? `<td><strong class="comp-best-odd">${safeFixed(val, 2)}</strong></td>`
+      : `<td>${safeFixed(val, 2)}</td>`;
   }
   function fmtPayout(p) {
     if (!p) return '<td style="color:#ccc">—</td>';
     const cls = p >= 98 ? 'comp-payout-hi' : p >= 96 ? 'comp-payout-mid' : 'comp-payout-lo';
-    return `<td class="${cls}">${p.toFixed(1)}%</td>`;
+    return `<td class="${cls}">${safeFixed(p, 1)}%</td>`;
   }
   function deltaSpan(delta) {
     if (delta == null || delta === 0) return '';
     const sign = delta > 0 ? '+' : '';
     const cls  = delta > 0 ? 'comp-delta-up' : 'comp-delta-dn';
-    return `<span class="comp-delta ${cls}">(${sign}${delta.toFixed(2)})</span>`;
+    return `<span class="comp-delta ${cls}">(${sign}${safeFixed(delta, 2)})</span>`;
   }
 
   function bkLogoHTML(r) {
@@ -31119,7 +31119,7 @@ function renderComparateur(d) {
     const icLbl = icPct >= 80 ? 'Consensus fort' : icPct >= 60 ? 'Consensus moyen' : 'Marché divisé';
     icBadge = `<span class="comp-ic-badge ${icCls}" title="Indice de Consensus — mesure l'accord entre bookmakers">IC ${icPct}% — ${icLbl}</span>`;
   }
-  const surebetBadge = surebet != null ? `<span class="comp-surebet-badge" title="Arbitrage détecté — couverture rentable">ARBI +${surebet.toFixed(2)}%</span>` : '';
+  const surebetBadge = surebet != null ? `<span class="comp-surebet-badge" title="Arbitrage détecté — couverture rentable">ARBI +${safeFixed(surebet, 2)}%</span>` : '';
 
   // ── Market sections ──
   function buildOUSection(lineStr, ovField, unField, payField, probField) {
@@ -31133,9 +31133,9 @@ function renderComparateur(d) {
     </tr>`;
     const bestRow_ = `<tr class="comp-best-row">
       <td><div class="comp-bk-name">Meilleure cote</div></td>
-      <td><strong class="comp-best-odd">${bestOv ? bestOv.toFixed(2) : '—'}</strong></td>
-      <td><strong class="comp-best-odd">${bestUn ? bestUn.toFixed(2) : '—'}</strong></td>
-      <td class="comp-payout-hi"><strong>${bestP ? bestP.toFixed(1) + '%' : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestOv ? safeFixed(bestOv, 2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestUn ? safeFixed(bestUn, 2) : '—'}</strong></td>
+      <td class="comp-payout-hi"><strong>${bestP ? safeFixed(bestP, 1) + '%' : '—'}</strong></td>
     </tr>`;
     const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r[ovField], r[ovField] === bestOv && bestOv > 0)}
@@ -31156,7 +31156,7 @@ function renderComparateur(d) {
     </tr>`;
     const bestRow_ = `<tr class="comp-best-row">
       <td><div class="comp-bk-name">Meilleure cote</div></td>
-      <td><strong class="comp-best-odd">${best ? best.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${best ? safeFixed(best, 2) : '—'}</strong></td>
     </tr>`;
     const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}${fmtOdd(r[field], r[field] === best && best > 0)}</tr>`;
     const anjR = rows.filter(r => r.isANJ), nonR = rows.filter(r => !r.isANJ);
@@ -31194,9 +31194,9 @@ function renderComparateur(d) {
     </tr>`;
     bestRow = `<tr class="comp-best-row">
       <td><div class="comp-bk-name">Meilleure cote</div></td>
-      <td><strong class="comp-best-odd">${bestYes ? bestYes.toFixed(2) : '—'}</strong></td>
-      <td><strong class="comp-best-odd">${bestNo ? bestNo.toFixed(2) : '—'}</strong></td>
-      <td class="comp-payout-hi"><strong>${bestP ? bestP.toFixed(1) + '%' : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestYes ? safeFixed(bestYes, 2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestNo ? safeFixed(bestNo, 2) : '—'}</strong></td>
+      <td class="comp-payout-hi"><strong>${bestP ? safeFixed(bestP, 1) + '%' : '—'}</strong></td>
     </tr>`;
     const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r.bttsYes, r.bttsYes === bestYes && bestYes > 0)}
@@ -31218,9 +31218,9 @@ function renderComparateur(d) {
     </tr>`;
     bestRow = `<tr class="comp-best-row">
       <td><div class="comp-bk-name">Meilleure cote</div></td>
-      <td><strong class="comp-best-odd">${best1X ? best1X.toFixed(2) : '—'}</strong></td>
-      <td><strong class="comp-best-odd">${bestX2 ? bestX2.toFixed(2) : '—'}</strong></td>
-      <td><strong class="comp-best-odd">${best12 ? best12.toFixed(2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${best1X ? safeFixed(best1X, 2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${bestX2 ? safeFixed(bestX2, 2) : '—'}</strong></td>
+      <td><strong class="comp-best-odd">${best12 ? safeFixed(best12, 2) : '—'}</strong></td>
     </tr>`;
     const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r.dc1X, r.dc1X === best1X && best1X > 0)}
@@ -31257,10 +31257,10 @@ function renderComparateur(d) {
     const bkOf = (field, val) => { if (!val) return ''; const r = rows.find(x => x[field] === val && !x.isAvg && x.key !== '_best'); return r ? compOddBk(r.key || r.title) : ''; };
     bestRow = `<tr class="comp-best-row">
       <td><div class="comp-bk-name">Meilleure cote${deltaInfo}</div></td>
-      <td><strong class="comp-best-odd">${bestHome.toFixed(2)}</strong>${deltaSpan(dH)}${bkOf('home', bestHome)}</td>
-      <td><strong class="comp-best-odd">${bestDraw ? bestDraw.toFixed(2) : '—'}</strong>${deltaSpan(dD)}${bkOf('draw', bestDraw)}</td>
-      <td><strong class="comp-best-odd">${bestAway.toFixed(2)}</strong>${deltaSpan(dA)}${bkOf('away', bestAway)}</td>
-      <td class="comp-payout-hi"><strong>${bestPayout.toFixed(1)}%</strong></td>
+      <td><strong class="comp-best-odd">${safeFixed(bestHome, 2)}</strong>${deltaSpan(dH)}${bkOf('home', bestHome)}</td>
+      <td><strong class="comp-best-odd">${bestDraw ? safeFixed(bestDraw, 2) : '—'}</strong>${deltaSpan(dD)}${bkOf('draw', bestDraw)}</td>
+      <td><strong class="comp-best-odd">${safeFixed(bestAway, 2)}</strong>${deltaSpan(dA)}${bkOf('away', bestAway)}</td>
+      <td class="comp-payout-hi"><strong>${safeFixed(bestPayout, 1)}%</strong></td>
     </tr>`;
     const rr = (r, cls='') => `<tr class="${cls}">${nameCell(r)}
       ${fmtOdd(r.home, r.home === bestHome)}
@@ -31582,7 +31582,7 @@ function renderComparateur(d) {
       var po = m.poisson || {};
       var edge = m.best_edge && typeof m.best_edge.edge === 'number' ? m.best_edge.edge : null;
       var edgeCls = edge == null ? 'neg' : (edge >= 5 ? 'hot' : (edge > 0 ? '' : 'neg'));
-      var edgeTxt = edge == null ? '—' : (edge > 0 ? '+' : '') + edge.toFixed(1) + '%';
+      var edgeTxt = edge == null ? '—' : (edge > 0 ? '+' : '') + safeFixed(edge, 1) + '%';
       var o = m.odds || {};
       var be = m.best_edge || {};
       // Verdict décision (edge dévigé — tiers transparents)
@@ -31694,7 +31694,7 @@ function renderComparateur(d) {
             '<div class="mc-cta-s">' + topPicks.length + ' value bet' + (topPicks.length > 1 ? 's' : '') +
               ' · edge dévigé positif</div>' +
           '</div>' +
-          '<div class="mc-cta-badge">+' + topPicks[0].best_edge.edge.toFixed(1) + '%</div>' +
+          '<div class="mc-cta-badge">+' + topPicks[0].safeFixed(best_edge.edge, 1) + '%</div>' +
         '</div>';
       html += '<div class="mc-grp mc-grp-top">★ Top value — sélection PariScore</div>';
       topPicks.forEach(function (m) { html += buildCard(m); });
