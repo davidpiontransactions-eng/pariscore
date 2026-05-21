@@ -26186,13 +26186,37 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
     if (!res.headersSent && pathname === '/robots.txt') {
         const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
         const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+        // bd ParisScorebis-<seo> fix Google Search Console "Bloquée par robots.txt"
+        // (mail GSC 21/05/2026). Retrait Disallow /*?match= (legacy, plus utilisé)
+        // + Allow explicites pages SEO + Disallow /server.js, /.env etc (defense
+        // in depth, BLOCKED_FILES deja en place server.js:164).
         const body = [
             'User-agent: *',
             'Allow: /',
+            'Allow: /pronostic-*',
+            'Allow: /pronostics',
+            'Allow: /pronostics/*',
+            'Allow: /guide/*',
+            'Allow: /guides',
+            '',
+            '# Private routes — never crawl',
             'Disallow: /api/',
             'Disallow: /tennis/api/',
             'Disallow: /admin.html',
-            'Disallow: /*?match=',
+            'Disallow: /r/',
+            'Disallow: /cb/',
+            '',
+            '# Sensitive files (defense-in-depth, BLOCKED_FILES already enforces)',
+            'Disallow: /server.js',
+            'Disallow: /.env',
+            'Disallow: /database.json',
+            'Disallow: /history.json',
+            'Disallow: /pariscore.db',
+            'Disallow: /CLAUDE.md',
+            'Disallow: /CHANGELOG.md',
+            '',
+            '# Crawl politeness',
+            'Crawl-delay: 1',
             '',
             `Sitemap: ${origin}/sitemap.xml`,
             ''
