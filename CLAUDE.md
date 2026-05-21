@@ -74,6 +74,7 @@ Source autoritaire : `bd ready`. Snapshot 21/05/2026.
 | `u8w9` | Bug Mobile page blanche filtres iOS Safari + Chrome Android |
 | `izsn` | Refacto safeFixed() wrapper sur 94 .toFixed() restants — anti NaN/null |
 | `c8zp` | Cron capture tennis score finals + cleanup history-edges legacy |
+| `8uoc` | **[DECISION DG]** Tennis Abstract + autres DBs tennis — rapport recherche solution legal+technique avant GO |
 
 ### P2 (queue)
 
