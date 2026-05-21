@@ -367,19 +367,19 @@ Date : ${dateStr} à ${timeStr}
 - Classement : #${match.home_rank || '?'}
 - PPG domicile : ${hs.ppg ?? '?'}
 - Forme récente (5 matchs, gauche=récent) : ${match.home_form || 'N/A'}
-- Buts marqués/match (dom) : ${hs.avgScored != null ? hs.avgScored.toFixed(2) : '?'}
-- Buts encaissés/match (dom) : ${hs.avgConceded != null ? hs.avgConceded.toFixed(2) : '?'}
+- Buts marqués/match (dom) : ${hs.avgScored != null ? safeFixed(hs.avgScored, 2) : '?'}
+- Buts encaissés/match (dom) : ${hs.avgConceded != null ? safeFixed(hs.avgConceded, 2) : '?'}
 - Victoires : ${hs.wins ?? 0}% | Nuls : ${hs.draws ?? 0}% | Défaites : ${hs.losses ?? 0}%
-- xG attendu (λ dom) : ${eg.home != null ? eg.home.toFixed(2) : '?'}
+- xG attendu (λ dom) : ${eg.home != null ? safeFixed(eg.home, 2) : '?'}
 
 ÉQUIPE EXTÉRIEURE (${match.away_team}) :
 - Classement : #${match.away_rank || '?'}
 - PPG extérieur : ${as.ppg ?? '?'}
 - Forme récente (5 matchs, gauche=récent) : ${match.away_form || 'N/A'}
-- Buts marqués/match (ext) : ${as.avgScored != null ? as.avgScored.toFixed(2) : '?'}
-- Buts encaissés/match (ext) : ${as.avgConceded != null ? as.avgConceded.toFixed(2) : '?'}
+- Buts marqués/match (ext) : ${as.avgScored != null ? safeFixed(as.avgScored, 2) : '?'}
+- Buts encaissés/match (ext) : ${as.avgConceded != null ? safeFixed(as.avgConceded, 2) : '?'}
 - Victoires : ${as.wins ?? 0}% | Nuls : ${as.draws ?? 0}% | Défaites : ${as.losses ?? 0}%
-- xG attendu (λ ext) : ${eg.away != null ? eg.away.toFixed(2) : '?'}
+- xG attendu (λ ext) : ${eg.away != null ? safeFixed(eg.away, 2) : '?'}
 
 PROBABILITÉS POISSON (CALCULÉES PAR NOTRE ALGORITHME — DONNÉES CERTIFIÉES) :
 - Résultat 1N2 : 1 (${p.homeWin ?? 0}%) / N (${p.draw ?? 0}%) / 2 (${p.awayWin ?? 0}%)
@@ -391,11 +391,11 @@ PROBABILITÉS POISSON (CALCULÉES PAR NOTRE ALGORITHME — DONNÉES CERTIFIÉES)
 - 2e score : ${p.topScores?.[1]?.score ?? '?'} (${p.topScores?.[1]?.prob ?? 0}%)
 
 COTES BOOKMAKERS & VALEUR :
-- Cote 1 : ${match.odds?.home != null ? match.odds.home.toFixed(2) : '?'} (${match.bookmakers?.home || 'N/A'})
-- Cote N : ${match.odds?.draw != null ? match.odds.draw.toFixed(2) : '?'} (${match.bookmakers?.draw || 'N/A'})
-- Cote 2 : ${match.odds?.away != null ? match.odds.away.toFixed(2) : '?'} (${match.bookmakers?.away || 'N/A'})
-- Edge dom : ${match.edge?.home != null ? match.edge.home.toFixed(1) : '?'}% | Edge nul : ${match.edge?.draw != null ? match.edge.draw.toFixed(1) : '?'}% | Edge ext : ${match.edge?.away != null ? match.edge.away.toFixed(1) : '?'}%
-- Meilleur edge : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? match.best_edge.odds.toFixed(2) : '?'} (Edge : +${match.best_edge?.edge != null ? match.best_edge.edge.toFixed(1) : '?'}%) via ${match.best_edge?.bk ?? 'N/A'}
+- Cote 1 : ${match.odds?.home != null ? safeFixed(match.odds.home, 2) : '?'} (${match.bookmakers?.home || 'N/A'})
+- Cote N : ${match.odds?.draw != null ? safeFixed(match.odds.draw, 2) : '?'} (${match.bookmakers?.draw || 'N/A'})
+- Cote 2 : ${match.odds?.away != null ? safeFixed(match.odds.away, 2) : '?'} (${match.bookmakers?.away || 'N/A'})
+- Edge dom : ${match.edge?.home != null ? safeFixed(match.edge.home, 1) : '?'}% | Edge nul : ${match.edge?.draw != null ? safeFixed(match.edge.draw, 1) : '?'}% | Edge ext : ${match.edge?.away != null ? safeFixed(match.edge.away, 1) : '?'}%
+- Meilleur edge : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? safeFixed(match.best_edge.odds, 2) : '?'} (Edge : +${match.best_edge?.edge != null ? safeFixed(match.best_edge.edge, 1) : '?'}%) via ${match.best_edge?.bk ?? 'N/A'}
 `;
 
   // ── Bloc presse V2 (injecté si disponible) ───────────────────────────────────
@@ -443,6 +443,13 @@ function safeInt(v, dflt = 0) {
 function safeFloat(v, dflt = 0) {
   const n = parseFloat(v);
   return Number.isFinite(n) ? n : dflt;
+}
+// safeFixed (bd izsn): wrapper anti-crash pour .toFixed() — protège des null/undefined/NaN.
+// Signature alignée avec frontend pariscore.html (digits=2, fallback='—').
+function safeFixed(val, digits = 2, fallback = '—') {
+  if (val == null) return fallback;
+  const n = Number(val);
+  return Number.isFinite(n) ? n.toFixed(digits) : fallback;
 }
 
 // ─── KELLY CRITERION — Sizing helper pour module Mes Paris ────────────────────
@@ -5331,8 +5338,8 @@ function computeBetSignal(record, uqd) {
   const icData = marketKey && uqd.markets[marketKey];
   if (!icData) {
     const reason = ev > 5
-      ? `EV ${ev.toFixed(1)}% > 5% ✓ mais marché "${label}" non mappé UQD`
-      : `EV ${ev.toFixed(1)}% ≤ seuil 5%`;
+      ? `EV ${safeFixed(ev, 1)}% > 5% ✓ mais marché "${label}" non mappé UQD`
+      : `EV ${safeFixed(ev, 1)}% ≤ seuil 5%`;
     return { recommended: false, reason, ev_pct: ev };
   }
 
@@ -5352,7 +5359,7 @@ function computeBetSignal(record, uqd) {
       ev_pct: ev,
       ic_lower_pct: icData.lower,
       ic_lower_ev: evLower,
-      reason: `✓ EV ${ev.toFixed(1)}% > 5% | ✓ EV pessimiste IC90% ${evLower.toFixed(1)}% > 0%`,
+      reason: `✓ EV ${safeFixed(ev, 1)}% > 5% | ✓ EV pessimiste IC90% ${safeFixed(evLower, 1)}% > 0%`,
     };
   } else if (cond1 && !cond2) {
     return {
@@ -5361,14 +5368,14 @@ function computeBetSignal(record, uqd) {
       ev_pct: ev,
       ic_lower_pct: icData.lower,
       ic_lower_ev: evLower,
-      reason: `✓ EV ${ev.toFixed(1)}% > 5% | ✗ EV pessimiste ${evLower != null ? evLower.toFixed(1) : '?'}% ≤ 0% (incertitude trop haute)`,
+      reason: `✓ EV ${safeFixed(ev, 1)}% > 5% | ✗ EV pessimiste ${evLower != null ? safeFixed(evLower, 1) : '?'}% ≤ 0% (incertitude trop haute)`,
     };
   } else {
     return {
       recommended: false,
       market: label,
       ev_pct: ev,
-      reason: `✗ EV ${ev.toFixed(1)}% ≤ seuil 5%`,
+      reason: `✗ EV ${safeFixed(ev, 1)}% ≤ seuil 5%`,
     };
   }
 }
@@ -5574,7 +5581,7 @@ function generateLiveScenarios(match) {
       probability: Math.round(nextGoalHome * 100),
       confidence: Math.round(nextGoalHome * 100 * dataQuality),
       reason: nextGoalHome > 0.5
-        ? `Domination écrasante (xG ${liveXgH.toFixed(1)}-${liveXgA.toFixed(1)}, momentum fort)`
+        ? `Domination écrasante (xG ${safeFixed(liveXgH, 1)}-${safeFixed(liveXgA, 1)}, momentum fort)`
         : `Avantage terrain + puissance offensive (${powerDiff > 10 ? 'Power Score supérieur' : 'xG favorable'})`,
       icon: '⚽',
       matchId: match.id,
@@ -5588,7 +5595,7 @@ function generateLiveScenarios(match) {
       probability: Math.round(nextGoalAway * 100),
       confidence: Math.round(nextGoalAway * 100 * dataQuality),
       reason: nextGoalAway > 0.5
-        ? `Extérieur dominateur (xG ${liveXgA.toFixed(1)}-${liveXgH.toFixed(1)}, contre-attaques efficaces)`
+        ? `Extérieur dominateur (xG ${safeFixed(liveXgA, 1)}-${safeFixed(liveXgH, 1)}, contre-attaques efficaces)`
         : `Bonne dynamique visiteur + faille défensive adverse`,
       icon: '⚽',
       matchId: match.id,
@@ -5636,8 +5643,8 @@ function generateLiveScenarios(match) {
       reason: homeGoals === 0 && awayGoals === 0
         ? `Les deux équipes créent (xG ${(liveXgH + liveXgA).toFixed(1)}), but imminent des deux côtés`
         : homeGoals > 0
-          ? `${match.away_team} pousse (xG ${liveXgA.toFixed(1)}), égalisation probable`
-          : `${match.home_team} réagit (xG ${liveXgH.toFixed(1)}), réponse attendue`,
+          ? `${match.away_team} pousse (xG ${safeFixed(liveXgA, 1)}), égalisation probable`
+          : `${match.home_team} réagit (xG ${safeFixed(liveXgH, 1)}), réponse attendue`,
       icon: '🤝',
       matchId: match.id,
     });
@@ -5649,7 +5656,7 @@ function generateLiveScenarios(match) {
       bet: `1 (Victoire domicile)`,
       probability: Math.round(homeWinFromNow * 100),
       confidence: Math.round(homeWinFromNow * 100 * dataQuality),
-      reason: `Contrôle du match (xG ${liveXgH.toFixed(1)}-${liveXgA.toFixed(1)}, score ${homeGoals}-${awayGoals})`,
+      reason: `Contrôle du match (xG ${safeFixed(liveXgH, 1)}-${safeFixed(liveXgA, 1)}, score ${homeGoals}-${awayGoals})`,
       icon: '🏠',
       matchId: match.id,
     });
@@ -5661,7 +5668,7 @@ function generateLiveScenarios(match) {
       bet: `2 (Victoire extérieur)`,
       probability: Math.round(awayWinFromNow * 100),
       confidence: Math.round(awayWinFromNow * 100 * dataQuality),
-      reason: `Performance extérieure solide (xG ${liveXgA.toFixed(1)}-${liveXgH.toFixed(1)})`,
+      reason: `Performance extérieure solide (xG ${safeFixed(liveXgA, 1)}-${safeFixed(liveXgH, 1)})`,
       icon: '✈️',
       matchId: match.id,
     });
@@ -5692,7 +5699,7 @@ function generateLiveScenarios(match) {
         bet: `Over 9.5 Corners`,
         probability: Math.min(85, Math.round(cornerRate * 8)),
         confidence: Math.round(Math.min(85, cornerRate * 8) * dataQuality),
-        reason: `Rythme corners élevé (${cornerRate.toFixed(1)}/90min, ${totalCorners} en ${minute}e)`,
+        reason: `Rythme corners élevé (${safeFixed(cornerRate, 1)}/90min, ${totalCorners} en ${minute}e)`,
         icon: '🚩',
         matchId: match.id,
       });
@@ -9512,12 +9519,12 @@ function generateProScoutPrompt(match, homeRatings = [], awayRatings = [], homeS
   }
 
   // xGA estimé (buts encaissés = proxy xGA)
-  const homeXGA = hs.avgConceded != null ? hs.avgConceded.toFixed(2) : '?';
-  const awayXGA = as.avgConceded != null ? as.avgConceded.toFixed(2) : '?';
+  const homeXGA = hs.avgConceded != null ? safeFixed(hs.avgConceded, 2) : '?';
+  const awayXGA = as.avgConceded != null ? safeFixed(as.avgConceded, 2) : '?';
 
   // Corners estimés
   const cornersOver85 = cp.over_8_5 || cp.over_6_5 || '?';
-  const cornersTotal = match.corners_avg ? match.corners_avg.toFixed(1) : '?';
+  const cornersTotal = match.corners_avg ? safeFixed(match.corners_avg, 1) : '?';
 
   // Date/heure
   const dt = match.commence_time ? new Date(match.commence_time) : new Date();
@@ -9534,16 +9541,16 @@ Date  : ${dateStr} à ${timeStr}
 PILIER 1 — MÉTRIQUES AVANCÉES (xG / xGA / Corners)
 ═══════════════════════════════════════════════
 Équipe DOM (${match.home_team}) :
-  xG attendu (λ dom)  : ${eg.home != null ? eg.home.toFixed(2) : '?'}
+  xG attendu (λ dom)  : ${eg.home != null ? safeFixed(eg.home, 2) : '?'}
   xGA proxy (buts enc) : ${homeXGA} / match
-  Buts marqués/match   : ${hs.avgScored != null ? hs.avgScored.toFixed(2) : '?'}
+  Buts marqués/match   : ${hs.avgScored != null ? safeFixed(hs.avgScored, 2) : '?'}
   Note équipe BSD       : ${homeAvgRating} / 10
   Top joueurs BSD       : ${topHomePlayers}
 
 Équipe EXT (${match.away_team}) :
-  xG attendu (λ ext)  : ${eg.away != null ? eg.away.toFixed(2) : '?'}
+  xG attendu (λ ext)  : ${eg.away != null ? safeFixed(eg.away, 2) : '?'}
   xGA proxy (buts enc) : ${awayXGA} / match
-  Buts marqués/match   : ${as.avgScored != null ? as.avgScored.toFixed(2) : '?'}
+  Buts marqués/match   : ${as.avgScored != null ? safeFixed(as.avgScored, 2) : '?'}
   Note équipe BSD       : ${awayAvgRating} / 10
   Top joueurs BSD       : ${topAwayPlayers}
 
@@ -9564,7 +9571,7 @@ ${match.away_team} :
   Classement  : #${match.away_rank || '?'} | PPG ext : ${as.ppg ?? '?'}
   Absences    : ${awayInj}
 
-Mismatch clé : Attaque dom (${homeAtt} att, xG ${eg.home != null ? eg.home.toFixed(2) : '?'}) vs Défense ext (${awayDef} déf, xGA ${awayXGA}) — et inversement.
+Mismatch clé : Attaque dom (${homeAtt} att, xG ${eg.home != null ? safeFixed(eg.home, 2) : '?'}) vs Défense ext (${awayDef} déf, xGA ${awayXGA}) — et inversement.
 
 ═══════════════════════════════════════════════
 PILIER 3 — DYNAMIQUE & MOMENTUM
@@ -9599,9 +9606,9 @@ Score #1    : ${p.topScores?.[0]?.score ?? '?'} (${p.topScores?.[0]?.prob ?? 0}%
 Score #2    : ${p.topScores?.[1]?.score ?? '?'} (${p.topScores?.[1]?.prob ?? 0}%)
 
 COTES & VALUE :
-  1 / N / 2   : ${match.odds?.home != null ? match.odds.home.toFixed(2) : '?'} / ${match.odds?.draw != null ? match.odds.draw.toFixed(2) : '?'} / ${match.odds?.away != null ? match.odds.away.toFixed(2) : '?'}
-  Edge dom    : ${match.edge?.home != null ? match.edge.home.toFixed(1) : '?'}% | Edge nul : ${match.edge?.draw != null ? match.edge.draw.toFixed(1) : '?'}% | Edge ext : ${match.edge?.away != null ? match.edge.away.toFixed(1) : '?'}%
-  Meilleur edge : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? match.best_edge.odds.toFixed(2) : '?'} (Edge +${match.best_edge?.edge != null ? match.best_edge.edge.toFixed(1) : '?'}%) via ${match.best_edge?.bk ?? 'N/A'}
+  1 / N / 2   : ${match.odds?.home != null ? safeFixed(match.odds.home, 2) : '?'} / ${match.odds?.draw != null ? safeFixed(match.odds.draw, 2) : '?'} / ${match.odds?.away != null ? safeFixed(match.odds.away, 2) : '?'}
+  Edge dom    : ${match.edge?.home != null ? safeFixed(match.edge.home, 1) : '?'}% | Edge nul : ${match.edge?.draw != null ? safeFixed(match.edge.draw, 1) : '?'}% | Edge ext : ${match.edge?.away != null ? safeFixed(match.edge.away, 1) : '?'}%
+  Meilleur edge : ${match.best_edge?.label ?? '?'} @ ${match.best_edge?.odds != null ? safeFixed(match.best_edge.odds, 2) : '?'} (Edge +${match.best_edge?.edge != null ? safeFixed(match.best_edge.edge, 1) : '?'}%) via ${match.best_edge?.bk ?? 'N/A'}
 `;
 
   return SYSTEM_SCOUT_PROMPT + '\n\n' + dataBlock;
@@ -9984,7 +9991,7 @@ async function fetchBackupPlayers(teamName) {
         id: entry.player?.id, name: entry.player?.name || '?',
         photo: `https://media.api-sports.io/football/players/${entry.player?.id}.png`,
         position: s?.games?.position || '', goals, assists,
-        rating: rating > 0 ? rating.toFixed(1) : null, minutes, kpi,
+        rating: rating > 0 ? safeFixed(rating, 1) : null, minutes, kpi,
       };
     }).filter(p => p.minutes >= 45).sort((a, b) => b.kpi - a.kpi);
     if (players.length) console.log(`  [BackupPlayers] ✓ ${teamName} — ${players.length} joueurs (API-Football)`);
@@ -10026,7 +10033,7 @@ async function fetchTeamKeyPlayersBSD(bsdTeamId, bsdSeasonId) {
             position: entry.player?.position || '',
             goals,
             assists,
-            rating: rating > 0 ? rating.toFixed(1) : null,
+            rating: rating > 0 ? safeFixed(rating, 1) : null,
             minutes,
             kpi,
           };
@@ -10084,7 +10091,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
               position: entry.player?.position || '',
               goals,
               assists,
-              rating: rating > 0 ? rating.toFixed(1) : null,
+              rating: rating > 0 ? safeFixed(rating, 1) : null,
               minutes,
               kpi,
             };
@@ -10134,7 +10141,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
           position: s?.games?.position || '',
           goals,
           assists,
-          rating: rating > 0 ? rating.toFixed(1) : null,
+          rating: rating > 0 ? safeFixed(rating, 1) : null,
           minutes,
           kpi,
         };
@@ -10339,7 +10346,7 @@ async function generateAIScout() {
 
   // ── Résumé Poisson / edge (inchangé) ────────────────────────────────────────
   const summary = top5.map((m, i) =>
-    `${i + 1}. ${m.home_team} vs ${m.away_team} (${m.league}) — Edge: +${m.best_edge.edge.toFixed(1)}% sur "${m.best_edge.label}" à ${m.best_edge.odds.toFixed(2)} | Poisson: O2.5 ${m.poisson?.over25}%, BTTS ${m.poisson?.btts}% | xG dom ${m.expectedGoals?.home ?? '?'} / ext ${m.expectedGoals?.away ?? '?'}`
+    `${i + 1}. ${m.home_team} vs ${m.away_team} (${m.league}) — Edge: +${safeFixed(m.best_edge.edge, 1)}% sur "${m.best_edge.label}" à ${safeFixed(m.best_edge.odds, 2)} | Poisson: O2.5 ${m.poisson?.over25}%, BTTS ${m.poisson?.btts}% | xG dom ${m.expectedGoals?.home ?? '?'} / ext ${m.expectedGoals?.away ?? '?'}`
   ).join('\n');
 
   // ── Récupération stats avancées (10 équipes max, cache 24h) ─────────────────
@@ -10405,7 +10412,7 @@ async function generateAIScout() {
     const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const result = {
       text,
-      matches: top5.map(m => ({ home: m.home_team, away: m.away_team, edge: m.best_edge.edge.toFixed(1), label: m.best_edge.label })),
+      matches: top5.map(m => ({ home: m.home_team, away: m.away_team, edge: safeFixed(m.best_edge.edge, 1), label: m.best_edge.label })),
       advanced_data_used: hasAdvanced,
       generated_at: new Date().toISOString(),
     };
@@ -13541,7 +13548,7 @@ function computeDominanceScore(homeRatings, awayRatings, homeSquad, awaySquad) {
   else if (awayPct >= 55) label = 'Léger avantage extérieur';
   else label = 'Équilibré';
 
-  return { home: homePct, away: awayPct, label, homeScore: homeScore.toFixed(2), awayScore: awayScore.toFixed(2) };
+  return { home: homePct, away: awayPct, label, homeScore: safeFixed(homeScore, 2), awayScore: safeFixed(awayScore, 2) };
 }
 
 function computeMatchEV(match) {
@@ -14590,7 +14597,7 @@ function buildAlertMessage(valueBets, label = 'Value Bets') {
       `⏱ <i>Coup d'envoi : ${ko}</i>\n\n` +
       `🎯 <b>LE BET PRÉDICTIF :</b> <b>${escTg(bet.pick)}</b>\n` +
       `🔥 <b>Indice de Confiance :</b> ${conf.glyph} <i>(${conf.label})</i>\n` +
-      `📈 <b>Avantage (EV+) :</b> <b>+${evDisplay}%</b> <i>(Cote ${bet.odds.toFixed(2)} vs Bookmakers)</i>\n\n` +
+      `📈 <b>Avantage (EV+) :</b> <b>+${evDisplay}%</b> <i>(Cote ${safeFixed(bet.odds, 2)} vs Bookmakers)</i>\n\n` +
       `📊 <b>L'ŒIL DE L'IA (Data Express) :</b>\n` +
       args.slice(0, 3).map(a => `• ${escTg(a)}`).join('\n') + `\n\n` +
       `⚡ <i>Prenez l'avantage sur les books en 2 secondes chrono !</i>\n` +
@@ -24313,7 +24320,7 @@ function _computeTrapBet(fair, blended, badge, bestEv) {
   // Contradiction franche : marché favori ≥60% mais modèle penche l'autre côté ≥55%.
   if (mFavPct >= 60 && modelFav !== mFav && modelFavPct >= 55) {
     return { flag: true, type: 'model_contradicts_market', market_fav: mFav, model_fav: modelFav,
-      detail: `Marché ${mFavPct.toFixed(0)}% sur ${mFav} ; modèle ${modelFavPct.toFixed(0)}% sur ${modelFav}`, severity: 'high' };
+      detail: `Marché ${safeFixed(mFavPct, 0)}% sur ${mFav} ; modèle ${safeFixed(modelFavPct, 0)}% sur ${modelFav}`, severity: 'high' };
   }
   // Edge "value" mais segment peu fiable → piège.
   if (bestEv && bestEv.ev > 4 && badge && (badge.level === 'red' || badge.level === 'grey')) {
@@ -25433,7 +25440,7 @@ if (pathname.startsWith('/api/v1/ai/tennis-analyze/') && req.method === 'GET') {
   const blended = (match.predictions && match.predictions.blended) || null;
   const setProbs = (match.predictions && match.predictions.set_probs) || null;
 
-  const fmtPct = (v) => (v == null ? '—' : (typeof v === 'number' ? (v <= 1 ? (v * 100).toFixed(1) + '%' : v.toFixed(1) + '%') : '—'));
+  const fmtPct = (v) => (v == null ? '—' : (typeof v === 'number' ? (v <= 1 ? (v * 100).toFixed(1) + '%' : safeFixed(v, 1) + '%') : '—'));
   const dataBlock = `
 [DONNÉES DU MATCH FOURNIES PAR PARISCORE]
 Tournoi : ${tournament}${round ? ' — ' + round : ''}
@@ -25450,7 +25457,7 @@ ${p1} : ${odds.p1 ? odds.p1.odds + ' (' + (odds.p1.book || '—') + ')' : '—'}
 ${p2} : ${odds.p2 ? odds.p2.odds + ' (' + (odds.p2.book || '—') + ')' : '—'}
 
 [PROBABILITÉS DEVIGED (Shin-Hurley)]
-${p1} : ${fair.p1 != null ? fair.p1.toFixed(1) + '%' : '—'} | ${p2} : ${fair.p2 != null ? fair.p2.toFixed(1) + '%' : '—'} | Marge book : ${fair.margin != null ? fair.margin.toFixed(2) + '%' : '—'}
+${p1} : ${fair.p1 != null ? safeFixed(fair.p1, 1) + '%' : '—'} | ${p2} : ${fair.p2 != null ? safeFixed(fair.p2, 1) + '%' : '—'} | Marge book : ${fair.margin != null ? safeFixed(fair.margin, 2) + '%' : '—'}
 
 [ELO SURFACE-SPLIT]
 ${p1} : ${elo && elo.p1_elo != null ? Math.round(elo.p1_elo) : '—'}
@@ -25461,9 +25468,9 @@ P(${p1} gagne) Elo : ${elo ? fmtPct(elo.p1) : '—'}
 ${p1} : ${blended ? fmtPct(blended.p1) : '—'} | ${p2} : ${blended ? fmtPct(blended.p2) : '—'}
 
 [EV MODÈLE vs MARCHÉ]
-${p1} EV : ${evModel.p1 != null ? evModel.p1.toFixed(2) + '%' : '—'}
-${p2} EV : ${evModel.p2 != null ? evModel.p2.toFixed(2) + '%' : '—'}
-Best EV : ${bestEv.side === 'p1' ? p1 : (bestEv.side === 'p2' ? p2 : '—')} ${bestEv.ev != null ? bestEv.ev.toFixed(2) + '%' : '—'} @ cote ${bestEv.odds ?? '—'} (${bestEv.book ?? '—'})
+${p1} EV : ${evModel.p1 != null ? safeFixed(evModel.p1, 2) + '%' : '—'}
+${p2} EV : ${evModel.p2 != null ? safeFixed(evModel.p2, 2) + '%' : '—'}
+Best EV : ${bestEv.side === 'p1' ? p1 : (bestEv.side === 'p2' ? p2 : '—')} ${bestEv.ev != null ? safeFixed(bestEv.ev, 2) + '%' : '—'} @ cote ${bestEv.odds ?? '—'} (${bestEv.book ?? '—'})
 
 [MARKOV — PROBABILITÉS DE SET]
 P(2-0) : ${setProbs ? fmtPct(setProbs.p_2_0) : '—'} | P(2-1) : ${setProbs ? fmtPct(setProbs.p_2_1) : '—'}
@@ -29511,7 +29518,7 @@ function buildLiveAlertMessage(match, trigger) {
       betLine =
         `\n\n🎯 <b>LE BET PRÉDICTIF :</b> <b>${escTg(bet.pick)}</b>\n` +
         `🔥 <b>Confiance :</b> ${conf.glyph} <i>(${conf.label})</i>\n` +
-        `📊 <b>Proba live :</b> <b>${bet.prob}%</b> <i>(cote équiv. ${bet.odds.toFixed(2)} · ${escTg(bet.bk)})</i>`;
+        `📊 <b>Proba live :</b> <b>${bet.prob}%</b> <i>(cote équiv. ${safeFixed(bet.odds, 2)} · ${escTg(bet.bk)})</i>`;
     }
   }
 
