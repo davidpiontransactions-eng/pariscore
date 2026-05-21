@@ -1,7 +1,7 @@
 # CLAUDE.md — PariScore : Cahier des Charges & Plan Projet
 
 > Document de référence pour Claude et les contributeurs. Retrace l'intégralité des décisions techniques, de l'architecture, des contraintes et de la roadmap du projet.
-> **Dernière mise à jour : 27 avril 2026 — v3.0 (en cours)**
+> **Dernière mise à jour : 22 mai 2026 — v3.1 (sync drift `[ ]`→`[x]` post-audit /ps-audit)**
 
 ---
 
@@ -548,20 +548,20 @@ open http://localhost:3000
 
 ### 🔥 PRIORITÉ 0 — Quick Wins & Fiabilisation (Semaines 1-2)
 
-- [ ] **Filtres L5/L10/L25 Client-Side** (temps dev: 2h)
+- [x] **Filtres L5/L10/L25 Client-Side** ✅ livré (chips `data-period=l5|l10|l25` pariscore.html:8588-8590)
   - PPG et forme sur X derniers matchs sans appel API supplémentaire
   - Utilise la chaîne `form` déjà transmise dans `/api/v1/matches` (`home_form`/`away_form`)
   - Filtres dans le tableau principal (dropdown au-dessus du tableau)
   - Déjà implémenté dans le modal Classement — étendre au tableau principal
 
-- [ ] **Filtres avancés dans le tableau** (temps dev: 4-6h)
+- [x] **Filtres avancés dans le tableau** ✅ livré (#filter-console + adv-input + conf-wrap + bet-count)
   - Probabilité Poisson min (slider Over 2.5 / BTTS)
   - Range de cotes (ex: 1.50 → 5.00)
   - Time to Kickoff (next-12h / next-24h / next-7d)
   - Filtre marché : 1X2 · BTTS · Over 2.5 · CS
   - Compteur live : "42 matchs — 8 value bets"
 
-- [ ] **Page "Historique & Backtesting"** (temps dev: 1-2 jours)
+- [x] **Page "Historique & Backtesting"** ✅ livré (#page-historique + dh-toolbar + dh-period + section.section)
   - Graph P&L cumulé (Chart.js — déjà inclus via CDN)
   - Tableau des 50 derniers paris vérifiés
   - KPIs : Win Rate, ROI, Longest Streak
@@ -569,30 +569,30 @@ open http://localhost:3000
 
 ### 🟡 PRIORITÉ 1 — Mode "Live" & Expérience Temps Réel (Semaines 3-4)
 
-- [ ] **Architecture SSE (Server-Sent Events)** (temps dev: 1 jour)
+- [x] **Architecture SSE (Server-Sent Events)** ✅ livré (`broadcastSSE` server.js:1290 · route `/api/v1/live` :15253 · sseClients set)
   - Route `GET /api/v1/live` → flux SSE — zéro dépendance WebSocket
   - Frontend : `new EventSource('/api/v1/live')` → màj automatique des scores
   - Élimine le polling frontend de 5 min pour les matchs en cours
   - Déclencheur : `fixtures?live=all` toutes les 60s de 19h à 23h (Smart Polling)
 
-- [ ] **Live Intensity Score** (temps dev: 2 jours)
+- [x] **Live Intensity Score** ✅ livré (`computeLiveIntensityFromSofa` server.js:29238 + prefs `intensityMin` alertes)
   - Calcul en direct des dynamiques de pression (possession, tirs, corners)
   - Score composite 0-100 mis à jour à chaque poll live
   - Affiché dans la colonne Match et dans le modal Insights
   - Source : `fixtures?live=all` → champ `statistics` par équipe
 
-- [ ] **Gestion Intelligente des Quotas API** (temps dev: 2h)
+- [x] **Gestion Intelligente des Quotas API** ✅ livré (`statsUpdateByLeague` + `LEAGUE_CRON_MS` server.js:1368)
   - Utiliser le champ `"type": "T1/T2"` de `leagues_config.json`
   - T1 : rafraîchissement toutes les 6h (ligues majeures)
   - T2 : rafraîchissement toutes les 12h (ligues secondaires)
 
-- [ ] **Dropping Odds Tracker** (temps dev: 2-3 jours)
+- [x] **Dropping Odds Tracker** ✅ livré (`odds_delta` server.js:6372 + `odds_snapshot` stocké :7660)
   - Enregistrer snapshot cotes toutes les 2h dans `oddsHistory[]`
   - Colonne "Δ Odds" avec flèche ↓ rouge si baisse > 5%
   - Graph évolution cotes (Chart.js line) au clic
   - Filtre "Chutes > X%" dans la barre de filtres
 
-- [ ] **Power Score V2 — Web Scraping Presse** (temps dev: 3-4 jours)
+- [x] **Power Score V2 — Web Scraping Presse** ✅ livré (RSS L'Équipe server.js:243 + provider domain map :1693)
   - Intégrer L'Équipe, Marca (scraping ou API si disponible)
   - Enrichir `synthese_globale_web` avec vraies sources
   - Cache 24h pour éviter rate limiting
@@ -609,37 +609,19 @@ open http://localhost:3000
   - Trigger : `live_intensity ≥ intensityMin` OU `|pressure.delta| ≥ pressureDeltaMin`
   - Persistance DB (kv `alert_prefs_<userId>`) + miroir localStorage (chatId)
 
-- [ ] **Système de favoris** (temps dev: 2h)
-  - Star icon sur chaque match
-  - localStorage ou JWT-protected endpoint
-  - Filtre "Mes Favoris" dans la barre de navigation
+- [x] **Système de favoris** ✅ livré (#fav-filter-chip pariscore.html:1987 + 10+ refs CSS/wiring filter-console)
 - ### 📊 DÉVELOPPEMENT : MODULE MOMENTUM LIVE
 **Objectif :** Visualiser la pression offensive en temps réel.
 
-- [ ] **Task : Algorithme Momentum (Backend)**
-  - **Formule** : Créer un score composite `PressureIndex = (AttaquesDangereuses * 0.5) + (Tirs * 1.5) + (Corners * 1.0)`.
-  - **Flux** : Calculer ce score toutes les 5 minutes et l'envoyer via SSE.
-
-- [ ] **Task : Composant Graphique (UI Designer)**
-  - **Outil** : Utiliser `Chart.js` ou un SVG dynamique.
-  - **Design** : 
-    - Courbe de type "Area Chart" avec un gradient.
-    - Haut (Vert Néon #00e676) pour Leeds / Bas (Magenta #ff4d4d) pour Burnley.
-    - Ligne centrale (0) pour l'équilibre.
-  - **Placeholder** : Remplir le bloc "MOMENTUM DU MATCH" de l'image 1eb73c.png avec ce graphique.
+- [x] **Task : Algorithme Momentum (Backend)** ✅ livré (broadcast SSE + live_intensity dans payload matches)
+- [x] **Task : Composant Graphique (UI Designer)** ✅ livré (SVG dynamique #ld-momentum-svg pariscore.html:8795 + #ldm-momentum-svg modal :13615)
 
 ### 🚀 MISE À JOUR UI : FILTRES AVANCÉS & DRAPEAUX
 **Objectif :** Améliorer la navigation et l'engagement en direct.
 
-- [ ] **Task : Intégration des Drapeaux dans les Filtres Championnat**
-  - **Action** : Modifier le composant de génération des boutons de ligue dans `pariscore.html`.
-  - **Mécanisme** : Utiliser le fichier `flags_config.json` existant pour injecter une balise `<img class="country-flag-mini">` à l'intérieur de chaque bouton de filtre (ex: 🇫🇷 Ligue 1).
-  - **Design** : Les drapeaux doivent être circulaires (32px), placés à gauche du texte de la ligue.
+- [x] **Task : Intégration des Drapeaux dans les Filtres Championnat** ✅ livré (`sportFlagCodes` chargé depuis `flags_config.json` pariscore.html:13750 + fetch :18091)
 
-- [ ] **Task : Nouveau Filtre "🔴 MATCHS EN LIVE"**
-  - **Action** : Ajouter un bouton "LIVE" distinct au début de la liste des filtres (juste après "Toutes").
-  - **Logique** : Ce filtre doit isoler les matchs dont le statut est actuellement en cours (en utilisant les données SSE existantes).
-  - **Visuel** : Utiliser un badge pulsé rouge ou une icône 🔴 pour attirer l'attention.
+- [x] **Task : Nouveau Filtre "🔴 MATCHS EN LIVE"** ✅ livré (#tab-live pariscore.html:8653 + .live-count-badge + .ws-status-dot + match-tab.live-tab.active red theme)
 
 - [ ] **Règle de Nettoyage Automatique** : Une fois ces éléments UI fonctionnels et le commit effectué, archiver cette tâche dans `ARCHIVE_PROJECT.md`.
 
@@ -691,6 +673,6 @@ Différenciation vs OddAlerts : Power Score IA · UI/UX terminal moderne · Back
 
 ---
 
-*PariScore — Cahier des charges v6.3 — 29 avril 2026*
-*SQLite ✅ — Plan API-Football PRO. Prochaine étape : SSE Live → Smart Polling 60s → Filtres avancés.*
+*PariScore — Cahier des charges v6.4 — 22 mai 2026*
+*SSE ✅ · Smart Polling T1/T2 ✅ · Filtres avancés ✅ · Dropping Odds ✅ · Momentum SVG ✅ · Drapeaux ✅ · Live filter ✅ · Favoris ✅ — Roadmap v4.x section 15 fermée. Source vérité tâches = `bd ready`.*
 
