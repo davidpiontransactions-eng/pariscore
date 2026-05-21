@@ -1897,7 +1897,7 @@ async function _refreshSofaLiveIdx() {
     }
     _sofaLiveIdx.map = map;
     _sofaLiveIdx.ts = Date.now();
-  } catch (_) { /* Sofascore indispo → fallback proxy DR */ }
+  } catch (e) { _traceCatch('sofascore_live_idx', e); /* Sofascore indispo → fallback proxy DR */ }
   finally { _sofaLiveIdx.loading = false; }
 }
 
@@ -3693,6 +3693,21 @@ function kvSetBatch(entries) {
 // refaire les appels. Reset complet après 12h.
 
 const API_CACHE_TTL = 12 * 3600 * 1000; // 12 heures
+
+// ── QA CRIT-3 fix (bd ParisScorebis-401) ────────────────────────────────────
+// Helper throttled trace pour broad catch blocks. Silence en production
+// par défaut, verbose en dev OR si DEBUG_TRACE=1 env. Throttle 60s par label
+// pour éviter spam logs.
+const _qaTraceTs = new Map();
+function _traceCatch(label, err) {
+  const isDev = process.env.NODE_ENV !== 'production' || process.env.DEBUG_TRACE === '1';
+  if (!isDev) return;
+  const now = Date.now();
+  const last = _qaTraceTs.get(label) || 0;
+  if (now - last < 60000) return; // throttle 1 log/min par label
+  _qaTraceTs.set(label, now);
+  console.warn(`[TRACE:${label}]`, err && err.code ? `${err.code} ${err.message || ''}` : (err && err.message) || err);
+}
 
 // Fail-soft wrappers (bd ParisScorebis-amc — SQLITE_NOTADB runtime error
 // observé en prod sur tv-channel route). Si la DB est corrompue/indisponible
@@ -6450,7 +6465,7 @@ async function archivePastMatches() {
             });
             if (found?.goals) realScore = { home: found.goals.home, away: found.goals.away, source: 'api-football' };
           }
-        } catch (e) { /* score unavailable */ }
+        } catch (e) { _traceCatch('archive_score_lookup', e); /* score unavailable */ }
       }
 
       // H4 : tag stratégies IA qualifiées au moment de l'archive (snapshot prédictions)
@@ -6460,7 +6475,7 @@ async function archivePastMatches() {
           const prob = strat.getProb?.(match);
           if (typeof prob === 'number' && prob >= 55) strategiesQualified.push(key);
         }
-      } catch (e) { /* STRATEGIES sont définies plus bas dans le fichier, garde-fou */ }
+      } catch (e) { _traceCatch('strategies_qualified', e); /* STRATEGIES sont définies plus bas dans le fichier, garde-fou */ }
 
       const record = {
         id: match.id, home_team: match.home_team, away_team: match.away_team,
@@ -6508,7 +6523,7 @@ async function archivePastMatches() {
           sqldb.prepare(
             "UPDATE user_bets SET updated_at = strftime('%s','now') WHERE match_id = ? AND status = 'pending'"
           ).run(record.id);
-        } catch (e) { /* table absente sur ancien deploy */ }
+        } catch (e) { _traceCatch('user_bets_update', e); /* table absente sur ancien deploy */ }
       }
     }
 
