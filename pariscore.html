@@ -6955,6 +6955,21 @@ tr.tennis-vb-row.is-live>td:first-child{box-shadow:inset 3px 0 0 0 var(--red,#ff
 </style>
 </head>
 <body>
+<!-- Security maintenance banner (bd ParisScorebis-c8m) — activé via JS opt-in -->
+<div class="cf-security-banner" role="alert" aria-live="polite">
+  <span class="cf-sec-icon">🛡️</span>
+  <strong>Maintenance sécurité</strong> — Reconnexion requise. Nous avons renforcé la sécurité de vos données. Merci de vous <a href="#" onclick="document.querySelector('#auth-modal')?.classList.add('open');return false;">reconnecter</a> pour continuer.
+</div>
+<script>
+  /* Active banner via localStorage flag 'cf_security_banner' = '1' OR via URL param ?security=1 */
+  (function () {
+    try {
+      var show = localStorage.getItem('cf_security_banner') === '1'
+              || /[?&]security=1\b/.test(location.search);
+      if (show) document.body.setAttribute('data-cf-security-banner', 'show');
+    } catch (_) {}
+  })();
+</script>
 <noscript>
 <nav aria-label="Navigation SEO">
 <p><strong>PariScore — Pronostics Football & Tennis par algorithme.</strong>
@@ -11928,6 +11943,47 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   /* Profiles modal CF V2 (above mid-modal stack but below auth) */
   #cf-profiles-modal { z-index: 9500 !important; }
   /* MAJ-Z-END */
+
+  /* ── Security incident maintenance banner (bd ParisScorebis-c8m) ──
+     Opt-in via body[data-cf-security-banner="show"] localStorage flag.
+     Affiche bandeau sticky top en cas de force-relog post rotation JWT. */
+  .cf-security-banner {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 9998;
+    padding: var(--cf-space-3) var(--cf-space-4);
+    background: linear-gradient(90deg, rgba(255,56,86,.15), rgba(255,56,86,.05) 60%, transparent);
+    border-bottom: 1px solid var(--cf-coral);
+    color: var(--cf-text-strong);
+    font-family: var(--cf-font-sans);
+    font-size: var(--cf-fs-md);
+    font-weight: var(--cf-fw-semibold);
+    text-align: center;
+    box-shadow: var(--cf-shadow-md), inset 0 -1px 0 var(--cf-coral-glow);
+    animation: cfSecBannerPulse 4s ease-in-out infinite;
+  }
+  body[data-cf-security-banner="show"] .cf-security-banner {
+    display: block;
+  }
+  .cf-security-banner .cf-sec-icon {
+    display: inline-block;
+    margin-right: var(--cf-space-2);
+    color: var(--cf-coral);
+    text-shadow: 0 0 8px var(--cf-coral-glow);
+  }
+  .cf-security-banner a {
+    color: var(--cf-cyan);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  @keyframes cfSecBannerPulse {
+    0%, 100% { box-shadow: var(--cf-shadow-md), inset 0 -1px 0 rgba(255,56,86,.55); }
+    50%      { box-shadow: var(--cf-shadow-md), inset 0 -1px 0 rgba(255,56,86,.90); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cf-security-banner { animation: none !important; }
+  }
 
   /* UI-014 — Choke-O-Meter pastille foot (bd ParisScorebis-2l9) */
   .cf-choke-dot {
