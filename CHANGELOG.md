@@ -2,6 +2,144 @@
 
 ---
 
+## [v12.16] — 2026-05-21 — PWA icon fix + SW v24
+
+**Bug bd ParisScorebis-npp** : Chrome mobile console `icon.svg invalid image` bloquait install PWA propre.
+
+**Root cause** : SVG référençait fonts custom (`Syne`, `DM Mono`) non chargées par Chrome lors rendu icon manifest.
+
+**Fix** :
+- Refonte `icon.svg` sans dépendances fonts externes. Background gradient radial + outer ring cyan→emerald + lettre `P/S` paths manuels + label `PARI` shapes géométriques.
+- `manifest.json` purpose `"any"` → `"any maskable"` (Android adaptive icons).
+- `sw.js` v22 → v24 force re-install pour purger icon.svg pre-cached invalide.
+
+---
+
+## [v12.15] — 2026-05-21 — Spike alternatives Odds API
+
+**bd ParisScorebis-bjv** : Spike research read-only. Aucun code production touché.
+
+Livrable `.context/spike_odds_alternatives.md` :
+- Décision matrix 8 options scored 0-100
+- Combo retenu : **Odds API Starter ($30/mo) + API-Football odds (déjà payé) + Polymarket proxy (gratuit)**
+- Rejets argumentés : OddsPortal scrape (ToS+CF), Pinnacle (sport coverage), SportRadar/OddsJam/OddsMatrix (over-budget)
+- Architecture `providers/odds_provider.js` fallback chain proposée
+- Effort impl : ~8 jours dev / 6 phases
+
+---
+
+## [v12.14] — 2026-05-21 — Fix momentum flat-line La Liga
+
+**bd ParisScorebis-8c5** : Real Betis vs Elche stats live populated mais Momentum SVG = flat lines.
+
+**Root cause** : live polling loop `server.js:27667` calculait minute via `parseInt(detail?.current_minute ?? m.live_minute ?? 0) || 0`. Si BSD feed sans `current_minute` ET `m.live_minute` null → minute=0 → guard `if (minute)` bloquait `recordLiveMomentumSnapshot` → history vide → flat-line frontend.
+
+**Fix** : fallback estimation minute via `commence_time + Date.now()` quand minute=0 ET stats live présents. Compte mi-temps 15min.
+
+---
+
+## [v12.13] — 2026-05-21 — Diagnostic SQLite corruption script
+
+**bd ParisScorebis-b50** : SQLITE_NOTADB runtime sur `apiCacheGet`. Code fix `apiCache*` fail-soft try/catch déjà livré (commit 7d32234).
+
+Livrable `.context/diag_sqlite_corruption.sh` : 13 checks (fichiers, disque, inode, magic bytes, integrity_check, quick_check, journal mode, schema, api_cache volume, pm2 logs, lsof, backups) + procédure recovery (restore from backup ou `.recover` SQLite >= 3.32).
+
+---
+
+## [v12.12] — 2026-05-21 — Security hardening : notification banner + nginx ACL
+
+**bd ParisScorebis-c8m** Phase 3 Hardening + Phase 5 Notification.
+
+- `.cf-security-banner` sticky top z-index 9998 avec `cfSecBannerPulse` 4s. Activation via `localStorage.setItem('cf_security_banner','1')` ou `?security=1`.
+- `.context/nginx_hardening_pariscore.conf` : 9 location regex blocks (source JS, .env, SQLite, JSON sensibles, package, docs, rapports, dotfiles, IP bans). Rate limiting auth 5r/min + api 60r/min. Security headers (HSTS preload + X-Content-Type + X-Frame + Referrer + Permissions).
+
+---
+
+## [v12.11] — 2026-05-21 — Incident sécurité dossier preuves
+
+**bd ParisScorebis-c8m** : audit nginx logs révèle attaque réussie.
+
+**Findings** :
+- IP `37.65.65.25` (Nantes FR SFR résidentiel) a téléchargé `server.js` HTTP 200 196 KB à `20/May/2026:00:26:11 UTC` avant déploiement fix.
+- Retry même IP 00:50:19 sur 3 fichiers : 403 (fix actif).
+- 8 clés/secrets `.env` considérés compromis : `JWT_SECRET`, `ADMIN_PASSWORD`, `GA_POSTBACK_TOKEN`, `TELEGRAM_BOT_TOKEN`, `ODDS_API_KEY`, `GEMINI_API_KEY`, `API_FOOTBALL_KEY`, `BSD_API_KEY`.
+
+Livrables :
+- `.context/incident_securite_20260520.md` — Timeline + attaquant geo + 8 clés exposées + 6 phases remédiation + leçons apprises + 8 backlog hardening
+- `.context/audit_db_post_breach.sql` — 8 queries SQLite audit (paris, bankroll, conversions, sessions)
+
+Rotation engagée : JWT_SECRET fait. Reste 7 clés via dashboards externes.
+
+---
+
+## [v12.10] — 2026-05-21 — ETL Historique scaffold
+
+**bd ParisScorebis-9je** : Pipeline ETL massif Historique Football.
+
+**Décision sourcing** : API-Football PRO (déjà payé, 7500 req/jour) primaire + openfootball backup. Rejets fbref scrape (CF+ToS), Kaggle (outdated), SportRadar (cost).
+
+`seed_historique_db.js` :
+- Quota-aware (throttle 200ms + stop early < 100 req remaining)
+- 9 PRIORITY_LEAGUES T1 (PL, L1, Bundesliga, Serie A, La Liga, Eredivisie, Primeira, Brasileirão, UCL)
+- Output `historique_football.json` schema_version + leagues map
+- CLI args : `--sample-pl`, `--league X`, `--season Y`
+
+---
+
+## [v12.0 → v12.9] — 2026-05-20 — Design System V2.0 complet + Sprint 2 innovations
+
+**Epic bd ParisScorebis-70r CLOSED.** 5 phases livrées :
+
+### Phase 1 (v12.0) — Tokens centralisés
+- 60 vars unifiées `:root` : bg/glass/néon/surface/text/spacing/radius/blur/typo
+- ~150 utility classes `.cf-u-*`
+- Rétro-compat vars v11.x
+
+### Phase 2 (v12.1) — Foot+Tennis refonte
+- Sticky col 2 standardisé `var(--cf-sticky-col2)` 80px (vs 60/90/140 incohérent)
+- Hero VALUE col foot gradient réactif emerald/amber/coral
+- LCD scoreboard tennis cyan glow + radius-card
+- DR bar 3 tiers gradient (emerald/amber/coral réactif)
+- Halo surface `::after` radial subtil clay/grass/hard via `:has()`
+
+### Phase 3 (v12.2) — Historique migration
+- Alias 16 vars `--dh-*` → `--cf-*` tokens
+- 38 CSS rules `.dh-*` consument V2 sans modif
+- Bloomberg-density layer (KPI tile, chips pilules, table padding)
+
+### Phase 4 (v12.3) — Polish global
+- Scrollbar custom 8x8 cyan + Firefox thin
+- Safari `-webkit-backdrop-filter` blanket 22 sites
+- `prefers-reduced-motion` universel via `*`
+- GPU `will-change` 6 sélecteurs critical
+
+### Phase 5 (v12.4) — QA visuelle
+- 28/28 tokens validés runtime `getComputedStyle`
+- 4/4 phase blocks DOM-confirmed
+- Accessibility AAA contrast ratios
+
+### Sprint 2 features (v12.5-12.9)
+- v12.5-12.7 QA fix CRIT-1 (dr_home guard), CRIT-4 (snapshot minimal), CRIT-5 (hot-swap fallback), MAJ-2 (reduce/0), MAJ-4 (storage event sync), MAJ-7/8/9 (z-index hierarchy), MIN-5 (opacity vs saturate)
+- v12.8 BD-DATA-005 Choke-O-Meter heuristique (Favorite Win Rate proxy)
+- v12.9 UI-014 Choke pastille foot consume BD-DATA-005
+
+---
+
+## [v11.0 → v11.13] — 2026-05-20 — CYBER-FINTECH OVERLAY + Sprint 1 P0 + rapports
+
+**Highlights** :
+- v11.1-11.4 CF overlay theme-agnostic (Foot+Tennis dark trading panels)
+- v11.3 Tennis ball SVG 3D + scoreboard serving indicator (pulse animation)
+- v11.4 Tennis serving `?` badge fallback + AiScore servePos parse
+- v11.5-11.8 UI-009 Bet Score Gauge + EV Heatmap, UI-011 Fatigue pastille, UI-017 Time-to-kickoff chip, UI-018 3D translucent balls hub cards
+- v11.9 Fix country mapping Conmebol/Concacaf/UEFA/CAF/AFC/FIFA (Copa Libertadores)
+- v11.10 Fix Odds API quota predictive rate-limit
+- v11.11 UI-012 Profils filtres tennis sauvegardés (localStorage)
+- v11.12 QA rapport read-only 28 risk flags
+- v11.13 Design V2.0 rapport read-only
+
+---
+
 ## [v10.78] — 2026-05-19
 
 ### Fix — Bug poll tennis `fetchBSDTennisPredictions is not defined` (5o0)
