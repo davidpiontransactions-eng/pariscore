@@ -12227,6 +12227,201 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     .cf-choke-trap { animation: none !important; }
   }
 
+  /* ============================================================
+     bd qvxh — NUKE TOTAL v12.59 : light forcé sur TOUTES les cellules
+     tableau Foot+Tennis. Spec-bump via :not(#__cf3__) pour battre
+     les overrides dark navy gradient ligne ~10817+ (specificity 3,1,2).
+     Cible : background-color + background-image + color.
+     Préserve les accents box-shadow rouge L'Equipe & badges colorés.
+     ============================================================ */
+
+  /* -- 1. Tables Foot + Tennis : nuke background sur thead/tbody/tr/td -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__),
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead,
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody,
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr,
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr,
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+  }
+
+  /* -- 2. Thead bleu translucide premium oddsalert -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th {
+    background-color: rgba(14, 165, 233, 0.08) !important;
+    background-image: linear-gradient(180deg, rgba(14, 165, 233, 0.12), rgba(14, 165, 233, 0.04)) !important;
+    color: #0c4a6e !important;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.25) !important;
+    text-shadow: none !important;
+  }
+
+  /* -- 3. Hover row bleu translucide subtil -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr:hover td,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr:hover td,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr:hover td {
+    background-color: rgba(14, 165, 233, 0.04) !important;
+    background-image: none !important;
+  }
+
+  /* -- 4. Sticky team col (1st + 2nd) bleu très subtil -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(1),
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(2),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(1),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(2),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(1),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(2) {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    border-right-color: rgba(14, 165, 233, 0.15) !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th:nth-child(1),
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th:nth-child(2),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th:nth-child(1),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th:nth-child(2),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th:nth-child(1),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th:nth-child(2) {
+    background-color: rgba(14, 165, 233, 0.08) !important;
+    background-image: linear-gradient(180deg, rgba(14, 165, 233, 0.12), rgba(14, 165, 233, 0.04)) !important;
+    color: #0c4a6e !important;
+  }
+
+  /* -- 5. VALUE col (right edge) light bleu translucide -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td.vb-value-col,
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) thead tr th.vb-value-col {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    border-left: 2px solid rgba(14, 165, 233, 0.25) !important;
+  }
+
+  /* -- 6. Tennis score col (LCD scoreboard) light flat -- */
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td.tvb-score-col,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td.tvb-score-col {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0c4a6e !important;
+    text-shadow: none !important;
+    box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.20) !important;
+  }
+
+  /* -- 7. Surface tint rows (clay/grass/hard) — light tint preserved subtle -- */
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr.tennis-vb-row td:first-child,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr.tennis-vb-row td:first-child {
+    background-color: #ffffff !important;
+    background-image: none !important;
+  }
+
+  /* -- 8. Préserve accents box-shadow rouge L'Equipe + variants -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) #vb-body tr.is-value-hot td:first-child {
+    box-shadow: inset 3px 0 0 0 #22c55e !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) #vb-body tr.is-value td:first-child {
+    box-shadow: inset 3px 0 0 0 #d99412 !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) #vb-body tr.match-row-live td:first-child {
+    box-shadow: inset 3px 0 0 0 #E2001A !important;
+  }
+
+  /* -- 9. Page background light gradient bleu translucide -- */
+  body[data-cf-light="1"] #page-matchs,
+  body[data-cf-light="1"] #page-tennis,
+  body[data-cf-light="1"] #matches-table,
+  body[data-cf-light="1"] #table-scroll {
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%) !important;
+  }
+  body[data-cf-light="1"] #scrollbar-top {
+    background: #f8fbff !important;
+  }
+
+  /* -- 10. Cards/wrappers internes : .pbet-wrap, .t3c-wrap, .vb-hero-value -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .pbet-wrap,
+  body[data-cf-light="1"] .pbet-wrap {
+    background-color: rgba(14, 165, 233, 0.04) !important;
+    background-image: none !important;
+    border-color: rgba(14, 165, 233, 0.20) !important;
+    color: #0f172a !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .pbet-wrap .pbet-head,
+  body[data-cf-light="1"] .pbet-wrap .pbet-head {
+    background-color: rgba(14, 165, 233, 0.10) !important;
+    background-image: none !important;
+    color: #0c4a6e !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .pbet-wrap .pbet-row,
+  body[data-cf-light="1"] .pbet-wrap .pbet-row {
+    background-color: rgba(14, 165, 233, 0.02) !important;
+    background-image: none !important;
+    color: #0f172a !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .pbet-wrap .pbet-row .pb-lbl,
+  body[data-cf-light="1"] .pbet-wrap .pb-lbl { color: #0f172a !important; }
+
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .t3c-wrap,
+  body[data-cf-light="1"] .t3c-wrap {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .t3c-hdr,
+  body[data-cf-light="1"] .t3c-hdr {
+    background-color: rgba(14, 165, 233, 0.06) !important;
+    background-image: none !important;
+    color: #0c4a6e !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .t3c-foot,
+  body[data-cf-light="1"] .t3c-foot {
+    background-color: rgba(241, 245, 249, 0.6) !important;
+    background-image: none !important;
+    color: #475569 !important;
+  }
+  body[data-cf-light="1"] .t3c-ring {
+    background-color: rgba(14, 165, 233, 0.05) !important;
+  }
+  body[data-cf-light="1"] .cotes-block,
+  body[data-cf-light="1"] .buteurs-block {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+  }
+
+  /* -- 11. Stat header league row (interrow groupings) si présente -- */
+  body[data-cf-light="1"] #vb-body tr.stat-header-league td,
+  body[data-cf-light="1"] #vb-body tr.cf-league-header td,
+  body[data-cf-light="1"] #vb-body tr.league-header td {
+    background-color: rgba(14, 165, 233, 0.10) !important;
+    background-image: none !important;
+    color: #0c4a6e !important;
+    border-top: 1px solid rgba(14, 165, 233, 0.20) !important;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.20) !important;
+  }
+
+  /* -- 12. Text helpers : forcer texte slate sur dark text inline -- */
+  body[data-cf-light="1"] #vb-table #vb-body td [style*="#e8eaed"],
+  body[data-cf-light="1"] #vb-table #vb-body td [style*="#E8EAED"] {
+    color: #0f172a !important;
+  }
+  body[data-cf-light="1"] #vb-table #vb-body td [style*="#8b949e"],
+  body[data-cf-light="1"] #vb-table #vb-body td [style*="#7d8590"] {
+    color: #64748b !important;
+  }
+
   /* CF-END */
 </style>
 
