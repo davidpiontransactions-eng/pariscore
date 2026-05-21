@@ -85,6 +85,20 @@ fi
 echo "✓ Tennis ETL termine" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
 
+# ── PHASE 2b: openfootball ETL (bd 6du6 ODbL safe) ──────────────────
+echo "════ PHASE 2b: openfootball ETL ════" | tee -a "$LOG_FILE"
+if [ -f seed_historique_openfootball.js ]; then
+  if [ -n "$LITE" ]; then
+    node seed_historique_openfootball.js --season 2024-25 2>&1 | tee -a "$LOG_FILE"
+  else
+    node seed_historique_openfootball.js --all-seasons 2>&1 | tee -a "$LOG_FILE"
+  fi
+  echo "✓ openfootball ETL termine" | tee -a "$LOG_FILE"
+else
+  echo "⚠️ seed_historique_openfootball.js manquant — skip" | tee -a "$LOG_FILE"
+fi
+echo "" | tee -a "$LOG_FILE"
+
 # ── PHASE 3: Verifications outputs ──────────────────────────────────
 echo "════ PHASE 3: Verification outputs ════" | tee -a "$LOG_FILE"
 for f in historique_football.json historique_tennis.json; do
