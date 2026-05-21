@@ -354,15 +354,15 @@
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent);
     flex-shrink: 0;
-    animation: livePulse 1.6s ease-in-out infinite;
+    animation: livePulse-dot 1.6s ease-in-out infinite; /* QA fix COS-1: renommé livePulse-dot pour éviter collision avec livePulse row background */
     box-shadow: 0 0 0 0 var(--accent);
   }
-  @keyframes livePulse {
+  @keyframes livePulse-dot { /* QA fix COS-1: était @keyframes livePulse — dupliqué avec row-pulse à ligne ~472 */
     0%   { box-shadow: 0 0 0 0 rgba(237,28,36,0.6); }
     60%  { box-shadow: 0 0 0 5px rgba(237,28,36,0); }
     100% { box-shadow: 0 0 0 0 rgba(237,28,36,0); }
   }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  /* QA fix COS-2: @keyframes pulse dupliqué supprimé — définition active à ligne ~3756 (opacity .5→1 pour skeletons) */
   /* Live update toast — non intrusif, pas de saut de page */
   .live-update-toast {
     position: fixed; top: 72px; right: 24px; z-index: 200;
@@ -3690,7 +3690,7 @@
   .gemini-cursor { display:inline-block; width:2px; height:14px; background:var(--green); animation:blink .7s infinite; vertical-align:middle; margin-left:2px; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   .gm-spinner { width:32px; height:32px; border:3px solid var(--border2); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* QA fix COS-3: @keyframes spin dupliqué supprimé ici — définition canonique à ligne ~1241 */
   .bk-logo {
     font-size: 11px; font-family: var(--font-mono); padding: 4px 10px;
     border-radius: 4px; background: var(--bg4); color: var(--text3); border: 1px solid var(--border);
@@ -4866,9 +4866,7 @@
     animation: spin 1s linear infinite;
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  /* QA fix COS-3: @keyframes spin dupliqué supprimé ici — définition canonique à ligne ~1241 */
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -6797,7 +6795,8 @@
     #mfs-body .conf-range { height: 8px; }
     #mfs-body .conf-range::-webkit-slider-thumb { width: 20px; height: 20px; }
     #mfs-body .conf-range::-moz-range-thumb { width: 20px; height: 20px; }
-    #mfs-body .mls-panel, #mfs-body #ts-panel { z-index: 100000; }
+    /* QA fix MAJ-7 (rapport_qa_foot_tennis.md): z-index 100000 → 9300 (au-dessus bottom-sheet, sous auth-modal 9999) */
+    #mfs-body .mls-panel, #mfs-body #ts-panel { z-index: 9300; }
     /* O2.5 presets redondants : le slider « Degré Confiance » couvre déjà ce besoin */
     #mfs-body .adv-chips-m .adv-chips-grp:first-child { display: none !important; }
     /* Refonte filtre Tennis mobile — propre, uniforme, lisible */
@@ -14731,6 +14730,17 @@ if (!window._tnPrematchSnapshot) {
 }
 function _tnSnapshotPersist() {
   try {
+    // QA fix MAJ-3 (rapport_qa_foot_tennis.md): LRU eviction 100 entries max
+    // Evite overflow sessionStorage (~5-10MB) sur grosse journée ATP+WTA+ITF (200+ matchs).
+    var _TN_SNAP_MAX = 100;
+    if (window._tnPrematchSnapshot.size > _TN_SNAP_MAX) {
+      // Trier par ts ASC, supprimer les plus anciens pour garder les 100 plus récents
+      var entries = [];
+      window._tnPrematchSnapshot.forEach(function(v, k) { entries.push({ k: k, ts: (v && v.ts) || 0 }); });
+      entries.sort(function(a, b) { return a.ts - b.ts; });
+      var toDelete = entries.slice(0, entries.length - _TN_SNAP_MAX);
+      toDelete.forEach(function(e) { window._tnPrematchSnapshot.delete(e.k); });
+    }
     var obj = {};
     window._tnPrematchSnapshot.forEach(function (v, k) { obj[k] = v; });
     sessionStorage.setItem(_TN_SNAP_STORAGE_KEY, JSON.stringify(obj));
@@ -21336,6 +21346,10 @@ function safeFixed(val, digits = 2) {
   const n = Number(val);
   return isFinite(n) ? n.toFixed(digits) : '—';
 }
+// QA fix MAJ-1 (rapport_qa_foot_tennis.md): parseInt/parseFloat peuvent retourner NaN
+// et se propager silencieusement dans calculs (IC90, EV, fatigue meta). Wrappers sûrs.
+function safeInt(v, dflt) { if (dflt === undefined) dflt = 0; var n = parseInt(v, 10); return Number.isFinite(n) ? n : dflt; }
+function safeFloat(v, dflt) { if (dflt === undefined) dflt = 0; var n = parseFloat(v); return Number.isFinite(n) ? n : dflt; }
 // v53.0: SVG placeholder joueur (silhouette par défaut si photo absente)
 const PH_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" fill="var(--text3)" opacity="0.5"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="var(--text3)" opacity="0.4"/></svg>';
 const BSD_IMG_BASE = 'https://sports.bzzoiro.com/img/player';
@@ -32198,7 +32212,9 @@ function renderComparateur(d) {
       if (attempts > 20) clearInterval(iv);
     }, 750);
     /* Steady T2K refresh — once per 30s once page settled */
-    setInterval(cfRefreshT2K, 30 * 1000);
+    /* QA fix MIN-8 (rapport_qa_foot_tennis.md): stocker handle + clear avant créer pour éviter double interval */
+    if (window._cfT2kInterval) { clearInterval(window._cfT2kInterval); }
+    window._cfT2kInterval = setInterval(cfRefreshT2K, 30 * 1000);
   }
 
   if (document.readyState === 'loading') {
