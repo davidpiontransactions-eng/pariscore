@@ -95,6 +95,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `l9vk` | Marketing Affiliation 5 phases — 1xBet+Twitter+YouTube+Telegram+Stripe | open |
 | `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD | Phase 2A livré v12.65 commit `117c711` (`/api/v1/sources/health`) · Phases 2B/2C/2D ouvertes |
 | `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | open |
+| `0hf4` | **BSD coverage Phase 1** — TV channels + broadcasts (fetchers + caches + helper attach) | Phase 1 livré v12.65 commit `d10ab09` · Phases 1.1/2/3 ouvertes |
 | `j6pz` | **BSD coverage Phase 2** — Shotmap + best_odds + bookmakers (3 endpoints REST + UI shotmap SVG modal Live Dashboard) | open · 3-4h |
 | `ueg0` | **BSD coverage Phase 3** — Social items sentiment buzz match (badge cellule + section modal Insights) | open · 2h |
 | `82th` | **BSD coverage Phase 4** — Referees + Venues + Leagues dynamic (enrichissement modal Contexte stade/arbitre/ligue) | open · 3-4h |
