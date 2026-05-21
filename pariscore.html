@@ -10072,6 +10072,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     display:block; margin:3px auto 0; opacity:0.85; transition:opacity .15s;
   }
   #tennis-vb-table .tn-pbp-spark:hover, #tennis-live-table .tn-pbp-spark:hover { opacity:1; }
+  /* bd tvf — Foot pressure sparkline dans col Match (a cote du badge intensite) */
+  .fb-press-spark { display:inline-block; vertical-align:middle; opacity:0.85; transition:opacity .15s; }
+  .fb-press-spark:hover { opacity:1; }
   #tennis-vb-table .tn-sb-soon { display:inline-block; background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:6px 10px; font-family:'DM Mono',monospace; font-size:12px; font-weight:700; color:#ffa726; white-space:nowrap; }
   #tennis-vb-table .tn-sb-srv { display:inline-flex; align-items:center; justify-content:center; line-height:1; min-width:16px; text-align:center; filter:drop-shadow(0 0 4px rgba(212,230,13,.55)); animation:tnSrvPulse 1.4s ease-in-out infinite; }
   #tennis-vb-table .tn-sb-srv .tn-sb-ball { width:14px; height:14px; display:block; }
@@ -18488,6 +18491,8 @@ function initSSE() {
         if (p.live_score            !== undefined) m.live_score            = p.live_score;
         if (p.live_minute           !== undefined) m.live_minute           = p.live_minute;
         if (p.live_intensity        !== undefined) m.live_intensity        = p.live_intensity;
+        // bd tvf — Trace pression dom/ext pour sparkline col Match (15 dernieres mises a jour)
+        try { _footPressurePush(m.id, p.live_intensity, p.live_momentum || m.live_momentum); } catch (_) {}
         if (p.status)                              m.status                = p.status;
         if (p.live_possession       !== undefined) m.live_possession       = p.live_possession;
         if (p.live_shots            !== undefined) m.live_shots            = p.live_shots;
@@ -20667,7 +20672,7 @@ const label = country
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
           : ''}
         ${formatTopScores(m.poisson?.topScores, 3)}
-        ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span></div>` : ''}</td>
+        ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}</td>
       <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
         ${renderOddsDeltaCell(m)}
       </td>
@@ -21427,6 +21432,72 @@ function safeFixed(val, digits = 2) {
 // et se propager silencieusement dans calculs (IC90, EV, fatigue meta). Wrappers sûrs.
 function safeInt(v, dflt) { if (dflt === undefined) dflt = 0; var n = parseInt(v, 10); return Number.isFinite(n) ? n : dflt; }
 function safeFloat(v, dflt) { if (dflt === undefined) dflt = 0; var n = parseFloat(v); return Number.isFinite(n) ? n : dflt; }
+
+// bd tvf — Tracker pression dom/ext live foot (15 derniers snapshots, in-memory).
+// Source data : live_intensity (composite 0-100) + live_momentum.{home,away}.attack_pct.
+// Pure frontend, alimente par SSE live_patch.
+window._footPressureHist = window._footPressureHist || new Map();
+function _footPressurePush(matchId, intensity, momentum) {
+  if (!matchId) return;
+  let hist = window._footPressureHist.get(matchId) || [];
+  const h = momentum && momentum.home ? Number(momentum.home.attack_pct) : null;
+  const a = momentum && momentum.away ? Number(momentum.away.attack_pct) : null;
+  // Si pas de momentum dom/ext, utilise intensite globale (mono-serie)
+  const entry = { ts: Date.now(), intensity: intensity == null ? null : Number(intensity), h, a };
+  // Skip duplicat (meme intensite ET memes pcts) — evite hist plate stagnante
+  const last = hist[hist.length - 1];
+  if (last && last.intensity === entry.intensity && last.h === entry.h && last.a === entry.a) return;
+  hist.push(entry);
+  if (hist.length > 15) hist = hist.slice(-15);
+  window._footPressureHist.set(matchId, hist);
+}
+function _footPressureSparkline(matchId) {
+  const hist = window._footPressureHist.get(matchId);
+  if (!hist || hist.length < 2) return '';
+  const W = 60, H = 16, PAD = 1;
+  const hasDomExt = hist.some(e => e.h != null && e.a != null);
+  if (hasDomExt) {
+    // 2 courbes (dom vert / ext bleu) bornees 0-100
+    const stepX = (W - PAD * 2) / Math.max(1, hist.length - 1);
+    const pointsH = []; const pointsA = [];
+    hist.forEach((e, i) => {
+      const x = PAD + i * stepX;
+      if (e.h != null) {
+        const yH = H - PAD - (Math.max(0, Math.min(100, e.h)) / 100) * (H - PAD * 2);
+        pointsH.push(safeFixed(x, 1) + ',' + safeFixed(yH, 1));
+      }
+      if (e.a != null) {
+        const yA = H - PAD - (Math.max(0, Math.min(100, e.a)) / 100) * (H - PAD * 2);
+        pointsA.push(safeFixed(x, 1) + ',' + safeFixed(yA, 1));
+      }
+    });
+    const lastH = hist[hist.length - 1].h, lastA = hist[hist.length - 1].a;
+    const title = `Pression dom/ext (15 dernières mises à jour) — DOM ${lastH != null ? lastH + '%' : '?'} · EXT ${lastA != null ? lastA + '%' : '?'}`;
+    return `<svg class="fb-press-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="${_escForSvg(title)}"><title>${_escForSvg(title)}</title>` +
+      (pointsH.length ? `<polyline fill="none" stroke="#15803D" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" points="${pointsH.join(' ')}"/>` : '') +
+      (pointsA.length ? `<polyline fill="none" stroke="#1d4ed8" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" points="${pointsA.join(' ')}"/>` : '') +
+      `</svg>`;
+  }
+  // Fallback : courbe mono intensity globale
+  const vals = hist.map(e => e.intensity).filter(v => v != null);
+  if (vals.length < 2) return '';
+  const stepX = (W - PAD * 2) / Math.max(1, vals.length - 1);
+  const min = Math.min(...vals, 0);
+  const max = Math.max(...vals, 100);
+  const range = Math.max(1, max - min);
+  const pts = vals.map((v, i) => {
+    const x = PAD + i * stepX;
+    const y = H - PAD - ((v - min) / range) * (H - PAD * 2);
+    return safeFixed(x, 1) + ',' + safeFixed(y, 1);
+  }).join(' ');
+  const last = vals[vals.length - 1];
+  const stroke = last >= 60 ? '#E2001A' : last >= 30 ? '#ffa726' : '#29b6f6';
+  const title = `Intensité live (${vals.length} pts) — actuel ${last}`;
+  return `<svg class="fb-press-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="${_escForSvg(title)}"><title>${_escForSvg(title)}</title>` +
+    `<polyline fill="none" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/>` +
+    `</svg>`;
+}
+function _escForSvg(s) { return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 // v53.0: SVG placeholder joueur (silhouette par défaut si photo absente)
 const PH_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" fill="var(--text3)" opacity="0.5"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="var(--text3)" opacity="0.4"/></svg>';
 const BSD_IMG_BASE = 'https://sports.bzzoiro.com/img/player';
