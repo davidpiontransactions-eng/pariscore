@@ -27664,7 +27664,19 @@ async function pollLiveScores() {
             }
 
             // Snapshots momentum/xG/pressure (indépendant)
-            const minute = parseInt(detail?.current_minute ?? m.live_minute ?? 0) || 0;
+            // bd ParisScorebis-8c5 fix: si minute manquant (cas La Liga BSD parfois sans
+            // current_minute), fallback estimation via commence_time + Date.now() pour
+            // eviter momentum flat-line malgre stats live disponibles.
+            let minute = parseInt(detail?.current_minute ?? m.live_minute ?? 0) || 0;
+            if (!minute && m.commence_time) {
+              const elapsedMs = Date.now() - new Date(m.commence_time).getTime();
+              const elapsedMin = Math.floor(elapsedMs / 60000);
+              // Si match en cours (between 0 et 120min depuis kickoff) ET stats populated → estimate
+              if (elapsedMin >= 0 && elapsedMin <= 120 && (m.live_stats || m.live_dangerous_attacks || m.live_shots)) {
+                // Compte 45min jeu + 15min mi-temps + 45min: si > 60, soustraire mi-temps
+                minute = elapsedMin > 60 ? Math.max(45, elapsedMin - 15) : Math.min(45, elapsedMin);
+              }
+            }
             if (minute) {
               recordLiveMomentumSnapshot(m.id, minute, sr, m);
               const xgH = detail?.actual_home_xg ?? detail?.home_xg_live ?? null;
