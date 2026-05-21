@@ -6990,6 +6990,22 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 </audio>
 
 <button id="theme-toggle" onclick="toggleTheme()" title="Basculer mode jour/nuit">☾ Nuit</button>
+<!-- bd 21m7 — Toggle alertes sonores trading (next to theme toggle) -->
+<button id="audio-toggle" data-audio-toggle onclick="psToggleAudioAlerts()" title="Alertes sonores désactivées — cliquer pour activer" style="position:fixed;top:14px;right:80px;z-index:200;background:transparent;color:var(--text2);border:1px solid var(--bg3);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;transition:color .15s,border-color .15s;">🔇</button>
+<script>
+  /* bd 21m7 — sync toggle UI au boot selon localStorage */
+  (function syncAudioToggleOnBoot() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', syncAudioToggleOnBoot);
+      return;
+    }
+    var btn = document.getElementById('audio-toggle');
+    if (!btn) return;
+    var enabled = localStorage.getItem('cf_audio_enabled') === '1';
+    btn.textContent = enabled ? '🔊' : '🔇';
+    btn.title = enabled ? 'Alertes sonores actives — cliquer pour désactiver' : 'Alertes sonores désactivées — cliquer pour activer';
+  })();
+</script>
 
 <!-- UPDATE BAR -->
 <div class="update-bar">
@@ -18490,7 +18506,11 @@ function initSSE() {
         if (!m) return;
         if (p.live_score            !== undefined) m.live_score            = p.live_score;
         if (p.live_minute           !== undefined) m.live_minute           = p.live_minute;
-        if (p.live_intensity        !== undefined) m.live_intensity        = p.live_intensity;
+        if (p.live_intensity        !== undefined) {
+          // bd 21m7 — Detecte transition tier intensity pour son alerte (avant overwrite)
+          try { if (typeof psCheckIntensityTransition === 'function') psCheckIntensityTransition(m.id, p.live_intensity); } catch (_) {}
+          m.live_intensity        = p.live_intensity;
+        }
         // bd tvf — Trace pression dom/ext pour sparkline col Match (15 dernieres mises a jour)
         try { _footPressurePush(m.id, p.live_intensity, p.live_momentum || m.live_momentum); } catch (_) {}
         if (p.status)                              m.status                = p.status;
@@ -30787,6 +30807,99 @@ document.addEventListener('keydown', e => {
     console.log('[Theme] Toggle:', isDark ? 'dark->light' : 'light->dark');
     localStorage.setItem(STORAGE_KEY, isDark ? 'light' : 'dark');
     applyTheme(!isDark);
+  };
+
+  // bd 21m7 — Module audio alertes trading (state tracking transitions positives)
+  // Joue son UNIQUEMENT sur Rouge→Jaune ou Jaune→Vert (positives), pas sur cellule
+  // simplement verte. Autoplay-safe: requiert UI unlock (toggle) + Promise wrap.
+  window._psAudio = window._psAudio || {
+    enabled: localStorage.getItem('cf_audio_enabled') === '1',
+    ctx: null,
+    lastPlay: 0,
+    prevTiers: new Map(), // matchId → { intensity: 'red'|'amber'|'green' }
+    THROTTLE_MS: 2000,
+  };
+  function _psIntensityTier(v) {
+    if (v == null || isNaN(v)) return 'red';
+    if (v >= 60) return 'green';
+    if (v >= 30) return 'amber';
+    return 'red';
+  }
+  window._psIntensityTier = _psIntensityTier;
+  function _psAudioUnlock() {
+    if (window._psAudio.ctx) return window._psAudio.ctx;
+    try {
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) return null;
+      window._psAudio.ctx = new Ctor();
+      // iOS unlock : courte note silencieuse
+      const osc = window._psAudio.ctx.createOscillator();
+      const g = window._psAudio.ctx.createGain();
+      g.gain.value = 0;
+      osc.connect(g); g.connect(window._psAudio.ctx.destination);
+      osc.start(); osc.stop(window._psAudio.ctx.currentTime + 0.01);
+      return window._psAudio.ctx;
+    } catch (e) { console.warn('[Audio] unlock failed:', e.message); return null; }
+  }
+  // Joue 2 notes courtes (BIP montant pour amber, BIP plus aigu pour green).
+  window.playTradingAlert = function(toTier) { return playTradingAlert(toTier); };
+  function playTradingAlert(toTier) {
+    if (!window._psAudio.enabled) return;
+    const now = Date.now();
+    if (now - window._psAudio.lastPlay < window._psAudio.THROTTLE_MS) return; // anti-spam
+    const ctx = window._psAudio.ctx;
+    if (!ctx) return; // pas encore unlock
+    window._psAudio.lastPlay = now;
+    try {
+      const freqs = toTier === 'green' ? [660, 990] : [440, 660]; // green plus aigu
+      const playNote = (freq, start, dur, vol = 0.18) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, ctx.currentTime + start);
+        gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + start + 0.02);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + dur);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + dur + 0.05);
+      };
+      const playPromise = ctx.resume && ctx.resume();
+      const fire = () => { playNote(freqs[0], 0, 0.15); playNote(freqs[1], 0.13, 0.18); };
+      // Autoplay-safe : si resume retourne Promise, attendre puis fire avec silent catch
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(fire).catch(e => console.warn('[Audio] resume blocked:', e.message));
+      } else { fire(); }
+    } catch (e) { console.warn('[Audio] play failed:', e.message); }
+  }
+  // Detecte transition pour un match donne (sur live_intensity courant) et trigger son si positive.
+  window.psCheckIntensityTransition = function(matchId, newIntensity) { return psCheckIntensityTransition(matchId, newIntensity); };
+  function psCheckIntensityTransition(matchId, newIntensity) {
+    if (!matchId) return;
+    const newTier = _psIntensityTier(newIntensity);
+    const prev = window._psAudio.prevTiers.get(matchId);
+    window._psAudio.prevTiers.set(matchId, { intensity: newTier });
+    if (!prev) return; // 1er enregistrement, pas de transition
+    const order = { red: 0, amber: 1, green: 2 };
+    if (order[newTier] > order[prev.intensity]) {
+      // Transition positive
+      playTradingAlert(newTier);
+    }
+  }
+  // Toggle UI exposé global : appelable depuis bouton "🔊 Alertes sonores"
+  window.psToggleAudioAlerts = function() {
+    window._psAudio.enabled = !window._psAudio.enabled;
+    localStorage.setItem('cf_audio_enabled', window._psAudio.enabled ? '1' : '0');
+    if (window._psAudio.enabled) _psAudioUnlock();
+    if (typeof showNotification === 'function') {
+      showNotification(window._psAudio.enabled ? '🔊 Alertes sonores activées' : '🔇 Alertes sonores désactivées', 'green');
+    }
+    // Met a jour bouton si present
+    document.querySelectorAll('[data-audio-toggle]').forEach(b => {
+      b.textContent = window._psAudio.enabled ? '🔊' : '🔇';
+      b.setAttribute('title', window._psAudio.enabled ? 'Alertes sonores actives — cliquer pour désactiver' : 'Alertes sonores désactivées — cliquer pour activer');
+    });
+    return window._psAudio.enabled;
   };
 
   // Goal Horn Sound - Goal Horn Stadium Style
