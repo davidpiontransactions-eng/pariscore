@@ -41,7 +41,13 @@
 // blanc c'est tout ». Reset complet light theme : #6b6864 → #ffffff,
 // #7a7771 → #f7f7f7, #4a4844 → #e4e4e4. Blocs « Élite Dark Trading »
 // neutralisés via media query min-width:99999px (jamais match).
-const CACHE = 'pariscore-shell-v22';
+// v23 (2026-05-21) : invalide v22 — bd ParisScorebis-npp fix icon.svg
+// invalide. Refonte SVG sans deps fonts externes (Syne, DM Mono), paths
+// manuels P/S + PARI label geometric shapes. Manifest purpose any+maskable.
+// v24 (2026-05-21) : invalide v23 — Design V2.0 complet (v12.0-v12.4) +
+// Phase 4 polish scrollbar + Phase 3 Historique migration + sécurité fix
+// BLOCKED_FILES + QA fixes + momentum La Liga + ETL Historique scaffold.
+const CACHE = 'pariscore-shell-v24';
 const SHELL = [
   '/',
   '/pariscore.html',
