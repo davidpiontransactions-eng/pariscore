@@ -130,6 +130,114 @@
   /* Catboost ML chip light */
   body[data-cf-light="1"] .t3c-badge-sm.ml-cat { background: #e0f2fe !important; color: #075985 !important; border-color: #38bdf8 !important; }
 
+  /* ── bd z55o EXTENDED : nuke all remaining dark zones (live dashboard, deep-analysis, modals, panels) ── */
+  /* Global var hijack — force light values même quand --bg/--bg2/--bg3 utilisés via var() */
+  body[data-cf-light="1"] {
+    --bg:  #ffffff !important;
+    --bg2: #f8fafc !important;
+    --bg3: #f1f5f9 !important;
+    --bg4: #e2e8f0 !important;
+    --text:  #0f172a !important;
+    --text2: #475569 !important;
+    --text3: #64748b !important;
+    --cf-bg-panel:   #ffffff !important;
+    --cf-bg-card:    #f8fafc !important;
+    --cf-bg-elev:    #f1f5f9 !important;
+    --cf-border:     #e2e8f0 !important;
+    --cf-text-primary: #0f172a !important;
+    --cf-text-secondary: #475569 !important;
+    --cf-text-muted: #64748b !important;
+    --fc-graphite:    #f1f5f9 !important;
+    --fc-graphite-hi: #f8fafc !important;
+  }
+  /* Modal overlays + panels couverts par var() — auto-light via vars hijack ci-dessus */
+  /* Cibles explicites pour éléments avec hardcoded dark inline ou non-var */
+  body[data-cf-light="1"] [id^="ld-"],
+  body[data-cf-light="1"] [id^="deep-"],
+  body[data-cf-light="1"] [id^="ldm-"],
+  body[data-cf-light="1"] [id^="ai-"],
+  body[data-cf-light="1"] [id^="strat-"],
+  body[data-cf-light="1"] [class*="ld-"],
+  body[data-cf-light="1"] [class*="deep-"] {
+    color: #0f172a !important;
+  }
+  body[data-cf-light="1"] [id^="ld-"][style*="background"],
+  body[data-cf-light="1"] [class*="ld-"][style*="background"] {
+    background: #ffffff !important;
+  }
+  /* Tableau cells dark hardcoded (#0d, #0e, #0f, #1a, #1c, #11 → white/light) */
+  body[data-cf-light="1"] [style*="background:#0a"]:not([style*="#0a8f"]):not([style*="#0a0a"]),
+  body[data-cf-light="1"] [style*="background: #0a"]:not([style*="#0a8f"]):not([style*="#0a0a"]),
+  body[data-cf-light="1"] [style*="background:#0d"],
+  body[data-cf-light="1"] [style*="background: #0d"],
+  body[data-cf-light="1"] [style*="background:#0e"]:not([style*="#0ea"]),
+  body[data-cf-light="1"] [style*="background: #0e"]:not([style*="#0ea"]),
+  body[data-cf-light="1"] [style*="background:#0f1"],
+  body[data-cf-light="1"] [style*="background: #0f1"],
+  body[data-cf-light="1"] [style*="background:#10"],
+  body[data-cf-light="1"] [style*="background: #10"],
+  body[data-cf-light="1"] [style*="background:#11"],
+  body[data-cf-light="1"] [style*="background: #11"],
+  body[data-cf-light="1"] [style*="background:#14"]:not([style*="#14b"]),
+  body[data-cf-light="1"] [style*="background: #14"]:not([style*="#14b"]),
+  body[data-cf-light="1"] [style*="background:#18"],
+  body[data-cf-light="1"] [style*="background: #18"],
+  body[data-cf-light="1"] [style*="background:#1a"]:not([style*="#1a8"]),
+  body[data-cf-light="1"] [style*="background: #1a"]:not([style*="#1a8"]),
+  body[data-cf-light="1"] [style*="background:#1c"]:not([style*="#1cc"]),
+  body[data-cf-light="1"] [style*="background: #1c"]:not([style*="#1cc"]),
+  body[data-cf-light="1"] [style*="background:#1e2"],
+  body[data-cf-light="1"] [style*="background: #1e2"] {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+  }
+  /* Bottom nav / hero / accueil hero dark cards */
+  body[data-cf-light="1"] .bn3d,
+  body[data-cf-light="1"] .accueil-card,
+  body[data-cf-light="1"] .price-card,
+  body[data-cf-light="1"] .fc-head,
+  body[data-cf-light="1"] .status-bar {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+  }
+  /* Status indicators dans header */
+  body[data-cf-light="1"] #status-bar,
+  body[data-cf-light="1"] #ai-scout-panel {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+  /* Hero accueil "PARIEZ AVEC LES DONNÉES" — pas de modif texte */
+  /* Live dashboard modal — fond white + accents conservés */
+  body[data-cf-light="1"] #ld-modal,
+  body[data-cf-light="1"] #ld-panel,
+  body[data-cf-light="1"] #deep-analysis-modal,
+  body[data-cf-light="1"] #deep-analysis-content,
+  body[data-cf-light="1"] #tennis-ai-modal,
+  body[data-cf-light="1"] #strat-help-modal,
+  body[data-cf-light="1"] #live-detail-modal,
+  body[data-cf-light="1"] #insights-modal {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  /* Inputs / selects / textareas dark → light */
+  body[data-cf-light="1"] input,
+  body[data-cf-light="1"] select,
+  body[data-cf-light="1"] textarea {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+  /* SVG fills dark — préserve accents colorés (vert, rouge, ambre, bleu) */
+  body[data-cf-light="1"] svg [fill="#0a0d0f"],
+  body[data-cf-light="1"] svg [fill="#111417"],
+  body[data-cf-light="1"] svg [fill="#181c20"] { fill: #f8fafc !important; }
+  /* Ensure table backgrounds light */
+  body[data-cf-light="1"] table#vb-table,
+  body[data-cf-light="1"] table#tennis-vb-table,
+  body[data-cf-light="1"] table#tennis-live-table { background: #ffffff !important; }
+
   /* ── Nuit Profonde (LEGACY — désactivé bd z55o, conservé pour rollback) ── */
   body.dark-theme {
     --bg: #0a0a0a;
