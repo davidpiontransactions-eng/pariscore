@@ -18463,7 +18463,8 @@ function _renderMomentumBars(m) {
 
   // Barres momentum — Sofascore live_momentum [{min, v}] où v ∈ [-100, +100]
   // v > 0 = domicile domine (barre verte vers le haut), v < 0 = extérieur (barre bleue vers le bas)
-  var sofaMomentum = m.live_momentum || [];
+  // bd 8c5 fix: Array.isArray guard contre objet BSD legacy ecraseur (forte couv La Liga).
+  var sofaMomentum = Array.isArray(m.live_momentum) ? m.live_momentum : [];
   if (sofaMomentum.length > 0) {
     sofaMomentum.forEach(function(pt) {
       if (pt.min == null) return;
@@ -18950,7 +18951,9 @@ function initSSE() {
       if (d.live_corners)            m.live_corners            = d.live_corners;
       if (d.live_xg)                 m.live_xg                 = d.live_xg;
       if (d.live_big_chances)        m.live_big_chances        = d.live_big_chances;
-      if (d.live_momentum)           m.live_momentum           = d.live_momentum;
+      // bd 8c5 fix: route shape strict — array Sofa vers live_momentum, objet BSD vers live_momentum_pct
+      if (Array.isArray(d.live_momentum)) m.live_momentum = d.live_momentum;
+      if (d.live_momentum_pct)       m.live_momentum_pct       = d.live_momentum_pct;
       if (d.live_cards)              m.live_cards              = d.live_cards;
       if (d.live_dangerous_attacks)  m.live_dangerous_attacks  = d.live_dangerous_attacks;
       if (d.live_touches_opp_box)    m.live_touches_opp_box    = d.live_touches_opp_box;
