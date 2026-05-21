@@ -6198,6 +6198,7 @@ async function enrichCornersFromBSD(matches) {
 const HISTORY_FILE = path.join(__dirname, 'history.json');
 const HISTORIQUE_SEED_FILE = path.join(__dirname, 'historique_football.json'); // bd 9je ETL output
 const HISTORIQUE_TENNIS_SEED_FILE = path.join(__dirname, 'historique_tennis.json'); // bd rxh ETL output
+const HISTORIQUE_OPENFOOTBALL_FILE = path.join(__dirname, 'historique_openfootball.json'); // bd 6du6 ETL output
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
 
@@ -6330,6 +6331,54 @@ function loadHistory() {
       }
     } catch (e) {
       console.warn('[ETL Seed Load tennis]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-6du6 — Merge historique_openfootball.json (ETL ODbL) dans
+  // db.archive_matches au boot. Schema: leagues.<key>.{meta, matches[]}
+  if (fs.existsSync(HISTORIQUE_OPENFOOTBALL_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_OPENFOOTBALL_FILE, 'utf8'));
+      if (seed && seed.leagues && typeof seed.leagues === 'object') {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const key of Object.keys(seed.leagues)) {
+          const leagueData = seed.leagues[key];
+          if (!leagueData || !Array.isArray(leagueData.matches)) continue;
+          for (const m of leagueData.matches) {
+            totalSeed++;
+            if (!m || !m.id || existingIds.has(String(m.id))) continue;
+            const archived = {
+              id: m.id,
+              sport: 'football',
+              sport_key: `of_${m.league_id}`,
+              league: m.league_name,
+              country: m.country,
+              commence_time: m.date,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              home_score: m.home_score,
+              away_score: m.away_score,
+              live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
+              halftime_score: m.halftime_score,
+              status: m.status || 'finished',
+              season: m.season,
+              round: m.round,
+              _source: 'etl-seed-openfootball',
+              _attribution: m._attribution || 'openfootball/football.json (ODbL)',
+            };
+            (db.archive_matches = db.archive_matches || []).push(archived);
+            existingIds.add(String(m.id));
+            totalAdded++;
+          }
+        }
+        if (totalSeed > 0) {
+          console.log(`  ✓ ETL seed merge (openfootball): ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (dedup'd, ODbL)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load openfootball]', e.message);
     }
   }
 }
