@@ -83,24 +83,29 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 
 ### P2 (queue)
 
-| ID | Titre |
+| ID | Titre | État |
+|---|---|---|
+| `kto1` | Research: tennisabstract.com WP interactivity-api — rapport incorporation | open |
+| `m5sv` | Research: GitHub n63li/Tennis-API — rapport incorporation | open |
+| `1hiv` | Research: sportsdata.io Tennis API — rapport incorporation (pricing+coverage+ROI) | open |
+| `wect` | ETL Historique FBref soccerdata — RESEARCH ONLY (doublon `8lqf` à fusionner) | open |
+| `5vzv` | Spike footballdatabase.com — audit ETL faisabilité vs ToS+CF | open (CF wall) |
+| `qkx` | Spike eval odds-api1 RapidAPI candidate | open (couplé `bjv` Phase 1 fail) |
+| `e3mr` | Tennis Consolidation LOT P1+P2 — Backtest Brier + Serve/Return point-level + UQD | open |
+| `l9vk` | Marketing Affiliation 5 phases — 1xBet+Twitter+YouTube+Telegram+Stripe | open |
+| `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD | Phase 2A livré v12.65 commit `117c711` (`/api/v1/sources/health`) · Phases 2B/2C/2D ouvertes |
+| `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | open |
+
+**✓ FERMÉS session 22/05/2026 v12.65 (6)**
+
+| ID | Livraison |
 |---|---|
-| `kto1` | Research: tennisabstract.com WP interactivity-api — rapport incorporation |
-| `m5sv` | Research: GitHub n63li/Tennis-API — rapport incorporation |
-| `1hiv` | Research: sportsdata.io Tennis API — rapport incorporation (pricing+coverage+ROI) |
-| `nwk6` | PWA Push Notifications backend — VAPID + sender service + sw.js handlers |
-| `wect` | ETL Historique FBref soccerdata — RESEARCH ONLY (doublon `8lqf` à fusionner) |
-| `5vzv` | Spike footballdatabase.com — audit ETL faisabilité vs ToS+CF |
-| `ffh` | Spike 6 sources data (Transfermarkt + FBref + Sofascore + Fotmob + The Analyst + xvalue.ai) |
-| `qkx` | Spike eval odds-api1 RapidAPI candidate |
-| `k37` | Bug UI teinte rose tableau Foot (jour) |
-| `e3mr` | Tennis Consolidation LOT P1+P2 — Backtest Brier + Serve/Return point-level + UQD |
-| `l9vk` | Marketing Affiliation 5 phases — 1xBet+Twitter+YouTube+Telegram+Stripe |
-| `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD |
-| `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T |
-| `c9p4` | Roadmap v4.x backlog tableau principal — filtres + favoris + Dropping Odds + drapeaux |
-| `rlhf` | Module audio alertes trading — state tracking + autoplay fix (orphan CLAUDE.md→bd) |
-| `x11y` | Tennis indicateurs jeux dynamiques — Over 7.5/8.5 + Under 12.5 break (orphan CLAUDE.md→bd) |
+| `nwk6` | PWA Push Notifications backend — Phase 1 livré v12.49 (VAPID ES256 zero-dep + 4 routes + auto-cleanup 410/404) |
+| `ffh` | Spike 6 sources data — commit `1280dfb` livrable `.context/spike-ffh-6sources-eval-final.md` (GO ferme xvalue.ai 85/100) |
+| `k37` | Bug UI teinte rose tableau Foot — commit `8b99cb2` (coral leak `tr.match-row-live::before` box-shadow 14→6px + keyframe + remove !important) |
+| `c9p4` | Roadmap v4.x backlog tableau principal — closed stale dup (8 items déjà cochés `[x]` commit `5e18185` CLAUDE.md section 15 sync drift) |
+| `rlhf` | Module audio alertes trading — commit `fc9c65e` (state tracking transitions + orchestrateur 4 indicateurs + queue 200ms cap 3 sons/burst) |
+| `x11y` | Tennis indicateurs jeux dynamiques — closed stale dup (code présent pariscore.html:14813 O7.5/O8.5/O9.5/U12.5) |
 
 ### P3 (research)
 
@@ -111,6 +116,8 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 >
 > **Sync drift 21/05/2026 v12.63** : `rxh` closed (prod v12.43), `h9j7` closed, `6du6` Phase 2 wikidata wire livré. 3 orphan missions CLAUDE.md → bd créés (`rlhf` audio · `x11y` tennis indicators · `gz7s` Rotowire benchmark).
+>
+> **Sync drift 22/05/2026 v12.65** : 14 commits push session — `5e18185` CLAUDE.md drift section 15 · `fbea217` c5i Phase 3 aiscore on-demand · `bce7535`+`16c6a9d` izsn safeFixed wraps · `38ffa7b`+`9ba089a` 8c5 momentum La Liga (split live_momentum_pct objet vs array Sofa + follow-up Array.isArray guards consumers) · `ae6a292` p2if AI-AL Revue Presse 5 sources · `72d5e8a`+`0754a33` bjv spike RapidAPI + Pinnacle research + POC OddsPapi · `2ce9463` 8uoc Tennis sourcing v2 TML MIT · `8b99cb2` k37 coral leak · `fc9c65e` rlhf audio orchestrateur · `1280dfb` ffh 6 sources (GO xvalue.ai) · `117c711` ryi3 Phase 2A health route. Closed: `c9p4`+`x11y`+`c8zp`+`8c5` (stale dup/livré).
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
@@ -368,6 +375,34 @@ Ce rapport devra contenir :
 1. Le diagnostic complet de la page Rotowire.
 2. Le tableau des "Forces" et "Faiblesses" de leur UI/UX.
 3. Le plan d'action concret : Les "Game Changers" à implémenter d'urgence sur PariScore.
+
+### MISSION UI/UX : CORRECTION DE CONTRASTE (LISIBILITÉ) SUR LE TABLEAU TENNIS
+
+Claude, active ta compétence : `css-architecture` et `ui-ux-pro-max`.
+
+🚨 **PROBLÈME D'ACCESSIBILITÉ SIGNALÉ :** Sur notre tableau (Tennis ou Foot, selon le contexte), il y a un problème de contraste majeur. La police de couleur blanche est illisible ou "baveuse" parce qu'elle est affichée sur un fond (probablement jaune, vert clair ou translucide) qui ne permet pas un bon détachement visuel.
+
+Ta mission est de corriger ce contraste immédiatement pour garantir la fameuse "règle des 500ms" (lisibilité instantanée).
+
+---
+
+### ÉTAPE 1 : IDENTIFICATION DE LA CLASSE CSS
+- Identifie la colonne, le badge ou le widget spécifique où nous utilisons ce fond (probablement lié à un indicateur de probabilité, de cote, ou un tag "Over/Under").
+- Analyse le code HTML/CSS de `pariscore.html` pour trouver la classe incriminée (ex: `.badge-yellow`, `.prob-high`, `.bg-warning`).
+
+---
+
+### ÉTAPE 2 : CORRECTION DU CONTRASTE (BEST PRACTICES FINTECH)
+- Applique une règle de contraste strict : 
+  - Si le fond de la cellule/badge est clair (Jaune, Vert clair, Cyan clair, Blanc), la police **DOIT** être foncée (`#0f172a` ou `#000000`) et utiliser une graisse plus importante (`font-weight: 600` ou `700`).
+  - Si tu veux absolument garder la police blanche, alors assombris significativement la couleur de fond ou ajoute une opacité noire en sous-couche.
+
+---
+
+### ÉTAPE 3 : PROTOCOLE DE VALIDATION
+1. Modifie le CSS de la cellule/colonne concernée.
+2. Fais un test de rendu.
+3. Confirme-moi dans le terminal que le ratio de contraste a été corrigé et que le texte est désormais parfaitement lisible.
 
 Affiche-moi un résumé exécutif des 3 meilleures idées retenues dans le terminal une fois l'analyse terminée !
 *Dernière mise à jour : v12.63 — 21/05/2026. CLAUDE.md purgé (v7.1 → v12.31 historisés dans `CHANGELOG.md`). Sync drift bd↔CLAUDE.md effectue. Source vérité tâches = `bd ready`.*
