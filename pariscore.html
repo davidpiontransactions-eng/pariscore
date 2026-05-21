@@ -19198,6 +19198,53 @@ function toggleSteamFilter() {
   renderMatches(allMatches);
 }
 
+// bd u4ib — Chip Verdict IA CatBoost (BSD ML v5) — affiche recommandations vérifiées + confidence
+function renderCatboostVerdict(m) {
+  const p = m && m.predictions_ml;
+  if (!p) return '';
+  const recs = p.recommendations || {};
+  const conf = p.confidence != null ? Math.round(p.confidence * 100) : null;
+  // Picks actifs : booleans recs true
+  const picks = [];
+  if (recs.bet_favorite) picks.push('1X2 ★');
+  if (recs.over_25) picks.push('O2.5');
+  if (recs.over_15) picks.push('O1.5');
+  if (recs.over_35) picks.push('O3.5');
+  if (recs.btts) picks.push('BTTS');
+  if (!picks.length) return '';
+  const tier = conf >= 60 ? 'hi' : conf >= 45 ? 'mid' : 'lo';
+  const confStr = conf != null ? ` ${conf}%` : '';
+  return `<div class="t3c-badge-sm ml-cat tier-${tier}" style="margin-top:3px;display:inline-block;" title="CatBoost ML v5 BSD: ${picks.join(' · ')}${confStr ? ' · confidence ' + conf + '%' : ''}">🤖 ${picks[0]}${picks.length > 1 ? '+' + (picks.length - 1) : ''}${confStr}</div>`;
+}
+
+// bd u4ib — Pill Sharp Money — affiche signal divergence Polymarket >5pt
+function renderSharpMoneySignal(m) {
+  const d = m && m.market_divergence;
+  if (!d || !d.sharp_signal) return '';
+  // Quelle leg diverge le plus
+  const dH = Math.abs((d.fair_home || 0) - (d.pm_home || 0));
+  const dD = d.pm_draw != null ? Math.abs((d.fair_draw || 0) - (d.pm_draw || 0)) : 0;
+  const dA = Math.abs((d.fair_away || 0) - (d.pm_away || 0));
+  let leg = '1', max = dH;
+  if (dD > max) { leg = 'N'; max = dD; }
+  if (dA > max) { leg = '2'; max = dA; }
+  // Sens : Polymarket plus haut prob = sharp money sur cette leg
+  const pmVal = leg === '1' ? d.pm_home : leg === 'N' ? d.pm_draw : d.pm_away;
+  const fairVal = leg === '1' ? d.fair_home : leg === 'N' ? d.fair_draw : d.fair_away;
+  const arrow = pmVal > fairVal ? '↑' : '↓';
+  return `<div class="sharp-pill" style="display:inline-block;font-family:var(--font-mono);font-size:9px;font-weight:800;padding:2px 5px;margin-left:3px;border-radius:4px;background:linear-gradient(180deg,#3a1318,#280c10);color:#fb7185;border:1px solid #e2364b;" title="Polymarket sharp money: leg ${leg} prob marché=${fairVal}% vs Polymarket=${pmVal}% (delta ${d.divergence_pct}pt). Signal ${pmVal > fairVal ? 'support' : 'fade'} sur ${leg}.">💎 ${leg}${arrow}</div>`;
+}
+
+// bd u4ib — Tooltip coach name + preferred_formation pour cellule rang
+function renderCoachTooltip(m) {
+  const h = m && m.home_manager;
+  const a = m && m.away_manager;
+  if (!h && !a) return '';
+  const fmt = (mgr) => mgr ? `${mgr.short_name || mgr.name}${mgr.preferred_formation ? ' (' + mgr.preferred_formation + ')' : ''}` : '?';
+  const title = `Coach DOM: ${fmt(h)}\nCoach EXT: ${fmt(a)}`;
+  return `<span style="margin-left:4px;cursor:help;font-size:11px;" title="${title.replace(/"/g, '&quot;')}">🎩</span>`;
+}
+
 function renderOddsDeltaCell(m) {
   // bd c81b — Priorité au signal BSD movement natif (14 books, plus fiable que delta historique mono-source)
   const bsdMov = m.bsd_odds_summary && m.bsd_odds_summary.movement;
@@ -20723,6 +20770,7 @@ const label = country
       <td style="min-width:100px;font-size:10px;padding:4px 6px !important;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
           ${flagImg(m.sport)}<span style="color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;">${m.league}</span>
+          ${renderCoachTooltip(m)}
           <span style="margin-left:auto;cursor:pointer;" onclick="openRadarModal('${m.id}')" title="Stats avancées">📊</span>
         </div>
         ${m.h2h && m.h2h.total > 0
@@ -20731,10 +20779,10 @@ const label = country
         ${formatTopScores(m.poisson?.topScores, 3)}
         ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}</td>
       <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
-        ${renderOddsDeltaCell(m)}
+        ${renderOddsDeltaCell(m)}${renderSharpMoneySignal(m)}
       </td>
       <td>
-        <div class="t3c-wrap">${top3}</div>
+        <div class="t3c-wrap">${top3}${renderCatboostVerdict(m)}</div>
       </td>
       <td>
         <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}${renderTopKPI(m.topKPI, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}</div>
