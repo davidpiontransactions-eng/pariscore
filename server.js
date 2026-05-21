@@ -1295,12 +1295,39 @@ function broadcastSSE(eventName, data) {
 }
 
 // Retourne db.matches avec le mock injecté en tête si actif
+// bd pxt7 — Champs lourds inutilisés par le tableau Foot (#page-matchs).
+// Conservés en mémoire (db.matches) pour /api/v1/insights, /api/v1/comparateur, AI Scout, cron BSD.
+// Strippés du payload /api/v1/matches + SSE pour réduire la bande passante de ~210 KB / 250 matchs
+// (-19% payload sans perte fonctionnelle). Mesure pxt7 : 1115 KB → ~905 KB.
+const _MATCH_LIST_STRIP_FIELDS = [
+  'all_bookmakers',   // 146 KB — utilisé uniquement par /api/v1/comparateur/:id
+  'xgLogistic',       //  23 KB — calcul interne devig, non rendu
+  'bsd_coaches',      //  18 KB — utilisé uniquement par /api/v1/insights/:id (lazy)
+  'poissonEdge',      //   8 KB — backend uniquement (sélection edge)
+  'injuries',         //   5 KB — utilisé par AI Scout + /api/v1/insights/:id
+  'injuryPenalty',    //   5 KB — backend uniquement (calc poisson)
+  'bsd_xg',           //   4 KB — utilisé par /api/v1/insights/:id (lazy)
+  'devigMethod',      //   1 KB — métadonnée interne
+];
+function _stripMatchForList(m) {
+  if (!m) return m;
+  // Évite spread coûteux quand aucun champ à strip présent (perf hot path)
+  let hasStripField = false;
+  for (const f of _MATCH_LIST_STRIP_FIELDS) {
+    if (m[f] != null) { hasStripField = true; break; }
+  }
+  if (!hasStripField) return m;
+  const out = { ...m };
+  for (const f of _MATCH_LIST_STRIP_FIELDS) delete out[f];
+  return out;
+}
+
 function matchesForBroadcast() {
   const base = db.matches || [];
-  if (mockActive && testMatch && testMatch.live_status !== 'FT') {
-    return [testMatch, ...base.filter(m => m.id !== testMatch.id)];
-  }
-  return base;
+  const src = (mockActive && testMatch && testMatch.live_status !== 'FT')
+    ? [testMatch, ...base.filter(m => m.id !== testMatch.id)]
+    : base;
+  return src.map(_stripMatchForList);
 }
 
 function buildMeta() {
@@ -15229,6 +15256,8 @@ async function handleAPI(req, res, pathname, query) {
         }
         console.log('[DEBUG LIVE] Matchs en BDD: ' + matches.length + ', Matchs renvoyés après filtre: ' + liveMatches.length + (mockActive ? ' [MOCK actif]' : '') + ' | statuts: ' + matches.map(function(m){ return m.status || '?'; }).slice(0,10).join(','));
         console.log(`📊 [API] Filtre LIVE actif — ${liveMatches.length} matchs en direct.`);
+        // bd pxt7 — strip champs lourds inutilisés (cf. /api/v1/matches non-live)
+        liveMatches = liveMatches.map(_stripMatchForList);
         return jsonResponse(res, 200, { count: liveMatches.length, matches: liveMatches, meta: { status: db.status, fromCache, serverReady, liveOnly: true, mockActive } });
       }
 
@@ -15281,6 +15310,10 @@ async function handleAPI(req, res, pathname, query) {
       if (mockActive && testMatch && testMatch.live_status !== 'FT') {
         matches = [testMatch, ...matches.filter(m => m.id !== testMatch.id)];
       }
+
+      // bd pxt7 — Strip champs lourds inutilisés par #page-matchs (~210 KB économisés / 250 matchs).
+      // Les routes lazy (/api/v1/insights/, /api/v1/comparateur/, AI Scout) conservent accès complet via db.matches.
+      matches = matches.map(_stripMatchForList);
 
       console.log(`📊 [API] Envoi de ${matches.length} matchs filtrés (Kill Switch 4h bypass LIVE + statuts élargis).`);
       return jsonResponse(res, 200, { count: matches.length, matches, meta: { status: db.status, fromCache, serverReady } });
