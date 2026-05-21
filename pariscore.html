@@ -10207,6 +10207,19 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-live-table tr:hover { background:var(--bg3,#181c20); }
   #tennis-live-table .tennis-serving { font-weight:700; color:#22c55e; }
   #tennis-live-table .tn-live-ball { width:14px; height:14px; display:inline-block; vertical-align:middle; margin-left:6px; filter:drop-shadow(0 0 4px rgba(212,230,13,.55)); animation:tnSrvPulse 1.4s ease-in-out infinite; }
+  /* bd c5i fix: badge "?" gris discret quand source data n'expose pas le serveur */
+  #tennis-live-table .tn-live-srv-unknown {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; margin-left: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: rgba(148,163,184,.55);
+    background: rgba(148,163,184,.08);
+    border: 1px dashed rgba(148,163,184,.30);
+    border-radius: 50%;
+    cursor: help;
+    vertical-align: middle;
+  }
   #tennis-live-table .tennis-set-score { font-family:'DM Mono',monospace; font-size:14px; color:var(--blue,#29b6f6); }
   #tennis-live-table .tennis-games { font-family:'DM Mono',monospace; font-size:13px; color:var(--text2,#8d9399); }
   #tennis-live-table .tennis-point { font-family:'DM Mono',monospace; font-weight:700; color:var(--green,#00e676); }
@@ -13793,8 +13806,11 @@ function renderTennisLive(matches) {
     const p1Cls = m.serving === 1 ? 'tennis-serving' : '';
     const p2Cls = m.serving === 2 ? 'tennis-serving' : '';
     const _ballSvg = '<svg class="tn-live-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg>';
-    const p1Ball = m.serving === 1 ? _ballSvg : '';
-    const p2Ball = m.serving === 2 ? _ballSvg : '';
+    // bd c5i fix: badge "?" gris quand serving inconnu (ESPN/LiveScore expose pas serveur).
+    // Avant: deux balles vides → ambiguite UX. Apres: badge ? sur les 2 lignes uniformement.
+    const _unknownBadge = '<span class="tn-live-srv-unknown" title="Serveur inconnu — source data ne l\'expose pas pour ce match" aria-label="Serveur inconnu">?</span>';
+    const p1Ball = m.serving === 1 ? _ballSvg : (m.serving == null ? _unknownBadge : '');
+    const p2Ball = m.serving === 2 ? _ballSvg : (m.serving == null ? _unknownBadge : '');
     const tour = String(m.tour || '').toUpperCase();
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';

@@ -15126,7 +15126,19 @@ function _normalizeBSDTennisMatch(m) {
     sets,
     current_set_index: m.current_set != null ? Math.max(0, (parseInt(m.current_set, 10) || 1) - 1) : (sets.length ? sets.length - 1 : 0),
     current_point: m.current_point || '',
-    serving: m.is_serving_p1 === true ? 1 : (m.is_serving_p1 === false ? 2 : null),
+    serving: (() => {
+      // Source signal direct
+      if (m.is_serving_p1 === true) return 1;
+      if (m.is_serving_p1 === false) return 2;
+      // bd c5i: inference par parite jeux depuis _tennisServeHist si snapshot connu
+      try {
+        const g1 = (m.player1_games_current || 0) + (Array.isArray(m.sets_detail) ? m.sets_detail.reduce((a, s) => a + (s.p1 || 0), 0) : 0);
+        const g2 = (m.player2_games_current || 0) + (Array.isArray(m.sets_detail) ? m.sets_detail.reduce((a, s) => a + (s.p2 || 0), 0) : 0);
+        const inferred = inferTennisServingFromHistory(m.id, g1, g2);
+        if (inferred === 1 || inferred === 2) return inferred;
+      } catch (_) { /* defensive */ }
+      return null;
+    })(),
     notes: m.round_name || '',
     start_time: m.match_date || null,
     last_update_ts: Date.now(),
@@ -15176,6 +15188,27 @@ function _tennisGamesFromSets(m) {
   }
   return { g1, g2 };
 }
+// bd c5i — Inference serveur par parite des jeux quand source omet l'info.
+// Tennis: serveur alterne CHAQUE jeu. Si on a connu serveur a un snapshot
+// passe, on derive current serveur depuis (totalGames_now - totalGames_then)
+// parite. Retourne null si pas d'info historique.
+function inferTennisServingFromHistory(matchId, currentG1, currentG2) {
+  if (!matchId) return null;
+  const hist = _tennisServeHist.get(matchId) || [];
+  // Cherche le snapshot le plus recent avec serving connu
+  let lastKnown = null;
+  for (let i = hist.length - 1; i >= 0; i--) {
+    if (hist[i].serving === 1 || hist[i].serving === 2) { lastKnown = hist[i]; break; }
+  }
+  if (!lastKnown) return null;
+  const totalThen = (lastKnown.g1 || 0) + (lastKnown.g2 || 0);
+  const totalNow = (currentG1 || 0) + (currentG2 || 0);
+  const elapsed = totalNow - totalThen;
+  if (elapsed < 0 || elapsed > 30) return null; // sanity: 30 jeux d'ecart = nouveau set, defiance
+  // Pair = meme serveur, impair = oppose
+  return (elapsed % 2 === 0) ? lastKnown.serving : (lastKnown.serving === 1 ? 2 : 1);
+}
+
 function recordTennisServe(m) {
   if (!m || !m.id || !m.is_live) return null;
   const { g1, g2 } = _tennisGamesFromSets(m);
