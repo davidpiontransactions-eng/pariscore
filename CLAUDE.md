@@ -156,6 +156,161 @@ bd close <id>         # Complete work
 - If push fails, resolve and retry until it succeeds
 <!-- END BEADS INTEGRATION -->
 
+## 💳 MODULE DE MONÉTISATION & SÉCURITÉ : INTÉGRATION STRIPE
+
+### Objectif
+Implémenter une infrastructure de paiement résiliente, conforme aux standards PCI-DSS, basée sur l'API Stripe (Abonnements / Accès Premium) pour la plateforme Pariscore.
+
+### Directives de Sécurité Absolue
+1. **Zéro Hardcoding :** Aucune clé privée Stripe (`sk_live_...` ou `sk_test_...`) ni secret de webhook (`whsec_...`) ne doit être injecté directement dans le code source ou validé dans Git. Tout doit transiter exclusivement par les variables d'environnement (`.env`).
+2. **Vérification des Webhooks :** La route de réception des webhooks Stripe doit impérativement valider la signature brute de l'événement (`stripe.webhooks.constructEvent`) avec le payload brut (`req.body` non parsé par un bodyParser global) pour empêcher les attaques par rejeu ou usurpation d'identité de paiement.
+3. **Gestion des Rôles :** L'état d'abonnement de l'utilisateur (ex: `is_premium: true`, `stripe_customer_id`, `subscription_status`) doit être synchronisé de manière atomique en base de données dès réception de l'événement `invoice.paid` ou `customer.subscription.deleted`.
+
+
+### MISSION ARCHITECTURE : SYSTÈME D'AUTHENTIFICATION ET BASE DE DONNÉES UTILISATEURS
+
+Claude, active ta matrice de compétences : `database-architect`, `nodejs-backend-patterns`, `security-best-practices` et `frontend-ux-states`.
+
+Nous devons transformer PariScore en une véritable plateforme SaaS. Actuellement, le site est ouvert, mais nous devons implémenter un système d'inscription et de connexion pour gérer les comptes utilisateurs (Free vs Premium) et lier nos futurs paiements Stripe.
+
+Agis en tant que **Lead Security Architect**. 
+
+### ÉTAPE 1 : CHOIX DE L'ARCHITECTURE ET DIAGNOSTIC
+- Analyse notre stack actuelle (Node.js / Express en backend, HTML/JS en frontend).
+- Propose-moi la meilleure approche pour gérer l'authentification : devons-nous construire une solution "maison" (MongoDB/PostgreSQL + JWT + Bcrypt) ou utiliser un service tiers moderne et sécurisé comme Supabase ou Clerk ?
+- Argumente brièvement ton choix en fonction de notre besoin de sécurité (trading/paiement) et de rapidité d'implémentation.
+
+### ÉTAPE 2 : MODÉLISATION DE LA BASE DE DONNÉES (SCHEMA)
+Peu importe la techno choisie, définis le modèle de données (Schema) d'un "User" de PariScore. Il doit au minimum inclure :
+- ID unique, Email, Password (hashé), Date de création.
+- `role` ou `plan` (ex: "free", "premium_monthly").
+- `stripe_customer_id` (pour lier les futurs paiements).
+- `preferences` (objet JSON pour sauvegarder leurs filtres favoris de l'onglet Foot/Tennis).
+
+### ÉTAPE 3 : PLAN D'INTÉGRATION (ROADMAP)
+Rédige un plan d'action étape par étape pour cette implémentation :
+1. Mise en place de la BDD et des routes Backend (/register, /login, /logout, /me).
+2. Création des UI Frontend (Modale de connexion/inscription premium en Glassmorphism).
+3. Protection des routes (Middleware) pour bloquer les données IA/DR Live aux utilisateurs non connectés ou non-Premium.
+
+### ÉTAPE 4 : VALIDATION
+N'écris pas encore le code serveur. Affiche-moi ton choix technologique (Étape 1) et le schéma de base de données (Étape 2) dans le terminal. Attends mon "GO" pour commencer à coder les routes d'authentification.
+
+### MISSION DATA ENGINEERING & UI : DÉTECTION ET AFFICHAGE DU SERVEUR EN LIVE (TENNIS)
+
+Claude, active ta matrice de compétences : `api-integration`, `data-architecture`, `nodejs-backend-patterns` et `frontend-ux-states`.
+
+**🚨 BUG CRITIQUE SIGNALÉ :** Sur notre onglet Tennis en direct, nous avons une faille de données : notre flux API actuel (BSD ou autre) ne permet pas de définir de manière fiable **qui est au service** (le serveur du jeu en cours). C'est une information vitale pour nos parieurs professionnels.
+
+Je veux que tu agisses en tant que **Lead Data Engineer** pour auditer, sourcer et intégrer cette information en temps réel.
+
+Exécute la mission en respectant ces 4 étapes :
+
 ---
 
+### ÉTAPE 1 : AUDIT DU FLUX ACTUEL ET RECHERCHE DE SOURCE FIABLE
+- **Investigation interne :** Inspecte les logs de notre API actuelle (le payload JSON brut des matchs live). Vérifie s'il n'y a pas un champ non exploité (ex: `server`, `current_server`, `serving`, ou une notation dans l'historique des points) que nous aurions raté.
+- **Sourcing Externe :** Si notre API est définitivement aveugle sur ce point, trouve et propose-moi une source ou une méthode fiable pour récupérer cette donnée en live. 
+  *Pistes :* Une autre API légère (type API-Football/Tennis, TheSports, ou un endpoint spécifique GitHub), ou le scraping d'un flux WebSocket public (type SofaScore/Flashscore) uniquement pour extraire l'ID du serveur.
+
+---
+
+### ÉTAPE 2 : LOGIQUE D'INFÉRENCE (PLAN B ALGORITHMIQUE)
+S'il est impossible de sourcer l'info directement sans surcoût majeur, propose un algorithme de "déduction du serveur" basé sur les règles du tennis.
+- *Exemple logique :* En connaissant qui a servi au 1er jeu du 1er set, et en comptant le nombre total de jeux terminés, on peut mathématiquement déduire qui sert dans le jeu actuel (hors Tie-Break où la règle des 2 points s'applique). 
+- Évalue la fiabilité d'une telle approche pour notre backend.
+
+---
+
+### ÉTAPE 3 : INTÉGRATION FRONTEND (LE DESIGN PREMIUM)
+Peu importe la source de la donnée retenue, prévois l'intégration UI dans `pariscore.html` :
+- Injecte une propriété `is_serving: true` sur le joueur concerné dans le state de notre frontend.
+- Ajoute un indicateur visuel élégant, pro et discret à côté du nom du joueur au service (par exemple, une micro-balle de tennis 🎾 stylisée, un point néon vert "Pulse", ou un chevron). 
+
+## 🔊 MODULE AUDIO : ALERTES SONORES DE TRADING (STATE TRACKING)
+
+### Objectif
+Implémenter un système d'alerte sonore (type Terminal Bloomberg) qui avertit le parieur lorsqu'un indicateur clé (Conseils IA, Confiance, Market Edge) monte en puissance lors d'un match en direct ou d'une mise à jour de données.
+
+### Règles d'Implémentation
+1. **Logique de Transition (State Tracking) :** Le son ne doit pas se jouer simplement parce qu'un indicateur est vert. Il doit se jouer **uniquement lors d'une transition positive** : 
+   - Neutre (ou Rouge) ➔ Jaune
+   - Jaune ➔ Vert
+   Cela nécessite de stocker l'état précédent de la cellule (via le `sessionStorage` ou un objet Map local) pour le comparer au nouveau payload.
+2. **Politique Navigateur (Autoplay) :** Les navigateurs modernes (Chrome, Safari) bloquent l'audio non sollicité. Il est **obligatoire** de créer un bouton "Activer les Alertes Sonores" (Toggle) dans l'interface (UI) pour débloquer le contexte audio de la page.
+3. **Throttling (Anti-Spam) :** Si une mise à jour globale fait passer 10 matchs au vert simultanément, le son (`tennis.mp3`) ne doit retentir qu'une seule fois (ou avec un léger décalage) pour ne pas saturer les haut-parleurs.
+---
+
+### ÉTAPE 4 : PROTOCOLE DE VALIDATION (ATTENTE DU "GO")
+⚠️ Ne modifie aucun fichier de production pour le moment.
+1. Fais tes recherches sur la documentation des APIs ou audite notre payload actuel.
+2. Affiche-moi
+
+### MISSION ALGORITHMIQUE & UI : INDICATEURS DYNAMIQUES DE JEUX EN DIRECT (TENNIS)
+
+Claude, active ta matrice de compétences : `javascript-logic`, `sports-betting-quant`, `frontend-design`, et `ui-ux-pro-max`.
+
+Nous devons enrichir le tableau Tennis Live (fichier `pariscore.html` et scripts de rendu associés) avec des indicateurs prédictifs "Over/Under Jeux" qui réagissent dynamiquement en fonction du déroulement du set en cours (Set 1, Set 2, Set 3, Set 4 ou Set 5).
+
+Agis en tant que **Lead Data Engineer & UI Expert**. Implémente cette logique algorithmique et visuelle.
+
+---
+
+### ÉTAPE 1 : LOGIQUE ALGORITHMIQUE (CALCUL DU CONTEXTE DU SET)
+Dans la fonction de rendu ou de traitement des matchs de tennis en direct, tu dois identifier le set en cours (ex: `current_set`) et évaluer le score de ce set (ex: 2-2, 3-2, etc.).
+
+Implémente les règles conditionnelles suivantes pour le set actif :
+1. **Indicateur de base (Début de set) :** Affiche toujours l'indicateur `"Over 7.5 jeux"`.
+   - Si la probabilité de réussite (calculée via nos modèles ou via la data historique du serveur) est $\ge 50\%$, affiche le badge en **Jaune**.
+   - Si la probabilité est $\ge 65\%$, affiche le badge en **Vert**.
+2. **Indicateur de match avancé :** Calcule le nombre total de jeux déjà disputés dans ce set.
+   - Si `jeux_joues > 4` (ex: score de 3-2, 4-1, etc.), ajoute automatiquement un deuxième indicateur : `"Over 8.5 jeux"` (avec le même code couleur que ci-dessus).
+3. **Indicateur de Break (Rupture) :** - Tu dois détecter s'il y a eu un break dans le set (soit via l'API si elle le fournit, soit en calculant si le receveur a remporté un jeu).
+   - Si un **Break** est détecté dans le set en cours, affiche un nouvel indicateur : `"% de réussite sur Under 12.5 jeux"`.
+
+Cette logique doit s'appliquer de la même manière quel que soit le set en cours (S1, S2, S3, S4, S5).
+
+---
+
+### ÉTAPE 2 : INTÉGRATION VISUELLE (UI/UX)
+- Intègre ces indicateurs sous forme de **micro-badges** ou de **pilules (tags)** (ex: `<span class="badge badge-yellow">O 7.5 (52%)</span>`).
+- Ces badges doivent être injectés dans la colonne appropriée du tableau (ex: colonne "Conseils IA" ou "Sets/Jeux").
+- Utilise les codes couleurs stricts de notre Design System : Jaune pour "Moyen" (50-64%) et Vert fluo/émeraude pour "Fort" (65%+).
+- L'affichage doit être ultra-compact pour ne pas casser la hauteur des lignes du tableau (règle des 500ms de lecture).
+
+---
+
+### ÉTAPE 3 : TESTS ET VALIDATION
+1. Analyse la structure actuelle de l'objet `match` pour localiser le set en cours et le score détaillé.
+2. Écris la fonction de calcul (ex: `calculateLiveGameIndicators(match)`) qui renverra les badges HTML à injecter.
+3. Ne modifie les fichiers de production qu'après m'avoir présenté un exemple du rendu JSON/HTML généré par ta fonction.
+4. Lance un test sur `localhost:3000` en simulant un score de 3-2 avec un break pour vérifier que les badges "Over 7.5", "Over 8.5" et "% Under 12.5" s'affichent correctement.
+
+
+### MISSION DE BUGFIX : RÉSOLUTION DE L'AUTOPLAY POLICY (AUDIO DOMEXCEPTION)
+
+Claude, active tes compétences : `javascript-logic`, `browser-apis` et `ui-ux-pro-max`.
+
+🚨 **BUG SIGNALÉ :** Notre système d'alerte sonore génère l'erreur suivante dans la console :
+`Uncaught (in promise) DOMException: play() failed because the user didn't interact with the document first.`
+
+Le navigateur bloque la fonction `playTradingAlert()` car elle se déclenche (via les mises à jour Live) avant que l'utilisateur n'ait cliqué ou interagi avec la page. 
+
+Ta mission est de corriger cela en implémentant une gestion propre de l'Autoplay Policy.
+
+Exécute ces 2 étapes de correction :
+
+---
+
+### ÉTAPE 1 : PROTECTION DE LA FONCTION `.play()`
+- Dans la fonction `playTradingAlert()`, assure-toi que l'appel à `.play()` est bien géré par une Promesse (Promise) pour intercepter le rejet silencieusement sans polluer la console.
+- **Exemple d'implémentation attendue :**
+  ```javascript
+  const playPromise = audioContext.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(error => {
+      // Bloqué par l'autoplay policy, on gère silencieusement
+      console.warn("Audio bloqué en attente d'interaction utilisateur.");
+    });
+  }
 *Dernière mise à jour : v12.31 — 21/05/2026. CLAUDE.md purgé (v7.1 → v12.31 historisés dans `CHANGELOG.md`). Source vérité tâches = `bd ready`.*
