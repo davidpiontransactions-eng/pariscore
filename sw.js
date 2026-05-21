@@ -47,7 +47,9 @@
 // v24 (2026-05-21) : invalide v23 — Design V2.0 complet (v12.0-v12.4) +
 // Phase 4 polish scrollbar + Phase 3 Historique migration + sécurité fix
 // BLOCKED_FILES + QA fixes + momentum La Liga + ETL Historique scaffold.
-const CACHE = 'pariscore-shell-v24';
+// v25 (2026-05-21) : invalide v24 — bd nwk6 push event handler + notificationclick
+// (Phase 1 headerless + Phase 2 payload AES-128-GCM chiffre {title,body,url,icon}).
+const CACHE = 'pariscore-shell-v25';
 const SHELL = [
   '/',
   '/pariscore.html',
@@ -98,5 +100,45 @@ self.addEventListener('fetch', (e) => {
         return resp;
       }).catch(() => cached)
     )
+  );
+});
+
+// bd nwk6 — Push notification handler. Accepte payload JSON {title, body, url, icon}
+// (chiffre AES-128-GCM cote serveur) ou fallback générique si headerless.
+self.addEventListener('push', (e) => {
+  let payload = { title: 'PariScore', body: 'Nouvelle alerte value bet', url: '/', icon: '/icon.svg' };
+  try {
+    if (e.data) {
+      const txt = e.data.text();
+      if (txt) {
+        try { Object.assign(payload, JSON.parse(txt)); }
+        catch (_) { payload.body = txt; }
+      }
+    }
+  } catch (_) { /* fallback to defaults */ }
+  e.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: payload.icon || '/icon.svg',
+      badge: payload.badge || '/icon.svg',
+      tag: payload.tag || 'pariscore-alert',
+      data: { url: payload.url || '/' },
+      renotify: !!payload.renotify,
+      requireInteraction: !!payload.requireInteraction,
+    })
+  );
+});
+
+// bd nwk6 — Clic sur notification → focus tab existant ou ouvre nouvelle
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if (w.url.includes(target) && 'focus' in w) return w.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })
   );
 });
