@@ -21415,6 +21415,127 @@ if (pathname === '/api/v1/status') {
 }
 
 // -------------------------------------------------
+//  GET /api/v1/sources/health — bd:ryi3 Phase 2A
+//  Check provider+latence+quota pour 5 sources data (BSD/ESPN/OddsAPI/Gemini/Felipeall).
+//  Read-only sur état caché — pas de fetch réel pendant /health (sinon route coûteuse).
+//  Phase 2A.1 TODO : wirer recordProviderHealth() dans chaque fetcher pour
+//  alimenter latency_ms + last_error en runtime. Pour l'instant on dérive de
+//  l'état déjà tracké (db.lastOddsUpdate, db.lastStatsUpdate, quotas).
+// -------------------------------------------------
+if (pathname === '/api/v1/sources/health') {
+  // Lazy init du registre health (alimenté par recordProviderHealth si wiré).
+  if (!global._providerHealth) global._providerHealth = {};
+  const ph = global._providerHealth;
+
+  // Helpers — derive status depuis latency + last_error.
+  function _deriveStatus(meta, configured) {
+    if (!configured) return 'down';
+    if (meta && meta.last_error) {
+      const age = meta.last_error_ts ? (Date.now() - meta.last_error_ts) : Infinity;
+      // Erreur < 10min = down sauf si succès plus récent.
+      if (age < 10 * 60 * 1000 && (!meta.last_success_ts || meta.last_success_ts < meta.last_error_ts)) return 'down';
+    }
+    const lat = meta && Number.isFinite(meta.latency_ms) ? meta.latency_ms : null;
+    if (lat !== null) {
+      if (lat > 5000) return 'down';
+      if (lat > 2000) return 'degraded';
+    }
+    return 'ok';
+  }
+
+  // Snapshot par source.
+  const bsdMeta = ph.BSD || {};
+  const espnMeta = ph.ESPN || {};
+  const oddsMeta = ph.OddsAPI || {};
+  const geminiMeta = ph.Gemini || {};
+  const tmMeta = ph.Felipeall || {};
+
+  // OddsAPI : on connaît lastOddsUpdate + quota
+  const oddsLastSuccess = oddsMeta.last_success_ts
+    ? new Date(oddsMeta.last_success_ts).toISOString()
+    : db.lastOddsUpdate || null;
+  // Stats (API-Football) — non listée dans scope 5 sources mais lastStatsUpdate sert pour debug
+  // BSD : pas de quota documenté côté Bzzoiro ; ESPN public = pas de quota
+  // Felipeall : sidecar self-host = pas de quota
+  // Gemini : pay-as-you-go = pas de quota standardisé
+
+  const sources = [
+    {
+      name: 'BSD',
+      configured: !!BSD_API_KEY,
+      status: _deriveStatus(bsdMeta, !!BSD_API_KEY),
+      latency_ms: Number.isFinite(bsdMeta.latency_ms) ? bsdMeta.latency_ms : null,
+      quota_remaining: null,  // BSD : pas de quota header documenté
+      quota_used: null,
+      last_success_ts: bsdMeta.last_success_ts ? new Date(bsdMeta.last_success_ts).toISOString() : null,
+      last_error: bsdMeta.last_error || null,
+      endpoint: BSD_BASE_URL,
+    },
+    {
+      name: 'ESPN',
+      configured: true,  // public API, no key
+      status: _deriveStatus(espnMeta, true),
+      latency_ms: Number.isFinite(espnMeta.latency_ms) ? espnMeta.latency_ms : null,
+      quota_remaining: null,  // public, no quota
+      quota_used: null,
+      last_success_ts: espnMeta.last_success_ts ? new Date(espnMeta.last_success_ts).toISOString() : null,
+      last_error: espnMeta.last_error || null,
+      endpoint: 'https://site.api.espn.com',
+    },
+    {
+      name: 'OddsAPI',
+      configured: !!ODDS_API_KEY,
+      status: _deriveStatus(oddsMeta, !!ODDS_API_KEY),
+      latency_ms: Number.isFinite(oddsMeta.latency_ms) ? oddsMeta.latency_ms : null,
+      quota_remaining: db.oddsQuotaRemaining !== null && db.oddsQuotaRemaining !== undefined
+        ? Number(db.oddsQuotaRemaining)
+        : null,
+      quota_used: null,  // The Odds API expose x-requests-used mais on ne le stocke pas encore
+      last_success_ts: oddsLastSuccess,
+      last_error: oddsMeta.last_error || null,
+      endpoint: 'https://api.the-odds-api.com/v4',
+    },
+    {
+      name: 'Gemini',
+      configured: !!GEMINI_API_KEY,
+      status: _deriveStatus(geminiMeta, !!GEMINI_API_KEY),
+      latency_ms: Number.isFinite(geminiMeta.latency_ms) ? geminiMeta.latency_ms : null,
+      quota_remaining: null,  // pay-as-you-go
+      quota_used: null,
+      last_success_ts: geminiMeta.last_success_ts ? new Date(geminiMeta.last_success_ts).toISOString() : null,
+      last_error: geminiMeta.last_error || null,
+      endpoint: 'https://generativelanguage.googleapis.com/v1beta',
+    },
+    {
+      name: 'Felipeall',
+      configured: !!TM_API_URL,
+      status: _deriveStatus(tmMeta, !!TM_API_URL),
+      latency_ms: Number.isFinite(tmMeta.latency_ms) ? tmMeta.latency_ms : null,
+      quota_remaining: null,  // self-host
+      quota_used: null,
+      last_success_ts: tmMeta.last_success_ts ? new Date(tmMeta.last_success_ts).toISOString() : null,
+      last_error: tmMeta.last_error || null,
+      endpoint: TM_API_URL,
+    },
+  ];
+
+  // Overall : healthy=tous ok, critical=≥1 down, sinon partial
+  const downCount = sources.filter(s => s.status === 'down').length;
+  const okCount = sources.filter(s => s.status === 'ok').length;
+  let overall_status;
+  if (downCount > 0) overall_status = 'critical';
+  else if (okCount === sources.length) overall_status = 'healthy';
+  else overall_status = 'partial';
+
+  return jsonResponse(res, 200, {
+    ts: new Date().toISOString(),
+    sources,
+    overall_status,
+    notes: 'Phase 2A: latency/last_error tracking depends on recordProviderHealth() wiring in fetchers (TODO Phase 2A.1)',
+  });
+}
+
+// -------------------------------------------------
 //  GET /api/v1/fbref/team/:name — FBref advanced stats team query (P4 Pattern B)
 // -------------------------------------------------
 if (pathname.startsWith('/api/v1/fbref/team/')) {
