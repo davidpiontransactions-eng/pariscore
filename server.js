@@ -7108,6 +7108,30 @@ function backfillHistoryFromArchive() {
 }
 
 // Devig 2-way market : retourne probabilité fair en % (entier) de A vs B.
+// bd b3b — Best edge 1X2 : meilleur EV parmi home/draw/away avec cotes marche
+// et probas modele (Poisson teamStats prioritaire). Retourne { label, edge, odds, prob }.
+function computeBest1X2Edge(homeOdds, drawOdds, awayOdds, modelProbs) {
+  if (!Number.isFinite(homeOdds) || !Number.isFinite(awayOdds) || !modelProbs) return null;
+  const dOdds = Number.isFinite(drawOdds) ? drawOdds : ((homeOdds + awayOdds) / 2);
+  const ph = Number.isFinite(modelProbs.home) ? modelProbs.home : null;
+  const pd = Number.isFinite(modelProbs.draw) ? modelProbs.draw : null;
+  const pa = Number.isFinite(modelProbs.away) ? modelProbs.away : null;
+  // Accept probas en pct (0..100) ou ratio (0..1) — normalise
+  const norm = (p) => p == null ? null : (p > 1 ? p / 100 : p);
+  const legs = [
+    { label: 'home', odds: homeOdds, prob: norm(ph) },
+    { label: 'draw', odds: dOdds,    prob: norm(pd) },
+    { label: 'away', odds: awayOdds, prob: norm(pa) },
+  ];
+  let best = null;
+  for (const l of legs) {
+    if (!Number.isFinite(l.odds) || !Number.isFinite(l.prob) || l.odds <= 1 || l.prob <= 0) continue;
+    const edge = (l.odds * l.prob - 1) * 100;
+    if (!best || edge > best.edge) best = { label: l.label, edge: +edge.toFixed(2), odds: l.odds, prob: l.prob };
+  }
+  return best;
+}
+
 function devigTwoWay(oddsA, oddsB) {
   if (!Number.isFinite(oddsA) || !Number.isFinite(oddsB)) return null;
   if (oddsA <= 1 || oddsB <= 1) return null;
@@ -7195,28 +7219,39 @@ async function backfillHistoryFromBSD(daysBack = 14, opts = {}) {
       }
 
       // STRATÉGIE 2 — fallback Poisson via teamStats fuzzy (si cotes absentes)
-      if (probOver25 == null || probBTTS == null) {
-        const hKey = normName(m.home_team);
-        const aKey = normName(m.away_team);
-        const hStats = (db.teamStats && (db.teamStats[hKey] || (typeof findFuzzy === 'function' ? findFuzzy(hKey) : null))) || null;
-        const aStats = (db.teamStats && (db.teamStats[aKey] || (typeof findFuzzy === 'function' ? findFuzzy(aKey) : null))) || null;
-        if (hStats && aStats &&
-            Number.isFinite(hStats.avgScored) && Number.isFinite(aStats.avgConceded) &&
-            Number.isFinite(aStats.avgScored) && Number.isFinite(hStats.avgConceded)) {
-          const lh = (hStats.avgScored / LEAGUE_AVG) * aStats.avgConceded;
-          const la = (aStats.avgScored / LEAGUE_AVG) * hStats.avgConceded;
-          if (lh > 0 && la > 0) {
-            try {
-              const poisson = computePoisson(lh, la);
-              if (probOver25 == null) probOver25 = poisson.over25;
-              if (probBTTS == null)  probBTTS  = poisson.btts;
-            } catch (e) { console.warn('[CATCH-04] computePoisson (buildValueBets):', e.message); }
-          }
+      // bd b3b — capture aussi probs 1X2 pour bestEdge ; couvre les deux cas
+      // (Poisson dispo pour edge meme si over25 deja calc depuis cotes).
+      let poisson1X2 = null;
+      const hKey = normName(m.home_team);
+      const aKey = normName(m.away_team);
+      const hStats = (db.teamStats && (db.teamStats[hKey] || (typeof findFuzzy === 'function' ? findFuzzy(hKey) : null))) || null;
+      const aStats = (db.teamStats && (db.teamStats[aKey] || (typeof findFuzzy === 'function' ? findFuzzy(aKey) : null))) || null;
+      if (hStats && aStats &&
+          Number.isFinite(hStats.avgScored) && Number.isFinite(aStats.avgConceded) &&
+          Number.isFinite(aStats.avgScored) && Number.isFinite(hStats.avgConceded)) {
+        const lh = (hStats.avgScored / LEAGUE_AVG) * aStats.avgConceded;
+        const la = (aStats.avgScored / LEAGUE_AVG) * hStats.avgConceded;
+        if (lh > 0 && la > 0) {
+          try {
+            const poisson = computePoisson(lh, la);
+            if (probOver25 == null) probOver25 = poisson.over25;
+            if (probBTTS == null)  probBTTS  = poisson.btts;
+            // 1X2 probs pour computeBest1X2Edge (toujours capturees si Poisson OK)
+            if (Number.isFinite(poisson.homeWin) && Number.isFinite(poisson.awayWin)) {
+              poisson1X2 = { home: poisson.homeWin, draw: poisson.draw, away: poisson.awayWin };
+            }
+          } catch (e) { console.warn('[CATCH-04] computePoisson (buildValueBets):', e.message); }
         }
       }
 
       // Skip si aucune prédiction trouvée (ni cotes ni teamStats)
       if (probOver25 == null && probBTTS == null) continue;
+
+      // bd b3b — bestEdge 1X2 quand cotes m.odds.home/draw/away + Poisson dispo
+      let best1X2 = null;
+      if (m.odds && Number.isFinite(m.odds.home) && Number.isFinite(m.odds.away) && poisson1X2) {
+        best1X2 = computeBest1X2Edge(m.odds.home, m.odds.draw, m.odds.away, poisson1X2);
+      }
 
       const realScore = { home: m.home_score, away: m.away_score, source: 'backfill_bsd' };
       const record = {
@@ -7225,8 +7260,13 @@ async function backfillHistoryFromBSD(daysBack = 14, opts = {}) {
         predicted: {
           over25: probOver25,
           btts: probBTTS,
-          bestEdge: null,
-          bestEdgeValue: null,
+          bestEdge: best1X2 ? best1X2.label : null,
+          bestEdgeValue: best1X2 ? best1X2.edge : null,
+          bestEdgeOdds: best1X2 ? best1X2.odds : null,
+          // Snapshot Poisson 1X2 pour audit + recompute futur
+          homeWin: poisson1X2 ? poisson1X2.home : null,
+          draw:    poisson1X2 ? poisson1X2.draw : null,
+          awayWin: poisson1X2 ? poisson1X2.away : null,
         },
         odds_snapshot: m.odds || null,
         realScore,
@@ -7272,16 +7312,21 @@ async function backfillHistoryFromBSD(daysBack = 14, opts = {}) {
 // Appelé après fetchStats() — non-destructif (skip si predicted déjà rempli).
 function enrichHistoryPoisson() {
   if (!history.length) return 0;
-  let enriched_odds = 0, enriched_poisson = 0, skipped = 0;
+  let enriched_odds = 0, enriched_poisson = 0, enriched_edge = 0, skipped = 0;
   const LEAGUE_AVG = 1.35;
   const hasTeamStats = db.teamStats && Object.keys(db.teamStats).length > 0;
 
   for (const h of history) {
     if (!h.verified || !h.realScore) continue;
-    if (Number.isFinite(h.predicted?.over25) && Number.isFinite(h.predicted?.btts)) continue;
+    // bd b3b — process records meme si over25/btts deja remplis, pour compute bestEdge manquant
+    const needsProbs = !Number.isFinite(h.predicted?.over25) || !Number.isFinite(h.predicted?.btts);
+    const needsEdge = !Number.isFinite(h.predicted?.bestEdgeValue) || !h.predicted?.bestEdge;
+    if (!needsProbs && !needsEdge) continue;
 
     let probOver25 = h.predicted?.over25;
     let probBTTS = h.predicted?.btts;
+    let poisson1X2 = (Number.isFinite(h.predicted?.homeWin) && Number.isFinite(h.predicted?.awayWin))
+      ? { home: h.predicted.homeWin, draw: h.predicted.draw, away: h.predicted.awayWin } : null;
     let source = null;
 
     // STRATÉGIE 1 — odds_snapshot
@@ -7296,8 +7341,8 @@ function enrichHistoryPoisson() {
       }
     }
 
-    // STRATÉGIE 2 — Poisson teamStats fuzzy
-    if ((!Number.isFinite(probOver25) || !Number.isFinite(probBTTS)) && hasTeamStats) {
+    // STRATÉGIE 2 — Poisson teamStats fuzzy (+ bd b3b : capture aussi probs 1X2)
+    if ((!Number.isFinite(probOver25) || !Number.isFinite(probBTTS) || !poisson1X2) && hasTeamStats) {
       const hKey = normName(h.home_team);
       const aKey = normName(h.away_team);
       const hStats = db.teamStats[hKey] || findFuzzy(hKey);
@@ -7312,19 +7357,41 @@ function enrichHistoryPoisson() {
             const poisson = computePoisson(lh, la);
             if (!Number.isFinite(probOver25)) { probOver25 = poisson.over25; source = source || 'poisson'; }
             if (!Number.isFinite(probBTTS))   { probBTTS  = poisson.btts;   source = source || 'poisson'; }
+            if (!poisson1X2 && Number.isFinite(poisson.homeWin) && Number.isFinite(poisson.awayWin)) {
+              poisson1X2 = { home: poisson.homeWin, draw: poisson.draw, away: poisson.awayWin };
+            }
           } catch (e) { console.warn('[CATCH-05] computePoisson (backfill):', e.message); }
         }
       }
     }
 
-    if (!Number.isFinite(probOver25) && !Number.isFinite(probBTTS)) { skipped++; continue; }
+    // bd b3b — bestEdge 1X2 si cotes odds_snapshot.home/draw/away + Poisson 1X2 dispos
+    let best1X2 = null;
+    const odds = h.odds_snapshot || {};
+    if (Number.isFinite(odds.home) && Number.isFinite(odds.away) && poisson1X2) {
+      best1X2 = computeBest1X2Edge(odds.home, odds.draw, odds.away, poisson1X2);
+    }
+
+    if (!Number.isFinite(probOver25) && !Number.isFinite(probBTTS) && !best1X2) { skipped++; continue; }
 
     h.predicted = h.predicted || {};
     if (Number.isFinite(probOver25)) h.predicted.over25 = probOver25;
     if (Number.isFinite(probBTTS))   h.predicted.btts = probBTTS;
+    // Snapshot Poisson 1X2 pour audit + recompute futur
+    if (poisson1X2) {
+      if (!Number.isFinite(h.predicted.homeWin)) h.predicted.homeWin = poisson1X2.home;
+      if (!Number.isFinite(h.predicted.draw))    h.predicted.draw    = poisson1X2.draw;
+      if (!Number.isFinite(h.predicted.awayWin)) h.predicted.awayWin = poisson1X2.away;
+    }
+    if (best1X2) {
+      h.predicted.bestEdge      = best1X2.label;
+      h.predicted.bestEdgeValue = best1X2.edge;
+      h.predicted.bestEdgeOdds  = best1X2.odds;
+      enriched_edge++;
+    }
     h.enriched = source;
     if (source === 'odds') enriched_odds++;
-    else enriched_poisson++;
+    else if (source === 'poisson') enriched_poisson++;
 
     const rs = h.realScore;
     const wasOver25 = (rs.home + rs.away) > 2.5;
@@ -7339,10 +7406,10 @@ function enrichHistoryPoisson() {
     }
   }
 
-  const enriched = enriched_odds + enriched_poisson;
+  const enriched = enriched_odds + enriched_poisson + enriched_edge;
   if (enriched > 0) {
     saveHistory();
-    console.log(`  [EnrichHistory] ✓ ${enriched} matchs enrichis (odds: ${enriched_odds}, poisson: ${enriched_poisson}, skipped: ${skipped}) — over25_total: ${accuracy.over25_total}, btts_total: ${accuracy.btts_total}`);
+    console.log(`  [EnrichHistory] ✓ ${enriched_odds + enriched_poisson} matchs probs (odds: ${enriched_odds}, poisson: ${enriched_poisson}) + ${enriched_edge} bestEdge 1X2 enrichis (skipped: ${skipped}) — over25_total: ${accuracy.over25_total}, btts_total: ${accuracy.btts_total}`);
   } else {
     console.log(`  [EnrichHistory] 0 enrichis sur ${history.length} (skipped: ${skipped})`);
   }
