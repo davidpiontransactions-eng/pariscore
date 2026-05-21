@@ -24,13 +24,13 @@
 |---|---|---|---|
 | **Coverage sports** | 7 sports actifs PariScore | 50+ sports (sportId 10=foot, 12=tennis, 11=basket, …) | odds-api1 |
 | **Coverage bookmakers** | ~40 dont 0 sharp en free | **368 books** dont Pinnacle, 1xBet, Bet365, Betfair Exchange | **odds-api1 (gros plus)** |
-| **Coverage FR/ANJ** | Winamax, Betclic, Unibet, PMU, NetBet, Bwin, FDJ | 12/13 books ANJ (manque **Betclic**) + FDJ + Pinnacle FR | Odds API marginalement |
+| **Coverage FR/ANJ** | Winamax, Betclic, Unibet, PMU, NetBet, Bwin, FDJ | 12/13 books ANJ (manque **Betclic**) + FDJ | Odds API marginalement |
 | **Markets** | h2h + spreads + totals | 1X2 (101) + BTTS (104) + O/U (106) + handicaps + props | Parite |
 | **Pricing** | $0 free 500 req/mo → $30 Starter 20k req/mo | RAPIDAPI_KEY mutualisee (deja payee), 1 req = 1 req | odds-api1 |
 | **Quota epuise** | OUI (chronique, bd `l3x`) | NON (mutualise 4+ APIs) | odds-api1 |
 | **Latence** | 200-500ms | ~300ms observe (probes _probe_rapidapi_odds*.js) | Parite |
 | **Format reponse** | Bookmakers array (clean) | `bookmakerOdds{slug}.markets{mid}.outcomes{oid}` — necessite mapper | Odds API (more direct) |
-| **Pinnacle (sharp)** | Indisponible free | ✅ Disponible (fr:True + websocketLive) | **odds-api1** |
+| **Pinnacle (sharp)** | ❌ **Indisponible TOUS tiers** (cf. research-pinnacle-api-2026.md — Odds API ne contient PAS Pinnacle même payant; correction post-spike) | ✅ Disponible (fr:True + websocketLive) si endpoint odds-by-tournaments accessible | **odds-api1** (sous réserve Phase 1 runtime, actuellement 404) |
 | **WebSocket live** | Non | Oui (champ `websocketLive` par book) | odds-api1 |
 | **Risque editeur tiers** | Faible (stable 2020+) | Moyen (publisher RapidAPI) | Odds API |
 | **Score global /100** | 60 (epuise, sharps absents) | **78** (sharps + mutualisation cle) | **odds-api1 (+18)** |
@@ -39,7 +39,7 @@
 
 ### 3. TROIS CAS D'USAGE OU odds-api1 BAT Odds API
 
-1. **WFV / IC / Surebet calcul plus juste** — `computeWFV1N2` et `detectSurebet1N2` consomment `all_bookmakers`. Pinnacle (sharp low-vig) ajoute change la « Val. Marche Ponderee » de ~5-10% (mesure typique), reduit faux positifs Surebet, ameliore calibration ValueBet. **Inaccessible avec Odds API free.**
+1. **WFV / IC / Surebet calcul plus juste** — `computeWFV1N2` et `detectSurebet1N2` consomment `all_bookmakers`. Pinnacle (sharp low-vig) ajoute change la « Val. Marche Ponderee » de ~5-10% (mesure typique), reduit faux positifs Surebet, ameliore calibration ValueBet. **Inaccessible TOUS tiers Odds API** (correction: research-pinnacle-api-2026.md confirme Odds API n'inclut PAS Pinnacle même payant). Alternatives Pinnacle: OddsPapi.io free 250 req · pinnodds.com $99/mo · SportsGameOdds Rookie $99/mo.
 2. **Enrichissement matchs BSD-only sans cotes** — Routing actuel : L1 BSD → L1.5 RapidAPI Free Football → L2 stats → L3 ESPN. Beaucoup de matchs L2 ligues secondaires arrivent sans `bookmakers[].h2h`. `enrichWithOdds()` (dans `odds-rapidapi.js`) injecte les cotes manquantes via odds-api1, gagne ~20-30% coverage cotes/match (estim. base BSD seul ~60%, attendue post-integration ~85%).
 3. **Failover quota** — Quand Odds API quota epuise (bd `l3x` constate ~3-4×/mois), odds-api1 prend le relais sans intervention DG. Le frontend conserve `best_edge` au lieu d'afficher `null`. Reduit le bug recurrent « cotes vides Ligue 1 ».
 
