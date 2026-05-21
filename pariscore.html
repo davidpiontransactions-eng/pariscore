@@ -13133,6 +13133,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <div class="ins-tab" onclick="insShowTab('corners')">Corners</div>
         <div class="ins-tab" onclick="insShowTab('powerscore')">Power Score</div>
         <div class="ins-tab" onclick="insShowTab('h2h')">H2H</div>
+        <div class="ins-tab" onclick="insShowTab('compos')">Compos</div>
+        <div class="ins-tab" onclick="insShowTab('incidents')">Incidents</div>
+        <div class="ins-tab" onclick="insShowTab('shotmap')">Shotmap</div>
       </div>
       <select id="ins-tab-mob" aria-label="Section" onchange="insShowTab(this.value)">
         <option value="resume">Résumé</option>
@@ -13144,6 +13147,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <option value="corners">Corners</option>
         <option value="powerscore">Power Score</option>
         <option value="h2h">H2H</option>
+        <option value="compos">Compos</option>
+        <option value="incidents">Incidents</option>
+        <option value="shotmap">Shotmap</option>
       </select>
       <div id="ins-tab-resume"></div>
       <div id="ins-tab-stats"      style="display:none"></div>
@@ -13154,6 +13160,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <div id="ins-tab-powerscore" style="display:none"></div>
       <div id="ins-tab-scouting"   style="display:none"><div id="scout-content" style="padding:16px"></div></div>
       <div id="ins-tab-h2h"        style="display:none"></div>
+      <div id="ins-tab-compos"     style="display:none"></div>
+      <div id="ins-tab-incidents"  style="display:none"></div>
+      <div id="ins-tab-shotmap"    style="display:none"></div>
       <!-- CTA-2 : bandeau bonus footer (populated par openInsights) -->
       <div class="aff-bonus-strip" id="ins-aff-bonus-strip" style="display:none">
         <div class="aff-bonus-strip__icon" aria-hidden="true">★</div>
@@ -20682,6 +20691,10 @@ const label = country
       <td style="min-width:70px;padding:4px 6px !important;">
         <div style="margin-bottom:2px;">${formBalls(m.home_form)}</div>
         <div>${formBalls(m.away_form)}</div>
+        <div style="display:flex;gap:4px;align-items:center;margin-top:4px;">
+          <button class="ins-btn" style="font-size:9px;padding:3px 5px;" onclick="event.stopPropagation();openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
+          <button class="ai-gen-btn" style="font-size:9px;padding:3px 5px;" onclick="event.stopPropagation();openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
+        </div>
       </td>
       <td style="min-width:100px;font-size:10px;padding:4px 6px !important;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
@@ -21383,7 +21396,11 @@ function insSetSmartLieu(v)     { insSmartLieu = v; _rebuildClassement(); }
 
 function insShowTab(tab) {
   if (tab !== 'powerscore' && psEventSource) { psEventSource.close(); psEventSource = null; }
-  const tabs = ['resume','stats','joueurs','scouting','graphique','classement','corners','powerscore','h2h'];
+  // bd 8oov: arrêter le refresh incidents quand on quitte l'onglet
+  if (tab !== 'incidents' && typeof bsdIncidentsTimer !== 'undefined' && bsdIncidentsTimer) {
+    clearInterval(bsdIncidentsTimer); bsdIncidentsTimer = null;
+  }
+  const tabs = ['resume','stats','joueurs','scouting','graphique','classement','corners','powerscore','h2h','compos','incidents','shotmap'];
   tabs.forEach(t => {
     const el = document.getElementById(`ins-tab-${t}`);
     if (el) el.style.display = t === tab ? '' : 'none';
@@ -21413,8 +21430,243 @@ function insShowTab(tab) {
       container.innerHTML = buildJoueursTab(insCurrentData);
     }
   }
+  // bd 8oov: nouveaux onglets BSD (Compos / Incidents / Shotmap)
+  if (tab === 'compos') {
+    const container = document.getElementById('ins-tab-compos');
+    if (container && container.dataset.loaded !== '1' && insCurrentMatchId) {
+      container.dataset.loaded = '1';
+      buildBsdCompos(insCurrentMatchId);
+    }
+  }
+  if (tab === 'incidents') {
+    const container = document.getElementById('ins-tab-incidents');
+    if (container && insCurrentMatchId) {
+      // toujours refresh à l'ouverture (live)
+      buildBsdIncidents(insCurrentMatchId, true);
+    }
+  }
+  if (tab === 'shotmap') {
+    const container = document.getElementById('ins-tab-shotmap');
+    if (container && container.dataset.loaded !== '1' && insCurrentMatchId) {
+      container.dataset.loaded = '1';
+      buildBsdShotmap(insCurrentMatchId);
+    }
+  }
   var _its = document.getElementById('ins-tab-mob');
   if (_its && _its.value !== tab) _its.value = tab;
+}
+
+// ─── BSD MCP Enrichissements (bd 8oov) ──────────────────────────────────────
+// 3 onglets: Compos (lineups XI + bench + injured), Incidents (timeline live),
+// Shotmap (stats brutes + grid SVG des tirs si dispo). Consomme les routes
+// /api/v1/bsd/{lineups,incidents,shotmap}/<matchId>. Fail-soft : si data:null
+// (BSD upstream KO ou match sans lineups), placeholder + retry manuel.
+let bsdIncidentsTimer = null;
+
+async function buildBsdCompos(matchId) {
+  const el = document.getElementById('ins-tab-compos');
+  if (!el) return;
+  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement compositions BSD…</div>';
+  try {
+    const res = await apiFetch(`/api/v1/bsd/lineups/${encodeURIComponent(matchId)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const out = await res.json();
+    const d = out.data || {};
+    if (!d.lineups) {
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">Compositions indisponibles pour ce match.<br><span style="font-size:11px">Statut BSD : ${d.lineup_status || 'unknown'}</span></div>`;
+      return;
+    }
+    const status = d.lineup_status || 'unknown';
+    const beta = d.beta ? ' · <span style="color:var(--amber)">BETA</span>' : '';
+    const statusBadge = status === 'confirmed'
+      ? '<span style="color:var(--green);font-weight:700">CONFIRMÉE</span>'
+      : status === 'predicted'
+        ? '<span style="color:var(--blue);font-weight:700">IA-PRÉDITE</span>'
+        : `<span style="color:var(--text3)">${status}</span>`;
+    const renderSide = (side, sideLabel) => {
+      if (!side) return `<div class="ins-empty" style="padding:24px 16px">${sideLabel} : pas de données</div>`;
+      const players = (side.players || []).map(p => `
+        <li style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--bg4);">
+          <span style="font-family:'DM Mono',monospace;color:var(--text2);font-size:11px;min-width:28px;text-align:right">#${p.jersey_number ?? '—'}</span>
+          <span style="flex:1;padding-left:10px;color:var(--text);font-size:13px">${p.short_name || p.name}</span>
+          <span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px;min-width:30px;text-align:center">${p.position || '—'}</span>
+          ${p.ai_score != null ? `<span style="font-family:'DM Mono',monospace;color:${p.ai_score > 0.7 ? 'var(--green)' : p.ai_score > 0.4 ? 'var(--amber)' : 'var(--text3)'};font-size:10px;min-width:40px;text-align:right">${(p.ai_score*100).toFixed(0)}%</span>` : ''}
+        </li>`).join('');
+      const bench = (side.substitutes || []).slice(0, 8).map(p => `
+        <li style="display:flex;justify-content:space-between;padding:4px 8px;color:var(--text3);font-size:11px">
+          <span>#${p.jersey_number ?? '—'} ${p.short_name || p.name}</span>
+          <span>${p.position || ''}</span>
+        </li>`).join('');
+      return `
+        <div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+            <strong style="color:var(--green);font-size:13px">${side.team_name}</strong>
+            <span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px">${side.formation || '—'} · conf ${side.confidence != null ? (side.confidence*100).toFixed(0)+'%' : '—'}</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Titulaires</div>
+          <ul style="list-style:none;padding:0;margin:0">${players || '<li style="color:var(--text3);padding:8px">—</li>'}</ul>
+          ${bench ? `<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 4px">Banc (top 8)</div><ul style="list-style:none;padding:0;margin:0">${bench}</ul>` : ''}
+        </div>`;
+    };
+    const renderInjured = (list, sideLabel) => {
+      if (!list || !list.length) return '';
+      const items = list.map(p => `<li style="font-size:11px;color:var(--text3);padding:2px 0">⚕️ ${p.short_name || p.name} <span style="color:var(--red)">(${p.status})</span>${p.reason && p.reason !== 'Unknown' ? ` — ${p.reason}` : ''}</li>`).join('');
+      return `<div style="margin-top:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Absents ${sideLabel}</div><ul style="list-style:none;padding:0;margin:4px 0 0">${items}</ul></div>`;
+    };
+    el.innerHTML = `
+      <div style="padding:14px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · ${statusBadge}${beta}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${out.cached ? 'CACHE 6H' : 'LIVE'} · event ${out.event_id}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${renderSide(d.lineups.home, 'Domicile')}
+          ${renderSide(d.lineups.away, 'Extérieur')}
+        </div>
+        ${d.unavailable_players ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">${renderInjured(d.unavailable_players.home, 'dom')}${renderInjured(d.unavailable_players.away, 'ext')}</div>` : ''}
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement compositions BSD : ${e.message}</div>`;
+  }
+}
+
+async function buildBsdIncidents(matchId, autoRefresh) {
+  const el = document.getElementById('ins-tab-incidents');
+  if (!el) return;
+  // 1er chargement : loader. Refresh : silencieux.
+  if (!el.dataset.loaded) {
+    el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement timeline incidents…</div>';
+  }
+  try {
+    const res = await apiFetch(`/api/v1/bsd/incidents/${encodeURIComponent(matchId)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const out = await res.json();
+    const d = out.data || {};
+    const incidents = Array.isArray(d.incidents) ? d.incidents : [];
+    if (!incidents.length) {
+      el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Aucun incident enregistré pour ce match.</div>';
+      el.dataset.loaded = '1';
+      return;
+    }
+    const iconFor = (t) => {
+      if (t === 'goal') return '⚽';
+      if (t === 'yellowCard' || t === 'yellow_card') return '🟨';
+      if (t === 'redCard' || t === 'red_card') return '🟥';
+      if (t === 'substitution') return '🔄';
+      if (t === 'penalty') return '🥅';
+      if (t === 'var') return '📺';
+      if (t === 'period') return '⏱️';
+      return '•';
+    };
+    const rows = incidents.slice().reverse().map(inc => {
+      const side = inc.is_home === true ? 'D' : inc.is_home === false ? 'E' : '—';
+      const sideCol = side === 'D' ? 'var(--green)' : side === 'E' ? 'var(--blue)' : 'var(--text3)';
+      const minute = inc.minute != null ? `${inc.minute}'${inc.added_time ? `+${inc.added_time}` : ''}` : '—';
+      const player = inc.player ? `<strong style="color:var(--text)">${inc.player}</strong>` : '';
+      const txt = inc.text ? `<span style="color:var(--text2)">${inc.text}</span>` : '';
+      const score = (inc.home_score != null && inc.away_score != null) ? `<span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px">${inc.home_score}–${inc.away_score}</span>` : '';
+      return `<li style="display:grid;grid-template-columns:42px 26px 22px 1fr 44px;gap:10px;align-items:center;padding:7px 8px;border-bottom:1px solid var(--bg4);font-size:12px">
+        <span style="font-family:'DM Mono',monospace;color:var(--text3);text-align:right">${minute}</span>
+        <span style="text-align:center">${iconFor(inc.type)}</span>
+        <span style="color:${sideCol};font-weight:700;font-family:'DM Mono',monospace">${side}</span>
+        <span>${player} ${txt}</span>
+        ${score}
+      </li>`;
+    }).join('');
+    el.innerHTML = `
+      <div style="padding:14px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · TIMELINE INCIDENTS</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${incidents.length} évts · ${out.cached ? 'CACHE 1min' : 'LIVE'}</div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;max-height:60vh;overflow:auto">${rows}</ul>
+      </div>`;
+    el.dataset.loaded = '1';
+    // Auto-refresh 30s si match actif
+    if (autoRefresh && !bsdIncidentsTimer) {
+      bsdIncidentsTimer = setInterval(() => buildBsdIncidents(matchId, false), 30000);
+    }
+  } catch (e) {
+    if (!el.dataset.loaded) {
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement incidents : ${e.message}</div>`;
+    }
+  }
+}
+
+async function buildBsdShotmap(matchId) {
+  const el = document.getElementById('ins-tab-shotmap');
+  if (!el) return;
+  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement shotmap BSD…</div>';
+  try {
+    const res = await apiFetch(`/api/v1/bsd/shotmap/${encodeURIComponent(matchId)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const out = await res.json();
+    const d = out.data || {};
+    const stats = d.stats || {};
+    const shots = Array.isArray(d.shotmap) ? d.shotmap : [];
+    const sh = stats.home || {};
+    const sa = stats.away || {};
+    const statCell = (label, h, a, hi) => `
+      <div style="display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bg4)">
+        <span style="font-family:'DM Mono',monospace;color:${hi && (h||0) > (a||0) ? 'var(--green)' : 'var(--text2)'};text-align:right;font-size:12px">${h ?? '—'}</span>
+        <span style="text-align:center;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">${label}</span>
+        <span style="font-family:'DM Mono',monospace;color:${hi && (a||0) > (h||0) ? 'var(--green)' : 'var(--text2)'};text-align:left;font-size:12px">${a ?? '—'}</span>
+      </div>`;
+    let shotsGrid = '';
+    if (shots.length) {
+      // Grid SVG simple : terrain 100x60, tirs colorés par équipe, taille = xG
+      const dots = shots.map(s => {
+        const x = (s.x != null) ? s.x : 50;
+        const y = (s.y != null) ? s.y : 50;
+        const xg = s.xg || s.x_g || 0.05;
+        const r = Math.min(Math.max(xg * 12, 2), 8);
+        const isHome = s.is_home === true || s.team === 'home';
+        const color = isHome ? '#00e676' : '#29b6f6';
+        const opacity = (s.outcome === 'goal' || s.is_goal) ? 1 : 0.55;
+        return `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" opacity="${opacity}"/>`;
+      }).join('');
+      shotsGrid = `
+        <div style="margin-top:12px">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Shotmap (${shots.length} tirs)</div>
+          <svg viewBox="0 0 100 60" style="width:100%;height:auto;background:linear-gradient(180deg,#0b1410,#0a1010);border:1px solid var(--bg4);border-radius:6px">
+            <rect x="0.5" y="0.5" width="99" height="59" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
+            <line x1="50" y1="0" x2="50" y2="60" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
+            <circle cx="50" cy="30" r="6" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
+            ${dots}
+          </svg>
+          <div style="display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">
+            <span><span style="color:#00e676">●</span> Domicile</span>
+            <span><span style="color:#29b6f6">●</span> Extérieur</span>
+            <span>· taille = xG · plein = but</span>
+          </div>
+        </div>`;
+    } else {
+      shotsGrid = `<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--text3);padding:14px;border:1px dashed var(--bg4);border-radius:6px">Aucun tir détaillé disponible (match non commencé ou shotmap non publiée par BSD).</div>`;
+    }
+    el.innerHTML = `
+      <div style="padding:14px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · SHOTMAP & STATS LIVE</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${out.cached ? 'CACHE 2min' : 'LIVE'} · event ${out.event_id}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;align-items:center;margin-bottom:6px">
+            <strong style="color:var(--green);font-size:12px">Domicile</strong>
+            <strong style="color:var(--blue);font-size:12px;text-align:right">Extérieur</strong>
+          </div>
+          ${statCell('Possession %', sh.ball_possession, sa.ball_possession, true)}
+          ${statCell('Tirs cadrés', sh.shots_on_target, sa.shots_on_target, true)}
+          ${statCell('Tirs non cadrés', sh.shots_off_target, sa.shots_off_target, false)}
+          ${statCell('Corners', sh.corner_kicks, sa.corner_kicks, true)}
+          ${statCell('Jaunes', sh.yellow_cards, sa.yellow_cards, false)}
+          ${statCell('Rouges', sh.red_cards, sa.red_cards, false)}
+          ${statCell('xG (réel)', sh.xg?.actual, sa.xg?.actual, true)}
+          ${shotsGrid}
+        </div>
+      </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement shotmap : ${e.message}</div>`;
+  }
 }
 
 function formBadges(form) {
@@ -23190,13 +23442,17 @@ async function openInsights(matchId) {
   document.getElementById('ins-teams').textContent = `${m.home_team} — ${m.away_team}${insLiveScore}`;
   document.getElementById('ins-league').innerHTML = `${m.league} · ${fmtKickoffDate(m.commence_time, { weekday: 'long', day: 'numeric', month: 'long' })}${insIntensity}`;
 
-  ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore'].forEach(id => {
+  ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-compos','ins-tab-incidents','ins-tab-shotmap'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement…</div>`; el.dataset.loaded = ''; }
   });
   // v68.0: Scouting garde son DOM interne (scout-content) — loader séparé
   const scoutEl = document.getElementById('ins-tab-scouting');
   if (scoutEl) { scoutEl.dataset.loaded = ''; }
+  // bd 8oov: stopper le timer incidents auto-refresh d'un précédent match
+  if (typeof bsdIncidentsTimer !== 'undefined' && bsdIncidentsTimer) {
+    clearInterval(bsdIncidentsTimer); bsdIncidentsTimer = null;
+  }
 
   document.getElementById('insights-modal').classList.add('open');
   insShowTab('resume');
