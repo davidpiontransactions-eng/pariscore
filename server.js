@@ -2511,6 +2511,277 @@ async function bsdFetch(endpoint, retries = 2) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd c81b — BSD MCP enrichments Foot (A=compare_odds, C=predictions ML, D=polymarket, E=managers)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// A — compare_odds : 14 books + 7 markets en 1 call, movement SHORTENING/DRIFTING natif.
+const _bsdOddsCache = new Map(); // eventId → { ts, data }
+const BSD_ODDS_TTL_MS = 5 * 60 * 1000; // 5min
+async function fetchBSDCompareOdds(eventId) {
+  if (!eventId) return null;
+  const cached = _bsdOddsCache.get(eventId);
+  if (cached && Date.now() - cached.ts < BSD_ODDS_TTL_MS) return cached.data;
+  try {
+    const res = await bsdFetch(`/odds/compare/?event=${eventId}`);
+    if (res.status !== 200 || !res.data) return null;
+    _bsdOddsCache.set(eventId, { ts: Date.now(), data: res.data });
+    return res.data;
+  } catch (e) { console.warn('[BSD Odds]', eventId, e.message); return null; }
+}
+
+// Extrait les champs essentiels pour PariScore depuis le payload compare_odds.
+// Retourne { books_count, best, consensus, movement, updated_at } pour fusion match record.
+function extractBSDOddsSummary(payload) {
+  if (!payload || !payload.markets) return null;
+  const m1x2 = payload.markets['1x2'];
+  if (!m1x2 || !m1x2.HOME || !m1x2.AWAY) return null;
+  const consensus = (outcome) => {
+    const bk = outcome && outcome.bookmakers && outcome.bookmakers['oddssafari-consensus'];
+    return bk && Number.isFinite(bk.decimal_odds) ? bk.decimal_odds : null;
+  };
+  const movementOf = (outcome) => {
+    if (!outcome || !outcome.bookmakers) return null;
+    // Agrège : compte SHORTENING vs DRIFTING parmi les books → majorité
+    let s = 0, d = 0;
+    for (const bk of Object.values(outcome.bookmakers)) {
+      if (bk.movement === 'SHORTENING') s++;
+      else if (bk.movement === 'DRIFTING') d++;
+    }
+    if (!s && !d) return null;
+    return s > d ? 'SHORTENING' : (d > s ? 'DRIFTING' : 'STABLE');
+  };
+  const updatedTs = (outcome) => {
+    let max = 0;
+    if (outcome && outcome.bookmakers) {
+      for (const bk of Object.values(outcome.bookmakers)) {
+        const t = bk.updated_at ? Date.parse(bk.updated_at) : 0;
+        if (t > max) max = t;
+      }
+    }
+    return max || null;
+  };
+  return {
+    books_count: payload.bookmakers_count || 0,
+    best: {
+      home: { value: m1x2.HOME.best_odds, bookmaker: m1x2.HOME.best_bookmaker_slug, name: m1x2.HOME.best_bookmaker_name },
+      draw: m1x2.DRAW ? { value: m1x2.DRAW.best_odds, bookmaker: m1x2.DRAW.best_bookmaker_slug, name: m1x2.DRAW.best_bookmaker_name } : null,
+      away: { value: m1x2.AWAY.best_odds, bookmaker: m1x2.AWAY.best_bookmaker_slug, name: m1x2.AWAY.best_bookmaker_name },
+    },
+    consensus: {
+      home: consensus(m1x2.HOME),
+      draw: m1x2.DRAW ? consensus(m1x2.DRAW) : null,
+      away: consensus(m1x2.AWAY),
+    },
+    movement: {
+      home: movementOf(m1x2.HOME),
+      draw: m1x2.DRAW ? movementOf(m1x2.DRAW) : null,
+      away: movementOf(m1x2.AWAY),
+    },
+    btts: payload.markets.btts ? {
+      yes: payload.markets.btts.yes ? payload.markets.btts.yes.best_odds : null,
+      no:  payload.markets.btts.no  ? payload.markets.btts.no.best_odds  : null,
+      consensus_yes: payload.markets.btts.yes ? consensus(payload.markets.btts.yes) : null,
+    } : null,
+    over25: payload.markets.over_under_25 ? {
+      over: payload.markets.over_under_25.over ? payload.markets.over_under_25.over.best_odds : null,
+      under: payload.markets.over_under_25.under ? payload.markets.over_under_25.under.best_odds : null,
+      consensus_over: payload.markets.over_under_25.over ? consensus(payload.markets.over_under_25.over) : null,
+    } : null,
+    updated_at: Math.max(updatedTs(m1x2.HOME) || 0, updatedTs(m1x2.AWAY) || 0),
+  };
+}
+
+// D — Polymarket : 3ème source devig (sentiment crypto market)
+const _bsdPolymarketCache = new Map();
+const BSD_POLYMARKET_TTL_MS = 5 * 60 * 1000;
+async function fetchBSDPolymarket(eventId) {
+  if (!eventId) return null;
+  const cached = _bsdPolymarketCache.get(eventId);
+  if (cached && Date.now() - cached.ts < BSD_POLYMARKET_TTL_MS) return cached.data;
+  try {
+    const res = await bsdFetch(`/odds/polymarket/?event=${eventId}`);
+    if (res.status !== 200) return null;
+    const data = res.data && res.data.results ? res.data.results : (res.data || null);
+    _bsdPolymarketCache.set(eventId, { ts: Date.now(), data });
+    return data;
+  } catch (e) { console.warn('[BSD Polymarket]', eventId, e.message); return null; }
+}
+
+// E — Managers : tactical fingerprint (cache 7j)
+const _bsdManagerCache = new Map();
+const BSD_MANAGER_TTL_MS = 7 * 24 * 3600 * 1000;
+async function fetchBSDManager(managerId) {
+  if (!managerId) return null;
+  const cached = _bsdManagerCache.get(managerId);
+  if (cached && Date.now() - cached.ts < BSD_MANAGER_TTL_MS) return cached.data;
+  try {
+    const res = await bsdFetch(`/managers/${managerId}/`);
+    if (res.status !== 200 || !res.data) return null;
+    _bsdManagerCache.set(managerId, { ts: Date.now(), data: res.data });
+    return res.data;
+  } catch (e) { console.warn('[BSD Manager]', managerId, e.message); return null; }
+}
+
+// Trouve manager actif pour une équipe (helper cached 7j par team)
+const _bsdTeamManagerCache = new Map();
+async function fetchTeamManager(teamId) {
+  if (!teamId) return null;
+  const cached = _bsdTeamManagerCache.get(teamId);
+  if (cached && Date.now() - cached.ts < BSD_MANAGER_TTL_MS) return cached.data;
+  try {
+    // /api/managers/?current_team=N retourne les coachs actuels d'une équipe
+    const res = await bsdFetch(`/managers/?current_team=${teamId}&page_size=5`);
+    if (res.status !== 200 || !res.data || !res.data.results || !res.data.results.length) return null;
+    const mgr = res.data.results[0];
+    _bsdTeamManagerCache.set(teamId, { ts: Date.now(), data: mgr });
+    return mgr;
+  } catch (e) { return null; }
+}
+
+// C — Predictions CatBoost v5 par event_id (différent du legacy ?league= existant)
+const _bsdPredictionEventCache = new Map();
+const BSD_PRED_TTL_MS = 60 * 60 * 1000; // 1h
+async function fetchBSDPredictionByEvent(eventId) {
+  if (!eventId) return null;
+  const cached = _bsdPredictionEventCache.get(eventId);
+  if (cached && Date.now() - cached.ts < BSD_PRED_TTL_MS) return cached.data;
+  try {
+    const res = await bsdFetch(`/predictions/?event=${eventId}`);
+    if (res.status !== 200 || !res.data) return null;
+    const result = res.data.results && res.data.results.length ? res.data.results[0] : null;
+    _bsdPredictionEventCache.set(eventId, { ts: Date.now(), data: result });
+    return result;
+  } catch (e) { return null; }
+}
+
+// D-suite — Devig Shin-Hurley 3-way avec Polymarket (si dispo)
+// Retourne { fair_home, fair_draw, fair_away, divergence_pct } ou null.
+// divergence_pct = écart maximal entre proba book consensus et proba Polymarket → signal sharp money.
+function computePolymarketDivergence(bsdOddsSummary, polymarketData) {
+  if (!bsdOddsSummary || !bsdOddsSummary.consensus || !polymarketData) return null;
+  // Polymarket shape attendue : { markets: { '1x2': { home: {prob:0.6}, draw:{prob:0.2}, away:{prob:0.2} } } }
+  // ou flat: { home_prob, draw_prob, away_prob }
+  let pmH, pmD, pmA;
+  if (polymarketData.markets && polymarketData.markets['1x2']) {
+    const m = polymarketData.markets['1x2'];
+    pmH = (m.home && m.home.prob) || (m.HOME && m.HOME.prob) || null;
+    pmD = (m.draw && m.draw.prob) || (m.DRAW && m.DRAW.prob) || null;
+    pmA = (m.away && m.away.prob) || (m.AWAY && m.AWAY.prob) || null;
+  } else {
+    pmH = polymarketData.home_prob || null;
+    pmD = polymarketData.draw_prob || null;
+    pmA = polymarketData.away_prob || null;
+  }
+  if (pmH == null || pmA == null) return null;
+  const c = bsdOddsSummary.consensus;
+  if (!c.home || !c.away) return null;
+  const bkH = 1 / c.home;
+  const bkD = c.draw ? 1 / c.draw : 0;
+  const bkA = 1 / c.away;
+  const bkSum = bkH + bkD + bkA;
+  const fairH = bkH / bkSum;
+  const fairD = bkD / bkSum;
+  const fairA = bkA / bkSum;
+  const dH = Math.abs(fairH - pmH);
+  const dD = pmD != null ? Math.abs(fairD - pmD) : 0;
+  const dA = Math.abs(fairA - pmA);
+  const maxD = Math.max(dH, dD, dA);
+  return {
+    fair_home: Math.round(fairH * 1000) / 10,
+    fair_draw: Math.round(fairD * 1000) / 10,
+    fair_away: Math.round(fairA * 1000) / 10,
+    pm_home:   Math.round(pmH * 1000) / 10,
+    pm_draw:   pmD != null ? Math.round(pmD * 1000) / 10 : null,
+    pm_away:   Math.round(pmA * 1000) / 10,
+    divergence_pct: Math.round(maxD * 1000) / 10,
+    sharp_signal: maxD > 0.05, // >5pt = signal fort
+  };
+}
+
+// Enrichit un match record avec BSD odds compare + predictions ML + polymarket (fire-and-forget appelé via cron).
+async function enrichMatchWithBSDFullStack(match) {
+  if (!match || !match._bsd_event_id) return;
+  const eid = match._bsd_event_id;
+  const [oddsRaw, predRaw, pmRaw] = await Promise.allSettled([
+    fetchBSDCompareOdds(eid),
+    fetchBSDPredictionByEvent(eid),
+    fetchBSDPolymarket(eid),
+  ]);
+  const odds = oddsRaw.status === 'fulfilled' ? oddsRaw.value : null;
+  const pred = predRaw.status === 'fulfilled' ? predRaw.value : null;
+  const pm   = pmRaw.status === 'fulfilled' ? pmRaw.value : null;
+
+  if (odds) {
+    const summary = extractBSDOddsSummary(odds);
+    if (summary) {
+      match.bsd_odds_summary = summary;
+      // Patch odds principal si Odds API absent (priorité BSD multi-books)
+      if (!match.odds || (!match.odds.home && summary.best && summary.best.home)) {
+        match.odds = match.odds || {};
+        match.odds.home = summary.best.home.value;
+        match.odds.draw = summary.best.draw ? summary.best.draw.value : null;
+        match.odds.away = summary.best.away.value;
+        match.odds._source = 'bsd_compare';
+        match.odds._books_count = summary.books_count;
+      }
+    }
+  }
+  if (pred && pred.markets) {
+    // Wrap dans m.predictions_ml (distinct de m.poisson maison)
+    match.predictions_ml = {
+      match_result: pred.markets.match_result || null,
+      expected_goals: pred.markets.expected_goals || null,
+      over_under: pred.markets.over_under || null,
+      btts: pred.markets.btts || null,
+      score_most_likely: pred.markets.score ? pred.markets.score.most_likely : null,
+      recommendations: pred.recommendations || null,
+      confidence: pred.model ? pred.model.confidence : null,
+      version: pred.model ? pred.model.version : null,
+    };
+  }
+  if (pm && match.bsd_odds_summary) {
+    const div = computePolymarketDivergence(match.bsd_odds_summary, pm);
+    if (div) match.market_divergence = div;
+  }
+}
+
+// E-suite — Enrichit avec managers home + away
+async function enrichMatchWithManagers(match) {
+  if (!match || !match.home_team_id || !match.away_team_id) return;
+  try {
+    const [homeMgr, awayMgr] = await Promise.all([
+      fetchTeamManager(match.home_team_id),
+      fetchTeamManager(match.away_team_id),
+    ]);
+    if (homeMgr) match.home_manager = { id: homeMgr.id, name: homeMgr.name, short_name: homeMgr.short_name, country: homeMgr.country };
+    if (awayMgr) match.away_manager = { id: awayMgr.id, name: awayMgr.name, short_name: awayMgr.short_name, country: awayMgr.country };
+  } catch (_) {}
+}
+
+// Cron tick : enrichit matchs notstarted next 24h + matchs live avec BSD full stack.
+// Sequencing : max 5 matchs par tick pour ne pas spammer BSD.
+let _isEnrichingBSD = false;
+async function cronEnrichBSDFullStack() {
+  if (_isEnrichingBSD) return;
+  _isEnrichingBSD = true;
+  try {
+    const now = Date.now();
+    const candidates = (db.matches || [])
+      .filter(m => m && m._bsd_event_id && (
+        (m.commence_time && Date.parse(m.commence_time) - now < 24 * 3600 * 1000 && Date.parse(m.commence_time) > now - 4 * 3600 * 1000) ||
+        m.live_score
+      ))
+      .slice(0, 5);
+    for (const m of candidates) {
+      await enrichMatchWithBSDFullStack(m);
+      await new Promise(r => setTimeout(r, 200)); // throttle 5 calls/sec safe
+    }
+    if (candidates.length) console.log(`  [BSD Enrich] ${candidates.length} matchs enrichis (odds+pred+polymarket)`);
+  } catch (e) { console.warn('[BSD Enrich] cron error:', e.message); }
+  finally { _isEnrichingBSD = false; }
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
@@ -25920,6 +26191,7 @@ const BSD_ENRICH_TTL = {
   predictions:6 * 3600 * 1000,   // 6h (ML CatBoost stable)
   polymarket: 5 * 60 * 1000,     // 5min (prediction market)
   broadcasts: 24 * 3600 * 1000,  // 24h (TV channels figés)
+  compare_odds: 5 * 60 * 1000,   // bd c81b 5min (14 books + movement)
 };
 
 function _bsdResolveEventId(matchId) {
@@ -25946,13 +26218,15 @@ async function _bsdEnrichFetch(kind, eventId) {
     return { data: cached === '__NEG__' ? null : cached, cached: true };
   }
   let endpoint = null;
+  // bd c81b fix : bsdFetch ajoute prefix /api/ deja, donc relative path sans /api/api/ double
   switch (kind) {
-    case 'lineups':     endpoint = `/api/v2/events/${eventId}/lineups/`; break;
-    case 'shotmap':     endpoint = `/api/v2/events/${eventId}/shotmap/`; break;
-    case 'incidents':   endpoint = `/api/v2/events/${eventId}/incidents/`; break;
-    case 'predictions': endpoint = `/api/v2/predictions/?event=${eventId}`; break;
-    case 'polymarket':  endpoint = `/api/v2/polymarket/?event=${eventId}`; break;
-    case 'broadcasts':  endpoint = `/api/v2/broadcasts/?event=${eventId}`; break;
+    case 'lineups':     endpoint = `/v2/events/${eventId}/lineups/`; break;
+    case 'shotmap':     endpoint = `/v2/events/${eventId}/shotmap/`; break;
+    case 'incidents':   endpoint = `/v2/events/${eventId}/incidents/`; break;
+    case 'predictions': endpoint = `/predictions/?event=${eventId}`; break;
+    case 'polymarket':  endpoint = `/odds/polymarket/?event=${eventId}`; break;
+    case 'broadcasts':  endpoint = `/broadcasts/?event=${eventId}`; break;
+    case 'compare_odds': endpoint = `/odds/compare/?event=${eventId}`; break;
     default: throw new Error(`unknown bsd kind: ${kind}`);
   }
   const res = await bsdFetch(endpoint);
@@ -25964,7 +26238,55 @@ async function _bsdEnrichFetch(kind, eventId) {
   return { data: res.data, cached: false };
 }
 
-const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts'];
+const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts', 'compare_odds'];
+// bd c81b — GET /api/v1/bsd/manager/<teamId> → tactical fingerprint coach courant
+if (pathname.startsWith('/api/v1/bsd/manager/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/manager/'.length)).trim();
+  const teamId = /^\d+$/.test(rawId) ? rawId : null;
+  if (!teamId) return jsonResponse(res, 400, { error: 'bad_team_id' });
+  try {
+    const mgr = await fetchTeamManager(teamId);
+    if (!mgr) return jsonResponse(res, 200, { source: 'bsd', team_id: Number(teamId), data: null });
+    // Enrichit avec detail si dispo (carrière + tactique)
+    const detail = await fetchBSDManager(mgr.id);
+    return jsonResponse(res, 200, {
+      source: 'bsd', team_id: Number(teamId),
+      data: {
+        id: mgr.id, name: mgr.name, short_name: mgr.short_name, country: mgr.country,
+        nationality: detail ? detail.nationality : null,
+        date_of_birth: detail ? detail.date_of_birth : null,
+        career: detail ? detail.career : null,
+        preferred_formation: detail ? detail.preferred_formation : null,
+        style: detail ? detail.style : null,
+      },
+      fetched_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_manager_failed', message: e.message });
+  }
+}
+// bd c81b — GET /api/v1/match/:matchId/bsd-enriched → bundle complet pour match (odds+pred+pm+managers)
+if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/match/'.length, -'/bsd-enriched'.length));
+  const m = db.matches.find(x => x.id === matchId);
+  if (!m) return jsonResponse(res, 404, { error: 'match_not_found' });
+  // Force enrichissement on-demand si pas déjà fait
+  if (!m.bsd_odds_summary) {
+    try { await enrichMatchWithBSDFullStack(m); } catch (_) {}
+  }
+  if (!m.home_manager && !m.away_manager) {
+    try { await enrichMatchWithManagers(m); } catch (_) {}
+  }
+  return jsonResponse(res, 200, {
+    match_id: matchId,
+    bsd_odds_summary: m.bsd_odds_summary || null,
+    predictions_ml: m.predictions_ml || null,
+    market_divergence: m.market_divergence || null,
+    home_manager: m.home_manager || null,
+    away_manager: m.away_manager || null,
+    fetched_at: new Date().toISOString(),
+  });
+}
 for (const kind of BSD_ENRICH_PATHS) {
   const prefix = `/api/v1/bsd/${kind}/`;
   if (pathname.startsWith(prefix) && req.method === 'GET') {
@@ -29948,6 +30270,10 @@ setInterval(() => {
 }, 2 * 3600 * 1000);
 
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+// bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
+setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+// Premier tick après 30s pour laisser db.matches se peupler
+setTimeout(() => cronEnrichBSDFullStack().catch(() => {}), 30 * 1000);
 
 // BSD Live WebSocket (push <5s) — complète le poll 60s. No-op si BSD_LIVE_TOKEN absent.
 if (BSD_LIVE_WS_ENABLED) {
