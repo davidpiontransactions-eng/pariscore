@@ -82,6 +82,7 @@ Source autoritaire : `bd ready`. Snapshot 21/05/2026.
 |---|---|
 | `kto1` | Research: tennisabstract.com WP interactivity-api — rapport incorporation |
 | `m5sv` | Research: GitHub n63li/Tennis-API — rapport incorporation |
+| `1hiv` | Research: sportsdata.io Tennis API — rapport incorporation (pricing+coverage+ROI) |
 | `nwk6` | PWA Push Notifications backend — VAPID + sender service + sw.js handlers |
 | `wect` | ETL Historique FBref soccerdata — RESEARCH ONLY (doublon `8lqf` à fusionner) |
 | `5vzv` | Spike footballdatabase.com — audit ETL faisabilité vs ToS+CF |
