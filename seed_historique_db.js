@@ -106,6 +106,36 @@ function readQuota(headers) {
   if (Number.isFinite(r)) _quotaRemaining = r;
 }
 
+// ── Fetch fixture statistics (xG, shots, possession) ─────────────────────────
+// API-Football /fixtures/statistics?fixture={id} retourne stats par equipe.
+// Cost: 1 req par match → enable uniquement avec --with-stats flag (heavy quota).
+async function fetchFixtureStatistics(fixtureId) {
+  if (!fixtureId) return null;
+  const url = `https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`;
+  try {
+    const res = await httpsGet(url);
+    readQuota(res.headers);
+    if (res.status !== 200 || !Array.isArray(res.data?.response)) return null;
+    return res.data.response;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Helper: extract stat number from API-Football statisticsItems shape
+function _extractStat(items, label) {
+  if (!Array.isArray(items)) return null;
+  const item = items.find(i => i?.type && String(i.type).toLowerCase().includes(label.toLowerCase()));
+  if (!item) return null;
+  const v = item.value;
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') {
+    const m = v.match(/-?\d+(\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
+  return null;
+}
+
 // ── Fetch fixtures by league + season ───────────────────────────────────────
 async function fetchFixturesByLeague(leagueId, season) {
   const url = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&status=FT-AET-PEN`;
@@ -118,13 +148,13 @@ async function fetchFixturesByLeague(leagueId, season) {
   return res.data?.response || [];
 }
 
-// ── Transform raw fixture → match record ────────────────────────────────────
-function transformFixture(raw) {
+// ── Transform raw fixture → match record (with optional advanced stats) ─────
+function transformFixture(raw, statsResponse) {
   if (!raw || !raw.fixture || !raw.teams) return null;
   const home = raw.teams.home;
   const away = raw.teams.away;
   const score = raw.score?.fulltime || raw.goals || {};
-  return {
+  const record = {
     id: `af_${raw.fixture.id}`,
     source: 'api-football',
     league_id: raw.league?.id,
@@ -145,17 +175,60 @@ function transformFixture(raw) {
     status: raw.fixture.status?.short,
     venue: raw.fixture.venue?.name,
     referee: raw.fixture.referee,
+    halftime_score: raw.score?.halftime || null,
+    extratime_score: raw.score?.extratime || null,
+    penalty_score: raw.score?.penalty || null,
   };
+
+  // Advanced stats si fetched separately via /fixtures/statistics
+  if (Array.isArray(statsResponse) && statsResponse.length === 2) {
+    const homeStat = statsResponse.find(s => s?.team?.id === home?.id);
+    const awayStat = statsResponse.find(s => s?.team?.id === away?.id);
+    record.stats = {
+      home: homeStat ? {
+        shots:           _extractStat(homeStat.statistics, 'Total Shots'),
+        shots_on_target: _extractStat(homeStat.statistics, 'Shots on Goal'),
+        possession_pct:  _extractStat(homeStat.statistics, 'Ball Possession'),
+        corners:         _extractStat(homeStat.statistics, 'Corner Kicks'),
+        fouls:           _extractStat(homeStat.statistics, 'Fouls'),
+        yellow_cards:    _extractStat(homeStat.statistics, 'Yellow Cards'),
+        red_cards:       _extractStat(homeStat.statistics, 'Red Cards'),
+        offsides:        _extractStat(homeStat.statistics, 'Offsides'),
+        passes_total:    _extractStat(homeStat.statistics, 'Total Passes'),
+        passes_pct:      _extractStat(homeStat.statistics, 'Passes %'),
+        xg:              _extractStat(homeStat.statistics, 'expected_goals') ?? _extractStat(homeStat.statistics, 'xG'),
+      } : null,
+      away: awayStat ? {
+        shots:           _extractStat(awayStat.statistics, 'Total Shots'),
+        shots_on_target: _extractStat(awayStat.statistics, 'Shots on Goal'),
+        possession_pct:  _extractStat(awayStat.statistics, 'Ball Possession'),
+        corners:         _extractStat(awayStat.statistics, 'Corner Kicks'),
+        fouls:           _extractStat(awayStat.statistics, 'Fouls'),
+        yellow_cards:    _extractStat(awayStat.statistics, 'Yellow Cards'),
+        red_cards:       _extractStat(awayStat.statistics, 'Red Cards'),
+        offsides:        _extractStat(awayStat.statistics, 'Offsides'),
+        passes_total:    _extractStat(awayStat.statistics, 'Total Passes'),
+        passes_pct:      _extractStat(awayStat.statistics, 'Passes %'),
+        xg:              _extractStat(awayStat.statistics, 'expected_goals') ?? _extractStat(awayStat.statistics, 'xG'),
+      } : null,
+    };
+  }
+
+  return record;
 }
 
 // ── Main ETL ────────────────────────────────────────────────────────────────
 async function main() {
   const args = process.argv.slice(2);
   const sample = args.includes('--sample-pl');
+  const withStats = args.includes('--with-stats');
   const leagueArg = args.find(a => a.startsWith('--league'));
   const seasonArg = args.find(a => a.startsWith('--season'));
   const targetLeagueId = leagueArg ? parseInt(leagueArg.split('=')[1] || args[args.indexOf(leagueArg) + 1], 10) : null;
   const targetSeason = seasonArg ? parseInt(seasonArg.split('=')[1] || args[args.indexOf(seasonArg) + 1], 10) : CURRENT_SEASON;
+  /* --with-stats: 1 req par match supplementaire pour stats avancees (xG, shots,
+     possession, corners, cartons). Heavy quota (e.g. PL 380 matches = 380 req).
+     Defaut OFF pour preserver quota. */
 
   let leagues = PRIORITY_LEAGUES;
   if (sample) {
@@ -185,13 +258,27 @@ async function main() {
     }
     console.log(`[ETL] ${league.name} (id=${league.id}) saison ${targetSeason}...`);
     const rawFixtures = await fetchFixturesByLeague(league.id, targetSeason);
-    const transformed = rawFixtures.map(transformFixture).filter(Boolean);
+    const transformed = [];
+    for (const raw of rawFixtures) {
+      if (!raw || !raw.fixture) continue;
+      let stats = null;
+      if (withStats) {
+        if (_quotaRemaining !== null && _quotaRemaining < QUOTA_SAFETY_MARGIN) {
+          console.warn(`[ETL] Quota < ${QUOTA_SAFETY_MARGIN} — skip stats avancees pour reste de la ligue`);
+          break;
+        }
+        stats = await fetchFixtureStatistics(raw.fixture.id);
+        await sleep(THROTTLE_MS); // throttle stats requests too
+      }
+      const record = transformFixture(raw, stats);
+      if (record) transformed.push(record);
+    }
     existingDB.leagues[league.id] = {
-      meta: { ...league, season: targetSeason, last_update: new Date().toISOString() },
+      meta: { ...league, season: targetSeason, last_update: new Date().toISOString(), with_stats: withStats },
       matches: transformed,
     };
     totalIngested += transformed.length;
-    console.log(`[ETL]   → ${transformed.length} matchs ingere (quota remaining: ${_quotaRemaining ?? 'n/a'})`);
+    console.log(`[ETL]   → ${transformed.length} matchs ingere ${withStats ? '(stats inclus)' : ''} (quota remaining: ${_quotaRemaining ?? 'n/a'})`);
     await sleep(THROTTLE_MS);
   }
 
