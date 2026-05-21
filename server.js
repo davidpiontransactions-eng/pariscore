@@ -2816,6 +2816,189 @@ async function cronEnrichBSDFullStack() {
   finally { _isEnrichingBSD = false; }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TV BROADCASTERS — BSD REST integration (Phase 1 backend)
+// Endpoints REST BSD :
+//   GET /api/v2/tv-channels/?country_code=FR&limit=50   (paginated, 177 FR ~4 pages)
+//   GET /api/v2/broadcasts/?country_code=FR&date_from=YYYY-MM-DD&date_to=YYYY-MM-DD[&league=ID]
+//   GET /api/v2/broadcasts/?event=<eventId>
+// Réutilise bsdFetch() (auth Token + retry). Zero-dep. Caches en mémoire.
+// Phase 1.1 future = cron pre-fetch. Phase 2 = route /api/v1/broadcasts/match/:matchId.
+// Phase 3 = UI chip diffuseur tableau + modal Insights section.
+// ═══════════════════════════════════════════════════════════════════════════════
+const BSD_TV_CHANNELS_TTL_MS = 24 * 60 * 60 * 1000; // 24h (channels list stable)
+const BSD_BROADCASTS_TTL_MS  =  6 * 60 * 60 * 1000; // 6h (refresh quotidien typiquement)
+const BSD_BROADCASTS_EVT_TTL_MS = 6 * 60 * 60 * 1000;
+
+const bsdTvChannelsCache    = new Map(); // country → { ts, data: [{id,name,country_code,link}, ...] }
+const bsdBroadcastsCache    = new Map(); // `${country}|${dateFrom}|${dateTo}|${leagueId||'*'}` → { ts, data: { byEvent: Map<eventId, channels[]>, raw: [...] } }
+const bsdBroadcastsByEventCache = new Map(); // eventId → { ts, data: channels[] }
+
+// Extrait path+query relatif d'une URL `next` BSD absolue (le base URL inclut /api).
+// Ex: "https://sports.bzzoiro.com/api/v2/tv-channels/?country_code=FR&limit=50&offset=50"
+//   → "/v2/tv-channels/?country_code=FR&limit=50&offset=50"
+function _bsdRelativeFromNext(nextUrl) {
+  if (!nextUrl) return null;
+  try {
+    const u = new URL(String(nextUrl));
+    let p = u.pathname + (u.search || '');
+    if (p.startsWith('/api/')) p = p.slice(4); // /api/v2/... → /v2/...
+    return p;
+  } catch (_) {
+    // Si déjà relatif
+    const s = String(nextUrl).trim();
+    if (s.startsWith('/api/')) return s.slice(4);
+    if (s.startsWith('/')) return s;
+    return null;
+  }
+}
+
+// fetchBSDTVChannels(country='FR') → [{id, name, country_code, link}, ...]
+// Pagination auto (BSD = 50/page, ~4 pages pour FR=177).
+async function fetchBSDTVChannels(country = 'FR') {
+  const key = String(country || 'FR').toUpperCase();
+  const cached = bsdTvChannelsCache.get(key);
+  if (cached && Date.now() - cached.ts < BSD_TV_CHANNELS_TTL_MS) return cached.data;
+  if (!BSD_API_KEY) return [];
+  const all = [];
+  let suffix = `/v2/tv-channels/?country_code=${encodeURIComponent(key)}&limit=50`;
+  for (let page = 0; page < 10 && suffix; page++) {
+    let r;
+    try { r = await bsdFetch(suffix); } catch (e) { console.warn('[BSD-TV] channels fetch error', e.message); break; }
+    if (!r || r.status !== 200 || !r.data) break;
+    const arr = Array.isArray(r.data) ? r.data : (Array.isArray(r.data.results) ? r.data.results : []);
+    if (!arr.length) break;
+    for (const c of arr) {
+      if (!c || c.id == null) continue;
+      all.push({
+        id: c.id,
+        name: c.name || '',
+        country_code: (c.country_code || key).toUpperCase(),
+        link: c.link || '',
+      });
+    }
+    const nx = r.data && r.data.next ? _bsdRelativeFromNext(r.data.next) : null;
+    if (!nx || nx === suffix) break;
+    suffix = nx;
+  }
+  bsdTvChannelsCache.set(key, { ts: Date.now(), data: all });
+  return all;
+}
+
+// fetchBSDBroadcasts(country, dateFrom, dateTo, leagueId=null)
+//   → { byEvent: Map<eventId, channels[]>, raw: [...] }
+//   channels[] = [{ channel_id, channel_name, channel_link, country_code, scheduled_start_time }, ...]
+// Pagination auto. Cache key inclut tous les filtres.
+async function fetchBSDBroadcasts(country = 'FR', dateFrom, dateTo, leagueId = null) {
+  const ctry = String(country || 'FR').toUpperCase();
+  const df = (dateFrom || '').slice(0, 10);
+  const dt = (dateTo || dateFrom || '').slice(0, 10);
+  const lg = leagueId ? String(leagueId) : '*';
+  const key = `${ctry}|${df}|${dt}|${lg}`;
+  const cached = bsdBroadcastsCache.get(key);
+  if (cached && Date.now() - cached.ts < BSD_BROADCASTS_TTL_MS) return cached.data;
+  if (!BSD_API_KEY || !df) return { byEvent: new Map(), raw: [] };
+  const raw = [];
+  const params = [
+    `country_code=${encodeURIComponent(ctry)}`,
+    `date_from=${encodeURIComponent(df)}`,
+    `date_to=${encodeURIComponent(dt)}`,
+    `limit=50`,
+  ];
+  if (leagueId) params.push(`league=${encodeURIComponent(leagueId)}`);
+  let suffix = `/v2/broadcasts/?${params.join('&')}`;
+  for (let page = 0; page < 20 && suffix; page++) {
+    let r;
+    try { r = await bsdFetch(suffix); } catch (e) { console.warn('[BSD-TV] broadcasts fetch error', e.message); break; }
+    if (!r || r.status !== 200 || !r.data) break;
+    const arr = Array.isArray(r.data) ? r.data : (Array.isArray(r.data.results) ? r.data.results : []);
+    if (!arr.length) break;
+    raw.push(...arr);
+    const nx = r.data && r.data.next ? _bsdRelativeFromNext(r.data.next) : null;
+    if (!nx || nx === suffix) break;
+    suffix = nx;
+  }
+  // Aggregate par event_id → tableau de channels (dedup par channel_id)
+  const byEvent = new Map();
+  for (const b of raw) {
+    if (!b || b.event_id == null || b.channel_id == null) continue;
+    const eid = String(b.event_id);
+    let list = byEvent.get(eid);
+    if (!list) { list = []; byEvent.set(eid, list); }
+    if (list.some(x => x.channel_id === b.channel_id)) continue;
+    list.push({
+      channel_id: b.channel_id,
+      channel_name: b.channel_name || '',
+      channel_link: b.channel_link || '',
+      country_code: (b.country_code || ctry).toUpperCase(),
+      scheduled_start_time: b.scheduled_start_time || b.event_date || null,
+    });
+  }
+  const data = { byEvent, raw };
+  bsdBroadcastsCache.set(key, { ts: Date.now(), data });
+  return data;
+}
+
+// fetchBSDBroadcastsByEvent(eventId) → channels[]
+async function fetchBSDBroadcastsByEvent(eventId) {
+  if (!eventId) return [];
+  const key = String(eventId);
+  const cached = bsdBroadcastsByEventCache.get(key);
+  if (cached && Date.now() - cached.ts < BSD_BROADCASTS_EVT_TTL_MS) return cached.data;
+  if (!BSD_API_KEY) return [];
+  const out = [];
+  let suffix = `/v2/broadcasts/?event=${encodeURIComponent(key)}&limit=50`;
+  for (let page = 0; page < 5 && suffix; page++) {
+    let r;
+    try { r = await bsdFetch(suffix); } catch (e) { console.warn('[BSD-TV] broadcasts/event fetch error', e.message); break; }
+    if (!r || r.status !== 200 || !r.data) break;
+    const arr = Array.isArray(r.data) ? r.data : (Array.isArray(r.data.results) ? r.data.results : []);
+    if (!arr.length) break;
+    for (const b of arr) {
+      if (!b || b.channel_id == null) continue;
+      if (out.some(x => x.channel_id === b.channel_id)) continue;
+      out.push({
+        channel_id: b.channel_id,
+        channel_name: b.channel_name || '',
+        channel_link: b.channel_link || '',
+        country_code: (b.country_code || '').toUpperCase(),
+        scheduled_start_time: b.scheduled_start_time || b.event_date || null,
+      });
+    }
+    const nx = r.data && r.data.next ? _bsdRelativeFromNext(r.data.next) : null;
+    if (!nx || nx === suffix) break;
+    suffix = nx;
+  }
+  bsdBroadcastsByEventCache.set(key, { ts: Date.now(), data: out });
+  return out;
+}
+
+// attachBSDBroadcasts(match, country='FR') — mutate in-place, ajoute match.tv_channels
+// Pas de fetch HTTP : lookup cache uniquement (pre-fetch est responsabilité du cron Phase 1.1).
+// Idempotent : ne s'écrase pas si tv_channels déjà rempli avec valeur non-vide.
+function attachBSDBroadcasts(match, country = 'FR') {
+  if (!match || typeof match !== 'object') return;
+  if (Array.isArray(match.tv_channels) && match.tv_channels.length) return;
+  const eid = match._bsd_event_id ? String(match._bsd_event_id) : null;
+  if (!eid) { if (!match.tv_channels) match.tv_channels = []; return; }
+  // 1) Cache par event (le plus précis)
+  const evCached = bsdBroadcastsByEventCache.get(eid);
+  if (evCached && Date.now() - evCached.ts < BSD_BROADCASTS_EVT_TTL_MS && evCached.data.length) {
+    match.tv_channels = evCached.data.slice();
+    return;
+  }
+  // 2) Cache par fenêtre (sweep toutes entrées du country donné)
+  const ctry = String(country || 'FR').toUpperCase();
+  for (const [k, entry] of bsdBroadcastsCache) {
+    if (!entry || !entry.data || !entry.data.byEvent) continue;
+    if (!k.startsWith(`${ctry}|`)) continue;
+    if (Date.now() - entry.ts >= BSD_BROADCASTS_TTL_MS) continue;
+    const list = entry.data.byEvent.get(eid);
+    if (list && list.length) { match.tv_channels = list.slice(); return; }
+  }
+  match.tv_channels = [];
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
