@@ -19199,6 +19199,30 @@ function toggleSteamFilter() {
 }
 
 function renderOddsDeltaCell(m) {
+  // bd c81b — Priorité au signal BSD movement natif (14 books, plus fiable que delta historique mono-source)
+  const bsdMov = m.bsd_odds_summary && m.bsd_odds_summary.movement;
+  let bsdBadge = '';
+  if (bsdMov) {
+    const legs = [
+      { label: '1', mov: bsdMov.home, best: m.bsd_odds_summary.best && m.bsd_odds_summary.best.home },
+      { label: 'N', mov: bsdMov.draw, best: m.bsd_odds_summary.best && m.bsd_odds_summary.best.draw },
+      { label: '2', mov: bsdMov.away, best: m.bsd_odds_summary.best && m.bsd_odds_summary.best.away },
+    ].filter(l => l.mov);
+    const shortening = legs.find(l => l.mov === 'SHORTENING');
+    if (shortening) {
+      const v = shortening.best ? shortening.best.value.toFixed(2) : '?';
+      const bk = shortening.best ? shortening.best.name : '';
+      bsdBadge = `<div class="odds-delta-pill drop" onclick="showOddsGraph('${m.id}',event)" title="BSD: ${shortening.label} en SHORTENING (cote qui baisse — sharp money). Best ${v} @ ${bk}. ${m.bsd_odds_summary.books_count} books.">${shortening.label} ▼ ${v}</div>`;
+    } else {
+      const drifting = legs.find(l => l.mov === 'DRIFTING');
+      if (drifting) {
+        const v = drifting.best ? drifting.best.value.toFixed(2) : '?';
+        bsdBadge = `<div class="odds-delta-pill rise" onclick="showOddsGraph('${m.id}',event)" title="BSD: ${drifting.label} en DRIFTING (cote qui monte). Best ${v}. ${m.bsd_odds_summary.books_count} books.">${drifting.label} ▲ ${v}</div>`;
+      }
+    }
+  }
+  if (bsdBadge) return bsdBadge;
+
   const d = m.odds_delta;
   if (!d) return '<span style="color:var(--text3);font-size:10px;font-family:var(--font-mono);">—</span>';
   const vals = [
