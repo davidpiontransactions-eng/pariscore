@@ -6214,6 +6214,7 @@ const HISTORIQUE_TENNIS_SEED_FILE = path.join(__dirname, 'historique_tennis.json
 const HISTORIQUE_OPENFOOTBALL_FILE = path.join(__dirname, 'historique_openfootball.json'); // bd 6du6 ETL output
 const HISTORIQUE_FBREF_FILE = path.join(__dirname, 'historique_fbref.json'); // bd 8lqf ETL output (RESEARCH ONLY)
 const HISTORIQUE_ELOFOOTBALL_FILE = path.join(__dirname, 'historique_elofootball.json'); // bd 8lvf ETL output
+const HISTORIQUE_BSD_TENNIS_FILE = path.join(__dirname, 'historique_bsd_tennis.json'); // bd rxh Phase 2 ETL output
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
 
@@ -6492,6 +6493,83 @@ function loadHistory() {
       }
     } catch (e) {
       console.warn('[ETL Seed Load elofootball]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-rxh Phase 2 — Merge historique_bsd_tennis.json (BSD Sports
+  // Addon settled predictions) dans db.archive_matches. Schema: predictions[]
+  // avec match (tournament, players, sets_detail) + prediction probs + backtest
+  // (actual_winner, was_winner_correct, confidence).
+  if (fs.existsSync(HISTORIQUE_BSD_TENNIS_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_BSD_TENNIS_FILE, 'utf8'));
+      if (seed && Array.isArray(seed.predictions)) {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const p of seed.predictions) {
+          totalSeed++;
+          if (!p || !p.id || existingIds.has(String(p.id))) continue;
+          const circuit = String(p.circuit || '').toUpperCase();
+          const sport_key = circuit === 'ATP' ? 'tennis_atp'
+            : circuit === 'WTA' ? 'tennis_wta'
+            : circuit === 'UTR' ? 'tennis_utr'
+            : circuit === 'ITF' ? 'tennis_itf'
+            : 'tennis_other';
+          const seasonYear = p.date ? new Date(p.date).getUTCFullYear() : null;
+          const winner = p.actual_winner === 1 ? 'p1' : (p.actual_winner === 2 ? 'p2' : null);
+          const archived = {
+            id: p.id,
+            sport: 'tennis',
+            sport_key,
+            tour: circuit || null,
+            league: p.tournament || 'Tennis',
+            country: 'International',
+            surface: p.surface || null,
+            round: p.round || null,
+            commence_time: p.date,
+            home_team: p.player1?.name || null,
+            away_team: p.player2?.name || null,
+            player1: p.player1 || null,
+            player2: p.player2 || null,
+            sets: p.sets_detail || [],
+            sets_won_p1: p.sets_won_p1,
+            sets_won_p2: p.sets_won_p2,
+            winner,
+            home_score: p.sets_won_p1,
+            away_score: p.sets_won_p2,
+            live_score: p.sets_won_p1 != null ? `${p.sets_won_p1}-${p.sets_won_p2}` : null,
+            status: p.status || 'finished',
+            season: seasonYear,
+            // BSD ML predictions (calibration source)
+            bsd_prediction: {
+              prob_p1_wins: p.prediction?.prob_p1_wins,
+              prob_p2_wins: p.prediction?.prob_p2_wins,
+              predicted_winner: p.prediction?.predicted_winner,
+              confidence: p.prediction?.confidence,
+              prob_over_2_5_sets: p.prediction?.prob_over_2_5_sets,
+              prob_over_22_5_games: p.prediction?.prob_over_22_5_games,
+              was_winner_correct: p.was_winner_correct,
+            },
+            _source: 'etl-bsd-tennis',
+            _attribution: p._attribution || 'BSD Tennis (Bzzoiro Sports Addon)',
+            _etl_meta: {
+              ingested_at: seed.generated_at,
+              bsd_prediction_id: p.bsd_prediction_id,
+              bsd_match_id: p.bsd_match_id,
+              api_id: p.api_id,
+            },
+          };
+          (db.archive_matches = db.archive_matches || []).push(archived);
+          existingIds.add(String(p.id));
+          totalAdded++;
+        }
+        if (totalSeed > 0) {
+          console.log(`  ✓ ETL seed merge (bsd-tennis): ${totalAdded}/${totalSeed} predictions ajoutees a db.archive_matches (BSD attribution)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load bsd-tennis]', e.message);
     }
   }
 }
