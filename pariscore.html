@@ -31796,6 +31796,75 @@ function renderComparateur(d) {
     });
   })();
 
+  /* ── Push Notification scaffold (bd ParisScorebis-e7l) ──
+     Demande permission + subscribe Web Push API. Disabled par defaut
+     (privacy). Activate via window.cfEnablePushNotifications().
+     Backend endpoint /api/v1/push/subscribe a creer pour stocker
+     subscriptions (sprint dedie + VAPID keys). */
+  (function () {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    /* Expose pour user opt-in manuel via UI button futur */
+    window.cfEnablePushNotifications = async function () {
+      try {
+        var perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          console.warn('[PWA Push] permission refusée:', perm);
+          return false;
+        }
+        var reg = await navigator.serviceWorker.ready;
+        /* TODO: VAPID public key a injecter via /api/v1/push/vapid-key endpoint */
+        var vapidKey = window.CF_VAPID_PUBLIC_KEY || null;
+        if (!vapidKey) {
+          console.warn('[PWA Push] VAPID public key non configuree — abandon');
+          return false;
+        }
+        var subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidKey
+        });
+        var token = localStorage.getItem('jwt_token');
+        var resp = await fetch('/api/v1/push/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? 'Bearer ' + token : ''
+          },
+          body: JSON.stringify(subscription)
+        });
+        if (!resp.ok) throw new Error('push subscribe API failed: ' + resp.status);
+        localStorage.setItem('cf_push_enabled', '1');
+        console.log('[PWA Push] enabled OK');
+        return true;
+      } catch (e) {
+        console.warn('[PWA Push] erreur:', e.message);
+        return false;
+      }
+    };
+    window.cfDisablePushNotifications = async function () {
+      try {
+        var reg = await navigator.serviceWorker.ready;
+        var sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          var token = localStorage.getItem('jwt_token');
+          await fetch('/api/v1/push/unsubscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': token ? 'Bearer ' + token : ''
+            },
+            body: JSON.stringify({ endpoint: sub.endpoint })
+          });
+        }
+        localStorage.removeItem('cf_push_enabled');
+        return true;
+      } catch (e) {
+        console.warn('[PWA Push] unsubscribe erreur:', e.message);
+        return false;
+      }
+    };
+  })();
+
   /* — Au boot : skeletons si on arrive direct sur matchs en mobile — */
   document.addEventListener('DOMContentLoaded', function () {
     if (isMobile()) mobShowSkeletons();
