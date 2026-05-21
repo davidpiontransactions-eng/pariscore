@@ -10067,6 +10067,11 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tn-sb-tot { color:#e8eaed; background:#1e293b; border-radius:5px; padding:1px 7px; min-width:20px; }
   #tennis-vb-table .tn-sb-tot-lead { color:#4ade80; }
   #tennis-vb-table .tn-sb-empty span { color:var(--text3,#5a6068); }
+  /* bd 9bg — PBP sparkline placement sous le scoreboard */
+  #tennis-vb-table .tn-pbp-spark, #tennis-live-table .tn-pbp-spark {
+    display:block; margin:3px auto 0; opacity:0.85; transition:opacity .15s;
+  }
+  #tennis-vb-table .tn-pbp-spark:hover, #tennis-live-table .tn-pbp-spark:hover { opacity:1; }
   #tennis-vb-table .tn-sb-soon { display:inline-block; background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:6px 10px; font-family:'DM Mono',monospace; font-size:12px; font-weight:700; color:#ffa726; white-space:nowrap; }
   #tennis-vb-table .tn-sb-srv { display:inline-flex; align-items:center; justify-content:center; line-height:1; min-width:16px; text-align:center; filter:drop-shadow(0 0 4px rgba(212,230,13,.55)); animation:tnSrvPulse 1.4s ease-in-out infinite; }
   #tennis-vb-table .tn-sb-srv .tn-sb-ball { width:14px; height:14px; display:block; }
@@ -14118,7 +14123,49 @@ function _tvbScoreCell(m) {
 
   // Grille étendue : balle serveur + points + N sets + total.
   const gridStyleExt = `grid-template-columns:auto repeat(${nCols},auto);`;
-  return `<div class="tn-sb" style="${gridStyleExt}">${rowHtml('p1')}${rowHtml('p2')}${_tvbDRLive(lo, sets, s1, s2)}</div>`;
+  // bd 9bg — PBP sparkline : trajectoire jeux p1−p2 cumulée par set
+  const spark = _tvbPBPSparkline(sets, s1, s2);
+  return `<div class="tn-sb" style="${gridStyleExt}">${rowHtml('p1')}${rowHtml('p2')}${_tvbDRLive(lo, sets, s1, s2)}</div>${spark}`;
+}
+
+// bd 9bg — Sparkline PBP Tennis : SVG inline 60x16, courbe différentielle
+// jeux (p1−p2) cumulée par set. Pure frontend, sans appel détail match.
+// Pas de pbp réel point-par-point dans la liste live BSD → on rend la
+// trajectoire macro set-by-set + courant. Suffisant pour signal momentum.
+function _tvbPBPSparkline(sets, s1, s2) {
+  if (!Array.isArray(sets) || sets.length === 0) return '';
+  // Série : cumul (p1 − p2) après chaque set joué
+  const series = [];
+  let cumP1 = 0, cumP2 = 0;
+  for (const s of sets) {
+    cumP1 += Number(s && s.p1) || 0;
+    cumP2 += Number(s && s.p2) || 0;
+    series.push(cumP1 - cumP2);
+  }
+  if (series.length < 1) return '';
+  // Ajoute un point ancre 0 au début si 1 seul set (sinon ligne plate isolée)
+  if (series.length === 1) series.unshift(0);
+  const W = 60, H = 16, PAD = 1;
+  const min = Math.min(...series, 0);
+  const max = Math.max(...series, 0);
+  const range = Math.max(1, max - min);
+  const step = (W - PAD * 2) / Math.max(1, series.length - 1);
+  const pts = series.map((v, i) => {
+    const x = PAD + i * step;
+    const y = H - PAD - ((v - min) / range) * (H - PAD * 2);
+    return safeFixed(x, 1) + ',' + safeFixed(y, 1);
+  }).join(' ');
+  // Ligne zéro de référence
+  const yZero = H - PAD - ((0 - min) / range) * (H - PAD * 2);
+  // Couleur : positif (p1 lead) cyan, négatif (p2 lead) coral, équilibre slate
+  const last = series[series.length - 1];
+  const stroke = last > 0 ? 'var(--cf-emerald,#4ade80)' : last < 0 ? 'var(--cf-coral,#fb7185)' : 'var(--text3,#5a6068)';
+  const lead = s1 > s2 ? 'p1' : (s2 > s1 ? 'p2' : 'égal');
+  const title = `PBP Δjeux : ${series.map(v => (v > 0 ? '+' : '') + v).join(' → ')} · lead sets ${s1}-${s2} (${lead})`;
+  return `<svg class="tn-pbp-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="${_escTennis(title)}"><title>${_escTennis(title)}</title>` +
+    `<line x1="${PAD}" y1="${safeFixed(yZero, 1)}" x2="${W - PAD}" y2="${safeFixed(yZero, 1)}" stroke="rgba(148,163,184,0.25)" stroke-width="0.5" stroke-dasharray="2 2"/>` +
+    `<polyline fill="none" stroke="${stroke}" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/>` +
+    `</svg>`;
 }
 
 // Dominance Ratio Live PAR JOUEUR (2 lignes, alignées J1/J2 du scoreboard).
