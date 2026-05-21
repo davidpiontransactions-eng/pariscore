@@ -6336,13 +6336,16 @@ function loadHistory() {
                 _etl_meta: { ingested_at: seed.generated_at, tour: m.tour },
               };
               (db.archive_matches = db.archive_matches || []).push(archived);
+              // bd rxh Phase 4 fix: runHistoryQuery(sport='tennis') lit tennisHistory[],
+              // pas db.archive_matches. Mirror dans tennisHistory pour exposer via /api/v1/history/query.
+              tennisHistory.push(archived);
               existingIds.add(String(m.id));
               totalAdded++;
             }
           }
         }
         if (totalSeed > 0) {
-          console.log(`  ✓ ETL seed merge (tennis): ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (dedup'd)`);
+          console.log(`  ✓ ETL seed merge (tennis ESPN): ${totalAdded}/${totalSeed} matchs ajoutes (db.archive_matches + tennisHistory)`);
         }
       }
     } catch (e) {
@@ -6561,11 +6564,13 @@ function loadHistory() {
             },
           };
           (db.archive_matches = db.archive_matches || []).push(archived);
+          // bd rxh Phase 4 fix: tennisHistory pour exposure via /api/v1/history/query
+          tennisHistory.push(archived);
           existingIds.add(String(p.id));
           totalAdded++;
         }
         if (totalSeed > 0) {
-          console.log(`  ✓ ETL seed merge (bsd-tennis): ${totalAdded}/${totalSeed} predictions ajoutees a db.archive_matches (BSD attribution)`);
+          console.log(`  ✓ ETL seed merge (bsd-tennis): ${totalAdded}/${totalSeed} predictions ajoutees (db.archive_matches + tennisHistory, BSD attribution)`);
         }
       }
     } catch (e) {
