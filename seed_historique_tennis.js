@@ -103,45 +103,61 @@ function buildSeasonDates(season) {
 }
 
 // ── Fetch ESPN scoreboard for one date + tour ───────────────────────────────
+// ESPN structure: { events: [{ id, name, groupings: [{ grouping, competitions: [...] }] }] }
+// Returns flattened list of { competition, tournamentMeta, groupingSlug }
 async function fetchScoreboardForDate(tour, dateYYYYMMDD) {
   const url = `${ESPN_BASE}/${tour}/scoreboard?dates=${dateYYYYMMDD}`;
   const res = await httpsGet(url);
   if (res.status !== 200 || !res.data) return [];
-  const events = res.data.events || res.data.competitions || [];
-  return events;
+  const events = res.data.events || [];
+  const out = [];
+  for (const ev of events) {
+    const tournamentMeta = {
+      tournamentId: ev.id,
+      tournamentName: ev.name || ev.shortName || '',
+      major: !!ev.major,
+      venue: ev.venue?.fullName || null,
+      seasonYear: ev.season?.year || null,
+    };
+    const groupings = Array.isArray(ev.groupings) ? ev.groupings : [];
+    if (groupings.length === 0 && Array.isArray(ev.competitions)) {
+      // Fallback: events with flat competitions[] (rare)
+      for (const c of ev.competitions) out.push({ competition: c, tournamentMeta, groupingSlug: null });
+    } else {
+      for (const g of groupings) {
+        const slug = g.grouping?.slug || g.grouping?.displayName || null;
+        for (const c of (g.competitions || [])) {
+          out.push({ competition: c, tournamentMeta, groupingSlug: slug });
+        }
+      }
+    }
+  }
+  return out;
 }
 
-// ── Transform ESPN event → match record ─────────────────────────────────────
-function transformEspnEvent(raw, tour) {
-  if (!raw) return null;
-  const competition = (raw.competitions && raw.competitions[0]) || raw;
-  if (!competition) return null;
+// ── Transform ESPN competition → match record ───────────────────────────────
+function transformEspnEvent(entry, tour) {
+  if (!entry || !entry.competition) return null;
+  const { competition, tournamentMeta, groupingSlug } = entry;
   const competitors = competition.competitors || [];
   if (competitors.length < 2) return null;
 
-  const c1 = competitors[0];
-  const c2 = competitors[1];
+  // Status — only ingest finished matches
+  const status = competition.status?.type?.name || 'unknown';
+  const completed = competition.status?.type?.completed === true
+    || /STATUS_FINAL|completed/i.test(status);
+  if (!completed) return null;
 
-  // Determine round/tournament from raw notes or competition.notes
-  const notes = Array.isArray(competition.notes) && competition.notes.length
-    ? competition.notes.map(n => n.headline || n.text || '').join(' · ')
-    : '';
-  const tournamentName = (raw.tournament && raw.tournament.displayName)
-    || (raw.season && raw.season.year && raw.name)
-    || raw.shortName
-    || notes
-    || '';
+  // Order: ESPN uses homeAway 'home'/'away'. We map home → p1, away → p2 for consistency.
+  // If homeAway missing, fall back to array order.
+  const home = competitors.find(c => c.homeAway === 'home') || competitors[0];
+  const away = competitors.find(c => c.homeAway === 'away') || competitors[1];
 
-  // Status FT / cancelled / ongoing
-  const status = competition.status?.type?.name || raw.status?.type?.name || 'unknown';
-  const isCompleted = /STATUS_FINAL|STATUS_FULL_TIME|FT|completed|final/i.test(status);
-  if (!isCompleted) return null; // only ingest finished matches
-
-  // Set scores
-  const sets = [];
-  const c1Sets = Array.isArray(c1.linescores) ? c1.linescores : [];
-  const c2Sets = Array.isArray(c2.linescores) ? c2.linescores : [];
+  const setsRaw = (c) => Array.isArray(c.linescores) ? c.linescores : [];
+  const c1Sets = setsRaw(home);
+  const c2Sets = setsRaw(away);
   const nSets = Math.max(c1Sets.length, c2Sets.length);
+  const sets = [];
   for (let i = 0; i < nSets; i++) {
     sets.push({
       p1: c1Sets[i]?.value ?? null,
@@ -151,38 +167,59 @@ function transformEspnEvent(raw, tour) {
     });
   }
 
-  // Winner
-  const p1Won = c1.winner === true;
-  const p2Won = c2.winner === true;
-  const winner = p1Won ? 'p1' : (p2Won ? 'p2' : null);
+  // Sets won: count linescores where competitor's value > opponent's
+  let sw1 = 0, sw2 = 0;
+  for (const s of sets) {
+    if (s.p1 != null && s.p2 != null) {
+      if (s.p1 > s.p2) sw1++;
+      else if (s.p2 > s.p1) sw2++;
+    }
+  }
+
+  const winner = home.winner === true ? 'p1' : (away.winner === true ? 'p2' : null);
+
+  // Derive actual tour from grouping (ATP scoreboard endpoint returns WTA combined events too)
+  const inferredTour = (() => {
+    const g = String(groupingSlug || '').toLowerCase();
+    if (g.startsWith('mens-')) return 'ATP';
+    if (g.startsWith('womens-')) return 'WTA';
+    if (g.includes('mixed')) return 'MIXED';
+    return tour.toUpperCase();
+  })();
 
   return {
-    id: `espn_tennis_${raw.id || competition.id}`,
+    id: `espn_tennis_${competition.id}`,
     source: 'espn-public',
-    tour: tour.toUpperCase(),
+    tour: inferredTour,
+    endpoint_tour: tour.toUpperCase(),
     sport: 'tennis',
-    tournament: tournamentName,
-    round: competition.round?.displayName || raw.round?.displayName || null,
-    surface: competition.surfaceType || null,
-    date: raw.date || competition.date,
+    tournament: tournamentMeta.tournamentName,
+    tournament_id: tournamentMeta.tournamentId,
+    major: tournamentMeta.major,
+    venue: tournamentMeta.venue,
+    grouping: groupingSlug, // 'mens-singles' | 'womens-singles' | 'doubles' | etc.
+    round: competition.round?.displayName || competition.round?.name || null,
+    date: competition.date,
     player1: {
-      name: c1.athlete?.displayName || c1.team?.displayName || c1.displayName,
-      country: c1.athlete?.flag?.alt || null,
-      flag: c1.athlete?.flag?.href || null,
-      seed: c1.curatedRank?.current || c1.seed || null,
+      name: home.athlete?.displayName || home.athlete?.fullName || null,
+      short: home.athlete?.shortName || null,
+      country: home.athlete?.flag?.alt || null,
+      flag: home.athlete?.flag?.href || null,
+      espn_id: home.athlete?.id || home.id,
     },
     player2: {
-      name: c2.athlete?.displayName || c2.team?.displayName || c2.displayName,
-      country: c2.athlete?.flag?.alt || null,
-      flag: c2.athlete?.flag?.href || null,
-      seed: c2.curatedRank?.current || c2.seed || null,
+      name: away.athlete?.displayName || away.athlete?.fullName || null,
+      short: away.athlete?.shortName || null,
+      country: away.athlete?.flag?.alt || null,
+      flag: away.athlete?.flag?.href || null,
+      espn_id: away.athlete?.id || away.id,
     },
     sets,
-    sets_won_p1: parseInt(c1.score) || null,
-    sets_won_p2: parseInt(c2.score) || null,
+    sets_won_p1: sw1,
+    sets_won_p2: sw2,
     winner,
     status,
-    _espn_event_id: String(raw.id || competition.id),
+    _espn_competition_id: String(competition.id),
   };
 }
 
