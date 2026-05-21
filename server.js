@@ -13762,7 +13762,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/')) {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/')) {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -25906,6 +25906,90 @@ if (pathname.startsWith('/api/v1/bsd/transfers/') && req.method === 'GET') {
     return jsonResponse(res, 502, { error: 'bsd_transfers_failed', message: String(e.message || e) });
   }
 }
+
+// ─── BSD MCP Enrichissements onglet Foot (bd 8oov) ──────────────────────────
+// Proxies BSD pour lineups, shotmap, incidents, predictions ML, polymarket, broadcasts.
+// Pattern: /api/v1/bsd/<kind>/<matchId>  (matchId = id frontend OU _bsd_event_id direct)
+// Gate: footPro (déjà appliqué par srvPlanGate). Cache: api_cache sqlite (TTL adaptés).
+// Format réponse: { source:'bsd', event_id, data, cached:bool, fetched_at }
+// Safe-fail: retourne 200 + data:null si BSD upstream KO (UI affiche placeholder).
+const BSD_ENRICH_TTL = {
+  lineups:    6 * 3600 * 1000,   // 6h (compos peu changeantes hors match-day)
+  shotmap:    2 * 60 * 1000,     // 2min (live, refresh fréquent)
+  incidents:  60 * 1000,         // 1min (live timeline)
+  predictions:6 * 3600 * 1000,   // 6h (ML CatBoost stable)
+  polymarket: 5 * 60 * 1000,     // 5min (prediction market)
+  broadcasts: 24 * 3600 * 1000,  // 24h (TV channels figés)
+};
+
+function _bsdResolveEventId(matchId) {
+  // Accepte: id frontend (ex "bsd_207463_2026-05-21"), _bsd_event_id direct (int), fixture_id
+  if (!matchId) return null;
+  const s = String(matchId).trim();
+  if (/^\d+$/.test(s)) return s;
+  // Lookup db.matches
+  const m = db.matches.find(x => x.id === s) ||
+            db.matches.find(x => String(x.fixture_id) === s) ||
+            (typeof cachedMatches !== 'undefined' && cachedMatches.find(x => x.id === s));
+  if (m && m._bsd_event_id) return String(m._bsd_event_id);
+  // Parse pattern bsd_<id>_<date>
+  const mm = s.match(/^bsd_(\d+)_/);
+  if (mm) return mm[1];
+  return null;
+}
+
+async function _bsdEnrichFetch(kind, eventId) {
+  const cacheKey = `bsd_enrich_${kind}_${eventId}`;
+  const ttl = BSD_ENRICH_TTL[kind] || 5 * 60 * 1000;
+  const cached = apiCacheGet(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    return { data: cached === '__NEG__' ? null : cached, cached: true };
+  }
+  let endpoint = null;
+  switch (kind) {
+    case 'lineups':     endpoint = `/api/v2/events/${eventId}/lineups/`; break;
+    case 'shotmap':     endpoint = `/api/v2/events/${eventId}/shotmap/`; break;
+    case 'incidents':   endpoint = `/api/v2/events/${eventId}/incidents/`; break;
+    case 'predictions': endpoint = `/api/v2/predictions/?event=${eventId}`; break;
+    case 'polymarket':  endpoint = `/api/v2/polymarket/?event=${eventId}`; break;
+    case 'broadcasts':  endpoint = `/api/v2/broadcasts/?event=${eventId}`; break;
+    default: throw new Error(`unknown bsd kind: ${kind}`);
+  }
+  const res = await bsdFetch(endpoint);
+  if (!res || res.status !== 200 || !res.data) {
+    apiCacheSet(cacheKey, '__NEG__', `bsd_${kind}`, ttl);
+    return { data: null, cached: false };
+  }
+  apiCacheSet(cacheKey, res.data, `bsd_${kind}`, ttl);
+  return { data: res.data, cached: false };
+}
+
+const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts'];
+for (const kind of BSD_ENRICH_PATHS) {
+  const prefix = `/api/v1/bsd/${kind}/`;
+  if (pathname.startsWith(prefix) && req.method === 'GET') {
+    const rawId = decodeURIComponent(pathname.slice(prefix.length)).trim();
+    const eventId = _bsdResolveEventId(rawId);
+    if (!eventId) {
+      return jsonResponse(res, 400, { error: 'bad_match_id', message: `Aucun _bsd_event_id résolu pour matchId="${rawId}"` });
+    }
+    try {
+      const { data, cached } = await _bsdEnrichFetch(kind, eventId);
+      return jsonResponse(res, 200, {
+        source: 'bsd',
+        kind,
+        event_id: Number(eventId),
+        data,
+        cached,
+        fetched_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn(`  [BSD/${kind}] event=${eventId} erreur:`, e.message);
+      return jsonResponse(res, 502, { error: `bsd_${kind}_failed`, message: String(e.message || e) });
+    }
+  }
+}
+
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
   const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
   // v9.1: ID validation
@@ -26987,6 +27071,126 @@ if (pathname.startsWith('/api/v1/quick-scout/') && req.method === 'GET') {
   });
 }
 
+// v12.43 (bd c0qo) — Enrichissement BSD pour bouton AI-AL (foot).
+// Pre-fetch parallele : lineups + predictions + match-detail + polymarket.
+// Cache 1h via kvStore. Promise.allSettled + timeout 5s par call = degradation
+// gracieuse si BSD partiel ou KO. Retourne string a injecter en suffix du prompt.
+async function enrichGeminiContextWithBSD(matchId, match, forceRefresh) {
+  if (!BSD_API_KEY || !match) return '';
+  const cacheKey = `bsd_ctx_v1_${matchId}`;
+  if (!forceRefresh) {
+    const cached = kvGet(cacheKey);
+    if (cached && cached.ts && Date.now() - cached.ts < 3600000 && cached.block) {
+      return cached.block;
+    }
+  }
+  const bsdId = match._bsd_event_id || (matchId.startsWith('bsd_') ? matchId.slice(4).split('_')[0] : null);
+  if (!bsdId) return '';
+
+  const withTimeout = (p, ms = 5000) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('bsd_timeout')), ms)),
+  ]);
+
+  const t0 = Date.now();
+  const results = await Promise.allSettled([
+    withTimeout(bsdFetch(`/api/v2/events/${bsdId}/lineups/`)),
+    withTimeout((async () => fetchBSDPrediction(bsdId))()),
+    withTimeout(bsdFetch(`/api/v2/events/${bsdId}/`)),
+    withTimeout(bsdFetch(`/api/v2/events/${bsdId}/incidents/`)),
+    withTimeout(bsdFetch(`/api/v2/events/${bsdId}/odds/polymarket/`)),
+  ]);
+  console.log(`  [BSD-Enrich] bsd=${bsdId} ${Date.now() - t0}ms — statuses : ${results.map(r => r.status === 'fulfilled' ? 'OK' : 'KO').join(',')}`);
+
+  const out = [];
+  const get = i => (results[i].status === 'fulfilled' ? results[i].value : null);
+
+  // 1. Lineups
+  try {
+    const lin = get(0);
+    const lineups = lin?.data?.lineups || lin?.data;
+    const fmtXI = side => {
+      const players = lineups?.[side]?.players || lineups?.[side]?.starting_xi || [];
+      if (!Array.isArray(players) || players.length === 0) return null;
+      const names = players.slice(0, 11).map(p => p.name || p.player_name || p.shortName).filter(Boolean);
+      const formation = lineups?.[side]?.formation || lineups?.[side]?.formation_str || '';
+      return names.length ? `${formation ? formation + ' — ' : ''}${names.join(' · ')}` : null;
+    };
+    const h = fmtXI('home'); const a = fmtXI('away');
+    if (h) out.push(`COMPO ${match.home_team} : ${h}`);
+    if (a) out.push(`COMPO ${match.away_team} : ${a}`);
+  } catch (_) {}
+
+  // 2. Predictions ML BSD (CatBoost)
+  try {
+    const pred = get(1);
+    if (pred) {
+      const norm = normalizeBsdPrediction(pred, match);
+      if (norm && norm.percent_home != null) {
+        out.push(`PREDICTION ML BSD : ${match.home_team} ${norm.percent_home}% / Nul ${norm.percent_draw}% / ${match.away_team} ${norm.percent_away}%${norm.confidence != null ? ` — confiance ${norm.confidence}` : ''}${norm.advice ? ` — pari conseille : ${norm.advice}` : ''}`);
+        if (norm.btts_yes != null) out.push(`PREDICTION BTTS BSD : ${norm.btts_yes}%`);
+        if (norm.score_most_likely) out.push(`SCORE LE PLUS PROBABLE BSD : ${norm.score_most_likely}`);
+      }
+    }
+  } catch (_) {}
+
+  // 3. Score live + status + venue
+  try {
+    const det = get(2)?.data;
+    if (det) {
+      const status = det.status_str || det.status || '';
+      const minute = det.minute || det.current_minute || null;
+      const sh = det.home_score ?? det.score_home ?? null;
+      const sa = det.away_score ?? det.score_away ?? null;
+      if (status && status.toLowerCase() !== 'notstarted' && (sh != null || sa != null)) {
+        out.push(`SCORE LIVE : ${sh ?? '?'}-${sa ?? '?'} (${status}${minute ? ' ' + minute + "'" : ''})`);
+      }
+      const venue = det.venue?.name || det.stadium || null;
+      if (venue) out.push(`STADE : ${venue}`);
+      const ref = det.referee?.name || det.referee || null;
+      if (ref && typeof ref === 'string') out.push(`ARBITRE : ${ref}`);
+    }
+  } catch (_) {}
+
+  // 4. Incidents recents (live)
+  try {
+    const incData = get(3)?.data;
+    const events = incData?.results || incData?.incidents || incData || [];
+    if (Array.isArray(events) && events.length > 0) {
+      const last5 = events.slice(-5).map(ev => {
+        const min = ev.minute ?? ev.time ?? '?';
+        const type = ev.type || ev.incident_type || ev.event_type || '?';
+        const player = ev.player?.name || ev.player_name || '';
+        const team = ev.team === 'home' ? match.home_team : (ev.team === 'away' ? match.away_team : '');
+        return `${min}' ${type}${player ? ' ' + player : ''}${team ? ' (' + team + ')' : ''}`;
+      }).filter(Boolean);
+      if (last5.length) out.push(`INCIDENTS RECENTS : ${last5.join(' | ')}`);
+    }
+  } catch (_) {}
+
+  // 5. Polymarket — sentiment crypto retail
+  try {
+    const poly = get(4)?.data;
+    const markets = poly?.markets || poly?.results || poly || [];
+    const ml = Array.isArray(markets) ? markets.find(m => /moneyline|1x2|match_result/i.test(m.market_type || m.name || '')) : null;
+    if (ml?.outcomes && Array.isArray(ml.outcomes)) {
+      const fmtO = ml.outcomes.map(o => `${o.name || o.label}: ${o.price ? (o.price * 100).toFixed(0) + '%' : '?'}`).join(' / ');
+      if (fmtO) out.push(`POLYMARKET (sentiment crypto retail) : ${fmtO}`);
+    }
+  } catch (_) {}
+
+  if (out.length === 0) return '';
+  const block = `
+
+[CONTEXTE BSD ENRICHI — donnees temps reel Bzzoiro Sports Data]
+${out.join('\n')}
+
+Utilise ces donnees pour enrichir ta narration : si les compos sont publiees, mentionne des absences/titulaires-cles. Si la prediction ML BSD diverge fortement de ta narration, integre cette divergence dans ton verdict. Si polymarket diverge des bookmakers traditionnels, c'est un signal de sentiment retail interessant a souligner.
+`;
+  try { kvSet(cacheKey, { block, ts: Date.now() }); } catch (_) {}
+  return block;
+}
+
 // GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
 if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
   if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
@@ -26995,6 +27199,14 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
   const matchId = decodeURIComponent(pathname.split('/api/v1/deep-analysis-stream/')[1]);
   const match = db.matchIndex.get(matchId) || db.matches.find(m => m.id === matchId);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+
+  // v12.43 (bd c0qo) — Enrichissement BSD parallele avant prompt Gemini.
+  // Pre-fetch lineups+predictions+incidents+polymarket via Promise.allSettled
+  // pour injecter [CONTEXTE BSD ENRICHI] dans le systemPrompt en aval.
+  const bsdEnrichBlock = await enrichGeminiContextWithBSD(matchId, match, forceRefresh).catch(e => {
+    console.warn('  [DeepStream] enrichGeminiContextWithBSD KO:', e.message);
+    return '';
+  });
 
   // SSE headers
   res.writeHead(200, {
@@ -27101,7 +27313,7 @@ Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il l
 
 RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
-${dataBlock}`;
+${dataBlock}${bsdEnrichBlock || ''}`;
 
   // I1 — Confidence Score + I4 — Market divergences SSE meta event
   const confidence = (s.isReal ? 40 : 0) + (odds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (xg.home ? 10 : 0);
@@ -27165,6 +27377,12 @@ if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
     console.log(`  [DeepPro] HIT cache — ${match.home_team} vs ${match.away_team}`);
     return jsonResponse(res, 200, { text: cached.text, _from_cache: true });
   }
+
+  // v12.43 (bd c0qo) — Enrichissement BSD parallele avant prompt Gemini.
+  const bsdEnrichBlock = await enrichGeminiContextWithBSD(matchId, match, false).catch(e => {
+    console.warn('  [DeepPro] enrichGeminiContextWithBSD KO:', e.message);
+    return '';
+  });
 
   const p = match.poisson || {};
   const s = match.stats || {};
@@ -27272,7 +27490,7 @@ Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il l
 
 RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
-${dataBlock}`;
+${dataBlock}${bsdEnrichBlock || ''}`;
 
   (async () => {
     try {
