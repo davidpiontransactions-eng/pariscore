@@ -21327,37 +21327,68 @@ async function enrichTVChannels() {
       if (!chosenChannels) continue;
       const slot = document.querySelector(`[data-tv-badge="${id}"]`);
       if (!slot) continue;
-      // Multi-broadcaster display : afficher jusqu'à 3 diffuseurs avec deep-link clickable
-      // Monogramme coloré déterministe (hash nom → teinte) — fallback propre si pas de logo
-      const tvMonogram = (name) => {
-        const n = String(name || '?').trim();
-        let h = 0;
-        for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
-        const hue = h % 360;
-        const letter = (n[0] || '?').toUpperCase();
-        return `<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:3px;background:hsl(${hue},55%,45%);color:#fff;font:800 9px/1 var(--font-mono);flex-shrink:0;">${letter}</span>`;
-      };
-      const renderChannel = (ch) => {
-        const url = TV_DEEPLINKS[ch.name] || null;
-        const fallback = tvMonogram(ch.name);
-        const logoHtml = ch.logo
-          ? `<img src="${ch.logo}" alt="${ch.name}" style="height:14px;max-width:28px;object-fit:contain;" loading="lazy" onerror="this.outerHTML='${fallback.replace(/'/g, "\\'")}'">`
-          : fallback;
-        const tag = `<span title="${chosenCountry} — Diffuseur ${ch.name}${url ? ' (cliquer pour ouvrir)' : ''}">${ch.name}</span>`;
-        const inner = `${logoHtml} ${tag}`;
-        if (url) {
-          return `<a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;text-decoration:none;color:inherit;cursor:pointer">${inner}</a>`;
-        }
-        return `<span style="display:inline-flex;align-items:center;gap:3px">${inner}</span>`;
-      };
-      const items = chosenChannels.slice(0, 3).map(renderChannel).join('<span style="opacity:.4;margin:0 3px">·</span>');
-      slot.innerHTML = items;
-      slot.style.display = 'flex';
-      slot.style.flexWrap = 'wrap';
-      slot.style.gap = '3px';
+      // bd tv-clean — Option D : single badge cliquable, modal liste verticale au click
+      // Stocke channels en JSON encoded dans data-attr pour récupération au click
+      const channelsJson = JSON.stringify({ country: chosenCountry, channels: chosenChannels.slice(0, 10) })
+        .replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+      const count = chosenChannels.length;
+      const label = count === 1 ? '1 chaîne' : `${count} chaînes`;
+      slot.innerHTML = `<button type="button" class="tv-badge-btn" data-tv-channels='${channelsJson}' onclick="event.stopPropagation();psOpenTVModal(this)" title="Voir ${count} diffuseur${count > 1 ? 's' : ''} TV (${chosenCountry})" style="display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,233,0.10);color:#0c4a6e;border:1px solid rgba(14,165,233,0.30);border-radius:10px;padding:2px 8px;font:700 10px/1.2 var(--font-mono);cursor:pointer;transition:background .15s,border-color .15s;">📺 ${label}</button>`;
+      slot.style.display = 'inline-flex';
+      slot.style.justifyContent = 'center';
     }
   } catch {}
 }
+
+// bd tv-clean — Modal liste verticale chaînes TV (option D)
+window.psOpenTVModal = function(btn) {
+  try {
+    const raw = btn.getAttribute('data-tv-channels');
+    const data = JSON.parse(raw.replace(/&apos;/g, "'").replace(/&quot;/g, '"'));
+    const channels = data.channels || [];
+    const country = data.country || '';
+    let overlay = document.getElementById('ps-tv-modal');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'ps-tv-modal';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(4px);';
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+      document.body.appendChild(overlay);
+    } else {
+      overlay.innerHTML = '';
+      overlay.style.display = 'flex';
+    }
+    const monogram = (name) => {
+      const n = String(name || '?').trim();
+      let h = 0;
+      for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+      const hue = h % 360;
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:hsl(${hue},65%,50%);color:#fff;font:800 13px/1 var(--font-mono);flex-shrink:0;">${(n[0] || '?').toUpperCase()}</span>`;
+    };
+    const items = channels.map(ch => {
+      const url = (typeof TV_DEEPLINKS !== 'undefined' && TV_DEEPLINKS[ch.name]) || null;
+      const logo = ch.logo
+        ? `<img src="${ch.logo}" alt="${ch.name}" style="width:28px;height:28px;object-fit:contain;border-radius:6px;background:#f8fafc;flex-shrink:0;" loading="lazy" onerror="this.replaceWith(this._fbk||document.createTextNode(''))">`
+        : monogram(ch.name);
+      const inner = `${logo}<div style="display:flex;flex-direction:column;gap:1px;flex:1;"><span style="font:700 13px var(--font-sans,system-ui);color:#0f172a;">${ch.name}</span>${url ? '<span style="font:500 10px var(--font-mono);color:#0ea5e9;">→ Regarder en direct</span>' : '<span style="font:400 10px var(--font-mono);color:#64748b;">Diffuseur officiel</span>'}</div>`;
+      if (url) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#f8fafc;text-decoration:none;border:1px solid #e2e8f0;transition:background .15s,border-color .15s;" onmouseover="this.style.background='rgba(14,165,233,0.08)';this.style.borderColor='rgba(14,165,233,0.40)'" onmouseout="this.style.background='#f8fafc';this.style.borderColor='#e2e8f0'">${inner}</a>`;
+      }
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;">${inner}</div>`;
+    }).join('');
+    const panel = document.createElement('div');
+    panel.style.cssText = 'background:#ffffff;border-radius:14px;padding:18px;max-width:380px;width:90%;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(15,23,42,0.25);border:1px solid #e2e8f0;';
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 style="margin:0;font:800 15px var(--font-sans,system-ui);color:#0f172a;">📺 Diffuseurs TV${country ? ' · ' + country : ''}</h3>
+        <button type="button" onclick="document.getElementById('ps-tv-modal').remove()" aria-label="Fermer" style="background:transparent;border:none;color:#64748b;font:700 18px sans-serif;cursor:pointer;padding:0 4px;">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">${items}</div>
+      <div style="margin-top:12px;font:400 10px var(--font-mono);color:#64748b;text-align:center;">${channels.length} diffuseur${channels.length > 1 ? 's' : ''} · liens externes</div>
+    `;
+    overlay.appendChild(panel);
+  } catch (e) { console.warn('[psOpenTVModal]', e.message); }
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  EXPERT REPORT — Bet or Skip (confidence-based daily summary)
