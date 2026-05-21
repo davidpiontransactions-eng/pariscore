@@ -3913,6 +3913,10 @@
     transition: background .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .tm-bet-btn:hover { background: #fb8c00; }
   @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+  @keyframes ldmPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.25)} }
+  /* v12.62 (bd qe5) — Override light-mode catch-all `[id^="ldm-"] !important` pour minute promue accent vert */
+  body[data-cf-light="1"] #ldm-minute { color: var(--green) !important; }
+  body[data-cf-light="1"] #ldm-minute-pulse { background: var(--green) !important; }
 
   /* ── PARTNER ACCESS SECTION (CPA inversé style Datafoot) ──────────────── */
   .partner-access-section { padding: 40px 32px; border-top: 1px solid var(--bg3);
@@ -13560,8 +13564,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
         <div style="text-align:center;">
           <div id="ldm-score" style="font:900 36px/1 var(--font-mono);color:var(--text);letter-spacing:.04em;">0–0</div>
+          <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span id="ldm-minute" style="font:900 20px/1 var(--font-mono);color:var(--green);letter-spacing:.05em;text-shadow:0 0 8px rgba(0,230,118,0.35);">—</span>
+            <span id="ldm-minute-pulse" style="display:none;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:ldmPulse 1.4s ease-in-out infinite;"></span>
+          </div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--font-mono);">
-            <span id="ldm-minute">—</span> · <span id="ldm-league">—</span>
+            <span id="ldm-league">—</span>
           </div>
           <div style="margin-top:8px;">
             <span id="ldm-intensity" style="font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;font-family:var(--font-mono);background:rgba(41,182,246,0.12);color:var(--blue);">⚡ 0/100</span>
@@ -13690,12 +13698,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         </div>
       </section>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-        <div style="padding:16px 24px;border-right:1px solid var(--border);">
+      <div id="ldm-stats-verdict-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        <div id="ldm-stats-col" style="padding:16px 24px;border-right:1px solid var(--border);">
           <div style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Statistiques Live</div>
           <div id="ldm-stats-bars"></div>
         </div>
-        <div style="padding:16px 24px;">
+        <div id="ldm-verdict-col" style="padding:16px 24px;">
           <div style="font:800 10px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;">Verdict Live</div>
           <div id="ldm-verdict-content" style="font-size:12px;color:var(--text2);line-height:1.6;">Analyse en cours…</div>
         </div>
@@ -24884,6 +24892,8 @@ function updateLiveDetailModal(m) {
   const min = m.minute || m.live_minute || 0;
   setText('ldm-minute', min ? `${min}′` : '—');
   setText('ldm-league', m.league || '');
+  const pulseEl = document.getElementById('ldm-minute-pulse');
+  if (pulseEl) pulseEl.style.display = (min > 0 && min < 95) ? 'inline-block' : 'none';
 
   const intensity = m.intensity || m.live_intensity || 0;
   const iEl = document.getElementById('ldm-intensity');
@@ -25302,6 +25312,26 @@ function drawLDMomentumSVG(momArr) {
 function updateLDVerdict(m) {
   const el = document.getElementById('ldm-verdict-content');
   if (!el) return;
+  // v12.62 (bd qe5) Phase 1 — Picks chiffrés (cockpit) REMPLACE verdict litteraire.
+  // Si live_scenarios.picks dispo + section cockpit visible, masquer le bloc verdict
+  // pour éviter doublon (cockpit a déjà verdict_actionable dans Picks Live Chiffrés).
+  const cockpitSection = document.getElementById('ldm-cockpit-section');
+  const ls = m.live_scenarios;
+  const cockpitVisible = cockpitSection && cockpitSection.style.display !== 'none'
+                         && ls && ls.win_prob && Array.isArray(ls.picks) && ls.picks.length > 0;
+  const verdictCol = document.getElementById('ldm-verdict-col');
+  const statsGrid = document.getElementById('ldm-stats-verdict-grid');
+  const statsCol = document.getElementById('ldm-stats-col');
+  if (cockpitVisible) {
+    if (verdictCol) verdictCol.style.display = 'none';
+    if (statsGrid) statsGrid.style.gridTemplateColumns = '1fr';
+    if (statsCol) statsCol.style.borderRight = 'none';
+    return;
+  } else {
+    if (verdictCol) verdictCol.style.display = '';
+    if (statsGrid) statsGrid.style.gridTemplateColumns = '1fr 1fr';
+    if (statsCol) statsCol.style.borderRight = '1px solid var(--border)';
+  }
   // v9.8.3: hasData vérifie les VALEURS (pas juste truthiness object), distingue early game
   const fieldHasValue = (f) => f && (f.home != null || f.away != null);
   const hasData = fieldHasValue(m.xg) || fieldHasValue(m.shots) || fieldHasValue(m.possession) || fieldHasValue(m.dangerous_attacks);
