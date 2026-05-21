@@ -19460,6 +19460,17 @@ const server = http.createServer(async (req, res) => {
     const pathname = parsedUrl.pathname;
     const query = Object.fromEntries(parsedUrl.searchParams.entries());
 
+    // bd ParisScorebis-u5x — X-Robots-Tag noindex sur toutes les routes API
+    // pour signaler explicitement a Google bot que ces endpoints JSON ne
+    // doivent JAMAIS apparaitre en SERP. Complemente robots.txt Disallow /api/.
+    // Decouverte: GSC signalait /api/v1/comparateur/feed bloquee — comportement
+    // attendu mais le double-layer rassure le crawler + previens edge cases.
+    if (pathname.startsWith('/api/') || pathname.startsWith('/tennis/api/') ||
+        pathname === '/r/' || pathname.startsWith('/r/') ||
+        pathname === '/cb/' || pathname.startsWith('/cb/')) {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
     // CORS preflight
     if (req.method === 'OPTIONS') {
         return res.writeHead(204, {
