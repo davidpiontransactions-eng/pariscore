@@ -3356,6 +3356,14 @@ function initSQLite() {
   sqldb.exec(`CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS ai_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, matchId TEXT NOT NULL, rating INTEGER NOT NULL, ts INTEGER NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS matchday_passes (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT UNIQUE NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`);
+  // bd s77m — table idempotency webhook Stripe (anti-rejeu : un event_id traité une seule fois)
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS stripe_events (
+    event_id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    received_at INTEGER NOT NULL,
+    payload_hash TEXT
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_stripe_events_received ON stripe_events(received_at)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -3364,6 +3372,29 @@ function initSQLite() {
     role TEXT NOT NULL DEFAULT 'freemium',
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
   )`);
+  // bd s77m — extension users pour abonnement Stripe Pro (idempotent ALTER)
+  try {
+    const ucols = sqldb.prepare("PRAGMA table_info(users)").all();
+    if (!ucols.some(c => c.name === 'stripe_customer_id')) {
+      sqldb.exec(`ALTER TABLE users ADD COLUMN stripe_customer_id TEXT`);
+    }
+    if (!ucols.some(c => c.name === 'stripe_subscription_id')) {
+      sqldb.exec(`ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT`);
+    }
+    if (!ucols.some(c => c.name === 'subscription_status')) {
+      // valeurs Stripe : active, trialing, past_due, canceled, unpaid, incomplete, incomplete_expired
+      sqldb.exec(`ALTER TABLE users ADD COLUMN subscription_status TEXT`);
+    }
+    if (!ucols.some(c => c.name === 'premium_until')) {
+      // epoch seconds — date d'expiration access Pro (current_period_end Stripe)
+      sqldb.exec(`ALTER TABLE users ADD COLUMN premium_until INTEGER`);
+    }
+    if (!ucols.some(c => c.name === 'preferences_json')) {
+      // JSON blob : filtres favoris tableau Foot/Tennis (cahier des charges Etape 2)
+      sqldb.exec(`ALTER TABLE users ADD COLUMN preferences_json TEXT`);
+    }
+    sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL`);
+  } catch (e) { console.error('  [Migration s77m] users ALTER failed:', e.message); }
   // ── API Cache — toutes les réponses API stockées 12h (modèle OddAlerts/Datafoot) ──
   sqldb.exec(`CREATE TABLE IF NOT EXISTS api_cache (
     key TEXT PRIMARY KEY,
@@ -13394,12 +13425,41 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const STRIPE_MATCHDAY_PRICE_ID = process.env.STRIPE_MATCHDAY_PRICE_ID || '';
 const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL || 'http://localhost:3000/?matchday=success';
 const STRIPE_CANCEL_URL = process.env.STRIPE_CANCEL_URL || 'http://localhost:3000/';
+// bd s77m — Subscription Pro (mensuel/annuel) — Price IDs + redirections
+const STRIPE_PRICE_PRO_MONTHLY = process.env.STRIPE_PRICE_PRO_MONTHLY || '';
+const STRIPE_PRICE_PRO_ANNUAL  = process.env.STRIPE_PRICE_PRO_ANNUAL  || '';
+const STRIPE_PRICE_PRO_FOOT    = process.env.STRIPE_PRICE_PRO_FOOT    || '';
+const STRIPE_PRICE_PRO_TENNIS  = process.env.STRIPE_PRICE_PRO_TENNIS  || '';
+const STRIPE_PRO_SUCCESS_URL   = process.env.STRIPE_PRO_SUCCESS_URL   || 'http://localhost:3000/?subscription=success';
+const STRIPE_PRO_CANCEL_URL    = process.env.STRIPE_PRO_CANCEL_URL    || 'http://localhost:3000/?subscription=cancel';
+const STRIPE_PORTAL_RETURN_URL = process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/?portal=back';
 
 function stripeRequest(method, endpoint, params) {
   return new Promise((resolve, reject) => {
-    const body = params
-      ? Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')
-      : '';
+    // bd s77m — flatten nested objects/arrays au format Stripe form encoding (metadata[user_id], expand[][...])
+    const flatten = (obj, prefix = '') => {
+      const out = [];
+      for (const [k, v] of Object.entries(obj || {})) {
+        if (v == null) continue;
+        const key = prefix ? `${prefix}[${k}]` : k;
+        if (Array.isArray(v)) {
+          v.forEach((item, i) => {
+            const arrKey = `${key}[${i}]`;
+            if (item !== null && typeof item === 'object') {
+              for (const [ik, iv] of Object.entries(item)) out.push(`${encodeURIComponent(`${arrKey}[${ik}]`)}=${encodeURIComponent(iv)}`);
+            } else {
+              out.push(`${encodeURIComponent(arrKey)}=${encodeURIComponent(item)}`);
+            }
+          });
+        } else if (typeof v === 'object') {
+          out.push(...flatten(v, key));
+        } else {
+          out.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`);
+        }
+      }
+      return out;
+    };
+    const body = params ? flatten(params).join('&') : '';
     const options = {
       hostname: 'api.stripe.com',
       path: `/v1/${endpoint}`,
@@ -13423,14 +13483,89 @@ function stripeRequest(method, endpoint, params) {
   });
 }
 
-// Vérifie la signature Stripe-Signature (HMAC-SHA256)
-function verifyStripeSignature(rawBody, sigHeader) {
+// Vérifie la signature Stripe-Signature (HMAC-SHA256) + timestamp tolerance anti-rejeu (default 5min)
+function verifyStripeSignature(rawBody, sigHeader, toleranceSec = 300) {
   if (!STRIPE_WEBHOOK_SECRET || !sigHeader) return false;
-  const parts = Object.fromEntries(sigHeader.split(',').map(p => p.split('=')));
-  const ts = parts.t;
+  // bd s77m — parse robuste: header peut contenir plusieurs v1=... (rotation secret)
+  const tParts = []; const v1Parts = [];
+  for (const segment of sigHeader.split(',')) {
+    const [k, ...rest] = segment.split('=');
+    const v = rest.join('=');
+    if (k === 't') tParts.push(v);
+    else if (k === 'v1') v1Parts.push(v);
+  }
+  if (!tParts.length || !v1Parts.length) return false;
+  const ts = tParts[0];
+  // Anti-replay : refuse si timestamp > toleranceSec
+  const tsNum = parseInt(ts, 10);
+  if (!tsNum || Math.abs(Math.floor(Date.now() / 1000) - tsNum) > toleranceSec) return false;
   const expected = crypto.createHmac('sha256', STRIPE_WEBHOOK_SECRET)
     .update(`${ts}.${rawBody}`).digest('hex');
-  return parts.v1 === expected;
+  // Timing-safe comparison sur chaque candidat v1
+  const expBuf = Buffer.from(expected, 'hex');
+  return v1Parts.some(v1 => {
+    try {
+      const gotBuf = Buffer.from(v1, 'hex');
+      return gotBuf.length === expBuf.length && crypto.timingSafeEqual(gotBuf, expBuf);
+    } catch { return false; }
+  });
+}
+
+// bd s77m — résout un Price ID Stripe à partir du plan choisi par l'utilisateur
+function psResolveProPriceId(plan, billing) {
+  // plan : 'pro_all' (default), 'pro_foot', 'pro_tennis'
+  // billing : 'monthly' (default), 'annual'
+  if (plan === 'pro_foot' && STRIPE_PRICE_PRO_FOOT) return STRIPE_PRICE_PRO_FOOT;
+  if (plan === 'pro_tennis' && STRIPE_PRICE_PRO_TENNIS) return STRIPE_PRICE_PRO_TENNIS;
+  if (billing === 'annual' && STRIPE_PRICE_PRO_ANNUAL) return STRIPE_PRICE_PRO_ANNUAL;
+  return STRIPE_PRICE_PRO_MONTHLY;
+}
+
+// Map Stripe Price ID → role PariScore (synchronisé webhook)
+function psStripePriceToRole(priceId) {
+  if (!priceId) return 'premium';
+  if (priceId === STRIPE_PRICE_PRO_FOOT)   return 'pro_foot';
+  if (priceId === STRIPE_PRICE_PRO_TENNIS) return 'pro_tennis';
+  return 'pro_all'; // monthly + annual + default
+}
+
+// Idempotency : retourne true si event déjà traité (ou enregistré maintenant)
+function psStripeEventAlreadyProcessed(eventId, eventType) {
+  if (!eventId) return false;
+  try {
+    sqldb.prepare('INSERT INTO stripe_events (event_id, event_type, received_at) VALUES (?, ?, ?)')
+      .run(eventId, eventType || 'unknown', Math.floor(Date.now() / 1000));
+    return false; // insert success → première fois
+  } catch (e) {
+    if (e.message.includes('UNIQUE')) return true; // déjà vu
+    console.error('[Stripe] idempotency check error:', e.message);
+    return false;
+  }
+}
+
+// Update users.role + statut abonnement de manière atomique
+function psSyncUserSubscription({ userId, customerId, subscriptionId, status, role, premiumUntil }) {
+  if (!userId) return false;
+  try {
+    const set = [];
+    const vals = [];
+    if (customerId !== undefined)     { set.push('stripe_customer_id = ?');     vals.push(customerId); }
+    if (subscriptionId !== undefined) { set.push('stripe_subscription_id = ?'); vals.push(subscriptionId); }
+    if (status !== undefined)         { set.push('subscription_status = ?');   vals.push(status); }
+    if (role !== undefined)           { set.push('role = ?');                  vals.push(role); }
+    if (premiumUntil !== undefined)   { set.push('premium_until = ?');         vals.push(premiumUntil); }
+    if (!set.length) return false;
+    vals.push(userId);
+    sqldb.prepare(`UPDATE users SET ${set.join(', ')} WHERE id = ?`).run(...vals);
+    return true;
+  } catch (e) { console.error('[Stripe] psSyncUserSubscription error:', e.message); return false; }
+}
+
+function psFindUserByCustomer(customerId) {
+  if (!customerId) return null;
+  try {
+    return sqldb.prepare('SELECT id, email, role FROM users WHERE stripe_customer_id = ?').get(customerId) || null;
+  } catch { return null; }
 }
 
 function jwtSign(payload, ttl = JWT_TTL) {
@@ -20882,14 +21017,25 @@ if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
   return;
 }
 // GET /api/v1/auth/me — Profil utilisateur connecté
+// bd s77m — si role DB diffère du role JWT (upgrade subscription récent), réémet token frais
 if (pathname === '/api/v1/auth/me' && req.method === 'GET') {
   const user = getAuthUser(req);
   if (!user) return jsonResponse(res, 401, { error: 'Non authentifié', code: 'AUTH_REQUIRED' });
-  // Pour les membres SQLite, retourner les infos fraîches
   if (user.userId) {
-    const row = sqldb.prepare('SELECT id, email, role, created_at FROM users WHERE id = ?').get(user.userId);
+    const row = sqldb.prepare('SELECT id, email, role, created_at, subscription_status, premium_until, stripe_customer_id FROM users WHERE id = ?').get(user.userId);
     if (!row) return jsonResponse(res, 404, { error: 'Utilisateur introuvable' });
-    return jsonResponse(res, 200, { userId: row.id, email: row.email, role: row.role, created_at: row.created_at });
+    const payload = {
+      userId: row.id, email: row.email, role: row.role, created_at: row.created_at,
+      subscription_status: row.subscription_status || null,
+      premium_until: row.premium_until || null,
+      has_billing: !!row.stripe_customer_id,
+    };
+    // Refresh JWT si role drift (post-webhook subscription)
+    if (row.role !== user.role) {
+      payload.token = jwtSign({ userId: row.id, email: row.email, role: row.role }, JWT_TTL_USER);
+      payload.token_refreshed = true;
+    }
+    return jsonResponse(res, 200, payload);
   }
   return jsonResponse(res, 200, { username: user.username, role: user.role });
 }
@@ -20907,6 +21053,7 @@ if (pathname === '/api/v1/checkout/matchday' && req.method === 'POST') {
         'success_url': STRIPE_SUCCESS_URL,
         'cancel_url': STRIPE_CANCEL_URL,
         'payment_method_types[0]': 'card',
+        'metadata[product]': 'matchday',
       });
       if (session.error) return jsonResponse(res, 400, { error: session.error.message });
       jsonResponse(res, 200, { url: session.url, session_id: session.id });
@@ -20917,30 +21064,227 @@ if (pathname === '/api/v1/checkout/matchday' && req.method === 'POST') {
   })();
   return;
 }
+// bd s77m — POST /api/v1/payments/create-checkout-session → abonnement Pro (mode=subscription)
+// Body : { plan: 'pro_all'|'pro_foot'|'pro_tennis', billing: 'monthly'|'annual' }
+if (pathname === '/api/v1/payments/create-checkout-session' && req.method === 'POST') {
+  const user = requireUserAuth(req, res);
+  if (!user) return;
+  if (!STRIPE_SECRET_KEY) {
+    return jsonResponse(res, 503, { error: 'Paiement non configuré (STRIPE_SECRET_KEY manquante)' });
+  }
+  readBodyLimited(req, MAX_BODY_SIZE).then(async raw => {
+    try {
+      const parsed = raw ? JSON.parse(raw) : {};
+      const plan = ['pro_all', 'pro_foot', 'pro_tennis'].includes(parsed.plan) ? parsed.plan : 'pro_all';
+      const billing = parsed.billing === 'annual' ? 'annual' : 'monthly';
+      const priceId = psResolveProPriceId(plan, billing);
+      if (!priceId) return jsonResponse(res, 503, { error: `Price ID non configuré pour ${plan}/${billing}` });
+      // Récupère row user pour customer_email + customer existant
+      const row = sqldb.prepare('SELECT id, email, stripe_customer_id FROM users WHERE id = ?').get(user.userId);
+      if (!row) return jsonResponse(res, 404, { error: 'Utilisateur introuvable' });
+      const params = {
+        mode: 'subscription',
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${STRIPE_PRO_SUCCESS_URL}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: STRIPE_PRO_CANCEL_URL,
+        payment_method_types: ['card'],
+        // Lie le checkout à notre user_id (webhook s'en sert pour update users.role)
+        metadata: { user_id: String(row.id), plan, billing, product: 'pro_subscription' },
+        // metadata aussi sur la subscription elle-même (event invoice.paid n'a pas session metadata)
+        subscription_data: { metadata: { user_id: String(row.id), plan, billing } },
+        allow_promotion_codes: 'true',
+        client_reference_id: String(row.id),
+      };
+      // Réutilise le customer Stripe existant si déjà créé (évite doublons)
+      if (row.stripe_customer_id) params.customer = row.stripe_customer_id;
+      else params.customer_email = row.email;
+      const session = await stripeRequest('POST', 'checkout/sessions', params);
+      if (session.error) return jsonResponse(res, 400, { error: session.error.message, stripe_code: session.error.code });
+      jsonResponse(res, 200, { url: session.url, session_id: session.id });
+    } catch (e) {
+      console.error('[Stripe] subscription checkout error:', e.message);
+      jsonResponse(res, 500, { error: 'Erreur Stripe', detail: e.message });
+    }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// bd s77m — POST /api/v1/payments/customer-portal → Stripe Billing Portal (self-service abonnement)
+if (pathname === '/api/v1/payments/customer-portal' && req.method === 'POST') {
+  const user = requireUserAuth(req, res);
+  if (!user) return;
+  if (!STRIPE_SECRET_KEY) {
+    return jsonResponse(res, 503, { error: 'Paiement non configuré (STRIPE_SECRET_KEY manquante)' });
+  }
+  (async () => {
+    try {
+      const row = sqldb.prepare('SELECT stripe_customer_id FROM users WHERE id = ?').get(user.userId);
+      if (!row || !row.stripe_customer_id) {
+        return jsonResponse(res, 404, { error: 'Aucun abonnement actif — pas de customer Stripe lié' });
+      }
+      const session = await stripeRequest('POST', 'billing_portal/sessions', {
+        customer: row.stripe_customer_id,
+        return_url: STRIPE_PORTAL_RETURN_URL,
+      });
+      if (session.error) return jsonResponse(res, 400, { error: session.error.message });
+      jsonResponse(res, 200, { url: session.url });
+    } catch (e) {
+      console.error('[Stripe] customer-portal error:', e.message);
+      jsonResponse(res, 500, { error: 'Erreur Stripe' });
+    }
+  })();
+  return;
+}
+// bd s77m — GET /api/v1/payments/subscription → état abonnement courant
+if (pathname === '/api/v1/payments/subscription' && req.method === 'GET') {
+  const user = requireUserAuth(req, res);
+  if (!user) return;
+  const row = sqldb.prepare('SELECT role, stripe_customer_id, stripe_subscription_id, subscription_status, premium_until FROM users WHERE id = ?').get(user.userId);
+  if (!row) return jsonResponse(res, 404, { error: 'Utilisateur introuvable' });
+  const now = Math.floor(Date.now() / 1000);
+  const isActive = row.subscription_status === 'active' || row.subscription_status === 'trialing';
+  return jsonResponse(res, 200, {
+    role: row.role,
+    plan: row.role,
+    has_subscription: !!row.stripe_subscription_id,
+    status: row.subscription_status || 'none',
+    is_active: isActive,
+    customer_id: row.stripe_customer_id || null,
+    premium_until: row.premium_until || null,
+    days_remaining: row.premium_until ? Math.max(0, Math.floor((row.premium_until - now) / 86400)) : null,
+  });
+}
 // POST /api/v1/webhook/stripe → Stripe envoie l'événement après paiement
+// bd s77m — handler étendu : matchday (one-shot) + subscription Pro (invoice.paid, customer.subscription.*)
 if (pathname === '/api/v1/webhook/stripe' && req.method === 'POST') {
   readBodyLimited(req, MAX_BODY_SIZE).then(rawBody => {
+    // bd s77m — refus strict si secret webhook absent (prod) — empêche events forgés
+    if (!STRIPE_WEBHOOK_SECRET) {
+      console.error('[Stripe] STRIPE_WEBHOOK_SECRET absent — webhook refusé (sécurité)');
+      return jsonResponse(res, 503, { error: 'Webhook désactivé : STRIPE_WEBHOOK_SECRET non configuré' });
+    }
     const sig = req.headers['stripe-signature'] || '';
-    if (STRIPE_WEBHOOK_SECRET && !verifyStripeSignature(rawBody, sig)) {
+    if (!verifyStripeSignature(rawBody, sig)) {
+      console.warn('[Stripe] webhook signature invalide ou expirée — IP', req.socket?.remoteAddress);
       return jsonResponse(res, 400, { error: 'Signature invalide' });
     }
+    let event;
+    try { event = JSON.parse(rawBody); }
+    catch { return jsonResponse(res, 400, { error: 'JSON invalide' }); }
+
+    // Idempotency : refuse retry sur même event_id (Stripe peut renvoyer si pas de 2xx en 30s)
+    if (psStripeEventAlreadyProcessed(event.id, event.type)) {
+      console.log(`[Stripe] event ${event.id} déjà traité — skip (idempotency)`);
+      return jsonResponse(res, 200, { received: true, idempotent: true });
+    }
+
+    const obj = event.data?.object || {};
     try {
-      const event = JSON.parse(rawBody);
-      if (event.type === 'checkout.session.completed') {
-        const sessionId = event.data?.object?.id;
-        if (sessionId) {
-          const now = Math.floor(Date.now() / 1000);
-          const exp = now + JWT_TTL_MATCHDAY;
-          const token = jwtSign({ role: 'matchday', session_id: sessionId }, JWT_TTL_MATCHDAY);
-          sqldb.prepare(
-            'INSERT OR IGNORE INTO matchday_passes (session_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
-          ).run(sessionId, token, now, exp);
-          console.log(`[Matchday] Pass créé — session ${sessionId} — expire dans 24h`);
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const product = obj.metadata?.product;
+          if (obj.mode === 'subscription' || product === 'pro_subscription') {
+            // Nouvel abonnement Pro — lie customer Stripe au user PariScore
+            const userId = parseInt(obj.metadata?.user_id || obj.client_reference_id, 10);
+            const customerId = obj.customer;
+            const subId = obj.subscription;
+            const plan = obj.metadata?.plan || 'pro_all';
+            if (userId && customerId) {
+              psSyncUserSubscription({
+                userId, customerId, subscriptionId: subId,
+                status: 'active', role: plan,
+              });
+              console.log(`[Stripe] Pro subscription créée — user ${userId} → ${plan} (sub ${subId})`);
+            } else {
+              console.error('[Stripe] checkout.session.completed subscription sans user_id/customer:', { userId, customerId });
+            }
+          } else {
+            // Matchday pass (mode=payment) — comportement existant inchangé
+            const sessionId = obj.id;
+            if (sessionId) {
+              const now = Math.floor(Date.now() / 1000);
+              const exp = now + JWT_TTL_MATCHDAY;
+              const token = jwtSign({ role: 'matchday', session_id: sessionId }, JWT_TTL_MATCHDAY);
+              sqldb.prepare(
+                'INSERT OR IGNORE INTO matchday_passes (session_id, token, created_at, expires_at) VALUES (?, ?, ?, ?)'
+              ).run(sessionId, token, now, exp);
+              console.log(`[Matchday] Pass créé — session ${sessionId} — expire dans 24h`);
+            }
+          }
+          break;
         }
+        case 'invoice.paid':
+        case 'invoice.payment_succeeded': {
+          // Renouvellement réussi → prolonge premium_until à period_end
+          const customerId = obj.customer;
+          const subId = obj.subscription;
+          const periodEnd = obj.lines?.data?.[0]?.period?.end || null;
+          const userRow = psFindUserByCustomer(customerId);
+          if (userRow) {
+            psSyncUserSubscription({
+              userId: userRow.id, customerId, subscriptionId: subId,
+              status: 'active',
+              premiumUntil: periodEnd,
+            });
+            console.log(`[Stripe] invoice.paid — user ${userRow.id} renouvelé jusqu'à ${periodEnd ? new Date(periodEnd * 1000).toISOString() : 'n/a'}`);
+          } else {
+            console.warn(`[Stripe] invoice.paid sans user trouvé pour customer ${customerId}`);
+          }
+          break;
+        }
+        case 'invoice.payment_failed': {
+          // Paiement échoué → marque past_due mais ne retire pas l'accès immédiatement
+          // (Stripe re-essaie selon settings ; on attend subscription.deleted pour révoquer)
+          const customerId = obj.customer;
+          const userRow = psFindUserByCustomer(customerId);
+          if (userRow) {
+            psSyncUserSubscription({ userId: userRow.id, status: 'past_due' });
+            console.warn(`[Stripe] invoice.payment_failed — user ${userRow.id} passé en past_due`);
+          }
+          break;
+        }
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated': {
+          // Plan change / period_end update — re-synchronise rôle + statut + premium_until
+          const customerId = obj.customer;
+          const subId = obj.id;
+          const status = obj.status; // active|trialing|past_due|canceled|...
+          const periodEnd = obj.current_period_end || null;
+          const priceId = obj.items?.data?.[0]?.price?.id;
+          const role = psStripePriceToRole(priceId);
+          const userRow = psFindUserByCustomer(customerId);
+          if (userRow) {
+            const update = { userId: userRow.id, subscriptionId: subId, status, premiumUntil: periodEnd };
+            // Ne downgrade pas le rôle si status pas active (préserve grace period)
+            if (status === 'active' || status === 'trialing') update.role = role;
+            psSyncUserSubscription(update);
+            console.log(`[Stripe] subscription.${event.type.includes('created') ? 'created' : 'updated'} — user ${userRow.id} status=${status} role=${role}`);
+          }
+          break;
+        }
+        case 'customer.subscription.deleted': {
+          // Résiliation finale → freemium + nettoie sub_id (garde customer_id pour ré-abonnement)
+          const customerId = obj.customer;
+          const userRow = psFindUserByCustomer(customerId);
+          if (userRow) {
+            psSyncUserSubscription({
+              userId: userRow.id, subscriptionId: null,
+              status: 'canceled', role: 'freemium', premiumUntil: null,
+            });
+            console.log(`[Stripe] subscription.deleted — user ${userRow.id} downgraded freemium`);
+          }
+          break;
+        }
+        default:
+          // Event non géré : 200 OK pour éviter retries Stripe inutiles
+          break;
       }
-      jsonResponse(res, 200, { received: true });
+      jsonResponse(res, 200, { received: true, event_type: event.type });
     } catch (e) {
-      jsonResponse(res, 400, { error: 'JSON invalide' });
+      console.error(`[Stripe] webhook handler error (${event.type}):`, e.message);
+      // 500 → Stripe re-tentera. Idempotency table déjà inséré le event_id donc skip au prochain retry.
+      // Pour permettre retry valide : DELETE de l'event en cas d'erreur de traitement.
+      try { sqldb.prepare('DELETE FROM stripe_events WHERE event_id = ?').run(event.id); } catch {}
+      jsonResponse(res, 500, { error: 'Erreur traitement webhook' });
     }
   }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
   return;

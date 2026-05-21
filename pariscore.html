@@ -29639,10 +29639,10 @@ const PLANS = [
   { name:'MATCHDAY FOOT',     price:'1,50', period:'/ 24h',        desc:"Tout le Foot Pro pendant 24h.",         features:['Foot illimité 24h','Toutes les ligues','IA / Power Score','Top Stratégies','Alertes Telegram','Mes Paris & bankroll'], disabled:['Tennis'], btn:'Pass Foot du Jour',      featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
   { name:'MATCHDAY TENNIS',   price:'1,50', period:'/ 24h',        desc:"Tout le Tennis Pro pendant 24h.",       features:['Tennis illimité 24h','Value bets & Elo Tennis','IA Tennis','Top Stratégies Tennis','Alertes Telegram'], disabled:['Foot Pro'], btn:'Pass Tennis du Jour',    featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
   { name:'DUO MATCHDAY',      price:'2,50', period:'/ 24h',        desc:"Foot + Tennis Pro pendant 24h.",        features:['Foot + Tennis illimités 24h','Toutes les ligues + ATP/WTA','IA / Power Score','Top Stratégies (2 sports)','Alertes Telegram'], disabled:[], btn:'Pass Duo du Jour',       featured:false, matchday:true,  btnClass:'price-btn-amber',  onclick:'buyMatchdayPass()' },
-  { name:'PRO FOOT',          price:'19,5', period:'/ mois',       desc:"Pour les parieurs Foot.",               features:['Foot illimité — toutes les ligues','IA / Power Score illimité','Top Stratégies','Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j','BetMines best picks IA','Comparateur 20+ bookmakers'], disabled:['Tennis'], btn:'Choisir Pro Foot',       featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
-  { name:'PRO TENNIS',        price:'19,5', period:'/ mois',       desc:"Pour les parieurs Tennis.",             features:['Tennis illimité — ATP / WTA','Value bets & indices Elo','IA Tennis','Top Stratégies Tennis','Alertes Telegram temps réel','Mes Paris & bankroll'], disabled:['Foot Pro (reste niveau gratuit)'], btn:'Choisir Pro Tennis',     featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
-  { name:'DUO PRO',           price:'30',   period:'/ mois',       desc:"Les 2 sports, tout illimité.",          features:['Foot + Tennis illimités','Toutes les ligues + ATP/WTA','IA / Power Score illimité','Top Stratégies (2 sports)','Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j','BetMines + Comparateur','Accès Discord'], disabled:[], btn:"Commencer l'essai gratuit", featured:true, matchday:false, btnClass:'price-btn-green', onclick:'openModal()' },
-  { name:'ANNUEL DUO',        price:'22',   period:'/ mois - 27%', desc:"Duo Pro annuel — économisez ~96€/an.",  features:['Tout Duo Pro inclus','Accès anticipé nouvelles fonctions','Backtesting 2 ans','Export CSV / API','Alertes prioritaires'], disabled:[], btn:'Choisir Annuel',         featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:'openModal()' },
+  { name:'PRO FOOT',          price:'19,5', period:'/ mois',       desc:"Pour les parieurs Foot.",               features:['Foot illimité — toutes les ligues','IA / Power Score illimité','Top Stratégies','Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j','BetMines best picks IA','Comparateur 20+ bookmakers'], disabled:['Tennis'], btn:'Choisir Pro Foot',       featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:"buyProSubscription('pro_foot','monthly')" },
+  { name:'PRO TENNIS',        price:'19,5', period:'/ mois',       desc:"Pour les parieurs Tennis.",             features:['Tennis illimité — ATP / WTA','Value bets & indices Elo','IA Tennis','Top Stratégies Tennis','Alertes Telegram temps réel','Mes Paris & bankroll'], disabled:['Foot Pro (reste niveau gratuit)'], btn:'Choisir Pro Tennis',     featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:"buyProSubscription('pro_tennis','monthly')" },
+  { name:'DUO PRO',           price:'30',   period:'/ mois',       desc:"Les 2 sports, tout illimité.",          features:['Foot + Tennis illimités','Toutes les ligues + ATP/WTA','IA / Power Score illimité','Top Stratégies (2 sports)','Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j','BetMines + Comparateur','Accès Discord'], disabled:[], btn:"Commencer l'essai gratuit", featured:true, matchday:false, btnClass:'price-btn-green', onclick:"buyProSubscription('pro_all','monthly')" },
+  { name:'ANNUEL DUO',        price:'22',   period:'/ mois - 27%', desc:"Duo Pro annuel — économisez ~96€/an.",  features:['Tout Duo Pro inclus','Accès anticipé nouvelles fonctions','Backtesting 2 ans','Export CSV / API','Alertes prioritaires'], disabled:[], btn:'Choisir Annuel',         featured:false, matchday:false, btnClass:'price-btn-ghost',  onclick:"buyProSubscription('pro_all','annual')" },
 ];
 const pricingGrid = document.getElementById('pricing-grid');
 PLANS.forEach(p => {
@@ -29686,6 +29686,68 @@ async function buyMatchdayPass() {
     alert('Impossible de contacter le serveur de paiement.');
   }
 }
+
+// bd s77m — Abonnement Pro mensuel/annuel via Stripe Checkout subscription
+async function buyProSubscription(plan, billing) {
+  if (!psGetToken()) {
+    if (typeof openAuthModal === 'function') openAuthModal('register');
+    else alert('Inscription requise pour souscrire.');
+    return;
+  }
+  try {
+    const res = await apiFetch('/api/v1/payments/create-checkout-session', {
+      method: 'POST',
+      body: { plan: plan || 'pro_all', billing: billing || 'monthly' },
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || 'Erreur lors de la création du paiement.');
+    }
+  } catch(e) {
+    if (e && e.status === 401) return; // openAuthModal déjà ouvert par apiFetch
+    alert('Impossible de contacter le serveur de paiement.');
+  }
+}
+
+// Customer Portal Stripe (self-service annulation/upgrade)
+async function openBillingPortal() {
+  if (!psGetToken()) { if (typeof openAuthModal === 'function') openAuthModal('login'); return; }
+  try {
+    const res = await apiFetch('/api/v1/payments/customer-portal', { method: 'POST' });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert(data.error || 'Aucun abonnement actif.');
+  } catch(e) {
+    if (e && e.status === 401) return;
+    alert('Impossible d\'ouvrir le portail client.');
+  }
+}
+
+// Polling post-Stripe subscription return — refresh JWT pour récupérer nouveau rôle
+(async function checkSubscriptionReturn() {
+  const q = new URLSearchParams(window.location.search);
+  if (q.get('subscription') !== 'success') return;
+  window.history.replaceState({}, '', window.location.pathname);
+  if (!psGetToken()) return;
+  let tries = 0;
+  const poll = async () => {
+    tries++;
+    try {
+      const res = await fetch('/api/v1/auth/me', { headers: { 'Authorization': 'Bearer ' + psGetToken() } });
+      const d = await res.json();
+      if (d && d.role && d.role.startsWith('pro')) {
+        if (d.token_refreshed && d.token) psSetToken(d.token);
+        if (typeof showNotification === 'function') showNotification('Abonnement actif ! Bienvenue dans la version Pro.', 'green');
+        if (typeof updateNavAuthState === 'function') updateNavAuthState();
+        return;
+      }
+    } catch(e) {}
+    if (tries < 8) setTimeout(poll, 1500);
+  };
+  setTimeout(poll, 1500);
+})();
 
 // Polling apres retour Stripe (?matchday=success)
 (async function checkMatchdayReturn() {
