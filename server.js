@@ -21602,7 +21602,10 @@ if (pathname === '/api/v1/live/bsd') {
     shots_on_target: m.live_shots_on_target || null,
     corners: m.live_corners || null,
     cards: m.live_cards || null,
-    momentum: m.live_momentum || null,
+    // bd 8c5 — Garde array stricte : ne jamais exposer un objet BSD legacy
+    // sur ce champ array-shape. Consumers font Array.isArray() → empty state.
+    momentum: (Array.isArray(m.live_momentum) ? m.live_momentum : null),
+    momentum_pct: m.live_momentum_pct || null,
     intensity: m.live_intensity || 0,
     edge: m.best_edge?.edge || 0,
     _source: m._source || 'odds_api',

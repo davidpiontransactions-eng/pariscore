@@ -18901,7 +18901,11 @@ function initSSE() {
         if (p.live_dangerous_attacks !== undefined) m.live_dangerous_attacks = p.live_dangerous_attacks;
         if (p.live_xg               !== undefined) m.live_xg               = p.live_xg;
         if (p.live_cards            !== undefined) m.live_cards            = p.live_cards;
-        if (p.live_momentum         !== undefined) m.live_momentum         = p.live_momentum;
+        // bd 8c5 — Garde array stricte : ne pas écraser un array Sofa local par un
+        // null/objet provenant d'un tick BSD WS sans data momentum. Symptôme avant
+        // fix : barres momentum redevenaient plates à chaque poll 30s.
+        if (Array.isArray(p.live_momentum)) m.live_momentum = p.live_momentum;
+        if (p.live_momentum_pct     !== undefined) m.live_momentum_pct     = p.live_momentum_pct;
         if (p.live_stats            !== undefined) m.live_stats            = p.live_stats;
       });
       // [FIX live] live_patch ne re-rendait jamais le tableau → un match qui
@@ -24829,7 +24833,8 @@ async function refreshLiveDetailModal(matchId, { force }) {
         shots: fb.live_shots || null,
         shots_on_target: fb.live_shots_on_target || null,
         corners: fb.live_corners || null,
-        momentum: fb.live_momentum || null,
+        // bd 8c5 — Garde array stricte : drawLDMomentumSVG attend [{min,v}]
+        momentum: (Array.isArray(fb.live_momentum) ? fb.live_momentum : null),
         intensity: fb.live_intensity || 0,
       };
     }
