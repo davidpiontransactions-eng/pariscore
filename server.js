@@ -6513,9 +6513,20 @@ function loadHistory() {
         for (const p of seed.predictions) {
           totalSeed++;
           if (!p || !p.id || existingIds.has(String(p.id))) continue;
-          const circuit = String(p.circuit || '').toUpperCase();
+          // bd k3ex fix defensif: BSD tag souvent circuit='ATP' pour matchs feminins
+          // (UTR Women, etc). On re-derive depuis gender + tournament name si conflit.
+          let circuit = String(p.circuit || '').toUpperCase();
+          const g1 = String(p.player1?.gender || '').toUpperCase();
+          const g2 = String(p.player2?.gender || '').toUpperCase();
+          const tNorm = String(p.tournament || '').toLowerCase();
+          if (g1 === 'F' && g2 === 'F') circuit = 'WTA';
+          else if (g1 === 'M' && g2 === 'M') circuit = 'ATP';
+          else if ((g1 === 'F' && g2 === 'M') || (g1 === 'M' && g2 === 'F')) circuit = 'MIXED';
+          else if (/\b(women|ladies|wta|female|girls)\b/.test(tNorm)) circuit = 'WTA';
+          else if (/\bmixed\b/.test(tNorm)) circuit = 'MIXED';
           const sport_key = circuit === 'ATP' ? 'tennis_atp'
             : circuit === 'WTA' ? 'tennis_wta'
+            : circuit === 'MIXED' ? 'tennis_mixed'
             : circuit === 'UTR' ? 'tennis_utr'
             : circuit === 'ITF' ? 'tennis_itf'
             : 'tennis_other';

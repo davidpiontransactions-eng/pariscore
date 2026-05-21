@@ -136,10 +136,35 @@ async function fetchAllSettled({ limitPages }) {
   return { total: firstCount, items: all };
 }
 
+// ── Derive correct circuit (BSD bug fix bd ParisScorebis-k3ex) ──────────────
+// BSD tag souvent circuit='ATP' meme pour matchs feminins (UTR Women, etc).
+// Heuristic priorisee: gender > tournament name keyword > BSD circuit fallback.
+function deriveCircuit(rawCircuit, player1, player2, tournamentName) {
+  const g1 = String(player1?.gender || '').toUpperCase();
+  const g2 = String(player2?.gender || '').toUpperCase();
+  const t = String(tournamentName || '').toLowerCase();
+  // Strongest signal: both players gender
+  if (g1 === 'F' && g2 === 'F') return 'WTA';
+  if (g1 === 'M' && g2 === 'M') return 'ATP';
+  if ((g1 === 'F' && g2 === 'M') || (g1 === 'M' && g2 === 'F')) return 'MIXED';
+  // Tournament name fallback
+  if (/\b(women|ladies|wta|female|girls)\b/.test(t)) return 'WTA';
+  if (/\b(men|atp|male|boys)\b/.test(t)) return 'ATP';
+  if (/\bmixed\b/.test(t)) return 'MIXED';
+  // Last resort: BSD circuit raw (may be wrong but better than null)
+  return rawCircuit || null;
+}
+
 // ── Transform → minimal portable record ─────────────────────────────────────
 function transformPrediction(p) {
   if (!p || !p.match) return null;
   const m = p.match;
+  const circuit = deriveCircuit(
+    m.tournament?.circuit,
+    m.player1,
+    m.player2,
+    m.tournament?.name
+  );
   return {
     id: `bsd_tennis_pred_${p.id}`,
     bsd_prediction_id: p.id,
@@ -151,7 +176,8 @@ function transformPrediction(p) {
     status: m.status,
     tournament: m.tournament?.name || null,
     tournament_id: m.tournament?.id || null,
-    circuit: m.tournament?.circuit || null,    // ATP / WTA / UTR / ITF
+    circuit,                                      // ATP / WTA / MIXED / UTR / ITF (derive corrige bd k3ex)
+    bsd_raw_circuit: m.tournament?.circuit || null,  // pour audit divergence
     category: m.tournament?.category || null,  // grand_slam / atp1000 / utr / etc
     surface: m.tournament?.surface || null,
     round: m.round_name || null,

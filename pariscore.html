@@ -15273,7 +15273,12 @@ function renderTennisValueBets(rawMatches) {
       const hay = _norm([_n1, _n2, m.tournament, m.round, m.tour, m.surface].filter(Boolean).join(' '));
       if (!_qTerms.every(t => hay.includes(t))) return false;
     }
-    if (f.tour !== 'ALL' && String(m.tour || '').toUpperCase() !== f.tour) return false;
+    // bd k3ex fix: matchs MIXED visibles sous ATP ET WTA (impliquent les 2 genres).
+    // Avant: strict equality excluait mixed-doubles des deux filtres.
+    if (f.tour !== 'ALL') {
+      const mt = String(m.tour || '').toUpperCase();
+      if (mt !== f.tour && mt !== 'MIXED') return false;
+    }
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
     if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
     if (f.comp && f.comp !== 'ALL') {
