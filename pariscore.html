@@ -19619,13 +19619,13 @@ function renderOddsDeltaCell(m) {
     ].filter(l => l.mov);
     const shortening = legs.find(l => l.mov === 'SHORTENING');
     if (shortening) {
-      const v = shortening.best ? shortening.best.value.toFixed(2) : '?';
+      const v = shortening.best ? safeFixed(shortening.best.value, 2) : '?';
       const bk = shortening.best ? shortening.best.name : '';
       bsdBadge = `<div class="odds-delta-pill drop" onclick="showOddsGraph('${m.id}',event)" title="BSD: ${shortening.label} en SHORTENING (cote qui baisse — sharp money). Best ${v} @ ${bk}. ${m.bsd_odds_summary.books_count} books.">${shortening.label} ▼ ${v}</div>`;
     } else {
       const drifting = legs.find(l => l.mov === 'DRIFTING');
       if (drifting) {
-        const v = drifting.best ? drifting.best.value.toFixed(2) : '?';
+        const v = drifting.best ? safeFixed(drifting.best.value, 2) : '?';
         bsdBadge = `<div class="odds-delta-pill rise" onclick="showOddsGraph('${m.id}',event)" title="BSD: ${drifting.label} en DRIFTING (cote qui monte). Best ${v}. ${m.bsd_odds_summary.books_count} books.">${drifting.label} ▲ ${v}</div>`;
       }
     }
