@@ -179,7 +179,8 @@
       "Bash(awk -F: '$2 > 9080 && $2 < 9230')",
       "Bash(awk -F: '{ if \\($1+0 > 9100 && $1+0 < 9230\\) print }')",
       "Bash(pip list *)",
-      "Bash(python scripts/sofa-microservice.py)"
+      "Bash(python scripts/sofa-microservice.py)",
+      "WebFetch(domain:www.gambling-affiliation.com)"
     ]
   }
 }
