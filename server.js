@@ -6454,44 +6454,77 @@ function loadHistory() {
   }
 
   // bd ParisScorebis-8lvf — Merge historique_elofootball.json (community data)
+  // v12.40 Phase 3: handles 3 schemas — clubs{}.matches[], recent_matches[],
+  // rankings_current[] (last expose via db.elofootballRankings pour future UI).
   if (fs.existsSync(HISTORIQUE_ELOFOOTBALL_FILE)) {
     try {
       const seed = JSON.parse(fs.readFileSync(HISTORIQUE_ELOFOOTBALL_FILE, 'utf8'));
-      if (seed && seed.clubs && typeof seed.clubs === 'object') {
+      if (seed && typeof seed === 'object') {
         let totalSeed = 0;
         let totalAdded = 0;
         const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
-        for (const clubSlug of Object.keys(seed.clubs)) {
-          const clubData = seed.clubs[clubSlug];
-          if (!clubData || !Array.isArray(clubData.matches)) continue;
-          for (const m of clubData.matches) {
+
+        // Helper: map elofootball record → archive_matches shape (prob fields preserved)
+        const mapElo = (m) => ({
+          id: m.id,
+          sport: 'football',
+          sport_key: 'elofootball',
+          league: m.league_name || 'Unknown',
+          country: 'International',
+          commence_time: m.date,
+          home_team: m.home_team,
+          away_team: m.away_team,
+          home_score: m.home_score,
+          away_score: m.away_score,
+          live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
+          status: 'finished',
+          season: m.season,
+          elo_delta: m.elo_delta,
+          // bd 8lvf Phase 3: probabilites elofootball preserves pour backtest/calibration
+          elo_prediction: (m.prob_home != null || m.prob_draw != null || m.prob_away != null) ? {
+            prob_home: m.prob_home,
+            prob_draw: m.prob_draw,
+            prob_away: m.prob_away,
+          } : null,
+          opponent_rating: m.opponent_rating || null,
+          _source: 'etl-elofootball',
+          _attribution: m._attribution || 'elofootball.com (community Elo ratings)',
+        });
+
+        // 1) Schema clubs{slug}.matches[] (v12.31 scaffold + v12.32 club-specific pull)
+        if (seed.clubs && typeof seed.clubs === 'object') {
+          for (const clubKey of Object.keys(seed.clubs)) {
+            const clubData = seed.clubs[clubKey];
+            if (!clubData || !Array.isArray(clubData.matches)) continue;
+            for (const m of clubData.matches) {
+              totalSeed++;
+              if (!m || !m.id || existingIds.has(String(m.id))) continue;
+              (db.archive_matches = db.archive_matches || []).push(mapElo(m));
+              existingIds.add(String(m.id));
+              totalAdded++;
+            }
+          }
+        }
+
+        // 2) Schema recent_matches[] (v12.32: index.php → 1902 matchs avec probas)
+        if (Array.isArray(seed.recent_matches)) {
+          for (const m of seed.recent_matches) {
             totalSeed++;
             if (!m || !m.id || existingIds.has(String(m.id))) continue;
-            const archived = {
-              id: m.id,
-              sport: 'football',
-              sport_key: 'elofootball',
-              league: m.league_name || 'Unknown',
-              country: 'International',
-              commence_time: m.date,
-              home_team: m.home_team,
-              away_team: m.away_team,
-              home_score: m.home_score,
-              away_score: m.away_score,
-              live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
-              status: 'finished',
-              season: m.season,
-              elo_delta: m.elo_delta,
-              _source: 'etl-elofootball',
-              _attribution: m._attribution || 'elofootball.com (community Elo ratings)',
-            };
-            (db.archive_matches = db.archive_matches || []).push(archived);
+            (db.archive_matches = db.archive_matches || []).push(mapElo(m));
             existingIds.add(String(m.id));
             totalAdded++;
           }
         }
+
+        // 3) Schema rankings_current[] (v12.32: Top 50 Elo snapshot — pas archive
+        //    matchs mais expose pour UI badge/widget Elo rankings)
+        if (Array.isArray(seed.rankings_current)) {
+          db.elofootballRankings = seed.rankings_current;
+        }
+
         if (totalSeed > 0) {
-          console.log(`  ✓ ETL seed merge (elofootball): ${totalAdded}/${totalSeed} matchs ajoutes (community attribution)`);
+          console.log(`  ✓ ETL seed merge (elofootball): ${totalAdded}/${totalSeed} matchs ajoutes (community attribution${Array.isArray(seed.rankings_current) ? `, rankings_current ${seed.rankings_current.length} clubs` : ''})`);
         }
       }
     } catch (e) {
