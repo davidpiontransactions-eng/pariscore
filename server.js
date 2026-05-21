@@ -13855,6 +13855,107 @@ function vapidJwtSign(audience, ttlSec = 12 * 3600) {
   return `${signingInput}.${sig}`;
 }
 
+// bd nwk6 Phase 2 — Chiffrement payload AES-128-GCM (RFC 8291 + RFC 8188).
+// Permet d'envoyer text/JSON custom au SW (au lieu de notification generique).
+// Body format aes128gcm : salt(16) || rs(4 BE) || keyIdLen(1) || keyId(N) || cipher
+function _ecPointToJwk(raw65) {
+  if (!Buffer.isBuffer(raw65) || raw65.length !== 65 || raw65[0] !== 0x04) return null;
+  const x = raw65.slice(1, 33).toString('base64url');
+  const y = raw65.slice(33, 65).toString('base64url');
+  return { kty: 'EC', crv: 'P-256', x, y };
+}
+function _jwkToRawPoint(jwk) {
+  const x = Buffer.from(jwk.x, 'base64url');
+  const y = Buffer.from(jwk.y, 'base64url');
+  return Buffer.concat([Buffer.from([0x04]), x, y]);
+}
+function encryptWebPushPayload(payload, subscription) {
+  const ua_pub = Buffer.from(subscription.keys.p256dh, 'base64url');
+  const auth   = Buffer.from(subscription.keys.auth,   'base64url');
+  if (ua_pub.length !== 65 || ua_pub[0] !== 0x04) throw new Error('p256dh invalide (raw uncompressed 65 bytes required)');
+  if (auth.length < 16) throw new Error('auth secret < 16 bytes');
+
+  // 1. Generate ephemeral ECDH P-256 keypair (application server)
+  const { publicKey: asPubKey, privateKey: asPrivKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+  const asJwk = asPubKey.export({ format: 'jwk' });
+  const as_pub = _jwkToRawPoint(asJwk);
+
+  // 2. Import UA public key
+  const uaJwk = _ecPointToJwk(ua_pub);
+  if (!uaJwk) throw new Error('ua_public JWK convert failed');
+  const uaPubKey = crypto.createPublicKey({ key: uaJwk, format: 'jwk' });
+
+  // 3. ECDH shared secret
+  const shared = crypto.diffieHellman({ privateKey: asPrivKey, publicKey: uaPubKey });
+
+  // 4. HKDF IKM (RFC 8291 §3.4) : info = "WebPush: info\0" + ua_pub + as_pub
+  const infoIKM = Buffer.concat([Buffer.from('WebPush: info\0'), ua_pub, as_pub]);
+  const IKM = Buffer.from(crypto.hkdfSync('sha256', shared, auth, infoIKM, 32));
+
+  // 5. Per-message salt
+  const salt = crypto.randomBytes(16);
+
+  // 6. CEK + NONCE
+  const CEK   = Buffer.from(crypto.hkdfSync('sha256', IKM, salt, Buffer.from('Content-Encoding: aes128gcm\0'), 16));
+  const NONCE = Buffer.from(crypto.hkdfSync('sha256', IKM, salt, Buffer.from('Content-Encoding: nonce\0'), 12));
+
+  // 7. Plaintext padding RFC 8188 : append 0x02 (last record marker)
+  const plaintext = Buffer.concat([Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf8'), Buffer.from([0x02])]);
+
+  // 8. AES-128-GCM encrypt
+  const cipher = crypto.createCipheriv('aes-128-gcm', CEK, NONCE);
+  const enc1 = cipher.update(plaintext);
+  const enc2 = cipher.final();
+  const tag  = cipher.getAuthTag();
+  const cipherText = Buffer.concat([enc1, enc2, tag]);
+
+  // 9. Body : salt(16) || rs(4 BE) || keyIdLen(1) || keyId(65) || cipherText
+  const recordSize = Buffer.alloc(4);
+  recordSize.writeUInt32BE(4096, 0);
+  const keyIdLen = Buffer.from([as_pub.length]);
+  const body = Buffer.concat([salt, recordSize, keyIdLen, as_pub, cipherText]);
+  return body;
+}
+
+// Envoi push avec payload chiffre (Phase 2). subscription doit avoir keys.p256dh + keys.auth.
+function sendPushPayload(subscription, payload, opts = {}) {
+  return new Promise((resolve) => {
+    if (!subscription || !subscription.endpoint || !subscription.keys) return resolve({ ok: false, error: 'no_subscription' });
+    if (!VAPID_PRIVATE_KEY || !VAPID_PUBLIC_KEY) return resolve({ ok: false, error: 'vapid_not_configured' });
+    try {
+      let body;
+      try { body = encryptWebPushPayload(payload, subscription); }
+      catch (e) { return resolve({ ok: false, error: 'encrypt_failed:' + e.message }); }
+      const url = new URL(subscription.endpoint);
+      const audience = `${url.protocol}//${url.host}`;
+      const jwt = vapidJwtSign(audience);
+      if (!jwt) return resolve({ ok: false, error: 'vapid_jwt_failed' });
+      const options = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname + url.search,
+        method: 'POST',
+        headers: {
+          'Authorization': `vapid t=${jwt}, k=${VAPID_PUBLIC_KEY}`,
+          'TTL': String(opts.ttl || 60),
+          'Content-Type': 'application/octet-stream',
+          'Content-Encoding': 'aes128gcm',
+          'Content-Length': body.length,
+          'Urgency': opts.urgency || 'normal',
+        },
+      };
+      const req = https.request(options, (r) => {
+        let respBody = '';
+        r.on('data', c => respBody += c);
+        r.on('end', () => resolve({ ok: r.statusCode >= 200 && r.statusCode < 300, status: r.statusCode, body: respBody.slice(0, 300) }));
+      });
+      req.on('error', (e) => resolve({ ok: false, error: e.message }));
+      req.write(body);
+      req.end();
+    } catch (e) { resolve({ ok: false, error: e.message }); }
+  });
+}
+
 // Push headerless : POST endpoint avec VAPID Authorization (pas de body chiffré).
 // SW affiche notification générique. Phase 2 ajoutera payload AES-128-GCM si besoin.
 function sendPushNoPayload(subscription, opts = {}) {
@@ -13889,12 +13990,19 @@ function sendPushNoPayload(subscription, opts = {}) {
 }
 
 // Broadcast helper : envoie a tous les subscriptions d'un user (gere 410 Gone → cleanup auto)
-async function broadcastPushToUser(userId, opts) {
+// opts.payload : string ou object → si present, envoi chiffre AES-128-GCM ; sinon headerless.
+async function broadcastPushToUser(userId, opts = {}) {
   if (!userId) return { sent: 0, failed: 0 };
   const subs = sqldb.prepare('SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?').all(userId);
   let sent = 0, failed = 0;
+  const payloadBuf = opts.payload != null
+    ? (typeof opts.payload === 'string' ? Buffer.from(opts.payload, 'utf8') : Buffer.from(JSON.stringify(opts.payload), 'utf8'))
+    : null;
   for (const s of subs) {
-    const r = await sendPushNoPayload({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, opts);
+    const sub = { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } };
+    const r = payloadBuf
+      ? await sendPushPayload(sub, payloadBuf, opts)
+      : await sendPushNoPayload(sub, opts);
     if (r.ok) {
       sent++;
       sqldb.prepare('UPDATE push_subscriptions SET last_used_at = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), s.id);
@@ -21420,12 +21528,34 @@ if (pathname === '/api/v1/push/unsubscribe' && req.method === 'POST') {
   return;
 }
 // bd nwk6 — POST /api/v1/push/test — admin trigger test push vers user authentifié
+// Body optionnel : { title, body, url, payload } — payload custom JSON serialise
 if (pathname === '/api/v1/push/test' && req.method === 'POST') {
   const user = requireUserAuth(req, res);
   if (!user) return;
-  broadcastPushToUser(user.userId, { urgency: 'normal' })
-    .then(r => jsonResponse(res, 200, { test: true, sent: r.sent, failed: r.failed }))
-    .catch(e => jsonResponse(res, 500, { error: e.message }));
+  readBodyLimited(req, MAX_BODY_SIZE).then(raw => {
+    let opts = { urgency: 'normal' };
+    try {
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Construit payload SW : {title, body, url} ou payload custom direct
+        if (parsed.payload) opts.payload = parsed.payload;
+        else if (parsed.title || parsed.body) {
+          opts.payload = {
+            title: parsed.title || 'PariScore',
+            body:  parsed.body  || 'Test notification',
+            url:   parsed.url   || '/',
+          };
+        }
+      }
+    } catch (_) { /* body invalide → push headerless */ }
+    broadcastPushToUser(user.userId, opts)
+      .then(r => jsonResponse(res, 200, { test: true, sent: r.sent, failed: r.failed, encrypted: !!opts.payload }))
+      .catch(e => jsonResponse(res, 500, { error: e.message }));
+  }).catch(() => {
+    broadcastPushToUser(user.userId, { urgency: 'normal' })
+      .then(r => jsonResponse(res, 200, { test: true, sent: r.sent, failed: r.failed, encrypted: false }))
+      .catch(e => jsonResponse(res, 500, { error: e.message }));
+  });
   return;
 }
 // bd s77m — GET /api/v1/payments/subscription → état abonnement courant
