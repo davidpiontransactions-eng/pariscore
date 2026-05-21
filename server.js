@@ -6196,6 +6196,7 @@ async function enrichCornersFromBSD(matches) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const HISTORY_FILE = path.join(__dirname, 'history.json');
+const HISTORIQUE_SEED_FILE = path.join(__dirname, 'historique_football.json'); // bd 9je ETL output
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
 
@@ -6216,6 +6217,61 @@ function loadHistory() {
   history = kvGet('history_matches', []);
   accuracy = kvGet('history_accuracy', accuracy);
   console.log(`  ✓ Historique SQLite chargé (${history.length} matchs archivés)`);
+
+  // bd ParisScorebis-9je — Merge historique_football.json (ETL output) dans
+  // db.archive_matches au boot. Dedup via id existant. Pas overwrite si match
+  // deja present (live data prend priorite sur ETL backfill).
+  if (fs.existsSync(HISTORIQUE_SEED_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_SEED_FILE, 'utf8'));
+      if (seed && seed.leagues && typeof seed.leagues === 'object') {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const leagueId of Object.keys(seed.leagues)) {
+          const league = seed.leagues[leagueId];
+          if (!league || !Array.isArray(league.matches)) continue;
+          for (const m of league.matches) {
+            totalSeed++;
+            if (!m || !m.id || existingIds.has(String(m.id))) continue;
+            // Map ETL shape → archive_matches shape (compat with runHistoryQuery)
+            const archived = {
+              id: m.id,
+              sport: 'football',
+              sport_key: m.source === 'api-football' && m.league_id ? `apif_${m.league_id}` : 'unknown',
+              league: m.league_name,
+              country: m.country,
+              commence_time: m.date,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              home_score: m.home_score,
+              away_score: m.away_score,
+              live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
+              status: 'finished',
+              venue: m.venue,
+              referee: m.referee,
+              season: m.season,
+              round: m.round,
+              halftime_score: m.halftime_score,
+              extratime_score: m.extratime_score,
+              penalty_score: m.penalty_score,
+              _source: 'etl-seed',
+              _etl_meta: { league_meta: league.meta, ingested_at: seed.generated_at },
+              stats: m.stats || null,
+            };
+            (db.archive_matches = db.archive_matches || []).push(archived);
+            existingIds.add(String(m.id));
+            totalAdded++;
+          }
+        }
+        if (totalSeed > 0) {
+          console.log(`  ✓ ETL seed merge: ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (dedup'd)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load]', e.message);
+    }
+  }
 }
 
 function saveHistory() {
