@@ -1,4 +1,4 @@
-# 🏟️ PariScore — Poste de Pilotage (v12.31 — bd-driven)
+# 🏟️ PariScore — Poste de Pilotage (v12.63 — bd-driven)
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
@@ -34,9 +34,10 @@ Source autoritaire : `bd list --status=in_progress`. Snapshot 21/05/2026.
 
 | ID | P | Titre | État |
 |---|---|---|---|
-| `9je` | P0 | Pipeline ETL Historique Football API-Football PRO | Code livré v12.10 · run bloqué quota épuisé |
-| `rxh` | P0 | Pipeline ETL Historique Tennis (ESPN public) 2024-26 | Code livré v12.27 · run attendu |
-| `6du6` | P0 | DB historique tennis+foot datasets gratuits (openfootball ODbL) | Code livré v12.29 · run attendu |
+| `9je` | P0 | Pipeline ETL Historique Football API-Football PRO | Code livré v12.10 · run bloqué quota épuisé (reset minuit UTC) |
+| `6du6` | P0 | DB historique tennis+foot datasets gratuits (openfootball ODbL + Wikidata CC0) | Phase 1 openfootball 16352 matchs OK · Phase 2 Wikidata wire 56 winners livré v12.63 · deploy VPS attendu |
+| `c8m` | P0 | SECURITY — server.js exposé + rotation clés | 11 clés rotées + ufw ban + fix code 4e02a6a deployed · reste audit_db postbreach |
+| `s77m` | P0 | Stripe Checkout + Webhook + Customer Portal | Code livré v12.43 · attente decisions DG (trial, prix, matchday) |
 | `401` | P1 | Crash Test audit onglets Football + Tennis | rapport_qa_foot_tennis.md livré · 28 risk flags |
 | `bjv` | P1 | Spike sourcing cotes alternative Odds API | OddsPortal CF muré · spike RapidAPI odds-api1 en cours |
 | `5iw` | P1 | Intégration BSD Live WebSocket foot (<5s) CdM 2026 | Eval pending |
@@ -46,12 +47,16 @@ Source autoritaire : `bd list --status=in_progress`. Snapshot 21/05/2026.
 
 Source autoritaire : `bd ready`. Snapshot 21/05/2026.
 
-### P0 (priorité absolue)
+### P0 (priorité absolue) — bloqué ops/DG
+
+Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions VPS/DG hors scope code.
 
 | ID | Titre | Action immédiate |
 |---|---|---|
-| `h9j7` | VPS deploy v12.22-v12.31 + run ETL one-shot post quota reset | Attendre minuit UTC API-Football → `bash .context/run_etl_2024_2026.sh` sur VPS |
-| `c8m` | SECURITY — server.js exposé HTTP + rotation 8 clés API | Action DG : rotation ADMIN_PASSWORD · GA_POSTBACK_TOKEN · TELEGRAM_BOT_TOKEN · ODDS_API_KEY · GEMINI_API_KEY · API_FOOTBALL_KEY · BSD_API_KEY · JWT_SECRET |
+| `9je` | ETL Football post quota reset | `bash .context/run_etl_2024_2026.sh` VPS à minuit UTC |
+| `6du6` | Wikidata CC0 wire Phase 2 | Deploy VPS : `git pull` + `pm2 restart pariscore` + verif log `ETL seed merge (wikidata CC0): 56/56` |
+| `c8m` | Audit DB postbreach | `bash security_db_audit_postbreach.sh` VPS (rotation + ufw déjà faits) |
+| `s77m` | Stripe activation | DG checklist `.context/stripe_dg_checklist.md` — 9 sections (trial, prix mensuel/annuel/mono-sport, matchday pass) |
 
 ### P1
 
@@ -94,8 +99,18 @@ Source autoritaire : `bd ready`. Snapshot 21/05/2026.
 | `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD |
 | `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T |
 | `c9p4` | Roadmap v4.x backlog tableau principal — filtres + favoris + Dropping Odds + drapeaux |
+| `rlhf` | Module audio alertes trading — state tracking + autoplay fix (orphan CLAUDE.md→bd) |
+| `x11y` | Tennis indicateurs jeux dynamiques — Over 7.5/8.5 + Under 12.5 break (orphan CLAUDE.md→bd) |
+
+### P3 (research)
+
+| ID | Titre |
+|---|---|
+| `gz7s` | Benchmark Rotowire Soccer — ideas to steal (orphan CLAUDE.md→bd) |
 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
+>
+> **Sync drift 21/05/2026 v12.63** : `rxh` closed (prod v12.43), `h9j7` closed, `6du6` Phase 2 wikidata wire livré. 3 orphan missions CLAUDE.md → bd créés (`rlhf` audio · `x11y` tennis indicators · `gz7s` Rotowire benchmark).
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
@@ -313,4 +328,46 @@ Exécute ces 2 étapes de correction :
       console.warn("Audio bloqué en attente d'interaction utilisateur.");
     });
   }
-*Dernière mise à jour : v12.31 — 21/05/2026. CLAUDE.md purgé (v7.1 → v12.31 historisés dans `CHANGELOG.md`). Source vérité tâches = `bd ready`.*
+
+  ### MISSION BENCHMARK & DATA INTELLIGENCE : ANALYSE DE ROTOWIRE SOCCER
+
+Claude, active ta matrice de compétences : `product-management`, `sports-betting-quant`, `web-scraper-advanced` (ou `mcp-browser-automation`), et `ui-ux-pro-max`.
+
+Je veux que tu réalises un benchmark approfondi de cette page de statistiques de référence : https://www.rotowire.com/soccer/stats.php
+
+L'objectif est d'étudier comment ils structurent et restituent la data (notamment pour le Daily Fantasy Sports et les paris sur les joueurs) afin d'en extraire les meilleures idées pour notre propre plateforme, PariScore.
+
+Exécute cette mission en respectant les 4 étapes suivantes :
+
+---
+
+### ÉTAPE 1 : EXPLORATION ET AUDIT DE LA PAGE
+Utilise tes outils de navigation ou d'analyse web pour explorer la structure de la page Rotowire fournie. 
+Fais particulièrement attention à :
+- **La granularité de la data :** Quelles statistiques individuelles (Tirs, Passes clés, Centres, xG, xA) mettent-ils en avant ?
+- **L'expérience utilisateur (UX) :** Comment les filtres fonctionnent-ils (par équipe, par position, par championnat) ? Comment gèrent-ils l'affichage de tableaux massifs sans perdre l'utilisateur ?
+- **Les spécificités :** Ont-ils des indicateurs uniques (comme le suivi des tireurs de coups francs/penaltys, les blessures, ou le temps de jeu projeté) ?
+
+---
+
+### ÉTAPE 2 : RÉDACTION DU RAPPORT D'ANALYSE CRITIQUE
+Rédige une synthèse de ton exploration. Décris la philosophie de Rotowire : pourquoi ce site est-il tant apprécié par les parieurs professionnels et les joueurs de Fantasy League ? Quels sont leurs choix forts en termes de Data Engineering et d'interface ?
+
+---
+
+### ÉTAPE 3 : IDENTIFICATION DES "+" POUR PARISCORE (IDEAS TO STEAL)
+C'est la partie la plus importante. En tant que Product Manager, dresse une liste priorisée d'au moins 3 à 5 fonctionnalités ou approches UI/Data que PariScore DOIT absolument "voler" ou adapter pour passer un cap. 
+*Exemple de pistes de réflexion :* - Faut-il créer un onglet dédié aux "Player Props" (Tirs cadrés, passes) comme eux ? 
+- Faut-il intégrer un tracker de "Set Pieces" (qui tire les corners/penaltys par équipe) en direct ?
+
+---
+
+### ÉTAPE 4 : LIVRABLE ET PROTOCOLE DE FIN
+Génère un fichier nommé `rapport_benchmark_rotowire.md` à la racine de notre projet.
+Ce rapport devra contenir :
+1. Le diagnostic complet de la page Rotowire.
+2. Le tableau des "Forces" et "Faiblesses" de leur UI/UX.
+3. Le plan d'action concret : Les "Game Changers" à implémenter d'urgence sur PariScore.
+
+Affiche-moi un résumé exécutif des 3 meilleures idées retenues dans le terminal une fois l'analyse terminée !
+*Dernière mise à jour : v12.63 — 21/05/2026. CLAUDE.md purgé (v7.1 → v12.31 historisés dans `CHANGELOG.md`). Sync drift bd↔CLAUDE.md effectue. Source vérité tâches = `bd ready`.*
