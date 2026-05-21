@@ -10806,12 +10806,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #vb-body tr.match-row-live::before {
     width: 3px;
     background: var(--cf-red);
-    box-shadow: 0 0 14px var(--cf-red-glow);
+    /* k37 fix : blur clamp 6px (vs 14px) — limite le halo coral pour qu'il ne
+       teinte plus la cellule en rose/coral subtle (avant : leak ~14-22px). */
+    box-shadow: 0 0 6px var(--cf-red-glow);
     animation: cfLivePulse 1.6s ease-in-out infinite;
   }
   @keyframes cfLivePulse {
-    0%, 100% { opacity: 1;   box-shadow: 0 0 10px var(--cf-red-glow); }
-    50%      { opacity: .55; box-shadow: 0 0 22px var(--cf-red-glow); }
+    /* k37 fix : amplitude réduite 4→8px (vs 10→22px) — pulse visible mais sans
+       leak horizontal qui teintait la ligne en rose/coral subtle. */
+    0%, 100% { opacity: 1;   box-shadow: 0 0 4px var(--cf-red-glow); }
+    50%      { opacity: .55; box-shadow: 0 0 8px var(--cf-red-glow); }
   }
 
   /* 5. Sticky team column — keep dark on dark surface (double spec-bump) */
@@ -11797,9 +11801,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   }
 
   /* ── 7. Live row pulse coral (Foot + Tennis unified via V2 token) ── */
+  /* k37 fix : suppression du !important qui locked le shadow à 14px et
+     overridait l'animation cfLivePulse (qui réduit le blur à 4-8px). Le
+     tennis is-live garde son glow via les rules locales tennis-vb-table. */
   #vb-body tr.match-row-live::before,
   tr.tennis-vb-row.is-live > td:first-child::before {
-    box-shadow: var(--cf-glow-coral) !important;
+    /* No-op : cfLivePulse keyframes pilotent le box-shadow côté Foot, et le
+       glow coral tennis est défini dans les rules .tn-* dédiées. */
   }
 
   /* ── 8. Hover row glow doux unifié (Foot + Tennis) ── */
