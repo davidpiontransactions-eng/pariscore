@@ -3364,6 +3364,19 @@ function initSQLite() {
     payload_hash TEXT
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_stripe_events_received ON stripe_events(received_at)`);
+  // bd nwk6 — PWA Push subscriptions (1 user N endpoints)
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_agent TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    last_used_at INTEGER,
+    failure_count INTEGER NOT NULL DEFAULT 0
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -13730,7 +13743,9 @@ function srvPlanGate(req, res, pathname) {
   const PUBLIC = new Set([
     '/api/v1/status', '/api/v1/accuracy', '/api/v1/auth/login', '/api/v1/auth/register',
     '/api/v1/auth/me', '/api/v1/checkout/matchday', '/api/v1/webhook/stripe',
-    '/api/v1/matchday/status', '/api/v1/team-logo'
+    '/api/v1/matchday/status', '/api/v1/team-logo',
+    // bd nwk6 — push public (subscribe anon accepté, unsubscribe par endpoint)
+    '/api/v1/push/vapid-key', '/api/v1/push/subscribe', '/api/v1/push/unsubscribe'
   ]);
   if (PUBLIC.has(pathname)) return false;
   const a = srvAccess(req);
@@ -13781,6 +13796,122 @@ function initUsers() {
 initUsers();
 
 // ─── TELEGRAM BOT ────────────────────────────────────────────────────────────
+// ─── PWA PUSH (Web Push API + VAPID ES256 — zéro dépendance) ─────────────────
+// bd nwk6 — VAPID JWT signature P-256 ECDSA, sendPushNoPayload pour Phase 1
+// (notifications headerless : SW affiche generic message). Payload encrypted
+// AES-128-GCM = Phase 2 separee si besoin custom text par user.
+let VAPID_PUBLIC_KEY  = process.env.VAPID_PUBLIC_KEY  || '';
+let VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
+const VAPID_SUBJECT   = process.env.VAPID_SUBJECT   || 'mailto:admin@pariscore.fr';
+
+// Auto-genere keypair si absent (dev only — affiche WARNING + cle a copier .env)
+function initVAPIDKeys() {
+  if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+    console.log(`  ✓ VAPID keys chargées depuis .env (subject: ${VAPID_SUBJECT})`);
+    return;
+  }
+  try {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+    // Encode au format Web Push : public raw 65 bytes uncompressed (0x04 + X 32 + Y 32) → base64url
+    const pubDer = publicKey.export({ format: 'der', type: 'spki' });
+    // SPKI suffix : 65 derniers bytes = clé EC point uncompressed
+    const pubRaw = pubDer.slice(pubDer.length - 65);
+    const privDer = privateKey.export({ format: 'der', type: 'pkcs8' });
+    VAPID_PUBLIC_KEY  = pubRaw.toString('base64url');
+    VAPID_PRIVATE_KEY = privDer.toString('base64url');
+    console.warn('  \x1b[33m[VAPID] Clés auto-générées (NON-PERSISTÉES) — copier ces lignes dans .env:\x1b[0m');
+    console.warn(`    VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}`);
+    console.warn(`    VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}`);
+  } catch (e) {
+    console.error('  [VAPID] init failed:', e.message);
+  }
+}
+initVAPIDKeys();
+
+// Décode VAPID_PRIVATE_KEY base64url DER pkcs8 → KeyObject signer-ready
+function _vapidPrivateKeyObj() {
+  if (!VAPID_PRIVATE_KEY) return null;
+  try {
+    const der = Buffer.from(VAPID_PRIVATE_KEY, 'base64url');
+    return crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+  } catch (e) { console.warn('[VAPID] _vapidPrivateKeyObj decode:', e.message); return null; }
+}
+
+// Génère JWT ES256 signé pour VAPID Authorization header.
+// audience = origin du push service (https://fcm.googleapis.com etc.)
+function vapidJwtSign(audience, ttlSec = 12 * 3600) {
+  const pk = _vapidPrivateKeyObj();
+  if (!pk) return null;
+  const header = Buffer.from(JSON.stringify({ typ: 'JWT', alg: 'ES256' })).toString('base64url');
+  const claims = Buffer.from(JSON.stringify({
+    aud: audience,
+    exp: Math.floor(Date.now() / 1000) + Math.min(ttlSec, 24 * 3600),
+    sub: VAPID_SUBJECT,
+  })).toString('base64url');
+  const signingInput = `${header}.${claims}`;
+  // ECDSA P-256 + SHA-256 — Node renvoie DER, on doit convertir en raw (r||s 32+32)
+  const derSig = crypto.sign('SHA256', Buffer.from(signingInput), { key: pk, dsaEncoding: 'ieee-p1363' });
+  const sig = derSig.toString('base64url');
+  return `${signingInput}.${sig}`;
+}
+
+// Push headerless : POST endpoint avec VAPID Authorization (pas de body chiffré).
+// SW affiche notification générique. Phase 2 ajoutera payload AES-128-GCM si besoin.
+function sendPushNoPayload(subscription, opts = {}) {
+  return new Promise((resolve) => {
+    if (!subscription || !subscription.endpoint) return resolve({ ok: false, error: 'no_endpoint' });
+    try {
+      const url = new URL(subscription.endpoint);
+      const audience = `${url.protocol}//${url.host}`;
+      const jwt = vapidJwtSign(audience);
+      if (!jwt) return resolve({ ok: false, error: 'vapid_jwt_failed' });
+      const options = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname + url.search,
+        method: 'POST',
+        headers: {
+          'Authorization': `vapid t=${jwt}, k=${VAPID_PUBLIC_KEY}`,
+          'TTL': String(opts.ttl || 60),
+          'Content-Length': '0',
+          'Urgency': opts.urgency || 'normal',
+        },
+      };
+      const req = https.request(options, (r) => {
+        let body = '';
+        r.on('data', c => body += c);
+        r.on('end', () => resolve({ ok: r.statusCode >= 200 && r.statusCode < 300, status: r.statusCode, body: body.slice(0, 300) }));
+      });
+      req.on('error', (e) => resolve({ ok: false, error: e.message }));
+      req.end();
+    } catch (e) { resolve({ ok: false, error: e.message }); }
+  });
+}
+
+// Broadcast helper : envoie a tous les subscriptions d'un user (gere 410 Gone → cleanup auto)
+async function broadcastPushToUser(userId, opts) {
+  if (!userId) return { sent: 0, failed: 0 };
+  const subs = sqldb.prepare('SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?').all(userId);
+  let sent = 0, failed = 0;
+  for (const s of subs) {
+    const r = await sendPushNoPayload({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, opts);
+    if (r.ok) {
+      sent++;
+      sqldb.prepare('UPDATE push_subscriptions SET last_used_at = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), s.id);
+    } else {
+      failed++;
+      // 404/410 = subscription expired → cleanup
+      if (r.status === 404 || r.status === 410) {
+        sqldb.prepare('DELETE FROM push_subscriptions WHERE id = ?').run(s.id);
+        console.log(`[Push] subscription ${s.id} expirée (${r.status}) — supprimée`);
+      } else {
+        sqldb.prepare('UPDATE push_subscriptions SET failure_count = failure_count + 1 WHERE id = ?').run(s.id);
+      }
+    }
+  }
+  return { sent, failed };
+}
+
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_CHAT_IDS = new Set(); // chargé depuis .env si défini
 if (process.env.TELEGRAM_CHAT_IDS) {
@@ -21247,6 +21378,54 @@ if (pathname === '/api/v1/payments/customer-portal' && req.method === 'POST') {
       jsonResponse(res, 500, { error: 'Erreur Stripe' });
     }
   })();
+  return;
+}
+// bd nwk6 — GET /api/v1/push/vapid-key → public key base64url pour applicationServerKey frontend
+if (pathname === '/api/v1/push/vapid-key' && req.method === 'GET') {
+  if (!VAPID_PUBLIC_KEY) return jsonResponse(res, 503, { error: 'VAPID non configuré' });
+  return jsonResponse(res, 200, { publicKey: VAPID_PUBLIC_KEY });
+}
+// bd nwk6 — POST /api/v1/push/subscribe → enregistre PushSubscription (idempotent via UNIQUE endpoint)
+if (pathname === '/api/v1/push/subscribe' && req.method === 'POST') {
+  const user = getAuthUser(req); // optionnel : push anonyme accepté (user_id NULL)
+  readBodyLimited(req, MAX_BODY_SIZE).then(raw => {
+    try {
+      const sub = JSON.parse(raw);
+      if (!sub || !sub.endpoint || !sub.keys || !sub.keys.p256dh || !sub.keys.auth) {
+        return jsonResponse(res, 400, { error: 'subscription invalide (endpoint+keys.p256dh+keys.auth requis)' });
+      }
+      const ua = String(req.headers['user-agent'] || '').slice(0, 300);
+      const uid = (user && user.userId) ? user.userId : null;
+      try {
+        sqldb.prepare(
+          'INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent) VALUES (?, ?, ?, ?, ?) ' +
+          'ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, user_agent = excluded.user_agent, failure_count = 0'
+        ).run(uid, sub.endpoint, sub.keys.p256dh, sub.keys.auth, ua);
+      } catch (e) { console.error('[Push] subscribe DB error:', e.message); return jsonResponse(res, 500, { error: 'DB error' }); }
+      jsonResponse(res, 201, { subscribed: true, user_id: uid });
+    } catch (e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// bd nwk6 — POST /api/v1/push/unsubscribe — body {endpoint}
+if (pathname === '/api/v1/push/unsubscribe' && req.method === 'POST') {
+  readBodyLimited(req, MAX_BODY_SIZE).then(raw => {
+    try {
+      const { endpoint } = JSON.parse(raw);
+      if (!endpoint) return jsonResponse(res, 400, { error: 'endpoint requis' });
+      const r = sqldb.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(endpoint);
+      jsonResponse(res, 200, { deleted: r.changes });
+    } catch (e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// bd nwk6 — POST /api/v1/push/test — admin trigger test push vers user authentifié
+if (pathname === '/api/v1/push/test' && req.method === 'POST') {
+  const user = requireUserAuth(req, res);
+  if (!user) return;
+  broadcastPushToUser(user.userId, { urgency: 'normal' })
+    .then(r => jsonResponse(res, 200, { test: true, sent: r.sent, failed: r.failed }))
+    .catch(e => jsonResponse(res, 500, { error: e.message }));
   return;
 }
 // bd s77m — GET /api/v1/payments/subscription → état abonnement courant
