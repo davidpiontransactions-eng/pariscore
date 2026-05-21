@@ -1,10 +1,25 @@
-# 🛌 Session Handoff — Resume Tomorrow
+# 🛌 Session Handoff — État live
 
-> **Stop session** : 21 mai 2026 fin journée
-> **Dernière commit** : `73b74c2` v12.17 (CHANGELOG update session)
-> **Total session** : 29 commits poussés `main` (v11.1 → v12.17)
+> **Update continuation** : 21 mai 2026 (resume session)
+> **Dernière commit** : `baedc47` v12.23 (X-Robots-Tag API noindex)
+> **Total session** : 34 commits poussés `main` (v11.1 → v12.23)
 > **Tickets fermés** : 29 / 50+ créés
+> **Tickets in_progress** : 4 (401 QA, 5iw BSD WS, bjv spike Odds, nyg Apify)
 > **Resume command** : `bd ready` puis lire ce fichier
+
+## 📦 Continuation post-handoff (5 commits, 21/05/2026)
+
+| Commit | Ticket | Description |
+|---|---|---|
+| `8e776f0` v12.19 | `e7l` | PWA install prompt UI |
+| `ab122b8` v12.20 | `401` CRIT-3 | Throttled trace helper `_traceCatch` |
+| `a8b5496` v12.21 | `e7l` | PWA Push notification scaffold |
+| `dcd16f7` v12.22 | `u5x` NEW | robots.txt SEO fix (GSC alert) |
+| `baedc47` v12.23 | `u5x` | X-Robots-Tag API noindex double-layer |
+
+**QA 401 milestone** : 5/5 CRITIQUE all done ✅ (CRIT-1 v12.5, CRIT-2 safe, CRIT-3 v12.20, CRIT-4 v12.5, CRIT-5 v12.5)
+**PWA infrastructure 9/9 frontend** ✅
+**SEO double-layer protection** ✅
 
 ---
 
@@ -39,6 +54,21 @@ Si corruption → procédure recovery dans script.
 
 ### 🟠 Momentum La Liga `8c5` — Validation prod
 Deploy + restart + observer match La Liga live 5min → momentum bars dom/ext au lieu flat-line.
+
+### 🟠 SEO `u5x` — Deploy robots.txt + X-Robots-Tag fix
+```bash
+ssh ubuntu@<vps>
+cd /home/ubuntu/pariscore
+git pull
+pm2 restart pariscore
+curl -s https://pariscore.fr/robots.txt
+curl -I https://pariscore.fr/api/v1/status  # doit retourner X-Robots-Tag: noindex
+```
+Puis GSC:
+1. Rapport "Bloquée par robots.txt" → cliquer "Valider la correction"
+2. Sitemap → Remove + Re-add `sitemap.xml`
+3. URL Inspection → tester 5 pages prioritaires
+4. Suivre 2-7 jours Coverage report
 
 ---
 
