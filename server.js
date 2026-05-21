@@ -15276,6 +15276,66 @@ function recordTennisServe(m) {
   return { games: recent, breaks_recent: breaks, run: { player: streakP, len: streakW }, trend, snapshots: hist.length };
 }
 
+// bd c8zp — Archive tennis finished matches detectes dans live cache vers
+// tennisHistory (alimente onglet Historique tennis comme foot via archivePastMatches).
+// Idempotent: dedup par m.id contre tennisHistory existant + db.archive_matches.
+function archiveFinishedTennisFromLiveCache(liveData) {
+  if (!Array.isArray(liveData) || !liveData.length) return 0;
+  const existingTennisIds = new Set((tennisHistory || []).map(h => String(h.id)));
+  const existingArchiveIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+  let added = 0;
+  for (const m of liveData) {
+    if (!m || !m.id) continue;
+    const isFinished = m.is_live === false && (
+      String(m.status || '').toLowerCase().includes('finish') ||
+      String(m.status || '').toLowerCase().includes('end') ||
+      String(m.status || '').toLowerCase() === 'ft' ||
+      (m.player1_sets != null && m.player2_sets != null && (m.player1_sets >= 2 || m.player2_sets >= 2))
+    );
+    if (!isFinished) continue;
+    const idStr = String(m.id);
+    if (existingTennisIds.has(idStr) || existingArchiveIds.has(idStr)) continue;
+    // Map live tennis shape → archive shape compat runHistoryQuery
+    const sw1 = Number(m.player1_sets ?? 0);
+    const sw2 = Number(m.player2_sets ?? 0);
+    const winner = sw1 > sw2 ? 'p1' : (sw2 > sw1 ? 'p2' : null);
+    const archived = {
+      id: m.id,
+      sport: 'tennis',
+      sport_key: m.tour === 'WTA' ? 'tennis_wta' : (m.tour === 'MIXED' ? 'tennis_mixed' : 'tennis_atp'),
+      tour: m.tour || null,
+      league: m.tournament || 'Tennis',
+      country: 'International',
+      surface: m.surface || null,
+      round: m.notes || null,
+      commence_time: m.start_time || new Date().toISOString(),
+      home_team: m.player1?.name || null,
+      away_team: m.player2?.name || null,
+      player1: m.player1 || null,
+      player2: m.player2 || null,
+      sets: m.sets || [],
+      sets_won_p1: sw1,
+      sets_won_p2: sw2,
+      winner,
+      home_score: sw1,
+      away_score: sw2,
+      live_score: `${sw1}-${sw2}`,
+      status: 'finished',
+      _source: 'cron-tennis-live-archive',
+      _archived_at: new Date().toISOString(),
+    };
+    tennisHistory.push(archived);
+    (db.archive_matches = db.archive_matches || []).push(archived);
+    existingTennisIds.add(idStr);
+    existingArchiveIds.add(idStr);
+    added++;
+  }
+  if (added > 0) {
+    console.log(`  [Tennis Archive] ${added} matchs finished archives vers tennisHistory (+db.archive_matches)`);
+  }
+  return added;
+}
+
 async function pollTennisLive() {
   if (_isFetchingTennis) return;
   _isFetchingTennis = true;
@@ -15300,6 +15360,8 @@ async function pollTennisLive() {
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
+    // bd c8zp: cron capture tennis score finals → tennisHistory
+    try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
     // Warmer background : remplit les caches BSD (pred/calib/rank) HORS chemin
     // requête /tennis/value-bets. Les builders s'auto-gatent (cache 6h/30min)
     // → fetch réel rare. Fire-and-forget, ne bloque jamais le poll.
