@@ -6197,6 +6197,7 @@ async function enrichCornersFromBSD(matches) {
 
 const HISTORY_FILE = path.join(__dirname, 'history.json');
 const HISTORIQUE_SEED_FILE = path.join(__dirname, 'historique_football.json'); // bd 9je ETL output
+const HISTORIQUE_TENNIS_SEED_FILE = path.join(__dirname, 'historique_tennis.json'); // bd rxh ETL output
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
 
@@ -6265,11 +6266,70 @@ function loadHistory() {
           }
         }
         if (totalSeed > 0) {
-          console.log(`  ✓ ETL seed merge: ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (dedup'd)`);
+          console.log(`  ✓ ETL seed merge (foot): ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (dedup'd)`);
         }
       }
     } catch (e) {
-      console.warn('[ETL Seed Load]', e.message);
+      console.warn('[ETL Seed Load foot]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-rxh — Merge historique_tennis.json (ETL output) dans
+  // db.archive_matches au boot. Schema: seasons.<year>.{atp,wta}[]
+  if (fs.existsSync(HISTORIQUE_TENNIS_SEED_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_TENNIS_SEED_FILE, 'utf8'));
+      if (seed && seed.seasons && typeof seed.seasons === 'object') {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const seasonKey of Object.keys(seed.seasons)) {
+          const seasonData = seed.seasons[seasonKey];
+          if (!seasonData || typeof seasonData !== 'object') continue;
+          for (const tour of ['atp', 'wta']) {
+            const matches = Array.isArray(seasonData[tour]) ? seasonData[tour] : [];
+            for (const m of matches) {
+              totalSeed++;
+              if (!m || !m.id || existingIds.has(String(m.id))) continue;
+              // Map ETL tennis shape → archive_matches shape (compat with runHistoryQuery)
+              const archived = {
+                id: m.id,
+                sport: 'tennis',
+                sport_key: m.tour === 'ATP' ? 'tennis_atp' : 'tennis_wta',
+                tour: m.tour,
+                league: m.tournament || 'Tennis',
+                country: 'International',
+                surface: m.surface,
+                round: m.round,
+                commence_time: m.date,
+                home_team: m.player1?.name,
+                away_team: m.player2?.name,
+                player1: m.player1,
+                player2: m.player2,
+                sets: m.sets,
+                sets_won_p1: m.sets_won_p1,
+                sets_won_p2: m.sets_won_p2,
+                winner: m.winner,
+                home_score: m.sets_won_p1,
+                away_score: m.sets_won_p2,
+                live_score: m.sets_won_p1 != null ? `${m.sets_won_p1}-${m.sets_won_p2}` : null,
+                status: 'finished',
+                season: parseInt(seasonKey, 10),
+                _source: 'etl-seed-tennis',
+                _etl_meta: { ingested_at: seed.generated_at, tour: m.tour },
+              };
+              (db.archive_matches = db.archive_matches || []).push(archived);
+              existingIds.add(String(m.id));
+              totalAdded++;
+            }
+          }
+        }
+        if (totalSeed > 0) {
+          console.log(`  ✓ ETL seed merge (tennis): ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (dedup'd)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load tennis]', e.message);
     }
   }
 }
