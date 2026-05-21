@@ -25486,7 +25486,15 @@ P(0-2) : ${setProbs ? fmtPct(setProbs.p_0_2) : '—'} | P(1-2) : ${setProbs ? fm
      - TITRE : Accrocheur, avec le nom du tournoi, le stade de la compétition et des émojis.
      - INTRO : Courte présentation du contexte et des cotes affichées.
      - 📊 DEEP DATA & PROJECTIONS : Estime de manière cohérente pour les deux joueurs : Le PowerScore (sur 100), La probabilité de victoire finale du tournoi (W%), Le principal atout sur cette surface précise.
-     - 📰 REVUE DE PRESSE : Rédige de manière réaliste et pertinente l'avis de 5 médias sportifs différents (ex: L'Équipe, Eurosport, Marca, Gazzetta dello Sport, etc.) sur la tactique attendue.
+     - 📰 REVUE DE PRESSE (AVIS MÉDIAS) : Tu n'as pas accès à une recherche web en direct. Génère 5 narratifs médiatiques pertinents et plausibles que la presse sportive aurait produits sur ce match, en t'appuyant sur le tournoi, la surface, les nationalités, le ranking et la forme récente des joueurs.
+       Sélectionne les 5 médias selon les nationalités des joueurs (panel international par défaut si les nationalités sont mixtes/inconnues : **L'Équipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**). Adapte si pertinent : France (L'Équipe, Eurosport), Espagne (Marca, AS), UK (Sky Sports, BBC Sport, The Guardian), USA (ESPN, Tennis Channel), Italie (Gazzetta dello Sport, Corriere dello Sport), Allemagne (Kicker, Bild), Australie (Wide World of Sports).
+       Format strict, 5 items numérotés sur 1 à 2 lignes maximum chacun :
+       1. **[Nom du Média]** : "Citation ou analyse résumée sur la dynamique d'un des deux joueurs (forme, surface, head-to-head, mental)."
+       2. **[Nom du Média]** : "..."
+       3. **[Nom du Média]** : "..."
+       4. **[Nom du Média]** : "..."
+       5. **[Nom du Média]** : "..."
+       Varie les angles : forme actuelle, performance sur la surface, head-to-head, pression psychologique, value bet débattu, tactique attendue (service/retour, fond de court vs filet).
 
      - 💰 TOP 3 PARIS À JOUER : Propose 3 paris pertinents basés sur les cotes ou estimés : 1. Le Bankroll Builder (Pari très "safe") + Analyse courte. 2. La Value (Le meilleur rapport risque/gain) + Analyse courte. 3. Le Risk (Grosse cote / Pari fun) + Analyse courte.
      - ⚠️ L'AVIS DU TRADER : Un avertissement ou un conseil final sur le piège à éviter dans ce match.
@@ -27786,7 +27794,7 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    Mise Kelly : X.X%
 
 5. REVUE DE PRESSE (AVIS MEDIAS) :
-   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.).
+   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.). Panel international par defaut si nationalites mixtes/inconnues : **L'Equipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**.
    Format strict, 5 items numerotes sur 1 a 2 lignes maximum chacun, aucun emoji :
    1. **[Nom du Media]** : "Citation ou analyse resumee sur la dynamique d'une des deux equipes."
    2. **[Nom du Media]** : "..."
@@ -27963,7 +27971,7 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    Mise Kelly : X.X%
 
 5. REVUE DE PRESSE (AVIS MEDIAS) :
-   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.).
+   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.). Panel international par defaut si nationalites mixtes/inconnues : **L'Equipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**.
    Format strict, 5 items numerotes sur 1 a 2 lignes maximum chacun, aucun emoji :
    1. **[Nom du Media]** : "Citation ou analyse resumee sur la dynamique d'une des deux equipes."
    2. **[Nom du Media]** : "..."
