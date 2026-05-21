@@ -260,17 +260,19 @@ sudo chmod 600 /etc/pariscore/secrets.env
 | Date | Clé | Qui | Confirmé |
 |---|---|---|---|
 | ~21/05/2026 | JWT_SECRET | DG | Oui (pm2 restart confirmé) |
-| EN ATTENTE | ADMIN_PASSWORD | DG | Non |
-| EN ATTENTE | GA_POSTBACK_TOKEN | DG | Non |
-| EN ATTENTE | TELEGRAM_BOT_TOKEN | DG | Non |
-| EN ATTENTE | ODDS_API_KEY | DG | Non |
-| EN ATTENTE | GEMINI_API_KEY | DG | Non |
-| EN ATTENTE | GROQ_API_KEY | DG | Non |
-| EN ATTENTE | RAPIDAPI_KEY (×5 alias) | DG | Non |
-| EN ATTENTE | API_FOOTBALL_KEY | DG | Non (kill-switch actif) |
-| EN ATTENTE | BSD_API_KEY | DG + bzzoiro | Non |
-| EN ATTENTE | FOOTBALL_DATA_API_KEY | DG | Non |
-| EN ATTENTE | APIFY_TOKEN | DG | Non |
+| 21/05/2026 20:10 UTC | ADMIN_PASSWORD | DG | Oui (.env + pm2 restart, prod HTTP 200) |
+| 21/05/2026 20:10 UTC | GA_POSTBACK_TOKEN | DG | Oui |
+| 21/05/2026 20:10 UTC | TELEGRAM_BOT_TOKEN | DG | Oui |
+| 21/05/2026 20:10 UTC | ODDS_API_KEY | DG | Oui |
+| 21/05/2026 20:10 UTC | GEMINI_API_KEY | DG | Oui |
+| 21/05/2026 20:10 UTC | GROQ_API_KEY | DG | Oui |
+| 21/05/2026 20:10 UTC | RAPIDAPI_KEY (×5 alias) | DG | Oui |
+| 21/05/2026 20:10 UTC | API_FOOTBALL_KEY | DG | Oui (kill-switch toujours actif) |
+| 21/05/2026 20:10 UTC | BSD_API_KEY | DG + bzzoiro | Oui (bsd_connected=true vérifié) |
+| 21/05/2026 20:10 UTC | FOOTBALL_DATA_API_KEY | DG | Oui |
+| 21/05/2026 20:10 UTC | APIFY_TOKEN | DG | Oui |
+
+**TOUTES CLÉS ROTÉES 21/05/2026 20:10 UTC** — vérification prod : `/api/v1/status` HTTP 200, `/server.js` HTTP 403, uptime pm2 ~14min (restart confirmé), `bsd_connected:true`.
 
 ---
 
