@@ -6554,6 +6554,7 @@ const HISTORY_FILE = path.join(__dirname, 'history.json');
 const HISTORIQUE_SEED_FILE = path.join(__dirname, 'historique_football.json'); // bd 9je ETL output
 const HISTORIQUE_TENNIS_SEED_FILE = path.join(__dirname, 'historique_tennis.json'); // bd rxh ETL output
 const HISTORIQUE_OPENFOOTBALL_FILE = path.join(__dirname, 'historique_openfootball.json'); // bd 6du6 ETL output
+const HISTORIQUE_WIKIDATA_FILE = path.join(__dirname, 'historique_wikidata.json'); // bd 6du6 Phase 2 — Wikidata CC0 (GS singles + foot finals)
 const HISTORIQUE_FBREF_FILE = path.join(__dirname, 'historique_fbref.json'); // bd 8lqf ETL output (RESEARCH ONLY)
 const HISTORIQUE_ELOFOOTBALL_FILE = path.join(__dirname, 'historique_elofootball.json'); // bd 8lvf ETL output
 const HISTORIQUE_BSD_TENNIS_FILE = path.join(__dirname, 'historique_bsd_tennis.json'); // bd rxh Phase 2 ETL output
@@ -6740,6 +6741,83 @@ function loadHistory() {
       }
     } catch (e) {
       console.warn('[ETL Seed Load openfootball]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-6du6 Phase 2 — Merge historique_wikidata.json (CC0 1.0 Universal).
+  // Schema: {tennis: {grand_slam_singles_winners[]}, football: {major_finals[]}}.
+  // Winners-only records (single home_team = winner, no opponent). Commercial-safe (Wikidata CC0).
+  if (fs.existsSync(HISTORIQUE_WIKIDATA_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_WIKIDATA_FILE, 'utf8'));
+      let totalSeed = 0;
+      let totalAdded = 0;
+      const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+
+      const tennisRows = Array.isArray(seed?.tennis?.grand_slam_singles_winners)
+        ? seed.tennis.grand_slam_singles_winners : [];
+      for (const m of tennisRows) {
+        totalSeed++;
+        if (!m || !m.id || existingIds.has(String(m.id))) continue;
+        const isMens = (m.class || '').toLowerCase().includes("men's singles")
+          && !(m.class || '').toLowerCase().includes('women');
+        const archived = {
+          id: m.id,
+          sport: 'tennis',
+          sport_key: isMens ? 'tennis_atp' : 'tennis_wta',
+          tour: isMens ? 'ATP' : 'WTA',
+          league: m.edition || m.series || 'Grand Slam',
+          country: 'International',
+          surface: m.surface,
+          round: m.round || 'F',
+          commence_time: m.date,
+          home_team: m.winner,
+          away_team: null,
+          winner: m.winner,
+          status: 'finished',
+          season: m.date ? parseInt(String(m.date).slice(0, 4), 10) : null,
+          _source: 'etl-seed-wikidata',
+          _attribution: m._attribution || 'Wikidata (CC0 1.0)',
+          _wikidata: { series_qid: m.series_qid, edition_qid: m.edition_qid, winner_qid: m.winner_qid, class: m.class },
+        };
+        (db.archive_matches = db.archive_matches || []).push(archived);
+        tennisHistory.push(archived);
+        existingIds.add(String(m.id));
+        totalAdded++;
+      }
+
+      const footRows = Array.isArray(seed?.football?.major_finals)
+        ? seed.football.major_finals : [];
+      for (const m of footRows) {
+        totalSeed++;
+        if (!m || !m.id || existingIds.has(String(m.id))) continue;
+        const archived = {
+          id: m.id,
+          sport: 'football',
+          sport_key: m.type_qid ? `wd_${m.type_qid}` : 'wd_football',
+          league: m.event_label || m.type || 'Major Final',
+          country: 'International',
+          commence_time: m.date,
+          home_team: m.winner || null,
+          away_team: null,
+          winner: m.winner || null,
+          status: 'finished',
+          season: m.date ? parseInt(String(m.date).slice(0, 4), 10) : null,
+          round: m.round || 'F',
+          _source: 'etl-seed-wikidata',
+          _attribution: m._attribution || 'Wikidata (CC0 1.0)',
+          _wikidata: { event_qid: m.event_qid, type_qid: m.type_qid, winner_qid: m.winner_qid, type: m.type },
+        };
+        (db.archive_matches = db.archive_matches || []).push(archived);
+        existingIds.add(String(m.id));
+        totalAdded++;
+      }
+
+      if (totalSeed > 0) {
+        console.log(`  ✓ ETL seed merge (wikidata CC0): ${totalAdded}/${totalSeed} winners ajoutes (db.archive_matches${tennisRows.length ? ' + tennisHistory' : ''})`);
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load wikidata]', e.message);
     }
   }
 
