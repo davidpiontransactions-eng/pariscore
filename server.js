@@ -16047,8 +16047,9 @@ function _tennisGamesFromSets(m) {
 // bd c5i — Cross-source merge : si BSD/ESPN serving=null, cherche dans aiscoreMatchCache
 // par normName des joueurs (déjà chauffé via warmer ou requêtes utilisateur). Mutation
 // in-place : copie serving 1|2 dans le match live. Retourne nb d'enrichissements.
-function enrichServingFromAiscoreCache(liveData) {
+function enrichServingFromAiscoreCache(liveData, sourceTag) {
   if (!Array.isArray(liveData) || liveData.length === 0) return 0;
+  const _srcTag = sourceTag || 'aiscore_cache';
   // Index aiscore cache par paire de joueurs normalisée
   const aiIdx = new Map();
   try {
@@ -16082,10 +16083,52 @@ function enrichServingFromAiscoreCache(liveData) {
     const mP1Norm = a;
     const aligned = (aiP1Norm === mP1Norm) ? hit.serving : (hit.serving === 1 ? 2 : 1);
     m.serving = aligned;
-    m._serving_source = 'aiscore_cache';
+    m._serving_source = _srcTag;
     enriched++;
   }
   return enriched;
+}
+
+// bd c5i Phase 3 — On-demand aiscore fetch throttle pour matchs serving=null
+// & aiscore cache miss. Resout via sitemap index (player last-name match dans slug).
+// Throttle: max 5 fetches par poll + cooldown 10min par matchId raté.
+const _aiscoreOndemandSeenIds = new Map();
+const AISCORE_ONDEMAND_COOLDOWN_MS = 10 * 60 * 1000;
+const AISCORE_ONDEMAND_MAX_PER_POLL = 5;
+async function fetchAiscoreServingOnDemand(liveData) {
+  if (!Array.isArray(liveData) || liveData.length === 0) return 0;
+  const now = Date.now();
+  const candidates = liveData.filter(m =>
+    m && m.is_live && m.serving !== 1 && m.serving !== 2
+    && m.player1 && m.player1.name && m.player2 && m.player2.name
+    && (!_aiscoreOndemandSeenIds.has(m.id)
+        || (now - _aiscoreOndemandSeenIds.get(m.id)) > AISCORE_ONDEMAND_COOLDOWN_MS)
+  );
+  if (candidates.length === 0) return 0;
+  let idx;
+  try { idx = await getAiscoreTennisIndex(); } catch (_) { return 0; }
+  if (!idx || !Array.isArray(idx.matches) || idx.matches.length === 0) return 0;
+  let fetched = 0;
+  for (const m of candidates) {
+    if (fetched >= AISCORE_ONDEMAND_MAX_PER_POLL) break;
+    _aiscoreOndemandSeenIds.set(m.id, now);
+    const p1n = normName(m.player1.name);
+    const p2n = normName(m.player2.name);
+    if (!p1n || !p2n) continue;
+    const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
+    const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
+    if (!p1Last || !p2Last || p1Last.length < 3 || p2Last.length < 3) continue;
+    const hit = idx.matches.find(am => {
+      const s = String(am.slug || '').toLowerCase();
+      return s.includes(p1Last) && s.includes(p2Last);
+    });
+    if (!hit) continue;
+    try {
+      await getAiscoreMatch(hit.id, hit.slug);
+      fetched++;
+    } catch (_) { /* swallow — cooldown deja set */ }
+  }
+  return fetched;
 }
 
 // bd c5i — Inference serveur par parite des jeux quand source omet l'info.
@@ -16221,15 +16264,22 @@ async function pollTennisLive() {
     const data = _mergeTennisLive(bsd, espn);
     // bd c5i — Cross-source serving enrichment (aiscore cache hit) AVANT recordTennisServe
     // pour que l'historique parite ait la donnée fraîche.
-    let _aiEnriched = 0;
-    try { _aiEnriched = enrichServingFromAiscoreCache(data); } catch (_) {}
+    let _aiEnriched = 0, _aiOndemand = 0, _aiEnrichedOndemand = 0;
+    try { _aiEnriched = enrichServingFromAiscoreCache(data, 'aiscore_cache'); } catch (_) {}
+    // bd c5i Phase 3 — on-demand aiscore fetch throttled (5/poll) pour matchs
+    // serving=null & cache miss. Re-merge apres fetch pour propager au payload courant.
+    try { _aiOndemand = await fetchAiscoreServingOnDemand(data); } catch (_) {}
+    if (_aiOndemand > 0) {
+      try { _aiEnrichedOndemand = enrichServingFromAiscoreCache(data, 'aiscore_ondemand'); } catch (_) {}
+    }
     // S3 : serve momentum par match live + purge des ids disparus.
     const _liveIds = new Set();
     for (const m of data) {
       if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
     }
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
-    console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiEnriched ? ` serving+${_aiEnriched}aiscore` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
+    const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
+    console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
