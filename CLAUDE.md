@@ -1,4 +1,4 @@
-# 🏟️ PariScore — Poste de Pilotage (v12.63 — bd-driven)
+# 🏟️ PariScore — Poste de Pilotage (v12.65 — bd-driven)
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
@@ -22,7 +22,8 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Backend** : Node.js (Vanilla, zero-dep sauf `better-sqlite3`), SQLite3 WAL, SSE
 - **Frontend** : SPA `pariscore.html` mono-fichier (30k+ lignes), Design System V2.0 tokens unifiés `--cf-*`
 - **Math Engine** : JS natif — Poisson bivarié, Elo dynamique, Shin-Hurley devig, Kelly cap 25%, Bootstrap UQD (à venir)
-- **Sources data** : BSD (Bzzoiro Sports Addon $5/mo), ESPN public, Odds API, openfootball ODbL, felipeall/transfermarkt-api sidecar self-host, elofootball community
+- **Sources data** : BSD (Bzzoiro Sports Addon $5/mo + WS push), ESPN public, Odds API, openfootball ODbL, Wikidata CC0 (v12.62 wire 56 winners tennis), felipeall/transfermarkt-api sidecar self-host, elofootball community, aiscore.com on-demand throttled (tennis serving fallback v12.65)
+- **Sources backlog DG decision** : Tennismylife/TML-Database MIT (substitution Sackmann NC, bd `8uoc`), xvalue.ai (GO ferme 85/100 bd `ffh`), OddsPapi.io free Pinnacle sharp (bd `bjv` POC), RapidAPI odds-api1 (bd `bjv` Phase 1 404 endpoints)
 - **Déploiement** : VPS OVH `/home/ubuntu/pariscore` via WinSCP ou `git pull` + `pm2 restart pariscore`
 - **Persistance ETL** : `db.archive_matches` alimenté par 8 sources (3 live runtime + 5 ETL bootstrap). Inventaire : `.context/databases_historique_inventory.md` + `.csv`
 
@@ -177,6 +178,12 @@ Dataset Apify one-shot disponible racine projet:
 - **Poisson Time-Inhomogène** — modèle live conditionnel minute par minute
 - **Context Engine** — météo + arbitres + kilométrage déplacements
 - **Alertes SSE** — triggers `favorite_trap` + `goal_flood`
+
+**Nouvelles pistes 22/05/2026 v12.65 (règle 1 PROTOCOLE — 3 propositions session):**
+
+- **xvalue.ai ML scouting clustering** (cf. bd `ffh` GO 85/100) — branch xG advanced + clustering 30 ligues dans pipeline `buildMatchRecord`, composante "form-style fingerprint" qui détecte les anomalies tactiques pré-match (changement coach, blessure clé). Sortie : `style_shift_score` 0-100 contribuant à `confidence_badge`.
+- **Pinnacle sharp calibration via OddsPapi.io free** (cf. bd `bjv` Plan C 250 req/mo) — utiliser cote Pinnacle dans `computeWFV1N2` comme ancrage low-vig, recalibrer `detectSurebet1N2` avec sharps low-marge, mesurer reduction faux positifs ValueBet (estim. -5 à -10% bias). POC mesurable backtest 50 matchs.
+- **Pattern on-demand throttled généralisé** (cf. bd `c5i` Phase 3 livré `fbea217`) — étendre paradigme `fetchAiscoreServingOnDemand` (5/poll + cooldown 10min/miss) à d'autres data gaps : `fetchAiscoreLineupsOnDemand` (lineups manquants BSD/ESPN), `fetchSofascoreEditorialOnDemand` (bd `6jro` Plan H article preview), `fetchOddsPapiPinnacleOnDemand` (anchor sharp ad-hoc). Helper générique `withOnDemandThrottle(fetcher, opts)`.
 
 ---
 
