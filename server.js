@@ -29216,6 +29216,135 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
         return res.end(body);
     }
 
+    // bd 968x Phase 4 — /about E-E-A-T page (Google Trust signals)
+    // Experience / Expertise / Authoritativeness / Trustworthiness
+    // Standalone HTML server-rendered (pas SPA, crawler-friendly direct).
+    if (!res.headersSent && pathname === '/about') {
+        const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+        const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+        const html = `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>À propos · PariScore — Méthodologie quantitative paris sportifs</title>
+<meta name="description" content="PariScore : plateforme francophone d'analyse mathématique pour paris football et tennis. Méthodologie Poisson bivariée, edge no-vig calibré, Power Score V2 IA. Transparence sources et backtesting accuracy.">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta property="og:title" content="À propos · PariScore">
+<meta property="og:description" content="Méthodologie quantitative paris sportifs francophone. Aucune mise captée — pure analyse mathématique transparente.">
+<meta property="og:url" content="${origin}/about">
+<link rel="canonical" href="${origin}/about">
+<style>
+:root{--bg:#0a0d0f;--bg2:#111417;--bg3:#181c20;--bg4:#1e2328;--green:#00e676;--blue:#29b6f6;--amber:#ffa726;--text:#e8eaed;--text2:#8d9399;--text3:#5a6068}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans','Inter',system-ui,sans-serif;line-height:1.6;padding:40px 20px}
+main{max-width:840px;margin:0 auto}
+h1{font-size:42px;font-weight:800;margin-bottom:8px;letter-spacing:-.02em}
+h2{font-size:24px;margin:40px 0 12px;color:var(--green);font-weight:700;letter-spacing:-.01em}
+h3{font-size:16px;margin:24px 0 8px;color:var(--blue);font-weight:600}
+p{margin-bottom:14px;color:var(--text)}
+ul{margin:12px 0 16px 24px}
+li{margin-bottom:6px;color:var(--text2)}
+strong{color:var(--text);font-weight:600}
+code{font-family:'DM Mono',monospace;background:var(--bg4);padding:2px 6px;border-radius:3px;font-size:13px;color:var(--amber)}
+.intro{font-size:18px;color:var(--text2);margin-bottom:32px;border-left:3px solid var(--green);padding-left:16px}
+.pillar{background:var(--bg2);border:1px solid var(--bg4);border-radius:10px;padding:20px 24px;margin-bottom:20px}
+.pillar-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+a:hover{color:var(--green);border-bottom-color:var(--green)}
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-size:13px;color:var(--text3)}
+.nav{margin-bottom:32px;font-size:13px;color:var(--text3)}
+.nav a{color:var(--text3);border:none}
+</style>
+</head>
+<body>
+<main>
+<nav class="nav"><a href="/">← Retour au tableau de bord</a></nav>
+
+<h1>À propos de PariScore</h1>
+<p class="intro">Plateforme francophone d'analyse mathématique pour paris football et tennis. Nous ne prenons aucune mise : nous donnons aux parieurs sérieux les outils statistiques pour comprendre <strong>pourquoi</strong> un pari a une valeur attendue positive ou négative.</p>
+
+<div class="pillar">
+<div class="pillar-label">E — Experience (Expérience pratique)</div>
+<h2 id="experience">Origines et trajectoire</h2>
+<p>Projet initié en <strong>avril 2026</strong> par un fondateur parieur depuis 12+ ans, frustré par l'absence d'outil quantitatif francophone transparent. Le prototype CoteAlerte (HTML statique) a évolué progressivement vers PariScore : application full-stack avec backend Node.js zéro-dépendance et frontend SPA mono-fichier.</p>
+<p>Notre approche est <strong>itérative et publiquement documentée</strong> : chaque version majeure (v12.x actuelle) est tracée dans le CHANGELOG, chaque décision technique justifiée dans des ADRs internes. Les métriques de backtesting sont calculées en continu sur les 50+ derniers matchs archivés et exposées via l'endpoint public <code>/api/v1/accuracy</code>.</p>
+</div>
+
+<div class="pillar">
+<div class="pillar-label">E — Expertise (Compétence technique)</div>
+<h2 id="expertise">Méthodologie quantitative</h2>
+
+<h3 id="poisson">Distribution de Poisson bivariée</h3>
+<p>Pour chaque match, nous calculons les paramètres lambda d'attaque/défense normalisés par la moyenne de ligue (1.35 buts/match) à partir des standings home/away :</p>
+<ul>
+<li><code>λ_dom = (avgScored_dom / 1.35) × avgConceded_ext</code></li>
+<li><code>λ_ext = (avgScored_ext / 1.35) × avgConceded_dom</code></li>
+<li>Matrice de scores 0-6 × 0-6 : <code>P(h,a) = Poisson(λ_dom, h) × Poisson(λ_ext, a)</code></li>
+</ul>
+<p>Marchés dérivés : BTTS, Over 0.5/1.5/2.5/3.5, Under 1.5, Clean Sheet, 1N2, top 5 scores probables.</p>
+
+<h3 id="edge">Edge No-Vig calibré (Value Bet)</h3>
+<p>Détection mathématique des cotes sous-évaluées par les bookmakers :</p>
+<ul>
+<li>Pour chaque bookmaker : <code>prob_implicite = 1 / cote</code></li>
+<li>Marge bookmaker = <code>Σ(prob_implicites) - 1</code></li>
+<li>Prob fair normalisée = <code>prob_implicite / Σ(prob_implicites)</code></li>
+<li>Edge = <code>meilleure_cote × prob_fair - 1</code></li>
+</ul>
+<p>Edge &gt; 0 = opportunité, Edge &gt; 5% = signal fort recommandable. Affichage transparent dans le tableau matchs (colonne dédiée + tri).</p>
+
+<h3 id="power-score">Power Score V2 — Analyse IA explicative</h3>
+<p>Score composite 0-100 calculé par Gemini 2.0 Flash avec injection de 5 piliers : Forme récente (5 derniers matchs), xG attendu, Cotes/Edge mathématique, Contexte tactique (composition probable + blessures), Presse récente (RSS L'Équipe + BBC + Sky + ESPN + GNews).</p>
+
+<h3 id="tennis">Calibration tennis Shin-Hurley + Markov</h3>
+<p>Modèle propre dérivé Elo surface-split ATP/WTA + Markov set-by-set + devig Shin-Hurley. Sources cotes croisées (BSD, MatchStat, calibration interne).</p>
+</div>
+
+<div class="pillar">
+<div class="pillar-label">A — Authoritativeness (Sources et autorité)</div>
+<h2 id="authoritativeness">Sources de données canoniques</h2>
+<p>Aucune source n'est scrapée illégalement. Chaque flux est documenté avec sa license et son SLA :</p>
+<ul>
+<li><strong>BSD (Bzzoiro Sports Addon)</strong> : feed live WebSocket &lt;5s + tennis ML + standings 110+ ligues. Source primaire payante ($5/mo Sports Addon).</li>
+<li><strong>The Odds API</strong> : cotes h2h 20+ bookmakers Europe, plan gratuit 500 req/mois respecté.</li>
+<li><strong>API-Football Free</strong> : 100 req/jour fallback standings + scores + Smart Polling live.</li>
+<li><strong>ESPN public</strong> : standings ligues couvertes ESPN (J-League, MLS, K League…) zéro clé.</li>
+<li><strong>elofootball.com</strong> : ratings communautaires CC BY-SA respecté.</li>
+<li><strong>openfootball ODbL + Wikidata CC0</strong> : historique champions, fondations, palmares.</li>
+<li><strong>Sofascore / Flashscore (Apify)</strong> : enrichissements ponctuels venue/referee/TV/standings fallback.</li>
+<li><strong>felipeall/transfermarkt-api</strong> self-host MIT : valeurs marché + transferts.</li>
+</ul>
+<p>Le backtesting des prédictions est public : <a href="/api/v1/accuracy">/api/v1/accuracy</a> (Over 2.5, BTTS, Edge &gt; 5%).</p>
+</div>
+
+<div class="pillar">
+<div class="pillar-label">T — Trustworthiness (Confiance et conformité)</div>
+<h2 id="trustworthiness">Engagements de conformité</h2>
+<ul>
+<li><strong>Pas un bookmaker</strong> : PariScore ne capte aucune mise. Toute redirection vers un opérateur licencié ARJEL passe par lien clairement identifié.</li>
+<li><strong>Pas un service garanti</strong> : intervalles de confiance affichés, sample size visible, accuracy backtested transparente. Les paris sportifs comportent des risques.</li>
+<li><strong>Gate 18+</strong> appliquée à l'inscription. Aucun ciblage de mineurs.</li>
+<li><strong>Sécurité</strong> : clés API jamais exposées client (proxy serveur), JWT auth + bcrypt, .env hors versionning, path traversal bloqué, CORS restreint en production.</li>
+<li><strong>Données personnelles</strong> : RGPD respecté, suppression compte sur demande à david.piontransactions@gmail.com.</li>
+<li><strong>Sources légales</strong> : ODbL/CC0/MIT/CC BY-SA respectées. Toute source CC BY-NC-SA fait l'objet d'une décision GO/NO-GO documentée (purge en cours données tennis Sackmann CC BY-NC-SA).</li>
+</ul>
+<p>Pour toute question éthique, conformité ou data, contact : <code>david.piontransactions@gmail.com</code>.</p>
+</div>
+
+<footer>
+<p>PariScore v12.65+ · Documentation technique publique : <a href="/llms.txt">/llms.txt</a> · Repo GitHub : non publié (closed-source)</p>
+<p>© 2026 PariScore. Plateforme d'analyse statistique. Les paris sportifs comportent des risques de dépendance. Numéro vert : 09 74 75 13 13 (Joueurs Info Service).</p>
+</footer>
+</main>
+</body>
+</html>`;
+        res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=3600'
+        });
+        return res.end(html);
+    }
+
     // bd 968x Phase 1 — llms.txt (LLM crawler hints, standard llmstxt.org)
     // Markdown brut décrivant la méthodologie + sources + features pour LLM indexers
     // (ChatGPT/Perplexity/Claude). Cache 24h CDN-friendly.
@@ -29252,7 +29381,9 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
             const urls = [
                 { loc: `${origin}/`, changefreq: 'hourly', priority: '1.0', lastmod: nowIso },
                 { loc: `${origin}/pronostics`, changefreq: 'hourly', priority: '0.9', lastmod: nowIso },
-                { loc: `${origin}/guides`, changefreq: 'weekly', priority: '0.7', lastmod: nowIso }
+                { loc: `${origin}/guides`, changefreq: 'weekly', priority: '0.7', lastmod: nowIso },
+                // bd 968x Phase 4 — /about E-E-A-T page (Google Trust signals)
+                { loc: `${origin}/about`, changefreq: 'monthly', priority: '0.7', lastmod: nowIso }
             ];
             for (const gslug of Object.keys(SEO_GUIDES)) {
                 urls.push({ loc: `${origin}/guide/${gslug}`, changefreq: 'monthly', priority: '0.6', lastmod: nowIso });
