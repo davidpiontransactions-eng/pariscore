@@ -45,13 +45,13 @@ jobs:
             --config p/javascript \
             --config p/security-audit \
             --sarif --output semgrep.sarif \
-            --error \
-            --no-suppress-errors \
             --metrics off \
+            --no-error \
             server.js odds-rapidapi.js oddspapi.js tools/ \
           || true
-          # || true : workflow ne fail PAS sur findings (revue manuelle).
-          # SARIF upload exposera findings dans Security tab pour triage.
+          # --no-error : workflow ne fail PAS sur findings (triage manuel via SARIF).
+          # || true : safety belt si crash inattendu (timeout, network, etc).
+          ls -lh semgrep.sarif || echo "WARN: SARIF non produit"
 
       - name: Upload SARIF to GitHub Security
         if: always()
