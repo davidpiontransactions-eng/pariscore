@@ -129,7 +129,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `0hf4` | **BSD coverage Phase 1** — TV channels + broadcasts (fetchers + caches + helper attach) | Phase 1 livré v12.65 commit `d10ab09` · Phases 1.1/2/3 ouvertes |
 | ~~`j6pz`~~ ✅ | **BSD coverage Phase 2** — Shotmap (fix endpoint bug `/v2/events/{id}/stats/`) + best_odds + bookmakers | livré — UI shotmap SVG refactor nouveau schema + 2 nouveaux endpoints |
 | ~~`ueg0`~~ ✅ | **BSD coverage Phase 3** — Social items sentiment buzz match (section modal Insights) | livré commit (voir ci-dessous) — section modal Insights lazy fetch + sentiment heuristique |
-| `82th` | **BSD coverage Phase 4** — Referees + Venues + Leagues dynamic (enrichissement modal Contexte stade/arbitre/ligue) | open · 3-4h |
+| ~~`82th`~~ ✅ | **BSD coverage Phase 4** — Referees + Venues + Leagues dynamic | livré backend (3 routes + 3 cache layers + insights payload IDs) — UI optionnelle (Plan D Sofascore couvre venue/referee modal) |
 
 > **BSD MCP coverage roadmap (22/05/2026)** : 17/28 endpoints déjà plugués via `bsdFetch()` REST direct. 11 gaps découpés en 5 phases. Phase 1 TV broadcasters en cours (bg agent, bd ticket créé pendant exec). Phases 2-5 = `j6pz` `ueg0` `82th` `r0v3` (P3). Effort total 12-15h dev. Source: audit MCP `bsd-sports` 28 tools vs grep `bsdFetch()` server.js 22/05.
 
@@ -224,7 +224,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 |---|---|---|---|---|
 | ~~`j6pz`~~ ✅ | — | BSD Phase 2 — Shotmap fix + best_odds + bookmakers (livré endpoint fix + UI SVG refactor) | 3-4h | HIGH |
 | ~~`ueg0`~~ ✅ | — | BSD Phase 3 — Social items sentiment buzz match (livré section modal Insights lazy) | 2h | HIGH |
-| `82th` | — | BSD Phase 4 — Referees + Venues + Leagues dynamic | 3-4h | MED |
+| ~~`82th`~~ ✅ | — | BSD Phase 4 — Referees + Venues + Leagues dynamic (livré backend 3 routes + cache + insights wire) | 3-4h | MED |
 | J | `6jro` | Sofascore continuous scraper webhook (conflit bd `ffh`) | 3-4h | MED |
 
 ### 📋 Récap effort total

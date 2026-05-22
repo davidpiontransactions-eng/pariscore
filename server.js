@@ -27012,6 +27012,33 @@ async function bsdFetchBookmakers() {
   return { data: res.data, cached: false };
 }
 
+// bd 82th — BSD Phase 4 fetchers per-id (referees + venues + leagues). Cache plus long.
+const BSD_REFEREE_TTL = 6 * 3600 * 1000;
+const BSD_VENUE_TTL = 12 * 3600 * 1000;
+const BSD_LEAGUE_TTL = 24 * 3600 * 1000;
+const _bsdRefereeCache = new Map();   // id -> {data, ts}
+const _bsdVenueCache = new Map();
+const _bsdLeagueCache = new Map();
+
+async function bsdFetchById(kind, id) {
+  if (!id || !/^\d+$/.test(String(id))) return { data: null, cached: false };
+  let cache, ttl, path;
+  if (kind === 'referee') { cache = _bsdRefereeCache; ttl = BSD_REFEREE_TTL; path = `/v2/referees/${id}/`; }
+  else if (kind === 'venue') { cache = _bsdVenueCache; ttl = BSD_VENUE_TTL; path = `/v2/venues/${id}/`; }
+  else if (kind === 'league') { cache = _bsdLeagueCache; ttl = BSD_LEAGUE_TTL; path = `/v2/leagues/${id}/`; }
+  else return { data: null, cached: false };
+  const now = Date.now();
+  const cached = cache.get(String(id));
+  if (cached && (now - cached.ts) < ttl) return { data: cached.data, cached: true };
+  const res = await bsdFetch(path);
+  if (!res || res.status !== 200 || !res.data) {
+    cache.set(String(id), { data: null, ts: now }); // neg cache
+    return { data: null, cached: false };
+  }
+  cache.set(String(id), { data: res.data, ts: now });
+  return { data: res.data, cached: false };
+}
+
 // bd ueg0 — Sentiment heuristique léger sur texte tweet/news. Pas d'ML : keyword scoring rapide.
 // Retourne {score: -1..+1, label: 'positive'|'neutral'|'negative'}.
 function computeSocialSentiment(text) {
@@ -27149,6 +27176,32 @@ if (pathname === '/api/v1/bsd/bookmakers' && req.method === 'GET') {
     console.warn('[BSD/bookmakers] erreur:', e.message);
     return jsonResponse(res, 502, { error: 'bsd_bookmakers_failed', message: String(e.message || e) });
   }
+}
+
+// bd 82th — GET /api/v1/bsd/referee/:id|venue/:id|league/:id → enrich modal Contexte
+if (pathname.startsWith('/api/v1/bsd/referee/') && req.method === 'GET') {
+  const id = decodeURIComponent(pathname.slice('/api/v1/bsd/referee/'.length)).trim();
+  if (!/^\d+$/.test(id)) return jsonResponse(res, 400, { error: 'bad_referee_id' });
+  try {
+    const { data, cached } = await bsdFetchById('referee', id);
+    return jsonResponse(res, 200, { source: 'bsd', kind: 'referee', id: Number(id), data, cached });
+  } catch (e) { return jsonResponse(res, 502, { error: 'bsd_referee_failed', message: String(e.message || e) }); }
+}
+if (pathname.startsWith('/api/v1/bsd/venue/') && req.method === 'GET') {
+  const id = decodeURIComponent(pathname.slice('/api/v1/bsd/venue/'.length)).trim();
+  if (!/^\d+$/.test(id)) return jsonResponse(res, 400, { error: 'bad_venue_id' });
+  try {
+    const { data, cached } = await bsdFetchById('venue', id);
+    return jsonResponse(res, 200, { source: 'bsd', kind: 'venue', id: Number(id), data, cached });
+  } catch (e) { return jsonResponse(res, 502, { error: 'bsd_venue_failed', message: String(e.message || e) }); }
+}
+if (pathname.startsWith('/api/v1/bsd/league/') && req.method === 'GET') {
+  const id = decodeURIComponent(pathname.slice('/api/v1/bsd/league/'.length)).trim();
+  if (!/^\d+$/.test(id)) return jsonResponse(res, 400, { error: 'bad_league_id' });
+  try {
+    const { data, cached } = await bsdFetchById('league', id);
+    return jsonResponse(res, 200, { source: 'bsd', kind: 'league', id: Number(id), data, cached });
+  } catch (e) { return jsonResponse(res, 502, { error: 'bsd_league_failed', message: String(e.message || e) }); }
 }
 
 // bd ueg0 — GET /api/v1/social/match/:matchId → BSD social items + sentiment + buzz
@@ -27487,6 +27540,10 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         sofascore_venue_referee: (typeof getSofascoreVenueReferee === 'function') ? getSofascoreVenueReferee(match) : null,
         // bd qm6a Plan E — Flashscore live stats fallback (BSD/ESPN HS scenario)
         flashscore_live_stats: (typeof getFlashscoreLiveStats === 'function') ? getFlashscoreLiveStats(match) : null,
+        // bd 82th — BSD Phase 4 enrichissement Contexte (referee + venue + league via IDs match)
+        bsd_referee_id: match.bsd_referee_id || match.referee_id || null,
+        bsd_venue_id: match.bsd_venue_id || match.venue_id || null,
+        bsd_league_id: match.bsd_league_id || match.league_id || null,
       });
     } catch (e) {
       console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
