@@ -10315,9 +10315,19 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .cf-divergence-pulse.cyan   { animation-name: psDivergencePulse-cyan; }
   .cf-divergence-pulse.amber  { animation-name: psDivergencePulse-amber; }
   .cf-divergence-pulse.red    { animation-name: psDivergencePulse-red; }
+  /* bd 647 — DR Live Pulse (cellule .tn-dr-delta + cellule DR foot/tennis) */
+  /* Sprint 2 P1 TOP 1 spec: 1.5s ease-out, cyan→amber transition, expanding ring.
+     Distinct des divergence pulses (cyan/amber/red). GPU-friendly: transform + box-shadow + filter brightness. */
+  @keyframes psDRPulse {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(41,182,246,0.65); filter: brightness(1); }
+    25%  { transform: scale(1.18); box-shadow: 0 0 0 4px rgba(41,182,246,0.50); filter: brightness(1.5); }
+    60%  { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(255,167,38,0.22); filter: brightness(1.22); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 14px rgba(255,167,38,0);   filter: brightness(1); }
+  }
+  .cf-dr-pulse { animation: psDRPulse 1.5s ease-out 1; will-change: transform, box-shadow, filter; border-radius: 4px; display: inline-block; }
   /* Accessibility — respect prefers-reduced-motion (animation disable, contrast preserved) */
   @media (prefers-reduced-motion: reduce) {
-    .cf-divergence-pulse { animation: none !important; filter: none !important; transform: none !important; }
+    .cf-divergence-pulse, .cf-dr-pulse { animation: none !important; box-shadow: none !important; filter: none !important; transform: none !important; }
   }
   #tennis-vb-table .tn-dr { grid-column:1/-1; display:flex; flex-direction:column; gap:3px; margin-top:5px; padding-top:5px; border-top:1px solid #1e293b; }
   #tennis-vb-table .tn-dr-line { display:flex; align-items:center; justify-content:space-between; gap:8px; line-height:1.25; }
@@ -19306,6 +19316,50 @@ function initSSE() {
       }, 2600); // 1.2s × 2 iterations + 200ms safety margin
       _cfDivergenceTimers.set(safeId, timer);
     } catch (err) { console.warn('[SSE] market_divergence error', err); }
+  });
+
+  // bd 647 — DR Live Pulse (UI-010)
+  // SSE event 'dr_spike' → cellule .tn-dr-delta (et fallback cellule DR foot)
+  // pulse 1.5s ease-out 1 itération. Couples backend bd 6v0 (broadcastTennisDRSpike).
+  var _cfDRPulseTimers = (typeof _cfDRPulseTimers !== 'undefined') ? _cfDRPulseTimers : new Map();
+  sseConnection.addEventListener('dr_spike', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || !d.matchId) return;
+      const safeId = String(d.matchId).slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!safeId) return;
+      const side = (d.side === 'p1' || d.side === 'p2') ? d.side : 'p1';
+      // Cible primaire : ligne tennis du tableau VB (tr[data-match-id]).
+      // Sélecteurs possibles : .tn-dr-delta (badge Δ), .tn-dr-val (valeur DR), ou row fallback.
+      const row = document.querySelector('tr[data-match-id="' + safeId + '"]') ||
+                  document.querySelector('[data-tennis-id="' + safeId + '"]') ||
+                  document.querySelector('[data-match="' + safeId + '"]');
+      if (!row) return;
+      // Préfère badge .tn-dr-delta côté joueur ciblé, sinon premier badge dispo, sinon cellule DR
+      const deltaBadges = row.querySelectorAll('.tn-dr-delta');
+      let target = null;
+      if (deltaBadges.length === 2) {
+        target = side === 'p1' ? deltaBadges[0] : deltaBadges[1];
+      } else if (deltaBadges.length === 1) {
+        target = deltaBadges[0];
+      } else {
+        target = row.querySelector('.tn-dr-val, .tn-dr, [data-col="dr"]') || row;
+      }
+      if (!target) return;
+      // Cleanup previous animation (idempotent)
+      const existing = _cfDRPulseTimers.get(safeId);
+      if (existing) {
+        clearTimeout(existing);
+        target.classList.remove('cf-dr-pulse');
+      }
+      void target.offsetWidth; // force reflow restart animation
+      target.classList.add('cf-dr-pulse');
+      const timer = setTimeout(() => {
+        target.classList.remove('cf-dr-pulse');
+        _cfDRPulseTimers.delete(safeId);
+      }, 1700); // 1.5s + 200ms safety
+      _cfDRPulseTimers.set(safeId, timer);
+    } catch (err) { console.warn('[SSE] dr_spike error', err); }
   });
 
   // v11.0 — Badge néon WebSocket BSD (statut connexion)
