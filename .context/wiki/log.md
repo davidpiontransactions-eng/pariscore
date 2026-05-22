@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-05-22 16:15 — INGEST — wave 2 bootstrap
+
+Pages created (17):
+- Decisions (7): [[zero-dep-node]], [[sqlite-wal]], [[bsd-addon-5usd]], [[vps-ovh-prod]], [[sackmann-purge]], [[api-football-pro-upgrade]], [[caveman-mode]]
+- Concepts (5): [[power-score]], [[shin-hurley-devig]], [[kelly-cap]], [[live-intensity]], [[ai-scout]]
+- Features (3): [[live-dashboard-cockpit]], [[tableau-foot]], [[mes-paris]], [[mobile-pwa]]
+- Entities (4): [[stripe]], [[gemini]], [[wikidata]], [[matchstat]]
+
+Sources synthesized:
+- CLAUDE.md ACTIONS OPS section, section 14 limites connues, innovation backlog
+- bd tickets details: c5i, s77m, qe5, e7l, c0qo, p2if, 5iw, 6du6, 9je, 8uoc, bjv, ffh
+- bsd_config.json + bsd_fr_leagues.json mapping audit (37/52 ligues mappées, 71% coverage)
+- BSD MCP probes: list_leagues live = 52 ligues, drift vs snapshot (manque BSD 27 World Cup 2026 + 55 Veikkausliiga)
+
+Operations:
+- Refresh `bsd_fr_leagues.json` snapshot live (52 entries, IDs 27+55 captured)
+- CLAUDE.md ACTIONS OPS table étendu: ajout actions 11 (snapshot refresh), 12 (mapper BSD 27 HIGH), 13 (mapper coupes domestiques HIGH), 14 (DG décision 11 ligues secondary)
+
+Cross-refs systematic [[slug]] entre entités/concepts/features/decisions selon WIKI-SCHEMA section 7.
+
+LINT pending wave 3: vérifier orphan pages + broken xref ([[odds-api]] [[momentum]] [[sse]] [[tennis-abstract]] etc référencés mais non créés encore).
+
 ## 2026-05-22 14:55 — BOOTSTRAP — initial wiki seed
 
 Pages created (13):
