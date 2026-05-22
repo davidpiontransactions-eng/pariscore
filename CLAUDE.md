@@ -125,6 +125,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `gz7s` | Benchmark Rotowire Soccer — ideas to steal (orphan CLAUDE.md→bd) |
 | `r0v3` | BSD coverage Phase 5 — Squad endpoint + fixtures variant (proxies REST simples, LOW ROI, 1-2h) |
 | `qm6a` | **Flashscore datasets integration** — voir sous-table dédiée ci-dessous (6 plans A-F) |
+| `6jro` | **Sofascore Apify datasets integration** — voir sous-table dédiée ci-dessous (4 plans G-J) |
 
 #### Sous-tâches `qm6a` Flashscore datasets — 6 plans
 
@@ -144,6 +145,22 @@ Datasets Apify one-shot disponibles racine projet:
 **Effort total cumul:** ~6-7h si tous exécutés.
 **Limite:** datasets Apify one-shot ≠ feed continu. Value durable nécessite scraper continuous (Apify subscription) OU pivot xvalue.ai (bd `ffh` GO 85/100).
 **Ordre recommandé:** A (quick win logos) → F (badge UI) → D (venue+referee alt 82th) → E (live fallback) → B (standings backup) → C (validation audit).
+
+#### Sous-tâches `6jro` Sofascore Apify datasets — 4 plans
+
+Dataset Apify one-shot disponible racine projet:
+- `dataset_sofascore-scraper-pro_2026-05-22_00-07-03-587.json` (110K, 2 entries: 1 tennis player profile + 1 football match detail)
+
+| Plan | Phase | Tâche | Effort | ROI | Use case |
+|---|---|---|---|---|---|
+| **G** | 1 | Tennis player profile enrichment — ETL `teamRankings` + `teamGrandSlamBestResults` → modal Insights tennis section "Historique Grand Slam" | 1-2h | HIGH | Tennis profile pro |
+| **H** | 2 | Football `initialFeaturedArticle` editorial — Sofascore editorial team article URL+title+excerpt → modal Insights foot "Avant-Match" (UNIQUE vs BSD) | 1h | MED | Editorial unique source |
+| **I** | 3 | Tennis `hasSingles`/`hasDoubles` flags — filter onglet Tennis bouton "Doubles uniquement" | 30min | LOW | Filtre niche |
+| **J** | 4 | Sofascore continuous scraper webhook — alternative permanent feed vs Apify one-shot — ⚠️ conflit potentiel bd `ffh` (Sofascore = 53/100 NO-GO car redondant BSD live, mais profile/historique = use case distinct) | 3-4h | MED | Permanent feed profile data |
+
+**Effort total cumul:** ~5-7h si tous exécutés.
+**Note bd `ffh` cross-ref:** Sofascore catégorisé NO-GO uniquement pour use case LIVE (redondant BSD WS). Use case PROFILE/HISTORIQUE distinct → Plan J réserve fenêtre potentielle.
+**Ordre recommandé:** G (tennis profile = HIGH ROI) → H (editorial unique) → I (filtre niche) → J (reserve continuous feed décision DG).
 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 >
