@@ -1334,6 +1334,8 @@ function matchesForBroadcast() {
   const src = (mockActive && testMatch && testMatch.live_status !== 'FT')
     ? [testMatch, ...base.filter(m => m.id !== testMatch.id)]
     : base;
+  // bd 0hf4 Phase 1.1 — Enrich match.tv_channels from BSD cache (zero HTTP, cache-only lookup)
+  for (const m of src) { try { if (typeof attachBSDBroadcasts === 'function') attachBSDBroadcasts(m, 'FR'); } catch (_) {} }
   return src.map(_stripMatchForList);
 }
 
@@ -30766,6 +30768,25 @@ setInterval(() => {
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+// bd 0hf4 Phase 1.1 — Cron pre-fetch BSD TV channels + broadcasts FR fenêtre J→J+7 (6h)
+// Populates bsdBroadcastsCache → attachBSDBroadcasts (cache-only) enrichit match.tv_channels[]
+async function cronPreFetchBSDBroadcasts() {
+  try {
+    const now = new Date();
+    const dayFrom = now.toISOString().slice(0, 10);
+    const day7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    if (typeof fetchBSDTVChannels === 'function') await fetchBSDTVChannels('FR').catch(() => {});
+    if (typeof fetchBSDBroadcasts === 'function') {
+      const res = await fetchBSDBroadcasts('FR', dayFrom, day7, null);
+      const n = res && res.raw ? res.raw.length : 0;
+      console.log(`  [BSD-TV] pre-fetch FR ${dayFrom}→${day7}: ${n} broadcasts`);
+    }
+  } catch (e) {
+    console.warn('  [BSD-TV] pre-fetch error:', e.message);
+  }
+}
+setInterval(() => cronPreFetchBSDBroadcasts().catch(() => {}), 6 * 3600 * 1000);
+setTimeout(() => cronPreFetchBSDBroadcasts().catch(() => {}), 90 * 1000);
 // Premier tick après 30s pour laisser db.matches se peupler
 setTimeout(() => cronEnrichBSDFullStack().catch(() => {}), 30 * 1000);
 
