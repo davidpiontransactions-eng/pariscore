@@ -1,0 +1,324 @@
+{
+  "_meta": {
+    "bd": "9ij",
+    "version": "1.0.0",
+    "updated": "2026-05-22",
+    "purpose": "Alias-map tournois ATP/WTA — résout noms multi-sources hétérogènes (ESPN/BSD/aiscore/Sackmann) vers canonical_id pour lookup Surface Speed Index.",
+    "coverage": "4 Grand Slams + 9 ATP Masters 1000 + 10 WTA 1000 + ATP Finals + WTA Finals + United Cup + select ATP/WTA 500/250 majeurs",
+    "alias_format": "lowercase ascii — comparé après _normTournName (strip ATP/WTA/OPEN/CUP/MASTERS/CHAMPIONSHIPS/TROPHY/years)",
+    "source_speed_ref": "ITF Court Pace Rating (CPR) categories: SLOW=1-2, MEDIUM_SLOW=3, MEDIUM=4, MEDIUM_FAST=5, FAST=6+. Numerical index aligned with internal Tennis Abstract aces/svpt ratio (100 = surface mean).",
+    "schema": "canonical_id → { aliases:[string], surface:'Hard|Clay|Grass|Carpet', speed_code:'SLOW|MED|FAST', speed_index:number, tier:'GS|M1000|WTA1000|F|500|250', circuit:'ATP|WTA|MIXED' }"
+  },
+  "roland_garros": {
+    "aliases": ["roland garros", "french", "french open", "rg", "rolandgarros", "internazionali parigi", "paris slam"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "GS", "circuit": "MIXED"
+  },
+  "wimbledon": {
+    "aliases": ["wimbledon", "the championships", "wimby", "all england", "wmb", "championships wimbledon"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 115, "tier": "GS", "circuit": "MIXED"
+  },
+  "us_open": {
+    "aliases": ["us", "us open", "usopen", "flushing meadows", "billie jean king national tennis center", "new york slam"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "GS", "circuit": "MIXED"
+  },
+  "australian_open": {
+    "aliases": ["australian", "australian open", "aus", "ao", "melbourne", "melbourne park"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "GS", "circuit": "MIXED"
+  },
+  "atp_finals": {
+    "aliases": ["atp finals", "nitto atp finals", "year-end championships", "ye finals", "tour finals", "world tour finals", "atp world tour finals"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "F", "circuit": "ATP"
+  },
+  "wta_finals": {
+    "aliases": ["wta finals", "wta year-end", "wta tour finals", "wta championships", "billie jean king cup finals"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "F", "circuit": "WTA"
+  },
+  "indian_wells": {
+    "aliases": ["indian wells", "bnp paribas", "bnp paribas open", "iw", "tennis paradise"],
+    "surface": "Hard", "speed_code": "SLOW", "speed_index": 90, "tier": "M1000", "circuit": "MIXED"
+  },
+  "miami": {
+    "aliases": ["miami", "miami open", "miami masters", "hard rock stadium"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "M1000", "circuit": "MIXED"
+  },
+  "monte_carlo": {
+    "aliases": ["monte carlo", "monte-carlo", "montecarlo", "rolex monte carlo", "monte carlo masters"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "M1000", "circuit": "ATP"
+  },
+  "madrid": {
+    "aliases": ["madrid", "mutua madrid", "mutua madrid open", "caja magica"],
+    "surface": "Clay", "speed_code": "MED", "speed_index": 95, "tier": "M1000", "circuit": "MIXED"
+  },
+  "rome": {
+    "aliases": ["rome", "internazionali", "internazionali bnl", "internazionali bnl italia", "italian", "italian open", "roma", "foro italico"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "M1000", "circuit": "MIXED"
+  },
+  "canada": {
+    "aliases": ["canada", "canadian", "canadian open", "national bank open", "rogers", "rogers cup", "toronto", "montreal"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "M1000", "circuit": "MIXED"
+  },
+  "cincinnati": {
+    "aliases": ["cincinnati", "cincy", "western southern", "western and southern", "western & southern", "lindner family tennis center"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "M1000", "circuit": "MIXED"
+  },
+  "shanghai": {
+    "aliases": ["shanghai", "shanghai rolex", "shanghai masters", "qizhong forest"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "M1000", "circuit": "ATP"
+  },
+  "paris_bercy": {
+    "aliases": ["paris", "paris bercy", "paris masters", "rolex paris masters", "bercy", "accor arena"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 112, "tier": "M1000", "circuit": "ATP"
+  },
+  "doha": {
+    "aliases": ["doha", "qatar", "qatar open", "khalifa international tennis"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "WTA1000", "circuit": "MIXED"
+  },
+  "dubai": {
+    "aliases": ["dubai", "dubai duty free", "dubai tennis championships"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "WTA1000", "circuit": "MIXED"
+  },
+  "beijing": {
+    "aliases": ["beijing", "china open", "china", "national tennis center"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "WTA1000", "circuit": "MIXED"
+  },
+  "wuhan": {
+    "aliases": ["wuhan", "wuhan open", "optics valley"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "WTA1000", "circuit": "WTA"
+  },
+  "guadalajara": {
+    "aliases": ["guadalajara", "guadalajara open", "akron"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "WTA1000", "circuit": "WTA"
+  },
+  "barcelona": {
+    "aliases": ["barcelona", "barcelona open", "conde de godo", "real club tenis barcelona"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "500", "circuit": "ATP"
+  },
+  "hamburg": {
+    "aliases": ["hamburg", "hamburg open", "german open hamburg", "rothenbaum"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 87, "tier": "500", "circuit": "ATP"
+  },
+  "halle": {
+    "aliases": ["halle", "halle open", "terra wortmann", "gerry weber"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 115, "tier": "500", "circuit": "ATP"
+  },
+  "queens": {
+    "aliases": ["queens", "queen", "queens club", "cinch championships", "fever-tree"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 115, "tier": "500", "circuit": "ATP"
+  },
+  "dubai_atp500": {
+    "aliases": ["dubai 500"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "500", "circuit": "ATP"
+  },
+  "acapulco": {
+    "aliases": ["acapulco", "abierto mexicano", "mexican open"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "500", "circuit": "ATP"
+  },
+  "rio": {
+    "aliases": ["rio", "rio open", "rio de janeiro"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "500", "circuit": "ATP"
+  },
+  "vienna": {
+    "aliases": ["vienna", "erste bank", "erste bank open", "wiener stadthalle"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "500", "circuit": "ATP"
+  },
+  "basel": {
+    "aliases": ["basel", "swiss indoors", "st jakobshalle"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 112, "tier": "500", "circuit": "ATP"
+  },
+  "tokyo": {
+    "aliases": ["tokyo", "japan open", "kinoshita group", "ariake colosseum"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "500", "circuit": "ATP"
+  },
+  "dubai_wta500": {
+    "aliases": ["dubai wta", "dubai duty free tennis championships"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "500", "circuit": "WTA"
+  },
+  "stuttgart_wta": {
+    "aliases": ["stuttgart", "porsche tennis grand prix", "porsche grand prix"],
+    "surface": "Clay", "speed_code": "MED", "speed_index": 90, "tier": "500", "circuit": "WTA"
+  },
+  "charleston": {
+    "aliases": ["charleston", "credit one", "family circle"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 87, "tier": "500", "circuit": "WTA"
+  },
+  "berlin_wta": {
+    "aliases": ["berlin", "bett1open", "bett1 open"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "500", "circuit": "WTA"
+  },
+  "eastbourne": {
+    "aliases": ["eastbourne", "rothesay international"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "500", "circuit": "WTA"
+  },
+  "united_cup": {
+    "aliases": ["united cup", "united cup perth", "atp wta united cup"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "F", "circuit": "MIXED"
+  },
+  "adelaide": {
+    "aliases": ["adelaide", "adelaide international"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "250", "circuit": "MIXED"
+  },
+  "auckland": {
+    "aliases": ["auckland", "asb classic"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "250", "circuit": "MIXED"
+  },
+  "brisbane": {
+    "aliases": ["brisbane", "brisbane international"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "250", "circuit": "MIXED"
+  },
+  "marseille": {
+    "aliases": ["marseille", "open 13", "open 13 provence"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 112, "tier": "250", "circuit": "ATP"
+  },
+  "buenos_aires": {
+    "aliases": ["buenos aires", "argentina open", "ba open"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "250", "circuit": "ATP"
+  },
+  "santiago": {
+    "aliases": ["santiago", "chile open", "movistar chile"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "250", "circuit": "ATP"
+  },
+  "houston": {
+    "aliases": ["houston", "us mens clay", "river oaks"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 88, "tier": "250", "circuit": "ATP"
+  },
+  "marrakech": {
+    "aliases": ["marrakech", "grand prix hassan"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "250", "circuit": "ATP"
+  },
+  "estoril": {
+    "aliases": ["estoril", "millennium estoril", "portugal open"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 86, "tier": "250", "circuit": "ATP"
+  },
+  "munich": {
+    "aliases": ["munich", "bmw open", "iphitos"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 86, "tier": "250", "circuit": "ATP"
+  },
+  "geneva": {
+    "aliases": ["geneva", "geneva open", "gonet geneva"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 86, "tier": "250", "circuit": "ATP"
+  },
+  "lyon": {
+    "aliases": ["lyon", "open parc auvergne", "open parc"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 87, "tier": "250", "circuit": "ATP"
+  },
+  "stuttgart_atp": {
+    "aliases": ["stuttgart atp", "boss open", "weissenhof"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 115, "tier": "250", "circuit": "ATP"
+  },
+  "hertogenbosch": {
+    "aliases": ["hertogenbosch", "s-hertogenbosch", "rosmalen", "libema open", "topshelf"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "250", "circuit": "MIXED"
+  },
+  "mallorca": {
+    "aliases": ["mallorca", "mallorca championships", "santa ponsa"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "250", "circuit": "ATP"
+  },
+  "newport": {
+    "aliases": ["newport", "infosys hall of fame", "hall of fame"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "250", "circuit": "ATP"
+  },
+  "bad_homburg": {
+    "aliases": ["bad homburg", "bad homburg open"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "250", "circuit": "WTA"
+  },
+  "nottingham": {
+    "aliases": ["nottingham", "rothesay open", "rothesay nottingham"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "250", "circuit": "MIXED"
+  },
+  "birmingham": {
+    "aliases": ["birmingham", "rothesay classic"],
+    "surface": "Grass", "speed_code": "FAST", "speed_index": 113, "tier": "250", "circuit": "WTA"
+  },
+  "prague_wta": {
+    "aliases": ["prague", "prague open", "livesport prague"],
+    "surface": "Clay", "speed_code": "MED", "speed_index": 90, "tier": "250", "circuit": "WTA"
+  },
+  "warsaw": {
+    "aliases": ["warsaw", "bnp paribas warsaw", "warsaw open"],
+    "surface": "Clay", "speed_code": "MED", "speed_index": 90, "tier": "250", "circuit": "WTA"
+  },
+  "palermo": {
+    "aliases": ["palermo", "palermo ladies", "31 ladies"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 86, "tier": "250", "circuit": "WTA"
+  },
+  "cleveland": {
+    "aliases": ["cleveland", "tennis in the land", "topnetwork cleveland"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "250", "circuit": "WTA"
+  },
+  "monterrey": {
+    "aliases": ["monterrey", "abierto gnp seguros"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "250", "circuit": "WTA"
+  },
+  "linz": {
+    "aliases": ["linz", "upper austria ladies", "tipsport linz"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "250", "circuit": "WTA"
+  },
+  "ningbo": {
+    "aliases": ["ningbo", "ningbo open"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "250", "circuit": "WTA"
+  },
+  "zhuhai": {
+    "aliases": ["zhuhai", "zhuhai championships", "huajin securities"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "250", "circuit": "ATP"
+  },
+  "antwerp": {
+    "aliases": ["antwerp", "european open", "european open antwerp"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "250", "circuit": "ATP"
+  },
+  "metz": {
+    "aliases": ["metz", "moselle open"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "250", "circuit": "ATP"
+  },
+  "winston_salem": {
+    "aliases": ["winston salem", "winston-salem", "winstonsalem"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "250", "circuit": "ATP"
+  },
+  "umag": {
+    "aliases": ["umag", "croatia open umag", "plava laguna"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "250", "circuit": "ATP"
+  },
+  "bastad": {
+    "aliases": ["bastad", "bastad open", "swedish open"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 86, "tier": "250", "circuit": "ATP"
+  },
+  "kitzbuhel": {
+    "aliases": ["kitzbuhel", "generali", "generali open"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 85, "tier": "250", "circuit": "ATP"
+  },
+  "gstaad": {
+    "aliases": ["gstaad", "swiss open", "ebs gstaad"],
+    "surface": "Clay", "speed_code": "SLOW", "speed_index": 86, "tier": "250", "circuit": "ATP"
+  },
+  "atlanta": {
+    "aliases": ["atlanta", "atp atlanta", "atlanta open"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "250", "circuit": "ATP"
+  },
+  "washington": {
+    "aliases": ["washington", "citi open", "washington dc"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "500", "circuit": "MIXED"
+  },
+  "delray_beach": {
+    "aliases": ["delray beach", "delray", "delray beach open"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "250", "circuit": "ATP"
+  },
+  "los_cabos": {
+    "aliases": ["los cabos", "abierto los cabos", "mifel"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 108, "tier": "250", "circuit": "ATP"
+  },
+  "chengdu": {
+    "aliases": ["chengdu", "chengdu open"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 102, "tier": "250", "circuit": "ATP"
+  },
+  "hangzhou": {
+    "aliases": ["hangzhou", "hangzhou open"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "250", "circuit": "ATP"
+  },
+  "sofia": {
+    "aliases": ["sofia", "sofia open", "garanti koza"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "250", "circuit": "ATP"
+  },
+  "next_gen_finals": {
+    "aliases": ["next gen finals", "next gen atp finals", "nextgen"],
+    "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "F", "circuit": "ATP"
+  }
+}
