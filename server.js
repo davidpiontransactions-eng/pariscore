@@ -27,6 +27,7 @@ const crypto = require('crypto');
 const Database = require('better-sqlite3');
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
+const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -68,6 +69,13 @@ const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const AF_REMOVED = true;
 const API_FOOTBALL_KEY = AF_REMOVED ? '' : process.env.API_FOOTBALL_KEY;
 if (AF_REMOVED) console.log('  [AF] API-Football RETIRÉ (kill-switch v10.77) — fallbacks BSD/ESPN/felipeall actifs');
+// ─── Migration bd `zia` (P2) : opt-in odds API-Football ──────────────────────
+// Indépendant du kill-switch AF_REMOVED stats : odds-apifootball.js lit
+// process.env direct → permet d'activer cotes AF sans réactiver stats AF.
+// Flag par défaut OFF (rollout progressif). Activer via .env :
+//   USE_API_FOOTBALL_ODDS=1
+const USE_API_FOOTBALL_ODDS = String(process.env.USE_API_FOOTBALL_ODDS || '').trim() === '1';
+if (USE_API_FOOTBALL_ODDS) console.log('  [zia] USE_API_FOOTBALL_ODDS=1 → enrichissement cotes API-Football activé (fallback Odds API conservé)');
 const FREE_FOOTBALL_RAPIDAPI_KEY = process.env.FREE_FOOTBALL_RAPIDAPI_KEY || process.env.RAPIDAPI_KEY || '';
 const FREE_FOOTBALL_RAPIDAPI_HOST = 'free-api-live-football-data.p.rapidapi.com';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -13024,6 +13032,27 @@ async function fetchOdds(force = false, opts = {}) {
         await oddsRapidApi.enrichWithOdds(allRawMatches);
       } catch (e) {
         console.warn('  [Routing] ⚠️ odds-api1 indisponible:', e.message);
+      }
+    }
+
+    // =========================================================================
+    // ÉTAPE 1.6 : ENRICHISSEMENT COTES via API-Football (bd `zia` opt-in)
+    // Active uniquement si USE_API_FOOTBALL_ODDS=1 + API_FOOTBALL_KEY présente.
+    // Ne remplace QUE les matchs sans cotes h2h exploitables (BSD/ESPN/odds-api1
+    // restent primaires). Quota estim : 1 req /odds?date + 1 req /fixtures?date
+    // = 2 req/jour pour TOUS les matchs (vs 50+ leagues séparées).
+    // =========================================================================
+    if (USE_API_FOOTBALL_ODDS && oddsApiFootball.enabled() && allRawMatches.length > 0) {
+      console.log('  [Routing] L1.6 : Enrichissement cotes via API-Football (bd zia opt-in)...');
+      try {
+        const res = await oddsApiFootball.enrichWithOdds(allRawMatches, { filterEU: true });
+        if (res && res.enriched > 0) {
+          console.log(`  [Routing] ✓ API-Football : ${res.enriched} matchs enrichis (skipped=${res.skipped}).`);
+        } else {
+          console.log(`  [Routing] API-Football : aucun match enrichi (skipped=${res ? res.skipped : 0}).`);
+        }
+      } catch (e) {
+        console.warn('  [Routing] ⚠️ API-Football odds indisponible:', e.message);
       }
     }
 
