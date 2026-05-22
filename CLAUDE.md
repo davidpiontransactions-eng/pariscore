@@ -169,6 +169,55 @@ Dataset Apify one-shot disponible racine projet:
 >
 > **Sync drift 22/05/2026 v12.65** : 14 commits push session — `5e18185` CLAUDE.md drift section 15 · `fbea217` c5i Phase 3 aiscore on-demand · `bce7535`+`16c6a9d` izsn safeFixed wraps · `38ffa7b`+`9ba089a` 8c5 momentum La Liga (split live_momentum_pct objet vs array Sofa + follow-up Array.isArray guards consumers) · `ae6a292` p2if AI-AL Revue Presse 5 sources · `72d5e8a`+`0754a33` bjv spike RapidAPI + Pinnacle research + POC OddsPapi · `2ce9463` 8uoc Tennis sourcing v2 TML MIT · `8b99cb2` k37 coral leak · `fc9c65e` rlhf audio orchestrateur · `1280dfb` ffh 6 sources (GO xvalue.ai) · `117c711` ryi3 Phase 2A health route. Closed: `c9p4`+`x11y`+`c8zp`+`8c5` (stale dup/livré).
 
+## 🎯 PLANS RESTANTS — Roadmap exécution priorisée (consolidée)
+
+Single source quick-scan tous plans bounded actionable cross-tickets (BSD coverage + Flashscore qm6a + Sofascore 6jro). Triée par effort × ROI.
+
+### 🟢 Quick wins (<1h, HIGH/MED ROI)
+
+| Plan | bd | Tâche | Effort | ROI |
+|---|---|---|---|---|
+| ~~A~~ ✅ | `qm6a` | Logos backup Flashscore → api_cache (commit `3fc4ca7`) | 30min | HIGH |
+| F | `qm6a` | `has_live_stream` badge UI tableau matchs (reuse `0hf4`) | 30min | LOW |
+| I | `6jro` | Tennis `hasSingles`/`hasDoubles` filter onglet Tennis | 30min | LOW |
+| D | `qm6a` | Venue + referee enrichment (alt bd `82th`) | 1h | MED |
+| H | `6jro` | Football `initialFeaturedArticle` editorial modal Insights | 1h | MED |
+
+### 🟡 Medium (1-2h, MED/HIGH ROI)
+
+| Plan | bd | Tâche | Effort | ROI |
+|---|---|---|---|---|
+| G | `6jro` | Tennis player profile enrichment (rankings + Grand Slam BR) | 1-2h | HIGH |
+| B | `qm6a` | Standings fallback offline (db.flashscore_standings) | 1-2h | MED |
+| E | `qm6a` | Lineups + statistics live fallback ESPN-only matchs | 1-2h | MED |
+| C | `qm6a` | Cross-ref team naming validation audit | 2h | MED |
+| `r0v3` | — | BSD Phase 5 — Squad endpoint + fixtures variant proxies | 1-2h | LOW |
+
+### 🔴 Lourd (3-4h+, HIGH ROI ou archi)
+
+| Plan | bd | Tâche | Effort | ROI |
+|---|---|---|---|---|
+| `j6pz` | — | BSD Phase 2 — Shotmap + best_odds + bookmakers (UI SVG modal) | 3-4h | HIGH |
+| `ueg0` | — | BSD Phase 3 — Social items sentiment buzz match | 2h | HIGH |
+| `82th` | — | BSD Phase 4 — Referees + Venues + Leagues dynamic | 3-4h | MED |
+| J | `6jro` | Sofascore continuous scraper webhook (conflit bd `ffh`) | 3-4h | MED |
+
+### 📋 Récap effort total
+
+- **Quick wins** (5 plans <1h chacun) : **3h cumul** — pousser tous en bg
+- **Medium** (5 plans 1-2h chacun) : **6-10h cumul**
+- **Lourd** (4 plans 2-4h chacun) : **11-16h cumul**
+- **TOTAL backlog restant** : **20-29h dev**
+
+### 🎯 Ordre recommandé exécution
+
+1. **F + I + H** (quick wins UI/UX, ~2h cumul, finir plans Flashscore léger)
+2. **D + G** (Venue/referee + Tennis profile, ~3h cumul, valeur produit forte)
+3. **ueg0** (Social sentiment HIGH ROI, 2h)
+4. **j6pz** (Shotmap SVG HIGH ROI, 3-4h)
+5. **B + E + C** (Flashscore datasets remaining, ~5-6h cumul)
+6. **82th + r0v3 + J** (lourd backlog, ~7-10h cumul)
+
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
 - **Bayesian Value Radar** — Data Blending Poisson Bivarié + Elo dynamique + xG Logistic
