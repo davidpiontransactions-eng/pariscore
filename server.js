@@ -23801,17 +23801,40 @@ if (pathname === '/api/v1/live/predictions') {
 // GET /api/v1/match/:matchId/tv-channel — TV broadcaster for a specific match.
 // Stratégie : Sofa microservice d'abord (data live officielle), puis fallback static league→broadcaster
 // si Sofa indisponible OU retourne 0 channels. Évite "no-mapping" bloquant en local quand microservice down.
+// bd pwu (v12.66+) — graceful fallback 200 empty au lieu de 404 quand matchId archivé/obsolète
+// (front cache des IDs après purge db.matches → spam 404 inutile sur cycle ETL).
 const tvChannelMatch = pathname.match(/^\/api\/v1\/match\/([^/?]+)\/tv-channel$/);
 if (tvChannelMatch && req.method === 'GET') {
   const id = decodeURIComponent(tvChannelMatch[1]);
+  // bd pwu — Anti-injection : whitelist matchId (alphanumeric + _ - max 64). Inclut patterns frontend (bsd_<id>_<date>).
+  if (!id || !/^[a-zA-Z0-9_-]{1,64}$/.test(id)) {
+    return jsonResponse(res, 400, { error: 'matchId invalide', code: 'BAD_MATCH_ID' });
+  }
   const country = (query.country || 'FR').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(country)) {
+    return jsonResponse(res, 400, { error: 'country invalide (ISO-2 attendu)' });
+  }
   const force = query.force === '1';
   const cacheKey = `tv_${id}_${country}_v8`; // v8 = fallback favicon domaine (beIN/RMC/Ligue1+/L'Équipe…) — invalide payloads logo:null ; v7 = résolveur marque mot-clé ; v6 = Phase 1 extended
   const cached = !force ? apiCacheGet(cacheKey) : null;
   if (cached) return jsonResponse(res, 200, { ...cached, _cached: true });
 
   const match = db.matches.find(m => m.id === id);
-  if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé' });
+  if (!match) {
+    // bd pwu — Fallback gracieux : match disparu de db.matches (purge cycle ETL) → tentative archive_matches.
+    const archived = Array.isArray(db.archive_matches) ? db.archive_matches.find(m => m.id === id) : null;
+    const empty = {
+      match_id: id,
+      country,
+      channels: [],
+      _source: archived ? 'archived-no-broadcast' : 'match-not-found',
+      _fallback: true,
+      _archived: !!archived,
+    };
+    // Cache 5min (conservative) — UI front peut cacher safely sans spam log.
+    apiCacheSet(cacheKey, empty, 'tv_channel', 5 * 60 * 1000);
+    return jsonResponse(res, 200, empty);
+  }
 
   // Pipeline 4-layer (cascade) :
   //  1) Sofa microservice (data live officielle quand pserv up)
@@ -29027,11 +29050,26 @@ if (pathname.startsWith('/api/v1/bsd/squad/') && req.method === 'GET') {
 // bd 0hf4 Phase 2 — GET /api/v1/broadcasts/match/:matchId → TV channels diffuseurs
 // On-demand single event (complement Phase 1.1 cron pre-fetch FR J→J+7).
 // Wrap autour fetchBSDBroadcastsByEvent() cache TTL 6h.
+// bd pwu (v12.66+) — graceful 200 empty fallback quand matchId archivé/obsolète + sanitize regex.
 if (pathname.startsWith('/api/v1/broadcasts/match/') && req.method === 'GET') {
   const rawId = decodeURIComponent(pathname.slice('/api/v1/broadcasts/match/'.length)).trim();
+  // bd pwu — Anti-injection : whitelist matchId (alphanumeric + _ - max 64). Inclut patterns frontend (bsd_<id>_<date>).
+  if (!rawId || !/^[a-zA-Z0-9_-]{1,64}$/.test(rawId)) {
+    return jsonResponse(res, 400, { error: 'bad_match_id', message: 'matchId invalide (alphanumeric + _ - max 64)' });
+  }
   const eventId = _bsdResolveEventId(rawId);
   if (!eventId) {
-    return jsonResponse(res, 400, { error: 'bad_match_id', message: `Aucun _bsd_event_id résolu pour matchId="${rawId}"` });
+    // bd pwu — Fallback gracieux : match disparu de db.matches (purge cycle ETL) → 200 empty.
+    return jsonResponse(res, 200, {
+      source: 'bsd_broadcasts',
+      match_id: rawId,
+      event_id: null,
+      count: 0,
+      tv_channels: [],
+      note: 'match not found or archived',
+      _fallback: true,
+      fetched_at: new Date().toISOString(),
+    });
   }
   if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
   try {
@@ -29045,7 +29083,18 @@ if (pathname.startsWith('/api/v1/broadcasts/match/') && req.method === 'GET') {
     });
   } catch (e) {
     console.warn(`  [BSD/broadcasts] event=${eventId} erreur:`, e.message);
-    return jsonResponse(res, 502, { error: 'bsd_broadcasts_failed', message: String(e.message || e) });
+    // bd pwu — Erreur upstream BSD : retourne 200 empty avec flag _fallback (au lieu de 502 dur)
+    // pour éviter spam UI et permettre cache front. Garde log warn pour debug.
+    return jsonResponse(res, 200, {
+      source: 'bsd_broadcasts',
+      event_id: Number(eventId),
+      count: 0,
+      tv_channels: [],
+      note: 'upstream_error',
+      error_message: String(e.message || e).slice(0, 200),
+      _fallback: true,
+      fetched_at: new Date().toISOString(),
+    });
   }
 }
 
