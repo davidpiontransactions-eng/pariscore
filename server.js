@@ -22233,6 +22233,95 @@ if (pathname === '/api/v1/sources/health') {
 }
 
 // -------------------------------------------------
+//  GET /api/v1/sources/understat/:teamId — bd:ryi3 Phase 2B
+//  Proxy lecture Understat xG / xGA / shots — scraping HTML léger.
+//  Cache 6h dans api_cache (key: understat_team_<teamId>_<year>) pour
+//  respecter le rate-limit upstream.
+//  Path:teamId = slug URL-encoded (ex: 'Arsenal', 'Manchester_City'), tel
+//  que publié sur https://understat.com/team/<TeamId>/<Year>.
+//  Réponse normalisée: { team, year, ts, xg, xga, npxg, npxga, history_count }.
+//  Erreurs upstream: 502 (HTML invalide), 504 (timeout), 404 (team not found).
+// -------------------------------------------------
+if (pathname.startsWith('/api/v1/sources/understat/')) {
+  const rawId = pathname.slice('/api/v1/sources/understat/'.length);
+  if (!rawId || rawId === 'undefined' || rawId.length > 64) {
+    return jsonResponse(res, 400, { error: 'teamId required (max 64 chars)' });
+  }
+  const teamId = decodeURIComponent(rawId);
+  if (!/^[A-Za-z0-9_\- ]{2,64}$/.test(teamId)) {
+    return jsonResponse(res, 400, { error: 'invalid teamId (alnum + _ - space only)' });
+  }
+  const year = Number.isFinite(Number(query.year)) ? Number(query.year)
+              : (new Date().getMonth() >= 7 ? new Date().getFullYear() : new Date().getFullYear() - 1);
+  const cacheKey = `understat_team_${teamId.replace(/\s+/g, '_')}_${year}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) {
+    return jsonResponse(res, 200, { ...cached, _cache: 'hit' });
+  }
+  const upstreamUrl = `https://understat.com/team/${encodeURIComponent(teamId.replace(/\s+/g, '_'))}/${year}`;
+  const tStart = Date.now();
+  (async () => {
+    try {
+      const html = await fetchRawText(upstreamUrl, 10000).catch(err => {
+        const msg = String(err && err.message || err);
+        if (/timeout/i.test(msg)) throw Object.assign(new Error('upstream timeout'), { status: 504 });
+        throw Object.assign(new Error('upstream fetch failed: ' + msg), { status: 502 });
+      });
+      if (!html) {
+        return jsonResponse(res, 404, { error: 'team not found on Understat', team: teamId, year });
+      }
+      const out = { team: teamId, year, ts: new Date().toISOString(),
+                    xg: null, xga: null, npxg: null, npxga: null,
+                    history_count: 0, _source: 'understat', _latency_ms: 0 };
+      try {
+        // Understat embed son JSON via `var statisticsData = JSON.parse('…')`.
+        // Format inline ' '-quoted, échappé \\xHH. On capture, hex-decode, parse.
+        const m1 = html.match(/var\s+statisticsData\s*=\s*JSON\.parse\('([^']+)'\)/);
+        if (m1 && m1[1]) {
+          const decoded = m1[1].replace(/\\x([0-9A-Fa-f]{2})/g,
+                                       (_, h) => String.fromCharCode(parseInt(h, 16)));
+          const stats = JSON.parse(decoded);
+          if (stats && typeof stats === 'object') {
+            let xg = 0, xga = 0, npxg = 0, npxga = 0;
+            const sit = stats.situation || {};
+            for (const k of Object.keys(sit)) {
+              const row = sit[k] || {};
+              xg    += Number(row.xG)    || 0;
+              xga   += Number(row.xGA)   || 0;
+              npxg  += Number(row.npxG)  || 0;
+              npxga += Number(row.npxGA) || 0;
+            }
+            out.xg    = +(xg.toFixed(2));
+            out.xga   = +(xga.toFixed(2));
+            out.npxg  = +(npxg.toFixed(2));
+            out.npxga = +(npxga.toFixed(2));
+          }
+        }
+        const m2 = html.match(/var\s+datesData\s*=\s*JSON\.parse\('([^']+)'\)/);
+        if (m2 && m2[1]) {
+          const decoded2 = m2[1].replace(/\\x([0-9A-Fa-f]{2})/g,
+                                        (_, h) => String.fromCharCode(parseInt(h, 16)));
+          const dates = JSON.parse(decoded2);
+          if (Array.isArray(dates)) out.history_count = dates.length;
+        }
+      } catch (parseErr) {
+        out._parse_error = String(parseErr.message || parseErr).slice(0, 200);
+      }
+      out._latency_ms = Date.now() - tStart;
+      apiCacheSet(cacheKey, out, 'understat', 6 * 3600 * 1000);
+      return jsonResponse(res, 200, { ...out, _cache: 'miss' });
+    } catch (err) {
+      const status = err && err.status ? err.status : 500;
+      return jsonResponse(res, status, {
+        error: err && err.message || 'understat fetch failed',
+        team: teamId, year, _latency_ms: Date.now() - tStart
+      });
+    }
+  })();
+  return;
+}
+
+// -------------------------------------------------
 //  GET /api/v1/fbref/team/:name — FBref advanced stats team query (P4 Pattern B)
 // -------------------------------------------------
 if (pathname.startsWith('/api/v1/fbref/team/')) {
