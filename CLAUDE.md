@@ -245,34 +245,29 @@ Implémenter une infrastructure de paiement résiliente, conforme aux standards 
 3. **Gestion des Rôles :** L'état d'abonnement de l'utilisateur (ex: `is_premium: true`, `stripe_customer_id`, `subscription_status`) doit être synchronisé de manière atomique en base de données dès réception de l'événement `invoice.paid` ou `customer.subscription.deleted`.
 
 
-### MISSION ARCHITECTURE : SYSTÈME D'AUTHENTIFICATION ET BASE DE DONNÉES UTILISATEURS
+### État livraisons SaaS (Auth + Stripe)
 
-Claude, active ta matrice de compétences : `database-architect`, `nodejs-backend-patterns`, `security-best-practices` et `frontend-ux-states`.
+| Composant | État | Locus |
+|---|---|---|
+| **Schema users SQLite** | ✅ livré | `server.js:3658+` (table `users` + cols `stripe_customer_id` + `stripe_subscription_id` + `premium_until`) |
+| **JWT + bcrypt auth** | ✅ livré | `server.js:14120+` (routes `/api/v1/auth/login/register/me` + middleware Premium gate `FOOT_PRO` set) |
+| **Stripe Checkout backend** | ✅ livré v12.43 | `stripeRequest()` `server.js:13893+` + route `/api/v1/checkout/matchday` + table `stripe_events` |
+| **Stripe Webhook signature verify** | ✅ livré | `/api/v1/webhook/stripe` payload brut + `event_id` dedup |
+| **Customer Portal** | ✅ livré v12.43 | bd `s77m` |
+| **DG activation** | ⏳ pending | bd `s77m` — checklist `.context/stripe_dg_checklist.md` (9 sections : trial, prix mensuel/annuel/mono-sport, matchday pass) |
 
-Nous devons transformer PariScore en une véritable plateforme SaaS. Actuellement, le site est ouvert, mais nous devons implémenter un système d'inscription et de connexion pour gérer les comptes utilisateurs (Free vs Premium) et lier nos futurs paiements Stripe.
+**Décisions DG bloquantes** (toutes pré-activation Stripe live):
+1. Prix mensuel Pro €19 confirmé ? annuel ? mono-sport (foot only / tennis only) ?
+2. Trial gratuit 7j / 14j / aucun ?
+3. Matchday pass €X.XX one-time J-1 active ?
+4. Currency : € only ou multi-devise launch ?
+5. Webhook secret `whsec_...` configuré .env VPS ?
+6. Stripe Connect (affiliate) Phase 2 ou jamais ?
+7. Refund policy (no-refund SaaS / 14j cooling-off EU) ?
+8. Cancellation flow UX (immediate vs end-of-period) ?
+9. Pricing page Public — toggle test/live mode ?
 
-Agis en tant que **Lead Security Architect**. 
-
-### ÉTAPE 1 : CHOIX DE L'ARCHITECTURE ET DIAGNOSTIC
-- Analyse notre stack actuelle (Node.js / Express en backend, HTML/JS en frontend).
-- Propose-moi la meilleure approche pour gérer l'authentification : devons-nous construire une solution "maison" (MongoDB/PostgreSQL + JWT + Bcrypt) ou utiliser un service tiers moderne et sécurisé comme Supabase ou Clerk ?
-- Argumente brièvement ton choix en fonction de notre besoin de sécurité (trading/paiement) et de rapidité d'implémentation.
-
-### ÉTAPE 2 : MODÉLISATION DE LA BASE DE DONNÉES (SCHEMA)
-Peu importe la techno choisie, définis le modèle de données (Schema) d'un "User" de PariScore. Il doit au minimum inclure :
-- ID unique, Email, Password (hashé), Date de création.
-- `role` ou `plan` (ex: "free", "premium_monthly").
-- `stripe_customer_id` (pour lier les futurs paiements).
-- `preferences` (objet JSON pour sauvegarder leurs filtres favoris de l'onglet Foot/Tennis).
-
-### ÉTAPE 3 : PLAN D'INTÉGRATION (ROADMAP)
-Rédige un plan d'action étape par étape pour cette implémentation :
-1. Mise en place de la BDD et des routes Backend (/register, /login, /logout, /me).
-2. Création des UI Frontend (Modale de connexion/inscription premium en Glassmorphism).
-3. Protection des routes (Middleware) pour bloquer les données IA/DR Live aux utilisateurs non connectés ou non-Premium.
-
-### ÉTAPE 4 : VALIDATION
-N'écris pas encore le code serveur. Affiche-moi ton choix technologique (Étape 1) et le schéma de base de données (Étape 2) dans le terminal. Attends mon "GO" pour commencer à coder les routes d'authentification.
+> ⚠️ Tant que checklist DG non validée, le code Stripe reste TEST MODE. Pas de `sk_live_*` injecté.
 
 ## 🗄️ MISSIONS LIVRÉES (archived — voir CHANGELOG.md / bd notes)
 
