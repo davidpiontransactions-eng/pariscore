@@ -4438,6 +4438,38 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_match_timeline_match ON match_timeline_snapshots(match_id)`);
 
+  // ── bd pbf BD-DATA-011 — CLV tracker (Closing Line Value) ──
+  // closing_odds = snapshot des cotes brutes à T-5min..T-0 (kickoff). Source vérité CLV.
+  // CLV = (taken_odds / closing_odds - 1) × 100  → métrique gold-standard skill parieur.
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS closing_odds (
+    match_id TEXT PRIMARY KEY,
+    home_team TEXT,
+    away_team TEXT,
+    league TEXT,
+    commence_time TEXT,
+    closing_home REAL,
+    closing_draw REAL,
+    closing_away REAL,
+    bk_home TEXT,
+    bk_draw TEXT,
+    bk_away TEXT,
+    captured_at INTEGER NOT NULL,
+    source TEXT NOT NULL DEFAULT 'odds_api'
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_closing_odds_commence ON closing_odds(commence_time)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_closing_odds_captured ON closing_odds(captured_at)`);
+  // user_bets : col CLV (pct) — idempotent ALTER via pragma check
+  try {
+    const cols = sqldb.prepare("PRAGMA table_info(user_bets)").all();
+    if (!cols.some(c => c.name === 'clv_pct')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN clv_pct REAL`);
+    }
+    if (!cols.some(c => c.name === 'closing_odds')) {
+      // cote closing capturée au moment du settle (snapshot historique du leg)
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN closing_odds REAL`);
+    }
+  } catch (e) { console.error('  [Migration pbf] user_bets CLV ALTER failed:', e.message); }
+
   // ── v9.9 migrations : Gambling-Affiliation network — sub-id tracking + S2S postback ──
   // affiliates : multi-réseau (direct | ga) + credentials GA (pid/bid) + template sub-id
   try {
@@ -7953,6 +7985,29 @@ async function archivePastMatches() {
             "UPDATE user_bets SET updated_at = strftime('%s','now') WHERE match_id = ? AND status = 'pending'"
           ).run(record.id);
         } catch (e) { _traceCatch('user_bets_update', e); /* table absente sur ancien deploy */ }
+        // bd pbf — CLV per leg : si closing_odds capturé pour ce match, calcule CLV pour chaque pari
+        // settled non-void (won/lost/half_won/half_lost) et pas encore évalué.
+        try {
+          const closing = getMatchClosingOdds(record.id);
+          if (closing) {
+            const bets = sqldb.prepare(
+              "SELECT id, market, selection_label, odds FROM user_bets WHERE match_id = ? AND status IN ('won','lost','half_won','half_lost') AND clv_pct IS NULL"
+            ).all(record.id);
+            for (const bet of bets) {
+              // Heuristique mapping selection → cote closing (1X2 only Phase 1, autres marchés future scope)
+              const sel = String(bet.selection_label || '').toLowerCase().trim();
+              let closingVal = null;
+              if (sel === '1' || sel === 'home' || sel === record.home_team?.toLowerCase()) closingVal = closing.home;
+              else if (sel === 'x' || sel === 'n' || sel === 'draw' || sel === 'nul') closingVal = closing.draw;
+              else if (sel === '2' || sel === 'away' || sel === record.away_team?.toLowerCase()) closingVal = closing.away;
+              const clv = computeCLV(bet.odds, closingVal);
+              if (clv !== null) {
+                sqldb.prepare("UPDATE user_bets SET clv_pct = ?, closing_odds = ? WHERE id = ?")
+                  .run(clv, closingVal, bet.id);
+              }
+            }
+          }
+        } catch (e) { _traceCatch('clv_settle', e); }
       }
     }
 
@@ -24816,6 +24871,47 @@ if (pathname === '/api/v1/accuracy') {
   return jsonResponse(res, 200, getAccuracyReport());
 }
 
+// bd pbf BD-DATA-011 — CLV per match : closing_odds + (optionally) user_bet CLV
+// GET /api/v1/clv/match/:matchId → { taken_odds, closing_odds, clv_pct, sample }
+if (pathname.startsWith('/api/v1/clv/match/')) {
+  const user = getAuthUser(req);
+  if (!user) return jsonResponse(res, 401, { error: 'Authentification requise', code: 'AUTH_REQUIRED' });
+  const matchId = pathname.slice('/api/v1/clv/match/'.length);
+  // Anti-injection : whitelist id (alphanumeric + _ - max 64)
+  if (!matchId || !/^[a-zA-Z0-9_-]{1,64}$/.test(matchId)) {
+    return jsonResponse(res, 400, { error: 'matchId invalide', code: 'BAD_MATCH_ID' });
+  }
+  const closing = getMatchClosingOdds(matchId);
+  // Sample : paris user sur ce match (CLV déjà calculé ou en attente)
+  let sample = [];
+  let userBet = null;
+  try {
+    sample = sqldb.prepare(
+      "SELECT id, market, selection_label, odds, status, clv_pct, closing_odds FROM user_bets WHERE user_id = ? AND match_id = ? ORDER BY created_at DESC LIMIT 20"
+    ).all(user.id, matchId);
+    userBet = sample.find(b => b.status === 'pending') || sample[0] || null;
+  } catch (e) { _traceCatch('clv_route_sample', e); }
+  // Si user a un pari pending : calcul CLV "live" (taken_odds vs closing courant si capturé)
+  let clv_pct = null;
+  let taken_odds = null;
+  let closing_used = null;
+  if (userBet && closing) {
+    taken_odds = userBet.odds;
+    const sel = String(userBet.selection_label || '').toLowerCase().trim();
+    if (sel === '1' || sel === 'home') closing_used = closing.home;
+    else if (sel === 'x' || sel === 'n' || sel === 'draw' || sel === 'nul') closing_used = closing.draw;
+    else if (sel === '2' || sel === 'away') closing_used = closing.away;
+    clv_pct = computeCLV(taken_odds, closing_used);
+  }
+  return jsonResponse(res, 200, {
+    match_id: matchId,
+    closing_odds: closing, // {home,draw,away,captured_at,source} ou null
+    user_bet: userBet ? { id: userBet.id, market: userBet.market, selection: userBet.selection_label, odds: userBet.odds, status: userBet.status, clv_pct: userBet.clv_pct, closing_odds: userBet.closing_odds } : null,
+    live: { taken_odds, closing_used, clv_pct },
+    sample,
+  });
+}
+
 // GET /api/v1/bankroll — Bankroll tracking (flat 1u)
 if (pathname === '/api/v1/bankroll') {
   const startBankroll = 100;
@@ -33365,6 +33461,91 @@ function autoPurgeDatabase() {
 }
 
 /* -------------------------------------------------
+   bd pbf — CLV Tracker (Closing Line Value)
+   ------------------------------------------------- */
+// computeCLV : math rigoureux. Clamp [-90, +300] pour outliers (cote closing extrême → CLV irréaliste).
+// Retourne null si une des deux cotes est manquante / non-finie / <= 1.
+function computeCLV(takenOdds, closingOdds) {
+  const t = Number(takenOdds);
+  const c = Number(closingOdds);
+  if (!Number.isFinite(t) || !Number.isFinite(c) || t <= 1.0 || c <= 1.0) return null;
+  const clv = (t / c - 1) * 100;
+  // Clamp outliers : un CLV > 300% ou < -90% est presque toujours une erreur de cote
+  if (clv > 300) return 300;
+  if (clv < -90) return -90;
+  return Math.round(clv * 100) / 100; // 2 décimales
+}
+
+// Helper lecture closing_odds par match. Retourne null si pas encore capturé.
+function getMatchClosingOdds(matchId) {
+  if (!sqldb || !matchId) return null;
+  try {
+    const row = sqldb.prepare(
+      'SELECT closing_home, closing_draw, closing_away, captured_at, source FROM closing_odds WHERE match_id = ?'
+    ).get(String(matchId));
+    if (!row) return null;
+    return {
+      home: row.closing_home,
+      draw: row.closing_draw,
+      away: row.closing_away,
+      captured_at: row.captured_at,
+      source: row.source,
+    };
+  } catch (e) { _traceCatch('clv_get_closing', e); return null; }
+}
+
+// Cron snapshot closing : scanne db.matches dont commence_time est dans la fenêtre
+// [now - 300s ; now + 0s]. Pour chaque match non encore snapshotté, capture les cotes brutes.
+// Idempotent : skip si match_id déjà présent dans closing_odds (preserve premier snapshot).
+function _snapshotClosingOdds() {
+  if (!sqldb || !Array.isArray(db?.matches) || !db.matches.length) return;
+  const now = Date.now();
+  const windowStart = now - 300 * 1000; // T-5min
+  const windowEnd = now + 0;            // T-0 (kickoff)
+  let captured = 0, skipped = 0;
+  const sample = [];
+  try {
+    const checkStmt = sqldb.prepare('SELECT match_id FROM closing_odds WHERE match_id = ?');
+    const insertStmt = sqldb.prepare(`INSERT INTO closing_odds
+      (match_id, home_team, away_team, league, commence_time,
+       closing_home, closing_draw, closing_away,
+       bk_home, bk_draw, bk_away, captured_at, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    for (const m of db.matches) {
+      if (!m || !m.id || !m.commence_time) continue;
+      const ts = Date.parse(m.commence_time);
+      if (!Number.isFinite(ts)) continue;
+      if (ts < windowStart || ts > windowEnd) continue;
+      // Idempotence : ne jamais overwrite (preserve premier snapshot = closing pur)
+      const existing = checkStmt.get(String(m.id));
+      if (existing) { skipped++; continue; }
+      const h = Number(m?.odds?.home), d = Number(m?.odds?.draw), a = Number(m?.odds?.away);
+      // Au moins une cote doit être valide pour valoir un snapshot
+      if (!Number.isFinite(h) && !Number.isFinite(d) && !Number.isFinite(a)) { skipped++; continue; }
+      const bkH = m?.bookmakers?.home || null;
+      const bkD = m?.bookmakers?.draw || null;
+      const bkA = m?.bookmakers?.away || null;
+      try {
+        insertStmt.run(
+          String(m.id), m.home_team || null, m.away_team || null, m.league || null, m.commence_time,
+          Number.isFinite(h) ? h : null,
+          Number.isFinite(d) ? d : null,
+          Number.isFinite(a) ? a : null,
+          bkH, bkD, bkA,
+          Math.floor(now / 1000),
+          'odds_api'
+        );
+        captured++;
+        if (sample.length < 2) sample.push(`${m.home_team || '?'} vs ${m.away_team || '?'} → ${h ?? '-'}/${d ?? '-'}/${a ?? '-'}`);
+      } catch (e) { _traceCatch('clv_snapshot_insert', e); }
+    }
+    if (captured > 0) {
+      console.log(`  [CLV] snapshot closing T-5min: ${captured} captured, ${skipped} skip (already/no-odds). Sample: ${sample.join(' | ')}`);
+    }
+  } catch (e) { console.warn('[CLV] snapshot error:', e.message); }
+}
+
+/* -------------------------------------------------
    Jobs périodiques
    ------------------------------------------------- */
 setInterval(() => fetchOdds().catch(e => console.error('[Cron] Odds:', e.message)), 12 * 3600 * 1000);
@@ -33379,6 +33560,8 @@ setInterval(() => {
 }, 2 * 3600 * 1000);
 
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+// bd pbf — CLV closing snapshot 60s (capture cotes fenêtre T-5min→T-0)
+setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
 // bd 0hf4 Phase 1.1 — Cron pre-fetch BSD TV channels + broadcasts FR fenêtre J→J+7 (6h)
