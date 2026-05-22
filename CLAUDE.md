@@ -129,7 +129,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `e3mr` | Tennis Consolidation LOT P1+P2 — Backtest Brier + Serve/Return point-level + UQD | open |
 | `l9vk` | Marketing Affiliation 5 phases — 1xBet+Twitter+YouTube+Telegram+Stripe | open |
 | `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD | Phase 2A livré v12.65 commit `117c711` (`/api/v1/sources/health`) · Phases 2B/2C/2D ouvertes |
-| `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | open |
+| `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | Phase 1 ✅ `llms.txt` racine projet + route GET `/llms.txt` Content-Type `text/markdown` cache 24h (méthodo Poisson/edge/Power Score + 8 sources data + features clés UX + ce que PariScore N'EST PAS). Phases 2 Structured Data JSON-LD + 3 SSR scores crawler + 4 /about E-E-A-T ouvertes |
 | ~~`0hf4`~~ ✅ | **BSD coverage Phase 1+1.1+2+3** — TV channels + broadcasts (fetchers + caches + helper attach + on-demand route + modal UI) | Phase 1 v12.65 `d10ab09` · Phase 1.1 cron pre-fetch v12.66 · Phase 2 route `GET /api/v1/broadcasts/match/:matchId` · Phase 3 ✅ tv_channels payload `/api/v1/insights/:id` + section modal "📺 TV DIFFUSEUR · BSD" dedup channel_id, max 12 chips avec flag + lien externe |
 | ~~`j6pz`~~ ✅ | **BSD coverage Phase 2** — Shotmap (fix endpoint bug `/v2/events/{id}/stats/`) + best_odds + bookmakers | livré — UI shotmap SVG refactor nouveau schema + 2 nouveaux endpoints |
 | ~~`ueg0`~~ ✅ | **BSD coverage Phase 3** — Social items sentiment buzz match (section modal Insights) | livré commit (voir ci-dessous) — section modal Insights lazy fetch + sentiment heuristique |
