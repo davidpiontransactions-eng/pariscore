@@ -17,6 +17,9 @@
 - [[gemini]] — Google AI 1.5 Flash, pay-as-you-go, AI Scout + Power Score + Pro Scout
 - [[wikidata]] — Public domain CC0, tennis winners 56 entries wire Phase 2 (bd 6du6)
 - [[matchstat]] — Tennis enrichment H2H + perf breakdown, 9 endpoints proxiés
+- [[odds-api]] — Legacy cotes 20+ books, Free 500/mois, migration vers BSD en cours (bd zia)
+- [[tennis-abstract]] — Site Jeff Sackmann scraping Elo + reports (distinct du dataset GitHub)
+- [[transfermarkt]] — Sidecar self-host felipeall/transfermarkt-api, market values + transfers
 
 ## 🧮 Concepts (math / algorithms / patterns)
 
@@ -28,6 +31,8 @@
 - [[kelly-cap]] — Bankroll sizing Kelly Criterion + cap 25% (fractional Kelly)
 - [[live-intensity]] — Score composite 0-100 dynamique match live (alertes + UI)
 - [[ai-scout]] — Combiné du Jour Gemini 3 picks structurés (cache 6h)
+- [[value-bet]] — Définition + critères BET stricts (EV>5% + IC>0 + PowerScore≥60)
+- [[sse]] — Server-Sent Events pattern push live (cohérent zero-dep)
 
 ## 🎯 Features (product)
 
@@ -36,6 +41,9 @@
 - [[tableau-foot]] — Page Matchs centrale, 18 colonnes, filtres avancés, mode live distinct
 - [[mes-paris]] — Bet tracking + bankroll réelle + Kelly + auto-suggest règlement (v9.8)
 - [[mobile-pwa]] — Version mobile parieur nomade, PWA install + push (Phase 5/7 livré)
+- [[tableau-tennis]] — Page Value Bets ATP/WTA filtres tour/surface/format/strategie
+- [[alertes-telegram]] — Push notifications value bets + live momentum (v9.9.5)
+- [[comparateur]] — Modal cotes multi-bookmakers + affiliate CTA tracking
 
 ## 📋 Decisions (ADRs)
 
@@ -56,10 +64,10 @@
 
 ## 📊 Stats
 
-- **Pages:** 30 (3 infra + 10 entities + 8 concepts + 5 features + 7 decisions)
-- **Bootstrap date:** 2026-05-22 (wave 1 + wave 2)
-- **Raw sources catalogued:** `.context/` 165 .md + `dataset_*.json` 3 + `CLAUDE.md` + `server.js` + `pariscore.html` + 9 commits session 22/05 + bd 50 tickets
-- **Next wave 3 priority:** vendors (odds-api, tennis-abstract, elofootball, openfootball, transfermarkt, tennis-mylife, oddspapi, xvalue, rapidapi) + concepts (momentum, bootstrap-uqd, sse, smart-polling) + features (tableau-tennis, alertes-telegram, ai-al-revue-presse)
+- **Pages:** 38 (3 infra + 13 entities + 10 concepts + 8 features + 7 decisions, wave 1+2+3)
+- **Bootstrap date:** 2026-05-22 (wave 1 + wave 2 + wave 3)
+- **Raw sources catalogued:** `.context/` 165 .md + `dataset_*.json` 3 + `CLAUDE.md` + `server.js` + `pariscore.html` + 12 commits session 22/05 + bd 50 tickets
+- **Next wave 4 priority:** vendors (elofootball, openfootball, tennis-mylife, oddspapi, xvalue, rapidapi, aiscore) + concepts (momentum, bootstrap-uqd, smart-polling, dropping-odds, devig-methods) + features (ai-al-revue-presse, pro-scout-5-piliers)
 
 ---
 

@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-05-22 16:55 — INGEST — wave 3 + BSD coverage execution
+
+Pages created (8):
+- Concepts (2): [[value-bet]], [[sse]]
+- Features (3): [[tableau-tennis]], [[alertes-telegram]], [[comparateur]]
+- Entities (3): [[odds-api]], [[tennis-abstract]], [[transfermarkt]]
+
+Wiki total: 38 pages (3 infra + 13 entities + 10 concepts + 8 features + 7 decisions).
+
+Operations (code commits):
+- `a85fd9b` feat(bsd-coverage): mapper BSD 27 World Cup + 4 coupes domestiques HIGH
+  → `leagues_config.json` +5 ligues (63 Coupe FR, 73 Copa Brasil, 81 DFB Pokal, 143 Copa del Rey, 999 World Cup 2026)
+  → `bsd_config.json` mapping +5 bidirectionnel
+  → Coverage BSD 71% → 80% (37 → 42 ligues mappées)
+  → CLAUDE.md actions 11/12/13 marqués ✅
+
+LINT initial wave 3:
+- Orphan refs détectés: [[bootstrap-uqd]] [[momentum]] [[dropping-odds]] [[smart-polling]] (à créer wave 4)
+- Broken refs: [[tennis-mylife]] (référencé wikidata + sackmann-purge + elo-dynamique, créer wave 4)
+- Broken refs: [[openfootball]] (référencé wikidata + decisions)
+- Broken refs: [[elofootball]] (référencé elo-dynamique)
+- Broken refs: [[xvalue]] [[oddspapi]] (référencés multiple, créer wave 4 ou marquer research-only)
+
 ## 2026-05-22 16:15 — INGEST — wave 2 bootstrap
 
 Pages created (17):
