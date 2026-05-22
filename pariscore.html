@@ -17336,13 +17336,95 @@ async function _fetchAndRenderTennisDetail(matchId) {
     const predData = predRes.ok ? await predRes.json().catch(() => null) : null;
     // bd 6jro Plan G — placeholder Sofa Tennis Profile (Grand Slam history + rankings)
     const SOFA_PROFILE_PLACEHOLDER = '<div id="tennis-sofa-profile-enrich" style="margin-top:24px;"></div>';
-    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER;
+    // bd mpg — placeholder PBP Point-by-Point (lazy fetch + SSE pbp_update refresh)
+    const PBP_PLACEHOLDER = `<div id="tennis-pbp-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:24px;"></div>`;
+    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
     fetchTennisSofaProfile(matchData);
+    fetchTennisPBP(matchId);
   } catch (e) {
     body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>` + ENRICH_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
   }
+}
+
+// bd mpg — Tennis PBP fetch + render section modal Insights.
+// Lazy fetch on modal open + refresh via SSE pbp_update handler.
+async function fetchTennisPBP(matchId) {
+  const target = document.getElementById('tennis-pbp-enrich');
+  if (!target || !matchId) return;
+  target.innerHTML = `<div class="ins-section" style="opacity:.55;font-size:11px;font-family:'DM Mono',monospace;padding:8px 0;color:var(--text3,#5a6068);">📍 POINT-BY-POINT — chargement…</div>`;
+  try {
+    const r = await apiFetch(`/api/v1/tennis/pbp/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } });
+    if (r.status === 404) {
+      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:12px 14px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);" title="Point-by-point disponible uniquement pour les matchs couverts par aiscore.com. Coverage estimée : ~40-60% des matchs ATP/WTA top tournois.">📍 PBP indisponible pour ce match</div>`;
+      return;
+    }
+    if (!r.ok) {
+      target.innerHTML = '';
+      return;
+    }
+    const data = await r.json();
+    if (!data || !Array.isArray(data.points) || data.points.length === 0) {
+      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:12px 14px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);">📍 PBP en attente du 1er point</div>`;
+      return;
+    }
+    target.innerHTML = renderTennisPBPSection(data);
+  } catch (_) { target.innerHTML = ''; }
+}
+
+function renderTennisPBPSection(d) {
+  const points = Array.isArray(d.points) ? d.points : [];
+  if (points.length === 0) return '';
+  const p1Name = (d.player1 && d.player1.name) || '—';
+  const p2Name = (d.player2 && d.player2.name) || '—';
+  const c = d.counters || {};
+  const W = Math.max(400, points.length * 4);
+  const H = 60;
+  const padTop = 8;
+  const rowH = 18;
+  const dotR = 2.2;
+  const dots = points.map((pt, i) => {
+    const x = (i / Math.max(1, points.length - 1)) * (W - 12) + 6;
+    const winner = pt.winner === 1 ? 1 : (pt.winner === 2 ? 2 : 0);
+    const y = winner === 1 ? padTop + 4 : (winner === 2 ? padTop + 4 + rowH * 2 : padTop + 4 + rowH);
+    const color = winner === 1 ? 'var(--green,#00e676)' : (winner === 2 ? '#ffa726' : 'var(--text3,#5a6068)');
+    const title = `Set ${pt.set} · Jeu ${pt.game} · ${pt.score || '?'} · Server P${pt.server}`;
+    return `<circle cx="${x.toFixed(1)}" cy="${y}" r="${dotR}" fill="${color}"><title>${_escTennis(title)}</title></circle>`;
+  }).join('');
+  const baselines = `
+    <line x1="0" y1="${padTop + 4}" x2="${W}" y2="${padTop + 4}" stroke="var(--bg4,#1e2328)" stroke-width="0.5" stroke-dasharray="2,3"/>
+    <line x1="0" y1="${padTop + 4 + rowH * 2}" x2="${W}" y2="${padTop + 4 + rowH * 2}" stroke="var(--bg4,#1e2328)" stroke-width="0.5" stroke-dasharray="2,3"/>`;
+  const counterRow = (label, p1Val, p2Val) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'DM Mono',monospace;font-size:11px;padding:3px 0;">
+      <span style="color:var(--green,#00e676);font-weight:700;min-width:30px;text-align:right;">${p1Val}</span>
+      <span style="color:var(--text3,#5a6068);font-size:10px;letter-spacing:.04em;text-transform:uppercase;">${label}</span>
+      <span style="color:#ffa726;font-weight:700;min-width:30px;text-align:left;">${p2Val}</span>
+    </div>`;
+  return `<div class="ins-section" style="border:1px solid rgba(0,230,118,0.20);background:linear-gradient(135deg,rgba(0,230,118,0.04),rgba(0,230,118,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:9px;font-family:'DM Mono',monospace;color:#00b85a;background:rgba(0,230,118,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">📍 POINT-BY-POINT · AISCORE</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);">${points.length} points</span>
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);">last_idx=${d.last_point_idx}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;font-family:'Instrument Sans',sans-serif;font-size:12px;margin-bottom:6px;">
+      <span style="color:var(--green,#00e676);font-weight:600;">● ${_escTennis(p1Name)}</span>
+      <span style="color:#ffa726;font-weight:600;">${_escTennis(p2Name)} ●</span>
+    </div>
+    <div style="overflow-x:auto;max-height:80px;">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:60px;display:block;">
+        ${baselines}
+        ${dots}
+      </svg>
+    </div>
+    <div style="margin-top:10px;display:grid;grid-template-columns:1fr;gap:1px;">
+      ${counterRow('Aces', c.p1_aces || 0, c.p2_aces || 0)}
+      ${counterRow('Double Fautes', c.p1_df || 0, c.p2_df || 0)}
+    </div>
+    ${d.source_url ? `<div style="margin-top:8px;text-align:right;"><a href="${_escTennis(d.source_url)}" target="_blank" rel="noopener nofollow" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);text-decoration:none;">Source aiscore ↗</a></div>` : ''}
+  </div>`;
 }
 
 // bd ueg0 — Social Buzz lazy fetch + render (BSD social items + sentiment heuristique)
@@ -19325,6 +19407,19 @@ function initSSE() {
         updateButeursCell(data.matchId, data.buteurs);
       }
     } catch(err) { console.warn('[SSE] buteurs-ready parse error', err); }
+  });
+
+  // bd mpg — SSE pbp_update : refresh PBP section si modal détail tennis ouverte sur ce matchId.
+  sseConnection.addEventListener('pbp_update', e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (!data || !data.match_id) return;
+      const target = document.getElementById('tennis-pbp-enrich');
+      if (!target) return;
+      const openMatchId = target.getAttribute('data-match-id');
+      if (openMatchId !== String(data.match_id)) return;
+      if (typeof fetchTennisPBP === 'function') fetchTennisPBP(openMatchId);
+    } catch(err) { console.warn('[SSE] pbp_update parse error', err); }
   });
 
   sseConnection.addEventListener('live_patch', e => {
