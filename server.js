@@ -17476,6 +17476,187 @@ async function fetchAiscoreServingOnDemand(liveData) {
   return fetched;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd mpg — BD-DATA-010 PBP point-by-point streaming tennis live
+// ═══════════════════════════════════════════════════════════════════════════════
+// Source: aiscore.com HTML (BSD /api/v2/matches/{id}/ n'expose PAS point_by_point).
+// Pattern: reuse `getAiscoreMatch` cache + extends on-demand fetch throttle.
+// Diff detection: compare `last_point_idx` poll-over-poll → SSE `pbp_update` broadcast.
+// Debounce 30s per matchId (anti-spam SSE). Cache 30s aligné avec aiscore match TTL.
+//
+// Schema sortie /api/v1/tennis/pbp/:matchId :
+//   {
+//     match_id: "0xabc123",
+//     source: "aiscore",
+//     player1, player2,
+//     points: [{ idx, set, game, score, server, winner, shot_type, minute }, ...],
+//     last_point_idx,
+//     counters: { p1_aces, p2_aces, p1_df, p2_df },
+//     updated_at
+//   }
+const _tennisPBPPrev = new Map(); // matchId → { last_point_idx, ts }
+const _tennisPBPSSEDebounce = new Map(); // matchId → last broadcast ts
+const PBP_SSE_DEBOUNCE_MS = Math.max(5000, parseInt(process.env.PBP_SSE_DEBOUNCE_MS || '30000', 10));
+
+// Convertit aiscore.point_by_point (groupé par set/jeu) en flat points[] avec idx croissant.
+function _normalizePBPFromAiscore(am) {
+  if (!am || !Array.isArray(am.point_by_point)) {
+    return { points: [], last_point_idx: -1, counters: { p1_aces: 0, p2_aces: 0, p1_df: 0, p2_df: 0 } };
+  }
+  const points = [];
+  let idx = 0;
+  for (let si = 0; si < am.point_by_point.length; si++) {
+    const setBox = am.point_by_point[si];
+    const setNum = si + 1;
+    const games = Array.isArray(setBox.game_score) ? setBox.game_score : [];
+    const pointsArr = Array.isArray(setBox.points) ? setBox.points : [];
+    for (let gi = 0; gi < pointsArr.length; gi++) {
+      const gamePts = Array.isArray(pointsArr[gi]) ? pointsArr[gi] : [];
+      const gameMeta = games[gi] || {};
+      const gameWinner = gameMeta.winner ? 1 : 2; // approx : colorGreen sur ligne p1
+      const server = (gi % 2 === 0) ? 1 : 2; // server alterne chaque jeu
+      for (let pi = 0; pi < gamePts.length; pi++) {
+        const sc = gamePts[pi];
+        const isLast = pi === gamePts.length - 1;
+        points.push({
+          idx: idx++,
+          set: setNum,
+          game: gi + 1,
+          score: String(sc || ''),
+          server,
+          winner: isLast ? gameWinner : null,
+          shot_type: null,
+          minute: null,
+        });
+      }
+    }
+  }
+  const counters = { p1_aces: 0, p2_aces: 0, p1_df: 0, p2_df: 0 };
+  if (am.stats && typeof am.stats === 'object') {
+    const acesEntry = am.stats['Aces'] || am.stats['aces'] || null;
+    const dfEntry = am.stats['Double Faults'] || am.stats['Double faults'] || am.stats['double_faults'] || null;
+    if (acesEntry) {
+      counters.p1_aces = parseInt(acesEntry.p1, 10) || 0;
+      counters.p2_aces = parseInt(acesEntry.p2, 10) || 0;
+    }
+    if (dfEntry) {
+      counters.p1_df = parseInt(dfEntry.p1, 10) || 0;
+      counters.p2_df = parseInt(dfEntry.p2, 10) || 0;
+    }
+  }
+  return { points, last_point_idx: idx - 1, counters };
+}
+
+// Résout matchId interne (bsd_t_<id> / espn / aiscore) → aiscore match (cache + index).
+async function _resolveAiscoreMatchForPBP(matchId, liveData) {
+  if (!matchId) return null;
+  const mid = String(matchId);
+  const directCached = aiscoreMatchCache.get(mid);
+  if (directCached && directCached.data) return directCached.data;
+  if (/^[0-9a-z]+$/.test(mid) && mid.length <= 24) {
+    try { return await getAiscoreMatch(mid); } catch (_) { /* fallback */ }
+  }
+  const m = Array.isArray(liveData) ? liveData.find(x => x && String(x.id) === mid) : null;
+  if (!m || !m.player1 || !m.player2) return null;
+  const p1n = normName(m.player1.name);
+  const p2n = normName(m.player2.name);
+  if (!p1n || !p2n) return null;
+  const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
+  const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
+  if (!p1Last || !p2Last || p1Last.length < 3 || p2Last.length < 3) return null;
+  for (const [, entry] of aiscoreMatchCache) {
+    const d = entry && entry.data;
+    if (!d || !Array.isArray(d.players) || d.players.length < 2) continue;
+    const an = normName(d.players[0].name);
+    const bn = normName(d.players[1].name);
+    if ((an.includes(p1Last) && bn.includes(p2Last)) || (an.includes(p2Last) && bn.includes(p1Last))) {
+      return d;
+    }
+  }
+  try {
+    const idx = await getAiscoreTennisIndex();
+    const hit = idx && Array.isArray(idx.matches) ? idx.matches.find(am => {
+      const s = String(am.slug || '').toLowerCase();
+      return s.includes(p1Last) && s.includes(p2Last);
+    }) : null;
+    if (!hit) return null;
+    return await getAiscoreMatch(hit.id, hit.slug);
+  } catch (_) { return null; }
+}
+
+// Helper public : récupère PBP normalisé pour un matchId (lazy fetch + cache aiscore).
+async function fetchTennisPBP(matchId) {
+  const liveData = _tennisLiveCache && Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+  const am = await _resolveAiscoreMatchForPBP(matchId, liveData);
+  if (!am) return null;
+  const norm = _normalizePBPFromAiscore(am);
+  return {
+    match_id: String(matchId),
+    source: 'aiscore',
+    source_url: am.source_url || null,
+    player1: (am.players && am.players[0]) ? { name: am.players[0].name, country: am.players[0].country } : null,
+    player2: (am.players && am.players[1]) ? { name: am.players[1].name, country: am.players[1].country } : null,
+    tournament: am.tournament || null,
+    status: am.status || null,
+    points: norm.points,
+    last_point_idx: norm.last_point_idx,
+    counters: norm.counters,
+    updated_at: am.fetched_at || new Date().toISOString(),
+  };
+}
+
+// Diff detection par poll : compare last_point_idx avec _tennisPBPPrev → SSE broadcast.
+function detectAndBroadcastPBPUpdates(liveData) {
+  if (!Array.isArray(liveData) || liveData.length === 0) return 0;
+  const now = Date.now();
+  let broadcasts = 0;
+  for (const m of liveData) {
+    if (!m || !m.is_live) continue;
+    const p1n = m.player1 && normName(m.player1.name);
+    const p2n = m.player2 && normName(m.player2.name);
+    if (!p1n || !p2n) continue;
+    const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
+    const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
+    if (!p1Last || !p2Last) continue;
+    let am = null;
+    for (const [, entry] of aiscoreMatchCache) {
+      const d = entry && entry.data;
+      if (!d || !Array.isArray(d.players) || d.players.length < 2) continue;
+      const an = normName(d.players[0].name);
+      const bn = normName(d.players[1].name);
+      if ((an.includes(p1Last) && bn.includes(p2Last)) || (an.includes(p2Last) && bn.includes(p1Last))) {
+        am = d; break;
+      }
+    }
+    if (!am) continue;
+    const norm = _normalizePBPFromAiscore(am);
+    const prev = _tennisPBPPrev.get(m.id) || null;
+    const lastIdx = norm.last_point_idx;
+    if (prev && prev.last_point_idx === lastIdx) continue;
+    _tennisPBPPrev.set(m.id, { last_point_idx: lastIdx, ts: now });
+    const lastBroadcast = _tennisPBPSSEDebounce.get(m.id) || 0;
+    if (now - lastBroadcast < PBP_SSE_DEBOUNCE_MS) continue;
+    _tennisPBPSSEDebounce.set(m.id, now);
+    try {
+      const newPointsCount = prev ? Math.max(0, lastIdx - prev.last_point_idx) : Math.min(5, norm.points.length);
+      const newPoints = norm.points.slice(-newPointsCount);
+      broadcastSSE('pbp_update', {
+        match_id: m.id,
+        source: 'aiscore',
+        last_point_idx: lastIdx,
+        new_points: newPoints,
+        counters: norm.counters,
+        ts: now,
+      });
+      broadcasts++;
+    } catch (_) { /* SSE non bloquant */ }
+  }
+  const liveIds = new Set(liveData.filter(mm => mm && mm.is_live).map(mm => mm.id));
+  for (const k of _tennisPBPPrev.keys()) if (!liveIds.has(k)) _tennisPBPPrev.delete(k);
+  for (const k of _tennisPBPSSEDebounce.keys()) if (!liveIds.has(k)) _tennisPBPSSEDebounce.delete(k);
+  return broadcasts;
+}
+
 // bd c5i — Inference serveur par parite des jeux quand source omet l'info.
 // Tennis: serveur alterne CHAQUE jeu. Si on a connu serveur a un snapshot
 // passe, on derive current serveur depuis (totalGames_now - totalGames_then)
@@ -17834,6 +18015,11 @@ async function pollTennisLive() {
     _tennisLiveCache = { ts: Date.now(), data };
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
+    // bd mpg — Detect & broadcast PBP updates depuis aiscore cache (debounce 30s/matchId).
+    try {
+      const pbpBroadcasts = detectAndBroadcastPBPUpdates(data);
+      if (pbpBroadcasts > 0) console.log(`  [TennisPBP] SSE pbp_update broadcast x${pbpBroadcasts}`);
+    } catch (e) { /* swallow — best-effort */ }
     // Warmer background : remplit les caches BSD (pred/calib/rank) HORS chemin
     // requête /tennis/value-bets. Les builders s'auto-gatent (cache 6h/30min)
     // → fetch réel rare. Fire-and-forget, ne bloque jamais le poll.
@@ -28062,6 +28248,28 @@ if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') 
   }
   const out = await handleTennisBSD(`/api/v2/predictions/${encodeURIComponent(matchId)}/`, `bsd_tennis_pred_${matchId}`, 5 * 60 * 1000);
   return jsonResponse(res, out.status, out.body);
+}
+// bd mpg — BD-DATA-010 PBP point-by-point streaming tennis live.
+// Source: aiscore HTML (BSD ne l'expose pas). Lazy fetch + cache aiscore 30s.
+// Sanitize: matchId regex [A-Za-z0-9_-]+ max 64 chars (anti-injection).
+if (pathname.startsWith('/api/v1/tennis/pbp/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/pbp/'.length)).trim();
+  if (!matchId || matchId.length > 64 || !/^[A-Za-z0-9_-]+$/.test(matchId)) {
+    return jsonResponse(res, 400, { error: 'invalid_match_id', detail: 'matchId alphanumérique requis (max 64 chars)' });
+  }
+  try {
+    const pbp = await fetchTennisPBP(matchId);
+    if (!pbp) {
+      return jsonResponse(res, 404, {
+        error: 'pbp_unavailable',
+        match_id: matchId,
+        detail: 'Point-by-point indisponible pour ce match (source aiscore non résolvable ou match non couvert).',
+      });
+    }
+    return jsonResponse(res, 200, pbp);
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'pbp_fetch_failed', detail: String(e && e.message || e) });
+  }
 }
 // Colonne 2 — rang Elo surface + forme 90j même surface. Lecture seule (SQLite
 // déjà syncé Sackmann/TA), cache JSON disque 12h, zéro scrape runtime → anti-ban.
