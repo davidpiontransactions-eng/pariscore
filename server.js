@@ -1397,6 +1397,105 @@ function broadcastMarketDivergence(matchId) {
   return true;
 }
 
+// bd 040 — Steam detector multi-bookmaker (BD-DATA-012)
+// "Steam" = mouvement coordonné de N >= threshold bookmakers dans même direction
+// (cote favori baisse) en fenêtre courte (≤5min). Signal sharp money.
+//
+// Schema: KV `odds_snap_bk_${matchId}` = [{ ts, books: [{bk:'pinnacle', home, draw, away}, ...] }]
+// (max 12 snapshots). Append-only, capped. Décision: pas de migration SQLite (zero-dep + KV pattern
+// déjà en place pour odds_snap_${id}).
+//
+// detectSteam(matchId, opts)
+//   - windowMs (default 300_000 = 5min) — fenêtre temporelle
+//   - threshold (default 3) — N bookmakers minimum
+//   - dropPctMin (default 2.0) — delta minimum par bookmaker pour compter comme "drop"
+// Retour: null OU {direction, n_bookmakers, magnitude_avg_pct, severity, samples_window}.
+function detectSteam(matchId, opts) {
+  try {
+    if (matchId == null) return null;
+    const o = opts || {};
+    const windowMs = Number.isFinite(o.windowMs) ? o.windowMs : 300_000;
+    const threshold = Number.isFinite(o.threshold) ? o.threshold : 3;
+    const dropPctMin = Number.isFinite(o.dropPctMin) ? o.dropPctMin : 2.0;
+    const history = kvGet(`odds_snap_bk_${matchId}`) || [];
+    if (!Array.isArray(history) || history.length < 2) return null;
+    const now = Date.now();
+    const window = history.filter(s => s && s.ts && (now - s.ts) <= windowMs && Array.isArray(s.books));
+    if (window.length < 2) return null;
+    const first = window[0];
+    const last = window[window.length - 1];
+    // Build map bk → {homeFirst, homeLast, drawFirst, drawLast, awayFirst, awayLast}
+    const bkMap = new Map();
+    for (const b of first.books) {
+      if (!b || !b.bk) continue;
+      bkMap.set(b.bk, { homeFirst: b.home, drawFirst: b.draw, awayFirst: b.away });
+    }
+    for (const b of last.books) {
+      if (!b || !b.bk) continue;
+      const e = bkMap.get(b.bk) || {};
+      e.homeLast = b.home; e.drawLast = b.draw; e.awayLast = b.away;
+      bkMap.set(b.bk, e);
+    }
+    // Pour chaque direction (home/draw/away), compter N bookmakers avec drop >= dropPctMin
+    const counts = { home: [], draw: [], away: [] };
+    for (const [bk, e] of bkMap) {
+      for (const side of ['home', 'draw', 'away']) {
+        const fst = e[side + 'First'], lst = e[side + 'Last'];
+        if (!Number.isFinite(fst) || !Number.isFinite(lst) || fst <= 0) continue;
+        const deltaPct = ((lst - fst) / fst) * 100;
+        // Steam = baisse de cote => deltaPct négatif <= -dropPctMin
+        if (deltaPct <= -dropPctMin) counts[side].push({ bk, deltaPct });
+      }
+    }
+    // Sélectionne la direction avec le plus de bookmakers convergents
+    let bestDir = null;
+    let bestList = [];
+    for (const side of ['home', 'draw', 'away']) {
+      if (counts[side].length > bestList.length) { bestDir = side; bestList = counts[side]; }
+    }
+    if (!bestDir || bestList.length < threshold) return null;
+    // Magnitude moyenne (en %, clamp [-50, 50] anti-outlier)
+    const magnitudes = bestList.map(x => Math.max(-50, Math.min(50, x.deltaPct)));
+    const magAvg = magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length;
+    const magAbs = Math.abs(magAvg);
+    let severity = 'low';
+    if (magAbs >= 5) severity = 'high';
+    else if (magAbs >= 3) severity = 'med';
+    return {
+      direction: bestDir,
+      n_bookmakers: bestList.length,
+      magnitude_avg_pct: parseFloat(magAvg.toFixed(2)),
+      severity,
+      samples_window: window.length,
+      window_ms: windowMs,
+      bookmakers: bestList.map(x => x.bk).slice(0, 10), // tronque pour SSE payload
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+// bd 040 — Broadcast SSE steam_detected si signal valide + debounce 5min.
+// matchId sanitize string truncated 64 char alnum. Magnitude clamp [-50, 50]%.
+function broadcastSteamDetected(matchId, opts) {
+  const steam = detectSteam(matchId, opts);
+  if (!steam) return false;
+  if (!_pulseShouldBroadcast('steam_detected', matchId)) return false;
+  if (sseClients.size === 0) return false;
+  const safeId = String(matchId).slice(0, 64);
+  broadcastSSE('steam_detected', {
+    type: 'steam_detected',
+    matchId: safeId,
+    direction: steam.direction,
+    n_bookmakers: steam.n_bookmakers,
+    magnitude_avg_pct: steam.magnitude_avg_pct,
+    severity: steam.severity,
+    bookmakers: steam.bookmakers,
+    window_min: parseFloat((steam.window_ms / 60000).toFixed(1)),
+  });
+  return true;
+}
+
 // bd 6v0 — DR Spike SSE event broadcast tennis live.
 // Détecte écart |DR_set_courant - DR_match| > seuil (threshold env DR_SPIKE_THRESHOLD_PCT,
 // exprimé en % du DR_match). Sécurité: side ∈ {p1,p2}, matchId string truncated 64.
@@ -6981,6 +7080,32 @@ function buildMatchRecord(raw) {
     // bd a8n — Post snapshot, check market divergence (delta+slope 15min) → SSE.
     // Debounce 30s per matchId garantit absence spam si fetchOdds cron tape.
     try { broadcastMarketDivergence(record.id); } catch (_) {}
+
+    // bd 040 — Capture per-bookmaker snapshot pour steam detection.
+    // record.all_bookmakers = rows processAllBookmakers (home/draw/away par bk).
+    // Stocke compact pour steam detector fenêtre 5min.
+    try {
+      const bkRows = Array.isArray(record.all_bookmakers) ? record.all_bookmakers : [];
+      if (bkRows.length >= 2) {
+        const bkSnapKey = `odds_snap_bk_${record.id}`;
+        const bkHistory = kvGet(bkSnapKey) || [];
+        const bkArr = Array.isArray(bkHistory) ? bkHistory : [];
+        const books = bkRows
+          .filter(r => r && (r.key || r.title) && (r.home || r.away))
+          .slice(0, 25) // cap bookmaker count par snapshot
+          .map(r => ({
+            bk: String(r.key || r.title || '').toLowerCase().slice(0, 32),
+            home: Number.isFinite(r.home) ? r.home : null,
+            draw: Number.isFinite(r.draw) ? r.draw : null,
+            away: Number.isFinite(r.away) ? r.away : null,
+          }));
+        if (books.length >= 2) {
+          kvSet(bkSnapKey, [...bkArr, { ts: Date.now(), books }].slice(-12));
+          // Steam check post-snapshot. Debounce 30s géré par _pulseShouldBroadcast.
+          broadcastSteamDetected(record.id);
+        }
+      }
+    } catch (_) {}
   }
 
   // ── SPRINT 1 P0 — BD-DATA-001 — IC90 bornes sur best_edge (Normal-approx) ──
@@ -15576,6 +15701,38 @@ const STRATEGIES = {
       return Math.round((o25 + u15) / 2);
     },
     getOdds: () => null,
+  },
+  // bd 040 — Steam Detector multi-bookmaker (BD-DATA-012)
+  // Sharp money signal: N>=3 bookmakers baissent cote même outcome <5min.
+  // getProb: combine confidence Poisson de la direction steamée + bonus magnitude/severity.
+  STEAM_DETECTED: {
+    label: 'Steam Multi-Bookmaker',
+    icon: '',
+    tipster: 'Le Sharp',
+    tipsterDesc: 'Détecte les mouvements coordonnés multi-bookmakers (>=3 books, <5min). Signal sharp money.',
+    tipsterFlag: '🇲🇨',
+    getProb: m => {
+      const steam = detectSteam(m.id);
+      if (!steam) return null;
+      const dir = steam.direction;
+      // Confiance Poisson sur la direction steamée
+      let baseProb = null;
+      if (dir === 'home' && m.poisson?.homeWin != null) baseProb = m.poisson.homeWin;
+      else if (dir === 'draw' && m.poisson?.draw != null) baseProb = m.poisson.draw;
+      else if (dir === 'away' && m.poisson?.awayWin != null) baseProb = m.poisson.awayWin;
+      if (baseProb == null) return null;
+      // Bonus severity: high +8, med +4, low +0
+      const sevBonus = steam.severity === 'high' ? 8 : steam.severity === 'med' ? 4 : 0;
+      return Math.min(99, Math.round(baseProb + sevBonus));
+    },
+    getOdds: m => {
+      const steam = detectSteam(m.id);
+      if (!steam) return null;
+      if (steam.direction === 'home') return m.odds?.home || null;
+      if (steam.direction === 'draw') return m.odds?.draw || null;
+      if (steam.direction === 'away') return m.odds?.away || null;
+      return null;
+    },
   },
 };
 
