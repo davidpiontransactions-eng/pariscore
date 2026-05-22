@@ -29233,6 +29233,76 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
 <meta property="og:description" content="Méthodologie quantitative paris sportifs francophone. Aucune mise captée — pure analyse mathématique transparente.">
 <meta property="og:url" content="${origin}/about">
 <link rel="canonical" href="${origin}/about">
+<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${origin}/` },
+    { '@type': 'ListItem', position: 2, name: 'À propos', item: `${origin}/about` }
+  ]
+})}</script>
+<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'PariScore',
+  url: `${origin}/`,
+  logo: `${origin}/icon.svg`,
+  description: "Plateforme francophone d'analyse mathématique pour paris football et tennis. Méthodologie Poisson bivariée, edge no-vig calibré, Power Score V2 IA.",
+  foundingDate: '2026-04',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: 'david.piontransactions@gmail.com',
+    availableLanguage: ['fr', 'en']
+  },
+  sameAs: []
+})}</script>
+<script type="application/ld+json">${JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: "Quelle est la méthodologie statistique de PariScore ?",
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "PariScore utilise la distribution de Poisson bivariée pour calculer les probabilités BTTS, Over/Under et 1N2 à partir des paramètres lambda d'attaque/défense normalisés par la moyenne de ligue (1.35 buts/match). Les Value Bets sont détectés via edge no-vig calibré : normalisation 1/cote → probabilité fair → comparaison à la meilleure cote bookmaker."
+      }
+    },
+    {
+      '@type': 'Question',
+      name: "Quelles sont les sources de données ?",
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Huit sources canoniques documentées : BSD (Bzzoiro Sports Addon, source primaire payante), The Odds API (cotes h2h 20+ bookmakers), API-Football Free (fallback standings), ESPN public, elofootball.com, openfootball ODbL + Wikidata CC0, Sofascore/Flashscore via Apify, felipeall transfermarkt-api self-host MIT."
+      }
+    },
+    {
+      '@type': 'Question',
+      name: "PariScore est-il un bookmaker ?",
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Non. PariScore ne capte aucune mise. C'est une plateforme d'analyse statistique. Toute redirection vers un opérateur de paris passe par lien clairement identifié vers un site licencié ARJEL."
+      }
+    },
+    {
+      '@type': 'Question',
+      name: "Comment vérifier la fiabilité des prédictions ?",
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Les métriques de backtesting sont publiques : endpoint /api/v1/accuracy expose les taux de réussite vérifiés pour Over 2.5, BTTS et Edge > 5% sur les 50+ derniers matchs archivés. Les intervalles de confiance et sample size sont systématiquement affichés."
+      }
+    },
+    {
+      '@type': 'Question',
+      name: "PariScore est-il accessible aux mineurs ?",
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Non. Gate 18+ appliquée à l'inscription. Aucun ciblage de mineurs. Numéro vert d'aide aux joueurs : 09 74 75 13 13 (Joueurs Info Service)."
+      }
+    }
+  ]
+})}</script>
 <style>
 :root{--bg:#0a0d0f;--bg2:#111417;--bg3:#181c20;--bg4:#1e2328;--green:#00e676;--blue:#29b6f6;--amber:#ffa726;--text:#e8eaed;--text2:#8d9399;--text3:#5a6068}
 *{box-sizing:border-box;margin:0;padding:0}
