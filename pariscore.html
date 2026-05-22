@@ -22421,7 +22421,26 @@ function buildResumeTab(d) {
   const hRank = d.homeStats?.rank ? `#${d.homeStats.rank}` : '—';
   const aRank = d.awayStats?.rank ? `#${d.awayStats.rank}` : '—';
 
+  // bd 6jro Plan H — Sofascore editorial article (Avant-Match). Section affichée tête onglet Résumé.
+  const editorial = d.sofascore_editorial || null;
+  const editorialHtml = editorial && editorial.title ? `
+    <div class="ins-section" style="border:1px solid rgba(245,158,11,0.25);background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(245,158,11,0.02));border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:9px;font-family:var(--font-mono);color:#92400e;background:rgba(245,158,11,0.18);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">📰 AVANT-MATCH · SOFASCORE</span>
+        ${editorial.date ? `<span style="font-size:10px;color:var(--text3);font-family:var(--font-mono);">${new Date(editorial.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})}</span>` : ''}
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        ${editorial.imageUrl ? `<img src="${editorial.imageUrl}" alt="" loading="lazy" style="width:120px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--bg4);" onerror="this.style.display='none'">` : ''}
+        <div style="flex:1;min-width:0;">
+          <a href="${editorial.url || '#'}" target="_blank" rel="noopener" style="font-size:14px;font-weight:700;color:var(--text);text-decoration:none;line-height:1.3;display:block;margin-bottom:6px;" onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='var(--text)'">${editorial.title}</a>
+          ${editorial.excerpt ? `<div style="font-size:12px;color:var(--text2);line-height:1.45;">${editorial.excerpt}</div>` : ''}
+          ${Array.isArray(editorial.tags) && editorial.tags.length ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${editorial.tags.slice(0,4).map(t => `<span style="font-size:9px;font-family:var(--font-mono);color:var(--text3);background:var(--bg4);padding:2px 6px;border-radius:3px;text-transform:lowercase;">#${t}</span>`).join('')}</div>` : ''}
+        </div>
+      </div>
+    </div>` : '';
+
   return `
+    ${editorialHtml}
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
