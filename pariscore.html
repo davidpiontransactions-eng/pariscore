@@ -25342,7 +25342,7 @@ function updateLiveDetailModal(m) {
   renderStatRow('clearances',    m.clearances ? m.clearances.home : null, m.clearances ? m.clearances.away : null);
   renderStatRow('saves',         m.saves ? m.saves.home : null, m.saves ? m.saves.away : null);
 
-  drawLDMomentumSVG(m.momentum || []);
+  drawLDMomentumSVG(m.momentum || [], m.events || []);
   drawLDPressureIndex(m.pressure_index);
   drawLDXGCurve(m.xg_curve || [], m);
   drawLDCockpit(m);
@@ -25600,7 +25600,8 @@ function drawLDXGCurve(hist, m) {
 }
 
 // v9.8.7 — momentum SVG : score signed -100..+100, area chart Sofascore-style + bars overlay
-function drawLDMomentumSVG(momArr) {
+// bd qe5 Phase 1.5 — events markers (goals/cards/SOT) overlay aux minutes correspondantes
+function drawLDMomentumSVG(momArr, events) {
   const svg = document.getElementById('ldm-momentum-svg');
   if (!svg) return;
   const W = 600, H = 140, midY = H / 2, padY = 6;
@@ -25645,10 +25646,38 @@ function drawLDMomentumSVG(momArr) {
   </defs>`;
   // Area home (positive only) + area away (negative only) via clipPath alternative : 2 paths bidirectionnels
   // Plus simple : bars overlay (au-dessus = bleu, en-dessous = orange)
+  // bd qe5 Phase 1.5 — events markers overlay (buts, cartons, SOT) au minute exact
+  let eventsMarkers = '';
+  if (Array.isArray(events) && events.length) {
+    const MAX_MIN_LOCAL = 90;
+    const xPos = (min) => Math.max(0, Math.min(W, (min / MAX_MIN_LOCAL) * W));
+    for (const ev of events) {
+      if (!ev || !ev.minute) continue;
+      const x = xPos(ev.minute);
+      // Bord haut pour home, bord bas pour away, milieu pour neutral
+      const yLine = ev.side === 'home' ? padY + 4 : (ev.side === 'away' ? H - padY - 4 : midY);
+      let symbol = '', color = 'var(--text)', size = 5;
+      if (ev.kind === 'goal') { symbol = '⚽'; color = 'var(--green)'; size = 6; }
+      else if (ev.kind === 'own_goal') { symbol = '⚽'; color = '#ef4444'; size = 6; }
+      else if (ev.kind === 'card_yellow') { symbol = '▮'; color = '#facc15'; size = 5; }
+      else if (ev.kind === 'card_red') { symbol = '▮'; color = '#ef4444'; size = 5; }
+      else if (ev.kind === 'shot_on_target') { symbol = '○'; color = 'var(--blue)'; size = 4; }
+      else if (ev.kind === 'substitution') { continue; } // skip subs noise
+      else continue;
+      const title = `${ev.minute}' ${ev.kind}${ev.player ? ' — ' + ev.player : ''}${ev.score_after ? ' (' + ev.score_after + ')' : ''}`;
+      // Petit trait vertical + icon : line de baseline midY vers yLine + cercle/symbol
+      eventsMarkers += `
+        <line x1="${x.toFixed(1)}" y1="${midY}" x2="${x.toFixed(1)}" y2="${yLine}" stroke="${color}" stroke-width="1" opacity="0.5"/>
+        <circle cx="${x.toFixed(1)}" cy="${yLine}" r="${size}" fill="${color}" opacity="0.85"><title>${title}</title></circle>
+      `;
+    }
+  }
+
   svg.innerHTML = `${defs}
     <line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/>
     ${bars}
     <path d="${pathData}" fill="none" stroke="var(--text)" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+    ${eventsMarkers}
   `;
 }
 
