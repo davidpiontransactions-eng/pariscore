@@ -27310,6 +27310,31 @@ if (pathname.startsWith('/api/v1/bsd/squad/') && req.method === 'GET') {
   }
 }
 
+// bd 0hf4 Phase 2 — GET /api/v1/broadcasts/match/:matchId → TV channels diffuseurs
+// On-demand single event (complement Phase 1.1 cron pre-fetch FR J→J+7).
+// Wrap autour fetchBSDBroadcastsByEvent() cache TTL 6h.
+if (pathname.startsWith('/api/v1/broadcasts/match/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/broadcasts/match/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) {
+    return jsonResponse(res, 400, { error: 'bad_match_id', message: `Aucun _bsd_event_id résolu pour matchId="${rawId}"` });
+  }
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  try {
+    const channels = await fetchBSDBroadcastsByEvent(eventId);
+    return jsonResponse(res, 200, {
+      source: 'bsd_broadcasts',
+      event_id: Number(eventId),
+      count: channels.length,
+      tv_channels: channels,
+      fetched_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn(`  [BSD/broadcasts] event=${eventId} erreur:`, e.message);
+    return jsonResponse(res, 502, { error: 'bsd_broadcasts_failed', message: String(e.message || e) });
+  }
+}
+
 // bd r0v3 — GET /api/v1/bsd/fixtures/:teamId?limit=20&status=finished → fixtures team
 // Cache 1h. Params : limit (1-50, default 20), status (optionnel: finished|inprogress|notstarted).
 if (pathname.startsWith('/api/v1/bsd/fixtures/') && req.method === 'GET') {
