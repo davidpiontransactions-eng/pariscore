@@ -9924,11 +9924,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Sets</th>
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Jeux</th>
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Point</th>
+            <th style="padding:10px 6px;text-align:center;font-size:11px;color:#E2001A;font-family:'DM Mono',monospace;width:38px;" title="Break Point Pressure Index — pression live 0-100 par joueur (clutch+offense+serve+momentum × context)">BPPI</th>
             <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Statut</th>
           </tr>
         </thead>
         <tbody id="tennis-live-tbody">
-          <tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -10424,6 +10425,20 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tvb-edge-neg { color:var(--text3,#5a6068); background:transparent; }
   #tennis-vb-table .tvb-best-badge { display:inline-block; padding:3px 8px; border-radius:10px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; color:#0a0d0f; background:linear-gradient(135deg, #00e676, #ffa726); }
   #tennis-vb-table .tvb-best-badge.tvb-best-neg { background:var(--bg4,#1e2328); color:var(--text3,#5a6068); }
+  /* ── BPPI Break Point Pressure Index (bd 6xw) — colonne tennis live ── */
+  .tn-bppi-cell { display:flex; flex-direction:column; gap:3px; align-items:center; min-width:36px; }
+  .tn-bppi-bar { width:32px; height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; position:relative; }
+  .tn-bppi-bar > span { display:block; height:100%; border-radius:2px; transition:width .25s ease-out; }
+  .tn-bppi-low  > span { background:linear-gradient(90deg,#ff4d4d,#e2001a); }
+  .tn-bppi-mid  > span { background:linear-gradient(90deg,#ffa726,#fb8c00); }
+  .tn-bppi-high > span { background:linear-gradient(90deg,#00e676,#00c853); }
+  .tn-bppi-val { font-family:'DM Mono',monospace; font-size:10px; font-weight:700; line-height:1; }
+  .tn-bppi-val.low  { color:#ff4d4d; }
+  .tn-bppi-val.mid  { color:#ffa726; }
+  .tn-bppi-val.high { color:#00e676; }
+  .tn-bppi-missing { color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:11px; }
+  .tn-bppi-ctx { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; color:#E2001A; letter-spacing:.4px; margin-top:1px; font-weight:700; }
+
   /* ── Bets Prédictifs (colonne après Match · VB + Live tab) ── */
   .tvb-pred { display:flex; flex-direction:column; gap:3px; align-items:flex-start; min-width:150px; }
   .tvb-pred-kpi { display:inline-block; font-family:'DM Mono',monospace; font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 7px; border-radius:6px; text-transform:uppercase; }
@@ -14372,13 +14387,101 @@ async function _fetchLivescoreFallback() {
   return _lsMapEvents(await r.json());
 }
 
+// bd 6xw — BPPI rendu section détaillée dans le modal Insights tennis.
+// Source : window._tennisLastFetch (live cache enrichi par poll côté serveur).
+// Robuste : si pas de BPPI dispo (match non-live ou data incomplète) → renvoie ''.
+function _tnBppiSection(matchId, p1Name, p2Name) {
+  try {
+    const list = Array.isArray(window._tennisLastFetch) ? window._tennisLastFetch : [];
+    const live = list.find(x => x && String(x.id) === String(matchId));
+    if (!live || !live.bppi) return '';
+    const bppi = live.bppi;
+    if (bppi.missing === true) {
+      return `<div class="tennis-detail-section">
+        <h3>🎾 PRESSION BREAKPOINT (BPPI)</h3>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3,#5a6068);padding:8px 0;">Données pression insuffisantes — match récent ou source incomplète.</div>
+      </div>`;
+    }
+    const _tone = v => (v >= 65 ? '#00e676' : (v >= 45 ? '#ffa726' : '#ff4d4d'));
+    const _toneBg = v => (v >= 65 ? 'rgba(0,230,118,.12)' : (v >= 45 ? 'rgba(255,167,38,.12)' : 'rgba(255,77,77,.12)'));
+    const p1Val = Math.max(0, Math.min(100, Number(bppi.p1) || 0));
+    const p2Val = Math.max(0, Math.min(100, Number(bppi.p2) || 0));
+    const c = bppi.components || { p1: {}, p2: {} };
+    const ctxFlags = Array.isArray(bppi.context_flags) ? bppi.context_flags : [];
+    const ctxBadge = ctxFlags.length
+      ? `<span style="display:inline-block;font-family:'DM Mono',monospace;font-size:10px;font-weight:800;color:#fff;background:linear-gradient(135deg,#ff4d4d,#e2001a);padding:3px 8px;border-radius:10px;margin-left:8px;letter-spacing:.4px;">CONTEXT × ${bppi.context_weight || 1} · ${ctxFlags.join(', ').toUpperCase()}</span>`
+      : '';
+    const gauge = (label, val) => {
+      const col = _tone(val);
+      const bg = _toneBg(val);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;background:${bg};">
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);min-width:120px;">${_escTennis(label)}</span>
+        <div style="flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+          <span style="display:block;height:100%;width:${val}%;background:${col};border-radius:3px;"></span>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${col};min-width:32px;text-align:right;">${val}</span>
+      </div>`;
+    };
+    const playerBlock = (name, val, comp) => `
+      <div style="flex:1;min-width:240px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:14px;color:var(--text,#e8eaed);">${_escTennis(name)}</span>
+          <span style="font-family:Syne,sans-serif;font-weight:800;font-size:26px;color:${_tone(val)};line-height:1;">${val}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          ${gauge('Clutch défensif', comp.clutch || 0)}
+          ${gauge('Offense breaks', comp.offense || 0)}
+          ${gauge('Pression service', comp.serve || 0)}
+          ${gauge('Momentum 5 jeux', comp.momentum || 0)}
+        </div>
+      </div>`;
+    return `<div class="tennis-detail-section">
+      <h3>🎾 PRESSION BREAKPOINT (BPPI)${ctxBadge}</h3>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;">
+        ${playerBlock(p1Name || 'Joueur 1', p1Val, c.p1 || {})}
+        ${playerBlock(p2Name || 'Joueur 2', p2Val, c.p2 || {})}
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);">
+        Pondérations : 30% clutch · 30% offense · 20% service · 20% momentum · × context (deuce/set point/match point). Source : poll live 30s (BSD + ESPN).
+      </div>
+    </div>`;
+  } catch (_) { return ''; }
+}
+
+// bd 6xw — BPPI rendu cellule colonne tennis live (2 mini-barres p1/p2 empilées).
+function _tnBppiCell(m) {
+  const bppi = m && m.bppi;
+  if (!bppi || bppi.missing === true) {
+    return `<span class="tn-bppi-missing" title="Données pression insuffisantes (match récent ou source incomplète)">—</span>`;
+  }
+  const _toneCls = v => (v >= 65 ? 'high' : (v >= 45 ? 'mid' : 'low'));
+  const p1 = Math.max(0, Math.min(100, Number(bppi.p1) || 0));
+  const p2 = Math.max(0, Math.min(100, Number(bppi.p2) || 0));
+  const t1 = _toneCls(p1), t2 = _toneCls(p2);
+  const c = bppi.components || { p1: {}, p2: {} };
+  const tip = `BPPI — Pression live 0-100\n`
+    + `${(m.player1 && m.player1.name) || 'J1'} : ${p1} (clutch ${c.p1.clutch || 0} · offense ${c.p1.offense || 0} · serve ${c.p1.serve || 0} · mom ${c.p1.momentum || 0})\n`
+    + `${(m.player2 && m.player2.name) || 'J2'} : ${p2} (clutch ${c.p2.clutch || 0} · offense ${c.p2.offense || 0} · serve ${c.p2.serve || 0} · mom ${c.p2.momentum || 0})\n`
+    + `Context × ${bppi.context_weight || 1}${(bppi.context_flags && bppi.context_flags.length) ? ' (' + bppi.context_flags.join(',') + ')' : ''}`;
+  const ctxFlag = (bppi.context_flags && bppi.context_flags.length)
+    ? `<span class="tn-bppi-ctx" title="${_escTennis(bppi.context_flags.join(', '))}">${bppi.context_flags.includes('match_point') ? 'MP' : (bppi.context_flags.includes('set_point') ? 'SP' : 'DE')}</span>`
+    : '';
+  return `<div class="tn-bppi-cell" title="${_escTennis(tip)}">
+    <div class="tn-bppi-bar tn-bppi-${t1}"><span style="width:${p1}%"></span></div>
+    <span class="tn-bppi-val ${t1}">${p1}</span>
+    <div class="tn-bppi-bar tn-bppi-${t2}"><span style="width:${p2}%"></span></div>
+    <span class="tn-bppi-val ${t2}">${p2}</span>
+    ${ctxFlag}
+  </div>`;
+}
+
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
   const onlyLive = document.getElementById('tennis-live-only')?.checked;
   const list = onlyLive ? (matches || []).filter(m => m.is_live) : (matches || []);
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement.' : 'Aucun match disponible.'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement.' : 'Aucun match disponible.'}</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(m => {
@@ -14414,6 +14517,7 @@ function renderTennisLive(matches) {
       <td style="text-align:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></td>
       <td style="text-align:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</td>
       <td style="text-align:center;"><span class="tennis-point">${_escTennis(point)}</span></td>
+      <td style="text-align:center;vertical-align:middle;padding:6px 4px;">${_tnBppiCell(m)}</td>
       <td style="text-align:center;" class="${_tennisStatusClass(m)}">${_escTennis(m.status)}</td>
     </tr>`;
   }).join('');
@@ -14454,7 +14558,7 @@ async function tickTennisLive() {
     if (statusEl) statusEl.textContent = 'Erreur réseau';
     const tbody = document.getElementById('tennis-live-tbody');
     if (tbody && !window._tennisLastFetch.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</td></tr>';
     }
   }
 }
@@ -17666,6 +17770,7 @@ function renderTennisDashboard(data, preds) {
         ${renderServeCard(p2Name, serve2)}
       </div>
     </div>
+    ${_tnBppiSection(data.id || data.match_id || data._id, p1Name, p2Name)}
     ${predHtml}
     ${pbpHtml}
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);font-size:10px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Source : BSD · Rafraîchi toutes les 30s</div>`;
