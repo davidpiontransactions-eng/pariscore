@@ -17643,6 +17643,122 @@ function matchSetProbs(holdA, holdB) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  bd e3mr P1 — Brier Score backtest tennis sur predictions archivées
+//
+//  Source : tennisHistory[] (rempli par cron tennis archivePastMatches + ETL
+//  BSD bsd_prediction). Filtre période [7d, 30d, 90d, all]. Extrait
+//  forecast = bsd_prediction.prob_p1_wins (si disponible) sinon predicted.ml_prob,
+//  outcome = (winner === 'p1') ? 1 : 0.
+//
+//  Brier Score = mean((forecast - outcome)²) ∈ [0, 1]. Lower = better.
+//  - 0.25 = baseline coin-flip 50/50
+//  - <0.22 = modèle utile
+//  - <0.18 = bon modèle prédictif
+//
+//  Calibration buckets : 10 bins [0-10%, 10-20%, ..., 90-100%].
+//  Pour chaque bucket : observed_freq vs predicted_range. Modèle bien calibré
+//  si observed ≈ midpoint(predicted_range) (reliability diagram diagonale).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function _e3mrPeriodCutoffMs(period) {
+  const now = Date.now();
+  switch (String(period || '').toLowerCase()) {
+    case '7d':  return now - 7  * 86400000;
+    case '30d': return now - 30 * 86400000;
+    case '90d': return now - 90 * 86400000;
+    case 'all':
+    default:    return 0;
+  }
+}
+
+/**
+ * Compute Brier score + calibration buckets sur tennis predictions archivées.
+ * @param {Object} opts
+ * @param {string} [opts.period='30d'] - filtrage temporel
+ * @returns {{ brier_score:number|null, n_samples:number, period:string,
+ *             calibration_buckets:Array, insufficient_data?:boolean }}
+ */
+function computeTennisBrierBacktest({ period = '30d' } = {}) {
+  const cutoffMs = _e3mrPeriodCutoffMs(period);
+  const pool = (typeof tennisHistory !== 'undefined' && Array.isArray(tennisHistory))
+    ? tennisHistory
+    : [];
+
+  // Buckets [0-10%, 10-20%, ..., 90-100%]
+  const buckets = Array.from({ length: 10 }, (_, i) => ({
+    range: [i * 0.1, (i + 1) * 0.1],
+    midpoint: (i * 0.1 + (i + 1) * 0.1) / 2,
+    n: 0,
+    observed_wins: 0,
+    sum_forecast: 0,
+  }));
+
+  let brierSum = 0;
+  let nSamples = 0;
+
+  for (const h of pool) {
+    if (!h) continue;
+    // Filtre temporel
+    const tArchive = h._archived_at ? Date.parse(h._archived_at) : (h.commence_time ? Date.parse(h.commence_time) : 0);
+    if (cutoffMs > 0 && (!tArchive || tArchive < cutoffMs)) continue;
+    if (!h.winner || (h.winner !== 'p1' && h.winner !== 'p2')) continue;
+
+    // Forecast prioritaire : bsd_prediction.prob_p1_wins (0-100 ou 0-1)
+    let forecast = null;
+    if (h.bsd_prediction && Number.isFinite(parseFloat(h.bsd_prediction.prob_p1_wins))) {
+      const raw = parseFloat(h.bsd_prediction.prob_p1_wins);
+      forecast = raw > 1 ? raw / 100 : raw; // normalise 0-100 → 0-1
+    } else if (h.predicted && Number.isFinite(parseFloat(h.predicted.ml_prob_p1))) {
+      forecast = parseFloat(h.predicted.ml_prob_p1);
+      if (forecast > 1) forecast = forecast / 100;
+    }
+    if (!Number.isFinite(forecast) || forecast < 0 || forecast > 1) continue;
+
+    const outcome = h.winner === 'p1' ? 1 : 0;
+    const err = forecast - outcome;
+    brierSum += err * err;
+    nSamples++;
+
+    // Calibration bucket
+    let bIdx = Math.min(9, Math.floor(forecast * 10));
+    buckets[bIdx].n++;
+    buckets[bIdx].observed_wins += outcome;
+    buckets[bIdx].sum_forecast += forecast;
+  }
+
+  if (nSamples < 10) {
+    return {
+      brier_score: null,
+      n_samples: nSamples,
+      period,
+      calibration_buckets: [],
+      insufficient_data: true,
+      hint: 'Need >= 10 settled tennis predictions with prob_p1_wins. Run ETL bsd-tennis seed or wait for archive cron.',
+    };
+  }
+
+  const calibration = buckets
+    .filter(b => b.n > 0)
+    .map(b => ({
+      prob_range: [parseFloat(b.range[0].toFixed(2)), parseFloat(b.range[1].toFixed(2))],
+      midpoint: parseFloat(b.midpoint.toFixed(2)),
+      n: b.n,
+      observed_freq: parseFloat((b.observed_wins / b.n).toFixed(4)),
+      mean_forecast: parseFloat((b.sum_forecast / b.n).toFixed(4)),
+    }));
+
+  return {
+    brier_score: parseFloat((brierSum / nSamples).toFixed(5)),
+    n_samples: nSamples,
+    period,
+    calibration_buckets: calibration,
+    baseline_coin_flip: 0.25,
+    method: 'brier_archive_predictions',
+    ts: Date.now(),
+  };
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 //  TENNIS ABSTRACT — résolveur d'URL + scraper léger "≥ 1 set"
 //  Source : tennisabstract.com/cgi-bin/{w}player.cgi?p={id}/{First-Last}
@@ -24596,6 +24712,25 @@ if (pathname.match(/^\/api\/v1\/bankroll\/tx\/\d+$/) && req.method === 'DELETE')
 if (pathname === '/api/v1/accuracy/trends') {
   const weeks = parseInt(query.weeks) || 12;
   return jsonResponse(res, 200, getWeeklyAccuracyTrends(weeks));
+}
+
+// bd e3mr P1 — GET /api/v1/accuracy/tennis-brier?period=7d|30d|90d|all
+// Brier score backtest + calibration 10 buckets sur tennisHistory archivé.
+// Sécurité: param period sanitize regex (^(7d|30d|90d|all)$), pas d'auth requis
+// (lecture seule sur archive publique, comme /accuracy/public).
+if (pathname === '/api/v1/accuracy/tennis-brier' && req.method === 'GET') {
+  const periodRaw = String(query.period || '30d');
+  if (!/^(7d|30d|90d|all)$/.test(periodRaw)) {
+    return jsonResponse(res, 400, { error: 'invalid_period', allowed: ['7d', '30d', '90d', 'all'] });
+  }
+  try {
+    const t0 = Date.now();
+    const report = computeTennisBrierBacktest({ period: periodRaw });
+    report.elapsed_ms = Date.now() - t0;
+    return jsonResponse(res, 200, report);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tennis_brier_error', detail: e.message });
+  }
 }
 
 // GET /api/v1/accuracy/public — Badge hero (proof social, style Datafoot)
