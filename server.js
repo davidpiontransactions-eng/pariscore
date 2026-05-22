@@ -27698,6 +27698,13 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         bsd_referee_id: match.bsd_referee_id || match.referee_id || null,
         bsd_venue_id: match.bsd_venue_id || match.venue_id || null,
         bsd_league_id: match.bsd_league_id || match.league_id || null,
+        // bd 0hf4 Phase 3 — TV broadcasters (cache cron Phase 1.1 + attach in-place idempotent)
+        tv_channels: (function() {
+          try {
+            if (typeof attachBSDBroadcasts === 'function') attachBSDBroadcasts(match, 'FR');
+          } catch (_) {}
+          return Array.isArray(match.tv_channels) ? match.tv_channels : [];
+        })(),
       });
     } catch (e) {
       console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
