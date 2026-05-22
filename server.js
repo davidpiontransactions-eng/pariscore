@@ -1316,6 +1316,116 @@ function broadcastSSE(eventName, data) {
   }
 }
 
+// ─── bd a8n / 6v0 — SSE Pulse Broadcast (Market Divergence + DR Spike) ──────
+// Debounce per (type,matchId) — empêche le spam SSE en cas d'oscillation odds
+// proche du seuil. Fenêtre par défaut 30s : un même match ne re-broadcast pas
+// le même type d'événement avant 30s. Tunable via env PULSE_DEBOUNCE_MS.
+const PULSE_DEBOUNCE_MS = Math.max(5000, parseInt(process.env.PULSE_DEBOUNCE_MS || '30000', 10));
+const _pulseLastBroadcast = new Map(); // key=`${type}:${matchId}` → ts
+// bd a8n — slope threshold (% par minute) déclencheur anomaly market_divergence.
+// Default 2%/min ≈ baisse 30% en 15min (= sharp money). Tunable env.
+const DIVERGENCE_SLOPE_THRESHOLD_PCT = parseFloat(process.env.DIVERGENCE_SLOPE_THRESHOLD_PCT || '2.0');
+// bd 6v0 — DR spike threshold (% drop instantané sur la cote dominante du set
+// en cours vs cote match). Default 5%. Tunable env.
+const DR_SPIKE_THRESHOLD_PCT = parseFloat(process.env.DR_SPIKE_THRESHOLD_PCT || '5.0');
+
+function _pulseShouldBroadcast(type, matchId) {
+  if (matchId == null) return false;
+  const key = `${type}:${matchId}`;
+  const last = _pulseLastBroadcast.get(key) || 0;
+  if (Date.now() - last < PULSE_DEBOUNCE_MS) return false;
+  _pulseLastBroadcast.set(key, Date.now());
+  return true;
+}
+
+// bd a8n — Compute Market Divergence (delta + slope sur fenêtre 15min)
+// odds_snap_${matchId} = [{home, draw, away, ts}] (max 12 snapshots).
+// Retourne {delta_pct, slope_pct_per_min, anomaly, type} ou null si insuffisant.
+// type: 'cyan' (divergence+ favori durcit), 'amber' (divergence-), 'red' (steam multi-marché).
+function computeMarketDivergence(matchId) {
+  try {
+    if (matchId == null) return null;
+    const history = kvGet(`odds_snap_${matchId}`) || [];
+    if (!Array.isArray(history) || history.length < 2) return null;
+    const now = Date.now();
+    const windowMs = 15 * 60 * 1000;
+    const window = history.filter(s => s && s.ts && (now - s.ts) <= windowMs);
+    if (window.length < 2) return null;
+    const first = window[0];
+    const last = window[window.length - 1];
+    if (!first || !last || first.home == null || last.home == null) return null;
+    // Delta sur cote home (la plus représentative pour favori) en %
+    const deltaHome = ((last.home - first.home) / first.home) * 100;
+    const deltaAway = (last.away != null && first.away != null)
+      ? ((last.away - first.away) / first.away) * 100 : 0;
+    const dtMin = Math.max(1, (last.ts - first.ts) / 60000);
+    const slopeHome = deltaHome / dtMin;
+    const slopeMax = Math.max(Math.abs(slopeHome), Math.abs(deltaAway / dtMin));
+    const anomaly = slopeMax >= DIVERGENCE_SLOPE_THRESHOLD_PCT;
+    let type = 'amber';
+    if (deltaHome < -2 && deltaAway < -2) type = 'red'; // steam multi-marché
+    else if (deltaHome < 0) type = 'cyan'; // favori durcit
+    else type = 'amber';
+    return {
+      delta_pct: parseFloat(deltaHome.toFixed(2)),
+      slope_pct_per_min: parseFloat(slopeHome.toFixed(3)),
+      anomaly,
+      type,
+      window_min: parseFloat(dtMin.toFixed(1)),
+      samples: window.length,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+// bd a8n — Broadcast SSE market_divergence si anomaly détecté + debounce.
+// matchId int validé (sanitize: must be number/string truthy).
+function broadcastMarketDivergence(matchId) {
+  const div = computeMarketDivergence(matchId);
+  if (!div || !div.anomaly) return false;
+  if (!_pulseShouldBroadcast('market_divergence', matchId)) return false;
+  if (sseClients.size === 0) return false;
+  broadcastSSE('market_divergence', {
+    type: 'market_divergence',
+    matchId: String(matchId).slice(0, 64),
+    delta_pct: div.delta_pct,
+    slope_pct_per_min: div.slope_pct_per_min,
+    pulse_type: div.type,
+    window_min: div.window_min,
+  });
+  return true;
+}
+
+// bd 6v0 — DR Spike SSE event broadcast tennis live.
+// Détecte écart |DR_set_courant - DR_match| > seuil (threshold env DR_SPIKE_THRESHOLD_PCT,
+// exprimé en % du DR_match). Sécurité: side ∈ {p1,p2}, matchId string truncated 64.
+function broadcastTennisDRSpike(matchId, drMatch, drSet, side) {
+  try {
+    if (!matchId) return false;
+    if (!Number.isFinite(drMatch) || !Number.isFinite(drSet) || drMatch <= 0) return false;
+    const deltaDR = drSet - drMatch;
+    const deltaPct = Math.abs(deltaDR / drMatch) * 100;
+    if (deltaPct < DR_SPIKE_THRESHOLD_PCT) return false;
+    if (!_pulseShouldBroadcast('dr_spike', matchId)) return false;
+    if (sseClients.size === 0) return false;
+    const safeSide = (side === 'p1' || side === 'p2') ? side : 'p1';
+    broadcastSSE('dr_spike', {
+      type: 'dr_spike',
+      matchId: String(matchId).slice(0, 64),
+      sport: 'tennis',
+      side: safeSide,
+      dr_match: parseFloat(drMatch.toFixed(3)),
+      dr_set: parseFloat(drSet.toFixed(3)),
+      delta_dr: parseFloat(deltaDR.toFixed(3)),
+      odds_delta_pct: parseFloat(deltaPct.toFixed(2)),
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 // Retourne db.matches avec le mock injecté en tête si actif
 // bd pxt7 — Champs lourds inutilisés par le tableau Foot (#page-matchs).
 // Conservés en mémoire (db.matches) pour /api/v1/insights, /api/v1/comparateur, AI Scout, cron BSD.
@@ -6823,6 +6933,9 @@ function buildMatchRecord(raw) {
     const arr = Array.isArray(history) ? history : (history?.home != null ? [history] : []);
     const snap = { home: record.odds.home, draw: record.odds.draw, away: record.odds.away, ts: Date.now() };
     kvSet(snapKey, [...arr, snap].slice(-12));
+    // bd a8n — Post snapshot, check market divergence (delta+slope 15min) → SSE.
+    // Debounce 30s per matchId garantit absence spam si fetchOdds cron tape.
+    try { broadcastMarketDivergence(record.id); } catch (_) {}
   }
 
   // ── SPRINT 1 P0 — BD-DATA-001 — IC90 bornes sur best_edge (Normal-approx) ──
@@ -16793,6 +16906,25 @@ async function pollTennisLive() {
       if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
     }
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
+    // bd 6v0 — DR Spike detection on every poll for live tennis matches.
+    // Compare DR_set_courant vs DR_match → si |delta|/dr_match > seuil → SSE.
+    // Fire-and-forget, debounce 30s per matchId garantit pas de spam.
+    try {
+      for (const m of data) {
+        if (!m || !m.is_live) continue;
+        const curSet = (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
+          : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null);
+        const drBase = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+        if (!drBase || !Number.isFinite(drBase.dr)) continue;
+        const drEnriched = _drAttachCurrentSet(drBase, curSet);
+        const drSetCur = drEnriched?.dr_set_courant;
+        if (!drSetCur || !Number.isFinite(drSetCur.dr) || drSetCur.reliable === false) continue;
+        // DR favorise J1 si DR > 1 → DR=p1/p2 ratio (déjà p1-centric côté Sofa).
+        // Spike side = celui qui voit son DR augmenter (=dominant set en cours).
+        const side = drSetCur.dr >= drBase.dr ? 'p1' : 'p2';
+        broadcastTennisDRSpike(m.id, drBase.dr, drSetCur.dr, side);
+      }
+    } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
