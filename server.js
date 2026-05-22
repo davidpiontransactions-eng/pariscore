@@ -4880,6 +4880,86 @@ function apiCacheClear(source) {
   }
 }
 
+// ─── bd 3vn — TTL cache homogène (Phase 1) ──────────────────────────────────
+// Source unique TTL via cache_profiles.json (root projet, sibling de leagues_config.json).
+// Override env var: CACHE_TTL_<PROFILE_UPPERCASE> (ex: CACHE_TTL_BSD_INCIDENTS=120000)
+// Fallback: si profile.json absent OU clé absente OU parsing fail → renvoie `fallbackMs`
+// → ZÉRO régression : code existant continue à utiliser TTL hardcoded en l'absence du config.
+// Lecture fichier mise en cache 60s (mtime check + reload), évite I/O répété sur chemin chaud.
+const _CACHE_PROFILES_FILE = path.join(__dirname, 'cache_profiles.json');
+const _CACHE_PROFILES_RELOAD_MS = 60 * 1000;
+let _cacheProfilesCache = { data: null, loadedAt: 0, mtimeMs: 0, lastErr: null };
+
+function _loadCacheProfiles() {
+  const now = Date.now();
+  if (_cacheProfilesCache.data && (now - _cacheProfilesCache.loadedAt) < _CACHE_PROFILES_RELOAD_MS) {
+    return _cacheProfilesCache.data;
+  }
+  try {
+    const stat = fs.statSync(_CACHE_PROFILES_FILE);
+    if (_cacheProfilesCache.data && stat.mtimeMs === _cacheProfilesCache.mtimeMs) {
+      _cacheProfilesCache.loadedAt = now;
+      return _cacheProfilesCache.data;
+    }
+    const raw = fs.readFileSync(_CACHE_PROFILES_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    _cacheProfilesCache = { data: parsed, loadedAt: now, mtimeMs: stat.mtimeMs, lastErr: null };
+    return parsed;
+  } catch (e) {
+    if (!_cacheProfilesCache.lastErr || _cacheProfilesCache.lastErr.code !== e.code) {
+      console.warn(`  ⚠ cache_profiles.json indisponible (${e.code || e.message}) — fallbacks hardcoded utilisés`);
+    }
+    _cacheProfilesCache = { data: null, loadedAt: now, mtimeMs: 0, lastErr: e };
+    return null;
+  }
+}
+
+/**
+ * getCacheTTL(profileKey, fallbackMs)
+ * - Lit cache_profiles.json (cache fichier 60s + mtime invalidation)
+ * - Override prioritaire: process.env.CACHE_TTL_<PROFILE_UPPERCASE> (parseInt strict)
+ * - Renvoie fallbackMs si profile absent OU fichier introuvable OU env var invalide
+ * → ZÉRO régression: les call sites passent leur TTL hardcoded historique en fallback.
+ */
+function getCacheTTL(profileKey, fallbackMs) {
+  if (typeof profileKey === 'string' && profileKey.length > 0) {
+    const envKey = 'CACHE_TTL_' + profileKey.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+    const envVal = process.env[envKey];
+    if (envVal !== undefined) {
+      const n = parseInt(envVal, 10);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  }
+  const profiles = _loadCacheProfiles();
+  if (profiles && Object.prototype.hasOwnProperty.call(profiles, profileKey)) {
+    const v = profiles[profileKey];
+    if (Number.isFinite(v) && v > 0) return v;
+  }
+  if (Number.isFinite(fallbackMs) && fallbackMs > 0) return fallbackMs;
+  return API_CACHE_TTL;
+}
+
+/** Diag route admin — snapshot état runtime profiles + overrides env */
+function getCacheProfilesSnapshot() {
+  const profiles = _loadCacheProfiles();
+  const overrides = {};
+  for (const k of Object.keys(process.env)) {
+    if (k.startsWith('CACHE_TTL_')) {
+      const n = parseInt(process.env[k], 10);
+      overrides[k] = Number.isFinite(n) && n > 0 ? n : `<invalid: ${process.env[k]}>`;
+    }
+  }
+  return {
+    file: _CACHE_PROFILES_FILE,
+    loadedAt: _cacheProfilesCache.loadedAt,
+    mtimeMs: _cacheProfilesCache.mtimeMs,
+    lastError: _cacheProfilesCache.lastErr ? (_cacheProfilesCache.lastErr.code || _cacheProfilesCache.lastErr.message) : null,
+    profileCount: profiles ? Object.keys(profiles).filter(k => k !== '_meta').length : 0,
+    profiles: profiles || null,
+    envOverrides: overrides,
+  };
+}
+
 function apiCacheCleanExpired() {
   const before = sqldb.prepare('SELECT COUNT(*) as c FROM api_cache WHERE expires_at < ?').get(Date.now());
   sqldb.prepare('DELETE FROM api_cache WHERE expires_at < ?').run(Date.now());
@@ -12897,7 +12977,7 @@ async function fetchFootballDataMatches(dateFrom, dateTo) {
       return [];
     }
     const adapted = res.data.matches.map(footballDataToOddsApiFormat).filter(Boolean);
-    apiCacheSet(cacheKey, adapted, 'football_data', FOOTBALL_DATA_TTL_MS);
+    apiCacheSet(cacheKey, adapted, 'football_data', getCacheTTL('football_data', FOOTBALL_DATA_TTL_MS)); // bd 3vn
     return adapted;
   } catch (e) {
     console.warn('  [Football-Data] fetchMatches erreur:', e.message);
@@ -12975,7 +13055,7 @@ async function fetchFootballDataMatchDetail(fdMatchId) {
       referees: Array.isArray(res.data.referees) ? res.data.referees : [],
       _source: 'football_data',
     };
-    apiCacheSet(cacheKey, out, 'football_data', FOOTBALL_DATA_DETAIL_TTL_MS);
+    apiCacheSet(cacheKey, out, 'football_data', getCacheTTL('football_data_detail', FOOTBALL_DATA_DETAIL_TTL_MS)); // bd 3vn
     return out;
   } catch (e) {
     console.warn(`  [Football-Data] detail ${fdMatchId} erreur:`, e.message);
@@ -12998,10 +13078,10 @@ async function fetchOpenFootballLeague(leagueMeta) {
     const url = `${OPENFOOTBALL_BASE}/${season}/${leagueMeta.code}.json`;
     const res = await httpsGet(url);
     if (res.status !== 200 || !res.data || typeof res.data !== 'object' || !Array.isArray(res.data.matches)) {
-      apiCacheSet(cacheKey, '__NEG__', 'openfootball', OPENFOOTBALL_NEG_TTL_MS);
+      apiCacheSet(cacheKey, '__NEG__', 'openfootball', getCacheTTL('openfootball_neg', OPENFOOTBALL_NEG_TTL_MS)); // bd 3vn
       return null;
     }
-    apiCacheSet(cacheKey, res.data, 'openfootball', OPENFOOTBALL_TTL_MS);
+    apiCacheSet(cacheKey, res.data, 'openfootball', getCacheTTL('openfootball', OPENFOOTBALL_TTL_MS)); // bd 3vn
     return res.data;
   } catch (e) {
     console.warn(`  [OpenFootball] ${leagueMeta.code} erreur:`, e.message);
@@ -23513,7 +23593,7 @@ if (pathname.startsWith('/api/v1/sources/understat/')) {
         out._parse_error = String(parseErr.message || parseErr).slice(0, 200);
       }
       out._latency_ms = Date.now() - tStart;
-      apiCacheSet(cacheKey, out, 'understat', 6 * 3600 * 1000);
+      apiCacheSet(cacheKey, out, 'understat', getCacheTTL('understat', 6 * 3600 * 1000)); // bd 3vn
       return jsonResponse(res, 200, { ...out, _cache: 'miss' });
     } catch (err) {
       const status = err && err.status ? err.status : 500;
@@ -25006,6 +25086,13 @@ if (pathname === '/api/v1/admin/status') {
       status: testMatch?.live_status ?? null,
     },
   });
+}
+
+// GET /api/v1/admin/cache-profiles (protégé JWT admin) — bd 3vn diag TTL runtime
+if (pathname === '/api/v1/admin/cache-profiles' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé' });
+  return jsonResponse(res, 200, getCacheProfilesSnapshot());
 }
 
 // POST /api/v1/admin/backtest-bsd (protégé auth — admin ou premium)
@@ -29054,17 +29141,24 @@ if (pathname.startsWith('/api/v1/bsd/transfers/') && req.method === 'GET') {
 // Gate: footPro (déjà appliqué par srvPlanGate). Cache: api_cache sqlite (TTL adaptés).
 // Format réponse: { source:'bsd', event_id, data, cached:bool, fetched_at }
 // Safe-fail: retourne 200 + data:null si BSD upstream KO (UI affiche placeholder).
-const BSD_ENRICH_TTL = {
-  lineups:    6 * 3600 * 1000,   // 6h (compos peu changeantes hors match-day)
-  shotmap:    2 * 60 * 1000,     // 2min (live, refresh fréquent)
-  incidents:  60 * 1000,         // 1min (live timeline)
-  predictions:6 * 3600 * 1000,   // 6h (ML CatBoost stable)
-  polymarket: 5 * 60 * 1000,     // 5min (prediction market)
-  broadcasts: 24 * 3600 * 1000,  // 24h (TV channels figés)
-  compare_odds: 5 * 60 * 1000,   // bd c81b 5min (14 books + movement)
-  social:     30 * 60 * 1000,    // bd ueg0 30min (social items tweets/news/videos)
-  best_odds:  5 * 60 * 1000,     // bd j6pz Phase 2 5min (top-of-book aggregate vs compare)
-};
+// bd 3vn — TTL lookup via getCacheTTL (cache_profiles.json + env override).
+// Fallbacks hardcoded préservés pour ZÉRO régression si profile.json absent.
+const BSD_ENRICH_TTL = new Proxy({}, {
+  get(_t, kind) {
+    switch (kind) {
+      case 'lineups':      return getCacheTTL('bsd_lineups',      6 * 3600 * 1000);
+      case 'shotmap':      return getCacheTTL('bsd_shotmap',      2 * 60 * 1000);
+      case 'incidents':    return getCacheTTL('bsd_incidents',    60 * 1000);
+      case 'predictions':  return getCacheTTL('bsd_predictions',  6 * 3600 * 1000);
+      case 'polymarket':   return getCacheTTL('bsd_polymarket',   5 * 60 * 1000);
+      case 'broadcasts':   return getCacheTTL('bsd_broadcasts',   24 * 3600 * 1000);
+      case 'compare_odds': return getCacheTTL('bsd_compare_odds', 5 * 60 * 1000);
+      case 'social':       return getCacheTTL('bsd_social',       30 * 60 * 1000);
+      case 'best_odds':    return getCacheTTL('bsd_best_odds',    5 * 60 * 1000);
+      default: return undefined;
+    }
+  }
+});
 
 function _bsdResolveEventId(matchId) {
   // Accepte: id frontend (ex "bsd_207463_2026-05-21"), _bsd_event_id direct (int), fixture_id
