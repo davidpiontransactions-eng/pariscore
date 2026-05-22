@@ -166,11 +166,11 @@ Datasets Apify one-shot disponibles racine projet:
 | **C** | 3 | Cross-ref team naming validation — Map Flashscore slug → BSD team_id (fuzzy normName), audit script divergences | 2h | MED | Validation normName + CI/CD |
 | **D** | 4 | Venue + referee enrichment — alternative à bd `82th` BSD Phase 4, cross-source modal Contexte | 1h | MED | Backup `82th` |
 | **E** | 5 | Lineups + statistics live fallback — gap-fill quand BSD live partial (ESPN-only matchs), map stat_name → `live_*` champs | 1-2h | MED | Live data robustness |
-| **F** | 6 | `has_live_stream` flag UI — badge "Live TV" tableau matchs (icone TV), reuse pattern bd `0hf4` | 30min | LOW | UX nice-to-have |
+| **F** | 6 | ✅ livré — `tools/import-flashscore-livestream.js` ETL dataset Apify → `api_cache` key `livestream_<normHome>_<normAway>` TTL 7j source `flashscore_livestream`. server.js `attachFlashscoreLiveStream()` Map cache lazy reload 1min + wire 2 sites (`matchesForBroadcast` + `/api/v1/matches`). pariscore.html pill `📡 STREAM` ambre next to TV badge. 3 entries seeded dataset. | 30min | LOW | ✓ DONE |
 
 **Effort total cumul:** ~5.5-6.5h si tous exécutés restants (Plan A ✅).
 **Limite:** datasets Apify one-shot ≠ feed continu. Value durable nécessite scraper continuous (Apify subscription) OU pivot xvalue.ai (bd `ffh` GO 85/100).
-**Ordre recommandé:** ~~A~~ ✅ → F (badge UI) → D (venue+referee alt 82th) → E (live fallback) → B (standings backup) → C (validation audit).
+**Ordre recommandé:** ~~A~~ ✅ → ~~F~~ ✅ → D (venue+referee alt 82th) → E (live fallback) → B (standings backup) → C (validation audit).
 
 #### Sous-tâches `6jro` Sofascore Apify datasets — 4 plans
 
@@ -203,7 +203,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 | Plan | bd | Tâche | Effort | ROI |
 |---|---|---|---|---|
 | ~~A~~ ✅ | `qm6a` | Logos backup Flashscore → api_cache (commit `3fc4ca7`) | 30min | HIGH |
-| F | `qm6a` | `has_live_stream` badge UI tableau matchs (reuse `0hf4`) | 30min | LOW |
+| ~~F~~ ✅ | `qm6a` | has_live_stream badge UI tableau matchs (commit + tool ETL livré) | 30min | LOW |
 | I | `6jro` | Tennis `hasSingles`/`hasDoubles` filter onglet Tennis | 30min | LOW |
 | D | `qm6a` | Venue + referee enrichment (alt bd `82th`) | 1h | MED |
 | H | `6jro` | Football `initialFeaturedArticle` editorial modal Insights | 1h | MED |
