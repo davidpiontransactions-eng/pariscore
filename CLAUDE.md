@@ -153,7 +153,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | ID | Titre |
 |---|---|
 | `gz7s` | Benchmark Rotowire Soccer — ideas to steal (orphan CLAUDE.md→bd) |
-| `r0v3` | BSD coverage Phase 5 — Squad endpoint + fixtures variant (proxies REST simples, LOW ROI, 1-2h) |
+| ~~`r0v3`~~ ✅ | BSD coverage Phase 5 — Squad endpoint + fixtures variant — livré : `GET /api/v1/bsd/squad/:teamId` (wrap `fetchBSDTeamSquad` cache 6h, expose attributs/availability/injury) + `GET /api/v1/bsd/fixtures/:teamId?limit=N&status=...` (helper `fetchBSDTeamFixtures` cache 1h, schema normalisé). |
 | `qm6a` | **Flashscore datasets integration** — voir sous-table dédiée ci-dessous (6 plans A-F) |
 | `6jro` | **Sofascore Apify datasets integration** — voir sous-table dédiée ci-dessous (4 plans G-J) |
 
@@ -221,7 +221,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 | ~~C~~ ✅ | `qm6a` | Cross-ref team naming validation audit (script offline+online + heuristique shorthand) | 2h | MED |
 | ~~E~~ ✅ | `qm6a` | Live stats fallback Flashscore (ETL + cache + wire insights + match list fallback) | 1-2h | MED |
 | C | `qm6a` | Cross-ref team naming validation audit | 2h | MED |
-| `r0v3` | — | BSD Phase 5 — Squad endpoint + fixtures variant proxies | 1-2h | LOW |
+| ~~`r0v3`~~ ✅ | — | BSD Phase 5 — Squad + fixtures REST proxies (livré 2 routes + helper fetchBSDTeamFixtures) | 1-2h | LOW |
 
 ### 🔴 Lourd (3-4h+, HIGH ROI ou archi)
 
@@ -246,7 +246,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 3. **ueg0** (Social sentiment HIGH ROI, 2h)
 4. **j6pz** (Shotmap SVG HIGH ROI, 3-4h)
 5. ~~C~~ ✅ (Flashscore cross-ref naming audit livré — script offline+online dual-mode)
-6. **r0v3 + J** (lourd backlog ~7-10h cumul — 82th backend livré, UI optionnel via Plan D Sofa)
+6. ~~r0v3~~ ✅ + **J** seul restant (Sofascore continuous scraper webhook 3-4h MED ROI — conflit potentiel bd `ffh` Sofascore live NO-GO, mais profile/historique distinct)
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
