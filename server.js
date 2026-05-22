@@ -22322,6 +22322,102 @@ if (pathname.startsWith('/api/v1/sources/understat/')) {
 }
 
 // -------------------------------------------------
+//  GET /api/v1/metrics — bd:ryi3 Phase 2C
+//  Runtime counters JSON (pas Prometheus exposition format).
+//  Surface: uptime_sec, requests_total, errors_5xx, bsd_fetch_count,
+//  cache_hits/misses, cache_hit_rate, sse_clients, live_matches_count,
+//  db_size_mb, memory_*_mb, odds_quota_remaining.
+//  Rate-limit basique 1 req / 2s par IP (anti-scrape monitoring abusif).
+//  Pas de secrets exposés (aucune env var / clé API).
+// -------------------------------------------------
+{
+  if (!global._metricsRateLimit) global._metricsRateLimit = new Map();
+  if (!global._metricsCounters) {
+    global._metricsCounters = {
+      requests_total: 0,
+      errors_5xx: 0,
+      bsd_fetch_count: 0,
+      cache_hits: 0,
+      cache_misses: 0,
+      boot_ts: Date.now(),
+    };
+  }
+}
+if (pathname.startsWith('/api/')) {
+  global._metricsCounters.requests_total = (global._metricsCounters.requests_total || 0) + 1;
+}
+
+if (pathname === '/api/v1/metrics') {
+  const ip = (req.socket && req.socket.remoteAddress) || 'unknown';
+  const now = Date.now();
+  const last = global._metricsRateLimit.get(ip) || 0;
+  if (now - last < 2000) {
+    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '2' });
+    return res.end(JSON.stringify({ error: 'rate_limited', retry_after_ms: 2000 - (now - last) }));
+  }
+  global._metricsRateLimit.set(ip, now);
+  if (global._metricsRateLimit.size > 1000) {
+    for (const [k, t] of global._metricsRateLimit) {
+      if (now - t > 60_000) global._metricsRateLimit.delete(k);
+    }
+  }
+
+  const counters = global._metricsCounters;
+  const totalCache = (counters.cache_hits || 0) + (counters.cache_misses || 0);
+  const cacheHitRate = totalCache > 0 ? +(counters.cache_hits / totalCache).toFixed(4) : null;
+
+  let dbSizeMb = null;
+  try {
+    const st = require('fs').statSync(SQLITE_FILE);
+    dbSizeMb = +(st.size / 1024 / 1024).toFixed(2);
+  } catch (_) {}
+
+  let liveMatchesCount = 0;
+  try {
+    const matches = (db.matches && db.matches.length > 0) ? db.matches : cachedMatches;
+    const liveStatusSet = new Set(['LIVE','IN_PLAY','INPLAY','IN_PROGRESS','PLAYING',
+                                   '1H','2H','HT','ET','BT','PAUSED','1ST_HALF','2ND_HALF']);
+    for (const m of (matches || [])) {
+      const s = String(m.status || m.live_status || '').toUpperCase().replace(/[\s\-]+/g, '_');
+      if (liveStatusSet.has(s) || m.live_minute != null) liveMatchesCount++;
+    }
+  } catch (_) {}
+
+  let apiCacheTotal = null;
+  try {
+    if (sqldb) {
+      const r = sqldb.prepare('SELECT COUNT(*) as c FROM api_cache').get();
+      apiCacheTotal = r ? r.c : null;
+    }
+  } catch (_) {}
+
+  const mem = process.memoryUsage();
+
+  return jsonResponse(res, 200, {
+    ts: new Date().toISOString(),
+    uptime_sec: Math.floor(process.uptime()),
+    boot_ts: new Date(counters.boot_ts).toISOString(),
+    requests_total: counters.requests_total || 0,
+    errors_5xx: counters.errors_5xx || 0,
+    bsd_fetch_count: counters.bsd_fetch_count || 0,
+    cache_hits: counters.cache_hits || 0,
+    cache_misses: counters.cache_misses || 0,
+    cache_hit_rate: cacheHitRate,
+    api_cache_entries: apiCacheTotal,
+    sse_clients: (typeof sseClients !== 'undefined' && sseClients.size) || 0,
+    live_matches_count: liveMatchesCount,
+    matches_total: (db.matches && db.matches.length) || 0,
+    teams_total: db.teamStats ? Object.keys(db.teamStats).length : 0,
+    history_count: (typeof history !== 'undefined' && history.length) || 0,
+    db_size_mb: dbSizeMb,
+    memory_rss_mb: +(mem.rss / 1024 / 1024).toFixed(1),
+    memory_heap_used_mb: +(mem.heapUsed / 1024 / 1024).toFixed(1),
+    odds_quota_remaining: (db.oddsQuotaRemaining != null) ? Number(db.oddsQuotaRemaining) : null,
+    notes: 'Phase 2C: counters best-effort. cache_hits/misses + bsd_fetch_count require wiring in helpers (TODO Phase 2C.1)',
+  });
+}
+
+// -------------------------------------------------
 //  GET /api/v1/fbref/team/:name — FBref advanced stats team query (P4 Pattern B)
 // -------------------------------------------------
 if (pathname.startsWith('/api/v1/fbref/team/')) {
