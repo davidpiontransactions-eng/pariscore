@@ -22142,11 +22142,49 @@ if (pathname.startsWith('/api/v1/live-dashboard/')) {
     : (db.matches.find(m => m.id === id) || null);
   if (!match) return jsonResponse(res, 404, { error: 'Match non trouvé', id });
   const bsdId = match._bsd_event_id || (id.startsWith('bsd_') ? id.slice(4) : null);
-  const [detail, sofaEnrich] = await Promise.all([
+  // bd qe5 Phase 1.5 — incidents fetch parallèle (cache 60s) pour markers SVG momentum
+  const [detail, sofaEnrich, incRes] = await Promise.all([
     bsdId ? fetchBSDEventDetail(bsdId) : Promise.resolve(null),
     fetchSofaMicroserviceEnrichment(match).catch(() => null),
+    bsdId ? _bsdEnrichFetch('incidents', bsdId).catch(() => null) : Promise.resolve(null),
   ]);
   const payload = buildLiveDashboardPayload(match, detail);
+  // Normalisation events[] : minute + type + side (home|away|neutral) + player + score_after
+  if (incRes?.data) {
+    const raw = incRes.data?.results || incRes.data?.incidents || incRes.data || [];
+    if (Array.isArray(raw) && raw.length) {
+      payload.events = raw
+        .filter(ev => ev && (ev.minute != null || ev.time != null))
+        .map(ev => {
+          const minute = parseInt(ev.minute ?? ev.time ?? 0, 10) || 0;
+          const teamRaw = (ev.team || '').toString().toLowerCase();
+          const side = teamRaw === 'home' ? 'home' : (teamRaw === 'away' ? 'away' : 'neutral');
+          const type = (ev.type || ev.incident_type || ev.event_type || '').toLowerCase();
+          // Classifier en catégories visuelles : goal | card_yellow | card_red | shot_on_target | substitution | other
+          let kind = 'other';
+          if (/goal|but/.test(type) && !/own_goal|csc/.test(type)) kind = 'goal';
+          else if (/own_goal|csc/.test(type)) kind = 'own_goal';
+          else if (/yellow|jaune/.test(type)) kind = 'card_yellow';
+          else if (/red|rouge/.test(type)) kind = 'card_red';
+          else if (/shot_on_target|sot|tir cadre/.test(type)) kind = 'shot_on_target';
+          else if (/sub|remplacement/.test(type)) kind = 'substitution';
+          return {
+            minute,
+            kind,
+            side,
+            type,
+            player: ev.player?.name || ev.player_name || null,
+            score_after: ev.score ? `${ev.score.home ?? '?'}-${ev.score.away ?? '?'}` : null,
+          };
+        })
+        .filter(ev => ev.minute > 0 && ev.minute <= 130)
+        .sort((a, b) => a.minute - b.minute);
+    } else {
+      payload.events = [];
+    }
+  } else {
+    payload.events = [];
+  }
   // Sofa overrides : si Sofa a la donnée, elle prime sur BSD synthétique
   if (sofaEnrich) {
     if (sofaEnrich.possession)        payload.possession        = sofaEnrich.possession;
