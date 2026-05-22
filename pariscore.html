@@ -17061,12 +17061,104 @@ async function _fetchAndRenderTennisDetail(matchId) {
     }
     const matchData = await matchRes.json();
     const predData = predRes.ok ? await predRes.json().catch(() => null) : null;
-    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER;
+    // bd 6jro Plan G — placeholder Sofa Tennis Profile (Grand Slam history + rankings)
+    const SOFA_PROFILE_PLACEHOLDER = '<div id="tennis-sofa-profile-enrich" style="margin-top:24px;"></div>';
+    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
+    fetchTennisSofaProfile(matchData);
   } catch (e) {
     body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>` + ENRICH_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
   }
+}
+
+// bd 6jro Plan G — Tennis profile enrichment (Sofascore Apify ETL)
+// Fetch rankings + grandSlamBestResults pour les 2 joueurs, render section dédiée.
+async function fetchTennisSofaProfile(matchData) {
+  const target = document.getElementById('tennis-sofa-profile-enrich');
+  if (!target) return;
+  const p1Name = (matchData && (matchData.player1?.name || matchData.home_team)) || '';
+  const p2Name = (matchData && (matchData.player2?.name || matchData.away_team)) || '';
+  if (!p1Name && !p2Name) return;
+  try {
+    const url = `/api/v1/tennis/sofa-profile?p1=${encodeURIComponent(p1Name)}&p2=${encodeURIComponent(p2Name)}`;
+    const r = await apiFetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) return; // silencieux : section optionnelle
+    const data = await r.json();
+    if (!data || (!data.p1 && !data.p2)) return; // aucun profil — masquer
+    target.innerHTML = renderTennisSofaProfile(data, p1Name, p2Name);
+  } catch (_) { /* silent */ }
+}
+
+function renderTennisSofaProfile(d, p1Name, p2Name) {
+  const card = (profile, fallbackName) => {
+    if (!profile) {
+      return `<div style="flex:1;min-width:220px;padding:14px;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;opacity:.55;">
+        <div style="font-size:13px;font-weight:600;color:var(--text2,#8d9399);">${_escTennis(fallbackName || '—')}</div>
+        <div style="font-size:11px;color:var(--text3,#5a6068);margin-top:6px;">Pas de profil Sofascore en cache.</div>
+      </div>`;
+    }
+    const flag = profile.country && profile.country.alpha2 ? `<img src="https://flagcdn.com/w20/${profile.country.alpha2.toLowerCase()}.png" alt="" style="width:18px;height:auto;border-radius:2px;vertical-align:middle;margin-right:6px;">` : '';
+    const rk = Array.isArray(profile.rankings) ? profile.rankings : [];
+    const mainRk = rk.find(r => r.type === 5) || rk[0];
+    const rkLine = mainRk ? `
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);">
+        <span>Classement: <strong style="color:var(--text,#e8eaed);">#${mainRk.ranking}</strong></span>
+        <span>Points: <strong style="color:var(--text,#e8eaed);">${mainRk.points}</strong></span>
+        ${mainRk.previousRanking ? `<span>Précédent: #${mainRk.previousRanking}</span>` : ''}
+        ${mainRk.bestRanking ? `<span title="Meilleur classement carrière">Best: <strong style="color:#22c55e;">#${mainRk.bestRanking}</strong></span>` : ''}
+      </div>` : '';
+    const gs = Array.isArray(profile.grandSlams) ? profile.grandSlams : [];
+    const gsTitlesTotal = gs.reduce((acc, t) => acc + (t.titles || 0), 0);
+    const gsRows = gs.map(t => {
+      const recent = Array.isArray(t.recent) ? t.recent : [];
+      const yearsCells = recent.map(y => {
+        const winnerStyle = y.winner ? 'background:#facc15;color:#78350f;font-weight:800;' : (y.round ? 'background:rgba(245,158,11,0.10);color:#92400e;' : 'background:var(--bg4,#1e2328);color:var(--text3,#5a6068);');
+        const label = y.winner ? '🏆' : (y.round ? _abbrevRound(y.round) : '—');
+        return `<div title="${y.year}${y.round ? ' — ' + _escTennis(y.round) : ''}${y.winner ? ' — TITRE' : ''}" style="${winnerStyle}padding:3px 5px;border-radius:3px;font-size:9px;text-align:center;font-family:'DM Mono',monospace;min-width:32px;">
+          <div>${y.year}</div>
+          <div style="margin-top:1px;">${label}</div>
+        </div>`;
+      }).join('');
+      return `<div style="margin-top:8px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text2,#8d9399);margin-bottom:4px;display:flex;justify-content:space-between;">
+          <span>${_escTennis(t.name)}</span>
+          ${t.titles ? `<span title="Titres ${t.name}" style="color:#facc15;font-family:'DM Mono',monospace;">🏆 ${t.titles}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">${yearsCells}</div>
+      </div>`;
+    }).join('');
+    return `<div style="flex:1;min-width:280px;padding:14px;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="font-size:14px;font-weight:700;color:var(--text,#e8eaed);">${flag}${_escTennis(profile.name)}</div>
+        ${gsTitlesTotal ? `<span title="Total Grand Chelems gagnés" style="font-family:'DM Mono',monospace;font-size:11px;background:rgba(250,204,21,0.15);color:#ca8a04;padding:3px 7px;border-radius:4px;font-weight:800;">🏆 ${gsTitlesTotal} GS</span>` : ''}
+      </div>
+      ${rkLine}
+      ${gsRows}
+    </div>`;
+  };
+  return `<div class="ins-section" style="border-top:1px solid var(--bg4,#1e2328);padding-top:18px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:9px;font-family:'DM Mono',monospace;color:#1d4ed8;background:rgba(59,130,246,0.12);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">🏆 HISTORIQUE GRAND CHELEM · SOFASCORE</span>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;">
+      ${card(d.p1, p1Name)}
+      ${card(d.p2, p2Name)}
+    </div>
+  </div>`;
+}
+
+function _abbrevRound(round) {
+  if (!round) return '—';
+  const r = String(round).toLowerCase();
+  if (r.includes('final') && !r.includes('semi') && !r.includes('quart')) return 'F';
+  if (r.includes('semifinal') || r.includes('semi-final')) return 'SF';
+  if (r.includes('quarterfinal') || r.includes('quarter-final')) return 'QF';
+  if (r.includes('round of 16') || r.includes('r16')) return 'R16';
+  if (r.includes('round of 32') || r.includes('r32')) return 'R32';
+  if (r.includes('round of 64') || r.includes('r64')) return 'R64';
+  if (r.includes('round of 128') || r.includes('r128')) return 'R128';
+  return round.slice(0, 4);
 }
 
 async function fetchTennisMatchstatEnrich(matchId) {
