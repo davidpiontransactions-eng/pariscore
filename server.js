@@ -28673,6 +28673,239 @@ Utilise ces donnees pour enrichir ta narration : si les compos sont publiees, me
   return block;
 }
 
+// ─── v12.67 (bd c0qo) — Gemini Function Calling avec BSD MCP context ─────────
+// Pattern : 1ere passe Gemini avec tools=[7 functionDeclarations BSD]. Si Gemini
+// emet un functionCall, on execute via helpers bsdFetch existants, on renvoie
+// functionResponse, et on boucle (max 3 iterations safety). Le texte resultant
+// est injecte comme [CONTEXTE BSD DEEP-DIVE] dans le prompt principal AI-AL.
+//
+// Opt-in via env AI_AL_FUNCTION_CALLING=1 (off par defaut). Fallback gracieux
+// si Gemini 4xx/5xx ou no functionCall (retourne string vide).
+//
+// Cache 30min par matchId via kvStore. Bloc texte synthese pret a concatener.
+const AI_AL_FC_ENABLED = process.env.AI_AL_FUNCTION_CALLING === '1';
+const AI_AL_FC_TTL_MS = 30 * 60 * 1000;
+const AI_AL_FC_MAX_LOOPS = 3;
+const AI_AL_FC_TOKEN_WARN = 100000;
+
+// 7 function declarations mappees vers helpers BSD existants.
+// Schemas JSON Schema (OBJECT/STRING), parameters.required strict.
+const BSD_FC_DECLARATIONS = [
+  {
+    name: 'get_match_detail',
+    description: 'Recupere le detail BSD complet d\'un match (score live, status, venue, arbitre). Utiliser pour ancrer contexte live ou ambiance stade.',
+    parameters: { type: 'object', properties: { event_id: { type: 'string', description: 'ID BSD event' } }, required: ['event_id'] },
+  },
+  {
+    name: 'get_lineups',
+    description: 'Recupere les compositions probables ou confirmees (formation + XI). Utiliser pour analyse tactique des absences/titulaires.',
+    parameters: { type: 'object', properties: { event_id: { type: 'string', description: 'ID BSD event' } }, required: ['event_id'] },
+  },
+  {
+    name: 'get_incidents',
+    description: 'Recupere les incidents live du match (buts, cartons, subs, VAR). Utiliser uniquement si match en cours.',
+    parameters: { type: 'object', properties: { event_id: { type: 'string', description: 'ID BSD event' } }, required: ['event_id'] },
+  },
+  {
+    name: 'get_predictions',
+    description: 'Recupere la prediction ML BSD (CatBoost) 8 marches: 1X2, Over/Under, BTTS, score le plus probable. A comparer avec Poisson PariScore.',
+    parameters: { type: 'object', properties: { event_id: { type: 'string', description: 'ID BSD event' } }, required: ['event_id'] },
+  },
+  {
+    name: 'get_polymarket_odds',
+    description: 'Recupere les cotes Polymarket (sentiment crypto retail). Utiliser pour detecter divergences avec bookmakers traditionnels.',
+    parameters: { type: 'object', properties: { event_id: { type: 'string', description: 'ID BSD event' } }, required: ['event_id'] },
+  },
+  {
+    name: 'get_compare_odds',
+    description: 'Recupere comparaison odds BSD 14 books × 7 marches avec mouvement (SHORTENING/DRIFTING). Utiliser pour detecter une cote qui chute (signal money).',
+    parameters: { type: 'object', properties: { event_id: { type: 'string', description: 'ID BSD event' } }, required: ['event_id'] },
+  },
+  {
+    name: 'get_h2h_history',
+    description: 'Recupere les 5 derniers head-to-head entre les deux equipes (scores + dates) depuis archive PariScore. Utiliser pour narration historique.',
+    parameters: { type: 'object', properties: { home_team: { type: 'string' }, away_team: { type: 'string' } }, required: ['home_team', 'away_team'] },
+  },
+];
+
+// Execute un functionCall Gemini en mappant vers les helpers bsdFetch existants.
+// Retourne { ok, summary } — summary est un texte concis pour functionResponse.
+// Aucune re-throw : erreur -> { ok:false, summary:'erreur=...' }.
+async function executeBSDFunctionCall(name, args, match) {
+  const withTimeout = (p, ms = 5000) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('bsd_timeout')), ms)),
+  ]);
+  try {
+    const eid = String(args?.event_id || '').trim();
+    if (name === 'get_match_detail') {
+      const r = await withTimeout(bsdFetch(`/api/v2/events/${eid}/`));
+      const d = r?.data;
+      if (!d) return { ok: false, summary: 'detail indisponible' };
+      const status = d.status_str || d.status || '?';
+      const minute = d.minute || d.current_minute || null;
+      const sh = d.home_score ?? d.score_home ?? null;
+      const sa = d.away_score ?? d.score_away ?? null;
+      const venue = d.venue?.name || d.stadium || null;
+      const ref = d.referee?.name || d.referee || null;
+      return { ok: true, summary: `status=${status}${minute ? ' min=' + minute : ''}${sh != null ? ' score=' + sh + '-' + sa : ''}${venue ? ' venue="' + venue + '"' : ''}${ref && typeof ref === 'string' ? ' arbitre="' + ref + '"' : ''}` };
+    }
+    if (name === 'get_lineups') {
+      const r = await withTimeout(bsdFetch(`/api/v2/events/${eid}/lineups/`));
+      const lineups = r?.data?.lineups || r?.data;
+      const fmt = side => {
+        const ps = lineups?.[side]?.players || lineups?.[side]?.starting_xi || [];
+        if (!Array.isArray(ps) || ps.length === 0) return null;
+        const names = ps.slice(0, 11).map(p => p.name || p.player_name || p.shortName).filter(Boolean);
+        const formation = lineups?.[side]?.formation || lineups?.[side]?.formation_str || '';
+        return names.length ? `${formation ? formation + ' ' : ''}${names.join(',')}` : null;
+      };
+      const h = fmt('home'); const a = fmt('away');
+      if (!h && !a) return { ok: false, summary: 'compos indisponibles' };
+      return { ok: true, summary: `home="${h || 'n/a'}" away="${a || 'n/a'}"` };
+    }
+    if (name === 'get_incidents') {
+      const r = await withTimeout(bsdFetch(`/api/v2/events/${eid}/incidents/`));
+      const events = r?.data?.results || r?.data?.incidents || r?.data || [];
+      if (!Array.isArray(events) || events.length === 0) return { ok: false, summary: 'aucun incident' };
+      const last5 = events.slice(-5).map(ev => {
+        const min = ev.minute ?? ev.time ?? '?';
+        const type = ev.type || ev.incident_type || ev.event_type || '?';
+        const player = ev.player?.name || ev.player_name || '';
+        return `${min}'${type}${player ? ' ' + player : ''}`;
+      });
+      return { ok: true, summary: last5.join(' | ') };
+    }
+    if (name === 'get_predictions') {
+      const pred = await withTimeout((async () => fetchBSDPrediction(eid))());
+      if (!pred) return { ok: false, summary: 'prediction indisponible' };
+      const norm = normalizeBsdPrediction(pred, match);
+      if (!norm || norm.percent_home == null) return { ok: false, summary: 'prediction non normalisable' };
+      return { ok: true, summary: `home=${norm.percent_home}% draw=${norm.percent_draw}% away=${norm.percent_away}%${norm.confidence != null ? ' confiance=' + norm.confidence : ''}${norm.advice ? ' advice="' + norm.advice + '"' : ''}${norm.btts_yes != null ? ' btts_yes=' + norm.btts_yes + '%' : ''}${norm.score_most_likely ? ' score=' + norm.score_most_likely : ''}` };
+    }
+    if (name === 'get_polymarket_odds') {
+      const r = await withTimeout(bsdFetch(`/api/v2/events/${eid}/odds/polymarket/`));
+      const poly = r?.data;
+      const markets = poly?.markets || poly?.results || poly || [];
+      const ml = Array.isArray(markets) ? markets.find(m => /moneyline|1x2|match_result/i.test(m.market_type || m.name || '')) : null;
+      if (!ml?.outcomes) return { ok: false, summary: 'polymarket indisponible' };
+      const fmtO = ml.outcomes.map(o => `${o.name || o.label}:${o.price ? (o.price * 100).toFixed(0) + '%' : '?'}`).join(' / ');
+      return { ok: true, summary: fmtO || 'parse vide' };
+    }
+    if (name === 'get_compare_odds') {
+      const payload = await withTimeout((async () => fetchBSDCompareOdds(eid))());
+      if (!payload) return { ok: false, summary: 'compare_odds indisponible' };
+      const ex = extractBSDOddsSummary(payload);
+      if (!ex) return { ok: false, summary: 'compare_odds non extractible' };
+      return { ok: true, summary: `books=${ex.books_count || '?'} best=${JSON.stringify(ex.best || {})} consensus=${JSON.stringify(ex.consensus || {})} movement=${JSON.stringify(ex.movement || {})}` };
+    }
+    if (name === 'get_h2h_history') {
+      const h = String(args?.home_team || match?.home_team || '');
+      const a = String(args?.away_team || match?.away_team || '');
+      if (!h || !a) return { ok: false, summary: 'noms equipes manquants' };
+      const h2h = computeH2H(h, a);
+      if (!h2h || !h2h.matches || h2h.matches.length === 0) return { ok: false, summary: 'aucun h2h dans archive PariScore' };
+      const last = h2h.matches.slice(0, 5).map(m => `${m.score} (${(m.commence_time || '').slice(0, 10)})`).join(' | ');
+      return { ok: true, summary: `n=${h2h.matches.length} last=${last}` };
+    }
+    return { ok: false, summary: 'function inconnue' };
+  } catch (e) {
+    return { ok: false, summary: `erreur=${(e && e.message) || 'inconnue'}` };
+  }
+}
+
+// Estime nb tokens approx (1 token ~ 4 chars). Warning log si > seuil.
+function estimateGeminiTokens(payloadObj) {
+  try { return Math.ceil(JSON.stringify(payloadObj).length / 4); } catch (_) { return 0; }
+}
+
+// 1ere passe Gemini avec tools=[functionDeclarations]. Boucle multi-turn jusqu'a
+// reponse texte finale OU max 3 iterations. Renvoie string bloc context final
+// (synthese narrative des function calls executes) ou '' si echec.
+async function enrichGeminiContextWithFunctionCalling(matchId, match, forceRefresh) {
+  if (!AI_AL_FC_ENABLED || !GEMINI_API_KEY || !match) return '';
+  const cacheKey = `bsd_fc_v1_${matchId}`;
+  if (!forceRefresh) {
+    const cached = kvGet(cacheKey);
+    if (cached && cached.ts && Date.now() - cached.ts < AI_AL_FC_TTL_MS && cached.block) return cached.block;
+  }
+  const bsdId = match._bsd_event_id || (matchId.startsWith('bsd_') ? matchId.slice(4).split('_')[0] : null);
+  if (!bsdId) return '';
+
+  const planPrompt = `Tu es un assistant de pre-fetch data pour une analyse de match de paris sportifs. Le match : ${match.home_team} (dom) vs ${match.away_team} (ext), competition ${match.league || match.sport}. Event ID BSD : ${bsdId}. Heure de coup d'envoi : ${match.commence_time || 'inconnue'}.
+
+OBJECTIF : choisir les 3 a 5 fonctions BSD les plus utiles pour enrichir une chronique parieur (compos, prediction ML, mouvements odds, h2h, sentiment polymarket si pertinent). N'invente aucune donnee : appelle les fonctions et resume ce qu'elles renvoient.
+
+CONTRAINTE FINALE : apres tes function calls, retourne UN SEUL paragraphe synthese (3-6 phrases, francais, sans emoji) qui resume les donnees clefs prefetchees. Format : phrase libre, pas de bullets, pas de markdown. Cite chaque fonction dont tu as utilise le resultat.
+
+Commence par appeler les fonctions les plus pertinentes.`;
+
+  const contents = [{ role: 'user', parts: [{ text: planPrompt }] }];
+  const tools = [{ functionDeclarations: BSD_FC_DECLARATIONS }];
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+  let loopCount = 0;
+  let finalText = '';
+  const traces = [];
+  while (loopCount < AI_AL_FC_MAX_LOOPS) {
+    loopCount++;
+    const payload = {
+      contents,
+      tools,
+      toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
+      generationConfig: { temperature: 0.3, maxOutputTokens: 800 },
+      safetySettings: GEMINI_SAFETY_SETTINGS,
+    };
+    const estTok = estimateGeminiTokens(payload);
+    if (estTok > AI_AL_FC_TOKEN_WARN) console.warn(`  [AI-AL FC] tokens estim=${estTok} > seuil ${AI_AL_FC_TOKEN_WARN} (match=${matchId})`);
+    let res;
+    try {
+      res = await Promise.race([
+        httpsPost(url, payload),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('fc_timeout')), 15000)),
+      ]);
+    } catch (e) {
+      console.warn(`  [AI-AL FC] loop=${loopCount} HTTP KO : ${e.message}`);
+      return '';
+    }
+    if (res.status < 200 || res.status >= 300) {
+      console.warn(`  [AI-AL FC] loop=${loopCount} HTTP ${res.status}`);
+      return '';
+    }
+    const cand = res.data?.candidates?.[0];
+    const parts = cand?.content?.parts || [];
+    const fcPart = parts.find(p => p.functionCall);
+    if (fcPart?.functionCall) {
+      const fn = fcPart.functionCall.name;
+      const args = fcPart.functionCall.args || {};
+      // Auto-fill event_id si requis et manquant
+      const decl = BSD_FC_DECLARATIONS.find(d => d.name === fn);
+      if (decl?.parameters?.required?.includes('event_id') && !args.event_id) args.event_id = bsdId;
+      const exec = await executeBSDFunctionCall(fn, args, match);
+      traces.push(`${fn}(${JSON.stringify(args)}) -> ${exec.ok ? 'OK' : 'KO'}: ${exec.summary.slice(0, 120)}`);
+      contents.push({ role: 'model', parts });
+      contents.push({ role: 'user', parts: [{ functionResponse: { name: fn, response: { result: exec.summary } } }] });
+      continue;
+    }
+    // Texte final (pas de functionCall dans cette passe)
+    const txt = parts.map(p => p.text || '').join('').trim();
+    if (txt) finalText = txt;
+    break;
+  }
+
+  console.log(`  [AI-AL FC] match=${matchId} loops=${loopCount} calls=${traces.length} text=${finalText.length}c | ${traces.join(' | ').slice(0, 400)}`);
+  if (!finalText) return '';
+  const block = `
+
+[CONTEXTE BSD DEEP-DIVE — Gemini Function Calling, ${traces.length} fonctions executees]
+${finalText}
+
+Source : pre-fetch dynamique BSD MCP via Gemini Function Calling (v12.67). Si les chiffres divergent du contexte Poisson PariScore plus haut, integre cette divergence dans ton verdict.
+`;
+  try { kvSet(cacheKey, { block, ts: Date.now(), traces }); } catch (_) {}
+  return block;
+}
+
 // GET /api/v1/deep-analysis-stream/:id  — Streaming SSE version (terminal IA)
 if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET') {
   if (AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)' });
@@ -28687,9 +28920,11 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
   // pour injecter [CONTEXTE BSD ENRICHI] dans le systemPrompt en aval.
   // v12.66 (bd p2if Phase 2) — branch RSS reel (L'Equipe + BBC + Sky + ESPN + GNews)
   // en parallele BSD pour grounder section 5 "Revue de Presse" sur articles reels.
-  const [bsdEnrichRes, pressCtxRes] = await Promise.allSettled([
+  // v12.67 (bd c0qo) — Function Calling enrichment en parallele (opt-in env)
+  const [bsdEnrichRes, pressCtxRes, fcEnrichRes] = await Promise.allSettled([
     enrichGeminiContextWithBSD(matchId, match, forceRefresh),
     fetchPressContext(match.home_team, match.away_team),
+    enrichGeminiContextWithFunctionCalling(matchId, match, forceRefresh),
   ]);
   const bsdEnrichBlock = bsdEnrichRes.status === 'fulfilled' ? (bsdEnrichRes.value || '') : '';
   if (bsdEnrichRes.status === 'rejected') console.warn('  [DeepStream] enrichGeminiContextWithBSD KO:', bsdEnrichRes.reason?.message);
@@ -28698,6 +28933,8 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
     ? `\n\n[REVUE DE PRESSE REELLE — ${pressCtx.articleCount} articles via ${(pressCtx.sourceNames || []).join(', ')}]\n${pressCtx.text}\n[FIN REVUE DE PRESSE REELLE]\n`
     : '';
   if (pressCtxRes.status === 'rejected') console.warn('  [DeepStream] fetchPressContext KO:', pressCtxRes.reason?.message);
+  const fcBlock = fcEnrichRes.status === 'fulfilled' ? (fcEnrichRes.value || '') : '';
+  if (fcEnrichRes.status === 'rejected') console.warn('  [DeepStream] enrichGeminiContextWithFunctionCalling KO:', fcEnrichRes.reason?.message);
 
   // SSE headers
   res.writeHead(200, {
@@ -28805,7 +29042,7 @@ Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il l
 
 RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
-${dataBlock}${bsdEnrichBlock || ''}${pressBlock}`;
+${dataBlock}${bsdEnrichBlock || ''}${fcBlock || ''}${pressBlock}`;
 
   // I1 — Confidence Score + I4 — Market divergences SSE meta event
   const confidence = (s.isReal ? 40 : 0) + (odds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (xg.home ? 10 : 0);
@@ -28872,9 +29109,11 @@ if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
 
   // v12.43 (bd c0qo) — Enrichissement BSD parallele avant prompt Gemini.
   // v12.66 (bd p2if Phase 2) — branch RSS reel en parallele BSD pour grounder section 5.
-  const [bsdEnrichResNs, pressCtxResNs] = await Promise.allSettled([
+  // v12.67 (bd c0qo) — Function Calling enrichment opt-in
+  const [bsdEnrichResNs, pressCtxResNs, fcEnrichResNs] = await Promise.allSettled([
     enrichGeminiContextWithBSD(matchId, match, false),
     fetchPressContext(match.home_team, match.away_team),
+    enrichGeminiContextWithFunctionCalling(matchId, match, false),
   ]);
   const bsdEnrichBlock = bsdEnrichResNs.status === 'fulfilled' ? (bsdEnrichResNs.value || '') : '';
   if (bsdEnrichResNs.status === 'rejected') console.warn('  [DeepPro] enrichGeminiContextWithBSD KO:', bsdEnrichResNs.reason?.message);
@@ -28883,6 +29122,8 @@ if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
     ? `\n\n[REVUE DE PRESSE REELLE — ${pressCtxNs.articleCount} articles via ${(pressCtxNs.sourceNames || []).join(', ')}]\n${pressCtxNs.text}\n[FIN REVUE DE PRESSE REELLE]\n`
     : '';
   if (pressCtxResNs.status === 'rejected') console.warn('  [DeepPro] fetchPressContext KO:', pressCtxResNs.reason?.message);
+  const fcBlockNs = fcEnrichResNs.status === 'fulfilled' ? (fcEnrichResNs.value || '') : '';
+  if (fcEnrichResNs.status === 'rejected') console.warn('  [DeepPro] enrichGeminiContextWithFunctionCalling KO:', fcEnrichResNs.reason?.message);
 
   const p = match.poisson || {};
   const s = match.stats || {};
@@ -28991,7 +29232,7 @@ Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il l
 
 RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
-${dataBlock}${bsdEnrichBlock || ''}${pressBlockNs}`;
+${dataBlock}${bsdEnrichBlock || ''}${fcBlockNs || ''}${pressBlockNs}`;
 
   (async () => {
     try {
