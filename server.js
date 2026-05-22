@@ -31008,15 +31008,28 @@ function _bsdWsSubscribeAll() {
 
 function _bsdWsHeartbeat() {
   if (!_bsdWsHandshakeDone || !_bsdWsSock) return;
-  _bsdWsSendJSON({ action: 'ping' });
-  // Si dernier pong > 60s, force reconnect (socket zombie)
+  const sock = _bsdWsSock;
+  // Guard : socket déjà ended/destroyed → arrête heartbeat immédiat (évite EPIPE)
+  if (sock.destroyed || sock.writableEnded) {
+    if (_bsdWsHeartbeatTimer) { clearInterval(_bsdWsHeartbeatTimer); _bsdWsHeartbeatTimer = null; }
+    return;
+  }
+  // Pong timeout >60s : nuke heartbeat + null sock AVANT end() pour empêcher
+  // writes concurrents (consume/subscribe) qui déclenchent 'write after end'.
   if (_bsdWsLastPong && Date.now() - _bsdWsLastPong > 60000) {
     console.warn('  [BSD-WS] pong timeout (>60s) → force reconnect');
-    try { _bsdWsSock.end(); } catch (e) {}
+    if (_bsdWsHeartbeatTimer) { clearInterval(_bsdWsHeartbeatTimer); _bsdWsHeartbeatTimer = null; }
+    _bsdWsHandshakeDone = false;
+    _bsdWsSock = null;
+    try { sock.end(); } catch (e) {}
+    return;
   }
+  _bsdWsSendJSON({ action: 'ping' });
 }
 
 function _bsdWsSendFrame(sock, opcode, payload) {
+  // Guard : ne write JAMAIS sur un socket destroyed/ended (cause 'write after end' boucle)
+  if (!sock || sock.destroyed || sock.writableEnded) return;
   const buf = Buffer.isBuffer(payload) ? payload : Buffer.from(payload || '');
   const len = buf.length;
   let header;
