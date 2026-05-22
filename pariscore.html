@@ -22299,30 +22299,63 @@ async function buildBsdShotmap(matchId) {
       </div>`;
     let shotsGrid = '';
     if (shots.length) {
-      // Grid SVG simple : terrain 100x60, tirs colorés par équipe, taille = xG
+      // bd j6pz Phase 2 — Refactor SVG terrain 100x60 utilise nouveau schema BSD /events/{id}/stats/
+      // Shot fields: s.pos {x,y} = position joueur (x=distance attacking goal 0-100, y=lateral 0-100)
+      // s.home (bool), s.type ('goal'|'save'|'miss'|'block'), s.xg (float 0-1), s.min, s.body, s.sit
+      // Mapping pitch : home attacks right (svg.x = 100 - pos.x*0.5), away attacks left.
+      let goalsH = 0, goalsA = 0, totalXgH = 0, totalXgA = 0;
       const dots = shots.map(s => {
-        const x = (s.x != null) ? s.x : 50;
-        const y = (s.y != null) ? s.y : 50;
-        const xg = s.xg || s.x_g || 0.05;
-        const r = Math.min(Math.max(xg * 12, 2), 8);
-        const isHome = s.is_home === true || s.team === 'home';
+        const pos = s.pos || {};
+        const px = (typeof pos.x === 'number') ? pos.x : 30;
+        const py = (typeof pos.y === 'number') ? pos.y : 50;
+        const xg = s.xg || 0.05;
+        const r = Math.min(Math.max(Math.sqrt(xg) * 6 + 1.5, 2), 7);
+        const isHome = s.home === true;
+        if (isHome) { totalXgH += xg; if (s.type === 'goal') goalsH++; }
+        else { totalXgA += xg; if (s.type === 'goal') goalsA++; }
+        // Home attacks right half (svg.x 50→100), Away attacks left half (svg.x 0→50)
+        const svgX = isHome ? (100 - px * 0.5) : (px * 0.5);
+        const svgY = py * 0.6;
         const color = isHome ? '#00e676' : '#29b6f6';
-        const opacity = (s.outcome === 'goal' || s.is_goal) ? 1 : 0.55;
-        return `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" opacity="${opacity}"/>`;
+        const isGoal = s.type === 'goal';
+        const isSave = s.type === 'save';
+        const fill = isGoal ? color : (isSave ? color : 'none');
+        const fillOpacity = isGoal ? 1 : (isSave ? 0.65 : 0);
+        const strokeWidth = isGoal ? 0.5 : 0.6;
+        const tipParts = [
+          isHome ? 'Dom' : 'Ext',
+          s.min ? `${s.min}'` : '',
+          s.type ? s.type.toUpperCase() : '',
+          `xG ${xg.toFixed(2)}`,
+          s.body ? s.body : '',
+          s.sit ? s.sit : '',
+        ].filter(Boolean).join(' · ');
+        return `<circle cx="${svgX.toFixed(1)}" cy="${svgY.toFixed(1)}" r="${r.toFixed(1)}" fill="${fill}" fill-opacity="${fillOpacity}" stroke="${color}" stroke-width="${strokeWidth}"><title>${tipParts}</title></circle>`;
       }).join('');
+      const xgLegend = `<span title="xG cumulé Domicile · Extérieur" style="font-family:var(--font-mono);font-size:10px;color:var(--text3);">xG ${totalXgH.toFixed(2)} - ${totalXgA.toFixed(2)} · Buts ${goalsH}-${goalsA}</span>`;
       shotsGrid = `
         <div style="margin-top:12px">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Shotmap (${shots.length} tirs)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">
+            <span>Shotmap (${shots.length} tirs)</span>
+            ${xgLegend}
+          </div>
           <svg viewBox="0 0 100 60" style="width:100%;height:auto;background:linear-gradient(180deg,#0b1410,#0a1010);border:1px solid var(--bg4);border-radius:6px">
             <rect x="0.5" y="0.5" width="99" height="59" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
             <line x1="50" y1="0" x2="50" y2="60" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
             <circle cx="50" cy="30" r="6" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.3"/>
+            <rect x="0" y="18" width="14" height="24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.3"/>
+            <rect x="86" y="18" width="14" height="24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.3"/>
+            <rect x="0" y="24" width="5" height="12" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.3"/>
+            <rect x="95" y="24" width="5" height="12" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.3"/>
             ${dots}
           </svg>
-          <div style="display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">
+          <div style="display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-wrap:wrap">
             <span><span style="color:#00e676">●</span> Domicile</span>
             <span><span style="color:#29b6f6">●</span> Extérieur</span>
-            <span>· taille = xG · plein = but</span>
+            <span>· taille = √xG</span>
+            <span>· plein = BUT</span>
+            <span>· semi = Save</span>
+            <span>· vide = Miss/Block</span>
           </div>
         </div>`;
     } else {

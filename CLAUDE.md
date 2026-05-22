@@ -127,7 +127,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `ryi3` | Routing schema Phase 2+ — health + Understat + metrics + affiliate CRUD | Phase 2A livré v12.65 commit `117c711` (`/api/v1/sources/health`) · Phases 2B/2C/2D ouvertes |
 | `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | open |
 | `0hf4` | **BSD coverage Phase 1** — TV channels + broadcasts (fetchers + caches + helper attach) | Phase 1 livré v12.65 commit `d10ab09` · Phases 1.1/2/3 ouvertes |
-| `j6pz` | **BSD coverage Phase 2** — Shotmap + best_odds + bookmakers (3 endpoints REST + UI shotmap SVG modal Live Dashboard) | open · 3-4h |
+| ~~`j6pz`~~ ✅ | **BSD coverage Phase 2** — Shotmap (fix endpoint bug `/v2/events/{id}/stats/`) + best_odds + bookmakers | livré — UI shotmap SVG refactor nouveau schema + 2 nouveaux endpoints |
 | ~~`ueg0`~~ ✅ | **BSD coverage Phase 3** — Social items sentiment buzz match (section modal Insights) | livré commit (voir ci-dessous) — section modal Insights lazy fetch + sentiment heuristique |
 | `82th` | **BSD coverage Phase 4** — Referees + Venues + Leagues dynamic (enrichissement modal Contexte stade/arbitre/ligue) | open · 3-4h |
 
@@ -222,7 +222,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 
 | Plan | bd | Tâche | Effort | ROI |
 |---|---|---|---|---|
-| `j6pz` | — | BSD Phase 2 — Shotmap + best_odds + bookmakers (UI SVG modal) | 3-4h | HIGH |
+| ~~`j6pz`~~ ✅ | — | BSD Phase 2 — Shotmap fix + best_odds + bookmakers (livré endpoint fix + UI SVG refactor) | 3-4h | HIGH |
 | ~~`ueg0`~~ ✅ | — | BSD Phase 3 — Social items sentiment buzz match (livré section modal Insights lazy) | 2h | HIGH |
 | `82th` | — | BSD Phase 4 — Referees + Venues + Leagues dynamic | 3-4h | MED |
 | J | `6jro` | Sofascore continuous scraper webhook (conflit bd `ffh`) | 3-4h | MED |
