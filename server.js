@@ -3102,6 +3102,44 @@ function getSofascoreEditorial(match) {
   return sofascoreEditorialMap.get(`${h}|${a}`) || null;
 }
 
+// ─── bd 6jro Plan G — Sofascore tennis player profile (Apify dataset ETL) ────
+// Lazy lookup api_cache key 'sofa_tennis_player_<normName>'. TTL 7j.
+// Tool ETL: tools/import-sofascore-tennis-player.js
+const sofascoreTennisPlayerMap = new Map();
+let sofascoreTennisPlayerLoadedAt = 0;
+const SOFASCORE_TENNIS_PLAYER_RELOAD_MS = 5 * 60 * 1000;
+
+function loadSofascoreTennisPlayerCache(force = false) {
+  const now = Date.now();
+  if (!force && (now - sofascoreTennisPlayerLoadedAt) < SOFASCORE_TENNIS_PLAYER_RELOAD_MS) return;
+  if (!sqldb) return;
+  try {
+    const rows = sqldb.prepare(
+      "SELECT key, data FROM api_cache WHERE key LIKE 'sofa\\_tennis\\_player\\_%' ESCAPE '\\' AND expires_at > ?"
+    ).all(now);
+    sofascoreTennisPlayerMap.clear();
+    for (const row of rows) {
+      try {
+        const d = JSON.parse(row.data || '{}');
+        if (d && d.name) {
+          const nk = _normKeyForLiveStream(d.name);
+          if (nk) sofascoreTennisPlayerMap.set(nk, d);
+        }
+      } catch (_) {}
+    }
+    sofascoreTennisPlayerLoadedAt = now;
+  } catch (e) { /* silent */ }
+}
+
+function getSofascoreTennisPlayer(name) {
+  if (!name) return null;
+  loadSofascoreTennisPlayerCache();
+  if (sofascoreTennisPlayerMap.size === 0) return null;
+  const nk = _normKeyForLiveStream(name);
+  if (!nk) return null;
+  return sofascoreTennisPlayerMap.get(nk) || null;
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
@@ -25690,6 +25728,20 @@ if (pathname.startsWith('/api/v1/tennis/players/') && req.method === 'GET') {
   }
   const out = await handleTennisBSD(`/api/v2/players/${encodeURIComponent(playerId)}/`, `bsd_tennis_player_${playerId}`, 3600 * 1000);
   return jsonResponse(res, out.status, out.body);
+}
+// bd 6jro Plan G — Sofascore tennis player profile lookup (rankings + Grand Slam history)
+// Query: ?p1=Novak%20Djokovic&p2=Carlos%20Alcaraz
+// Réponse: { p1: <profile|null>, p2: <profile|null> } — depuis api_cache (ETL Apify).
+if (pathname === '/api/v1/tennis/sofa-profile' && req.method === 'GET') {
+  const p1 = String(query.p1 || '').trim().slice(0, 80);
+  const p2 = String(query.p2 || '').trim().slice(0, 80);
+  if (!p1 && !p2) return jsonResponse(res, 400, { error: 'missing_params', hint: 'p1 and/or p2 required' });
+  const out = {
+    p1: p1 ? (typeof getSofascoreTennisPlayer === 'function' ? getSofascoreTennisPlayer(p1) : null) : null,
+    p2: p2 ? (typeof getSofascoreTennisPlayer === 'function' ? getSofascoreTennisPlayer(p2) : null) : null,
+    source: 'sofascore_tennis_player',
+  };
+  return jsonResponse(res, 200, out);
 }
 if (pathname.startsWith('/api/v1/tennis/predictions/') && req.method === 'GET') {
   const matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/predictions/'.length));
