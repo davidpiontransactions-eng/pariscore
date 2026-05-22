@@ -1336,6 +1336,8 @@ function matchesForBroadcast() {
     : base;
   // bd 0hf4 Phase 1.1 — Enrich match.tv_channels from BSD cache (zero HTTP, cache-only lookup)
   for (const m of src) { try { if (typeof attachBSDBroadcasts === 'function') attachBSDBroadcasts(m, 'FR'); } catch (_) {} }
+  // bd qm6a Plan F — Enrich match.has_live_stream from Flashscore ETL cache (api_cache livestream_*)
+  for (const m of src) { try { if (typeof attachFlashscoreLiveStream === 'function') attachFlashscoreLiveStream(m); } catch (_) {} }
   return src.map(_stripMatchForList);
 }
 
@@ -2999,6 +3001,64 @@ function attachBSDBroadcasts(match, country = 'FR') {
     if (list && list.length) { match.tv_channels = list.slice(); return; }
   }
   match.tv_channels = [];
+}
+
+// ─── bd qm6a Plan F — Flashscore has_live_stream attach (Apify dataset ETL) ──
+// Lazy-loaded Map { 'normHome|normAway' → true } depuis api_cache (livestream_*).
+// Refresh max 1×/min. Tool ETL: tools/import-flashscore-livestream.js
+const flashscoreLiveStreamMap = new Map();
+let flashscoreLiveStreamLoadedAt = 0;
+const FLASHSCORE_LIVESTREAM_RELOAD_MS = 60 * 1000;
+
+function _normKeyForLiveStream(name) {
+  if (!name) return '';
+  return String(name).toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ').trim()
+    .replace(/\s+/g, '_');
+}
+
+function loadFlashscoreLiveStreamCache(force = false) {
+  const now = Date.now();
+  if (!force && (now - flashscoreLiveStreamLoadedAt) < FLASHSCORE_LIVESTREAM_RELOAD_MS) return;
+  if (!sqldb) return;
+  try {
+    const rows = sqldb.prepare(
+      "SELECT key, data FROM api_cache WHERE key LIKE 'livestream\\_%' ESCAPE '\\' AND expires_at > ?"
+    ).all(now);
+    flashscoreLiveStreamMap.clear();
+    for (const row of rows) {
+      const m = /^livestream_(.+)_([^_]+(?:_[^_]+)*)$/.exec(row.key);
+      if (!m) continue;
+      // key format: livestream_<normHome>_<normAway> — split sur dernier groupe
+      // Fallback: parse data JSON pour récupérer normalisés exacts
+      try {
+        const d = JSON.parse(row.data || '{}');
+        if (d.has_live_stream && d.home_team && d.away_team) {
+          const h = _normKeyForLiveStream(d.home_team);
+          const a = _normKeyForLiveStream(d.away_team);
+          if (h && a) flashscoreLiveStreamMap.set(`${h}|${a}`, true);
+        }
+      } catch (_) {}
+    }
+    flashscoreLiveStreamLoadedAt = now;
+  } catch (e) {
+    // Silent: api_cache lookup failures non-bloquantes
+  }
+}
+
+function attachFlashscoreLiveStream(match) {
+  if (!match || typeof match !== 'object') return;
+  if (match.has_live_stream === true) return; // déjà set par autre source
+  if (!match.home_team || !match.away_team) return;
+  loadFlashscoreLiveStreamCache();
+  if (flashscoreLiveStreamMap.size === 0) return;
+  const h = _normKeyForLiveStream(match.home_team);
+  const a = _normKeyForLiveStream(match.away_team);
+  if (h && a && flashscoreLiveStreamMap.has(`${h}|${a}`)) {
+    match.has_live_stream = true;
+  }
 }
 
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
@@ -15586,6 +15646,11 @@ async function handleAPI(req, res, pathname, query) {
       // waterfall fetch /api/v1/match/:id/tv-channel par match. Idempotent : skip si rempli.
       for (const m of matches) {
         try { if (typeof attachBSDBroadcasts === 'function') attachBSDBroadcasts(m, 'FR'); } catch (_) {}
+      }
+
+      // bd qm6a Plan F — enrich match.has_live_stream depuis cache Flashscore ETL (api_cache livestream_*)
+      for (const m of matches) {
+        try { if (typeof attachFlashscoreLiveStream === 'function') attachFlashscoreLiveStream(m); } catch (_) {}
       }
 
       // bd pxt7 — Strip champs lourds inutilisés par #page-matchs (~210 KB économisés / 250 matchs).

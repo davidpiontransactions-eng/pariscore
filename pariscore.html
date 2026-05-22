@@ -21107,12 +21107,17 @@ const label = country
       const label = count === 1 ? '1 chaîne' : `${count} chaînes`;
       return `<button type="button" class="tv-badge-btn" data-tv-channels='${channelsJson}' onclick="event.stopPropagation();psOpenTVModal(this)" title="Voir ${count} diffuseur${count > 1 ? 's' : ''} TV (FR)" style="display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,233,0.10);color:#0c4a6e;border:1px solid rgba(14,165,233,0.30);border-radius:10px;padding:2px 8px;font:700 10px/1.2 var(--font-mono);cursor:pointer;transition:background .15s,border-color .15s;">📺 ${label}</button>`;
     })();
+    // bd qm6a Plan F — has_live_stream pill (Flashscore ETL). Distinct icône 📡 + couleur ambre.
+    const streamBadgeInline = m.has_live_stream
+      ? `<span class="stream-badge-inline" title="Diffusion en streaming disponible (source Flashscore)" style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,0.12);color:#92400e;border:1px solid rgba(245,158,11,0.30);border-radius:10px;padding:2px 6px;font:700 9px/1.2 var(--font-mono);">📡 STREAM</span>`
+      : '';
     tr.innerHTML = `
       <td style="min-width:60px;text-align:center;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
         <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
         ${_live ? '' : `<div class="cf-t2k" data-cf-t2k="${m.commence_time || ''}" style="display:none;"></div>`}
         <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:${tvBadgeInline ? 'inline-flex' : 'none'};justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV">${tvBadgeInline}</div>
+        ${streamBadgeInline ? `<div style="margin:3px auto 0;display:inline-flex;justify-content:center;">${streamBadgeInline}</div>` : ''}
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;">
         ${_live ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
