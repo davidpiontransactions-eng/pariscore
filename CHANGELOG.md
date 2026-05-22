@@ -2,6 +2,68 @@
 
 ---
 
+## [v12.65] — 2026-05-22 — Session 26 commits : c5i Phase 3 + izsn safeFixed + 8c5 momentum + p2if AI-AL + bjv/8uoc/ffh spikes + k37 + rlhf + ryi3 health + tv-bsd Phase 1
+
+Session intensive 22/05 — 26 commits push main (bd-driven + worktree-disciplined).
+
+### Code livrés (10 features/fixes)
+
+| Commit | bd | Description |
+|---|---|---|
+| `fbea217` | `c5i` | Tennis serveur live Phase 3 — `fetchAiscoreServingOnDemand` throttled 5/poll + cooldown 10min, sourceTag `aiscore_cache`/`aiscore_ondemand` |
+| `bce7535` | `izsn` | safeFixed wrapper 49 sites server.js — anti NaN/null + helper backend signature aligned frontend |
+| `16c6a9d` | `izsn` | safeFixed wrapper 2 sites pariscore.html — anti NaN/null |
+| `38ffa7b` | `8c5` | Momentum plat La Liga fix — split `live_momentum_pct` (objet BSD WS) vs `live_momentum` (array Sofa) |
+| `9ba089a` | `8c5` | 8c5 follow-up — Array.isArray guards 3 consumers SSE+REST manqués (live_patch + /api/v1/live + modal refresh) |
+| `ae6a292` | `p2if` | AI-AL Revue Presse Phase 1 — prompt Gemini foot+tennis avec panel 5 sources international (L'Équipe/Marca/Sky Sports/ESPN/TalkSport) |
+| `8b99cb2` | `k37` | UI coral leak tableau Foot — `tr.match-row-live::before` box-shadow 14→6px + keyframe + remove !important override |
+| `fc9c65e` | `rlhf` | Audio alertes trading — `_psAudio` state tracking 4 indicateurs (intensity/verdict/confidence/edge), `_psTierFromValue` + `_psApplyTransition` + queue 200ms cap 3 sons/burst |
+| `117c711` | `ryi3` | Routing Phase 2A — route `/api/v1/sources/health` 5 sources (BSD/ESPN/OddsAPI/Gemini/Felipeall) + status derivation degraded/down/ok |
+| `d10ab09` | `0hf4` | BSD TV broadcasters Phase 1 — 3 fetchers (`fetchBSDTVChannels` 24h + `fetchBSDBroadcasts` 6h + `fetchBSDBroadcastsByEvent` 6h) + helper `attachBSDBroadcasts` cache-only lookup |
+
+### Livrables research/spike (4 docs `.context/`)
+
+| Commit | bd | Livrable |
+|---|---|---|
+| `72d5e8a` | `bjv` | `.context/spike-bjv-rapidapi-eval-final.md` (RapidAPI odds-api1 score 78/100 — GO conditionnel) |
+| `0754a33` | `bjv` | `.context/research-pinnacle-api-2026.md` + correctifs spike (Pinnacle API fermée 23/07/2025, NO-GO direct, 3 voies abordables) + POC `_probe_oddspapi_pinnacle.js` |
+| `2ce9463` | `8uoc` | `.context/strategy/rapport-tennis-data-sourcing-2026.md` v2 (découverte Tennismylife/TML-Database MIT — drop-in replacement Sackmann NC) |
+| `1280dfb` | `ffh` | `.context/spike-ffh-6sources-eval-final.md` (xvalue.ai GO ferme 85/100 — seule API REST + free trial + xG advanced + ML scouting clustering 30 ligues) |
+
+### Doc/maintenance CLAUDE.md (10 commits sync)
+
+- `5e18185` Section 15 drift — 13 items `[ ]→[x]` post `/ps-audit`
+- `d384d1d` P2 sync drift — 6 fermés + colonne État
+- `b7abcc1` BSD MCP coverage roadmap Phases 2-5 (4 bd tickets)
+- `f0bc9c2` TV Phase 1 row + bd `0hf4` ref
+- `7b9715d` Purge 5 missions livrées + refresh tables (CLAUDE.md -211/+42 lignes)
+- `e95109f`+`1cf3c52`+`9dcad10` qm6a Flashscore 6 plans A-F sous-table
+- `17c176c` 6jro Sofascore Apify 4 plans G-J sous-table
+- `e64903c` Header v12.65 + Sources data enrichi + 3 pistes Innovation Backlog
+- `fed8a2d` MISSION AUTH stale → État livraisons SaaS + 9 décisions DG bloquantes
+
+### bd state changes
+
+**Fermés (10)** : `izsn` `lyku` (audit confirmed) · `8c5` · `c8zp` · `c9p4` · `x11y` · `nwk6` · `k37` · plus notes status open conservés `ffh` `rlhf` (validation user pending)
+**Créés (7)** : `0hf4` (BSD TV) · `j6pz` (BSD Phase 2) · `ueg0` (BSD Phase 3) · `82th` (BSD Phase 4) · `r0v3` (BSD Phase 5) · `qm6a` (Flashscore datasets) · `6jro` (Sofascore datasets)
+**In_progress maj notes** : `c5i` `bjv` `8uoc` `p2if` `ryi3`
+
+### Découvertes critiques
+
+- **Pinnacle API publique fermée 23/07/2025** (B2B Pinnacle Solution €5000/mo + licence sportsbook régulée — hors scope PariScore)
+- **The Odds API ne contient PAS Pinnacle** même tiers payants — invalide combo retenu spike `bjv` initial
+- **Sackmann tennis_atp CC BY-NC-SA infraction** pour SaaS commercial €19/mo — `tennis_matches` table en infraction → Plan A purge + ETL TML-DB MIT (8uoc)
+- **xvalue.ai (Soccerment)** seule source 6 candidates avec API REST officielle + free trial + xG advanced
+
+### Pending ops user (post-session)
+
+1. **Deploy VPS** : `cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore` (cumul `fbea217` → `fed8a2d`)
+2. **🚨 Revoke RapidAPI key** exposée chat 21/05 (dashboard RapidAPI) + nouvelle clé `.env` VPS
+3. **DG decisions** : `8uoc` Q1 (Sackmann purge urgent) · `s77m` Stripe checklist 9 sections · `j5lb` 6 études bloquées
+4. **POCs free trial** : OddsPapi.io 250 req Pinnacle (`.context/_probe_oddspapi_pinnacle.js`) · xvalue.ai 1j (`bjv` Phase 1 alternative)
+
+---
+
 ## [v12.16] — 2026-05-21 — PWA icon fix + SW v24
 
 **Bug bd ParisScorebis-npp** : Chrome mobile console `icon.svg invalid image` bloquait install PWA propre.
