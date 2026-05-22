@@ -11764,6 +11764,45 @@ async function fetchBSDTeamSquad(bsdTeamId) {
   }
 }
 
+// bd r0v3 — Generic team fixtures fetcher : last N events any-status, normalized
+// schema pour exposition REST proxy /api/v1/bsd/fixtures/:teamId. Cache 1h
+// (fixtures upcoming change peu intra-day ; finished immuables après J+1).
+async function fetchBSDTeamFixtures(bsdTeamId, limit = 20, status = null) {
+  if (!bsdTeamId || !BSD_BASE_URL) return [];
+  const cleanLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+  const cleanStatus = (status && /^[a-z_]+$/.test(String(status))) ? String(status) : null;
+  const cacheKey = `bsd_team_fixtures_${bsdTeamId}_${cleanLimit}_${cleanStatus || 'any'}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  try {
+    const statusPart = cleanStatus ? `&status=${cleanStatus}` : '';
+    const res = await bsdFetch(`/events/?team=${bsdTeamId}&page_size=${cleanLimit}&ordering=-start_time${statusPart}`);
+    if (res.status !== 200 || !res.data?.results?.length) return [];
+    const fixtures = res.data.results.map(e => ({
+      id: e.id,
+      start_time: e.start_time,
+      status: e.status,
+      home_team: e.home_team?.name || null,
+      away_team: e.away_team?.name || null,
+      home_team_id: e.home_team?.id || null,
+      away_team_id: e.away_team?.id || null,
+      home_score: e.home_score?.current ?? e.home_score?.display ?? null,
+      away_score: e.away_score?.current ?? e.away_score?.display ?? null,
+      league: e.league?.name || null,
+      league_id: e.league?.id || null,
+      season: e.season?.name || null,
+      season_id: e.season?.id || null,
+      venue: e.venue?.name || null,
+      round: e.round?.name || e.round_number || null,
+    }));
+    apiCacheSet(cacheKey, fixtures, 'bsd_team_fixtures', 3600 * 1000); // 1h
+    return fixtures;
+  } catch (e) {
+    console.warn(`  [BSD] fetchTeamFixtures ${bsdTeamId} erreur:`, e.message);
+    return [];
+  }
+}
+
 // Fetch and aggregate BSD player ratings for a team+season — cache 24h
 // Returns array sorted by avg_rating desc: { name, position, avg_rating, goals, assists, minutes, matches, xg, xa, ... }
 async function fetchBSDPlayerRatings(bsdTeamId, bsdSeasonId) {
@@ -27249,6 +27288,49 @@ if (pathname.startsWith('/api/v1/bsd/league/') && req.method === 'GET') {
     const { data, cached } = await bsdFetchById('league', id);
     return jsonResponse(res, 200, { source: 'bsd', kind: 'league', id: Number(id), data, cached });
   } catch (e) { return jsonResponse(res, 502, { error: 'bsd_league_failed', message: String(e.message || e) }); }
+}
+
+// bd r0v3 — GET /api/v1/bsd/squad/:teamId → squad joueurs + attributs (cache 6h)
+// Wrap autour fetchBSDTeamSquad (helper interne déjà cached via apiCacheGet/Set).
+if (pathname.startsWith('/api/v1/bsd/squad/') && req.method === 'GET') {
+  const id = decodeURIComponent(pathname.slice('/api/v1/bsd/squad/'.length)).trim();
+  if (!/^\d+$/.test(id)) return jsonResponse(res, 400, { error: 'bad_team_id' });
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  try {
+    const squad = await fetchBSDTeamSquad(Number(id));
+    return jsonResponse(res, 200, {
+      source: 'bsd',
+      kind: 'squad',
+      team_id: Number(id),
+      count: squad.length,
+      squad,
+    });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_squad_failed', message: String(e.message || e) });
+  }
+}
+
+// bd r0v3 — GET /api/v1/bsd/fixtures/:teamId?limit=20&status=finished → fixtures team
+// Cache 1h. Params : limit (1-50, default 20), status (optionnel: finished|inprogress|notstarted).
+if (pathname.startsWith('/api/v1/bsd/fixtures/') && req.method === 'GET') {
+  const id = decodeURIComponent(pathname.slice('/api/v1/bsd/fixtures/'.length)).trim();
+  if (!/^\d+$/.test(id)) return jsonResponse(res, 400, { error: 'bad_team_id' });
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  const limit = query.limit;
+  const status = query.status || null;
+  try {
+    const fixtures = await fetchBSDTeamFixtures(Number(id), limit, status);
+    return jsonResponse(res, 200, {
+      source: 'bsd',
+      kind: 'team_fixtures',
+      team_id: Number(id),
+      count: fixtures.length,
+      filter: { limit: fixtures.length, status: status || 'any' },
+      fixtures,
+    });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_team_fixtures_failed', message: String(e.message || e) });
+  }
 }
 
 // bd ueg0 — GET /api/v1/social/match/:matchId → BSD social items + sentiment + buzz
