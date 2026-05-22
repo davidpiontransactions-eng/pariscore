@@ -3222,6 +3222,24 @@ function getFlashscoreLiveStats(match) {
   return flashscoreLiveStatsMap.get(`${h}|${a}`) || null;
 }
 
+// ─── bd qm6a Plan B — Flashscore standings fallback (Apify dataset ETL) ───────
+// Lazy lookup api_cache key 'flashscore_standings_<configId>'. TTL 7j.
+// Fallback de DERNIER recours : utilisé uniquement si BSD+ESPN+API-Football
+// tous HS pour la ligue demandée (route /api/v1/standings/:leagueId).
+function getFlashscoreStandings(configId) {
+  if (!configId || !sqldb) return null;
+  try {
+    const row = sqldb.prepare(
+      'SELECT data, expires_at FROM api_cache WHERE key = ? AND source = ?'
+    ).get(`flashscore_standings_${configId}`, 'flashscore_standings');
+    if (!row) return null;
+    if (row.expires_at <= Date.now()) return null;
+    const d = JSON.parse(row.data || '{}');
+    if (!Array.isArray(d.rows) || !d.rows.length) return null;
+    return d;
+  } catch (_) { return null; }
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
@@ -24249,11 +24267,40 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
     }
   }
 
+  // bd qm6a Plan B — Fallback Flashscore : dernier recours si toutes les sources
+  // canoniques (BSD+ESPN+API-Football) sont vides. Données one-shot, fraîcheur 7j
+  // max — _source='flashscore' pour transparence UI.
+  let flashscoreFallback = false;
+  if (!rows.length) {
+    const fs = getFlashscoreStandings(configId);
+    if (fs && Array.isArray(fs.rows) && fs.rows.length) {
+      rows = fs.rows.map(r => ({
+        team: r.team,
+        rank: r.rank,
+        form: '',
+        ppg: r.played ? parseFloat((r.pts / r.played).toFixed(2)) : null,
+        played: r.played,
+        wins: r.wins,
+        draws: r.draws,
+        losses: r.losses,
+        pts: r.pts,
+        gf: r.gf,
+        ga: r.ga,
+        avgFor: r.played ? parseFloat((r.gf / r.played).toFixed(2)) : null,
+        avgAg: r.played ? parseFloat((r.ga / r.played).toFixed(2)) : null,
+        _source: 'flashscore',
+      }));
+      flashscoreFallback = true;
+      console.log(`  [DEBUG STANDINGS] ligue ${configId} — Flashscore fallback (${rows.length} rows)`);
+    }
+  }
+
   return jsonResponse(res, 200, {
     success: true,
     leagueId: configId,
     count: rows.length,
     refetched,
+    flashscoreFallback,
     standings: rows,
   });
 }

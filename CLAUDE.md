@@ -166,7 +166,7 @@ Datasets Apify one-shot disponibles racine projet:
 | Plan | Phase | Tâche | Effort | ROI | Use case |
 |---|---|---|---|---|---|
 | **A** | 1 | ✅ Logos backup livré commit `3fc4ca7` — `tools/import-flashscore-logos.js` standalone loader, 20 EPL teams ingested `api_cache` TTL 90j, NBA filtered, idempotent + `--dry-run` + `--force`. Lookup chain `/api/v1/team-logo` automatique. | 30min | HIGH | ✓ DONE |
-| **B** | 2 | Standings fallback offline — `db.flashscore_standings` layer dédié, trigger si BSD+ESPN+API-Football tous HS | 1-2h | MED | Resilience triple-source HS |
+| **B** | 2 | ✅ livré — `tools/import-flashscore-standings.js` ETL dataset Apify entries football → `api_cache` key `flashscore_standings_<configId>` TTL 7j source `flashscore_standings`. Resolveur (country, league) → config_id via `leagues_config.json`. server.js `getFlashscoreStandings()` lookup + wire route `/api/v1/standings/:leagueId` fallback dernier recours (post BSD+ESPN+API-Football vides) avec flag `flashscoreFallback:true` + `_source:'flashscore'` rows. 20 EPL teams seedés (configId=39, Arsenal P1 82pts top). | 1-2h | MED | ✓ DONE |
 | **C** | 3 | Cross-ref team naming validation — Map Flashscore slug → BSD team_id (fuzzy normName), audit script divergences | 2h | MED | Validation normName + CI/CD |
 | **D** | 4 | ✅ livré — `tools/import-sofascore-football-venue-referee.js` ETL dataset Apify entries football → `api_cache` key `sofa_venue_referee_<normHome>_<normAway>` TTL 7j source `sofascore_venue_referee`. server.js `getSofascoreVenueReferee()` + wire `/api/v1/insights/:id` payload field `sofascore_venue_referee`. pariscore.html section "🏟️ STADE & ARBITRE · SOFASCORE" tête onglet Résumé : carte stade (nom + ville + capacité + flag) + carte arbitre (nom + flag + games + YC/match + RC/match). 1 entry seedée (Bernabéu + Munuera Montero 299 matchs 4.63 YC/m). Alt bd `82th`. | 1h | MED | ✓ DONE |
 | **E** | 5 | ✅ livré — `tools/import-flashscore-live-stats.js` ETL dataset Apify entries football → `api_cache` key `flashscore_live_stats_<normHome>_<normAway>` TTL 30min source `flashscore_live_stats`. STAT_MAP normalise stat_name → champs (possession_pct, total_shots, shots_on_target, corner_kicks, etc). server.js `getFlashscoreLiveStats()` + wire `/api/v1/insights/:id` payload `flashscore_live_stats` + match list `flashscore_live_fallback` (skip si live BSD/ESPN/AF déjà présent). 3 entries seedées. | 1-2h | MED | ✓ DONE |
@@ -174,7 +174,7 @@ Datasets Apify one-shot disponibles racine projet:
 
 **Effort total cumul:** ~5.5-6.5h si tous exécutés restants (Plan A ✅).
 **Limite:** datasets Apify one-shot ≠ feed continu. Value durable nécessite scraper continuous (Apify subscription) OU pivot xvalue.ai (bd `ffh` GO 85/100).
-**Ordre recommandé:** ~~A~~ ✅ → ~~F~~ ✅ → ~~D~~ ✅ → ~~E~~ ✅ → B (standings backup) → C (validation audit).
+**Ordre recommandé:** ~~A~~ ✅ → ~~F~~ ✅ → ~~D~~ ✅ → ~~E~~ ✅ → ~~B~~ ✅ → C (validation audit).
 
 #### Sous-tâches `6jro` Sofascore Apify datasets — 4 plans
 
@@ -217,7 +217,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 | Plan | bd | Tâche | Effort | ROI |
 |---|---|---|---|---|
 | ~~G~~ ✅ | `6jro` | Tennis player profile enrichment Grand Slam history (ETL + endpoint + section modal Insights) | 1-2h | HIGH |
-| B | `qm6a` | Standings fallback offline (db.flashscore_standings) | 1-2h | MED |
+| ~~B~~ ✅ | `qm6a` | Standings fallback offline (ETL tool + helper + route wire) | 1-2h | MED |
 | ~~E~~ ✅ | `qm6a` | Live stats fallback Flashscore (ETL + cache + wire insights + match list fallback) | 1-2h | MED |
 | C | `qm6a` | Cross-ref team naming validation audit | 2h | MED |
 | `r0v3` | — | BSD Phase 5 — Squad endpoint + fixtures variant proxies | 1-2h | LOW |
@@ -244,7 +244,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 2. **D + G** (Venue/referee + Tennis profile, ~3h cumul, valeur produit forte)
 3. **ueg0** (Social sentiment HIGH ROI, 2h)
 4. **j6pz** (Shotmap SVG HIGH ROI, 3-4h)
-5. **B + E + C** (Flashscore datasets remaining, ~5-6h cumul)
+5. **C** (Flashscore cross-ref naming audit — B/E livrés, ~2h)
 6. **82th + r0v3 + J** (lourd backlog, ~7-10h cumul)
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
@@ -396,4 +396,37 @@ Agis en tant que **Senior Frontend Engineer**.
 2. Affiche-moi d'abord un extrait du Payload JSON du WebSocket pour que je voie la donnée que tu as trouvée (ou non).
 3. Attends mon "GO" pour implémenter la logique visuelle sur le fichier HTML/JS concerné.
 
+### MISSION JAVASCRIPT & DOM : CORRECTION DU BUG DE L'ICÔNE DU SERVEUR (Balle de Tennis)
+
+Claude, active ta matrice de compétences : `javascript-logic`, `dom-manipulation`, et `frontend-ux-states`.
+
+🚨 **BUG VISUEL ET D'ÉTAT SIGNALÉ :** Sur notre scoreboard de Tennis en direct, l'indicateur visuel du serveur (représenté par une icône de balle de tennis) ne se met pas à jour correctement. Lorsque le serveur change au fil du match, la balle ne passe pas au nouveau joueur, ou reste figée.
+
+Agis en tant que **Senior Frontend Engineer** pour auditer et corriger cette faille de réactivité.
+
+---
+
+### ÉTAPE 1 : AUDIT DE LA BOUCLE DE RENDU
+- Localise la fonction responsable de l'affichage du scoreboard et de l'indicateur de service dans `pariscore.html` ou le script JS associé (cherche l'endroit où l'icône de la balle de tennis est injectée en HTML ou gérée via une classe CSS comme `.is-serving`).
+- Identifie comment la mise à jour des données (via WebSocket ou polling API) déclenche le rafraîchissement de ce bloc.
+
+---
+
+### ÉTAPE 2 : CORRECTION DE LA LOGIQUE D'ÉTAT (STATE MANAGEMENT)
+Le problème vient d'un nettoyage d'état manquant. Applique cette logique stricte :
+- À chaque mise à jour du score ou changement de jeu, **réinitialise d'abord** l'indicateur de service pour les DEUX joueurs (retire l'icône ou la classe CSS associée).
+- **Ensuite**, lis la nouvelle propriété du flux de données (ex: `match.serving`, `match.player1.is_serving`) et réapplique l'icône de la balle de tennis UNIQUEMENT au joueur actuellement au service.
+
+---
+
+### ÉTAPE 3 : OPTIMISATION DU CODE (ÉVITER LES DOUBLONS)
+- Assure-toi que l'injection de la balle de tennis ne crée pas de doublons dans le DOM (ex: l'ajout répété de balises `<img>` ou `<span>` à chaque tick du WebSocket). 
+- Privilégie le ciblage par ID ou par classe, et utilise un basculement de classe simple (ex: `element.classList.toggle('active-server', isServing)`).
+
+---
+
+### ÉTAPE 4 : PROTOCOLE DE VALIDATION
+1. Modifie la logique d'affichage.
+2. Simule un changement de serveur dans la console de test locale pour vérifier que la balle disparaît bien du Joueur A pour s'afficher chez le Joueur B.
+3. Confirme-moi dans le terminal que le bug est patché et que le code a été sécurisé contre les conflits de rendu.
 *Dernière mise à jour : v12.65 — 22/05/2026. CLAUDE.md purgé (5 missions livrées → bd notes + CHANGELOG.md). Sync drift bd↔CLAUDE.md effectué. Source vérité tâches = `bd ready`.*
