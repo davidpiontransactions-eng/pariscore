@@ -26020,17 +26020,134 @@ function _buildSurfaceSpeedIndex() {
   return byTourney;
 }
 
+// ─── bd 9ij — Alias-map tournois ATP/WTA (Surface Speed coverage) ───────────
+// Fichier source: .context/tennis_tournament_aliases.json — 80+ tournois
+// (4 Grand Slams + 9 ATP Masters 1000 + WTA 1000 + ATP Finals + 500/250 majeurs).
+// Permet de matcher noms hétérogènes ("French Open" vs "Roland Garros" vs "RG").
+// Charge unique au boot, lookup O(1) Map. Speed_index fallback ITF Court Pace
+// Rating: SLOW=85 (Clay RG, Monte-Carlo), MED=100 (Hard US/AO), FAST=110-115
+// (Grass Wimbledon, Indoor ATP Finals/Bercy). Réf: ITF Approved Tennis Balls &
+// Court Pace Rating Programme (https://www.itftennis.com/technical/courts/).
+// Modulator serveur/retourneur appliqué via speedNudge dans
+// computeTennisMarkovSetProbs (k=0.04 sur (spd-100)/100).
+const _TENNIS_ALIAS_FILE = path.join(__dirname, '.context', 'tennis_tournament_aliases.json');
+const _tennisAliasState = { canonByAlias: null, byCanon: null, ts: 0 };
+
+function _loadTennisAliasMap() {
+  if (_tennisAliasState.canonByAlias) return _tennisAliasState;
+  const canonByAlias = new Map(); // normAlias → canonical_id
+  const byCanon = new Map();      // canonical_id → entry
+  try {
+    const raw = fs.readFileSync(_TENNIS_ALIAS_FILE, 'utf8');
+    const data = JSON.parse(raw);
+    for (const [canonId, entry] of Object.entries(data)) {
+      if (canonId.startsWith('_')) continue; // skip _meta
+      if (!entry || typeof entry !== 'object' || !Array.isArray(entry.aliases)) continue;
+      byCanon.set(canonId, entry);
+      // canonical_id itself = alias (replace _ by space first)
+      const canonAsName = canonId.replace(/_/g, ' ');
+      const canonN = _normTournName(canonAsName);
+      if (canonN) canonByAlias.set(canonN, canonId);
+      for (const alias of entry.aliases) {
+        // input sanitize anti-injection: lowercase + strip non-ascii via normName
+        const n = _normTournName(String(alias || ''));
+        if (n) canonByAlias.set(n, canonId);
+      }
+    }
+    if (canonByAlias.size > 0) {
+      console.log(`  ✓ tennis_tournament_aliases.json chargé (${byCanon.size} tournois · ${canonByAlias.size} alias)`);
+    }
+  } catch (e) {
+    console.warn('  ⚠ tennis_tournament_aliases.json introuvable — alias-map désactivé:', e.message);
+  }
+  _tennisAliasState.canonByAlias = canonByAlias;
+  _tennisAliasState.byCanon = byCanon;
+  _tennisAliasState.ts = Date.now();
+  return _tennisAliasState;
+}
+
+// Résout le nom brut d'un tournoi vers son canonical_id (ex: "French Open"
+// → "roland_garros"). null si tournoi inconnu (fallback gracieux).
+function resolveTennisTournamentId(rawName) {
+  if (!rawName) return null;
+  const { canonByAlias } = _loadTennisAliasMap();
+  if (!canonByAlias || canonByAlias.size === 0) return null;
+  const t = _normTournName(rawName);
+  if (!t) return null;
+  if (canonByAlias.has(t)) return canonByAlias.get(t);
+  // sub-token fuzzy : tournoi feed contient un alias (5+ chars) ou inverse
+  for (const [alias, canonId] of canonByAlias.entries()) {
+    if (alias.length >= 5 && (t.includes(alias) || alias.includes(t))) return canonId;
+  }
+  return null;
+}
+
+// Renvoie le speed code (SLOW/MED/FAST) + index numérique fallback (85/100/115)
+// pour un canonical_id donné. Utilisé quand Sackmann ne couvre pas le tournoi.
+function getTennisTournamentSurfaceSpeed(canonicalId) {
+  if (!canonicalId) return null;
+  const { byCanon } = _loadTennisAliasMap();
+  if (!byCanon) return null;
+  const entry = byCanon.get(canonicalId);
+  if (!entry) return null;
+  return {
+    canonical_id: canonicalId,
+    surface: entry.surface || null,
+    speed_code: entry.speed_code || 'MED',
+    index: typeof entry.speed_index === 'number' ? entry.speed_index : 100,
+    tier: entry.tier || null,
+    circuit: entry.circuit || null,
+  };
+}
+
 // Renvoie { index, surface, samples } ou null. index 100 = vitesse moyenne
 // de la surface ; > 100 rapide (boost serveur), < 100 lent.
+// Chaîne de lookup v2 (bd 9ij) :
+//   1) Sackmann (aces/svpt) sur le nom direct → précision empirique.
+//   2) Alias-map → canonical_id, puis re-essai Sackmann sur TOUS les aliases.
+//   3) Fallback table statique aliases (ITF court pace rating).
+//   4) Fuzzy substring sur Sackmann (legacy).
 function getTennisSurfaceSpeed(tournamentName) {
   if (!tournamentName) return null;
   const idx = _buildSurfaceSpeedIndex();
-  if (!idx || idx.size === 0) return null;
   const t = _normTournName(tournamentName);
   if (!t) return null;
-  if (idx.has(t)) return idx.get(t);
-  for (const [n, v] of idx.entries()) {
-    if (n.length >= 5 && (t.includes(n) || n.includes(t))) return v;
+
+  // 1) Sackmann direct hit (le plus précis)
+  if (idx && idx.size > 0 && idx.has(t)) {
+    const v = idx.get(t);
+    return { ...v, source: 'sackmann_direct', canonical_id: resolveTennisTournamentId(tournamentName) };
+  }
+
+  // 2) Résolution alias → canonical → re-test Sackmann sur toutes les variantes
+  const canonId = resolveTennisTournamentId(tournamentName);
+  if (canonId && idx && idx.size > 0) {
+    const { byCanon } = _loadTennisAliasMap();
+    const entry = byCanon.get(canonId);
+    if (entry) {
+      const variants = [canonId.replace(/_/g, ' '), ...(entry.aliases || [])];
+      for (const v of variants) {
+        const nv = _normTournName(v);
+        if (nv && idx.has(nv)) {
+          return { ...idx.get(nv), source: 'sackmann_via_alias', canonical_id: canonId };
+        }
+      }
+    }
+  }
+
+  // 3) Fallback statique alias-map (ITF court pace rating)
+  if (canonId) {
+    const ts = getTennisTournamentSurfaceSpeed(canonId);
+    if (ts) return { ...ts, samples: 0, source: 'alias_static' };
+  }
+
+  // 4) Legacy fuzzy substring Sackmann
+  if (idx && idx.size > 0) {
+    for (const [n, v] of idx.entries()) {
+      if (n.length >= 5 && (t.includes(n) || n.includes(t))) {
+        return { ...v, source: 'sackmann_fuzzy', canonical_id: null };
+      }
+    }
   }
   return null;
 }
