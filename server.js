@@ -26884,6 +26884,7 @@ const BSD_ENRICH_TTL = {
   polymarket: 5 * 60 * 1000,     // 5min (prediction market)
   broadcasts: 24 * 3600 * 1000,  // 24h (TV channels figés)
   compare_odds: 5 * 60 * 1000,   // bd c81b 5min (14 books + movement)
+  social:     30 * 60 * 1000,    // bd ueg0 30min (social items tweets/news/videos)
 };
 
 function _bsdResolveEventId(matchId) {
@@ -26919,6 +26920,7 @@ async function _bsdEnrichFetch(kind, eventId) {
     case 'polymarket':  endpoint = `/odds/polymarket/?event=${eventId}`; break;
     case 'broadcasts':  endpoint = `/broadcasts/?event=${eventId}`; break;
     case 'compare_odds': endpoint = `/odds/compare/?event=${eventId}`; break;
+    case 'social':      endpoint = `/social/?event=${eventId}&limit=20`; break;
     default: throw new Error(`unknown bsd kind: ${kind}`);
   }
   const res = await bsdFetch(endpoint);
@@ -26930,7 +26932,56 @@ async function _bsdEnrichFetch(kind, eventId) {
   return { data: res.data, cached: false };
 }
 
-const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts', 'compare_odds'];
+const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts', 'compare_odds', 'social'];
+
+// bd ueg0 — Sentiment heuristique léger sur texte tweet/news. Pas d'ML : keyword scoring rapide.
+// Retourne {score: -1..+1, label: 'positive'|'neutral'|'negative'}.
+function computeSocialSentiment(text) {
+  if (!text || typeof text !== 'string') return { score: 0, label: 'neutral' };
+  const t = text.toLowerCase();
+  const positive = /\b(win|won|wins|victory|champion|champions|title|trophy|trophée|trophy|gagn[éeèe]|victoire|amazing|stunner|brilliant|magnifique|incroyable|hat[- ]?trick|goal of the season|goal of the month|🏆|🎉|🔥|💪|⭐|🌟|👏)\b/g;
+  const negative = /\b(lose|lost|loss|defeat|defeated|injury|injured|blessé|blessure|broken|fracture|déception|disappointing|crisis|crise|sacked|fired|limogé|terrible|awful|😢|💔|😞)\b/g;
+  const pos = (t.match(positive) || []).length;
+  const neg = (t.match(negative) || []).length;
+  const score = (pos - neg) / Math.max(1, pos + neg);
+  const label = score > 0.2 ? 'positive' : score < -0.2 ? 'negative' : 'neutral';
+  return { score: Math.round(score * 100) / 100, label };
+}
+
+// bd ueg0 — Aggregate social buzz : count + sentiment moyen + breakdown types.
+function aggregateSocialBuzz(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return { count: 0, sentiment_score: 0, sentiment_label: 'neutral', by_type: {}, top_items: [] };
+  }
+  let totalScore = 0;
+  const byType = {};
+  for (const it of items) {
+    const text = `${it.text || ''} ${it.title || ''}`;
+    const s = computeSocialSentiment(text);
+    it._sentiment = s;
+    totalScore += s.score;
+    const tp = it.type || 'unknown';
+    byType[tp] = (byType[tp] || 0) + 1;
+  }
+  const avg = totalScore / items.length;
+  return {
+    count: items.length,
+    sentiment_score: Math.round(avg * 100) / 100,
+    sentiment_label: avg > 0.2 ? 'positive' : avg < -0.2 ? 'negative' : 'neutral',
+    by_type: byType,
+    top_items: items.slice(0, 10).map(it => ({
+      id: it.id,
+      type: it.type,
+      url: it.url,
+      text: it.text,
+      title: it.title,
+      thumbnail: it.thumbnail,
+      account: it.account ? { handle: it.account.handle, name: it.account.name, verified: !!it.account.verified } : null,
+      published_at: it.published_at,
+      sentiment: it._sentiment || { score: 0, label: 'neutral' },
+    })),
+  };
+}
 // bd c81b — GET /api/v1/bsd/manager/<teamId> → tactical fingerprint coach courant
 if (pathname.startsWith('/api/v1/bsd/manager/') && req.method === 'GET') {
   const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/manager/'.length)).trim();
@@ -27001,6 +27052,32 @@ for (const kind of BSD_ENRICH_PATHS) {
       console.warn(`  [BSD/${kind}] event=${eventId} erreur:`, e.message);
       return jsonResponse(res, 502, { error: `bsd_${kind}_failed`, message: String(e.message || e) });
     }
+  }
+}
+
+// bd ueg0 — GET /api/v1/social/match/:matchId → BSD social items + sentiment + buzz
+// Wrap autour _bsdEnrichFetch('social') avec agrégation server-side (computeSocialSentiment).
+if (pathname.startsWith('/api/v1/social/match/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/social/match/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) {
+    return jsonResponse(res, 400, { error: 'bad_match_id', message: `Aucun _bsd_event_id résolu pour matchId="${rawId}"` });
+  }
+  try {
+    const { data, cached } = await _bsdEnrichFetch('social', eventId);
+    const items = (data && Array.isArray(data.results)) ? data.results : [];
+    const buzz = aggregateSocialBuzz(items);
+    return jsonResponse(res, 200, {
+      source: 'bsd_social',
+      event_id: Number(eventId),
+      total_available: (data && typeof data.count === 'number') ? data.count : items.length,
+      buzz,
+      cached,
+      fetched_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn(`  [BSD/social] event=${eventId} erreur:`, e.message);
+    return jsonResponse(res, 502, { error: 'bsd_social_failed', message: String(e.message || e) });
   }
 }
 

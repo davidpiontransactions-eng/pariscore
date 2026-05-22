@@ -128,7 +128,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `968x` | SEO/AEO Growth strategy — llms.txt + Structured Data + SSR scores + /about E-E-A-T | open |
 | `0hf4` | **BSD coverage Phase 1** — TV channels + broadcasts (fetchers + caches + helper attach) | Phase 1 livré v12.65 commit `d10ab09` · Phases 1.1/2/3 ouvertes |
 | `j6pz` | **BSD coverage Phase 2** — Shotmap + best_odds + bookmakers (3 endpoints REST + UI shotmap SVG modal Live Dashboard) | open · 3-4h |
-| `ueg0` | **BSD coverage Phase 3** — Social items sentiment buzz match (badge cellule + section modal Insights) | open · 2h |
+| ~~`ueg0`~~ ✅ | **BSD coverage Phase 3** — Social items sentiment buzz match (section modal Insights) | livré commit (voir ci-dessous) — section modal Insights lazy fetch + sentiment heuristique |
 | `82th` | **BSD coverage Phase 4** — Referees + Venues + Leagues dynamic (enrichissement modal Contexte stade/arbitre/ligue) | open · 3-4h |
 
 > **BSD MCP coverage roadmap (22/05/2026)** : 17/28 endpoints déjà plugués via `bsdFetch()` REST direct. 11 gaps découpés en 5 phases. Phase 1 TV broadcasters en cours (bg agent, bd ticket créé pendant exec). Phases 2-5 = `j6pz` `ueg0` `82th` `r0v3` (P3). Effort total 12-15h dev. Source: audit MCP `bsd-sports` 28 tools vs grep `bsdFetch()` server.js 22/05.
@@ -223,7 +223,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 | Plan | bd | Tâche | Effort | ROI |
 |---|---|---|---|---|
 | `j6pz` | — | BSD Phase 2 — Shotmap + best_odds + bookmakers (UI SVG modal) | 3-4h | HIGH |
-| `ueg0` | — | BSD Phase 3 — Social items sentiment buzz match | 2h | HIGH |
+| ~~`ueg0`~~ ✅ | — | BSD Phase 3 — Social items sentiment buzz match (livré section modal Insights lazy) | 2h | HIGH |
 | `82th` | — | BSD Phase 4 — Referees + Venues + Leagues dynamic | 3-4h | MED |
 | J | `6jro` | Sofascore continuous scraper webhook (conflit bd `ffh`) | 3-4h | MED |
 
@@ -355,5 +355,41 @@ Implémenter une infrastructure de paiement résiliente, conforme aux standards 
 | Bugfix autoplay DOMException | — | `playPromise.catch` silencieux pariscore.html:31652 |
 | UI contraste teinte rose tableau Foot | `k37` | coral leak fix commit `8b99cb2` (`tr.match-row-live::before` box-shadow scope) |
 | Benchmark Rotowire Soccer | `gz7s` | P3 open — rapport à livrer (voir bd description spec) |
+
+### MISSION WEBSOCKET & UI : ANIMATION DU TERRAIN 2D (LIVE MATCH TRACKER)
+
+Claude, active ta matrice de compétences : `websocket-integration`, `frontend-canvas-dom`, et `sports-data-engineering`.
+
+🚨 **PROBLÈME VISUEL ET FONCTIONNEL :** Sur notre interface de match en direct, le widget du terrain de football affiche le texte de fallback "position ballon indisponible". Pourtant, le panneau latéral reçoit bien les données de possession/pression via notre WebSocket (on voit 50/50 pour Machida vs Urawa). 
+
+Le flux WS est actif, mais la liaison avec l'animation du ballon sur le terrain (coordonnées ou zones) est cassée ou mal "pluggée".
+
+Agis en tant que **Senior Frontend Engineer**.
+
+---
+
+### ÉTAPE 1 : AUDIT DU PAYLOAD WEBSOCKET
+- Intercepte et analyse la structure brute du JSON que nous recevons via le WebSocket pour un match en cours.
+- Cherche comment le fournisseur d'API transmet l'information de l'action en cours. Est-ce sous forme de coordonnées (`x`, `y`) ? Ou sous forme de zones (`zone: "attack"`, `side: "home"`) ? Ou sous forme d'événements texte (`event: "Corner Kick"`) ?
+
+---
+
+### ÉTAPE 2 : MAPPING ET LOGIQUE DE RENDU
+- Si la donnée existe dans le payload, crée la fonction de mapping (ex: `mapBallPosition(data)`).
+- **Si ce sont des coordonnées X/Y :** Convertis ces pourcentages par rapport à la taille de notre conteneur CSS (le terrain vert) pour y placer un point (le ballon).
+- **Si ce sont des zones :** Plutôt qu'un ballon précis, illumine une zone du terrain (ex: un calque blanc translucide sur le tiers offensif) selon l'équipe qui a le ballon.
+- Supprime le texte "position ballon indisponible" dynamiquement dès que la première donnée de position valide est reçue.
+
+---
+
+### ÉTAPE 3 : GESTION DES FALLBACKS (LE CAS ÉCHÉANT)
+- Si (et seulement si) notre fournisseur d'API ne fournit *réellement* aucune donnée de position spatiale pour ce match, remplace le grand texte moche "position ballon indisponible" par un design plus premium et discret (ex: un texte subtil "Simulation 2D non couverte pour cette ligue" centré, sans bloquer la vue des lignes du terrain).
+
+---
+
+### ÉTAPE 4 : TESTS ET VALIDATION
+1. N'écris pas le code de rendu tout de suite.
+2. Affiche-moi d'abord un extrait du Payload JSON du WebSocket pour que je voie la donnée que tu as trouvée (ou non).
+3. Attends mon "GO" pour implémenter la logique visuelle sur le fichier HTML/JS concerné.
 
 *Dernière mise à jour : v12.65 — 22/05/2026. CLAUDE.md purgé (5 missions livrées → bd notes + CHANGELOG.md). Sync drift bd↔CLAUDE.md effectué. Source vérité tâches = `bd ready`.*

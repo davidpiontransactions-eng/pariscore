@@ -17072,6 +17072,60 @@ async function _fetchAndRenderTennisDetail(matchId) {
   }
 }
 
+// bd ueg0 — Social Buzz lazy fetch + render (BSD social items + sentiment heuristique)
+async function fetchInsightsSocialBuzz(matchId) {
+  if (!matchId) return;
+  const slot = document.getElementById('ins-social-buzz-slot');
+  if (!slot) return;
+  slot.innerHTML = `<div class="ins-section" style="opacity:.55;font-size:11px;font-family:var(--font-mono);padding:8px 0;">📢 Buzz Réseaux Sociaux — chargement…</div>`;
+  try {
+    const r = await apiFetch(`/api/v1/social/match/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) { slot.innerHTML = ''; return; }
+    const data = await r.json();
+    if (!data || !data.buzz || data.buzz.count === 0) { slot.innerHTML = ''; return; }
+    slot.innerHTML = renderInsightsSocialBuzz(data);
+  } catch (_) { slot.innerHTML = ''; }
+}
+
+function renderInsightsSocialBuzz(d) {
+  const b = d.buzz || {};
+  const items = Array.isArray(b.top_items) ? b.top_items : [];
+  if (!items.length) return '';
+  const labelColor = b.sentiment_label === 'positive' ? '#16a34a' : b.sentiment_label === 'negative' ? '#dc2626' : '#64748b';
+  const labelBg = b.sentiment_label === 'positive' ? 'rgba(22,163,74,0.12)' : b.sentiment_label === 'negative' ? 'rgba(220,38,38,0.12)' : 'rgba(100,116,139,0.12)';
+  const labelEmoji = b.sentiment_label === 'positive' ? '📈' : b.sentiment_label === 'negative' ? '📉' : '➖';
+  const byType = b.by_type || {};
+  const typeIcons = { tweet: '🐦', video: '🎥', news: '📰' };
+  const typeBadges = Object.entries(byType).map(([k, v]) => `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text2);background:var(--bg4);padding:2px 6px;border-radius:3px;">${typeIcons[k]||'•'} ${k}: ${v}</span>`).join(' ');
+  const _esc = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+  const itemCard = it => {
+    const time = it.published_at ? new Date(it.published_at).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    const txt = _esc((it.text || it.title || '').slice(0, 240));
+    const verified = it.account && it.account.verified ? ' <span title="Compte vérifié" style="color:#1d9bf0;">✓</span>' : '';
+    const sent = it.sentiment || {};
+    const sentColor = sent.label === 'positive' ? '#16a34a' : sent.label === 'negative' ? '#dc2626' : '#64748b';
+    return `<a href="${_esc(it.url||'#')}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;text-decoration:none;color:var(--text);margin-bottom:8px;border-left:3px solid ${sentColor};">
+      <div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:var(--font-mono);">
+        <span>${typeIcons[it.type]||'•'} ${it.account ? `@${_esc(it.account.handle||'')}${verified} · ${_esc(it.account.name||'')}` : (it.type||'item')}</span>
+        <span>${time}</span>
+      </div>
+      <div style="font-size:12.5px;line-height:1.4;color:var(--text);">${txt}</div>
+    </a>`;
+  };
+  return `<div class="ins-section" style="border:1px solid rgba(168,85,247,0.20);background:linear-gradient(135deg,rgba(168,85,247,0.04),rgba(168,85,247,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:9px;font-family:var(--font-mono);color:#7e22ce;background:rgba(168,85,247,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">📢 BUZZ RÉSEAUX SOCIAUX · BSD</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text2);">${b.count} items${d.total_available > b.count ? ` / ${d.total_available} dispo` : ''}</span>
+      </div>
+      <span style="font-family:var(--font-mono);font-size:11px;color:${labelColor};background:${labelBg};padding:3px 8px;border-radius:4px;font-weight:700;">${labelEmoji} ${b.sentiment_label} (${b.sentiment_score > 0 ? '+' : ''}${b.sentiment_score})</span>
+    </div>
+    ${typeBadges ? `<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px;">${typeBadges}</div>` : ''}
+    <div>${items.slice(0, 5).map(itemCard).join('')}</div>
+    ${d.cached ? `<div style="margin-top:6px;font-size:9px;font-family:var(--font-mono);color:var(--text3);opacity:.6;">Source BSD cache 30min</div>` : ''}
+  </div>`;
+}
+
 // bd 6jro Plan G — Tennis profile enrichment (Sofascore Apify ETL)
 // Fetch rankings + grandSlamBestResults pour les 2 joueurs, render section dédiée.
 async function fetchTennisSofaProfile(matchData) {
@@ -22570,6 +22624,7 @@ function buildResumeTab(d) {
   return `
     ${editorialHtml}
     ${venueRefereeHtml}
+    <div id="ins-social-buzz-slot"></div>
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -24166,6 +24221,7 @@ async function openInsights(matchId) {
     insCurrentData = d;
 
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
+    fetchInsightsSocialBuzz(m.id);  // bd ueg0 — async lazy fetch + populate slot
     const statsEl = document.getElementById('ins-tab-stats');
     if (statsEl) statsEl.innerHTML = buildStatsTab(d);
     document.getElementById('ins-tab-graphique').innerHTML  = buildGraphiqueTab(d);
