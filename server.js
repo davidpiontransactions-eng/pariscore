@@ -4363,7 +4363,21 @@ function initSQLite() {
     if (!cols.some(c => c.name === 'source')) {
       sqldb.exec(`ALTER TABLE user_bets ADD COLUMN source TEXT DEFAULT 'manual'`);
     }
+    // bd cty — CLV par stratégie 30j : strategy tag + closing line snapshot
+    if (!cols.some(c => c.name === 'strategy')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN strategy TEXT`);
+    }
+    if (!cols.some(c => c.name === 'closing_odds')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN closing_odds REAL`);
+    }
+    if (!cols.some(c => c.name === 'closing_odds_captured_at')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN closing_odds_captured_at INTEGER`);
+    }
   } catch (e) { console.error('  [Migration v9.8.1] user_bets ALTER failed:', e.message); }
+  // bd cty — index dédié pour requêtes CLV (user_id, strategy, settled_at)
+  try {
+    sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_bets_strategy ON user_bets(user_id, strategy, settled_at)`);
+  } catch (e) { console.error('  [Migration cty] idx_user_bets_strategy failed:', e.message); }
 
   // bankroll_plan — config par user pour suivi objectif quotidien
   sqldb.exec(`CREATE TABLE IF NOT EXISTS bankroll_plan (
@@ -8626,6 +8640,137 @@ function _strategyWonOf(strategyKey, h) {
     // Stratégies sans data dans le record archivé (corners, cartons, etc.) → null
     default: return null;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// bd cty — BD-DATA-006 : CLV (Closing Line Value) par stratégie 30 jours
+// CLV = (cote_pari_pris / cote_clôture - 1) × 100
+// Métrique gold-standard sharp vs square : CLV+ = sharp, CLV~0 = flat, CLV- = square
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Infère un tag stratégie depuis (market, selection_label) quand bet POST ne fournit pas
+// d'explicite `strategy`. Mapping conservateur — null si ambigu (pas de pollution data).
+function inferStrategyTag(market, selectionLabel) {
+  if (!market || typeof market !== 'string') return null;
+  const m = market.toUpperCase().replace(/[\s\-\.]/g, '_');
+  const sl = (selectionLabel || '').toLowerCase();
+  // Match direct sur les clés STRATEGIES si déjà au bon format
+  if (typeof STRATEGIES === 'object' && STRATEGIES && Object.prototype.hasOwnProperty.call(STRATEGIES, m)) return m;
+  // Heuristiques marchés courants
+  if (m.includes('BTTS') || m === 'GG' || m === 'GGNG') return sl.includes('non') || sl === 'no' ? null : 'BTTS_YES';
+  if (m.includes('OVER_2_5') || m === 'O25' || m === 'PLUS_2_5') return 'OVER_2_5';
+  if (m.includes('OVER_1_5') || m === 'O15') return 'OVER_1_5';
+  if (m.includes('UNDER_2_5') || m === 'U25' || m === 'MOINS_2_5') return 'UNDER_2_5';
+  if (m === '1X2' || m === '1N2') {
+    if (sl === '1' || sl.includes('home') || sl.includes('domicile')) return 'HOME_WIN';
+    if (sl === '2' || sl.includes('away') || sl.includes('exterieur') || sl.includes('extérieur')) return 'AWAY_WIN';
+    if (sl === 'x' || sl === 'n' || sl.includes('nul') || sl.includes('draw')) return 'DRAW';
+  }
+  if (m.includes('HOME_WIN') || m === 'HOME') return 'HOME_WIN';
+  if (m.includes('AWAY_WIN') || m === 'AWAY') return 'AWAY_WIN';
+  if (m.includes('DRAW') || m === 'NUL') return 'DRAW';
+  if (m.includes('CS_0_0') || m === 'SCORE_00' || m === '0_0') return 'CS_00';
+  return null;
+}
+
+// Clip outliers CLV pour robustesse stats : [-90%, +300%]
+// CLV < -90% = bet sur 100x outsider qui clos 10x = ratio non-informatif (bug data)
+// CLV > 300% = artefact closing line non-snapshoté (cote stale)
+function _clipCLV(pct) {
+  if (!Number.isFinite(pct)) return null;
+  return Math.max(-90, Math.min(300, pct));
+}
+
+// Median d'un array de nombres (sans dep)
+function _medianOf(arr) {
+  if (!arr || !arr.length) return 0;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// Helper bas-niveau : CLV moyen pour une stratégie spécifique sur fenêtre N jours
+// userId : null = aggregate cross-users (anonymized public mode)
+// Returns: { strategy, n_bets, clv_mean_pct, clv_median_pct, win_rate_pct, roi_pct, sparkline }
+function computeStrategyCLV(userId, strategy, periodDays = 30) {
+  if (!sqldb) return null;
+  const periodSec = Math.max(1, Math.min(365, periodDays | 0)) * 86400;
+  const sinceTs = Math.floor(Date.now() / 1000) - periodSec;
+
+  // Where clause : bets settled (non-pending, non-void), strategy match, closing_odds disponible
+  const whereParts = [
+    "strategy = ?",
+    "closing_odds IS NOT NULL",
+    "closing_odds > 1.01",
+    "odds > 1.01",
+    "status IN ('won','lost','half_won','half_lost','cashout')",
+    "settled_at >= ?",
+  ];
+  const params = [strategy, sinceTs];
+  if (userId != null) {
+    whereParts.push("user_id = ?");
+    params.push(userId);
+  }
+  const sql = `SELECT odds, closing_odds, stake_cents, payout_cents, status, settled_at
+               FROM user_bets WHERE ${whereParts.join(' AND ')} ORDER BY settled_at ASC`;
+  let rows;
+  try { rows = sqldb.prepare(sql).all(...params); }
+  catch (e) { _traceCatch('clv_query', e); return null; }
+  if (!rows.length) return { strategy, n_bets: 0, clv_mean_pct: null, clv_median_pct: null, win_rate_pct: null, roi_pct: null, sparkline: [] };
+
+  const clvs = [];
+  let wins = 0, totalStake = 0, totalPayout = 0;
+  for (const r of rows) {
+    const clv = _clipCLV(((r.odds / r.closing_odds) - 1) * 100);
+    if (clv != null) clvs.push({ clv, ts: r.settled_at });
+    if (r.status === 'won' || r.status === 'half_won') wins++;
+    totalStake += (r.stake_cents || 0);
+    totalPayout += (r.payout_cents || 0);
+  }
+  const clvOnly = clvs.map(c => c.clv);
+  const mean = clvOnly.reduce((s, v) => s + v, 0) / clvOnly.length;
+  // Sparkline : moyenne glissante par bucket de 3 jours (max 10 points)
+  const bucketSec = Math.max(1, Math.floor(periodSec / 10));
+  const buckets = new Map();
+  for (const { clv, ts } of clvs) {
+    const k = Math.floor(ts / bucketSec);
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(clv);
+  }
+  const sparkline = Array.from(buckets.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([k, vs]) => ({ ts: k * bucketSec, clv: +(vs.reduce((s, v) => s + v, 0) / vs.length).toFixed(2) }));
+
+  return {
+    strategy,
+    n_bets: rows.length,
+    clv_mean_pct: +mean.toFixed(2),
+    clv_median_pct: +(_medianOf(clvOnly)).toFixed(2),
+    win_rate_pct: +(100 * wins / rows.length).toFixed(1),
+    roi_pct: totalStake > 0 ? +(100 * (totalPayout / totalStake)).toFixed(2) : null,
+    sparkline,
+  };
+}
+
+// Top-level : balaye toutes les stratégies présentes en DB pour user (ou global) sur N jours
+function computeAllStrategyCLV(userId, periodDays = 30) {
+  if (!sqldb) return [];
+  const periodSec = Math.max(1, Math.min(365, periodDays | 0)) * 86400;
+  const sinceTs = Math.floor(Date.now() / 1000) - periodSec;
+  const params = [sinceTs];
+  let where = "strategy IS NOT NULL AND closing_odds IS NOT NULL AND settled_at >= ? AND status IN ('won','lost','half_won','half_lost','cashout')";
+  if (userId != null) {
+    where += " AND user_id = ?";
+    params.push(userId);
+  }
+  let strats;
+  try {
+    strats = sqldb.prepare(`SELECT DISTINCT strategy FROM user_bets WHERE ${where}`).all(...params);
+  } catch (e) { _traceCatch('clv_distinct', e); return []; }
+  return strats
+    .map(r => computeStrategyCLV(userId, r.strategy, periodDays))
+    .filter(r => r && r.n_bets > 0)
+    .sort((a, b) => (b.clv_mean_pct || 0) - (a.clv_mean_pct || 0));
 }
 
 // H3 : décompose un record tennis en picks-par-marché.
@@ -25029,10 +25174,14 @@ if (pathname === '/api/v1/bets' && req.method === 'POST') {
   const stakeCents = Math.round(body.stake * 100);
   const bookmaker = normalizeBookmaker(body.bookmaker);
   const sport = normalizeSport(body.sport);
+  // bd cty — strategy tag (optionnel, auto-derive si absent)
+  const strategyTag = (typeof body.strategy === 'string' && body.strategy.trim())
+    ? body.strategy.trim().slice(0, 48)
+    : inferStrategyTag(body.market, body.selection_label);
   const result = sqldb.prepare(`INSERT INTO user_bets
     (user_id, match_id, home_team, away_team, league, commence_time, market, selection_label,
-     odds, stake_cents, bookmaker, notes, model_prob, edge_pct, kelly_fraction, sport, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual')`).run(
+     odds, stake_cents, bookmaker, notes, model_prob, edge_pct, kelly_fraction, sport, source, strategy)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual', ?)`).run(
     user.userId,
     body.match_id || null,
     body.home_team || null,
@@ -25049,6 +25198,7 @@ if (pathname === '/api/v1/bets' && req.method === 'POST') {
     typeof body.edge_pct === 'number' ? body.edge_pct : null,
     typeof body.kelly_fraction === 'number' ? body.kelly_fraction : null,
     sport,
+    strategyTag,
   );
   const inserted = sqldb.prepare('SELECT * FROM user_bets WHERE id = ?').get(result.lastInsertRowid);
   return jsonResponse(res, 201, inserted);
@@ -25206,6 +25356,40 @@ if (pathname.match(/^\/api\/v1\/bankroll\/tx\/\d+$/) && req.method === 'DELETE')
   const result = sqldb.prepare('DELETE FROM bankroll_transactions WHERE id = ? AND user_id = ?').run(txId, user.userId);
   if (result.changes === 0) return jsonResponse(res, 404, { error: 'Transaction introuvable' });
   return jsonResponse(res, 200, { deleted: true, id: txId });
+}
+
+// bd cty — GET /api/v1/analytics/clv-by-strategy?period=30d&public=1
+// CLV moyen par stratégie sur fenêtre N jours glissants
+// Mode authentifié : CLV personnel par user_id JWT
+// Mode public (param public=1) : CLV agrégé tous users (anonymized)
+// Security : period sanitize regex, user_id depuis JWT (jamais query param)
+if (pathname === '/api/v1/analytics/clv-by-strategy' && req.method === 'GET') {
+  const periodRaw = String(query.period || '30d');
+  const m = /^(\d{1,3})d$/.exec(periodRaw);
+  if (!m) return jsonResponse(res, 400, { error: 'invalid_period', allowed_format: '<N>d (ex: 7d, 30d, 90d)' });
+  const periodDays = Math.max(1, Math.min(365, parseInt(m[1], 10)));
+  const isPublic = query.public === '1' || query.public === 'true';
+  let userId = null;
+  if (!isPublic) {
+    const user = requireUserAuth(req, res); if (!user) return;
+    userId = user.userId;
+  }
+  try {
+    const t0 = Date.now();
+    const rows = computeAllStrategyCLV(userId, periodDays);
+    return jsonResponse(res, 200, {
+      mode: isPublic ? 'public_aggregate' : 'user',
+      period_days: periodDays,
+      total_strategies: rows.length,
+      data: rows,
+      elapsed_ms: Date.now() - t0,
+      notice: rows.length === 0
+        ? 'Aucun bet settled avec closing_odds. CLV requires closing line snapshot — see /docs#clv or wait 30j post-deploy.'
+        : null,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'clv_compute_error', detail: e.message });
+  }
 }
 
 // GET /api/v1/accuracy/trends — Weekly accuracy trend chart
@@ -33381,6 +33565,56 @@ setInterval(() => {
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+
+// bd cty — Closing line snapshot : pour chaque pending bet dont kickoff dans [now+1min, now+10min],
+// snapshot la cote courante (selon market) depuis db.matches → user_bets.closing_odds.
+// Idempotent : skip si closing_odds déjà settée. Tourne toutes les 2min pour densifier la fenêtre.
+async function cronSnapshotClosingLines() {
+  if (!sqldb) return;
+  try {
+    const nowSec = Math.floor(Date.now() / 1000);
+    // Pending bets avec match_id + commence_time dans fenêtre [now+1min, now+15min], pas encore snapshotés
+    const candidates = sqldb.prepare(`
+      SELECT id, match_id, market, selection_label, home_team, away_team, commence_time
+      FROM user_bets
+      WHERE status = 'pending'
+        AND closing_odds IS NULL
+        AND match_id IS NOT NULL
+        AND commence_time IS NOT NULL
+    `).all();
+    if (!candidates.length) return;
+    let snapped = 0;
+    for (const bet of candidates) {
+      const koSec = Math.floor(new Date(bet.commence_time).getTime() / 1000);
+      // Fenêtre serrée [now+60s, now+900s] = T-1 à T-15min avant kickoff
+      if (!Number.isFinite(koSec) || koSec - nowSec < 60 || koSec - nowSec > 900) continue;
+      const match = db.matches.find(m => String(m.id) === String(bet.match_id));
+      if (!match || !match.odds) continue;
+      // Map market → odds field
+      const market = (bet.market || '').toUpperCase().replace(/[\s\-\.]/g, '_');
+      const sl = (bet.selection_label || '').toLowerCase();
+      let closeOdd = null;
+      if (market === 'BTTS' || market.includes('BTTS')) closeOdd = match.odds.btts || null;
+      else if (market.includes('OVER_2_5') || market === 'O25') closeOdd = match.odds.over25 || null;
+      else if (market.includes('UNDER_2_5') || market === 'U25') closeOdd = match.odds.under25 || null;
+      else if (market === '1X2' || market === '1N2') {
+        if (sl === '1' || sl.includes('home') || sl.includes('domicile')) closeOdd = match.odds.home || null;
+        else if (sl === '2' || sl.includes('away') || sl.includes('exterieur') || sl.includes('extérieur')) closeOdd = match.odds.away || null;
+        else if (sl === 'x' || sl === 'n' || sl.includes('nul')) closeOdd = match.odds.draw || null;
+      }
+      else if (market === 'HOME_WIN' || market === 'HOME') closeOdd = match.odds.home || null;
+      else if (market === 'AWAY_WIN' || market === 'AWAY') closeOdd = match.odds.away || null;
+      else if (market === 'DRAW' || market === 'NUL') closeOdd = match.odds.draw || null;
+      if (closeOdd && closeOdd > 1.01) {
+        sqldb.prepare('UPDATE user_bets SET closing_odds = ?, closing_odds_captured_at = ? WHERE id = ?')
+          .run(closeOdd, nowSec, bet.id);
+        snapped++;
+      }
+    }
+    if (snapped > 0) console.log(`  [Cron CLV] ${snapped} closing odds snapshotted`);
+  } catch (e) { _traceCatch('clv_snapshot_cron', e); }
+}
+setInterval(() => cronSnapshotClosingLines().catch(e => console.warn('[CLV Snapshot]', e.message)), 2 * 60 * 1000);
 // bd 0hf4 Phase 1.1 — Cron pre-fetch BSD TV channels + broadcasts FR fenêtre J→J+7 (6h)
 // Populates bsdBroadcastsCache → attachBSDBroadcasts (cache-only) enrichit match.tv_channels[]
 async function cronPreFetchBSDBroadcasts() {
