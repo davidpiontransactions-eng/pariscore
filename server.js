@@ -3182,6 +3182,46 @@ function getSofascoreVenueReferee(match) {
   return { venue: data.venue || null, referee: data.referee || null };
 }
 
+// ─── bd qm6a Plan E — Flashscore live stats fallback (Apify dataset ETL) ─────
+// Lazy lookup api_cache key 'flashscore_live_stats_<normHome>_<normAway>'. TTL 30min.
+// Fallback live data quand BSD+ESPN+API-Football tous HS pour un match donné.
+const flashscoreLiveStatsMap = new Map();
+let flashscoreLiveStatsLoadedAt = 0;
+const FLASHSCORE_LIVE_STATS_RELOAD_MS = 60 * 1000;
+
+function loadFlashscoreLiveStatsCache(force = false) {
+  const now = Date.now();
+  if (!force && (now - flashscoreLiveStatsLoadedAt) < FLASHSCORE_LIVE_STATS_RELOAD_MS) return;
+  if (!sqldb) return;
+  try {
+    const rows = sqldb.prepare(
+      "SELECT key, data FROM api_cache WHERE key LIKE 'flashscore\\_live\\_stats\\_%' ESCAPE '\\' AND expires_at > ?"
+    ).all(now);
+    flashscoreLiveStatsMap.clear();
+    for (const row of rows) {
+      try {
+        const d = JSON.parse(row.data || '{}');
+        if (d && d.home_team && d.away_team) {
+          const h = _normKeyForLiveStream(d.home_team);
+          const a = _normKeyForLiveStream(d.away_team);
+          if (h && a) flashscoreLiveStatsMap.set(`${h}|${a}`, d);
+        }
+      } catch (_) {}
+    }
+    flashscoreLiveStatsLoadedAt = now;
+  } catch (e) { /* silent */ }
+}
+
+function getFlashscoreLiveStats(match) {
+  if (!match || !match.home_team || !match.away_team) return null;
+  loadFlashscoreLiveStatsCache();
+  if (flashscoreLiveStatsMap.size === 0) return null;
+  const h = _normKeyForLiveStream(match.home_team);
+  const a = _normKeyForLiveStream(match.away_team);
+  if (!h || !a) return null;
+  return flashscoreLiveStatsMap.get(`${h}|${a}`) || null;
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
@@ -15773,6 +15813,24 @@ async function handleAPI(req, res, pathname, query) {
       for (const m of matches) {
         try { if (typeof attachFlashscoreLiveStream === 'function') attachFlashscoreLiveStream(m); } catch (_) {}
       }
+      // bd qm6a Plan E — fallback live stats Flashscore quand BSD+ESPN HS (gracieux silencieux si déjà rempli)
+      for (const m of matches) {
+        try {
+          if (typeof getFlashscoreLiveStats !== 'function') break;
+          // Skip si live data déjà présent (BSD/ESPN/API-Football)
+          if (m.live_status || m.live_score || m.live_minute) continue;
+          const fb = getFlashscoreLiveStats(m);
+          if (!fb) continue;
+          m.flashscore_live_fallback = {
+            minute: fb.match_minute,
+            period: fb.match_period,
+            home_score: fb.home_score,
+            away_score: fb.away_score,
+            status: fb.status,
+            source: 'flashscore_live_stats',
+          };
+        } catch (_) {}
+      }
 
       // bd pxt7 — Strip champs lourds inutilisés par #page-matchs (~210 KB économisés / 250 matchs).
       // Les routes lazy (/api/v1/insights/, /api/v1/comparateur/, AI Scout) conservent accès complet via db.matches.
@@ -27427,6 +27485,8 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         sofascore_editorial: (typeof getSofascoreEditorial === 'function') ? getSofascoreEditorial(match) : null,
         // bd qm6a Plan D — Sofascore venue + referee (alt 82th BSD Phase 4)
         sofascore_venue_referee: (typeof getSofascoreVenueReferee === 'function') ? getSofascoreVenueReferee(match) : null,
+        // bd qm6a Plan E — Flashscore live stats fallback (BSD/ESPN HS scenario)
+        flashscore_live_stats: (typeof getFlashscoreLiveStats === 'function') ? getFlashscoreLiveStats(match) : null,
       });
     } catch (e) {
       console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
