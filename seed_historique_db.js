@@ -23,8 +23,8 @@
  *   node seed_historique_db.js --sample-pl            # echantillon Premier League pour validation
  *
  * QUOTA-AWARE:
- *   Respecte rate-limit API-Football PRO (7500/jour). Throttle 200ms entre requetes.
- *   Stop early si quota < 100 requests remaining.
+ *   Respecte rate-limit API-Football Free (100/jour). Throttle 200ms entre requetes.
+ *   Stop early si quota < 5 requests remaining.
  *
  * STATUT: SCAFFOLD initial. Implementation full reste a faire (bd 9je P0).
  */
@@ -54,7 +54,7 @@ if (!API_FOOTBALL_KEY) {
 
 const OUTPUT_FILE = path.join(__dirname, 'historique_football.json');
 const THROTTLE_MS = 200;
-const QUOTA_SAFETY_MARGIN = 100;
+const QUOTA_SAFETY_MARGIN = 5;
 
 // Ligues prioritaires (T1 high-value coverage)
 const PRIORITY_LEAGUES = [
