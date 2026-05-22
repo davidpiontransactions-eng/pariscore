@@ -10355,6 +10355,34 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .cf-divergence-pulse.cyan   { animation-name: psDivergencePulse-cyan; }
   .cf-divergence-pulse.amber  { animation-name: psDivergencePulse-amber; }
   .cf-divergence-pulse.red    { animation-name: psDivergencePulse-red; }
+  /* bd 040 — Steam Detector multi-bookmaker pulse (BD-DATA-012). Pattern visuel "train à vapeur"
+     gradient gold → amber pulsing 2 itérations. Distinct des divergence pulses pour signal sharp money.
+     GPU-friendly: transform + filter brightness + box-shadow. */
+  @keyframes psSteamPulse {
+    0%   { transform: scale(1);     opacity: 1;    filter: brightness(1); box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+    25%  { transform: scale(1.07);  opacity: 0.92; filter: brightness(1.45) drop-shadow(0 0 7px rgba(251,191,36,0.85)); box-shadow: 0 0 0 4px rgba(251,191,36,0.35); }
+    55%  { transform: scale(1.03);  opacity: 1;    filter: brightness(1.20) drop-shadow(0 0 4px rgba(245,158,11,0.55)); box-shadow: 0 0 0 8px rgba(245,158,11,0.15); }
+    100% { transform: scale(1);     opacity: 1;    filter: brightness(1); box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+  }
+  .cf-steam-pulse { animation: psSteamPulse 1.0s ease-out 2; will-change: transform, opacity, filter, box-shadow; border-radius: 4px; }
+  /* Badge inline STEAM (côté cellule match). <60px largeur, lisible mobile. */
+  .cf-steam-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
+    padding: 2px 5px; border-radius: 4px;
+    background: linear-gradient(90deg, rgba(251,191,36,0.20), rgba(245,158,11,0.30));
+    color: #fbbf24;
+    border: 1px solid rgba(251,191,36,0.45);
+    text-shadow: 0 0 4px rgba(251,191,36,0.45);
+    cursor: help;
+    white-space: nowrap;
+    max-width: 60px;
+    vertical-align: middle;
+  }
+  .cf-steam-badge.severity-low  { opacity: 0.80; }
+  .cf-steam-badge.severity-med  { opacity: 1; }
+  .cf-steam-badge.severity-high { background: linear-gradient(90deg, rgba(255,77,77,0.25), rgba(245,158,11,0.35)); color: #fde68a; border-color: rgba(255,77,77,0.55); }
   /* bd 647 — DR Live Pulse (cellule .tn-dr-delta + cellule DR foot/tennis) */
   /* Sprint 2 P1 TOP 1 spec: 1.5s ease-out, cyan→amber transition, expanding ring.
      Distinct des divergence pulses (cyan/amber/red). GPU-friendly: transform + box-shadow + filter brightness. */
@@ -10367,7 +10395,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .cf-dr-pulse { animation: psDRPulse 1.5s ease-out 1; will-change: transform, box-shadow, filter; border-radius: 4px; display: inline-block; }
   /* Accessibility — respect prefers-reduced-motion (animation disable, contrast preserved) */
   @media (prefers-reduced-motion: reduce) {
-    .cf-divergence-pulse, .cf-dr-pulse { animation: none !important; box-shadow: none !important; filter: none !important; transform: none !important; }
+    .cf-divergence-pulse, .cf-dr-pulse, .cf-steam-pulse { animation: none !important; box-shadow: none !important; filter: none !important; transform: none !important; }
   }
   #tennis-vb-table .tn-dr { grid-column:1/-1; display:flex; flex-direction:column; gap:3px; margin-top:5px; padding-top:5px; border-top:1px solid #1e293b; }
   #tennis-vb-table .tn-dr-line { display:flex; align-items:center; justify-content:space-between; gap:8px; line-height:1.25; }
@@ -19506,6 +19534,55 @@ function initSSE() {
     } catch (err) { console.warn('[SSE] dr_spike error', err); }
   });
 
+  // bd 040 — Steam Detector multi-bookmaker (BD-DATA-012)
+  // SSE event 'steam_detected' → cellule cote/edge match pulse 1.0s ease-out 2 iter
+  // + badge inline STEAM avec tooltip détails (N books · magnitude · severity).
+  // Reuse pattern divergence (debounce 30s géré côté serveur via _pulseShouldBroadcast).
+  var _cfSteamTimers = (typeof _cfSteamTimers !== 'undefined') ? _cfSteamTimers : new Map();
+  sseConnection.addEventListener('steam_detected', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || !d.matchId) return;
+      // Sanitize matchId (defense-in-depth: server tronque déjà).
+      const safeId = String(d.matchId).slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!safeId) return;
+      const sev = (d.severity === 'low' || d.severity === 'med' || d.severity === 'high') ? d.severity : 'med';
+      const dir = (d.direction === 'home' || d.direction === 'draw' || d.direction === 'away') ? d.direction : 'home';
+      const nBooks = Math.max(0, Math.min(50, parseInt(d.n_bookmakers) || 0));
+      const mag = Math.max(-50, Math.min(50, parseFloat(d.magnitude_avg_pct) || 0));
+      const row = document.querySelector('tr[data-match-id="' + safeId + '"]');
+      if (!row) return;
+      const target = row.querySelector('.edge-cell, [data-col="edge"], .odds-cell') || row;
+      // Cleanup previous animation
+      const existing = _cfSteamTimers.get(safeId);
+      if (existing) {
+        clearTimeout(existing);
+        target.classList.remove('cf-steam-pulse');
+        const old = row.querySelector('.cf-steam-badge[data-steam-temp="1"]');
+        if (old) old.remove();
+      }
+      // Force reflow for restart
+      void target.offsetWidth;
+      target.classList.add('cf-steam-pulse');
+      // Inline badge attaché à la cellule match (.match-cell ou row fallback)
+      const labelCell = row.querySelector('.match-cell, [data-col="match"]') || target;
+      const badge = document.createElement('span');
+      badge.className = 'cf-steam-badge severity-' + sev;
+      badge.setAttribute('data-steam-temp', '1');
+      const dirLabel = dir === 'home' ? '1' : (dir === 'draw' ? 'N' : '2');
+      badge.textContent = '🚂 STEAM ' + dirLabel;
+      badge.title = nBooks + ' bookmakers · ' + mag.toFixed(1) + '% · severity ' + sev;
+      labelCell.appendChild(badge);
+      const timer = setTimeout(() => {
+        target.classList.remove('cf-steam-pulse');
+        // Garde le badge visible 60s (signal persistant) avant retrait
+        setTimeout(() => { if (badge.parentNode) badge.remove(); }, 60000);
+        _cfSteamTimers.delete(safeId);
+      }, 2200); // 1.0s × 2 iter + 200ms safety
+      _cfSteamTimers.set(safeId, timer);
+    } catch (err) { console.warn('[SSE] steam_detected error', err); }
+  });
+
   // v11.0 — Badge néon WebSocket BSD (statut connexion)
   sseConnection.addEventListener('ws_status', e => {
     try {
@@ -27627,6 +27704,7 @@ const STRATEGIES_UI = [
   { key: 'DC_AWAY',           label: 'Double Chance X2',      icon: '', tipster: 'L\'Assureur' },
   { key: 'HT_HOME_FT_HOME',  label: 'Mi-Temps Victoire Dom.', icon: '', tipster: 'Le Sprint' },
   { key: 'HT_UNDER_FT_OVER', label: 'Explosion 2e Mi-Temps',  icon: '', tipster: 'Le Dynamiteur' },
+  { key: 'STEAM_DETECTED',   label: 'Steam Multi-Book',       icon: '', tipster: 'Le Sharp' },
 ];
 let currentStrategies = ['BTTS_YES'];
 let strategiesPageInitialized = false;
