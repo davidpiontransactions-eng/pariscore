@@ -12440,6 +12440,135 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     color: #64748b !important;
   }
 
+  /* ============================================================
+     bd ygpr — Light theme DEEP FIX cellules résiduelles tableau
+     Foot+Tennis. Résiduels non couverts par qvxh NUKE (12249+) :
+     - Wrappers glass dark .table-responsive-wrapper:has(#vb-table)
+       (ligne 10727 = linear-gradient #0b1220→#070b14)
+     - Tennis inner widgets : .tn-drs-chip (10309), .tn-dr border
+       top (10292), .tn-sb-g-win/.tn-sb-tot-lead (color #4ade80
+       lisibilité faible sur light flat → slate-green).
+     - Sticky team col fallback color #e8eaed forcé par 10833
+       (texte enfants non override).
+     - Modals enfants .tex-table/.bm-table hover rgba(255,255,255).
+     Spec-bump :not(#__cf__):not(#__cf2__):not(#__cf3__) pour battre
+     les blocks dark trading CF-START. Préserve accents colorés.
+     ============================================================ */
+
+  /* -- 13. Wrappers tableau dark glass → light flat -- */
+  body[data-cf-light="1"] #table-scroll,
+  body[data-cf-light="1"] #tennis-valuebets-section .table-responsive-wrapper,
+  body[data-cf-light="1"] #tennis-live-section .table-responsive-wrapper,
+  body[data-cf-light="1"] #page-tennis .table-responsive-wrapper,
+  body[data-cf-light="1"] .table-responsive-wrapper:has(#vb-table),
+  body[data-cf-light="1"] .table-responsive-wrapper:has(#tennis-vb-table),
+  body[data-cf-light="1"] .table-responsive-wrapper:has(#tennis-live-table) {
+    background:
+      radial-gradient(140% 100% at 0% 0%, rgba(14,165,233,.05), transparent 50%),
+      linear-gradient(180deg, #f8fbff 0%, #ffffff 100%) !important;
+    border-color: rgba(14, 165, 233, 0.18) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(14, 165, 233, 0.04),
+      0 8px 22px -14px rgba(15, 23, 42, 0.12),
+      0 0 0 1px rgba(14, 165, 233, 0.04) !important;
+    color: #0f172a !important;
+    /* Re-theme locaux : annule le hijack dark interne du wrapper */
+    --bg:  #ffffff !important;
+    --bg2: #f8fafc !important;
+    --bg3: rgba(14, 165, 233, 0.04) !important;
+    --bg4: rgba(148, 163, 184, 0.10) !important;
+    --text:  #0f172a !important;
+    --text2: #475569 !important;
+    --text3: #64748b !important;
+    --border:  rgba(14, 165, 233, 0.10) !important;
+    --border2: rgba(14, 165, 233, 0.18) !important;
+  }
+
+  /* -- 14. Tennis tn-drs-chip (dark hex hardcoded ligne 10309) -- */
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip {
+    background-color: #f1f5f9 !important;
+    background-image: none !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-dom,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-dom {
+    color: #15803d !important;
+    border-color: rgba(22, 163, 74, 0.45) !important;
+    background-color: rgba(22, 163, 74, 0.08) !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-bal,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-bal {
+    color: #b45309 !important;
+    border-color: rgba(217, 119, 6, 0.45) !important;
+    background-color: rgba(217, 119, 6, 0.08) !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-sub,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-sub {
+    color: #b91c1c !important;
+    border-color: rgba(185, 28, 28, 0.45) !important;
+    background-color: rgba(185, 28, 28, 0.06) !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-cur,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-chip.tn-drs-cur {
+    box-shadow: 0 0 0 1px #0ea5e9, 0 0 6px rgba(14, 165, 233, 0.30) !important;
+    background-color: rgba(14, 165, 233, 0.10) !important;
+  }
+
+  /* -- 15. Tennis .tn-dr border-top dark (10292) + labels -- */
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr {
+    border-top-color: rgba(14, 165, 233, 0.18) !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-lab,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-lab,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-lab,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-drs-lab {
+    color: #475569 !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-flat,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-dr-flat {
+    color: #64748b !important;
+  }
+
+  /* -- 16. Tennis scoreboard color helpers (tn-sb-tot-lead / tn-sb-g-win
+        utilisent #4ade80 → contraste ok mais lisibilité faible sur bg
+        clair `tn-sb-tot bg #e0f2fe` déjà overridé. Forcer slate-green
+        plus dark pour cohérence avec light flat) -- */
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-sb-g-win,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-sb-g-win,
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-sb-tot-lead,
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .tn-sb-tot-lead {
+    color: #15803d !important;
+  }
+
+  /* -- 17. Sticky team col cellules — préserve enfants colorés mais
+        cleanup texte fallback (#e8eaed forcé par 10833) -- */
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(1),
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(2),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(1),
+  body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(2),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(1),
+  body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td:nth-child(2) {
+    /* Note : qvxh -- 4. déjà fix bg + color level table-cell. Ici
+       force aussi le texte enfants non override ailleurs. */
+    color: #0f172a !important;
+  }
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td [style*="color:#94a3b8"],
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td [style*="color:#cbd5e1"],
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td [style*="color: #94a3b8"],
+  body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) tbody tr td [style*="color: #cbd5e1"] {
+    color: #475569 !important;
+  }
+
+  /* -- 18. Tennis tex-* / bm-* tables modals (ouverts depuis tableau
+        Tennis) — leak rgba(255,255,255,.02) row hover sur bg clair -- */
+  body[data-cf-light="1"] .tex-table tr:hover td,
+  body[data-cf-light="1"] .bm-table tr:hover td {
+    background: rgba(14, 165, 233, 0.05) !important;
+  }
+
   /* CF-END */
 </style>
 
