@@ -17704,6 +17704,78 @@ function computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format = 'BO3' } =
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  bd e3mr P2b — UQD Bootstrap IC90 Tennis (perturbation gaussienne SPW)
+//
+//  Méthode : 500 itérations de perturbation gaussienne sur p1_serve_pct et
+//  p2_serve_pct (σ = sqrt(p(1-p)/n), approx. binomial std error). Pour chaque
+//  itération on recalcule computeTennisMatchProb closed-form (~50µs) → IC90
+//  percentile [5, 95] sur p1_win.
+//
+//  Performance estimée : 500 × ~20µs = 10ms par match. Non-bloquant (règle 2
+//  CLAUDE.md). Closed-form Klaassen-Magnus évite simulation Monte Carlo lourde
+//  (10k tirages = 500k ops/match).
+//
+//  Sortie : { p1_win_mean, p1_win_ic90:[lo,hi], width, n_simulations }
+// ═══════════════════════════════════════════════════════════════════════════════
+/**
+ * Bootstrap UQD IC90 pour P(p1 wins) tennis.
+ * @param {Object} params
+ * @param {number} params.p1_serve_pct - SPW [0,1]
+ * @param {number} params.p2_serve_pct - SPW [0,1]
+ * @param {number} [params.p1_sample=50] - taille échantillon SPW p1 (pour σ)
+ * @param {number} [params.p2_sample=50] - taille échantillon SPW p2
+ * @param {'BO3'|'BO5'} [params.format='BO3']
+ * @param {number} [params.iterations=500]
+ * @returns {{ p1_win_mean:number, p1_win_ic90:[number,number], width:number,
+ *             n_simulations:number, format:string }|null}
+ */
+function computeBootstrapUQDTennis({
+  p1_serve_pct, p2_serve_pct,
+  p1_sample = 50, p2_sample = 50,
+  format = 'BO3',
+  iterations = 500,
+} = {}) {
+  if (!Number.isFinite(p1_serve_pct) || !Number.isFinite(p2_serve_pct)) return null;
+  const baseProb = computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format });
+  if (!baseProb) return null;
+
+  // Std error binomiale sur SPW (proportion) : sqrt(p(1-p)/n)
+  // Floor sample à 10 pour éviter des perturbations excessives sur petits échantillons.
+  const n1 = Math.max(10, p1_sample);
+  const n2 = Math.max(10, p2_sample);
+  const sig1 = Math.sqrt(p1_serve_pct * (1 - p1_serve_pct) / n1);
+  const sig2 = Math.sqrt(p2_serve_pct * (1 - p2_serve_pct) / n2);
+
+  const samples = new Array(iterations);
+  for (let i = 0; i < iterations; i++) {
+    // Perturbation gaussienne tronquée sur SPW (clamp [0.3, 0.95])
+    let s1 = p1_serve_pct + sig1 * boxMullerGaussian();
+    let s2 = p2_serve_pct + sig2 * boxMullerGaussian();
+    s1 = Math.max(0.3, Math.min(0.95, s1));
+    s2 = Math.max(0.3, Math.min(0.95, s2));
+    const prob = computeTennisMatchProb({ p1_serve_pct: s1, p2_serve_pct: s2, format });
+    samples[i] = prob ? prob.p1_win : baseProb.p1_win;
+  }
+
+  samples.sort((a, b) => a - b);
+  const idxLo = Math.floor(iterations * 0.05);
+  const idxHi = Math.floor(iterations * 0.95);
+  const lo = samples[idxLo];
+  const hi = samples[idxHi];
+  const mean = samples.reduce((s, v) => s + v, 0) / iterations;
+
+  return {
+    p1_win_mean: parseFloat(mean.toFixed(4)),
+    p1_win_ic90: [parseFloat(lo.toFixed(4)), parseFloat(hi.toFixed(4))],
+    width: parseFloat((hi - lo).toFixed(4)),
+    n_simulations: iterations,
+    format: format,
+    p1_base: baseProb.p1_win,
+    method: 'bootstrap_log_normal_spw',
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  bd e3mr P1 — Brier Score backtest tennis sur predictions archivées
 //
 //  Source : tennisHistory[] (rempli par cron tennis archivePastMatches + ETL
@@ -24772,6 +24844,36 @@ if (pathname.match(/^\/api\/v1\/bankroll\/tx\/\d+$/) && req.method === 'DELETE')
 if (pathname === '/api/v1/accuracy/trends') {
   const weeks = parseInt(query.weeks) || 12;
   return jsonResponse(res, 200, getWeeklyAccuracyTrends(weeks));
+}
+
+// bd e3mr P2b — GET /api/v1/tennis/uqd?p1_serve_pct=&p2_serve_pct=&format=BO3|BO5&iterations=500
+// Bootstrap UQD IC90 sur p1_win pour une paire de SPW. Lecture seule, non-bloquant.
+if (pathname === '/api/v1/tennis/uqd' && req.method === 'GET') {
+  const p1 = parseFloat(query.p1_serve_pct);
+  const p2 = parseFloat(query.p2_serve_pct);
+  if (!Number.isFinite(p1) || !Number.isFinite(p2)) {
+    return jsonResponse(res, 400, { error: 'p1_serve_pct and p2_serve_pct required (0.3-0.95)' });
+  }
+  const formatRaw = String(query.format || 'BO3').toUpperCase();
+  if (!/^BO(3|5)$/.test(formatRaw)) {
+    return jsonResponse(res, 400, { error: 'invalid_format', allowed: ['BO3', 'BO5'] });
+  }
+  const iters = Math.max(100, Math.min(1000, parseInt(query.iterations, 10) || 500));
+  const p1Sample = parseInt(query.p1_sample, 10) || 50;
+  const p2Sample = parseInt(query.p2_sample, 10) || 50;
+  try {
+    const t0 = Date.now();
+    const result = computeBootstrapUQDTennis({
+      p1_serve_pct: p1, p2_serve_pct: p2,
+      p1_sample: p1Sample, p2_sample: p2Sample,
+      format: formatRaw, iterations: iters,
+    });
+    if (!result) return jsonResponse(res, 400, { error: 'invalid_inputs', detail: 'serve_pct must be in [0.3, 0.95]' });
+    result.elapsed_ms = Date.now() - t0;
+    return jsonResponse(res, 200, result);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'tennis_uqd_error', detail: e.message });
+  }
 }
 
 // bd e3mr P1 — GET /api/v1/accuracy/tennis-brier?period=7d|30d|90d|all
