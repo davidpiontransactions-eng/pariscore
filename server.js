@@ -30766,11 +30766,33 @@ async function sendLiveMomentumAlerts(liveMatches) {
       if (!trigger) continue;
       // claim cooldown AVANT l'await (atomique, pas de gap check-then-act → anti-doublon concurrent)
       markLiveAlertSent(userId, m.id);
-      const ok = await sendTelegramAlert(prefs.chatId, buildLiveAlertMessage(m, trigger));
-      if (ok) {
-        console.log(`  [LiveAlert] → user=${userId} match=${m.home_team}-${m.away_team} ${trigger.kind}=${trigger.value}`);
+      const msgHtml = buildLiveAlertMessage(m, trigger);
+      const numUserId = parseInt(userId, 10);
+      // bd e7l Phase 6 — Web Push parallèle Telegram (silencieux si user sans subscription).
+      // Push opts.payload chiffré AES-128-GCM via broadcastPushToUser, urgency=high.
+      const pushPromise = (!isNaN(numUserId) && prefs.pushEnabled !== false)
+        ? broadcastPushToUser(numUserId, {
+            payload: {
+              title: `🔥 Live · ${m.home_team} vs ${m.away_team}`,
+              body: trigger.kind === 'intensity'
+                ? `Intensité ${trigger.value}/100${m.minute ? ' · ' + m.minute + "'" : ''}`
+                : `Pression ${trigger.side} +${trigger.value}${m.minute ? ' · ' + m.minute + "'" : ''}`,
+              tag: `live_${m.id}`,
+              url: `/?openMatch=${encodeURIComponent(m.id)}`,
+              icon: '/icon.svg',
+            },
+            urgency: 'high',
+          }).catch(e => { console.warn('  [LivePush] err:', e.message); return { sent: 0, failed: 1 }; })
+        : Promise.resolve({ sent: 0, failed: 0 });
+      const [ok, pushRes] = await Promise.all([
+        sendTelegramAlert(prefs.chatId, msgHtml),
+        pushPromise,
+      ]);
+      const pushSent = pushRes?.sent || 0;
+      if (ok || pushSent > 0) {
+        console.log(`  [LiveAlert] → user=${userId} match=${m.home_team}-${m.away_team} ${trigger.kind}=${trigger.value} tg=${ok ? 1 : 0} push=${pushSent}`);
       } else {
-        _liveAlertCooldowns.delete(`${userId}:${m.id}`); // échec envoi → rollback pour retry prochain poll
+        _liveAlertCooldowns.delete(`${userId}:${m.id}`); // tous échec → rollback pour retry prochain poll
       }
     }
   }
