@@ -124,7 +124,26 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 |---|---|
 | `gz7s` | Benchmark Rotowire Soccer — ideas to steal (orphan CLAUDE.md→bd) |
 | `r0v3` | BSD coverage Phase 5 — Squad endpoint + fixtures variant (proxies REST simples, LOW ROI, 1-2h) |
-| `qm6a` | **Flashscore datasets integration** — 2 datasets Apify 22/05 (team-stats 80 + live-matches 3) — 6 plans: A logos backup 30min · B standings fallback 1-2h · C cross-ref naming 2h · D venue+referee enrichment 1h · E lineups+stats live fallback 1-2h · F has_live_stream badge UI 30min |
+| `qm6a` | **Flashscore datasets integration** — voir sous-table dédiée ci-dessous (6 plans A-F) |
+
+#### Sous-tâches `qm6a` Flashscore datasets — 6 plans
+
+Datasets Apify one-shot disponibles racine projet:
+- `dataset_flashscore-team-stats_2026-05-21_23-54-30-172.json` (48K, 80 entries: 20 EPL foot + 60 NBA basket hors scope)
+- `dataset_flashscore-live-matches_2026-05-22_00-03-54-224.json` (39K, 3 matchs live foot riches)
+
+| Plan | Phase | Tâche | Effort | ROI | Use case |
+|---|---|---|---|---|---|
+| **A** | 1 | Logos backup — ETL ingest `team_logo_url` Flashscore CDN dans `bsd_team_logos` cache, fallback chain BSD → Sofa → Flashscore | 30min | HIGH | Backup logos haute-qualité |
+| **B** | 2 | Standings fallback offline — `db.flashscore_standings` layer dédié, trigger si BSD+ESPN+API-Football tous HS | 1-2h | MED | Resilience triple-source HS |
+| **C** | 3 | Cross-ref team naming validation — Map Flashscore slug → BSD team_id (fuzzy normName), audit script divergences | 2h | MED | Validation normName + CI/CD |
+| **D** | 4 | Venue + referee enrichment — alternative à bd `82th` BSD Phase 4, cross-source modal Contexte | 1h | MED | Backup `82th` |
+| **E** | 5 | Lineups + statistics live fallback — gap-fill quand BSD live partial (ESPN-only matchs), map stat_name → `live_*` champs | 1-2h | MED | Live data robustness |
+| **F** | 6 | `has_live_stream` flag UI — badge "Live TV" tableau matchs (icone TV), reuse pattern bd `0hf4` | 30min | LOW | UX nice-to-have |
+
+**Effort total cumul:** ~6-7h si tous exécutés.
+**Limite:** datasets Apify one-shot ≠ feed continu. Value durable nécessite scraper continuous (Apify subscription) OU pivot xvalue.ai (bd `ffh` GO 85/100).
+**Ordre recommandé:** A (quick win logos) → F (badge UI) → D (venue+referee alt 82th) → E (live fallback) → B (standings backup) → C (validation audit).
 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 >
