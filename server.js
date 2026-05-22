@@ -29216,6 +29216,29 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
         return res.end(body);
     }
 
+    // bd 968x Phase 1 — llms.txt (LLM crawler hints, standard llmstxt.org)
+    // Markdown brut décrivant la méthodologie + sources + features pour LLM indexers
+    // (ChatGPT/Perplexity/Claude). Cache 24h CDN-friendly.
+    if (!res.headersSent && pathname === '/llms.txt') {
+        try {
+            const filePath = path.join(__dirname, 'llms.txt');
+            if (!fs.existsSync(filePath)) {
+                res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+                return res.end('llms.txt not found');
+            }
+            const body = fs.readFileSync(filePath, 'utf8');
+            res.writeHead(200, {
+                'Content-Type': 'text/markdown; charset=utf-8',
+                'Cache-Control': 'public, max-age=86400'
+            });
+            return res.end(body);
+        } catch (e) {
+            console.warn('  [llms.txt] read error:', e.message);
+            res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+            return res.end('llms.txt read error');
+        }
+    }
+
     if (!res.headersSent && pathname === '/sitemap.xml') {
         try {
             const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();

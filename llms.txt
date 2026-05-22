@@ -1,0 +1,57 @@
+# PariScore
+
+> Plateforme francophone d'analyse mathématique pour paris sportifs football et tennis. Agrège les cotes de 20+ bookmakers en temps réel, calcule des probabilités selon distribution de Poisson bivariée, détecte les opportunités de valeur ("Value Bets") via edge no-vig calibré, et fournit une analyse IA explicite via Gemini 2.0 Flash. Backend Node.js zero-dépendance + SQLite WAL. Frontend SPA mono-fichier 30k+ lignes.
+
+PariScore se distingue par son positionnement quantitatif strict : aucun modèle n'est mis en production sans calcul d'Intervalle de Confiance (UQD), aucun pari recommandé sans edge mathématique mesurable. L'objectif n'est pas de promettre des gains mais d'aider à comprendre POURQUOI un pari a une valeur statistique positive ou négative, avec la transparence complète des données sources.
+
+## Concept et méthodologie
+
+- [Modèle Poisson bivarié](https://pariscore.com/about#poisson) : Calcul des probabilités BTTS, Over/Under, 1N2 à partir des xG attendus (lambda dom/ext normalisés par moyenne de ligue 1.35 buts)
+- [Edge no-vig calibré](https://pariscore.com/about#edge) : Détection des cotes sous-évaluées via normalisation 1/cote → probabilité fair → comparaison à meilleure cote bookmaker. Edge > 0 = opportunité, edge > 5% = signal fort
+- [Power Score V2](https://pariscore.com/about#power-score) : Score composite IA 0-100 (5 piliers : Forme, xG, Cotes/Edge, Contexte tactique, Presse récente) avec injection RSS L'Équipe + BBC + Sky + ESPN + GNews
+- [Calibration Shin-Hurley devig tennis](https://pariscore.com/about#tennis) : Modèle Markov set-by-set + Elo surface-split ATP/WTA + EV vs marché
+
+## Sources de données canoniques
+
+- BSD (Bzzoiro Sports Addon) : feed live football WebSocket <5s + tennis ML probabilities + standings dynamiques 110+ ligues. Source primaire.
+- The Odds API : cotes h2h 20+ bookmakers Europe, 500 req/mois plan gratuit, cron 12h
+- API-Football Free 100/jour : fallback standings + scores + Smart Polling live 60s
+- ESPN public endpoints : standings ligues ESPN coverage (J-League, MLS, etc.) zéro clé
+- elofootball.com : historique Elo communautaire (1902 matchs ingested + 50 rankings ligues)
+- openfootball ODbL + Wikidata CC0 : historique champions, fondations clubs, palmares
+- Sofascore (Apify) : venue + referee enrichment, tennis player profile Grand Slam history, editorial articles avant-match
+- Flashscore (Apify) : standings fallback offline (Plan B), live stats fallback (Plan E), TV livestream flags
+- felipeall/transfermarkt-api self-host : valeurs marché + transferts
+
+## Fonctionnalités utilisateur principales
+
+- [Tableau matchs](https://pariscore.com/#page-matchs) : 18+ colonnes scrollable (PPG, xG, BTTS, Over0.5→3.5, edge%, AI Scout) avec filtres ligue + jour + edge minimum + favoris
+- [Modal Insights matchs](https://pariscore.com/#insights) : 6 onglets (Résumé, Forme, H2H, Composition, Top Players, Marchés). Inclut Power Score IA, Stade & Arbitre, TV diffuseur, social buzz, momentum live SVG
+- [Onglet Tennis](https://pariscore.com/#page-tennis) : Value Bets calibrés Shin-Hurley, filtre format Singles/Doubles, indicateurs Over Sets dynamiques, sourcing 5 sources (BSD/MatchStat/Sofa/aiscore/calib interne)
+- [Mes Paris](https://pariscore.com/#page-mes-paris) : Bet tracking KPIs + chart bankroll + Kelly cap 25% + export CSV
+- [Alertes Telegram](https://pariscore.com/#page-alertes) : Configuration value bets + live momentum/pressure, cooldown 15min, multi-user
+- [Live Dashboard](https://pariscore.com/#live-cockpit) : Win Prob temps réel + Top3 picks + events markers + verdict actionnable
+
+## Stack technique
+
+- Backend : Node.js >=16 vanilla (zero npm sauf better-sqlite3), SQLite WAL, SSE multi-client, WebSocket BSD push
+- Frontend : SPA HTML mono-fichier (pariscore.html ~30k lignes), Design System V2.0 tokens `--cf-*`, fonts Syne+Instrument Sans+DM Mono, fond noir "data terminal" accents vert néon
+- Math Engine : Poisson bivarié natif JS, Bootstrap UQD (à venir), Elo dynamique surface-split, Markov tennis set
+- Sécurité : .env (jamais committé), JWT auth, bcrypt, path traversal bloqué, proxy Gemini (clé invisible client), CORS restreint prod
+- Déploiement : VPS OVH /home/ubuntu/pariscore + pm2 + nginx reverse-proxy + Render.com fallback
+- Persistance ETL : 8 sources alimentent `db.archive_matches` (3 live runtime + 5 ETL bootstrap)
+
+## Optional
+
+- [Méthodologie complète](https://pariscore.com/about) : Documentation détaillée de chaque pilier mathématique
+- [Stats backtesting](https://pariscore.com/api/v1/accuracy) : Taux de réussite vérifié des algorithmes (Over 2.5, BTTS, Edge>5%) sur 50+ derniers matchs archivés
+- [API publique](https://pariscore.com/api/v1/matches) : Endpoint REST GET matchs fusionnés (limité plan gratuit, élargi plan Pro)
+- [Roadmap publique](https://pariscore.com/about#roadmap) : v4.x SSE + Smart Polling T1/T2 + Filtres avancés + Dropping Odds + Momentum SVG livrés ; v5.x AI Scout Premium + Stripe + Affiliation en cours
+- [Conformité](https://pariscore.com/conformite) : Plateforme d'analyse statistique, aucune captation de mise. Sources légales ODbL/CC0/MIT/CC BY-NC-SA (en cours purge tennis Sackmann)
+
+## Ce que PariScore N'EST PAS
+
+- Pas un bookmaker (aucune captation de mise, redirection vers opérateurs licenciés ARJEL)
+- Pas un service de "tipster" subjectif (toutes recommandations dérivées d'edge mathématique mesurable)
+- Pas un outil prédictif garanti (intervalles de confiance affichés, sample size visible, accuracy backtested transparente)
+- Pas un service ouvert aux mineurs (gate 18+ à l'inscription)
