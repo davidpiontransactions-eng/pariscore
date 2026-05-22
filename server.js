@@ -4091,6 +4091,16 @@ function initSQLite() {
   }
   sqldb.pragma('journal_mode = WAL');
   sqldb.pragma('synchronous = NORMAL');
+  // bd b50 — durcissement résilience SQLITE_NOTADB :
+  //  • busy_timeout 5s : évite throw SQLITE_BUSY quand cron + http handler accèdent
+  //    en parallèle (writers serialisés naturellement par better-sqlite3 mais
+  //    snapshot WAL peut être lock-pending pendant checkpoint auto).
+  //  • foreign_keys ON : intégrité référentielle (push_subscriptions.user_id).
+  //  • wal_autocheckpoint 1000 pages : flush WAL plus régulier → moins de risque
+  //    de fichier .db tronqué si pm2 kill -9 ou disque plein soudain.
+  try { sqldb.pragma('busy_timeout = 5000'); } catch (_) {}
+  try { sqldb.pragma('foreign_keys = ON'); } catch (_) {}
+  try { sqldb.pragma('wal_autocheckpoint = 1000'); } catch (_) {}
   // Fn SQLite unaccent : strip diacritiques (á→a, é→e…) pour matcher les noms
   // accentués (BSD "Sebastián Báez") aux noms ASCII Sackmann/Elo.
   try {
@@ -4515,13 +4525,48 @@ function _traceCatch(label, err) {
 // (disque plein, fichier overwritten, WAL/SHM cassé entre boot et runtime), on
 // log une fois par minute et on retourne un cache-miss au lieu de crash le
 // process. Cron de healthcheck VPS détecte le warn pour alerter ops.
+//
+// bd b50 — extension : si erreur SQLITE_NOTADB / SQLITE_CORRUPT au runtime,
+// tenter UNE FOIS (cooldown 5min) de fermer + quarantaine + recréer la DB.
+// Évite la spirale crash-loop quand le fichier est devenu invalide en cours
+// d'exécution (cause D : copy/backup pendant write, ou disque plein qui
+// tronque header). Auto-recovery non-destructive : rename → fresh DB.
 let _apiCacheDbWarnTs = 0;
+let _dbRecoveryAttemptTs = 0;
+const _DB_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
+function _attemptRuntimeDbRecovery(err) {
+  const code = err && err.code;
+  if (code !== 'SQLITE_NOTADB' && code !== 'SQLITE_CORRUPT') return false;
+  const now = Date.now();
+  if (now - _dbRecoveryAttemptTs < _DB_RECOVERY_COOLDOWN_MS) return false;
+  _dbRecoveryAttemptTs = now;
+  console.error(`\x1b[31m[SQLITE_RECOVERY] Runtime ${code} détecté → tentative auto-recovery (rename + fresh DB)\x1b[0m`);
+  try {
+    try { if (sqldb && sqldb.open) sqldb.close(); } catch (_) {}
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    for (const suf of ['', '-wal', '-shm']) {
+      try {
+        if (fs.existsSync(SQLITE_FILE + suf)) {
+          fs.renameSync(SQLITE_FILE + suf, `${SQLITE_FILE}.corrupt-${stamp}${suf}`);
+        }
+      } catch (_) {}
+    }
+    initSQLite();
+    console.error(`\x1b[33m[SQLITE_RECOVERY] ✓ Base recréée. Données quarantaine : ${SQLITE_FILE}.corrupt-${stamp} . Recovery offline : sqlite3 ${SQLITE_FILE}.corrupt-${stamp} ".recover" | sqlite3 recovered.db\x1b[0m`);
+    return true;
+  } catch (e) {
+    console.error('[SQLITE_RECOVERY] ✗ échec auto-recovery:', e.message);
+    return false;
+  }
+}
 function _apiCacheDbWarn(ctx, err) {
   const now = Date.now();
   if (now - _apiCacheDbWarnTs > 60_000) {
     _apiCacheDbWarnTs = now;
     console.error(`[apiCache:${ctx}] DB error: ${err && err.code || ''} ${err && err.message || err}`);
   }
+  // bd b50 — auto-recovery sur erreur fatale fichier DB (SQLITE_NOTADB / SQLITE_CORRUPT)
+  _attemptRuntimeDbRecovery(err);
 }
 
 function apiCacheGet(key) {
@@ -29970,6 +30015,36 @@ process.on('uncaughtException', (error) => {
     console.error("\x1b[31m[ANTI‑CRASH] Uncaught Exception:\x1b[0m", error.message);
     console.error(error.stack);
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   bd b50 — GRACEFUL SHUTDOWN SQLite
+   pm2 envoie SIGINT puis SIGKILL après 1.6s (pm2 conf kill_timeout). On flush
+   le WAL via sqldb.close() pour éviter fichier .db tronqué au prochain boot
+   (cause C SQLITE_NOTADB). Idempotent : flag _shuttingDown empêche re-entry.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+let _shuttingDown = false;
+function gracefulShutdown(signal) {
+    if (_shuttingDown) return;
+    _shuttingDown = true;
+    console.log(`\n  [Shutdown] Signal ${signal} reçu — flush SQLite WAL...`);
+    try {
+        if (sqldb && sqldb.open) {
+            // Force checkpoint WAL → -wal et -shm fusionnés dans .db avant close
+            try { sqldb.pragma('wal_checkpoint(TRUNCATE)'); } catch (e) {
+                console.warn('  [Shutdown] WAL checkpoint warn:', e.message);
+            }
+            sqldb.close();
+            console.log('  [Shutdown] ✓ SQLite fermé proprement (WAL flushed)');
+        }
+    } catch (e) {
+        console.error('  [Shutdown] ✗ Erreur close SQLite:', e.message);
+    }
+    // Laisser le temps aux logs de flush avant exit
+    setTimeout(() => process.exit(0), 200).unref();
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
+process.on('SIGHUP',  () => gracefulShutdown('SIGHUP'));
 
 /* -------------------------------------------------
    Sofascore microservice client — Phase 1 enrichment via Python wrapper
