@@ -22513,6 +22513,42 @@ function buildResumeTab(d) {
   const hRank = d.homeStats?.rank ? `#${d.homeStats.rank}` : '—';
   const aRank = d.awayStats?.rank ? `#${d.awayStats.rank}` : '—';
 
+  // bd qm6a Plan D — Sofascore venue + referee enrichment (alt 82th BSD Phase 4).
+  const vr = d.sofascore_venue_referee || null;
+  const venueRefereeHtml = vr && (vr.venue || vr.referee) ? `
+    <div class="ins-section" style="border:1px solid rgba(59,130,246,0.20);background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(59,130,246,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:9px;font-family:var(--font-mono);color:#1d4ed8;background:rgba(59,130,246,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">🏟️ STADE & ARBITRE · SOFASCORE</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        ${vr.venue ? `
+          <div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-bottom:6px;">Stade</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${vr.venue.name || '—'}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px;font-family:var(--font-mono);">
+              ${vr.venue.city ? vr.venue.city + (vr.venue.country ? ', ' + vr.venue.country : '') : (vr.venue.country || '—')}
+              ${vr.venue.country_code ? ` <img src="https://flagcdn.com/w20/${vr.venue.country_code.toLowerCase()}.png" alt="" style="width:14px;height:auto;vertical-align:middle;margin-left:3px;">` : ''}
+            </div>
+            ${vr.venue.capacity ? `<div style="font-size:11px;color:var(--text2);margin-top:4px;font-family:var(--font-mono);">Capacité: <strong style="color:var(--text);">${vr.venue.capacity.toLocaleString('fr-FR')}</strong></div>` : ''}
+          </div>` : '<div></div>'}
+        ${vr.referee ? `
+          <div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-bottom:6px;">Arbitre</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${vr.referee.name || '—'}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px;font-family:var(--font-mono);">
+              ${vr.referee.country || '—'}
+              ${vr.referee.country_code ? ` <img src="https://flagcdn.com/w20/${vr.referee.country_code.toLowerCase()}.png" alt="" style="width:14px;height:auto;vertical-align:middle;margin-left:3px;">` : ''}
+            </div>
+            ${vr.referee.games ? `
+              <div style="display:flex;gap:8px;margin-top:6px;font-family:var(--font-mono);font-size:10px;color:var(--text2);">
+                <span title="Matchs arbitrés">⚖️ ${vr.referee.games}</span>
+                <span title="Cartons jaunes / match" style="color:#facc15;">🟨 ${vr.referee.yc_per_game ?? '—'}/m</span>
+                <span title="Cartons rouges / match" style="color:#ef4444;">🟥 ${vr.referee.rc_per_game ?? '—'}/m</span>
+              </div>` : ''}
+          </div>` : '<div></div>'}
+      </div>
+    </div>` : '';
+
   // bd 6jro Plan H — Sofascore editorial article (Avant-Match). Section affichée tête onglet Résumé.
   const editorial = d.sofascore_editorial || null;
   const editorialHtml = editorial && editorial.title ? `
@@ -22533,6 +22569,7 @@ function buildResumeTab(d) {
 
   return `
     ${editorialHtml}
+    ${venueRefereeHtml}
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
