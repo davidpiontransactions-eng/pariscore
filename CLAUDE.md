@@ -30,17 +30,17 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 
 ## 🔥 TÂCHES EN COURS
 
-Source autoritaire : `bd list --status=in_progress`. Snapshot 21/05/2026.
+Source autoritaire : `bd list --status=in_progress`. Snapshot 22/05/2026.
 
 | ID | P | Titre | État |
 |---|---|---|---|
 | `9je` | P0 | Pipeline ETL Historique Football API-Football PRO | Code livré v12.10 · run bloqué quota épuisé (reset minuit UTC) |
-| `6du6` | P0 | DB historique tennis+foot datasets gratuits (openfootball ODbL + Wikidata CC0) | Phase 1 openfootball 16352 matchs OK · Phase 2 Wikidata wire 56 winners livré v12.63 · deploy VPS attendu |
-| `c8m` | P0 | SECURITY — server.js exposé + rotation clés | 11 clés rotées + ufw ban + fix code 4e02a6a deployed · reste audit_db postbreach |
+| `6du6` | P0 | DB historique tennis+foot datasets gratuits (openfootball ODbL + Wikidata CC0) | Phase 2 Wikidata wire 56 winners livré v12.63 · deploy VPS attendu |
+| `c8m` | P0 | SECURITY — server.js exposé + rotation clés | 11 clés rotées + ufw ban + fix code deployed · reste audit_db postbreach VPS |
 | `s77m` | P0 | Stripe Checkout + Webhook + Customer Portal | Code livré v12.43 · attente decisions DG (trial, prix, matchday) |
 | `401` | P1 | Crash Test audit onglets Football + Tennis | rapport_qa_foot_tennis.md livré · 28 risk flags |
-| `bjv` | P1 | Spike sourcing cotes alternative Odds API | OddsPortal CF muré · spike RapidAPI odds-api1 en cours |
-| `5iw` | P1 | Intégration BSD Live WebSocket foot (<5s) CdM 2026 | Eval pending |
+| `bjv` | P1 | Spike sourcing cotes alternative Odds API | Phase 1 odds-api1 RapidAPI 404 confirmé · Pinnacle research NO-GO direct · POC OddsPapi.io pending DG |
+| `5iw` | P1 | Intégration BSD Live WebSocket foot (<5s) CdM 2026 | WS connecté zero-dep validé · reste validation schema payload live VPS |
 | `8lqf` | P2 | Spike FBref via soccerdata Python | RESEARCH ONLY scaffold livré v12.30 |
 
 ## 🎯 TÂCHES À FAIRE — Queue prioritaire
@@ -58,28 +58,33 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `c8m` | Audit DB postbreach | `bash security_db_audit_postbreach.sh` VPS (rotation + ufw déjà faits) |
 | `s77m` | Stripe activation | DG checklist `.context/stripe_dg_checklist.md` — 9 sections (trial, prix mensuel/annuel/mono-sport, matchday pass) |
 
-### P1
+### P1 (ouvert ou ops pending)
 
-| ID | Titre |
+| ID | Titre | État |
+|---|---|---|
+| `d4rd` | GSC validation post-fix robots.txt — URL Inspection + resubmit sitemap | ops DG |
+| `u5x` | SEO fix GSC « Bloquée par robots.txt » (recoupé `d4rd`) | ops DG |
+| `x9s` | Plug oddsapi RapidAPI odds-api1 sur TOUS champs cotes | BLOCKED bjv Phase 1 404 |
+| `b50` | DB pariscore.db SQLITE_NOTADB runtime — investigate corruption ops | ops VPS |
+| `e7l` | Version mobile PariScore (parieur nomade) — bottom nav + cartes + PWA | Phase 5/7 PWA install + push livrés v12.19+v12.21 · reste 2/7 |
+| `qe5` | Live Dashboard Betting Cockpit Phase 1 — Win Prob + Top3 picks + events markers + verdict | Phase 1 partial livré v12.62 (Minute promue + cockpit) · Phase 2/3 spec |
+| `j5lb` | **[DECISION DG]** GO/NO-GO 6 études bloquées arbitrage | DG decision |
+| `p2if` | AI-AL Revue de Presse Foot+Tennis — 5 avis presse panel Gemini | Phase 1 livré commit `ae6a292` · Phase 2 Telegram push + RSS L'Équipe ouverte |
+| `8uoc` | **[DECISION DG]** Tennis Abstract + autres DBs tennis | Research v2 livré commit `2ce9463` (TML-Database MIT) · 3 questions DG Q1/Q2/Q3 |
+
+**✓ FERMÉS session 22/05/2026 v12.65 (8 P1)**
+
+| ID | Livraison |
 |---|---|
-| `d4rd` | GSC validation post-fix robots.txt — URL Inspection + resubmit sitemap |
-| `8lvf` | elofootball.com Elo historique massif — calibrer URL patterns sur HTML réel |
-| `u5x` | SEO fix GSC « Bloquée par robots.txt » (code OK, ops pending — recoupé `d4rd`) |
-| `x9s` | Plug oddsapi RapidAPI odds-api1 sur TOUS champs cotes |
-| `c5i` | Tennis serveur invisible quand source ESPN/LiveScore sans `is_serving_p1` |
-| `b50` | DB pariscore.db SQLITE_NOTADB runtime — investigate corruption ops |
-| `e7l` | Version mobile PariScore (parieur nomade) — bottom nav + cartes + PWA |
-| `qe5` | Live Dashboard Betting Cockpit Phase 1 — Win Prob + Top3 picks + events markers + verdict |
-| `8c5` | Bug momentum du match plat/vide La Liga (et autres) |
-| `j5lb` | **[DECISION DG]** GO/NO-GO 6 études bloquées arbitrage (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing) |
-| `p2if` | AI-AL Revue de Presse Foot+Tennis — 5 avis presse panel Gemini |
-| `4cog` | Tennis Consolidation LOT P0 — tennisMatch canonique + Elo v2 + Surface + Log-diff |
-| `k3ex` | Bug Tennis ATP/WTA matchs féminins disparus tournois mixtes |
-| `lyku` | Bug Routage LIGA classement ID 3 cassé — refactor vers `/api/events/` |
-| `u8w9` | Bug Mobile page blanche filtres iOS Safari + Chrome Android |
-| `izsn` | Refacto safeFixed() wrapper sur 94 .toFixed() restants — anti NaN/null |
-| `c8zp` | Cron capture tennis score finals + cleanup history-edges legacy |
-| `8uoc` | **[DECISION DG]** Tennis Abstract + autres DBs tennis — rapport recherche solution legal+technique avant GO |
+| `c5i` | Tennis serveur invisible Phase 3 — aiscore on-demand throttled fetch — commit `fbea217` |
+| `izsn` | safeFixed() wrapper 51 sites server.js + 2 sites pariscore.html — commits `bce7535`+`16c6a9d` |
+| `8c5` | Momentum plat La Liga — split `live_momentum_pct` objet vs array Sofa + follow-up Array.isArray guards consumers — commits `38ffa7b`+`9ba089a` |
+| `lyku` | Routage LIGA classement ID 3 — confirmé déjà fixé `server.js:10676-10685` (surgical override events-derived) |
+| `k3ex` | Tennis ATP/WTA matchs féminins disparus tournois mixtes — fix livré v12.38 (BSD circuit re-derive depuis gender+tournament name) |
+| `u8w9` | Mobile page blanche filtres iOS Safari + Chrome Android — fix livrés (presets selectors + apiFetch 401 token clear) |
+| `8lvf` | elofootball.com Elo historique massif — Phase 1-3 livrées v12.31-v12.40 (1902 matchs + 50 rankings) |
+| `4cog` | Tennis Consolidation LOT P0 — 5/5 sub-tasks déjà implémentés post-audit |
+| `c8zp` | Cron capture tennis finals + cleanup history-edges legacy — Phase 1+2 livrés v12.64 |
 
 ### P2 (queue)
 
@@ -225,191 +230,17 @@ Rédige un plan d'action étape par étape pour cette implémentation :
 ### ÉTAPE 4 : VALIDATION
 N'écris pas encore le code serveur. Affiche-moi ton choix technologique (Étape 1) et le schéma de base de données (Étape 2) dans le terminal. Attends mon "GO" pour commencer à coder les routes d'authentification.
 
-### MISSION DATA ENGINEERING & UI : DÉTECTION ET AFFICHAGE DU SERVEUR EN LIVE (TENNIS)
+## 🗄️ MISSIONS LIVRÉES (archived — voir CHANGELOG.md / bd notes)
 
-Claude, active ta matrice de compétences : `api-integration`, `data-architecture`, `nodejs-backend-patterns` et `frontend-ux-states`.
+5 missions historiques purgées 22/05/2026 v12.65 (poste pilotage, pas journal — règle 1):
 
-**🚨 BUG CRITIQUE SIGNALÉ :** Sur notre onglet Tennis en direct, nous avons une faille de données : notre flux API actuel (BSD ou autre) ne permet pas de définir de manière fiable **qui est au service** (le serveur du jeu en cours). C'est une information vitale pour nos parieurs professionnels.
+| Mission | bd | Livraison |
+|---|---|---|
+| Tennis serveur live invisible | `c5i` | Phase 1+2+3 livrés (aiscore cache + parity inference + on-demand throttled) commits `fbea217` |
+| Module audio alertes Bloomberg | `rlhf` | state tracking 4 indicateurs + queue 200ms commit `fc9c65e` |
+| Indicateurs dynamiques tennis O7.5/O8.5/U12.5 | `x11y` | code présent pariscore.html:14813 (closed stale dup) |
+| Bugfix autoplay DOMException | — | `playPromise.catch` silencieux pariscore.html:31652 |
+| UI contraste teinte rose tableau Foot | `k37` | coral leak fix commit `8b99cb2` (`tr.match-row-live::before` box-shadow scope) |
+| Benchmark Rotowire Soccer | `gz7s` | P3 open — rapport à livrer (voir bd description spec) |
 
-Je veux que tu agisses en tant que **Lead Data Engineer** pour auditer, sourcer et intégrer cette information en temps réel.
-
-Exécute la mission en respectant ces 4 étapes :
-
----
-
-### ÉTAPE 1 : AUDIT DU FLUX ACTUEL ET RECHERCHE DE SOURCE FIABLE
-- **Investigation interne :** Inspecte les logs de notre API actuelle (le payload JSON brut des matchs live). Vérifie s'il n'y a pas un champ non exploité (ex: `server`, `current_server`, `serving`, ou une notation dans l'historique des points) que nous aurions raté.
-- **Sourcing Externe :** Si notre API est définitivement aveugle sur ce point, trouve et propose-moi une source ou une méthode fiable pour récupérer cette donnée en live. 
-  *Pistes :* Une autre API légère (type API-Football/Tennis, TheSports, ou un endpoint spécifique GitHub), ou le scraping d'un flux WebSocket public (type SofaScore/Flashscore) uniquement pour extraire l'ID du serveur.
-
----
-
-### ÉTAPE 2 : LOGIQUE D'INFÉRENCE (PLAN B ALGORITHMIQUE)
-S'il est impossible de sourcer l'info directement sans surcoût majeur, propose un algorithme de "déduction du serveur" basé sur les règles du tennis.
-- *Exemple logique :* En connaissant qui a servi au 1er jeu du 1er set, et en comptant le nombre total de jeux terminés, on peut mathématiquement déduire qui sert dans le jeu actuel (hors Tie-Break où la règle des 2 points s'applique). 
-- Évalue la fiabilité d'une telle approche pour notre backend.
-
----
-
-### ÉTAPE 3 : INTÉGRATION FRONTEND (LE DESIGN PREMIUM)
-Peu importe la source de la donnée retenue, prévois l'intégration UI dans `pariscore.html` :
-- Injecte une propriété `is_serving: true` sur le joueur concerné dans le state de notre frontend.
-- Ajoute un indicateur visuel élégant, pro et discret à côté du nom du joueur au service (par exemple, une micro-balle de tennis 🎾 stylisée, un point néon vert "Pulse", ou un chevron). 
-
-## 🔊 MODULE AUDIO : ALERTES SONORES DE TRADING (STATE TRACKING)
-
-### Objectif
-Implémenter un système d'alerte sonore (type Terminal Bloomberg) qui avertit le parieur lorsqu'un indicateur clé (Conseils IA, Confiance, Market Edge) monte en puissance lors d'un match en direct ou d'une mise à jour de données.
-
-### Règles d'Implémentation
-1. **Logique de Transition (State Tracking) :** Le son ne doit pas se jouer simplement parce qu'un indicateur est vert. Il doit se jouer **uniquement lors d'une transition positive** : 
-   - Neutre (ou Rouge) ➔ Jaune
-   - Jaune ➔ Vert
-   Cela nécessite de stocker l'état précédent de la cellule (via le `sessionStorage` ou un objet Map local) pour le comparer au nouveau payload.
-2. **Politique Navigateur (Autoplay) :** Les navigateurs modernes (Chrome, Safari) bloquent l'audio non sollicité. Il est **obligatoire** de créer un bouton "Activer les Alertes Sonores" (Toggle) dans l'interface (UI) pour débloquer le contexte audio de la page.
-3. **Throttling (Anti-Spam) :** Si une mise à jour globale fait passer 10 matchs au vert simultanément, le son (`tennis.mp3`) ne doit retentir qu'une seule fois (ou avec un léger décalage) pour ne pas saturer les haut-parleurs.
----
-
-### ÉTAPE 4 : PROTOCOLE DE VALIDATION (ATTENTE DU "GO")
-⚠️ Ne modifie aucun fichier de production pour le moment.
-1. Fais tes recherches sur la documentation des APIs ou audite notre payload actuel.
-2. Affiche-moi
-
-### MISSION ALGORITHMIQUE & UI : INDICATEURS DYNAMIQUES DE JEUX EN DIRECT (TENNIS)
-
-Claude, active ta matrice de compétences : `javascript-logic`, `sports-betting-quant`, `frontend-design`, et `ui-ux-pro-max`.
-
-Nous devons enrichir le tableau Tennis Live (fichier `pariscore.html` et scripts de rendu associés) avec des indicateurs prédictifs "Over/Under Jeux" qui réagissent dynamiquement en fonction du déroulement du set en cours (Set 1, Set 2, Set 3, Set 4 ou Set 5).
-
-Agis en tant que **Lead Data Engineer & UI Expert**. Implémente cette logique algorithmique et visuelle.
-
----
-
-### ÉTAPE 1 : LOGIQUE ALGORITHMIQUE (CALCUL DU CONTEXTE DU SET)
-Dans la fonction de rendu ou de traitement des matchs de tennis en direct, tu dois identifier le set en cours (ex: `current_set`) et évaluer le score de ce set (ex: 2-2, 3-2, etc.).
-
-Implémente les règles conditionnelles suivantes pour le set actif :
-1. **Indicateur de base (Début de set) :** Affiche toujours l'indicateur `"Over 7.5 jeux"`.
-   - Si la probabilité de réussite (calculée via nos modèles ou via la data historique du serveur) est $\ge 50\%$, affiche le badge en **Jaune**.
-   - Si la probabilité est $\ge 65\%$, affiche le badge en **Vert**.
-2. **Indicateur de match avancé :** Calcule le nombre total de jeux déjà disputés dans ce set.
-   - Si `jeux_joues > 4` (ex: score de 3-2, 4-1, etc.), ajoute automatiquement un deuxième indicateur : `"Over 8.5 jeux"` (avec le même code couleur que ci-dessus).
-3. **Indicateur de Break (Rupture) :** - Tu dois détecter s'il y a eu un break dans le set (soit via l'API si elle le fournit, soit en calculant si le receveur a remporté un jeu).
-   - Si un **Break** est détecté dans le set en cours, affiche un nouvel indicateur : `"% de réussite sur Under 12.5 jeux"`.
-
-Cette logique doit s'appliquer de la même manière quel que soit le set en cours (S1, S2, S3, S4, S5).
-
----
-
-### ÉTAPE 2 : INTÉGRATION VISUELLE (UI/UX)
-- Intègre ces indicateurs sous forme de **micro-badges** ou de **pilules (tags)** (ex: `<span class="badge badge-yellow">O 7.5 (52%)</span>`).
-- Ces badges doivent être injectés dans la colonne appropriée du tableau (ex: colonne "Conseils IA" ou "Sets/Jeux").
-- Utilise les codes couleurs stricts de notre Design System : Jaune pour "Moyen" (50-64%) et Vert fluo/émeraude pour "Fort" (65%+).
-- L'affichage doit être ultra-compact pour ne pas casser la hauteur des lignes du tableau (règle des 500ms de lecture).
-
----
-
-### ÉTAPE 3 : TESTS ET VALIDATION
-1. Analyse la structure actuelle de l'objet `match` pour localiser le set en cours et le score détaillé.
-2. Écris la fonction de calcul (ex: `calculateLiveGameIndicators(match)`) qui renverra les badges HTML à injecter.
-3. Ne modifie les fichiers de production qu'après m'avoir présenté un exemple du rendu JSON/HTML généré par ta fonction.
-4. Lance un test sur `localhost:3000` en simulant un score de 3-2 avec un break pour vérifier que les badges "Over 7.5", "Over 8.5" et "% Under 12.5" s'affichent correctement.
-
-
-### MISSION DE BUGFIX : RÉSOLUTION DE L'AUTOPLAY POLICY (AUDIO DOMEXCEPTION)
-
-Claude, active tes compétences : `javascript-logic`, `browser-apis` et `ui-ux-pro-max`.
-
-🚨 **BUG SIGNALÉ :** Notre système d'alerte sonore génère l'erreur suivante dans la console :
-`Uncaught (in promise) DOMException: play() failed because the user didn't interact with the document first.`
-
-Le navigateur bloque la fonction `playTradingAlert()` car elle se déclenche (via les mises à jour Live) avant que l'utilisateur n'ait cliqué ou interagi avec la page. 
-
-Ta mission est de corriger cela en implémentant une gestion propre de l'Autoplay Policy.
-
-Exécute ces 2 étapes de correction :
-
----
-
-### ÉTAPE 1 : PROTECTION DE LA FONCTION `.play()`
-- Dans la fonction `playTradingAlert()`, assure-toi que l'appel à `.play()` est bien géré par une Promesse (Promise) pour intercepter le rejet silencieusement sans polluer la console.
-- **Exemple d'implémentation attendue :**
-  ```javascript
-  const playPromise = audioContext.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(error => {
-      // Bloqué par l'autoplay policy, on gère silencieusement
-      console.warn("Audio bloqué en attente d'interaction utilisateur.");
-    });
-  }
-
-  ### MISSION BENCHMARK & DATA INTELLIGENCE : ANALYSE DE ROTOWIRE SOCCER
-
-Claude, active ta matrice de compétences : `product-management`, `sports-betting-quant`, `web-scraper-advanced` (ou `mcp-browser-automation`), et `ui-ux-pro-max`.
-
-Je veux que tu réalises un benchmark approfondi de cette page de statistiques de référence : https://www.rotowire.com/soccer/stats.php
-
-L'objectif est d'étudier comment ils structurent et restituent la data (notamment pour le Daily Fantasy Sports et les paris sur les joueurs) afin d'en extraire les meilleures idées pour notre propre plateforme, PariScore.
-
-Exécute cette mission en respectant les 4 étapes suivantes :
-
----
-
-### ÉTAPE 1 : EXPLORATION ET AUDIT DE LA PAGE
-Utilise tes outils de navigation ou d'analyse web pour explorer la structure de la page Rotowire fournie. 
-Fais particulièrement attention à :
-- **La granularité de la data :** Quelles statistiques individuelles (Tirs, Passes clés, Centres, xG, xA) mettent-ils en avant ?
-- **L'expérience utilisateur (UX) :** Comment les filtres fonctionnent-ils (par équipe, par position, par championnat) ? Comment gèrent-ils l'affichage de tableaux massifs sans perdre l'utilisateur ?
-- **Les spécificités :** Ont-ils des indicateurs uniques (comme le suivi des tireurs de coups francs/penaltys, les blessures, ou le temps de jeu projeté) ?
-
----
-
-### ÉTAPE 2 : RÉDACTION DU RAPPORT D'ANALYSE CRITIQUE
-Rédige une synthèse de ton exploration. Décris la philosophie de Rotowire : pourquoi ce site est-il tant apprécié par les parieurs professionnels et les joueurs de Fantasy League ? Quels sont leurs choix forts en termes de Data Engineering et d'interface ?
-
----
-
-### ÉTAPE 3 : IDENTIFICATION DES "+" POUR PARISCORE (IDEAS TO STEAL)
-C'est la partie la plus importante. En tant que Product Manager, dresse une liste priorisée d'au moins 3 à 5 fonctionnalités ou approches UI/Data que PariScore DOIT absolument "voler" ou adapter pour passer un cap. 
-*Exemple de pistes de réflexion :* - Faut-il créer un onglet dédié aux "Player Props" (Tirs cadrés, passes) comme eux ? 
-- Faut-il intégrer un tracker de "Set Pieces" (qui tire les corners/penaltys par équipe) en direct ?
-
----
-
-### ÉTAPE 4 : LIVRABLE ET PROTOCOLE DE FIN
-Génère un fichier nommé `rapport_benchmark_rotowire.md` à la racine de notre projet.
-Ce rapport devra contenir :
-1. Le diagnostic complet de la page Rotowire.
-2. Le tableau des "Forces" et "Faiblesses" de leur UI/UX.
-3. Le plan d'action concret : Les "Game Changers" à implémenter d'urgence sur PariScore.
-
-### MISSION UI/UX : CORRECTION DE CONTRASTE (LISIBILITÉ) SUR LE TABLEAU TENNIS
-
-Claude, active ta compétence : `css-architecture` et `ui-ux-pro-max`.
-
-🚨 **PROBLÈME D'ACCESSIBILITÉ SIGNALÉ :** Sur notre tableau (Tennis ou Foot, selon le contexte), il y a un problème de contraste majeur. La police de couleur blanche est illisible ou "baveuse" parce qu'elle est affichée sur un fond (probablement jaune, vert clair ou translucide) qui ne permet pas un bon détachement visuel.
-
-Ta mission est de corriger ce contraste immédiatement pour garantir la fameuse "règle des 500ms" (lisibilité instantanée).
-
----
-
-### ÉTAPE 1 : IDENTIFICATION DE LA CLASSE CSS
-- Identifie la colonne, le badge ou le widget spécifique où nous utilisons ce fond (probablement lié à un indicateur de probabilité, de cote, ou un tag "Over/Under").
-- Analyse le code HTML/CSS de `pariscore.html` pour trouver la classe incriminée (ex: `.badge-yellow`, `.prob-high`, `.bg-warning`).
-
----
-
-### ÉTAPE 2 : CORRECTION DU CONTRASTE (BEST PRACTICES FINTECH)
-- Applique une règle de contraste strict : 
-  - Si le fond de la cellule/badge est clair (Jaune, Vert clair, Cyan clair, Blanc), la police **DOIT** être foncée (`#0f172a` ou `#000000`) et utiliser une graisse plus importante (`font-weight: 600` ou `700`).
-  - Si tu veux absolument garder la police blanche, alors assombris significativement la couleur de fond ou ajoute une opacité noire en sous-couche.
-
----
-
-### ÉTAPE 3 : PROTOCOLE DE VALIDATION
-1. Modifie le CSS de la cellule/colonne concernée.
-2. Fais un test de rendu.
-3. Confirme-moi dans le terminal que le ratio de contraste a été corrigé et que le texte est désormais parfaitement lisible.
-
-Affiche-moi un résumé exécutif des 3 meilleures idées retenues dans le terminal une fois l'analyse terminée !
-*Dernière mise à jour : v12.63 — 21/05/2026. CLAUDE.md purgé (v7.1 → v12.31 historisés dans `CHANGELOG.md`). Sync drift bd↔CLAUDE.md effectue. Source vérité tâches = `bd ready`.*
+*Dernière mise à jour : v12.65 — 22/05/2026. CLAUDE.md purgé (5 missions livrées → bd notes + CHANGELOG.md). Sync drift bd↔CLAUDE.md effectué. Source vérité tâches = `bd ready`.*
