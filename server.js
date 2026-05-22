@@ -26885,6 +26885,7 @@ const BSD_ENRICH_TTL = {
   broadcasts: 24 * 3600 * 1000,  // 24h (TV channels figés)
   compare_odds: 5 * 60 * 1000,   // bd c81b 5min (14 books + movement)
   social:     30 * 60 * 1000,    // bd ueg0 30min (social items tweets/news/videos)
+  best_odds:  5 * 60 * 1000,     // bd j6pz Phase 2 5min (top-of-book aggregate vs compare)
 };
 
 function _bsdResolveEventId(matchId) {
@@ -26914,13 +26915,16 @@ async function _bsdEnrichFetch(kind, eventId) {
   // bd c81b fix : bsdFetch ajoute prefix /api/ deja, donc relative path sans /api/api/ double
   switch (kind) {
     case 'lineups':     endpoint = `/v2/events/${eventId}/lineups/`; break;
-    case 'shotmap':     endpoint = `/v2/events/${eventId}/shotmap/`; break;
+    // bd j6pz fix : endpoint correct = /v2/events/{id}/stats/ (retourne shotmap+stats+momentum+xg_per_minute+avg_positions)
+    // L'ancien /shotmap/ retournait 404 (n'existe pas). Preserve key 'shotmap' pour rétrocompat lookup cache.
+    case 'shotmap':     endpoint = `/v2/events/${eventId}/stats/`; break;
     case 'incidents':   endpoint = `/v2/events/${eventId}/incidents/`; break;
     case 'predictions': endpoint = `/predictions/?event=${eventId}`; break;
     case 'polymarket':  endpoint = `/odds/polymarket/?event=${eventId}`; break;
     case 'broadcasts':  endpoint = `/broadcasts/?event=${eventId}`; break;
     case 'compare_odds': endpoint = `/odds/compare/?event=${eventId}`; break;
-    case 'social':      endpoint = `/social/?event=${eventId}&limit=20`; break;
+    case 'social':      endpoint = `/v2/social/?event=${eventId}&limit=20`; break;
+    case 'best_odds':   endpoint = `/v2/odds/best/?event=${eventId}`; break;  // bd j6pz Phase 2
     default: throw new Error(`unknown bsd kind: ${kind}`);
   }
   const res = await bsdFetch(endpoint);
@@ -26932,7 +26936,23 @@ async function _bsdEnrichFetch(kind, eventId) {
   return { data: res.data, cached: false };
 }
 
-const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts', 'compare_odds', 'social'];
+const BSD_ENRICH_PATHS = ['lineups', 'shotmap', 'incidents', 'predictions', 'polymarket', 'broadcasts', 'compare_odds', 'social', 'best_odds'];
+
+// bd j6pz Phase 2 — Bookmakers registry global BSD (pas per-event). Cache 24h.
+let _bsdBookmakersCache = null;
+let _bsdBookmakersCacheAt = 0;
+const BSD_BOOKMAKERS_TTL = 24 * 3600 * 1000;
+async function bsdFetchBookmakers() {
+  const now = Date.now();
+  if (_bsdBookmakersCache && (now - _bsdBookmakersCacheAt) < BSD_BOOKMAKERS_TTL) {
+    return { data: _bsdBookmakersCache, cached: true };
+  }
+  const res = await bsdFetch('/v2/bookmakers/');
+  if (!res || res.status !== 200 || !res.data) return { data: null, cached: false };
+  _bsdBookmakersCache = res.data;
+  _bsdBookmakersCacheAt = now;
+  return { data: res.data, cached: false };
+}
 
 // bd ueg0 — Sentiment heuristique léger sur texte tweet/news. Pas d'ML : keyword scoring rapide.
 // Retourne {score: -1..+1, label: 'positive'|'neutral'|'negative'}.
@@ -27052,6 +27072,24 @@ for (const kind of BSD_ENRICH_PATHS) {
       console.warn(`  [BSD/${kind}] event=${eventId} erreur:`, e.message);
       return jsonResponse(res, 502, { error: `bsd_${kind}_failed`, message: String(e.message || e) });
     }
+  }
+}
+
+// bd j6pz Phase 2 — GET /api/v1/bsd/bookmakers → registry global (15 books). Cache 24h.
+if (pathname === '/api/v1/bsd/bookmakers' && req.method === 'GET') {
+  try {
+    const { data, cached } = await bsdFetchBookmakers();
+    return jsonResponse(res, 200, {
+      source: 'bsd',
+      kind: 'bookmakers',
+      count: data && Array.isArray(data.results) ? data.results.length : 0,
+      results: data && Array.isArray(data.results) ? data.results : [],
+      cached,
+      fetched_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn('[BSD/bookmakers] erreur:', e.message);
+    return jsonResponse(res, 502, { error: 'bsd_bookmakers_failed', message: String(e.message || e) });
   }
 }
 
