@@ -239,11 +239,19 @@ const GNEWS_API_KEY = process.env.GNEWS_API_KEY || '';
 const PRESS_CACHE_TTL = 24 * 3600000; // 24h
 
 // Flux RSS des sources de référence (zéro API key)
+// bd p2if Phase 3 — Champ `sport` ajouté pour router feeds par discipline.
+// 'football' (default back-compat), 'tennis' (Phase 3 extension), 'all' (générique).
 const RSS_FEEDS = [
-  { url: 'https://www.lequipe.fr/rss.xml', lang: 'fr', source: "L'Equipe" },
-  { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml', lang: 'en', source: 'BBC Sport' },
-  { url: 'https://www.skysports.com/rss/12040', lang: 'en', source: 'Sky Sports' },
-  { url: 'https://www.espn.com/espn/rss/soccer/news', lang: 'en', source: 'ESPN FC' },
+  // Football (Phase 2 livré)
+  { url: 'https://www.lequipe.fr/rss/actu_rss_Football.xml', lang: 'fr', source: "L'Equipe", sport: 'football' },
+  { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml', lang: 'en', source: 'BBC Sport', sport: 'football' },
+  { url: 'https://www.skysports.com/rss/12040', lang: 'en', source: 'Sky Sports', sport: 'football' },
+  { url: 'https://www.espn.com/espn/rss/soccer/news', lang: 'en', source: 'ESPN FC', sport: 'football' },
+  // Tennis (Phase 3 extension)
+  { url: 'https://www.lequipe.fr/rss/actu_rss_Tennis.xml', lang: 'fr', source: "L'Equipe Tennis", sport: 'tennis' },
+  { url: 'https://feeds.bbci.co.uk/sport/tennis/rss.xml', lang: 'en', source: 'BBC Tennis', sport: 'tennis' },
+  { url: 'https://www.espn.com/espn/rss/tennis/news', lang: 'en', source: 'ESPN Tennis', sport: 'tennis' },
+  { url: 'https://www.tennisworldusa.org/index.php?format=feed&type=rss', lang: 'en', source: 'Tennis World USA', sport: 'tennis' },
 ];
 
 // Parseur XML RSS minimaliste (natif — zéro dépendance)
@@ -306,17 +314,24 @@ async function fetchGNews(query, lang = 'fr') {
 }
 
 // Agrège toutes les sources et retourne { text, articleCount, sourceNames } pour Gemini + UI
-async function fetchPressContext(homeTeam, awayTeam) {
-  const cacheKey = `press_${normName(homeTeam)}_${normName(awayTeam)}`;
+// bd p2if Phase 3 — param `sport` (default 'football' back-compat) route feeds RSS pertinents.
+async function fetchPressContext(homeTeam, awayTeam, sport = 'football') {
+  const sportNorm = (sport === 'tennis' || sport === 'all') ? sport : 'football';
+  const cacheKey = `press_${sportNorm}_${normName(homeTeam)}_${normName(awayTeam)}`;
   const cached = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < PRESS_CACHE_TTL)) {
     return { text: cached.text || cached.data || '', articleCount: cached.articleCount || 0, sourceNames: cached.sourceNames || [] };
   }
 
+  // Filtre feeds par sport (back-compat : 'football' = football-only, 'all' = tous)
+  const feeds = sportNorm === 'all'
+    ? RSS_FEEDS
+    : RSS_FEEDS.filter(f => f.sport === sportNorm);
+
   // Fetch RSS en parallèle + GNews combiné (+ per-team si résultats insuffisants)
   const combinedQuery = `${homeTeam} ${awayTeam}`;
   const [rssResults, gnewsItems] = await Promise.all([
-    Promise.all(RSS_FEEDS.map(async feed => {
+    Promise.all(feeds.map(async feed => {
       const xml = await fetchRSS(feed.url);
       const items = parseRSSItems(xml);
       return filterRelevantItems(items, homeTeam, awayTeam)
@@ -26080,6 +26095,16 @@ if (pathname.startsWith('/api/v1/ai/tennis-analyze/') && req.method === 'GET') {
 
   const p1 = (match.player1 && match.player1.name) || '—';
   const p2 = (match.player2 && match.player2.name) || '—';
+
+  // bd p2if Phase 3 — Press context Tennis (RSS L'Equipe Tennis / BBC Tennis / ESPN Tennis / TWUSA)
+  // 5s timeout fallback : si feeds lents, prompt fallback narrative (back-compat).
+  let pressCtxTennis = null;
+  try {
+    pressCtxTennis = await Promise.race([
+      fetchPressContext(p1, p2, 'tennis'),
+      new Promise(r => setTimeout(() => r(null), 5000)),
+    ]);
+  } catch (e) { console.warn('  [TennisAI] fetchPressContext KO:', e.message); }
   const p1Country = (match.player1 && match.player1.country) || '';
   const p2Country = (match.player2 && match.player2.country) || '';
   const tournament = match.tournament || '—';
@@ -26135,7 +26160,15 @@ Best EV : ${bestEv.side === 'p1' ? p1 : (bestEv.side === 'p2' ? p2 : '—')} ${b
 [MARKOV — PROBABILITÉS DE SET]
 P(2-0) : ${setProbs ? fmtPct(setProbs.p_2_0) : '—'} | P(2-1) : ${setProbs ? fmtPct(setProbs.p_2_1) : '—'}
 P(0-2) : ${setProbs ? fmtPct(setProbs.p_0_2) : '—'} | P(1-2) : ${setProbs ? fmtPct(setProbs.p_1_2) : '—'}
-`;
+${(pressCtxTennis && pressCtxTennis.articleCount > 0) ? `
+[REVUE DE PRESSE REELLE — ${pressCtxTennis.articleCount} articles via ${(pressCtxTennis.sourceNames || []).join(', ')}]
+${pressCtxTennis.text}
+[FIN REVUE DE PRESSE REELLE]
+` : ''}`;
+
+  const _pressTennisInstruction = (pressCtxTennis && pressCtxTennis.articleCount > 0)
+    ? `PRIORITE ABSOLUE — La section [REVUE DE PRESSE REELLE] ci-dessous contient ${pressCtxTennis.articleCount} articles réels. Au minimum 3 des 5 items de la section "📰 REVUE DE PRESSE" doivent être grounded sur ces articles : mets le nom du média en gras puis paraphrase l'angle/dynamique évoqué. Complete avec narratifs probables si besoin.`
+    : `Tu n'as pas accès à une recherche web en direct. Génère 5 narratifs médiatiques pertinents et plausibles que la presse sportive aurait produits sur ce match.`;
 
   const systemPrompt = `Agis comme un expert en paris sportifs (Tennis) et un data analyst. Je vais te fournir les données d'un match (avec les cotes, les joueurs, et parfois la météo/horaire). Génère une analyse "Deep Data" et rédige un message prêt à être publié sur Telegram.
      CONTRAINTES STRICTES :
@@ -26146,7 +26179,7 @@ P(0-2) : ${setProbs ? fmtPct(setProbs.p_0_2) : '—'} | P(1-2) : ${setProbs ? fm
      - TITRE : Accrocheur, avec le nom du tournoi, le stade de la compétition et des émojis.
      - INTRO : Courte présentation du contexte et des cotes affichées.
      - 📊 DEEP DATA & PROJECTIONS : Estime de manière cohérente pour les deux joueurs : Le PowerScore (sur 100), La probabilité de victoire finale du tournoi (W%), Le principal atout sur cette surface précise.
-     - 📰 REVUE DE PRESSE (AVIS MÉDIAS) : Tu n'as pas accès à une recherche web en direct. Génère 5 narratifs médiatiques pertinents et plausibles que la presse sportive aurait produits sur ce match, en t'appuyant sur le tournoi, la surface, les nationalités, le ranking et la forme récente des joueurs.
+     - 📰 REVUE DE PRESSE (AVIS MÉDIAS) : ${_pressTennisInstruction} Appuie-toi sur le tournoi, la surface, les nationalités, le ranking et la forme récente des joueurs.
        Sélectionne les 5 médias selon les nationalités des joueurs (panel international par défaut si les nationalités sont mixtes/inconnues : **L'Équipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**). Adapte si pertinent : France (L'Équipe, Eurosport), Espagne (Marca, AS), UK (Sky Sports, BBC Sport, The Guardian), USA (ESPN, Tennis Channel), Italie (Gazzetta dello Sport, Corriere dello Sport), Allemagne (Kicker, Bild), Australie (Wide World of Sports).
        Format strict, 5 items numérotés sur 1 à 2 lignes maximum chacun :
        1. **[Nom du Média]** : "Citation ou analyse résumée sur la dynamique d'un des deux joueurs (forme, surface, head-to-head, mental)."
