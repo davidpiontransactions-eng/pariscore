@@ -124,6 +124,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 |---|---|
 | `gz7s` | Benchmark Rotowire Soccer — ideas to steal (orphan CLAUDE.md→bd) |
 | `r0v3` | BSD coverage Phase 5 — Squad endpoint + fixtures variant (proxies REST simples, LOW ROI, 1-2h) |
+| `qm6a` | **Flashscore dataset integration** — dataset Apify 22/05 (20 EPL + 60 NBA hors scope) — 3 plans: A logos backup 30min · B standings fallback offline 1-2h · C cross-ref team naming validation 2h |
 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 >
