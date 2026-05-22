@@ -23153,10 +23153,42 @@ function buildResumeTab(d) {
       </div>
     </div>` : '';
 
+  // bd kgd — BD-DATA-009 Travel Factor (distance + jet-lag + climat) section UI.
+  // Affiché uniquement si non missing ET score > 0 (skip si voyage négligeable).
+  const tf = m.travel_factor || null;
+  const travelFactorHtml = (tf && !tf.missing && typeof tf.score === 'number' && tf.score > 0) ? (() => {
+    const lvlColor = tf.level === 'severe' ? '#ef4444' : tf.level === 'high' ? '#f59e0b' : tf.level === 'moderate' ? '#3b82f6' : '#10b981';
+    const lvlLabel = tf.level === 'severe' ? 'Voyage extrême' : tf.level === 'high' ? 'Voyage long' : tf.level === 'moderate' ? 'Voyage modéré' : 'Voyage léger';
+    const tzAbs = Math.abs(tf.tz_delta_hours || 0);
+    const tzEmoji = tzAbs >= 6 ? '🌗' : tzAbs >= 3 ? '🌓' : tzAbs > 0 ? '🌒' : '';
+    const climEmoji = tf.climate_shift ? '🌡️' : '';
+    const impactPct = Math.round((1 - (tf.xg_modulator || 1)) * 100);
+    const bar = `<div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:6px;">
+      <div style="width:${tf.score}%;height:100%;background:${lvlColor};border-radius:3px;"></div>
+    </div>`;
+    return `
+    <div class="ins-section" style="border:1px solid ${lvlColor}40;background:linear-gradient(135deg,${lvlColor}10,${lvlColor}03);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-size:9px;font-family:var(--font-mono);color:${lvlColor};background:${lvlColor}28;padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">✈️ TRAVEL FACTOR · ${m.away_team}</span>
+        <span style="font-size:10px;font-family:var(--font-mono);color:var(--text2);">${lvlLabel} — ${tf.score}/100</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:8px;font-family:var(--font-mono);font-size:11px;">
+        <div><span style="color:var(--text3);">Distance</span><div style="color:var(--text);font-weight:700;">${Math.round(tf.distance_km).toLocaleString('fr-FR')} km</div></div>
+        <div><span style="color:var(--text3);">Δ Fuseau</span><div style="color:var(--text);font-weight:700;">${tzEmoji} ${tf.tz_delta_hours > 0 ? '+' : ''}${tf.tz_delta_hours}h</div></div>
+        <div><span style="color:var(--text3);">Climat</span><div style="color:var(--text);font-weight:700;">${climEmoji} ${tf.climate_shift ? 'Shift' : 'Stable'}</div></div>
+        ${tf.days_since_last != null ? `<div><span style="color:var(--text3);">Repos</span><div style="color:var(--text);font-weight:700;">${tf.days_since_last}j</div></div>` : ''}
+        <div><span style="color:var(--text3);">Impact xG</span><div style="color:${impactPct > 0 ? '#ef4444' : 'var(--text)'};font-weight:700;">${impactPct > 0 ? '-' : ''}${impactPct}%</div></div>
+      </div>
+      ${bar}
+      <div style="margin-top:6px;font-size:10px;color:var(--text3);line-height:1.4;">${tf.home_city || ''}${tf.away_city ? ` ← ${tf.away_city}` : ''} · modèle Context Engine (Caia 2019, Recht 2003)</div>
+    </div>`;
+  })() : '';
+
   return `
     ${tvHtml}
     ${editorialHtml}
     ${venueRefereeHtml}
+    ${travelFactorHtml}
     <div id="ins-social-buzz-slot"></div>
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
