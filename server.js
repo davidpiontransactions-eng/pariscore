@@ -20838,6 +20838,195 @@ function findMatchForSeo(id) {
   return pool.find(m => String(m.id) === String(id)) || null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// bd 968x Phase 3 — SSR scores crawler
+// Détecte les crawlers SEO + IA via User-Agent. Permet de servir un HTML
+// pré-rendu (top matchs du jour) à la place de la SPA pour Googlebot/Bingbot
+// et les LLM indexers (GPTBot/ChatGPT-User/CCBot/anthropic-ai/PerplexityBot).
+// Les navigateurs réels (UA hors regex) reçoivent toujours la SPA normale.
+// ─────────────────────────────────────────────────────────────────────────────
+const SEO_CRAWLER_UA_RE = /Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|AhrefsBot|SemrushBot|MJ12bot|GPTBot|ChatGPT-User|CCBot|anthropic-ai|Claude-Web|ClaudeBot|PerplexityBot|Applebot|FacebookExternalHit|Twitterbot|LinkedInBot/i;
+function detectCrawler(req) {
+  try {
+    const ua = String((req && req.headers && req.headers['user-agent']) || '');
+    return SEO_CRAWLER_UA_RE.test(ua);
+  } catch (_) { return false; }
+}
+
+// Cache SSR snapshot home (TTL 30min). Évite de re-stringifier 50 matchs
+// pour chaque hit crawler. Invalidation soft : TTL strict, pas de hook event.
+let _ssrHomeCache = { html: null, ts: 0, origin: '' };
+const SSR_HOME_TTL_MS = 30 * 60 * 1000;
+
+// Détecte sport d'un match (utilisé pour les JSON-LD SportsEvent.sport).
+function _ssrSportLabel(m) {
+  try {
+    if (seoDetectSport(m) === 'tennis') return 'Tennis';
+  } catch (_) {}
+  return 'Soccer';
+}
+
+// Génère un snapshot HTML statique (top 50 matchs) pour les crawlers.
+// Contenu : titre + intro + tableau des matchs (équipes, ligue, heure, cotes 1N2,
+// edge, probas Poisson) + JSON-LD SportsEvent par match + lien vers la page
+// détail SEO (/pronostic-...) pour le crawl approfondi.
+function renderHomeCrawlerSnapshot(origin) {
+  // Sélection top 50 matchs : à venir prioritaires + tri par commence_time.
+  const now = Date.now();
+  const pool = (db.matches || [])
+    .filter(m => m && m.home_team && m.away_team && m.id)
+    .slice()
+    .sort((a, b) => {
+      const ta = new Date(a.commence_time || 0).getTime() || 0;
+      const tb = new Date(b.commence_time || 0).getTime() || 0;
+      const fa = ta < now ? 1 : 0;     // les matchs passés en queue
+      const fb = tb < now ? 1 : 0;
+      if (fa !== fb) return fa - fb;
+      return ta - tb;
+    })
+    .slice(0, 50);
+
+  const pct = v => (v == null || isNaN(v)) ? '—' : `${Math.round(Number(v))}%`;
+  const num = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(2);
+  const dateLabel = iso => {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }); }
+    catch (_) { return '—'; }
+  };
+
+  // JSON-LD ItemList (liste de SportsEvent) — schema.org Rich Result
+  // (Carousel of events). Permet à Google de découvrir les 50 entrées.
+  const itemListLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Top matchs du jour — PariScore',
+    numberOfItems: pool.length,
+    itemListElement: pool.map((m, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: seoMatchUrl(m, origin),
+      item: buildMatchJsonLd(m, seoMatchUrl(m, origin))
+    }))
+  };
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${origin}/` },
+      { '@type': 'ListItem', position: 2, name: 'Pronostics', item: `${origin}/pronostics` }
+    ]
+  };
+
+  // Tableau matchs — rows escapés
+  const rows = pool.map(m => {
+    const p = m.poisson || {};
+    const od = m.odds || {};
+    const be = m.best_edge || {};
+    const url = seoMatchUrl(m, origin).replace(origin, '');
+    const sport = _ssrSportLabel(m);
+    const home = escHtml(m.home_team);
+    const away = escHtml(m.away_team);
+    const league = escHtml(m.league || sport);
+    const edgeLabel = be.label ? escHtml(be.label) : '—';
+    return `<tr>
+<td><a href="${url}"><strong>${home}</strong> vs <strong>${away}</strong></a></td>
+<td>${league}</td>
+<td>${dateLabel(m.commence_time)}</td>
+<td>${num(od.home)}</td>
+<td>${num(od.draw)}</td>
+<td>${num(od.away)}</td>
+<td>${pct(p.homeWin)}</td>
+<td>${pct(p.draw)}</td>
+<td>${pct(p.awayWin)}</td>
+<td>${pct(p.over25)}</td>
+<td>${pct(p.btts)}</td>
+<td>${edgeLabel}${be.edge != null ? ` (+${Number(be.edge).toFixed(1)}%)` : ''}</td>
+</tr>`;
+  }).join('\n');
+
+  const nowIso = new Date().toISOString();
+  const title = `Pronostics football & tennis — Top ${pool.length} matchs · PariScore`;
+  const desc = `Analyse mathématique de ${pool.length} matchs : cotes 1N2, probabilités Poisson (BTTS, Over 2.5), edge no-vig détecté et Power Score. Mise à jour ${dateLabel(nowIso)}.`;
+
+  // Sécurise un JSON-LD inline contre l'injection HTML : `</script>` dans
+  // une valeur JSON casserait le bloc <script type=application/ld+json>.
+  // Échappement standard JSON-safe : < → <, > → >, & → &.
+  const jsonLdSafe = obj => JSON.stringify(obj)
+    .replace(/</g, '\\u003C').replace(/>/g, '\\u003E').replace(/&/g, '\\u0026');
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="${escHtml(origin)}/">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${escHtml(title)}">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:url" content="${escHtml(origin)}/">
+<script type="application/ld+json">${jsonLdSafe(breadcrumbLd)}</script>
+<script type="application/ld+json">${jsonLdSafe(itemListLd)}</script>
+<style>
+:root{--bg:#0a0d0f;--bg2:#111417;--bg4:#1e2328;--green:#00e676;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:'Instrument Sans',system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px}
+h1{font-size:1.9rem;margin:0 0 8px}
+h2{color:var(--blue);font-size:1.2rem;margin:28px 0 10px}
+.meta{color:var(--text2);font-size:.9rem;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.88rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bg4);text-align:left}
+th{background:var(--bg2);color:var(--text2);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+.intro{color:var(--text2);max-width:780px;margin:0 0 12px}
+.tags{margin:14px 0;font-size:.85rem;color:var(--text2)}
+.tags a{display:inline-block;margin:0 8px 6px 0;padding:3px 9px;background:var(--bg2);border-radius:12px;border:1px solid var(--bg4)}
+footer{margin-top:36px;color:var(--text2);font-size:.82rem;border-top:1px solid var(--bg4);padding-top:14px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Fil d'Ariane" class="meta"><a href="/">Accueil</a> › <span>Top matchs du jour</span></nav>
+<h1>Pronostics football & tennis — Top ${pool.length} matchs analysés</h1>
+<p class="intro">${escHtml(desc)} PariScore agrège les cotes de 20+ bookmakers, applique le modèle de Poisson bivarié pour calculer les probabilités réelles, et détecte les value bets (edge no-vig &gt; 5%). Méthodologie complète sur <a href="/about">notre page À propos</a>.</p>
+
+<h2>Tableau des matchs (top ${pool.length})</h2>
+<table>
+<thead>
+<tr>
+<th>Match</th><th>Compétition</th><th>Coup d'envoi</th>
+<th>Cote 1</th><th>Cote N</th><th>Cote 2</th>
+<th>P(1)</th><th>P(N)</th><th>P(2)</th>
+<th>O 2,5</th><th>BTTS</th><th>Value bet</th>
+</tr>
+</thead>
+<tbody>
+${rows || '<tr><td colspan="12">Aucun match disponible pour le moment.</td></tr>'}
+</tbody>
+</table>
+
+<div class="tags">Navigation rapide :
+<a href="/pronostics">Tous les pronostics</a>
+<a href="/guides">Guides de paris</a>
+<a href="/about">À propos & méthodologie</a>
+<a href="/llms.txt">Documentation LLM (llms.txt)</a>
+</div>
+
+<h2>Comment lire ce tableau ?</h2>
+<p class="intro"><strong>Cote 1 / N / 2</strong> : meilleure cote bookmaker pour victoire domicile, match nul, victoire extérieur. <strong>P(1) / P(N) / P(2)</strong> : probabilité réelle calculée par notre modèle de Poisson bivarié à partir des standings home/away et de l'<em>expected goals</em> (xG). <strong>O 2,5</strong> : probabilité que le match contienne plus de 2,5 buts. <strong>BTTS</strong> (both teams to score) : probabilité que les deux équipes marquent. <strong>Value bet</strong> : marché présentant l'écart le plus favorable entre cote bookmaker et probabilité réelle (edge no-vig positif).</p>
+
+<footer>
+<p>PariScore v12.65+ · Snapshot crawler généré le ${dateLabel(nowIso)} · TTL cache 30 min · <a href="/about">À propos</a> · <a href="/llms.txt">/llms.txt</a></p>
+<p>Plateforme d'analyse statistique — PariScore ne capte aucune mise. Les paris sportifs comportent des risques de dépendance. Numéro vert : 09 74 75 13 13.</p>
+</footer>
+</main>
+</body>
+</html>`;
+}
+
 // URL canonique d'une page match.
 function seoMatchUrl(m, origin) {
   return `${origin}/pronostic-${seoSlug(m.home_team)}-vs-${seoSlug(m.away_team)}-${m.id}`;
@@ -29485,6 +29674,25 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
             '# Crawl politeness',
             'Crawl-delay: 1',
             '',
+            '# AEO — IA crawlers explicitly welcomed (LLM indexing)',
+            '# Snapshot SSR available on `/` (UA-detected, bd 968x Phase 3)',
+            'User-agent: GPTBot',
+            'Allow: /',
+            'User-agent: ChatGPT-User',
+            'Allow: /',
+            'User-agent: CCBot',
+            'Allow: /',
+            'User-agent: anthropic-ai',
+            'Allow: /',
+            'User-agent: Claude-Web',
+            'Allow: /',
+            'User-agent: ClaudeBot',
+            'Allow: /',
+            'User-agent: PerplexityBot',
+            'Allow: /',
+            'User-agent: Applebot',
+            'Allow: /',
+            '',
             `Sitemap: ${origin}/sitemap.xml`,
             ''
         ].join('\n');
@@ -29873,6 +30081,42 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
                 return res.end('Erreur génération page match');
             }
             return;
+        }
+    }
+
+    /* -------------------------------------------------
+       4️⃣c  SSR SNAPSHOT CRAWLER (bd 968x Phase 3)
+       Intercepte la home `/` UNIQUEMENT pour les crawlers SEO/IA :
+       Googlebot, Bingbot, GPTBot, Claude-Web, PerplexityBot, etc.
+       Les navigateurs réels (UA hors regex) tombent dans le static
+       file fallback ci-dessous (pariscore.html SPA normal).
+       Cache strict 30min pour TTFB rapide + budget compute.
+       ------------------------------------------------- */
+    if (!res.headersSent && pathname === '/' && detectCrawler(req)) {
+        try {
+            const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+            const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+            const now = Date.now();
+            if (!_ssrHomeCache.html
+                || _ssrHomeCache.origin !== origin
+                || (now - _ssrHomeCache.ts) > SSR_HOME_TTL_MS) {
+                _ssrHomeCache = {
+                    html: renderHomeCrawlerSnapshot(origin),
+                    ts: now,
+                    origin
+                };
+            }
+            res.writeHead(200, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'public, max-age=1800',  // 30min côté CDN
+                'Vary': 'User-Agent',
+                'X-Robots-Tag': 'index,follow',
+                'X-Content-Type-Options': 'nosniff'
+            });
+            return res.end(_ssrHomeCache.html);
+        } catch (e) {
+            console.warn('  [SSR-CRAWLER]', e.message);
+            // Fallback : laisse la SPA répondre.
         }
     }
 
