@@ -29,6 +29,31 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 
 ---
 
+## 📋 ACTIONS OPS USER POST-SESSION v12.65
+
+**Pending DG/ops avant nouveau code (cumul session 22/05 — 30 commits push)**
+
+| # | Action | Type | Commande / Lien | Urgence |
+|---|---|---|---|---|
+| 1 | **Deploy VPS** | ops | `cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore` (cumul `fbea217`→`290bfb1`) | 🔴 HIGH |
+| 2 | **🚨 Revoke RapidAPI key** | security | Dashboard RapidAPI → revoke + nouvelle clé → `.env` VPS uniquement (exposée chat 21/05) | 🔴 CRITICAL |
+| 3 | **Audit DB postbreach** | ops | `bash .context/security_db_audit_postbreach.sh` VPS (bd `c8m`) | 🟡 MED |
+| 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS à minuit UTC (bd `9je`) | 🟡 MED |
+| 5 | **Run flashscore-logos** | ops | `node tools/import-flashscore-logos.js` VPS post-deploy (bd `qm6a` Plan A) | 🟢 LOW |
+| 6 | **DG decision Stripe** | DG | `.context/stripe_dg_checklist.md` — 9 sections (trial/prix/matchday) bd `s77m` | 🟡 MED |
+| 7 | **DG decision Sackmann purge** | DG | `8uoc` Q1 — Sackmann tennis_matches en infraction CC BY-NC-SA → GO purge + ETL TML-DB MIT ? | 🔴 HIGH legal |
+| 8 | **DG decision 6 études bloquées** | DG | bd `j5lb` — GO/NO-GO 6 spikes arbitrage (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing) | 🟡 MED |
+| 9 | **POC OddsPapi.io** | DG | Signup free 250 req → `ODDSPAPI_KEY` .env → `node .context/_probe_oddspapi_pinnacle.js` (bd `bjv`) | 🟢 LOW |
+| 10 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd `ffh` GO 85/100) | 🟢 LOW |
+
+**Validation post-deploy attendue:**
+- `pm2 logs pariscore --lines 200 --nostream | grep -i "wikidata\|TennisLive\|safeFixed\|live_momentum_pct"`
+- Modal Live Dashboard La Liga 60s+ → barres momentum non-flat (bd `8c5`)
+- Tableau Foot mode jour → vérifier ligne BS Bouhajla pas teinte rose (bd `k37`)
+- Bouton audio toggle 🔇/🔊 → test transitions matchs (bd `rlhf`)
+
+---
+
 ## 🔥 TÂCHES EN COURS
 
 Source autoritaire : `bd list --status=in_progress`. Snapshot 22/05/2026.
