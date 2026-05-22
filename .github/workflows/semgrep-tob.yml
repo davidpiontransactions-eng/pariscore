@@ -1,0 +1,83 @@
+name: Semgrep SAST (Trail of Bits rules)
+
+# bd 968x — security scan via Semgrep + Trail of Bits ruleset officiel.
+# Runs sur push main + PR + schedule hebdomadaire (Lundi 6am UTC).
+# Output : SARIF uploadé GitHub Security tab + artifact téléchargeable 30j.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server.js'
+      - 'odds-rapidapi.js'
+      - 'oddspapi.js'
+      - 'tools/**.js'
+      - '.github/workflows/semgrep-tob.yml'
+  pull_request:
+    branches: [main]
+  schedule:
+    # Lundi 06:00 UTC = 08:00 Paris (été) / 07:00 Paris (hiver)
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  semgrep:
+    name: Semgrep scan
+    runs-on: ubuntu-latest
+    # Container Semgrep officiel : Python + semgrep-core + ruleset cache local
+    container:
+      image: semgrep/semgrep:latest
+    if: (github.actor != 'dependabot[bot]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Semgrep scan — Trail of Bits + OWASP + JS
+        run: |
+          semgrep scan \
+            --config p/trailofbits \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/security-audit \
+            --sarif --output semgrep.sarif \
+            --error \
+            --no-suppress-errors \
+            --metrics off \
+            server.js odds-rapidapi.js oddspapi.js tools/ \
+          || true
+          # || true : workflow ne fail PAS sur findings (revue manuelle).
+          # SARIF upload exposera findings dans Security tab pour triage.
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep-trailofbits
+
+      - name: Upload SARIF artifact (30j retention)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sarif-${{ github.sha }}
+          path: semgrep.sarif
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f semgrep.sarif ]; then
+            COUNT=$(jq '[.runs[].results[]] | length' semgrep.sarif 2>/dev/null || echo "?")
+            echo "## Semgrep ToB scan — $COUNT findings" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Ruleset : p/trailofbits + p/owasp-top-ten + p/javascript + p/security-audit" >> $GITHUB_STEP_SUMMARY
+            echo "Files scanned : server.js, odds-rapidapi.js, oddspapi.js, tools/" >> $GITHUB_STEP_SUMMARY
+            echo "Triage : voir onglet Security ou télécharger artifact SARIF" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Semgrep ToB scan — SARIF non généré (voir logs)" >> $GITHUB_STEP_SUMMARY
+          fi
