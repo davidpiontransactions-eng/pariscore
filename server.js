@@ -28010,10 +28010,19 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
   // v12.43 (bd c0qo) — Enrichissement BSD parallele avant prompt Gemini.
   // Pre-fetch lineups+predictions+incidents+polymarket via Promise.allSettled
   // pour injecter [CONTEXTE BSD ENRICHI] dans le systemPrompt en aval.
-  const bsdEnrichBlock = await enrichGeminiContextWithBSD(matchId, match, forceRefresh).catch(e => {
-    console.warn('  [DeepStream] enrichGeminiContextWithBSD KO:', e.message);
-    return '';
-  });
+  // v12.66 (bd p2if Phase 2) — branch RSS reel (L'Equipe + BBC + Sky + ESPN + GNews)
+  // en parallele BSD pour grounder section 5 "Revue de Presse" sur articles reels.
+  const [bsdEnrichRes, pressCtxRes] = await Promise.allSettled([
+    enrichGeminiContextWithBSD(matchId, match, forceRefresh),
+    fetchPressContext(match.home_team, match.away_team),
+  ]);
+  const bsdEnrichBlock = bsdEnrichRes.status === 'fulfilled' ? (bsdEnrichRes.value || '') : '';
+  if (bsdEnrichRes.status === 'rejected') console.warn('  [DeepStream] enrichGeminiContextWithBSD KO:', bsdEnrichRes.reason?.message);
+  const pressCtx = pressCtxRes.status === 'fulfilled' ? pressCtxRes.value : null;
+  const pressBlock = (pressCtx && pressCtx.text && pressCtx.articleCount > 0)
+    ? `\n\n[REVUE DE PRESSE REELLE — ${pressCtx.articleCount} articles via ${(pressCtx.sourceNames || []).join(', ')}]\n${pressCtx.text}\n[FIN REVUE DE PRESSE REELLE]\n`
+    : '';
+  if (pressCtxRes.status === 'rejected') console.warn('  [DeepStream] fetchPressContext KO:', pressCtxRes.reason?.message);
 
   // SSE headers
   res.writeHead(200, {
@@ -28103,7 +28112,8 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    Mise Kelly : X.X%
 
 5. REVUE DE PRESSE (AVIS MEDIAS) :
-   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.). Panel international par defaut si nationalites mixtes/inconnues : **L'Equipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**.
+   PRIORITE ABSOLUE — Si la section [REVUE DE PRESSE REELLE] est presente dans les donnees ci-dessous, base tes 5 items dessus : pour chaque article cite, mets le nom du media en gras puis paraphrase l'angle ou la dynamique evoquee. Au minimum 3 des 5 items doivent etre grounded sur des articles reels listes. Complete avec narratifs probables si besoin, en gardant le panel coherent avec les sources reelles fournies.
+   FALLBACK — Si la section [REVUE DE PRESSE REELLE] est absente ou vide, genere les 5 narratifs probables en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.). Panel international par defaut si nationalites mixtes/inconnues : **L'Equipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**.
    Format strict, 5 items numerotes sur 1 a 2 lignes maximum chacun, aucun emoji :
    1. **[Nom du Media]** : "Citation ou analyse resumee sur la dynamique d'une des deux equipes."
    2. **[Nom du Media]** : "..."
@@ -28120,7 +28130,7 @@ Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il l
 
 RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
-${dataBlock}${bsdEnrichBlock || ''}`;
+${dataBlock}${bsdEnrichBlock || ''}${pressBlock}`;
 
   // I1 — Confidence Score + I4 — Market divergences SSE meta event
   const confidence = (s.isReal ? 40 : 0) + (odds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (xg.home ? 10 : 0);
@@ -28186,10 +28196,18 @@ if (pathname.startsWith('/api/v1/deep-analysis/') && req.method === 'GET') {
   }
 
   // v12.43 (bd c0qo) — Enrichissement BSD parallele avant prompt Gemini.
-  const bsdEnrichBlock = await enrichGeminiContextWithBSD(matchId, match, false).catch(e => {
-    console.warn('  [DeepPro] enrichGeminiContextWithBSD KO:', e.message);
-    return '';
-  });
+  // v12.66 (bd p2if Phase 2) — branch RSS reel en parallele BSD pour grounder section 5.
+  const [bsdEnrichResNs, pressCtxResNs] = await Promise.allSettled([
+    enrichGeminiContextWithBSD(matchId, match, false),
+    fetchPressContext(match.home_team, match.away_team),
+  ]);
+  const bsdEnrichBlock = bsdEnrichResNs.status === 'fulfilled' ? (bsdEnrichResNs.value || '') : '';
+  if (bsdEnrichResNs.status === 'rejected') console.warn('  [DeepPro] enrichGeminiContextWithBSD KO:', bsdEnrichResNs.reason?.message);
+  const pressCtxNs = pressCtxResNs.status === 'fulfilled' ? pressCtxResNs.value : null;
+  const pressBlockNs = (pressCtxNs && pressCtxNs.text && pressCtxNs.articleCount > 0)
+    ? `\n\n[REVUE DE PRESSE REELLE — ${pressCtxNs.articleCount} articles via ${(pressCtxNs.sourceNames || []).join(', ')}]\n${pressCtxNs.text}\n[FIN REVUE DE PRESSE REELLE]\n`
+    : '';
+  if (pressCtxResNs.status === 'rejected') console.warn('  [DeepPro] fetchPressContext KO:', pressCtxResNs.reason?.message);
 
   const p = match.poisson || {};
   const s = match.stats || {};
@@ -28280,7 +28298,8 @@ Ton rôle : écrire une chronique de match qui donne ENVIE — ou dissuade clair
    Mise Kelly : X.X%
 
 5. REVUE DE PRESSE (AVIS MEDIAS) :
-   Tu n'as pas acces a une recherche web en direct. Genere les 5 narratifs mediatiques les plus pertinents et probables que la presse sportive aurait produits sur ce match, en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Chaque entree doit etre realiste : nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.). Panel international par defaut si nationalites mixtes/inconnues : **L'Equipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**.
+   PRIORITE ABSOLUE — Si la section [REVUE DE PRESSE REELLE] est presente dans les donnees ci-dessous, base tes 5 items dessus : pour chaque article cite, mets le nom du media en gras puis paraphrase l'angle ou la dynamique evoquee. Au minimum 3 des 5 items doivent etre grounded sur des articles reels listes. Complete avec narratifs probables si besoin, en gardant le panel coherent avec les sources reelles fournies.
+   FALLBACK — Si la section [REVUE DE PRESSE REELLE] est absente ou vide, genere les 5 narratifs probables en t'appuyant sur les statistiques, le classement, la forme et l'historique des deux equipes. Nom de media existant choisi selon les nationalites des clubs (L'Equipe, RMC Sport, Le Parisien, France Football pour clubs FR ; Marca, Mundo Deportivo, AS pour clubs ES ; BBC Sport, The Athletic, Sky Sports, The Guardian pour clubs UK ; Gazzetta dello Sport, Corriere dello Sport, Tuttosport pour clubs IT ; Bild, Kicker, Sport1 pour clubs DE ; etc.). Panel international par defaut si nationalites mixtes/inconnues : **L'Equipe**, **Marca**, **Sky Sports**, **ESPN**, **TalkSport**.
    Format strict, 5 items numerotes sur 1 a 2 lignes maximum chacun, aucun emoji :
    1. **[Nom du Media]** : "Citation ou analyse resumee sur la dynamique d'une des deux equipes."
    2. **[Nom du Media]** : "..."
@@ -28297,7 +28316,7 @@ Le lecteur ne doit pas sentir qu'il lit un tableau Excel. Il doit sentir qu'il l
 
 RAPPEL ABSOLU : TU DOIS INCLURE LA SECTION "5. REVUE DE PRESSE (AVIS MEDIAS)" AVANT LE VERDICT (SECTION 6). C'EST UNE CONTRAINTE TECHNIQUE STRICTE. CETTE SECTION CONTIENT 5 AVIS MEDIAS FORMATES "N. **Nom du Media** : \\"Citation\\"". L'OMISSION DE CETTE SECTION INVALIDE TOUTE LA REPONSE.
 
-${dataBlock}${bsdEnrichBlock || ''}`;
+${dataBlock}${bsdEnrichBlock || ''}${pressBlockNs}`;
 
   (async () => {
     try {
@@ -30802,6 +30821,89 @@ if (BSD_LIVE_WS_ENABLED) {
 // Avant : sendValueBetAlerts() seulement via route admin manuelle → aucune alerte value auto sur VPS.
 const VALUE_ALERT_INTERVAL_MS = parseInt(process.env.VALUE_ALERT_INTERVAL_MS || String(30 * 60 * 1000), 10);
 setInterval(() => sendValueBetAlerts().catch(e => console.warn('[ValueAlert]', e.message)), VALUE_ALERT_INTERVAL_MS);
+
+// v12.66 (bd p2if Phase 2 — B) Daily Top Picks Telegram broadcast — 8h Paris.
+// Scan matches J→J+1.5j, filtre EV+ profit net > +10% (evPlus > 110), top 3 par EV desc.
+// Broadcast canaux TELEGRAM_CHAT_IDS env via broadcastTelegramAlert(). Gate prod.
+const DAILY_TOP_PICKS_HOUR = parseInt(process.env.DAILY_TOP_PICKS_HOUR || '8', 10);
+const DAILY_TOP_PICKS_EV_MIN = parseFloat(process.env.DAILY_TOP_PICKS_EV_MIN || '110'); // evPlus > 110 = profit net > +10%
+const DAILY_TOP_PICKS_COUNT = parseInt(process.env.DAILY_TOP_PICKS_COUNT || '3', 10);
+
+function _selectDailyTopPicks() {
+  if (!Array.isArray(db.matches) || !db.matches.length) return [];
+  const now = Date.now();
+  const horizon = now + 36 * 3600 * 1000;
+  const candidates = [];
+  for (const m of db.matches) {
+    if (!m || !m.commence_time) continue;
+    const ko = new Date(m.commence_time).getTime();
+    if (!Number.isFinite(ko) || ko <= now || ko > horizon) continue;
+    if (m.live_minute) continue;
+    const bet = pickPredictiveBet(m);
+    if (!bet || !Number.isFinite(bet.evPlus)) continue;
+    if (bet.evPlus < DAILY_TOP_PICKS_EV_MIN) continue;
+    const conf = computeConfidenceStars(bet.prob, bet.evPlus);
+    if (conf.stars < 3) continue;
+    candidates.push({ match: m, bet, conf });
+  }
+  return candidates
+    .sort((a, b) => b.bet.evPlus - a.bet.evPlus)
+    .slice(0, DAILY_TOP_PICKS_COUNT);
+}
+
+function _buildDailyTopPicksMessage(picks) {
+  if (!picks.length) return null;
+  const dt = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const lines = [
+    `🎯 <b>TOP ${picks.length} PICKS PARISCORE — ${dt.toUpperCase()}</b>`,
+    `<i>Analyse Poisson + Edge no-vig | EV+ profit net &gt; ${(DAILY_TOP_PICKS_EV_MIN - 100).toFixed(0)}%</i>`,
+    ``,
+  ];
+  picks.forEach((p, i) => {
+    const ko = new Date(p.match.commence_time).toLocaleString('fr-FR',
+      { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const evDisplay = (p.bet.evPlus - 100).toFixed(1);
+    lines.push(
+      `<b>${i + 1}. ${escTg(p.match.league || p.match.sport || '')} — ${escTg(p.match.home_team)} vs ${escTg(p.match.away_team)}</b>`,
+      `   Pari : <b>${escTg(p.bet.pick)}</b> (cote ${safeFixed(p.bet.odds, 2)} chez ${escTg(p.bet.bk || '—')})`,
+      `   Confiance : ${p.conf.glyph} | EV+ <b>+${evDisplay}%</b> | Coup d'envoi ${ko}`,
+      `   <a href="${matchUrl(p.match)}">Voir analyse complète</a>`,
+      ``,
+    );
+  });
+  lines.push(`⚡ <i>Pariez avec les maths, pas l'instinct.</i>`);
+  return lines.join('\n');
+}
+
+async function _runDailyTopPicksTelegram() {
+  try {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_IDS.size) {
+      console.log('  [DailyPicks] skip — Telegram non configuré');
+      return;
+    }
+    if (!automatedAlertsAllowed()) {
+      console.log('  [DailyPicks] skip — NODE_ENV != production (set TELEGRAM_FORCE_ALERTS=1 pour debug)');
+      return;
+    }
+    const picks = _selectDailyTopPicks();
+    if (!picks.length) {
+      console.log('  [DailyPicks] aucun pick éligible (EV+ ≥ +' + (DAILY_TOP_PICKS_EV_MIN - 100).toFixed(0) + '%, 3★+ canal principal)');
+      return;
+    }
+    const msg = _buildDailyTopPicksMessage(picks);
+    if (!msg) return;
+    await broadcastTelegramAlert(msg);
+    console.log(`  [DailyPicks] OK — ${picks.length} pick(s) broadcastés → ${TELEGRAM_CHAT_IDS.size} chat(s)`);
+  } catch (e) {
+    console.warn('  [DailyPicks] erreur:', e.message);
+  }
+}
+
+setTimeout(() => {
+  _runDailyTopPicksTelegram().catch(e => console.warn('[DailyPicks bootstrap]', e.message));
+  setInterval(() => _runDailyTopPicksTelegram().catch(e => console.warn('[DailyPicks]', e.message)), 24 * 3600 * 1000);
+}, _msUntilNextParisHour(DAILY_TOP_PICKS_HOUR));
+console.log(`  [DailyPicks] cron armé — premier tick à ${DAILY_TOP_PICKS_HOUR}h00 Europe/Paris (EV+ ≥ +${(DAILY_TOP_PICKS_EV_MIN - 100).toFixed(0)}%, top ${DAILY_TOP_PICKS_COUNT})`);
 
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
