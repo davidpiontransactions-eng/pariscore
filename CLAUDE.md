@@ -165,12 +165,12 @@ Datasets Apify one-shot disponibles racine projet:
 | **B** | 2 | Standings fallback offline — `db.flashscore_standings` layer dédié, trigger si BSD+ESPN+API-Football tous HS | 1-2h | MED | Resilience triple-source HS |
 | **C** | 3 | Cross-ref team naming validation — Map Flashscore slug → BSD team_id (fuzzy normName), audit script divergences | 2h | MED | Validation normName + CI/CD |
 | **D** | 4 | ✅ livré — `tools/import-sofascore-football-venue-referee.js` ETL dataset Apify entries football → `api_cache` key `sofa_venue_referee_<normHome>_<normAway>` TTL 7j source `sofascore_venue_referee`. server.js `getSofascoreVenueReferee()` + wire `/api/v1/insights/:id` payload field `sofascore_venue_referee`. pariscore.html section "🏟️ STADE & ARBITRE · SOFASCORE" tête onglet Résumé : carte stade (nom + ville + capacité + flag) + carte arbitre (nom + flag + games + YC/match + RC/match). 1 entry seedée (Bernabéu + Munuera Montero 299 matchs 4.63 YC/m). Alt bd `82th`. | 1h | MED | ✓ DONE |
-| **E** | 5 | Lineups + statistics live fallback — gap-fill quand BSD live partial (ESPN-only matchs), map stat_name → `live_*` champs | 1-2h | MED | Live data robustness |
+| **E** | 5 | ✅ livré — `tools/import-flashscore-live-stats.js` ETL dataset Apify entries football → `api_cache` key `flashscore_live_stats_<normHome>_<normAway>` TTL 30min source `flashscore_live_stats`. STAT_MAP normalise stat_name → champs (possession_pct, total_shots, shots_on_target, corner_kicks, etc). server.js `getFlashscoreLiveStats()` + wire `/api/v1/insights/:id` payload `flashscore_live_stats` + match list `flashscore_live_fallback` (skip si live BSD/ESPN/AF déjà présent). 3 entries seedées. | 1-2h | MED | ✓ DONE |
 | **F** | 6 | ✅ livré — `tools/import-flashscore-livestream.js` ETL dataset Apify → `api_cache` key `livestream_<normHome>_<normAway>` TTL 7j source `flashscore_livestream`. server.js `attachFlashscoreLiveStream()` Map cache lazy reload 1min + wire 2 sites (`matchesForBroadcast` + `/api/v1/matches`). pariscore.html pill `📡 STREAM` ambre next to TV badge. 3 entries seeded dataset. | 30min | LOW | ✓ DONE |
 
 **Effort total cumul:** ~5.5-6.5h si tous exécutés restants (Plan A ✅).
 **Limite:** datasets Apify one-shot ≠ feed continu. Value durable nécessite scraper continuous (Apify subscription) OU pivot xvalue.ai (bd `ffh` GO 85/100).
-**Ordre recommandé:** ~~A~~ ✅ → ~~F~~ ✅ → ~~D~~ ✅ → E (live fallback) → B (standings backup) → C (validation audit).
+**Ordre recommandé:** ~~A~~ ✅ → ~~F~~ ✅ → ~~D~~ ✅ → ~~E~~ ✅ → B (standings backup) → C (validation audit).
 
 #### Sous-tâches `6jro` Sofascore Apify datasets — 4 plans
 
@@ -214,7 +214,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 |---|---|---|---|---|
 | ~~G~~ ✅ | `6jro` | Tennis player profile enrichment Grand Slam history (ETL + endpoint + section modal Insights) | 1-2h | HIGH |
 | B | `qm6a` | Standings fallback offline (db.flashscore_standings) | 1-2h | MED |
-| E | `qm6a` | Lineups + statistics live fallback ESPN-only matchs | 1-2h | MED |
+| ~~E~~ ✅ | `qm6a` | Live stats fallback Flashscore (ETL + cache + wire insights + match list fallback) | 1-2h | MED |
 | C | `qm6a` | Cross-ref team naming validation audit | 2h | MED |
 | `r0v3` | — | BSD Phase 5 — Squad endpoint + fixtures variant proxies | 1-2h | LOW |
 
