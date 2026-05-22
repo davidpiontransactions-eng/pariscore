@@ -31790,6 +31790,38 @@ async function _runDailyTopPicksTelegram() {
     if (!msg) return;
     await broadcastTelegramAlert(msg);
     console.log(`  [DailyPicks] OK — ${picks.length} pick(s) broadcastés → ${TELEGRAM_CHAT_IDS.size} chat(s)`);
+
+    // bd e7l Phase 7 — Web Push broadcast top picks à tous users avec subscription
+    // Une notif par user (Aggregate top 3 dans body), opt-out via DELETE /push/subscribe.
+    try {
+      const userIds = sqldb.prepare('SELECT DISTINCT user_id FROM push_subscriptions WHERE user_id IS NOT NULL').all();
+      if (userIds.length) {
+        const top = picks[0];
+        const evDisplay = (top.bet.evPlus - 100).toFixed(1);
+        const matchLabel = `${top.match.home_team} vs ${top.match.away_team}`;
+        const others = picks.length > 1 ? ` · +${picks.length - 1} autre${picks.length > 2 ? 's' : ''}` : '';
+        const payload = {
+          title: `🎯 Top ${picks.length} pick${picks.length > 1 ? 's' : ''} du jour`,
+          body: `${matchLabel} · ${top.bet.pick} @ ${safeFixed(top.bet.odds, 2)} (EV +${evDisplay}%)${others}`,
+          tag: 'daily_top_picks',
+          url: '/?topPicks=1',
+          icon: '/icon.svg',
+          requireInteraction: true,
+        };
+        let pushSent = 0, pushUsers = 0;
+        for (const { user_id } of userIds) {
+          if (!user_id) continue;
+          pushUsers++;
+          try {
+            const r = await broadcastPushToUser(user_id, { payload, urgency: 'normal' });
+            pushSent += r.sent || 0;
+          } catch (_) {}
+        }
+        console.log(`  [DailyPicks] WebPush → ${pushSent} envoi(s) à ${pushUsers} user(s)`);
+      }
+    } catch (e) {
+      console.warn('  [DailyPicks] WebPush err:', e.message);
+    }
   } catch (e) {
     console.warn('  [DailyPicks] erreur:', e.message);
   }
