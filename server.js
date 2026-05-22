@@ -3140,6 +3140,48 @@ function getSofascoreTennisPlayer(name) {
   return sofascoreTennisPlayerMap.get(nk) || null;
 }
 
+// ─── bd qm6a Plan D — Sofascore venue + referee (Apify dataset ETL) ──────────
+// Lazy lookup api_cache key 'sofa_venue_referee_<normHome>_<normAway>'. TTL 7j.
+// Alt bd 82th BSD Phase 4. Tool ETL: tools/import-sofascore-football-venue-referee.js
+const sofascoreVenueRefereeMap = new Map();
+let sofascoreVenueRefereeLoadedAt = 0;
+const SOFASCORE_VENUE_REFEREE_RELOAD_MS = 5 * 60 * 1000;
+
+function loadSofascoreVenueRefereeCache(force = false) {
+  const now = Date.now();
+  if (!force && (now - sofascoreVenueRefereeLoadedAt) < SOFASCORE_VENUE_REFEREE_RELOAD_MS) return;
+  if (!sqldb) return;
+  try {
+    const rows = sqldb.prepare(
+      "SELECT key, data FROM api_cache WHERE key LIKE 'sofa\\_venue\\_referee\\_%' ESCAPE '\\' AND expires_at > ?"
+    ).all(now);
+    sofascoreVenueRefereeMap.clear();
+    for (const row of rows) {
+      try {
+        const d = JSON.parse(row.data || '{}');
+        if (d && d.home_team && d.away_team) {
+          const h = _normKeyForLiveStream(d.home_team);
+          const a = _normKeyForLiveStream(d.away_team);
+          if (h && a) sofascoreVenueRefereeMap.set(`${h}|${a}`, d);
+        }
+      } catch (_) {}
+    }
+    sofascoreVenueRefereeLoadedAt = now;
+  } catch (e) { /* silent */ }
+}
+
+function getSofascoreVenueReferee(match) {
+  if (!match || !match.home_team || !match.away_team) return null;
+  loadSofascoreVenueRefereeCache();
+  if (sofascoreVenueRefereeMap.size === 0) return null;
+  const h = _normKeyForLiveStream(match.home_team);
+  const a = _normKeyForLiveStream(match.away_team);
+  if (!h || !a) return null;
+  const data = sofascoreVenueRefereeMap.get(`${h}|${a}`);
+  if (!data) return null;
+  return { venue: data.venue || null, referee: data.referee || null };
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
@@ -27268,6 +27310,8 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         unified_stats,
         // bd 6jro Plan H — Sofascore editorial article (Apify ETL, modal Insights Avant-Match)
         sofascore_editorial: (typeof getSofascoreEditorial === 'function') ? getSofascoreEditorial(match) : null,
+        // bd qm6a Plan D — Sofascore venue + referee (alt 82th BSD Phase 4)
+        sofascore_venue_referee: (typeof getSofascoreVenueReferee === 'function') ? getSofascoreVenueReferee(match) : null,
       });
     } catch (e) {
       console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
