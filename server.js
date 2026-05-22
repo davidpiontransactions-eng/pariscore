@@ -3061,6 +3061,47 @@ function attachFlashscoreLiveStream(match) {
   }
 }
 
+// ─── bd 6jro Plan H — Sofascore initialFeaturedArticle (Apify dataset ETL) ───
+// Lazy lookup api_cache key 'sofa_editorial_<normHome>_<normAway>'. TTL 24h.
+// Tool ETL: tools/import-sofascore-editorial.js
+const sofascoreEditorialMap = new Map();
+let sofascoreEditorialLoadedAt = 0;
+const SOFASCORE_EDITORIAL_RELOAD_MS = 60 * 1000;
+
+function loadSofascoreEditorialCache(force = false) {
+  const now = Date.now();
+  if (!force && (now - sofascoreEditorialLoadedAt) < SOFASCORE_EDITORIAL_RELOAD_MS) return;
+  if (!sqldb) return;
+  try {
+    const rows = sqldb.prepare(
+      "SELECT key, data FROM api_cache WHERE key LIKE 'sofa\\_editorial\\_%' ESCAPE '\\' AND expires_at > ?"
+    ).all(now);
+    sofascoreEditorialMap.clear();
+    for (const row of rows) {
+      try {
+        const d = JSON.parse(row.data || '{}');
+        if (d.home_team && d.away_team && d.article) {
+          const h = _normKeyForLiveStream(d.home_team);
+          const a = _normKeyForLiveStream(d.away_team);
+          if (h && a) sofascoreEditorialMap.set(`${h}|${a}`, d.article);
+        }
+      } catch (_) {}
+    }
+    sofascoreEditorialLoadedAt = now;
+  } catch (e) { /* silent */ }
+}
+
+// Retourne objet article ou null. Lookup non-mutant — appelé depuis /api/v1/insights.
+function getSofascoreEditorial(match) {
+  if (!match || !match.home_team || !match.away_team) return null;
+  loadSofascoreEditorialCache();
+  if (sofascoreEditorialMap.size === 0) return null;
+  const h = _normKeyForLiveStream(match.home_team);
+  const a = _normKeyForLiveStream(match.away_team);
+  if (!h || !a) return null;
+  return sofascoreEditorialMap.get(`${h}|${a}`) || null;
+}
+
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
@@ -27173,6 +27214,8 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         top_players: allTopPlayers,
         // Stats unifiées pré-calculées (v49.0 Hermes)
         unified_stats,
+        // bd 6jro Plan H — Sofascore editorial article (Apify ETL, modal Insights Avant-Match)
+        sofascore_editorial: (typeof getSofascoreEditorial === 'function') ? getSofascoreEditorial(match) : null,
       });
     } catch (e) {
       console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);

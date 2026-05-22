@@ -180,13 +180,13 @@ Dataset Apify one-shot disponible racine projet:
 | Plan | Phase | Tâche | Effort | ROI | Use case |
 |---|---|---|---|---|---|
 | **G** | 1 | Tennis player profile enrichment — ETL `teamRankings` + `teamGrandSlamBestResults` → modal Insights tennis section "Historique Grand Slam" | 1-2h | HIGH | Tennis profile pro |
-| **H** | 2 | Football `initialFeaturedArticle` editorial — Sofascore editorial team article URL+title+excerpt → modal Insights foot "Avant-Match" (UNIQUE vs BSD) | 1h | MED | Editorial unique source |
+| **H** | 2 | ✅ livré — `tools/import-sofascore-editorial.js` ETL dataset Apify → `api_cache` key `sofa_editorial_<normHome>_<normAway>` TTL 24h source `sofascore_editorial`. server.js `getSofascoreEditorial()` lookup + wire `/api/v1/insights/:id` payload field `sofascore_editorial`. pariscore.html section "📰 AVANT-MATCH · SOFASCORE" tête onglet Résumé modal Insights (title/excerpt/image/tags/url externe). 1 entry seedée. | 1h | MED | ✓ DONE |
 | **I** | 3 | ✅ livré — Filtre Format Singles/Doubles onglet Tennis (data-filter=format ALL/SINGLES/DOUBLES). Heuristique `_tnIsDoublesMatch()` : `is_doubles` flag explicite OR tournament/round regex `doubles?` OR slash-pair names (`Bopanna R. / Ebden M.`). `_tennisVbFilters.format='ALL'` ajouté. | 30min | LOW | ✓ DONE |
 | **J** | 4 | Sofascore continuous scraper webhook — alternative permanent feed vs Apify one-shot — ⚠️ conflit potentiel bd `ffh` (Sofascore = 53/100 NO-GO car redondant BSD live, mais profile/historique = use case distinct) | 3-4h | MED | Permanent feed profile data |
 
 **Effort total cumul:** ~5-7h si tous exécutés.
 **Note bd `ffh` cross-ref:** Sofascore catégorisé NO-GO uniquement pour use case LIVE (redondant BSD WS). Use case PROFILE/HISTORIQUE distinct → Plan J réserve fenêtre potentielle.
-**Ordre recommandé:** G (tennis profile = HIGH ROI) → H (editorial unique) → ~~I~~ ✅ → J (reserve continuous feed décision DG).
+**Ordre recommandé:** G (tennis profile = HIGH ROI) → ~~H~~ ✅ → ~~I~~ ✅ → J (reserve continuous feed décision DG).
 
 > **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
 >
@@ -206,7 +206,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 | ~~F~~ ✅ | `qm6a` | has_live_stream badge UI tableau matchs (commit + tool ETL livré) | 30min | LOW |
 | ~~I~~ ✅ | `6jro` | Filtre Format Singles/Doubles onglet Tennis (heuristique slash-pair + tournament regex) | 30min | LOW |
 | D | `qm6a` | Venue + referee enrichment (alt bd `82th`) | 1h | MED |
-| H | `6jro` | Football `initialFeaturedArticle` editorial modal Insights | 1h | MED |
+| ~~H~~ ✅ | `6jro` | Football `initialFeaturedArticle` editorial modal Insights (commit + ETL tool livré) | 1h | MED |
 
 ### 🟡 Medium (1-2h, MED/HIGH ROI)
 
