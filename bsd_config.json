@@ -21,7 +21,11 @@
       "20":  {"config_id": 218, "name": "Liga MX Clausura"},
       "24":  {"config_id": 318, "name": "Super League (Greece)"},
       "26":  {"config_id": 113, "name": "Allsvenskan"},
-      "27":  {"config_id": 0,   "name": "World Cup 2026"},
+      "27":  {"config_id": 999, "name": "World Cup 2026"},
+      "35":  {"config_id": 73,  "name": "Copa do Brasil"},
+      "41":  {"config_id": 143, "name": "Copa del Rey"},
+      "43":  {"config_id": 81,  "name": "DFB Pokal"},
+      "44":  {"config_id": 63,  "name": "Coupe de France"},
       "38":  {"config_id": 141, "name": "Segunda División"},
       "2":   {"config_id": 94,  "name": "Liga Portugal Betclic"},
       "9":   {"config_id": 71,  "name": "Brasileirão"},
@@ -80,7 +84,12 @@
       "244": 55,
       "137": 42,
       "45":  39,
-      "48":  40
+      "48":  40,
+      "63":  44,
+      "73":  35,
+      "81":  43,
+      "143": 41,
+      "999": 27
     },
     "fallback_needed": [333, 210, 269, 383, 99, 345]
   }

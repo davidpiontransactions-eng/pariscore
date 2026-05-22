@@ -45,9 +45,9 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 | 8 | **DG decision 6 études bloquées** | DG | bd `j5lb` — GO/NO-GO 6 spikes arbitrage (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing) | 🟡 MED |
 | 9 | **POC OddsPapi.io** | DG | Signup free 250 req → `ODDSPAPI_KEY` .env → `node .context/_probe_oddspapi_pinnacle.js` (bd `bjv`) | 🟢 LOW |
 | 10 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd `ffh` GO 85/100) | 🟢 LOW |
-| 11 | **BSD coverage audit** | code | Snapshot `bsd_fr_leagues.json` stale (manque BSD 27 World Cup 2026 + 55 Veikkausliiga) → re-fetch live MCP + commit | 🟢 LOW |
-| 12 | **Mapper BSD 27 World Cup 2026** | code | Ajouter mapping `bsd_config.json` config_to_bsd → BSD 27, lié bd `5iw` BSD Live WS CdM 2026 | 🔴 HIGH |
-| 13 | **Mapper coupes domestiques BSD HIGH** | code | BSD 44 Coupe France + 41 Copa del Rey + 43 DFB Pokal + 35 Copa do Brasil → `bsd_config.json` + `leagues_config.json` (4 coupes prestigieuses non couvertes, $0 incrémental) | 🔴 HIGH |
+| ~~11~~ ✅ | **BSD coverage audit** | code | ✅ livré commit `4e86075` (refresh snapshot `bsd_fr_leagues.json` IDs 27+55 captured) |
+| ~~12~~ ✅ | **Mapper BSD 27 World Cup 2026** | code | ✅ livré (mapping config 999 → BSD 27 dans `bsd_config.json` + `leagues_config.json`) |
+| ~~13~~ ✅ | **Mapper coupes domestiques BSD HIGH** | code | ✅ livré (BSD 44/41/43/35 mappés config 63/143/81/73 — coverage BSD 71% → 80%) |
 | 14 | **DG décision ligues BSD secondary** | DG | 11 ligues BSD restantes non mappées (Africa Cup, Liga F WOMEN, Friendly Games, coupes mineures Japan/Poland/Tunisia/Finland, Nigeria PFL, Liga MX Clausura). GO/NO-GO mapping selon intérêt commercial. $0 incrémental BSD (déjà payé). | 🟡 MED |
 
 **Validation post-deploy attendue:**

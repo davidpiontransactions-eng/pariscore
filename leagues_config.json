@@ -78,6 +78,11 @@
     { "id": 210,  "name": "Prva HNL",             "country": "Croatia",        "type": "T1", "odds_key": "soccer_croatia_primera_hnl",                  "cron_hours": 12, "sofa_id": 170   },
     { "id": 269,  "name": "SuperLiga",            "country": "Serbia",         "type": "T1", "odds_key": "soccer_serbia_super_liga",                    "cron_hours": 12, "sofa_id": 210   },
     { "id": 137,  "name": "Coppa Italia",         "country": "Italy",          "type": "CUP","odds_key": "soccer_italy_coppa_italia",                    "cron_hours": 24, "sofa_id": null  },
-    { "id": 900,  "name": "A-League",             "country": "Australia",      "type": "T2", "odds_key": "soccer_australia_aleague",                    "cron_hours": 24, "sofa_id": null, "rapid_league_id": 113, "exotic": true }
+    { "id": 900,  "name": "A-League",             "country": "Australia",      "type": "T2", "odds_key": "soccer_australia_aleague",                    "cron_hours": 24, "sofa_id": null, "rapid_league_id": 113, "exotic": true },
+    { "id": 63,   "name": "Coupe de France",      "country": "France",         "type": "CUP","odds_key": "soccer_france_coupe_de_france",                "cron_hours": 24, "sofa_id": null },
+    { "id": 143,  "name": "Copa del Rey",         "country": "Spain",          "type": "CUP","odds_key": "soccer_spain_copa_del_rey",                    "cron_hours": 24, "sofa_id": null },
+    { "id": 81,   "name": "DFB Pokal",            "country": "Germany",        "type": "CUP","odds_key": "soccer_germany_dfb_pokal",                     "cron_hours": 24, "sofa_id": null },
+    { "id": 73,   "name": "Copa do Brasil",       "country": "Brazil",         "type": "CUP","odds_key": "soccer_brazil_copa_do_brasil",                 "cron_hours": 24, "sofa_id": null },
+    { "id": 999,  "name": "World Cup 2026",       "country": "International",  "type": "CUP","odds_key": "soccer_fifa_world_cup",                        "cron_hours": 12, "sofa_id": null }
   ]
 }
