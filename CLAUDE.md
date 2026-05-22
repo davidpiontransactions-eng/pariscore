@@ -96,7 +96,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `u5x` | SEO fix GSC « Bloquée par robots.txt » (recoupé `d4rd`) | ops DG |
 | `x9s` | Plug oddsapi RapidAPI odds-api1 sur TOUS champs cotes | BLOCKED bjv Phase 1 404 |
 | `b50` | DB pariscore.db SQLITE_NOTADB runtime — investigate corruption ops | ops VPS |
-| `e7l` | Version mobile PariScore (parieur nomade) — bottom nav + cartes + PWA | Phase 5/7 PWA install + push livrés v12.19+v12.21 · reste 2/7 |
+| `e7l` | Version mobile PariScore (parieur nomade) — bottom nav + cartes + PWA | Phase 5/7 PWA install + push livrés v12.19+v12.21 · Phase 6/7 ✅ Web Push wire `sendLiveMomentumAlerts` parallèle Telegram (broadcastPushToUser AES-128-GCM, urgency=high, payload title/body/tag/url, fallback gracieux). Reste Phase 7 (push value bets nouveau matchday + scheduled previews) |
 | `qe5` | Live Dashboard Betting Cockpit Phase 1 — Win Prob + Top3 picks + events markers + verdict | Phase 1 partial livré v12.62 (Minute promue + cockpit) · Phase 2/3 spec |
 | `j5lb` | **[DECISION DG]** GO/NO-GO 6 études bloquées arbitrage | DG decision |
 | `p2if` | AI-AL Revue de Presse Foot+Tennis — 5 avis presse panel Gemini | Phase 1+2 livrés `ae6a292` + v12.66 (Phase 2A RSS Foot + Phase 2B cron Telegram top picks) · Phase 3 ✅ Tennis RSS extension : `RSS_FEEDS` ajoute 4 sources tennis (L'Equipe Tennis / BBC Tennis / ESPN Tennis / Tennis World USA), `fetchPressContext` accepte param `sport='tennis'` route feeds, route `/api/v1/ai/tennis-analyze/:matchId` inject `[REVUE DE PRESSE REELLE]` block 5s timeout fallback + prompt PRIORITE ABSOLUE conditionnel |
