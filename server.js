@@ -15581,6 +15581,13 @@ async function handleAPI(req, res, pathname, query) {
         matches = [testMatch, ...matches.filter(m => m.id !== testMatch.id)];
       }
 
+      // bd 0hf4 Phase 1.1 (Plan F qm6a v12.67) — enrich match.tv_channels[] depuis cache BSD
+      // pre-fetch côté serveur (cron 6h). Permet badge TV sync first-paint frontend sans
+      // waterfall fetch /api/v1/match/:id/tv-channel par match. Idempotent : skip si rempli.
+      for (const m of matches) {
+        try { if (typeof attachBSDBroadcasts === 'function') attachBSDBroadcasts(m, 'FR'); } catch (_) {}
+      }
+
       // bd pxt7 — Strip champs lourds inutilisés par #page-matchs (~210 KB économisés / 250 matchs).
       // Les routes lazy (/api/v1/insights/, /api/v1/comparateur/, AI Scout) conservent accès complet via db.matches.
       matches = matches.map(_stripMatchForList);

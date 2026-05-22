@@ -21096,12 +21096,23 @@ const label = country
     tr.setAttribute('data-match-id', m.id);
     if (m.home_team) tr.setAttribute('data-home-team', m.home_team);
     if (m.away_team) tr.setAttribute('data-away-team', m.away_team);
+    // Plan F qm6a v12.67 — TV badge sync first-paint si server-side attach a rempli m.tv_channels[]
+    // (bd 0hf4 Phase 1.1 cron pre-fetch + REST eager attach v12.67). Evite waterfall async par match.
+    const tvBadgeInline = (() => {
+      const ch = Array.isArray(m.tv_channels) ? m.tv_channels : [];
+      if (!ch.length) return '';
+      const channelsJson = JSON.stringify({ country: 'FR', channels: ch.slice(0, 10) })
+        .replace(/'/g, '&apos;').replace(/"/g, '&quot;');
+      const count = ch.length;
+      const label = count === 1 ? '1 chaîne' : `${count} chaînes`;
+      return `<button type="button" class="tv-badge-btn" data-tv-channels='${channelsJson}' onclick="event.stopPropagation();psOpenTVModal(this)" title="Voir ${count} diffuseur${count > 1 ? 's' : ''} TV (FR)" style="display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,233,0.10);color:#0c4a6e;border:1px solid rgba(14,165,233,0.30);border-radius:10px;padding:2px 8px;font:700 10px/1.2 var(--font-mono);cursor:pointer;transition:background .15s,border-color .15s;">📺 ${label}</button>`;
+    })();
     tr.innerHTML = `
       <td style="min-width:60px;text-align:center;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
         <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
         ${_live ? '' : `<div class="cf-t2k" data-cf-t2k="${m.commence_time || ''}" style="display:none;"></div>`}
-        <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:none;justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV"></div>
+        <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:${tvBadgeInline ? 'inline-flex' : 'none'};justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV">${tvBadgeInline}</div>
       </td>
       <td style="text-align:left;min-width:180px;padding:4px 8px !important;">
         ${_live ? `<div data-live-container="${m.id}" style="position:absolute;top:2px;right:4px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
@@ -21325,6 +21336,14 @@ async function enrichTVChannels() {
   try {
     const slots = document.querySelectorAll('[data-tv-badge]');
     if (!slots.length) return;
+    // Plan F qm6a v12.67 — short-circuit slots déjà remplis sync first-paint (server-side attach).
+    // Évite waterfall fetch /api/v1/match/:id/tv-channel × 40 pays sur matchs déjà servis.
+    slots.forEach(el => {
+      if (el.innerHTML && el.innerHTML.trim() !== '') {
+        const id = el.getAttribute('data-tv-badge');
+        if (id) _tvBadgeFetched.add(id);
+      }
+    });
     const ids = Array.from(slots).map(el => el.getAttribute('data-tv-badge')).filter(Boolean);
     // Geo-detection : pays user d'abord, puis FR, puis 30+ fallbacks
     const userCountry = detectUserCountry();
