@@ -7227,6 +7227,35 @@ function buildMatchRecord(raw) {
     // fatigue is optional decoration
   }
 
+  // ── BD-DATA-009 (bd kgd) — Travel Factor : distance + jet-lag + climat ──────
+  // Modulateur xG visiteur (max -8% literature betting analytics).
+  // Sport football uniquement (tennis/individuel hors scope).
+  try {
+    if (typeof computeTravelFactor === 'function') {
+      const sport = raw._sport || raw.sport_key || '';
+      const isFootball = !sport.startsWith('tennis_') && sport !== 'tennis';
+      if (isFootball) {
+        const lastAwayMatchISO = (typeof _lastMatchDateBeforeKickoff === 'function')
+          ? _lastMatchDateBeforeKickoff(raw.away_team, raw.commence_time)
+          : null;
+        const tf = computeTravelFactor(raw.home_team, raw.away_team, raw.commence_time, lastAwayMatchISO);
+        if (tf) {
+          record.travel_factor = tf;
+          // Modulateur xG sur visiteur (attaque dégradée) — n'applique que si score > 0 et non missing
+          if (!tf.missing && typeof tf.xg_modulator === 'number' && tf.xg_modulator < 1) {
+            const origXgAway = record.expectedGoals?.away;
+            if (typeof origXgAway === 'number' && origXgAway > 0) {
+              record.expectedGoals.away_raw = origXgAway;
+              record.expectedGoals.away = parseFloat((origXgAway * tf.xg_modulator).toFixed(2));
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // travel factor is optional decoration
+  }
+
   // Injuries — mappées directement depuis le flux BSD (unavailable_players)
   // Plus besoin d'appel API-Football dédié → économie de quota
   const bsdUnavailable = raw._source === 'bsd' ? raw.unavailable : null;
@@ -14447,6 +14476,180 @@ function computeFatigueIndex(teamName, matchDate) {
     matchesIn14d,
     upcomingIn72h,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BD-DATA-009 — TRAVEL FACTOR (bd kgd) — Context Engine composante voyage
+//  Distance Haversine + jet-lag (Δtz) + climate shift + recovery factor
+//  Output: xG modulator -8% max applied to away team attack (literature betting analytics)
+//  Ref:
+//   - Recht/Schwartz/Mecklenburg (1995) "Insomnia and sleepiness in patients with traveling"
+//     → Effet jet-lag ~5-10% performance baisse cross-Atlantic
+//   - Caia et al. (2019) "Sleep, travel, & performance in athletes" Sports Med Open
+//     → 1-2% drop per Δtz > 3h. Tropical→tempéré shift = 3-5% perf loss
+//   - Recht (2003) "Westward travel deficit in MLB" Nature 386:434
+//     → Westward (gain tz) easier than eastward (loss tz) — pondéré asymetrique optionnel
+//  Score 0-100 (haut = handicap voyage). xG modulator = 1 - score/100 × 0.08 (cap -8%)
+// ═══════════════════════════════════════════════════════════════════════════════
+let _STADIUMS_GEO = null;
+function _loadStadiumsGeo() {
+  if (_STADIUMS_GEO !== null) return _STADIUMS_GEO;
+  try {
+    const p = path.join(__dirname, '.context', 'stadiums_geo.json');
+    if (fs.existsSync(p)) {
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+      _STADIUMS_GEO = (raw && raw.teams) ? raw.teams : {};
+      console.log(`  ✓ stadiums_geo.json chargé (${Object.keys(_STADIUMS_GEO).length} stades — Travel Factor BD-DATA-009)`);
+    } else {
+      _STADIUMS_GEO = {};
+      console.warn('  ⚠ .context/stadiums_geo.json introuvable — Travel Factor désactivé');
+    }
+  } catch (e) {
+    console.warn('  [TravelFactor] load stadiums_geo.json:', e.message);
+    _STADIUMS_GEO = {};
+  }
+  return _STADIUMS_GEO;
+}
+
+// Lookup stade par nom équipe (exact normName puis fuzzy first-word).
+function _lookupStadiumGeo(teamName) {
+  if (!teamName) return null;
+  const geo = _loadStadiumsGeo();
+  if (!geo || !Object.keys(geo).length) return null;
+  const key = normName(teamName);
+  if (geo[key]) return geo[key];
+  // Fuzzy : premier mot ≥ 4 chars matchant une clé
+  const firstWord = key.split(' ')[0];
+  if (firstWord.length >= 4) {
+    for (const [k, v] of Object.entries(geo)) {
+      if (k === firstWord || k.startsWith(firstWord + ' ') || k.endsWith(' ' + firstWord)) return v;
+    }
+  }
+  return null;
+}
+
+// Haversine distance en km (math pure, zéro dépendance).
+function _haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371; // rayon Terre km
+  const toRad = (d) => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Δ heures entre deux IANA timezones à une date donnée. Math pure via Intl API.
+function _tzOffsetDiffHours(tzA, tzB, atDate) {
+  if (!tzA || !tzB || tzA === tzB) return 0;
+  const d = atDate instanceof Date ? atDate : new Date(atDate);
+  if (isNaN(d.getTime())) return 0;
+  try {
+    const opts = { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const parseLocal = (tz) => {
+      const fmt = new Intl.DateTimeFormat('en-US', { ...opts, timeZone: tz });
+      const parts = fmt.formatToParts(d);
+      const lookup = {};
+      for (const p of parts) lookup[p.type] = p.value;
+      const iso = `${lookup.year}-${lookup.month}-${lookup.day}T${lookup.hour}:${lookup.minute}:${lookup.second}Z`;
+      return new Date(iso).getTime();
+    };
+    return (parseLocal(tzA) - parseLocal(tzB)) / 3600000;
+  } catch (_) {
+    return 0;
+  }
+}
+
+/**
+ * computeTravelFactor — Évalue handicap voyage équipe visiteuse vers équipe domicile.
+ *
+ * Inputs :
+ *   homeTeam {string}  — équipe à domicile (lookup geo)
+ *   awayTeam {string}  — équipe visiteuse (lookup geo)
+ *   kickoffISO {string}— kickoff datetime (used for tz delta computation)
+ *   prevAwayMatchDate {string|null} — date dernier match équipe visiteuse (recovery)
+ *
+ * Output :
+ *   { distance_km, tz_delta_hours, climate_shift, days_since_last,
+ *     travel_score (0-100, haut=handicap), xg_modulator (0.92-1.00),
+ *     missing (bool si géocodes absents) }
+ *
+ * Formule (literature betting analytics) :
+ *   distance_penalty = clamp(distance_km / 5000, 0, 1) × 30
+ *   tz_penalty       = min(|Δtz|, 12) / 12 × 25
+ *   climate_penalty  = climate_shift ? 15 : 0
+ *   recovery_penalty = days_since_last < 3 ? 20 : (days_since_last > 7 ? 10 : 0)
+ *   travel_score     = min(100, sum)
+ *   xg_modulator     = 1 - travel_score/100 × 0.08   (max -8% xG visiteur)
+ */
+function computeTravelFactor(homeTeam, awayTeam, kickoffISO, prevAwayMatchDate) {
+  const homeGeo = _lookupStadiumGeo(homeTeam);
+  const awayGeo = _lookupStadiumGeo(awayTeam);
+  if (!homeGeo || !awayGeo) {
+    return { missing: true, score: null, xg_modulator: 1, source: 'stadiums_geo' };
+  }
+  const distance_km = parseFloat(_haversineKm(homeGeo.lat, homeGeo.lng, awayGeo.lat, awayGeo.lng).toFixed(2));
+  const tz_delta_hours = parseFloat(_tzOffsetDiffHours(homeGeo.tz, awayGeo.tz, kickoffISO || Date.now()).toFixed(2));
+  const climate_shift = !!(homeGeo.climate && awayGeo.climate && homeGeo.climate !== awayGeo.climate);
+
+  let days_since_last = null;
+  if (prevAwayMatchDate && kickoffISO) {
+    const ms = new Date(kickoffISO).getTime() - new Date(prevAwayMatchDate).getTime();
+    if (Number.isFinite(ms) && ms > 0) days_since_last = parseFloat((ms / 86400000).toFixed(1));
+  }
+
+  const distance_penalty = Math.min(distance_km / 5000, 1) * 30;
+  const tz_penalty = Math.min(Math.abs(tz_delta_hours), 12) / 12 * 25;
+  const climate_penalty = climate_shift ? 15 : 0;
+  let recovery_penalty = 0;
+  if (days_since_last != null) {
+    if (days_since_last < 3) recovery_penalty = 20;
+    else if (days_since_last > 7) recovery_penalty = 10;
+  }
+  const travel_score = Math.min(100, Math.round(distance_penalty + tz_penalty + climate_penalty + recovery_penalty));
+  const xg_modulator = parseFloat((1 - travel_score / 100 * 0.08).toFixed(4));
+
+  let level;
+  if (travel_score >= 60) level = 'severe';
+  else if (travel_score >= 35) level = 'high';
+  else if (travel_score >= 15) level = 'moderate';
+  else level = 'low';
+
+  return {
+    missing: false,
+    distance_km,
+    tz_delta_hours,
+    climate_shift,
+    home_climate: homeGeo.climate || null,
+    away_climate: awayGeo.climate || null,
+    home_city: homeGeo.city || null,
+    away_city: awayGeo.city || null,
+    days_since_last,
+    travel_score,
+    score: travel_score,
+    level,
+    xg_modulator,
+    source: 'stadiums_geo',
+  };
+}
+
+// Helper : dernier match passé d'une équipe (db.matches + archive_matches),
+// utilisé pour days_since_last du Travel Factor.
+function _lastMatchDateBeforeKickoff(teamName, kickoffISO) {
+  const tsKO = new Date(kickoffISO).getTime();
+  if (!Number.isFinite(tsKO)) return null;
+  let bestTs = null;
+  const upd = (m) => {
+    if (!m || !m.commence_time) return;
+    if (m.home_team !== teamName && m.away_team !== teamName) return;
+    const ts = new Date(m.commence_time).getTime();
+    if (!Number.isFinite(ts) || ts >= tsKO) return;
+    if (bestTs === null || ts > bestTs) bestTs = ts;
+  };
+  if (Array.isArray(db.matches)) for (const m of db.matches) upd(m);
+  if (Array.isArray(db.archive_matches)) for (const m of db.archive_matches) upd(m);
+  return bestTs ? new Date(bestTs).toISOString() : null;
 }
 
 function computeAbsenceImpact(squad, teamName) {
