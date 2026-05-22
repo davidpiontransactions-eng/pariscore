@@ -25471,7 +25471,7 @@ function updateLiveDetailModal(m) {
   renderStatRow('clearances',    m.clearances ? m.clearances.home : null, m.clearances ? m.clearances.away : null);
   renderStatRow('saves',         m.saves ? m.saves.home : null, m.saves ? m.saves.away : null);
 
-  drawLDMomentumSVG(m.momentum || [], m.events || []);
+  drawLDMomentumSVG(m.momentum || [], m.events || [], m.live_xg_series || null);
   drawLDPressureIndex(m.pressure_index);
   drawLDXGCurve(m.xg_curve || [], m);
   drawLDCockpit(m);
@@ -25488,7 +25488,13 @@ function drawLDCockpit(m) {
   const section = document.getElementById('ldm-cockpit-section');
   if (!section) return;
   const ls = m.live_scenarios;
-  if (!ls || !ls.win_prob) { section.style.display = 'none'; document.getElementById('ldm-odds-bar').style.display = 'none'; return; }
+  if (!ls || !ls.win_prob) {
+    section.style.display = 'none';
+    document.getElementById('ldm-odds-bar').style.display = 'none';
+    const l2 = document.getElementById('ldm-verdict-l2');
+    if (l2) l2.style.display = 'none';
+    return;
+  }
   section.style.display = 'block';
 
   // v9.9.0 Phase 3 — Détection value bet apparition + odds drop pour toast SSE
@@ -25579,6 +25585,9 @@ function drawLDCockpit(m) {
     return `<span class="ts-pill ${cls}"><b>${s.score}</b> ${s.prob}%</span>`;
   }).join('');
 
+  // bd qe5 Phase 3 — Verdict Layer 2 chips (momentum switch + EV next-goal + cashout signal)
+  renderLDVerdictL2(ls.verdict_l2);
+
   // Picks chiffrés
   const picks = ls.picks || [];
   const picksEl = document.getElementById('ldm-picks-list');
@@ -25606,6 +25615,44 @@ function drawLDCockpit(m) {
       </div>`;
     }).join('');
   }
+}
+
+// bd qe5 Phase 3 — Verdict Layer 2 chips renderer (lazy DOM injection si div absent)
+function renderLDVerdictL2(l2) {
+  let container = document.getElementById('ldm-verdict-l2');
+  if (!l2 || !Array.isArray(l2.triggers) || !l2.triggers.length) {
+    if (container) container.style.display = 'none';
+    return;
+  }
+  if (!container) {
+    // Lazy inject sous picks-list dans cockpit-section
+    const picksList = document.getElementById('ldm-picks-list');
+    if (!picksList) return;
+    container = document.createElement('div');
+    container.id = 'ldm-verdict-l2';
+    container.className = 'ld-verdict-l2';
+    container.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);';
+    picksList.parentNode.appendChild(container);
+  }
+  container.style.display = 'flex';
+  const colorMap = {
+    green: { bg: 'rgba(0,230,118,0.12)', border: 'var(--green)', text: 'var(--green)' },
+    orange: { bg: 'rgba(255,167,38,0.12)', border: '#ffa726', text: '#ffa726' },
+    red: { bg: 'rgba(239,68,68,0.12)', border: 'var(--red)', text: 'var(--red)' },
+  };
+  container.innerHTML = l2.triggers.slice(0, 3).map(t => {
+    const c = colorMap[t.color] || colorMap.orange;
+    const levelBadge = t.level === 'high'
+      ? `<span style="background:${c.border};color:#000;padding:1px 4px;border-radius:3px;font:800 8px/1 var(--font-mono);margin-left:4px;">!</span>`
+      : '';
+    const safe = (s) => (typeof escapeHtml === 'function' ? escapeHtml(s) : String(s || ''));
+    return `<div title="${safe(t.detail || '')}" style="display:inline-flex;align-items:center;gap:5px;padding:5px 9px;background:${c.bg};border:1px solid ${c.border};border-radius:14px;font:700 10px/1.2 var(--font-mono);color:${c.text};max-width:100%;">
+      <span style="font-weight:800;">L2</span>
+      <span>${safe(t.label || t.kind || '')}</span>
+      ${levelBadge}
+      <span style="color:var(--text3);font-weight:500;font-size:9px;">${safe(t.detail || '')}</span>
+    </div>`;
+  }).join('');
 }
 
 // v9.9.0 Phase 3 — Deeplink bookmaker affilié (1xbet/Winamax/Betclic préset par priority backend)
@@ -25730,7 +25777,8 @@ function drawLDXGCurve(hist, m) {
 
 // v9.8.7 — momentum SVG : score signed -100..+100, area chart Sofascore-style + bars overlay
 // bd qe5 Phase 1.5 — events markers (goals/cards/SOT) overlay aux minutes correspondantes
-function drawLDMomentumSVG(momArr, events) {
+// bd qe5 Phase 2 — xG curve overlay : 2 polylines home/away normalized auto-scale + legend
+function drawLDMomentumSVG(momArr, events, xgSeries) {
   const svg = document.getElementById('ldm-momentum-svg');
   if (!svg) return;
   const W = 600, H = 140, midY = H / 2, padY = 6;
@@ -25802,10 +25850,37 @@ function drawLDMomentumSVG(momArr, events) {
     }
   }
 
+  // bd qe5 Phase 2 — xG curve overlay (2 polylines color-coded H/A + legend + axe Y mini)
+  let xgOverlay = '';
+  if (xgSeries && Array.isArray(xgSeries.home) && Array.isArray(xgSeries.away)
+      && (xgSeries.home.length >= 2 || xgSeries.away.length >= 2)) {
+    const MAX_MIN_LOCAL = 90;
+    const xPos = (min) => Math.max(0, Math.min(W, (min / MAX_MIN_LOCAL) * W));
+    // Auto-scale Y range : maxXG = max sur les 2 series, plancher 0.5 pour éviter écrasement
+    const allValues = [...xgSeries.home.map(p => p.v || 0), ...xgSeries.away.map(p => p.v || 0)];
+    const maxXG = Math.max(0.5, ...allValues);
+    // xG région : tiers haut du SVG (0 .. midY-padY*2), tracé en bas vers le haut.
+    const xgTop = padY + 8;
+    const xgBottom = midY - padY * 2;
+    const xgYScale = (v) => xgBottom - (Math.max(0, v) / maxXG) * (xgBottom - xgTop);
+    const buildPath = (arr) => arr.map((p, i) => `${i === 0 ? 'M' : 'L'}${xPos(p.m || 0).toFixed(1)},${xgYScale(p.v || 0).toFixed(1)}`).join(' ');
+    const pathH = buildPath(xgSeries.home);
+    const pathA = buildPath(xgSeries.away);
+    const lastH = xgSeries.home[xgSeries.home.length - 1]?.v || 0;
+    const lastA = xgSeries.away[xgSeries.away.length - 1]?.v || 0;
+    const derivedTag = xgSeries.derived ? ' (proxy)' : '';
+    xgOverlay = `
+      <path d="${pathH}" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linejoin="round" opacity="0.85" stroke-dasharray="3,2"/>
+      <path d="${pathA}" fill="none" stroke="#ffa726" stroke-width="1.5" stroke-linejoin="round" opacity="0.85" stroke-dasharray="3,2"/>
+      <text x="${W - 4}" y="${H - 4}" fill="var(--text3)" font-size="9" font-family="var(--font-mono)" text-anchor="end">xG${derivedTag} ${lastH.toFixed(2)} - ${lastA.toFixed(2)}</text>
+    `;
+  }
+
   svg.innerHTML = `${defs}
     <line x1="0" y1="${midY}" x2="${W}" y2="${midY}" stroke="var(--border)" stroke-width="1"/>
     ${bars}
     <path d="${pathData}" fill="none" stroke="var(--text)" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+    ${xgOverlay}
     ${eventsMarkers}
   `;
 }
