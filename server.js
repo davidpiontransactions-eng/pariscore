@@ -30239,6 +30239,54 @@ function recordLiveXGSnapshot(matchId, minute, xgH, xgA) {
   }
 }
 
+// bd qe5 Phase 2 — Live xG fallback derivation depuis tirs cadrés/non-cadrés (poids InStat standards)
+// xg_proxy = Σ(shots_on_target × 0.32 + shots_off_target × 0.08)
+// Utilisé si BSD ne fournit ni actual_home_xg ni home_xg_live live.
+function deriveXGFallback(match, detail) {
+  const lh = detail?.live_stats?.home || {};
+  const la = detail?.live_stats?.away || {};
+  const sotH = lh.shots_on_target ?? match.live_shots_on_target?.home ?? 0;
+  const sotA = la.shots_on_target ?? match.live_shots_on_target?.away ?? 0;
+  const totH = lh.total_shots ?? match.live_shots?.home ?? 0;
+  const totA = la.total_shots ?? match.live_shots?.away ?? 0;
+  const offH = Math.max(0, totH - sotH);
+  const offA = Math.max(0, totA - sotA);
+  const xgH = +(sotH * 0.32 + offH * 0.08).toFixed(3);
+  const xgA = +(sotA * 0.32 + offA * 0.08).toFixed(3);
+  if (xgH === 0 && xgA === 0) return null;
+  return { home: xgH, away: xgA };
+}
+
+// bd qe5 Phase 2 — Construit live_xg_series: { home:[{m,v}], away:[{m,v}], derived:bool }
+// Source primaire: _liveXGHistory (BSD réel). Fallback: derivation tirs si BSD vide.
+// Downsample > 90 points pour respecter contrainte payload < 4KB par match.
+function buildLiveXgSeries(matchId, derivedSnapshot) {
+  const hist = _liveXGHistory.get(matchId) || [];
+  if (hist.length >= 2) {
+    // Source BSD réelle: cumulative xG par minute
+    let points = hist;
+    // Downsample si > 90 points (1 point/minute max, ratio uniforme)
+    if (points.length > 90) {
+      const step = Math.ceil(points.length / 90);
+      points = points.filter((_, i) => i % step === 0 || i === points.length - 1);
+    }
+    return {
+      home: points.map(p => ({ m: p.min, v: +(p.xgH || 0).toFixed(3) })),
+      away: points.map(p => ({ m: p.min, v: +(p.xgA || 0).toFixed(3) })),
+      derived: false,
+    };
+  }
+  // Fallback derivation cumulative: si snapshot existe, expose au moins 1 point courant
+  if (derivedSnapshot && derivedSnapshot.minute > 0) {
+    return {
+      home: [{ m: 0, v: 0 }, { m: derivedSnapshot.minute, v: +derivedSnapshot.xgH.toFixed(3) }],
+      away: [{ m: 0, v: 0 }, { m: derivedSnapshot.minute, v: +derivedSnapshot.xgA.toFixed(3) }],
+      derived: true,
+    };
+  }
+  return null;
+}
+
 function buildLiveDashboardPayload(match, detail) {
   const sr = detail?.sr_stats || null;
   const minute = parseInt(detail?.current_minute ?? match.live_minute ?? 0) || 0;
@@ -30249,6 +30297,15 @@ function buildLiveDashboardPayload(match, detail) {
   const xgA = detail?.actual_away_xg ?? detail?.away_xg_live ?? null;
   // v9.8.6 — snapshot xG cumulative + pressure index
   recordLiveXGSnapshot(match.id, minute, xgH, xgA);
+  // bd qe5 Phase 2 — Si BSD ne fournit pas xG live, derivation fallback depuis tirs cadres/non
+  let _xgDerived = null;
+  if (xgH == null && xgA == null && minute > 0) {
+    const fb = deriveXGFallback(match, detail);
+    if (fb) {
+      _xgDerived = { minute, xgH: fb.home, xgA: fb.away };
+      recordLiveXGSnapshot(match.id, minute, fb.home, fb.away);
+    }
+  }
   const pi = computePressureIndex(sr, match);
   if (pi) recordLivePressureSnapshot(match.id, minute, pi);
   const possH = sr?.ball_safe_pct?.home;
@@ -30410,6 +30467,8 @@ function buildLiveDashboardPayload(match, detail) {
     pressure_index: pi || null,
     pressure_history: _livePressureHistory.get(match.id) || [],
     xg_curve: _liveXGHistory.get(match.id) || [],
+    // bd qe5 Phase 2 — xG series live overlay momentum SVG (home/away polylines + derived flag)
+    live_xg_series: buildLiveXgSeries(match.id, _xgDerived),
     // v9.9.0 — Phase 1 Betting Cockpit
     live_scenarios: buildLiveCockpit(match, detail, minute, xgH, xgA),
     _source: 'bsd_sr_stats',
@@ -30607,6 +30666,98 @@ function buildLiveCockpit(match, detail, minute, xgH, xgA) {
       picks.sort((a, b) => (b.edge ?? -999) - (a.edge ?? -999) || b.prob - a.prob);
     }
 
+    // bd qe5 Phase 3 — Verdict Layer 2 : detectors actionnables au-delà des picks
+    // Triggers : momentum_switch (delta intensity ±20pts/5min) + EV next-goal > 5% + cashout signal
+    const triggers = [];
+    let momentumSwitch = false;
+    let cashoutSignal = false;
+    try {
+      // 1) Momentum switch detector — compare snapshot momentum now vs ~5min ago
+      const momHist = _liveMomentumHistory.get(match.id) || [];
+      if (momHist.length >= 2) {
+        const last = momHist[momHist.length - 1];
+        // Cherche le snapshot le plus proche de minute-5
+        const target = (last.min || minute) - 5;
+        let prev = null;
+        for (let i = momHist.length - 2; i >= 0; i--) {
+          if (momHist[i].min <= target) { prev = momHist[i]; break; }
+        }
+        if (!prev && momHist.length >= 2) prev = momHist[0];
+        if (prev) {
+          const delta = (last.v || 0) - (prev.v || 0);
+          if (Math.abs(delta) >= 20) {
+            momentumSwitch = true;
+            const side = delta > 0 ? (match.home_team || 'Domicile') : (match.away_team || 'Extérieur');
+            triggers.push({
+              kind: 'momentum_switch',
+              level: Math.abs(delta) >= 40 ? 'high' : 'med',
+              label: `Switch momentum vers ${side}`,
+              detail: `Δ ${delta > 0 ? '+' : ''}${delta} pts (5min)`,
+              color: 'orange',
+            });
+          }
+        }
+      }
+      // 2) EV next-goal > 5% — check edges.next_goal_home/away si disponibles
+      const ngHome = pNextHome;
+      const ngAway = pNextAway;
+      if (liveOdds) {
+        // Heuristique : odds_home approxime odds next-goal-home en l'absence de marché dédié
+        // Garde-fou : limiter à ngHome > 0.3 pour éviter triggers low-prob
+        if (ngHome > 0.3 && liveOdds.home) {
+          const evHome = (ngHome * liveOdds.home - 1) * 100;
+          if (evHome >= 5) {
+            triggers.push({
+              kind: 'ev_next_goal',
+              level: evHome >= 12 ? 'high' : 'med',
+              label: `EV Next Goal ${match.home_team || 'H'}`,
+              detail: `+${evHome.toFixed(1)}% (prob ${Math.round(ngHome * 100)}% @${liveOdds.home})`,
+              color: 'green',
+            });
+          }
+        }
+        if (ngAway > 0.3 && liveOdds.away) {
+          const evAway = (ngAway * liveOdds.away - 1) * 100;
+          if (evAway >= 5) {
+            triggers.push({
+              kind: 'ev_next_goal',
+              level: evAway >= 12 ? 'high' : 'med',
+              label: `EV Next Goal ${match.away_team || 'A'}`,
+              detail: `+${evAway.toFixed(1)}% (prob ${Math.round(ngAway * 100)}% @${liveOdds.away})`,
+              color: 'green',
+            });
+          }
+        }
+      }
+      // 3) Cashout signal — si pré-match favori (edge négatif live + cote dérive >20%) + momentum inverse
+      if (trend && liveOdds) {
+        // Si cote home a monté >20% (dir=rise pct>=20) ET ng_home < pNextAway → favori perd valeur
+        const homeRise = trend.home && trend.home.dir === 'rise' && trend.home.pct >= 20;
+        const awayRise = trend.away && trend.away.dir === 'rise' && trend.away.pct >= 20;
+        if (homeRise && pNextAway > pNextHome) {
+          cashoutSignal = true;
+          triggers.push({
+            kind: 'cashout',
+            level: 'high',
+            label: `Signal cashout ${match.home_team || 'Domicile'}`,
+            detail: `Cote +${trend.home.pct}% & momentum inverse — sécuriser gain`,
+            color: 'red',
+          });
+        } else if (awayRise && pNextHome > pNextAway) {
+          cashoutSignal = true;
+          triggers.push({
+            kind: 'cashout',
+            level: 'high',
+            label: `Signal cashout ${match.away_team || 'Extérieur'}`,
+            detail: `Cote +${trend.away.pct}% & momentum inverse — sécuriser gain`,
+            color: 'red',
+          });
+        }
+      }
+    } catch (e2) {
+      // Détecteurs verdict_l2 sont best-effort : pas de propagation
+    }
+
     return {
       win_prob: {
         home: Math.round(pHome * 100),
@@ -30627,6 +30778,12 @@ function buildLiveCockpit(match, detail, minute, xgH, xgA) {
       over: { o15: Math.round(pOver15 * 100), o25: Math.round(pOver25 * 100), o05_next15: Math.round(pOver05Next15 * 100) },
       picks: picks.slice(0, 5),
       verdict_actionable: verdict,
+      // bd qe5 Phase 3 — Verdict Layer 2 : triggers actionnables (max 3 chips frontend)
+      verdict_l2: {
+        triggers: triggers.slice(0, 3),
+        momentum_switch: momentumSwitch,
+        cashout_signal: cashoutSignal,
+      },
       _minutes_remaining: minutesRemaining,
       _lambda: { home: +lambdaH.toFixed(3), away: +lambdaA.toFixed(3) },
     };
