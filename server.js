@@ -22418,6 +22418,144 @@ if (pathname === '/api/v1/metrics') {
 }
 
 // -------------------------------------------------
+//  /api/v1/affiliate[/:id] (singular alias) — bd:ryi3 Phase 2D
+//  CRUD admin sur table `affiliates` existante (schema déjà créé v9.9, voir
+//  initSQLite). Aliases singuliers en complément de /api/v1/affiliates pluriel
+//  pour cohérence avec routing-schema-2026 (GET list public, GET/POST/PATCH/
+//  DELETE single). POST/PATCH/DELETE gated admin via getAuthUser().
+//  Validation regex bookmaker + promo_code: ^[A-Za-z0-9_-]{3,32}$ (anti-injection
+//  SQL/path). Stats clicks/conv/conv_rate enrichies depuis affiliate_clicks.
+// -------------------------------------------------
+if (pathname === '/api/v1/affiliate' || pathname.match(/^\/api\/v1\/affiliate\/\d+$/)) {
+  const _AFF_CODE_RE = /^[A-Za-z0-9_-]{3,32}$/;
+  const idMatch = pathname.match(/^\/api\/v1\/affiliate\/(\d+)$/);
+  const affId = idMatch ? parseInt(idMatch[1], 10) : null;
+
+  if (req.method === 'GET' && pathname === '/api/v1/affiliate') {
+    try {
+      if (!sqldb) return jsonResponse(res, 503, { error: 'DB not ready', items: [] });
+      const rows = sqldb.prepare(
+        'SELECT id, bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, active, priority, created_at FROM affiliates ORDER BY priority DESC, id ASC'
+      ).all();
+      let withStats = rows;
+      try {
+        const stats = sqldb.prepare(
+          `SELECT affiliate_id,
+                  COUNT(*) AS clicks,
+                  SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) AS conv
+           FROM affiliate_clicks
+           GROUP BY affiliate_id`
+        ).all();
+        const statMap = new Map(stats.map(s => [s.affiliate_id, s]));
+        withStats = rows.map(r => {
+          const s = statMap.get(r.id) || { clicks: 0, conv: 0 };
+          const conv_rate = s.clicks > 0 ? +(s.conv / s.clicks).toFixed(4) : 0;
+          return { ...r, clicks: s.clicks, conv: s.conv || 0, conv_rate };
+        });
+      } catch (_) { /* clicks table may be absent in older schema */ }
+      return jsonResponse(res, 200, { count: withStats.length, items: withStats });
+    } catch (e) {
+      console.error('[/api/v1/affiliate GET]', e.message);
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
+  if (req.method === 'GET' && affId !== null) {
+    try {
+      const row = sqldb.prepare('SELECT * FROM affiliates WHERE id = ?').get(affId);
+      if (!row) return jsonResponse(res, 404, { error: 'affiliate not found', id: affId });
+      let clicks = 0, conv = 0;
+      try {
+        const s = sqldb.prepare(
+          `SELECT COUNT(*) AS clicks,
+                  SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) AS conv
+           FROM affiliate_clicks WHERE affiliate_id = ?`
+        ).get(affId);
+        if (s) { clicks = s.clicks; conv = s.conv || 0; }
+      } catch (_) {}
+      const conv_rate = clicks > 0 ? +(conv / clicks).toFixed(4) : 0;
+      return jsonResponse(res, 200, { ...row, clicks, conv, conv_rate });
+    } catch (e) {
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
+  if (req.method === 'POST' && pathname === '/api/v1/affiliate') {
+    const user = getAuthUser(req);
+    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+    readBodyLimited(req, (typeof MAX_BODY_SIZE !== 'undefined' ? MAX_BODY_SIZE : 1024 * 1024)).then(body => {
+      try {
+        const d = JSON.parse(body);
+        if (!d.bookmaker || !d.name || !d.affiliate_link) {
+          return jsonResponse(res, 400, { error: 'bookmaker, name, affiliate_link requis' });
+        }
+        if (!_AFF_CODE_RE.test(String(d.bookmaker))) {
+          return jsonResponse(res, 400, { error: 'bookmaker invalid (regex ^[A-Za-z0-9_-]{3,32}$)' });
+        }
+        if (d.promo_code && !_AFF_CODE_RE.test(String(d.promo_code))) {
+          return jsonResponse(res, 400, { error: 'promo_code invalid (regex ^[A-Za-z0-9_-]{3,32}$)' });
+        }
+        const result = sqldb.prepare(
+          `INSERT INTO affiliates (bookmaker, name, affiliate_link, deeplink_template, promo_code, commission_type, commission_rate, active, priority)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).run(
+          String(d.bookmaker).toLowerCase(), String(d.name).slice(0, 128),
+          String(d.affiliate_link).slice(0, 512),
+          d.deeplink_template ? String(d.deeplink_template).slice(0, 512) : null,
+          d.promo_code || null,
+          d.commission_type || 'revshare',
+          Number(d.commission_rate) || 30,
+          d.active !== undefined ? (d.active ? 1 : 0) : 1,
+          Number(d.priority) || 0
+        );
+        return jsonResponse(res, 201, { id: result.lastInsertRowid, ok: true });
+      } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+    return;
+  }
+
+  if (req.method === 'PATCH' && affId !== null) {
+    const user = getAuthUser(req);
+    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+    readBodyLimited(req, (typeof MAX_BODY_SIZE !== 'undefined' ? MAX_BODY_SIZE : 1024 * 1024)).then(body => {
+      try {
+        const d = JSON.parse(body);
+        const allowed = ['bookmaker', 'name', 'affiliate_link', 'deeplink_template',
+                         'promo_code', 'commission_type', 'commission_rate', 'active', 'priority'];
+        const fields = [];
+        const values = [];
+        for (const [k, v] of Object.entries(d)) {
+          if (!allowed.includes(k)) continue;
+          if ((k === 'bookmaker' || k === 'promo_code') && v && !_AFF_CODE_RE.test(String(v))) {
+            return jsonResponse(res, 400, { error: `${k} invalid (regex ^[A-Za-z0-9_-]{3,32}$)` });
+          }
+          fields.push(`${k} = ?`);
+          values.push(k === 'active' ? (v ? 1 : 0) : v);
+        }
+        if (fields.length === 0) return jsonResponse(res, 400, { error: 'Aucun champ valide à modifier' });
+        values.push(affId);
+        const result = sqldb.prepare(`UPDATE affiliates SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+        if (result.changes === 0) return jsonResponse(res, 404, { error: 'affiliate not found', id: affId });
+        return jsonResponse(res, 200, { ok: true, changes: result.changes });
+      } catch (e) { jsonResponse(res, 400, { error: e.message }); }
+    }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+    return;
+  }
+
+  if (req.method === 'DELETE' && affId !== null) {
+    const user = getAuthUser(req);
+    if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+    try {
+      const result = sqldb.prepare('DELETE FROM affiliates WHERE id = ?').run(affId);
+      if (result.changes === 0) return jsonResponse(res, 404, { error: 'affiliate not found', id: affId });
+      return jsonResponse(res, 200, { ok: true, deleted: affId });
+    } catch (e) {
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+}
+
+// -------------------------------------------------
 //  GET /api/v1/fbref/team/:name — FBref advanced stats team query (P4 Pattern B)
 // -------------------------------------------------
 if (pathname.startsWith('/api/v1/fbref/team/')) {
