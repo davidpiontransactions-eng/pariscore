@@ -152,7 +152,7 @@ if (XAI_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'Grok (xAI)', type: 'openai', ho
 if (OPENROUTER_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'OpenRouter', type: 'openai', host: 'openrouter.ai', path: '/api/v1/chat/completions', key: OPENROUTER_API_KEY, model: 'meta-llama/llama-3.3-70b-instruct:free' });
 
 if (!ODDS_API_KEY) console.warn('  ⚠ ODDS_API_KEY manquante dans .env');
-if (!API_FOOTBALL_KEY) console.warn('  ⚠ API_FOOTBALL_KEY manquante dans .env');
+if (!API_FOOTBALL_KEY && !AF_REMOVED) console.warn('  ⚠ API_FOOTBALL_KEY manquante dans .env');
 if (AI_DEEP_PROVIDERS.length === 0) console.warn('  ⚠ Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)');
 else console.log('  ✓ Providers IA:', AI_DEEP_PROVIDERS.map(p => p.name).join(' → '));
 if (PARLAY_API_HOST && !PARLAY_API_KEY) console.warn('  ⚠ PARLAY_API_KEY manquante pour Parlay-API dans .env');
