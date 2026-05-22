@@ -9702,6 +9702,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Grass" onclick="applyTennisFilter(this)">🟩 Grass</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;" title="Plan I 6jro — Filtre Format Singles/Doubles">Format</span>
+        <button class="tennis-vb-filter-btn is-active" data-filter="format" data-value="ALL" onclick="applyTennisFilter(this)">Tous</button>
+        <button class="tennis-vb-filter-btn" data-filter="format" data-value="SINGLES" onclick="applyTennisFilter(this)" title="Matchs singles uniquement (1v1)">👤 Singles</button>
+        <button class="tennis-vb-filter-btn" data-filter="format" data-value="DOUBLES" onclick="applyTennisFilter(this)" title="Matchs doubles uniquement (paire vs paire)">👥 Doubles</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;text-transform:uppercase;">Catégorie</span>
         <button class="tennis-vb-filter-btn is-active" data-filter="tier" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
         <button class="tennis-vb-filter-btn" data-filter="tier" data-value="GS" onclick="applyTennisFilter(this)" title="Grand Chelem">GC</button>
@@ -14296,7 +14302,7 @@ function stopTennisLive() {
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
 window._tennisVbLastFetch = [];
-window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', strategy: 'ALL', sort: 'time', q: '' };
+window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', strategy: 'ALL', format: 'ALL', sort: 'time', q: '' };
 let _tennisVbTimer = null;
 
 // ── Filtre Compétition multi-sélection (tennis) ──────────────────────────────
@@ -14371,6 +14377,23 @@ function tncToggle(e) {
 function tncFromLegacy(v) {
   window._tennisCompSel = (!v || v === 'ALL') ? [] : [v];
   tncSync();
+}
+
+// bd 6jro Plan I — Heuristique détection doubles (slash-pair name OR tournament/round contient
+// 'doubles', OR is_doubles server-side). Pas de regex sur nom contenant simple slash dans tournament.
+function _tnIsDoublesMatch(m) {
+  if (!m) return false;
+  if (m.is_doubles === true) return true;
+  const _toStr = v => (v && typeof v === 'object') ? (v.name || v.short_name || '') : String(v || '');
+  const tname = _toStr(m.tournament);
+  const round = String(m.round || '');
+  if (/doubles?\b/i.test(tname) || /doubles?\b/i.test(round)) return true;
+  const p1 = (m.player1 && m.player1.name) || '';
+  const p2 = (m.player2 && m.player2.name) || '';
+  // Pair name pattern : "Bopanna R. / Ebden M." (slash entouré d'espaces, deux noms).
+  const slashPair = /\s\/\s/;
+  if (slashPair.test(p1) && slashPair.test(p2)) return true;
+  return false;
 }
 
 function applyTennisFilter(btnEl) {
@@ -15767,6 +15790,13 @@ function renderTennisValueBets(rawMatches) {
       if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
     }
     if (f.strategy && f.strategy !== 'ALL' && !_tnStrategyMatch(m, f.strategy)) return false;
+    // bd 6jro Plan I — filtre format Singles/Doubles. Heuristique : doubles si name slash-pair,
+    // ou tournament/round flag doubles, ou is_doubles explicite (server-side).
+    if (f.format && f.format !== 'ALL') {
+      const isDoubles = _tnIsDoublesMatch(m);
+      if (f.format === 'DOUBLES' && !isDoubles) return false;
+      if (f.format === 'SINGLES' && isDoubles) return false;
+    }
     return true;
   });
 
