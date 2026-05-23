@@ -26275,6 +26275,24 @@ async function buildCornersTab(matchId) {
 }
 
 // ─── P1-A/B/C — STATIC INSIGHT LAYER (instantané, sans Gemini) ──────────────
+// bd 1r14 — Tooltip breakdown reliability_score (volume + stabilité + qualité)
+// Affiche formula transparente sur hover badge "/100" (title attr native).
+function _buildReliabilityTooltip(score, comp) {
+  if (!comp) return `Fiabilité ${score}/100 — composantes indisponibles`;
+  const v = comp.volume || {}, s = comp.stability || {}, q = comp.quality || {};
+  const vRaw = v.raw_input || {}, sRaw = s.raw_input || {}, qRaw = q.raw_input || {};
+  const lines = [];
+  lines.push(`Fiabilité ${score}/100 — formule composite :`);
+  lines.push('');
+  lines.push(`• Volume Data (35%) : ${v.score ?? '?'}/100`);
+  if (vRaw.avg_played != null) lines.push(`  ${vRaw.avg_played} matchs joués moyens (max @ 20+)`);
+  lines.push(`• Stabilité IC (35%) : ${s.score ?? '?'}/100`);
+  if (sRaw.ic_width_over25 != null) lines.push(`  IC over25 width ${sRaw.ic_width_over25}pts (étroit = stable)`);
+  lines.push(`• Qualité Source (30%) : ${q.score ?? '?'}/100`);
+  lines.push(`  ${qRaw.is_real_data ? 'Données réelles BSD/API' : 'Données simulées (sim)'}`);
+  return lines.join('\n');
+}
+
 function buildStaticInsightLayer(d) {
   if (!d || !d.match) return '';
   const m   = d.match;
@@ -26282,6 +26300,8 @@ function buildStaticInsightLayer(d) {
   const uqd = m.uqd?.markets || null;
   const bs  = m.bet_signal  || {};
   const rel = m.reliability_score ?? null;
+  const relComp = m.reliability_components || null;
+  const relTip = (rel != null) ? _buildReliabilityTooltip(rel, relComp) : '';
 
   // ── P1-A : Gauge Triptych avec IC arc + comparateur bookmaker ───────────────
   const svgGauge = (prob, icLower, icUpper) => {
@@ -26448,7 +26468,7 @@ function buildStaticInsightLayer(d) {
         <div class="ps-bet-cta-ev">
           <span style="background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25)">EV +${safeFixed(ev, 1)}%</span>
           <span style="background:rgba(0,230,118,0.07);color:var(--green);border:1px solid rgba(0,230,118,0.18)">✅ IC confirmé</span>
-          ${rel != null ? `<span style="color:var(--text3);background:var(--bg4);border:1px solid var(--border)">Fiabilité ${rel}/100</span>` : ''}
+          ${rel != null ? `<span title="${escapeHtml(relTip)}" style="color:var(--text3);background:var(--bg4);border:1px solid var(--border);cursor:help">Fiabilité ${rel}/100 ${relComp ? '<span style="opacity:.5;font-size:.85em;margin-left:2px">ⓘ</span>' : ''}</span>` : ''}
         </div>
         <a class="aff-cta aff-cta--inline" target="_blank" rel="nofollow sponsored noopener"
            href="${affHrefOk}">

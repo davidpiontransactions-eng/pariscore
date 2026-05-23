@@ -6188,6 +6188,7 @@ function computeBootstrapUQD(expHome, expAway, playedHome, playedAway, N) {
 //   35% — Volume Data   : fiabilité statistique (matchs joués)
 //   35% — Stabilité xG  : étroitesse de l'IC over25 (IC large = incertitude élevée)
 //   30% — Qualité Source: données réelles BSD/API vs simulées
+// bd 1r14 — Expose components pour tooltip UI breakdown (sans break API legacy).
 function computeReliabilityScore(uqd, isRealData, playedHome, playedAway) {
   const avgPlayed = ((playedHome || 5) + (playedAway || 5)) / 2;
   const volumeScore = Math.min(100, (avgPlayed / 20) * 100);           // 20+ matchs = max
@@ -6199,6 +6200,22 @@ function computeReliabilityScore(uqd, isRealData, playedHome, playedAway) {
 
   const raw = 0.35 * volumeScore + 0.35 * stabilityScore + 0.30 * qualityScore;
   return Math.round(Math.max(0, Math.min(100, raw)));
+}
+
+// bd 1r14 — Wrapper retournant components breakdown pour tooltip UI.
+// Décomposition transparente formula sans casser callers existants
+// (number-only retourné par computeReliabilityScore).
+function computeReliabilityComponents(uqd, isRealData, playedHome, playedAway) {
+  const avgPlayed = ((playedHome || 5) + (playedAway || 5)) / 2;
+  const volumeScore = Math.round(Math.min(100, (avgPlayed / 20) * 100));
+  const icWidth = uqd && uqd.markets && uqd.markets.over25 ? uqd.markets.over25.width : 60;
+  const stabilityScore = Math.round(Math.max(0, 100 - icWidth * 1.8));
+  const qualityScore = isRealData ? 85 : 28;
+  return {
+    volume: { score: volumeScore, weight: 0.35, raw_input: { avg_played: Math.round(avgPlayed * 10) / 10, max_at: 20 } },
+    stability: { score: stabilityScore, weight: 0.35, raw_input: { ic_width_over25: Math.round(icWidth * 10) / 10 } },
+    quality: { score: qualityScore, weight: 0.30, raw_input: { is_real_data: !!isRealData } },
+  };
 }
 
 // ── RÈGLE DE DÉCISION STRICTE — BET si EV>5% ET IC borne inf → EV>0% ────────
@@ -7244,6 +7261,8 @@ function buildMatchRecord(raw) {
 
   // 2. Score de Fiabilité Composite (remplace l'ancien confidence_score heuristique)
   record.reliability_score = computeReliabilityScore(uqd, isRealData, playedHome, playedAway);
+  // bd 1r14 — Components breakdown pour tooltip UI transparence formula.
+  record.reliability_components = computeReliabilityComponents(uqd, isRealData, playedHome, playedAway);
 
   // 3. Rétro-compatibilité : conserver confidence_score = reliability_score
   record.confidence_score = record.reliability_score;
