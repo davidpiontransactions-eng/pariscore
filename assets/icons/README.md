@@ -37,40 +37,97 @@ Spécifications pour les 16 icônes de la barre de navigation principale.
 | Cohérence | Même style 3D pour les 16 icônes (matte/glossy/clay/gradient — choisir une direction) |
 | Palette autorisée | Brand PariScore : emerald `#0f5132` / clay `#cc6633` / gold `#d4af37` + neutres (gris, blanc, ombres) |
 
-## Sources de génération recommandées
+## Sources recommandées (packs ready-to-use, pas de génération AI)
 
-### Option 1 — Higgsfield (quand crédits rechargés)
+### Option 1 — Iconscout 3D Pack ⭐ recommandé
 
-Prompt template par icône :
+- URL : https://iconscout.com/3d-icons
+- Abonnement ~20€/mois (Lite) ou achat à l'unité (~1€/icône)
+- Avantage majeur : **packs cohérents** (même style, même lighting, même palette) → les 16 icônes parfaitement homogènes
+- Filtrer par style : "Clay", "Glossy", "Cute", "Realistic", "Isometric" — choisir un seul style pour les 16
+- Format export : PNG 256×256 / 512×512 alpha déjà transparent
+- Recommandation set : "Business 3D" ou "Sport & Game 3D" ou "Premium 3D Icons"
+
+### Option 2 — Streamline 3D Emojis
+
+- URL : https://www.streamlinehq.com/icons/streamline-emojis
+- Library quasi-officielle Apple-style emojis en 3D
+- Free tier avec attribution, paid sans attribution
+- Couvre 99% des concepts dont on a besoin (ball, trophy, fire, ticket, book, shield, scale, brain, chart, bell, clock, house, crown, gear)
+
+### Option 3 — Flaticon UICONS 3D (gratuit)
+
+- URL : https://www.flaticon.com/uicons-3d
+- Gratuit avec attribution mention (lien crédits en footer site)
+- Catalogue large, qualité variable selon créateur — vérifier visuel avant download
+- Format PNG export natif
+
+### Option 4 — Lordicon 3D
+
+- URL : https://lordicon.com/icons/3d
+- Bonus : animations Lottie disponibles si on veut un effet hover animé en V2
+- Pricing : free tier limité, paid pour usage commercial sans crédit
+
+### Option 5 — Quick fix sans budget : émojis Apple/Google en PNG
+
+Ship immédiat zero-cost :
+- https://emojipedia.org/ → click emoji (🎾 🏆 🔥 etc.) → download Apple/Google PNG haute-rés
+- Renommer selon le tableau de cette doc
+- ⚠️ Licence : Apple emojis = propriété Apple. Tolérance usage perso/blog. Commercial strict = risque. Préférer Twemoji (Twitter Open Source, CC-BY 4.0) :
+  - https://github.com/twitter/twemoji → SVG/PNG libres, attribution simple
+
+### Option 6 — Twemoji direct (recommandé pour gratuit + clean license)
+
+- URL : https://twemoji-cheatsheet.vercel.app/
+- Licence CC-BY 4.0 (attribution lien GitHub)
+- 3000+ emojis style cohérent
+- Mapping suggéré :
+  | Page | Twemoji codepoint |
+  |---|---|
+  | football | `26bd` (⚽) |
+  | tennis | `1f3be` (🎾) |
+  | trophy | `1f3c6` (🏆) |
+  | strategy | `1f3af` (🎯) |
+  | fire | `1f525` (🔥) |
+  | ticket | `1f3ab` (🎫) |
+  | book | `1f4d6` (📖) |
+  | shield | `1f6e1` (🛡) |
+  | compare | `2696` (⚖) |
+  | brain | `1f9e0` (🧠) |
+  | chart | `1f4c8` (📈) |
+  | bell | `1f514` (🔔) |
+  | clock | `1f570` (🕰) |
+  | home | `1f3e0` (🏠) |
+  | crown | `1f451` (👑) |
+  | settings | `2699` (⚙) |
+
+  Download via : `https://twemoji.maxcdn.com/v/latest/72x72/<codepoint>.png` (free CDN)
+
+### Workflow gratuit ship-aujourd'hui (Twemoji)
+
+```bash
+cd /home/ubuntu/pariscore/assets/icons
+curl -o 3d-football.png https://twemoji.maxcdn.com/v/latest/72x72/26bd.png
+curl -o 3d-tennis.png   https://twemoji.maxcdn.com/v/latest/72x72/1f3be.png
+curl -o 3d-trophy.png   https://twemoji.maxcdn.com/v/latest/72x72/1f3c6.png
+curl -o 3d-strategy.png https://twemoji.maxcdn.com/v/latest/72x72/1f3af.png
+curl -o 3d-fire.png     https://twemoji.maxcdn.com/v/latest/72x72/1f525.png
+curl -o 3d-ticket.png   https://twemoji.maxcdn.com/v/latest/72x72/1f3ab.png
+curl -o 3d-book.png     https://twemoji.maxcdn.com/v/latest/72x72/1f4d6.png
+curl -o 3d-shield.png   https://twemoji.maxcdn.com/v/latest/72x72/1f6e1.png
+curl -o 3d-compare.png  https://twemoji.maxcdn.com/v/latest/72x72/2696.png
+curl -o 3d-brain.png    https://twemoji.maxcdn.com/v/latest/72x72/1f9e0.png
+curl -o 3d-chart.png    https://twemoji.maxcdn.com/v/latest/72x72/1f4c8.png
+curl -o 3d-bell.png     https://twemoji.maxcdn.com/v/latest/72x72/1f514.png
+curl -o 3d-clock.png    https://twemoji.maxcdn.com/v/latest/72x72/1f570.png
+curl -o 3d-home.png     https://twemoji.maxcdn.com/v/latest/72x72/1f3e0.png
+curl -o 3d-crown.png    https://twemoji.maxcdn.com/v/latest/72x72/1f451.png
+curl -o 3d-settings.png https://twemoji.maxcdn.com/v/latest/72x72/2699.png
+ls -la *.png   # doit montrer 16 fichiers
+git add *.png && git commit -m "feat(assets): 16 nav icons via Twemoji CC-BY 4.0" && git push
 ```
-Premium 3D rendered icon of a [SYMBOL], glossy matte finish, transparent
-background, centered composition, soft studio lighting, drop shadow,
-emerald green and gold accent palette, isometric or slight perspective
-angle, ultra-detailed, octane render, 4K, app icon style, no text, no
-background, 128x128
-```
 
-### Option 2 — MidJourney v6+
-
-```
-3D icon, [SYMBOL], glossy emerald green and gold, transparent background,
-centered, soft lighting, premium app icon style --ar 1:1 --no background
---style raw
-```
-
-### Option 3 — Packs commerciaux ready-to-use
-
-- **Iconscout 3D Pack** : https://iconscout.com/3d-icons — abonnement, 16 icônes à choisir dans un même set (cohérence garantie)
-- **Lordicon 3D** : https://lordicon.com/icons/3d — animations bonus
-- **Streamline 3D** : https://www.streamlinehq.com/icons/streamline-emojis — émojis 3D quasi-officiels
-- **Flaticon 3D** : https://www.flaticon.com/uicons-3d — gratuit avec attribution
-
-### Option 4 — Quick fix : émojis convertis en PNG
-
-Pour ship immédiat sans génération : exporter les emojis Apple (raquette 🎾, coupe 🏆, etc.) en PNG via :
-- https://emojipedia.org/ → click emoji → download Apple/Google style PNG
-- Renommer selon le tableau ci-dessus
-- ⚠️ Vérifier licence (Apple emojis = propriété Apple, OK usage perso, KO usage commercial strict)
+→ Ship en 5 minutes, license clean, zero coût. Mention Twitter/Twemoji attribution dans le footer site web ou page /about à ajouter ensuite.
 
 ## Validation post-upload
 
