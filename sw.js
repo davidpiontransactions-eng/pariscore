@@ -54,7 +54,12 @@
 // JSON statique + cron PM2 + worker_threads + bsdTennisFetch hardening) +
 // regex _rgRoundOrder format BSD "Round of 128". Force re-install pour
 // purger anciens pariscore.html sans <img class="nav-icon-3d"> chez users.
-const CACHE = 'pariscore-shell-v26';
+// v27 (2026-05-23) : invalide v26 — Implémentation cascade hybride Smart
+// Fallback : CDN Microsoft Fluent Emoji 3D (jsDelivr MIT) -> SVG local
+// glassmorphic -> emoji unicode <span>. Bullet-proof contre 404 CDN/local.
+// Ajout CSS .nav-icon-emoji pour fallback ultime. Force re-install pour
+// purger HTML précédent sans onerror cascade chez users.
+const CACHE = 'pariscore-shell-v27';
 const SHELL = [
   '/',
   '/pariscore.html',
