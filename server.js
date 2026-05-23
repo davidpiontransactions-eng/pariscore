@@ -35057,6 +35057,122 @@ function _bsdWsApplyEventStats(m, stats) {
   if (h.dangerous_attack != null || a.dangerous_attack != null) m.live_dangerous_attacks = pair(h.dangerous_attack, a.dangerous_attack);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd vl02 — Alertes SSE live edge math (innovation backlog)
+//
+// Détecte triggers événements actionables pendant le match :
+//
+//   favorite_trap : favori pre-match (best_edge.label = dom/ext) en deficit
+//                   live après la minute 30. Signal : bet UNDER (favori
+//                   comeback dégradé) OU bet ADVERSE live avec edge accru.
+//                   One-shot par match (fired flag).
+//
+//   goal_flood    : 3+ buts cumulés dans fenêtre 15min (sliding window).
+//                   Signal : marché Over X.5 + BTTS likely.
+//                   Cooldown 5min entre 2 alertes même match.
+//
+// Push via broadcastSSE('alert_trigger', { match_id, type, ts, payload }).
+// Frontend listener : push browser notif + toast UI + sound.
+// ═══════════════════════════════════════════════════════════════════════════════
+const _liveAlertsState = new Map();  // matchId → { fav, fired:Set, goalsTs:[], lastTrapTs, lastFloodTs }
+const FAVORITE_TRAP_MIN_MINUTE = 30;
+const GOAL_FLOOD_WINDOW_MS = 15 * 60 * 1000;
+const GOAL_FLOOD_THRESHOLD = 3;
+const ALERT_COOLDOWN_MS = 5 * 60 * 1000;
+
+function _resolveMatchFavorite(m) {
+  // pre-match best_edge.label → 'H' (home/dom) | 'A' (away/ext) | null
+  const lbl = String((m && m.best_edge && m.best_edge.label) || '').toLowerCase();
+  if (/dom|home|^1\b/.test(lbl)) return 'H';
+  if (/ext|away|^2\b/.test(lbl)) return 'A';
+  return null;
+}
+
+function _parseLiveScoreVl(s) {
+  if (!s) return null;
+  const x = String(s).match(/^(\d+)-(\d+)$/);
+  if (!x) return null;
+  return { h: parseInt(x[1], 10), a: parseInt(x[2], 10) };
+}
+
+function _checkLiveAlerts(m, prevScoreStr) {
+  if (!m || m.id == null) return;
+  if (typeof broadcastSSE !== 'function') return;
+  if (typeof sseClients === 'undefined' || !sseClients || sseClients.size === 0) return;
+
+  const now = Date.now();
+  let st = _liveAlertsState.get(m.id);
+  if (!st) {
+    st = { fav: _resolveMatchFavorite(m), fired: new Set(), goalsTs: [], lastTrapTs: 0, lastFloodTs: 0 };
+    _liveAlertsState.set(m.id, st);
+  }
+
+  const minute = Number(m.live_minute) || 0;
+  const curScore = _parseLiveScoreVl(m.live_score);
+  const prevScore = _parseLiveScoreVl(prevScoreStr);
+  const totalCur = curScore ? curScore.h + curScore.a : null;
+  const totalPrev = prevScore ? prevScore.h + prevScore.a : null;
+  const goalsDelta = (totalCur != null && totalPrev != null) ? Math.max(0, totalCur - totalPrev) : 0;
+
+  // Track timeline buts pour sliding window goal_flood
+  if (goalsDelta > 0) {
+    for (let i = 0; i < goalsDelta; i++) st.goalsTs.push(now);
+    // Purge ts > 2× window (économise mémoire long match)
+    const cutoff = now - (GOAL_FLOOD_WINDOW_MS * 2);
+    if (st.goalsTs.length > 0 && st.goalsTs[0] < cutoff) {
+      st.goalsTs = st.goalsTs.filter(t => t >= cutoff);
+    }
+  }
+
+  // ── favorite_trap ────────────────────────────────────────────────────────
+  if (st.fav && curScore && minute >= FAVORITE_TRAP_MIN_MINUTE && !st.fired.has('favorite_trap')) {
+    const favScore = (st.fav === 'H') ? curScore.h : curScore.a;
+    const oppScore = (st.fav === 'H') ? curScore.a : curScore.h;
+    if (favScore < oppScore) {
+      st.fired.add('favorite_trap');
+      st.lastTrapTs = now;
+      try {
+        broadcastSSE('alert_trigger', {
+          match_id: m.id,
+          type: 'favorite_trap',
+          ts: now,
+          payload: {
+            favorite_side: st.fav,
+            favorite_team: st.fav === 'H' ? (m.home_team || null) : (m.away_team || null),
+            opponent_team: st.fav === 'H' ? (m.away_team || null) : (m.home_team || null),
+            score: m.live_score,
+            minute,
+            best_edge_label: (m.best_edge && m.best_edge.label) || null,
+            best_edge_pct: (m.best_edge && m.best_edge.edge) || null,
+          },
+        });
+      } catch (_) { /* swallow */ }
+    }
+  }
+
+  // ── goal_flood ───────────────────────────────────────────────────────────
+  if (goalsDelta > 0 && (now - st.lastFloodTs) > ALERT_COOLDOWN_MS) {
+    const recentGoals = st.goalsTs.filter(t => (now - t) <= GOAL_FLOOD_WINDOW_MS).length;
+    if (recentGoals >= GOAL_FLOOD_THRESHOLD) {
+      st.lastFloodTs = now;
+      try {
+        broadcastSSE('alert_trigger', {
+          match_id: m.id,
+          type: 'goal_flood',
+          ts: now,
+          payload: {
+            score: m.live_score,
+            minute,
+            goals_15min: recentGoals,
+            home_team: m.home_team || null,
+            away_team: m.away_team || null,
+          },
+        });
+      } catch (_) { /* swallow */ }
+    }
+  }
+}
+
 function _bsdWsHandleJSON(msg) {
   if (_bsdWsRawLogged < 3) {
     _bsdWsRawLogged++;
@@ -35092,6 +35208,7 @@ function _bsdWsHandleJSON(msg) {
     const eid = msg.event_id;
     const m = _bsdWsLookupMatch(eid, msg.home && msg.home.name, msg.away && msg.away.name);
     if (!m) return;
+    const _vl02_prevScore = m.live_score;  // bd vl02 capture pre-update pour goal delta detection
     if (msg.score) {
       const hs = msg.score.home, as = msg.score.away;
       if (hs != null && as != null) m.live_score = hs + '-' + as;
@@ -35102,6 +35219,7 @@ function _bsdWsHandleJSON(msg) {
       if (msg.time.period) m.live_period = msg.time.period;
     }
     _bsdWsApplyEventStats(m, msg.stats);
+    try { _checkLiveAlerts(m, _vl02_prevScore); } catch (_) { /* swallow — alertes non-bloquantes */ }
     if (sseClients.size > 0) {
       broadcastSSE('ws_event', {
         id: m.id,
@@ -35149,9 +35267,11 @@ function _bsdWsHandleJSON(msg) {
   const m = _bsdWsLookupMatch(p.eid, p.home, p.away);
   if (!m) return;
 
+  const _vl02_prevScore = m.live_score;  // bd vl02 capture pre-update pour goal delta
   if (p.score && /^\d+-\d+$/.test(String(p.score))) m.live_score = String(p.score);
   if (p.minute != null) m.live_minute = parseInt(p.minute) || m.live_minute;
   if (p.status) m.status = p.status;
+  try { _checkLiveAlerts(m, _vl02_prevScore); } catch (_) { /* swallow */ }
   m.live_ws = {
     ball: p.ball || (m.live_ws && m.live_ws.ball) || null,
     situation: p.situation || null,
