@@ -9877,9 +9877,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         return;
       }
       const gen = new Date(((data.generated_at || Date.now()/1000)) * 1000);
-      const cacheTag = data.cache === 'hit'
-        ? ' · cached'
-        : (data.cache === 'stale_refreshing' ? ' · stale↻' : ' · fresh');
+      const cacheTag =
+        data.cache === 'static_fresh' ? ' · live'
+        : data.cache === 'static_stale' ? ' · stale↻'
+        : data.cache === 'sqlite_fallback' ? ' · fallback'
+        : data.cache === 'hit' ? ' · cached'
+        : data.cache === 'stale_refreshing' ? ' · stale↻'
+        : ' · fresh';
       if (statusEl) statusEl.textContent = _rgCurrentTour + ' · ' + data.draw_size + ' joueurs · ' + Number(data.sim_n).toLocaleString('fr-FR') + ' sims · ' + gen.toLocaleTimeString('fr-FR') + cacheTag;
       if (contendersEl) {
         const cards = (data.top_contenders || []).map(p => {
