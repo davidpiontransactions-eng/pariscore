@@ -1,0 +1,32 @@
+🏆 ROLAND GARROS 2026 — Bracket Interactif PariScore est EN LIGNE !
+
+À 48h du coup d'envoi à Paris, on vient de pousser un tout nouvel onglet Roland Garros sur PariScore. Conçu spécifiquement pour préparer vos paris long-cours sur le Grand Chelem terre battue. 🎾🟧
+
+🔬 Ce qu'il y a sous le capot :
+
+▪️ Bracket complet ATP & WTA — 128 joueurs par tableau, tirage officiel BSD
+▪️ Modèle prédictif propulsé par 10 000 simulations probabilistes par tournoi
+▪️ Elo terre battue interne PariScore — calibré Sackmann-style (K=200 surface, MoV façon 538, régression d'inactivité)
+▪️ Top 16 favoris au titre avec probas de victoire finale, finale et demi-finale
+▪️ Win probability match par match sur l'ensemble des 7 tours (R128 → R64 → R32 → R16 → QF → SF → F)
+▪️ Toggle instantané ATP ↔ WTA
+
+⚡ Côté technique :
+On a réécrit toute l'archi en 1 journée pour vous garantir un chargement sous 500 ms quoi qu'il arrive (lecture pure JSON pré-calculé + refresh CRON toutes les 2h en tâche de fond). Pas de "Calcul en cours...", pas de timeout. Direct. Brut. Comme un bon edge.
+
+📊 À quoi ça sert pour vos paris ?
+
+▪️ Identifier les outsiders sous-cotés par les bookmakers (proba Elo > proba implicite)
+▪️ Construire des combinés long-cours (vainqueur tournoi, finaliste, demi-finaliste)
+▪️ Repérer les traps du favori dans certaines parties de tableau
+▪️ Anticiper les chocs probables dès les R16/QF
+▪️ Trader le value bet match par match au fur et à mesure du tournoi
+
+⚠️ Le modèle ne tient pas compte des forfaits de dernière minute — restez vigilants sur les blessures à l'échauffement (j'ai mis ça en backlog pour V2).
+
+👉 L'onglet vous attend sur pariscore.fr — section "Roland Garros". Tirage publié officiellement le 24-25 mai, données BSD synchronisées en continu jusqu'au coup d'envoi.
+
+🚀 Pariez avec les maths, pas l'instinct.
+
+— David
+PariScore — l'edge mathématique au service du parieur

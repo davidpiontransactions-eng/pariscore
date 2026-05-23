@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="t1 d1">
+  <title id="t1">PariScore Roland Garros 2026 — Shield Badge</title>
+  <desc id="d1">Premium emerald and clay-orange shield with embedded tennis ball, PariScore wordmark, Eiffel Tower silhouette and "RG 2026" tagline.</desc>
+
+  <defs>
+    <!-- Background gradient (charcoal deep) -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#1a1f24"/>
+      <stop offset="60%" stop-color="#0a0d0f"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Shield gradient (emerald -> deep emerald) -->
+    <linearGradient id="shieldGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#1c8a5a"/>
+      <stop offset="100%" stop-color="#0f5132"/>
+    </linearGradient>
+
+    <!-- Inner clay panel (clay orange) -->
+    <linearGradient id="clayGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#e07a3c"/>
+      <stop offset="100%" stop-color="#cc6633"/>
+    </linearGradient>
+
+    <!-- Tennis ball gradient (yellow-green with rim shadow) -->
+    <radialGradient id="ballGrad" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#e8f06a"/>
+      <stop offset="60%" stop-color="#c2d445"/>
+      <stop offset="100%" stop-color="#8aa325"/>
+    </radialGradient>
+
+    <!-- Gold accent (subtle premium edge) -->
+    <linearGradient id="goldEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4af37"/>
+      <stop offset="50%" stop-color="#f4d97a"/>
+      <stop offset="100%" stop-color="#a07a1f"/>
+    </linearGradient>
+
+    <!-- Drop shadow filter -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="4" result="offsetBlur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Inner glow filter (embossed feel) -->
+    <filter id="emboss" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feSpecularLighting result="spec" specularExponent="20" lighting-color="#ffffff">
+        <feDistantLight azimuth="135" elevation="45"/>
+      </feSpecularLighting>
+      <feComposite in="spec" in2="SourceGraphic" operator="in" result="specOut"/>
+      <feComposite in="SourceGraphic" in2="specOut" operator="arithmetic" k1="0" k2="1" k3="0.6" k4="0"/>
+    </filter>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="512" height="512" fill="url(#bgGrad)"/>
+
+  <!-- Outer gold ring (premium edge) -->
+  <path d="M 256 40
+           L 432 100
+           L 432 280
+           Q 432 380 256 472
+           Q 80 380 80 280
+           L 80 100 Z"
+        fill="none" stroke="url(#goldEdge)" stroke-width="3" opacity="0.85"/>
+
+  <!-- Shield body emerald -->
+  <path d="M 256 52
+           L 420 108
+           L 420 280
+           Q 420 372 256 458
+           Q 92 372 92 280
+           L 92 108 Z"
+        fill="url(#shieldGrad)" filter="url(#dropShadow)"/>
+
+  <!-- Inner clay panel -->
+  <path d="M 256 92
+           L 376 132
+           L 376 268
+           Q 376 348 256 418
+           Q 136 348 136 268
+           L 136 132 Z"
+        fill="url(#clayGrad)" opacity="0.95"/>
+
+  <!-- Subtle clay texture (granular dots) -->
+  <g opacity="0.25" fill="#8a3a1a">
+    <circle cx="170" cy="170" r="1.5"/>
+    <circle cx="200" cy="190" r="1"/>
+    <circle cx="230" cy="160" r="1.2"/>
+    <circle cx="280" cy="180" r="1"/>
+    <circle cx="320" cy="200" r="1.5"/>
+    <circle cx="350" cy="170" r="1"/>
+    <circle cx="180" cy="240" r="1.2"/>
+    <circle cx="220" cy="270" r="1"/>
+    <circle cx="290" cy="260" r="1.5"/>
+    <circle cx="330" cy="290" r="1"/>
+    <circle cx="160" cy="320" r="1.2"/>
+    <circle cx="200" cy="350" r="1"/>
+    <circle cx="260" cy="370" r="1.5"/>
+    <circle cx="310" cy="350" r="1"/>
+    <circle cx="350" cy="320" r="1.2"/>
+  </g>
+
+  <!-- Tennis ball -->
+  <g transform="translate(256, 200)" filter="url(#dropShadow)">
+    <circle r="48" fill="url(#ballGrad)"/>
+    <!-- Ball seam curves -->
+    <path d="M -42 -12 Q 0 -45 42 -12" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.85"/>
+    <path d="M -42 12 Q 0 45 42 12" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.85"/>
+    <!-- Highlight -->
+    <ellipse cx="-18" cy="-20" rx="14" ry="10" fill="#ffffff" opacity="0.35"/>
+  </g>
+
+  <!-- PariScore wordmark -->
+  <text x="256" y="320" text-anchor="middle" font-family="Georgia, 'Bree Serif', serif"
+        font-size="42" font-weight="700" fill="#fff8e7" letter-spacing="2"
+        style="paint-order:stroke;stroke:#000000;stroke-width:1;stroke-opacity:0.3;">PariScore</text>
+
+  <!-- Subtitle ROLAND GARROS 2026 -->
+  <text x="256" y="354" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="16" font-weight="600" fill="#0f5132" letter-spacing="6">ROLAND GARROS · 2026</text>
+
+  <!-- Eiffel Tower silhouette at base -->
+  <g transform="translate(256, 396)" opacity="0.75">
+    <!-- Tower body -->
+    <path d="M -3 0 L 3 0 L 4 -8 L 2 -8 L 2 -22 L 6 -22 L 7 -30 L -7 -30 L -6 -22 L -2 -22 L -2 -8 L -4 -8 Z" fill="#0f5132"/>
+    <!-- Tower base arches -->
+    <path d="M -10 0 L -8 -4 L -4 -8 L 4 -8 L 8 -4 L 10 0 Z" fill="#0f5132"/>
+    <!-- Tower tip antenna -->
+    <line x1="0" y1="-30" x2="0" y2="-36" stroke="#0f5132" stroke-width="1.5"/>
+  </g>
+
+  <!-- Bottom edge tagline -->
+  <text x="256" y="436" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="11" font-weight="500" fill="#a07a1f" letter-spacing="3" opacity="0.9">L'EDGE MATHÉMATIQUE</text>
+</svg>
