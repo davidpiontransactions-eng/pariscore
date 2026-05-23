@@ -5795,6 +5795,104 @@ function computePoisson(expHome, expAway) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd cnvg — Poisson Time-Inhomogène live (innovation backlog edge math)
+//
+// Recompute Poisson conditionnel minute par minute + score state. Modèle :
+//   λ_remaining = λ_full × (minutes_left/90) × score_adjustment(side, score_diff)
+//
+// score_adjustment (heuristique tactique standard observable) :
+//   trailing -2+ → ×1.40 (push désespéré)
+//   trailing -1  → ×1.20 (push offensif)
+//   tied         → ×1.00
+//   leading +1   → ×0.85 (gestion défensive légère)
+//   leading +2+  → ×0.75 (gestion défensive forte)
+//
+// Probabilités markets recalculées sur score FINAL = score_so_far + remaining goals.
+// Retourne null si match non-live, minute hors [1,89], ou xG manquants.
+// ═══════════════════════════════════════════════════════════════════════════════
+function computeLivePoissonInhomogeneous(match) {
+  if (!match || !match.is_live) return null;
+  const minute = Number(match.live_minute) || 0;
+  if (minute <= 0 || minute >= 90) return null;
+  const exp = match.expectedGoals || {};
+  const lambdaH = Number(exp.home) || 0;
+  const lambdaA = Number(exp.away) || 0;
+  if (lambdaH <= 0 || lambdaA <= 0) return null;
+
+  // Score state actuel
+  let sH = 0, sA = 0;
+  if (match.live_score && /^\d+-\d+$/.test(String(match.live_score))) {
+    const parts = String(match.live_score).split('-');
+    sH = parseInt(parts[0], 10) || 0;
+    sA = parseInt(parts[1], 10) || 0;
+  }
+
+  // Time-remaining factor (0..1)
+  const minLeft = Math.max(0, 90 - minute);
+  const timeFactor = minLeft / 90;
+
+  // Score-state adjustment per side
+  const adjFactor = (diff) => {
+    if (diff <= -2) return 1.40;
+    if (diff === -1) return 1.20;
+    if (diff === 0) return 1.00;
+    if (diff === 1) return 0.85;
+    return 0.75; // diff >= 2
+  };
+  const diffH = sH - sA, diffA = sA - sH;
+  const adjH = adjFactor(diffH), adjA = adjFactor(diffA);
+  const lambdaH_rem = lambdaH * timeFactor * adjH;
+  const lambdaA_rem = lambdaA * timeFactor * adjA;
+
+  // Recompute Poisson sur remaining goals
+  const MAX = 7;
+  let over05 = 0, over15 = 0, over25 = 0, over35 = 0;
+  let btts = 0, under15 = 0;
+  let homeWin = 0, draw = 0, awayWin = 0;
+  for (let h = 0; h < MAX; h++) {
+    for (let a = 0; a < MAX; a++) {
+      const p = poissonPMF(lambdaH_rem, h) * poissonPMF(lambdaA_rem, a);
+      const finalH = sH + h, finalA = sA + a;
+      const total = finalH + finalA;
+      if (total > 0) over05 += p;
+      if (total > 1) over15 += p;
+      if (total > 2) over25 += p;
+      if (total > 3) over35 += p;
+      if (total <= 1) under15 += p;
+      if (finalH > 0 && finalA > 0) btts += p;
+      if (finalH > finalA) homeWin += p;
+      if (finalH === finalA) draw += p;
+      if (finalH < finalA) awayWin += p;
+    }
+  }
+
+  return {
+    minute_at_compute: minute,
+    score_at_compute: `${sH}-${sA}`,
+    lambda_home_rem: parseFloat(lambdaH_rem.toFixed(3)),
+    lambda_away_rem: parseFloat(lambdaA_rem.toFixed(3)),
+    adjustments: {
+      time_factor: parseFloat(timeFactor.toFixed(3)),
+      adj_home: adjH,
+      adj_away: adjA,
+      score_diff_home: diffH,
+    },
+    markets: {
+      over05: Math.round(over05 * 100),
+      over15: Math.round(over15 * 100),
+      over25: Math.round(over25 * 100),
+      over35: Math.round(over35 * 100),
+      btts: Math.round(btts * 100),
+      under15: Math.round(under15 * 100),
+      homeWin: Math.round(homeWin * 100),
+      draw: Math.round(draw * 100),
+      awayWin: Math.round(awayWin * 100),
+    },
+    method: 'poisson_time_inhomogeneous',
+  };
+}
+
 // Alias nommé — retourne la matrice brute (max+1 × max+1) de probabilités de scores
 function calculatePoisson(lH, lA, max = 6) {
   const matrix = [];
@@ -31116,6 +31214,9 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         bsd_referee_id: match.bsd_referee_id || match.referee_id || null,
         bsd_venue_id: match.bsd_venue_id || match.venue_id || null,
         bsd_league_id: match.bsd_league_id || match.league_id || null,
+        // bd cnvg — Poisson Time-Inhomogène live (λ ajusté minute + score)
+        // null si match non-live ou xG manquants. UI peut comparer pre-match vs live_poisson markets.
+        live_poisson: (typeof computeLivePoissonInhomogeneous === 'function') ? computeLivePoissonInhomogeneous(match) : null,
         // bd 0hf4 Phase 3 — TV broadcasters (cache cron Phase 1.1 + attach in-place idempotent)
         tv_channels: (function() {
           try {
