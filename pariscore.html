@@ -26588,8 +26588,9 @@ function buildStaticInsightLayer(d) {
         <thead><tr style="color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-size:9px"><th style="text-align:left;padding:5px 0">Marché</th><th style="text-align:right;padding:5px 0">Pre-match</th><th style="text-align:right;padding:5px 0">Live</th><th style="text-align:right;padding:5px 0">Δ</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
-      <div title="λ buts attendus restants · adj_home/away coefficient push/défensif tactique" style="font-size:9px;color:var(--text3);margin-top:8px;font-family:var(--font-mono);line-height:1.5;cursor:help">
-        λ_home_rem ${lp.lambda_home_rem} · λ_away_rem ${lp.lambda_away_rem} · adj_home ×${adj.adj_home != null ? adj.adj_home : 1} · adj_away ×${adj.adj_away != null ? adj.adj_away : 1}
+      <div title="λ buts attendus restants · adj_home/away coefficient push/défensif tactique · weather/travel factors bd z3fp Context Engine integration" style="font-size:9px;color:var(--text3);margin-top:8px;font-family:var(--font-mono);line-height:1.5;cursor:help">
+        λ_home_rem ${lp.lambda_home_rem} · λ_away_rem ${lp.lambda_away_rem}<br>
+        adj_home ×${adj.adj_home != null ? adj.adj_home : 1} · adj_away ×${adj.adj_away != null ? adj.adj_away : 1}${adj.weather_factor != null && adj.weather_factor !== 1 ? ' · weather ×' + adj.weather_factor : ''}${adj.travel_factor != null && adj.travel_factor !== 1 ? ' · travel ×' + adj.travel_factor + ' (away)' : ''}
       </div>
     </div>`;
   })() : '';

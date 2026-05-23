@@ -5842,8 +5842,27 @@ function computeLivePoissonInhomogeneous(match) {
   };
   const diffH = sH - sA, diffA = sA - sH;
   const adjH = adjFactor(diffH), adjA = adjFactor(diffA);
-  const lambdaH_rem = lambdaH * timeFactor * adjH;
-  const lambdaA_rem = lambdaA * timeFactor * adjA;
+
+  // bd z3fp — Context Engine weather adjustment (both sides identique).
+  // Pluie >3mm/h dégrade contrôle balle + passes longues → λ ×0.92.
+  // Vent >30km/h impact passes longues + crosses → λ ×0.95.
+  // Effets multiplicatifs combinés si simultanés.
+  let weatherFactor = 1.0;
+  const mw = match.match_weather || null;
+  if (mw) {
+    if (mw.precipitation_mm != null && mw.precipitation_mm > 3) weatherFactor *= 0.92;
+    if (mw.wind_kmh != null && mw.wind_kmh > 30) weatherFactor *= 0.95;
+  }
+
+  // bd z3fp — Context Engine travel adjustment (away only — fatigue jet-lag visiteurs).
+  // Fatigue factor déjà calculé bd i8gw (0.88-1.00 selon bucket distance).
+  let travelFactor = 1.0;
+  const mt = match.match_travel || null;
+  if (mt && typeof mt.fatigue_factor === 'number') travelFactor = mt.fatigue_factor;
+
+  // Combine all factors
+  const lambdaH_rem = lambdaH * timeFactor * adjH * weatherFactor;
+  const lambdaA_rem = lambdaA * timeFactor * adjA * weatherFactor * travelFactor;
 
   // Recompute Poisson sur remaining goals
   const MAX = 7;
@@ -5877,6 +5896,8 @@ function computeLivePoissonInhomogeneous(match) {
       adj_home: adjH,
       adj_away: adjA,
       score_diff_home: diffH,
+      weather_factor: parseFloat(weatherFactor.toFixed(3)),
+      travel_factor: parseFloat(travelFactor.toFixed(3)),
     },
     markets: {
       over05: Math.round(over05 * 100),
