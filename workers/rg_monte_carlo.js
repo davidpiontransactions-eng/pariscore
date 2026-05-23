@@ -19,6 +19,16 @@
 
 const { workerData, parentPort } = require('worker_threads');
 
+// Pilier 1 — Fatigue universelle round-based. Compresse l'écart Elo des
+// dernières rounds pour modéliser : champions fatigués en deuxième semaine
+// = matches plus serrés = plus d'upsets. Coefficient appliqué à
+// (eloB - eloA) avant le calcul Elo standard. V1 universelle (chaque
+// joueur a même decay). V2 (post-launch) : per-player fatigue depuis BSD
+// player matches duration_minutes.
+// Index = round (0-based depuis R128 si draw 128). totalRounds=7 pour RG.
+// Tableau 1.0 = no decay (R128/R64), descend à 0.78 en finale.
+const FATIGUE_BY_ROUND = [1.00, 1.00, 0.97, 0.93, 0.88, 0.83, 0.78];
+
 function runMonteCarlo(playerStats, N) {
   const titleCount = Object.create(null);
   const finalCount = Object.create(null);
@@ -27,14 +37,21 @@ function runMonteCarlo(playerStats, N) {
   if (n < 2) return { titleCount, finalCount, sfCount, totalRounds: 0 };
   const totalRounds = Math.max(1, Math.round(Math.log2(Math.max(2, n))));
 
-  // Elo TypedArray (Float64) + pré-calcul win-prob[i*n+j] = P(i bat j).
+  // Elo TypedArray (Float64) + pré-calcul win-prob[round, a, b] = P(a bat b)
+  // au round R avec fatigue. Mémoire : totalRounds × n × n × 4 bytes.
+  // Pour n=128, totalRounds=7 → ~458 KB Float32. OK.
   const elos = new Float64Array(n);
   for (let i = 0; i < n; i++) elos[i] = playerStats[i].clay_elo || 1500;
-  const wp = new Float32Array(n * n);
-  for (let a = 0; a < n; a++) {
-    const ea = elos[a];
-    for (let b = 0; b < n; b++) {
-      wp[a * n + b] = 1 / (1 + Math.pow(10, (elos[b] - ea) / 400));
+  const wp = new Float32Array(totalRounds * n * n);
+  for (let r = 0; r < totalRounds; r++) {
+    const fatigueCoef = FATIGUE_BY_ROUND[Math.min(r, FATIGUE_BY_ROUND.length - 1)];
+    for (let a = 0; a < n; a++) {
+      const ea = elos[a];
+      for (let b = 0; b < n; b++) {
+        // Compresse l'écart Elo proportionnellement au coefficient fatigue
+        const diff = (elos[b] - ea) * fatigueCoef;
+        wp[r * n * n + a * n + b] = 1 / (1 + Math.pow(10, diff / 400));
+      }
     }
   }
 
@@ -50,11 +67,12 @@ function runMonteCarlo(playerStats, N) {
     for (let k = 0; k < n; k++) alive[k] = k;
     let aliveLen = n;
     for (let round = 0; round < totalRounds; round++) {
+      const wpRoundBase = round * n * n;
       let nextLen = 0;
       const pairs = aliveLen - (aliveLen & 1);
       for (let m = 0; m < pairs; m += 2) {
         const a = alive[m], b = alive[m + 1];
-        const winner = Math.random() < wp[a * n + b] ? a : b;
+        const winner = Math.random() < wp[wpRoundBase + a * n + b] ? a : b;
         next[nextLen++] = winner;
         if (round === sfRound) sfC[winner]++;
         else if (round === finRound) finalC[winner]++;
@@ -73,7 +91,8 @@ function runMonteCarlo(playerStats, N) {
     if (sfC[i]) sfCount[sk] = (sfCount[sk] || 0) + sfC[i];
   }
 
-  return { titleCount, finalCount, sfCount, totalRounds };
+  // Expose fatigue config in result for traceability (frontend debug)
+  return { titleCount, finalCount, sfCount, totalRounds, fatigue_by_round: Array.from(FATIGUE_BY_ROUND.slice(0, totalRounds)) };
 }
 
 try {

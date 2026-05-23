@@ -9812,8 +9812,32 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     #page-rg .rg-bracket { display:flex; gap:18px; min-width:max-content; align-items:stretch; }
     #page-rg .rg-round-col { display:flex; flex-direction:column; min-width:230px; }
     #page-rg .rg-round-label { font-family:'Bree Serif',serif; font-size:13px; font-weight:700; color:var(--rg-clay); text-transform:uppercase; letter-spacing:1px; padding-bottom:8px; border-bottom:1px solid rgba(216,91,37,0.25); margin-bottom:10px; text-align:center; }
-    #page-rg .rg-match-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); border:1px solid rgba(10,77,60,0.15); border-radius:8px; padding:8px 10px; margin-bottom:8px; flex:1; min-height:84px; display:flex; flex-direction:column; justify-content:center; }
-    #page-rg .rg-match-card.live { border-color:var(--rg-clay); box-shadow:0 0 0 2px rgba(216,91,37,0.18); }
+    #page-rg .rg-match-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); border:1px solid rgba(10,77,60,0.15); border-radius:8px; padding:8px 10px; margin-bottom:8px; flex:1; min-height:84px; display:flex; flex-direction:column; justify-content:center; position:relative; transition: opacity .2s ease, transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+    /* Pilier 2 — Value Heatmap : tier-based border + glow */
+    #page-rg .rg-match-card.edge-strong { border-color:#00c875; border-width:2px; box-shadow:0 0 14px rgba(0,200,117,0.45), inset 0 0 8px rgba(0,200,117,0.08); }
+    #page-rg .rg-match-card.edge-moderate { border-color:#f5b73d; border-width:1.5px; box-shadow:0 0 8px rgba(245,183,61,0.32); }
+    #page-rg .rg-match-card.edge-trap { border-color:rgba(229,57,53,0.45); box-shadow:0 0 6px rgba(229,57,53,0.18); }
+    #page-rg .rg-match-card.edge-neutral { border-color:rgba(10,77,60,0.18); }
+    #page-rg .rg-edge-badge { position:absolute; top:4px; right:4px; padding:2px 6px; border-radius:4px; font-family:'DM Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:0.04em; color:#fff; pointer-events:auto; cursor:help; z-index:2; }
+    #page-rg .rg-edge-badge.edge-strong { background:linear-gradient(135deg, #00c875, #0a8a4a); }
+    #page-rg .rg-edge-badge.edge-moderate { background:linear-gradient(135deg, #f5b73d, #c08a1a); color:#1f1408; }
+    #page-rg .rg-edge-badge.edge-trap { background:linear-gradient(135deg, #e53935, #8a1a1a); }
+    #page-rg .rg-edge-badge.edge-neutral { background:rgba(10,77,60,0.55); }
+    #page-rg .rg-match-card.live { border-color:var(--rg-clay); box-shadow:0 0 0 2px rgba(216,91,37,0.18); animation: rgLivePulse 2s ease-in-out infinite; }
+    #page-rg .rg-match-card.live::before { content:'🔴 LIVE'; position:absolute; top:4px; left:6px; font-family:'DM Mono',monospace; font-size:9px; color:#e53935; font-weight:700; letter-spacing:0.06em; animation: rgLiveBlink 1s step-end infinite; z-index:2; }
+    #page-rg .rg-match-card.live .rg-dr-mini { position:absolute; bottom:4px; right:6px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; color:var(--rg-emerald,#0f5132); padding:1px 4px; background:rgba(28,138,90,0.12); border-radius:3px; }
+    #page-rg .rg-player-line.serving::after { content:'🎾'; margin-left:4px; font-size:10px; }
+    @keyframes rgLivePulse { 0%,100% { box-shadow:0 0 0 0 rgba(229,57,53,0.4); } 50% { box-shadow:0 0 16px 4px rgba(229,57,53,0.0); } }
+    @keyframes rgLiveBlink { 50% { opacity:0.3; } }
+    /* Filter bar bracket */
+    #page-rg .rg-filter-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 14px; padding:10px 12px; background:rgba(255,255,255,0.6); backdrop-filter:blur(4px); border:1px solid rgba(204,102,51,0.15); border-radius:10px; }
+    #page-rg .rg-filter-label { font-family:'DM Mono',monospace; font-size:10px; color:var(--rg-clay-dark,#8a3a1a); text-transform:uppercase; letter-spacing:0.12em; margin-right:4px; }
+    #page-rg .rg-filter-chip { padding:5px 10px; border-radius:6px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:11.5px; font-weight:700; cursor:pointer; border:1px solid rgba(15,81,50,0.18); background:rgba(255,255,255,0.7); color:var(--rg-green-dark,#0a3a22); transition: background .15s ease, transform .12s ease, border-color .15s ease; user-select:none; }
+    #page-rg .rg-filter-chip:hover { background:rgba(204,102,51,0.08); transform:translateY(-1px); }
+    #page-rg .rg-filter-chip.active { background:linear-gradient(135deg, #1c8a5a, #0f5132); color:#fff; border-color:#0f5132; }
+    #page-rg .rg-match-card.filter-hidden { opacity:0.15; pointer-events:none; transform:scale(0.96); }
+    /* Mini-affichage fatigue (Pilier 1) sur player line */
+    #page-rg .rg-player-fatigue { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; color:#a07a1f; margin-left:4px; padding:1px 4px; background:rgba(244,217,122,0.18); border-radius:3px; }
     #page-rg .rg-player-line { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:13px; gap:8px; }
     #page-rg .rg-player-line.winner { font-weight:700; color:var(--rg-green-dark); }
     #page-rg .rg-player-line.loser { color:var(--rg-grey); opacity:0.7; text-decoration:line-through; }
@@ -10023,6 +10047,17 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <div id="rg-contenders" class="rg-contenders"></div>
   </div>
 
+  <!-- Filter bar Pilier 2 — Value Heatmap : seuil EV pour highlight matches -->
+  <div id="rg-filter-bar" class="rg-filter-bar" role="toolbar" aria-label="Filtres value bets">
+    <span class="rg-filter-label">Filtre Value</span>
+    <button type="button" class="rg-filter-chip active" data-rg-filter="all" onclick="rgSetFilter('all', this)">Tous</button>
+    <button type="button" class="rg-filter-chip" data-rg-filter="value" onclick="rgSetFilter('value', this)" title="Tous matches avec edge positif (Monte Carlo prob &gt; fair implicite)">🟢 Value</button>
+    <button type="button" class="rg-filter-chip" data-rg-filter="ev5" onclick="rgSetFilter('ev5', this)" title="Edge ≥ +5pp (modérée)">EV ≥ +5%</button>
+    <button type="button" class="rg-filter-chip" data-rg-filter="ev10" onclick="rgSetFilter('ev10', this)" title="Edge ≥ +10pp (strong)">EV ≥ +10%</button>
+    <button type="button" class="rg-filter-chip" data-rg-filter="trap" onclick="rgSetFilter('trap', this)" title="Trap du marché (modèle sous bookmaker)">🔴 Traps</button>
+    <span id="rg-filter-count" style="margin-left:auto; font-family:'DM Mono',monospace; font-size:10.5px; color:#5a6068;">— matches</span>
+  </div>
+
   <div class="rg-bracket-wrap">
     <div id="rg-bracket" class="rg-bracket">
       <div class="rg-loading">Chargement du tableau Roland Garros…</div>
@@ -10148,16 +10183,32 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     const p2Enc = _rgEncPlayer(p2);
     const p1Label = _rgEsc('Voir détails ' + (p1.name || 'joueur'));
     const p2Label = _rgEsc('Voir détails ' + (p2.name || 'joueur'));
-    return '<div class="rg-match-card' + (isLive ? ' live' : '') + '">' +
-      '<div class="rg-player-line rg-player-clickable ' + (p1Win ? 'winner' : (p2Win ? 'loser' : '')) + '" data-rg-player="' + p1Enc + '" role="button" tabindex="0" aria-label="' + p1Label + '">' +
+    // Pilier 2 — Value Heatmap : applique class edge-* sur la card + render badge
+    const oe = m.odds_edge;
+    let edgeCls = '';
+    let edgeBadge = '';
+    let edgeBest = null;
+    if (oe && oe.edge_pct) {
+      edgeBest = oe.edge_pct.best;
+      const tier = oe.edge_pct.tier;
+      const verdict = oe.edge_pct.verdict;
+      edgeCls = ' edge-' + tier + ' edge-side-' + verdict;
+      const sign = edgeBest >= 0 ? '+' : '';
+      const tierIcon = tier === 'strong' ? '🟢' : (tier === 'moderate' ? '🟡' : (tier === 'trap' ? '🔴' : '⚪'));
+      edgeBadge = '<span class="rg-edge-badge edge-' + tier + '" title="Cote ' + oe.odds.p1.toFixed(2) + ' / ' + oe.odds.p2.toFixed(2) + ' · fair ' + oe.fair_pct.p1.toFixed(1) + '% / ' + oe.fair_pct.p2.toFixed(1) + '%">' + tierIcon + ' EV ' + sign + edgeBest.toFixed(1) + '%</span>';
+    }
+    const dataEdge = edgeBest != null ? ' data-edge="' + edgeBest.toFixed(1) + '"' : '';
+    return '<div class="rg-match-card' + (isLive ? ' live' : '') + edgeCls + '" data-rg-match-id="' + _rgEsc(String(m.match_id || '')) + '"' + dataEdge + '>' +
+      edgeBadge +
+      '<div class="rg-player-line rg-player-clickable ' + (p1Win ? 'winner' : (p2Win ? 'loser' : '')) + '" data-rg-player="' + p1Enc + '" data-player-id="' + _rgEsc(String(p1.id || '')) + '" role="button" tabindex="0" aria-label="' + p1Label + '">' +
         '<span class="rg-player-name">' + _rgEsc(p1.name || 'TBD') + seed1 + clay1 + '</span>' +
         '<span class="rg-player-prob">' + pr1 + '</span>' +
       '</div>' +
-      '<div class="rg-player-line rg-player-clickable ' + (p2Win ? 'winner' : (p1Win ? 'loser' : '')) + '" data-rg-player="' + p2Enc + '" role="button" tabindex="0" aria-label="' + p2Label + '">' +
+      '<div class="rg-player-line rg-player-clickable ' + (p2Win ? 'winner' : (p1Win ? 'loser' : '')) + '" data-rg-player="' + p2Enc + '" data-player-id="' + _rgEsc(String(p2.id || '')) + '" role="button" tabindex="0" aria-label="' + p2Label + '">' +
         '<span class="rg-player-name">' + _rgEsc(p2.name || 'TBD') + seed2 + clay2 + '</span>' +
         '<span class="rg-player-prob">' + pr2 + '</span>' +
       '</div>' +
-      '<div class="rg-match-meta"><span>' + _rgEsc(dt) + '</span><span>' + _rgEsc(m.status || '') + '</span></div>' +
+      '<div class="rg-match-meta"><span>' + _rgEsc(dt) + '</span><span class="rg-match-score" data-status="' + _rgEsc(m.status || '') + '">' + _rgEsc(m.status || '') + '</span></div>' +
     '</div>';
   }
   window.loadRolandGarros = async function(tour, opts) {
@@ -10431,6 +10482,105 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     const card = document.getElementById('rg-player-card');
     if (card && card.classList.contains('open')) closeRgPlayerCard();
   });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Pilier 2 — Value Heatmap : filter chips + count badge.
+  // ═══════════════════════════════════════════════════════════════════════
+  let _rgCurrentFilter = 'all';
+  window.rgSetFilter = function(mode, btn) {
+    _rgCurrentFilter = mode || 'all';
+    document.querySelectorAll('.rg-filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    _rgApplyFilter();
+  };
+  function _rgApplyFilter() {
+    const cards = document.querySelectorAll('#rg-bracket .rg-match-card');
+    let shown = 0, total = cards.length;
+    cards.forEach(function(card) {
+      const edgeStr = card.dataset.edge;
+      const edge = edgeStr != null ? parseFloat(edgeStr) : null;
+      let show = true;
+      if (_rgCurrentFilter === 'value') show = edge != null && edge > 0;
+      else if (_rgCurrentFilter === 'ev5') show = edge != null && edge >= 5;
+      else if (_rgCurrentFilter === 'ev10') show = edge != null && edge >= 10;
+      else if (_rgCurrentFilter === 'trap') show = card.classList.contains('edge-trap');
+      card.classList.toggle('filter-hidden', !show);
+      if (show) shown++;
+    });
+    const cnt = document.getElementById('rg-filter-count');
+    if (cnt) cnt.textContent = shown + ' / ' + total + ' matches' + (_rgCurrentFilter === 'all' ? '' : ' (filtre actif)');
+  }
+  // Re-apply filter après chaque load (le bracket innerHTML est régénéré)
+  const _rgOriginalLoad2 = window.loadRolandGarros;
+  window.loadRolandGarros = async function() {
+    const result = await _rgOriginalLoad2.apply(this, arguments);
+    try { _rgApplyFilter(); } catch (_) {}
+    return result;
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Pilier 3 — Live Momentum (DOM patch ciblé, zero re-render bracket).
+  // Expose une API window.rgUpdateLiveNode(matchId, patch) appelable depuis
+  // un consumer WS (par ex. BSD WebSocket adapter dans une feature flag V2).
+  // ═══════════════════════════════════════════════════════════════════════
+  window.rgUpdateLiveNode = function(matchId, patch) {
+    if (!matchId || !patch) return false;
+    const node = document.querySelector('.rg-match-card[data-rg-match-id="' + CSS.escape(String(matchId)) + '"]');
+    if (!node) return false;
+    if (!node.classList.contains('live') && (patch.status === 'live' || patch.status === 'in_progress')) {
+      node.classList.add('live');
+    }
+    if (patch.score != null) {
+      const scoreEl = node.querySelector('.rg-match-score');
+      if (scoreEl) scoreEl.textContent = String(patch.score);
+    }
+    if (patch.dominance_ratio != null) {
+      let drEl = node.querySelector('.rg-dr-mini');
+      if (!drEl) {
+        drEl = document.createElement('span');
+        drEl.className = 'rg-dr-mini';
+        node.appendChild(drEl);
+      }
+      drEl.textContent = 'DR ' + Number(patch.dominance_ratio).toFixed(2);
+    }
+    if (patch.current_server_id != null) {
+      node.querySelectorAll('.rg-player-line').forEach(function(p) { p.classList.remove('serving'); });
+      const sv = node.querySelector('.rg-player-line[data-player-id="' + CSS.escape(String(patch.current_server_id)) + '"]');
+      if (sv) sv.classList.add('serving');
+    }
+    if (patch.status === 'finished' || patch.status === 'ended') {
+      node.classList.remove('live');
+      const sv = node.querySelectorAll('.rg-player-line.serving');
+      sv.forEach(function(p) { p.classList.remove('serving'); });
+    }
+    return true;
+  };
+
+  // SSE consumer optionnel : si une route /api/v1/tennis/rg-live-stream est
+  // ajoutée plus tard côté server, ce listener consomera les patches. Soft-
+  // wire : pas d'erreur si endpoint absent (EventSource gère ses propres
+  // reconnects en background).
+  function _rgInitLiveStream() {
+    if (typeof EventSource === 'undefined') return;
+    if (window._rgLiveSseInit) return;
+    window._rgLiveSseInit = true;
+    try {
+      const es = new EventSource('/api/v1/tennis/rg-live-stream');
+      es.addEventListener('match_update', function(ev) {
+        try {
+          const data = JSON.parse(ev.data || '{}');
+          if (data && data.match_id) window.rgUpdateLiveNode(data.match_id, data);
+        } catch (_) {}
+      });
+      es.onerror = function() {
+        // 404/501 si endpoint pas encore implémenté server-side : on tolère silencieusement
+        // (le DOM patcher reste exploitable manuellement via window.rgUpdateLiveNode).
+      };
+      window._rgLiveEs = es;
+    } catch (_) {}
+  }
+  // Init SSE après premier load bracket (les nodes existent)
+  setTimeout(_rgInitLiveStream, 5000);
 })();
 </script>
 

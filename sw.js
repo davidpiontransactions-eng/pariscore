@@ -76,7 +76,12 @@
 // listener étendue à #rg-contenders + #rg-bracket. CSS .rg-contender.rg-player-
 // clickable hover translateY-2 + shadow brand. data-rg-player encode JSON sur
 // chaque card top contender.
-const CACHE = 'pariscore-shell-v30';
+// v31 (2026-05-23) : invalide v30 — V2 RG complete : Pilier 1 (fatigue
+// universelle round-based dans Monte Carlo Worker + fallback inline),
+// Pilier 2 (Value Heatmap odds devig Shin-Hurley + edge tier + filter
+// chips bracket), Pilier 3 (Live Momentum DOM patcher + SSE consumer
+// + server SSE broadcaster polling BSD /matches/live/ toutes les 30s).
+const CACHE = 'pariscore-shell-v31';
 const SHELL = [
   '/',
   '/pariscore.html',
