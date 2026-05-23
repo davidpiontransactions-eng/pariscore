@@ -18905,6 +18905,37 @@ function _initTennisInternalSchema() {
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_loser_name ON tennis_matches_internal(loser_name)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_surface ON tennis_matches_internal(surface, tour)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_tour_date ON tennis_matches_internal(tour, tourney_date)`);
+
+  // bd dl49 Phase 4.1 — Extend schema avec serve stats cols (mirror Sackmann).
+  // DG choice 2026-05-24 Option A : populate ces cols depuis BSD shotmap/incidents
+  // API quand dispo (ETL extension Phase 4.1.1 session future). Rows existants
+  // restent NULL → consumers serve stats fallback Sackmann via 'union' source.
+  // Idempotent ALTER via pragma check.
+  try {
+    const cols = sqldb.prepare(`PRAGMA table_info(tennis_matches_internal)`).all();
+    const colNames = new Set(cols.map(c => c.name));
+    // Mirror Sackmann serve stat columns (per side : winner / loser)
+    const serveCols = [
+      ['w_ace', 'INTEGER'], ['w_df', 'INTEGER'], ['w_svpt', 'INTEGER'],
+      ['w_1stIn', 'INTEGER'], ['w_1stWon', 'INTEGER'], ['w_2ndWon', 'INTEGER'],
+      ['w_SvGms', 'INTEGER'], ['w_bpSaved', 'INTEGER'], ['w_bpFaced', 'INTEGER'],
+      ['l_ace', 'INTEGER'], ['l_df', 'INTEGER'], ['l_svpt', 'INTEGER'],
+      ['l_1stIn', 'INTEGER'], ['l_1stWon', 'INTEGER'], ['l_2ndWon', 'INTEGER'],
+      ['l_SvGms', 'INTEGER'], ['l_bpSaved', 'INTEGER'], ['l_bpFaced', 'INTEGER'],
+      // Rank seed bayésien cold-start (Sackmann compat)
+      ['winner_rank', 'INTEGER'], ['winner_rank_points', 'INTEGER'],
+      ['loser_rank', 'INTEGER'], ['loser_rank_points', 'INTEGER'],
+      // Player metadata Sackmann compat (handle dominance, IOC, age)
+      ['winner_hand', 'TEXT'], ['loser_hand', 'TEXT'],
+      ['winner_ioc', 'TEXT'], ['loser_ioc', 'TEXT'],
+      ['winner_age', 'REAL'], ['loser_age', 'REAL'],
+    ];
+    for (const [name, type] of serveCols) {
+      if (!colNames.has(name)) {
+        sqldb.exec(`ALTER TABLE tennis_matches_internal ADD COLUMN ${name} ${type}`);
+      }
+    }
+  } catch (e) { console.warn('  [Tennis internal] ALTER serve cols failed:', e.message); }
 }
 
 function _initTennisEloSchema() {
