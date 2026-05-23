@@ -49,7 +49,12 @@
 // BLOCKED_FILES + QA fixes + momentum La Liga + ETL Historique scaffold.
 // v25 (2026-05-21) : invalide v24 — bd nwk6 push event handler + notificationclick
 // (Phase 1 headerless + Phase 2 payload AES-128-GCM chiffre {title,body,url,icon}).
-const CACHE = 'pariscore-shell-v25';
+// v26 (2026-05-23) : invalide v25 — Refonte UI navbar (16 nav-icon-3d SVG
+// glassmorphic translucent) + refonte archi Roland Garros (route pure-read
+// JSON statique + cron PM2 + worker_threads + bsdTennisFetch hardening) +
+// regex _rgRoundOrder format BSD "Round of 128". Force re-install pour
+// purger anciens pariscore.html sans <img class="nav-icon-3d"> chez users.
+const CACHE = 'pariscore-shell-v26';
 const SHELL = [
   '/',
   '/pariscore.html',
