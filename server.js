@@ -18788,6 +18788,54 @@ const TENNIS_ELO_SURFACES = ['Hard', 'Clay', 'Grass', 'Carpet'];
 let _tennisEloComputing = false;
 let _tennisEloLastComputeTs = 0;
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd dl49 Phase 3 — tennis_matches_internal (Sackmann replacement, proprietary)
+//
+// Schema subset Sackmann columns built from BSD tennis settled matches + ESPN
+// tennis archive + db.archive_tennis_matches array. Coverage limited to ingest
+// start (~2024+). PRIMARY KEY (source, source_id) garantit idempotency cross-
+// source. Indices sur date/winner_name pour Elo computation queries.
+//
+// Sources acceptées :
+//   bsd     — api_cache key bsd_tennis_matches_<date>
+//   espn    — api_cache key espn_tennis_*
+//   archive — db.archive_tennis_matches array (legacy)
+//
+// Migration cible : computeTennisElo + computeTennisServeStats + speed index +
+// backtest T9 + tournament alias surface index → read from cette table au lieu
+// de tennis_matches (Sackmann CC-BY-NC-SA déprecated bd 8uoc).
+// ═══════════════════════════════════════════════════════════════════════════════
+function _initTennisInternalSchema() {
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_matches_internal (
+    source TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    tour TEXT,
+    tourney_name TEXT,
+    tourney_id INTEGER,
+    surface TEXT,
+    tourney_date INTEGER,
+    match_date INTEGER,
+    winner_name TEXT,
+    loser_name TEXT,
+    winner_player_id INTEGER,
+    loser_player_id INTEGER,
+    score TEXT,
+    sets_winner INTEGER,
+    sets_loser INTEGER,
+    best_of INTEGER,
+    round TEXT,
+    status TEXT,
+    minutes INTEGER,
+    imported_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    PRIMARY KEY (source, source_id)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_date ON tennis_matches_internal(tourney_date)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_winner_name ON tennis_matches_internal(winner_name)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_loser_name ON tennis_matches_internal(loser_name)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_surface ON tennis_matches_internal(surface, tour)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_tour_date ON tennis_matches_internal(tour, tourney_date)`);
+}
+
 function _initTennisEloSchema() {
   sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_elo (
     player_id INTEGER NOT NULL,
