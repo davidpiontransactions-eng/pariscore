@@ -3502,11 +3502,16 @@ function getFlashscoreStandings(configId) {
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
-async function bsdTennisFetch(pathSuffix, retries = 2) {
+// Hardening RG-timeout (rapport_resolution_timeout_rg.md §5.3) :
+// retries 2 → 1 + timeout 15s → 8s. Worst case 48s → 17s par appel.
+// Le cron BG tolère un échec (retry dans 2h) ; le path user HTTP ne touche
+// jamais BSD (lecture JSON statique seulement, cf. nouvelle route RG).
+const BSD_TENNIS_FETCH_TIMEOUT_MS = 8000;
+async function bsdTennisFetch(pathSuffix, retries = 1) {
   const url = `${BSD_TENNIS_BASE}${pathSuffix}`;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await httpsGet(url, { 'Authorization': `Token ${BSD_API_KEY}` });
+      const res = await httpsGet(url, { 'Authorization': `Token ${BSD_API_KEY}` }, BSD_TENNIS_FETCH_TIMEOUT_MS);
       if (res && res.status === 402) {
         const code = (res.data && (res.data.code || res.data.error)) || '';
         if (String(code).toLowerCase().includes('addon')) {
@@ -5439,7 +5444,7 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
   }
 }
 
-function httpsGet(urlStr, headers = {}) {
+function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr);
     const opts = {
@@ -5460,7 +5465,7 @@ function httpsGet(urlStr, headers = {}) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
     req.end();
   });
 }
@@ -28626,19 +28631,115 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
     cache: 'miss',
   };
   apiCacheSet(cacheKey, payload, 'rg_bracket', RG_BRACKET_TTL_MS);
+  // Phase 2 — écriture atomique fichier JSON statique pour lecture pure côté route HTTP.
+  // Détaché du chemin user via cron BG (tools/cron-rg-prefetch.js). Le serveur HTTP
+  // expose juste un readFile sans dépendance réseau.
+  try {
+    const outDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+    const outPath = path.join(outDir, `rg_predictions_${tour}.json`);
+    const tmp = outPath + '.tmp';
+    const fileBlob = { ...payload, written_at: Date.now() };
+    fs.writeFileSync(tmp, JSON.stringify(fileBlob));
+    fs.renameSync(tmp, outPath);
+  } catch (e) {
+    console.warn('  [RG static JSON write]', e && e.message);
+  }
   return payload;
+}
+// Lecture pure du fichier JSON statique pré-calculé par le cron BG.
+// Retourne null si absent. fresh = écrit <2h ; stale = écrit <24h.
+const RG_STATIC_FRESH_MS = 2 * 3600 * 1000;
+const RG_STATIC_STALE_MS = 24 * 3600 * 1000;
+function readRgStaticJson(tour) {
+  const p = path.join(__dirname, 'data', `rg_predictions_${tour}.json`);
+  try {
+    if (!fs.existsSync(p)) return null;
+    const raw = fs.readFileSync(p, 'utf8');
+    const data = JSON.parse(raw);
+    const writtenAt = Number(data.written_at) || 0;
+    const ageMs = Date.now() - writtenAt;
+    return {
+      data,
+      ageMs,
+      fresh: ageMs < RG_STATIC_FRESH_MS,
+      stale: ageMs < RG_STATIC_STALE_MS,
+    };
+  } catch (e) {
+    console.warn('  [RG static JSON read]', e && e.message);
+    return null;
+  }
 }
 if (pathname === '/api/v1/tournament/roland-garros' && req.method === 'GET') {
   const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase())
     ? String(query.tour).toUpperCase() : 'ATP';
+  // Path user HTTP : lecture pure, jamais de compute inline (rapport §4).
+  // PRIORITÉ 1 — Fichier JSON statique (lecture O(1), aucune dépendance réseau)
+  const staticEntry = readRgStaticJson(tour);
+  if (staticEntry && (staticEntry.fresh || staticEntry.stale)) {
+    return jsonResponse(res, 200, {
+      ...staticEntry.data,
+      cache: staticEntry.fresh ? 'static_fresh' : 'static_stale',
+      age_ms: staticEntry.ageMs,
+    });
+  }
+  // PRIORITÉ 2 — SQLite api_cache (fallback si fichier absent OU stale >24h)
+  const sqliteEntry = apiCacheGet(`rg_bracket_${tour}_${RG_MC_DEFAULT_N}`);
+  if (sqliteEntry) {
+    return jsonResponse(res, 200, { ...sqliteEntry, cache: 'sqlite_fallback' });
+  }
+  // PRIORITÉ 3 — Aucun cache disponible. On signale warming_up sans bloquer.
+  // Le user retry dans 2 min, ou le cron BG aura déjà rempli le cache.
+  return jsonResponse(res, 503, {
+    error: 'rg_warming_up',
+    message: 'Pré-calcul en cours côté serveur. Réessayez dans 2-5 minutes.',
+    retry_after_s: 120,
+    available: false,
+    reason: 'warming_up',
+  });
+}
+// Route admin trigger pour le cron BG découplé (tools/cron-rg-prefetch.js).
+// Localhost-only + token requis (RG_REFRESH_TOKEN env, fallback ADMIN_PASSWORD).
+// Exécute _rgBuildFresh() qui fait BSD fetch + Monte Carlo Worker + write JSON.
+// Le compute happens dans CE process serveur mais hors d'une requête user.
+if (pathname === '/api/v1/admin/rg-refresh' && (req.method === 'POST' || req.method === 'GET')) {
+  // Defense-in-depth #1 — localhost only
+  const remoteAddr = (req.socket && req.socket.remoteAddress) || '';
+  const isLocal = remoteAddr === '127.0.0.1' || remoteAddr === '::1' || remoteAddr === '::ffff:127.0.0.1';
+  if (!isLocal) {
+    return jsonResponse(res, 403, { error: 'localhost_only', remote: remoteAddr });
+  }
+  // Defense-in-depth #2 — token check
+  const expectedToken = process.env.RG_REFRESH_TOKEN || process.env.ADMIN_PASSWORD || '';
+  const givenToken = String(query.token || (req.headers['x-rg-token'] || '')).trim();
+  if (!expectedToken) {
+    return jsonResponse(res, 500, { error: 'server_misconfig', detail: 'RG_REFRESH_TOKEN or ADMIN_PASSWORD env var required' });
+  }
+  if (givenToken !== expectedToken) {
+    return jsonResponse(res, 401, { error: 'invalid_token' });
+  }
+  const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase())
+    ? String(query.tour).toUpperCase() : 'ATP';
   const simNRaw = parseInt(query.simN, 10);
   const simN = Number.isFinite(simNRaw) ? Math.max(1000, Math.min(50000, simNRaw)) : RG_MC_DEFAULT_N;
+  const t0 = Date.now();
   try {
-    const out = await buildRolandGarrosBracket({ tour, simN });
-    return jsonResponse(res, 200, out);
+    const out = await _rgBuildFresh({ tour, simN });
+    const ms = Date.now() - t0;
+    if (!out || !out.available) {
+      console.warn(`  [RG admin trigger ${tour}] unavailable ${ms}ms : ${out && out.reason}`);
+      return jsonResponse(res, 200, { ok: false, tour, simN, ms, reason: out && out.reason });
+    }
+    console.log(`  [RG admin trigger ${tour}] OK ${ms}ms · ${out.draw_size} players`);
+    return jsonResponse(res, 200, {
+      ok: true, tour, simN, ms,
+      draw_size: out.draw_size,
+      generated_at: out.generated_at,
+      written_to: `data/rg_predictions_${tour}.json`,
+    });
   } catch (e) {
-    console.error('  [RG] route erreur:', e && e.stack ? e.stack : e);
-    return jsonResponse(res, 502, { error: 'rg_bracket_failed', detail: String(e && e.message || e) });
+    console.error(`  [RG admin trigger ${tour}] ERROR:`, e && e.stack ? e.stack : e);
+    return jsonResponse(res, 502, { ok: false, error: 'rg_build_failed', detail: String(e && e.message || e) });
   }
 }
 if (pathname === '/api/v1/tennis/aiscore/index' && req.method === 'GET') {
