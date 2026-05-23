@@ -100,7 +100,7 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `qe5` | Live Dashboard Betting Cockpit Phase 1 — Win Prob + Top3 picks + events markers + verdict | Phase 1 partial v12.62 (Minute promue + cockpit) · Phase 1.5 ✅ events markers SVG momentum : backend fetch BSD incidents parallèle (cache 60s) + normalisation kind=goal/own_goal/card_yellow/card_red/shot_on_target + frontend overlay drawLDMomentumSVG markers `⚽▮○` color-coded position minute×W + tooltip `<title>` minute/type/player/score. Phase 2/3 spec ouvertes (live xG curve enrichi + verdict layer 2) |
 | `j5lb` | **[DECISION DG]** GO/NO-GO 6 études bloquées arbitrage | DG decision |
 | `p2if` | AI-AL Revue de Presse Foot+Tennis — 5 avis presse panel Gemini | Phase 1+2 livrés `ae6a292` + v12.66 (Phase 2A RSS Foot + Phase 2B cron Telegram top picks) · Phase 3 ✅ Tennis RSS extension : `RSS_FEEDS` ajoute 4 sources tennis (L'Equipe Tennis / BBC Tennis / ESPN Tennis / Tennis World USA), `fetchPressContext` accepte param `sport='tennis'` route feeds, route `/api/v1/ai/tennis-analyze/:matchId` inject `[REVUE DE PRESSE REELLE]` block 5s timeout fallback + prompt PRIORITE ABSOLUE conditionnel |
-| `8uoc` | **[DECISION DG]** Tennis Abstract + autres DBs tennis | Research v2 livré commit `2ce9463` (TML-Database MIT) · 3 questions DG Q1/Q2/Q3 |
+| ~~`8uoc`~~ ✅ | Tennis Abstract + autres DBs tennis — DG GO purge Sackmann 2026-05-23 | Phase 1+2 livrées commit `dd2bb75`. TML-DB finding CC-NC (non MIT) — replacement = bd `dl49` internal Elo BSD/ESPN |
 
 **✓ FERMÉS session 22/05/2026 v12.65 (8 P1)**
 

@@ -15492,7 +15492,8 @@ function _tnRenderSourceBadge(m) {
   let warn = '';
   if (src === 'LIVESCORE' && m && m.is_live) {
     const hasPoint = m.current_point && m.current_point !== '—';
-    const hasServing = (m.serving === 1 || m.serving === 2);
+    // bd 4c52 — helper centralisé tolère type coercion + variantes champs.
+    const hasServing = _tnGetServingIdx(m) !== null;
     if (!hasPoint && !hasServing) {
       warn = '<span class="tn-src-warn" title="Données limitées — LiveScore n\'expose ni point ni serveur" aria-label="Données limitées LiveScore">!</span>';
     }
@@ -15545,14 +15546,19 @@ function renderTennisLive(matches) {
     const allSets = sets.length ? sets.map(s => `${s.p1}-${s.p2}`).join(' ') : '—';
     const p1Flag = m.player1?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player1.flag)}" alt="">` : '';
     const p2Flag = m.player2?.flag ? `<img class="tennis-flag" src="${_escTennis(m.player2.flag)}" alt="">` : '';
-    const p1Cls = m.serving === 1 ? 'tennis-serving' : '';
-    const p2Cls = m.serving === 2 ? 'tennis-serving' : '';
+    // bd 4c52 — Helper _tnGetServingIdx tolère type coercion + variantes nom
+    // de champ (top-level vs nested per-player vs string serialized). Évite
+    // bug "balle figée" causé par strict equality `=== 1` qui échouait sur
+    // payload `serving:'1'` ou `player1.is_serving:true` sans top-level.
+    const _srvIdx = _tnGetServingIdx(m);
+    const p1Cls = _srvIdx === 1 ? 'tennis-serving' : '';
+    const p2Cls = _srvIdx === 2 ? 'tennis-serving' : '';
     const _ballSvg = '<svg class="tn-live-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg>';
     // bd c5i fix: badge "?" gris quand serving inconnu (ESPN/LiveScore expose pas serveur).
     // Avant: deux balles vides → ambiguite UX. Apres: badge ? sur les 2 lignes uniformement.
     const _unknownBadge = '<span class="tn-live-srv-unknown" title="Serveur inconnu — source data ne l\'expose pas pour ce match" aria-label="Serveur inconnu">?</span>';
-    const p1Ball = m.serving === 1 ? _ballSvg : (m.serving == null ? _unknownBadge : '');
-    const p2Ball = m.serving === 2 ? _ballSvg : (m.serving == null ? _unknownBadge : '');
+    const p1Ball = _srvIdx === 1 ? _ballSvg : (_srvIdx == null ? _unknownBadge : '');
+    const p2Ball = _srvIdx === 2 ? _ballSvg : (_srvIdx == null ? _unknownBadge : '');
     const tour = String(m.tour || '').toUpperCase();
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';
@@ -15789,6 +15795,47 @@ function _tnPointPart(cp, who) {
   return s;
 }
 
+// bd 4c52 — Résout l'index serveur (1=J1, 2=J2, null=inconnu) tolérant aux
+// variantes backend. Fix bug "balle figée" : strict equality `=== 1` échouait
+// si BSD/Sofa sérialisent serving comme string ('1') OU si payload utilise un
+// flag nested par joueur (m.player1.is_serving=true) au lieu de top-level.
+//
+// Sources acceptées (premier non-null gagne):
+//   1. m.serving / m._live.serving (number ou string '1'|'2')
+//   2. m.server_idx / m.serve_idx (alias)
+//   3. m.player1.is_serving / m.player1.serving (flag nested boolean)
+//   4. m.player2.is_serving / m.player2.serving
+// Renvoie 1 | 2 | null.
+function _tnGetServingIdx(m) {
+  if (!m) return null;
+  const coerce = v => {
+    if (v == null) return null;
+    if (typeof v === 'number') return (v === 1 || v === 2) ? v : null;
+    if (typeof v === 'string') {
+      const n = parseInt(v, 10);
+      return (n === 1 || n === 2) ? n : null;
+    }
+    return null;
+  };
+  const lo = m._live || null;
+  const candidates = [
+    m.serving, lo && lo.serving,
+    m.server_idx, lo && lo.server_idx,
+    m.serve_idx, lo && lo.serve_idx,
+  ];
+  for (const v of candidates) {
+    const n = coerce(v);
+    if (n !== null) return n;
+  }
+  const p1Flag = (m.player1 && (m.player1.is_serving === true || m.player1.serving === true))
+    || (lo && lo.player1 && (lo.player1.is_serving === true || lo.player1.serving === true));
+  if (p1Flag) return 1;
+  const p2Flag = (m.player2 && (m.player2.is_serving === true || m.player2.serving === true))
+    || (lo && lo.player2 && (lo.player2.is_serving === true || lo.player2.serving === true));
+  if (p2Flag) return 2;
+  return null;
+}
+
 // Détecte le format Grand Chelem (best-of-5 → 5 colonnes sets) vs standard (3).
 function _tnIsGrandSlam(m) {
   const t = String((m && (m.tournament || m.league || m.competition || '')) || '').toLowerCase();
@@ -15836,10 +15883,13 @@ function _tvbScoreCell(m) {
   if (j1 == null && j2 == null) { j1 = '–'; j2 = '–'; }
   else { j1 = j1 == null ? '–' : j1; j2 = j2 == null ? '–' : j2; }
 
-  // Serveur — 🎾 sur la ligne du joueur qui sert (lo.serving 1|2). Slot
-  // toujours présent (visible/transparent) pour alignement géométrique strict
-  // J1/J2 (grille CSS : même nombre de cellules par ligne, sinon décalage).
-  const _srv = (lo.serving === 1) ? 'p1' : (lo.serving === 2) ? 'p2' : null;
+  // Serveur — 🎾 sur la ligne du joueur qui sert. Slot toujours présent
+  // (visible/transparent) pour alignement géométrique strict J1/J2 (grille
+  // CSS : même nombre de cellules par ligne, sinon décalage).
+  // bd 4c52 — Helper _tnGetServingIdx résout serving via fallback chain
+  // (top-level/nested/string-coerce) pour éviter strict-equality fail.
+  const _srvIdx = _tnGetServingIdx(Object.assign({}, m, { _live: lo }));
+  const _srv = (_srvIdx === 1) ? 'p1' : (_srvIdx === 2) ? 'p2' : null;
   const ballCell = (who) => {
     if (_srv === who) return `<span class="tn-sb-srv" title="${_escTennis(String((who === 'p1' ? m.player1?.name : m.player2?.name) || ''))} au service"><svg class="tn-sb-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg></span>`;
     /* Serving unknown : badge "?" gris transparent — honnêteté UX (data source ESPN/LiveScore expose pas le serveur) */
@@ -16888,7 +16938,9 @@ function tnLiveBets(m){
     // 1 — Vainqueur match re-pricé selon sets acquis
     if(bp1!=null&&bp2!=null){ var lp1=cl(bp1+lead*15); var s=lp1>=50; add((s?n1:n2)+' vainqueur'+(lead?(' ('+s1+'-'+s2+')'):''),s?lp1:100-lp1); }
     // 2 — Vainqueur du set en cours
-    var srv=lv.serving===1?'p1':(lv.serving===2?'p2':null);
+    // bd 4c52 — helper centralisé : type coercion + nested player flag.
+    var _srvIdx=_tnGetServingIdx({_live:lv,player1:lv&&lv.player1,player2:lv&&lv.player2});
+    var srv=_srvIdx===1?'p1':(_srvIdx===2?'p2':null);
     var st1=sm.set1&&sm.set1.p1_pct!=null?_tnPctN(sm.set1.p1_pct):null;
     var base=st1!=null?st1:(bp1!=null?bp1:50);
     if(srv) base=srv==='p1'?Math.min(85,base+8):Math.max(15,base-8);
@@ -16921,8 +16973,10 @@ function tnLiveBetsFromScore(m){
     if(lead>0)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n1)+' vainqueur</b> <span class="pp">mène '+s1+'-'+s2+'</span></div>');
     else if(lead<0)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n2)+' vainqueur</b> <span class="pp">mène '+s2+'-'+s1+'</span></div>');
     else chips.push('<div class="tvb-pred-chip"><b>Set 1 décisif</b> <span class="pp">'+s1+'-'+s2+'</span></div>');
-    if(m.serving===1)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n1)+' tient son service</b></div>');
-    else if(m.serving===2)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n2)+' tient son service</b></div>');
+    // bd 4c52 — helper centralisé : type coercion + nested player flag.
+    var _srvIdx=_tnGetServingIdx(m);
+    if(_srvIdx===1)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n1)+' tient son service</b></div>');
+    else if(_srvIdx===2)chips.push('<div class="tvb-pred-chip"><b>'+_escTennis(n2)+' tient son service</b></div>');
     var gp1=Number(ls.p1)||0, gp2=Number(ls.p2)||0;
     chips.push('<div class="tvb-pred-chip"><b>'+((gp1+gp2)>=8?'Set long (tie-break ?)':'Set rapide')+'</b> <span class="pp">jeux '+gp1+'-'+gp2+'</span></div>');
     var v=lead>0?(n1+' mène'):(lead<0?(n2+' mène'):'serré');
