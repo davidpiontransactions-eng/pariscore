@@ -3507,6 +3507,48 @@
   .paris-tab { background: transparent; border: none; padding: 8px 14px; font-size: 11px; font-family: var(--font-mono); color: var(--text2); cursor: pointer; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid transparent; }
   .paris-tab.active { color: var(--green); border-bottom-color: var(--green); }
 
+  /* bd vl02 — Alertes SSE live edge math (favorite_trap + goal_flood) */
+  .alert-toast-stack { position: fixed; top: 18px; right: 18px; z-index: 9100; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 360px; }
+  .alert-toast {
+    pointer-events: auto; cursor: pointer;
+    display: flex; align-items: stretch; gap: 0;
+    background: linear-gradient(135deg, rgba(20,24,28,0.97), rgba(28,34,40,0.95));
+    border: 1px solid rgba(245,158,11,0.45);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    overflow: hidden;
+    animation: alertToastIn .35s cubic-bezier(.2,.8,.2,1) both;
+    backdrop-filter: blur(6px);
+  }
+  .alert-toast.dismissing { animation: alertToastOut .25s ease-in both; }
+  .alert-toast.type-trap { border-color: rgba(245,158,11,0.55); }
+  .alert-toast.type-flood { border-color: rgba(239,68,68,0.55); }
+  .alert-toast-bar { width: 4px; flex-shrink: 0; }
+  .alert-toast.type-trap .alert-toast-bar { background: linear-gradient(180deg, #ffa726, #fb8c00); }
+  .alert-toast.type-flood .alert-toast-bar { background: linear-gradient(180deg, #ff4d4d, #e2001a); }
+  .alert-toast-body { flex: 1; min-width: 0; padding: 10px 14px 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .alert-toast-head { display: flex; align-items: center; gap: 8px; }
+  .alert-toast-icon { font-size: 18px; line-height: 1; }
+  .alert-toast-title { font: 700 12px/1.2 var(--font-mono); color: var(--text); letter-spacing: .6px; text-transform: uppercase; }
+  .alert-toast.type-trap .alert-toast-title { color: #ffa726; }
+  .alert-toast.type-flood .alert-toast-title { color: #ff6b6b; }
+  .alert-toast-msg { font: 500 12px/1.4 var(--font-display, sans-serif); color: var(--text2); }
+  .alert-toast-meta { font: 600 10px/1 var(--font-mono); color: var(--text3); letter-spacing: .5px; margin-top: 2px; }
+  @keyframes alertToastIn {
+    0% { transform: translateX(120%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes alertToastOut {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(120%); opacity: 0; }
+  }
+  @media (max-width: 600px) {
+    .alert-toast-stack { top: 12px; right: 12px; left: 12px; max-width: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .alert-toast, .alert-toast.dismissing { animation: none !important; }
+  }
+
   /* bd o6s — CLV Tracker mini-card sticky footer (Sprint 3 INNOV-8) */
   /* Mini-card 30j toujours visible bas page Mes Paris : KPI sharp/flat/square
      stratégie active. Click → onglet CLV détail. Subtle, non-bloquant scroll. */
@@ -20909,6 +20951,17 @@ function initSSE() {
     } catch (err) { console.warn('[SSE] live_ws error', err); }
   });
 
+  // bd vl02 — Alertes SSE live edge math (favorite_trap + goal_flood)
+  // Affiche toast UI top-right avec type-specific icon + couleur + auto-dismiss 8s.
+  // Click toast → dismiss. Stack si multiples alertes proches.
+  sseConnection.addEventListener('alert_trigger', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || !d.type) return;
+      _showAlertToast(d);
+    } catch (err) { console.warn('[SSE] alert_trigger error', err); }
+  });
+
   sseConnection.onopen = () => {
     console.log('[SSE] Connecté — polling 5min désactivé');
     if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
@@ -29382,6 +29435,61 @@ function setParisTab(tab) {
   if (tab === 'clv') loadCLVByStrategy();
   // bd o6s — Refresh mini-card CLV sticky footer à chaque switch tab (page Mes Paris).
   try { loadCLVMiniCard(); } catch (_) { /* swallow */ }
+}
+
+// bd vl02 — Alertes SSE live edge math toast UI
+// Render top-right stack (auto-create container si absent) + auto-dismiss 8s + click-dismiss.
+function _showAlertToast(d) {
+  if (!d || !d.type) return;
+  let stack = document.getElementById('alert-toast-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'alert-toast-stack';
+    stack.className = 'alert-toast-stack';
+    document.body.appendChild(stack);
+  }
+  const pl = d.payload || {};
+  let icon = 'ALERT', title = 'Alerte live', msg = '', typeCls = '';
+  if (d.type === 'favorite_trap') {
+    icon = 'PIEGE'; title = 'Favori en deficit'; typeCls = 'type-trap';
+    const fav = pl.favorite_team || 'Favori';
+    const opp = pl.opponent_team || 'Adversaire';
+    const edge = pl.best_edge_pct != null ? ' (edge pre-match ' + (pl.best_edge_pct > 0 ? '+' : '') + Number(pl.best_edge_pct).toFixed(1) + '%)' : '';
+    msg = fav + ' mene par ' + opp + ' — score ' + (pl.score || '?') + edge;
+  } else if (d.type === 'goal_flood') {
+    icon = 'BUTS'; title = 'Goal flood 15min'; typeCls = 'type-flood';
+    msg = (pl.goals_15min || '3+') + ' buts en 15min — ' + (pl.home_team || 'DOM') + ' vs ' + (pl.away_team || 'EXT') + ' score ' + (pl.score || '?');
+  } else {
+    title = String(d.type).toUpperCase();
+    msg = JSON.stringify(pl).slice(0, 100);
+  }
+  const t = document.createElement('div');
+  t.className = 'alert-toast ' + typeCls;
+  t.innerHTML =
+    '<div class="alert-toast-bar"></div>' +
+    '<div class="alert-toast-body">' +
+      '<div class="alert-toast-head">' +
+        '<span class="alert-toast-icon">[' + icon + ']</span>' +
+        '<span class="alert-toast-title">' + title + '</span>' +
+      '</div>' +
+      '<div class="alert-toast-msg"></div>' +
+      '<div class="alert-toast-meta">minute ' + (pl.minute != null ? pl.minute : '?') + ' • ' + new Date(d.ts || Date.now()).toLocaleTimeString('fr-FR') + '</div>' +
+    '</div>';
+  // Inject msg en safe text (pas innerHTML pour éviter XSS noms teams)
+  t.querySelector('.alert-toast-msg').textContent = msg;
+  const dismiss = () => {
+    if (t.classList.contains('dismissing')) return;
+    t.classList.add('dismissing');
+    setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 280);
+  };
+  t.addEventListener('click', dismiss);
+  stack.appendChild(t);
+  setTimeout(dismiss, 8000);
+  // Cap stack à 5 toasts max (drop le plus ancien si >5)
+  while (stack.children.length > 5) {
+    const oldest = stack.firstElementChild;
+    if (oldest && oldest !== t) oldest.parentNode.removeChild(oldest); else break;
+  }
 }
 
 // bd o6s — Load CLV mini-card sticky footer page Mes Paris
