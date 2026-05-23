@@ -11399,6 +11399,28 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tn-bppi-missing { color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:11px; }
   .tn-bppi-ctx { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; color:#E2001A; letter-spacing:.4px; margin-top:1px; font-weight:700; }
 
+  /* ── bd krj — Break Point Pressure halo amber (sprint 3 INNOV-11) ─────── */
+  /* Halo amber subtil sur cellule joueur quand BPPI > 30 (pression break élevée).
+     Signal visuel "ce joueur sous pression — opportunité tactique" — value bet trigger.
+     Subtle car threshold bas couvre ~50% joueurs lives en match serré. */
+  #tennis-live-table td.tn-bp-halo {
+    position: relative;
+    background: linear-gradient(90deg, rgba(255,167,38,0.06), rgba(255,167,38,0.10) 50%, rgba(255,167,38,0.06));
+    box-shadow: inset 0 0 0 1px rgba(255,167,38,0.32);
+    animation: tnBpHaloPulse 2.4s ease-in-out infinite;
+  }
+  #tennis-live-table td.tn-bp-halo.tn-bp-halo-strong {
+    background: linear-gradient(90deg, rgba(255,167,38,0.10), rgba(255,167,38,0.18) 50%, rgba(255,167,38,0.10));
+    box-shadow: inset 0 0 0 1px rgba(255,167,38,0.58), 0 0 8px rgba(255,167,38,0.22) inset;
+  }
+  @keyframes tnBpHaloPulse {
+    0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,167,38,0.32); }
+    50%      { box-shadow: inset 0 0 0 1px rgba(255,167,38,0.58), 0 0 6px rgba(255,167,38,0.20) inset; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #tennis-live-table td.tn-bp-halo { animation: none !important; }
+  }
+
   /* ── Bets Prédictifs (colonne après Match · VB + Live tab) ── */
   .tvb-pred { display:flex; flex-direction:column; gap:3px; align-items:flex-start; min-width:150px; }
   .tvb-pred-kpi { display:inline-block; font-family:'DM Mono',monospace; font-size:10px; font-weight:800; letter-spacing:.5px; padding:2px 7px; border-radius:6px; text-transform:uppercase; }
@@ -15551,8 +15573,21 @@ function renderTennisLive(matches) {
     // bug "balle figée" causé par strict equality `=== 1` qui échouait sur
     // payload `serving:'1'` ou `player1.is_serving:true` sans top-level.
     const _srvIdx = _tnGetServingIdx(m);
-    const p1Cls = _srvIdx === 1 ? 'tennis-serving' : '';
-    const p2Cls = _srvIdx === 2 ? 'tennis-serving' : '';
+    // bd krj — Halo amber pressure break sur cellule joueur. Threshold BPPI>30
+    // = pression élevée (signal value bet sous-jacent). >65 = strong halo
+    // (clutch + offense + serve + momentum tous favorables sur ce joueur).
+    const _bppi = (m && m.bppi && m.bppi.missing !== true) ? m.bppi : null;
+    const _bpHalo = (v) => {
+      if (!_bppi) return '';
+      const n = Number(v) || 0;
+      if (n > 65) return 'tn-bp-halo tn-bp-halo-strong';
+      if (n > 30) return 'tn-bp-halo';
+      return '';
+    };
+    const p1BpCls = _bpHalo(_bppi && _bppi.p1);
+    const p2BpCls = _bpHalo(_bppi && _bppi.p2);
+    const p1Cls = [_srvIdx === 1 ? 'tennis-serving' : '', p1BpCls].filter(Boolean).join(' ');
+    const p2Cls = [_srvIdx === 2 ? 'tennis-serving' : '', p2BpCls].filter(Boolean).join(' ');
     const _ballSvg = '<svg class="tn-live-ball" viewBox="0 0 24 24" aria-hidden="true"><use href="#i3d-tennisball"/></svg>';
     // bd c5i fix: badge "?" gris quand serving inconnu (ESPN/LiveScore expose pas serveur).
     // Avant: deux balles vides → ambiguite UX. Apres: badge ? sur les 2 lignes uniformement.
