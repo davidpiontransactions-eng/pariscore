@@ -31,6 +31,32 @@
 'use strict';
 
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+// Charge .env du projet (le cron script tourne dans un PM2 child sans env
+// du shell parent). Parser minimaliste zero-dep, n'écrase pas les var déjà
+// présentes (process.env > .env). Safe sur fichier absent.
+function loadEnvFile() {
+  const envPath = path.join(__dirname, '..', '.env');
+  try {
+    const content = fs.readFileSync(envPath, 'utf8');
+    for (const line of content.split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+      if (m && !process.env[m[1]]) {
+        let val = m[2].trim();
+        if ((val.startsWith('"') && val.endsWith('"')) ||
+            (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        process.env[m[1]] = val;
+      }
+    }
+  } catch (e) {
+    console.warn('[cron-rg] .env load skipped :', e && e.message);
+  }
+}
+loadEnvFile();
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 const HOST = '127.0.0.1';
@@ -38,7 +64,7 @@ const TOKEN = process.env.RG_REFRESH_TOKEN || process.env.ADMIN_PASSWORD || '';
 const REQUEST_TIMEOUT_MS = 90 * 1000; // 90s — laisse de la marge pour BSD lent
 
 if (!TOKEN) {
-  console.error('[cron-rg] FATAL : RG_REFRESH_TOKEN ou ADMIN_PASSWORD env requis');
+  console.error('[cron-rg] FATAL : RG_REFRESH_TOKEN ou ADMIN_PASSWORD env requis (.env non trouvé ou variable absente)');
   process.exit(2);
 }
 
