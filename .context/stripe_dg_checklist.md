@@ -12,19 +12,21 @@
 
 Dashboard Stripe → Products → New product, pour CHAQUE produit ci-dessous :
 
-| Product Name | Billing | Amount | Env var côté .env |
-|---|---|---|---|
-| PariScore Pro (Mensuel) | Recurring monthly | TBD € | `STRIPE_PRICE_PRO_MONTHLY` |
-| PariScore Pro (Annuel) | Recurring yearly | TBD € | `STRIPE_PRICE_PRO_ANNUAL` |
-| PariScore Pro Football | Recurring monthly | TBD € | `STRIPE_PRICE_PRO_FOOT` |
-| PariScore Pro Tennis | Recurring monthly | TBD € | `STRIPE_PRICE_PRO_TENNIS` |
-| PariScore Matchday Pass | One-time | TBD € | `STRIPE_MATCHDAY_PRICE_ID` |
+| Product Name | Billing | Amount | Trial | Env var côté .env |
+|---|---|---|---|---|
+| PariScore Pro (Mensuel) | Recurring monthly | **€19** ✅ | **7 jours** ✅ | `STRIPE_PRICE_PRO_MONTHLY` |
+| PariScore Pro (Annuel) | Recurring yearly | TBD ⏳ | 7 jours | `STRIPE_PRICE_PRO_ANNUAL` |
+| PariScore Pro Football | Recurring monthly | TBD ⏳ | 7 jours | `STRIPE_PRICE_PRO_FOOT` |
+| PariScore Pro Tennis | Recurring monthly | TBD ⏳ | 7 jours | `STRIPE_PRICE_PRO_TENNIS` |
+| PariScore Matchday Pass | One-time | **€2.99** ✅ | — | `STRIPE_MATCHDAY_PRICE_ID` |
 
-⚠️ Décisions DG bloquantes (cf bd s77m notes) :
-- Prix mensuel/annuel final
-- Trial 7 jours oui/non
-- Plans mono-sport (foot/tennis séparés) oui/non
-- Matchday pass oui/non
+DG ARBITRAGE 2026-05-23 :
+- ✅ Prix mensuel Pro : **€19/mois**
+- ⏳ Prix annuel : TBD (recommandé €182.40 -20%)
+- ✅ Trial : **7 jours gratuit** (tous plans subscription)
+- ✅ Plans mono-sport : **OUI** (foot + tennis séparés en plus du full-Pro)
+- ✅ Matchday pass : **OUI €2.99 one-time J-1**
+- ⏳ Refund policy : TBD (recommandé 14j EU cooling-off conforme RGPD/CDC)
 
 → Copier les `price_xxx` IDs générés.
 
