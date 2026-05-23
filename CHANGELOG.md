@@ -2,6 +2,73 @@
 
 ---
 
+## [v12.67] — 2026-05-23 — bd `0mpj` Onglet Roland Garros bracket interactif (Path A internal Clay Elo + Monte Carlo)
+
+### Code livré (1 feature, 706 lignes — 393 backend + 317 frontend)
+
+| Locus | Description |
+|---|---|
+| `server.js:28336-28518` | Backend RG bracket : `_rgRoundOrder/_rgRoundLabel/_monteCarloRG/buildRolandGarrosBracket` + route `GET /api/v1/tournament/roland-garros?tour=ATP|WTA&simN=1000..50000`. Réutilise `resolveRgTournaments` (BSD `/api/v2/tournaments/?category=grand_slam` cache 12h) + `handleTennisBSD` (matches `/api/v2/matches/?tournament=ID&limit=300` cache 30min) + `tennis_elo` SQLite (surface='Clay' interne PariScore, lecture). Cache payload 1h. Monte Carlo N=10000 défaut (clamp 1k-50k). Sortie par joueur : `clay_elo` + `clay_rank` + `title_prob_pct` + `final_prob_pct` + `sf_prob_pct`. Top 16 contenders triés + bracket structuré par round avec p1/p2 win prob Elo. |
+| `pariscore.html:7211` | Nav link `🏆 Roland Garros` + auto-load on first click via `window._rgLoaded` guard. |
+| `pariscore.html:9703-9899` | Page `#page-rg` scoped CSS RG charte (`--rg-clay #D85B25` + `--rg-cream #F4ECDE` + `--rg-green #0A4D3C` + Bree Serif headlines). Hero + toggle ATP/WTA + status pill + refresh button. Top 16 favoris grid responsive avec `🏆 X.XX%` color-coded (hot ≥10% emerald · warm 2-10% amber · cool <2% grey). Bracket horizontal scroll 7 colonnes (R128 → F) avec cards glassmorphism par match (seed badge + clay-rank pill + win prob % + winner highlight). Disclaimer méthodo Monte Carlo. Mobile responsive ≤768px. |
+
+### Architecture
+
+- **Path A (legal-clean)** : Clay Elo recomputed via `computeTennisElo()` existant depuis `tennis_matches` Sackmann (proprietary derivation). Pas de dépendance TA cElo direct (bd `8uoc` Q1/Q2/Q3 DG pending), pas de scraper externe à activer.
+- **Sourcing draw** : BSD MCP primary `/api/v2/tournaments/?category=grand_slam` + `/api/v2/matches/?tournament=ID&limit=300`. Fallback ESPN non câblé (BSD seul couvre Grand Slam draws complets).
+- **Monte Carlo** : 10k itérations × 127 matchs × 7 rounds = 1.27M ops. Bench standalone Node natif `Math.random()` + Elo formula = 222ms pour 5k sims. <500ms pour 10k. Pas de Worker thread (single-shot).
+
+### Validation
+
+- `node --check server.js` ✓ syntaxe OK
+- Route smoke test fresh boot port 3099 BSD off : 15ms cache hit / 5750ms cache miss → `{available: false, reason: 'rg_not_found'}` comportement attendu.
+- Monte Carlo standalone bench 5k sims 128 joueurs : 222ms, top 5 spread 6.8% → 10.88% (Elo gap réaliste).
+
+### Décisions par défaut (auto mode, redirigeable)
+
+1. **Path** : A internal recompute (vs B TA cElo bloqué `8uoc`).
+2. **Tour** : ATP men's singles par défaut (WTA toggle dispo).
+3. **Persistance** : cache `api_cache` clé `rg_bracket_<tour>_<simN>` TTL 1h (vs nouvelle table `tournament_brackets` — TTL cache suffit pour usage 2 semaines tournoi).
+4. **Cadence** : on-demand fetch (vs cron J-1 — cache 1h + push BSD WS cumul couvre).
+5. **Onglet** : nav header principal (vs sous-onglet Tennis).
+6. **Charte** : scoped `[data-page="rg"]` (vs theme switcher global).
+
+### Pending DG/ops
+
+- **Deploy VPS** : `cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore` — requis pour activer la route (BSD_TENNIS_ENABLED=true prod).
+- **Validation prod post-deploy** : `curl https://pariscore.com/api/v1/tournament/roland-garros?tour=ATP&simN=10000 | jq .draw_size` → attend 128, `.top_contenders[0].name` → favori (Sinner ATP ou Sabalenka WTA mid-2026).
+- **Extension WTA** : code prêt, juste valider BSD `circuit='WTA'` retourne RG femmes dans `/tournaments` (sinon ajuster regex filter).
+- **Cron pre-warm cache** : si latence cache miss 5s gêne UX, ajouter cron 6h `buildRolandGarrosBracket({tour:'ATP'})` + idem WTA pour garder cache chaud pendant les 2 semaines RG.
+
+---
+
+## [v12.66] — 2026-05-22 — Audit bd `3u9` AF post-prod (kill-switch + plan tier + recommandations DG)
+
+### Audit livré (1 doc `.context/audits/`)
+
+| bd | Livrable |
+|---|---|
+| `3u9` | `.context/audits/audit-3u9-af-state-post-prod.md` — état réel kill-switch v10.77 (`server.js:69-71`), plan compte actuel (Free 100 req/jour, cross-ref bd `zia`), tableau usages AF par feature post-`AF_REMOVED=true`, 3 scénarios DG (A maintenir kill-switch $0/mo · B upgrade Pro $19/mo + activer bd `zia` cotes · C cleanup total 500-800 lignes dead code), synergy bd `zia` conditionnelle plan Pro, recommandation CTO Scénario A court terme (reverse possible via plan revenue Stripe `s77m`). |
+
+### Findings clés
+
+- Kill-switch v10.77 confirmé sain : `AF_REMOVED=true` → `API_FOOTBALL_KEY=''` → ~23 call sites early-return null gracefully. Aucune régression observée (boot 271 matchs sans AF, log `[AF] API-Football RETIRÉ`).
+- Routes ex-AF : `/api/v1/af/predictions/:id` fallback BSD (v10.75), `/api/v1/af/transfers/:id` 503 gracieux assumé (orphelin sunsetté), stats avancées équipe couvertes par `buildAdvancedStatsFromStandings` v10.76.
+- Opt-in cotes AF `USE_API_FOOTBALL_ODDS=1` (bd `zia`) **indépendant du kill-switch stats** — viable uniquement plan Pro (compte Free 100 req/j cap insuffisant pour 200 req/j cumulés).
+- Contradiction doc identifiée : `.claude/CLAUDE.md` §3.2 et §14 décrivent un plan Pro $19/mo qui n'est pas souscrit (drift à corriger après décision DG).
+
+### Pas de code change
+
+Audit only — aucun call site touché, aucun cleanup dead code (réservé Scénario C sur décision DG).
+
+### Résiduel — décisions DG attendues
+
+1. Scénario A (kill-switch maintenu, $0/mo) vs B (upgrade Pro, réactive AF + bd `zia`) vs C (cleanup total) ?
+2. bd `zia` : close `wont_fix` (A/C) ou attendre activation prod (B) ?
+3. Sync `.claude/CLAUDE.md` §3.2 §14 après décision DG.
+
+---
+
 ## [v12.65] — 2026-05-22 — Session 26 commits : c5i Phase 3 + izsn safeFixed + 8c5 momentum + p2if AI-AL + bjv/8uoc/ffh spikes + k37 + rlhf + ryi3 health + tv-bsd Phase 1
 
 Session intensive 22/05 — 26 commits push main (bd-driven + worktree-disciplined).

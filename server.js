@@ -880,6 +880,32 @@ function buildAffiliateRedirectUrl(aff, subid, clickId) {
   return base + sep + 'subid=' + encodeURIComponent(subid) + '&cid=' + clickId;
 }
 
+// bd l9vk Phase 1 — injecte UTM tags affiliate sur deeplink_template render pour reconciliation
+// Stripe → utm_source/utm_campaign/utm_medium/utm_content (affiliate_id). Idempotent (skip si déjà présents).
+function injectAffiliateUTM(url, affiliateId, source, campaign, content) {
+  if (!url || typeof url !== 'string') return url;
+  try {
+    const u = new URL(url);
+    const params = u.searchParams;
+    if (!params.has('utm_source')   && source)   params.set('utm_source',   String(source).slice(0, 60));
+    if (!params.has('utm_campaign') && campaign) params.set('utm_campaign', String(campaign).slice(0, 60));
+    if (!params.has('utm_medium')) params.set('utm_medium', 'affiliate');
+    if (!params.has('utm_content') && (content || affiliateId)) {
+      params.set('utm_content', String(content || `aff_${affiliateId}`).slice(0, 60));
+    }
+    return u.toString();
+  } catch {
+    // URL invalide → append manuel best-effort (rare car affiliate_link validé en CRUD)
+    const sep = url.includes('?') ? '&' : '?';
+    const parts = [];
+    if (source)   parts.push('utm_source='   + encodeURIComponent(source));
+    if (campaign) parts.push('utm_campaign=' + encodeURIComponent(campaign));
+    parts.push('utm_medium=affiliate');
+    parts.push('utm_content=' + encodeURIComponent(content || `aff_${affiliateId || 'na'}`));
+    return url + sep + parts.join('&');
+  }
+}
+
 function normalizeSport(sp) {
   if (!sp) return 'football';
   const s = String(sp).trim().toLowerCase();
@@ -4645,8 +4671,19 @@ function initSQLite() {
     if (!cols.some(c => c.name === 'conversion_type')) {
       sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN conversion_type TEXT`);
     }
+    // bd l9vk Phase 5 — Stripe customer reconciliation + UTM tracking marketing
+    if (!cols.some(c => c.name === 'customer_id')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN customer_id TEXT`);
+    }
+    if (!cols.some(c => c.name === 'utm_source')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN utm_source TEXT`);
+    }
+    if (!cols.some(c => c.name === 'utm_campaign')) {
+      sqldb.exec(`ALTER TABLE affiliate_clicks ADD COLUMN utm_campaign TEXT`);
+    }
     // UNIQUE click_id : SQLite autorise N NULL multiples par défaut → safe pour clicks legacy
     sqldb.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_aff_clicks_clickid  ON affiliate_clicks(click_id)`);
+    sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_customer ON affiliate_clicks(customer_id)`);
     sqldb.exec(`CREATE INDEX        IF NOT EXISTS idx_aff_clicks_user     ON affiliate_clicks(user_id, clicked_at)`);
     sqldb.exec(`CREATE INDEX        IF NOT EXISTS idx_aff_clicks_converted ON affiliate_clicks(converted_at)`);
     sqldb.exec(`CREATE INDEX        IF NOT EXISTS idx_aff_clicks_context  ON affiliate_clicks(context, clicked_at)`);
@@ -25540,6 +25577,163 @@ if (pathname.startsWith('/api/v1/affiliate/link/') && req.method === 'GET') {
   });
 }
 
+// ─── bd l9vk Phase 1+5 — affiliate_id-based click route (vs /r/ bookmaker-based) ───
+// GET /api/v1/affiliate/click/:affiliateId?source=X&campaign=Y&content=Z
+// Effet: lookup affiliate id → INSERT click_id UUID + UTM tags → 302 vers affiliate_link (+ UTM injectés)
+// Use-case: CTAs hors-match (banner landing, email, Telegram channel) — pas besoin de matchId.
+// Cookie ps_aff_click posé 90j (first-party, GDPR-safe) pour réconciliation Stripe checkout.
+const affClickMatch = pathname.match(/^\/api\/v1\/affiliate\/click\/(\d+)$/);
+if (affClickMatch && req.method === 'GET') {
+  // Sanitize affiliate_id : regex /^\d+$/ déjà appliquée via match. Cap à uint32.
+  const affiliateId = parseInt(affClickMatch[1], 10);
+  if (!Number.isFinite(affiliateId) || affiliateId < 1 || affiliateId > 2147483647) {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('invalid affiliate id');
+  }
+  let aff;
+  try {
+    aff = sqldb.prepare('SELECT * FROM affiliates WHERE id = ? AND active = 1').get(affiliateId);
+  } catch (e) {
+    console.error('[/api/v1/affiliate/click/:id] DB lookup failed:', e.message);
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('lookup failed');
+  }
+  if (!aff) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('affiliate not found or inactive');
+  }
+  const clickId = (crypto.randomUUID ? crypto.randomUUID() : genClickId());
+  const source   = String(query.source   || '').slice(0, 60);
+  const campaign = String(query.campaign || '').slice(0, 60);
+  const content  = String(query.content  || '').slice(0, 60);
+  const user = getAuthUser(req);
+  // Inject UTM dans URL finale (utm_source/campaign/medium/content)
+  let targetUrl = injectAffiliateUTM(aff.affiliate_link, aff.id, source || 'direct', campaign || 'click', content);
+  // Append cid pour postback iGaming compat
+  try {
+    const u2 = new URL(targetUrl);
+    if (!u2.searchParams.has('cid')) u2.searchParams.set('cid', clickId);
+    targetUrl = u2.toString();
+  } catch { /* noop */ }
+  // INSERT click best-effort, non-bloquant
+  try {
+    sqldb.prepare(`INSERT INTO affiliate_clicks
+      (affiliate_id, match_id, user_ip, user_agent, click_id, context, utm_source, utm_campaign, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      aff.id,
+      query.mid || 'direct',
+      req.socket && req.socket.remoteAddress || 'unknown',
+      String(req.headers['user-agent'] || '').slice(0, 256),
+      clickId,
+      `${source || 'direct'}_${campaign || 'click'}`.slice(0, 64),
+      source || null,
+      campaign || null,
+      user && user.userId || null
+    );
+  } catch (e) {
+    console.error('[/api/v1/affiliate/click/:id] INSERT failed:', e.message);
+  }
+  // Cookie first-party 90j : Stripe checkout pourra lire et envoyer affiliate_click_id en metadata
+  const cookieMaxAge = 90 * 24 * 3600;
+  res.writeHead(302, {
+    'Location': targetUrl,
+    'Set-Cookie': `ps_aff_click=${clickId}; Max-Age=${cookieMaxAge}; Path=/; SameSite=Lax; HttpOnly`,
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache',
+  });
+  return res.end();
+}
+
+// ─── bd l9vk Phase 5 — opt-out RGPD tracking affiliate (clear cookie) ───
+if (pathname === '/api/v1/affiliate/optout' && (req.method === 'POST' || req.method === 'DELETE')) {
+  res.writeHead(200, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Set-Cookie': 'ps_aff_click=; Max-Age=0; Path=/; SameSite=Lax; HttpOnly',
+  });
+  return res.end(JSON.stringify({ optout: true, message: 'Cookie tracking affiliate effacé. Vous ne serez plus tracé.' }));
+}
+
+// ─── bd l9vk Phase 5 — admin stats dashboard par affiliate × période ───
+// GET /api/v1/admin/affiliate/stats?affiliate_id=X&period=30d
+// Réponse: { clicks, conversions, conv_rate, ltv_total, payout_total, roi_pct, by_day[], top_contexts[] }
+if (pathname === '/api/v1/admin/affiliate/stats' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  // Parse period (1d/7d/30d/90d/all) → seconds offset
+  const periodRaw = String(query.period || '30d');
+  const periodMatch = periodRaw.match(/^(\d{1,3})d$/);
+  let sinceClause = '';
+  if (periodMatch) {
+    const days = Math.min(365, parseInt(periodMatch[1], 10));
+    sinceClause = `AND clicked_at >= strftime('%s','now','-${days} days')`;
+  } else if (periodRaw !== 'all') {
+    return jsonResponse(res, 400, { error: 'period invalide (attendu: 1d-365d ou "all")' });
+  }
+  // Affiliate filter optionnel
+  const affIdRaw = query.affiliate_id;
+  let affClause = '';
+  if (affIdRaw !== undefined && affIdRaw !== null && affIdRaw !== '') {
+    if (!/^\d+$/.test(String(affIdRaw))) {
+      return jsonResponse(res, 400, { error: 'affiliate_id invalide (entier requis)' });
+    }
+    affClause = `AND affiliate_id = ${parseInt(affIdRaw, 10)}`;
+  }
+  try {
+    const summary = sqldb.prepare(`SELECT
+        COUNT(*) AS clicks,
+        SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) AS conversions,
+        COALESCE(SUM(payout_cents), 0) AS payout_cents_total,
+        COUNT(DISTINCT customer_id) AS unique_customers
+      FROM affiliate_clicks
+      WHERE 1=1 ${sinceClause} ${affClause}`).get();
+    const clicks = summary?.clicks || 0;
+    const conversions = summary?.conversions || 0;
+    const convRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
+    const payoutTotal = (summary?.payout_cents_total || 0) / 100;
+    const ltvRow = sqldb.prepare(`SELECT COALESCE(SUM(payout_cents), 0) AS ltv_cents
+      FROM affiliate_clicks
+      WHERE converted_at IS NOT NULL ${sinceClause} ${affClause}`).get();
+    const ltvTotal = (ltvRow?.ltv_cents || 0) / 100;
+    const roiPct = payoutTotal > 0 ? ((ltvTotal - payoutTotal) / payoutTotal) * 100 : null;
+    const byDay = sqldb.prepare(`SELECT
+        DATE(clicked_at, 'unixepoch') AS day,
+        COUNT(*) AS clicks,
+        SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) AS conversions,
+        COALESCE(SUM(payout_cents), 0) / 100.0 AS payout_eur
+      FROM affiliate_clicks
+      WHERE 1=1 ${sinceClause} ${affClause}
+      GROUP BY day
+      ORDER BY day DESC
+      LIMIT 90`).all();
+    const topContexts = sqldb.prepare(`SELECT
+        COALESCE(context, 'unknown') AS context,
+        COUNT(*) AS clicks,
+        SUM(CASE WHEN converted_at IS NOT NULL THEN 1 ELSE 0 END) AS conversions
+      FROM affiliate_clicks
+      WHERE 1=1 ${sinceClause} ${affClause}
+      GROUP BY context
+      ORDER BY clicks DESC
+      LIMIT 10`).all();
+    return jsonResponse(res, 200, {
+      affiliate_id: affClause ? parseInt(affIdRaw, 10) : null,
+      period: periodRaw,
+      clicks,
+      conversions,
+      conv_rate: Math.round(convRate * 100) / 100,
+      ltv_total: ltvTotal,
+      payout_total: payoutTotal,
+      unique_customers: summary?.unique_customers || 0,
+      roi_pct: roiPct !== null ? Math.round(roiPct * 100) / 100 : null,
+      by_day: byDay,
+      top_contexts: topContexts,
+      generated_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error('[/api/v1/admin/affiliate/stats]', e.message);
+    return jsonResponse(res, 500, { error: 'Erreur agrégation stats', detail: e.message });
+  }
+}
+
 // ─── GET /r/ — 1st-party redirect anti-AdBlock (Niveau 3, endpoint anodin) ───
 // Params: b=bookmaker, c=context, mid=matchId, sp=sport, lg=league, m=market, s=selection
 // Effet: lookup affiliate → compose sub-id → INSERT click → 302 vers URL finale (avec pid/bid/subid/cid GA)
@@ -28138,6 +28332,189 @@ async function buildRgPath(playerName) {
 if (pathname === '/api/v1/tennis/rg-path' && req.method === 'GET') {
   const out = await buildRgPath(String(query.player || '').trim());
   return jsonResponse(res, 200, out);
+}
+// ── ParisScorebis-0mpj — Roland Garros bracket interactif (Path A internal) ──
+// Réutilise resolveRgTournaments + tennis_elo Clay surface. Monte Carlo 10k
+// title/F/SF prob. Cache 1h. Zéro TA dependency (legal-clean).
+const RG_MC_DEFAULT_N = 10000;
+const RG_BRACKET_TTL_MS = 60 * 60 * 1000;
+function _rgRoundOrder(roundName) {
+  if (!roundName) return 0;
+  const r = String(roundName).toLowerCase();
+  if (/r128|first round|1st round|1\/64|round 1\b/.test(r)) return 1;
+  if (/r64|second round|2nd round|1\/32|round 2\b/.test(r)) return 2;
+  if (/r32|third round|3rd round|1\/16|round 3\b/.test(r)) return 3;
+  if (/r16|round of 16|fourth round|4th round|1\/8|round 4\b/.test(r)) return 4;
+  if (/qf|quarter/.test(r)) return 5;
+  if (/sf|semi/.test(r)) return 6;
+  if (/^f$|\bfinal\b/.test(r)) return 7;
+  return 0;
+}
+function _rgRoundLabel(ord, totalRounds) {
+  const labels = ['F', 'SF', 'QF', 'R16', 'R32', 'R64', 'R128'];
+  const fromEnd = totalRounds - ord;
+  if (fromEnd >= 0 && fromEnd < labels.length) return labels[fromEnd];
+  return `R${Math.pow(2, Math.max(1, totalRounds - ord + 1))}`;
+}
+function _monteCarloRG(playerStats, N) {
+  const draw = playerStats.slice();
+  const totalRounds = Math.max(1, Math.round(Math.log2(Math.max(2, draw.length))));
+  const titleCount = new Map();
+  const finalCount = new Map();
+  const sfCount = new Map();
+  for (let i = 0; i < N; i++) {
+    let alive = draw.slice();
+    for (let round = 0; round < totalRounds; round++) {
+      const next = [];
+      for (let m = 0; m < alive.length; m += 2) {
+        const a = alive[m], b = alive[m + 1];
+        if (!a) { if (b) next.push(b); continue; }
+        if (!b) { next.push(a); continue; }
+        const eloA = a.clay_elo || 1500;
+        const eloB = b.clay_elo || 1500;
+        const pA = 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+        const winner = Math.random() < pA ? a : b;
+        next.push(winner);
+        const wKey = String(winner.name || '').toLowerCase();
+        if (round === totalRounds - 3) sfCount.set(wKey, (sfCount.get(wKey) || 0) + 1);
+        else if (round === totalRounds - 2) finalCount.set(wKey, (finalCount.get(wKey) || 0) + 1);
+      }
+      alive = next;
+    }
+    if (alive[0]) {
+      const champKey = String(alive[0].name || '').toLowerCase();
+      titleCount.set(champKey, (titleCount.get(champKey) || 0) + 1);
+    }
+  }
+  return { titleCount, finalCount, sfCount, totalRounds };
+}
+async function buildRolandGarrosBracket({ tour = 'ATP', simN = RG_MC_DEFAULT_N } = {}) {
+  const cacheKey = `rg_bracket_${tour}_${simN}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return { ...cached, cache: 'hit' };
+  const rgs = await resolveRgTournaments();
+  if (!rgs.length) return { available: false, reason: 'rg_not_found' };
+  // Filtre par tour (ATP/WTA) + exclu doubles/juniors. Tri id desc = édition récente.
+  let targets = rgs.filter(t => {
+    const c = String(t.circuit || '').toUpperCase();
+    const n = String(t.name || '').toLowerCase();
+    if (/doubles|boys|girls|wheelchair|junior/.test(n)) return false;
+    if (tour === 'ATP') return c === 'ATP' || /\bmen\b|\bmens\b|atp/.test(n);
+    if (tour === 'WTA') return c === 'WTA' || /\bwomen\b|\bwomens\b|\bladies\b|wta/.test(n);
+    return false;
+  });
+  targets.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+  if (!targets.length) return { available: false, reason: 'tour_not_found', tour, candidates: rgs };
+  const tournament = targets[0];
+  const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${tournament.id}&limit=300`, `bsd_rg_m_${tournament.id}`, 30 * 60 * 1000);
+  if (mo.status !== 200) return { available: false, reason: 'matches_fetch_failed', upstream_status: mo.status };
+  const ms = (mo.body && (Array.isArray(mo.body) ? mo.body : mo.body.results)) || [];
+  if (!ms.length) return { available: false, reason: 'no_matches' };
+  const rounds = new Map();
+  for (const m of ms) {
+    const ord = _rgRoundOrder(m.round_name);
+    if (ord === 0) continue;
+    if (!rounds.has(ord)) rounds.set(ord, []);
+    rounds.get(ord).push(m);
+  }
+  for (const arr of rounds.values()) {
+    arr.sort((a, b) => String(a.match_date || a.start_time || '').localeCompare(String(b.match_date || b.start_time || '')));
+  }
+  const r1 = rounds.get(1) || [];
+  if (!r1.length) return { available: false, reason: 'no_first_round', rounds_found: Array.from(rounds.keys()) };
+  const drawPlayers = [];
+  for (const m of r1) {
+    const p1 = m.player1 || {}; const p2 = m.player2 || {};
+    drawPlayers.push({ name: p1.name || p1.short_name || 'TBD', id: p1.id || null, seed: p1.seed || null, country: p1.country_code || p1.country || null });
+    drawPlayers.push({ name: p2.name || p2.short_name || 'TBD', id: p2.id || null, seed: p2.seed || null, country: p2.country_code || p2.country || null });
+  }
+  if (drawPlayers.length < 8) return { available: false, reason: 'draw_too_small', count: drawPlayers.length };
+  let claySorted = [];
+  try {
+    claySorted = sqldb.prepare(`SELECT player_name, elo, matches_count FROM tennis_elo WHERE tour = ? AND surface = 'Clay' ORDER BY elo DESC`).all(tour);
+  } catch (_) { claySorted = []; }
+  const clayRankMap = new Map();
+  for (let i = 0; i < claySorted.length; i++) {
+    const r = claySorted[i];
+    clayRankMap.set(String(r.player_name || '').toLowerCase(), { rank: i + 1, elo: r.elo, matches: r.matches_count });
+  }
+  const playerStats = drawPlayers.map(p => {
+    const key = String(p.name || '').toLowerCase();
+    const ce = clayRankMap.get(key);
+    return {
+      name: p.name, id: p.id, seed: p.seed, country: p.country,
+      clay_elo: ce ? Math.round(ce.elo) : 1500,
+      clay_rank: ce ? ce.rank : null,
+      clay_matches: ce ? ce.matches : 0,
+      elo_source: ce ? 'internal' : 'fallback_1500',
+    };
+  });
+  const sim = _monteCarloRG(playerStats, simN);
+  const playerMap = new Map();
+  for (const p of playerStats) {
+    const sk = String(p.name).toLowerCase();
+    playerMap.set(sk, {
+      ...p,
+      title_prob_pct: parseFloat(((sim.titleCount.get(sk) || 0) / simN * 100).toFixed(2)),
+      final_prob_pct: parseFloat(((sim.finalCount.get(sk) || 0) / simN * 100).toFixed(2)),
+      sf_prob_pct: parseFloat(((sim.sfCount.get(sk) || 0) / simN * 100).toFixed(2)),
+    });
+  }
+  const totalRounds = sim.totalRounds;
+  const bracketByRound = [];
+  for (let ord = 1; ord <= totalRounds; ord++) {
+    const arr = rounds.get(ord) || [];
+    const mapped = arr.map(m => {
+      const n1 = String((m.player1 && (m.player1.name || m.player1.short_name)) || 'TBD').toLowerCase();
+      const n2 = String((m.player2 && (m.player2.name || m.player2.short_name)) || 'TBD').toLowerCase();
+      const p1stats = playerMap.get(n1);
+      const p2stats = playerMap.get(n2);
+      const pWin = (p1stats && p2stats) ? _eloExpected(p1stats.clay_elo, p2stats.clay_elo) : null;
+      return {
+        match_id: m.id || null,
+        round: m.round_name || _rgRoundLabel(ord, totalRounds),
+        round_order: ord,
+        round_label: _rgRoundLabel(ord, totalRounds),
+        date: m.match_date || m.start_time || null,
+        status: m.status || null,
+        player1: p1stats || { name: (m.player1 && (m.player1.name || m.player1.short_name)) || 'TBD' },
+        player2: p2stats || { name: (m.player2 && (m.player2.name || m.player2.short_name)) || 'TBD' },
+        p1_win_prob: pWin != null ? parseFloat((pWin * 100).toFixed(1)) : null,
+        p2_win_prob: pWin != null ? parseFloat(((1 - pWin) * 100).toFixed(1)) : null,
+        winner_id: (m.winner_player_id != null ? m.winner_player_id : (m.winner && m.winner.id)) || null,
+      };
+    });
+    bracketByRound.push({ round_order: ord, round_label: _rgRoundLabel(ord, totalRounds), matches: mapped });
+  }
+  const topContenders = Array.from(playerMap.values())
+    .sort((a, b) => (b.title_prob_pct || 0) - (a.title_prob_pct || 0))
+    .slice(0, 16);
+  const payload = {
+    available: true,
+    tournament: { id: tournament.id, name: tournament.name, circuit: tournament.circuit, surface: tournament.surface, tour },
+    sim_n: simN,
+    draw_size: drawPlayers.length,
+    total_rounds: totalRounds,
+    rounds: bracketByRound,
+    top_contenders: topContenders,
+    generated_at: Math.floor(Date.now() / 1000),
+    cache: 'miss',
+  };
+  apiCacheSet(cacheKey, payload, 'rg_bracket', RG_BRACKET_TTL_MS);
+  return payload;
+}
+if (pathname === '/api/v1/tournament/roland-garros' && req.method === 'GET') {
+  const tour = ['ATP', 'WTA'].includes(String(query.tour || '').toUpperCase())
+    ? String(query.tour).toUpperCase() : 'ATP';
+  const simNRaw = parseInt(query.simN, 10);
+  const simN = Number.isFinite(simNRaw) ? Math.max(1000, Math.min(50000, simNRaw)) : RG_MC_DEFAULT_N;
+  try {
+    const out = await buildRolandGarrosBracket({ tour, simN });
+    return jsonResponse(res, 200, out);
+  } catch (e) {
+    console.error('  [RG] route erreur:', e && e.stack ? e.stack : e);
+    return jsonResponse(res, 502, { error: 'rg_bracket_failed', detail: String(e && e.message || e) });
+  }
 }
 if (pathname === '/api/v1/tennis/aiscore/index' && req.method === 'GET') {
   try {
@@ -34439,6 +34816,22 @@ async function bootInit() {
     }
 
     console.log('  [Boot] ✓ Système prêt.');
+
+    // bd ParisScorebis-h6a — Tennis Abstract Elo scraper status notice
+    // Scaffold tool lives at tools/scrape-tennis-abstract-elo.js. It is DISABLED
+    // by default because Tennis Abstract / Sackmann data ships under
+    // CC BY-NC-SA 4.0 (NonCommercial) incompatible with PariScore commercial SaaS.
+    // Activation requires DG GO on bd 8uoc Q1 + dual env flags + CLI confirm.
+    // See .context/h6a-tennis-elo-spec.md for full architecture + alternative path.
+    {
+      const _taOn = process.env.TENNIS_ABSTRACT_ELO_SCRAPER === '1'
+                 && process.env.LEGAL_OVERRIDE_CONFIRMED === '1';
+      if (_taOn) {
+        console.warn('  [Boot] ⚠ Tennis Abstract Elo scraper ENABLED via env override (bd h6a + 8uoc legal pending) — internal QA only, do NOT surface in UI/API.');
+      } else {
+        console.log('  [Boot] Tennis Abstract Elo scraper DISABLED (CC BY-NC-SA license — bd h6a + 8uoc legal DG pending).');
+      }
+    }
 
     withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
         .then(() => {
