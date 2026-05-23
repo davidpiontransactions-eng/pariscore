@@ -17490,46 +17490,132 @@ function enrichServingFromAiscoreCache(liveData, sourceTag) {
   return enriched;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd zckt — Helper générique `withOnDemandThrottle()` (innovation backlog)
+//
+// Extrait pattern de `fetchAiscoreServingOnDemand` (bd c5i Phase 3) en helper
+// réutilisable pour tout fetcher coûteux sur data gap conditionnel :
+//   • Cap N fetches par invocation (throttle global pollwide)
+//   • Cooldown M ms par key ratée (anti-retry-storm sur miss prévisible)
+//   • State Map réutilisable cross-poll (caller fournit pour persist)
+//
+// Use cases extensibles (cf CLAUDE.md innovation §3) :
+//   - fetchAiscoreLineupsOnDemand (lineups BSD/ESPN missing)
+//   - fetchSofascoreEditorialOnDemand (bd 6jro Plan H)
+//   - fetchOddsPapiPinnacleOnDemand (anchor sharp ad-hoc)
+//
+// SIGNATURE :
+//   await withOnDemandThrottle({
+//     candidates,         // array<item> à processer
+//     candidateKey,       // (item) => string (key pour tracking cooldown)
+//     resolver,           // async (item) => target|null (lookup léger, ex sitemap index)
+//     fetcher,            // async (item, target) => * (fetch coûteux, peut throw)
+//     maxPerInvocation,   // default 5
+//     cooldownMs,         // default 10 min
+//     state,              // Map<key, ts> (fournie par caller, persisted cross-call)
+//     name                // string debug-only
+//   })
+//   → number (fetches réussis)
+//
+// CONTRAT :
+//   • Skip item si state.has(key) && (now - state.get(key)) <= cooldownMs
+//   • Marque state.set(key, now) AVANT fetcher() (compte tentative, pas success — anti-retry)
+//   • Stoppe loop quand fetched >= maxPerInvocation (cap throttle)
+//   • Swallow errors fetcher individuels (cooldown évite spam, suite continue)
+// ═══════════════════════════════════════════════════════════════════════════════
+async function withOnDemandThrottle({
+  candidates,
+  candidateKey,
+  resolver,
+  fetcher,
+  maxPerInvocation = 5,
+  cooldownMs = 10 * 60 * 1000,
+  state,
+  name = 'ondemand',
+}) {
+  if (!Array.isArray(candidates) || candidates.length === 0) return 0;
+  if (!state || typeof state.has !== 'function') return 0;
+  if (typeof candidateKey !== 'function' || typeof fetcher !== 'function') return 0;
+
+  const now = Date.now();
+  const eligible = candidates.filter(item => {
+    const k = candidateKey(item);
+    if (!k) return false;
+    const lastTs = state.get(k);
+    return lastTs == null || (now - lastTs) > cooldownMs;
+  });
+  if (eligible.length === 0) return 0;
+
+  let fetched = 0;
+  for (const item of eligible) {
+    if (fetched >= maxPerInvocation) break;
+    const k = candidateKey(item);
+    state.set(k, now);  // marque AVANT fetcher (compte tentative, pas success)
+    let target = item;
+    if (typeof resolver === 'function') {
+      try {
+        target = await resolver(item);
+        if (target == null) continue;  // resolver ko = skip, mais cooldown déjà set
+      } catch (_) {
+        continue;  // resolver throw = skip, cooldown set évite retry storm
+      }
+    }
+    try {
+      await fetcher(item, target);
+      fetched++;
+    } catch (_) { /* fetcher swallow — cooldown active évite spam */ }
+  }
+  return fetched;
+}
+
 // bd c5i Phase 3 — On-demand aiscore fetch throttle pour matchs serving=null
 // & aiscore cache miss. Resout via sitemap index (player last-name match dans slug).
 // Throttle: max 5 fetches par poll + cooldown 10min par matchId raté.
+// bd zckt — refactor pour utiliser helper générique withOnDemandThrottle().
 const _aiscoreOndemandSeenIds = new Map();
 const AISCORE_ONDEMAND_COOLDOWN_MS = 10 * 60 * 1000;
 const AISCORE_ONDEMAND_MAX_PER_POLL = 5;
 async function fetchAiscoreServingOnDemand(liveData) {
   if (!Array.isArray(liveData) || liveData.length === 0) return 0;
-  const now = Date.now();
-  const candidates = liveData.filter(m =>
+  // Filter pre-resolver : skip matchs déjà résolus (serving set) ou data incomplète.
+  const targets = liveData.filter(m =>
     m && m.is_live && m.serving !== 1 && m.serving !== 2
     && m.player1 && m.player1.name && m.player2 && m.player2.name
-    && (!_aiscoreOndemandSeenIds.has(m.id)
-        || (now - _aiscoreOndemandSeenIds.get(m.id)) > AISCORE_ONDEMAND_COOLDOWN_MS)
   );
-  if (candidates.length === 0) return 0;
-  let idx;
-  try { idx = await getAiscoreTennisIndex(); } catch (_) { return 0; }
-  if (!idx || !Array.isArray(idx.matches) || idx.matches.length === 0) return 0;
-  let fetched = 0;
-  for (const m of candidates) {
-    if (fetched >= AISCORE_ONDEMAND_MAX_PER_POLL) break;
-    _aiscoreOndemandSeenIds.set(m.id, now);
-    const p1n = normName(m.player1.name);
-    const p2n = normName(m.player2.name);
-    if (!p1n || !p2n) continue;
-    const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
-    const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
-    if (!p1Last || !p2Last || p1Last.length < 3 || p2Last.length < 3) continue;
-    const hit = idx.matches.find(am => {
-      const s = String(am.slug || '').toLowerCase();
-      return s.includes(p1Last) && s.includes(p2Last);
-    });
-    if (!hit) continue;
-    try {
+  if (targets.length === 0) return 0;
+  // Resolver utilise un index partagé : on lazy-load une seule fois pour tous les candidats.
+  let _idxCache = null;
+  const getIdx = async () => {
+    if (_idxCache != null) return _idxCache;
+    try { _idxCache = await getAiscoreTennisIndex() || { matches: [] }; }
+    catch (_) { _idxCache = { matches: [] }; }
+    return _idxCache;
+  };
+  return await withOnDemandThrottle({
+    name: 'aiscore_serving',
+    candidates: targets,
+    candidateKey: (m) => m && m.id != null ? String(m.id) : null,
+    resolver: async (m) => {
+      const idx = await getIdx();
+      if (!idx || !Array.isArray(idx.matches) || idx.matches.length === 0) return null;
+      const p1n = normName(m.player1.name);
+      const p2n = normName(m.player2.name);
+      if (!p1n || !p2n) return null;
+      const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
+      const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
+      if (!p1Last || !p2Last || p1Last.length < 3 || p2Last.length < 3) return null;
+      return idx.matches.find(am => {
+        const s = String(am.slug || '').toLowerCase();
+        return s.includes(p1Last) && s.includes(p2Last);
+      }) || null;
+    },
+    fetcher: async (_m, hit) => {
       await getAiscoreMatch(hit.id, hit.slug);
-      fetched++;
-    } catch (_) { /* swallow — cooldown deja set */ }
-  }
-  return fetched;
+    },
+    maxPerInvocation: AISCORE_ONDEMAND_MAX_PER_POLL,
+    cooldownMs: AISCORE_ONDEMAND_COOLDOWN_MS,
+    state: _aiscoreOndemandSeenIds,
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
