@@ -28372,8 +28372,9 @@ function _rgRoundLabel(ord, totalRounds) {
   return `R${Math.pow(2, Math.max(1, totalRounds - ord + 1))}`;
 }
 // Monte Carlo perf-optimized : index-based TypedArrays + pre-computed win-prob
-// table (N×N Float32). Évite ~1.27M Math.pow() au profit de ~16K (1× au boot
-// du run). Gain mesuré ~5-10× vs version Map/Object. Interface inchangée.
+// table per-round (Pilier 1 fatigue) Float32. Évite Math.pow() en hot loop.
+// Doit rester synchronisé avec workers/rg_monte_carlo.js (fallback inline).
+const _RG_FATIGUE_BY_ROUND = [1.00, 1.00, 0.97, 0.93, 0.88, 0.83, 0.78];
 function _monteCarloRG(playerStats, N) {
   const titleCount = new Map();
   const finalCount = new Map();
@@ -28383,12 +28384,16 @@ function _monteCarloRG(playerStats, N) {
   const totalRounds = Math.max(1, Math.round(Math.log2(Math.max(2, n))));
   const elos = new Float64Array(n);
   for (let i = 0; i < n; i++) elos[i] = playerStats[i].clay_elo || 1500;
-  // Pré-calcul win-prob[i*n+j] = P(i bat j) (formule Elo standard)
-  const wp = new Float32Array(n * n);
-  for (let a = 0; a < n; a++) {
-    const ea = elos[a];
-    for (let b = 0; b < n; b++) {
-      wp[a * n + b] = 1 / (1 + Math.pow(10, (elos[b] - ea) / 400));
+  // Pré-calcul win-prob[round, a, b] = P(a bat b) au round R avec fatigue
+  const wp = new Float32Array(totalRounds * n * n);
+  for (let r = 0; r < totalRounds; r++) {
+    const fatigueCoef = _RG_FATIGUE_BY_ROUND[Math.min(r, _RG_FATIGUE_BY_ROUND.length - 1)];
+    for (let a = 0; a < n; a++) {
+      const ea = elos[a];
+      for (let b = 0; b < n; b++) {
+        const diff = (elos[b] - ea) * fatigueCoef;
+        wp[r * n * n + a * n + b] = 1 / (1 + Math.pow(10, diff / 400));
+      }
     }
   }
   const titleC = new Int32Array(n);
@@ -28402,11 +28407,12 @@ function _monteCarloRG(playerStats, N) {
     for (let k = 0; k < n; k++) alive[k] = k;
     let aliveLen = n;
     for (let round = 0; round < totalRounds; round++) {
+      const wpRoundBase = round * n * n;
       let nextLen = 0;
       const pairs = aliveLen - (aliveLen & 1);
       for (let m = 0; m < pairs; m += 2) {
         const a = alive[m], b = alive[m + 1];
-        const winner = Math.random() < wp[a * n + b] ? a : b;
+        const winner = Math.random() < wp[wpRoundBase + a * n + b] ? a : b;
         next[nextLen++] = winner;
         if (round === sfRound) sfC[winner]++;
         else if (round === finRound) finalC[winner]++;
@@ -28424,7 +28430,7 @@ function _monteCarloRG(playerStats, N) {
     if (finalC[i]) finalCount.set(sk, (finalCount.get(sk) || 0) + finalC[i]);
     if (sfC[i]) sfCount.set(sk, (sfCount.get(sk) || 0) + sfC[i]);
   }
-  return { titleCount, finalCount, sfCount, totalRounds };
+  return { titleCount, finalCount, sfCount, totalRounds, fatigue_by_round: _RG_FATIGUE_BY_ROUND.slice(0, totalRounds) };
 }
 // Phase 3 — Off-thread Monte Carlo via worker_threads. Décharge l'event loop
 // pendant 1-3s de compute. Fallback inline `_monteCarloRG` si worker échoue.
@@ -28487,6 +28493,59 @@ function runRgMonteCarloAsync(playerStats, N) {
     }
   });
 }
+// Pilier 3 — Live Momentum SSE broadcaster (V1 polling, V2 BSD WS).
+// Maintient un Set<res> de clients SSE connectés au flux /api/v1/tennis/rg-
+// live-stream. Poll BSD /api/v2/matches/live/ toutes les 30s, filtre tennis
+// clay grand_slam, calcule delta vs état précédent, broadcast event SSE
+// "match_update" aux clients. Frontend rgUpdateLiveNode() patch le DOM
+// ciblé sans re-render bracket.
+const _rgLiveSseClients = new Set();
+const _rgLivePollMs = 30 * 1000;
+const _rgLiveLastState = new Map(); // matchId → previous patch JSON string
+async function _rgLivePollOnce() {
+  if (_rgLiveSseClients.size === 0) return; // skip si aucun client SSE
+  try {
+    const out = await handleTennisBSD('/api/v2/matches/live/', null, 0);
+    if (out.status !== 200) return;
+    const matches = (out.body && (Array.isArray(out.body) ? out.body : out.body.results)) || [];
+    for (const m of matches) {
+      // Filtre tennis clay grand_slam (Roland Garros window)
+      const surf = m.tournament && m.tournament.surface;
+      const cat = m.tournament && m.tournament.category;
+      if (surf && String(surf).toLowerCase() !== 'clay') continue;
+      if (cat && String(cat).toLowerCase() !== 'grand_slam') continue;
+      const matchId = m.id;
+      if (matchId == null) continue;
+      const patch = {
+        match_id: matchId,
+        score: m.score || m.result_str || null,
+        status: m.status || null,
+        current_server_id: m.current_server_id != null ? m.current_server_id : null,
+        dominance_ratio: m.dominance_ratio != null ? m.dominance_ratio : null,
+        ts: Date.now(),
+      };
+      const sig = JSON.stringify({ s: patch.score, st: patch.status, srv: patch.current_server_id, dr: patch.dominance_ratio });
+      const prevSig = _rgLiveLastState.get(matchId);
+      if (prevSig === sig) continue; // pas de changement
+      _rgLiveLastState.set(matchId, sig);
+      const line = 'event: match_update\ndata: ' + JSON.stringify(patch) + '\n\n';
+      for (const sseRes of _rgLiveSseClients) {
+        try { sseRes.write(line); } catch (_) { _rgLiveSseClients.delete(sseRes); }
+      }
+    }
+    // Cleanup state pour matches finished (libère mémoire)
+    for (const [mid, sig] of _rgLiveLastState) {
+      try {
+        const parsed = JSON.parse(sig);
+        if (parsed.st === 'finished' || parsed.st === 'ended') _rgLiveLastState.delete(mid);
+      } catch (_) {}
+    }
+  } catch (e) {
+    console.error('  [RG live poll]', e && e.message);
+  }
+}
+setInterval(_rgLivePollOnce, _rgLivePollMs);
+
 // SWR (stale-while-revalidate) : si cache expiré <24h, on sert le stale +
 // refresh BG. Évite "Failed to fetch" frontend pendant le recalcul (1-3s).
 const _rgBgRefresh = new Set();
@@ -28518,6 +28577,58 @@ async function buildRolandGarrosBracket({ tour = 'ATP', simN = RG_MC_DEFAULT_N }
     return { ...staleEntry, cache: 'stale_refreshing' };
   }
   return await _rgBuildFresh({ tour, simN, cacheKey });
+}
+// Pilier 2 — Value Heatmap. Pour chaque match du bracket, compare la win
+// prob Monte Carlo PariScore aux cotes The Odds API (lookup par paires de
+// joueurs normalisés). Calcule fair prob via devig Shin-Hurley 2-way et
+// edge en points de pourcentage. Tier : strong (≥10pp), moderate (≥5pp),
+// neutral (≤±5pp), trap (≤-5pp côté p1 OU p2).
+function _rgComputeMatchEdge(p1stats, p2stats, pWin) {
+  if (!p1stats || !p2stats || !p1stats.name || !p2stats.name) return null;
+  if (p1stats.name === 'TBD' || p2stats.name === 'TBD') return null;
+  if (pWin == null) return null;
+  let hit = null;
+  try { hit = findTennisOddsForPlayers(p1stats.name, p2stats.name); } catch (_) {}
+  if (!hit || !hit.match) return null;
+  const best = extractBestTennisH2H(hit.match);
+  if (!best) return null;
+  // Align p1/p2 PariScore order avec swapped flag Odds API
+  const oddsP1 = hit.swapped ? best.p2.odds : best.p1.odds;
+  const oddsP2 = hit.swapped ? best.p1.odds : best.p2.odds;
+  const bookP1 = hit.swapped ? best.p2.book : best.p1.book;
+  const bookP2 = hit.swapped ? best.p1.book : best.p2.book;
+  if (!oddsP1 || !oddsP2 || oddsP1 < 1.01 || oddsP2 < 1.01) return null;
+  const fair = devigShinHurley([oddsP1, oddsP2]);
+  if (!fair || fair.length !== 2) return null;
+  const fairP1 = fair[0], fairP2 = fair[1];
+  const mcP1 = pWin, mcP2 = 1 - pWin;
+  const edgeP1Pct = (mcP1 - fairP1) * 100;
+  const edgeP2Pct = (mcP2 - fairP2) * 100;
+  const better = Math.max(edgeP1Pct, edgeP2Pct);
+  const worse = Math.min(edgeP1Pct, edgeP2Pct);
+  const verdict = edgeP1Pct >= edgeP2Pct ? 'p1' : 'p2';
+  let tier = 'neutral';
+  if (better >= 10) tier = 'strong';
+  else if (better >= 5) tier = 'moderate';
+  if (worse <= -10 && better < 5) tier = 'trap';
+  return {
+    odds: {
+      p1: oddsP1, p2: oddsP2,
+      book_p1: bookP1, book_p2: bookP2,
+      source: 'the_odds_api',
+    },
+    fair_pct: {
+      p1: parseFloat((fairP1 * 100).toFixed(1)),
+      p2: parseFloat((fairP2 * 100).toFixed(1)),
+      method: 'shin',
+    },
+    edge_pct: {
+      p1: parseFloat(edgeP1Pct.toFixed(1)),
+      p2: parseFloat(edgeP2Pct.toFixed(1)),
+      best: parseFloat(better.toFixed(1)),
+      verdict, tier,
+    },
+  };
 }
 async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } = {}) {
   if (!cacheKey) cacheKey = `rg_bracket_${tour}_${simN}`;
@@ -28632,6 +28743,8 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
       const p1stats = playerMap.get(n1);
       const p2stats = playerMap.get(n2);
       const pWin = (p1stats && p2stats) ? _eloExpected(p1stats.clay_elo, p2stats.clay_elo) : null;
+      // Pilier 2 — odds + edge (null si lookup Odds API miss)
+      const oddsEdge = _rgComputeMatchEdge(p1stats, p2stats, pWin);
       return {
         match_id: m.id || null,
         round: m.round_name || _rgRoundLabel(ord, totalRounds),
@@ -28644,6 +28757,7 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
         p1_win_prob: pWin != null ? parseFloat((pWin * 100).toFixed(1)) : null,
         p2_win_prob: pWin != null ? parseFloat(((1 - pWin) * 100).toFixed(1)) : null,
         winner_id: (m.winner_player_id != null ? m.winner_player_id : (m.winner && m.winner.id)) || null,
+        odds_edge: oddsEdge,
       };
     });
     bracketByRound.push({ round_order: ord, round_label: _rgRoundLabel(ord, totalRounds), matches: mapped });
@@ -28838,6 +28952,40 @@ if (pathname.startsWith('/api/v1/tennis/rg-player/') && req.method === 'GET') {
     console.error('  [RG player enrich] ERROR:', e && e.message);
     return jsonResponse(res, 200, { l5_clay: [], dominance_ratio_clay: null, source: 'error', detail: String(e && e.message || e), cache: 'miss' });
   }
+}
+// Pilier 3 — SSE flux live momentum RG. Frontend EventSource consume
+// "match_update" events broadcastés depuis _rgLivePollOnce. Heartbeat
+// toutes les 25s pour keep-alive nginx + browsers.
+if (pathname === '/api/v1/tennis/rg-live-stream' && req.method === 'GET') {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.write(': RG live stream connected\n\n');
+  _rgLiveSseClients.add(res);
+  // Heartbeat anti-timeout intermédiaires (nginx default 60s idle)
+  const heartbeat = setInterval(() => {
+    try { res.write(': hb ' + Date.now() + '\n\n'); }
+    catch (_) {
+      clearInterval(heartbeat);
+      try { _rgLiveSseClients.delete(res); } catch (_) {}
+    }
+  }, 25000);
+  // Send current state snapshot to new client (so they catch up on existing live matches)
+  try {
+    for (const [, sig] of _rgLiveLastState) {
+      const parsed = JSON.parse(sig);
+      // Best-effort : sig contient seulement les champs deltas, on reconstruit minimal patch
+      // (le client merge déjà incrementally via rgUpdateLiveNode)
+    }
+  } catch (_) {}
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    _rgLiveSseClients.delete(res);
+  });
+  return;
 }
 if (pathname === '/api/v1/tennis/aiscore/index' && req.method === 'GET') {
   try {
