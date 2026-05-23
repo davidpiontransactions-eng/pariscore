@@ -9786,7 +9786,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     }
     #page-rg { background: linear-gradient(180deg, var(--rg-cream-soft) 0%, var(--rg-cream) 100%); border-radius:14px; padding:24px 20px; margin:12px 0; color:#2A1F15; }
     #page-rg .rg-hero { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--rg-clay); }
-    #page-rg .rg-hero-title { font-family:'Bree Serif','Playfair Display',Syne,serif; font-weight:700; font-size:36px; color:var(--rg-green); letter-spacing:-0.5px; margin:0; }
+    #page-rg .rg-hero-title { font-family:'Bree Serif','Playfair Display',Syne,serif; font-weight:700; font-size:36px; color:var(--rg-green); letter-spacing:-0.5px; margin:0; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+    #page-rg .rg-hero-logo { height:64px; width:auto; flex:0 0 auto; filter:drop-shadow(0 4px 12px rgba(204,102,51,0.32)); transition:transform .3s ease; }
+    #page-rg .rg-hero-logo:hover { transform:rotate(-5deg) scale(1.05); }
     #page-rg .rg-hero-sub { font-family:'Instrument Sans',sans-serif; font-size:13px; color:var(--rg-grey); margin-top:4px; }
     #page-rg .rg-tour-toggle { display:inline-flex; background:rgba(10,77,60,0.08); border:1px solid var(--rg-green); border-radius:8px; padding:3px; }
     #page-rg .rg-tour-btn { padding:8px 16px; background:transparent; color:var(--rg-green); font-weight:600; font-size:13px; border:0; border-radius:6px; cursor:pointer; font-family:'Instrument Sans',sans-serif; }
@@ -9826,7 +9828,8 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     #page-rg .rg-disclaimer { margin-top:14px; padding:10px 12px; font-family:'Instrument Sans',sans-serif; font-size:11px; color:var(--rg-grey); background:rgba(10,77,60,0.04); border-left:3px solid var(--rg-clay); border-radius:4px; }
     @media (max-width: 768px) {
       #page-rg { padding:16px 12px; }
-      #page-rg .rg-hero-title { font-size:24px; }
+      #page-rg .rg-hero-title { font-size:24px; gap:8px; }
+      #page-rg .rg-hero-logo { height:44px; }
       #page-rg .rg-bracket-wrap { padding:10px; }
       #page-rg .rg-round-col { min-width:200px; }
     }
@@ -9834,7 +9837,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
   <div class="rg-hero">
     <div>
-      <h1 class="rg-hero-title">🏆 Roland Garros — Tableau Final</h1>
+      <h1 class="rg-hero-title"><img class="rg-hero-logo" src="/assets/icons/rg-badge-hero.svg" alt="Badge PariScore Roland Garros 2026" loading="eager" />Roland Garros — Tableau Final</h1>
       <div class="rg-hero-sub">Bracket interactif · Clay Elo interne PariScore · Modèle Prédictif (10 000 simulations) · Terre battue Paris</div>
     </div>
     <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
