@@ -164,6 +164,84 @@ function toIntOrNull(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+// ─── Extractor BSD CALIB_RAW (gold mine — match nested + actual_winner) ────
+// Source : api_cache key='bsd_tennis_calib_raw' (1600+ items per snapshot).
+// Schema item : {id, match:{id, api_id, tournament:{...}, player1:{...}, player2:{...},
+//                match_date, status, round_name, player1_sets, player2_sets, sets_detail},
+//                prob_*, predicted_winner, actual_winner, was_winner_correct}
+// status='finished' garanti par calibration scope. actual_winner=1|2.
+function extractFromBsdCalibItem(item) {
+  if (!item || !item.match) return null;
+  const mch = item.match;
+  if (!mch.id) return null;
+  if (String(mch.status || '').toLowerCase() !== 'finished') return null;
+
+  const aw = item.actual_winner;
+  if (aw !== 1 && aw !== 2) return null;
+  const winnerIsP1 = aw === 1;
+
+  const p1 = mch.player1 || {};
+  const p2 = mch.player2 || {};
+  const p1Name = p1.name || p1.short_name || null;
+  const p2Name = p2.name || p2.short_name || null;
+  if (!p1Name || !p2Name) return null;
+
+  const t = mch.tournament || {};
+  const tour = normTour(t.circuit, p1.gender || p2.gender || t.gender);
+  const surface = normSurface(t.surface);
+
+  // Parse sets_detail array → score string "6-4 7-6" winner-perspective
+  let score = null;
+  if (Array.isArray(mch.sets_detail) && mch.sets_detail.length > 0) {
+    score = mch.sets_detail.map(s => {
+      const wp = winnerIsP1 ? (s.p1 || 0) : (s.p2 || 0);
+      const lp = winnerIsP1 ? (s.p2 || 0) : (s.p1 || 0);
+      return `${wp}-${lp}`;
+    }).join(' ');
+  }
+
+  // sets count from outer match (already determined winner perspective via winnerIsP1)
+  const setsW = winnerIsP1 ? (mch.player1_sets || 0) : (mch.player2_sets || 0);
+  const setsL = winnerIsP1 ? (mch.player2_sets || 0) : (mch.player1_sets || 0);
+
+  // Player metadata + rank seed
+  const wRanking = winnerIsP1 ? (p1.current_ranking || {}) : (p2.current_ranking || {});
+  const lRanking = winnerIsP1 ? (p2.current_ranking || {}) : (p1.current_ranking || {});
+
+  return {
+    source: 'bsd_calib',
+    source_id: String(mch.id),
+    tour,
+    tourney_name: t.name || null,
+    tourney_id: Number.isFinite(Number(t.id)) ? Number(t.id) : null,
+    surface,
+    tourney_date: dateToYYYYMMDDInt(mch.match_date),
+    match_date: mch.match_date ? Date.parse(mch.match_date) || null : null,
+    winner_name: winnerIsP1 ? p1Name : p2Name,
+    loser_name: winnerIsP1 ? p2Name : p1Name,
+    winner_player_id: Number.isFinite(Number(winnerIsP1 ? p1.id : p2.id)) ? Number(winnerIsP1 ? p1.id : p2.id) : null,
+    loser_player_id: Number.isFinite(Number(winnerIsP1 ? p2.id : p1.id)) ? Number(winnerIsP1 ? p2.id : p1.id) : null,
+    score,
+    sets_winner: setsW || null,
+    sets_loser: setsL || null,
+    best_of: null,  // calib_raw n'expose pas
+    round: mch.round_name || null,
+    status: 'finished',
+    minutes: null,
+    // Serve stats inline calib_raw : pas exposé directement (predictions seulement)
+    w_ace: null, l_ace: null, w_df: null, l_df: null,
+    // Player metadata Sackmann compat
+    w_ioc: winnerIsP1 ? (p1.country_code || null) : (p2.country_code || null),
+    l_ioc: winnerIsP1 ? (p2.country_code || null) : (p1.country_code || null),
+    w_hand: null, l_hand: null,
+    // Rank seed Bayésien (cold-start Elo)
+    winner_rank: Number.isFinite(Number(wRanking.position)) ? Number(wRanking.position) : null,
+    winner_rank_points: Number.isFinite(Number(wRanking.points)) ? Number(wRanking.points) : null,
+    loser_rank: Number.isFinite(Number(lRanking.position)) ? Number(lRanking.position) : null,
+    loser_rank_points: Number.isFinite(Number(lRanking.points)) ? Number(lRanking.points) : null,
+  };
+}
+
 // ── Extractor ESPN ─────────────────────────────────────────────────────────
 function extractFromEspnEvent(e) {
   if (!e || !e.id) return null;
@@ -284,18 +362,25 @@ function main() {
     }
   } catch (e) { console.warn('[etl] ALTER serve cols failed:', e.message); }
 
-  const summary = { bsd: 0, espn: 0, archive: 0, skipped: 0, errors: [], serveCovered: 0 };
+  const summary = { bsd: 0, bsd_calib: 0, espn: 0, archive: 0, skipped: 0, errors: [], serveCovered: 0, rankCovered: 0 };
   const upsertStmt = db.prepare(`INSERT OR REPLACE INTO tennis_matches_internal (
     source, source_id, tour, tourney_name, tourney_id, surface,
     tourney_date, match_date, winner_name, loser_name, winner_player_id, loser_player_id,
     score, sets_winner, sets_loser, best_of, round, status, minutes,
     w_ace, l_ace, w_df, l_df,
-    winner_ioc, loser_ioc, winner_hand, loser_hand
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    winner_ioc, loser_ioc, winner_hand, loser_hand,
+    winner_rank, winner_rank_points, loser_rank, loser_rank_points
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
   const upsertOne = (row) => {
     if (!row) { summary.skipped++; return; }
-    if (DRY_RUN) { summary[row.source]++; if (row.w_ace != null || row.l_ace != null) summary.serveCovered++; return; }
+    const srcKey = summary[row.source] != null ? row.source : 'errors';
+    if (DRY_RUN) {
+      if (summary[row.source] != null) summary[row.source]++;
+      if (row.w_ace != null || row.l_ace != null) summary.serveCovered++;
+      if (row.winner_rank != null || row.loser_rank != null) summary.rankCovered++;
+      return;
+    }
     try {
       upsertStmt.run(
         row.source, row.source_id, row.tour, row.tourney_name, row.tourney_id, row.surface,
@@ -303,20 +388,24 @@ function main() {
         row.winner_player_id, row.loser_player_id, row.score, row.sets_winner, row.sets_loser,
         row.best_of, row.round, row.status, row.minutes,
         row.w_ace || null, row.l_ace || null, row.w_df || null, row.l_df || null,
-        row.w_ioc || null, row.l_ioc || null, row.w_hand || null, row.l_hand || null
+        row.w_ioc || null, row.l_ioc || null, row.w_hand || null, row.l_hand || null,
+        row.winner_rank || null, row.winner_rank_points || null,
+        row.loser_rank || null, row.loser_rank_points || null
       );
-      summary[row.source]++;
+      if (summary[row.source] != null) summary[row.source]++;
       if (row.w_ace != null || row.l_ace != null) summary.serveCovered++;
+      if (row.winner_rank != null || row.loser_rank != null) summary.rankCovered++;
     } catch (e) {
       summary.errors.push({ source: row.source, source_id: row.source_id, err: e.message });
     }
   };
 
-  // ── Source BSD : api_cache rows ──────────────────────────────────────────
+  // ── Source BSD : api_cache rows (raw matches endpoints — generic) ────────
   if (!SOURCE_FILTER || SOURCE_FILTER === 'bsd') {
     try {
-      const rows = db.prepare(`SELECT key, data FROM api_cache WHERE source = 'bsd_tennis' OR key LIKE 'bsd_tennis_matches_%'`).all();
-      console.log(`[etl] BSD: ${rows.length} cache entries trouvées`);
+      // Generic BSD tennis matches cached (RG/tournament matches : bsd_rg_m_*)
+      const rows = db.prepare(`SELECT key, data FROM api_cache WHERE key LIKE 'bsd_rg_m_%' OR key LIKE 'bsd_tennis_matches_%'`).all();
+      console.log(`[etl] BSD raw matches: ${rows.length} cache entries trouvées`);
       const tx = db.transaction(() => {
         for (const r of rows) {
           let data;
@@ -329,6 +418,27 @@ function main() {
     } catch (e) {
       console.warn(`[etl] BSD error: ${e.message}`);
       summary.errors.push({ source: 'bsd', err: e.message });
+    }
+  }
+
+  // ── Source BSD CALIB_RAW : 1600+ finished items avec actual_winner ───────
+  // Source primaire dl49 — couvre matchs settled via calibration scope BSD.
+  if (!SOURCE_FILTER || SOURCE_FILTER === 'bsd_calib') {
+    try {
+      const rows = db.prepare(`SELECT key, data FROM api_cache WHERE key='bsd_tennis_calib_raw'`).all();
+      console.log(`[etl] BSD calib_raw: ${rows.length} cache entries trouvées`);
+      const tx = db.transaction(() => {
+        for (const r of rows) {
+          let data;
+          try { data = JSON.parse(r.data); } catch { continue; }
+          const items = Array.isArray(data) ? data : (data && data.results) || [];
+          for (const item of items) upsertOne(extractFromBsdCalibItem(item));
+        }
+      });
+      tx();
+    } catch (e) {
+      console.warn(`[etl] BSD calib error: ${e.message}`);
+      summary.errors.push({ source: 'bsd_calib', err: e.message });
     }
   }
 
@@ -372,14 +482,16 @@ function main() {
     }
   }
 
-  const total = summary.bsd + summary.espn + summary.archive;
+  const total = summary.bsd + summary.bsd_calib + summary.espn + summary.archive;
   console.log(`\n[etl] ✓ TERMINÉ${DRY_RUN ? ' (DRY-RUN — aucune écriture)' : ''}`);
-  console.log(`  bsd            : ${summary.bsd}`);
+  console.log(`  bsd (raw)      : ${summary.bsd}`);
+  console.log(`  bsd_calib      : ${summary.bsd_calib}`);
   console.log(`  espn           : ${summary.espn}`);
   console.log(`  archive        : ${summary.archive}`);
   console.log(`  skipped        : ${summary.skipped}`);
   console.log(`  total          : ${total}`);
   console.log(`  serve_covered  : ${summary.serveCovered}${total > 0 ? ` (${Math.round(summary.serveCovered / total * 100)}%)` : ''}`);
+  console.log(`  rank_covered   : ${summary.rankCovered}${total > 0 ? ` (${Math.round(summary.rankCovered / total * 100)}%)` : ''}`);
   if (summary.errors.length) {
     console.log(`  errors  : ${summary.errors.length}`);
     summary.errors.slice(0, 5).forEach(e => console.log(`    • ${e.source}: ${e.err}`));
