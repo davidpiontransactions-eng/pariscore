@@ -71,7 +71,12 @@
 // clickables (data-rg-player encoded JSON + delegation listener + a11y ESC/
 // Enter/Space). Server enrichi payload bracket (short_name, country_name,
 // gender, current_ranking propagés depuis BSD raw).
-const CACHE = 'pariscore-shell-v29';
+// v30 (2026-05-23) : invalide v29 — Fix fiche détaillée joueur RG : ajout
+// click handler aux contender cards (top 16 favoris) et au bracket. Delegation
+// listener étendue à #rg-contenders + #rg-bracket. CSS .rg-contender.rg-player-
+// clickable hover translateY-2 + shadow brand. data-rg-player encode JSON sur
+// chaque card top contender.
+const CACHE = 'pariscore-shell-v30';
 const SHELL = [
   '/',
   '/pariscore.html',

@@ -9969,19 +9969,25 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       letter-spacing: 0.05em;
     }
 
-    /* Player nodes clickables dans le bracket */
-    #page-rg .rg-player-line.rg-player-clickable {
+    /* Player nodes clickables — bracket lines + contender cards */
+    #page-rg .rg-player-clickable {
       cursor: pointer;
-      transition: background 0.15s ease, transform 0.15s ease;
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
     #page-rg .rg-player-line.rg-player-clickable:hover {
       background: rgba(204, 102, 51, 0.06);
       transform: translateX(2px);
     }
-    #page-rg .rg-player-line.rg-player-clickable:focus-visible {
+    #page-rg .rg-contender.rg-player-clickable:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(204, 102, 51, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(204, 102, 51, 0.18);
+    }
+    #page-rg .rg-player-clickable:focus-visible {
       outline: 2px solid #cc6633;
-      outline-offset: -2px;
-      border-radius: 4px;
+      outline-offset: 2px;
+      border-radius: 6px;
     }
 
     @media (max-width: 768px) {
@@ -10195,7 +10201,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           const cls = _rgPctClass(p.title_prob_pct);
           const rankLabel = p.clay_rank ? 'Terre #' + p.clay_rank : 'Hors top';
           const seedLabel = p.seed ? '[' + _rgEsc(p.seed) + ']' : '';
-          return '<div class="rg-contender">' +
+          const pEnc = _rgEncPlayer(p);
+          const ariaLbl = _rgEsc('Voir détails ' + (p.name || 'joueur'));
+          return '<div class="rg-contender rg-player-clickable" data-rg-player="' + pEnc + '" role="button" tabindex="0" aria-label="' + ariaLbl + '">' +
             '<div class="rg-contender-head">' +
               '<span class="rg-contender-name">' + _rgEsc(p.name) + ' ' + seedLabel + '</span>' +
               '<span class="rg-title-pct ' + cls + '">🏆 ' + _rgFmtPct(p.title_prob_pct) + '</span>' +
@@ -10375,12 +10383,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     }
   }
 
-  // === Delegation click sur bracket — décode data-rg-player + open card ===
+  // === Delegation click sur bracket + contenders — décode data-rg-player + open card ===
   function _rgPcAttachDelegation() {
     if (_rgPcDelegationAttached) return;
-    const bracket = document.getElementById('rg-bracket');
-    if (!bracket) return;
-    bracket.addEventListener('click', function(e) {
+    const containers = [
+      document.getElementById('rg-bracket'),
+      document.getElementById('rg-contenders'),
+    ].filter(Boolean);
+    if (!containers.length) return;
+    const clickHandler = function(e) {
       const node = e.target.closest('.rg-player-clickable[data-rg-player]');
       if (!node) return;
       e.preventDefault();
@@ -10391,14 +10402,17 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       } catch (err) {
         console.warn('[RG PC] decode failed:', err);
       }
-    });
-    // Keyboard a11y : Enter/Space sur node focus
-    bracket.addEventListener('keydown', function(e) {
+    };
+    const keyHandler = function(e) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       const node = e.target.closest('.rg-player-clickable[data-rg-player]');
       if (!node) return;
       e.preventDefault();
       node.click();
+    };
+    containers.forEach(function(c) {
+      c.addEventListener('click', clickHandler);
+      c.addEventListener('keydown', keyHandler);
     });
     _rgPcDelegationAttached = true;
   }
