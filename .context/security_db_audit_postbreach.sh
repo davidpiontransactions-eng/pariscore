@@ -43,16 +43,16 @@ sqlite3 "$DB" "SELECT id, user_id, sport, stake_cents, datetime(created_at,'unix
   ORDER BY stake_cents DESC LIMIT 50;"
 
 echo ""
-echo "─── 4. BANKROLL TRANSACTIONS PENDANT FENÊTRE ───"
-sqlite3 "$DB" "SELECT id, user_id, type, amount_cents, datetime(created_at,'unixepoch') AS created
+echo "─── 4. BANKROLL TRANSACTIONS PENDANT FENÊTRE (col kind, pas type) ───"
+sqlite3 "$DB" "SELECT id, user_id, kind, amount_cents, datetime(occurred_at,'unixepoch') AS occurred, datetime(created_at,'unixepoch') AS created
   FROM bankroll_transactions
   WHERE created_at >= strftime('%s','$BREACH_START')
     AND created_at <= strftime('%s','$BREACH_END')
   ORDER BY ABS(amount_cents) DESC LIMIT 50;"
 
 echo ""
-echo "─── 5. AFFILIATE_CLICKS / CONVERSIONS PENDANT FENÊTRE ───"
-sqlite3 "$DB" "SELECT id, affiliate_id, datetime(clicked_at,'unixepoch') AS clicked, ip_address, user_agent
+echo "─── 5. AFFILIATE_CLICKS / CONVERSIONS PENDANT FENÊTRE (col user_ip, pas ip_address) ───"
+sqlite3 "$DB" "SELECT id, affiliate_id, match_id, datetime(clicked_at,'unixepoch') AS clicked, user_ip, user_agent
   FROM affiliate_clicks
   WHERE clicked_at >= strftime('%s','$BREACH_START')
     AND clicked_at <= strftime('%s','$BREACH_END')
@@ -60,19 +60,19 @@ sqlite3 "$DB" "SELECT id, affiliate_id, datetime(clicked_at,'unixepoch') AS clic
 
 echo ""
 echo "─── 6. STRIPE EVENTS (FRAUDE PAIEMENT POSSIBLE) ───"
-sqlite3 "$DB" "SELECT id, event_type, datetime(received_at,'unixepoch') AS received, customer_id
+sqlite3 "$DB" "SELECT event_id, event_type, datetime(received_at,'unixepoch') AS received, payload_hash
   FROM stripe_events
   WHERE received_at >= strftime('%s','$BREACH_START')
     AND received_at <= strftime('%s','$BREACH_END')
-  ORDER BY received_at DESC LIMIT 50;" 2>/dev/null || echo "(stripe_events table absent ou query failed)"
+  ORDER BY received_at DESC LIMIT 50;" 2>/dev/null || echo "(stripe_events table absent ou query failed — cohérent si Stripe pas activé prod)"
 
 echo ""
-echo "─── 7. MATCHDAY PASSES ACHATS FENÊTRE ───"
-sqlite3 "$DB" "SELECT id, user_id, datetime(purchased_at,'unixepoch') AS purchased, status, amount_cents
+echo "─── 7. MATCHDAY PASSES SESSIONS FENÊTRE (cache idempotency Stripe, pas archive purchases) ───"
+sqlite3 "$DB" "SELECT id, session_id, datetime(created_at,'unixepoch') AS created, datetime(expires_at,'unixepoch') AS expires
   FROM matchday_passes
-  WHERE purchased_at >= strftime('%s','$BREACH_START')
-    AND purchased_at <= strftime('%s','$BREACH_END')
-  ORDER BY purchased_at DESC LIMIT 50;" 2>/dev/null || echo "(matchday_passes columns peuvent differer, audit manuel)"
+  WHERE created_at >= strftime('%s','$BREACH_START')
+    AND created_at <= strftime('%s','$BREACH_END')
+  ORDER BY created_at DESC LIMIT 50;"
 
 echo ""
 echo "─── 8. PUSH SUBSCRIPTIONS ANORMALES (potentiel spam vector) ───"
