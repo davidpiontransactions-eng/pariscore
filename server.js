@@ -18996,6 +18996,53 @@ function _eloInactivityRegress(elo, lastYmd, curYmd) {
   return TENNIS_ELO_INITIAL + (elo - TENNIS_ELO_INITIAL) * r;
 }
 
+// bd dl49 Phase 4 — Helper source-switch tennis Elo input rows.
+// Sources : 'legacy' (Sackmann tennis_matches), 'internal' (BSD/ESPN propriétaire
+// tennis_matches_internal), 'union' (UNION ALL des deux pendant transition).
+// Default = 'legacy' garde compat strict avec data Sackmann backup pré-purge.
+// Quand prod aura tennis_matches_internal populé via ETL, switch env-flag :
+//   TENNIS_ELO_SOURCE=internal node server.js
+function _buildTennisEloRows(source) {
+  if (source === 'internal') {
+    _initTennisInternalSchema();
+    return sqldb.prepare(`
+      SELECT tour, surface, tourney_date, score,
+             winner_player_id AS winner_id, winner_name, NULL AS winner_rank,
+             loser_player_id AS loser_id, loser_name, NULL AS loser_rank
+      FROM tennis_matches_internal
+      WHERE tourney_date IS NOT NULL AND winner_name IS NOT NULL AND loser_name IS NOT NULL
+      ORDER BY tourney_date ASC
+    `).all();
+  }
+  if (source === 'union') {
+    _initTennisInternalSchema();
+    return sqldb.prepare(`
+      SELECT tour, surface, tourney_date, score,
+             winner_id, winner_name, winner_rank,
+             loser_id, loser_name, loser_rank
+      FROM tennis_matches
+      WHERE winner_id IS NOT NULL AND loser_id IS NOT NULL AND tourney_date IS NOT NULL
+      UNION ALL
+      SELECT tour, surface, tourney_date, score,
+             winner_player_id AS winner_id, winner_name, NULL AS winner_rank,
+             loser_player_id AS loser_id, loser_name, NULL AS loser_rank
+      FROM tennis_matches_internal
+      WHERE tourney_date IS NOT NULL AND winner_name IS NOT NULL AND loser_name IS NOT NULL
+      ORDER BY tourney_date ASC
+    `).all();
+  }
+  // legacy default — query inchangée vs version pre-Phase 4
+  return sqldb.prepare(`
+    SELECT tour, surface, tourney_date, score,
+           winner_id, winner_name, winner_rank,
+           loser_id, loser_name, loser_rank
+    FROM tennis_matches
+    WHERE winner_id IS NOT NULL AND loser_id IS NOT NULL
+      AND tourney_date IS NOT NULL
+    ORDER BY tourney_date ASC, tourney_id ASC, match_num ASC
+  `).all();
+}
+
 // Recompute Elo from scratch over tennis_matches ordered chronologiquement.
 // Renvoie {players, matches, elapsed_ms}.
 function computeTennisElo() {
@@ -19006,25 +19053,31 @@ function computeTennisElo() {
     _initTennisEloSchema();
     sqldb.exec('DELETE FROM tennis_elo');
 
-    const elos = new Map(); // key: `${tour}|${playerId}|${surface}` → {elo, matches, lastDate, name}
-    const rows = sqldb.prepare(`
-      SELECT tour, surface, tourney_date, score,
-             winner_id, winner_name, winner_rank,
-             loser_id, loser_name, loser_rank
-      FROM tennis_matches
-      WHERE winner_id IS NOT NULL AND loser_id IS NOT NULL
-        AND tourney_date IS NOT NULL
-      ORDER BY tourney_date ASC, tourney_id ASC, match_num ASC
-    `).all();
+    // bd dl49 Phase 4 — Source-switch via env flag TENNIS_ELO_SOURCE.
+    // Defaults 'legacy' (compat Sackmann backup pré-purge). Migration cible
+    // 'internal' une fois tennis_matches_internal populé par ETL prod.
+    const eloSource = String(process.env.TENNIS_ELO_SOURCE || 'legacy').toLowerCase();
+    if (!['legacy', 'internal', 'union'].includes(eloSource)) {
+      console.warn(`  [Elo] Invalid TENNIS_ELO_SOURCE=${eloSource} — fallback 'legacy'`);
+    }
+    const actualSource = ['legacy', 'internal', 'union'].includes(eloSource) ? eloSource : 'legacy';
+
+    const elos = new Map(); // key: `${tour}|${playerKey}|${surface}` → {elo, matches, lastDate, name}
+    const rows = _buildTennisEloRows(actualSource);
+    console.log(`  [Elo] Source: ${actualSource} → ${rows.length} matches input`);
 
     let processed = 0;
     for (const m of rows) {
       const tour = m.tour;
       if (!tour) continue;
-      const wId = m.winner_id;
-      const lId = m.loser_id;
       const wName = m.winner_name || null;
       const lName = m.loser_name || null;
+      // bd dl49 Phase 4 — Fallback key normName quand player_id null (rows internal
+      // sans winner_player_id resolu). Évite collision "${tour}|null|ALL" pour
+      // tous joueurs anonymes. Préfixe 'n:' pour distinguer ID numérique vs name-hash.
+      const wId = m.winner_id != null ? m.winner_id : (wName ? 'n:' + normName(wName) : null);
+      const lId = m.loser_id != null ? m.loser_id : (lName ? 'n:' + normName(lName) : null);
+      if (wId == null || lId == null) continue;  // skip ambiguous rows
       const surface = m.surface && TENNIS_ELO_SURFACES.includes(m.surface) ? m.surface : null;
       const ymd = m.tourney_date;
 
