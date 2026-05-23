@@ -17864,6 +17864,71 @@ async function _resolveAiscoreMatchForPBP(matchId, liveData) {
   } catch (_) { return null; }
 }
 
+// bd mpg Phase 2 — On-demand fetch aiscore PBP pour matchs live sans cache.
+// Refactor pattern : utilise helper générique withOnDemandThrottle (bd zckt).
+// Coverage step-up : sans cette fonction, detectAndBroadcastPBPUpdates skip
+// silencieusement les matchs sans aiscore cache préchargé via serving fetch.
+const _pbpOndemandSeenIds = new Map();
+const PBP_ONDEMAND_COOLDOWN_MS = 10 * 60 * 1000;
+const PBP_ONDEMAND_MAX_PER_POLL = 3;  // Plus conservateur que serving (5) — PBP HTML payload plus lourd
+async function fetchAiscorePBPOnDemand(liveData) {
+  if (!Array.isArray(liveData) || liveData.length === 0) return 0;
+  // Filter pre-resolver : live matchs sans aiscore cache + data joueurs complète
+  const targets = liveData.filter(m => {
+    if (!m || !m.is_live) return false;
+    if (!m.player1 || !m.player1.name || !m.player2 || !m.player2.name) return false;
+    // Skip si déjà en cache aiscore (PBP sera capté par detectAndBroadcastPBPUpdates)
+    for (const [, entry] of aiscoreMatchCache) {
+      const d = entry && entry.data;
+      if (!d || !Array.isArray(d.players) || d.players.length < 2) continue;
+      const an = normName(d.players[0].name);
+      const bn = normName(d.players[1].name);
+      const p1n = normName(m.player1.name);
+      const p2n = normName(m.player2.name);
+      const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
+      const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
+      if (p1Last && p2Last && ((an.includes(p1Last) && bn.includes(p2Last)) || (an.includes(p2Last) && bn.includes(p1Last)))) {
+        return false;  // déjà cache
+      }
+    }
+    return true;
+  });
+  if (targets.length === 0) return 0;
+  // Lazy single-fetch sitemap index (réutilisé entre candidats)
+  let _idxCache = null;
+  const getIdx = async () => {
+    if (_idxCache != null) return _idxCache;
+    try { _idxCache = await getAiscoreTennisIndex() || { matches: [] }; }
+    catch (_) { _idxCache = { matches: [] }; }
+    return _idxCache;
+  };
+  return await withOnDemandThrottle({
+    name: 'aiscore_pbp',
+    candidates: targets,
+    candidateKey: (m) => m && m.id != null ? String(m.id) : null,
+    resolver: async (m) => {
+      const idx = await getIdx();
+      if (!idx || !Array.isArray(idx.matches) || idx.matches.length === 0) return null;
+      const p1n = normName(m.player1.name);
+      const p2n = normName(m.player2.name);
+      if (!p1n || !p2n) return null;
+      const p1Last = p1n.split(/\s+/).filter(Boolean).pop();
+      const p2Last = p2n.split(/\s+/).filter(Boolean).pop();
+      if (!p1Last || !p2Last || p1Last.length < 3 || p2Last.length < 3) return null;
+      return idx.matches.find(am => {
+        const s = String(am.slug || '').toLowerCase();
+        return s.includes(p1Last) && s.includes(p2Last);
+      }) || null;
+    },
+    fetcher: async (_m, hit) => {
+      await getAiscoreMatch(hit.id, hit.slug);  // populate cache → next poll detectAndBroadcast triggers PBP SSE
+    },
+    maxPerInvocation: PBP_ONDEMAND_MAX_PER_POLL,
+    cooldownMs: PBP_ONDEMAND_COOLDOWN_MS,
+    state: _pbpOndemandSeenIds,
+  });
+}
+
 // Helper public : récupère PBP normalisé pour un matchId (lazy fetch + cache aiscore).
 async function fetchTennisPBP(matchId) {
   const liveData = _tennisLiveCache && Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
@@ -18295,6 +18360,12 @@ async function pollTennisLive() {
     _tennisLiveCache = { ts: Date.now(), data };
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
+    // bd mpg Phase 2 — On-demand fetch aiscore PBP pour matchs live sans cache.
+    // Trigger populate cache → next poll detectAndBroadcastPBPUpdates broadcast SSE.
+    try {
+      const pbpFetched = await fetchAiscorePBPOnDemand(data);
+      if (pbpFetched > 0) console.log(`  [TennisPBP] fetched+${pbpFetched}aiscore_ondemand`);
+    } catch (_) { /* swallow */ }
     // bd mpg — Detect & broadcast PBP updates depuis aiscore cache (debounce 30s/matchId).
     try {
       const pbpBroadcasts = detectAndBroadcastPBPUpdates(data);
