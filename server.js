@@ -3503,10 +3503,13 @@ function getFlashscoreStandings(configId) {
 // Lève {code:'ADDON_REQUIRED'} si HTTP 402 + addon_required → géré côté routes
 // pour renvoyer 402 propre au frontend (pas un crash).
 // Hardening RG-timeout (rapport_resolution_timeout_rg.md §5.3) :
-// retries 2 → 1 + timeout 15s → 8s. Worst case 48s → 17s par appel.
-// Le cron BG tolère un échec (retry dans 2h) ; le path user HTTP ne touche
-// jamais BSD (lecture JSON statique seulement, cf. nouvelle route RG).
-const BSD_TENNIS_FETCH_TIMEOUT_MS = 8000;
+// retries 2 → 1 + timeout 15s → 8s → 5s. Worst case 48s → 17s → 11s par appel.
+// Timeout 5s recommandé par Bzzoiro (BSD vendor, mail 2026-05-23) : reste
+// confortable au-dessus de leur p99 mesuré 2.4s sur /matches et 25ms sur
+// /tournaments (Grafana dashboard public). Le cron BG tolère un échec (retry
+// dans 2h) ; le path user HTTP ne touche jamais BSD (lecture JSON statique
+// seulement, cf. nouvelle route RG).
+const BSD_TENNIS_FETCH_TIMEOUT_MS = 5000;
 async function bsdTennisFetch(pathSuffix, retries = 1) {
   const url = `${BSD_TENNIS_BASE}${pathSuffix}`;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -28305,7 +28308,9 @@ async function buildRgPath(playerName) {
   const path = [];
   let tournamentMeta = null;
   for (const t of rgs) {
-    const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${t.id}&limit=300`, `bsd_rg_m_${t.id}`, 30 * 60 * 1000);
+    // limit=200 — cap silencieux BSD (Bzzoiro mail 2026-05-23). Anciennement 300
+    // était silently truncated. RG ATP/WTA = 401 matchs total, R1 = 64 sous cap.
+    const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${t.id}&limit=200`, `bsd_rg_m_${t.id}`, 30 * 60 * 1000);
     if (mo.status !== 200) continue;
     const ms = (mo.body && (Array.isArray(mo.body) ? mo.body : mo.body.results)) || [];
     const mine = ms.filter(m => {
@@ -28530,7 +28535,10 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
   targets.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
   if (!targets.length) return { available: false, reason: 'tour_not_found', tour, candidates: rgs };
   const tournament = targets[0];
-  const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${tournament.id}&limit=300`, `bsd_rg_m_${tournament.id}`, 30 * 60 * 1000);
+  // limit=200 — cap silencieux BSD (Bzzoiro mail 2026-05-23). Anciennement 300
+  // était silently truncated à 200. Pagination offset=200,400... = backlog V2
+  // si total count > 200 (RG ATP/WTA = 401 matchs total, R1 = 64 sous cap OK).
+  const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${tournament.id}&limit=200`, `bsd_rg_m_${tournament.id}`, 30 * 60 * 1000);
   if (mo.status !== 200) return { available: false, reason: 'matches_fetch_failed', upstream_status: mo.status };
   const ms = (mo.body && (Array.isArray(mo.body) ? mo.body : mo.body.results)) || [];
   if (!ms.length) return { available: false, reason: 'no_matches' };
