@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="t3 d3">
+  <title id="t3">PariScore Roland Garros 2026 — Modern Bracket Mark</title>
+  <desc id="d3">Minimalist abstract bracket tree forming a stylized P, tennis ball pivot, premium 3D gradient feel, clay-orange line at base.</desc>
+
+  <defs>
+    <linearGradient id="bgGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14181c"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+
+    <linearGradient id="emeraldGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2bb375"/>
+      <stop offset="100%" stop-color="#0f5132"/>
+    </linearGradient>
+
+    <linearGradient id="bracketLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f5132"/>
+      <stop offset="50%" stop-color="#2bb375"/>
+      <stop offset="100%" stop-color="#0f5132"/>
+    </linearGradient>
+
+    <linearGradient id="clayBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8a3a1a" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#cc6633"/>
+      <stop offset="80%" stop-color="#cc6633"/>
+      <stop offset="100%" stop-color="#8a3a1a" stop-opacity="0"/>
+    </linearGradient>
+
+    <radialGradient id="ballGrad3" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#e8f06a"/>
+      <stop offset="60%" stop-color="#c2d445"/>
+      <stop offset="100%" stop-color="#8aa325"/>
+    </radialGradient>
+
+    <filter id="glow3" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="shadow3" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="3"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.6"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bgGrad3)"/>
+
+  <!-- Subtle grid background (data-terminal feel) -->
+  <g opacity="0.06" stroke="#2bb375" stroke-width="0.5">
+    <line x1="0" y1="64" x2="512" y2="64"/>
+    <line x1="0" y1="128" x2="512" y2="128"/>
+    <line x1="0" y1="192" x2="512" y2="192"/>
+    <line x1="0" y1="256" x2="512" y2="256"/>
+    <line x1="0" y1="320" x2="512" y2="320"/>
+    <line x1="0" y1="384" x2="512" y2="384"/>
+    <line x1="0" y1="448" x2="512" y2="448"/>
+    <line x1="64" y1="0" x2="64" y2="512"/>
+    <line x1="128" y1="0" x2="128" y2="512"/>
+    <line x1="192" y1="0" x2="192" y2="512"/>
+    <line x1="256" y1="0" x2="256" y2="512"/>
+    <line x1="320" y1="0" x2="320" y2="512"/>
+    <line x1="384" y1="0" x2="384" y2="512"/>
+    <line x1="448" y1="0" x2="448" y2="512"/>
+  </g>
+
+  <!-- Bracket tree LEFT (R128 -> R64 -> R32 -> R16 -> QF -> SF -> F) -->
+  <g stroke="url(#bracketLine)" stroke-width="2.5" fill="none" stroke-linecap="round" filter="url(#glow3)" opacity="0.85">
+    <!-- R128 column (left) -->
+    <line x1="60" y1="120" x2="100" y2="120"/>
+    <line x1="60" y1="160" x2="100" y2="160"/>
+    <line x1="60" y1="200" x2="100" y2="200"/>
+    <line x1="60" y1="240" x2="100" y2="240"/>
+    <line x1="60" y1="280" x2="100" y2="280"/>
+    <line x1="60" y1="320" x2="100" y2="320"/>
+    <line x1="60" y1="360" x2="100" y2="360"/>
+    <line x1="60" y1="400" x2="100" y2="400"/>
+    <!-- R128 -> R64 connectors -->
+    <path d="M 100 120 L 100 140 L 140 140 L 140 180 M 100 160 L 100 140"/>
+    <path d="M 100 200 L 100 220 L 140 220 L 140 260 M 100 240 L 100 220"/>
+    <path d="M 100 280 L 100 300 L 140 300 L 140 340 M 100 320 L 100 300"/>
+    <path d="M 100 360 L 100 380 L 140 380 L 140 420 M 100 400 L 100 380"/>
+    <!-- R64 -> R32 -->
+    <path d="M 140 180 L 180 180 L 180 220 L 140 220 L 140 260 M 180 220 L 220 220"/>
+    <path d="M 140 340 L 180 340 L 180 380 L 140 380 L 140 420 M 180 380 L 220 380"/>
+    <!-- R32 -> QF -->
+    <line x1="220" y1="220" x2="220" y2="380" stroke="url(#bracketLine)"/>
+    <line x1="220" y1="300" x2="245" y2="300"/>
+  </g>
+
+  <!-- Bracket tree RIGHT (mirror) -->
+  <g stroke="url(#bracketLine)" stroke-width="2.5" fill="none" stroke-linecap="round" filter="url(#glow3)" opacity="0.85">
+    <line x1="412" y1="120" x2="452" y2="120"/>
+    <line x1="412" y1="160" x2="452" y2="160"/>
+    <line x1="412" y1="200" x2="452" y2="200"/>
+    <line x1="412" y1="240" x2="452" y2="240"/>
+    <line x1="412" y1="280" x2="452" y2="280"/>
+    <line x1="412" y1="320" x2="452" y2="320"/>
+    <line x1="412" y1="360" x2="452" y2="360"/>
+    <line x1="412" y1="400" x2="452" y2="400"/>
+    <path d="M 412 120 L 412 140 L 372 140 L 372 180 M 412 160 L 412 140"/>
+    <path d="M 412 200 L 412 220 L 372 220 L 372 260 M 412 240 L 412 220"/>
+    <path d="M 412 280 L 412 300 L 372 300 L 372 340 M 412 320 L 412 300"/>
+    <path d="M 412 360 L 412 380 L 372 380 L 372 420 M 412 400 L 412 380"/>
+    <path d="M 372 180 L 332 180 L 332 220 L 372 220 L 372 260 M 332 220 L 292 220"/>
+    <path d="M 372 340 L 332 340 L 332 380 L 372 380 L 372 420 M 332 380 L 292 380"/>
+    <line x1="292" y1="220" x2="292" y2="380"/>
+    <line x1="292" y1="300" x2="267" y2="300"/>
+  </g>
+
+  <!-- Central tennis ball (final/champion pivot) -->
+  <g transform="translate(256, 256)" filter="url(#shadow3)">
+    <!-- Emerald ring around ball (trophy feel) -->
+    <circle r="62" fill="none" stroke="url(#emeraldGrad3)" stroke-width="3" opacity="0.7"/>
+    <circle r="56" fill="none" stroke="#d4af37" stroke-width="1.5" opacity="0.8"/>
+    <!-- Ball itself -->
+    <circle r="48" fill="url(#ballGrad3)"/>
+    <path d="M -42 -12 Q 0 -45 42 -12" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+    <path d="M -42 12 Q 0 45 42 12" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+    <ellipse cx="-17" cy="-20" rx="13" ry="9" fill="#ffffff" opacity="0.4"/>
+  </g>
+
+  <!-- PariScore wordmark -->
+  <text x="256" y="380" text-anchor="middle" font-family="Georgia, 'Bree Serif', serif"
+        font-size="44" font-weight="700" fill="#fff8e7" letter-spacing="3">PariScore</text>
+
+  <!-- Clay-orange bar separator -->
+  <rect x="156" y="396" width="200" height="3" fill="url(#clayBar)" rx="1.5"/>
+
+  <!-- Subtitle -->
+  <text x="256" y="424" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="14" font-weight="600" fill="#2bb375" letter-spacing="6">ROLAND GARROS · 2026</text>
+
+  <!-- Tagline (mono terminal feel) -->
+  <text x="256" y="456" text-anchor="middle" font-family="'DM Mono', Consolas, monospace"
+        font-size="11" font-weight="500" fill="#cc6633" letter-spacing="2" opacity="0.85">10 000 SIMS · 128 PLAYERS · CLAY ELO</text>
+
+  <!-- Corner accents (data-terminal feel) -->
+  <g stroke="#2bb375" stroke-width="1.5" fill="none" opacity="0.6">
+    <path d="M 24 24 L 24 50 M 24 24 L 50 24"/>
+    <path d="M 488 24 L 488 50 M 488 24 L 462 24"/>
+    <path d="M 24 488 L 24 462 M 24 488 L 50 488"/>
+    <path d="M 488 488 L 488 462 M 488 488 L 462 488"/>
+  </g>
+</svg>

@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-labelledby="th dh">
+  <title id="th">PariScore Roland Garros 2026 — Hero Banner</title>
+  <desc id="dh">Cinematic hero banner with clay court, tennis ball trajectory, bracket visualization and PariScore branding.</desc>
+
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a1f24"/>
+      <stop offset="40%" stop-color="#0f1417"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+
+    <linearGradient id="clayHorizon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cc6633"/>
+      <stop offset="100%" stop-color="#5a2010"/>
+    </linearGradient>
+
+    <radialGradient id="spot" cx="50%" cy="100%" r="80%">
+      <stop offset="0%" stop-color="#e88f57" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="emeraldHero" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2bb375"/>
+      <stop offset="100%" stop-color="#0f5132"/>
+    </linearGradient>
+
+    <linearGradient id="goldHero" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4af37"/>
+      <stop offset="50%" stop-color="#f4d97a"/>
+      <stop offset="100%" stop-color="#a07a1f"/>
+    </linearGradient>
+
+    <radialGradient id="ballHero" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#e8f06a"/>
+      <stop offset="60%" stop-color="#c2d445"/>
+      <stop offset="100%" stop-color="#8aa325"/>
+    </radialGradient>
+
+    <linearGradient id="trajectoryFade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c2d445" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#e8f06a" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="1"/>
+    </linearGradient>
+
+    <filter id="glowHero" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="shadowHero" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
+      <feOffset dx="0" dy="6"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark sky background -->
+  <rect width="1280" height="720" fill="url(#skyGrad)"/>
+
+  <!-- Spotlight effect -->
+  <rect width="1280" height="720" fill="url(#spot)"/>
+
+  <!-- Clay court perspective (foreground) -->
+  <polygon points="0,720 1280,720 1100,500 180,500" fill="url(#clayHorizon)" opacity="0.92"/>
+
+  <!-- Court lines (perspective) -->
+  <g stroke="#fff8e7" stroke-width="1.5" fill="none" opacity="0.45">
+    <line x1="180" y1="500" x2="1100" y2="500"/>
+    <line x1="120" y1="560" x2="1160" y2="560"/>
+    <line x1="60" y1="620" x2="1220" y2="620"/>
+    <line x1="0" y1="680" x2="1280" y2="680"/>
+    <!-- Vertical court lines (perspective vanishing) -->
+    <line x1="450" y1="500" x2="380" y2="720"/>
+    <line x1="640" y1="500" x2="640" y2="720"/>
+    <line x1="830" y1="500" x2="900" y2="720"/>
+  </g>
+
+  <!-- Clay granular texture -->
+  <g opacity="0.3" fill="#8a3a1a">
+    <circle cx="300" cy="600" r="2"/>
+    <circle cx="450" cy="650" r="1.5"/>
+    <circle cx="600" cy="630" r="1.8"/>
+    <circle cx="700" cy="680" r="1.5"/>
+    <circle cx="850" cy="640" r="2"/>
+    <circle cx="950" cy="690" r="1.5"/>
+    <circle cx="1050" cy="660" r="1.8"/>
+    <circle cx="220" cy="700" r="1.5"/>
+    <circle cx="380" cy="700" r="1.8"/>
+    <circle cx="540" cy="710" r="1.5"/>
+    <circle cx="720" cy="700" r="2"/>
+    <circle cx="880" cy="710" r="1.5"/>
+    <circle cx="1040" cy="700" r="1.8"/>
+  </g>
+
+  <!-- Bracket tree (LEFT side) - abstract -->
+  <g stroke="url(#emeraldHero)" stroke-width="2" fill="none" stroke-linecap="round" filter="url(#glowHero)" opacity="0.55">
+    <line x1="60" y1="180" x2="120" y2="180"/>
+    <line x1="60" y1="220" x2="120" y2="220"/>
+    <line x1="60" y1="280" x2="120" y2="280"/>
+    <line x1="60" y1="320" x2="120" y2="320"/>
+    <path d="M 120 180 L 120 200 L 160 200 L 160 240 M 120 220 L 120 200"/>
+    <path d="M 120 280 L 120 300 L 160 300 L 160 340 M 120 320 L 120 300"/>
+    <path d="M 160 240 L 200 240 L 200 290 L 160 290 L 160 340 M 200 290 L 240 290"/>
+  </g>
+
+  <!-- Bracket tree (RIGHT side) - mirror -->
+  <g stroke="url(#emeraldHero)" stroke-width="2" fill="none" stroke-linecap="round" filter="url(#glowHero)" opacity="0.55">
+    <line x1="1220" y1="180" x2="1160" y2="180"/>
+    <line x1="1220" y1="220" x2="1160" y2="220"/>
+    <line x1="1220" y1="280" x2="1160" y2="280"/>
+    <line x1="1220" y1="320" x2="1160" y2="320"/>
+    <path d="M 1160 180 L 1160 200 L 1120 200 L 1120 240 M 1160 220 L 1160 200"/>
+    <path d="M 1160 280 L 1160 300 L 1120 300 L 1120 340 M 1160 320 L 1160 300"/>
+    <path d="M 1120 240 L 1080 240 L 1080 290 L 1120 290 L 1120 340 M 1080 290 L 1040 290"/>
+  </g>
+
+  <!-- Tennis ball trajectory (cinematic arc) -->
+  <path d="M 150 480 Q 640 100 1130 480" fill="none" stroke="url(#trajectoryFade)" stroke-width="3" stroke-linecap="round" opacity="0.75" filter="url(#glowHero)"/>
+
+  <!-- Tennis ball mid-flight (with motion blur effect via opacity stack) -->
+  <g transform="translate(1130, 480)" filter="url(#shadowHero)">
+    <!-- Motion trail (ghost balls) -->
+    <circle cx="-22" cy="14" r="26" fill="url(#ballHero)" opacity="0.18"/>
+    <circle cx="-10" cy="8" r="32" fill="url(#ballHero)" opacity="0.35"/>
+    <!-- Main ball -->
+    <circle r="38" fill="url(#ballHero)"/>
+    <path d="M -32 -9 Q 0 -35 32 -9" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.9"/>
+    <path d="M -32 9 Q 0 35 32 9" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.9"/>
+    <ellipse cx="-14" cy="-15" rx="10" ry="7" fill="#ffffff" opacity="0.4"/>
+  </g>
+
+  <!-- Glowing trophy silhouette (centered, slightly above court) -->
+  <g transform="translate(640, 380)" filter="url(#shadowHero)" opacity="0.95">
+    <!-- Cup bowl -->
+    <path d="M -45 -30 L 45 -30 L 38 20 Q 38 35 25 40 L -25 40 Q -38 35 -38 20 Z" fill="url(#goldHero)"/>
+    <!-- Cup handles -->
+    <path d="M -45 -22 Q -65 -22 -65 0 Q -65 22 -45 22" fill="none" stroke="url(#goldHero)" stroke-width="5"/>
+    <path d="M 45 -22 Q 65 -22 65 0 Q 65 22 45 22" fill="none" stroke="url(#goldHero)" stroke-width="5"/>
+    <!-- Cup base -->
+    <rect x="-30" y="40" width="60" height="8" fill="url(#goldHero)"/>
+    <rect x="-22" y="48" width="44" height="6" fill="#a07a1f"/>
+    <rect x="-35" y="54" width="70" height="10" fill="url(#goldHero)"/>
+    <!-- Glow highlight on bowl -->
+    <ellipse cx="-15" cy="-15" rx="14" ry="6" fill="#fff8e7" opacity="0.6"/>
+  </g>
+
+  <!-- Trophy glow halo -->
+  <ellipse cx="640" cy="380" rx="120" ry="40" fill="url(#goldHero)" opacity="0.18" filter="url(#glowHero)"/>
+
+  <!-- Big PariScore wordmark (top) -->
+  <text x="640" y="130" text-anchor="middle" font-family="Georgia, 'Bree Serif', serif"
+        font-size="78" font-weight="700" fill="#fff8e7" letter-spacing="6">PariScore</text>
+
+  <!-- Subtitle "x ROLAND GARROS 2026" -->
+  <text x="640" y="180" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="22" font-weight="600" fill="#2bb375" letter-spacing="12">× ROLAND GARROS · 2026</text>
+
+  <!-- Bottom CTA strip -->
+  <rect x="0" y="660" width="1280" height="60" fill="#0a0d0f" opacity="0.85"/>
+  <text x="640" y="700" text-anchor="middle" font-family="'DM Mono', Consolas, monospace"
+        font-size="20" font-weight="500" fill="#f4d97a" letter-spacing="6">BRACKET PRÉDICTIF · 128 JOUEURS · 10 000 SIMULATIONS · CLAY ELO PARISCORE</text>
+
+  <!-- Side gold accent lines -->
+  <line x1="220" y1="155" x2="380" y2="155" stroke="url(#goldHero)" stroke-width="2" opacity="0.7"/>
+  <line x1="900" y1="155" x2="1060" y2="155" stroke="url(#goldHero)" stroke-width="2" opacity="0.7"/>
+</svg>
