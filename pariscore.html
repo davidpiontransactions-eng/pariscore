@@ -7208,6 +7208,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <div class="nav-links">
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs">Football</a>
     <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis">🎾 Tennis</a>
+    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg">🏆 Roland Garros</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies">Top Stratégies</a>
     <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks">Hot Picks</a>
     <a href="#" onclick="showPage('paris',this);return false;" data-page="paris">Mes Paris</a>
@@ -9700,6 +9701,212 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 </section>
 </div><!-- /page-alertes -->
 
+<!-- ░░ PAGE : ROLAND GARROS BRACKET (bd ParisScorebis-0mpj) ░░ -->
+<div id="page-rg" data-page="rg" style="display:none;">
+  <style>
+    [data-page="rg"] {
+      --rg-clay: #D85B25;
+      --rg-clay-dark: #A03F18;
+      --rg-cream: #F4ECDE;
+      --rg-cream-soft: #FBF6EC;
+      --rg-green: #0A4D3C;
+      --rg-green-dark: #06301F;
+      --rg-emerald: #00B96B;
+      --rg-amber: #F5A623;
+      --rg-grey: #6B6157;
+    }
+    #page-rg { background: linear-gradient(180deg, var(--rg-cream-soft) 0%, var(--rg-cream) 100%); border-radius:14px; padding:24px 20px; margin:12px 0; color:#2A1F15; }
+    #page-rg .rg-hero { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--rg-clay); }
+    #page-rg .rg-hero-title { font-family:'Bree Serif','Playfair Display',Syne,serif; font-weight:700; font-size:36px; color:var(--rg-green); letter-spacing:-0.5px; margin:0; }
+    #page-rg .rg-hero-sub { font-family:'Instrument Sans',sans-serif; font-size:13px; color:var(--rg-grey); margin-top:4px; }
+    #page-rg .rg-tour-toggle { display:inline-flex; background:rgba(10,77,60,0.08); border:1px solid var(--rg-green); border-radius:8px; padding:3px; }
+    #page-rg .rg-tour-btn { padding:8px 16px; background:transparent; color:var(--rg-green); font-weight:600; font-size:13px; border:0; border-radius:6px; cursor:pointer; font-family:'Instrument Sans',sans-serif; }
+    #page-rg .rg-tour-btn.active { background:var(--rg-clay); color:var(--rg-cream); }
+    #page-rg .rg-status { font-family:'DM Mono',monospace; font-size:11px; color:var(--rg-grey); text-transform:uppercase; letter-spacing:0.5px; }
+    #page-rg .rg-refresh-btn { padding:7px 14px; background:var(--rg-green); color:var(--rg-cream); border:0; border-radius:6px; cursor:pointer; font-family:'Instrument Sans',sans-serif; font-size:12px; font-weight:600; }
+    #page-rg .rg-refresh-btn:hover { background:var(--rg-green-dark); }
+    #page-rg .rg-contenders-head { font-family:'Bree Serif',serif; font-size:20px; color:var(--rg-green-dark); margin:0 0 12px 0; }
+    #page-rg .rg-contenders { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; margin-bottom:28px; }
+    #page-rg .rg-contender { background:rgba(255,255,255,0.7); backdrop-filter:blur(6px); border:1px solid rgba(216,91,37,0.2); border-radius:10px; padding:10px 12px; }
+    #page-rg .rg-contender-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+    #page-rg .rg-contender-name { font-family:'Instrument Sans',sans-serif; font-weight:600; color:#2A1F15; font-size:14px; }
+    #page-rg .rg-contender-rank { font-family:'DM Mono',monospace; font-size:10px; color:var(--rg-clay-dark); text-transform:uppercase; padding:2px 6px; background:rgba(216,91,37,0.12); border-radius:4px; }
+    #page-rg .rg-contender-prob { display:flex; justify-content:space-between; margin-top:6px; font-family:'DM Mono',monospace; font-size:11px; color:var(--rg-grey); }
+    #page-rg .rg-contender-prob b { color:var(--rg-green-dark); font-weight:600; }
+    #page-rg .rg-title-pct { font-family:'Bree Serif',serif; font-size:18px; font-weight:700; white-space:nowrap; }
+    #page-rg .rg-title-pct.hot { color:var(--rg-emerald); }
+    #page-rg .rg-title-pct.warm { color:var(--rg-amber); }
+    #page-rg .rg-title-pct.cool { color:var(--rg-grey); }
+    #page-rg .rg-bracket-wrap { background:var(--rg-cream-soft); border:1px solid rgba(10,77,60,0.12); border-radius:12px; padding:16px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    #page-rg .rg-bracket { display:flex; gap:18px; min-width:max-content; align-items:stretch; }
+    #page-rg .rg-round-col { display:flex; flex-direction:column; min-width:230px; }
+    #page-rg .rg-round-label { font-family:'Bree Serif',serif; font-size:13px; font-weight:700; color:var(--rg-clay); text-transform:uppercase; letter-spacing:1px; padding-bottom:8px; border-bottom:1px solid rgba(216,91,37,0.25); margin-bottom:10px; text-align:center; }
+    #page-rg .rg-match-card { background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); border:1px solid rgba(10,77,60,0.15); border-radius:8px; padding:8px 10px; margin-bottom:8px; flex:1; min-height:84px; display:flex; flex-direction:column; justify-content:center; }
+    #page-rg .rg-match-card.live { border-color:var(--rg-clay); box-shadow:0 0 0 2px rgba(216,91,37,0.18); }
+    #page-rg .rg-player-line { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:13px; gap:8px; }
+    #page-rg .rg-player-line.winner { font-weight:700; color:var(--rg-green-dark); }
+    #page-rg .rg-player-line.loser { color:var(--rg-grey); opacity:0.7; text-decoration:line-through; }
+    #page-rg .rg-player-name { font-family:'Instrument Sans',sans-serif; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #page-rg .rg-player-seed { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; padding:1px 4px; background:rgba(216,91,37,0.12); color:var(--rg-clay-dark); border-radius:3px; margin-left:4px; }
+    #page-rg .rg-player-prob { font-family:'DM Mono',monospace; font-size:11px; color:var(--rg-grey); min-width:38px; text-align:right; }
+    #page-rg .rg-player-line.winner .rg-player-prob { color:var(--rg-emerald); font-weight:700; }
+    #page-rg .rg-clay-pill { display:inline-block; font-family:'DM Mono',monospace; font-size:9px; color:var(--rg-clay); margin-left:4px; }
+    #page-rg .rg-match-meta { display:flex; justify-content:space-between; margin-top:4px; font-family:'DM Mono',monospace; font-size:10px; color:var(--rg-grey); }
+    #page-rg .rg-loading { text-align:center; padding:60px 20px; font-family:'Instrument Sans',sans-serif; color:var(--rg-grey); font-size:13px; }
+    #page-rg .rg-error { text-align:center; padding:40px 20px; background:rgba(255,77,77,0.08); border:1px solid #FF4D4D; border-radius:10px; color:#A02020; font-family:'Instrument Sans',sans-serif; }
+    #page-rg .rg-disclaimer { margin-top:14px; padding:10px 12px; font-family:'Instrument Sans',sans-serif; font-size:11px; color:var(--rg-grey); background:rgba(10,77,60,0.04); border-left:3px solid var(--rg-clay); border-radius:4px; }
+    @media (max-width: 768px) {
+      #page-rg { padding:16px 12px; }
+      #page-rg .rg-hero-title { font-size:24px; }
+      #page-rg .rg-bracket-wrap { padding:10px; }
+      #page-rg .rg-round-col { min-width:200px; }
+    }
+  </style>
+
+  <div class="rg-hero">
+    <div>
+      <h1 class="rg-hero-title">🏆 Roland Garros — Tableau Final</h1>
+      <div class="rg-hero-sub">Bracket interactif · Clay Elo interne PariScore · Monte Carlo 10 000 simulations · Terre battue Paris</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <div class="rg-tour-toggle">
+        <button class="rg-tour-btn active" data-rg-tour="ATP" onclick="loadRolandGarros('ATP')">ATP</button>
+        <button class="rg-tour-btn" data-rg-tour="WTA" onclick="loadRolandGarros('WTA')">WTA</button>
+      </div>
+      <span class="rg-status" id="rg-status">—</span>
+      <button class="rg-refresh-btn" onclick="loadRolandGarros()">🔄 Actualiser</button>
+    </div>
+  </div>
+
+  <div id="rg-contenders-wrap" style="margin-bottom:24px;">
+    <h2 class="rg-contenders-head">Top 16 favoris au titre</h2>
+    <div id="rg-contenders" class="rg-contenders"></div>
+  </div>
+
+  <div class="rg-bracket-wrap">
+    <div id="rg-bracket" class="rg-bracket">
+      <div class="rg-loading">Chargement du tableau Roland Garros…</div>
+    </div>
+  </div>
+
+  <div class="rg-disclaimer">
+    ⓘ Probabilités calculées par simulation Monte Carlo (10 000 itérations) sur le draw BSD officiel et l'Elo terre battue PariScore interne. Modèle Elo Sackmann-style (K=200 surface, MoV façon 538, régression inactivité). Ne tient pas compte des forfaits/blessures de dernière minute.
+  </div>
+</div>
+
+<script>
+(function() {
+  let _rgCurrentTour = 'ATP';
+  function _rgEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function _rgFmtPct(n) {
+    if (n == null || isNaN(n)) return '—';
+    return (Number(n) >= 10 ? Number(n).toFixed(1) : Number(n).toFixed(2)) + '%';
+  }
+  function _rgPctClass(pct) {
+    if (pct == null || isNaN(pct)) return 'cool';
+    if (pct >= 10) return 'hot';
+    if (pct >= 2) return 'warm';
+    return 'cool';
+  }
+  function _rgRoundIcon(label) {
+    if (label === 'F') return '🏆 Finale';
+    if (label === 'SF') return '🥈 Demi-finales';
+    if (label === 'QF') return '⚜️ Quarts';
+    if (label === 'R16') return '8èmes de finale';
+    if (label === 'R32') return '16èmes';
+    if (label === 'R64') return '32èmes';
+    if (label === 'R128') return '1er tour';
+    return label;
+  }
+  function _rgMatchCard(m) {
+    const p1 = m.player1 || {};
+    const p2 = m.player2 || {};
+    const wId = m.winner_id;
+    const p1Win = wId != null && p1.id != null && String(wId) === String(p1.id);
+    const p2Win = wId != null && p2.id != null && String(wId) === String(p2.id);
+    const isLive = String(m.status || '').toLowerCase() === 'live' || String(m.status || '').toLowerCase() === 'in_progress';
+    const pr1 = m.p1_win_prob != null ? m.p1_win_prob + '%' : '—';
+    const pr2 = m.p2_win_prob != null ? m.p2_win_prob + '%' : '—';
+    const seed1 = p1.seed ? '<span class="rg-player-seed">' + _rgEsc(p1.seed) + '</span>' : '';
+    const seed2 = p2.seed ? '<span class="rg-player-seed">' + _rgEsc(p2.seed) + '</span>' : '';
+    const clay1 = p1.clay_rank ? '<span class="rg-clay-pill">Terre #' + p1.clay_rank + '</span>' : '';
+    const clay2 = p2.clay_rank ? '<span class="rg-clay-pill">Terre #' + p2.clay_rank + '</span>' : '';
+    let dt = '';
+    if (m.date) {
+      try { dt = new Date(m.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }); } catch(_) {}
+    }
+    return '<div class="rg-match-card' + (isLive ? ' live' : '') + '">' +
+      '<div class="rg-player-line ' + (p1Win ? 'winner' : (p2Win ? 'loser' : '')) + '">' +
+        '<span class="rg-player-name">' + _rgEsc(p1.name || 'TBD') + seed1 + clay1 + '</span>' +
+        '<span class="rg-player-prob">' + pr1 + '</span>' +
+      '</div>' +
+      '<div class="rg-player-line ' + (p2Win ? 'winner' : (p1Win ? 'loser' : '')) + '">' +
+        '<span class="rg-player-name">' + _rgEsc(p2.name || 'TBD') + seed2 + clay2 + '</span>' +
+        '<span class="rg-player-prob">' + pr2 + '</span>' +
+      '</div>' +
+      '<div class="rg-match-meta"><span>' + _rgEsc(dt) + '</span><span>' + _rgEsc(m.status || '') + '</span></div>' +
+    '</div>';
+  }
+  window.loadRolandGarros = async function(tour) {
+    if (tour) _rgCurrentTour = tour;
+    document.querySelectorAll('[data-rg-tour]').forEach(b => {
+      b.classList.toggle('active', b.dataset.rgTour === _rgCurrentTour);
+    });
+    const statusEl = document.getElementById('rg-status');
+    const bracketEl = document.getElementById('rg-bracket');
+    const contendersEl = document.getElementById('rg-contenders');
+    if (statusEl) statusEl.textContent = 'Chargement…';
+    if (bracketEl) bracketEl.innerHTML = '<div class="rg-loading">Calcul Monte Carlo en cours…</div>';
+    if (contendersEl) contendersEl.innerHTML = '';
+    try {
+      const r = await fetch('/api/v1/tournament/roland-garros?tour=' + encodeURIComponent(_rgCurrentTour) + '&simN=10000');
+      const data = await r.json();
+      if (!data || !data.available) {
+        const reason = data && data.reason || 'unknown';
+        if (bracketEl) bracketEl.innerHTML = '<div class="rg-error">Roland Garros indisponible (' + _rgEsc(reason) + '). Réessayer plus tard ou vérifier BSD coverage.</div>';
+        if (statusEl) statusEl.textContent = 'Indisponible';
+        return;
+      }
+      const gen = new Date(((data.generated_at || Date.now()/1000)) * 1000);
+      const cacheTag = data.cache === 'hit' ? ' · cached' : ' · fresh';
+      if (statusEl) statusEl.textContent = _rgCurrentTour + ' · ' + data.draw_size + ' joueurs · ' + Number(data.sim_n).toLocaleString('fr-FR') + ' sims · ' + gen.toLocaleTimeString('fr-FR') + cacheTag;
+      if (contendersEl) {
+        const cards = (data.top_contenders || []).map(p => {
+          const cls = _rgPctClass(p.title_prob_pct);
+          const rankLabel = p.clay_rank ? 'Terre #' + p.clay_rank : 'Hors top';
+          const seedLabel = p.seed ? '[' + _rgEsc(p.seed) + ']' : '';
+          return '<div class="rg-contender">' +
+            '<div class="rg-contender-head">' +
+              '<span class="rg-contender-name">' + _rgEsc(p.name) + ' ' + seedLabel + '</span>' +
+              '<span class="rg-title-pct ' + cls + '">🏆 ' + _rgFmtPct(p.title_prob_pct) + '</span>' +
+            '</div>' +
+            '<div class="rg-contender-prob">' +
+              '<span><span class="rg-contender-rank">' + _rgEsc(rankLabel) + '</span> · Elo ' + p.clay_elo + '</span>' +
+              '<span>F <b>' + _rgFmtPct(p.final_prob_pct) + '</b> · SF <b>' + _rgFmtPct(p.sf_prob_pct) + '</b></span>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        contendersEl.innerHTML = cards || '<div class="rg-loading">Aucun favori — draw vide ou Elo manquant.</div>';
+      }
+      if (bracketEl) {
+        bracketEl.innerHTML = (data.rounds || []).map(r => {
+          const cards = (r.matches || []).map(_rgMatchCard).join('');
+          return '<div class="rg-round-col">' +
+            '<div class="rg-round-label">' + _rgEsc(_rgRoundIcon(r.round_label)) + '</div>' +
+            (cards || '<div class="rg-loading" style="padding:20px 10px; font-size:11px;">À venir</div>') +
+          '</div>';
+        }).join('');
+      }
+    } catch (e) {
+      if (bracketEl) bracketEl.innerHTML = '<div class="rg-error">Erreur réseau: ' + _rgEsc(String(e && e.message || e)) + '</div>';
+      if (statusEl) statusEl.textContent = 'Erreur';
+    }
+  };
+})();
+</script>
+
 <!-- PAGE : TENNIS LIVE (ESPN ATP+WTA) -->
 <div id="page-tennis" data-page="tennis" style="display:none;">
 
@@ -9950,6 +10157,15 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <input type="checkbox" id="tennis-live-only" checked onchange="renderTennisLive(window._tennisLastFetch||[])"> Live uniquement
         </label>
       </div>
+    </div>
+    <!-- bd dt9/i5r — Filtre source (debug coverage data par fournisseur) -->
+    <div class="tn-src-filter-row" role="group" aria-label="Filtrer matchs tennis par source de données" data-filter="source">
+      <span class="tn-src-label">Source :</span>
+      <button type="button" class="tn-src-filter-chip is-active" data-src-filter="ALL" onclick="setTennisSourceFilter('ALL')" aria-pressed="true" title="Toutes les sources">ALL</button>
+      <button type="button" class="tn-src-filter-chip" data-src-filter="BSD" onclick="setTennisSourceFilter('BSD')" aria-pressed="false" title="BSD Sports Addon — source primaire (stats/serving/points)">BSD</button>
+      <button type="button" class="tn-src-filter-chip" data-src-filter="ESPN" onclick="setTennisSourceFilter('ESPN')" aria-pressed="false" title="ESPN public scoreboard">ESPN</button>
+      <button type="button" class="tn-src-filter-chip" data-src-filter="LIVESCORE" onclick="setTennisSourceFilter('LIVESCORE')" aria-pressed="false" title="LiveScore fallback (BSD/ESPN absents)">LIVESCORE</button>
+      <button type="button" class="tn-src-filter-chip" data-src-filter="AISCORE" onclick="setTennisSourceFilter('AISCORE')" aria-pressed="false" title="AiScore — enrichissement serving (cache + on-demand throttled)">AISCORE</button>
     </div>
     <div class="table-responsive-wrapper">
       <table id="tennis-live-table" style="width:100%;border-collapse:collapse;min-width:900px;">
@@ -10557,6 +10773,25 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-live-table .tennis-discipline { display:block; font-size:10px; color:var(--text3,#5a6068); font-family:'Instrument Sans',sans-serif; margin-top:2px; }
   #tennis-live-table tr.tennis-row-clickable { cursor:pointer; }
   #tennis-live-table tr.tennis-row-clickable:hover { background:var(--bg3,#181c20); }
+  /* bd dt9/i5r — Source badge + filter chips (mini-chip ≤38px width, tokens --cf-*) */
+  .tn-src-chip { display:inline-flex; align-items:center; justify-content:center; min-width:30px; max-width:38px; height:14px; padding:0 5px; margin-left:6px; border-radius:7px; font-family:'DM Mono',monospace; font-size:9px; font-weight:700; letter-spacing:0.3px; line-height:1; border:1px solid transparent; vertical-align:middle; cursor:help; }
+  .tn-src-chip[data-source="BSD"] { background:rgba(74,222,128,0.18); color:var(--cf-emerald,#4ade80); border-color:rgba(74,222,128,0.42); }
+  .tn-src-chip[data-source="ESPN"] { background:rgba(56,189,248,0.18); color:var(--cf-cyan,#38bdf8); border-color:rgba(56,189,248,0.42); }
+  .tn-src-chip[data-source="LIVESCORE"] { background:rgba(251,191,36,0.18); color:var(--cf-amber,#fbbf24); border-color:rgba(251,191,36,0.42); }
+  .tn-src-chip[data-source="AISCORE_CACHE"] { background:rgba(148,163,184,0.18); color:var(--cf-text2,#94a3b8); border-color:rgba(148,163,184,0.42); }
+  .tn-src-chip[data-source="AISCORE_ONDEMAND"] { background:rgba(148,163,184,0.28); color:var(--cf-text2,#94a3b8); border-color:rgba(148,163,184,0.55); font-style:italic; }
+  .tn-src-chip:focus-visible { outline:2px solid var(--cf-cyan,#38bdf8); outline-offset:1px; }
+  .tn-src-warn { display:inline-flex; align-items:center; justify-content:center; min-width:14px; height:14px; margin-left:4px; border-radius:50%; background:rgba(255,167,38,0.22); color:var(--cf-amber,#fbbf24); border:1px solid rgba(255,167,38,0.45); font-size:9px; font-weight:800; cursor:help; vertical-align:middle; }
+  .tn-src-filter-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0 0 10px 0; padding:4px 0; }
+  .tn-src-filter-row .tn-src-label { font-family:'DM Mono',monospace; font-size:10px; color:var(--cf-text3,#5a6068); letter-spacing:0.4px; margin-right:2px; text-transform:uppercase; }
+  .tn-src-filter-chip { display:inline-flex; align-items:center; padding:3px 8px; border-radius:10px; font-family:'DM Mono',monospace; font-size:10px; font-weight:600; letter-spacing:0.3px; cursor:pointer; user-select:none; border:1px solid var(--bg4,#1e2328); background:transparent; color:var(--text2,#8d9399); transition:all 120ms ease; }
+  .tn-src-filter-chip:hover { color:var(--text,#e8eaed); border-color:var(--cf-text3,#64748b); }
+  .tn-src-filter-chip:focus-visible { outline:2px solid var(--cf-cyan,#38bdf8); outline-offset:2px; }
+  .tn-src-filter-chip.is-active { background:var(--bg3,#181c20); color:var(--text,#e8eaed); border-color:var(--cf-cyan,#38bdf8); box-shadow:inset 0 -2px 0 var(--cf-cyan,#38bdf8); }
+  .tn-src-filter-chip[data-src-filter="BSD"].is-active { border-color:var(--cf-emerald,#4ade80); box-shadow:inset 0 -2px 0 var(--cf-emerald,#4ade80); color:var(--cf-emerald,#4ade80); }
+  .tn-src-filter-chip[data-src-filter="ESPN"].is-active { border-color:var(--cf-cyan,#38bdf8); box-shadow:inset 0 -2px 0 var(--cf-cyan,#38bdf8); color:var(--cf-cyan,#38bdf8); }
+  .tn-src-filter-chip[data-src-filter="LIVESCORE"].is-active { border-color:var(--cf-amber,#fbbf24); box-shadow:inset 0 -2px 0 var(--cf-amber,#fbbf24); color:var(--cf-amber,#fbbf24); }
+  .tn-src-filter-chip[data-src-filter="AISCORE"].is-active { border-color:var(--cf-text2,#94a3b8); box-shadow:inset 0 -2px 0 var(--cf-text2,#94a3b8); color:var(--cf-text2,#94a3b8); }
   /* Modal détail tennis (BSD) */
   .tennis-modal { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; }
   .tennis-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); }
@@ -14542,13 +14777,86 @@ function _tnBppiCell(m) {
   </div>`;
 }
 
+// bd dt9/i5r — Résout source normalisée (whitelist enum strict) pour un match tennis.
+// Priorité: _source explicite > _serving_source (aiscore_*) > _src=livescore > fallback ESPN.
+function _tnResolveSource(m) {
+  if (!m) return 'ESPN';
+  const explicit = String(m._source || '').toUpperCase();
+  if (explicit === 'BSD' || explicit === 'ESPN' || explicit === 'LIVESCORE') {
+    // Si serving enrichi par aiscore, prime le tag aiscore sur ESPN (mais pas sur BSD/LIVESCORE)
+    if (explicit === 'ESPN') {
+      const ss = String(m._serving_source || '').toLowerCase();
+      if (ss === 'aiscore_ondemand') return 'AISCORE_ONDEMAND';
+      if (ss === 'aiscore_cache') return 'AISCORE_CACHE';
+    }
+    return explicit;
+  }
+  const ss = String(m._serving_source || '').toLowerCase();
+  if (ss === 'aiscore_ondemand') return 'AISCORE_ONDEMAND';
+  if (ss === 'aiscore_cache') return 'AISCORE_CACHE';
+  if (String(m._src || '').toLowerCase() === 'livescore') return 'LIVESCORE';
+  return 'ESPN';
+}
+
+// bd dt9/i5r — Badge HTML source data par row (color-coded + tooltip + aria + warn LiveScore).
+function _tnRenderSourceBadge(m) {
+  const src = _tnResolveSource(m);
+  const labels = {
+    BSD: 'Source : BSD Sports Addon (primaire — stats, serving, points)',
+    ESPN: 'Source : ESPN public scoreboard',
+    LIVESCORE: 'Source : LiveScore fallback (BSD/ESPN indisponibles pour ce match)',
+    AISCORE_CACHE: 'Source ESPN + serving enrichi via AiScore (cache 5min)',
+    AISCORE_ONDEMAND: 'Source ESPN + serving enrichi via AiScore (fetch on-demand throttled)',
+  };
+  const display = src === 'AISCORE_CACHE' ? 'AI·C'
+    : src === 'AISCORE_ONDEMAND' ? 'AI·D'
+    : src;
+  const tooltip = labels[src] || 'Source inconnue';
+  let warn = '';
+  if (src === 'LIVESCORE' && m && m.is_live) {
+    const hasPoint = m.current_point && m.current_point !== '—';
+    const hasServing = (m.serving === 1 || m.serving === 2);
+    if (!hasPoint && !hasServing) {
+      warn = '<span class="tn-src-warn" title="Données limitées — LiveScore n\'expose ni point ni serveur" aria-label="Données limitées LiveScore">!</span>';
+    }
+  }
+  return `<span class="tn-src-chip" data-source="${src}" title="${_escTennis(tooltip)}" aria-label="${_escTennis('Source données: ' + src)}" tabindex="0">${_escTennis(display)}</span>${warn}`;
+}
+
+// bd dt9/i5r — Filtre source actif. AISCORE chip groupe AISCORE_CACHE + AISCORE_ONDEMAND.
+window._tennisSourceFilter = window._tennisSourceFilter || 'ALL';
+function setTennisSourceFilter(f) {
+  const allowed = ['ALL', 'BSD', 'ESPN', 'LIVESCORE', 'AISCORE'];
+  if (!allowed.includes(f)) return;
+  window._tennisSourceFilter = f;
+  try {
+    document.querySelectorAll('.tn-src-filter-chip').forEach(el => {
+      const isActive = el.getAttribute('data-src-filter') === f;
+      el.classList.toggle('is-active', isActive);
+      el.setAttribute('aria-pressed', String(isActive));
+    });
+  } catch (_) {}
+  renderTennisLive(window._tennisLastFetch || []);
+}
+function _tnMatchesSourceFilter(m) {
+  const f = window._tennisSourceFilter || 'ALL';
+  if (f === 'ALL') return true;
+  const src = _tnResolveSource(m);
+  if (f === 'AISCORE') return src === 'AISCORE_CACHE' || src === 'AISCORE_ONDEMAND';
+  return src === f;
+}
+
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
   const onlyLive = document.getElementById('tennis-live-only')?.checked;
-  const list = onlyLive ? (matches || []).filter(m => m.is_live) : (matches || []);
+  let list = onlyLive ? (matches || []).filter(m => m.is_live) : (matches || []);
+  // bd dt9/i5r — applique filtre source (chip ALL/BSD/ESPN/LIVESCORE/AISCORE)
+  list = list.filter(_tnMatchesSourceFilter);
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement.' : 'Aucun match disponible.'}</td></tr>`;
+    const f = window._tennisSourceFilter || 'ALL';
+    const filtMsg = f !== 'ALL' ? ` (filtre source: ${f})` : '';
+    tbody.innerHTML = `<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement' : 'Aucun match disponible'}${filtMsg}.</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(m => {
@@ -14575,8 +14883,9 @@ function renderTennisLive(matches) {
     const rowTitle = m._src === 'livescore'
       ? 'Voir détail LiveScore (sets et jeux par set)'
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
-    return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
-      <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}</td>
+    const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
+    return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
+      <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</td>
       <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
       <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}</td>
       <td class="${p2Cls}">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}</td>
