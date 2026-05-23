@@ -37,7 +37,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 |---|---|---|---|---|
 | ~~1~~ ✅ | **Deploy VPS** | ops | ✅ done 2026-05-23 — cumul `fbea217`→`290bfb1` deployed. Validation logs : grep `wikidata\|TennisLive\|safeFixed\|live_momentum_pct` |
 | 2 | **🚨 Revoke RapidAPI key** | security | Dashboard RapidAPI → revoke + nouvelle clé → `.env` VPS uniquement (exposée chat 21/05) | 🔴 CRITICAL |
-| 3 | **Audit DB postbreach** | ops | `bash .context/security_db_audit_postbreach.sh` VPS (bd `c8m`) | 🟡 MED |
+| ~~3~~ ✅ | **Audit DB postbreach** | ops | ✅ done 2026-05-23 — 8 sections audit = 0 lignes. Zéro compromission DB fenêtre breach. bd `c8m` CLOSED. |
 | 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS à minuit UTC (bd `9je`) | 🟡 MED |
 | 5 | **Run flashscore-logos** | ops | `node tools/import-flashscore-logos.js` VPS post-deploy (bd `qm6a` Plan A) | 🟢 LOW |
 | 6 | **DG decision Stripe — 4/6 arbitré 2026-05-23** | DG+ops | bd `s77m` — LOCKED: €19/mo, trial 7j, mono-sport OUI, matchday €2.99. PENDING: prix annuel + refund policy. Action user dashboard Stripe (~30min) : créer compte + 5 products + secret key + webhook + append .env VPS + pm2 restart. | 🟡 MED |
