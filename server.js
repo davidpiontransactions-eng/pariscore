@@ -30588,6 +30588,108 @@ async function bsdFetchBookmakers() {
   return { data: res.data, cached: false };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd cy9h — Context Engine météo partial (innovation backlog ligne 259)
+//
+// Open-Meteo API zero-key (https://open-meteo.com) :
+//   * Geocoding API (search city → lat/lon/country)
+//   * Forecast API (hourly temp/precipitation/wind 16d max)
+//   * Pas de signup, pas de rate limit hard public usage
+//
+// Cache strategy :
+//   * geocode → api_cache key geo_<normName> TTL 30d (rarely change)
+//   * weather → api_cache key weather_<matchId> TTL 1h (forecast stable courte fenêtre)
+//
+// Use case edge math (future) : pluie >3mm/h corrélée -8% λ both sides
+// (passes longues moins précises, contrôle balle dégradé).
+// ═══════════════════════════════════════════════════════════════════════════════
+async function _geocodeCity(name) {
+  if (!name || typeof name !== 'string') return null;
+  const cacheKey = `geo_${normName(name)}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  if (cached === null) return null; // neg cache hit (apiCacheGet returns null on miss too — but we save explicitly below)
+  try {
+    const res = await httpsGet(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=fr`, {}, 8000);
+    if (res && res.status === 200 && res.data && Array.isArray(res.data.results) && res.data.results.length > 0) {
+      const r = res.data.results[0];
+      const out = { lat: r.latitude, lon: r.longitude, name: r.name, country: r.country_code };
+      apiCacheSet(cacheKey, out, 'open_meteo_geo', 30 * 24 * 3600 * 1000);
+      return out;
+    }
+  } catch (_) { /* swallow */ }
+  return null;
+}
+
+async function _fetchOpenMeteoForecast(lat, lon, kickoffIso) {
+  if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,wind_speed_10m,weather_code&timezone=auto&forecast_days=2`;
+    const res = await httpsGet(url, {}, 8000);
+    if (!res || res.status !== 200 || !res.data || !res.data.hourly || !Array.isArray(res.data.hourly.time)) return null;
+    const h = res.data.hourly;
+    // Find closest hour to kickoff time
+    const kickoffMs = Date.parse(kickoffIso);
+    if (!Number.isFinite(kickoffMs)) return null;
+    let bestIdx = 0, bestDiff = Infinity;
+    for (let i = 0; i < h.time.length; i++) {
+      const diff = Math.abs(Date.parse(h.time[i]) - kickoffMs);
+      if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+    }
+    return {
+      time: h.time[bestIdx],
+      temp_c: h.temperature_2m ? h.temperature_2m[bestIdx] : null,
+      precipitation_mm: h.precipitation ? h.precipitation[bestIdx] : null,
+      wind_kmh: h.wind_speed_10m ? h.wind_speed_10m[bestIdx] : null,
+      weather_code: h.weather_code ? h.weather_code[bestIdx] : null,
+    };
+  } catch (_) { return null; }
+}
+
+// WMO weather code → label FR + icon emoji (subset commun matches sport)
+function _weatherCodeLabel(code) {
+  if (code == null) return { label: 'inconnu', icon: '·' };
+  const c = Number(code);
+  if (c === 0) return { label: 'ensoleillé', icon: '☀' };
+  if (c >= 1 && c <= 3) return { label: 'nuageux', icon: '⛅' };
+  if (c >= 45 && c <= 48) return { label: 'brouillard', icon: '🌫' };
+  if (c >= 51 && c <= 57) return { label: 'bruine', icon: '🌦' };
+  if (c >= 61 && c <= 67) return { label: 'pluie', icon: '🌧' };
+  if (c >= 71 && c <= 77) return { label: 'neige', icon: '🌨' };
+  if (c >= 80 && c <= 82) return { label: 'averses', icon: '🌦' };
+  if (c >= 95 && c <= 99) return { label: 'orage', icon: '⛈' };
+  return { label: 'variable', icon: '·' };
+}
+
+async function fetchWeatherForMatch(match) {
+  if (!match || !match.commence_time) return null;
+  const cacheKey = `weather_${match.id || ''}`;
+  if (!match.id) return null;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  // Chain candidates pour geocode (best effort)
+  const candidates = [match.venue_city, match.venue, match.home_team_city, match.home_team].filter(c => c && typeof c === 'string');
+  let geo = null;
+  for (const c of candidates) {
+    geo = await _geocodeCity(c);
+    if (geo) break;
+  }
+  if (!geo) return null;
+  const forecast = await _fetchOpenMeteoForecast(geo.lat, geo.lon, match.commence_time);
+  if (!forecast) return null;
+  const labelInfo = _weatherCodeLabel(forecast.weather_code);
+  const out = {
+    ...forecast,
+    city: geo.name,
+    country: geo.country,
+    label_fr: labelInfo.label,
+    icon: labelInfo.icon,
+    geocode_from: candidates[0] || null,
+  };
+  apiCacheSet(cacheKey, out, 'open_meteo_weather', 3600 * 1000);
+  return out;
+}
+
 // bd 82th — BSD Phase 4 fetchers per-id (referees + venues + leagues). Cache plus long.
 const BSD_REFEREE_TTL = 6 * 3600 * 1000;
 const BSD_VENUE_TTL = 12 * 3600 * 1000;
@@ -31217,6 +31319,12 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         // bd cnvg — Poisson Time-Inhomogène live (λ ajusté minute + score)
         // null si match non-live ou xG manquants. UI peut comparer pre-match vs live_poisson markets.
         live_poisson: (typeof computeLivePoissonInhomogeneous === 'function') ? computeLivePoissonInhomogeneous(match) : null,
+        // bd cy9h — Context Engine météo (Open-Meteo zero-key) — fetch async, cache 1h
+        // null si geocoding failed ou commence_time absent. Edge math future : pluie>3mm/h → λ -8%.
+        match_weather: await (async () => {
+          try { return await fetchWeatherForMatch(match); }
+          catch (_) { return null; }
+        })(),
         // bd 0hf4 Phase 3 — TV broadcasters (cache cron Phase 1.1 + attach in-place idempotent)
         tv_channels: (function() {
           try {
