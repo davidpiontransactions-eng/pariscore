@@ -40,7 +40,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 | 3 | **Audit DB postbreach** | ops | `bash .context/security_db_audit_postbreach.sh` VPS (bd `c8m`) | 🟡 MED |
 | 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS à minuit UTC (bd `9je`) | 🟡 MED |
 | 5 | **Run flashscore-logos** | ops | `node tools/import-flashscore-logos.js` VPS post-deploy (bd `qm6a` Plan A) | 🟢 LOW |
-| 6 | **DG decision Stripe** | DG | `.context/stripe_dg_checklist.md` — 9 sections (trial/prix/matchday) bd `s77m` | 🟡 MED |
+| 6 | **DG decision Stripe — 4/6 arbitré 2026-05-23** | DG+ops | bd `s77m` — LOCKED: €19/mo, trial 7j, mono-sport OUI, matchday €2.99. PENDING: prix annuel + refund policy. Action user dashboard Stripe (~30min) : créer compte + 5 products + secret key + webhook + append .env VPS + pm2 restart. | 🟡 MED |
 | 7 | **Sackmann purge — Phase 1+2 livrées** | code+ops | ✅ DG GO 2026-05-23 (bd `8uoc`). ⚠️ TML-Database découvert CC-NC (non MIT) — substitution invalidée. Replacement choisi = internal Elo from BSD/ESPN (bd `dl49`, 3-5j). Phase 1+2 session courante : backup script + Sackmann sync désactivé (flag `SACKMANN_SYNC_DISABLED=true`). Ops VPS : `node tools/backup-tennis-matches.js` puis deploy server.js patché. Phase 3-7 (ETL interne + refactor consumers + DROP table + LICENSE-DATA.md) = sessions futures bd `dl49`. | 🔴 HIGH legal |
 | 8 | **DG decision 6 études bloquées** | DG | bd `j5lb` — GO/NO-GO 6 spikes arbitrage (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing) | 🟡 MED |
 | 9 | **POC OddsPapi.io** | DG | Signup free 250 req → `ODDSPAPI_KEY` .env → `node .context/_probe_oddspapi_pinnacle.js` (bd `bjv`) | 🟢 LOW |
