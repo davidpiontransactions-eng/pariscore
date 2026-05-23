@@ -26510,6 +26510,28 @@ function buildStaticInsightLayer(d) {
     </div>`;
   })();
 
+  // bd i8gw — Section JET-LAG kilométrage déplacements (Context Engine finalize)
+  // Affichée si match_travel non-null. Compact chip distance + bucket + fatigue factor.
+  const mt = m.match_travel || null;
+  const travelPanel = (mt && mt.distance_km != null) ? (() => {
+    const km = mt.distance_km;
+    const factor = mt.fatigue_factor || 1.0;
+    const bucket = mt.bucket || '—';
+    const highImpact = km >= 500;
+    const bucketColor = km < 300 ? '#9ca3af' : km < 500 ? '#9ca3af' : km < 1000 ? '#fb923c' : km < 2500 ? '#ef4444' : '#dc2626';
+    const factorPct = ((factor - 1) * 100).toFixed(0);
+    return `<div class="ps-section ps-travel" style="border:1px solid rgba(251,146,60,0.22);background:linear-gradient(135deg,rgba(251,146,60,0.04),rgba(251,146,60,0.01));border-radius:10px;padding:10px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:9px;font-family:var(--font-mono);color:#c2410c;background:rgba(251,146,60,0.18);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800">✈ DÉPLACEMENT · Haversine</span>
+        <span style="font-size:14px;font-family:var(--font-mono);font-weight:700;color:${bucketColor}">${km.toLocaleString('fr-FR')} km</span>
+        <span style="font-size:11px;font-family:var(--font-mono);color:var(--text2);text-transform:uppercase;letter-spacing:.04em">${bucket}</span>
+        ${highImpact ? `<span style="font-size:9px;font-family:var(--font-mono);color:var(--amber);background:rgba(245,158,11,0.15);padding:2px 6px;border-radius:4px;letter-spacing:.04em" title="Distance >500km — fatigue jet-lag corrélée perf dégradée visiteurs">⚠ JET-LAG</span>` : ''}
+        <span style="font-size:10px;font-family:var(--font-mono);color:var(--text3)" title="Facteur multiplicatif λ_away (edge math future)">λ_away ×${factor.toFixed(2)} (${factorPct}%)</span>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:6px;font-family:var(--font-mono)">${escapeHtml((mt.away_city || '?') + ' → ' + (mt.home_city || '?'))}</div>
+    </div>`;
+  })() : '';
+
   // bd cy9h — Section météo Open-Meteo (Context Engine partial)
   // Affichée si match_weather non-null. Affichage compact icon + temp + précip + vent + city.
   const mw = m.match_weather || null;
@@ -26582,6 +26604,7 @@ function buildStaticInsightLayer(d) {
     ${hasStreaks ? streakRow : ''}
     ${livePanel}
     ${meteoPanel}
+    ${travelPanel}
     ${livePoissonPanel}
     ${betPill}
   </div>`;
