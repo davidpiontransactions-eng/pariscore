@@ -119,53 +119,76 @@ const SACKMANN_SERVE_COLS = [
 
   console.log(`[probe] ${candidates.length} candidats trouvés, fetch stats endpoint pour ${LIMIT} premiers...\n`);
 
-  const allFields = new Set();
-  const fieldFrequency = new Map();
-  let successCount = 0, failCount = 0;
-  const sampleResponses = [];
+  const probeEndpoints = [
+    { key: 'stats', path: (id) => `/api/v2/events/${id}/stats/` },
+    { key: 'incidents', path: (id) => `/api/v2/events/${id}/incidents/` },
+    { key: 'lineups', path: (id) => `/api/v2/events/${id}/lineups/` },
+  ];
+
+  const aggResults = {};  // {endpoint: { fields: Set, freq: Map, success, fail, sample }}
+  for (const ep of probeEndpoints) {
+    aggResults[ep.key] = { fields: new Set(), freq: new Map(), success: 0, fail: 0, sample: null };
+  }
 
   for (let i = 0; i < Math.min(LIMIT, candidates.length); i++) {
     const c = candidates[i];
-    process.stdout.write(`  [${i + 1}/${LIMIT}] ${c.name} (id=${c.id}) ... `);
-    try {
-      const res = await bsdFetch(`/api/v2/events/${c.id}/stats/`);
-      if (res.status !== 200 || !res.data) {
-        console.log(`HTTP ${res.status}`);
-        failCount++;
-        continue;
+    console.log(`\n  [${i + 1}/${LIMIT}] ${c.name} (id=${c.id})`);
+    for (const ep of probeEndpoints) {
+      const agg = aggResults[ep.key];
+      process.stdout.write(`    ${ep.key.padEnd(12)} ... `);
+      try {
+        const res = await bsdFetch(ep.path(c.id));
+        if (res.status !== 200 || !res.data) {
+          console.log(`HTTP ${res.status}`);
+          agg.fail++;
+          continue;
+        }
+        const keys = walkKeys(res.data);
+        keys.forEach(k => {
+          agg.fields.add(k);
+          agg.freq.set(k, (agg.freq.get(k) || 0) + 1);
+        });
+        agg.success++;
+        if (!agg.sample) agg.sample = { id: c.id, name: c.name, data: res.data };
+        console.log(`OK · ${keys.size} fields`);
+      } catch (e) {
+        console.log(`ERR: ${e.message}`);
+        agg.fail++;
       }
-      const keys = walkKeys(res.data);
-      keys.forEach(k => {
-        allFields.add(k);
-        fieldFrequency.set(k, (fieldFrequency.get(k) || 0) + 1);
-      });
-      successCount++;
-      if (sampleResponses.length < 1) sampleResponses.push({ id: c.id, name: c.name, data: res.data });
-      console.log('OK');
-    } catch (e) {
-      console.log(`ERR: ${e.message}`);
-      failCount++;
     }
   }
+
+  // Use stats endpoint pour Sackmann cross-check (compat avec ancien output)
+  const allFields = aggResults.stats.fields;
+  const fieldFrequency = aggResults.stats.freq;
+  const successCount = aggResults.stats.success;
+  const failCount = aggResults.stats.fail;
+  const sampleResponses = aggResults.stats.sample ? [aggResults.stats.sample] : [];
 
   // Analyse cols Sackmann requises
   console.log(`\n══════════════════════════════════════════════════════════════`);
   console.log(`  BSD TENNIS STATS COVERAGE AUDIT — bd dl49 Phase 4.1.1`);
   console.log(`══════════════════════════════════════════════════════════════`);
-  console.log(`  Success: ${successCount}/${LIMIT} · Failed: ${failCount}`);
-  console.log(`  Total fields uniques observés: ${allFields.size}`);
+  for (const ep of probeEndpoints) {
+    const agg = aggResults[ep.key];
+    console.log(`  ${ep.key.padEnd(12)} : ${agg.success}/${LIMIT} OK · ${agg.fields.size} fields uniques`);
+  }
   console.log(``);
-  console.log(`  ── Cols Sackmann requises — présence ─────────────────────`);
+  console.log(`  ── Cols Sackmann requises — présence (cross-endpoint) ────`);
   for (const col of SACKMANN_SERVE_COLS) {
-    const matches = [...allFields].filter(f => f.toLowerCase().includes(col.toLowerCase()));
-    if (matches.length > 0) {
-      console.log(`  ${col.padEnd(10)} : ✓ FOUND (${matches.length} matches) — ${matches.slice(0, 3).join(', ')}${matches.length > 3 ? ' ...' : ''}`);
+    const findings = [];
+    for (const ep of probeEndpoints) {
+      const matches = [...aggResults[ep.key].fields].filter(f => f.toLowerCase().includes(col.toLowerCase()));
+      if (matches.length > 0) findings.push(`${ep.key}: ${matches[0]}${matches.length > 1 ? ` +${matches.length - 1}` : ''}`);
+    }
+    if (findings.length > 0) {
+      console.log(`  ${col.padEnd(10)} : ✓ FOUND — ${findings.join(' · ')}`);
     } else {
-      console.log(`  ${col.padEnd(10)} : ✗ ABSENT`);
+      console.log(`  ${col.padEnd(10)} : ✗ ABSENT (aucun endpoint)`);
     }
   }
 
-  console.log(`\n  ── Top 30 fields by frequency ────────────────────────────`);
+  console.log(`\n  ── Top 30 fields /stats/ by frequency ────────────────────`);
   const sorted = [...fieldFrequency.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
   sorted.forEach(([k, v]) => console.log(`  ${String(v).padStart(3)}/${LIMIT}  ${k}`));
 
