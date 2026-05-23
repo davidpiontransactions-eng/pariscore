@@ -157,96 +157,47 @@ Toutes les P0 actuellement in_progress ont leur code livré. Restants = actions 
 | `qm6a` | **Flashscore datasets integration** — voir sous-table dédiée ci-dessous (6 plans A-F) |
 | `6jro` | **Sofascore Apify datasets integration** — voir sous-table dédiée ci-dessous (4 plans G-J) |
 
-#### Sous-tâches `qm6a` Flashscore datasets — 6 plans
+#### Sous-tâches `qm6a` Flashscore datasets — 6 plans ✅ **TOUS LIVRÉS**
 
-Datasets Apify one-shot disponibles racine projet:
-- `dataset_flashscore-team-stats_2026-05-21_23-54-30-172.json` (48K, 80 entries: 20 EPL foot + 60 NBA basket hors scope)
-- `dataset_flashscore-live-matches_2026-05-22_00-03-54-224.json` (39K, 3 matchs live foot riches)
+Datasets Apify one-shot racine projet : `dataset_flashscore-team-stats_*.json` (20 EPL + 60 NBA hors scope) + `dataset_flashscore-live-matches_*.json` (3 matchs live foot).
 
-| Plan | Phase | Tâche | Effort | ROI | Use case |
-|---|---|---|---|---|---|
-| **A** | 1 | ✅ Logos backup livré commit `3fc4ca7` — `tools/import-flashscore-logos.js` standalone loader, 20 EPL teams ingested `api_cache` TTL 90j, NBA filtered, idempotent + `--dry-run` + `--force`. Lookup chain `/api/v1/team-logo` automatique. | 30min | HIGH | ✓ DONE |
-| **B** | 2 | ✅ livré — `tools/import-flashscore-standings.js` ETL dataset Apify entries football → `api_cache` key `flashscore_standings_<configId>` TTL 7j source `flashscore_standings`. Resolveur (country, league) → config_id via `leagues_config.json`. server.js `getFlashscoreStandings()` lookup + wire route `/api/v1/standings/:leagueId` fallback dernier recours (post BSD+ESPN+API-Football vides) avec flag `flashscoreFallback:true` + `_source:'flashscore'` rows. 20 EPL teams seedés (configId=39, Arsenal P1 82pts top). | 1-2h | MED | ✓ DONE |
-| **C** | 3 | ✅ livré — `tools/audit-flashscore-team-naming.js` audit script offline + online dual-mode. normName aligné server.js:5159, strip affixes corporate, Levenshtein lev≤3 fuzzy match. Online (`--db=database.json`) : match exact + stripped affix + fuzzy candidates. Offline : heuristique shorthand (13 patterns connus EPL: Manchester Utd→Manchester United, Wolves→Wolverhampton Wanderers, etc). Rapport `.context/audits/audit-flashscore-team-naming.md`. 8/20 EPL EPL flagged shorthand suspect (mode offline). | 2h | MED | ✓ DONE |
-| **D** | 4 | ✅ livré — `tools/import-sofascore-football-venue-referee.js` ETL dataset Apify entries football → `api_cache` key `sofa_venue_referee_<normHome>_<normAway>` TTL 7j source `sofascore_venue_referee`. server.js `getSofascoreVenueReferee()` + wire `/api/v1/insights/:id` payload field `sofascore_venue_referee`. pariscore.html section "🏟️ STADE & ARBITRE · SOFASCORE" tête onglet Résumé : carte stade (nom + ville + capacité + flag) + carte arbitre (nom + flag + games + YC/match + RC/match). 1 entry seedée (Bernabéu + Munuera Montero 299 matchs 4.63 YC/m). Alt bd `82th`. | 1h | MED | ✓ DONE |
-| **E** | 5 | ✅ livré — `tools/import-flashscore-live-stats.js` ETL dataset Apify entries football → `api_cache` key `flashscore_live_stats_<normHome>_<normAway>` TTL 30min source `flashscore_live_stats`. STAT_MAP normalise stat_name → champs (possession_pct, total_shots, shots_on_target, corner_kicks, etc). server.js `getFlashscoreLiveStats()` + wire `/api/v1/insights/:id` payload `flashscore_live_stats` + match list `flashscore_live_fallback` (skip si live BSD/ESPN/AF déjà présent). 3 entries seedées. | 1-2h | MED | ✓ DONE |
-| **F** | 6 | ✅ livré — `tools/import-flashscore-livestream.js` ETL dataset Apify → `api_cache` key `livestream_<normHome>_<normAway>` TTL 7j source `flashscore_livestream`. server.js `attachFlashscoreLiveStream()` Map cache lazy reload 1min + wire 2 sites (`matchesForBroadcast` + `/api/v1/matches`). pariscore.html pill `📡 STREAM` ambre next to TV badge. 3 entries seeded dataset. | 30min | LOW | ✓ DONE |
+| Plan | Tâche | Locus |
+|---|---|---|
+| A | Logos backup → api_cache TTL 90j (20 EPL) | `tools/import-flashscore-logos.js` commit `3fc4ca7` |
+| B | Standings fallback offline configId | `tools/import-flashscore-standings.js` + `getFlashscoreStandings()` |
+| C | Cross-ref team naming audit | `tools/audit-flashscore-team-naming.js` (offline+online dual) |
+| D | Venue + referee enrichment Sofa | `tools/import-sofascore-football-venue-referee.js` (alt 82th) |
+| E | Live stats fallback Flashscore | `tools/import-flashscore-live-stats.js` |
+| F | Livestream badge `📡 STREAM` | `tools/import-flashscore-livestream.js` |
 
-**Effort total cumul:** ~5.5-6.5h si tous exécutés restants (Plan A ✅).
-**Limite:** datasets Apify one-shot ≠ feed continu. Value durable nécessite scraper continuous (Apify subscription) OU pivot xvalue.ai (bd `ffh` GO 85/100).
-**Ordre recommandé:** ~~A~~ ✅ → ~~F~~ ✅ → ~~D~~ ✅ → ~~E~~ ✅ → ~~B~~ ✅ → ~~C~~ ✅. **Tous 6 plans livrés.**
+**Limite Apify one-shot:** datasets ≠ feed continu. Value durable = scraper continuous OR pivot xvalue.ai (bd `ffh` GO 85/100).
 
-#### Sous-tâches `6jro` Sofascore Apify datasets — 4 plans
+#### Sous-tâches `6jro` Sofascore Apify datasets — 4 plans (G+H+I ✅, J restant)
 
-Dataset Apify one-shot disponible racine projet:
-- `dataset_sofascore-scraper-pro_2026-05-22_00-07-03-587.json` (110K, 2 entries: 1 tennis player profile + 1 football match detail)
+Dataset Apify one-shot racine `dataset_sofascore-scraper-pro_*.json` (2 entries seed initial).
 
-| Plan | Phase | Tâche | Effort | ROI | Use case |
-|---|---|---|---|---|---|
-| **G** | 1 | ✅ livré — `tools/import-sofascore-tennis-player.js` ETL dataset Apify entries `/tennis/player/...` → `api_cache` key `sofa_tennis_player_<normName>` TTL 7j source `sofascore_tennis_player`. server.js `getSofascoreTennisPlayer()` + endpoint GET `/api/v1/tennis/sofa-profile?p1=&p2=`. pariscore.html `fetchTennisSofaProfile()` + `renderTennisSofaProfile()` section "🏆 HISTORIQUE GRAND CHELEM · SOFASCORE" deux cartes joueurs (rankings + 4 tournois Grand Chelem 5 années récentes + total titres). 1 entry seedée (Djokovic). | 1-2h | HIGH | ✓ DONE |
-| **H** | 2 | ✅ livré — `tools/import-sofascore-editorial.js` ETL dataset Apify → `api_cache` key `sofa_editorial_<normHome>_<normAway>` TTL 24h source `sofascore_editorial`. server.js `getSofascoreEditorial()` lookup + wire `/api/v1/insights/:id` payload field `sofascore_editorial`. pariscore.html section "📰 AVANT-MATCH · SOFASCORE" tête onglet Résumé modal Insights (title/excerpt/image/tags/url externe). 1 entry seedée. | 1h | MED | ✓ DONE |
-| **I** | 3 | ✅ livré — Filtre Format Singles/Doubles onglet Tennis (data-filter=format ALL/SINGLES/DOUBLES). Heuristique `_tnIsDoublesMatch()` : `is_doubles` flag explicite OR tournament/round regex `doubles?` OR slash-pair names (`Bopanna R. / Ebden M.`). `_tennisVbFilters.format='ALL'` ajouté. | 30min | LOW | ✓ DONE |
-| **J** | 4 | Sofascore continuous scraper webhook — alternative permanent feed vs Apify one-shot — ⚠️ conflit potentiel bd `ffh` (Sofascore = 53/100 NO-GO car redondant BSD live, mais profile/historique = use case distinct) | 3-4h | MED | Permanent feed profile data |
+| Plan | Tâche | Locus |
+|---|---|---|
+| G | Tennis player profile Grand Slam | `tools/import-sofascore-tennis-player.js` + section modal "🏆 HISTORIQUE GRAND CHELEM" |
+| H | Editorial article modal Insights | `tools/import-sofascore-editorial.js` + section "📰 AVANT-MATCH" |
+| I | Filtre Format Singles/Doubles | `_tnIsDoublesMatch()` heuristique slash-pair + tournament regex |
+| **J** ⏳ | Sofascore continuous scraper webhook | 3-4h MED · conflit bd `ffh` (profile/historique distinct vs live NO-GO) |
 
-**Effort total cumul:** ~5-7h si tous exécutés.
-**Note bd `ffh` cross-ref:** Sofascore catégorisé NO-GO uniquement pour use case LIVE (redondant BSD WS). Use case PROFILE/HISTORIQUE distinct → Plan J réserve fenêtre potentielle.
-**Ordre recommandé:** ~~G~~ ✅ → ~~H~~ ✅ → ~~I~~ ✅ → J (reserve continuous feed décision DG).
+> **Sync drift cumul 21-24/05/2026** : Sweep 165 .md → 13 nouveaux bd · 41 commits push session 23-24/05 · Tous innovations backlog livrés ou audit-marked (7 session + 4 audit). Détails par bd notes.
 
-> **Sweep documentation .md 21/05/2026** : 165 fichiers scannés, 110 tâches uniques extraites (cross-réf bd existants). Détail dans `.context/_tasks_sweep_md_20260521.md`. 13 nouveaux bd créés (P1: `j5lb p2if 4cog k3ex lyku u8w9 izsn c8zp` · P2: `e3mr l9vk ryi3 968x c9p4`).
->
-> **Sync drift 21/05/2026 v12.63** : `rxh` closed (prod v12.43), `h9j7` closed, `6du6` Phase 2 wikidata wire livré. 3 orphan missions CLAUDE.md → bd créés (`rlhf` audio · `x11y` tennis indicators · `gz7s` Rotowire benchmark).
->
-> **Sync drift 22/05/2026 v12.65** : 14 commits push session — `5e18185` CLAUDE.md drift section 15 · `fbea217` c5i Phase 3 aiscore on-demand · `bce7535`+`16c6a9d` izsn safeFixed wraps · `38ffa7b`+`9ba089a` 8c5 momentum La Liga (split live_momentum_pct objet vs array Sofa + follow-up Array.isArray guards consumers) · `ae6a292` p2if AI-AL Revue Presse 5 sources · `72d5e8a`+`0754a33` bjv spike RapidAPI + Pinnacle research + POC OddsPapi · `2ce9463` 8uoc Tennis sourcing v2 TML MIT · `8b99cb2` k37 coral leak · `fc9c65e` rlhf audio orchestrateur · `1280dfb` ffh 6 sources (GO xvalue.ai) · `117c711` ryi3 Phase 2A health route. Closed: `c9p4`+`x11y`+`c8zp`+`8c5` (stale dup/livré).
+## 🎯 PLANS RESTANTS — Roadmap exécution priorisée
 
-## 🎯 PLANS RESTANTS — Roadmap exécution priorisée (consolidée)
+**TOUT LIVRÉ ✅** :
+- BSD coverage Phases 1-5 (`0hf4`, `j6pz`, `ueg0`, `82th`, `r0v3`)
+- Flashscore qm6a Plans A-F (logos backup, standings fallback, naming audit, venue/referee Sofa, live stats, livestream)
+- Sofascore 6jro Plans G-I (tennis player profile, editorial article, format filter Singles/Doubles)
+- Innovation backlog (Bootstrap UQD, Reliability tooltip, Bet Signal, Bayesian Radar, Alertes SSE, Helper throttle, Poisson Time-Inhomogène, Context Engine météo+arbitres+km)
 
-Single source quick-scan tous plans bounded actionable cross-tickets (BSD coverage + Flashscore qm6a + Sofascore 6jro). Triée par effort × ROI.
-
-### 🟢 Quick wins (<1h, HIGH/MED ROI)
-
-| Plan | bd | Tâche | Effort | ROI |
-|---|---|---|---|---|
-| ~~A~~ ✅ | `qm6a` | Logos backup Flashscore → api_cache (commit `3fc4ca7`) | 30min | HIGH |
-| ~~F~~ ✅ | `qm6a` | has_live_stream badge UI tableau matchs (commit + tool ETL livré) | 30min | LOW |
-| ~~I~~ ✅ | `6jro` | Filtre Format Singles/Doubles onglet Tennis (heuristique slash-pair + tournament regex) | 30min | LOW |
-| ~~D~~ ✅ | `qm6a` | Venue + referee enrichment (commit + tool ETL livré, alt bd 82th) | 1h | MED |
-| ~~H~~ ✅ | `6jro` | Football `initialFeaturedArticle` editorial modal Insights (commit + ETL tool livré) | 1h | MED |
-
-### 🟡 Medium (1-2h, MED/HIGH ROI)
-
-| Plan | bd | Tâche | Effort | ROI |
-|---|---|---|---|---|
-| ~~G~~ ✅ | `6jro` | Tennis player profile enrichment Grand Slam history (ETL + endpoint + section modal Insights) | 1-2h | HIGH |
-| ~~B~~ ✅ | `qm6a` | Standings fallback offline (ETL tool + helper + route wire) | 1-2h | MED |
-| ~~C~~ ✅ | `qm6a` | Cross-ref team naming validation audit (script offline+online + heuristique shorthand) | 2h | MED |
-| ~~E~~ ✅ | `qm6a` | Live stats fallback Flashscore (ETL + cache + wire insights + match list fallback) | 1-2h | MED |
-| C | `qm6a` | Cross-ref team naming validation audit | 2h | MED |
-| ~~`r0v3`~~ ✅ | — | BSD Phase 5 — Squad + fixtures REST proxies (livré 2 routes + helper fetchBSDTeamFixtures) | 1-2h | LOW |
-
-### 🔴 Lourd (3-4h+, HIGH ROI ou archi)
-
-| Plan | bd | Tâche | Effort | ROI |
-|---|---|---|---|---|
-| ~~`j6pz`~~ ✅ | — | BSD Phase 2 — Shotmap fix + best_odds + bookmakers (livré endpoint fix + UI SVG refactor) | 3-4h | HIGH |
-| ~~`ueg0`~~ ✅ | — | BSD Phase 3 — Social items sentiment buzz match (livré section modal Insights lazy) | 2h | HIGH |
-| ~~`82th`~~ ✅ | — | BSD Phase 4 — Referees + Venues + Leagues dynamic (livré backend 3 routes + cache + insights wire) | 3-4h | MED |
-| J | `6jro` | Sofascore continuous scraper webhook (conflit bd `ffh`) | 3-4h | MED |
-
-### 📋 Récap effort total
-
-- **Quick wins** (5 plans <1h chacun) : **3h cumul** — pousser tous en bg
-- **Medium** (5 plans 1-2h chacun) : **6-10h cumul**
-- **Lourd** (4 plans 2-4h chacun) : **11-16h cumul**
-- **TOTAL backlog restant** : **20-29h dev**
-
-### 🎯 Ordre recommandé exécution
-
-1. **F + I + H** (quick wins UI/UX, ~2h cumul, finir plans Flashscore léger)
-2. **D + G** (Venue/referee + Tennis profile, ~3h cumul, valeur produit forte)
-3. **ueg0** (Social sentiment HIGH ROI, 2h)
-4. **j6pz** (Shotmap SVG HIGH ROI, 3-4h)
-5. ~~C~~ ✅ (Flashscore cross-ref naming audit livré — script offline+online dual-mode)
-6. ~~r0v3~~ ✅ + **J** seul restant (Sofascore continuous scraper webhook 3-4h MED ROI — conflit potentiel bd `ffh` Sofascore live NO-GO, mais profile/historique distinct)
+**RESTANT (1 plan + sessions futures):**
+- `J` 6jro Sofascore continuous scraper webhook (3-4h MED, conflit ffh)
+- `dl49` Phases 4.2-7 (DÉFÉRÉE 6 mois — wait cron daily ETL accumulation)
+- `l9vk` Marketing 5 phases multi-day (DG signups requis)
+- DG decisions (`j5lb`, `d4rd`, `3u9`, Stripe annual+refund+mono-sport, ffh/bjv POC signups)
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
