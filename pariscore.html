@@ -26510,6 +26510,31 @@ function buildStaticInsightLayer(d) {
     </div>`;
   })();
 
+  // bd cy9h — Section météo Open-Meteo (Context Engine partial)
+  // Affichée si match_weather non-null. Affichage compact icon + temp + précip + vent + city.
+  const mw = m.match_weather || null;
+  const meteoPanel = mw ? (() => {
+    const temp = mw.temp_c != null ? Math.round(mw.temp_c) + '°C' : '—';
+    const precip = mw.precipitation_mm != null ? mw.precipitation_mm.toFixed(1) + 'mm/h' : '—';
+    const wind = mw.wind_kmh != null ? Math.round(mw.wind_kmh) + ' km/h' : '—';
+    const cityLine = mw.city ? mw.city + (mw.country ? ', ' + mw.country : '') : '—';
+    const heavyRain = mw.precipitation_mm != null && mw.precipitation_mm > 3;
+    const strongWind = mw.wind_kmh != null && mw.wind_kmh > 30;
+    const edgeTag = (heavyRain || strongWind) ? `<span style="font-size:9px;font-family:var(--font-mono);color:var(--amber);background:rgba(245,158,11,0.15);padding:2px 6px;border-radius:4px;letter-spacing:.04em;margin-left:6px" title="Pluie >3mm/h ou vent >30km/h — corrélation négative avec λ buts (passes longues moins précises, contrôle dégradé)">⚠ ÉDGE-MATH</span>` : '';
+    return `<div class="ps-section ps-weather" style="border:1px solid rgba(99,102,241,0.25);background:linear-gradient(135deg,rgba(99,102,241,0.05),rgba(99,102,241,0.01));border-radius:10px;padding:10px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:9px;font-family:var(--font-mono);color:#4338ca;background:rgba(99,102,241,0.18);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800">🌦 MÉTÉO · Open-Meteo</span>
+        <span style="font-size:22px;line-height:1">${mw.icon || '·'}</span>
+        <span style="font-size:13px;font-family:var(--font-mono);font-weight:700;color:var(--text)">${temp}</span>
+        <span style="font-size:11px;font-family:var(--font-mono);color:var(--text2)" title="Précipitation horaire">${precip}</span>
+        <span style="font-size:11px;font-family:var(--font-mono);color:var(--text2)" title="Vitesse vent à 10m">${wind}</span>
+        <span style="font-size:11px;color:var(--text3);text-transform:capitalize">${mw.label_fr || '—'}</span>
+        ${edgeTag}
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:6px;font-family:var(--font-mono)">${escapeHtml(cityLine)} · prévision ${mw.time ? new Date(mw.time).toLocaleString('fr-FR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}) : '—'}</div>
+    </div>`;
+  })() : '';
+
   // bd cnvg — Section comparison Pre-match vs Live ajusté (Poisson Time-Inhomogène)
   // Affiché uniquement si match.live_poisson non-null (match live + xG dispo).
   const lp = m.live_poisson || null;
@@ -26556,6 +26581,7 @@ function buildStaticInsightLayer(d) {
     ${hasProba ? probaGrid : ''}
     ${hasStreaks ? streakRow : ''}
     ${livePanel}
+    ${meteoPanel}
     ${livePoissonPanel}
     ${betPill}
   </div>`;
