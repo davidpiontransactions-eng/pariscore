@@ -115,6 +115,22 @@ function extractFromBsdMatch(m) {
   const tour = normTour(tournament.circuit || tournament.tour, m.gender || tournament.gender);
   const surface = normSurface(tournament.surface || m.surface);
 
+  // bd dl49 Phase 4.1 — Serve stats inline BSD per match data.
+  // BSD expose p1_aces, p2_aces, p1_double_faults, p2_double_faults,
+  // p1_first_serve_pct, p2_first_serve_pct directement dans match payload.
+  // Map vers winner/loser perspective Sackmann-compat.
+  // BSD n'expose PAS svpt/1stIn/1stWon/2ndWon/SvGms/bpSaved/bpFaced separately
+  // → NULL pour ces cols (consumers ignorent via WHERE IS NOT NULL).
+  const w_ace = winnerIsP1 ? toIntOrNull(m.p1_aces) : toIntOrNull(m.p2_aces);
+  const l_ace = winnerIsP1 ? toIntOrNull(m.p2_aces) : toIntOrNull(m.p1_aces);
+  const w_df = winnerIsP1 ? toIntOrNull(m.p1_double_faults) : toIntOrNull(m.p2_double_faults);
+  const l_df = winnerIsP1 ? toIntOrNull(m.p2_double_faults) : toIntOrNull(m.p1_double_faults);
+  // Player metadata Sackmann compat — BSD nationality si dispo
+  const w_ioc = winnerIsP1 ? (p1.country || p1.nationality || null) : (p2.country || p2.nationality || null);
+  const l_ioc = winnerIsP1 ? (p2.country || p2.nationality || null) : (p1.country || p1.nationality || null);
+  const w_hand = winnerIsP1 ? (p1.hand || p1.playing_hand || null) : (p2.hand || p2.playing_hand || null);
+  const l_hand = winnerIsP1 ? (p2.hand || p2.playing_hand || null) : (p1.hand || p1.playing_hand || null);
+
   return {
     source: 'bsd',
     source_id: String(m.id),
@@ -135,7 +151,17 @@ function extractFromBsdMatch(m) {
     round: m.round || m.round_name || null,
     status: 'finished',
     minutes: Number.isFinite(Number(m.duration_minutes || m.minutes)) ? Number(m.duration_minutes || m.minutes) : null,
+    // Phase 4.1 serve stats (BSD inline)
+    w_ace, l_ace, w_df, l_df,
+    w_ioc, l_ioc, w_hand, l_hand,
+    // Cols Sackmann-only (svpt/1stIn/etc) restent absentes → null SQL upsert
   };
+}
+
+function toIntOrNull(v) {
+  if (v == null || v === '') return null;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 // ── Extractor ESPN ─────────────────────────────────────────────────────────
@@ -237,24 +263,50 @@ function main() {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_loser_name ON tennis_matches_internal(loser_name)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_tmi_surface ON tennis_matches_internal(surface, tour)`);
 
-  const summary = { bsd: 0, espn: 0, archive: 0, skipped: 0, errors: [] };
+  // bd dl49 Phase 4.1 — ALTER serve+rank+metadata cols idempotent (mirror server.js)
+  const altCols = [
+    ['w_ace', 'INTEGER'], ['w_df', 'INTEGER'], ['w_svpt', 'INTEGER'],
+    ['w_1stIn', 'INTEGER'], ['w_1stWon', 'INTEGER'], ['w_2ndWon', 'INTEGER'],
+    ['w_SvGms', 'INTEGER'], ['w_bpSaved', 'INTEGER'], ['w_bpFaced', 'INTEGER'],
+    ['l_ace', 'INTEGER'], ['l_df', 'INTEGER'], ['l_svpt', 'INTEGER'],
+    ['l_1stIn', 'INTEGER'], ['l_1stWon', 'INTEGER'], ['l_2ndWon', 'INTEGER'],
+    ['l_SvGms', 'INTEGER'], ['l_bpSaved', 'INTEGER'], ['l_bpFaced', 'INTEGER'],
+    ['winner_rank', 'INTEGER'], ['winner_rank_points', 'INTEGER'],
+    ['loser_rank', 'INTEGER'], ['loser_rank_points', 'INTEGER'],
+    ['winner_hand', 'TEXT'], ['loser_hand', 'TEXT'],
+    ['winner_ioc', 'TEXT'], ['loser_ioc', 'TEXT'],
+    ['winner_age', 'REAL'], ['loser_age', 'REAL'],
+  ];
+  try {
+    const existingCols = new Set(db.prepare(`PRAGMA table_info(tennis_matches_internal)`).all().map(c => c.name));
+    for (const [name, type] of altCols) {
+      if (!existingCols.has(name)) db.exec(`ALTER TABLE tennis_matches_internal ADD COLUMN ${name} ${type}`);
+    }
+  } catch (e) { console.warn('[etl] ALTER serve cols failed:', e.message); }
+
+  const summary = { bsd: 0, espn: 0, archive: 0, skipped: 0, errors: [], serveCovered: 0 };
   const upsertStmt = db.prepare(`INSERT OR REPLACE INTO tennis_matches_internal (
     source, source_id, tour, tourney_name, tourney_id, surface,
     tourney_date, match_date, winner_name, loser_name, winner_player_id, loser_player_id,
-    score, sets_winner, sets_loser, best_of, round, status, minutes
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    score, sets_winner, sets_loser, best_of, round, status, minutes,
+    w_ace, l_ace, w_df, l_df,
+    winner_ioc, loser_ioc, winner_hand, loser_hand
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
   const upsertOne = (row) => {
     if (!row) { summary.skipped++; return; }
-    if (DRY_RUN) { summary[row.source]++; return; }
+    if (DRY_RUN) { summary[row.source]++; if (row.w_ace != null || row.l_ace != null) summary.serveCovered++; return; }
     try {
       upsertStmt.run(
         row.source, row.source_id, row.tour, row.tourney_name, row.tourney_id, row.surface,
         row.tourney_date, row.match_date, row.winner_name, row.loser_name,
         row.winner_player_id, row.loser_player_id, row.score, row.sets_winner, row.sets_loser,
-        row.best_of, row.round, row.status, row.minutes
+        row.best_of, row.round, row.status, row.minutes,
+        row.w_ace || null, row.l_ace || null, row.w_df || null, row.l_df || null,
+        row.w_ioc || null, row.l_ioc || null, row.w_hand || null, row.l_hand || null
       );
       summary[row.source]++;
+      if (row.w_ace != null || row.l_ace != null) summary.serveCovered++;
     } catch (e) {
       summary.errors.push({ source: row.source, source_id: row.source_id, err: e.message });
     }
@@ -322,11 +374,12 @@ function main() {
 
   const total = summary.bsd + summary.espn + summary.archive;
   console.log(`\n[etl] ✓ TERMINÉ${DRY_RUN ? ' (DRY-RUN — aucune écriture)' : ''}`);
-  console.log(`  bsd     : ${summary.bsd}`);
-  console.log(`  espn    : ${summary.espn}`);
-  console.log(`  archive : ${summary.archive}`);
-  console.log(`  skipped : ${summary.skipped}`);
-  console.log(`  total   : ${total}`);
+  console.log(`  bsd            : ${summary.bsd}`);
+  console.log(`  espn           : ${summary.espn}`);
+  console.log(`  archive        : ${summary.archive}`);
+  console.log(`  skipped        : ${summary.skipped}`);
+  console.log(`  total          : ${total}`);
+  console.log(`  serve_covered  : ${summary.serveCovered}${total > 0 ? ` (${Math.round(summary.serveCovered / total * 100)}%)` : ''}`);
   if (summary.errors.length) {
     console.log(`  errors  : ${summary.errors.length}`);
     summary.errors.slice(0, 5).forEach(e => console.log(`    • ${e.source}: ${e.err}`));
