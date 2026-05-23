@@ -518,6 +518,31 @@
     .nav-icon-3d { transition: none; transform: none; }
     .nav-links a:hover .nav-icon-3d { transform: scale(1.1); }
   }
+  /* Fallback ultime — emoji unicode span si CDN + SVG local KO */
+  .nav-icon-emoji {
+    font-size: 22px;
+    line-height: 1;
+    flex: 0 0 26px;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.22));
+    transition: transform 0.2s ease, filter 0.2s ease;
+    user-select: none;
+  }
+  .nav-links a:hover .nav-icon-emoji {
+    transform: scale(1.18) translateY(-2px);
+    filter: drop-shadow(0 4px 8px rgba(226, 0, 26, 0.3));
+  }
+  .nav-links a.active .nav-icon-emoji {
+    transform: scale(1.12);
+    filter: drop-shadow(0 0 6px rgba(226, 0, 26, 0.55));
+  }
+  @media (max-width: 768px) {
+    .nav-icon-emoji { font-size: 20px; flex: 0 0 24px; width: 24px; height: 24px; }
+  }
   .nav-links a:hover { transform: translateY(-1px); }
   .nav-links a::after {
     content: '';
@@ -7250,22 +7275,22 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <span class="logo-tag-mob">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
-    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs"><img class="nav-icon-3d" src="/assets/icons/3d-football.svg" alt="Icone Football PariScore" loading="lazy" />Football</a>
-    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis"><img class="nav-icon-3d" src="/assets/icons/3d-tennis.svg" alt="Icone Tennis PariScore" loading="lazy" />Tennis</a>
-    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg"><img class="nav-icon-3d" src="/assets/icons/3d-trophy.svg" alt="Icone Roland Garros trophée terre battue" loading="lazy" />Roland Garros</a>
-    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies"><img class="nav-icon-3d" src="/assets/icons/3d-strategy.svg" alt="Icone Top Stratégies PariScore" loading="lazy" />Top Stratégies</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks"><img class="nav-icon-3d" src="/assets/icons/3d-fire.svg" alt="Icone Hot Picks paris sportifs" loading="lazy" />Hot Picks</a>
-    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris"><img class="nav-icon-3d" src="/assets/icons/3d-ticket.svg" alt="Icone Mes Paris ticket" loading="lazy" />Mes Paris</a>
-    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide"><img class="nav-icon-3d" src="/assets/icons/3d-book.svg" alt="Icone Guide paris sportifs" loading="lazy" />Guide</a>
-    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets"><img class="nav-icon-3d" src="/assets/icons/3d-shield.svg" alt="Icone Sure Bets bouclier" loading="lazy" />Sure Bets</a>
-    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur"><img class="nav-icon-3d" src="/assets/icons/3d-compare.svg" alt="Icone Comparateur cotes bookmakers" loading="lazy" />Comparateur</a>
-    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions"><img class="nav-icon-3d" src="/assets/icons/3d-brain.svg" alt="Icone Prédictions IA intelligence artificielle" loading="lazy" />Prédictions IA</a>
-    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances"><img class="nav-icon-3d" src="/assets/icons/3d-chart.svg" alt="Icone Tendances statistiques" loading="lazy" />Tendances</a>
-    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes"><img class="nav-icon-3d" src="/assets/icons/3d-bell.svg" alt="Icone Alertes notifications Telegram" loading="lazy" />Alertes</a>
-    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique"><img class="nav-icon-3d" src="/assets/icons/3d-clock.svg" alt="Icone Historique paris vérifiés" loading="lazy" />Historique</a>
-    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil"><img class="nav-icon-3d" src="/assets/icons/3d-home.svg" alt="Icone Accueil PariScore" loading="lazy" />Accueil</a>
-    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs"><img class="nav-icon-3d" src="/assets/icons/3d-crown.svg" alt="Icone Tarifs Pro abonnement" loading="lazy" />Tarifs</a>
-    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres"><img class="nav-icon-3d" src="/assets/icons/3d-settings.svg" alt="Icone Paramètres compte" loading="lazy" /></a>
+    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Soccer%20ball/3D/soccer_ball_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-football.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚽</span>';}" alt="Icone Football PariScore" loading="lazy" />Football</a>
+    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Tennis/3D/tennis_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-tennis.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎾</span>';}" alt="Icone Tennis PariScore" loading="lazy" />Tennis</a>
+    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Trophy/3D/trophy_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-trophy.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🏆</span>';}" alt="Icone Roland Garros trophée terre battue" loading="lazy" />Roland Garros</a>
+    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Bullseye/3D/bullseye_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-strategy.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎯</span>';}" alt="Icone Top Stratégies PariScore" loading="lazy" />Top Stratégies</a>
+    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Fire/3D/fire_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-fire.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🔥</span>';}" alt="Icone Hot Picks paris sportifs" loading="lazy" />Hot Picks</a>
+    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Admission%20tickets/3D/admission_tickets_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-ticket.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎫</span>';}" alt="Icone Mes Paris ticket" loading="lazy" />Mes Paris</a>
+    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Open%20book/3D/open_book_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-book.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>📖</span>';}" alt="Icone Guide paris sportifs" loading="lazy" />Guide</a>
+    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Shield/3D/shield_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-shield.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🛡️</span>';}" alt="Icone Sure Bets bouclier" loading="lazy" />Sure Bets</a>
+    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Balance%20scale/3D/balance_scale_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-compare.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚖️</span>';}" alt="Icone Comparateur cotes bookmakers" loading="lazy" />Comparateur</a>
+    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Brain/3D/brain_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-brain.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🧠</span>';}" alt="Icone Prédictions IA intelligence artificielle" loading="lazy" />Prédictions IA</a>
+    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Chart%20increasing/3D/chart_increasing_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-chart.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>📈</span>';}" alt="Icone Tendances statistiques" loading="lazy" />Tendances</a>
+    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Bell/3D/bell_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-bell.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🔔</span>';}" alt="Icone Alertes notifications Telegram" loading="lazy" />Alertes</a>
+    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Mantelpiece%20clock/3D/mantelpiece_clock_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-clock.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🕰️</span>';}" alt="Icone Historique paris vérifiés" loading="lazy" />Historique</a>
+    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/House/3D/house_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-home.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🏠</span>';}" alt="Icone Accueil PariScore" loading="lazy" />Accueil</a>
+    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Crown/3D/crown_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-crown.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>👑</span>';}" alt="Icone Tarifs Pro abonnement" loading="lazy" />Tarifs</a>
+    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Gear/3D/gear_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-settings.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚙️</span>';}" alt="Icone Paramètres compte" loading="lazy" /></a>
   </div>
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
   <div class="nav-right">
