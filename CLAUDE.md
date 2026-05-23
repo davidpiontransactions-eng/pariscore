@@ -254,7 +254,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 - ~~**Bootstrap UQD** — 500 itérations IC90 par match~~ ✅ livré (foot `computeBootstrapUQD` server.js:6111 + tennis `computeBootstrapUQDTennis` server.js:19109)
 - ~~**Score composite fiabilité /100** — volume data + stabilité xG + calibration~~ ✅ livré `computeReliabilityScore` server.js:6191 (35% volume + 35% stabilité IC over25 + 30% qualité source réel vs sim)
 - ~~**Règle BET stricte** — EV>5% ET borne inférieure IC>0~~ ✅ livré `computeBetSignal` server.js:6207 (EV worst-case IC lower, recommande uniquement si pessimiste reste positif)
-- **Poisson Time-Inhomogène** — modèle live conditionnel minute par minute
+- ~~**Poisson Time-Inhomogène** — modèle live conditionnel minute par minute~~ ✅ livré bd `cnvg` commit `12b2d95` (helper `computeLivePoissonInhomogeneous`, λ_rem = λ_full × time × adj{trailing/leading}, exposé `/api/v1/insights/:id` payload `live_poisson` markets recompute final = score_so_far + remaining)
 - **Context Engine** — météo + arbitres + kilométrage déplacements
 - ~~**Alertes SSE** — triggers `favorite_trap` + `goal_flood`~~ ✅ livré bd `vl02` commit `5003042` (toast UI top-right type-color, cooldown 5min, sliding 15min window)
 
