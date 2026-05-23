@@ -59,7 +59,11 @@
 // glassmorphic -> emoji unicode <span>. Bullet-proof contre 404 CDN/local.
 // Ajout CSS .nav-icon-emoji pour fallback ultime. Force re-install pour
 // purger HTML précédent sans onerror cascade chez users.
-const CACHE = 'pariscore-shell-v27';
+// v28 (2026-05-23) : invalide v27 — Ajout badge hero RG custom PariScore
+// (assets/icons/rg-badge-hero.svg, 200x200) dans H1 onglet Roland Garros.
+// Design custom DIY (PS monogram + clay terracotta ring + gold edge + tennis
+// ball accent), zero trademark FFT. Hover rotate -5deg scale 1.05.
+const CACHE = 'pariscore-shell-v28';
 const SHELL = [
   '/',
   '/pariscore.html',
