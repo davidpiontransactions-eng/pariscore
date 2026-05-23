@@ -26510,6 +26510,43 @@ function buildStaticInsightLayer(d) {
     </div>`;
   })();
 
+  // bd cnvg — Section comparison Pre-match vs Live ajusté (Poisson Time-Inhomogène)
+  // Affiché uniquement si match.live_poisson non-null (match live + xG dispo).
+  const lp = m.live_poisson || null;
+  const livePoissonPanel = lp ? (() => {
+    const pm = m.poisson || m.blended || m.calibrated || {};
+    const rows = [
+      { lbl: 'Over 2.5', pre: pm.over25, live: lp.markets.over25 },
+      { lbl: 'BTTS', pre: pm.btts, live: lp.markets.btts },
+      { lbl: m.home_team || 'Dom.', pre: pm.homeWin, live: lp.markets.homeWin },
+      { lbl: 'Nul', pre: pm.draw, live: lp.markets.draw },
+      { lbl: m.away_team || 'Ext.', pre: pm.awayWin, live: lp.markets.awayWin },
+    ];
+    const rowsHtml = rows.map(r => {
+      const pre = r.pre != null ? r.pre : '—';
+      const live = r.live != null ? r.live : '—';
+      const delta = (r.pre != null && r.live != null) ? (r.live - r.pre) : null;
+      const dCls = delta == null ? 'color:var(--text3)' : (delta > 5 ? 'color:var(--green);font-weight:700' : (delta < -5 ? 'color:var(--red);font-weight:700' : 'color:var(--text3)'));
+      const dStr = delta == null ? '—' : ((delta > 0 ? '+' : '') + delta + 'pts');
+      const arrow = delta == null ? '' : (delta > 5 ? ' ▲' : (delta < -5 ? ' ▼' : ''));
+      return `<tr style="border-top:1px solid rgba(255,255,255,0.04)"><td style="padding:5px 0">${escapeHtml(r.lbl)}</td><td style="text-align:right;padding:5px 0;color:var(--text2)">${pre === '—' ? '—' : pre + '%'}</td><td style="text-align:right;padding:5px 0;font-weight:700">${live === '—' ? '—' : live + '%'}</td><td style="text-align:right;padding:5px 0;${dCls}">${dStr}${arrow}</td></tr>`;
+    }).join('');
+    const adj = lp.adjustments || {};
+    return `<div class="ps-section ps-live-poisson" style="border:1px solid rgba(0,230,118,0.28);background:linear-gradient(135deg,rgba(0,230,118,0.05),rgba(0,230,118,0.01));border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:9px;font-family:var(--font-mono);color:var(--green);background:rgba(0,230,118,0.18);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800">⚡ PRÉDICTIONS LIVE AJUSTÉES · Poisson Time-Inhomogène</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">min ${lp.minute_at_compute} · score ${lp.score_at_compute} · t-factor ${adj.time_factor != null ? adj.time_factor : '—'}</span>
+      </div>
+      <table style="width:100%;font-family:var(--font-mono);font-size:11px;border-collapse:collapse">
+        <thead><tr style="color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-size:9px"><th style="text-align:left;padding:5px 0">Marché</th><th style="text-align:right;padding:5px 0">Pre-match</th><th style="text-align:right;padding:5px 0">Live</th><th style="text-align:right;padding:5px 0">Δ</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      <div title="λ buts attendus restants · adj_home/away coefficient push/défensif tactique" style="font-size:9px;color:var(--text3);margin-top:8px;font-family:var(--font-mono);line-height:1.5;cursor:help">
+        λ_home_rem ${lp.lambda_home_rem} · λ_away_rem ${lp.lambda_away_rem} · adj_home ×${adj.adj_home != null ? adj.adj_home : 1} · adj_away ×${adj.adj_away != null ? adj.adj_away : 1}
+      </div>
+    </div>`;
+  })() : '';
+
   // ── Assemblage ─────────────────────────────────────────────────────────────
   const hasProba = p.over25 || p.btts;
   if (!hasProba && !hasStreaks && !isLive) return '';
@@ -26519,6 +26556,7 @@ function buildStaticInsightLayer(d) {
     ${hasProba ? probaGrid : ''}
     ${hasStreaks ? streakRow : ''}
     ${livePanel}
+    ${livePoissonPanel}
     ${betPill}
   </div>`;
 }
