@@ -8926,7 +8926,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 <section class="section fade-up" id="predictions" style="background: radial-gradient(ellipse 60% 30% at 30% 50%, rgba(0,230,118,0.03) 0%, transparent 60%);">
   <div class="section-label">Prédictions IA</div>
   <div class="section-title">Intelligence artificielle<br>au service du parieur.</div>
-  <div class="section-sub">Simulations Monte Carlo, xG, forme récente et analyse contextuelle. Chaque prédiction est expliquée, pas juste un chiffre.</div>
+  <div class="section-sub">Simulations probabilistes, xG, forme récente et analyse contextuelle. Chaque prédiction est expliquée, pas juste un chiffre.</div>
   <div class="pred-grid" id="pred-grid"></div>
 </section>
 
@@ -9766,7 +9766,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <div class="rg-hero">
     <div>
       <h1 class="rg-hero-title">🏆 Roland Garros — Tableau Final</h1>
-      <div class="rg-hero-sub">Bracket interactif · Clay Elo interne PariScore · Monte Carlo 10 000 simulations · Terre battue Paris</div>
+      <div class="rg-hero-sub">Bracket interactif · Clay Elo interne PariScore · Modèle Prédictif (10 000 simulations) · Terre battue Paris</div>
     </div>
     <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
       <div class="rg-tour-toggle">
@@ -9790,7 +9790,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <div class="rg-disclaimer">
-    ⓘ Probabilités calculées par simulation Monte Carlo (10 000 itérations) sur le draw BSD officiel et l'Elo terre battue PariScore interne. Modèle Elo Sackmann-style (K=200 surface, MoV façon 538, régression inactivité). Ne tient pas compte des forfaits/blessures de dernière minute.
+    ⓘ Probabilités calculées par simulation probabiliste (10 000 itérations) sur le draw BSD officiel et l'Elo terre battue PariScore interne. Modèle Elo Sackmann-style (K=200 surface, MoV façon 538, régression inactivité). Ne tient pas compte des forfaits/blessures de dernière minute.
   </div>
 </div>
 
@@ -9849,7 +9849,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       '<div class="rg-match-meta"><span>' + _rgEsc(dt) + '</span><span>' + _rgEsc(m.status || '') + '</span></div>' +
     '</div>';
   }
-  window.loadRolandGarros = async function(tour) {
+  window.loadRolandGarros = async function(tour, opts) {
+    opts = opts || {};
+    const isRetry = !!opts._retry;
     if (tour) _rgCurrentTour = tour;
     document.querySelectorAll('[data-rg-tour]').forEach(b => {
       b.classList.toggle('active', b.dataset.rgTour === _rgCurrentTour);
@@ -9857,11 +9859,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     const statusEl = document.getElementById('rg-status');
     const bracketEl = document.getElementById('rg-bracket');
     const contendersEl = document.getElementById('rg-contenders');
-    if (statusEl) statusEl.textContent = 'Chargement…';
-    if (bracketEl) bracketEl.innerHTML = '<div class="rg-loading">Calcul Monte Carlo en cours…</div>';
+    if (statusEl) statusEl.textContent = isRetry ? 'Nouvelle tentative…' : 'Chargement…';
+    if (bracketEl) bracketEl.innerHTML = '<div class="rg-loading">Calcul prédictif en cours…</div>';
     if (contendersEl) contendersEl.innerHTML = '';
+    // AbortController 60s — évite "Failed to fetch" hang sur calcul long.
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 60000);
     try {
-      const r = await fetch('/api/v1/tournament/roland-garros?tour=' + encodeURIComponent(_rgCurrentTour) + '&simN=10000');
+      const r = await fetch('/api/v1/tournament/roland-garros?tour=' + encodeURIComponent(_rgCurrentTour) + '&simN=10000', { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
       if (!data || !data.available) {
         const reason = data && data.reason || 'unknown';
@@ -9870,7 +9877,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         return;
       }
       const gen = new Date(((data.generated_at || Date.now()/1000)) * 1000);
-      const cacheTag = data.cache === 'hit' ? ' · cached' : ' · fresh';
+      const cacheTag = data.cache === 'hit'
+        ? ' · cached'
+        : (data.cache === 'stale_refreshing' ? ' · stale↻' : ' · fresh');
       if (statusEl) statusEl.textContent = _rgCurrentTour + ' · ' + data.draw_size + ' joueurs · ' + Number(data.sim_n).toLocaleString('fr-FR') + ' sims · ' + gen.toLocaleTimeString('fr-FR') + cacheTag;
       if (contendersEl) {
         const cards = (data.top_contenders || []).map(p => {
@@ -9900,7 +9909,23 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         }).join('');
       }
     } catch (e) {
-      if (bracketEl) bracketEl.innerHTML = '<div class="rg-error">Erreur réseau: ' + _rgEsc(String(e && e.message || e)) + '</div>';
+      clearTimeout(tid);
+      const msg = String(e && e.message || e);
+      const isAbort = e && (e.name === 'AbortError' || /aborted/i.test(msg));
+      const isNet = !isAbort && /Failed to fetch|NetworkError|HTTP 5/i.test(msg);
+      // Retry auto une fois sur timeout/network
+      if (!isRetry && (isAbort || isNet)) {
+        if (statusEl) statusEl.textContent = 'Réessai…';
+        return window.loadRolandGarros(null, { _retry: true });
+      }
+      const friendly = isAbort
+        ? 'Calcul trop long (timeout 60s). Le serveur précharge — réessayer dans 30s.'
+        : isNet
+          ? 'Serveur injoignable. Vérifier connexion ou réessayer.'
+          : msg;
+      if (bracketEl) bracketEl.innerHTML =
+        '<div class="rg-error">⚠️ ' + _rgEsc(friendly) +
+        ' <button onclick="loadRolandGarros()" style="margin-left:8px;padding:4px 10px;background:var(--rg-orange,#e2700a);color:#fff;border:0;border-radius:4px;cursor:pointer;font-family:inherit;">Réessayer</button></div>';
       if (statusEl) statusEl.textContent = 'Erreur';
     }
   };
