@@ -28344,15 +28344,19 @@ if (pathname === '/api/v1/tennis/rg-path' && req.method === 'GET') {
 // title/F/SF prob. Cache 1h. Zéro TA dependency (legal-clean).
 const RG_MC_DEFAULT_N = 10000;
 const RG_BRACKET_TTL_MS = 60 * 60 * 1000;
+// Map round_name BSD/upstream → ordre (1=R128, 2=R64, …, 7=F).
+// BSD format observé (probe direct 2026-05-23) : "Round of 128", "Round of 64",
+// "Round of 32", "Round of 16", "Quarterfinal", "Semifinal", "Final".
+// Variantes Sackmann / Tennis Abstract / ESPN également couvertes.
 function _rgRoundOrder(roundName) {
   if (!roundName) return 0;
   const r = String(roundName).toLowerCase();
-  if (/r128|first round|1st round|1\/64|round 1\b/.test(r)) return 1;
-  if (/r64|second round|2nd round|1\/32|round 2\b/.test(r)) return 2;
-  if (/r32|third round|3rd round|1\/16|round 3\b/.test(r)) return 3;
-  if (/r16|round of 16|fourth round|4th round|1\/8|round 4\b/.test(r)) return 4;
-  if (/qf|quarter/.test(r)) return 5;
-  if (/sf|semi/.test(r)) return 6;
+  if (/round of 128|r128|first round|1st round|1\/64|round 1\b/.test(r)) return 1;
+  if (/round of 64|r64|second round|2nd round|1\/32|round 2\b/.test(r)) return 2;
+  if (/round of 32|r32|third round|3rd round|1\/16|round 3\b/.test(r)) return 3;
+  if (/round of 16|r16|fourth round|4th round|1\/8|round 4\b/.test(r)) return 4;
+  if (/quarter|qf\b|1\/4/.test(r)) return 5;
+  if (/semi|sf\b|1\/2/.test(r)) return 6;
   if (/^f$|\bfinal\b/.test(r)) return 7;
   return 0;
 }
