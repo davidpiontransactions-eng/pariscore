@@ -9833,6 +9833,168 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       #page-rg .rg-bracket-wrap { padding:10px; }
       #page-rg .rg-round-col { min-width:200px; }
     }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       Fiche détaillée joueur RG — Slide-over droite + bottom-sheet mobile.
+       Glassmorphism backdrop + brand RG palette emerald/clay/gold/cream.
+       ═══════════════════════════════════════════════════════════════════════ */
+    .rg-pc-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(10, 13, 15, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9998;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .rg-pc-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .rg-pc-card {
+      position: fixed; top: 0; right: 0; height: 100vh;
+      width: 100%; max-width: 440px;
+      background: linear-gradient(180deg, #fff8e7 0%, #f5ead2 100%);
+      border-left: 4px solid #cc6633;
+      box-shadow: -16px 0 48px rgba(0,0,0,0.25);
+      z-index: 9999;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+      overflow-y: auto;
+      overflow-x: hidden;
+      font-family: 'Bree Serif', Georgia, serif;
+      color: #0a3a22;
+    }
+    .rg-pc-card.open { transform: translateX(0); }
+
+    .rg-pc-close {
+      position: absolute; top: 12px; right: 12px;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(15, 81, 50, 0.12); border: 0; color: #0f5132;
+      font-size: 22px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.18s ease, transform 0.25s ease;
+      z-index: 2;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    .rg-pc-close:hover { background: rgba(204, 102, 51, 0.25); transform: rotate(90deg); }
+
+    .rg-pc-header { padding: 28px 24px 20px; border-bottom: 1px solid rgba(15,81,50,0.12); }
+    .rg-pc-flag-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(204, 102, 51, 0.12);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px; font-weight: 600; color: #8a3a1a; letter-spacing: 0.06em;
+    }
+    .rg-pc-flag { font-size: 22px; line-height: 1; }
+    .rg-pc-name {
+      margin: 14px 0 10px; font-size: 26px; line-height: 1.15;
+      color: #0a3a22; font-weight: 700;
+    }
+    .rg-pc-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .rg-pc-chip {
+      padding: 4px 10px; border-radius: 6px;
+      background: rgba(15, 81, 50, 0.08); color: #0f5132;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em;
+    }
+    .rg-pc-chip-rank { background: rgba(204, 102, 51, 0.15); color: #8a3a1a; }
+    .rg-pc-chip-seed { background: linear-gradient(135deg, #f4d97a, #a07a1f); color: #fff; }
+    .rg-pc-chip-gender { background: rgba(15, 81, 50, 0.06); color: #5a6068; }
+
+    .rg-pc-section { padding: 18px 24px; border-bottom: 1px solid rgba(15,81,50,0.1); }
+    .rg-pc-section-title {
+      margin: 0 0 14px; font-size: 10.5px;
+      font-family: 'DM Mono', monospace; text-transform: uppercase;
+      letter-spacing: 0.18em; color: #cc6633; font-weight: 700;
+    }
+
+    .rg-pc-metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .rg-pc-metric {
+      padding: 14px 12px; border-radius: 10px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(15, 81, 50, 0.1);
+      backdrop-filter: blur(4px);
+      display: flex; flex-direction: column; gap: 5px;
+      transition: transform 0.2s ease;
+    }
+    .rg-pc-metric:hover { transform: translateY(-2px); }
+    .rg-pc-metric-label {
+      font-size: 10px; color: #5a6068;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .rg-pc-metric-value {
+      font-family: 'Bree Serif', Georgia, serif;
+      font-size: 26px; font-weight: 700; color: #0a3a22; line-height: 1;
+    }
+    .rg-pc-metric-value.rg-pc-elo { color: #cc6633; }
+    .rg-pc-metric-value.rg-pc-title { color: #0f5132; }
+    .rg-pc-metric-sub { font-size: 10.5px; color: #8d9399; font-family: 'Helvetica Neue', Arial, sans-serif; }
+
+    .rg-pc-form-dots { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .rg-pc-form-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700;
+      color: #fff; transition: transform 0.2s ease;
+      cursor: help;
+    }
+    .rg-pc-form-dot.win { background: linear-gradient(135deg, #1c8a5a, #0f5132); box-shadow: 0 2px 6px rgba(15,81,50,0.3); }
+    .rg-pc-form-dot.loss { background: linear-gradient(135deg, #e53935, #8a1a1a); box-shadow: 0 2px 6px rgba(229,57,53,0.3); }
+    .rg-pc-form-dot.skeleton {
+      background: rgba(15, 81, 50, 0.12); color: rgba(15,81,50,0.4);
+      animation: rgPcShimmer 1.4s infinite;
+    }
+    .rg-pc-form-dot:hover { transform: scale(1.15); }
+
+    .rg-pc-form-note {
+      margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px; color: #5a6068; line-height: 1.4;
+    }
+    .rg-pc-skeleton {
+      background: linear-gradient(90deg, rgba(15,81,50,.08) 0%, rgba(15,81,50,.2) 50%, rgba(15,81,50,.08) 100%);
+      background-size: 200% 100%; animation: rgPcShimmer 1.4s infinite;
+      color: transparent; border-radius: 4px; height: 14px;
+    }
+    @keyframes rgPcShimmer {
+      0% { background-position: 200% 0; opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { background-position: -200% 0; opacity: 0.7; }
+    }
+
+    .rg-pc-footer {
+      padding: 16px 24px 24px;
+      font-size: 10.5px; color: #8d9399;
+      text-align: center; font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* Player nodes clickables dans le bracket */
+    #page-rg .rg-player-line.rg-player-clickable {
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    #page-rg .rg-player-line.rg-player-clickable:hover {
+      background: rgba(204, 102, 51, 0.06);
+      transform: translateX(2px);
+    }
+    #page-rg .rg-player-line.rg-player-clickable:focus-visible {
+      outline: 2px solid #cc6633;
+      outline-offset: -2px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .rg-pc-card {
+        max-width: 100%; top: auto; bottom: 0; right: 0;
+        height: 88vh; border-left: 0; border-top: 4px solid #cc6633;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+      }
+      .rg-pc-card.open { transform: translateY(0); }
+      .rg-pc-metric-grid { grid-template-columns: 1fr; }
+      .rg-pc-name { font-size: 22px; }
+    }
   </style>
 
   <div class="rg-hero">
@@ -9864,6 +10026,67 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <div class="rg-disclaimer">
     ⓘ Probabilités calculées par simulation probabiliste (10 000 itérations) sur le draw BSD officiel et l'Elo terre battue PariScore interne. Modèle Elo Sackmann-style (K=200 surface, MoV façon 538, régression inactivité). Ne tient pas compte des forfaits/blessures de dernière minute.
   </div>
+
+  <!-- Fiche détaillée joueur RG — Slide-over droite (desktop) / Bottom-sheet (mobile) -->
+  <div id="rg-player-backdrop" class="rg-pc-backdrop" onclick="closeRgPlayerCard()" aria-hidden="true"></div>
+  <aside id="rg-player-card" class="rg-pc-card" role="dialog" aria-modal="true" aria-labelledby="rg-pc-name" aria-hidden="true">
+    <button class="rg-pc-close" onclick="closeRgPlayerCard()" aria-label="Fermer fiche joueur" type="button">×</button>
+
+    <header class="rg-pc-header">
+      <div class="rg-pc-flag-pill">
+        <span id="rg-pc-flag" class="rg-pc-flag">🌐</span>
+        <span id="rg-pc-country" class="rg-pc-country">—</span>
+      </div>
+      <h2 id="rg-pc-name" class="rg-pc-name">—</h2>
+      <div class="rg-pc-meta">
+        <span id="rg-pc-seed" class="rg-pc-chip rg-pc-chip-seed" hidden></span>
+        <span id="rg-pc-rank" class="rg-pc-chip rg-pc-chip-rank">—</span>
+        <span id="rg-pc-gender" class="rg-pc-chip rg-pc-chip-gender" hidden></span>
+      </div>
+    </header>
+
+    <section class="rg-pc-section">
+      <h3 class="rg-pc-section-title">Métriques PariScore</h3>
+      <div class="rg-pc-metric-grid">
+        <div class="rg-pc-metric">
+          <span class="rg-pc-metric-label">Elo Terre Battue</span>
+          <span id="rg-pc-clay-elo" class="rg-pc-metric-value rg-pc-elo">—</span>
+          <span id="rg-pc-clay-rank" class="rg-pc-metric-sub">—</span>
+        </div>
+        <div class="rg-pc-metric">
+          <span class="rg-pc-metric-label">🏆 Probabilité Titre</span>
+          <span id="rg-pc-title-prob" class="rg-pc-metric-value rg-pc-title">—</span>
+          <span id="rg-pc-final-prob" class="rg-pc-metric-sub">—</span>
+        </div>
+        <div class="rg-pc-metric">
+          <span class="rg-pc-metric-label">Demi-finale</span>
+          <span id="rg-pc-sf-prob" class="rg-pc-metric-value">—</span>
+          <span class="rg-pc-metric-sub">Monte Carlo 10 000</span>
+        </div>
+        <div class="rg-pc-metric">
+          <span class="rg-pc-metric-label">Dominance Ratio</span>
+          <span id="rg-pc-dr" class="rg-pc-metric-value">—</span>
+          <span class="rg-pc-metric-sub">Service · Retour</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="rg-pc-section">
+      <h3 class="rg-pc-section-title">Forme récente — 5 derniers matchs clay</h3>
+      <div id="rg-pc-form-dots" class="rg-pc-form-dots" aria-live="polite">
+        <span class="rg-pc-form-dot skeleton">?</span>
+        <span class="rg-pc-form-dot skeleton">?</span>
+        <span class="rg-pc-form-dot skeleton">?</span>
+        <span class="rg-pc-form-dot skeleton">?</span>
+        <span class="rg-pc-form-dot skeleton">?</span>
+      </div>
+      <p id="rg-pc-form-note" class="rg-pc-form-note rg-pc-skeleton">Chargement L5 clay…</p>
+    </section>
+
+    <footer class="rg-pc-footer">
+      <span>Source : BSD + PariScore Clay Elo · cache 6h</span>
+    </footer>
+  </aside>
 </div>
 
 <script>
@@ -9892,6 +10115,10 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     if (label === 'R128') return '1er tour';
     return label;
   }
+  function _rgEncPlayer(p) {
+    // Encode JSON pour data-attribute HTML safely (encodeURIComponent + remplacement quotes)
+    try { return encodeURIComponent(JSON.stringify(p || {})); } catch (_) { return ''; }
+  }
   function _rgMatchCard(m) {
     const p1 = m.player1 || {};
     const p2 = m.player2 || {};
@@ -9909,12 +10136,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     if (m.date) {
       try { dt = new Date(m.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }); } catch(_) {}
     }
+    // Clickable player lines : data-rg-player encode le player JSON pour le
+    // slide-over. tabindex+role pour a11y, listener délégué attaché plus bas.
+    const p1Enc = _rgEncPlayer(p1);
+    const p2Enc = _rgEncPlayer(p2);
+    const p1Label = _rgEsc('Voir détails ' + (p1.name || 'joueur'));
+    const p2Label = _rgEsc('Voir détails ' + (p2.name || 'joueur'));
     return '<div class="rg-match-card' + (isLive ? ' live' : '') + '">' +
-      '<div class="rg-player-line ' + (p1Win ? 'winner' : (p2Win ? 'loser' : '')) + '">' +
+      '<div class="rg-player-line rg-player-clickable ' + (p1Win ? 'winner' : (p2Win ? 'loser' : '')) + '" data-rg-player="' + p1Enc + '" role="button" tabindex="0" aria-label="' + p1Label + '">' +
         '<span class="rg-player-name">' + _rgEsc(p1.name || 'TBD') + seed1 + clay1 + '</span>' +
         '<span class="rg-player-prob">' + pr1 + '</span>' +
       '</div>' +
-      '<div class="rg-player-line ' + (p2Win ? 'winner' : (p1Win ? 'loser' : '')) + '">' +
+      '<div class="rg-player-line rg-player-clickable ' + (p2Win ? 'winner' : (p1Win ? 'loser' : '')) + '" data-rg-player="' + p2Enc + '" role="button" tabindex="0" aria-label="' + p2Label + '">' +
         '<span class="rg-player-name">' + _rgEsc(p2.name || 'TBD') + seed2 + clay2 + '</span>' +
         '<span class="rg-player-prob">' + pr2 + '</span>' +
       '</div>' +
@@ -10005,6 +10238,185 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       if (statusEl) statusEl.textContent = 'Erreur';
     }
   };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Fiche détaillée joueur RG — slide-over open/close + lazy enrichment.
+  // ═══════════════════════════════════════════════════════════════════════
+  let _rgPcCurrentPlayerId = null;
+  let _rgPcDelegationAttached = false;
+
+  function _rgCountryFlag(code) {
+    if (!code || typeof code !== 'string' || code.length !== 2) return '';
+    try {
+      const A = 0x1F1E6, base = 'A'.charCodeAt(0);
+      return String.fromCodePoint(
+        A + code.toUpperCase().charCodeAt(0) - base,
+        A + code.toUpperCase().charCodeAt(1) - base
+      );
+    } catch (_) { return ''; }
+  }
+
+  function _rgPcSetText(id, txt) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (txt == null || txt === '') ? '—' : String(txt);
+  }
+  function _rgPcSetChip(id, txt, show) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (show && txt) { el.textContent = txt; el.hidden = false; }
+    else el.hidden = true;
+  }
+  function _rgPcFormNote(txt, skeleton) {
+    const el = document.getElementById('rg-pc-form-note');
+    if (!el) return;
+    el.textContent = txt;
+    el.classList.toggle('rg-pc-skeleton', !!skeleton);
+  }
+
+  window.openRgPlayerCard = function(playerData) {
+    if (!playerData || !playerData.name) return;
+    const card = document.getElementById('rg-player-card');
+    const backdrop = document.getElementById('rg-player-backdrop');
+    if (!card || !backdrop) return;
+
+    // === Skeleton instant depuis données embedded bracket (zéro fetch) ===
+    _rgPcSetText('rg-pc-name', playerData.name);
+    const flag = _rgCountryFlag(playerData.country) || '🌐';
+    _rgPcSetText('rg-pc-flag', flag);
+    _rgPcSetText('rg-pc-country', playerData.country_name || playerData.country || '');
+
+    _rgPcSetChip('rg-pc-seed', playerData.seed ? '[' + playerData.seed + ']' : '', !!playerData.seed);
+    const rk = playerData.current_ranking;
+    const rkTxt = (rk && rk.position) ? ((rk.type || 'ATP') + ' #' + rk.position) : 'Hors classement';
+    _rgPcSetText('rg-pc-rank', rkTxt);
+    _rgPcSetChip('rg-pc-gender', playerData.gender === 'F' ? 'WTA' : (playerData.gender === 'M' ? 'ATP' : ''), !!playerData.gender);
+
+    _rgPcSetText('rg-pc-clay-elo', playerData.clay_elo != null ? playerData.clay_elo : '—');
+    const clayRkTxt = playerData.clay_rank
+      ? ('Clay rank #' + playerData.clay_rank + ' · ' + (playerData.clay_matches || 0) + ' matchs')
+      : 'Elo fallback · données limitées';
+    _rgPcSetText('rg-pc-clay-rank', clayRkTxt);
+
+    const tp = playerData.title_prob_pct;
+    const fp = playerData.final_prob_pct;
+    const sf = playerData.sf_prob_pct;
+    _rgPcSetText('rg-pc-title-prob', (tp != null ? Number(tp).toFixed(1) : '0.0') + '%');
+    _rgPcSetText('rg-pc-final-prob', 'Finale ' + (fp != null ? Number(fp).toFixed(1) : '0.0') + '%');
+    _rgPcSetText('rg-pc-sf-prob', (sf != null ? Number(sf).toFixed(1) : '0.0') + '%');
+    _rgPcSetText('rg-pc-dr', '—');
+
+    // Reset form dots to skeleton
+    const dotsEl = document.getElementById('rg-pc-form-dots');
+    if (dotsEl) {
+      dotsEl.innerHTML = '<span class="rg-pc-form-dot skeleton">?</span>'.repeat(5);
+    }
+    _rgPcFormNote('Chargement L5 clay…', true);
+
+    // === Open ===
+    backdrop.classList.add('open');
+    card.classList.add('open');
+    card.setAttribute('aria-hidden', 'false');
+    backdrop.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    _rgPcCurrentPlayerId = playerData.id;
+
+    // === Lazy enrichment fetch (L5 clay + DR) ===
+    if (playerData.id) {
+      _rgPcFetchEnrichment(playerData.id);
+    } else {
+      _rgPcFormNote('Player ID indisponible — données limitées au cache bracket.', false);
+    }
+  };
+
+  window.closeRgPlayerCard = function() {
+    const card = document.getElementById('rg-player-card');
+    const backdrop = document.getElementById('rg-player-backdrop');
+    if (!card || !backdrop) return;
+    card.classList.remove('open');
+    backdrop.classList.remove('open');
+    card.setAttribute('aria-hidden', 'true');
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    _rgPcCurrentPlayerId = null;
+  };
+
+  async function _rgPcFetchEnrichment(playerId) {
+    try {
+      const r = await fetch('/api/v1/tennis/rg-player/' + encodeURIComponent(playerId));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      // User a fermé ou changé de joueur entretemps → on jette le résultat
+      if (_rgPcCurrentPlayerId !== playerId) return;
+
+      const dotsEl = document.getElementById('rg-pc-form-dots');
+      if (Array.isArray(data.l5_clay) && data.l5_clay.length && dotsEl) {
+        dotsEl.innerHTML = data.l5_clay.map(function(m) {
+          const cls = m.result === 'W' ? 'win' : 'loss';
+          const lbl = m.result === 'W' ? 'V' : 'D';
+          const opp = m.opponent ? _rgEsc(m.opponent) : '?';
+          const scr = m.score ? _rgEsc(m.score) : '';
+          const dt = m.date ? new Date(m.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) : '';
+          const ttl = opp + (scr ? ' (' + scr + ')' : '') + (dt ? ' · ' + dt : '');
+          return '<span class="rg-pc-form-dot ' + cls + '" title="' + ttl + '">' + lbl + '</span>';
+        }).join('');
+        const wins = data.l5_clay.filter(function(m) { return m.result === 'W'; }).length;
+        _rgPcFormNote(wins + '/' + data.l5_clay.length + ' victoires sur les derniers matchs clay', false);
+      } else if (dotsEl) {
+        dotsEl.innerHTML = '<span class="rg-pc-form-dot loss" style="background:rgba(15,81,50,0.1);color:#5a6068;box-shadow:none">—</span>'.repeat(5);
+        _rgPcFormNote('Aucun match clay récent répertorié pour ce joueur.', false);
+      }
+
+      if (data.dominance_ratio_clay != null) {
+        _rgPcSetText('rg-pc-dr', Number(data.dominance_ratio_clay).toFixed(2));
+      }
+    } catch (e) {
+      if (_rgPcCurrentPlayerId !== playerId) return;
+      _rgPcFormNote('Données enrichies indisponibles (BSD upstream lent ou hors ligne).', false);
+    }
+  }
+
+  // === Delegation click sur bracket — décode data-rg-player + open card ===
+  function _rgPcAttachDelegation() {
+    if (_rgPcDelegationAttached) return;
+    const bracket = document.getElementById('rg-bracket');
+    if (!bracket) return;
+    bracket.addEventListener('click', function(e) {
+      const node = e.target.closest('.rg-player-clickable[data-rg-player]');
+      if (!node) return;
+      e.preventDefault();
+      try {
+        const raw = decodeURIComponent(node.dataset.rgPlayer || '');
+        const data = JSON.parse(raw);
+        if (data && data.name && data.name !== 'TBD') openRgPlayerCard(data);
+      } catch (err) {
+        console.warn('[RG PC] decode failed:', err);
+      }
+    });
+    // Keyboard a11y : Enter/Space sur node focus
+    bracket.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const node = e.target.closest('.rg-player-clickable[data-rg-player]');
+      if (!node) return;
+      e.preventDefault();
+      node.click();
+    });
+    _rgPcDelegationAttached = true;
+  }
+
+  // Attach delegation à la première loadRolandGarros() — bracket existe alors
+  const _rgOriginalLoad = window.loadRolandGarros;
+  window.loadRolandGarros = async function() {
+    const result = await _rgOriginalLoad.apply(this, arguments);
+    _rgPcAttachDelegation();
+    return result;
+  };
+
+  // ESC key close
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    const card = document.getElementById('rg-player-card');
+    if (card && card.classList.contains('open')) closeRgPlayerCard();
+  });
 })();
 </script>
 

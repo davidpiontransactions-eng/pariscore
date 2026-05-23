@@ -28549,8 +28549,28 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
   const drawPlayers = [];
   for (const m of r1) {
     const p1 = m.player1 || {}; const p2 = m.player2 || {};
-    drawPlayers.push({ name: p1.name || p1.short_name || 'TBD', id: p1.id || null, seed: p1.seed || null, country: p1.country_code || p1.country || null });
-    drawPlayers.push({ name: p2.name || p2.short_name || 'TBD', id: p2.id || null, seed: p2.seed || null, country: p2.country_code || p2.country || null });
+    // Enrichi (fiche joueur RG) : propage short_name, country_name, gender,
+    // current_ranking (position/points/type) depuis le payload BSD natif.
+    drawPlayers.push({
+      name: p1.name || p1.short_name || 'TBD',
+      short_name: p1.short_name || null,
+      id: p1.id || null,
+      seed: p1.seed || null,
+      country: p1.country_code || p1.country || null,
+      country_name: p1.country_name || null,
+      gender: p1.gender || null,
+      current_ranking: p1.current_ranking || null,
+    });
+    drawPlayers.push({
+      name: p2.name || p2.short_name || 'TBD',
+      short_name: p2.short_name || null,
+      id: p2.id || null,
+      seed: p2.seed || null,
+      country: p2.country_code || p2.country || null,
+      country_name: p2.country_name || null,
+      gender: p2.gender || null,
+      current_ranking: p2.current_ranking || null,
+    });
   }
   if (drawPlayers.length < 8) return { available: false, reason: 'draw_too_small', count: drawPlayers.length };
   let claySorted = [];
@@ -28744,6 +28764,71 @@ if (pathname === '/api/v1/admin/rg-refresh' && (req.method === 'POST' || req.met
   } catch (e) {
     console.error(`  [RG admin trigger ${tour}] ERROR:`, e && e.stack ? e.stack : e);
     return jsonResponse(res, 502, { ok: false, error: 'rg_build_failed', detail: String(e && e.message || e) });
+  }
+}
+// Enrichment fiche détaillée joueur Roland Garros — lazy fetch BSD player
+// matches clay (L5 form). Cache SQLite 6h via api_cache. Appelé par le
+// slide-over frontend openRgPlayerCard() après ouverture instantanée du
+// skeleton avec données embedded bracket.
+if (pathname.startsWith('/api/v1/tennis/rg-player/') && req.method === 'GET') {
+  const playerId = decodeURIComponent(pathname.slice('/api/v1/tennis/rg-player/'.length)).trim();
+  if (!playerId || playerId.length > 32 || !/^[A-Za-z0-9_-]+$/.test(playerId)) {
+    return jsonResponse(res, 400, { error: 'invalid_player_id', detail: 'alphanumérique max 32 chars requis' });
+  }
+  const ck = `rg_player_enrich_${playerId}`;
+  const cached = apiCacheGet(ck);
+  if (cached) return jsonResponse(res, 200, { ...cached, cache: 'hit' });
+  try {
+    // BSD endpoint joueur matches filtrés clay. Cache BSD intermédiaire 30min
+    // via handleTennisBSD (TTL géré dans la chaîne d'appel).
+    const out = await handleTennisBSD(
+      `/api/v2/players/${encodeURIComponent(playerId)}/matches/?surface=clay&limit=15`,
+      `bsd_player_clay_${playerId}`,
+      30 * 60 * 1000
+    );
+    if (out.status !== 200) {
+      // Soft fail — pas d'erreur HTTP côté client, juste payload vide
+      const empty = { l5_clay: [], dominance_ratio_clay: null, source: 'unavailable', upstream_status: out.status, cache: 'miss' };
+      apiCacheSet(ck, empty, 'rg_player_enrich', 30 * 60 * 1000);
+      return jsonResponse(res, 200, empty);
+    }
+    const matches = (out.body && (Array.isArray(out.body) ? out.body : out.body.results)) || [];
+    // Filtre matchs terminés (status finished/won/lost variants) + tri date desc
+    const finished = matches
+      .filter(m => {
+        const s = String(m.status || '').toLowerCase();
+        return /finished|won|lost|complete/.test(s) || m.winner_player_id != null;
+      })
+      .sort((a, b) => String(b.match_date || b.start_time || '').localeCompare(String(a.match_date || a.start_time || '')))
+      .slice(0, 5);
+    const l5 = finished.map(m => {
+      const p1id = m.player1 && m.player1.id;
+      const p2id = m.player2 && m.player2.id;
+      const isP1 = String(p1id) === String(playerId);
+      const winnerId = m.winner_player_id != null ? m.winner_player_id : (m.winner && m.winner.id);
+      const won = (isP1 && String(winnerId) === String(p1id)) || (!isP1 && String(winnerId) === String(p2id));
+      return {
+        result: won ? 'W' : 'L',
+        opponent: isP1 ? (m.player2 && (m.player2.name || m.player2.short_name)) : (m.player1 && (m.player1.name || m.player1.short_name)),
+        opponent_country: isP1 ? (m.player2 && (m.player2.country_code || m.player2.country)) : (m.player1 && (m.player1.country_code || m.player1.country)),
+        score: m.score || m.result_str || null,
+        date: m.match_date || m.start_time || null,
+        tournament: m.tournament && m.tournament.name || null,
+      };
+    });
+    const payload = {
+      l5_clay: l5,
+      // Dominance Ratio nécessite point-level stats (BSD non exposé sur historique)
+      // → V2 backlog. NULL pour V1.
+      dominance_ratio_clay: null,
+      source: 'bsd_clay_matches',
+      cache: 'miss',
+    };
+    apiCacheSet(ck, payload, 'rg_player_enrich', 6 * 3600 * 1000);
+    return jsonResponse(res, 200, payload);
+  } catch (e) {
+    console.error('  [RG player enrich] ERROR:', e && e.message);
+    return jsonResponse(res, 200, { l5_clay: [], dominance_ratio_clay: null, source: 'error', detail: String(e && e.message || e), cache: 'miss' });
   }
 }
 if (pathname === '/api/v1/tennis/aiscore/index' && req.method === 'GET') {

@@ -63,7 +63,15 @@
 // (assets/icons/rg-badge-hero.svg, 200x200) dans H1 onglet Roland Garros.
 // Design custom DIY (PS monogram + clay terracotta ring + gold edge + tennis
 // ball accent), zero trademark FFT. Hover rotate -5deg scale 1.05.
-const CACHE = 'pariscore-shell-v28';
+// v29 (2026-05-23) : invalide v28 — Fiche détaillée joueur RG slide-over
+// (panneau latéral droite desktop + bottom-sheet mobile). Glassmorphism
+// backdrop blur 8px + brand palette emerald/clay/gold/cream. Skeleton instant
+// depuis embedded bracket data + lazy fetch enrichment L5 clay via nouvelle
+// route /api/v1/tennis/rg-player/:id (cache SQLite 6h). Player lines bracket
+// clickables (data-rg-player encoded JSON + delegation listener + a11y ESC/
+// Enter/Space). Server enrichi payload bracket (short_name, country_name,
+// gender, current_ranking propagés depuis BSD raw).
+const CACHE = 'pariscore-shell-v29';
 const SHELL = [
   '/',
   '/pariscore.html',
