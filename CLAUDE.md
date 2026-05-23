@@ -256,13 +256,13 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 - **Règle BET stricte** — EV>5% ET borne inférieure IC>0
 - **Poisson Time-Inhomogène** — modèle live conditionnel minute par minute
 - **Context Engine** — météo + arbitres + kilométrage déplacements
-- **Alertes SSE** — triggers `favorite_trap` + `goal_flood`
+- ~~**Alertes SSE** — triggers `favorite_trap` + `goal_flood`~~ ✅ livré bd `vl02` commit `5003042` (toast UI top-right type-color, cooldown 5min, sliding 15min window)
 
 **Nouvelles pistes 22/05/2026 v12.65 (règle 1 PROTOCOLE — 3 propositions session):**
 
 - **xvalue.ai ML scouting clustering** (cf. bd `ffh` GO 85/100) — branch xG advanced + clustering 30 ligues dans pipeline `buildMatchRecord`, composante "form-style fingerprint" qui détecte les anomalies tactiques pré-match (changement coach, blessure clé). Sortie : `style_shift_score` 0-100 contribuant à `confidence_badge`.
 - **Pinnacle sharp calibration via OddsPapi.io free** (cf. bd `bjv` Plan C 250 req/mo) — utiliser cote Pinnacle dans `computeWFV1N2` comme ancrage low-vig, recalibrer `detectSurebet1N2` avec sharps low-marge, mesurer reduction faux positifs ValueBet (estim. -5 à -10% bias). POC mesurable backtest 50 matchs.
-- **Pattern on-demand throttled généralisé** (cf. bd `c5i` Phase 3 livré `fbea217`) — étendre paradigme `fetchAiscoreServingOnDemand` (5/poll + cooldown 10min/miss) à d'autres data gaps : `fetchAiscoreLineupsOnDemand` (lineups manquants BSD/ESPN), `fetchSofascoreEditorialOnDemand` (bd `6jro` Plan H article preview), `fetchOddsPapiPinnacleOnDemand` (anchor sharp ad-hoc). Helper générique `withOnDemandThrottle(fetcher, opts)`.
+- ~~**Pattern on-demand throttled généralisé** — helper `withOnDemandThrottle()`~~ ✅ livré bd `zckt` commit `1966f8b` (helper module-scope + refactor `fetchAiscoreServingOnDemand`, signature `{candidates, candidateKey, resolver, fetcher, maxPerInvocation, cooldownMs, state, name}`). Use cases extensibles : `fetchAiscoreLineupsOnDemand`, `fetchSofascoreEditorialOnDemand`, `fetchOddsPapiPinnacleOnDemand`, `fetchUnderstatPlayerStatsOnDemand`.
 
 ---
 
