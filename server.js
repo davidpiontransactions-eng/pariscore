@@ -18286,11 +18286,20 @@ function findTennisOddsForPlayers(player1Name, player2Name) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  TENNIS HISTORICAL — Jeff Sackmann CSV  (github.com/JeffSackmann/tennis_atp,
-//  tennis_wta). License CC BY-NC-SA 4.0 — server-side only, never expose raw
-//  rows via API. Used for in-house surface Elo training (T4) + backtest (T9).
-//  Model outputs (probabilities, Elo) sont des œuvres dérivées, pas le dataset.
+//  tennis_wta). License CC BY-NC-SA 4.0.
+//
+//  ⛔ DEPRECATED 2026-05-23 — DG decision bd 8uoc : Sackmann CC-BY-NC-SA est
+//  INCOMPATIBLE service commercial PariScore (Pro €19/mo). Sync HTTP désactivé
+//  via SACKMANN_SYNC_DISABLED (anti-infraction continue). Table tennis_matches
+//  conservée en lecture seule pendant 30j transition. Replacement décidé =
+//  internal Elo from BSD/ESPN (bd dl49). DROP TABLE prévu après ETL interne
+//  validé.
+//
+//  Re-activer SACKMANN_SYNC_DISABLED=false UNIQUEMENT pour usage research non
+//  commercial isolé (jamais en production prod).
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const SACKMANN_SYNC_DISABLED = String(process.env.SACKMANN_SYNC_DISABLED || 'true').toLowerCase() !== 'false';
 const SACKMANN_REPOS = {
   ATP: 'https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_',
   WTA: 'https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_',
@@ -18460,6 +18469,9 @@ function upsertSackmannMatches(rows) {
 
 // Sync orchestrator. Boucle ATP+WTA × N années récentes.
 async function syncSackmannData({ yearsBack = SACKMANN_YEARS_BACK } = {}) {
+  if (SACKMANN_SYNC_DISABLED) {
+    return { skipped: 'sackmann_sync_disabled', reason: 'CC-BY-NC-SA incompatible commercial — bd 8uoc DG decision 2026-05-23' };
+  }
   if (_sackmannSyncInProgress) return { skipped: 'in_progress' };
   _sackmannSyncInProgress = true;
 
@@ -35698,11 +35710,16 @@ console.log(`  [DailyPicks] cron armé — premier tick à ${DAILY_TOP_PICKS_HOU
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
 pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
 
-// Tennis historical (Sackmann CSV) — cron nightly + initial sync si data stale (>48h).
-// Server-side only (CC BY-NC-SA NC). Used by Elo (T4) + backtest (T9).
-setInterval(() => {
-  syncSackmannData().catch(e => console.warn('[Sackmann cron]', e.message));
-}, SACKMANN_SYNC_INTERVAL_MS);
+// Tennis historical (Sackmann CSV) — cron nightly DEPRECATED 2026-05-23.
+// Sackmann CC-BY-NC-SA incompatible service commercial — sync HTTP désactivé
+// par flag SACKMANN_SYNC_DISABLED (bd 8uoc). Replacement = internal Elo (bd dl49).
+if (!SACKMANN_SYNC_DISABLED) {
+  setInterval(() => {
+    syncSackmannData().catch(e => console.warn('[Sackmann cron]', e.message));
+  }, SACKMANN_SYNC_INTERVAL_MS);
+} else {
+  console.log('  [Sackmann] cron DÉSACTIVÉ (SACKMANN_SYNC_DISABLED=true) — CC-BY-NC-SA bd 8uoc.');
+}
 // Tennis Abstract — refresh quotidien 10:00 Europe/Paris (cache warmer + sanity log).
 function _msUntilNextParisHour(targetHour) {
   const nowParisStr = new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris', hour12: false });
@@ -35794,6 +35811,23 @@ if (MATCHSTAT_ENABLED) {
 }
 
 (function _sackmannBootSync() {
+  if (SACKMANN_SYNC_DISABLED) {
+    console.log('  [Sackmann] boot sync skip — SACKMANN_SYNC_DISABLED actif (bd 8uoc CC-BY-NC-SA).');
+    // Continue malgré tout vers compute Elo fallback si tennis_matches contient data legacy.
+    setTimeout(() => {
+      try {
+        _initTennisEloSchema();
+        _initTennisTaSchema();
+        const eloRow = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_elo').get();
+        const matchesRow = sqldb.prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='tennis_matches'`).get();
+        if (matchesRow && matchesRow.n > 0 && (!eloRow || eloRow.n === 0)) {
+          console.log('  [Elo] Boot compute (tennis_elo vide, table tennis_matches legacy présente)…');
+          computeTennisElo();
+        }
+      } catch (_) { /* swallow */ }
+    }, 5000);
+    return;
+  }
   const last = getSackmannLastSync();
   if (!last || Date.now() - last > SACKMANN_STALE_THRESHOLD_MS) {
     console.log('  [Sackmann] Boot sync (data stale or absent)…');

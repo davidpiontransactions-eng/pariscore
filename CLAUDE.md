@@ -35,13 +35,13 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 
 | # | Action | Type | Commande / Lien | Urgence |
 |---|---|---|---|---|
-| 1 | **Deploy VPS** | ops | `cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore` (cumul `fbea217`→`290bfb1`) | 🔴 HIGH |
+| ~~1~~ ✅ | **Deploy VPS** | ops | ✅ done 2026-05-23 — cumul `fbea217`→`290bfb1` deployed. Validation logs : grep `wikidata\|TennisLive\|safeFixed\|live_momentum_pct` |
 | 2 | **🚨 Revoke RapidAPI key** | security | Dashboard RapidAPI → revoke + nouvelle clé → `.env` VPS uniquement (exposée chat 21/05) | 🔴 CRITICAL |
 | 3 | **Audit DB postbreach** | ops | `bash .context/security_db_audit_postbreach.sh` VPS (bd `c8m`) | 🟡 MED |
 | 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS à minuit UTC (bd `9je`) | 🟡 MED |
 | 5 | **Run flashscore-logos** | ops | `node tools/import-flashscore-logos.js` VPS post-deploy (bd `qm6a` Plan A) | 🟢 LOW |
 | 6 | **DG decision Stripe** | DG | `.context/stripe_dg_checklist.md` — 9 sections (trial/prix/matchday) bd `s77m` | 🟡 MED |
-| 7 | **DG decision Sackmann purge** | DG | `8uoc` Q1 — Sackmann tennis_matches en infraction CC BY-NC-SA → GO purge + ETL TML-DB MIT ? | 🔴 HIGH legal |
+| 7 | **Sackmann purge — Phase 1+2 livrées** | code+ops | ✅ DG GO 2026-05-23 (bd `8uoc`). ⚠️ TML-Database découvert CC-NC (non MIT) — substitution invalidée. Replacement choisi = internal Elo from BSD/ESPN (bd `dl49`, 3-5j). Phase 1+2 session courante : backup script + Sackmann sync désactivé (flag `SACKMANN_SYNC_DISABLED=true`). Ops VPS : `node tools/backup-tennis-matches.js` puis deploy server.js patché. Phase 3-7 (ETL interne + refactor consumers + DROP table + LICENSE-DATA.md) = sessions futures bd `dl49`. | 🔴 HIGH legal |
 | 8 | **DG decision 6 études bloquées** | DG | bd `j5lb` — GO/NO-GO 6 spikes arbitrage (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing) | 🟡 MED |
 | 9 | **POC OddsPapi.io** | DG | Signup free 250 req → `ODDSPAPI_KEY` .env → `node .context/_probe_oddspapi_pinnacle.js` (bd `bjv`) | 🟢 LOW |
 | 10 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd `ffh` GO 85/100) | 🟢 LOW |
