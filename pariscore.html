@@ -474,28 +474,49 @@
     transition: color .18s, transform .12s;
     /* barre rouge en bas */
   }
-  /* Icônes 3D premium navbar — fond transparent PNG, 24×24, float au hover */
+  /* Icônes 3D premium navbar — SVG glassmorphic translucent.
+     Effet pro/sexy : opacité .85 par défaut, glow soft au hover, halo brand
+     à l'état actif. Float subtil + scale 1.18 + drop-shadow multi-couches.
+     Perspective tilt 3D-feel via rotateY micro. */
   .nav-icon-3d {
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
     object-fit: contain;
     display: inline-block;
     vertical-align: middle;
-    transition: transform 0.2s ease, filter 0.2s ease;
+    opacity: 0.88;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1),
+                filter 0.25s ease,
+                opacity 0.2s ease;
     pointer-events: none;
     user-select: none;
+    transform: perspective(400px) rotateY(-4deg);
+    will-change: transform, filter;
   }
   .nav-links a:hover .nav-icon-3d {
-    transform: translateY(-2px) scale(1.1);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+    opacity: 1;
+    transform: perspective(400px) rotateY(0deg) translateY(-3px) scale(1.18);
+    filter: drop-shadow(0 6px 12px rgba(226, 0, 26, 0.35))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
   }
   .nav-links a.active .nav-icon-3d {
-    filter: drop-shadow(0 0 6px rgba(226, 0, 26, 0.55));
+    opacity: 1;
+    transform: perspective(400px) rotateY(0deg) scale(1.12);
+    filter: drop-shadow(0 0 8px rgba(226, 0, 26, 0.6))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
   }
-  /* Mobile : icônes un peu plus grandes pour tap-target lisibilité */
+  /* Mobile : taille tap-target + perspective réduite */
   @media (max-width: 768px) {
-    .nav-icon-3d { width: 22px; height: 22px; flex: 0 0 22px; }
+    .nav-icon-3d {
+      width: 24px; height: 24px; flex: 0 0 24px;
+      transform: perspective(400px) rotateY(-2deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nav-icon-3d { transition: none; transform: none; }
+    .nav-links a:hover .nav-icon-3d { transform: scale(1.1); }
   }
   .nav-links a:hover { transform: translateY(-1px); }
   .nav-links a::after {
@@ -7229,22 +7250,22 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <span class="logo-tag-mob">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
-    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs"><img class="nav-icon-3d" src="/assets/icons/3d-football.png" alt="Icone Football PariScore" loading="lazy" />Football</a>
-    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis"><img class="nav-icon-3d" src="/assets/icons/3d-tennis.png" alt="Icone Tennis PariScore" loading="lazy" />Tennis</a>
-    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg"><img class="nav-icon-3d" src="/assets/icons/3d-trophy.png" alt="Icone Roland Garros trophée terre battue" loading="lazy" />Roland Garros</a>
-    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies"><img class="nav-icon-3d" src="/assets/icons/3d-strategy.png" alt="Icone Top Stratégies PariScore" loading="lazy" />Top Stratégies</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks"><img class="nav-icon-3d" src="/assets/icons/3d-fire.png" alt="Icone Hot Picks paris sportifs" loading="lazy" />Hot Picks</a>
-    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris"><img class="nav-icon-3d" src="/assets/icons/3d-ticket.png" alt="Icone Mes Paris ticket" loading="lazy" />Mes Paris</a>
-    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide"><img class="nav-icon-3d" src="/assets/icons/3d-book.png" alt="Icone Guide paris sportifs" loading="lazy" />Guide</a>
-    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets"><img class="nav-icon-3d" src="/assets/icons/3d-shield.png" alt="Icone Sure Bets bouclier" loading="lazy" />Sure Bets</a>
-    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur"><img class="nav-icon-3d" src="/assets/icons/3d-compare.png" alt="Icone Comparateur cotes bookmakers" loading="lazy" />Comparateur</a>
-    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions"><img class="nav-icon-3d" src="/assets/icons/3d-brain.png" alt="Icone Prédictions IA intelligence artificielle" loading="lazy" />Prédictions IA</a>
-    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances"><img class="nav-icon-3d" src="/assets/icons/3d-chart.png" alt="Icone Tendances statistiques" loading="lazy" />Tendances</a>
-    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes"><img class="nav-icon-3d" src="/assets/icons/3d-bell.png" alt="Icone Alertes notifications Telegram" loading="lazy" />Alertes</a>
-    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique"><img class="nav-icon-3d" src="/assets/icons/3d-clock.png" alt="Icone Historique paris vérifiés" loading="lazy" />Historique</a>
-    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil"><img class="nav-icon-3d" src="/assets/icons/3d-home.png" alt="Icone Accueil PariScore" loading="lazy" />Accueil</a>
-    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs"><img class="nav-icon-3d" src="/assets/icons/3d-crown.png" alt="Icone Tarifs Pro abonnement" loading="lazy" />Tarifs</a>
-    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres"><img class="nav-icon-3d" src="/assets/icons/3d-settings.png" alt="Icone Paramètres compte" loading="lazy" /></a>
+    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs"><img class="nav-icon-3d" src="/assets/icons/3d-football.svg" alt="Icone Football PariScore" loading="lazy" />Football</a>
+    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis"><img class="nav-icon-3d" src="/assets/icons/3d-tennis.svg" alt="Icone Tennis PariScore" loading="lazy" />Tennis</a>
+    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg"><img class="nav-icon-3d" src="/assets/icons/3d-trophy.svg" alt="Icone Roland Garros trophée terre battue" loading="lazy" />Roland Garros</a>
+    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies"><img class="nav-icon-3d" src="/assets/icons/3d-strategy.svg" alt="Icone Top Stratégies PariScore" loading="lazy" />Top Stratégies</a>
+    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks"><img class="nav-icon-3d" src="/assets/icons/3d-fire.svg" alt="Icone Hot Picks paris sportifs" loading="lazy" />Hot Picks</a>
+    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris"><img class="nav-icon-3d" src="/assets/icons/3d-ticket.svg" alt="Icone Mes Paris ticket" loading="lazy" />Mes Paris</a>
+    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide"><img class="nav-icon-3d" src="/assets/icons/3d-book.svg" alt="Icone Guide paris sportifs" loading="lazy" />Guide</a>
+    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets"><img class="nav-icon-3d" src="/assets/icons/3d-shield.svg" alt="Icone Sure Bets bouclier" loading="lazy" />Sure Bets</a>
+    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur"><img class="nav-icon-3d" src="/assets/icons/3d-compare.svg" alt="Icone Comparateur cotes bookmakers" loading="lazy" />Comparateur</a>
+    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions"><img class="nav-icon-3d" src="/assets/icons/3d-brain.svg" alt="Icone Prédictions IA intelligence artificielle" loading="lazy" />Prédictions IA</a>
+    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances"><img class="nav-icon-3d" src="/assets/icons/3d-chart.svg" alt="Icone Tendances statistiques" loading="lazy" />Tendances</a>
+    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes"><img class="nav-icon-3d" src="/assets/icons/3d-bell.svg" alt="Icone Alertes notifications Telegram" loading="lazy" />Alertes</a>
+    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique"><img class="nav-icon-3d" src="/assets/icons/3d-clock.svg" alt="Icone Historique paris vérifiés" loading="lazy" />Historique</a>
+    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil"><img class="nav-icon-3d" src="/assets/icons/3d-home.svg" alt="Icone Accueil PariScore" loading="lazy" />Accueil</a>
+    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs"><img class="nav-icon-3d" src="/assets/icons/3d-crown.svg" alt="Icone Tarifs Pro abonnement" loading="lazy" />Tarifs</a>
+    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres"><img class="nav-icon-3d" src="/assets/icons/3d-settings.svg" alt="Icone Paramètres compte" loading="lazy" /></a>
   </div>
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
   <div class="nav-right">
