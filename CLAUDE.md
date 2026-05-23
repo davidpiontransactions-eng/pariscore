@@ -250,7 +250,7 @@ Single source quick-scan tous plans bounded actionable cross-tickets (BSD covera
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
-- **Bayesian Value Radar** — Data Blending Poisson Bivarié + Elo dynamique + xG Logistic (partial : Poisson+Elo livrés, xG Logistic blend pending)
+- ~~**Bayesian Value Radar** — Data Blending Poisson Bivarié + Elo dynamique + xG Logistic~~ ✅ livré (audit 2026-05-23) : `computeXGLogisticProbs` server.js:6082 (sigmoid xgDiff/xgTotal) + `bayesianBlend(poisson, elo, xg)` server.js:6104 weights 50/25/25 + `calibrateProbs` reliability diagram. Wired `m.blended` + `m.calibrated`.
 - ~~**Bootstrap UQD** — 500 itérations IC90 par match~~ ✅ livré (foot `computeBootstrapUQD` server.js:6111 + tennis `computeBootstrapUQDTennis` server.js:19109)
 - ~~**Score composite fiabilité /100** — volume data + stabilité xG + calibration~~ ✅ livré `computeReliabilityScore` server.js:6191 (35% volume + 35% stabilité IC over25 + 30% qualité source réel vs sim)
 - ~~**Règle BET stricte** — EV>5% ET borne inférieure IC>0~~ ✅ livré `computeBetSignal` server.js:6207 (EV worst-case IC lower, recommande uniquement si pessimiste reste positif)
