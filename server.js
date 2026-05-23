@@ -4842,13 +4842,17 @@ function _traceCatch(label, err) {
 // tronque header). Auto-recovery non-destructive : rename → fresh DB.
 let _apiCacheDbWarnTs = 0;
 let _dbRecoveryAttemptTs = 0;
+let _dbRecoveryCount = 0;
+let _dbLastWarnCode = null;
 const _DB_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
 function _attemptRuntimeDbRecovery(err) {
   const code = err && err.code;
   if (code !== 'SQLITE_NOTADB' && code !== 'SQLITE_CORRUPT') return false;
+  _dbLastWarnCode = code;
   const now = Date.now();
   if (now - _dbRecoveryAttemptTs < _DB_RECOVERY_COOLDOWN_MS) return false;
   _dbRecoveryAttemptTs = now;
+  _dbRecoveryCount++;
   console.error(`\x1b[31m[SQLITE_RECOVERY] Runtime ${code} détecté → tentative auto-recovery (rename + fresh DB)\x1b[0m`);
   try {
     try { if (sqldb && sqldb.open) sqldb.close(); } catch (_) {}
@@ -23638,6 +23642,65 @@ if (pathname === '/api/v1/status') {
       last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null,
     },
   });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// GET /api/v1/db-health — bd b50 monitoring SQLite (cron VPS / alerting webhook)
+// Public read-only : ne contient aucune donnée sensible, juste métadonnées
+// fichier + résultat quick_check + counters recovery. Coût : 1 quick_check
+// par requête capé à 1/min via cache mémoire (sinon DoS facile).
+// HTTP 200 si DB saine, 503 si quick_check KO ou DB closed. Cron VPS peut
+// utiliser status code pour alert : `curl -fsS .../db-health || alert`.
+// ────────────────────────────────────────────────────────────────────────────
+let _dbHealthCacheTs = 0;
+let _dbHealthCachePayload = null;
+const _DB_HEALTH_CACHE_MS = 60 * 1000;
+if (pathname === '/api/v1/db-health') {
+  const now = Date.now();
+  if (_dbHealthCachePayload && (now - _dbHealthCacheTs) < _DB_HEALTH_CACHE_MS) {
+    const status = _dbHealthCachePayload.healthy ? 200 : 503;
+    return jsonResponse(res, status, { ..._dbHealthCachePayload, cached: true });
+  }
+  const payload = {
+    healthy: false,
+    quick_check: 'unknown',
+    journal_mode: null,
+    page_count: null,
+    page_size: null,
+    size_bytes: null,
+    wal_size_bytes: null,
+    recovery_count: _dbRecoveryCount,
+    last_recovery_ts: _dbRecoveryAttemptTs || null,
+    last_recovery_iso: _dbRecoveryAttemptTs ? new Date(_dbRecoveryAttemptTs).toISOString() : null,
+    last_warn_code: _dbLastWarnCode,
+    db_path: SQLITE_FILE,
+    checked_at_iso: new Date().toISOString(),
+    cached: false,
+  };
+  try {
+    if (!sqldb || !sqldb.open) throw new Error('db_closed');
+    const qc = sqldb.pragma('quick_check');
+    const qcVal = Array.isArray(qc) && qc[0] ? String(qc[0].quick_check) : 'n/a';
+    payload.quick_check = qcVal;
+    payload.healthy = qcVal.toLowerCase() === 'ok';
+    payload.journal_mode = sqldb.pragma('journal_mode', { simple: true });
+    payload.page_count = sqldb.pragma('page_count', { simple: true });
+    payload.page_size = sqldb.pragma('page_size', { simple: true });
+    if (Number.isFinite(payload.page_count) && Number.isFinite(payload.page_size)) {
+      payload.size_bytes = payload.page_count * payload.page_size;
+    }
+    try {
+      const walPath = SQLITE_FILE + '-wal';
+      if (fs.existsSync(walPath)) payload.wal_size_bytes = fs.statSync(walPath).size;
+    } catch (_) { /* swallow */ }
+  } catch (e) {
+    payload.healthy = false;
+    payload.error = e.code || e.message;
+  }
+  _dbHealthCachePayload = payload;
+  _dbHealthCacheTs = now;
+  const status = payload.healthy ? 200 : 503;
+  return jsonResponse(res, status, payload);
 }
 
 // -------------------------------------------------
