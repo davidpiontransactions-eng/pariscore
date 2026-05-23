@@ -360,74 +360,7 @@ Implémenter une infrastructure de paiement résiliente, conforme aux standards 
 | Bugfix autoplay DOMException | — | `playPromise.catch` silencieux pariscore.html:31652 |
 | UI contraste teinte rose tableau Foot | `k37` | coral leak fix commit `8b99cb2` (`tr.match-row-live::before` box-shadow scope) |
 | Benchmark Rotowire Soccer | `gz7s` | P3 open — rapport à livrer (voir bd description spec) |
+| Tennis balle serveur figée (type coercion + nested flag) | `4c52` | commit `b2d5ee9` — helper `_tnGetServingIdx` + 5 sites patchés (renderTennisLive, _tvbScoreCell, _tnRenderSourceBadge, predictive cell, tnLiveBetsFromScore) |
+| Terrain 2D foot ball tracker fallback | `4uk9` | wontfix — audit pipeline OK (server.js:34803 + pariscore.html:20272). BSD livedata frames J1/secondaires ne pushent pas coords ballon. Provider limit. Cosmetic patch skipped DG choice. |
 
-### MISSION WEBSOCKET & UI : ANIMATION DU TERRAIN 2D (LIVE MATCH TRACKER)
-
-Claude, active ta matrice de compétences : `websocket-integration`, `frontend-canvas-dom`, et `sports-data-engineering`.
-
-🚨 **PROBLÈME VISUEL ET FONCTIONNEL :** Sur notre interface de match en direct, le widget du terrain de football affiche le texte de fallback "position ballon indisponible". Pourtant, le panneau latéral reçoit bien les données de possession/pression via notre WebSocket (on voit 50/50 pour Machida vs Urawa). 
-
-Le flux WS est actif, mais la liaison avec l'animation du ballon sur le terrain (coordonnées ou zones) est cassée ou mal "pluggée".
-
-Agis en tant que **Senior Frontend Engineer**.
-
----
-
-### ÉTAPE 1 : AUDIT DU PAYLOAD WEBSOCKET
-- Intercepte et analyse la structure brute du JSON que nous recevons via le WebSocket pour un match en cours.
-- Cherche comment le fournisseur d'API transmet l'information de l'action en cours. Est-ce sous forme de coordonnées (`x`, `y`) ? Ou sous forme de zones (`zone: "attack"`, `side: "home"`) ? Ou sous forme d'événements texte (`event: "Corner Kick"`) ?
-
----
-
-### ÉTAPE 2 : MAPPING ET LOGIQUE DE RENDU
-- Si la donnée existe dans le payload, crée la fonction de mapping (ex: `mapBallPosition(data)`).
-- **Si ce sont des coordonnées X/Y :** Convertis ces pourcentages par rapport à la taille de notre conteneur CSS (le terrain vert) pour y placer un point (le ballon).
-- **Si ce sont des zones :** Plutôt qu'un ballon précis, illumine une zone du terrain (ex: un calque blanc translucide sur le tiers offensif) selon l'équipe qui a le ballon.
-- Supprime le texte "position ballon indisponible" dynamiquement dès que la première donnée de position valide est reçue.
-
----
-
-### ÉTAPE 3 : GESTION DES FALLBACKS (LE CAS ÉCHÉANT)
-- Si (et seulement si) notre fournisseur d'API ne fournit *réellement* aucune donnée de position spatiale pour ce match, remplace le grand texte moche "position ballon indisponible" par un design plus premium et discret (ex: un texte subtil "Simulation 2D non couverte pour cette ligue" centré, sans bloquer la vue des lignes du terrain).
-
----
-
-### ÉTAPE 4 : TESTS ET VALIDATION
-1. N'écris pas le code de rendu tout de suite.
-2. Affiche-moi d'abord un extrait du Payload JSON du WebSocket pour que je voie la donnée que tu as trouvée (ou non).
-3. Attends mon "GO" pour implémenter la logique visuelle sur le fichier HTML/JS concerné.
-
-### MISSION JAVASCRIPT & DOM : CORRECTION DU BUG DE L'ICÔNE DU SERVEUR (Balle de Tennis)
-
-Claude, active ta matrice de compétences : `javascript-logic`, `dom-manipulation`, et `frontend-ux-states`.
-
-🚨 **BUG VISUEL ET D'ÉTAT SIGNALÉ :** Sur notre scoreboard de Tennis en direct, l'indicateur visuel du serveur (représenté par une icône de balle de tennis) ne se met pas à jour correctement. Lorsque le serveur change au fil du match, la balle ne passe pas au nouveau joueur, ou reste figée.
-
-Agis en tant que **Senior Frontend Engineer** pour auditer et corriger cette faille de réactivité.
-
----
-
-### ÉTAPE 1 : AUDIT DE LA BOUCLE DE RENDU
-- Localise la fonction responsable de l'affichage du scoreboard et de l'indicateur de service dans `pariscore.html` ou le script JS associé (cherche l'endroit où l'icône de la balle de tennis est injectée en HTML ou gérée via une classe CSS comme `.is-serving`).
-- Identifie comment la mise à jour des données (via WebSocket ou polling API) déclenche le rafraîchissement de ce bloc.
-
----
-
-### ÉTAPE 2 : CORRECTION DE LA LOGIQUE D'ÉTAT (STATE MANAGEMENT)
-Le problème vient d'un nettoyage d'état manquant. Applique cette logique stricte :
-- À chaque mise à jour du score ou changement de jeu, **réinitialise d'abord** l'indicateur de service pour les DEUX joueurs (retire l'icône ou la classe CSS associée).
-- **Ensuite**, lis la nouvelle propriété du flux de données (ex: `match.serving`, `match.player1.is_serving`) et réapplique l'icône de la balle de tennis UNIQUEMENT au joueur actuellement au service.
-
----
-
-### ÉTAPE 3 : OPTIMISATION DU CODE (ÉVITER LES DOUBLONS)
-- Assure-toi que l'injection de la balle de tennis ne crée pas de doublons dans le DOM (ex: l'ajout répété de balises `<img>` ou `<span>` à chaque tick du WebSocket). 
-- Privilégie le ciblage par ID ou par classe, et utilise un basculement de classe simple (ex: `element.classList.toggle('active-server', isServing)`).
-
----
-
-### ÉTAPE 4 : PROTOCOLE DE VALIDATION
-1. Modifie la logique d'affichage.
-2. Simule un changement de serveur dans la console de test locale pour vérifier que la balle disparaît bien du Joueur A pour s'afficher chez le Joueur B.
-3. Confirme-moi dans le terminal que le bug est patché et que le code a été sécurisé contre les conflits de rendu.
-*Dernière mise à jour : v12.65 — 22/05/2026. CLAUDE.md purgé (5 missions livrées → bd notes + CHANGELOG.md). Sync drift bd↔CLAUDE.md effectué. Source vérité tâches = `bd ready`.*
+*Dernière mise à jour : v12.66 — 23/05/2026. CLAUDE.md purgé 2 missions ad-hoc texte (4c52 fix + 4uk9 wontfix → bd notes). Sync drift `8uoc` corrigé. Source vérité tâches = `bd ready`.*
