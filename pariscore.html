@@ -3506,6 +3506,47 @@
   .paris-tabs { display: flex; gap: 4px; margin: 14px 0 8px; border-bottom: 1px solid var(--border); }
   .paris-tab { background: transparent; border: none; padding: 8px 14px; font-size: 11px; font-family: var(--font-mono); color: var(--text2); cursor: pointer; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid transparent; }
   .paris-tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+  /* bd o6s — CLV Tracker mini-card sticky footer (Sprint 3 INNOV-8) */
+  /* Mini-card 30j toujours visible bas page Mes Paris : KPI sharp/flat/square
+     stratégie active. Click → onglet CLV détail. Subtle, non-bloquant scroll. */
+  .clv-mini-card {
+    position: sticky; bottom: 12px; z-index: 30;
+    margin: 16px auto 24px; max-width: 760px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(20,24,28,0.96), rgba(28,34,40,0.94));
+    border: 1px solid rgba(41,182,246,0.22);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    cursor: pointer;
+    transition: border-color .25s ease, transform .15s ease;
+    backdrop-filter: blur(6px);
+  }
+  .clv-mini-card:hover { border-color: rgba(0,230,118,0.42); transform: translateY(-1px); }
+  .clv-mc-icon { font-size: 22px; line-height: 1; opacity: .85; }
+  .clv-mc-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .clv-mc-label { font: 700 9px/1 var(--font-mono); color: var(--text3); letter-spacing: .8px; text-transform: uppercase; }
+  .clv-mc-strat { font: 700 13px/1.2 var(--font-display, 'Syne'), sans-serif; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .clv-mc-kpis { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+  .clv-mc-kpi { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+  .clv-mc-kpi-val { font: 800 16px/1 var(--font-mono); color: var(--text); }
+  .clv-mc-kpi-val.pos { color: var(--green); }
+  .clv-mc-kpi-val.neg { color: var(--red); }
+  .clv-mc-kpi-val.flat { color: var(--amber); }
+  .clv-mc-kpi-lbl { font: 600 9px/1 var(--font-mono); color: var(--text3); letter-spacing: .6px; text-transform: uppercase; margin-top: 3px; }
+  .clv-mc-verdict { padding: 6px 12px; border-radius: 6px; font: 700 11px/1 var(--font-mono); letter-spacing: .8px; text-transform: uppercase; }
+  .clv-mc-verdict.sharp { background: rgba(0,230,118,0.16); color: var(--green); border: 1px solid rgba(0,230,118,0.32); }
+  .clv-mc-verdict.flat { background: rgba(245,158,11,0.16); color: var(--amber); border: 1px solid rgba(245,158,11,0.32); }
+  .clv-mc-verdict.square { background: rgba(255,77,77,0.16); color: var(--red); border: 1px solid rgba(255,77,77,0.32); }
+  .clv-mc-verdict.empty { background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
+  @media (max-width: 600px) {
+    .clv-mini-card { gap: 10px; padding: 8px 12px; }
+    .clv-mc-strat { max-width: 110px; font-size: 12px; }
+    .clv-mc-kpis { gap: 10px; }
+    .clv-mc-kpi-val { font-size: 13px; }
+    .clv-mc-verdict { padding: 4px 8px; font-size: 10px; }
+  }
   .paris-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 14px; padding: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; }
   .paris-filters label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); text-transform: uppercase; display: flex; flex-direction: column; gap: 4px; }
   .paris-filters select, .paris-filters input { background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 4px; font-size: 12px; font-family: var(--font-mono); }
@@ -9596,6 +9637,30 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </div>
   </div>
 </section>
+
+<!-- bd o6s — CLV Tracker mini-card sticky footer (INNOV-8 Sprint 3 P2) -->
+<!-- Mini-card 30j toujours visible en bas de la page Mes Paris, summary métriques
+     CLV active strategy (sharp/flat/square verdict). Click → onglet CLV détail. -->
+<div id="clv-mini-card" class="clv-mini-card" style="display:none;" aria-live="polite"
+     onclick="setParisTab('clv'); document.getElementById('clv-mini-card').scrollIntoView({behavior:'smooth'});"
+     title="Click pour voir détail CLV par stratégie">
+  <div class="clv-mc-icon" aria-hidden="true">📊</div>
+  <div class="clv-mc-body">
+    <div class="clv-mc-label">CLV 30j</div>
+    <div class="clv-mc-strat" id="clv-mc-strategy">—</div>
+  </div>
+  <div class="clv-mc-kpis">
+    <div class="clv-mc-kpi">
+      <span class="clv-mc-kpi-val" id="clv-mc-avg">—</span>
+      <span class="clv-mc-kpi-lbl">moyen</span>
+    </div>
+    <div class="clv-mc-kpi">
+      <span class="clv-mc-kpi-val" id="clv-mc-sample">—</span>
+      <span class="clv-mc-kpi-lbl">paris</span>
+    </div>
+    <div class="clv-mc-verdict" id="clv-mc-verdict">—</div>
+  </div>
+</div>
 </div><!-- /page-paris -->
 
 <!-- PAGE : TOP STRATÉGIES -->
@@ -29315,6 +29380,50 @@ function setParisTab(tab) {
   if (tab === 'open' || tab === 'settled') renderUserBetsTable();
   if (tab === 'plan') loadDailyTracker();
   if (tab === 'clv') loadCLVByStrategy();
+  // bd o6s — Refresh mini-card CLV sticky footer à chaque switch tab (page Mes Paris).
+  try { loadCLVMiniCard(); } catch (_) { /* swallow */ }
+}
+
+// bd o6s — Load CLV mini-card sticky footer page Mes Paris
+// Pick top strategy active (highest n_bets last 30d) + summary KPIs.
+// Affiche/hide selon donnée dispo. Click déjà géré inline onclick HTML.
+async function loadCLVMiniCard() {
+  const card = document.getElementById('clv-mini-card');
+  if (!card) return;
+  try {
+    const res = await apiFetch('/api/v1/analytics/clv-by-strategy?period=30d');
+    if (!res.ok) { card.style.display = 'none'; return; }
+    const data = await res.json();
+    const rows = (data && data.data) || [];
+    if (!rows.length) { card.style.display = 'none'; return; }
+    // Pick top strategy par n_bets (proxy "active strategy")
+    const top = rows.slice().sort((a, b) => (b.n_bets || 0) - (a.n_bets || 0))[0];
+    if (!top || (top.n_bets || 0) === 0) { card.style.display = 'none'; return; }
+    const strat = top.strategy || '—';
+    const clv = top.clv_mean_pct;
+    const nBets = top.n_bets || 0;
+    let avgCls = 'flat', verdictCls = 'flat', verdictLbl = 'Flat';
+    if (clv != null && Number.isFinite(clv)) {
+      if (clv >= 2) { avgCls = 'pos'; verdictCls = 'sharp'; verdictLbl = 'Sharp'; }
+      else if (clv <= -2) { avgCls = 'neg'; verdictCls = 'square'; verdictLbl = 'Square'; }
+      else { avgCls = 'flat'; verdictCls = 'flat'; verdictLbl = 'Flat'; }
+    } else {
+      avgCls = ''; verdictCls = 'empty'; verdictLbl = 'N/A';
+    }
+    const avgStr = (clv == null || !Number.isFinite(clv)) ? '—' : (clv > 0 ? '+' : '') + clv.toFixed(1) + '%';
+    const setText = (id, t, cls) => {
+      const el = document.getElementById(id); if (!el) return;
+      el.textContent = t;
+      if (cls != null) el.className = el.className.replace(/\bpos|neg|flat|sharp|square|empty\b/g, '').trim() + ' ' + cls;
+    };
+    setText('clv-mc-strategy', strat, null);
+    const avgEl = document.getElementById('clv-mc-avg');
+    if (avgEl) { avgEl.textContent = avgStr; avgEl.className = 'clv-mc-kpi-val ' + (avgCls || ''); }
+    setText('clv-mc-sample', String(nBets), null);
+    const vEl = document.getElementById('clv-mc-verdict');
+    if (vEl) { vEl.textContent = verdictLbl; vEl.className = 'clv-mc-verdict ' + verdictCls; }
+    card.style.display = '';
+  } catch (_) { card.style.display = 'none'; }
 }
 
 // bd cty — Load CLV by strategy 30j (Closing Line Value)
