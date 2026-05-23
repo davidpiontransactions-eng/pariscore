@@ -30661,6 +30661,76 @@ function _weatherCodeLabel(code) {
   return { label: 'variable', icon: '·' };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd i8gw — Context Engine kilométrage déplacements (innovation backlog finalize)
+//
+// Compute distance jet-lag travel équipe extérieure → stade match. Edge math :
+// distance >500km corrélée fatigue/perf dégradée joueurs visiteurs (passes,
+// duels, finissage). Réutilise _geocodeCity bd cy9h + cache api_cache.
+//
+// Fatigue factor heuristique (deferred edge math sur λ_away) :
+//   <300km   ×1.00 (déplacement local, pas d'impact)
+//   300-500  ×0.98
+//   500-1000 ×0.95
+//   1000-2500 ×0.92
+//   >2500    ×0.88 (intercontinental, jet-lag majeur)
+// ═══════════════════════════════════════════════════════════════════════════════
+function _haversineKm(lat1, lon1, lat2, lon2) {
+  if (typeof lat1 !== 'number' || typeof lon1 !== 'number' || typeof lat2 !== 'number' || typeof lon2 !== 'number') return null;
+  const R = 6371; // earth radius km
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
+function _travelFatigueFactor(km) {
+  if (km == null) return 1.0;
+  if (km < 300) return 1.0;
+  if (km < 500) return 0.98;
+  if (km < 1000) return 0.95;
+  if (km < 2500) return 0.92;
+  return 0.88;
+}
+
+async function computeMatchTravelDistance(match) {
+  if (!match || !match.id) return null;
+  const cacheKey = `travel_${match.id}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+
+  // Geocode home venue/city (réutilise chain identique fetchWeatherForMatch)
+  const homeCands = [match.venue_city, match.venue, match.home_team_city, match.home_team].filter(c => c && typeof c === 'string');
+  let homeGeo = null;
+  for (const c of homeCands) {
+    homeGeo = await _geocodeCity(c);
+    if (homeGeo) break;
+  }
+  // Geocode away team city
+  const awayCands = [match.away_team_city, match.away_team].filter(c => c && typeof c === 'string');
+  let awayGeo = null;
+  for (const c of awayCands) {
+    awayGeo = await _geocodeCity(c);
+    if (awayGeo) break;
+  }
+  if (!homeGeo || !awayGeo) return null;
+  const km = _haversineKm(homeGeo.lat, homeGeo.lon, awayGeo.lat, awayGeo.lon);
+  if (km == null) return null;
+  const out = {
+    distance_km: km,
+    home_city: homeGeo.name,
+    home_country: homeGeo.country,
+    away_city: awayGeo.name,
+    away_country: awayGeo.country,
+    fatigue_factor: _travelFatigueFactor(km),
+    bucket: km < 300 ? 'local' : km < 500 ? 'court' : km < 1000 ? 'moyen' : km < 2500 ? 'long' : 'intercontinental',
+  };
+  apiCacheSet(cacheKey, out, 'context_travel', 30 * 24 * 3600 * 1000);
+  return out;
+}
+
 async function fetchWeatherForMatch(match) {
   if (!match || !match.commence_time) return null;
   const cacheKey = `weather_${match.id || ''}`;
@@ -31323,6 +31393,12 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         // null si geocoding failed ou commence_time absent. Edge math future : pluie>3mm/h → λ -8%.
         match_weather: await (async () => {
           try { return await fetchWeatherForMatch(match); }
+          catch (_) { return null; }
+        })(),
+        // bd i8gw — Context Engine kilométrage haversine away_team→home_venue
+        // null si geocoding équipes failed. Edge math future : distance >500km → λ_away ×0.92-0.95.
+        match_travel: await (async () => {
+          try { return await computeMatchTravelDistance(match); }
           catch (_) { return null; }
         })(),
         // bd 0hf4 Phase 3 — TV broadcasters (cache cron Phase 1.1 + attach in-place idempotent)
