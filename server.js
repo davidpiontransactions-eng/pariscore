@@ -4845,6 +4845,12 @@ let _dbRecoveryAttemptTs = 0;
 let _dbRecoveryCount = 0;
 let _dbLastWarnCode = null;
 const _DB_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
+// bd b50 — Module-scope cache pour route /api/v1/db-health. Doit être ici
+// (PAS dans le handler) sinon let/const re-init à chaque request → cache
+// jamais hit → pragma quick_check exécuté chaque appel = 5-30s sous cron-load.
+let _dbHealthCacheTs = 0;
+let _dbHealthCachePayload = null;
+const _DB_HEALTH_CACHE_MS = 60 * 1000;
 function _attemptRuntimeDbRecovery(err) {
   const code = err && err.code;
   if (code !== 'SQLITE_NOTADB' && code !== 'SQLITE_CORRUPT') return false;
@@ -23648,13 +23654,12 @@ if (pathname === '/api/v1/status') {
 // GET /api/v1/db-health — bd b50 monitoring SQLite (cron VPS / alerting webhook)
 // Public read-only : ne contient aucune donnée sensible, juste métadonnées
 // fichier + résultat quick_check + counters recovery. Coût : 1 quick_check
-// par requête capé à 1/min via cache mémoire (sinon DoS facile).
+// par requête capé à 1/min via cache mémoire module-scope (sinon DoS facile
+// + hang sous cron-load car pragma quick_check attend busy_timeout SQLite).
 // HTTP 200 si DB saine, 503 si quick_check KO ou DB closed. Cron VPS peut
 // utiliser status code pour alert : `curl -fsS .../db-health || alert`.
+// State cache déclaré module-scope plus haut (sinon let/const re-init/request).
 // ────────────────────────────────────────────────────────────────────────────
-let _dbHealthCacheTs = 0;
-let _dbHealthCachePayload = null;
-const _DB_HEALTH_CACHE_MS = 60 * 1000;
 if (pathname === '/api/v1/db-health') {
   const now = Date.now();
   if (_dbHealthCachePayload && (now - _dbHealthCacheTs) < _DB_HEALTH_CACHE_MS) {
