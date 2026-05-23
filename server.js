@@ -36457,6 +36457,18 @@ if (MATCHSTAT_ENABLED) {
   })();
 }
 
+// bd dl49 Phase 3 — init internal schema au boot pour future consumers Phase 4-5.
+// Table créée idempotent au boot serveur indépendamment de l'ETL tool run.
+// Consumers refactorés Phase 4-5 pourront query directement (rows = 0 si ETL pas
+// encore run, gérer via fallback Sackmann legacy le temps de la migration).
+(function _tennisInternalBootInit() {
+  try {
+    _initTennisInternalSchema();
+    const n = sqldb.prepare(`SELECT COUNT(*) AS n FROM tennis_matches_internal`).get().n;
+    console.log(`  [Tennis internal] schema OK · ${n} rows (ETL tool: node tools/build-tennis-internal-history.js)`);
+  } catch (e) { console.warn('  [Tennis internal] schema init failed:', e.message); }
+})();
+
 (function _sackmannBootSync() {
   if (SACKMANN_SYNC_DISABLED) {
     console.log('  [Sackmann] boot sync skip — SACKMANN_SYNC_DISABLED actif (bd 8uoc CC-BY-NC-SA).');
