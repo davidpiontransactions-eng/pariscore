@@ -21910,7 +21910,12 @@ async function _fetchAndRenderTennisDetail(matchId) {
       return;
     }
     if (!matchRes.ok) {
-      body.innerHTML = `<div class="tennis-empty-state">Erreur ${matchRes.status} — flux BSD indisponible.</div>` + ENRICH_PLACEHOLDER;
+      // Fix 24/05 : 5xx (502 BSD upstream down, 504 timeout) ou 4xx autres →
+      // synth cache au lieu de message brut. Affiche bandeau status discret en
+      // tete (degraded panel) + tente enrich MatchStat (peut reussir meme si
+      // BSD down). Beaucoup plus utile pour user que "Erreur 502" vide.
+      const statusBanner = `<div class="tennis-empty-state" style="font-size:11px;opacity:.55;padding:6px 0;text-align:center;">Flux BSD HTTP ${matchRes.status} — synthèse cache local.</div>`;
+      body.innerHTML = statusBanner + _renderTennisDegradedDetail(matchId) + ENRICH_PLACEHOLDER;
       fetchTennisMatchstatEnrich(matchId);
       return;
     }
@@ -22163,7 +22168,14 @@ async function fetchTennisMatchstatEnrich(matchId) {
       target.innerHTML = `<div class="tennis-empty-state" style="font-size:11px;opacity:.6;">📊 MatchStat — résolution partielle (p1 id: ${d.p1?.ms_id||'?'}, p2 id: ${d.p2?.ms_id||'?'}). Index resolver en cours de population.</div>`;
       return;
     }
-    if (!r.ok) { target.innerHTML = `<div class="tennis-empty-state" style="font-size:11px;opacity:.6;">MatchStat indisponible (HTTP ${r.status}).</div>`; return; }
+    if (!r.ok) {
+      // Fix 24/05 : 404 = match non resolu MatchStat (normal pour ~60% des
+      // matchs hors top players). Silence total au lieu de message bruyant.
+      // 5xx / autres 4xx : message discret conserve (signal d'incident reel).
+      if (r.status === 404) { target.innerHTML = ''; target.style.display = 'none'; return; }
+      target.innerHTML = `<div class="tennis-empty-state" style="font-size:11px;opacity:.6;">MatchStat indisponible (HTTP ${r.status}).</div>`;
+      return;
+    }
     const data = await r.json();
     target.innerHTML = renderTennisMatchstatEnrich(data);
   } catch (e) {
