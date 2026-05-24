@@ -28664,14 +28664,27 @@ async function _buildTennisValueBetsCore({ date }) {
     const _tObj = (m.tournament && typeof m.tournament === 'object') ? m.tournament : null;
     const _tourN = m.tour || (_tObj && _tObj.circuit) || '';
     const _surfN = m.surface || (_tObj && _tObj.surface) || null;
-    const tourGuess = ['ATP', 'WTA'].includes(String(_tourN).toUpperCase()) ? String(_tourN).toUpperCase() : null;
+    // FIX: expand tourGuess to handle BSD non-standard circuit values (e.g. 'ATP 250', 'Grand Slam', 'WTA 1000')
+    const tourGuess = (() => {
+      const t = String(_tourN).toUpperCase().trim();
+      if (t === 'ATP' || t === 'WTA') return t;
+      if (t.startsWith('ATP')) return 'ATP';
+      if (t.startsWith('WTA')) return 'WTA';
+      // Grand Slam: infer from player gender (BSD player object)
+      const p1g = m.player1 && (m.player1.gender || m.player1.sex);
+      if (p1g) return (String(p1g).toUpperCase() === 'F' || String(p1g).toUpperCase() === 'FEMALE') ? 'WTA' : 'ATP';
+      return null;
+    })();
     // Canonicalise les noms (accent-insensible) → nom ASCII stocké Sackmann/Elo.
     // Tous les lookups en aval (Elo/Markov/KoA/fatigue/logdiff) matchent ensuite.
     if (tourGuess) {
       p1Name = _canonTennisName(p1Name, tourGuess) || p1Name;
       p2Name = _canonTennisName(p2Name, tourGuess) || p2Name;
     }
-    let surfaceClean = (_surfN && TENNIS_ELO_SURFACES.includes(String(_surfN).toLowerCase())) ? String(_surfN).toLowerCase() : null;
+    // FIX: normalize _surfN to Title Case before checking TENNIS_ELO_SURFACES (was lowercase mismatch → always null)
+    const _surfRaw = _surfN ? String(_surfN).trim() : null;
+    const _surfNorm = _surfRaw ? (_surfRaw.charAt(0).toUpperCase() + _surfRaw.slice(1).toLowerCase()) : null;
+    let surfaceClean = (_surfNorm && TENNIS_ELO_SURFACES.includes(_surfNorm)) ? _surfNorm : null;
     let surfaceSource = surfaceClean ? matchSource : null;
     if (!surfaceClean && _tName) {
       const resolved = resolveTennisSurfaceSync(_tName); // sync, zéro scrape (FIX timeout)
@@ -28834,7 +28847,16 @@ async function _buildTennisValueBetsCore({ date }) {
       try {
         _p1ss = getTennisSurfStats(p1Name, tourGuess, surfaceClean);
         _p2ss = getTennisSurfStats(p2Name, tourGuess, surfaceClean);
-      } catch (_) { /* surf stats absents — colonne 2 affichera N/A */ }
+        // FIX: log when surf_rank still null after lookup (helps diagnose missing DB data)
+        if (!_p1ss.rk && !_p2ss.rk) {
+          console.warn(`[TennisSurf] surf_rank null — tour=${tourGuess} surface=${surfaceClean} p1="${p1Name}" p2="${p2Name}" — check tennis_elo population`);
+        }
+      } catch (err) {
+        // FIX: was silent — now logs explicitly for debugging
+        console.error(`[TennisSurf] getTennisSurfStats crashed — ${err.message} — tour=${tourGuess} surface=${surfaceClean} p1="${p1Name}"`);
+      }
+    } else {
+      console.warn(`[TennisSurf] Skipped — tourGuess=${tourGuess} surfaceClean=${surfaceClean} tournament="${_tName}" circuit="${_tourN}"`);
     }
 
     enriched.push({
