@@ -5184,7 +5184,11 @@ function kvScan(prefix) {
 
 // ─── DATABASE ────────────────────────────────────────────────────────────────
 
+let _lastSanityCheck = 0;
 function sanityCheckTeamStats() {
+  const now = Date.now();
+  if (now - _lastSanityCheck < 5 * 60 * 1000) return; // cooldown 5min
+  _lastSanityCheck = now;
   const issues = [];
   for (const [key, stats] of Object.entries(db.teamStats || {})) {
     if (!stats || typeof stats !== 'object') { issues.push(`${key}: invalid entry (not object)`); continue; }
