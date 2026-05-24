@@ -36118,17 +36118,28 @@ async function bootInit() {
       }
     }
 
-    withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
-        .then(() => {
-            if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
-            console.log('  [Boot] ✓ Enrichissement stats terminé.');
-            // FIX historique : Poisson rétrospectif sur history une fois teamStats prêt
-            try { enrichHistoryPoisson(); }
-            catch (e) { console.warn('  [Boot] ⚠ enrichHistoryPoisson:', e.message); }
-        })
-        .catch(e => {
-            console.warn('  [Boot] ⚠ Enrichissement stats:', e.message);
-        });
+    // bd ParisScorebis-rcmw 2026-05-24 — SKIP_BOOT_FETCHSTATS env opt-out
+    // Cause : fetchStats(true) au boot sature CPU 97% pendant 15+min (84 ligues
+    // BSD standings + fuzzy Levenshtein O(NxM) + ETL writes). withBootTimeout
+    // race-reject la promesse mais ne cancel pas le travail sync — fetchStats
+    // continue en background indefiniment, bloque HTTP responses curl timeout.
+    // Fix : env SKIP_BOOT_FETCHSTATS=1 saute le boot fetchStats. Cron 12h
+    // setInterval ligne 36296 rafraichit stats normalement. HTTP repond immediat.
+    if (process.env.SKIP_BOOT_FETCHSTATS === '1') {
+        console.log('  [Boot] fetchStats SKIP (SKIP_BOOT_FETCHSTATS=1) — cron 12h prend la suite, HTTP responsive immediat.');
+    } else {
+        withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
+            .then(() => {
+                if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
+                console.log('  [Boot] ✓ Enrichissement stats terminé.');
+                // FIX historique : Poisson rétrospectif sur history une fois teamStats prêt
+                try { enrichHistoryPoisson(); }
+                catch (e) { console.warn('  [Boot] ⚠ enrichHistoryPoisson:', e.message); }
+            })
+            .catch(e => {
+                console.warn('  [Boot] ⚠ Enrichissement stats:', e.message);
+            });
+    }
 }
 
 server.listen(PORT, () => {
