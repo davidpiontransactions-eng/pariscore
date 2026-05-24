@@ -21350,23 +21350,36 @@ function _psLtsRenderPit(m) {
   const rallyEl = document.getElementById('pslts-m-rally');
   if (rallyEl) rallyEl.textContent = '—';
 
-  // xWin Δ : non disponible Phase 1 sans /insights fetch (Phase 2)
+  // xWin Δ : prediction BSD live vs prematch model (Elo blend snapshot)
   const xwinEl = document.getElementById('pslts-m-xwin');
   if (xwinEl) {
-    if (window._psLtsInsights && window._psLtsInsights.live_poisson) {
-      const lp = window._psLtsInsights.live_poisson;
-      const live = lp.homeWin != null ? Number(lp.homeWin) : null;
-      const pre = window._psLtsInsights.match && window._psLtsInsights.match.poisson && window._psLtsInsights.match.poisson.homeWin != null
-        ? Number(window._psLtsInsights.match.poisson.homeWin) : null;
-      if (live != null && pre != null) {
-        const delta = live - pre;
-        xwinEl.textContent = (delta > 0 ? '+' : '') + delta.toFixed(0) + 'pts';
-        xwinEl.setAttribute('data-trend', delta > 5 ? 'up' : (delta < -5 ? 'down' : ''));
-      } else {
-        xwinEl.textContent = '—';
-      }
+    let liveWin = null;
+    let preWin = null;
+    // Source live : BSD prediction (Phase 2) — m._live.prediction ou window._psLtsInsights.prediction
+    const pred = (window._psLtsInsights && window._psLtsInsights.prediction) || null;
+    if (pred && pred.p1 && pred.p1.win_probability != null) {
+      liveWin = Number(pred.p1.win_probability);
+      if (liveWin <= 1) liveWin = liveWin * 100;
+    }
+    // Source pré-match : snapshot Elo blend ou predictions.p1.fair (sur le match payload courant)
+    if (m._elo && m._elo.p1_winprob != null) {
+      preWin = Number(m._elo.p1_winprob);
+      if (preWin <= 1) preWin = preWin * 100;
+    } else if (m.predictions && m.predictions.p1 && m.predictions.p1.prob != null) {
+      preWin = Number(m.predictions.p1.prob);
+      if (preWin <= 1) preWin = preWin * 100;
+    }
+    if (liveWin != null && preWin != null && isFinite(liveWin) && isFinite(preWin)) {
+      const delta = liveWin - preWin;
+      xwinEl.textContent = (delta > 0 ? '+' : '') + delta.toFixed(0) + 'pts';
+      xwinEl.setAttribute('data-trend', delta > 5 ? 'up' : (delta < -5 ? 'down' : ''));
+    } else if (liveWin != null) {
+      // Pas de pré-match : affiche WP live seule
+      xwinEl.textContent = liveWin.toFixed(0) + '% WP';
+      xwinEl.setAttribute('data-trend', '');
     } else {
       xwinEl.textContent = '—';
+      xwinEl.setAttribute('data-trend', '');
     }
   }
 
@@ -21411,18 +21424,120 @@ async function _psLtsTick() {
   if (m) _psLtsRenderAll(m);
 }
 
+// Phase 2 — fetch BSD predictions pour xWin Live Delta (vs pré-match Elo blend)
+// Cache 5min côté server, retour { p1: {win_probability, set_score, ...}, p2: {...} }
+async function _psLtsFetchPrediction(matchId) {
+  if (!matchId) return;
+  try {
+    const r = await fetch('/api/v1/tennis/predictions/' + encodeURIComponent(matchId), {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!r.ok) {
+      // 404 = pas de prédiction disponible (match non couvert BSD) — silencieux
+      window._psLtsInsights = window._psLtsInsights || {};
+      window._psLtsInsights.prediction = null;
+      return;
+    }
+    const pred = await r.json();
+    window._psLtsInsights = window._psLtsInsights || {};
+    window._psLtsInsights.prediction = pred;
+    // Re-render PIT pour mettre à jour xWin Δ
+    const m = _psLtsFindMatch(window._psLtsCurrentId);
+    if (m) _psLtsRenderPit(m);
+    _psLtsRenderReliability(m);
+  } catch (_) {
+    // Network/parse error — silencieux, garde rendering Phase 1
+  }
+}
+
+// Phase 2 — bandeau reliability < 40 ou confidence_badge LOW/SPARSE
+function _psLtsRenderReliability(m) {
+  const el = document.getElementById('pslts-reliability');
+  if (!el || !m) return;
+  let lowConfidence = false;
+  let reason = '';
+  // Source 1 : reliability_score si exposé (foot principalement, parfois tennis)
+  if (m.reliability_score != null && Number(m.reliability_score) < 40) {
+    lowConfidence = true;
+    reason = `Reliability ${Math.round(Number(m.reliability_score))}/100 — échantillon limité`;
+  }
+  // Source 2 : confidence_badge tennis (HIGH/MED/LOW/SPARSE)
+  const conf = m.confidence_badge || (m._elo && m._elo.tier) || null;
+  if (conf && (String(conf).toUpperCase() === 'LOW' || String(conf).toUpperCase() === 'SPARSE')) {
+    lowConfidence = true;
+    if (!reason) reason = `Confiance modèle ${conf} — données Elo limitées sur cette surface`;
+  }
+  if (lowConfidence) {
+    el.textContent = 'Fiabilité limitée · ' + reason;
+    el.setAttribute('data-show', 'true');
+  } else {
+    el.setAttribute('data-show', 'false');
+  }
+}
+
+// Phase 2 — SSE soft-wire : réutilise /api/v1/tennis/rg-live-stream existant
+// Event 'match_update' { match_id, ...patches }. Si match_id == current,
+// merge dans window._tennisLastFetch puis re-render.
+function _psLtsSseWire() {
+  if (typeof EventSource === 'undefined') return;
+  if (window._psLtsSseInit) return;
+  window._psLtsSseInit = true;
+  try {
+    const es = new EventSource('/api/v1/tennis/rg-live-stream');
+    es.addEventListener('match_update', function(ev) {
+      try {
+        const data = JSON.parse(ev.data || '{}');
+        if (!data || !data.match_id) return;
+        if (String(data.match_id) !== String(window._psLtsCurrentId)) return;
+        // Merge patch dans l'entrée _tennisLastFetch correspondante
+        const list = Array.isArray(window._tennisLastFetch) ? window._tennisLastFetch : [];
+        const target = list.find(m => String(m.id) === String(data.match_id));
+        if (target) Object.assign(target, data);
+        // Re-render avec batching RAF (anti reflow burst)
+        if (window._psLtsRafPending) return;
+        window._psLtsRafPending = true;
+        requestAnimationFrame(() => {
+          window._psLtsRafPending = false;
+          const m = _psLtsFindMatch(window._psLtsCurrentId);
+          if (m) _psLtsRenderAll(m);
+        });
+      } catch (_) {}
+    });
+    es.onerror = function() {
+      // 404/501 si endpoint absent — tolérant, polling 30s prend le relai
+    };
+    window._psLtsEs = es;
+  } catch (_) {}
+}
+
 function openPsLiveTennisSheet(matchId) {
   if (!matchId) return;
   const sheet = document.getElementById('ps-live-tennis-sheet');
   if (!sheet) return;
   window._psLtsCurrentId = String(matchId);
+  window._psLtsInsights = {};
   const m = _psLtsFindMatch(matchId);
-  if (m) _psLtsRenderAll(m);
+  if (m) {
+    _psLtsRenderAll(m);
+    _psLtsRenderReliability(m);
+  }
   sheet.setAttribute('data-open', 'true');
   sheet.setAttribute('aria-hidden', 'false');
   _psLtsSetTier('peek');
+  // Phase 2 : SSE wire (idempotent) + fetch BSD prediction one-shot
+  _psLtsSseWire();
+  _psLtsFetchPrediction(matchId);
   if (window._psLtsTimer) clearInterval(window._psLtsTimer);
-  window._psLtsTimer = setInterval(_psLtsTick, 30 * 1000);
+  // Ticker 30s : refresh tennis live cache + re-fetch prediction (TTL 5min server)
+  window._psLtsTimer = setInterval(() => {
+    _psLtsTick();
+    // Re-fetch prediction toutes les 2 ticks (60s) — économise quota
+    if (!window._psLtsTickCount) window._psLtsTickCount = 0;
+    window._psLtsTickCount++;
+    if (window._psLtsTickCount % 2 === 0 && window._psLtsCurrentId) {
+      _psLtsFetchPrediction(window._psLtsCurrentId);
+    }
+  }, 30 * 1000);
 }
 
 function closePsLiveTennisSheet() {
