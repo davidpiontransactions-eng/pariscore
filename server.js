@@ -5666,34 +5666,97 @@ function levenshtein(a, b) {
   return dp[m][n];
 }
 
+// bd lzdg Phase 1 — Fix perf boot CPU 80%+ findFuzzy O(N×M) sur 5000+ teamStats.
+// Optimisations :
+//   (a) Cache LRU 1000 entries (hit = skip levenshtein entierement)
+//   (b) Prefix index char-0 lazy-rebuilt si teamStats size change → réduit candidates ~1/26
+//   (c) Early exit bestDist === 0 (perfect match found)
+//   (d) skipExact + excludeEntry pas cachés (collision keys complexes, fallback path original)
+const _fuzzyCache = new Map();
+const FUZZY_CACHE_MAX = 1000;
+let _teamStatsPrefixIdx = null;
+let _teamStatsIdxSize = 0;
+
+function _rebuildTeamStatsPrefixIdx() {
+  _teamStatsPrefixIdx = new Map();
+  for (const k of Object.keys(db.teamStats)) {
+    const c = k.charAt(0);
+    let bucket = _teamStatsPrefixIdx.get(c);
+    if (!bucket) { bucket = []; _teamStatsPrefixIdx.set(c, bucket); }
+    bucket.push(k);
+  }
+  _teamStatsIdxSize = Object.keys(db.teamStats).length;
+}
+
+function _setFuzzyCacheLRU(k, v) {
+  if (_fuzzyCache.size >= FUZZY_CACHE_MAX) {
+    // Drop oldest (Map iteration order = insertion order)
+    _fuzzyCache.delete(_fuzzyCache.keys().next().value);
+  }
+  _fuzzyCache.set(k, v);
+}
+
 function findFuzzy(key, { skipExact = false, excludeEntry = null } = {}) {
-  const keys = Object.keys(db.teamStats);
-  if (!keys.length || !key) return null;
+  if (!key) return null;
+  const tsSize = Object.keys(db.teamStats).length;
+  if (tsSize === 0) return null;
+
+  // Cache lookup — only safe quand excludeEntry null (collision risk sinon)
+  const cacheable = !excludeEntry;
+  const cacheKey = cacheable ? `${skipExact ? 1 : 0}|${key}` : null;
+  if (cacheKey && _fuzzyCache.has(cacheKey)) {
+    const hit = _fuzzyCache.get(cacheKey);
+    // LRU touch : delete + re-set move to end
+    _fuzzyCache.delete(cacheKey);
+    _fuzzyCache.set(cacheKey, hit);
+    return hit;
+  }
+
   // 1. Match exact d'abord (sauf si skipExact)
   if (!skipExact && db.teamStats[key] && db.teamStats[key] !== excludeEntry) {
+    if (cacheKey) _setFuzzyCacheLRU(cacheKey, db.teamStats[key]);
     return db.teamStats[key];
   }
-  // 2. Prefix match : la DB entry doit commencer par le premier mot de key (4+ chars)
+
+  // Lazy rebuild prefix index si teamStats size changed (cron stats add/remove)
+  if (!_teamStatsPrefixIdx || tsSize !== _teamStatsIdxSize) {
+    _rebuildTeamStatsPrefixIdx();
+  }
+
+  // 2. Prefix match firstWord — restreint au bucket char-0 du firstWord
   const firstWord = key.split(' ')[0];
   if (firstWord.length >= 4) {
-    for (const k of keys) {
+    const firstWordChar = firstWord.charAt(0);
+    const candidates = _teamStatsPrefixIdx.get(firstWordChar) || [];
+    for (const k of candidates) {
       if (k === key && skipExact) continue;
-      if (k.startsWith(firstWord) && db.teamStats[k] !== excludeEntry) return db.teamStats[k];
+      if (k.startsWith(firstWord) && db.teamStats[k] !== excludeEntry) {
+        if (cacheKey) _setFuzzyCacheLRU(cacheKey, db.teamStats[k]);
+        return db.teamStats[k];
+      }
     }
   }
-  // 3. Levenshtein strict : ≤1 pour noms courts (≤4), ≤2 sinon
+
+  // 3. Levenshtein strict — restreint au bucket char-0 du key (1/26 reduction typique)
+  const keyChar = key.charAt(0);
+  const candidates = _teamStatsPrefixIdx.get(keyChar) || [];
   let best = null, bestDist = Infinity;
-  for (const k of keys) {
+  for (const k of candidates) {
     if (k === key && skipExact) continue;
     if (db.teamStats[k] === excludeEntry) continue;
     const dist = levenshtein(k, key);
     const threshold = key.length <= 4 ? 1 : 2;
-    if (dist < bestDist && dist <= threshold) { bestDist = dist; best = k; }
+    if (dist < bestDist && dist <= threshold) {
+      bestDist = dist; best = k;
+      if (bestDist === 0) break;  // perfect match — early exit
+    }
   }
-  if (best) {
+  const result = best ? db.teamStats[best] : null;
+  if (best && !excludeEntry) {
     console.warn(`  [Fuzzy] "${key}" → "${best}" (dist=${bestDist}) — ATTENTION: match approximatif`);
   }
-  return best ? db.teamStats[best] : null;
+  if (cacheKey) _setFuzzyCacheLRU(cacheKey, result);
+  return result;
 }
 
 // Saison dynamique : avant juillet → saison précédente
