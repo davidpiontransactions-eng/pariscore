@@ -7777,12 +7777,18 @@ function buildMatchRecord(raw) {
     if (record.bsd_xg) {
       if (!record.expectedGoals) record.expectedGoals = {};
       if (record.bsd_xg.home != null) {
-        record.expectedGoals.home = parseFloat(Number(record.bsd_xg.home).toFixed(2));
-        record.expectedGoals.home_source = 'bsd_real';
+        const _xgH = Number(record.bsd_xg.home);
+        if (Number.isFinite(_xgH)) {
+          record.expectedGoals.home = parseFloat(_xgH.toFixed(2));
+          record.expectedGoals.home_source = 'bsd_real';
+        }
       }
       if (record.bsd_xg.away != null) {
-        record.expectedGoals.away = parseFloat(Number(record.bsd_xg.away).toFixed(2));
-        record.expectedGoals.away_source = 'bsd_real';
+        const _xgA = Number(record.bsd_xg.away);
+        if (Number.isFinite(_xgA)) {
+          record.expectedGoals.away = parseFloat(_xgA.toFixed(2));
+          record.expectedGoals.away_source = 'bsd_real';
+        }
       }
     }
     record.bsd_coaches = raw.bsd_coaches || raw.coaches || null;
@@ -28544,8 +28550,9 @@ async function _buildTennisValueBetsCore({ date }) {
       ? `/api/v2/matches/?date=${encodeURIComponent(dateClean)}&limit=200`
       : `/api/v2/matches/?status=scheduled&limit=200`;
     const ck = `bsd_tennis_value_bets_${dateClean || 'today'}`;
-    // TTL: 30min for scheduled (pre-match), 5min when live matches present (fresher enrichment)
-    const bsd = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
+    // TTL: 5min for date-specific queries (includes live matches), 30min for global scheduled-only
+    const _bsdTtlMs = dateClean ? 5 * 60 * 1000 : 30 * 60 * 1000;
+    const bsd = await handleTennisBSD(suffix, ck, _bsdTtlMs);
     if (bsd.status === 200) {
       let _extracted = _extractBsdMatchesList(bsd.body);
       // Guard: filter finished/cancelled matches that BSD now returns without status filter
@@ -28620,6 +28627,25 @@ async function _buildTennisValueBetsCore({ date }) {
   try {
     if (_bsdTennisRank && _bsdTennisRank.byKey && Date.now() - _bsdTennisRank.ts < 6 * 3600 * 1000) rankIdx = _bsdTennisRank.byKey;
   } catch (e) { /* pas de rank chaud */ }
+
+  // CR-01 fix: hoist prepared statement OUTSIDE the per-match loop.
+  // sqldb.prepare() compiles a statement on every call — inside a 200-match loop
+  // this was 400+ compiles per VB cycle. Statement is now compiled once and reused.
+  const _stmtPlayerRank = (() => {
+    try {
+      return sqldb.prepare(
+        `SELECT atp_rank, wta_rank FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND tour = ? LIMIT 1`
+      );
+    } catch (_) { return null; }
+  })();
+  const _getPlayerRank = (name, tour) => {
+    if (!name || !tour || !_stmtPlayerRank) return null;
+    try {
+      const row = _stmtPlayerRank.get(name.trim(), tour);
+      if (!row) return null;
+      return tour === 'WTA' ? (row.wta_rank || null) : (row.atp_rank || null);
+    } catch (_) { return null; }
+  };
 
   const enriched = [];
   const _vbT0 = Date.now();
@@ -28883,18 +28909,7 @@ async function _buildTennisValueBetsCore({ date }) {
       _totConv = _computeTotalsConvergence(bsdPred, gamesOU);
     } catch (e) { /* signaux S2 omis pour ce match — build continue */ }
 
-    // BUG-03 fix helper: lookup ATP/WTA rank from tennis_players_elo table
-    const _getPlayerRank = (name, tour) => {
-      if (!name || !tour) return null;
-      try {
-        const row = sqldb.prepare(
-          `SELECT atp_rank, wta_rank FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND tour = ? LIMIT 1`
-        ).get(name.trim(), tour);
-        if (!row) return null;
-        return tour === 'WTA' ? (row.wta_rank || null) : (row.atp_rank || null);
-      } catch (_) { return null; }
-    };
-
+    // _getPlayerRank is hoisted above the loop (CR-01 fix — was N+1 prepare() per match)
     let _p1ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
     let _p2ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
     if (tourGuess && surfaceClean) {
