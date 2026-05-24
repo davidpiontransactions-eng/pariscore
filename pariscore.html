@@ -19890,7 +19890,9 @@ var _TN_SNAP_STORAGE_KEY = '_tnPrematchSnapshotV1';
 if (!window._tnPrematchSnapshot) {
   window._tnPrematchSnapshot = new Map();
   try {
+    // Load from sessionStorage first; fall back to localStorage (survives page refresh).
     var _raw = sessionStorage.getItem(_TN_SNAP_STORAGE_KEY);
+    if (!_raw) _raw = localStorage.getItem(_TN_SNAP_STORAGE_KEY + '_ls');
     if (_raw) {
       var _parsed = JSON.parse(_raw);
       if (_parsed && typeof _parsed === 'object') {
@@ -19902,7 +19904,7 @@ if (!window._tnPrematchSnapshot) {
         }
       }
     }
-  } catch (_) { /* sessionStorage indispo / JSON corrompu → ignore */ }
+  } catch (_) { /* storage indispo / JSON corrompu → ignore */ }
 }
 function _tnSnapshotPersist() {
   try {
@@ -19919,7 +19921,20 @@ function _tnSnapshotPersist() {
     }
     var obj = {};
     window._tnPrematchSnapshot.forEach(function (v, k) { obj[k] = v; });
-    sessionStorage.setItem(_TN_SNAP_STORAGE_KEY, JSON.stringify(obj));
+    var _serialized = JSON.stringify(obj);
+    try { sessionStorage.setItem(_TN_SNAP_STORAGE_KEY, _serialized); } catch (_) {}
+    // Dual-persist to localStorage: survives page refresh (sessionStorage does not).
+    // Capped at 50 entries (most-recent) to avoid localStorage quota (~5MB shared).
+    try {
+      var _lsEntries = Object.entries(obj);
+      if (_lsEntries.length > 50) {
+        _lsEntries.sort(function(a, b) { return ((a[1] && a[1].ts) || 0) - ((b[1] && b[1].ts) || 0); });
+        _lsEntries = _lsEntries.slice(-50);
+      }
+      var _lsObj = {};
+      _lsEntries.forEach(function(e) { _lsObj[e[0]] = e[1]; });
+      localStorage.setItem(_TN_SNAP_STORAGE_KEY + '_ls', JSON.stringify(_lsObj));
+    } catch (_) {}
   } catch (_) { /* quota / privacy → silencieux */ }
 }
 function _tnSnapshotPickFields(m) {
