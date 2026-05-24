@@ -4652,65 +4652,88 @@
     background: rgba(226,232,240,0.6);
   }
 
-  /* Tennis VB : sticky col 1 (Date/Heure) + col 2 (Match joueurs) */
+  /* Tennis VB : sticky cols 1 (★ Favori 40px) + 2 (Date/Heure ~90px) + 3 (Match joueurs)
+     bd 661w fix : ajout col ★ position 1 decale tous nth-child(N) → N+1.
+     Recalc left offsets : col 1 = 0, col 2 = 40px (apres ★), col 3 = 40+90=130px. */
   #tennis-vb-table th:nth-child(1), #tennis-vb-table td:nth-child(1) {
     position: sticky; left: 0; z-index: 3;
     background: var(--bg2, #111417);
   }
   #tennis-vb-table thead th:nth-child(1) { z-index: 6; background: var(--bg3, #181c20); }
   #tennis-vb-table th:nth-child(2), #tennis-vb-table td:nth-child(2) {
-    position: sticky; left: 90px; z-index: 3;
+    position: sticky; left: 40px; z-index: 3;
     background: var(--bg2, #111417);
   }
   #tennis-vb-table thead th:nth-child(2) { z-index: 6; background: var(--bg3, #181c20); }
-  #tennis-vb-table td:nth-child(2)::after {
+  #tennis-vb-table th:nth-child(3), #tennis-vb-table td:nth-child(3) {
+    position: sticky; left: 130px; z-index: 3;
+    background: var(--bg2, #111417);
+  }
+  #tennis-vb-table thead th:nth-child(3) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-vb-table td:nth-child(3)::after {
     content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
     width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.18), transparent);
     pointer-events: none;
   }
   #tennis-vb-table tr:hover td:nth-child(1),
-  #tennis-vb-table tr:hover td:nth-child(2) { background: var(--bg3, #181c20); }
+  #tennis-vb-table tr:hover td:nth-child(2),
+  #tennis-vb-table tr:hover td:nth-child(3) { background: var(--bg3, #181c20); }
 
-  /* Tennis Live : sticky col 1 (Tournoi) + col 2 (Tour) — joueurs cols 3+4 lisibles via scroll */
+  /* Tennis Live : sticky cols 1 (★) + 2 (Tournoi) + 3 (Tour) — joueurs cols 4+5 lisibles via scroll
+     bd 661w fix : recalc left col 1 = 0, col 2 = 40px, col 3 = 40+140=180px. */
   #tennis-live-table th:nth-child(1), #tennis-live-table td:nth-child(1) {
     position: sticky; left: 0; z-index: 3;
     background: var(--bg2, #111417);
   }
   #tennis-live-table thead th:nth-child(1) { z-index: 6; background: var(--bg3, #181c20); }
   #tennis-live-table th:nth-child(2), #tennis-live-table td:nth-child(2) {
-    position: sticky; left: 140px; z-index: 3;
+    position: sticky; left: 40px; z-index: 3;
     background: var(--bg2, #111417);
   }
   #tennis-live-table thead th:nth-child(2) { z-index: 6; background: var(--bg3, #181c20); }
-  #tennis-live-table td:nth-child(2)::after {
+  #tennis-live-table th:nth-child(3), #tennis-live-table td:nth-child(3) {
+    position: sticky; left: 180px; z-index: 3;
+    background: var(--bg2, #111417);
+  }
+  #tennis-live-table thead th:nth-child(3) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-live-table td:nth-child(3)::after {
     content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
     width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.18), transparent);
     pointer-events: none;
   }
   #tennis-live-table tr:hover td:nth-child(1),
-  #tennis-live-table tr:hover td:nth-child(2) { background: var(--bg3, #181c20); }
+  #tennis-live-table tr:hover td:nth-child(2),
+  #tennis-live-table tr:hover td:nth-child(3) { background: var(--bg3, #181c20); }
 
   /* Light theme overrides : fonds opaques blancs sur sticky cols */
   body:not(.dark-theme) #tennis-vb-table td:nth-child(1),
   body:not(.dark-theme) #tennis-vb-table td:nth-child(2),
+  body:not(.dark-theme) #tennis-vb-table td:nth-child(3),
   body:not(.dark-theme) #tennis-live-table td:nth-child(1),
-  body:not(.dark-theme) #tennis-live-table td:nth-child(2) { background: #ffffff; }
+  body:not(.dark-theme) #tennis-live-table td:nth-child(2),
+  body:not(.dark-theme) #tennis-live-table td:nth-child(3) { background: #ffffff; }
   body:not(.dark-theme) #tennis-vb-table thead th:nth-child(1),
   body:not(.dark-theme) #tennis-vb-table thead th:nth-child(2),
+  body:not(.dark-theme) #tennis-vb-table thead th:nth-child(3),
   body:not(.dark-theme) #tennis-live-table thead th:nth-child(1),
-  body:not(.dark-theme) #tennis-live-table thead th:nth-child(2) { background: #f4f4f4; }
+  body:not(.dark-theme) #tennis-live-table thead th:nth-child(2),
+  body:not(.dark-theme) #tennis-live-table thead th:nth-child(3) { background: #f4f4f4; }
   body:not(.dark-theme) #tennis-vb-table tr:hover td:nth-child(1),
   body:not(.dark-theme) #tennis-vb-table tr:hover td:nth-child(2),
+  body:not(.dark-theme) #tennis-vb-table tr:hover td:nth-child(3),
   body:not(.dark-theme) #tennis-live-table tr:hover td:nth-child(1),
-  body:not(.dark-theme) #tennis-live-table tr:hover td:nth-child(2) { background: #f9f9f9; }
+  body:not(.dark-theme) #tennis-live-table tr:hover td:nth-child(2),
+  body:not(.dark-theme) #tennis-live-table tr:hover td:nth-child(3) { background: #f9f9f9; }
 
   /* Mobile ≤768px : cards remplacent les tableaux — sticky désactivé proprement */
   @media (max-width: 768px) {
     .table-responsive-wrapper { border-radius: 0; }
     #tennis-vb-table th:nth-child(1), #tennis-vb-table td:nth-child(1),
     #tennis-vb-table th:nth-child(2), #tennis-vb-table td:nth-child(2),
+    #tennis-vb-table th:nth-child(3), #tennis-vb-table td:nth-child(3),
     #tennis-live-table th:nth-child(1), #tennis-live-table td:nth-child(1),
-    #tennis-live-table th:nth-child(2), #tennis-live-table td:nth-child(2) {
+    #tennis-live-table th:nth-child(2), #tennis-live-table td:nth-child(2),
+    #tennis-live-table th:nth-child(3), #tennis-live-table td:nth-child(3) {
       position: static;
     }
   }
