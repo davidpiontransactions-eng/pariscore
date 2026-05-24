@@ -4425,6 +4425,20 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_api_cache_expires ON api_cache(expires_at)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_api_cache_source ON api_cache(source)`);
+  // ── API Cache Buffer (24h resilience layer — fallback si API échoue) ──
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS api_cache_buffer (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL,
+    data_key TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    stored_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    schema_version INTEGER,
+    checksum TEXT,
+    UNIQUE(source, data_key)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_cache_buffer_expires ON api_cache_buffer(expires_at)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_cache_buffer_source_key ON api_cache_buffer(source, data_key)`);
   // ── Affiliation — liens bookmakers + tracking conversions ──
   sqldb.exec(`CREATE TABLE IF NOT EXISTS affiliates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13755,6 +13769,112 @@ async function fetchESPNMatches(dateFrom, dateTo) {
   return out;
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// CACHE BUFFER HELPERS — 24h Resilience Layer (Fallback si API échoue)
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch avec fallback cache 24h.
+ * @param {string} source - ex: 'odds_api', 'api_football'
+ * @param {string} dataKey - ex: 'soccer_epl_h2h', 'team_342'
+ * @param {AsyncFunction} fetcher - () => Promise (appel API brut)
+ * @param {Function} validator - (data) => boolean (vérifier complétude)
+ * @returns {Promise} données fraîches OU cache 24h OU null
+ */
+async function fetchWithCacheBuffer(source, dataKey, fetcher, validator) {
+  let freshData = null;
+
+  try {
+    // 1. TENTER FETCH FRAIS
+    freshData = await fetcher();
+
+    // 2. VALIDER COMPLÉTUDE
+    if (validator(freshData)) {
+      // Donnée saine → mise à jour cache + return
+      await updateCacheBuffer(source, dataKey, freshData);
+      return freshData;
+    } else {
+      // Donnée incomplète/aberrante → rejeter
+      console.warn(`[CacheBuffer] Invalid data from ${source}/${dataKey}. Schema mismatch.`);
+    }
+  } catch (error) {
+    // 3. FETCH ÉCHOUÉ (timeout, 5xx, réseau)
+    console.warn(`[CacheBuffer] Fetch failed ${source}/${dataKey}: ${error.message}`);
+  }
+
+  // 4. FALLBACK : Chercher cache 24h
+  const cachedData = await getCacheBuffer(source, dataKey);
+  if (cachedData) {
+    console.log(`[CacheBuffer] Serving cache (${source}/${dataKey})`);
+    return cachedData;
+  }
+
+  // 5. DERNIER RECOURS : Données demo ou null
+  console.error(`[CacheBuffer] VIDE : aucun cache ${source}/${dataKey}`);
+  return null;
+}
+
+/**
+ * Mettre à jour cache 24h
+ */
+async function updateCacheBuffer(source, dataKey, payload) {
+  const stored_at = Date.now();
+  const expires_at = stored_at + 86400000; // +24h
+  const checksum = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+
+  try {
+    sqldb.prepare(`
+      INSERT INTO api_cache_buffer (source, data_key, payload, stored_at, expires_at, checksum)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(source, data_key) DO UPDATE SET
+        payload=excluded.payload, stored_at=excluded.stored_at,
+        expires_at=excluded.expires_at, checksum=excluded.checksum
+    `).run(source, dataKey, JSON.stringify(payload), stored_at, expires_at, checksum);
+    console.log(`[CacheBuffer] Updated ${source}/${dataKey}`);
+  } catch (err) {
+    console.error(`[CacheBuffer] Write error: ${err.message}`);
+  }
+}
+
+/**
+ * Récupérer cache 24h (si valide)
+ */
+async function getCacheBuffer(source, dataKey) {
+  try {
+    const row = sqldb.prepare(`
+      SELECT payload, expires_at FROM api_cache_buffer
+      WHERE source = ? AND data_key = ? AND expires_at > ?
+    `).get(source, dataKey, Date.now());
+
+    if (row) {
+      return JSON.parse(row.payload);
+    }
+  } catch (err) {
+    console.error(`[CacheBuffer] Read error: ${err.message}`);
+  }
+  return null;
+}
+
+/**
+ * Validateurs par source
+ */
+const cacheValidators = {
+  odds_api_odds: (data) => {
+    return Array.isArray(data?.bookmakers) &&
+           data.bookmakers.length > 0 &&
+           data.bookmakers.every(b => b.home_team && b.away_team && b.bookmakers);
+  },
+  odds_api_h2h: (data) => {
+    return Array.isArray(data) &&
+           data.length > 0 &&
+           data.every(m => m.id && m.home_team && m.away_team);
+  },
+  bsd_live: (data) => {
+    return Array.isArray(data) &&
+           data.every(e => e.id && e.status);
+  },
+};
+
 // ─── JOB 1 : COTES (toutes les 12h) ──────────────────────────────────────
 // opts.bsdLeagueIds:    number[]    → BSD league IDs to target (bypasses bulk fetch)
 // opts.configLeagueIds: number[]    → PariScore config league IDs (mapped via configIdToBsd)
@@ -13808,7 +13928,14 @@ async function fetchOdds(force = false, opts = {}) {
       if (isTargeted) {
         for (const bsdId of targetBsdIds) {
           try {
-            const part = await fetchBSDMatches(dateFrom, dateTo, bsdId);
+            // Wrap fetchBSDMatches avec cache buffer 24h
+            const dataKey = `bsd_${bsdId}_${dateFrom}_${dateTo}`;
+            const part = await fetchWithCacheBuffer(
+              'bsd',
+              dataKey,
+              async () => await fetchBSDMatches(dateFrom, dateTo, bsdId),
+              (data) => Array.isArray(data) && data.length > 0 && data.every(m => m.id && m.home && m.away)
+            );
             if (part && part.length > 0) {
               bsdRaw.push(...part);
               console.log(`  [Routing]   • BSD league=${bsdId} → ${part.length} matchs`);
@@ -13818,7 +13945,14 @@ async function fetchOdds(force = false, opts = {}) {
           } catch (innerErr) { console.warn(`  [Routing]   • BSD league=${bsdId} erreur:`, innerErr.message); }
         }
       } else {
-        bsdRaw = await fetchBSDMatches(dateFrom, dateTo);
+        // Wrap fetchBSDMatches avec cache buffer 24h (bulk fetch)
+        const dataKey = `bsd_bulk_${dateFrom}_${dateTo}`;
+        bsdRaw = await fetchWithCacheBuffer(
+          'bsd',
+          dataKey,
+          async () => await fetchBSDMatches(dateFrom, dateTo),
+          (data) => Array.isArray(data) && data.length > 0 && data.every(m => m.id && m.home && m.away)
+        ) || [];
       }
       if (bsdRaw && bsdRaw.length > 0) {
         const adapted = bsdRaw.map(bsdToOddsApiFormat).filter(Boolean);
@@ -14106,7 +14240,14 @@ async function fetchStats(force = false) {
             console.warn(`  [BSD] Ligue ${configId} — lignes api-football périmées détectées → refetch forcé (bypass gate)`);
           }
 
-          const teams = await fetchBSDStandings(bsdId, configId);
+          // Wrap fetchBSDStandings avec cache buffer 24h
+          const teams = await fetchWithCacheBuffer(
+            'bsd_standings',
+            `${bsdId}_${configId}`,
+            async () => await fetchBSDStandings(bsdId, configId),
+            (data) => data && typeof data === 'object' && Object.keys(data).length > 0 &&
+                      Object.values(data).some(t => t && t.wins != null && t.ppg != null)
+          );
           if (teams && Object.keys(teams).length) {
             // Purge denylist équipes mal-classifiées (data error BSD)
             const denylist = LEAGUE_TEAM_DENYLIST[configId];
@@ -24327,6 +24468,21 @@ if (pathname === '/api/v1/click' && req.method === 'POST') {
 }
 
 if (pathname === '/api/v1/status') {
+  // Cache buffer stats (24h resilience layer)
+  let cacheBufferCount = 0;
+  let cacheBufferExpired = 0;
+  try {
+    const now = Date.now();
+    const bufferRows = sqldb.prepare(`SELECT COUNT(*) as total,
+      SUM(CASE WHEN expires_at > ? THEN 1 ELSE 0 END) as valid FROM api_cache_buffer`).get(now);
+    if (bufferRows) {
+      cacheBufferCount = bufferRows.valid || 0;
+      cacheBufferExpired = (bufferRows.total || 0) - (bufferRows.valid || 0);
+    }
+  } catch (e) {
+    console.warn('[Status] Cache buffer query failed:', e.message);
+  }
+
   return jsonResponse(res, 200, {
     status: db.status,
     ready: serverReady,
@@ -24338,6 +24494,11 @@ if (pathname === '/api/v1/status') {
     statsQuota: db.statsQuotaRemaining,
     uptime: process.uptime(),
     bsd_connected: !!BSD_API_KEY,
+    cache_buffer: {
+      valid_entries: cacheBufferCount,
+      expired_entries: cacheBufferExpired,
+      description: '24h resilience layer (fallback si API échoue)'
+    },
     fbref_advanced: {
       teams: db.fbrefStats ? Object.keys(db.fbrefStats).length : 0,
       last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null,
