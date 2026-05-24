@@ -7770,7 +7770,21 @@ function buildMatchRecord(raw) {
   if (raw._source === 'bsd') {
     record._source = 'bsd';
     record._bsd_event_id = raw._bsd_event_id;
-    record.bsd_xg = raw.bsd_xg || raw.xg || null;
+    // BUG-07 fix: guard against {home:null,away:null} truthy object
+    const _rawXg = raw.bsd_xg || raw.xg;
+    record.bsd_xg = (_rawXg && (_rawXg.home != null || _rawXg.away != null)) ? _rawXg : null;
+    // BUG-05 fix: BSD real xG overrides Poisson expectedGoals when available
+    if (record.bsd_xg) {
+      if (!record.expectedGoals) record.expectedGoals = {};
+      if (record.bsd_xg.home != null) {
+        record.expectedGoals.home = parseFloat(Number(record.bsd_xg.home).toFixed(2));
+        record.expectedGoals.home_source = 'bsd_real';
+      }
+      if (record.bsd_xg.away != null) {
+        record.expectedGoals.away = parseFloat(Number(record.bsd_xg.away).toFixed(2));
+        record.expectedGoals.away_source = 'bsd_real';
+      }
+    }
     record.bsd_coaches = raw.bsd_coaches || raw.coaches || null;
     record.bsd_unavailable = raw.unavailable || null;
   }
@@ -28672,7 +28686,11 @@ async function _buildTennisValueBetsCore({ date }) {
       if (t.startsWith('WTA')) return 'WTA';
       // Grand Slam: infer from player gender (BSD player object)
       const p1g = m.player1 && (m.player1.gender || m.player1.sex);
-      if (p1g) return (String(p1g).toUpperCase() === 'F' || String(p1g).toUpperCase() === 'FEMALE') ? 'WTA' : 'ATP';
+      if (p1g) {
+        const _g = String(p1g).toUpperCase().trim();
+        const _isW = _g === 'F' || _g === 'FEMALE' || _g === 'W' || _g === 'WOMAN' || _g === 'WOMEN';
+        return _isW ? 'WTA' : 'ATP';
+      }
       return null;
     })();
     // Canonicalise les noms (accent-insensible) → nom ASCII stocké Sackmann/Elo.
@@ -28841,6 +28859,18 @@ async function _buildTennisValueBetsCore({ date }) {
       _totConv = _computeTotalsConvergence(bsdPred, gamesOU);
     } catch (e) { /* signaux S2 omis pour ce match — build continue */ }
 
+    // BUG-03 fix helper: lookup ATP/WTA rank from tennis_players_elo table
+    const _getPlayerRank = (name, tour) => {
+      if (!name || !tour) return null;
+      try {
+        const row = sqldb.prepare(
+          `SELECT atp_rank, wta_rank FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND tour = ? LIMIT 1`
+        ).get(name.trim(), tour);
+        if (!row) return null;
+        return tour === 'WTA' ? (row.wta_rank || null) : (row.atp_rank || null);
+      } catch (_) { return null; }
+    };
+
     let _p1ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
     let _p2ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
     if (tourGuess && surfaceClean) {
@@ -28856,7 +28886,11 @@ async function _buildTennisValueBetsCore({ date }) {
         console.error(`[TennisSurf] getTennisSurfStats crashed — ${err.message} — tour=${tourGuess} surface=${surfaceClean} p1="${p1Name}"`);
       }
     } else {
-      console.warn(`[TennisSurf] Skipped — tourGuess=${tourGuess} surfaceClean=${surfaceClean} tournament="${_tName}" circuit="${_tourN}"`);
+      // BUG-08 fix: only log when circuit looks like tennis (avoids spam for football matches)
+      const _circuitStr = String(_tourN || '').toUpperCase();
+      if (_circuitStr && (_circuitStr.includes('ATP') || _circuitStr.includes('WTA') || _circuitStr.includes('GRAND'))) {
+        console.warn(`[TennisSurf] Skipped — tourGuess=${tourGuess} surfaceClean=${surfaceClean} tournament="${_tName}" circuit="${_tourN}"`);
+      }
     }
 
     enriched.push({
@@ -28869,8 +28903,24 @@ async function _buildTennisValueBetsCore({ date }) {
       round: m.round || null,
       start_time: m.start_time || m.commence_time || null,
       status: m.status || null,
-      player1: Object.assign({ name: p1Name }, m.player1 || {}, { surf_rank: _p1ss.rk, surf_rank_total: _p1ss.total, surf_form: _p1ss.form, l5_pts: _p1ss.l5_pts, l10_pts: _p1ss.l10_pts, powerscore: _p1ss.powerscore, ps_rank: _p1ss.ps_rank, ps_total: _p1ss.ps_total }),
-      player2: Object.assign({ name: p2Name }, m.player2 || {}, { surf_rank: _p2ss.rk, surf_rank_total: _p2ss.total, surf_form: _p2ss.form, l5_pts: _p2ss.l5_pts, l10_pts: _p2ss.l10_pts, powerscore: _p2ss.powerscore, ps_rank: _p2ss.ps_rank, ps_total: _p2ss.ps_total }),
+      player1: Object.assign({ name: p1Name }, m.player1 || {}, {
+        surf_rank: _p1ss.rk, surf_rank_total: _p1ss.total, surf_form: _p1ss.form,
+        l5_pts: _p1ss.l5_pts, l10_pts: _p1ss.l10_pts,
+        powerscore: _p1ss.powerscore, ps_rank: _p1ss.ps_rank, ps_total: _p1ss.ps_total,
+        // BUG-03 fix: ATP/WTA ranking from DB
+        rank: _getPlayerRank(p1Name, tourGuess),
+        // BUG-04 fix: elo_surface from computed eloProb (p1_surface is {elo, matches, surface} object)
+        elo_surface: (eloProb && eloProb.p1_surface && eloProb.p1_surface.elo != null) ? Math.round(eloProb.p1_surface.elo) : null,
+      }),
+      player2: Object.assign({ name: p2Name }, m.player2 || {}, {
+        surf_rank: _p2ss.rk, surf_rank_total: _p2ss.total, surf_form: _p2ss.form,
+        l5_pts: _p2ss.l5_pts, l10_pts: _p2ss.l10_pts,
+        powerscore: _p2ss.powerscore, ps_rank: _p2ss.ps_rank, ps_total: _p2ss.ps_total,
+        // BUG-03 fix: ATP/WTA ranking from DB
+        rank: _getPlayerRank(p2Name, tourGuess),
+        // BUG-04 fix: elo_surface from computed eloProb
+        elo_surface: (eloProb && eloProb.p2_surface && eloProb.p2_surface.elo != null) ? Math.round(eloProb.p2_surface.elo) : null,
+      }),
       odds,
       fair,
       edge,
