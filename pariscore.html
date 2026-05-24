@@ -287,7 +287,12 @@
      safe-area) + border-bottom 2px rouge L'Equipe (visual separation distincte
      du body blanc) + bg moins translucide 0.95 (visibilite garantie) */
 
-  html.ps-mobile-v2 nav {
+  /* C3.3 fix CRITIQUE : selector nav:not(#bottom-nav) — sinon mes regles
+     matchaient ALSO <nav id="bottom-nav"> qui est aussi un <nav> element.
+     Resultat bug : bottom-nav heritait top:0 + height:48px + position fixed
+     du top nav, stack au top du viewport au lieu d'etre fixed bottom.
+     Detecte via preview_eval boundingRect bottom-nav y=0 height=48 (au lieu y=764 height=64). */
+  html.ps-mobile-v2 nav:not(#bottom-nav) {
     height: calc(48px + env(safe-area-inset-top, 0px)) !important;
     min-height: calc(48px + env(safe-area-inset-top, 0px)) !important;
     padding: env(safe-area-inset-top, 0px) 14px 0 !important;
@@ -313,7 +318,7 @@
   }
 
   /* Logo mobile compact : icone visible, texte plus petit, tag desktop masque */
-  html.ps-mobile-v2 nav .logo {
+  html.ps-mobile-v2 nav:not(#bottom-nav) .logo {
     font-size: 19px;
     letter-spacing: 0.05em;
     gap: 8px;
@@ -358,7 +363,18 @@
   /* ── ZONE 2 — Bottom Tab Bar glassmorphic premium ── */
 
   html.ps-mobile-v2 #bottom-nav {
-    height: 64px;
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    /* C3.3 fix : top:auto explicit override global nav {top:0} ligne 635 qui
+       cascade sur #bottom-nav (selector nav matche aussi <nav id=bottom-nav>)
+       Sans cet override, top:0+bottom:0+pas-de-height = stretched 812px. */
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: fixed !important;
+    z-index: 9000 !important;
     padding: 0 0 calc(env(safe-area-inset-bottom, 0px)) 0 !important;
     /* Glassmorphic light premium */
     background: rgba(255, 255, 255, 0.78) !important;
