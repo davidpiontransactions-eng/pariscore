@@ -13785,6 +13785,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1020px;">
         <thead>
           <tr style="background:var(--bg3,#181c20);">
+            <th class="tvb-th tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);width:36px;" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
             <th class="tvb-th tvb-dt-col" style="text-align:left;" title="Date · heure (Europe/Paris) · surface">Date<br>Heure<br>Surface</th>
             <th class="tvb-th" style="text-align:left;">Match</th>
             <th class="tvb-th" style="text-align:left;color:#00e676;width:170px;" title="Bets Prédictifs — KPI directif (BET FORT / VALUE / PASS) + 3 paris conseillés (PredScore = EV modèle + confiance calibration + accord Elo/BSD). Bascule en 3 bets LIVE selon le score quand le match est en cours."><span class="tgou-hwrap" style="justify-content:flex-start;">Bets Prédictifs<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisPredictiveGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Bets Prédictifs">i</button></span><br><span class="tvb-th-sub">conseillés</span></th>
@@ -13804,7 +13805,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           </tr>
         </thead>
         <tbody id="tennis-vb-tbody">
-          <tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="17" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -13837,6 +13838,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <table id="tennis-live-table" style="width:100%;border-collapse:collapse;min-width:900px;">
         <thead>
           <tr style="background:var(--bg3,#181c20);">
+            <th class="tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);width:36px;" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tournoi</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tour</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 1</th>
@@ -13850,7 +13852,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           </tr>
         </thead>
         <tbody id="tennis-live-tbody">
-          <tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
+          <tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
         </tbody>
       </table>
     </div>
@@ -18639,6 +18641,19 @@ function _tnMatchesSourceFilter(m) {
   return src === f;
 }
 
+// bd 661w — helper cellule favori reutilise par tennis-live-table + tennis-vb-table.
+// Reuse infra existante (favoriteMatchIds Set + toggleFavorite + .fav-btn css).
+// event.stopPropagation pour ne pas trigger row onclick (openTennisDetail).
+function _tnFavCell(matchId) {
+  if (!matchId) return '<td class="tn-fav-td" style="text-align:center;padding:6px 4px;width:36px;"></td>';
+  const id = String(matchId).replace(/'/g, "&#39;");
+  const active = (typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds && favoriteMatchIds.has)
+    ? favoriteMatchIds.has(String(matchId)) : false;
+  const cls = active ? 'fav-btn active' : 'fav-btn';
+  const title = active ? 'Favori — clic pour retirer' : 'Ajouter aux favoris';
+  return `<td class="tn-fav-td" style="text-align:center;padding:6px 4px;width:36px;" onclick="event.stopPropagation();"><button type="button" class="${cls}" onclick="event.stopPropagation();toggleFavorite('${id}',this)" aria-label="${title}" title="${title}">★</button></td>`;
+}
+
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
@@ -18649,7 +18664,7 @@ function renderTennisLive(matches) {
   if (!list.length) {
     const f = window._tennisSourceFilter || 'ALL';
     const filtMsg = f !== 'ALL' ? ` (filtre source: ${f})` : '';
-    tbody.innerHTML = `<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement' : 'Aucun match disponible'}${filtMsg}.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement' : 'Aucun match disponible'}${filtMsg}.</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(m => {
@@ -18696,6 +18711,7 @@ function renderTennisLive(matches) {
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
     const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
     return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
+      ${_tnFavCell(m.id)}
       <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</td>
       <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
       <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}</td>
@@ -18745,7 +18761,7 @@ async function tickTennisLive() {
     if (statusEl) statusEl.textContent = 'Erreur réseau';
     const tbody = document.getElementById('tennis-live-tbody');
     if (tbody && !window._tennisLastFetch.length) {
-      tbody.innerHTML = '<tr><td colspan="10" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</td></tr>';
     }
   }
 }
@@ -20225,7 +20241,7 @@ function renderTennisValueBets(rawMatches) {
   const matches = buildUnifiedTennis(rawMatches);
   window._tnLiveSig = _tnLiveIdSig();
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="17" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
     return;
   }
 
@@ -20309,7 +20325,7 @@ function renderTennisValueBets(rawMatches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="16" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="17" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
     return;
   }
 
@@ -20438,6 +20454,7 @@ function renderTennisValueBets(rawMatches) {
     const _tnLiveId = m._live ? _escTennis(String(m._live.id || '')) : '';/*TN_UNIFY_ROW*/
     const _tnRowCls = m._isLive ? ' is-live' : '';
     return `<tr class="tennis-vb-row${_tnRowCls}" data-tn-row="${matchId}" ${onclick}>
+      ${_tnFavCell(m.id)}
       <td class="tvb-dt-col"><div class="tvb-dtc-stack"><div class="tvb-dtc-top">${ctxDate}</div><div class="tvb-dtc-mid">${_tvbTourBadge(m.tour)}</div><div class="tvb-dtc-bot">${_tvbSurfaceBadge(m.surface)}</div>${_tnActuallyLive(m) ? '<div class="tvb-dtc-live"><span class="tn-live-tag"><i></i>LIVE</span></div>' : ''}</div></td>
       <td>
         ${_tvbTrap(m.trap_bet)}
@@ -20555,7 +20572,7 @@ async function tickTennisValueBets() {
     if (r.status === 401 || r.status === 403) {
       if (statusEl) statusEl.textContent = 'Accès réservé';
       const tbody = document.getElementById('tennis-vb-tbody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="19" style="padding:40px;text-align:center;color:var(--text2,#8d9399);">🔒 Module Tennis réservé <b>Pro Tennis / Duo</b>.<br><span style="font-size:13px;color:var(--text3,#5a6068);">Connecte-toi pour accéder aux value bets tennis.</span></td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="20" style="padding:40px;text-align:center;color:var(--text2,#8d9399);">🔒 Module Tennis réservé <b>Pro Tennis / Duo</b>.<br><span style="font-size:13px;color:var(--text3,#5a6068);">Connecte-toi pour accéder aux value bets tennis.</span></td></tr>';
       return;
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -20566,7 +20583,7 @@ async function tickTennisValueBets() {
       window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
       const tb = document.getElementById('tennis-vb-tbody');
       if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tb.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</td></tr>';
+        tb.innerHTML = '<tr><td colspan="20" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</td></tr>';
       }
       if (window._tennisVbBuildRetries <= 30) {
         if (statusEl) statusEl.textContent = `⏳ Préparation… (${window._tennisVbBuildRetries})`;
@@ -20592,14 +20609,14 @@ async function tickTennisValueBets() {
       if (statusEl) statusEl.textContent = `Reconnexion… (${window._tennisVbBuildRetries})`;
       const tb = document.getElementById('tennis-vb-tbody');
       if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tb.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</td></tr>';
+        tb.innerHTML = '<tr><td colspan="20" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</td></tr>';
       }
       setTimeout(tickTennisValueBets, 2500);
     } else {
       if (statusEl) statusEl.textContent = 'Erreur réseau';
       const tbody = document.getElementById('tennis-vb-tbody');
       if (tbody && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tbody.innerHTML = '<tr><td colspan="19" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement (build serveur indisponible).</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="20" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement (build serveur indisponible).</td></tr>';
       }
     }
   }
@@ -25250,6 +25267,9 @@ function toggleFavorite(matchId, el) {
   psFavToast(added ? '★ Ajouté à vos favoris' : 'Retiré des favoris', added);
   // Re-render → le match favori remonte en tête du tableau
   try { if (typeof allMatches !== 'undefined' && allMatches.length) renderMatches(allMatches); } catch (e) {}
+  // bd 661w — re-render tennis tables (live + value-bets) si presentes
+  try { if (typeof renderTennisLive === 'function' && Array.isArray(window._tennisLastFetch)) renderTennisLive(window._tennisLastFetch); } catch (e) {}
+  try { if (typeof renderTennisValueBets === 'function' && Array.isArray(window._tennisVbLastFetch)) renderTennisValueBets(window._tennisVbLastFetch); } catch (e) {}
 }
 
 function trackClick(type, id, event, teamCtx) {
