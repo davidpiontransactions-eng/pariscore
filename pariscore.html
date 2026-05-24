@@ -13814,9 +13814,14 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <!-- Tableau value-bets -->
     <div class="table-responsive-wrapper">
       <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1020px;">
+        <!-- bd 661w fix : colgroup verrouille col 1 favoris a 40px (auto-table
+             layout browser ignorait width inline+CSS sur certaines configs). -->
+        <colgroup>
+          <col style="width:40px;">
+        </colgroup>
         <thead>
           <tr style="background:var(--bg3,#181c20);">
-            <th class="tvb-th tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);width:36px;" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
+            <th class="tvb-th tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
             <th class="tvb-th tvb-dt-col" style="text-align:left;" title="Date · heure (Europe/Paris) · surface">Date<br>Heure<br>Surface</th>
             <th class="tvb-th" style="text-align:left;">Match</th>
             <th class="tvb-th" style="text-align:left;color:#00e676;width:170px;" title="Bets Prédictifs — KPI directif (BET FORT / VALUE / PASS) + 3 paris conseillés (PredScore = EV modèle + confiance calibration + accord Elo/BSD). Bascule en 3 bets LIVE selon le score quand le match est en cours."><span class="tgou-hwrap" style="justify-content:flex-start;">Bets Prédictifs<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisPredictiveGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Bets Prédictifs">i</button></span><br><span class="tvb-th-sub">conseillés</span></th>
@@ -13867,9 +13872,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </div>
     <div class="table-responsive-wrapper">
       <table id="tennis-live-table" style="width:100%;border-collapse:collapse;min-width:900px;">
+        <!-- bd 661w fix : colgroup verrouille col 1 favoris a 40px. -->
+        <colgroup>
+          <col style="width:40px;">
+        </colgroup>
         <thead>
           <tr style="background:var(--bg3,#181c20);">
-            <th class="tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);width:36px;" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
+            <th class="tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tournoi</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tour</th>
             <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 1</th>
