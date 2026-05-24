@@ -1369,6 +1369,300 @@
      FIN C7 CSS — JS helper + wiring au boot inline script
      =========================================================== */
 
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Phase A SENSORY UI FOUNDATION
+     Tokens charte "OBSIDIAN PRESS" (L'Equipe x Bloomberg x Vision Pro)
+     - Z-depth layers (Vision Pro spatial)
+     - Glass stack 3.0 (blur cumulatif progressif)
+     - Ombres asymetriques directionnelles (lumiere haut-gauche editorial)
+     - Spring physics CSS linear() (iOS native equivalent zero-JS)
+     - OKLCH colors (WCAG AAA + dark mode mathematical)
+     - Triple-typo system (Bricolage Grotesque + IBM Plex Sans + JetBrains Mono)
+     - Density toggle utilities (compact/comfortable/spacious)
+
+     Scope : html.ps-mobile-v2 (zero impact desktop V1)
+     Status : Phase A FOUNDATION ONLY — vars definies mais composants .mc
+     existants PAS refactored. Phase B refactor cards + nav = session future.
+     =========================================================== */
+
+  /* ── Z-DEPTH LAYERS (Vision Pro inspired) ── */
+  html.ps-mobile-v2 {
+    --sui-z-recess:  -2px;
+    --sui-z-base:     0px;
+    --sui-z-lift:     2px;
+    --sui-z-hover:    6px;
+    --sui-z-modal:   12px;
+    --sui-z-system:  20px;
+  }
+
+  /* ── GLASS STACK 3.0 (blur cumulatif progressif) ── */
+  html.ps-mobile-v2 {
+    --sui-glass-thin:  blur(8px)  saturate(140%);
+    --sui-glass-mid:   blur(20px) saturate(170%);
+    --sui-glass-thick: blur(40px) saturate(190%);
+  }
+
+  /* ── OMBRES ASYMETRIQUES DIRECTIONNELLES (light from top-left editorial) ── */
+  html.ps-mobile-v2 {
+    --sui-shadow-card-rest:
+      -1px 1px 0 rgba(255, 255, 255, 0.04) inset,
+      3px 4px 0 -1px rgba(0, 0, 0, 0.04),
+      6px 12px 24px -4px rgba(0, 0, 0, 0.08),
+      12px 24px 48px -8px rgba(0, 0, 0, 0.05);
+    --sui-shadow-card-hover:
+      -2px 2px 0 rgba(255, 255, 255, 0.08) inset,
+      4px 6px 0 -1px rgba(0, 0, 0, 0.05),
+      8px 16px 28px -4px rgba(0, 0, 0, 0.10),
+      16px 32px 56px -8px rgba(0, 0, 0, 0.07);
+    --sui-shadow-card-active:
+      0px 1px 0 rgba(255, 255, 255, 0.05) inset,
+      1px 2px 0 -1px rgba(0, 0, 0, 0.06),
+      2px 6px 12px -2px rgba(0, 0, 0, 0.08);
+    /* Edge tier halos (PLATINUM / GOLD / SILVER) */
+    --sui-shadow-edge-platinum:
+      0 0 0 1px #c9b170,
+      0 4px 16px rgba(201, 177, 112, 0.42);
+    --sui-shadow-edge-gold:
+      0 0 0 1px #d4a93b,
+      0 4px 14px rgba(212, 169, 59, 0.38);
+    --sui-shadow-edge-silver:
+      0 0 0 1px #888,
+      0 4px 12px rgba(136, 136, 136, 0.28);
+  }
+
+  /* ── SPRING PHYSICS (CSS linear() Animations L2) ──
+     Trois variantes : soft (overshoot doux), tight (pas overshoot), snap (rebond accent).
+     Generes via https://linear-easing-generator.netlify.app — iOS UISpring equivalents. */
+  html.ps-mobile-v2 {
+    --sui-spring-soft: linear(
+      0, 0.0125 4%, 0.0506 8.07%, 0.1132 12.3%, 0.197 16.74%, 0.3 21.36%,
+      0.4178 26.07%, 0.5429 30.86%, 0.6675 35.78%, 0.7839 40.9%, 0.8846 46.31%,
+      0.9637 52.06%, 1.0176 58.25%, 1.0444 64.97%, 1.0439 71.96%, 1.0223 79.36%,
+      0.9988 86.55%, 0.985 93.69%, 1
+    );
+    --sui-spring-tight: linear(
+      0, 0.0026 4%, 0.0237 8%, 0.0805 13.6%, 0.181 20%, 0.327 26.8%,
+      0.51 33.6%, 0.713 40.4%, 0.911 47.2%, 1.078 54%, 1.193 60.8%,
+      1.246 67.6%, 1.234 74.4%, 1.171 81.2%, 1.082 88%, 1
+    );
+    --sui-spring-snap: linear(
+      0, 0.082, 0.299 8%, 0.812 16%, 1.118 22%, 1.21, 1.23, 1.181 32%,
+      0.987 42%, 0.95, 0.946, 0.958 60%, 1.001 74%, 1.013, 1.01 86%, 1
+    );
+    /* Durees standard (multiples of 80ms tap feedback) */
+    --sui-dur-tap:  80ms;
+    --sui-dur-fast: 160ms;
+    --sui-dur-med:  240ms;
+    --sui-dur-slow: 340ms;
+    --sui-dur-page: 280ms;
+    --sui-dur-tick: 600ms;
+  }
+
+  /* Fallback cubic-bezier si linear() pas supporte (Edge legacy, vieux Safari) */
+  @supports not (transition-timing-function: linear(0, 1)) {
+    html.ps-mobile-v2 {
+      --sui-spring-soft:  cubic-bezier(0.34, 1.56, 0.64, 1);
+      --sui-spring-tight: cubic-bezier(0.32, 0.72, 0, 1);
+      --sui-spring-snap:  cubic-bezier(0.4, 1.8, 0.6, 1);
+    }
+  }
+
+  /* ── OKLCH SEMANTIC COLORS (perceptual uniform + WCAG AAA + dark mode auto) ── */
+  html.ps-mobile-v2 {
+    --sui-accent:       oklch(58% 0.22 25);
+    --sui-accent-dim:   oklch(48% 0.20 25);
+    --sui-accent-glow:  oklch(58% 0.22 25 / 0.40);
+    --sui-data-pos:     oklch(58% 0.18 145);
+    --sui-data-neg:     oklch(54% 0.22 25);
+    --sui-data-neutral: oklch(70% 0.02 250);
+    --sui-data-warn:    oklch(72% 0.16 75);
+  }
+
+  /* Fallback hex si OKLCH pas supporte (Safari 14-, FF 112-) */
+  @supports not (color: oklch(0% 0 0)) {
+    html.ps-mobile-v2 {
+      --sui-accent:       #ed1c24;
+      --sui-accent-dim:   #c4151e;
+      --sui-accent-glow:  rgba(237, 28, 36, 0.40);
+      --sui-data-pos:     #1a8c45;
+      --sui-data-neg:     #c4151e;
+      --sui-data-neutral: #8d9399;
+      --sui-data-warn:    #b45309;
+    }
+  }
+
+  /* ── OBSIDIAN PRESS DARK THEME (palette dark premium) ── */
+  html.ps-mobile-v2 {
+    --sui-obs-bg:      oklch(13% 0.012 250);
+    --sui-obs-surface: oklch(17% 0.014 250);
+    --sui-obs-elevate: oklch(20% 0.016 250);
+    --sui-obs-border:  oklch(28% 0.018 250 / 0.4);
+    --sui-obs-text:    oklch(96% 0.008 250);
+    --sui-obs-text-2:  oklch(72% 0.014 250);
+    --sui-obs-text-3:  oklch(50% 0.012 250);
+  }
+
+  /* ── CREAM PAPER LIGHT THEME (palette light premium L'Equipe-style) ── */
+  html.ps-mobile-v2 {
+    --sui-cream-bg:      oklch(96% 0.012 80);
+    --sui-cream-surface: oklch(99% 0.008 80);
+    --sui-cream-elevate: #ffffff;
+    --sui-cream-border:  oklch(78% 0.014 80 / 0.5);
+    --sui-cream-text:    oklch(15% 0.006 80);
+    --sui-cream-text-2:  oklch(40% 0.010 80);
+    --sui-cream-text-3:  oklch(60% 0.012 80);
+  }
+
+  /* Fallback OKLCH dark/light hex */
+  @supports not (color: oklch(0% 0 0)) {
+    html.ps-mobile-v2 {
+      --sui-obs-bg:      #0a0c10;
+      --sui-obs-surface: #14181c;
+      --sui-obs-elevate: #1a1f24;
+      --sui-obs-border:  rgba(50, 60, 75, 0.4);
+      --sui-obs-text:    #e8eaed;
+      --sui-obs-text-2:  #8d9399;
+      --sui-obs-text-3:  #5a6068;
+      --sui-cream-bg:      #f8f5ec;
+      --sui-cream-surface: #fcfaf3;
+      --sui-cream-elevate: #ffffff;
+      --sui-cream-border:  rgba(200, 190, 170, 0.5);
+      --sui-cream-text:    #0a0a0a;
+      --sui-cream-text-2:  #4a4a4a;
+      --sui-cream-text-3:  #888888;
+    }
+  }
+
+  /* ── TYPOGRAPHIE TRIPLE-SYSTEM (NO Inter/Roboto AI-slop) ── */
+  html.ps-mobile-v2 {
+    --sui-font-display:   'Bricolage Grotesque', 'Maison Neue Extended', 'Barlow Condensed', system-ui, sans-serif;
+    --sui-font-body:      'IBM Plex Sans', 'Source Sans 3', system-ui, sans-serif;
+    --sui-font-mono:      'JetBrains Mono', 'DM Mono', ui-monospace, monospace;
+    --sui-font-editorial: 'PP Editorial New', 'Marais', Georgia, serif;
+  }
+
+  /* ── DENSITY TOGGLE UTILITIES ── */
+  html.ps-mobile-v2[data-density="compact"]     { --sui-row: 8px;  --sui-card-pad: 10px 12px; --sui-gap: 6px;  }
+  html.ps-mobile-v2[data-density="comfortable"],
+  html.ps-mobile-v2:not([data-density])         { --sui-row: 12px; --sui-card-pad: 14px 16px; --sui-gap: 10px; }
+  html.ps-mobile-v2[data-density="spacious"]    { --sui-row: 16px; --sui-card-pad: 18px 20px; --sui-gap: 14px; }
+
+  /* ── NOISE TEXTURE OVERLAY (Obsidian premium grain feel) ──
+     Toggleable via [data-theme="obsidian"][data-grain="on"] sur <html>.
+     Pas active par defaut (zero impact paint cost si non-utilise). */
+  html.ps-mobile-v2[data-theme="obsidian"][data-grain="on"] body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+  }
+
+  /* ── PRESS FEEDBACK universel pour elements opt-in .sui-pressable ── */
+  html.ps-mobile-v2 .sui-pressable {
+    transition: transform var(--sui-dur-tap) var(--sui-spring-tight);
+    will-change: transform;
+  }
+  html.ps-mobile-v2 .sui-pressable:active {
+    transform: scale(0.985);
+  }
+
+  /* ── NUMBER TICK animation (cotes / scores live update) ── */
+  @keyframes suiNumberTickUp {
+    0%   { transform: scale(1);    color: inherit; }
+    30%  { transform: scale(1.18); color: var(--sui-data-pos); }
+    100% { transform: scale(1);    color: inherit; }
+  }
+  @keyframes suiNumberTickDown {
+    0%   { transform: scale(1);    color: inherit; }
+    30%  { transform: scale(1.18); color: var(--sui-data-neg); }
+    100% { transform: scale(1);    color: inherit; }
+  }
+  html.ps-mobile-v2 .sui-tick-up   { animation: suiNumberTickUp   var(--sui-dur-tick) var(--sui-spring-snap) 1; display: inline-block; }
+  html.ps-mobile-v2 .sui-tick-down { animation: suiNumberTickDown var(--sui-dur-tick) var(--sui-spring-snap) 1; display: inline-block; }
+
+  /* ── RIPPLE host (JS injecte .sui-ripple span on pointerdown) ── */
+  html.ps-mobile-v2 .sui-ripple-host {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  html.ps-mobile-v2 .sui-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--sui-accent-glow), transparent 60%);
+    transform: scale(0);
+    opacity: 0.4;
+    animation: suiRipple 800ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes suiRipple {
+    to { transform: scale(2.4); opacity: 0; }
+  }
+
+  /* ── EDGE TIER UTILITIES (opt-in via class .sui-edge-platinum / -gold / -silver) ── */
+  html.ps-mobile-v2 .sui-edge-platinum {
+    background: linear-gradient(135deg, #f3e4b3, #c9b170);
+    color: #4a3a10;
+    box-shadow: var(--sui-shadow-edge-platinum);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-family: var(--sui-font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  html.ps-mobile-v2 .sui-edge-gold {
+    background: linear-gradient(135deg, #ffd989, #d4a93b);
+    color: #4a3210;
+    box-shadow: var(--sui-shadow-edge-gold);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-family: var(--sui-font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  html.ps-mobile-v2 .sui-edge-silver {
+    background: linear-gradient(135deg, #d8d8d8, #888);
+    color: #1a1a1a;
+    box-shadow: var(--sui-shadow-edge-silver);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-family: var(--sui-font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── DATA HERO TYPO (cotes/scores/edges hero treatment opt-in) ── */
+  html.ps-mobile-v2 .sui-data-hero {
+    font-family: var(--sui-font-mono);
+    font-size: clamp(15px, 4.5vw, 18px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums oldstyle-nums;
+    font-feature-settings: 'ss01', 'cv01';
+    letter-spacing: -0.01em;
+  }
+  html.ps-mobile-v2 .sui-data-xl {
+    font-family: var(--sui-font-display);
+    font-size: clamp(22px, 7vw, 32px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* ===========================================================
+     FIN Phase A — Sensory UI Foundation tokens defined
+     Vars accessibles via getComputedStyle / var(--sui-*) partout.
+     Phase B = refactor .mc cards + nav (session future).
+     Phase C = density toggle UI + theme switcher (session future).
+     =========================================================== */
+
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
   body[data-cf-light="1"] {
     background: #ffffff !important;
