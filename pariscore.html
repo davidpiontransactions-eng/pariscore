@@ -106,6 +106,35 @@
     border-color: #e2e8f0 !important;
     color: #b45309 !important;
   }
+  /* bd visibilité noms joueurs tennis cards light theme (gris pâle sur white = illisible) */
+  body[data-cf-light="1"] #tennis-vb-table .tvb-pname,
+  body[data-cf-light="1"] #tennis-live-table .tvb-pname {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table .tvb-pname.tvb-pfav,
+  body[data-cf-light="1"] #tennis-live-table .tvb-pname.tvb-pfav {
+    color: #15803d !important;
+  }
+  /* Sets dots empty state (·) lisibles light theme */
+  body[data-cf-light="1"] #tennis-vb-table .tn-sb-empty span,
+  body[data-cf-light="1"] #tennis-live-table .tn-sb-empty span {
+    color: #64748b !important;
+  }
+  /* Badge RK ranking lisible light theme */
+  body[data-cf-light="1"] #tennis-vb-table .elo-rk,
+  body[data-cf-light="1"] #tennis-live-table .elo-rk {
+    color: #334155 !important;
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    opacity: 1 !important;
+  }
+  body[data-cf-light="1"] #tennis-vb-table .elo-rk-na,
+  body[data-cf-light="1"] #tennis-live-table .elo-rk-na {
+    opacity: .75 !important;
+    color: #64748b !important;
+    background: #f8fafc !important;
+  }
   /* Tennis score col bg gradient cyan terminal → flat light blue */
   body[data-cf-light="1"] #tennis-vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.tvb-score-col,
   body[data-cf-light="1"] #tennis-live-table:not(#__cf__):not(#__cf2__):not(#__cf3__) td.tvb-score-col {
