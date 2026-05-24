@@ -270,6 +270,183 @@
      C7 = _psHaptic helper + spring animations
      =========================================================== */
 
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Chantier C2 + Patch Header Bug
+     Mini App Bar 56px + Bottom Nav glassmorphic + content padding fix
+     Scope strict : .ps-mobile-v2 (zero impact desktop V1)
+
+     Probleme resolu : C1-B viewport switch a active toutes les @media
+     (max-width: 768px) dormantes — stack vertical (top nav 66px + mob-toolbar
+     + hero desktop non-responsive) creait un espace vide enorme entre top
+     nav et bottom-nav fixed. Refonte = mini header compact + bottom glass +
+     padding fixe page.
+     =========================================================== */
+
+  /* ── ZONE 1 — Mini App Bar haut (56px sticky glassmorphic) ── */
+
+  /* Top nav compact 56px (override existant 66px ligne 641 + 52px min ligne 6715) */
+  html.ps-mobile-v2 nav {
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: 0 14px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Fixed top : sort de flow normal pour eviter conflit padding-top body */
+    position: fixed !important;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    /* Glassmorphic light premium */
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.95) inset,
+      0 2px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Logo mobile compact : icone visible, texte plus petit, tag desktop masque */
+  html.ps-mobile-v2 nav .logo {
+    font-size: 19px;
+    letter-spacing: 0.05em;
+    gap: 8px;
+  }
+  html.ps-mobile-v2 nav .logo-mark {
+    width: 26px;
+    height: 26px;
+  }
+  html.ps-mobile-v2 nav .logo .logo-tag-mob {
+    display: none;
+  }
+
+  /* Update-bar masquee mobile (redondante avec bottom-nav live badge) */
+  html.ps-mobile-v2 .update-bar {
+    display: none;
+  }
+
+  /* nav-right : Live pill compact + auth button miniaturise */
+  html.ps-mobile-v2 nav .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  html.ps-mobile-v2 nav .nav-right .live-pill {
+    font-size: 10px;
+    padding: 3px 8px;
+    height: 22px;
+  }
+  html.ps-mobile-v2 .nav-auth-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+    height: 30px;
+    line-height: 1;
+  }
+
+  /* Theme toggle + audio toggle caches en haut mobile : migration vers bn-more-sheet "Plus" drawer */
+  html.ps-mobile-v2 #theme-toggle,
+  html.ps-mobile-v2 #audio-toggle {
+    display: none;
+  }
+
+  /* ── ZONE 2 — Bottom Tab Bar glassmorphic premium ── */
+
+  html.ps-mobile-v2 #bottom-nav {
+    height: 64px;
+    padding: 0 0 calc(env(safe-area-inset-bottom, 0px)) 0 !important;
+    /* Glassmorphic light premium */
+    background: rgba(255, 255, 255, 0.78) !important;
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+    /* GPU compositing pour animation spring */
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Tab items : padding reduit (15→8), centre verticalement */
+  html.ps-mobile-v2 #bottom-nav a {
+    padding: 8px 1px 6px;
+    height: 64px;
+    align-items: center;
+  }
+
+  /* Tab active : spring scale + glow rouge L'Equipe */
+  html.ps-mobile-v2 #bottom-nav a.active {
+    transform: translateY(-1px) scale(1.04);
+    transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  html.ps-mobile-v2 #bottom-nav a.active .bn-lbl {
+    text-shadow:
+      0 1px 0 #d11820,
+      0 0 6px rgba(237, 28, 36, 0.5);
+  }
+
+  /* Press feedback tactile (override .psm-pressable generique pour bottom-nav) */
+  html.ps-mobile-v2 #bottom-nav a:active {
+    transform: scale(0.96);
+    transition: transform 80ms ease-out;
+  }
+
+  /* Dark theme variant glassmorphic */
+  html.ps-mobile-v2 body.dark-theme #bottom-nav {
+    background: rgba(10, 13, 15, 0.78) !important;
+    border-top-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ── ZONE 3 — Padding viewport central (deblocage contenu) ── */
+
+  /* Override regles existantes body padding (ligne 6716) avec stack complet
+     Top : 56px nav + safe-top encoche iPhone
+     Bottom : 64px bottom-nav + safe-bottom gesture bar + 8px gap
+     Left/Right : safe-area landscape iPhone Pro Max */
+  html.ps-mobile-v2 body {
+    padding-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px) !important;
+    padding-left: env(safe-area-inset-left, 0px) !important;
+    padding-right: env(safe-area-inset-right, 0px) !important;
+  }
+
+  /* Hero accueil compact mobile (kill hauteur 100vh desktop) */
+  html.ps-mobile-v2 #page-accueil .hero,
+  html.ps-mobile-v2 #page-accueil > section:first-of-type {
+    min-height: auto;
+    padding: 20px 16px;
+  }
+
+  /* Tableau matches : overflow-x scroll horizontal sans casser layout mobile */
+  html.ps-mobile-v2 .table-wrap,
+  html.ps-mobile-v2 #page-matchs .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* mob-toolbar : reste sticky mais sous le nav fixed (decale 56px + safe-top) */
+  html.ps-mobile-v2 #mob-toolbar {
+    top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  /* Sections page-* : padding lateral mobile reduit pour gain horizontal */
+  html.ps-mobile-v2 main,
+  html.ps-mobile-v2 #page-matchs,
+  html.ps-mobile-v2 #page-tennis,
+  html.ps-mobile-v2 #page-strategies,
+  html.ps-mobile-v2 #page-paris,
+  html.ps-mobile-v2 #page-accueil {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* ===========================================================
+     FIN C2 + Patch Header Bug — gain vertical ~120-180px
+     Prochaines etapes : C3 cartes empilees + C4 bottom-sheets
+     =========================================================== */
+
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
   body[data-cf-light="1"] {
     background: #ffffff !important;
