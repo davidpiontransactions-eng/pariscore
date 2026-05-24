@@ -21322,11 +21322,16 @@ function _psLtsRenderPit(m) {
   const bppi = (m.bppi && m.bppi.missing !== true) ? m.bppi : null;
   const intensity = Number(m.live_intensity || 0);
 
-  // DR : ratio approximé via BPPI (proxy Phase 1)
+  // DR : helper _tnComputeDR exact Sofascore + fallback proxy jeux/sets
   let dr = null;
-  if (bppi && bppi.p1 != null && bppi.p2 != null) {
+  try {
+    const drData = (typeof _tnComputeDR === 'function') ? _tnComputeDR(m) : null;
+    if (drData && drData.drP1 != null) dr = drData.drP1;
+  } catch (_) {}
+  if (dr == null && bppi && bppi.p1 != null && bppi.p2 != null) {
+    // Fallback BPPI si _tnComputeDR indispo
     const tot = Number(bppi.p1) + Number(bppi.p2);
-    if (tot > 0) dr = (Number(bppi.p1) / tot) * 2; // normalisé [0,2], 1 = équilibre
+    if (tot > 0) dr = (Number(bppi.p1) / tot) * 2;
   }
   const drEl = document.getElementById('pslts-m-dr');
   if (drEl) {
@@ -21411,7 +21416,162 @@ function _psLtsRenderAll(m) {
   if (!m) return;
   _psLtsRenderReadout(m);
   _psLtsRenderPit(m);
-  // Phase 3 : _psLtsRenderEdge(m) + _psLtsRenderContext(m)
+  _psLtsRenderEdge(m);
+  _psLtsRenderContext(m);
+}
+
+// Phase 3 — EDGE-STRIP : cartes marches live actionnables avec regle BET stricte.
+// Sources : BSD prediction (window._psLtsInsights.prediction) + m.odds h2h
+// (TheOddsAPI snapshot). Affiche signal BET (EV>5% + IC_inf>0 implicite via
+// confidence_badge) ou WATCH si signal partiel.
+function _psLtsRenderEdge(m) {
+  const grid = document.getElementById('pslts-bet-grid');
+  if (!grid || !m) return;
+  const pred = (window._psLtsInsights && window._psLtsInsights.prediction) || null;
+  const cards = [];
+
+  // --- Card 1 : Match winner (BSD prediction + odds Odds API h2h)
+  if (pred && pred.p1 && pred.p1.win_probability != null) {
+    let wp1 = Number(pred.p1.win_probability);
+    if (wp1 <= 1) wp1 = wp1 * 100;
+    let wp2 = pred.p2 && pred.p2.win_probability != null ? Number(pred.p2.win_probability) : null;
+    if (wp2 != null && wp2 <= 1) wp2 = wp2 * 100;
+    const pickP1 = wp1 >= 50;
+    const pickName = pickP1 ? (m.player1 && m.player1.name) : (m.player2 && m.player2.name);
+    const pickWp = pickP1 ? wp1 : (wp2 != null ? wp2 : 100 - wp1);
+    let odds = null, ev = null, signal = null;
+    if (m.odds && m.odds.p1 && m.odds.p2) {
+      const oddsP = pickP1 ? (m.odds.p1.odds || m.odds.p1) : (m.odds.p2.odds || m.odds.p2);
+      odds = Number(oddsP);
+      if (isFinite(odds) && odds > 1) {
+        ev = (odds * (pickWp / 100) - 1) * 100;
+        if (ev >= 5) signal = 'bet';
+        else if (ev >= 0) signal = 'watch';
+      }
+    }
+    cards.push({
+      market: 'Vainqueur match',
+      pick: _psLtsEscape(pickName) + ' · ' + Math.round(pickWp) + '%',
+      odds: odds != null && isFinite(odds) ? odds.toFixed(2) : null,
+      ev: ev != null ? (ev > 0 ? '+' : '') + ev.toFixed(1) + '% EV' : null,
+      signal: signal,
+    });
+  }
+
+  // --- Card 2 : Vainqueur du set en cours (derive lead + DR)
+  const s1 = Number(m.player1_sets || 0);
+  const s2 = Number(m.player2_sets || 0);
+  const sets = Array.isArray(m.sets) ? m.sets : [];
+  const lastSet = sets[m.current_set_index] || sets[sets.length - 1] || null;
+  if (lastSet) {
+    const gp1 = Number(lastSet.p1 || 0);
+    const gp2 = Number(lastSet.p2 || 0);
+    let leadPick = '', leadProb = null;
+    if (gp1 > gp2 + 1) {
+      leadPick = (m.player1 && m.player1.name) || 'J1';
+      leadProb = Math.min(85, 55 + (gp1 - gp2) * 6);
+    } else if (gp2 > gp1 + 1) {
+      leadPick = (m.player2 && m.player2.name) || 'J2';
+      leadProb = Math.min(85, 55 + (gp2 - gp1) * 6);
+    } else {
+      leadPick = 'Set serré';
+      leadProb = 50;
+    }
+    cards.push({
+      market: `Vainqueur set en cours · ${gp1}-${gp2}`,
+      pick: _psLtsEscape(leadPick) + ' · ~' + leadProb + '%',
+      odds: null,
+      ev: null,
+      signal: leadProb >= 70 ? 'watch' : null,
+    });
+  }
+
+  // --- Card 3 : Over sets (BO3 = over 2.5 sets / BO5 = over 3.5)
+  const bo = (m.best_of && Number(m.best_of) === 5) ? 5 : 3;
+  const setsPlayed = s1 + s2 + (lastSet && (lastSet.p1 || lastSet.p2) ? 1 : 0);
+  const overLine = bo === 5 ? 3.5 : 2.5;
+  const remaining = Math.max(0, Math.ceil(overLine - setsPlayed));
+  if (setsPlayed > 0 && remaining >= 0) {
+    cards.push({
+      market: `Over ${overLine} sets · BO${bo}`,
+      pick: setsPlayed > overLine
+        ? `Atteint (${setsPlayed} joues)`
+        : `Reste ${remaining} set(s) requis`,
+      odds: null,
+      ev: null,
+      signal: null,
+    });
+  }
+
+  if (!cards.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--cf-text-muted,#64748b);text-align:center;padding:12px 0;">Donnees prediction indispo · re-essai dans 60s</div>';
+    return;
+  }
+
+  grid.innerHTML = cards.map(c => {
+    const sigBadge = c.signal === 'bet'
+      ? '<span class="pslts-bet-signal">BET</span>'
+      : (c.signal === 'watch' ? '<span class="pslts-bet-signal">WATCH</span>' : '');
+    const sigAttr = c.signal ? ` data-signal="${c.signal}"` : '';
+    const oddsLine = c.odds ? `<div class="pslts-bet-odds">@${c.odds}</div>` : '';
+    const evLine = c.ev ? `<div class="pslts-bet-ev">${c.ev}</div>` : '';
+    return `<div class="pslts-bet-card"${sigAttr}>
+      ${sigBadge}
+      <div class="pslts-bet-market">${_psLtsEscape(c.market)}</div>
+      <div class="pslts-bet-pick">${c.pick}</div>
+      ${oddsLine}
+      ${evLine}
+    </div>`;
+  }).join('');
+}
+
+// Phase 3 — CONTEXT body : court, round, surface, weather, reliability numerique
+function _psLtsRenderContext(m) {
+  if (!m) return;
+  const setText = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (v == null || v === '') ? '—' : String(v);
+  };
+  setText('pslts-ctx-court', m.court || (m.venue && m.venue.name) || '—');
+  setText('pslts-ctx-round', m.round || m.stage || '—');
+
+  // H2H : payload tennis n'expose pas h2h directement, mais predictions peut
+  const pred = (window._psLtsInsights && window._psLtsInsights.prediction) || null;
+  let h2hTxt = '—';
+  if (pred && pred.h2h) {
+    const h1 = pred.h2h.p1_wins != null ? pred.h2h.p1_wins : '?';
+    const h2 = pred.h2h.p2_wins != null ? pred.h2h.p2_wins : '?';
+    h2hTxt = `${h1}-${h2} (tous terrains)`;
+  } else if (m.h2h && (m.h2h.p1_wins != null || m.h2h.p2_wins != null)) {
+    h2hTxt = `${m.h2h.p1_wins ?? '?'}-${m.h2h.p2_wins ?? '?'}`;
+  }
+  setText('pslts-ctx-h2h', h2hTxt);
+
+  // Weather : payload match_weather (foot pattern) ou tennis live souvent absent
+  let weatherTxt = '—';
+  if (m.match_weather && m.match_weather.temperature_c != null) {
+    const w = m.match_weather;
+    const parts = [];
+    if (w.temperature_c != null) parts.push(Math.round(w.temperature_c) + 'C');
+    if (w.wind_speed_kmh != null) parts.push('vent ' + Math.round(w.wind_speed_kmh) + ' km/h');
+    if (w.humidity_pct != null) parts.push(Math.round(w.humidity_pct) + '% HR');
+    if (w.precipitation_mm != null && w.precipitation_mm > 0) parts.push('pluie ' + w.precipitation_mm + 'mm');
+    weatherTxt = parts.join(' · ') || '—';
+  } else if (m.surface) {
+    weatherTxt = 'Surface ' + m.surface;
+  }
+  setText('pslts-ctx-weather', weatherTxt);
+
+  // Reliability : score numerique si dispo, sinon confidence_badge
+  let relTxt = '—';
+  if (m.reliability_score != null) {
+    relTxt = Math.round(Number(m.reliability_score)) + '/100';
+  } else if (m.confidence_badge) {
+    relTxt = String(m.confidence_badge);
+  } else if (m._elo && m._elo.tier) {
+    relTxt = String(m._elo.tier);
+  }
+  setText('pslts-ctx-rel', relTxt);
 }
 
 async function _psLtsTick() {
