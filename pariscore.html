@@ -4295,6 +4295,37 @@
   .fav-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text3); padding: 3px 5px; border-radius: 5px; transition: color .15s, transform .15s; line-height: 1; }
   .fav-btn:hover { color: var(--amber); transform: scale(1.2); }
   .fav-btn.active { color: var(--amber); }
+  /* bd 661w — col favoris tennis : lock width 40px header+body pour eviter
+     auto-table layout deforme la cellule (trop large = bouge tabs, trop etroit
+     = ecrase etoile). !important pour override inline width:36px premier jet. */
+  #tennis-live-table .tn-fav-th,
+  #tennis-live-table .tn-fav-td,
+  #tennis-vb-table .tn-fav-th,
+  #tennis-vb-table .tn-fav-td {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    padding: 6px 4px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    box-sizing: border-box;
+  }
+  #tennis-live-table .tn-fav-th,
+  #tennis-vb-table .tn-fav-th {
+    font-size: 14px !important;
+    color: var(--amber, #ffa726) !important;
+  }
+  #tennis-live-table .tn-fav-td .fav-btn,
+  #tennis-vb-table .tn-fav-td .fav-btn {
+    font-size: 16px;
+    padding: 4px 6px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+  }
   /* Sparkline de forme */
   .form-spark { display: inline-flex; align-items: center; margin-left: 2px; opacity: 0.8; }
   /* Rankings — badges de zone */
