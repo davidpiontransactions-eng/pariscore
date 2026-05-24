@@ -22658,6 +22658,8 @@ function _mapSurfaceToElo(surf) {
 const _TENNIS_SURFACE_KEYWORDS = [
   ['Clay', ['roland garros', 'french open', 'internazionali', ' rome', 'madrid', 'monte carlo', 'monte-carlo', 'montecarlo', 'hamburg', 'barcelona', 'estoril', 'munich', 'bastad', 'gstaad', 'kitzbuhel', 'umag', 'bucharest', 'geneva', 'lyon', 'cordoba', 'buenos aires', ' rio ', 'santiago', 'houston', 'marrakech', 'oeiras', 'bordeaux', 'roma', 'clarins', 'parma', 'saint-malo', 'saint malo', 'iasi', 'florence', 'turin clay']],
   ['Grass', ['wimbledon', 'halle', 'queen', 'hertogenbosch', 'eastbourne', 'newport', 'mallorca', 'bad homburg', ' berlin', 'birmingham', 'nottingham', 'stuttgart open', 'libema']],
+  // Hard: UTR/PTT circuits (typically hard), Grand Slams hard, and common hard-court venues
+  ['Hard', ['utr ptt', 'utr pro', ' utr ', 'australian open', 'us open', 'flushing', 'indian wells', 'miami open', 'cincinnati', 'toronto', 'montreal', 'beijing', 'shanghai', 'dubai', 'doha', 'abu dhabi', 'brisbane', 'sydney']],
   ['Carpet', ['carpet']],
 ];
 
@@ -28679,18 +28681,23 @@ async function _buildTennisValueBetsCore({ date }) {
     const _tourN = m.tour || (_tObj && _tObj.circuit) || '';
     const _surfN = m.surface || (_tObj && _tObj.surface) || null;
     // FIX: expand tourGuess to handle BSD non-standard circuit values (e.g. 'ATP 250', 'Grand Slam', 'WTA 1000')
+    // Gender checked BEFORE circuit prefix — BSD sometimes tags women's ITF/Challenger events
+    // as circuit "ATP", so gender is more reliable for disambiguation.
     const tourGuess = (() => {
       const t = String(_tourN).toUpperCase().trim();
-      if (t === 'ATP' || t === 'WTA') return t;
-      if (t.startsWith('ATP')) return 'ATP';
-      if (t.startsWith('WTA')) return 'WTA';
-      // Grand Slam: infer from player gender (BSD player object)
+      // Exact match: unambiguous
+      if (t === 'ATP') return 'ATP';
+      if (t === 'WTA') return 'WTA';
+      // Gender from BSD player object — takes priority over ambiguous circuit names
       const p1g = m.player1 && (m.player1.gender || m.player1.sex);
       if (p1g) {
         const _g = String(p1g).toUpperCase().trim();
         const _isW = _g === 'F' || _g === 'FEMALE' || _g === 'W' || _g === 'WOMAN' || _g === 'WOMEN';
         return _isW ? 'WTA' : 'ATP';
       }
+      // Fallback: prefix detection for circuits like 'ATP 250', 'WTA 1000', 'ATP Tour'
+      if (t.startsWith('ATP')) return 'ATP';
+      if (t.startsWith('WTA')) return 'WTA';
       return null;
     })();
     // Canonicalise les noms (accent-insensible) → nom ASCII stocké Sackmann/Elo.
