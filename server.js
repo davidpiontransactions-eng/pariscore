@@ -36088,6 +36088,8 @@ async function pollLiveScores() {
 
         // v9.9.5 — déclenchement alertes live momentum/pressure (fire-and-forget)
         sendLiveMomentumAlerts(liveNow).catch(e => console.warn('[LiveAlert]', e.message));
+        // v12 — incidents + shotmap REST enrichment (fire-and-forget, 30s/60s TTL interne)
+        pollBSDLiveEnrichment().catch(e => console.warn('[BSD-Enrich]', e.message));
     } catch (e) {
         console.warn('[LivePoll] Error:', e.message);
     } finally {
@@ -36158,6 +36160,25 @@ function _bsdWsLookupMatch(eid, home, away) {
   return null;
 }
 
+// ── v12 Deep Merge Guard ────────────────────────────────────────────────────
+// Champs statiques pré-match : WS ne doit JAMAIS les écraser.
+const _WS_STATIC_FIELDS = new Set([
+  'player1','player2','predictions','surface','tour','round',
+  'surf_rank','surf_rank_total','surf_form','elo_surface',
+  'l5_pts','l10_pts','powerscore','ps_rank','ps_total',
+  'poisson','fair','edge','best_edge',
+  'blended','calibrated','reliability','bootstrap_uqd','blended_tennis','markov',
+  'expectedGoals',
+  'home_rank','away_rank','home_form','away_form',
+  'stats','bsd_coaches','bsd_unavailable',
+]);
+/** Patch gardé : écrit field=value sur m uniquement si field non protégé. null/undefined ignoré. */
+function _wsGuardedPatch(m, field, value) {
+  if (_WS_STATIC_FIELDS.has(field)) return;
+  if (value === null || value === undefined) return;
+  m[field] = value;
+}
+
 // Extraction défensive : schéma BSD WS inconnu → on tente plusieurs noms de champs.
 function _bsdWsParse(msg) {
   const eid = msg.event_id ?? msg.eventId ?? msg.match_id ?? msg.matchId ?? msg.id ?? null;
@@ -36199,67 +36220,201 @@ function _bsdWsParse(msg) {
   return { eid, home, away, score, minute, status, ball, situation, pressureH, pressureA };
 }
 
-// v11.0 — Mappe stats BSD WS event frame → champs live_* canoniques PariScore
+// v12 — Mappe stats BSD WS event frame → champs live_* canoniques PariScore (38 champs vs 16 v11)
+// Drop-in remplaçant de _bsdWsApplyEventStats. Utilise _wsGuardedPatch (deep merge safe).
 function _bsdWsApplyEventStats(m, stats) {
   if (!stats || typeof stats !== 'object') return;
   const h = stats.home || {}, a = stats.away || {};
-  const pair = (kh, ka) => {
-    if (kh == null && ka == null) return undefined;
-    return { home: kh == null ? null : Number(kh), away: ka == null ? null : Number(ka) };
+  const pair = (vh, va) => {
+    const nh = vh == null ? null : Number(vh), na = va == null ? null : Number(va);
+    if (nh === null && na === null) return undefined;
+    return { home: nh, away: na };
+  };
+  const ratioObj = k => {
+    const vh = h[k], va = a[k];
+    if (vh == null && va == null) return undefined;
+    const map = v => (!v) ? null : (typeof v === 'object')
+      ? { value: v.value == null ? null : Number(v.value), total: v.total == null ? null : Number(v.total), pct: v.pct == null ? null : Number(v.pct) }
+      : { value: Number(v), total: null, pct: null };
+    return { home: map(vh), away: map(va) };
   };
   const ap = v => (v && typeof v === 'object' && 'pct' in v) ? Number(v.pct) : (v == null ? null : Number(v));
-  const mp = (k, mapper) => { const v = mapper(h[k], a[k]); if (v !== undefined) return v; return undefined; };
-  // Possession
-  if (h.ball_possession != null || a.ball_possession != null) m.live_possession = pair(h.ball_possession, a.ball_possession);
-  // Tirs
-  if (h.total_shots != null || a.total_shots != null) m.live_shots = pair(h.total_shots, a.total_shots);
-  if (h.shots_on_target != null || a.shots_on_target != null) m.live_shots_on_target = pair(h.shots_on_target, a.shots_on_target);
-  if (h.shots_off_target != null || a.shots_off_target != null) m.live_shots_off_target = pair(h.shots_off_target, a.shots_off_target);
-  if (h.shots_inside_box != null || a.shots_inside_box != null) m.live_shots_inside_box = pair(h.shots_inside_box, a.shots_inside_box);
-  if (h.blocked_shots != null || a.blocked_shots != null) m.live_shots_blocked = pair(h.blocked_shots, a.blocked_shots);
-  // Corners / fautes / cartons
-  if (h.corner_kicks != null || a.corner_kicks != null) m.live_corners = pair(h.corner_kicks, a.corner_kicks);
-  if (h.fouls != null || a.fouls != null) m.live_fouls = pair(h.fouls, a.fouls);
-  if (h.offsides != null || a.offsides != null) m.live_offsides = pair(h.offsides, a.offsides);
+  const p = pair; // shorthand
+
+  // ── Possession ─────────────────────────────────────────────────────────
+  const poss = p(h.ball_possession, a.ball_possession); if (poss !== undefined) _wsGuardedPatch(m, 'live_possession', poss);
+  // ── Tirs ───────────────────────────────────────────────────────────────
+  const shots = p(h.total_shots, a.total_shots); if (shots !== undefined) _wsGuardedPatch(m, 'live_shots', shots);
+  const sot = p(h.shots_on_target, a.shots_on_target); if (sot !== undefined) _wsGuardedPatch(m, 'live_shots_on_target', sot);
+  const sofft = p(h.shots_off_target, a.shots_off_target); if (sofft !== undefined) _wsGuardedPatch(m, 'live_shots_off_target', sofft);
+  const sib = p(h.shots_inside_box, a.shots_inside_box); if (sib !== undefined) _wsGuardedPatch(m, 'live_shots_inside_box', sib);
+  const sob = p(h.shots_outside_box, a.shots_outside_box); if (sob !== undefined) _wsGuardedPatch(m, 'live_shots_outside_box', sob);
+  const blk = p(h.blocked_shots, a.blocked_shots); if (blk !== undefined) _wsGuardedPatch(m, 'live_shots_blocked', blk);
+  const hw = p(h.hit_woodwork, a.hit_woodwork); if (hw !== undefined) _wsGuardedPatch(m, 'live_woodwork', hw);
+  // ── Corners / fautes / cartons ─────────────────────────────────────────
+  const ck = p(h.corner_kicks, a.corner_kicks); if (ck !== undefined) _wsGuardedPatch(m, 'live_corners', ck);
+  const fouls = p(h.fouls, a.fouls); if (fouls !== undefined) _wsGuardedPatch(m, 'live_fouls', fouls);
+  const offs = p(h.offsides, a.offsides); if (offs !== undefined) _wsGuardedPatch(m, 'live_offsides', offs);
   if (h.yellow_cards != null || a.yellow_cards != null || h.red_cards != null || a.red_cards != null) {
-    m.live_cards = {
+    _wsGuardedPatch(m, 'live_cards', {
       home: { yellow: Number(h.yellow_cards || 0), red: Number(h.red_cards || 0) },
       away: { yellow: Number(a.yellow_cards || 0), red: Number(a.red_cards || 0) },
-    };
+    });
   }
-  // Passes
-  if (h.passes != null || a.passes != null) m.live_passes = pair(h.passes, a.passes);
-  if (h.pass_accuracy_pct != null || a.pass_accuracy_pct != null) m.live_pass_accuracy = pair(ap(h.pass_accuracy_pct), ap(a.pass_accuracy_pct));
-  else if (h.accurate_passes || a.accurate_passes) m.live_pass_accuracy = pair(ap(h.accurate_passes), ap(a.accurate_passes));
-  // Occasions
-  if (h.big_chances != null || a.big_chances != null) m.live_big_chances = pair(h.big_chances, a.big_chances);
-  if (h.big_chances_missed != null || a.big_chances_missed != null) m.live_big_chances_missed = pair(h.big_chances_missed, a.big_chances_missed);
-  // xG
-  if (h.xg != null || a.xg != null) m.live_xg = pair(h.xg, a.xg);
-  // Pénétration zone
-  if (h.touches_in_penalty_area != null || a.touches_in_penalty_area != null) m.live_touches_opp_box = pair(h.touches_in_penalty_area, a.touches_in_penalty_area);
-  // Momentum premium (~2min refresh)
-  // bd 8c5 fix: BSD WS publie un OBJET {home,away} (percentages instantanes) qui ECRASAIT
-  // l'ARRAY [{min,v}] type Sofa attendu par le frontend (_renderMomentumBars + drawLDMomentumSVG).
-  // Resultat = barres momentum plates/vides La Liga (forte couverture BSD WS).
-  // Solution : champ dedie `live_momentum_pct` (objet) — preserve data BSD sans
-  // clobber l'array Sofa que le SVG consomme. Frontend continue de lire `live_momentum` array.
+  // ── Passes ─────────────────────────────────────────────────────────────
+  const passes = p(h.passes || h.accurate_passes, a.passes || a.accurate_passes); if (passes !== undefined) _wsGuardedPatch(m, 'live_passes', passes);
+  const passAcc = p(ap(h.pass_accuracy_pct), ap(a.pass_accuracy_pct)); if (passAcc !== undefined) _wsGuardedPatch(m, 'live_pass_accuracy', passAcc);
+  // ── Occasions ──────────────────────────────────────────────────────────
+  const bc = p(h.big_chances, a.big_chances); if (bc !== undefined) _wsGuardedPatch(m, 'live_big_chances', bc);
+  const bcm = p(h.big_chances_missed, a.big_chances_missed); if (bcm !== undefined) _wsGuardedPatch(m, 'live_big_chances_missed', bcm);
+  const bcs = p(h.big_chances_scored, a.big_chances_scored); if (bcs !== undefined) _wsGuardedPatch(m, 'live_big_chances_scored', bcs);
+  // ── xG ─────────────────────────────────────────────────────────────────
+  const xg = p(h.xg || h.expected_goals, a.xg || a.expected_goals); if (xg !== undefined) _wsGuardedPatch(m, 'live_xg', xg);
+  // ── Zone pénalty ───────────────────────────────────────────────────────
+  const tipb = p(h.touches_in_penalty_area, a.touches_in_penalty_area); if (tipb !== undefined) _wsGuardedPatch(m, 'live_touches_opp_box', tipb);
+  const fte = p(h.final_third_entries, a.final_third_entries); if (fte !== undefined) _wsGuardedPatch(m, 'live_final_third_entries', fte);
+  const ftp = p(h.final_third_phase && h.final_third_phase.pct != null ? Number(h.final_third_phase.pct) : null,
+                a.final_third_phase && a.final_third_phase.pct != null ? Number(a.final_third_phase.pct) : null);
+  if (ftp !== undefined) _wsGuardedPatch(m, 'live_final_third_pct', ftp);
+  // ── Gardien ────────────────────────────────────────────────────────────
+  const saves = p(h.goalkeeper_saves || h.total_saves, a.goalkeeper_saves || a.total_saves); if (saves !== undefined) _wsGuardedPatch(m, 'live_saves', saves);
+  const gp = p(h.goals_prevented, a.goals_prevented); if (gp !== undefined) _wsGuardedPatch(m, 'live_goals_prevented', gp);
+  // ── Récupérations / duels ──────────────────────────────────────────────
+  const inter = p(h.interceptions, a.interceptions); if (inter !== undefined) _wsGuardedPatch(m, 'live_interceptions', inter);
+  const recov = p(h.recoveries, a.recoveries); if (recov !== undefined) _wsGuardedPatch(m, 'live_recoveries', recov);
+  const tack = p(h.tackles || h.total_tackles, a.tackles || a.total_tackles); if (tack !== undefined) _wsGuardedPatch(m, 'live_tackles', tack);
+  const aerials = ratioObj('aerial_duels'); if (aerials !== undefined) _wsGuardedPatch(m, 'live_aerial_duels', aerials);
+  const groundD = ratioObj('ground_duels'); if (groundD !== undefined) _wsGuardedPatch(m, 'live_ground_duels', groundD);
+  const dribs = ratioObj('dribbles'); if (dribs !== undefined) _wsGuardedPatch(m, 'live_dribbles', dribs);
+  const disp = p(h.dispossessed, a.dispossessed); if (disp !== undefined) _wsGuardedPatch(m, 'live_dispossessed', disp);
+  // ── Transitions / balle arrêtée ────────────────────────────────────────
+  const crosses = ratioObj('crosses'); if (crosses !== undefined) _wsGuardedPatch(m, 'live_crosses', crosses);
+  const longB = ratioObj('long_balls'); if (longB !== undefined) _wsGuardedPatch(m, 'live_long_balls', longB);
+  const clears = p(h.clearances, a.clearances); if (clears !== undefined) _wsGuardedPatch(m, 'live_clearances', clears);
+  const throwI = p(h.throw_ins, a.throw_ins); if (throwI !== undefined) _wsGuardedPatch(m, 'live_throw_ins', throwI);
+  const gkicks = p(h.goal_kicks, a.goal_kicks); if (gkicks !== undefined) _wsGuardedPatch(m, 'live_goal_kicks', gkicks);
+  const fk = p(h.free_kicks, a.free_kicks); if (fk !== undefined) _wsGuardedPatch(m, 'live_free_kicks', fk);
+  // ── Momentum pct (bd 8c5: objet distinct de l'array Sofa) ──────────────
   if (h.attack_pct != null || a.attack_pct != null || h.dangerous_attack_pct != null || a.dangerous_attack_pct != null) {
-    m.live_momentum_pct = {
-      home: {
-        attack_pct: h.attack_pct == null ? null : Number(h.attack_pct),
-        dangerous_attack_pct: h.dangerous_attack_pct == null ? null : Number(h.dangerous_attack_pct),
-        ball_safe_pct: h.ball_safe_pct == null ? null : Number(h.ball_safe_pct),
-      },
-      away: {
-        attack_pct: a.attack_pct == null ? null : Number(a.attack_pct),
-        dangerous_attack_pct: a.dangerous_attack_pct == null ? null : Number(a.dangerous_attack_pct),
-        ball_safe_pct: a.ball_safe_pct == null ? null : Number(a.ball_safe_pct),
-      },
-    };
+    _wsGuardedPatch(m, 'live_momentum_pct', {
+      home: { attack_pct: h.attack_pct == null ? null : Number(h.attack_pct), dangerous_attack_pct: h.dangerous_attack_pct == null ? null : Number(h.dangerous_attack_pct), ball_safe_pct: h.ball_safe_pct == null ? null : Number(h.ball_safe_pct) },
+      away: { attack_pct: a.attack_pct == null ? null : Number(a.attack_pct), dangerous_attack_pct: a.dangerous_attack_pct == null ? null : Number(a.dangerous_attack_pct), ball_safe_pct: a.ball_safe_pct == null ? null : Number(a.ball_safe_pct) },
+    });
   }
-  // Compteurs absolus (utiles pour danger attacks legacy)
-  if (h.dangerous_attack != null || a.dangerous_attack != null) m.live_dangerous_attacks = pair(h.dangerous_attack, a.dangerous_attack);
+  // ── Danger attacks (compteurs absolus legacy) ──────────────────────────
+  const da = p(h.dangerous_attack, a.dangerous_attack); if (da !== undefined) _wsGuardedPatch(m, 'live_dangerous_attacks', da);
+}
+
+// ── DTO event frame — remplace le bloc inline if (t === 'event') ──────────
+function _bsdWsDTOEvent(msg, m, alertHook) {
+  const prevScore = m.live_score;
+  if (msg.score) {
+    const hs = msg.score.home, as_ = msg.score.away;
+    if (hs != null && as_ != null) _wsGuardedPatch(m, 'live_score', hs + '-' + as_);
+  }
+  if (msg.time) {
+    if (msg.time.minute != null) _wsGuardedPatch(m, 'live_minute', Number(msg.time.minute));
+    if (msg.time.status) _wsGuardedPatch(m, 'status', msg.time.status);
+    if (msg.time.period) _wsGuardedPatch(m, 'live_period', msg.time.period);
+    if (msg.time.added_time != null) _wsGuardedPatch(m, 'live_added_time', Number(msg.time.added_time));
+  }
+  _bsdWsApplyEventStats(m, msg.stats);
+  if (typeof alertHook === 'function') try { alertHook(m, prevScore); } catch (_) {}
+  return prevScore;
+}
+
+// ── Incidents — normalise un incident BSD REST → format PariScore ─────────
+function _bsdNormalizeIncident(inc) {
+  if (!inc || !inc.type) return null;
+  const tLow = String(inc.type).toLowerCase().replace(/[-_\s]/g, '');
+  const SUPPORTED = new Set(['goal','card','yellowcard','redcard','substitution','injurytime','var','period','missedpenalty','penalty']);
+  if (!SUPPORTED.has(tLow) && !tLow.includes('card') && !tLow.includes('goal')) return null;
+  const out = { type: tLow, minute: inc.minute != null ? Number(inc.minute) : null, added_time: inc.added_time != null ? Number(inc.added_time) : null, is_home: inc.is_home ?? null, ts: Date.now() };
+  if (tLow === 'goal') {
+    out.player = inc.player || null; out.player_id = inc.player_id || null; out.assist = inc.assist || null;
+    out.goal_type = inc.goal_type || 'regular'; out.home_score = inc.home_score != null ? Number(inc.home_score) : null; out.away_score = inc.away_score != null ? Number(inc.away_score) : null;
+    if (Array.isArray(inc.sequence) && inc.sequence.length) {
+      out.sequence = inc.sequence.slice(0, 10).map(s => ({ event: s.event, player: s.player, pid: s.pid, pos: s.pos ? { x: Number(s.pos.x), y: Number(s.pos.y) } : null, end: s.end ? { x: Number(s.end.x), y: Number(s.end.y) } : null, assist: s.assist || false, body: s.body || null, gk: s.gk ? { x: Number(s.gk.x), y: Number(s.gk.y) } : null }));
+    }
+  } else if (tLow === 'injurytime') { out.length = inc.length != null ? Number(inc.length) : null;
+  } else if (tLow === 'substitution') { out.player_in = inc.player_in || inc.player || null; out.player_out = inc.player_out || null; out.player_in_id = inc.player_in_id || null; out.player_out_id = inc.player_out_id || null;
+  } else if (tLow.includes('card')) { out.player = inc.player || null; out.player_id = inc.player_id || null; out.card = tLow.includes('red') ? 'red' : 'yellow'; }
+  return out;
+}
+
+/** Fusionne incidents REST dans m.live_incidents (dédup par minute|type|player_id). */
+function _bsdMergeIncidents(m, incidents) {
+  if (!Array.isArray(incidents) || !incidents.length) return;
+  if (!Array.isArray(m.live_incidents)) m.live_incidents = [];
+  const _key = inc => `${inc.minute}|${inc.type}|${inc.player_id || inc.player || inc.length || ''}`;
+  const existing = new Set(m.live_incidents.map(_key));
+  let added = 0;
+  for (const raw of incidents) {
+    const norm = _bsdNormalizeIncident(raw);
+    if (!norm) continue;
+    const k = _key(norm);
+    if (existing.has(k)) continue;
+    existing.add(k); m.live_incidents.push(norm); added++;
+  }
+  if (added > 0) {
+    m.live_incidents.sort((a, b) => (a.minute || 0) - (b.minute || 0));
+    if (m.live_incidents.length > 50) m.live_incidents = m.live_incidents.slice(-50);
+  }
+}
+
+/** Fusionne shotmap REST → live_momentum (timeline), live_xg_per_minute, live_shotmap. */
+function _bsdMergeShotmap(m, data) {
+  if (!data || typeof data !== 'object') return;
+  // Momentum timeline [{m,v}] — Array.isArray guard préservé frontend (bd 8c5)
+  if (Array.isArray(data.momentum) && data.momentum.length) {
+    const cleaned = data.momentum.filter(e => e && e.m != null && e.v != null).map(e => ({ m: Number(e.m), v: Math.max(-100, Math.min(100, Number(e.v))) })).filter(e => Number.isFinite(e.m) && Number.isFinite(e.v));
+    if (cleaned.length) m.live_momentum = cleaned;
+  }
+  // xG/minute [{m, xg_home, xg_away, cum_home, cum_away}]
+  if (Array.isArray(data.xg_per_minute) && data.xg_per_minute.length) {
+    const cleaned = data.xg_per_minute.filter(e => e && e.m != null).map(e => ({ m: Number(e.m), xg_home: parseFloat(Number(e.xg_home || 0).toFixed(3)), xg_away: parseFloat(Number(e.xg_away || 0).toFixed(3)), cum_home: e.cum_home != null ? parseFloat(Number(e.cum_home).toFixed(3)) : null, cum_away: e.cum_away != null ? parseFloat(Number(e.cum_away).toFixed(3)) : null })).filter(e => Number.isFinite(e.m));
+    if (cleaned.length) m.live_xg_per_minute = cleaned;
+  }
+  // Shotmap per-shot (capped 50)
+  if (Array.isArray(data.shotmap) && data.shotmap.length) {
+    const cleaned = data.shotmap.filter(s => s && s.min != null && s.xg != null && Number.isFinite(Number(s.xg))).map(s => ({ min: Number(s.min), home: !!s.home, type: s.type || 'miss', xg: parseFloat(Number(s.xg).toFixed(4)), xgot: s.xgot != null ? parseFloat(Number(s.xgot).toFixed(4)) : null, gml: s.gml || null, sit: s.sit || null, body: s.body || null, gtype: s.gtype || null, player_id: s.player_id || null, pos: s.pos ? { x: Number(s.pos.x), y: Number(s.pos.y) } : null, added: s.added || null })).sort((a, b) => a.min - b.min).slice(0, 50);
+    if (cleaned.length) m.live_shotmap = cleaned;
+  }
+}
+
+// ── Poll REST enrichment — incidents (30s) + shotmap (60s) pour matchs WS live ─
+const _bsdLiveEnrichState = new Map(); // matchId → { lastIncidents, lastShotmap }
+const _BSD_ENRICH_INC_TTL  = 30 * 1000;
+const _BSD_ENRICH_SHOT_TTL = 60 * 1000;
+
+async function pollBSDLiveEnrichment() {
+  const targets = db.matches.filter(m => m && m._bsd_event_id != null && m.live_websocket && (m.is_live || (m.live_score && m.live_score !== '0-0')));
+  if (!targets.length) return;
+  const now = Date.now();
+  for (const m of targets) {
+    const eid = m._bsd_event_id;
+    const st = _bsdLiveEnrichState.get(m.id) || {};
+    // Incidents
+    if (!st.lastIncidents || (now - st.lastIncidents) > _BSD_ENRICH_INC_TTL) {
+      try {
+        const res = await bsdFetch(`/api/v2/events/${eid}/incidents/`, `bsd_inc_${eid}`, _BSD_ENRICH_INC_TTL);
+        if (res && res.status === 200) {
+          const list = (res.body && res.body.incidents) || (Array.isArray(res.body) ? res.body : null);
+          if (list) { _bsdMergeIncidents(m, list); st.lastIncidents = now; }
+        }
+      } catch (e) { console.warn(`  [BSD-Enrich] incidents ${eid}:`, e.message); }
+    }
+    // Shotmap (momentum + xG/min)
+    if (!st.lastShotmap || (now - st.lastShotmap) > _BSD_ENRICH_SHOT_TTL) {
+      try {
+        const res = await bsdFetch(`/api/v2/events/${eid}/shotmap/`, `bsd_shot_${eid}`, _BSD_ENRICH_SHOT_TTL);
+        if (res && res.status === 200 && res.body) { _bsdMergeShotmap(m, res.body); st.lastShotmap = now; }
+      } catch (e) { console.warn(`  [BSD-Enrich] shotmap ${eid}:`, e.message); }
+    }
+    _bsdLiveEnrichState.set(m.id, st);
+  }
+  // Purge entrées matchs terminés
+  for (const [id] of _bsdLiveEnrichState) { if (!db.matches.find(m => m && m.id === id)) _bsdLiveEnrichState.delete(id); }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -36408,44 +36563,43 @@ function _bsdWsHandleJSON(msg) {
     if (msg.code === 'limit') console.warn('  [BSD-WS] cap subscriptions atteint — pending=' + _bsdWsPendingSubs.length);
     return;
   }
-  // Frame event (~30s) → patch stats canoniques + broadcast SSE typé
+  // Frame event (~30s) → DTO v12 + broadcast SSE typé
   if (t === 'event') {
     const eid = msg.event_id;
     const m = _bsdWsLookupMatch(eid, msg.home && msg.home.name, msg.away && msg.away.name);
     if (!m) return;
-    const _vl02_prevScore = m.live_score;  // bd vl02 capture pre-update pour goal delta detection
-    if (msg.score) {
-      const hs = msg.score.home, as = msg.score.away;
-      if (hs != null && as != null) m.live_score = hs + '-' + as;
-    }
-    if (msg.time) {
-      if (msg.time.minute != null) m.live_minute = Number(msg.time.minute);
-      if (msg.time.status) m.status = msg.time.status;
-      if (msg.time.period) m.live_period = msg.time.period;
-    }
-    _bsdWsApplyEventStats(m, msg.stats);
-    try { _checkLiveAlerts(m, _vl02_prevScore); } catch (_) { /* swallow — alertes non-bloquantes */ }
+    const _vl02_prevScore = _bsdWsDTOEvent(msg, m, _checkLiveAlerts);
     if (sseClients.size > 0) {
       broadcastSSE('ws_event', {
-        id: m.id,
-        event_id: eid,
+        id: m.id, event_id: eid,
         score: m.live_score || null,
         minute: m.live_minute || null,
+        added_time: m.live_added_time || null,
         status: m.status || null,
         period: m.live_period || null,
+        // Stats de base (existant)
         live_possession: m.live_possession || null,
         live_shots: m.live_shots || null,
         live_shots_on_target: m.live_shots_on_target || null,
         live_corners: m.live_corners || null,
         live_xg: m.live_xg || null,
         live_big_chances: m.live_big_chances || null,
-        // bd 8c5 fix: garde Array.isArray pour proteger les consumers frontend (SVG)
-        // d'un eventuel objet legacy contaminant. live_momentum_pct expose separement.
-        live_momentum: (Array.isArray(m.live_momentum) ? m.live_momentum : null),
-        live_momentum_pct: m.live_momentum_pct || null,
         live_cards: m.live_cards || null,
         live_dangerous_attacks: m.live_dangerous_attacks || null,
         live_touches_opp_box: m.live_touches_opp_box || null,
+        // bd 8c5 fix: Array.isArray guard momentum array vs pct objet
+        live_momentum: (Array.isArray(m.live_momentum) ? m.live_momentum : null),
+        live_momentum_pct: m.live_momentum_pct || null,
+        // v12 nouveaux champs
+        live_saves: m.live_saves || null,
+        live_interceptions: m.live_interceptions || null,
+        live_recoveries: m.live_recoveries || null,
+        live_aerial_duels: m.live_aerial_duels || null,
+        live_crosses: m.live_crosses || null,
+        live_woodwork: m.live_woodwork || null,
+        live_goals_prevented: m.live_goals_prevented || null,
+        live_tackles: m.live_tackles || null,
+        live_clearances: m.live_clearances || null,
       });
     }
     return;
