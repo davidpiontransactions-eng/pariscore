@@ -36334,6 +36334,7 @@ function _bsdNormalizeIncident(inc) {
   if (!inc || !inc.type) return null;
   const tLow = String(inc.type).toLowerCase().replace(/[-_\s]/g, '');
   // WR-04 fix: rely solely on SUPPORTED — fallback substrings were allowing unknown types through
+  // BUG-3 fix: generic 'card' type from BSD must pass through (mapped to yellow/red via card field below)
   const SUPPORTED = new Set(['goal','card','yellowcard','redcard','substitution','injurytime','var','period','missedpenalty','penalty']);
   if (!SUPPORTED.has(tLow)) return null;
   const out = { type: tLow, minute: inc.minute != null ? Number(inc.minute) : null, added_time: inc.added_time != null ? Number(inc.added_time) : null, is_home: inc.is_home ?? null, ts: Date.now() };
@@ -36375,7 +36376,8 @@ function _bsdMergeShotmap(m, data) {
   if (!data || typeof data !== 'object') return;
   // Momentum timeline [{m,v}] — Array.isArray guard préservé frontend (bd 8c5)
   if (Array.isArray(data.momentum) && data.momentum.length) {
-    const cleaned = data.momentum.filter(e => e && e.m != null && e.v != null).map(e => ({ m: Number(e.m), v: Math.max(-100, Math.min(100, Number(e.v))) })).filter(e => Number.isFinite(e.m) && Number.isFinite(e.v));
+    // BUG-2 fix: frontend reads pt.min — BSD shotmap uses key 'm', normalize to 'min'
+    const cleaned = data.momentum.filter(e => e && e.m != null && e.v != null).map(e => ({ min: Number(e.m), v: Math.max(-100, Math.min(100, Number(e.v))) })).filter(e => Number.isFinite(e.min) && Number.isFinite(e.v));
     // WR-05: direct write intentional — _wsGuardedPatch skips undefined/null;
     // live_momentum must remain Array (Array.isArray guard in frontend drawLDMomentumSVG).
     if (cleaned.length) m.live_momentum = cleaned;
@@ -36399,7 +36401,8 @@ const _BSD_ENRICH_SHOT_TTL = 60 * 1000;
 
 async function pollBSDLiveEnrichment() {
   // WR-02 fix: trust is_live as sole gate — avoids excluding 0-0 matches
-  const targets = db.matches.filter(m => m && m._bsd_event_id != null && m.live_websocket && m.is_live);
+  // BUG-1 fix: live_websocket never assigned to db.matches entries — drop that gate
+  const targets = db.matches.filter(m => m && m._bsd_event_id != null && m.is_live);
   if (!targets.length) return;
   const now = Date.now();
   for (const m of targets) {
@@ -36588,8 +36591,8 @@ function _bsdWsHandleJSON(msg) {
       broadcastSSE('ws_event', {
         id: m.id, event_id: eid,
         score: m.live_score || null,
-        minute: m.live_minute || null,
-        added_time: m.live_added_time || null,
+        minute: m.live_minute ?? null,
+        added_time: m.live_added_time ?? null,
         status: m.status || null,
         period: m.live_period || null,
         // Stats de base (existant)
