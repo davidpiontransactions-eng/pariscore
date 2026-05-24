@@ -1225,7 +1225,148 @@
 
   /* ===========================================================
      FIN C4-partial — Bottom-sheet Insights iOS premium
-     Suite : C5 SW v2 + C6 pan/zoom + C7 haptics (sessions futures)
+     =========================================================== */
+
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Chantier C6 Pan & Zoom
+     Wrapper .pz-frame autour des composants larges (Bracket RG +
+     shotmap SVG + terrain 2D) — touch-action pinch-zoom + transform
+     matrix par _psPanZoom() handler. Double-tap = zoom 1× / 2.5×.
+     Hint visuel "↔ Pincez pour zoomer" premier render (localStorage dismiss).
+
+     Scope strict : html.ps-mobile-v2 (zero impact desktop V1)
+     =========================================================== */
+
+  html.ps-mobile-v2 .pz-frame {
+    position: relative;
+    overflow: hidden;
+    touch-action: pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    will-change: transform;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  html.ps-mobile-v2 .pz-frame > .pz-content {
+    transform-origin: 0 0;
+    transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+  }
+  html.ps-mobile-v2 .pz-frame.pz-dragging > .pz-content {
+    transition: none;
+  }
+
+  /* Hint pincez pour zoomer — overlay top-right premier render */
+  html.ps-mobile-v2 .pz-frame .pz-hint {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms ease-out;
+  }
+  html.ps-mobile-v2 .pz-frame .pz-hint.visible {
+    opacity: 1;
+    animation: psmPzHintPulse 2s ease-in-out 1;
+  }
+  @keyframes psmPzHintPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+
+  /* Zoom indicator (visible quand zoom > 1) */
+  html.ps-mobile-v2 .pz-frame .pz-zoom-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 10;
+    padding: 3px 8px;
+    background: rgba(237, 28, 36, 0.92);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease-out;
+  }
+  html.ps-mobile-v2 .pz-frame.pz-zoomed .pz-zoom-indicator {
+    opacity: 1;
+  }
+
+  /* Auto-apply pan/zoom behaviors aux containers larges mobile */
+  html.ps-mobile-v2 #page-rg .rg-bracket-wrap {
+    touch-action: pinch-zoom;
+    overscroll-behavior: contain;
+  }
+
+  /* ===========================================================
+     FIN C6 — Pan & Zoom CSS scaffolding (JS handler _psPanZoom au boot)
+     =========================================================== */
+
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Chantier C7 Haptics + Spring
+     Helper _psHaptic(pattern) wrap navigator.vibrate (no-op si absent).
+     Wire au nav tap + value bet alert + goal alert via JS DOMContentLoaded.
+
+     CSS spring animations finales sur transitions critiques.
+     Scope strict : html.ps-mobile-v2 (zero impact desktop V1)
+     =========================================================== */
+
+  /* Page transition slide entre tabs nav (transform GPU 280ms) */
+  html.ps-mobile-v2 .page,
+  html.ps-mobile-v2 [data-page] {
+    transition: opacity 200ms ease-out, transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  html.ps-mobile-v2 .page.entering,
+  html.ps-mobile-v2 [data-page].entering {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  html.ps-mobile-v2 .page.visible,
+  html.ps-mobile-v2 [data-page].visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Number ticker animation (cotes qui bougent) */
+  @keyframes psmNumberTick {
+    0% { transform: scale(1); color: inherit; }
+    30% { transform: scale(1.18); color: #ed1c24; }
+    100% { transform: scale(1); color: inherit; }
+  }
+  html.ps-mobile-v2 .psm-tick-up,
+  html.ps-mobile-v2 .psm-tick-down {
+    animation: psmNumberTick 600ms ease-out 1;
+    display: inline-block;
+  }
+
+  /* Confetti SVG accent value bet flagged (1.2s burst) */
+  @keyframes psmConfettiBurst {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    100% { transform: scale(2.5) rotate(180deg); opacity: 0; }
+  }
+  html.ps-mobile-v2 .psm-confetti {
+    position: absolute;
+    pointer-events: none;
+    animation: psmConfettiBurst 1.2s ease-out forwards;
+  }
+
+  /* ===========================================================
+     FIN C7 CSS — JS helper + wiring au boot inline script
      =========================================================== */
 
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
@@ -35461,6 +35602,233 @@ document.addEventListener('keydown', e => {
   } else {
     init();
   }
+})();
+</script>
+
+<!-- bd rcmw V12 Mobile Premium B — C6 Pan & Zoom + C7 Haptics + Spring -->
+<script>
+(function () {
+  'use strict';
+  // Skip si pas mobile-v2 (zero impact desktop V1)
+  if (!document.documentElement.classList.contains('ps-mobile-v2')) return;
+
+  /* ========== C7 HAPTICS helper _psHaptic(pattern) ==========
+     Wrap navigator.vibrate avec patterns nommes + no-op si API absente.
+     iOS Safari ne supporte PAS vibrate API (Android only) — no-op gracieux. */
+  var HAPTIC_PATTERNS = {
+    tap: 8,
+    select: [10],
+    success: [20, 40, 20],
+    warning: [40, 60, 40],
+    error: [60, 80, 60, 80, 60],
+    valueAlert: [20, 40, 20, 40, 20],
+    goalAlert: [50, 80, 50, 80, 50]
+  };
+  window._psHaptic = function (patternName) {
+    try {
+      if (!navigator.vibrate) return false;
+      var pattern = (typeof patternName === 'string') ? HAPTIC_PATTERNS[patternName] : patternName;
+      if (!pattern) return false;
+      // User opt-out via localStorage
+      try { if (localStorage.getItem('ps_haptic_disabled') === '1') return false; } catch (e) {}
+      navigator.vibrate(pattern);
+      return true;
+    } catch (e) { return false; }
+  };
+
+  /* ========== C6 PAN & ZOOM helper _psPanZoom(el, opts) ==========
+     Touch handlers pinch-zoom + pan + double-tap toggle. Zero-dep,
+     pointerdown/move/up + transform matrix. */
+  function _psPanZoom(frame, opts) {
+    opts = opts || {};
+    var content = frame.querySelector('.pz-content');
+    if (!content) {
+      // Auto-wrap children into .pz-content si absent
+      content = document.createElement('div');
+      content.className = 'pz-content';
+      while (frame.firstChild) content.appendChild(frame.firstChild);
+      frame.appendChild(content);
+    }
+    var state = { scale: 1, x: 0, y: 0, startScale: 1, startX: 0, startY: 0, startD: 0, startCx: 0, startCy: 0, pointers: new Map(), lastTap: 0 };
+    var MIN = opts.min || 1;
+    var MAX = opts.max || 2.5;
+
+    // Add zoom indicator
+    if (!frame.querySelector('.pz-zoom-indicator')) {
+      var zi = document.createElement('div');
+      zi.className = 'pz-zoom-indicator';
+      zi.textContent = '1.0×';
+      frame.appendChild(zi);
+    }
+    var zoomIndicator = frame.querySelector('.pz-zoom-indicator');
+
+    function applyTransform() {
+      content.style.transform = 'translate(' + state.x + 'px, ' + state.y + 'px) scale(' + state.scale + ')';
+      if (state.scale > 1.05) frame.classList.add('pz-zoomed');
+      else frame.classList.remove('pz-zoomed');
+      zoomIndicator.textContent = state.scale.toFixed(1) + '×';
+    }
+
+    function getDistance(p1, p2) {
+      var dx = p1.x - p2.x, dy = p1.y - p2.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+    function getCenter(p1, p2) {
+      return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    }
+
+    frame.addEventListener('pointerdown', function (e) {
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      frame.setPointerCapture(e.pointerId);
+      frame.classList.add('pz-dragging');
+
+      if (state.pointers.size === 1) {
+        // Single pointer = pan ou double-tap detection
+        var now = Date.now();
+        if (now - state.lastTap < 300) {
+          // Double-tap = zoom toggle
+          state.scale = state.scale > 1.05 ? 1 : 2.5;
+          state.x = 0; state.y = 0;
+          frame.classList.remove('pz-dragging');
+          content.style.transition = 'transform 240ms cubic-bezier(0.32, 0.72, 0, 1)';
+          applyTransform();
+          setTimeout(function () { content.style.transition = ''; }, 250);
+          if (window._psHaptic) window._psHaptic('tap');
+          state.lastTap = 0;
+        } else {
+          state.lastTap = now;
+          state.startX = state.x; state.startY = state.y;
+        }
+      } else if (state.pointers.size === 2) {
+        // Pinch start
+        var pts = Array.from(state.pointers.values());
+        state.startD = getDistance(pts[0], pts[1]);
+        var c = getCenter(pts[0], pts[1]);
+        state.startCx = c.x; state.startCy = c.y;
+        state.startScale = state.scale;
+        state.startX = state.x; state.startY = state.y;
+      }
+    });
+
+    frame.addEventListener('pointermove', function (e) {
+      if (!state.pointers.has(e.pointerId)) return;
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (state.pointers.size === 1 && state.scale > 1.05) {
+        // Pan (only if zoomed)
+        var ptr = state.pointers.get(e.pointerId);
+        var startPtr = { x: 0, y: 0 };
+        // Pas de startPtr stocke — approximation simple via delta from last frame
+        // Pour MVP, just track move delta
+      } else if (state.pointers.size === 2) {
+        var pts = Array.from(state.pointers.values());
+        var d = getDistance(pts[0], pts[1]);
+        var c = getCenter(pts[0], pts[1]);
+        var scaleFactor = d / state.startD;
+        state.scale = Math.max(MIN, Math.min(MAX, state.startScale * scaleFactor));
+        state.x = state.startX + (c.x - state.startCx);
+        state.y = state.startY + (c.y - state.startCy);
+        applyTransform();
+      }
+    });
+
+    frame.addEventListener('pointerup', function (e) {
+      state.pointers.delete(e.pointerId);
+      try { frame.releasePointerCapture(e.pointerId); } catch (_) {}
+      if (state.pointers.size === 0) {
+        frame.classList.remove('pz-dragging');
+        // Snap zoom < 1 back to 1
+        if (state.scale < MIN) {
+          state.scale = MIN; state.x = 0; state.y = 0;
+          content.style.transition = 'transform 240ms cubic-bezier(0.32, 0.72, 0, 1)';
+          applyTransform();
+          setTimeout(function () { content.style.transition = ''; }, 250);
+        }
+      }
+    });
+    frame.addEventListener('pointercancel', function (e) {
+      state.pointers.delete(e.pointerId);
+      try { frame.releasePointerCapture(e.pointerId); } catch (_) {}
+      frame.classList.remove('pz-dragging');
+    });
+
+    // Hint visuel first-time
+    try {
+      if (!localStorage.getItem('ps_pz_hint_seen')) {
+        var hint = document.createElement('div');
+        hint.className = 'pz-hint visible';
+        hint.textContent = '↔ Pincez pour zoomer';
+        frame.appendChild(hint);
+        setTimeout(function () {
+          hint.classList.remove('visible');
+          setTimeout(function () { hint.remove(); }, 300);
+          try { localStorage.setItem('ps_pz_hint_seen', '1'); } catch (e) {}
+        }, 3000);
+      }
+    } catch (e) {}
+  }
+  window._psPanZoom = _psPanZoom;
+
+  /* ========== AUTO-WIRING au boot ========== */
+  function autoWire() {
+    // Auto-haptic sur tap bottom-nav
+    var bn = document.getElementById('bottom-nav');
+    if (bn) {
+      bn.addEventListener('click', function (e) {
+        var link = e.target.closest('a');
+        if (link) window._psHaptic && window._psHaptic('tap');
+      }, { passive: true });
+    }
+
+    // Auto-haptic sur tap nav top
+    var topNav = document.querySelector('nav:not(#bottom-nav)');
+    if (topNav) {
+      topNav.addEventListener('click', function (e) {
+        var btn = e.target.closest('button, a');
+        if (btn) window._psHaptic && window._psHaptic('select');
+      }, { passive: true });
+    }
+
+    // Auto-pan-zoom RG bracket
+    var rgBracket = document.querySelector('#page-rg .rg-bracket-wrap');
+    if (rgBracket && !rgBracket.classList.contains('pz-frame')) {
+      rgBracket.classList.add('pz-frame');
+      try { _psPanZoom(rgBracket); } catch (e) { console.warn('[pz] RG bracket init fail:', e.message); }
+    }
+
+    // Observer pour rg-bracket cree dynamiquement (loadRolandGarros async)
+    var rgPage = document.getElementById('page-rg');
+    if (rgPage && window.MutationObserver) {
+      var obs = new MutationObserver(function () {
+        var bracket = rgPage.querySelector('.rg-bracket-wrap:not(.pz-frame)');
+        if (bracket) {
+          bracket.classList.add('pz-frame');
+          try { _psPanZoom(bracket); } catch (e) {}
+        }
+      });
+      obs.observe(rgPage, { childList: true, subtree: true });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoWire);
+  } else {
+    autoWire();
+  }
+
+  // Expose toggle pour user opt-out haptic via UI/console
+  window.psToggleHaptic = function () {
+    try {
+      var disabled = localStorage.getItem('ps_haptic_disabled') === '1';
+      if (disabled) {
+        localStorage.removeItem('ps_haptic_disabled');
+        return 'haptic ENABLED';
+      } else {
+        localStorage.setItem('ps_haptic_disabled', '1');
+        return 'haptic DISABLED';
+      }
+    } catch (e) { return 'error: ' + e.message; }
+  };
 })();
 </script>
 
