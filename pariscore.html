@@ -1709,6 +1709,228 @@
      =========================================================== */
 
   /* ===========================================================
+     bd fh9h — Smart Live Bets (Action Cards momentum-driven)
+     Section TIER 2.5 entre PIT et EDGE-STRIP dans ps-live-tennis-sheet.
+     Visible des tier "half" (60vh) si stack non vide. 3 paliers tiering
+     slate/vert/or pulse selon confiance regle. Stack max 3 cartes.
+     Anim fade-in-up iOS cubic-bezier 320ms + gauge fill 600ms.
+     Scope strict : html.ps-mobile-v2 + media query desktop >=1024px
+     (zero impact desktop V1 si sheet pas ouvert).
+     =========================================================== */
+
+  /* Section container — collapse total quand stack vide (data-active-count="0") */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-smart-bets {
+    flex-shrink: 0;
+    padding: 0 14px;
+    display: none;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="half"] .pslts-smart-bets:not([data-active-count="0"]),
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="full"] .pslts-smart-bets:not([data-active-count="0"]) {
+    display: block;
+    padding-top: 10px;
+    padding-bottom: 2px;
+  }
+
+  /* Sticky pill compteur alertes */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(226, 0, 26, 0.12);
+    border: 1px solid rgba(226, 0, 26, 0.35);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #E2001A;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-pill[hidden] { display: none; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #E2001A;
+    animation: pslts-slb-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pslts-slb-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* Stack des cartes */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Carte alerte — 3 tiers visuels low/mid/high */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card {
+    position: relative;
+    background: color-mix(in oklab, var(--cf-bg-panel, #ffffff) 82%, transparent);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border-radius: 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(100, 116, 139, 0.35);
+    transform: translateY(8px);
+    opacity: 0;
+    animation: pslts-slb-enter 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card[data-tier="mid"] {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.18);
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card[data-tier="high"] {
+    border-color: #d4af37;
+    box-shadow: 0 0 12px -2px rgba(212, 175, 55, 0.35);
+    animation: pslts-slb-enter 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards,
+               pslts-slb-glow 2.4s ease-in-out 320ms infinite;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card.is-leaving {
+    animation: pslts-slb-leave 240ms ease-out forwards;
+  }
+  @keyframes pslts-slb-enter {
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes pslts-slb-leave {
+    to { transform: translateY(-4px); opacity: 0; }
+  }
+  @keyframes pslts-slb-glow {
+    0%, 100% { box-shadow: 0 0 8px -2px rgba(212, 175, 55, 0.35); }
+    50%      { box-shadow: 0 0 16px -2px rgba(212, 175, 55, 0.55); }
+  }
+
+  /* Header carte : titre + dismiss */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--cf-text-secondary, #475569);
+    line-height: 1.1;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-dismiss {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 6px;
+    margin: -6px -6px -6px 8px;
+    color: var(--cf-text-muted, #64748b);
+    font-size: 14px;
+    line-height: 1;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 50%;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-dismiss:active {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* Body label pari */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.25;
+    color: var(--cf-text-primary, #0f172a);
+    margin-bottom: 8px;
+  }
+
+  /* Meta row : gauge + conf + odds optionnel */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-gauge {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.18);
+    overflow: hidden;
+    min-width: 80px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-gauge-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #16a34a, #d4af37);
+    transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-conf {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cf-text-primary, #0f172a);
+    min-width: 22px;
+    text-align: right;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-odds {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #E2001A;
+    white-space: nowrap;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-ev {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    color: #16a34a;
+    margin-left: 4px;
+    white-space: nowrap;
+  }
+
+  /* Dark theme variants — adapte gauge + bg + dismiss */
+  html.ps-mobile-v2 body.dark-theme #ps-live-tennis-sheet .pslts-slb-card,
+  html.ps-mobile-v2 body[data-cf-light="0"] #ps-live-tennis-sheet .pslts-slb-card {
+    background: color-mix(in oklab, var(--cf-bg-panel, #16181d) 88%, transparent);
+  }
+  html.ps-mobile-v2 body.dark-theme #ps-live-tennis-sheet .pslts-slb-gauge,
+  html.ps-mobile-v2 body[data-cf-light="0"] #ps-live-tennis-sheet .pslts-slb-gauge {
+    background: rgba(255, 255, 255, 0.10);
+  }
+  html.ps-mobile-v2 body.dark-theme #ps-live-tennis-sheet .pslts-slb-dismiss:active,
+  html.ps-mobile-v2 body[data-cf-light="0"] #ps-live-tennis-sheet .pslts-slb-dismiss:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Desktop side-panel (>=1024px) — section visible toujours quand sheet open */
+  @media (min-width: 1024px) {
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-smart-bets:not([data-active-count="0"]) {
+      display: block;
+      padding: 10px 14px 2px;
+    }
+  }
+
+  /* prefers-reduced-motion : neutralise animations sauf opacity */
+  @media (prefers-reduced-motion: reduce) {
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card,
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card[data-tier="high"] {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      box-shadow: none;
+    }
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-gauge-fill { transition: none; }
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-pill-dot { animation: none; }
+  }
+  /* ===========================================================
+     FIN bd fh9h — Smart Live Bets
+     =========================================================== */
+
+  /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C6 Pan & Zoom
      Wrapper .pz-frame autour des composants larges (Bracket RG +
      shotmap SVG + terrain 2D) — touch-action pinch-zoom + transform
@@ -17585,6 +17807,16 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </div>
     </section>
 
+    <!-- TIER 2.5 : SMART LIVE BETS (bd fh9h) — alertes evenementielles regles momentum -->
+    <section class="pslts-smart-bets" aria-label="Alertes paris live" data-active-count="0">
+      <div class="pslts-slb-pill" id="pslts-slb-pill" aria-live="polite" hidden>
+        <span class="pslts-slb-pill-dot"></span>
+        <span class="pslts-slb-pill-count">0</span>
+        <span class="pslts-slb-pill-label">alertes live</span>
+      </div>
+      <div class="pslts-slb-stack" id="pslts-slb-stack" role="region"></div>
+    </section>
+
     <!-- TIER 3 : EDGE-STRIP marchés actionnables -->
     <section class="pslts-edge" aria-label="Marchés live actionnables">
       <div class="pslts-reliability" id="pslts-reliability" data-show="false">
@@ -21416,9 +21648,391 @@ function _psLtsRenderAll(m) {
   if (!m) return;
   _psLtsRenderReadout(m);
   _psLtsRenderPit(m);
+  _psLtsRenderSmartBets(m);
   _psLtsRenderEdge(m);
   _psLtsRenderContext(m);
 }
+
+// ─── bd fh9h — Smart Live Bets : Rule Engine + Action Cards ─────────────────
+// 5 regles clay momentum edge-triggered cooldown 30s min conf 55.
+// Stack max 3 cartes tiering low/mid/high (slate/vert/or pulse).
+// Source data : matchData (window._tennisLastFetch entry, enrichi par
+// window._psLtsInsights.prediction si fetch). Helpers reutilisent
+// _tnComputeDR + _tnGetServingIdx existants.
+
+const _SLB_RULES = [
+  // R1 — Break Imminent : DR_pickFor > 1.30, Hold_other < 60%, set serre (|delta gp| <= 1)
+  {
+    id: 'R1', market: 'next_game_winner', icon: '🎯', title: 'BREAK A VENIR',
+    evaluate(m) {
+      const dr = _slbExtractDR(m);
+      const hs = _slbHoldStreak(m);
+      const ls = _slbLastSet(m);
+      if (!dr || !hs || !ls) return null;
+      const tight = Math.abs((ls.p1 || 0) - (ls.p2 || 0)) <= 1;
+      if (!tight) return null;
+      // dr.p1 = ratio jeux gagnes / perdus J1 set en cours, dr.p2 = inverse
+      for (const pick of ['p1', 'p2']) {
+        const other = pick === 'p1' ? 'p2' : 'p1';
+        if (dr[pick] > 1.30 && hs[other] < 60) {
+          const conf = 50 + 20 * (dr[pick] - 1.30) + 15 * (60 - hs[other]) / 60;
+          return {
+            pickFor: pick,
+            confidence: Math.round(Math.max(55, Math.min(88, conf))),
+            label: `${_slbName(m, pick)} prochain jeu (service ${_slbName(m, other)})`,
+          };
+        }
+      }
+      return null;
+    },
+  },
+  // R2 — Reset Servant Trap : set 3-3 ou 4-4 ou 5-5, Pressure_Gauge_pickFor > 65, Intensity > 70
+  {
+    id: 'R2', market: 'set_winner', icon: '⚡', title: 'RESET TRAP SET',
+    evaluate(m) {
+      const ls = _slbLastSet(m);
+      if (!ls) return null;
+      const equal = ls.p1 === ls.p2 && [3, 4, 5].includes(ls.p1);
+      if (!equal) return null;
+      const pg = _slbPressureGauge(m);
+      const intensity = Number(m.live_intensity || 0);
+      const rallyAvg = _slbRallyAvg(m);
+      if (intensity < 70) return null;
+      if (rallyAvg != null && rallyAvg < 6) return null;
+      for (const pick of ['p1', 'p2']) {
+        const pgSide = pick === 'p1' ? pg.p1Share : (100 - pg.p1Share);
+        if (pgSide > 65) {
+          const rlBoost = rallyAvg != null ? (rallyAvg - 6) * 5 : 0;
+          const conf = 40 + 0.6 * (pgSide - 65) + Math.max(0, rlBoost);
+          return {
+            pickFor: pick,
+            confidence: Math.round(Math.max(60, Math.min(85, conf))),
+            label: `${_slbName(m, pick)} vainqueur du set (pression cumulee terre battue)`,
+          };
+        }
+      }
+      return null;
+    },
+  },
+  // R3 — Tie-Break Lock : set 5-5/6-5/6-6, DR equilibre [0.85, 1.15], Hold_both > 75%
+  {
+    id: 'R3', market: 'tiebreak', icon: '🎲', title: 'TIE-BREAK LOCK',
+    evaluate(m) {
+      const ls = _slbLastSet(m);
+      if (!ls) return null;
+      const tbZone = (ls.p1 === 5 && ls.p2 === 5) ||
+                     (ls.p1 === 6 && ls.p2 === 5) || (ls.p1 === 5 && ls.p2 === 6) ||
+                     (ls.p1 === 6 && ls.p2 === 6);
+      if (!tbZone) return null;
+      const dr = _slbExtractDR(m);
+      const hs = _slbHoldStreak(m);
+      if (!dr || !hs) return null;
+      const balanced = dr.p1 >= 0.85 && dr.p1 <= 1.15;
+      if (!balanced) return null;
+      if (hs.p1 < 75 || hs.p2 < 75) return null;
+      const conf = 70 + 10 * (5 - Math.abs(dr.p1 - 1) * 100) / 5;
+      return {
+        pickFor: null,
+        confidence: Math.round(Math.max(75, Math.min(90, conf))),
+        label: `Tie-break probable ce set (equilibre + holds fermes)`,
+      };
+    },
+  },
+  // R4 — Comeback Window : J2 a gagne set precedent, DR_J1 > 1.40, Intensity > 75, BP J1 >= 2
+  {
+    id: 'R4', market: 'set_winner', icon: '🔁', title: 'COMEBACK WINDOW',
+    evaluate(m) {
+      const setsArr = Array.isArray(m.sets) ? m.sets : [];
+      const idx = (typeof m.current_set_index === 'number') ? m.current_set_index : (setsArr.length - 1);
+      if (idx < 1) return null;
+      const prevSet = setsArr[idx - 1];
+      if (!prevSet) return null;
+      const dr = _slbExtractDR(m);
+      const intensity = Number(m.live_intensity || 0);
+      const bp = _slbBpActive(m);
+      if (!dr || intensity < 75 || !bp) return null;
+      for (const pick of ['p1', 'p2']) {
+        const other = pick === 'p1' ? 'p2' : 'p1';
+        const otherWonPrev = pick === 'p1'
+          ? (prevSet.p2 > prevSet.p1)
+          : (prevSet.p1 > prevSet.p2);
+        if (!otherWonPrev) continue;
+        if (dr[pick] <= 1.40) continue;
+        const bpCount = pick === 'p1' ? (bp.p1Count || 0) : (bp.p2Count || 0);
+        if (bpCount < 2) continue;
+        const conf = 55 + 15 * (dr[pick] - 1.40) + 5 * bpCount;
+        return {
+          pickFor: pick,
+          confidence: Math.round(Math.max(60, Math.min(80, conf))),
+          label: `${_slbName(m, pick)} remonte ce set (renversement detecte)`,
+        };
+      }
+      return null;
+    },
+  },
+  // R5 — Hold Both Stall : >=6 jeux d'affilee holds 2 joueurs, DR ~ 1.0 ±0.10, RL < 5
+  {
+    id: 'R5', market: 'over_games', icon: '✅', title: 'HOLD STALL',
+    evaluate(m) {
+      const ls = _slbLastSet(m);
+      if (!ls) return null;
+      const totalGames = (ls.p1 || 0) + (ls.p2 || 0);
+      if (totalGames < 6) return null;
+      const dr = _slbExtractDR(m);
+      if (!dr) return null;
+      const balanced = Math.abs(dr.p1 - 1) <= 0.10;
+      if (!balanced) return null;
+      const rallyAvg = _slbRallyAvg(m);
+      if (rallyAvg != null && rallyAvg >= 5) return null;
+      const conf = 78 + 2 * (totalGames - 6);
+      return {
+        pickFor: null,
+        confidence: Math.round(Math.max(80, Math.min(92, conf))),
+        label: `Securitaire : Over 11.5 jeux ce set (holds des deux cotes)`,
+      };
+    },
+  },
+];
+
+// State maps — persiste entre renders pour edge-trigger + cooldown
+const _slbState = new Map();    // ruleId -> { lastFireMs, lastResult }
+const _slbActive = new Map();   // ruleId -> SmartBet (rendu en DOM)
+const _slbDismissed = new Map();// ruleId -> dismissedUntilMs (anti re-fire post dismiss)
+const SLB_COOLDOWN_MS = 30 * 1000;
+const SLB_TTL_MS = 60 * 1000;
+
+function evaluateLiveBets(matchData) {
+  const now = Date.now();
+  const fired = [];
+  for (const rule of _SLB_RULES) {
+    const dismissedUntil = _slbDismissed.get(rule.id) || 0;
+    const state = _slbState.get(rule.id) || { lastFireMs: 0, lastResult: null };
+    let result = null;
+    try { result = rule.evaluate(matchData); } catch (_) { result = null; }
+    if (result && result.confidence >= 55) {
+      const edgeTrigger = !state.lastResult;
+      const cooldownOk = (now - state.lastFireMs) >= SLB_COOLDOWN_MS;
+      const dismissOk = now >= dismissedUntil;
+      if (edgeTrigger && cooldownOk && dismissOk) {
+        fired.push({
+          ruleId: rule.id, market: rule.market, icon: rule.icon, title: rule.title,
+          label: result.label, pickFor: result.pickFor, confidence: result.confidence,
+          odds: _slbResolveOdds(matchData, rule.market, result.pickFor),
+          triggeredAt: now, ttlMs: SLB_TTL_MS,
+        });
+        state.lastFireMs = now;
+      }
+      state.lastResult = result;
+    } else {
+      state.lastResult = null;
+    }
+    _slbState.set(rule.id, state);
+  }
+  return fired;
+}
+
+function _psLtsRenderSmartBets(matchData) {
+  const stack = document.getElementById('pslts-slb-stack');
+  const section = document.querySelector('#ps-live-tennis-sheet .pslts-smart-bets');
+  const pill = document.getElementById('pslts-slb-pill');
+  if (!stack || !section || !pill) return;
+
+  // 1. Nouvelles alertes (edge-triggered uniquement)
+  const fired = evaluateLiveBets(matchData);
+  for (const bet of fired) {
+    _slbActive.set(bet.ruleId, bet);
+    stack.insertAdjacentHTML('afterbegin', _slbCardHtml(bet));
+  }
+
+  // 2. Expiration TTL ou condition morte
+  const now = Date.now();
+  for (const [ruleId, bet] of Array.from(_slbActive.entries())) {
+    const state = _slbState.get(ruleId);
+    const ttlExpired = (now - bet.triggeredAt) > bet.ttlMs;
+    const ruleDead = state && state.lastResult === null;
+    if (ttlExpired || ruleDead) {
+      const card = stack.querySelector(`[data-rule="${ruleId}"]`);
+      if (card && !card.classList.contains('is-leaving')) {
+        card.classList.add('is-leaving');
+        setTimeout(() => { try { card.remove(); } catch (_) {} }, 250);
+      }
+      _slbActive.delete(ruleId);
+    }
+  }
+
+  // 3. Trim max 3 cartes visibles (oldest fade-out)
+  const cards = Array.from(stack.querySelectorAll('.pslts-slb-card:not(.is-leaving)'));
+  if (cards.length > 3) {
+    for (const old of cards.slice(3)) {
+      old.classList.add('is-leaving');
+      const oldRuleId = old.getAttribute('data-rule');
+      setTimeout(() => { try { old.remove(); } catch (_) {} }, 250);
+      if (oldRuleId) _slbActive.delete(oldRuleId);
+    }
+  }
+
+  // 4. Compteur + pill visibility
+  const count = stack.querySelectorAll('.pslts-slb-card:not(.is-leaving)').length;
+  section.setAttribute('data-active-count', String(count));
+  pill.hidden = count === 0;
+  const cEl = pill.querySelector('.pslts-slb-pill-count');
+  const lEl = pill.querySelector('.pslts-slb-pill-label');
+  if (cEl) cEl.textContent = String(count);
+  if (lEl) lEl.textContent = count === 1 ? 'alerte live' : 'alertes live';
+}
+
+function _slbCardHtml(bet) {
+  const tier = bet.confidence >= 80 ? 'high' : (bet.confidence >= 60 ? 'mid' : 'low');
+  const oddsBlock = (bet.odds && bet.odds.decimal != null && isFinite(bet.odds.decimal))
+    ? `<span class="pslts-slb-odds">@${Number(bet.odds.decimal).toFixed(2)}</span>${
+        bet.odds.ev_pct != null
+          ? `<span class="pslts-slb-ev">${bet.odds.ev_pct > 0 ? '+' : ''}${Number(bet.odds.ev_pct).toFixed(1)}% EV</span>`
+          : ''
+      }`
+    : '';
+  const role = tier === 'high' ? 'alert' : 'status';
+  return `<article class="pslts-slb-card" data-tier="${tier}" data-rule="${bet.ruleId}" role="${role}">
+    <div class="pslts-slb-header">
+      <span class="pslts-slb-title">${bet.icon || ''} ${_psLtsEscape(bet.title)}</span>
+      <button type="button" class="pslts-slb-dismiss" aria-label="Ignorer alerte" onclick="_slbDismiss('${bet.ruleId}')">×</button>
+    </div>
+    <div class="pslts-slb-label">${_psLtsEscape(bet.label)}</div>
+    <div class="pslts-slb-meta">
+      <div class="pslts-slb-gauge"><div class="pslts-slb-gauge-fill" style="width:${bet.confidence}%"></div></div>
+      <span class="pslts-slb-conf">${bet.confidence}</span>
+      ${oddsBlock}
+    </div>
+  </article>`;
+}
+
+function _slbDismiss(ruleId) {
+  const card = document.querySelector(`.pslts-slb-card[data-rule="${ruleId}"]`);
+  if (card) {
+    card.classList.add('is-leaving');
+    setTimeout(() => { try { card.remove(); } catch (_) {} }, 250);
+  }
+  _slbActive.delete(ruleId);
+  // Anti re-fire 60s apres dismiss (laisse user respirer)
+  _slbDismissed.set(ruleId, Date.now() + 60 * 1000);
+  // Met a jour compteur immediatement
+  const stack = document.getElementById('pslts-slb-stack');
+  const section = document.querySelector('#ps-live-tennis-sheet .pslts-smart-bets');
+  const pill = document.getElementById('pslts-slb-pill');
+  if (stack && section && pill) {
+    const count = stack.querySelectorAll('.pslts-slb-card:not(.is-leaving)').length;
+    section.setAttribute('data-active-count', String(count));
+    pill.hidden = count === 0;
+    const cEl = pill.querySelector('.pslts-slb-pill-count');
+    if (cEl) cEl.textContent = String(count);
+  }
+}
+
+// ─── SLB HELPERS ────────────────────────────────────────────────────────────
+function _slbExtractDR(m) {
+  // Reutilise _tnComputeDR (exact Sofascore + fallback proxy jeux/sets)
+  try {
+    if (typeof _tnComputeDR === 'function') {
+      const d = _tnComputeDR(m);
+      if (d && d.drP1 != null && d.drP2 != null) return { p1: d.drP1, p2: d.drP2 };
+    }
+  } catch (_) {}
+  // Fallback BPPI brut si _tnComputeDR fail
+  const bppi = (m && m.bppi && m.bppi.missing !== true) ? m.bppi : null;
+  if (bppi && bppi.p1 != null && bppi.p2 != null) {
+    const tot = Number(bppi.p1) + Number(bppi.p2);
+    if (tot > 0) {
+      const r1 = (Number(bppi.p1) / tot) * 2;
+      return { p1: r1, p2: 2 - r1 };
+    }
+  }
+  return null;
+}
+
+function _slbLastSet(m) {
+  const sets = Array.isArray(m && m.sets) ? m.sets : [];
+  const idx = (typeof m.current_set_index === 'number') ? m.current_set_index : (sets.length - 1);
+  const s = sets[idx] || sets[sets.length - 1] || null;
+  if (!s) return null;
+  return { p1: Number(s.p1) || 0, p2: Number(s.p2) || 0, idx };
+}
+
+function _slbHoldStreak(m) {
+  // Derive % service tenu sur derniers 5 jeux par joueur via sets + serving alternance.
+  // Approximation Phase 1 : compte jeux gagnes a domicile (theorique serveur)
+  // sur N derniers jeux. Sans alternance precise serving, on suppose alterne 1-2-1-2...
+  const sets = Array.isArray(m && m.sets) ? m.sets : [];
+  if (!sets.length) return null;
+  // Concat tous jeux serie [{p1, p2}] dans l'ordre chronologique cumule
+  const allGames = [];
+  for (const s of sets) {
+    const g1 = Number(s.p1) || 0, g2 = Number(s.p2) || 0;
+    // Approxime sequence : reconstitue alternance (g1+g2 jeux totaux, alterne service)
+    for (let i = 0; i < g1 + g2; i++) {
+      allGames.push(i % 2 === 0 ? 'p1' : 'p2');
+    }
+  }
+  const recent = allGames.slice(-5);
+  if (!recent.length) return null;
+  // Hold % approx : compte jeux gagnes par celui dont c'etait le service
+  // (heuristique car sans data point-by-point precise)
+  const wins = { p1: recent.filter(s => s === 'p1').length, p2: recent.filter(s => s === 'p2').length };
+  // Sans signal precis hold/break, on retourne baseline 70% qu'on biaise via DR
+  const dr = _slbExtractDR(m);
+  const baseline = 70;
+  if (!dr) return { p1: baseline, p2: baseline };
+  const tilt = (dr.p1 - 1) * 12; // si DR_p1 = 1.30 → tilt +3.6 → J1 hold 73.6%, J2 hold 66.4%
+  return { p1: Math.max(30, Math.min(95, baseline + tilt)), p2: Math.max(30, Math.min(95, baseline - tilt)) };
+}
+
+function _slbPressureGauge(m) {
+  // Reproduit calc _psLtsRenderPit composite (DR 40% + BPPI 35% + Hold 25%)
+  const dr = _slbExtractDR(m);
+  const bppi = (m && m.bppi && m.bppi.missing !== true) ? m.bppi : null;
+  const hs = _slbHoldStreak(m);
+  const drNorm = dr ? (dr.p1 / 2 * 100) : 50;
+  const bpNorm = (bppi && bppi.p1 != null && bppi.p2 != null)
+    ? (Number(bppi.p1 || 0) / Math.max(1, Number(bppi.p1 || 0) + Number(bppi.p2 || 0)) * 100)
+    : 50;
+  const holdNorm = hs ? hs.p1 : 50;
+  const p1Share = Math.round(drNorm * 0.4 + bpNorm * 0.35 + holdNorm * 0.25);
+  return { p1Share: Math.max(5, Math.min(95, p1Share)) };
+}
+
+function _slbRallyAvg(m) {
+  // Pas expose payload BSD live tennis. Phase 1 retourne null → R2/R5 ne
+  // bloquent pas sur rally si donnee absente (skip if condition).
+  if (m && m._pbp && typeof m._pbp.rally_length_avg === 'number') return m._pbp.rally_length_avg;
+  if (m && m.live_rally_avg != null) return Number(m.live_rally_avg);
+  return null;
+}
+
+function _slbBpActive(m) {
+  // bppi peut exposer breakpoints actifs ; sinon fallback estim via DR + score
+  const bppi = (m && m.bppi && m.bppi.missing !== true) ? m.bppi : null;
+  if (!bppi) return null;
+  // Approxime count BP actives via valeurs bppi normalisees
+  return {
+    p1Count: Math.max(0, Math.round((Number(bppi.p1 || 0) / 100) * 3)),
+    p2Count: Math.max(0, Math.round((Number(bppi.p2 || 0) / 100) * 3)),
+  };
+}
+
+function _slbName(m, pick) {
+  const p = pick === 'p1' ? m.player1 : m.player2;
+  return (p && p.name) ? String(p.name).split(' ').pop() : pick.toUpperCase();
+}
+
+function _slbResolveOdds(m, market, pickFor) {
+  // Phase 1 : seul market 'set_winner' / 'next_game_winner' peut mapper m.odds h2h
+  // (proxy match winner). Pour tiebreak/over_games on retourne null.
+  if (!pickFor || !m || !m.odds) return null;
+  if (market !== 'set_winner' && market !== 'next_game_winner') return null;
+  const odd = pickFor === 'p1' ? (m.odds.p1 && (m.odds.p1.odds || m.odds.p1)) : (m.odds.p2 && (m.odds.p2.odds || m.odds.p2));
+  if (odd == null || !isFinite(Number(odd)) || Number(odd) <= 1) return null;
+  // EV approximee : (cote * conf/100 - 1) * 100 — conf injectee plus tard, ici null
+  return { decimal: Number(odd), ev_pct: null };
+}
+// ─── FIN bd fh9h Smart Live Bets ────────────────────────────────────────────
 
 // Phase 3 — EDGE-STRIP : cartes marches live actionnables avec regle BET stricte.
 // Sources : BSD prediction (window._psLtsInsights.prediction) + m.odds h2h
