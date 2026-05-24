@@ -447,6 +447,408 @@
      Prochaines etapes : C3 cartes empilees + C4 bottom-sheets
      =========================================================== */
 
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Chantier C3 cartes matchs premium
+     Polish .mc existante (ligne 7047) avec :
+     - Gradient mesh subtil (radial multi-couches)
+     - Glassmorphic depth (border + multi-shadow)
+     - Material You border-radius 20px
+     - Best edge halo glow rouge L'Equipe pulse
+     - Live badge enhancement (border gradient anime)
+     - Press feedback spring scale + shadow change
+     - Skeleton shimmer smoother
+
+     Scope strict : .ps-mobile-v2 .mc (zero impact desktop V1 + fallback mobile V1)
+     =========================================================== */
+
+  /* Container #vb-cards : gap entre cartes + padding mobile premium */
+  html.ps-mobile-v2 #vb-cards {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px !important;
+    padding: 12px 12px 24px !important;
+  }
+
+  /* Carte de base : gradient mesh + shadow depth + radius premium */
+  html.ps-mobile-v2 .mc {
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(237, 28, 36, 0.05), transparent 50%),
+      radial-gradient(100% 60% at 100% 100%, rgba(26, 140, 69, 0.04), transparent 50%),
+      linear-gradient(180deg, #ffffff 0%, #fafafa 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.07) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07) !important;
+    border-radius: 16px !important;
+    padding: 14px 16px !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 4px 12px rgba(0, 0, 0, 0.05),
+      0 12px 28px -8px rgba(0, 0, 0, 0.08) !important;
+    /* GPU compositing pour transform animations */
+    will-change: transform;
+    transform: translateZ(0);
+    transition:
+      transform 80ms ease-out,
+      box-shadow 200ms ease-out;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Press feedback tactile spring */
+  html.ps-mobile-v2 .mc:active {
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(237, 28, 36, 0.07), transparent 50%),
+      linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%) !important;
+    transform: scale(0.985);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 1px 2px rgba(0, 0, 0, 0.03),
+      0 2px 6px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  /* Carte LIVE : bord gradient rouge anime + glow accent subtil */
+  html.ps-mobile-v2 .mc.live,
+  html.ps-mobile-v2 .mc:has(.mc-time.live) {
+    border-color: rgba(237, 28, 36, 0.32) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(237, 28, 36, 0.08),
+      0 4px 16px rgba(237, 28, 36, 0.10),
+      0 12px 32px -8px rgba(0, 0, 0, 0.10) !important;
+  }
+  html.ps-mobile-v2 .mc.live::after,
+  html.ps-mobile-v2 .mc:has(.mc-time.live)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, #ed1c24 0%, transparent 35%, transparent 65%, rgba(237, 28, 36, 0.5) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* Top row : league + time hierarchy premium */
+  html.ps-mobile-v2 .mc .mc-top {
+    margin-bottom: 10px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-league {
+    font-size: 10px !important;
+    letter-spacing: 0.06em !important;
+    color: #888 !important;
+    font-weight: 800 !important;
+  }
+  html.ps-mobile-v2 .mc .mc-time {
+    font-size: 12px !important;
+    color: #555 !important;
+    font-weight: 700 !important;
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 10px;
+  }
+  html.ps-mobile-v2 .mc .mc-time.live {
+    background: linear-gradient(135deg, #ed1c24, #c4151e) !important;
+    color: #fff !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(237, 28, 36, 0.35);
+  }
+  html.ps-mobile-v2 .mc .mc-time.live::before {
+    content: '● ';
+    color: #fff;
+    animation: psmLivePulse 1.4s ease-in-out infinite;
+  }
+  @keyframes psmLivePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Teams : typographie editoriale L'Equipe */
+  html.ps-mobile-v2 .mc .mc-teams {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-team {
+    font-size: 16px !important;
+    color: #111 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+  }
+  html.ps-mobile-v2 .mc .mc-team .mc-rk {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #666 !important;
+    border-radius: 5px !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-team .mc-sc {
+    font-size: 22px !important;
+    color: #ed1c24 !important;
+    font-weight: 900 !important;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  /* Metrics row : depth + premium borders */
+  html.ps-mobile-v2 .mc .mc-metrics {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+  }
+  html.ps-mobile-v2 .mc .mc-cell {
+    background: transparent !important;
+    padding: 8px 4px !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell:last-child {
+    border-right: 0 !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell .mc-k {
+    font-size: 9px !important;
+    color: #888 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em;
+  }
+  html.ps-mobile-v2 .mc .mc-cell .mc-v {
+    font-size: 14px !important;
+    color: #111 !important;
+    font-weight: 800 !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Best edge HOT : gradient + glow halo pulse */
+  html.ps-mobile-v2 .mc .mc-cell.edge.hot {
+    background: linear-gradient(135deg, #ed1c24 0%, #c4151e 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 0 0 1px rgba(237, 28, 36, 0.4),
+      0 0 12px rgba(237, 28, 36, 0.35);
+    animation: psmEdgePulse 2.4s ease-in-out infinite;
+  }
+  @keyframes psmEdgePulse {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 0 1px rgba(237, 28, 36, 0.4), 0 0 12px rgba(237, 28, 36, 0.35); }
+    50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(237, 28, 36, 0.55), 0 0 20px rgba(237, 28, 36, 0.5); }
+  }
+  html.ps-mobile-v2 .mc .mc-cell.edge.hot .mc-k {
+    color: rgba(255, 255, 255, 0.92) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell.edge.hot .mc-v {
+    color: #fff !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+  }
+
+  /* Edge positive non-hot : color green softer */
+  html.ps-mobile-v2 .mc .mc-cell.edge:not(.hot):not(.neg) .mc-v {
+    color: #1a8c45 !important;
+  }
+
+  /* Bottom row : odds depth + track button premium */
+  html.ps-mobile-v2 .mc .mc-bottom {
+    margin-top: 12px !important;
+    gap: 10px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-odd {
+    background: rgba(0, 0, 0, 0.025) !important;
+    border: 1px solid rgba(0, 0, 0, 0.07) !important;
+    border-radius: 8px !important;
+    padding: 7px 2px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #222 !important;
+    transition: transform 80ms ease-out, box-shadow 200ms ease-out;
+  }
+  html.ps-mobile-v2 .mc .mc-odd b {
+    font-size: 9px !important;
+    color: #888 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  html.ps-mobile-v2 .mc .mc-odd:active {
+    transform: scale(0.96);
+  }
+  html.ps-mobile-v2 .mc .mc-odd.best {
+    background: linear-gradient(135deg, rgba(237, 28, 36, 0.08), rgba(237, 28, 36, 0.03)) !important;
+    border-color: rgba(237, 28, 36, 0.35) !important;
+    color: #ed1c24 !important;
+    box-shadow:
+      0 0 0 1px rgba(237, 28, 36, 0.15),
+      0 2px 6px rgba(237, 28, 36, 0.12);
+  }
+  html.ps-mobile-v2 .mc .mc-odd.best b {
+    color: rgba(237, 28, 36, 0.7) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-track {
+    background: linear-gradient(135deg, #ed1c24 0%, #c4151e 100%) !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    padding: 0 18px !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 2px 8px rgba(237, 28, 36, 0.3);
+    transition: transform 80ms ease-out, box-shadow 200ms ease-out;
+  }
+  html.ps-mobile-v2 .mc .mc-track:active {
+    transform: scale(0.96);
+    background: linear-gradient(135deg, #c4151e 0%, #a30d12 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 1px 3px rgba(237, 28, 36, 0.4);
+  }
+
+  /* Detail expanded panel (.mc-detail) : premium depth */
+  html.ps-mobile-v2 .mc .mc-detail {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+  html.ps-mobile-v2 .mc .mcd-reco {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(237, 28, 36, 0.06);
+    color: #ed1c24;
+  }
+  html.ps-mobile-v2 .mc .mcd-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  html.ps-mobile-v2 .mc .mcd-c {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  html.ps-mobile-v2 .mc .mcd-c span {
+    display: block;
+    font-size: 9px;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  html.ps-mobile-v2 .mc .mcd-c b {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+  }
+  html.ps-mobile-v2 .mc .mcd-more {
+    margin-top: 10px;
+    width: 100%;
+    padding: 9px;
+    background: rgba(237, 28, 36, 0.08);
+    border: 1px solid rgba(237, 28, 36, 0.2);
+    border-radius: 8px;
+    color: #ed1c24;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  html.ps-mobile-v2 .mc .mcd-more:active {
+    transform: scale(0.98);
+    background: rgba(237, 28, 36, 0.12);
+  }
+
+  /* Chip rank "Xe v Ye" : compact premium */
+  html.ps-mobile-v2 .mc .mc-chip {
+    background: rgba(0, 0, 0, 0.04);
+    color: #555;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Group header (championnat divider) : gradient L'Equipe rouge */
+  html.ps-mobile-v2 .mc-grp {
+    background: linear-gradient(90deg, #ed1c24 0%, #c4151e 100%) !important;
+    color: #fff !important;
+    margin: 8px -12px 4px !important;
+    padding: 8px 16px !important;
+    border-radius: 0 !important;
+    font-size: 11px !important;
+    letter-spacing: 0.08em !important;
+    box-shadow: 0 2px 6px rgba(237, 28, 36, 0.2);
+  }
+
+  /* Skeleton loader : smoother shimmer + premium height */
+  html.ps-mobile-v2 .mc-skel {
+    height: 142px !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(0, 0, 0, 0.04) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+    background:
+      linear-gradient(100deg, #fafafa 30%, #ffffff 50%, #fafafa 70%) !important;
+    background-size: 200% 100% !important;
+    animation: psmSkelShimmer 1.4s ease-in-out infinite !important;
+    margin-bottom: 12px;
+  }
+  @keyframes psmSkelShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Empty state : minimaliste editorial */
+  html.ps-mobile-v2 .mc-empty {
+    padding: 64px 24px !important;
+    font-family: var(--font-head);
+    font-size: 14px !important;
+    color: #888 !important;
+    letter-spacing: 0.04em;
+  }
+
+  /* Dark theme variant : kill light backgrounds + adapter shadows */
+  html.ps-mobile-v2 body.dark-theme .mc {
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(237, 28, 36, 0.08), transparent 50%),
+      radial-gradient(100% 60% at 100% 100%, rgba(26, 140, 69, 0.06), transparent 50%),
+      linear-gradient(180deg, #14181c 0%, #0e1114 100%) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 40px -8px rgba(0, 0, 0, 0.6),
+      0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+  html.ps-mobile-v2 body.dark-theme .mc .mc-team {
+    color: #e8eaed !important;
+  }
+  html.ps-mobile-v2 body.dark-theme .mc .mc-metrics {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  html.ps-mobile-v2 body.dark-theme .mc .mc-cell .mc-v {
+    color: #e8eaed !important;
+  }
+  html.ps-mobile-v2 body.dark-theme .mc .mc-odd {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #e8eaed !important;
+  }
+
+  /* ===========================================================
+     FIN C3 — Cartes matchs premium L'Equipe x Material You
+     Prochain : C4-partial Bottom-sheet Insights (remplace modale)
+     =========================================================== */
+
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
   body[data-cf-light="1"] {
     background: #ffffff !important;
