@@ -5184,6 +5184,27 @@ function kvScan(prefix) {
 
 // ─── DATABASE ────────────────────────────────────────────────────────────────
 
+function sanityCheckTeamStats() {
+  const issues = [];
+  for (const [key, stats] of Object.entries(db.teamStats || {})) {
+    if (!stats || typeof stats !== 'object') { issues.push(`${key}: invalid entry (not object)`); continue; }
+    if (stats._real && !stats.rank) issues.push(`${key}: rank=0 (marked real data)`);
+    const homeStats = stats.home || {};
+    const awayStats = stats.away || {};
+    if (homeStats.ppg === 0 && homeStats.played > 5) issues.push(`${key}: home PPG=0 but played=${homeStats.played}`);
+    if (awayStats.ppg === 0 && awayStats.played > 5) issues.push(`${key}: away PPG=0 but played=${awayStats.played}`);
+    if (stats._real && !stats.form) issues.push(`${key}: empty form (real data)`);
+  }
+  if (issues.length) {
+    console.error(`\x1b[31m[SANITY] ${issues.length} data anomalies detected:\x1b[0m`);
+    issues.slice(0, 10).forEach(iss => console.error(`  \x1b[31m• ${iss}\x1b[0m`));
+    if (issues.length > 10) console.error(`  \x1b[31m... and ${issues.length - 10} more\x1b[0m`);
+    return false;
+  }
+  console.log(`  [SANITY] ✓ Team stats valid (${Object.keys(db.teamStats).length} teams, all checks passed)`);
+  return true;
+}
+
 function saveDB() {
   // 🛡️ PROTECTION ANTI-EFFACEMENT (Zero-Data Guard)
   // Si on tente de sauvegarder un tableau vide alors qu'on avait des données, 
@@ -5227,6 +5248,7 @@ function saveDB() {
         statsUpdateByLeague: db.statsUpdateByLeague
       }],
     ]);
+    sanityCheckTeamStats();
   } catch (e) {
     console.error('\x1b[31m[DB_ERROR] Échec critique de la sauvegarde SQLite :\x1b[0m', e.message);
   }
@@ -7295,10 +7317,30 @@ function buildMatchRecord(raw) {
     return null;
   }
 
-  const hKey = normName(raw.home_team);
-  const aKey = normName(raw.away_team);
+  const hKey = teamKey(raw.home_team);
+  const aKey = teamKey(raw.away_team);
   let hRaw = db.teamStats[hKey] || findFuzzy(hKey);
   let aRaw = db.teamStats[aKey] || findFuzzy(aKey);
+
+  // Fuzzy retry via xsTeamMatch — resolves cross-source name inconsistency (BSD "Aston Villa FC" vs API-Football "Aston Villa")
+  if (!hRaw && raw.home_team) {
+    for (const dbKey of Object.keys(db.teamStats)) {
+      if (xsTeamMatch(raw.home_team, dbKey)) {
+        hRaw = db.teamStats[dbKey];
+        console.warn(`  [BuildMatch] Fuzzy retry via xsTeamMatch: "${raw.home_team}" → "${dbKey}" (home)`);
+        break;
+      }
+    }
+  }
+  if (!aRaw && raw.away_team) {
+    for (const dbKey of Object.keys(db.teamStats)) {
+      if (xsTeamMatch(raw.away_team, dbKey)) {
+        aRaw = db.teamStats[dbKey];
+        console.warn(`  [BuildMatch] Fuzzy retry via xsTeamMatch: "${raw.away_team}" → "${dbKey}" (away)`);
+        break;
+      }
+    }
+  }
 
   // Si exact match retourne une entrée sans rank réel (ex: stub BSD fixtures sans standings),
   // tenter fuzzy en excluant cet exact pour préférer une entrée standings _real
@@ -14202,7 +14244,7 @@ async function fetchStats(force = false) {
           }
           groups.forEach(group => {
             group.forEach(entry => {
-              const key = normName(entry.team.name);
+              const key = teamKey(entry.team.name);
               const homeStats = buildSideStats(entry.home);
               const awayStats = buildSideStats(entry.away);
 
@@ -14318,7 +14360,7 @@ async function fetchStats(force = false) {
       for (const { teamName, leagueId } of teamsNeedingSofa) {
         try {
           const stats = await fetchSofascoreTeamStats(teamName, leagueId);
-          if (stats) { db.teamStats[normName(teamName)] = { teamId: null, rank: 0, ...stats }; sofaFilled++; }
+          if (stats) { db.teamStats[teamKey(teamName)] = { teamId: null, rank: 0, ...stats }; sofaFilled++; }
         } catch (e) { console.warn('[CATCH-06] fetchSofascoreTeamStats:', teamName, e.message); }
       }
       if (sofaFilled) console.log(`  [Cron:Stats] Phase 3: ✓ ${sofaFilled} équipes alimentées via Sofascore`);
