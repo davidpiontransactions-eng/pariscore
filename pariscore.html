@@ -282,30 +282,34 @@
      padding fixe page.
      =========================================================== */
 
-  /* ── ZONE 1 — Mini App Bar haut (56px sticky glassmorphic) ── */
+  /* ── ZONE 1 — Mini App Bar haut (48px sticky glassmorphic) ── */
+  /* C3.1 fix : 56→48px + top:0 + padding-top=safe-top inclus (evite double-padding
+     safe-area) + border-bottom 2px rouge L'Equipe (visual separation distincte
+     du body blanc) + bg moins translucide 0.95 (visibilite garantie) */
 
-  /* Top nav compact 56px (override existant 66px ligne 641 + 52px min ligne 6715) */
   html.ps-mobile-v2 nav {
-    height: 56px !important;
-    min-height: 56px !important;
-    padding: 0 14px !important;
+    height: calc(48px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(48px + env(safe-area-inset-top, 0px)) !important;
+    padding: env(safe-area-inset-top, 0px) 14px 0 !important;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* Fixed top : sort de flow normal pour eviter conflit padding-top body */
+    /* Fixed top:0 (pas top:safe-top) — safe-top integre dans padding-top */
     position: fixed !important;
-    top: env(safe-area-inset-top, 0px);
+    top: 0 !important;
     left: 0;
     right: 0;
     z-index: 1000;
-    /* Glassmorphic light premium */
-    background: rgba(255, 255, 255, 0.88) !important;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    /* Glassmorphic light premium — bg moins translucide pour visibility */
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    /* Border-bottom L'Equipe rouge 2px : separation visuelle distincte body blanc */
+    border-bottom: 2px solid #ed1c24 !important;
     box-shadow:
       0 1px 0 rgba(255, 255, 255, 0.95) inset,
-      0 2px 12px rgba(0, 0, 0, 0.04);
+      0 4px 16px rgba(237, 28, 36, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
   /* Logo mobile compact : icone visible, texte plus petit, tag desktop masque */
@@ -400,12 +404,12 @@
 
   /* ── ZONE 3 — Padding viewport central (deblocage contenu) ── */
 
-  /* Override regles existantes body padding (ligne 6716) avec stack complet
-     Top : 56px nav + safe-top encoche iPhone
+  /* C3.1 fix : nav 56→48px, body padding-top align nouveau total nav height
+     Top : 48px nav + safe-top encoche iPhone (integre dans nav padding)
      Bottom : 64px bottom-nav + safe-bottom gesture bar + 8px gap
      Left/Right : safe-area landscape iPhone Pro Max */
   html.ps-mobile-v2 body {
-    padding-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: calc(48px + env(safe-area-inset-top, 0px)) !important;
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px) !important;
     padding-left: env(safe-area-inset-left, 0px) !important;
     padding-right: env(safe-area-inset-right, 0px) !important;
@@ -426,9 +430,9 @@
     overscroll-behavior-x: contain;
   }
 
-  /* mob-toolbar : reste sticky mais sous le nav fixed (decale 56px + safe-top) */
+  /* mob-toolbar : reste sticky mais sous le nav fixed (C3.1 decale 48px + safe-top) */
   html.ps-mobile-v2 #mob-toolbar {
-    top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    top: calc(48px + env(safe-area-inset-top, 0px)) !important;
   }
 
   /* Sections page-* : padding lateral mobile reduit pour gain horizontal */
