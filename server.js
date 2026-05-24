@@ -36309,11 +36309,17 @@ function _bsdWsApplyEventStats(m, stats) {
 function _bsdWsDTOEvent(msg, m, alertHook) {
   const prevScore = m.live_score;
   if (msg.score) {
-    const hs = msg.score.home, as_ = msg.score.away;
-    if (hs != null && as_ != null) _wsGuardedPatch(m, 'live_score', hs + '-' + as_);
+    // IN-02 fix: BSD may send score as string "2-1" or object {home,away}
+    if (typeof msg.score === 'string' && /^\d+-\d+$/.test(msg.score)) {
+      _wsGuardedPatch(m, 'live_score', msg.score);
+    } else if (msg.score.home != null && msg.score.away != null) {
+      _wsGuardedPatch(m, 'live_score', msg.score.home + '-' + msg.score.away);
+    }
   }
   if (msg.time) {
     if (msg.time.minute != null) _wsGuardedPatch(m, 'live_minute', Number(msg.time.minute));
+    // WR-01: status intentionally overridable — WS is ground truth for live match state.
+    // Not added to _WS_STATIC_FIELDS. Pre-match status set by REST pipeline; live status owned by WS.
     if (msg.time.status) _wsGuardedPatch(m, 'status', msg.time.status);
     if (msg.time.period) _wsGuardedPatch(m, 'live_period', msg.time.period);
     if (msg.time.added_time != null) _wsGuardedPatch(m, 'live_added_time', Number(msg.time.added_time));
@@ -36327,8 +36333,9 @@ function _bsdWsDTOEvent(msg, m, alertHook) {
 function _bsdNormalizeIncident(inc) {
   if (!inc || !inc.type) return null;
   const tLow = String(inc.type).toLowerCase().replace(/[-_\s]/g, '');
+  // WR-04 fix: rely solely on SUPPORTED — fallback substrings were allowing unknown types through
   const SUPPORTED = new Set(['goal','card','yellowcard','redcard','substitution','injurytime','var','period','missedpenalty','penalty']);
-  if (!SUPPORTED.has(tLow) && !tLow.includes('card') && !tLow.includes('goal')) return null;
+  if (!SUPPORTED.has(tLow)) return null;
   const out = { type: tLow, minute: inc.minute != null ? Number(inc.minute) : null, added_time: inc.added_time != null ? Number(inc.added_time) : null, is_home: inc.is_home ?? null, ts: Date.now() };
   if (tLow === 'goal') {
     out.player = inc.player || null; out.player_id = inc.player_id || null; out.assist = inc.assist || null;
@@ -36346,7 +36353,8 @@ function _bsdNormalizeIncident(inc) {
 function _bsdMergeIncidents(m, incidents) {
   if (!Array.isArray(incidents) || !incidents.length) return;
   if (!Array.isArray(m.live_incidents)) m.live_incidents = [];
-  const _key = inc => `${inc.minute}|${inc.type}|${inc.player_id || inc.player || inc.length || ''}`;
+  // WR-03 fix: include score snapshot to distinguish same-minute same-type events (own goals, shootout)
+  const _key = inc => `${inc.minute}|${inc.type}|${inc.player_id || inc.player || inc.length || ''}|${inc.home_score ?? ''}-${inc.away_score ?? ''}`;
   const existing = new Set(m.live_incidents.map(_key));
   let added = 0;
   for (const raw of incidents) {
@@ -36368,6 +36376,8 @@ function _bsdMergeShotmap(m, data) {
   // Momentum timeline [{m,v}] — Array.isArray guard préservé frontend (bd 8c5)
   if (Array.isArray(data.momentum) && data.momentum.length) {
     const cleaned = data.momentum.filter(e => e && e.m != null && e.v != null).map(e => ({ m: Number(e.m), v: Math.max(-100, Math.min(100, Number(e.v))) })).filter(e => Number.isFinite(e.m) && Number.isFinite(e.v));
+    // WR-05: direct write intentional — _wsGuardedPatch skips undefined/null;
+    // live_momentum must remain Array (Array.isArray guard in frontend drawLDMomentumSVG).
     if (cleaned.length) m.live_momentum = cleaned;
   }
   // xG/minute [{m, xg_home, xg_away, cum_home, cum_away}]
@@ -36388,28 +36398,33 @@ const _BSD_ENRICH_INC_TTL  = 30 * 1000;
 const _BSD_ENRICH_SHOT_TTL = 60 * 1000;
 
 async function pollBSDLiveEnrichment() {
-  const targets = db.matches.filter(m => m && m._bsd_event_id != null && m.live_websocket && (m.is_live || (m.live_score && m.live_score !== '0-0')));
+  // WR-02 fix: trust is_live as sole gate — avoids excluding 0-0 matches
+  const targets = db.matches.filter(m => m && m._bsd_event_id != null && m.live_websocket && m.is_live);
   if (!targets.length) return;
   const now = Date.now();
   for (const m of targets) {
     const eid = m._bsd_event_id;
     const st = _bsdLiveEnrichState.get(m.id) || {};
-    // Incidents
+    // Incidents — CR-01 fix: bsdFetch(endpoint) only (2nd/3rd args were wrongly passed as retries)
+    // CR-03 fix: advance TTL regardless of payload content (prevents unbounded calls on empty/404)
     if (!st.lastIncidents || (now - st.lastIncidents) > _BSD_ENRICH_INC_TTL) {
       try {
-        const res = await bsdFetch(`/api/v2/events/${eid}/incidents/`, `bsd_inc_${eid}`, _BSD_ENRICH_INC_TTL);
+        const res = await bsdFetch(`/api/v2/events/${eid}/incidents/`);
+        st.lastIncidents = now; // CR-03: always advance TTL
         if (res && res.status === 200) {
-          const list = (res.body && res.body.incidents) || (Array.isArray(res.body) ? res.body : null);
-          if (list) { _bsdMergeIncidents(m, list); st.lastIncidents = now; }
+          // CR-02 fix: bsdFetch returns res.data (not res.body)
+          const list = (res.data && res.data.incidents) || (Array.isArray(res.data) ? res.data : null);
+          if (list) _bsdMergeIncidents(m, list);
         }
-      } catch (e) { console.warn(`  [BSD-Enrich] incidents ${eid}:`, e.message); }
+      } catch (e) { console.warn(`  [BSD-Enrich] incidents ${eid}:`, e.message); st.lastIncidents = now; }
     }
     // Shotmap (momentum + xG/min)
     if (!st.lastShotmap || (now - st.lastShotmap) > _BSD_ENRICH_SHOT_TTL) {
       try {
-        const res = await bsdFetch(`/api/v2/events/${eid}/shotmap/`, `bsd_shot_${eid}`, _BSD_ENRICH_SHOT_TTL);
-        if (res && res.status === 200 && res.body) { _bsdMergeShotmap(m, res.body); st.lastShotmap = now; }
-      } catch (e) { console.warn(`  [BSD-Enrich] shotmap ${eid}:`, e.message); }
+        const res = await bsdFetch(`/api/v2/events/${eid}/shotmap/`);
+        st.lastShotmap = now; // always advance TTL
+        if (res && res.status === 200 && res.data) _bsdMergeShotmap(m, res.data);
+      } catch (e) { console.warn(`  [BSD-Enrich] shotmap ${eid}:`, e.message); st.lastShotmap = now; }
     }
     _bsdLiveEnrichState.set(m.id, st);
   }
