@@ -1228,6 +1228,487 @@
      =========================================================== */
 
   /* ===========================================================
+     bd yl9p — Popup Live Tennis ultime (Roland Garros)
+     Bottom-sheet glassmorphic 3 paliers peek/half/full (mobile)
+     Side-panel droit fixe 420px (desktop >=1024px)
+     4 zones : READOUT score / PIT 6 indicateurs / EDGE-STRIP / CONTEXT
+     Scope strict : html.ps-mobile-v2 (mobile) + min-width:1024px (desktop)
+     =========================================================== */
+
+  /* MOBILE — bottom-sheet 3 paliers */
+  html.ps-mobile-v2 #ps-live-tennis-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 9400;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 220ms ease-out;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-open="true"] {
+    pointer-events: auto;
+    opacity: 1;
+  }
+
+  /* Backdrop tier-aware (transparent en peek, blur progressif) */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 280ms ease-out, backdrop-filter 280ms ease-out;
+    pointer-events: none;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="half"] .pslts-backdrop {
+    background: rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(6px) brightness(0.92);
+    -webkit-backdrop-filter: blur(6px) brightness(0.92);
+    pointer-events: auto;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="full"] .pslts-backdrop {
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(14px) brightness(0.85);
+    -webkit-backdrop-filter: blur(14px) brightness(0.85);
+    pointer-events: auto;
+  }
+
+  /* Sheet body — translateY anchored bottom, snap 3 paliers via height + transform */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-body {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg,
+      color-mix(in oklab, var(--cf-bg-panel, #ffffff) 78%, transparent) 0%,
+      color-mix(in oklab, var(--cf-bg-panel, #ffffff) 96%, transparent) 100%);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    border-top: 1px solid color-mix(in oklab, #E2001A 32%, transparent);
+    box-shadow:
+      0 -24px 60px -12px rgba(0, 0, 0, 0.55),
+      0 -1px 0 0 color-mix(in oklab, #E2001A 18%, transparent) inset;
+    transform: translateY(100%);
+    transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1),
+                height 320ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, height;
+    height: 28vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-open="true"] .pslts-body {
+    transform: translateY(0);
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="peek"] .pslts-body { height: 28vh; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="half"] .pslts-body { height: 60vh; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="full"] .pslts-body { height: 92vh; }
+
+  /* Drag handle iOS premium */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-handle {
+    width: 44px; height: 5px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.22);
+    margin: 8px auto 6px;
+    cursor: grab;
+    flex-shrink: 0;
+    touch-action: none;
+  }
+  html.ps-mobile-v2 body.dark-theme #ps-live-tennis-sheet .pslts-handle,
+  html.ps-mobile-v2 body[data-cf-light="0"] #ps-live-tennis-sheet .pslts-handle {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  /* TIER 1 — READOUT score (toujours visible) */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-readout {
+    flex-shrink: 0;
+    padding: 8px 18px 12px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-player {
+    position: relative;
+    padding: 6px 8px;
+    border-radius: 12px;
+    transition: background 200ms ease-out;
+    min-width: 0;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-player.is-p2 { text-align: right; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-player[data-serving="true"]::before {
+    content: '';
+    position: absolute; inset: 2px;
+    border-radius: 10px;
+    border: 1.5px solid #E2001A;
+    animation: psLtsServePulse 1.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes psLtsServePulse {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.015); }
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-pname {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.15;
+    color: var(--cf-text-primary, #0f172a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-pmeta {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--cf-text-muted, #64748b);
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-scoregrid {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-sets {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cf-text-primary, #0f172a);
+    letter-spacing: 0.5px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-games {
+    font-size: 14px;
+    color: var(--cf-text-secondary, #475569);
+    margin-top: 2px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-points {
+    font-size: 11px;
+    color: #E2001A;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 0.6px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-duration {
+    font-size: 9px;
+    color: var(--cf-text-muted, #64748b);
+    margin-top: 4px;
+    letter-spacing: 0.4px;
+  }
+
+  /* TIER 2 — PIT 6 indicateurs (visible half+) */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-pit {
+    flex-shrink: 0;
+    padding: 4px 14px 8px;
+    border-top: 1px solid color-mix(in oklab, var(--cf-text-muted, #64748b) 18%, transparent);
+    display: none;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="half"] .pslts-pit,
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="full"] .pslts-pit {
+    display: block;
+  }
+
+  /* Pressure Gauge — barre bicolore P1/P2 animée tween */
+  @property --pslts-p1share { syntax: '<percentage>'; inherits: false; initial-value: 50%; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-gauge {
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+      #E2001A 0%,
+      #E2001A var(--pslts-p1share, 50%),
+      #475569 var(--pslts-p1share, 50%),
+      #475569 100%);
+    transition: --pslts-p1share 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 8px 0 4px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--cf-text-muted, #64748b);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Metric grid 2 colonnes x 3 lignes mobile, 6 inline desktop */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metrics {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metric {
+    background: var(--cf-bg-card, #f8fafc);
+    border: 1px solid color-mix(in oklab, var(--cf-text-muted, #64748b) 15%, transparent);
+    border-radius: 10px;
+    padding: 6px 9px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 4px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metric-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--cf-text-muted, #64748b);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metric-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cf-text-primary, #0f172a);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metric-value[data-trend="up"]   { color: #16a34a; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metric-value[data-trend="down"] { color: #dc2626; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-metric-sub {
+    grid-column: 1 / -1;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: var(--cf-text-muted, #64748b);
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  /* TIER 3 — EDGE-STRIP (visible full) */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-edge {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 14px;
+    border-top: 1px solid color-mix(in oklab, var(--cf-text-muted, #64748b) 18%, transparent);
+    display: none;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="full"] .pslts-edge {
+    display: block;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-edge-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--cf-text-muted, #64748b);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-card {
+    background: var(--cf-bg-card, #f8fafc);
+    border: 1px solid color-mix(in oklab, var(--cf-text-muted, #64748b) 18%, transparent);
+    border-radius: 12px;
+    padding: 10px;
+    position: relative;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-card[data-signal="bet"] {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.18);
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-card[data-signal="watch"] {
+    border-color: #ca8a04;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-market {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cf-text-secondary, #475569);
+    margin-bottom: 4px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-pick {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--cf-text-primary, #0f172a);
+    line-height: 1.15;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-odds {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #E2001A;
+    margin-top: 4px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-ev {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #16a34a;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-signal {
+    position: absolute;
+    top: 6px; right: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: #16a34a;
+    color: white;
+    text-transform: uppercase;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-bet-card[data-signal="watch"] .pslts-bet-signal {
+    background: #ca8a04;
+  }
+
+  /* Reliability bandeau (low confidence) */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-reliability {
+    background: rgba(202, 138, 4, 0.12);
+    border: 1px solid rgba(202, 138, 4, 0.32);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #92400e;
+    letter-spacing: 0.3px;
+    display: none;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-reliability[data-show="true"] { display: block; }
+
+  /* TIER 4 — CONTEXT footer collapsible (full only) */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context {
+    flex-shrink: 0;
+    padding: 8px 14px calc(10px + var(--safe-bottom));
+    border-top: 1px solid color-mix(in oklab, var(--cf-text-muted, #64748b) 18%, transparent);
+    display: none;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet[data-tier="full"] .pslts-context {
+    display: block;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context-toggle {
+    background: transparent;
+    border: 0;
+    width: 100%;
+    text-align: left;
+    padding: 6px 0;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cf-text-secondary, #475569);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context-toggle::after {
+    content: '+';
+    font-size: 16px;
+    color: var(--cf-text-muted, #64748b);
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context[data-expanded="true"] .pslts-context-toggle::after {
+    content: '-';
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context-body {
+    display: none;
+    padding-top: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cf-text-secondary, #475569);
+    line-height: 1.5;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context[data-expanded="true"] .pslts-context-body {
+    display: block;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 8px;
+    padding: 3px 0;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-context-key {
+    color: var(--cf-text-muted, #64748b);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+  }
+
+  /* Close X */
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+    border: 0;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--cf-text-secondary, #475569);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: transform 80ms ease-out;
+  }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-close:active {
+    transform: scale(0.9);
+  }
+  html.ps-mobile-v2 body.dark-theme #ps-live-tennis-sheet .pslts-close,
+  html.ps-mobile-v2 body[data-cf-light="0"] #ps-live-tennis-sheet .pslts-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  /* Body scroll lock quand sheet open au-dela de peek */
+  html.ps-mobile-v2:has(#ps-live-tennis-sheet[data-tier="half"]) body,
+  html.ps-mobile-v2:has(#ps-live-tennis-sheet[data-tier="full"]) body {
+    overflow: hidden;
+  }
+
+  /* DESKTOP >=1024px — side-panel droit fixe (zero impact mobile) */
+  @media (min-width: 1024px) {
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet {
+      position: fixed;
+      top: 80px; right: 16px; bottom: 16px;
+      left: auto;
+      width: 420px;
+      z-index: 9400;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 220ms ease-out;
+    }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet[data-open="true"] {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-backdrop { display: none; }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-body {
+      position: relative; height: 100%; bottom: auto; left: auto; right: auto;
+      border-radius: 18px;
+      border: 1px solid color-mix(in oklab, #E2001A 28%, transparent);
+      transform: translateX(120%);
+      transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: -16px 0 48px -12px rgba(0, 0, 0, 0.35);
+    }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet[data-open="true"] .pslts-body {
+      transform: translateX(0);
+    }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-handle { display: none; }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-pit,
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-edge,
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-context {
+      display: block;
+    }
+    html:not(.ps-mobile-v2) #ps-live-tennis-sheet .pslts-metrics {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* prefers-reduced-motion : neutralise animations sauf opacity */
+  @media (prefers-reduced-motion: reduce) {
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-body { transition: opacity 180ms; }
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-player[data-serving="true"]::before { animation: none; }
+    html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-gauge { transition: none; }
+  }
+  /* ===========================================================
+     FIN bd yl9p — Popup Live Tennis ultime
+     =========================================================== */
+
+  /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C6 Pan & Zoom
      Wrapper .pz-frame autour des composants larges (Bracket RG +
      shotmap SVG + terrain 2D) — touch-action pinch-zoom + transform
@@ -17039,6 +17520,100 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 </div>
 
+<!-- bd yl9p — Popup Live Tennis ultime (Roland Garros)
+     Bottom-sheet 3 paliers (mobile) / side-panel 420px (desktop)
+     4 zones : READOUT / PIT 6 indicateurs / EDGE-STRIP / CONTEXT -->
+<div id="ps-live-tennis-sheet" role="dialog" aria-modal="false" aria-hidden="true" data-open="false" data-tier="peek">
+  <div class="pslts-backdrop" onclick="psLtsBackdropTap()"></div>
+  <div class="pslts-body psm-gpu">
+    <button class="pslts-close" type="button" aria-label="Fermer" onclick="closePsLiveTennisSheet()">×</button>
+    <div class="pslts-handle" aria-label="Glisser pour agrandir"
+         onpointerdown="_psLtsHandlePointerDown(event)"
+         onclick="_psLtsHandleTap()"></div>
+
+    <!-- TIER 1 : READOUT score (toujours visible) -->
+    <header class="pslts-readout" aria-live="polite">
+      <div class="pslts-player is-p1" data-serving="false">
+        <div class="pslts-pname" id="pslts-p1-name">—</div>
+        <div class="pslts-pmeta" id="pslts-p1-meta">—</div>
+      </div>
+      <div class="pslts-scoregrid">
+        <div class="pslts-sets" id="pslts-sets">—</div>
+        <div class="pslts-games" id="pslts-games">—</div>
+        <div class="pslts-points" id="pslts-points">—</div>
+        <div class="pslts-duration" id="pslts-duration">—</div>
+      </div>
+      <div class="pslts-player is-p2" data-serving="false">
+        <div class="pslts-pname" id="pslts-p2-name">—</div>
+        <div class="pslts-pmeta" id="pslts-p2-meta">—</div>
+      </div>
+    </header>
+
+    <!-- TIER 2 : PIT 6 indicateurs propriétaires -->
+    <section class="pslts-pit" aria-label="Indicateurs de pression">
+      <div class="pslts-gauge" id="pslts-gauge" style="--pslts-p1share:50%"></div>
+      <div class="pslts-gauge-labels">
+        <span id="pslts-gauge-p1">P1 50</span>
+        <span style="text-align:center;color:var(--cf-text-muted,#64748b);">Pressure Gauge</span>
+        <span id="pslts-gauge-p2">50 P2</span>
+      </div>
+      <div class="pslts-metrics">
+        <div class="pslts-metric" data-kind="dr">
+          <div class="pslts-metric-label">Dom. Ratio</div>
+          <div class="pslts-metric-value" id="pslts-m-dr">—</div>
+        </div>
+        <div class="pslts-metric" data-kind="hold-streak">
+          <div class="pslts-metric-label">Hold Streak</div>
+          <div class="pslts-metric-value" id="pslts-m-hold">—</div>
+        </div>
+        <div class="pslts-metric" data-kind="bp-conv">
+          <div class="pslts-metric-label">BP Conv.</div>
+          <div class="pslts-metric-value" id="pslts-m-bp">—</div>
+        </div>
+        <div class="pslts-metric" data-kind="rally">
+          <div class="pslts-metric-label">Rally Avg</div>
+          <div class="pslts-metric-value" id="pslts-m-rally">—</div>
+        </div>
+        <div class="pslts-metric" data-kind="xwin-delta">
+          <div class="pslts-metric-label">xWin &Delta;</div>
+          <div class="pslts-metric-value" id="pslts-m-xwin">—</div>
+        </div>
+        <div class="pslts-metric" data-kind="intensity">
+          <div class="pslts-metric-label">Intensity</div>
+          <div class="pslts-metric-value" id="pslts-m-int">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIER 3 : EDGE-STRIP marchés actionnables -->
+    <section class="pslts-edge" aria-label="Marchés live actionnables">
+      <div class="pslts-reliability" id="pslts-reliability" data-show="false">
+        Fiabilité limitée — analyse contextuelle uniquement.
+      </div>
+      <div class="pslts-edge-title">Marchés live · règle BET stricte (EV&gt;5% &amp; IC_inf&gt;0)</div>
+      <div class="pslts-bet-grid" id="pslts-bet-grid">
+        <div style="grid-column:1/-1;font-family:'DM Mono',monospace;font-size:11px;color:var(--cf-text-muted,#64748b);text-align:center;padding:12px 0;">
+          Chargement des marchés…
+        </div>
+      </div>
+    </section>
+
+    <!-- TIER 4 : CONTEXT footer collapsible -->
+    <footer class="pslts-context" data-expanded="false">
+      <button type="button" class="pslts-context-toggle" onclick="_psLtsToggleContext()">
+        Contexte · H2H · Météo · Court
+      </button>
+      <div class="pslts-context-body" id="pslts-context-body">
+        <div class="pslts-context-row"><span class="pslts-context-key">H2H clay</span><span id="pslts-ctx-h2h">—</span></div>
+        <div class="pslts-context-row"><span class="pslts-context-key">Court</span><span id="pslts-ctx-court">—</span></div>
+        <div class="pslts-context-row"><span class="pslts-context-key">Tour</span><span id="pslts-ctx-round">—</span></div>
+        <div class="pslts-context-row"><span class="pslts-context-key">Météo</span><span id="pslts-ctx-weather">—</span></div>
+        <div class="pslts-context-row"><span class="pslts-context-key">Fiabilité</span><span id="pslts-ctx-rel">—</span></div>
+      </div>
+    </footer>
+  </div>
+</div>
+
 <div id="live-detail-modal" onclick="if(event.target===this)closeLiveDetail()">
   <div id="live-detail-panel">
     <button class="modal-close" onclick="closeLiveDetail()" style="position:absolute;top:16px;right:16px;z-index:5;background:rgba(0,0,0,0.5);border:1px solid var(--border2);color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;">×</button>
@@ -20596,8 +21171,282 @@ async function loadTaBirthdaysRibbon() {
 let _tennisDetailInterval = null;
 let _tennisDetailCurrentId = null;
 
+// ─── bd yl9p — Popup Live Tennis ultime (ps-live-tennis-sheet) ───────────────
+// Bottom-sheet 3 paliers (mobile) / side-panel 420px (desktop)
+// 4 zones : READOUT / PIT 6 indicateurs / EDGE-STRIP / CONTEXT
+// Phase 1 : skeleton DOM + render TIER 1 + TIER 2 client-side derivation
+// Phase 2 : SSE diff push + server-computed indicators
+// Phase 3 : EDGE-STRIP marchés + reliability bandeau + contexte enrichi
+window._psLtsCurrentId = null;
+window._psLtsTimer = null;
+window._psLtsInsights = null;
+
+function _psLtsIsMobile() {
+  return document.documentElement.classList.contains('ps-mobile-v2');
+}
+
+function _psLtsFindMatch(matchId) {
+  const list = Array.isArray(window._tennisLastFetch) ? window._tennisLastFetch : [];
+  const id = String(matchId);
+  return list.find(m => String(m.id) === id || String(m.fixture_id) === id) || null;
+}
+
+function _psLtsSetTier(tier) {
+  const sheet = document.getElementById('ps-live-tennis-sheet');
+  if (!sheet) return;
+  if (!['peek', 'half', 'full'].includes(tier)) tier = 'peek';
+  sheet.setAttribute('data-tier', tier);
+}
+
+function _psLtsHandleTap() {
+  const sheet = document.getElementById('ps-live-tennis-sheet');
+  if (!sheet) return;
+  const cur = sheet.getAttribute('data-tier') || 'peek';
+  const next = cur === 'peek' ? 'half' : (cur === 'half' ? 'full' : 'peek');
+  _psLtsSetTier(next);
+}
+
+let _psLtsDragStart = null;
+function _psLtsHandlePointerDown(e) {
+  const sheet = document.getElementById('ps-live-tennis-sheet');
+  if (!sheet) return;
+  _psLtsDragStart = { y: e.clientY, tier: sheet.getAttribute('data-tier') || 'peek' };
+  const move = (ev) => {
+    if (!_psLtsDragStart) return;
+    const dy = ev.clientY - _psLtsDragStart.y;
+    // Snap thresholds : drag up >40px = expand 1 step, drag down >40px = collapse 1 step
+    if (dy < -40) {
+      const cur = sheet.getAttribute('data-tier');
+      if (cur === 'peek') _psLtsSetTier('half');
+      else if (cur === 'half') _psLtsSetTier('full');
+      _psLtsDragStart = null;
+    } else if (dy > 40) {
+      const cur = sheet.getAttribute('data-tier');
+      if (cur === 'full') _psLtsSetTier('half');
+      else if (cur === 'half') _psLtsSetTier('peek');
+      else if (cur === 'peek') closePsLiveTennisSheet();
+      _psLtsDragStart = null;
+    }
+  };
+  const up = () => {
+    _psLtsDragStart = null;
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+  };
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
+}
+
+function psLtsBackdropTap() {
+  const sheet = document.getElementById('ps-live-tennis-sheet');
+  if (!sheet) return;
+  const cur = sheet.getAttribute('data-tier') || 'peek';
+  if (cur === 'full') _psLtsSetTier('half');
+  else if (cur === 'half') _psLtsSetTier('peek');
+  // peek = backdrop transparent, n'intercepte pas (pointer-events:none)
+}
+
+function _psLtsToggleContext() {
+  const ctx = document.querySelector('#ps-live-tennis-sheet .pslts-context');
+  if (!ctx) return;
+  const cur = ctx.getAttribute('data-expanded') === 'true';
+  ctx.setAttribute('data-expanded', cur ? 'false' : 'true');
+}
+
+function _psLtsEscape(v) {
+  if (v == null) return '—';
+  return String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function _psLtsFmtPct(n, digits) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toFixed(digits == null ? 0 : digits) + '%';
+}
+
+function _psLtsRenderReadout(m) {
+  if (!m) return;
+  const p1n = document.getElementById('pslts-p1-name');
+  const p2n = document.getElementById('pslts-p2-name');
+  const p1m = document.getElementById('pslts-p1-meta');
+  const p2m = document.getElementById('pslts-p2-meta');
+  const sets = document.getElementById('pslts-sets');
+  const games = document.getElementById('pslts-games');
+  const pts = document.getElementById('pslts-points');
+  const dur = document.getElementById('pslts-duration');
+
+  if (p1n) p1n.textContent = (m.player1 && m.player1.name) ? m.player1.name : '—';
+  if (p2n) p2n.textContent = (m.player2 && m.player2.name) ? m.player2.name : '—';
+
+  const p1Rank = m.player1 && m.player1.rank ? `#${m.player1.rank}` : '';
+  const p2Rank = m.player2 && m.player2.rank ? `#${m.player2.rank}` : '';
+  const tour = m.tour ? String(m.tour).toUpperCase() : '';
+  if (p1m) p1m.textContent = [tour, p1Rank].filter(Boolean).join(' · ') || '—';
+  if (p2m) p2m.textContent = [tour, p2Rank].filter(Boolean).join(' · ') || '—';
+
+  // Serving pulse — réutilise helper existant _tnGetServingIdx
+  try {
+    const srv = (typeof _tnGetServingIdx === 'function') ? _tnGetServingIdx(m) : null;
+    const p1el = document.querySelector('#ps-live-tennis-sheet .pslts-player.is-p1');
+    const p2el = document.querySelector('#ps-live-tennis-sheet .pslts-player.is-p2');
+    if (p1el) p1el.setAttribute('data-serving', srv === 1 ? 'true' : 'false');
+    if (p2el) p2el.setAttribute('data-serving', srv === 2 ? 'true' : 'false');
+  } catch (_) {}
+
+  const setsArr = Array.isArray(m.sets) ? m.sets : [];
+  const setsScore = `${m.player1_sets ?? 0}-${m.player2_sets ?? 0}`;
+  if (sets) sets.textContent = setsScore;
+
+  const lastSet = setsArr[m.current_set_index] || setsArr[setsArr.length - 1] || null;
+  if (games) games.textContent = lastSet ? `${lastSet.p1 ?? 0}-${lastSet.p2 ?? 0}` : '—';
+  if (pts) pts.textContent = m.current_point || '—';
+
+  // Durée match : timestamp start_time si dispo
+  if (dur) {
+    let durTxt = '';
+    if (m.start_time) {
+      const ms = Date.now() - new Date(m.start_time).getTime();
+      if (ms > 0 && ms < 8 * 3600 * 1000) {
+        const h = Math.floor(ms / 3600000);
+        const min = Math.floor((ms % 3600000) / 60000);
+        durTxt = h > 0 ? `${h}h ${min}'` : `${min}'`;
+      }
+    }
+    dur.textContent = durTxt || (m.status ? String(m.status) : '—');
+  }
+}
+
+function _psLtsRenderPit(m) {
+  if (!m) return;
+  // Phase 1 : client-side derivation depuis payload existant
+  // Phase 2 : remplace par champs server-computed (m._live.dominance_ratio etc.)
+  const bppi = (m.bppi && m.bppi.missing !== true) ? m.bppi : null;
+  const intensity = Number(m.live_intensity || 0);
+
+  // DR : ratio approximé via BPPI (proxy Phase 1)
+  let dr = null;
+  if (bppi && bppi.p1 != null && bppi.p2 != null) {
+    const tot = Number(bppi.p1) + Number(bppi.p2);
+    if (tot > 0) dr = (Number(bppi.p1) / tot) * 2; // normalisé [0,2], 1 = équilibre
+  }
+  const drEl = document.getElementById('pslts-m-dr');
+  if (drEl) {
+    drEl.textContent = dr != null ? dr.toFixed(2) : '—';
+    drEl.setAttribute('data-trend', dr != null ? (dr > 1.1 ? 'up' : (dr < 0.9 ? 'down' : '')) : '');
+  }
+
+  // Hold Streak : compte sets gagnés sur derniers 3
+  const setsArr = Array.isArray(m.sets) ? m.sets : [];
+  const recent = setsArr.slice(-3);
+  let holdP1 = 0, holdTotal = recent.length;
+  recent.forEach(s => { if ((s.p1 || 0) > (s.p2 || 0)) holdP1++; });
+  const holdEl = document.getElementById('pslts-m-hold');
+  if (holdEl) holdEl.textContent = holdTotal > 0 ? `${Math.round(holdP1 / holdTotal * 100)}%` : '—';
+
+  // BP Conv : approxime via BPPI brut Phase 1
+  const bpEl = document.getElementById('pslts-m-bp');
+  if (bpEl) bpEl.textContent = bppi ? `${Math.round(bppi.p1 || 0)}/${Math.round(bppi.p2 || 0)}` : '—';
+
+  // Rally Avg : non disponible Phase 1 (server Phase 2)
+  const rallyEl = document.getElementById('pslts-m-rally');
+  if (rallyEl) rallyEl.textContent = '—';
+
+  // xWin Δ : non disponible Phase 1 sans /insights fetch (Phase 2)
+  const xwinEl = document.getElementById('pslts-m-xwin');
+  if (xwinEl) {
+    if (window._psLtsInsights && window._psLtsInsights.live_poisson) {
+      const lp = window._psLtsInsights.live_poisson;
+      const live = lp.homeWin != null ? Number(lp.homeWin) : null;
+      const pre = window._psLtsInsights.match && window._psLtsInsights.match.poisson && window._psLtsInsights.match.poisson.homeWin != null
+        ? Number(window._psLtsInsights.match.poisson.homeWin) : null;
+      if (live != null && pre != null) {
+        const delta = live - pre;
+        xwinEl.textContent = (delta > 0 ? '+' : '') + delta.toFixed(0) + 'pts';
+        xwinEl.setAttribute('data-trend', delta > 5 ? 'up' : (delta < -5 ? 'down' : ''));
+      } else {
+        xwinEl.textContent = '—';
+      }
+    } else {
+      xwinEl.textContent = '—';
+    }
+  }
+
+  // Intensity : directement live_intensity
+  const intEl = document.getElementById('pslts-m-int');
+  if (intEl) {
+    intEl.textContent = intensity > 0 ? `${Math.round(intensity)}/100` : '—';
+    intEl.setAttribute('data-trend', intensity >= 75 ? 'up' : (intensity > 0 && intensity < 35 ? 'down' : ''));
+  }
+
+  // Pressure Gauge composite Phase 1 : moyenne pondérée des signaux dispo
+  let p1Share = 50;
+  if (dr != null || bppi) {
+    const drNorm = dr != null ? (dr / 2 * 100) : 50;
+    const bpNorm = bppi ? (Number(bppi.p1 || 0) / Math.max(1, Number(bppi.p1 || 0) + Number(bppi.p2 || 0)) * 100) : 50;
+    const holdNorm = holdTotal > 0 ? (holdP1 / holdTotal * 100) : 50;
+    p1Share = Math.round(drNorm * 0.4 + bpNorm * 0.35 + holdNorm * 0.25);
+    p1Share = Math.max(5, Math.min(95, p1Share));
+  }
+  const gauge = document.getElementById('pslts-gauge');
+  if (gauge) gauge.style.setProperty('--pslts-p1share', p1Share + '%');
+  const gp1 = document.getElementById('pslts-gauge-p1');
+  const gp2 = document.getElementById('pslts-gauge-p2');
+  if (gp1) gp1.textContent = `P1 ${p1Share}`;
+  if (gp2) gp2.textContent = `${100 - p1Share} P2`;
+}
+
+function _psLtsRenderAll(m) {
+  if (!m) return;
+  _psLtsRenderReadout(m);
+  _psLtsRenderPit(m);
+  // Phase 3 : _psLtsRenderEdge(m) + _psLtsRenderContext(m)
+}
+
+async function _psLtsTick() {
+  if (!window._psLtsCurrentId) return;
+  // Force refresh tennis live cache puis re-render
+  try {
+    if (typeof tickTennisLive === 'function') await tickTennisLive();
+  } catch (_) {}
+  const m = _psLtsFindMatch(window._psLtsCurrentId);
+  if (m) _psLtsRenderAll(m);
+}
+
+function openPsLiveTennisSheet(matchId) {
+  if (!matchId) return;
+  const sheet = document.getElementById('ps-live-tennis-sheet');
+  if (!sheet) return;
+  window._psLtsCurrentId = String(matchId);
+  const m = _psLtsFindMatch(matchId);
+  if (m) _psLtsRenderAll(m);
+  sheet.setAttribute('data-open', 'true');
+  sheet.setAttribute('aria-hidden', 'false');
+  _psLtsSetTier('peek');
+  if (window._psLtsTimer) clearInterval(window._psLtsTimer);
+  window._psLtsTimer = setInterval(_psLtsTick, 30 * 1000);
+}
+
+function closePsLiveTennisSheet() {
+  const sheet = document.getElementById('ps-live-tennis-sheet');
+  if (!sheet) return;
+  sheet.setAttribute('data-open', 'false');
+  sheet.setAttribute('aria-hidden', 'true');
+  _psLtsSetTier('peek');
+  if (window._psLtsTimer) { clearInterval(window._psLtsTimer); window._psLtsTimer = null; }
+  window._psLtsCurrentId = null;
+  window._psLtsInsights = null;
+}
+
+// Hook : route mobile + match live → nouveau sheet, sinon modal legacy
 async function openTennisDetail(matchId) {
   if (!matchId) return;
+  // bd yl9p : route mobile + live → ps-live-tennis-sheet (modal legacy reste pour desktop / non-live)
+  try {
+    const m = _psLtsFindMatch(matchId);
+    if (_psLtsIsMobile() && m && m.is_live) {
+      openPsLiveTennisSheet(matchId);
+      return;
+    }
+  } catch (_) {}
   _tennisDetailCurrentId = String(matchId);
   const modal = document.getElementById('tennis-detail-modal');
   const body = document.getElementById('tennis-detail-body');
