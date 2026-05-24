@@ -27252,13 +27252,13 @@ const label = country
       <td style="min-width:70px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;">
         <div style="margin-bottom:2px;">
           <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
-          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof homePpgL5==='number'?safeFixed(homePpgL5, 1):'-'}</span>
+          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${(!hs.played && homePpgL5 === 0) ? '—' : (typeof homePpgL5==='number'?safeFixed(homePpgL5, 1):'-')}</span>
           <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${homePower>=65?'#15803D':homePower>=45?'#B45309':'#B91C1C'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
           ${renderFatigueDot(m.home_fatigue, m.home_fatigue_level, m.home_fatigue_meta)}
         </div>
         <div>
           <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
-          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${typeof awayPpgL5==='number'?safeFixed(awayPpgL5, 1):'-'}</span>
+          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${(!as.played && awayPpgL5 === 0) ? '—' : (typeof awayPpgL5==='number'?safeFixed(awayPpgL5, 1):'-')}</span>
           <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${awayPower>=65?'#15803D':awayPower>=45?'#B45309':'#B91C1C'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
           ${renderFatigueDot(m.away_fatigue, m.away_fatigue_level, m.away_fatigue_meta)}
         </div>
