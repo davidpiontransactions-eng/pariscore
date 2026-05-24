@@ -1659,7 +1659,405 @@
   /* ===========================================================
      FIN Phase A — Sensory UI Foundation tokens defined
      Vars accessibles via getComputedStyle / var(--sui-*) partout.
-     Phase B = refactor .mc cards + nav (session future).
+     =========================================================== */
+
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Phase B Cards 3D refactor
+     Upgrade .mc cards existantes vers structure layered OBSIDIAN PRESS
+     en utilisant les tokens Phase A (--sui-*). Aucun changement HTML
+     necessaire — pure CSS upgrade qui supplante C3 cartes premium.
+
+     Layers visuels :
+     1. Background mesh radiale OKLCH 2-couches accent+pos
+     2. Border 1px sui-border + radius 20px Material You
+     3. Shadow card-rest asymetrique editorial top-left
+     4. Hover/active spring physics translateZ + scale
+     5. LIVE state border glow rouge anime + halo
+     6. Best odd "★" flag + halo accent
+     7. Edge tier badge (PLATINUM/GOLD/SILVER) selon EV
+
+     Scope strict : html.ps-mobile-v2 .mc (zero impact V1)
+     =========================================================== */
+
+  /* Container #vb-cards : gap + padding premium */
+  html.ps-mobile-v2 #vb-cards {
+    gap: var(--sui-gap, 12px) !important;
+    padding: 14px 12px 24px !important;
+  }
+
+  /* CARTE base : layered + shadow asymetrique + spring */
+  html.ps-mobile-v2 .mc {
+    position: relative !important;
+    isolation: isolate !important;
+    background:
+      radial-gradient(150% 80% at 0% 0%, color-mix(in oklch, var(--sui-accent) 6%, transparent), transparent 55%),
+      radial-gradient(120% 60% at 100% 100%, color-mix(in oklch, var(--sui-data-pos) 4%, transparent), transparent 50%),
+      linear-gradient(180deg, var(--sui-cream-elevate, #ffffff) 0%, var(--sui-cream-surface, #fcfaf3) 100%) !important;
+    border: 1px solid var(--sui-cream-border, rgba(0, 0, 0, 0.07)) !important;
+    border-bottom: 1px solid var(--sui-cream-border, rgba(0, 0, 0, 0.07)) !important;
+    border-radius: 20px !important;
+    padding: var(--sui-card-pad, 14px 16px) !important;
+    box-shadow: var(--sui-shadow-card-rest) !important;
+    /* GPU compositing + spring physics */
+    will-change: transform, box-shadow !important;
+    transform: translateZ(var(--sui-z-lift, 2px)) !important;
+    transition:
+      transform var(--sui-dur-med, 240ms) var(--sui-spring-soft),
+      box-shadow var(--sui-dur-med, 240ms) var(--sui-spring-soft) !important;
+    overflow: hidden !important;
+  }
+
+  /* Press feedback tactile : compression spring */
+  html.ps-mobile-v2 .mc:active {
+    transform: translateZ(var(--sui-z-base, 0)) scale(0.985) !important;
+    box-shadow: var(--sui-shadow-card-active) !important;
+  }
+
+  /* LIVE state : border-glow rouge anime + bord lumineux */
+  html.ps-mobile-v2 .mc.live,
+  html.ps-mobile-v2 .mc:has(.mc-time.live) {
+    border-color: color-mix(in oklch, var(--sui-accent) 40%, transparent) !important;
+    box-shadow:
+      var(--sui-shadow-card-rest),
+      0 0 0 1px var(--sui-accent-glow) inset,
+      0 0 24px -4px var(--sui-accent-glow) !important;
+  }
+
+  /* Header meta : league pill + time pill premium */
+  html.ps-mobile-v2 .mc .mc-top {
+    margin-bottom: 12px !important;
+    align-items: center !important;
+  }
+  html.ps-mobile-v2 .mc .mc-league {
+    font-family: var(--sui-font-body) !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    color: var(--sui-cream-text-3, #888) !important;
+    text-transform: uppercase !important;
+  }
+  html.ps-mobile-v2 .mc .mc-time {
+    font-family: var(--sui-font-mono) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    padding: 3px 9px !important;
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 5%, transparent) !important;
+    border-radius: 999px !important;
+    color: var(--sui-cream-text-2, #555) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-time.live {
+    background: linear-gradient(135deg, var(--sui-accent), var(--sui-accent-dim)) !important;
+    color: #fff !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px var(--sui-accent-glow);
+    padding-left: 8px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-time.live::before {
+    content: '\25CF ';
+    color: #fff;
+    animation: suiLivePulse 1.4s var(--sui-spring-soft) infinite;
+  }
+  @keyframes suiLivePulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+  }
+
+  /* Teams : typographie editoriale L'Equipe */
+  html.ps-mobile-v2 .mc .mc-teams {
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-team {
+    font-family: var(--sui-font-display) !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: var(--sui-cream-text, #0a0a0a) !important;
+    letter-spacing: 0.005em;
+  }
+  html.ps-mobile-v2 .mc .mc-team .mc-rk {
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 6%, transparent) !important;
+    color: var(--sui-cream-text-2, #555) !important;
+    border-radius: 5px !important;
+    font-family: var(--sui-font-mono) !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 2px 6px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-team .mc-sc {
+    font-family: var(--sui-font-display) !important;
+    font-size: clamp(20px, 6vw, 26px) !important;
+    font-weight: 900 !important;
+    color: var(--sui-accent) !important;
+    font-variant-numeric: tabular-nums oldstyle-nums !important;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    letter-spacing: -0.02em;
+  }
+
+  /* Metrics row : depth + premium borders */
+  html.ps-mobile-v2 .mc .mc-metrics {
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 2%, transparent) !important;
+    border: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 6%, transparent) !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+  }
+  html.ps-mobile-v2 .mc .mc-cell {
+    background: transparent !important;
+    padding: 8px 4px !important;
+    border-right: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 5%, transparent) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell:last-child {
+    border-right: 0 !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell .mc-k {
+    font-family: var(--sui-font-body) !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    color: var(--sui-cream-text-3, #888) !important;
+    text-transform: uppercase !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell .mc-v {
+    font-family: var(--sui-font-mono) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--sui-cream-text, #0a0a0a) !important;
+    font-variant-numeric: tabular-nums !important;
+    font-feature-settings: 'ss01', 'cv01';
+  }
+
+  /* Best edge HOT cell : PLATINUM gradient + halo glow pulse */
+  html.ps-mobile-v2 .mc .mc-cell.edge.hot {
+    background: linear-gradient(135deg, var(--sui-accent), var(--sui-accent-dim)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 0 0 1px var(--sui-accent-glow),
+      0 0 14px var(--sui-accent-glow) !important;
+    animation: suiEdgeHotPulse 2.4s var(--sui-spring-soft) infinite;
+  }
+  @keyframes suiEdgeHotPulse {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 0 1px var(--sui-accent-glow), 0 0 12px var(--sui-accent-glow); }
+    50%      { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3),  0 0 0 1px var(--sui-accent),      0 0 22px var(--sui-accent-glow); }
+  }
+  html.ps-mobile-v2 .mc .mc-cell.edge.hot .mc-k {
+    color: rgba(255, 255, 255, 0.92) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell.edge.hot .mc-v {
+    color: #fff !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+  }
+
+  /* Edge POS non-hot : couleur vert sport OKLCH */
+  html.ps-mobile-v2 .mc .mc-cell.edge:not(.hot):not(.neg) .mc-v {
+    color: var(--sui-data-pos) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-cell.edge.neg .mc-v {
+    color: var(--sui-data-neg) !important;
+  }
+
+  /* Bottom row : odds depth + track button premium */
+  html.ps-mobile-v2 .mc .mc-bottom {
+    margin-top: 14px !important;
+    gap: 10px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-odd {
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 2.5%, transparent) !important;
+    border: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 7%, transparent) !important;
+    border-radius: 8px !important;
+    padding: 8px 2px !important;
+    font-family: var(--sui-font-mono) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--sui-cream-text, #0a0a0a) !important;
+    font-variant-numeric: tabular-nums !important;
+    transition: transform var(--sui-dur-tap, 80ms) var(--sui-spring-tight), box-shadow var(--sui-dur-fast, 160ms) var(--sui-spring-soft) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-odd b {
+    font-family: var(--sui-font-body) !important;
+    font-size: 9px !important;
+    color: var(--sui-cream-text-3, #888) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+  }
+  html.ps-mobile-v2 .mc .mc-odd:active {
+    transform: scale(0.96);
+  }
+  html.ps-mobile-v2 .mc .mc-odd.best {
+    background: linear-gradient(135deg, color-mix(in oklch, var(--sui-accent) 12%, transparent), color-mix(in oklch, var(--sui-accent) 4%, transparent)) !important;
+    border-color: color-mix(in oklch, var(--sui-accent) 40%, transparent) !important;
+    color: var(--sui-accent) !important;
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--sui-accent) 15%, transparent),
+      0 2px 8px var(--sui-accent-glow);
+    position: relative;
+  }
+  html.ps-mobile-v2 .mc .mc-odd.best b {
+    color: color-mix(in oklch, var(--sui-accent) 70%, transparent) !important;
+  }
+  /* Best odd "★" flag indicator (visual cue value pick) */
+  html.ps-mobile-v2 .mc .mc-odd.best::after {
+    content: '\2605';
+    position: absolute;
+    top: -5px;
+    right: -3px;
+    font-size: 11px;
+    color: var(--sui-accent);
+    filter: drop-shadow(0 1px 3px var(--sui-accent-glow));
+  }
+
+  /* Track button : gradient L'Equipe premium */
+  html.ps-mobile-v2 .mc .mc-track {
+    background: linear-gradient(135deg, var(--sui-accent), var(--sui-accent-dim)) !important;
+    border-radius: 8px !important;
+    font-family: var(--sui-font-display) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    padding: 0 20px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 2px 10px var(--sui-accent-glow);
+    transition: transform var(--sui-dur-tap, 80ms) var(--sui-spring-tight), box-shadow var(--sui-dur-fast, 160ms) var(--sui-spring-soft) !important;
+  }
+  html.ps-mobile-v2 .mc .mc-track:active {
+    transform: scale(0.96);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 1px 4px var(--sui-accent-glow);
+  }
+
+  /* Detail panel (.mc-detail expanded) : premium depth */
+  html.ps-mobile-v2 .mc .mc-detail {
+    margin-top: 14px !important;
+    padding: 14px !important;
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 2%, transparent) !important;
+    border: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 5%, transparent) !important;
+    border-radius: 10px !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-reco {
+    font-family: var(--sui-font-display) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    margin-bottom: 12px !important;
+    padding: 6px 10px !important;
+    background: color-mix(in oklch, var(--sui-accent) 8%, transparent) !important;
+    color: var(--sui-accent) !important;
+    border-radius: 6px !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-c {
+    background: color-mix(in oklch, var(--sui-cream-elevate, #fff) 60%, transparent) !important;
+    border: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 5%, transparent) !important;
+    border-radius: 6px !important;
+    padding: 7px 9px !important;
+    font-size: 11px !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-c span {
+    display: block !important;
+    font-family: var(--sui-font-body) !important;
+    font-size: 9px !important;
+    color: var(--sui-cream-text-3, #888) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    margin-bottom: 3px !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-c b {
+    font-family: var(--sui-font-mono) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--sui-cream-text, #0a0a0a) !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-more {
+    margin-top: 12px !important;
+    width: 100% !important;
+    padding: 10px !important;
+    background: color-mix(in oklch, var(--sui-accent) 8%, transparent) !important;
+    border: 1px solid color-mix(in oklch, var(--sui-accent) 22%, transparent) !important;
+    border-radius: 8px !important;
+    color: var(--sui-accent) !important;
+    font-family: var(--sui-font-display) !important;
+    font-weight: 800 !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    cursor: pointer;
+    transition: transform var(--sui-dur-tap) var(--sui-spring-tight), background var(--sui-dur-fast) var(--sui-spring-soft) !important;
+  }
+  html.ps-mobile-v2 .mc .mcd-more:active {
+    transform: scale(0.98);
+    background: color-mix(in oklch, var(--sui-accent) 14%, transparent) !important;
+  }
+
+  /* Chip rank "Xe v Ye" : compact premium */
+  html.ps-mobile-v2 .mc .mc-chip {
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 4%, transparent) !important;
+    color: var(--sui-cream-text-2, #555) !important;
+    border-radius: 4px !important;
+    padding: 1px 6px !important;
+    font-family: var(--sui-font-mono) !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  /* Group header (championnat divider) : gradient L'Equipe rouge */
+  html.ps-mobile-v2 .mc-grp {
+    background: linear-gradient(90deg, var(--sui-accent), var(--sui-accent-dim)) !important;
+    color: #fff !important;
+    margin: 10px -12px 6px !important;
+    padding: 9px 16px !important;
+    border-radius: 0 !important;
+    font-family: var(--sui-font-display) !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.10em !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 2px 8px var(--sui-accent-glow);
+  }
+
+  /* Skeleton loader : Phase A psm shimmer kept + premium height bump */
+  html.ps-mobile-v2 .mc-skel {
+    height: 148px !important;
+    border-radius: 20px !important;
+    border: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 4%, transparent) !important;
+    background:
+      linear-gradient(100deg, var(--sui-cream-surface, #fafafa) 30%, var(--sui-cream-elevate, #fff) 50%, var(--sui-cream-surface, #fafafa) 70%) !important;
+    background-size: 200% 100% !important;
+    animation: suiSkelShimmer 1.6s var(--sui-spring-soft) infinite !important;
+    margin-bottom: 12px;
+  }
+  @keyframes suiSkelShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Empty state : minimaliste editorial */
+  html.ps-mobile-v2 .mc-empty {
+    padding: 64px 24px !important;
+    font-family: var(--sui-font-display) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: var(--sui-cream-text-3, #888) !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+  }
+
+  /* ===========================================================
+     FIN Phase B — Cards 3D refactor utilisant tokens Phase A
+     Resultat : .mc cartes existantes upgrades visuellement (gradient
+     mesh OKLCH + shadow asymetrique + spring physics + halo accent
+     pulse + tabular-nums typo financiere) sans modifier HTML.
      Phase C = density toggle UI + theme switcher (session future).
      =========================================================== */
 
