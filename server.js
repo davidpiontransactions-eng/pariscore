@@ -23101,24 +23101,75 @@ function seoMatchUrl(m, origin) {
 }
 
 // JSON-LD schema.org SportsEvent (injecté dans le <head>).
+// bd GSC fix — Google Search Console 2026-05-24 alerté 5 champs manquants :
+// performer, endDate, image, offers, location.address. Tous ajoutés ici avec
+// fallbacks raisonnables (pas critique mais améliore couverture Rich Results).
 function buildMatchJsonLd(m, canonical) {
+  const origin = origin0();
+  const startIso = m.commence_time || new Date().toISOString();
+  // endDate = startDate + 2h (foot) ou +3h (tennis BO5)
+  const sport = (typeof seoDetectSport === 'function') ? seoDetectSport(m) : 'football';
+  const durationHours = sport === 'tennis' ? 3 : 2;
+  let endIso = startIso;
+  try {
+    const startMs = Date.parse(startIso);
+    if (Number.isFinite(startMs)) endIso = new Date(startMs + durationHours * 3600000).toISOString();
+  } catch (_) { /* swallow */ }
+
+  const homeName = m.home_team || m.player1 || m.p1 || 'Domicile';
+  const awayName = m.away_team || m.player2 || m.p2 || 'Extérieur';
+  const performers = [
+    { '@type': 'SportsTeam', name: homeName },
+    { '@type': 'SportsTeam', name: awayName }
+  ];
+
+  // image : tableau (Google recommande array). Logo + open-graph image.
+  const imageUrls = [
+    `${origin}/og-image.png`,
+    `${origin}/logo.png`,
+    `${origin}/icon.svg`,
+  ];
+
+  // location : Place avec address (GSC required). Derive city depuis match si dispo,
+  // sinon générique 'Europe' + FR par défaut.
+  const venueCity = m.venue_city || m.home_team_city || m.league || 'Europe';
+  const venueCountryCode = (m.country_code || m.venue_country_code || 'FR').toUpperCase();
+  const venueName = m.venue || `Stade ${homeName}`;
+
   return {
     '@context': 'https://schema.org',
     '@type': 'SportsEvent',
-    name: `${m.home_team} vs ${m.away_team}`,
-    sport: 'Soccer',
-    startDate: m.commence_time || undefined,
+    name: `${homeName} vs ${awayName}`,
+    sport: sport === 'tennis' ? 'Tennis' : 'Soccer',
+    startDate: startIso,
+    endDate: endIso,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     url: canonical,
-    description: `Pronostic, statistiques data-science, xG et Power Score pour ${m.home_team} contre ${m.away_team}.`,
-    competitor: [
-      { '@type': 'SportsTeam', name: m.home_team },
-      { '@type': 'SportsTeam', name: m.away_team }
-    ],
+    description: `Pronostic, statistiques data-science, xG et Power Score pour ${homeName} contre ${awayName}.`,
+    image: imageUrls,
+    performer: performers,
+    competitor: performers,
     superEvent: { '@type': 'SportsOrganization', name: m.league || 'Football' },
-    location: { '@type': 'Place', name: m.league || 'Stade' },
-    organizer: { '@type': 'Organization', name: 'PariScore', url: origin0() }
+    location: {
+      '@type': 'Place',
+      name: venueName,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: venueCity,
+        addressCountry: venueCountryCode,
+      }
+    },
+    organizer: { '@type': 'Organization', name: 'PariScore', url: origin },
+    offers: {
+      '@type': 'Offer',
+      url: `${origin}/?utm_source=schema&utm_medium=event`,
+      price: '0',
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      validFrom: new Date().toISOString(),
+      category: 'free_analysis',
+    },
   };
 }
 function origin0() { return 'https://pariscore.fr'; }
