@@ -26,6 +26,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { Worker } = require('worker_threads'); // off-thread Monte Carlo RG (Phase 3 perf)
 const Database = require('better-sqlite3');
+const EloCalculator = require('./eloCalculator'); // WElo (Weighted Elo) Tennis — Kovalchik FiveThirtyEight
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
@@ -4781,6 +4782,53 @@ function initSQLite() {
     console.log('  i  GA_PID absent — seeds Gambling-Affiliation skip (fallback direct uniquement)');
   }
 
+  // ── WElo Tennis (Weighted Elo) — Kovalchik FiveThirtyEight ──
+  // Stockage des ratings ELO dynamiques ATP/WTA par joueur
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_players_elo (
+    player_id TEXT PRIMARY KEY,
+    player_name TEXT,
+    elo_rating REAL NOT NULL DEFAULT 1500,
+    matches_played INTEGER NOT NULL DEFAULT 0,
+    last_match_at INTEGER,
+    atp_rank INTEGER,
+    wta_rank INTEGER,
+    circuit TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_players_elo ON tennis_players_elo(elo_rating DESC)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_players_circuit ON tennis_players_elo(circuit, elo_rating DESC)`);
+
+  // Historique des matchs traités par WElo
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_matches_elo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id TEXT UNIQUE,
+    player1_id TEXT NOT NULL,
+    player2_id TEXT NOT NULL,
+    player1_name TEXT,
+    player2_name TEXT,
+    winner_id TEXT NOT NULL,
+    player1_games_won INTEGER NOT NULL,
+    player2_games_won INTEGER NOT NULL,
+    player1_elo_before REAL,
+    player2_elo_before REAL,
+    player1_elo_after REAL,
+    player2_elo_after REAL,
+    player1_elo_delta REAL,
+    player2_elo_delta REAL,
+    k_factor_p1 REAL,
+    k_factor_p2 REAL,
+    mov_factor REAL,
+    tournament TEXT,
+    circuit TEXT,
+    round TEXT,
+    processed_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_elo_match ON tennis_matches_elo(match_id)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_elo_players ON tennis_matches_elo(player1_id, player2_id)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_elo_winner ON tennis_matches_elo(winner_id)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_matches_elo_circuit ON tennis_matches_elo(circuit, processed_at)`);
+
   // Seed utilisateur de test (idempotent)
   const testEmail = 'test@pariscore.fr';
   const existing = sqldb.prepare('SELECT id FROM users WHERE email = ?').get(testEmail);
@@ -4805,6 +4853,27 @@ function kvSet(key, value) {
 function kvSetBatch(entries) {
   const stmt = sqldb.prepare('INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)');
   sqldb.transaction(() => { for (const [k, v] of entries) stmt.run(k, JSON.stringify(v)); })();
+}
+
+// ─── WElo TENNIS — Initialisation du calculator ──────────────────────────
+// Charge l'état persistant depuis SQLite et init en mémoire
+let tennisEloCalculator = null;
+
+function initTennisEloCalculator() {
+  tennisEloCalculator = new EloCalculator(1500);
+
+  // Charger l'état existant depuis tennis_players_elo
+  try {
+    const players = sqldb.prepare('SELECT player_id, elo_rating, matches_played FROM tennis_players_elo').all();
+    for (const p of players) {
+      tennisEloCalculator.initializePlayer(p.player_id, p.elo_rating);
+      const state = tennisEloCalculator.getPlayer(p.player_id);
+      state.matchesPlayed = p.matches_played;
+    }
+    console.log(`  ✓ WElo Tennis initialized — ${players.length} joueurs chargés depuis SQLite`);
+  } catch (e) {
+    console.error('  ⚠ Erreur init WElo Tennis:', e.message);
+  }
 }
 
 // ─── API RESPONSE CACHE — 12h TTL (modèle OddAlerts/Datafoot) ──────────
@@ -29811,6 +29880,138 @@ if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
     return jsonResponse(res, 200, { count: 0, matches: [], meta: { error: 'build_failed', detail: String(e && e.message || e) } });
   }
 }
+
+// ─── WElo TENNIS ELO ROUTES ─────────────────────────────────────────────
+
+// POST /api/v1/tennis/elo/process-match — Traiter un match et mettre à jour les ratings
+if (pathname === '/api/v1/tennis/elo/process-match' && req.method === 'POST') {
+  const body = await readBodyLimited(req, 1024);
+  let payload = {};
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    return jsonResponse(res, 400, { error: 'invalid_json' });
+  }
+
+  const { player1_id, player2_id, player1_games_won, player2_games_won, winner_id, tournament, circuit, round } = payload;
+  if (!player1_id || !player2_id || !Number.isFinite(player1_games_won) || !Number.isFinite(player2_games_won) || !winner_id) {
+    return jsonResponse(res, 400, { error: 'missing_required_params', required: ['player1_id', 'player2_id', 'player1_games_won', 'player2_games_won', 'winner_id'] });
+  }
+
+  if (winner_id !== player1_id && winner_id !== player2_id) {
+    return jsonResponse(res, 400, { error: 'invalid_winner_id' });
+  }
+
+  try {
+    const result = tennisEloCalculator.processMatchResult(player1_id, player2_id, player1_games_won, player2_games_won, winner_id);
+
+    // Persister en SQLite
+    sqldb.prepare(`
+      INSERT OR REPLACE INTO tennis_matches_elo
+      (match_id, player1_id, player2_id, winner_id, player1_games_won, player2_games_won,
+       player1_elo_before, player2_elo_before, player1_elo_after, player2_elo_after,
+       player1_elo_delta, player2_elo_delta, tournament, circuit, round, processed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      `${player1_id}_${player2_id}_${Date.now()}`,
+      player1_id, player2_id, winner_id,
+      player1_games_won, player2_games_won,
+      result.player1.eloBefore, result.player2.eloBefore,
+      result.player1.eloAfter, result.player2.eloAfter,
+      result.player1.delta, result.player2.delta,
+      tournament || null, circuit || null, round || null,
+      Math.floor(Date.now() / 1000)
+    );
+
+    // Mettre à jour les joueurs dans tennis_players_elo
+    sqldb.prepare(`
+      INSERT OR REPLACE INTO tennis_players_elo
+      (player_id, elo_rating, matches_played, last_match_at, circuit)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      player1_id, result.player1.eloAfter, result.player1.matchesPlayed,
+      Math.floor(Date.now() / 1000), circuit || null
+    );
+
+    sqldb.prepare(`
+      INSERT OR REPLACE INTO tennis_players_elo
+      (player_id, elo_rating, matches_played, last_match_at, circuit)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      player2_id, result.player2.eloAfter, result.player2.matchesPlayed,
+      Math.floor(Date.now() / 1000), circuit || null
+    );
+
+    return jsonResponse(res, 200, { success: true, result });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'process_match_failed', detail: String(e && e.message || e) });
+  }
+}
+
+// GET /api/v1/tennis/elo/rankings — Afficher les top joueurs par Elo
+if (pathname === '/api/v1/tennis/elo/rankings' && req.method === 'GET') {
+  try {
+    const limit = Math.min(Math.max(parseInt(query.limit) || 100, 1), 1000);
+    const circuit = query.circuit ? String(query.circuit).toUpperCase() : null;
+
+    let players = tennisEloCalculator.getTopPlayers(limit * 2); // Fetch extra au cas où on filter par circuit
+
+    if (circuit && ['ATP', 'WTA'].includes(circuit)) {
+      players = players.filter(p => {
+        const dbPlayer = sqldb.prepare('SELECT circuit FROM tennis_players_elo WHERE player_id = ?').get(p.playerId);
+        return dbPlayer && dbPlayer.circuit === circuit;
+      });
+    }
+
+    const rankings = players.slice(0, limit).map((p, idx) => ({
+      rank: idx + 1,
+      player_id: p.playerId,
+      elo_rating: Math.round(p.elo * 100) / 100,
+      matches_played: p.matchesPlayed
+    }));
+
+    return jsonResponse(res, 200, { rankings, count: rankings.length });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'rankings_failed', detail: String(e && e.message || e) });
+  }
+}
+
+// GET /api/v1/tennis/elo/player/:playerId — Détail d'un joueur
+if (pathname.startsWith('/api/v1/tennis/elo/player/') && req.method === 'GET') {
+  const playerId = decodeURIComponent(pathname.slice('/api/v1/tennis/elo/player/'.length)).trim();
+  if (!playerId) {
+    return jsonResponse(res, 400, { error: 'missing_player_id' });
+  }
+
+  try {
+    const player = tennisEloCalculator.getPlayer(playerId);
+    const dbPlayer = sqldb.prepare('SELECT * FROM tennis_players_elo WHERE player_id = ?').get(playerId);
+
+    return jsonResponse(res, 200, {
+      player_id: playerId,
+      player_name: dbPlayer?.player_name || null,
+      elo_rating: Math.round(player.elo * 100) / 100,
+      matches_played: player.matchesPlayed,
+      atp_rank: dbPlayer?.atp_rank || null,
+      wta_rank: dbPlayer?.wta_rank || null,
+      circuit: dbPlayer?.circuit || null,
+      last_match_at: dbPlayer?.last_match_at || null
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'player_lookup_failed', detail: String(e && e.message || e) });
+  }
+}
+
+// GET /api/v1/tennis/elo/stats — Statistiques globales du modèle
+if (pathname === '/api/v1/tennis/elo/stats' && req.method === 'GET') {
+  try {
+    const stats = tennisEloCalculator.getStats();
+    return jsonResponse(res, 200, stats);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'stats_failed', detail: String(e && e.message || e) });
+  }
+}
+
 // DEBUG-ONLY : simule un match scheduled qui passe live pour valider le recall
 // snapshot. Pick un match enrichi du cache vb, injecte dans _tennisLiveCache
 // avec is_live=true, invalide vb cache, rebuild → la réponse doit contenir le
@@ -36235,6 +36436,13 @@ async function bootInit() {
 
     if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
     serverReady = true;
+
+    // Init WElo Tennis calculator
+    try {
+      initTennisEloCalculator();
+    } catch (e) {
+      console.warn('  [Boot] ⚠ initTennisEloCalculator:', e.message);
+    }
 
     // FIX historique : récupère les matchs déjà perdus dans db.archive_matches
     try {
