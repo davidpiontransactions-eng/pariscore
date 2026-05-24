@@ -15415,14 +15415,25 @@ const JWT_TTL_USER = 30 * 24 * 3600; // 30 jours — membres
 // ─── STRIPE (HTTPS natif — zéro dépendance npm) ──────────────────────────────
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
-const STRIPE_MATCHDAY_PRICE_ID = process.env.STRIPE_MATCHDAY_PRICE_ID || '';
 const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL || 'http://localhost:3000/?matchday=success';
 const STRIPE_CANCEL_URL = process.env.STRIPE_CANCEL_URL || 'http://localhost:3000/';
-// bd s77m — Subscription Pro (mensuel/annuel) — Price IDs + redirections
+// bd s77m Phase 1 — Price IDs Subscription Pro (mensuel/annuel)
 const STRIPE_PRICE_PRO_MONTHLY = process.env.STRIPE_PRICE_PRO_MONTHLY || '';
 const STRIPE_PRICE_PRO_ANNUAL  = process.env.STRIPE_PRICE_PRO_ANNUAL  || '';
 const STRIPE_PRICE_PRO_FOOT    = process.env.STRIPE_PRICE_PRO_FOOT    || '';
 const STRIPE_PRICE_PRO_TENNIS  = process.env.STRIPE_PRICE_PRO_TENNIS  || '';
+// bd s77m Phase 2 — Refactor 8 tiers user pricing 2026-05-24 :
+//   DUO PRO €30/mo (foot+tennis combo) + ANNUEL DUO €22×12 -27% (€264/an)
+//   MATCHDAY FOOT/TENNIS/DUO (€1.50/€1.50/€2.50 one-time 24h)
+//   STRIPE_MATCHDAY_PRICE_ID (legacy générique) → fallback dernière chance pour
+//   matchday duo si STRIPE_PRICE_MATCHDAY_DUO absent (backward compat soft)
+const STRIPE_PRICE_DUO_MONTHLY      = process.env.STRIPE_PRICE_DUO_MONTHLY      || '';
+const STRIPE_PRICE_DUO_ANNUAL       = process.env.STRIPE_PRICE_DUO_ANNUAL       || '';
+const STRIPE_PRICE_MATCHDAY_FOOT    = process.env.STRIPE_PRICE_MATCHDAY_FOOT    || '';
+const STRIPE_PRICE_MATCHDAY_TENNIS  = process.env.STRIPE_PRICE_MATCHDAY_TENNIS  || '';
+const STRIPE_PRICE_MATCHDAY_DUO     = process.env.STRIPE_PRICE_MATCHDAY_DUO     || process.env.STRIPE_MATCHDAY_PRICE_ID || '';
+// Backward compat alias (legacy code references STRIPE_MATCHDAY_PRICE_ID)
+const STRIPE_MATCHDAY_PRICE_ID = STRIPE_PRICE_MATCHDAY_DUO;
 const STRIPE_PRO_SUCCESS_URL   = process.env.STRIPE_PRO_SUCCESS_URL   || 'http://localhost:3000/?subscription=success';
 const STRIPE_PRO_CANCEL_URL    = process.env.STRIPE_PRO_CANCEL_URL    || 'http://localhost:3000/?subscription=cancel';
 const STRIPE_PORTAL_RETURN_URL = process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/?portal=back';
@@ -15504,22 +15515,50 @@ function verifyStripeSignature(rawBody, sigHeader, toleranceSec = 300) {
   });
 }
 
-// bd s77m — résout un Price ID Stripe à partir du plan choisi par l'utilisateur
+// bd s77m Phase 2 — Résout un Price ID Stripe à partir du plan choisi par l'utilisateur
+// 8 tiers supportés :
+//   plan='pro_foot'   billing='monthly' → STRIPE_PRICE_PRO_FOOT (€19.5/mo)
+//   plan='pro_tennis' billing='monthly' → STRIPE_PRICE_PRO_TENNIS (€19.5/mo)
+//   plan='pro_duo'    billing='monthly' → STRIPE_PRICE_DUO_MONTHLY (€30/mo)
+//   plan='pro_duo'    billing='annual'  → STRIPE_PRICE_DUO_ANNUAL (€264/an, -27%)
+//   plan='pro_all' (legacy) billing='annual' → STRIPE_PRICE_PRO_ANNUAL (legacy)
+//   plan='pro_all' (default) → STRIPE_PRICE_PRO_MONTHLY (legacy fallback)
 function psResolveProPriceId(plan, billing) {
-  // plan : 'pro_all' (default), 'pro_foot', 'pro_tennis'
-  // billing : 'monthly' (default), 'annual'
-  if (plan === 'pro_foot' && STRIPE_PRICE_PRO_FOOT) return STRIPE_PRICE_PRO_FOOT;
-  if (plan === 'pro_tennis' && STRIPE_PRICE_PRO_TENNIS) return STRIPE_PRICE_PRO_TENNIS;
-  if (billing === 'annual' && STRIPE_PRICE_PRO_ANNUAL) return STRIPE_PRICE_PRO_ANNUAL;
+  const p = String(plan || '').toLowerCase();
+  const b = String(billing || 'monthly').toLowerCase();
+  // Mono-sport (priorité explicite)
+  if (p === 'pro_foot' && STRIPE_PRICE_PRO_FOOT)     return STRIPE_PRICE_PRO_FOOT;
+  if (p === 'pro_tennis' && STRIPE_PRICE_PRO_TENNIS) return STRIPE_PRICE_PRO_TENNIS;
+  // Duo (foot+tennis combo)
+  if (p === 'pro_duo' || p === 'duo') {
+    if (b === 'annual' && STRIPE_PRICE_DUO_ANNUAL) return STRIPE_PRICE_DUO_ANNUAL;
+    if (STRIPE_PRICE_DUO_MONTHLY) return STRIPE_PRICE_DUO_MONTHLY;
+  }
+  // Legacy fallback (pro_all + billing annual/monthly)
+  if (b === 'annual' && STRIPE_PRICE_PRO_ANNUAL) return STRIPE_PRICE_PRO_ANNUAL;
   return STRIPE_PRICE_PRO_MONTHLY;
 }
 
+// bd s77m Phase 2 — Résout Price ID Matchday Pass (one-time 24h)
+// sport='foot' → STRIPE_PRICE_MATCHDAY_FOOT (€1.50)
+// sport='tennis' → STRIPE_PRICE_MATCHDAY_TENNIS (€1.50)
+// sport='duo' (default) → STRIPE_PRICE_MATCHDAY_DUO (€2.50, fallback legacy STRIPE_MATCHDAY_PRICE_ID)
+function psResolveMatchdayPriceId(sport) {
+  const s = String(sport || 'duo').toLowerCase();
+  if (s === 'foot' && STRIPE_PRICE_MATCHDAY_FOOT)     return STRIPE_PRICE_MATCHDAY_FOOT;
+  if (s === 'tennis' && STRIPE_PRICE_MATCHDAY_TENNIS) return STRIPE_PRICE_MATCHDAY_TENNIS;
+  return STRIPE_PRICE_MATCHDAY_DUO;  // default duo (also legacy fallback)
+}
+
 // Map Stripe Price ID → role PariScore (synchronisé webhook)
+// Roles : pro_foot, pro_tennis, pro_duo (foot+tennis), pro_all (legacy generic)
 function psStripePriceToRole(priceId) {
   if (!priceId) return 'premium';
-  if (priceId === STRIPE_PRICE_PRO_FOOT)   return 'pro_foot';
-  if (priceId === STRIPE_PRICE_PRO_TENNIS) return 'pro_tennis';
-  return 'pro_all'; // monthly + annual + default
+  if (priceId === STRIPE_PRICE_PRO_FOOT)     return 'pro_foot';
+  if (priceId === STRIPE_PRICE_PRO_TENNIS)   return 'pro_tennis';
+  if (priceId === STRIPE_PRICE_DUO_MONTHLY)  return 'pro_duo';
+  if (priceId === STRIPE_PRICE_DUO_ANNUAL)   return 'pro_duo';
+  return 'pro_all'; // monthly + annual legacy + default
 }
 
 // Idempotency : retourne true si event déjà traité (ou enregistré maintenant)
@@ -25125,23 +25164,28 @@ if (pathname === '/api/v1/auth/me' && req.method === 'GET') {
   return jsonResponse(res, 200, { username: user.username, role: user.role });
 }
 // POST /api/v1/checkout/matchday → crée une Stripe Checkout Session
+// bd s77m Phase 2 — accept query/body param `sport` (foot|tennis|duo) pour
+// matchday pass mono-sport vs duo. Default 'duo' (legacy compat).
 if (pathname === '/api/v1/checkout/matchday' && req.method === 'POST') {
-  if (!STRIPE_SECRET_KEY || !STRIPE_MATCHDAY_PRICE_ID) {
-    return jsonResponse(res, 503, { error: 'Paiement non configuré (clés Stripe manquantes)' });
+  const sportParam = String((query && query.sport) || 'duo').toLowerCase();
+  const priceId = psResolveMatchdayPriceId(sportParam);
+  if (!STRIPE_SECRET_KEY || !priceId) {
+    return jsonResponse(res, 503, { error: 'Paiement non configuré (clés Stripe manquantes)', sport: sportParam });
   }
   (async () => {
     try {
       const session = await stripeRequest('POST', 'checkout/sessions', {
         'mode': 'payment',
-        'line_items[0][price]': STRIPE_MATCHDAY_PRICE_ID,
+        'line_items[0][price]': priceId,
         'line_items[0][quantity]': '1',
         'success_url': STRIPE_SUCCESS_URL,
         'cancel_url': STRIPE_CANCEL_URL,
         'payment_method_types[0]': 'card',
         'metadata[product]': 'matchday',
+        'metadata[sport]': sportParam,
       });
       if (session.error) return jsonResponse(res, 400, { error: session.error.message });
-      jsonResponse(res, 200, { url: session.url, session_id: session.id });
+      jsonResponse(res, 200, { url: session.url, session_id: session.id, sport: sportParam });
     } catch (e) {
       console.error('[Stripe] checkout error:', e.message);
       jsonResponse(res, 500, { error: 'Erreur Stripe' });
