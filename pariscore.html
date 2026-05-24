@@ -21804,16 +21804,46 @@ async function _renderLivescoreDetail(eid) {
 }
 
 // Panneau dégradé (D) : id non résolvable BSD → on NE refait AUCUNE requête,
-// on rend une synthèse depuis les données déjà en mémoire (window._tennisVbLastFetch).
+// on rend une synthèse depuis les données déjà en mémoire.
+// Fix bug 24/05 : lookup multi-cache (value-bets + live + unified) — avant,
+// seul _tennisVbLastFetch était consulté → écran vide quand user cliquait
+// depuis tableau Live (qui peuple _tennisLastFetch / psTennisMatches).
 function _renderTennisDegradedDetail(matchId) {
   const head = `<div class="tennis-empty-state" style="text-align:center;">
     <div style="font-size:30px;margin-bottom:6px;">🎾</div>
     <div><strong>Détail point-par-point BSD indisponible</strong></div>
     <div style="margin-top:4px;font-size:12px;opacity:.75;">Match du flux programmé/dégradé. Synthèse ci-dessous depuis les données déjà chargées (zéro requête).</div>
   </div>`;
-  const list = Array.isArray(window._tennisVbLastFetch) ? window._tennisVbLastFetch : [];
-  const m = list.find(x => x && String(x.id) === String(matchId));
-  if (!m) return head;
+  const sid = String(matchId);
+  const sources = [
+    window._tennisVbLastFetch,
+    window.psTennisMatches,
+    window._tennisLastFetch,
+  ];
+  let m = null;
+  for (const src of sources) {
+    if (!Array.isArray(src)) continue;
+    m = src.find(x => x && (String(x.id) === sid || String(x.fixture_id) === sid));
+    if (m) break;
+  }
+  // Si entrée live brute (_tennisLastFetch shape) trouvée, normalise champs
+  // attendus par le rendu (predictions/odds/predictive). Champs manquants
+  // restent null → rangées correspondantes ne s'affichent pas (`row()` retourne '').
+  if (m && !m.predictions && m._live) {
+    m = Object.assign({
+      player1: m.player1, player2: m.player2,
+      tour: m.tour, tournament: m.tournament, round: m.round, surface: m.surface,
+      status: m.status, predictions: m.predictions || null, odds: m.odds || null,
+      predictive: m.predictive || null,
+    }, m);
+  }
+  // Dernier recours : entrée minimale depuis matchId pour rendre au moins
+  // les noms + statut générique au lieu d'un écran vide.
+  if (!m) {
+    return head + `<div style="max-width:560px;margin:14px auto 0;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--text3,#5a6068);">
+      Match introuvable dans les caches locaux (Live/ValueBets/Unified). Recharge la page ou retourne au tableau pour resélectionner.
+    </div>`;
+  }
   const p1 = m.player1 || {}, p2 = m.player2 || {};
   const pr = m.predictions || {};
   const elo = pr.elo || null, bl = pr.blended || null;
