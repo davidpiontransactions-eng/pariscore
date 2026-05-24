@@ -21571,13 +21571,24 @@ function _psLtsRenderPit(m) {
     drEl.setAttribute('data-trend', dr != null ? (dr > 1.1 ? 'up' : (dr < 0.9 ? 'down' : '')) : '');
   }
 
-  // Hold Streak : compte sets gagnés sur derniers 3
+  // Hold Streak : % service tenu approximation via _slbHoldStreak helper
+  // (baseline 75 ATP/clay + DR tilt). Fix 24/05 (bd fh9h follow-up) : avant
+  // = sets-won-last-3 qui retourne 0% sur set incomplet — metric incoherente
+  // avec engine Smart Live Bets + visuellement absurde (P1 dominant DR 1.10
+  // mais HOLD STREAK affichait 0%).
   const setsArr = Array.isArray(m.sets) ? m.sets : [];
   const recent = setsArr.slice(-3);
   let holdP1 = 0, holdTotal = recent.length;
   recent.forEach(s => { if ((s.p1 || 0) > (s.p2 || 0)) holdP1++; });
   const holdEl = document.getElementById('pslts-m-hold');
-  if (holdEl) holdEl.textContent = holdTotal > 0 ? `${Math.round(holdP1 / holdTotal * 100)}%` : '—';
+  if (holdEl) {
+    let hsTxt = '—';
+    try {
+      const hs = (typeof _slbHoldStreak === 'function') ? _slbHoldStreak(m) : null;
+      if (hs && hs.p1 != null && hs.p2 != null) hsTxt = `${Math.round(hs.p1)}/${Math.round(hs.p2)}%`;
+    } catch (_) {}
+    holdEl.textContent = hsTxt;
+  }
 
   // BP Conv : approxime via BPPI brut Phase 1
   const bpEl = document.getElementById('pslts-m-bp');
@@ -21627,12 +21638,20 @@ function _psLtsRenderPit(m) {
     intEl.setAttribute('data-trend', intensity >= 75 ? 'up' : (intensity > 0 && intensity < 35 ? 'down' : ''));
   }
 
-  // Pressure Gauge composite Phase 1 : moyenne pondérée des signaux dispo
+  // Pressure Gauge composite : moyenne pondérée des signaux dispo.
+  // Fix 24/05 (bd fh9h follow-up) : holdNorm utilisait métrique sets-won-last-3
+  // qui retourne 0% sur set incomplet (5-5 ongoing) → pulled p1Share vers 41
+  // alors que DR/BPPI disaient P1 dominant. Reutilise _slbHoldStreak (baseline
+  // 75 + DR tilt) pour coherence avec rule engine Smart Live Bets.
   let p1Share = 50;
   if (dr != null || bppi) {
     const drNorm = dr != null ? (dr / 2 * 100) : 50;
     const bpNorm = bppi ? (Number(bppi.p1 || 0) / Math.max(1, Number(bppi.p1 || 0) + Number(bppi.p2 || 0)) * 100) : 50;
-    const holdNorm = holdTotal > 0 ? (holdP1 / holdTotal * 100) : 50;
+    let holdNorm = 50;
+    try {
+      const hs = (typeof _slbHoldStreak === 'function') ? _slbHoldStreak(m) : null;
+      if (hs && hs.p1 != null) holdNorm = hs.p1;
+    } catch (_) {}
     p1Share = Math.round(drNorm * 0.4 + bpNorm * 0.35 + holdNorm * 0.25);
     p1Share = Math.max(5, Math.min(95, p1Share));
   }
@@ -21686,7 +21705,8 @@ const _SLB_RULES = [
       return null;
     },
   },
-  // R2 — Reset Servant Trap : set 3-3 ou 4-4 ou 5-5, Pressure_Gauge_pickFor > 65, Intensity > 70
+  // R2 — Reset Servant Trap : set 3-3 ou 4-4 ou 5-5, Pressure_Gauge_pickFor > 55,
+  // Intensity > 70 (skip si 0/null = donnee absente), Rally > 6 (skip si null)
   {
     id: 'R2', market: 'set_winner', icon: '⚡', title: 'RESET TRAP SET',
     evaluate(m) {
@@ -21697,13 +21717,16 @@ const _SLB_RULES = [
       const pg = _slbPressureGauge(m);
       const intensity = Number(m.live_intensity || 0);
       const rallyAvg = _slbRallyAvg(m);
-      if (intensity < 70) return null;
+      // Fix 24/05 : intensity = 0 (null/absent) = donnee inconnue, n'invalide pas regle.
+      // Seul intensity > 0 ET < 70 = signal trop faible → reject.
+      if (intensity > 0 && intensity < 70) return null;
       if (rallyAvg != null && rallyAvg < 6) return null;
       for (const pick of ['p1', 'p2']) {
         const pgSide = pick === 'p1' ? pg.p1Share : (100 - pg.p1Share);
-        if (pgSide > 65) {
+        // Fix 24/05 : seuil 65 → 55 (5-5 typique = 55-60% dominance pression)
+        if (pgSide > 55) {
           const rlBoost = rallyAvg != null ? (rallyAvg - 6) * 5 : 0;
-          const conf = 40 + 0.6 * (pgSide - 65) + Math.max(0, rlBoost);
+          const conf = 40 + 0.6 * (pgSide - 55) + Math.max(0, rlBoost);
           return {
             pickFor: pick,
             confidence: Math.round(Math.max(60, Math.min(85, conf))),
@@ -21714,7 +21737,7 @@ const _SLB_RULES = [
       return null;
     },
   },
-  // R3 — Tie-Break Lock : set 5-5/6-5/6-6, DR equilibre [0.85, 1.15], Hold_both > 75%
+  // R3 — Tie-Break Lock : set 5-5/6-5/6-6, DR equilibre [0.85, 1.15], Hold_both > 65%
   {
     id: 'R3', market: 'tiebreak', icon: '🎲', title: 'TIE-BREAK LOCK',
     evaluate(m) {
@@ -21729,8 +21752,14 @@ const _SLB_RULES = [
       if (!dr || !hs) return null;
       const balanced = dr.p1 >= 0.85 && dr.p1 <= 1.15;
       if (!balanced) return null;
-      if (hs.p1 < 75 || hs.p2 < 75) return null;
-      const conf = 70 + 10 * (5 - Math.abs(dr.p1 - 1) * 100) / 5;
+      // Fix 24/05 : seuil hold 75 → 65 (baseline helper Phase 1 = 75 +/- DR tilt,
+      // realiste pour clay ou hold ATP ~78% mais variabilite +/-10 typique).
+      if (hs.p1 < 65 || hs.p2 < 65) return null;
+      // Fix 24/05 : nouvelle formule monotone — peak 90 a DR=1.0, descend a 75
+      // aux bornes 0.85/1.15. Avant : formule cassee retournait 59 souvent
+      // (clamp force 75 fixe sans differenciation).
+      const dist = Math.abs(dr.p1 - 1); // 0 a 0.15
+      const conf = 90 - (dist / 0.15) * 15;
       return {
         pickFor: null,
         confidence: Math.round(Math.max(75, Math.min(90, conf))),
@@ -21770,7 +21799,7 @@ const _SLB_RULES = [
       return null;
     },
   },
-  // R5 — Hold Both Stall : >=6 jeux d'affilee holds 2 joueurs, DR ~ 1.0 ±0.10, RL < 5
+  // R5 — Hold Both Stall : >=6 jeux d'affilee holds 2 joueurs, DR ~ 1.0 ±0.15, RL < 5
   {
     id: 'R5', market: 'over_games', icon: '✅', title: 'HOLD STALL',
     evaluate(m) {
@@ -21780,7 +21809,9 @@ const _SLB_RULES = [
       if (totalGames < 6) return null;
       const dr = _slbExtractDR(m);
       if (!dr) return null;
-      const balanced = Math.abs(dr.p1 - 1) <= 0.10;
+      // Fix 24/05 : tolerance balanced 0.10 → 0.15 (DR=1.10 echouait par marge
+      // 0.003 du float arithmetic — typique clay ATP 5-5 / 6-6).
+      const balanced = Math.abs(dr.p1 - 1) <= 0.15;
       if (!balanced) return null;
       const rallyAvg = _slbRallyAvg(m);
       if (rallyAvg != null && rallyAvg >= 5) return null;
@@ -21976,11 +22007,12 @@ function _slbHoldStreak(m) {
   // Hold % approx : compte jeux gagnes par celui dont c'etait le service
   // (heuristique car sans data point-by-point precise)
   const wins = { p1: recent.filter(s => s === 'p1').length, p2: recent.filter(s => s === 'p2').length };
-  // Sans signal precis hold/break, on retourne baseline 70% qu'on biaise via DR
+  // Fix 24/05 : baseline 70 → 75 (ATP standard hold ~78%, WTA ~63%, terre battue
+  // ~73% — moyenne plus realiste). Tilt amplifie via DR pour differenciation.
   const dr = _slbExtractDR(m);
-  const baseline = 70;
+  const baseline = 75;
   if (!dr) return { p1: baseline, p2: baseline };
-  const tilt = (dr.p1 - 1) * 12; // si DR_p1 = 1.30 → tilt +3.6 → J1 hold 73.6%, J2 hold 66.4%
+  const tilt = (dr.p1 - 1) * 12; // si DR_p1 = 1.30 → tilt +3.6 → J1 hold 78.6%, J2 hold 71.4%
   return { p1: Math.max(30, Math.min(95, baseline + tilt)), p2: Math.max(30, Math.min(95, baseline - tilt)) };
 }
 
