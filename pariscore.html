@@ -10273,8 +10273,7 @@
 </style>
 <style>/*TN_UNIFY_CSS*/
 tr.tennis-vb-row{transition:background .4s ease;}
-tr.tennis-vb-row.is-live{position:relative;background:linear-gradient(90deg,rgba(255,77,77,.09),rgba(255,77,77,0) 60%);}
-tr.tennis-vb-row.is-live>td:first-child{box-shadow:inset 3px 0 0 0 var(--red,#ff4d4d),inset 7px 0 9px -6px rgba(255,77,77,.55);}
+tr.tennis-vb-row.is-live>td:first-child{position:relative;background:linear-gradient(90deg,rgba(255,77,77,.09),rgba(255,77,77,0) 85%);box-shadow:inset 3px 0 0 0 var(--red,#ff4d4d),inset 7px 0 9px -6px rgba(255,77,77,.55);}
 .tn-live-ind{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--red,#ff4d4d);letter-spacing:.3px;animation:tnLivePulse 1.8s ease-in-out infinite;}
 @keyframes tnLivePulse{0%,100%{opacity:1}50%{opacity:.55}}
 @media(prefers-reduced-motion:reduce){.tn-live-ind{animation:none}}
@@ -13912,11 +13911,26 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
     <!-- Tableau value-bets -->
     <div class="table-responsive-wrapper">
-      <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;min-width:1020px;">
-        <!-- bd 661w fix : colgroup verrouille col 1 favoris a 40px (auto-table
-             layout browser ignorait width inline+CSS sur certaines configs). -->
+      <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:1020px;">
+        <!-- bd 661w fix : colgroup widths MUST match sticky offsets: col1=40px(0), col2=90px(40), col3=200px(130) -->
         <colgroup>
           <col style="width:40px;">
+          <col style="width:90px;">
+          <col style="width:200px;">
+          <col style="width:170px;">
+          <col style="width:120px;">
+          <col style="width:100px;">
+          <col style="width:130px;">
+          <col style="width:110px;">
+          <col style="width:110px;">
+          <col style="width:110px;">
+          <col style="width:120px;">
+          <col style="width:110px;">
+          <col style="width:130px;">
+          <col style="width:110px;">
+          <col style="width:120px;">
+          <col style="width:100px;">
+          <col style="width:120px;">
         </colgroup>
         <thead>
           <tr style="background:var(--bg3,#181c20);">
@@ -13970,10 +13984,20 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <button type="button" class="tn-src-filter-chip" data-src-filter="AISCORE" onclick="setTennisSourceFilter('AISCORE')" aria-pressed="false" title="AiScore — enrichissement serving (cache + on-demand throttled)">AISCORE</button>
     </div>
     <div class="table-responsive-wrapper">
-      <table id="tennis-live-table" style="width:100%;border-collapse:collapse;min-width:900px;">
-        <!-- bd 661w fix : colgroup verrouille col 1 favoris a 40px. -->
+      <table id="tennis-live-table" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;">
+        <!-- bd 661w fix : colgroup verrouille TOUTES colonnes + table-layout:fixed pour stabilité -->
         <colgroup>
           <col style="width:40px;">
+          <col style="width:140px;">
+          <col style="width:100px;">
+          <col style="width:180px;">
+          <col style="width:180px;">
+          <col style="width:170px;">
+          <col style="width:80px;">
+          <col style="width:80px;">
+          <col style="width:80px;">
+          <col style="width:60px;">
+          <col style="width:100px;">
         </colgroup>
         <thead>
           <tr style="background:var(--bg3,#181c20);">
