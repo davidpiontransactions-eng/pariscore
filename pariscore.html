@@ -1036,6 +1036,198 @@
      CTA + headline + tagline + stats (plus de "vide blanc")
      =========================================================== */
 
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Chantier C4-partial
+     Bottom-sheet Insights match (remplace modale centree desktop par
+     bottom-sheet iOS premium swipe-from-bottom sur mobile).
+     - Modale desktop : centree 740px max-width 88vh max-height (intact V1)
+     - Mobile : bottom-sheet full-width 92vh anchored bottom + drag handle
+       + spring iOS cubic-bezier + border-radius top 24px + glassmorphic
+
+     Scope strict : html.ps-mobile-v2 #insights-modal/panel (zero impact V1)
+     =========================================================== */
+
+  /* Overlay backdrop : preserve dim background mais plus opaque mobile */
+  html.ps-mobile-v2 #insights-modal {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    /* Transition fade overlay matched avec sheet slide */
+    transition: opacity 280ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+  }
+
+  /* Panel : bottom-sheet full-width anchored bottom */
+  html.ps-mobile-v2 #insights-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 92vh !important;
+    max-height: 92vh !important;
+    border-radius: 24px 24px 0 0 !important;
+    border: none !important;
+    border-top: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+    margin: 0 !important;
+    margin-top: auto !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(40px) saturate(160%);
+    -webkit-backdrop-filter: blur(40px) saturate(160%);
+    box-shadow:
+      0 -1px 0 rgba(255, 255, 255, 0.95) inset,
+      0 -20px 60px rgba(0, 0, 0, 0.35),
+      0 -4px 12px rgba(0, 0, 0, 0.15) !important;
+    /* Spring iOS official cubic-bezier */
+    transition: transform 340ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+    transform: translateY(100%);
+    /* GPU compositing pour smooth slide */
+    will-change: transform;
+  }
+  html.ps-mobile-v2 #insights-modal.open #insights-panel {
+    transform: translateY(0);
+  }
+
+  /* Drag handle bar (signal universel swipeable iOS) injectee via ::before */
+  html.ps-mobile-v2 #insights-panel::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 999px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Inner scrollable area : padding top compense drag handle + safe-area-inset-bottom */
+  html.ps-mobile-v2 #insights-panel-inner {
+    padding: 28px 18px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Header titles compact mobile */
+  html.ps-mobile-v2 #insights-panel .ins-header {
+    margin-top: 8px !important;
+    margin-bottom: 16px !important;
+  }
+  html.ps-mobile-v2 #insights-panel .ins-teams {
+    font-size: 18px !important;
+    line-height: 1.25 !important;
+  }
+  html.ps-mobile-v2 #insights-panel .ins-league {
+    font-size: 10px !important;
+    margin-top: 3px !important;
+  }
+
+  /* Tabs : horizontal scroll mobile + chip-style premium */
+  html.ps-mobile-v2 #insights-panel .ins-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    gap: 4px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    margin: 0 -18px 16px !important;
+    padding: 0 18px 0 !important;
+  }
+  html.ps-mobile-v2 #insights-panel .ins-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  html.ps-mobile-v2 #insights-panel .ins-tab {
+    flex: 0 0 auto !important;
+    padding: 10px 14px !important;
+    font-size: 11px !important;
+    white-space: nowrap;
+    /* Press feedback */
+    transition: color 150ms ease-out, transform 80ms ease-out, border-color 150ms ease-out;
+  }
+  html.ps-mobile-v2 #insights-panel .ins-tab:active {
+    transform: scale(0.96);
+  }
+  html.ps-mobile-v2 #insights-panel .ins-tab.active {
+    border-bottom-width: 3px !important;
+    /* Tab spring effect */
+    transform: translateY(-1px);
+  }
+
+  /* Section titles compact mobile */
+  html.ps-mobile-v2 #insights-panel .ins-section {
+    margin-bottom: 16px !important;
+  }
+  html.ps-mobile-v2 #insights-panel .ins-section-title {
+    font-size: 9px !important;
+    letter-spacing: 0.18em !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Tables : compact + horizontal scroll si overflow */
+  html.ps-mobile-v2 #insights-panel .ins-table {
+    font-size: 11px !important;
+  }
+  html.ps-mobile-v2 #insights-panel table {
+    width: 100% !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Bouton close (X) repositionne en haut droite + touch target 44x44 */
+  html.ps-mobile-v2 #insights-panel .modal-close {
+    position: absolute !important;
+    top: 22px !important;
+    right: 14px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #555 !important;
+    font-size: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 80ms ease-out, background 150ms ease-out;
+  }
+  html.ps-mobile-v2 #insights-panel .modal-close:active {
+    transform: scale(0.92);
+    background: rgba(0, 0, 0, 0.10) !important;
+  }
+
+  /* Pre-load : panel cache sous viewport via transform translateY(100%)
+     evite flash visuel au premier render */
+  html.ps-mobile-v2 #insights-modal:not(.open) #insights-panel {
+    transform: translateY(100%);
+  }
+
+  /* Dark theme variant bottom-sheet */
+  html.ps-mobile-v2 body.dark-theme #insights-panel {
+    background: rgba(20, 24, 28, 0.96) !important;
+    border-top-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  html.ps-mobile-v2 body.dark-theme #insights-panel::before {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  html.ps-mobile-v2 body.dark-theme #insights-panel .modal-close {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    color: #aaa !important;
+  }
+
+  /* Body scroll lock quand bottom-sheet open (evite scroll body derriere) */
+  html.ps-mobile-v2:has(#insights-modal.open) body {
+    overflow: hidden;
+  }
+
+  /* ===========================================================
+     FIN C4-partial — Bottom-sheet Insights iOS premium
+     Suite : C5 SW v2 + C6 pan/zoom + C7 haptics (sessions futures)
+     =========================================================== */
+
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
   body[data-cf-light="1"] {
     background: #ffffff !important;
