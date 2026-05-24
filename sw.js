@@ -81,7 +81,16 @@
 // Pilier 2 (Value Heatmap odds devig Shin-Hurley + edge tier + filter
 // chips bracket), Pilier 3 (Live Momentum DOM patcher + SSE consumer
 // + server SSE broadcaster polling BSD /matches/live/ toutes les 30s).
-const CACHE = 'pariscore-shell-v31';
+// v32 (2026-05-24) : bd rcmw C5 App Shell strategies refactor. Stale-while-
+// revalidate pour HTML (boot <200ms meme offline + refresh background),
+// cache-first elargi assets/icons/svg/fonts, network-only API conserve,
+// navigation preload active pour TTFB optimal. Shell elargi avec icons.
+// Cache layers separes pour granular invalidation : shell + assets + runtime.
+const CACHE_VERSION = 'v32';
+const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
+const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
+const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
+
 const SHELL = [
   '/',
   '/pariscore.html',
@@ -89,18 +98,95 @@ const SHELL = [
   '/icon.svg'
 ];
 
+// Pre-cache icons + assets critiques (best-effort, missing files OK)
+const ASSETS_PREFETCH = [
+  '/assets/icons/3d-football.svg',
+  '/assets/icons/3d-tennis.svg',
+  '/assets/icons/3d-trophy.svg',
+  '/assets/icons/3d-strategy.svg',
+  '/assets/icons/3d-fire.svg',
+  '/assets/icons/3d-ticket.svg',
+  '/assets/icons/3d-book.svg',
+  '/assets/icons/3d-shield.svg',
+  '/assets/icons/3d-compare.svg',
+  '/assets/icons/3d-brain.svg',
+  '/assets/icons/3d-chart.svg',
+  '/assets/icons/3d-bell.svg',
+  '/assets/icons/3d-clock.svg',
+  '/assets/icons/3d-home.svg',
+  '/assets/icons/3d-crown.svg',
+  '/assets/icons/3d-settings.svg'
+];
+
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
+  e.waitUntil(
+    Promise.all([
+      caches.open(CACHE_SHELL).then((c) => c.addAll(SHELL)).catch(() => {}),
+      caches.open(CACHE_ASSETS).then((c) => {
+        // addAll fails atomic si UN asset miss — utilise add() best-effort par asset
+        return Promise.allSettled(ASSETS_PREFETCH.map((u) => c.add(u).catch(() => {})));
+      }).catch(() => {})
+    ])
+  );
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    Promise.all([
+      // Purge old caches
+      caches.keys().then((keys) => Promise.all(
+        keys.filter((k) => k !== CACHE_SHELL && k !== CACHE_ASSETS && k !== CACHE_RUNTIME && k.startsWith('pariscore-'))
+            .map((k) => caches.delete(k))
+      )),
+      // Navigation Preload (TTFB optimization — server response ready avant SW resolve)
+      self.registration.navigationPreload && self.registration.navigationPreload.enable()
+    ]).then(() => self.clients.claim())
   );
 });
+
+// Helpers : strategies cache
+async function networkFirst(req, cache) {
+  try {
+    const fresh = await fetch(req);
+    if (fresh && fresh.status === 200 && fresh.type === 'basic') {
+      const clone = fresh.clone();
+      caches.open(cache).then((c) => c.put(req, clone)).catch(() => {});
+    }
+    return fresh;
+  } catch (_) {
+    return (await caches.match(req)) || (await caches.match('/pariscore.html'));
+  }
+}
+
+async function cacheFirst(req, cache) {
+  const cached = await caches.match(req);
+  if (cached) return cached;
+  try {
+    const fresh = await fetch(req);
+    if (fresh && fresh.status === 200 && fresh.type === 'basic') {
+      const clone = fresh.clone();
+      caches.open(cache).then((c) => c.put(req, clone)).catch(() => {});
+    }
+    return fresh;
+  } catch (_) {
+    return cached;
+  }
+}
+
+async function staleWhileRevalidate(req, cache, preloadResponse) {
+  const cached = await caches.match(req);
+  const fetchPromise = (preloadResponse ? Promise.resolve(preloadResponse) : fetch(req)).then((fresh) => {
+    if (fresh && fresh.status === 200 && fresh.type === 'basic') {
+      const clone = fresh.clone();
+      caches.open(cache).then((c) => c.put(req, clone)).catch(() => {});
+    }
+    return fresh;
+  }).catch(() => cached);
+  // Si cache hit : retourne immediat (boot <200ms) + refresh background
+  // Si cache miss : await network response
+  return cached || fetchPromise;
+}
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
@@ -109,30 +195,27 @@ self.addEventListener('fetch', (e) => {
   try { url = new URL(req.url); } catch (_) { return; }
   if (url.origin !== self.location.origin) return;
 
-  // API + SSE + flux live : toujours réseau, jamais de cache (données fraîches obligatoires)
+  // API + SSE : network-only, jamais cache (donnees fraiches obligatoires)
   if (url.pathname.startsWith('/api/')) return;
 
-  // Navigation (HTML) : réseau d'abord, fallback shell offline
+  // Navigation HTML : stale-while-revalidate (boot rapide cache + refresh background)
   if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req).catch(() => caches.match('/pariscore.html').then((r) => r || caches.match('/')))
-    );
+    e.respondWith((async () => {
+      const preload = await e.preloadResponse;
+      return staleWhileRevalidate(req, CACHE_SHELL, preload);
+    })());
     return;
   }
 
-  // Assets statiques : cache d'abord, sinon réseau (et on met en cache)
-  e.respondWith(
-    caches.match(req).then((cached) =>
-      cached ||
-      fetch(req).then((resp) => {
-        if (resp && resp.status === 200 && resp.type === 'basic') {
-          const clone = resp.clone();
-          caches.open(CACHE).then((c) => c.put(req, clone)).catch(() => {});
-        }
-        return resp;
-      }).catch(() => cached)
-    )
-  );
+  // Assets icons/svg/fonts : cache-first (immutable rarement change)
+  const isStaticAsset = /\.(svg|png|jpg|jpeg|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname);
+  if (isStaticAsset) {
+    e.respondWith(cacheFirst(req, CACHE_ASSETS));
+    return;
+  }
+
+  // Manifest + sw.js + autres : stale-while-revalidate runtime
+  e.respondWith(staleWhileRevalidate(req, CACHE_RUNTIME));
 });
 
 // bd nwk6 — Push notification handler. Accepte payload JSON {title, body, url, icon}
