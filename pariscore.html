@@ -2055,10 +2055,178 @@
 
   /* ===========================================================
      FIN Phase B — Cards 3D refactor utilisant tokens Phase A
-     Resultat : .mc cartes existantes upgrades visuellement (gradient
-     mesh OKLCH + shadow asymetrique + spring physics + halo accent
-     pulse + tabular-nums typo financiere) sans modifier HTML.
-     Phase C = density toggle UI + theme switcher (session future).
+     =========================================================== */
+
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Phase C Settings panel UI
+     Density toggle (compact/comfortable/spacious) + theme switcher
+     (auto-os/cream/obsidian) injectes dynamiquement dans bn-more-sheet
+     "Plus" drawer. Persist localStorage ps_density + ps_theme.
+
+     Aussi : application defaut au boot via inline script (avant CSS paint)
+     pour eviter flash.
+     =========================================================== */
+
+  /* ── Settings panel container dans bn-more-sheet ── */
+  html.ps-mobile-v2 .sui-settings {
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 3%, transparent);
+    border: 1px solid color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 6%, transparent);
+    border-radius: 14px;
+    padding: 14px;
+    margin: 4px 0 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  html.ps-mobile-v2 .sui-settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  html.ps-mobile-v2 .sui-settings-label {
+    font-family: var(--sui-font-body);
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--sui-cream-text-3, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Segmented control 3-state (density + theme) ── */
+  html.ps-mobile-v2 .sui-segmented {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 4px;
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 4%, transparent);
+    border-radius: 10px;
+    position: relative;
+  }
+  html.ps-mobile-v2 .sui-seg-btn {
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding: 8px 6px;
+    font-family: var(--sui-font-body);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sui-cream-text-2, #555);
+    cursor: pointer;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color var(--sui-dur-fast, 160ms) var(--sui-spring-soft), background var(--sui-dur-fast, 160ms) var(--sui-spring-soft), transform var(--sui-dur-tap, 80ms) var(--sui-spring-tight);
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.ps-mobile-v2 .sui-seg-btn:active {
+    transform: scale(0.96);
+  }
+  html.ps-mobile-v2 .sui-seg-btn[aria-pressed="true"] {
+    background: var(--sui-cream-elevate, #fff);
+    color: var(--sui-accent);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.95) inset,
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Dark theme variant settings */
+  html.ps-mobile-v2[data-theme="obsidian"] .sui-settings {
+    background: var(--sui-obs-surface);
+    border-color: var(--sui-obs-border);
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .sui-settings-label {
+    color: var(--sui-obs-text-3);
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .sui-segmented {
+    background: color-mix(in oklch, var(--sui-obs-text, #fff) 5%, transparent);
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .sui-seg-btn {
+    color: var(--sui-obs-text-2);
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .sui-seg-btn[aria-pressed="true"] {
+    background: var(--sui-obs-elevate);
+    color: var(--sui-accent);
+  }
+
+  /* ── OBSIDIAN dark theme apply (body + components) ── */
+  html.ps-mobile-v2[data-theme="obsidian"] body {
+    background: var(--sui-obs-bg);
+    color: var(--sui-obs-text);
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] nav:not(#bottom-nav) {
+    background: color-mix(in oklch, var(--sui-obs-surface) 88%, transparent) !important;
+    border-bottom-color: var(--sui-accent) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] #bottom-nav {
+    background: color-mix(in oklch, var(--sui-obs-surface) 80%, transparent) !important;
+    border-top-color: var(--sui-obs-border) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc {
+    background:
+      radial-gradient(150% 80% at 0% 0%, color-mix(in oklch, var(--sui-accent) 8%, transparent), transparent 55%),
+      radial-gradient(120% 60% at 100% 100%, color-mix(in oklch, var(--sui-data-pos) 6%, transparent), transparent 50%),
+      linear-gradient(180deg, var(--sui-obs-surface) 0%, var(--sui-obs-elevate) 100%) !important;
+    border-color: var(--sui-obs-border) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc .mc-team {
+    color: var(--sui-obs-text) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc .mc-team .mc-rk {
+    background: color-mix(in oklch, var(--sui-obs-text, #fff) 6%, transparent) !important;
+    color: var(--sui-obs-text-2) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc .mc-metrics {
+    background: color-mix(in oklch, var(--sui-obs-text, #fff) 3%, transparent) !important;
+    border-color: var(--sui-obs-border) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc .mc-cell .mc-v {
+    color: var(--sui-obs-text) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc .mc-odd {
+    background: color-mix(in oklch, var(--sui-obs-text, #fff) 4%, transparent) !important;
+    border-color: var(--sui-obs-border) !important;
+    color: var(--sui-obs-text) !important;
+  }
+  html.ps-mobile-v2[data-theme="obsidian"] .mc-skel {
+    background: linear-gradient(100deg, var(--sui-obs-surface) 30%, var(--sui-obs-elevate) 50%, var(--sui-obs-surface) 70%) !important;
+  }
+
+  /* Auto theme : suit prefers-color-scheme OS */
+  @media (prefers-color-scheme: dark) {
+    html.ps-mobile-v2[data-theme="auto"] body {
+      background: var(--sui-obs-bg);
+      color: var(--sui-obs-text);
+    }
+    html.ps-mobile-v2[data-theme="auto"] nav:not(#bottom-nav) {
+      background: color-mix(in oklch, var(--sui-obs-surface) 88%, transparent) !important;
+      border-bottom-color: var(--sui-accent) !important;
+    }
+    html.ps-mobile-v2[data-theme="auto"] #bottom-nav {
+      background: color-mix(in oklch, var(--sui-obs-surface) 80%, transparent) !important;
+      border-top-color: var(--sui-obs-border) !important;
+    }
+    html.ps-mobile-v2[data-theme="auto"] .mc {
+      background:
+        radial-gradient(150% 80% at 0% 0%, color-mix(in oklch, var(--sui-accent) 8%, transparent), transparent 55%),
+        radial-gradient(120% 60% at 100% 100%, color-mix(in oklch, var(--sui-data-pos) 6%, transparent), transparent 50%),
+        linear-gradient(180deg, var(--sui-obs-surface) 0%, var(--sui-obs-elevate) 100%) !important;
+      border-color: var(--sui-obs-border) !important;
+    }
+    html.ps-mobile-v2[data-theme="auto"] .mc .mc-team { color: var(--sui-obs-text) !important; }
+    html.ps-mobile-v2[data-theme="auto"] .mc .mc-metrics { background: color-mix(in oklch, var(--sui-obs-text, #fff) 3%, transparent) !important; border-color: var(--sui-obs-border) !important; }
+    html.ps-mobile-v2[data-theme="auto"] .mc .mc-cell .mc-v { color: var(--sui-obs-text) !important; }
+    html.ps-mobile-v2[data-theme="auto"] .mc .mc-odd {
+      background: color-mix(in oklch, var(--sui-obs-text, #fff) 4%, transparent) !important;
+      border-color: var(--sui-obs-border) !important;
+      color: var(--sui-obs-text) !important;
+    }
+  }
+
+  /* ===========================================================
+     FIN Phase C — Density toggle + Theme switcher OS auto
      =========================================================== */
 
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
@@ -36520,6 +36688,99 @@ document.addEventListener('keydown', e => {
         return 'haptic DISABLED';
       }
     } catch (e) { return 'error: ' + e.message; }
+  };
+
+  /* ========== Phase C — Density toggle + Theme switcher ==========
+     Apply data-density + data-theme from localStorage. Inject settings
+     panel UI into bn-more-sheet "Plus" drawer. */
+
+  function applySettings() {
+    try {
+      var density = localStorage.getItem('ps_density') || 'comfortable';
+      var theme = localStorage.getItem('ps_theme') || 'auto';
+      if (['compact', 'comfortable', 'spacious'].indexOf(density) > -1) {
+        document.documentElement.setAttribute('data-density', density);
+      }
+      if (['auto', 'cream', 'obsidian'].indexOf(theme) > -1) {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    } catch (e) {}
+  }
+  applySettings();
+
+  function injectSettings() {
+    var sheet = document.getElementById('bn-more-sheet');
+    if (!sheet || sheet.querySelector('.sui-settings')) return;
+    var grid = sheet.querySelector('.bn-more-grid');
+    if (!grid) return;
+
+    var currentDensity = document.documentElement.getAttribute('data-density') || 'comfortable';
+    var currentTheme = document.documentElement.getAttribute('data-theme') || 'auto';
+
+    var panel = document.createElement('div');
+    panel.className = 'sui-settings';
+    panel.setAttribute('role', 'group');
+    panel.setAttribute('aria-label', 'Reglages affichage');
+    panel.innerHTML = [
+      '<div class="sui-settings-group">',
+      '  <span class="sui-settings-label">Densite</span>',
+      '  <div class="sui-segmented" role="radiogroup" data-sui-group="density">',
+      '    <button class="sui-seg-btn" type="button" role="radio" data-sui-value="compact" aria-pressed="' + (currentDensity === 'compact') + '">Compact</button>',
+      '    <button class="sui-seg-btn" type="button" role="radio" data-sui-value="comfortable" aria-pressed="' + (currentDensity === 'comfortable') + '">Confort</button>',
+      '    <button class="sui-seg-btn" type="button" role="radio" data-sui-value="spacious" aria-pressed="' + (currentDensity === 'spacious') + '">Spacieux</button>',
+      '  </div>',
+      '</div>',
+      '<div class="sui-settings-group">',
+      '  <span class="sui-settings-label">Theme</span>',
+      '  <div class="sui-segmented" role="radiogroup" data-sui-group="theme">',
+      '    <button class="sui-seg-btn" type="button" role="radio" data-sui-value="auto" aria-pressed="' + (currentTheme === 'auto') + '">Auto OS</button>',
+      '    <button class="sui-seg-btn" type="button" role="radio" data-sui-value="cream" aria-pressed="' + (currentTheme === 'cream') + '">Cream</button>',
+      '    <button class="sui-seg-btn" type="button" role="radio" data-sui-value="obsidian" aria-pressed="' + (currentTheme === 'obsidian') + '">Obsidian</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+
+    // Insert AVANT le grid existant
+    grid.parentNode.insertBefore(panel, grid);
+
+    // Click handlers segmented buttons
+    panel.addEventListener('click', function (e) {
+      var btn = e.target.closest('.sui-seg-btn');
+      if (!btn) return;
+      var groupEl = btn.closest('.sui-segmented');
+      var group = groupEl.getAttribute('data-sui-group');
+      var value = btn.getAttribute('data-sui-value');
+      if (!group || !value) return;
+      // Update aria-pressed (radio behavior)
+      groupEl.querySelectorAll('.sui-seg-btn').forEach(function (b) {
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      // Apply + persist
+      try { localStorage.setItem('ps_' + group, value); } catch (err) {}
+      document.documentElement.setAttribute('data-' + group, value);
+      // Haptic feedback
+      if (window._psHaptic) window._psHaptic('select');
+    }, { passive: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectSettings);
+  } else {
+    injectSettings();
+  }
+
+  // Expose console helpers
+  window.psSetDensity = function (v) {
+    if (['compact', 'comfortable', 'spacious'].indexOf(v) === -1) return 'invalid';
+    try { localStorage.setItem('ps_density', v); } catch (e) {}
+    document.documentElement.setAttribute('data-density', v);
+    return 'density set: ' + v;
+  };
+  window.psSetTheme = function (v) {
+    if (['auto', 'cream', 'obsidian'].indexOf(v) === -1) return 'invalid';
+    try { localStorage.setItem('ps_theme', v); } catch (e) {}
+    document.documentElement.setAttribute('data-theme', v);
+    return 'theme set: ' + v;
   };
 })();
 </script>
