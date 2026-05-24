@@ -28534,14 +28534,31 @@ async function _buildTennisValueBetsCore({ date }) {
   let matchSource = 'bsd';
 
   if (BSD_TENNIS_ENABLED) {
+    // FIX live-data-loss: remove status=scheduled filter for date-specific queries.
+    // With status=scheduled, BSD drops a match the instant it goes LIVE → match
+    // disappears from _tennisVbLastFetch → frontend gets minimal BSD live object
+    // (no surf_rank/elo_surface/rank) → "RK —" / "·" displayed during match.
+    // Without filter (bounded by date), BSD returns scheduled + in-progress.
+    // No-date case keeps scheduled filter to cap global volume.
     const suffix = dateClean
-      ? `/api/v2/matches/?date=${encodeURIComponent(dateClean)}&status=scheduled&limit=200`
+      ? `/api/v2/matches/?date=${encodeURIComponent(dateClean)}&limit=200`
       : `/api/v2/matches/?status=scheduled&limit=200`;
     const ck = `bsd_tennis_value_bets_${dateClean || 'today'}`;
+    // TTL: 30min for scheduled (pre-match), 5min when live matches present (fresher enrichment)
     const bsd = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
     if (bsd.status === 200) {
-      bsdMatches = _extractBsdMatchesList(bsd.body);
-      if (!bsdMatches.length) console.warn('  [TennisVB] BSD list HTTP 200 mais 0 match scheduled → fallback ESPN (slate vide ?)');
+      let _extracted = _extractBsdMatchesList(bsd.body);
+      // Guard: filter finished/cancelled matches that BSD now returns without status filter
+      const _TN_VB_FINISHED = new Set([
+        'finished','ft','terminated','ended','cancelled','canceled',
+        'postponed','walkover','retired','abandoned','complete','post'
+      ]);
+      _extracted = _extracted.filter(m => {
+        const st = String(m.status || '').toLowerCase().replace(/[\s_-]/g, '');
+        return !_TN_VB_FINISHED.has(st);
+      });
+      bsdMatches = _extracted;
+      if (!bsdMatches.length) console.warn('  [TennisVB] BSD list HTTP 200 mais 0 match actif → fallback ESPN (slate vide ?)');
     } else if (bsd.status !== 503 && bsd.status !== 402) {
       // Vraie erreur upstream BSD (5xx) → propager.
       return { status: bsd.status, body: bsd.body };
