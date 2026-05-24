@@ -3,13 +3,64 @@
 <head>
 <meta name="ga-site-verification" content="SmmkqlT_jyUQZaKKREF6z87c" />
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
-<!-- Bug bd ParisScorebis-amc V11 — viewport desktop 1280px + initial-scale=0.3
-     pour scaler la vue desktop dans la largeur téléphone (~375px → 384px
-     rendu, fit complet d'un coup). User peut pinch zoom 0.2→2.0 pour lire.
-     Tableau desktop visible dans son intégralité dès le chargement.
-     V10 → V11 : ajout initial-scale=0.3 + pinch zoom.
-     Réversible : remettre width=device-width pour mode mobile natif. -->
+<!-- bd ParisScorebis-rcmw V12 Mobile Premium B — viewport conditional swap (Option B locked 2026-05-24).
+     Script synchrone pre-paint : detecte mobile via UA + pointer:coarse + width <= 820 (iPad portrait inclus).
+     Mobile  → width=device-width + class .ps-mobile-v2 sur <html>
+     Desktop → width=1280 scaled 0.3 + class .ps-desktop-v1 (V11 comportement preservé)
+     Escape hatch : ?view=mobile|desktop + localStorage ps_view + window.psSwitchView('mobile|desktop')
+     Default fallback (noscript) = desktop scaled = aucune regression utilisateurs habitues. -->
+<script>
+(function () {
+  'use strict';
+  try {
+    var url = new URL(location.href);
+    var force = url.searchParams.get('view');
+    var stored = null;
+    try { stored = localStorage.getItem('ps_view'); } catch (e) {}
+    var mode = (force === 'mobile' || force === 'desktop') ? force
+             : (stored === 'mobile' || stored === 'desktop') ? stored
+             : 'auto';
+    if (force === 'mobile' || force === 'desktop') {
+      try { localStorage.setItem('ps_view', force); } catch (e) {}
+    }
+    if (mode === 'auto') {
+      var ua = navigator.userAgent || '';
+      var isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      var isIPadOS13Plus = ua.indexOf('Macintosh') > -1 && 'ontouchend' in document;
+      var isTabletUA = /iPad|Tablet|PlayBook|Silk/i.test(ua) || isIPadOS13Plus;
+      var isCoarsePointer = (typeof matchMedia === 'function') && matchMedia('(pointer: coarse)').matches;
+      var smallWidth = (window.innerWidth || document.documentElement.clientWidth || 0) <= 820;
+      mode = (isMobileUA || isTabletUA || (isCoarsePointer && smallWidth)) ? 'mobile' : 'desktop';
+    }
+    var meta = document.createElement('meta');
+    meta.name = 'viewport';
+    if (mode === 'mobile') {
+      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content';
+      document.documentElement.classList.add('ps-mobile-v2');
+    } else {
+      meta.content = 'width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover';
+      document.documentElement.classList.add('ps-desktop-v1');
+    }
+    document.head.appendChild(meta);
+    window.psSwitchView = function (target) {
+      if (target !== 'mobile' && target !== 'desktop' && target !== 'auto') return;
+      try {
+        if (target === 'auto') localStorage.removeItem('ps_view');
+        else localStorage.setItem('ps_view', target);
+      } catch (e) {}
+      location.reload();
+    };
+    window.psGetView = function () { return mode; };
+  } catch (err) {
+    var fallback = document.createElement('meta');
+    fallback.name = 'viewport';
+    fallback.content = 'width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover';
+    document.head.appendChild(fallback);
+    document.documentElement.classList.add('ps-desktop-v1');
+  }
+})();
+</script>
+<noscript><meta name="viewport" content="width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover"></noscript>
 <title>PariScore — Paris de Valeur & Statistiques Football</title>
 <meta name="description" content="PariScore : pronostics foot &amp; tennis par algorithme. Power Score, xG, statistiques avancées et value bets dévigés pour parier avec les maths.">
 <link rel="canonical" href="https://pariscore.fr/">
@@ -34,6 +85,12 @@
 <meta name="apple-mobile-web-app-title" content="PariScore">
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
+<!-- bd rcmw V12 Mobile Premium B — PWA native illusion meta tags -->
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<meta name="apple-touch-fullscreen" content="yes">
+<meta name="msapplication-tap-highlight" content="no">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&family=Anton&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -78,7 +135,141 @@
     --radius: 4px;
     --radius-lg: 6px;
     --radius-xl: 10px;
+    /* bd rcmw V12 Mobile Premium B — Safe Area vars (iPhone notch, Dynamic Island, gesture bar) */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    /* Bottom nav glassmorphic (C2 sera plus large, ces vars sont la base) */
+    --psm-bn-height: 64px;
+    --psm-bn-bg: rgba(255, 255, 255, 0.78);
+    --psm-bn-border: rgba(0, 0, 0, 0.07);
+    --psm-bn-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+    /* Bottom sheet (C4) */
+    --psm-bs-radius: 24px;
+    --psm-bs-bg: rgba(255, 255, 255, 0.96);
+    --psm-bs-handle: rgba(0, 0, 0, 0.22);
+    /* Tactile feedback */
+    --psm-press-scale: 0.985;
+    --psm-press-duration: 80ms;
+    --psm-spring-bezier: cubic-bezier(0.32, 0.72, 0, 1);
   }
+
+  /* ===========================================================
+     bd rcmw V12 Mobile Premium B — Chantier C1-B FOUNDATIONS
+     Scope strict : .ps-mobile-v2 (classe posee par swap script <head>)
+     Zero impact desktop V1 (.ps-desktop-v1 NE matche aucune regle ici)
+     =========================================================== */
+
+  /* Kill default web feel sur mobile uniquement */
+  html.ps-mobile-v2,
+  html.ps-mobile-v2 body {
+    /* Bloque pull-to-refresh + bounce overscroll iOS/Android */
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
+    /* Bloque zoom double-tap intempestif (premier double-tap = zoom natif) */
+    touch-action: manipulation;
+    /* Desactive le highlight bleu iOS sur tap */
+    -webkit-tap-highlight-color: transparent;
+    /* Anti font-boost Android Samsung Internet */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Selection texte interdite par defaut (sauf inputs/contenteditable) */
+  html.ps-mobile-v2 body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  html.ps-mobile-v2 input,
+  html.ps-mobile-v2 textarea,
+  html.ps-mobile-v2 select,
+  html.ps-mobile-v2 [contenteditable="true"],
+  html.ps-mobile-v2 .psm-selectable {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+
+  /* Anti-zoom inputs iOS : font-size < 16px declenche zoom forme du viewport.
+     Force >= 16px sur form fields pour bloquer ce comportement. */
+  html.ps-mobile-v2 input,
+  html.ps-mobile-v2 select,
+  html.ps-mobile-v2 textarea {
+    font-size: 16px;
+  }
+
+  /* Safe Area padding au niveau body (top encoches/Dynamic Island).
+     Bottom NON pris ici : la bottom nav C2 gere son propre padding-bottom. */
+  html.ps-mobile-v2 body {
+    padding-top: var(--safe-top);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  /* GPU compositing hint pour composants animes (bottom nav, sheets, cards) */
+  html.ps-mobile-v2 .psm-gpu,
+  html.ps-mobile-v2 .psm-bottom-nav,
+  html.ps-mobile-v2 .psm-bottom-sheet,
+  html.ps-mobile-v2 .psm-match-card {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Tactile press feedback universel (boutons + cards + nav items) */
+  html.ps-mobile-v2 .psm-pressable {
+    transition: transform var(--psm-press-duration) ease-out;
+  }
+  html.ps-mobile-v2 .psm-pressable:active {
+    transform: scale(var(--psm-press-scale));
+  }
+
+  /* Bottom nav reservoir space (evite que contenu page soit cache sous nav glassmorphic).
+     Active uniquement si #bottom-nav OU .psm-bottom-nav present (C2 livrera la nav reelle). */
+  html.ps-mobile-v2 body {
+    padding-bottom: calc(var(--psm-bn-height) + var(--safe-bottom) + 8px);
+  }
+
+  /* Pre-disable existing #bottom-nav legacy (sera refactor en C2 avec class .psm-bottom-nav).
+     Pour l instant on garde l existant fonctionnel mais on prepare la transition. */
+  html.ps-mobile-v2 #bottom-nav {
+    /* Safe area pour la nav legacy en attendant C2 */
+    padding-bottom: calc(8px + var(--safe-bottom));
+  }
+
+  /* Helper class : zone scrollable interne (utilise dans bottom-sheets C4).
+     overscroll-behavior contain : empeche scroll cascade vers body. */
+  html.ps-mobile-v2 .psm-scroll-area {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Force smooth scrolling sur anchors (deep-links #matchs, #tennis, etc.) */
+  html.ps-mobile-v2 {
+    scroll-behavior: smooth;
+  }
+
+  /* Print no-op : aucun de ces resets ne doit affecter print preview */
+  @media print {
+    html.ps-mobile-v2 body {
+      padding: 0 !important;
+      overscroll-behavior: auto !important;
+    }
+  }
+
+  /* ===========================================================
+     FIN C1-B FOUNDATIONS — prochaines etapes :
+     C2 = #bottom-nav refonte glassmorphic + bn-more-sheet 3 snap points
+     C3 = .psm-match-card empilee (remplace tableau 1400px en mobile)
+     C4 = psBottomSheet() module pour modales (Insights, Filtres, Auth)
+     C5 = sw.js v2 strategies App Shell + manifest enrichi
+     C6 = .pz-frame pan/zoom Bracket/Shotmap/Terrain
+     C7 = _psHaptic helper + spring animations
+     =========================================================== */
+
   /* bd z55o : MASS OVERRIDE light theme — supplante hardcoded dark (#0f172a, #1e293b, etc.) sur composants tableau Foot+Tennis */
   body[data-cf-light="1"] {
     background: #ffffff !important;
