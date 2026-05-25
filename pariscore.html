@@ -4667,8 +4667,19 @@
   #vb-table th:nth-child(4),
   #vb-table td:nth-child(4) { border-right: 2px solid rgba(255,255,255,0.14); }
 
-  /* Barre verte supprimée — scrollbar haut masquée, thumb neutralisé */
-  #scrollbar-top { display: none !important; }
+  /* Scrollbar haut miroir + scrollbar bas — dual scroll tableau Foot */
+  #scrollbar-top { display: block; }
+  #scrollbar-top::-webkit-scrollbar { height: 10px !important; }
+  #scrollbar-top::-webkit-scrollbar-track { background: rgba(15,23,42,0.30) !important; border-radius: 5px !important; }
+  #scrollbar-top::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56,189,248,0.60), rgba(56,189,248,0.35)) !important;
+    border-radius: 5px !important; border: 1px solid rgba(56,189,248,0.20) !important;
+    box-shadow: 0 0 6px rgba(56,189,248,0.25);
+  }
+  #scrollbar-top::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(56,189,248,0.90), rgba(56,189,248,0.60)) !important;
+    box-shadow: 0 0 8px rgba(56,189,248,0.50);
+  }
   #table-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
   #table-scroll::-webkit-scrollbar-track { background: var(--bg3); border-radius: 3px; }
   #table-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); border-radius: 3px; }
@@ -11969,7 +11980,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
             <th style="min-width:180px;">Match</th>
             <th style="min-width:70px;">Rang</th>
             <th style="min-width:70px;">Forme</th>
-            <th style="min-width:100px;" title="Score prédictif pré-match (xG · H2H · forme)">Score prédictif prematch</th>
+            <th style="min-width:170px;" title="Score prédictif pré-match (xG · H2H · forme)">Score prédictif prematch</th>
             <th class="th-hero" style="min-width:80px;text-align:center;" title="Mouvement de cote — baisse détectée">Cote ▼</th>
             <th style="min-width:200px;">Conseils IA</th>
             <th style="min-width:150px;">Buteurs</th>
