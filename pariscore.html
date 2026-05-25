@@ -37893,7 +37893,10 @@ function hasMatchdayAccess() {
 
 function initMatchdayBanner() {
   const banner = document.getElementById('matchday-banner');
-  if (banner) banner.style.display = hasMatchdayAccess() ? 'none' : 'flex';
+  if (!banner) return;
+  // Masquer pour les utilisateurs déjà pro/admin (pas besoin du matchday pass)
+  const accM = (typeof psAccess === 'function') ? psAccess() : { footPro: false };
+  banner.style.display = (hasMatchdayAccess() || accM.footPro) ? 'none' : 'flex';
 }
 
 async function buyMatchdayPass() {
