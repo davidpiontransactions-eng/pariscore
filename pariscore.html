@@ -3159,6 +3159,15 @@
     --gauge-rail-opacity: 0.6;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── Skip link — WCAG 2.1 SC 2.4.1 ── */
+  .skip-link {
+    position: absolute; top: -100px; left: 16px; z-index: 9999;
+    padding: 10px 18px; border-radius: 6px;
+    background: var(--accent); color: #fff;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    transition: top .15s;
+  }
+  .skip-link:focus { top: 16px; }
   /* ── Global focus indicator — WCAG 2.1 AA (keyboard nav) ── */
   :focus-visible {
     outline: 2px solid var(--accent) !important;
@@ -10337,6 +10346,7 @@ tr.tennis-vb-row.is-live>td:first-child{position:relative;background:linear-grad
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Aller au contenu principal</a>
 <!-- Security maintenance banner (bd ParisScorebis-c8m) — activé via JS opt-in -->
 <div class="cf-security-banner" role="alert" aria-live="polite">
   <span class="cf-sec-icon">🛡️</span>
@@ -10522,11 +10532,11 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <!-- LOGIN FORM -->
     <div id="auth-form-login">
       <div class="auth-field">
-        <label>Email</label>
+        <label for="login-email">Email</label>
         <input type="email" id="login-email" placeholder="vous@exemple.com" autocomplete="email">
       </div>
       <div class="auth-field">
-        <label>Mot de passe</label>
+        <label for="login-password">Mot de passe</label>
         <div class="pwd-wrap">
           <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
             onkeydown="if(event.key==='Enter') submitLogin()">
@@ -10539,11 +10549,11 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <!-- REGISTER FORM -->
     <div id="auth-form-register" style="display:none;">
       <div class="auth-field">
-        <label>Email</label>
+        <label for="reg-email">Email</label>
         <input type="email" id="reg-email" placeholder="vous@exemple.com" autocomplete="email">
       </div>
       <div class="auth-field">
-        <label>Mot de passe <span style="color:var(--text3)">(8 caractères min.)</span></label>
+        <label for="reg-password">Mot de passe <span style="color:var(--text3)">(8 caractères min.)</span></label>
         <div class="pwd-wrap">
           <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password"
             onkeydown="if(event.key==='Enter') submitRegister()">
@@ -10824,6 +10834,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 </div>
 
+<a id="main-content" tabindex="-1" aria-hidden="true" style="position:absolute;"></a>
 <!-- PAGE : ACCUEIL -->
 <div id="page-accueil" data-page="accueil">
 
