@@ -34377,8 +34377,8 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
        4️⃣a  FONDATION CRAWL — robots.txt + sitemap.xml
        ------------------------------------------------- */
     if (!res.headersSent && pathname === '/robots.txt') {
-        const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
-        const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+        // GSC "Page avec redirection" fix — always emit canonical HTTPS origin (never http:// or www.)
+        const origin = process.env.SITE_ORIGIN || 'https://pariscore.fr';
         // bd ParisScorebis-<seo> fix Google Search Console "Bloquée par robots.txt"
         // (mail GSC 21/05/2026). Retrait Disallow /*?match= (legacy, plus utilisé)
         // + Allow explicites pages SEO + Disallow /server.js, /.env etc (defense
@@ -34664,8 +34664,8 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
 
     if (!res.headersSent && pathname === '/sitemap.xml') {
         try {
-            const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
-            const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+            // GSC "Page avec redirection" fix — hardcode canonical HTTPS origin
+            const origin = process.env.SITE_ORIGIN || 'https://pariscore.fr';
             const xmlEsc = s => String(s == null ? '' : s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
