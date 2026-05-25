@@ -14220,6 +14220,7 @@ function _paintBracket(el,data){
     </defs></svg>
 
     <!-- Tableau value-bets — Phase B ADR-001 : div role=table + CSS Grid -->
+    <div id="tn-vb-scroll-top" class="tn-scroll-top"><div id="tn-vb-scroll-inner" style="height:1px;"></div></div>
     <div class="tn-vb-grid" id="tennis-vb-table" role="table" aria-label="Tableau value bets tennis">
       <div class="tn-vb-thead" role="rowgroup">
         <div class="tn-vb-header-row" role="row">
@@ -14263,6 +14264,7 @@ function _paintBracket(el,data){
       <button type="button" class="tn-src-filter-chip" data-src-filter="AISCORE" onclick="setTennisSourceFilter('AISCORE')" aria-pressed="false" title="AiScore — enrichissement serving (cache + on-demand throttled)">AISCORE</button>
     </div>
     <!-- Tennis Live — Phase B ADR-001 : div role=table + CSS Grid -->
+    <div id="tn-live-scroll-top" class="tn-scroll-top"><div id="tn-live-scroll-inner" style="height:1px;"></div></div>
     <div class="tn-live-grid" id="tennis-live-table" role="table" aria-label="Tableau tennis live">
       <div class="tn-live-header-row" role="row">
         <span class="tn-live-cell tn-cell-fav" role="columnheader" aria-label="Favoris">★</span>
@@ -14967,13 +14969,19 @@ function _paintBracket(el,data){
   #tennis-vb-table .tvb-dr-chip { display:inline-flex; align-items:center; gap:2px; font-size:9px; font-family:var(--font-mono,'DM Mono',monospace); padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; white-space:nowrap; }
   #tennis-vb-table .tvb-dr-chip.up { background:rgba(26,140,69,0.15); color:var(--green,#1a8c45); }
   #tennis-vb-table .tvb-dr-chip.dn { background:rgba(204,26,26,0.12); color:var(--red,#cc1a1a); }
+  /* Tennis tables dual scrollbar — mirror haut synced JS */
+  .tn-scroll-top { overflow-x:auto; height:12px; scrollbar-width:thin; scrollbar-color:rgba(56,189,248,0.55) rgba(15,23,42,0.30); }
+  .tn-scroll-top::-webkit-scrollbar { height:10px; }
+  .tn-scroll-top::-webkit-scrollbar-track { background:rgba(15,23,42,0.30); border-radius:5px; }
+  .tn-scroll-top::-webkit-scrollbar-thumb { background:linear-gradient(180deg,rgba(56,189,248,0.60),rgba(56,189,248,0.35)); border-radius:5px; border:1px solid rgba(56,189,248,0.20); box-shadow:0 0 6px rgba(56,189,248,0.25); }
+  .tn-scroll-top::-webkit-scrollbar-thumb:hover { background:linear-gradient(180deg,rgba(56,189,248,0.90),rgba(56,189,248,0.60)); box-shadow:0 0 8px rgba(56,189,248,0.50); }
   /* ══ Phase B ADR-001 — div role=table + CSS Grid ══════════════════════════ */
   .tn-vb-grid { display:flex; flex-direction:column; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; background:var(--bg2,#111417); }
   .tn-vb-thead { background:var(--bg3,#181c20); border-bottom:1px solid var(--border,rgba(255,255,255,0.07)); }
   .tn-vb-header-row, .tn-vb-row {
     display:grid;
-    grid-template-columns: 32px 210px 180px 165px 100px 100px 115px 32px;
-    min-width:934px; align-items:center;
+    grid-template-columns: 32px 210px 180px 200px 100px 100px 115px 32px;
+    min-width:969px; align-items:center;
   }
   .tn-vb-header-row { padding:2px 0; }
   .tn-vb-row { border-bottom:1px solid var(--border,rgba(255,255,255,0.05)); transition:background 90ms; cursor:pointer; }
@@ -14992,7 +15000,7 @@ function _paintBracket(el,data){
   .tn-cell-fav { justify-content:center; padding:4px 2px; }
   .tn-cell-match { flex-direction:column; align-items:flex-start; gap:3px; padding:8px 12px; overflow:hidden; }
   .tn-cell-signal { align-items:flex-start; overflow:hidden; min-width:0; }
-  .tn-cell-score { align-items:flex-start; contain:paint; overflow:hidden; }
+  .tn-cell-score { align-items:flex-start; overflow:hidden; }
   .tn-cell-elo, .tn-cell-proba, .tn-cell-value { justify-content:center; flex-direction:column; align-items:center; gap:3px; }
   .tn-cell-elo:empty::after, .tn-cell-proba:empty::after, .tn-cell-value:empty::after { content:'—'; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:10px; opacity:0.4; }
   .tn-cell-expand { justify-content:center; padding:4px 2px; }
@@ -38342,6 +38350,26 @@ if (scrollTop && scrollMain) {
   syncScrollWidth();
   const obs = new MutationObserver(syncScrollWidth);
   obs.observe(scrollMain, { childList: true, subtree: true });
+}
+// Tennis VB dual scrollbar sync
+const tnVbScrollTop = document.getElementById('tn-vb-scroll-top');
+const tnVbGrid = document.getElementById('tennis-vb-table');
+if (tnVbScrollTop && tnVbGrid) {
+  tnVbScrollTop.addEventListener('scroll', () => { tnVbGrid.scrollLeft = tnVbScrollTop.scrollLeft; });
+  tnVbGrid.addEventListener('scroll', () => { tnVbScrollTop.scrollLeft = tnVbGrid.scrollLeft; });
+  const syncTnVbWidth = () => { const inner = document.getElementById('tn-vb-scroll-inner'); if (inner) inner.style.width = tnVbGrid.scrollWidth + 'px'; };
+  syncTnVbWidth();
+  new MutationObserver(syncTnVbWidth).observe(tnVbGrid, { childList:true, subtree:true });
+}
+// Tennis Live dual scrollbar sync
+const tnLvScrollTop = document.getElementById('tn-live-scroll-top');
+const tnLvGrid = document.getElementById('tennis-live-table');
+if (tnLvScrollTop && tnLvGrid) {
+  tnLvScrollTop.addEventListener('scroll', () => { tnLvGrid.scrollLeft = tnLvScrollTop.scrollLeft; });
+  tnLvGrid.addEventListener('scroll', () => { tnLvScrollTop.scrollLeft = tnLvGrid.scrollLeft; });
+  const syncTnLvWidth = () => { const inner = document.getElementById('tn-live-scroll-inner'); if (inner) inner.style.width = tnLvGrid.scrollWidth + 'px'; };
+  syncTnLvWidth();
+  new MutationObserver(syncTnLvWidth).observe(tnLvGrid, { childList:true, subtree:true });
 }
 </script>
 
