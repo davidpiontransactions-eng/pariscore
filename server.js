@@ -1638,6 +1638,13 @@ const ALL_LEAGUE_IDS = leaguesConfig.leagues.filter(l => l.id).map(l => l.id);
 // Délai de refresh par ligue (en ms) — T1: 6h, T2: 12h (depuis cron_hours dans leagues_config.json)
 const LEAGUE_CRON_MS = {};
 leaguesConfig.leagues.forEach(l => { if (l.id) LEAGUE_CRON_MS[l.id] = (l.cron_hours || 6) * 3600000; });
+const LEAGUE_TYPE_MAP = {};
+leaguesConfig.leagues.forEach(l => { if (l.id) LEAGUE_TYPE_MAP[l.id] = l.type || 'T1'; });
+const LEAGUE_COUNTRY_MAP = {};
+leaguesConfig.leagues.forEach(l => { if (l.id) LEAGUE_COUNTRY_MAP[l.id] = l.country || ''; });
+// Pays "continentaux" : leurs standings sont des coupes/compétitions régionales,
+// pas des championnats domestiques — ne doivent pas écraser les rangs de ligue.
+const _CONTINENTAL_COUNTRIES = new Set(['South America', 'Europe', 'Africa', 'International']);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  BSD (Bzzoiro Sports Data) — API gratuite, zéro rate limit
@@ -5983,7 +5990,7 @@ const _CLUB_AFFIX = new Set([
   'fc', 'afc', 'cf', 'cfc', 'fco', 'ac', 'acf', 'as', 'aas', 'ss', 'ssc', 'ssd',
   'us', 'usl', 'sc', 'scf', 'sco', 'sd', 'cd', 'ca', 'rc', 'rcd', 'ud', 'fk',
   'sk', 'nk', 'if', 'bk', 'bfc', 'bc', 'bsc', 'sv', 'vfb', 'vfl', 'vfr', 'tsg',
-  'hsv', 'ogc', 'rco', 'spvgg', 'al', 'club', 'calcio'
+  'hsv', 'ogc', 'rco', 'spvgg', 'al', 'club', 'calcio', 'fbc', 'ec'
 ]);
 function teamKey(name) {
   const n = normName(name);
@@ -14532,7 +14539,26 @@ async function fetchStats(force = false) {
             for (const k of Object.keys(db.teamStats)) {
               if (db.teamStats[k]?.leagueId === configId) delete db.teamStats[k];
             }
-            Object.assign(db.teamStats, teams);
+            // Merge prioritaire : une ligue CUP ou continentale (Copa do Brasil,
+            // Libertadores, UCL…) ne doit JAMAIS écraser le rang domestique T1/T2
+            // d'une équipe déjà classée. Ex: Coritiba rank 90 Copa do Brasil ne
+            // doit pas remplacer rank 8 Brasileirão.
+            const _inType = LEAGUE_TYPE_MAP[configId] || 'T1';
+            const _inCountry = LEAGUE_COUNTRY_MAP[configId] || '';
+            const _inIsDomestic = (_inType === 'T1' || _inType === 'T2') && !_CONTINENTAL_COUNTRIES.has(_inCountry);
+            for (const [k, v] of Object.entries(teams)) {
+              const ex = db.teamStats[k];
+              if (ex && ex.leagueId !== configId) {
+                const _exType = LEAGUE_TYPE_MAP[ex.leagueId] || 'T1';
+                const _exCountry = LEAGUE_COUNTRY_MAP[ex.leagueId] || '';
+                const _exIsDomestic = (_exType === 'T1' || _exType === 'T2') && !_CONTINENTAL_COUNTRIES.has(_exCountry);
+                if (_exIsDomestic && !_inIsDomestic) {
+                  console.warn(`  [STANDINGS] "${k}" préservé ligue ${ex.leagueId}(${_exType}) rang ${ex.rank} — skip ligue ${configId}(${_inType}) rang ${v.rank}`);
+                  continue;
+                }
+              }
+              db.teamStats[k] = v;
+            }
             const count = Object.keys(teams).length;
             bsdTeamsFetched += count;
             totalTeams += count;
