@@ -153,6 +153,14 @@
     --psm-press-scale: 0.985;
     --psm-press-duration: 80ms;
     --psm-spring-bezier: cubic-bezier(0.32, 0.72, 0, 1);
+    /* Z-index scale — V3.1 ADR-001 */
+    --z-sticky: 20;
+    --z-hover: 30;
+    --z-tooltip: 100;
+    --z-dropdown: 200;
+    --z-modal: 1000;
+    --z-overlay: 9000;
+    --z-toast: 11000;
   }
 
   /* ===========================================================
@@ -4691,20 +4699,20 @@
      bd 661w fix : ajout col ★ position 1 decale tous nth-child(N) → N+1.
      Recalc left offsets : col 1 = 0, col 2 = 40px (apres ★), col 3 = 40+90=130px. */
   #tennis-vb-table th:nth-child(1), #tennis-vb-table td:nth-child(1) {
-    position: sticky; left: 0; z-index: 3;
+    position: sticky; left: 0; z-index: var(--z-sticky, 20);
     background: var(--bg2, #111417);
   }
-  #tennis-vb-table thead th:nth-child(1) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-vb-table thead th:nth-child(1) { z-index: calc(var(--z-sticky, 20) + 1); background: var(--bg3, #181c20); }
   #tennis-vb-table th:nth-child(2), #tennis-vb-table td:nth-child(2) {
-    position: sticky; left: 40px; z-index: 3;
+    position: sticky; left: 40px; z-index: var(--z-sticky, 20);
     background: var(--bg2, #111417);
   }
-  #tennis-vb-table thead th:nth-child(2) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-vb-table thead th:nth-child(2) { z-index: calc(var(--z-sticky, 20) + 1); background: var(--bg3, #181c20); }
   #tennis-vb-table th:nth-child(3), #tennis-vb-table td:nth-child(3) {
-    position: sticky; left: 180px; z-index: 3;
+    position: sticky; left: 180px; z-index: var(--z-sticky, 20);
     background: var(--bg2, #111417);
   }
-  #tennis-vb-table thead th:nth-child(3) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-vb-table thead th:nth-child(3) { z-index: calc(var(--z-sticky, 20) + 1); background: var(--bg3, #181c20); }
   #tennis-vb-table td:nth-child(3)::after {
     content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
     width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.18), transparent);
@@ -4717,20 +4725,20 @@
   /* Tennis Live : sticky cols 1 (★) + 2 (Tournoi) + 3 (Tour) — joueurs cols 4+5 lisibles via scroll
      bd 661w fix : recalc left col 1 = 0, col 2 = 40px, col 3 = 40+140=180px. */
   #tennis-live-table th:nth-child(1), #tennis-live-table td:nth-child(1) {
-    position: sticky; left: 0; z-index: 3;
+    position: sticky; left: 0; z-index: var(--z-sticky, 20);
     background: var(--bg2, #111417);
   }
-  #tennis-live-table thead th:nth-child(1) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-live-table thead th:nth-child(1) { z-index: calc(var(--z-sticky, 20) + 1); background: var(--bg3, #181c20); }
   #tennis-live-table th:nth-child(2), #tennis-live-table td:nth-child(2) {
-    position: sticky; left: 40px; z-index: 3;
+    position: sticky; left: 40px; z-index: var(--z-sticky, 20);
     background: var(--bg2, #111417);
   }
-  #tennis-live-table thead th:nth-child(2) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-live-table thead th:nth-child(2) { z-index: calc(var(--z-sticky, 20) + 1); background: var(--bg3, #181c20); }
   #tennis-live-table th:nth-child(3), #tennis-live-table td:nth-child(3) {
-    position: sticky; left: 180px; z-index: 3;
+    position: sticky; left: 180px; z-index: var(--z-sticky, 20);
     background: var(--bg2, #111417);
   }
-  #tennis-live-table thead th:nth-child(3) { z-index: 6; background: var(--bg3, #181c20); }
+  #tennis-live-table thead th:nth-child(3) { z-index: calc(var(--z-sticky, 20) + 1); background: var(--bg3, #181c20); }
   #tennis-live-table td:nth-child(3)::after {
     content: ''; position: absolute; right: -6px; top: 0; bottom: 0;
     width: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.18), transparent);
@@ -13911,7 +13919,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
     <!-- Tableau value-bets -->
     <div class="table-responsive-wrapper">
-      <table id="tennis-vb-table" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:1020px;">
+      <table id="tennis-vb-table" aria-label="Tableau value bets tennis" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:1020px;">
         <!-- bd 661w fix : colgroup widths MUST match sticky offsets: col1=40px(0), col2=140px(40), col3=200px(180=40+140) -->
         <colgroup>
           <col style="width:40px;">
@@ -13933,8 +13941,8 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <col style="width:120px;">
         </colgroup>
         <thead>
-          <tr style="background:var(--bg3,#181c20);">
-            <th class="tvb-th tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
+          <tr role="row" style="background:var(--bg3,#181c20);">
+            <th class="tvb-th tn-fav-th" scope="col" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
             <th class="tvb-th tvb-dt-col" style="text-align:left;" title="Date · heure (Europe/Paris) · surface">Date<br>Heure<br>Surface</th>
             <th class="tvb-th" style="text-align:left;">Match</th>
             <th class="tvb-th" style="text-align:left;color:#00e676;width:170px;" title="Bets Prédictifs — KPI directif (BET FORT / VALUE / PASS) + 3 paris conseillés (PredScore = EV modèle + confiance calibration + accord Elo/BSD). Bascule en 3 bets LIVE selon le score quand le match est en cours."><span class="tgou-hwrap" style="justify-content:flex-start;">Bets Prédictifs<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisPredictiveGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Bets Prédictifs">i</button></span><br><span class="tvb-th-sub">conseillés</span></th>
@@ -14330,7 +14338,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tvb-surf-indoor .tvb-surf-dot { background:#a78bfa; }
   #tennis-vb-table .tvb-surf-na { color:var(--text3,#5a6068); border:1px solid var(--border); }
   #tennis-vb-table .tvb-surf-na .tvb-surf-dot { background:var(--text3,#5a6068); }
-  #tennis-vb-table td.tvb-score-col { width:1%; white-space:nowrap; padding:8px 10px; }
+  #tennis-vb-table td.tvb-score-col { white-space:normal; overflow:hidden; padding:8px 10px; }
   #tennis-vb-table .tn-sb { display:inline-grid; grid-auto-flow:row; gap:3px 6px; background:#0f172a; border:1px solid #1e293b; border-radius:8px; padding:6px 8px; align-items:center; justify-items:center; }
   #tennis-vb-table .tn-sb span { font-family:'DM Mono',monospace; font-size:13px; font-weight:700; line-height:1.3; text-align:center; }
   #tennis-vb-table .tn-sb-pt { color:#38bdf8; min-width:24px; }
@@ -14690,6 +14698,21 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tvb-elo-vs { font-family:'DM Mono',monospace; font-size:13px; font-weight:700; color:var(--blue,#29b6f6); white-space:nowrap; }
   #tennis-vb-table .tvb-elo-vs .e-fav { color:var(--green,#00e676); }
   #tennis-vb-table .tvb-elo-vs .e-sep { color:var(--text3,#5a6068); margin:0 4px; font-weight:400; }
+  /* ELO contextual minibar — V3.1 RT-02 */
+  #tennis-vb-table .tvb-elo-mini { width:100%; display:flex; flex-direction:column; gap:2px; }
+  #tennis-vb-table .tvb-elo-rail { height:4px; background:var(--border,rgba(0,0,0,0.09)); border-radius:2px; overflow:hidden; }
+  #tennis-vb-table .tvb-elo-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
+  #tennis-vb-table .tvb-elo-fill.j1 { background:var(--blue,#1558d6); }
+  #tennis-vb-table .tvb-elo-fill.j2 { background:var(--accent,#ed1c24); }
+  #tennis-vb-table .tvb-elo-nums { display:flex; align-items:baseline; justify-content:space-between; gap:2px; margin-top:2px; font-family:var(--font-mono,'DM Mono',monospace); font-size:10px; }
+  #tennis-vb-table .tvb-elo-num { color:var(--text2,#4a4a4a); font-weight:600; }
+  #tennis-vb-table .tvb-elo-num.fav { color:var(--green,#1a8c45); font-weight:800; }
+  #tennis-vb-table .tvb-elo-dlt { color:var(--text3,#888); font-size:9px; }
+  #tennis-vb-table .tvb-elo-dlt.warn { color:var(--amber,#b45309); font-weight:700; }
+  /* DR trend chip inside predictive cell — V3.1 RT-01 */
+  #tennis-vb-table .tvb-dr-chip { display:inline-flex; align-items:center; gap:2px; font-size:9px; font-family:var(--font-mono,'DM Mono',monospace); padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; white-space:nowrap; }
+  #tennis-vb-table .tvb-dr-chip.up { background:rgba(26,140,69,0.15); color:var(--green,#1a8c45); }
+  #tennis-vb-table .tvb-dr-chip.dn { background:rgba(204,26,26,0.12); color:var(--red,#cc1a1a); }
   #tennis-vb-table .tset-badge { display:inline-block; min-width:48px; padding:5px 10px; border-radius:11px; font-family:'DM Mono',monospace; font-size:12.5px; font-weight:800; box-shadow:0 2px 5px rgba(0,0,0,0.35); }
   #tennis-vb-table .tset-hot { color:#04210f; background:linear-gradient(135deg,#5cffae,#00b257); }
   #tennis-vb-table .tset-mid { color:#2a1c02; background:linear-gradient(135deg,#ffd27f,#e08a00); }
@@ -19846,6 +19869,33 @@ function _tvbSDI(sd) {
   var tip = 'Serve Dominance Index (Tennis Abstract matchmx) — P1 ' + sd.p1.sdi + ' (pts service ' + sd.p1.serve_pts_won_pct + '%, ace ' + sd.p1.ace_pct + '%) vs P2 ' + sd.p2.sdi;
   return '<div title="' + tip.replace(/"/g, '&quot;') + '" style="font-size:9px;color:' + col + ';margin-top:3px;">SDI ' + sd.p1.sdi + '▸' + sd.p2.sdi + ' (' + sign + dl + ')</div>';
 }
+// ELO contextual minibar — V3.1 RT-02 (contextual normalization vs baseline-0)
+function _tvbEloMinibar(elo1, elo2) {
+  if (elo1 == null || elo2 == null) {
+    var v1 = elo1 != null ? elo1 : '—', v2 = elo2 != null ? elo2 : '—';
+    return '<span class="tvb-elo-vs"><span>' + v1 + '</span><span class="e-sep">▸</span><span>' + v2 + '</span></span>';
+  }
+  var BUFFER = 100;
+  var eloFloor = Math.min(elo1, elo2) - BUFFER;
+  var eloCeil  = Math.max(elo1, elo2) + BUFFER;
+  var range    = eloCeil - eloFloor;
+  var pct1     = Math.round((elo1 - eloFloor) / range * 100);
+  var pct2     = Math.round((elo2 - eloFloor) / range * 100);
+  var delta    = elo2 - elo1;
+  var warn     = Math.abs(delta) > 200;
+  var fav1     = elo1 > elo2 ? ' fav' : '';
+  var fav2     = elo2 > elo1 ? ' fav' : '';
+  var sign     = delta >= 0 ? '+' : '';
+  var tip      = 'ELO J1 ' + elo1 + ' vs J2 ' + elo2 + ' · Δ' + sign + delta + ' — normalisé sur plage contextuelle (±100)';
+  return '<div class="tvb-elo-mini" title="' + tip.replace(/"/g, '&quot;') + '">'
+    + '<div class="tvb-elo-rail"><div class="tvb-elo-fill j1" style="width:' + pct1 + '%"></div></div>'
+    + '<div class="tvb-elo-rail"><div class="tvb-elo-fill j2" style="width:' + pct2 + '%"></div></div>'
+    + '<div class="tvb-elo-nums">'
+    +   '<span class="tvb-elo-num' + fav1 + '">' + elo1 + '</span>'
+    +   '<span class="tvb-elo-dlt' + (warn ? ' warn' : '') + '">' + sign + delta + '</span>'
+    +   '<span class="tvb-elo-num' + fav2 + '">' + elo2 + '</span>'
+    + '</div></div>';
+}
 
 // ── Sprint 2 — signaux BSD inline (trap / cEV / 1er set / convergence totaux) ─
 function _tvbTrap(t) {
@@ -20207,10 +20257,21 @@ function _tvbPredictiveCell(m){
       if(lb&&lb.length){
         var liveScore = lb.length ? Math.round(lb.reduce(function(a,b){ return a + (Number(b.prob)||0); }, 0) / lb.length) : 0;
         var liveSlots = _tvbExtractMarkets(lb, null);
+        var drChip = '';
+        try {
+          var dh1 = window._tnDRHist && window._tnDRHist[m.id + '|p1'];
+          if (dh1 && dh1.dir !== 'flat') {
+            var drArr = dh1.dir === 'up' ? '▲' : '▼';
+            var drCls = dh1.dir === 'up' ? 'up' : 'dn';
+            var drN1  = (m.player1 && m.player1.name) ? _escTennis(m.player1.name.split(' ').pop()) : 'J1';
+            drChip = '<span class="tvb-dr-chip ' + drCls + '">' + drArr + ' DR ' + drN1 + '</span>';
+          }
+        } catch(_) {}
         return '<div class="tvb-pred">'
           + '<div class="tvb-pred-top">'
           +   _tvbBetScoreGauge(liveScore, 'live')
           +   '<span class="tvb-pred-kpi live">LIVE · '+_escTennis(lb._verdict||'SUIVI')+'</span>'
+          +   drChip
           + '</div>'
           + _tvbEvHeatmap(liveSlots)
           + lb.map(_tnChip).join('')
@@ -20642,7 +20703,7 @@ function renderTennisValueBets(rawMatches) {
       </td>
       <td class="tvb-pred-col"${m._isLive && _tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''} style="text-align:left;vertical-align:middle;">${_tvbPredictiveCell(m)}</td>
       <td class="tvb-score-col"${m._isLive && _tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''} style="text-align:center;">${_tvbScoreCell(m)}</td>
-      <td style="text-align:center;"><span class="tvb-elo-vs"><span class="${(eloP1 != null && eloP2 != null && eloP1 > eloP2) ? 'e-fav' : ''}">${eloP1 != null ? eloP1 : '—'}</span><span class="e-sep">▸</span><span class="${(eloP1 != null && eloP2 != null && eloP2 > eloP1) ? 'e-fav' : ''}">${eloP2 != null ? eloP2 : '—'}</span></span>${_tvbSDI(m.serve_dominance)}</td>
+      <td style="text-align:center;">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}</td>
       <td style="text-align:center;">${_tvbConfBadge(m.confidence_badge)}${probHtml}${_tvbMlDiv(m.ml_market_div)}</td>
       <td style="text-align:center;">${_tvbSetsMergedCell(m.predictions?.set_probs, m.predictions?.at_least_one_set, m.player1?.name || p1Name, m.player2?.name || p2Name, !!p1Fav, !!p2Fav)}</td>
       <td style="text-align:center;">${_tvbPowerFormCell(m.player1, m.player2)}</td>
