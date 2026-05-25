@@ -2529,6 +2529,37 @@ async function bsdGetPlayerDetail(playerId) {
   }
 }
 
+// v3.2 — Player Skill Cache + helpers ─────────────────────────────────────────
+const playerSkillCache = new Map(); // Map<playerId, {data, ts}>
+const PLAYER_SKILL_TTL = 6 * 60 * 60 * 1000; // 6h
+
+function cleanTraits(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(s => typeof s === 'string' && !/^trait_\d+$/i.test(s.trim()));
+}
+
+function computeMismatch(playerA, playerB) {
+  const annotations = [];
+  const atA = playerA?.attributes;
+  const atB = playerB?.attributes;
+  if (!atA || !atB) return annotations;
+  const atkDiff = (atA.attacking || 0) - (atB.defending || 0);
+  if (atkDiff > 20) annotations.push({
+    type: 'warning',
+    rule: 'offensive_mismatch',
+    label: `Mismatch offensif : ${playerA.name} (ATK ${atA.attacking}) vs ${playerB.name} (DEF ${atB.defending})`,
+    delta: atkDiff,
+  });
+  const techDiff = Math.abs((atA.technical || 0) - (atB.technical || 0));
+  if (techDiff > 25) annotations.push({
+    type: 'info',
+    rule: 'technical_advantage',
+    label: `Avantage technique : ${atA.technical > atB.technical ? playerA.name : playerB.name} (+${techDiff} pts)`,
+    delta: techDiff,
+  });
+  return annotations;
+}
+
 // ─── PROTOTYPE BSD transferts (Adriano 2026-05-19) ──────────────────────────
 // /api/v2/players/{id}/transfers/ — transferts CONFIRMÉS natifs BSD (date,
 // club from/to, fee, type). Candidat au retrait du sidecar felipeall (volet
@@ -32148,6 +32179,53 @@ if (pathname.startsWith('/api/v1/bsd/fixtures/') && req.method === 'GET') {
     });
   } catch (e) {
     return jsonResponse(res, 502, { error: 'bsd_team_fixtures_failed', message: String(e.message || e) });
+  }
+}
+
+// v3.2 — GET /api/v1/bsd/player-skill/search?q= → résolution name→BSD ID
+if (pathname === '/api/v1/bsd/player-skill/search' && req.method === 'GET') {
+  const q = (query.q || '').trim();
+  if (q.length < 2) return jsonResponse(res, 400, { error: 'query_too_short' });
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  try {
+    const results = await bsdSearchPlayers(q);
+    return jsonResponse(res, 200, { results: results.slice(0, 5) });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_search_failed', message: String(e.message || e) });
+  }
+}
+
+// v3.2 — GET /api/v1/bsd/player-skill/:playerId → profil complet + cache 6h
+if (pathname.startsWith('/api/v1/bsd/player-skill/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/player-skill/'.length)).trim();
+  if (!/^\d+$/.test(rawId)) return jsonResponse(res, 400, { error: 'bad_player_id' });
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  const playerId = Number(rawId);
+  const now = Date.now();
+  const hit = playerSkillCache.get(playerId);
+  if (hit && (now - hit.ts) < PLAYER_SKILL_TTL) return jsonResponse(res, 200, { ...hit.data, cached: true });
+  try {
+    const r = await bsdFetch(`/players/${playerId}/`);
+    const p = r.data;
+    if (!p) return jsonResponse(res, 404, { error: 'player_not_found' });
+    const payload = {
+      id: p.id,
+      name: p.name,
+      short_name: p.short_name || p.name,
+      position: p.position,
+      specific_position: p.specific_position || null,
+      availability: p.availability || 'available',
+      attributes: p.attributes || null,
+      strengths: cleanTraits(p.strengths),
+      weaknesses: cleanTraits(p.weaknesses),
+      nationality: p.nationality || null,
+      market_value_eur: p.market_value_eur || null,
+      cached: false,
+    };
+    playerSkillCache.set(playerId, { data: payload, ts: now });
+    return jsonResponse(res, 200, payload);
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_player_skill_failed', message: String(e.message || e) });
   }
 }
 

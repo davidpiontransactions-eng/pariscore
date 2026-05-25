@@ -3307,13 +3307,15 @@
     background: #ffffff;
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 0 32px;
+    padding: 0 20px;
     height: 66px;
     display: flex; align-items: center; justify-content: space-between;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
   body.dark-theme nav {
-    background: linear-gradient(180deg, rgba(10,13,15,0.97) 0%, rgba(10,13,15,0.97) 70%, rgba(226,0,26,0.10) 100%);
+    background: linear-gradient(180deg, #15181c 0%, #0a0d0f 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
   }
   .logo {
     font-family: var(--font-head);
@@ -5100,6 +5102,29 @@
   .buteur-bar { display: block; height: 100%; border-radius: 2px; transition: width .3s; }
   .buteur-xg { font-family: var(--font-mono); font-size: 9px; font-weight: 600; flex-shrink: 0; min-width: 28px; text-align: right; }
   .buteur-pct { font-family: var(--font-mono); font-size: 11px; font-weight: 700; flex-shrink: 0; min-width: 30px; text-align: right; }
+  /* v3.2 — Football Skill Drawer */
+  .skill-btn { font-size:9px; padding:3px 5px; background:rgba(245,158,11,0.12); color:#92400e; border:1px solid rgba(245,158,11,0.35); border-radius:4px; cursor:pointer; font-family:var(--font-mono); font-weight:700; transition:background .15s; white-space:nowrap; }
+  .skill-btn:hover { background:rgba(245,158,11,0.22); }
+  body:not(.dark-theme) .skill-btn { color:#78350f; }
+  .ft-skill-drawer td { padding:0 !important; border-bottom:2px solid rgba(245,158,11,0.4) !important; }
+  .ft-skill-drawer-inner { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; padding:10px 14px; background:var(--bg2); }
+  .ft-skill-panel { flex:0 0 auto; min-width:190px; }
+  .ft-skill-panel-title { font-size:9px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:7px; font-family:var(--font-mono); }
+  .ft-skill-bars { display:flex; flex-direction:column; gap:4px; }
+  .ft-skill-bar-row { display:flex; align-items:center; gap:5px; }
+  .ft-skill-bar-label { font-size:9px; font-family:var(--font-mono); color:var(--text3); width:26px; flex-shrink:0; }
+  .ft-skill-bar-track { flex:1; height:5px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+  .ft-skill-bar-fill { height:100%; border-radius:3px; transition:width .4s ease; }
+  .ft-skill-bar-val { font-size:9px; font-family:var(--font-mono); font-weight:700; width:20px; text-align:right; flex-shrink:0; }
+  .ft-skill-tags { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
+  .ft-skill-tag { font-size:9px; padding:1px 5px; border-radius:3px; font-weight:600; font-family:var(--font-mono); }
+  .ft-skill-tag.str { background:rgba(0,230,118,0.12); color:var(--green); border:1px solid rgba(0,230,118,0.25); }
+  .ft-skill-tag.wk  { background:rgba(255,77,77,0.10); color:var(--red); border:1px solid rgba(255,77,77,0.22); }
+  .ft-skill-mismatch { flex:1 1 200px; padding:7px 10px; border-radius:5px; border:1px solid; margin-top:2px; }
+  .ft-skill-mismatch.warning { background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.28); }
+  .ft-skill-mismatch.info    { background:rgba(41,182,246,0.07); border-color:rgba(41,182,246,0.22); }
+  .ft-skill-mismatch-label { font-size:10px; color:var(--text2); line-height:1.4; }
+  .ft-skill-loader { padding:14px 16px; font-size:11px; color:var(--text3); font-family:var(--font-mono); text-align:center; }
 
   /* Packball — [STATS] button compact */
   .stats-toggle-btn { font-family: var(--font-mono); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 4px; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); cursor: pointer; transition: all .15s; }
@@ -26496,6 +26521,92 @@ function cornerProbFromXG(homeXG, awayXG) {
   return Math.round(Math.max(0, Math.min(99, (1 - cumulative) * 100)));
 }
 
+// v3.2 — Football Skill Drawer: toggle + render ───────────────────────────────
+async function toggleSkillDrawer(matchId) {
+  const drawerTr = document.getElementById('ftsk-' + matchId);
+  if (!drawerTr) return;
+  const isOpen = drawerTr.style.display !== 'none';
+  drawerTr.style.display = isOpen ? 'none' : '';
+  if (!isOpen && !drawerTr.dataset.rendered) {
+    drawerTr.dataset.rendered = '1';
+    const pids = (drawerTr.dataset.pids || '').split(',').filter(Boolean).map(Number);
+    const content = document.getElementById('ftsk-content-' + matchId);
+    if (!content || !pids.length) {
+      if (content) content.innerHTML = '<div class="ft-skill-loader">Profils non disponibles</div>';
+      return;
+    }
+    content.innerHTML = '<div class="ft-skill-loader">⚡ Chargement profils Bzzoiro...</div>';
+    try {
+      const profiles = await Promise.all(
+        pids.map(id => fetch('/api/v1/bsd/player-skill/' + id).then(r => r.json()).catch(() => null))
+      );
+      const valid = profiles.filter(p => p && p.id && !p.error);
+      content.innerHTML = valid.length
+        ? _renderSkillDrawerContent(valid)
+        : '<div class="ft-skill-loader">Profils non disponibles (ligue mineure)</div>';
+    } catch (_) {
+      content.innerHTML = '<div class="ft-skill-loader" style="color:var(--red);">Erreur chargement</div>';
+    }
+  }
+}
+
+function _renderSkillDrawerContent(profiles) {
+  const SKILLS = [
+    { k:'attacking',  l:'ATK' },
+    { k:'technical',  l:'TEC' },
+    { k:'tactical',   l:'TAC' },
+    { k:'defending',  l:'DEF' },
+    { k:'creativity', l:'CRE' },
+  ];
+  const skillClr = v => v >= 70 ? 'var(--green)' : v >= 50 ? 'var(--amber)' : 'var(--red)';
+
+  function bars(attrs) {
+    if (!attrs) return '<div class="ft-skill-loader" style="font-size:10px;padding:4px 0;">Profil indisponible</div>';
+    return SKILLS.map(({ k, l }) => {
+      const v = attrs[k] ?? 0;
+      return `<div class="ft-skill-bar-row">
+        <span class="ft-skill-bar-label">${l}</span>
+        <div class="ft-skill-bar-track"><div class="ft-skill-bar-fill" style="width:${v}%;background:${skillClr(v)};"></div></div>
+        <span class="ft-skill-bar-val" style="color:${skillClr(v)};">${v}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function tags(arr, cls) {
+    return (arr || []).slice(0, 3).map(s => `<span class="ft-skill-tag ${cls}">${s}</span>`).join('');
+  }
+
+  // Client-side mismatch (same rules as server computeMismatch)
+  const mismatches = [];
+  for (let i = 0; i < profiles.length; i++) {
+    for (let j = i + 1; j < profiles.length; j++) {
+      const a = profiles[i], b = profiles[j];
+      const atA = a.attributes, atB = b.attributes;
+      if (!atA || !atB) continue;
+      const atkDiff = (atA.attacking || 0) - (atB.defending || 0);
+      if (atkDiff > 20) mismatches.push({ type:'warning', label:`Mismatch offensif : ${a.short_name} (ATK ${atA.attacking}) vs ${b.short_name} (DEF ${atB.defending})` });
+      const techDiff = Math.abs((atA.technical || 0) - (atB.technical || 0));
+      if (techDiff > 25) mismatches.push({ type:'info', label:`Avantage technique : ${atA.technical > atB.technical ? a.short_name : b.short_name} (+${techDiff} pts)` });
+    }
+  }
+
+  const availIcon = av => av === 'doubtful' ? ' <span style="color:var(--amber);font-size:9px;">❓</span>' : av === 'injured' ? ' <span style="color:var(--red);font-size:9px;">🚑</span>' : '';
+
+  const panels = profiles.map(p => `
+    <div class="ft-skill-panel">
+      <div class="ft-skill-panel-title">${(p.short_name || p.name).replace(/</g,'&lt;')}${availIcon(p.availability)} · ${p.specific_position || p.position || '?'}</div>
+      <div class="ft-skill-bars">${bars(p.attributes)}</div>
+      <div class="ft-skill-tags">${tags(p.strengths,'str')}${tags(p.weaknesses,'wk')}</div>
+    </div>`).join('');
+
+  const mmHtml = mismatches.map(mm => `
+    <div class="ft-skill-mismatch ${mm.type}">
+      <span class="ft-skill-mismatch-label">${mm.type === 'warning' ? '⚠️' : '⚡'} ${mm.label}</span>
+    </div>`).join('');
+
+  return `${panels}${mmHtml ? `<div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:190px;">${mmHtml}</div>` : ''}`;
+}
+
 function renderTopButteurs(buts, ctx) {
   if (!buts || !buts.length) return '<span style="color:var(--text3);font-size:11px;">—</span>';
   const homeTeam = (ctx && ctx.home) ? String(ctx.home).replace(/"/g,'&quot;') : '';
@@ -27630,6 +27741,7 @@ const label = country
     const streamBadgeInline = m.has_live_stream
       ? `<span class="stream-badge-inline" title="Diffusion en streaming disponible (source Flashscore)" style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,0.12);color:#92400e;border:1px solid rgba(245,158,11,0.30);border-radius:10px;padding:2px 6px;font:700 9px/1.2 var(--font-mono);">📡 STREAM</span>`
       : '';
+    const _skillPids = (m.topButteurs || []).filter(p => p.id).slice(0, 4).map(p => p.id).join(',');
     tr.innerHTML = `
       <td style="min-width:60px;text-align:center;">
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
@@ -27682,6 +27794,7 @@ const label = country
         <div style="display:flex;gap:4px;align-items:center;margin-top:4px;">
           <button class="ins-btn" style="font-size:9px;padding:3px 5px;" onclick="event.stopPropagation();openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
           <button class="ai-gen-btn" style="font-size:9px;padding:3px 5px;" onclick="event.stopPropagation();openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
+          ${_skillPids ? `<button class="skill-btn" onclick="event.stopPropagation();toggleSkillDrawer('${m.id}')" title="Profils Skill Bzzoiro V3.2">⚡</button>` : ''}
         </div>
       </td>
       <td style="min-width:100px;font-size:10px;padding:4px 6px !important;">
@@ -27732,6 +27845,16 @@ const label = country
       })()}</td>
     `;
     tbody.appendChild(tr);
+    // v3.2 — Skill Drawer TR (hidden, lazy-rendered on toggle)
+    if (_skillPids) {
+      const _sdTr = document.createElement('tr');
+      _sdTr.className = 'ft-skill-drawer';
+      _sdTr.id = 'ftsk-' + m.id;
+      _sdTr.dataset.pids = _skillPids;
+      _sdTr.style.display = 'none';
+      _sdTr.innerHTML = `<td colspan="99" style="padding:0 !important;"><div class="ft-skill-drawer-inner" id="ftsk-content-${m.id}"><div class="ft-skill-loader">⚡ Chargement profils...</div></div></td>`;
+      tbody.appendChild(_sdTr);
+    }
     } catch (e) {
       console.warn('Erreur ligne match', m.id, e);
     }
