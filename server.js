@@ -4619,6 +4619,17 @@ function initSQLite() {
     failure_count INTEGER NOT NULL DEFAULT 0
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id)`);
+  // Newsletter — inscrits sans compte (prospects + members opt-in)
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS newsletter (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL COLLATE NOCASE,
+    source TEXT NOT NULL DEFAULT 'website_footer',
+    subscribed_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    unsubscribed_at INTEGER,
+    active INTEGER NOT NULL DEFAULT 1
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_newsletter_email ON newsletter(email)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_newsletter_active ON newsletter(active)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -25661,6 +25672,55 @@ if (pathname === '/api/v1/cache-status') {
   const ttl = Math.round(API_CACHE_TTL / 3600000);
   return jsonResponse(res, 200, { ...stats, ttl_hours: ttl });
 }
+// ── Newsletter routes ────────────────────────────────────────────────────────
+
+// POST /api/v1/newsletter/subscribe
+if (pathname === '/api/v1/newsletter/subscribe' && req.method === 'POST') {
+  const body = await readBodyLimited(req, 4096);
+  let parsed;
+  try { parsed = JSON.parse(body); } catch { return jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  const email = String(parsed.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@') || email.length < 5) {
+    return jsonResponse(res, 400, { error: 'Email invalide' });
+  }
+  const source = String(parsed.source || 'website_footer').slice(0, 40);
+  try {
+    sqldb.prepare('INSERT OR IGNORE INTO newsletter (email, source) VALUES (?, ?)').run(email, source);
+    // réactiver si précédemment désinscrit
+    sqldb.prepare("UPDATE newsletter SET active=1, unsubscribed_at=NULL WHERE email=? AND active=0").run(email);
+    console.log(`  [Newsletter] +1 → ${email} (${source})`);
+    return jsonResponse(res, 200, { success: true, message: 'Inscription confirmée !' });
+  } catch (e) {
+    console.error('  [Newsletter] Erreur:', e.message);
+    return jsonResponse(res, 500, { error: 'Erreur serveur' });
+  }
+}
+
+// POST /api/v1/newsletter/unsubscribe
+if (pathname === '/api/v1/newsletter/unsubscribe' && req.method === 'POST') {
+  const body = await readBodyLimited(req, 4096);
+  let parsed;
+  try { parsed = JSON.parse(body); } catch { return jsonResponse(res, 400, { error: 'JSON invalide' }); }
+  const email = String(parsed.email || '').trim().toLowerCase();
+  if (!email) return jsonResponse(res, 400, { error: 'Email requis' });
+  sqldb.prepare("UPDATE newsletter SET active=0, unsubscribed_at=strftime('%s','now') WHERE email=?").run(email);
+  return jsonResponse(res, 200, { success: true, message: 'Désinscription confirmée.' });
+}
+
+// GET /api/v1/newsletter/list — admin JWT requis
+if (pathname === '/api/v1/newsletter/list' && req.method === 'GET') {
+  let isAdmin = false;
+  try {
+    const tok = (req.headers['authorization'] || '').replace('Bearer ', '').trim();
+    const decoded = jwtVerify(tok);
+    isAdmin = decoded && decoded.role === 'admin';
+  } catch (_) {}
+  if (!isAdmin) return jsonResponse(res, 403, { error: 'Admin requis' });
+  const rows = sqldb.prepare('SELECT id, email, source, subscribed_at, active FROM newsletter ORDER BY subscribed_at DESC').all();
+  const activeCount = rows.filter(r => r.active).length;
+  return jsonResponse(res, 200, { total: rows.length, active: activeCount, subscribers: rows });
+}
+
 // POST /api/v1/auth/login — Admin (username) ou Membre (email)
 if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
   const ip = req.socket?.remoteAddress || 'unknown';

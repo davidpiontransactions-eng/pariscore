@@ -6830,6 +6830,17 @@
   .footer-links { display: flex; gap: 20px; font-size: 13px; color: var(--text3); }
   .footer-links a:hover { color: var(--text2); }
   .footer-right { font-size: 12px; color: var(--text3); }
+  /* Newsletter widget footer */
+  .footer-newsletter { border-top: 1px solid var(--border); padding: 28px 32px; text-align: center; background: var(--bg2); }
+  .fn-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .fn-sub { font-size: 12.5px; color: var(--text3); margin-bottom: 14px; }
+  .fn-form { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; max-width: 440px; margin: 0 auto; }
+  .fn-form input[type="email"] { flex: 1; min-width: 200px; padding: 9px 14px; background: var(--bg4); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; outline: none; }
+  .fn-form input[type="email"]:focus { border-color: var(--green); }
+  .fn-form button { padding: 9px 20px; background: var(--green); color: #000; font-weight: 700; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
+  .fn-form button:hover { opacity: .85; }
+  .fn-form button:disabled { opacity: .5; cursor: not-allowed; }
+  .fn-msg { font-size: 12.5px; margin-top: 8px; }
 
   /* DIVIDER */
   .divider { border: none; border-top: 1px solid var(--border); }
@@ -18048,6 +18059,16 @@ function _paintBracket(el,data){
 </div><!-- /page-parametres -->
 
 <!-- FOOTER -->
+<!-- Newsletter widget -->
+<div class="footer-newsletter">
+  <div class="fn-title">📬 Recevoir les picks gratuits</div>
+  <div class="fn-sub">Analyses &amp; value bets directement dans votre boîte mail — sans spam, désinscription en 1 clic</div>
+  <form class="fn-form" id="fn-form">
+    <input type="email" id="fn-email" placeholder="votre@email.com" autocomplete="email" required />
+    <button type="submit" id="fn-btn">S'abonner</button>
+  </form>
+  <div id="fn-msg" class="fn-msg" style="display:none;"></div>
+</div>
 <footer>
   <div>
     <div class="footer-logo">PariScore</div>
@@ -18061,8 +18082,47 @@ function _paintBracket(el,data){
     <a href="/guide/xg-explique">xG expliqué</a>
     <a href="/guide/critere-kelly">Critère de Kelly</a>
   </div>
-  <div class="footer-right">© 2025 PariScore. Tous droits réservés.</div>
+  <div class="footer-right">© 2026 PariScore. Tous droits réservés.</div>
 </footer>
+
+<script>
+(function() {
+  var form = document.getElementById('fn-form');
+  if (!form) return;
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var email = document.getElementById('fn-email').value.trim();
+    var btn   = document.getElementById('fn-btn');
+    var msg   = document.getElementById('fn-msg');
+    btn.disabled = true;
+    btn.textContent = '...';
+    msg.style.display = 'none';
+    try {
+      var r = await fetch('/api/v1/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, source: 'website_footer' })
+      });
+      var data = await r.json();
+      if (r.ok && data.success) {
+        msg.textContent = '✓ Inscription confirmée ! Vous recevrez les prochains picks.';
+        msg.style.color = 'var(--green, #00e676)';
+        msg.style.display = 'block';
+        document.getElementById('fn-email').value = '';
+        btn.textContent = '✓ Inscrit';
+      } else {
+        throw new Error(data.error || 'Erreur');
+      }
+    } catch(err) {
+      msg.textContent = '✗ ' + err.message;
+      msg.style.color = 'var(--red, #ff4d4d)';
+      msg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = "S'abonner";
+    }
+  });
+})();
+</script>
 
 <!-- POWER SCORE / AI ANALYSIS MODAL -->
 <div id="gemini-modal" onclick="if(event.target===this)closeGemini()">
