@@ -3159,6 +3159,13 @@
     --gauge-rail-opacity: 0.6;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── Global focus indicator — WCAG 2.1 AA (keyboard nav) ── */
+  :focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px !important;
+    border-radius: 3px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
   html { scroll-behavior: smooth; }
   body {
     background: var(--bg);
