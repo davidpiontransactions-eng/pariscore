@@ -35970,6 +35970,14 @@ function dhRenderKpisTennis(kpis, totalMatches) {
   const totalWins = tennisMarkets.reduce((s, m) => s + ((kpis[m]?.wins) || 0), 0);
   const aggWR = totalPicks ? totalWins / totalPicks : null;
   const longestLoss = Math.max(...tennisMarkets.map(m => kpis[m]?.longest_losing_streak || 0));
+  const aggLoss = totalPicks - totalWins;
+  const aggIc = (() => {
+    const totW = tennisMarkets.reduce((s, m) => s + (kpis[m]?.sample || 0), 0);
+    if (!totW) return null;
+    const lo = tennisMarkets.reduce((s, m) => s + ((kpis[m]?.winrate_ic95?.[0] || 0) * (kpis[m]?.sample || 0)), 0) / totW;
+    const hi = tennisMarkets.reduce((s, m) => s + ((kpis[m]?.winrate_ic95?.[1] || 0) * (kpis[m]?.sample || 0)), 0) / totW;
+    return [lo, hi];
+  })();
   const gy = kpis.global_yield || {};
   const hasYield = gy.sample_with_odds > 0;
   const yieldPct = gy.yield;
@@ -38011,6 +38019,10 @@ function psAccess() {
     if (_now >= Date.parse('2026-05-15T00:00:00+02:00') && _now < Date.parse('2026-05-19T00:00:00+02:00')) {
       footPro = true; tennisPro = true;
     }
+  }
+  // Bypass dev local : accès complet sur localhost/127.0.0.1 (jamais actif en production)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    footPro = true; tennisPro = true;
   }
   return {
     role, loggedIn: !!u,
