@@ -20599,17 +20599,18 @@ function buildUnifiedTennis(vb){
     var k=_tnPairKey(m);var lo=liveIdx.get(k);
     if(!lo){lo=liveIdxLast.get(_tnPairKeyLast(m));if(lo)k=_tnPairKey(lo);}
     if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;}else{m._live=null;m._isLive=false;}
-    // Snapshot : capture l'enrichissement prematch tant qu'il est complet (avant
-    // que le serveur ne le drop quand match passe live). Conserve TTL 12h.
-    try { _tnSnapshotStore(m); } catch (_) {}
-    // Réhydratation défensive : si vb a déjà perdu des champs (cycle dégradé),
-    // on tente de combler avec le snapshot stocké AVANT (sans écraser).
+    // Réhydratation AVANT le store : récupère snapshot pré-live avant écrasement
+    // par cycle dégradé (serveur drop predictions/elo/best_ev_model une fois match
+    // live). _tnApplySnapshot n'écrase que les champs null — safe sur update légitimes.
     try {
       if (m && m._isLive) {
         var _snapBack = _tnSnapshotLookup(m);
         if (_snapBack) _tnApplySnapshot(m, _snapBack);
       }
     } catch (_) {}
+    // Store APRÈS réhydratation : snapshot capture état enrichi (champs restaurés),
+    // protège les cycles suivants contre la dégradation serveur.
+    try { _tnSnapshotStore(m); } catch (_) {}
     return m;
   });
   liveIdx.forEach(function(lo,k){
