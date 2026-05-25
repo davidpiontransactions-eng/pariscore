@@ -3,6 +3,7 @@
 <head>
 <meta name="ga-site-verification" content="SmmkqlT_jyUQZaKKREF6z87c" />
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light dark">
 <!-- bd ParisScorebis-rcmw V12 Mobile Premium B — viewport conditional swap (Option B locked 2026-05-24).
      Script synchrone pre-paint : detecte mobile via UA + pointer:coarse + width <= 820 (iPad portrait inclus).
      Mobile  → width=device-width + class .ps-mobile-v2 sur <html>
@@ -3023,6 +3024,7 @@
   /* ── bd z55o EXTENDED : nuke all remaining dark zones (live dashboard, deep-analysis, modals, panels) ── */
   /* Global var hijack — force light values même quand --bg/--bg2/--bg3 utilisés via var() */
   body[data-cf-light="1"] {
+    color-scheme: light;
     --bg:  #f4f6f8 !important;
     --bg2: #ffffff !important;
     --bg3: #f1f5f9 !important;
@@ -3130,6 +3132,7 @@
 
   /* ── Nuit Profonde — réactivé v3.2 (rollback bd z55o) ── */
   body.dark-theme {
+    color-scheme: dark;
     --bg: #0a0d0f;
     --bg2: #15181c;
     --bg3: #1e2328;
