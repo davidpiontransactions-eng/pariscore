@@ -3128,7 +3128,7 @@
   body[data-cf-light="1"] table#tennis-vb-table,
   body[data-cf-light="1"] table#tennis-live-table { background: #ffffff !important; }
 
-  /* ── Nuit Profonde (LEGACY — désactivé bd z55o, conservé pour rollback) ── */
+  /* ── Nuit Profonde — réactivé v3.2 (rollback bd z55o) ── */
   body.dark-theme {
     --bg: #0a0a0a;
     --bg2: #111417;
@@ -38746,32 +38746,36 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('strat-help-overlay')?.style.display !== 'none') closeStratHelp();
 });
 
-/* ── bd z55o : light theme FORCÉ (aucun noir) — toggle désactivé ── */
+/* ── Theme toggle — dark/light (bd z55o rollback v3.2) ── */
 (function() {
   const STORAGE_KEY = 'ps-theme-override';
 
-  function shouldBeDark() { return false; /* bd z55o force light */ }
+  function shouldBeDark() {
+    try { return localStorage.getItem(STORAGE_KEY) === 'dark'; } catch(_) { return false; }
+  }
 
-  function applyTheme(_dark) {
-    // bd z55o : ignore param, force light toujours
-    document.body.classList.remove('dark-theme');
-    document.body.setAttribute('data-cf-light', '1');
+  function applyTheme(dark) {
+    if (dark) {
+      document.body.classList.add('dark-theme');
+      document.body.removeAttribute('data-cf-light');
+    } else {
+      document.body.classList.remove('dark-theme');
+      document.body.setAttribute('data-cf-light', '1');
+    }
+    try { localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light'); } catch(_) {}
+    const label = dark ? '☀ Jour' : '☾ Nuit';
     const btn = document.getElementById('theme-toggle');
-    if (btn) { btn.style.display = 'none'; }
+    if (btn) { btn.textContent = label; btn.style.display = ''; }
     const btnM = document.getElementById('theme-toggle-m');
-    if (btnM) { btnM.style.display = 'none'; }
+    if (btnM) { btnM.textContent = label; btnM.style.display = ''; }
   }
 
   function init() {
-    // Clear any dark override historique
-    try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
-    applyTheme(false);
+    applyTheme(shouldBeDark());
   }
 
   window.toggleTheme = function() {
-    // bd z55o no-op (UX désactivée pour empêcher dark)
-    applyTheme(false);
-    return false;
+    applyTheme(!document.body.classList.contains('dark-theme'));
   };
 
   // bd 21m7 / rlhf — Module audio alertes trading (state tracking transitions positives)
