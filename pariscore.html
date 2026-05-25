@@ -18204,9 +18204,9 @@ function _paintBracket(el,data){
 </div>
 
 <!-- INSIGHTS MODAL -->
-<div id="insights-modal" onclick="if(event.target===this)closeInsights()">
+<div id="insights-modal" role="dialog" aria-modal="true" aria-labelledby="ins-teams" onclick="if(event.target===this)closeInsights()">
   <div id="insights-panel">
-    <button class="modal-close" onclick="closeInsights()" style="position:absolute;top:16px;right:16px;">×</button>
+    <button class="modal-close" onclick="closeInsights()" aria-label="Fermer" style="position:absolute;top:16px;right:16px;">×</button>
     <div id="insights-panel-inner">
       <div class="ins-header">
         <div class="ins-teams" id="ins-teams">—</div>
@@ -38317,7 +38317,7 @@ if (scrollTop && scrollMain) {
 <!-- ══════════════════════════════════════════════════════════
      DEEP ANALYSIS PRO MODAL
 ═══════════════════════════════════════════════════════════ -->
-<div id="deep-modal" onclick="if(event.target===this)closeDeepAnalysis()">
+<div id="deep-modal" role="dialog" aria-modal="true" aria-labelledby="deep-match-label" onclick="if(event.target===this)closeDeepAnalysis()">
   <div id="deep-panel">
     <div id="deep-panel-header">
       <div style="flex:1;">
@@ -38334,7 +38334,7 @@ if (scrollTop && scrollMain) {
         <button id="dp-btn-refresh"  class="dp-mode-btn"        onclick="refreshDeepAnalysis()" title="Forcer une nouvelle analyse (bypass cache)">Nouvelle analyse</button>
         <button id="dp-btn-pro"                                 onclick="toggleProMode()" title="Mode Parieur Pro — données brutes">Pro</button>
       </div>
-      <button onclick="closeDeepAnalysis()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
+      <button onclick="closeDeepAnalysis()" aria-label="Fermer" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>
     </div>
     <div id="deep-panel-inner">
       <!-- I4 — Divergences marché (injecté par JS via meta event) -->
