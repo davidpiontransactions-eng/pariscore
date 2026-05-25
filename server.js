@@ -21774,7 +21774,12 @@ async function fetchTennisAbstractTournament(slug) {
   const cached = tennisAbstractCache.get(slug);
   if (cached && Date.now() - cached.ts < TENNIS_ABSTRACT_TTL_MS) return cached.data;
   const url = `${TENNIS_ABSTRACT_BASE}/${meta.file}`;
-  const res = await httpsGet(url, { 'Accept': 'text/html', 'User-Agent': 'Mozilla/5.0 (PariScore)' });
+  const res = await httpsGet(url, {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Referer': 'https://www.tennisabstract.com/',
+  });
   if (res.status !== 200 || typeof res.data !== 'string') {
     throw new Error(`Tennis Abstract HTTP ${res.status} for ${slug}`);
   }
@@ -21846,7 +21851,12 @@ async function fetchTennisAbstractReport(slug) {
   const cached = tennisAbstractReportsCache.get(slug);
   if (cached && Date.now() - cached.ts < meta.ttl) return cached.data;
   const url = `${TENNIS_ABSTRACT_BASE.replace('/current', '')}${meta.path}`;
-  const res = await httpsGet(url, { 'Accept': 'text/html', 'User-Agent': 'Mozilla/5.0 (PariScore)' });
+  const res = await httpsGet(url, {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Referer': 'https://www.tennisabstract.com/',
+  });
   if (res.status !== 200 || typeof res.data !== 'string') {
     throw new Error(`TA report HTTP ${res.status} for ${slug}`);
   }
@@ -21884,17 +21894,30 @@ async function fetchBetminesFixtures(dateFrom, dateTo) {
       path: u.pathname + (u.search || ''),
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br',
         'Origin': 'https://www.betmines.com',
-        'Referer': 'https://www.betmines.com/',
+        'Referer': 'https://www.betmines.com/football/predictions',
+        'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
       },
     }, (res) => {
       let body = '';
       res.on('data', c => body += c);
       res.on('end', () => {
-        if (res.statusCode !== 200) return reject(new Error(`betmines HTTP ${res.statusCode}`));
+        if (res.statusCode !== 200) {
+          // Log body partiel pour diagnostiquer 403 (IP ban vs auth vs bot detection)
+          const snippet = body.substring(0, 200);
+          return reject(new Error(`betmines HTTP ${res.statusCode} — ${snippet}`));
+        }
         try {
           const arr = JSON.parse(body);
           if (!Array.isArray(arr)) return reject(new Error('betmines: non-array response'));
@@ -29237,9 +29260,12 @@ async function _buildTennisValueBetsCore({ date }) {
       try {
         _p1ss = getTennisSurfStats(p1Name, tourGuess, surfaceClean);
         _p2ss = getTennisSurfStats(p2Name, tourGuess, surfaceClean);
-        // FIX: log when surf_rank still null after lookup (helps diagnose missing DB data)
+        // Joueurs ITF/Challenger non couverts par tennis_elo (source Sackmann ATP/WTA uniquement)
+        // → log debug silencieux, pas une erreur (bd dl49 Phase 4+ pour couverture élargie)
         if (!_p1ss.rk && !_p2ss.rk) {
-          console.warn(`[TennisSurf] surf_rank null — tour=${tourGuess} surface=${surfaceClean} p1="${p1Name}" p2="${p2Name}" — check tennis_elo population`);
+          if (process.env.TENNIS_SURF_DEBUG === 'true') {
+            console.debug(`[TennisSurf] surf_rank null — tour=${tourGuess} surface=${surfaceClean} p1="${p1Name}" p2="${p2Name}"`);
+          }
         }
       } catch (err) {
         // FIX: was silent — now logs explicitly for debugging
