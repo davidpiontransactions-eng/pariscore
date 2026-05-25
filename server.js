@@ -4294,6 +4294,210 @@ if (MOCK_MODE) {
 const ANJ_BOOKMAKERS = ['Winamax', 'Betclic', 'Unibet', 'PMU', 'ParionsSport', 'ZEbet', 'Winamax'];
 const FINAL_FALLBACK = 'https://www.coteur.com/cotes/football';
 
+// ─── COUPE DU MONDE 2026 — données statiques & helpers ───────────────────────
+// BSD league_id=27, season_id=188 — 48 équipes, 12 groupes A→L, 104 matchs
+
+const WC2026_LEAGUE_ID = 27;
+const WC2026_SEASON_ID = 188;
+const WC2026_START = '2026-06-11';
+const WC2026_END   = '2026-07-19';
+
+// FIFA rankings approx. mars 2026 — keyed by BSD team_id
+const WC2026_FIFA_RANKINGS = {
+  489: 1,  491: 6,  477: 7,  469: 8,  467: 9,  498: 10, // ARG ESP BEL NED GER COL
+  485: 3,  493: 4,  463: 5,                               // FRA ENG BRA
+  475: 2,                                                  // ESP
+  457: 14, 451: 15, 486: 18, 480: 20, 462: 21,            // USA MEX SEN URU SUI
+  481: 22, 453: 23, 459: 24, 494: 25, 483: 26,            // IRN KOR AUS CRO AUT
+  731: 27, 470: 28, 464: 30, 488: 31,                     // SWE JPN MAR NOR
+  930: 37, 932: 39, 466: 42, 472: 44, 478: 44, 455: 48,  // CZE TUR SCO ECU EGY CAN
+  490: 52, 474: 53, 471: 55, 479: 56, 648: 57,            // ALG TUN CIV SAU DRC
+  495: 60, 931: 61, 933: 62, 452: 63, 458: 66,            // GHA BIH IRQ ZAF PAR
+  496: 71, 497: 74, 476: 80, 468: 83, 484: 87,            // PAN UZB CPV CUW JOR
+  461: 89, 465: 89, 482: 95,                               // QAT HAI NZL
+};
+
+// ISO flag codes — keyed by BSD team_id
+const WC2026_FLAG_CODES = {
+  930: 'cz', 451: 'mx', 452: 'za', 453: 'kr',
+  931: 'ba', 455: 'ca', 461: 'qa', 462: 'ch',
+  463: 'br', 465: 'ht', 464: 'ma', 466: 'gb-sct',
+  459: 'au', 458: 'py', 932: 'tr', 457: 'us',
+  468: 'cw', 471: 'ci', 472: 'ec', 467: 'de',
+  470: 'jp', 469: 'nl', 731: 'se', 474: 'tn',
+  477: 'be', 478: 'eg', 481: 'ir', 482: 'nz',
+  476: 'cv', 479: 'sa', 475: 'es', 480: 'uy',
+  485: 'fr', 933: 'iq', 488: 'no', 486: 'sn',
+  490: 'dz', 489: 'ar', 483: 'at', 484: 'jo',
+  498: 'co', 648: 'cd', 491: 'pt', 497: 'uz',
+  494: 'hr', 493: 'gb-eng', 495: 'gh', 496: 'pa',
+};
+
+const _wc2026Cache = {};
+
+function _wcIsActive() {
+  const now = Date.now();
+  return now >= new Date(WC2026_START).getTime() && now <= new Date(WC2026_END).getTime() + 86400000;
+}
+
+function _wcCacheTTL() {
+  return _wcIsActive() ? 3 * 60 * 1000 : 30 * 60 * 1000;
+}
+
+function _wcCached(key) {
+  const e = _wc2026Cache[key];
+  if (!e || Date.now() - e.ts > _wcCacheTTL()) return null;
+  return e.data;
+}
+
+function _wcSetCache(key, data) {
+  _wc2026Cache[key] = { data, ts: Date.now() };
+  return data;
+}
+
+function _wcRoundLabel(round) {
+  const r = Number(round);
+  if (r === 1) return 'Journée 1';
+  if (r === 2) return 'Journée 2';
+  if (r === 3) return 'Journée 3';
+  if (r === 5) return '32e de finale';
+  if (r === 6) return 'Quarts de finale';
+  if (r === 27) return 'Demi-finales';
+  if (r === 28) return 'Match 3e place';
+  if (r === 29) return 'Finale';
+  return round != null ? `Round ${r}` : '';
+}
+
+function _wcMatchPhase(round) {
+  const r = Number(round);
+  return (r >= 1 && r <= 3) ? 'groups' : 'knockout';
+}
+
+function _wcFormatMatch(m) {
+  const homeId  = (m.home_team_obj && m.home_team_obj.id) || m.home_team_id || null;
+  const awayId  = (m.away_team_obj && m.away_team_obj.id) || m.away_team_id || null;
+  const roundNum = m.round_number || null;
+  return {
+    id: m.id,
+    bsd_event_id: m.id,
+    date: m.event_date || m.start_date || m.date || null,
+    status: m.status || 'notstarted',
+    round: roundNum,
+    round_label: _wcRoundLabel(roundNum),
+    phase: _wcMatchPhase(roundNum),
+    group: m.group_name || null,
+    home: {
+      id: homeId,
+      name: m.home_team || '',
+      flag: WC2026_FLAG_CODES[homeId] || '',
+      fifa_rank: WC2026_FIFA_RANKINGS[homeId] || null,
+    },
+    away: {
+      id: awayId,
+      name: m.away_team || '',
+      flag: WC2026_FLAG_CODES[awayId] || '',
+      fifa_rank: WC2026_FIFA_RANKINGS[awayId] || null,
+    },
+    score: {
+      home: m.home_score != null ? m.home_score : null,
+      away: m.away_score != null ? m.away_score : null,
+    },
+    venue: (m.venue && m.venue.name) || null,
+    city:  (m.venue && m.venue.city) || null,
+    current_minute: m.current_minute || null,
+  };
+}
+
+async function fetchWC2026Overview() {
+  let standings = null;
+  try {
+    const res = await bsdFetch(`/leagues/${WC2026_LEAGUE_ID}/standings/?season=${WC2026_SEASON_ID}`);
+    if (res && res.status === 200) standings = res.data || res;
+  } catch (e) { console.warn('[WC2026/overview] standings:', e.message); }
+
+  let matchesRaw = [];
+  try {
+    const now = new Date();
+    const fromD = new Date(Math.max(now.getTime() - 2 * 86400000, new Date(WC2026_START).getTime()));
+    const toD   = new Date(Math.min(now.getTime() + 7 * 86400000, new Date(WC2026_END).getTime() + 86400000));
+    const res   = await bsdFetch(`/events/?league=${WC2026_LEAGUE_ID}&date_from=${fromD.toISOString().slice(0,10)}&date_to=${toD.toISOString().slice(0,10)}&limit=100`);
+    const payload = (res && res.status === 200) ? (res.data || res) : null;
+    matchesRaw = (payload && Array.isArray(payload.results)) ? payload.results : [];
+  } catch (e) { console.warn('[WC2026/overview] events:', e.message); }
+
+  const groups = {};
+  const standingGroups = standings && (standings.groups || (standings.data && standings.data.groups));
+  if (standingGroups) {
+    for (const [gName, teams] of Object.entries(standingGroups)) {
+      groups[gName] = teams.map(t => ({
+        position: t.position, team_id: t.team_id, team_name: t.team || t.team_name || '',
+        flag: WC2026_FLAG_CODES[t.team_id] || '',
+        fifa_rank: WC2026_FIFA_RANKINGS[t.team_id] || null,
+        played: t.played, won: t.won, drawn: t.drawn, lost: t.lost,
+        gf: t.gf, ga: t.ga, gd: t.gd, pts: t.pts, form: t.form || '',
+      }));
+    }
+  }
+
+  return {
+    league_id: WC2026_LEAGUE_ID, season_id: WC2026_SEASON_ID,
+    tournament_start: WC2026_START, tournament_end: WC2026_END,
+    is_active: _wcIsActive(), groups,
+    upcoming_matches: matchesRaw.map(_wcFormatMatch),
+    fetched_at: new Date().toISOString(),
+  };
+}
+
+async function fetchWC2026Schedule(phase, round) {
+  let allMatches = [];
+  for (let page = 1; page <= 3; page++) {
+    let payload;
+    try {
+      const res = await bsdFetch(`/events/?league=${WC2026_LEAGUE_ID}&date_from=${WC2026_START}&date_to=${WC2026_END}&limit=100&page=${page}`);
+      payload = (res && res.status === 200) ? (res.data || res) : null;
+    } catch (e) { console.warn(`[WC2026/schedule] page=${page}:`, e.message); break; }
+    const results = (payload && Array.isArray(payload.results)) ? payload.results : [];
+    allMatches = allMatches.concat(results);
+    if (!results.length || !payload.next) break;
+  }
+  let matches = allMatches.map(_wcFormatMatch);
+  if (phase === 'groups')   matches = matches.filter(m => m.phase === 'groups');
+  if (phase === 'knockout') matches = matches.filter(m => m.phase === 'knockout');
+  if (round != null)        matches = matches.filter(m => Number(m.round) === Number(round));
+  const byDate = {};
+  for (const m of matches) {
+    const d = m.date ? m.date.slice(0, 10) : 'TBD';
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(m);
+  }
+  return { total: matches.length, phase: phase || 'all', round: round || null, by_date: byDate, fetched_at: new Date().toISOString() };
+}
+
+async function fetchWC2026Bracket() {
+  let allMatches = [];
+  try {
+    const res = await bsdFetch(`/events/?league=${WC2026_LEAGUE_ID}&date_from=${WC2026_START}&date_to=${WC2026_END}&limit=100`);
+    const payload = (res && res.status === 200) ? (res.data || res) : null;
+    allMatches = (payload && Array.isArray(payload.results)) ? payload.results : [];
+    if (payload && payload.next) {
+      try {
+        const res2 = await bsdFetch(`/events/?league=${WC2026_LEAGUE_ID}&date_from=${WC2026_START}&date_to=${WC2026_END}&limit=100&page=2`);
+        const p2 = (res2 && res2.status === 200) ? (res2.data || res2) : null;
+        if (p2 && Array.isArray(p2.results)) allMatches = allMatches.concat(p2.results);
+      } catch (_) {}
+    }
+  } catch (e) { console.warn('[WC2026/bracket]', e.message); }
+  const matches  = allMatches.map(_wcFormatMatch);
+  const knockout = matches.filter(m => m.phase === 'knockout');
+  const rounds   = {};
+  for (const m of knockout) {
+    const lbl = m.round_label || `Round ${m.round}`;
+    if (!rounds[lbl]) rounds[lbl] = [];
+    rounds[lbl].push(m);
+  }
+  return { has_knockout_data: knockout.length > 0, knockout_count: knockout.length, rounds, fetched_at: new Date().toISOString() };
+}
+
 // ─── BASE DE DONNÉES EN MÉMOIRE ─────────────────────────────────────────────
 let db = {
   matches: [],   // matchs fusionnés (odds + stats)
@@ -31970,6 +32174,57 @@ if (pathname.startsWith('/api/v1/social/match/') && req.method === 'GET') {
   } catch (e) {
     console.warn(`  [BSD/social] event=${eventId} erreur:`, e.message);
     return jsonResponse(res, 502, { error: 'bsd_social_failed', message: String(e.message || e) });
+  }
+}
+
+// ─── COUPE DU MONDE 2026 — routes ────────────────────────────────────────────
+
+// GET /api/v1/worldcup/overview — groupes + classements + matchs imminents
+if (pathname === '/api/v1/worldcup/overview' && req.method === 'GET') {
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  const cached = _wcCached('overview');
+  if (cached) return jsonResponse(res, 200, { ...cached, cached: true });
+  try {
+    const data = await fetchWC2026Overview();
+    _wcSetCache('overview', data);
+    return jsonResponse(res, 200, { ...data, cached: false });
+  } catch (e) {
+    console.error('[WC2026/overview]', e.message);
+    return jsonResponse(res, 502, { error: 'wc2026_overview_failed', message: String(e.message || e) });
+  }
+}
+
+// GET /api/v1/worldcup/schedule?phase=groups|knockout&round=N
+if (pathname === '/api/v1/worldcup/schedule' && req.method === 'GET') {
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  const _wcU = new URL(req.url, 'http://l');
+  const phase = _wcU.searchParams.get('phase') || null;
+  const round = _wcU.searchParams.has('round') ? Number(_wcU.searchParams.get('round')) : null;
+  const cacheKey = `schedule_${phase || 'all'}_${round != null ? round : 'all'}`;
+  const cached = _wcCached(cacheKey);
+  if (cached) return jsonResponse(res, 200, { ...cached, cached: true });
+  try {
+    const data = await fetchWC2026Schedule(phase, round);
+    _wcSetCache(cacheKey, data);
+    return jsonResponse(res, 200, { ...data, cached: false });
+  } catch (e) {
+    console.error('[WC2026/schedule]', e.message);
+    return jsonResponse(res, 502, { error: 'wc2026_schedule_failed', message: String(e.message || e) });
+  }
+}
+
+// GET /api/v1/worldcup/bracket
+if (pathname === '/api/v1/worldcup/bracket' && req.method === 'GET') {
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  const cached = _wcCached('bracket');
+  if (cached) return jsonResponse(res, 200, { ...cached, cached: true });
+  try {
+    const data = await fetchWC2026Bracket();
+    _wcSetCache('bracket', data);
+    return jsonResponse(res, 200, { ...data, cached: false });
+  } catch (e) {
+    console.error('[WC2026/bracket]', e.message);
+    return jsonResponse(res, 502, { error: 'wc2026_bracket_failed', message: String(e.message || e) });
   }
 }
 
