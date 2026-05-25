@@ -3159,6 +3159,8 @@
     --gauge-rail-opacity: 0.6;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── Placeholder images — prevent CLS (explicit dimensions) ── */
+  img[src*="placehold.co"] { width: 600px; height: 300px; max-width: 100%; aspect-ratio: 2/1; loading: lazy; }
   /* ── Skip link — WCAG 2.1 SC 2.4.1 ── */
   .skip-link {
     position: absolute; top: -100px; left: 16px; z-index: 9999;
@@ -31953,17 +31955,17 @@ function updateLiveDetailModal(m) {
   ];
   // v9.8.3: distingue "early game data en cours" vs "ligue mineure non couverte"
   const hasAnyData = stats.some(s => s.src && s.src.home != null && s.src.away != null);
-  const noDataBanner = document.getElementById('ldm-no-data-banner');
+  const noDataBanner = document.getElementById('ldm-no-data-banner-early') || document.getElementById('ldm-no-data-banner-limited');
   const matchMinute = parseInt(m.minute || 0);
   const isEarlyGame = matchMinute > 0 && matchMinute < 15;
   if (!hasAnyData) {
     const earlyHtml = `
-      <div id="ldm-no-data-banner" style="padding:14px;margin-bottom:14px;background:rgba(41,182,246,0.08);border:1px solid rgba(41,182,246,0.3);border-radius:8px;font-size:12px;color:#0277bd;line-height:1.55;">
+      <div id="ldm-no-data-banner-early" style="padding:14px;margin-bottom:14px;background:rgba(41,182,246,0.08);border:1px solid rgba(41,182,246,0.3);border-radius:8px;font-size:12px;color:#0277bd;line-height:1.55;">
         ⏳ <strong>Stats live en cours de récupération…</strong>
         <br/><span style="font-size:11px;color:var(--text3);">Match à ${matchMinute}' — les données détaillées (xG, attaques, tirs) arrivent progressivement. Rafraîchissement auto toutes les 30 s. Score live fiable dès maintenant.</span>
       </div>`;
     const limitedHtml = `
-      <div id="ldm-no-data-banner" style="padding:14px;margin-bottom:14px;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;font-size:12px;color:#b45309;line-height:1.55;">
+      <div id="ldm-no-data-banner-limited" style="padding:14px;margin-bottom:14px;background:rgba(255,167,38,0.08);border:1px solid rgba(255,167,38,0.25);border-radius:8px;font-size:12px;color:#b45309;line-height:1.55;">
         ⚠️ <strong>Statistiques live indisponibles</strong> pour <em>${m.league || 'cette compétition'}</em>.
         <br/><span style="font-size:11px;color:var(--text3);">Couverture data limitée pour cette compétition (data provider). Le score live et le résultat final restent fiables.</span>
       </div>`;
