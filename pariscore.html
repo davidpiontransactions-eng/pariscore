@@ -13917,54 +13917,23 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </symbol>
     </defs></svg>
 
-    <!-- Tableau value-bets -->
-    <div class="table-responsive-wrapper">
-      <table id="tennis-vb-table" aria-label="Tableau value bets tennis" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:1020px;">
-        <!-- bd 661w fix : colgroup widths MUST match sticky offsets: col1=40px(0), col2=140px(40), col3=200px(180=40+140) -->
-        <colgroup>
-          <col style="width:40px;">
-          <col style="width:140px;">
-          <col style="width:200px;">
-          <col style="width:170px;">
-          <col style="width:120px;">
-          <col style="width:100px;">
-          <col style="width:130px;">
-          <col style="width:110px;">
-          <col style="width:110px;">
-          <col style="width:110px;">
-          <col style="width:120px;">
-          <col style="width:110px;">
-          <col style="width:130px;">
-          <col style="width:110px;">
-          <col style="width:120px;">
-          <col style="width:100px;">
-          <col style="width:120px;">
-        </colgroup>
-        <thead>
-          <tr role="row" style="background:var(--bg3,#181c20);">
-            <th class="tvb-th tn-fav-th" scope="col" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
-            <th class="tvb-th tvb-dt-col" style="text-align:left;" title="Date · heure (Europe/Paris) · surface">Date<br>Heure<br>Surface</th>
-            <th class="tvb-th" style="text-align:left;">Match</th>
-            <th class="tvb-th" style="text-align:left;color:#00e676;width:170px;" title="Bets Prédictifs — KPI directif (BET FORT / VALUE / PASS) + 3 paris conseillés (PredScore = EV modèle + confiance calibration + accord Elo/BSD). Bascule en 3 bets LIVE selon le score quand le match est en cours."><span class="tgou-hwrap" style="justify-content:flex-start;">Bets Prédictifs<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisPredictiveGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Bets Prédictifs">i</button></span><br><span class="tvb-th-sub">conseillés</span></th>
-            <th class="tvb-th tvb-score-col" style="text-align:center;color:#38bdf8;width:120px;" title="Score live — Jeu (points) · Sets">Score</th>
-            <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Elo surface — favori en vert">Elo</th>
-            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité de victoire du match (modèle Elo/blend)"><svg class="i3d-th"><use href="#i3d-target"></use></svg>Proba Vic match</th>
-            <th class="tvb-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Sets — Haut : issue best-of-3 (J1 2-0 / 2-1 / J2 2-1 / 2-0, chip = issue la + probable). Bas : P(chaque joueur gagne ≥ 1 set) Markov Sackmann × split TA surface 52 sem."><svg class="i3d-th"><use href="#i3d-bars"></use></svg>Score Sets<br><span class="tvb-th-sub">Gagne au moins 1 set</span></th>
-            <th class="tvb-th" style="text-align:center;color:var(--amber,#ffa726);" title="Forme pondérée même surface — points par victoire selon rang adversaire battu (Top10 +3 · Top50 +2 · Top100 +1 · sinon +0.5 · défaite 0) sur 5 (L5) et 10 (L10) derniers matchs. PowerScore /100 = 0.5·Elo surface normalisé + 0.3·WinRate 52 sem + 0.2·facteur forme.">Forme (Pts) / PowerScore <button type="button" class="tvb-th-info" onclick="event.stopPropagation();openTennisFormPowerGuide()" title="Aide — définitions &amp; calculs Forme pondérée + PowerScore. Ouvre le Guide." aria-label="Aide colonne Forme / PowerScore — ouvrir le Guide">ⓘ</button></th>
-            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Joueur pronostiqué pour le plus d'aces + P(ses aces > adversaire). A% ajusté forme (5 derniers vs 52 sem.) × neutralisation retour adverse (RPW/Brk). Source : Tennis Abstract (par-match, surface)"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>King of Aces</th>
-            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 1 (profil Sprinter/Diesel, surface 52 sem.). Halo = EV+ ≥ 110 %"><svg class="i3d-th"><use href="#i3d-bolt"></use></svg>Gain Set 1</th>
-            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Probabilité que le Joueur 1 empoche le SET 2 (pondéré Réaction/Enchaînement + fatigue)"><svg class="i3d-th"><use href="#i3d-bolt2"></use></svg>Gain Set 2</th>
-            <th class="tvb-th tgou-th" style="text-align:center;color:var(--blue,#29b6f6);" title="Over/Under jeux par set (PMF DP serve/return + gate Combined Hold). Cliquer Sx pour le détail O7.5 / O8.5 / O9.5 / U12.5"><span class="tgou-hwrap">Jeux O/U<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisGamesGuide()" title="Comment lire cette colonne — définition + méthode de calcul" aria-label="Aide colonne Jeux O/U">i</button></span></th>
-            <th class="tvb-th" style="text-align:center;color:#a78bfa;" title="Mental — Réaction = set 2 gagné après set 1 perdu · Enchaîne = set 2 gagné après set 1 gagné"><svg class="i3d-th"><use href="#i3d-brain"></use></svg>Mental</th>
-            <th class="tvb-th" style="text-align:center;color:var(--green,#00e676);" title="Cote marché + value EV+ modèle. « Cotes indispo » si quota Odds API épuisé"><svg class="i3d-th"><use href="#i3d-trend"></use></svg>Value (EV+)</th>
-            <th class="tvb-th" style="text-align:center;color:var(--amber,#ffa726);" title="Indice de confiance = plus petit échantillon Elo surface des 2 joueurs · RkΔ en infobulle"><svg class="i3d-th"><use href="#i3d-star"></use></svg>Confiance</th>
-            <th class="tvb-th" style="text-align:center;color:#E2001A;" title="Analyse Deep Data IA — prêt Telegram"><svg class="i3d-th"><use href="#i3d-ai"></use></svg>Alerte IA</th>
-          </tr>
-        </thead>
-        <tbody id="tennis-vb-tbody">
-          <tr><td colspan="17" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
-        </tbody>
-      </table>
+    <!-- Tableau value-bets — Phase B ADR-001 : div role=table + CSS Grid -->
+    <div class="tn-vb-grid" id="tennis-vb-table" role="table" aria-label="Tableau value bets tennis">
+      <div class="tn-vb-thead" role="rowgroup">
+        <div class="tn-vb-header-row" role="row">
+          <span class="tn-vb-cell tn-cell-fav" role="columnheader" aria-label="Favoris">★</span>
+          <span class="tn-vb-cell tn-cell-match" role="columnheader" aria-sort="none">Match</span>
+          <span class="tn-vb-cell tn-cell-signal" role="columnheader" style="color:#00e676;"><span class="tgou-hwrap" style="justify-content:flex-start;">Bets Prédictifs<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisPredictiveGuide()" title="Comment lire cette colonne" aria-label="Aide Bets Prédictifs">i</button></span></span>
+          <span class="tn-vb-cell tn-cell-score" role="columnheader" style="color:#38bdf8;">Score</span>
+          <span class="tn-vb-cell tn-cell-elo" role="columnheader" style="color:var(--blue,#29b6f6);">Elo</span>
+          <span class="tn-vb-cell tn-cell-proba" role="columnheader" style="color:var(--green,#00e676);">Proba</span>
+          <span class="tn-vb-cell tn-cell-value" role="columnheader" style="color:var(--green,#00e676);">Value EV+</span>
+          <span class="tn-vb-cell tn-cell-expand" role="columnheader" aria-label="Détails">▸</span>
+        </div>
+      </div>
+      <div class="tn-vb-tbody" id="tennis-vb-tbody" role="rowgroup">
+        <div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Chargement…</span></div>
+      </div>
     </div>
   </section>
 
@@ -13991,41 +13960,24 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <button type="button" class="tn-src-filter-chip" data-src-filter="LIVESCORE" onclick="setTennisSourceFilter('LIVESCORE')" aria-pressed="false" title="LiveScore fallback (BSD/ESPN absents)">LIVESCORE</button>
       <button type="button" class="tn-src-filter-chip" data-src-filter="AISCORE" onclick="setTennisSourceFilter('AISCORE')" aria-pressed="false" title="AiScore — enrichissement serving (cache + on-demand throttled)">AISCORE</button>
     </div>
-    <div class="table-responsive-wrapper">
-      <table id="tennis-live-table" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:900px;">
-        <!-- bd 661w fix : colgroup verrouille TOUTES colonnes + table-layout:fixed pour stabilité -->
-        <colgroup>
-          <col style="width:40px;">
-          <col style="width:140px;">
-          <col style="width:100px;">
-          <col style="width:180px;">
-          <col style="width:180px;">
-          <col style="width:170px;">
-          <col style="width:80px;">
-          <col style="width:80px;">
-          <col style="width:80px;">
-          <col style="width:60px;">
-          <col style="width:100px;">
-        </colgroup>
-        <thead>
-          <tr style="background:var(--bg3,#181c20);">
-            <th class="tn-fav-th" style="padding:10px 4px;text-align:center;font-size:14px;color:var(--amber,#ffa726);" title="Favoris — clique l'etoile dans chaque ligne pour epingler">★</th>
-            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tournoi</th>
-            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Tour</th>
-            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 1</th>
-            <th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Joueur 2</th>
-            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#00e676;font-family:'DM Mono',monospace;" title="Bets prédictifs live — directive selon le score en cours (sets, serveur, jeux)">Bets Prédictifs</th>
-            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Sets</th>
-            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Jeux</th>
-            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Point</th>
-            <th style="padding:10px 6px;text-align:center;font-size:11px;color:#E2001A;font-family:'DM Mono',monospace;width:38px;" title="Break Point Pressure Index — pression live 0-100 par joueur (clutch+offense+serve+momentum × context)">BPPI</th>
-            <th style="padding:10px 12px;text-align:center;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;">Statut</th>
-          </tr>
-        </thead>
-        <tbody id="tennis-live-tbody">
-          <tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Chargement…</td></tr>
-        </tbody>
-      </table>
+    <!-- Tennis Live — Phase B ADR-001 : div role=table + CSS Grid -->
+    <div class="tn-live-grid" id="tennis-live-table" role="table" aria-label="Tableau tennis live">
+      <div class="tn-live-header-row" role="row">
+        <span class="tn-live-cell tn-cell-fav" role="columnheader" aria-label="Favoris">★</span>
+        <span class="tn-live-cell" role="columnheader">Tournoi</span>
+        <span class="tn-live-cell" role="columnheader">Tour</span>
+        <span class="tn-live-cell" role="columnheader">Joueur 1</span>
+        <span class="tn-live-cell" role="columnheader">Joueur 2</span>
+        <span class="tn-live-cell" role="columnheader" style="color:#00e676;">Bets Prédictifs</span>
+        <span class="tn-live-cell" role="columnheader" style="justify-content:center;">Sets</span>
+        <span class="tn-live-cell" role="columnheader" style="justify-content:center;">Jeux</span>
+        <span class="tn-live-cell" role="columnheader" style="justify-content:center;">Point</span>
+        <span class="tn-live-cell" role="columnheader" style="justify-content:center;color:#E2001A;" title="Break Point Pressure Index">BPPI</span>
+        <span class="tn-live-cell" role="columnheader" style="justify-content:center;">Statut</span>
+      </div>
+      <div id="tennis-live-tbody" role="rowgroup">
+        <div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Chargement…</span></div>
+      </div>
     </div>
   </section>
 
@@ -14713,6 +14665,90 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tvb-dr-chip { display:inline-flex; align-items:center; gap:2px; font-size:9px; font-family:var(--font-mono,'DM Mono',monospace); padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; white-space:nowrap; }
   #tennis-vb-table .tvb-dr-chip.up { background:rgba(26,140,69,0.15); color:var(--green,#1a8c45); }
   #tennis-vb-table .tvb-dr-chip.dn { background:rgba(204,26,26,0.12); color:var(--red,#cc1a1a); }
+  /* ══ Phase B ADR-001 — div role=table + CSS Grid ══════════════════════════ */
+  .tn-vb-grid { display:flex; flex-direction:column; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; background:var(--bg2,#111417); }
+  .tn-vb-thead { background:var(--bg3,#181c20); border-bottom:1px solid var(--border,rgba(255,255,255,0.07)); }
+  .tn-vb-header-row, .tn-vb-row {
+    display:grid;
+    grid-template-columns: 32px 220px 155px 145px 130px 95px 105px 32px;
+    min-width:914px; align-items:center;
+  }
+  .tn-vb-header-row { padding:2px 0; }
+  .tn-vb-row { border-bottom:1px solid var(--border,rgba(255,255,255,0.05)); transition:background 90ms; cursor:pointer; }
+  .tn-vb-row:hover { background:var(--bg3,#181c20); }
+  .tn-vb-row.is-live { background:rgba(0,230,118,0.04); }
+  /* Sticky cols — col1(★) at 0, col2(match) at 32px */
+  .tn-vb-header-row > span:nth-child(1), .tn-vb-row > span:nth-child(1) { position:sticky; left:0; z-index:var(--z-sticky,20); background:var(--bg3,#181c20); }
+  .tn-vb-row > span:nth-child(1) { background:var(--bg2,#111417); }
+  .tn-vb-row:hover > span:nth-child(1), .tn-vb-row:hover > span:nth-child(2) { background:var(--bg3,#181c20); }
+  .tn-vb-row.is-live > span:nth-child(1), .tn-vb-row.is-live > span:nth-child(2) { background:rgba(5,20,12,0.97); }
+  .tn-vb-header-row > span:nth-child(2), .tn-vb-row > span:nth-child(2) { position:sticky; left:32px; z-index:var(--z-sticky,20); background:var(--bg3,#181c20); }
+  .tn-vb-row > span:nth-child(2) { background:var(--bg2,#111417); }
+  /* Cell base */
+  .tn-vb-cell { padding:10px 10px; font-size:12px; color:var(--text2,#8d9399); font-family:'DM Mono',monospace; overflow:hidden; display:flex; align-items:center; }
+  .tn-vb-header-row .tn-vb-cell { font-size:11px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+  .tn-cell-fav { justify-content:center; padding:4px 2px; }
+  .tn-cell-match { flex-direction:column; align-items:flex-start; gap:3px; padding:8px 12px; overflow:visible; }
+  .tn-cell-signal, .tn-cell-score { align-items:flex-start; }
+  .tn-cell-elo, .tn-cell-proba, .tn-cell-value { justify-content:center; flex-direction:column; align-items:center; gap:3px; }
+  .tn-cell-expand { justify-content:center; padding:4px 2px; }
+  /* Match cell sub-elements */
+  .tn-match-meta { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .tn-tournament { font-size:10px; color:var(--text3,#5a6068); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+  .tn-match-players { display:flex; flex-direction:column; gap:3px; width:100%; }
+  .tn-player { display:flex; align-items:center; gap:4px; }
+  .tn-pname { font-weight:700; color:var(--text,#e8eaed); font-size:12px; font-family:'Instrument Sans',sans-serif; }
+  .tn-pname.tn-pfav { color:var(--green,#00e676); }
+  .tn-rank { font-size:10px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; }
+  /* Proba bar (compact) */
+  .tn-proba-num { font-size:13px; font-weight:800; color:var(--text,#e8eaed); font-family:'DM Mono',monospace; }
+  .tn-proba-bar-track { height:4px; background:var(--border,rgba(255,255,255,0.07)); border-radius:2px; width:72px; overflow:hidden; }
+  .tn-proba-bar-fill { height:100%; border-radius:2px; background:var(--green,#00e676); }
+  /* Value/edge */
+  .tn-odds-val { font-size:14px; font-weight:800; color:var(--text,#e8eaed); font-family:'DM Mono',monospace; }
+  .tn-edge-badge { font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; }
+  .tn-edge-pos { background:rgba(0,230,118,0.15); color:var(--green,#00e676); }
+  .tn-edge-neg { background:rgba(255,77,77,0.12); color:var(--red,#ff4d4d); }
+  /* Fav + expand buttons */
+  .tn-fav-btn { background:none; border:none; cursor:pointer; font-size:16px; color:var(--text3,#5a6068); padding:4px; min-width:32px; min-height:44px; transition:color 150ms,transform 100ms; line-height:1; }
+  .tn-fav-btn:hover { color:var(--amber,#ffa726); transform:scale(1.2); }
+  .tn-fav-btn.active { color:var(--amber,#ffa726); }
+  .tn-expand-btn { background:none; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:11px; color:var(--text3,#5a6068); padding:3px 5px; min-width:24px; min-height:44px; border-radius:4px; transition:color 150ms,transform 150ms; }
+  .tn-expand-btn:hover { color:var(--text,#e8eaed); border-color:rgba(255,255,255,0.25); }
+  .tn-expand-btn.open { color:var(--green,#00e676); transform:rotate(90deg); }
+  /* Drawer */
+  .tn-vb-drawer { border-top:1px solid rgba(56,189,248,0.15); background:var(--bg2,#111417); }
+  .tn-vb-drawer[hidden] { display:none; }
+  .tn-drawer-cell { padding:14px 16px; width:100%; box-sizing:border-box; }
+  .tn-drawer-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  @media (max-width:900px) { .tn-drawer-grid { grid-template-columns:repeat(2,1fr); } }
+  .tn-drawer-section h4 { font-size:10px; color:var(--text3,#5a6068); text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px; font-family:'DM Mono',monospace; }
+  /* Live grid — 11 columns */
+  .tn-live-grid { display:flex; flex-direction:column; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; background:var(--bg2,#111417); }
+  .tn-live-header-row, .tn-live-row {
+    display:grid;
+    grid-template-columns: 36px 160px 90px 180px 180px 170px 80px 80px 80px 56px 110px;
+    min-width:1222px; align-items:center;
+  }
+  .tn-live-header-row { background:var(--bg3,#181c20); border-bottom:1px solid var(--border,rgba(255,255,255,0.07)); }
+  .tn-live-row { border-bottom:1px solid var(--border,rgba(255,255,255,0.05)); cursor:pointer; transition:background 90ms; }
+  .tn-live-row:hover { background:var(--bg3,#181c20); }
+  .tn-live-cell { padding:9px 10px; font-size:12px; color:var(--text2,#8d9399); font-family:'DM Mono',monospace; overflow:hidden; display:flex; align-items:center; }
+  .tn-live-header-row .tn-live-cell { font-size:11px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+  /* Mobile card layout */
+  @media (max-width:768px) {
+    .tn-vb-thead { display:none; }
+    .tn-vb-row { display:grid !important; grid-template-columns:auto 1fr auto; grid-template-areas:"fav meta meta" "fav players prob" "sig sig val"; min-width:unset; background:var(--bg2,#111417); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+    .tn-cell-fav { grid-area:fav; min-width:44px; min-height:44px; align-self:stretch; }
+    .tn-cell-match { grid-area:players; min-width:0; }
+    .tn-cell-signal { grid-area:sig; }
+    .tn-cell-score { grid-area:meta; }
+    .tn-cell-elo { display:none; }
+    .tn-cell-proba { grid-area:prob; }
+    .tn-cell-value { grid-area:val; }
+    .tn-cell-expand { display:none; }
+    .tn-fav-btn { min-width:44px; min-height:44px; }
+  }
   #tennis-vb-table .tset-badge { display:inline-block; min-width:48px; padding:5px 10px; border-radius:11px; font-family:'DM Mono',monospace; font-size:12.5px; font-weight:800; box-shadow:0 2px 5px rgba(0,0,0,0.35); }
   #tennis-vb-table .tset-hot { color:#04210f; background:linear-gradient(135deg,#5cffae,#00b257); }
   #tennis-vb-table .tset-mid { color:#2a1c02; background:linear-gradient(135deg,#ffd27f,#e08a00); }
@@ -18840,6 +18876,73 @@ function _tnFavCell(matchId) {
   return `<td class="tn-fav-td" style="text-align:center;padding:6px 4px;width:36px;" onclick="event.stopPropagation();"><button type="button" class="${cls}" onclick="event.stopPropagation();toggleFavorite('${id}',this)" aria-label="${title}" title="${title}">★</button></td>`;
 }
 
+// Phase B helpers — button-only fav (no td wrapper) for div role=table cells
+function _tnFavBtn(matchId) {
+  if (!matchId) return '';
+  const id = String(matchId).replace(/'/g, "&#39;");
+  const active = (typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds && favoriteMatchIds.has)
+    ? favoriteMatchIds.has(String(matchId)) : false;
+  const cls = active ? 'tn-fav-btn active' : 'tn-fav-btn';
+  const title = active ? 'Favori — clic pour retirer' : 'Ajouter aux favoris';
+  return `<button type="button" class="${cls}" onclick="event.stopPropagation();toggleFavorite('${id}',this)" aria-label="${title}" title="${title}">★</button>`;
+}
+
+// Lazy drawer expand/collapse — renders detail content on first open
+function _tnExpandDrawer(matchId) {
+  const safeId = String(matchId || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const rowEl = document.querySelector(`.tn-vb-row[data-match-id="${safeId}"]`);
+  if (!rowEl) return;
+  const drawerId = 'tndr-' + matchId;
+  const drawerEl = document.getElementById(drawerId);
+  if (!drawerEl) return;
+  const btn = rowEl.querySelector('.tn-expand-btn');
+  const isOpen = !drawerEl.hidden;
+  if (isOpen) {
+    drawerEl.hidden = true;
+    rowEl.setAttribute('aria-expanded', 'false');
+    if (btn) btn.classList.remove('open');
+    return;
+  }
+  // Lazy render: only on first expand
+  const cell = drawerEl.querySelector('.tn-drawer-cell');
+  if (cell && !cell.dataset.rendered) {
+    const m = window._tnVbFiltered && window._tnVbFiltered[String(matchId)];
+    if (m) { cell.innerHTML = _tnRenderDrawerContent(m); cell.dataset.rendered = '1'; }
+  }
+  drawerEl.hidden = false;
+  rowEl.setAttribute('aria-expanded', 'true');
+  if (btn) btn.classList.add('open');
+}
+
+// Renders full detail content inside an open drawer
+function _tnRenderDrawerContent(m) {
+  const sm = m.set_model;
+  const elo = m.predictions?.elo;
+  const odds = m.odds;
+  const bestEv = m.best_ev_model;
+  const matchId = _escTennis(String(m.id || ''));
+  const aiBtn = matchId
+    ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
+    : '';
+  const p1Name = m.player1?.name || '—';
+  const p2Name = m.player2?.name || '—';
+  const eloP1 = elo?.p1_elo ?? null;
+  const eloP2 = elo?.p2_elo ?? null;
+  const p1Fav = (eloP1 != null && eloP2 != null && eloP1 > eloP2);
+  const p2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1);
+  return `<div class="tn-drawer-grid">
+<div class="tn-drawer-section"><h4>Score Sets</h4>${_tvbSetsMergedCell(m.predictions?.set_probs, m.predictions?.at_least_one_set, p1Name, p2Name, p1Fav, p2Fav)}</div>
+<div class="tn-drawer-section"><h4>Forme / Power</h4>${_tvbPowerFormCell(m.player1, m.player2)}</div>
+<div class="tn-drawer-section"><h4>King of Aces</h4>${_tvbKingOfAcesCell(m.predictions?.most_aces)}</div>
+<div class="tn-drawer-section"><h4>Gain Set 1</h4>${_tvbSet1Cell(sm, p1Name, p2Name)}${_tvbFirstSet(m.first_set)}</div>
+<div class="tn-drawer-section"><h4>Gain Set 2</h4>${_tvbSet2Cell(sm, p1Name, p2Name)}</div>
+<div class="tn-drawer-section"><h4>Jeux O/U</h4>${_tvbGamesOUStack(m.over_under_set_calculations, m.id)}${_tvbTotConv(m.totals_convergence)}</div>
+<div class="tn-drawer-section"><h4>Mental</h4>${_tvbMentalCell(sm)}</div>
+<div class="tn-drawer-section"><h4>Marché + Conf.</h4>${_tvbMarketCell(odds, bestEv)}${_tvbConfEdge(m.conf_edge)}${_tvbConfCell(elo, m.log_diff)}</div>
+<div class="tn-drawer-section"><h4>Alerte IA</h4>${aiBtn}</div>
+</div>`;
+}
+
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
@@ -18850,7 +18953,7 @@ function renderTennisLive(matches) {
   if (!list.length) {
     const f = window._tennisSourceFilter || 'ALL';
     const filtMsg = f !== 'ALL' ? ` (filtre source: ${f})` : '';
-    tbody.innerHTML = `<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement' : 'Aucun match disponible'}${filtMsg}.</td></tr>`;
+    tbody.innerHTML = `<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement' : 'Aucun match disponible'}${filtMsg}.</span></div>`;
     return;
   }
   tbody.innerHTML = list.map(m => {
@@ -18896,19 +18999,19 @@ function renderTennisLive(matches) {
       ? 'Voir détail LiveScore (sets et jeux par set)'
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
     const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
-    return `<tr class="tennis-row-clickable" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
-      ${_tnFavCell(m.id)}
-      <td>${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</td>
-      <td><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</td>
-      <td class="${p1Cls}">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}</td>
-      <td class="${p2Cls}">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}</td>
-      <td style="text-align:left;vertical-align:middle;">${tnLiveBetsFromScore(m)}</td>
-      <td style="text-align:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></td>
-      <td style="text-align:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</td>
-      <td style="text-align:center;"><span class="tennis-point">${_escTennis(point)}</span></td>
-      <td style="text-align:center;vertical-align:middle;padding:6px 4px;">${_tnBppiCell(m)}</td>
-      <td style="text-align:center;" class="${_tennisStatusClass(m)}">${_escTennis(m.status)}</td>
-    </tr>`;
+    return `<div class="tn-live-row tennis-row-clickable" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
+<span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
+<span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
+<span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}</span>
+<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}</span>
+<span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
+<span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
+<span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
+<span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-point">${_escTennis(point)}</span></span>
+<span class="tn-live-cell" role="cell" style="justify-content:center;padding:6px 4px;">${_tnBppiCell(m)}</span>
+<span class="tn-live-cell ${_tennisStatusClass(m)}" role="cell" style="justify-content:center;">${_escTennis(m.status)}</span>
+</div>`;
   }).join('');
 }
 
@@ -18947,7 +19050,7 @@ async function tickTennisLive() {
     if (statusEl) statusEl.textContent = 'Erreur réseau';
     const tbody = document.getElementById('tennis-live-tbody');
     if (tbody && !window._tennisLastFetch.length) {
-      tbody.innerHTML = '<tr><td colspan="11" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</td></tr>';
+      tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement. Réessaie dans 30 s.</span></div>';
     }
   }
 }
@@ -20480,7 +20583,7 @@ function renderTennisValueBets(rawMatches) {
   const matches = buildUnifiedTennis(rawMatches);
   window._tnLiveSig = _tnLiveIdSig();
   if (!Array.isArray(matches) || matches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="17" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</td></tr>';
+    tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Aucun match disponible.</span></div>';
     return;
   }
 
@@ -20564,7 +20667,7 @@ function renderTennisValueBets(rawMatches) {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="17" style="padding:32px;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</td></tr>';
+    tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</span></div>';
     return;
   }
 
@@ -20692,30 +20795,36 @@ function renderTennisValueBets(rawMatches) {
       : '';
     const _tnLiveId = m._live ? _escTennis(String(m._live.id || '')) : '';/*TN_UNIFY_ROW*/
     const _tnRowCls = m._isLive ? ' is-live' : '';
-    return `<tr class="tennis-vb-row${_tnRowCls}" data-tn-row="${matchId}" ${onclick}>
-      ${_tnFavCell(m.id)}
-      <td class="tvb-dt-col"><div class="tvb-dtc-stack"><div class="tvb-dtc-top">${ctxDate}</div><div class="tvb-dtc-mid">${_tvbTourBadge(m.tour)}</div><div class="tvb-dtc-bot">${_tvbSurfaceBadge(m.surface)}</div>${_tnActuallyLive(m) ? '<div class="tvb-dtc-live"><span class="tn-live-tag"><i></i>LIVE</span></div>' : ''}</div></td>
-      <td>
-        ${_tvbTrap(m.trap_bet)}
-        <div><span class="tvb-pname${p1Fav}">${p1Flag}${p1Name}</span>${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}${_tvbPlayerAlerts(sm, 'p1')}</div>
-        <div style="margin-top:3px;"><span class="tvb-pname${p2Fav}">${p2Flag}${p2Name}</span>${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}${_tvbPlayerAlerts(sm, 'p2')}</div>
-        ${tournLine}
-      </td>
-      <td class="tvb-pred-col"${m._isLive && _tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''} style="text-align:left;vertical-align:middle;">${_tvbPredictiveCell(m)}</td>
-      <td class="tvb-score-col"${m._isLive && _tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''} style="text-align:center;">${_tvbScoreCell(m)}</td>
-      <td style="text-align:center;">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}</td>
-      <td style="text-align:center;">${_tvbConfBadge(m.confidence_badge)}${probHtml}${_tvbMlDiv(m.ml_market_div)}</td>
-      <td style="text-align:center;">${_tvbSetsMergedCell(m.predictions?.set_probs, m.predictions?.at_least_one_set, m.player1?.name || p1Name, m.player2?.name || p2Name, !!p1Fav, !!p2Fav)}</td>
-      <td style="text-align:center;">${_tvbPowerFormCell(m.player1, m.player2)}</td>
-      <td style="text-align:center;">${_tvbKingOfAcesCell(m.predictions?.most_aces)}</td>
-      <td style="text-align:center;">${_tvbSet1Cell(sm, m.player1?.name, m.player2?.name)}${_tvbFirstSet(m.first_set)}</td>
-      <td style="text-align:center;">${_tvbSet2Cell(sm, m.player1?.name, m.player2?.name)}</td>
-      <td style="text-align:center;">${_tvbGamesOUStack(m.over_under_set_calculations, m.id)}${_tvbTotConv(m.totals_convergence)}</td>
-      <td style="text-align:center;">${_tvbMentalCell(sm)}</td>
-      <td style="text-align:center;">${_tvbMarketCell(odds, bestEv)}${_tvbConfEdge(m.conf_edge)}</td>
-      <td style="text-align:center;">${_tvbConfCell(elo, m.log_diff)}</td>
-      <td style="text-align:center;">${aiBtn}</td>
-    </tr>`;
+    // Phase B — store match for lazy drawer rendering
+    if (!window._tnVbFiltered) window._tnVbFiltered = {};
+    window._tnVbFiltered[String(m.id || '')] = m;
+    // Phase B — new variables for 8-cell display
+    const sideOdds = bestEv ? (bestEv.side === 'p1' ? odds?.p1 : odds?.p2) : null;
+    const probaNew = probP1 != null
+      ? `<div class="tn-proba-num">${probP1}%</div><div class="tn-proba-bar-track"><div class="tn-proba-bar-fill" style="width:${probP1}%"></div></div>`
+      : '<span style="color:var(--text3,#5a6068);">—</span>';
+    const valueHtml = bestEv
+      ? `<div class="tn-odds-val">${sideOdds ? safeFixed(sideOdds.odds, 2) : '—'}</div><div class="tn-edge-badge ${bestEv.ev > 0 ? 'tn-edge-pos' : 'tn-edge-neg'}">${bestEv.ev > 0 ? '▲' : '▼'} ${_tvbFmtEv(bestEv.ev)}</div>`
+      : '<span style="color:var(--text3,#5a6068);">—</span>';
+    const tournStr = (() => { if (!m.tournament) return ''; const t = typeof m.tournament === 'object' ? (m.tournament.name || m.tournament.short_name || '') : String(m.tournament); return _escTennis(t) + (m.round ? ' · ' + _escTennis(m.round) : ''); })();
+    const surfBadgeV3 = _tvbSurfaceBadge(m.surface);
+    const liveTagV3 = _tnActuallyLive(m) ? '<span class="tn-live-tag"><i></i>LIVE</span>' : '';
+    const r1 = m.player1?.rank ? `<span class="tn-rank">#${_escTennis(String(m.player1.rank))}</span>` : '';
+    const r2 = m.player2?.rank ? `<span class="tn-rank">#${_escTennis(String(m.player2.rank))}</span>` : '';
+    const drawerId = 'tndr-' + matchId;
+    const ariaLbl = _escTennis((m.player1?.name || '') + ' vs ' + (m.player2?.name || ''));
+    const tnp1Fav = (eloP1 != null && eloP2 != null && eloP1 > eloP2) ? ' tn-pfav' : '';
+    const tnp2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? ' tn-pfav' : '';
+    return `<div class="tn-vb-row${_tnRowCls}" role="row" data-match-id="${matchId}" data-status="${m._isLive ? 'live' : 'pre'}" aria-expanded="false" ${onclick} style="cursor:pointer;">
+<span class="tn-vb-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
+<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}</div></div></span>
+<span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
+<span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
+<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}</span>
+<span class="tn-vb-cell tn-cell-proba" role="cell">${_tvbConfBadge(m.confidence_badge)}${probaNew}${_tvbMlDiv(m.ml_market_div)}</span>
+<span class="tn-vb-cell tn-cell-value" role="cell">${valueHtml}</span>
+<span class="tn-vb-cell tn-cell-expand" role="cell"><button class="tn-expand-btn" aria-label="Détails ${ariaLbl}" aria-expanded="false" aria-controls="${drawerId}" onclick="event.stopPropagation();_tnExpandDrawer('${matchId}')">▸</button></span>
+</div><div class="tn-vb-drawer" id="${drawerId}" role="row" hidden aria-label="Détails ${ariaLbl}"><div class="tn-drawer-cell"></div></div>`;
   }).join('');
 }
 
@@ -20811,7 +20920,7 @@ async function tickTennisValueBets() {
     if (r.status === 401 || r.status === 403) {
       if (statusEl) statusEl.textContent = 'Accès réservé';
       const tbody = document.getElementById('tennis-vb-tbody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="20" style="padding:40px;text-align:center;color:var(--text2,#8d9399);">🔒 Module Tennis réservé <b>Pro Tennis / Duo</b>.<br><span style="font-size:13px;color:var(--text3,#5a6068);">Connecte-toi pour accéder aux value bets tennis.</span></td></tr>';
+      if (tbody) tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:40px;display:block;text-align:center;color:var(--text2,#8d9399);">🔒 Module Tennis réservé <b>Pro Tennis / Duo</b>.<br><span style="font-size:13px;color:var(--text3,#5a6068);">Connecte-toi pour accéder aux value bets tennis.</span></span></div>';
       return;
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -20822,7 +20931,7 @@ async function tickTennisValueBets() {
       window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
       const tb = document.getElementById('tennis-vb-tbody');
       if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tb.innerHTML = '<tr><td colspan="20" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</td></tr>';
+        tb.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</span></div>';
       }
       if (window._tennisVbBuildRetries <= 30) {
         if (statusEl) statusEl.textContent = `⏳ Préparation… (${window._tennisVbBuildRetries})`;
@@ -20848,14 +20957,14 @@ async function tickTennisValueBets() {
       if (statusEl) statusEl.textContent = `Reconnexion… (${window._tennisVbBuildRetries})`;
       const tb = document.getElementById('tennis-vb-tbody');
       if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tb.innerHTML = '<tr><td colspan="20" style="padding:32px;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</td></tr>';
+        tb.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</span></div>';
       }
       setTimeout(tickTennisValueBets, 2500);
     } else {
       if (statusEl) statusEl.textContent = 'Erreur réseau';
       const tbody = document.getElementById('tennis-vb-tbody');
       if (tbody && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tbody.innerHTML = '<tr><td colspan="20" style="padding:32px;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement (build serveur indisponible).</td></tr>';
+        tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement (build serveur indisponible).</span></div>';
       }
     }
   }
