@@ -61,3 +61,8 @@ build/
 
 # Sidecar Transfermarkt (felipeall, cloné localement — non versionné)
 transfermarkt-api/
+
+# bd h6a — Tennis Abstract scraped data (legal CC BY-NC-SA — never commit)
+.context/scraped/tennis-abstract/
+tennis_abstract_*.html
+tennis_abstract_*.json
