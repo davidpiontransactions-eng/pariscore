@@ -1,0 +1,45 @@
+# PariScore — surcharges production
+# Usage : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  pariscore:
+    build:
+      target: production
+    volumes:
+      - pariscore-data:/app/data   # uniquement le volume SQLite, pas de bind mount
+    environment:
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:3000:3000"     # bind localhost only — Nginx reverse proxy devant
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  sofa:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  pariscore-data:
+    driver: local

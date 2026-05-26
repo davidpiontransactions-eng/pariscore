@@ -1,0 +1,57 @@
+# PariScore — Docker Compose (développement local)
+# Lancement : docker compose up
+# Prod      : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # ── App principale Node.js ─────────────────────────────────────────────────
+  pariscore:
+    build:
+      context: .
+      target: dev
+    container_name: pariscore-app
+    ports:
+      - "3000:3000"
+      - "127.0.0.1:9229:9229"   # Node.js debugger
+    volumes:
+      - .:/app                   # bind mount — hot reload
+      - /app/node_modules        # préserve node_modules du conteneur
+      - pariscore-data:/app/data # SQLite persistant
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      DATABASE_PATH: /app/data/pariscore.db
+      SOFA_SERVICE_BASE: http://sofa:8765
+      TRANSFERMARKT_API_URL: http://transfermarkt-api:8000
+    depends_on:
+      sofa:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Sidecar Python — Sofascore microservice ────────────────────────────────
+  sofa:
+    build:
+      context: .
+      dockerfile: Dockerfile.sofa
+    container_name: pariscore-sofa
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      SOFA_PORT: "8765"
+      SOFA_BIND: "0.0.0.0"
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8765/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  pariscore-data:
+    driver: local
+
+networks:
+  default:
+    name: pariscore-net

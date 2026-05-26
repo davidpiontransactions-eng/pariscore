@@ -1,0 +1,75 @@
+node_modules
+.git
+.env
+.env.*
+.env.local
+*.log
+server*.log
+.jwt_secret
+
+# SQLite (volume géré séparément)
+*.db
+*.db-shm
+*.db-wal
+database.json
+*_cache.json
+ai_cache.json
+history.json
+
+# Dev tools
+.vscode/
+.idea/
+.claude/
+.beads/
+.dmux/
+.agents/
+.planning/
+.worktrees/
+.context/
+.mcp.json
+.gitleaks.toml
+
+# Test / audit files
+.context/
+audit*/
+exports/
+marketing/
+budget/
+
+# Données temporaires / scripts one-shot
+tools/
+data/
+workers/
+scripts/*.py
+scripts/*.js
+scripts/requirements.txt
+
+# Transfermarkt sidecar (a son propre compose)
+transfermarkt-api/
+docker-compose.transfermarkt.yml
+
+# Docs & assets volumineux
+*.pdf
+*.docx
+*.exe
+*.zip
+CHANGELOG.md
+ARCHIVE_PROJECT.md
+RAPPORT_DESIGN_*.md
+CLASSEMENT_*.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Open-design & outils externes
+open-design/
+pty-toolkit/
+tmux-3.6a/
+shadow/
