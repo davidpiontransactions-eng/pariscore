@@ -15030,6 +15030,10 @@ function _paintBracket(el,data){
   .tn-fav-btn { background:none; border:none; cursor:pointer; font-size:16px; color:var(--text3,#5a6068); padding:4px; min-width:32px; min-height:44px; transition:color 150ms,transform 100ms; line-height:1; }
   .tn-fav-btn:hover { color:var(--amber,#ffa726); transform:scale(1.2); }
   .tn-fav-btn.active { color:var(--amber,#ffa726); }
+  /* Favoris épinglés — bandeau section + flash d'entrée */
+  .tn-fav-pin-hdr { display:block; padding:5px 12px; background:rgba(255,180,0,0.07); border-bottom:1.5px solid rgba(255,180,0,0.28); border-top:1px solid rgba(255,255,255,0.05); font-family:'DM Mono',monospace; font-size:11px; font-weight:800; color:var(--amber,#ffa726); letter-spacing:0.05em; }
+  @keyframes tn-pin-flash { 0%{background:rgba(255,180,0,0.18)} 100%{background:rgba(255,180,0,0.04)} }
+  .tn-pinned-fav { background:rgba(255,180,0,0.04) !important; animation:tn-pin-flash 0.55s ease-out; }
   .tn-expand-btn { background:none; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:11px; color:var(--text3,#5a6068); padding:3px 5px; min-width:24px; min-height:44px; border-radius:4px; transition:color 150ms,transform 150ms; }
   .tn-expand-btn:hover { color:var(--text,#e8eaed); border-color:rgba(255,255,255,0.25); }
   .tn-expand-btn.open { color:var(--green,#00e676); transform:rotate(90deg); }
@@ -19319,7 +19323,15 @@ function renderTennisLive(matches) {
     tbody.innerHTML = `<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">${onlyLive ? 'Aucun match en direct actuellement' : 'Aucun match disponible'}${filtMsg}.</span></div>`;
     return;
   }
-  tbody.innerHTML = list.map(m => {
+  // Favoris épinglés en tête (pin-to-top)
+  let _tnLiveFavCount = 0;
+  if (typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.size) {
+    const _f = [], _r = [];
+    for (const m of list) { (favoriteMatchIds.has(String(m.id)) ? _f : _r).push(m); }
+    _tnLiveFavCount = _f.length;
+    if (_tnLiveFavCount) list = [..._f, ..._r];
+  }
+  tbody.innerHTML = (_tnLiveFavCount ? `<div class="tn-fav-pin-hdr">★ MES FAVORIS (${_tnLiveFavCount})</div>` : '') + list.map(m => {
     const sets = Array.isArray(m.sets) ? m.sets : [];
     const lastSet = sets[m.current_set_index] || sets[sets.length - 1] || { p1: 0, p2: 0 };
     const setsScore = `${m.player1_sets ?? 0}-${m.player2_sets ?? 0}`;
@@ -19362,7 +19374,7 @@ function renderTennisLive(matches) {
       ? 'Voir détail LiveScore (sets et jeux par set)'
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
     const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
-    return `<div class="tn-live-row tennis-row-clickable" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
+    return `<div class="tn-live-row tennis-row-clickable${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
@@ -21096,10 +21108,19 @@ function renderTennisValueBets(rawMatches) {
     }
   });
 
+  // Favoris épinglés en tête (pin-to-top)
+  let _tvbFavCount = 0;
+  if (typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.size) {
+    const _f = [], _r = [];
+    for (const m of filtered) { (favoriteMatchIds.has(String(m.id)) ? _f : _r).push(m); }
+    _tvbFavCount = _f.length;
+    if (_tvbFavCount) filtered = [..._f, ..._r];
+  }
+
   // Hook : enrich rows with TA Elo tooltips + surface badges après render (UC-1+UC-2)
   setTimeout(() => { try { enrichTennisVbWithTA(); } catch (_) {} }, 50);
 
-  tbody.innerHTML = filtered.slice(0, 200).map(m => {
+  tbody.innerHTML = (_tvbFavCount ? `<div class="tn-fav-pin-hdr">★ MES FAVORIS (${_tvbFavCount})</div>` : '') + filtered.slice(0, 200).map(m => {
     const elo = m.predictions?.elo;
     const blended = m.predictions?.blended;
     const odds = m.odds;
@@ -21158,7 +21179,7 @@ function renderTennisValueBets(rawMatches) {
       ? `<div class="tvb-ctx" style="font-size:10px;color:var(--text3,#5a6068);margin-top:3px;">${_escTennis(m.tournament)}${m.round ? ' · ' + _escTennis(m.round) : ''}</div>`
       : '';
     const _tnLiveId = m._live ? _escTennis(String(m._live.id || '')) : '';/*TN_UNIFY_ROW*/
-    const _tnRowCls = m._isLive ? ' is-live' : '';
+    const _tnRowCls = (m._isLive ? ' is-live' : '') + ((typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : '');
     // Phase B — store match for lazy drawer rendering
     if (!window._tnVbFiltered) window._tnVbFiltered = {};
     window._tnVbFiltered[String(m.id || '')] = m;
@@ -27672,8 +27693,8 @@ function renderMatches(matches) {
     if (favCount > 0 && idx === 0) {
       const favColCount = tbody.closest('table')?.querySelectorAll('thead tr:first-child th')?.length || 12;
       const favHdr = document.createElement('tr');
-      favHdr.innerHTML = `<td colspan="${favColCount}" style="background:#FFF7E6;padding:6px 12px;border-bottom:2px solid #E2001A;border-top:1px solid #EAEAEA;">
-        <span style="display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;font-weight:800;color:#1A1A1A;letter-spacing:0.05em;">
+      favHdr.innerHTML = `<td colspan="${favColCount}" style="background:rgba(255,180,0,0.07);padding:6px 12px;border-bottom:1.5px solid rgba(255,180,0,0.28);border-top:1px solid rgba(255,255,255,0.05);">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;font-weight:800;color:var(--amber,#ffa726);letter-spacing:0.05em;">
           <span style="color:#ffb400;">★</span> MES FAVORIS (${favCount})
         </span>
       </td>`;
@@ -29177,15 +29198,27 @@ function buildResumeTab(d) {
   const hRank = d.homeStats?.rank ? `#${d.homeStats.rank}` : '—';
   const aRank = d.awayStats?.rank ? `#${d.awayStats.rank}` : '—';
 
-  // bd qm6a Plan D — Sofascore venue + referee enrichment (alt 82th BSD Phase 4).
+  // bd qm6a Plan D + BSD v2 — Venue (Sofascore) + Referee disciplinary profile (BSD v2 priority)
   const vr = d.sofascore_venue_referee || null;
-  const venueRefereeHtml = vr && (vr.venue || vr.referee) ? `
+  const bsdRef = d.bsd_referee_profile || null;
+  // BSD v2 preferred — live swap + consolidated career stats. Sofascore as fallback.
+  const _refData = bsdRef?.name ? bsdRef : (vr?.referee || null);
+  const _refSrc  = bsdRef?.name ? 'BSD v2' : 'SOFASCORE';
+  const _refSev  = (() => {
+    const y = _refData?.yc_per_game != null ? +_refData.yc_per_game : null;
+    if (y == null) return null;
+    if (y >= 6.0) return { label: 'Très sévère', c: '#ef4444', bg: 'rgba(239,68,68,0.13)',  i: '🔴' };
+    if (y >= 4.5) return { label: 'Sévère',      c: '#f97316', bg: 'rgba(249,115,22,0.13)', i: '⚠️' };
+    if (y >= 3.0) return { label: 'Modéré',      c: '#eab308', bg: 'rgba(234,179,8,0.13)',  i: '🟡' };
+    return              { label: 'Indulgent',     c: '#22c55e', bg: 'rgba(34,197,94,0.13)',  i: '🟢' };
+  })();
+  const venueRefereeHtml = (vr && (vr.venue || vr.referee)) || _refData ? `
     <div class="ins-section" style="border:1px solid rgba(59,130,246,0.20);background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(59,130,246,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <span style="font-size:9px;font-family:var(--font-mono);color:#1d4ed8;background:rgba(59,130,246,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">🏟️ STADE & ARBITRE · SOFASCORE</span>
+        <span style="font-size:9px;font-family:var(--font-mono);color:#1d4ed8;background:rgba(59,130,246,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">🏟️ STADE & ARBITRE · ${_refData ? _refSrc : 'SOFASCORE'}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        ${vr.venue ? `
+        ${vr?.venue ? `
           <div>
             <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-bottom:6px;">Stade</div>
             <div style="font-size:14px;font-weight:700;color:var(--text);">${vr.venue.name || '—'}</div>
@@ -29195,19 +29228,24 @@ function buildResumeTab(d) {
             </div>
             ${vr.venue.capacity ? `<div style="font-size:11px;color:var(--text2);margin-top:4px;font-family:var(--font-mono);">Capacité: <strong style="color:var(--text);">${vr.venue.capacity.toLocaleString('fr-FR')}</strong></div>` : ''}
           </div>` : '<div></div>'}
-        ${vr.referee ? `
+        ${_refData ? `
           <div>
-            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-bottom:6px;">Arbitre</div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);">${vr.referee.name || '—'}</div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-mono);margin-bottom:6px;">⚖️ Arbitre</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${_refData.name || '—'}</div>
             <div style="font-size:11px;color:var(--text2);margin-top:3px;font-family:var(--font-mono);">
-              ${vr.referee.country || '—'}
-              ${vr.referee.country_code ? ` <img src="https://flagcdn.com/w20/${vr.referee.country_code.toLowerCase()}.png" alt="" style="width:14px;height:auto;vertical-align:middle;margin-left:3px;">` : ''}
+              ${_refData.country || ''}
+              ${_refData.country_code ? ` <img src="https://flagcdn.com/w20/${_refData.country_code.toLowerCase()}.png" alt="" style="width:14px;height:auto;vertical-align:middle;margin-left:3px;">` : ''}
             </div>
-            ${vr.referee.games ? `
-              <div style="display:flex;gap:8px;margin-top:6px;font-family:var(--font-mono);font-size:10px;color:var(--text2);">
-                <span title="Matchs arbitrés">⚖️ ${vr.referee.games}</span>
-                <span title="Cartons jaunes / match" style="color:#facc15;">🟨 ${vr.referee.yc_per_game ?? '—'}/m</span>
-                <span title="Cartons rouges / match" style="color:#ef4444;">🟥 ${vr.referee.rc_per_game ?? '—'}/m</span>
+            ${_refData.games != null ? `
+              <div style="display:flex;gap:6px;margin-top:6px;font-family:var(--font-mono);font-size:10px;color:var(--text2);flex-wrap:wrap;">
+                <span title="Matchs arbitrés">⚖️ ${_refData.games}</span>
+                <span title="Cartons jaunes / match" style="color:#facc15;">🟨 ${_refData.yc_per_game ?? '—'}/m</span>
+                <span title="Cartons rouges / match" style="color:#ef4444;">🟥 ${_refData.rc_per_game ?? '—'}/m</span>
+              </div>` : ''}
+            ${_refSev ? `
+              <div style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:3px 8px;border-radius:6px;background:${_refSev.bg};border:1px solid ${_refSev.c}50;">
+                <span style="font-size:10px;">${_refSev.i}</span>
+                <span style="font-size:10px;font-family:var(--font-mono);font-weight:700;color:${_refSev.c};letter-spacing:.03em;">${_refSev.label}</span>
               </div>` : ''}
           </div>` : '<div></div>'}
       </div>
