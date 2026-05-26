@@ -18213,13 +18213,64 @@ function _normalizeBSDTennisMatch(m) {
   };
 }
 
+// ── BSD Tennis detailed stats enrichment (new fields: first_won, bp_saved, ret_won, total_pts)
+const _bsdTennisDetailCache = new Map(); // bsd_match_id → {ts, data}
+const BSD_TENNIS_DETAIL_TTL_MS = 60_000; // 60s — aligned with live poll cadence
+
+async function _fetchBSDTennisMatchDetail(bsdMatchId) {
+  const cid = String(bsdMatchId);
+  const cached = _bsdTennisDetailCache.get(cid);
+  if (cached && Date.now() - cached.ts < BSD_TENNIS_DETAIL_TTL_MS) return cached.data;
+  const res = await bsdTennisFetch(`/api/v2/matches/${cid}/`, 0);
+  if (res && res.status === 200 && res.data) {
+    _bsdTennisDetailCache.set(cid, { ts: Date.now(), data: res.data });
+    return res.data;
+  }
+  return null;
+}
+
+function _needsDetailEnrich(stats) {
+  return stats && (
+    stats.p1_first_won === null || stats.p1_bp_saved === null ||
+    stats.p1_ret_won  === null || stats.p1_total_pts === null
+  );
+}
+
+function _mergeDetailStats(match, detail) {
+  if (!match._bsd_stats || !detail) return match;
+  const s = match._bsd_stats;
+  s.p1_first_won = s.p1_first_won ?? detail.p1_first_serve_won_pct ?? detail.p1_first_serve_points_won_pct ?? null;
+  s.p2_first_won = s.p2_first_won ?? detail.p2_first_serve_won_pct ?? detail.p2_first_serve_points_won_pct ?? null;
+  s.p1_bp_saved  = s.p1_bp_saved  ?? detail.p1_break_points_saved  ?? null;
+  s.p2_bp_saved  = s.p2_bp_saved  ?? detail.p2_break_points_saved  ?? null;
+  s.p1_ret_won   = s.p1_ret_won   ?? detail.p1_return_points_won_pct ?? null;
+  s.p2_ret_won   = s.p2_ret_won   ?? detail.p2_return_points_won_pct ?? null;
+  s.p1_total_pts = s.p1_total_pts ?? detail.p1_total_points_won_pct  ?? null;
+  s.p2_total_pts = s.p2_total_pts ?? detail.p2_total_points_won_pct  ?? null;
+  return match;
+}
+
 async function fetchBSDTennisLive() {
   const res = await bsdTennisFetch('/api/v2/matches/live/');
   if (!res || res.status !== 200) return [];
   const arr = Array.isArray(res.data)
     ? res.data
     : (res.data && Array.isArray(res.data.results) ? res.data.results : []);
-  return arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+  const normalized = arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+  // Enrich live matches with extended stats from BSD detailed endpoint (parallel, non-blocking)
+  const results = await Promise.allSettled(
+    normalized.map(async (m) => {
+      if (!m.is_live || !m._bsd_match_id || !_needsDetailEnrich(m._bsd_stats)) return m;
+      try {
+        const detail = await Promise.race([
+          _fetchBSDTennisMatchDetail(m._bsd_match_id),
+          new Promise(r => setTimeout(() => r(null), 3000)),
+        ]);
+        return _mergeDetailStats(m, detail);
+      } catch (_) { return m; }
+    })
+  );
+  return results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
 }
 
 function _tennisPairKey(m) {
