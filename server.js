@@ -28896,7 +28896,7 @@ function _canonTennisName(name, tour) {
 const _TT_OOP_URLS = {
   'roland garros': 'https://fr.tennistemple.com/competition/roland-garros-2026/77149/orderofplay',
 };
-const _TT_OOP_TTL = 45 * 60 * 1000;
+const _TT_OOP_TTL = 24 * 60 * 60 * 1000; // 24h — refreshed by daily cron at 8h Paris
 const _ttOopCache = new Map(); // url → { ts, map: Map<normalizedKey, courtName> }
 
 function _parseTTOopHtml(html) {
@@ -28978,6 +28978,20 @@ function _ttLookupCourt(map, ...playerNames) {
     if (map.has(norm)) return map.get(norm);
   }
   return null;
+}
+
+async function _runDailyTTOop() {
+  const keys = Object.keys(_TT_OOP_URLS);
+  let ok = 0;
+  for (const tournName of keys) {
+    try {
+      const map = await _fetchTTOopForTournament(tournName);
+      if (map && map.size) ok++;
+    } catch (e) {
+      console.warn(`  [TT-OOP] prefetch error "${tournName}": ${e.message}`);
+    }
+  }
+  console.log(`  [TT-OOP] prefetch — ${ok}/${keys.length} tournoi(s) mis en cache (24h)`);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -37995,6 +38009,15 @@ setTimeout(() => {
   setInterval(() => _runDailyTopPicksTelegram().catch(e => console.warn('[DailyPicks]', e.message)), 24 * 3600 * 1000);
 }, _msUntilNextParisHour(DAILY_TOP_PICKS_HOUR));
 console.log(`  [DailyPicks] cron armé — premier tick à ${DAILY_TOP_PICKS_HOUR}h00 Europe/Paris (EV+ ≥ +${(DAILY_TOP_PICKS_EV_MIN - 100).toFixed(0)}%, top ${DAILY_TOP_PICKS_COUNT})`);
+
+// TennisTemple OOP — programme quotidien par court (draw publié ~6-7h Paris)
+// Boot-warm immédiat + cron 8h00 Paris, cache 24h.
+_runDailyTTOop().catch(e => console.warn('[TT-OOP boot]', e.message));
+setTimeout(() => {
+  _runDailyTTOop().catch(e => console.warn('[TT-OOP daily]', e.message));
+  setInterval(() => _runDailyTTOop().catch(e => console.warn('[TT-OOP daily]', e.message)), 24 * 3600 * 1000);
+}, _msUntilNextParisHour(8));
+console.log('  [TT-OOP] cron armé — prefetch quotidien à 8h00 Europe/Paris');
 
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
