@@ -30277,11 +30277,23 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
     if (!rounds.has(ord)) rounds.set(ord, []);
     rounds.get(ord).push(m);
   }
+  // Diagnostic: log raw round_name samples when nothing recognized (BSD format drift)
+  if (!rounds.size) {
+    const sampleNames = [...new Set(ms.slice(0, 20).map(m => m.round_name).filter(Boolean))].slice(0, 6);
+    console.warn(`  [RG ${tour}] ⚠️ 0 rounds recognized from ${ms.length} matches — BSD round names: ${JSON.stringify(sampleNames)}`);
+  }
   for (const arr of rounds.values()) {
     arr.sort((a, b) => String(a.match_date || a.start_time || '').localeCompare(String(b.match_date || b.start_time || '')));
   }
-  const r1 = rounds.get(1) || [];
-  if (!r1.length) return { available: false, reason: 'no_first_round', rounds_found: Array.from(rounds.keys()) };
+  let r1 = rounds.get(1) || [];
+  // Fallback: if R1 not found but other rounds exist, use earliest (e.g. mid-tournament or BSD naming drift)
+  if (!r1.length && rounds.size > 0) {
+    const earliestOrd = Math.min(...rounds.keys());
+    r1 = rounds.get(earliestOrd) || [];
+    console.warn(`  [RG ${tour}] R1 not found — fallback to earliest round (ord=${earliestOrd}, ${r1.length} matches)`);
+  }
+  const sampleRoundNames = !rounds.size ? [...new Set(ms.slice(0, 10).map(m => m.round_name).filter(Boolean))].slice(0, 4) : undefined;
+  if (!r1.length) return { available: false, reason: 'no_first_round', rounds_found: Array.from(rounds.keys()), sample_round_names: sampleRoundNames };
   const drawPlayers = [];
   for (const m of r1) {
     const p1 = m.player1 || {}; const p2 = m.player2 || {};
