@@ -16273,7 +16273,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/')) {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/') || pathname.startsWith('/api/v1/bsd/compos/') || pathname.startsWith('/api/v1/bsd/clips/') || pathname.startsWith('/api/v1/bsd/clip-video/')) {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -31970,6 +31970,7 @@ const BSD_ENRICH_TTL = new Proxy({}, {
       case 'compare_odds': return getCacheTTL('bsd_compare_odds', 5 * 60 * 1000);
       case 'social':       return getCacheTTL('bsd_social',       30 * 60 * 1000);
       case 'best_odds':    return getCacheTTL('bsd_best_odds',    5 * 60 * 1000);
+      case 'clips':        return getCacheTTL('bsd_clips',        24 * 3600 * 1000);
       default: return undefined;
     }
   }
@@ -32012,6 +32013,7 @@ async function _bsdEnrichFetch(kind, eventId) {
     case 'compare_odds': endpoint = `/odds/compare/?event=${eventId}`; break;
     case 'social':      endpoint = `/v2/social/?event=${eventId}&limit=20`; break;
     case 'best_odds':   endpoint = `/v2/odds/best/?event=${eventId}`; break;  // bd j6pz Phase 2
+    case 'clips':       endpoint = `/v2/events/${eventId}/clips/`; break;
     default: throw new Error(`unknown bsd kind: ${kind}`);
   }
   const res = await bsdFetch(endpoint);
@@ -32621,6 +32623,93 @@ if (pathname.startsWith('/api/v1/social/match/') && req.method === 'GET') {
     console.warn(`  [BSD/social] event=${eventId} erreur:`, e.message);
     return jsonResponse(res, 502, { error: 'bsd_social_failed', message: String(e.message || e) });
   }
+}
+
+// ─── BSD enrichment routes (incidents / shotmap / compos / clips) ─────────────
+// Pattern commun : _bsdResolveEventId → _bsdEnrichFetch → jsonResponse
+// Auth gate ligne 16276 couvre tous ces prefixes.
+
+if (pathname.startsWith('/api/v1/bsd/incidents/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/incidents/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
+  try {
+    const { data, cached } = await _bsdEnrichFetch('incidents', eventId);
+    const incidents = (data && Array.isArray(data.results)) ? data.results : (Array.isArray(data) ? data : []);
+    return jsonResponse(res, 200, { source: 'bsd_incidents', event_id: Number(eventId), data: { incidents }, cached });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_incidents_failed', message: String(e.message || e) });
+  }
+}
+
+if (pathname.startsWith('/api/v1/bsd/shotmap/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/shotmap/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
+  try {
+    const { data, cached } = await _bsdEnrichFetch('shotmap', eventId);
+    return jsonResponse(res, 200, { source: 'bsd_shotmap', event_id: Number(eventId), data: data || {}, cached });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_shotmap_failed', message: String(e.message || e) });
+  }
+}
+
+if (pathname.startsWith('/api/v1/bsd/compos/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/compos/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
+  try {
+    const { data, cached } = await _bsdEnrichFetch('lineups', eventId);
+    return jsonResponse(res, 200, { source: 'bsd_compos', event_id: Number(eventId), data: data || {}, cached });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_compos_failed', message: String(e.message || e) });
+  }
+}
+
+// GET /api/v1/bsd/clips/:matchId — manifest JSON des clips buts disponibles
+if (pathname.startsWith('/api/v1/bsd/clips/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/clips/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
+  try {
+    const { data, cached } = await _bsdEnrichFetch('clips', eventId);
+    return jsonResponse(res, 200, { source: 'bsd_clips', event_id: Number(eventId), data: data || {}, cached });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'bsd_clips_failed', message: String(e.message || e) });
+  }
+}
+
+// GET /api/v1/bsd/clip-video/:matchId/goal-{n}.mp4 — proxy vidéo MP4 depuis BSD
+// Nécessaire car BSD requiert Authorization header (pas exposable depuis <video src>).
+// Clip ~16s 720x1280 vertical. Généré à la demande par BSD (~10s premier accès, cache ensuite).
+if (pathname.startsWith('/api/v1/bsd/clip-video/') && req.method === 'GET') {
+  const rest = pathname.slice('/api/v1/bsd/clip-video/'.length);
+  const slashIdx = rest.indexOf('/');
+  if (slashIdx < 0) return jsonResponse(res, 400, { error: 'bad_path' });
+  const rawId = decodeURIComponent(rest.slice(0, slashIdx));
+  const clipFile = rest.slice(slashIdx + 1);
+  if (!/^goal-\d+\.mp4$/.test(clipFile)) return jsonResponse(res, 400, { error: 'bad_clip_name' });
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id' });
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'bsd_api_key_missing' });
+  const videoUrl = `${BSD_BASE_URL}/v2/events/${eventId}/clips/${clipFile}`;
+  const u = new URL(videoUrl);
+  const bsdReq = https.request({
+    hostname: u.hostname, port: 443,
+    path: u.pathname,
+    method: 'GET',
+    headers: { 'Authorization': `Token ${BSD_API_KEY}`, 'Accept': 'video/mp4', 'User-Agent': 'PariScore/2.0' },
+  }, bsdRes => {
+    if (bsdRes.statusCode === 404) return jsonResponse(res, 404, { error: 'clip_not_found' });
+    if (bsdRes.statusCode !== 200) return jsonResponse(res, 502, { error: 'bsd_clip_upstream_error', status: bsdRes.statusCode });
+    const headers = { 'Content-Type': 'video/mp4', 'Cache-Control': 'public, max-age=86400' };
+    if (bsdRes.headers['content-length']) headers['Content-Length'] = bsdRes.headers['content-length'];
+    res.writeHead(200, headers);
+    bsdRes.pipe(res);
+  });
+  bsdReq.on('error', e => { if (!res.headersSent) jsonResponse(res, 502, { error: 'bsd_clip_proxy_error' }); });
+  bsdReq.end();
+  return;
 }
 
 // ─── COUPE DU MONDE 2026 — routes ────────────────────────────────────────────
