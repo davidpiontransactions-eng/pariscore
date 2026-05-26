@@ -18194,7 +18194,7 @@ function _normalizeBSDTennisMatch(m) {
       return null;
     })(),
     notes: m.round_name || '',
-    start_time: m.match_date || null,
+    start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
     last_update_ts: Date.now(),
     _bsd_match_id: m.id,
     _bsd_stats: {
@@ -26249,8 +26249,8 @@ if (pathname === '/api/v1/top-strategy') {
   });
 }
 
-// GET /api/v1/strategies — liste des stratégies disponibles
-if (pathname === '/api/v1/strategies') {
+// GET /api/v1/strategies — liste des stratégies disponibles (public, non-authentifié uniquement)
+if (pathname === '/api/v1/strategies' && !req.headers.authorization) {
   return jsonResponse(res, 200, {
     strategies: Object.entries(STRATEGIES).map(([key, s]) => ({
       key, label: s.label, icon: s.icon,
@@ -28950,7 +28950,7 @@ async function _buildTennisValueBetsCore({ date }) {
       id: m.id,
       tournament: m.tournament || null,
       surface: null,
-      court: m.court || null,
+      court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || null,
       tour: m.tour || null,
       round: m.round || null,
       start_time: m.start_time || null,
@@ -29024,7 +29024,6 @@ async function _buildTennisValueBetsCore({ date }) {
         id: m.id,
         tournament: _tName,
         surface: m.surface || null,
-        round: m.round || null,
         start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
         status: m.status || null,
         round: m.round || m.round_name || null,
@@ -29297,9 +29296,8 @@ async function _buildTennisValueBetsCore({ date }) {
       tournament: _tName,
       surface: surfaceClean || _surfN || null,
       surface_source: surfaceSource,
-      court: m.court || null,
+      court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || null,
       tour: tourGuess || _tourN || null,
-      round: m.round || null,
       start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
       status: m.status || null,
       round: m.round || m.round_name || null,
