@@ -20469,26 +20469,30 @@ function _tnSnapshotPersist() {
   } catch (_) { /* quota / privacy → silencieux */ }
 }
 function _tnSnapshotPickFields(m) {
+  // Use _tnHasMeaningful for object fields: avoids storing {elo:null,blended:null}
+  // shells that would later block restoration of good pre-live data.
+  // Primitive fields (surface: string) keep simple || null — no change in behavior.
+  var _pick = function(v) { return _tnHasMeaningful(v) ? v : null; };
   return {
-    predictions: m.predictions || null,
-    set_model: m.set_model || null,
-    confidence_badge: m.confidence_badge || null,
-    predictive: m.predictive || null,
-    rank_momentum: m.rank_momentum || null,
-    conf_edge: m.conf_edge || null,
-    log_diff: m.log_diff || null,
-    ml_market_div: m.ml_market_div || null,
-    ev_model: m.ev_model || null,
-    best_ev_model: m.best_ev_model || null,
-    trap_bet: m.trap_bet || null,
-    first_set: m.first_set || null,
-    over_under_set_calculations: m.over_under_set_calculations || null,
-    totals_convergence: m.totals_convergence || null,
-    serve_dominance: m.serve_dominance || null,
-    odds: m.odds || null,
-    fair: m.fair || null,
-    edge: m.edge || null,
-    best_edge: m.best_edge || null,
+    predictions: _pick(m.predictions),
+    set_model: _pick(m.set_model),
+    confidence_badge: _pick(m.confidence_badge),
+    predictive: _pick(m.predictive),
+    rank_momentum: _pick(m.rank_momentum),
+    conf_edge: _pick(m.conf_edge),
+    log_diff: _pick(m.log_diff),
+    ml_market_div: _pick(m.ml_market_div),
+    ev_model: _pick(m.ev_model),
+    best_ev_model: _pick(m.best_ev_model),
+    trap_bet: _pick(m.trap_bet),
+    first_set: _pick(m.first_set),
+    over_under_set_calculations: _pick(m.over_under_set_calculations),
+    totals_convergence: _pick(m.totals_convergence),
+    serve_dominance: _pick(m.serve_dominance),
+    odds: _pick(m.odds),
+    fair: _pick(m.fair),
+    edge: _pick(m.edge),
+    best_edge: _pick(m.best_edge),
     surface: m.surface || null,
     _p1Power: m.player1 ? {
       powerscore: m.player1.powerscore, l5_pts: m.player1.l5_pts, l10_pts: m.player1.l10_pts,
@@ -20547,7 +20551,15 @@ function _tnSnapshotStore(m) {
   if (!_tnSnapshotHasSignal(m) && !_tnSnapshotHasMinimal(m)) return;
   var k = _tnPairKey(m);
   var kl = _tnPairKeyLast(m);
-  var snap = { ts: Date.now(), data: _tnSnapshotPickFields(m), hasSignal: _tnSnapshotHasSignal(m) };
+  var newHasSignal = _tnSnapshotHasSignal(m);
+  // Protect high-signal snapshot from being overwritten by degraded live data.
+  // Live cycle may return match with predictions:{elo:null}, surf_form:null — never
+  // let a hasSignal=false write stomp a hasSignal=true write from the pre-live cycle.
+  if (!newHasSignal && k) {
+    var _existing = window._tnPrematchSnapshot.get('pk:' + k);
+    if (_existing && _existing.hasSignal) return;
+  }
+  var snap = { ts: Date.now(), data: _tnSnapshotPickFields(m), hasSignal: newHasSignal };
   if (k) window._tnPrematchSnapshot.set('pk:' + k, snap);
   if (kl && kl !== k) window._tnPrematchSnapshot.set('lk:' + kl, snap);
   var pairs = _tnAllPairKeys(m);
@@ -20573,25 +20585,38 @@ function _tnSnapshotLookup(lo) {
   if (Date.now() - hit.ts > _TN_SNAP_TTL_MS) return null;
   return hit.data;
 }
+// Returns false for values that carry no meaningful data:
+// null, undefined, empty array [], or plain object where ALL own values are null/undefined.
+// Used by _tnApplySnapshot to decide whether the snapshot value should replace target.
+function _tnHasMeaningful(v) {
+  if (v == null) return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === 'object') {
+    var keys = Object.keys(v);
+    if (!keys.length) return false;
+    for (var ki = 0; ki < keys.length; ki++) { if (v[keys[ki]] != null) return true; }
+    return false; // all own props are null/undefined
+  }
+  return true; // number, string, boolean
+}
 function _tnApplySnapshot(target, snap) {
   if (!target || !snap) return target;
   var SCALAR = ['predictions','set_model','confidence_badge','predictive','rank_momentum','conf_edge','log_diff','ml_market_div','ev_model','best_ev_model','trap_bet','first_set','over_under_set_calculations','totals_convergence','serve_dominance','odds','fair','edge','best_edge','surface'];
   for (var i = 0; i < SCALAR.length; i++) {
     var k = SCALAR[i];
-    if ((target[k] == null) && snap[k] != null) target[k] = snap[k];
+    // Use _tnHasMeaningful: catches null, undefined, [], and {all-null-props} objects
+    if (!_tnHasMeaningful(target[k]) && _tnHasMeaningful(snap[k])) target[k] = snap[k];
   }
   if (snap._p1Power && target.player1) {
     for (var p1k in snap._p1Power) {
       if (!Object.prototype.hasOwnProperty.call(snap._p1Power, p1k)) continue;
-      var _v1 = target.player1[p1k];
-      if ((_v1 == null || (Array.isArray(_v1) && !_v1.length)) && snap._p1Power[p1k] != null) target.player1[p1k] = snap._p1Power[p1k];
+      if (!_tnHasMeaningful(target.player1[p1k]) && _tnHasMeaningful(snap._p1Power[p1k])) target.player1[p1k] = snap._p1Power[p1k];
     }
   }
   if (snap._p2Power && target.player2) {
     for (var p2k in snap._p2Power) {
       if (!Object.prototype.hasOwnProperty.call(snap._p2Power, p2k)) continue;
-      var _v2 = target.player2[p2k];
-      if ((_v2 == null || (Array.isArray(_v2) && !_v2.length)) && snap._p2Power[p2k] != null) target.player2[p2k] = snap._p2Power[p2k];
+      if (!_tnHasMeaningful(target.player2[p2k]) && _tnHasMeaningful(snap._p2Power[p2k])) target.player2[p2k] = snap._p2Power[p2k];
     }
   }
   return target;
