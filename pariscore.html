@@ -29000,26 +29000,40 @@ async function buildBsdIncidents(matchId, autoRefresh) {
       if (t === 'period') return '⏱️';
       return '•';
     };
-    const rows = incidents.slice().reverse().map(inc => {
+    // Assign goal numbers chronologically before reversing for display
+    let _goalCtr = 0;
+    const _goalNums = incidents.map(inc =>
+      (inc.type === 'goal' || inc.type === 'own_goal') ? ++_goalCtr : null
+    );
+    const _hasClips = _goalCtr > 0;
+    const _safeMatchId = matchId.replace(/[^a-z0-9]/gi, '_');
+    const rows = incidents.slice().reverse().map((inc, di) => {
+      const myGoalN = _goalNums[incidents.length - 1 - di];
       const side = inc.is_home === true ? 'D' : inc.is_home === false ? 'E' : '—';
       const sideCol = side === 'D' ? 'var(--green)' : side === 'E' ? 'var(--blue)' : 'var(--text3)';
       const minute = inc.minute != null ? `${inc.minute}'${inc.added_time ? `+${inc.added_time}` : ''}` : '—';
       const player = inc.player ? `<strong style="color:var(--text)">${inc.player}</strong>` : '';
       const txt = inc.text ? `<span style="color:var(--text2)">${inc.text}</span>` : '';
       const score = (inc.home_score != null && inc.away_score != null) ? `<span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px">${inc.home_score}–${inc.away_score}</span>` : '';
+      const clipBtn = myGoalN ? `<button onclick="bsdPlayClip(${JSON.stringify(matchId)},${myGoalN})" title="Replay but BSD" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#ef4444;border-radius:4px;padding:1px 5px;font-size:10px;cursor:pointer;vertical-align:middle;margin-left:5px">📹</button>` : '';
       return `<li style="display:grid;grid-template-columns:42px 26px 22px 1fr 44px;gap:10px;align-items:center;padding:7px 8px;border-bottom:1px solid var(--bg4);font-size:12px">
         <span style="font-family:'DM Mono',monospace;color:var(--text3);text-align:right">${minute}</span>
         <span style="text-align:center">${iconFor(inc.type)}</span>
         <span style="color:${sideCol};font-weight:700;font-family:'DM Mono',monospace">${side}</span>
-        <span>${player} ${txt}</span>
+        <span>${player} ${txt}${clipBtn}</span>
         ${score}
       </li>`;
     }).join('');
     el.innerHTML = `
       <div style="padding:14px 12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · TIMELINE INCIDENTS</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · TIMELINE INCIDENTS${_hasClips ? ' · <span style="color:#ef4444;font-size:12px">📹</span>' : ''}</div>
           <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${incidents.length} évts · ${out.cached ? 'CACHE 1min' : 'LIVE'}</div>
+        </div>
+        <div id="bsd-clip-player-${_safeMatchId}" style="display:none;margin-bottom:10px;text-align:center;background:var(--bg4);border-radius:8px;padding:10px 8px">
+          <div id="bsd-clip-loader-${_safeMatchId}" style="padding:12px;color:var(--text3);font-size:11px">⏳ Génération du clip BSD… (~10s premier accès)</div>
+          <video id="bsd-clip-video-${_safeMatchId}" controls playsinline style="display:none;width:100%;max-width:260px;border-radius:6px;background:#000;max-height:46vh"></video>
+          <div style="margin-top:6px;font-size:10px;color:var(--text3)">BSD Goal Replay · 720×1280 · <button onclick="bsdClipClose(${JSON.stringify(matchId)})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:10px;text-decoration:underline">✕ Fermer</button></div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;max-height:60vh;overflow:auto">${rows}</ul>
       </div>`;
@@ -29033,6 +29047,32 @@ async function buildBsdIncidents(matchId, autoRefresh) {
       el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement incidents : ${e.message}</div>`;
     }
   }
+}
+
+function bsdPlayClip(matchId, goalN) {
+  const safeId = matchId.replace(/[^a-z0-9]/gi, '_');
+  const player = document.getElementById(`bsd-clip-player-${safeId}`);
+  const video  = document.getElementById(`bsd-clip-video-${safeId}`);
+  const loader = document.getElementById(`bsd-clip-loader-${safeId}`);
+  if (!player || !video || !loader) return;
+  const src = `/api/v1/bsd/clip-video/${encodeURIComponent(matchId)}/goal-${goalN}.mp4`;
+  if (video.dataset.clipN === String(goalN) && player.style.display !== 'none') {
+    player.style.display = 'none';
+    return;
+  }
+  player.style.display = 'block';
+  loader.style.display = 'block';
+  loader.textContent = '⏳ Génération du clip BSD… (~10s premier accès)';
+  video.style.display = 'none';
+  video.src = src;
+  video.dataset.clipN = String(goalN);
+  video.onloadeddata = () => { loader.style.display = 'none'; video.style.display = 'block'; video.play().catch(() => {}); };
+  video.onerror   = () => { loader.textContent = '⚠️ Clip non disponible pour ce but.'; video.style.display = 'none'; };
+}
+function bsdClipClose(matchId) {
+  const safeId = matchId.replace(/[^a-z0-9]/gi, '_');
+  const player = document.getElementById(`bsd-clip-player-${safeId}`);
+  if (player) { player.style.display = 'none'; }
 }
 
 async function buildBsdShotmap(matchId) {
