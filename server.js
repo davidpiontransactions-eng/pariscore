@@ -4272,7 +4272,7 @@ function buildInitialMockMatch() {
   };
 }
 
-function updateMockMatch() {
+function updateMockMatch() { // nosemgrep: insecure-random — mock/test simulation only
   if (!testMatch) return;
   const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
   testMatch.live_minute = Math.min(testMatch.live_minute + 1, 90);
@@ -6654,8 +6654,8 @@ function calibrateProbs(probs) {
 
 // ── Box-Muller : générateur N(0,1) sans dépendance externe ───────────────────
 function boxMullerGaussian() {
-  const u1 = Math.max(1e-10, Math.random());
-  const u2 = Math.random();
+  const u1 = Math.max(1e-10, Math.random()); // nosemgrep: insecure-random — statistical simulation
+  const u2 = Math.random(); // nosemgrep: insecure-random — statistical simulation
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }
 
@@ -9965,7 +9965,7 @@ function _bootstrapCI95(seq, iters = 500) {
   const wrs = new Array(iters);
   for (let i = 0; i < iters; i++) {
     let w = 0;
-    for (let j = 0; j < n; j++) w += seq[(Math.random() * n) | 0] ? 1 : 0;
+    for (let j = 0; j < n; j++) w += seq[(Math.random() * n) | 0] ? 1 : 0; // nosemgrep: insecure-random — bootstrap resampling
     wrs[i] = w / n;
   }
   wrs.sort((a, b) => a - b);
@@ -11736,7 +11736,7 @@ async function fetchTeamKeyPlayersBSD(bsdTeamId, bsdSeasonId) {
           const per90 = Math.max(1, minutes / 90);
           const kpi = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
           return {
-            id: entry.player?.id || Math.random(),
+            id: entry.player?.id || crypto.randomBytes(4).toString('hex'),
             name: entry.player?.name || '?',
             photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
             position: entry.player?.position || '',
@@ -11794,7 +11794,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
             const per90 = Math.max(1, minutes / 90);
             const kpi = parseFloat(((goals * 3 + assists * 2 + rating) / per90).toFixed(2));
             return {
-              id: entry.player?.id || Math.random(),
+              id: entry.player?.id || crypto.randomBytes(4).toString('hex'),
               name: entry.player?.name || '?',
               photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
               position: entry.player?.position || '',
@@ -15909,7 +15909,7 @@ function buildDemoMatches() {
 
   return DEMOS.map(([sport, home, away, off, h, m, oH, oD, oA], idx) => {
     const raw = {
-      id: Math.random().toString(36).slice(2),
+      id: Math.random().toString(36).slice(2), // nosemgrep: insecure-random — demo match, non-security
       _sport: sport, sport_key: sport,
       commence_time: d(off, h, m),
       home_team: home, away_team: away,
@@ -22563,7 +22563,7 @@ function _aiscoreThrottle() {
 // avec headers browser complets). Le stack TLS de `curl` (OpenSSL) passe.
 // → on shell `curl` via execFile (args en array = pas de shell, injection-safe).
 // Seul scraper du repo à déroger au zero-dep ; justifié + isolé à aiscore.
-const { execFile } = require('child_process');
+const { execFile } = require('child_process'); // nosemgrep: detect-child-process
 function _curlFetch(url) {
   return new Promise((resolve, reject) => {
     // url whitelistée : https://www.aiscore.com/... uniquement
@@ -24360,7 +24360,13 @@ async function _fetchTTOopForTournament(tournName) {
   // Node.js TLS fingerprint (JA3) is blocked by TennisTemple WAF — same pattern as aiscore.
   // Use execFile curl (already imported) which passes with OpenSSL + browser headers.
   const _p = new Promise(resolve => {
-    const { execFile: _ef } = require('child_process');
+    // url comes from _TT_OOP_URLS static dict — whitelist check for defense in depth
+    if (!/^https:\/\/(?:fr|en)\.tennistemple\.com\/[A-Za-z0-9/_.\-]+$/.test(url)) {
+      console.warn(`  [TT-OOP] URL refusée (whitelist): ${url}`);
+      _ttOopInFlight.delete(url);
+      return resolve(null);
+    }
+    const { execFile: _ef } = require('child_process'); // nosemgrep: detect-child-process
     _ef('curl', [
       '-sS', '--compressed', '--max-time', '20',
       '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -29959,7 +29965,7 @@ function _monteCarloRG(playerStats, N) {
       const pairs = aliveLen - (aliveLen & 1);
       for (let m = 0; m < pairs; m += 2) {
         const a = alive[m], b = alive[m + 1];
-        const winner = Math.random() < wp[wpRoundBase + a * n + b] ? a : b;
+        const winner = Math.random() < wp[wpRoundBase + a * n + b] ? a : b; // nosemgrep: insecure-random — tournament simulation
         next[nextLen++] = winner;
         if (round === sfRound) sfC[winner]++;
         else if (round === finRound) finalC[winner]++;
