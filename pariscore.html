@@ -21004,7 +21004,7 @@ function renderTennisValueBets(rawMatches) {
   const _norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const _qTerms = _norm(f.q).split(/\s+/).filter(Boolean);
 
-  const filtered = matches.filter(m => {
+  let filtered = matches.filter(m => {
     // Exclut les matchs sans joueurs identifiés (TBD / qualifs ESPN → "?").
     const _n1 = String((m.player1 && m.player1.name) || '').trim();
     const _n2 = String((m.player2 && m.player2.name) || '').trim();
@@ -21125,7 +21125,7 @@ function renderTennisValueBets(rawMatches) {
   // Hook : enrich rows with TA Elo tooltips + surface badges après render (UC-1+UC-2)
   setTimeout(() => { try { enrichTennisVbWithTA(); } catch (_) {} }, 50);
 
-  tbody.innerHTML = (_tvbFavCount ? `<div class="tn-fav-pin-hdr">★ MES FAVORIS (${_tvbFavCount})</div>` : '') + filtered.slice(0, 200).map(m => {
+  tbody.innerHTML = (_tvbFavCount ? `<div class="tn-fav-pin-hdr">★ MES FAVORIS (${_tvbFavCount})</div>` : '') + filtered.slice(0, 200).map(m => { try {
     const elo = m.predictions?.elo;
     const blended = m.predictions?.blended;
     const odds = m.odds;
@@ -21215,7 +21215,7 @@ function renderTennisValueBets(rawMatches) {
 <span class="tn-vb-cell tn-cell-value" role="cell">${valueHtml}</span>
 <span class="tn-vb-cell tn-cell-expand" role="cell"><button class="tn-expand-btn" aria-label="Détails ${ariaLbl}" aria-expanded="false" aria-controls="${drawerId}" onclick="event.stopPropagation();_tnExpandDrawer('${matchId}')">▸</button></span>
 </div><div class="tn-vb-drawer" id="${drawerId}" role="row" hidden aria-label="Détails ${ariaLbl}"><div class="tn-drawer-cell"></div></div>`;
-  }).join('');
+  } catch(rowErr) { console.warn('[TennisVB] row render error:', rowErr && rowErr.message, 'match:', m && m.id); return ''; } }).join('');
 }
 
 // ── AI-AL Tennis ────────────────────────────────────────────────────────────
@@ -21333,7 +21333,16 @@ async function tickTennisValueBets() {
     }
     window._tennisVbBuildRetries = 0;
     window._tennisVbLastFetch = matches;
-    renderTennisValueBets(matches);
+    console.log('[Tennis Value] Data received:', matches.length, 'matches, src=' + (data.meta?.match_source || '?'));
+    try {
+      renderTennisValueBets(matches);
+    } catch (renderErr) {
+      console.error('[TennisVB] render crash:', renderErr);
+      const tb = document.getElementById('tennis-vb-tbody');
+      if (tb) tb.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--red,#ff4d4d);">Erreur d\'affichage — voir console (F12).</span></div>';
+      if (statusEl) statusEl.textContent = 'Erreur rendu';
+      return;
+    }
     if (statusEl) {
       const withElo = matches.filter(m => m.predictions && m.predictions.elo).length;
       const src = data.meta?.match_source || '?';
