@@ -36996,6 +36996,7 @@ let _bsdWsBuf = Buffer.alloc(0);
 let _bsdWsBackoff = 2000;
 let _bsdWsRawLogged = 0;
 let _bsdWsLastFrames = []; // ring buffer derniers 10 frames (schema validation)
+const _bsdWsInjectAttempted = new Set(); // eids déjà tentés (évite fetch répété)
 const _bsdWsLastBcast = new Map(); // matchId -> ts (throttle SSE)
 // v11.0 — BSD spec compliance : subscribe loop + heartbeat + typed dispatch
 const _bsdWsSubs = new Set();         // event_ids actuellement subscribed
@@ -37017,6 +37018,50 @@ function _bsdWsLookupMatch(eid, home, away) {
     if (hit) return hit;
   }
   return null;
+}
+
+// WS inject-on-miss : quand WS reçoit eid inconnu, fetch REST BSD une fois
+// et injecte un match synthétique dans db.matches. Fire-and-forget async.
+async function _bsdWsTryInjectMatch(eid) {
+  const k = String(eid);
+  if (_bsdWsInjectAttempted.has(k)) return;
+  _bsdWsInjectAttempted.add(k);
+  try {
+    const r = await bsdFetch(`/api/v2/events/${k}/`);
+    if (!r || r.status !== 200 || !r.data) return;
+    const e = r.data;
+    const homeTeam = e.home_team?.name || e.home?.name || e.home_team || null;
+    const awayTeam = e.away_team?.name || e.away?.name || e.away_team || null;
+    if (!homeTeam || !awayTeam) return;
+    // Already injected by pollLiveScores in the meantime?
+    if (_bsdWsLookupMatch(eid, homeTeam, awayTeam)) return;
+    const score = (e.home_score != null && e.away_score != null) ? `${e.home_score}-${e.away_score}` : null;
+    const synthetic = buildFallbackMatchRecord({
+      id: `bsd_${k}_ws`,
+      home_team: homeTeam,
+      away_team: awayTeam,
+      commence_time: e.start_at || e.scheduled || new Date().toISOString(),
+      status: e.status || 'inprogress',
+      home_score: e.home_score ?? null,
+      away_score: e.away_score ?? null,
+      sport_title: e.tournament?.name || e.league || 'Football',
+      country: e.country || null,
+      _source: 'bsd_ws_inject',
+      _sport: 'soccer',
+    });
+    if (!synthetic) return;
+    synthetic._bsd_event_id = Number(k);
+    synthetic._bsd_live_injected = true;
+    synthetic.live_score = score;
+    synthetic.live_minute = e.minute ?? null;
+    if (e.status) synthetic.status = e.status;
+    db.matches.push(synthetic);
+    console.log(`  [BSD-WS] inject-on-miss eid=${k} → ${homeTeam} vs ${awayTeam} score=${score || '?'}`);
+    // Subscribe proprement maintenant que le match est dans db.matches
+    if (_bsdWsHandshakeDone) _bsdWsSubscribe(Number(k));
+  } catch (e) {
+    console.warn(`  [BSD-WS] inject-on-miss eid=${k} failed:`, e.message);
+  }
 }
 
 // ── v12 Deep Merge Guard ────────────────────────────────────────────────────
@@ -37450,7 +37495,7 @@ function _bsdWsHandleJSON(msg) {
   if (t === 'event') {
     const eid = msg.event_id;
     const m = _bsdWsLookupMatch(eid, msg.home && msg.home.name, msg.away && msg.away.name);
-    if (!m) return;
+    if (!m) { if (eid != null) _bsdWsTryInjectMatch(eid).catch(() => {}); return; }
     const _vl02_prevScore = _bsdWsDTOEvent(msg, m, _checkLiveAlerts);
     if (sseClients.size > 0) {
       broadcastSSE('ws_event', {
@@ -37508,7 +37553,10 @@ function _bsdWsHandleJSON(msg) {
   const p = _bsdWsParse(msg);
   const m = _bsdWsLookupMatch(p.eid, p.home, p.away);
   if (!m) {
-    if (p.eid != null) console.warn('  [BSD-WS] match non trouvé eid=' + p.eid + ' home=' + (p.home || '?') + ' away=' + (p.away || '?') + ' — _bsd_event_id manquant dans db.matches?');
+    if (p.eid != null) {
+      console.warn('  [BSD-WS] match non trouvé eid=' + p.eid + ' — inject-on-miss déclenché');
+      _bsdWsTryInjectMatch(p.eid).catch(() => {});
+    }
     return;
   }
 
