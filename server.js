@@ -16273,7 +16273,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/') || pathname.startsWith('/api/v1/bsd/compos/') || pathname.startsWith('/api/v1/bsd/clips/') || pathname.startsWith('/api/v1/bsd/clip-video/')) {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/') || pathname.startsWith('/api/v1/bsd/compos/') || pathname.startsWith('/api/v1/bsd/clips/') || pathname.startsWith('/api/v1/bsd/clip-video/') || pathname === '/api/v1/bsd/ws-status') {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -32625,6 +32625,21 @@ if (pathname.startsWith('/api/v1/social/match/') && req.method === 'GET') {
   }
 }
 
+// GET /api/v1/bsd/ws-status — diagnostic WS live (admin only via footPro gate)
+if (pathname === '/api/v1/bsd/ws-status' && req.method === 'GET') {
+  return jsonResponse(res, 200, {
+    enabled: BSD_LIVE_WS_ENABLED,
+    connected: !!_bsdWsHandshakeDone,
+    subscribed: Array.from(_bsdWsSubs),
+    pending: [..._bsdWsPendingSubs],
+    last_pong_age_s: _bsdWsLastPong ? Math.round((Date.now() - _bsdWsLastPong) / 1000) : null,
+    raw_logged: _bsdWsRawLogged,
+    last_frames: _bsdWsLastFrames.slice(-5),
+    db_matches_with_bsd_id: db.matches.filter(m => m && m._bsd_event_id != null).length,
+    db_matches_live: db.matches.filter(m => m && m.is_live).length,
+  });
+}
+
 // ─── BSD enrichment routes (incidents / shotmap / compos / clips) ─────────────
 // Pattern commun : _bsdResolveEventId → _bsdEnrichFetch → jsonResponse
 // Auth gate ligne 16276 couvre tous ces prefixes.
@@ -36980,6 +36995,7 @@ let _bsdWsSock = null;
 let _bsdWsBuf = Buffer.alloc(0);
 let _bsdWsBackoff = 2000;
 let _bsdWsRawLogged = 0;
+let _bsdWsLastFrames = []; // ring buffer derniers 10 frames (schema validation)
 const _bsdWsLastBcast = new Map(); // matchId -> ts (throttle SSE)
 // v11.0 — BSD spec compliance : subscribe loop + heartbeat + typed dispatch
 const _bsdWsSubs = new Set();         // event_ids actuellement subscribed
@@ -37395,7 +37411,13 @@ function _checkLiveAlerts(m, prevScoreStr) {
 }
 
 function _bsdWsHandleJSON(msg) {
-  if (_bsdWsRawLogged < 3) {
+  // Ring buffer : garde 10 derniers frames pour GET /api/v1/bsd/ws-status
+  try {
+    const frame = { ts: Date.now(), type: msg.type || 'unknown', event_id: msg.event_id ?? null, payload: JSON.stringify(msg).slice(0, 300) };
+    _bsdWsLastFrames.push(frame);
+    if (_bsdWsLastFrames.length > 10) _bsdWsLastFrames.shift();
+  } catch (_) {}
+  if (_bsdWsRawLogged < 5) {
     _bsdWsRawLogged++;
     try { console.log('  [BSD-WS] raw#' + _bsdWsRawLogged + ' ' + JSON.stringify(msg).slice(0, 400)); } catch (e) {}
   }
@@ -37485,7 +37507,10 @@ function _bsdWsHandleJSON(msg) {
   // Frame livedata (par défaut) ou legacy → parser défensif existant
   const p = _bsdWsParse(msg);
   const m = _bsdWsLookupMatch(p.eid, p.home, p.away);
-  if (!m) return;
+  if (!m) {
+    if (p.eid != null) console.warn('  [BSD-WS] match non trouvé eid=' + p.eid + ' home=' + (p.home || '?') + ' away=' + (p.away || '?') + ' — _bsd_event_id manquant dans db.matches?');
+    return;
+  }
 
   const _vl02_prevScore = m.live_score;  // bd vl02 capture pre-update pour goal delta
   if (p.score && /^\d+-\d+$/.test(String(p.score))) m.live_score = String(p.score);
@@ -37683,6 +37708,8 @@ function _bsdWsConnect() {
       _bsdWsHandshakeDone = true;
       _bsdWsBackoff = 2000;
       _bsdWsLastPong = Date.now();
+      _bsdWsRawLogged = 0; // reset pour logger les premiers frames de chaque connexion
+      _bsdWsLastFrames = [];
       console.log('  ✓ [BSD-WS] connecté (push live <5s) — démarrage subscribe loop');
       _bsdWsBuf = _bsdWsBuf.slice(idx + 4);
       _bsdWsConsume();
