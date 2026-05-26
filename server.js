@@ -36683,6 +36683,54 @@ async function pollLiveScores() {
         }
         console.log(`  [LiveDBG] matchés(cross-provider)=${_liveMatched} (dont sig=${_sigMatched}) patches=${patches.length}`);
 
+        // [LiveInject] BSD live orphans — when Odds API has no entry (end-of-season,
+        // untracked league), the `if (!m) continue` guard above silently drops these
+        // live matches. Inject them directly via buildFallbackMatchRecord so the
+        // Live tab shows them. Cleaned up automatically when no longer live.
+        const _currentBsdLiveIds = new Set(bsdLive.filter(b => b.live_score).map(b => String(b._bsd_event_id)));
+        let _injectedCount = 0;
+        for (const bl of bsdLive) {
+          if (!bl.live_score) continue;
+          // Skip if any of the 4 index tiers already matched this match
+          if (_byId.get(bl.id)
+            || (bl._bsd_event_id != null && _byBsd.get(String(bl._bsd_event_id)))
+            || _byTeams.get(normName(bl.home_team) + '@' + normName(bl.away_team))
+            || _bySig.get(_sigTok(bl.home_team) + '@' + _sigTok(bl.away_team))) continue;
+          const synthetic = buildFallbackMatchRecord({
+            id: bl.id,
+            home_team: bl.home_team,
+            away_team: bl.away_team,
+            commence_time: bl.commence_time,
+            status: bl.status,
+            home_score: bl.home_score,
+            away_score: bl.away_score,
+            sport_title: bl.league,
+            country: bl.country || null,
+            _source: 'bsd',
+            _sport: 'soccer',
+          });
+          if (!synthetic) continue;
+          if (bl.odds?.home != null || bl.odds?.draw != null || bl.odds?.away != null) {
+            synthetic.odds = { home: bl.odds.home || null, draw: bl.odds.draw || null, away: bl.odds.away || null };
+          }
+          synthetic.live_score        = bl.live_score;
+          synthetic.live_minute       = bl.live_minute;
+          synthetic._bsd_event_id     = bl._bsd_event_id;
+          synthetic._bsd_live_injected = true;
+          db.matches.push(synthetic);
+          _byId.set(synthetic.id, synthetic);
+          if (bl._bsd_event_id != null) _byBsd.set(String(bl._bsd_event_id), synthetic);
+          _injectedCount++;
+        }
+        // Cleanup: remove injected entries no longer live in this BSD poll
+        const _beforeClean = db.matches.length;
+        db.matches = db.matches.filter(m => !m._bsd_live_injected || _currentBsdLiveIds.has(String(m._bsd_event_id)));
+        const _cleaned = _beforeClean - db.matches.length;
+        if (_injectedCount > 0 || _cleaned > 0) {
+          console.log(`  [LiveInject] injected=${_injectedCount} cleaned=${_cleaned} liveIds=${[..._currentBsdLiveIds].join(',')}`);
+          if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
+        }
+
         // Double routing live stats : BSD primary → Sofa fills gaps
         const liveNow = db.matches.filter(m => m.live_score && parseInt(m.live_minute||0) > 0 && parseInt(m.live_minute||0) < 130);
 
