@@ -29563,6 +29563,7 @@ async function _buildTennisValueBetsCore({ date }) {
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: (eloProb && bsdProb) ? 'elo+bsd' : (eloProb ? 'elo' : (bsdProb ? 'bsd' : null)) },
+      youtube_url: e.youtube_url || null,
     });
   }
 
@@ -29864,6 +29865,7 @@ function toCanonicalTennisMatch(e) {
     over_under_set_calculations: e.over_under_set_calculations || null,
     predictive: e.predictive || null,
     sources: e.sources || null,
+    youtube_url: e.youtube_url || null,
   };
 }
 

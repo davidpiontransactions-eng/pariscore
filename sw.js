@@ -86,7 +86,7 @@
 // cache-first elargi assets/icons/svg/fonts, network-only API conserve,
 // navigation preload active pour TTFB optimal. Shell elargi avec icons.
 // Cache layers separes pour granular invalidation : shell + assets + runtime.
-const CACHE_VERSION = 'v32';
+const CACHE_VERSION = 'v33';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
