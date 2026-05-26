@@ -14397,6 +14397,12 @@ async function fetchOdds(force = false, opts = {}) {
     // FINALISATION & PROTECTION ANTI-WIPE
     // =========================================================================
     if (allRawMatches.length > 0) {
+      // Snapshot _bsd_event_id avant rebuild — les frames WS en vol utilisent ces IDs.
+      const _bsdIdOldMap = new Map();
+      for (const m of (db.matches || [])) {
+        if (m && m._bsd_event_id != null)
+          _bsdIdOldMap.set(normName(m.home_team) + '@' + normName(m.away_team), m._bsd_event_id);
+      }
       tempBuiltMatches = allRawMatches.map(buildMatchRecord).filter(Boolean);
       if (isTargeted) {
         // Targeted refresh: keep matches of other leagues, replace only matches in target set.
@@ -14417,6 +14423,13 @@ async function fetchOdds(force = false, opts = {}) {
       } else {
         db.matches = tempBuiltMatches.sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
         console.log(`  [Cron:Odds] ✅ Succès : ${db.matches.length} matchs injectés.`);
+      }
+      // Restore _bsd_event_id sur nouveaux objets match (WS lookup sinon aveugle post-rebuild)
+      for (const m of db.matches) {
+        if (m && m._bsd_event_id == null) {
+          const bid = _bsdIdOldMap.get(normName(m.home_team) + '@' + normName(m.away_team));
+          if (bid != null) { m._bsd_event_id = bid; }
+        }
       }
       db.status = 'ok';
     } else {
@@ -37026,6 +37039,7 @@ async function _bsdWsTryInjectMatch(eid) {
   const k = String(eid);
   if (_bsdWsInjectAttempted.has(k)) return;
   _bsdWsInjectAttempted.add(k);
+  console.warn('  [BSD-WS] inject-on-miss eid=' + k + ' — fetch BSD REST');
   try {
     const r = await bsdFetch(`/api/v2/events/${k}/`);
     if (!r || r.status !== 200 || !r.data) return;
@@ -37091,15 +37105,26 @@ function _bsdWsParse(msg) {
   const score = msg.score ?? ((msg.home_score != null && msg.away_score != null) ? (msg.home_score + '-' + msg.away_score) : null);
   const minute = msg.minute ?? msg.current_minute ?? msg.live_minute ?? msg.clock ?? null;
   const status = msg.status ?? msg.match_status ?? null;
-  // Position ballon : {x,y} normalisé 0..100 si possible
+  // Position ballon : BSD livedata = coordinates array [{x,y}] (path trail, dernier = position actuelle)
   let ball = null;
-  const bp = msg.ball ?? msg.ball_position ?? msg.ballPos ?? msg.position ?? null;
-  if (bp && typeof bp === 'object') {
-    let bx = bp.x ?? bp.X ?? bp[0], by = bp.y ?? bp.Y ?? bp[1];
+  const coords = msg.coordinates;
+  if (Array.isArray(coords) && coords.length > 0) {
+    const last = coords[coords.length - 1];
+    let bx = last.x ?? last.X, by = last.y ?? last.Y;
     if (bx != null && by != null) {
       bx = Number(bx); by = Number(by);
       if (Math.abs(bx) <= 1 && Math.abs(by) <= 1) { bx *= 100; by *= 100; } // 0..1 → 0..100
-      ball = { x: Math.max(0, Math.min(100, bx)), y: Math.max(0, Math.min(100, by)) };
+      ball = { x: Math.max(0, Math.min(100, bx)), y: Math.max(0, Math.min(100, by)), trail: coords.slice(-4) };
+    }
+  } else {
+    const bp = msg.ball ?? msg.ball_position ?? msg.ballPos ?? msg.position ?? null;
+    if (bp && typeof bp === 'object') {
+      let bx = bp.x ?? bp.X ?? bp[0], by = bp.y ?? bp.Y ?? bp[1];
+      if (bx != null && by != null) {
+        bx = Number(bx); by = Number(by);
+        if (Math.abs(bx) <= 1 && Math.abs(by) <= 1) { bx *= 100; by *= 100; }
+        ball = { x: Math.max(0, Math.min(100, bx)), y: Math.max(0, Math.min(100, by)) };
+      }
     }
   }
   // Situation : corner / penalty / dangerous attack / free kick / goal
@@ -37121,7 +37146,9 @@ function _bsdWsParse(msg) {
   // Pression / momentum instantané (0..100 ou -100..100)
   const pressureH = msg.home_pressure ?? msg.pressure_home ?? (msg.pressure && msg.pressure.home) ?? null;
   const pressureA = msg.away_pressure ?? msg.pressure_away ?? (msg.pressure && msg.pressure.away) ?? null;
-  return { eid, home, away, score, minute, status, ball, situation, pressureH, pressureA };
+  const side = msg.side ?? null; // "home"|"away" — équipe avec le ballon (livedata BSD)
+  const commentary = msg.commentary ?? null;
+  return { eid, home, away, score, minute, status, ball, situation, pressureH, pressureA, side, commentary };
 }
 
 // v12 — Mappe stats BSD WS event frame → champs live_* canoniques PariScore (38 champs vs 16 v11)
@@ -37469,6 +37496,7 @@ function _bsdWsHandleJSON(msg) {
   // v11.0 — Dispatch BSD-spec types officiels (event/livedata/odds/pong/error/subscribed/unsubscribed)
   const t = msg && msg.type;
   if (t === 'pong') { _bsdWsLastPong = Date.now(); return; }
+  if (t === 'ingest_debug') return; // BSD internal ingestion debug — skip
   if (t === 'subscribed') {
     const eid = msg.event_id;
     if (eid != null) { _bsdWsSubs.add(String(eid)); }
@@ -37553,10 +37581,7 @@ function _bsdWsHandleJSON(msg) {
   const p = _bsdWsParse(msg);
   const m = _bsdWsLookupMatch(p.eid, p.home, p.away);
   if (!m) {
-    if (p.eid != null) {
-      console.warn('  [BSD-WS] match non trouvé eid=' + p.eid + ' — inject-on-miss déclenché');
-      _bsdWsTryInjectMatch(p.eid).catch(() => {});
-    }
+    if (p.eid != null) _bsdWsTryInjectMatch(p.eid).catch(() => {});
     return;
   }
 
@@ -37570,6 +37595,8 @@ function _bsdWsHandleJSON(msg) {
     situation: p.situation || null,
     pressureH: p.pressureH != null ? Number(p.pressureH) : (m.live_ws && m.live_ws.pressureH) || null,
     pressureA: p.pressureA != null ? Number(p.pressureA) : (m.live_ws && m.live_ws.pressureA) || null,
+    side: p.side || null,
+    commentary: p.commentary || (m.live_ws && m.live_ws.commentary) || null,
     ts: Date.now(),
   };
 
