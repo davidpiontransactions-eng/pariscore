@@ -3020,6 +3020,11 @@
   body[data-cf-light="1"] .sharp-pill { background: #fee2e2 !important; color: #b91c1c !important; border-color: #fb7185 !important; }
   /* Catboost ML chip light */
   body[data-cf-light="1"] .t3c-badge-sm.ml-cat { background: #e0f2fe !important; color: #075985 !important; border-color: #38bdf8 !important; }
+  /* tvb-pred-chip sub-elements — hardcoded light colors invisible on white */
+  body[data-cf-light="1"] .tvb-pred-chip .oc { color: #1e293b !important; }
+  body[data-cf-light="1"] .tvb-pred-chip .ev { color: #15803d !important; }
+  body[data-cf-light="1"] .tvb-pred-chip .pp { color: #0369a1 !important; }
+  body[data-cf-light="1"] .tvb-pred-empty { color: #64748b !important; }
 
   /* ── bd z55o EXTENDED : nuke all remaining dark zones (live dashboard, deep-analysis, modals, panels) ── */
   /* Global var hijack — force light values même quand --bg/--bg2/--bg3 utilisés via var() */
@@ -15577,8 +15582,8 @@ function _paintBracket(el,data){
     0%, 100% { filter: brightness(1); }
     50%      { filter: brightness(1.18); }
   }
-  .tvb-pred-chip { color: #cbd5e1 !important; }
-  .tvb-pred-chip b { color: #f1f5f9 !important; }
+  .tvb-pred-chip { color: var(--text2, #94a3b8) !important; }
+  .tvb-pred-chip b { color: var(--text, #e8eaed) !important; }
 
   /* 13. Tennis live row override */
   tr.tennis-vb-row.is-live {
@@ -21176,7 +21181,7 @@ function renderTennisValueBets(rawMatches) {
     const tnp2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? ' tn-pfav' : '';
     return `<div class="tn-vb-row${_tnRowCls}" role="row" data-match-id="${matchId}" data-status="${m._isLive ? 'live' : 'pre'}" aria-expanded="false" ${onclick} style="cursor:pointer;">
 <span class="tn-vb-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
-<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}</div></div></span>
+<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
 <span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
 <span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
 <span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}</span>
