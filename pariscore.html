@@ -19494,7 +19494,7 @@ function renderTennisLive(matches) {
 ${_escTennis(m.status)}
 <div style="display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:2px;">
 ${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${safeId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
-${m.is_live && safeId ? `<button class="tn-stats-btn" onclick="event.stopPropagation();_tnToggleLiveStats('${safeId}')" title="Statistiques live détaillées">📊 STATS</button>` : ''}
+${m.is_live && m.live_stats != null && safeId ? `<button class="tn-stats-btn" onclick="event.stopPropagation();_tnToggleLiveStats('${safeId}')" title="Statistiques live détaillées">📊 STATS</button>` : ''}
 </div>
 </span>
 </div>
