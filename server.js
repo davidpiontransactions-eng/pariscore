@@ -28921,6 +28921,7 @@ async function _buildTennisValueBetsCore({ date }) {
       });
       bsdMatches = _extracted;
       if (!bsdMatches.length) console.warn('  [TennisVB] BSD list HTTP 200 mais 0 match actif → fallback ESPN (slate vide ?)');
+
     } else if (bsd.status !== 503 && bsd.status !== 402) {
       // Vraie erreur upstream BSD (5xx) → propager.
       return { status: bsd.status, body: bsd.body };
@@ -29024,8 +29025,9 @@ async function _buildTennisValueBetsCore({ date }) {
         tournament: _tName,
         surface: m.surface || null,
         round: m.round || null,
-        start_time: m.start_time || m.commence_time || m.scheduled || m.event_date || m.start_date || m.date || null,
+        start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
         status: m.status || null,
+        round: m.round || m.round_name || null,
         player1: m.player1 || { name: p1Name || null },
         player2: m.player2 || { name: p2Name || null },
         odds: null, fair: null, edge: null, best_edge: null,
@@ -29298,14 +29300,15 @@ async function _buildTennisValueBetsCore({ date }) {
       court: m.court || null,
       tour: tourGuess || _tourN || null,
       round: m.round || null,
-      start_time: m.start_time || m.commence_time || m.scheduled || m.event_date || m.start_date || m.date || null,
+      start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
       status: m.status || null,
+      round: m.round || m.round_name || null,
       player1: Object.assign({ name: p1Name }, m.player1 || {}, {
         surf_rank: _p1ss.rk, surf_rank_total: _p1ss.total, surf_form: _p1ss.form,
         l5_pts: _p1ss.l5_pts, l10_pts: _p1ss.l10_pts,
         powerscore: _p1ss.powerscore, ps_rank: _p1ss.ps_rank, ps_total: _p1ss.ps_total,
-        // BUG-03 fix: ATP/WTA ranking from DB
-        rank: _getPlayerRank(p1Name, tourGuess),
+        // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
+        rank: _getPlayerRank(p1Name, tourGuess) ?? (m.player1?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb (p1_surface is {elo, matches, surface} object)
         elo_surface: (eloProb && eloProb.p1_surface && eloProb.p1_surface.elo != null) ? Math.round(eloProb.p1_surface.elo) : null,
       }),
@@ -29313,8 +29316,8 @@ async function _buildTennisValueBetsCore({ date }) {
         surf_rank: _p2ss.rk, surf_rank_total: _p2ss.total, surf_form: _p2ss.form,
         l5_pts: _p2ss.l5_pts, l10_pts: _p2ss.l10_pts,
         powerscore: _p2ss.powerscore, ps_rank: _p2ss.ps_rank, ps_total: _p2ss.ps_total,
-        // BUG-03 fix: ATP/WTA ranking from DB
-        rank: _getPlayerRank(p2Name, tourGuess),
+        // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
+        rank: _getPlayerRank(p2Name, tourGuess) ?? (m.player2?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb
         elo_surface: (eloProb && eloProb.p2_surface && eloProb.p2_surface.elo != null) ? Math.round(eloProb.p2_surface.elo) : null,
       }),
