@@ -93,7 +93,12 @@ function triggerRefresh(tour) {
           console.log(`[cron-rg ${tour}] OK ${ms}ms · ${parsed.draw_size || 0} players · server-ms ${parsed.ms || '?'}`);
           resolve(true);
         } else if (res.statusCode === 200 && parsed && parsed.ok === false) {
-          console.warn(`[cron-rg ${tour}] unavailable ${ms}ms : ${parsed.reason || 'unknown'}`);
+          const extra = [
+            parsed.rounds_found != null ? `rounds=${JSON.stringify(parsed.rounds_found)}` : null,
+            parsed.sample_round_names ? `sample_names=${JSON.stringify(parsed.sample_round_names)}` : null,
+            parsed.count != null ? `count=${parsed.count}` : null,
+          ].filter(Boolean).join(' ');
+          console.warn(`[cron-rg ${tour}] unavailable ${ms}ms : ${parsed.reason || 'unknown'}${extra ? ' · ' + extra : ''}`);
           resolve(false);
         } else {
           console.error(`[cron-rg ${tour}] HTTP ${res.statusCode} ${ms}ms · body: ${body.slice(0, 300)}`);
