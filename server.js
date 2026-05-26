@@ -21628,7 +21628,7 @@ function _buildTennisPowerRankIdx() {
 // Enrichissement d'un joueur : rang surface, forme, L5/L10, PowerScore + rang PS.
 // surface = valeur capitalisée (Hard/Clay/Grass/Carpet) ; null → indicateur neutre.
 function getTennisSurfStats(playerName, tour, surface) {
-  const out = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null,
+  const out = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null,
                 powerscore: null, ps_rank: null, ps_total: null };
   if (!playerName || !tour || !surface || !TENNIS_ELO_SURFACES.includes(surface)) return out;
   const T = String(tour).toUpperCase();
@@ -29254,8 +29254,8 @@ async function _buildTennisValueBetsCore({ date }) {
     } catch (e) { /* signaux S2 omis pour ce match — build continue */ }
 
     // _getPlayerRank is hoisted above the loop (CR-01 fix — was N+1 prepare() per match)
-    let _p1ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
-    let _p2ss = { rk: null, total: null, form: [], l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
+    let _p1ss = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
+    let _p2ss = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
     if (tourGuess && surfaceClean) {
       try {
         _p1ss = getTennisSurfStats(p1Name, tourGuess, surfaceClean);
@@ -32009,7 +32009,7 @@ async function fetchWeatherForMatch(match) {
 }
 
 // bd 82th — BSD Phase 4 fetchers per-id (referees + venues + leagues). Cache plus long.
-const BSD_REFEREE_TTL = 6 * 3600 * 1000;
+const BSD_REFEREE_TTL = 24 * 3600 * 1000; // career stats consolidated (Bzzoiro v2 — stable)
 const BSD_VENUE_TTL = 12 * 3600 * 1000;
 const BSD_LEAGUE_TTL = 24 * 3600 * 1000;
 const _bsdRefereeCache = new Map();   // id -> {data, ts}
@@ -32033,6 +32033,57 @@ async function bsdFetchById(kind, id) {
   }
   cache.set(String(id), { data: res.data, ts: now });
   return { data: res.data, cached: false };
+}
+
+// BSD v2 — event-level referee cache (5min — handles last-minute swap per Bzzoiro announcement)
+const _bsdEventRefCache = new Map();
+const BSD_EVENT_REF_TTL = 5 * 60 * 1000;
+
+// Fetches live referee from /api/v2/events/{id}/ then career profile from /api/v2/referees/{id}/.
+// Returns normalized object {id, name, country, country_code, games, yc_total, rc_total, yc_per_game, rc_per_game}.
+async function fetchBSDRefereeForMatch(match) {
+  const eid = match._bsd_event_id ? String(match._bsd_event_id) : null;
+  if (!eid) return null;
+  const cKey = `ev_ref_${eid}`;
+  const cached = _bsdEventRefCache.get(cKey);
+  if (cached && (Date.now() - cached.ts) < BSD_EVENT_REF_TTL) return cached.data;
+  try {
+    const evRes = await bsdFetch(`/api/v2/events/${eid}/`);
+    const ev = evRes?.data;
+    if (!ev) return null;
+    const refObj = typeof ev.referee === 'object' && ev.referee !== null ? ev.referee : null;
+    const refId = refObj?.id != null ? String(refObj.id) : null;
+    const refName = refObj?.name || (typeof ev.referee === 'string' ? ev.referee : null);
+    if (!refName && !refId) return null;
+    let profile = null;
+    if (refId) {
+      const { data } = await bsdFetchById('referee', refId);
+      profile = data;
+    }
+    // Normalise across possible BSD v2 response shapes
+    const games   = profile?.matches ?? profile?.statistics?.matches ?? profile?.games ?? null;
+    const ycTotal = profile?.yellowCards ?? profile?.statistics?.yellowCards ?? profile?.yellow_cards ?? null;
+    const rcTotal = profile?.redCards ?? profile?.statistics?.redCards ?? profile?.red_cards ?? null;
+    const ycPG    = games && ycTotal != null ? Math.round((ycTotal / games) * 10) / 10
+                  : (profile?.yellowCardsPerGame ?? profile?.yc_per_game ?? null);
+    const rcPG    = games && rcTotal != null ? Math.round((rcTotal / games) * 100) / 100
+                  : (profile?.redCardsPerGame ?? profile?.rc_per_game ?? null);
+    const result = {
+      id:           refId,
+      name:         refName || profile?.name || null,
+      country:      refObj?.country || profile?.country || null,
+      country_code: (refObj?.country_code || profile?.country_code || '').toLowerCase() || null,
+      games,
+      yc_total: ycTotal,
+      rc_total: rcTotal,
+      yc_per_game: ycPG,
+      rc_per_game: rcPG,
+    };
+    _bsdEventRefCache.set(cKey, { data: result, ts: Date.now() });
+    return result;
+  } catch (_) {
+    return null;
+  }
 }
 
 // bd ueg0 — Sentiment heuristique léger sur texte tweet/news. Pas d'ML : keyword scoring rapide.
@@ -32726,6 +32777,11 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         sofascore_editorial: (typeof getSofascoreEditorial === 'function') ? getSofascoreEditorial(match) : null,
         // bd qm6a Plan D — Sofascore venue + referee (alt 82th BSD Phase 4)
         sofascore_venue_referee: (typeof getSofascoreVenueReferee === 'function') ? getSofascoreVenueReferee(match) : null,
+        // BSD v2 — live referee profile (event swap + consolidated career stats)
+        bsd_referee_profile: await (async () => {
+          try { return await fetchBSDRefereeForMatch(match); }
+          catch (_) { return null; }
+        })(),
         // bd qm6a Plan E — Flashscore live stats fallback (BSD/ESPN HS scenario)
         flashscore_live_stats: (typeof getFlashscoreLiveStats === 'function') ? getFlashscoreLiveStats(match) : null,
         // bd 82th — BSD Phase 4 enrichissement Contexte (referee + venue + league via IDs match)

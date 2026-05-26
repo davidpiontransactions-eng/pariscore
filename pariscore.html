@@ -20583,13 +20583,15 @@ function _tnApplySnapshot(target, snap) {
   if (snap._p1Power && target.player1) {
     for (var p1k in snap._p1Power) {
       if (!Object.prototype.hasOwnProperty.call(snap._p1Power, p1k)) continue;
-      if (target.player1[p1k] == null && snap._p1Power[p1k] != null) target.player1[p1k] = snap._p1Power[p1k];
+      var _v1 = target.player1[p1k];
+      if ((_v1 == null || (Array.isArray(_v1) && !_v1.length)) && snap._p1Power[p1k] != null) target.player1[p1k] = snap._p1Power[p1k];
     }
   }
   if (snap._p2Power && target.player2) {
     for (var p2k in snap._p2Power) {
       if (!Object.prototype.hasOwnProperty.call(snap._p2Power, p2k)) continue;
-      if (target.player2[p2k] == null && snap._p2Power[p2k] != null) target.player2[p2k] = snap._p2Power[p2k];
+      var _v2 = target.player2[p2k];
+      if ((_v2 == null || (Array.isArray(_v2) && !_v2.length)) && snap._p2Power[p2k] != null) target.player2[p2k] = snap._p2Power[p2k];
     }
   }
   return target;
