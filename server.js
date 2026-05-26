@@ -17629,6 +17629,7 @@ async function handleAPI(req, res, pathname, query) {
         ) : null,
         notes: m.notes,
         start_time: m.start_time,
+        live_stats: m._bsd_stats || null,
         last_update_ts: m.last_update_ts
       }));
       res.writeHead(200, {
@@ -28931,26 +28932,35 @@ async function _fetchTTOopForTournament(tournName) {
   if (!url) return null;
   const cached = _ttOopCache.get(url);
   if (cached && Date.now() - cached.ts < _TT_OOP_TTL) return cached.map;
-  try {
-    const res = await httpsGet(url, {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
-      'Cache-Control': 'no-cache',
-    }, 15000);
-    if (res.status === 200) {
-      const map = _parseTTOopHtml(res.body);
+  // Node.js TLS fingerprint (JA3) is blocked by TennisTemple WAF — same pattern as aiscore.
+  // Use execFile curl (already imported) which passes with OpenSSL + browser headers.
+  return new Promise(resolve => {
+    const { execFile: _ef } = require('child_process');
+    _ef('curl', [
+      '-sS', '--compressed', '--max-time', '20',
+      '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      '-H', 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      '-H', 'Accept-Language: fr-FR,fr;q=0.9',
+      '-H', 'Sec-Fetch-Mode: navigate',
+      '-H', 'Sec-Fetch-Site: none',
+      '-H', 'Sec-Fetch-Dest: document',
+      url,
+    ], { maxBuffer: 4 * 1024 * 1024, timeout: 22000 }, (err, stdout) => {
+      if (err && !stdout) {
+        console.warn(`  [TT-OOP] curl error: ${err.message}`);
+        return resolve(cached ? cached.map : null);
+      }
+      const html = String(stdout || '');
+      if (html.length < 500) {
+        console.warn(`  [TT-OOP] réponse vide/courte (${html.length}B) — ${url}`);
+        return resolve(cached ? cached.map : null);
+      }
+      const map = _parseTTOopHtml(html);
       _ttOopCache.set(url, { ts: Date.now(), map });
-      console.log(`  [TT-OOP] ✓ ${map.size} joueurs courts pour "${normT}"`);
-      return map;
-    }
-    console.warn(`  [TT-OOP] HTTP ${res.status} — ${url}`);
-    if (cached) return cached.map;
-  } catch (e) {
-    console.warn(`  [TT-OOP] fetch error: ${e.message}`);
-    if (cached) return cached.map;
-  }
-  return null;
+      console.log(`  [TT-OOP] ✓ ${map.size} joueurs/courts pour "${normT}"`);
+      resolve(map);
+    });
+  });
 }
 
 function _ttLookupCourt(map, ...playerNames) {
