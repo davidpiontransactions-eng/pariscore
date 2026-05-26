@@ -180,7 +180,35 @@
       "Bash(awk -F: '{ if \\($1+0 > 9100 && $1+0 < 9230\\) print }')",
       "Bash(pip list *)",
       "Bash(python scripts/sofa-microservice.py)",
-      "WebFetch(domain:www.gambling-affiliation.com)"
+      "WebFetch(domain:www.gambling-affiliation.com)",
+      "Bash(awk 'NR>=23280 && NR<=24700 && /jsonResponse.*404|return.*404|res\\\\.writeHead\\\\\\(404/' server.js)",
+      "Bash(claude rc *)",
+      "Bash(git log *)",
+      "WebFetch(domain:tennisabstract.com)",
+      "Bash(rtk wc *)",
+      "Bash(rtk grep *)",
+      "Bash(cd /d \"C:\\\\Users\\\\david\\\\Documents\\\\dev PariScore\\\\ParisScorebis\")",
+      "Bash(rtk git *)",
+      "Bash(rtk git commit -m 'feat\\(tennis\\): WElo \\(Weighted Elo\\) integration — Kovalchik model *)",
+      "Bash(rtk bd *)",
+      "Bash(grep -E \"\\\\.\\(md|json|js\\)$\")",
+      "Bash(rtk ls *)",
+      "Bash(rtk read *)",
+      "Read(//home/ubuntu/**)",
+      "Bash(pm2 logs *)",
+      "Bash(npm start *)",
+      "Bash(rtk curl *)",
+      "Bash(awk '/^async function fetchOdds/,/^async function [a-zA-Z]/ {print NR\": \"$0}' server.js)",
+      "Bash(grep -v \"//\\\\|^\\\\s*//\")",
+      "Bash(ssh ubuntu@pariscore.fr \"cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore && echo 'DEPLOY OK'\")",
+      "Bash(bd remember *)",
+      "mcp__bzzoiro-sports__get_live_scores",
+      "mcp__bsd-sports__get_match_incidents",
+      "mcp__bsd-sports__get_match_shotmap",
+      "Bash(ssh -o ConnectTimeout=10 ubuntu@vps-pariscore 'cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore && pm2 logs pariscore --lines 30 --nostream')"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\david\\Documents\\dev PariScore\\ParisScorebis"
     ]
   }
 }

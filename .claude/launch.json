@@ -11,5 +11,6 @@
         "SKIP_BOOT_FETCHSTATS": "1"
       }
     }
-  ]
+  ],
+  "autoVerify": true
 }

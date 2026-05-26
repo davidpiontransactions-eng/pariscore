@@ -24371,6 +24371,7 @@ async function _fetchTTOopForTournament(tournName) {
       '-H', 'Sec-Fetch-Dest: document',
       url,
     ], { maxBuffer: 4 * 1024 * 1024, timeout: 22000 }, (err, stdout) => {
+      _ttOopInFlight.delete(url); // release in-flight slot
       if (err && !stdout) {
         console.warn(`  [TT-OOP] curl error: ${err.message}`);
         return resolve(cached ? cached.map : null);
@@ -24386,6 +24387,8 @@ async function _fetchTTOopForTournament(tournName) {
       resolve(map);
     });
   });
+  _ttOopInFlight.set(url, _p);
+  return _p;
 }
 
 function _ttLookupCourt(map, ...playerNames) {
