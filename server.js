@@ -5459,7 +5459,7 @@ function sanityCheckTeamStats() {
   const issues = [];
   for (const [key, stats] of Object.entries(db.teamStats || {})) {
     if (!stats || typeof stats !== 'object') { issues.push(`${key}: invalid entry (not object)`); continue; }
-    if (stats._real && !stats.rank) issues.push(`${key}: rank=0 (marked real data)`);
+    if (stats._real && stats.rank === 0) issues.push(`${key}: rank=0 (marked real data, API returned explicit 0)`);
     const homeStats = stats.home || {};
     const awayStats = stats.away || {};
     if (homeStats.ppg === 0 && homeStats.played > 5) issues.push(`${key}: home PPG=0 but played=${homeStats.played}`);
@@ -5674,6 +5674,17 @@ function loadDB() {
   } catch (e) {
     console.warn('  [SANITIZE] erreur:', e.message);
   }
+
+  // ─── One-shot rank=0 cleanup ─────────────────────────────────────────────
+  // API-Football returns rank=0 for some end-of-season entries; that corrupt
+  // value was persisted before the guard was added. Nullify on load so the
+  // sanity checker stops firing and Poisson ranking logic gets null (= unknown)
+  // instead of a misleading 0.
+  let rankZeroFixed = 0;
+  for (const k of Object.keys(db.teamStats)) {
+    if (db.teamStats[k]?.rank === 0) { db.teamStats[k].rank = null; rankZeroFixed++; }
+  }
+  if (rankZeroFixed) console.warn(`  [SANITIZE] ${rankZeroFixed} rank=0 entries nullified on load`);
 
   console.log(`  ✓ SQLite chargé (${db.matches.length} matchs, ${Object.keys(db.teamStats).length} équipes, ${Object.keys(db.advancedTeamStats).length} stats avancées)`);
   syncCacheBuffers(); // Populate buffers from SQLite on startup
@@ -14726,7 +14737,7 @@ async function fetchStats(force = false) {
               db.teamStats[key] = {
                 home: homeStats,
                 away: awayStats,
-                rank: entry.rank,
+                rank: (entry.rank != null && entry.rank > 0) ? entry.rank : (db.teamStats[key]?.rank || null),
                 form: entry.form || '',
                 teamId: entry.team.id,
                 leagueId: lid,
