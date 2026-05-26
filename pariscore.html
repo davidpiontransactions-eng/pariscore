@@ -19385,7 +19385,10 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-point">${_escTennis(point)}</span></span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;padding:6px 4px;">${_tnBppiCell(m)}</span>
-<span class="tn-live-cell ${_tennisStatusClass(m)}" role="cell" style="justify-content:center;">${_escTennis(m.status)}</span>
+<span class="tn-live-cell ${_tennisStatusClass(m)}" role="cell" style="justify-content:center;flex-direction:column;gap:3px;">
+${_escTennis(m.status)}
+${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${safeId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
+</span>
 </div>`;
   }).join('');
 }
