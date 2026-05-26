@@ -15047,6 +15047,10 @@ function _paintBracket(el,data){
   .tn-drawer-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
   @media (max-width:900px) { .tn-drawer-grid { grid-template-columns:repeat(2,1fr); } }
   .tn-drawer-section h4 { font-size:10px; color:var(--text3,#5a6068); text-transform:uppercase; letter-spacing:0.5px; margin:0 0 6px; font-family:'DM Mono',monospace; }
+  .tn-yt-container { position:relative; width:100%; padding-top:56.25%; aspect-ratio:16/9; border-radius:8px; overflow:hidden; background:var(--bg,#0a0d0f); box-shadow:0 4px 24px rgba(0,0,0,0.45); margin-top:4px; }
+  .tn-yt-iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:8px; }
+  .tn-yt-error { display:none; position:absolute; top:0; left:0; width:100%; height:100%; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:var(--text3,#5a6068); font-size:11px; font-family:'DM Mono',monospace; text-align:center; }
+  .tn-yt-error svg { opacity:.4; }
   /* Live grid — 11 columns */
   .tn-live-grid { display:flex; flex-direction:column; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; background:var(--bg2,#111417); }
   .tn-live-header-row, .tn-live-row {
@@ -19302,6 +19306,19 @@ function _tnExpandDrawer(matchId) {
   if (btn) btn.classList.add('open');
 }
 
+// Converts any YouTube watch/short URL to embed URL. Returns null if invalid.
+function _getYouTubeEmbedUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const t = url.trim();
+  const watchMatch = t.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+  if (watchMatch) return 'https://www.youtube.com/embed/' + watchMatch[1];
+  const shortMatch = t.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+  if (shortMatch) return 'https://www.youtube.com/embed/' + shortMatch[1];
+  const embedMatch = t.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/);
+  if (embedMatch) return 'https://www.youtube.com/embed/' + embedMatch[1];
+  return null;
+}
+
 // Renders full detail content inside an open drawer
 function _tnRenderDrawerContent(m) {
   const sm = m.set_model;
@@ -19318,6 +19335,19 @@ function _tnRenderDrawerContent(m) {
   const eloP2 = elo?.p2_elo ?? null;
   const p1Fav = (eloP1 != null && eloP2 != null && eloP1 > eloP2);
   const p2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1);
+  const ytUrl = _getYouTubeEmbedUrl(m.youtube_url);
+  const ytSection = ytUrl
+    ? `<div class="tn-drawer-section" style="grid-column:1/-1">
+<h4>📺 Dernier Match · Highlights</h4>
+<div class="tn-yt-container">
+<iframe class="tn-yt-iframe" src="${ytUrl}" frameborder="0" loading="eager"
+  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen title="Highlights — ${_escTennis(p1Name)} vs ${_escTennis(p2Name)}"
+  onerror="this.style.display='none';const e=this.nextElementSibling;if(e)e.style.display='flex'"></iframe>
+<div class="tn-yt-error"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><span>Vidéo non disponible</span></div>
+</div>
+</div>`
+    : '';
   return `<div class="tn-drawer-grid">
 <div class="tn-drawer-section"><h4>Score Sets</h4>${_tvbSetsMergedCell(m.predictions?.set_probs, m.predictions?.at_least_one_set, p1Name, p2Name, p1Fav, p2Fav)}</div>
 <div class="tn-drawer-section"><h4>Forme / Power</h4>${_tvbPowerFormCell(m.player1, m.player2)}</div>
@@ -19329,6 +19359,7 @@ function _tnRenderDrawerContent(m) {
 <div class="tn-drawer-section"><h4>Marché + Conf.</h4>${_tvbMarketCell(odds, bestEv)}${_tvbConfEdge(m.conf_edge)}${_tvbConfCell(elo, m.log_diff)}</div>
 <div class="tn-drawer-section"><h4>Alerte IA</h4>${aiBtn}</div>
 ${(m.is_live && m.live_stats != null) ? `<div class="tn-drawer-section" style="grid-column:1/-1"><h4>📊 Stats Live</h4>${_tnRenderLiveStatsTable(m)}</div>` : ''}
+${ytSection}
 </div>`;
 }
 
