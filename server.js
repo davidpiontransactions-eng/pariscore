@@ -28889,6 +28889,88 @@ function _canonTennisName(name, tour) {
   return out;
 }
 
+// ── TennisTemple Order-of-Play scraper ──────────────────────────────────────
+// Fetches court assignments for Grand Slams / configured tournaments.
+// SSR'd HTML, no JSON API. Cache 45min. Zero-dep regex parse.
+const _TT_OOP_URLS = {
+  'roland garros': 'https://fr.tennistemple.com/competition/roland-garros-2026/77149/orderofplay',
+};
+const _TT_OOP_TTL = 45 * 60 * 1000;
+const _ttOopCache = new Map(); // url → { ts, map: Map<normalizedKey, courtName> }
+
+function _parseTTOopHtml(html) {
+  // Builds Map: normalized player key → court name.
+  // TT format: class="court no-map">Court Philippe Chatrier<  and  class="name">Sabalenka A<
+  const result = new Map();
+  let currentCourt = null;
+  const re = /class="court[^"]*">([^<]+)<|class="name">([^<]+)</g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    if (m[1] !== undefined) {
+      currentCourt = m[1].trim();
+    } else if (m[2] !== undefined && currentCourt) {
+      const raw = m[2].trim();
+      const norm = raw.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+      const parts = norm.split(/\s+/);
+      // "Sabalenka A" → key "sabalenka"; "De Minaur A" → "de minaur"
+      const nameKey = parts.length > 1 ? parts.slice(0, -1).join(' ') : norm;
+      result.set(nameKey, currentCourt);
+      result.set(norm, currentCourt); // full string fallback
+    }
+  }
+  return result;
+}
+
+async function _fetchTTOopForTournament(tournName) {
+  if (!tournName) return null;
+  const normT = String(tournName).toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  let url = null;
+  for (const [key, val] of Object.entries(_TT_OOP_URLS)) {
+    if (normT.includes(key) || key.includes(normT)) { url = val; break; }
+  }
+  if (!url) return null;
+  const cached = _ttOopCache.get(url);
+  if (cached && Date.now() - cached.ts < _TT_OOP_TTL) return cached.map;
+  try {
+    const res = await httpsGet(url, {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      'Cache-Control': 'no-cache',
+    }, 15000);
+    if (res.status === 200) {
+      const map = _parseTTOopHtml(res.body);
+      _ttOopCache.set(url, { ts: Date.now(), map });
+      console.log(`  [TT-OOP] ✓ ${map.size} joueurs courts pour "${normT}"`);
+      return map;
+    }
+    console.warn(`  [TT-OOP] HTTP ${res.status} — ${url}`);
+    if (cached) return cached.map;
+  } catch (e) {
+    console.warn(`  [TT-OOP] fetch error: ${e.message}`);
+    if (cached) return cached.map;
+  }
+  return null;
+}
+
+function _ttLookupCourt(map, ...playerNames) {
+  if (!map || !map.size) return null;
+  for (const rawName of playerNames) {
+    if (!rawName) continue;
+    const norm = String(rawName).toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    const parts = norm.split(/\s+/);
+    // Try progressively shorter prefixes (last name first): "aryna sabalenka" → "sabalenka"
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const candidate = parts.slice(i).join(' ');
+      if (candidate.length < 3) continue;
+      if (map.has(candidate)) return map.get(candidate);
+    }
+    if (map.has(norm)) return map.get(norm);
+  }
+  return null;
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 async function _buildTennisValueBetsCore({ date }) {
   const dateClean = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   let bsdMatches = [];
@@ -28950,7 +29032,7 @@ async function _buildTennisValueBetsCore({ date }) {
       id: m.id,
       tournament: m.tournament || null,
       surface: null,
-      court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || null,
+      court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || (m.round_name && !/^(round|quart|semi|final|r\d+|qf|sf|1st|2nd|3rd|4th)/i.test(String(m.round_name).trim()) ? m.round_name : null) || null,
       tour: m.tour || null,
       round: m.round || null,
       start_time: m.start_time || null,
@@ -29001,6 +29083,22 @@ async function _buildTennisValueBetsCore({ date }) {
       if (!row) return null;
       return tour === 'WTA' ? (row.wta_rank || null) : (row.atp_rank || null);
     } catch (_) { return null; }
+  };
+
+  // Pre-fetch TennisTemple court maps for all tournaments in this batch (cached 45min).
+  const _ttAllMaps = [];
+  try {
+    const _uniqueTournaments = [...new Set(bsdMatches.map(m =>
+      (m.tournament && typeof m.tournament === 'object') ? (m.tournament.name || '') : (m.tournament || '')
+    ).filter(Boolean))];
+    for (const t of _uniqueTournaments) {
+      const tm = await _fetchTTOopForTournament(t);
+      if (tm && tm.size) _ttAllMaps.push(tm);
+    }
+  } catch (_) {}
+  const _ttLookupAll = (...names) => {
+    for (const m of _ttAllMaps) { const r = _ttLookupCourt(m, ...names); if (r) return r; }
+    return null;
   };
 
   const enriched = [];
@@ -29296,7 +29394,7 @@ async function _buildTennisValueBetsCore({ date }) {
       tournament: _tName,
       surface: surfaceClean || _surfN || null,
       surface_source: surfaceSource,
-      court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || null,
+      court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || (m.round_name && !/^(round|quart|semi|final|r\d+|qf|sf|1st|2nd|3rd|4th)/i.test(String(m.round_name).trim()) ? m.round_name : null) || _ttLookupAll(p1Name, p2Name) || null,
       tour: tourGuess || _tourN || null,
       start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
       status: m.status || null,

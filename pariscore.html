@@ -14985,8 +14985,8 @@ function _paintBracket(el,data){
   .tn-vb-thead { background:var(--bg3,#181c20); border-bottom:1px solid var(--border,rgba(255,255,255,0.07)); }
   .tn-vb-header-row, .tn-vb-row {
     display:grid;
-    grid-template-columns: 32px 210px 180px 200px 100px 100px 115px 32px;
-    min-width:969px; align-items:center;
+    grid-template-columns: 32px 290px 180px 200px 100px 100px 115px 32px;
+    min-width:1049px; align-items:center;
   }
   .tn-vb-header-row { padding:2px 0; }
   .tn-vb-row { border-bottom:1px solid var(--border,rgba(255,255,255,0.05)); transition:background 90ms; cursor:pointer; }
@@ -15034,6 +15034,9 @@ function _paintBracket(el,data){
   .tn-fav-pin-hdr { display:block; padding:5px 12px; background:rgba(255,180,0,0.07); border-bottom:1.5px solid rgba(255,180,0,0.28); border-top:1px solid rgba(255,255,255,0.05); font-family:'DM Mono',monospace; font-size:11px; font-weight:800; color:var(--amber,#ffa726); letter-spacing:0.05em; }
   @keyframes tn-pin-flash { 0%{background:rgba(255,180,0,0.18)} 100%{background:rgba(255,180,0,0.04)} }
   .tn-pinned-fav { background:rgba(255,180,0,0.04) !important; animation:tn-pin-flash 0.55s ease-out; }
+  /* Court planning headers */
+  .tn-tourn-hdr { display:block; padding:8px 14px; background:rgba(0,230,118,0.04); border-top:2px solid rgba(0,230,118,0.2); border-bottom:1px solid rgba(0,230,118,0.1); font-family:'DM Mono',monospace; font-size:12px; font-weight:800; color:rgba(0,230,118,0.72); letter-spacing:0.04em; text-transform:uppercase; }
+  .tn-court-hdr { display:block; padding:5px 14px 5px 26px; background:rgba(41,182,246,0.05); border-bottom:1px solid rgba(41,182,246,0.15); border-top:1px solid rgba(41,182,246,0.1); font-family:'DM Mono',monospace; font-size:11px; font-weight:700; color:rgba(41,182,246,0.8); letter-spacing:0.06em; }
   .tn-expand-btn { background:none; border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:11px; color:var(--text3,#5a6068); padding:3px 5px; min-width:24px; min-height:44px; border-radius:4px; transition:color 150ms,transform 150ms; }
   .tn-expand-btn:hover { color:var(--text,#e8eaed); border-color:rgba(255,255,255,0.25); }
   .tn-expand-btn.open { color:var(--green,#00e676); transform:rotate(90deg); }
@@ -21150,7 +21153,18 @@ function renderTennisValueBets(rawMatches) {
   // Hook : enrich rows with TA Elo tooltips + surface badges après render (UC-1+UC-2)
   setTimeout(() => { try { enrichTennisVbWithTA(); } catch (_) {} }, 50);
 
+  // Court planning: inject tournament+court section headers at group boundaries.
+  const _tnTK = m => typeof m.tournament === 'object' ? (m.tournament?.name || m.tournament?.short_name || '') : String(m.tournament || '');
+  const _tnCK = m => _tnTK(m) + '\x00' + String(m.court || '');
+  const _tnTHdr = m => { const n = _escTennis(_tnTK(m)); const s = m.surface ? ' · ' + _escTennis(m.surface) : ''; return n ? `<div class="tn-tourn-hdr">${n}${s}</div>` : ''; };
+  const _tnCHdr = m => m.court ? `<div class="tn-court-hdr">🏟️ ${_escTennis(String(m.court))}</div>` : '';
+  let _ptk = null, _pck = null;
   tbody.innerHTML = (_tvbFavCount ? `<div class="tn-fav-pin-hdr">★ MES FAVORIS (${_tvbFavCount})</div>` : '') + filtered.slice(0, 200).map(m => { try {
+    const _isFav = typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id));
+    const _ctk = _tnTK(m), _cck = _tnCK(m);
+    const _tHdr = (!_isFav && _ctk !== _ptk) ? _tnTHdr(m) : '';
+    const _cHdr = (!_isFav && _cck !== _pck) ? _tnCHdr(m) : '';
+    if (!_isFav) { _ptk = _ctk; _pck = _cck; }
     const elo = m.predictions?.elo;
     const blended = m.predictions?.blended;
     const odds = m.odds;
@@ -21230,7 +21244,7 @@ function renderTennisValueBets(rawMatches) {
     const ariaLbl = _escTennis((m.player1?.name || '') + ' vs ' + (m.player2?.name || ''));
     const tnp1Fav = (eloP1 != null && eloP2 != null && eloP1 > eloP2) ? ' tn-pfav' : '';
     const tnp2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? ' tn-pfav' : '';
-    return `<div class="tn-vb-row${_tnRowCls}" role="row" data-match-id="${matchId}" data-status="${m._isLive ? 'live' : 'pre'}" aria-expanded="false" ${onclick} style="cursor:pointer;">
+    return _tHdr + _cHdr + `<div class="tn-vb-row${_tnRowCls}" role="row" data-match-id="${matchId}" data-status="${m._isLive ? 'live' : 'pre'}" aria-expanded="false" ${onclick} style="cursor:pointer;">
 <span class="tn-vb-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
 <span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
