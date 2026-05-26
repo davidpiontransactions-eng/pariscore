@@ -31985,6 +31985,7 @@ if (pathname.startsWith('/api/v1/bsd/transfers/') && req.method === 'GET') {
 // Safe-fail: retourne 200 + data:null si BSD upstream KO (UI affiche placeholder).
 // bd 3vn — TTL lookup via getCacheTTL (cache_profiles.json + env override).
 // Fallbacks hardcoded préservés pour ZÉRO régression si profile.json absent.
+const DEBUG_BSD = !!process.env.DEBUG_BSD;
 const BSD_ENRICH_TTL = new Proxy({}, {
   get(_t, kind) {
     switch (kind) {
@@ -32043,8 +32044,10 @@ async function _bsdEnrichFetch(kind, eventId) {
     case 'clips':       endpoint = `/v2/events/${eventId}/clips/`; break;
     default: throw new Error(`unknown bsd kind: ${kind}`);
   }
+  if (DEBUG_BSD) console.log(`[DEBUG COMPOS] Request URL: ${endpoint} (kind=${kind}, eventId=${eventId})`);
   const res = await bsdFetch(endpoint);
   if (!res || res.status !== 200 || !res.data) {
+    if (DEBUG_BSD) console.log(`[DEBUG COMPOS] BSD upstream returned status=${res?.status} for ${endpoint}`);
     apiCacheSet(cacheKey, '__NEG__', `bsd_${kind}`, ttl);
     return { data: null, cached: false };
   }
@@ -32422,7 +32425,12 @@ for (const kind of BSD_ENRICH_PATHS) {
     const rawId = decodeURIComponent(pathname.slice(prefix.length)).trim();
     const eventId = _bsdResolveEventId(rawId);
     if (!eventId) {
-      return jsonResponse(res, 400, { error: 'bad_match_id', message: `Aucun _bsd_event_id résolu pour matchId="${rawId}"` });
+      if (DEBUG_BSD) console.log(`[DEBUG COMPOS] No _bsd_event_id resolved for matchId="${rawId}" (kind=${kind}) — returning empty`);
+      return jsonResponse(res, 200, {
+        source: 'bsd', kind, event_id: null,
+        data: { lineup_status: 'no_bsd_event_id' },
+        cached: false, fetched_at: new Date().toISOString(),
+      });
     }
     try {
       const { data, cached } = await _bsdEnrichFetch(kind, eventId);

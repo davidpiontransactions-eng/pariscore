@@ -28942,7 +28942,10 @@ async function buildBsdCompos(matchId) {
   el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement compositions BSD…</div>';
   try {
     const res = await apiFetch(`/api/v1/bsd/lineups/${encodeURIComponent(matchId)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      el.innerHTML = `<div class="ins-empty" style="padding:40px 16px;text-align:center;color:var(--text3)"><div style="font-size:32px;margin-bottom:12px">🏟️</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Compositions à venir</div><div style="font-size:11px">Disponibles ~60 min avant coup d'envoi</div></div>`;
+      return;
+    }
     const out = await res.json();
     const d = out.data || {};
     if (!d.lineups) {
@@ -29012,7 +29015,10 @@ async function buildBsdIncidents(matchId, autoRefresh) {
   }
   try {
     const res = await apiFetch(`/api/v1/bsd/incidents/${encodeURIComponent(matchId)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      if (!el.dataset.loaded) el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)"><div style="font-size:24px;margin-bottom:8px">📋</div>Timeline incidents indisponible</div>`;
+      return;
+    }
     const out = await res.json();
     const d = out.data || {};
     const incidents = Array.isArray(d.incidents) ? d.incidents : [];
@@ -29112,7 +29118,10 @@ async function buildBsdShotmap(matchId) {
   el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement shotmap BSD…</div>';
   try {
     const res = await apiFetch(`/api/v1/bsd/shotmap/${encodeURIComponent(matchId)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)"><div style="font-size:24px;margin-bottom:8px">🎯</div>Shotmap indisponible pour ce match</div>`;
+      return;
+    }
     const out = await res.json();
     const d = out.data || {};
     const stats = d.stats || {};
@@ -31118,6 +31127,21 @@ async function openInsights(matchId) {
   if (!m) return;
 
   insCurrentMatchId = matchId;
+
+  // Rec W3 — masquer onglets BSD si match hors couverture BSD (ESPN/API-Football sans _bsd_event_id)
+  const _hasBsd = /^bsd_\d+/.test(matchId) || !!m._bsd_event_id;
+  (function _toggleBsdTabs(show) {
+    const bsdKinds = ['compos','incidents','shotmap'];
+    document.querySelectorAll('.ins-tab').forEach(el => {
+      const mc = (el.getAttribute('onclick') || '').match(/insShowTab\('(\w+)'\)/);
+      if (mc && bsdKinds.includes(mc[1])) el.style.display = show ? '' : 'none';
+    });
+    const sel = document.getElementById('ins-tab-mob');
+    if (sel) bsdKinds.forEach(v => {
+      const opt = sel.querySelector(`option[value="${v}"]`);
+      if (opt) { opt.disabled = !show; opt.hidden = !show; }
+    });
+  })(_hasBsd);
 
   const insLiveScore = m.live_score ? ` 🔴 ${m.live_score}${m.live_minute ? ` (${m.live_minute}′)` : ''}` : '';
   const insIntensity = (m.live_score && m.live_intensity != null)
