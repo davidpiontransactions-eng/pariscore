@@ -357,7 +357,10 @@ function main() {
   ];
   try {
     const existingCols = new Set(db.prepare(`PRAGMA table_info(tennis_matches_internal)`).all().map(c => c.name));
+    const SAFE_COL = /^[a-z_][a-z0-9_]*$/i;
+    const SAFE_TYPES = new Set(['INTEGER', 'TEXT', 'REAL', 'NUMERIC', 'BLOB']);
     for (const [name, type] of altCols) {
+      if (!SAFE_COL.test(name) || !SAFE_TYPES.has(type)) continue; // guard against injection
       if (!existingCols.has(name)) db.exec(`ALTER TABLE tennis_matches_internal ADD COLUMN ${name} ${type}`);
     }
   } catch (e) { console.warn('[etl] ALTER serve cols failed:', e.message); }
