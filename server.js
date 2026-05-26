@@ -29024,7 +29024,7 @@ async function _buildTennisValueBetsCore({ date }) {
         tournament: _tName,
         surface: m.surface || null,
         round: m.round || null,
-        start_time: m.start_time || m.commence_time || null,
+        start_time: m.start_time || m.commence_time || m.scheduled || m.event_date || m.start_date || m.date || null,
         status: m.status || null,
         player1: m.player1 || { name: p1Name || null },
         player2: m.player2 || { name: p2Name || null },
@@ -29298,7 +29298,7 @@ async function _buildTennisValueBetsCore({ date }) {
       court: m.court || null,
       tour: tourGuess || _tourN || null,
       round: m.round || null,
-      start_time: m.start_time || m.commence_time || null,
+      start_time: m.start_time || m.commence_time || m.scheduled || m.event_date || m.start_date || m.date || null,
       status: m.status || null,
       player1: Object.assign({ name: p1Name }, m.player1 || {}, {
         surf_rank: _p1ss.rk, surf_rank_total: _p1ss.total, surf_form: _p1ss.form,
