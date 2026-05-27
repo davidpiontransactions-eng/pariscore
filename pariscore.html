@@ -20427,69 +20427,124 @@ function _tvbMlDiv(d) {
   return '<div title="Divergence proba ML BSD vs marché dévigé (P1) — signal value secondaire" style="font-size:9px;color:#29b6f6;margin-top:2px;font-weight:700;">MLΔ ' + s + d.p1 + 'pt</div>';
 }
 
-// ── SPS (Surface PowerScore) cell — bd q1w5 task #4 ──────────────────────────
-// Lazy-hydrated chip rendered alongside the Elo minibar. Pre-render = neutral
-// placeholder; one fetch /api/v1/sps/:matchId per visible match populates both
-// player scores. Client-side cache prevents re-fetch when the user scrolls back.
-var _spsCache = new Map();      // matchId → { p1: {sps, confidence_full}, p2: {...} }
-var _spsInFlight = new Set();   // matchId currently being fetched
+// ── SPS (Surface PowerScore) cell — bd q1w5 tasks #4 + R1/W2/W3/W4/W5 fixes ──
+// Pre-render = neutral placeholder; the hydrator batches all visible match IDs
+// into a single /api/v1/sps?ids=m1,m2,... fetch (R1), then paints each cell by
+// data attribute. Cache has TTL (W2). innerHTML insertions go through an HTML
+// escape helper (W3). DOM lookup uses dataset filter instead of a brittle CSS
+// attribute-equals selector (W5). Observability stats exposed on window (R5).
+var _SPS_CACHE_TTL_MS = 6 * 3600 * 1000;  // 6h — matches cron 12h schedule margin
+var _spsCache = new Map();      // matchId → { ts, payload: {p1, p2} | null }
+var _spsInFlight = new Set();   // matchId currently in a batch
+window.__spsStats = window.__spsStats || { hits: 0, miss_fetched: 0, fetched_total: 0, batches: 0, errors: 0, failed_fetches: 0 };
+
+function _spsEsc(s) {
+  // Minimal HTML escape — used for any user-derived string going into innerHTML.
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function _spsCacheGet(mid) {
+  var entry = _spsCache.get(mid);
+  if (!entry) return undefined;
+  if ((Date.now() - entry.ts) > _SPS_CACHE_TTL_MS) {
+    _spsCache.delete(mid);
+    return undefined;
+  }
+  return entry.payload;
+}
+function _spsCacheSet(mid, payload) {
+  _spsCache.set(mid, { ts: Date.now(), payload: payload });
+}
 function _tvbSPSPlaceholder(matchId) {
-  return '<div class="tn-sps-row" data-sps-mid="' + String(matchId) + '" '
+  var mid = _spsEsc(matchId);
+  return '<div class="tn-sps-row" data-sps-mid="' + mid + '" '
        + 'style="display:flex;gap:6px;font-size:9px;color:#5a6068;margin-top:3px;line-height:1.2;" '
        + 'title="Surface PowerScore — aptitude joueur sur la surface (0-100, fenêtre 52 sem). En cours de calcul…">'
-       + '<span class="tn-sps-p1">SPS · —</span>'
-       + '<span class="tn-sps-p2">SPS · —</span>'
+       + '<span class="tn-sps-p1 tn-sps-loading">SPS · …</span>'
+       + '<span class="tn-sps-p2 tn-sps-loading">SPS · …</span>'
        + '</div>';
 }
 function _tvbSPSFormatChip(side, payload) {
-  if (!payload) return '<span class="tn-sps-' + side + '">SPS · —</span>';
-  var sps = (payload.sps != null) ? payload.sps.toFixed(1) : '—';
-  var conf = payload.confidence_full;
+  if (!payload) {
+    return '<span class="tn-sps-' + side + ' tn-sps-empty" '
+         + 'title="Données SPS pas encore calculées pour ce match — patientez ou attendez prochain cron 12h.">'
+         + 'SPS · —</span>';
+  }
+  var sps = (payload.sps != null) ? Number(payload.sps).toFixed(1) : '—';
+  var conf = !!payload.confidence_full;
+  var matches = payload.matches_played != null ? payload.matches_played : '?';
   var col = conf ? '#00e676' : '#ffa726';
-  var warn = conf ? '' : '<span title="Données insuffisantes (moins de 5 matchs sur la surface dans la fenêtre 52 sem)" style="color:#ffa726;margin-left:2px;">⚠</span>';
-  var tip = 'SPS ' + sps + (conf ? '' : ' (faible confiance)') + ' — n=' + (payload.matches_played != null ? payload.matches_played : '?') + ' matchs/surface';
-  return '<span class="tn-sps-' + side + '" title="' + tip.replace(/"/g, '&quot;') + '">'
-       + '<span style="color:' + col + ';font-weight:700;">SPS ' + sps + '</span>' + warn
+  var warn = conf ? '' : '<span title="Données insuffisantes (&lt;5 matchs sur la surface dans la fenêtre 52 sem)" style="color:#ffa726;margin-left:2px;">⚠</span>';
+  var tip = 'SPS ' + sps + (conf ? '' : ' (faible confiance)') + ' — n=' + _spsEsc(matches) + ' matchs/surface';
+  return '<span class="tn-sps-' + side + '" title="' + _spsEsc(tip) + '">'
+       + '<span style="color:' + col + ';font-weight:700;">SPS ' + _spsEsc(sps) + '</span>' + warn
        + '</span>';
 }
-function _tvbHydrateSPS(matchId) {
-  if (!matchId) return;
-  var mid = String(matchId);
-  if (_spsInFlight.has(mid)) return;
-  // Cache hit → paint immediately
-  if (_spsCache.has(mid)) {
-    _tvbPaintSPSCell(mid, _spsCache.get(mid));
-    return;
-  }
-  _spsInFlight.add(mid);
-  apiFetch('/api/v1/sps/' + encodeURIComponent(mid))
-    .then(function(r) {
-      if (!r || !r.ok) return null;
-      return r.json();
-    })
-    .then(function(data) {
-      if (!data || !Array.isArray(data.players)) {
-        // 404 / empty → mark as resolved with empty payload, don't loop
-        _spsCache.set(mid, { p1: null, p2: null });
-        _tvbPaintSPSCell(mid, { p1: null, p2: null });
-        return;
-      }
-      // We don't know which player_id maps to p1 vs p2 from the row context
-      // here, so paint by order — first row = p1, second = p2.
-      var p1 = data.players[0] || null;
-      var p2 = data.players[1] || null;
-      var payload = { p1: p1, p2: p2 };
-      _spsCache.set(mid, payload);
-      _tvbPaintSPSCell(mid, payload);
-    })
-    .catch(function() { /* silent — placeholder stays */ })
-    .finally(function() { _spsInFlight.delete(mid); });
-}
 function _tvbPaintSPSCell(matchId, payload) {
-  var nodes = document.querySelectorAll('[data-sps-mid="' + String(matchId).replace(/"/g, '\\"') + '"]');
+  var target = String(matchId);
+  // Defensive: iterate all placeholders and filter by dataset, avoiding CSS
+  // selector escaping pitfalls if match_id ever contains [ ] etc (W5 fix).
+  var nodes = document.querySelectorAll('[data-sps-mid]');
   for (var i = 0; i < nodes.length; i++) {
-    nodes[i].innerHTML = _tvbSPSFormatChip('p1', payload.p1) + _tvbSPSFormatChip('p2', payload.p2);
+    if (nodes[i].getAttribute('data-sps-mid') === target) {
+      nodes[i].innerHTML = _tvbSPSFormatChip('p1', payload && payload.p1)
+                         + _tvbSPSFormatChip('p2', payload && payload.p2);
+    }
   }
+}
+function _tvbHydrateSPSBatch(matchIds) {
+  if (!Array.isArray(matchIds) || !matchIds.length) return;
+  var toFetch = [];
+  for (var i = 0; i < matchIds.length; i++) {
+    var mid = String(matchIds[i]);
+    if (!mid || _spsInFlight.has(mid)) continue;
+    var hit = _spsCacheGet(mid);
+    if (hit !== undefined) {
+      window.__spsStats.hits++;
+      _tvbPaintSPSCell(mid, hit);
+      continue;
+    }
+    _spsInFlight.add(mid);
+    toFetch.push(mid);
+  }
+  if (!toFetch.length) return;
+  // Server cap = 250 IDs/batch. Chunk if needed.
+  var CHUNK = 200;
+  var chunks = [];
+  for (var c = 0; c < toFetch.length; c += CHUNK) chunks.push(toFetch.slice(c, c + CHUNK));
+  window.__spsStats.batches += chunks.length;
+  window.__spsStats.fetched_total += toFetch.length;
+
+  Promise.all(chunks.map(function(ids) {
+    var qs = '/api/v1/sps?ids=' + encodeURIComponent(ids.join(','));
+    return apiFetch(qs)
+      .then(function(r) { return (r && r.ok) ? r.json() : null; })
+      .then(function(data) {
+        var results = (data && data.results) || {};
+        for (var j = 0; j < ids.length; j++) {
+          var mid = ids[j];
+          var arr = results[mid];
+          var payload;
+          if (!Array.isArray(arr) || arr.length === 0) {
+            payload = { p1: null, p2: null };
+          } else {
+            window.__spsStats.miss_fetched++;
+            payload = { p1: arr[0] || null, p2: arr[1] || null };
+          }
+          _spsCacheSet(mid, payload);
+          _tvbPaintSPSCell(mid, payload);
+          _spsInFlight.delete(mid);
+        }
+      })
+      .catch(function(err) {
+        window.__spsStats.failed_fetches += ids.length;
+        window.__spsStats.errors++;
+        // Free in-flight markers so a retry can fire later
+        for (var j = 0; j < ids.length; j++) _spsInFlight.delete(ids[j]);
+        try { console.warn('[SPS hydrator] batch fail', err && err.message); } catch (_) {}
+      });
+  }));
 }
 function _tvbSDI(sd) {
   if (!sd || !sd.p1 || !sd.p2) return '';
@@ -21284,16 +21339,18 @@ function renderTennisValueBets(rawMatches) {
 
   // Hook : enrich rows with TA Elo tooltips + surface badges après render (UC-1+UC-2)
   setTimeout(() => { try { enrichTennisVbWithTA(); } catch (_) {} }, 50);
-  // SPS hydrator — fetch /api/v1/sps/:matchId for every visible row (bd q1w5 task #4).
-  // Dedup via _spsCache + _spsInFlight inside _tvbHydrateSPS. Best-effort silent.
+  // SPS hydrator — single batched fetch /api/v1/sps?ids=m1,m2,... for ALL visible
+  // rows (R1 fix). Dedup via _spsCache + _spsInFlight inside _tvbHydrateSPSBatch.
   setTimeout(() => {
     try {
       var seen = new Set();
+      var ids = [];
       var ph = document.querySelectorAll('[data-sps-mid]');
       for (var i = 0; i < ph.length; i++) {
         var mid = ph[i].getAttribute('data-sps-mid');
-        if (mid && !seen.has(mid)) { seen.add(mid); _tvbHydrateSPS(mid); }
+        if (mid && !seen.has(mid)) { seen.add(mid); ids.push(mid); }
       }
+      if (ids.length) _tvbHydrateSPSBatch(ids);
     } catch (_) {}
   }, 80);
 
