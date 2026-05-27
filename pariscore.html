@@ -14115,7 +14115,6 @@ function _paintBracket(el,data){
           <option value="chrono">📅 Chronologique ↑</option>
           <option value="ev">📈 Value EV+ ↓</option>
           <option value="prob">🎯 Proba match ↓</option>
-          <option value="powerscore">PowerScore ↓ (col. 7, meilleur → moins bon)</option>
           <option value="delta_dr">🔥 Δ DR live ↓ (set en cours · prematch en bas)</option>
           <option value="set1">💥 Gain Set 1 ↓</option>
           <option value="elo">⭐ Elo P1 ↓</option>
@@ -15771,7 +15770,7 @@ function _paintBracket(el,data){
     display: none !important;
   }
 
-  /* Trading mode tennis: hide cols 8-13 (PowerScore, KingOfAces, Set1, Set2,
+  /* Trading mode tennis: hide cols 8-13 (KingOfAces, Set1, Set2,
      Jeux O/U, Mental) — keep: 1 Date/Surface, 2 Match, 3 Bets Pred, 4 Score,
      5 Elo, 6 Proba, 7 ScoreSets, 14 Value EV+, 15 Confiance, 16 AI */
   body[data-cf-mode="trading"] #tennis-vb-table thead th:nth-child(8),
@@ -17509,42 +17508,6 @@ function _paintBracket(el,data){
       </div>
     </div>
     <!-- ── FIN JAUGE D'INTENSITÉ ──────────────────────────────────────────── -->
-
-    <div id="guide-forme-power" class="guide-section-header">
-      <span class="guide-section-icon">🎾</span>
-      <h2>Colonne « Forme (Pts) / PowerScore » — Tennis</h2>
-    </div>
-
-    <div class="gs-article" style="border:1px solid var(--border2);border-radius:10px;padding:20px 22px;margin:14px 0 28px;line-height:1.75;font-size:13px;color:var(--text2);">
-      <p class="gs-article-title" style="font-weight:800;color:var(--text);font-size:15px;margin-bottom:10px;">1 · Forme du moment pondérée (L5 / L10 pts)</p>
-      <p><b>Définition.</b> Mesure la qualité des résultats récents du joueur <b>sur la surface du match du jour</b> (Terre / Dur / Herbe). On prend ses <b>10 derniers matchs</b> sur cette surface ; <b>L5</b> = somme des points des 5 plus récents, <b>L10</b> = somme sur les 10.</p>
-      <p><b>Barème (points par match).</b> Une victoire rapporte selon le <i>classement de l'adversaire battu</i> ; une défaite rapporte 0 (quel que soit l'adversaire) :</p>
-      <div style="border:1px solid var(--border2);border-radius:8px;padding:12px 16px;margin:10px 0;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);">
-        Victoire vs Top 10 mondial &nbsp;&nbsp;→ <b style="color:#4ade80;">+3.0</b><br>
-        Victoire vs Top 11–50 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <b style="color:#4ade80;">+2.0</b><br>
-        Victoire vs Top 51–100 &nbsp;&nbsp;&nbsp;&nbsp;→ <b style="color:#4ade80;">+1.0</b><br>
-        Victoire vs &gt; 100 / rang inconnu → <b style="color:#4ade80;">+0.5</b><br>
-        Défaite (tout adversaire) &nbsp;&nbsp;&nbsp;→ <b style="color:#ff4d4d;">0</b>
-      </div>
-      <p><b>Lecture.</b> <code>L5 9.5 / L10 20</code> = 9,5 pts sur 5 derniers, 20 pts sur 10. Maximum théorique L10 = 10 × 3 = <b>30</b> (10 victoires d'affilée contre du Top 10).</p>
-
-      <p class="gs-article-title" style="font-weight:800;color:var(--text);font-size:15px;margin:22px 0 10px;">2 · PowerScore surface (/100)</p>
-      <p><b>Définition.</b> Indice de puissance composite, normalisé sur 100, propre à la surface du match. Fusionne niveau brut (Elo), régularité récente (taux de victoire) et dynamique de forme.</p>
-      <div style="border:1px solid var(--border2);border-radius:8px;padding:14px 16px;margin:10px 0;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);">
-        PowerScore = round( 100 × [ 0.5·EloNorm + 0.3·WinRate52s + 0.2·FacteurForme ] )
-      </div>
-      <ul style="margin:8px 0 8px 18px;">
-        <li><b>EloNorm</b> = clamp( (Elo_surface − 1500) / 900 , 0 → 1 ). Elo 2400 ≈ 1.0 ; Elo 1500 ≈ 0.</li>
-        <li><b>WinRate52s</b> = victoires / matchs joués sur la surface, <b>52 dernières semaines</b> (≤ 364 j).</li>
-        <li><b>FacteurForme</b> = clamp( L10 / 30 , 0 → 1 ) — réutilise la forme pondérée ci-dessus.</li>
-      </ul>
-      <p><b>Couleur du badge.</b> <span style="color:#4ade80;font-weight:700;">Vert &gt; 75</span> · <span style="color:#ffa726;font-weight:700;">Orange 50–75</span> · <span style="color:#ff4d4d;font-weight:700;">Rouge &lt; 50</span> · gris = données indisponibles.</p>
-
-      <p class="gs-article-title" style="font-weight:800;color:var(--text);font-size:15px;margin:22px 0 10px;">3 · Classement PowerScore mondial (#n)</p>
-      <p><b>Définition.</b> Rang du joueur dans le classement PowerScore de <b>tous les joueurs actifs</b> (au moins un match dans les <b>425 derniers jours</b>), <b>pour son circuit (ATP ou WTA) et la surface du match</b>. <code>#1</code> = meilleur PowerScore de la surface.</p>
-      <p><b>Calcul.</b> Tous les joueurs actifs du couple (circuit, surface) sont scorés par la formule PowerScore ci-dessus, triés décroissant ; le rang est la position dans cette liste (sur <code>ps_total</code> joueurs).</p>
-      <p><b>Données.</b> Source 100 % locale (historique Sackmann / Tennis Abstract synchronisé en base). Aucun scraping au chargement de page — cache 12 h. Le classement complet Top 100 par circuit/surface est exporté dans <code>CLASSEMENT_POWERSCORE.md</code> (régénérable : <code>node gen-powerscore-md.js</code>).</p>
-    </div>
 
     <div id="guide-dr" class="guide-section-header">
       <span class="guide-section-icon">⚔️</span>
@@ -19350,7 +19313,6 @@ function _tnRenderDrawerContent(m) {
     : '';
   return `<div class="tn-drawer-grid">
 <div class="tn-drawer-section"><h4>Score Sets</h4>${_tvbSetsMergedCell(m.predictions?.set_probs, m.predictions?.at_least_one_set, p1Name, p2Name, p1Fav, p2Fav)}</div>
-<div class="tn-drawer-section"><h4>Forme / Power</h4>${_tvbPowerFormCell(m.player1, m.player2)}</div>
 <div class="tn-drawer-section"><h4>King of Aces</h4>${_tvbKingOfAcesCell(m.predictions?.most_aces)}</div>
 <div class="tn-drawer-section"><h4>Gain Set 1</h4>${_tvbSet1Cell(sm, p1Name, p2Name)}${_tvbFirstSet(m.first_set)}</div>
 <div class="tn-drawer-section"><h4>Gain Set 2</h4>${_tvbSet2Cell(sm, p1Name, p2Name)}</div>
@@ -20423,26 +20385,6 @@ function _tvbSetsMergedCell(sp, a, p1, p2, p1Fav, p2Fav) {
     + `</div>`;
 }
 
-// Colonne 6 — Forme pondérée (L5/L10 pts) + PowerScore surface, 2 lignes J1/J2.
-function _tvbPFRow(p) {
-  if (!p) return '<div class="tpf-row"><span class="tpf-na">—</span></div>';
-  const hasForm = (p.l5_pts != null || p.l10_pts != null);
-  const f = hasForm
-    ? `L5 ${p.l5_pts != null ? p.l5_pts : '–'} / L10 ${p.l10_pts != null ? p.l10_pts : '–'}`
-    : 'L5 – / L10 –';
-  const ps = p.powerscore;
-  const cls = ps == null ? 'tpf-ps-na' : (ps > 75 ? 'tpf-ps-hi' : ps >= 50 ? 'tpf-ps-mid' : 'tpf-ps-lo');
-  const psTxt = ps == null ? '—/100' : `${ps}/100`;
-  const rk = (p.ps_rank != null)
-    ? `<span class="tpf-psrk" title="Classement PowerScore${p.ps_total ? ' (sur ' + p.ps_total + ' joueurs actifs, même surface)' : ''}">#${p.ps_rank}</span>`
-    : '';
-  return `<div class="tpf-row"><span class="tpf-form">${f}</span><span class="tpf-ps ${cls}">${psTxt}</span>${rk}</div>`;
-}
-function _tvbPowerFormCell(p1, p2) {
-  const empty = (p) => !p || (p.l5_pts == null && p.l10_pts == null && p.powerscore == null);
-  if (empty(p1) && empty(p2)) return '<span class="tvb-mono" style="color:var(--text3,#5a6068);">—</span>';
-  return `<div class="tpf-cell">${_tvbPFRow(p1)}${_tvbPFRow(p2)}</div>`;
-}
 
 // Cellule "King of Aces" — favori aces unique + badge % 3D glassmorphism.
 function _tvbKingOfAcesCell(ma) {
@@ -21237,18 +21179,6 @@ function renderTennisValueBets(rawMatches) {
         const pa = a.predictions?.blended?.p1 ?? a.predictions?.elo?.p1 ?? 0;
         const pb = b.predictions?.blended?.p1 ?? b.predictions?.elo?.p1 ?? 0;
         return pb - pa;
-      }
-      case 'powerscore': {
-        // Colonne 7 — meilleur PowerScore au moins bon. Score match = max
-        // des PowerScore J1/J2 (le joueur le plus fort porte le match).
-        // PS absent → -1 (renvoyé en bas de liste).
-        const _ps = m => {
-          const a1 = m.player1 && m.player1.powerscore;
-          const a2 = m.player2 && m.player2.powerscore;
-          const v = Math.max(a1 == null ? -1 : a1, a2 == null ? -1 : a2);
-          return Number.isFinite(v) ? v : -1;
-        };
-        return _ps(b) - _ps(a);
       }
       case 'delta_dr': {
         // |DR_J1 − DR_J2| set en cours, max → min. Prematch sans DR : -1
@@ -37525,14 +37455,6 @@ function openStrategiesGuide() {
   } catch (e) {}
   setTimeout(function () {
     try { scrollToSection('guide-strategies'); } catch (e) {}
-  }, 250);
-}
-
-// Pastille « ⓘ » colonne Forme/PowerScore → onglet Guide, section dédiée
-function openTennisFormPowerGuide() {
-  try { if (typeof showPage === 'function') showPage('guide'); } catch (e) {}
-  setTimeout(function () {
-    try { scrollToSection('guide-forme-power'); } catch (e) {}
   }, 250);
 }
 
