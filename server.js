@@ -38210,27 +38210,32 @@ async function bootInit() {
       }
     }
 
-    // bd ParisScorebis-rcmw 2026-05-24 — SKIP_BOOT_FETCHSTATS env opt-out
-    // Cause : fetchStats(true) au boot sature CPU 97% pendant 15+min (84 ligues
-    // BSD standings + fuzzy Levenshtein O(NxM) + ETL writes). withBootTimeout
-    // race-reject la promesse mais ne cancel pas le travail sync — fetchStats
-    // continue en background indefiniment, bloque HTTP responses curl timeout.
-    // Fix : env SKIP_BOOT_FETCHSTATS=1 saute le boot fetchStats. Cron 12h
-    // setInterval ligne 36296 rafraichit stats normalement. HTTP repond immediat.
+    // bd lzdg Phase 2 — defer fetchStats 30s post-boot (architectural fix)
+    // Phase 1 fixed findFuzzy O(N×M) with LRU cache + prefix index.
+    // Phase 2: HTTP layer must respond immediately after server.listen().
+    // fetchStats blocked event loop during standings rebuild (84 leagues × BSD).
+    // withBootTimeout race-rejects promise but does NOT cancel background sync
+    // work — fetchStats continued indefinitely, causing 15min HTTP blackout.
+    // Fix: defer via setTimeout so event loop drains pending HTTP requests first.
+    // BOOT_STATS_DELAY_MS env override (default 30000) for tuning without redeploy.
+    // SKIP_BOOT_FETCHSTATS=1 skips entirely (cron 12h takes over).
     if (process.env.SKIP_BOOT_FETCHSTATS === '1') {
         console.log('  [Boot] fetchStats SKIP (SKIP_BOOT_FETCHSTATS=1) — cron 12h prend la suite, HTTP responsive immediat.');
     } else {
-        withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
-            .then(() => {
-                if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
-                console.log('  [Boot] ✓ Enrichissement stats terminé.');
-                // FIX historique : Poisson rétrospectif sur history une fois teamStats prêt
-                try { enrichHistoryPoisson(); }
-                catch (e) { console.warn('  [Boot] ⚠ enrichHistoryPoisson:', e.message); }
-            })
-            .catch(e => {
-                console.warn('  [Boot] ⚠ Enrichissement stats:', e.message);
-            });
+        const _bootStatsDelay = parseInt(process.env.BOOT_STATS_DELAY_MS || '30000', 10);
+        console.log(`  [Boot] fetchStats différé ${_bootStatsDelay / 1000}s (HTTP responsive immédiat, ETL démarre à T+${_bootStatsDelay / 1000}s).`);
+        setTimeout(() => {
+            withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))
+                .then(() => {
+                    if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
+                    console.log('  [Boot] ✓ Enrichissement stats terminé.');
+                    try { enrichHistoryPoisson(); }
+                    catch (e) { console.warn('  [Boot] ⚠ enrichHistoryPoisson:', e.message); }
+                })
+                .catch(e => {
+                    console.warn('  [Boot] ⚠ Enrichissement stats:', e.message);
+                });
+        }, _bootStatsDelay);
     }
 }
 
