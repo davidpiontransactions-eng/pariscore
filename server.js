@@ -35607,7 +35607,8 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
         const base = path.basename(filePath).toLowerCase();
         const noLongCache = isHtml
             || ext === '.json' || ext === '.webmanifest' || ext === '.svg'
-            || base === 'sw.js' || base === 'service-worker.js';
+            || base === 'sw.js' || base === 'service-worker.js'
+            || base === 'pariscore.js';
         const headers = {
             'Content-Type': contentType,
             'Cache-Control': noLongCache
