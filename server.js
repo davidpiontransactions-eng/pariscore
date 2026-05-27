@@ -16305,6 +16305,9 @@ function srvPlanGate(req, res, pathname) {
   // payload metadata public uniquement (player IDs/surface/kickoff). Pas de pick
   // Premium ni d'analyse derrière la paywall — gate désactivée.
   if (pathname === '/api/v1/tennis/upcoming') return false;
+  // SPS read endpoint = score brut metadata, lisible sans gate Pro (alignée UX
+  // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
+  if (pathname.startsWith('/api/v1/sps/')) return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -31147,6 +31150,56 @@ if (pathname === '/api/v1/tennis/upcoming') {
       warnings,
     },
   });
+}
+// SPS read endpoint — GET /api/v1/sps/:matchId (bd q1w5 task #3).
+// Reads player_surface_scores rows for a given match, returns the 2 player SPS
+// payloads (or 404 if neither found). Consumer = UI Tennis Value Bets _tvbPFRow.
+// Idempotent + no side effects. Pro Tennis gate exempted (alignée /upcoming W6).
+if (pathname.startsWith('/api/v1/sps/')) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return jsonResponse(res, 405, { error: 'method_not_allowed', allow: 'GET' });
+  }
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/sps/'.length)).trim();
+  if (!rawId || rawId.length > 128 || !/^[A-Za-z0-9_\-:.]+$/.test(rawId)) {
+    return jsonResponse(res, 400, { error: 'invalid_match_id', detail: 'match_id alnum + _ - : . only, max 128 chars' });
+  }
+  try {
+    const rows = sqldb.prepare(`
+      SELECT player_id, surface, circuit, sps, aptitude_score,
+             confidence_full, matches_played, computed_at
+        FROM player_surface_scores
+       WHERE match_id = ?
+       ORDER BY player_id ASC
+    `).all(rawId);
+    if (!rows.length) {
+      return jsonResponse(res, 404, {
+        error: 'sps_not_found',
+        match_id: rawId,
+        hint: 'cron_sps_updater.py may not have processed this match yet. Wait next cron cycle or trigger manually with PARISCORE_SPS_DRY_RUN=0.',
+      });
+    }
+    const now = Date.now();
+    const players = rows.map(r => ({
+      player_id: r.player_id,
+      surface: r.surface,
+      circuit: r.circuit,
+      sps: Math.round(r.sps * 100) / 100,
+      aptitude_score: Math.round(r.aptitude_score * 100) / 100,
+      confidence_full: !!r.confidence_full,
+      matches_played: r.matches_played,
+      computed_at: new Date(r.computed_at).toISOString(),
+      age_ms: now - r.computed_at,
+    }));
+    return jsonResponse(res, 200, {
+      match_id: rawId,
+      count: players.length,
+      players,
+    });
+  } catch (e) {
+    console.warn('[/api/v1/sps]', e.message);
+    return jsonResponse(res, 500, { error: 'sps_lookup_failed', detail: e.message });
+  }
 }
 // AI-AL Tennis — analyse Gemini "Deep Data" formatée Telegram. Lookup match via buildTennisValueBets.
 if (pathname.startsWith('/api/v1/ai/tennis-analyze/') && req.method === 'GET') {
