@@ -16288,6 +16288,10 @@ function srvPlanGate(req, res, pathname) {
     return false; // filtrage 5 ligues UE appliqué dans la route
   }
   // Tennis (données) → accès Tennis (Pro Tennis / Duo / admin)
+  // Exception W6 (bd q1w5) : /api/v1/tennis/upcoming = feed cron interne SPS,
+  // payload metadata public uniquement (player IDs/surface/kickoff). Pas de pick
+  // Premium ni d'analyse derrière la paywall — gate désactivée.
+  if (pathname === '/api/v1/tennis/upcoming') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -31006,6 +31010,73 @@ if (pathname === '/api/v1/tennis/board' && req.method === 'GET') {
   if (out.status !== 200) return jsonResponse(res, out.status, out.body);
   const matches = (out.body.matches || []).map(toCanonicalTennisMatch);
   return jsonResponse(res, 200, { count: matches.length, matches, meta: out.body.meta });
+}
+// W6 (bd q1w5) — Upcoming matches feed pour cron_sps_updater.py Python sidecar.
+// Contract: .context/sps_pipeline_contract.md. Réutilise buildTennisValueBets (cache
+// VB chaud) puis filtre [now+lookahead_min_h, now+lookahead_max_h] + surface ∈
+// {clay,grass,hard} + tour optionnel. Renvoie player IDs sources pour SPS join sur
+// tennis_matches_internal.{winner,loser}_player_id.
+if (pathname === '/api/v1/tennis/upcoming' && req.method === 'GET') {
+  const _minRaw = parseInt(query.lookahead_min_h, 10);
+  const _maxRaw = parseInt(query.lookahead_max_h, 10);
+  const lookaheadMinH = Math.max(0, Number.isFinite(_minRaw) ? _minRaw : 24);
+  const lookaheadMaxH = Math.max(lookaheadMinH, Number.isFinite(_maxRaw) ? _maxRaw : 36);
+  const tourFilter = String(query.tour || '').toUpperCase();
+  const nowMs = Date.now();
+  const loMs = nowMs + lookaheadMinH * 3600_000;
+  const hiMs = nowMs + lookaheadMaxH * 3600_000;
+  // Window 24-36h depuis maintenant peut chevaucher jusqu'à 3 dates calendaires UTC.
+  const dates = [];
+  for (let offset = 0; offset <= 2; offset++) {
+    const d = new Date(nowMs + offset * 86_400_000);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  const collected = new Map(); // id → raw match
+  for (const d of dates) {
+    let dayOut;
+    try { dayOut = await buildTennisValueBets({ date: d }); } catch (_) { continue; }
+    if (!dayOut || dayOut.status !== 200) continue;
+    for (const m of (dayOut.body && dayOut.body.matches) || []) {
+      if (m && m.id != null && !collected.has(m.id)) collected.set(m.id, m);
+    }
+  }
+  const matches = [];
+  for (const m of collected.values()) {
+    const startMs = m.start_time ? Date.parse(m.start_time) : NaN;
+    if (!Number.isFinite(startMs) || startMs < loMs || startMs > hiMs) continue;
+    const surface = String(m.surface || '').toLowerCase();
+    if (surface !== 'clay' && surface !== 'grass' && surface !== 'hard') continue;
+    const tour = String(m.tour || 'ATP').toUpperCase();
+    if (tourFilter && tour !== tourFilter) continue;
+    const p1 = m.player1 || {};
+    const p2 = m.player2 || {};
+    if (p1.id == null || p2.id == null) continue;
+    matches.push({
+      id: String(m.id),
+      surface,
+      tour,
+      home_player_id: String(p1.id),
+      away_player_id: String(p2.id),
+      commence_time: new Date(startMs).toISOString(),
+      tourney_name: (m.tournament && (m.tournament.name || m.tournament)) || null,
+      round: m.round || m.round_name || null,
+      best_of: m.best_of || null,
+      home_player_name: p1.name || p1.short_name || null,
+      away_player_name: p2.name || p2.short_name || null,
+    });
+  }
+  matches.sort((a, b) => a.commence_time.localeCompare(b.commence_time));
+  return jsonResponse(res, 200, {
+    matches,
+    meta: {
+      now_utc: new Date(nowMs).toISOString(),
+      lookahead_min_h: lookaheadMinH,
+      lookahead_max_h: lookaheadMaxH,
+      tour_filter: tourFilter || null,
+      dates_scanned: dates,
+      total: matches.length,
+    },
+  });
 }
 // AI-AL Tennis — analyse Gemini "Deep Data" formatée Telegram. Lookup match via buildTennisValueBets.
 if (pathname.startsWith('/api/v1/ai/tennis-analyze/') && req.method === 'GET') {
