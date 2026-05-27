@@ -38577,6 +38577,45 @@ setTimeout(() => {
   setInterval(() => _runTexOddsSnapshotJob().catch(e => console.warn('[Cron:TexOdds]', e.message)), 6 * 3600 * 1000);
 }, 60 * 1000); // first run 60s after boot
 
+// bd dl49 Phase 3 — daily ETL accumulation tennis_matches_internal.
+// Spawn child process (isolated, no main-thread block during ~5s SQL+parse work).
+// Schedule: 02:00 Europe/Paris (off-peak, after BSD/ESPN end-of-day snapshots cron).
+function _runTennisInternalEtlJob() {
+  return new Promise((resolve) => {
+    const cp = require('child_process');
+    const etlPath = require('path').join(__dirname, 'tools', 'build-tennis-internal-history.js');
+    console.log('  [Cron:TennisInternalETL] Lancement build-tennis-internal-history…');
+    const t0 = Date.now();
+    const child = cp.spawn(process.execPath, [etlPath], {
+      cwd: __dirname,
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stderrTail = '';
+    let stdoutTail = '';
+    child.stdout.on('data', (b) => { stdoutTail = (stdoutTail + b.toString()).slice(-2000); });
+    child.stderr.on('data', (b) => { stderrTail = (stderrTail + b.toString()).slice(-2000); });
+    child.on('close', (code) => {
+      const elapsed = Date.now() - t0;
+      const summary = (stdoutTail.match(/total\s*:\s*(\d+)/) || [])[1] || '?';
+      if (code === 0) {
+        console.log(`  [Cron:TennisInternalETL] ✓ ETL OK (${elapsed}ms, total=${summary})`);
+      } else {
+        console.warn(`  [Cron:TennisInternalETL] ⚠ exit=${code} (${elapsed}ms) stderr: ${stderrTail.slice(-300)}`);
+      }
+      resolve();
+    });
+    child.on('error', (err) => {
+      console.warn('  [Cron:TennisInternalETL] spawn error:', err.message);
+      resolve();
+    });
+  });
+}
+setTimeout(() => {
+  _runTennisInternalEtlJob();
+  setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000);
+}, _msUntilNextParisHour(2));
+
 // BetMines v10.14 — refresh 30min today + tomorrow
 setTimeout(() => {
   _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message));
