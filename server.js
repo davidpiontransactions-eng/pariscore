@@ -16305,9 +16305,10 @@ function srvPlanGate(req, res, pathname) {
   // payload metadata public uniquement (player IDs/surface/kickoff). Pas de pick
   // Premium ni d'analyse derrière la paywall — gate désactivée.
   if (pathname === '/api/v1/tennis/upcoming') return false;
-  // SPS read endpoint = score brut metadata, lisible sans gate Pro (alignée UX
+  // SPS read endpoints = score brut metadata, lisibles sans gate Pro (alignée UX
   // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
-  if (pathname.startsWith('/api/v1/sps/')) return false;
+  // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
+  if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -31151,6 +31152,72 @@ if (pathname === '/api/v1/tennis/upcoming') {
     },
   });
 }
+// SPS batch endpoint — GET /api/v1/sps?ids=m1,m2,m3 (bd q1w5 R1).
+// Reads player_surface_scores for up to N match_ids in one call. Eliminates the
+// N+1 fetch pattern of the per-match endpoint when the UI renders 150+ rows.
+// Response: { results: { match_id: [...players] | null }, count, missing[] }
+if (pathname === '/api/v1/sps' && req.method === 'GET') {
+  const idsRaw = String(query.ids || '').trim();
+  if (!idsRaw) {
+    return jsonResponse(res, 400, { error: 'ids_required', detail: 'comma-separated match_ids in ?ids=' });
+  }
+  const ids = idsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  // Cap at 250 to keep response <100KB and avoid URL/query parser limits.
+  const SPS_BATCH_CAP = 250;
+  if (ids.length > SPS_BATCH_CAP) {
+    return jsonResponse(res, 400, { error: 'too_many_ids', cap: SPS_BATCH_CAP, requested: ids.length });
+  }
+  // Validate each id with the same allowlist as the per-match route.
+  const allowed = /^[A-Za-z0-9_\-:.]+$/;
+  const validIds = ids.filter(id => id.length <= 128 && allowed.test(id));
+  const rejectedCount = ids.length - validIds.length;
+  if (!validIds.length) {
+    return jsonResponse(res, 400, { error: 'no_valid_ids', rejected: rejectedCount });
+  }
+  try {
+    const placeholders = validIds.map(() => '?').join(',');
+    const rows = sqldb.prepare(`
+      SELECT player_id, surface, circuit, sps, aptitude_score,
+             confidence_full, matches_played, computed_at, match_id
+        FROM player_surface_scores
+       WHERE match_id IN (${placeholders})
+       ORDER BY match_id, player_id ASC
+    `).all(...validIds);
+    const now = Date.now();
+    const grouped = Object.create(null);
+    for (const id of validIds) grouped[id] = null;
+    for (const r of rows) {
+      if (!grouped[r.match_id]) grouped[r.match_id] = [];
+      grouped[r.match_id].push({
+        player_id: r.player_id,
+        surface: r.surface,
+        circuit: r.circuit,
+        sps: Math.round(r.sps * 100) / 100,
+        aptitude_score: Math.round(r.aptitude_score * 100) / 100,
+        confidence_full: !!r.confidence_full,
+        matches_played: r.matches_played,
+        computed_at: new Date(r.computed_at).toISOString(),
+        age_ms: now - r.computed_at,
+      });
+    }
+    const missing = validIds.filter(id => grouped[id] === null);
+    return jsonResponse(res, 200, {
+      results: grouped,
+      count: rows.length,
+      requested: validIds.length,
+      missing,
+      rejected: rejectedCount,
+    });
+  } catch (e) {
+    console.warn('[/api/v1/sps batch]', e.message);
+    return jsonResponse(res, 500, { error: 'sps_batch_failed', detail: e.message });
+  }
+}
+// Reject method mismatch on batch path (otherwise falls through to startsWith path).
+if (pathname === '/api/v1/sps') {
+  res.setHeader('Allow', 'GET');
+  return jsonResponse(res, 405, { error: 'method_not_allowed', allow: 'GET' });
+}
 // SPS read endpoint — GET /api/v1/sps/:matchId (bd q1w5 task #3).
 // Reads player_surface_scores rows for a given match, returns the 2 player SPS
 // payloads (or 404 if neither found). Consumer = UI Tennis Value Bets _tvbPFRow.
@@ -38664,10 +38731,15 @@ function _runTennisInternalEtlJob() {
     });
   });
 }
-setTimeout(() => {
-  _runTennisInternalEtlJob();
-  setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000);
-}, _msUntilNextParisHour(2));
+(function _scheduleTennisInternalEtl() {
+  const delayMs = _msUntilNextParisHour(2);
+  const nextRun = new Date(Date.now() + delayMs);
+  console.log(`  [Cron:TennisInternalETL] schedulé · prochain run ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min)`);
+  setTimeout(() => {
+    _runTennisInternalEtlJob();
+    setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000);
+  }, delayMs);
+})();
 
 // BetMines v10.14 — refresh 30min today + tomorrow
 setTimeout(() => {
