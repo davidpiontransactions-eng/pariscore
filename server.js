@@ -22009,7 +22009,6 @@ async function fetchBetminesFixtures(dateFrom, dateTo) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept-Encoding': 'gzip, deflate, br',
         'Origin': 'https://www.betmines.com',
         'Referer': 'https://www.betmines.com/football/predictions',
         'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
@@ -29610,7 +29609,7 @@ async function _buildTennisValueBetsCore({ date }) {
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: (eloProb && bsdProb) ? 'elo+bsd' : (eloProb ? 'elo' : (bsdProb ? 'bsd' : null)) },
-      youtube_url: e.youtube_url || null,
+      youtube_url: m.youtube_url || null,
     });
   }
 
