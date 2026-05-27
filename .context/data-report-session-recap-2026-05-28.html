@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PariScore — Session Recap Report · 28 Mai 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d0f;--bg2:#111417;--bg3:#181c20;--bg4:#1e2328;
+  --green:#00e676;--amber:#ffa726;--blue:#29b6f6;--red:#ff4d4d;--purple:#ce93d8;
+  --text:#e8eaed;--text2:#8d9399;--text3:#5a6068;--r:8px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding:32px 20px 64px}
+/* Header */
+.hdr{border-left:4px solid var(--green);padding-left:16px;margin-bottom:36px}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:-.4px}
+.hdr .meta{color:var(--text2);font-size:12px;margin-top:6px;display:flex;gap:16px;flex-wrap:wrap}
+.badge{background:var(--bg4);border:1px solid var(--bg3);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--text2)}
+h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--text2);margin-bottom:14px}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:36px}
+.kpi{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.g::before{background:var(--green)}.kpi.a::before{background:var(--amber)}
+.kpi.b::before{background:var(--blue)}.kpi.r::before{background:var(--red)}.kpi.p::before{background:var(--purple)}
+.kpi .lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi .val{font-size:26px;font-weight:700;font-family:monospace;letter-spacing:-1px}
+.kpi .delta{font-size:11px;margin-top:3px}
+.up{color:var(--green)}.dn{color:var(--red)}.fl{color:var(--text3)}.wn{color:var(--amber)}
+.kpi .spk{position:relative;height:36px;margin-top:8px}
+/* Charts */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:36px}
+@media(max-width:640px){.chart-grid{grid-template-columns:1fr}}
+.cc{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--r);padding:18px}
+.cc h3{font-size:12px;font-weight:600;margin-bottom:14px;color:var(--text)}
+.cw{position:relative;height:260px}
+.cw2{position:relative;height:240px}
+/* Timeline */
+.timeline{margin-bottom:36px}
+.tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg3)}
+.tl-item:last-child{border:none}
+.tl-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.tl-dot.fix{background:rgba(255,77,77,.15);border:1px solid rgba(255,77,77,.3)}
+.tl-dot.feat{background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3)}
+.tl-dot.ops{background:rgba(41,182,246,.15);border:1px solid rgba(41,182,246,.3)}
+.tl-dot.close{background:rgba(206,147,216,.15);border:1px solid rgba(206,147,216,.3)}
+.tl-body .title{font-size:13px;font-weight:600;color:var(--text)}
+.tl-body .desc{font-size:12px;color:var(--text2);margin-top:2px}
+.tl-body .commit{font-size:10px;color:var(--text3);font-family:monospace;margin-top:4px}
+/* Table */
+.tc{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--r);overflow:hidden;margin-bottom:36px}
+.tc-hdr{padding:14px 18px;border-bottom:1px solid var(--bg3)}
+.tc-hdr h3{font-size:12px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--bg3);padding:9px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);position:sticky;top:0}
+tbody tr{border-bottom:1px solid var(--bg3);transition:background .12s}
+tbody tr:last-child{border:none}
+tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+tbody tr:hover{background:var(--bg3)}
+td{padding:9px 14px;font-size:12px}
+.pill{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.pill.ok{background:rgba(0,230,118,.12);color:var(--green)}
+.pill.warn{background:rgba(255,167,38,.12);color:var(--amber)}
+.pill.dg{background:rgba(41,182,246,.12);color:var(--blue)}
+.pill.empty{background:rgba(255,77,77,.12);color:var(--red)}
+/* Insights */
+.ins{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--r);padding:18px;margin-bottom:36px}
+.ins h3{font-size:12px;font-weight:600;margin-bottom:14px}
+.ins-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--bg3);align-items:flex-start}
+.ins-item:last-child{border:none;padding-bottom:0}
+.ins-icon{font-size:16px;flex-shrink:0;margin-top:2px}
+.ins-text{font-size:12px;line-height:1.55}
+.ins-text strong{color:var(--green)}
+/* QA */
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:36px}
+.qa-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--r);padding:12px 14px}
+.qa-card .qc-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.qa-card .qc-st{font-size:11px;display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:var(--green)}.dot.warn{background:var(--amber)}.dot.fix{background:var(--blue)}
+/* Details */
+details{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--r);overflow:hidden}
+summary{padding:13px 18px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);user-select:none}
+summary:hover{background:var(--bg3)}
+.db{padding:14px 18px;font-size:12px;color:var(--text2);line-height:1.7}
+.db dt{color:var(--text);font-weight:600;margin-top:8px}
+.db dd{margin-left:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <h1>PariScore — Session Recap Report</h1>
+  <div class="meta">
+    <span>📅 28 Mai 2026 · 01h00–02h00 GMT+2</span>
+    <span>🔧 6 issues closed · 3 bug fixes · 2 commits</span>
+    <span class="badge">QA 0 bugs</span>
+    <span class="badge">W1 fixé</span>
+    <span class="badge">v12.67 → v12.68</span>
+  </div>
+</div>
+
+<!-- KPIs -->
+<h2>Métriques clés</h2>
+<div class="kpi-grid">
+  <div class="kpi g">
+    <div class="lbl">Issues fermées session</div>
+    <div class="val">6</div>
+    <div class="delta up">↑ hgad · rcmw · zia · lzdg + 04q1 · q1w5</div>
+    <div class="spk"><canvas id="s1"></canvas></div>
+  </div>
+  <div class="kpi r">
+    <div class="lbl">Bugs corrigés</div>
+    <div class="val">3</div>
+    <div class="delta up">TennisVB · BetMines gzip · NaN guard</div>
+    <div class="spk"><canvas id="s2"></canvas></div>
+  </div>
+  <div class="kpi b">
+    <div class="lbl">Temps boot ETL déféré</div>
+    <div class="val">+30s</div>
+    <div class="delta up">↑ HTTP 0ms TTFB (était 5-15min blackout)</div>
+    <div class="spk"><canvas id="s3"></canvas></div>
+  </div>
+  <div class="kpi a">
+    <div class="lbl">Issues in_progress restantes</div>
+    <div class="val">9</div>
+    <div class="delta wn">↓ de 15 → 9 (dont 7 DG/ops)</div>
+    <div class="spk"><canvas id="s4"></canvas></div>
+  </div>
+  <div class="kpi g">
+    <div class="lbl">Perf HTML extraction</div>
+    <div class="val">-55%</div>
+    <div class="delta up">2206KB → 988KB (pariscore.html)</div>
+    <div class="spk"><canvas id="s5"></canvas></div>
+  </div>
+  <div class="kpi b">
+    <div class="lbl">Sécurité — RapidAPI</div>
+    <div class="val">🔒</div>
+    <div class="delta up">Clé révoquée + nouvelle .env VPS</div>
+    <div class="spk"><canvas id="s6"></canvas></div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<h2>Analyse graphique</h2>
+<div class="chart-grid">
+  <div class="cc">
+    <h3>📊 Issues progression session</h3>
+    <div class="cw"><canvas id="issuesChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <h3>🐛 Bugs par catégorie</h3>
+    <div class="cw"><canvas id="bugsChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <h3>⚡ Boot performance — avant vs après lzdg Phase 2</h3>
+    <div class="cw2"><canvas id="bootChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <h3>📦 Taille fichiers JS après extraction 04q1</h3>
+    <div class="cw2"><canvas id="sizeChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<h2>Chronologie session</h2>
+<div class="timeline">
+  <div class="tl-item">
+    <div class="tl-dot ops">🔒</div>
+    <div class="tl-body">
+      <div class="title">RapidAPI key révoquée</div>
+      <div class="desc">Clé exposée chat 21/05 révoquée dashboard + nouvelle clé .env VPS + pm2 restart</div>
+      <div class="commit">CLAUDE.md action 2 → ✅ CLOSED</div>
+    </div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot fix">🔴</div>
+    <div class="tl-body">
+      <div class="title">TennisVB — ReferenceError e.youtube_url</div>
+      <div class="desc">server.js:29612 — variable de boucle m, pas e. Spammait 10+ erreurs/min en prod</div>
+      <div class="commit">commit 6ec4337 · fix(tennis-vb): e.youtube_url → m.youtube_url</div>
+    </div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot fix">⚠️</div>
+    <div class="tl-body">
+      <div class="title">BetMines — Accept-Encoding gzip retiré</div>
+      <div class="desc">Node https.request pas de décompression auto → body binary en logs sur 403. Header supprimé → logs lisibles</div>
+      <div class="commit">commit 6ec4337 · fix: remove Accept-Encoding gzip betmines</div>
+    </div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot close">✅</div>
+    <div class="tl-body">
+      <div class="title">3 issues fermées — hgad · rcmw · zia</div>
+      <div class="desc">Audit confirme code déjà livré (W3 SPS flag, 7 chantiers mobile, odds migration flag)</div>
+      <div class="commit">bd close hgad rcmw zia</div>
+    </div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot feat">🚀</div>
+    <div class="tl-body">
+      <div class="title">lzdg Phase 2 — defer fetchStats 30s</div>
+      <div class="desc">HTTP respond immédiatement post-restart. ETL démarre à T+30s. NaN guard || 30000 ajouté (W1 QA)</div>
+      <div class="commit">commit 92913b9 · fix(lzdg): defer fetchStats 30s post-boot</div>
+    </div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot ops">📊</div>
+    <div class="tl-body">
+      <div class="title">Data report + QA rapport générés</div>
+      <div class="desc">.context/test-report-session-2026-05-28.md · .context/data-report-session-recap-2026-05-28.html</div>
+      <div class="commit">QA: 0 bugs · W1 fixé dans la foulée</div>
+    </div>
+  </div>
+</div>
+
+<!-- QA TABLE -->
+<h2>QA — Checks effectués (10/10 passés)</h2>
+<div class="qa-grid">
+  <div class="qa-card"><div class="qc-title">node --check server.js</div><div class="qc-st"><span class="dot ok"></span>PASS</div></div>
+  <div class="qa-card"><div class="qc-title">node --check pariscore.js</div><div class="qc-st"><span class="dot ok"></span>PASS</div></div>
+  <div class="qa-card"><div class="qc-title">e.youtube_url → m.youtube_url unique</div><div class="qc-st"><span class="dot ok"></span>PASS (1 occurrence légitime)</div></div>
+  <div class="qa-card"><div class="qc-title">BetMines Accept-Encoding absent</div><div class="qc-st"><span class="dot ok"></span>PASS</div></div>
+  <div class="qa-card"><div class="qc-title">lzdg setTimeout enveloppe withBootTimeout</div><div class="qc-st"><span class="dot ok"></span>PASS</div></div>
+  <div class="qa-card"><div class="qc-title">server.listen → bootInit → setTimeout order</div><div class="qc-st"><span class="dot ok"></span>PASS</div></div>
+  <div class="qa-card"><div class="qc-title">NaN guard parseInt || 30000</div><div class="qc-st"><span class="dot fix"></span>W1 → FIXÉ</div></div>
+  <div class="qa-card"><div class="qc-title">USE_API_FOOTBALL_ODDS off par défaut</div><div class="qc-st"><span class="dot ok"></span>PASS (pas d'activation accidentelle)</div></div>
+  <div class="qa-card"><div class="qc-title">SPS confidence flag pariscore.js</div><div class="qc-st"><span class="dot ok"></span>PASS (ligne 2498-2501)</div></div>
+  <div class="qa-card"><div class="qc-title">rcmw mobile classes présentes</div><div class="qc-st"><span class="dot ok"></span>PASS (bottom-nav · haptic · pan-zoom)</div></div>
+</div>
+
+<!-- DB TABLE -->
+<h2>État base de données</h2>
+<div class="tc">
+  <div class="tc-hdr"><h3>Tables SQLite — snapshot 28/05/2026</h3></div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>Table</th><th>Lignes</th><th>Usage</th><th>Statut</th></tr></thead>
+    <tbody>
+      <tr><td>tennis_matches</td><td>24 995</td><td>Historique matchs ATP/WTA BSD ETL</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>tennis_elo</td><td>4 391</td><td>Elo interne pipeline dl49</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>matchstat_players</td><td>1 840</td><td>Stats joueurs Matchstat</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>kv</td><td>920</td><td>Clé-valeur (prefs, cache scout)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>tennis_ta_cache</td><td>301</td><td>Tennis Abstract (take/sweep rates)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>tennis_matches_internal</td><td>151</td><td>Matchs internes SPS ETL</td><td><span class="pill warn">Croissance lente</span></td></tr>
+      <tr><td>api_cache</td><td>103</td><td>Cache API externe</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>closing_odds</td><td>80</td><td>Cotes clôture calibration</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>users</td><td>43</td><td>Comptes JWT</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td>affiliates</td><td>2</td><td>Partenaires affiliation</td><td><span class="pill warn">Faible</span></td></tr>
+      <tr><td>player_surface_scores</td><td>0</td><td>SPS calculés (cron 02:00)</td><td><span class="pill empty">Cron pending</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="ins">
+  <h3>💡 Insights</h3>
+  <div class="ins-item">
+    <div class="ins-icon">🏆</div>
+    <div class="ins-text"><strong>6 issues fermées</strong> — Sprint productif : 3 closes code-audit (hgad/rcmw/zia déjà livrés), 2 closes session précédente confirmés (04q1/q1w5), 1 fix architectural (lzdg Phase 2). Issues in_progress : 15 → 9.</div>
+  </div>
+  <div class="ins-item">
+    <div class="ins-icon">🐛</div>
+    <div class="ins-text"><strong>ReferenceError TennisVB éliminé</strong> — `e.youtube_url` spammait ~10+ erreurs/min en prod depuis une durée inconnue. Coût : 0 match affiché sans youtube_url (champ null). Fix immédiat déployé VPS.</div>
+  </div>
+  <div class="ins-item">
+    <div class="ins-icon">⚡</div>
+    <div class="ins-text"><strong>Boot blackout éliminé (lzdg)</strong> — HTTP était indisponible 5-15min post-restart (CPU 80%+). fetchStats différé 30s → TTFB <500ms immédiat. BOOT_STATS_DELAY_MS tunable sans redeploy.</div>
+  </div>
+  <div class="ins-item">
+    <div class="ins-icon">🔒</div>
+    <div class="ins-text"><strong>Clé RapidAPI sécurisée</strong> — Exposition chat 21/05 → révocation + rotation complète en session. CLAUDE.md action 2 fermée. Surface d'attaque réduite.</div>
+  </div>
+  <div class="ins-item">
+    <div class="ins-icon">⚠️</div>
+    <div class="ins-text"><strong>BetMines 403 VPS IP ban persistant</strong> — Pas fixable en code. Si 403 >7j → désactiver cron BetMines. Données non critiques (fallback BSD/ESPN actif). Logs binaires corrigés pour diagnostic futur.</div>
+  </div>
+</div>
+
+<!-- METHODOLOGY -->
+<details>
+  <summary>⚙️ Méthodologie</summary>
+  <div class="db">
+    <dl>
+      <dt>Sources</dt>
+      <dd>SQLite WAL pariscore.db — mcp__sqlite-inspector</dd>
+      <dd>bd (beads) issue tracker</dd>
+      <dd>git log — commits session</dd>
+      <dd>node --check — validation syntaxe</dd>
+      <dt>QA Protocol (ps-test)</dt>
+      <dd>10 checks : syntaxe × 2, bug fix verification, null safety, boot order, flag opt-in, UI code presence</dd>
+      <dd>Résultat : 0 bugs ❌ · 1 avertissement W1 fixé inline</dd>
+      <dt>lzdg Phase 2 fix</dt>
+      <dd>setTimeout(30000) wraps withBootTimeout(fetchStats). server.listen() écoute avant ETL.</dd>
+      <dd>NaN guard : parseInt(env || '30000', 10) || 30000 — BOOT_STATS_DELAY_MS='abc' → 30000ms (safe fallback)</dd>
+    </dl>
+  </div>
+</details>
+
+</div>
+<script>
+const C={green:'#00e676',amber:'#ffa726',blue:'#29b6f6',red:'#ff4d4d',purple:'#ce93d8',m:'#5a6068'};
+Chart.defaults.color='#8d9399';Chart.defaults.borderColor='#1e2328';
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";Chart.defaults.font.size=11;
+
+function spk(id,data,color){
+  new Chart(document.getElementById(id).getContext('2d'),{
+    type:'line',
+    data:{labels:data.map((_,i)=>i),datasets:[{data,borderColor:color,borderWidth:1.5,fill:false,pointRadius:0,tension:.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:false}
+  });
+}
+spk('s1',[0,1,2,3,4,5,6],C.green);
+spk('s2',[0,0,1,2,3],C.red);
+spk('s3',[0,0,0,30],C.blue);
+spk('s4',[15,15,14,12,10,9],C.amber);
+spk('s5',[100,100,55,45],C.green);
+spk('s6',[0,0,0,1],C.blue);
+
+// Issues chart
+new Chart(document.getElementById('issuesChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Début session','Après 04q1+q1w5','Après bugs VPS','Après hgad+rcmw+zia','Après lzdg'],
+    datasets:[
+      {label:'Fermées',data:[0,2,2,5,6],backgroundColor:C.green,borderRadius:3,borderWidth:0},
+      {label:'In-progress',data:[15,13,13,10,9],backgroundColor:'#1e2328',borderRadius:3,borderWidth:1,borderColor:'#2e333a'}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:10}}}},scales:{x:{stacked:false,ticks:{font:{size:9}}},y:{beginAtZero:true,title:{display:true,text:'Issues',font:{size:10}}}}}
+});
+
+// Bugs chart
+new Chart(document.getElementById('bugsChart').getContext('2d'),{
+  type:'doughnut',
+  data:{
+    labels:['TennisVB (ReferenceError)','BetMines (binary log)','NaN guard (W1 fixé)'],
+    datasets:[{data:[1,1,1],backgroundColor:[C.red,C.amber,C.blue],borderWidth:0,hoverOffset:6}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:10}}}}}
+});
+
+// Boot performance
+new Chart(document.getElementById('bootChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['TTFB /api/v1/status','HTTP blackout durée','ETL démarre à T+'],
+    datasets:[
+      {label:'Avant lzdg P2',data:[30000,900,0],backgroundColor:C.red,borderRadius:3,borderWidth:0},
+      {label:'Après lzdg P2',data:[200,0,30],backgroundColor:C.green,borderRadius:3,borderWidth:0}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{padding:14,font:{size:10}}},
+      tooltip:{callbacks:{label:ctx=>{const u=ctx.datasetIndex===0?'ms (avant)':'s/ms (après)';return ` ${ctx.label}: ${ctx.raw}${u}`;}}}
+    },
+    scales:{x:{ticks:{font:{size:9}}},y:{beginAtZero:true,title:{display:true,text:'ms / secondes',font:{size:10}}}}
+  }
+});
+
+// Size chart
+new Chart(document.getElementById('sizeChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['pariscore.html avant','pariscore.html après','pariscore.js (extrait)'],
+    datasets:[{
+      label:'Taille KB',
+      data:[2206,988,1218],
+      backgroundColor:[C.red,C.green,C.blue],
+      borderRadius:4,borderWidth:0
+    }]
+  },
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} KB`}}},
+    scales:{x:{title:{display:true,text:'Kilobytes',font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>

@@ -38222,7 +38222,7 @@ async function bootInit() {
     if (process.env.SKIP_BOOT_FETCHSTATS === '1') {
         console.log('  [Boot] fetchStats SKIP (SKIP_BOOT_FETCHSTATS=1) — cron 12h prend la suite, HTTP responsive immediat.');
     } else {
-        const _bootStatsDelay = parseInt(process.env.BOOT_STATS_DELAY_MS || '30000', 10);
+        const _bootStatsDelay = parseInt(process.env.BOOT_STATS_DELAY_MS || '30000', 10) || 30000;
         console.log(`  [Boot] fetchStats différé ${_bootStatsDelay / 1000}s (HTTP responsive immédiat, ETL démarre à T+${_bootStatsDelay / 1000}s).`);
         setTimeout(() => {
             withBootTimeout('fetchStats (background)', BOOT_STATS_TIMEOUT_MS, () => fetchStats(true))

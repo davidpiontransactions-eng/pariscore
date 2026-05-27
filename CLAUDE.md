@@ -36,7 +36,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 | # | Action | Type | Commande / Lien | Urgence |
 |---|---|---|---|---|
 | ~~1~~ ✅ | **Deploy VPS** | ops | ✅ done 2026-05-23 — cumul `fbea217`→`290bfb1` deployed. Validation logs : grep `wikidata\|TennisLive\|safeFixed\|live_momentum_pct` |
-| 2 | **🚨 Revoke RapidAPI key** | security | Dashboard RapidAPI → revoke + nouvelle clé → `.env` VPS uniquement (exposée chat 21/05) | 🔴 CRITICAL |
+| ~~2~~ ✅ | **Revoke RapidAPI key** | security | ✅ done 2026-05-28 — clé révoquée Dashboard RapidAPI + nouvelle clé `.env` VPS + pm2 restart | 🔒 CLOSED |
 | ~~3~~ ✅ | **Audit DB postbreach** | ops | ✅ done 2026-05-23 — 8 sections audit = 0 lignes. Zéro compromission DB fenêtre breach. bd `c8m` CLOSED. |
 | 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS à minuit UTC (bd `9je`) | 🟡 MED |
 | ~~5~~ ✅ | **Run flashscore-logos** | ops | ✅ done 2026-05-24 — 20 EPL logos cached `api_cache` source='flashscore' keys logo_* (bd `qm6a` Plan A run prod) |
