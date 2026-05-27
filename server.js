@@ -21990,6 +21990,8 @@ async function fetchTennisAbstractReport(slug) {
 const BETMINES_API = 'https://api.betmines.com/betmines/v1';
 const BETMINES_TTL_MS = 30 * 60 * 1000;
 const betminesCache = new Map();
+const BETMINES_ENABLED = String(process.env.BETMINES_ENABLED ?? '1').trim() !== '0';
+if (!BETMINES_ENABLED) console.log('  [BetMines] cron DISABLED (BETMINES_ENABLED=0) — fixtures indisponibles.');
 
 async function fetchBetminesFixtures(dateFrom, dateTo) {
   const from = dateFrom || _texFmtDate(new Date());
@@ -38746,11 +38748,13 @@ function _runTennisInternalEtlJob() {
   }, delayMs);
 })();
 
-// BetMines v10.14 — refresh 30min today + tomorrow
-setTimeout(() => {
-  _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message));
-  setInterval(() => _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message)), 30 * 60 * 1000);
-}, 90 * 1000);
+// BetMines v10.14 — refresh 30min today + tomorrow (skip if BETMINES_ENABLED=0)
+if (BETMINES_ENABLED) {
+  setTimeout(() => {
+    _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message));
+    setInterval(() => _runBetminesRefresh().catch(e => console.warn('[Cron:BetMines]', e.message)), 30 * 60 * 1000);
+  }, 90 * 1000);
+}
 
 // Matchstat resolver — cron 7d + boot sync si data absente.
 if (MATCHSTAT_ENABLED) {
