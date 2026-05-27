@@ -38,9 +38,11 @@ from cron_sps_updater import (
     SPSStore,
     _accumulate_player,
     _normalize_elo,
+    _normalize_player_name,
     _parse_iso,
     _parse_tie_breaks,
     _safe_pct,
+    _ta_cache_lookup,
     aggregate_to_metrics,
     fetch_upcoming_matches,
 )
@@ -541,3 +543,84 @@ class TestSPSPipeline:
             ).fetchone()
             assert row is not None
             assert json.loads(row[0])["errors"] >= 1
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 10. PLAYER NAME NORMALIZATION + TA cache lookup (bd qvan mapping)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestNormalizePlayerName:
+    @pytest.mark.parametrize("raw,expected", [
+        ("Carlos Alcaraz", "carlos alcaraz"),
+        ("Iga Świątek", "iga swiatek"),
+        ("Adéla Krčálová", "adela krcalova"),
+        # Đ (U+0110) is not a combining char and not in [a-z0-9 ], dropped → space.
+        # This matches the server.js normName() regex exactly. Net effect:
+        # "Đoković" → " okovic" → "okovic" (no D recovered, by design).
+        ("Novak Đoković", "novak okovic"),
+        ("  Multiple   Spaces  ", "multiple spaces"),
+        ("Hyphen-Name O'Brien", "hyphen name o brien"),
+        ("", ""),
+        (None, ""),
+        ("All UPPER CASE", "all upper case"),
+    ])
+    def test_normalize_player_name(self, raw, expected):
+        assert _normalize_player_name(raw) == expected
+
+
+class TestTaCacheLookup:
+    def _seed_ta_row(self, db_path, name_key, tour, surface,
+                     take_set_rate=0.55, sweep_rate=0.65, sample=20):
+        with sqlite3.connect(db_path) as conn:
+            conn.execute(
+                "INSERT INTO tennis_ta_cache "
+                "(name_key, tour, surface, ta_id, ta_url, take_set_rate, sweep_rate, "
+                " sample, source, fetched_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (name_key, tour, surface, "0", "", take_set_rate, sweep_rate,
+                 sample, "test", int(time.time() * 1000)),
+            )
+            conn.commit()
+
+    def test_lookup_hits_on_normalized_name(self, temp_db):
+        self._seed_ta_row(temp_db, "carlos alcaraz", "ATP", "Clay")
+        out = _ta_cache_lookup(temp_db, "Carlos Alcaraz", "clay", "ATP")
+        assert "tie_breaks_won" in out
+        assert "baseline_efficiency" in out
+        assert 50.0 <= out["tie_breaks_won"] <= 60.0
+        assert 60.0 <= out["baseline_efficiency"] <= 70.0
+
+    def test_lookup_accent_insensitive(self, temp_db):
+        self._seed_ta_row(temp_db, "iga swiatek", "WTA", "Clay")
+        out = _ta_cache_lookup(temp_db, "Iga Świątek", "clay", "WTA")
+        assert "tie_breaks_won" in out
+
+    def test_lookup_surface_case_insensitive(self, temp_db):
+        self._seed_ta_row(temp_db, "test player", "ATP", "Hard")
+        out = _ta_cache_lookup(temp_db, "Test Player", "HARD", "atp")
+        assert out  # non-empty
+
+    def test_lookup_miss_returns_empty_dict(self, temp_db):
+        out = _ta_cache_lookup(temp_db, "Unknown Player", "clay", "ATP")
+        assert out == {}
+
+    def test_lookup_empty_name_returns_empty(self, temp_db):
+        out = _ta_cache_lookup(temp_db, "", "clay", "ATP")
+        assert out == {}
+
+    def test_lookup_circuit_filtered(self, temp_db):
+        # ATP row exists but query asks for WTA → miss.
+        self._seed_ta_row(temp_db, "test player", "ATP", "Clay")
+        out = _ta_cache_lookup(temp_db, "Test Player", "clay", "WTA")
+        assert out == {}
+
+    def test_lookup_takes_latest_when_multiple(self, temp_db):
+        self._seed_ta_row(temp_db, "two seed", "ATP", "Clay",
+                          take_set_rate=0.10, sweep_rate=0.10)
+        time.sleep(0.01)
+        self._seed_ta_row(temp_db, "two seed", "ATP", "Clay",
+                          take_set_rate=0.99, sweep_rate=0.99)
+        out = _ta_cache_lookup(temp_db, "Two Seed", "clay", "ATP")
+        # most recent fetched_at wins → close to 99.0
+        assert out["tie_breaks_won"] > 90.0
+        assert out["baseline_efficiency"] > 90.0

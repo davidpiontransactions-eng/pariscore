@@ -31,6 +31,7 @@ import sqlite3
 import sys
 import threading
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -141,6 +142,8 @@ class UpcomingMatch:
     player_a_id: str
     player_b_id: str
     kickoff_utc: datetime
+    player_a_name: str = ""   # for TA cache name-based lookup (qvan mapping)
+    player_b_name: str = ""
 
 
 @dataclass
@@ -246,6 +249,8 @@ def fetch_upcoming_matches(
             player_a_id=str(pa),
             player_b_id=str(pb),
             kickoff_utc=ko,
+            player_a_name=str(m.get("home_player_name") or m.get("player_a_name") or ""),
+            player_b_name=str(m.get("away_player_name") or m.get("player_b_name") or ""),
         ))
     return out
 
@@ -526,11 +531,40 @@ def aggregate_to_metrics(
     )
 
 
+def _normalize_player_name(raw: object) -> str:
+    """Normalize a player display name to match tennis_ta_cache.name_key convention.
+
+    Mirrors the JS `normName()` helper in server.js exactly:
+      1. NFD decompose
+      2. drop combining marks
+      3. lowercase
+      4. replace any character outside [a-z0-9 ] with a space (this drops Đ, Ł,
+         Æ, ß and other non-decomposable Unicode letters — matching the JS regex)
+      5. collapse whitespace
+    """
+    if not raw:
+        return ""
+    s = unicodedata.normalize("NFD", str(raw))
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.lower()
+    s = "".join(ch if ("a" <= ch <= "z") or ("0" <= ch <= "9") or ch == " " else " "
+                for ch in s)
+    return " ".join(s.split())
+
+
 def _ta_cache_lookup(
-    db_path: str, player_id: str, surface: str, tour: str
+    db_path: str, player_name: str, surface: str, tour: str
 ) -> dict[str, float]:
-    """Best-effort fetch of Tennis Abstract cached metrics for player+surface."""
+    """Best-effort fetch of Tennis Abstract cached metrics for player+surface.
+
+    Lookup keyed on tennis_ta_cache.name_key (normalized name) — NOT on ta_id,
+    because upstream BSD player IDs do not match Tennis Abstract IDs.
+    Surface match is case-insensitive (TA stores 'Clay' / 'Hard' / 'Grass').
+    """
     out: dict[str, float] = {}
+    key = _normalize_player_name(player_name)
+    if not key:
+        return out
     try:
         with sqlite3.connect(db_path) as conn:
             cur = conn.cursor()
@@ -538,17 +572,17 @@ def _ta_cache_lookup(
                 """
                 SELECT take_set_rate, sweep_rate, sample
                   FROM tennis_ta_cache
-                 WHERE ta_id = ?
+                 WHERE name_key = ?
                    AND LOWER(surface) = ?
                    AND UPPER(tour) = ?
                  ORDER BY fetched_at DESC LIMIT 1
                 """,
-                (str(player_id), surface.lower(), tour.upper()),
+                (key, surface.lower(), tour.upper()),
             )
             row = cur.fetchone()
             if row:
-                # Spec mapping (heuristic — adjust if upstream schema changes):
-                # take_set_rate ≈ tie-break-ish dominance; sweep_rate ≈ baseline efficiency.
+                # take_set_rate ≈ tie-break-ish dominance (% sets won, proxy for clutch).
+                # sweep_rate ≈ baseline efficiency (% straight-set wins).
                 if row[0] is not None:
                     out["tie_breaks_won"] = max(0.0, min(100.0, float(row[0]) * 100.0))
                 if row[1] is not None:
@@ -556,7 +590,7 @@ def _ta_cache_lookup(
                         0.0, min(100.0, float(row[1]) * 100.0)
                     )
     except sqlite3.Error as e:
-        logger.debug("TA cache lookup failed (%s, %s): %s", player_id, surface, e)
+        logger.debug("TA cache lookup failed (%s, %s): %s", player_name, surface, e)
     return out
 
 
@@ -729,10 +763,11 @@ class SPSPipeline:
             self.store.write_heartbeat(stats)
             return stats
 
-        jobs: list[tuple[UpcomingMatch, str]] = []
+        # Jobs: (match, player_id, player_name) — name plumbed for TA cache lookup.
+        jobs: list[tuple[UpcomingMatch, str, str]] = []
         for m in matches:
-            jobs.append((m, m.player_a_id))
-            jobs.append((m, m.player_b_id))
+            jobs.append((m, m.player_a_id, m.player_a_name))
+            jobs.append((m, m.player_b_id, m.player_b_name))
 
         processed = 0
         skipped = 0
@@ -740,8 +775,8 @@ class SPSPipeline:
 
         with ThreadPoolExecutor(max_workers=self.workers) as pool:
             futures = {
-                pool.submit(self._process_one, m, pid): (m.match_id, pid)
-                for m, pid in jobs
+                pool.submit(self._process_one, m, pid, pname): (m.match_id, pid)
+                for m, pid, pname in jobs
             }
             for fut in as_completed(futures):
                 match_id, pid = futures[fut]
@@ -792,8 +827,11 @@ class SPSPipeline:
         self.store.write_heartbeat(stats)
         return stats
 
-    def _process_one(self, match: UpcomingMatch, player_id: str) -> bool:
+    def _process_one(
+        self, match: UpcomingMatch, player_id: str, player_name: str = ""
+    ) -> bool:
         """Compute and store SPS for a single (match, player) pair.
+        player_name (optional) is used for TA cache lookup keyed on name_key.
         Returns True on successful write, False if skipped."""
         _DB_LIMITER.acquire()  # DB only — HTTP fetch happens once upfront
 
@@ -820,7 +858,7 @@ class SPSPipeline:
         )
 
         elo_raw = self.stats_source.fetch_elo(player_id, match.circuit)
-        ta_metrics = _ta_cache_lookup(self.db_path, player_id, match.surface, match.circuit)
+        ta_metrics = _ta_cache_lookup(self.db_path, player_name, match.surface, match.circuit)
 
         metrics = aggregate_to_metrics(agg, elo_raw, sdr_pct, ta_metrics)
 
