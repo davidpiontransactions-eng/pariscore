@@ -194,6 +194,131 @@ during transition). Additive changes (new optional fields) do not bump version.
 
 ---
 
+---
+
+## Deploy — VPS OVH PariScore (R5)
+
+### 1. Pull du code sur VPS
+
+```bash
+cd /home/ubuntu/pariscore
+git pull
+pm2 restart pariscore     # recharge server.js (route /api/v1/tennis/upcoming)
+```
+
+### 2. Vérification endpoint live
+
+```bash
+# Sans token (mode dev / token désactivé)
+curl -s http://localhost:3000/api/v1/tennis/upcoming | jq '.meta'
+
+# Smoke health check + sps_pipeline section
+curl -s http://localhost:3000/api/v1/sources/health | jq '.sps_pipeline'
+```
+
+Réponse attendue minimale :
+```json
+{
+  "matches": [...],
+  "meta": {
+    "now_utc": "...",
+    "lookahead_min_h": 24,
+    "lookahead_max_h": 36,
+    "tour_filter": null,
+    "dates_scanned": ["YYYY-MM-DD", "YYYY-MM-DD", "YYYY-MM-DD"],
+    "total": N,
+    "latency_ms": <int>,
+    "warnings": []
+  }
+}
+```
+
+### 3. Variables d'environnement `.env` (VPS uniquement)
+
+À ajouter dans `/home/ubuntu/pariscore/.env` :
+
+```bash
+# === Surface PowerScore (SPS) pipeline ===
+# Token interne optionnel : si défini, l'endpoint /api/v1/tennis/upcoming
+# exige le header `x-pariscore-internal-token: <value>`. Si vide, accès ouvert
+# (mode initial freemium — payload public uniquement, OK).
+SPS_INTERNAL_TOKEN=
+
+# Côté cron Python (mêmes valeurs que server.js sauf override):
+# PARISCORE_API_URL=http://localhost:3000/api/v1/tennis/upcoming
+# PARISCORE_DB_PATH=/home/ubuntu/pariscore/pariscore.db
+# PARISCORE_LOG_PATH=/home/ubuntu/pariscore/logs/sps_updater.log
+```
+
+> ⚠️ Si `SPS_INTERNAL_TOKEN` est activé, le cron Python doit envoyer le header :
+> ```python
+> # À ajouter dans cron_sps_updater.py fetch_upcoming_matches() — voir bd q1w5 follow-up
+> req.headers["x-pariscore-internal-token"] = os.environ.get("SPS_INTERNAL_TOKEN", "")
+> ```
+> Actuellement non implémenté côté cron — laisser `SPS_INTERNAL_TOKEN=` vide en première
+> mise en prod.
+
+### 4. Crontab installation
+
+```bash
+# Édition crontab utilisateur
+crontab -e
+```
+
+Ajout (12h schedule recommandé 05:30 + 17:30 Paris) :
+
+```cron
+30 5,17 * * * cd /home/ubuntu/pariscore && /usr/bin/python3 cron_sps_updater.py
+```
+
+Vérification :
+```bash
+crontab -l                                                 # lister les jobs actifs
+tail -f /home/ubuntu/pariscore/logs/sps_updater.log        # streamer les logs
+```
+
+### 5. Dry-run validation post-deploy
+
+Avant d'activer la persistence en prod, faire tourner un dry-run manuel :
+
+```bash
+cd /home/ubuntu/pariscore
+PARISCORE_SPS_DRY_RUN=1 PARISCORE_LOG_LEVEL=DEBUG /usr/bin/python3 cron_sps_updater.py
+```
+
+Sortie attendue :
+- `Fetched N upcoming matches. [DRY-RUN]`
+- `[DRY-RUN] Skipping K pending upserts (would have been written).`
+- `Summary: matches=N ok=K skipped=0 errors=0`
+- Logs détaillés (DEBUG) pour 5 premiers SPS sample
+
+Si `errors > 0` → consulter `logs/sps_updater.log` + résoudre avant retrait du flag.
+
+### 6. Monitoring stale-detection
+
+```bash
+# Vérification rapide ad-hoc
+curl -s http://localhost:3000/api/v1/sources/health | jq '.sps_pipeline.status'
+# Attendu : "ok"  (pas "stale" / "degraded" / "unknown")
+```
+
+Pour alerting automatique : utiliser le helper Telegram existant (variable
+`TELEGRAM_BOT_TOKEN` `.env`) + ajouter un cron horaire qui POSTe vers Telegram
+si `sps_pipeline.status` ≠ "ok". À traiter par bd `R1` (Telegram observability).
+
+### 7. Pré-requis populés
+
+| Pré-requis | bd | Statut |
+|---|---|---|
+| `tennis_matches_internal` rempli (52 semaines historique ATP + WTA) | `dl49` | en cours |
+| `player_id ↔ ta_id` mapping table | `qvan` | non démarré |
+| `tennis_ta_cache` overrides peuplé | `qvan` | non démarré |
+
+Sans ces prérequis, le cron tourne mais SPS = fallback 50.0 partout
+(`confidence_full: false` flag déjà disponible côté UI pour griser).
+
+---
+
 ## See also
 
 - `cron_sps_updater.py` — consumer implementation

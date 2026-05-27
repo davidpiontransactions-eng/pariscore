@@ -5122,6 +5122,19 @@ function kvSetBatch(entries) {
   sqldb.transaction(() => { for (const [k, v] of entries) stmt.run(k, JSON.stringify(v)); })();
 }
 
+// ─── SPS upcoming endpoint — module-scope constants (W6, bd q1w5) ──────────
+// Hoisted out of the request handler because /api/v1/sources/health reads
+// SPS_UPCOMING_TELEMETRY before the W6 route block executes; declaring them inside
+// the handler triggered a TDZ ReferenceError that silently stalled the response.
+const SPS_UPCOMING_CAP_HOURS = 7 * 24;  // safety cap window (7 days)
+const SPS_UPCOMING_TELEMETRY = {
+  last_call_at: null,
+  last_latency_ms: null,
+  last_status: null,
+  calls_total: 0,
+  cache_hits: 0,
+};
+
 // ─── WElo TENNIS — Initialisation du calculator ──────────────────────────
 // Charge l'état persistant depuis SQLite et init en mémoire
 let tennisEloCalculator = null;
@@ -25205,10 +25218,28 @@ if (pathname === '/api/v1/sources/health') {
   else if (okCount === sources.length) overall_status = 'healthy';
   else overall_status = 'partial';
 
+  // R1 (bd q1w5) — SPS pipeline endpoint telemetry + SQLite kv heartbeat.
+  // Lit kv['sps_last_run'] écrit par cron_sps_updater.py SPSStore.write_heartbeat.
+  // kvGet retourne déjà JSON-parsed objet (server.js:5110-5114).
+  let spsHeartbeat = null;
+  try { spsHeartbeat = kvGet('sps_last_run', null); } catch (_) { spsHeartbeat = null; }
+  const spsTel = (typeof SPS_UPCOMING_TELEMETRY !== 'undefined') ? SPS_UPCOMING_TELEMETRY : null;
+  const spsAgeMs = spsHeartbeat && spsHeartbeat.ts_ms ? (Date.now() - spsHeartbeat.ts_ms) : null;
+  const spsStatus = (spsHeartbeat == null)
+    ? 'unknown'
+    : (spsAgeMs > 24 * 3600 * 1000 ? 'stale'
+       : (spsHeartbeat.errors > 0 ? 'degraded' : 'ok'));
+
   return jsonResponse(res, 200, {
     ts: new Date().toISOString(),
     sources,
     overall_status,
+    sps_pipeline: {
+      status: spsStatus,
+      last_run: spsHeartbeat,
+      age_ms: spsAgeMs,
+      endpoint_telemetry: spsTel,
+    },
     notes: 'Phase 2A: latency/last_error tracking depends on recordProviderHealth() wiring in fetchers (TODO Phase 2A.1)',
   });
 }
@@ -31016,18 +31047,41 @@ if (pathname === '/api/v1/tennis/board' && req.method === 'GET') {
 // VB chaud) puis filtre [now+lookahead_min_h, now+lookahead_max_h] + surface ∈
 // {clay,grass,hard} + tour optionnel. Renvoie player IDs sources pour SPS join sur
 // tennis_matches_internal.{winner,loser}_player_id.
-if (pathname === '/api/v1/tennis/upcoming' && req.method === 'GET') {
+//
+// Caps & telemetry — module-scope refs (voir module-scope SPS_UPCOMING_* declarations
+// pour hoisting hors handler — sinon TDZ vs /api/v1/sources/health qui les lit en amont).
+// Voir rapport QA .context/test-report-w6-tennis-upcoming.md
+//   W1 405 vs 404 ↓  W2 whitelist tour ↓  W3 cap max ↓  W4 dynamic scan ↓  W5 token opt-in ↓
+if (pathname === '/api/v1/tennis/upcoming') {
+  // W1 — 405 instead of fallthrough 404 for non-GET.
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return jsonResponse(res, 405, { error: 'method_not_allowed', allow: 'GET' });
+  }
+  // W5 — opt-in internal token. Active uniquement si SPS_INTERNAL_TOKEN env set.
+  if (process.env.SPS_INTERNAL_TOKEN) {
+    const sent = req.headers['x-pariscore-internal-token'];
+    if (sent !== process.env.SPS_INTERNAL_TOKEN) {
+      return jsonResponse(res, 401, { error: 'unauthorized', hint: 'missing or invalid x-pariscore-internal-token header' });
+    }
+  }
+  const _t0 = Date.now();
+  SPS_UPCOMING_TELEMETRY.calls_total += 1;
   const _minRaw = parseInt(query.lookahead_min_h, 10);
   const _maxRaw = parseInt(query.lookahead_max_h, 10);
-  const lookaheadMinH = Math.max(0, Number.isFinite(_minRaw) ? _minRaw : 24);
-  const lookaheadMaxH = Math.max(lookaheadMinH, Number.isFinite(_maxRaw) ? _maxRaw : 36);
-  const tourFilter = String(query.tour || '').toUpperCase();
+  const lookaheadMinH = Math.max(0, Math.min(SPS_UPCOMING_CAP_HOURS, Number.isFinite(_minRaw) ? _minRaw : 24));
+  const lookaheadMaxH = Math.max(lookaheadMinH, Math.min(SPS_UPCOMING_CAP_HOURS, Number.isFinite(_maxRaw) ? _maxRaw : 36));
+  // W2 — whitelist tour (ignore non-ATP/WTA silently to keep idempotent for clients).
+  const _tourRaw = String(query.tour || '').toUpperCase();
+  const tourFilter = (_tourRaw === 'ATP' || _tourRaw === 'WTA') ? _tourRaw : '';
   const nowMs = Date.now();
   const loMs = nowMs + lookaheadMinH * 3600_000;
   const hiMs = nowMs + lookaheadMaxH * 3600_000;
-  // Window 24-36h depuis maintenant peut chevaucher jusqu'à 3 dates calendaires UTC.
+  // W4 — scan dynamique. Couvre tous les jours UTC chevauchant [loMs, hiMs] + 1
+  // jour de marge pour fuseaux. Cap 8 jours (= SPS_UPCOMING_CAP_HOURS / 24 + 1).
+  const datesCount = Math.min(8, Math.ceil(lookaheadMaxH / 24) + 1);
   const dates = [];
-  for (let offset = 0; offset <= 2; offset++) {
+  for (let offset = 0; offset < datesCount; offset++) {
     const d = new Date(nowMs + offset * 86_400_000);
     dates.push(d.toISOString().slice(0, 10));
   }
@@ -31036,6 +31090,9 @@ if (pathname === '/api/v1/tennis/upcoming' && req.method === 'GET') {
     let dayOut;
     try { dayOut = await buildTennisValueBets({ date: d }); } catch (_) { continue; }
     if (!dayOut || dayOut.status !== 200) continue;
+    if (dayOut.body && dayOut.body.meta && dayOut.body.meta.loading === false) {
+      SPS_UPCOMING_TELEMETRY.cache_hits += 1;  // best-effort heuristic
+    }
     for (const m of (dayOut.body && dayOut.body.matches) || []) {
       if (m && m.id != null && !collected.has(m.id)) collected.set(m.id, m);
     }
@@ -31066,6 +31123,17 @@ if (pathname === '/api/v1/tennis/upcoming' && req.method === 'GET') {
     });
   }
   matches.sort((a, b) => a.commence_time.localeCompare(b.commence_time));
+  const warnings = [];
+  if (Number.isFinite(_maxRaw) && _maxRaw > SPS_UPCOMING_CAP_HOURS) {
+    warnings.push('lookahead_max_h_capped');
+  }
+  if (_tourRaw && !tourFilter) {
+    warnings.push('tour_filter_ignored');
+  }
+  const latencyMs = Date.now() - _t0;
+  SPS_UPCOMING_TELEMETRY.last_call_at = new Date(nowMs).toISOString();
+  SPS_UPCOMING_TELEMETRY.last_latency_ms = latencyMs;
+  SPS_UPCOMING_TELEMETRY.last_status = 200;
   return jsonResponse(res, 200, {
     matches,
     meta: {
@@ -31075,6 +31143,8 @@ if (pathname === '/api/v1/tennis/upcoming' && req.method === 'GET') {
       tour_filter: tourFilter || null,
       dates_scanned: dates,
       total: matches.length,
+      latency_ms: latencyMs,
+      warnings,
     },
   });
 }
