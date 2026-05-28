@@ -12,6 +12,7 @@
  *
  * USAGE:
  *   node tools/build-tennis-internal-history.js [--dry-run] [--force] [--source=bsd|espn|archive]
+ *   node tools/build-tennis-internal-history.js --backfill-days=N   (N jours BSD API live calls → upsert)
  *
  * EXIT CODES:
  *   0 OK    1 error    2 partial (au moins 1 source failed)
@@ -32,6 +33,8 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const FORCE = process.argv.includes('--force');
 const sourceArg = process.argv.find(a => a.startsWith('--source='));
 const SOURCE_FILTER = sourceArg ? sourceArg.split('=')[1] : null;
+const backfillArg = process.argv.find(a => a.startsWith('--backfill-days='));
+const BACKFILL_DAYS = backfillArg ? Math.max(0, parseInt(backfillArg.split('=')[1], 10) || 0) : 0;
 
 function normName(s) {
   if (!s) return '';
@@ -407,8 +410,8 @@ function main() {
   if (!SOURCE_FILTER || SOURCE_FILTER === 'bsd') {
     try {
       // Generic BSD tennis matches cached (RG/tournament matches : bsd_rg_m_*)
-      const rows = db.prepare(`SELECT key, data FROM api_cache WHERE key LIKE 'bsd_rg_m_%' OR key LIKE 'bsd_tennis_matches_%'`).all();
-      console.log(`[etl] BSD raw matches: ${rows.length} cache entries trouvées`);
+      const rows = db.prepare(`SELECT key, data FROM api_cache WHERE key LIKE 'bsd_rg_m_%' OR key LIKE 'bsd_tennis_matches_%' OR key LIKE 'bsd_tennis_value_bets_%'`).all();
+      console.log(`[etl] BSD raw matches (rg+matches+value_bets): ${rows.length} cache entries trouvées`);
       const tx = db.transaction(() => {
         for (const r of rows) {
           let data;
@@ -509,10 +512,178 @@ function main() {
   process.exit(summary.errors.length > 0 ? 2 : 0);
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(`[etl] FATAL: ${e.message}`);
-  console.error(e.stack);
-  process.exit(1);
+// ── Backfill helpers ──────────────────────────────────────────────────────────
+
+function _loadEnvIfNeeded() {
+  if (process.env.BSD_API_KEY) return;
+  try {
+    const envPath = path.join(ROOT, '.env');
+    if (!fs.existsSync(envPath)) return;
+    for (const line of fs.readFileSync(envPath, 'utf8').split('\n')) {
+      const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim().replace(/^['"]|['"]$/g, '');
+    }
+  } catch (_) {}
+}
+
+function _httpsGetJson(url, apiKey) {
+  return new Promise((resolve, reject) => {
+    const https = require('https');
+    const parsed = new URL(url);
+    const opts = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      headers: { Authorization: `Token ${apiKey}` },
+      timeout: 10000,
+    };
+    const req = https.request(opts, res => {
+      let body = '';
+      res.on('data', d => { body += d; });
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, data: JSON.parse(body) }); }
+        catch (_) { resolve({ status: res.statusCode, data: null }); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('HTTPS timeout')); });
+    req.end();
+  });
+}
+
+// ── bd j2ev — BSD historical backfill (--backfill-days=N) ────────────────────
+async function backfillMain() {
+  _loadEnvIfNeeded();
+  const BSD_API_KEY = process.env.BSD_API_KEY || '';
+  if (!BSD_API_KEY) { console.error('[backfill] BSD_API_KEY manquante — définir dans .env'); process.exit(1); }
+  if (!fs.existsSync(DB_PATH)) { console.error(`[backfill] DB introuvable: ${DB_PATH}`); process.exit(1); }
+
+  const db = new Database(DB_PATH);
+
+  // Schema init (idempotent — mirror main())
+  db.exec(`CREATE TABLE IF NOT EXISTS tennis_matches_internal (
+    source TEXT NOT NULL, source_id TEXT NOT NULL,
+    tour TEXT, tourney_name TEXT, tourney_id INTEGER, surface TEXT,
+    tourney_date INTEGER, match_date INTEGER,
+    winner_name TEXT, loser_name TEXT, winner_player_id INTEGER, loser_player_id INTEGER,
+    score TEXT, sets_winner INTEGER, sets_loser INTEGER, best_of INTEGER, round TEXT,
+    status TEXT, minutes INTEGER,
+    imported_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    PRIMARY KEY (source, source_id)
+  )`);
+  const altCols = [
+    ['w_ace','INTEGER'],['w_df','INTEGER'],['w_svpt','INTEGER'],
+    ['w_1stIn','INTEGER'],['w_1stWon','INTEGER'],['w_2ndWon','INTEGER'],
+    ['w_SvGms','INTEGER'],['w_bpSaved','INTEGER'],['w_bpFaced','INTEGER'],
+    ['l_ace','INTEGER'],['l_df','INTEGER'],['l_svpt','INTEGER'],
+    ['l_1stIn','INTEGER'],['l_1stWon','INTEGER'],['l_2ndWon','INTEGER'],
+    ['l_SvGms','INTEGER'],['l_bpSaved','INTEGER'],['l_bpFaced','INTEGER'],
+    ['winner_rank','INTEGER'],['winner_rank_points','INTEGER'],
+    ['loser_rank','INTEGER'],['loser_rank_points','INTEGER'],
+    ['winner_hand','TEXT'],['loser_hand','TEXT'],
+    ['winner_ioc','TEXT'],['loser_ioc','TEXT'],
+    ['winner_age','REAL'],['loser_age','REAL'],
+  ];
+  try {
+    const existingCols = new Set(db.prepare(`PRAGMA table_info(tennis_matches_internal)`).all().map(c => c.name));
+    const SAFE_COL = /^[a-z_][a-z0-9_]*$/i;
+    const SAFE_TYPES = new Set(['INTEGER','TEXT','REAL','NUMERIC','BLOB']);
+    for (const [name, type] of altCols) {
+      if (!SAFE_COL.test(name) || !SAFE_TYPES.has(type)) continue;
+      if (!existingCols.has(name)) db.exec(`ALTER TABLE tennis_matches_internal ADD COLUMN ${name} ${type}`);
+    }
+  } catch (e) { console.warn('[backfill] ALTER serve cols failed:', e.message); }
+
+  const upsertStmt = db.prepare(`INSERT OR REPLACE INTO tennis_matches_internal (
+    source, source_id, tour, tourney_name, tourney_id, surface,
+    tourney_date, match_date, winner_name, loser_name, winner_player_id, loser_player_id,
+    score, sets_winner, sets_loser, best_of, round, status, minutes,
+    w_ace, l_ace, w_df, l_df,
+    winner_ioc, loser_ioc, winner_hand, loser_hand,
+    winner_rank, winner_rank_points, loser_rank, loser_rank_points
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+
+  const BSD_TENNIS_BASE = 'https://sports.bzzoiro.com/tennis';
+  let totalInserted = 0, totalSkipped = 0, totalErrors = 0;
+
+  console.log(`[backfill] Démarrage — ${BACKFILL_DAYS} jours rétrospectifs via BSD API live`);
+  for (let d = 1; d <= BACKFILL_DAYS; d++) {
+    const dt = new Date();
+    dt.setUTCDate(dt.getUTCDate() - d);
+    const dateStr = dt.toISOString().slice(0, 10);
+    let page = 1;
+
+    while (true) {
+      const url = `${BSD_TENNIS_BASE}/api/v2/matches/?status=finished&date_from=${dateStr}&date_to=${dateStr}&limit=200&page=${page}`;
+      let resp;
+      try {
+        resp = await _httpsGetJson(url, BSD_API_KEY);
+      } catch (e) {
+        console.warn(`\n  [backfill] ${dateStr} p${page} HTTP error: ${e.message}`);
+        totalErrors++;
+        break;
+      }
+      if (resp.status === 402) {
+        console.error('\n[backfill] BSD Tennis addon requis (402) — abo BSD_TENNIS requis');
+        db.close(); process.exit(1);
+      }
+      if (resp.status !== 200) {
+        console.warn(`\n  [backfill] ${dateStr} p${page} status=${resp.status} — skip date`);
+        break;
+      }
+      const results = Array.isArray(resp.data) ? resp.data : (resp.data && resp.data.results) || [];
+      if (!results.length) break;
+
+      const tx = db.transaction(() => {
+        for (const m of results) {
+          const row = extractFromBsdMatch(m);
+          if (!row) { totalSkipped++; continue; }
+          try {
+            upsertStmt.run(
+              row.source, row.source_id, row.tour, row.tourney_name, row.tourney_id, row.surface,
+              row.tourney_date, row.match_date, row.winner_name, row.loser_name,
+              row.winner_player_id, row.loser_player_id, row.score, row.sets_winner, row.sets_loser,
+              row.best_of, row.round, row.status, row.minutes,
+              row.w_ace || null, row.l_ace || null, row.w_df || null, row.l_df || null,
+              row.w_ioc || null, row.l_ioc || null, row.w_hand || null, row.l_hand || null,
+              row.winner_rank || null, row.winner_rank_points || null,
+              row.loser_rank || null, row.loser_rank_points || null
+            );
+            totalInserted++;
+          } catch (e) { totalErrors++; }
+        }
+      });
+      tx();
+
+      const hasNext = resp.data && resp.data.next != null;
+      if (!hasNext || results.length < 200) break;
+      page++;
+      await new Promise(r => setTimeout(r, 300));
+    }
+    process.stdout.write(`\r  [backfill] ${d}/${BACKFILL_DAYS} (${dateStr}) · insérés=${totalInserted} skip=${totalSkipped} err=${totalErrors}`);
+    if (d < BACKFILL_DAYS) await new Promise(r => setTimeout(r, 500));
+  }
+
+  const finalCount = DRY_RUN ? '(dry-run)' : db.prepare(`SELECT COUNT(*) AS n FROM tennis_matches_internal`).get().n;
+  console.log(`\n\n[backfill] ✓ TERMINÉ — ${BACKFILL_DAYS} jours · insérés=${totalInserted} skip=${totalSkipped} err=${totalErrors}`);
+  console.log(`  Table tennis_matches_internal : ${finalCount} rows total`);
+  db.close();
+  process.exit(totalErrors > 0 ? 2 : 0);
+}
+
+// ── Dispatch ──────────────────────────────────────────────────────────────────
+if (BACKFILL_DAYS > 0) {
+  backfillMain().catch(e => {
+    console.error(`[etl:backfill] FATAL: ${e.message}`);
+    console.error(e.stack);
+    process.exit(1);
+  });
+} else {
+  try {
+    main();
+  } catch (e) {
+    console.error(`[etl] FATAL: ${e.message}`);
+    console.error(e.stack);
+    process.exit(1);
+  }
 }
