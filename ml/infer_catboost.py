@@ -79,18 +79,22 @@ def build_row(feat: dict[str, Any]) -> list[Any]:
 
     po: dict = feat.get("poisson") or {}
     fair: dict = feat.get("fair") or {}
+    NAN = float("nan")
+
+    has_po = bool(po and po.get("homeWin") is not None)
+    has_fair = bool(fair and fair.get("home") is not None)
 
     return [
-        _safe_float(po.get("homeWin"), 33.0),
-        _safe_float(po.get("draw"),    33.0),
-        _safe_float(po.get("awayWin"), 33.0),
-        _safe_float(po.get("over25"),  50.0),
-        _safe_float(po.get("over15"),  70.0),
-        _safe_float(po.get("btts"),    45.0),
-        _safe_float(po.get("cs00"),     5.0),
-        _safe_float(fair.get("home"),  0.33) * 100.0,
-        _safe_float(fair.get("draw"),  0.33) * 100.0,
-        _safe_float(fair.get("away"),  0.33) * 100.0,
+        _safe_float(po.get("homeWin"), NAN) if has_po else NAN,
+        _safe_float(po.get("draw"),    NAN) if has_po else NAN,
+        _safe_float(po.get("awayWin"), NAN) if has_po else NAN,
+        _safe_float(po.get("over25"),  NAN) if has_po else NAN,
+        _safe_float(po.get("over15"),  NAN) if has_po else NAN,
+        _safe_float(po.get("btts"),    NAN) if has_po else NAN,
+        _safe_float(po.get("cs00"),    NAN) if has_po else NAN,
+        _safe_float(fair.get("home"),  NAN) * 100.0 if has_fair else NAN,
+        _safe_float(fair.get("draw"),  NAN) * 100.0 if has_fair else NAN,
+        _safe_float(fair.get("away"),  NAN) * 100.0 if has_fair else NAN,
         month,
         hour,
         dow,

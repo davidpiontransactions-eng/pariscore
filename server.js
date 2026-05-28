@@ -26969,7 +26969,7 @@ async function _runCatBoostBatchInference(matches) {
   }
   const features = (matches || [])
     .filter(function(m) {
-      return m.poisson && !(m.sport || '').startsWith('tennis_') && m.sport !== 'tennis';
+      return !(m.sport || '').startsWith('tennis_') && m.sport !== 'tennis';
     })
     .map(function(m) {
       return {
