@@ -4882,6 +4882,22 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_closing_odds_commence ON closing_odds(commence_time)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_closing_odds_captured ON closing_odds(captured_at)`);
+  // player_surface_scores — SPS computed by cron_sps_updater.py (02h05). Created
+  // here at startup so /api/v1/sps never throws "no such table" on a fresh VPS
+  // before the Python cron first runs.
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS player_surface_scores (
+    player_id    INTEGER NOT NULL,
+    surface      TEXT NOT NULL,
+    match_id     TEXT NOT NULL,
+    circuit      TEXT,
+    sps          REAL,
+    aptitude_score REAL,
+    confidence_full INTEGER NOT NULL DEFAULT 0,
+    matches_played  INTEGER NOT NULL DEFAULT 0,
+    computed_at  INTEGER NOT NULL,
+    PRIMARY KEY (player_id, surface, match_id)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_pss_match_id ON player_surface_scores(match_id)`);
   // user_bets : col CLV (pct) — idempotent ALTER via pragma check
   try {
     const cols = sqldb.prepare("PRAGMA table_info(user_bets)").all();
@@ -8078,6 +8094,22 @@ function buildMatchRecord(raw) {
     }
     record.bsd_coaches = raw.bsd_coaches || raw.coaches || null;
     record.bsd_unavailable = raw.unavailable || null;
+  }
+
+  // ── CatBoost — lookup cache (batch refresh après fetchOdds) ──────────────────
+  // Fallback Poisson auto si CATBOOST_ENABLED=false ou cache vide (premier cycle).
+  record.catboost = _catboostCache[record.id] || null;
+  if (record.catboost) {
+    const cb = record.catboost;
+    const po = record.poisson;
+    // Blend 60% CatBoost + 40% Poisson (calibré vs non-calibré)
+    record.blended_cb = {
+      homeWin: Math.round(cb.home   * 100 * 0.6 + (po?.homeWin || 33) * 0.4),
+      draw:    Math.round(cb.draw   * 100 * 0.6 + (po?.draw    || 33) * 0.4),
+      awayWin: Math.round(cb.away   * 100 * 0.6 + (po?.awayWin || 33) * 0.4),
+      over25:  Math.round(cb.over25 * 100 * 0.6 + (po?.over25  || 50) * 0.4),
+      btts:    Math.round(cb.btts   * 100 * 0.6 + (po?.btts    || 45) * 0.4),
+    };
   }
 
   return record;
@@ -14479,6 +14511,8 @@ async function fetchOdds(force = false, opts = {}) {
     await archiveThenPurge('post-fetchOdds');
     saveDB();
     syncCacheBuffers();
+    // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
+    if (process.env.CATBOOST_ENABLED === 'true') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
@@ -26909,6 +26943,146 @@ function _spawnEDA(args, timeoutMs) {
 function _edaTable(raw, dflt) {
   var t = (raw || dflt || 'player_surface_scores').replace(/[^a-z0-9_]/gi, '').replace(/^\d/, '_$&');
   return t || null;
+}
+
+// ─── CATBOOST — Batch inference subprocess (pattern _spawnEDA) ───────────────
+// Kill-switch : CATBOOST_ENABLED=false (défaut). Fallback Poisson auto si off ou erreur.
+// Modèles : models/catboost_football_{1x2,over25,btts}_v1.cbm (train via admin route)
+
+let _catboostCache = {};     // { matchId → { home, draw, away, over25, btts } }
+let _catboostMetrics = null; // { trained_at, n_total, models: { 1x2: { rps, ... } } }
+const _CB_MODELS_DIR = path.join(__dirname, 'models');
+const _CB_INFER_SCRIPT = path.join(__dirname, 'ml', 'infer_catboost.py');
+const _CB_TRAIN_SCRIPT = path.join(__dirname, 'ml', 'train_catboost.py');
+
+function _cbParseOut(raw) {
+  const lines = raw.trim().split('\n').filter(function(l) { return l.trim().startsWith('{'); });
+  return JSON.parse(lines.length ? lines[lines.length - 1] : raw.trim());
+}
+
+async function _runCatBoostBatchInference(matches) {
+  if (process.env.CATBOOST_ENABLED !== 'true') return {};
+  const model1x2 = path.join(_CB_MODELS_DIR, 'catboost_football_1x2_v1.cbm');
+  if (!fs.existsSync(model1x2)) {
+    console.warn('[CatBoost] Modèles absents — lancer POST /api/v1/admin/catboost/train');
+    return {};
+  }
+  const features = (matches || [])
+    .filter(function(m) {
+      return m.poisson && !(m.sport || '').startsWith('tennis_') && m.sport !== 'tennis';
+    })
+    .map(function(m) {
+      return {
+        id: m.id,
+        home_team: m.home_team,
+        away_team: m.away_team,
+        league: m.league || 'unknown',
+        commence_time: m.commence_time,
+        poisson: m.poisson ? {
+          homeWin: m.poisson.homeWin, draw: m.poisson.draw, awayWin: m.poisson.awayWin,
+          over25: m.poisson.over25, over15: m.poisson.over15,
+          btts: m.poisson.btts, cs00: m.poisson.cs00,
+        } : null,
+        fair: m.fair || null,
+      };
+    });
+  if (!features.length) return {};
+
+  return new Promise(function(resolve) {
+    const cp = require('child_process').spawn(
+      _EDA_PY_BIN, [_CB_INFER_SCRIPT],
+      { cwd: __dirname, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+    let out = '';
+    cp.stdout.on('data', function(d) { out += d.toString(); });
+    cp.stderr.on('data', function(d) { process.stderr.write('[CatBoost] ' + d); });
+    const timer = setTimeout(function() {
+      cp.kill();
+      console.warn('[CatBoost] Inference timeout 30s — fallback Poisson');
+      resolve({});
+    }, 30000);
+    cp.on('close', function() {
+      clearTimeout(timer);
+      try {
+        const r = _cbParseOut(out);
+        resolve(r.predictions && typeof r.predictions === 'object' ? r.predictions : {});
+      } catch(e) {
+        console.warn('[CatBoost] Parse error:', e.message, '— fallback Poisson');
+        resolve({});
+      }
+    });
+    cp.on('error', function(err) {
+      clearTimeout(timer);
+      console.warn('[CatBoost] Spawn error:', err.message, '— fallback Poisson');
+      resolve({});
+    });
+    cp.stdin.write(JSON.stringify({ features: features, sport: 'football' }));
+    cp.stdin.end();
+  });
+}
+
+async function _refreshCatBoostCache() {
+  if (process.env.CATBOOST_ENABLED !== 'true') return;
+  try {
+    const preds = await _runCatBoostBatchInference(db.matches);
+    if (preds && typeof preds === 'object' && Object.keys(preds).length > 0) {
+      _catboostCache = preds;
+      for (const m of db.matches) {
+        if (_catboostCache[m.id]) m.catboost = _catboostCache[m.id];
+      }
+      console.log('[CatBoost] ✓ Cache ' + Object.keys(preds).length + ' prédictions');
+    }
+  } catch(e) {
+    console.warn('[CatBoost] refreshCache error:', e.message);
+  }
+}
+
+// POST /api/v1/admin/catboost/train — déclenche entraînement (admin only)
+if (pathname === '/api/v1/admin/catboost/train' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const dbArg = process.env.DATABASE_PATH || path.join(__dirname, 'pariscore.db');
+  const child = require('child_process').spawn(
+    _EDA_PY_BIN, [_CB_TRAIN_SCRIPT, '--db', dbArg, '--models-dir', _CB_MODELS_DIR],
+    { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }
+  );
+  let out = '';
+  child.stdout.on('data', function(d) { out += d.toString(); });
+  child.stderr.on('data', function(d) { process.stderr.write('[CatBoost:Train] ' + d); });
+  const trainTimer = setTimeout(function() {
+    child.kill();
+    jsonResponse(res, 504, { error: 'Training timeout (5min)' });
+  }, 300000);
+  child.on('close', function(code) {
+    clearTimeout(trainTimer);
+    try {
+      const result = _cbParseOut(out);
+      if (result.error) return jsonResponse(res, 422, result);
+      _catboostMetrics = result;
+      jsonResponse(res, 200, result);
+    } catch(e) {
+      jsonResponse(res, 500, { error: 'Train parse error: ' + e.message, raw: out.slice(-500) });
+    }
+  });
+  child.on('error', function(err) {
+    clearTimeout(trainTimer);
+    jsonResponse(res, 500, { error: 'Train spawn error: ' + err.message });
+  });
+  return;
+}
+
+// GET /api/v1/admin/catboost/status — métriques modèles + taille cache
+if (pathname === '/api/v1/admin/catboost/status' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const model1x2 = path.join(_CB_MODELS_DIR, 'catboost_football_1x2_v1.cbm');
+  jsonResponse(res, 200, {
+    enabled: process.env.CATBOOST_ENABLED === 'true',
+    models_exist: fs.existsSync(model1x2),
+    cache_size: Object.keys(_catboostCache).length,
+    last_metrics: _catboostMetrics,
+  });
+  return;
 }
 
 // GET /api/v1/admin/eda/tables — liste tables SQLite disponibles
