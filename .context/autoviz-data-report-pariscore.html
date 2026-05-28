@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoViz × PariScore — Rapport d'Évaluation</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --bg2:     #161b22;
+      --bg3:     #21262d;
+      --bg4:     #30363d;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --text2:   #8b949e;
+      --text3:   #484f58;
+      --green:   #3fb950;
+      --green2:  #1a4731;
+      --amber:   #d29922;
+      --amber2:  #3d2b00;
+      --red:     #f85149;
+      --red2:    #4a1518;
+      --blue:    #58a6ff;
+      --blue2:   #0d2a4a;
+      --purple:  #bc8cff;
+      --teal:    #39d353;
+
+      --accent:  #58a6ff;
+      --r1: #58a6ff;
+      --r2: #3fb950;
+      --r3: #f0883e;
+      --r4: #bc8cff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    /* ─── HEADER ──────────────────────────────────────── */
+    .report-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+    }
+    .report-header .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--blue2);
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .report-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .report-header h1 span { color: var(--accent); }
+    .report-header .meta {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      color: var(--text2);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .report-header .meta span::before { content: "• "; opacity: .5; }
+
+    /* ─── VERDICT BANNER ──────────────────────────────── */
+    .verdict-banner {
+      background: linear-gradient(135deg, var(--blue2), var(--bg3));
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .verdict-score {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .verdict-text strong { font-weight: 600; color: var(--text); }
+    .verdict-text p { color: var(--text2); margin-top: 4px; font-size: 13px; }
+
+    /* ─── KPI GRID ────────────────────────────────────── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text3);
+      margin-bottom: 12px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .kpi-card .kpi-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+    .kpi-card .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .kpi-card .kpi-sub { font-size: 12px; color: var(--text2); }
+    .kpi-card .kpi-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .badge-green  { background: var(--green2);  color: var(--green); }
+    .badge-amber  { background: var(--amber2);  color: var(--amber); }
+    .badge-red    { background: var(--red2);    color: var(--red); }
+    .badge-blue   { background: var(--blue2);   color: var(--blue); }
+
+    /* ─── CHARTS ──────────────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .chart-wrap { position: relative; height: 260px; }
+    .chart-wrap-sm { position: relative; height: 200px; }
+
+    /* ─── TABLE ───────────────────────────────────────── */
+    .table-section { margin-bottom: 36px; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: var(--bg3);
+      color: var(--text2);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:hover { background: var(--bg3); }
+    tbody tr:nth-child(even) { background: rgba(255,255,255,.02); }
+    tbody td { padding: 10px 14px; color: var(--text); }
+    tbody td:first-child { font-weight: 600; }
+    .highlight-row { background: rgba(88,166,255,.06) !important; }
+    .highlight-row td:first-child { color: var(--accent); }
+
+    /* ─── PROS / CONS ─────────────────────────────────── */
+    .pros-cons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 700px) { .pros-cons-grid { grid-template-columns: 1fr; } }
+    .pc-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .pc-card.pros { border-top: 3px solid var(--green); }
+    .pc-card.cons { border-top: 3px solid var(--red); }
+    .pc-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+    .pc-card.pros h3 { color: var(--green); }
+    .pc-card.cons h3 { color: var(--red); }
+    .pc-list { list-style: none; }
+    .pc-list li {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+      font-size: 13px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .pc-list li:last-child { border-bottom: none; }
+    .pc-list li .icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+    .pc-list li strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    /* ─── INSIGHTS ────────────────────────────────────── */
+    .insights-section { margin-bottom: 36px; }
+    .insight-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .insight-emoji { font-size: 20px; flex-shrink: 0; }
+    .insight-body strong { color: var(--text); font-size: 14px; display: block; margin-bottom: 2px; }
+    .insight-body p { color: var(--text2); font-size: 13px; }
+
+    /* ─── METHODOLOGY ─────────────────────────────────── */
+    details {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+    }
+    summary {
+      cursor: pointer;
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: "▶"; font-size: 10px; transition: transform .2s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    .methodology-body { padding: 0 18px 16px; color: var(--text2); font-size: 13px; line-height: 1.8; }
+    .methodology-body ul { padding-left: 18px; }
+    .methodology-body li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="tag">Rapport d'Évaluation Technologique</div>
+    <h1>AutoViz × <span>PariScore</span></h1>
+    <div class="meta">
+      <span>Généré le 28 mai 2026</span>
+      <span>Sources : GitHub AutoViML, PyPI, Medium, Towards Data Science, KDnuggets</span>
+      <span>Bibliothèque évaluée : v0.1.905 (juin 2024)</span>
+    </div>
+  </div>
+
+  <!-- VERDICT BANNER -->
+  <div class="verdict-banner">
+    <div class="verdict-score">5.5<sub style="font-size:18px;font-weight:400">/10</sub></div>
+    <div class="verdict-text">
+      <strong>Verdict : Outil de développement utile — pas de production</strong>
+      <p>AutoViz accélère l'exploration de données en R&D et l'audit qualité ETL, mais ne remplace pas les charts JS temps-réel de PariScore. Usage recommandé : machine locale du développeur uniquement.</p>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="section-label">Indicateurs clés — AutoViz</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">GitHub Stars</div>
+      <div class="kpi-value">1 900</div>
+      <div class="kpi-sub">214 forks · Apache 2.0</div>
+      <span class="kpi-badge badge-blue">Communauté active</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Version actuelle</div>
+      <div class="kpi-value">0.1.905</div>
+      <div class="kpi-sub">Publiée juin 2024</div>
+      <span class="kpi-badge badge-amber">12 mois sans update</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Ligne de code unique</div>
+      <div class="kpi-value">1</div>
+      <div class="kpi-sub">AutoViz_Class().AutoViz(df)</div>
+      <span class="kpi-badge badge-green">DX excellent</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Max rows (défaut)</div>
+      <div class="kpi-value">150k</div>
+      <div class="kpi-sub">PariScore DB actuelle : 32k</div>
+      <span class="kpi-badge badge-green">Couvert</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Score fit PariScore</div>
+      <div class="kpi-value">5.5<small style="font-size:14px">/10</small></div>
+      <div class="kpi-sub">Dev uniquement · non production</div>
+      <span class="kpi-badge badge-amber">Usage conditionnel</span>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section-label">Analyse comparative</div>
+  <div class="charts-grid">
+
+    <div class="chart-card wide">
+      <h3>Dimensions AutoViz vs alternatives — pour PariScore (score /10)</h3>
+      <div class="chart-wrap">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Fit AutoViz par cas d'usage PariScore</h3>
+      <div class="chart-wrap">
+        <canvas id="usecaseBar"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Répartition recommandée d'usage AutoViz</h3>
+      <div class="chart-wrap">
+        <canvas id="donutChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <div class="section-label">Comparaison outils EDA — contexte PariScore</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Outil</th>
+            <th>Vitesse EDA</th>
+            <th>Profondeur stats</th>
+            <th>Poids install</th>
+            <th>Sports-specific</th>
+            <th>Maintenance 2026</th>
+            <th>Prod ready</th>
+            <th>Score PariScore</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td>AutoViz</td>
+            <td>⚡ Très rapide</td>
+            <td>🟡 Moyenne</td>
+            <td>🔴 Lourde (Bokeh+HoloViews)</td>
+            <td>🔴 Aucun</td>
+            <td>🔴 Inactif 12 mois</td>
+            <td>🔴 Non</td>
+            <td><strong>5.5 / 10</strong></td>
+          </tr>
+          <tr>
+            <td>ydata-profiling</td>
+            <td>🟡 Lent</td>
+            <td>🟢 Excellente</td>
+            <td>🟡 Moyenne</td>
+            <td>🔴 Aucun</td>
+            <td>🟢 Actif</td>
+            <td>🟡 HTML export</td>
+            <td><strong>6.5 / 10</strong></td>
+          </tr>
+          <tr>
+            <td>SweetViz</td>
+            <td>⚡ Rapide</td>
+            <td>🟡 Bonne</td>
+            <td>🟢 Légère</td>
+            <td>🔴 Aucun</td>
+            <td>🟡 Modéré</td>
+            <td>🟡 HTML export</td>
+            <td><strong>6.0 / 10</strong></td>
+          </tr>
+          <tr>
+            <td>Plotly custom</td>
+            <td>🔴 Long à coder</td>
+            <td>🟢 Sur mesure</td>
+            <td>🟢 Légère</td>
+            <td>🟢 Total contrôle</td>
+            <td>🟢 Très actif</td>
+            <td>🟢 Oui</td>
+            <td><strong>8.0 / 10</strong></td>
+          </tr>
+          <tr>
+            <td>Pandas + matplotlib</td>
+            <td>🔴 Manuel</td>
+            <td>🟢 Sur mesure</td>
+            <td>🟢 Minimale</td>
+            <td>🟢 Total contrôle</td>
+            <td>🟢 Standard</td>
+            <td>🟢 Oui</td>
+            <td><strong>7.5 / 10</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PROS / CONS -->
+  <div class="section-label">Analyse +/− pour PariScore</div>
+  <div class="pros-cons-grid">
+    <div class="pc-card pros">
+      <h3>✅ Avantages</h3>
+      <ul class="pc-list">
+        <li>
+          <span class="icon">⚡</span>
+          <div>
+            <strong>1 ligne de code, résultats en secondes</strong>
+            Exploration rapide sans écrire une seule ligne de matplotlib. Idéal pour valider un nouveau dataset (SPS, Elo, archive_matches).
+          </div>
+        </li>
+        <li>
+          <span class="icon">🐍</span>
+          <div>
+            <strong>Python déjà dans le stack</strong>
+            PariScore utilise déjà Python (cron_sps_updater.py). AutoViz s'intègre sans nouveau runtime sur le VPS ou en local.
+          </div>
+        </li>
+        <li>
+          <span class="icon">🔍</span>
+          <div>
+            <strong>FixDQ() — audit qualité données</strong>
+            Détecte outliers, missing values, distributions anormales. Parfait pour auditer les 32 918 records de pariscore.db après chaque ETL.
+          </div>
+        </li>
+        <li>
+          <span class="icon">🎯</span>
+          <div>
+            <strong>Support variable cible (depVar)</strong>
+            Specifier <code>depVar='home_win'</code> génère automatiquement les corrélations de toutes les features vs l'outcome — gold mine pour calibrer le modèle Poisson.
+          </div>
+        </li>
+        <li>
+          <span class="icon">📊</span>
+          <div>
+            <strong>Output HTML interactif (Bokeh)</strong>
+            Les rapports Bokeh peuvent être servie en tant que dashboard interne dev — zero front-end code requis.
+          </div>
+        </li>
+        <li>
+          <span class="icon">📄</span>
+          <div>
+            <strong>Apache 2.0 — aucune restriction commerciale</strong>
+            Utilisable dans PariScore sans contrainte légale, même en SaaS Pro €19/mo.
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="pc-card cons">
+      <h3>❌ Inconvénients</h3>
+      <ul class="pc-list">
+        <li>
+          <span class="icon">⏸️</span>
+          <div>
+            <strong>Inactivité : dernier update juin 2024</strong>
+            12 mois sans commit majeur. Risque de compatibility drift avec pandas 2.x / numpy 2.x. Utiliser avec version Python/pandas épinglées.
+          </div>
+        </li>
+        <li>
+          <span class="icon">💾</span>
+          <div>
+            <strong>Dépendances lourdes</strong>
+            HoloViews + Bokeh + hvPlot = installation volumineuse sur le VPS OVH Node.js-first. Recommandé en local dev uniquement.
+          </div>
+        </li>
+        <li>
+          <span class="icon">🔴</span>
+          <div>
+            <strong>Non production-ready</strong>
+            Génère des fichiers statiques Python-side. Impossible de remplacer Chart.js/ECharts dans pariscore.html ni les SSE/WebSocket live.
+          </div>
+        </li>
+        <li>
+          <span class="icon">⚽</span>
+          <div>
+            <strong>Zéro feature sports-specific</strong>
+            Pas de courbes Elo, ROI betting, head-to-head, surface clay/grass. Nécessite du post-processing custom pour tout contexte tennis/foot.
+          </div>
+        </li>
+        <li>
+          <span class="icon">📉</span>
+          <div>
+            <strong>Plafond 150k lignes / 30 colonnes (défaut)</strong>
+            OK aujourd'hui (32k records), mais les objets match PariScore ont >30 champs. Nécessite <code>max_cols_analyzed</code> override.
+          </div>
+        </li>
+        <li>
+          <span class="icon">⚙️</span>
+          <div>
+            <strong>Compatibilité HoloViews fragile</strong>
+            Issues documentées avec pandas/numpy récents. Tests obligatoires avant adoption — ne pas assumer que pip install suffit.
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="insights-section">
+    <div class="section-label">Insights</div>
+
+    <div class="insight-card">
+      <div class="insight-emoji">🎯</div>
+      <div class="insight-body">
+        <strong>Meilleur cas d'usage : R&D de nouveaux modèles</strong>
+        <p>Quand tu développes un nouveau signal (ex : intégration xvalue.ai ML scouting, calibration Pinnacle OddsPapi), AutoViz peut générer en 10 secondes les distributions, corrélations et outliers du dataset d'entraînement — sans écrire une seule ligne de matplotlib.</p>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-emoji">⚠️</div>
+      <div class="insight-body">
+        <strong>Risque principal : maintenance stagnante</strong>
+        <p>12 mois sans update majeur sur un outil qui dépend de HoloViews et Bokeh est un signal d'alarme. La plupart des issues signalent des conflits pandas 2.x. Épingler <code>pandas&lt;2.0</code> dans le venv AutoViz ou utiliser ydata-profiling (alternative mieux maintenue) pour l'audit de prod.</p>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-emoji">💡</div>
+      <div class="insight-body">
+        <strong>Pattern recommandé : SQLite → CSV → AutoViz</strong>
+        <p>Export des tables SQLite (archive_matches, player_surface_scores) via Python, puis AutoViz en une ligne. Résultat : rapport HTML Bokeh interactif pour review interne. Aucune modification de server.js requise.</p>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-emoji">🏆</div>
+      <div class="insight-body">
+        <strong>Alternative supérieure pour cas d'usage PariScore : ydata-profiling</strong>
+        <p>Si l'objectif est l'audit complet de pariscore.db (stats, corrélations, missing, types), ydata-profiling (ex pandas-profiling) offre une profondeur statistique bien supérieure et est activement maintenu en 2026. AutoViz gagne uniquement sur la vitesse brute.</p>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-emoji">🚀</div>
+      <div class="insight-body">
+        <strong>Valeur réelle : accélère le cycle feature → validation</strong>
+        <p>Pour un dev solo (CTO PariScore), l'économie de temps est réelle lors de l'exploration de nouvelles features (surface clay impact, bet signal calibration). Estimation : 30–60 min de matplotlib code économisées par session EDA. Sur 10 sessions de R&D, gain d'une journée entière.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALTERNATIVES RÉCENTES -->
+  <div class="section-label" style="margin-top:36px">Alternatives GitHub — projets + récents qu'AutoViz</div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">
+
+      <div style="background:var(--bg3);border-radius:6px;padding:14px;border-left:3px solid var(--green)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <strong style="color:var(--text);font-size:14px">ydata-profiling</strong>
+          <span style="font-size:11px;background:var(--green2);color:var(--green);padding:2px 8px;border-radius:20px;font-weight:700">10k+ ⭐</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">v4.18.4 — Avril 2026 · MIT</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Successeur pandas-profiling. Rapport HTML complet : stats, corrélations, missing values, alertes qualité. Le + maintenu de la catégorie.</div>
+        <div style="font-size:11px;color:var(--green)">✅ Meilleur pour audit ETL/SQLite PariScore</div>
+        <div style="font-size:11px;color:var(--amber);margin-top:2px">⚠ Lent sur grands datasets</div>
+        <a href="https://github.com/ydataai/ydata-profiling" style="font-size:11px;color:var(--blue);text-decoration:none;display:block;margin-top:6px">→ github.com/ydataai/ydata-profiling</a>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:6px;padding:14px;border-left:3px solid var(--blue)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <strong style="color:var(--text);font-size:14px">D-Tale</strong>
+          <span style="font-size:11px;background:var(--blue2);color:var(--blue);padding:2px 8px;border-radius:20px;font-weight:700">5.2k ⭐</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">v3.19.1 — Jan 2026 · LGPL-2.1</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">GUI Flask+React interactive sur DataFrames. Édition cellules, filtres pandas, corrélations, heatmaps, charts Plotly, network graphs. Se lance avec 2 lignes.</div>
+        <div style="font-size:11px;color:var(--green)">✅ Meilleur remplacement direct AutoViz — + feature-rich + maintenu</div>
+        <div style="font-size:11px;color:var(--amber);margin-top:2px">⚠ Flask server (port séparé) — dev local uniquement</div>
+        <a href="https://github.com/man-group/dtale" style="font-size:11px;color:var(--blue);text-decoration:none;display:block;margin-top:6px">→ github.com/man-group/dtale</a>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:6px;padding:14px;border-left:3px solid var(--purple)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <strong style="color:var(--text);font-size:14px">PandasAI</strong>
+          <span style="font-size:11px;background:rgba(188,140,255,.15);color:var(--purple);padding:2px 8px;border-radius:20px;font-weight:700">23.5k ⭐</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">v3.0.0 — Oct 2025 · MIT</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Chat en langage naturel avec ta DB. "Quel joueur a le meilleur SPS sur clay?" → réponse + chart automatique. RAG + LLM (OpenAI/local).</div>
+        <div style="font-size:11px;color:var(--green)">✅ Game-changer pour R&D exploration ad-hoc</div>
+        <div style="font-size:11px;color:var(--amber);margin-top:2px">⚠ Coût API OpenAI · Nécessite clé LLM</div>
+        <a href="https://github.com/sinaptik-ai/pandas-ai" style="font-size:11px;color:var(--blue);text-decoration:none;display:block;margin-top:6px">→ github.com/sinaptik-ai/pandas-ai</a>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:6px;padding:14px;border-left:3px solid var(--amber)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <strong style="color:var(--text);font-size:14px">LIDA (Microsoft)</strong>
+          <span style="font-size:11px;background:var(--amber2);color:var(--amber);padding:2px 8px;border-radius:20px;font-weight:700">3.3k ⭐</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Actif · Apache 2.0 · Python 3.10+</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Génère des charts depuis description LLM. GPT-4 → code viz → exécution. Supporte matplotlib, seaborn, plotly, ggplot. Agnostique au langage.</div>
+        <div style="font-size:11px;color:var(--amber)">⚠ Limite : ≤10 colonnes (context LLM) — problématique pour objets match PariScore</div>
+        <div style="font-size:11px;color:var(--red);margin-top:2px">❌ Trop limité pour dataset sport complexe</div>
+        <a href="https://github.com/microsoft/lida" style="font-size:11px;color:var(--blue);text-decoration:none;display:block;margin-top:6px">→ github.com/microsoft/lida</a>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:36px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">Classement final recommandé pour PariScore (audit ETL + R&D)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span style="background:var(--green2);color:var(--green);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700">🥇 ydata-profiling — audit qualité DB</span>
+      <span style="background:var(--blue2);color:var(--blue);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700">🥈 D-Tale — exploration interactive R&D</span>
+      <span style="background:rgba(188,140,255,.15);color:var(--purple);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700">🥉 PandasAI — si budget API LLM dispo</span>
+      <span style="background:rgba(255,255,255,.05);color:var(--text3);padding:6px 14px;border-radius:20px;font-size:12px">4. AutoViz — option rapide si déjà installé</span>
+    </div>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <details>
+    <summary>Méthodologie de recherche</summary>
+    <div class="methodology-body">
+      <ul>
+        <li>Fetch direct GitHub AutoViML/AutoViz (README, PyPI page)</li>
+        <li>Web search : <em>"AutoViz pros cons review 2025 2026"</em></li>
+        <li>Web search : <em>"AutoViz vs sweetviz vs pandas-profiling comparison"</em></li>
+        <li>Web search : <em>"AutoViz sports betting EDA time series 2025"</em></li>
+        <li>Sources analysées : GitHub, PyPI, Medium (Towards Data Science, Analytics Vidhya), KDnuggets, Bitrook, Kaggle Q&A</li>
+        <li>Scoring dimensions : évaluation subjective croisée avec la stack PariScore (Node.js + Python ETL + SQLite + pariscore.html SPA)</li>
+        <li>Données non interpolées : stars, version, date, max_rows depuis documentation officielle</li>
+      </ul>
+      <p style="margin-top:12px;color:var(--text3)">Rapport généré le 2026-05-28 — PariScore v12.65+</p>
+    </div>
+  </details>
+
+</div>
+
+<script>
+/* ─── PALETTE ─────────────────────────────────────── */
+const C = {
+  blue:   '#58a6ff',
+  green:  '#3fb950',
+  amber:  '#d29922',
+  red:    '#f85149',
+  purple: '#bc8cff',
+  teal:   '#39d353',
+  grid:   'rgba(255,255,255,.06)',
+  text2:  '#8b949e',
+};
+
+Chart.defaults.color = C.text2;
+Chart.defaults.borderColor = 'rgba(255,255,255,.07)';
+
+/* ─── RADAR: 4 tools × 7 dimensions ──────────────── */
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Vitesse EDA', 'Facilité usage', 'Profondeur stats', 'Maintenance', 'Stack compat.', 'Sports focus', 'Prod ready'],
+    datasets: [
+      {
+        label: 'AutoViz',
+        data: [9, 10, 5, 3, 5, 2, 2],
+        backgroundColor: 'rgba(88,166,255,.25)',
+        borderColor: C.blue,
+        borderWidth: 2,
+      },
+      {
+        label: 'ydata-profiling',
+        data: [5, 8, 9, 7, 6, 2, 6],
+        backgroundColor: 'rgba(63,185,80,.15)',
+        borderColor: C.green,
+        borderWidth: 2,
+      },
+      {
+        label: 'SweetViz',
+        data: [8, 9, 6, 6, 7, 2, 5],
+        backgroundColor: 'rgba(210,153,34,.15)',
+        borderColor: C.amber,
+        borderWidth: 2,
+      },
+      {
+        label: 'Plotly custom',
+        data: [3, 3, 10, 9, 9, 9, 10],
+        backgroundColor: 'rgba(188,140,255,.15)',
+        borderColor: C.purple,
+        borderWidth: 2,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
+    },
+    scales: {
+      x: { ticks: { font: { size: 11 } }, grid: { color: C.grid } },
+      y: { beginAtZero: true, max: 10, ticks: { stepSize: 2 }, grid: { color: C.grid } },
+    },
+  },
+});
+
+/* ─── USE-CASE BAR ────────────────────────────────── */
+const ucCtx = document.getElementById('usecaseBar').getContext('2d');
+new Chart(ucCtx, {
+  type: 'bar',
+  data: {
+    labels: [
+      'Exploration\nfeatures R&D',
+      'Audit qualité\nETL/SQLite',
+      'Debug\nbacktesting',
+      'Dashboard\ninterne dev',
+      'Frontend\nproduction',
+      'Live/SSE\ncharts',
+    ],
+    datasets: [{
+      label: 'Score fit AutoViz /10',
+      data: [8, 7, 7, 5, 1, 0],
+      backgroundColor: [
+        'rgba(63,185,80,.7)',
+        'rgba(63,185,80,.7)',
+        'rgba(63,185,80,.7)',
+        'rgba(210,153,34,.7)',
+        'rgba(248,81,73,.7)',
+        'rgba(248,81,73,.7)',
+      ],
+      borderRadius: 4,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { beginAtZero: true, max: 10, ticks: { stepSize: 2 }, grid: { color: C.grid } },
+      y: { ticks: { font: { size: 11 } }, grid: { color: 'transparent' } },
+    },
+  },
+});
+
+/* ─── DONUT ───────────────────────────────────────── */
+const doCtx = document.getElementById('donutChart').getContext('2d');
+new Chart(doCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['R&D / Exploration features', 'Audit qualité DB', 'Debug ETL/SPS', 'Production (déconseillé)'],
+    datasets: [{
+      data: [45, 30, 15, 10],
+      backgroundColor: [C.blue, C.green, C.amber, C.red],
+      borderColor: '#161b22',
+      borderWidth: 3,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
+    },
+  },
+});
+</script>
+</body>
+</html>

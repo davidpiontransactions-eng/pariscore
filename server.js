@@ -26870,6 +26870,137 @@ if (pathname === '/api/v1/admin/backfill-history' && req.method === 'POST') {
   return;
 }
 
+// ─── EDA routes (admin) — fg-data-profiling + D-Tale + PandasAI ─────────────
+// EDA_PYTHON_BIN : override via .env pour VPS (ex: /home/ubuntu/pariscore/.venv-data/bin/python)
+// Défaut Win32 : .venv-data/Scripts/python.exe | Linux : python3 (installer packages séparément)
+const _EDA_PY_BIN = process.env.EDA_PYTHON_BIN ||
+  (process.platform === 'win32'
+    ? require('path').join(__dirname, '.venv-data', 'Scripts', 'python.exe')
+    : require('path').join(__dirname, '.venv-data', 'bin', 'python'));
+
+// FIX-4: extract last JSON-looking line from stdout (résiste aux warnings Python)
+function _edaParseOut(raw) {
+  const lines = raw.trim().split('\n').filter(function(l) { return l.trim().startsWith('{'); });
+  return JSON.parse(lines.length ? lines[lines.length - 1] : raw.trim());
+}
+
+function _spawnEDA(args, timeoutMs) {
+  timeoutMs = timeoutMs || 120000;
+  return new Promise(function(resolve, reject) {
+    const cp = require('child_process');
+    const script = require('path').join(__dirname, 'tools', 'pariscore-eda.py');
+    let out = '';
+    const child = cp.spawn(_EDA_PY_BIN, [script].concat(args), {
+      cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    child.stdout.on('data', function(d) { out += d.toString(); });
+    child.stderr.on('data', function(d) { process.stderr.write('[EDA] ' + d); });
+    const timer = setTimeout(function() { child.kill(); reject(new Error('EDA timeout ' + timeoutMs + 'ms')); }, timeoutMs);
+    child.on('close', function() {
+      clearTimeout(timer);
+      try { resolve(_edaParseOut(out)); }
+      catch(e) { reject(new Error('EDA parse error: ' + out.slice(-300))); }
+    });
+    child.on('error', function(err) { clearTimeout(timer); reject(err); });
+  });
+}
+
+// FIX-6: helper sanitize table + guard empty
+function _edaTable(raw, dflt) {
+  var t = (raw || dflt || 'player_surface_scores').replace(/[^a-z0-9_]/gi, '');
+  return t || null;
+}
+
+// GET /api/v1/admin/eda/tables — liste tables SQLite disponibles
+if (pathname === '/api/v1/admin/eda/tables' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  _spawnEDA(['--mode', 'tables'])
+    .then(function(r) { return jsonResponse(res, 200, r); })
+    .catch(function(e) { return jsonResponse(res, 500, { error: e.message }); });
+  return;
+}
+
+// GET /api/v1/admin/eda/profile?table=X[&full=1] — rapport HTML fg-data-profiling
+if (pathname === '/api/v1/admin/eda/profile' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const table = _edaTable(query.table, 'player_surface_scores');           // FIX-6
+  if (!table) return jsonResponse(res, 400, { error: 'table invalide' });
+  const outFile = require('path').join(__dirname, '.context', 'eda_profile_' + table + '.html');
+  const args = ['--mode', 'profile', '--table', table, '--output', outFile];
+  if (query.full === '1') args.push('--full');
+  _spawnEDA(args, 180000)
+    .then(function(r) { return jsonResponse(res, 200, Object.assign(r, { url: '/eda/profile/' + table })); })
+    .catch(function(e) { return jsonResponse(res, 500, { error: e.message }); });
+  return;
+}
+
+// GET /eda/profile/:table — serve rapport HTML (FIX-1: auth requise)
+if (pathname.startsWith('/eda/profile/') && req.method === 'GET') {
+  const user = getAuthUser(req);                                            // FIX-1: was missing
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const tableName = _edaTable(pathname.replace('/eda/profile/', ''), '');  // FIX-6
+  if (!tableName) return jsonResponse(res, 400, { error: 'table invalide' });
+  const filePath = require('path').join(__dirname, '.context', 'eda_profile_' + tableName + '.html');
+  if (!require('fs').existsSync(filePath)) {
+    return jsonResponse(res, 404, { error: 'Rapport absent — générer via GET /api/v1/admin/eda/profile?table=' + tableName });
+  }
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  require('fs').createReadStream(filePath).pipe(res);
+  return;
+}
+
+// GET /api/v1/admin/eda/dtale?table=X[&port=40000] — D-Tale détaché (FIX-3: subprocess persistant)
+if (pathname === '/api/v1/admin/eda/dtale' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const table = _edaTable(query.table, 'player_surface_scores');           // FIX-6
+  if (!table) return jsonResponse(res, 400, { error: 'table invalide' });
+  const portRaw = parseInt(query.port);                                    // FIX-5: clamp port range
+  const dtPort = (portRaw >= 1024 && portRaw <= 65534) ? portRaw : 40000;
+  // FIX-3: spawn détaché — D-Tale tourne en background (2h), Python ne bloque pas Node
+  const cp = require('child_process');
+  const script = require('path').join(__dirname, 'tools', 'pariscore-eda.py');
+  try {
+    const dtChild = cp.spawn(_EDA_PY_BIN, [script, '--mode', 'dtale', '--table', table, '--port', String(dtPort)], {
+      cwd: __dirname, env: process.env, stdio: 'ignore', detached: true,
+    });
+    dtChild.unref();
+  } catch(spawnErr) {
+    return jsonResponse(res, 500, { error: 'D-Tale spawn error: ' + spawnErr.message });
+  }
+  setTimeout(function() {
+    jsonResponse(res, 200, {
+      ok: true,
+      url: 'http://localhost:' + dtPort + '/dtale/main/1',
+      table: table,
+      note: 'D-Tale démarré en arrière-plan — ouvrir URL dans 3-5s',
+    });
+  }, 2000);
+  return;
+}
+
+// POST /api/v1/admin/eda/chat — PandasAI question en langage naturel
+// Body: { table: "player_surface_scores", question: "meilleur SPS clay?" }
+if (pathname === '/api/v1/admin/eda/chat' && req.method === 'POST') {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  readBodyLimited(req, 4096).then(function(raw) {
+    let body;
+    try { body = JSON.parse(raw); } catch(e) { return jsonResponse(res, 400, { error: 'JSON invalide' }); }
+    const table = _edaTable(body.table, 'player_surface_scores');          // FIX-6
+    if (!table) return jsonResponse(res, 400, { error: 'table invalide' });
+    const question = (body.question || '').slice(0, 500).trim();
+    if (!question) return jsonResponse(res, 400, { error: 'question manquante' });
+    return _spawnEDA(['--mode', 'chat', '--table', table, '--question', question], 60000)
+      .then(function(r) { return jsonResponse(res, 200, r); })
+      .catch(function(e) { return jsonResponse(res, 500, { error: e.message }); });
+  }).catch(function(e) { return jsonResponse(res, 400, { error: e.message }); });
+  return;
+}
+// ─── /EDA routes ──────────────────────────────────────────────────────────────
+
 // GET /api/v1/admin/status (protégé JWT admin)
 if (pathname === '/api/v1/admin/status') {
   const user = getAuthUser(req);
