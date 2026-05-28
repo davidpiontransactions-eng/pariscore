@@ -2468,6 +2468,11 @@ function _spsEsc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+function _spsScoreColor(v) {
+  if (v >= 70) return '#00e676';
+  if (v >= 50) return '#ffa726';
+  return '#ff4d4d';
+}
 function _spsCacheGet(mid) {
   var entry = _spsCache.get(mid);
   if (!entry) return undefined;
@@ -2487,34 +2492,43 @@ function _tvbSPSPlaceholder(matchId, elo1, elo2) {
   var eloAttrs = '';
   if (elo1 != null) eloAttrs += ' data-elo1="' + _spsEsc(String(elo1)) + '"';
   if (elo2 != null) eloAttrs += ' data-elo2="' + _spsEsc(String(elo2)) + '"';
-  return '<div class="tn-sps-row" data-sps-mid="' + mid + '"' + eloAttrs + ' '
-       + 'style="display:flex;gap:6px;font-size:9px;color:#5a6068;margin-top:3px;line-height:1.2;" '
-       + 'title="Surface PowerScore — aptitude joueur sur la surface (0-100, fenêtre 52 sem). En cours de calcul…">'
-       + '<span class="tn-sps-p1 tn-sps-loading">SPS · …</span>'
-       + '<span class="tn-sps-p2 tn-sps-loading">SPS · …</span>'
+  return '<div class="tn-sps-row" data-sps-mid="' + mid + '"' + eloAttrs
+       + ' title="Surface PowerScore — aptitude joueur sur la surface (0-100, fenêtre 52 sem). En cours de calcul…">'
+       + '<span class="tn-sps-loading" aria-hidden="true"></span>'
+       + '<span class="tn-sps-loading" aria-hidden="true"></span>'
        + '</div>';
 }
 function _tvbSPSFormatChip(side, payload, eloFallback) {
   if (!payload) {
     if (eloFallback != null && !isNaN(eloFallback)) {
       var eloVal = Number(eloFallback).toFixed(0);
-      return '<span class="tn-sps-' + side + ' tn-sps-empty" '
-           + 'title="SPS non calculé — Elo surface utilisé comme indicateur de référence." '
-           + 'style="color:#5a6068;">ELO~ ' + _spsEsc(eloVal) + '</span>';
+      return '<div class="tn-sps-elo-fb tn-sps-' + side + '" '
+           + 'title="SPS non calculé — Elo surface utilisé comme indicateur de référence.">'
+           + '<span class="tn-sps-elo-label">ELO~</span>'
+           + '<span class="tn-sps-elo-val">' + _spsEsc(eloVal) + '</span>'
+           + '</div>';
     }
-    return '<span class="tn-sps-' + side + ' tn-sps-empty" '
-         + 'title="Données SPS pas encore calculées pour ce match — patientez ou attendez prochain cron 12h.">'
-         + 'SPS · —</span>';
+    return '<div class="tn-sps-empty tn-sps-' + side + '" '
+         + 'title="Données SPS pas encore calculées — attend le cron 02h05.">SPS —</div>';
   }
-  var sps = (payload.sps != null) ? Number(payload.sps).toFixed(1) : '—';
+  var spsRaw = payload.sps != null ? Number(payload.sps) : null;
+  var spsVal = spsRaw != null ? spsRaw.toFixed(1) : '—';
+  var col = spsRaw != null ? _spsScoreColor(spsRaw) : '#5a6068';
+  var fillW = spsRaw != null ? Math.min(100, Math.max(0, spsRaw)).toFixed(1) : '0';
   var conf = !!payload.confidence_full;
-  var matches = payload.matches_played != null ? payload.matches_played : '?';
-  var col = conf ? '#00e676' : '#ffa726';
-  var warn = conf ? '' : '<span title="Données insuffisantes (&lt;5 matchs sur la surface dans la fenêtre 52 sem)" style="color:#ffa726;margin-left:2px;">⚠</span>';
-  var tip = 'SPS ' + sps + (conf ? '' : ' (faible confiance)') + ' — n=' + _spsEsc(matches) + ' matchs/surface';
-  return '<span class="tn-sps-' + side + '" title="' + _spsEsc(tip) + '">'
-       + '<span style="color:' + col + ';font-weight:700;">SPS ' + _spsEsc(sps) + '</span>' + warn
-       + '</span>';
+  var confCls = conf ? 'full' : 'low';
+  var matchCount = payload.matches_played != null ? _spsEsc(String(payload.matches_played)) : '?';
+  var tip = 'SPS ' + spsVal + (conf ? '' : ' (faible confiance)') + ' — n=' + matchCount + ' matchs/surface';
+  return '<div class="tn-sps-chip tn-sps-' + side + '" title="' + _spsEsc(tip) + '">'
+       + '<div class="tn-sps-head">'
+       + '<span class="tn-sps-score" style="color:' + col + ';">' + _spsEsc(spsVal) + '</span>'
+       + '<span class="tn-sps-meta">'
+       + '<span class="tn-sps-conf-dot ' + confCls + '" style="color:' + col + ';"></span>'
+       + '<span>n=' + matchCount + '</span>'
+       + '</span>'
+       + '</div>'
+       + '<div class="tn-sps-track"><div class="tn-sps-fill" style="width:' + fillW + '%;background:' + col + ';opacity:0.85;"></div></div>'
+       + '</div>';
 }
 function _tvbPaintSPSCell(matchId, payload) {
   var target = String(matchId);
