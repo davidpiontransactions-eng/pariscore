@@ -26970,6 +26970,7 @@ function _cbParseOut(raw) {
 }
 
 async function _runCatBoostBatchInference(matches) {
+  console.log('[CatBoost] runBatch ENTRY enabled=' + process.env.CATBOOST_ENABLED + ' matches=' + (matches||[]).length);
   if (process.env.CATBOOST_ENABLED !== 'true') return {};
   const model1x2 = path.join(_CB_MODELS_DIR, 'catboost_football_1x2_v1.cbm');
   if (!fs.existsSync(model1x2)) {
@@ -27036,6 +27037,7 @@ async function _runCatBoostBatchInference(matches) {
 }
 
 async function _refreshCatBoostCache() {
+  console.log('[CatBoost] refreshCache ENTRY enabled=' + process.env.CATBOOST_ENABLED);
   if (process.env.CATBOOST_ENABLED !== 'true') {
     console.log('[CatBoost] skip — CATBOOST_ENABLED=' + (process.env.CATBOOST_ENABLED || 'absent'));
     return;
