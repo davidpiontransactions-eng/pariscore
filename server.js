@@ -16543,9 +16543,22 @@ function initVAPIDKeys() {
     const privDer = privateKey.export({ format: 'der', type: 'pkcs8' });
     VAPID_PUBLIC_KEY  = pubRaw.toString('base64url');
     VAPID_PRIVATE_KEY = privDer.toString('base64url');
-    console.warn('  \x1b[33m[VAPID] Clés auto-générées (NON-PERSISTÉES) — copier ces lignes dans .env:\x1b[0m');
-    console.warn(`    VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}`);
-    console.warn(`    VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}`);
+    try {
+      const envPath = require('path').join(__dirname, '.env');
+      let envContent = '';
+      try { envContent = require('fs').readFileSync(envPath, 'utf8'); } catch (_) {}
+      if (!envContent.includes('VAPID_PUBLIC_KEY=')) {
+        const sep = envContent.length && !envContent.endsWith('\n') ? '\n' : '';
+        require('fs').appendFileSync(envPath, `${sep}VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}\nVAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}\n`);
+        console.warn('  \x1b[33m[VAPID] Clés auto-générées et persistées dans .env (actives au prochain restart)\x1b[0m');
+      } else {
+        console.warn('  \x1b[33m[VAPID] Clés auto-générées (NON-PERSISTÉES — VAPID_PUBLIC_KEY déjà dans .env)\x1b[0m');
+      }
+    } catch (writeErr) {
+      console.warn('  \x1b[33m[VAPID] Clés auto-générées (NON-PERSISTÉES) — copier dans .env:\x1b[0m');
+      console.warn(`    VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}`);
+      console.warn(`    VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}`);
+    }
   } catch (e) {
     console.error('  [VAPID] init failed:', e.message);
   }
