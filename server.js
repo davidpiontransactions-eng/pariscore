@@ -38737,6 +38737,33 @@ setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[C
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
 
+// CatBoost weekly retrain — spawn train script if n_total grew >200 rows since last train
+setInterval(function() {
+  if (process.env.CATBOOST_ENABLED !== 'true') return;
+  const prevN = _catboostMetrics?.n_total || 0;
+  const dbArg = process.env.DATABASE_PATH || require('path').join(__dirname, 'pariscore.db');
+  const child = require('child_process').spawn(
+    _CB_PY_BIN, [_CB_TRAIN_SCRIPT, '--db', dbArg, '--models-dir', _CB_MODELS_DIR],
+    { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }
+  );
+  let out = '';
+  child.stdout.on('data', function(d) { out += d.toString(); });
+  child.stderr.on('data', function(d) { process.stderr.write('[CatBoost:WeeklyTrain] ' + d); });
+  child.on('close', function(code) {
+    if (code !== 0) { console.warn('[CatBoost] WeeklyTrain exit ' + code + ' — skip'); return; }
+    try {
+      const r = _cbParseOut(out);
+      if (r.error) { console.warn('[CatBoost] WeeklyTrain error:', r.error); return; }
+      const newN = r.n_total || 0;
+      if (newN - prevN < 200) { console.log('[CatBoost] WeeklyTrain skip — delta=' + (newN - prevN) + ' <200 rows'); return; }
+      _catboostMetrics = r;
+      console.log('[CatBoost] WeeklyTrain ✓ n=' + newN + ' rps=' + r.models?.['1x2']?.rps);
+      _refreshCatBoostCache().catch(e => console.warn('[CatBoost] WeeklyTrain cache refresh:', e.message));
+    } catch(e) { console.warn('[CatBoost] WeeklyTrain parse:', e.message); }
+  });
+  child.on('error', function(err) { console.warn('[CatBoost] WeeklyTrain spawn:', err.message); });
+}, 7 * 24 * 3600 * 1000);
+
 // bd cty — Closing line snapshot : pour chaque pending bet dont kickoff dans [now+1min, now+10min],
 // snapshot la cote courante (selon market) depuis db.matches → user_bets.closing_odds.
 // Idempotent : skip si closing_odds déjà settée. Tourne toutes les 2min pour densifier la fenêtre.
