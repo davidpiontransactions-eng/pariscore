@@ -38748,6 +38748,23 @@ function _runTennisInternalEtlJob() {
   }, delayMs);
 })();
 
+(function _scheduleSPSUpdater() {
+  const delayMs = _msUntilNextParisHour(2) + 5 * 60 * 1000;
+  const nextRun = new Date(Date.now() + delayMs);
+  console.log(`  [Cron:SPS] schedulé · prochain run ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min)`);
+  function _runSPS() {
+    const cp = require('child_process');
+    const spsPath = require('path').join(__dirname, 'cron_sps_updater.py');
+    console.log('  [Cron:SPS] démarrage cron_sps_updater.py…');
+    const child = cp.spawn('python3', [spsPath], { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stdout.on('data', d => process.stdout.write('[Cron:SPS] ' + d));
+    child.stderr.on('data', d => process.stderr.write('[Cron:SPS] ' + d));
+    child.on('exit', code => console.log(`  [Cron:SPS] terminé (exit ${code})`));
+    child.on('error', err => console.warn('  [Cron:SPS] spawn error:', err.message));
+  }
+  setTimeout(() => { _runSPS(); setInterval(_runSPS, 24 * 3600 * 1000); }, delayMs);
+})();
+
 // BetMines v10.14 — refresh 30min today + tomorrow (skip if BETMINES_ENABLED=0)
 if (BETMINES_ENABLED) {
   setTimeout(() => {
