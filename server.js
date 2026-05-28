@@ -14515,8 +14515,8 @@ async function fetchOdds(force = false, opts = {}) {
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
     // typeof guard (option C) — défense-en-profondeur contre scope/TDZ résiduel
-    console.log('[CatBoost] Trigger — CATBOOST_ENABLED=' + process.env.CATBOOST_ENABLED);
-    if (process.env.CATBOOST_ENABLED === 'true' && typeof _refreshCatBoostCache === 'function') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
+    console.log('[CatBoost] Trigger — CATBOOST_ENABLED=' + process.env.CATBOOST_ENABLED + ' typeof=' + typeof _refreshCatBoostCache);
+    if (process.env.CATBOOST_ENABLED === 'true') { if (typeof _refreshCatBoostCache === 'function') { _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message)); } else { console.warn('[CatBoost] SKIP — typeof _refreshCatBoostCache=' + typeof _refreshCatBoostCache); } }
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
