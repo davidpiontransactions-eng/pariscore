@@ -2,6 +2,24 @@
 
 ---
 
+## [v12.68] — 2026-05-28 — Intégration annonces BSD 26-27/05/2026
+
+### Fonctionnalités livrées
+
+| Point | Description |
+|---|---|
+| **Goal Replays** | `bsdPlayClip()` → async + consultation manifest `/api/v1/bsd/clips/:matchId` avant lecture vidéo. Tooltip 📹 enrichi avec nom du joueur + minute. Routes proxy clips déjà sur `/api/v2/events/{id}/clips/` ✅ |
+| **Cup competitions** | `buildRows()` expose `group: s._group_name` → `GET /api/v1/standings/:leagueId` inclut désormais le groupe. Onglet Classement modal Insights : chips groupe (Gr. A / Gr. B…) pour naviguer entre poules. `round_name` ajouté dans payload `GET /api/v1/insights/:matchId` + affiché dans l'en-tête du match. |
+| **Post-match highlights** | `GET /api/v1/social/match/:matchId` expose `videos: []` (social_items type='video', max 10). Nouvel onglet **🎬 Vidéos** dans le modal Insights : grid de cartes cliquables (thumbnail + titre + durée). |
+| **Support BSD** | Support BSD disponible sur https://sports.bzzoiro.com/support/ |
+
+### Fichiers modifiés
+- `server.js` — buildRows group, social videos, insights round_name+match_group
+- `pariscore.html` — tab Vidéos (button + select + div)
+- `pariscore.js` — insShowTab, bsdPlayClip async, buildBsdVideos, buildClassementTab group chips, openInsights round_name
+
+---
+
 ## [v12.67] — 2026-05-23 — bd `0mpj` Onglet Roland Garros bracket interactif (Path A internal Clay Elo + Monte Carlo)
 
 ### Code livré (1 feature, 706 lignes — 393 backend + 317 frontend)

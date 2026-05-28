@@ -10972,6 +10972,7 @@ function closeScoreMatrix() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 let insCurrentData    = null;
+let insActiveGroup    = null;       // groupe actif pour classements à poules (ex: "A", "B"…)
 let insStandingsMode  = 'global';   // global | home | away
 let insTablesView     = 'rankings'; // rankings | standings
 let insRankingStat    = 'ppg';      // ppg | avgFor | avgAg | cards
@@ -10994,6 +10995,7 @@ function insSetSmartMode(v)     { insSmartMode = v; _rebuildClassement(); }
 function insSetSmartStrategy(v) { insSmartStrategy = v; _rebuildClassement(); }
 function insSetSmartPeriod(v)   { insSmartPeriod = v; _rebuildClassement(); }
 function insSetSmartLieu(v)     { insSmartLieu = v; _rebuildClassement(); }
+function insSetGroup(g)         { insActiveGroup = g; _rebuildClassement(); }
 
 function insShowTab(tab) {
   if (tab !== 'powerscore' && psEventSource) { psEventSource.close(); psEventSource = null; }
@@ -11001,7 +11003,7 @@ function insShowTab(tab) {
   if (tab !== 'incidents' && typeof bsdIncidentsTimer !== 'undefined' && bsdIncidentsTimer) {
     clearInterval(bsdIncidentsTimer); bsdIncidentsTimer = null;
   }
-  const tabs = ['resume','stats','joueurs','scouting','graphique','classement','corners','powerscore','h2h','compos','incidents','shotmap'];
+  const tabs = ['resume','stats','joueurs','scouting','graphique','classement','corners','powerscore','h2h','compos','incidents','shotmap','videos'];
   tabs.forEach(t => {
     const el = document.getElementById(`ins-tab-${t}`);
     if (el) el.style.display = t === tab ? '' : 'none';
@@ -11051,6 +11053,13 @@ function insShowTab(tab) {
     if (container && container.dataset.loaded !== '1' && insCurrentMatchId) {
       container.dataset.loaded = '1';
       buildBsdShotmap(insCurrentMatchId);
+    }
+  }
+  if (tab === 'videos') {
+    const container = document.getElementById('ins-tab-videos');
+    if (container && container.dataset.loaded !== '1' && insCurrentMatchId) {
+      container.dataset.loaded = '1';
+      buildBsdVideos(insCurrentMatchId);
     }
   }
   var _its = document.getElementById('ins-tab-mob');
@@ -11180,7 +11189,8 @@ async function buildBsdIncidents(matchId, autoRefresh) {
       const player = inc.player ? `<strong style="color:var(--text)">${inc.player}</strong>` : '';
       const txt = inc.text ? `<span style="color:var(--text2)">${inc.text}</span>` : '';
       const score = (inc.home_score != null && inc.away_score != null) ? `<span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px">${inc.home_score}–${inc.away_score}</span>` : '';
-      const clipBtn = myGoalN ? `<button onclick="bsdPlayClip(${JSON.stringify(matchId)},${myGoalN})" title="Replay but BSD" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#ef4444;border-radius:4px;padding:1px 5px;font-size:10px;cursor:pointer;vertical-align:middle;margin-left:5px">📹</button>` : '';
+      const _clipLabel = inc.player ? `Replay — ${inc.player} (${minute})` : `Replay but #${myGoalN}`;
+      const clipBtn = myGoalN ? `<button onclick="bsdPlayClip(${JSON.stringify(matchId)},${myGoalN},${JSON.stringify(inc.player||'')},${JSON.stringify(minute)})" title="${_clipLabel}" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#ef4444;border-radius:4px;padding:1px 5px;font-size:10px;cursor:pointer;vertical-align:middle;margin-left:5px">📹</button>` : '';
       return `<li style="display:grid;grid-template-columns:42px 26px 22px 1fr 44px;gap:10px;align-items:center;padding:7px 8px;border-bottom:1px solid var(--bg4);font-size:12px">
         <span style="font-family:'DM Mono',monospace;color:var(--text3);text-align:right">${minute}</span>
         <span style="text-align:center">${iconFor(inc.type)}</span>
@@ -11214,30 +11224,93 @@ async function buildBsdIncidents(matchId, autoRefresh) {
   }
 }
 
-function bsdPlayClip(matchId, goalN) {
-  const safeId = matchId.replace(/[^a-z0-9]/gi, '_');
-  const player = document.getElementById(`bsd-clip-player-${safeId}`);
-  const video  = document.getElementById(`bsd-clip-video-${safeId}`);
-  const loader = document.getElementById(`bsd-clip-loader-${safeId}`);
-  if (!player || !video || !loader) return;
+async function bsdPlayClip(matchId, goalN, playerName, minuteStr) {
+  const safeId  = matchId.replace(/[^a-z0-9]/gi, '_');
+  const playerEl = document.getElementById(`bsd-clip-player-${safeId}`);
+  const video    = document.getElementById(`bsd-clip-video-${safeId}`);
+  const loader   = document.getElementById(`bsd-clip-loader-${safeId}`);
+  if (!playerEl || !video || !loader) return;
   const src = `/api/v1/bsd/clip-video/${encodeURIComponent(matchId)}/goal-${goalN}.mp4`;
-  if (video.dataset.clipN === String(goalN) && player.style.display !== 'none') {
-    player.style.display = 'none';
+  if (video.dataset.clipN === String(goalN) && playerEl.style.display !== 'none') {
+    playerEl.style.display = 'none';
     return;
   }
-  player.style.display = 'block';
+  playerEl.style.display = 'block';
   loader.style.display = 'block';
-  loader.textContent = '⏳ Génération du clip BSD… (~10s premier accès)';
+  loader.textContent = '⏳ Vérification manifest clips BSD…';
   video.style.display = 'none';
+  // Consulter le manifest pour confirmer la disponibilité du clip
+  try {
+    const mRes = await apiFetch(`/api/v1/bsd/clips/${encodeURIComponent(matchId)}`);
+    if (mRes.ok) {
+      const mData = await mRes.json();
+      const clips = Array.isArray(mData?.data?.results) ? mData.data.results
+        : Array.isArray(mData?.data?.clips) ? mData.data.clips : null;
+      if (clips && !clips.some(c => String(c.name || c.clip || '').includes(`goal-${goalN}`))) {
+        const avail = clips.map(c => c.name || c.clip).filter(Boolean).join(', ');
+        loader.innerHTML = avail
+          ? `⚠️ But #${goalN} en génération. Clips disponibles : <span style="color:var(--blue)">${avail}</span>`
+          : `⚠️ Clip but #${goalN} en cours de génération par BSD — réessayer dans ~30s`;
+        return;
+      }
+    }
+  } catch (_) { /* fail-soft — manifest facultatif */ }
+  const labelBut = playerName ? `But de ${playerName}${minuteStr ? ` (${minuteStr})` : ''}` : `But #${goalN}`;
+  loader.textContent = `⏳ ${labelBut} — génération BSD… (~10s premier accès)`;
   video.src = src;
   video.dataset.clipN = String(goalN);
   video.onloadeddata = () => { loader.style.display = 'none'; video.style.display = 'block'; video.play().catch(() => {}); };
-  video.onerror   = () => { loader.textContent = '⚠️ Clip non disponible pour ce but.'; video.style.display = 'none'; };
+  video.onerror = () => { loader.textContent = `⚠️ Clip non disponible pour ${labelBut}.`; video.style.display = 'none'; };
 }
 function bsdClipClose(matchId) {
   const safeId = matchId.replace(/[^a-z0-9]/gi, '_');
   const player = document.getElementById(`bsd-clip-player-${safeId}`);
   if (player) { player.style.display = 'none'; }
+}
+
+// BSD 26/05 — onglet Vidéos : post-match highlights via social_items type='video'
+async function buildBsdVideos(matchId) {
+  const el = document.getElementById('ins-tab-videos');
+  if (!el) return;
+  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement vidéos BSD…</div>';
+  try {
+    const res = await apiFetch(`/api/v1/social/match/${encodeURIComponent(matchId)}`);
+    if (!res.ok) {
+      el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Vidéos non disponibles pour ce match.</div>';
+      return;
+    }
+    const out = await res.json();
+    const videos = Array.isArray(out.videos) ? out.videos : [];
+    if (!videos.length) {
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">
+        <div style="font-size:32px;margin-bottom:12px">🎬</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Aucune vidéo disponible</div>
+        <div style="font-size:11px">Les highlights post-match apparaissent ~15 min après le coup de sifflet final.</div>
+      </div>`;
+      return;
+    }
+    const cards = videos.map(v => {
+      const title = v.title || v.name || 'Vidéo';
+      const thumb = v.thumbnail || v.image || '';
+      const url   = v.url || v.link || v.permalink || '';
+      const dur   = v.duration ? `<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${Math.round(v.duration / 60)}min</span>` : '';
+      const thumbHtml = thumb ? `<img src="${thumb}" style="width:100%;height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block" loading="lazy" onerror="this.style.display='none'">` : `<div style="height:60px;background:var(--bg4);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div>`;
+      const linkAttr = url ? `href="${url}" target="_blank" rel="noopener noreferrer"` : '';
+      return `<a ${linkAttr} style="display:block;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;overflow:hidden;text-decoration:none;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--bg4)'">
+        ${thumbHtml}
+        <div style="padding:8px 10px">
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3">${title}</div>
+          ${dur}
+        </div>
+      </a>`;
+    }).join('');
+    el.innerHTML = `<div style="padding:14px 12px">
+      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px">BSD · POST-MATCH HIGHLIGHTS · ${videos.length} vidéo${videos.length > 1 ? 's' : ''} · sync /15min</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">${cards}</div>
+    </div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement vidéos : ${e.message}</div>`;
+  }
 }
 
 async function buildBsdShotmap(matchId) {
@@ -12960,7 +13033,19 @@ function buildGraphiqueTab(d) {
 }
 
 function buildClassementTab(d) {
-  const rows = d.standings || [];
+  const allRows = d.standings || [];
+  // BSD 26/05 — support groupes (Libertadores, UCL, CAN…)
+  const allGroups = [...new Set(allRows.map(r => r.group).filter(Boolean))].sort();
+  let activeGroup = insActiveGroup;
+  if (allGroups.length > 0 && (!activeGroup || !allGroups.includes(activeGroup))) {
+    activeGroup = allGroups[0];
+  }
+  const rows = allGroups.length > 0 ? allRows.filter(r => r.group === activeGroup) : allRows;
+  const groupFilterHtml = allGroups.length > 1
+    ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;padding:0 2px">
+        ${allGroups.map(g => `<button onclick="insSetGroup(${JSON.stringify(g)})" style="padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid ${g===activeGroup?'var(--blue)':'var(--bg4)'};background:${g===activeGroup?'rgba(41,182,246,0.15)':'var(--bg3)'};color:${g===activeGroup?'var(--blue)':'var(--text2)'};font-family:'DM Mono',monospace">Gr. ${g}</button>`).join('')}
+      </div>`
+    : '';
   if (!rows.length) {
     // Fallback : comparaison directe des deux équipes si données dispo
     const hStats = d.homeStats?.home;
@@ -13451,7 +13536,7 @@ function _buildClassementTabLegacy(d) {
       </div>`;
     }).join('');
 
-    return controls + `<div class="rk-list">${rows_html || '<div class="ins-empty">Aucune donnée.</div>'}</div>`;
+    return groupFilterHtml + controls + `<div class="rk-list">${rows_html || '<div class="ins-empty">Aucune donnée.</div>'}</div>`;
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -13471,7 +13556,7 @@ function _buildClassementTabLegacy(d) {
     ? [...rows]
     : [...rows].sort((a,b) => (getSt(b).pts||0) - (getSt(a).pts||0));
 
-  return controls + `
+  return groupFilterHtml + controls + `
     <table class="standings-table">
       <thead><tr>
         <th>#</th><th style="text-align:left">Équipe</th>
@@ -13508,6 +13593,7 @@ async function openInsights(matchId) {
   if (!m) return;
 
   insCurrentMatchId = matchId;
+  insActiveGroup    = null; // reset groupe actif à chaque nouveau match
 
   // Rec W3 — masquer onglets BSD si match hors couverture BSD (ESPN/API-Football sans _bsd_event_id)
   const _hasBsd = /^bsd_\d+/.test(matchId) || !!m._bsd_event_id;
@@ -13531,7 +13617,7 @@ async function openInsights(matchId) {
   document.getElementById('ins-teams').textContent = `${m.home_team} — ${m.away_team}${insLiveScore}`;
   document.getElementById('ins-league').innerHTML = `${m.league} · ${fmtKickoffDate(m.commence_time, { weekday: 'long', day: 'numeric', month: 'long' })}${insIntensity}`;
 
-  ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-compos','ins-tab-incidents','ins-tab-shotmap'].forEach(id => {
+  ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-compos','ins-tab-incidents','ins-tab-shotmap','ins-tab-videos'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement…</div>`; el.dataset.loaded = ''; }
   });
@@ -13566,6 +13652,12 @@ async function openInsights(matchId) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const d = await res.json();
     insCurrentData = d;
+
+    // BSD 26/05 — afficher la phase (round_name) dans le sous-titre du modal
+    if (d.round_name) {
+      const leagueEl = document.getElementById('ins-league');
+      if (leagueEl) leagueEl.innerHTML += ` · <span style="color:var(--blue);font-size:11px;font-family:'DM Mono',monospace">${d.round_name}</span>`;
+    }
 
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
     fetchInsightsSocialBuzz(m.id);  // bd ueg0 — async lazy fetch + populate slot

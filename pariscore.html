@@ -3342,10 +3342,14 @@
     background: #ffffff !important;
   }
   body.dark-theme nav {
-    background: linear-gradient(180deg, #15181c 0%, #0a0d0f 100%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+    background: #ffffff;
+    border-bottom: 3px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
+  body.dark-theme nav .nav-links a { color: #111111; }
+  body.dark-theme nav .logo { color: #111111; }
+  body.dark-theme nav .nav-auth-btn { color: #4a4a4a; border-color: rgba(0,0,0,0.16); }
+  body.dark-theme nav .live-pill { color: #4a4a4a; }
   .logo {
     font-family: var(--font-head);
     font-size: 28px; font-weight: 800;
@@ -17712,6 +17716,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <div class="ins-tab" onclick="insShowTab('compos')">Compos</div>
         <div class="ins-tab" onclick="insShowTab('incidents')">Incidents</div>
         <div class="ins-tab" onclick="insShowTab('shotmap')">Shotmap</div>
+        <div class="ins-tab" onclick="insShowTab('videos')">🎬 Vidéos</div>
       </div>
       <select id="ins-tab-mob" aria-label="Section" onchange="insShowTab(this.value)">
         <option value="resume">Résumé</option>
@@ -17726,6 +17731,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <option value="compos">Compos</option>
         <option value="incidents">Incidents</option>
         <option value="shotmap">Shotmap</option>
+        <option value="videos">🎬 Vidéos</option>
       </select>
       <div id="ins-tab-resume"></div>
       <div id="ins-tab-stats"      style="display:none"></div>
@@ -17739,6 +17745,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       <div id="ins-tab-compos"     style="display:none"></div>
       <div id="ins-tab-incidents"  style="display:none"></div>
       <div id="ins-tab-shotmap"    style="display:none"></div>
+      <div id="ins-tab-videos"     style="display:none"></div>
       <!-- CTA-2 : bandeau bonus footer (populated par openInsights) -->
       <div class="aff-bonus-strip" id="ins-aff-bonus-strip" style="display:none">
         <div class="aff-bonus-strip__icon" aria-hidden="true">★</div>
