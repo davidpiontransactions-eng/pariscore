@@ -26907,7 +26907,7 @@ function _spawnEDA(args, timeoutMs) {
 
 // FIX-6: helper sanitize table + guard empty
 function _edaTable(raw, dflt) {
-  var t = (raw || dflt || 'player_surface_scores').replace(/[^a-z0-9_]/gi, '');
+  var t = (raw || dflt || 'player_surface_scores').replace(/[^a-z0-9_]/gi, '').replace(/^\d/, '_$&');
   return t || null;
 }
 
@@ -38855,7 +38855,7 @@ function _runTennisInternalEtlJob() {
     child.stderr.on('data', (b) => { stderrTail = (stderrTail + b.toString()).slice(-2000); });
     child.on('close', (code) => {
       const elapsed = Date.now() - t0;
-      const summary = (stdoutTail.match(/total\s*:\s*(\d+)/) || [])[1] || '?';
+      const _sm = stdoutTail.match(/total\s*:\s*(\d+)/); const summary = _sm ? _sm[1] : '?';
       if (code === 0) {
         console.log(`  [Cron:TennisInternalETL] ✓ ETL OK (${elapsed}ms, total=${summary})`);
       } else {
