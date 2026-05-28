@@ -27000,6 +27000,7 @@ async function _runCatBoostBatchInference(matches) {
     return {};
   }
 
+  console.log('[CatBoost] spawn ' + _CB_PY_BIN + ' — ' + features.length + ' features');
   return new Promise(function(resolve) {
     const cp = require('child_process').spawn(
       _CB_PY_BIN, [_CB_INFER_SCRIPT],
@@ -27007,14 +27008,15 @@ async function _runCatBoostBatchInference(matches) {
     );
     let out = '';
     cp.stdout.on('data', function(d) { out += d.toString(); });
-    cp.stderr.on('data', function(d) { process.stderr.write('[CatBoost] ' + d); });
+    cp.stderr.on('data', function(d) { process.stderr.write('[CatBoost] stderr: ' + d); });
     const timer = setTimeout(function() {
       cp.kill();
       console.warn('[CatBoost] Inference timeout 30s — fallback Poisson');
       resolve({});
     }, 30000);
-    cp.on('close', function() {
+    cp.on('close', function(code) {
       clearTimeout(timer);
+      console.log('[CatBoost] close code=' + code + ' out.len=' + out.length);
       try {
         const r = _cbParseOut(out);
         resolve(r.predictions && typeof r.predictions === 'object' ? r.predictions : {});
