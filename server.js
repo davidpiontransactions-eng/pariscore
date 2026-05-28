@@ -19224,6 +19224,101 @@ function archiveFinishedTennisFromLiveCache(liveData) {
   return added;
 }
 
+// bd 401 Fix 2 — Inject finished live match results into the WElo system
+// (tennis_players_elo + tennis_matches_elo). Reads the live data for finished
+// matches, resolves player IDs from tennis_players_elo by name, and calls
+// tennisEloCalculator.processMatchResult(). Best-effort — errors logged, never throw.
+function archiveTennisEloFromLiveCache(liveData) {
+  if (!Array.isArray(liveData) || !liveData.length) return 0;
+  if (typeof tennisEloCalculator === 'undefined' ||
+      typeof tennisEloCalculator.processMatchResult !== 'function') return 0;
+  const alreadyProcessed = new Set();
+  try {
+    const recent = sqldb.prepare(
+      `SELECT match_id FROM tennis_matches_elo WHERE processed_at > ?`
+    ).all(Math.floor(Date.now() / 1000) - 86400);
+    for (const r of recent) { if (r && r.match_id) alreadyProcessed.add(String(r.match_id)); }
+  } catch (_) { /* best-effort */ }
+
+  let updated = 0;
+  for (const m of liveData) {
+    if (!m || !m.id) continue;
+    const isFinished = m.is_live === false && (
+      String(m.status || '').toLowerCase().includes('finish') ||
+      String(m.status || '').toLowerCase().includes('end') ||
+      String(m.status || '').toLowerCase() === 'ft' ||
+      (m.player1_sets != null && m.player2_sets != null &&
+       (m.player1_sets >= 2 || m.player2_sets >= 2))
+    );
+    if (!isFinished) continue;
+    const sw1 = Number(m.player1_sets ?? 0);
+    const sw2 = Number(m.player2_sets ?? 0);
+    if (sw1 === sw2) continue;
+    const winnerSide = sw1 > sw2 ? 'p1' : 'p2';
+    // Resolve player IDs from tennis_players_elo (name-based lookup)
+    let p1Id = m.player1?.id || null;
+    let p2Id = m.player2?.id || null;
+    const p1Name = m.player1?.name || null;
+    const p2Name = m.player2?.name || null;
+    const tour = String(m.tour || '').toUpperCase();
+    if (!p1Id && p1Name) {
+      try {
+        const row = sqldb.prepare(
+          `SELECT player_id FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND (circuit = ? OR circuit IS NULL) LIMIT 1`
+        ).get(p1Name.trim(), tour);
+        if (row) p1Id = String(row.player_id);
+      } catch (_) {}
+    }
+    if (!p2Id && p2Name) {
+      try {
+        const row = sqldb.prepare(
+          `SELECT player_id FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND (circuit = ? OR circuit IS NULL) LIMIT 1`
+        ).get(p2Name.trim(), tour);
+        if (row) p2Id = String(row.player_id);
+      } catch (_) {}
+    }
+    if (!p1Id || !p2Id) continue;
+    const dedupKey = `${p1Id}|${p2Id}|${m.id}`;
+    if (alreadyProcessed.has(dedupKey)) continue;
+    // Build match_id from player pair for dedup (fix: avoid stale unique constraint)
+    const matchEid = `${p1Id}_${p2Id}_${String(m.id || '').slice(0, 16)}`;
+    try {
+      const gamesWonP1 = (m.sets || []).reduce((sum, s) => sum + (Number(s.p1_games ?? s.g1 ?? s.home_games ?? 0)), sw1 === 0 ? 6 : 6 * sw1 - 2); // heuristic: 6 games per won set minus 2 in lost
+      const gamesWonP2 = (m.sets || []).reduce((sum, s) => sum + (Number(s.p2_games ?? s.g2 ?? s.away_games ?? 0)), sw2 === 0 ? 6 : 6 * sw2 - 2);
+      const result = tennisEloCalculator.processMatchResult(
+        p1Id, p2Id, Math.max(0, gamesWonP1), Math.max(0, gamesWonP2),
+        winnerSide === 'p1' ? p1Id : p2Id
+      );
+      sqldb.prepare(`
+        INSERT OR REPLACE INTO tennis_matches_elo
+        (match_id, player1_id, player2_id, winner_id, player1_games_won, player2_games_won,
+         player1_elo_before, player2_elo_before, player1_elo_after, player2_elo_after,
+         player1_elo_delta, player2_elo_delta, tournament, circuit, round, processed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        matchEid, p1Id, p2Id, winnerSide === 'p1' ? p1Id : p2Id,
+        Math.max(0, gamesWonP1), Math.max(0, gamesWonP2),
+        result.player1.eloBefore, result.player2.eloBefore,
+        result.player1.eloAfter, result.player2.eloAfter,
+        result.player1.delta, result.player2.delta,
+        (m.tournament && typeof m.tournament === 'object' ? m.tournament.name : m.tournament) || null,
+        tour || null, m.round || m.round_name || null,
+        Math.floor(Date.now() / 1000)
+      );
+      alreadyProcessed.add(dedupKey);
+      // Also upsert players table
+      sqldb.prepare(
+        `INSERT OR REPLACE INTO tennis_players_elo (player_id, player_name, elo_rating, matches_played, last_match_at, circuit) VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(p1Id, p1Name, result.player1.eloAfter, result.player1.matchesPlayed, Math.floor(Date.now()/1000), tour);
+      sqldb.prepare(
+        `INSERT OR REPLACE INTO tennis_players_elo (player_id, player_name, elo_rating, matches_played, last_match_at, circuit) VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(p2Id, p2Name, result.player2.eloAfter, result.player2.matchesPlayed, Math.floor(Date.now()/1000), tour);
+      updated++;
+    } catch (e) { /* best-effort — skip ce match, ne bloque pas le poll */ }
+  }
+  if (updated > 0) console.log(`  [TennisElo Live] ${updated} matchs traités → tennis_players_elo mis à jour`);
+}
+
 async function pollTennisLive() {
   if (_isFetchingTennis) return;
   _isFetchingTennis = true;
@@ -19312,6 +19407,11 @@ async function pollTennisLive() {
     _tennisLiveCache = { ts: Date.now(), data };
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
+    // bd 401 Fix 2 — Auto Elo update from finished live matches.
+    // Les matchs terminés sont injectés dans tennis_players_elo (WElo) pour
+    // que les ratings suivent le circuit en temps réel (pas seulement au boot).
+    // Best-effort, n'interrompt jamais le poll.
+    try { archiveTennisEloFromLiveCache(data); } catch (e) { /* best-effort */ }
     // bd mpg Phase 2 — On-demand fetch aiscore PBP pour matchs live sans cache.
     // Trigger populate cache → next poll detectAndBroadcastPBPUpdates broadcast SSE.
     try {
@@ -20037,13 +20137,14 @@ function computeTennisElo() {
     sqldb.exec('DELETE FROM tennis_elo');
 
     // bd dl49 Phase 4 — Source-switch via env flag TENNIS_ELO_SOURCE.
-    // Defaults 'legacy' (compat Sackmann backup pré-purge). Migration cible
-    // 'internal' une fois tennis_matches_internal populé par ETL prod.
-    const eloSource = String(process.env.TENNIS_ELO_SOURCE || 'legacy').toLowerCase();
+    // Defaults 'union' (Sackmann legacy + internal BSD/ESPN) pour garantir
+    // l'approvisionnement continu post-purge Sackmann. Migration cible
+    // 'internal' une fois tennis_matches_internal > 10k rows.
+    const eloSource = String(process.env.TENNIS_ELO_SOURCE || 'union').toLowerCase();
     if (!['legacy', 'internal', 'union'].includes(eloSource)) {
-      console.warn(`  [Elo] Invalid TENNIS_ELO_SOURCE=${eloSource} — fallback 'legacy'`);
+      console.warn(`  [Elo] Invalid TENNIS_ELO_SOURCE=${eloSource} — fallback 'union'`);
     }
-    const actualSource = ['legacy', 'internal', 'union'].includes(eloSource) ? eloSource : 'legacy';
+    const actualSource = ['legacy', 'internal', 'union'].includes(eloSource) ? eloSource : 'union';
 
     const elos = new Map(); // key: `${tour}|${playerKey}|${surface}` → {elo, matches, lastDate, name}
     const rows = _buildTennisEloRows(actualSource);
@@ -31513,6 +31614,24 @@ if (pathname === '/api/v1/tennis/upcoming') {
     if (tourFilter && tour !== tourFilter) continue;
     const p1 = m.player1 || {};
     const p2 = m.player2 || {};
+    // bd 401 Fix 3 — Player ID fallback for SPS upcoming: BSD/ESPN may not
+    // carry .id but always has .name. Resolve from tennis_players_elo by name.
+    if (p1.id == null && p1.name) {
+      try {
+        const row = sqldb.prepare(
+          `SELECT player_id FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) LIMIT 1`
+        ).get(String(p1.name).trim());
+        if (row) p1.id = String(row.player_id);
+      } catch (_) {}
+    }
+    if (p2.id == null && p2.name) {
+      try {
+        const row = sqldb.prepare(
+          `SELECT player_id FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) LIMIT 1`
+        ).get(String(p2.name).trim());
+        if (row) p2.id = String(row.player_id);
+      } catch (_) {}
+    }
     if (p1.id == null || p2.id == null) continue;
     matches.push({
       id: String(m.id),
@@ -39213,6 +39332,23 @@ function _runTennisInternalEtlJob() {
     _runTennisInternalEtlJob();
     setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000).unref();
   }, delayMs).unref();
+})();
+
+// bd 401 Fix 1 — Tennis Elo recomputation quotidienne après l'ETL interne.
+// computeTennisElo() ne tournait qu'au boot si tennis_elo vide → stale après
+// la 1ère population. On schedule 10 min après l'ETL (02:10 Paris).
+(function _scheduleTennisEloRecompute() {
+  const delayMs = _msUntilNextParisHour(2) + 10 * 60 * 1000;
+  const nextRun = new Date(Date.now() + delayMs);
+  console.log(`  [Cron:TennisElo] recompute schedulé · prochain run ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min)`);
+  function _runElo() {
+    console.log('  [Cron:TennisElo] recompute tennis_elo depuis tennis_matches_internal…');
+    try {
+      const r = computeTennisElo();
+      if (r) console.log(`  [Cron:TennisElo] ✓ ${r.players} joueurs, ${r.matches} matchs (${r.elapsed_ms}ms)`);
+    } catch (e) { console.warn('  [Cron:TennisElo] erreur:', e.message); }
+  }
+  setTimeout(() => { _runElo(); setInterval(_runElo, 24 * 3600 * 1000).unref(); }, delayMs).unref();
 })();
 
 (function _scheduleSPSUpdater() {
