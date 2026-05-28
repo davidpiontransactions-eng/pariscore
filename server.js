@@ -5264,6 +5264,42 @@ const SPS_UPCOMING_TELEMETRY = {
 // Charge l'état persistant depuis SQLite et init en mémoire
 let tennisEloCalculator = null;
 
+// bd 401 — Bootstrap tennis_players_elo depuis tennis_elo (one-shot migration).
+// tennis_players_elo est le système WElo utilisé pour les matchs live (Fix #2).
+// tennis_elo (4,391 rows) est l'ancien système Sackmann. Sans ce bootstrap,
+// le calculator démarre vide → aucune mise à jour live possible.
+function bootstrapTennisWEloFromElo() {
+  try {
+    const existing = sqldb.prepare('SELECT COUNT(1) as n FROM tennis_players_elo').get().n;
+    if (existing > 0) { console.log('  [WElo bootstrap] skip — tennis_players_elo déjà peuplée (' + existing + ' joueurs)'); return; }
+    console.log('  [WElo bootstrap] tennis_players_elo vide — migration depuis tennis_elo…');
+    const rows = sqldb.prepare(`
+      SELECT player_id, player_name, tour,
+             MAX(elo) AS elo_max, SUM(matches_count) AS total_matches,
+             MAX(last_match_date) AS last_date, MAX(updated_at) AS updated
+      FROM tennis_elo
+      WHERE player_id IS NOT NULL
+      GROUP BY player_id, tour
+    `).all();
+    if (!rows.length) { console.log('  [WElo bootstrap] tennis_elo vide — skip'); return; }
+    const insertStmt = sqldb.prepare(`
+      INSERT OR REPLACE INTO tennis_players_elo
+      (player_id, player_name, elo_rating, matches_played, last_match_at, circuit, updated_at, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%s','now'))
+    `);
+    const tx = sqldb.transaction((batch) => {
+      for (const r of batch) {
+        if (!r.player_id) continue;
+        const circuit = String(r.tour || '').toUpperCase() === 'WTA' ? 'WTA' : 'ATP';
+        insertStmt.run(r.player_id, r.player_name, Math.round(r.elo_max),
+          r.total_matches || 0, r.last_date || null, circuit, r.updated || null);
+      }
+    });
+    tx(rows);
+    console.log('  [WElo bootstrap] ✓ ' + rows.length + ' entrées insérées dans tennis_players_elo');
+  } catch (e) { console.warn('  [WElo bootstrap] erreur:', e.message); }
+}
+
 function initTennisEloCalculator() {
   tennisEloCalculator = new EloCalculator(1500);
 
@@ -38665,7 +38701,7 @@ server.on('error', err => {
 /* -------------------------------------------------
    Séquence de démarrage (exécutée après que le serveur soit en écoute)
    ------------------------------------------------- */
-const BOOT_ODDS_TIMEOUT_MS = parseInt(process.env.BOOT_ODDS_TIMEOUT_MS || '25000', 10);
+const BOOT_ODDS_TIMEOUT_MS = parseInt(process.env.BOOT_ODDS_TIMEOUT_MS || '45000', 10);
 const BOOT_STATS_TIMEOUT_MS = parseInt(process.env.BOOT_STATS_TIMEOUT_MS || '90000', 10);
 
 function withBootTimeout(label, ms, fn) {
@@ -38691,6 +38727,7 @@ async function bootInit() {
 
     // Init WElo Tennis calculator
     try {
+      bootstrapTennisWEloFromElo(); // bd 401 — one-shot migration tennis_elo → tennis_players_elo
       initTennisEloCalculator();
     } catch (e) {
       console.warn('  [Boot] ⚠ initTennisEloCalculator:', e.message);
