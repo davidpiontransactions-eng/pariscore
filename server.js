@@ -4372,6 +4372,7 @@ const WC2026_FLAG_CODES = {
 };
 
 const _wc2026Cache = {};
+let _catboostCache = {};     // { matchId → { home, draw, away, over25, btts } } — declared early, used in buildMatchRecord (line ~8101)
 
 function _wcIsActive() {
   const now = Date.now();
@@ -26949,7 +26950,7 @@ function _edaTable(raw, dflt) {
 // Kill-switch : CATBOOST_ENABLED=false (défaut). Fallback Poisson auto si off ou erreur.
 // Modèles : models/catboost_football_{1x2,over25,btts}_v1.cbm (train via admin route)
 
-let _catboostCache = {};     // { matchId → { home, draw, away, over25, btts } }
+// _catboostCache declared early at module top (line ~4374) to avoid TDZ in buildMatchRecord
 let _catboostMetrics = null; // { trained_at, n_total, models: { 1x2: { rps, ... } } }
 const _CB_MODELS_DIR = path.join(__dirname, 'models');
 const _CB_INFER_SCRIPT = path.join(__dirname, 'ml', 'infer_catboost.py');
