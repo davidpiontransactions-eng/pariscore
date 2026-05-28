@@ -36179,6 +36179,8 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
             'X-Content-Type-Options': 'nosniff',
             'X-Frame-Options': 'SAMEORIGIN',
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+            'Referrer-Policy': 'strict-origin-when-cross-origin',
+            'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
         };
 
         // HTML pages get a basic CSP
