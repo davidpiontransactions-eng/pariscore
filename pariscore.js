@@ -11770,20 +11770,74 @@ function buildResumeTab(d) {
       </div>
     </div>
 
-    ${m.blended_cb ? `
-    <div class="ins-section" style="border:1px solid rgba(168,85,247,0.22);background:linear-gradient(135deg,rgba(168,85,247,0.05),rgba(168,85,247,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <span style="font-size:9px;font-family:var(--font-mono);color:#a855f7;background:rgba(168,85,247,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">🤖 ML CATBOOST · 60% CB + 40% Poisson</span>
+    ${m.blended_cb ? (() => {
+      const cb = m.blended_cb;
+      const odds = m.odds || {};
+      const bk = m.bookmakers || {};
+      // Value bet detection — 1X2 uniquement (cotes réelles disponibles)
+      const vbMap = {};
+      [['home', cb.homeWin], ['draw', cb.draw], ['away', cb.awayWin]].forEach(([k, prob]) => {
+        if (odds[k] && prob) {
+          const e = Math.round((odds[k] * prob / 100 - 1) * 1000) / 10;
+          if (e > 0) vbMap[k] = { edge: e, odds: odds[k], bkName: bk[k] || '' };
+        }
+      });
+      const bestKey = Object.keys(vbMap).sort((a, b) => vbMap[b].edge - vbMap[a].edge)[0] || null;
+      const bestVb = bestKey ? vbMap[bestKey] : null;
+      const keyLbl = { home: 'Domicile', draw: 'Nul', away: 'Extérieur' };
+      const probForKey = { home: cb.homeWin, draw: cb.draw, away: cb.awayWin };
+      const stars = e => {
+        const n = e > 12 ? 5 : e > 8 ? 4 : e > 5 ? 3 : e > 2 ? 2 : 1;
+        return `<span style="color:#f59e0b;font-size:13px">${'★'.repeat(n)}</span><span style="color:#d1d5db;font-size:13px">${'☆'.repeat(5 - n)}</span>`;
+      };
+      const advice = bestVb
+        ? `Conseil final : <strong style="color:#7c3aed">${keyLbl[bestKey]}</strong> recommandé — probabilité modèle ${probForKey[bestKey]}%, edge <strong style="color:#16a34a">+${bestVb.edge}%</strong> vs cote ${bestVb.odds}${bestVb.bkName ? ' (' + bestVb.bkName + ')' : ''}.`
+        : `Aucune value bet 1X2 confirmée. Marchés à surveiller : BTTS ${cb.btts}%, Over 2.5 ${cb.over25}%.`;
+      const rows = [
+        ['GG / BTTS', cb.btts,    null],
+        ['Over 2.5',  cb.over25,  null],
+        ['Domicile',  cb.homeWin, 'home'],
+        ['Nul',       cb.draw,    'draw'],
+        ['Extérieur', cb.awayWin, 'away'],
+      ].map(([lbl, val, key]) => {
+        if (val == null) return '';
+        const g1  = val > 65 ? '#5b21b6' : val > 45 ? '#6d28d9' : '#7c3aed';
+        const g2  = val > 65 ? '#8b5cf6' : val > 45 ? '#a855f7' : '#c4b5fd';
+        const tc  = val > 65 ? '#6d28d9' : val > 45 ? '#7c3aed' : '#8b5cf6';
+        const bdg = val > 65 ? 'Fort'    : val > 45 ? 'Moyen'   : 'Faible';
+        const vb  = key && vbMap[key];
+        return `<div style="display:grid;grid-template-columns:100px 1fr 44px 52px 80px;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:600;color:var(--text,#1f2937)">${lbl}</span>
+          <div style="height:14px;background:rgba(139,92,246,0.09);border-radius:10px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.12),inset 0 1px 2px rgba(0,0,0,0.07)">
+            <div style="height:100%;width:${val}%;background:linear-gradient(90deg,${g1},${g2});border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),0 1px 4px rgba(109,40,217,0.3);transform-origin:left;animation:cbFill .9s cubic-bezier(.34,1.1,.64,1) both;position:relative;overflow:hidden">
+              <div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.24),transparent);border-radius:10px 10px 0 0"></div>
+            </div>
+          </div>
+          <span style="font-size:11px;font-weight:800;color:${tc};text-align:right;font-family:var(--font-mono,monospace)">${val}%</span>
+          <span style="font-size:9px;font-weight:700;color:${tc};background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:4px;padding:2px 5px;text-align:center">${bdg}</span>
+          <span>${vb ? `<span style="font-size:9px;font-weight:800;color:#16a34a;background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:5px;padding:2px 7px;white-space:nowrap">+${vb.edge}% ✓ VALUE</span>` : ''}</span>
+        </div>`;
+      }).join('');
+      return `<style>@keyframes cbFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}</style>
+    <div style="border:1px solid rgba(139,92,246,0.22);background:linear-gradient(135deg,rgba(139,92,246,0.05),rgba(168,85,247,0.01));border-radius:14px;padding:14px 16px;margin-bottom:16px;box-shadow:0 4px 24px rgba(139,92,246,0.07),inset 0 1px 0 rgba(255,255,255,0.06)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#6d28d9,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(109,40,217,0.35),inset 0 1px 0 rgba(255,255,255,0.18)">🤖</div>
+          <div>
+            <div style="font-size:10px;font-weight:900;color:#6d28d9;letter-spacing:.07em;text-transform:uppercase">ML CatBoost</div>
+            <div style="font-size:9px;color:var(--text2,#6b7280);font-family:var(--font-mono,monospace);margin-top:1px">Hybride · 60% CB + 40% Poisson</div>
+          </div>
+        </div>
+        ${bestVb ? `<span style="font-size:9px;font-weight:800;color:#16a34a;background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.25);border-radius:8px;padding:4px 10px">🟢 VALUE</span>` : ''}
       </div>
-      <div class="pois-flat-grid">
-        ${[['GG / BTTS', m.blended_cb.btts], ['Over 2.5', m.blended_cb.over25], ['Domicile', m.blended_cb.homeWin], ['Nul', m.blended_cb.draw], ['Extérieur', m.blended_cb.awayWin]].map(([lbl, val]) => {
-          if (val == null) return '';
-          const col = val > 65 ? '#7c3aed' : val > 45 ? '#9333ea' : '#a855f7';
-          const badge = val > 65 ? 'Fort' : val > 45 ? 'Moyen' : 'Faible';
-          return `<div class="pois-row"><span class="pois-lbl">${lbl}</span><div class="pois-track"><div class="pois-fill" style="width:${val}%;background:${col}"></div></div><span class="pois-pct" style="color:${col}">${val}%</span><span class="pois-badge" style="color:${col};border-color:${col}">${badge}</span></div>`;
-        }).join('')}
+      ${rows}
+      <div style="margin-top:12px;padding:10px 12px;background:rgba(109,40,217,0.04);border:1px solid rgba(109,40,217,0.12);border-radius:10px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.04)">
+        <div style="font-size:9px;font-weight:800;letter-spacing:.07em;color:#6d28d9;text-transform:uppercase;margin-bottom:7px">🎯 Verdict PariScore &amp; Aide à la Décision</div>
+        ${bestVb ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:11px;font-weight:800;color:#16a34a">🟢 VALUE BET — ${keyLbl[bestKey]}</span><span style="line-height:1">${stars(bestVb.edge)}</span><span style="font-size:9px;color:var(--text2,#888)">Confiance</span></div>` : `<div style="font-size:10px;color:var(--text2,#6b7280);margin-bottom:6px">⚠️ Pas de value bet 1X2 confirmé</div>`}
+        <div style="font-size:10px;color:var(--text2,#4b5563);line-height:1.55">${advice}</div>
       </div>
-    </div>` : ''}
+    </div>`;
+    })() : ''}
 
     <div class="ins-section">
       <div class="ins-section-title">Notes par Secteur</div>
