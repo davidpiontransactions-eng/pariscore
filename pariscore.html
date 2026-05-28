@@ -14377,6 +14377,87 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-vb-table .tvb-elo-num.fav { color:var(--green,#1a8c45); font-weight:800; }
   #tennis-vb-table .tvb-elo-dlt { color:var(--text3,#888); font-size:9px; }
   #tennis-vb-table .tvb-elo-dlt.warn { color:var(--amber,#b45309); font-weight:700; }
+  /* ── SPS Surface PowerScore chips — V2.0 premium ─────────────────────────── */
+  @keyframes sps-shimmer {
+    0%   { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+  .tn-sps-row {
+    display:flex; flex-direction:column; gap:4px; margin-top:5px; width:100%;
+  }
+  /* Loading skeleton — CSS-only shimmer, no text */
+  .tn-sps-loading {
+    display:block; height:14px; border-radius:3px; width:100%;
+    background:linear-gradient(90deg,
+      rgba(255,255,255,0.03) 0%,
+      rgba(255,255,255,0.08) 40%,
+      rgba(41,182,246,0.06) 60%,
+      rgba(255,255,255,0.03) 100%);
+    background-size:200% 100%;
+    animation:sps-shimmer 1.6s cubic-bezier(0.4,0,0.6,1) infinite;
+  }
+  /* Real SPS chip — double-bezel card */
+  .tn-sps-chip {
+    display:flex; flex-direction:column; gap:2px; width:100%;
+    padding:3px 5px; border-radius:5px;
+    background:rgba(255,255,255,0.025);
+    border:1px solid rgba(255,255,255,0.055);
+    transition:background 220ms cubic-bezier(0.32,0.72,0,1),
+               border-color 220ms cubic-bezier(0.32,0.72,0,1);
+  }
+  .tn-vb-row:hover .tn-sps-chip {
+    background:rgba(255,255,255,0.045); border-color:rgba(255,255,255,0.09);
+  }
+  .tn-sps-head { display:flex; align-items:center; justify-content:space-between; gap:3px; }
+  .tn-sps-score {
+    font-family:var(--font-mono,'DM Mono',monospace);
+    font-size:10px; font-weight:700; letter-spacing:-0.3px; line-height:1;
+  }
+  .tn-sps-meta {
+    display:flex; align-items:center; gap:3px;
+    font-family:var(--font-mono,'DM Mono',monospace);
+    font-size:8px; color:var(--text3,#5a6068); line-height:1; white-space:nowrap;
+  }
+  .tn-sps-conf-dot {
+    display:inline-block; width:5px; height:5px; border-radius:50%; flex-shrink:0;
+    transition:box-shadow 220ms;
+  }
+  .tn-sps-conf-dot.full { background:currentColor; box-shadow:0 0 5px currentColor; }
+  .tn-sps-conf-dot.low  { border:1.5px solid currentColor; background:transparent; }
+  /* Mini progress track */
+  .tn-sps-track {
+    height:2px; border-radius:2px; background:rgba(255,255,255,0.06);
+    overflow:hidden; width:100%;
+  }
+  .tn-sps-fill {
+    height:100%; border-radius:2px;
+    transition:width 700ms cubic-bezier(0.32,0.72,0,1);
+  }
+  /* ELO fallback chip */
+  .tn-sps-elo-fb {
+    display:flex; align-items:center; gap:4px;
+    padding:2px 5px; border-radius:4px;
+    border:1px dashed rgba(41,182,246,0.22);
+    background:rgba(41,182,246,0.04);
+    transition:border-color 220ms cubic-bezier(0.32,0.72,0,1);
+  }
+  .tn-vb-row:hover .tn-sps-elo-fb { border-color:rgba(41,182,246,0.38); }
+  .tn-sps-elo-label {
+    font-family:var(--font-mono,'DM Mono',monospace); font-size:8px;
+    color:var(--text3,#5a6068); text-transform:uppercase; letter-spacing:0.4px;
+  }
+  .tn-sps-elo-val {
+    font-family:var(--font-mono,'DM Mono',monospace); font-size:10px;
+    font-weight:600; color:rgba(41,182,246,0.7);
+  }
+  /* Empty / null state */
+  .tn-sps-empty {
+    display:flex; align-items:center; gap:4px;
+    padding:2px 5px; border-radius:4px;
+    border:1px dashed rgba(255,255,255,0.07);
+    font-family:var(--font-mono,'DM Mono',monospace);
+    font-size:9px; color:var(--text3,#5a6068); opacity:0.5;
+  }
   /* DR trend chip inside predictive cell — V3.1 RT-01 */
   #tennis-vb-table .tvb-dr-chip { display:inline-flex; align-items:center; gap:2px; font-size:9px; font-family:var(--font-mono,'DM Mono',monospace); padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; white-space:nowrap; }
   #tennis-vb-table .tvb-dr-chip.up { background:rgba(26,140,69,0.15); color:var(--green,#1a8c45); }
