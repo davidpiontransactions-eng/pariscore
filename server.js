@@ -4375,6 +4375,102 @@ const WC2026_FLAG_CODES = {
 const _wc2026Cache = {};
 let _catboostCache = {};     // { matchId → { home, draw, away, over25, btts } } — declared early, used in buildMatchRecord (line ~8101)
 
+// ─── CatBoost module-scope helpers ─────────────────────────────────────────────
+// MUST be at module scope (not inside http.createServer callback) — fetchOdds cron can't see callback-scope functions
+let _catboostMetrics = null;
+const _CB_MODELS_DIR = path.join(__dirname, 'models');
+const _CB_INFER_SCRIPT = path.join(__dirname, 'ml', 'infer_catboost.py');
+const _CB_TRAIN_SCRIPT = path.join(__dirname, 'ml', 'train_catboost.py');
+const _CB_PY_BIN = process.env.CATBOOST_PYTHON_BIN ||
+  (process.platform === 'win32'
+    ? require('path').join(__dirname, '.venv-data', 'Scripts', 'python.exe')
+    : 'python3');
+
+function _cbParseOut(raw) {
+  const lines = raw.trim().split('\n').filter(function(l) { return l.trim().startsWith('{'); });
+  if (!raw.trim()) throw new Error('[CatBoost] subprocess produced no JSON output');
+  return JSON.parse(lines.length ? lines[lines.length - 1] : raw.trim());
+}
+
+async function _runCatBoostBatchInference(matches) {
+  if (process.env.CATBOOST_ENABLED !== 'true') return {};
+  const model1x2 = path.join(_CB_MODELS_DIR, 'catboost_football_1x2_v1.cbm');
+  if (!fs.existsSync(model1x2)) {
+    console.warn('[CatBoost] Modèles absents — lancer POST /api/v1/admin/catboost/train');
+    return {};
+  }
+  const features = (matches || [])
+    .filter(function(m) {
+      return !(m.sport || '').startsWith('tennis_') && m.sport !== 'tennis';
+    })
+    .map(function(m) {
+      return {
+        id: m.id,
+        home_team: m.home_team,
+        away_team: m.away_team,
+        league: m.league || 'unknown',
+        commence_time: m.commence_time,
+        poisson: m.poisson ? {
+          homeWin: m.poisson.homeWin, draw: m.poisson.draw, awayWin: m.poisson.awayWin,
+          over25: m.poisson.over25, over15: m.poisson.over15,
+          btts: m.poisson.btts, cs00: m.poisson.cs00,
+        } : null,
+        fair: m.fair || null,
+      };
+    });
+  if (!features.length) return {};
+  return new Promise(function(resolve) {
+    const cp = require('child_process').spawn(
+      _CB_PY_BIN, [_CB_INFER_SCRIPT],
+      { cwd: __dirname, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+    let out = '';
+    cp.stdout.on('data', function(d) { out += d.toString(); });
+    cp.stderr.on('data', function(d) { process.stderr.write('[CatBoost] stderr: ' + d); });
+    const timer = setTimeout(function() {
+      cp.kill();
+      console.warn('[CatBoost] Inference timeout 30s — fallback Poisson');
+      resolve({});
+    }, 30000);
+    cp.on('close', function(code) {
+      clearTimeout(timer);
+      try {
+        const r = _cbParseOut(out);
+        resolve(r.predictions && typeof r.predictions === 'object' ? r.predictions : {});
+      } catch(e) {
+        console.warn('[CatBoost] Parse error:', e.message, '— fallback Poisson');
+        resolve({});
+      }
+    });
+    cp.on('error', function(err) {
+      clearTimeout(timer);
+      console.warn('[CatBoost] Spawn error:', err.message, '— fallback Poisson');
+      resolve({});
+    });
+    cp.stdin.write(JSON.stringify({ features: features, sport: 'football' }));
+    cp.stdin.end();
+  });
+}
+
+async function _refreshCatBoostCache() {
+  if (process.env.CATBOOST_ENABLED !== 'true') return;
+  try {
+    const preds = await _runCatBoostBatchInference(db.matches);
+    const n = preds && typeof preds === 'object' ? Object.keys(preds).length : 0;
+    if (n > 0) {
+      _catboostCache = preds;
+      for (const m of db.matches) {
+        if (_catboostCache[m.id]) m.catboost = _catboostCache[m.id];
+      }
+      console.log('[CatBoost] ✓ Cache ' + n + ' prédictions');
+    } else {
+      console.warn('[CatBoost] preds vide — matches=' + (db.matches || []).length);
+    }
+  } catch(e) {
+    console.warn('[CatBoost] refreshCache error:', e.message);
+  }
+}
+
 function _wcIsActive() {
   const now = Date.now();
   return now >= new Date(WC2026_START).getTime() && now <= new Date(WC2026_END).getTime() + 86400000;
@@ -14515,8 +14611,7 @@ async function fetchOdds(force = false, opts = {}) {
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
     // typeof guard (option C) — défense-en-profondeur contre scope/TDZ résiduel
-    console.log('[CatBoost] Trigger — CATBOOST_ENABLED=' + process.env.CATBOOST_ENABLED + ' typeof=' + typeof _refreshCatBoostCache);
-    if (process.env.CATBOOST_ENABLED === 'true') { if (typeof _refreshCatBoostCache === 'function') { _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message)); } else { console.warn('[CatBoost] SKIP — typeof _refreshCatBoostCache=' + typeof _refreshCatBoostCache); } }
+    if (process.env.CATBOOST_ENABLED === 'true') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
@@ -26949,115 +27044,8 @@ function _edaTable(raw, dflt) {
   return t || null;
 }
 
-// ─── CATBOOST — Batch inference subprocess (pattern _spawnEDA) ───────────────
-// Kill-switch : CATBOOST_ENABLED=false (défaut). Fallback Poisson auto si off ou erreur.
-// Modèles : models/catboost_football_{1x2,over25,btts}_v1.cbm (train via admin route)
-
-// _catboostCache declared early at module top (line ~4374) to avoid TDZ in buildMatchRecord
-let _catboostMetrics = null; // { trained_at, n_total, models: { 1x2: { rps, ... } } }
-const _CB_MODELS_DIR = path.join(__dirname, 'models');
-const _CB_INFER_SCRIPT = path.join(__dirname, 'ml', 'infer_catboost.py');
-const _CB_TRAIN_SCRIPT = path.join(__dirname, 'ml', 'train_catboost.py');
-// CatBoost uses python3 directly (not EDA venv — catboost installed system-wide, not in .venv-data)
-const _CB_PY_BIN = process.env.CATBOOST_PYTHON_BIN ||
-  (process.platform === 'win32'
-    ? require('path').join(__dirname, '.venv-data', 'Scripts', 'python.exe')
-    : 'python3');
-
-function _cbParseOut(raw) {
-  const lines = raw.trim().split('\n').filter(function(l) { return l.trim().startsWith('{'); });
-  return JSON.parse(lines.length ? lines[lines.length - 1] : raw.trim());
-}
-
-async function _runCatBoostBatchInference(matches) {
-  console.log('[CatBoost] runBatch ENTRY enabled=' + process.env.CATBOOST_ENABLED + ' matches=' + (matches||[]).length);
-  if (process.env.CATBOOST_ENABLED !== 'true') return {};
-  const model1x2 = path.join(_CB_MODELS_DIR, 'catboost_football_1x2_v1.cbm');
-  if (!fs.existsSync(model1x2)) {
-    console.warn('[CatBoost] Modèles absents — lancer POST /api/v1/admin/catboost/train');
-    return {};
-  }
-  const features = (matches || [])
-    .filter(function(m) {
-      return !(m.sport || '').startsWith('tennis_') && m.sport !== 'tennis';
-    })
-    .map(function(m) {
-      return {
-        id: m.id,
-        home_team: m.home_team,
-        away_team: m.away_team,
-        league: m.league || 'unknown',
-        commence_time: m.commence_time,
-        poisson: m.poisson ? {
-          homeWin: m.poisson.homeWin, draw: m.poisson.draw, awayWin: m.poisson.awayWin,
-          over25: m.poisson.over25, over15: m.poisson.over15,
-          btts: m.poisson.btts, cs00: m.poisson.cs00,
-        } : null,
-        fair: m.fair || null,
-      };
-    });
-  if (!features.length) {
-    console.log('[CatBoost] 0 features foot sur ' + (matches || []).length + ' matchs');
-    return {};
-  }
-
-  console.log('[CatBoost] spawn ' + _CB_PY_BIN + ' — ' + features.length + ' features');
-  return new Promise(function(resolve) {
-    const cp = require('child_process').spawn(
-      _CB_PY_BIN, [_CB_INFER_SCRIPT],
-      { cwd: __dirname, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    let out = '';
-    cp.stdout.on('data', function(d) { out += d.toString(); });
-    cp.stderr.on('data', function(d) { process.stderr.write('[CatBoost] stderr: ' + d); });
-    const timer = setTimeout(function() {
-      cp.kill();
-      console.warn('[CatBoost] Inference timeout 30s — fallback Poisson');
-      resolve({});
-    }, 30000);
-    cp.on('close', function(code) {
-      clearTimeout(timer);
-      console.log('[CatBoost] close code=' + code + ' out.len=' + out.length);
-      try {
-        const r = _cbParseOut(out);
-        resolve(r.predictions && typeof r.predictions === 'object' ? r.predictions : {});
-      } catch(e) {
-        console.warn('[CatBoost] Parse error:', e.message, '— fallback Poisson');
-        resolve({});
-      }
-    });
-    cp.on('error', function(err) {
-      clearTimeout(timer);
-      console.warn('[CatBoost] Spawn error:', err.message, '— fallback Poisson');
-      resolve({});
-    });
-    cp.stdin.write(JSON.stringify({ features: features, sport: 'football' }));
-    cp.stdin.end();
-  });
-}
-
-async function _refreshCatBoostCache() {
-  console.log('[CatBoost] refreshCache ENTRY enabled=' + process.env.CATBOOST_ENABLED);
-  if (process.env.CATBOOST_ENABLED !== 'true') {
-    console.log('[CatBoost] skip — CATBOOST_ENABLED=' + (process.env.CATBOOST_ENABLED || 'absent'));
-    return;
-  }
-  try {
-    const preds = await _runCatBoostBatchInference(db.matches);
-    const n = preds && typeof preds === 'object' ? Object.keys(preds).length : 0;
-    if (n > 0) {
-      _catboostCache = preds;
-      for (const m of db.matches) {
-        if (_catboostCache[m.id]) m.catboost = _catboostCache[m.id];
-      }
-      console.log('[CatBoost] ✓ Cache ' + n + ' prédictions');
-    } else {
-      console.log('[CatBoost] preds vide — matches=' + (db.matches || []).length + ' CATBOOST_ENABLED=' + process.env.CATBOOST_ENABLED);
-    }
-  } catch(e) {
-    console.warn('[CatBoost] refreshCache error:', e.message);
-  }
-}
+// CatBoost helpers (_catboostMetrics, _CB_*, _cbParseOut, _runCatBoostBatchInference, _refreshCatBoostCache)
+// moved to module scope (above http.createServer) — route handlers below
 
 // POST /api/v1/admin/catboost/train — déclenche entraînement (admin only)
 if (pathname === '/api/v1/admin/catboost/train' && req.method === 'POST') {
