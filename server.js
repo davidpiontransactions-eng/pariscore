@@ -59,6 +59,7 @@ function loadEnv() {
   }
 }
 loadEnv();
+console.log('[Boot] CATBOOST_ENABLED=' + (process.env.CATBOOST_ENABLED || 'NOT_SET'));
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 // ─── API-FOOTBALL RETIRÉ (v10.77) ───────────────────────────────────────────
