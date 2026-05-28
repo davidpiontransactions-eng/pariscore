@@ -27047,14 +27047,17 @@ if (pathname === '/api/v1/admin/catboost/train' && req.method === 'POST') {
     { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }
   );
   let out = '';
+  let trainResponded = false;
   child.stdout.on('data', function(d) { out += d.toString(); });
   child.stderr.on('data', function(d) { process.stderr.write('[CatBoost:Train] ' + d); });
   const trainTimer = setTimeout(function() {
     child.kill();
-    jsonResponse(res, 504, { error: 'Training timeout (5min)' });
+    if (!trainResponded) { trainResponded = true; jsonResponse(res, 504, { error: 'Training timeout (5min)' }); }
   }, 300000);
   child.on('close', function(code) {
     clearTimeout(trainTimer);
+    if (trainResponded) return;
+    trainResponded = true;
     try {
       const result = _cbParseOut(out);
       if (result.error) return jsonResponse(res, 422, result);
@@ -27066,7 +27069,7 @@ if (pathname === '/api/v1/admin/catboost/train' && req.method === 'POST') {
   });
   child.on('error', function(err) {
     clearTimeout(trainTimer);
-    jsonResponse(res, 500, { error: 'Train spawn error: ' + err.message });
+    if (!trainResponded) { trainResponded = true; jsonResponse(res, 500, { error: 'Train spawn error: ' + err.message }); }
   });
   return;
 }

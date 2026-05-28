@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Report — CatBoost Phase 1 | PariScore</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #21262d; --bg4: #2d333b;
+    --green: #3fb950; --amber: #d29922; --red: #f85149; --blue: #58a6ff;
+    --purple: #bc8cff; --text: #e6edf3; --text2: #8b949e; --border: #30363d;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 24px; font-size: 14px; line-height: 1.5; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  h2 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .meta { color: var(--text2); font-size: 13px; margin-bottom: 28px; }
+  .meta span { margin-right: 20px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+  .badge.green { background: rgba(63,185,80,.15); color: var(--green); border-color: rgba(63,185,80,.3); }
+  .badge.amber { background: rgba(210,153,34,.15); color: var(--amber); border-color: rgba(210,153,34,.3); }
+  .badge.red { background: rgba(248,81,73,.15); color: var(--red); border-color: rgba(248,81,73,.3); }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 32px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.blue { color: var(--blue); }
+  .kpi-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .kpi-spark { margin-top: 8px; }
+
+  /* Charts */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+  .charts-grid.wide { grid-template-columns: 1fr; }
+  .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .chart-wrap { position: relative; height: 260px; }
+  .chart-wrap.sm { height: 220px; }
+  .chart-wrap.lg { height: 300px; }
+
+  /* Table */
+  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 32px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--bg3); color: var(--text2); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,.02); }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid rgba(48,54,61,.5); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--blue); min-width: 2px; }
+
+  /* Insights */
+  .insights { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 28px; }
+  .insight { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .insight:last-child { border-bottom: none; padding-bottom: 0; }
+  .insight-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .insight-text strong { color: var(--text); display: block; margin-bottom: 2px; }
+  .insight-text span { color: var(--text2); font-size: 13px; }
+
+  /* Alert box */
+  .alert { border-radius: var(--radius); padding: 12px 16px; margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-start; }
+  .alert.amber { background: rgba(210,153,34,.12); border: 1px solid rgba(210,153,34,.3); }
+  .alert.red { background: rgba(248,81,73,.10); border: 1px solid rgba(248,81,73,.3); }
+  .alert-icon { font-size: 18px; flex-shrink: 0; }
+  .alert-body strong { display: block; margin-bottom: 4px; }
+  .alert-body span { font-size: 13px; color: var(--text2); }
+
+  /* Methodology */
+  details { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; margin-top: 28px; }
+  summary { padding: 14px 18px; cursor: pointer; font-weight: 600; color: var(--text2); user-select: none; list-style: none; display: flex; align-items: center; gap: 8px; }
+  summary::before { content: '▶'; font-size: 10px; transition: transform .2s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  .method-body { padding: 0 18px 16px; color: var(--text2); font-size: 13px; line-height: 1.7; }
+  .method-body p { margin-bottom: 8px; }
+  .method-body code { background: var(--bg3); padding: 1px 6px; border-radius: 4px; font-family: 'SF Mono', monospace; font-size: 12px; }
+  @media (max-width: 760px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  /* Calibration bar */
+  .calib-row { display: grid; grid-template-columns: 80px 1fr 1fr 60px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .calib-row:last-child { border-bottom: none; }
+  .calib-bar-wrap { height: 14px; background: var(--bg3); border-radius: 7px; overflow: hidden; position: relative; }
+  .calib-bar-pred { height: 100%; border-radius: 7px; position: absolute; }
+  .calib-bar-actual { height: 6px; top: 4px; border-radius: 3px; position: absolute; opacity: .85; }
+</style>
+</head>
+<body>
+
+<h1>Data Report — CatBoost Phase 1</h1>
+<div class="meta">
+  <span>📅 2026-05-28</span>
+  <span>🗄️ Source: <code>pariscore.db → kv['history_matches']</code></span>
+  <span>🤖 Modèle: CatBoost v1.2.10</span>
+  <span class="badge amber">172 lignes utilisables</span>
+</div>
+
+<div class="alert amber">
+  <div class="alert-icon">⚠️</div>
+  <div class="alert-body">
+    <strong>Données pilote locales — résultats indicatifs uniquement</strong>
+    <span>Seules 172/21 081 lignes vérifiées possèdent un <code>poisson_snapshot</code> (0.82%). Toutes datent de mai 2026 — diversité temporelle nulle. VPS estimé à ~4 000 lignes utilisables → résultats de qualité pilot attendus. Entraîner via <code>POST /api/v1/admin/catboost/train</code> après déploiement.</span>
+  </div>
+</div>
+
+<!-- KPI Grid -->
+<h2>📊 KPIs Pipeline</h2>
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">Total historique</div>
+    <div class="kpi-value blue">21 127</div>
+    <div class="kpi-sub">records bruts SQLite</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Vérifiés</div>
+    <div class="kpi-value green">21 081</div>
+    <div class="kpi-sub">99.8% taux vérification</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Utilisables ML</div>
+    <div class="kpi-value amber">172</div>
+    <div class="kpi-sub">avec poisson_snapshot</div>
+    <div class="kpi-spark">
+      <div style="position:relative;height:40px"><canvas id="sparkUtilisables"></canvas></div>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">RPS 1X2 (local)</div>
+    <div class="kpi-value red">0.2360</div>
+    <div class="kpi-sub">baseline Poisson: 0.2082 ↗</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Accuracy Over 2.5</div>
+    <div class="kpi-value amber">60.0%</div>
+    <div class="kpi-sub">35 matchs validation</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Accuracy BTTS</div>
+    <div class="kpi-value amber">54.3%</div>
+    <div class="kpi-sub">35 matchs validation</div>
+  </div>
+</div>
+
+<!-- Charts row 1 -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <h2>Distribution des résultats 1X2</h2>
+    <div class="chart-wrap sm"><canvas id="chart1x2"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h2>Distribution des buts totaux par match</h2>
+    <div class="chart-wrap sm"><canvas id="chartGoals"></canvas></div>
+  </div>
+</div>
+
+<!-- Charts row 2 -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <h2>Top 10 ligues — Répartition des données</h2>
+    <div class="chart-wrap"><canvas id="chartLeagues"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h2>Calibration Poisson vs Résultats réels</h2>
+    <div style="padding-top:8px">
+      <div style="display:grid;grid-template-columns:80px 1fr 1fr 60px;gap:10px;padding:0 0 8px 0;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">
+        <div>Outcome</div><div>Poisson prédit</div><div>Réel observé</div><div>Biais</div>
+      </div>
+      <div class="calib-row">
+        <div>🏠 Domicile</div>
+        <div>
+          <div class="calib-bar-wrap">
+            <div class="calib-bar-pred" style="width:40.9%;background:rgba(88,166,255,.4)"></div>
+            <div class="calib-bar-actual" style="width:48.8%;background:#58a6ff"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">prédit: 40.9%</div>
+        </div>
+        <div style="font-weight:600">48.8%</div>
+        <div style="color:var(--green);font-weight:600">+7.9pp</div>
+      </div>
+      <div class="calib-row">
+        <div>🤝 Nul</div>
+        <div>
+          <div class="calib-bar-wrap">
+            <div class="calib-bar-pred" style="width:24%;background:rgba(188,140,255,.4)"></div>
+            <div class="calib-bar-actual" style="width:20.9%;background:#bc8cff"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">prédit: 24.0%</div>
+        </div>
+        <div style="font-weight:600">20.9%</div>
+        <div style="color:var(--amber);font-weight:600">-3.1pp</div>
+      </div>
+      <div class="calib-row">
+        <div>✈️ Extérieur</div>
+        <div>
+          <div class="calib-bar-wrap">
+            <div class="calib-bar-pred" style="width:33.6%;background:rgba(248,81,73,.4)"></div>
+            <div class="calib-bar-actual" style="width:30.2%;background:#f85149"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">prédit: 33.6%</div>
+        </div>
+        <div style="font-weight:600">30.2%</div>
+        <div style="color:var(--amber);font-weight:600">-3.4pp</div>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text2)">
+          Marché BTTS: 93/172 = <strong style="color:var(--text)">54.1%</strong> réel — Over 2.5: 87/172 = <strong style="color:var(--text)">50.6%</strong> réel
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart row 3: Metrics comparison -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <h2>Metrics modèles — local vs cible VPS</h2>
+    <div class="chart-wrap sm"><canvas id="chartMetrics"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h2>Pipeline de données — Entonnoir</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:8px">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
+          <span>Total records bruts</span><span style="font-weight:600">21 127</span>
+        </div>
+        <div style="height:20px;background:var(--bg3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:100%;background:#58a6ff;border-radius:4px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
+          <span>Vérifiés (avec realScore)</span><span style="font-weight:600">21 081 <span style="color:var(--text2);font-weight:400">(99.8%)</span></span>
+        </div>
+        <div style="height:20px;background:var(--bg3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:99.8%;background:#3fb950;border-radius:4px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
+          <span>Avec poisson_snapshot (ML-ready)</span><span style="font-weight:600">172 <span style="color:var(--amber);font-weight:400">(0.82%)</span></span>
+        </div>
+        <div style="height:20px;background:var(--bg3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:0.82%;background:var(--amber);border-radius:4px;min-width:4px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
+          <span>Train split (80%)</span><span style="font-weight:600">137</span>
+        </div>
+        <div style="height:20px;background:var(--bg3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:0.65%;background:var(--purple);border-radius:4px;min-width:4px"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:6px;font-size:12px;color:var(--text2)">
+        ⚡ <strong style="color:var(--amber)">Cause</strong> du goulot: <code>poisson_snapshot</code> seulement stocké depuis la migration vers <code>predicted.poisson_snapshot</code> (mai 2026). Tous les records antérieurs n'ont que les probas recalculées, pas le snapshot historique.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+  <h2>Top 10 ligues — Données détaillées</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Ligue</th>
+        <th class="num">Matchs</th>
+        <th class="num">Part (%)</th>
+        <th>Distribution</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>MLS</td><td class="num">17</td><td class="num">9.9%</td><td><div class="bar-cell"><div class="bar" style="width:calc(17/17*120px)"></div>17</div></td></tr>
+      <tr><td>2</td><td>Segunda Division</td><td class="num">14</td><td class="num">8.1%</td><td><div class="bar-cell"><div class="bar" style="width:calc(14/17*120px)"></div>14</div></td></tr>
+      <tr><td>3</td><td>Copa Sudamericana</td><td class="num">13</td><td class="num">7.6%</td><td><div class="bar-cell"><div class="bar" style="width:calc(13/17*120px)"></div>13</div></td></tr>
+      <tr><td>4</td><td>USL Championship</td><td class="num">13</td><td class="num">7.6%</td><td><div class="bar-cell"><div class="bar" style="width:calc(13/17*120px)"></div>13</div></td></tr>
+      <tr><td>5</td><td>Copa Libertadores</td><td class="num">13</td><td class="num">7.6%</td><td><div class="bar-cell"><div class="bar" style="width:calc(13/17*120px)"></div>13</div></td></tr>
+      <tr><td>6</td><td>La Liga</td><td class="num">10</td><td class="num">5.8%</td><td><div class="bar-cell"><div class="bar" style="width:calc(10/17*120px)"></div>10</div></td></tr>
+      <tr><td>7</td><td>Brasileirao</td><td class="num">10</td><td class="num">5.8%</td><td><div class="bar-cell"><div class="bar" style="width:calc(10/17*120px)"></div>10</div></td></tr>
+      <tr><td>8</td><td>Premier League</td><td class="num">10</td><td class="num">5.8%</td><td><div class="bar-cell"><div class="bar" style="width:calc(10/17*120px)"></div>10</div></td></tr>
+      <tr><td>9</td><td>Serie A</td><td class="num">9</td><td class="num">5.2%</td><td><div class="bar-cell"><div class="bar" style="width:calc(9/17*120px)"></div>9</div></td></tr>
+      <tr><td>10</td><td>Serie B</td><td class="num">9</td><td class="num">5.2%</td><td><div class="bar-cell"><div class="bar" style="width:calc(9/17*120px)"></div>9</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Insights -->
+<h2>💡 Insights</h2>
+<div class="insights">
+  <div class="insight">
+    <div class="insight-icon">🏠</div>
+    <div class="insight-text">
+      <strong>Poisson sous-estime l'avantage domicile de +7.9pp</strong>
+      <span>Prédit 40.9% pour victoire domicile, réalité 48.8%. Biais systématique que CatBoost est précisément conçu à corriger via l'encodage ordonné par équipe. Sur VPS avec plus de données, cet écart permettra un gain de RPS significatif.</span>
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">🔴</div>
+    <div class="insight-text">
+      <strong>Goulot critique : 0.82% des records ont un poisson_snapshot</strong>
+      <span>21 081 matchs vérifiés mais seulement 172 utilisables — car <code>predicted.poisson_snapshot</code> n'est sauvegardé que depuis la refonte de mai 2026. Le pipeline accumule ~30-50 lignes/jour → qualité pilot attendue d'ici fin juin 2026.</span>
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">📅</div>
+    <div class="insight-text">
+      <strong>Zéro diversité temporelle — toutes les 172 lignes sont de mai 2026</strong>
+      <span>Le modèle ne voit pas de variation saisonnière, de changements de forme long-terme, ni de schémas inter-saisons. Conséquence directe sur le RPS local (-13.3% vs baseline). Ce problème se résout naturellement en 3-6 mois d'accumulation.</span>
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">🌎</div>
+    <div class="insight-text">
+      <strong>Skew géographique vers les Amériques</strong>
+      <span>MLS + USL + Copa Libertadores + Copa Sudamericana + Brasileirao = 66 matchs (38.4%). Les équipes européennes (La Liga, PL, Serie A, Serie B) totalisent 39 matchs (22.7%). Le modèle sera initialement plus précis sur les ligues américaines.</span>
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">📊</div>
+    <div class="insight-text">
+      <strong>1 anomalie données — total buts négatif (-4 goals)</strong>
+      <span>1 match avec <code>realScore.home + realScore.away = -4</code> détecté dans la distribution. Probable corruption de données lors d'un import. Impact négligeable sur 172 lignes mais à purger via une validation SQL : <code>WHERE CAST(json_extract(value,'$.realScore.home') AS INT) >= 0</code>.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Methodology -->
+<details>
+  <summary>📐 Méthodologie & Sources</summary>
+  <div class="method-body">
+    <p><strong>Source de données</strong>: Table SQLite <code>kv</code>, clé <code>history_matches</code>, format JSON array. Chaque record contient <code>verified: true</code>, <code>realScore: {home, away}</code>, et optionnellement <code>predicted.poisson_snapshot</code>.</p>
+    <p><strong>Critère de sélection ML</strong>: Record doit avoir <code>verified=true</code> ET <code>realScore</code> non-null ET <code>predicted.poisson_snapshot.homeWin</code> non-null. Les records sans snapshot (anciens) sont exclus.</p>
+    <p><strong>RPS (Ranked Probability Score)</strong>: Métrique probabiliste pour classements ordonnés à 3 classes. Formule: <code>RPS = (1/N) × Σ_i (1/2) × Σ_{k=0}^{1} (F_{i,k} - O_{i,k})²</code>. Plage [0, 1], plus bas = meilleur. Baseline Poisson PariScore: 0.2082.</p>
+    <p><strong>Split train/val</strong>: 80%/20% stratifié sur la classe 1X2 (home/draw/away) pour préserver l'équilibre des classes dans les deux sets.</p>
+    <p><strong>Features (16)</strong>: Poisson 1X2 + over25 + over15 + btts + cs00 (7 num) · Fair probs home/draw/away (3 num) · Temporel month/hour/dow (3 num) · Catégoriels league/home_team/away_team (3 cat, encodage ordonné CatBoost natif).</p>
+    <p><strong>Hyperparamètres 1X2</strong>: <code>iterations=500, lr=0.05, depth=6, MultiClass, early_stopping=50, l2=3.0</code>. Binary: <code>iterations=300, depth=5, Logloss, early_stopping=40</code>.</p>
+  </div>
+</details>
+
+<script>
+const P = { // palette
+  blue: '#58a6ff', green: '#3fb950', amber: '#d29922', red: '#f85149',
+  purple: '#bc8cff', gray: '#8b949e',
+  bg3: '#21262d', border: '#30363d', text: '#e6edf3',
+};
+const gridLine = { color: 'rgba(48,54,61,0.8)' };
+const defaults = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: P.text, font: { size: 12 } } } },
+};
+
+// Spark: utilisables
+new Chart(document.getElementById('sparkUtilisables'), {
+  type: 'line',
+  data: {
+    labels: ['bruts','vérifiés','ML-ready'],
+    datasets: [{ data: [21127, 21081, 172], borderColor: P.amber, borderWidth: 2,
+      pointRadius: 3, pointBackgroundColor: P.amber, tension: 0.3, fill: false }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { display: false },
+      y: { display: false },
+    }
+  }
+});
+
+// Chart 1X2 results
+new Chart(document.getElementById('chart1x2'), {
+  type: 'doughnut',
+  data: {
+    labels: ['🏠 Domicile', '🤝 Nul', '✈️ Extérieur'],
+    datasets: [{
+      data: [84, 36, 52],
+      backgroundColor: [P.blue, P.purple, P.red],
+      borderColor: '#161b22', borderWidth: 2,
+      hoverBorderColor: '#161b22',
+    }]
+  },
+  options: {
+    ...defaults,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: P.text, padding: 16, font: { size: 12 } } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} matchs (${(ctx.raw/172*100).toFixed(1)}%)` } }
+    },
+  }
+});
+
+// Goals distribution
+new Chart(document.getElementById('chartGoals'), {
+  type: 'bar',
+  data: {
+    labels: ['0', '1', '2', '3', '4', '5', '6', '7+'],
+    datasets: [{
+      label: 'Matchs',
+      data: [6, 31, 47, 45, 15, 13, 10, 4], // 7+8+10 grouped
+      backgroundColor: [P.gray, P.blue, P.blue, P.blue, P.amber, P.amber, P.red, P.red].map(c => c + 'cc'),
+      borderColor: [P.gray, P.blue, P.blue, P.blue, P.amber, P.amber, P.red, P.red],
+      borderWidth: 1, borderRadius: 4,
+    }]
+  },
+  options: {
+    ...defaults,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.raw} matchs (${(ctx.raw/172*100).toFixed(1)}%)` } }
+    },
+    scales: {
+      x: { ticks: { color: P.gray }, grid: gridLine },
+      y: { ticks: { color: P.gray }, grid: gridLine, beginAtZero: true },
+    }
+  }
+});
+
+// Leagues chart
+new Chart(document.getElementById('chartLeagues'), {
+  type: 'bar',
+  data: {
+    labels: ['MLS','Segunda Div.','Copa Sudamer.','USL Champ.','Copa Libert.','La Liga','Brasileirao','Premier League','Serie A','Serie B'],
+    datasets: [{
+      label: 'Matchs',
+      data: [17, 14, 13, 13, 13, 10, 10, 10, 9, 9],
+      backgroundColor: [
+        P.blue, P.blue, P.amber, P.amber, P.amber,
+        P.green, P.green, P.green, P.purple, P.purple
+      ].map(c => c + 'bb'),
+      borderColor: [
+        P.blue, P.blue, P.amber, P.amber, P.amber,
+        P.green, P.green, P.green, P.purple, P.purple
+      ],
+      borderWidth: 1, borderRadius: 4,
+    }]
+  },
+  options: {
+    ...defaults,
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: P.gray }, grid: gridLine, beginAtZero: true },
+      y: { ticks: { color: P.text, font: { size: 11 } }, grid: { display: false } },
+    }
+  }
+});
+
+// Metrics comparison
+new Chart(document.getElementById('chartMetrics'), {
+  type: 'bar',
+  data: {
+    labels: ['RPS 1X2\n(↓ meilleur)', 'Acc. Over 2.5', 'Acc. BTTS'],
+    datasets: [
+      {
+        label: 'CatBoost local (172 lignes)',
+        data: [0.2360, 60.0, 54.3],
+        backgroundColor: P.amber + 'aa', borderColor: P.amber, borderWidth: 1, borderRadius: 4,
+      },
+      {
+        label: 'Baseline Poisson / Aléatoire',
+        data: [0.2082, 50.6, 54.1],
+        backgroundColor: P.gray + '66', borderColor: P.gray, borderWidth: 1, borderRadius: 4,
+      },
+      {
+        label: 'Objectif VPS (~4k lignes)',
+        data: [0.1925, 65.0, 62.0],
+        backgroundColor: P.green + 'aa', borderColor: P.green, borderWidth: 1, borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    ...defaults,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: P.text, font: { size: 11 }, padding: 12 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}` } }
+    },
+    scales: {
+      x: { ticks: { color: P.gray, font: { size: 11 } }, grid: gridLine },
+      y: { ticks: { color: P.gray }, grid: gridLine, beginAtZero: false },
+    }
+  }
+});
+</script>
+</body>
+</html>

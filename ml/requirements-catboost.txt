@@ -1,0 +1,10 @@
+# CatBoost Phase 1 dependencies
+# Install in the same venv as EDA toolkit (.venv-data):
+#   pip install -r ml/requirements-catboost.txt
+#
+# VPS: source .venv-data/bin/activate && pip install -r ml/requirements-catboost.txt
+# Win: .venv-data\Scripts\activate && pip install -r ml/requirements-catboost.txt
+
+catboost>=1.2.0
+scikit-learn>=1.3.0
+numpy>=1.24.0
