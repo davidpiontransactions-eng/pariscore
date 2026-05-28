@@ -26958,6 +26958,11 @@ let _catboostMetrics = null; // { trained_at, n_total, models: { 1x2: { rps, ...
 const _CB_MODELS_DIR = path.join(__dirname, 'models');
 const _CB_INFER_SCRIPT = path.join(__dirname, 'ml', 'infer_catboost.py');
 const _CB_TRAIN_SCRIPT = path.join(__dirname, 'ml', 'train_catboost.py');
+// CatBoost uses python3 directly (not EDA venv — catboost installed system-wide, not in .venv-data)
+const _CB_PY_BIN = process.env.CATBOOST_PYTHON_BIN ||
+  (process.platform === 'win32'
+    ? require('path').join(__dirname, '.venv-data', 'Scripts', 'python.exe')
+    : 'python3');
 
 function _cbParseOut(raw) {
   const lines = raw.trim().split('\n').filter(function(l) { return l.trim().startsWith('{'); });
@@ -26997,7 +27002,7 @@ async function _runCatBoostBatchInference(matches) {
 
   return new Promise(function(resolve) {
     const cp = require('child_process').spawn(
-      _EDA_PY_BIN, [_CB_INFER_SCRIPT],
+      _CB_PY_BIN, [_CB_INFER_SCRIPT],
       { cwd: __dirname, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] }
     );
     let out = '';
@@ -27056,7 +27061,7 @@ if (pathname === '/api/v1/admin/catboost/train' && req.method === 'POST') {
   if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
   const dbArg = process.env.DATABASE_PATH || path.join(__dirname, 'pariscore.db');
   const child = require('child_process').spawn(
-    _EDA_PY_BIN, [_CB_TRAIN_SCRIPT, '--db', dbArg, '--models-dir', _CB_MODELS_DIR],
+    _CB_PY_BIN, [_CB_TRAIN_SCRIPT, '--db', dbArg, '--models-dir', _CB_MODELS_DIR],
     { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }
   );
   let out = '';
