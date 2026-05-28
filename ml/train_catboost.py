@@ -99,15 +99,27 @@ def extract_features(
     Build feature matrix + label vectors from verified history records.
 
     Returns (X, y_1x2, y_over25, y_btts).
-    Skips records missing poisson_snapshot or realScore.
+    Accepts records with or without poisson_snapshot:
+    - With snapshot: all 16 features populated (meta-learner mode).
+    - Without snapshot: Poisson/fair features = NaN (CatBoost handles natively,
+      falls back to categorical+temporal signal only).
+    Tennis records are excluded (football model only).
     """
     X_rows: list[list[Any]] = []
     y_1x2: list[int] = []
     y_over25: list[int] = []
     y_btts: list[int] = []
 
+    NAN = float("nan")
+
     for r in records:
         if not r.get("verified") or not r.get("realScore"):
+            continue
+
+        # Football only — exclude tennis IDs and leagues
+        sport_id: str = str(r.get("id") or "")
+        league: str = str(r.get("league") or "")
+        if "tennis" in sport_id.lower() or "tennis" in league.lower():
             continue
 
         predicted = r.get("predicted") or {}
@@ -115,12 +127,12 @@ def extract_features(
         fair: dict = predicted.get("fair") or {}
         score: dict = r["realScore"]
 
-        # Skip pre-Poisson records (no snapshot)
-        if ps.get("homeWin") is None:
+        # Guard against corrupt score data (e.g. negative goals from bad ETL)
+        try:
+            h_goals = max(0, int(score.get("home") or 0))
+            a_goals = max(0, int(score.get("away") or 0))
+        except (TypeError, ValueError):
             continue
-
-        h_goals = int(score.get("home") or 0)
-        a_goals = int(score.get("away") or 0)
 
         # --- Labels ---
         if h_goals > a_goals:
@@ -138,18 +150,21 @@ def extract_features(
         except Exception:
             month, hour, dow = 6, 20, 5
 
-        # --- Feature vector (must match FEATURE_NAMES order) ---
+        # --- Poisson/fair features — NaN when absent (CatBoost handles missing) ---
+        has_ps = bool(ps and ps.get("homeWin") is not None)
+        has_fair = bool(fair and fair.get("home") is not None)
+
         row: list[Any] = [
-            _safe_float(ps.get("homeWin"), 33.0),
-            _safe_float(ps.get("draw"),    33.0),
-            _safe_float(ps.get("awayWin"), 33.0),
-            _safe_float(ps.get("over25"),  50.0),
-            _safe_float(ps.get("over15"),  70.0),
-            _safe_float(ps.get("btts"),    45.0),
-            _safe_float(ps.get("cs00"),     5.0),
-            _safe_float(fair.get("home"),  0.33) * 100.0,
-            _safe_float(fair.get("draw"),  0.33) * 100.0,
-            _safe_float(fair.get("away"),  0.33) * 100.0,
+            _safe_float(ps.get("homeWin"), NAN) if has_ps else NAN,
+            _safe_float(ps.get("draw"),    NAN) if has_ps else NAN,
+            _safe_float(ps.get("awayWin"), NAN) if has_ps else NAN,
+            _safe_float(ps.get("over25"),  NAN) if has_ps else NAN,
+            _safe_float(ps.get("over15"),  NAN) if has_ps else NAN,
+            _safe_float(ps.get("btts"),    NAN) if has_ps else NAN,
+            _safe_float(ps.get("cs00"),    NAN) if has_ps else NAN,
+            _safe_float(fair.get("home"),  NAN) * 100.0 if has_fair else NAN,
+            _safe_float(fair.get("draw"),  NAN) * 100.0 if has_fair else NAN,
+            _safe_float(fair.get("away"),  NAN) * 100.0 if has_fair else NAN,
             month,
             hour,
             dow,
@@ -162,6 +177,14 @@ def extract_features(
         y_1x2.append(result_1x2)
         y_over25.append(1 if (h_goals + a_goals) > 2.5 else 0)
         y_btts.append(1 if (h_goals > 0 and a_goals > 0) else 0)
+
+    if not X_rows:
+        return (
+            np.empty((0, len(FEATURE_NAMES)), dtype=object),
+            np.array([], dtype=np.int32),
+            np.array([], dtype=np.int32),
+            np.array([], dtype=np.int32),
+        )
 
     return (
         np.array(X_rows, dtype=object),
@@ -188,6 +211,7 @@ def train_1x2(
         verbose=0,
         cat_features=CAT_FEATURE_INDICES,
         l2_leaf_reg=3.0,
+        nan_mode="Min",
         use_best_model=True,
         early_stopping_rounds=50,
     )
@@ -212,6 +236,7 @@ def train_binary(
         verbose=0,
         cat_features=CAT_FEATURE_INDICES,
         l2_leaf_reg=3.0,
+        nan_mode="Min",
         use_best_model=True,
         early_stopping_rounds=40,
     )
@@ -244,7 +269,15 @@ def main() -> None:
     records = load_history(db_path)
     n_raw = len(records)
     X, y_1x2, y_over25, y_btts = extract_features(records)
-    n_usable = len(X) if X is not None else 0
+    n_usable = len(X) if X is not None and len(X) > 0 else 0
+
+    # Count records that have full Poisson features vs NaN-only (categorical fallback)
+    n_with_poisson = 0
+    if n_usable > 0:
+        import math as _math
+        n_with_poisson = int(sum(
+            1 for row in X if not _math.isnan(float(row[0])) if row[0] is not None
+        ))
 
     MIN_SAMPLES = 50
     if n_usable < MIN_SAMPLES:
@@ -265,6 +298,8 @@ def main() -> None:
     result: dict[str, Any] = {
         "sport": "football",
         "n_total": len(X),
+        "n_with_poisson": n_with_poisson,
+        "n_categorical_only": len(X) - n_with_poisson,
         "n_train": len(idx_tr),
         "n_val": len(idx_val),
         "trained_at": datetime.now(timezone.utc).isoformat(),
