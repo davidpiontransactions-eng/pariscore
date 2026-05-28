@@ -55,14 +55,14 @@
   } catch (err) {
     var fallback = document.createElement('meta');
     fallback.name = 'viewport';
-    fallback.content = 'width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover';
+    fallback.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content';
     document.head.appendChild(fallback);
     document.documentElement.classList.add('ps-desktop-v1');
   }
 })();
 </script>
-<noscript><meta name="viewport" content="width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover"></noscript>
-<title>PariScore — Paris de Valeur & Statistiques Football</title>
+<noscript><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"></noscript>
+<title>PariScore — Paris de Valeur &amp; Statistiques Football</title>
 <meta name="description" content="PariScore : pronostics foot &amp; tennis par algorithme. Power Score, xG, statistiques avancées et value bets dévigés pour parier avec les maths.">
 <link rel="canonical" href="https://pariscore.fr/">
 <meta name="robots" content="index,follow">
