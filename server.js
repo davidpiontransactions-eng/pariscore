@@ -17385,7 +17385,7 @@ function getPredictions() {
       odds: m.odds, best_edge: m.best_edge,
       poisson: m.poisson, expectedGoals: m.expectedGoals,
       confidence: Math.round(
-        (Math.max(m.poisson.homeWin, m.poisson.draw, m.poisson.awayWin) +
+        (Math.max(m.poisson.homeWin || 0, m.poisson.draw || 0, m.poisson.awayWin || 0) +
           Math.abs((m.best_edge?.edge || 0))) / 2
       ),
       recommendation: m.poisson.homeWin > 55 ? `Victoire ${m.home_team}` :
@@ -17407,8 +17407,8 @@ function getTrends() {
   const bttsVals = matches.filter(m => m.poisson).map(m => m.poisson.btts);
   const over25Vals = matches.filter(m => m.poisson).map(m => m.poisson.over25);
   const over15Vals = matches.filter(m => m.poisson).map(m => m.poisson.over15);
-  const xgHome = matches.filter(m => m.expectedGoals).map(m => m.expectedGoals.home);
-  const xgAway = matches.filter(m => m.expectedGoals).map(m => m.expectedGoals.away);
+  const xgHome = matches.filter(m => m.expectedGoals?.home != null).map(m => m.expectedGoals.home);
+  const xgAway = matches.filter(m => m.expectedGoals?.away != null).map(m => m.expectedGoals.away);
 
   const byLeague = {};
   matches.forEach(m => {
@@ -38875,8 +38875,8 @@ function _runTennisInternalEtlJob() {
   console.log(`  [Cron:TennisInternalETL] schedulé · prochain run ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min)`);
   setTimeout(() => {
     _runTennisInternalEtlJob();
-    setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000);
-  }, delayMs);
+    setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000).unref();
+  }, delayMs).unref();
 })();
 
 (function _scheduleSPSUpdater() {
@@ -38894,7 +38894,7 @@ function _runTennisInternalEtlJob() {
     child.on('exit', code => console.log(`  [Cron:SPS] terminé (exit ${code})`));
     child.on('error', err => console.warn('  [Cron:SPS] spawn error:', err.message));
   }
-  setTimeout(() => { _runSPS(); setInterval(_runSPS, 24 * 3600 * 1000); }, delayMs);
+  setTimeout(() => { _runSPS(); setInterval(_runSPS, 24 * 3600 * 1000).unref(); }, delayMs).unref();
 })();
 
 // BetMines v10.14 — refresh 30min today + tomorrow (skip if BETMINES_ENABLED=0)
