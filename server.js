@@ -12612,6 +12612,27 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
       } else if (Array.isArray(standingsRes.data) && standingsRes.data.length) {
         rows = standingsRes.data;
       }
+      // Cup/continental competitions: BSD returns groups shape instead of flat standings.
+      // Shape A (array): { groups: [{group_name:"A", standings:[...]}, ...] }
+      // Shape B (object): { groups: {"A": [...], "B": [...]} }
+      if (!rows.length) {
+        const grps = standingsRes.data?.groups;
+        if (Array.isArray(grps) && grps.length) {
+          for (const grp of grps) {
+            const gName = grp.group_name || grp.name || null;
+            const tag = (entry) => gName ? Object.assign({}, entry, { _group_name: gName }) : entry;
+            if (Array.isArray(grp.standings) && grp.standings.length) rows.push(...grp.standings.map(tag));
+            else if (Array.isArray(grp.results) && grp.results.length) rows.push(...grp.results.map(tag));
+            else if (Array.isArray(grp) && grp.length) rows.push(...grp);
+          }
+          if (rows.length) console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → groups[] structure: ${grps.length} groups, ${rows.length} teams total`);
+        } else if (grps && typeof grps === 'object') {
+          for (const [gName, grpRows] of Object.entries(grps)) {
+            if (Array.isArray(grpRows)) rows.push(...grpRows.map(e => Object.assign({}, e, { _group_name: gName })));
+          }
+          if (rows.length) console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → groups{} structure: ${rows.length} teams total`);
+        }
+      }
     }
     if (!rows.length) {
       console.warn(`  [DEBUG STANDINGS] Standings vides BSD ${bsdLeagueId} saison ${seasonId || 'n/a'} status=${standingsRes?.status}`);
@@ -12727,6 +12748,7 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
         },
         _real: true,
         _source: 'bsd',
+        _group_name: entry._group_name || null,
       };
     });
     return teams;
@@ -13966,7 +13988,12 @@ async function fetchOpenFootballMatches(dateFrom, dateTo) {
 }
 
 function bsdToOddsApiFormat(bsdMatch) {
-  if (!bsdMatch.odds?.home || !bsdMatch.odds?.away) return null;
+  // Matchs sans cotes BSD : affichés avec odds null (badge "Sans cotes") plutôt qu'exclus.
+  // Cela préserve les matchs en direct et les matchs de coupes sans marché ouvert.
+  const hasOdds = !!(bsdMatch.odds?.home && bsdMatch.odds?.away);
+  if (!hasOdds) {
+    bsdMatch = Object.assign({}, bsdMatch, { odds: { home: null, draw: null, away: null, _no_odds: true } });
+  }
   // Exclure à la source les matchs déjà terminés côté BSD
   const rawStatus = (bsdMatch.status || '').toLowerCase().trim();
   if (rawStatus && BSD_FINISHED_STATUSES.has(rawStatus)) return null;
@@ -14380,7 +14407,7 @@ async function fetchOdds(force = false, opts = {}) {
               'bsd',
               dataKey,
               async () => await fetchBSDMatches(dateFrom, dateTo, bsdId),
-              (data) => Array.isArray(data) && data.length > 0 && data.every(m => m.id && m.home && m.away)
+              (data) => Array.isArray(data) && data.length > 0 && data.every(m => m.id && (m.home_team || m.home) && (m.away_team || m.away))
             );
             if (part && part.length > 0) {
               bsdRaw.push(...part);
@@ -14397,7 +14424,7 @@ async function fetchOdds(force = false, opts = {}) {
           'bsd',
           dataKey,
           async () => await fetchBSDMatches(dateFrom, dateTo),
-          (data) => Array.isArray(data) && data.length > 0 && data.every(m => m.id && m.home && m.away)
+          (data) => Array.isArray(data) && data.length > 0 && data.every(m => m.id && (m.home_team || m.home) && (m.away_team || m.away))
         ) || [];
       }
       if (bsdRaw && bsdRaw.length > 0) {
@@ -14708,7 +14735,7 @@ async function fetchStats(force = false) {
             `${bsdId}_${configId}`,
             async () => await fetchBSDStandings(bsdId, configId),
             (data) => data && typeof data === 'object' && Object.keys(data).length > 0 &&
-                      Object.values(data).some(t => t && t.wins != null && t.ppg != null)
+                      Object.values(data).some(t => t && (t.home?.wins != null || t._raw?.wins != null))
           );
           if (teams && Object.keys(teams).length) {
             // Purge denylist équipes mal-classifiées (data error BSD)
@@ -27109,6 +27136,31 @@ if (pathname === '/api/v1/admin/catboost/status' && req.method === 'GET') {
   return;
 }
 
+// DELETE /api/v1/admin/clear-cache — vide api_cache_buffer par source (ops VPS sans restart)
+// Auth : JWT admin OU ?key=ADMIN_PASSWORD (pour curl one-liner)
+if (pathname === '/api/v1/admin/clear-cache' && req.method === 'DELETE') {
+  const user = getAuthUser(req);
+  const qp = new URLSearchParams(req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '');
+  const keyOk = process.env.ADMIN_PASSWORD && qp.get('key') === process.env.ADMIN_PASSWORD;
+  if (!keyOk && (!user || user.role !== 'admin')) return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const source = qp.get('source') || null;
+  try {
+    if (source) {
+      sqldb.prepare('DELETE FROM api_cache_buffer WHERE source = ?').run(source);
+      apiCacheClear(source); // vide aussi le in-memory apiCache
+      console.log(`[Admin] clear-cache source="${source}"`);
+      return jsonResponse(res, 200, { ok: true, cleared: source });
+    } else {
+      sqldb.prepare('DELETE FROM api_cache_buffer').run();
+      apiCacheClear();
+      console.log('[Admin] clear-cache ALL sources');
+      return jsonResponse(res, 200, { ok: true, cleared: 'all' });
+    }
+  } catch (e) {
+    return jsonResponse(res, 500, { error: e.message });
+  }
+}
+
 // GET /api/v1/admin/eda/tables — liste tables SQLite disponibles
 if (pathname === '/api/v1/admin/eda/tables' && req.method === 'GET') {
   const user = getAuthUser(req);
@@ -38747,6 +38799,37 @@ setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.mess
 setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+
+// Cron quotidien 06:00 UTC — après resync BSD (05:30 UTC), force refresh standings + odds
+// Reset db.statsUpdateByLeague pour bypasser tous les gates T1/T2 → fetch frais garanti
+(function scheduleDailyFootballRefresh() {
+  const now = new Date();
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 6, 0, 0, 0));
+  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+  const msToFirst = next - now;
+  setTimeout(function tick() {
+    console.log('\n[DailyRefresh] 06:00 UTC — reset gates + force fetchStats → fetchOdds (séquentiel)');
+    db.statsUpdateByLeague = {};
+    // Séquentiel obligatoire : fetchOdds lit db.teamStats → fetchStats doit finir en premier
+    fetchStats(true)
+      .catch(e => console.error('[DailyRefresh] fetchStats:', e.message))
+      .then(() => fetchOdds(true).catch(e => console.error('[DailyRefresh] fetchOdds:', e.message)))
+      .then(() => {
+        console.log('[DailyRefresh] ✓ done');
+        if (automatedAlertsAllowed() && TELEGRAM_CHAT_IDS.size) {
+          const matchCount = db.matches?.length || 0;
+          const teamCount = Object.keys(db.teamStats || {}).length;
+          broadcastTelegramAlert(
+            `✅ <b>PariScore — Refresh quotidien 06:00 UTC</b>\n` +
+            `📊 ${matchCount} matchs · ${teamCount} équipes\n` +
+            `🏟️ Standings + cotes BSD mis à jour`
+          ).catch(() => {});
+        }
+      });
+    setTimeout(tick, 24 * 3600 * 1000);
+  }, msToFirst);
+  console.log(`  [DailyRefresh] Next forced refresh: ${next.toISOString()} (in ${Math.round(msToFirst / 60000)} min)`);
+})();
 
 // CatBoost weekly retrain — spawn train script if n_total grew >200 rows since last train
 setInterval(function() {
