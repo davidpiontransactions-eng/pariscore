@@ -26988,7 +26988,10 @@ async function _runCatBoostBatchInference(matches) {
         fair: m.fair || null,
       };
     });
-  if (!features.length) return {};
+  if (!features.length) {
+    console.log('[CatBoost] 0 features foot sur ' + (matches || []).length + ' matchs');
+    return {};
+  }
 
   return new Promise(function(resolve) {
     const cp = require('child_process').spawn(
@@ -27024,15 +27027,21 @@ async function _runCatBoostBatchInference(matches) {
 }
 
 async function _refreshCatBoostCache() {
-  if (process.env.CATBOOST_ENABLED !== 'true') return;
+  if (process.env.CATBOOST_ENABLED !== 'true') {
+    console.log('[CatBoost] skip — CATBOOST_ENABLED=' + (process.env.CATBOOST_ENABLED || 'absent'));
+    return;
+  }
   try {
     const preds = await _runCatBoostBatchInference(db.matches);
-    if (preds && typeof preds === 'object' && Object.keys(preds).length > 0) {
+    const n = preds && typeof preds === 'object' ? Object.keys(preds).length : 0;
+    if (n > 0) {
       _catboostCache = preds;
       for (const m of db.matches) {
         if (_catboostCache[m.id]) m.catboost = _catboostCache[m.id];
       }
-      console.log('[CatBoost] ✓ Cache ' + Object.keys(preds).length + ' prédictions');
+      console.log('[CatBoost] ✓ Cache ' + n + ' prédictions');
+    } else {
+      console.log('[CatBoost] preds vide — matches=' + (db.matches || []).length + ' CATBOOST_ENABLED=' + process.env.CATBOOST_ENABLED);
     }
   } catch(e) {
     console.warn('[CatBoost] refreshCache error:', e.message);
