@@ -2496,7 +2496,7 @@ function _tvbSPSPlaceholder(matchId, elo1, elo2) {
 }
 function _tvbSPSFormatChip(side, payload, eloFallback) {
   if (!payload) {
-    if (eloFallback != null) {
+    if (eloFallback != null && !isNaN(eloFallback)) {
       var eloVal = Number(eloFallback).toFixed(0);
       return '<span class="tn-sps-' + side + ' tn-sps-empty" '
            + 'title="SPS non calculé — Elo surface utilisé comme indicateur de référence." '
@@ -2566,10 +2566,14 @@ function _tvbHydrateSPSBatch(matchIds) {
           if (!Array.isArray(arr) || arr.length === 0) {
             payload = { p1: null, p2: null };
             _spsCacheSet(mid, payload, _SPS_NULL_CACHE_TTL_MS);  // re-check in 5min after cron
+          } else if (arr.length < 2) {
+            window.__spsStats.miss_fetched++;
+            payload = { p1: arr[0] || null, p2: arr[1] || null };
+            _spsCacheSet(mid, payload, 30 * 60 * 1000);  // partial: 30min so P2 gets picked up when ready
           } else {
             window.__spsStats.miss_fetched++;
             payload = { p1: arr[0] || null, p2: arr[1] || null };
-            _spsCacheSet(mid, payload);  // real data: 6h TTL
+            _spsCacheSet(mid, payload);  // both players: 6h TTL
           }
           _tvbPaintSPSCell(mid, payload);
           _spsInFlight.delete(mid);
