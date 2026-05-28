@@ -14649,7 +14649,13 @@ async function fetchOdds(force = false, opts = {}) {
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
     // typeof guard (option C) — défense-en-profondeur contre scope/TDZ résiduel
-    if (process.env.CATBOOST_ENABLED === 'true') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
+    if (process.env.CATBOOST_ENABLED === 'true') {
+      if (typeof _refreshCatBoostCache === 'function') {
+        _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
+      } else {
+        console.warn('[CatBoost] _refreshCatBoostCache not defined — cache refresh skipped (scope guard)');
+      }
+    }
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
@@ -38870,7 +38876,11 @@ setInterval(function() {
       if (newN - prevN < 200) { console.log('[CatBoost] WeeklyTrain skip — delta=' + (newN - prevN) + ' <200 rows'); return; }
       _catboostMetrics = r;
       console.log('[CatBoost] WeeklyTrain ✓ n=' + newN + ' rps=' + r.models?.['1x2']?.rps);
-      _refreshCatBoostCache().catch(e => console.warn('[CatBoost] WeeklyTrain cache refresh:', e.message));
+      if (typeof _refreshCatBoostCache === 'function') {
+        _refreshCatBoostCache().catch(e => console.warn('[CatBoost] WeeklyTrain cache refresh:', e.message));
+      } else {
+        console.warn('[CatBoost] WeeklyTrain — _refreshCatBoostCache not defined, skip cache refresh');
+      }
     } catch(e) { console.warn('[CatBoost] WeeklyTrain parse:', e.message); }
   });
   child.on('error', function(err) { console.warn('[CatBoost] WeeklyTrain spawn:', err.message); });
