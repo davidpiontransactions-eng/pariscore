@@ -14513,7 +14513,8 @@ async function fetchOdds(force = false, opts = {}) {
     saveDB();
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
-    if (process.env.CATBOOST_ENABLED === 'true') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
+    // typeof guard (option C) — défense-en-profondeur contre scope/TDZ résiduel
+    if (process.env.CATBOOST_ENABLED === 'true' && typeof _refreshCatBoostCache === 'function') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
