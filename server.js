@@ -8099,7 +8099,7 @@ function buildMatchRecord(raw) {
 
   // ── CatBoost — lookup cache (batch refresh après fetchOdds) ──────────────────
   // Fallback Poisson auto si CATBOOST_ENABLED=false ou cache vide (premier cycle).
-  record.catboost = _catboostCache[record.id] || null;
+  record.catboost = (typeof _catboostCache !== 'undefined' ? _catboostCache[record.id] : undefined) || null;
   if (record.catboost) {
     const cb = record.catboost;
     const po = record.poisson;
