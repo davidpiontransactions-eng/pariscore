@@ -4460,7 +4460,18 @@ async function _refreshCatBoostCache() {
     if (n > 0) {
       _catboostCache = preds;
       for (const m of db.matches) {
-        if (_catboostCache[m.id]) m.catboost = _catboostCache[m.id];
+        if (_catboostCache[m.id]) {
+          m.catboost = _catboostCache[m.id];
+          const cb = m.catboost;
+          const po = m.poisson;
+          m.blended_cb = {
+            homeWin: Math.round(cb.home   * 100 * 0.6 + (po?.homeWin || 33) * 0.4),
+            draw:    Math.round(cb.draw   * 100 * 0.6 + (po?.draw    || 33) * 0.4),
+            awayWin: Math.round(cb.away   * 100 * 0.6 + (po?.awayWin || 33) * 0.4),
+            over25:  Math.round(cb.over25 * 100 * 0.6 + (po?.over25  || 50) * 0.4),
+            btts:    Math.round(cb.btts   * 100 * 0.6 + (po?.btts    || 45) * 0.4),
+          };
+        }
       }
       console.log('[CatBoost] ✓ Cache ' + n + ' prédictions');
     } else {
