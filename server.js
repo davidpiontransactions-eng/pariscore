@@ -14514,6 +14514,7 @@ async function fetchOdds(force = false, opts = {}) {
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
     // typeof guard (option C) — défense-en-profondeur contre scope/TDZ résiduel
+    console.log('[CatBoost] Trigger — CATBOOST_ENABLED=' + process.env.CATBOOST_ENABLED);
     if (process.env.CATBOOST_ENABLED === 'true' && typeof _refreshCatBoostCache === 'function') _refreshCatBoostCache().catch(e => console.warn('[CatBoost]', e.message));
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
