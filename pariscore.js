@@ -12183,22 +12183,32 @@ function buildStatsTab(d) {
     }).join('');
   };
 
-  // Comparison bar
-  const cmpBar = (label, hVal, aVal, suffix = '', decimals = 2) => {
-    if (hVal == null && aVal == null) return '';
-    const h = hVal ?? 0, a = aVal ?? 0, max = Math.max(h, a, 0.01);
-    const hPct = (h / max * 100).toFixed(1), aPct = (a / max * 100).toFixed(1);
-    return `<div style="display:grid;grid-template-columns:140px 1fr 1fr;gap:8px;align-items:center;margin-bottom:10px;font-size:11px">
-      <div style="color:var(--text2)">${label}</div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="width:${hPct}%;height:100%;background:var(--blue);border-radius:3px"></div></div>
-        <span style="color:var(--blue);font-weight:600;min-width:40px;text-align:right">${hVal != null ? (typeof hVal === 'number' ? (Number.isInteger(hVal) ? hVal : hVal.toFixed(decimals)) + suffix : hVal + suffix) : '—'}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="width:${aPct}%;height:100%;background:#ab47bc;border-radius:3px"></div></div>
-        <span style="color:#ab47bc;font-weight:600;min-width:40px;text-align:right">${aVal != null ? (typeof aVal === 'number' ? (Number.isInteger(aVal) ? aVal : aVal.toFixed(decimals)) + suffix : aVal + suffix) : '—'}</span>
-      </div>
-    </div>`;
+  // Comparison bar — 3D split (matches global cmpBar style)
+  const cmpBar = (label, homeVal, awayVal, unit = '', decimals = 1) => {
+    if (homeVal == null && awayVal == null) return '';
+    const h = parseFloat(homeVal) || 0;
+    const a = parseFloat(awayVal) || 0;
+    const total = h + a;
+    const wH = total > 0 ? Math.round(h / total * 100) : 50;
+    const wA = 100 - wH;
+    const hFmt = Number.isInteger(h) ? h : h.toFixed(decimals);
+    const aFmt = Number.isInteger(a) ? a : a.toFixed(decimals);
+    const hWins = h >= a;
+    return '<div style="margin-bottom:11px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
+        + '<span style="font:' + (hWins ? '800' : '600') + ' 12px/1 var(--font-mono,monospace);color:var(--blue,#2563eb)">' + hFmt + unit + '</span>'
+        + '<span style="font-size:9px;font-weight:700;color:var(--text2,#888);letter-spacing:.05em;text-transform:uppercase">' + label + '</span>'
+        + '<span style="font:' + (!hWins ? '800' : '600') + ' 12px/1 var(--font-mono,monospace);color:#ab47bc">' + aFmt + unit + '</span>'
+      + '</div>'
+      + '<div style="height:12px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.06);box-shadow:inset 0 2px 4px rgba(0,0,0,0.12),inset 0 1px 2px rgba(0,0,0,0.07);display:flex">'
+        + '<div style="width:' + wH + '%;background:linear-gradient(90deg,#1e3a8a,#60a5fa);position:relative;overflow:hidden;transition:width .5s ease">'
+          + '<div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.22),transparent)"></div>'
+        + '</div>'
+        + '<div style="width:' + wA + '%;background:linear-gradient(270deg,#581c87,#c084fc);position:relative;overflow:hidden;transition:width .5s ease">'
+          + '<div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.18),transparent)"></div>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
   };
 
   // KPIs des joueurs clés
@@ -12255,16 +12265,80 @@ function buildStatsTab(d) {
       ${cornersAgainstRow}`}
   `;
 
-  // Marchés Poisson
-  const poissonRows = !_poiOK ? _dataNotice : `
-    ${[['GG',p.btts],['O1.5',p.over15],['O2.5',p.over25],['O3.5',p.over35],['1',p.homeWin],['N',p.draw],['2',p.awayWin]].map(([lbl,val]) => {
-      const color = val > 65 ? 'var(--green)' : val > 45 ? 'var(--amber)' : 'var(--red)';
-      return val != null ? `<div style="text-align:center">
-        <div style="font:700 14px/1 var(--font-mono);color:${color}">${val}%</div>
-        <div style="font-size:9px;color:var(--text3)">${lbl}</div>
-      </div>` : '';
-    }).join('')}
-  `;
+  // Marchés Poisson — dynamic gradients + opScore + verdict panel
+  const poissonRows = (() => {
+    if (!_poiOK) return _dataNotice;
+    const _mOdds = m.odds || {};
+    const _mBk = m.bookmakers || {};
+    const dc1x = (p.homeWin != null && p.draw != null) ? Math.round(p.homeWin + p.draw) : null;
+    const dc12 = (p.homeWin != null && p.awayWin != null) ? Math.round(p.homeWin + p.awayWin) : null;
+    const dcX2 = (p.draw != null && p.awayWin != null) ? Math.round(p.draw + p.awayWin) : null;
+    const _opSc = (v, e) => Math.round((v / 100) * 60 + Math.min(Math.max(e || 0, 0) / 30, 1) * 40 * 100);
+    const _edg = (ok, v) => { const o = _mOdds[ok]; if (!o || !v) return null; return Math.round((o * v / 100 - 1) * 1000) / 10; };
+    const mkts = [
+      { lbl: 'GG / BTTS',  val: p.btts,    ok: null },
+      { lbl: 'Over 1.5',   val: p.over15,  ok: null },
+      { lbl: 'Over 2.5',   val: p.over25,  ok: null },
+      { lbl: 'Over 3.5',   val: p.over35,  ok: null },
+      { lbl: 'Domicile',   val: p.homeWin, ok: 'home' },
+      { lbl: 'Nul',        val: p.draw,    ok: 'draw' },
+      { lbl: 'Extérieur',  val: p.awayWin, ok: 'away' },
+      { lbl: 'DC 1X',      val: dc1x,      ok: null },
+      { lbl: 'DC 12',      val: dc12,      ok: null },
+      { lbl: 'DC X2',      val: dcX2,      ok: null },
+    ];
+    const rows = mkts.map(r => {
+      if (r.val == null) return null;
+      const e = _edg(r.ok, r.val);
+      const op = _opSc(r.val, e);
+      return { lbl: r.lbl, val: r.val, e, op, ok: r.ok };
+    }).filter(Boolean);
+    const byOp = rows.slice().sort((a, b) => b.op - a.op);
+    const vBest = byOp[0] || null;
+    const vComp = rows.filter(r => r.e != null && r.e > 0 && r.val > 45).sort((a, b) => b.e - a.e)[0] || null;
+    const _grad = op => op >= 70 ? 'linear-gradient(90deg,#064e3b,#10b981)'
+      : op >= 50 ? 'linear-gradient(90deg,#1e3a8a,#60a5fa)'
+      : op >= 35 ? 'linear-gradient(90deg,#78350f,#fbbf24)'
+      : op >= 20 ? 'linear-gradient(90deg,#7c2d12,#fb923c)'
+      : 'linear-gradient(90deg,#7f1d1d,#fca5a5)';
+    const _col = op => op >= 70 ? '#10b981' : op >= 50 ? '#60a5fa' : op >= 35 ? '#fbbf24' : op >= 20 ? '#fb923c' : '#fca5a5';
+    const _bdg = op => op >= 70 ? 'Excellent' : op >= 50 ? 'Bon' : op >= 35 ? 'Moyen' : 'Faible';
+    let out = '';
+    rows.forEach(r => {
+      const g = _grad(r.op), c = _col(r.op), b = _bdg(r.op);
+      const eHtml = (r.e != null && r.e > 0)
+        ? '<span style="font:700 10px/1 var(--font-mono,monospace);color:#10b981;border:1px solid #10b981;border-radius:4px;padding:1px 5px">+' + r.e + '%</span>'
+        : '<span></span>';
+      out += '<div style="display:grid;grid-template-columns:110px 1fr 44px 56px 72px;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05)">'
+        + '<span style="font-size:10px;font-weight:600;color:var(--text2,#888)">' + r.lbl + '</span>'
+        + '<div style="height:10px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.18);box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)">'
+        + '<div style="height:100%;width:' + r.val + '%;background:' + g + ';transform-origin:left;animation:poisFill .8s ease;position:relative;overflow:hidden">'
+        + '<div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent)"></div>'
+        + '</div></div>'
+        + '<span style="font:700 11px/1 var(--font-mono,monospace);color:' + c + ';text-align:right">' + r.val + '%</span>'
+        + '<span style="font:600 9px/1 sans-serif;color:' + c + ';border:1px solid ' + c + ';border-radius:4px;padding:1px 5px;text-align:center">' + b + '</span>'
+        + eHtml + '</div>';
+    });
+    if (vBest || vComp) {
+      out += '<div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+      out += vBest
+        ? '<div style="background:linear-gradient(135deg,rgba(30,58,138,0.25),rgba(96,165,250,0.08));border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:10px">'
+          + '<div style="font-size:9px;font-weight:800;letter-spacing:.08em;color:#60a5fa;margin-bottom:4px">🔵 CHOIX SÛR</div>'
+          + '<div style="font-size:11px;font-weight:700;color:var(--text,#e8eaed)">' + vBest.lbl + '</div>'
+          + '<div style="font-size:10px;color:#60a5fa;margin-top:2px">' + vBest.val + '% · Score ' + vBest.op + '/100</div>'
+          + '</div>'
+        : '<div></div>';
+      out += vComp
+        ? '<div style="background:linear-gradient(135deg,rgba(6,78,59,0.25),rgba(16,185,129,0.08));border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px">'
+          + '<div style="font-size:9px;font-weight:800;letter-spacing:.08em;color:#10b981;margin-bottom:4px">⚡ MEILLEUR COMPROMIS</div>'
+          + '<div style="font-size:11px;font-weight:700;color:var(--text,#e8eaed)">' + vComp.lbl + '</div>'
+          + '<div style="font-size:10px;color:#10b981;margin-top:2px">Edge +' + vComp.e + '% · ' + (_mBk[vComp.ok] || '') + '</div>'
+          + '</div>'
+        : '<div></div>';
+      out += '</div>';
+    }
+    return out;
+  })();
 
   return `
     <div style="padding:12px">
@@ -12286,7 +12360,8 @@ function buildStatsTab(d) {
 
       <div class="ins-section">
         <div class="ins-section-title">Marchés</div>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px">${poissonRows}</div>
+        <style>@keyframes poisFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}</style>
+        ${poissonRows}
       </div>
 
       ${playersSection}
