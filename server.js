@@ -38756,7 +38756,8 @@ function _runTennisInternalEtlJob() {
     const cp = require('child_process');
     const spsPath = require('path').join(__dirname, 'cron_sps_updater.py');
     console.log('  [Cron:SPS] démarrage cron_sps_updater.py…');
-    const child = cp.spawn('python3', [spsPath], { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    const spsEnv = Object.assign({}, process.env, { PARISCORE_LOOKAHEAD_MIN: '0', PARISCORE_LOOKAHEAD_MAX: '48' });
+    const child = cp.spawn('python3', [spsPath], { cwd: __dirname, env: spsEnv, stdio: ['ignore', 'pipe', 'pipe'] });
     child.stdout.on('data', d => process.stdout.write('[Cron:SPS] ' + d));
     child.stderr.on('data', d => process.stderr.write('[Cron:SPS] ' + d));
     child.on('exit', code => console.log(`  [Cron:SPS] terminé (exit ${code})`));
