@@ -11770,6 +11770,21 @@ function buildResumeTab(d) {
       </div>
     </div>
 
+    ${m.blended_cb ? `
+    <div class="ins-section" style="border:1px solid rgba(168,85,247,0.22);background:linear-gradient(135deg,rgba(168,85,247,0.05),rgba(168,85,247,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:9px;font-family:var(--font-mono);color:#a855f7;background:rgba(168,85,247,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">🤖 ML CATBOOST · 60% CB + 40% Poisson</span>
+      </div>
+      <div class="pois-flat-grid">
+        ${[['GG / BTTS', m.blended_cb.btts], ['Over 2.5', m.blended_cb.over25], ['Domicile', m.blended_cb.homeWin], ['Nul', m.blended_cb.draw], ['Extérieur', m.blended_cb.awayWin]].map(([lbl, val]) => {
+          if (val == null) return '';
+          const col = val > 65 ? '#7c3aed' : val > 45 ? '#9333ea' : '#a855f7';
+          const badge = val > 65 ? 'Fort' : val > 45 ? 'Moyen' : 'Faible';
+          return `<div class="pois-row"><span class="pois-lbl">${lbl}</span><div class="pois-track"><div class="pois-fill" style="width:${val}%;background:${col}"></div></div><span class="pois-pct" style="color:${col}">${val}%</span><span class="pois-badge" style="color:${col};border-color:${col}">${badge}</span></div>`;
+        }).join('')}
+      </div>
+    </div>` : ''}
+
     <div class="ins-section">
       <div class="ins-section-title">Notes par Secteur</div>
       ${(() => {
