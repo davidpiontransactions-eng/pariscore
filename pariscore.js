@@ -2456,8 +2456,9 @@ function _tvbMlDiv(d) {
 // data attribute. Cache has TTL (W2). innerHTML insertions go through an HTML
 // escape helper (W3). DOM lookup uses dataset filter instead of a brittle CSS
 // attribute-equals selector (W5). Observability stats exposed on window (R5).
-var _SPS_CACHE_TTL_MS = 6 * 3600 * 1000;  // 6h — matches cron 12h schedule margin
-var _spsCache = new Map();      // matchId → { ts, payload: {p1, p2} | null }
+var _SPS_CACHE_TTL_MS = 6 * 3600 * 1000;       // 6h — real data TTL
+var _SPS_NULL_CACHE_TTL_MS = 5 * 60 * 1000;    // 5min — null/missing result TTL (re-check after cron runs)
+var _spsCache = new Map();      // matchId → { ts, ttl, payload: {p1, p2} | null }
 var _spsInFlight = new Set();   // matchId currently in a batch
 window.__spsStats = window.__spsStats || { hits: 0, miss_fetched: 0, fetched_total: 0, batches: 0, errors: 0, failed_fetches: 0 };
 
@@ -2470,26 +2471,37 @@ function _spsEsc(s) {
 function _spsCacheGet(mid) {
   var entry = _spsCache.get(mid);
   if (!entry) return undefined;
-  if ((Date.now() - entry.ts) > _SPS_CACHE_TTL_MS) {
+  var ttl = entry.ttl != null ? entry.ttl : _SPS_CACHE_TTL_MS;
+  if ((Date.now() - entry.ts) > ttl) {
     _spsCache.delete(mid);
     return undefined;
   }
   return entry.payload;
 }
-function _spsCacheSet(mid, payload) {
-  _spsCache.set(mid, { ts: Date.now(), payload: payload });
+function _spsCacheSet(mid, payload, overrideTtlMs) {
+  var ttl = overrideTtlMs != null ? overrideTtlMs : _SPS_CACHE_TTL_MS;
+  _spsCache.set(mid, { ts: Date.now(), ttl: ttl, payload: payload });
 }
-function _tvbSPSPlaceholder(matchId) {
+function _tvbSPSPlaceholder(matchId, elo1, elo2) {
   var mid = _spsEsc(matchId);
-  return '<div class="tn-sps-row" data-sps-mid="' + mid + '" '
+  var eloAttrs = '';
+  if (elo1 != null) eloAttrs += ' data-elo1="' + _spsEsc(String(elo1)) + '"';
+  if (elo2 != null) eloAttrs += ' data-elo2="' + _spsEsc(String(elo2)) + '"';
+  return '<div class="tn-sps-row" data-sps-mid="' + mid + '"' + eloAttrs + ' '
        + 'style="display:flex;gap:6px;font-size:9px;color:#5a6068;margin-top:3px;line-height:1.2;" '
        + 'title="Surface PowerScore — aptitude joueur sur la surface (0-100, fenêtre 52 sem). En cours de calcul…">'
        + '<span class="tn-sps-p1 tn-sps-loading">SPS · …</span>'
        + '<span class="tn-sps-p2 tn-sps-loading">SPS · …</span>'
        + '</div>';
 }
-function _tvbSPSFormatChip(side, payload) {
+function _tvbSPSFormatChip(side, payload, eloFallback) {
   if (!payload) {
+    if (eloFallback != null) {
+      var eloVal = Number(eloFallback).toFixed(0);
+      return '<span class="tn-sps-' + side + ' tn-sps-empty" '
+           + 'title="SPS non calculé — Elo surface utilisé comme indicateur de référence." '
+           + 'style="color:#5a6068;">ELO~ ' + _spsEsc(eloVal) + '</span>';
+    }
     return '<span class="tn-sps-' + side + ' tn-sps-empty" '
          + 'title="Données SPS pas encore calculées pour ce match — patientez ou attendez prochain cron 12h.">'
          + 'SPS · —</span>';
@@ -2506,13 +2518,15 @@ function _tvbSPSFormatChip(side, payload) {
 }
 function _tvbPaintSPSCell(matchId, payload) {
   var target = String(matchId);
-  // Defensive: iterate all placeholders and filter by dataset, avoiding CSS
-  // selector escaping pitfalls if match_id ever contains [ ] etc (W5 fix).
   var nodes = document.querySelectorAll('[data-sps-mid]');
   for (var i = 0; i < nodes.length; i++) {
     if (nodes[i].getAttribute('data-sps-mid') === target) {
-      nodes[i].innerHTML = _tvbSPSFormatChip('p1', payload && payload.p1)
-                         + _tvbSPSFormatChip('p2', payload && payload.p2);
+      var elo1 = nodes[i].dataset.elo1 != null ? parseFloat(nodes[i].dataset.elo1) : null;
+      var elo2 = nodes[i].dataset.elo2 != null ? parseFloat(nodes[i].dataset.elo2) : null;
+      if (isNaN(elo1)) elo1 = null;
+      if (isNaN(elo2)) elo2 = null;
+      nodes[i].innerHTML = _tvbSPSFormatChip('p1', payload && payload.p1, elo1)
+                         + _tvbSPSFormatChip('p2', payload && payload.p2, elo2);
     }
   }
 }
@@ -2551,11 +2565,12 @@ function _tvbHydrateSPSBatch(matchIds) {
           var payload;
           if (!Array.isArray(arr) || arr.length === 0) {
             payload = { p1: null, p2: null };
+            _spsCacheSet(mid, payload, _SPS_NULL_CACHE_TTL_MS);  // re-check in 5min after cron
           } else {
             window.__spsStats.miss_fetched++;
             payload = { p1: arr[0] || null, p2: arr[1] || null };
+            _spsCacheSet(mid, payload);  // real data: 6h TTL
           }
-          _spsCacheSet(mid, payload);
           _tvbPaintSPSCell(mid, payload);
           _spsInFlight.delete(mid);
         }
@@ -3473,7 +3488,7 @@ function renderTennisValueBets(rawMatches) {
 <span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
 <span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
 <span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
-<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbSPSPlaceholder(matchId)}</span>
+<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>
 <span class="tn-vb-cell tn-cell-proba" role="cell">${_tvbConfBadge(m.confidence_badge)}${probaNew}${_tvbMlDiv(m.ml_market_div)}</span>
 <span class="tn-vb-cell tn-cell-value" role="cell">${valueHtml}</span>
 <span class="tn-vb-cell tn-cell-expand" role="cell">${aiBtn}<button class="tn-expand-btn" aria-label="Détails ${ariaLbl}" aria-expanded="false" aria-controls="${drawerId}" onclick="event.stopPropagation();_tnExpandDrawer('${matchId}')">▸</button></span>
