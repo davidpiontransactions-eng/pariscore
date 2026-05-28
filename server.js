@@ -28586,6 +28586,7 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
         ga,
         avgFor,
         avgAg,
+        group: s._group_name || null,
         _source: s._source || null,
       };
     })
@@ -33302,6 +33303,7 @@ if (pathname.startsWith('/api/v1/social/match/') && req.method === 'GET') {
       event_id: Number(eventId),
       total_available: (data && typeof data.count === 'number') ? data.count : items.length,
       buzz,
+      videos: items.filter(i => i && i.type === 'video').slice(0, 10),
       cached,
       fetched_at: new Date().toISOString(),
     });
@@ -33805,6 +33807,9 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
           } catch (_) {}
           return Array.isArray(match.tv_channels) ? match.tv_channels : [];
         })(),
+        // BSD 26/05 — phase du match (ex: "Quarts de finale") + groupe (ex: "A")
+        round_name: match.round_name || match.round || null,
+        match_group: match.group_name || match._group_name || null,
       });
     } catch (e) {
       console.error("\x1b[31m[INSIGHTS ERROR] Match: %s vs %s\x1b[0m", match.home_team, match.away_team);
