@@ -2539,8 +2539,16 @@ function _tvbPaintSPSCell(matchId, payload) {
       var elo2 = nodes[i].dataset.elo2 != null ? parseFloat(nodes[i].dataset.elo2) : null;
       if (isNaN(elo1)) elo1 = null;
       if (isNaN(elo2)) elo2 = null;
-      nodes[i].innerHTML = _tvbSPSFormatChip('p1', payload && payload.p1, elo1)
-                         + _tvbSPSFormatChip('p2', payload && payload.p2, elo2);
+      var p1 = payload && payload.p1;
+      var p2 = payload && payload.p2;
+      // Hide row when nothing useful to show (no SPS, no ELO fallback)
+      if (!p1 && !p2 && elo1 == null && elo2 == null) {
+        nodes[i].style.display = 'none';
+        continue;
+      }
+      nodes[i].style.display = '';
+      nodes[i].innerHTML = _tvbSPSFormatChip('p1', p1, elo1)
+                         + _tvbSPSFormatChip('p2', p2, elo2);
     }
   }
 }
