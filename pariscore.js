@@ -11537,6 +11537,9 @@ function _escForSvg(s) { return String(s || '').replace(/&/g,'&amp;').replace(/"
 const PH_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" fill="var(--text3)" opacity="0.5"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="var(--text3)" opacity="0.4"/></svg>';
 const BSD_IMG_BASE = 'https://sports.bzzoiro.com/img/player';
 function playerPhotoURL(id) { return id ? `${BSD_IMG_BASE}/${id}/` : ''; }
+// bd patch BSD 29 mai — Nouvelle route directe pour les avatars tennis
+// Accepte l'ID joueur BSD directement, plus besoin de lookup complexe
+function tennisPlayerPhotoURL(id) { return id ? `https://sports.bzzoiro.com/img/tennis-player/${id}/` : ''; }
 function playerImgURL(p) { return p.photo || playerPhotoURL(p.id); }
 function playerInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -11547,9 +11550,14 @@ function fixBrokenPlayerPhoto(img) {
   const playerId = img.dataset.playerId || img.dataset.id || null;
   img.dataset.tryCount = tried + 1;
 
-  // Cascade: BSD /img/player/{id}/ (si pas encore essayé et ID connu)
+  // Cascade: BSD /img/player/{id}/ + /img/tennis-player/{id}/ (bd patch 29 mai)
   if (tried === 0 && playerId) {
     img.src = `https://sports.bzzoiro.com/img/player/${playerId}/`;
+    return;
+  }
+  // bd patch BSD 29 mai — tennis player route directe
+  if (tried === 1 && playerId) {
+    img.src = `https://sports.bzzoiro.com/img/tennis-player/${playerId}/`;
     return;
   }
   // Fallback final: initiales dans span coloré
