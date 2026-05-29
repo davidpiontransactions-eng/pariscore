@@ -9926,7 +9926,7 @@ function _tennisPicksOf(h) {
   if (!h.verified || !h.realResult) return [];
   const r = h.realResult;
   const out = [];
-  const t = new Date(h.commence_time).getTime();
+  const t = h.commence_time ? new Date(h.commence_time).getTime() : 0;
   // Bridge: entries ETL stockent sous bsd_prediction, pas predicted. Unifier.
   const p = h.predicted || h.bsd_prediction ? {
     // Si bsd_prediction présent mais pas predicted, dériver
@@ -10017,11 +10017,16 @@ function computeTennisKpis(entries) {
   // Guard-fou: dataset vide → retourne zéros explicites, pas undefined/NaN
   if (!allPicks.length) {
     console.log('  [DEBUG HISTORIQUE TENNIS] computeTennisKpis: 0 picks → retour zéro');
+    const zeroMkt = { sample: 0, wins: 0, losses: 0, winrate: 0, winrate_ic95: [0, 0], ic_method: 'wilson', longest_winning_streak: 0, longest_losing_streak: 0 };
     return {
       total_picks: 0, verified_matches: 0,
       max_drawdown_units: 0, final_pl_units: 0,
-      ml: { sample: 0, wins: 0, losses: 0, winrate: 0, winrate_ic95: [0, 0], ic_method: 'wilson', longest_winning_streak: 0, longest_losing_streak: 0 },
-      set1: { sample: 0, wins: 0, losses: 0, winrate: 0, winrate_ic95: [0, 0], ic_method: 'wilson', longest_winning_streak: 0, longest_losing_streak: 0 },
+      ml: { ...zeroMkt },
+      set1: { ...zeroMkt },
+      geq1_set: { ...zeroMkt },
+      total_games: { ...zeroMkt },
+      aces: { ...zeroMkt },
+      tie_break: { ...zeroMkt },
     };
   }
 
@@ -10115,6 +10120,7 @@ function computeTennisBreakdown(entries) {
 
 function computeTennisSeries(entries) {
   const verified = entries.filter(h => h.verified && h.realResult)
+    .filter(h => h.commence_time) // skip entries sans date
     .slice()
     .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
   const plCumulative = [], ddCurve = [];
@@ -10124,7 +10130,7 @@ function computeTennisSeries(entries) {
     for (const p of _tennisPicksOf(h)) delta += (p.won ? 1 : -1);
     if (delta !== 0) cumul += delta;
     if (cumul > peak) peak = cumul;
-    const dateKey = h.commence_time.split('T')[0];
+    const dateKey = h.commence_time ? h.commence_time.split('T')[0] : 'unknown';
     plCumulative.push({ date: dateKey, units: cumul });
     ddCurve.push({ date: dateKey, dd: peak - cumul });
   }
