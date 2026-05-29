@@ -8304,6 +8304,13 @@ function loadHistory() {
   accuracy = kvGet('history_accuracy', accuracy);
   console.log(`  ✓ Historique SQLite chargé (${history.length} matchs archivés)`);
 
+  // Charge l'historique tennis persisté (patch bd — était perdu au reboot)
+  const persistedTennis = kvGet('tennis_history_matches', null);
+  if (persistedTennis && Array.isArray(persistedTennis) && persistedTennis.length) {
+    tennisHistory = persistedTennis;
+    console.log(`  ✓ Historique Tennis SQLite chargé (${tennisHistory.length} matchs archivés)`);
+  }
+
   // bd ParisScorebis-9je — Merge historique_football.json (ETL output) dans
   // db.archive_matches au boot. Dedup via id existant. Pas overwrite si match
   // deja present (live data prend priorite sur ETL backfill).
@@ -8414,6 +8421,7 @@ function loadHistory() {
         }
         if (totalSeed > 0) {
           console.log(`  ✓ ETL seed merge (tennis ESPN): ${totalAdded}/${totalSeed} matchs ajoutes (db.archive_matches + tennisHistory)`);
+          if (totalAdded > 0) saveHistory();
         }
       }
     } catch (e) {
@@ -8540,6 +8548,7 @@ function loadHistory() {
 
       if (totalSeed > 0) {
         console.log(`  ✓ ETL seed merge (wikidata CC0): ${totalAdded}/${totalSeed} winners ajoutes (db.archive_matches${tennisRows.length ? ' + tennisHistory' : ''})`);
+        if (totalAdded > 0) saveHistory();
       }
     } catch (e) {
       console.warn('[ETL Seed Load wikidata]', e.message);
@@ -8760,6 +8769,7 @@ function loadHistory() {
         }
         if (totalSeed > 0) {
           console.log(`  ✓ ETL seed merge (bsd-tennis): ${totalAdded}/${totalSeed} predictions ajoutees (db.archive_matches + tennisHistory, BSD attribution)`);
+          if (totalAdded > 0) saveHistory();
         }
       }
     } catch (e) {
@@ -8771,6 +8781,7 @@ function loadHistory() {
 function saveHistory() {
   kvSetBatch([
     ['history_matches', history],
+    ['tennis_history_matches', tennisHistory],
     ['history_accuracy', accuracy],
   ]);
 }
@@ -9991,6 +10002,17 @@ function computeTennisKpis(entries) {
   for (const h of entries) allPicks.push(..._tennisPicksOf(h));
   allPicks.sort((a, b) => a.t - b.t);
 
+  // Guard-fou: dataset vide → retourne zéros explicites, pas undefined/NaN
+  if (!allPicks.length) {
+    console.log('  [DEBUG HISTORIQUE TENNIS] computeTennisKpis: 0 picks → retour zéro');
+    return {
+      total_picks: 0, verified_matches: 0,
+      max_drawdown_units: 0, final_pl_units: 0,
+      ml: { sample: 0, wins: 0, losses: 0, winrate: 0, winrate_ic95: [0, 0], ic_method: 'wilson', longest_winning_streak: 0, longest_losing_streak: 0 },
+      set1: { sample: 0, wins: 0, losses: 0, winrate: 0, winrate_ic95: [0, 0], ic_method: 'wilson', longest_winning_streak: 0, longest_losing_streak: 0 },
+    };
+  }
+
   const markets = ['ml', 'set1', 'geq1_set', 'total_games', 'aces', 'tie_break'];
   const out = {
     total_picks: allPicks.length,
@@ -10743,16 +10765,29 @@ function runHistoryQuery(p) {
   }
   if (p.markets?.length) {
     const wants = new Set(p.markets);
-    pool = pool.filter(h => {
-      if (!h.predicted) return false;
-      if (wants.has('over25') && h.predicted.over25 > 55 && h.predicted.over25 <= 100) return true;
-      if (wants.has('btts') && h.predicted.btts > 55 && h.predicted.btts <= 100) return true;
-      if (wants.has('edge')) {
-        const ev = h.predicted.bestEdgeValue;
-        if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) return true;
-      }
-      return false;
-    });
+    // Tennis markets: décomposition via _tennisPicksOf (≠ football predicted fields)
+    if (sport === 'tennis') {
+      pool = pool.filter(h => {
+        const picks = _tennisPicksOf(h);
+        return picks.some(pk => wants.has(pk.market));
+      });
+    } else {
+      pool = pool.filter(h => {
+        if (!h.predicted) return false;
+        if (wants.has('over25') && h.predicted.over25 > 55 && h.predicted.over25 <= 100) return true;
+        if (wants.has('btts') && h.predicted.btts > 55 && h.predicted.btts <= 100) return true;
+        if (wants.has('edge')) {
+          const ev = h.predicted.bestEdgeValue;
+          if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) return true;
+        }
+        return false;
+      });
+    }
+  }
+
+  // bd debug — log le nombre de matchs dans le pool après filtres
+  if (sport === 'tennis') {
+    console.log(`  [DEBUG HISTORIQUE TENNIS] Pool après filtres: ${pool.length} matchs (marchés: ${(p.markets||[]).join(',') || 'tous'}, surfaces: ${(p.surfaces||[]).join(',') || 'toutes'})`);
   }
   // H4 : Filtre stratégies (matche si record a au moins 1 stratégie active)
   if (sport === 'football' && p.strategies?.length) {
@@ -19406,7 +19441,8 @@ function archiveFinishedTennisFromLiveCache(liveData) {
     added++;
   }
   if (added > 0) {
-    console.log(`  [Tennis Archive] ${added} matchs finished archives vers tennisHistory (+db.archive_matches)`);
+    saveHistory();
+    console.log(`  [Tennis Archive] ${added} matchs finished archives vers tennisHistory (+db.archive_matches) — persisté`);
   }
   return added;
 }
