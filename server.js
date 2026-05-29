@@ -16803,6 +16803,37 @@ async function broadcastTelegramAlert(messageHtml) {
   }
 }
 
+// Discord webhook — alerte channel unique, format embed
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || '';
+
+async function sendDiscordAlert(embed) {
+  if (!DISCORD_WEBHOOK_URL) return false;
+  try {
+    const res = await httpsPost(DISCORD_WEBHOOK_URL, { embeds: [embed] });
+    if (res && res.status >= 400) {
+      console.warn(`  [Discord] Échec webhook: HTTP ${res.status}`);
+      return false;
+    }
+    console.log(`  [Discord] Alerte envoyée`);
+    return true;
+  } catch (e) {
+    console.warn(`  [Discord] Échec:`, e.message);
+    return false;
+  }
+}
+
+// Broadcast unifié Telegram + Discord — envoie aux deux canaux en parallèle
+async function broadcastAlert(messageHtml, discordEmbed) {
+  const tasks = [];
+  if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size && messageHtml) {
+    tasks.push(broadcastTelegramAlert(messageHtml));
+  }
+  if (DISCORD_WEBHOOK_URL && discordEmbed) {
+    tasks.push(sendDiscordAlert(discordEmbed));
+  }
+  if (tasks.length) await Promise.allSettled(tasks);
+}
+
 // Envoyer alertes pour les value bets avec edge > seuil
 
 function escTg(s) {
@@ -17049,6 +17080,127 @@ async function sendValueBetAlerts() {
     })),
   };
   kvSet('alert_history', [...existing, entry].slice(-50));
+}
+
+// ── Alertes Tennis Prematch (Elo Gap >= 100) & Live (|DR| >= 0.20) ──────────
+const _TENNIS_ALERT_TTL_MS = 6 * 60 * 60 * 1000; // cooldown 6h prematch
+const _TENNIS_LIVE_ALERT_TTL_MS = 5 * 60 * 1000; // cooldown 5min live
+const _tennisAlertSent = new Map(); // `${scope}:${matchId}` → lastSentMs
+const _tennisDrAbsSent = new Map(); // `tndr_${scope}:${matchId}` → drGapSnapshot (dedup)
+
+function _tnAlertOnCooldown(key, ttl) {
+  return Date.now() - (_tennisAlertSent.get(key) || 0) < (ttl || _TENNIS_ALERT_TTL_MS);
+}
+function _tnAlertMark(key) { _tennisAlertSent.set(key, Date.now()); }
+
+// Lookup Elo par nom joueur dans tennis_players_elo (LIKE tolérant)
+function _lookupTennisElo(playerName) {
+  if (!playerName || !tennisEloCalculator) return null;
+  const clean = String(playerName).trim();
+  if (!clean) return null;
+  // Essai 1 : exact match LOWER dans SQLite
+  let row = sqldb.prepare(
+    `SELECT player_id, player_name, elo_rating, circuit FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) LIMIT 1`
+  ).get(clean);
+  // Essai 2 : contain match (nom complet contient le terme BSD)
+  if (!row) {
+    row = sqldb.prepare(
+      `SELECT player_id, player_name, elo_rating, circuit FROM tennis_players_elo WHERE LOWER(player_name) LIKE ? LIMIT 1`
+    ).get('%' + clean.toLowerCase() + '%');
+  }
+  if (!row || !row.elo_rating) return null;
+  return { id: row.player_id, name: row.player_name, elo: row.elo_rating, circuit: row.circuit };
+}
+
+async function pollTennisPrematchEloAlerts() {
+  if (!automatedAlertsAllowed()) return;
+  if (!tennisEloCalculator) return;
+
+  try {
+    let upcoming = [];
+    if (BSD_TENNIS_ENABLED) {
+      try {
+        const res = await bsdTennisFetch('/api/v2/matches/?status=scheduled&limit=200');
+        if (res && res.status === 200) {
+          const arr = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+          upcoming = arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+        }
+      } catch (e) { /* fallback silencieux — pas de matchs BSD */ }
+    }
+
+    if (!upcoming.length) return;
+
+    const alerts = [];
+    for (const m of upcoming) {
+      if (m.is_live) continue;
+      const matchKey = `elo:${m.id}`;
+      if (_tnAlertOnCooldown(matchKey)) continue;
+
+      const p1Name = m.player1?.name;
+      const p2Name = m.player2?.name;
+      if (!p1Name || !p2Name) continue;
+
+      const eloP1 = _lookupTennisElo(p1Name);
+      const eloP2 = _lookupTennisElo(p2Name);
+      if (!eloP1 || !eloP2) continue;
+
+      const gap = eloP1.elo - eloP2.elo;
+      if (Math.abs(gap) < 100) continue;
+
+      const fav = gap > 0 ? eloP1 : eloP2;
+      const dog = gap > 0 ? eloP2 : eloP1;
+      const prob = tennisEloCalculator.computeWinProbability(fav.elo, dog.elo);
+
+      alerts.push({
+        matchId: m.id, tournament: m.tournament, court: m.court,
+        discipline: m.discipline, startTime: m.start_time,
+        p1Name, p2Name, gap: Math.round(gap), favName: fav.name,
+        favElo: Math.round(fav.elo), dogElo: Math.round(dog.elo),
+        prob: Math.round(prob * 100),
+      });
+    }
+
+    if (!alerts.length) return;
+
+    for (const a of alerts) {
+      const msgHtml = [
+        `🎾 <b>ALERTE ELO TENNIS</b> — Écart significatif`,
+        ``,
+        `${escTg(a.tournament)} | ${escTg(a.court)} | ${escTg(a.discipline)}`,
+        `${escTg(a.p1Name)} (Elo: ${a.gap > 0 ? a.favElo : a.dogElo}) vs ${escTg(a.p2Name)} (Elo: ${a.gap > 0 ? a.dogElo : a.favElo})`,
+        `Écart: <b>${Math.abs(a.gap)} pts</b> — Favori: ${escTg(a.favName)} (${a.prob}%)`,
+        a.startTime ? `Début: ${new Date(a.startTime).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}` : '',
+        `Surface: ${a.discipline || 'N/A'}`,
+      ].filter(Boolean).join('\n');
+
+      const discordEmbed = {
+        title: `🎾 Alerte Elo Tennis — ${a.tournament}`,
+        color: 0x1DB954,
+        fields: [
+          { name: 'Match', value: `${a.p1Name} vs ${a.p2Name}`, inline: false },
+          { name: 'Écart Elo', value: `${Math.abs(a.gap)} pts`, inline: true },
+          { name: 'Favori', value: `${a.favName} (${a.prob}%)`, inline: true },
+          { name: 'Surface', value: a.discipline || 'N/A', inline: true },
+          { name: 'Tour', value: a.court || 'N/A', inline: true },
+          { name: 'Début', value: a.startTime ? new Date(a.startTime).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : 'N/A', inline: true },
+        ],
+        footer: { text: `Elo: ${a.favElo} vs ${a.dogElo} | ${a.tournament}` },
+        timestamp: new Date().toISOString(),
+      };
+
+      await broadcastAlert(msgHtml, discordEmbed);
+      _tnAlertMark(`elo:${a.matchId}`);
+    }
+
+    console.log(`  [TennisEloAlert] ${alerts.length} alerte(s) envoyée(s)`);
+    // Nettoyage périodique du cooldown (>1000 entrées)
+    if (_tennisAlertSent.size > 1000) {
+      const cutoff = Date.now() - _TENNIS_ALERT_TTL_MS * 2;
+      for (const [k, v] of _tennisAlertSent) { if (v < cutoff) _tennisAlertSent.delete(k); }
+    }
+  } catch (e) {
+    console.warn('  [TennisEloAlert]', e.message);
+  }
 }
 
 // ─── /api/v1/arbitrage — scanner de surebets multi-bookmakers ───────────────
@@ -19300,6 +19452,97 @@ async function pollTennisLive() {
         const side = drSetCur.dr >= drBase.dr ? 'p1' : 'p2';
         broadcastTennisDRSpike(m.id, drBase.dr, drSetCur.dr, side);
       }
+      // bd new — Alerte live |DR| absolu >= 0.20 (set ou match)
+      try {
+        for (const m of data) {
+          if (!m || !m.is_live) continue;
+          const curSet2 = (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
+            : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null);
+          const drBase2 = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+          if (!drBase2 || !Number.isFinite(drBase2.dr)) continue;
+          const drEnriched2 = _drAttachCurrentSet(drBase2, curSet2);
+          const drSetCur2 = drEnriched2?.dr_set_courant;
+          // ── DR Set (courant) ──
+          if (drSetCur2 && Number.isFinite(drSetCur2.dr) && drSetCur2.reliable !== false) {
+            const drSetGap = drSetCur2.dr - 1.0;
+            if (Math.abs(drSetGap) >= 0.20) {
+              const snapKey = `tndr_set:${m.id}`;
+              const snapVal = drSetCur2.dr.toFixed(2);
+              if (_tennisDrAbsSent.get(snapKey) !== snapVal) {
+                _tennisDrAbsSent.set(snapKey, snapVal);
+                const sideSet = drSetGap > 0 ? 'p1' : 'p2';
+                const dominantSet = sideSet === 'p1' ? m.player1?.name : m.player2?.name;
+                const setScore = [].concat(m.sets || []).slice(-1)[0];
+                const setLabel = setScore ? ` (${setScore.p1}-${setScore.p2})` : '';
+                const msgHtml = [
+                  `🔥 <b>LIVE DR SET</b> — Domination en cours`,
+                  ``,
+                  `${escTg(m.tournament)} | ${escTg(m.court)} | Set ${curSet2 || '?'}${setLabel}`,
+                  `${escTg(m.player1?.name)} vs ${escTg(m.player2?.name)}`,
+                  `DR Set courant: <b>${drSetCur2.dr.toFixed(2)}</b> → ${escTg(dominantSet)} domine`,
+                  `DR Match cumulé: ${drBase2.dr.toFixed(2)}`,
+                  `Écart DR Set: ${Math.abs(drSetGap).toFixed(2)}`,
+                ].filter(Boolean).join('\n');
+                const discordEmbed = {
+                  title: `🔥 LIVE DR Set — ${m.tournament}`,
+                  color: 0xFF4500,
+                  fields: [
+                    { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
+                    { name: 'Set', value: `${curSet2 || '?'}${setLabel}`, inline: true },
+                    { name: 'DR Set', value: drSetCur2.dr.toFixed(2), inline: true },
+                    { name: 'DR Match', value: drBase2.dr.toFixed(2), inline: true },
+                    { name: 'Dominant', value: dominantSet || '?', inline: true },
+                  ],
+                  footer: { text: `Alerte Live DR Set | ${m.tournament}` },
+                  timestamp: new Date().toISOString(),
+                };
+                broadcastAlert(msgHtml, discordEmbed).catch(() => {});
+                console.log(`  [Tennis DR Alert] SET spike ${m.id} DR=${drSetCur2.dr.toFixed(2)} side=${sideSet}`);
+              }
+            }
+          }
+          // ── DR Match (cumulé) ──
+          const drMatchGap = drBase2.dr - 1.0;
+          if (Math.abs(drMatchGap) >= 0.20) {
+            const snapKey2 = `tndr_match:${m.id}`;
+            const snapVal2 = drBase2.dr.toFixed(2);
+            if (_tennisDrAbsSent.get(snapKey2) !== snapVal2) {
+              _tennisDrAbsSent.set(snapKey2, snapVal2);
+              const sideMatch = drMatchGap > 0 ? 'p1' : 'p2';
+              const dominantMatch = sideMatch === 'p1' ? m.player1?.name : m.player2?.name;
+              const liveScore = `Score: ${m.player1_sets || 0}-${m.player2_sets || 0}`;
+              const bg = [].concat(m.sets || []).slice(-1)[0];
+              const currentSetScore = bg ? ` (Set: ${bg.p1}-${bg.p2})` : '';
+              const msgHtml = [
+                `💥 <b>LIVE DR MATCH</b> — Domination confirmée`,
+                ``,
+                `${escTg(m.tournament)} | ${escTg(m.court)}`,
+                `${escTg(m.player1?.name)} vs ${escTg(m.player2?.name)}`,
+                `${liveScore}${currentSetScore}`,
+                `DR Match: <b>${drBase2.dr.toFixed(2)}</b> → ${escTg(dominantMatch)} domine`,
+                `Écart DR: ${Math.abs(drMatchGap).toFixed(2)}`,
+              ].filter(Boolean).join('\n');
+              const discordEmbed = {
+                title: `💥 LIVE DR Match — ${m.tournament}`,
+                color: 0xFF0000,
+                fields: [
+                  { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
+                  { name: 'Score', value: liveScore, inline: true },
+                  { name: 'DR Match', value: drBase2.dr.toFixed(2), inline: true },
+                  { name: 'Dominant', value: dominantMatch || '?', inline: true },
+                  { name: 'Tour', value: m.court || 'N/A', inline: true },
+                ],
+                footer: { text: `Alerte Live DR Match | ${m.tournament}` },
+                timestamp: new Date().toISOString(),
+              };
+              broadcastAlert(msgHtml, discordEmbed).catch(() => {});
+              console.log(`  [Tennis DR Alert] MATCH spike ${m.id} DR=${drBase2.dr.toFixed(2)} side=${sideMatch}`);
+            }
+          }
+        }
+        // Nettoyage périodique dedup map (>500 entrées)
+        if (_tennisDrAbsSent.size > 500) { _tennisDrAbsSent.clear(); }
+      } catch (e) { /* swallow — DR alert best-effort */ }
     } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
@@ -26946,6 +27189,7 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'GET') {
     enabled: false, chatId: '', edgeMin: 8, probaMin: 55,
     markets: ['BTTS_YES', 'OVER_2_5'], leagues: [],
     liveEnabled: false, intensityMin: 70, pressureDeltaMin: 35,
+    tennisEnabled: false, tennisEloMinGap: 100, tennisDRSetThreshold: 0.20, tennisDRMatchThreshold: 0.20,
   };
   return jsonResponse(res, 200, prefs);
 }
@@ -26966,6 +27210,10 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'POST') {
         liveEnabled: !!parsed.liveEnabled,
         intensityMin: Math.max(50, Math.min(100, parseInt(parsed.intensityMin) || 70)),
         pressureDeltaMin: Math.max(15, Math.min(80, parseInt(parsed.pressureDeltaMin) || 35)),
+        tennisEnabled: !!parsed.tennisEnabled,
+        tennisEloMinGap: Math.max(50, Math.min(500, parseInt(parsed.tennisEloMinGap) || 100)),
+        tennisDRSetThreshold: Math.max(0.10, Math.min(1.0, parseFloat(parsed.tennisDRSetThreshold) || 0.20)),
+        tennisDRMatchThreshold: Math.max(0.10, Math.min(1.0, parseFloat(parsed.tennisDRMatchThreshold) || 0.20)),
         updatedAt: new Date().toISOString(),
       };
       kvSet(`alert_prefs_${user.id}`, prefs);
@@ -27281,6 +27529,8 @@ if (pathname === '/api/v1/admin/status') {
     accuracy: getAccuracyReport(),
     aiScoutCached: !!aiScoutCache.data,
     telegramChats: TELEGRAM_CHAT_IDS.size,
+    discordWebhook: !!DISCORD_WEBHOOK_URL,
+    tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
     memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     mock: {
       active: mockActive,
@@ -39087,6 +39337,9 @@ console.log('  [TT-OOP] cron armé — prefetch quotidien à 8h00 Europe/Paris')
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
 pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
+// Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)
+setInterval(() => pollTennisPrematchEloAlerts().catch(e => console.warn('[TennisElo]', e.message)), 10 * 60 * 1000);
+setTimeout(() => pollTennisPrematchEloAlerts().catch(() => {}), 30 * 1000); // bootstrap à +30s
 
 // Tennis historical (Sackmann CSV) — cron nightly DEPRECATED 2026-05-23.
 // Sackmann CC-BY-NC-SA incompatible service commercial — sync HTTP désactivé
