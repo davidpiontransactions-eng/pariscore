@@ -18970,6 +18970,10 @@ function _dhRenderTableHeader() {
       <th>Sets</th>
       <th>ML</th>
       <th>Set 1</th>
+      <th>≥1 Set</th>
+      <th>Tot. jeux</th>
+      <th>Aces</th>
+      <th>TB</th>
       <th>Issue</th>`;
   } else {
     thead.innerHTML = `
@@ -19027,6 +19031,29 @@ function _dhRenderTableTennis(data) {
       const s1Winner = s1.p1 > s1.p2 ? m.p1 : m.p2;
       set1Won = s1Winner === p.set1 ? 1 : 0;
     }
+    // Marchés additionnels (≥1 Set, Total Jeux, Aces, Tie-break)
+    const dogPick = p.geq1_set_dog || '—';
+    let dogWon = null;
+    if (p.geq1_set_dog && r.sets?.length) {
+      const dogSetsWon = r.sets.filter(s => (p.geq1_set_dog === m.p1 ? s.p1 > s.p2 : s.p2 > s.p1)).length;
+      dogWon = dogSetsWon >= 1 ? 1 : 0;
+    }
+    const tgPick = typeof p.total_games_thr === 'number' ? (p.total_games_over ? 'O ' : 'U ') + p.total_games_thr : '—';
+    let tgWon = null;
+    if (typeof p.total_games_thr === 'number' && typeof r.total_games === 'number') {
+      tgWon = (p.total_games_over ? r.total_games > p.total_games_thr : r.total_games < p.total_games_thr) ? 1 : 0;
+    }
+    const acesPick = typeof p.aces_thr === 'number' ? 'O ' + p.aces_thr : '—';
+    let acesWon = null;
+    if (typeof p.aces_thr === 'number' && (typeof r.aces_p1 === 'number' || typeof r.aces_p2 === 'number')) {
+      const ta = (r.aces_p1 || 0) + (r.aces_p2 || 0);
+      acesWon = ta > p.aces_thr ? 1 : 0;
+    }
+    const tbPick = typeof p.tie_break === 'boolean' ? (p.tie_break ? 'Oui' : 'Non') : '—';
+    let tbWon = null;
+    if (typeof p.tie_break === 'boolean' && typeof r.had_tiebreak === 'boolean') {
+      tbWon = p.tie_break === r.had_tiebreak ? 1 : 0;
+    }
 
     const pillFor = (label, won) => {
       const cls = won === 1 ? 'win' : won === 0 ? 'loss' : 'na';
@@ -19035,13 +19062,17 @@ function _dhRenderTableTennis(data) {
 
     return `<tr>
       <td><strong>${escapeHtml(m.p1 || '?')}</strong> – ${escapeHtml(m.p2 || '?')}</td>
-      <td style="color:var(--text2);">${escapeHtml(m.tournament || m.league || '')}</td>
-      <td style="color:var(--text2);">${escapeHtml(m.surface || '—')}</td>
+      <td>${escapeHtml(m.tournament || m.league || '')}</td>
+      <td>${escapeHtml(m.surface || '—')}</td>
       <td>${dt}</td>
-      <td style="font-family:var(--font-mono);">${escapeHtml(setsScore)}</td>
-      <td>${mlPick !== '—' ? pillFor(mlPick, mlWon) : '<span class="dh-pred-pill na">—</span>'}</td>
-      <td>${set1Pick !== '—' ? pillFor(set1Pick, set1Won) : '<span class="dh-pred-pill na">—</span>'}</td>
-      <td>${winner !== '—' ? `<span class="dh-cell-${winner === p.ml ? 'win' : 'loss'}">${escapeHtml(winner)}</span>` : '<span style="color:var(--text3);">N/A</span>'}</td>
+      <td>${escapeHtml(setsScore)}</td>
+      <td>${pillFor(mlPick, mlWon)}</td>
+      <td>${pillFor(set1Pick, set1Won)}</td>
+      <td>${pillFor(dogPick, dogWon)}</td>
+      <td>${pillFor(tgPick, tgWon)}</td>
+      <td>${pillFor(acesPick, acesWon)}</td>
+      <td>${pillFor(tbPick, tbWon)}</td>
+      <td>${escapeHtml(winner)}</td>
     </tr>`;
   }).join('');
 

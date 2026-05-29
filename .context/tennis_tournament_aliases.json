@@ -320,5 +320,9 @@
   "next_gen_finals": {
     "aliases": ["next gen finals", "next gen atp finals", "nextgen"],
     "surface": "Hard", "speed_code": "FAST", "speed_index": 110, "tier": "F", "circuit": "ATP"
+  },
+  "little_rock_challenger": {
+    "aliases": ["little rock", "little rock challenger", "challenger little rock", "uams health open"],
+    "surface": "Hard", "speed_code": "MED", "speed_index": 100, "tier": "CH", "circuit": "ATP"
   }
 }

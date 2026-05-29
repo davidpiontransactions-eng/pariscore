@@ -10431,7 +10431,8 @@ function runBacktestSimulation(filters, opts = {}) {
     // Calcul stake selon staking system
     let stake = 0;
     const odds = typeof pk.odds === 'number' && pk.odds > 1 ? pk.odds : null;
-    const proba = typeof pk.proba === 'number' ? pk.proba / 100 : null;
+    const proba = typeof pk.proba === 'number' ? pk.proba / 100
+      : (odds ? 1 / odds : null); // bd fix: tennis derive pseudo-proba from odds
     if (staking === 'flat_1u') {
       stake = 1;
     } else if (staking === 'pct_1') {
@@ -10574,6 +10575,32 @@ function computeCalibration(entries) {
       if (p.market !== 'over25' && p.market !== 'btts') continue;
       const proba = p.proba;
       if (typeof proba !== 'number' || proba < 0 || proba > 100) continue;
+      const bucket = Math.min(Math.floor(proba / 10) * 10, 90);
+      const key = `${bucket}-${bucket + 10}`;
+      if (!buckets[key]) buckets[key] = { pred_sum: 0, sample: 0, wins: 0, mid: bucket + 5 };
+      buckets[key].pred_sum += proba;
+      buckets[key].sample++;
+      buckets[key].wins += p.won;
+    }
+  }
+  return Object.entries(buckets).map(([range, d]) => ({
+    bucket: range,
+    bucket_mid: d.mid,
+    predicted_avg: d.sample ? d.pred_sum / d.sample : null,
+    realized_rate: d.sample ? d.wins / d.sample * 100 : null,
+    sample: d.sample,
+  })).sort((a, b) => a.bucket_mid - b.bucket_mid);
+}
+
+// R6 — Calibration tennis: buckets déciles via proba implicite (1/odds)
+function computeTennisCalibration(entries) {
+  const buckets = {};
+  for (const h of entries) {
+    const picks = _tennisPicksOf(h);
+    for (const p of picks) {
+      if (!p.odds || typeof p.odds !== 'number' || p.odds <= 1) continue;
+      const proba = (1 / p.odds) * 100; // probabilité implicite
+      if (proba < 0 || proba > 100) continue;
       const bucket = Math.min(Math.floor(proba / 10) * 10, 90);
       const key = `${bucket}-${bucket + 10}`;
       if (!buckets[key]) buckets[key] = { pred_sum: 0, sample: 0, wins: 0, mid: bucket + 5 };
@@ -10911,7 +10938,7 @@ function runHistoryQuery(p) {
   const series = sport === 'tennis' ? computeTennisSeries(pool) : computeHistorySeries(pool);
   const alerts = sport === 'football' ? computeHistoryAlerts(pool) : []; // R2 Executive
   const attribution = sport === 'football' ? computeProfitAttribution(pool) : null; // R4
-  const calibration = sport === 'football' ? computeCalibration(pool) : []; // R6
+  const calibration = sport === 'football' ? computeCalibration(pool) : computeTennisCalibration(pool); // R6
   const badbeats = sport === 'football' ? computeBadBeats(pool) : null; // R7
 
   // Exclude low-WR leagues (BetMines-style)
