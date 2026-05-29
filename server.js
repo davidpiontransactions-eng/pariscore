@@ -9927,7 +9927,19 @@ function _tennisPicksOf(h) {
   const r = h.realResult;
   const out = [];
   const t = new Date(h.commence_time).getTime();
-  const p = h.predicted || {};
+  // Bridge: entries ETL stockent sous bsd_prediction, pas predicted. Unifier.
+  const p = h.predicted || h.bsd_prediction ? {
+    // Si bsd_prediction présent mais pas predicted, dériver
+    ...(h.predicted || {}),
+    ...(h.bsd_prediction ? {
+      ml: h.bsd_prediction.prob_p1_wins > 0.50 ? h.p1 : (h.bsd_prediction.prob_p1_wins < 0.50 ? h.p2 : null),
+      ml_odds: h.bsd_prediction.prob_p1_wins > 0.50
+        ? parseFloat((1 / Math.max(0.01, h.bsd_prediction.prob_p1_wins)).toFixed(2))
+        : (h.bsd_prediction.prob_p1_wins < 0.50
+          ? parseFloat((1 / Math.max(0.01, 1 - h.bsd_prediction.prob_p1_wins)).toFixed(2))
+          : null),
+    } : {}),
+  } : {};
   const tournament = h.tournament || h.league || null;
 
   // Marché 1 : Moneyline (ML)
@@ -38972,12 +38984,24 @@ async function bootInit() {
             total_games: (h.sets || []).reduce((s, set) => s + (set.p1 || 0) + (set.p2 || 0), 0),
             had_tiebreak: (h.sets || []).some(s => (s.p1 === 7 && s.p2 === 6) || (s.p1 === 6 && s.p2 === 7)),
           };
+          // Bridge bsd_prediction → predicted pour _tennisPicksOf
+          if (!h.predicted && h.bsd_prediction && Number.isFinite(h.bsd_prediction.prob_p1_wins)) {
+            const bp = h.bsd_prediction.prob_p1_wins;
+            const bpNorm = bp > 1 ? bp / 100 : bp; // normaliser 0-100 → 0-1
+            h.predicted = {
+              ml: bpNorm > 0.50 ? h.p1 : (bpNorm < 0.50 ? h.p2 : null),
+              ml_odds: bpNorm > 0.50
+                ? parseFloat((1 / Math.max(0.01, bpNorm)).toFixed(2))
+                : (bpNorm < 0.50 ? parseFloat((1 / Math.max(0.01, 1 - bpNorm)).toFixed(2)) : null),
+            };
+          }
           enriched++;
         }
       }
       if (enriched > 0) {
         saveHistory();
-        console.log(`  ✓ Historique Tennis retro-enrichi: ${enriched}/${tennisHistory.length} matchs (verified+realResult+p1/p2)`);
+        const withPreds = tennisHistory.filter(h => h.predicted || h.bsd_prediction).length;
+        console.log(`  ✓ Historique Tennis retro-enrichi: ${enriched}/${tennisHistory.length} matchs (verified+realResult+p1/p2) — ${withPreds} matchs avec prédictions`);
       }
     }
 
