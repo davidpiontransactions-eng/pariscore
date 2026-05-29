@@ -25476,6 +25476,9 @@ if (pathname === '/api/v1/status') {
       teams: db.fbrefStats ? Object.keys(db.fbrefStats).length : 0,
       last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null,
     },
+    telegramChats: TELEGRAM_CHAT_IDS.size,
+    discordWebhook: !!DISCORD_WEBHOOK_URL,
+    tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
   });
 }
 
