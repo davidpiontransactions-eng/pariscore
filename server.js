@@ -8309,6 +8309,30 @@ function loadHistory() {
   if (persistedTennis && Array.isArray(persistedTennis) && persistedTennis.length) {
     tennisHistory = persistedTennis;
     console.log(`  ✓ Historique Tennis SQLite chargé (${tennisHistory.length} matchs archivés)`);
+    // bd fix — Enrich retroactif: entries sans verified/realResult/p1/p2
+    let enriched = 0;
+    for (const h of tennisHistory) {
+      if (!h.verified && h.winner && (h.home_team || h.away_team || h.player1?.name || h.player2?.name)) {
+        h.verified = true;
+        h.p1 = h.p1 || h.player1?.name || h.home_team || null;
+        h.p2 = h.p2 || h.player2?.name || h.away_team || null;
+        // winner peut être 'p1'/'p2' (cron archive) OU nom du joueur (ETL seed)
+        const winnerName = h.winner === 'p1' ? h.p1
+          : (h.winner === 'p2' ? h.p2
+            : h.winner);
+        h.realResult = h.realResult || {
+          winner: winnerName,
+          sets: h.sets || [],
+          total_games: (h.sets || []).reduce((s, set) => s + (set.p1 || 0) + (set.p2 || 0), 0),
+          had_tiebreak: (h.sets || []).some(s => (s.p1 === 7 && s.p2 === 6) || (s.p1 === 6 && s.p2 === 7)),
+        };
+        enriched++;
+      }
+    }
+    if (enriched > 0) {
+      saveHistory();
+      console.log(`  ✓ Historique Tennis retro-enrichi: ${enriched}/${tennisHistory.length} matchs (verified+realResult+p1/p2)`);
+    }
   }
 
   // bd ParisScorebis-9je — Merge historique_football.json (ETL output) dans
