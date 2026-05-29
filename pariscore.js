@@ -18174,7 +18174,10 @@ function dhRenderVariance(bb) {
   const wrap = document.getElementById('dh-variance-content');
   if (!wrap) return;
   if (!bb || !bb.total_picks_lost) {
-    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">🎲 Variance Tracker</div><div class="dh-soon-body">Aucun pick perdu dans ce sous-ensemble. Élargis la période.</div></div>`;
+    const msg = dhState.sport === 'tennis'
+      ? 'Le Variance Tracker n\'est pas encore disponible pour le tennis.'
+      : 'Aucun pick perdu dans ce sous-ensemble. Élargis la période.';
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">🎲 Variance Tracker</div><div class="dh-soon-body">${msg}</div></div>`;
     return;
   }
   const headerKpis = `
@@ -18256,7 +18259,10 @@ function dhRenderAttribution(attr) {
   const wrap = document.getElementById('dh-attribution-content');
   if (!wrap) return;
   if (!attr || !attr.total_picks) {
-    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">💰 Profit Attribution</div><div class="dh-soon-body">Aucun pick dans ce sous-ensemble filtré. Élargis la période pour voir la décomposition P/L.</div></div>`;
+    const msg = dhState.sport === 'tennis'
+      ? 'Le Profit Attribution n\'est pas encore disponible pour le tennis.'
+      : 'Aucun pick dans ce sous-ensemble filtré. Élargis la période pour voir la décomposition P/L.';
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">💰 Profit Attribution</div><div class="dh-soon-body">${msg}</div></div>`;
     return;
   }
   const totalPL = attr.total_pl_units;
@@ -18816,7 +18822,7 @@ function dhRenderKpisTennis(kpis, totalMatches) {
   ];
 
   // R6 A5 — tooltips data-density détaillés
-  const detailedTooltip = `Wins/Loss : ${totalWins}/${aggLoss}\nTotal picks : ${totalPicks}\nIC 95% : ${aggIc ? Math.round(aggIc[0]*100) + '–' + Math.round(aggIc[1]*100) + '%' : '—'}\nMéthode IC : ${icMethodAgg}\nMarchés : Over 2.5 (${kpis.over25?.sample || 0}) · BTTS (${kpis.btts?.sample || 0}) · Edge (${kpis.edge?.sample || 0})`;
+  const detailedTooltip = `Wins/Loss : ${totalWins}/${aggLoss}\nTotal picks : ${totalPicks}\nIC 95% : ${aggIc ? Math.round(aggIc[0]*100) + '–' + Math.round(aggIc[1]*100) + '%' : '—'}\nMéthode IC : ${icMethodAgg}\nMarchés : ML (${kpis.ml?.sample || 0}) · Set 1 (${kpis.set1?.sample || 0}) · ≥1 Set (${kpis.geq1_set?.sample || 0}) · Tot. jeux (${kpis.total_games?.sample || 0}) · Aces (${kpis.aces?.sample || 0}) · TB (${kpis.tie_break?.sample || 0})`;
   document.getElementById('dh-kpi-strip').innerHTML = items.map((k, i) => `
     <div class="dh-kpi" title="${i === 1 ? detailedTooltip : k.sub}">
       <div class="dh-kpi-label">${k.label}</div>
@@ -19300,7 +19306,8 @@ function _dhWireControls() {
       dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key);
       dhState.surfaces = [];
       // Tennis: période par défaut = all (les seeds historiques sont 2024-2025)
-      if (dhState.sport === 'tennis') { dhState.period = 'all'; dhState.fromDate = null; dhState.toDate = null; dhState.minProba = 0; dhState.minEV = 0; dhState.confidence = []; }
+      if (dhState.sport === 'tennis') { dhState.period = 'all'; dhState.fromDate = null; dhState.toDate = null; dhState.minProba = 0; dhState.minEV = 0; dhState.confidence = []; dhState.strategies = []; dhState.minOdds = 1.10; dhState.maxOdds = 10.00; dhState.venue = 'all'; }
+      else { dhState.period = '90'; dhState.fromDate = null; dhState.toDate = null; dhState.minProba = 55; }
       // Met à jour les boutons période
       document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === dhState.period));
       // Mise à jour placeholder filtre joueurs selon sport (patch BSD)
@@ -19309,6 +19316,14 @@ function _dhWireControls() {
       _dhRenderMarketChips();
       _dhRenderTableHeader();
       document.getElementById('dh-fr-surface').style.display = dhState.sport === 'tennis' ? '' : 'none';
+      // Cache les sections foot-only pour le tennis (stratégies, confiance, EV, proba, cotes, venue)
+      const isTennis = dhState.sport === 'tennis';
+      const hideForTennis = ['dh-f-strategy', 'dh-f-confidence', 'dh-f-ev', 'dh-f-proba', 'dh-f-odds-min', 'dh-f-venue'];
+      hideForTennis.forEach(id => {
+        const el = document.getElementById(id); if (!el) return;
+        const section = el.closest('.dh-fr-section, .dh-fr-row');
+        if (section) section.style.display = isTennis ? 'none' : '';
+      });
       dhRefresh();
     });
   });
@@ -19525,10 +19540,12 @@ function _dhWireControls() {
 
   // Reset
   document.getElementById('dh-reset').addEventListener('click', () => {
-    dhState.leagues = []; dhState.teams = []; dhState.markets = ['over25', 'btts', 'edge'];
-    dhState.confidence = []; dhState.outcome = 'all'; dhState.minEV = 0; dhState.minProba = 55;
+    dhState.leagues = []; dhState.teams = [];
+    dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key);
+    dhState.confidence = []; dhState.outcome = 'all'; dhState.minEV = 0;
+    dhState.minProba = dhState.sport === 'tennis' ? 0 : 55;
     dhState.excludeLowLeagues = false; dhState.fromDate = null; dhState.toDate = null;
-    dhState.period = '90'; dhState.page = 1;
+    dhState.period = dhState.sport === 'tennis' ? 'all' : '90'; dhState.page = 1;
     // R1 reset
     dhState.minOdds = 1.10; dhState.maxOdds = 10.00; dhState.venue = 'all'; dhState.weekdays = [];
     // Reflect in DOM
