@@ -27270,6 +27270,43 @@ if (pathname === '/api/v1/alerts/test' && req.method === 'POST') {
   return;
 }
 
+// POST /api/v1/tennis/alerts/test — envoyer alerte tennis test (Telegram + Discord)
+if (pathname === '/api/v1/tennis/alerts/test' && req.method === 'POST') {
+  const testHtml = [
+    '🎾 <b>TEST ALERTE TENNIS</b> — Message de test',
+    '',
+    'Roland-Garros | 1er tour | Terre battue',
+    'Alcaraz (Elo: 2150) vs Moutet (Elo: 1530)',
+    'Écart: <b>620 pts</b> — Favori: Alcaraz (97%)',
+    'Début: ' + new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }),
+    'Surface: Terre battue',
+  ].join('\n');
+  const testEmbed = {
+    title: '🎾 TEST Alerte Tennis — Roland-Garros',
+    color: 0x1DB954,
+    fields: [
+      { name: 'Match', value: 'Alcaraz vs Moutet', inline: false },
+      { name: 'Écart Elo', value: '620 pts', inline: true },
+      { name: 'Favori', value: 'Alcaraz (97%)', inline: true },
+      { name: 'Surface', value: 'Terre battue', inline: true },
+      { name: 'Tour', value: '1er tour', inline: true },
+    ],
+    footer: { text: 'Test — PariScore Tennis Alerts' },
+    timestamp: new Date().toISOString(),
+  };
+  broadcastAlert(testHtml, testEmbed).then(() => {
+    console.log('  [TennisTest] Alerte test envoyée → Telegram + Discord');
+  }).catch(e => {
+    console.warn('  [TennisTest] Échec:', e.message);
+  });
+  return jsonResponse(res, 200, {
+    ok: true,
+    telegram: !!(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size),
+    discord: !!DISCORD_WEBHOOK_URL,
+    message: 'Alerte tennis test envoyée',
+  });
+}
+
 // GET /api/v1/alerts/history — 10 dernières alertes envoyées
 if (pathname === '/api/v1/alerts/history' && req.method === 'GET') {
   const user = requireAuth(req, res);
