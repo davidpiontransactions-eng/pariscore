@@ -10829,7 +10829,7 @@ function runHistoryQuery(p) {
   }
   if (p.outcome === 'won' || p.outcome === 'lost') {
     pool = pool.filter(h => {
-      const picks = _historyPicksOf(h);
+      const picks = sport === 'tennis' ? _tennisPicksOf(h) : _historyPicksOf(h);
       if (!picks.length) return false;
       const allWon = picks.every(x => x.won === 1);
       const anyLost = picks.some(x => x.won === 0);

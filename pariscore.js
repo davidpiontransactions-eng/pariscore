@@ -19008,8 +19008,12 @@ function _dhRenderTableTennis(data) {
     const setsScore = (r.sets || []).map(s => s.p1 + '-' + s.p2).join(' ') || '—';
     const winner = r.winner || '—';
     const p = m.predicted || {};
-    const mlPick = p.ml || '—';
-    const mlWon = (p.ml && r.winner) ? (p.ml === r.winner ? 1 : 0) : null;
+    // Bridge: entries ETL peuvent avoir bsd_prediction sans predicted (patch bd)
+    const bp = m.bsd_prediction || {};
+    const _bpMl = bp.prob_p1_wins > 0.50 ? m.p1 : (bp.prob_p1_wins < 0.50 ? m.p2 : null);
+    const mlPick = p.ml || _bpMl || '—';
+    const _effectiveMl = p.ml || _bpMl || null;
+    const mlWon = (_effectiveMl && r.winner) ? (_effectiveMl === r.winner ? 1 : 0) : null;
     const set1Pick = p.set1 || '—';
     let set1Won = null;
     if (p.set1 && r.sets?.length) {
@@ -19556,7 +19560,7 @@ function _dhWireControls() {
       document.getElementById('dh-view-variance').style.display = v === 'variance' ? '' : 'none';
       document.getElementById('dh-view-backtest').style.display = v === 'backtest' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
-      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution' || v === 'variance') dhRefresh();
+      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution' || v === 'variance' || v === 'table') dhRefresh();
     });
   });
 
