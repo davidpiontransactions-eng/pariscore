@@ -10819,13 +10819,20 @@ function runHistoryQuery(p) {
     if (!Number.isNaN(ts)) pool = pool.filter(h => new Date(h.commence_time).getTime() < ts);
   }
   if (p.minProba != null && !Number.isNaN(p.minProba)) {
-    pool = pool.filter(h => {
-      const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
-      return probs.some(x => x >= p.minProba);
-    });
+    if (sport === 'tennis') {
+      // Tennis: minProba n'est pas applicable (pas de over25/btts)
+      // skip — les KPIs de confiance sont dans _tennisPicksOf
+    } else {
+      pool = pool.filter(h => {
+        const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
+        return probs.some(x => x >= p.minProba);
+      });
+    }
   }
   if (p.minEV != null && !Number.isNaN(p.minEV)) {
-    pool = pool.filter(h => (h.predicted?.bestEdgeValue || 0) >= p.minEV);
+    if (sport !== 'tennis') {
+      pool = pool.filter(h => (h.predicted?.bestEdgeValue || 0) >= p.minEV);
+    }
   }
   if (p.outcome === 'won' || p.outcome === 'lost') {
     pool = pool.filter(h => {
@@ -10836,7 +10843,7 @@ function runHistoryQuery(p) {
       return p.outcome === 'won' ? allWon : anyLost;
     });
   }
-  if (p.confidence?.length) {
+  if (p.confidence?.length && sport !== 'tennis') {
     const wants = new Set(p.confidence);
     pool = pool.filter(h => {
       const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
