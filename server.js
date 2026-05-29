@@ -19421,6 +19421,8 @@ function archiveFinishedTennisFromLiveCache(liveData) {
       commence_time: m.start_time || new Date().toISOString(),
       home_team: m.player1?.name || null,
       away_team: m.player2?.name || null,
+      p1: m.player1?.name || null,
+      p2: m.player2?.name || null,
       player1: m.player1 || null,
       player2: m.player2 || null,
       sets: m.sets || [],
@@ -19431,8 +19433,30 @@ function archiveFinishedTennisFromLiveCache(liveData) {
       away_score: sw2,
       live_score: `${sw1}-${sw2}`,
       status: 'finished',
+      verified: true,
       _source: 'cron-tennis-live-archive',
       _archived_at: new Date().toISOString(),
+      // bd fix — realResult + predicted pour alimenter _tennisPicksOf et les KPIs
+      realResult: {
+        winner: winner === 'p1' ? m.player1?.name : (winner === 'p2' ? m.player2?.name : null),
+        sets: (m.sets || []).map(s => ({ p1: s.p1 ?? 0, p2: s.p2 ?? 0 })),
+        total_games: (m.sets || []).reduce((s, set) => s + (set.p1 || 0) + (set.p2 || 0), 0),
+        aces_p1: m._bsd_stats?.p1_aces ?? null,
+        aces_p2: m._bsd_stats?.p2_aces ?? null,
+        had_tiebreak: (m.sets || []).some(s => {
+          return (s.p1 >= 6 && s.p2 >= 6) || (s.p1 === 7 && s.p2 === 6) || (s.p1 === 6 && s.p2 === 7);
+        }) || false,
+      },
+      // Prédictions BSD (stockées sur m._bsd_prediction) pour alimenter ML/Set1/Total Games
+      predicted: m._bsd_prediction ? {
+        ml: m.bsd_prediction.prob_p1_wins > 0.50 ? m.player1?.name : (m.bsd_prediction.prob_p2_wins > 0.50 ? m.player2?.name : null),
+        ml_odds: m.bsd_prediction.prob_p1_wins > 0.50
+          ? parseFloat((1 / Math.max(0.01, m.bsd_prediction.prob_p1_wins)).toFixed(2))
+          : parseFloat((1 / Math.max(0.01, 1 - m.bsd_prediction.prob_p1_wins)).toFixed(2)),
+        set1: null, // BSD ne prédit pas le set1 individuellement
+        total_games_thr: m.bsd_prediction.expected_total_games ?? null,
+        total_games_over: true,
+      } : {},
     };
     tennisHistory.push(archived);
     (db.archive_matches = db.archive_matches || []).push(archived);
