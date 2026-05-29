@@ -19297,8 +19297,12 @@ function _dhWireControls() {
       document.querySelectorAll('#dh-sport-toggle .dh-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
       dhState.sport = btn.dataset.sport;
       dhState.page = 1;
-      dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key); // reset to all-active
+      dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key);
       dhState.surfaces = [];
+      // Tennis: période par défaut = all (les seeds historiques sont 2024-2025)
+      if (dhState.sport === 'tennis') { dhState.period = 'all'; dhState.fromDate = null; dhState.toDate = null; dhState.minProba = 0; dhState.minEV = 0; dhState.confidence = []; }
+      // Met à jour les boutons période
+      document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === dhState.period));
       // Mise à jour placeholder filtre joueurs selon sport (patch BSD)
       const teamInput = document.getElementById('dh-f-team');
       if (teamInput) teamInput.placeholder = dhState.sport === 'tennis' ? 'Ex: Sinner, Djokovic…' : 'Ex: PSG, Sinner…';
