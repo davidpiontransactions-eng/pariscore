@@ -19295,6 +19295,9 @@ function _dhWireControls() {
       dhState.page = 1;
       dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key); // reset to all-active
       dhState.surfaces = [];
+      // Mise à jour placeholder filtre joueurs selon sport (patch BSD)
+      const teamInput = document.getElementById('dh-f-team');
+      if (teamInput) teamInput.placeholder = dhState.sport === 'tennis' ? 'Ex: Sinner, Djokovic…' : 'Ex: PSG, Sinner…';
       _dhRenderMarketChips();
       _dhRenderTableHeader();
       document.getElementById('dh-fr-surface').style.display = dhState.sport === 'tennis' ? '' : 'none';
