@@ -19538,9 +19538,10 @@ async function _fetchMSChallengerMatches() {
     const cal = await matchstatFetch('/tennis/v2/atp/tournament/calendar/2026?pageSize=200', 6 * 3600 * 1000);
     if (cal.status !== 200 || !cal.body) return [];
     const tournaments = Array.isArray(cal.body) ? cal.body
-      : (cal.body.results || cal.body.tournaments || []);
+      : (cal.body.data || cal.body.results || cal.body.tournaments || []);
+    // Filtrer: ne garder que les Challengers (tier contient "challenger")
     const challengers = tournaments.filter(t => {
-      const cat = String(t.category || t.type || '').toLowerCase();
+      const cat = String(t.tier || t.category || t.type || '').toLowerCase();
       return cat.includes('challenger') || cat.includes('chall');
     });
     if (!challengers.length) return [];
@@ -19554,7 +19555,7 @@ async function _fetchMSChallengerMatches() {
         const fix = await matchstatFetch(`/tennis/v2/atp/fixtures/tournament/${id}?pageSize=50`, 5 * 60 * 1000);
         if (fix.status !== 200 || !fix.body) return [];
         const matches = Array.isArray(fix.body) ? fix.body
-          : (fix.body.results || fix.body.matches || []);
+          : (fix.body.data || fix.body.results || fix.body.matches || []);
         return matches.map(m => ({
           id: `ms_ch_${m.id || m.match_id || Math.random()}`,
           tour: 'ATP',
