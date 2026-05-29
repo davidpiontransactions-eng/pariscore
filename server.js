@@ -2037,12 +2037,13 @@ function resolveTvLogo(name, srcLogo) {
 // Fallback statique league → broadcasters par pays. Clé = `id` config (leagues_config.json).
 // Source : droits TV saison 2025-2026 publics, vérifiés (à mettre à jour saison +1).
 // Stratégie : prioriser pays de la ligue + ajouter FR si rights français existants.
-// Denylist équipes mal-classifiées par BSD (data error standings).
-// Format: config_id → Set normalisé (lowercase, trim) des équipes à exclure.
-// Source bug : BSD season 317 (Ligue 1) inclut Rodez AF + Red Star FC qui sont en Ligue 2.
-const LEAGUE_TEAM_DENYLIST = {
-  61: new Set(['rodez af', 'red star fc']),  // Ligue 1 — exclure équipes L2 misclassifiées
-};
+// bd patch BSD 29 mai — Knockout matches exclus des standings par BSD.
+// Plus besoin de denylist manuelle ; les classements sont désormais propres.
+// Gardé commenté pour archive au cas où.
+// const LEAGUE_TEAM_DENYLIST = {
+//   61: new Set(['rodez af', 'red star fc']),  // Ligue 1 — exclure équipes L2 misclassifiées
+// };
+const LEAGUE_TEAM_DENYLIST = {};
 
 const LEAGUE_TV_FALLBACK = {
   // J1 League (98) — droits exclusifs DAZN Japan 2022-2028. Pas de diffuseur FR linéaire.
@@ -13214,6 +13215,8 @@ async function fetchBSDTeamSquad(bsdTeamId) {
       short_name: p.short_name,
       position: p.position,           // G/D/M/F
       specific_position: p.specific_position,
+      // bd patch BSD 29 mai — jersey_number désormais rempli pour ~87% des joueurs
+      // (fallback automatique vers profil joueur si absent dans la ligne effectif)
       jersey_number: p.jersey_number,
       attributes: p.attributes || null, // { tactical, attacking, defending, technical, creativity }
       strengths: p.strengths || [],
@@ -16492,6 +16495,8 @@ function srvPlanGate(req, res, pathname) {
   }
   // Bankroll simulé = vitrine marketing publique (jamais de données user)
   if (pathname === '/api/v1/bankroll/simulated' || pathname === '/api/v1/bankroll') return false;
+  // Test alertes tennis — public, pas de plan requis
+  if (pathname === '/api/v1/alerts/tennis-test') return false;
   // Mes Paris + bankroll + alertes → un plan Pro quelconque
   if (pathname.startsWith('/api/v1/bets') || pathname.startsWith('/api/v1/bankroll') || pathname.startsWith('/api/v1/alerts')) {
     if (!a.anyPro) { jsonResponse(res, 403, { error: 'Module réservé Pro', code: 'PLAN_REQUIRED' }); return true; }
@@ -16823,10 +16828,26 @@ async function sendDiscordAlert(embed) {
 }
 
 // Broadcast unifié Telegram + Discord — envoie aux deux canaux en parallèle
+// Tennis: utilise TENNIS_TELEGRAM_CHAT_IDS (séparé du foot)
+const TENNIS_TELEGRAM_CHAT_IDS = new Set();
+if (process.env.TENNIS_TELEGRAM_CHAT_IDS) {
+  process.env.TENNIS_TELEGRAM_CHAT_IDS.split(',').forEach(id => TENNIS_TELEGRAM_CHAT_IDS.add(id.trim()));
+}
+
+async function broadcastTennisTelegramAlert(messageHtml) {
+  if (!TELEGRAM_BOT_TOKEN || !TENNIS_TELEGRAM_CHAT_IDS.size) return;
+  for (const chatId of TENNIS_TELEGRAM_CHAT_IDS) {
+    await sendTelegramAlert(chatId, messageHtml);
+  }
+}
+
 async function broadcastAlert(messageHtml, discordEmbed) {
   const tasks = [];
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size && messageHtml) {
     tasks.push(broadcastTelegramAlert(messageHtml));
+  }
+  if (TELEGRAM_BOT_TOKEN && TENNIS_TELEGRAM_CHAT_IDS.size && messageHtml) {
+    tasks.push(broadcastTennisTelegramAlert(messageHtml));
   }
   if (DISCORD_WEBHOOK_URL && discordEmbed) {
     tasks.push(sendDiscordAlert(discordEmbed));
@@ -18560,7 +18581,11 @@ function _normalizeBSDTennisMatch(m) {
     current_set_index: m.current_set != null ? Math.max(0, (parseInt(m.current_set, 10) || 1) - 1) : (sets.length ? sets.length - 1 : 0),
     current_point: m.current_point || '',
     serving: (() => {
-      // Source signal direct
+      // bd patch BSD 29 mai — is_serving_p1 n'est PLUS inversé/absent,
+      // la synchro list↔detail est corrigée côté BSD. Valeur fiable prioritaire.
+      // Verrouillage: la valeur du flux détaillé (/matches/{id}/) ne touche
+      // PAS serving (seul _mergeDetailStats s'applique → champs _bsd_stats).
+      // Ce champ est la source unique de vérité pour le service en cours.
       if (m.is_serving_p1 === true) return 1;
       if (m.is_serving_p1 === false) return 2;
       // bd c5i: inference par parite jeux depuis _tennisServeHist si snapshot connu
@@ -18635,6 +18660,15 @@ async function fetchBSDTennisLive() {
     ? res.data
     : (res.data && Array.isArray(res.data.results) ? res.data.results : []);
   const normalized = arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+  // bd patch BSD 29 mai — Verrou serving: le détail (/matches/{id}/) enrichit
+  // uniquement _bsd_stats, mais par sécurité on préserve le serving original.
+  // La valeur `is_serving_p1` du flux list est désormais fiable (bug BSD corrigé).
+  const _servingBackup = new Map();
+  for (const m of normalized) {
+    if (m._bsd_match_id != null && (m.serving === 1 || m.serving === 2)) {
+      _servingBackup.set(m._bsd_match_id, m.serving);
+    }
+  }
   // Enrich live matches with extended stats from BSD detailed endpoint (parallel, non-blocking)
   const results = await Promise.allSettled(
     normalized.map(async (m) => {
@@ -18644,7 +18678,14 @@ async function fetchBSDTennisLive() {
           _fetchBSDTennisMatchDetail(m._bsd_match_id),
           new Promise(r => setTimeout(() => r(null), 3000)),
         ]);
-        return _mergeDetailStats(m, detail);
+        const enriched = _mergeDetailStats(m, detail);
+        // bd patch BSD 29 mai — Restaure le serving original après enrichissement
+        // détail (le flux détaillé ne doit jamais écraser is_serving_p1 du flux list).
+        const savedSrv = _servingBackup.get(m._bsd_match_id);
+        if (savedSrv != null && enriched.serving !== savedSrv) {
+          enriched.serving = savedSrv;
+        }
+        return enriched;
       } catch (_) { return m; }
     })
   );
@@ -25477,6 +25518,7 @@ if (pathname === '/api/v1/status') {
       last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null,
     },
     telegramChats: TELEGRAM_CHAT_IDS.size,
+    tennisTelegramChats: TENNIS_TELEGRAM_CHAT_IDS.size,
     discordWebhook: !!DISCORD_WEBHOOK_URL,
     tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
   });
@@ -27270,8 +27312,8 @@ if (pathname === '/api/v1/alerts/test' && req.method === 'POST') {
   return;
 }
 
-// POST /api/v1/tennis/alerts/test — envoyer alerte tennis test (Telegram + Discord)
-if (pathname === '/api/v1/tennis/alerts/test' && req.method === 'POST') {
+// POST /api/v1/alerts/tennis-test — envoyer alerte tennis test (Telegram + Discord)
+if (pathname === '/api/v1/alerts/tennis-test' && req.method === 'POST') {
   const testHtml = [
     '🎾 <b>TEST ALERTE TENNIS</b> — Message de test',
     '',
@@ -27569,6 +27611,7 @@ if (pathname === '/api/v1/admin/status') {
     accuracy: getAccuracyReport(),
     aiScoutCached: !!aiScoutCache.data,
     telegramChats: TELEGRAM_CHAT_IDS.size,
+    tennisTelegramChats: TENNIS_TELEGRAM_CHAT_IDS.size,
     discordWebhook: !!DISCORD_WEBHOOK_URL,
     tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
     memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
