@@ -119,7 +119,15 @@ window.loadWCSchedule=function(round,btn){
 
 function _paintSchedule(el,data){
   if(!data||!data.by_date||!Object.keys(data.by_date).length){el.innerHTML='<div class="wc-loading">Aucun match.</div>';return;}
-  var sections=Object.entries(data.by_date).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){
+  // Dedup client-side (BSD peut renvoyer doublons)
+  var _seen=new Set();
+  var byDate={};
+  Object.entries(data.by_date).forEach(function(e){
+    var day=e[0],ms=e[1];
+    var uniq=ms.filter(function(m){var k=m.id||m.bsd_event_id;if(!k||_seen.has(k))return false;_seen.add(k);return true;});
+    if(uniq.length)byDate[day]=uniq;
+  });
+  var sections=Object.entries(byDate).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){
     var date=e[0],matches=e[1];
     var cards=matches.map(function(m){
       var hasScore=m.score&&m.score.home!=null;
