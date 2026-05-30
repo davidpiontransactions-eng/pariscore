@@ -1540,7 +1540,7 @@ async function tickTennisLive() {
   const statusEl = document.getElementById('tennis-live-status');
   try {
     if (statusEl) statusEl.textContent = 'Mise à jour…';
-    const r = await fetch('/tennis/api/v2/matches/live/', { headers: { 'Accept': 'application/json' } });
+    const r = await fetch('/api/v1/tennis/live', { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     let list = Array.isArray(data) ? data : [];
