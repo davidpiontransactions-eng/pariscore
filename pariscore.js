@@ -13938,19 +13938,17 @@ async function buildCornersTab(matchId) {
     const awayH = typeof d.away_corner_history === 'object' && d.away_corner_history !== null
       ? d.away_corner_history : null;
 
-    const probBar = (pct) => {
-      const color = pct >= 65 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-      return `<div style="flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s"></div>
-      </div>`;
-    };
+    const probCls = (pct) => pct >= 65 ? 'g' : pct >= 50 ? 'a' : 'r';
+    const probBar = (pct) =>
+      `<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-${probCls(pct)}" style="width:${pct}%"></div></div>`;
 
     const probRows = Object.entries(probs).map(([k, v]) => {
       const label = k.replace(/over_(\d+)_(\d+)/, 'Over $1.$2');
+      const c = probCls(v);
       return `<div class="cr-prob-row">
         <div class="cr-prob-label">${label}</div>
         ${probBar(v)}
-        <div class="cr-prob-val">${v}%</div>
+        <div class="cr-prob-val cr-prob-val-${c}">${v}%</div>
       </div>`;
     }).join('');
 
