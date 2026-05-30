@@ -24207,6 +24207,10 @@ function renderComparateur(d) {
     fetch('/api/v1/cs2/matches', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (json) {
+        if (json && json.bsd_status === 'disabled') {
+          _renderCs2AddonDisabled();
+          return;
+        }
         _cs2LastData = (json && Array.isArray(json.matches)) ? json.matches : [];
         _updateCs2Status(json);
         _applyCs2Filter();
@@ -24215,6 +24219,34 @@ function renderComparateur(d) {
         console.warn('[CS2]', e.message);
         _renderCs2Error();
       });
+  }
+
+  function _renderCs2AddonDisabled() {
+    var grid = document.getElementById('cs2-grid');
+    if (!grid) return;
+    grid.innerHTML = '<div style="grid-column:1/-1;max-width:600px;margin:32px auto;background:var(--bg2);border:1px solid rgba(255,167,38,0.4);border-radius:12px;padding:28px 28px 24px;">' +
+      '<div style="font-size:32px;margin-bottom:12px;">⚠️</div>' +
+      '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;color:var(--text);margin-bottom:8px;">BSD CS2 Addon non activé</div>' +
+      '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px;">' +
+        'Le feed CS2 live nécessite l\'addon <strong>Bzzoiro Sports CS2</strong> ($5/mo).<br>' +
+        'Envoie un email à l\'équipe BSD pour l\'activer sur ton compte.' +
+      '</div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:14px 16px;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text2);">' +
+        '<div style="color:var(--text3);font-size:10px;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">Template email</div>' +
+        '<div style="margin-bottom:4px;"><span style="color:var(--text3);">À :</span> <span style="color:#29b6f6;">support@bzzoiro.com</span></div>' +
+        '<div style="margin-bottom:4px;"><span style="color:var(--text3);">Objet :</span> Activation CS2 addon — compte [ton email]</div>' +
+        '<div style="color:var(--text3);margin-top:8px;font-size:11px;">' +
+          'Bonjour, je voudrais activer l\'addon CS2/CSGO sur mon compte Bzzoiro Sports ($5/mo).' +
+          ' Pourriez-vous l\'activer ? Merci.' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">' +
+        '<a href="mailto:support@bzzoiro.com?subject=Activation%20CS2%20addon&body=Bonjour%2C%20je%20voudrais%20activer%20l\'addon%20CS2%2FCSGO%20sur%20mon%20compte%20Bzzoiro%20Sports%20(%245%2Fmo).%20Merci." ' +
+           'style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:#FF6B00;color:#fff;border-radius:7px;text-decoration:none;font-family:\'Instrument Sans\',sans-serif;font-weight:600;font-size:13px;">📧 Envoyer l\'email</a>' +
+        '<a href="https://sports.bzzoiro.com/pricing/" target="_blank" rel="noopener" ' +
+           'style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:var(--bg3);color:var(--text);border:1px solid var(--bg4);border-radius:7px;text-decoration:none;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">🌐 bzzoiro.com/pricing</a>' +
+      '</div>' +
+    '</div>';
   }
 
   function _applyCs2Filter() {

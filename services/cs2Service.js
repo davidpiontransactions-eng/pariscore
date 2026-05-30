@@ -686,6 +686,7 @@ module.exports = {
   buildMatchEnrichment,
 
   invalidateCache() { _cs2Cache.ts = 0; },
+  _getCacheStatus() { return _cs2Cache.bsd_status || 'unknown'; },
 
   async getCs2Matches(apiKey) {
     if (!apiKey) {
@@ -701,6 +702,14 @@ module.exports = {
         _bsdCs2('/api/v2/matches/?status=notstarted&limit=100', apiKey).catch(() => null),
         _fetchPredictions(apiKey)
       ]);
+
+      // Detect addon not activated (401/403)
+      const authError = [resLive, resUpcoming].find(r => r && (r.status === 401 || r.status === 403));
+      if (authError) {
+        console.warn(`[CS2Service] BSD CSGO addon non activé — HTTP ${authError.status}`);
+        _cs2Cache = { ts: Date.now(), data: [], bsd_status: 'disabled', bsd_http: authError.status };
+        return [];
+      }
 
       const raw = [];
       for (const res of [resLive, resUpcoming]) {
@@ -741,7 +750,7 @@ module.exports = {
         return 0;
       });
 
-      _cs2Cache = { ts: Date.now(), data: matches };
+      _cs2Cache = { ts: Date.now(), data: matches, bsd_status: 'ok', bsd_http: 200 };
       console.log(`[CS2Service] ${matches.length} matches (${matches.filter(m => m.is_live).length} live, ${Object.keys(predMap).length} predictions)`);
       return matches;
 

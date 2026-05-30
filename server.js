@@ -18503,12 +18503,13 @@ async function handleAPI(req, res, pathname, query) {
   if (pathname === '/api/v1/cs2/matches' && req.method === 'GET') {
     try {
       const all = await cs2Service.getCs2Matches(BSD_API_KEY);
+      const bsdStatus = cs2Service._getCacheStatus ? cs2Service._getCacheStatus() : 'unknown';
       const filter = query.status || 'all';
       const data = filter === 'live'     ? all.filter(m => m.is_live)
                  : filter === 'prematch' ? all.filter(m => !m.is_live && m.status !== 'finished')
                  : all;
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
-      return res.end(JSON.stringify({ ok: true, count: data.length, matches: data }));
+      return res.end(JSON.stringify({ ok: true, count: data.length, matches: data, bsd_status: bsdStatus }));
     } catch (e) {
       console.error('[CS2 route]', e.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
