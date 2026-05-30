@@ -2328,6 +2328,41 @@ function _drAttachCurrentSet(dr, curSet) {
   return { ...dr, dr_set_courant: cur };
 }
 
+// Calcule le DR (Dominance Ratio) directement depuis les stats BSD du match live.
+// Synchrone, clé = match id (pas de lookup par nom Sofascore → robuste).
+// Fallback quand _sofaLiveIdx ne matche pas les noms BSD/ESPN.
+// Même shape de retour que getSofascoreDRCached → consommateurs inchangés.
+// DR = (serve% + return%) J1 / (serve% + return%) J2 (parité formule Sofascore).
+function computeTennisDRFromMatch(m) {
+  const s = m && m._bsd_stats;
+  if (!s) return null;
+  const num = (v) => {
+    if (Number.isFinite(v)) return v;
+    if (v == null) return null;
+    const f = parseFloat(v);
+    return Number.isFinite(f) ? f : null;
+  };
+  const p1S = num(s.p1_first_won), p1R = num(s.p1_ret_won);
+  const p2S = num(s.p2_first_won), p2R = num(s.p2_ret_won);
+  // Voie 1 — serve + return (parité Sofascore DR), meilleure granularité
+  if (p1S != null && p1R != null && p2S != null && p2R != null) {
+    const a = p1S + p1R, b = p2S + p2R;
+    if (a > 0 && b > 0) {
+      return { ts: Date.now(), dr: parseFloat((a / b).toFixed(3)),
+        p1_serve: p1S, p1_ret: p1R, p2_serve: p2S, p2_ret: p2R,
+        dr_by_set: {}, source: 'bsd_serve_ret' };
+    }
+  }
+  // Voie 2 — ratio total points gagnés (dominance brute, fallback)
+  const t1 = num(s.p1_total_pts), t2 = num(s.p2_total_pts);
+  if (t1 != null && t2 != null && t1 > 0 && t2 > 0) {
+    return { ts: Date.now(), dr: parseFloat((t1 / t2).toFixed(3)),
+      p1_serve: p1S, p1_ret: p1R, p2_serve: p2S, p2_ret: p2R,
+      dr_by_set: {}, source: 'bsd_total' };
+  }
+  return null;
+}
+
 // Find Sofascore team ID by name — cached 7 days
 async function searchSofascoreTeam(teamName) {
   try {
@@ -20169,14 +20204,17 @@ async function pollTennisLive() {
           if (!m || !m.is_live) continue;
           const curSet2 = (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
             : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null);
-          const drBase2 = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+          // DR multi-source : Sofascore (lookup par nom, riche dr_by_set) en priorité,
+          // sinon calcul inline depuis stats BSD (clé match id → robuste aux noms).
+          let drBase2 = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+          let _drSrc = (drBase2 && Number.isFinite(drBase2.dr)) ? 'sofa' : null;
+          if (!_drSrc) {
+            drBase2 = computeTennisDRFromMatch(m);
+            _drSrc = (drBase2 && drBase2.source) || 'none';
+          }
           if (process.env.DEBUG_DR === 'true') {
-            const _np1 = normName(m.player1?.name || ''), _np2 = normName(m.player2?.name || '');
-            const _idxMap = _sofaLiveIdx.map;
-            const _idxSize = _idxMap ? _idxMap.size : 0;
-            const _hit = _idxMap && (_idxMap.has(`${_np1}|${_np2}`) || _idxMap.has(`${_np2}|${_np1}`));
-            console.log(`  [DR DEBUG] "${m.player1?.name}" vs "${m.player2?.name}" | norm="${_np1}|${_np2}" | drBase=${drBase2 ? drBase2.dr : 'NULL'} | sofaIdx=${_idxSize}keys idxHit=${_hit}`);
-            if (_idxSize > 0 && !_hit) console.log(`  [DR DEBUG] sofa live keys: ${[..._idxMap.keys()].slice(0, 8).join(' ; ')}`);
+            const st = m._bsd_stats || {};
+            console.log(`  [DR DEBUG] "${m.player1?.name}" vs "${m.player2?.name}" | dr=${drBase2 ? drBase2.dr : 'NULL'} src=${_drSrc} | bsd p1S=${st.p1_first_won} p1R=${st.p1_ret_won} p2S=${st.p2_first_won} p2R=${st.p2_ret_won} p1T=${st.p1_total_pts} p2T=${st.p2_total_pts}`);
           }
           if (!drBase2 || !Number.isFinite(drBase2.dr)) continue;
 
@@ -20238,7 +20276,7 @@ async function pollTennisLive() {
               { name: '🎾 Court', value: m.court || 'N/A', inline: true },
               { name: '🏟️ Tournoi', value: m.tournament || 'N/A', inline: true },
             ],
-            footer: { text: `Diff DR Joueurs | Seuil ${_DR_DIFF_THR} | Cooldown 5min | ${m.tournament}` },
+            footer: { text: `Diff DR Joueurs | src:${_drSrc} | Seuil ${_DR_DIFF_THR} | Cooldown 5min | ${m.tournament}` },
             timestamp: new Date().toISOString(),
           };
 
