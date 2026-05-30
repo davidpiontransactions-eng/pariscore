@@ -19609,6 +19609,19 @@ async function _fetchMSChallengerMatches() {
               // Parse les matchs depuis la page tournoi (même structure que /matches/)
               const parsed = _texParseMatchesPage(tournPage);
               for (const p of parsed) {
+                // Init Elo Challenger: nom du joueur comme ID (pas de BSD player ID)
+                const p1Id = `ch_${(p.player1?.name || '?').toLowerCase().replace(/\s+/g, '_')}`;
+                const p2Id = `ch_${(p.player2?.name || '?').toLowerCase().replace(/\s+/g, '_')}`;
+                let elo1 = 1500, elo2 = 1500;
+                if (tennisEloCalculator) {
+                  try {
+                    elo1 = tennisEloCalculator.getPlayer(p1Id).elo;
+                    elo2 = tennisEloCalculator.getPlayer(p2Id).elo;
+                  } catch (_) {
+                    tennisEloCalculator.initializePlayer(p1Id, 1500);
+                    tennisEloCalculator.initializePlayer(p2Id, 1500);
+                  }
+                }
                 matches.push({
                   id: p.id,
                   tour: 'ATP',
@@ -19628,6 +19641,9 @@ async function _fetchMSChallengerMatches() {
                   _source: 'tex_challenger',
                   _bsd_match_id: null,
                   _bsd_stats: {},
+                  elo_p1: Math.round(elo1),
+                  elo_p2: Math.round(elo2),
+                  elo_gap: Math.round(elo1 - elo2),
                 });
               }
             } catch (_) { /* skip ce tournoi */ }
