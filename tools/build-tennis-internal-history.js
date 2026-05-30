@@ -102,20 +102,31 @@ function extractFromBsdMatch(m) {
   const p2Name = p2.name || p2.short_name || null;
   if (!p1Name || !p2Name) return null;
 
-  // Determine winner from m.winner OR sets count OR score
+  // Determine winner — BSD API uses player1_sets/player2_sets (not sets_won_p1/p2, not winner field)
   let winnerIsP1 = null;
   if (m.winner != null) {
     winnerIsP1 = (m.winner === 1 || m.winner === '1' || m.winner === 'p1');
+  } else if (m.player1_sets != null && m.player2_sets != null) {
+    if (m.player1_sets > m.player2_sets) winnerIsP1 = true;
+    else if (m.player2_sets > m.player1_sets) winnerIsP1 = false;
   } else if (m.sets_won_p1 != null && m.sets_won_p2 != null) {
     if (m.sets_won_p1 > m.sets_won_p2) winnerIsP1 = true;
     else if (m.sets_won_p2 > m.sets_won_p1) winnerIsP1 = false;
   }
   if (winnerIsP1 == null) return null;  // ambiguity skip
 
-  const score = m.score || (Array.isArray(m.sets) ? m.sets.map(s => `${s.p1 || 0}-${s.p2 || 0}`).join(' ') : null);
+  // Score: BSD API uses sets_detail array (not m.sets, not m.score)
+  const score = m.score ||
+    (Array.isArray(m.sets_detail) ? m.sets_detail.map(s => `${s.p1 ?? 0}-${s.p2 ?? 0}`).join(' ') : null) ||
+    (Array.isArray(m.sets) ? m.sets.map(s => `${s.p1 ?? 0}-${s.p2 ?? 0}`).join(' ') : null);
   const setsCount = parseSets(score);
   const tournament = m.tournament || {};
-  const tour = normTour(tournament.circuit || tournament.tour, m.gender || tournament.gender);
+  // Gender-first tour derivation: BSD circuit label unreliable (e.g. circuit="ATP" for WTA matches)
+  const matchGender = m.gender || p1.gender || p2.gender || tournament.gender;
+  let tour;
+  if (matchGender === 'F' || matchGender === 'W') tour = 'WTA';
+  else if (matchGender === 'M') tour = 'ATP';
+  else tour = normTour(tournament.circuit || tournament.tour, matchGender);
   const surface = normSurface(tournament.surface || m.surface);
 
   // bd dl49 Phase 4.1 — Serve stats inline BSD per match data.
@@ -129,8 +140,9 @@ function extractFromBsdMatch(m) {
   const w_df = winnerIsP1 ? toIntOrNull(m.p1_double_faults) : toIntOrNull(m.p2_double_faults);
   const l_df = winnerIsP1 ? toIntOrNull(m.p2_double_faults) : toIntOrNull(m.p1_double_faults);
   // Player metadata Sackmann compat — BSD nationality si dispo
-  const w_ioc = winnerIsP1 ? (p1.country || p1.nationality || null) : (p2.country || p2.nationality || null);
-  const l_ioc = winnerIsP1 ? (p2.country || p2.nationality || null) : (p1.country || p1.nationality || null);
+  // BSD API uses country_code (ISO-3166 alpha-2), not .country/.nationality
+  const w_ioc = winnerIsP1 ? (p1.country_code || p1.country || p1.nationality || null) : (p2.country_code || p2.country || p2.nationality || null);
+  const l_ioc = winnerIsP1 ? (p2.country_code || p2.country || p2.nationality || null) : (p1.country_code || p1.country || p1.nationality || null);
   const w_hand = winnerIsP1 ? (p1.hand || p1.playing_hand || null) : (p2.hand || p2.playing_hand || null);
   const l_hand = winnerIsP1 ? (p2.hand || p2.playing_hand || null) : (p1.hand || p1.playing_hand || null);
 
