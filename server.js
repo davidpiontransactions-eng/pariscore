@@ -2360,6 +2360,21 @@ function computeTennisDRFromMatch(m) {
       p1_serve: p1S, p1_ret: p1R, p2_serve: p2S, p2_ret: p2R,
       dr_by_set: {}, source: 'bsd_total' };
   }
+  // Voie 3 — serve-only (BSD ne fournit souvent que first_serve_won%).
+  // Identité tennis : chaque point sur le service de J2 est gagné soit par J2
+  // (serve), soit par J1 (return) → ret_J1 ≈ 100 - serve_J2. Approx via
+  // first_serve_won% (ignore 2e balle) mais directionnellement correct.
+  // DR = (serve_J1 + ret_J1) / (serve_J2 + ret_J2) — parité somme Sofascore.
+  if (p1S != null && p2S != null && p1S > 0 && p2S > 0) {
+    const p1Rderiv = Math.max(0, Math.min(100, 100 - p2S));
+    const p2Rderiv = Math.max(0, Math.min(100, 100 - p1S));
+    const a = p1S + p1Rderiv, b = p2S + p2Rderiv;
+    if (a > 0 && b > 0) {
+      return { ts: Date.now(), dr: parseFloat((a / b).toFixed(3)),
+        p1_serve: p1S, p1_ret: p1Rderiv, p2_serve: p2S, p2_ret: p2Rderiv,
+        dr_by_set: {}, source: 'bsd_serve_approx' };
+    }
+  }
   return null;
 }
 
