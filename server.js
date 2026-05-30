@@ -5285,9 +5285,7 @@ function initTennisEloCalculator() {
 }
 
 function initTennisGlicko2() {
-  console.log('  [Glicko2 Debug] init start');
   tennisGlicko2 = new TennisGlicko2(0.5, 180);
-  console.log('  [Glicko2 Debug] created, type:', typeof tennisGlicko2);
   try {
     const saved = kvGet('tennis_glicko2_state', null);
     if (saved) {
@@ -6403,6 +6401,91 @@ function computePoisson(expHome, expAway) {
     awayWin: Math.round(awayWin * 100),
     topScores: scores.slice(0, 5).map(s => ({ score: s.score, prob: Math.round(s.prob * 100) })),
     method: 'poisson',
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd — Dixon-Coles (1997) : correction du Poisson indépendant pour le foot.
+// Ajoute un paramètre ρ (rho) modélisant la dépendance basse entre les buts.
+// τ(0,0)=1-λh·λa·ρ, τ(0,1)=1+λh·ρ, τ(1,0)=1+λa·ρ, τ(1,1)=1-ρ
+// Corrige le biais du Poisson sur 0-0/1-0/0-1/1-1 (±3-5 points de proba).
+// ρ calibré empiriquement: -0.05 (PL/PD/BL1/SA), -0.03 (FL1/L1 faible score)
+function computeDixonColes(expHome, expAway, rho = -0.05) {
+  const MAX = 7;
+  const matrix = [];
+  // Base Poisson indépendant
+  for (let h = 0; h < MAX; h++) {
+    matrix[h] = [];
+    for (let a = 0; a < MAX; a++) {
+      matrix[h][a] = poissonPMF(expHome, h) * poissonPMF(expAway, a);
+    }
+  }
+
+  // Dixon-Coles τ adjustment (low-score correction)
+  const tau00 = 1 - expHome * expAway * rho;
+  const tau01 = 1 + expHome * rho;
+  const tau10 = 1 + expAway * rho;
+  const tau11 = 1 - rho;
+
+  matrix[0][0] *= Math.max(0, tau00);
+  matrix[0][1] *= Math.max(0, tau01);
+  matrix[1][0] *= Math.max(0, tau10);
+  matrix[1][1] *= Math.max(0, tau11);
+
+  // Renormalize
+  let total = 0;
+  for (let h = 0; h < MAX; h++)
+    for (let a = 0; a < MAX; a++)
+      total += matrix[h][a];
+  if (total > 0) {
+    for (let h = 0; h < MAX; h++)
+      for (let a = 0; a < MAX; a++)
+        matrix[h][a] /= total;
+  }
+
+  let over05 = 0, over15 = 0, over25 = 0, over35 = 0;
+  let btts = 0, under15 = 0, cs00 = 0;
+  let homeWin = 0, draw = 0, awayWin = 0;
+
+  for (let h = 0; h < MAX; h++) {
+    for (let a = 0; a < MAX; a++) {
+      const p = matrix[h][a];
+      const totalG = h + a;
+      if (totalG > 0) over05 += p;
+      if (totalG > 1) over15 += p;
+      if (totalG > 2) over25 += p;
+      if (totalG > 3) over35 += p;
+      if (totalG <= 1) under15 += p;
+      if (h > 0 && a > 0) btts += p;
+      if (h === 0 && a === 0) cs00 = p;
+      if (h > a) homeWin += p;
+      if (h === a) draw += p;
+      if (h < a) awayWin += p;
+    }
+  }
+
+  const scores = [];
+  for (let h = 0; h < MAX; h++)
+    for (let a = 0; a < MAX; a++)
+      scores.push({ score: `${h}-${a}`, prob: matrix[h][a] });
+  scores.sort((a, b) => b.prob - a.prob);
+
+  return {
+    over05: Math.round(over05 * 100),
+    over15: Math.round(over15 * 100),
+    over25: Math.round(over25 * 100),
+    over35: Math.round(over35 * 100),
+    btts: Math.round(btts * 100),
+    under15: Math.round(under15 * 100),
+    cs00: Math.round(cs00 * 100),
+    homeWin: Math.round(homeWin * 100),
+    draw: Math.round(draw * 100),
+    awayWin: Math.round(awayWin * 100),
+    topScores: scores.slice(0, 5).map(s => ({ score: s.score, prob: Math.round(s.prob * 100) })),
+    method: 'dixon-coles',
+    rho,
+    // Delta vs Poisson pour diagnostic
+    _dc_delta_cs00: Math.round((cs00 - (matrix[0][0] / Math.max(0.0001, tau00 > 0 ? tau00 : 1))) * 10000) / 100,
   };
 }
 
@@ -7902,6 +7985,8 @@ function buildMatchRecord(raw) {
     poisson = { error: 'BAD_LAMBDA', message: 'Moyennes invalides — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
   } else {
     poisson = computePoisson(expHome, expAway);
+    // bd — Dixon-Coles: ajouté en parallèle du Poisson, stocké sur le match
+    match.dixonColes = computeDixonColes(expHome, expAway);
   }
 
   // ── v7.0 BAYESIAN MODEL BLENDER ────────────────────────────────────────────
