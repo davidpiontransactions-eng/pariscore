@@ -20427,61 +20427,80 @@ async function pollTennisLive() {
           const drGapAbs    = Math.abs(drGapSigned);
           if (drGapAbs < _DR_DIFF_THR) continue;
 
-          // ── Alerte domination + cote ≤ 1.30 → webhook dédié (scope RG + Challengers) ──
-          {
-            // Scope : Roland Garros + ATP/WTA Challengers uniquement
-            const _tnTour = (m.tour       || '').toUpperCase();
-            const _tnDisc = (m.discipline || '').toUpperCase();
-            const _tnName = (m.tournament || '').toUpperCase();
-            const _isRGorChallenger = (
-              /ROLAND.?GARROS|FRENCH.?OPEN/.test(_tnName) ||
-              /CHALLENGER/.test(_tnDisc)                   ||
-              /CHALLENGER/.test(_tnTour)                   ||
-              /CHALLENGER/.test(_tnName)                   ||
-              (/GRAND.?SLAM/.test(_tnDisc) && /ATP|WTA/.test(_tnTour))
-            );
-            if (!_isRGorChallenger) { /* hors scope — UTR/ITF/250/500 exclus */ }
-            else {
-            const _dominSide    = drGapSigned > 0 ? 'p1' : 'p2';
-            const _dominantName = _dominSide === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
-            const _dominantOdds = _dominSide === 'p1' ? m.odds_player1 : m.odds_player2;
-            if (_dominantOdds != null && Number.isFinite(_dominantOdds) && _dominantOdds <= 1.3) {
-              const _oddsKey = `tndr_odds13:${m.id}`;
-              if (!_tnAlertOnCooldown(_oddsKey, 5 * 60 * 1000)) {
-                _tnAlertMark(_oddsKey);
-                const _ls  = `${m.player1_sets || 0}-${m.player2_sets || 0}`;
-                const _p1s = Number.isFinite(drBase2?.p1_serve) ? drBase2.p1_serve.toFixed(2) : '–';
-                const _p1r = Number.isFinite(drBase2?.p1_ret)   ? drBase2.p1_ret.toFixed(2)   : '–';
-                const _p2s = Number.isFinite(drBase2?.p2_serve) ? drBase2.p2_serve.toFixed(2) : '–';
-                const _p2r = Number.isFinite(drBase2?.p2_ret)   ? drBase2.p2_ret.toFixed(2)   : '–';
-                const _oddsEmbed = {
-                  title: `🎯 DOMINATION + COTE ≤ 1.30 — ${_dominantName}`,
-                  description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Sets ${_ls}`,
-                  color: 0xFFD700,
-                  fields: [
-                    { name: `🎯 ${m.player1?.name || 'J1'}`, value: `Serve: **${_p1s}**\nReturn: **${_p1r}**`, inline: true },
-                    { name: `🎯 ${m.player2?.name || 'J2'}`, value: `Serve: **${_p2s}**\nReturn: **${_p2r}**`, inline: true },
-                    { name: '​', value: '​', inline: true },
-                    { name: '📊 Ratio DR',   value: `**${Number.isFinite(drBase2?.dr) ? drBase2.dr.toFixed(2) : '–'}**`, inline: true },
-                    { name: '⚡ Écart DR',   value: `**${drGapAbs.toFixed(2)}**`,                                        inline: true },
-                    { name: '🏆 Dominant',   value: `**${_dominantName}**`,                                               inline: true },
-                    { name: '💰 Cote match', value: `**${_dominantOdds.toFixed(2)}** ≤ 1.30 ✅`,                         inline: true },
-                    { name: '🎾 Court',      value: m.court      || 'N/A',                                                inline: true },
-                    { name: '🏟️ Tournoi',    value: m.tournament || 'N/A',                                                inline: true },
-                  ],
-                  footer: { text: `Domination DR + Cote≤1.30 | src:${_drSrc} | Seuil DR ${_DR_DIFF_THR} | Cooldown 5min | ${m.tournament}` },
-                  timestamp: new Date().toISOString(),
-                };
-                if (DISCORD_TENNIS_DOMINATION_ODDS_URL) {
-                  httpsPost(DISCORD_TENNIS_DOMINATION_ODDS_URL, { embeds: [_oddsEmbed] })
-                    .catch(e => console.warn('  [Tennis:DomOdds13]', e.message));
+          // ── Alerte DOMINATION REELLE : DR_individuel = ret% / (100-serve%) >= 1.2 + cote <= 1.30 ──
+          // Scope : RG + ATP/WTA Challengers + UTR. Independant du gate drGapAbs ci-dessous.
+          try {
+            const _p1sN = Number(drBase2?.p1_serve);
+            const _p1rN = Number(drBase2?.p1_ret);
+            const _p2sN = Number(drBase2?.p2_serve);
+            const _p2rN = Number(drBase2?.p2_ret);
+            // DR individuel = (% pts gagnes en retour) / (% pts perdus au service)
+            //               = ret_won% / (100 - serve_won%)
+            const _drI_p1 = (Number.isFinite(_p1sN) && Number.isFinite(_p1rN) && _p1sN < 100)
+              ? _p1rN / (100 - _p1sN) : null;
+            const _drI_p2 = (Number.isFinite(_p2sN) && Number.isFinite(_p2rN) && _p2sN < 100)
+              ? _p2rN / (100 - _p2sN) : null;
+            const _DOM_REAL_THR = 1.2;
+            const _p1Dom = _drI_p1 != null && _drI_p1 >= _DOM_REAL_THR;
+            const _p2Dom = _drI_p2 != null && _drI_p2 >= _DOM_REAL_THR;
+            if (_p1Dom || _p2Dom) {
+              const _tnTour2 = (m.tour       || '').toUpperCase();
+              const _tnDisc2 = (m.discipline || '').toUpperCase();
+              const _tnName2 = (m.tournament || '').toUpperCase();
+              const _inScope = (
+                /ROLAND.?GARROS|FRENCH.?OPEN/.test(_tnName2)               ||
+                /CHALLENGER/.test(_tnDisc2) || /CHALLENGER/.test(_tnTour2) ||
+                /CHALLENGER/.test(_tnName2) || /UTR/.test(_tnName2)        ||
+                /UTR/.test(_tnTour2)        || /UTR/.test(_tnDisc2)        ||
+                (/GRAND.?SLAM/.test(_tnDisc2) && /ATP|WTA/.test(_tnTour2))
+              );
+              if (_inScope) {
+                const _dSide = (_p1Dom && (!_p2Dom || (_drI_p1 ?? 0) >= (_drI_p2 ?? 0))) ? 'p1' : 'p2';
+                const _dName = _dSide === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
+                const _dOdds = _dSide === 'p1' ? m.odds_player1 : m.odds_player2;
+                const _dDR   = _dSide === 'p1' ? _drI_p1 : _drI_p2;
+                if (_dOdds != null && Number.isFinite(_dOdds) && _dOdds <= 1.3) {
+                  const _ok = `tndr_odds13:${m.id}`;
+                  if (!_tnAlertOnCooldown(_ok, 5 * 60 * 1000)) {
+                    _tnAlertMark(_ok);
+                    const _ls   = `${m.player1_sets || 0}-${m.player2_sets || 0}`;
+                    const _p1sS = Number.isFinite(_p1sN) ? _p1sN.toFixed(1) + '%' : '--';
+                    const _p1rS = Number.isFinite(_p1rN) ? _p1rN.toFixed(1) + '%' : '--';
+                    const _p2sS = Number.isFinite(_p2sN) ? _p2sN.toFixed(1) + '%' : '--';
+                    const _p2rS = Number.isFinite(_p2rN) ? _p2rN.toFixed(1) + '%' : '--';
+                    const _d1S  = _drI_p1 != null ? _drI_p1.toFixed(3) : '--';
+                    const _d2S  = _drI_p2 != null ? _drI_p2.toFixed(3) : '--';
+                    const _dDRS = Number.isFinite(_dDR)  ? _dDR.toFixed(3)  : '--';
+                    const _emb  = {
+                      title: `🎯 DOMINATION REELLE DR>=1.20 + COTE<=1.30`,
+                      description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Sets ${_ls}`,
+                      color: 0xFFD700,
+                      fields: [
+                        { name: `🎯 ${m.player1?.name || 'J1'}`, value: `Serve: **${_p1sS}** | Return: **${_p1rS}**
+DR = **${_d1S}**${_p1Dom ? ' ✅ >=1.20' : ''}`, inline: true },
+                        { name: `🎯 ${m.player2?.name || 'J2'}`, value: `Serve: **${_p2sS}** | Return: **${_p2rS}**
+DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.20' : ''}`, inline: true },
+                        { name: '​', value: '​', inline: true },
+                        { name: '🏆 Dominant',   value: `**${_dName}**`,                      inline: true },
+                        { name: '💰 Cote match', value: `**${_dOdds.toFixed(2)}** <=1.30 ✅`, inline: true },
+                        { name: '📐 DR reel',    value: `**${_dDRS}** >=1.20 ✅`,           inline: true },
+                        { name: '🎾 Court',      value: m.court      || 'N/A',                 inline: true },
+                        { name: '🏟 Tournoi',    value: m.tournament || 'N/A',                 inline: true },
+                        { name: '📡 Src DR',     value: _drSrc,                               inline: true },
+                      ],
+                      footer: { text: `DR=ret%/(100-serv%) | seuil >=1.20 + cote<=1.30 | Cooldown 5min | ${m.tournament}` },
+                      timestamp: new Date().toISOString(),
+                    };
+                    if (DISCORD_TENNIS_DOMINATION_ODDS_URL) {
+                      httpsPost(DISCORD_TENNIS_DOMINATION_ODDS_URL, { embeds: [_emb] })
+                        .catch(e => console.warn('  [Tennis:DomOdds13]', e.message));
+                    }
+                    console.log(`  [Tennis:DomOdds13] ${m.id} dominant=${_dName} DR=${_dDRS} cote=${_dOdds.toFixed(2)}`);
+                  }
                 }
-                console.log(`  [Tennis:DomOdds13] ${m.id} dominant=${_dominantName} cote=${_dominantOdds.toFixed(2)} gap=${drGapAbs.toFixed(2)}`);
               }
             }
-            } // end else _isRGorChallenger
-          }
-          // ─────────────────────────────────────────────────────────────────────
+          } catch (_eDom) { /* swallow */ }
 
           // Cooldown 5 min par match — time-based, pas value-based (alert re-fire si DR stable)
           if (_tnAlertOnCooldown(`tndr_diff:${m.id}`, 5 * 60 * 1000)) continue;
