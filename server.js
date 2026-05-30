@@ -17828,7 +17828,7 @@ const STRATEGIES = {
       const under35 = 100 - m.poisson.over35;
       if (under35 < 80) return null;
       const isReal = m.stats?.home?._real === true && m.stats?.away?._real === true;
-      const bothDefensive = isReal && m.stats.home.avgConceded < 1.2 && m.stats.away.avgConceded < 1.2;
+      const bothDefensive = isReal && (m.stats?.home?.avgConceded ?? 999) < 1.2 && (m.stats?.away?.avgConceded ?? 999) < 1.2;
       return bothDefensive ? Math.min(under35 + 5, 99) : under35;
     },
     getOdds: () => null,
@@ -20273,7 +20273,7 @@ async function pollTennisLive() {
             ``,
             `DR ${escTg(m.player1?.name || 'J1')}: Serve <b>${p1Serve}</b> | Ret <b>${p1Ret}</b>`,
             `DR ${escTg(m.player2?.name || 'J2')}: Serve <b>${p2Serve}</b> | Ret <b>${p2Ret}</b>`,
-            `Ratio DR: <b>${drBase2.dr.toFixed(2)}</b> | Écart: <b>${drGapAbs.toFixed(2)}</b>`,
+            `Ratio DR: <b>${Number.isFinite(drBase2?.dr) ? drBase2.dr.toFixed(2) : '–'}</b> | Écart: <b>${Number.isFinite(drGapAbs) ? drGapAbs.toFixed(2) : '–'}</b>`,
             `→ <b>${escTg(dominant)}</b> domine ${escTg(dominated)}${setBonus}`,
           ].filter(Boolean).join('\n');
 
