@@ -2948,7 +2948,13 @@ function buildUnifiedTennis(vb){
   var base=(Array.isArray(vb)?vb:[]).map(function(m){
     var k=_tnPairKey(m);var lo=liveIdx.get(k);
     if(!lo){lo=liveIdxLast.get(_tnPairKeyLast(m));if(lo)k=_tnPairKey(lo);}
-    if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;}else{m._live=null;m._isLive=false;}
+    if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;
+      // Copy model fields from enriched live data (Glicko-2, momentum, odds)
+      if (lo.glicko2) m.glicko2 = lo.glicko2;
+      if (lo.momentum) m.momentum = lo.momentum;
+      if (lo.odds_player1 != null) m.odds_player1 = lo.odds_player1;
+      if (lo.odds_player2 != null) m.odds_player2 = lo.odds_player2;
+    }else{m._live=null;m._isLive=false;}
     // Réhydratation AVANT le store : récupère snapshot pré-live avant écrasement
     // par cycle dégradé (serveur drop predictions/elo/best_ev_model une fois match
     // live). _tnApplySnapshot n'écrase que les champs null — safe sur update légitimes.
@@ -2965,7 +2971,9 @@ function buildUnifiedTennis(vb){
   });
   liveIdx.forEach(function(lo,k){
     if(used.has(k)||lo.is_live!==true)return;
-    var row={id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true};
+    var row={id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true,
+      glicko2: lo.glicko2 || null, momentum: lo.momentum || null,
+      odds_player1: lo.odds_player1, odds_player2: lo.odds_player2};
     // Live-only : pas de paire vb → réinjecte le snapshot prematch (Conseils
     // IA, PowerScore, Forme, Elo, predictions, set_model, confidence_badge).
     try {
@@ -10294,6 +10302,7 @@ const label = country
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
           : ''}
         ${formatTopScores(m.poisson?.topScores, 3)}
+        ${m.dixonColes?.method === 'dixon-coles' ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--blue);margin-top:1px;">DC: O25 ${m.dixonColes.over25}% · BTTS ${m.dixonColes.btts}% · CS0-0 ${m.dixonColes.cs00}% ${m.dixonColes.rho ? '(ρ='+m.dixonColes.rho+')' : ''}</div>` : ''}
         ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}</td>
       <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
         ${renderOddsDeltaCell(m)}${renderSharpMoneySignal(m)}
