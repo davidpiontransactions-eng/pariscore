@@ -18540,6 +18540,26 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/cs2/map-model?team1=Vitality&team2=FaZe&map=Mirage[&rankWindow=15]
+  if (pathname === '/api/v1/cs2/map-model' && req.method === 'GET') {
+    const t1 = (query.team1 || '').trim();
+    const t2 = (query.team2 || '').trim();
+    const map = (query.map || '').trim();
+    const rankWindow = parseInt(query.rankWindow || '15', 10);
+    if (!t1 || !t2 || !map) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'team1, team2, map required' }));
+    }
+    try {
+      const model = await cs2Service.computeMapOverModel(t1, t2, map, rankWindow);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, model }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, model: null }));
+    }
+  }
+
   // GET /api/v1/cs2/stickers  (ByMykel — team name → sticker image index)
   if (pathname === '/api/v1/cs2/stickers' && req.method === 'GET') {
     try {
@@ -40703,6 +40723,9 @@ cs2Service.getCs2Matches(BSD_API_KEY).catch(e => console.warn('[CS2 bootstrap]',
 // Preload ByMykel static data (no auth, cached 1h/24h)
 cs2Service.fetchHighlights().catch(e => console.warn('[CS2/Highlights bootstrap]', e.message));
 cs2Service.fetchTeamStickers().catch(e => console.warn('[CS2/Stickers bootstrap]', e.message));
+// Preload csapi.de match history for Over Rounds model (6h cache)
+cs2Service.fetchCsApiMatches().catch(e => console.warn('[CS2/OverModel bootstrap]', e.message));
+cs2Service.fetchCsApiRankings().catch(e => console.warn('[CS2/Rankings bootstrap]', e.message));
 console.log('  [CS2] poll armé — 30 s interval');
 
 // Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)

@@ -24048,6 +24048,43 @@ function renderComparateur(d) {
     return null;
   }
 
+  // ── Over Rounds model async fetch ────────────────────────────────────────
+  var _cs2ModelCache = {}; // key → model result
+  function _fetchMapOverModel(matchId, t1, t2, map, domId) {
+    var cacheKey = t1 + '|' + t2 + '|' + map;
+    if (_cs2ModelCache[cacheKey] !== undefined) {
+      _renderModelInDom(domId, _cs2ModelCache[cacheKey]);
+      return;
+    }
+    var url = '/api/v1/cs2/map-model?team1=' + encodeURIComponent(t1) +
+              '&team2=' + encodeURIComponent(t2) +
+              '&map=' + encodeURIComponent(map);
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var model = j && j.model ? j.model : null;
+        _cs2ModelCache[cacheKey] = model;
+        _renderModelInDom(domId, model);
+      }).catch(function () {
+        _cs2ModelCache[cacheKey] = null;
+        var el = document.getElementById(domId);
+        if (el) el.style.display = 'none';
+      });
+  }
+
+  function _renderModelInDom(domId, model) {
+    var el = document.getElementById(domId);
+    if (!el) return;
+    if (!model) { el.style.display = 'none'; return; }
+    var signalCls = model.signal === 'OVER' ? 'cs2-signal-over' : 'cs2-signal-under';
+    var confColor = model.confidence === 'HIGH' ? '#00e676' : model.confidence === 'MED' ? '#ffa726' : '#8d9399';
+    el.style.opacity = '1';
+    el.innerHTML =
+      '<span style="color:var(--text3);font-size:9px;">moy ' + model.predicted + ' rds</span> ' +
+      '<span class="' + signalCls + '">' + model.signal + ' ' + model.line + '</span> ' +
+      '<span style="font-size:9px;color:' + confColor + ';">' + model.confidence + '</span>';
+  }
+
   // ── Highlight lookup ─────────────────────────────────────────────────────
   function _cs2FindHighlights(t1name, t2name) {
     if (!_cs2Highlights.length) return [];
@@ -24189,16 +24226,22 @@ function renderComparateur(d) {
       }
     }
 
-    // ── Map bar ──────────────────────────────────────────────────────────
+    // ── Map bar + Over Rounds model ───────────────────────────────────────
     var mapBarHtml = '';
     if (m.current_map) {
       var valueFlag = (mapAdv && mapAdv.value_flag)
         ? '<span class="cs2-value-flag">' + _esc(mapAdv.value_flag) + '</span>' : '';
       var mapNumTag = m.map_number
         ? '<span class="cs2-map-num" style="margin-left:4px;opacity:.6;">M' + m.map_number + '</span>' : '';
+      // Over model — fetched async, injected by data-model-id
+      var modelId = 'cs2-model-' + _esc(m.id);
       mapBarHtml = '<div class="cs2-map-bar">' +
         '<span class="cs2-map-label">🗺 ' + _esc(m.current_map) + '</span>' +
-        mapNumTag + valueFlag + '</div>';
+        mapNumTag + valueFlag +
+        '<span class="cs2-over-model" id="' + modelId + '" style="margin-left:auto;opacity:.5;font-size:10px;">…</span>' +
+        '</div>';
+      // Async fetch model (non-blocking)
+      _fetchMapOverModel(m.id, m.team1.name, m.team2.name, m.current_map, modelId);
     }
 
     // ── Odds ─────────────────────────────────────────────────────────────
