@@ -2548,6 +2548,31 @@ async function bsdGetPlayerDetail(playerId) {
 // v3.2 — Player Skill Cache + helpers ─────────────────────────────────────────
 const playerSkillCache = new Map(); // Map<playerId, {data, ts}>
 const PLAYER_SKILL_TTL = 6 * 60 * 60 * 1000; // 6h
+// Per-player attribute indices — populated by fetchBSDTeamSquad + fetchBSDPlayerRatings
+// Squad endpoint has real per-player attributes; stats endpoint has performance data for derivation
+const playerSquadAttrIndex = new Map(); // playerId → {attributes, strengths, weaknesses, specific_position}
+const playerStatsIndex = new Map();     // playerId → aggregated stats object
+
+function deriveAttributesFromStats(stats) {
+  const matches = stats.matches || 1;
+  const rating = Math.min(10, Math.max(0, stats.avg_rating || 6.0));
+  const goalsPerMatch = (stats.goals || 0) / matches;
+  const assistsPerMatch = (stats.assists || 0) / matches;
+  const xgPerMatch = (stats.xg || 0) / matches;
+  const xaPerMatch = (stats.xa || 0) / matches;
+  const keyPassesPerMatch = (stats.key_passes || 0) / matches;
+  const shotsPerMatch = (stats.shots_on_target || 0) / matches;
+  const ratingBase = Math.round((rating / 10) * 80);
+  const pos = String(stats.position || stats.specific_position || '').toUpperCase();
+  const defBase = pos.startsWith('G') ? 72 : pos.startsWith('D') ? 76 : pos.startsWith('M') ? 50 : 24;
+  return {
+    attacking:  Math.min(99, Math.max(1, Math.round(ratingBase * 0.5 + goalsPerMatch * 200 + xgPerMatch * 80 + shotsPerMatch * 15))),
+    technical:  Math.min(99, Math.max(1, Math.round(ratingBase * 0.65 + keyPassesPerMatch * 70 + xaPerMatch * 60 + assistsPerMatch * 30))),
+    tactical:   Math.min(99, Math.max(1, Math.round(ratingBase * 0.75 + rating * 1.5))),
+    defending:  Math.min(99, Math.max(1, Math.round(defBase + ratingBase * 0.1))),
+    creativity: Math.min(99, Math.max(1, Math.round(ratingBase * 0.4 + xaPerMatch * 110 + keyPassesPerMatch * 55 + assistsPerMatch * 45))),
+  };
+}
 
 function cleanTraits(arr) {
   if (!Array.isArray(arr)) return [];
@@ -13502,6 +13527,16 @@ async function fetchBSDTeamSquad(bsdTeamId) {
       market_value: p.market_value || null,
     }));
     apiCacheSet(cacheKey, squad, 'bsd_squad');
+    for (const p of squad) {
+      if (p.id && p.attributes) {
+        playerSquadAttrIndex.set(p.id, {
+          attributes: p.attributes,
+          strengths: p.strengths || [],
+          weaknesses: p.weaknesses || [],
+          specific_position: p.specific_position || null,
+        });
+      }
+    }
     return squad;
   } catch (e) {
     console.warn(`  [BSD] fetchTeamSquad ${bsdTeamId} erreur:`, e.message);
@@ -13603,6 +13638,9 @@ async function fetchBSDPlayerRatings(bsdTeamId, bsdSeasonId) {
       return { ...rest, avg_rating: avg, xg: Math.round(p.xg * 100) / 100, xa: Math.round(p.xa * 100) / 100 };
     }).sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
     apiCacheSet(cacheKey, ratings, 'bsd_ratings');
+    for (const r of ratings) {
+      if (r.id) playerStatsIndex.set(r.id, r);
+    }
     return ratings;
   } catch (e) {
     console.warn(`  [BSD] fetchPlayerRatings ${bsdTeamId} erreur:`, e.message);
@@ -34324,16 +34362,25 @@ if (pathname.startsWith('/api/v1/bsd/player-skill/') && req.method === 'GET') {
     const r = await bsdFetch(`/players/${playerId}/`);
     const p = r.data;
     if (!p) return jsonResponse(res, 404, { error: 'player_not_found' });
+    // Priority: squad-endpoint attributes (real per-player) > BSD individual endpoint > derived from stats
+    const squadEntry = playerSquadAttrIndex.get(playerId);
+    let resolvedAttributes = squadEntry?.attributes || p.attributes || null;
+    let resolvedStrengths = cleanTraits(p.strengths?.length ? p.strengths : squadEntry?.strengths);
+    let resolvedWeaknesses = cleanTraits(p.weaknesses?.length ? p.weaknesses : squadEntry?.weaknesses);
+    if (!resolvedAttributes) {
+      const statsEntry = playerStatsIndex.get(playerId);
+      if (statsEntry) resolvedAttributes = deriveAttributesFromStats(statsEntry);
+    }
     const payload = {
       id: p.id,
       name: p.name,
       short_name: p.short_name || p.name,
       position: p.position,
-      specific_position: p.specific_position || null,
+      specific_position: p.specific_position || squadEntry?.specific_position || null,
       availability: p.availability || 'available',
-      attributes: p.attributes || null,
-      strengths: cleanTraits(p.strengths),
-      weaknesses: cleanTraits(p.weaknesses),
+      attributes: resolvedAttributes,
+      strengths: resolvedStrengths,
+      weaknesses: resolvedWeaknesses,
       nationality: p.nationality || null,
       market_value_eur: p.market_value_eur || null,
       cached: false,
