@@ -10494,6 +10494,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   <div class="nav-links">
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Soccer%20ball/3D/soccer_ball_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-football.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚽</span>';}" alt="Icone Football PariScore" loading="lazy" />Football</a>
     <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Tennis/3D/tennis_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-tennis.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎾</span>';}" alt="Icone Tennis PariScore" loading="lazy" />Tennis</a>
+    <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2"><span style="font-size:18px;line-height:1;vertical-align:middle;">🎮</span>CS2</a>
     <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Globe%20Showing%20Americas/3D/globe_showing_americas_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-world.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🌎</span>';}" alt="Coupe du Monde 2026" loading="lazy" />CdM 2026</a>
     <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Trophy/3D/trophy_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-trophy.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🏆</span>';}" alt="Icone Roland Garros trophée terre battue" loading="lazy" />Roland Garros</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Bullseye/3D/bullseye_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-strategy.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎯</span>';}" alt="Icone Top Stratégies PariScore" loading="lazy" />Top Stratégies</a>
@@ -10526,6 +10527,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </a>
   <a href="#" data-page="tennis" onclick="bnGo('tennis',this);return false;">
     <span class="bn-lbl">Tennis</span>
+  </a>
+  <a href="#" data-page="cs2" onclick="bnGo('cs2',this);return false;">
+    <span class="bn-lbl">🎮 CS2</span>
   </a>
   <a href="#" data-page="strategies" onclick="bnGo('strategies',this);return false;">
     <span class="bn-lbl">Stratégies</span>
@@ -18291,6 +18295,108 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 </section>
 </div>
 
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAGE : CS2 / Counter-Strike 2
+     Source BSD CSGO addon + HLTV rankings (fallback-safe)
+     ══════════════════════════════════════════════════════════════ -->
+<div id="page-cs2" data-page="cs2" style="display:none;">
+<style>
+/* ── CS2 Tab Styles ─────────────────────────────────────────── */
+#page-cs2 { padding-top: 4px; }
+.cs2-header { padding: 18px 16px 0; max-width: 1200px; margin: 0 auto; }
+.cs2-title { font-family: Syne,sans-serif; font-weight: 800; font-size: 26px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+.cs2-badge-live { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,107,0,0.12); border: 1px solid rgba(255,107,0,0.35); border-radius: 20px; padding: 2px 8px; font-family:'DM Mono',monospace; font-size: 10px; font-weight: 700; color: #FF6B00; text-transform: uppercase; }
+.cs2-badge-live .cs2-ldot { width: 5px; height: 5px; border-radius: 50%; background: #FF6B00; animation: cs2pulse 1.2s ease-in-out infinite; }
+@keyframes cs2pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }
+.cs2-subtitle { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.06em; }
+.cs2-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 16px 16px; max-width: 1200px; }
+.cs2-pill { display: inline-flex; align-items: center; gap: 4px; padding: 5px 13px; border-radius: 20px; border: 1px solid var(--bg4,#1e2328); background: var(--bg2,#111417); color: var(--text2,#8d9399); font-family:'Instrument Sans',sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.cs2-pill.active, .cs2-pill:focus-visible { background: #FF6B00; border-color: #FF6B00; color: #fff; }
+.cs2-pill:hover:not(.active) { border-color: #FF6B00; color: #FF6B00; }
+.cs2-refresh-btn { margin-left: auto; padding: 6px 13px; background: var(--bg3,#181c20); color: var(--text,#e8eaed); border: 1px solid var(--bg4,#1e2328); border-radius: 6px; cursor: pointer; font-family:'Instrument Sans',sans-serif; font-size: 12px; }
+.cs2-refresh-btn:hover { border-color: #FF6B00; }
+/* Grid */
+.cs2-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; padding: 0 16px 96px; max-width: 1200px; margin: 0 auto; }
+/* Card */
+.cs2-card { background: var(--bg2,#111417); border: 1px solid var(--bg4,#1e2328); border-radius: 10px; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; }
+.cs2-card:hover { border-color: rgba(255,107,0,0.35); box-shadow: 0 2px 12px rgba(255,107,0,0.07); }
+.cs2-card.is-live { border-color: rgba(255,107,0,0.5); }
+/* Card Header */
+.cs2-card-head { display: flex; align-items: center; gap: 8px; padding: 7px 11px; background: var(--bg3,#181c20); border-bottom: 1px solid var(--bg4,#1e2328); min-height: 32px; }
+.cs2-tour-logo { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; flex-shrink: 0; }
+.cs2-tour-name { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.04em; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs2-format { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); padding: 2px 6px; border: 1px solid var(--bg4,#1e2328); border-radius: 4px; white-space: nowrap; }
+.cs2-live-pill { display: inline-flex; align-items: center; gap: 3px; font-family:'DM Mono',monospace; font-size: 9px; font-weight: 700; color: #FF6B00; white-space: nowrap; }
+.cs2-live-pill .cs2-ldot { width: 5px; height: 5px; border-radius: 50%; background: #FF6B00; animation: cs2pulse 1.2s ease-in-out infinite; }
+/* VS row */
+.cs2-vs-row { display: flex; align-items: center; gap: 8px; padding: 14px 12px 10px; }
+.cs2-team { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+.cs2-team.t2 { flex-direction: row-reverse; text-align: right; }
+.cs2-team-logo-wrap { width: 38px; height: 38px; flex-shrink: 0; background: var(--bg3,#181c20); border-radius: 7px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.cs2-team-logo { width: 32px; height: 32px; object-fit: contain; }
+.cs2-team-info { min-width: 0; }
+.cs2-team-name { font-family:'Instrument Sans',sans-serif; font-weight: 700; font-size: 13px; color: var(--text,#e8eaed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs2-hltv { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-top: 1px; }
+.cs2-center { text-align: center; flex-shrink: 0; min-width: 56px; }
+.cs2-map-score { font-family:'DM Mono',monospace; font-size: 24px; font-weight: 700; color: var(--text,#e8eaed); letter-spacing: -1px; line-height: 1; }
+.cs2-round-score { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-top: 3px; white-space: nowrap; }
+.cs2-vs-txt { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); }
+/* Map bar */
+.cs2-map-bar { display: flex; align-items: center; gap: 6px; background: var(--bg3,#181c20); border-radius: 6px; margin: 0 12px 10px; padding: 6px 10px; }
+.cs2-map-label { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text2,#8d9399); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.cs2-map-num { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); }
+.cs2-value-flag { font-family:'DM Mono',monospace; font-size: 10px; font-weight: 700; color: #00e676; margin-left: auto; }
+/* Footer */
+.cs2-card-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--bg4,#1e2328); flex-wrap: wrap; gap: 6px; }
+.cs2-odds-row { display: flex; gap: 5px; }
+.cs2-odd { font-family:'DM Mono',monospace; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 5px; border: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); color: var(--text2,#8d9399); cursor: default; white-space: nowrap; }
+.cs2-odd.best { border-color: rgba(0,230,118,0.4); color: #00e676; background: rgba(0,230,118,0.06); }
+.cs2-time { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); }
+/* Status */
+#cs2-status-bar { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); padding: 0 16px 8px; max-width: 1200px; margin: 0 auto; }
+/* Empty / skeleton */
+.cs2-empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; }
+.cs2-empty-icon { font-size: 52px; margin-bottom: 12px; }
+.cs2-empty-msg { font-family:'Instrument Sans',sans-serif; font-size: 16px; color: var(--text2,#8d9399); margin-bottom: 6px; }
+.cs2-empty-sub { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); }
+.cs2-skel { background: linear-gradient(90deg, var(--bg2,#111417) 0%, var(--bg3,#181c20) 50%, var(--bg2,#111417) 100%); background-size: 200% 100%; animation: cs2shim 1.4s linear infinite; border-radius: 6px; height: 120px; }
+@keyframes cs2shim { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+@media (max-width: 600px) {
+  .cs2-grid { grid-template-columns: 1fr; padding: 0 8px 96px; }
+  .cs2-map-score { font-size: 20px; }
+}
+</style>
+
+  <!-- Header -->
+  <div class="cs2-header fade-up">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+      <h2 class="cs2-title">🎮 Counter-Strike 2</h2>
+      <span id="cs2-live-badge" class="cs2-badge-live" style="display:none;">
+        <span class="cs2-ldot"></span>LIVE
+      </span>
+    </div>
+    <p class="cs2-subtitle">Matchs live &amp; à venir · BSD CSGO · HLTV Rankings · Map Advantage</p>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="cs2-toolbar">
+    <button class="cs2-pill active" data-cs2f="all"      onclick="setCs2Filter('all',this)">⬛ Tous</button>
+    <button class="cs2-pill"        data-cs2f="live"     onclick="setCs2Filter('live',this)">🔴 Live</button>
+    <button class="cs2-pill"        data-cs2f="prematch" onclick="setCs2Filter('prematch',this)">📅 À venir</button>
+    <button class="cs2-refresh-btn" onclick="cs2ForceRefresh()">🔄 Actualiser</button>
+  </div>
+
+  <!-- Status -->
+  <div id="cs2-status-bar"></div>
+
+  <!-- Match grid -->
+  <div id="cs2-grid" class="cs2-grid">
+    <div class="cs2-skel"></div>
+    <div class="cs2-skel"></div>
+    <div class="cs2-skel"></div>
+  </div>
+</div>
 
 <!-- ============================================================
      SPRINT 1 P0 — JS bootstrap (Mode Dual + Tennis Accordion)
