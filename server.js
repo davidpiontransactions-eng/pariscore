@@ -14055,7 +14055,7 @@ async function handleCornersRoute(res, matchId) {
       } : 'No data — using league average',
       prediction,
       recommendations: Object.entries(prediction.probabilities)
-        .map(([k, v]) => ({ market: k.replace('_', ' over ').replace('over ', 'Over '), probability: v, recommended: v >= 60 }))
+        .map(([k, v]) => ({ market: k.replace(/over_(\d+)_(\d+)/, 'Over $1.$2'), probability: v, recommended: v >= 60 }))
         .sort((a, b) => b.probability - a.probability),
       source: 'bsd',
       generated_at: new Date().toISOString(),

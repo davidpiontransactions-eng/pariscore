@@ -13894,18 +13894,20 @@ async function buildCornersTab(matchId) {
     const pred = d.prediction || {};
     const probs = pred.probabilities || {};
     const recs = d.recommendations || [];
-    const homeH = d.home_corner_history;
-    const awayH = d.away_corner_history;
+    const homeH = typeof d.home_corner_history === 'object' && d.home_corner_history !== null
+      ? d.home_corner_history : null;
+    const awayH = typeof d.away_corner_history === 'object' && d.away_corner_history !== null
+      ? d.away_corner_history : null;
 
     const probBar = (pct) => {
       const color = pct >= 65 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-      return `<div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;"></div>
+      return `<div style="flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .4s"></div>
       </div>`;
     };
 
     const probRows = Object.entries(probs).map(([k, v]) => {
-      const label = k.replace('over_', 'Over ').replace('_', '.');
+      const label = k.replace(/over_(\d+)_(\d+)/, 'Over $1.$2');
       return `<div class="cr-prob-row">
         <div class="cr-prob-label">${label}</div>
         ${probBar(v)}
@@ -13913,9 +13915,12 @@ async function buildCornersTab(matchId) {
       </div>`;
     }).join('');
 
+    const fmtCrMkt = s => typeof s === 'string'
+      ? s.replace(/^(?:Over\s+)?over[\s_](\d+)[_.](\d+)$/i, 'Over $1.$2')
+      : s;
     const recCards = recs.length ? recs.map(r => `
       <div class="cr-rec-card ${r.recommended ? 'cr-rec-yes' : 'cr-rec-no'}">
-        <div class="cr-rec-market">${r.market}</div>
+        <div class="cr-rec-market">${fmtCrMkt(r.market)}</div>
         <div class="cr-rec-prob">${r.probability}%</div>
         ${r.recommended
           ? '<span class="cr-rec-badge">✓ Value</span>'
@@ -13923,45 +13928,63 @@ async function buildCornersTab(matchId) {
       </div>
     `).join('') : '<div style="color:var(--text3);font-size:11px;">Aucune recommandation.</div>';
 
-    const histBlock = (label, hist) => {
-      if (!hist || typeof hist !== 'object') return '';
-      return `<div class="cr-hist-block">
-        <div class="cr-hist-label">${label}</div>
-        <div class="cr-hist-stats">
-          <div class="cr-hist-stat"><span class="cr-hist-val">${hist.avg_corners_per_match?.toFixed(1) || '—'}</span><span class="cr-hist-unit">corners/match</span></div>
-          <div class="cr-hist-stat"><span class="cr-hist-val">${hist.avg_corners_for?.toFixed(1) || '—'}</span><span class="cr-hist-unit">pour</span></div>
-          <div class="cr-hist-stat"><span class="cr-hist-val">${hist.avg_corners_against?.toFixed(1) || '—'}</span><span class="cr-hist-unit">contre</span></div>
-          <div class="cr-hist-stat"><span class="cr-hist-val">${hist.matches_sample || 0}</span><span class="cr-hist-unit">matchs</span></div>
+    const maxTotal = 12, maxFA = 8;
+    const crPct = (v, max) => Math.min(100, Math.max(0, ((parseFloat(v) || 0) / max) * 100)).toFixed(1);
+    const statRow = (lbl, val, p, color) =>
+      `<div class="cr-stat-row">
+        <span class="cr-stat-lbl">${lbl}</span>
+        <div class="cr-stat-bar-wrap"><div class="cr-stat-bar" style="width:${p}%;background:${color}"></div></div>
+        <span class="cr-stat-val">${val}</span>
+      </div>`;
+
+    const teamBlock = (hist, name, isAway) => {
+      const cls = `cr-team-col${isAway ? ' cr-team-away' : ''}`;
+      if (!hist) return `<div class="${cls}">
+        <div class="cr-team-name">${name}</div>
+        <div class="cr-no-data">Estimation<br>ligue moy.</div>
+      </div>`;
+      const total = safeFixed(hist.avg_corners_per_match, 1);
+      const forC  = safeFixed(hist.avg_corners_for, 1);
+      const agst  = safeFixed(hist.avg_corners_against, 1);
+      return `<div class="${cls}">
+        <div class="cr-team-name">${name}</div>
+        <div class="cr-stat-grid">
+          ${statRow('∑ match', total, crPct(total, maxTotal), 'var(--blue)')}
+          ${statRow('Pour ↑',  forC,  crPct(forC, maxFA),    'var(--green)')}
+          ${statRow('Contre ↓',agst,  crPct(agst, maxFA),    'var(--red)')}
         </div>
+        <div class="cr-sample-badge">🗂 ${hist.matches_sample || '?'} matchs</div>
       </div>`;
     };
 
     return `<div class="cr-wrap">
       <div class="cr-header">
-        <div class="cr-title">🚩 Prédictions Corners</div>
-        <div class="cr-sub">Modèle prédictif · ${d.source === 'bsd' ? 'Données réelles' : 'Estimation'}</div>
+        <div class="cr-title">🚩 Corners</div>
+        <div class="cr-sub">${d.source === 'bsd' ? 'Données BSD réelles' : 'Modèle Poisson'}${d.cached ? ' · 💾 cache' : ''}</div>
       </div>
 
-      <div class="cr-expected">
-        <div class="cr-exp-label">Total attendu</div>
-        <div class="cr-exp-value">${pred.expected_total || '—'}</div>
-        <div class="cr-exp-sub">Confiance modèle: ${pred.confidence || 0}%</div>
+      <div class="cr-teams">
+        ${teamBlock(homeH, d.home_team || 'Domicile', false)}
+        <div class="cr-vs-col">
+          <div class="cr-vs-sep"></div>
+          <div class="cr-vs-label">λ attendu</div>
+          <div class="cr-vs-value">${pred.expected_total || '—'}</div>
+          <div class="cr-vs-conf">${pred.confidence || 0}%</div>
+          <div class="cr-vs-sep"></div>
+        </div>
+        ${teamBlock(awayH, d.away_team || 'Extérieur', true)}
       </div>
 
-      <div class="cr-probs">${probRows}</div>
+      <div class="cr-probs-section">
+        <div class="cr-section-title">Distribution Over/Under</div>
+        <div class="cr-probs">${probRows}</div>
+      </div>
 
       <div class="cr-recs">
         <div class="cr-recs-title">Recommandations</div>
         <div class="cr-recs-grid">${recCards}</div>
       </div>
 
-      ${homeH || awayH ? `<div class="cr-history">
-        <div class="cr-history-title">Historique Corners</div>
-        ${histBlock(d.home_team, homeH)}
-        ${histBlock(d.away_team, awayH)}
-      </div>` : '<div style="color:var(--text3);font-size:11px;margin-top:12px;">Pas d\'historique BSD</div>'}
-
-      ${d.cached ? '<div class="cr-cache-badge">💾 Données en cache (6h)</div>' : ''}
       ${d.error ? '<div style="margin-top:10px;font-size:11px;color:var(--text3);">ℹ ' + d.error + '</div>' : ''}
     </div>`;
   } catch(e) {
