@@ -34827,6 +34827,13 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         pct: ((hBsdTeamId ? 50 : 0) + (aBsdTeamId ? 50 : 0)),
       };
 
+      // Paralléliser les 3 appels async lents (referee + météo + travel) → -1.5 à 3s latence
+      const [_insReferee, _insWeather, _insTravel] = await Promise.all([
+        (async () => { try { return await fetchBSDRefereeForMatch(match); } catch (_) { return null; } })(),
+        (async () => { try { return await fetchWeatherForMatch(match); } catch (_) { return null; } })(),
+        (async () => { try { return await computeMatchTravelDistance(match); } catch (_) { return null; } })(),
+      ]);
+
       jsonResponse(res, 200, {
         success: true,
         match,
@@ -34869,11 +34876,8 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         sofascore_editorial: (typeof getSofascoreEditorial === 'function') ? getSofascoreEditorial(match) : null,
         // bd qm6a Plan D — Sofascore venue + referee (alt 82th BSD Phase 4)
         sofascore_venue_referee: (typeof getSofascoreVenueReferee === 'function') ? getSofascoreVenueReferee(match) : null,
-        // BSD v2 — live referee profile (event swap + consolidated career stats)
-        bsd_referee_profile: await (async () => {
-          try { return await fetchBSDRefereeForMatch(match); }
-          catch (_) { return null; }
-        })(),
+        // BSD v2 — live referee profile (pre-computed in parallel above)
+        bsd_referee_profile: _insReferee,
         // bd qm6a Plan E — Flashscore live stats fallback (BSD/ESPN HS scenario)
         flashscore_live_stats: (typeof getFlashscoreLiveStats === 'function') ? getFlashscoreLiveStats(match) : null,
         // bd 82th — BSD Phase 4 enrichissement Contexte (referee + venue + league via IDs match)
@@ -34883,18 +34887,10 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
         // bd cnvg — Poisson Time-Inhomogène live (λ ajusté minute + score)
         // null si match non-live ou xG manquants. UI peut comparer pre-match vs live_poisson markets.
         live_poisson: (typeof computeLivePoissonInhomogeneous === 'function') ? computeLivePoissonInhomogeneous(match) : null,
-        // bd cy9h — Context Engine météo (Open-Meteo zero-key) — fetch async, cache 1h
-        // null si geocoding failed ou commence_time absent. Edge math future : pluie>3mm/h → λ -8%.
-        match_weather: await (async () => {
-          try { return await fetchWeatherForMatch(match); }
-          catch (_) { return null; }
-        })(),
-        // bd i8gw — Context Engine kilométrage haversine away_team→home_venue
-        // null si geocoding équipes failed. Edge math future : distance >500km → λ_away ×0.92-0.95.
-        match_travel: await (async () => {
-          try { return await computeMatchTravelDistance(match); }
-          catch (_) { return null; }
-        })(),
+        // bd cy9h — Context Engine météo (pre-computed in parallel above)
+        match_weather: _insWeather,
+        // bd i8gw — Context Engine kilométrage haversine (pre-computed in parallel above)
+        match_travel: _insTravel,
         // bd 0hf4 Phase 3 — TV broadcasters (cache cron Phase 1.1 + attach in-place idempotent)
         tv_channels: (function() {
           try {
@@ -39993,7 +39989,7 @@ setInterval(() => {
     if (typeof oddsCacheCleanExpired === 'function') oddsCacheCleanExpired();
 }, 2 * 3600 * 1000);
 
-setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 60 * 1000);
+setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 20 * 1000);
 // bd pbf — CLV closing snapshot 60s (capture cotes fenêtre T-5min→T-0)
 setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
