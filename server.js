@@ -27908,6 +27908,26 @@ if (pathname === '/api/v1/alerts/tennis-test' && req.method === 'POST') {
   });
 }
 
+// POST /api/v1/discord/morning-picks/test — déclenche immédiatement le broadcast matin (admin)
+if (pathname === '/api/v1/discord/morning-picks/test' && req.method === 'POST') {
+  let _isAdmin = false;
+  try { const _tok = (req.headers['authorization'] || '').replace('Bearer ', '').trim(); const _d = jwtVerify(_tok); _isAdmin = _d && _d.role === 'admin'; } catch (_) {}
+  if (!_isAdmin) return jsonResponse(res, 403, { error: 'Admin requis' });
+  _runMorningStrategyPicksDiscord({ force: true })
+    .then(() => {
+      console.log('  [MorningPicks:Discord] test déclenché manuellement');
+    })
+    .catch(e => console.warn('  [MorningPicks:Discord] test erreur:', e.message));
+  return jsonResponse(res, 200, {
+    ok: true,
+    discord: !!DISCORD_MORNING_PICKS_WEBHOOK_URL,
+    strategies: DISCORD_MORNING_PICKS_STRATEGIES,
+    minConfidence: DISCORD_MORNING_PICKS_MIN_CONF,
+    count: DISCORD_MORNING_PICKS_COUNT,
+    message: 'Broadcast Discord matin déclenché',
+  });
+}
+
 // GET /api/v1/alerts/history — 10 dernières alertes envoyées
 if (pathname === '/api/v1/alerts/history' && req.method === 'GET') {
   const user = requireAuth(req, res);
@@ -40076,6 +40096,100 @@ setTimeout(() => {
   setInterval(() => _runDailyTopPicksTelegram().catch(e => console.warn('[DailyPicks]', e.message)), 24 * 3600 * 1000);
 }, _msUntilNextParisHour(DAILY_TOP_PICKS_HOUR));
 console.log(`  [DailyPicks] cron armé — premier tick à ${DAILY_TOP_PICKS_HOUR}h00 Europe/Paris (EV+ ≥ +${(DAILY_TOP_PICKS_EV_MIN - 100).toFixed(0)}%, top ${DAILY_TOP_PICKS_COUNT})`);
+
+// ─── Discord Morning Strategy Picks — 8h00 Paris ──────────────────────────────
+// Top 5 paris prematch par stratégie (confiance ≥ 65%) → Discord webhook
+// bd: morning discord picks — one embed per strategy, color-coded, ML-sourced
+const DISCORD_MORNING_PICKS_WEBHOOK_URL = process.env.DISCORD_MORNING_PICKS_WEBHOOK_URL || DISCORD_FOOT_WEBHOOK_URL;
+const DISCORD_MORNING_PICKS_MIN_CONF = parseInt(process.env.DISCORD_MORNING_PICKS_MIN_CONF || '65', 10);
+const DISCORD_MORNING_PICKS_COUNT = parseInt(process.env.DISCORD_MORNING_PICKS_COUNT || '5', 10);
+const DISCORD_MORNING_PICKS_HOUR = parseInt(process.env.DISCORD_MORNING_PICKS_HOUR || '8', 10);
+const DISCORD_MORNING_PICKS_STRATEGIES = (
+  process.env.DISCORD_MORNING_PICKS_STRATEGIES || 'BTTS_YES,OVER_2_5,OVER_1_5,HOME_WIN,AWAY_WIN'
+).split(',').map(s => s.trim()).filter(Boolean);
+
+const _STRAT_DISCORD_COLORS = {
+  BTTS_YES: 0xf59e0b, OVER_2_5: 0xff4d4d, OVER_1_5: 0xff8c42,
+  UNDER_2_5: 0x22d3ee, HOME_WIN: 0x29b6f6, AWAY_WIN: 0x7c3aed,
+  DRAW: 0xa78bfa, CS_00: 0x64748b, VERROU_TACTIQUE: 0x0ea5e9,
+  GOLDEN_PPG_GAP: 0xfbbf24, ANGLE_CORNERS: 0x10b981, OVER_6_5_CORNERS: 0x059669,
+};
+
+function _buildStrategyDiscordEmbed(stratKey, picks) {
+  const strat = STRATEGIES[stratKey];
+  if (!strat || !picks.length) return null;
+  const dt = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const color = _STRAT_DISCORD_COLORS[stratKey] || 0x00e676;
+  const fields = picks.map((p, i) => {
+    const ko = new Date(p.commence_time).toLocaleString('fr-FR', {
+      weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+    const edgeStr = p.best_edge?.edge != null
+      ? ` • Edge ${p.best_edge.edge > 0 ? '+' : ''}${safeFixed(p.best_edge.edge, 1)}%` : '';
+    const oddsStr = p.odds != null ? ` @ **${safeFixed(p.odds, 2)}**` : '';
+    const srcBadge = p.model_source === 'ml-catboost' ? ' `ML`' : p.model_source === 'dixon-coles' ? ' `DC`' : '';
+    return {
+      name: `${i + 1}. ${p.league || p.sport || '?'} — ${p.home_team} vs ${p.away_team}`,
+      value: `**${p.confidence}%**${srcBadge}${oddsStr}${edgeStr}\n⏰ ${ko}`,
+      inline: false,
+    };
+  });
+  return {
+    title: `${strat.icon || '⚽'} TOP ${picks.length} — ${strat.label.toUpperCase()} | ${dt}`,
+    color,
+    fields,
+    footer: {
+      text: `PariScore • Conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}% • ${strat.tipsterFlag || ''} ${strat.tipster || 'Modèle ML/Poisson'}`,
+    },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+async function _runMorningStrategyPicksDiscord({ force = false } = {}) {
+  try {
+    if (!DISCORD_MORNING_PICKS_WEBHOOK_URL) {
+      console.log('  [MorningPicks:Discord] skip — DISCORD_MORNING_PICKS_WEBHOOK_URL non configuré');
+      return;
+    }
+    if (!force && !automatedAlertsAllowed()) {
+      console.log('  [MorningPicks:Discord] skip — NODE_ENV != production (set TELEGRAM_FORCE_ALERTS=1 pour debug)');
+      return;
+    }
+    const embeds = [];
+    for (const stratKey of DISCORD_MORNING_PICKS_STRATEGIES) {
+      const picks = getTopMatchesByStrategy(stratKey, DISCORD_MORNING_PICKS_COUNT, DISCORD_MORNING_PICKS_MIN_CONF);
+      if (!picks || !picks.length) {
+        console.log(`  [MorningPicks:Discord] ${stratKey} — 0 picks conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%`);
+        continue;
+      }
+      const embed = _buildStrategyDiscordEmbed(stratKey, picks);
+      if (embed) embeds.push(embed);
+    }
+    if (!embeds.length) {
+      console.log(`  [MorningPicks:Discord] aucun pick éligible toutes stratégies (conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%)`);
+      return;
+    }
+    // Discord cap: 10 embeds/message
+    for (let i = 0; i < embeds.length; i += 10) {
+      const chunk = embeds.slice(i, i + 10);
+      const res = await httpsPost(DISCORD_MORNING_PICKS_WEBHOOK_URL, { embeds: chunk });
+      if (res && res.status >= 400) {
+        console.warn(`  [MorningPicks:Discord] Échec HTTP ${res.status}`);
+      } else {
+        console.log(`  [MorningPicks:Discord] OK — chunk ${Math.floor(i / 10) + 1}: ${chunk.length} embed(s)`);
+      }
+    }
+    console.log(`  [MorningPicks:Discord] broadcast terminé — ${embeds.length} stratégie(s)`);
+  } catch (e) {
+    console.warn('  [MorningPicks:Discord] erreur:', e.message);
+  }
+}
+
+setTimeout(() => {
+  _runMorningStrategyPicksDiscord().catch(e => console.warn('[MorningPicks:Discord bootstrap]', e.message));
+  setInterval(() => _runMorningStrategyPicksDiscord().catch(e => console.warn('[MorningPicks:Discord]', e.message)), 24 * 3600 * 1000);
+}, _msUntilNextParisHour(DISCORD_MORNING_PICKS_HOUR));
+console.log(`  [MorningPicks:Discord] cron armé — ${DISCORD_MORNING_PICKS_HOUR}h00 Paris, ${DISCORD_MORNING_PICKS_STRATEGIES.length} stratégies, conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%`);
 
 // TennisTemple OOP — programme quotidien par court (draw publié ~6-7h Paris)
 // Boot-warm immédiat + cron 8h00 Paris, cache 24h.
