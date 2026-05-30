@@ -1218,6 +1218,24 @@ function _tnRenderSourceBadge(m) {
   return `<span class="tn-src-chip" data-source="${src}" title="${_escTennis(tooltip)}" aria-label="${_escTennis('Source données: ' + src)}" tabindex="0">${_escTennis(display)}</span>${warn}`;
 }
 
+// bd — Glicko-2 badge (serve/return rating) next to player name
+function _tnGlickoBadge(m, playerIdx) {
+  if (!m.glicko2) return '';
+  const sv = playerIdx === 1 ? m.glicko2.p1_serve : m.glicko2.p2_serve;
+  const rt = playerIdx === 1 ? m.glicko2.p1_return : m.glicko2.p2_return;
+  if (!sv && !rt) return '';
+  return `<span class="tn-glicko-badge" title="Glicko-2: Serve ${sv||'?'} / Return ${rt||'?'}">S:${sv||'?'}</span>`;
+}
+
+// bd — Momentum badge (K-Flow direction + confidence)
+function _tnMomentumBadge(m) {
+  if (!m.momentum || m.momentum.kfs_direction === 'neutral') return '';
+  const dir = m.momentum.kfs_direction === 'p1' ? '▲' : '▼';
+  const conf = m.momentum.kfs_confidence || 0;
+  if (conf < 20) return '';
+  return `<span class="tn-mom-badge" title="Momentum: ${conf}% flow=${(m.momentum.momentum_shift||0).toFixed(2)} KFS=${m.momentum.kfs_direction}">${dir}${conf}%</span>`;
+}
+
 // bd dt9/i5r — Filtre source actif. AISCORE chip groupe AISCORE_CACHE + AISCORE_ONDEMAND.
 window._tennisSourceFilter = window._tennisSourceFilter || 'ALL';
 function setTennisSourceFilter(f) {
@@ -1499,8 +1517,8 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
-<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m.odds_player1 ? ' <span class="tn-live-odds" title="Cote vainqueur">' + m.odds_player1 + '</span>' : ''}</span>
-<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m.odds_player2 ? ' <span class="tn-live-odds" title="Cote vainqueur">' + m.odds_player2 + '</span>' : ''}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
+<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
 <span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
