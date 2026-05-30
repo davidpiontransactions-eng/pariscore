@@ -28,6 +28,7 @@ const { Worker } = require('worker_threads'); // off-thread Monte Carlo RG (Phas
 const Database = require('better-sqlite3');
 const EloCalculator = require('./eloCalculator'); // WElo (Weighted Elo) Tennis — Kovalchik FiveThirtyEight
 const { TennisGlicko2 } = require('./glicko2Calculator'); // Glicko-2 Tennis Skills (serve/return)
+const { TennisMomentumTracker } = require('./momentumTennis'); // K-Flow + SM momentum
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
@@ -5266,6 +5267,12 @@ const SPS_UPCOMING_TELEMETRY = {
 // Charge l'état persistant depuis SQLite et init en mémoire
 let tennisEloCalculator = null;
 let tennisGlicko2 = null;
+let tennisMomentumTracker = null;
+
+function initTennisMomentum() {
+  tennisMomentumTracker = new TennisMomentumTracker();
+  console.log('  ✓ K-Flow + SM Momentum Tennis initialized');
+}
 
 function initTennisEloCalculator() {
   tennisEloCalculator = new EloCalculator(1500);
@@ -16685,6 +16692,8 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
   // Glicko-2 stats — public read-only, pas de plan requis
   if (pathname.startsWith('/api/v1/tennis/glicko2/')) return false;
+  // K-Flow + SM Momentum — public read-only
+  if (pathname === '/api/v1/tennis/momentum') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -18344,6 +18353,15 @@ async function handleAPI(req, res, pathname, query) {
     });
   }
 
+  // K-Flow + SM Momentum route
+  if (pathname === '/api/v1/tennis/momentum' && req.method === 'GET') {
+    if (!tennisMomentumTracker) return jsonResponse(res, 503, { error: 'momentum_not_initialized' });
+    const matchId = String(query.matchId || '').trim();
+    if (!matchId) return jsonResponse(res, 400, { error: 'matchId required' });
+    const mom = tennisMomentumTracker.getMomentum(matchId);
+    return jsonResponse(res, 200, mom);
+  }
+
   // Fallback API interne
   return jsonResponse(res, 404, { error: 'Route inconnue: ' + pathname });
 }
@@ -19856,6 +19874,20 @@ async function pollTennisLive() {
     const _liveIds = new Set();
     for (const m of data) {
       if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
+      // bd — K-Flow + SM Momentum tracker: feed point data per match
+      if (m && m.is_live && tennisMomentumTracker) {
+        try {
+          const pWinner = m.current_point ? (m.current_point.includes('40') || m.serving === 1 ? 0 : 1) : (m.serving === 1 ? 0 : 1);
+          tennisMomentumTracker.addPoint(m.id, {
+            winner: m.serving === 1 ? 0 : 1, // heuristic: server wins point by default (will improve with real point data)
+            server: m.serving === 1 ? 0 : m.serving === 2 ? 1 : null,
+            rallyCount: 4, // default rally count (will improve with real data)
+            gamePoint: false,
+            ts: Date.now(),
+          });
+          m.momentum = tennisMomentumTracker.getMomentum(m.id);
+        } catch (_) { m.momentum = null; }
+      }
     }
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
     // bd 6xw — Break Point Pressure Index par match live + SSE bppi_spike (Δ>20pts).
@@ -39368,6 +39400,7 @@ async function bootInit() {
     // Init Glicko-2 Tennis calculator (serve/return skills)
     try {
       initTennisGlicko2();
+      initTennisMomentum();
     } catch (e) {
       console.warn('  [Boot] ⚠ initTennisGlicko2:', e.message);
     }
