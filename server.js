@@ -33,7 +33,9 @@ const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momen
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
-const cs2Service = require('./services/cs2Service');   // CS2/CSGO BSD addon + HLTV rankings
+const cs2Service        = require('./services/cs2Service');        // CS2/CSGO BSD addon + HLTV rankings
+const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
+const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -18606,6 +18608,47 @@ async function handleAPI(req, res, pathname, query) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message }));
     }
+  }
+
+  // ── Berserk League 1v1 (berserkcs2.org scraper) ──────────────────────────
+  if (pathname === '/api/v1/cs2/berserk/matches' && req.method === 'GET') {
+    try {
+      const data = await berserkService.getMatches();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=120' });
+      return res.end(JSON.stringify({ ok: true, recent: data.recent, upcoming: data.upcoming }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, recent: [], upcoming: [] }));
+    }
+  }
+
+  if (pathname === '/api/v1/cs2/berserk/players' && req.method === 'GET') {
+    try {
+      const data = await berserkService.getPlayers();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
+      return res.end(JSON.stringify({ ok: true, count: data.length, players: data }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, players: [] }));
+    }
+  }
+
+  // ── Liquipedia tier3 CS2 matches (FRAG TAP, Exort, etc.) ─────────────────
+  if (pathname === '/api/v1/cs2/liquipedia/matches' && req.method === 'GET') {
+    try {
+      const matches = await liquipediaService.getMatches();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, count: matches.length, matches }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
+    }
+  }
+
+  if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
+    const tracked = liquipediaService.getTrackedTournaments();
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    return res.end(JSON.stringify({ ok: true, tournaments: tracked }));
   }
 
   // 2b. Match Details (proxy interne pour modal STATS)
@@ -40826,6 +40869,9 @@ cs2Service.fetchTeamStickers().catch(e => console.warn('[CS2/Stickers bootstrap]
 cs2Service.fetchCsApiMatches().catch(e => console.warn('[CS2/OverModel bootstrap]', e.message));
 cs2Service.fetchCsApiRankings().catch(e => console.warn('[CS2/Rankings bootstrap]', e.message));
 cs2Service.fetchCsApiPlayerStats().catch(e => console.warn('[CS2/Players bootstrap]', e.message));
+// Tier-3 scrapers bootstrap
+berserkService.getMatches().catch(e => console.warn('[Berserk bootstrap]', e.message));
+liquipediaService.getMatches().catch(e => console.warn('[Liquipedia bootstrap]', e.message));
 console.log('  [CS2] poll armé — 30 s interval');
 
 // Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)

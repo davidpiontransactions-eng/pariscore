@@ -23949,6 +23949,9 @@ function renderComparateur(d) {
   var CS2_POLL_MS    = 30 * 1000;
   var _cs2Stickers   = {};   // teamName.lower() → { image, name, team }
   var _cs2Highlights = [];   // all highlights from ByMykel
+  var _berserkData   = { recent: [], upcoming: [] };
+  var _liquipediaData= [];
+  var _tier3Loaded   = false;
 
   // ── Public API ────────────────────────────────────────────────────────────
   window.initCs2Page = function () {
@@ -23964,6 +23967,8 @@ function renderComparateur(d) {
     _startCs2Poll();
     // Preload ByMykel static data (fire-and-forget)
     _preloadCs2Static();
+    // Preload tier-3 league data
+    if (!_tier3Loaded) { _tier3Loaded = true; _loadTier3Data(); }
   };
 
   window.stopCs2Page = function () {
@@ -24424,6 +24429,94 @@ function renderComparateur(d) {
     '</div>';
   }
 
+  // ── Tier 3 league data loaders ───────────────────────────────────────────
+  function _loadTier3Data() {
+    fetch('/api/v1/cs2/berserk/matches', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.recent) {
+          _berserkData = { recent: j.recent, upcoming: j.upcoming || [] };
+          _refreshTier3Section();
+        }
+      }).catch(function(){});
+    fetch('/api/v1/cs2/liquipedia/matches', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && Array.isArray(j.matches)) {
+          _liquipediaData = j.matches;
+          _refreshTier3Section();
+        }
+      }).catch(function(){});
+  }
+
+  function _refreshTier3Section() {
+    var el = document.getElementById('cs2-tier3-section');
+    if (el) el.innerHTML = _buildTier3Html();
+  }
+
+  function _buildTier3Html() {
+    var html = '';
+
+    // ── Berserk League (1v1) ──────────────────────────────────────────────
+    var bAll = (_berserkData.upcoming || []).concat(_berserkData.recent || []).slice(0, 15);
+    if (bAll.length > 0) {
+      html += '<div class="cs2-dash-section">' +
+        '<div class="cs2-dash-section-title">⚔️ Berserk League <span class="cs2-tier3-badge">1v1 · MR12 · BO1</span></div>' +
+        '<div class="cs2-dash-wrap"><table class="cs2-dash-table"><thead><tr>' +
+        '<th>#</th><th>Joueur 1</th><th>Score</th><th>Joueur 2</th><th>Statut</th></tr></thead><tbody>';
+      bAll.forEach(function(m) {
+        var scoreStr = m.score ? (m.score.p1 + '–' + m.score.p2) : '–';
+        var statusBadge = m.status === 'finished'
+          ? '<span style="color:#8d9399;font-size:9px;">FIN</span>'
+          : '<span style="color:#ffa726;font-size:9px;font-weight:700;">À VENIR</span>';
+        var winnerStyle1 = m.winner === m.player1 ? 'color:#00e676;font-weight:700;' : '';
+        var winnerStyle2 = m.winner === m.player2 ? 'color:#00e676;font-weight:700;' : '';
+        html += '<tr class="cs2-dash-row">' +
+          '<td style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3);">#' + (m.match_num||'') + '</td>' +
+          '<td style="font-weight:600;' + winnerStyle1 + '">' + _esc(m.player1) + '</td>' +
+          '<td style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;text-align:center;">' + scoreStr + '</td>' +
+          '<td style="font-weight:600;' + winnerStyle2 + '">' + _esc(m.player2) + '</td>' +
+          '<td>' + statusBadge + '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+
+    // ── Liquipedia Tier 3 (FRAG TAP, Exort, etc.) ────────────────────────
+    if (_liquipediaData.length > 0) {
+      // Group by tournament
+      var byTour = {};
+      _liquipediaData.forEach(function(m) {
+        var t = m.tournament || 'CS2';
+        if (!byTour[t]) byTour[t] = [];
+        byTour[t].push(m);
+      });
+      Object.keys(byTour).forEach(function(tname) {
+        var tMatches = byTour[tname];
+        html += '<div class="cs2-dash-section">' +
+          '<div class="cs2-dash-section-title">🏆 ' + _esc(tname) + ' <span class="cs2-tier3-badge">Liquipedia</span></div>' +
+          '<div class="cs2-dash-wrap"><table class="cs2-dash-table"><thead><tr>' +
+          '<th>Équipe 1</th><th>Maps</th><th>Équipe 2</th><th>Résultat</th></tr></thead><tbody>';
+        tMatches.slice(0, 20).forEach(function(m) {
+          var ms = m.maps_score;
+          var scoreStr = ms ? (ms.team1 + '–' + ms.team2) : '?–?';
+          var winner1 = ms && ms.team1 > ms.team2;
+          var winner2 = ms && ms.team2 > ms.team1;
+          html += '<tr class="cs2-dash-row">' +
+            '<td style="font-weight:600;' + (winner1?'color:#00e676;':'') + '">' + _esc(m.team1) + '</td>' +
+            '<td style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;text-align:center;">' + scoreStr + '</td>' +
+            '<td style="font-weight:600;' + (winner2?'color:#00e676;':'') + '">' + _esc(m.team2) + '</td>' +
+            '<td style="font-family:\'DM Mono\',monospace;font-size:10px;color:' + (m.status==='finished'?'#8d9399':'#ffa726') + ';">' + _esc(m.status||'—') + '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table></div></div>';
+      });
+    }
+
+    if (!html) return '<div style="padding:20px 16px;color:var(--text3);font-family:\'DM Mono\',monospace;font-size:11px;">⏳ Chargement ligues Tier 3…</div>';
+    return html;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // CS2 BETTING DASHBOARD — KPI table view for fast bet decisions
   // ═══════════════════════════════════════════════════════════════════════
@@ -24605,6 +24698,8 @@ function renderComparateur(d) {
     var html = '';
     if (live.length)     html += section('LIVE', live);
     if (prematch.length) html += section('PREMATCH', prematch);
+    // Tier 3 leagues section (Berserk + Liquipedia)
+    html += '<div id="cs2-tier3-section">' + _buildTier3Html() + '</div>';
     grid.innerHTML = html;
 
     // Trigger async enrichment + model fetches for all matches
