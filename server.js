@@ -20466,11 +20466,6 @@ async function pollTennisLive() {
           } catch (eVar) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis DR Var]', eVar.message); }
           // ─────────────────────────────────────────────────────────────────
 
-          // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
-          const drGapSigned = drBase2.dr - 1.0;
-          const drGapAbs    = Math.abs(drGapSigned);
-          if (drGapAbs < _DR_DIFF_THR) continue;
-
           // ── Alerte DOMINATION REELLE : DR_individuel = ret% / (100-serve%) >= 1.2 + cote <= 1.30 ──
           // Scope : RG + ATP/WTA Challengers + UTR. Independant du gate drGapAbs ci-dessous.
           try {
@@ -20545,6 +20540,11 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.20' : ''}`, inline: true },
               }
             }
           } catch (_eDom) { /* swallow */ }
+
+          // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
+          const drGapSigned = drBase2.dr - 1.0;
+          const drGapAbs    = Math.abs(drGapSigned);
+          if (drGapAbs < _DR_DIFF_THR) continue;
 
           // Cooldown 5 min par match — time-based, pas value-based (alert re-fire si DR stable)
           if (_tnAlertOnCooldown(`tndr_diff:${m.id}`, 5 * 60 * 1000)) continue;
