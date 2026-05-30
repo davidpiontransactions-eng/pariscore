@@ -20158,97 +20158,86 @@ async function pollTennisLive() {
         const side = drSetCur.dr >= drBase.dr ? 'p1' : 'p2';
         broadcastTennisDRSpike(m.id, drBase.dr, drSetCur.dr, side);
       }
-      // bd new — Alerte live |DR| absolu >= 0.20 (set ou match)
+      // DR-DIFF — Alerte Discord Différence DR entre les 2 joueurs
+      // Métrique : |DR_ratio - 1.0| = écart normalisé P1 vs P2 (DR = p1_total / p2_total)
+      //            Affichage : DR individuels serve+return de chaque joueur
+      // Dedup : cooldown time-based 5 min par match (via _tnAlertOnCooldown)
+      // Seuil : TENNIS_DR_DIFF_THRESHOLD env (défaut 0.20)
       try {
+        const _DR_DIFF_THR = parseFloat(process.env.TENNIS_DR_DIFF_THRESHOLD || '0.20');
         for (const m of data) {
           if (!m || !m.is_live) continue;
           const curSet2 = (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
             : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null);
           const drBase2 = getSofascoreDRCached(m.player1?.name, m.player2?.name);
           if (!drBase2 || !Number.isFinite(drBase2.dr)) continue;
+
+          // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
+          const drGapSigned = drBase2.dr - 1.0;
+          const drGapAbs    = Math.abs(drGapSigned);
+          if (drGapAbs < _DR_DIFF_THR) continue;
+
+          // Cooldown 5 min par match — time-based, pas value-based (alert re-fire si DR stable)
+          if (_tnAlertOnCooldown(`tndr_diff:${m.id}`, 5 * 60 * 1000)) continue;
+
+          // Côtés dominant / dominé
+          const side      = drGapSigned > 0 ? 'p1' : 'p2';
+          const dominant  = side === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
+          const dominated = side === 'p1' ? (m.player2?.name || 'J2') : (m.player1?.name || 'J1');
+
+          // DR individuels joueurs : serve + return séparément (p1_serve / p1_ret / p2_serve / p2_ret)
+          const p1Serve = Number.isFinite(drBase2.p1_serve) ? drBase2.p1_serve.toFixed(2) : '–';
+          const p1Ret   = Number.isFinite(drBase2.p1_ret)   ? drBase2.p1_ret.toFixed(2)   : '–';
+          const p2Serve = Number.isFinite(drBase2.p2_serve) ? drBase2.p2_serve.toFixed(2) : '–';
+          const p2Ret   = Number.isFinite(drBase2.p2_ret)   ? drBase2.p2_ret.toFixed(2)   : '–';
+
+          // Bonus DR set courant si fiable (min 6 pts retour)
           const drEnriched2 = _drAttachCurrentSet(drBase2, curSet2);
-          const drSetCur2 = drEnriched2?.dr_set_courant;
-          // ── DR Set (courant) ──
-          if (drSetCur2 && Number.isFinite(drSetCur2.dr) && drSetCur2.reliable !== false) {
-            const drSetGap = drSetCur2.dr - 1.0;
-            if (Math.abs(drSetGap) >= 0.20) {
-              const snapKey = `tndr_set:${m.id}`;
-              const snapVal = drSetCur2.dr.toFixed(2);
-              if (_tennisDrAbsSent.get(snapKey) !== snapVal) {
-                _tennisDrAbsSent.set(snapKey, snapVal);
-                const sideSet = drSetGap > 0 ? 'p1' : 'p2';
-                const dominantSet = sideSet === 'p1' ? m.player1?.name : m.player2?.name;
-                const setScore = [].concat(m.sets || []).slice(-1)[0];
-                const setLabel = setScore ? ` (${setScore.p1}-${setScore.p2})` : '';
-                const msgHtml = [
-                  `🔥 <b>LIVE DR SET</b> — Domination en cours`,
-                  ``,
-                  `${escTg(m.tournament)} | ${escTg(m.court)} | Set ${curSet2 || '?'}${setLabel}`,
-                  `${escTg(m.player1?.name)} vs ${escTg(m.player2?.name)}`,
-                  `DR Set courant: <b>${drSetCur2.dr.toFixed(2)}</b> → ${escTg(dominantSet)} domine`,
-                  `DR Match cumulé: ${drBase2.dr.toFixed(2)}`,
-                  `Écart DR Set: ${Math.abs(drSetGap).toFixed(2)}`,
-                ].filter(Boolean).join('\n');
-                const discordEmbed = {
-                  title: `🔥 LIVE DR Set — ${m.tournament}`,
-                  color: 0xFF4500,
-                  fields: [
-                    { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
-                    { name: 'Set', value: `${curSet2 || '?'}${setLabel}`, inline: true },
-                    { name: 'DR Set', value: drSetCur2.dr.toFixed(2), inline: true },
-                    { name: 'DR Match', value: drBase2.dr.toFixed(2), inline: true },
-                    { name: 'Dominant', value: dominantSet || '?', inline: true },
-                  ],
-                  footer: { text: `Alerte Live DR Set | ${m.tournament}` },
-                  timestamp: new Date().toISOString(),
-                };
-                broadcastTennisLiveAlert(msgHtml, discordEmbed).catch(() => {});
-                console.log(`  [Tennis DR Alert] SET spike ${m.id} DR=${drSetCur2.dr.toFixed(2)} side=${sideSet}`);
-              }
-            }
-          }
-          // ── DR Match (cumulé) ──
-          const drMatchGap = drBase2.dr - 1.0;
-          if (Math.abs(drMatchGap) >= 0.20) {
-            const snapKey2 = `tndr_match:${m.id}`;
-            const snapVal2 = drBase2.dr.toFixed(2);
-            if (_tennisDrAbsSent.get(snapKey2) !== snapVal2) {
-              _tennisDrAbsSent.set(snapKey2, snapVal2);
-              const sideMatch = drMatchGap > 0 ? 'p1' : 'p2';
-              const dominantMatch = sideMatch === 'p1' ? m.player1?.name : m.player2?.name;
-              const liveScore = `Score: ${m.player1_sets || 0}-${m.player2_sets || 0}`;
-              const bg = [].concat(m.sets || []).slice(-1)[0];
-              const currentSetScore = bg ? ` (Set: ${bg.p1}-${bg.p2})` : '';
-              const msgHtml = [
-                `💥 <b>LIVE DR MATCH</b> — Domination confirmée`,
-                ``,
-                `${escTg(m.tournament)} | ${escTg(m.court)}`,
-                `${escTg(m.player1?.name)} vs ${escTg(m.player2?.name)}`,
-                `${liveScore}${currentSetScore}`,
-                `DR Match: <b>${drBase2.dr.toFixed(2)}</b> → ${escTg(dominantMatch)} domine`,
-                `Écart DR: ${Math.abs(drMatchGap).toFixed(2)}`,
-              ].filter(Boolean).join('\n');
-              const discordEmbed = {
-                title: `💥 LIVE DR Match — ${m.tournament}`,
-                color: 0xFF0000,
-                fields: [
-                  { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
-                  { name: 'Score', value: liveScore, inline: true },
-                  { name: 'DR Match', value: drBase2.dr.toFixed(2), inline: true },
-                  { name: 'Dominant', value: dominantMatch || '?', inline: true },
-                  { name: 'Tour', value: m.court || 'N/A', inline: true },
-                ],
-                footer: { text: `Alerte Live DR Match | ${m.tournament}` },
-                timestamp: new Date().toISOString(),
-              };
-              broadcastTennisLiveAlert(msgHtml, discordEmbed).catch(() => {});
-              console.log(`  [Tennis DR Alert] MATCH spike ${m.id} DR=${drBase2.dr.toFixed(2)} side=${sideMatch}`);
-            }
-          }
+          const drSetCur2   = drEnriched2?.dr_set_courant;
+          const setGapAbs   = (drSetCur2 && Number.isFinite(drSetCur2.dr)) ? Math.abs(drSetCur2.dr - 1.0) : null;
+          const setBonus    = (drSetCur2 && Number.isFinite(drSetCur2.dr) && drSetCur2.reliable !== false)
+            ? `\nDR Set ${curSet2 || '?'}: ${drSetCur2.dr.toFixed(2)} (écart ${setGapAbs.toFixed(2)})`
+            : '';
+
+          const liveScore = `${m.player1_sets || 0}-${m.player2_sets || 0}`;
+          const lastSet   = [].concat(m.sets || []).slice(-1)[0];
+          const setLabel  = lastSet ? ` · Set ${curSet2 || '?'}: ${lastSet.p1}-${lastSet.p2}` : '';
+          const intensity = drGapAbs >= 0.35 ? '🔴 FORTE DOMINATION' : '⚠️ DOMINATION';
+
+          const msgHtml = [
+            `🎾 <b>DIFF DR LIVE — ${intensity}</b>`,
+            ``,
+            `${escTg(m.tournament)} | ${escTg(m.court)} (${liveScore} sets${setLabel})`,
+            `${escTg(m.player1?.name || 'J1')} vs ${escTg(m.player2?.name || 'J2')}`,
+            ``,
+            `DR ${escTg(m.player1?.name || 'J1')}: Serve <b>${p1Serve}</b> | Ret <b>${p1Ret}</b>`,
+            `DR ${escTg(m.player2?.name || 'J2')}: Serve <b>${p2Serve}</b> | Ret <b>${p2Ret}</b>`,
+            `Ratio DR: <b>${drBase2.dr.toFixed(2)}</b> | Écart: <b>${drGapAbs.toFixed(2)}</b>`,
+            `→ <b>${escTg(dominant)}</b> domine ${escTg(dominated)}${setBonus}`,
+          ].filter(Boolean).join('\n');
+
+          const discordEmbed = {
+            title: `🎾 Diff DR Live — ${intensity}`,
+            description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Sets ${liveScore}`,
+            color: drGapAbs >= 0.35 ? 0xFF2200 : 0xFF8C00,
+            fields: [
+              { name: `🎯 ${m.player1?.name || 'J1'}`, value: `Serve: **${p1Serve}**\nReturn: **${p1Ret}**`, inline: true },
+              { name: `🎯 ${m.player2?.name || 'J2'}`, value: `Serve: **${p2Serve}**\nReturn: **${p2Ret}**`, inline: true },
+              { name: '​', value: '​', inline: true },
+              { name: '📊 Ratio DR', value: `**${drBase2.dr.toFixed(2)}**`, inline: true },
+              { name: '⚡ Écart DR', value: `**${drGapAbs.toFixed(2)}**`, inline: true },
+              { name: '🏆 Dominant', value: dominant, inline: true },
+              { name: '🎾 Court', value: m.court || 'N/A', inline: true },
+              { name: '🏟️ Tournoi', value: m.tournament || 'N/A', inline: true },
+            ],
+            footer: { text: `Diff DR Joueurs | Seuil ${_DR_DIFF_THR} | Cooldown 5min | ${m.tournament}` },
+            timestamp: new Date().toISOString(),
+          };
+
+          broadcastTennisLiveAlert(msgHtml, discordEmbed).catch(() => {});
+          console.log(`  [Tennis DR Diff] ${m.id} gap=${drGapAbs.toFixed(2)} dominant=${dominant} ratio=${drBase2.dr.toFixed(2)}`);
         }
-        // Nettoyage périodique dedup map (>500 entrées)
-        if (_tennisDrAbsSent.size > 500) { _tennisDrAbsSent.clear(); }
-      } catch (e) { /* swallow — DR alert best-effort */ }
+      } catch (e) { console.warn('  [Tennis DR Diff alert]', e.message); }
     } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
