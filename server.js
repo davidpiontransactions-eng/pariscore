@@ -40263,7 +40263,7 @@ console.log(`  [MorningPicks:Discord] cron armé — ${DISCORD_MORNING_PICKS_HOU
 // Top 5 matchs ATP du jour par écart Elo surface-pondéré (Clay +15%, Grass +10%)
 // Fallback odds si Elo indisponible. Webhook distinct canal tennis.
 const DISCORD_TENNIS_MORNING_WEBHOOK_URL = process.env.DISCORD_TENNIS_MORNING_WEBHOOK_URL || '';
-const DISCORD_TENNIS_MORNING_HOUR = parseInt(process.env.DISCORD_TENNIS_MORNING_HOUR || '8', 10);
+const DISCORD_TENNIS_MORNING_HOUR = parseInt(process.env.DISCORD_TENNIS_MORNING_HOUR || '10', 10);
 const DISCORD_TENNIS_MORNING_COUNT = parseInt(process.env.DISCORD_TENNIS_MORNING_COUNT || '5', 10);
 const _SURFACE_COLORS = { Clay: 0xcc6633, Hard: 0x29b6f6, Grass: 0x00c851, Carpet: 0xa78bfa };
 const _SURFACE_FACTOR = { Clay: 1.15, Grass: 1.10, Hard: 1.0, Carpet: 1.0 };
