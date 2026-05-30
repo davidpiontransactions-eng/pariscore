@@ -16693,11 +16693,8 @@ function srvPlanGate(req, res, pathname) {
   // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
   // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
-  // Glicko-2 stats — public read-only, pas de plan requis
-  if (pathname.startsWith('/api/v1/tennis/glicko2/')) return false;
-  // K-Flow + SM Momentum — public read-only
-  if (pathname === '/api/v1/tennis/momentum') return false;
-  if (pathname === '/api/v1/players/momentum') return false;
+  // Glicko-2 stats + live enriched + momentum — public read-only
+  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -31154,6 +31151,11 @@ async function handleTennisBSD(pathSuffix, cacheKey, ttlMs) {
 }
 
 if (pathname === '/api/v1/tennis/live' && req.method === 'GET') {
+  // Return enriched live data from poll cache (includes glicko2, momentum, odds)
+  const cached = _tennisLiveCache.data || [];
+  return jsonResponse(res, 200, cached);
+}
+if (pathname === '/api/v1/tennis/live-raw' && req.method === 'GET') {
   const out = await handleTennisBSD('/api/v2/matches/live/', null, 0);
   return jsonResponse(res, out.status, out.body);
 }
