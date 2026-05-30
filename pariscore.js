@@ -9426,29 +9426,81 @@ function calcTopMarketScore(m, market) {
   }
 }
 
-// Score poisson par clé stratégie (STRATEGIES_UI) — ranking client Top N
+// bd he1t — meilleure proba modèle (%) par marché, repli Poisson (miroir exact de
+// bestModelProb() server.js). Priorité : CatBoost blend > Dixon-Coles / calibré > Poisson.
+function bestModelProb(m, market) {
+  if (!m) return null;
+  var cb = m.blended_cb, dc = m.dixonColes, ca = m.calibrated, po = m.poisson || {};
+  switch (market) {
+    case 'homeWin': case 'draw': case 'awayWin':
+      if (cb && cb[market] != null) return cb[market];
+      if (ca && ca[market] != null) return ca[market];
+      return po[market] != null ? po[market] : null;
+    case 'over25': case 'btts':
+      if (cb && cb[market] != null) return cb[market];
+      if (dc && dc[market] != null) return dc[market];
+      return po[market] != null ? po[market] : null;
+    case 'over05': case 'over15': case 'over35': case 'under15': case 'cs00':
+      if (dc && dc[market] != null) return dc[market];
+      return po[market] != null ? po[market] : null;
+    default:
+      return po[market] != null ? po[market] : null;
+  }
+}
+// Source modèle pour un marché (badge UI « ML » / « DC » / « Poisson »).
+function modelSourceFor(m, market) {
+  if (!m) return 'poisson';
+  var cb = m.blended_cb, dc = m.dixonColes, ca = m.calibrated;
+  switch (market) {
+    case 'homeWin': case 'draw': case 'awayWin':
+      if (cb && cb[market] != null) return 'ml-catboost';
+      if (ca && ca[market] != null) return 'calibrated';
+      return 'poisson';
+    case 'over25': case 'btts':
+      if (cb && cb[market] != null) return 'ml-catboost';
+      if (dc && dc[market] != null) return 'dixon-coles';
+      return 'poisson';
+    case 'over05': case 'over15': case 'over35': case 'under15': case 'cs00':
+      if (dc && dc[market] != null) return 'dixon-coles';
+      return 'poisson';
+    default: return 'poisson';
+  }
+}
+var STRAT_MARKET = {
+  BTTS_YES: 'btts', OVER_2_5: 'over25', OVER_1_5: 'over15', UNDER_2_5: 'over25',
+  HOME_WIN: 'homeWin', AWAY_WIN: 'awayWin', DRAW: 'draw', CS_00: 'cs00',
+  VERROU_TACTIQUE: 'over35', DC_HOME: 'homeWin', DC_AWAY: 'awayWin',
+  HT_HOME_FT_HOME: 'homeWin', HT_UNDER_FT_OVER: 'over25', GOLDEN_PPG_GAP: 'homeWin',
+};
+// Badge source modèle pour les cartes Top Stratégies (transparence du calcul).
+function _modelSrcBadge(src) {
+  if (src === 'ml-catboost') return ' <span style="font-size:9px;font-weight:800;color:#6d28d9;background:rgba(109,40,217,0.1);border:1px solid rgba(109,40,217,0.25);border-radius:4px;padding:1px 5px;vertical-align:middle;" title="Probabilité issue du modèle ML CatBoost (hybride)">🤖 ML</span>';
+  if (src === 'dixon-coles') return ' <span style="font-size:9px;font-weight:700;color:#2563eb;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.22);border-radius:4px;padding:1px 5px;vertical-align:middle;" title="Probabilité corrigée Dixon-Coles (faibles scores)">DC</span>';
+  if (src === 'calibrated') return ' <span style="font-size:9px;font-weight:700;color:#0891b2;background:rgba(8,145,178,0.08);border:1px solid rgba(8,145,178,0.2);border-radius:4px;padding:1px 5px;vertical-align:middle;" title="Probabilité bayésienne calibrée (Poisson+Elo+xG)">CAL</span>';
+  return '';
+}
+// Score modèle par clé stratégie (STRATEGIES_UI) — ranking client Top N (bd he1t : ML-aware)
 function calcStrategyScore(m, key) {
-  var p = m.poisson || {};
-  var hw = p.homeWin || 0, aw = p.awayWin || 0, dr = p.draw || 0;
+  var hw = bestModelProb(m, 'homeWin') || 0, aw = bestModelProb(m, 'awayWin') || 0, dr = bestModelProb(m, 'draw') || 0;
   var hp = m.stats && m.stats.home ? (m.stats.home.ppg || 0) : 0;
   var ap = m.stats && m.stats.away ? (m.stats.away.ppg || 0) : 0;
   switch (key) {
-    case 'BTTS_YES':         return p.btts || 0;
-    case 'OVER_2_5':         return p.over25 || 0;
-    case 'OVER_1_5':         return p.over15 || 0;
-    case 'UNDER_2_5':        return 100 - (p.over25 || 50);
+    case 'BTTS_YES':         return bestModelProb(m, 'btts') || 0;
+    case 'OVER_2_5':         return bestModelProb(m, 'over25') || 0;
+    case 'OVER_1_5':         return bestModelProb(m, 'over15') || 0;
+    case 'UNDER_2_5':        return 100 - (bestModelProb(m, 'over25') != null ? bestModelProb(m, 'over25') : 50);
     case 'HOME_WIN':         return hw;
     case 'AWAY_WIN':         return aw;
     case 'DRAW':             return dr;
-    case 'CS_00':            return p.cs00 != null ? p.cs00 : (100 - (p.over05 || 90));
-    case 'VERROU_TACTIQUE':  return 100 - (p.over35 || 50);
+    case 'CS_00':            { var cs = bestModelProb(m, 'cs00'); return cs != null ? cs : (100 - (bestModelProb(m, 'over05') || 90)); }
+    case 'VERROU_TACTIQUE':  return 100 - (bestModelProb(m, 'over35') != null ? bestModelProb(m, 'over35') : 50);
     case 'DC_HOME':          return hw + dr;
     case 'DC_AWAY':          return aw + dr;
     case 'HT_HOME_FT_HOME':  return hw * 0.85;
-    case 'HT_UNDER_FT_OVER': return (p.over25 || 0) * 0.7;
+    case 'HT_UNDER_FT_OVER': return (bestModelProb(m, 'over25') || 0) * 0.7;
     case 'GOLDEN_PPG_GAP':   return Math.min(100, Math.abs(hp - ap) * 33);
     case 'ANGLE_CORNERS':
-    case 'OVER_6_5_CORNERS': return (m.confidence_score || 0); // pas de poisson corners → proxy confiance
+    case 'OVER_6_5_CORNERS': return (m.confidence_score || 0); // pas de modèle corners → proxy confiance
     default:                 return (m.confidence_score || 0);
   }
 }
@@ -16963,7 +17015,7 @@ function _renderStratCard(m, key) {
     <div style="flex:1;min-width:0;overflow:hidden;">
       <div class="ppc-league">${leagueShort} · ${dateStr}</div>
       <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
-      <div class="ppc-sub">${ui?.label || key}${xg ? ' · ' + xg : ''}</div>
+      <div class="ppc-sub">${ui?.label || key}${xg ? ' · ' + xg : ''}${_modelSrcBadge(m.model_source)}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
       <div style="display:flex;gap:10px;align-items:baseline;">
@@ -21139,7 +21191,7 @@ async function loadHotPicks() {
         <div style="flex:1;min-width:0;overflow:hidden;">
           <div class="ppc-league">${leagueShort} · ${dateStr}</div>
           <div class="ppc-teams">${p.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${p.away_team}</div>
-          <div class="ppc-sub">${p.strategyIcon || ''} ${p.strategyLabel || ''}</div>
+          <div class="ppc-sub">${p.strategyIcon || ''} ${p.strategyLabel || ''}${_modelSrcBadge(p.model_source)}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
           <div style="display:flex;gap:10px;align-items:baseline;">
