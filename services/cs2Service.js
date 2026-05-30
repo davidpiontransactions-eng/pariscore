@@ -200,15 +200,15 @@ module.exports = {
     if (Date.now() - _cs2Cache.ts < CS2_BSD_TTL_MS) return _cs2Cache.data;
 
     try {
-      // Fetch matches (list live + upcoming)
-      const [resList, resPrematch] = await Promise.allSettled([
-        _bsdCs2Get('/matches/?status=inprogress', apiKey),
-        _bsdCs2Get('/matches/?status=upcoming&limit=50', apiKey)
+      // BSD CS2 uses same /api/v2/ path pattern as BSD Tennis
+      const [resLive, resUpcoming] = await Promise.allSettled([
+        _bsdCs2Get('/api/v2/matches/live/', apiKey),
+        _bsdCs2Get('/api/v2/matches/?status=upcoming&limit=100', apiKey)
       ]);
 
       // Merge results
       const raw = [];
-      for (const settled of [resList, resPrematch]) {
+      for (const settled of [resLive, resUpcoming]) {
         if (settled.status !== 'fulfilled') continue;
         const r = settled.value;
         if (!r || r.status !== 200 || !r.data) continue;
@@ -219,9 +219,9 @@ module.exports = {
         raw.push(...items);
       }
 
-      // If both status endpoints empty, try generic matches list
+      // Fallback: generic list (scheduled + live combined)
       if (raw.length === 0) {
-        const res = await _bsdCs2Get('/matches/', apiKey).catch(() => null);
+        const res = await _bsdCs2Get('/api/v2/matches/?limit=100', apiKey).catch(() => null);
         if (res && res.status === 200 && res.data) {
           const items = Array.isArray(res.data)        ? res.data
                       : Array.isArray(res.data.results) ? res.data.results
