@@ -58,7 +58,10 @@ function loadEnv() {
     if (idx === -1) continue;
     const key = trimmed.slice(0, idx).trim();
     const val = trimmed.slice(idx + 1).trim();
-    process.env[key] = val;
+    // Sémantique dotenv standard : une variable déjà présente dans l'environnement
+    // du process (shell, pm2 --update-env, override CI) a PRIORITÉ sur .env.
+    // Évite qu'un .env stale clobber une valeur injectée volontairement à l'exécution.
+    if (process.env[key] === undefined) process.env[key] = val;
   }
 }
 loadEnv();
@@ -7989,6 +7992,7 @@ function buildMatchRecord(raw) {
   // v9.0/v9.9: Anti-Zero + Sanity λ — bloquer si moyennes à 0 OU λ aberrant
   // (cumuls saison pris pour moyennes → expHome≈136 → matrice Poisson sous-flow = 0%).
   let poisson;
+  let dixonColes = null;
   const _lamBad = !Number.isFinite(expHome) || !Number.isFinite(expAway) ||
                   expHome > 8 || expAway > 8 || (expHome === 0 && expAway === 0);
   if (_lamBad) {
@@ -7996,8 +8000,8 @@ function buildMatchRecord(raw) {
     poisson = { error: 'BAD_LAMBDA', message: 'Moyennes invalides — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
   } else {
     poisson = computePoisson(expHome, expAway);
-    // bd — Dixon-Coles: ajouté en parallèle du Poisson, stocké sur le match
-    match.dixonColes = computeDixonColes(expHome, expAway);
+    // bd — Dixon-Coles: ajouté en parallèle du Poisson, stocké sur le record
+    dixonColes = computeDixonColes(expHome, expAway);
   }
 
   // ── v7.0 BAYESIAN MODEL BLENDER ────────────────────────────────────────────
@@ -8077,6 +8081,7 @@ function buildMatchRecord(raw) {
     edge: edge.edgeValues,
     best_edge: edge.best,
     poisson,
+    dixonColes,
     blended,
     calibrated,
     evs,
@@ -14867,7 +14872,7 @@ async function fetchOdds(force = false, opts = {}) {
     if (sseClients.size > 0) broadcastSSE('matches_update', { matches: matchesForBroadcast(), meta: buildMeta() });
 
   } catch (e) {
-    console.error('  [Cron:Odds] Erreur fatale:', e.message);
+    console.error('  [Cron:Odds] Erreur fatale:', e.stack || e.message);
     if (!db.matches.length && cachedMatches.length > 0) {
       db.matches = JSON.parse(JSON.stringify(cachedMatches));
       db.status = 'cache_fallback';
