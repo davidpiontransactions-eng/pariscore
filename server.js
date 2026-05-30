@@ -28008,6 +28008,44 @@ if (pathname === '/api/v1/discord/tennis-morning/test' && req.method === 'POST')
   });
 }
 
+// POST /api/v1/discord/tennis-dr/test — envoie embed DR factice (admin, test en conditions réelles)
+if (pathname === '/api/v1/discord/tennis-dr/test' && req.method === 'POST') {
+  let _isAdmin = false;
+  try { const _tok = (req.headers['authorization'] || '').replace('Bearer ', '').trim(); const _d = jwtVerify(_tok); _isAdmin = _d && _d.role === 'admin'; } catch (_) {}
+  if (!_isAdmin) return jsonResponse(res, 403, { error: 'Admin requis' });
+  const _drTestEmbed = {
+    title: '💥 [TEST] LIVE DR Match — Roland Garros',
+    color: 0xFF0000,
+    description: '🧪 Ceci est un test en conditions réelles',
+    fields: [
+      { name: 'Match', value: 'Sinner vs Alcaraz', inline: false },
+      { name: 'Score', value: 'Score: 1-1 (Set: 4-3)', inline: true },
+      { name: 'DR Match', value: '1.28', inline: true },
+      { name: 'Dominant', value: 'Sinner (p1)', inline: true },
+      { name: 'Écart DR', value: '0.28 ≥ 0.20 ✅', inline: true },
+      { name: 'Tour', value: 'Demi-finale', inline: true },
+    ],
+    footer: { text: 'TEST — PariScore Live DR Alert | Roland Garros' },
+    timestamp: new Date().toISOString(),
+  };
+  const _drTestMsg = [
+    '💥 <b>[TEST] LIVE DR MATCH</b> — Domination confirmée',
+    '',
+    'Roland Garros | Demi-finale',
+    'Sinner vs Alcaraz',
+    'Score: 1-1 (Set: 4-3)',
+    'DR Match: <b>1.28</b> → Sinner domine | Écart: 0.28',
+  ].join('\n');
+  broadcastTennisLiveAlert(_drTestMsg, _drTestEmbed)
+    .then(() => console.log('  [Tennis DR Test] embed envoyé canal tennis Discord'))
+    .catch(e => console.warn('  [Tennis DR Test] erreur:', e.message));
+  return jsonResponse(res, 200, {
+    ok: true,
+    discord: !!DISCORD_TENNIS_MORNING_WEBHOOK_URL,
+    message: 'Test DR tennis envoyé',
+  });
+}
+
 // GET /api/v1/alerts/history — 10 dernières alertes envoyées
 if (pathname === '/api/v1/alerts/history' && req.method === 'GET') {
   const user = requireAuth(req, res);
