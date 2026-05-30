@@ -11970,7 +11970,10 @@ function buildResumeTab(d) {
       // ── Badge assignment (no duplicate) ─────────────────────────────────────
       var usedLbls = {};
       // 🔵 CHOIX SÛR: highest probability
-      var choixSur = mkts.reduce(function(b, mk) { return mk.val > b.val ? mk : b; });
+      // Init = mkts[0] : comportement identique quand mkts non-vide ; sentinelle si vide
+      // (blended_cb a toujours 5 champs numériques, mais évite tout throw reduce-of-empty).
+      var choixSur = mkts.reduce(function(b, mk) { return mk.val > b.val ? mk : b; },
+        mkts[0] || { lbl: '—', val: 0, key: null, edge: null, bkOdds: null, bkName: '', opScore: 0 });
       usedLbls[choixSur.lbl] = 1;
       // ⚡ MEILLEUR COMPROMIS: highest opScore with prob >= 55 + edge > 0
       var compromis = mkts.filter(function(mk) {
