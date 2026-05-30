@@ -23978,6 +23978,16 @@ function renderComparateur(d) {
     _applyCs2Filter();
   };
 
+  // ── View mode toggle ──────────────────────────────────────────────────────
+  var _cs2ViewMode = 'dashboard'; // default = dashboard for quick betting
+  window.setCs2View = function (mode, btn) {
+    _cs2ViewMode = mode;
+    document.querySelectorAll('.cs2-view-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.view === mode);
+    });
+    _applyCs2Filter();
+  };
+
   window.cs2ForceRefresh = function () {
     window._cs2ForceRefresh = true;
     initCs2Page();
@@ -24206,7 +24216,11 @@ function renderComparateur(d) {
     var matches = _cs2LastData;
     if (_cs2Filter === 'live')     matches = matches.filter(function (m) { return m.is_live; });
     if (_cs2Filter === 'prematch') matches = matches.filter(function (m) { return !m.is_live && m.status !== 'finished'; });
-    renderCs2Matches(matches);
+    if (_cs2ViewMode === 'dashboard') {
+      renderCs2Dashboard(matches);
+    } else {
+      renderCs2Matches(matches);
+    }
   }
 
   function _updateCs2Status(json) {
@@ -24409,6 +24423,201 @@ function renderComparateur(d) {
       '<div class="cs2-card-foot">' + oddsHtml + timeHtml + '</div>' +
     '</div>';
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CS2 BETTING DASHBOARD — KPI table view for fast bet decisions
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── Compute KPI signals for one match ──────────────────────────────────
+  function _cs2BettingSignals(m) {
+    var e = _cs2EnrichCache[(m.team1.name || '') + '|' + (m.team2.name || '')];
+    var model = _cs2ModelCache[(m.team1.name||'')+'|'+(m.team2.name||'')+'|'+(m.current_map||'')];
+    var signals = [];
+
+    // 1. Win probability (BSD ML)
+    if (m.prediction) {
+      var p1 = m.prediction.team1_win_prob || 0;
+      var p2 = m.prediction.team2_win_prob || 0;
+      var maxP = Math.max(p1, p2);
+      var favTeam = p1 >= p2 ? m.team1.name : m.team2.name;
+      if (maxP >= 0.65) signals.push({ key:'prob', label: favTeam + ' ' + Math.round(maxP*100) + '%', color:'green', val: maxP });
+      else if (maxP >= 0.55) signals.push({ key:'prob', label: Math.round(maxP*100) + '%', color:'amber', val: maxP });
+      else signals.push({ key:'prob', label:'50/50', color:'grey', val: maxP });
+    }
+
+    // 2. Team 1 form
+    if (e && e.team1 && e.team1.form) {
+      var wr1 = e.team1.form.winrate || 0;
+      var f1 = e.team1.form.form || [];
+      signals.push({ key:'form1', label: f1.slice(-5).join(''), color: wr1>=65?'green':wr1>=45?'amber':'red', val: wr1 });
+    }
+
+    // 3. Team 2 form
+    if (e && e.team2 && e.team2.form) {
+      var wr2 = e.team2.form.winrate || 0;
+      var f2 = e.team2.form.form || [];
+      signals.push({ key:'form2', label: f2.slice(-5).join(''), color: wr2>=65?'green':wr2>=45?'amber':'red', val: wr2 });
+    }
+
+    // 4. H2H
+    if (e && e.h2h && e.h2h.n >= 3) {
+      var tot = e.h2h.t1wins + e.h2h.t2wins;
+      var r = tot > 0 ? e.h2h.t1wins / tot : 0.5;
+      signals.push({ key:'h2h', label: e.h2h.t1wins + '–' + e.h2h.t2wins, color: r>=0.65?'green':r<=0.35?'red':'amber', val: r });
+    }
+
+    // 5. Map winrate (HLTV)
+    if (e && e.map_winrate && e.map_winrate.source === 'hltv' && e.map_winrate.team1 != null) {
+      var diff = (e.map_winrate.team1||50) - (e.map_winrate.team2||50);
+      signals.push({ key:'mapwr', label: e.map_winrate.team1 + '% vs ' + e.map_winrate.team2 + '%', color: Math.abs(diff)>=20?'green':'amber', val: diff });
+    }
+
+    // 6. Over Rounds model
+    if (model && model.line) {
+      signals.push({ key:'over', label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':model.confidence==='MED'?'amber':'grey', val: model.predicted });
+    }
+
+    return { signals: signals, enrichment: e, model: model };
+  }
+
+  // ── Auto-verdict from signals ──────────────────────────────────────────
+  function _cs2Verdict(signals) {
+    if (!signals.length) return { txt: '⏳ Chargement…', cls: 'cs2-verdict-hold' };
+    var greens = signals.filter(function(s){ return s.color==='green'; }).length;
+    var reds   = signals.filter(function(s){ return s.color==='red';   }).length;
+    var n = signals.length;
+    if (greens >= 3 && reds === 0) return { txt: '🟢 BET FORT',   cls: 'cs2-verdict-strong' };
+    if (greens >= 2 && reds <= 1)  return { txt: '🟡 BET LÉGER',  cls: 'cs2-verdict-mild' };
+    if (reds   >= 3)               return { txt: '🔴 SKIP',       cls: 'cs2-verdict-skip' };
+    if (reds   >= 2 && greens < 2) return { txt: '🔴 ÉVITER',     cls: 'cs2-verdict-skip' };
+    return { txt: '⚪ HOLD', cls: 'cs2-verdict-hold' };
+  }
+
+  // ── Render KPI signal badge ───────────────────────────────────────────
+  function _kpiBadge(sig) {
+    var col = sig.color === 'green' ? '#00e676' : sig.color === 'red' ? '#ff4d4d' : sig.color === 'amber' ? '#ffa726' : '#5a6068';
+    var bg  = sig.color === 'green' ? 'rgba(0,230,118,0.10)' : sig.color === 'red' ? 'rgba(255,77,77,0.10)' : sig.color === 'amber' ? 'rgba(255,167,38,0.10)' : 'rgba(90,96,104,0.10)';
+    return '<span style="display:inline-flex;align-items:center;padding:2px 6px;border-radius:4px;border:1px solid ' + col + ';background:' + bg + ';color:' + col + ';font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;white-space:nowrap;">' + _esc(sig.label) + '</span>';
+  }
+
+  // ── Main dashboard renderer ───────────────────────────────────────────
+  window.renderCs2Dashboard = function (matches) {
+    var grid = document.getElementById('cs2-grid');
+    if (!grid) return;
+
+    if (!matches || !matches.length) {
+      grid.innerHTML = '<div class="cs2-empty"><div class="cs2-empty-icon">🎮</div><div class="cs2-empty-msg">Aucun match disponible</div></div>';
+      return;
+    }
+
+    var live    = matches.filter(function(m){ return m.is_live; });
+    var prematch= matches.filter(function(m){ return !m.is_live && m.status !== 'finished'; });
+
+    function section(title, list) {
+      if (!list.length) return '';
+      var rows = list.map(function(m) {
+        var kd    = _cs2BettingSignals(m);
+        var verdict = _cs2Verdict(kd.signals);
+        var e = kd.enrichment;
+        var model = kd.model;
+
+        // Score / time
+        var scoreCell = '';
+        if (m.is_live) {
+          var ms = m.maps_score || {};
+          var rs = m.round_score || {};
+          scoreCell = '<span style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:#FF6B00;">' +
+            (ms.team1!=null?ms.team1:'—') + '–' + (ms.team2!=null?ms.team2:'—') + '</span>' +
+            (rs.team1!=null ? '<br><span style="font-size:9px;color:var(--text3);">' + rs.team1 + '–' + rs.team2 + ' rds</span>' : '');
+        } else if (m.scheduled) {
+          scoreCell = '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2);">' + _cs2FmtMatchTime(new Date(m.scheduled)) + '</span>';
+        }
+
+        // Map + over model cell
+        var mapCell = m.current_map
+          ? '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);">' + _esc(m.current_map) + '</span>' +
+            (model ? '<br>' + _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':model.confidence==='MED'?'amber':'grey' }) : '')
+          : (model ? _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':'amber' }) : '<span style="color:var(--text3);font-size:10px;">—</span>');
+
+        // Odds cell
+        var odds = m.odds || {};
+        var oddsCell = odds.team1 != null
+          ? '<span style="font-family:\'DM Mono\',monospace;font-size:11px;">' +
+            Number(odds.team1).toFixed(2) + '<span style="color:var(--text3);margin:0 4px;">vs</span>' +
+            Number(odds.team2).toFixed(2) + '</span>'
+          : '<span style="color:var(--text3);font-size:10px;">—</span>';
+
+        // Form cells (team1 last 5 as dots)
+        function formDots(formArr) {
+          if (!formArr) return '<span style="color:var(--text3);font-size:10px;">—</span>';
+          return formArr.slice(-5).map(function(r){
+            var c = r==='W'?'#00e676':r==='L'?'#ff4d4d':'#5a6068';
+            return '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+c+';margin:0 1px;" title="'+r+'"></span>';
+          }).join('');
+        }
+        var f1 = e && e.team1 && e.team1.form ? e.team1.form.form : null;
+        var f2 = e && e.team2 && e.team2.form ? e.team2.form.form : null;
+
+        // KPI signals row (all except form)
+        var kpiCells = kd.signals
+          .filter(function(s){ return s.key !== 'form1' && s.key !== 'form2'; })
+          .map(function(s){ return _kpiBadge(s); }).join(' ');
+
+        // Team names with HLTV rank
+        function teamLabel(t) {
+          return _esc(t.name) + (t.hltv_rank ? ' <span style="font-size:9px;color:var(--text3);">#'+t.hltv_rank+'</span>' : '');
+        }
+
+        // Prediction confidence badge
+        var probCell = m.prediction
+          ? _kpiBadge(kd.signals.find(function(s){return s.key==='prob';}) || { label:'—', color:'grey' })
+          : '<span style="color:var(--text3);font-size:10px;">—</span>';
+
+        return '<tr class="cs2-dash-row' + (m.is_live ? ' cs2-dash-live' : '') + '">' +
+          '<td class="cs2-dash-score">' + scoreCell + '</td>' +
+          '<td class="cs2-dash-teams">' +
+            '<div class="cs2-dash-t1">' + teamLabel(m.team1) + '</div>' +
+            '<div class="cs2-dash-t2">' + teamLabel(m.team2) + '</div>' +
+            '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);margin-top:1px;">' + _esc(m.tournament) + '</div>' +
+          '</td>' +
+          '<td class="cs2-dash-odds">' + oddsCell + '</td>' +
+          '<td class="cs2-dash-prob">' + probCell + '</td>' +
+          '<td class="cs2-dash-form">' +
+            '<div style="margin-bottom:2px;">' + formDots(f1) + '</div>' +
+            '<div>' + formDots(f2) + '</div>' +
+          '</td>' +
+          '<td class="cs2-dash-map">' + mapCell + '</td>' +
+          '<td class="cs2-dash-kpi">' + (kpiCells || '<span style="color:var(--text3);font-size:10px;">⏳</span>') + '</td>' +
+          '<td class="cs2-dash-verdict"><span class="cs2-verdict-badge ' + verdict.cls + '">' + verdict.txt + '</span></td>' +
+        '</tr>';
+      }).join('');
+
+      return '<div class="cs2-dash-section">' +
+        '<div class="cs2-dash-section-title">' + (list.some(function(m){return m.is_live;}) ? '🔴 LIVE' : '📅 PRÉ-MATCH') + ' <span style="color:var(--text3);font-size:11px;">(' + list.length + ')</span></div>' +
+        '<div class="cs2-dash-wrap"><table class="cs2-dash-table">' +
+        '<thead><tr>' +
+        '<th>Score / Heure</th><th>Match</th><th>Cotes</th><th>Prob ML</th>' +
+        '<th>Forme<br><span style="font-size:8px;font-weight:400;">T1 / T2 last 5</span></th>' +
+        '<th>Map / Rounds</th><th>Signaux KPI</th><th>VERDICT</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    }
+
+    var html = '';
+    if (live.length)     html += section('LIVE', live);
+    if (prematch.length) html += section('PREMATCH', prematch);
+    grid.innerHTML = html;
+
+    // Trigger async enrichment + model fetches for all matches
+    matches.forEach(function(m) {
+      if (m.team1 && m.team2) {
+        _fetchEnrichment(m.id, m.team1.name, m.team2.name, m.current_map || null);
+        if (m.current_map) _fetchMapOverModel(m.id, m.team1.name, m.team2.name, m.current_map, null);
+      }
+    });
+    // Re-render after enrichment loads (using existing poll)
+    setTimeout(function() { _applyCs2Filter(); }, 3000);
+    setTimeout(function() { _applyCs2Filter(); }, 8000);
+  };
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function _buildHighlightSection(clips) {
