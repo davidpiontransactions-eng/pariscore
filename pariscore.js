@@ -24048,6 +24048,95 @@ function renderComparateur(d) {
     return null;
   }
 
+  // ── Enrichment fetch (form + H2H + players + map winrate) ───────────────
+  var _cs2EnrichCache = {}; // key t1|t2 → enrichment
+  function _fetchEnrichment(matchId, t1, t2, map) {
+    var cacheKey = t1 + '|' + t2;
+    if (_cs2EnrichCache[cacheKey]) {
+      _renderEnrichmentInCard(matchId, _cs2EnrichCache[cacheKey], map);
+      return;
+    }
+    var url = '/api/v1/cs2/enrich?team1=' + encodeURIComponent(t1) +
+              '&team2=' + encodeURIComponent(t2) +
+              (map ? '&map=' + encodeURIComponent(map) : '');
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var e = j && j.enrichment ? j.enrichment : null;
+        if (e) { _cs2EnrichCache[cacheKey] = e; _renderEnrichmentInCard(matchId, e, map); }
+      }).catch(function () {});
+  }
+
+  function _renderEnrichmentInCard(matchId, e, map) {
+    var card = document.querySelector('[data-cs2-match-id="' + matchId + '"]');
+    if (!card || !e) return;
+
+    // Form pills
+    function formPills(formData, side) {
+      if (!formData || !formData.form) return '';
+      var el = card.querySelector('.cs2-form-pills-' + side);
+      if (!el) return '';
+      el.innerHTML = formData.form.slice(-7).map(function (r) {
+        var col = r === 'W' ? '#00e676' : r === 'L' ? '#ff4d4d' : '#5a6068';
+        return '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + col + ';margin:0 1px;" title="' + r + '"></span>';
+      }).join('');
+      return '';
+    }
+    formPills(e.team1, 't1');
+    formPills(e.team2, 't2');
+
+    // H2H badge
+    var h2hEl = card.querySelector('.cs2-h2h-badge');
+    if (h2hEl && e.h2h) {
+      h2hEl.textContent = 'H2H ' + e.h2h.t1wins + '–' + e.h2h.t2wins;
+      h2hEl.style.display = 'inline';
+    }
+
+    // Streak badges
+    function streakBadge(team, side) {
+      var el = card.querySelector('.cs2-streak-' + side);
+      if (!el || team.streak == null) return;
+      var val = team.streak;
+      el.textContent = (val > 0 ? '+' : '') + val;
+      el.style.color = val > 0 ? '#00e676' : val < 0 ? '#ff4d4d' : '#8d9399';
+      el.style.display = 'inline';
+    }
+    streakBadge(e.team1, 't1');
+    streakBadge(e.team2, 't2');
+
+    // Map winrate bar
+    if (map && e.map_winrate && e.map_winrate.source === 'hltv') {
+      var mwEl = card.querySelector('.cs2-map-winrate-bar');
+      if (mwEl) {
+        var w1 = e.map_winrate.team1;
+        var w2 = e.map_winrate.team2;
+        if (w1 != null || w2 != null) {
+          var flag1 = w1 != null && w2 != null && Math.abs(w1 - w2) >= 20 ? ' ✓' : '';
+          mwEl.innerHTML = '<span style="color:var(--text3);font-size:9px;">WR ' + map + ':</span> ' +
+            (w1 != null ? '<span style="color:' + (w1>=60?'#00e676':w1>=45?'#ffa726':'#ff4d4d') + '">' + w1 + '%</span>' : '<span style="color:var(--text3)">?</span>') +
+            '<span style="color:var(--text3);margin:0 3px;">vs</span>' +
+            (w2 != null ? '<span style="color:' + (w2>=60?'#00e676':w2>=45?'#ffa726':'#ff4d4d') + '">' + w2 + '%</span>' : '<span style="color:var(--text3)">?</span>') +
+            '<span style="color:#00e676;font-weight:700;">' + flag1 + '</span>';
+          mwEl.style.display = 'flex';
+        }
+      }
+    }
+
+    // Top player ratings
+    function playerRatings(players, side) {
+      var el = card.querySelector('.cs2-players-' + side);
+      if (!el || !players || !players.length) return;
+      el.innerHTML = players.slice(0, 3).map(function (p) {
+        var col = p.rating >= 1.2 ? '#00e676' : p.rating >= 1.0 ? '#ffa726' : '#8d9399';
+        return '<span title="' + p.name + ' — ADR:' + p.adr + ' KAST:' + (p.kast||'?') + '" style="font-size:9px;color:var(--text3);white-space:nowrap;">' +
+          p.name + ' <span style="color:' + col + ';font-weight:700;">' + (p.rating || '?') + '</span></span>';
+      }).join('<span style="color:var(--bg4);margin:0 3px;">·</span>');
+      el.style.display = 'flex';
+    }
+    playerRatings(e.team1.players, 't1');
+    playerRatings(e.team2.players, 't2');
+  }
+
   // ── Over Rounds model async fetch ────────────────────────────────────────
   var _cs2ModelCache = {}; // key → model result
   function _fetchMapOverModel(matchId, t1, t2, map, domId) {
@@ -24276,7 +24365,10 @@ function renderComparateur(d) {
         '" alt="" onerror="this.style.display=\'none\'" loading="lazy"/>'
       : '<span style="font-size:13px;flex-shrink:0;">🏆</span>';
 
-    return '<div class="cs2-card' + (isLive ? ' is-live' : '') + '">' +
+    // Trigger enrichment fetch async
+    _fetchEnrichment(m.id, t1.name, t2.name, m.current_map || null);
+
+    return '<div class="cs2-card' + (isLive ? ' is-live' : '') + '" data-cs2-match-id="' + _esc(m.id) + '">' +
       '<div class="cs2-card-head">' +
         tourLogo +
         '<span class="cs2-tour-name">' + _esc(m.tournament) + '</span>' +
@@ -24287,20 +24379,32 @@ function renderComparateur(d) {
         '<div class="cs2-team">' +
           teamLogo(t1) +
           '<div class="cs2-team-info">' +
-            '<div class="cs2-team-name">' + stickerBadge(stk1) + _esc(t1.name || 'TBD') + '</div>' +
+            '<div class="cs2-team-name">' + stickerBadge(stk1) + _esc(t1.name || 'TBD') +
+              '<span class="cs2-streak-t1" style="display:none;font-family:\'DM Mono\',monospace;font-size:9px;margin-left:4px;"></span>' +
+            '</div>' +
             rankTag(t1.hltv_rank) +
+            '<div class="cs2-form-pills-t1" style="margin-top:3px;display:flex;gap:1px;"></div>' +
+            '<div class="cs2-players-t1" style="display:none;gap:4px;flex-wrap:wrap;margin-top:2px;"></div>' +
           '</div>' +
         '</div>' +
-        '<div class="cs2-center">' + scoreHtml + subHtml + '</div>' +
+        '<div class="cs2-center">' +
+          scoreHtml + subHtml +
+          '<div style="margin-top:4px;"><span class="cs2-h2h-badge" style="display:none;font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);"></span></div>' +
+        '</div>' +
         '<div class="cs2-team t2">' +
           teamLogo(t2) +
           '<div class="cs2-team-info">' +
-            '<div class="cs2-team-name">' + _esc(t2.name || 'TBD') + stickerBadge(stk2) + '</div>' +
+            '<div class="cs2-team-name">' + _esc(t2.name || 'TBD') + stickerBadge(stk2) +
+              '<span class="cs2-streak-t2" style="display:none;font-family:\'DM Mono\',monospace;font-size:9px;margin-left:4px;"></span>' +
+            '</div>' +
             rankTag(t2.hltv_rank) +
+            '<div class="cs2-form-pills-t2" style="margin-top:3px;display:flex;gap:1px;justify-content:flex-end;"></div>' +
+            '<div class="cs2-players-t2" style="display:none;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin-top:2px;"></div>' +
           '</div>' +
         '</div>' +
       '</div>' +
       mapBarHtml +
+      '<div class="cs2-map-winrate-bar" style="display:none;align-items:center;gap:4px;font-family:\'DM Mono\',monospace;font-size:10px;padding:3px 12px 5px;"></div>' +
       _buildHighlightSection(clips) +
       '<div class="cs2-card-foot">' + oddsHtml + timeHtml + '</div>' +
     '</div>';
