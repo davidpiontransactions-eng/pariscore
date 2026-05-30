@@ -7076,8 +7076,16 @@ function computeBetSignal(record, uqd) {
   const pLower = (icData.lower || 0) / 100;
   const evLower = odds ? parseFloat(((pLower * odds - 1) * 100).toFixed(1)) : null;
 
-  const cond1 = ev > 5;
-  const cond2 = evLower != null && evLower > 0;
+  // Kelly tier routing (Ren & Susnjak 2022): classify match difficulty → dynamic thresholds
+  const kellyFrac = odds && odds > 1 ? ev / (odds - 1) : null;
+  let evThr = 5, evLowerThr = 0, kellyTier = 'medium';
+  if (kellyFrac !== null) {
+    if (kellyFrac > 15)    { evThr = 3; evLowerThr = -2; kellyTier = 'easy'; }
+    else if (kellyFrac < 8) { evThr = 8; evLowerThr = 2;  kellyTier = 'hard'; }
+  }
+
+  const cond1 = ev > evThr;
+  const cond2 = evLower != null && evLower > evLowerThr;
 
   if (cond1 && cond2) {
     return {
@@ -7086,7 +7094,9 @@ function computeBetSignal(record, uqd) {
       ev_pct: ev,
       ic_lower_pct: icData.lower,
       ic_lower_ev: evLower,
-      reason: `✓ EV ${safeFixed(ev, 1)}% > 5% | ✓ EV pessimiste IC90% ${safeFixed(evLower, 1)}% > 0%`,
+      kelly_tier: kellyTier,
+      kelly_frac: kellyFrac !== null ? parseFloat(kellyFrac.toFixed(1)) : null,
+      reason: `✓ EV ${safeFixed(ev, 1)}% > ${evThr}% [${kellyTier}] | ✓ EV pessimiste IC90% ${safeFixed(evLower, 1)}% > ${evLowerThr}%`,
     };
   } else if (cond1 && !cond2) {
     return {
@@ -7095,14 +7105,18 @@ function computeBetSignal(record, uqd) {
       ev_pct: ev,
       ic_lower_pct: icData.lower,
       ic_lower_ev: evLower,
-      reason: `✓ EV ${safeFixed(ev, 1)}% > 5% | ✗ EV pessimiste ${evLower != null ? safeFixed(evLower, 1) : '?'}% ≤ 0% (incertitude trop haute)`,
+      kelly_tier: kellyTier,
+      kelly_frac: kellyFrac !== null ? parseFloat(kellyFrac.toFixed(1)) : null,
+      reason: `✓ EV ${safeFixed(ev, 1)}% > ${evThr}% [${kellyTier}] | ✗ EV pessimiste ${evLower != null ? safeFixed(evLower, 1) : '?'}% ≤ ${evLowerThr}% (incertitude trop haute)`,
     };
   } else {
     return {
       recommended: false,
       market: label,
       ev_pct: ev,
-      reason: `✗ EV ${safeFixed(ev, 1)}% ≤ seuil 5%`,
+      kelly_tier: kellyTier,
+      kelly_frac: kellyFrac !== null ? parseFloat(kellyFrac.toFixed(1)) : null,
+      reason: `✗ EV ${safeFixed(ev, 1)}% ≤ seuil ${evThr}% [${kellyTier}]`,
     };
   }
 }
@@ -7986,8 +8000,18 @@ function buildMatchRecord(raw) {
 
   // Expected goals (Poisson λ) : attaque dom × défense ext / ligue moyenne (~1.35)
   const LEAGUE_AVG = 1.35;
-  const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG);
-  const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG);
+  // Home advantage dynamique (Benz & Lopez 2020): baseline 1.10 + ajustement forme L5
+  const _formWinRate = (f) => {
+    if (!f || !f.length) return 0.5;
+    const g = String(f).split('').slice(-5);
+    const pts = g.reduce((s, r) => s + (r === 'W' ? 3 : r === 'D' ? 1 : 0), 0);
+    return pts / (g.length * 3);
+  };
+  const _hfr = _formWinRate(homeForm);
+  const _afr = _formWinRate(awayForm);
+  const ha_dynamic = Math.max(0.95, Math.min(1.25, 1.10 * (1 + 0.10 * (_hfr - _afr))));
+  const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG) * ha_dynamic;
+  const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG) / ha_dynamic;
 
   // v9.0/v9.9: Anti-Zero + Sanity λ — bloquer si moyennes à 0 OU λ aberrant
   // (cumuls saison pris pour moyennes → expHome≈136 → matrice Poisson sous-flow = 0%).
@@ -9757,6 +9781,34 @@ function getAccuracyReport() {
     edge: { rate: pct(accuracy.edge_correct, accuracy.edge_total), sample: accuracy.edge_total },
     history_size: history.length,
   };
+
+  // ── Calibration: Brier + Log-Loss (Walsh & Joshi 2023 — accuracy seule trompeuse) ──
+  {
+    const eps = 1e-7;
+    let bO25 = 0, bBtts = 0, llO25 = 0, llBtts = 0, nO25 = 0, nBtts = 0;
+    for (const h of history) {
+      if (!h.verified || !h.realScore) continue;
+      const rs = h.realScore;
+      const o25 = ((rs.home + rs.away) > 2.5) ? 1 : 0;
+      const btts = (rs.home > 0 && rs.away > 0) ? 1 : 0;
+      if (h.predicted?.over25 != null) {
+        const p = Math.max(eps, Math.min(1 - eps, h.predicted.over25 / 100));
+        bO25  += (p - o25) ** 2;
+        llO25 += -(o25 * Math.log(p) + (1 - o25) * Math.log(1 - p));
+        nO25++;
+      }
+      if (h.predicted?.btts != null) {
+        const p = Math.max(eps, Math.min(1 - eps, h.predicted.btts / 100));
+        bBtts  += (p - btts) ** 2;
+        llBtts += -(btts * Math.log(p) + (1 - btts) * Math.log(1 - p));
+        nBtts++;
+      }
+    }
+    global.calibration = {
+      over25: nO25 ? { brier: parseFloat((bO25 / nO25).toFixed(4)), logloss: parseFloat((llO25 / nO25).toFixed(4)), sample: nO25 } : null,
+      btts:   nBtts ? { brier: parseFloat((bBtts / nBtts).toFixed(4)), logloss: parseFloat((llBtts / nBtts).toFixed(4)), sample: nBtts } : null,
+    };
+  }
 
   // ── Rolling window (30 derniers matchs vérifiés) ────────────────────────────
   const recent = history.filter(h => h.verified).slice(-30);
