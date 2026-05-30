@@ -29,6 +29,7 @@ const Database = require('better-sqlite3');
 const EloCalculator = require('./eloCalculator'); // WElo (Weighted Elo) Tennis — Kovalchik FiveThirtyEight
 const { TennisGlicko2 } = require('./glicko2Calculator'); // Glicko-2 Tennis Skills (serve/return)
 const { TennisMomentumTracker } = require('./momentumTennis'); // K-Flow + SM momentum
+const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momentum scoring
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
@@ -5268,10 +5269,12 @@ const SPS_UPCOMING_TELEMETRY = {
 let tennisEloCalculator = null;
 let tennisGlicko2 = null;
 let tennisMomentumTracker = null;
+let playerMomentumScorer = null;
 
 function initTennisMomentum() {
   tennisMomentumTracker = new TennisMomentumTracker();
-  console.log('  ✓ K-Flow + SM Momentum Tennis initialized');
+  playerMomentumScorer = new PlayerMomentumScorer();
+  console.log('  ✓ K-Flow + SM Momentum Tennis + Player Momentum initialized');
 }
 
 function initTennisEloCalculator() {
@@ -16694,6 +16697,7 @@ function srvPlanGate(req, res, pathname) {
   if (pathname.startsWith('/api/v1/tennis/glicko2/')) return false;
   // K-Flow + SM Momentum — public read-only
   if (pathname === '/api/v1/tennis/momentum') return false;
+  if (pathname === '/api/v1/players/momentum') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -18360,6 +18364,17 @@ async function handleAPI(req, res, pathname, query) {
     if (!matchId) return jsonResponse(res, 400, { error: 'matchId required' });
     const mom = tennisMomentumTracker.getMomentum(matchId);
     return jsonResponse(res, 200, mom);
+  }
+
+  // Player Momentum Score (OSS Pulse-inspired)
+  if (pathname === '/api/v1/players/momentum' && req.method === 'GET') {
+    if (!playerMomentumScorer) return jsonResponse(res, 503, { error: 'momentum_not_initialized' });
+    const playerId = String(query.playerId || '').trim();
+    if (playerId) {
+      return jsonResponse(res, 200, playerMomentumScorer.computeMomentumScore(playerId));
+    }
+    const top = playerMomentumScorer.getTopMomentum(Math.min(parseInt(query.limit) || 20, 100));
+    return jsonResponse(res, 200, { top, count: top.length });
   }
 
   // Fallback API interne
