@@ -18214,6 +18214,48 @@ async function handleAPI(req, res, pathname, query) {
       : jsonResponse(res, 200, { success: false, message: 'Échec synchro.' });
   }
 
+  // ─── GLICKO-2 TENNIS — Read-only, public ─────────────────────────────
+  // GET /api/v1/tennis/glicko2/stats
+  if (pathname === '/api/v1/tennis/glicko2/stats' && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    return jsonResponse(res, 200, tennisGlicko2.getStats());
+  }
+  if (pathname.startsWith('/api/v1/tennis/glicko2/player/') && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    const gid = decodeURIComponent(pathname.slice('/api/v1/tennis/glicko2/player/'.length)).trim();
+    if (!gid) return jsonResponse(res, 400, { error: 'missing_player_id' });
+    const srv = tennisGlicko2.serveCalc.getPlayer(gid);
+    const ret = tennisGlicko2.returnCalc.getPlayer(gid);
+    return jsonResponse(res, 200, {
+      player_id: gid,
+      serve: { rating: Math.round(srv.rating * 100) / 100, deviation: Math.round(srv.deviation * 100) / 100, volatility: Math.round(srv.volatility * 1000) / 1000 },
+      return: { rating: Math.round(ret.rating * 100) / 100, deviation: Math.round(ret.deviation * 100) / 100, volatility: Math.round(ret.volatility * 1000) / 1000 },
+    });
+  }
+  if (pathname === '/api/v1/tennis/glicko2/top' && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    const glimit = Math.min(Math.max(parseInt(query.limit) || 100, 1), 500);
+    const gtop = tennisGlicko2.serveCalc.getTopPlayers(glimit);
+    return jsonResponse(res, 200, {
+      rankings: gtop.map((p, i) => ({
+        rank: i + 1, player_id: p.playerId,
+        serve_rating: Math.round(p.rating * 100) / 100,
+        deviation: Math.round(p.deviation * 100) / 100,
+      })),
+    });
+  }
+  if (pathname === '/api/v1/tennis/glicko2/proba' && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    const gp1 = String(query.p1 || '').trim(), gp2 = String(query.p2 || '').trim();
+    if (!gp1 || !gp2) return jsonResponse(res, 400, { error: 'p1 and p2 required' });
+    const ps = tennisGlicko2.computeServeWinProbability(gp1, gp2);
+    const pr = tennisGlicko2.computeReturnWinProbability(gp1, gp2);
+    return jsonResponse(res, 200, {
+      p1_serve_win_prob: Math.round(ps * 10000) / 100,
+      p1_return_win_prob: Math.round(pr * 10000) / 100,
+    });
+  }
+
   // Fallback API interne
   return jsonResponse(res, 404, { error: 'Route inconnue: ' + pathname });
 }
@@ -36072,50 +36114,6 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
                             result = { url: `https://sports.bzzoiro.com/img/team/${t.id}/`, bsdId: t.id };
 }
 
-// ─── GLICKO-2 TENNIS ROUTES ──────────────────────────────────────────────
-// GET /api/v1/tennis/glicko2/stats — Statistiques Glicko-2
-if (pathname === '/api/v1/tennis/glicko2/stats' && req.method === 'GET') {
-  if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
-  return jsonResponse(res, 200, tennisGlicko2.getStats());
-}
-// GET /api/v1/tennis/glicko2/player/:id — Rating serve+return d'un joueur
-if (pathname.startsWith('/api/v1/tennis/glicko2/player/') && req.method === 'GET') {
-  if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
-  const playerId = decodeURIComponent(pathname.slice('/api/v1/tennis/glicko2/player/'.length)).trim();
-  if (!playerId) return jsonResponse(res, 400, { error: 'missing_player_id' });
-  const srv = tennisGlicko2.serveCalc.getPlayer(playerId);
-  const ret = tennisGlicko2.returnCalc.getPlayer(playerId);
-  return jsonResponse(res, 200, {
-    player_id: playerId,
-    serve: { rating: Math.round(srv.rating * 100) / 100, deviation: Math.round(srv.deviation * 100) / 100, volatility: Math.round(srv.volatility * 1000) / 1000 },
-    return: { rating: Math.round(ret.rating * 100) / 100, deviation: Math.round(ret.deviation * 100) / 100, volatility: Math.round(ret.volatility * 1000) / 1000 },
-  });
-}
-// GET /api/v1/tennis/glicko2/top — Top joueurs Glicko-2
-if (pathname === '/api/v1/tennis/glicko2/top' && req.method === 'GET') {
-  if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
-  const limit = Math.min(Math.max(parseInt(query.limit) || 100, 1), 500);
-  const top = tennisGlicko2.serveCalc.getTopPlayers(limit);
-  return jsonResponse(res, 200, {
-    rankings: top.map((p, i) => ({
-      rank: i + 1, player_id: p.playerId,
-      serve_rating: Math.round(p.rating * 100) / 100,
-      deviation: Math.round(p.deviation * 100) / 100,
-    })),
-  });
-}
-// GET /api/v1/tennis/glicko2/proba — Probabilité point/lancer Glicko-2
-if (pathname === '/api/v1/tennis/glicko2/proba' && req.method === 'GET') {
-  if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
-  const p1 = String(query.p1 || '').trim(), p2 = String(query.p2 || '').trim();
-  if (!p1 || !p2) return jsonResponse(res, 400, { error: 'p1 and p2 required' });
-  const ps = tennisGlicko2.computeServeWinProbability(p1, p2);
-  const pr = tennisGlicko2.computeReturnWinProbability(p1, p2);
-  return jsonResponse(res, 200, {
-    p1_serve_win_prob: Math.round(ps * 10000) / 100,
-    p1_return_win_prob: Math.round(pr * 10000) / 100,
-  });
-}
                     } catch (e) { /* fallback */ }
                 }
 
