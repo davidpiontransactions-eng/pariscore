@@ -18540,6 +18540,27 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/cs2/enrich?team1=Vitality&team2=FaZe[&map=Mirage]
+  // Returns: form, H2H, player stats, streak, HLTV map winrates
+  if (pathname === '/api/v1/cs2/enrich' && req.method === 'GET') {
+    const t1  = (query.team1 || '').trim();
+    const t2  = (query.team2 || '').trim();
+    const map = (query.map  || '').trim() || null;
+    if (!t1 || !t2) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'team1 and team2 required' }));
+    }
+    try {
+      const enrichment = await cs2Service.buildMatchEnrichment(t1, t2, map);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
+      return res.end(JSON.stringify({ ok: true, enrichment }));
+    } catch (e) {
+      console.error('[CS2 enrich]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
   // GET /api/v1/cs2/map-model?team1=Vitality&team2=FaZe&map=Mirage[&rankWindow=15]
   if (pathname === '/api/v1/cs2/map-model' && req.method === 'GET') {
     const t1 = (query.team1 || '').trim();
@@ -40726,6 +40747,7 @@ cs2Service.fetchTeamStickers().catch(e => console.warn('[CS2/Stickers bootstrap]
 // Preload csapi.de match history for Over Rounds model (6h cache)
 cs2Service.fetchCsApiMatches().catch(e => console.warn('[CS2/OverModel bootstrap]', e.message));
 cs2Service.fetchCsApiRankings().catch(e => console.warn('[CS2/Rankings bootstrap]', e.message));
+cs2Service.fetchCsApiPlayerStats().catch(e => console.warn('[CS2/Players bootstrap]', e.message));
 console.log('  [CS2] poll armé — 30 s interval');
 
 // Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)
