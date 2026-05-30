@@ -1236,7 +1236,25 @@ function _tnMomentumBadge(m) {
   return `<span class="tn-mom-badge" title="Momentum: ${conf}% flow=${(m.momentum.momentum_shift||0).toFixed(2)} KFS=${m.momentum.kfs_direction}">${dir}${conf}%</span>`;
 }
 
-// bd dt9/i5r — Filtre source actif. AISCORE chip groupe AISCORE_CACHE + AISCORE_ONDEMAND.
+// bd — Status bar showing active AI models on tennis page
+function _tnUpdateModelsBar(matches) {
+  var bar = document.getElementById('tn-models-bar');
+  if (!bar) return;
+  var withGlicko = 0, withMomentum = 0, withOdds = 0;
+  for (var i = 0; i < (matches || []).length; i++) {
+    var m = matches[i];
+    if (m.glicko2) withGlicko++;
+    if (m.momentum) withMomentum++;
+    if (m.odds_player1 && m.odds_player2) withOdds++;
+  }
+  var parts = [];
+  if (withGlicko) parts.push('<span style="color:#0ea5e9;">⬡ Glicko-2</span>');
+  if (withMomentum) parts.push('<span style="color:#22c55e;">⚡ Momentum</span>');
+  if (withOdds) parts.push('<span style="color:#ffa726;">💰 Odds BSD</span>');
+  parts.push('<span style="color:#ec4899;">🧠 Elo</span>');
+  bar.innerHTML = parts.join(' <span style="color:#5a6068;">|</span> ');
+  bar.style.display = 'inline-block';
+}
 window._tennisSourceFilter = window._tennisSourceFilter || 'ALL';
 function setTennisSourceFilter(f) {
   const allowed = ['ALL', 'BSD', 'ESPN', 'LIVESCORE', 'AISCORE'];
@@ -1554,6 +1572,7 @@ async function tickTennisLive() {
     }
     window._tennisLastFetch = list;
     renderTennisLive(window._tennisLastFetch);
+    _tnUpdateModelsBar(list);
     try { patchTennisLive(); } catch (_) {}/*TN_UNIFY_TICK*/
     if (statusEl) statusEl.textContent = `${list.length} match(s) · ${srcLabel} · ${new Date().toLocaleTimeString('fr-FR')}`;
   } catch (e) {
