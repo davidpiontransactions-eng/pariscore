@@ -20427,8 +20427,21 @@ async function pollTennisLive() {
           const drGapAbs    = Math.abs(drGapSigned);
           if (drGapAbs < _DR_DIFF_THR) continue;
 
-          // ── Alerte domination + cote ≤ 1.30 → webhook dédié ──────────────────
+          // ── Alerte domination + cote ≤ 1.30 → webhook dédié (scope RG + Challengers) ──
           {
+            // Scope : Roland Garros + ATP/WTA Challengers uniquement
+            const _tnTour = (m.tour       || '').toUpperCase();
+            const _tnDisc = (m.discipline || '').toUpperCase();
+            const _tnName = (m.tournament || '').toUpperCase();
+            const _isRGorChallenger = (
+              /ROLAND.?GARROS|FRENCH.?OPEN/.test(_tnName) ||
+              /CHALLENGER/.test(_tnDisc)                   ||
+              /CHALLENGER/.test(_tnTour)                   ||
+              /CHALLENGER/.test(_tnName)                   ||
+              (/GRAND.?SLAM/.test(_tnDisc) && /ATP|WTA/.test(_tnTour))
+            );
+            if (!_isRGorChallenger) { /* hors scope — UTR/ITF/250/500 exclus */ }
+            else {
             const _dominSide    = drGapSigned > 0 ? 'p1' : 'p2';
             const _dominantName = _dominSide === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
             const _dominantOdds = _dominSide === 'p1' ? m.odds_player1 : m.odds_player2;
@@ -20466,6 +20479,7 @@ async function pollTennisLive() {
                 console.log(`  [Tennis:DomOdds13] ${m.id} dominant=${_dominantName} cote=${_dominantOdds.toFixed(2)} gap=${drGapAbs.toFixed(2)}`);
               }
             }
+            } // end else _isRGorChallenger
           }
           // ─────────────────────────────────────────────────────────────────────
 
