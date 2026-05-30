@@ -40269,8 +40269,10 @@ const _SURFACE_COLORS = { Clay: 0xcc6633, Hard: 0x29b6f6, Grass: 0x00c851, Carpe
 const _SURFACE_FACTOR = { Clay: 1.15, Grass: 1.10, Hard: 1.0, Carpet: 1.0 };
 const _SURFACE_EMOJI = { Clay: '🟤', Hard: '🔵', Grass: '🟢', Carpet: '🟣' };
 
-function _selectMorningTennisATP(count) {
+// tour = 'ATP' | 'WTA'
+function _selectMorningTennisByTour(tour, count) {
   const n = count || DISCORD_TENNIS_MORNING_COUNT;
+  const tourUpper = (tour || 'ATP').toUpperCase();
   const now = Date.now();
   const horizon = now + 24 * 3600 * 1000;
   const candidates = [];
@@ -40278,7 +40280,7 @@ function _selectMorningTennisATP(count) {
   const tennisPool = Array.isArray(_tennisLiveCache?.data) ? _tennisLiveCache.data : [];
   for (const m of tennisPool) {
     if (!m) continue;
-    if ((m.tour || '').toUpperCase() !== 'ATP') continue;
+    if ((m.tour || '').toUpperCase() !== tourUpper) continue;
     if (m.is_live) continue;
     const ko = new Date(m.commence_time || m.start_time).getTime();
     if (!Number.isFinite(ko) || ko <= now || ko > horizon) continue;
@@ -40318,18 +40320,20 @@ function _selectMorningTennisATP(count) {
   return candidates.sort((a, b) => b.score - a.score).slice(0, n);
 }
 
-function _buildTennisATPMorningEmbed(picks) {
+function _buildTennisMorningEmbed(tour, picks) {
   if (!picks.length) return null;
+  const tourLabel = (tour || 'ATP').toUpperCase();
+  const tourIcon = tourLabel === 'WTA' ? '👩' : '🎾';
   const dt = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' });
   const surfaces = [...new Set(picks.map(p => p.surface))];
-  const color = surfaces.length === 1 ? (_SURFACE_COLORS[surfaces[0]] || 0x1DB954) : 0x1DB954;
+  const color = surfaces.length === 1 ? (_SURFACE_COLORS[surfaces[0]] || 0x1DB954) : (tourLabel === 'WTA' ? 0xe879f9 : 0x1DB954);
   const fields = picks.map((p, i) => {
     const ko = new Date(p.m.commence_time || p.m.start_time).toLocaleString('fr-FR', {
       weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
     });
     const surfEmoji = _SURFACE_EMOJI[p.surface] || '⚪';
     const eloStr = p.source === 'elo' && p.eloFav != null ? ` | Elo ${p.eloFav} vs ${p.eloDog}` : p.source === 'odds' ? ' | odds-based' : '';
-    const tournament = p.m.tournament || p.m.league || 'ATP';
+    const tournament = p.m.tournament || p.m.league || tourLabel;
     const round = p.m.round || p.m.court || '';
     return {
       name: `${i + 1}. ${p.p1Name} vs ${p.p2Name}`,
@@ -40338,11 +40342,11 @@ function _buildTennisATPMorningEmbed(picks) {
     };
   });
   return {
-    title: `🎾 TOP ${picks.length} ATP — SURFACE EDGE | ${dt}`,
+    title: `${tourIcon} TOP ${picks.length} ${tourLabel} — SURFACE EDGE | ${dt}`,
     color,
     description: 'Classement par écart Elo × facteur surface (Clay +15%, Grass +10%). Fallback odds.',
     fields,
-    footer: { text: 'PariScore • ATP Prematch • Elo surface-weighted' },
+    footer: { text: `PariScore • ${tourLabel} Prematch • Elo surface-weighted` },
     timestamp: new Date().toISOString(),
   };
 }
@@ -40357,18 +40361,21 @@ async function _runMorningTennisATPDiscord({ force = false } = {}) {
       console.log('  [MorningTennis:Discord] skip — NODE_ENV != production');
       return;
     }
-    const picks = _selectMorningTennisATP();
-    if (!picks.length) {
-      console.log('  [MorningTennis:Discord] 0 matchs ATP dans les 24h');
+    const atpPicks = _selectMorningTennisByTour('ATP');
+    const wtaPicks = _selectMorningTennisByTour('WTA');
+    const embeds = [
+      _buildTennisMorningEmbed('ATP', atpPicks),
+      _buildTennisMorningEmbed('WTA', wtaPicks),
+    ].filter(Boolean);
+    if (!embeds.length) {
+      console.log('  [MorningTennis:Discord] 0 matchs ATP/WTA dans les 24h');
       return;
     }
-    const embed = _buildTennisATPMorningEmbed(picks);
-    if (!embed) return;
-    const discordRes = await httpsPost(DISCORD_TENNIS_MORNING_WEBHOOK_URL, { embeds: [embed] });
+    const discordRes = await httpsPost(DISCORD_TENNIS_MORNING_WEBHOOK_URL, { embeds });
     if (discordRes && discordRes.status >= 400) {
       console.warn(`  [MorningTennis:Discord] Échec HTTP ${discordRes.status}`);
     } else {
-      console.log(`  [MorningTennis:Discord] OK — top ${picks.length} ATP envoyés`);
+      console.log(`  [MorningTennis:Discord] OK — ATP:${atpPicks.length} WTA:${wtaPicks.length} envoyés`);
     }
   } catch (e) {
     console.warn('  [MorningTennis:Discord] erreur:', e.message);
