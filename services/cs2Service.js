@@ -21,8 +21,15 @@ const CS2_BSD_BASE     = 'https://sports.bzzoiro.com/csgo';
 const RANKINGS_FILE    = path.join(__dirname, '..', 'data', 'hltv_rankings.json');
 
 // ─── Caches ──────────────────────────────────────────────────────────────────
-let _cs2Cache      = { ts: 0, data: [] };
-let _hltvRankCache = { ts: 0, rankings: {} };  // teamName.lower() → { rank, points }
+let _cs2Cache        = { ts: 0, data: [] };
+let _hltvRankCache   = { ts: 0, rankings: {} };    // teamName.lower() → { rank, points }
+let _highlightsCache = { ts: 0, data: [] };        // ByMykel tournament highlights
+let _stickersCache   = { ts: 0, byTeam: {} };      // teamName.lower() → best sticker img
+
+// ─── ByMykel/CSGO-API constants ───────────────────────────────────────────────
+const BYKEL_BASE           = 'https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en';
+const BYKEL_HIGHLIGHTS_TTL = 60 * 60 * 1000;      // 1 h
+const BYKEL_STICKERS_TTL   = 24 * 60 * 60 * 1000; // 24 h
 
 // ─── Native https with timeout ───────────────────────────────────────────────
 function _get(url, headers = {}, timeoutMs = 8000) {
@@ -210,10 +217,90 @@ async function _fetchPredictions(apiKey) {
   return {};
 }
 
+// ─── ByMykel/CSGO-API fetcher ─────────────────────────────────────────────────
+async function _byMykelFetch(file) {
+  const res = await _get(`${BYKEL_BASE}/${file}`, {}, 10000);
+  if (res.status !== 200 || !Array.isArray(res.data)) return [];
+  return res.data;
+}
+
+// ─── Highlights (tournament match clips — video MP4 Steam CDN) ───────────────
+async function fetchHighlights() {
+  if (Date.now() - _highlightsCache.ts < BYKEL_HIGHLIGHTS_TTL) return _highlightsCache.data;
+  try {
+    const data = await _byMykelFetch('highlights.json');
+    _highlightsCache = { ts: Date.now(), data };
+    console.log(`[CS2/Highlights] ${data.length} clips loaded`);
+    return data;
+  } catch (e) {
+    console.warn('[CS2/Highlights]', e.message);
+    return _highlightsCache.data || [];
+  }
+}
+
+// ─── Team stickers index (name.lower() → best sticker image URL) ─────────────
+async function fetchTeamStickers() {
+  if (Date.now() - _stickersCache.ts < BYKEL_STICKERS_TTL) return _stickersCache.byTeam;
+  try {
+    const raw = await _byMykelFetch('stickers.json');
+    const byTeam = {};
+    for (const s of raw) {
+      // Name format: "Sticker | Team Vitality | Paris 2023" or "Sticker | Team Vitality (Holo) | Paris 2023"
+      const parts = (s.name || '').split(' | ');
+      if (parts.length < 2) continue;
+      let teamName = parts[1].trim();
+      // Strip variant suffix in parentheses: "FaZe Clan (Gold)" → "FaZe Clan"
+      teamName = teamName.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      if (!teamName || teamName.length < 2) continue;
+      const key = teamName.toLowerCase();
+      // Keep first (most common) sticker per team, prefer non-foil
+      if (!byTeam[key]) {
+        byTeam[key] = { team: teamName, image: s.image, name: s.name };
+      }
+    }
+    _stickersCache = { ts: Date.now(), byTeam };
+    console.log(`[CS2/Stickers] ${Object.keys(byTeam).length} teams indexed`);
+    return byTeam;
+  } catch (e) {
+    console.warn('[CS2/Stickers]', e.message);
+    return _stickersCache.byTeam || {};
+  }
+}
+
+// ─── Helper: find best sticker for a team name ───────────────────────────────
+function findTeamSticker(teamName, stickersIndex) {
+  if (!teamName || !stickersIndex) return null;
+  const key = teamName.toLowerCase();
+  if (stickersIndex[key]) return stickersIndex[key];
+  // Fuzzy: check if any sticker key is contained in team name or vice versa
+  for (const [k, v] of Object.entries(stickersIndex)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  return null;
+}
+
+// ─── Helper: find highlights for a match (by team names) ────────────────────
+function findMatchHighlights(team1, team2, highlights, maxResults = 3) {
+  if (!highlights || (!team1 && !team2)) return [];
+  const n1 = (team1 || '').toLowerCase();
+  const n2 = (team2 || '').toLowerCase();
+  return highlights.filter(h => {
+    const h0 = (h.team0 || '').toLowerCase();
+    const h1 = (h.team1 || '').toLowerCase();
+    const matchesT1 = n1 && (h0.includes(n1) || h1.includes(n1) || n1.includes(h0) || n1.includes(h1));
+    const matchesT2 = n2 && (h0.includes(n2) || h1.includes(n2) || n2.includes(h0) || n2.includes(h1));
+    return matchesT1 || matchesT2;
+  }).slice(0, maxResults);
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 module.exports = {
   ACTIVE_MAPS,
   computeMapAdvantage,
+  fetchHighlights,
+  fetchTeamStickers,
+  findTeamSticker,
+  findMatchHighlights,
 
   invalidateCache() { _cs2Cache.ts = 0; },
 
