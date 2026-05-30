@@ -17176,6 +17176,9 @@ async function broadcastTelegramAlert(messageHtml) {
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || '';
 // Canal dédié foot-live (fallback sur DISCORD_WEBHOOK_URL si non défini séparément)
 const DISCORD_FOOT_WEBHOOK_URL = process.env.DISCORD_FOOT_WEBHOOK_URL || DISCORD_WEBHOOK_URL;
+// Canal domination tennis + cote ≤ 1.30 (env var ou URL directe DG)
+const DISCORD_TENNIS_DOMINATION_ODDS_URL = process.env.DISCORD_TENNIS_DOMINATION_ODDS_URL
+  || 'https://discord.com/api/webhooks/1509918685299609803/ajyv7cTN8SNF6zeraF-X4uWHegYRXUvOBUzU_BHyFLA2VpxmbQ3DjAC92MTFrbtJHO-a';
 
 async function sendDiscordFootAlert(embed) {
   if (!DISCORD_FOOT_WEBHOOK_URL) return false;
@@ -20423,6 +20426,48 @@ async function pollTennisLive() {
           const drGapSigned = drBase2.dr - 1.0;
           const drGapAbs    = Math.abs(drGapSigned);
           if (drGapAbs < _DR_DIFF_THR) continue;
+
+          // ── Alerte domination + cote ≤ 1.30 → webhook dédié ──────────────────
+          {
+            const _dominSide    = drGapSigned > 0 ? 'p1' : 'p2';
+            const _dominantName = _dominSide === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
+            const _dominantOdds = _dominSide === 'p1' ? m.odds_player1 : m.odds_player2;
+            if (_dominantOdds != null && Number.isFinite(_dominantOdds) && _dominantOdds <= 1.3) {
+              const _oddsKey = `tndr_odds13:${m.id}`;
+              if (!_tnAlertOnCooldown(_oddsKey, 5 * 60 * 1000)) {
+                _tnAlertMark(_oddsKey);
+                const _ls  = `${m.player1_sets || 0}-${m.player2_sets || 0}`;
+                const _p1s = Number.isFinite(drBase2?.p1_serve) ? drBase2.p1_serve.toFixed(2) : '–';
+                const _p1r = Number.isFinite(drBase2?.p1_ret)   ? drBase2.p1_ret.toFixed(2)   : '–';
+                const _p2s = Number.isFinite(drBase2?.p2_serve) ? drBase2.p2_serve.toFixed(2) : '–';
+                const _p2r = Number.isFinite(drBase2?.p2_ret)   ? drBase2.p2_ret.toFixed(2)   : '–';
+                const _oddsEmbed = {
+                  title: `🎯 DOMINATION + COTE ≤ 1.30 — ${_dominantName}`,
+                  description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Sets ${_ls}`,
+                  color: 0xFFD700,
+                  fields: [
+                    { name: `🎯 ${m.player1?.name || 'J1'}`, value: `Serve: **${_p1s}**\nReturn: **${_p1r}**`, inline: true },
+                    { name: `🎯 ${m.player2?.name || 'J2'}`, value: `Serve: **${_p2s}**\nReturn: **${_p2r}**`, inline: true },
+                    { name: '​', value: '​', inline: true },
+                    { name: '📊 Ratio DR',   value: `**${Number.isFinite(drBase2?.dr) ? drBase2.dr.toFixed(2) : '–'}**`, inline: true },
+                    { name: '⚡ Écart DR',   value: `**${drGapAbs.toFixed(2)}**`,                                        inline: true },
+                    { name: '🏆 Dominant',   value: `**${_dominantName}**`,                                               inline: true },
+                    { name: '💰 Cote match', value: `**${_dominantOdds.toFixed(2)}** ≤ 1.30 ✅`,                         inline: true },
+                    { name: '🎾 Court',      value: m.court      || 'N/A',                                                inline: true },
+                    { name: '🏟️ Tournoi',    value: m.tournament || 'N/A',                                                inline: true },
+                  ],
+                  footer: { text: `Domination DR + Cote≤1.30 | src:${_drSrc} | Seuil DR ${_DR_DIFF_THR} | Cooldown 5min | ${m.tournament}` },
+                  timestamp: new Date().toISOString(),
+                };
+                if (DISCORD_TENNIS_DOMINATION_ODDS_URL) {
+                  httpsPost(DISCORD_TENNIS_DOMINATION_ODDS_URL, { embeds: [_oddsEmbed] })
+                    .catch(e => console.warn('  [Tennis:DomOdds13]', e.message));
+                }
+                console.log(`  [Tennis:DomOdds13] ${m.id} dominant=${_dominantName} cote=${_dominantOdds.toFixed(2)} gap=${drGapAbs.toFixed(2)}`);
+              }
+            }
+          }
+          // ─────────────────────────────────────────────────────────────────────
 
           // Cooldown 5 min par match — time-based, pas value-based (alert re-fire si DR stable)
           if (_tnAlertOnCooldown(`tndr_diff:${m.id}`, 5 * 60 * 1000)) continue;
