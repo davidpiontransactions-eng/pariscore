@@ -27980,6 +27980,22 @@ if (pathname === '/api/v1/discord/morning-picks/test' && req.method === 'POST') 
   });
 }
 
+// POST /api/v1/discord/tennis-morning/test — top 5 ATP surface-weighted (admin)
+if (pathname === '/api/v1/discord/tennis-morning/test' && req.method === 'POST') {
+  let _isAdmin = false;
+  try { const _tok = (req.headers['authorization'] || '').replace('Bearer ', '').trim(); const _d = jwtVerify(_tok); _isAdmin = _d && _d.role === 'admin'; } catch (_) {}
+  if (!_isAdmin) return jsonResponse(res, 403, { error: 'Admin requis' });
+  _runMorningTennisATPDiscord({ force: true })
+    .then(() => console.log('  [MorningTennis:Discord] test déclenché manuellement'))
+    .catch(e => console.warn('  [MorningTennis:Discord] test erreur:', e.message));
+  return jsonResponse(res, 200, {
+    ok: true,
+    discord: !!DISCORD_TENNIS_MORNING_WEBHOOK_URL,
+    count: DISCORD_TENNIS_MORNING_COUNT,
+    message: 'Broadcast Discord tennis ATP déclenché',
+  });
+}
+
 // GET /api/v1/alerts/history — 10 dernières alertes envoyées
 if (pathname === '/api/v1/alerts/history' && req.method === 'GET') {
   const user = requireAuth(req, res);
@@ -40242,6 +40258,127 @@ setTimeout(() => {
   setInterval(() => _runMorningStrategyPicksDiscord().catch(e => console.warn('[MorningPicks:Discord]', e.message)), 24 * 3600 * 1000);
 }, _msUntilNextParisHour(DISCORD_MORNING_PICKS_HOUR));
 console.log(`  [MorningPicks:Discord] cron armé — ${DISCORD_MORNING_PICKS_HOUR}h00 Paris, ${DISCORD_MORNING_PICKS_STRATEGIES.length} stratégies, conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%`);
+
+// ─── Discord Morning Tennis ATP — 8h00 Paris ─────────────────────────────────
+// Top 5 matchs ATP du jour par écart Elo surface-pondéré (Clay +15%, Grass +10%)
+// Fallback odds si Elo indisponible. Webhook distinct canal tennis.
+const DISCORD_TENNIS_MORNING_WEBHOOK_URL = process.env.DISCORD_TENNIS_MORNING_WEBHOOK_URL || '';
+const DISCORD_TENNIS_MORNING_HOUR = parseInt(process.env.DISCORD_TENNIS_MORNING_HOUR || '8', 10);
+const DISCORD_TENNIS_MORNING_COUNT = parseInt(process.env.DISCORD_TENNIS_MORNING_COUNT || '5', 10);
+const _SURFACE_COLORS = { Clay: 0xcc6633, Hard: 0x29b6f6, Grass: 0x00c851, Carpet: 0xa78bfa };
+const _SURFACE_FACTOR = { Clay: 1.15, Grass: 1.10, Hard: 1.0, Carpet: 1.0 };
+const _SURFACE_EMOJI = { Clay: '🟤', Hard: '🔵', Grass: '🟢', Carpet: '🟣' };
+
+function _selectMorningTennisATP(count) {
+  const n = count || DISCORD_TENNIS_MORNING_COUNT;
+  const now = Date.now();
+  const horizon = now + 24 * 3600 * 1000;
+  const candidates = [];
+
+  for (const m of db.matches) {
+    if (!m || m.sport !== 'tennis') continue;
+    if ((m.tour || '').toUpperCase() !== 'ATP') continue;
+    if (m.is_live) continue;
+    const ko = new Date(m.commence_time || m.start_time).getTime();
+    if (!Number.isFinite(ko) || ko <= now || ko > horizon) continue;
+    const p1Name = m.player1?.name || m.home_team;
+    const p2Name = m.player2?.name || m.away_team;
+    if (!p1Name || !p2Name) continue;
+
+    const surface = m.surface || 'Hard';
+    const sfactor = _SURFACE_FACTOR[surface] || 1.0;
+    let score = 0, favName = null, dogName = null, favProb = null, eloFav = null, eloDog = null, source = 'none';
+
+    const eP1 = _lookupTennisElo(p1Name);
+    const eP2 = _lookupTennisElo(p2Name);
+    if (eP1 && eP2 && tennisEloCalculator) {
+      const gap = eP1.elo - eP2.elo;
+      score = Math.abs(gap) * sfactor;
+      const isP1Fav = gap > 0;
+      favName = isP1Fav ? p1Name : p2Name;
+      dogName = isP1Fav ? p2Name : p1Name;
+      eloFav = Math.round(isP1Fav ? eP1.elo : eP2.elo);
+      eloDog = Math.round(isP1Fav ? eP2.elo : eP1.elo);
+      try { favProb = Math.round(tennisEloCalculator.computeWinProbability(eloFav, eloDog) * 100); } catch (_) { favProb = null; }
+      source = 'elo';
+    } else if (m.odds_player1 > 1 && m.odds_player2 > 1) {
+      const r1 = 1 / m.odds_player1, r2 = 1 / m.odds_player2, tot = r1 + r2;
+      const prob1 = r1 / tot, prob2 = r2 / tot;
+      score = Math.abs(prob1 - prob2) * 100 * sfactor;
+      if (prob1 >= prob2) { favName = p1Name; dogName = p2Name; favProb = Math.round(prob1 * 100); }
+      else { favName = p2Name; dogName = p1Name; favProb = Math.round(prob2 * 100); }
+      source = 'odds';
+    }
+
+    if (score <= 0) continue;
+    candidates.push({ m, p1Name, p2Name, surface, score, favName, dogName, favProb, eloFav, eloDog, source });
+  }
+
+  return candidates.sort((a, b) => b.score - a.score).slice(0, n);
+}
+
+function _buildTennisATPMorningEmbed(picks) {
+  if (!picks.length) return null;
+  const dt = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' });
+  const surfaces = [...new Set(picks.map(p => p.surface))];
+  const color = surfaces.length === 1 ? (_SURFACE_COLORS[surfaces[0]] || 0x1DB954) : 0x1DB954;
+  const fields = picks.map((p, i) => {
+    const ko = new Date(p.m.commence_time || p.m.start_time).toLocaleString('fr-FR', {
+      weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+    const surfEmoji = _SURFACE_EMOJI[p.surface] || '⚪';
+    const eloStr = p.source === 'elo' && p.eloFav != null ? ` | Elo ${p.eloFav} vs ${p.eloDog}` : p.source === 'odds' ? ' | odds-based' : '';
+    const tournament = p.m.tournament || p.m.league || 'ATP';
+    const round = p.m.round || p.m.court || '';
+    return {
+      name: `${i + 1}. ${p.p1Name} vs ${p.p2Name}`,
+      value: `${surfEmoji} **${p.surface}**${round ? ' — ' + round : ''} • **${p.favName}** favori **${p.favProb != null ? p.favProb + '%' : '?'}**${eloStr}\n🏆 ${tournament} | ⏰ ${ko}`,
+      inline: false,
+    };
+  });
+  return {
+    title: `🎾 TOP ${picks.length} ATP — SURFACE EDGE | ${dt}`,
+    color,
+    description: 'Classement par écart Elo × facteur surface (Clay +15%, Grass +10%). Fallback odds.',
+    fields,
+    footer: { text: 'PariScore • ATP Prematch • Elo surface-weighted' },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+async function _runMorningTennisATPDiscord({ force = false } = {}) {
+  try {
+    if (!DISCORD_TENNIS_MORNING_WEBHOOK_URL) {
+      console.log('  [MorningTennis:Discord] skip — DISCORD_TENNIS_MORNING_WEBHOOK_URL non configuré');
+      return;
+    }
+    if (!force && !automatedAlertsAllowed()) {
+      console.log('  [MorningTennis:Discord] skip — NODE_ENV != production');
+      return;
+    }
+    const picks = _selectMorningTennisATP();
+    if (!picks.length) {
+      console.log('  [MorningTennis:Discord] 0 matchs ATP dans les 24h');
+      return;
+    }
+    const embed = _buildTennisATPMorningEmbed(picks);
+    if (!embed) return;
+    const discordRes = await httpsPost(DISCORD_TENNIS_MORNING_WEBHOOK_URL, { embeds: [embed] });
+    if (discordRes && discordRes.status >= 400) {
+      console.warn(`  [MorningTennis:Discord] Échec HTTP ${discordRes.status}`);
+    } else {
+      console.log(`  [MorningTennis:Discord] OK — top ${picks.length} ATP envoyés`);
+    }
+  } catch (e) {
+    console.warn('  [MorningTennis:Discord] erreur:', e.message);
+  }
+}
+
+setTimeout(() => {
+  _runMorningTennisATPDiscord().catch(e => console.warn('[MorningTennis:Discord bootstrap]', e.message));
+  setInterval(() => _runMorningTennisATPDiscord().catch(e => console.warn('[MorningTennis:Discord]', e.message)), 24 * 3600 * 1000);
+}, _msUntilNextParisHour(DISCORD_TENNIS_MORNING_HOUR));
+console.log(`  [MorningTennis:Discord] cron armé — ${DISCORD_TENNIS_MORNING_HOUR}h00 Paris, top ${DISCORD_TENNIS_MORNING_COUNT} ATP surface-weighted Elo`);
 
 // TennisTemple OOP — programme quotidien par court (draw publié ~6-7h Paris)
 // Boot-warm immédiat + cron 8h00 Paris, cache 24h.
