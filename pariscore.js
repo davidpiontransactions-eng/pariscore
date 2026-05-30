@@ -11878,7 +11878,7 @@ function buildResumeTab(d) {
         const dc1x = (p.homeWin != null && p.draw != null) ? Math.round(p.homeWin + p.draw) : null;
         const dc12 = (p.homeWin != null && p.awayWin != null) ? Math.round(p.homeWin + p.awayWin) : null;
         const dcX2 = (p.draw != null && p.awayWin != null) ? Math.round(p.draw + p.awayWin) : null;
-        const _opSc = (v, e) => Math.round((v / 100) * 60 + Math.min(Math.max(e || 0, 0) / 30, 1) * 40 * 100);
+        const _opSc = (v, e) => Math.round((v / 100) * 60 + Math.min(Math.max(e || 0, 0) / 30, 1) * 40);
         const _edg = (ok, v) => { const o = _mOdds[ok]; if (!o || !v) return null; return Math.round((o * v / 100 - 1) * 1000) / 10; };
         const mkts = [
           { lbl: 'GG / BTTS',  val: p.btts,    ok: null },
@@ -12403,7 +12403,7 @@ function buildStatsTab(d) {
     const dc1x = (p.homeWin != null && p.draw != null) ? Math.round(p.homeWin + p.draw) : null;
     const dc12 = (p.homeWin != null && p.awayWin != null) ? Math.round(p.homeWin + p.awayWin) : null;
     const dcX2 = (p.draw != null && p.awayWin != null) ? Math.round(p.draw + p.awayWin) : null;
-    const _opSc = (v, e) => Math.round((v / 100) * 60 + Math.min(Math.max(e || 0, 0) / 30, 1) * 40 * 100);
+    const _opSc = (v, e) => Math.round((v / 100) * 60 + Math.min(Math.max(e || 0, 0) / 30, 1) * 40);
     const _edg = (ok, v) => { const o = _mOdds[ok]; if (!o || !v) return null; return Math.round((o * v / 100 - 1) * 1000) / 10; };
     const mkts = [
       { lbl: 'GG / BTTS',  val: p.btts,    ok: null },
