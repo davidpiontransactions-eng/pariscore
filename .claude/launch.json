@@ -8,7 +8,8 @@
       "port": 3000,
       "autoPort": true,
       "env": {
-        "SKIP_BOOT_FETCHSTATS": "1"
+        "SKIP_BOOT_FETCHSTATS": "1",
+        "CATBOOST_ENABLED": "true"
       }
     }
   ],

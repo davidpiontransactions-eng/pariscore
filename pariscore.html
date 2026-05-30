@@ -13668,6 +13668,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <span id="tennis-live-status" style="font-size:12px;color:var(--text3,#5a6068);">—</span>
+        <span id="tn-models-bar" style="margin-left:16px;font-size:10px;font-family:'DM Mono',monospace;display:none;"></span>
         <button onclick="tickTennisLive()" style="padding:8px 14px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:13px;">🔄 Actualiser</button>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);">
           <input type="checkbox" id="tennis-live-only" checked onchange="renderTennisLive(window._tennisLastFetch||[])"> Live uniquement
@@ -14283,6 +14284,11 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   #tennis-live-table td { padding:10px 12px; border-top:1px solid var(--bg4,#1e2328); font-size:13px; color:var(--text,#e8eaed); }
   #tennis-live-table tr:hover { background:var(--bg3,#181c20); }
   #tennis-live-table .tennis-serving { font-weight:700; color:#22c55e; }
+  #tennis-live-table .tn-live-odds { flex-shrink:0; display:inline-flex; align-items:center; margin-left:4px; font-size:10px; font-weight:700; color:var(--amber,#ffa726); background:rgba(255,167,38,0.12); padding:1px 4px; border-radius:3px; font-family:'DM Mono',monospace; }
+  #tennis-live-table .tn-glicko-badge { flex-shrink:0; display:inline-flex; align-items:center; margin-left:4px; font-size:10px; font-weight:600; color:#0ea5e9; background:rgba(14,165,233,0.15); padding:1px 5px; border-radius:3px; font-family:'DM Mono',monospace; }
+  #tennis-live-table .tn-mom-badge { flex-shrink:0; display:inline-flex; align-items:center; margin-left:4px; font-size:10px; font-weight:700; padding:1px 5px; border-radius:3px; font-family:'DM Mono',monospace; }
+  #tennis-live-table .tn-mom-badge[title*='p1'] { color:#22c55e; background:rgba(34,197,94,0.12); }
+  #tennis-live-table .tn-mom-badge[title*='p2'] { color:#ef4444; background:rgba(239,68,68,0.12); }
   #tennis-live-table .tn-live-ball { width:14px; height:14px; display:inline-block; vertical-align:middle; margin-left:6px; filter:drop-shadow(0 0 4px rgba(212,230,13,.55)); animation:tnSrvPulse 1.4s ease-in-out infinite; }
   /* bd c5i fix: badge "?" gris discret quand source data n'expose pas le serveur */
   #tennis-live-table .tn-live-srv-unknown {

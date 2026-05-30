@@ -205,7 +205,23 @@
       "mcp__bzzoiro-sports__get_live_scores",
       "mcp__bsd-sports__get_match_incidents",
       "mcp__bsd-sports__get_match_shotmap",
-      "Bash(ssh -o ConnectTimeout=10 ubuntu@vps-pariscore 'cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore && pm2 logs pariscore --lines 30 --nostream')"
+      "Bash(ssh -o ConnectTimeout=10 ubuntu@vps-pariscore 'cd /home/ubuntu/pariscore && git pull && pm2 restart pariscore && pm2 logs pariscore --lines 30 --nostream')",
+      "PowerShell(claude skill *)",
+      "Bash(python surface_powerscore.py)",
+      "Bash(rtk pytest *)",
+      "Bash(python -m py_compile surface_powerscore.py)",
+      "Bash(bd memories *)",
+      "Bash(python -m py_compile cron_sps_updater.py)",
+      "Bash(python -m py_compile surface_powerscore.py cron_sps_updater.py test_surface_powerscore.py test_cron_sps_updater.py)",
+      "Bash(python -c \"import json,sys; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\('default_min=', d['meta']['lookahead_min_h'], 'max=', d['meta']['lookahead_max_h'], 'matches=', len\\(d['matches']\\)\\)\")",
+      "Bash(PARISCORE_SPS_DRY_RUN=1 PARISCORE_API_URL=\"http://127.0.0.1:3093/api/v1/tennis/upcoming?lookahead_min_h=0&lookahead_max_h=72\" python cron_sps_updater.py)",
+      "Bash(rtk find *)",
+      "Bash(xargs grep -l '\"name\".*\"claude-mem\"')",
+      "Bash(npm list *)",
+      "Bash(npm info *)",
+      "Bash(npm root *)",
+      "Bash(timeout 30 bash -c 'until [ -f \"C:\\\\Users\\\\david\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-david-Documents-dev-PariScore-ParisScorebis\\\\9ff487d4-ac98-45fe-b2d0-24a2320d5bab\\\\tasks\\\\bypc8rymm.output\" ]; do sleep 1; done; cat \"C:\\\\Users\\\\david\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-david-Documents-dev-PariScore-ParisScorebis\\\\9ff487d4-ac98-45fe-b2d0-24a2320d5bab\\\\tasks\\\\bypc8rymm.output\"')",
+      "Bash(npm cache *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\david\\Documents\\dev PariScore\\ParisScorebis"
