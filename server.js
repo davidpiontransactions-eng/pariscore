@@ -17178,7 +17178,7 @@ const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || '';
 const DISCORD_FOOT_WEBHOOK_URL = process.env.DISCORD_FOOT_WEBHOOK_URL || DISCORD_WEBHOOK_URL;
 // Canal domination tennis + cote ≤ 1.30 (env var ou URL directe DG)
 const DISCORD_TENNIS_DOMINATION_ODDS_URL = process.env.DISCORD_TENNIS_DOMINATION_ODDS_URL
-  || 'https://discord.com/api/webhooks/1509918685299609803/ajyv7cTN8SNF6zeraF-X4uWHegYRXUvOBUzU_BHyFLA2VpxmbQ3DjAC92MTFrbtJHO-a';
+  || 'https://discord.com/api/webhooks/1510415384778506362/ufpqP-yj0hUNoxosPHeLNvCYIPhJngpzj6xHLPvIOYTphQ67633U7XP0jfy0f8NlbfHf';
 
 async function sendDiscordFootAlert(embed) {
   if (!DISCORD_FOOT_WEBHOOK_URL) return false;
