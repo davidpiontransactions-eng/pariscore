@@ -18687,6 +18687,9 @@ function _normalizeBSDTennisMatch(m) {
     notes: m.round_name || '',
     start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
     last_update_ts: Date.now(),
+    // bd patch BSD 30 mai — cotes directes vainqueur du match (décimal)
+    odds_player1: m.odds_player1 != null ? parseFloat(m.odds_player1) : null,
+    odds_player2: m.odds_player2 != null ? parseFloat(m.odds_player2) : null,
     _bsd_match_id: m.id,
     _bsd_stats: {
       p1_aces: m.p1_aces ?? null, p2_aces: m.p2_aces ?? null,
