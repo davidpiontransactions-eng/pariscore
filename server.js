@@ -16596,6 +16596,8 @@ function srvPlanGate(req, res, pathname) {
   // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
   // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
+  // Glicko-2 stats — public read-only, pas de plan requis
+  if (pathname.startsWith('/api/v1/tennis/glicko2/')) return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
