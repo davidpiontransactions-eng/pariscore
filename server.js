@@ -40275,8 +40275,9 @@ function _selectMorningTennisATP(count) {
   const horizon = now + 24 * 3600 * 1000;
   const candidates = [];
 
-  for (const m of db.matches) {
-    if (!m || m.sport !== 'tennis') continue;
+  const tennisPool = Array.isArray(_tennisLiveCache?.data) ? _tennisLiveCache.data : [];
+  for (const m of tennisPool) {
+    if (!m) continue;
     if ((m.tour || '').toUpperCase() !== 'ATP') continue;
     if (m.is_live) continue;
     const ko = new Date(m.commence_time || m.start_time).getTime();
