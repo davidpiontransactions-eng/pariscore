@@ -18378,6 +18378,37 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 .cs2-over-model { font-family:'DM Mono',monospace; font-size:10px; display:flex; align-items:center; gap:4px; }
 .cs2-signal-over { font-weight:700; color:#00e676; font-family:'DM Mono',monospace; font-size:10px; }
 .cs2-signal-under { font-weight:700; color:#ffa726; font-family:'DM Mono',monospace; font-size:10px; }
+/* ── BETTING DASHBOARD TABLE ── */
+.cs2-dash-section { padding: 0 16px 20px; max-width: 1400px; margin: 0 auto; }
+.cs2-dash-section-title { font-family: Syne,sans-serif; font-weight: 800; font-size: 15px; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.cs2-dash-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid var(--bg4); }
+.cs2-dash-table { width: 100%; border-collapse: collapse; font-family: 'Instrument Sans',sans-serif; }
+.cs2-dash-table thead tr { background: var(--bg3); border-bottom: 1px solid var(--bg4); }
+.cs2-dash-table th { padding: 8px 10px; font-family: 'DM Mono',monospace; font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; text-align: left; }
+.cs2-dash-row { border-bottom: 1px solid var(--bg4); background: var(--bg2); transition: background 0.12s; }
+.cs2-dash-row:hover { background: var(--bg3); }
+.cs2-dash-row:last-child { border-bottom: 0; }
+.cs2-dash-row.cs2-dash-live { border-left: 3px solid #FF6B00; }
+.cs2-dash-table td { padding: 8px 10px; vertical-align: middle; }
+.cs2-dash-score { font-family: 'DM Mono',monospace; white-space: nowrap; min-width: 70px; text-align: center; }
+.cs2-dash-teams { min-width: 150px; }
+.cs2-dash-t1, .cs2-dash-t2 { font-weight: 600; font-size: 13px; color: var(--text); }
+.cs2-dash-odds { white-space: nowrap; }
+.cs2-dash-form { white-space: nowrap; }
+.cs2-dash-map { min-width: 90px; }
+.cs2-dash-kpi { min-width: 120px; }
+.cs2-dash-verdict { white-space: nowrap; min-width: 110px; }
+/* Verdict badges */
+.cs2-verdict-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-family: 'DM Mono',monospace; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.cs2-verdict-strong { background: rgba(0,230,118,0.12); border: 1px solid rgba(0,230,118,0.5); color: #00e676; }
+.cs2-verdict-mild   { background: rgba(255,167,38,0.12); border: 1px solid rgba(255,167,38,0.5); color: #ffa726; }
+.cs2-verdict-skip   { background: rgba(255,77,77,0.10);  border: 1px solid rgba(255,77,77,0.4);  color: #ff4d4d; }
+.cs2-verdict-hold   { background: rgba(141,147,153,0.10);border: 1px solid rgba(141,147,153,0.3);color: #8d9399; }
+@media (max-width: 768px) {
+  .cs2-dash-section { padding: 0 8px 16px; }
+  .cs2-dash-table th, .cs2-dash-table td { padding: 6px 7px; font-size: 11px; }
+  .cs2-dash-kpi, .cs2-dash-map { display: none; }
+}
 @media (max-width: 600px) {
   .cs2-grid { grid-template-columns: 1fr; padding: 0 8px 96px; }
   .cs2-map-score { font-size: 20px; }
@@ -18400,7 +18431,10 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <button class="cs2-pill active" data-cs2f="all"      onclick="setCs2Filter('all',this)">⬛ Tous</button>
     <button class="cs2-pill"        data-cs2f="live"     onclick="setCs2Filter('live',this)">🔴 Live</button>
     <button class="cs2-pill"        data-cs2f="prematch" onclick="setCs2Filter('prematch',this)">📅 À venir</button>
-    <button class="cs2-refresh-btn" onclick="cs2ForceRefresh()">🔄 Actualiser</button>
+    <span style="width:1px;height:22px;background:var(--bg4);margin:0 4px;flex-shrink:0;"></span>
+    <button class="cs2-pill cs2-view-btn active" data-view="dashboard" onclick="setCs2View('dashboard',this)" title="Dashboard KPI pari rapide">📊 Dashboard</button>
+    <button class="cs2-pill cs2-view-btn" data-view="cards" onclick="setCs2View('cards',this)" title="Vue cartes détaillées">🃏 Cartes</button>
+    <button class="cs2-refresh-btn" onclick="cs2ForceRefresh()">🔄</button>
   </div>
 
   <!-- Status -->
