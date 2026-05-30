@@ -17501,6 +17501,7 @@ const _TENNIS_ALERT_TTL_MS = 6 * 60 * 60 * 1000; // cooldown 6h prematch
 const _TENNIS_LIVE_ALERT_TTL_MS = 5 * 60 * 1000; // cooldown 5min live
 const _tennisAlertSent = new Map(); // `${scope}:${matchId}` → lastSentMs
 const _tennisDrAbsSent = new Map(); // `tndr_${scope}:${matchId}` → drGapSnapshot (dedup)
+const _tennisDRSetHist = new Map(); // matchId → { [setNum]: { dr, ts, src } } pour variance DR/set
 
 function _tnAlertOnCooldown(key, ttl) {
   return Date.now() - (_tennisAlertSent.get(key) || 0) < (ttl || _TENNIS_ALERT_TTL_MS);
@@ -20233,6 +20234,79 @@ async function pollTennisLive() {
           }
           if (!drBase2 || !Number.isFinite(drBase2.dr)) continue;
 
+          // ── VARIANCE DR PAR SET ──────────────────────────────────────────
+          // Snapshot du DR par set → variance inter-sets. Alerte si le DR oscille
+          // fort d'un set à l'autre (match en dents de scie / bascule momentum).
+          // Affichage "par joueur par set" : DR + dominant pour chaque set.
+          // Indépendant de l'alerte diff (pas de continue avant ce bloc).
+          try {
+            if (curSet2) {
+              let setHist = _tennisDRSetHist.get(m.id);
+              if (!setHist) { setHist = {}; _tennisDRSetHist.set(m.id, setHist); }
+              // Source DR/set : Sofascore dr_by_set (vrai per-set) si dispo,
+              // sinon snapshot du DR match courant attribué au set en cours.
+              const bySet = drBase2.dr_by_set || {};
+              const bySetKeys = Object.keys(bySet);
+              if (bySetKeys.length) {
+                for (const sn of bySetKeys) {
+                  const v = bySet[sn];
+                  if (v && Number.isFinite(v.dr)) setHist[sn] = { dr: v.dr, ts: Date.now(), src: 'sofa' };
+                }
+              } else {
+                setHist[curSet2] = { dr: drBase2.dr, ts: Date.now(), src: _drSrc };
+              }
+              const setEntries = Object.keys(setHist)
+                .map(k => ({ set: parseInt(k, 10), dr: setHist[k].dr }))
+                .filter(e => Number.isFinite(e.set) && Number.isFinite(e.dr))
+                .sort((a, b) => a.set - b.set);
+              if (setEntries.length >= 2) {
+                const vals = setEntries.map(e => e.dr);
+                const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+                const variance = vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vals.length;
+                const stdev = Math.sqrt(variance);
+                const _VAR_THR = parseFloat(process.env.TENNIS_DR_VAR_THRESHOLD || '0.08');
+                // Clé cooldown inclut le nb de sets → re-fire quand un nouveau set complète
+                const varKey = `tndr_var:${m.id}:${setEntries.length}`;
+                if (variance >= _VAR_THR && !_tnAlertOnCooldown(varKey, 5 * 60 * 1000)) {
+                  _tnAlertMark(varKey);
+                  const p1n = m.player1?.name || 'J1', p2n = m.player2?.name || 'J2';
+                  const swingLvl = variance >= 0.15 ? '🔴 TRÈS INSTABLE' : '📈 INSTABLE';
+                  const setLines = setEntries.map(e => `Set ${e.set}: DR ${e.dr.toFixed(2)} → ${e.dr >= 1 ? p1n : p2n}`);
+                  const varMsg = [
+                    `📈 <b>VARIANCE DR PAR SET — ${swingLvl}</b>`,
+                    ``,
+                    `${escTg(m.tournament)} | ${escTg(m.court)}`,
+                    `${escTg(p1n)} vs ${escTg(p2n)} (${m.player1_sets || 0}-${m.player2_sets || 0})`,
+                    ``,
+                    ...setLines.map(l => escTg(l)),
+                    ``,
+                    `Variance: <b>${variance.toFixed(3)}</b> | Écart-type: <b>${stdev.toFixed(3)}</b>`,
+                    `→ Domination en dents de scie sur ${setEntries.length} sets`,
+                  ].join('\n');
+                  const varEmbed = {
+                    title: `📈 Variance DR par Set — ${swingLvl}`,
+                    description: `**${p1n}** vs **${p2n}** · ${setEntries.length} sets analysés`,
+                    color: variance >= 0.15 ? 0xFF2200 : 0x9B59B6,
+                    fields: [
+                      ...setEntries.slice(0, 5).map(e => ({
+                        name: `Set ${e.set}`,
+                        value: `DR **${e.dr.toFixed(2)}**\n→ ${e.dr >= 1 ? p1n : p2n}`,
+                        inline: true,
+                      })),
+                      { name: '📊 Variance', value: `**${variance.toFixed(3)}**`, inline: true },
+                      { name: '📐 Écart-type', value: `**${stdev.toFixed(3)}**`, inline: true },
+                    ],
+                    footer: { text: `Variance DR/set | src:${_drSrc} | Seuil ${_VAR_THR} | ${m.tournament}` },
+                    timestamp: new Date().toISOString(),
+                  };
+                  broadcastTennisLiveAlert(varMsg, varEmbed).catch(() => {});
+                  console.log(`  [Tennis DR Var] ${m.id} sets=${setEntries.length} var=${variance.toFixed(3)} stdev=${stdev.toFixed(3)}`);
+                }
+              }
+            }
+          } catch (eVar) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis DR Var]', eVar.message); }
+          // ─────────────────────────────────────────────────────────────────
+
           // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
           const drGapSigned = drBase2.dr - 1.0;
           const drGapAbs    = Math.abs(drGapSigned);
@@ -20295,9 +20369,12 @@ async function pollTennisLive() {
             timestamp: new Date().toISOString(),
           };
 
+          _tnAlertMark(`tndr_diff:${m.id}`); // arme le cooldown (sinon spam chaque poll)
           broadcastTennisLiveAlert(msgHtml, discordEmbed).catch(() => {});
           console.log(`  [Tennis DR Diff] ${m.id} gap=${drGapAbs.toFixed(2)} dominant=${dominant} ratio=${drBase2.dr.toFixed(2)}`);
         }
+        // Purge historique DR/set (cap mémoire — matchs terminés)
+        if (_tennisDRSetHist.size > 300) _tennisDRSetHist.clear();
       } catch (e) { console.warn('  [Tennis DR Diff alert]', e.message); }
     } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
