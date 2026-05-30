@@ -5285,7 +5285,9 @@ function initTennisEloCalculator() {
 }
 
 function initTennisGlicko2() {
+  console.log('  [Glicko2 Debug] init start');
   tennisGlicko2 = new TennisGlicko2(0.5, 180);
+  console.log('  [Glicko2 Debug] created, type:', typeof tennisGlicko2);
   try {
     const saved = kvGet('tennis_glicko2_state', null);
     if (saved) {
@@ -18217,6 +18219,7 @@ async function handleAPI(req, res, pathname, query) {
   // ─── GLICKO-2 TENNIS — Read-only, public ─────────────────────────────
   // GET /api/v1/tennis/glicko2/stats
   if (pathname === '/api/v1/tennis/glicko2/stats' && req.method === 'GET') {
+    console.log('  [Glicko2 Debug] route hit, tennisGlicko2=', typeof tennisGlicko2, !!tennisGlicko2);
     if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
     return jsonResponse(res, 200, tennisGlicko2.getStats());
   }
