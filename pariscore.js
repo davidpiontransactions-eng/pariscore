@@ -23942,11 +23942,13 @@ function renderComparateur(d) {
   'use strict';
 
   // ── State ────────────────────────────────────────────────────────────────
-  var _cs2Timer    = null;
-  var _cs2Filter   = 'all';
-  var _cs2LastData = [];
-  var _cs2Loaded   = false;
-  var CS2_POLL_MS  = 30 * 1000;
+  var _cs2Timer      = null;
+  var _cs2Filter     = 'all';
+  var _cs2LastData   = [];
+  var _cs2Loaded     = false;
+  var CS2_POLL_MS    = 30 * 1000;
+  var _cs2Stickers   = {};   // teamName.lower() → { image, name, team }
+  var _cs2Highlights = [];   // all highlights from ByMykel
 
   // ── Public API ────────────────────────────────────────────────────────────
   window.initCs2Page = function () {
@@ -23960,6 +23962,8 @@ function renderComparateur(d) {
     _renderCs2Skeleton();
     _fetchAndRender();
     _startCs2Poll();
+    // Preload ByMykel static data (fire-and-forget)
+    _preloadCs2Static();
   };
 
   window.stopCs2Page = function () {
@@ -23979,10 +23983,83 @@ function renderComparateur(d) {
     initCs2Page();
   };
 
+  window.cs2PlayClip = function (idx, btn, videoUrl, title) {
+    var card = btn.closest('.cs2-card');
+    if (!card) return;
+    var player = card.querySelector('.cs2-hl-player');
+    if (!player) return;
+    var vid = player.querySelector('video');
+    if (!vid) return;
+    // Toggle off if same clip
+    if (player.style.display !== 'none' && vid.src === videoUrl) {
+      player.style.display = 'none';
+      vid.pause();
+      return;
+    }
+    vid.src = videoUrl;
+    player.style.display = 'block';
+    vid.play().catch(function () {});
+    // Highlight active button
+    card.querySelectorAll('.cs2-hl-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  };
+
   // ── Internal ─────────────────────────────────────────────────────────────
   function _startCs2Poll() {
     if (_cs2Timer) clearInterval(_cs2Timer);
     _cs2Timer = setInterval(_fetchAndRender, CS2_POLL_MS);
+  }
+
+  function _preloadCs2Static() {
+    // Stickers index
+    if (Object.keys(_cs2Stickers).length === 0) {
+      fetch('/api/v1/cs2/stickers', { cache: 'force-cache' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && j.byTeam) {
+            _cs2Stickers = j.byTeam;
+            _applyCs2Filter(); // re-render with stickers
+          }
+        }).catch(function () {});
+    }
+    // Highlights index (all — we filter per card)
+    if (_cs2Highlights.length === 0) {
+      fetch('/api/v1/cs2/highlights', { cache: 'force-cache' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && Array.isArray(j.highlights)) {
+            _cs2Highlights = j.highlights;
+            _applyCs2Filter(); // re-render with highlights
+          }
+        }).catch(function () {});
+    }
+  }
+
+  // ── Sticker lookup ───────────────────────────────────────────────────────
+  function _cs2FindSticker(teamName) {
+    if (!teamName || !_cs2Stickers) return null;
+    var key = teamName.toLowerCase();
+    if (_cs2Stickers[key]) return _cs2Stickers[key];
+    // Partial match
+    var keys = Object.keys(_cs2Stickers);
+    for (var i = 0; i < keys.length; i++) {
+      if (key.includes(keys[i]) || keys[i].includes(key)) return _cs2Stickers[keys[i]];
+    }
+    return null;
+  }
+
+  // ── Highlight lookup ─────────────────────────────────────────────────────
+  function _cs2FindHighlights(t1name, t2name) {
+    if (!_cs2Highlights.length) return [];
+    var n1 = (t1name || '').toLowerCase();
+    var n2 = (t2name || '').toLowerCase();
+    return _cs2Highlights.filter(function (h) {
+      var h0 = (h.team0 || '').toLowerCase();
+      var h1 = (h.team1 || '').toLowerCase();
+      var m1 = n1 && (h0.includes(n1) || h1.includes(n1) || n1.includes(h0) || n1.includes(h1));
+      var m2 = n2 && (h0.includes(n2) || h1.includes(n2) || n2.includes(h0) || n2.includes(h1));
+      return m1 || m2;
+    }).slice(0, 3);
   }
 
   function _fetchAndRender() {
@@ -24066,6 +24143,11 @@ function renderComparateur(d) {
     var odds   = m.odds       || {};
     var mapAdv = m.map_advantage || null;
 
+    // ── ByMykel stickers ─────────────────────────────────────────────────
+    var stk1 = _cs2FindSticker(t1.name);
+    var stk2 = _cs2FindSticker(t2.name);
+    var clips = _cs2FindHighlights(t1.name, t2.name);
+
     // ── Team logo ────────────────────────────────────────────────────────
     function teamLogo(team) {
       if (team.logo) {
@@ -24075,6 +24157,14 @@ function renderComparateur(d) {
           '</div>';
       }
       return '<div class="cs2-team-logo-wrap"><span style="font-size:18px;">🏢</span></div>';
+    }
+
+    // ── Sticker badge ─────────────────────────────────────────────────────
+    function stickerBadge(stk) {
+      if (!stk || !stk.image) return '';
+      return '<img class="cs2-sticker-badge" src="' + _esc(stk.image) +
+        '" alt="' + _esc(stk.name) + '" title="' + _esc(stk.name) +
+        '" onerror="this.style.display=\'none\'" loading="lazy"/>';
     }
 
     // ── HLTV rank ────────────────────────────────────────────────────────
@@ -24154,7 +24244,7 @@ function renderComparateur(d) {
         '<div class="cs2-team">' +
           teamLogo(t1) +
           '<div class="cs2-team-info">' +
-            '<div class="cs2-team-name">' + _esc(t1.name || 'TBD') + '</div>' +
+            '<div class="cs2-team-name">' + stickerBadge(stk1) + _esc(t1.name || 'TBD') + '</div>' +
             rankTag(t1.hltv_rank) +
           '</div>' +
         '</div>' +
@@ -24162,17 +24252,37 @@ function renderComparateur(d) {
         '<div class="cs2-team t2">' +
           teamLogo(t2) +
           '<div class="cs2-team-info">' +
-            '<div class="cs2-team-name">' + _esc(t2.name || 'TBD') + '</div>' +
+            '<div class="cs2-team-name">' + _esc(t2.name || 'TBD') + stickerBadge(stk2) + '</div>' +
             rankTag(t2.hltv_rank) +
           '</div>' +
         '</div>' +
       '</div>' +
       mapBarHtml +
+      _buildHighlightSection(clips) +
       '<div class="cs2-card-foot">' + oddsHtml + timeHtml + '</div>' +
     '</div>';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+  function _buildHighlightSection(clips) {
+    if (!clips || clips.length === 0) return '';
+    var html = '<div class="cs2-highlights-bar">' +
+      '<span class="cs2-hl-label">🎬 Highlights</span>';
+    for (var i = 0; i < clips.length; i++) {
+      var c = clips[i];
+      var label = (c.name || '').replace(/^Souvenir Charm \| [^|]+ \| /, '').replace('Double Kill', '2K').replace('Triple Kill', '3K').replace('Quadruple Kill', '4K').replace('Ace', 'ACE');
+      html += '<button class="cs2-hl-btn" onclick="cs2PlayClip(' + i + ',this,' + JSON.stringify(c.video) + ',' + JSON.stringify(c.name) + ')" title="' + _esc(c.name) + '">' +
+        _esc(label) + '</button>';
+    }
+    html += '</div>' +
+      '<div class="cs2-hl-player" id="cs2-hl-player-' + Date.now() + '" style="display:none;">' +
+        '<video class="cs2-hl-video" controls playsinline muted preload="none">' +
+        '</video>' +
+        '<button class="cs2-hl-close" onclick="this.closest(\'.cs2-hl-player\').style.display=\'none\';this.previousElementSibling.pause()">✕</button>' +
+      '</div>';
+    return html;
+  }
+
   function _esc(s) {
     return String(s || '')
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')

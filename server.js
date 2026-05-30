@@ -18523,6 +18523,35 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/cs2/highlights?team1=Vitality&team2=FaZe  (ByMykel — free, no auth)
+  if (pathname === '/api/v1/cs2/highlights' && req.method === 'GET') {
+    try {
+      const all = await cs2Service.fetchHighlights();
+      const t1 = (query.team1 || '').toLowerCase();
+      const t2 = (query.team2 || '').toLowerCase();
+      const filtered = (t1 || t2)
+        ? cs2Service.findMatchHighlights(t1, t2, all, 5)
+        : all.slice(0, 30);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, count: filtered.length, highlights: filtered }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, highlights: [] }));
+    }
+  }
+
+  // GET /api/v1/cs2/stickers  (ByMykel — team name → sticker image index)
+  if (pathname === '/api/v1/cs2/stickers' && req.method === 'GET') {
+    try {
+      const byTeam = await cs2Service.fetchTeamStickers();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+      return res.end(JSON.stringify({ ok: true, count: Object.keys(byTeam).length, byTeam }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, byTeam: {} }));
+    }
+  }
+
   if (pathname === '/api/v1/cs2/refresh' && req.method === 'POST') {
     cs2Service.invalidateCache();
     try {
@@ -40671,6 +40700,9 @@ pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
 // CS2 live — poll every 30 s (matches cache TTL = 30 s, poll aligns)
 setInterval(() => cs2Service.getCs2Matches(BSD_API_KEY).catch(e => console.warn('[CS2 poll]', e.message)), 30 * 1000);
 cs2Service.getCs2Matches(BSD_API_KEY).catch(e => console.warn('[CS2 bootstrap]', e.message));
+// Preload ByMykel static data (no auth, cached 1h/24h)
+cs2Service.fetchHighlights().catch(e => console.warn('[CS2/Highlights bootstrap]', e.message));
+cs2Service.fetchTeamStickers().catch(e => console.warn('[CS2/Stickers bootstrap]', e.message));
 console.log('  [CS2] poll armé — 30 s interval');
 
 // Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)

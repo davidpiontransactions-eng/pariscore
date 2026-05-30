@@ -18362,6 +18362,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 .cs2-empty-sub { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); }
 .cs2-skel { background: linear-gradient(90deg, var(--bg2,#111417) 0%, var(--bg3,#181c20) 50%, var(--bg2,#111417) 100%); background-size: 200% 100%; animation: cs2shim 1.4s linear infinite; border-radius: 6px; height: 120px; }
 @keyframes cs2shim { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+/* Sticker badge */
+.cs2-sticker-badge { width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin: 0 3px 1px 0; border-radius: 2px; }
+.cs2-team.t2 .cs2-sticker-badge { margin: 0 0 1px 3px; }
+/* Highlights bar */
+.cs2-highlights-bar { display: flex; align-items: center; gap: 5px; padding: 6px 12px; flex-wrap: wrap; border-top: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); }
+.cs2-hl-label { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+.cs2-hl-btn { font-family:'DM Mono',monospace; font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--bg4,#1e2328); background: var(--bg2,#111417); color: var(--text2,#8d9399); cursor: pointer; transition: all 0.12s; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.cs2-hl-btn:hover, .cs2-hl-btn.active { border-color: #FF6B00; color: #FF6B00; background: rgba(255,107,0,0.08); }
+/* Video player */
+.cs2-hl-player { position: relative; background: #000; border-top: 1px solid var(--bg4,#1e2328); }
+.cs2-hl-video { width: 100%; max-height: 200px; display: block; }
+.cs2-hl-close { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: #fff; border: 0; border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 12px; line-height: 1.6; }
 @media (max-width: 600px) {
   .cs2-grid { grid-template-columns: 1fr; padding: 0 8px 96px; }
   .cs2-map-score { font-size: 20px; }
