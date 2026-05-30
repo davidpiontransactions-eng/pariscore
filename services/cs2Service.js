@@ -293,6 +293,183 @@ function findMatchHighlights(team1, team2, highlights, maxResults = 3) {
   }).slice(0, maxResults);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OVER ROUNDS MODEL — csapi.de (free, no auth)
+// Stratégie : avg total rounds par équipe × map × last 90j × rank_tier adversaire
+// Source     : https://api.csapi.de
+// Données    : matches[].maps[].{team1_score, team2_score} + team.rank
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const CSAPI_BASE          = 'https://api.csapi.de';
+const CSAPI_MATCHES_TTL   = 6 * 60 * 60 * 1000;  // 6 h — updated daily, no need to hammer
+const CSAPI_RANKINGS_TTL  = 6 * 60 * 60 * 1000;  // 6 h
+const OVER_MODEL_DAYS     = 90;                   // fenêtre historique
+
+let _csapiMatchesCache  = { ts: 0, data: [] };
+let _csapiRankingsCache = { ts: 0, byName: {} }; // teamName.lower() → { rank, points }
+let _mapIndexCache      = { ts: 0, index: {} };   // teamName.lower() → mapKey → { rounds[], opp_ranks[], n }
+
+// ─── csapi.de fetch helper ────────────────────────────────────────────────────
+async function _csapiGet(path, timeoutMs = 10000) {
+  const res = await _get(`${CSAPI_BASE}${path}`, { 'Accept': 'application/json' }, timeoutMs);
+  return res;
+}
+
+// ─── Fetch match history (csapi.de /matches/latest) ──────────────────────────
+async function fetchCsApiMatches() {
+  if (Date.now() - _csapiMatchesCache.ts < CSAPI_MATCHES_TTL) return _csapiMatchesCache.data;
+  try {
+    // Try with days param first, fallback to plain endpoint
+    let res = await _csapiGet('/matches/latest?days=90').catch(() => null);
+    if (!res || res.status !== 200 || !Array.isArray(res.data)) {
+      res = await _csapiGet('/matches/latest').catch(() => null);
+    }
+    if (res && res.status === 200 && Array.isArray(res.data)) {
+      _csapiMatchesCache = { ts: Date.now(), data: res.data };
+      console.log(`[CS2/OverModel] ${res.data.length} matches fetched from csapi.de`);
+      return res.data;
+    }
+  } catch (e) { console.warn('[CS2/OverModel] Match fetch:', e.message); }
+  return _csapiMatchesCache.data || [];
+}
+
+// ─── Fetch current rankings (csapi.de /rankings) ─────────────────────────────
+async function fetchCsApiRankings() {
+  if (Date.now() - _csapiRankingsCache.ts < CSAPI_RANKINGS_TTL) return _csapiRankingsCache.byName;
+  try {
+    const res = await _csapiGet('/rankings/').catch(() => null);
+    if (res && res.status === 200 && res.data) {
+      const arr = Array.isArray(res.data) ? res.data : (res.data.rankings || []);
+      const byName = {};
+      for (const t of arr) {
+        if (t.name) byName[t.name.toLowerCase()] = { rank: t.rank, points: t.points };
+      }
+      _csapiRankingsCache = { ts: Date.now(), byName };
+      console.log(`[CS2/OverModel] ${Object.keys(byName).length} teams in rankings`);
+      return byName;
+    }
+  } catch (e) { console.warn('[CS2/OverModel] Rankings fetch:', e.message); }
+  return _csapiRankingsCache.byName || {};
+}
+
+// ─── Build per-team per-map rounds index ─────────────────────────────────────
+function _buildMapIndex(matches, lastDays = OVER_MODEL_DAYS) {
+  const cutoff = Date.now() - lastDays * 24 * 3600 * 1000;
+  const index  = {};
+
+  for (const match of matches) {
+    const matchTs = new Date(match.date || 0).getTime();
+    if (matchTs < cutoff) continue;
+    if (!match.maps || !match.team1 || !match.team2) continue;
+
+    const t1key  = (match.team1.name || '').toLowerCase();
+    const t2key  = (match.team2.name || '').toLowerCase();
+    const t1rank = Number(match.team1.rank) || null;
+    const t2rank = Number(match.team2.rank) || null;
+
+    for (const map of match.maps) {
+      if (!map.name) continue;
+      const s1 = Number(map.team1_score);
+      const s2 = Number(map.team2_score);
+      if (!Number.isFinite(s1) || !Number.isFinite(s2)) continue;
+      const total = s1 + s2;
+      if (total < 13 || total > 45) continue; // sanity check
+
+      const mapKey = map.name.toLowerCase().replace(/[^a-z]/g, '');
+
+      const _add = (teamKey, oppRank) => {
+        if (!index[teamKey]) index[teamKey] = {};
+        if (!index[teamKey][mapKey]) index[teamKey][mapKey] = { rounds: [], opp_ranks: [], n: 0, avg: 0, std: 0 };
+        index[teamKey][mapKey].rounds.push(total);
+        index[teamKey][mapKey].opp_ranks.push(oppRank);
+        index[teamKey][mapKey].n++;
+      };
+
+      _add(t1key, t2rank);
+      _add(t2key, t1rank);
+    }
+  }
+
+  // Compute avg + std per team-map
+  for (const maps of Object.values(index)) {
+    for (const stat of Object.values(maps)) {
+      if (!stat.rounds.length) continue;
+      stat.avg = stat.rounds.reduce((a, b) => a + b, 0) / stat.rounds.length;
+      const variance = stat.rounds.reduce((s, r) => s + (r - stat.avg) ** 2, 0) / stat.rounds.length;
+      stat.std = Math.sqrt(variance);
+    }
+  }
+
+  return index;
+}
+
+// ─── Rank-filtered avg (fallback to global if not enough filtered data) ───────
+function _filteredAvg(stat, oppRank, rankWindow = 15) {
+  if (!stat || !stat.rounds.length) return null;
+  if (oppRank == null) return { avg: stat.avg, n: stat.n };
+  const filt = stat.rounds.filter((_, i) => {
+    const opp = stat.opp_ranks[i];
+    return opp == null || Math.abs(opp - oppRank) <= rankWindow;
+  });
+  if (filt.length < 3) return { avg: stat.avg, n: stat.n }; // not enough → use all
+  const avg = filt.reduce((a, b) => a + b, 0) / filt.length;
+  return { avg, n: filt.length };
+}
+
+// ─── Public: compute Over Rounds model for a match ───────────────────────────
+// Returns null if no data. Signal: { OVER | UNDER } against closest standard line.
+async function computeMapOverModel(t1name, t2name, mapName, oppRankWindow = 15) {
+  if (!mapName || !t1name || !t2name) return null;
+
+  // Refresh index if stale
+  if (Date.now() - _mapIndexCache.ts > CSAPI_MATCHES_TTL) {
+    const matches = await fetchCsApiMatches();
+    _mapIndexCache = { ts: Date.now(), index: _buildMapIndex(matches) };
+  }
+  const idx = _mapIndexCache.index;
+
+  // Current rankings for rank-tier filtering
+  const rankings = await fetchCsApiRankings();
+  const t1rank = (rankings[t1name.toLowerCase()] || {}).rank || null;
+  const t2rank = (rankings[t2name.toLowerCase()] || {}).rank || null;
+
+  const mapKey = mapName.toLowerCase().replace(/[^a-z]/g, '');
+  const t1stat = (idx[t1name.toLowerCase()] || {})[mapKey] || null;
+  const t2stat = (idx[t2name.toLowerCase()] || {})[mapKey] || null;
+
+  const t1res = _filteredAvg(t1stat, t2rank, oppRankWindow);
+  const t2res = _filteredAvg(t2stat, t1rank, oppRankWindow);
+
+  if (!t1res && !t2res) return null;
+
+  const avg1 = t1res ? t1res.avg : null;
+  const avg2 = t2res ? t2res.avg : null;
+
+  let predicted;
+  if (avg1 != null && avg2 != null) predicted = (avg1 + avg2) / 2;
+  else predicted = avg1 ?? avg2;
+
+  // Standard bookmaker CS2 round lines
+  const LINES = [24.5, 25.5, 26.5, 27.5, 28.5];
+  const bestLine = LINES.reduce((p, c) => Math.abs(c - predicted) < Math.abs(p - predicted) ? c : p);
+  const signal   = predicted > bestLine ? 'OVER' : 'UNDER';
+  const nTotal   = (t1res?.n || 0) + (t2res?.n || 0);
+  const confidence = nTotal >= 20 ? 'HIGH' : nTotal >= 8 ? 'MED' : 'LOW';
+
+  return {
+    map         : mapName,
+    team1       : { name: t1name, avg: avg1 != null ? +avg1.toFixed(1) : null, n: t1res?.n || 0, rank: t1rank },
+    team2       : { name: t2name, avg: avg2 != null ? +avg2.toFixed(1) : null, n: t2res?.n || 0, rank: t2rank },
+    predicted   : +predicted.toFixed(1),
+    line        : bestLine,
+    signal,
+    confidence,
+    n_total     : nTotal,
+    window_days : OVER_MODEL_DAYS,
+    rank_window : oppRankWindow
+  };
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 module.exports = {
   ACTIVE_MAPS,
@@ -301,6 +478,9 @@ module.exports = {
   fetchTeamStickers,
   findTeamSticker,
   findMatchHighlights,
+  fetchCsApiMatches,
+  fetchCsApiRankings,
+  computeMapOverModel,
 
   invalidateCache() { _cs2Cache.ts = 0; },
 
