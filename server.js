@@ -27,6 +27,9 @@ const crypto = require('crypto');
 const { Worker } = require('worker_threads'); // off-thread Monte Carlo RG (Phase 3 perf)
 const Database = require('better-sqlite3');
 const EloCalculator = require('./eloCalculator'); // WElo (Weighted Elo) Tennis — Kovalchik FiveThirtyEight
+const { TennisGlicko2 } = require('./glicko2Calculator'); // Glicko-2 Tennis Skills (serve/return)
+const { TennisMomentumTracker } = require('./momentumTennis'); // K-Flow + SM momentum
+const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momentum scoring
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
@@ -1669,6 +1672,7 @@ if (bsdConfig.api_key && bsdConfig.api_key.length > 0) {
 }
 if (!BSD_API_KEY) console.warn('  ⚠ BSD_API_KEY manquante — définir dans .env');
 const BSD_BASE_URL = bsdConfig.base_url || 'https://sports.bzzoiro.com/api';
+const bsdImgUrl = (url) => url ? url + (url.includes('?') ? '&' : '?') + 'bg=transparent' : null;
 const BSD_CONFIG_TO_BSD = bsdConfig.mapping?.config_to_bsd || {};
 const BSD_BSD_TO_CONFIG = bsdConfig.mapping?.bsd_to_config || {};
 const BSD_FALLBACK_NEEDED = bsdConfig.mapping?.fallback_needed || [];
@@ -2037,12 +2041,13 @@ function resolveTvLogo(name, srcLogo) {
 // Fallback statique league → broadcasters par pays. Clé = `id` config (leagues_config.json).
 // Source : droits TV saison 2025-2026 publics, vérifiés (à mettre à jour saison +1).
 // Stratégie : prioriser pays de la ligue + ajouter FR si rights français existants.
-// Denylist équipes mal-classifiées par BSD (data error standings).
-// Format: config_id → Set normalisé (lowercase, trim) des équipes à exclure.
-// Source bug : BSD season 317 (Ligue 1) inclut Rodez AF + Red Star FC qui sont en Ligue 2.
-const LEAGUE_TEAM_DENYLIST = {
-  61: new Set(['rodez af', 'red star fc']),  // Ligue 1 — exclure équipes L2 misclassifiées
-};
+// bd patch BSD 29 mai — Knockout matches exclus des standings par BSD.
+// Plus besoin de denylist manuelle ; les classements sont désormais propres.
+// Gardé commenté pour archive au cas où.
+// const LEAGUE_TEAM_DENYLIST = {
+//   61: new Set(['rodez af', 'red star fc']),  // Ligue 1 — exclure équipes L2 misclassifiées
+// };
+const LEAGUE_TEAM_DENYLIST = {};
 
 const LEAGUE_TV_FALLBACK = {
   // J1 League (98) — droits exclusifs DAZN Japan 2022-2028. Pas de diffuseur FR linéaire.
@@ -2444,7 +2449,7 @@ async function bsdGetPlayerDetail(playerId) {
         }
       } else if (typeof s.opponent === 'object' && s.opponent) {
         opponent = s.opponent.name;
-        opponentLogo = s.opponent.image_path ? 'https://sports.bzzoiro.com' + s.opponent.image_path : null;
+        opponentLogo = s.opponent.image_path ? bsdImgUrl('https://sports.bzzoiro.com' + s.opponent.image_path) : null;
       } else if (typeof s.opponent === 'string') {
         opponent = s.opponent;
       }
@@ -2477,7 +2482,7 @@ async function bsdGetPlayerDetail(playerId) {
       nationality:       p.nationality,
       age:               p.age,
       birthdate:         p.birthdate,
-      photo:             p.image_path ? `https://sports.bzzoiro.com${p.image_path}` : null,
+      photo:             p.image_path ? bsdImgUrl(`https://sports.bzzoiro.com${p.image_path}`) : null,
       team:              p.team ? { id: p.team.id, name: p.team.name } : null,
       height:            p.height,
       weight:            p.weight,
@@ -2657,7 +2662,7 @@ async function bsdGetTeamDetail(teamId) {
       id: t.id,
       name: t.name,
       short_name: t.short_code,
-      logo: t.image_path ? `https://sports.bzzoiro.com${t.image_path}` : null,
+      logo: t.image_path ? bsdImgUrl(`https://sports.bzzoiro.com${t.image_path}`) : null,
       country: t.country?.name,
       country_code: t.country?.code,
       stadium: t.venue?.name,
@@ -5263,6 +5268,15 @@ const SPS_UPCOMING_TELEMETRY = {
 // ─── WElo TENNIS — Initialisation du calculator ──────────────────────────
 // Charge l'état persistant depuis SQLite et init en mémoire
 let tennisEloCalculator = null;
+let tennisGlicko2 = null;
+let tennisMomentumTracker = null;
+let playerMomentumScorer = null;
+
+function initTennisMomentum() {
+  tennisMomentumTracker = new TennisMomentumTracker();
+  playerMomentumScorer = new PlayerMomentumScorer();
+  console.log('  ✓ K-Flow + SM Momentum Tennis + Player Momentum initialized');
+}
 
 function initTennisEloCalculator() {
   tennisEloCalculator = new EloCalculator(1500);
@@ -5278,6 +5292,30 @@ function initTennisEloCalculator() {
     console.log(`  ✓ WElo Tennis initialized — ${players.length} joueurs chargés depuis SQLite`);
   } catch (e) {
     console.error('  ⚠ Erreur init WElo Tennis:', e.message);
+  }
+}
+
+function initTennisGlicko2() {
+  tennisGlicko2 = new TennisGlicko2(0.5, 180);
+  try {
+    const saved = kvGet('tennis_glicko2_state', null);
+    if (saved) {
+      tennisGlicko2.loadState(saved);
+      console.log(`  ✓ Glicko-2 Tennis initialized — ${tennisGlicko2.serveCalc.getStats().totalPlayers} joueurs (serve+return)`);
+    } else {
+      console.log('  ✓ Glicko-2 Tennis initialized — fresh (0 joueurs)');
+    }
+  } catch (e) {
+    console.warn('  ⚠ Erreur init Glicko-2:', e.message);
+  }
+}
+
+function saveGlicko2State() {
+  if (!tennisGlicko2) return;
+  try {
+    kvSet('tennis_glicko2_state', tennisGlicko2.exportState());
+  } catch (e) {
+    console.warn('  ⚠ Erreur persist Glicko-2:', e.message);
   }
 }
 
@@ -6374,6 +6412,91 @@ function computePoisson(expHome, expAway) {
     awayWin: Math.round(awayWin * 100),
     topScores: scores.slice(0, 5).map(s => ({ score: s.score, prob: Math.round(s.prob * 100) })),
     method: 'poisson',
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd — Dixon-Coles (1997) : correction du Poisson indépendant pour le foot.
+// Ajoute un paramètre ρ (rho) modélisant la dépendance basse entre les buts.
+// τ(0,0)=1-λh·λa·ρ, τ(0,1)=1+λh·ρ, τ(1,0)=1+λa·ρ, τ(1,1)=1-ρ
+// Corrige le biais du Poisson sur 0-0/1-0/0-1/1-1 (±3-5 points de proba).
+// ρ calibré empiriquement: -0.05 (PL/PD/BL1/SA), -0.03 (FL1/L1 faible score)
+function computeDixonColes(expHome, expAway, rho = -0.05) {
+  const MAX = 7;
+  const matrix = [];
+  // Base Poisson indépendant
+  for (let h = 0; h < MAX; h++) {
+    matrix[h] = [];
+    for (let a = 0; a < MAX; a++) {
+      matrix[h][a] = poissonPMF(expHome, h) * poissonPMF(expAway, a);
+    }
+  }
+
+  // Dixon-Coles τ adjustment (low-score correction)
+  const tau00 = 1 - expHome * expAway * rho;
+  const tau01 = 1 + expHome * rho;
+  const tau10 = 1 + expAway * rho;
+  const tau11 = 1 - rho;
+
+  matrix[0][0] *= Math.max(0, tau00);
+  matrix[0][1] *= Math.max(0, tau01);
+  matrix[1][0] *= Math.max(0, tau10);
+  matrix[1][1] *= Math.max(0, tau11);
+
+  // Renormalize
+  let total = 0;
+  for (let h = 0; h < MAX; h++)
+    for (let a = 0; a < MAX; a++)
+      total += matrix[h][a];
+  if (total > 0) {
+    for (let h = 0; h < MAX; h++)
+      for (let a = 0; a < MAX; a++)
+        matrix[h][a] /= total;
+  }
+
+  let over05 = 0, over15 = 0, over25 = 0, over35 = 0;
+  let btts = 0, under15 = 0, cs00 = 0;
+  let homeWin = 0, draw = 0, awayWin = 0;
+
+  for (let h = 0; h < MAX; h++) {
+    for (let a = 0; a < MAX; a++) {
+      const p = matrix[h][a];
+      const totalG = h + a;
+      if (totalG > 0) over05 += p;
+      if (totalG > 1) over15 += p;
+      if (totalG > 2) over25 += p;
+      if (totalG > 3) over35 += p;
+      if (totalG <= 1) under15 += p;
+      if (h > 0 && a > 0) btts += p;
+      if (h === 0 && a === 0) cs00 = p;
+      if (h > a) homeWin += p;
+      if (h === a) draw += p;
+      if (h < a) awayWin += p;
+    }
+  }
+
+  const scores = [];
+  for (let h = 0; h < MAX; h++)
+    for (let a = 0; a < MAX; a++)
+      scores.push({ score: `${h}-${a}`, prob: matrix[h][a] });
+  scores.sort((a, b) => b.prob - a.prob);
+
+  return {
+    over05: Math.round(over05 * 100),
+    over15: Math.round(over15 * 100),
+    over25: Math.round(over25 * 100),
+    over35: Math.round(over35 * 100),
+    btts: Math.round(btts * 100),
+    under15: Math.round(under15 * 100),
+    cs00: Math.round(cs00 * 100),
+    homeWin: Math.round(homeWin * 100),
+    draw: Math.round(draw * 100),
+    awayWin: Math.round(awayWin * 100),
+    topScores: scores.slice(0, 5).map(s => ({ score: s.score, prob: Math.round(s.prob * 100) })),
+    method: 'dixon-coles',
+    rho,
+    // Delta vs Poisson pour diagnostic
+    _dc_delta_cs00: Math.round((cs00 - (matrix[0][0] / Math.max(0.0001, tau00 > 0 ? tau00 : 1))) * 10000) / 100,
   };
 }
 
@@ -7873,6 +7996,8 @@ function buildMatchRecord(raw) {
     poisson = { error: 'BAD_LAMBDA', message: 'Moyennes invalides — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
   } else {
     poisson = computePoisson(expHome, expAway);
+    // bd — Dixon-Coles: ajouté en parallèle du Poisson, stocké sur le match
+    match.dixonColes = computeDixonColes(expHome, expAway);
   }
 
   // ── v7.0 BAYESIAN MODEL BLENDER ────────────────────────────────────────────
@@ -8303,6 +8428,13 @@ function loadHistory() {
   accuracy = kvGet('history_accuracy', accuracy);
   console.log(`  ✓ Historique SQLite chargé (${history.length} matchs archivés)`);
 
+  // Charge l'historique tennis persisté (patch bd — était perdu au reboot)
+  const persistedTennis = kvGet('tennis_history_matches', null);
+  if (persistedTennis && Array.isArray(persistedTennis) && persistedTennis.length) {
+    tennisHistory = persistedTennis;
+    console.log(`  ✓ Historique Tennis SQLite chargé (${tennisHistory.length} matchs archivés)`);
+  }
+
   // bd ParisScorebis-9je — Merge historique_football.json (ETL output) dans
   // db.archive_matches au boot. Dedup via id existant. Pas overwrite si match
   // deja present (live data prend priorite sur ETL backfill).
@@ -8413,6 +8545,7 @@ function loadHistory() {
         }
         if (totalSeed > 0) {
           console.log(`  ✓ ETL seed merge (tennis ESPN): ${totalAdded}/${totalSeed} matchs ajoutes (db.archive_matches + tennisHistory)`);
+          if (totalAdded > 0) saveHistory();
         }
       }
     } catch (e) {
@@ -8539,6 +8672,7 @@ function loadHistory() {
 
       if (totalSeed > 0) {
         console.log(`  ✓ ETL seed merge (wikidata CC0): ${totalAdded}/${totalSeed} winners ajoutes (db.archive_matches${tennisRows.length ? ' + tennisHistory' : ''})`);
+        if (totalAdded > 0) saveHistory();
       }
     } catch (e) {
       console.warn('[ETL Seed Load wikidata]', e.message);
@@ -8759,6 +8893,7 @@ function loadHistory() {
         }
         if (totalSeed > 0) {
           console.log(`  ✓ ETL seed merge (bsd-tennis): ${totalAdded}/${totalSeed} predictions ajoutees (db.archive_matches + tennisHistory, BSD attribution)`);
+          if (totalAdded > 0) saveHistory();
         }
       }
     } catch (e) {
@@ -8770,6 +8905,7 @@ function loadHistory() {
 function saveHistory() {
   kvSetBatch([
     ['history_matches', history],
+    ['tennis_history_matches', tennisHistory],
     ['history_accuracy', accuracy],
   ]);
 }
@@ -9914,8 +10050,20 @@ function _tennisPicksOf(h) {
   if (!h.verified || !h.realResult) return [];
   const r = h.realResult;
   const out = [];
-  const t = new Date(h.commence_time).getTime();
-  const p = h.predicted || {};
+  const t = h.commence_time ? new Date(h.commence_time).getTime() : 0;
+  // Bridge: entries ETL stockent sous bsd_prediction, pas predicted. Unifier.
+  const p = h.predicted || h.bsd_prediction ? {
+    // Si bsd_prediction présent mais pas predicted, dériver
+    ...(h.predicted || {}),
+    ...(h.bsd_prediction ? {
+      ml: h.bsd_prediction.prob_p1_wins > 0.50 ? h.p1 : (h.bsd_prediction.prob_p1_wins < 0.50 ? h.p2 : null),
+      ml_odds: h.bsd_prediction.prob_p1_wins > 0.50
+        ? parseFloat((1 / Math.max(0.01, h.bsd_prediction.prob_p1_wins)).toFixed(2))
+        : (h.bsd_prediction.prob_p1_wins < 0.50
+          ? parseFloat((1 / Math.max(0.01, 1 - h.bsd_prediction.prob_p1_wins)).toFixed(2))
+          : null),
+    } : {}),
+  } : {};
   const tournament = h.tournament || h.league || null;
 
   // Marché 1 : Moneyline (ML)
@@ -9989,6 +10137,22 @@ function computeTennisKpis(entries) {
   const allPicks = [];
   for (const h of entries) allPicks.push(..._tennisPicksOf(h));
   allPicks.sort((a, b) => a.t - b.t);
+
+  // Guard-fou: dataset vide → retourne zéros explicites, pas undefined/NaN
+  if (!allPicks.length) {
+    console.log('  [DEBUG HISTORIQUE TENNIS] computeTennisKpis: 0 picks → retour zéro');
+    const zeroMkt = { sample: 0, wins: 0, losses: 0, winrate: 0, winrate_ic95: [0, 0], ic_method: 'wilson', longest_winning_streak: 0, longest_losing_streak: 0 };
+    return {
+      total_picks: 0, verified_matches: 0,
+      max_drawdown_units: 0, final_pl_units: 0,
+      ml: { ...zeroMkt },
+      set1: { ...zeroMkt },
+      geq1_set: { ...zeroMkt },
+      total_games: { ...zeroMkt },
+      aces: { ...zeroMkt },
+      tie_break: { ...zeroMkt },
+    };
+  }
 
   const markets = ['ml', 'set1', 'geq1_set', 'total_games', 'aces', 'tie_break'];
   const out = {
@@ -10080,6 +10244,7 @@ function computeTennisBreakdown(entries) {
 
 function computeTennisSeries(entries) {
   const verified = entries.filter(h => h.verified && h.realResult)
+    .filter(h => h.commence_time) // skip entries sans date
     .slice()
     .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
   const plCumulative = [], ddCurve = [];
@@ -10089,7 +10254,7 @@ function computeTennisSeries(entries) {
     for (const p of _tennisPicksOf(h)) delta += (p.won ? 1 : -1);
     if (delta !== 0) cumul += delta;
     if (cumul > peak) peak = cumul;
-    const dateKey = h.commence_time.split('T')[0];
+    const dateKey = h.commence_time ? h.commence_time.split('T')[0] : 'unknown';
     plCumulative.push({ date: dateKey, units: cumul });
     ddCurve.push({ date: dateKey, dd: peak - cumul });
   }
@@ -10390,7 +10555,8 @@ function runBacktestSimulation(filters, opts = {}) {
     // Calcul stake selon staking system
     let stake = 0;
     const odds = typeof pk.odds === 'number' && pk.odds > 1 ? pk.odds : null;
-    const proba = typeof pk.proba === 'number' ? pk.proba / 100 : null;
+    const proba = typeof pk.proba === 'number' ? pk.proba / 100
+      : (odds ? 1 / odds : null); // bd fix: tennis derive pseudo-proba from odds
     if (staking === 'flat_1u') {
       stake = 1;
     } else if (staking === 'pct_1') {
@@ -10533,6 +10699,32 @@ function computeCalibration(entries) {
       if (p.market !== 'over25' && p.market !== 'btts') continue;
       const proba = p.proba;
       if (typeof proba !== 'number' || proba < 0 || proba > 100) continue;
+      const bucket = Math.min(Math.floor(proba / 10) * 10, 90);
+      const key = `${bucket}-${bucket + 10}`;
+      if (!buckets[key]) buckets[key] = { pred_sum: 0, sample: 0, wins: 0, mid: bucket + 5 };
+      buckets[key].pred_sum += proba;
+      buckets[key].sample++;
+      buckets[key].wins += p.won;
+    }
+  }
+  return Object.entries(buckets).map(([range, d]) => ({
+    bucket: range,
+    bucket_mid: d.mid,
+    predicted_avg: d.sample ? d.pred_sum / d.sample : null,
+    realized_rate: d.sample ? d.wins / d.sample * 100 : null,
+    sample: d.sample,
+  })).sort((a, b) => a.bucket_mid - b.bucket_mid);
+}
+
+// R6 — Calibration tennis: buckets déciles via proba implicite (1/odds)
+function computeTennisCalibration(entries) {
+  const buckets = {};
+  for (const h of entries) {
+    const picks = _tennisPicksOf(h);
+    for (const p of picks) {
+      if (!p.odds || typeof p.odds !== 'number' || p.odds <= 1) continue;
+      const proba = (1 / p.odds) * 100; // probabilité implicite
+      if (proba < 0 || proba > 100) continue;
       const bucket = Math.min(Math.floor(proba / 10) * 10, 90);
       const key = `${bucket}-${bucket + 10}`;
       if (!buckets[key]) buckets[key] = { pred_sum: 0, sample: 0, wins: 0, mid: bucket + 5 };
@@ -10742,16 +10934,29 @@ function runHistoryQuery(p) {
   }
   if (p.markets?.length) {
     const wants = new Set(p.markets);
-    pool = pool.filter(h => {
-      if (!h.predicted) return false;
-      if (wants.has('over25') && h.predicted.over25 > 55 && h.predicted.over25 <= 100) return true;
-      if (wants.has('btts') && h.predicted.btts > 55 && h.predicted.btts <= 100) return true;
-      if (wants.has('edge')) {
-        const ev = h.predicted.bestEdgeValue;
-        if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) return true;
-      }
-      return false;
-    });
+    // Tennis markets: décomposition via _tennisPicksOf (≠ football predicted fields)
+    if (sport === 'tennis') {
+      pool = pool.filter(h => {
+        const picks = _tennisPicksOf(h);
+        return picks.some(pk => wants.has(pk.market));
+      });
+    } else {
+      pool = pool.filter(h => {
+        if (!h.predicted) return false;
+        if (wants.has('over25') && h.predicted.over25 > 55 && h.predicted.over25 <= 100) return true;
+        if (wants.has('btts') && h.predicted.btts > 55 && h.predicted.btts <= 100) return true;
+        if (wants.has('edge')) {
+          const ev = h.predicted.bestEdgeValue;
+          if (typeof ev === 'number' && ev >= HISTORY_EDGE_MIN && ev <= HISTORY_EDGE_MAX) return true;
+        }
+        return false;
+      });
+    }
+  }
+
+  // bd debug — log le nombre de matchs dans le pool après filtres
+  if (sport === 'tennis') {
+    console.log(`  [DEBUG HISTORIQUE TENNIS] Pool après filtres: ${pool.length} matchs (marchés: ${(p.markets||[]).join(',') || 'tous'}, surfaces: ${(p.surfaces||[]).join(',') || 'toutes'})`);
   }
   // H4 : Filtre stratégies (matche si record a au moins 1 stratégie active)
   if (sport === 'football' && p.strategies?.length) {
@@ -10771,24 +10976,31 @@ function runHistoryQuery(p) {
     if (!Number.isNaN(ts)) pool = pool.filter(h => new Date(h.commence_time).getTime() < ts);
   }
   if (p.minProba != null && !Number.isNaN(p.minProba)) {
-    pool = pool.filter(h => {
-      const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
-      return probs.some(x => x >= p.minProba);
-    });
+    if (sport === 'tennis') {
+      // Tennis: minProba n'est pas applicable (pas de over25/btts)
+      // skip — les KPIs de confiance sont dans _tennisPicksOf
+    } else {
+      pool = pool.filter(h => {
+        const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
+        return probs.some(x => x >= p.minProba);
+      });
+    }
   }
   if (p.minEV != null && !Number.isNaN(p.minEV)) {
-    pool = pool.filter(h => (h.predicted?.bestEdgeValue || 0) >= p.minEV);
+    if (sport !== 'tennis') {
+      pool = pool.filter(h => (h.predicted?.bestEdgeValue || 0) >= p.minEV);
+    }
   }
   if (p.outcome === 'won' || p.outcome === 'lost') {
     pool = pool.filter(h => {
-      const picks = _historyPicksOf(h);
+      const picks = sport === 'tennis' ? _tennisPicksOf(h) : _historyPicksOf(h);
       if (!picks.length) return false;
       const allWon = picks.every(x => x.won === 1);
       const anyLost = picks.some(x => x.won === 0);
       return p.outcome === 'won' ? allWon : anyLost;
     });
   }
-  if (p.confidence?.length) {
+  if (p.confidence?.length && sport !== 'tennis') {
     const wants = new Set(p.confidence);
     pool = pool.filter(h => {
       const probs = [h.predicted?.over25, h.predicted?.btts].filter(x => typeof x === 'number');
@@ -10850,7 +11062,7 @@ function runHistoryQuery(p) {
   const series = sport === 'tennis' ? computeTennisSeries(pool) : computeHistorySeries(pool);
   const alerts = sport === 'football' ? computeHistoryAlerts(pool) : []; // R2 Executive
   const attribution = sport === 'football' ? computeProfitAttribution(pool) : null; // R4
-  const calibration = sport === 'football' ? computeCalibration(pool) : []; // R6
+  const calibration = sport === 'football' ? computeCalibration(pool) : computeTennisCalibration(pool); // R6
   const badbeats = sport === 'football' ? computeBadBeats(pool) : null; // R7
 
   // Exclude low-WR leagues (BetMines-style)
@@ -11900,7 +12112,7 @@ async function fetchTeamKeyPlayersBSD(bsdTeamId, bsdSeasonId) {
           return {
             id: entry.player?.id || crypto.randomBytes(4).toString('hex'),
             name: entry.player?.name || '?',
-            photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
+            photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/?bg=transparent`,
             position: entry.player?.position || '',
             goals,
             assists,
@@ -11958,7 +12170,7 @@ async function fetchTeamKeyPlayers(teamId, leagueId, season) {
             return {
               id: entry.player?.id || crypto.randomBytes(4).toString('hex'),
               name: entry.player?.name || '?',
-              photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/`,
+              photo: `https://sports.bzzoiro.com/img/player/${entry.player?.id}/?bg=transparent`,
               position: entry.player?.position || '',
               goals,
               assists,
@@ -13214,6 +13426,8 @@ async function fetchBSDTeamSquad(bsdTeamId) {
       short_name: p.short_name,
       position: p.position,           // G/D/M/F
       specific_position: p.specific_position,
+      // bd patch BSD 29 mai — jersey_number désormais rempli pour ~87% des joueurs
+      // (fallback automatique vers profil joueur si absent dans la ligne effectif)
       jersey_number: p.jersey_number,
       attributes: p.attributes || null, // { tactical, attacking, defending, technical, creativity }
       strengths: p.strengths || [],
@@ -13386,7 +13600,7 @@ function computeMatchTopButteurs(m) {
       attackers.push({
         name: p.short_name || p.name || '?',
         id: p.id || null,
-        photo: p.image_path ? ('https://sports.bzzoiro.com' + p.image_path) : null,
+        photo: p.image_path ? bsdImgUrl('https://sports.bzzoiro.com' + p.image_path) : null,
         team,
         teamName,
         score: Math.round(score * 100) / 100,
@@ -13431,7 +13645,7 @@ function computeMatchTopKPI(m) {
       players.push({
         name: p.short_name || p.name || '?',
         id: p.id || null,
-        photo: p.image_path ? ('https://sports.bzzoiro.com' + p.image_path) : null,
+        photo: p.image_path ? bsdImgUrl('https://sports.bzzoiro.com' + p.image_path) : null,
         team, teamName,
         position: POS_LABEL[p.position] || p.position || '?',
         kpi: Math.round(kpi * 100) / 100,
@@ -16480,6 +16694,8 @@ function srvPlanGate(req, res, pathname) {
   // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
   // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
+  // Glicko-2 stats + live enriched + momentum — public read-only
+  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -16492,6 +16708,8 @@ function srvPlanGate(req, res, pathname) {
   }
   // Bankroll simulé = vitrine marketing publique (jamais de données user)
   if (pathname === '/api/v1/bankroll/simulated' || pathname === '/api/v1/bankroll') return false;
+  // Test alertes tennis — public, pas de plan requis
+  if (pathname === '/api/v1/alerts/tennis-test') return false;
   // Mes Paris + bankroll + alertes → un plan Pro quelconque
   if (pathname.startsWith('/api/v1/bets') || pathname.startsWith('/api/v1/bankroll') || pathname.startsWith('/api/v1/alerts')) {
     if (!a.anyPro) { jsonResponse(res, 403, { error: 'Module réservé Pro', code: 'PLAN_REQUIRED' }); return true; }
@@ -16803,6 +17021,53 @@ async function broadcastTelegramAlert(messageHtml) {
   }
 }
 
+// Discord webhook — alerte channel unique, format embed
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || '';
+
+async function sendDiscordAlert(embed) {
+  if (!DISCORD_WEBHOOK_URL) return false;
+  try {
+    const res = await httpsPost(DISCORD_WEBHOOK_URL, { embeds: [embed] });
+    if (res && res.status >= 400) {
+      console.warn(`  [Discord] Échec webhook: HTTP ${res.status}`);
+      return false;
+    }
+    console.log(`  [Discord] Alerte envoyée`);
+    return true;
+  } catch (e) {
+    console.warn(`  [Discord] Échec:`, e.message);
+    return false;
+  }
+}
+
+// Broadcast unifié Telegram + Discord — envoie aux deux canaux en parallèle
+// Tennis: utilise TENNIS_TELEGRAM_CHAT_IDS (séparé du foot)
+const TENNIS_TELEGRAM_CHAT_IDS = new Set();
+if (process.env.TENNIS_TELEGRAM_CHAT_IDS) {
+  process.env.TENNIS_TELEGRAM_CHAT_IDS.split(',').forEach(id => TENNIS_TELEGRAM_CHAT_IDS.add(id.trim()));
+}
+
+async function broadcastTennisTelegramAlert(messageHtml) {
+  if (!TELEGRAM_BOT_TOKEN || !TENNIS_TELEGRAM_CHAT_IDS.size) return;
+  for (const chatId of TENNIS_TELEGRAM_CHAT_IDS) {
+    await sendTelegramAlert(chatId, messageHtml);
+  }
+}
+
+async function broadcastAlert(messageHtml, discordEmbed) {
+  const tasks = [];
+  if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size && messageHtml) {
+    tasks.push(broadcastTelegramAlert(messageHtml));
+  }
+  if (TELEGRAM_BOT_TOKEN && TENNIS_TELEGRAM_CHAT_IDS.size && messageHtml) {
+    tasks.push(broadcastTennisTelegramAlert(messageHtml));
+  }
+  if (DISCORD_WEBHOOK_URL && discordEmbed) {
+    tasks.push(sendDiscordAlert(discordEmbed));
+  }
+  if (tasks.length) await Promise.allSettled(tasks);
+}
+
 // Envoyer alertes pour les value bets avec edge > seuil
 
 function escTg(s) {
@@ -17049,6 +17314,127 @@ async function sendValueBetAlerts() {
     })),
   };
   kvSet('alert_history', [...existing, entry].slice(-50));
+}
+
+// ── Alertes Tennis Prematch (Elo Gap >= 100) & Live (|DR| >= 0.20) ──────────
+const _TENNIS_ALERT_TTL_MS = 6 * 60 * 60 * 1000; // cooldown 6h prematch
+const _TENNIS_LIVE_ALERT_TTL_MS = 5 * 60 * 1000; // cooldown 5min live
+const _tennisAlertSent = new Map(); // `${scope}:${matchId}` → lastSentMs
+const _tennisDrAbsSent = new Map(); // `tndr_${scope}:${matchId}` → drGapSnapshot (dedup)
+
+function _tnAlertOnCooldown(key, ttl) {
+  return Date.now() - (_tennisAlertSent.get(key) || 0) < (ttl || _TENNIS_ALERT_TTL_MS);
+}
+function _tnAlertMark(key) { _tennisAlertSent.set(key, Date.now()); }
+
+// Lookup Elo par nom joueur dans tennis_players_elo (LIKE tolérant)
+function _lookupTennisElo(playerName) {
+  if (!playerName || !tennisEloCalculator) return null;
+  const clean = String(playerName).trim();
+  if (!clean) return null;
+  // Essai 1 : exact match LOWER dans SQLite
+  let row = sqldb.prepare(
+    `SELECT player_id, player_name, elo_rating, circuit FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) LIMIT 1`
+  ).get(clean);
+  // Essai 2 : contain match (nom complet contient le terme BSD)
+  if (!row) {
+    row = sqldb.prepare(
+      `SELECT player_id, player_name, elo_rating, circuit FROM tennis_players_elo WHERE LOWER(player_name) LIKE ? LIMIT 1`
+    ).get('%' + clean.toLowerCase() + '%');
+  }
+  if (!row || !row.elo_rating) return null;
+  return { id: row.player_id, name: row.player_name, elo: row.elo_rating, circuit: row.circuit };
+}
+
+async function pollTennisPrematchEloAlerts() {
+  if (!automatedAlertsAllowed()) return;
+  if (!tennisEloCalculator) return;
+
+  try {
+    let upcoming = [];
+    if (BSD_TENNIS_ENABLED) {
+      try {
+        const res = await bsdTennisFetch('/api/v2/matches/?status=scheduled&limit=200');
+        if (res && res.status === 200) {
+          const arr = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+          upcoming = arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+        }
+      } catch (e) { /* fallback silencieux — pas de matchs BSD */ }
+    }
+
+    if (!upcoming.length) return;
+
+    const alerts = [];
+    for (const m of upcoming) {
+      if (m.is_live) continue;
+      const matchKey = `elo:${m.id}`;
+      if (_tnAlertOnCooldown(matchKey)) continue;
+
+      const p1Name = m.player1?.name;
+      const p2Name = m.player2?.name;
+      if (!p1Name || !p2Name) continue;
+
+      const eloP1 = _lookupTennisElo(p1Name);
+      const eloP2 = _lookupTennisElo(p2Name);
+      if (!eloP1 || !eloP2) continue;
+
+      const gap = eloP1.elo - eloP2.elo;
+      if (Math.abs(gap) < 100) continue;
+
+      const fav = gap > 0 ? eloP1 : eloP2;
+      const dog = gap > 0 ? eloP2 : eloP1;
+      const prob = tennisEloCalculator.computeWinProbability(fav.elo, dog.elo);
+
+      alerts.push({
+        matchId: m.id, tournament: m.tournament, court: m.court,
+        discipline: m.discipline, startTime: m.start_time,
+        p1Name, p2Name, gap: Math.round(gap), favName: fav.name,
+        favElo: Math.round(fav.elo), dogElo: Math.round(dog.elo),
+        prob: Math.round(prob * 100),
+      });
+    }
+
+    if (!alerts.length) return;
+
+    for (const a of alerts) {
+      const msgHtml = [
+        `🎾 <b>ALERTE ELO TENNIS</b> — Écart significatif`,
+        ``,
+        `${escTg(a.tournament)} | ${escTg(a.court)} | ${escTg(a.discipline)}`,
+        `${escTg(a.p1Name)} (Elo: ${a.gap > 0 ? a.favElo : a.dogElo}) vs ${escTg(a.p2Name)} (Elo: ${a.gap > 0 ? a.dogElo : a.favElo})`,
+        `Écart: <b>${Math.abs(a.gap)} pts</b> — Favori: ${escTg(a.favName)} (${a.prob}%)`,
+        a.startTime ? `Début: ${new Date(a.startTime).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}` : '',
+        `Surface: ${a.discipline || 'N/A'}`,
+      ].filter(Boolean).join('\n');
+
+      const discordEmbed = {
+        title: `🎾 Alerte Elo Tennis — ${a.tournament}`,
+        color: 0x1DB954,
+        fields: [
+          { name: 'Match', value: `${a.p1Name} vs ${a.p2Name}`, inline: false },
+          { name: 'Écart Elo', value: `${Math.abs(a.gap)} pts`, inline: true },
+          { name: 'Favori', value: `${a.favName} (${a.prob}%)`, inline: true },
+          { name: 'Surface', value: a.discipline || 'N/A', inline: true },
+          { name: 'Tour', value: a.court || 'N/A', inline: true },
+          { name: 'Début', value: a.startTime ? new Date(a.startTime).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : 'N/A', inline: true },
+        ],
+        footer: { text: `Elo: ${a.favElo} vs ${a.dogElo} | ${a.tournament}` },
+        timestamp: new Date().toISOString(),
+      };
+
+      await broadcastAlert(msgHtml, discordEmbed);
+      _tnAlertMark(`elo:${a.matchId}`);
+    }
+
+    console.log(`  [TennisEloAlert] ${alerts.length} alerte(s) envoyée(s)`);
+    // Nettoyage périodique du cooldown (>1000 entrées)
+    if (_tennisAlertSent.size > 1000) {
+      const cutoff = Date.now() - _TENNIS_ALERT_TTL_MS * 2;
+      for (const [k, v] of _tennisAlertSent) { if (v < cutoff) _tennisAlertSent.delete(k); }
+    }
+  } catch (e) {
+    console.warn('  [TennisEloAlert]', e.message);
+  }
 }
 
 // ─── /api/v1/arbitrage — scanner de surebets multi-bookmakers ───────────────
@@ -17926,6 +18312,69 @@ async function handleAPI(req, res, pathname, query) {
       : jsonResponse(res, 200, { success: false, message: 'Échec synchro.' });
   }
 
+  // ─── GLICKO-2 TENNIS — Read-only, public ─────────────────────────────
+  // GET /api/v1/tennis/glicko2/stats
+  if (pathname === '/api/v1/tennis/glicko2/stats' && req.method === 'GET') {
+    console.log('  [Glicko2 Debug] route hit, tennisGlicko2=', typeof tennisGlicko2, !!tennisGlicko2);
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    return jsonResponse(res, 200, tennisGlicko2.getStats());
+  }
+  if (pathname.startsWith('/api/v1/tennis/glicko2/player/') && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    const gid = decodeURIComponent(pathname.slice('/api/v1/tennis/glicko2/player/'.length)).trim();
+    if (!gid) return jsonResponse(res, 400, { error: 'missing_player_id' });
+    const srv = tennisGlicko2.serveCalc.getPlayer(gid);
+    const ret = tennisGlicko2.returnCalc.getPlayer(gid);
+    return jsonResponse(res, 200, {
+      player_id: gid,
+      serve: { rating: Math.round(srv.rating * 100) / 100, deviation: Math.round(srv.deviation * 100) / 100, volatility: Math.round(srv.volatility * 1000) / 1000 },
+      return: { rating: Math.round(ret.rating * 100) / 100, deviation: Math.round(ret.deviation * 100) / 100, volatility: Math.round(ret.volatility * 1000) / 1000 },
+    });
+  }
+  if (pathname === '/api/v1/tennis/glicko2/top' && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    const glimit = Math.min(Math.max(parseInt(query.limit) || 100, 1), 500);
+    const gtop = tennisGlicko2.serveCalc.getTopPlayers(glimit);
+    return jsonResponse(res, 200, {
+      rankings: gtop.map((p, i) => ({
+        rank: i + 1, player_id: p.playerId,
+        serve_rating: Math.round(p.rating * 100) / 100,
+        deviation: Math.round(p.deviation * 100) / 100,
+      })),
+    });
+  }
+  if (pathname === '/api/v1/tennis/glicko2/proba' && req.method === 'GET') {
+    if (!tennisGlicko2) return jsonResponse(res, 503, { error: 'glicko2_not_initialized' });
+    const gp1 = String(query.p1 || '').trim(), gp2 = String(query.p2 || '').trim();
+    if (!gp1 || !gp2) return jsonResponse(res, 400, { error: 'p1 and p2 required' });
+    const ps = tennisGlicko2.computeServeWinProbability(gp1, gp2);
+    const pr = tennisGlicko2.computeReturnWinProbability(gp1, gp2);
+    return jsonResponse(res, 200, {
+      p1_serve_win_prob: Math.round(ps * 10000) / 100,
+      p1_return_win_prob: Math.round(pr * 10000) / 100,
+    });
+  }
+
+  // K-Flow + SM Momentum route
+  if (pathname === '/api/v1/tennis/momentum' && req.method === 'GET') {
+    if (!tennisMomentumTracker) return jsonResponse(res, 503, { error: 'momentum_not_initialized' });
+    const matchId = String(query.matchId || '').trim();
+    if (!matchId) return jsonResponse(res, 400, { error: 'matchId required' });
+    const mom = tennisMomentumTracker.getMomentum(matchId);
+    return jsonResponse(res, 200, mom);
+  }
+
+  // Player Momentum Score (OSS Pulse-inspired)
+  if (pathname === '/api/v1/players/momentum' && req.method === 'GET') {
+    if (!playerMomentumScorer) return jsonResponse(res, 503, { error: 'momentum_not_initialized' });
+    const playerId = String(query.playerId || '').trim();
+    if (playerId) {
+      return jsonResponse(res, 200, playerMomentumScorer.computeMomentumScore(playerId));
+    }
+    const top = playerMomentumScorer.getTopMomentum(Math.min(parseInt(query.limit) || 20, 100));
+    return jsonResponse(res, 200, { top, count: top.length });
+  }
+
   // Fallback API interne
   return jsonResponse(res, 404, { error: 'Route inconnue: ' + pathname });
 }
@@ -18408,7 +18857,11 @@ function _normalizeBSDTennisMatch(m) {
     current_set_index: m.current_set != null ? Math.max(0, (parseInt(m.current_set, 10) || 1) - 1) : (sets.length ? sets.length - 1 : 0),
     current_point: m.current_point || '',
     serving: (() => {
-      // Source signal direct
+      // bd patch BSD 29 mai — is_serving_p1 n'est PLUS inversé/absent,
+      // la synchro list↔detail est corrigée côté BSD. Valeur fiable prioritaire.
+      // Verrouillage: la valeur du flux détaillé (/matches/{id}/) ne touche
+      // PAS serving (seul _mergeDetailStats s'applique → champs _bsd_stats).
+      // Ce champ est la source unique de vérité pour le service en cours.
       if (m.is_serving_p1 === true) return 1;
       if (m.is_serving_p1 === false) return 2;
       // bd c5i: inference par parite jeux depuis _tennisServeHist si snapshot connu
@@ -18423,6 +18876,9 @@ function _normalizeBSDTennisMatch(m) {
     notes: m.round_name || '',
     start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
     last_update_ts: Date.now(),
+    // bd patch BSD 30 mai — cotes directes vainqueur du match (décimal)
+    odds_player1: m.odds_player1 != null ? parseFloat(m.odds_player1) : null,
+    odds_player2: m.odds_player2 != null ? parseFloat(m.odds_player2) : null,
     _bsd_match_id: m.id,
     _bsd_stats: {
       p1_aces: m.p1_aces ?? null, p2_aces: m.p2_aces ?? null,
@@ -18483,6 +18939,15 @@ async function fetchBSDTennisLive() {
     ? res.data
     : (res.data && Array.isArray(res.data.results) ? res.data.results : []);
   const normalized = arr.map(_normalizeBSDTennisMatch).filter(Boolean);
+  // bd patch BSD 29 mai — Verrou serving: le détail (/matches/{id}/) enrichit
+  // uniquement _bsd_stats, mais par sécurité on préserve le serving original.
+  // La valeur `is_serving_p1` du flux list est désormais fiable (bug BSD corrigé).
+  const _servingBackup = new Map();
+  for (const m of normalized) {
+    if (m._bsd_match_id != null && (m.serving === 1 || m.serving === 2)) {
+      _servingBackup.set(m._bsd_match_id, m.serving);
+    }
+  }
   // Enrich live matches with extended stats from BSD detailed endpoint (parallel, non-blocking)
   const results = await Promise.allSettled(
     normalized.map(async (m) => {
@@ -18492,7 +18957,14 @@ async function fetchBSDTennisLive() {
           _fetchBSDTennisMatchDetail(m._bsd_match_id),
           new Promise(r => setTimeout(() => r(null), 3000)),
         ]);
-        return _mergeDetailStats(m, detail);
+        const enriched = _mergeDetailStats(m, detail);
+        // bd patch BSD 29 mai — Restaure le serving original après enrichissement
+        // détail (le flux détaillé ne doit jamais écraser is_serving_p1 du flux list).
+        const savedSrv = _servingBackup.get(m._bsd_match_id);
+        if (savedSrv != null && enriched.serving !== savedSrv) {
+          enriched.serving = savedSrv;
+        }
+        return enriched;
       } catch (_) { return m; }
     })
   );
@@ -19193,6 +19665,8 @@ function archiveFinishedTennisFromLiveCache(liveData) {
       commence_time: m.start_time || new Date().toISOString(),
       home_team: m.player1?.name || null,
       away_team: m.player2?.name || null,
+      p1: m.player1?.name || null,
+      p2: m.player2?.name || null,
       player1: m.player1 || null,
       player2: m.player2 || null,
       sets: m.sets || [],
@@ -19203,8 +19677,30 @@ function archiveFinishedTennisFromLiveCache(liveData) {
       away_score: sw2,
       live_score: `${sw1}-${sw2}`,
       status: 'finished',
+      verified: true,
       _source: 'cron-tennis-live-archive',
       _archived_at: new Date().toISOString(),
+      // bd fix — realResult + predicted pour alimenter _tennisPicksOf et les KPIs
+      realResult: {
+        winner: winner === 'p1' ? m.player1?.name : (winner === 'p2' ? m.player2?.name : null),
+        sets: (m.sets || []).map(s => ({ p1: s.p1 ?? 0, p2: s.p2 ?? 0 })),
+        total_games: (m.sets || []).reduce((s, set) => s + (set.p1 || 0) + (set.p2 || 0), 0),
+        aces_p1: m._bsd_stats?.p1_aces ?? null,
+        aces_p2: m._bsd_stats?.p2_aces ?? null,
+        had_tiebreak: (m.sets || []).some(s => {
+          return (s.p1 >= 6 && s.p2 >= 6) || (s.p1 === 7 && s.p2 === 6) || (s.p1 === 6 && s.p2 === 7);
+        }) || false,
+      },
+      // Prédictions BSD (stockées sur m._bsd_prediction) pour alimenter ML/Set1/Total Games
+      predicted: m._bsd_prediction ? {
+        ml: m.bsd_prediction.prob_p1_wins > 0.50 ? m.player1?.name : (m.bsd_prediction.prob_p2_wins > 0.50 ? m.player2?.name : null),
+        ml_odds: m.bsd_prediction.prob_p1_wins > 0.50
+          ? parseFloat((1 / Math.max(0.01, m.bsd_prediction.prob_p1_wins)).toFixed(2))
+          : parseFloat((1 / Math.max(0.01, 1 - m.bsd_prediction.prob_p1_wins)).toFixed(2)),
+        set1: null, // BSD ne prédit pas le set1 individuellement
+        total_games_thr: m.bsd_prediction.expected_total_games ?? null,
+        total_games_over: true,
+      } : {},
     };
     tennisHistory.push(archived);
     (db.archive_matches = db.archive_matches || []).push(archived);
@@ -19213,9 +19709,150 @@ function archiveFinishedTennisFromLiveCache(liveData) {
     added++;
   }
   if (added > 0) {
-    console.log(`  [Tennis Archive] ${added} matchs finished archives vers tennisHistory (+db.archive_matches)`);
+    saveHistory();
+    console.log(`  [Tennis Archive] ${added} matchs finished archives vers tennisHistory (+db.archive_matches) — persisté`);
   }
   return added;
+}
+
+// bd — Challenger ATP supplement: BSD/The Odds API/MatchStat ne couvrent pas.
+// Tennis Explorer scraper (déjà intégré) couvre tous les niveaux ATP/WTA.
+const _MS_CHALLENGER_CACHE_TTL = 5 * 60 * 1000;
+let _msChallengerCache = { ts: 0, data: [] };
+
+async function _fetchMSChallengerMatches() {
+  const now = Date.now();
+  if (_msChallengerCache.data.length && (now - _msChallengerCache.ts) < _MS_CHALLENGER_CACHE_TTL) {
+    return _msChallengerCache.data;
+  }
+  try {
+    const matches = [];
+
+    // Source 1: The Odds API — les Challengers sont listés comme sports actifs
+    if (ODDS_API_KEY) {
+      try {
+        const sportsRes = await httpsGet(`https://api.the-odds-api.com/v4/sports/?apiKey=${ODDS_API_KEY}&all=false`);
+        if (sportsRes && sportsRes.status === 200 && Array.isArray(sportsRes.data)) {
+          const challengerSports = sportsRes.data.filter(s =>
+            s && s.group === 'Tennis' && s.active === true &&
+            /challenger|itf/.test(String(s.key || '').toLowerCase())
+          );
+          if (challengerSports.length) {
+            // Fetch odds for each Challenger sport
+            const now2 = new Date();
+            for (const cs of challengerSports) {
+              try {
+                const query = new URLSearchParams({
+                  apiKey: ODDS_API_KEY,
+                  regions: process.env.ODDS_REGIONS || 'eu',
+                  markets: 'h2h',
+                  oddsFormat: 'decimal',
+                  dateFormat: 'iso',
+                  commenceTimeFrom: formatIsoTimestamp(now2),
+                  commenceTimeTo: formatIsoTimestamp(new Date(now2.getTime() + 7 * 24 * 3600 * 1000)),
+                }).toString();
+                const oddsRes = await httpsGet(`https://api.the-odds-api.com/v4/sports/${cs.key}/odds/?${query}`);
+                if (oddsRes && oddsRes.status === 200 && Array.isArray(oddsRes.data)) {
+                  for (const od of oddsRes.data) {
+                    const tnName = od.sport_title || cs.title || cs.key.replace(/tennis_(atp|wta|itf)_/, '').replace(/_/g, ' ');
+                    matches.push({
+                      id: `odds_ch_${od.id || Math.random()}`,
+                      tour: cs.key.includes('wta') ? 'WTA' : 'ATP',
+                      discipline: tnName,
+                      tournament: tnName,
+                      court: '',
+                      surface: 'Hard',
+                      status: 'notstarted',
+                      is_live: false,
+                      player1: { name: od.home_team || '?', country: '', flag: null },
+                      player2: { name: od.away_team || '?', country: '', flag: null },
+                      player1_sets: 0,
+                      player2_sets: 0,
+                      sets: [],
+                      serving: null,
+                      start_time: od.commence_time || null,
+                      _source: 'odds_api_challenger',
+                      _bsd_match_id: null,
+                      _bsd_stats: {},
+                    });
+                  }
+                }
+              } catch (_) { /* skip un sport */ }
+            }
+          }
+        }
+      } catch (_) { /* The Odds API fail → fallback MatchStat */ }
+    }
+
+    // Source 2: Tennis Explorer — couvre tous les niveaux ATP/WTA y compris Challengers
+    if (!matches.length) {
+      try {
+        const cal = await fetchTexCalendar('atp');
+        const items = cal && cal.tournaments || [];
+        const challengers = items.filter(t => {
+          const name = String(t.name || t.short || '').toLowerCase();
+          return name.includes('challenger') || name.includes('chall') || name.includes('little');
+        });
+        if (challengers.length) {
+          // Pour chaque Challenger, fetch la page du tournoi et parse les matchs
+          for (const t of challengers.slice(0, 5)) {
+            try {
+              const tournPage = await _texFetchHtml(t.url.replace(TEX_BASE, ''));
+              // Parse les matchs depuis la page tournoi (même structure que /matches/)
+              const parsed = _texParseMatchesPage(tournPage);
+              for (const p of parsed) {
+                // Init Elo Challenger: nom du joueur comme ID (pas de BSD player ID)
+                const p1Id = `ch_${(p.player1?.name || '?').toLowerCase().replace(/\s+/g, '_')}`;
+                const p2Id = `ch_${(p.player2?.name || '?').toLowerCase().replace(/\s+/g, '_')}`;
+                let elo1 = 1500, elo2 = 1500;
+                if (tennisEloCalculator) {
+                  try {
+                    elo1 = tennisEloCalculator.getPlayer(p1Id).elo;
+                    elo2 = tennisEloCalculator.getPlayer(p2Id).elo;
+                  } catch (_) {
+                    tennisEloCalculator.initializePlayer(p1Id, 1500);
+                    tennisEloCalculator.initializePlayer(p2Id, 1500);
+                  }
+                }
+                matches.push({
+                  id: p.id,
+                  tour: 'ATP',
+                  discipline: t.name || 'Challenger',
+                  tournament: t.name || t.short || 'Challenger',
+                  court: '',
+                  surface: t.surface || 'Hard',
+                  status: 'notstarted',
+                  is_live: false,
+                  player1: { name: p.player1?.name || '?', country: '', flag: null },
+                  player2: { name: p.player2?.name || '?', country: '', flag: null },
+                  player1_sets: 0,
+                  player2_sets: 0,
+                  sets: [],
+                  serving: null,
+                  start_time: null,
+                  _source: 'tex_challenger',
+                  _bsd_match_id: null,
+                  _bsd_stats: {},
+                  elo_p1: Math.round(elo1),
+                  elo_p2: Math.round(elo2),
+                  elo_gap: Math.round(elo1 - elo2),
+                });
+              }
+            } catch (_) { /* skip ce tournoi */ }
+          }
+        }
+      } catch (_) { /* Tennis Explorer fail */ }
+    }
+
+    _msChallengerCache = { ts: now, data: matches };
+    if (matches.length) {
+      console.log(`  [Challenger ATP] ${matches.length} matchs chargés (The Odds API + Tennis Explorer)`);
+    }
+    return matches;
+  } catch (e) {
+    console.warn('  [Challenger ATP]', e.message);
+    return [];
+  }
 }
 
 async function pollTennisLive() {
@@ -19234,6 +19871,8 @@ async function pollTennisLive() {
     let espn = [];
     try { espn = await fetchESPNTennisLive(); } catch (e) { console.warn('  [Tennis] ESPN live error:', e.message); }
     const data = _mergeTennisLive(bsd, espn);
+    // bd — Merge MatchStat Challenger matches (BSD ne couvre pas Challengers ATP)
+    try { const msCh = await _fetchMSChallengerMatches(); if (msCh.length) data.push(...msCh); } catch (_) {}
     // bd c5i — Cross-source serving enrichment (aiscore cache hit) AVANT recordTennisServe
     // pour que l'historique parite ait la donnée fraîche.
     let _aiEnriched = 0, _aiOndemand = 0, _aiEnrichedOndemand = 0;
@@ -19248,6 +19887,35 @@ async function pollTennisLive() {
     const _liveIds = new Set();
     for (const m of data) {
       if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
+      // bd — K-Flow + SM Momentum tracker: feed point data per match
+      if (m && m.is_live && tennisMomentumTracker) {
+        try {
+          const pWinner = m.current_point ? (m.current_point.includes('40') || m.serving === 1 ? 0 : 1) : (m.serving === 1 ? 0 : 1);
+          tennisMomentumTracker.addPoint(m.id, {
+            winner: m.serving === 1 ? 0 : 1, // heuristic: server wins point by default (will improve with real point data)
+            server: m.serving === 1 ? 0 : m.serving === 2 ? 1 : null,
+            rallyCount: 4, // default rally count (will improve with real data)
+            gamePoint: false,
+            ts: Date.now(),
+          });
+          m.momentum = tennisMomentumTracker.getMomentum(m.id);
+          // Attach Glicko-2 ratings to match for frontend display
+          if (tennisGlicko2) {
+            try {
+              const p1Id = m.player1?.name?.toLowerCase().replace(/\s+/g, '_') || '';
+              const p2Id = m.player2?.name?.toLowerCase().replace(/\s+/g, '_') || '';
+              tennisGlicko2.serveCalc.getPlayer(p1Id); // ensure initialized
+              tennisGlicko2.serveCalc.getPlayer(p2Id);
+              m.glicko2 = {
+                p1_serve: Math.round(tennisGlicko2.serveCalc.getPlayer(p1Id).rating),
+                p1_return: Math.round(tennisGlicko2.returnCalc.getPlayer(p1Id).rating),
+                p2_serve: Math.round(tennisGlicko2.serveCalc.getPlayer(p2Id).rating),
+                p2_return: Math.round(tennisGlicko2.returnCalc.getPlayer(p2Id).rating),
+              };
+            } catch (_) { m.glicko2 = null; }
+          }
+        } catch (_) { m.momentum = null; }
+      }
     }
     for (const k of _tennisServeHist.keys()) if (!_liveIds.has(k)) _tennisServeHist.delete(k);
     // bd 6xw — Break Point Pressure Index par match live + SSE bppi_spike (Δ>20pts).
@@ -19300,6 +19968,97 @@ async function pollTennisLive() {
         const side = drSetCur.dr >= drBase.dr ? 'p1' : 'p2';
         broadcastTennisDRSpike(m.id, drBase.dr, drSetCur.dr, side);
       }
+      // bd new — Alerte live |DR| absolu >= 0.20 (set ou match)
+      try {
+        for (const m of data) {
+          if (!m || !m.is_live) continue;
+          const curSet2 = (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
+            : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null);
+          const drBase2 = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+          if (!drBase2 || !Number.isFinite(drBase2.dr)) continue;
+          const drEnriched2 = _drAttachCurrentSet(drBase2, curSet2);
+          const drSetCur2 = drEnriched2?.dr_set_courant;
+          // ── DR Set (courant) ──
+          if (drSetCur2 && Number.isFinite(drSetCur2.dr) && drSetCur2.reliable !== false) {
+            const drSetGap = drSetCur2.dr - 1.0;
+            if (Math.abs(drSetGap) >= 0.20) {
+              const snapKey = `tndr_set:${m.id}`;
+              const snapVal = drSetCur2.dr.toFixed(2);
+              if (_tennisDrAbsSent.get(snapKey) !== snapVal) {
+                _tennisDrAbsSent.set(snapKey, snapVal);
+                const sideSet = drSetGap > 0 ? 'p1' : 'p2';
+                const dominantSet = sideSet === 'p1' ? m.player1?.name : m.player2?.name;
+                const setScore = [].concat(m.sets || []).slice(-1)[0];
+                const setLabel = setScore ? ` (${setScore.p1}-${setScore.p2})` : '';
+                const msgHtml = [
+                  `🔥 <b>LIVE DR SET</b> — Domination en cours`,
+                  ``,
+                  `${escTg(m.tournament)} | ${escTg(m.court)} | Set ${curSet2 || '?'}${setLabel}`,
+                  `${escTg(m.player1?.name)} vs ${escTg(m.player2?.name)}`,
+                  `DR Set courant: <b>${drSetCur2.dr.toFixed(2)}</b> → ${escTg(dominantSet)} domine`,
+                  `DR Match cumulé: ${drBase2.dr.toFixed(2)}`,
+                  `Écart DR Set: ${Math.abs(drSetGap).toFixed(2)}`,
+                ].filter(Boolean).join('\n');
+                const discordEmbed = {
+                  title: `🔥 LIVE DR Set — ${m.tournament}`,
+                  color: 0xFF4500,
+                  fields: [
+                    { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
+                    { name: 'Set', value: `${curSet2 || '?'}${setLabel}`, inline: true },
+                    { name: 'DR Set', value: drSetCur2.dr.toFixed(2), inline: true },
+                    { name: 'DR Match', value: drBase2.dr.toFixed(2), inline: true },
+                    { name: 'Dominant', value: dominantSet || '?', inline: true },
+                  ],
+                  footer: { text: `Alerte Live DR Set | ${m.tournament}` },
+                  timestamp: new Date().toISOString(),
+                };
+                broadcastAlert(msgHtml, discordEmbed).catch(() => {});
+                console.log(`  [Tennis DR Alert] SET spike ${m.id} DR=${drSetCur2.dr.toFixed(2)} side=${sideSet}`);
+              }
+            }
+          }
+          // ── DR Match (cumulé) ──
+          const drMatchGap = drBase2.dr - 1.0;
+          if (Math.abs(drMatchGap) >= 0.20) {
+            const snapKey2 = `tndr_match:${m.id}`;
+            const snapVal2 = drBase2.dr.toFixed(2);
+            if (_tennisDrAbsSent.get(snapKey2) !== snapVal2) {
+              _tennisDrAbsSent.set(snapKey2, snapVal2);
+              const sideMatch = drMatchGap > 0 ? 'p1' : 'p2';
+              const dominantMatch = sideMatch === 'p1' ? m.player1?.name : m.player2?.name;
+              const liveScore = `Score: ${m.player1_sets || 0}-${m.player2_sets || 0}`;
+              const bg = [].concat(m.sets || []).slice(-1)[0];
+              const currentSetScore = bg ? ` (Set: ${bg.p1}-${bg.p2})` : '';
+              const msgHtml = [
+                `💥 <b>LIVE DR MATCH</b> — Domination confirmée`,
+                ``,
+                `${escTg(m.tournament)} | ${escTg(m.court)}`,
+                `${escTg(m.player1?.name)} vs ${escTg(m.player2?.name)}`,
+                `${liveScore}${currentSetScore}`,
+                `DR Match: <b>${drBase2.dr.toFixed(2)}</b> → ${escTg(dominantMatch)} domine`,
+                `Écart DR: ${Math.abs(drMatchGap).toFixed(2)}`,
+              ].filter(Boolean).join('\n');
+              const discordEmbed = {
+                title: `💥 LIVE DR Match — ${m.tournament}`,
+                color: 0xFF0000,
+                fields: [
+                  { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
+                  { name: 'Score', value: liveScore, inline: true },
+                  { name: 'DR Match', value: drBase2.dr.toFixed(2), inline: true },
+                  { name: 'Dominant', value: dominantMatch || '?', inline: true },
+                  { name: 'Tour', value: m.court || 'N/A', inline: true },
+                ],
+                footer: { text: `Alerte Live DR Match | ${m.tournament}` },
+                timestamp: new Date().toISOString(),
+              };
+              broadcastAlert(msgHtml, discordEmbed).catch(() => {});
+              console.log(`  [Tennis DR Alert] MATCH spike ${m.id} DR=${drBase2.dr.toFixed(2)} side=${sideMatch}`);
+            }
+          }
+        }
+        // Nettoyage périodique dedup map (>500 entrées)
+        if (_tennisDrAbsSent.size > 500) { _tennisDrAbsSent.clear(); }
+      } catch (e) { /* swallow — DR alert best-effort */ }
     } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
@@ -24769,7 +25528,7 @@ const server = http.createServer(async (req, res) => {
                     const t = r.data?.results?.[0];
                     if (t?.id) {
                         result = {
-                            url: `https://sports.bzzoiro.com/img/team/${t.id}/`,
+                            url: `https://sports.bzzoiro.com/img/team/${t.id}/?bg=transparent`,
                             bsdId: t.id
                         };
                     }
@@ -25233,6 +25992,11 @@ if (pathname === '/api/v1/status') {
       teams: db.fbrefStats ? Object.keys(db.fbrefStats).length : 0,
       last_load: _fbrefLastLoad ? new Date(_fbrefLastLoad).toISOString() : null,
     },
+    telegramChats: TELEGRAM_CHAT_IDS.size,
+    tennisTelegramChats: TENNIS_TELEGRAM_CHAT_IDS.size,
+    discordWebhook: !!DISCORD_WEBHOOK_URL,
+    tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
+    tennisGlicko2Players: tennisGlicko2 ? tennisGlicko2.serveCalc.getStats().totalPlayers : 0,
   });
 }
 
@@ -26946,6 +27710,7 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'GET') {
     enabled: false, chatId: '', edgeMin: 8, probaMin: 55,
     markets: ['BTTS_YES', 'OVER_2_5'], leagues: [],
     liveEnabled: false, intensityMin: 70, pressureDeltaMin: 35,
+    tennisEnabled: false, tennisEloMinGap: 100, tennisDRSetThreshold: 0.20, tennisDRMatchThreshold: 0.20,
   };
   return jsonResponse(res, 200, prefs);
 }
@@ -26966,6 +27731,10 @@ if (pathname === '/api/v1/alerts/config' && req.method === 'POST') {
         liveEnabled: !!parsed.liveEnabled,
         intensityMin: Math.max(50, Math.min(100, parseInt(parsed.intensityMin) || 70)),
         pressureDeltaMin: Math.max(15, Math.min(80, parseInt(parsed.pressureDeltaMin) || 35)),
+        tennisEnabled: !!parsed.tennisEnabled,
+        tennisEloMinGap: Math.max(50, Math.min(500, parseInt(parsed.tennisEloMinGap) || 100)),
+        tennisDRSetThreshold: Math.max(0.10, Math.min(1.0, parseFloat(parsed.tennisDRSetThreshold) || 0.20)),
+        tennisDRMatchThreshold: Math.max(0.10, Math.min(1.0, parseFloat(parsed.tennisDRMatchThreshold) || 0.20)),
         updatedAt: new Date().toISOString(),
       };
       kvSet(`alert_prefs_${user.id}`, prefs);
@@ -27017,6 +27786,43 @@ if (pathname === '/api/v1/alerts/test' && req.method === 'POST') {
     } catch { jsonResponse(res, 400, { error: 'JSON invalide' }); }
   }).catch(() => jsonResponse(res, 400, { error: 'Corps invalide' }));
   return;
+}
+
+// POST /api/v1/alerts/tennis-test — envoyer alerte tennis test (Telegram + Discord)
+if (pathname === '/api/v1/alerts/tennis-test' && req.method === 'POST') {
+  const testHtml = [
+    '🎾 <b>TEST ALERTE TENNIS</b> — Message de test',
+    '',
+    'Roland-Garros | 1er tour | Terre battue',
+    'Alcaraz (Elo: 2150) vs Moutet (Elo: 1530)',
+    'Écart: <b>620 pts</b> — Favori: Alcaraz (97%)',
+    'Début: ' + new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }),
+    'Surface: Terre battue',
+  ].join('\n');
+  const testEmbed = {
+    title: '🎾 TEST Alerte Tennis — Roland-Garros',
+    color: 0x1DB954,
+    fields: [
+      { name: 'Match', value: 'Alcaraz vs Moutet', inline: false },
+      { name: 'Écart Elo', value: '620 pts', inline: true },
+      { name: 'Favori', value: 'Alcaraz (97%)', inline: true },
+      { name: 'Surface', value: 'Terre battue', inline: true },
+      { name: 'Tour', value: '1er tour', inline: true },
+    ],
+    footer: { text: 'Test — PariScore Tennis Alerts' },
+    timestamp: new Date().toISOString(),
+  };
+  broadcastAlert(testHtml, testEmbed).then(() => {
+    console.log('  [TennisTest] Alerte test envoyée → Telegram + Discord');
+  }).catch(e => {
+    console.warn('  [TennisTest] Échec:', e.message);
+  });
+  return jsonResponse(res, 200, {
+    ok: true,
+    telegram: !!(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size),
+    discord: !!DISCORD_WEBHOOK_URL,
+    message: 'Alerte tennis test envoyée',
+  });
 }
 
 // GET /api/v1/alerts/history — 10 dernières alertes envoyées
@@ -27281,6 +28087,9 @@ if (pathname === '/api/v1/admin/status') {
     accuracy: getAccuracyReport(),
     aiScoutCached: !!aiScoutCache.data,
     telegramChats: TELEGRAM_CHAT_IDS.size,
+    tennisTelegramChats: TENNIS_TELEGRAM_CHAT_IDS.size,
+    discordWebhook: !!DISCORD_WEBHOOK_URL,
+    tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
     memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     mock: {
       active: mockActive,
@@ -29564,6 +30373,12 @@ async function _buildTennisValueBetsCore({ date }) {
     // 402/503 → tombe en fallback ESPN ci-dessous (mode dégradé).
   }
 
+  // bd — Supplement MatchStat Challenger ATP (BSD ne couvre pas Challengers)
+  try {
+    const msCh = await _fetchMSChallengerMatches();
+    if (msCh.length) bsdMatches.push(...msCh);
+  } catch (_) { /* swallow — non bloquant */ }
+
   if (bsdMatches.length === 0) {
     // Fallback ESPN : live scoreboard (scores à jour) + schedule J→J+N (option C,
     // fait remonter les programmés). Merge dédup, live prioritaire sur programmé.
@@ -30337,6 +31152,11 @@ async function handleTennisBSD(pathSuffix, cacheKey, ttlMs) {
 }
 
 if (pathname === '/api/v1/tennis/live' && req.method === 'GET') {
+  // Return enriched live data from poll cache (includes glicko2, momentum, odds)
+  const cached = _tennisLiveCache.data || [];
+  return jsonResponse(res, 200, cached);
+}
+if (pathname === '/api/v1/tennis/live-raw' && req.method === 'GET') {
   const out = await handleTennisBSD('/api/v2/matches/live/', null, 0);
   return jsonResponse(res, out.status, out.body);
 }
@@ -35444,8 +36264,9 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
                         const r = await bsdFetch(`/teams/?search=${encodeURIComponent(name)}&page_size=1`);
                         const t = r.data?.results?.[0];
                         if (t?.id) {
-                            result = { url: `https://sports.bzzoiro.com/img/team/${t.id}/`, bsdId: t.id };
-                        }
+                            result = { url: `https://sports.bzzoiro.com/img/team/${t.id}/?bg=transparent`, bsdId: t.id };
+}
+
                     } catch (e) { /* fallback */ }
                 }
 
@@ -38562,6 +39383,44 @@ async function bootInit() {
     }
 
     if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
+
+    // bd fix — Enrich retroactif tennisHistory: entries sans verified/realResult/p1/p2
+    if (tennisHistory && tennisHistory.length) {
+      let enriched = 0;
+      for (const h of tennisHistory) {
+        if (!h.verified && h.winner && (h.home_team || h.away_team || h.player1?.name || h.player2?.name)) {
+          h.verified = true;
+          h.p1 = h.p1 || h.player1?.name || h.home_team || null;
+          h.p2 = h.p2 || h.player2?.name || h.away_team || null;
+          const winnerName = h.winner === 'p1' ? h.p1
+            : (h.winner === 'p2' ? h.p2 : h.winner);
+          h.realResult = h.realResult || {
+            winner: winnerName,
+            sets: h.sets || [],
+            total_games: (h.sets || []).reduce((s, set) => s + (set.p1 || 0) + (set.p2 || 0), 0),
+            had_tiebreak: (h.sets || []).some(s => (s.p1 === 7 && s.p2 === 6) || (s.p1 === 6 && s.p2 === 7)),
+          };
+          // Bridge bsd_prediction → predicted pour _tennisPicksOf
+          if (!h.predicted && h.bsd_prediction && Number.isFinite(h.bsd_prediction.prob_p1_wins)) {
+            const bp = h.bsd_prediction.prob_p1_wins;
+            const bpNorm = bp > 1 ? bp / 100 : bp; // normaliser 0-100 → 0-1
+            h.predicted = {
+              ml: bpNorm > 0.50 ? h.p1 : (bpNorm < 0.50 ? h.p2 : null),
+              ml_odds: bpNorm > 0.50
+                ? parseFloat((1 / Math.max(0.01, bpNorm)).toFixed(2))
+                : (bpNorm < 0.50 ? parseFloat((1 / Math.max(0.01, 1 - bpNorm)).toFixed(2)) : null),
+            };
+          }
+          enriched++;
+        }
+      }
+      if (enriched > 0) {
+        saveHistory();
+        const withPreds = tennisHistory.filter(h => h.predicted || h.bsd_prediction).length;
+        console.log(`  ✓ Historique Tennis retro-enrichi: ${enriched}/${tennisHistory.length} matchs (verified+realResult+p1/p2) — ${withPreds} matchs avec prédictions`);
+      }
+    }
+
     serverReady = true;
 
     // Init WElo Tennis calculator
@@ -38569,6 +39428,14 @@ async function bootInit() {
       initTennisEloCalculator();
     } catch (e) {
       console.warn('  [Boot] ⚠ initTennisEloCalculator:', e.message);
+    }
+
+    // Init Glicko-2 Tennis calculator (serve/return skills)
+    try {
+      initTennisGlicko2();
+      initTennisMomentum();
+    } catch (e) {
+      console.warn('  [Boot] ⚠ initTennisGlicko2:', e.message);
     }
 
     // FIX historique : récupère les matchs déjà perdus dans db.archive_matches
@@ -39087,6 +39954,9 @@ console.log('  [TT-OOP] cron armé — prefetch quotidien à 8h00 Europe/Paris')
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
 pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
+// Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)
+setInterval(() => pollTennisPrematchEloAlerts().catch(e => console.warn('[TennisElo]', e.message)), 10 * 60 * 1000);
+setTimeout(() => pollTennisPrematchEloAlerts().catch(() => {}), 30 * 1000); // bootstrap à +30s
 
 // Tennis historical (Sackmann CSV) — cron nightly DEPRECATED 2026-05-23.
 // Sackmann CC-BY-NC-SA incompatible service commercial — sync HTTP désactivé

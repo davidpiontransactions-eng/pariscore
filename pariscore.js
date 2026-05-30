@@ -1218,7 +1218,43 @@ function _tnRenderSourceBadge(m) {
   return `<span class="tn-src-chip" data-source="${src}" title="${_escTennis(tooltip)}" aria-label="${_escTennis('Source données: ' + src)}" tabindex="0">${_escTennis(display)}</span>${warn}`;
 }
 
-// bd dt9/i5r — Filtre source actif. AISCORE chip groupe AISCORE_CACHE + AISCORE_ONDEMAND.
+// bd — Glicko-2 badge (serve/return rating) next to player name
+function _tnGlickoBadge(m, playerIdx) {
+  if (!m.glicko2) return '';
+  const sv = playerIdx === 1 ? m.glicko2.p1_serve : m.glicko2.p2_serve;
+  const rt = playerIdx === 1 ? m.glicko2.p1_return : m.glicko2.p2_return;
+  if (!sv && !rt) return '';
+  return `<span class="tn-glicko-badge" title="Glicko-2: Serve ${sv||'?'} / Return ${rt||'?'}">S:${sv||'?'}</span>`;
+}
+
+// bd — Momentum badge (K-Flow direction + confidence)
+function _tnMomentumBadge(m) {
+  if (!m.momentum || m.momentum.kfs_direction === 'neutral') return '';
+  const dir = m.momentum.kfs_direction === 'p1' ? '▲' : '▼';
+  const conf = m.momentum.kfs_confidence || 0;
+  if (conf < 20) return '';
+  return `<span class="tn-mom-badge" title="Momentum: ${conf}% flow=${(m.momentum.momentum_shift||0).toFixed(2)} KFS=${m.momentum.kfs_direction}">${dir}${conf}%</span>`;
+}
+
+// bd — Status bar showing active AI models on tennis page
+function _tnUpdateModelsBar(matches) {
+  var bar = document.getElementById('tn-models-bar');
+  if (!bar) return;
+  var withGlicko = 0, withMomentum = 0, withOdds = 0;
+  for (var i = 0; i < (matches || []).length; i++) {
+    var m = matches[i];
+    if (m.glicko2) withGlicko++;
+    if (m.momentum) withMomentum++;
+    if (m.odds_player1 && m.odds_player2) withOdds++;
+  }
+  var parts = [];
+  if (withGlicko) parts.push('<span style="color:#0ea5e9;">⬡ Glicko-2</span>');
+  if (withMomentum) parts.push('<span style="color:#22c55e;">⚡ Momentum</span>');
+  if (withOdds) parts.push('<span style="color:#ffa726;">💰 Odds BSD</span>');
+  parts.push('<span style="color:#ec4899;">🧠 Elo</span>');
+  bar.innerHTML = parts.join(' <span style="color:#5a6068;">|</span> ');
+  bar.style.display = 'inline-block';
+}
 window._tennisSourceFilter = window._tennisSourceFilter || 'ALL';
 function setTennisSourceFilter(f) {
   const allowed = ['ALL', 'BSD', 'ESPN', 'LIVESCORE', 'AISCORE'];
@@ -1499,8 +1535,8 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
-<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}</span>
-<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
+<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
 <span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
@@ -1522,7 +1558,7 @@ async function tickTennisLive() {
   const statusEl = document.getElementById('tennis-live-status');
   try {
     if (statusEl) statusEl.textContent = 'Mise à jour…';
-    const r = await fetch('/tennis/api/v2/matches/live/', { headers: { 'Accept': 'application/json' } });
+    const r = await fetch('/api/v1/tennis/live', { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     let list = Array.isArray(data) ? data : [];
@@ -1536,6 +1572,7 @@ async function tickTennisLive() {
     }
     window._tennisLastFetch = list;
     renderTennisLive(window._tennisLastFetch);
+    _tnUpdateModelsBar(list);
     try { patchTennisLive(); } catch (_) {}/*TN_UNIFY_TICK*/
     if (statusEl) statusEl.textContent = `${list.length} match(s) · ${srcLabel} · ${new Date().toLocaleTimeString('fr-FR')}`;
   } catch (e) {
@@ -2911,7 +2948,13 @@ function buildUnifiedTennis(vb){
   var base=(Array.isArray(vb)?vb:[]).map(function(m){
     var k=_tnPairKey(m);var lo=liveIdx.get(k);
     if(!lo){lo=liveIdxLast.get(_tnPairKeyLast(m));if(lo)k=_tnPairKey(lo);}
-    if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;}else{m._live=null;m._isLive=false;}
+    if(lo){used.add(k);m._live=lo;m._isLive=lo.is_live===true;
+      // Copy model fields from enriched live data (Glicko-2, momentum, odds)
+      if (lo.glicko2) m.glicko2 = lo.glicko2;
+      if (lo.momentum) m.momentum = lo.momentum;
+      if (lo.odds_player1 != null) m.odds_player1 = lo.odds_player1;
+      if (lo.odds_player2 != null) m.odds_player2 = lo.odds_player2;
+    }else{m._live=null;m._isLive=false;}
     // Réhydratation AVANT le store : récupère snapshot pré-live avant écrasement
     // par cycle dégradé (serveur drop predictions/elo/best_ev_model une fois match
     // live). _tnApplySnapshot n'écrase que les champs null — safe sur update légitimes.
@@ -2928,7 +2971,9 @@ function buildUnifiedTennis(vb){
   });
   liveIdx.forEach(function(lo,k){
     if(used.has(k)||lo.is_live!==true)return;
-    var row={id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true};
+    var row={id:lo.id,player1:lo.player1,player2:lo.player2,tournament:lo.tournament,round:lo.round||'',tour:lo.tour,surface:lo.surface,status:lo.status,start_time:lo.start_time||lo.commence_time,_live:lo,_isLive:true,_liveOnly:true,
+      glicko2: lo.glicko2 || null, momentum: lo.momentum || null,
+      odds_player1: lo.odds_player1, odds_player2: lo.odds_player2};
     // Live-only : pas de paire vb → réinjecte le snapshot prematch (Conseils
     // IA, PowerScore, Forme, Elo, predictions, set_model, confidence_badge).
     try {
@@ -10110,7 +10155,7 @@ const label = country
     const teamLogoImg = (bsdId, teamId, sofaId, teamName) => {
       const esc = teamName.replace(/'/g,'\\\'').replace(/"/g,'&quot;');
       const style = 'width:18px;height:18px;object-fit:contain;margin-right:6px;vertical-align:middle;flex-shrink:0;';
-      if (bsdId)    return `<img src="https://sports.bzzoiro.com/img/team/${bsdId}/" class="team-logo-img" style="${style}" loading="lazy" onerror="teamLogoFallback(this,'${esc}',${teamId||'null'},${sofaId||'null'})">`;
+      if (bsdId)    return `<img src="https://sports.bzzoiro.com/img/team/${bsdId}/?bg=transparent" class="team-logo-img" style="${style}" loading="lazy" onerror="teamLogoFallback(this,'${esc}',${teamId||'null'},${sofaId||'null'})">`;
       if (teamId)   return `<img src="https://media.api-sports.io/football/teams/${teamId}.png" class="team-logo-img" style="${style}" loading="lazy" onerror="teamLogoFallback(this,'${esc}',null,${sofaId||'null'})">`;
       if (sofaId)   return `<img src="https://api.sofascore.app/api/v1/team/${sofaId}/image" class="team-logo-img" style="${style}" loading="lazy" onerror="teamLogoFallback(this,'${esc}',null,null)">`;
       return `<img src="" class="team-logo-img team-logo-pending" data-team="${esc}" style="${style}display:none;" loading="lazy" onerror="this.style.display='none'">`;
@@ -10257,6 +10302,7 @@ const label = country
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
           : ''}
         ${formatTopScores(m.poisson?.topScores, 3)}
+        ${m.dixonColes?.method === 'dixon-coles' ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--blue);margin-top:1px;">DC: O25 ${m.dixonColes.over25}% · BTTS ${m.dixonColes.btts}% · CS0-0 ${m.dixonColes.cs00}% ${m.dixonColes.rho ? '(ρ='+m.dixonColes.rho+')' : ''}</div>` : ''}
         ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}</td>
       <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
         ${renderOddsDeltaCell(m)}${renderSharpMoneySignal(m)}
@@ -11536,7 +11582,10 @@ function _escForSvg(s) { return String(s || '').replace(/&/g,'&amp;').replace(/"
 // v53.0: SVG placeholder joueur (silhouette par défaut si photo absente)
 const PH_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" fill="var(--text3)" opacity="0.5"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="var(--text3)" opacity="0.4"/></svg>';
 const BSD_IMG_BASE = 'https://sports.bzzoiro.com/img/player';
-function playerPhotoURL(id) { return id ? `${BSD_IMG_BASE}/${id}/` : ''; }
+function playerPhotoURL(id) { return id ? `${BSD_IMG_BASE}/${id}/?bg=transparent` : ''; }
+// bd patch BSD 29 mai — Nouvelle route directe pour les avatars tennis
+// Accepte l'ID joueur BSD directement, plus besoin de lookup complexe
+function tennisPlayerPhotoURL(id) { return id ? `https://sports.bzzoiro.com/img/tennis-player/${id}/?bg=transparent` : ''; }
 function playerImgURL(p) { return p.photo || playerPhotoURL(p.id); }
 function playerInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -11547,9 +11596,14 @@ function fixBrokenPlayerPhoto(img) {
   const playerId = img.dataset.playerId || img.dataset.id || null;
   img.dataset.tryCount = tried + 1;
 
-  // Cascade: BSD /img/player/{id}/ (si pas encore essayé et ID connu)
+  // Cascade: BSD /img/player/{id}/ + /img/tennis-player/{id}/ (bd patch 29 mai)
   if (tried === 0 && playerId) {
-    img.src = `https://sports.bzzoiro.com/img/player/${playerId}/`;
+    img.src = `https://sports.bzzoiro.com/img/player/${playerId}/?bg=transparent`;
+    return;
+  }
+  // bd patch BSD 29 mai — tennis player route directe
+  if (tried === 1 && playerId) {
+    img.src = `https://sports.bzzoiro.com/img/tennis-player/${playerId}/?bg=transparent`;
     return;
   }
   // Fallback final: initiales dans span coloré
@@ -18166,7 +18220,10 @@ function dhRenderVariance(bb) {
   const wrap = document.getElementById('dh-variance-content');
   if (!wrap) return;
   if (!bb || !bb.total_picks_lost) {
-    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">🎲 Variance Tracker</div><div class="dh-soon-body">Aucun pick perdu dans ce sous-ensemble. Élargis la période.</div></div>`;
+    const msg = dhState.sport === 'tennis'
+      ? 'Le Variance Tracker n\'est pas encore disponible pour le tennis.'
+      : 'Aucun pick perdu dans ce sous-ensemble. Élargis la période.';
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">🎲 Variance Tracker</div><div class="dh-soon-body">${msg}</div></div>`;
     return;
   }
   const headerKpis = `
@@ -18248,7 +18305,10 @@ function dhRenderAttribution(attr) {
   const wrap = document.getElementById('dh-attribution-content');
   if (!wrap) return;
   if (!attr || !attr.total_picks) {
-    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">💰 Profit Attribution</div><div class="dh-soon-body">Aucun pick dans ce sous-ensemble filtré. Élargis la période pour voir la décomposition P/L.</div></div>`;
+    const msg = dhState.sport === 'tennis'
+      ? 'Le Profit Attribution n\'est pas encore disponible pour le tennis.'
+      : 'Aucun pick dans ce sous-ensemble filtré. Élargis la période pour voir la décomposition P/L.';
+    wrap.innerHTML = `<div class="dh-soon-banner"><div class="dh-soon-title">💰 Profit Attribution</div><div class="dh-soon-body">${msg}</div></div>`;
     return;
   }
   const totalPL = attr.total_pl_units;
@@ -18808,7 +18868,7 @@ function dhRenderKpisTennis(kpis, totalMatches) {
   ];
 
   // R6 A5 — tooltips data-density détaillés
-  const detailedTooltip = `Wins/Loss : ${totalWins}/${aggLoss}\nTotal picks : ${totalPicks}\nIC 95% : ${aggIc ? Math.round(aggIc[0]*100) + '–' + Math.round(aggIc[1]*100) + '%' : '—'}\nMéthode IC : ${icMethodAgg}\nMarchés : Over 2.5 (${kpis.over25?.sample || 0}) · BTTS (${kpis.btts?.sample || 0}) · Edge (${kpis.edge?.sample || 0})`;
+  const detailedTooltip = `Wins/Loss : ${totalWins}/${aggLoss}\nTotal picks : ${totalPicks}\nIC 95% : ${aggIc ? Math.round(aggIc[0]*100) + '–' + Math.round(aggIc[1]*100) + '%' : '—'}\nMéthode IC : ${icMethodAgg}\nMarchés : ML (${kpis.ml?.sample || 0}) · Set 1 (${kpis.set1?.sample || 0}) · ≥1 Set (${kpis.geq1_set?.sample || 0}) · Tot. jeux (${kpis.total_games?.sample || 0}) · Aces (${kpis.aces?.sample || 0}) · TB (${kpis.tie_break?.sample || 0})`;
   document.getElementById('dh-kpi-strip').innerHTML = items.map((k, i) => `
     <div class="dh-kpi" title="${i === 1 ? detailedTooltip : k.sub}">
       <div class="dh-kpi-label">${k.label}</div>
@@ -18956,6 +19016,10 @@ function _dhRenderTableHeader() {
       <th>Sets</th>
       <th>ML</th>
       <th>Set 1</th>
+      <th>≥1 Set</th>
+      <th>Tot. jeux</th>
+      <th>Aces</th>
+      <th>TB</th>
       <th>Issue</th>`;
   } else {
     thead.innerHTML = `
@@ -19000,14 +19064,41 @@ function _dhRenderTableTennis(data) {
     const setsScore = (r.sets || []).map(s => s.p1 + '-' + s.p2).join(' ') || '—';
     const winner = r.winner || '—';
     const p = m.predicted || {};
-    const mlPick = p.ml || '—';
-    const mlWon = (p.ml && r.winner) ? (p.ml === r.winner ? 1 : 0) : null;
+    // Bridge: entries ETL peuvent avoir bsd_prediction sans predicted (patch bd)
+    const bp = m.bsd_prediction || {};
+    const _bpMl = bp.prob_p1_wins > 0.50 ? m.p1 : (bp.prob_p1_wins < 0.50 ? m.p2 : null);
+    const mlPick = p.ml || _bpMl || '—';
+    const _effectiveMl = p.ml || _bpMl || null;
+    const mlWon = (_effectiveMl && r.winner) ? (_effectiveMl === r.winner ? 1 : 0) : null;
     const set1Pick = p.set1 || '—';
     let set1Won = null;
     if (p.set1 && r.sets?.length) {
       const s1 = r.sets[0];
       const s1Winner = s1.p1 > s1.p2 ? m.p1 : m.p2;
       set1Won = s1Winner === p.set1 ? 1 : 0;
+    }
+    // Marchés additionnels (≥1 Set, Total Jeux, Aces, Tie-break)
+    const dogPick = p.geq1_set_dog || '—';
+    let dogWon = null;
+    if (p.geq1_set_dog && r.sets?.length) {
+      const dogSetsWon = r.sets.filter(s => (p.geq1_set_dog === m.p1 ? s.p1 > s.p2 : s.p2 > s.p1)).length;
+      dogWon = dogSetsWon >= 1 ? 1 : 0;
+    }
+    const tgPick = typeof p.total_games_thr === 'number' ? (p.total_games_over ? 'O ' : 'U ') + p.total_games_thr : '—';
+    let tgWon = null;
+    if (typeof p.total_games_thr === 'number' && typeof r.total_games === 'number') {
+      tgWon = (p.total_games_over ? r.total_games > p.total_games_thr : r.total_games < p.total_games_thr) ? 1 : 0;
+    }
+    const acesPick = typeof p.aces_thr === 'number' ? 'O ' + p.aces_thr : '—';
+    let acesWon = null;
+    if (typeof p.aces_thr === 'number' && (typeof r.aces_p1 === 'number' || typeof r.aces_p2 === 'number')) {
+      const ta = (r.aces_p1 || 0) + (r.aces_p2 || 0);
+      acesWon = ta > p.aces_thr ? 1 : 0;
+    }
+    const tbPick = typeof p.tie_break === 'boolean' ? (p.tie_break ? 'Oui' : 'Non') : '—';
+    let tbWon = null;
+    if (typeof p.tie_break === 'boolean' && typeof r.had_tiebreak === 'boolean') {
+      tbWon = p.tie_break === r.had_tiebreak ? 1 : 0;
     }
 
     const pillFor = (label, won) => {
@@ -19017,13 +19108,17 @@ function _dhRenderTableTennis(data) {
 
     return `<tr>
       <td><strong>${escapeHtml(m.p1 || '?')}</strong> – ${escapeHtml(m.p2 || '?')}</td>
-      <td style="color:var(--text2);">${escapeHtml(m.tournament || m.league || '')}</td>
-      <td style="color:var(--text2);">${escapeHtml(m.surface || '—')}</td>
+      <td>${escapeHtml(m.tournament || m.league || '')}</td>
+      <td>${escapeHtml(m.surface || '—')}</td>
       <td>${dt}</td>
-      <td style="font-family:var(--font-mono);">${escapeHtml(setsScore)}</td>
-      <td>${mlPick !== '—' ? pillFor(mlPick, mlWon) : '<span class="dh-pred-pill na">—</span>'}</td>
-      <td>${set1Pick !== '—' ? pillFor(set1Pick, set1Won) : '<span class="dh-pred-pill na">—</span>'}</td>
-      <td>${winner !== '—' ? `<span class="dh-cell-${winner === p.ml ? 'win' : 'loss'}">${escapeHtml(winner)}</span>` : '<span style="color:var(--text3);">N/A</span>'}</td>
+      <td>${escapeHtml(setsScore)}</td>
+      <td>${pillFor(mlPick, mlWon)}</td>
+      <td>${pillFor(set1Pick, set1Won)}</td>
+      <td>${pillFor(dogPick, dogWon)}</td>
+      <td>${pillFor(tgPick, tgWon)}</td>
+      <td>${pillFor(acesPick, acesWon)}</td>
+      <td>${pillFor(tbPick, tbWon)}</td>
+      <td>${escapeHtml(winner)}</td>
     </tr>`;
   }).join('');
 
@@ -19285,11 +19380,27 @@ function _dhWireControls() {
       document.querySelectorAll('#dh-sport-toggle .dh-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
       dhState.sport = btn.dataset.sport;
       dhState.page = 1;
-      dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key); // reset to all-active
+      dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key);
       dhState.surfaces = [];
+      // Tennis: période par défaut = all (les seeds historiques sont 2024-2025)
+      if (dhState.sport === 'tennis') { dhState.period = 'all'; dhState.fromDate = null; dhState.toDate = null; dhState.minProba = 0; dhState.minEV = 0; dhState.confidence = []; dhState.strategies = []; dhState.minOdds = 1.10; dhState.maxOdds = 10.00; dhState.venue = 'all'; }
+      else { dhState.period = '90'; dhState.fromDate = null; dhState.toDate = null; dhState.minProba = 55; }
+      // Met à jour les boutons période
+      document.querySelectorAll('#dh-period-bar .dh-period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === dhState.period));
+      // Mise à jour placeholder filtre joueurs selon sport (patch BSD)
+      const teamInput = document.getElementById('dh-f-team');
+      if (teamInput) teamInput.placeholder = dhState.sport === 'tennis' ? 'Ex: Sinner, Djokovic…' : 'Ex: PSG, Sinner…';
       _dhRenderMarketChips();
       _dhRenderTableHeader();
       document.getElementById('dh-fr-surface').style.display = dhState.sport === 'tennis' ? '' : 'none';
+      // Cache les sections foot-only pour le tennis (stratégies, confiance, EV, proba, cotes, venue)
+      const isTennis = dhState.sport === 'tennis';
+      const hideForTennis = ['dh-f-strategy', 'dh-f-confidence', 'dh-f-ev', 'dh-f-proba', 'dh-f-odds-min', 'dh-f-venue'];
+      hideForTennis.forEach(id => {
+        const el = document.getElementById(id); if (!el) return;
+        const section = el.closest('.dh-fr-section, .dh-fr-row');
+        if (section) section.style.display = isTennis ? 'none' : '';
+      });
       dhRefresh();
     });
   });
@@ -19506,10 +19617,12 @@ function _dhWireControls() {
 
   // Reset
   document.getElementById('dh-reset').addEventListener('click', () => {
-    dhState.leagues = []; dhState.teams = []; dhState.markets = ['over25', 'btts', 'edge'];
-    dhState.confidence = []; dhState.outcome = 'all'; dhState.minEV = 0; dhState.minProba = 55;
+    dhState.leagues = []; dhState.teams = [];
+    dhState.markets = DH_MARKETS_BY_SPORT[dhState.sport].map(m => m.key);
+    dhState.confidence = []; dhState.outcome = 'all'; dhState.minEV = 0;
+    dhState.minProba = dhState.sport === 'tennis' ? 0 : 55;
     dhState.excludeLowLeagues = false; dhState.fromDate = null; dhState.toDate = null;
-    dhState.period = '90'; dhState.page = 1;
+    dhState.period = dhState.sport === 'tennis' ? 'all' : '90'; dhState.page = 1;
     // R1 reset
     dhState.minOdds = 1.10; dhState.maxOdds = 10.00; dhState.venue = 'all'; dhState.weekdays = [];
     // Reflect in DOM
@@ -19545,7 +19658,7 @@ function _dhWireControls() {
       document.getElementById('dh-view-variance').style.display = v === 'variance' ? '' : 'none';
       document.getElementById('dh-view-backtest').style.display = v === 'backtest' ? '' : 'none';
       document.getElementById('dh-view-strategy').style.display = v === 'strategy' ? '' : 'none';
-      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution' || v === 'variance') dhRefresh();
+      if (v === 'charts' || v === 'strategy' || v === 'executive' || v === 'attribution' || v === 'variance' || v === 'table') dhRefresh();
     });
   });
 
