@@ -39,21 +39,52 @@ window.switchWCTab=function(tab,btn){
   if(tab==='bracket')renderWCBracket();
 };
 
+function _startWCCountdown(){
+  if(window._wcCdiv)return;
+  var TARGET=new Date('2026-06-11T18:00:00Z').getTime();
+  function tick(){
+    var b=document.getElementById('wc-status-badge');
+    if(!b)return;
+    var now=Date.now();
+    if(now>=TARGET)return; // tournament active — API response will overwrite
+    var d=Math.floor((TARGET-now)/86400000);
+    var h=Math.floor(((TARGET-now)%86400000)/3600000);
+    var m=Math.floor(((TARGET-now)%3600000)/60000);
+    b.textContent='J-'+d+' · '+h+'h'+(m<10?'0':'')+m;
+    b.title='Coup d\'envoi : 11 juin 2026 · 20h00 Paris';
+  }
+  tick();
+  window._wcCdiv=setInterval(tick,30000);
+}
+
 window.renderWCGroups=function(){
   var el=document.getElementById('wc-groups-container');
   if(!el)return;
+  _startWCCountdown();
   if(_wcD.overview){_paintGroups(el,_wcD.overview.groups);return;}
   el.innerHTML='<div class="wc-loading">Chargement des groupes…</div>';
   fetch('/api/v1/worldcup/overview').then(function(r){return r.json();}).then(function(data){
     _wcD.overview=data;
     var badge=document.getElementById('wc-status-badge');
-    if(badge&&data.is_active){badge.textContent='● EN COURS';badge.style.cssText='background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:#00e676';}
+    if(badge&&data.is_active){
+      if(window._wcCdiv){clearInterval(window._wcCdiv);window._wcCdiv=null;}
+      badge.textContent='● EN COURS';
+      badge.style.cssText='background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:#00e676';
+      badge.title='';
+    }
     _paintGroups(el,data.groups);
   }).catch(function(e){el.innerHTML='<div class="wc-err">Erreur groupes : '+e.message+'</div>';});
 };
 
 function _paintGroups(el,groups){
-  if(!groups||!Object.keys(groups).length){el.innerHTML='<div class="wc-loading">Groupes indisponibles.</div>';return;}
+  if(!groups||!Object.keys(groups).length){
+    var pre=Date.now()<new Date('2026-06-11').getTime();
+    el.innerHTML='<div class="wc-bp"><div class="wc-bp-icon">'+(pre?'📋':'📊')+'</div>'+
+      '<h3>'+(pre?'Pré-tournoi':'Classements indisponibles')+'</h3>'+
+      '<p>'+(pre?'Les 12 groupes (48 équipes) seront affichés dès le coup d\'envoi du 11 juin.':'Données BSD temporairement indisponibles.')+'</p>'+
+      (pre?'<p style="font-size:12px;margin-top:6px;color:var(--text3,#5a6068)">En attendant, consultez le calendrier complet onglet 📅</p>':'')+'</div>';
+    return;
+  }
   var hdrcols='<span></span><span>J</span><span>G</span><span>N</span><span>P</span><span>Diff</span><span>Pts</span>';
   var html=Object.entries(groups).map(function(e){
     var gName=e[0],teams=e[1];
