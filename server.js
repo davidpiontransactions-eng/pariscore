@@ -19901,6 +19901,21 @@ async function pollTennisLive() {
             ts: Date.now(),
           });
           m.momentum = tennisMomentumTracker.getMomentum(m.id);
+          // Attach Glicko-2 ratings to match for frontend display
+          if (tennisGlicko2) {
+            try {
+              const p1Id = m.player1?.name?.toLowerCase().replace(/\s+/g, '_') || '';
+              const p2Id = m.player2?.name?.toLowerCase().replace(/\s+/g, '_') || '';
+              tennisGlicko2.serveCalc.getPlayer(p1Id); // ensure initialized
+              tennisGlicko2.serveCalc.getPlayer(p2Id);
+              m.glicko2 = {
+                p1_serve: Math.round(tennisGlicko2.serveCalc.getPlayer(p1Id).rating),
+                p1_return: Math.round(tennisGlicko2.returnCalc.getPlayer(p1Id).rating),
+                p2_serve: Math.round(tennisGlicko2.serveCalc.getPlayer(p2Id).rating),
+                p2_return: Math.round(tennisGlicko2.returnCalc.getPlayer(p2Id).rating),
+              };
+            } catch (_) { m.glicko2 = null; }
+          }
         } catch (_) { m.momentum = null; }
       }
     }
