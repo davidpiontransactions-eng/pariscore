@@ -33,6 +33,7 @@ const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momen
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
+const cs2Service = require('./services/cs2Service');   // CS2/CSGO BSD addon + HLTV rankings
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -18492,6 +18493,47 @@ async function handleAPI(req, res, pathname, query) {
       });
       return res.end(JSON.stringify(payload));
     }
+
+  // ── CS2 / CSGO routes ─────────────────────────────────────────────────────
+  if (pathname === '/api/v1/cs2/matches' && req.method === 'GET') {
+    try {
+      const all = await cs2Service.getCs2Matches(BSD_API_KEY);
+      const filter = query.status || 'all';
+      const data = filter === 'live'     ? all.filter(m => m.is_live)
+                 : filter === 'prematch' ? all.filter(m => !m.is_live && m.status !== 'finished')
+                 : all;
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify({ ok: true, count: data.length, matches: data }));
+    } catch (e) {
+      console.error('[CS2 route]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'CS2 fetch failed', matches: [] }));
+    }
+  }
+
+  if (pathname === '/api/v1/cs2/live' && req.method === 'GET') {
+    try {
+      const all = await cs2Service.getCs2Matches(BSD_API_KEY);
+      const live = all.filter(m => m.is_live);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify({ ok: true, count: live.length, matches: live }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
+    }
+  }
+
+  if (pathname === '/api/v1/cs2/refresh' && req.method === 'POST') {
+    cs2Service.invalidateCache();
+    try {
+      const matches = await cs2Service.getCs2Matches(BSD_API_KEY);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ ok: true, count: matches.length }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
 
   // 2b. Match Details (proxy interne pour modal STATS)
   if (pathname === '/api/v1/match-details' && req.method === 'GET') {
@@ -40625,6 +40667,12 @@ console.log('  [TT-OOP] cron armé — prefetch quotidien à 8h00 Europe/Paris')
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
 pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
+
+// CS2 live — poll every 30 s (matches cache TTL = 30 s, poll aligns)
+setInterval(() => cs2Service.getCs2Matches(BSD_API_KEY).catch(e => console.warn('[CS2 poll]', e.message)), 30 * 1000);
+cs2Service.getCs2Matches(BSD_API_KEY).catch(e => console.warn('[CS2 bootstrap]', e.message));
+console.log('  [CS2] poll armé — 30 s interval');
+
 // Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)
 setInterval(() => pollTennisPrematchEloAlerts().catch(e => console.warn('[TennisElo]', e.message)), 10 * 60 * 1000);
 setTimeout(() => pollTennisPrematchEloAlerts().catch(() => {}), 30 * 1000); // bootstrap à +30s

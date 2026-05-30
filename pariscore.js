@@ -763,6 +763,8 @@ function showPage(pageId, linkEl) {
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
   if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
+  if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
+  if (pageId === 'cs2') initCs2Page();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -23930,5 +23932,267 @@ function renderComparateur(d) {
       }
     } catch (_) {}
   });
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CS2 / Counter-Strike 2 — tab logic
+// Route: GET /api/v1/cs2/matches
+// ═══════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  // ── State ────────────────────────────────────────────────────────────────
+  var _cs2Timer    = null;
+  var _cs2Filter   = 'all';
+  var _cs2LastData = [];
+  var _cs2Loaded   = false;
+  var CS2_POLL_MS  = 30 * 1000;
+
+  // ── Public API ────────────────────────────────────────────────────────────
+  window.initCs2Page = function () {
+    if (_cs2Loaded && !window._cs2ForceRefresh) {
+      _applyCs2Filter();
+      _startCs2Poll();
+      return;
+    }
+    window._cs2ForceRefresh = false;
+    _cs2Loaded = true;
+    _renderCs2Skeleton();
+    _fetchAndRender();
+    _startCs2Poll();
+  };
+
+  window.stopCs2Page = function () {
+    if (_cs2Timer) { clearInterval(_cs2Timer); _cs2Timer = null; }
+  };
+
+  window.setCs2Filter = function (filter, btn) {
+    _cs2Filter = filter;
+    document.querySelectorAll('.cs2-pill').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.cs2f === filter);
+    });
+    _applyCs2Filter();
+  };
+
+  window.cs2ForceRefresh = function () {
+    window._cs2ForceRefresh = true;
+    initCs2Page();
+  };
+
+  // ── Internal ─────────────────────────────────────────────────────────────
+  function _startCs2Poll() {
+    if (_cs2Timer) clearInterval(_cs2Timer);
+    _cs2Timer = setInterval(_fetchAndRender, CS2_POLL_MS);
+  }
+
+  function _fetchAndRender() {
+    fetch('/api/v1/cs2/matches', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        _cs2LastData = (json && Array.isArray(json.matches)) ? json.matches : [];
+        _updateCs2Status(json);
+        _applyCs2Filter();
+      })
+      .catch(function (e) {
+        console.warn('[CS2]', e.message);
+        _renderCs2Error();
+      });
+  }
+
+  function _applyCs2Filter() {
+    var matches = _cs2LastData;
+    if (_cs2Filter === 'live')     matches = matches.filter(function (m) { return m.is_live; });
+    if (_cs2Filter === 'prematch') matches = matches.filter(function (m) { return !m.is_live && m.status !== 'finished'; });
+    renderCs2Matches(matches);
+  }
+
+  function _updateCs2Status(json) {
+    var bar = document.getElementById('cs2-status-bar');
+    if (!bar) return;
+    var total = _cs2LastData.length;
+    var live  = _cs2LastData.filter(function (m) { return m.is_live; }).length;
+    bar.textContent = total > 0
+      ? (total + ' matchs · ' + live + ' live · mis à jour ' + _cs2FmtTime(new Date()))
+      : 'Aucun match disponible — BSD CSGO addon requis';
+    var badge = document.getElementById('cs2-live-badge');
+    if (badge) badge.style.display = live > 0 ? 'inline-flex' : 'none';
+  }
+
+  function _renderCs2Skeleton() {
+    var grid = document.getElementById('cs2-grid');
+    if (!grid) return;
+    grid.innerHTML = '<div class="cs2-skel"></div><div class="cs2-skel"></div><div class="cs2-skel"></div>';
+  }
+
+  function _renderCs2Error() {
+    var grid = document.getElementById('cs2-grid');
+    if (!grid) return;
+    grid.innerHTML = '<div class="cs2-empty" style="grid-column:1/-1;">' +
+      '<div class="cs2-empty-icon">⚠️</div>' +
+      '<div class="cs2-empty-msg">Impossible de charger les matchs CS2</div>' +
+      '<div class="cs2-empty-sub">Vérifiez que le BSD CSGO addon est activé ($5/mo) sur votre compte Bzzoiro</div>' +
+      '<button onclick="cs2ForceRefresh()" style="margin-top:14px;padding:8px 18px;background:#FF6B00;color:#fff;border:0;border-radius:6px;cursor:pointer;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">Réessayer</button>' +
+      '</div>';
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  window.renderCs2Matches = function (matches) {
+    var grid = document.getElementById('cs2-grid');
+    if (!grid) return;
+
+    if (!matches || matches.length === 0) {
+      var label = _cs2Filter === 'live' ? 'en cours' : _cs2Filter === 'prematch' ? 'à venir' : 'disponible';
+      grid.innerHTML = '<div class="cs2-empty">' +
+        '<div class="cs2-empty-icon">🎮</div>' +
+        '<div class="cs2-empty-msg">Aucun match CS2 ' + label + '</div>' +
+        '<div class="cs2-empty-sub">Prochaines compétitions : ESL Pro League · PGL Major · BLAST Premier</div>' +
+        '</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < matches.length; i++) {
+      html += _buildCs2Card(matches[i]);
+    }
+    grid.innerHTML = html;
+  };
+
+  function _buildCs2Card(m) {
+    var isLive = !!m.is_live;
+    var t1     = m.team1      || {};
+    var t2     = m.team2      || {};
+    var maps   = m.maps_score || {};
+    var rounds = m.round_score|| {};
+    var odds   = m.odds       || {};
+    var mapAdv = m.map_advantage || null;
+
+    // ── Team logo ────────────────────────────────────────────────────────
+    function teamLogo(team) {
+      if (team.logo) {
+        return '<div class="cs2-team-logo-wrap">' +
+          '<img class="cs2-team-logo" src="' + _esc(team.logo) +
+          '" alt="' + _esc(team.name) + '" onerror="this.style.display=\'none\'" loading="lazy"/>' +
+          '</div>';
+      }
+      return '<div class="cs2-team-logo-wrap"><span style="font-size:18px;">🏢</span></div>';
+    }
+
+    // ── HLTV rank ────────────────────────────────────────────────────────
+    function rankTag(rank) {
+      return rank ? '<div class="cs2-hltv">HLTV #' + rank + '</div>' : '';
+    }
+
+    // ── Score center ─────────────────────────────────────────────────────
+    var scoreHtml, subHtml = '';
+    if (maps.team1 != null && maps.team2 != null) {
+      scoreHtml = '<div class="cs2-map-score">' + maps.team1 + '–' + maps.team2 + '</div>';
+      if (isLive && rounds.team1 != null) {
+        subHtml = '<div class="cs2-round-score">' + rounds.team1 + '–' + rounds.team2 + ' rds</div>';
+      }
+    } else if (isLive && rounds.team1 != null && rounds.team2 != null) {
+      scoreHtml = '<div class="cs2-map-score">' + rounds.team1 + '–' + rounds.team2 + '</div>';
+      subHtml   = '<div class="cs2-round-score">rds en cours</div>';
+    } else {
+      scoreHtml = '<div class="cs2-vs-txt">BO' + (m.best_of || 3) + '</div>';
+      if (m.scheduled) {
+        subHtml = '<div class="cs2-round-score">' + _cs2FmtMatchTime(new Date(m.scheduled)) + '</div>';
+      }
+    }
+
+    // ── Map bar ──────────────────────────────────────────────────────────
+    var mapBarHtml = '';
+    if (m.current_map) {
+      var valueFlag = (mapAdv && mapAdv.value_flag)
+        ? '<span class="cs2-value-flag">' + _esc(mapAdv.value_flag) + '</span>' : '';
+      var mapNumTag = m.map_number
+        ? '<span class="cs2-map-num" style="margin-left:4px;opacity:.6;">M' + m.map_number + '</span>' : '';
+      mapBarHtml = '<div class="cs2-map-bar">' +
+        '<span class="cs2-map-label">🗺 ' + _esc(m.current_map) + '</span>' +
+        mapNumTag + valueFlag + '</div>';
+    }
+
+    // ── Odds ─────────────────────────────────────────────────────────────
+    var oddsHtml;
+    if (odds.team1 != null || odds.team2 != null) {
+      var best = (odds.team1 && odds.team2)
+        ? (Number(odds.team1) < Number(odds.team2) ? 1 : 2) : 0;
+      oddsHtml = '<div class="cs2-odds-row">';
+      if (odds.team1 != null) {
+        oddsHtml += '<span class="cs2-odd' + (best === 1 ? ' best' : '') + '">' +
+          Number(odds.team1).toFixed(2) + '</span>';
+      }
+      if (odds.team2 != null) {
+        oddsHtml += '<span class="cs2-odd' + (best === 2 ? ' best' : '') + '">' +
+          Number(odds.team2).toFixed(2) + '</span>';
+      }
+      oddsHtml += '</div>';
+    } else {
+      oddsHtml = '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3)">Cotes N/A</span>';
+    }
+
+    // ── Time label ───────────────────────────────────────────────────────
+    var timeHtml = isLive
+      ? '<span class="cs2-live-pill"><span class="cs2-ldot"></span>LIVE</span>'
+      : (m.scheduled
+          ? '<span class="cs2-time">' + _cs2FmtMatchTime(new Date(m.scheduled)) + '</span>'
+          : '');
+
+    // ── Tour logo ────────────────────────────────────────────────────────
+    var tourLogo = m.tournament_logo
+      ? '<img class="cs2-tour-logo" src="' + _esc(m.tournament_logo) +
+        '" alt="" onerror="this.style.display=\'none\'" loading="lazy"/>'
+      : '<span style="font-size:13px;flex-shrink:0;">🏆</span>';
+
+    return '<div class="cs2-card' + (isLive ? ' is-live' : '') + '">' +
+      '<div class="cs2-card-head">' +
+        tourLogo +
+        '<span class="cs2-tour-name">' + _esc(m.tournament) + '</span>' +
+        '<span class="cs2-format">BO' + (m.best_of || 3) + '</span>' +
+        (isLive ? '<span class="cs2-live-pill"><span class="cs2-ldot"></span>LIVE</span>' : '') +
+      '</div>' +
+      '<div class="cs2-vs-row">' +
+        '<div class="cs2-team">' +
+          teamLogo(t1) +
+          '<div class="cs2-team-info">' +
+            '<div class="cs2-team-name">' + _esc(t1.name || 'TBD') + '</div>' +
+            rankTag(t1.hltv_rank) +
+          '</div>' +
+        '</div>' +
+        '<div class="cs2-center">' + scoreHtml + subHtml + '</div>' +
+        '<div class="cs2-team t2">' +
+          teamLogo(t2) +
+          '<div class="cs2-team-info">' +
+            '<div class="cs2-team-name">' + _esc(t2.name || 'TBD') + '</div>' +
+            rankTag(t2.hltv_rank) +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      mapBarHtml +
+      '<div class="cs2-card-foot">' + oddsHtml + timeHtml + '</div>' +
+    '</div>';
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function _esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function _cs2FmtTime(d) {
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function _cs2FmtMatchTime(d) {
+    if (isNaN(d)) return '';
+    var now     = new Date();
+    var dayDiff = Math.floor((d - now) / 86400000);
+    var t       = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    if (dayDiff < 0)  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + ' ' + t;
+    if (dayDiff === 0) return "Aujourd'hui " + t;
+    if (dayDiff === 1) return 'Demain ' + t;
+    return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + ' ' + t;
+  }
+
 })();
 
