@@ -4615,6 +4615,9 @@ async function fetchWC2026Schedule(phase, round) {
     allMatches = allMatches.concat(results);
     if (!results.length || !payload.next) break;
   }
+  // Dedup — BSD peut renvoyer page 2 = page 1 identique
+  const _seenS = new Set();
+  allMatches = allMatches.filter(m => { const id = m.id || m.bsd_event_id; if (!id || _seenS.has(id)) return false; _seenS.add(id); return true; });
   let matches = allMatches.map(_wcFormatMatch);
   if (phase === 'groups')   matches = matches.filter(m => m.phase === 'groups');
   if (phase === 'knockout') matches = matches.filter(m => m.phase === 'knockout');
@@ -4642,6 +4645,8 @@ async function fetchWC2026Bracket() {
       } catch (_) {}
     }
   } catch (e) { console.warn('[WC2026/bracket]', e.message); }
+  const _seenB = new Set();
+  allMatches = allMatches.filter(m => { const id = m.id || m.bsd_event_id; if (!id || _seenB.has(id)) return false; _seenB.add(id); return true; });
   const matches  = allMatches.map(_wcFormatMatch);
   const knockout = matches.filter(m => m.phase === 'knockout');
   const rounds   = {};
