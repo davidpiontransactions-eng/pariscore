@@ -20170,6 +20170,14 @@ async function pollTennisLive() {
           const curSet2 = (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
             : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null);
           const drBase2 = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+          if (process.env.DEBUG_DR === 'true') {
+            const _np1 = normName(m.player1?.name || ''), _np2 = normName(m.player2?.name || '');
+            const _idxMap = _sofaLiveIdx.map;
+            const _idxSize = _idxMap ? _idxMap.size : 0;
+            const _hit = _idxMap && (_idxMap.has(`${_np1}|${_np2}`) || _idxMap.has(`${_np2}|${_np1}`));
+            console.log(`  [DR DEBUG] "${m.player1?.name}" vs "${m.player2?.name}" | norm="${_np1}|${_np2}" | drBase=${drBase2 ? drBase2.dr : 'NULL'} | sofaIdx=${_idxSize}keys idxHit=${_hit}`);
+            if (_idxSize > 0 && !_hit) console.log(`  [DR DEBUG] sofa live keys: ${[..._idxMap.keys()].slice(0, 8).join(' ; ')}`);
+          }
           if (!drBase2 || !Number.isFinite(drBase2.dr)) continue;
 
           // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
