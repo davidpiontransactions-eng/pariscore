@@ -17023,6 +17023,24 @@ async function broadcastTelegramAlert(messageHtml) {
 
 // Discord webhook — alerte channel unique, format embed
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || '';
+// Canal dédié foot-live (fallback sur DISCORD_WEBHOOK_URL si non défini séparément)
+const DISCORD_FOOT_WEBHOOK_URL = process.env.DISCORD_FOOT_WEBHOOK_URL || DISCORD_WEBHOOK_URL;
+
+async function sendDiscordFootAlert(embed) {
+  if (!DISCORD_FOOT_WEBHOOK_URL) return false;
+  try {
+    const res = await httpsPost(DISCORD_FOOT_WEBHOOK_URL, { embeds: [embed] });
+    if (res && res.status >= 400) {
+      console.warn(`  [Discord:Foot] Échec webhook: HTTP ${res.status}`);
+      return false;
+    }
+    console.log(`  [Discord:Foot] Alerte envoyée`);
+    return true;
+  } catch (e) {
+    console.warn(`  [Discord:Foot] Échec:`, e.message);
+    return false;
+  }
+}
 
 async function sendDiscordAlert(embed) {
   if (!DISCORD_WEBHOOK_URL) return false;
@@ -38120,6 +38138,39 @@ function buildLiveAlertMessage(match, trigger) {
     `⚠️ Pariez de manière responsable. 18+`;
 }
 
+function buildLiveAlertDiscordEmbed(match, trigger) {
+  const min = match.live_minute || '?';
+  const score = match.live_score || '0-0';
+  const reason = trigger.kind === 'intensity'
+    ? `Intensité ${trigger.value}/100`
+    : `Domination ${trigger.side} (Δ pression ${trigger.value})`;
+  const color = trigger.kind === 'intensity' ? 0xFF4500 : 0xF59E0B;
+  const fields = [
+    { name: 'Compétition', value: match.league || '?', inline: true },
+    { name: 'Score · Minute', value: `${score} · ${min}'`, inline: true },
+    { name: 'Déclencheur', value: reason, inline: false },
+  ];
+  const bet = pickLivePredictiveBet(match);
+  if (bet) {
+    const conf = computeConfidenceStars(bet.prob, bet.evPlus);
+    if (conf.stars >= 3) {
+      fields.push({
+        name: `Bet Prédictif — ${bet.pick}`,
+        value: `${conf.glyph} ${conf.label}\nProba live : **${bet.prob}%** · cote equiv. ${safeFixed(bet.odds, 2)}`,
+        inline: false,
+      });
+    }
+  }
+  return {
+    title: `ALERTE LIVE — ${match.home_team} vs ${match.away_team}`,
+    color,
+    fields,
+    url: liveMatchUrl(match),
+    footer: { text: 'Pariez de manière responsable. 18+ · pariscore.fr' },
+    timestamp: new Date().toISOString(),
+  };
+}
+
 function evaluateLiveTrigger(match) {
   const intensity = parseInt(match.live_intensity || 0);
   let pressureDelta = 0;
@@ -38185,6 +38236,24 @@ async function sendLiveMomentumAlerts(liveMatches) {
         _liveAlertCooldowns.delete(`${userId}:${m.id}`); // tous échec → rollback pour retry prochain poll
       }
     }
+  }
+}
+
+// Broadcast Discord #foot-live indépendant des user prefs — une alerte par match par round
+async function sendLiveFootDiscordAlerts(liveMatches) {
+  if (!DISCORD_FOOT_WEBHOOK_URL || !automatedAlertsAllowed()) return;
+  if (!liveMatches || !liveMatches.length) return;
+  for (const m of liveMatches) {
+    if (!m.id) continue;
+    if (isLiveAlertOnCooldown('_discord_foot', m.id)) continue;
+    const t = evaluateLiveTrigger(m);
+    let trigger = null;
+    if (t.intensity >= 50)       trigger = { kind: 'intensity', value: t.intensity };
+    else if (t.pressureDelta >= 15) trigger = { kind: 'pressure', value: t.pressureDelta, side: t.pressureSide };
+    if (!trigger) continue;
+    markLiveAlertSent('_discord_foot', m.id);
+    sendDiscordFootAlert(buildLiveAlertDiscordEmbed(m, trigger)).catch(() => {});
+    console.log(`  [Discord:Foot] ${m.home_team}-${m.away_team} ${trigger.kind}=${trigger.value}`);
   }
 }
 
@@ -38472,6 +38541,7 @@ async function pollLiveScores() {
 
         // v9.9.5 — déclenchement alertes live momentum/pressure (fire-and-forget)
         sendLiveMomentumAlerts(liveNow).catch(e => console.warn('[LiveAlert]', e.message));
+        sendLiveFootDiscordAlerts(liveNow).catch(e => console.warn('[Discord:Foot]', e.message));
         // v12 — incidents + shotmap REST enrichment (fire-and-forget, 30s/60s TTL interne)
         pollBSDLiveEnrichment().catch(e => console.warn('[BSD-Enrich]', e.message));
     } catch (e) {
