@@ -17563,16 +17563,69 @@ function getLeagueHub(oddsKey) {
 
 // ─── /api/v1/top-strategy — Top matchs par stratégie ────────────────────────
 // Config centralisée : ajouter une stratégie = 1 entrée ici (zéro autre changement)
+// ── Intégration modèles ML dans le scoring stratégies (bd he1t) ─────────────
+// Résout la MEILLEURE probabilité modèle (%) disponible pour un marché donné,
+// avec repli gracieux sur Poisson. Priorité par type de marché :
+//   1X2         → CatBoost blend (blended_cb) > bayésien calibré > Poisson
+//   over25/btts → CatBoost blend > Dixon-Coles > Poisson
+//   totals/CS   → Dixon-Coles (correction faibles scores) > Poisson
+// Toutes les sorties sont sur la même échelle (% 0-100). Jamais throw.
+function bestModelProb(m, market) {
+  if (!m) return null;
+  const cb = m.blended_cb, dc = m.dixonColes, ca = m.calibrated, po = m.poisson || {};
+  switch (market) {
+    case 'homeWin': case 'draw': case 'awayWin':
+      if (cb && cb[market] != null) return cb[market];
+      if (ca && ca[market] != null) return ca[market];
+      return po[market] != null ? po[market] : null;
+    case 'over25': case 'btts':
+      if (cb && cb[market] != null) return cb[market];
+      if (dc && dc[market] != null) return dc[market];
+      return po[market] != null ? po[market] : null;
+    case 'over05': case 'over15': case 'over35': case 'under15': case 'cs00':
+      if (dc && dc[market] != null) return dc[market];
+      return po[market] != null ? po[market] : null;
+    default:
+      return po[market] != null ? po[market] : null;
+  }
+}
+// Source modèle utilisée pour un marché (transparence UI + tag backtest).
+function modelSourceFor(m, market) {
+  if (!m) return 'poisson';
+  const cb = m.blended_cb, dc = m.dixonColes, ca = m.calibrated;
+  switch (market) {
+    case 'homeWin': case 'draw': case 'awayWin':
+      if (cb && cb[market] != null) return 'ml-catboost';
+      if (ca && ca[market] != null) return 'calibrated';
+      return 'poisson';
+    case 'over25': case 'btts':
+      if (cb && cb[market] != null) return 'ml-catboost';
+      if (dc && dc[market] != null) return 'dixon-coles';
+      return 'poisson';
+    case 'over05': case 'over15': case 'over35': case 'under15': case 'cs00':
+      if (dc && dc[market] != null) return 'dixon-coles';
+      return 'poisson';
+    default: return 'poisson';
+  }
+}
+// Marché primaire par stratégie → résolution model_source dans les picks.
+const STRAT_MARKET = {
+  BTTS_YES: 'btts', OVER_2_5: 'over25', OVER_1_5: 'over15', UNDER_2_5: 'over25',
+  HOME_WIN: 'homeWin', AWAY_WIN: 'awayWin', DRAW: 'draw', CS_00: 'cs00',
+  VERROU_TACTIQUE: 'over35', DC_HOME: 'homeWin', DC_AWAY: 'awayWin',
+  HT_HOME_FT_HOME: 'homeWin', HT_UNDER_FT_OVER: 'over25', GOLDEN_PPG_GAP: 'homeWin',
+};
+
 // ── AI Tipsters — personnalités par stratégie (synchro avec STRATEGIES_UI) ────
 const STRATEGIES = {
-  BTTS_YES: { label: 'BTTS Oui', icon: '', tipster: 'L\'Artilleur', tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.', tipsterFlag: '🇧🇷', getProb: m => m.poisson?.btts, getOdds: () => null },
-  OVER_2_5: { label: 'Plus de 2.5 buts', icon: '', tipster: 'Le Foudroyeur', tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.', tipsterFlag: '🇳🇱', getProb: m => m.poisson?.over25, getOdds: () => null },
-  OVER_1_5: { label: 'Plus de 1.5 buts', icon: '', tipster: 'Le Prudent', tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.', tipsterFlag: '🇩🇪', getProb: m => m.poisson?.over15, getOdds: () => null },
-  UNDER_2_5: { label: 'Moins de 2.5 buts', icon: '', tipster: 'Le Gardien', tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.', tipsterFlag: '🇮🇹', getProb: m => m.poisson ? 100 - m.poisson.over25 : null, getOdds: () => null },
-  HOME_WIN: { label: 'Victoire Domicile', icon: '', tipster: 'Le Localier', tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.', tipsterFlag: '🇬🇧', getProb: m => m.poisson?.homeWin, getOdds: m => m.odds?.home },
-  AWAY_WIN: { label: 'Victoire Extérieur', icon: '', tipster: 'L\'Aventurier', tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.', tipsterFlag: '🇪🇸', getProb: m => m.poisson?.awayWin, getOdds: m => m.odds?.away },
-  DRAW: { label: 'Match Nul', icon: '', tipster: 'Le Diplomate', tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.', tipsterFlag: '🇫🇷', getProb: m => m.poisson?.draw, getOdds: m => m.odds?.draw },
-  CS_00: { label: 'Score 0-0', icon: '', tipster: 'Le Sceptique', tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.', tipsterFlag: '🇵🇹', getProb: m => m.poisson?.cs00, getOdds: () => null },
+  BTTS_YES: { label: 'BTTS Oui', icon: '', tipster: 'L\'Artilleur', tipsterDesc: 'Spécialiste des matchs ouverts. Détecte les deux équipes qui marquent.', tipsterFlag: '🇧🇷', getProb: m => bestModelProb(m, 'btts'), getOdds: () => null },
+  OVER_2_5: { label: 'Plus de 2.5 buts', icon: '', tipster: 'Le Foudroyeur', tipsterDesc: 'Traque les matchs à 3+ buts. Chaud devant.', tipsterFlag: '🇳🇱', getProb: m => bestModelProb(m, 'over25'), getOdds: () => null },
+  OVER_1_5: { label: 'Plus de 1.5 buts', icon: '', tipster: 'Le Prudent', tipsterDesc: 'Sécurité offensive. Matchs à au moins 2 buts garantis.', tipsterFlag: '🇩🇪', getProb: m => bestModelProb(m, 'over15'), getOdds: () => null },
+  UNDER_2_5: { label: 'Moins de 2.5 buts', icon: '', tipster: 'Le Gardien', tipsterDesc: 'Expert des matchs fermés. Moins de 3 buts = son terrain.', tipsterFlag: '🇮🇹', getProb: m => { const v = bestModelProb(m, 'over25'); return v == null ? null : 100 - v; }, getOdds: () => null },
+  HOME_WIN: { label: 'Victoire Domicile', icon: '', tipster: 'Le Localier', tipsterDesc: 'Spécialiste des forteresses. Avantage terrain maximal.', tipsterFlag: '🇬🇧', getProb: m => bestModelProb(m, 'homeWin'), getOdds: m => m.odds?.home },
+  AWAY_WIN: { label: 'Victoire Extérieur', icon: '', tipster: 'L\'Aventurier', tipsterDesc: 'Paris audacieux. Déniche les vainqueurs à l\'extérieur.', tipsterFlag: '🇪🇸', getProb: m => bestModelProb(m, 'awayWin'), getOdds: m => m.odds?.away },
+  DRAW: { label: 'Match Nul', icon: '', tipster: 'Le Diplomate', tipsterDesc: 'Spécialiste des matchs équilibrés. Le nul, son art.', tipsterFlag: '🇫🇷', getProb: m => bestModelProb(m, 'draw'), getOdds: m => m.odds?.draw },
+  CS_00: { label: 'Score 0-0', icon: '', tipster: 'Le Sceptique', tipsterDesc: 'Anticipateur de blocages. Aucun but, 100% discipline.', tipsterFlag: '🇵🇹', getProb: m => bestModelProb(m, 'cs00'), getOdds: () => null },
   // ── Stratégies avancées P1 ──────────────────────────────────────────────────
   ANGLE_CORNERS: {
     label: 'Angle Mort Corners',
@@ -17638,7 +17691,7 @@ const STRATEGIES = {
       const strongerIsHome = homePpg > awayPpg;
       const strongerOdds = strongerIsHome ? m.odds?.home : m.odds?.away;
       if (!strongerIsHome && (strongerOdds == null || strongerOdds <= 1.70)) return null;
-      return strongerIsHome ? m.poisson.homeWin : m.poisson.awayWin;
+      return strongerIsHome ? bestModelProb(m, 'homeWin') : bestModelProb(m, 'awayWin');
     },
     getOdds: m => {
       if (!m.stats?.home || !m.stats?.away) return null;
@@ -17654,8 +17707,8 @@ const STRATEGIES = {
     tipsterFlag: '🇨🇭',
     getProb: m => {
       if (!m.poisson) return null;
-      const hw = m.poisson.homeWin ?? 0;
-      const dr = m.poisson.draw ?? 0;
+      const hw = bestModelProb(m, 'homeWin') ?? 0;
+      const dr = bestModelProb(m, 'draw') ?? 0;
       return hw + dr;
     },
     getOdds: () => null,
@@ -17668,8 +17721,8 @@ const STRATEGIES = {
     tipsterFlag: '🇸🇪',
     getProb: m => {
       if (!m.poisson) return null;
-      const aw = m.poisson.awayWin ?? 0;
-      const dr = m.poisson.draw ?? 0;
+      const aw = bestModelProb(m, 'awayWin') ?? 0;
+      const dr = bestModelProb(m, 'draw') ?? 0;
       return aw + dr;
     },
     getOdds: () => null,
@@ -17682,7 +17735,7 @@ const STRATEGIES = {
     tipsterFlag: '🇺🇸',
     getProb: m => {
       if (!m.poisson) return null;
-      const hw = m.poisson.homeWin ?? 0;
+      const hw = bestModelProb(m, 'homeWin') ?? 0;
       const ppg = m.stats?.home?.ppg ?? 0;
       if (hw < 60 || ppg < 1.8) return null;
       return hw;
@@ -17697,8 +17750,8 @@ const STRATEGIES = {
     tipsterFlag: '🇭🇷',
     getProb: m => {
       if (!m.poisson) return null;
-      const o25 = m.poisson.over25 ?? 0;
-      const u15 = m.poisson.under15 ?? 0;
+      const o25 = bestModelProb(m, 'over25') ?? 0;
+      const u15 = bestModelProb(m, 'under15') ?? 0;
       if (o25 < 65 || u15 < 25) return null;
       return Math.round((o25 + u15) / 2);
     },
@@ -17719,9 +17772,9 @@ const STRATEGIES = {
       const dir = steam.direction;
       // Confiance Poisson sur la direction steamée
       let baseProb = null;
-      if (dir === 'home' && m.poisson?.homeWin != null) baseProb = m.poisson.homeWin;
-      else if (dir === 'draw' && m.poisson?.draw != null) baseProb = m.poisson.draw;
-      else if (dir === 'away' && m.poisson?.awayWin != null) baseProb = m.poisson.awayWin;
+      if (dir === 'home') baseProb = bestModelProb(m, 'homeWin');
+      else if (dir === 'draw') baseProb = bestModelProb(m, 'draw');
+      else if (dir === 'away') baseProb = bestModelProb(m, 'awayWin');
       if (baseProb == null) return null;
       // Bonus severity: high +8, med +4, low +0
       const sevBonus = steam.severity === 'high' ? 8 : steam.severity === 'med' ? 4 : 0;
@@ -17765,6 +17818,11 @@ function computeConfidenceIndex(confidence, edge, match) {
   const hoursToKickoff = (new Date(match?.commence_time) - Date.now()) / 3600000;
   if (hoursToKickoff > 0 && hoursToKickoff < 24) score += Math.max(0, 5 - hoursToKickoff / 5);
   if (match?.sport && /ligue1|epl|serie_a|la_liga|bundesliga|champs_league/i.test(match.sport)) score += 3;
+  // bd he1t — bonus picks adossés à un modèle ML (CatBoost blend dispo), pondéré par la fiabilité.
+  if (match?.blended_cb) {
+    const rel = typeof match.reliability_score === 'number' ? match.reliability_score : 50;
+    score += 3 + (Math.max(0, Math.min(100, rel)) / 100) * 4; // +3 à +7
+  }
   return Math.min(99, Math.round(score));
 }
 
@@ -17800,6 +17858,7 @@ function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, l
         away_form: m.away_form || '',
         valueIndex,
         confidenceIndex,
+        model_source: modelSourceFor(m, STRAT_MARKET[strategyType]),
         tipster: strat.tipster || null,
         tipsterFlag: strat.tipsterFlag || null,
       };
@@ -17840,6 +17899,7 @@ function getHotPicks(limit = 5) {
           expectedGoals: m.expectedGoals,
           valueIndex: vi,
           confidenceIndex: ci,
+          model_source: modelSourceFor(m, STRAT_MARKET[key]),
         });
       });
   }
