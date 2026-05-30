@@ -19523,11 +19523,8 @@ function archiveFinishedTennisFromLiveCache(liveData) {
   return added;
 }
 
-// bd — MatchStat Challenger supplement: BSD ne couvre pas les Challengers ATP.
-// The Odds API les couvre via sport keys (ex: tennis_atp_challenger_*).
-// On utilise The Odds API pour récupérer les noms de tournois/joueurs
-// (pas de live scores, mais assez pour Value Bets et alertes).
-// MatchStat sert de fallback si configuré.
+// bd — Challenger ATP supplement: BSD/The Odds API/MatchStat ne couvrent pas.
+// Tennis Explorer scraper (déjà intégré) couvre tous les niveaux ATP/WTA.
 const _MS_CHALLENGER_CACHE_TTL = 5 * 60 * 1000;
 let _msChallengerCache = { ts: 0, data: [] };
 
@@ -19595,59 +19592,53 @@ async function _fetchMSChallengerMatches() {
       } catch (_) { /* The Odds API fail → fallback MatchStat */ }
     }
 
-    // Source 2: MatchStat (si API key configurée)
-    if (!matches.length && MATCHSTAT_ENABLED) {
+    // Source 2: Tennis Explorer — couvre tous les niveaux ATP/WTA y compris Challengers
+    if (!matches.length) {
       try {
-        const cal = await matchstatFetch('/tennis/v2/atp/tournament/calendar/2026?pageSize=200', 6 * 3600 * 1000);
-        if (cal.status === 200 && cal.body) {
-          const tournaments = Array.isArray(cal.body) ? cal.body
-            : (cal.body.data || cal.body.results || cal.body.tournaments || []);
-          const challengers = tournaments.filter(t => {
-            const tier = String(t.tier || t.category || t.type || '').toLowerCase();
-            return tier.includes('challenger') || tier.includes('chall');
-          });
-          if (challengers.length) {
-            const targets = challengers.slice(0, 10);
-            const results = await Promise.allSettled(
-              targets.map(async (t) => {
-                const id = t.id || t.tournament_id;
-                if (!id) return [];
-                const fix = await matchstatFetch(`/tennis/v2/atp/fixtures/tournament/${id}?pageSize=50`, 5 * 60 * 1000);
-                if (fix.status !== 200 || !fix.body) return [];
-                const items = Array.isArray(fix.body) ? fix.body : (fix.body.data || fix.body.results || []);
-                return items.map(m => ({
-                  id: `ms_ch_${m.id || m.match_id || 0}`,
+        const cal = await fetchTexCalendar('atp');
+        const items = cal && cal.tournaments || [];
+        const challengers = items.filter(t => {
+          const name = String(t.name || t.short || '').toLowerCase();
+          return name.includes('challenger') || name.includes('chall') || name.includes('little');
+        });
+        if (challengers.length) {
+          // Pour chaque Challenger, fetch la page du tournoi et parse les matchs
+          for (const t of challengers.slice(0, 5)) {
+            try {
+              const tournPage = await _texFetchHtml(t.url.replace(TEX_BASE, ''));
+              // Parse les matchs depuis la page tournoi (même structure que /matches/)
+              const parsed = _texParseMatchesPage(tournPage);
+              for (const p of parsed) {
+                matches.push({
+                  id: p.id,
                   tour: 'ATP',
-                  discipline: t.name || t.tournament_name || 'Challenger',
-                  tournament: t.name || t.tournament_name || 'Challenger',
-                  court: m.round || m.round_name || '',
-                  surface: t.surface || t.court_type || 'Hard',
-                  status: String(m.status || 'notstarted'),
-                  is_live: /progress|live/.test(String(m.status || '')),
-                  player1: { name: m.home_player_name || m.player1_name || m.home_name || '?', country: '', flag: null },
-                  player2: { name: m.away_player_name || m.player2_name || m.away_name || '?', country: '', flag: null },
-                  player1_sets: m.home_sets_won ?? m.home_score ?? 0,
-                  player2_sets: m.away_sets_won ?? m.away_score ?? 0,
+                  discipline: t.name || 'Challenger',
+                  tournament: t.name || t.short || 'Challenger',
+                  court: '',
+                  surface: t.surface || 'Hard',
+                  status: 'notstarted',
+                  is_live: false,
+                  player1: { name: p.player1?.name || '?', country: '', flag: null },
+                  player2: { name: p.player2?.name || '?', country: '', flag: null },
+                  player1_sets: 0,
+                  player2_sets: 0,
                   sets: [],
                   serving: null,
-                  start_time: m.match_date || m.start_time || null,
-                  _source: 'matchstat_challenger',
+                  start_time: null,
+                  _source: 'tex_challenger',
                   _bsd_match_id: null,
                   _bsd_stats: {},
-                }));
-              })
-            );
-            for (const r of results) {
-              if (r.status === 'fulfilled' && Array.isArray(r.value)) matches.push(...r.value);
-            }
+                });
+              }
+            } catch (_) { /* skip ce tournoi */ }
           }
         }
-      } catch (_) { /* MatchStat fail */ }
+      } catch (_) { /* Tennis Explorer fail */ }
     }
 
     _msChallengerCache = { ts: now, data: matches };
     if (matches.length) {
-      console.log(`  [Challenger ATP] ${matches.length} matchs chargés (The Odds API + MatchStat)`);
+      console.log(`  [Challenger ATP] ${matches.length} matchs chargés (The Odds API + Tennis Explorer)`);
     }
     return matches;
   } catch (e) {
