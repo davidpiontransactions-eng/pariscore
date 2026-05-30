@@ -17143,6 +17143,18 @@ async function broadcastAlert(messageHtml, discordEmbed) {
   if (tasks.length) await Promise.allSettled(tasks);
 }
 
+// Tennis live alerts → canal tennis Discord (DISCORD_TENNIS_MORNING_WEBHOOK_URL) + Telegram tennis
+async function broadcastTennisLiveAlert(messageHtml, discordEmbed) {
+  const tasks = [];
+  if (TELEGRAM_BOT_TOKEN && TENNIS_TELEGRAM_CHAT_IDS.size && messageHtml) {
+    tasks.push(broadcastTennisTelegramAlert(messageHtml));
+  }
+  if (DISCORD_TENNIS_MORNING_WEBHOOK_URL && discordEmbed) {
+    tasks.push(httpsPost(DISCORD_TENNIS_MORNING_WEBHOOK_URL, { embeds: [discordEmbed] }).catch(e => console.warn('  [Discord:TennisLive]', e.message)));
+  }
+  if (tasks.length) await Promise.allSettled(tasks);
+}
+
 // Envoyer alertes pour les value bets avec edge > seuil
 
 function escTg(s) {
@@ -20147,7 +20159,7 @@ async function pollTennisLive() {
                   footer: { text: `Alerte Live DR Set | ${m.tournament}` },
                   timestamp: new Date().toISOString(),
                 };
-                broadcastAlert(msgHtml, discordEmbed).catch(() => {});
+                broadcastTennisLiveAlert(msgHtml, discordEmbed).catch(() => {});
                 console.log(`  [Tennis DR Alert] SET spike ${m.id} DR=${drSetCur2.dr.toFixed(2)} side=${sideSet}`);
               }
             }
@@ -20186,7 +20198,7 @@ async function pollTennisLive() {
                 footer: { text: `Alerte Live DR Match | ${m.tournament}` },
                 timestamp: new Date().toISOString(),
               };
-              broadcastAlert(msgHtml, discordEmbed).catch(() => {});
+              broadcastTennisLiveAlert(msgHtml, discordEmbed).catch(() => {});
               console.log(`  [Tennis DR Alert] MATCH spike ${m.id} DR=${drBase2.dr.toFixed(2)} side=${sideMatch}`);
             }
           }
