@@ -20759,6 +20759,8 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             const _domNameU = _domSideU === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
             const _domOddsU = Number.isFinite(_domSideU === 'p1' ? m.odds_player1 : m.odds_player2)
               ? (_domSideU === 'p1' ? m.odds_player1 : m.odds_player2) : null;
+            // Gate cote Winner Match : doit être dans [1.10 ; 1.25]
+            if (!_domOddsU || _domOddsU < 1.10 || _domOddsU > 1.25) throw new Error('skip');
             const _emb3 = {
               title:       `🎾 UNDER JEU ALERT — ${_hasU75 ? 'Under 7.5 🔥' : 'Under 8.5'} | Set ${_setNumU}`,
               description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Score **1-1** (2 tenues service)`,
@@ -20772,7 +20774,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
                 { name: '🏟 Tournoi',  value: m.tournament || '?',  inline: true },
                 { name: '📡 Src DR',   value: _drSrc,               inline: true },
               ],
-              footer:    { text: `Score 1-1 (2 holds) → Under 7.5/8.5 set | DR Poisson model | Cooldown 30min | ${m.tournament}` },
+              footer:    { text: `Score 1-1 (2 holds) → Under 7.5/8.5 set | Cote winner [1.10-1.25] | DR Poisson | Cooldown 30min | ${m.tournament}` },
               timestamp: new Date().toISOString(),
             };
             if (DISCORD_TENNIS_BREAK_SET_URL) {
@@ -28637,13 +28639,13 @@ if (pathname === '/api/v1/alerts/tennis-under-games-test' && req.method === 'POS
     fields: [
       { name: '📐 DR match',   value: `**${_drTest.toFixed(2)}** — Alcaraz domine`,                               inline: true },
       { name: '🎯 P/jeu dom', value: `**${(_pDomT * 100).toFixed(1)}%**`,                                        inline: true },
-      { name: '🏆 Dominant',  value: `**Alcaraz** @ **1.35**`,                                                   inline: true },
+      { name: '🏆 Dominant',  value: `**Alcaraz** @ **1.18** ✅ [1.10-1.25]`,                                     inline: true },
       ...(_hasU75T ? [{ name: '✅ Under 7.5 jeux', value: `Cote calc. **${_oU75T}** ≤1.20 · Conf **${Math.round(_pU75T * 100)}%**\nSet expédié 6-1`, inline: false }] : []),
       ...(_hasU85T ? [{ name: `${_hasU75T ? '➕' : '✅'} Under 8.5 jeux`, value: `Cote calc. **${_oU85T}** ≤1.20 · Conf **${Math.round(_pU85T * 100)}%**\nSet fini ≤8 jeux (6-1 ou 6-2)`, inline: false }] : []),
       { name: '🏟 Tournoi',  value: 'Roland-Garros 2026 (TEST)',  inline: true },
       { name: '📡 Src DR',   value: 'sofascore 🧪',               inline: true },
     ],
-    footer:    { text: `Score 1-1 (2 holds) → Under 7.5/8.5 set | DR Poisson | MODE TEST | ${new Date().toLocaleString('fr-FR')}` },
+    footer:    { text: `Score 1-1 (2 holds) → Under 7.5/8.5 set | Cote winner [1.10-1.25] | DR Poisson | MODE TEST | ${new Date().toLocaleString('fr-FR')}` },
     timestamp: new Date().toISOString(),
   };
   httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_embTest] })
