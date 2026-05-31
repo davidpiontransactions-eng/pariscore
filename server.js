@@ -2422,7 +2422,7 @@ async function fetchNationalEloRatings() {
     const html = await new Promise((resolve, reject) => {
       const opts = {
         hostname: 'www.eloratings.net', path: '/', method: 'GET',
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PariScore/12)', 'Accept-Language': 'en-US' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9' },
         timeout: 12000
       };
       const req = https.request(opts, (res) => {
@@ -2433,7 +2433,7 @@ async function fetchNationalEloRatings() {
           const req2 = https.request({
             hostname: u ? u.hostname : 'www.eloratings.net',
             path: u ? u.pathname : loc, method: 'GET',
-            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PariScore/12)', 'Accept-Language': 'en-US' },
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9' },
             timeout: 12000
           }, (r2) => { let b = ''; r2.on('data', c => b += c); r2.on('end', () => resolve(b)); });
           req2.on('error', reject); req2.end(); return;
