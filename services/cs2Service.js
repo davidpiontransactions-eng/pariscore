@@ -15,6 +15,51 @@ const path  = require('path');
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const ACTIVE_MAPS      = ['Mirage', 'Inferno', 'Nuke', 'Ancient', 'Anubis', 'Vertigo', 'Dust2'];
+
+// Source→source canonicalisation: BSD & HLTV may use slightly different team names.
+// Keys = lowercase canonical HLTV name; values = array of recognised alternate strings.
+const TEAM_ALIASES = {
+  'vitality':       ['team vitality', 'vitality', 'vita'],
+  'faze':           ['faze clan', 'faze', 'fazeclan'],
+  'spirit':         ['team spirit', 'spirit', 'spirit team'],
+  'mouz':           ['mouz', 'mousesports'],
+  'natus vincere':  ['natus vincere', 'navi', 'nat. vincere'],
+  'g2':             ['g2 esports', 'g2', 'g2esports'],
+  'liquid':         ['team liquid', 'liquid'],
+  'heroic':         ['heroic'],
+  'furia':          ['furia esports', 'furia'],
+  'complexity':     ['complexity gaming', 'complexity', 'col'],
+  'cloud9':         ['cloud9', 'c9'],
+  'astralis':       ['astralis'],
+  'big':            ['big', 'big clan'],
+  'pain':           ['pain gaming', 'pain', 'paingaming'],
+  'ence':           ['ence'],
+  'falcons':        ['team falcons', 'falcons'],
+  'virtus.pro':     ['virtus.pro', 'virtus pro', 'vp'],
+  'ninjas in pyjamas': ['ninjas in pyjamas', 'nip', 'n.i.p.'],
+  'fnatic':         ['fnatic'],
+  'mongolz':        ['the mongolz', 'mongolz', 'mongol z'],
+  '3dmax':          ['3dmax'],
+  'monte':          ['monte'],
+  'saw':            ['saw'],
+  'eternos':        ['eternos'],
+  'sinners':        ['sinners esports', 'sinners'],
+  'imperial':       ['imperial esports', 'imperial', 'imp'],
+  'aurora':         ['aurora gaming', 'aurora'],
+  '9z':             ['9z team', '9z'],
+  'apeks':          ['apeks'],
+  'lynn vision':    ['lynn vision', 'lynn']
+};
+
+function _normalizeTeamName(raw) {
+  if (!raw) return raw;
+  const s = raw.toLowerCase().trim();
+  for (const [canon, aliases] of Object.entries(TEAM_ALIASES)) {
+    if (s === canon || aliases.includes(s)) return canon;
+  }
+  return s;
+}
+
 const CS2_BSD_TTL_MS   = 30 * 1000;       // 30 s live cache (BSD /live/ has 30s server cache)
 const HLTV_FILE_TTL_MS = 60 * 60 * 1000;  // 1 h — re-read rankings JSON from disk
 const CS2_BSD_BASE     = 'https://sports.bzzoiro.com/csgo';
@@ -126,7 +171,7 @@ function _tournamentLogo(tournId) {
 }
 
 // ─── Match normalization (BSD CS2 /api/v2/ schema) ───────────────────────────
-function _normalizeMatch(raw, predictions) {
+function _normalizeMatch(raw, predictions, mapStats) {
   // BSD CS2 status: notstarted | inprogress | finished
   const statusRaw = (raw.status || '').toLowerCase();
   const isLive    = statusRaw === 'inprogress';
@@ -134,6 +179,7 @@ function _normalizeMatch(raw, predictions) {
   // Teams — BSD CS2 uses team1/team2 objects with id, name, logo fields
   const t1 = raw.team1 || raw.home_team || {};
   const t2 = raw.team2 || raw.away_team || {};
+  const lookup = mapStats || {};
 
   // Scores: maps_score is series score, score is current map round score
   const maps1   = raw.team1_maps_won ?? raw.map_score_team1 ?? null;
@@ -168,14 +214,14 @@ function _normalizeMatch(raw, predictions) {
     map_number   : mapNumber,
     team1: {
       id        : t1.id   || null,
-      name      : String(t1.name  || 'TBD'),
+      name      : _normalizeTeamName(t1.name) || 'TBD',
       logo      : logo1,
       country   : t1.country || null,
       hltv_rank : null   // enriched below
     },
     team2: {
       id        : t2.id   || null,
-      name      : String(t2.name  || 'TBD'),
+      name      : _normalizeTeamName(t2.name) || 'TBD',
       logo      : logo2,
       country   : t2.country || null,
       hltv_rank : null
@@ -194,7 +240,11 @@ function _normalizeMatch(raw, predictions) {
       team1_form      : pred.home_form_score || null,
       team2_form      : pred.away_form_score || null
     } : null,
-    map_advantage: computeMapAdvantage(null, null, currentMap)
+    map_advantage: computeMapAdvantage(
+      lookup[_normalizeTeamName(t1.name)?.toLowerCase()],
+      lookup[_normalizeTeamName(t2.name)?.toLowerCase()],
+      currentMap
+    )
   };
 }
 
@@ -686,7 +736,7 @@ module.exports = {
   buildMatchEnrichment,
 
   invalidateCache() { _cs2Cache.ts = 0; },
-  _getCacheStatus() { return _cs2Cache.bsd_status || 'unknown'; },
+  _getCacheStatus() { return _cs2Cache.bsd_status || (_cs2Cache.data && _cs2Cache.data.length > 0 ? 'ok' : 'pending'); },
 
   async getCs2Matches(apiKey) {
     if (!apiKey) {
@@ -731,8 +781,9 @@ module.exports = {
         }
       }
 
-      // Normalize + attach predictions
-      const matches = raw.map(m => _normalizeMatch(m, predMap[String(m.id)] || null));
+      // Normalize + attach predictions (pass HLTV map stats for Map Advantage)
+      const mapStats = loadHltvMapStats();
+      const matches = raw.map(m => _normalizeMatch(m, predMap[String(m.id)] || null, mapStats));
 
       // Attach HLTV rankings from local JSON file (no HTTP call)
       const hltvR = _loadHltvRankings();

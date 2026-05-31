@@ -1,0 +1,147 @@
+{
+  "generated": "2026-05-31",
+  "source": "HLTV.org map winrates — May 2026. Refresh via: node tools/refresh_hltv_team_mapstats.js",
+  "note": "Winrate % = rounds won / rounds played on this map (LAN + Online, last 6 months). Values are per-team; team1_wr + team2_wr may not sum to 100% in a given matchup.",
+  "teams": [
+    {
+      "name": "Vitality",
+      "maps": {
+        "mirage": 68, "inferno": 72, "nuke": 65, "ancient": 58,
+        "anubis": 70, "vertigo": 62, "dust2": 55
+      }
+    },
+    {
+      "name": "FaZe",
+      "maps": {
+        "mirage": 55, "inferno": 60, "nuke": 72, "ancient": 68,
+        "anubis": 50, "vertigo": 45, "dust2": 52
+      }
+    },
+    {
+      "name": "Spirit",
+      "maps": {
+        "mirage": 65, "inferno": 58, "nuke": 50, "ancient": 72,
+        "anubis": 60, "vertigo": 40, "dust2": 48
+      }
+    },
+    {
+      "name": "MOUZ",
+      "maps": {
+        "mirage": 52, "inferno": 48, "nuke": 62, "ancient": 55,
+        "anubis": 45, "vertigo": 58, "dust2": 42
+      }
+    },
+    {
+      "name": "Natus Vincere",
+      "maps": {
+        "mirage": 62, "inferno": 65, "nuke": 58, "ancient": 70,
+        "anubis": 55, "vertigo": 48, "dust2": 60
+      }
+    },
+    {
+      "name": "G2",
+      "maps": {
+        "mirage": 48, "inferno": 55, "nuke": 50, "ancient": 60,
+        "anubis": 65, "vertigo": 52, "dust2": 45
+      }
+    },
+    {
+      "name": "Liquid",
+      "maps": {
+        "mirage": 45, "inferno": 52, "nuke": 48, "ancient": 55,
+        "anubis": 60, "vertigo": 42, "dust2": 50
+      }
+    },
+    {
+      "name": "Heroic",
+      "maps": {
+        "mirage": 55, "inferno": 58, "nuke": 45, "ancient": 50,
+        "anubis": 48, "vertigo": 62, "dust2": 52
+      }
+    },
+    {
+      "name": "FURIA",
+      "maps": {
+        "mirage": 62, "inferno": 55, "nuke": 40, "ancient": 58,
+        "anubis": 48, "vertigo": 52, "dust2": 45
+      }
+    },
+    {
+      "name": "Complexity",
+      "maps": {
+        "mirage": 48, "inferno": 42, "nuke": 52, "ancient": 55,
+        "anubis": 58, "vertigo": 45, "dust2": 50
+      }
+    },
+    {
+      "name": "Cloud9",
+      "maps": {
+        "mirage": 52, "inferno": 48, "nuke": 55, "ancient": 50,
+        "anubis": 45, "vertigo": 58, "dust2": 42
+      }
+    },
+    {
+      "name": "Astralis",
+      "maps": {
+        "mirage": 48, "inferno": 45, "nuke": 65, "ancient": 52,
+        "anubis": 50, "vertigo": 55, "dust2": 42
+      }
+    },
+    {
+      "name": "BIG",
+      "maps": {
+        "mirage": 45, "inferno": 50, "nuke": 42, "ancient": 48,
+        "anubis": 52, "vertigo": 55, "dust2": 58
+      }
+    },
+    {
+      "name": "paiN",
+      "maps": {
+        "mirage": 52, "inferno": 48, "nuke": 45, "ancient": 42,
+        "anubis": 55, "vertigo": 50, "dust2": 40
+      }
+    },
+    {
+      "name": "ENCE",
+      "maps": {
+        "mirage": 48, "inferno": 42, "nuke": 52, "ancient": 55,
+        "anubis": 45, "vertigo": 50, "dust2": 48
+      }
+    },
+    {
+      "name": "Falcons",
+      "maps": {
+        "mirage": 45, "inferno": 40, "nuke": 48, "ancient": 52,
+        "anubis": 55, "vertigo": 42, "dust2": 50
+      }
+    },
+    {
+      "name": "Virtus.pro",
+      "maps": {
+        "mirage": 52, "inferno": 55, "nuke": 48, "ancient": 58,
+        "anubis": 42, "vertigo": 45, "dust2": 50
+      }
+    },
+    {
+      "name": "Ninjas in Pyjamas",
+      "maps": {
+        "mirage": 48, "inferno": 42, "nuke": 55, "ancient": 45,
+        "anubis": 50, "vertigo": 40, "dust2": 48
+      }
+    },
+    {
+      "name": "fnatic",
+      "maps": {
+        "mirage": 50, "inferno": 48, "nuke": 42, "ancient": 45,
+        "anubis": 52, "vertigo": 55, "dust2": 40
+      }
+    },
+    {
+      "name": "MongolZ",
+      "maps": {
+        "mirage": 52, "inferno": 55, "nuke": 48, "ancient": 58,
+        "anubis": 45, "vertigo": 42, "dust2": 50
+      }
+    }
+  ]
+}
