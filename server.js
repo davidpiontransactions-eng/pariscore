@@ -18264,6 +18264,55 @@ const TENNIS_ESPN_ENDPOINTS = [
 let _tennisLiveCache = { ts: 0, data: [] };
 let _isFetchingTennis = false;
 
+// ── Domination Réelle Alert (Discord) ──
+const _DR_INDIVIDUAL_THR = 1.20;
+const _DOM_ODDS_THR = 1.30;
+const _DOM_COOLDOWN_MS = 5 * 60 * 1000;
+const _DOM_WEBHOOK = 'https://discord.com/api/webhooks/1510415384778506362/ufpqP-yj0hUNoxosPHeLNvCYIPhJngpzj6xHLPvIOYTphQ67633U7XP0jfy0f8NlbfHf';
+const _domOddsCooldown = new Map();
+const _DOM_SCOPE = ['roland garros', 'french open', 'atp challenger', 'wta challenger', 'utr'];
+
+function _tnDomPct(x) {
+  if (x == null || !Number.isFinite(Number(x))) return NaN;
+  const v = Number(x);
+  return v <= 1 ? v * 100 : v;
+}
+
+function _calcDRIndiv(pServe, pRet) {
+  const s = _tnDomPct(pServe), r = _tnDomPct(pRet);
+  if (!Number.isFinite(s) || !Number.isFinite(r)) return null;
+  const denom = 100 - s;
+  if (denom <= 0 || denom >= 100) return null;
+  return r / denom;
+}
+
+function _isDomScope(tn) {
+  if (!tn) return false;
+  const t = String(tn).toLowerCase();
+  return _DOM_SCOPE.some(s => t.includes(s));
+}
+
+function sendDiscordAlert(webhookUrl, payload) {
+  try {
+    const body = JSON.stringify(payload);
+    const u = new URL(webhookUrl);
+    const opts = {
+      hostname: u.hostname, port: 443, path: u.pathname + u.search,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    };
+    const req = require('https').request(opts, (res) => {
+      if (res.statusCode >= 400) console.warn(`  [Discord] webhook returned ${res.statusCode}`);
+    });
+    req.on('error', (e) => console.warn('  [Discord] webhook error:', e.message));
+    req.write(body); req.end();
+    return true;
+  } catch (e) {
+    console.warn('  [Discord] sendDiscordAlert error:', e.message);
+    return false;
+  }
+}
+
 function _tennisStateLabel(state, detail, period) {
   const s = String(state || '').toLowerCase();
   if (s === 'pre') return 'À VENIR';
@@ -19419,6 +19468,8 @@ async function pollTennisLive() {
     }
     // Purge BPPI prev pour matchs disparus
     for (const k of _tennisBPPIPrev.keys()) if (!_liveIds.has(k)) _tennisBPPIPrev.delete(k);
+    // Purge Domination cooldown pour matchs disparus
+    for (const k of _domOddsCooldown.keys()) { const id = String(k).replace('domdr_', ''); if (!_liveIds.has(id)) _domOddsCooldown.delete(k); }
     // bd 6v0 — DR Spike detection on every poll for live tennis matches.
     // Compare DR_set_courant vs DR_match → si |delta|/dr_match > seuil → SSE.
     // Fire-and-forget, debounce 30s per matchId garantit pas de spam.
@@ -19438,6 +19489,73 @@ async function pollTennisLive() {
         broadcastTennisDRSpike(m.id, drBase.dr, drSetCur.dr, side);
       }
     } catch (e) { /* swallow — pulse best-effort */ }
+    // bd e3mr P2c — Domination Réelle Alert (DR individuel ≥ 1.20 + cote ≤ 1.30)
+    try {
+      for (const m of data) {
+        if (!m || !m.is_live) continue;
+        const dr = getSofascoreDRCached(m.player1?.name, m.player2?.name);
+        if (!dr || !Number.isFinite(dr.dr)) continue;
+        const dr1 = _calcDRIndiv(dr.p1_serve, dr.p1_ret);
+        const dr2 = _calcDRIndiv(dr.p2_serve, dr.p2_ret);
+        const domP1 = dr1 != null && dr1 >= _DR_INDIVIDUAL_THR;
+        const domP2 = dr2 != null && dr2 >= _DR_INDIVIDUAL_THR;
+        if (!domP1 && !domP2) continue;
+        const domSide = domP1 ? 1 : 2;
+        const domName = domSide === 1 ? m.player1?.name : m.player2?.name;
+        const domDR = domSide === 1 ? dr1 : dr2;
+        const tn = m.tournament;
+        if (!_isDomScope(tn)) continue;
+        const ckey = `domdr_${m.id}`;
+        const last = _domOddsCooldown.get(ckey) || 0;
+        if (Date.now() - last < _DOM_COOLDOWN_MS) continue;
+        _domOddsCooldown.set(ckey, Date.now());
+        let oddsStr = 'non dispo';
+        let oddsVal = null;
+        try {
+          const o = findTennisOddsForPlayers(m.player1?.name, m.player2?.name);
+          if (o) {
+            const best = extractBestTennisH2H(o.match);
+            if (best) {
+              const domOdds = (o.swapped ? domSide !== 1 : domSide === 1) ? best.p1.odds : best.p2.odds;
+              if (domOdds > 0) {
+                oddsVal = domOdds;
+                oddsStr = String(domOdds.toFixed(2));
+              }
+            }
+          }
+        } catch (_) { /* odds best-effort */ }
+        if (oddsVal != null && oddsVal > _DOM_ODDS_THR) continue;
+        const drBaseVal = parseFloat(dr.dr.toFixed(2));
+        const isP1Centric = drBaseVal >= 1;
+        const drGist = isP1Centric
+          ? `DR J1=${drBaseVal} (>1 = J1 domine)`
+          : `DR J1=${drBaseVal} (<1 = J2 domine)`;
+        const embed = {
+          title: '🏆 Domination Réelle — Tennis',
+          color: 0x00ff88,
+          fields: [
+            { name: 'Match', value: `${m.player1?.name || '?'} vs ${m.player2?.name || '?'}`, inline: false },
+            { name: 'Tournoi', value: String(tn || '?'), inline: true },
+            { name: 'Court', value: String(m.court || m.round_name || '?'), inline: true },
+            { name: 'Score', value: `${m.player1_sets || 0}-${m.player2_sets || 0} sets`, inline: true },
+            { name: 'J1 Serve%', value: String(dr.p1_serve != null ? Math.round(_tnDomPct(dr.p1_serve)) + '%' : '?'), inline: true },
+            { name: 'J1 Retour%', value: String(dr.p1_ret != null ? Math.round(_tnDomPct(dr.p1_ret)) + '%' : '?'), inline: true },
+            { name: 'J2 Serve%', value: String(dr.p2_serve != null ? Math.round(_tnDomPct(dr.p2_serve)) + '%' : '?'), inline: true },
+            { name: 'J2 Retour%', value: String(dr.p2_ret != null ? Math.round(_tnDomPct(dr.p2_ret)) + '%' : '?'), inline: true },
+            { name: 'DR J1', value: `${dr1 != null ? dr1.toFixed(2) : '?'}`, inline: true },
+            { name: 'DR J2', value: `${dr2 != null ? dr2.toFixed(2) : '?'}`, inline: true },
+            { name: 'Dominant', value: `${domName} (DR=${domDR.toFixed(2)})`, inline: false },
+            { name: 'DR Match', value: drGist, inline: false },
+            { name: 'Cote Match Vainqueur', value: oddsStr, inline: true },
+            { name: 'Status', value: `${m.status || 'live'}`, inline: true },
+          ],
+          timestamp: new Date().toISOString(),
+        };
+        sendDiscordAlert(_DOM_WEBHOOK, { embeds: [embed] });
+        console.log(`  [Tennis:DomReelle] ALERT ${domName} DR=${domDR.toFixed(2)} odds=${oddsStr} — ${m.player1?.name} vs ${m.player2?.name}`);
+      }
+    } catch (e) { console.warn('  [Tennis:DomReelle] alert error:', e.message); }
+
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
