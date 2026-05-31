@@ -2416,59 +2416,28 @@ function _normNatName(n) {
     .replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-async function fetchNationalEloRatings() {
-  if (_nateloMap.size > 50 && Date.now() - _nateloCacheTs < _NATELO_TTL) return _nateloMap;
+const _NATELO_SEED_FILE = path.join(__dirname, 'data', 'national_elo.json');
+
+function _loadNatEloFromSeed() {
   try {
-    const html = await new Promise((resolve, reject) => {
-      const opts = {
-        hostname: 'www.eloratings.net', path: '/', method: 'GET',
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9' },
-        timeout: 12000
-      };
-      const req = https.request(opts, (res) => {
-        // Follow single redirect
-        if (res.statusCode >= 301 && res.statusCode <= 302 && res.headers.location) {
-          const loc = res.headers.location;
-          const u = loc.startsWith('http') ? new URL(loc) : null;
-          const req2 = https.request({
-            hostname: u ? u.hostname : 'www.eloratings.net',
-            path: u ? u.pathname : loc, method: 'GET',
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9' },
-            timeout: 12000
-          }, (r2) => { let b = ''; r2.on('data', c => b += c); r2.on('end', () => resolve(b)); });
-          req2.on('error', reject); req2.end(); return;
-        }
-        let body = ''; res.on('data', c => body += c); res.on('end', () => resolve(body));
-      });
-      req.on('error', reject); req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
-      req.end();
-    });
+    const raw = JSON.parse(fs.readFileSync(_NATELO_SEED_FILE, 'utf8'));
     const ratings = new Map();
-    // Parse table rows: <tr><td>rank</td><td><a href="/Country">Name</a></td><td>elo</td>...
-    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    let m;
-    while ((m = rowRe.exec(html)) !== null) {
-      const row = m[1];
-      const tds = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(x => x[1].replace(/<[^>]+>/g,'').trim());
-      if (tds.length < 3) continue;
-      const rank = parseInt(tds[0]);
-      if (!Number.isFinite(rank) || rank < 1 || rank > 250) continue;
-      // Country name — prefer anchor text
-      const anchor = row.match(/<a[^>]+href="\/[^"]*"[^>]*>([^<]+)<\/a>/i);
-      const name = anchor ? anchor[1].trim() : tds[1];
-      if (!name || name.length < 2) continue;
-      const elo = parseInt(tds[2]);
-      if (!Number.isFinite(elo) || elo < 600 || elo > 2300) continue;
-      const norm = _normNatName(name);
-      ratings.set(norm, { elo, rank, name });
+    for (const r of (raw.ratings || [])) {
+      if (!r.name || !r.elo || !r.rank) continue;
+      ratings.set(_normNatName(r.name), { elo: r.elo, rank: r.rank, name: r.name });
     }
     if (ratings.size > 50) {
       _nateloMap = ratings; _nateloCacheTs = Date.now();
-      console.log(`  [NatElo] Loaded ${ratings.size} national team ratings from eloratings.net`);
-    } else {
-      console.warn(`  [NatElo] Only ${ratings.size} rows parsed — keeping old cache`);
+      console.log(`  [NatElo] Loaded ${ratings.size} teams from seed file (${raw._meta?.date || 'unknown date'})`);
     }
-  } catch (e) { console.warn('  [NatElo] Fetch failed:', e.message); }
+  } catch (e) { console.warn('  [NatElo] Seed load failed:', e.message); }
+}
+
+async function fetchNationalEloRatings() {
+  if (_nateloMap.size > 50 && Date.now() - _nateloCacheTs < _NATELO_TTL) return _nateloMap;
+  // Primary: load from seed JSON (eloratings.net blocked by CF on VPS)
+  if (_nateloMap.size === 0) _loadNatEloFromSeed();
+  // Future: HTTP scrape when CF bypass available (currently returns JS challenge)
   return _nateloMap;
 }
 
