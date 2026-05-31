@@ -2895,6 +2895,110 @@ async function fetchOddspapiTennisSetOdds(fixtureId) {
   }
 }
 
+// ── OddsPapi — Cron alertes pré-match jeux/set Roland Garros ─────────────────
+// Critère : Pinnacle Over 7.5 | Over 8.5 | Under 12.5 ∈ [1.10 ; 1.25]
+// Poll toutes les 2h · cache fixtures 4h · cache odds 2h · cooldown alerte 12h
+// Budget estimé : ~24 req/j pendant RG (14j) = ~336 req/période vs 250 free/mo
+// → Sufficient pour RG si pas d'autre usage. Upgrade plan OddsPapi si > 250.
+const ODDSPAPI_ALERT_TOUR_IDS = [2579, 2583]; // RG ATP + WTA (probe 2026-05-31)
+const ODDSPAPI_ALERT_LINES = [
+  { direction: 'over',  line: 7.5,  label: 'Over 7.5 🔥',  field: 'over'  },
+  { direction: 'over',  line: 8.5,  label: 'Over 8.5 ⚡',  field: 'over'  },
+  { direction: 'under', line: 12.5, label: 'Under 12.5 🎯', field: 'under' },
+];
+const ODDSPAPI_ALERT_MIN = 1.10;
+const ODDSPAPI_ALERT_MAX = 1.25;
+
+async function pollOddspapiTennisSetOddsAlerts() {
+  if (!ODDSPAPI_V4_KEY() || !DISCORD_TENNIS_BREAK_SET_URL) return;
+  if (!automatedAlertsAllowed()) return;
+  const from = new Date().toISOString();
+  const to   = new Date(Date.now() + 48 * 3600000).toISOString();
+  let fired = 0;
+  for (const tourId of ODDSPAPI_ALERT_TOUR_IDS) {
+    try {
+      // 1. Fixtures (cache 4h)
+      const fxCk = `oddspapi_alert_fx_${tourId}`;
+      let fixtures = apiCacheGet(fxCk);
+      if (!fixtures) {
+        const d = await _oddspapiGet('fixtures', { tournamentId: tourId, from, to });
+        fixtures = (Array.isArray(d) ? d : (d.data || [])).filter(f => f.hasOdds);
+        apiCacheSet(fxCk, fixtures, 'oddspapi_alert', 4 * 3600 * 1000);
+        console.log(`  [OddsPapi:Alert] fixtures tour=${tourId} → ${fixtures.length} avec cotes`);
+      }
+      // 2. Noms joueurs (cache 12h)
+      const pCk = `oddspapi_alert_parts_${tourId}`;
+      let nameMap = apiCacheGet(pCk) || {};
+      if (!Object.keys(nameMap).length && fixtures.length) {
+        const partIds = [...new Set(fixtures.flatMap(f => [f.participant1Id, f.participant2Id]).filter(Boolean))];
+        if (partIds.length) {
+          try {
+            const pd = await _oddspapiGet('participants', { participantIds: partIds.slice(0, 50).join(',') });
+            const pArr = Array.isArray(pd) ? pd : (pd.data || []);
+            pArr.forEach(p => { if (p.participantId) nameMap[p.participantId] = p.participantName || p.name || String(p.participantId); });
+            apiCacheSet(pCk, nameMap, 'oddspapi_alert', 12 * 3600 * 1000);
+          } catch (_) {}
+        }
+      }
+      // 3. Pour chaque fixture : vérifier cotes set1
+      for (const fix of fixtures.slice(0, 8)) {
+        const p1Name = nameMap[fix.participant1Id] || `P1-${fix.participant1Id}`;
+        const p2Name = nameMap[fix.participant2Id] || `P2-${fix.participant2Id}`;
+        // Cotes (cache 2h dédié alertes — indépendant du cache display 30min)
+        const oddsCk = `oddspapi_alert_odds_${fix.fixtureId}`;
+        let odds = apiCacheGet(oddsCk);
+        if (!odds) {
+          odds = await fetchOddspapiTennisSetOdds(fix.fixtureId);
+          if (odds) apiCacheSet(oddsCk, odds, 'oddspapi_alert', 2 * 3600 * 1000);
+        }
+        if (!odds || (!odds.set1.length && !odds.set2.length)) continue;
+        const matchTime = fix.startTime ? new Date(fix.startTime).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '?';
+        // 4. Vérifier critères sur Set 1 (et Set 2 si disponible)
+        for (const setNum of [1, 2]) {
+          const setLines = setNum === 1 ? odds.set1 : odds.set2;
+          if (!setLines || !setLines.length) continue;
+          for (const cfg of ODDSPAPI_ALERT_LINES) {
+            const match = setLines.find(s => s.line === cfg.line);
+            if (!match) continue;
+            const price = match[cfg.field];
+            if (!price || price < ODDSPAPI_ALERT_MIN || price > ODDSPAPI_ALERT_MAX) continue;
+            // Cooldown 12h par (fixture, set, direction, line)
+            const alertKey = `oddspapi_setal:${fix.fixtureId}:s${setNum}:${cfg.direction}:${cfg.line}`;
+            if (_tnAlertOnCooldown(alertKey, 12 * 3600 * 1000)) continue;
+            _tnAlertMark(alertKey);
+            // 5. Construire embed Discord
+            const tourLabel = tourId === 2579 ? '🎾 Roland Garros ATP' : '🎾 Roland Garros WTA';
+            const pricePct  = Math.round((1 / price) * 100);
+            const embed = {
+              title:       `${cfg.label} · Set ${setNum} — Cote Pinnacle ${price.toFixed(2)} ✅`,
+              description: `**${p1Name}** vs **${p2Name}**`,
+              color:       cfg.direction === 'over' ? 0x00e676 : 0xff6b35,
+              fields: [
+                { name: '📊 Marché',      value: `**${cfg.label}** jeux/set · Set ${setNum}`,                                     inline: true },
+                { name: '💰 Cote',        value: `**${price.toFixed(2)}** (${match.bookmaker}) · Prob. **${pricePct}%**`,         inline: true },
+                { name: '🎯 Critère',     value: `Pinnacle ∈ [${ODDSPAPI_ALERT_MIN} ; ${ODDSPAPI_ALERT_MAX}] ✅`,                  inline: true },
+                { name: '⏰ Début',       value: `**${matchTime}** (Paris)`,                                                       inline: true },
+                { name: '🏆 Tournoi',     value: tourLabel,                                                                        inline: true },
+                { name: '📡 Source',      value: `OddsPapi v4 · Pinnacle`,                                                         inline: true },
+                ...(odds.h2h ? [{ name: '🎲 H2H',        value: `P1 **${odds.h2h.p1?.toFixed(2) || '?'}** · P2 **${odds.h2h.p2?.toFixed(2) || '?'}** [${odds.h2h.bookmaker}]`, inline: false }] : []),
+              ],
+              footer:    { text: `Over 7.5 · Over 8.5 · Under 12.5 ∈ [1.10-1.25] Pinnacle | Cooldown 12h | ${fix.fixtureId}` },
+              timestamp: new Date().toISOString(),
+            };
+            httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [embed] })
+              .catch(e => console.warn('  [OddsPapi:Alert] Discord échec:', e.message));
+            console.log(`  [OddsPapi:Alert] ✅ ${p1Name} vs ${p2Name} Set${setNum} ${cfg.label} @ ${price} [${match.bookmaker}]`);
+            fired++;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`  [OddsPapi:Alert] tour=${tourId} erreur:`, e.message);
+    }
+  }
+  if (fired) console.log(`  [OddsPapi:Alert] ${fired} alerte(s) envoyée(s)`);
+}
+
 function computeMismatch(playerA, playerB) {
   const annotations = [];
   const atA = playerA?.attributes;
@@ -41632,6 +41736,17 @@ console.log('  [CS2] poll armé — 30 s interval');
 // Tennis Elo prematch alerts — every 10 minutes (plus court que le cooldown 6h → chaque match alerte 1x)
 setInterval(() => pollTennisPrematchEloAlerts().catch(e => console.warn('[TennisElo]', e.message)), 10 * 60 * 1000);
 setTimeout(() => pollTennisPrematchEloAlerts().catch(() => {}), 30 * 1000); // bootstrap à +30s
+
+// OddsPapi — alertes pré-match Over/Under jeux/set RG · toutes les 2h
+// Critère Pinnacle [1.10-1.25] sur Over 7.5 · Over 8.5 · Under 12.5
+// Budget estimé: ~24 req/j (fixtures 4h + odds 2h × 8 matchs) — free tier 250/mo
+if (ODDSPAPI_V4_KEY()) {
+  setInterval(() => pollOddspapiTennisSetOddsAlerts().catch(e => console.warn('[OddsPapi:Alert]', e.message)), 2 * 60 * 60 * 1000);
+  setTimeout(() => pollOddspapiTennisSetOddsAlerts().catch(() => {}), 90 * 1000); // bootstrap à +90s
+  console.log('  [OddsPapi:Alert] cron armé — 2h interval · Over7.5/8.5 + Under12.5 ∈ [1.10-1.25] → Discord BREAK_SET');
+} else {
+  console.log('  [OddsPapi:Alert] DÉSACTIVÉ — ODDSPAPI_V4_KEY manquante');
+}
 
 // Tennis historical (Sackmann CSV) — cron nightly DEPRECATED 2026-05-23.
 // Sackmann CC-BY-NC-SA incompatible service commercial — sync HTTP désactivé
