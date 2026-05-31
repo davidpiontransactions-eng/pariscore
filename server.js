@@ -20721,6 +20721,66 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             console.log(`  [Tennis:BreakSet] ${m.id} dom=${_domNameBrk} drAvg=${_drAvgSet} set=${_g1}-${_g2} cote=${_domOddsBrk.toFixed(2)}`);
           } catch (_eBrk) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis:BreakSet]', _eBrk.message); }
 
+          // ── Alerte Under 7.5/8.5 jeux — Score 1-1 (2 tenues service) ───────────────────
+          // Trigger : score EXACT 1-1 dans le set en cours (les 2 joueurs ont tenu leur 1er jeu de service)
+          // Calcul : P(Under 7.5) et P(Under 8.5) via Poisson depuis DR → cote implicite
+          // Fire si : au moins un under a cote calculée ≤1.20
+          try {
+            const _mSetsU  = Array.isArray(m.sets) ? m.sets : [];
+            const _curSSU  = _mSetsU.length ? _mSetsU[_mSetsU.length - 1] : null;
+            if (!_curSSU) throw new Error('skip');
+            const _g1u = parseInt(_curSSU.p1) || 0;
+            const _g2u = parseInt(_curSSU.p2) || 0;
+            if (_g1u !== 1 || _g2u !== 1) throw new Error('skip'); // 1-1 exact seulement
+            // p_dom : probabilité de gagner chaque jeu pour le joueur dominant (DR-based)
+            const _drU   = Number.isFinite(drBase2.dr) ? drBase2.dr : 1;
+            const _drDom = Math.max(_drU, 1 / _drU); // toujours >= 1
+            const _pDom  = Math.min(0.95, 0.63 + (_drDom - 1) * 0.14);
+            const _pSub  = 1 - _pDom;
+            // P(Under 7.5 | 1-1) = P(5-0 restants) — set fini 6-1 dans un sens
+            const _pU75  = Math.pow(_pDom, 5) + Math.pow(_pSub, 5);
+            const _oU75  = parseFloat((1 / Math.max(_pU75, 0.01)).toFixed(2));
+            // P(Under 8.5 | 1-1) = P(5-0) + P(5-1 restants) — set fini 6-1 ou 6-2
+            const _pU85  = _pU75
+              + 5 * Math.pow(_pDom, 5) * _pSub
+              + 5 * Math.pow(_pSub, 5) * _pDom;
+            const _oU85  = parseFloat((1 / Math.max(_pU85, 0.01)).toFixed(2));
+            // Gate : au moins un under à cote ≤1.20
+            const _hasU75 = _oU75 <= 1.20;
+            const _hasU85 = _oU85 <= 1.20;
+            if (!_hasU75 && !_hasU85) throw new Error('skip');
+            // Cooldown 30min par match + set (évite re-fire si score reste 1-1)
+            const _setNumU = _mSetsU.length;
+            const _ckU = `tndr_under_games:${m.id}:s${_setNumU}`;
+            if (_tnAlertOnCooldown(_ckU, 30 * 60 * 1000)) throw new Error('skip');
+            _tnAlertMark(_ckU);
+            const _domSideU = drBase2.dr >= 1 ? 'p1' : 'p2';
+            const _domNameU = _domSideU === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
+            const _domOddsU = Number.isFinite(_domSideU === 'p1' ? m.odds_player1 : m.odds_player2)
+              ? (_domSideU === 'p1' ? m.odds_player1 : m.odds_player2) : null;
+            const _emb3 = {
+              title:       `🎾 UNDER JEU ALERT — ${_hasU75 ? 'Under 7.5 🔥' : 'Under 8.5'} | Set ${_setNumU}`,
+              description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Score **1-1** (2 tenues service)`,
+              color:       0x7209b7,
+              fields: [
+                { name: '📐 DR match',   value: `**${_drU.toFixed(2)}** — ${_domNameU} domine`,                                 inline: true },
+                { name: '🎯 P/jeu dom', value: `**${(_pDom * 100).toFixed(1)}%**`,                                             inline: true },
+                { name: '🏆 Dominant',  value: `**${_domNameU}**${_domOddsU ? ` @ **${_domOddsU.toFixed(2)}**` : ''}`,        inline: true },
+                ...(_hasU75 ? [{ name: '✅ Under 7.5 jeux', value: `Cote calc. **${_oU75}** ≤1.20 · Conf **${Math.round(_pU75 * 100)}%**\nSet expédié 6-1`, inline: false }] : []),
+                ...(_hasU85 ? [{ name: `${_hasU75 ? '➕' : '✅'} Under 8.5 jeux`, value: `Cote calc. **${_oU85}** ≤1.20 · Conf **${Math.round(_pU85 * 100)}%**\nSet fini ≤8 jeux (6-1 ou 6-2)`, inline: false }] : []),
+                { name: '🏟 Tournoi',  value: m.tournament || '?',  inline: true },
+                { name: '📡 Src DR',   value: _drSrc,               inline: true },
+              ],
+              footer:    { text: `Score 1-1 (2 holds) → Under 7.5/8.5 set | DR Poisson model | Cooldown 30min | ${m.tournament}` },
+              timestamp: new Date().toISOString(),
+            };
+            if (DISCORD_TENNIS_BREAK_SET_URL) {
+              httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_emb3] })
+                .catch(e => console.warn('  [Tennis:UnderGames]', e.message));
+            }
+            console.log(`  [Tennis:UnderGames] ${m.id} 1-1 DR=${_drU.toFixed(2)} pDom=${(_pDom*100).toFixed(0)}% U75_odd=${_oU75} U85_odd=${_oU85}`);
+          } catch (_eUG) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis:UnderGames]', _eUG.message); }
+
           // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
           const drGapSigned = drBase2.dr - 1.0;
           const drGapAbs    = Math.abs(drGapSigned);
