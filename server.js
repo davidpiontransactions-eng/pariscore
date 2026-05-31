@@ -18970,7 +18970,7 @@ async function handleAPI(req, res, pathname, query) {
     const t1 = (query.team1 || '').trim();
     const t2 = (query.team2 || '').trim();
     const map = (query.map || '').trim();
-    const rankWindow = parseInt(query.rankWindow || '15', 10);
+    const rankWindow = Math.max(1, parseInt(query.rankWindow || '15', 10) || 15);
     if (!t1 || !t2 || !map) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: 'team1, team2, map required' }));
