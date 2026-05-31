@@ -16961,8 +16961,9 @@ function srvPlanGate(req, res, pathname) {
   }
   // Bankroll simulé = vitrine marketing publique (jamais de données user)
   if (pathname === '/api/v1/bankroll/simulated' || pathname === '/api/v1/bankroll') return false;
-  // Test alertes tennis — public, pas de plan requis
+  // Test alertes tennis + xG intensité — public, pas de plan requis
   if (pathname === '/api/v1/alerts/tennis-test') return false;
+  if (pathname === '/api/v1/alerts/xg-intensity-test') return false;
   // Mes Paris + bankroll + alertes → un plan Pro quelconque
   if (pathname.startsWith('/api/v1/bets') || pathname.startsWith('/api/v1/bankroll') || pathname.startsWith('/api/v1/alerts')) {
     if (!a.anyPro) { jsonResponse(res, 403, { error: 'Module réservé Pro', code: 'PLAN_REQUIRED' }); return true; }
