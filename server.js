@@ -2907,7 +2907,7 @@ const ODDSPAPI_ALERT_LINES = [
   { direction: 'under', line: 12.5, label: 'Under 12.5 🎯', field: 'under' },
 ];
 const ODDSPAPI_ALERT_MIN = 1.10;
-const ODDSPAPI_ALERT_MAX = 1.25;
+const ODDSPAPI_ALERT_MAX = 1.30;
 
 async function pollOddspapiTennisSetOddsAlerts() {
   if (!ODDSPAPI_V4_KEY() || !DISCORD_TENNIS_BREAK_SET_URL) return;
