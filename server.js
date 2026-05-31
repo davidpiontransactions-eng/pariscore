@@ -2347,13 +2347,27 @@ function computeTennisDRFromMatch(m) {
   };
   const p1S = num(s.p1_first_won), p1R = num(s.p1_ret_won);
   const p2S = num(s.p2_first_won), p2R = num(s.p2_ret_won);
+  // DR par set — ratio jeux P1/P2 par set (proxy jeux, fallback quand Sofascore absent)
+  // DR_set = g1/g2 ; 6-2→3.0 · 6-4→1.5 · 7-6→1.17 · 6-0→cap 6.0
+  const dr_by_set = {};
+  if (Array.isArray(m.sets)) {
+    m.sets.forEach((set, i) => {
+      const g1 = parseInt(set.p1) || 0, g2 = parseInt(set.p2) || 0;
+      const total = g1 + g2;
+      if (total < 2) return; // set pas encore commencé
+      const drS = g2 > 0 ? Math.min(6, g1 / g2) : 6.0; // cap 6.0 si 6-0
+      const drSInv = g1 > 0 ? Math.min(6, g2 / g1) : 6.0;
+      // orienté P1 : DR>1 = P1 domine, DR<1 = P2 domine
+      dr_by_set[i + 1] = { dr: parseFloat(drS.toFixed(3)), ret_n: total };
+    });
+  }
   // Voie 1 — serve + return (parité Sofascore DR), meilleure granularité
   if (p1S != null && p1R != null && p2S != null && p2R != null) {
     const a = p1S + p1R, b = p2S + p2R;
     if (a > 0 && b > 0) {
       return { ts: Date.now(), dr: parseFloat((a / b).toFixed(3)),
         p1_serve: p1S, p1_ret: p1R, p2_serve: p2S, p2_ret: p2R,
-        dr_by_set: {}, source: 'bsd_serve_ret' };
+        dr_by_set, source: 'bsd_serve_ret' };
     }
   }
   // Voie 2 — ratio total points gagnés (dominance brute, fallback)
@@ -2361,13 +2375,9 @@ function computeTennisDRFromMatch(m) {
   if (t1 != null && t2 != null && t1 > 0 && t2 > 0) {
     return { ts: Date.now(), dr: parseFloat((t1 / t2).toFixed(3)),
       p1_serve: p1S, p1_ret: p1R, p2_serve: p2S, p2_ret: p2R,
-      dr_by_set: {}, source: 'bsd_total' };
+      dr_by_set, source: 'bsd_total' };
   }
-  // Voie 3 — serve-only (BSD ne fournit souvent que first_serve_won%).
-  // Identité tennis : chaque point sur le service de J2 est gagné soit par J2
-  // (serve), soit par J1 (return) → ret_J1 ≈ 100 - serve_J2. Approx via
-  // first_serve_won% (ignore 2e balle) mais directionnellement correct.
-  // DR = (serve_J1 + ret_J1) / (serve_J2 + ret_J2) — parité somme Sofascore.
+  // Voie 3 — serve-only approx
   if (p1S != null && p2S != null && p1S > 0 && p2S > 0) {
     const p1Rderiv = Math.max(0, Math.min(100, 100 - p2S));
     const p2Rderiv = Math.max(0, Math.min(100, 100 - p1S));
@@ -2375,8 +2385,16 @@ function computeTennisDRFromMatch(m) {
     if (a > 0 && b > 0) {
       return { ts: Date.now(), dr: parseFloat((a / b).toFixed(3)),
         p1_serve: p1S, p1_ret: p1Rderiv, p2_serve: p2S, p2_ret: p2Rderiv,
-        dr_by_set: {}, source: 'bsd_serve_approx' };
+        dr_by_set, source: 'bsd_serve_approx' };
     }
+  }
+  // Voie 4 — jeux uniquement (pas de stats point disponibles)
+  if (Object.keys(dr_by_set).length) {
+    const vals = Object.values(dr_by_set).map(s => s.dr);
+    const drMatch = parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(3));
+    return { ts: Date.now(), dr: drMatch,
+      p1_serve: null, p1_ret: null, p2_serve: null, p2_ret: null,
+      dr_by_set, source: 'bsd_games' };
   }
   return null;
 }
