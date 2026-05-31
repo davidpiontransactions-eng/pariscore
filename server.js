@@ -2381,6 +2381,125 @@ function computeTennisDRFromMatch(m) {
   return null;
 }
 
+// ─── National Team Elo Ratings — eloratings.net ──────────────────────────────
+// Cache 24h. Scope : équipes nationales (World Cup, Nations League, Euro, etc.)
+const _NATELO_TTL = 24 * 3600 * 1000;
+const _NATELO_SPORT_KEYS = new Set([
+  'soccer_fifa_world_cup', 'soccer_conmebol_copa_america',
+  'soccer_uefa_european_championship', 'soccer_africa_cup_of_nations',
+  'soccer_uefa_nations_league', 'soccer_concacaf_gold_cup',
+  'soccer_afc_asian_cup', 'soccer_afc_asian_cup_qualification',
+  'soccer_uefa_euro_qualification',
+  'soccer_fifa_world_cup_qualification_europe',
+  'soccer_fifa_world_cup_qualification_concacaf',
+  'soccer_fifa_world_cup_qualification_south_america',
+  'soccer_fifa_world_cup_qualification_africa',
+  'soccer_fifa_world_cup_qualification_asia',
+]);
+// Aliases : noms BSD/Odds API → noms eloratings.net normalisés
+const _NATELO_ALIASES = new Map([
+  ['united states','usa'], ['us','usa'], ['united states of america','usa'],
+  ['korea republic','south korea'], ['republic of korea','south korea'],
+  ['korea dpr','north korea'], ['dpr korea','north korea'],
+  ['ir iran','iran'],
+  ['cote divoire','ivory coast'], ['cote d ivoire','ivory coast'],
+  ['trinidadtobago','trinidad and tobago'], ['trinidad tobago','trinidad and tobago'],
+  ['cape verde islands','cape verde'],
+  ['chinese taipei','taiwan'],
+]);
+let _nateloCacheTs = 0;
+let _nateloMap = new Map(); // norm_name → {elo, rank, name}
+
+function _normNatName(n) {
+  return (n || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function fetchNationalEloRatings() {
+  if (_nateloMap.size > 50 && Date.now() - _nateloCacheTs < _NATELO_TTL) return _nateloMap;
+  try {
+    const html = await new Promise((resolve, reject) => {
+      const opts = {
+        hostname: 'www.eloratings.net', path: '/', method: 'GET',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PariScore/12)', 'Accept-Language': 'en-US' },
+        timeout: 12000
+      };
+      const req = https.request(opts, (res) => {
+        // Follow single redirect
+        if (res.statusCode >= 301 && res.statusCode <= 302 && res.headers.location) {
+          const loc = res.headers.location;
+          const u = loc.startsWith('http') ? new URL(loc) : null;
+          const req2 = https.request({
+            hostname: u ? u.hostname : 'www.eloratings.net',
+            path: u ? u.pathname : loc, method: 'GET',
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PariScore/12)', 'Accept-Language': 'en-US' },
+            timeout: 12000
+          }, (r2) => { let b = ''; r2.on('data', c => b += c); r2.on('end', () => resolve(b)); });
+          req2.on('error', reject); req2.end(); return;
+        }
+        let body = ''; res.on('data', c => body += c); res.on('end', () => resolve(body));
+      });
+      req.on('error', reject); req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+      req.end();
+    });
+    const ratings = new Map();
+    // Parse table rows: <tr><td>rank</td><td><a href="/Country">Name</a></td><td>elo</td>...
+    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    let m;
+    while ((m = rowRe.exec(html)) !== null) {
+      const row = m[1];
+      const tds = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(x => x[1].replace(/<[^>]+>/g,'').trim());
+      if (tds.length < 3) continue;
+      const rank = parseInt(tds[0]);
+      if (!Number.isFinite(rank) || rank < 1 || rank > 250) continue;
+      // Country name — prefer anchor text
+      const anchor = row.match(/<a[^>]+href="\/[^"]*"[^>]*>([^<]+)<\/a>/i);
+      const name = anchor ? anchor[1].trim() : tds[1];
+      if (!name || name.length < 2) continue;
+      const elo = parseInt(tds[2]);
+      if (!Number.isFinite(elo) || elo < 600 || elo > 2300) continue;
+      const norm = _normNatName(name);
+      ratings.set(norm, { elo, rank, name });
+    }
+    if (ratings.size > 50) {
+      _nateloMap = ratings; _nateloCacheTs = Date.now();
+      console.log(`  [NatElo] Loaded ${ratings.size} national team ratings from eloratings.net`);
+    } else {
+      console.warn(`  [NatElo] Only ${ratings.size} rows parsed — keeping old cache`);
+    }
+  } catch (e) { console.warn('  [NatElo] Fetch failed:', e.message); }
+  return _nateloMap;
+}
+
+function getNationalElo(teamName) {
+  if (!teamName || !_nateloMap.size) return null;
+  const norm = _normNatName(teamName);
+  if (_nateloMap.has(norm)) return _nateloMap.get(norm);
+  // Alias lookup
+  const aliased = _NATELO_ALIASES.get(norm);
+  if (aliased && _nateloMap.has(aliased)) return _nateloMap.get(aliased);
+  // Reverse alias
+  for (const [alias, canonical] of _NATELO_ALIASES) {
+    if (norm === canonical && _nateloMap.has(alias)) return _nateloMap.get(alias);
+  }
+  // Partial match (first significant word ≥ 4 chars)
+  const first = norm.split(' ').find(w => w.length >= 4);
+  if (first) {
+    for (const [key, val] of _nateloMap) {
+      if (key.includes(first)) return val;
+    }
+  }
+  return null;
+}
+
+function _isNationalTeamMatch(m) {
+  const key = (m._sport || m.sport_key || m.sport || '').toLowerCase();
+  if (_NATELO_SPORT_KEYS.has(key)) return true;
+  const league = (m.league || m.league_name || '').toLowerCase();
+  return /world.?cup|coupe.?du.?monde|nations.?league|euro.?20\d\d|copa.?america|afcon|gold.?cup|asian.?cup/i.test(league);
+}
+
 // Find Sofascore team ID by name — cached 7 days
 async function searchSofascoreTeam(teamName) {
   try {
@@ -8456,6 +8575,14 @@ function buildMatchRecord(raw) {
       over25:  Math.round(cb.over25 * 100 * 0.6 + (po?.over25  || 50) * 0.4),
       btts:    Math.round(cb.btts   * 100 * 0.6 + (po?.btts    || 45) * 0.4),
     };
+  }
+
+  // ── National Team Elo (eloratings.net) ────────────────────────────────────
+  if (_isNationalTeamMatch(record)) {
+    const hElo = getNationalElo(record.home_team);
+    const aElo = getNationalElo(record.away_team);
+    if (hElo) { record.elo_home = hElo.elo; record.elo_home_rank = hElo.rank; }
+    if (aElo) { record.elo_away = aElo.elo; record.elo_away_rank = aElo.rank; }
   }
 
   return record;
@@ -34936,6 +35063,17 @@ if (pathname === '/api/v1/worldcup/bracket' && req.method === 'GET') {
   }
 }
 
+// GET /api/v1/national-elo — classement Elo équipes nationales (eloratings.net, cache 24h)
+if (pathname === '/api/v1/national-elo' && req.method === 'GET') {
+  try {
+    const map = await fetchNationalEloRatings();
+    const ratings = [...map.values()].sort((a, b) => a.rank - b.rank);
+    return jsonResponse(res, 200, { ok: true, count: ratings.length, ts: _nateloCacheTs, ratings });
+  } catch (e) {
+    return jsonResponse(res, 500, { ok: false, error: e.message });
+  }
+}
+
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
   const matchId = decodeURIComponent(pathname.slice('/api/v1/insights/'.length));
   // v9.1: ID validation
@@ -40197,6 +40335,11 @@ server.listen(PORT, () => {
     console.log(`\n  ✓ PariScore Server running on port ${PORT} [env: ${ENV}]`);
     console.log(`  ✓ SQLite DB: ${SQLITE_FILE}\n`);
     bootInit().catch(e => console.error('  [Boot] Erreur init:', e.message));
+    // Pre-warm national Elo ratings from eloratings.net (fire-and-forget, cache 24h)
+    setTimeout(() => fetchNationalEloRatings().catch(e => console.warn('  [NatElo boot]', e.message)), 5000);
+    // Daily refresh
+    setInterval(() => fetchNationalEloRatings().catch(() => {}), _NATELO_TTL);
+
     // Pre-warm Roland Garros bracket cache (ATP+WTA) — fire-and-forget post-boot.
     // Évite la latence ~1-3s du calcul Monte Carlo au premier hit utilisateur.
     setTimeout(() => {
