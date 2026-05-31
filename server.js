@@ -17181,6 +17181,8 @@ const DISCORD_FOOT_WEBHOOK_URL = process.env.DISCORD_FOOT_WEBHOOK_URL || DISCORD
 // Canal domination tennis + cote ≤ 1.30 (env var ou URL directe DG)
 const DISCORD_TENNIS_DOMINATION_ODDS_URL = process.env.DISCORD_TENNIS_DOMINATION_ODDS_URL
   || 'https://discord.com/api/webhooks/1510415384778506362/ufpqP-yj0hUNoxosPHeLNvCYIPhJngpzj6xHLPvIOYTphQ67633U7XP0jfy0f8NlbfHf';
+// Canal alertes live DR diff + variance (séparé du morning picks) — vide = silence
+const DISCORD_TENNIS_LIVE_WEBHOOK_URL = process.env.DISCORD_TENNIS_LIVE_WEBHOOK_URL || '';
 
 async function sendDiscordFootAlert(embed) {
   if (!DISCORD_FOOT_WEBHOOK_URL) return false;
@@ -17242,14 +17244,15 @@ async function broadcastAlert(messageHtml, discordEmbed) {
   if (tasks.length) await Promise.allSettled(tasks);
 }
 
-// Tennis live alerts → canal tennis Discord (DISCORD_TENNIS_MORNING_WEBHOOK_URL) + Telegram tennis
+// Tennis live alerts → DISCORD_TENNIS_LIVE_WEBHOOK_URL (séparé morning picks) + Telegram tennis
+// Vide DISCORD_TENNIS_LIVE_WEBHOOK_URL dans .env → silence sur Discord pour Diff DR / Variance DR
 async function broadcastTennisLiveAlert(messageHtml, discordEmbed) {
   const tasks = [];
   if (TELEGRAM_BOT_TOKEN && TENNIS_TELEGRAM_CHAT_IDS.size && messageHtml) {
     tasks.push(broadcastTennisTelegramAlert(messageHtml));
   }
-  if (DISCORD_TENNIS_MORNING_WEBHOOK_URL && discordEmbed) {
-    tasks.push(httpsPost(DISCORD_TENNIS_MORNING_WEBHOOK_URL, { embeds: [discordEmbed] }).catch(e => console.warn('  [Discord:TennisLive]', e.message)));
+  if (DISCORD_TENNIS_LIVE_WEBHOOK_URL && discordEmbed) {
+    tasks.push(httpsPost(DISCORD_TENNIS_LIVE_WEBHOOK_URL, { embeds: [discordEmbed] }).catch(e => console.warn('  [Discord:TennisLive]', e.message)));
   }
   if (tasks.length) await Promise.allSettled(tasks);
 }
