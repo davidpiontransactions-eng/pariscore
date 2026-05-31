@@ -24939,3 +24939,59 @@ async function loadTennisAlerts() {
   }).join('');
 }
 
+function switchAlertTab(tab, btn) {
+  document.querySelectorAll('.ta-subtab').forEach(b => {
+    b.style.borderBottomColor = 'transparent';
+    b.style.color = 'var(--text2)';
+    b.style.fontWeight = 'normal';
+  });
+  btn.style.borderBottomColor = 'var(--green)';
+  btn.style.color = 'var(--text)';
+  btn.style.fontWeight = '600';
+  document.getElementById('ta-pane-tennis').style.display = tab === 'tennis' ? '' : 'none';
+  document.getElementById('ta-pane-foot').style.display = tab === 'foot' ? '' : 'none';
+  if (tab === 'foot') loadFootAlerts();
+}
+
+async function loadFootAlerts() {
+  const typeF = document.getElementById('fa-filter-type')?.value || '';
+  const outF  = document.getElementById('fa-filter-outcome')?.value || '';
+  const res = await apiFetch('/api/v1/foot/alerts/history?limit=300');
+  if (!res || !res.alerts) return;
+  const kpiEl = document.getElementById('fa-kpis');
+  if (kpiEl) {
+    kpiEl.innerHTML = res.stats.map(s => `
+      <div style="background:var(--bg2);border:1px solid var(--bg4);border-radius:8px;padding:12px 16px;min-width:160px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${s.alert_type.replace(/_/g,' ')} · ${(s.bet_pick||'—').slice(0,20)}</div>
+        <div style="font-size:22px;font-weight:700;color:${s.win_pct>=55?'var(--green)':s.win_pct>=45?'var(--amber)':'var(--red)'}">${s.win_pct!=null?s.win_pct+'%':'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${s.win}W · ${s.loss}L · ${s.pending}⏳ (${s.total} total)</div>
+      </div>`).join('');
+  }
+  const tbody = document.getElementById('fa-tbody');
+  if (!tbody) return;
+  let rows = res.alerts;
+  if (typeF) rows = rows.filter(r => r.alert_type === typeF);
+  if (outF)  rows = rows.filter(r => r.outcome === outF);
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text2)">Aucune alerte</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const dt = new Date(r.fired_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const oc = r.outcome==='WIN'?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS':'⏳';
+    const ocColor = r.outcome==='WIN'?'var(--green)':r.outcome==='LOSS'?'var(--red)':'var(--text2)';
+    const typeLabel = {'live_intensity':'🔥 Intensité','live_pressure':'📈 Pression','live_poisson':'📐 Poisson','morning_picks':'🌅 Morning','xg_intensity':'⚡ xG'}[r.alert_type]||r.alert_type;
+    return `<tr>
+      <td style="font-size:11px;color:var(--text2)">${dt}</td>
+      <td><span style="font-size:11px">${typeLabel}</span></td>
+      <td style="font-size:12px">${r.home_team||'?'} vs ${r.away_team||'?'}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.league||'—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.live_score||'—'}</td>
+      <td style="text-align:center">${r.live_minute!=null?r.live_minute+"'":'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.trigger_kind||'—'} ${r.trigger_value!=null?r.trigger_value:''}</td>
+      <td style="font-size:12px;font-weight:600">${r.bet_pick||'—'}</td>
+      <td style="text-align:center">${r.bet_prob!=null?r.bet_prob+'%':'—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.bet_odds!=null?r.bet_odds.toFixed(2):'—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.final_score||'⏳'}</td>
+      <td style="font-weight:700;color:${ocColor}">${oc}</td>
+    </tr>`;
+  }).join('');
+}
+
