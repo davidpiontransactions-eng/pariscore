@@ -765,6 +765,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
   if (pageId === 'cs2') initCs2Page();
+  if (pageId === 'tennis-alerts') loadTennisAlerts();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -24894,4 +24895,47 @@ function renderComparateur(d) {
   }
 
 })();
+
+// ─── Tennis Alerts History — onglet page-tennis-alerts ───────────────────────
+async function loadTennisAlerts() {
+  const typeF = (document.getElementById('ta-filter-type') || {}).value || '';
+  const outF  = (document.getElementById('ta-filter-outcome') || {}).value || '';
+  const res = await apiFetch('/api/v1/tennis/alerts/history?limit=300');
+  if (!res || !res.alerts) return;
+  const kpiEl = document.getElementById('ta-kpis');
+  if (kpiEl) {
+    kpiEl.innerHTML = res.stats.map(s => `
+      <div style="background:var(--bg2);border:1px solid var(--bg4);border-radius:8px;padding:12px 16px;min-width:160px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${s.alert_type.replace(/_/g,' ')} · ${(s.bet_type||'').replace(/_/g,' ')}</div>
+        <div style="font-size:22px;font-weight:700;color:${s.win_pct>=55?'var(--green)':s.win_pct>=45?'var(--amber)':'var(--red)'}">${s.win_pct!=null?s.win_pct+'%':'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${s.win}W · ${s.loss}L · ${s.pending}⏳ (${s.total} total)</div>
+      </div>`).join('');
+  }
+  const tbody = document.getElementById('ta-tbody');
+  if (!tbody) return;
+  let rows = res.alerts;
+  if (typeF) rows = rows.filter(r => r.alert_type === typeF);
+  if (outF)  rows = rows.filter(r => r.outcome === outF);
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text2)">Aucune alerte</td></tr>'; return; }
+  const typeLabel = { break_set:'🎯 Break', under_jeu:'📐 Under Jeu', oddspapi_prematch:'📡 OddsPapi', live_set_score:'⚡ Live' };
+  tbody.innerHTML = rows.map(r => {
+    const dt = new Date(r.fired_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const oc = r.outcome==='WIN'?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS':'⏳';
+    const ocColor = r.outcome==='WIN'?'var(--green)':r.outcome==='LOSS'?'var(--red)':'var(--text2)';
+    return `<tr>
+      <td style="font-size:11px;color:var(--text2)">${dt}</td>
+      <td><span style="font-size:11px">${typeLabel[r.alert_type]||r.alert_type}</span></td>
+      <td style="font-size:12px">${r.player1||'?'} vs ${r.player2||'?'}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.tournament||'—'}</td>
+      <td style="text-align:center">S${r.set_num||'?'}</td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.dr_set!=null?Number(r.dr_set).toFixed(2):'—'}</td>
+      <td><span style="font-size:11px;font-weight:600">${(r.bet_type||'—').replace(/_/g,' ')}</span></td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.bet_odds!=null?Number(r.bet_odds).toFixed(2):'—'}</td>
+      <td style="text-align:center">${r.bet_conf!=null?r.bet_conf+'%':'—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.score_at_alert||'—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono)">${r.set_score_final||'⏳'}</td>
+      <td style="font-weight:700;color:${ocColor}">${oc}</td>
+    </tr>`;
+  }).join('');
+}
 
