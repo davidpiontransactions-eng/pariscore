@@ -21012,8 +21012,11 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             const _g1u = parseInt(_curSSU.p1) || 0;
             const _g2u = parseInt(_curSSU.p2) || 0;
             if (_g1u !== 1 || _g2u !== 1) throw new Error('skip'); // 1-1 exact seulement
-            // p_dom : probabilité de gagner chaque jeu pour le joueur dominant (DR-based)
-            const _drU   = Number.isFinite(drBase2.dr) ? drBase2.dr : 1;
+            // p_dom : probabilité de gagner chaque jeu pour le joueur dominant (DR set en cours)
+            const _bySetU   = drBase2.dr_by_set || {};
+            const _drSetCur = _bySetU[_mSetsU.length]?.dr;
+            const _drU      = Number.isFinite(_drSetCur) ? _drSetCur : (Number.isFinite(drBase2.dr) ? drBase2.dr : 1);
+            if (_drU < 2.0 && (1 / _drU) < 2.0) throw new Error('skip'); // DR set en cours < 2.0 → pas de domination suffisante
             const _drDom = Math.max(_drU, 1 / _drU); // toujours >= 1
             const _pDom  = Math.min(0.95, 0.63 + (_drDom - 1) * 0.14);
             const _pSub  = 1 - _pDom;
@@ -21034,7 +21037,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             const _ckU = `tndr_under_games:${m.id}:s${_setNumU}`;
             if (_tnAlertOnCooldown(_ckU, 30 * 60 * 1000)) throw new Error('skip');
             _tnAlertMark(_ckU);
-            const _domSideU = drBase2.dr >= 1 ? 'p1' : 'p2';
+            const _domSideU = _drU >= 1 ? 'p1' : 'p2';
             const _domNameU = _domSideU === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
             const _domOddsU = Number.isFinite(_domSideU === 'p1' ? m.odds_player1 : m.odds_player2)
               ? (_domSideU === 'p1' ? m.odds_player1 : m.odds_player2) : null;
@@ -21045,7 +21048,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
               description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Score **1-1** (2 tenues service)`,
               color:       0x7209b7,
               fields: [
-                { name: '📐 DR match',   value: `**${_drU.toFixed(2)}** — ${_domNameU} domine`,                                 inline: true },
+                { name: `📐 DR set ${_setNumU}`,   value: `**${_drU.toFixed(2)}** — ${_domNameU} domine${Number.isFinite(_drSetCur) ? '' : ' (fallback match)'}`,  inline: true },
                 { name: '🎯 P/jeu dom', value: `**${(_pDom * 100).toFixed(1)}%**`,                                             inline: true },
                 { name: '🏆 Dominant',  value: `**${_domNameU}**${_domOddsU ? ` @ **${_domOddsU.toFixed(2)}**` : ''}`,        inline: true },
                 ...(_hasU75 ? [{ name: '✅ Under 7.5 jeux', value: `Cote calc. **${_oU75}** ≤1.20 · Conf **${Math.round(_pU75 * 100)}%**\nSet expédié 6-1`, inline: false }] : []),
