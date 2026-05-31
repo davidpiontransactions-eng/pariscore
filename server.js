@@ -17285,6 +17285,9 @@ const DISCORD_TENNIS_DOMINATION_ODDS_URL = process.env.DISCORD_TENNIS_DOMINATION
 // Canal Bets Prédictifs Football — prematch matchday + live Poisson 5min
 const DISCORD_FOOT_BETS_WEBHOOK_URL = process.env.DISCORD_FOOT_BETS_WEBHOOK_URL
   || 'https://discord.com/api/webhooks/1510636692783104141/LKqluoXnfh5RyIlH-_G40weFmvzvmVsMKErlqfB7OOK-BimHcW3hR6e1h7kPpYzyWL8w';
+// Canal Tennis Break Set — DR moyen set ≥2 + 1 break d'écart + cote >1.15
+const DISCORD_TENNIS_BREAK_SET_URL = process.env.DISCORD_TENNIS_BREAK_SET_URL
+  || 'https://discord.com/api/webhooks/1509918685299609803/ajyv7cTN8SNF6zeraF-X4uWHegYRXUvOBUzU_BHyFLA2VpxmbQ3DjAC92MTFrbtJHO-a';
 // Canal alertes live DR diff + variance (séparé du morning picks) — vide = silence
 const DISCORD_TENNIS_LIVE_WEBHOOK_URL = process.env.DISCORD_TENNIS_LIVE_WEBHOOK_URL || '';
 
@@ -20655,6 +20658,68 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
               }
             }
           } catch (_eDom) { /* swallow */ }
+
+          // ── Alerte DR Break Set — DR moyen set ≥2 + 1 break d'écart + cote >1.15 ──────
+          // Bets : Under 12.5 jeux (cote fair ≥1.20) ET/OU Gagne le set (cote ≥1.15)
+          try {
+            // 1. DR moyen sur sets — Sofascore dr_by_set priorité, fallback global DR
+            const _bySetBrk  = drBase2.dr_by_set || {};
+            const _setVals   = Object.values(_bySetBrk).filter(s => Number.isFinite(s?.dr));
+            const _drAvgSet  = _setVals.length
+              ? parseFloat((_setVals.reduce((sum, s) => sum + s.dr, 0) / _setVals.length).toFixed(3))
+              : (Number.isFinite(drBase2.dr) ? drBase2.dr : null);
+            if (!_drAvgSet || _drAvgSet < 2.0) throw new Error('skip');
+            // 2. Score set en cours — dernier entry de m.sets[]
+            const _mSets     = Array.isArray(m.sets) ? m.sets : [];
+            const _curSS     = _mSets.length ? _mSets[_mSets.length - 1] : null;
+            if (!_curSS) throw new Error('skip');
+            const _g1        = parseInt(_curSS.p1) || 0;
+            const _g2        = parseInt(_curSS.p2) || 0;
+            const _gap       = _g1 - _g2; // >0 → P1 devant
+            if (Math.abs(_gap) < 2) throw new Error('skip'); // pas encore 1 break d'écart
+            // 3. Aligner dominant DR avec leader du set
+            const _domSideBrk  = drBase2.dr >= 1 ? 'p1' : 'p2';
+            const _domLeads    = (_domSideBrk === 'p1' && _gap > 0) || (_domSideBrk === 'p2' && _gap < 0);
+            if (!_domLeads) throw new Error('skip');
+            const _domNameBrk  = _domSideBrk === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
+            const _domOddsBrk  = _domSideBrk === 'p1' ? m.odds_player1 : m.odds_player2;
+            if (!Number.isFinite(_domOddsBrk) || _domOddsBrk <= 1.15) throw new Error('skip');
+            // 4. Cooldown 20min
+            const _ckBrk = `tndr_break_set:${m.id}`;
+            if (_tnAlertOnCooldown(_ckBrk, 20 * 60 * 1000)) throw new Error('skip');
+            _tnAlertMark(_ckBrk);
+            // 5. Confiances
+            const _tot       = _g1 + _g2;
+            const _gAhead    = Math.abs(_gap);
+            const _confU125  = _tot <= 6 ? 82 : _tot <= 8 ? 75 : 68;
+            const _iU125     = parseFloat((100 / _confU125).toFixed(2));
+            const _confSet   = Math.min(88, Math.round(65 + (_drAvgSet - 2.0) * 8 + _gAhead * 3));
+            const _iSet      = parseFloat((100 / _confSet).toFixed(2));
+            const _setStr    = _mSets.map((s, i) => `S${i + 1}: ${s.p1}-${s.p2}`).join(' | ');
+            const _curSetNum = _mSets.length;
+            const _emb2      = {
+              title:       `🎾 BREAK ALERT — DR Moy. ${_drAvgSet.toFixed(2)} + Break | Set ${_curSetNum}`,
+              description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Set ${_curSetNum}: **${_g1}-${_g2}**`,
+              color:       0x00b4d8,
+              fields: [
+                { name: '🏆 Dominant',       value: `**${_domNameBrk}**`,                              inline: true },
+                { name: '📐 DR moyen set',   value: `**${_drAvgSet.toFixed(2)}** ≥2.0 ✅`,             inline: true },
+                { name: '💰 Cote match',     value: `**${_domOddsBrk.toFixed(2)}** >1.15 ✅`,          inline: true },
+                { name: '🎾 Score set',      value: `**${_g1}-${_g2}** (${_gAhead} jeu(x) écart)`,    inline: true },
+                { name: '📊 Sets',           value: _setStr || `Set 1 en cours`,                       inline: true },
+                { name: '📡 Src DR',         value: _drSrc,                                            inline: true },
+                { name: '🎯 BET 1 — Under 12.5 jeux', value: `Conf **${_confU125}%** · Cote fair **${_iU125}**\nDR ≥2 + break → set rapide attendu`,           inline: false },
+                { name: '🎯 BET 2 — Gagne le set',    value: `**${_domNameBrk}** · Conf **${_confSet}%** · Cote fair **${_iSet}**\nVérifier cote bookie ≥1.15`, inline: false },
+              ],
+              footer:      { text: `DR moyen ≥2.0 + 1 break écart + cote >1.15 | Cooldown 20min | ${m.tournament}` },
+              timestamp:   new Date().toISOString(),
+            };
+            if (DISCORD_TENNIS_BREAK_SET_URL) {
+              httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_emb2] })
+                .catch(e => console.warn('  [Tennis:BreakSet]', e.message));
+            }
+            console.log(`  [Tennis:BreakSet] ${m.id} dom=${_domNameBrk} drAvg=${_drAvgSet} set=${_g1}-${_g2} cote=${_domOddsBrk.toFixed(2)}`);
+          } catch (_eBrk) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis:BreakSet]', _eBrk.message); }
 
           // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
           const drGapSigned = drBase2.dr - 1.0;
