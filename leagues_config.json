@@ -83,6 +83,27 @@
     { "id": 143,  "name": "Copa del Rey",         "country": "Spain",          "type": "CUP","odds_key": "soccer_spain_copa_del_rey",                    "cron_hours": 24, "sofa_id": null },
     { "id": 81,   "name": "DFB Pokal",            "country": "Germany",        "type": "CUP","odds_key": "soccer_germany_dfb_pokal",                     "cron_hours": 24, "sofa_id": null },
     { "id": 73,   "name": "Copa do Brasil",       "country": "Brazil",         "type": "CUP","odds_key": "soccer_brazil_copa_do_brasil",                 "cron_hours": 24, "sofa_id": null },
-    { "id": 999,  "name": "World Cup 2026",       "country": "International",  "type": "CUP","odds_key": "soccer_fifa_world_cup",                        "cron_hours": 12, "sofa_id": null }
+    { "id": 999,  "name": "World Cup 2026",       "country": "International",  "type": "CUP","odds_key": "soccer_fifa_world_cup",                        "cron_hours": 12, "sofa_id": null },
+    { "id": 6,   "name": "Africa Cup of Nations",              "country": "Africa",        "type": "CUP","odds_key": "soccer_africa_nations_cup",                    "cron_hours": 24, "sofa_id": null },
+    { "id": 10,  "name": "Int. Friendly Games",                "country": "International", "type": "T2", "odds_key": "soccer_international_friendlies",              "cron_hours": 24, "sofa_id": null },
+    { "id": 558, "name": "Liga F",                             "country": "Spain",         "type": "T1", "odds_key": "soccer_spain_liga_f",                          "cron_hours": 24, "sofa_id": null },
+    { "id": 108, "name": "Puchar Polski",                      "country": "Poland",        "type": "CUP","odds_key": "soccer_poland_cup",                            "cron_hours": 24, "sofa_id": null },
+    { "id": 202, "name": "Tunisian Ligue Pro 1",               "country": "Tunisia",       "type": "T1", "odds_key": "soccer_tunisia_ligue_1",                       "cron_hours": 24, "sofa_id": null },
+    { "id": 575, "name": "Coupe de Tunisie",                   "country": "Tunisia",       "type": "CUP","odds_key": "soccer_tunisia_cup",                           "cron_hours": 24, "sofa_id": null },
+    { "id": 100, "name": "Emperor Cup",                        "country": "Japan",         "type": "CUP","odds_key": "soccer_japan_emperor_cup",                     "cron_hours": 24, "sofa_id": null },
+    { "id": 246, "name": "Suomen Cup",                         "country": "Finland",       "type": "CUP","odds_key": "soccer_finland_cup",                           "cron_hours": 24, "sofa_id": null },
+    { "id": 436, "name": "Nigeria Premier Football League",    "country": "Nigeria",       "type": "T1", "odds_key": "soccer_nigeria_premier_league",                "cron_hours": 24, "sofa_id": null },
+    { "id": 34,  "name": "WC Qual. UEFA",                      "country": "Europe",        "type": "T1", "odds_key": "soccer_fifa_world_cup_qualifier_uefa",         "cron_hours": 24, "sofa_id": null },
+    { "id": 30,  "name": "WC Qual. CONMEBOL",                  "country": "South America", "type": "T1", "odds_key": "soccer_fifa_world_cup_qualifier_conmebol",     "cron_hours": 24, "sofa_id": null },
+    { "id": 31,  "name": "WC Qual. CAF",                       "country": "Africa",        "type": "T1", "odds_key": "soccer_fifa_world_cup_qualifier_caf",          "cron_hours": 24, "sofa_id": null },
+    { "id": 32,  "name": "WC Qual. AFC",                       "country": "Asia",          "type": "T1", "odds_key": "soccer_fifa_world_cup_qualifier_afc",          "cron_hours": 24, "sofa_id": null },
+    { "id": 33,  "name": "WC Qual. CONCACAF",                  "country": "North America", "type": "T1", "odds_key": "soccer_fifa_world_cup_qualifier_concacaf",     "cron_hours": 24, "sofa_id": null },
+    { "id": 35,  "name": "WC Qual. OFC",                       "country": "Oceania",       "type": "T1", "odds_key": "soccer_fifa_world_cup_qualifier_ofc",          "cron_hours": 24, "sofa_id": null },
+    { "id": 5,   "name": "UEFA Nations League",                "country": "Europe",        "type": "T1", "odds_key": "soccer_uefa_nations_league",                   "cron_hours": 24, "sofa_id": null },
+    { "id": 683, "name": "CONCACAF Nations League",            "country": "North America", "type": "T1", "odds_key": "soccer_concacaf_nations_league",               "cron_hours": 24, "sofa_id": null },
+    { "id": 4,   "name": "UEFA Euro 2024",                     "country": "Europe",        "type": "CUP","odds_key": "soccer_uefa_euro",                             "cron_hours": 24, "sofa_id": null },
+    { "id": 9,   "name": "Copa America 2024",                  "country": "South America", "type": "CUP","odds_key": "soccer_conmebol_copa_america",                 "cron_hours": 24, "sofa_id": null },
+    { "id": 36,  "name": "AFC Asian Cup 2023",                 "country": "Asia",          "type": "CUP","odds_key": "soccer_afc_asian_cup",                         "cron_hours": 24, "sofa_id": null },
+    { "id": 1,   "name": "CONCACAF Gold Cup 2025",             "country": "North America", "type": "CUP","odds_key": "soccer_concacaf_gold_cup",                     "cron_hours": 24, "sofa_id": null }
   ]
 }
