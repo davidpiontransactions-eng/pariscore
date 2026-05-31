@@ -24436,14 +24436,27 @@ function renderComparateur(d) {
     }
 
     // ── Score center ─────────────────────────────────────────────────────
+    function _mapDots(n1, n2, bo) {
+      var toWin = Math.ceil((bo || 3) / 2);
+      var h = '<div class="cs2-map-dots"><div class="cs2-dots-side">';
+      for (var _i = 0; _i < toWin; _i++) h += '<span class="cs2-dot' + (_i < n1 ? ' d-t1' : '') + '"></span>';
+      h += '</div><span class="cs2-dot-sep"></span><div class="cs2-dots-side">';
+      for (var _j = 0; _j < toWin; _j++) h += '<span class="cs2-dot' + (_j < n2 ? ' d-t2' : '') + '"></span>';
+      return h + '</div></div>';
+    }
     var scoreHtml, subHtml = '';
     if (maps.team1 != null && maps.team2 != null) {
-      scoreHtml = '<div class="cs2-map-score">' + maps.team1 + '–' + maps.team2 + '</div>';
+      scoreHtml = _mapDots(maps.team1, maps.team2, m.best_of || 3);
       if (isLive && rounds.team1 != null) {
-        subHtml = '<div class="cs2-round-score">' + rounds.team1 + '–' + rounds.team2 + ' rds</div>';
+        subHtml = '<div class="cs2-round-score"><span class="cs2-rds-t1">' + rounds.team1 + '</span>' +
+          '<span style="color:var(--text3,#5a6068);margin:0 2px">–</span>' +
+          '<span class="cs2-rds-t2">' + rounds.team2 + '</span>' +
+          '<span style="color:var(--text3,#5a6068);margin-left:3px;font-size:9px">rds</span></div>';
       }
     } else if (isLive && rounds.team1 != null && rounds.team2 != null) {
-      scoreHtml = '<div class="cs2-map-score">' + rounds.team1 + '–' + rounds.team2 + '</div>';
+      scoreHtml = '<div class="cs2-map-score"><span class="cs2-rds-t1">' + rounds.team1 +
+        '</span><span style="color:var(--text3,#5a6068)">–</span><span class="cs2-rds-t2">' +
+        rounds.team2 + '</span></div>';
       subHtml   = '<div class="cs2-round-score">rds en cours</div>';
     } else {
       scoreHtml = '<div class="cs2-vs-txt">BO' + (m.best_of || 3) + '</div>';
@@ -24459,14 +24472,15 @@ function renderComparateur(d) {
         ? '<span class="cs2-value-flag">' + _esc(mapAdv.value_flag) + '</span>' : '';
       var mapNumTag = m.map_number
         ? '<span class="cs2-map-num" style="margin-left:4px;opacity:.6;">M' + m.map_number + '</span>' : '';
-      // Over model — fetched async, injected by data-model-id
+      var mapCls = 'map-' + (m.current_map).toLowerCase().replace(/[^a-z]/g, '');
+      var advCls = mapAdv && mapAdv.advantage !== 'neutral'
+        ? (mapAdv.advantage === 'team1' ? ' adv-t1' : ' adv-t2') : '';
       var modelId = 'cs2-model-' + _esc(m.id);
-      mapBarHtml = '<div class="cs2-map-bar">' +
+      mapBarHtml = '<div class="cs2-map-bar ' + mapCls + advCls + '">' +
         '<span class="cs2-map-label">🗺 ' + _esc(m.current_map) + '</span>' +
         mapNumTag + valueFlag +
         '<span class="cs2-over-model" id="' + modelId + '" style="margin-left:auto;opacity:.5;font-size:10px;">…</span>' +
         '</div>';
-      // Async fetch model (non-blocking)
       _fetchMapOverModel(m.id, m.team1.name, m.team2.name, m.current_map, modelId);
     }
 

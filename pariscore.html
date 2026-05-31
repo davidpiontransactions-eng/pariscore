@@ -18348,6 +18348,27 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 .cs2-map-label { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text2,#8d9399); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .cs2-map-num { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); }
 .cs2-value-flag { font-family:'DM Mono',monospace; font-size: 10px; font-weight: 700; color: #00e676; margin-left: auto; }
+/* Map atmosphere — per-map color tint on the bar */
+.cs2-map-bar.map-mirage  { background: linear-gradient(90deg, rgba(120,90,40,0.10) 0%, var(--bg3,#181c20) 70%); }
+.cs2-map-bar.map-inferno { background: linear-gradient(90deg, rgba(200,60,10,0.12) 0%, var(--bg3,#181c20) 70%); }
+.cs2-map-bar.map-nuke    { background: linear-gradient(90deg, rgba(30,160,100,0.10) 0%, var(--bg3,#181c20) 70%); }
+.cs2-map-bar.map-ancient { background: linear-gradient(90deg, rgba(60,130,70,0.10) 0%, var(--bg3,#181c20) 70%); }
+.cs2-map-bar.map-anubis  { background: linear-gradient(90deg, rgba(180,140,40,0.12) 0%, var(--bg3,#181c20) 70%); }
+.cs2-map-bar.map-vertigo { background: linear-gradient(90deg, rgba(40,100,200,0.10) 0%, var(--bg3,#181c20) 70%); }
+.cs2-map-bar.map-dust2   { background: linear-gradient(90deg, rgba(200,160,80,0.10) 0%, var(--bg3,#181c20) 70%); }
+/* Map advantage glow on left border */
+.cs2-map-bar.adv-t1 { border-left: 2px solid #FF6B00; padding-left: 8px; box-shadow: inset 3px 0 10px rgba(255,107,0,0.10); }
+.cs2-map-bar.adv-t2 { border-left: 2px solid #3b82f6; padding-left: 8px; box-shadow: inset 3px 0 10px rgba(59,130,246,0.10); }
+/* Series score dots */
+.cs2-map-dots { display: flex; align-items: center; gap: 7px; }
+.cs2-dots-side { display: flex; gap: 4px; }
+.cs2-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bg4,#1e2328); border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; transition: box-shadow 0.2s; }
+.cs2-dot.d-t1 { background: #FF6B00; border-color: rgba(255,107,0,0.9); box-shadow: 0 0 6px rgba(255,107,0,0.65); }
+.cs2-dot.d-t2 { background: #3b82f6; border-color: rgba(59,130,246,0.9); box-shadow: 0 0 6px rgba(59,130,246,0.65); }
+.cs2-dot-sep { width: 1px; height: 13px; background: var(--bg4,#1e2328); margin: 0 1px; }
+/* CT/T round score colors */
+.cs2-rds-t1 { color: #FF6B00; font-weight: 700; }
+.cs2-rds-t2 { color: #3b82f6; font-weight: 700; }
 /* Footer */
 .cs2-card-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--bg4,#1e2328); flex-wrap: wrap; gap: 6px; }
 .cs2-odds-row { display: flex; gap: 5px; }
