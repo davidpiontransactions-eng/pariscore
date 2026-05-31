@@ -20603,7 +20603,7 @@ async function pollTennisLive() {
                 const _dDR   = _dSide === 'p1' ? _drI_p1 : _drI_p2;
                 if (_dOdds != null && Number.isFinite(_dOdds) && _dOdds >= 1.2 && _dOdds <= 1.8) {
                   const _ok = `tndr_odds13:${m.id}`;
-                  if (!_tnAlertOnCooldown(_ok, 5 * 60 * 1000)) {
+                  if (!_tnAlertOnCooldown(_ok, 20 * 60 * 1000)) {
                     _tnAlertMark(_ok);
                     const _ls   = `${m.player1_sets || 0}-${m.player2_sets || 0}`;
                     const _p1sS = Number.isFinite(_p1sN) ? _p1sN.toFixed(1) + '%' : '--';
@@ -20630,7 +20630,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.20' : ''}`, inline: true },
                         { name: '🏟 Tournoi',    value: m.tournament || 'N/A',                 inline: true },
                         { name: '📡 Src DR',     value: _drSrc,                               inline: true },
                       ],
-                      footer: { text: `DR=ret%/(100-serv%) | seuil >=1.20 + cote 1.20-1.80 | Cooldown 5min | ${m.tournament}` },
+                      footer: { text: `DR=ret%/(100-serv%) | seuil >=1.20 + cote 1.20-1.80 | Cooldown 20min (~4 jeux) | ${m.tournament}` },
                       timestamp: new Date().toISOString(),
                     };
                     if (DISCORD_TENNIS_DOMINATION_ODDS_URL) {
