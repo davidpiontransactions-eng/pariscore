@@ -21063,6 +21063,81 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             console.log(`  [Tennis:UnderGames] ${m.id} 1-1 DR=${_drU.toFixed(2)} pDom=${(_pDom*100).toFixed(0)}% U75_odd=${_oU75} U85_odd=${_oU85}`);
           } catch (_eUG) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis:UnderGames]', _eUG.message); }
 
+          // ── Alerte OddsPapi LIVE — Score 2-0 ou 0-2 dans le set ──────────────
+          // Trigger : score EXACT 2-0 ou 0-2 dans le set en cours (début de dominance)
+          // Check : cotes OddsPapi in-play Over 7.5 / Over 8.5 / Under 12.5 ∈ [1.10-1.30]
+          // Intérêt : signal combiné score + Pinnacle confirme set rapide
+          if (ODDSPAPI_V4_KEY() && DISCORD_TENNIS_BREAK_SET_URL) {
+            try {
+              const _mSetsLO = Array.isArray(m.sets) ? m.sets : [];
+              const _curSSLO = _mSetsLO.length ? _mSetsLO[_mSetsLO.length - 1] : null;
+              if (!_curSSLO) throw new Error('skip');
+              const _g1lo = parseInt(_curSSLO.p1) || 0;
+              const _g2lo = parseInt(_curSSLO.p2) || 0;
+              const _is20 = _g1lo === 2 && _g2lo === 0;
+              const _is02 = _g1lo === 0 && _g2lo === 2;
+              if (!_is20 && !_is02) throw new Error('skip');
+              const _setNumLO = _mSetsLO.length;
+              const _scoreLO  = `${_g1lo}-${_g2lo}`;
+              // Cooldown 30min par match + set + score (évite re-fire si score reste 2-0)
+              const _ckLO = `oddspapi_live_setal:${m.id}:s${_setNumLO}:${_scoreLO}`;
+              if (_tnAlertOnCooldown(_ckLO, 30 * 60 * 1000)) throw new Error('skip');
+              // Résoudre fixture OddsPapi (cache — cherche index avant appel réseau)
+              const _fxCached = _oddspapiFxIndex.get(String(m.id));
+              const _hasFxCache = _fxCached && (Date.now() - _fxCached.ts) < ODDSPAPI_V4_TTL;
+              if (!_hasFxCache && !m.tournament) throw new Error('skip'); // skip si pas de tournoi sans cache
+              // Construire matchData compatible avec _oddspapiResolveFixtureId
+              const _mdLO = {
+                id: m.id,
+                player1: m.player1 || {},
+                player2: m.player2 || {},
+                tournament: { name: m.tournament || '' },
+                circuit: m.circuit || '',
+              };
+              // Async : ne bloque pas le poll principal
+              (async () => {
+                try {
+                  const _fxId = await _oddspapiResolveFixtureId(_mdLO);
+                  if (!_fxId) return;
+                  const _odds = await fetchOddspapiTennisSetOdds(_fxId);
+                  if (!_odds || (!_odds.set1.length && !_odds.set2.length)) return;
+                  // Vérifier critères sur le set en cours
+                  const _setLines = _setNumLO === 1 ? _odds.set1 : _odds.set2;
+                  if (!_setLines || !_setLines.length) return;
+                  const _hits = [];
+                  for (const cfg of ODDSPAPI_ALERT_LINES) {
+                    const _sl = _setLines.find(s => s.line === cfg.line);
+                    if (!_sl) continue;
+                    const _pr = _sl[cfg.field];
+                    if (!_pr || _pr < ODDSPAPI_ALERT_MIN || _pr > ODDSPAPI_ALERT_MAX) continue;
+                    _hits.push({ ...cfg, price: _pr, bookmaker: _sl.bookmaker });
+                  }
+                  if (!_hits.length) return;
+                  _tnAlertMark(_ckLO); // armer cooldown maintenant (après vérification)
+                  const _leaderLO = _is20 ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
+                  const _hitsStr  = _hits.map(h => `**${h.label}** @ **${h.price.toFixed(2)}** [${h.bookmaker}]`).join('\n');
+                  const _h2hStr   = _odds.h2h ? `P1 **${_odds.h2h.p1?.toFixed(2) || '?'}** · P2 **${_odds.h2h.p2?.toFixed(2) || '?'}** [${_odds.h2h.bookmaker}]` : '—';
+                  const _embLO = {
+                    title:       `🎾 LIVE SET ALERT — Score ${_scoreLO} · Set ${_setNumLO} · OddsPapi ✅`,
+                    description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}**`,
+                    color:       0xffa500,
+                    fields: [
+                      { name: '🏆 Mène',        value: `**${_leaderLO}** mène **${_scoreLO}** Set ${_setNumLO}`,  inline: true  },
+                      { name: '🏟 Tournoi',     value: m.tournament || '?',                                        inline: true  },
+                      { name: '🎲 H2H Pinnacle',value: _h2hStr,                                                    inline: false },
+                      { name: '📊 Signaux OddsPapi', value: _hitsStr,                                              inline: false },
+                    ],
+                    footer:    { text: `Score ${_scoreLO} LIVE + OddsPapi ∈ [${ODDSPAPI_ALERT_MIN}-${ODDSPAPI_ALERT_MAX}] | Cooldown 30min | ${m.id}` },
+                    timestamp: new Date().toISOString(),
+                  };
+                  httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_embLO] })
+                    .catch(e => console.warn('  [OddsPapi:LiveSet]', e.message));
+                  console.log(`  [OddsPapi:LiveSet] ${m.id} score ${_scoreLO} S${_setNumLO} hits:${_hits.map(h=>h.label+'@'+h.price).join(',')}`);
+                } catch (_e2) { /* silencieux */ }
+              })();
+            } catch (_eLO) { /* skip silencieux */ }
+          }
+
           // Écart DR entre les 2 joueurs (DR = p1_total/p2_total → |DR-1| = avantage relatif)
           const drGapSigned = drBase2.dr - 1.0;
           const drGapAbs    = Math.abs(drGapSigned);
