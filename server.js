@@ -2466,7 +2466,7 @@ function _isNationalTeamMatch(m) {
   const key = (m._sport || m.sport_key || m.sport || '').toLowerCase();
   if (_NATELO_SPORT_KEYS.has(key)) return true;
   const league = (m.league || m.league_name || '').toLowerCase();
-  return /world.?cup|coupe.?du.?monde|nations.?league|euro.?20\d\d|copa.?america|afcon|gold.?cup|asian.?cup/i.test(league);
+  return /world.?cup|coupe.?du.?monde|nations.?league|euro.?20\d\d|copa.?america|afcon|gold.?cup|asian.?cup|international.?friend|amical.?international|friendly.?game/i.test(league);
 }
 
 // Find Sofascore team ID by name — cached 7 days
@@ -7994,6 +7994,10 @@ function buildFallbackMatchRecord(raw) {
     _fd_match_id: raw._fd_match_id || null,
     _fd_competition: raw._fd_competition || null,
     _no_odds: true,
+    ...(_isNationalTeamMatch(raw) ? (() => {
+      const hE = getNationalElo(raw.home_team), aE = getNationalElo(raw.away_team);
+      return { elo_home: hE?.elo||null, elo_home_rank: hE?.rank||null, elo_away: aE?.elo||null, elo_away_rank: aE?.rank||null };
+    })() : {}),
   };
 }
 
