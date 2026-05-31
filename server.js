@@ -2331,6 +2331,62 @@ function _drAttachCurrentSet(dr, curSet) {
   return { ...dr, dr_set_courant: cur };
 }
 
+// ─── Tennis Alerts History — SQLite tracking + outcome verification ───────────
+function saveTennisAlert(data) {
+  if (!sqldb) return;
+  try {
+    sqldb.prepare(`INSERT INTO tennis_alerts
+      (fired_at, alert_type, match_id, player1, player2, tournament, set_num, dr_set, bet_type, bet_odds, bet_conf, score_at_alert)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      Date.now(), data.alert_type, data.match_id || null,
+      data.player1 || null, data.player2 || null, data.tournament || null,
+      data.set_num || null, data.dr_set || null,
+      data.bet_type || null, data.bet_odds || null, data.bet_conf || null,
+      data.score_at_alert || null
+    );
+  } catch (e) { console.warn('[TennisAlerts] saveTennisAlert:', e.message); }
+}
+
+function verifyPendingTennisAlerts(liveMatches) {
+  if (!sqldb) return;
+  try {
+    const pending = sqldb.prepare(`SELECT * FROM tennis_alerts WHERE outcome='PENDING' AND fired_at > ? ORDER BY fired_at DESC LIMIT 200`)
+      .all(Date.now() - 7 * 24 * 3600 * 1000);
+    if (!pending.length) return;
+    const matchMap = new Map();
+    for (const m of (liveMatches || [])) {
+      if (m.id) matchMap.set(String(m.id), m);
+    }
+    for (const alert of pending) {
+      const m = matchMap.get(String(alert.match_id));
+      if (!m) continue;
+      const sets = Array.isArray(m.sets) ? m.sets : [];
+      const setIdx = (alert.set_num || 1) - 1;
+      const setData = sets[setIdx];
+      if (!setData) continue;
+      const g1 = parseInt(setData.p1) || 0, g2 = parseInt(setData.p2) || 0;
+      const total = g1 + g2;
+      const setComplete = (setIdx < sets.length - 1) || !m.is_live;
+      if (!setComplete) continue;
+      const setFinal = `${g1}-${g2}`;
+      let outcome = 'VOID';
+      if (alert.bet_type === 'under_7.5') outcome = total <= 7 ? 'WIN' : 'LOSS';
+      else if (alert.bet_type === 'under_8.5') outcome = total <= 8 ? 'WIN' : 'LOSS';
+      else if (alert.bet_type === 'under_12.5') outcome = total <= 12 ? 'WIN' : 'LOSS';
+      else if (alert.bet_type === 'over_7.5') outcome = total > 7 ? 'WIN' : 'LOSS';
+      else if (alert.bet_type === 'over_8.5') outcome = total > 8 ? 'WIN' : 'LOSS';
+      else if (alert.bet_type === 'gagne_set') {
+        const p1Wins = g1 > g2;
+        const p1Dominant = (alert.dr_set || 1) >= 1;
+        outcome = (p1Dominant && p1Wins) || (!p1Dominant && !p1Wins) ? 'WIN' : 'LOSS';
+      }
+      sqldb.prepare(`UPDATE tennis_alerts SET outcome=?, set_score_final=?, verified_at=? WHERE id=?`)
+        .run(outcome, setFinal, Date.now(), alert.id);
+      console.log(`  [TennisAlerts] ✓ alert#${alert.id} ${alert.bet_type} set${alert.set_num} ${setFinal} → ${outcome}`);
+    }
+  } catch (e) { console.warn('[TennisAlerts] verifyPending:', e.message); }
+}
+
 // Calcule le DR (Dominance Ratio) directement depuis les stats BSD du match live.
 // Synchrone, clé = match id (pas de lookup par nom Sofascore → robuste).
 // Fallback quand _sofaLiveIdx ne matche pas les noms BSD/ESPN.
@@ -3005,6 +3061,7 @@ async function pollOddspapiTennisSetOddsAlerts() {
             };
             httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [embed] })
               .catch(e => console.warn('  [OddsPapi:Alert] Discord échec:', e.message));
+            saveTennisAlert({ alert_type:'oddspapi_prematch', player1:p1Name, player2:p2Name, tournament:tourLabel, set_num:setNum, bet_type:cfg.direction==='over'?`over_${cfg.line}`:`under_${cfg.line}`, bet_odds:price, bet_conf:pricePct });
             console.log(`  [OddsPapi:Alert] ✅ ${p1Name} vs ${p2Name} Set${setNum} ${cfg.label} @ ${price} [${match.bookmaker}]`);
             fired++;
           }
@@ -5705,6 +5762,27 @@ function initSQLite() {
     sqldb.prepare('INSERT INTO users (email, password_hash, salt, role) VALUES (?, ?, ?, ?)').run(testEmail, th, ts, 'freemium');
     console.log('  ✓ Utilisateur test créé — test@pariscore.fr / Test1234!');
   }
+  // Historique alertes tennis — tracking outcomes par type de pari
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fired_at INTEGER NOT NULL,
+    alert_type TEXT NOT NULL,
+    match_id TEXT,
+    player1 TEXT,
+    player2 TEXT,
+    tournament TEXT,
+    set_num INTEGER,
+    dr_set REAL,
+    bet_type TEXT,
+    bet_odds REAL,
+    bet_conf INTEGER,
+    score_at_alert TEXT,
+    set_score_final TEXT,
+    outcome TEXT NOT NULL DEFAULT 'PENDING',
+    verified_at INTEGER
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_fired ON tennis_alerts(fired_at DESC)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_outcome ON tennis_alerts(outcome)`);
   console.log('  ✓ SQLite initialisé (WAL mode) —', SQLITE_FILE);
 }
 
@@ -21014,6 +21092,8 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
               httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_emb2] })
                 .catch(e => console.warn('  [Tennis:BreakSet]', e.message));
             }
+            saveTennisAlert({ alert_type:'break_set', match_id:m.id, player1:m.player1?.name, player2:m.player2?.name, tournament:m.tournament, set_num:_curSetNum, dr_set:_drAvgSet, bet_type:'under_12.5', bet_conf:_confU125, score_at_alert:`${_g1}-${_g2}` });
+            saveTennisAlert({ alert_type:'break_set', match_id:m.id, player1:m.player1?.name, player2:m.player2?.name, tournament:m.tournament, set_num:_curSetNum, dr_set:_drAvgSet, bet_type:'gagne_set', bet_conf:_confSet, score_at_alert:`${_g1}-${_g2}` });
             console.log(`  [Tennis:BreakSet] ${m.id} dom=${_domNameBrk} drAvg=${_drAvgSet} set=${_g1}-${_g2} cote=${_domOddsBrk.toFixed(2)}`);
           } catch (_eBrk) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis:BreakSet]', _eBrk.message); }
 
@@ -21079,6 +21159,8 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
               httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_emb3] })
                 .catch(e => console.warn('  [Tennis:UnderGames]', e.message));
             }
+            if (_hasU75) saveTennisAlert({ alert_type:'under_jeu', match_id:m.id, player1:m.player1?.name, player2:m.player2?.name, tournament:m.tournament, set_num:_setNumU, dr_set:_drU, bet_type:'under_7.5', bet_odds:_oU75, bet_conf:Math.round(_pU75*100), score_at_alert:'1-1' });
+            if (_hasU85) saveTennisAlert({ alert_type:'under_jeu', match_id:m.id, player1:m.player1?.name, player2:m.player2?.name, tournament:m.tournament, set_num:_setNumU, dr_set:_drU, bet_type:'under_8.5', bet_odds:_oU85, bet_conf:Math.round(_pU85*100), score_at_alert:'1-1' });
             console.log(`  [Tennis:UnderGames] ${m.id} 1-1 DR=${_drU.toFixed(2)} pDom=${(_pDom*100).toFixed(0)}% U75_odd=${_oU75} U85_odd=${_oU85}`);
           } catch (_eUG) { if (process.env.DEBUG_DR === 'true') console.warn('  [Tennis:UnderGames]', _eUG.message); }
 
@@ -21230,6 +21312,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
+    try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
     // bd mpg Phase 2 — On-demand fetch aiscore PBP pour matchs live sans cache.
@@ -32498,6 +32581,24 @@ if (pathname === '/api/v1/tennis/set-odds' && req.method === 'GET') {
     return jsonResponse(res, 502, { error: 'set_odds_error', message: e.message });
   }
 }
+// GET /api/v1/tennis/alerts/history — historique alertes tennis avec stats
+if (pathname === '/api/v1/tennis/alerts/history' && req.method === 'GET') {
+  if (!sqldb) return jsonResponse(res, 503, { error: 'DB unavailable' });
+  const limit = Math.min(500, parseInt(query.limit || '200', 10));
+  const rows = sqldb.prepare(`SELECT * FROM tennis_alerts ORDER BY fired_at DESC LIMIT ?`).all(limit);
+  const stats = {};
+  for (const r of rows) {
+    const k = r.alert_type + ':' + r.bet_type;
+    if (!stats[k]) stats[k] = { alert_type: r.alert_type, bet_type: r.bet_type, total: 0, win: 0, loss: 0, pending: 0 };
+    stats[k].total++;
+    if (r.outcome === 'WIN') stats[k].win++;
+    else if (r.outcome === 'LOSS') stats[k].loss++;
+    else stats[k].pending++;
+  }
+  const statsArr = Object.values(stats).map(s => ({ ...s, win_pct: s.total - s.pending > 0 ? Math.round(s.win / (s.total - s.pending) * 100) : null }));
+  return jsonResponse(res, 200, { alerts: rows, stats: statsArr, total: rows.length });
+}
+
 // ── SPRINT 3 — Mini-bracket RG : chemin probable d'un joueur ────────────────
 async function resolveRgTournaments() {
   const ck = 'bsd_tennis_rg_tournaments';

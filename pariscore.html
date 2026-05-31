@@ -10506,6 +10506,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Brain/3D/brain_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-brain.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🧠</span>';}" alt="Icone Prédictions IA intelligence artificielle" loading="lazy" />Prédictions IA</a>
     <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Chart%20increasing/3D/chart_increasing_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-chart.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>📈</span>';}" alt="Icone Tendances statistiques" loading="lazy" />Tendances</a>
     <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Bell/3D/bell_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-bell.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🔔</span>';}" alt="Icone Alertes notifications Telegram" loading="lazy" />Alertes</a>
+    <a href="#" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts">📊 Alertes Tennis</a>
     <a href="#" onclick="showPage('historique',this);return false;" data-page="historique"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Mantelpiece%20clock/3D/mantelpiece_clock_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-clock.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🕰️</span>';}" alt="Icone Historique paris vérifiés" loading="lazy" />Historique</a>
     <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/House/3D/house_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-home.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🏠</span>';}" alt="Icone Accueil PariScore" loading="lazy" />Accueil</a>
     <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Crown/3D/crown_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-crown.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>👑</span>';}" alt="Icone Tarifs Pro abonnement" loading="lazy" />Tarifs</a>
@@ -13017,6 +13018,42 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div><!-- /al-dashboard -->
 </section>
 </div><!-- /page-alertes -->
+
+<!-- ░░ PAGE : HISTORIQUE ALERTES TENNIS ░░ -->
+<div id="page-tennis-alerts" data-page="tennis-alerts" style="display:none;">
+<div style="padding:20px;max-width:1400px;margin:0 auto">
+  <div class="section-header">
+    <h2>📊 Historique Alertes Tennis</h2>
+    <p class="section-sub">Suivi des alertes Discord — win rate par type de pari</p>
+  </div>
+  <div id="ta-kpis" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <select id="ta-filter-type" class="adv-input" style="width:180px">
+      <option value="">Tous types</option>
+      <option value="break_set">Break Set</option>
+      <option value="under_jeu">Under Jeu</option>
+      <option value="oddspapi_prematch">OddsPapi Prematch</option>
+    </select>
+    <select id="ta-filter-outcome" class="adv-input" style="width:140px">
+      <option value="">Tous outcomes</option>
+      <option value="WIN">WIN</option>
+      <option value="LOSS">LOSS</option>
+      <option value="PENDING">PENDING</option>
+    </select>
+    <button class="btn-refresh" onclick="loadTennisAlerts()">Refresh</button>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="stats-table" id="ta-table">
+      <thead><tr>
+        <th>Date</th><th>Type</th><th>Match</th><th>Tournoi</th>
+        <th>Set</th><th>DR set</th><th>Pari</th><th>Cote</th><th>Conf%</th>
+        <th>Score alerte</th><th>Score final</th><th>Outcome</th>
+      </tr></thead>
+      <tbody id="ta-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)">Chargement…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+</div><!-- /page-tennis-alerts -->
 
 <!-- ░░ PAGE : ROLAND GARROS BRACKET (bd ParisScorebis-0mpj) ░░ -->
 <div id="page-worldcup" data-page="worldcup" style="display:none;">
