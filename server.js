@@ -20498,7 +20498,7 @@ async function pollTennisLive() {
                 const _dName = _dSide === 'p1' ? (m.player1?.name || 'J1') : (m.player2?.name || 'J2');
                 const _dOdds = _dSide === 'p1' ? m.odds_player1 : m.odds_player2;
                 const _dDR   = _dSide === 'p1' ? _drI_p1 : _drI_p2;
-                if (_dOdds != null && Number.isFinite(_dOdds) && _dOdds <= 1.3) {
+                if (_dOdds != null && Number.isFinite(_dOdds) && _dOdds >= 1.2 && _dOdds <= 1.8) {
                   const _ok = `tndr_odds13:${m.id}`;
                   if (!_tnAlertOnCooldown(_ok, 5 * 60 * 1000)) {
                     _tnAlertMark(_ok);
@@ -20511,7 +20511,7 @@ async function pollTennisLive() {
                     const _d2S  = _drI_p2 != null ? _drI_p2.toFixed(3) : '--';
                     const _dDRS = Number.isFinite(_dDR)  ? _dDR.toFixed(3)  : '--';
                     const _emb  = {
-                      title: `🎯 DOMINATION REELLE DR>=1.20 + COTE<=1.30`,
+                      title: `🎯 DOMINATION REELLE DR>=1.20 + COTE 1.20-1.80`,
                       description: `**${m.player1?.name || 'J1'}** vs **${m.player2?.name || 'J2'}** · Sets ${_ls}`,
                       color: 0xFFD700,
                       fields: [
@@ -20521,13 +20521,13 @@ DR = **${_d1S}**${_p1Dom ? ' ✅ >=1.20' : ''}`, inline: true },
 DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.20' : ''}`, inline: true },
                         { name: '​', value: '​', inline: true },
                         { name: '🏆 Dominant',   value: `**${_dName}**`,                      inline: true },
-                        { name: '💰 Cote match', value: `**${_dOdds.toFixed(2)}** <=1.30 ✅`, inline: true },
+                        { name: '💰 Cote match', value: `**${_dOdds.toFixed(2)}** [1.20-1.80] ✅`, inline: true },
                         { name: '📐 DR reel',    value: `**${_dDRS}** >=1.20 ✅`,           inline: true },
                         { name: '🎾 Court',      value: m.court      || 'N/A',                 inline: true },
                         { name: '🏟 Tournoi',    value: m.tournament || 'N/A',                 inline: true },
                         { name: '📡 Src DR',     value: _drSrc,                               inline: true },
                       ],
-                      footer: { text: `DR=ret%/(100-serv%) | seuil >=1.20 + cote<=1.30 | Cooldown 5min | ${m.tournament}` },
+                      footer: { text: `DR=ret%/(100-serv%) | seuil >=1.20 + cote 1.20-1.80 | Cooldown 5min | ${m.tournament}` },
                       timestamp: new Date().toISOString(),
                     };
                     if (DISCORD_TENNIS_DOMINATION_ODDS_URL) {
