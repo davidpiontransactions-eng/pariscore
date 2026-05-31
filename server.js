@@ -16961,9 +16961,10 @@ function srvPlanGate(req, res, pathname) {
   }
   // Bankroll simulé = vitrine marketing publique (jamais de données user)
   if (pathname === '/api/v1/bankroll/simulated' || pathname === '/api/v1/bankroll') return false;
-  // Test alertes tennis + xG intensité — public, pas de plan requis
+  // Test alertes tennis + xG intensité + under jeux — public, pas de plan requis
   if (pathname === '/api/v1/alerts/tennis-test') return false;
   if (pathname === '/api/v1/alerts/xg-intensity-test') return false;
+  if (pathname === '/api/v1/alerts/tennis-under-games-test') return false;
   // Mes Paris + bankroll + alertes → un plan Pro quelconque
   if (pathname.startsWith('/api/v1/bets') || pathname.startsWith('/api/v1/bankroll') || pathname.startsWith('/api/v1/alerts')) {
     if (!a.anyPro) { jsonResponse(res, 403, { error: 'Module réservé Pro', code: 'PLAN_REQUIRED' }); return true; }
@@ -28613,6 +28614,48 @@ if (pathname === '/api/v1/alerts/tennis-test' && req.method === 'POST') {
     telegram: !!(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_IDS.size),
     discord: !!DISCORD_WEBHOOK_URL,
     message: 'Alerte tennis test envoyée',
+  });
+}
+
+// POST /api/v1/alerts/tennis-under-games-test — test alerte Under 7.5/8.5 jeux (admin, sans auth)
+if (pathname === '/api/v1/alerts/tennis-under-games-test' && req.method === 'POST') {
+  // Fake match: score 1-1 set 2, DR = 3.2 (dominant Alcaraz) → cote U8.5 ~1.09 <= 1.20
+  const _drTest  = 3.2;
+  const _drDomT  = _drTest; // already >= 1
+  const _pDomT   = Math.min(0.95, 0.63 + (_drDomT - 1) * 0.14);
+  const _pSubT   = 1 - _pDomT;
+  const _pU75T   = Math.pow(_pDomT, 5) + Math.pow(_pSubT, 5);
+  const _oU75T   = parseFloat((1 / Math.max(_pU75T, 0.01)).toFixed(2));
+  const _pU85T   = _pU75T + 5 * Math.pow(_pDomT, 5) * _pSubT + 5 * Math.pow(_pSubT, 5) * _pDomT;
+  const _oU85T   = parseFloat((1 / Math.max(_pU85T, 0.01)).toFixed(2));
+  const _hasU75T = _oU75T <= 1.20;
+  const _hasU85T = _oU85T <= 1.20;
+  const _embTest = {
+    title:       `🎾 UNDER JEU ALERT 🧪 TEST — ${_hasU75T ? 'Under 7.5 🔥' : 'Under 8.5'} | Set 2`,
+    description: '**Alcaraz** vs **Zverev** · Score **1-1** (2 tenues service) · Roland-Garros QF',
+    color:       0x7209b7,
+    fields: [
+      { name: '📐 DR match',   value: `**${_drTest.toFixed(2)}** — Alcaraz domine`,                               inline: true },
+      { name: '🎯 P/jeu dom', value: `**${(_pDomT * 100).toFixed(1)}%**`,                                        inline: true },
+      { name: '🏆 Dominant',  value: `**Alcaraz** @ **1.35**`,                                                   inline: true },
+      ...(_hasU75T ? [{ name: '✅ Under 7.5 jeux', value: `Cote calc. **${_oU75T}** ≤1.20 · Conf **${Math.round(_pU75T * 100)}%**\nSet expédié 6-1`, inline: false }] : []),
+      ...(_hasU85T ? [{ name: `${_hasU75T ? '➕' : '✅'} Under 8.5 jeux`, value: `Cote calc. **${_oU85T}** ≤1.20 · Conf **${Math.round(_pU85T * 100)}%**\nSet fini ≤8 jeux (6-1 ou 6-2)`, inline: false }] : []),
+      { name: '🏟 Tournoi',  value: 'Roland-Garros 2026 (TEST)',  inline: true },
+      { name: '📡 Src DR',   value: 'sofascore 🧪',               inline: true },
+    ],
+    footer:    { text: `Score 1-1 (2 holds) → Under 7.5/8.5 set | DR Poisson | MODE TEST | ${new Date().toLocaleString('fr-FR')}` },
+    timestamp: new Date().toISOString(),
+  };
+  httpsPost(DISCORD_TENNIS_BREAK_SET_URL, { embeds: [_embTest] })
+    .then(() => console.log('  [Tennis:UnderGames:Test] envoyé → Discord'))
+    .catch(e => console.warn('  [Tennis:UnderGames:Test]', e.message));
+  return jsonResponse(res, 200, {
+    ok: true,
+    dr: _drTest, pDom: parseFloat(_pDomT.toFixed(3)),
+    under75: { prob: Math.round(_pU75T * 100), odds: _oU75T, fires: _hasU75T },
+    under85: { prob: Math.round(_pU85T * 100), odds: _oU85T, fires: _hasU85T },
+    webhook: DISCORD_TENNIS_BREAK_SET_URL.slice(0, 60) + '...',
+    message: 'Alerte Under jeux test envoyée → Discord',
   });
 }
 
