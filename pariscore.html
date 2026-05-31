@@ -13023,34 +13023,70 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 <div id="page-tennis-alerts" data-page="tennis-alerts" style="display:none;">
 <div style="padding:20px;max-width:1400px;margin:0 auto">
   <div class="section-header">
-    <h2>📊 Historique Alertes Tennis</h2>
+    <h2>📊 Historique Alertes</h2>
     <p class="section-sub">Suivi des alertes Discord — win rate par type de pari</p>
   </div>
-  <div id="ta-kpis" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <select id="ta-filter-type" class="adv-input" style="width:180px">
-      <option value="">Tous types</option>
-      <option value="break_set">Break Set</option>
-      <option value="under_jeu">Under Jeu</option>
-      <option value="oddspapi_prematch">OddsPapi Prematch</option>
-    </select>
-    <select id="ta-filter-outcome" class="adv-input" style="width:140px">
-      <option value="">Tous outcomes</option>
-      <option value="WIN">WIN</option>
-      <option value="LOSS">LOSS</option>
-      <option value="PENDING">PENDING</option>
-    </select>
-    <button class="btn-refresh" onclick="loadTennisAlerts()">Refresh</button>
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--bg4);margin-bottom:20px">
+    <button class="ta-subtab active" data-subtab="tennis" onclick="switchAlertTab('tennis',this)" style="padding:8px 18px;background:none;border:none;color:var(--text);cursor:pointer;border-bottom:2px solid var(--green);font-weight:600">🎾 Tennis</button>
+    <button class="ta-subtab" data-subtab="foot" onclick="switchAlertTab('foot',this)" style="padding:8px 18px;background:none;border:none;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent">⚽ Foot</button>
   </div>
-  <div style="overflow-x:auto">
-    <table class="stats-table" id="ta-table">
-      <thead><tr>
-        <th>Date</th><th>Type</th><th>Match</th><th>Tournoi</th>
-        <th>Set</th><th>DR set</th><th>Pari</th><th>Cote</th><th>Conf%</th>
-        <th>Score alerte</th><th>Score final</th><th>Outcome</th>
-      </tr></thead>
-      <tbody id="ta-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)">Chargement…</td></tr></tbody>
-    </table>
+  <div id="ta-pane-tennis">
+    <div id="ta-kpis" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="ta-filter-type" class="adv-input" style="width:180px">
+        <option value="">Tous types</option>
+        <option value="break_set">Break Set</option>
+        <option value="under_jeu">Under Jeu</option>
+        <option value="oddspapi_prematch">OddsPapi Prematch</option>
+      </select>
+      <select id="ta-filter-outcome" class="adv-input" style="width:140px">
+        <option value="">Tous outcomes</option>
+        <option value="WIN">WIN</option>
+        <option value="LOSS">LOSS</option>
+        <option value="PENDING">PENDING</option>
+      </select>
+      <button class="btn-refresh" onclick="loadTennisAlerts()">Refresh</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="stats-table" id="ta-table">
+        <thead><tr>
+          <th>Date</th><th>Type</th><th>Match</th><th>Tournoi</th>
+          <th>Set</th><th>DR set</th><th>Pari</th><th>Cote</th><th>Conf%</th>
+          <th>Score alerte</th><th>Score final</th><th>Outcome</th>
+        </tr></thead>
+        <tbody id="ta-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)">Chargement…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="ta-pane-foot" style="display:none">
+    <div id="fa-kpis" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="fa-filter-type" class="adv-input" style="width:180px">
+        <option value="">Tous types</option>
+        <option value="live_intensity">Live Intensité</option>
+        <option value="live_pressure">Live Pression</option>
+        <option value="live_poisson">Live Poisson</option>
+        <option value="morning_picks">Morning Picks</option>
+      </select>
+      <select id="fa-filter-outcome" class="adv-input" style="width:140px">
+        <option value="">Tous outcomes</option>
+        <option value="WIN">✅ WIN</option>
+        <option value="LOSS">❌ LOSS</option>
+        <option value="PENDING">⏳ PENDING</option>
+      </select>
+      <button class="btn-refresh" onclick="loadFootAlerts()">🔄 Refresh</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="stats-table" id="fa-table">
+        <thead><tr>
+          <th>Date</th><th>Type</th><th>Match</th><th>Ligue</th>
+          <th>Score alerte</th><th>Min</th><th>Trigger</th>
+          <th>Pari</th><th>Prob%</th><th>Cote</th>
+          <th>Score final</th><th>Outcome</th>
+        </tr></thead>
+        <tbody id="fa-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)">Chargement…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 </div><!-- /page-tennis-alerts -->

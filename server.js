@@ -2387,6 +2387,55 @@ function verifyPendingTennisAlerts(liveMatches) {
   } catch (e) { console.warn('[TennisAlerts] verifyPending:', e.message); }
 }
 
+function saveFootAlert(data) {
+  if (!sqldb) return;
+  try {
+    sqldb.prepare(`INSERT INTO foot_alerts
+      (fired_at, alert_type, match_id, home_team, away_team, league, live_score, live_minute, trigger_kind, trigger_value, bet_pick, bet_prob, bet_odds)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      Date.now(), data.alert_type, data.match_id || null,
+      data.home_team || null, data.away_team || null, data.league || null,
+      data.live_score || null, data.live_minute || null,
+      data.trigger_kind || null, data.trigger_value || null,
+      data.bet_pick || null, data.bet_prob || null, data.bet_odds || null
+    );
+  } catch (e) { console.warn('[FootAlerts] save:', e.message); }
+}
+
+function verifyPendingFootAlerts() {
+  if (!sqldb) return;
+  try {
+    const pending = sqldb.prepare(`SELECT * FROM foot_alerts WHERE outcome='PENDING' AND fired_at > ? LIMIT 200`)
+      .all(Date.now() - 7 * 24 * 3600 * 1000);
+    if (!pending.length) return;
+    const archived = Array.isArray(db.history) ? db.history : [];
+    const histMap = new Map();
+    for (const h of archived) { if (h.id) histMap.set(String(h.id), h); }
+    for (const alert of pending) {
+      const h = histMap.get(String(alert.match_id));
+      if (!h || !h.real_score) continue;
+      const rs = h.real_score;
+      const total = (rs.home || 0) + (rs.away || 0);
+      const finalStr = `${rs.home}-${rs.away}`;
+      let outcome = 'VOID';
+      const pick = alert.bet_pick || '';
+      if (/plus de ([\d.]+) buts/i.test(pick)) {
+        const line = parseFloat(RegExp.$1);
+        outcome = total > line ? 'WIN' : 'LOSS';
+      } else if (/deux.*(marquent|marque)/i.test(pick)) {
+        outcome = (rs.home > 0 && rs.away > 0) ? 'WIN' : 'LOSS';
+      } else if (/domicile gagne/i.test(pick)) {
+        outcome = rs.home > rs.away ? 'WIN' : 'LOSS';
+      } else if (/extérieur gagne/i.test(pick)) {
+        outcome = rs.away > rs.home ? 'WIN' : 'LOSS';
+      }
+      sqldb.prepare(`UPDATE foot_alerts SET outcome=?, final_score=?, verified_at=? WHERE id=?`)
+        .run(outcome, finalStr, Date.now(), alert.id);
+      console.log(`  [FootAlerts] ✓ alert#${alert.id} "${pick}" ${finalStr} → ${outcome}`);
+    }
+  } catch (e) { console.warn('[FootAlerts] verify:', e.message); }
+}
+
 // Calcule le DR (Dominance Ratio) directement depuis les stats BSD du match live.
 // Synchrone, clé = match id (pas de lookup par nom Sofascore → robuste).
 // Fallback quand _sofaLiveIdx ne matche pas les noms BSD/ESPN.
@@ -5783,6 +5832,28 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_fired ON tennis_alerts(fired_at DESC)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_outcome ON tennis_alerts(outcome)`);
+  // Historique alertes foot — tracking outcomes par type de pari
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS foot_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fired_at INTEGER NOT NULL,
+    alert_type TEXT NOT NULL,
+    match_id TEXT,
+    home_team TEXT,
+    away_team TEXT,
+    league TEXT,
+    live_score TEXT,
+    live_minute INTEGER,
+    trigger_kind TEXT,
+    trigger_value REAL,
+    bet_pick TEXT,
+    bet_prob REAL,
+    bet_odds REAL,
+    final_score TEXT,
+    outcome TEXT NOT NULL DEFAULT 'PENDING',
+    verified_at INTEGER
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_foot_alerts_fired ON foot_alerts(fired_at DESC)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_foot_alerts_outcome ON foot_alerts(outcome)`);
   console.log('  ✓ SQLite initialisé (WAL mode) —', SQLITE_FILE);
 }
 
@@ -21313,6 +21384,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     _tennisLiveCache = { ts: Date.now(), data };
     try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
+    try { verifyPendingFootAlerts(); } catch (e) { console.warn('  [FootAlerts] verifyPending:', e.message); }
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
     // bd mpg Phase 2 — On-demand fetch aiscore PBP pour matchs live sans cache.
@@ -32599,6 +32671,24 @@ if (pathname === '/api/v1/tennis/alerts/history' && req.method === 'GET') {
   return jsonResponse(res, 200, { alerts: rows, stats: statsArr, total: rows.length });
 }
 
+// GET /api/v1/foot/alerts/history — historique alertes foot avec stats
+if (pathname === '/api/v1/foot/alerts/history' && req.method === 'GET') {
+  if (!sqldb) return jsonResponse(res, 503, { error: 'DB unavailable' });
+  const limit = Math.min(500, parseInt(query.limit || '200', 10));
+  const rows = sqldb.prepare(`SELECT * FROM foot_alerts ORDER BY fired_at DESC LIMIT ?`).all(limit);
+  const stats = {};
+  for (const r of rows) {
+    const k = r.alert_type + ':' + (r.bet_pick || 'no_bet').slice(0, 30);
+    if (!stats[k]) stats[k] = { alert_type: r.alert_type, bet_pick: r.bet_pick, total: 0, win: 0, loss: 0, pending: 0 };
+    stats[k].total++;
+    if (r.outcome === 'WIN') stats[k].win++;
+    else if (r.outcome === 'LOSS') stats[k].loss++;
+    else stats[k].pending++;
+  }
+  const statsArr = Object.values(stats).map(s => ({ ...s, win_pct: s.total - s.pending > 0 ? Math.round(s.win / (s.total - s.pending) * 100) : null }));
+  return jsonResponse(res, 200, { alerts: rows, stats: statsArr, total: rows.length });
+}
+
 // ── SPRINT 3 — Mini-bracket RG : chemin probable d'un joueur ────────────────
 async function resolveRgTournaments() {
   const ck = 'bsd_tennis_rg_tournaments';
@@ -39683,6 +39773,8 @@ async function sendLiveFootDiscordAlerts(liveMatches) {
     if (!trigger) continue;
     markLiveAlertSent('_discord_foot', m.id);
     sendDiscordFootAlert(buildLiveAlertDiscordEmbed(m, trigger)).catch(() => {});
+    const _faBet = pickLivePredictiveBet(m);
+    saveFootAlert({ alert_type: trigger.kind === 'intensity' ? 'live_intensity' : 'live_pressure', match_id: m.id, home_team: m.home_team, away_team: m.away_team, league: m.league, live_score: m.live_score, live_minute: parseInt(m.live_minute || 0), trigger_kind: trigger.kind, trigger_value: trigger.value, bet_pick: _faBet ? _faBet.pick : null, bet_prob: _faBet ? Math.round(_faBet.prob) : null });
     console.log(`  [Discord:Foot] ${m.home_team}-${m.away_team} ${trigger.kind}=${trigger.value}`);
   }
 }
@@ -41615,6 +41707,7 @@ async function _runLiveFootPoissonAlerts() {
     };
     httpsPost(DISCORD_FOOT_BETS_WEBHOOK_URL, { embeds: [embed] })
       .catch(e => console.warn('  [LiveFootPoisson]', e.message));
+    saveFootAlert({ alert_type: 'live_poisson', match_id: m.id, home_team: m.home_team, away_team: m.away_team, league: m.league, live_score: m.live_score, live_minute: parseInt(m.live_minute || 0), bet_pick: `Plus de ${goals}.5 buts`, bet_prob: Math.round(probMore), bet_odds: parseFloat(impliedOdds || 0) || null });
     console.log(`  [LiveFootPoisson] ${m.home_team}-${m.away_team} ${min}' Over${goals+0.5}=${probMore}% λ=${lamTot.toFixed(2)}`);
   }
 }
