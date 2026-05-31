@@ -10055,7 +10055,10 @@ function renderMatches(matches) {
   if (sortKey) {
     filtered = [...filtered].sort((a, b) => {
       let va, vb;
-      if (sortKey === 'pressure') {
+      if (sortKey === 'elo_home') {
+        va = a.elo_home || 0;
+        vb = b.elo_home || 0;
+      } else if (sortKey === 'pressure') {
         va = calcPressureIndex(a);
         vb = calcPressureIndex(b);
       } else if (sortKey.startsWith('poisson_')) {
@@ -10376,6 +10379,21 @@ const label = country
           ${renderFatigueDot(m.away_fatigue, m.away_fatigue_level, m.away_fatigue_meta)}
         </div>
       </td>
+      <td style="min-width:85px;text-align:center;padding:4px 6px !important;vertical-align:middle;">${(()=>{
+        if (!m.elo_home && !m.elo_away) return '<span style="color:var(--text3);font-size:9px;">—</span>';
+        const eloColor = (e1, e2) => e1 > e2 ? 'var(--green,#00e676)' : e1 < e2 ? 'var(--red,#ff4d4d)' : 'var(--text2)';
+        const hC = eloColor(m.elo_home||0, m.elo_away||0);
+        const aC = eloColor(m.elo_away||0, m.elo_home||0);
+        const hLine = m.elo_home
+          ? `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${hC};">${m.elo_home}</span>${m.elo_home_rank?`<span style="font-size:8px;color:var(--text3);">#${m.elo_home_rank}</span>`:''}</div>`
+          : `<div style="color:var(--text3);font-size:9px;">—</div>`;
+        const aLine = m.elo_away
+          ? `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${aC};">${m.elo_away}</span>${m.elo_away_rank?`<span style="font-size:8px;color:var(--text3);">#${m.elo_away_rank}</span>`:''}</div>`
+          : `<div style="color:var(--text3);font-size:9px;">—</div>`;
+        const diff = (m.elo_home && m.elo_away) ? Math.abs(m.elo_home - m.elo_away) : null;
+        const diffHtml = diff != null ? `<div style="font-size:8px;color:var(--text3);margin-top:1px;">Δ${diff}</div>` : '';
+        return hLine + aLine + diffHtml;
+      })()}</td>
       <td style="min-width:70px;padding:4px 6px !important;">
         <div style="margin-bottom:2px;">${formBalls(m.home_form)}</div>
         <div>${formBalls(m.away_form)}</div>
