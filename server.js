@@ -2720,6 +2720,181 @@ function cleanTraits(arr) {
   return arr.filter(s => typeof s === 'string' && !/^trait_\d+$/i.test(s.trim()));
 }
 
+// ─── OddsPapi v4 native — Cotes jeux/set tennis ──────────────────────────────
+// API: api.oddspapi.io/v4  Auth: ?apiKey=  Probe validé 2026-05-31 Roland Garros
+// sportId=12 (tennis), tournamentId=2579 (RG ATP), 2583 (RG WTA)
+const ODDSPAPI_V4_KEY = () => process.env.ODDSPAPI_V4_KEY || '';
+const ODDSPAPI_V4_TTL = 30 * 60 * 1000; // 30min
+// Market IDs (odd=over outcomeId, odd+1=under outcomeId), lines 8.5..16.5
+const ODDSPAPI_SET1_MKTIDS = [12263,12265,12267,12269,12271,12273,12275,12277,12279];
+const ODDSPAPI_SET2_MKTIDS = [12435,12437,12439,12441,12443,12445,12447,12449,12451];
+const _oddspapiTourIndex  = new Map(); // normName:circuit → tournamentId (24h)
+const _oddspapiFxIndex    = new Map(); // matchId → { fixtureId, ts }
+
+function _oddspapiGet(path, params = {}) {
+  if (!ODDSPAPI_V4_KEY()) return Promise.reject(new Error('ODDSPAPI_V4_KEY missing'));
+  const qs = Object.entries({ apiKey: ODDSPAPI_V4_KEY(), ...params })
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  return new Promise((resolve, reject) => {
+    const req = require('https').request({
+      host: 'api.oddspapi.io',
+      path: `/v4/${path}?${qs}`,
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      timeout: 12000,
+    }, r => {
+      let b = '';
+      r.on('data', c => b += c);
+      r.on('end', () => {
+        if (r.statusCode !== 200) return reject(new Error(`OddsPapi ${r.statusCode} ${b.slice(0,120)}`));
+        try { resolve(JSON.parse(b)); } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('OddsPapi timeout')));
+    req.end();
+  });
+}
+
+// Résoudre tournamentName → OddsPapi tournamentId (cache 24h)
+async function _oddspapiResolveTourId(tournamentName, circuit) {
+  const k = normName(tournamentName) + ':' + String(circuit || '').toLowerCase().slice(0, 3);
+  if (_oddspapiTourIndex.has(k)) return _oddspapiTourIndex.get(k);
+  const ck = `oddspapi_tour_${k}`;
+  const cached = apiCacheGet(ck);
+  if (cached) { _oddspapiTourIndex.set(k, cached); return cached; }
+  try {
+    const d = await _oddspapiGet('tournaments', { sportId: 12 });
+    const arr = Array.isArray(d) ? d : (d.data || []);
+    const normIn = normName(tournamentName);
+    const hit = arr.find(t => {
+      const nm = normName(t.tournamentName || '');
+      const cat = String(t.categoryName || t.categorySlug || '').toLowerCase();
+      const circuitOk = !circuit || cat.includes(String(circuit).toLowerCase().slice(0, 3));
+      return circuitOk && (nm === normIn || nm.includes(normIn) || normIn.includes(nm));
+    });
+    if (hit) {
+      _oddspapiTourIndex.set(k, hit.tournamentId);
+      apiCacheSet(ck, hit.tournamentId, 'oddspapi_tour', 24 * 3600 * 1000);
+      return hit.tournamentId;
+    }
+  } catch (e) {
+    console.warn(`  [OddsPapi] resolveTourId "${tournamentName}":`, e.message);
+  }
+  return null;
+}
+
+// Résoudre BSD matchId → OddsPapi fixtureId via betradarId ou nom joueurs
+async function _oddspapiResolveFixtureId(matchData) {
+  if (!ODDSPAPI_V4_KEY() || !matchData) return null;
+  const mid = String(matchData.id || matchData.match_id || '');
+  if (!mid) return null;
+  const cached = _oddspapiFxIndex.get(mid);
+  if (cached && (Date.now() - cached.ts) < ODDSPAPI_V4_TTL) return cached.fixtureId;
+  const ck = `oddspapi_fx_${mid}`;
+  const dbCached = apiCacheGet(ck);
+  if (dbCached) { _oddspapiFxIndex.set(mid, { fixtureId: dbCached, ts: Date.now() }); return dbCached; }
+  try {
+    const tourName = (matchData.tournament && matchData.tournament.name) || matchData.competition || '';
+    const circuit  = String(matchData.circuit || (matchData.player1 && matchData.player1.circuit) || '').toLowerCase();
+    const tourId   = await _oddspapiResolveTourId(tourName, circuit);
+    if (!tourId) return null;
+    const from = new Date(Date.now() - 86400000).toISOString();
+    const to   = new Date(Date.now() + 7 * 86400000).toISOString();
+    const fx   = await _oddspapiGet('fixtures', { tournamentId: tourId, from, to });
+    const arr  = (Array.isArray(fx) ? fx : (fx.data || [])).filter(f => f.hasOdds);
+    const p1   = normName((matchData.player1 && (matchData.player1.name || matchData.player1.short_name)) || '');
+    const p2   = normName((matchData.player2 && (matchData.player2.name || matchData.player2.short_name)) || '');
+    // 1. Betradar ID direct match (cheapest)
+    const brid = matchData.betradar_id || (matchData.external_ids && matchData.external_ids.betradar);
+    if (brid) {
+      const hit = arr.find(f => f.externalProviders && String(f.externalProviders.betradarId) === String(brid));
+      if (hit) { _storeFxId(ck, mid, hit.fixtureId); return hit.fixtureId; }
+    }
+    // 2. Sofascore ID match
+    const sfid = matchData.sofascore_id || (matchData.external_ids && matchData.external_ids.sofascore);
+    if (sfid) {
+      const hit = arr.find(f => f.externalProviders && String(f.externalProviders.sofascoreId) === String(sfid));
+      if (hit) { _storeFxId(ck, mid, hit.fixtureId); return hit.fixtureId; }
+    }
+    // 3. Player name matching via participants endpoint (top 10 fixtures)
+    if (p1 && p2) {
+      const partIds = [...new Set(arr.slice(0, 10).flatMap(f => [f.participant1Id, f.participant2Id]))];
+      if (partIds.length) {
+        const pData = await _oddspapiGet('participants', { participantIds: partIds.join(',') });
+        const pArr  = Array.isArray(pData) ? pData : (pData.data || []);
+        const pMap  = new Map(pArr.map(p => [p.participantId, normName(p.participantName || p.name || '')]));
+        for (const fix of arr.slice(0, 10)) {
+          const n1 = pMap.get(fix.participant1Id) || '';
+          const n2 = pMap.get(fix.participant2Id) || '';
+          if (!n1 || !n2) continue;
+          const match = (n1.includes(p1)||p1.includes(n1)) && (n2.includes(p2)||p2.includes(n2));
+          const matchRev = (n1.includes(p2)||p2.includes(n1)) && (n2.includes(p1)||p1.includes(n2));
+          if (match || matchRev) { _storeFxId(ck, mid, fix.fixtureId); return fix.fixtureId; }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn(`  [OddsPapi] resolveFixtureId match ${mid}:`, e.message);
+  }
+  return null;
+}
+function _storeFxId(ck, mid, fixtureId) {
+  _oddspapiFxIndex.set(mid, { fixtureId, ts: Date.now() });
+  apiCacheSet(ck, fixtureId, 'oddspapi_fx', ODDSPAPI_V4_TTL);
+  console.log(`  [OddsPapi] ✓ fixture résolu matchId=${mid} → ${fixtureId}`);
+}
+
+// Fetch cotes jeux/set depuis OddsPapi Pinnacle (+ fallback best-sharp)
+async function fetchOddspapiTennisSetOdds(fixtureId) {
+  if (!fixtureId || !ODDSPAPI_V4_KEY()) return null;
+  const ck = `oddspapi_setodds_${fixtureId}`;
+  const cached = apiCacheGet(ck);
+  if (cached) return cached;
+  try {
+    const data = await _oddspapiGet('odds', { fixtureId, bookmakers: 'pinnacle,bet365,unibet' });
+    const bkOdds = data.bookmakerOdds || {};
+    const result = { fixtureId, source: 'oddspapi', set1: [], set2: [], h2h: null };
+    const BK_PRIO = ['pinnacle','bet365','unibet']; // prefer sharp
+    function extractSetLines(mktIds, target) {
+      for (const bkSlug of [...BK_PRIO, ...Object.keys(bkOdds).filter(b => !BK_PRIO.includes(b))]) {
+        const bk = bkOdds[bkSlug]; if (!bk) continue;
+        const markets = bk.markets || {};
+        for (const mid of mktIds) {
+          const m = markets[mid]; if (!m) continue;
+          const outcomes = m.outcomes || {};
+          const over  = outcomes[mid]?.players?.['0'];
+          const under = outcomes[mid + 1]?.players?.['0'];
+          if (!over || !under) continue;
+          const line = parseFloat((over.bookmakerOutcomeId || '').split('/')[0]);
+          if (!Number.isFinite(line)) continue;
+          if (!target.find(s => s.line === line)) {
+            target.push({ line, over: over.price, under: under.price, bookmaker: bkSlug, mainLine: !!over.mainLine });
+          }
+        }
+      }
+      target.sort((a, b) => a.line - b.line);
+    }
+    extractSetLines(ODDSPAPI_SET1_MKTIDS, result.set1);
+    extractSetLines(ODDSPAPI_SET2_MKTIDS, result.set2);
+    // H2H (market 121)
+    for (const bkSlug of BK_PRIO) {
+      const bk = bkOdds[bkSlug]; if (!bk) continue;
+      const m121 = (bk.markets || {})[121]; if (!m121) continue;
+      const o = m121.outcomes?.[121]?.players?.['0'];
+      const u = m121.outcomes?.[122]?.players?.['0'];
+      if (o && u) { result.h2h = { p1: o.price, p2: u.price, bookmaker: bkSlug }; break; }
+    }
+    if (result.set1.length || result.set2.length) {
+      apiCacheSet(ck, result, 'oddspapi_setodds', ODDSPAPI_V4_TTL);
+    }
+    return result;
+  } catch (e) {
+    console.warn(`  [OddsPapi] fetchTennisSetOdds ${fixtureId}:`, e.message);
+    return null;
+  }
+}
+
 function computeMismatch(playerA, playerB) {
   const annotations = [];
   const atA = playerA?.attributes;
@@ -32102,6 +32277,28 @@ if (pathname === '/api/v1/tennis/matches' && req.method === 'GET') {
   const ck = `bsd_tennis_matches_${dateParam || 'today'}`;
   const out = await handleTennisBSD(suffix, ck, 30 * 60 * 1000);
   return jsonResponse(res, out.status, out.body);
+}
+// ── OddsPapi v4 — Cotes jeux/set tennis ─────────────────────────────────────
+// GET /api/v1/tennis/set-odds?matchId=<bsdMatchId>
+// Retourne set1/set2 Over/Under lines (Pinnacle + fallback) + h2h.
+// Cache 30min. Fail-soft : 404 si tournament inconnu, 502 si fetch échoue.
+if (pathname === '/api/v1/tennis/set-odds' && req.method === 'GET') {
+  if (!ODDSPAPI_V4_KEY()) return jsonResponse(res, 503, { error: 'oddspapi_v4_key_missing' });
+  const matchId = String(query.matchId || '').trim();
+  if (!matchId) return jsonResponse(res, 400, { error: 'matchId_required' });
+  try {
+    const matchOut = await handleTennisBSD(`/api/v2/matches/${encodeURIComponent(matchId)}/`, `bsd_match_${matchId}`, 30 * 60 * 1000);
+    if (matchOut.status !== 200) return jsonResponse(res, 404, { error: 'match_not_found', matchId });
+    const matchData = matchOut.body;
+    const fixtureId = await _oddspapiResolveFixtureId(matchData);
+    if (!fixtureId) return jsonResponse(res, 404, { error: 'oddspapi_fixture_not_found', matchId, hint: 'tournament not covered or match too far in future' });
+    const odds = await fetchOddspapiTennisSetOdds(fixtureId);
+    if (!odds) return jsonResponse(res, 502, { error: 'oddspapi_fetch_failed' });
+    return jsonResponse(res, 200, odds);
+  } catch (e) {
+    console.warn(`  [OddsPapi] /set-odds matchId=${matchId}:`, e.message);
+    return jsonResponse(res, 502, { error: 'set_odds_error', message: e.message });
+  }
 }
 // ── SPRINT 3 — Mini-bracket RG : chemin probable d'un joueur ────────────────
 async function resolveRgTournaments() {

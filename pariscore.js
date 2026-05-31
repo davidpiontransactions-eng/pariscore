@@ -5725,10 +5725,13 @@ async function _fetchAndRenderTennisDetail(matchId) {
     const SOFA_PROFILE_PLACEHOLDER = '<div id="tennis-sofa-profile-enrich" style="margin-top:24px;"></div>';
     // bd mpg — placeholder PBP Point-by-Point (lazy fetch + SSE pbp_update refresh)
     const PBP_PLACEHOLDER = `<div id="tennis-pbp-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:24px;"></div>`;
-    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER;
+    // OddsPapi — placeholder cotes jeux/set (lazy fetch Pinnacle)
+    const SET_ODDS_PLACEHOLDER = `<div id="tennis-set-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:24px;"></div>`;
+    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER + SET_ODDS_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
     fetchTennisSofaProfile(matchData);
     fetchTennisPBP(matchId);
+    fetchTennisSetOdds(matchId);
   } catch (e) {
     body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>` + ENRICH_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
@@ -5737,6 +5740,71 @@ async function _fetchAndRenderTennisDetail(matchId) {
 
 // bd mpg — Tennis PBP fetch + render section modal Insights.
 // Lazy fetch on modal open + refresh via SSE pbp_update handler.
+// ── OddsPapi — Cotes jeux/set tennis ────────────────────────────────────────
+async function fetchTennisSetOdds(matchId) {
+  const target = document.getElementById('tennis-set-odds-enrich');
+  if (!target || !matchId) return;
+  target.innerHTML = `<div class="ins-section" style="opacity:.55;font-size:11px;font-family:'DM Mono',monospace;padding:8px 0;color:var(--text3,#5a6068);">⚡ COTES JEUX/SET — chargement Pinnacle…</div>`;
+  try {
+    const r = await apiFetch(`/api/v1/tennis/set-odds?matchId=${encodeURIComponent(matchId)}`, { headers: { Accept: 'application/json' } });
+    if (r.status === 404) {
+      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;" title="Cotes jeux/set disponibles pour les tournois couverts par OddsPapi (Roland Garros, ATP/WTA majeurs). Données Pinnacle sharp.">⚡ Cotes jeux/set indisponibles pour ce tournoi</div>`;
+      return;
+    }
+    if (!r.ok) { target.innerHTML = ''; return; }
+    const d = await r.json();
+    if ((!d.set1 || !d.set1.length) && (!d.set2 || !d.set2.length)) {
+      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;">⚡ Cotes jeux/set non encore disponibles (trop tôt)</div>`;
+      return;
+    }
+    target.innerHTML = _renderTennisSetOdds(d);
+  } catch (e) {
+    target.innerHTML = '';
+    console.warn('[fetchTennisSetOdds]', e.message);
+  }
+}
+
+function _renderTennisSetOdds(d) {
+  const fmtOdds = v => v ? `<span style="font-weight:700;color:${v < 1.5 ? 'var(--amber,#ffa726)' : 'var(--green,#00e676)'}">${parseFloat(v).toFixed(2)}</span>` : '—';
+  const fmtBk   = s => `<span style="font-size:9px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">[${s}]</span>`;
+
+  function renderSetTable(lines, title) {
+    if (!lines || !lines.length) return '';
+    const rows = lines.map(l => {
+      const hl = l.mainLine ? 'background:rgba(0,230,118,0.06);border-left:2px solid var(--green,#00e676);' : '';
+      return `<tr style="${hl}">
+        <td style="padding:4px 8px;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--text,#e8eaed);">${l.line}</td>
+        <td style="padding:4px 8px;text-align:center;">${fmtOdds(l.over)}</td>
+        <td style="padding:4px 8px;text-align:center;">${fmtOdds(l.under)}</td>
+        <td style="padding:4px 8px;text-align:right;">${fmtBk(l.bookmaker)}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="flex:1;min-width:180px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:6px;text-transform:uppercase;">${title}</div>
+      <table style="width:100%;border-collapse:collapse;background:var(--bg2,#111417);border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:var(--bg3,#181c20);">
+          <th style="padding:4px 8px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);">Ligne</th>
+          <th style="padding:4px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--green,#00e676);">Over</th>
+          <th style="padding:4px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--red,#ff4d4d);">Under</th>
+          <th style="padding:4px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);">Book</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  const h2hHtml = d.h2h ? `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);margin-bottom:10px;">H2H : P1 ${fmtOdds(d.h2h.p1)} · P2 ${fmtOdds(d.h2h.p2)} ${fmtBk(d.h2h.bookmaker)}</div>` : '';
+  const set1Html = renderSetTable(d.set1, '⚡ Set 1 — Over/Under jeux');
+  const set2Html = renderSetTable(d.set2, '⚡ Set 2 — Over/Under jeux');
+
+  return `<div class="ins-section" style="border:1px solid rgba(0,230,118,0.18);border-radius:10px;padding:12px 14px;margin-top:4px;">
+    <div style="font-size:11px;font-weight:700;color:var(--green,#00e676);font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">⚡ COTES JEUX/SET · Pinnacle</div>
+    ${h2hHtml}
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">${set1Html}${set2Html}</div>
+    <div style="margin-top:8px;font-size:10px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Source : OddsPapi · Ligne surlignée = main line bookmaker · ${new Date().toLocaleTimeString('fr-FR')}</div>
+  </div>`;
+}
+
 async function fetchTennisPBP(matchId) {
   const target = document.getElementById('tennis-pbp-enrich');
   if (!target || !matchId) return;
