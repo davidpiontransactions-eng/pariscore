@@ -24038,6 +24038,8 @@ function renderComparateur(d) {
   var _berserkData   = { recent: [], upcoming: [] };
   var _liquipediaData= [];
   var _tier3Loaded   = false;
+  var _cs2EnrichTimer1 = null;
+  var _cs2EnrichTimer2 = null;
 
   // ── Public API ────────────────────────────────────────────────────────────
   window.initCs2Page = function () {
@@ -24397,6 +24399,15 @@ function renderComparateur(d) {
     grid.innerHTML = html;
   };
 
+  function _mapDots(n1, n2, bo) {
+    var toWin = Math.ceil((bo || 3) / 2);
+    var h = '<div class="cs2-map-dots"><div class="cs2-dots-side">';
+    for (var _i = 0; _i < toWin; _i++) h += '<span class="cs2-dot' + (_i < n1 ? ' d-t1' : '') + '"></span>';
+    h += '</div><span class="cs2-dot-sep"></span><div class="cs2-dots-side">';
+    for (var _j = 0; _j < toWin; _j++) h += '<span class="cs2-dot' + (_j < n2 ? ' d-t2' : '') + '"></span>';
+    return h + '</div></div>';
+  }
+
   function _buildCs2Card(m) {
     var isLive = !!m.is_live;
     var t1     = m.team1      || {};
@@ -24436,14 +24447,6 @@ function renderComparateur(d) {
     }
 
     // ── Score center ─────────────────────────────────────────────────────
-    function _mapDots(n1, n2, bo) {
-      var toWin = Math.ceil((bo || 3) / 2);
-      var h = '<div class="cs2-map-dots"><div class="cs2-dots-side">';
-      for (var _i = 0; _i < toWin; _i++) h += '<span class="cs2-dot' + (_i < n1 ? ' d-t1' : '') + '"></span>';
-      h += '</div><span class="cs2-dot-sep"></span><div class="cs2-dots-side">';
-      for (var _j = 0; _j < toWin; _j++) h += '<span class="cs2-dot' + (_j < n2 ? ' d-t2' : '') + '"></span>';
-      return h + '</div></div>';
-    }
     var scoreHtml, subHtml = '';
     if (maps.team1 != null && maps.team2 != null) {
       scoreHtml = _mapDots(maps.team1, maps.team2, m.best_of || 3);
@@ -24481,7 +24484,7 @@ function renderComparateur(d) {
         mapNumTag + valueFlag +
         '<span class="cs2-over-model" id="' + modelId + '" style="margin-left:auto;opacity:.5;font-size:10px;">…</span>' +
         '</div>';
-      _fetchMapOverModel(m.id, m.team1.name, m.team2.name, m.current_map, modelId);
+      _fetchMapOverModel(m.id, t1.name, t2.name, m.current_map, modelId);
     }
 
     // ── Odds ─────────────────────────────────────────────────────────────
@@ -24751,9 +24754,10 @@ function renderComparateur(d) {
         if (m.is_live) {
           var ms = m.maps_score || {};
           var rs = m.round_score || {};
-          scoreCell = '<span style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:#FF6B00;">' +
-            (ms.team1!=null?ms.team1:'—') + '–' + (ms.team2!=null?ms.team2:'—') + '</span>' +
-            (rs.team1!=null ? '<br><span style="font-size:9px;color:var(--text3);">' + rs.team1 + '–' + rs.team2 + ' rds</span>' : '');
+          scoreCell = '<span class="cs2-rds-t1" style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;">' + (ms.team1!=null?ms.team1:'—') + '</span>' +
+            '<span style="color:var(--text3,#5a6068)">–</span>' +
+            '<span class="cs2-rds-t2" style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;">' + (ms.team2!=null?ms.team2:'—') + '</span>' +
+            (rs.team1!=null ? '<br><span style="font-size:9px;"><span class="cs2-rds-t1">' + rs.team1 + '</span><span style="color:var(--text3,#5a6068)">–</span><span class="cs2-rds-t2">' + rs.team2 + '</span> rds</span>' : '');
         } else if (m.scheduled) {
           scoreCell = '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2);">' + _cs2FmtMatchTime(new Date(m.scheduled)) + '</span>';
         }
@@ -24766,7 +24770,7 @@ function renderComparateur(d) {
 
         // Odds cell
         var odds = m.odds || {};
-        var oddsCell = odds.team1 != null
+        var oddsCell = (odds.team1 != null && odds.team2 != null)
           ? '<span style="font-family:\'DM Mono\',monospace;font-size:11px;">' +
             Number(odds.team1).toFixed(2) + '<span style="color:var(--text3);margin:0 4px;">vs</span>' +
             Number(odds.team2).toFixed(2) + '</span>'
@@ -24842,8 +24846,10 @@ function renderComparateur(d) {
       }
     });
     // Re-render after enrichment loads (using existing poll)
-    setTimeout(function() { _applyCs2Filter(); }, 3000);
-    setTimeout(function() { _applyCs2Filter(); }, 8000);
+    if (_cs2EnrichTimer1) clearTimeout(_cs2EnrichTimer1);
+    if (_cs2EnrichTimer2) clearTimeout(_cs2EnrichTimer2);
+    _cs2EnrichTimer1 = setTimeout(function() { _applyCs2Filter(); }, 3000);
+    _cs2EnrichTimer2 = setTimeout(function() { _applyCs2Filter(); }, 8000);
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────
