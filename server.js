@@ -20954,7 +20954,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             const _bySetBrk  = drBase2.dr_by_set || {};
             const _drSetBrk  = _bySetBrk[_mSets.length]?.dr;
             const _drAvgSet  = Number.isFinite(_drSetBrk) ? _drSetBrk : (Number.isFinite(drBase2.dr) ? drBase2.dr : null);
-            if (!_drAvgSet || (_drAvgSet < 2.0 && (1 / _drAvgSet) < 2.0)) throw new Error('skip'); // DR set < 2.0
+            if (!_drAvgSet || (_drAvgSet < 1.5 && (1 / _drAvgSet) < 1.5)) throw new Error('skip'); // DR set < 1.5
             // 3. Aligner dominant DR set avec leader du set
             const _domSideBrk  = _drAvgSet >= 1 ? 'p1' : 'p2';
             const _domLeads    = (_domSideBrk === 'p1' && _gap > 0) || (_domSideBrk === 'p2' && _gap < 0);
@@ -21014,7 +21014,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
             const _bySetU   = drBase2.dr_by_set || {};
             const _drSetCur = _bySetU[_mSetsU.length]?.dr;
             const _drU      = Number.isFinite(_drSetCur) ? _drSetCur : (Number.isFinite(drBase2.dr) ? drBase2.dr : 1);
-            if (_drU < 2.0 && (1 / _drU) < 2.0) throw new Error('skip'); // DR set en cours < 2.0 → pas de domination suffisante
+            if (_drU < 1.5 && (1 / _drU) < 1.5) throw new Error('skip'); // DR set en cours < 1.5 → pas de domination suffisante
             const _drDom = Math.max(_drU, 1 / _drU); // toujours >= 1
             const _pDom  = Math.min(0.95, 0.63 + (_drDom - 1) * 0.14);
             const _pSub  = 1 - _pDom;
