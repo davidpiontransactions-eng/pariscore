@@ -28490,6 +28490,32 @@ if (pathname === '/api/v1/alerts/tennis-test' && req.method === 'POST') {
   });
 }
 
+// POST /api/v1/alerts/xg-intensity-test — test alerte live xG+intensité (admin, sans auth)
+if (pathname === '/api/v1/alerts/xg-intensity-test' && req.method === 'POST') {
+  const fakeMatch = {
+    id: 'test-xgi-001',
+    home_team:     'PSG',
+    away_team:     'Real Madrid',
+    live_score:    '1-1',
+    live_minute:   '62',
+    live_intensity: 47,
+    live_xg:       { home: 1.8, away: 0.7 },
+    expectedGoals: { home: 2.1, away: 1.1 },
+    league:        'Champions League (TEST)',
+    sport:         'UEFA Champions League',
+    commence_time: new Date().toISOString(),
+  };
+  _runLiveXgIntensityAlerts({ testMatch: fakeMatch })
+    .then(() => console.log('  [XgIntAlert:Test] envoyé → Discord'))
+    .catch(e => console.warn('  [XgIntAlert:Test] erreur:', e.message));
+  return jsonResponse(res, 200, {
+    ok: true,
+    testMatch: { home: fakeMatch.home_team, away: fakeMatch.away_team, xgH: 1.8, xgA: 0.7, intensity: 47, min: 62 },
+    webhook:   DISCORD_FOOT_XG_INTENSITY_WEBHOOK_URL.slice(0, 60) + '...',
+    message:   'Alerte xG+Intensité test envoyée → Discord',
+  });
+}
+
 // POST /api/v1/discord/morning-picks/test — déclenche immédiatement le broadcast matin (admin)
 if (pathname === '/api/v1/discord/morning-picks/test' && req.method === 'POST') {
   let _isAdmin = false;
@@ -40927,6 +40953,156 @@ async function _runLiveFootPoissonAlerts() {
 }
 setInterval(() => _runLiveFootPoissonAlerts().catch(() => {}), 5 * 60 * 1000);
 console.log(`  [LiveFootPoisson] cron armé — scan 5min, seuil prob>${LIVE_FOOT_POISSON_PROB_MIN}% + cote>${LIVE_FOOT_POISSON_ODDS_MIN}`);
+
+// ─── Live xG + Intensity Alert — xG équipe >0.5 AND intensité ≥15 ─────────────
+// Logique : si une équipe accumule xG>0.5 en live ET l'intensité du match ≥15/100
+// → choisit le meilleur pari parmi [Over N+0.5, BTTS, Win équipe dominante]
+// → filtre confiance >60% + cote implicite ≥1.20
+// Webhook dédié test/prod : DISCORD_FOOT_XG_INTENSITY_WEBHOOK_URL
+const DISCORD_FOOT_XG_INTENSITY_WEBHOOK_URL = process.env.DISCORD_FOOT_XG_INTENSITY_WEBHOOK_URL
+  || 'https://discord.com/api/webhooks/1510255497670955137/dPDerMYpOvbcGJJ-ibVmEzLSmjxEcbj2pnx0t2TBuqWaIg7bXwG89BfKafpm3MgehuSE';
+const LIVE_XG_INT_XG_MIN      = parseFloat(process.env.LIVE_XG_INT_XG_MIN      || '0.5');
+const LIVE_XG_INT_INTENS_MIN  = parseFloat(process.env.LIVE_XG_INT_INTENS_MIN  || '15');
+const LIVE_XG_INT_PROB_MIN    = parseFloat(process.env.LIVE_XG_INT_PROB_MIN    || '60');
+const LIVE_XG_INT_ODDS_MIN    = parseFloat(process.env.LIVE_XG_INT_ODDS_MIN    || '1.20');
+const LIVE_XG_INT_CD_MS       = parseInt(process.env.LIVE_XG_INT_CD_MS         || String(20 * 60 * 1000), 10);
+const _liveXgIntCooldowns     = new Map(); // `xgi:matchId:betKey` → timestamp
+
+function _selectXgIntensityBet(m) {
+  // Retourne { betLabel, betKey, confidence, impliedOdds, detail } ou null
+  const min     = parseInt(m.live_minute || 0) || 0;
+  if (min < 5 || min > 87) return null;
+  const elapsed = Math.max(min, 1);
+  const rem     = Math.max(90 - min, 3);
+  const xgH     = parseFloat(m.live_xg?.home) || 0;
+  const xgA     = parseFloat(m.live_xg?.away) || 0;
+  const intens  = parseInt(m.live_intensity || 0) || 0;
+
+  // Gate principal
+  if (xgH < LIVE_XG_INT_XG_MIN && xgA < LIVE_XG_INT_XG_MIN) return null;
+  if (intens < LIVE_XG_INT_INTENS_MIN) return null;
+
+  const parts   = (m.live_score || '0-0').split('-');
+  const sH      = parseInt(parts[0]) || 0;
+  const sA      = parseInt(parts[1]) || 0;
+  const goals   = sH + sA;
+
+  // λ restant par équipe : extrapolation du rythme xG actuel
+  const paceH   = xgH / elapsed;
+  const paceA   = xgA / elapsed;
+  const lamH    = paceH * rem;
+  const lamA    = paceA * rem;
+  const lamTot  = lamH + lamA;
+
+  // Probabilités Poisson
+  const pHomeScores = 1 - Math.exp(-lamH);
+  const pAwayScores = 1 - Math.exp(-lamA);
+  const pOverNx5    = 1 - Math.exp(-lamTot);          // Over goals+0.5
+  const pBtts       = pHomeScores * pAwayScores;       // les deux marquent encore
+
+  // Construire candidats
+  const candidates = [];
+
+  // 1. Over (goals+0.5)
+  if (pOverNx5 >= 0.01) candidates.push({
+    betKey:   `over${goals}5`,
+    betLabel: `Over ${goals}.5 buts`,
+    icon:     '💥',
+    confidence: Math.round(pOverNx5 * 100),
+    detail:   `λ total restant = **${lamTot.toFixed(2)}** | xG accumulé dom ${xgH.toFixed(2)} / ext ${xgA.toFixed(2)}`,
+  });
+
+  // 2. BTTS — si les deux équipes ont du xG significatif
+  if (xgH >= LIVE_XG_INT_XG_MIN && xgA >= LIVE_XG_INT_XG_MIN && pBtts >= 0.01) candidates.push({
+    betKey:   'btts_yes',
+    betLabel: 'BTTS Oui',
+    icon:     '🎯',
+    confidence: Math.round(pBtts * 100),
+    detail:   `P(dom marque) ${(pHomeScores*100).toFixed(0)}% × P(ext marque) ${(pAwayScores*100).toFixed(0)}%`,
+  });
+
+  // 3. Équipe dominante à marquer le prochain but
+  if (xgH > xgA && xgH >= LIVE_XG_INT_XG_MIN && pHomeScores >= 0.01) candidates.push({
+    betKey:   'home_scores',
+    betLabel: `${m.home_team || 'Domicile'} marque`,
+    icon:     '🏠',
+    confidence: Math.round(pHomeScores * 100),
+    detail:   `xG dom ${xgH.toFixed(2)} | λ restant dom = **${lamH.toFixed(2)}**`,
+  });
+  if (xgA >= xgH && xgA >= LIVE_XG_INT_XG_MIN && pAwayScores >= 0.01) candidates.push({
+    betKey:   'away_scores',
+    betLabel: `${m.away_team || 'Extérieur'} marque`,
+    icon:     '✈️',
+    confidence: Math.round(pAwayScores * 100),
+    detail:   `xG ext ${xgA.toFixed(2)} | λ restant ext = **${lamA.toFixed(2)}**`,
+  });
+
+  // Filtrer prob >min et cote implicite ≥min puis trier par confiance desc
+  const eligible = candidates
+    .filter(c => {
+      if (c.confidence < LIVE_XG_INT_PROB_MIN) return false;
+      const io = 100 / Math.max(c.confidence, 1);
+      if (io < LIVE_XG_INT_ODDS_MIN) return false;
+      c.impliedOdds = parseFloat(io.toFixed(2));
+      return true;
+    })
+    .sort((a, b) => b.confidence - a.confidence);
+
+  return eligible.length ? eligible[0] : null;
+}
+
+async function _runLiveXgIntensityAlerts({ testMatch = null } = {}) {
+  if (!testMatch && !automatedAlertsAllowed()) return;
+  if (!DISCORD_FOOT_XG_INTENSITY_WEBHOOK_URL) return;
+  const now      = Date.now();
+  const pool     = testMatch
+    ? [testMatch]
+    : (db.matches || []).filter(m => m?.live_score && parseInt(m.live_minute || 0) > 5);
+
+  for (const m of pool) {
+    const pick = _selectXgIntensityBet(m);
+    if (!pick) continue;
+    const ck = `xgi:${m.id}:${pick.betKey}`;
+    if (!testMatch && (now - (_liveXgIntCooldowns.get(ck) || 0)) < LIVE_XG_INT_CD_MS) continue;
+    if (!testMatch) _liveXgIntCooldowns.set(ck, now);
+
+    const intens  = parseInt(m.live_intensity || 0) || 0;
+    const min     = parseInt(m.live_minute || 0) || 0;
+    const xgH     = parseFloat(m.live_xg?.home) || 0;
+    const xgA     = parseFloat(m.live_xg?.away) || 0;
+    const league  = m.league || m.sport || '?';
+    const tag     = testMatch ? ' 🧪 TEST' : '';
+
+    const embed = {
+      title:       `${pick.icon} LIVE xG ALERT${tag} — ${pick.betLabel} | ${min}'`,
+      description: `**${m.home_team || '?'}** vs **${m.away_team || '?'}** · Score **${m.live_score || '0-0'}** · ${min}'`,
+      color:       0xff8c00,
+      fields: [
+        { name: '📊 Confiance',     value: `**${pick.confidence}%**`,                    inline: true },
+        { name: '💰 Cote fair',     value: `**${pick.impliedOdds}**`,                    inline: true },
+        { name: '⚡ Intensité',     value: `**${intens}/100**`,                          inline: true },
+        { name: '🎯 Pari',         value: `**${pick.betLabel}**`,                       inline: true },
+        { name: '🔥 xG dom',        value: `**${xgH.toFixed(2)}**`,                     inline: true },
+        { name: '🔥 xG ext',        value: `**${xgA.toFixed(2)}**`,                     inline: true },
+        { name: '📐 Détail',        value: pick.detail,                                  inline: false },
+        { name: '🏆 Ligue',         value: league,                                       inline: true },
+        { name: '⏱️ Min restantes', value: `**${Math.max(90 - min, 0)}**`,              inline: true },
+      ],
+      footer: {
+        text: `PariScore • xG>${LIVE_XG_INT_XG_MIN} + Intensité≥${LIVE_XG_INT_INTENS_MIN} + Conf>${LIVE_XG_INT_PROB_MIN}% + Cote≥${LIVE_XG_INT_ODDS_MIN} • Cooldown 20min${testMatch ? ' • MODE TEST' : ''}`,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    await httpsPost(DISCORD_FOOT_XG_INTENSITY_WEBHOOK_URL, { embeds: [embed] })
+      .catch(e => console.warn('  [XgIntAlert]', e.message));
+    console.log(`  [XgIntAlert]${tag} ${m.home_team}-${m.away_team} ${min}' bet=${pick.betKey} conf=${pick.confidence}% odds=${pick.impliedOdds}`);
+  }
+}
+
+// Cron 5min (production)
+setInterval(() => _runLiveXgIntensityAlerts().catch(() => {}), 5 * 60 * 1000);
+console.log(`  [XgIntAlert] cron armé — scan 5min, xG>${LIVE_XG_INT_XG_MIN} + intensité≥${LIVE_XG_INT_INTENS_MIN} + conf>${LIVE_XG_INT_PROB_MIN}%`);
 
 // ─── Discord Morning Tennis ATP — 8h00 Paris ─────────────────────────────────
 // Top 5 matchs ATP du jour par écart Elo surface-pondéré (Clay +15%, Grass +10%)
