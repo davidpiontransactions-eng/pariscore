@@ -17281,6 +17281,9 @@ const DISCORD_FOOT_WEBHOOK_URL = process.env.DISCORD_FOOT_WEBHOOK_URL || DISCORD
 // Canal domination tennis + cote ≤ 1.30 (env var ou URL directe DG)
 const DISCORD_TENNIS_DOMINATION_ODDS_URL = process.env.DISCORD_TENNIS_DOMINATION_ODDS_URL
   || 'https://discord.com/api/webhooks/1510415384778506362/ufpqP-yj0hUNoxosPHeLNvCYIPhJngpzj6xHLPvIOYTphQ67633U7XP0jfy0f8NlbfHf';
+// Canal Bets Prédictifs Football — prematch matchday + live Poisson 5min
+const DISCORD_FOOT_BETS_WEBHOOK_URL = process.env.DISCORD_FOOT_BETS_WEBHOOK_URL
+  || 'https://discord.com/api/webhooks/1510636692783104141/LKqluoXnfh5RyIlH-_G40weFmvzvmVsMKErlqfB7OOK-BimHcW3hR6e1h7kPpYzyWL8w';
 // Canal alertes live DR diff + variance (séparé du morning picks) — vide = silence
 const DISCORD_TENNIS_LIVE_WEBHOOK_URL = process.env.DISCORD_TENNIS_LIVE_WEBHOOK_URL || '';
 
@@ -18093,13 +18096,14 @@ function computeConfidenceIndex(confidence, edge, match) {
   return Math.min(99, Math.round(score));
 }
 
-function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, league = '') {
+function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, league = '', minOdds = 0) {
   const strat = STRATEGIES[strategyType];
   if (!strat) return null;
   const now = Date.now();
   const lim = Math.max(1, Math.min(50, parseInt(limit) || 10));
   const minConf = Math.max(0, Math.min(100, parseInt(minConfidence) || 50));
   const leagueFilter = (league || '').trim().toLowerCase();
+  const oddsFloor = parseFloat(minOdds) || 0;
 
   return db.matches
     .filter(m => m.poisson && new Date(m.commence_time).getTime() > now && (!leagueFilter || (m.sport || '').toLowerCase() === leagueFilter))
@@ -18107,6 +18111,13 @@ function getTopMatchesByStrategy(strategyType, limit = 10, minConfidence = 50, l
       const confidence = strat.getProb(m);
       if (confidence == null || confidence < minConf) return null;
       const stratOdds = strat.getOdds(m);
+      // Filtre cote min : cote réelle si dispo, sinon cote implicite fair = 100/prob
+      if (oddsFloor > 0) {
+        const effectiveOdds = (stratOdds != null && stratOdds > 0)
+          ? stratOdds
+          : parseFloat((100 / Math.max(confidence, 1)).toFixed(3));
+        if (effectiveOdds < oddsFloor) return null;
+      }
       const edge = m.best_edge?.edge || 0;
       const valueIndex = computeValueIndex(confidence, edge, strategyType);
       const confidenceIndex = computeConfidenceIndex(confidence, edge, m);
@@ -40746,12 +40757,14 @@ console.log(`  [DailyPicks] cron armé — premier tick à ${DAILY_TOP_PICKS_HOU
 // ─── Discord Morning Strategy Picks — 8h00 Paris ──────────────────────────────
 // Top 5 paris prematch par stratégie (confiance ≥ 65%) → Discord webhook
 // bd: morning discord picks — one embed per strategy, color-coded, ML-sourced
-const DISCORD_MORNING_PICKS_WEBHOOK_URL = process.env.DISCORD_MORNING_PICKS_WEBHOOK_URL || DISCORD_FOOT_WEBHOOK_URL;
-const DISCORD_MORNING_PICKS_MIN_CONF = parseInt(process.env.DISCORD_MORNING_PICKS_MIN_CONF || '65', 10);
-const DISCORD_MORNING_PICKS_COUNT = parseInt(process.env.DISCORD_MORNING_PICKS_COUNT || '5', 10);
-const DISCORD_MORNING_PICKS_HOUR = parseInt(process.env.DISCORD_MORNING_PICKS_HOUR || '8', 10);
+const DISCORD_MORNING_PICKS_WEBHOOK_URL = process.env.DISCORD_MORNING_PICKS_WEBHOOK_URL || DISCORD_FOOT_BETS_WEBHOOK_URL;
+const DISCORD_MORNING_PICKS_MIN_CONF  = parseInt(process.env.DISCORD_MORNING_PICKS_MIN_CONF  || '60', 10);
+const DISCORD_MORNING_PICKS_MIN_ODDS  = parseFloat(process.env.DISCORD_MORNING_PICKS_MIN_ODDS || '1.20');
+const DISCORD_MORNING_PICKS_COUNT     = parseInt(process.env.DISCORD_MORNING_PICKS_COUNT     || '5', 10);
+const DISCORD_MORNING_PICKS_HOUR      = parseInt(process.env.DISCORD_MORNING_PICKS_HOUR      || '8', 10);
 const DISCORD_MORNING_PICKS_STRATEGIES = (
-  process.env.DISCORD_MORNING_PICKS_STRATEGIES || 'BTTS_YES,OVER_2_5,OVER_1_5,HOME_WIN,AWAY_WIN,DC_HOME,DC_AWAY,OVER_6_5_CORNERS'
+  process.env.DISCORD_MORNING_PICKS_STRATEGIES ||
+  'BTTS_YES,OVER_2_5,OVER_1_5,UNDER_2_5,HOME_WIN,AWAY_WIN,DRAW,CS_00,ANGLE_CORNERS,OVER_6_5_CORNERS,VERROU_TACTIQUE,GOLDEN_PPG_GAP,DC_HOME,DC_AWAY,HT_HOME_FT_HOME,HT_UNDER_FT_OVER'
 ).split(',').map(s => s.trim()).filter(Boolean);
 
 const _STRAT_DISCORD_COLORS = {
@@ -40803,7 +40816,7 @@ async function _runMorningStrategyPicksDiscord({ force = false } = {}) {
     }
     const embeds = [];
     for (const stratKey of DISCORD_MORNING_PICKS_STRATEGIES) {
-      const picks = getTopMatchesByStrategy(stratKey, DISCORD_MORNING_PICKS_COUNT, DISCORD_MORNING_PICKS_MIN_CONF);
+      const picks = getTopMatchesByStrategy(stratKey, DISCORD_MORNING_PICKS_COUNT, DISCORD_MORNING_PICKS_MIN_CONF, '', DISCORD_MORNING_PICKS_MIN_ODDS);
       if (!picks || !picks.length) {
         console.log(`  [MorningPicks:Discord] ${stratKey} — 0 picks conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%`);
         continue;
@@ -40835,7 +40848,85 @@ setTimeout(() => {
   _runMorningStrategyPicksDiscord().catch(e => console.warn('[MorningPicks:Discord bootstrap]', e.message));
   setInterval(() => _runMorningStrategyPicksDiscord().catch(e => console.warn('[MorningPicks:Discord]', e.message)), 24 * 3600 * 1000);
 }, _msUntilNextParisHour(DISCORD_MORNING_PICKS_HOUR));
-console.log(`  [MorningPicks:Discord] cron armé — ${DISCORD_MORNING_PICKS_HOUR}h00 Paris, ${DISCORD_MORNING_PICKS_STRATEGIES.length} stratégies, conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%`);
+console.log(`  [MorningPicks:Discord] cron armé — ${DISCORD_MORNING_PICKS_HOUR}h00 Paris, ${DISCORD_MORNING_PICKS_STRATEGIES.length} stratégies, conf ≥ ${DISCORD_MORNING_PICKS_MIN_CONF}%, cote ≥ ${DISCORD_MORNING_PICKS_MIN_ODDS}`);
+
+// ─── Matchday detector — déclenche picks quand nouvelle journée de matchs ────
+// Scan toutes les heures. Si un nouveau date-set apparaît dans les 28h → envoie picks.
+let _footBetsLastMatchdayKey = '';
+async function _checkFootMatchdayAndSendPicks() {
+  try {
+    if (!DISCORD_FOOT_BETS_WEBHOOK_URL) return;
+    const now = Date.now();
+    const horizon = now + 28 * 3600 * 1000;
+    const upcomingDates = new Set();
+    for (const m of (db.matches || [])) {
+      if (!m?.commence_time) continue;
+      const ko = new Date(m.commence_time).getTime();
+      if (ko > now && ko < horizon) upcomingDates.add(m.commence_time.slice(0, 10));
+    }
+    const dayKey = [...upcomingDates].sort().join(',');
+    if (!dayKey || dayKey === _footBetsLastMatchdayKey) return;
+    _footBetsLastMatchdayKey = dayKey;
+    console.log(`  [FootBets:Matchday] Nouvelles dates détectées: ${dayKey} → envoi picks`);
+    await _runMorningStrategyPicksDiscord({ force: true });
+  } catch (e) { console.warn('  [FootBets:Matchday]', e.message); }
+}
+setInterval(() => _checkFootMatchdayAndSendPicks().catch(() => {}), 60 * 60 * 1000);
+setTimeout(() => _checkFootMatchdayAndSendPicks().catch(() => {}), 30 * 1000); // boot +30s
+console.log('  [FootBets:Matchday] detector armé — scan horaire 28h window');
+
+// ─── Live Foot Poisson 5min — alertes prob>65% + cote implicite>1.20 ─────────
+const _liveFootPoissonCooldowns = new Map();
+const LIVE_FOOT_POISSON_PROB_MIN  = parseFloat(process.env.LIVE_FOOT_POISSON_PROB_MIN  || '65');
+const LIVE_FOOT_POISSON_ODDS_MIN  = parseFloat(process.env.LIVE_FOOT_POISSON_ODDS_MIN  || '1.20');
+const LIVE_FOOT_POISSON_CD_MS     = parseInt(process.env.LIVE_FOOT_POISSON_CD_MS       || String(15 * 60 * 1000), 10);
+
+async function _runLiveFootPoissonAlerts() {
+  if (!automatedAlertsAllowed()) return;
+  if (!DISCORD_FOOT_BETS_WEBHOOK_URL) return;
+  const now = Date.now();
+  const livePool = (db.matches || []).filter(m =>
+    m?.live_score && parseInt(m.live_minute || 0) > 5 && parseInt(m.live_minute || 0) < 85
+  );
+  for (const m of livePool) {
+    const ck = `lfp:${m.id}`;
+    if ((now - (_liveFootPoissonCooldowns.get(ck) || 0)) < LIVE_FOOT_POISSON_CD_MS) continue;
+    if (!m.expectedGoals) continue;
+    const min    = parseInt(m.live_minute) || 0;
+    const rem    = Math.max(90 - min, 5);
+    const xgH    = parseFloat(m.expectedGoals.home) || 0;
+    const xgA    = parseFloat(m.expectedGoals.away) || 0;
+    const parts  = (m.live_score || '0-0').split('-');
+    const goals  = (parseInt(parts[0]) || 0) + (parseInt(parts[1]) || 0);
+    const lamTot = (xgH + xgA) * (rem / 90);
+    // Prob au moins 1 but restant → Over (goals + 0.5)
+    const probMore = Math.round((1 - Math.exp(-lamTot)) * 100);
+    if (probMore < LIVE_FOOT_POISSON_PROB_MIN) continue;
+    const impliedOdds = parseFloat((100 / probMore).toFixed(2));
+    if (impliedOdds < LIVE_FOOT_POISSON_ODDS_MIN) continue;
+    _liveFootPoissonCooldowns.set(ck, now);
+    const embed = {
+      title: `⚡ LIVE FOOT — Over ${goals}.5 Buts | ${min}'`,
+      description: `**${m.home_team || '?'}** vs **${m.away_team || '?'}** · Score **${m.live_score}** · ${min}'`,
+      color: 0xff4d4d,
+      fields: [
+        { name: '📊 Probabilité', value: `**${probMore}%**`,         inline: true },
+        { name: '💰 Cote fair',   value: `**${impliedOdds}**`,       inline: true },
+        { name: '⏱️ Min restantes', value: `**${rem}**`,             inline: true },
+        { name: '🎯 Marché',      value: `Over **${goals}.5** buts`, inline: true },
+        { name: '📐 λ restant',   value: `**${lamTot.toFixed(2)}**`, inline: true },
+        { name: '🏆 Ligue',       value: m.league || m.sport || '?', inline: true },
+      ],
+      footer: { text: `PariScore • Poisson Live 5min • Prob >${LIVE_FOOT_POISSON_PROB_MIN}% + Cote >${LIVE_FOOT_POISSON_ODDS_MIN} • Cooldown 15min` },
+      timestamp: new Date().toISOString(),
+    };
+    httpsPost(DISCORD_FOOT_BETS_WEBHOOK_URL, { embeds: [embed] })
+      .catch(e => console.warn('  [LiveFootPoisson]', e.message));
+    console.log(`  [LiveFootPoisson] ${m.home_team}-${m.away_team} ${min}' Over${goals+0.5}=${probMore}% λ=${lamTot.toFixed(2)}`);
+  }
+}
+setInterval(() => _runLiveFootPoissonAlerts().catch(() => {}), 5 * 60 * 1000);
+console.log(`  [LiveFootPoisson] cron armé — scan 5min, seuil prob>${LIVE_FOOT_POISSON_PROB_MIN}% + cote>${LIVE_FOOT_POISSON_ODDS_MIN}`);
 
 // ─── Discord Morning Tennis ATP — 8h00 Paris ─────────────────────────────────
 // Top 5 matchs ATP du jour par écart Elo surface-pondéré (Clay +15%, Grass +10%)
