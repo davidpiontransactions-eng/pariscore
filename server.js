@@ -15559,7 +15559,10 @@ async function fetchOdds(force = false, opts = {}) {
     // FIX historique : archiver AVANT purge pour éviter le wipe des matchs terminés
     await archiveThenPurge('post-fetchOdds');
     // Betfair WOM — fire-and-forget, mutate db.matches in place avant saveDB
-    enrichMatchesWithBetfairWOM(db.matches, 'football').catch(() => {});
+    // typeof guard : defensive against hoisting edge-case (async fn defined line ~31804)
+    if (typeof enrichMatchesWithBetfairWOM === 'function') {
+      enrichMatchesWithBetfairWOM(db.matches, 'football').catch(() => {});
+    }
     saveDB();
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
