@@ -15558,6 +15558,8 @@ async function fetchOdds(force = false, opts = {}) {
     db.lastOddsUpdate = new Date().toISOString();
     // FIX historique : archiver AVANT purge pour éviter le wipe des matchs terminés
     await archiveThenPurge('post-fetchOdds');
+    // Betfair WOM — fire-and-forget, mutate db.matches in place avant saveDB
+    enrichMatchesWithBetfairWOM(db.matches, 'football').catch(() => {});
     saveDB();
     syncCacheBuffers();
     // CatBoost batch inference — async, non-bloquant, fallback Poisson si désactivé
@@ -31692,6 +31694,128 @@ function blendTennisProbsW(eloProb, bsdProb, wBsd) {
     method: 'blend_dynamic',
   };
 }
+// ── BETFAIR WOM — Weight of Money (volume échangé % par runner) ─────────────
+// Scrape betfair.com/exchange/plus/{sport} → market IDs par nom match.
+// Readonly JSON endpoint — Referer header suffit, 0 auth requise côté serveur.
+// Cache: index 30min, WOM par market 10min. Non-bloquant, fire-and-forget foot.
+// ─────────────────────────────────────────────────────────────────────────────
+const _BF_AK      = 'nzIFcwyWhrlwYMrh';
+const _BF_HDR     = {
+  'Referer':         'https://www.betfair.com/',
+  'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  'Accept-Language': 'en-GB,en;q=0.9',
+};
+const _bfWOMCache = new Map(); // marketId → { wom, ts }
+const _bfIdxCache = new Map(); // sport → { markets[], ts }
+const _BF_WOM_TTL = 10 * 60 * 1000;
+const _BF_IDX_TTL = 30 * 60 * 1000;
+
+function _bfNorm(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function _bfScore(query, label) {
+  const h = _bfNorm(label);
+  const words = _bfNorm(query).split(' ').filter(w => w.length >= 3);
+  if (!words.length) return 0;
+  return words.filter(w => h.includes(w)).length / words.length;
+}
+async function _bfFetchIndex(sport) {
+  const hit = _bfIdxCache.get(sport);
+  if (hit && Date.now() - hit.ts < _BF_IDX_TTL) return hit.markets;
+  const path = sport === 'tennis' ? 'tennis' : 'football';
+  let markets = [];
+  try {
+    const res = await httpsGet(
+      `https://www.betfair.com/exchange/plus/${path}`,
+      { ..._BF_HDR, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
+      20000
+    );
+    const html = typeof res.data === 'string' ? res.data : '';
+    const re   = /href="[^"]*\/market\/(1\.\d{9,12})"[^>]*>([^<]{5,100})<\/a>/g;
+    const seen = new Set();
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      if (!seen.has(m[1])) { seen.add(m[1]); markets.push({ marketId: m[1], label: m[2].trim() }); }
+    }
+    if (!markets.length) {
+      const re2 = /\/market\/(1\.\d{9,12})/g;
+      while ((m = re2.exec(html)) !== null) {
+        if (!seen.has(m[1])) { seen.add(m[1]); markets.push({ marketId: m[1], label: '' }); }
+      }
+    }
+    console.log(`  [BetfairWOM] ${path} index: ${markets.length} markets`);
+  } catch (e) { console.warn(`  [BetfairWOM] index fetch: ${e.message}`); }
+  _bfIdxCache.set(sport, { markets, ts: Date.now() });
+  return markets;
+}
+async function _bfFetchWOM(marketId) {
+  const hit = _bfWOMCache.get(marketId);
+  if (hit && Date.now() - hit.ts < _BF_WOM_TTL) return hit.wom;
+  const url = `https://www.betfair.com/www/sports/exchange/readonly/v1/bymarket?_ak=${_BF_AK}&types=RUNNER_TRADED,RUNNER_STATE,MARKET_STATE&marketIds=${marketId}&alt=json`;
+  try {
+    const res = await httpsGet(url, { ..._BF_HDR, 'Accept': 'application/json, text/plain, */*' }, 10000);
+    if (res.status !== 200 || !res.data) return null;
+    const mkts    = res.data.markets || [];
+    const mkt     = mkts.find(m => m.marketId === marketId) || mkts[0];
+    if (!mkt || !Array.isArray(mkt.runners)) return null;
+    const runners = mkt.runners.filter(r => r.status !== 'REMOVED');
+    const total   = mkt.totalMatched || runners.reduce((s, r) => s + (r.totalMatched || 0), 0);
+    if (!total || runners.length < 2) return null;
+    const wom = {
+      runners: runners.map(r => ({
+        name:    r.runnerName || String(r.selectionId || ''),
+        pct:     Math.round(((r.totalMatched || 0) / total) * 100),
+        matched: Math.round(r.totalMatched || 0),
+      })),
+      total_matched: Math.round(total),
+      currency: 'GBP',
+      market_id: marketId,
+      ts: Date.now(),
+    };
+    _bfWOMCache.set(marketId, { wom, ts: Date.now() });
+    return wom;
+  } catch (e) { console.warn(`  [BetfairWOM] market ${marketId}: ${e.message}`); return null; }
+}
+async function fetchBetfairWOM(name1, name2, sport) {
+  try {
+    const markets = await _bfFetchIndex(sport);
+    if (!markets.length) return null;
+    const query = `${name1} ${name2}`;
+    let best = null, bScore = 0;
+    for (const m of markets) {
+      if (!m.label) continue;
+      // Only Match Odds / direct match markets (filter out tournament/set winner)
+      if (!/match\s*odds|\bv\b/i.test(m.label)) continue;
+      const sc = _bfScore(query, m.label);
+      if (sc > bScore) { bScore = sc; best = m; }
+    }
+    if (!best || bScore < 0.4) return null;
+    const wom = await _bfFetchWOM(best.marketId);
+    if (!wom) return null;
+    const r = wom.runners;
+    if (sport === 'tennis' && r.length >= 2)
+      return { p1: r[0].pct, p2: r[1].pct, total_matched: wom.total_matched, currency: 'GBP', market_id: best.marketId, ts: wom.ts };
+    if (sport === 'football' && r.length >= 3)
+      return { h: r[0].pct, d: r[1].pct, a: r[2].pct, total_matched: wom.total_matched, currency: 'GBP', market_id: best.marketId, ts: wom.ts };
+    // football 2-runner (no draw market) or fallback
+    return { p1: r[0].pct, p2: r[1].pct, total_matched: wom.total_matched, currency: 'GBP', market_id: best.marketId, ts: wom.ts };
+  } catch (e) { console.warn(`  [BetfairWOM] fetchBetfairWOM: ${e.message}`); return null; }
+}
+async function enrichMatchesWithBetfairWOM(matches, sport) {
+  if (!Array.isArray(matches) || !matches.length) return;
+  try { await _bfFetchIndex(sport); } catch (_) {} // pre-warm index once
+  for (const m of matches) {
+    try {
+      const n1 = m.home_team || (m.player1 && m.player1.name) || '';
+      const n2 = m.away_team || (m.player2 && m.player2.name) || '';
+      if (!n1 || !n2) continue;
+      const wom = await fetchBetfairWOM(n1, n2, sport);
+      if (wom) m.betfair_wom = wom;
+    } catch (_) {}
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Trap-bet : le marché price un favori que le modèle calibré contredit, OU
 // edge élevé sur un segment où le modèle BSD est peu fiable (badge red/grey).
 function _computeTrapBet(fair, blended, badge, bestEv) {
@@ -32285,6 +32409,7 @@ async function _buildTennisValueBetsCore({ date }) {
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: (eloProb && bsdProb) ? 'elo+bsd' : (eloProb ? 'elo' : (bsdProb ? 'bsd' : null)) },
+      betfair_wom: await fetchBetfairWOM(p1Name, p2Name, 'tennis').catch(() => null),
       youtube_url: m.youtube_url || null,
     });
   }

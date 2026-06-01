@@ -2735,6 +2735,47 @@ function _tvbConfEdge(ce) {
   var col = ce.actionable ? '#00e676' : '#5a6068';
   return '<div title="Edge × fiabilité calibrée (was_winner_correct)" style="font-size:9px;color:' + col + ';margin-top:2px;font-weight:700;">cEV ' + (ce.value > 0 ? '+' : '') + ce.value + (ce.actionable ? ' ✓' : '') + '</div>';
 }
+// ── Betfair WOM bar — tennis (p1/p2) + foot (h/d/a) ─────────────────────────
+function _tvbWOM(wom) {
+  if (!wom) return '';
+  var tot = wom.total_matched
+    ? '£' + (wom.total_matched >= 1000 ? Math.round(wom.total_matched / 1000) + 'k' : wom.total_matched)
+    : '';
+  var tip = 'Betfair Exchange — Weight of Money' + (tot ? ' · ' + tot + ' misés' : '');
+  // Tennis (p1/p2)
+  if (wom.p1 != null && wom.p2 != null) {
+    var p1 = wom.p1, p2 = wom.p2;
+    var c1 = p1 >= p2 ? '#00e676' : '#ff4d4d';
+    var c2 = p2 > p1  ? '#00e676' : '#ff4d4d';
+    return '<div title="' + tip + '" style="margin-top:3px;display:flex;align-items:center;gap:3px;font-size:8px;font-family:var(--font-mono);">'
+      + '<span style="color:var(--text3);font-size:7px;font-weight:700;letter-spacing:.5px;">WOM</span>'
+      + '<div style="width:52px;height:5px;border-radius:3px;overflow:hidden;background:#1e2328;display:flex;">'
+        + '<div style="width:' + p1 + '%;background:' + c1 + ';"></div>'
+        + '<div style="width:' + p2 + '%;background:' + c2 + ';"></div>'
+      + '</div>'
+      + '<span style="color:' + c1 + ';font-weight:700;">' + p1 + '%</span>'
+      + '<span style="color:var(--text3);">·</span>'
+      + '<span style="color:' + c2 + ';font-weight:700;">' + p2 + '%</span>'
+      + (tot ? '<span style="color:var(--text3);font-size:7px;">' + tot + '</span>' : '')
+      + '</div>';
+  }
+  // Football (h/d/a)
+  if (wom.h != null && wom.d != null && wom.a != null) {
+    return '<div title="' + tip + '" style="margin-top:3px;display:flex;align-items:center;gap:3px;font-size:8px;font-family:var(--font-mono);">'
+      + '<span style="color:var(--text3);font-size:7px;font-weight:700;letter-spacing:.5px;">WOM</span>'
+      + '<div style="width:52px;height:5px;border-radius:3px;overflow:hidden;background:#1e2328;display:flex;">'
+        + '<div style="width:' + wom.h + '%;background:#00e676;"></div>'
+        + '<div style="width:' + wom.d + '%;background:#ffa726;"></div>'
+        + '<div style="width:' + wom.a + '%;background:#ff4d4d;"></div>'
+      + '</div>'
+      + '<span style="color:#00e676;font-weight:700;">' + wom.h + '%</span>'
+      + '<span style="color:#ffa726;font-size:7px;">N' + wom.d + '</span>'
+      + '<span style="color:#ff4d4d;font-weight:700;">' + wom.a + '%</span>'
+      + (tot ? '<span style="color:var(--text3);font-size:7px;">' + tot + '</span>' : '')
+      + '</div>';
+  }
+  return '';
+}
 function _tvbFirstSet(fs) {
   if (!fs || fs.p1_pct == null) return '';
   var col = fs.diverges_match ? '#29b6f6' : '#8d9399';
@@ -3601,7 +3642,7 @@ function renderTennisValueBets(rawMatches) {
 <span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
 <span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
 <span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
-<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>
+<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbWOM(m.betfair_wom)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>
 <span class="tn-vb-cell tn-cell-proba" role="cell">${_tvbConfBadge(m.confidence_badge)}${probaNew}${_tvbMlDiv(m.ml_market_div)}</span>
 <span class="tn-vb-cell tn-cell-value" role="cell">${valueHtml}</span>
 <span class="tn-vb-cell tn-cell-expand" role="cell">${aiBtn}<button class="tn-expand-btn" aria-label="Détails ${ariaLbl}" aria-expanded="false" aria-controls="${drawerId}" onclick="event.stopPropagation();_tnExpandDrawer('${matchId}')">▸</button></span>
@@ -10425,6 +10466,7 @@ const label = country
           ${awayLogoImg}<span style="font-size:12px;font-weight:600;cursor:pointer;" onclick="trackClick('team','${(m.away_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.away_team}</span>${awayLiveScoreHtml(m)}
         </div>
         ${renderPredBets(m)}
+        ${_tvbWOM(m.betfair_wom)}
         ${_live ? (() => {
           const xgH = m.live_xg?.home ?? m.expectedGoals?.home ?? null;
           const xgA = m.live_xg?.away ?? m.expectedGoals?.away ?? null;
