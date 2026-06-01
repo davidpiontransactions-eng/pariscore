@@ -15284,6 +15284,11 @@ async function fetchOdds(force = false, opts = {}) {
     const upcoming = db.matches.filter(m => new Date(m.commence_time).getTime() > now).length;
     if (upcoming > 0) {
       console.log(`  [Cron:Odds] ⚡ Données fraîches en cache (${upcoming} matchs) — skip API [key=${cacheKey}]`);
+      // WOM enrich même sur cache-hit — seulement matchs sans betfair_wom (10min TTL cache interne)
+      if (typeof enrichMatchesWithBetfairWOM === 'function') {
+        const _needsWOM = db.matches.filter(m => m && !m.betfair_wom);
+        if (_needsWOM.length) enrichMatchesWithBetfairWOM(_needsWOM, 'football').catch(() => {});
+      }
       return;
     }
   }
