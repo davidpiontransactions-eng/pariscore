@@ -161,6 +161,8 @@ async function fetchBSDCs2Teams(apiKey) {
       if (!t.name) continue;
       const entry = { id: t.id, elo_rating: t.elo_rating || null, elo_peak: t.elo_peak || null };
       byName[t.name.toLowerCase()] = entry;
+      const normName = _normalizeTeamName(t.name);
+      if (normName) byName[normName] = entry;
       if (t.short_name) byName[t.short_name.toLowerCase()] = entry;
       if (t.id) byId[t.id] = entry;
     }
@@ -454,13 +456,19 @@ async function fetchCsApiMatches() {
   try {
     // Try with days param first, fallback to plain endpoint
     let res = await _csapiGet('/matches/latest?days=90').catch(() => null);
-    if (!res || res.status !== 200 || !Array.isArray(res.data)) {
+    if (!res || res.status !== 200) {
       res = await _csapiGet('/matches/latest').catch(() => null);
     }
-    if (res && res.status === 200 && Array.isArray(res.data)) {
-      _csapiMatchesCache = { ts: Date.now(), data: res.data };
-      console.log(`[CS2/OverModel] ${res.data.length} matches fetched from csapi.de`);
-      return res.data;
+    if (res && res.status === 200 && res.data) {
+      // Handle both direct array and wrapped formats: { matches:[...] } / { data:[...] } / [...]
+      const arr = Array.isArray(res.data) ? res.data
+                : Array.isArray(res.data.matches) ? res.data.matches
+                : Array.isArray(res.data.data)    ? res.data.data
+                : Array.isArray(res.data.results) ? res.data.results
+                : [];
+      _csapiMatchesCache = { ts: Date.now(), data: arr };
+      console.log(`[CS2/OverModel] ${arr.length} matches fetched from csapi.de`);
+      return arr;
     }
   } catch (e) { console.warn('[CS2/OverModel] Match fetch:', e.message); }
   return _csapiMatchesCache.data || [];
@@ -658,12 +666,13 @@ async function fetchCsApiTeamInfo(teamId) {
 // ─── Derive team form from match history (last N matches W/L) ────────────────
 function buildTeamForm(teamName, matches, n = 10) {
   const key = teamName.toLowerCase();
-  // Filter matches involving this team, sort newest first
+  // Handle both {name:string} and plain string for team1/team2
+  function _tname(t) { return (typeof t === 'string' ? t : (t?.name || '')).toLowerCase(); }
+
   const relevant = matches
     .filter(m => {
-      const t1 = (m.team1?.name || '').toLowerCase();
-      const t2 = (m.team2?.name || '').toLowerCase();
-      return t1 === key || t2 === key;
+      const t1 = _tname(m.team1); const t2 = _tname(m.team2);
+      return t1 === key || t2 === key || _normalizeTeamName(t1) === key || _normalizeTeamName(t2) === key;
     })
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
     .slice(0, n);
@@ -671,10 +680,10 @@ function buildTeamForm(teamName, matches, n = 10) {
   if (!relevant.length) return null;
 
   const form = relevant.map(m => {
-    const winner = (m.winner?.name || '').toLowerCase();
-    const isT1   = (m.team1?.name || '').toLowerCase() === key;
-    if (!winner) return 'N'; // no result
-    if (winner === key) return 'W';
+    const winner = _tname(m.winner);
+    const normW  = _normalizeTeamName(winner);
+    if (!winner) return 'N';
+    if (winner === key || normW === key) return 'W';
     return 'L';
   }).reverse(); // chronological order (oldest→newest)
 
@@ -694,18 +703,21 @@ function buildH2H(t1name, t2name, matches, n = 20) {
   const k1 = t1name.toLowerCase();
   const k2 = t2name.toLowerCase();
   const h2h = matches.filter(m => {
-    const mt1 = (m.team1?.name || '').toLowerCase();
-    const mt2 = (m.team2?.name || '').toLowerCase();
-    return (mt1 === k1 && mt2 === k2) || (mt1 === k2 && mt2 === k1);
+    function _tn(t) { return (typeof t === 'string' ? t : (t?.name || '')).toLowerCase(); }
+    const mt1 = _tn(m.team1); const mt2 = _tn(m.team2);
+    const nmt1 = _normalizeTeamName(mt1); const nmt2 = _normalizeTeamName(mt2);
+    return (mt1 === k1 || nmt1 === k1) && (mt2 === k2 || nmt2 === k2)
+        || (mt1 === k2 || nmt1 === k2) && (mt2 === k1 || nmt2 === k1);
   }).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, n);
 
   if (!h2h.length) return null;
 
   let t1wins = 0, t2wins = 0;
   const results = h2h.map(m => {
-    const winner = (m.winner?.name || '').toLowerCase();
-    if (winner === k1) { t1wins++; return 'T1'; }
-    if (winner === k2) { t2wins++; return 'T2'; }
+    function _tn2(t) { return (typeof t === 'string' ? t : (t?.name || '')).toLowerCase(); }
+    const winner = _tn2(m.winner); const normW = _normalizeTeamName(winner);
+    if (winner === k1 || normW === k1) { t1wins++; return 'T1'; }
+    if (winner === k2 || normW === k2) { t2wins++; return 'T2'; }
     return 'N';
   }).reverse();
 
