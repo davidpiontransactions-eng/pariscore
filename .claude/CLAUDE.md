@@ -1,4 +1,4 @@
-# CLAUDE.md — PariScore (v3.2 — trimmed 2026-06-02)
+# CLAUDE.md — PariScore (v3.3 — BSD June 2026 mission 2026-06-02)
 
 > Poste de pilotage. Source vérité tâches = `bd ready`. Détails techniques → `.claude/rules/`.
 
@@ -171,12 +171,19 @@ Chargées automatiquement sur les fichiers pertinents :
 
 | Endpoint BSD | Route PariScore | État |
 |---|---|---|
-| `/tennis/api/v2/matches/{id}/odds/` | `GET /api/v1/tennis/match/:matchId/odds` | ✅ implémenté + mobile sheet |
-| `/tennis/api/v2/matches/{id}/h2h/` | `GET /api/v1/tennis/h2h?matchId=` | ✅ backend + frontend câblé |
-| `/tennis/api/v2/matches/{id}/` (sets_detail) | via normalizer `_normalizeBSDTennisMatch` | ✅ aces/DF par set capturés |
+| `/tennis/api/v2/matches/{id}/odds/` | `GET /api/v1/tennis/match/:matchId/odds` | ✅ backend + mobile sheet `pslts-bsd-odds` |
+| `/tennis/api/v2/matches/{id}/h2h/` | `GET /api/v1/tennis/h2h?matchId=` | ✅ backend + `_psLtsFetchH2H()` frontend câblé |
+| `/tennis/api/v2/matches/{id}/` (sets_detail) | `_mergeDetailStats()` server.js | ⚠️ backend existe, schema réel = `aces_per_set[]` / `double_faults_per_set[]` — normalizer à patcher |
 | `/tennis/api/v2/matches/live/` | SSE + `fetchBSDTennisLive` | ✅ |
 
-**Champs sets capturés (juin 2026)** : `p1_aces`, `p2_aces`, `p1_df`, `p2_df` par set dans `match.sets[i]`
-**H2H surface breakdown** : `_psLtsFetchH2H()` — `by_surface.{hard|clay|grass}.{p1_wins|p2_wins}`
+**Schéma BSD réel confirmé sur match 36312 (2026-06-02)** :
+- Odds multi-books : `bookmakers[].{odds_player1, odds_player2, movement_player1, movement_player2}` → déjà extrait par `_extractTennisOddsSummary()`
+- H2H : `{ h2h: null|[...], player1_last5: [...], player2_last5: [...] }` → `_psLtsFetchH2H()` patché schéma réel commit `6ff2296`
+- Aces/DF par set : `aces_per_set: [[p1,p2], ...]` + `double_faults_per_set: [[p1,p2], ...]` dans match detail — ⚠️ normalizer utilise encore ancien schéma `sets_detail[i].p1_aces`
 
-*v3.3 — 2026-06-02 — BSD June 2026 features wired (commit 6831577).*
+**H2H label** : `pslts-ctx-h2h` span — label fixé "H2H clay" → "H2H" commit `72ff270`
+**Stale panel** : `dataset.rendered` stocke matchId (pas `'1'`) depuis commit `fad55b1`
+
+**Action restante** : patcher `_normalizeBSDTennisMatch()` + `_mergeDetailStats()` server.js avec `aces_per_set` / `double_faults_per_set` schéma réel.
+
+*v3.3 — 2026-06-02 — BSD June 2026 mission : H2H câblé + odds mobile sheet + stale panel fix. Aces/DF per set pending schema fix.*
