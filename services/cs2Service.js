@@ -698,6 +698,15 @@ async function fetchCsApiTeamInfo(teamId) {
 }
 
 // ─── Derive team form from match history (last N matches W/L) ────────────────
+// ─── BO1 exclusion filter (not representative of major tournament performance) ─
+function _isBO1(m) {
+  const bo = m.best_of || m.format || m.type;
+  if (!bo) return false;
+  if (typeof bo === 'number') return bo === 1;
+  const s = String(bo).toLowerCase().replace(/[^a-z0-9]/g,'');
+  return s === 'bo1' || s === '1';
+}
+
 function buildTeamForm(teamName, matches, n = 10) {
   const key = teamName.toLowerCase();
   // Handle both {name:string} and plain string for team1/team2
@@ -705,6 +714,7 @@ function buildTeamForm(teamName, matches, n = 10) {
 
   const relevant = matches
     .filter(m => {
+      if (_isBO1(m)) return false;
       const t1 = _tname(m.team1); const t2 = _tname(m.team2);
       return t1 === key || t2 === key || _normalizeTeamName(t1) === key || _normalizeTeamName(t2) === key;
     })
@@ -737,6 +747,7 @@ function buildH2H(t1name, t2name, matches, n = 20) {
   const k1 = t1name.toLowerCase();
   const k2 = t2name.toLowerCase();
   const h2h = matches.filter(m => {
+    if (_isBO1(m)) return false;
     function _tn(t) { return (typeof t === 'string' ? t : (t?.name || '')).toLowerCase(); }
     const mt1 = _tn(m.team1); const mt2 = _tn(m.team2);
     const nmt1 = _normalizeTeamName(mt1); const nmt2 = _normalizeTeamName(mt2);
@@ -792,6 +803,7 @@ function computeFormScore(teamName, matches) {
   function _tn(t) { return (typeof t === 'string' ? t : (t?.name || '')).toLowerCase(); }
   const relevant = matches
     .filter(m => {
+      if (_isBO1(m)) return false;
       const mt1 = _tn(m.team1); const mt2 = _tn(m.team2);
       return mt1 === key || mt2 === key || _normalizeTeamName(mt1) === key || _normalizeTeamName(mt2) === key;
     })

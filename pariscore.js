@@ -25392,12 +25392,13 @@ function renderComparateur(d) {
       var rs   = teamData.roster_strength; // 0-100
       var traj = teamData.form_trajectory;
       // Header
+      var trajColor = traj ? (traj.label==='HOT'||traj.label==='RISING'?'#00e676':traj.label==='STABLE'?'#ffa726':'#ff4d4d') : '#5a6068';
       var html = '<div style="margin-bottom:14px;">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
-          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.05em;">' + _esc(teamName) + ' — PRO SCOUT</span>' +
-          '<div style="display:flex;align-items:center;gap:6px;">' +
-            (traj ? '<span style="font-size:11px;" title="Form ' + traj.label + '">' + traj.arrow + '</span>' : '') +
-            (rs != null ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:' + (rs>=70?'#00e676':rs>=50?'#ffa726':'#ff4d4d') + ';" title="Roster Strength">STR ' + rs + '</span>' : '') +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);">' +
+          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;">' + _esc(teamName) + '</span>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            (traj ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:' + trajColor + ';">' + traj.arrow + ' ' + traj.label + (traj.source?'*':'') + '</span>' : '') +
+            (rs != null ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:' + (rs>=70?'#00e676':rs>=50?'#ffa726':'#ff4d4d') + ';">STR ' + rs + '</span>' : '') +
           '</div>' +
         '</div>';
       for (var i=0;i<teamData.players.length;i++) {
@@ -25410,7 +25411,7 @@ function renderComparateur(d) {
         html += '<div class="cs2-scout-player-row" style="flex-direction:column;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">' +
           '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
             '<span style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:var(--text1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
-              (isStar ? '⭐ ' : '') + _esc(p.name||'?') +
+              (isStar ? '<span style="color:#ffd700;font-size:8px;margin-right:3px;vertical-align:middle;">TOP</span>' : '') + _esc(p.name||'?') +
             '</span>' +
             '<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:' + role.color + '22;color:' + role.color + ';flex-shrink:0;">' + role.label + '</span>' +
             '<span class="cs2-scout-rating" style="color:' + rc + ';font-size:11px;font-weight:800;font-family:\'DM Mono\',monospace;flex-shrink:0;">' + (p.rating!=null?p.rating.toFixed(2):'?') + '</span>' +
@@ -25571,7 +25572,7 @@ function renderComparateur(d) {
     var fs1 = t1d.form_score; var fs2 = t2d.form_score;
     if (fs1!=null||fs2!=null)
       trajContent += _kpiRow('Form Score', fs1!=null?fs1+'':null, fs2!=null?fs2+'':null, fs1!=null?_tcolor(fs1):null, fs2!=null?_tcolor(fs2):null);
-    html += _section('📈 FORME (3 derniers + SOS)', trajContent);
+    html += _section('FORME · BO3 RÉCENTS + SOS', trajContent);
 
     // ─── ROSTER STRENGTH ─────────────────────────────────────────────────────
     var rs1 = t1d.roster_strength; var rs2 = t2d.roster_strength;
@@ -25592,7 +25593,7 @@ function renderComparateur(d) {
         t1d.rank!=null?(t1d.rank<=10?'#00e676':t1d.rank<=30?'#ffa726':'#aaa'):null,
         t2d.rank!=null?(t2d.rank<=10?'#00e676':t2d.rank<=30?'#ffa726':'#aaa'):null
       );
-    html += _section('💪 FORCE ROSTER (Rating 3.0)', rsContent);
+    html += _section('ROSTER STRENGTH · RATING 3.0', rsContent);
 
     // ─── PISTOL INDEX ─────────────────────────────────────────────────────────
     if (pi) {
@@ -25605,9 +25606,9 @@ function renderComparateur(d) {
       piContent += _kpiRow('Δ CT', pi.ct_delta>0?'+'+pi.ct_delta+'pp':pi.ct_delta+'pp', '', _deltaColor(pi.ct_delta), null);
       piContent += _kpiRow('Δ T', pi.t_delta>0?'+'+pi.t_delta+'pp':pi.t_delta+'pp', '', _deltaColor(pi.t_delta), null);
       if (pi.trade_signal)
-        piContent += '<div style="margin-top:6px;padding:5px 8px;border-radius:4px;background:rgba(255,214,0,0.08);border:1px solid rgba(255,214,0,0.25);">' +
-          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffd700;font-weight:700;">⚡ ' + _esc(pi.trade_signal) + '</span></div>';
-      html += _section('🎯 PISTOL ROUND INDEX (BSD proxy)', piContent);
+        piContent += '<div style="margin-top:6px;padding:5px 8px;border-radius:4px;background:rgba(255,214,0,0.06);border-left:2px solid #ffd700;">' +
+          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffd700;font-weight:700;letter-spacing:.04em;">SIGNAL · ' + _esc(pi.trade_signal.toUpperCase()) + '</span></div>';
+      html += _section('PISTOL ROUND INDEX · BSD PROXY', piContent);
     }
 
     // ─── MAP POOL ENTROPY ─────────────────────────────────────────────────────
@@ -25618,9 +25619,9 @@ function renderComparateur(d) {
         e1 ? (e1.concentrated?'#ffa726':'#00e676') : null,
         e2 ? (e2.concentrated?'#ffa726':'#00e676') : null
       );
-      if (e1&&e1.concentrated) entropyContent += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffa726;margin-top:4px;">⚠ ' + _esc(t1) + ' pool concentré — vulnerable au veto</div>';
-      if (e2&&e2.concentrated) entropyContent += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffa726;margin-top:4px;">⚠ ' + _esc(t2) + ' pool concentré — vulnerable au veto</div>';
-      html += _section('🗂 MAP POOL ENTROPY', entropyContent);
+      if (e1&&e1.concentrated) entropyContent += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffa726;margin-top:5px;padding:4px 6px;border-left:2px solid #ffa726;">' + _esc(t1.toUpperCase()) + ' · POOL CONCENTRE — RISQUE VETO FORCING</div>';
+      if (e2&&e2.concentrated) entropyContent += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffa726;margin-top:5px;padding:4px 6px;border-left:2px solid #ffa726;">' + _esc(t2.toUpperCase()) + ' · POOL CONCENTRE — RISQUE VETO FORCING</div>';
+      html += _section('MAP POOL ENTROPY · VETO RISK', entropyContent);
     }
 
     // ─── Source footer ────────────────────────────────────────────────────────
