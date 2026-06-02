@@ -22,7 +22,8 @@ class AppTheme {
           onError: AppColors.text,
           outline: AppColors.border,
         ),
-        textTheme: const TextTheme(
+        // GoogleFonts returns non-const — drop const here
+        textTheme: TextTheme(
           displayLarge: AppTextStyles.displayLarge,
           displayMedium: AppTextStyles.displayMedium,
           headlineLarge: AppTextStyles.headlineLarge,
@@ -33,7 +34,7 @@ class AppTheme {
           labelLarge: AppTextStyles.labelLarge,
           labelMedium: AppTextStyles.labelMedium,
         ),
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           backgroundColor: AppColors.bg,
           foregroundColor: AppColors.text,
           elevation: 0,
@@ -42,7 +43,7 @@ class AppTheme {
           titleTextStyle: AppTextStyles.headlineLarge,
           surfaceTintColor: Colors.transparent,
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
           backgroundColor: AppColors.bg2,
           selectedItemColor: AppColors.green,
           unselectedItemColor: AppColors.text3,
@@ -94,9 +95,12 @@ class AppTheme {
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: AppColors.red),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          labelStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.text2),
-          hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.text3),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          labelStyle:
+              AppTextStyles.bodyMedium.copyWith(color: AppColors.text2),
+          hintStyle:
+              AppTextStyles.bodyMedium.copyWith(color: AppColors.text3),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(

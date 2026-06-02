@@ -129,7 +129,7 @@ class _MatchesList extends StatelessWidget {
     return BlocBuilder<MatchesCubit, MatchesState>(
       builder: (context, state) {
         return switch (state) {
-          MatchesLoading() => const Center(
+          MatchesLoading() => Center(
               child: CircularProgressIndicator(color: AppColors.green),
             ),
           MatchesError(:final message) => _ErrorView(
@@ -212,7 +212,7 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

@@ -57,7 +57,7 @@ class _AiScoutView extends StatelessWidget {
       body: BlocBuilder<ScoutCubit, ScoutState>(
         builder: (context, state) {
           return switch (state) {
-            ScoutLoading() => const Center(
+            ScoutLoading() => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -274,7 +274,7 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

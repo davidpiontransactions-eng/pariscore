@@ -25,6 +25,12 @@ class ApiConstants {
   static const String liveSse = '/api/v1/live';
   static const String livePredictions = '/api/v1/live/predictions';
 
+  // Bets & Bankroll
+  static const String bets = '/api/v1/bets';
+  static const String bankrollSummary = '/api/v1/bankroll/summary';
+  static const String bankrollPlan = '/api/v1/bankroll/plan';
+  static const String betsKelly = '/api/v1/bets/kelly';
+
   // Status
   static const String status = '/api/v1/status';
 

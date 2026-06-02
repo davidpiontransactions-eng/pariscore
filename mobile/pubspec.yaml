@@ -32,6 +32,9 @@ dependencies:
   # Functional programming (Either/Option)
   dartz: ^0.10.1
 
+  # Fonts (Syne / Instrument Sans / DM Mono — no manual ttf needed)
+  google_fonts: ^6.2.1
+
   # Utils
   intl: ^0.19.0
   cached_network_image: ^3.4.1

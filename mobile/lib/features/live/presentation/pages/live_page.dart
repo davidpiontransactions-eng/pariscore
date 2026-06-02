@@ -51,7 +51,7 @@ class _LiveView extends StatelessWidget {
       body: BlocBuilder<LiveCubit, LiveState>(
         builder: (context, state) {
           return switch (state) {
-            LiveConnecting() => const Center(
+            LiveConnecting() => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -79,7 +79,7 @@ class _LiveView extends StatelessWidget {
                 ),
               ),
             LiveConnected(:final matches) => matches.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
