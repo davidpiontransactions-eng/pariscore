@@ -1,0 +1,1007 @@
+{
+  "generated": "2026-06-02",
+  "windows": {
+    "all": {
+      "label": "All-time",
+      "rankings": {
+        "Mirage": [
+          {
+            "name": "Vitality",
+            "wr": 68,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 1
+          },
+          {
+            "name": "Spirit",
+            "wr": 65,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 2
+          },
+          {
+            "name": "Natus Vincere",
+            "wr": 62,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 3
+          },
+          {
+            "name": "FURIA",
+            "wr": 62,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 4
+          },
+          {
+            "name": "FaZe",
+            "wr": 55,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 5
+          },
+          {
+            "name": "Heroic",
+            "wr": 55,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 6
+          },
+          {
+            "name": "MOUZ",
+            "wr": 52,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 7
+          },
+          {
+            "name": "Cloud9",
+            "wr": 52,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 8
+          },
+          {
+            "name": "paiN",
+            "wr": 52,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 9
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 52,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 10
+          },
+          {
+            "name": "MongolZ",
+            "wr": 52,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 11
+          },
+          {
+            "name": "fnatic",
+            "wr": 50,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 12
+          },
+          {
+            "name": "G2",
+            "wr": 48,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 13
+          },
+          {
+            "name": "Complexity",
+            "wr": 48,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 14
+          },
+          {
+            "name": "Astralis",
+            "wr": 48,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 15
+          },
+          {
+            "name": "ENCE",
+            "wr": 48,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 16
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 48,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 17
+          },
+          {
+            "name": "Liquid",
+            "wr": 45,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 18
+          },
+          {
+            "name": "BIG",
+            "wr": 45,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 19
+          },
+          {
+            "name": "Falcons",
+            "wr": 45,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 20
+          }
+        ],
+        "Inferno": [
+          {
+            "name": "Vitality",
+            "wr": 72,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 1
+          },
+          {
+            "name": "Natus Vincere",
+            "wr": 65,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 2
+          },
+          {
+            "name": "FaZe",
+            "wr": 60,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 3
+          },
+          {
+            "name": "Spirit",
+            "wr": 58,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 4
+          },
+          {
+            "name": "Heroic",
+            "wr": 58,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 5
+          },
+          {
+            "name": "G2",
+            "wr": 55,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 6
+          },
+          {
+            "name": "FURIA",
+            "wr": 55,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 7
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 55,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 8
+          },
+          {
+            "name": "MongolZ",
+            "wr": 55,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 9
+          },
+          {
+            "name": "Liquid",
+            "wr": 52,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 10
+          },
+          {
+            "name": "BIG",
+            "wr": 50,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 11
+          },
+          {
+            "name": "MOUZ",
+            "wr": 48,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 12
+          },
+          {
+            "name": "Cloud9",
+            "wr": 48,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 13
+          },
+          {
+            "name": "paiN",
+            "wr": 48,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 14
+          },
+          {
+            "name": "fnatic",
+            "wr": 48,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 15
+          },
+          {
+            "name": "Astralis",
+            "wr": 45,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 16
+          },
+          {
+            "name": "Complexity",
+            "wr": 42,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 17
+          },
+          {
+            "name": "ENCE",
+            "wr": 42,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 18
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 42,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 19
+          },
+          {
+            "name": "Falcons",
+            "wr": 40,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 20
+          }
+        ],
+        "Nuke": [
+          {
+            "name": "FaZe",
+            "wr": 72,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 1
+          },
+          {
+            "name": "Vitality",
+            "wr": 65,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 2
+          },
+          {
+            "name": "Astralis",
+            "wr": 65,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 3
+          },
+          {
+            "name": "MOUZ",
+            "wr": 62,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 4
+          },
+          {
+            "name": "Natus Vincere",
+            "wr": 58,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 5
+          },
+          {
+            "name": "Cloud9",
+            "wr": 55,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 6
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 55,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 7
+          },
+          {
+            "name": "Complexity",
+            "wr": 52,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 8
+          },
+          {
+            "name": "ENCE",
+            "wr": 52,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 9
+          },
+          {
+            "name": "Spirit",
+            "wr": 50,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 10
+          },
+          {
+            "name": "G2",
+            "wr": 50,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 11
+          },
+          {
+            "name": "Liquid",
+            "wr": 48,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 12
+          },
+          {
+            "name": "Falcons",
+            "wr": 48,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 13
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 48,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 14
+          },
+          {
+            "name": "MongolZ",
+            "wr": 48,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 15
+          },
+          {
+            "name": "Heroic",
+            "wr": 45,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 16
+          },
+          {
+            "name": "paiN",
+            "wr": 45,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 17
+          },
+          {
+            "name": "BIG",
+            "wr": 42,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 18
+          },
+          {
+            "name": "fnatic",
+            "wr": 42,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 19
+          },
+          {
+            "name": "FURIA",
+            "wr": 40,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 20
+          }
+        ],
+        "Ancient": [
+          {
+            "name": "Spirit",
+            "wr": 72,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 1
+          },
+          {
+            "name": "Natus Vincere",
+            "wr": 70,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 2
+          },
+          {
+            "name": "FaZe",
+            "wr": 68,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 3
+          },
+          {
+            "name": "G2",
+            "wr": 60,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 4
+          },
+          {
+            "name": "Vitality",
+            "wr": 58,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 5
+          },
+          {
+            "name": "FURIA",
+            "wr": 58,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 6
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 58,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 7
+          },
+          {
+            "name": "MongolZ",
+            "wr": 58,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 8
+          },
+          {
+            "name": "MOUZ",
+            "wr": 55,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 9
+          },
+          {
+            "name": "Liquid",
+            "wr": 55,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 10
+          },
+          {
+            "name": "Complexity",
+            "wr": 55,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 11
+          },
+          {
+            "name": "ENCE",
+            "wr": 55,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 12
+          },
+          {
+            "name": "Astralis",
+            "wr": 52,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 13
+          },
+          {
+            "name": "Falcons",
+            "wr": 52,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 14
+          },
+          {
+            "name": "Heroic",
+            "wr": 50,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 15
+          },
+          {
+            "name": "Cloud9",
+            "wr": 50,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 16
+          },
+          {
+            "name": "BIG",
+            "wr": 48,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 17
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 45,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 18
+          },
+          {
+            "name": "fnatic",
+            "wr": 45,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 19
+          },
+          {
+            "name": "paiN",
+            "wr": 42,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 20
+          }
+        ],
+        "Anubis": [
+          {
+            "name": "Vitality",
+            "wr": 70,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 1
+          },
+          {
+            "name": "G2",
+            "wr": 65,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 2
+          },
+          {
+            "name": "Spirit",
+            "wr": 60,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 3
+          },
+          {
+            "name": "Liquid",
+            "wr": 60,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 4
+          },
+          {
+            "name": "Complexity",
+            "wr": 58,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 5
+          },
+          {
+            "name": "Natus Vincere",
+            "wr": 55,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 6
+          },
+          {
+            "name": "paiN",
+            "wr": 55,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 7
+          },
+          {
+            "name": "Falcons",
+            "wr": 55,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 8
+          },
+          {
+            "name": "BIG",
+            "wr": 52,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 9
+          },
+          {
+            "name": "fnatic",
+            "wr": 52,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 10
+          },
+          {
+            "name": "FaZe",
+            "wr": 50,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 11
+          },
+          {
+            "name": "Astralis",
+            "wr": 50,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 12
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 50,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 13
+          },
+          {
+            "name": "Heroic",
+            "wr": 48,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 14
+          },
+          {
+            "name": "FURIA",
+            "wr": 48,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 15
+          },
+          {
+            "name": "MOUZ",
+            "wr": 45,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 16
+          },
+          {
+            "name": "Cloud9",
+            "wr": 45,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 17
+          },
+          {
+            "name": "ENCE",
+            "wr": 45,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 18
+          },
+          {
+            "name": "MongolZ",
+            "wr": 45,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 19
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 42,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 20
+          }
+        ],
+        "Vertigo": [
+          {
+            "name": "Vitality",
+            "wr": 62,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 1
+          },
+          {
+            "name": "Heroic",
+            "wr": 62,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 2
+          },
+          {
+            "name": "MOUZ",
+            "wr": 58,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 3
+          },
+          {
+            "name": "Cloud9",
+            "wr": 58,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 4
+          },
+          {
+            "name": "Astralis",
+            "wr": 55,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 5
+          },
+          {
+            "name": "BIG",
+            "wr": 55,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 6
+          },
+          {
+            "name": "fnatic",
+            "wr": 55,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 7
+          },
+          {
+            "name": "G2",
+            "wr": 52,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 8
+          },
+          {
+            "name": "FURIA",
+            "wr": 52,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 9
+          },
+          {
+            "name": "paiN",
+            "wr": 50,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 10
+          },
+          {
+            "name": "ENCE",
+            "wr": 50,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 11
+          },
+          {
+            "name": "Natus Vincere",
+            "wr": 48,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 12
+          },
+          {
+            "name": "FaZe",
+            "wr": 45,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 13
+          },
+          {
+            "name": "Complexity",
+            "wr": 45,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 14
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 45,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 15
+          },
+          {
+            "name": "Liquid",
+            "wr": 42,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 16
+          },
+          {
+            "name": "Falcons",
+            "wr": 42,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 17
+          },
+          {
+            "name": "MongolZ",
+            "wr": 42,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 18
+          },
+          {
+            "name": "Spirit",
+            "wr": 40,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 19
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 40,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 20
+          }
+        ],
+        "Dust2": [
+          {
+            "name": "Natus Vincere",
+            "wr": 60,
+            "hltv_rank": 5,
+            "hltv_pts": 650,
+            "rank": 1
+          },
+          {
+            "name": "BIG",
+            "wr": 58,
+            "hltv_rank": 13,
+            "hltv_pts": 330,
+            "rank": 2
+          },
+          {
+            "name": "Vitality",
+            "wr": 55,
+            "hltv_rank": 1,
+            "hltv_pts": 939,
+            "rank": 3
+          },
+          {
+            "name": "FaZe",
+            "wr": 52,
+            "hltv_rank": 2,
+            "hltv_pts": 850,
+            "rank": 4
+          },
+          {
+            "name": "Heroic",
+            "wr": 52,
+            "hltv_rank": 8,
+            "hltv_pts": 480,
+            "rank": 5
+          },
+          {
+            "name": "Liquid",
+            "wr": 50,
+            "hltv_rank": 7,
+            "hltv_pts": 530,
+            "rank": 6
+          },
+          {
+            "name": "Complexity",
+            "wr": 50,
+            "hltv_rank": 10,
+            "hltv_pts": 400,
+            "rank": 7
+          },
+          {
+            "name": "Falcons",
+            "wr": 50,
+            "hltv_rank": 16,
+            "hltv_pts": 270,
+            "rank": 8
+          },
+          {
+            "name": "Virtus.pro",
+            "wr": 50,
+            "hltv_rank": 27,
+            "hltv_pts": 130,
+            "rank": 9
+          },
+          {
+            "name": "MongolZ",
+            "wr": 50,
+            "hltv_rank": 19,
+            "hltv_pts": 220,
+            "rank": 10
+          },
+          {
+            "name": "Spirit",
+            "wr": 48,
+            "hltv_rank": 3,
+            "hltv_pts": 780,
+            "rank": 11
+          },
+          {
+            "name": "ENCE",
+            "wr": 48,
+            "hltv_rank": 15,
+            "hltv_pts": 290,
+            "rank": 12
+          },
+          {
+            "name": "Ninjas in Pyjamas",
+            "wr": 48,
+            "hltv_rank": 29,
+            "hltv_pts": 110,
+            "rank": 13
+          },
+          {
+            "name": "G2",
+            "wr": 45,
+            "hltv_rank": 6,
+            "hltv_pts": 600,
+            "rank": 14
+          },
+          {
+            "name": "FURIA",
+            "wr": 45,
+            "hltv_rank": 9,
+            "hltv_pts": 450,
+            "rank": 15
+          },
+          {
+            "name": "MOUZ",
+            "wr": 42,
+            "hltv_rank": 4,
+            "hltv_pts": 700,
+            "rank": 16
+          },
+          {
+            "name": "Cloud9",
+            "wr": 42,
+            "hltv_rank": 11,
+            "hltv_pts": 380,
+            "rank": 17
+          },
+          {
+            "name": "Astralis",
+            "wr": 42,
+            "hltv_rank": 12,
+            "hltv_pts": 360,
+            "rank": 18
+          },
+          {
+            "name": "paiN",
+            "wr": 40,
+            "hltv_rank": 14,
+            "hltv_pts": 310,
+            "rank": 19
+          },
+          {
+            "name": "fnatic",
+            "wr": 40,
+            "hltv_rank": 30,
+            "hltv_pts": 100,
+            "rank": 20
+          }
+        ]
+      }
+    }
+  },
+  "source_files": [
+    "all-time"
+  ]
+}

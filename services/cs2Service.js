@@ -630,6 +630,7 @@ async function computeMapOverModel(t1name, t2name, mapName, oppRankWindow = 15) 
 const CSAPI_TEAM_TTL      = 6 * 60 * 60 * 1000;   // 6h
 const CSAPI_PLAYERS_TTL   = 6 * 60 * 60 * 1000;   // 6h
 const HLTV_MAPSTATS_FILE  = path.join(__dirname, '..', 'data', 'hltv_team_mapstats.json');
+const HLTV_MAP_RANK_JSON  = path.join(__dirname, '..', 'data', 'hltv_map_rankings.json');
 const HLTV_MAPSTATS_3M   = path.join(__dirname, '..', 'data', 'hltv_mapstats_3m.json');
 const HLTV_MAPSTATS_6M   = path.join(__dirname, '..', 'data', 'hltv_mapstats_6m.json');
 const HLTV_MAPSTATS_1Y   = path.join(__dirname, '..', 'data', 'hltv_mapstats_1y.json');
@@ -803,10 +804,28 @@ async function computeBSDMapRankings(topN = 30) {
   if (_bsdMapRankingsCache.rankings && Date.now() - _bsdMapRankingsCache.ts < BSD_MAP_RANKINGS_TTL)
     return _bsdMapRankingsCache.rankings;
   try {
-    // Primary: HLTV team map stats file (top-30 accurate data)
-    const hltvMaps = loadHltvMapStats();   // { teamNameLower: { Mirage:72, Inferno:85, ... } }
+    // Primary A: pre-generated hltv_map_rankings.json (all windows, real rankings)
+    if (fs.existsSync(HLTV_MAP_RANK_JSON)) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(HLTV_MAP_RANK_JSON, 'utf8'));
+        // Use first available window (3m > 6m > 1y > all)
+        const wk = ['3m','6m','1y','all'].find(k => raw.windows?.[k]?.rankings);
+        if (wk) {
+          const rankings = raw.windows[wk].rankings;
+          _bsdMapRankingsCache = { ts: Date.now(), rankings };
+          console.log(`[CS2/MapRank] Loaded from hltv_map_rankings.json (window=${wk})`);
+          return rankings;
+        }
+      } catch (_) { /* fall through */ }
+    }
+
+    // Primary B: HLTV team map stats file (top-30 accurate data)
+    const hltvMaps = loadHltvMapStats();   // { teamNameLower: { mirage:72, ... } }
     const hltvRank = _loadHltvRankings(); // { teamNameLower: { rank, points } }
     const mapData  = {};
+    function _getWR(maps, mapLabel) {
+      return maps[mapLabel] ?? maps[mapLabel.toLowerCase()] ?? maps['de_'+mapLabel.toLowerCase()] ?? null;
+    }
 
     for (const [nameKey, maps] of Object.entries(hltvMaps)) {
       if (!Object.keys(maps).length) continue;
@@ -814,7 +833,23 @@ async function computeBSDMapRankings(topN = 30) {
       mapData[nameKey] = { ...maps, _rank: rk.rank || 99, _pts: rk.points || 0, _name: nameKey };
     }
 
-    // If HLTV file has < 5 teams, fall back to BSD ELO sort
+    // Build per-map rankings from map stats file
+    if (Object.keys(mapData).length >= 5) {
+      const rankings = {};
+      for (const map of ACTIVE_MAPS) {
+        const entries = Object.entries(mapData)
+          .map(([, d]) => ({ name: d._name, hltv_rank: d._rank, wr: _getWR(d, map) }))
+          .filter(e => e.wr != null)
+          .sort((a, b) => b.wr - a.wr)
+          .map((e, i) => ({ ...e, rank: i + 1 }));
+        rankings[map] = entries;
+      }
+      _bsdMapRankingsCache = { ts: Date.now(), rankings };
+      console.log(`[CS2/MapRank] Built from hltv_team_mapstats.json (${Object.keys(mapData).length} teams)`);
+      return rankings;
+    }
+
+    // Fallback C: BSD ELO sort
     if (Object.keys(mapData).length < 5 && _bsdApiKeyRef) {
       console.log('[CS2/MapRank] HLTV file sparse — falling back to BSD ELO data');
       const bsdTeams = await fetchBSDCs2Teams(_bsdApiKeyRef);
