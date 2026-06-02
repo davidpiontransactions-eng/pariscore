@@ -10702,9 +10702,12 @@ const label = country
           : (m.best_edge?.edge > 5
               ? `<span class="bet-signal-badge bet-warn" title="${(bs.reason||'EV>5% mais IC pessimiste ≤0%').replace(/"/g,"'")}">⚠ IC</span>`
               : '');
+        const bsdBetBadge = m.bsd_bet_signal?.bet_favorite
+          ? `<span class="bet-signal-badge" style="background:rgba(100,180,255,0.15);color:#64b4ff;border:1px solid rgba(100,180,255,0.3);font-size:9px;padding:1px 4px;border-radius:3px;" title="BSD ML v${m.bsd_bet_signal.model_version||'?'} — confiance ${Math.round((m.bsd_bet_signal.confidence||0)*100)}%">BSD ✓</span>`
+          : '';
         return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
           <span class="edge-badge ${isHigh?'edge-high':isPos?'edge-med':''}">${isPos?'+':''}${edgePct}%</span>
-          ${betBadge}
+          ${betBadge}${bsdBetBadge}
         </div>`;
       })()}</td>
     `;
