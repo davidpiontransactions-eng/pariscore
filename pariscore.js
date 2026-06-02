@@ -24811,7 +24811,7 @@ function renderComparateur(d) {
     // Trigger enrichment fetch async
     _fetchEnrichment(m.id, t1.name, t2.name, m.current_map || null);
 
-    return '<div class="cs2-card' + (isLive ? ' is-live' : '') + '" data-cs2-match-id="' + _esc(m.id) + '">' +
+    return '<div class="cs2-card' + (isLive ? ' is-live' : '') + (mapAdv && mapAdv.value_flag ? ' has-value-map' : '') + '" data-cs2-match-id="' + _esc(m.id) + '">' +
       '<div class="cs2-card-head">' +
         tourLogo +
         '<span class="cs2-tour-name">' + _esc(m.tournament) + '</span>' +
@@ -25105,7 +25105,7 @@ function renderComparateur(d) {
           ? _kpiBadge(kd.signals.find(function(s){return s.key==='prob';}) || { label:'—', color:'grey' })
           : '<span style="color:var(--text3);font-size:10px;">—</span>';
 
-        return '<tr class="cs2-dash-row' + (m.is_live ? ' cs2-dash-live' : '') + '">' +
+        return '<tr class="cs2-dash-row' + (m.is_live ? ' cs2-dash-live' : '') + (m.map_advantage && m.map_advantage.value_flag ? ' has-value-map' : '') + '">' +
           '<td class="cs2-dash-score">' + scoreCell + '</td>' +
           '<td class="cs2-dash-teams">' +
             '<div class="cs2-dash-t1">' + teamLabel(m.team1) + '</div>' +

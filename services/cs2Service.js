@@ -67,6 +67,7 @@ const RANKINGS_FILE    = path.join(__dirname, '..', 'data', 'hltv_rankings.json'
 
 // ─── Caches ──────────────────────────────────────────────────────────────────
 let _cs2Cache        = { ts: 0, data: [] };
+let _cs2Fetching     = false;
 let _hltvRankCache   = { ts: 0, rankings: {} };    // teamName.lower() → { rank, points }
 let _highlightsCache = { ts: 0, data: [] };        // ByMykel tournament highlights
 let _stickersCache   = { ts: 0, byTeam: {} };      // teamName.lower() → best sticker img
@@ -210,11 +211,15 @@ function computeMapAdvantage(t1MapStats, t2MapStats, currentMap) {
   const t1 = t1wr != null ? t1wr : 50;
   const t2 = t2wr != null ? t2wr : 50;
   const diff = t1 - t2;
+  const winner = diff >= 20 ? 'team1' : diff <= -20 ? 'team2' : 'neutral';
   return {
-    team1_wr  : t1,
-    team2_wr  : t2,
-    advantage : diff >= 20 ? 'team1' : diff <= -20 ? 'team2' : 'neutral',
-    value_flag: Math.abs(diff) >= 20 ? '✓ Value Map' : null
+    team1_wr       : t1,
+    team2_wr       : t2,
+    advantage      : winner,
+    value_flag     : Math.abs(diff) >= 20 ? '✓ Value Map' : null,
+    recommended_bet: Math.abs(diff) >= 20
+      ? `${diff > 0 ? 'T1' : 'T2'} sur ${currentMap} (écart ${Math.abs(diff)}pp · wr ${Math.max(t1, t2)}%)`
+      : null
   };
 }
 
@@ -839,7 +844,9 @@ module.exports = {
       return [];
     }
     if (Date.now() - _cs2Cache.ts < CS2_BSD_TTL_MS) return _cs2Cache.data;
+    if (_cs2Fetching) return _cs2Cache.data; // anti-concurrent burst guard
 
+    _cs2Fetching = true;
     try {
       // Parallel: live matches + upcoming (notstarted) + predictions
       const [resLive, resUpcoming, predMap] = await Promise.all([
@@ -913,6 +920,8 @@ module.exports = {
     } catch (e) {
       console.warn('[CS2Service] Fetch error:', e.message);
       return _cs2Cache.data || [];
+    } finally {
+      _cs2Fetching = false;
     }
   }
 };
