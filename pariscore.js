@@ -25329,26 +25329,62 @@ function renderComparateur(d) {
     var t2maps = (e.team2 && e.team2.all_maps) || {};
     var t1meta = e.team1 && e.team1.map_stats_meta;
     var t2meta = e.team2 && e.team2.map_stats_meta;
+    var t1ranking = (e.team1 && e.team1.map_world_ranking) || {};
+    var t2ranking = (e.team2 && e.team2.map_world_ranking) || {};
+    var hasWorldRank = Object.keys(t1ranking).length > 0 || Object.keys(t2ranking).length > 0;
+
     var html = '<div style="margin-bottom:10px;">' +
-      '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">' +
         '<span class="cs2-rds-t1" style="font-size:11px;font-family:\'DM Mono\',monospace;">' + _esc(t1) + '</span>' +
-        '<span style="font-size:9px;color:var(--text3);">WINRATE PAR CARTE</span>' +
+        '<span style="font-size:9px;color:var(--text3);">' + (hasWorldRank ? 'WR · RANG MONDIAL' : 'WINRATE PAR CARTE') + '</span>' +
         '<span class="cs2-rds-t2" style="font-size:11px;font-family:\'DM Mono\',monospace;">' + _esc(t2) + '</span>' +
       '</div>';
+
     for (var i = 0; i < ACTIVE_MAPS_SCOUT.length; i++) {
       var mk = ACTIVE_MAPS_SCOUT[i];
-      var ml = mk.charAt(0).toUpperCase() + mk.slice(1);
+      var ml = mk.charAt(0).toUpperCase() + mk.slice(1); // "Mirage"
       var w1 = t1maps[mk] != null ? t1maps[mk] : null;
       var w2 = t2maps[mk] != null ? t2maps[mk] : null;
       var isCur = currentMap && currentMap.toLowerCase().replace(/[^a-z]/g,'') === mk;
       var isVal = w1 != null && w2 != null && Math.abs(w1 - w2) >= 20;
       var b1 = w1 != null ? w1 : 50; var b2 = w2 != null ? w2 : 50;
       var p1 = ((b1 / (b1 + b2)) * 100).toFixed(1); var p2 = (100 - p1).toFixed(1);
-      html += '<div class="cs2-scout-map-row' + (isCur ? ' scout-map-current' : '') + '">' +
-        '<span class="cs2-scout-map-name">' + (isCur ? '▶ ' : '') + ml + (isVal ? ' ✓' : '') + '</span>' +
-        '<span class="cs2-scout-wr t1">' + (w1 != null ? w1 + '%' : '?') + '</span>' +
-        '<div class="cs2-scout-bar-wrap"><div class="cs2-scout-bar-t1" style="width:' + p1 + '%;"></div><div class="cs2-scout-bar-t2" style="width:' + p2 + '%;"></div></div>' +
-        '<span class="cs2-scout-wr t2">' + (w2 != null ? w2 + '%' : '?') + '</span>' +
+
+      // World ranking for this map
+      var rk1 = t1ranking[ml] || {};
+      var rk2 = t2ranking[ml] || {};
+      var rank1 = rk1.rank_bsd || rk1.rank_3m || rk1.rank_6m || rk1.rank_1y || null;
+      var rank2 = rk2.rank_bsd || rk2.rank_3m || rk2.rank_6m || rk2.rank_1y || null;
+      var rankAdv = rank1 != null && rank2 != null ? (rank1 < rank2 ? 't1' : rank2 < rank1 ? 't2' : '') : '';
+
+      // Rank chip color
+      function _rankColor(r) { return r <= 3 ? '#00e676' : r <= 10 ? '#ffa726' : r <= 20 ? '#aaa' : '#5a6068'; }
+      var r1chip = rank1 != null ? '<span style="font-family:\'DM Mono\',monospace;font-size:8px;font-weight:700;color:' + _rankColor(rank1) + ';margin-left:3px;">#' + rank1 + '</span>' : '';
+      var r2chip = rank2 != null ? '<span style="font-family:\'DM Mono\',monospace;font-size:8px;font-weight:700;color:' + _rankColor(rank2) + ';margin-right:3px;">#' + rank2 + '</span>' : '';
+
+      // Row border highlight if current map
+      var rowBorder = isCur ? 'border-left:2px solid #FF6B00;padding-left:4px;' : '';
+      // Value badge
+      var valueBadge = isVal ? ' <span style="font-size:7px;color:#00e676;font-weight:700;letter-spacing:.04em;">EDGE</span>' : '';
+
+      html += '<div class="cs2-scout-map-row' + (isCur ? ' scout-map-current' : '') + '" style="flex-direction:column;' + rowBorder + '">' +
+        '<div style="display:flex;align-items:center;gap:4px;">' +
+          '<span class="cs2-scout-map-name" style="flex:0 0 52px;">' + (isCur ? '▶ ' : '') + ml + valueBadge + '</span>' +
+          '<div style="display:flex;align-items:center;gap:3px;flex:1;">' +
+            '<span class="cs2-scout-wr t1" style="min-width:32px;text-align:right;">' + (w1 != null ? w1 + '%' : '?') + '</span>' +
+            r1chip +
+            '<div class="cs2-scout-bar-wrap" style="flex:1;">' +
+              '<div class="cs2-scout-bar-t1" style="width:' + p1 + '%;"></div>' +
+              '<div class="cs2-scout-bar-t2" style="width:' + p2 + '%;"></div>' +
+            '</div>' +
+            r2chip +
+            '<span class="cs2-scout-wr t2" style="min-width:32px;">' + (w2 != null ? w2 + '%' : '?') + '</span>' +
+          '</div>' +
+        '</div>' +
+        // Rank advantage signal row
+        (rankAdv && rank1 && rank2 ? '<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:' + (rankAdv==='t1'?'#FF6B00':'#3b82f6') + ';padding-left:56px;margin-top:2px;">' +
+          (rankAdv==='t1'?_esc(t1):_esc(t2)) + ' meilleure équipe mondiale sur ' + ml + ' (#' + Math.min(rank1,rank2) + ' vs #' + Math.max(rank1,rank2) + ')' +
+        '</div>' : '') +
       '</div>';
     }
     if (t1meta || t2meta) {
