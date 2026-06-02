@@ -1387,8 +1387,8 @@ function _getYouTubeEmbedUrl(url) {
 // ── BSD multi-book odds section (drawer) ────────────────────────────────────
 function _tnRenderBSDOddsSection(m) {
   const o = m._bsd_odds;
-  const bsdId = m._bsd_match_id;
-  if (!o && !bsdId) return '';
+  const bsdId = m._bsd_match_id || (String(m.id || '').replace(/^bsd_t_/, '') || null);
+  if (!o && (!bsdId || !/^\d+$/.test(String(bsdId)))) return '';
   const safeId = _escTennis(String(m.id || ''));
   if (!o) {
     return `<button onclick="event.stopPropagation();_tnLoadBSDOdds('${safeId}')" style="font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);color:var(--text2,#8d9399);cursor:pointer;font-family:'DM Mono',monospace;">📊 Charger cotes live</button>`;
@@ -1418,9 +1418,11 @@ function _tnRenderBSDOddsSection(m) {
 }
 window._tnLoadBSDOdds = async function(matchId) {
   const m = (window._tennisLastFetch || []).find(x => String(x.id) === String(matchId));
-  if (!m || !m._bsd_match_id) return;
+  if (!m) return;
+  const bsdId = m._bsd_match_id || (String(m.id || '').replace(/^bsd_t_/, '') || null);
+  if (!bsdId || !/^\d+$/.test(String(bsdId))) return;
   try {
-    const r = await fetch('/api/v1/tennis/match/' + m._bsd_match_id + '/odds');
+    const r = await fetch('/api/v1/tennis/match/' + bsdId + '/odds');
     const d = await r.json();
     if (d.available && d.summary) {
       m._bsd_odds = d.summary;
@@ -5827,7 +5829,10 @@ async function _fetchAndRenderTennisDetail(matchId) {
     if (matchRes.status === 404) {
       // Id non résolvable BSD (flux programmé/dégradé ESPN). MatchStat 404 sur
       // le même id → pas d'enrich réseau. Synthèse depuis données en mémoire (D).
-      body.innerHTML = _renderTennisDegradedDetail(matchId);
+      // BSD odds endpoint utilise id numérique différent → tenter quand même.
+      const _bsdOddsPlaceholder404 = `<div id="tennis-bsd-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:16px;"></div>`;
+      body.innerHTML = _renderTennisDegradedDetail(matchId) + _bsdOddsPlaceholder404;
+      fetchTennisBSDOdds(matchId);
       return;
     }
     if (!matchRes.ok) {
@@ -5835,9 +5840,13 @@ async function _fetchAndRenderTennisDetail(matchId) {
       // synth cache au lieu de message brut. Affiche bandeau status discret en
       // tete (degraded panel) + tente enrich MatchStat (peut reussir meme si
       // BSD down). Beaucoup plus utile pour user que "Erreur 502" vide.
+      // Fix 02/06 : BSD odds endpoint est public (gate exempté) — charger même
+      // si match detail 403 (non-Pro) ou autre 4xx/5xx.
       const statusBanner = `<div class="tennis-empty-state" style="font-size:11px;opacity:.55;padding:6px 0;text-align:center;">Flux BSD HTTP ${matchRes.status} — synthèse cache local.</div>`;
-      body.innerHTML = statusBanner + _renderTennisDegradedDetail(matchId) + ENRICH_PLACEHOLDER;
+      const _bsdOddsPlaceholder = `<div id="tennis-bsd-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:16px;"></div>`;
+      body.innerHTML = statusBanner + _renderTennisDegradedDetail(matchId) + ENRICH_PLACEHOLDER + _bsdOddsPlaceholder;
       fetchTennisMatchstatEnrich(matchId);
+      fetchTennisBSDOdds(matchId);
       return;
     }
     const matchData = await matchRes.json();
