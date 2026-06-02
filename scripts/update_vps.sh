@@ -7,19 +7,22 @@ PM2_NAME="server"
 echo "--- Début de la mise à jour PariScore ---"
 cd "$DEPLOY_DIR"
 
-echo "[1/5] Fetch remote..."
+echo "[1/6] Fetch remote..."
 git fetch --all
 
-echo "[2/5] Reset hard sur origin/main..."
+echo "[2/6] Reset hard sur origin/main..."
 git reset --hard origin/main
 
-echo "[3/5] Pull..."
+echo "[3/6] Pull..."
 git pull --rebase origin main
 
-echo "[4/5] npm install (omit dev)..."
+echo "[4/6] npm install (omit dev)..."
 npm install --omit=dev --silent
 
-echo "[5/5] PM2 restart..."
+echo "[5/6] npm rebuild native modules (node version guard)..."
+npm rebuild better-sqlite3
+
+echo "[6/6] PM2 restart..."
 pm2 restart "$PM2_NAME" --update-env
 
 echo ""
