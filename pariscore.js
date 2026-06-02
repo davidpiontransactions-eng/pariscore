@@ -24831,6 +24831,21 @@ function renderComparateur(d) {
         '" alt="" onerror="this.style.display=\'none\'" loading="lazy"/>'
       : '<span style="font-size:13px;flex-shrink:0;">🏆</span>';
 
+    // ── Probability bar (BSD ML prediction) ─────────────────────────────
+    var probBarHtml = '';
+    if (m.prediction && m.prediction.team1_win_prob != null) {
+      var _pct1 = Math.round((m.prediction.team1_win_prob || 0) * 100);
+      var _pct2 = 100 - _pct1;
+      probBarHtml = '<div class="cs2-prob-row">' +
+        '<span class="cs2-prob-lbl cs2-prob-lbl-t1">' + _pct1 + '%</span>' +
+        '<div class="cs2-prob-bar">' +
+          '<div class="cs2-prob-fill-ct" style="width:' + _pct1 + '%"></div>' +
+          '<div class="cs2-prob-fill-t"  style="width:' + _pct2 + '%"></div>' +
+        '</div>' +
+        '<span class="cs2-prob-lbl cs2-prob-lbl-t2">' + _pct2 + '%</span>' +
+      '</div>';
+    }
+
     // Trigger enrichment fetch async
     _fetchEnrichment(m.id, t1.name, t2.name, m.current_map || null);
 
@@ -24838,6 +24853,7 @@ function renderComparateur(d) {
       '<div class="cs2-card-head">' +
         tourLogo +
         '<span class="cs2-tour-name">' + _esc(m.tournament) + '</span>' +
+        (m.is_lan ? '<span class="cs2-lan-tag">🏟 LAN</span>' : '') +
         '<span class="cs2-format">BO' + (m.best_of || 3) + '</span>' +
         (isLive ? '<span class="cs2-live-pill"><span class="cs2-ldot"></span>LIVE</span>' : '') +
       '</div>' +
@@ -24869,6 +24885,7 @@ function renderComparateur(d) {
           '</div>' +
         '</div>' +
       '</div>' +
+      probBarHtml +
       mapBarHtml +
       _buildMomentumGauge(m) +
       '<div class="cs2-map-winrate-bar" style="display:none;align-items:center;gap:4px;font-family:\'DM Mono\',monospace;font-size:10px;padding:3px 12px 5px;"></div>' +
@@ -25097,12 +25114,20 @@ function renderComparateur(d) {
             (model ? '<br>' + _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':model.confidence==='MED'?'amber':'grey' }) : '')
           : (model ? _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':'amber' }) : '<span style="color:var(--text3);font-size:10px;">—</span>');
 
-        // Odds cell
+        // Odds cell + EV badge
         var odds = m.odds || {};
+        var _ev1 = (m.prediction && m.prediction.team1_win_prob && odds.team1)
+          ? (m.prediction.team1_win_prob * Number(odds.team1) - 1) : null;
+        var _ev2 = (m.prediction && m.prediction.team2_win_prob && odds.team2)
+          ? (m.prediction.team2_win_prob * Number(odds.team2) - 1) : null;
+        var _bestEv = (_ev1 != null && _ev2 != null) ? Math.max(_ev1, _ev2) : (_ev1 != null ? _ev1 : _ev2);
+        var _evHtml = _bestEv != null
+          ? '<br><span class="cs2-ev-badge ' + (_bestEv >= 0.05 ? 'ev-pos' : _bestEv >= 0 ? 'ev-flat' : 'ev-neg') + '">EV ' + (_bestEv >= 0 ? '+' : '') + (_bestEv * 100).toFixed(1) + '%</span>'
+          : '';
         var oddsCell = (odds.team1 != null && odds.team2 != null)
           ? '<span style="font-family:\'DM Mono\',monospace;font-size:11px;">' +
             Number(odds.team1).toFixed(2) + '<span style="color:var(--text3);margin:0 4px;">vs</span>' +
-            Number(odds.team2).toFixed(2) + '</span>'
+            Number(odds.team2).toFixed(2) + '</span>' + _evHtml
           : '<span style="color:var(--text3);font-size:10px;">—</span>';
 
         // Form cells (team1 last 5 as dots)
