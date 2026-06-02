@@ -5817,11 +5817,14 @@ async function _fetchAndRenderTennisDetail(matchId) {
     const PBP_PLACEHOLDER = `<div id="tennis-pbp-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:24px;"></div>`;
     // OddsPapi — placeholder cotes jeux/set (lazy fetch Pinnacle)
     const SET_ODDS_PLACEHOLDER = `<div id="tennis-set-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:24px;"></div>`;
-    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER + SET_ODDS_PLACEHOLDER;
+    // BSD multi-bookmaker odds — 14+ books SHORTENING/DRIFTING
+    const BSD_ODDS_PLACEHOLDER = `<div id="tennis-bsd-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:16px;"></div>`;
+    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER + SET_ODDS_PLACEHOLDER + BSD_ODDS_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
     fetchTennisSofaProfile(matchData);
     fetchTennisPBP(matchId);
     fetchTennisSetOdds(matchId);
+    fetchTennisBSDOdds(matchId);
   } catch (e) {
     body.innerHTML = `<div class="tennis-empty-state">Erreur réseau : ${_escTennis(e.message || String(e))}</div>` + ENRICH_PLACEHOLDER;
     fetchTennisMatchstatEnrich(matchId);
@@ -5852,6 +5855,61 @@ async function fetchTennisSetOdds(matchId) {
     target.innerHTML = '';
     console.warn('[fetchTennisSetOdds]', e.message);
   }
+}
+
+async function fetchTennisBSDOdds(matchId) {
+  const target = document.getElementById('tennis-bsd-odds-enrich');
+  if (!target || !matchId) return;
+  const bsdId = String(matchId).replace(/^bsd_t_/, '');
+  if (!/^\d+$/.test(bsdId)) { target.innerHTML = ''; return; }
+  target.innerHTML = '<div class="ins-section" style="opacity:.5;font-size:11px;font-family:\'DM Mono\',monospace;padding:8px 0;color:var(--text3,#5a6068);">📊 Cotes multi-books — chargement BSD…</div>';
+  try {
+    const r = await fetch('/api/v1/tennis/match/' + bsdId + '/odds');
+    if (!r.ok) { target.innerHTML = ''; return; }
+    const d = await r.json();
+    if (!d.available || !d.summary) { target.innerHTML = ''; return; }
+    target.innerHTML = _renderTennisBSDOdds(d.summary, d.bookmakers);
+  } catch(e) { target.innerHTML = ''; }
+}
+
+function _renderTennisBSDOdds(s, bookmakers) {
+  const mv = dir => dir === 'SHORTENING'
+    ? '<span style="color:#00e676;font-weight:700;" title="Shortening — argent sharp">↓</span>'
+    : dir === 'DRIFTING'
+    ? '<span style="color:#ff4d4d;font-weight:700;" title="Drifting">↑</span>' : '';
+  const topBooks = (bookmakers || []).filter(b => b.bookmaker_slug !== 'oddssafari-consensus').slice(0, 8);
+  const rows = topBooks.map(b =>
+    '<tr>' +
+    '<td style="padding:4px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2,#8d9399);">' + (b.bookmaker||'') + '</td>' +
+    '<td style="padding:4px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;font-weight:700;color:var(--text,#e8eaed);">' + (b.odds_player1 ? b.odds_player1.toFixed(2) : '—') + ' ' + mv(b.movement_player1) + '</td>' +
+    '<td style="padding:4px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;font-weight:700;color:var(--text,#e8eaed);">' + mv(b.movement_player2) + ' ' + (b.odds_player2 ? b.odds_player2.toFixed(2) : '—') + '</td>' +
+    '</tr>'
+  ).join('');
+  return '<div class="ins-section" style="border-radius:10px;border:1px solid var(--bg4,#1e2328);padding:12px 14px;margin-top:4px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+    '<div style="font-family:\'DM Mono\',monospace;font-weight:700;font-size:11px;color:var(--text2,#8d9399);text-transform:uppercase;letter-spacing:.06em;">📊 Cotes Vainqueur · ' + s.books_count + ' Books</div>' +
+    '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3,#5a6068);">Shin-Hurley no-vig</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+    '<div style="background:var(--bg3,#181c20);border-radius:8px;padding:10px 12px;text-align:center;">' +
+    '<div style="font-size:22px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--text,#e8eaed);">' + (s.best_p1 ? s.best_p1.toFixed(2) : '—') + ' ' + mv(s.movement_p1) + '</div>' +
+    '<div style="font-size:9px;color:var(--text3,#5a6068);margin-top:2px;">' + (s.best_p1_bk||'') + '</div>' +
+    '<div style="font-size:12px;color:var(--blue,#29b6f6);margin-top:5px;font-weight:600;">' + (s.fair_p1 != null ? s.fair_p1 + '% fair' : '') + '</div>' +
+    '</div>' +
+    '<div style="background:var(--bg3,#181c20);border-radius:8px;padding:10px 12px;text-align:center;">' +
+    '<div style="font-size:22px;font-weight:700;font-family:\'DM Mono\',monospace;color:var(--text,#e8eaed);">' + mv(s.movement_p2) + ' ' + (s.best_p2 ? s.best_p2.toFixed(2) : '—') + '</div>' +
+    '<div style="font-size:9px;color:var(--text3,#5a6068);margin-top:2px;">' + (s.best_p2_bk||'') + '</div>' +
+    '<div style="font-size:12px;color:var(--blue,#29b6f6);margin-top:5px;font-weight:600;">' + (s.fair_p2 != null ? s.fair_p2 + '% fair' : '') + '</div>' +
+    '</div>' +
+    '</div>' +
+    (topBooks.length ? '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr style="background:var(--bg3,#181c20);">' +
+    '<th style="padding:3px 8px;text-align:left;font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3,#5a6068);text-transform:uppercase;">Book</th>' +
+    '<th style="padding:3px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3,#5a6068);">P1</th>' +
+    '<th style="padding:3px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3,#5a6068);">P2</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>' : '') +
+    (s.avg_implied_p1 != null ? '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3,#5a6068);margin-top:8px;padding-top:6px;border-top:1px solid var(--bg4,#1e2328);">Moy. implicite · P1 ' + s.avg_implied_p1 + '% · P2 ' + s.avg_implied_p2 + '%</div>' : '') +
+    '</div>';
 }
 
 function _renderTennisSetOdds(d) {
