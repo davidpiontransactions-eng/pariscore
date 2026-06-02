@@ -7,8 +7,9 @@ import '../../domain/entities/bet.dart';
 
 class BetRow extends StatelessWidget {
   final Bet bet;
+  final VoidCallback? onSettle;
 
-  const BetRow({super.key, required this.bet});
+  const BetRow({super.key, required this.bet, this.onSettle});
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +108,22 @@ class BetRow extends StatelessWidget {
                 bet.createdAt.ddmm,
                 style: AppTextStyles.monoBadge.copyWith(color: AppColors.text3),
               ),
+              if (!bet.isSettled && onSettle != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onSettle,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: AppColors.green.withOpacity(0.4), width: 0.5),
+                    ),
+                    child: Text('Régler',
+                        style: AppTextStyles.monoBadge.copyWith(color: AppColors.green)),
+                  ),
+                ),
+              ],
             ],
           ),
         ],

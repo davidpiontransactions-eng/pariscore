@@ -5,10 +5,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/bet.dart';
+import '../../domain/entities/daily_tracker.dart';
 import '../cubit/bets_cubit.dart';
 import '../widgets/add_bet_sheet.dart';
+import '../widgets/bankroll_chart.dart';
 import '../widgets/bet_row.dart';
 import '../widgets/kpi_strip.dart';
+import '../widgets/settle_bet_sheet.dart';
 
 class BetsPage extends StatelessWidget {
   const BetsPage({super.key});
@@ -54,9 +57,10 @@ class _BetsView extends StatelessWidget {
                 message: message,
                 onRetry: () => context.read<BetsCubit>().load(),
               ),
-            BetsLoaded(:final bets, :final summary) => _BetsList(
+            BetsLoaded(:final bets, :final summary, :final tracker) => _BetsList(
                 bets: bets,
                 summary: summary,
+                tracker: tracker,
               ),
             _ => const SizedBox.shrink(),
           };
@@ -84,8 +88,24 @@ class _BetsView extends StatelessWidget {
 class _BetsList extends StatelessWidget {
   final List<Bet> bets;
   final BankrollSummary? summary;
+  final List<DailyTrackerEntry> tracker;
 
-  const _BetsList({required this.bets, this.summary});
+  const _BetsList({required this.bets, this.summary, this.tracker = const []});
+
+  void _showSettleSheet(BuildContext context, Bet bet) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.bg2,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => BlocProvider.value(
+        value: context.read<BetsCubit>(),
+        child: SettleBetSheet(bet: bet),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +116,10 @@ class _BetsList extends StatelessWidget {
         if (summary != null)
           SliverToBoxAdapter(
             child: KpiStrip(summary: summary!),
+          ),
+        if (tracker.isNotEmpty)
+          SliverToBoxAdapter(
+            child: BankrollChart(data: tracker),
           ),
         if (bets.isEmpty)
           const SliverFillRemaining(child: _EmptyView())
@@ -124,7 +148,10 @@ class _BetsList extends StatelessWidget {
                   child: Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: BetRow(bet: pending[i]),
+                    child: BetRow(
+                      bet: pending[i],
+                      onSettle: () => _showSettleSheet(context, pending[i]),
+                    ),
                   ),
                 );
               },

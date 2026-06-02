@@ -32,19 +32,11 @@ class _AiScoutView extends StatelessWidget {
               shaderCallback: (bounds) => const LinearGradient(
                 colors: [AppColors.green, AppColors.blue],
               ).createShader(bounds),
-              child: const Text('IA',
-                  style: TextStyle(
-                      fontFamily: 'Syne',
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      color: Colors.white)),
+              child: Text('IA',
+                  style: AppTextStyles.headlineLarge.copyWith(color: Colors.white)),
             ),
             const SizedBox(width: 6),
-            const Text('Scout',
-                style: TextStyle(
-                    fontFamily: 'Syne',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20)),
+            Text('Scout', style: AppTextStyles.headlineLarge),
           ],
         ),
         actions: [

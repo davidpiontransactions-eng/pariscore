@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/bet.dart';
+import '../../domain/entities/daily_tracker.dart';
 import '../../domain/repositories/bets_repository.dart';
 
 part 'bets_state.dart';
@@ -15,13 +16,15 @@ class BetsCubit extends Cubit<BetsState> {
     emit(const BetsLoading());
     final betsResult = await _repository.getBets();
     final summaryResult = await _repository.getBankrollSummary();
+    final trackerResult = await _repository.getDailyTracker();
 
     betsResult.fold(
       (failure) => emit(BetsError(failure.message)),
-      (bets) => summaryResult.fold(
-        (_) => emit(BetsLoaded(bets: bets, summary: null)),
-        (summary) => emit(BetsLoaded(bets: bets, summary: summary)),
-      ),
+      (bets) => emit(BetsLoaded(
+        bets: bets,
+        summary: summaryResult.fold((_) => null, (s) => s),
+        tracker: trackerResult.fold((_) => [], (t) => t),
+      )),
     );
   }
 
@@ -29,7 +32,17 @@ class BetsCubit extends Cubit<BetsState> {
     final result = await _repository.createBet(payload);
     result.fold(
       (failure) => emit(BetsError(failure.message)),
-      (_) => load(), // reload after create
+      (_) => load(),
+    );
+  }
+
+  Future<void> settleBet(int betId, String status,
+      {double? cashoutAmount}) async {
+    final result = await _repository.settleBet(betId, status,
+        cashoutAmount: cashoutAmount);
+    result.fold(
+      (failure) => emit(BetsError(failure.message)),
+      (_) => load(),
     );
   }
 }
