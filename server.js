@@ -3822,6 +3822,36 @@ async function enrichMatchWithBSDFullStack(match) {
         match.poisson = computePoisson(adjH, adjA);
       }
     }
+    if (detail.pitch_condition) {
+      match.pitch_condition = detail.pitch_condition;
+      const _wet = ['wet', 'soft', 'heavy'].includes(detail.pitch_condition.toLowerCase());
+      if (_wet && match.expectedGoals
+          && Number.isFinite(match.expectedGoals.home) && Number.isFinite(match.expectedGoals.away)) {
+        const _pF = 0.90;
+        const adjH = Math.max(0.1, match.expectedGoals.home * _pF);
+        const adjA = Math.max(0.1, match.expectedGoals.away * _pF);
+        match.expectedGoals = {
+          home: +adjH.toFixed(2), away: +adjA.toFixed(2),
+          _context: { ...(match.expectedGoals._context || {}), pitch_condition: detail.pitch_condition },
+        };
+        match.poisson = computePoisson(adjH, adjA);
+      }
+    }
+    if (detail.weather && detail.weather.temperature_c != null) {
+      const _wl = typeof _weatherCodeLabel === 'function' ? _weatherCodeLabel(detail.weather.code) : { label: detail.weather.description || '', icon: '' };
+      match.weather_bsd = {
+        temperature_c: detail.weather.temperature_c,
+        wind_speed: detail.weather.wind_speed,
+        weather_code: detail.weather.code,
+        description: detail.weather.description,
+        label_fr: _wl.label, icon: _wl.icon, _source: 'bsd',
+      };
+    }
+    if (detail.season_id && match._bsd_league_id) {
+      match.bsd_season_id = detail.season_id;
+      if (!global._bsdLeagueSeasonHints) global._bsdLeagueSeasonHints = new Map();
+      global._bsdLeagueSeasonHints.set(match._bsd_league_id, detail.season_id);
+    }
     if (detail.travel_distance_km != null) {
       match.travel_distance_km = detail.travel_distance_km;
       if (!match.match_travel || match.match_travel._source !== 'bsd') {
@@ -13669,11 +13699,18 @@ async function fetchBSDStandings(bsdLeagueId, configLeagueId) {
   }
 
   try {
+    // 0. Stratégie 0 (fastest): season_id seen in match detail enrichment
+    let seasonId = global._bsdLeagueSeasonHints?.get(bsdLeagueId) || null;
+    if (seasonId && DBG_STANDINGS) console.log(`  [DEBUG STANDINGS] BSD ${bsdLeagueId} → seasonId=${seasonId} (hint from match detail)`);
+
     // 1. Stratégie A: saison courante
-    let seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&current=true`);
-    let seasonId = (seasonsRes?.status === 200 && seasonsRes?.data?.results?.length)
+    let seasonsRes;
+    if (!seasonId) {
+    seasonsRes = await bsdFetch(`/seasons/?league=${bsdLeagueId}&current=true`);
+    seasonId = (seasonsRes?.status === 200 && seasonsRes?.data?.results?.length)
       ? seasonsRes.data.results[0].id
       : null;
+    }
 
     // 1b. Stratégie B: saison la plus récente (ordering=-year)
     if (!seasonId) {
@@ -35761,6 +35798,11 @@ async function fetchWeatherForMatch(match) {
   if (!match.id) return null;
   const cached = apiCacheGet(cacheKey);
   if (cached) return cached;
+  // BSD-provided weather takes priority — skip Open-Meteo geocode + API call
+  if (match.weather_bsd?.temperature_c != null) {
+    apiCacheSet(cacheKey, match.weather_bsd, 'open_meteo_weather', 3600 * 1000);
+    return match.weather_bsd;
+  }
   // Chain candidates pour geocode (best effort)
   const candidates = [match.venue_city, match.venue, match.home_team_city, match.home_team].filter(c => c && typeof c === 'string');
   let geo = null;
