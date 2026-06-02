@@ -20002,6 +20002,20 @@ function _mergeDetailStats(match, detail) {
   return match;
 }
 
+const _bsdTennisH2HCache = new Map();
+const BSD_TENNIS_H2H_TTL = 30 * 60 * 1000;
+async function _fetchBSDTennisH2H(bsdMatchId) {
+  const cid = String(bsdMatchId);
+  const cached = _bsdTennisH2HCache.get(cid);
+  if (cached && Date.now() - cached.ts < BSD_TENNIS_H2H_TTL) return cached.data;
+  const res = await bsdTennisFetch(`/api/v2/matches/${cid}/h2h/`, 0);
+  if (res && res.status === 200 && res.data) {
+    _bsdTennisH2HCache.set(cid, { ts: Date.now(), data: res.data });
+    return res.data;
+  }
+  return null;
+}
+
 async function fetchBSDTennisLive() {
   const res = await bsdTennisFetch('/api/v2/matches/live/');
   if (!res || res.status !== 200) return [];
@@ -20038,7 +20052,28 @@ async function fetchBSDTennisLive() {
       } catch (_) { return m; }
     })
   );
-  return results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+  const enriched = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+  // H2H factor enrichment — parallel, non-blocking, cache 30min
+  await Promise.allSettled(enriched.map(async (m) => {
+    if (!m._bsd_match_id || m._h2h != null) return;
+    try {
+      const h2h = await Promise.race([
+        _fetchBSDTennisH2H(m._bsd_match_id),
+        new Promise(r => setTimeout(() => r(null), 2000)),
+      ]);
+      if (!h2h || !h2h.h2h || !h2h.h2h.total_matches) return;
+      const total = h2h.h2h.total_matches;
+      const p1w = h2h.h2h.player1_wins;
+      m._h2h = {
+        total, p1_wins: p1w, p2_wins: h2h.h2h.player2_wins,
+        p1_win_rate: +((p1w + 0.5) / (total + 1)).toFixed(3),
+        by_surface: h2h.h2h.by_surface || null,
+        p1_last5: (h2h.player1_last5 || []).slice(0, 5).map(x => ({ won: x.won, surface: x.surface, round: x.round, date: x.date })),
+        p2_last5: (h2h.player2_last5 || []).slice(0, 5).map(x => ({ won: x.won, surface: x.surface, round: x.round, date: x.date })),
+      };
+    } catch (_) {}
+  }));
+  return enriched;
 }
 
 function _tennisPairKey(m) {
@@ -32898,6 +32933,39 @@ if (pathname.startsWith('/api/v1/tennis/player/') && req.method === 'GET') {
   const out = await handleTennisBSD(`/api/v2/players/${playerId}/`, ck, 6 * 3600 * 1000);
   if (out.status !== 200) return jsonResponse(res, out.status, out.body);
   return jsonResponse(res, 200, { source: 'bsd_tennis', player_id: Number(playerId), data: out.body, cached: out.cache === 'hit' });
+}
+
+// GET /api/v1/tennis/players/search?q=<name> — resolve player name → profile + ranking
+if (pathname === '/api/v1/tennis/players/search' && req.method === 'GET') {
+  const q = String(query.q || '').trim();
+  if (!q || q.length < 2) return jsonResponse(res, 400, { error: 'q_required', hint: 'min 2 chars' });
+  const ck = `bsd_tennis_psearch_${q.toLowerCase().replace(/\s+/g,'_')}`;
+  const out = await handleTennisBSD(`/api/v2/players/?search=${encodeURIComponent(q)}&limit=10`, ck, 6 * 3600 * 1000);
+  if (out.status !== 200) return jsonResponse(res, out.status, out.body);
+  const results = (out.body?.results || []).map(p => ({
+    id: p.id, name: p.name, short_name: p.short_name,
+    country_code: p.country_code, country_name: p.country_name,
+    gender: p.gender, current_ranking: p.current_ranking || null,
+  }));
+  return jsonResponse(res, 200, { source: 'bsd_tennis', count: results.length, results, cached: out.cache === 'hit' });
+}
+
+// GET /api/v1/tennis/tournament/:id — detail + matches
+if (pathname.startsWith('/api/v1/tennis/tournament/') && req.method === 'GET') {
+  const tourId = decodeURIComponent(pathname.slice('/api/v1/tennis/tournament/'.length)).trim();
+  if (!tourId || !/^\d+$/.test(tourId)) return jsonResponse(res, 400, { error: 'bad_tournament_id' });
+  const limit = Math.min(200, parseInt(query.limit || '100', 10));
+  const [detailOut, matchesOut] = await Promise.allSettled([
+    handleTennisBSD(`/api/v2/tournaments/${tourId}/`, `bsd_tennis_tour_${tourId}`, 24 * 3600 * 1000),
+    handleTennisBSD(`/api/v2/matches/?tournament=${tourId}&limit=${limit}`, `bsd_tennis_tour_matches_${tourId}`, 15 * 60 * 1000),
+  ]);
+  const detail  = detailOut.status  === 'fulfilled' && detailOut.value.status  === 200 ? detailOut.value.body  : null;
+  const matches = matchesOut.status === 'fulfilled' && matchesOut.value.status === 200 ? matchesOut.value.body : null;
+  if (!detail) return jsonResponse(res, 404, { error: 'tournament_not_found', id: tourId });
+  return jsonResponse(res, 200, {
+    source: 'bsd_tennis', tournament: detail,
+    matches: { count: matches?.count || 0, results: matches?.results || [] },
+  });
 }
 
 // GET /api/v1/tennis/alerts/history — historique alertes tennis avec stats
