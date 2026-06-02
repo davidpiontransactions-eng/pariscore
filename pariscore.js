@@ -1497,6 +1497,30 @@ function _tnToggleLiveStats(matchId) {
   if (btn) btn.classList.add('active');
 }
 
+// T4 — per-set aces/DF breakdown for desktop stats panel
+function _tnRenderPerSetStats(m) {
+  if (!m || !Array.isArray(m.sets) || !m.sets.length) return '';
+  const hasData = m.sets.some(s => s.p1_aces != null || s.p2_aces != null || s.p1_df != null || s.p2_df != null);
+  if (!hasData) return '';
+  const p1S = m.player1 ? String(m.player1.name || 'J1').split(' ').pop() : 'J1';
+  const p2S = m.player2 ? String(m.player2.name || 'J2').split(' ').pop() : 'J2';
+  const dataRows = m.sets.map((s, i) => {
+    if (s.p1_aces == null && s.p2_aces == null && s.p1_df == null && s.p2_df == null) return '';
+    return `<tr style="font-size:10px;text-align:center;color:var(--text,#e8eaed);">
+      <td style="color:var(--text3,#5a6068)">S${i+1}</td>
+      <td style="color:#00e676">${s.p1_aces??'—'}</td><td style="color:#ff4d4d">${s.p1_df??'—'}</td>
+      <td style="color:#00e676">${s.p2_aces??'—'}</td><td style="color:#ff4d4d">${s.p2_df??'—'}</td>
+    </tr>`;
+  }).join('');
+  if (!dataRows.trim()) return '';
+  return `<div style="margin-top:10px;">
+<div style="font-size:9px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Aces / DF par set</div>
+<table class="tn-live-stats-table"><thead><tr style="font-size:9px;color:var(--text3);">
+<th></th><th>A</th><th>DF</th><th>A</th><th>DF</th>
+</tr><tr style="font-size:9px;color:var(--text3);"><th></th><th colspan="2" style="text-align:center;">${_escTennis(p1S)}</th><th colspan="2" style="text-align:center;">${_escTennis(p2S)}</th></tr></thead>
+<tbody>${dataRows}</tbody></table></div>`;
+}
+
 function _tnRenderLiveStatsTable(m) {
   const p1 = m && m.player1 ? (m.player1.name || 'J1') : 'J1';
   const p2 = m && m.player2 ? (m.player2.name || 'J2') : 'J2';
@@ -1537,7 +1561,7 @@ function _tnRenderLiveStatsTable(m) {
   return `<div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-align:center;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;">📊 Statistiques Live${mockBadge}</div>
 <table class="tn-live-stats-table"><thead><tr>
 <th style="width:90px;text-align:center;">${_escTennis(p1S)}</th><th></th><th style="width:90px;text-align:center;">${_escTennis(p2S)}</th>
-</tr></thead><tbody>${rows}</tbody></table>${_tnRenderServiceCircles(s,p1,p2)}`;
+</tr></thead><tbody>${rows}</tbody></table>${_tnRenderServiceCircles(s,p1,p2)}${_tnRenderPerSetStats(m)}`;
 }
 
 function _tnRenderServiceCircles(s, p1, p2) {
@@ -5438,6 +5462,7 @@ function _psLtsRenderContext(m) {
     h2hTxt = `${m.h2h.p1_wins ?? '?'}-${m.h2h.p2_wins ?? '?'}`;
   }
   setText('pslts-ctx-h2h', h2hTxt);
+  _psLtsFetchH2H(m); // T3 — async surface breakdown, updates span when ready
 
   // Weather : payload match_weather (foot pattern) ou tennis live souvent absent
   let weatherTxt = '—';
@@ -5464,6 +5489,64 @@ function _psLtsRenderContext(m) {
     relTxt = String(m._elo.tier);
   }
   setText('pslts-ctx-rel', relTxt);
+  _psLtsRenderSetStats(m); // T2 — per-set aces/DF rows
+}
+
+// T2 — inject per-set aces/DF rows into context footer (removes stale rows first)
+function _psLtsRenderSetStats(m) {
+  const body = document.getElementById('pslts-context-body');
+  if (!body) return;
+  body.querySelectorAll('.pslts-set-stat-row').forEach(el => el.remove());
+  if (!m || !Array.isArray(m.sets) || !m.sets.length) return;
+  const hasData = m.sets.some(s => s.p1_aces != null || s.p2_aces != null || s.p1_df != null || s.p2_df != null);
+  if (!hasData) return;
+  const p1n = m.player1 ? String(m.player1.name || 'J1').split(' ').pop() : 'J1';
+  const p2n = m.player2 ? String(m.player2.name || 'J2').split(' ').pop() : 'J2';
+  const makeRow = (label, vals) => {
+    const row = document.createElement('div');
+    row.className = 'pslts-context-row pslts-set-stat-row';
+    row.innerHTML = `<span class="pslts-context-key">${label}</span><span>${vals}</span>`;
+    body.appendChild(row);
+  };
+  const aceP = m.sets.map((s, i) => (s.p1_aces != null || s.p2_aces != null) ? `S${i+1}:${s.p1_aces??'?'}/${s.p2_aces??'?'}` : null).filter(Boolean);
+  if (aceP.length) makeRow(`Aces ${p1n}/${p2n}`, aceP.join(' · '));
+  const dfP  = m.sets.map((s, i) => (s.p1_df   != null || s.p2_df   != null) ? `S${i+1}:${s.p1_df??'?'}/${s.p2_df??'?'}` : null).filter(Boolean);
+  if (dfP.length) makeRow(`DF ${p1n}/${p2n}`, dfP.join(' · '));
+}
+
+// T3 — async BSD H2H with surface breakdown, updates pslts-ctx-h2h when ready
+async function _psLtsFetchH2H(m) {
+  if (!m || !m._bsd_match_id) return;
+  const el = document.getElementById('pslts-ctx-h2h');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/v1/tennis/h2h?matchId=' + encodeURIComponent(m._bsd_match_id));
+    if (!r.ok) return;
+    const json = await r.json();
+    const d = json.data;
+    if (!d) return;
+    const tot1 = d.total_wins_p1 ?? d.p1_wins ?? (d.total && d.total.p1_wins) ?? null;
+    const tot2 = d.total_wins_p2 ?? d.p2_wins ?? (d.total && d.total.p2_wins) ?? null;
+    if (tot1 == null && tot2 == null) return;
+    let txt = `${tot1??'?'}-${tot2??'?'} total`;
+    const surf = String(m.surface || '').toLowerCase();
+    const byS  = d.by_surface || d.surfaces || null;
+    if (byS) {
+      const map = [['hard','dur'],['clay','terre'],['grass','gazon']];
+      const parts = [];
+      for (const [key, label] of map) {
+        const sv = byS[key] || byS[key[0].toUpperCase() + key.slice(1)];
+        if (!sv) continue;
+        const s1 = sv.p1_wins ?? sv.player1 ?? null;
+        const s2 = sv.p2_wins ?? sv.player2 ?? null;
+        if (s1 == null && s2 == null) continue;
+        const cur = surf && (surf.includes(key.slice(0,4)) || (key === 'grass' && surf.includes('grass')));
+        parts.push((cur ? '▶ ' : '') + `${label} ${s1??'?'}-${s2??'?'}`);
+      }
+      if (parts.length) txt += ' · ' + parts.join(' · ');
+    }
+    el.textContent = txt;
+  } catch (_) {}
 }
 
 async function _psLtsTick() {

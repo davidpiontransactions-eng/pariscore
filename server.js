@@ -20066,6 +20066,10 @@ function _normalizeBSDTennisMatch(m) {
         p1: s.p1 ?? s.player1 ?? null,
         p2: s.p2 ?? s.player2 ?? null,
         tb: Array.isArray(s.tiebreak) ? s.tiebreak : null,
+        p1_aces: s.p1_aces ?? null,
+        p2_aces: s.p2_aces ?? null,
+        p1_df:   s.p1_double_faults ?? s.p1_df ?? null,
+        p2_df:   s.p2_double_faults ?? s.p2_df ?? null,
       }))
     : [];
   const tn = m.tournament || {};
@@ -20163,6 +20167,16 @@ function _mergeDetailStats(match, detail) {
   s.p2_ret_won   = s.p2_ret_won   ?? detail.p2_return_points_won_pct ?? null;
   s.p1_total_pts = s.p1_total_pts ?? detail.p1_total_points_won_pct  ?? null;
   s.p2_total_pts = s.p2_total_pts ?? detail.p2_total_points_won_pct  ?? null;
+  // Per-set aces/DF (BSD June 2026 — new match detail fields)
+  if (Array.isArray(detail.sets_detail) && Array.isArray(match.sets)) {
+    detail.sets_detail.forEach((ds, i) => {
+      if (!match.sets[i]) return;
+      match.sets[i].p1_aces = match.sets[i].p1_aces ?? ds.p1_aces ?? null;
+      match.sets[i].p2_aces = match.sets[i].p2_aces ?? ds.p2_aces ?? null;
+      match.sets[i].p1_df   = match.sets[i].p1_df   ?? ds.p1_double_faults ?? ds.p1_df ?? null;
+      match.sets[i].p2_df   = match.sets[i].p2_df   ?? ds.p2_double_faults ?? ds.p2_df ?? null;
+    });
+  }
   return match;
 }
 
