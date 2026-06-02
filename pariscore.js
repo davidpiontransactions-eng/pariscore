@@ -25317,9 +25317,10 @@ function renderComparateur(d) {
   }
 
   function _renderScoutContent(tab, e, el) {
-    if (tab === 'maps')    _renderScoutMaps(e, el);
-    if (tab === 'players') _renderScoutPlayers(e, el);
-    if (tab === 'h2h')     _renderScoutH2H(e, el);
+    if (tab === 'maps')      _renderScoutMaps(e, el);
+    if (tab === 'players')   _renderScoutPlayers(e, el);
+    if (tab === 'h2h')       _renderScoutH2H(e, el);
+    if (tab === 'analytics') _renderScoutAnalytics(e, el);
   }
 
   function _renderScoutMaps(e, el) {
@@ -25367,25 +25368,69 @@ function renderComparateur(d) {
     el.innerHTML = html;
   }
 
+  // Infer player role from stats heuristics
+  function _cs2InferRole(p, isTopRater) {
+    var r = p.rating || 1.0; var adr = p.adr || 70; var kast = p.kast || 70; var kd = p.kd || 1.0;
+    // IGL: low rating in a star-heavy team, highest KAST tendency
+    if (!isTopRater && kast >= 75 && r < 1.05) return { label:'IGL', cls:'igl', color:'#FFA040' };
+    // AWPer: ADR often lower (one-shot weapon), high K/D
+    if (kd >= 1.20 && adr < 78 && r >= 1.10) return { label:'AWP', cls:'awper', color:'#B07AFF' };
+    // Entry: lower K/D (opens sites), moderate KAST
+    if (kd < 0.95 && kast >= 72) return { label:'ENTRY', cls:'entry', color:'#FF6B6B' };
+    // Support: high KAST, modest ADR
+    if (kast >= 76 && adr < 72) return { label:'SUP', cls:'support', color:'#40C0FF' };
+    // Default rifler / lurk
+    if (kd >= 1.15 && r >= 1.10) return { label:'STAR', cls:'star', color:'#FFD700' };
+    return { label:'RIF', cls:'rifler', color:'#8d9399' };
+  }
+
   function _renderScoutPlayers(e, el) {
     function teamBlock(teamData, teamName) {
       if (!teamData || !teamData.players || !teamData.players.length)
         return '<div style="color:var(--text3);font-size:11px;margin-bottom:12px;">Roster ' + _esc(teamName) + ' indisponible</div>';
       var maxR = Math.max.apply(null, teamData.players.map(function(p){ return p.rating||0; }));
-      var html = '<div style="margin-bottom:14px;"><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.05em;margin-bottom:6px;">' + _esc(teamName) + ' — RATING 2.0</div>';
+      var rs   = teamData.roster_strength; // 0-100
+      var traj = teamData.form_trajectory;
+      // Header
+      var html = '<div style="margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.05em;">' + _esc(teamName) + ' — PRO SCOUT</span>' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            (traj ? '<span style="font-size:11px;" title="Form ' + traj.label + '">' + traj.arrow + '</span>' : '') +
+            (rs != null ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:' + (rs>=70?'#00e676':rs>=50?'#ffa726':'#ff4d4d') + ';" title="Roster Strength">STR ' + rs + '</span>' : '') +
+          '</div>' +
+        '</div>';
       for (var i=0;i<teamData.players.length;i++) {
         var p = teamData.players[i];
-        var rc = (p.rating||0)>=1.10?'#00e676':(p.rating||0)>=0.95?'#ffa726':'#ff4d4d';
-        html += '<div class="cs2-scout-player-row">' +
-          '<span class="cs2-scout-player-name">' + (p.rating===maxR&&maxR>0?'⭐ ':'') + _esc(p.name||'?') + '</span>' +
-          '<span class="cs2-scout-stat">' + (p.adr!=null?'ADR '+p.adr:'') + '</span>' +
-          '<span class="cs2-scout-stat">' + (p.kast!=null?'KAST '+p.kast+'%':'') + '</span>' +
-          '<span class="cs2-scout-rating" style="color:'+rc+';">' + (p.rating!=null?p.rating.toFixed(2):'?') + '</span></div>';
+        var isStar = p.rating === maxR && maxR > 0;
+        var role = _cs2InferRole(p, isStar);
+        var rc   = (p.rating||0)>=1.25?'#00e676':(p.rating||0)>=1.05?'#ffa726':'#ff4d4d';
+        // Rating gauge: [0.70, 1.55] → [0%, 100%]
+        var gaugePct = Math.round(Math.max(0, Math.min(100, ((p.rating||0.70) - 0.70) / 0.85 * 100)));
+        html += '<div class="cs2-scout-player-row" style="flex-direction:column;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+            '<span style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:var(--text1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+              (isStar ? '⭐ ' : '') + _esc(p.name||'?') +
+            '</span>' +
+            '<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:' + role.color + '22;color:' + role.color + ';flex-shrink:0;">' + role.label + '</span>' +
+            '<span class="cs2-scout-rating" style="color:' + rc + ';font-size:11px;font-weight:800;font-family:\'DM Mono\',monospace;flex-shrink:0;">' + (p.rating!=null?p.rating.toFixed(2):'?') + '</span>' +
+          '</div>' +
+          '<div style="height:3px;background:var(--bg3,#1e2328);border-radius:2px;overflow:hidden;margin-bottom:4px;">' +
+            '<div style="height:100%;width:' + gaugePct + '%;background:linear-gradient(90deg,#FF6B00,' + rc + ');border-radius:2px;transition:width 400ms ease;"></div>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;">' +
+            (p.adr !=null ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text2);">ADR <span style="color:var(--text1);">' + p.adr + '</span></span>' : '') +
+            (p.kast!=null ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text2);">KAST <span style="color:var(--text1);">' + p.kast + '%</span></span>' : '') +
+            (p.kd  !=null ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text2);">K/D <span style="color:var(--text1);">' + p.kd.toFixed(2) + '</span></span>' : '') +
+          '</div>' +
+        '</div>';
       }
-      if (teamData.elo_rating||teamData.rank)
-        html += '<div style="margin-top:5px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);">' +
-          (teamData.rank?'#'+teamData.rank+' mondial':'') + (teamData.elo_rating?' · ELO '+teamData.elo_rating:'') +
-          (teamData.elo_peak?' (peak '+teamData.elo_peak+')':'') + '</div>';
+      if (teamData.elo_rating || teamData.rank)
+        html += '<div style="margin-top:6px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);">' +
+          (teamData.rank ? '#' + teamData.rank + ' mondial' : '') +
+          (teamData.elo_rating ? ' · ELO <span style="color:#ffa726;">' + teamData.elo_rating + '</span>' : '') +
+          (teamData.elo_peak ? ' <span style="color:var(--text3);">(peak ' + teamData.elo_peak + ')</span>' : '') +
+          '</div>';
       return html + '</div>';
     }
     el.innerHTML = teamBlock(e.team1, _scoutCtx.t1) + teamBlock(e.team2, _scoutCtx.t2);
@@ -25443,15 +25488,147 @@ function renderComparateur(d) {
         var aCls=action==='ban'?'ban':action==='pick'?'pick':'decider';
         var aIcon=action==='ban'?'❌':action==='pick'?'✅':'🎲';
         var wrHint='';
-        if (enriched&&action==='pick') {
-          var isT1=_scoutCtx.t1&&team.toLowerCase().includes(_scoutCtx.t1.slice(0,4).toLowerCase());
-          var tMaps=isT1?(enriched.team1&&enriched.team1.all_maps):(enriched.team2&&enriched.team2.all_maps);
-          if (tMaps) { var mk2=mapName.toLowerCase().replace(/[^a-z]/g,''); var wr=tMaps[mk2]; if (wr!=null) wrHint=' <span class="cs2-veto-wr">wr '+wr+'%</span>'; }
+        if (enriched && (action==='pick'||action==='decider')) {
+          var mk2   = mapName.toLowerCase().replace(/[^a-z]/g,'');
+          var t1wr2 = (enriched.team1&&enriched.team1.all_maps) ? enriched.team1.all_maps[mk2] : null;
+          var t2wr2 = (enriched.team2&&enriched.team2.all_maps) ? enriched.team2.all_maps[mk2] : null;
+          if (t1wr2!=null||t2wr2!=null) {
+            var w1=t1wr2!=null?t1wr2:50; var w2=t2wr2!=null?t2wr2:50;
+            var delta=w1-w2; var absDelta=Math.abs(delta);
+            var tot2=w1+w2; var p1pct=tot2>0?(w1/tot2*100).toFixed(0):50; var p2pct=(100-p1pct).toFixed(0);
+            var valueClass=absDelta>=25?'VALUE MAP ✓':absDelta>=15?'Avantage':'≈ Équilibre';
+            var verdictColor=absDelta>=25?'#00e676':absDelta>=15?'#ffa726':'#5a6068';
+            var pickTeamColor=action==='pick'?'#FF6B00':'#ffd700';
+            wrHint = '<div style="margin:6px 0 4px;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:4px;border-left:2px solid ' + pickTeamColor + ';">' +
+              '<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">' +
+                '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);">WIN% SUR ' + mapName.toUpperCase() + '</span>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
+                '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#FF6B00;width:30px;">' + w1 + '%</span>' +
+                '<div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;">' +
+                  '<div style="width:'+p1pct+'%;height:100%;background:linear-gradient(90deg,#FF6B00,#ff9a40);border-radius:3px 0 0 3px;"></div>' +
+                  '<div style="width:'+p2pct+'%;height:100%;background:linear-gradient(90deg,#3b82f6,#1e90ff);margin-left:auto;border-radius:0 3px 3px 0;display:inline-block;"></div>' +
+                '</div>' +
+                '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#3b82f6;width:30px;text-align:right;">' + w2 + '%</span>' +
+              '</div>' +
+              '<span style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:' + verdictColor + ';">' +
+                (delta!==0?((delta>0?'T1':'T2')+' +'+absDelta+'pp — '):'') + valueClass +
+              '</span>' +
+            '</div>';
+          }
         }
-        html += '<div class="cs2-veto-row"><span class="cs2-veto-num">'+(i+1)+'</span><span class="cs2-veto-team">'+_esc(team)+'</span><span class="cs2-veto-action '+aCls+'">'+aIcon+' '+action.toUpperCase()+'</span><span class="cs2-veto-map">'+_esc(mapName)+'</span>'+wrHint+'</div>';
+        html += '<div class="cs2-veto-row" style="flex-direction:column;align-items:stretch;">' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<span class="cs2-veto-num">'+(i+1)+'</span>' +
+            '<span class="cs2-veto-team">'+_esc(team)+'</span>' +
+            '<span class="cs2-veto-action '+aCls+'">'+aIcon+' '+action.toUpperCase()+'</span>' +
+            '<span class="cs2-veto-map">'+_esc(mapName)+'</span>' +
+          '</div>' + wrHint + '</div>';
       }
     }
     el.innerHTML = html + '</div>';
+  }
+
+  // ─── ANALYTICS (EDGE) tab — Pistol Index, Form Trajectory, Entropy, Roster Strength ──
+  function _renderScoutAnalytics(e, el) {
+    var t1 = _scoutCtx.t1; var t2 = _scoutCtx.t2;
+    var t1d = e.team1 || {}; var t2d = e.team2 || {};
+    var pi  = e.pistol_index;
+
+    function _section(title, content) {
+      return '<div style="margin-bottom:14px;">' +
+        '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.06em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.06);">' + title + '</div>' +
+        content + '</div>';
+    }
+    function _kpiRow(label, val1, val2, color1, color2) {
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);flex:0 0 110px;">' + label + '</span>' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:' + (color1||'var(--text1)') + ';flex:1;text-align:right;">' + (val1||'—') + '</span>' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:' + (color2||'var(--text1)') + ';flex:1;text-align:right;">' + (val2||'—') + '</span>' +
+      '</div>';
+    }
+    function _tcolor(v) { return v>=70?'#00e676':v>=50?'#ffa726':'#ff4d4d'; }
+    function _trajColor(label) {
+      return label==='HOT'?'#00e676':label==='RISING'?'#ffa726':label==='DECLINING'?'#ff6b00':'#ff4d4d';
+    }
+
+    var html = '';
+
+    // Header row: team names
+    html += '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
+      '<div style="flex:0 0 110px;"></div>' +
+      '<div style="flex:1;text-align:right;font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:#FF6B00;">' + _esc(t1) + '</div>' +
+      '<div style="flex:1;text-align:right;font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;color:#3b82f6;">' + _esc(t2) + '</div>' +
+    '</div>';
+
+    // ─── FORM TRAJECTORY ─────────────────────────────────────────────────────
+    var traj1 = t1d.form_trajectory; var traj2 = t2d.form_trajectory;
+    var trajContent = _kpiRow('Trajectoire',
+      traj1 ? '<span title="'+traj1.label+'" style="color:'+_trajColor(traj1.label)+'">' + traj1.arrow + ' ' + traj1.label + '</span>' : '—',
+      traj2 ? '<span title="'+traj2.label+'" style="color:'+_trajColor(traj2.label)+'">' + traj2.arrow + ' ' + traj2.label + '</span>' : '—',
+      null, null
+    );
+    var fs1 = t1d.form_score; var fs2 = t2d.form_score;
+    if (fs1!=null||fs2!=null)
+      trajContent += _kpiRow('Form Score', fs1!=null?fs1+'':null, fs2!=null?fs2+'':null, fs1!=null?_tcolor(fs1):null, fs2!=null?_tcolor(fs2):null);
+    html += _section('📈 FORME (3 derniers + SOS)', trajContent);
+
+    // ─── ROSTER STRENGTH ─────────────────────────────────────────────────────
+    var rs1 = t1d.roster_strength; var rs2 = t2d.roster_strength;
+    var rsContent = _kpiRow('Force roster',
+      rs1!=null?rs1+'/100':null, rs2!=null?rs2+'/100':null,
+      rs1!=null?_tcolor(rs1):null, rs2!=null?_tcolor(rs2):null
+    );
+    if (t1d.elo_rating!=null || t2d.elo_rating!=null)
+      rsContent += _kpiRow('ELO BSD',
+        t1d.elo_rating!=null?String(t1d.elo_rating):null,
+        t2d.elo_rating!=null?String(t2d.elo_rating):null,
+        t1d.elo_rating!=null?(t1d.elo_rating>1600?'#00e676':t1d.elo_rating>1200?'#ffa726':'#ff4d4d'):null,
+        t2d.elo_rating!=null?(t2d.elo_rating>1600?'#00e676':t2d.elo_rating>1200?'#ffa726':'#ff4d4d'):null
+      );
+    if (t1d.rank!=null || t2d.rank!=null)
+      rsContent += _kpiRow('HLTV Rank',
+        t1d.rank!=null?'#'+t1d.rank:null, t2d.rank!=null?'#'+t2d.rank:null,
+        t1d.rank!=null?(t1d.rank<=10?'#00e676':t1d.rank<=30?'#ffa726':'#aaa'):null,
+        t2d.rank!=null?(t2d.rank<=10?'#00e676':t2d.rank<=30?'#ffa726':'#aaa'):null
+      );
+    html += _section('💪 FORCE ROSTER (Rating 3.0)', rsContent);
+
+    // ─── PISTOL INDEX ─────────────────────────────────────────────────────────
+    if (pi) {
+      var piContent = '';
+      function _deltaColor(d) { return d>0?'#00e676':d<0?'#ff4d4d':'#5a6068'; }
+      piContent += _kpiRow('WR CT', pi.t1_ct_wr!=null?pi.t1_ct_wr+'%':null, pi.t2_ct_wr!=null?pi.t2_ct_wr+'%':null,
+        pi.t1_ct_wr!=null?_tcolor(pi.t1_ct_wr):null, pi.t2_ct_wr!=null?_tcolor(pi.t2_ct_wr):null);
+      piContent += _kpiRow('WR T', pi.t1_t_wr!=null?pi.t1_t_wr+'%':null, pi.t2_t_wr!=null?pi.t2_t_wr+'%':null,
+        pi.t1_t_wr!=null?_tcolor(pi.t1_t_wr):null, pi.t2_t_wr!=null?_tcolor(pi.t2_t_wr):null);
+      piContent += _kpiRow('Δ CT', pi.ct_delta>0?'+'+pi.ct_delta+'pp':pi.ct_delta+'pp', '', _deltaColor(pi.ct_delta), null);
+      piContent += _kpiRow('Δ T', pi.t_delta>0?'+'+pi.t_delta+'pp':pi.t_delta+'pp', '', _deltaColor(pi.t_delta), null);
+      if (pi.trade_signal)
+        piContent += '<div style="margin-top:6px;padding:5px 8px;border-radius:4px;background:rgba(255,214,0,0.08);border:1px solid rgba(255,214,0,0.25);">' +
+          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffd700;font-weight:700;">⚡ ' + _esc(pi.trade_signal) + '</span></div>';
+      html += _section('🎯 PISTOL ROUND INDEX (BSD proxy)', piContent);
+    }
+
+    // ─── MAP POOL ENTROPY ─────────────────────────────────────────────────────
+    var e1 = t1d.map_pool_entropy; var e2 = t2d.map_pool_entropy;
+    if (e1 || e2) {
+      var entropyContent = _kpiRow('Entropie pool',
+        e1 ? e1.normalized+'/100' : null, e2 ? e2.normalized+'/100' : null,
+        e1 ? (e1.concentrated?'#ffa726':'#00e676') : null,
+        e2 ? (e2.concentrated?'#ffa726':'#00e676') : null
+      );
+      if (e1&&e1.concentrated) entropyContent += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffa726;margin-top:4px;">⚠ ' + _esc(t1) + ' pool concentré — vulnerable au veto</div>';
+      if (e2&&e2.concentrated) entropyContent += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#ffa726;margin-top:4px;">⚠ ' + _esc(t2) + ' pool concentré — vulnerable au veto</div>';
+      html += _section('🗂 MAP POOL ENTROPY', entropyContent);
+    }
+
+    // ─── Source footer ────────────────────────────────────────────────────────
+    html += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);text-align:right;">' +
+      'Sources: BSD ELO · csapi.de Rating · HLTV Map WR' +
+      (e.data_age_h!=null?' · data '+e.data_age_h+'h':'') + '</div>';
+
+    el.innerHTML = html;
   }
 
   function _esc(s) {

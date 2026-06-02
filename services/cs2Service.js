@@ -789,6 +789,77 @@ function computeFormScore(teamName, matches) {
   return Math.round((sumR / sumW) * 100);
 }
 
+// ─── Roster Strength Score (normalized mean Rating, 0-100) ───────────────────
+// Star bonus: +5pts per player rating >1.30 (capped 0-100)
+function computeRosterStrength(players) {
+  if (!players || !players.length) return null;
+  const ratings = players.map(p => p.rating || 1.0).filter(r => r > 0);
+  if (!ratings.length) return null;
+  const mean = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+  const stars = ratings.filter(r => r > 1.30).length;
+  const base  = Math.max(0, Math.min(1, (mean - 0.70) / 0.80)); // [0.70, 1.50] → [0,1]
+  return Math.round(Math.min(1, base + stars * 0.05) * 100);
+}
+
+// ─── Map Pool Entropy (Shannon, normalized 0-100) ─────────────────────────────
+// Low (<70) = concentrated pool = vulnerable to veto forcing
+function computeMapPoolEntropy(mapStats) {
+  if (!mapStats || typeof mapStats !== 'object') return null;
+  const wrs = Object.entries(mapStats)
+    .filter(([k]) => !k.startsWith('_'))
+    .map(([, v]) => typeof v === 'number' ? v : null)
+    .filter(v => v != null);
+  if (wrs.length < 3) return null;
+  const total = wrs.reduce((a, b) => a + b, 0);
+  if (!total) return null;
+  const probs = wrs.map(w => w / total);
+  const H    = -probs.reduce((s, p) => s + (p > 0 ? p * Math.log2(p) : 0), 0);
+  const maxH = Math.log2(wrs.length);
+  const norm = maxH > 0 ? H / maxH : 1;
+  return {
+    entropy      : Math.round(H * 100) / 100,
+    normalized   : Math.round(norm * 100),       // 0=concentrated, 100=uniform
+    maps_n       : wrs.length,
+    concentrated : norm < 0.70,                  // flag: pool vulnerable to veto
+  };
+}
+
+// ─── Form Trajectory (last-3 results → arrow + label) ────────────────────────
+function computeFormTrajectory(form) {
+  if (!form || !form.form || form.form.length < 3) return null;
+  const last3 = form.form.slice(-3);
+  const wins  = last3.filter(r => r === 'W').length;
+  const map = { 3: ['↑↑','HOT'], 2: ['↗','RISING'], 1: ['↘','DECLINING'], 0: ['↓↓','COLD'] };
+  const [arrow, label] = map[wins];
+  return { arrow, label, last3, wins_last3: wins };
+}
+
+// ─── Pistol Index — CT/T round winrate differential as pistol proxy ───────────
+// BSD map_stats.round_winrate_ct / _t correlates strongly with pistol outcomes
+function computePistolIndex(t1meta, t2meta) {
+  const t1ct = t1meta?.round_winrate_ct ?? null;
+  const t1t  = t1meta?.round_winrate_t  ?? null;
+  const t2ct = t2meta?.round_winrate_ct ?? null;
+  const t2t  = t2meta?.round_winrate_t  ?? null;
+  if (t1ct == null && t1t == null && t2ct == null && t2t == null) return null;
+  const dCT = (t1ct ?? 50) - (t2ct ?? 50);
+  const dT  = (t1t  ?? 50) - (t2t  ?? 50);
+  const sigCT = Math.abs(dCT) >= 10 ? (dCT > 0 ? 'T1' : 'T2') : 'neutral';
+  const sigT  = Math.abs(dT)  >= 10 ? (dT  > 0 ? 'T1' : 'T2') : 'neutral';
+  const parts = [];
+  if (sigCT !== 'neutral') parts.push(sigCT + ' CT');
+  if (sigT  !== 'neutral') parts.push(sigT  + ' T');
+  return {
+    ct_delta    : Math.round(dCT * 10) / 10,
+    t_delta     : Math.round(dT  * 10) / 10,
+    signal_ct   : sigCT,
+    signal_t    : sigT,
+    t1_ct_wr    : t1ct, t1_t_wr: t1t,
+    t2_ct_wr    : t2ct, t2_t_wr: t2t,
+    trade_signal: parts.length ? parts.join(' | ') + ' pistol edge' : null,
+  };
+}
+
 // ─── Master enrichment: all stats for a matchup ──────────────────────────────
 async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
   const [matches, rankings, playerStats] = await Promise.all([
@@ -850,44 +921,53 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
     team2_t_wr : bsdMaps2?._round_winrate_t  ?? null,
   } : null;
 
+  // ─── Derived analytics (new P0 metrics) ─────────────────────────────────────
+  const t1meta = bsdMaps1 ? { round_winrate_ct: bsdMaps1._round_winrate_ct, round_winrate_t: bsdMaps1._round_winrate_t } : null;
+  const t2meta = bsdMaps2 ? { round_winrate_ct: bsdMaps2._round_winrate_ct, round_winrate_t: bsdMaps2._round_winrate_t } : null;
+  const t1mapsClean = Object.fromEntries(Object.entries(t1maps).filter(([k]) => !k.startsWith('_')));
+  const t2mapsClean = Object.fromEntries(Object.entries(t2maps).filter(([k]) => !k.startsWith('_')));
+
   return {
     team1: {
-      name      : t1name,
-      rank      : t1rank?.rank || null,
-      elo_rating: b1entry?.elo_rating ?? null,
-      elo_peak  : b1entry?.elo_peak   ?? null,
-      streak    : t1data?.streak ?? null,
-      form      : t1form,
-      form_score: t1form_score,
-      players   : t1players,
-      all_maps  : Object.keys(t1maps).filter(k => !k.startsWith('_')).length > 0
-                  ? Object.fromEntries(Object.entries(t1maps).filter(([k]) => !k.startsWith('_')))
-                  : null,
-      map_stats_meta: bsdMaps1 ? {
+      name           : t1name,
+      rank           : t1rank?.rank || null,
+      elo_rating     : b1entry?.elo_rating ?? null,
+      elo_peak       : b1entry?.elo_peak   ?? null,
+      streak         : t1data?.streak ?? null,
+      form           : t1form,
+      form_score     : t1form_score,
+      form_trajectory: computeFormTrajectory(t1form),
+      players        : t1players,
+      roster_strength: computeRosterStrength(t1players),
+      map_pool_entropy: computeMapPoolEntropy(t1mapsClean),
+      all_maps       : Object.keys(t1mapsClean).length > 0 ? t1mapsClean : null,
+      map_stats_meta : bsdMaps1 ? {
         map_winrate: bsdMaps1._map_winrate, round_winrate_ct: bsdMaps1._round_winrate_ct,
         round_winrate_t: bsdMaps1._round_winrate_t, sample_size: bsdMaps1._sample_size,
       } : null,
     },
     team2: {
-      name      : t2name,
-      rank      : t2rank?.rank || null,
-      elo_rating: b2entry?.elo_rating ?? null,
-      elo_peak  : b2entry?.elo_peak   ?? null,
-      streak    : t2data?.streak ?? null,
-      form      : t2form,
-      form_score: t2form_score,
-      players   : t2players,
-      all_maps  : Object.keys(t2maps).filter(k => !k.startsWith('_')).length > 0
-                  ? Object.fromEntries(Object.entries(t2maps).filter(([k]) => !k.startsWith('_')))
-                  : null,
-      map_stats_meta: bsdMaps2 ? {
+      name           : t2name,
+      rank           : t2rank?.rank || null,
+      elo_rating     : b2entry?.elo_rating ?? null,
+      elo_peak       : b2entry?.elo_peak   ?? null,
+      streak         : t2data?.streak ?? null,
+      form           : t2form,
+      form_score     : t2form_score,
+      form_trajectory: computeFormTrajectory(t2form),
+      players        : t2players,
+      roster_strength: computeRosterStrength(t2players),
+      map_pool_entropy: computeMapPoolEntropy(t2mapsClean),
+      all_maps       : Object.keys(t2mapsClean).length > 0 ? t2mapsClean : null,
+      map_stats_meta : bsdMaps2 ? {
         map_winrate: bsdMaps2._map_winrate, round_winrate_ct: bsdMaps2._round_winrate_ct,
         round_winrate_t: bsdMaps2._round_winrate_t, sample_size: bsdMaps2._sample_size,
       } : null,
     },
     h2h,
-    map_winrate: mapWinrate,
-    data_age_h : Math.round((Date.now() - _csapiMatchesCache.ts) / 3600000)
+    map_winrate : mapWinrate,
+    pistol_index: computePistolIndex(t1meta, t2meta),
+    data_age_h  : Math.round((Date.now() - _csapiMatchesCache.ts) / 3600000)
   };
 }
 
