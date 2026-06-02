@@ -29,7 +29,8 @@ class _BottomNav extends StatelessWidget {
   int get _index {
     if (location.startsWith(AppRouter.live)) return 1;
     if (location.startsWith(AppRouter.tennis)) return 2;
-    return 0;
+    if (location.startsWith(AppRouter.aiScout)) return 3;
+    return 0; // football
   }
 
   @override
@@ -46,35 +47,32 @@ class _BottomNav extends StatelessWidget {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         onDestinationSelected: (i) {
           switch (i) {
-            case 0:
-              context.go(AppRouter.football);
-            case 1:
-              context.go(AppRouter.live);
-            case 2:
-              context.go(AppRouter.tennis);
+            case 0: context.go(AppRouter.football);
+            case 1: context.go(AppRouter.live);
+            case 2: context.go(AppRouter.tennis);
+            case 3: context.go(AppRouter.aiScout);
           }
         },
-        destinations: [
+        destinations: const [
           NavigationDestination(
-            icon: const Icon(Icons.sports_soccer_outlined,
-                color: AppColors.text3),
-            selectedIcon: const Icon(Icons.sports_soccer,
-                color: AppColors.green),
+            icon: Icon(Icons.sports_soccer_outlined, color: AppColors.text3),
+            selectedIcon: Icon(Icons.sports_soccer, color: AppColors.green),
             label: 'Football',
           ),
           NavigationDestination(
-            icon: const Icon(Icons.fiber_manual_record_outlined,
-                color: AppColors.text3),
-            selectedIcon: const Icon(Icons.fiber_manual_record,
-                color: AppColors.red),
+            icon: Icon(Icons.fiber_manual_record_outlined, color: AppColors.text3),
+            selectedIcon: Icon(Icons.fiber_manual_record, color: AppColors.red),
             label: 'Live',
           ),
           NavigationDestination(
-            icon: const Icon(Icons.sports_tennis_outlined,
-                color: AppColors.text3),
-            selectedIcon: const Icon(Icons.sports_tennis,
-                color: AppColors.blue),
+            icon: Icon(Icons.sports_tennis_outlined, color: AppColors.text3),
+            selectedIcon: Icon(Icons.sports_tennis, color: AppColors.blue),
             label: 'Tennis',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.psychology_outlined, color: AppColors.text3),
+            selectedIcon: Icon(Icons.psychology, color: AppColors.amber),
+            label: 'IA Scout',
           ),
         ],
       ),

@@ -2,6 +2,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
 import 'core/network/api_client.dart';
+import 'features/ai_scout/data/datasources/scout_remote_datasource.dart';
+import 'features/ai_scout/data/repositories/scout_repository_impl.dart';
+import 'features/ai_scout/domain/repositories/scout_repository.dart';
+import 'features/ai_scout/domain/usecases/get_top_picks_usecase.dart';
+import 'features/ai_scout/presentation/cubit/scout_cubit.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -70,4 +75,14 @@ Future<void> init() async {
     () => LiveSseDataSourceImpl(sl()),
   );
   sl.registerFactory(() => LiveCubit(sl()));
+
+  // ─── AI Scout ──────────────────────────────────────────
+  sl.registerLazySingleton<ScoutRemoteDataSource>(
+    () => ScoutRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<ScoutRepository>(
+    () => ScoutRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton(() => GetTopPicksUseCase(sl()));
+  sl.registerFactory(() => ScoutCubit(sl()));
 }
