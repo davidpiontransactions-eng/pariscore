@@ -24250,19 +24250,28 @@ function renderComparateur(d) {
     streakBadge(e.team1, 't1');
     streakBadge(e.team2, 't2');
 
-    // Map winrate bar
-    if (map && e.map_winrate && e.map_winrate.source === 'hltv') {
+    // Map winrate bar (HLTV or BSD)
+    if (map && e.map_winrate && (e.map_winrate.source === 'hltv' || e.map_winrate.source === 'bsd')) {
       var mwEl = card.querySelector('.cs2-map-winrate-bar');
       if (mwEl) {
         var w1 = e.map_winrate.team1;
         var w2 = e.map_winrate.team2;
         if (w1 != null || w2 != null) {
           var flag1 = w1 != null && w2 != null && Math.abs(w1 - w2) >= 20 ? ' ✓' : '';
+          var srcBadge = e.map_winrate.source === 'bsd' ? '<span style="font-size:8px;color:var(--blue,#29b6f6);margin-left:3px;">BSD</span>' : '';
           mwEl.innerHTML = '<span style="color:var(--text3);font-size:9px;">WR ' + map + ':</span> ' +
             (w1 != null ? '<span style="color:' + (w1>=60?'#00e676':w1>=45?'#ffa726':'#ff4d4d') + '">' + w1 + '%</span>' : '<span style="color:var(--text3)">?</span>') +
             '<span style="color:var(--text3);margin:0 3px;">vs</span>' +
             (w2 != null ? '<span style="color:' + (w2>=60?'#00e676':w2>=45?'#ffa726':'#ff4d4d') + '">' + w2 + '%</span>' : '<span style="color:var(--text3)">?</span>') +
-            '<span style="color:#00e676;font-weight:700;">' + flag1 + '</span>';
+            '<span style="color:#00e676;font-weight:700;">' + flag1 + '</span>' + srcBadge;
+          // CT/T side row (BSD only)
+          if (e.map_winrate.source === 'bsd' && e.map_winrate.team1_ct_wr != null) {
+            mwEl.innerHTML += '<br><span style="color:var(--text3);font-size:8px;">CT ' +
+              '<span style="color:#29b6f6;">' + e.map_winrate.team1_ct_wr + '%</span>' +
+              ' vs <span style="color:#29b6f6;">' + e.map_winrate.team2_ct_wr + '%</span>' +
+              '  T <span style="color:#ffa726;">' + e.map_winrate.team1_t_wr + '%</span>' +
+              ' vs <span style="color:#ffa726;">' + e.map_winrate.team2_t_wr + '%</span></span>';
+          }
           mwEl.style.display = 'flex';
         }
       }
@@ -24485,8 +24494,13 @@ function renderComparateur(d) {
     }
 
     // ── HLTV rank ────────────────────────────────────────────────────────
-    function rankTag(rank) {
-      return rank ? '<div class="cs2-hltv">HLTV #' + rank + '</div>' : '';
+    function rankTag(team) {
+      var rank = typeof team === 'object' ? team.hltv_rank : team;
+      var elo  = typeof team === 'object' ? team.elo_rating : null;
+      var peak = typeof team === 'object' ? team.elo_peak : null;
+      if (rank) return '<div class="cs2-hltv">HLTV #' + rank + (elo ? ' <span style="color:var(--blue,#29b6f6);font-size:8px;">⚡' + elo + '</span>' : '') + '</div>';
+      if (elo)  return '<div class="cs2-hltv" style="color:var(--blue,#29b6f6);" title="BSD ELO (peak:' + (peak||'?') + ')">⚡ELO ' + elo + '</div>';
+      return '';
     }
 
     // ── Score center ─────────────────────────────────────────────────────
@@ -24579,7 +24593,7 @@ function renderComparateur(d) {
             '<div class="cs2-team-name">' + stickerBadge(stk1) + _esc(t1.name || 'TBD') +
               '<span class="cs2-streak-t1" style="display:none;font-family:\'DM Mono\',monospace;font-size:9px;margin-left:4px;"></span>' +
             '</div>' +
-            rankTag(t1.hltv_rank) +
+            rankTag(t1) +
             '<div class="cs2-form-pills-t1" style="margin-top:3px;display:flex;gap:1px;"></div>' +
             '<div class="cs2-players-t1" style="display:none;gap:4px;flex-wrap:wrap;margin-top:2px;"></div>' +
           '</div>' +
@@ -24594,7 +24608,7 @@ function renderComparateur(d) {
             '<div class="cs2-team-name">' + _esc(t2.name || 'TBD') + stickerBadge(stk2) +
               '<span class="cs2-streak-t2" style="display:none;font-family:\'DM Mono\',monospace;font-size:9px;margin-left:4px;"></span>' +
             '</div>' +
-            rankTag(t2.hltv_rank) +
+            rankTag(t2) +
             '<div class="cs2-form-pills-t2" style="margin-top:3px;display:flex;gap:1px;justify-content:flex-end;"></div>' +
             '<div class="cs2-players-t2" style="display:none;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin-top:2px;"></div>' +
           '</div>' +
@@ -24737,10 +24751,18 @@ function renderComparateur(d) {
       signals.push({ key:'h2h', label: e.h2h.t1wins + '–' + e.h2h.t2wins, color: r>=0.65?'green':r<=0.35?'red':'amber', val: r });
     }
 
-    // 5. Map winrate (HLTV)
-    if (e && e.map_winrate && e.map_winrate.source === 'hltv' && e.map_winrate.team1 != null) {
+    // 5. Map winrate (HLTV or BSD)
+    if (e && e.map_winrate && (e.map_winrate.source === 'hltv' || e.map_winrate.source === 'bsd') && e.map_winrate.team1 != null) {
       var diff = (e.map_winrate.team1||50) - (e.map_winrate.team2||50);
-      signals.push({ key:'mapwr', label: e.map_winrate.team1 + '% vs ' + e.map_winrate.team2 + '%', color: Math.abs(diff)>=20?'green':'amber', val: diff });
+      var src = e.map_winrate.source === 'bsd' ? '⚡' : '';
+      signals.push({ key:'mapwr', label: src + e.map_winrate.team1 + '% vs ' + e.map_winrate.team2 + '%', color: Math.abs(diff)>=20?'green':'amber', val: diff });
+      // CT/T side advantage signal (BSD only)
+      if (e.map_winrate.source === 'bsd' && e.map_winrate.team1_ct_wr != null) {
+        var ctDiff = (e.map_winrate.team1_ct_wr||50) - (e.map_winrate.team2_ct_wr||50);
+        if (Math.abs(ctDiff) >= 15) {
+          signals.push({ key:'ctside', label: 'CT:' + e.map_winrate.team1_ct_wr + '%vs' + e.map_winrate.team2_ct_wr + '%', color: ctDiff >= 15 ? 'green' : ctDiff <= -15 ? 'red' : 'amber', val: ctDiff });
+        }
+      }
     }
 
     // 6. Over Rounds model
@@ -24835,9 +24857,15 @@ function renderComparateur(d) {
           .filter(function(s){ return s.key !== 'form1' && s.key !== 'form2'; })
           .map(function(s){ return _kpiBadge(s); }).join(' ');
 
-        // Team names with HLTV rank
+        // Team names with rank (HLTV or BSD ELO)
         function teamLabel(t) {
-          return _esc(t.name) + (t.hltv_rank ? ' <span style="font-size:9px;color:var(--text3);">#'+t.hltv_rank+'</span>' : '');
+          var rankHtml = '';
+          if (t.hltv_rank) {
+            rankHtml = ' <span style="font-size:9px;color:var(--text3);">#'+t.hltv_rank+'</span>';
+          } else if (t.elo_rating) {
+            rankHtml = ' <span style="font-size:9px;color:var(--blue,#29b6f6);" title="BSD ELO (peak:'+( t.elo_peak||'?')+')">⚡'+t.elo_rating+'</span>';
+          }
+          return _esc(t.name) + rankHtml;
         }
 
         // Prediction confidence badge
