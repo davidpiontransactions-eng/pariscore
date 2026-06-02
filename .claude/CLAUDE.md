@@ -151,6 +151,12 @@ Quand BSD publie une newsletter ou annonce de nouveaux endpoints, exécuter ce w
 
 **Contrainte BSD tennis** : dual rendering — patcher mobile sheet (`pariscore.js _psLtsRenderContext`) ET desktop modal indépendamment.
 
+### Exécutions passées
+
+| Date | Trigger | GO | Commits | Résidu |
+|---|---|---|---|---|
+| 2026-06-02 | Newsletter BSD Juin 2026 (odds multi-books, H2H, aces/DF par set) | ✅ "oui" utilisateur | `72ff270` `fad55b1` `6ff2296` `a76a2e0` | aces_per_set normalizer server.js (schéma `aces_per_set[]` confirmé, patch pending) |
+
 ---
 
 ## 7. RÈGLES CONNEXES
