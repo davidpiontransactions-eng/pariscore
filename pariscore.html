@@ -18422,6 +18422,18 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 .cs2-map-label { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text2,#8d9399); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .cs2-map-num { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); }
 .cs2-value-flag { font-family:'DM Mono',monospace; font-size: 10px; font-weight: 700; color: #00e676; margin-left: auto; }
+/* Value Map Engine — animated pulse */
+@keyframes cs2-value-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,230,118,0); border-color: rgba(0,230,118,0.25); }
+  50%       { box-shadow: 0 0 10px 2px rgba(0,230,118,0.10); border-color: rgba(0,230,118,0.60); }
+}
+.cs2-card.has-value-map { border-color: rgba(0,230,118,0.25); animation: cs2-value-pulse 1.8s ease-in-out infinite; }
+.cs2-dash-row.has-value-map td:first-child { border-left: 2px solid rgba(0,230,118,0.55); }
+/* Neumorphic bet button */
+.cs2-bet-btn { background: var(--bg2,#0f1317); border-radius: 8px; box-shadow: 4px 4px 8px rgba(0,0,0,0.4), -2px -2px 6px rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: var(--text1,#e8eaed); cursor: pointer; font-family: 'Instrument Sans',sans-serif; font-size: 12px; padding: 7px 14px; transition: box-shadow 80ms, transform 80ms; }
+.cs2-bet-btn:active { box-shadow: 1px 1px 3px rgba(0,0,0,0.5), inset 2px 2px 4px rgba(0,0,0,0.3); transform: scale(0.97); }
+.cs2-bet-btn.green { color: #00e676; border-color: rgba(0,230,118,0.30); }
+.cs2-bet-btn.amber { color: #ffa726; border-color: rgba(255,167,38,0.30); }
 /* Map atmosphere — per-map color tint on the bar */
 .cs2-map-bar.map-mirage  { background: linear-gradient(90deg, rgba(120,90,40,0.10) 0%, var(--bg3,#181c20) 70%); }
 .cs2-map-bar.map-inferno { background: linear-gradient(90deg, rgba(200,60,10,0.12) 0%, var(--bg3,#181c20) 70%); }
