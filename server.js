@@ -20180,14 +20180,37 @@ function _mergeDetailStats(match, detail) {
   s.p2_ret_won   = s.p2_ret_won   ?? detail.p2_return_points_won_pct ?? null;
   s.p1_total_pts = s.p1_total_pts ?? detail.p1_total_points_won_pct  ?? null;
   s.p2_total_pts = s.p2_total_pts ?? detail.p2_total_points_won_pct  ?? null;
-  // Per-set aces/DF (BSD June 2026 — new match detail fields)
-  if (Array.isArray(detail.sets_detail) && Array.isArray(match.sets)) {
-    detail.sets_detail.forEach((ds, i) => {
-      if (!match.sets[i]) return;
-      match.sets[i].p1_aces = match.sets[i].p1_aces ?? ds.p1_aces ?? null;
-      match.sets[i].p2_aces = match.sets[i].p2_aces ?? ds.p2_aces ?? null;
-      match.sets[i].p1_df   = match.sets[i].p1_df   ?? ds.p1_double_faults ?? ds.p1_df ?? null;
-      match.sets[i].p2_df   = match.sets[i].p2_df   ?? ds.p2_double_faults ?? ds.p2_df ?? null;
+  // Per-set aces/DF — BSD June 2026 real schema: aces_per_set[] + double_faults_per_set[]
+  // Each element is either [p1,p2] array OR {p1,p2} object (handle both defensively)
+  const _extractPerSet = (arr, i, key1, key2) => {
+    if (!Array.isArray(arr) || !arr[i]) return [null, null];
+    const el = arr[i];
+    if (Array.isArray(el)) return [el[0] ?? null, el[1] ?? null];
+    if (typeof el === 'object') return [el[key1] ?? el.p1 ?? null, el[key2] ?? el.p2 ?? null];
+    return [null, null];
+  };
+  if (Array.isArray(match.sets)) {
+    const acesArr = detail.aces_per_set || null;
+    const dfArr   = detail.double_faults_per_set || null;
+    match.sets.forEach((set, i) => {
+      if (acesArr) {
+        const [a1, a2] = _extractPerSet(acesArr, i, 'p1_aces', 'p2_aces');
+        set.p1_aces = set.p1_aces ?? a1;
+        set.p2_aces = set.p2_aces ?? a2;
+      }
+      if (dfArr) {
+        const [d1, d2] = _extractPerSet(dfArr, i, 'p1_double_faults', 'p2_double_faults');
+        set.p1_df = set.p1_df ?? d1;
+        set.p2_df = set.p2_df ?? d2;
+      }
+      // Fallback: sets_detail[i] if BSD changes schema again
+      const ds = Array.isArray(detail.sets_detail) ? (detail.sets_detail[i] || null) : null;
+      if (ds) {
+        set.p1_aces = set.p1_aces ?? ds.p1_aces ?? null;
+        set.p2_aces = set.p2_aces ?? ds.p2_aces ?? null;
+        set.p1_df   = set.p1_df   ?? ds.p1_double_faults ?? ds.p1_df ?? null;
+        set.p2_df   = set.p2_df   ?? ds.p2_double_faults ?? ds.p2_df ?? null;
+      }
     });
   }
   return match;
