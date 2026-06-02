@@ -792,6 +792,66 @@ function loadHltvMapStats() {
   } catch (e) { console.warn('[CS2/MapStats]', e.message); return {}; }
 }
 
+// ─── BSD-based Map World Rankings (fallback when HLTV files absent) ──────────
+// Fetches BSD team detail for top-N HLTV-ranked teams, builds per-map rankings.
+// Cache: 24h. Runs async on first call, returns stale data immediately if warm.
+let _bsdMapRankingsCache = { ts: 0, rankings: null };
+const BSD_MAP_RANKINGS_TTL = 24 * 60 * 60 * 1000;
+
+async function computeBSDMapRankings(topN = 30) {
+  if (_bsdMapRankingsCache.rankings && Date.now() - _bsdMapRankingsCache.ts < BSD_MAP_RANKINGS_TTL)
+    return _bsdMapRankingsCache.rankings;
+  if (!_bsdApiKeyRef) return null;
+  try {
+    const bsdTeams = await fetchBSDCs2Teams(_bsdApiKeyRef);
+    // Sort by ELO desc, take top N
+    const sorted = Object.values(bsdTeams)
+      .filter(t => t.id && t.elo_rating)
+      .sort((a, b) => (b.elo_rating || 0) - (a.elo_rating || 0))
+      .slice(0, topN);
+    // Fetch details in batches of 5 to avoid flood (24h cache per team)
+    const mapData = {}; // teamName → { mapName: winrate }
+    for (let i = 0; i < sorted.length; i += 5) {
+      const batch = sorted.slice(i, i + 5);
+      const results = await Promise.allSettled(batch.map(t => fetchBSDCs2TeamDetail(t.id)));
+      for (let j = 0; j < batch.length; j++) {
+        const detail = results[j].status === 'fulfilled' ? results[j].value : null;
+        if (!detail) continue;
+        const name = (detail.name || '').toLowerCase();
+        const norm = _normalizeTeamName(name) || name;
+        const mLookup = detail.map_stats ? _bsdMapStatsToLookup(detail.map_stats) : {};
+        mapData[norm] = { ...mLookup, _elo: batch[j].elo_rating, _name: detail.name || norm };
+      }
+    }
+    // Build per-map rankings sorted by winrate
+    const rankings = {};
+    for (const map of ACTIVE_MAPS) {
+      const key = map.toLowerCase();
+      const entries = Object.entries(mapData)
+        .filter(([, d]) => d[key] != null)
+        .map(([teamKey, d]) => ({ name: d._name || teamKey, elo: d._elo, wr: d[key] }))
+        .sort((a, b) => b.wr - a.wr)
+        .map((e, i) => ({ ...e, rank: i + 1 }));
+      rankings[map] = entries;
+    }
+    _bsdMapRankingsCache = { ts: Date.now(), rankings };
+    console.log(`[CS2/BSD-MapRank] Rankings built for ${Object.keys(mapData).length} teams`);
+    return rankings;
+  } catch (e) {
+    console.warn('[CS2/BSD-MapRank]', e.message);
+    return _bsdMapRankingsCache.rankings;
+  }
+}
+
+// Get a team's rank on a specific map from BSD rankings
+async function getTeamMapRankBSD(teamName, mapName) {
+  const rankings = await computeBSDMapRankings();
+  if (!rankings) return null;
+  const key  = _normalizeTeamName(teamName.toLowerCase()) || teamName.toLowerCase();
+  const list = rankings[mapName] || [];
+  return list.find(t => _normalizeTeamName((t.name||'').toLowerCase()) === key) || null;
+}
+
 // ─── Multi-window HLTV map stats loader (3m / 6m / 1y) ──────────────────────
 function _loadHltvWindowFile(filePath, cache) {
   if (Date.now() - cache.ts < HLTV_MAPSTATS_TTL) return cache;
@@ -851,21 +911,31 @@ function computeAllMapTrends(teamName) {
   return hasData ? out : null;
 }
 
-// ─── Get per-map world ranking for a team (all 3 windows) ────────────────────
-function getTeamMapRankings(teamName) {
+// ─── Get per-map world ranking for a team (HLTV files if present, BSD fallback) ─
+async function getTeamMapRankings(teamName) {
   loadHltvMapStatsMulti();
   const key = _normalizeTeamName(teamName) || (teamName || '').toLowerCase();
-  const out = {};
+  const out = {}; let hasHltv = false;
+
   for (const map of ACTIVE_MAPS) {
-    const mkey = map;
-    const r3 = (_hltvMaps3mCache.mapRankings[mkey] || []).find(t => _normalizeTeamName(t.name) === key);
-    const r6 = (_hltvMaps6mCache.mapRankings[mkey] || []).find(t => _normalizeTeamName(t.name) === key);
-    const r1 = (_hltvMaps1yCache.mapRankings[mkey] || []).find(t => _normalizeTeamName(t.name) === key);
-    if (r3 || r6 || r1) out[map] = {
-      rank_3m: r3?.rank ?? null, wr_3m: r3?.wr ?? null,
-      rank_6m: r6?.rank ?? null, wr_6m: r6?.wr ?? null,
-      rank_1y: r1?.rank ?? null, wr_1y: r1?.wr ?? null,
-    };
+    const r3 = (_hltvMaps3mCache.mapRankings[map] || []).find(t => _normalizeTeamName(t.name) === key);
+    const r6 = (_hltvMaps6mCache.mapRankings[map] || []).find(t => _normalizeTeamName(t.name) === key);
+    const r1 = (_hltvMaps1yCache.mapRankings[map] || []).find(t => _normalizeTeamName(t.name) === key);
+    if (r3 || r6 || r1) {
+      hasHltv = true;
+      out[map] = { rank_3m: r3?.rank ?? null, wr_3m: r3?.wr ?? null,
+                   rank_6m: r6?.rank ?? null, wr_6m: r6?.wr ?? null,
+                   rank_1y: r1?.rank ?? null, wr_1y: r1?.wr ?? null, source: 'hltv' };
+    }
+  }
+  if (hasHltv) return out;
+
+  // Fallback: BSD map rankings (real ELO-sorted data, no time-window)
+  const bsdR = await computeBSDMapRankings().catch(() => null);
+  if (!bsdR) return null;
+  for (const map of ACTIVE_MAPS) {
+    const e = (bsdR[map] || []).find(t => _normalizeTeamName((t.name||'').toLowerCase()) === key);
+    if (e) out[map] = { rank_bsd: e.rank, wr_bsd: e.wr, elo: e.elo, source: 'bsd' };
   }
   return Object.keys(out).length ? out : null;
 }
@@ -1077,7 +1147,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       roster_strength: computeRosterStrength(t1players),
       map_pool_entropy : computeMapPoolEntropy(t1mapsClean),
       map_trends       : computeAllMapTrends(t1name),
-      map_world_ranking: getTeamMapRankings(t1name),
+      map_world_ranking: await getTeamMapRankings(t1name),
       all_maps         : Object.keys(t1mapsClean).length > 0 ? t1mapsClean : null,
       map_stats_meta : bsdMaps1 ? {
         map_winrate: bsdMaps1._map_winrate, round_winrate_ct: bsdMaps1._round_winrate_ct,
@@ -1097,7 +1167,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       roster_strength: computeRosterStrength(t2players),
       map_pool_entropy : computeMapPoolEntropy(t2mapsClean),
       map_trends       : computeAllMapTrends(t2name),
-      map_world_ranking: getTeamMapRankings(t2name),
+      map_world_ranking: await getTeamMapRankings(t2name),
       all_maps         : Object.keys(t2mapsClean).length > 0 ? t2mapsClean : null,
       map_stats_meta : bsdMaps2 ? {
         map_winrate: bsdMaps2._map_winrate, round_winrate_ct: bsdMaps2._round_winrate_ct,
@@ -1182,6 +1252,8 @@ module.exports = {
   computeMapTrend,
   computeAllMapTrends,
   getTeamMapRankings,
+  computeBSDMapRankings,
+  getTeamMapRankBSD,
   buildMatchEnrichment,
 
   invalidateCache() { _cs2Cache.ts = 0; },

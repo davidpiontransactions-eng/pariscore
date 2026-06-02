@@ -19483,6 +19483,25 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/cs2/map-rankings[?map=Mirage&top=30] — per-map world rankings (BSD source)
+  if (pathname === '/api/v1/cs2/map-rankings' && req.method === 'GET') {
+    const mapFilter = sp.get('map') || null;
+    const top = Math.min(parseInt(sp.get('top') || '30', 10), 50);
+    try {
+      const rankings = await cs2Service.computeBSDMapRankings(top);
+      if (!rankings) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'BSD data not ready', rankings: {} }));
+      }
+      const out = mapFilter ? { [mapFilter]: rankings[mapFilter] || [] } : rankings;
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, source: 'bsd', rankings: out, top }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
   if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
