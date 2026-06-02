@@ -1487,11 +1487,11 @@ function _tnToggleLiveStats(matchId) {
     if (btn) btn.classList.remove('active');
     return;
   }
-  if (!panel.dataset.rendered) {
+  if (panel.dataset.rendered !== String(matchId)) {
     const m = (window._tennisLastFetch || []).find(x => String(x.id) === String(matchId));
     if (!m) return; // match not in cache yet — don't mark rendered, retry on next click
     panel.innerHTML = _tnRenderLiveStatsTable(m);
-    panel.dataset.rendered = '1';
+    panel.dataset.rendered = String(matchId);
   }
   panel.hidden = false;
   if (btn) btn.classList.add('active');
