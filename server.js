@@ -2853,6 +2853,10 @@ const ODDSPAPI_SET1_MKTIDS = [12263,12265,12267,12269,12271,12273,12275,12277,12
 const ODDSPAPI_SET2_MKTIDS = [12435,12437,12439,12441,12443,12445,12447,12449,12451];
 const _oddspapiTourIndex  = new Map(); // normName:circuit → tournamentId (24h)
 const _oddspapiFxIndex    = new Map(); // matchId → { fixtureId, ts }
+// Circuit-breaker: bloquer TOUTE call OddsPapi après 429 pendant 1h
+let _oddspapiBlockedUntil = 0;
+const ODDSPAPI_BLOCK_MS   = 60 * 60 * 1000; // 1h
+const ODDSPAPI_NEG_TTL    = 6 * 60 * 60 * 1000; // 6h cache négatif (not-found)
 
 function _oddspapiGet(path, params = {}) {
   if (!ODDSPAPI_V4_KEY()) return Promise.reject(new Error('ODDSPAPI_V4_KEY missing'));
@@ -2881,10 +2885,13 @@ function _oddspapiGet(path, params = {}) {
 
 // Résoudre tournamentName → OddsPapi tournamentId (cache 24h)
 async function _oddspapiResolveTourId(tournamentName, circuit) {
+  // Circuit-breaker — stop hammering after 429
+  if (Date.now() < _oddspapiBlockedUntil) return null;
   const k = normName(tournamentName) + ':' + String(circuit || '').toLowerCase().slice(0, 3);
-  if (_oddspapiTourIndex.has(k)) return _oddspapiTourIndex.get(k);
+  if (_oddspapiTourIndex.has(k)) return _oddspapiTourIndex.get(k); // includes null (negative)
   const ck = `oddspapi_tour_${k}`;
   const cached = apiCacheGet(ck);
+  if (cached === '__NOT_FOUND__') { _oddspapiTourIndex.set(k, null); return null; }
   if (cached) { _oddspapiTourIndex.set(k, cached); return cached; }
   try {
     const d = await _oddspapiGet('tournaments', { sportId: 12 });
@@ -2901,8 +2908,17 @@ async function _oddspapiResolveTourId(tournamentName, circuit) {
       apiCacheSet(ck, hit.tournamentId, 'oddspapi_tour', 24 * 3600 * 1000);
       return hit.tournamentId;
     }
+    // No match found → negative cache 6h (stops retries)
+    _oddspapiTourIndex.set(k, null);
+    apiCacheSet(ck, '__NOT_FOUND__', 'oddspapi_tour', ODDSPAPI_NEG_TTL);
   } catch (e) {
     console.warn(`  [OddsPapi] resolveTourId "${tournamentName}":`, e.message);
+    // 429 → circuit-breaker 1h, block all OddsPapi calls
+    if (e.message && e.message.includes('429')) {
+      _oddspapiBlockedUntil = Date.now() + ODDSPAPI_BLOCK_MS;
+      console.warn(`  [OddsPapi] ⚠ 429 circuit-breaker activé — pause 1h jusqu'à ${new Date(_oddspapiBlockedUntil).toISOString()}`);
+    }
+    _oddspapiTourIndex.set(k, null); // évite retry immédiat en mémoire
   }
   return null;
 }
@@ -2910,6 +2926,7 @@ async function _oddspapiResolveTourId(tournamentName, circuit) {
 // Résoudre BSD matchId → OddsPapi fixtureId via betradarId ou nom joueurs
 async function _oddspapiResolveFixtureId(matchData) {
   if (!ODDSPAPI_V4_KEY() || !matchData) return null;
+  if (Date.now() < _oddspapiBlockedUntil) return null; // circuit-breaker
   const mid = String(matchData.id || matchData.match_id || '');
   if (!mid) return null;
   const cached = _oddspapiFxIndex.get(mid);
@@ -2959,6 +2976,12 @@ async function _oddspapiResolveFixtureId(matchData) {
     }
   } catch (e) {
     console.warn(`  [OddsPapi] resolveFixtureId match ${mid}:`, e.message);
+    if (e.message && e.message.includes('429')) {
+      _oddspapiBlockedUntil = Date.now() + ODDSPAPI_BLOCK_MS;
+      console.warn(`  [OddsPapi] ⚠ 429 circuit-breaker activé — pause 1h`);
+    }
+    // Negative cache: ne pas retenter avant ODDSPAPI_V4_TTL
+    _oddspapiFxIndex.set(mid, { fixtureId: null, ts: Date.now() });
   }
   return null;
 }
