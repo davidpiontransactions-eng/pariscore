@@ -35,6 +35,9 @@ dependencies:
   # Fonts (Syne / Instrument Sans / DM Mono — no manual ttf needed)
   google_fonts: ^6.2.1
 
+  # Charts
+  fl_chart: ^0.69.0
+
   # Utils
   intl: ^0.19.0
   cached_network_image: ^3.4.1

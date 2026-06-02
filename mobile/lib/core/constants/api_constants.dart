@@ -28,8 +28,11 @@ class ApiConstants {
   // Bets & Bankroll
   static const String bets = '/api/v1/bets';
   static const String bankrollSummary = '/api/v1/bankroll/summary';
+  static const String bankrollDailyTracker = '/api/v1/bankroll/daily-tracker';
   static const String bankrollPlan = '/api/v1/bankroll/plan';
   static const String betsKelly = '/api/v1/bets/kelly';
+
+  static String betSettle(int id) => '/api/v1/bets/$id/settle';
 
   // Status
   static const String status = '/api/v1/status';
