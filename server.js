@@ -32877,6 +32877,29 @@ if (pathname === '/api/v1/tennis/set-odds' && req.method === 'GET') {
     return jsonResponse(res, 502, { error: 'set_odds_error', message: e.message });
   }
 }
+// GET /api/v1/tennis/h2h?matchId=<bsd_match_id|bsd_t_NNN> — H2H + last5 per player
+if (pathname === '/api/v1/tennis/h2h' && req.method === 'GET') {
+  const raw = String(query.matchId || '').trim();
+  if (!raw) return jsonResponse(res, 400, { error: 'matchId_required' });
+  // Support bsd_t_36449 or bare 36449
+  const bsdId = raw.startsWith('bsd_t_') ? raw.slice('bsd_t_'.length) : raw;
+  if (!/^\d+$/.test(bsdId)) return jsonResponse(res, 400, { error: 'bad_match_id', hint: 'expected numeric or bsd_t_NNN' });
+  const ck = `bsd_tennis_h2h_${bsdId}`;
+  const out = await handleTennisBSD(`/api/v2/matches/${bsdId}/h2h/`, ck, 30 * 60 * 1000);
+  if (out.status !== 200) return jsonResponse(res, out.status, out.body);
+  return jsonResponse(res, 200, { source: 'bsd_tennis', match_id: Number(bsdId), data: out.body, cached: out.cache === 'hit' });
+}
+
+// GET /api/v1/tennis/player/:playerId — player profile (ranking, height, plays, turned_pro)
+if (pathname.startsWith('/api/v1/tennis/player/') && req.method === 'GET') {
+  const playerId = decodeURIComponent(pathname.slice('/api/v1/tennis/player/'.length)).trim();
+  if (!playerId || !/^\d+$/.test(playerId)) return jsonResponse(res, 400, { error: 'bad_player_id' });
+  const ck = `bsd_tennis_player_${playerId}`;
+  const out = await handleTennisBSD(`/api/v2/players/${playerId}/`, ck, 6 * 3600 * 1000);
+  if (out.status !== 200) return jsonResponse(res, out.status, out.body);
+  return jsonResponse(res, 200, { source: 'bsd_tennis', player_id: Number(playerId), data: out.body, cached: out.cache === 'hit' });
+}
+
 // GET /api/v1/tennis/alerts/history — historique alertes tennis avec stats
 if (pathname === '/api/v1/tennis/alerts/history' && req.method === 'GET') {
   if (!sqldb) return jsonResponse(res, 503, { error: 'DB unavailable' });
