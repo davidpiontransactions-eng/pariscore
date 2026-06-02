@@ -23534,7 +23534,7 @@ function renderComparateur(d) {
             '<div class="mc-cta-s">' + topPicks.length + ' value bet' + (topPicks.length > 1 ? 's' : '') +
               ' · edge dévigé positif</div>' +
           '</div>' +
-          '<div class="mc-cta-badge">+' + topPicks[0].safeFixed(best_edge.edge, 1) + '%</div>' +
+          '<div class="mc-cta-badge">+' + safeFixed(topPicks[0].best_edge.edge, 1) + '%</div>' +
         '</div>';
       html += '<div class="mc-grp mc-grp-top">★ Top value — sélection PariScore</div>';
       topPicks.forEach(function (m) { html += buildCard(m); });
