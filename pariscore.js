@@ -1384,6 +1384,53 @@ function _getYouTubeEmbedUrl(url) {
 }
 
 // Renders full detail content inside an open drawer
+// ── BSD multi-book odds section (drawer) ────────────────────────────────────
+function _tnRenderBSDOddsSection(m) {
+  const o = m._bsd_odds;
+  const bsdId = m._bsd_match_id;
+  if (!o && !bsdId) return '';
+  const safeId = _escTennis(String(m.id || ''));
+  if (!o) {
+    return `<button onclick="event.stopPropagation();_tnLoadBSDOdds('${safeId}')" style="font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);color:var(--text2,#8d9399);cursor:pointer;font-family:'DM Mono',monospace;">📊 Charger cotes live</button>`;
+  }
+  const mv = (dir) => dir === 'SHORTENING'
+    ? '<span style="color:#00e676;font-weight:700;" title="Shortening — argent sharp">↓</span>'
+    : dir === 'DRIFTING'
+    ? '<span style="color:#ff4d4d;font-weight:700;" title="Drifting">↑</span>' : '';
+  const ts = o.updated_at ? new Date(o.updated_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+  return `<div style="font-family:'DM Mono',monospace;font-size:10px;">
+  <div style="color:var(--text3);font-size:9px;margin-bottom:6px;">${o.books_count} books · Shin-Hurley no-vig${ts ? ' · ' + ts : ''}</div>
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">${o.best_p1 ? o.best_p1.toFixed(2) : '—'} ${mv(o.movement_p1)}</div>
+      <div style="color:var(--text3);font-size:8px;margin-top:1px;">${o.best_p1_bk || ''}</div>
+      <div style="color:var(--blue,#29b6f6);font-size:9px;margin-top:3px;">${o.fair_p1 != null ? o.fair_p1 + '% fair' : ''}</div>
+    </div>
+    <div style="color:var(--text3);text-align:center;font-size:9px;">VS</div>
+    <div style="text-align:right;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);">${mv(o.movement_p2)} ${o.best_p2 ? o.best_p2.toFixed(2) : '—'}</div>
+      <div style="color:var(--text3);font-size:8px;margin-top:1px;">${o.best_p2_bk || ''}</div>
+      <div style="color:var(--blue,#29b6f6);font-size:9px;margin-top:3px;">${o.fair_p2 != null ? o.fair_p2 + '% fair' : ''}</div>
+    </div>
+  </div>
+  ${o.avg_implied_p1 != null ? `<div style="color:var(--text3);font-size:8px;margin-top:5px;border-top:1px solid var(--bg4,#1e2328);padding-top:4px;">Moy. implicite · P1 ${o.avg_implied_p1}% · P2 ${o.avg_implied_p2}%</div>` : ''}
+  </div>`;
+}
+window._tnLoadBSDOdds = async function(matchId) {
+  const m = (window._tennisLastFetch || []).find(x => String(x.id) === String(matchId));
+  if (!m || !m._bsd_match_id) return;
+  try {
+    const r = await fetch('/api/v1/tennis/match/' + m._bsd_match_id + '/odds');
+    const d = await r.json();
+    if (d.available && d.summary) {
+      m._bsd_odds = d.summary;
+      const safeQ = String(matchId).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+      const container = document.querySelector('[data-tennis-id="' + safeQ + '"] ~ * .tn-bsd-odds-wrap, .tn-detail-drawer .tn-bsd-odds-wrap');
+      if (container) container.innerHTML = _tnRenderBSDOddsSection(m);
+    }
+  } catch(_) {}
+};
+
 function _tnRenderDrawerContent(m) {
   const sm = m.set_model;
   const elo = m.predictions?.elo;
@@ -1420,6 +1467,7 @@ function _tnRenderDrawerContent(m) {
 <div class="tn-drawer-section"><h4>Jeux O/U</h4>${_tvbGamesOUStack(m.over_under_set_calculations, m.id)}${_tvbTotConv(m.totals_convergence)}</div>
 <div class="tn-drawer-section"><h4>Mental</h4>${_tvbMentalCell(sm)}</div>
 <div class="tn-drawer-section"><h4>Marché + Conf.</h4>${_tvbMarketCell(odds, bestEv)}${_tvbConfEdge(m.conf_edge)}${_tvbConfCell(elo, m.log_diff)}</div>
+<div class="tn-drawer-section"><h4>📊 Cotes BSD · ${m._bsd_odds ? (m._bsd_odds.books_count + ' books') : '…'}</h4><div class="tn-bsd-odds-wrap">${_tnRenderBSDOddsSection(m)}</div></div>
 <div class="tn-drawer-section"><h4>Alerte IA</h4>${aiBtn}</div>
 ${(m.is_live && m.live_stats != null) ? `<div class="tn-drawer-section" style="grid-column:1/-1"><h4>📊 Stats Live</h4>${_tnRenderLiveStatsTable(m)}</div>` : ''}
 ${ytSection}
@@ -1577,8 +1625,8 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
-<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
-<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
+<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
 <span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
