@@ -90,3 +90,13 @@ render deploy --service pariscore
 
 ### 8. Après déploiement réussi
 Mettre à jour `CLAUDE.md` pied de page avec l'URL de prod et la date.
+
+## Gotchas (failure points observed in production)
+
+- **`git add -A` en commit** → peut inclure `.env` ou `pariscore.db` si `.gitignore` mal configuré. Toujours `git add <specific files>`.
+- **SQLite perdu au redeploy Render** → Render efface le filesystem entre deploys sauf disk persistant monté. Sans `/data`, toute la DB historique disparaît.
+- **`node --check` passe mais runtime crash** → `node --check` valide la syntaxe, pas les imports. `require('better-sqlite3')` peut échouer si `npm install` n'a pas tourné (Render : vérifier `buildCommand`).
+- **OVH VPS ≠ Render** → le projet déploie sur VPS OVH `/home/ubuntu/pariscore` via `git pull + pm2 restart`, PAS Render. Ne pas confondre les deux environnements.
+- **pm2 restart ne prend pas le nouveau code** → toujours `git pull` PUIS `pm2 restart pariscore`. L'ordre compte.
+- **BSD websocket silencieux après restart** → le WS BSD se reconnecte automatiquement via `reconnectBSDWebSocket()`, mais peut mettre 30s. Vérifier `pm2 logs pariscore | grep BSD` après restart.
+

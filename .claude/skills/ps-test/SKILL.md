@@ -87,3 +87,13 @@ Sévérité, Localisation, Code problématique, Fix proposé
 - Corriger immédiatement les bugs `❌` (BUG-X) avant de déclarer la feature "livrée"
 - Les `⚠️` sont à intégrer dans la roadmap P1/P2 de CLAUDE.md si non déjà présents
 - Mettre à jour CLAUDE.md : `[ ] Audit QA {module}` → `[x]` avec lien vers le rapport
+
+## Gotchas (failure points observed in QA)
+
+- **`best_edge` bare reference** → `best_edge` est un objet, jamais une variable globale. Accès sans `match.` → ReferenceError dans mobile cards (bug `ea468cb`). Toujours `match.best_edge?.label`.
+- **`node --check` valide la syntaxe des balises `<script>` HTML** → ne valide PAS `pariscore.html` directement. Utiliser le one-liner `node -e "new Function(...)"` sur chaque bloc script.
+- **`_real` absent ≠ `false`** → `m.stats?._real` peut être `undefined` sur les matchs démo. Toujours `=== true`, jamais `!== false`.
+- **Dual rendering tennis** → modifications au modal desktop N'affectent PAS le mobile live sheet (`_psLtsRenderAll`). Les deux chemins doivent être patchés indépendamment.
+- **SSE broadcast size** → `JSON.stringify(db.matches)` sur 200 matchs ≈ 300 Ko par client. Si N clients connectés → N × 300 Ko par tick SSE. Toujours vérifier `sseClients.size` en test de charge.
+- **Cron mutex non relâché** → si `fetchOdds()` crash avant le `finally`, `isFetchingOdds` reste `true` → cron bloqué silencieusement jusqu'au redémarrage. Le `finally` est non-négociable.
+
