@@ -152,12 +152,13 @@ async function fetchBSDCs2Teams(apiKey) {
   if (!_bsdApiKeyRef) return {};
   if (Date.now() - _bsdTeamsBulkCache.ts < BSD_TEAMS_BULK_TTL) return _bsdTeamsBulkCache.byName;
   try {
-    // BSD paginates at ~10/page regardless of limit param — follow next URLs
+    // BSD paginates at 50/page — follow full next URLs directly (avoid _bsdCs2 base-prefix doubling)
     const byName = {}, byId = {};
-    let endpoint = '/api/v2/teams/?page_size=100';
+    const authHdr = { 'Authorization': `Token ${_bsdApiKeyRef}`, 'Accept': 'application/json' };
+    let url = `${CS2_BSD_BASE}/api/v2/teams/?page_size=100&tz=Europe/Paris`;
     let pages = 0;
-    while (endpoint && pages < 20) { // safety cap: 20 pages × 100 = 2000 teams max
-      const res = await _bsdCs2(endpoint, _bsdApiKeyRef, 1);
+    while (url && pages < 20) { // safety cap: 20 pages × ~50 = 1000 teams max
+      const res = await _get(url, authHdr, 10000);
       if (!res || res.status !== 200) break;
       const items = Array.isArray(res.data?.results) ? res.data.results
                   : Array.isArray(res.data)           ? res.data
@@ -171,14 +172,8 @@ async function fetchBSDCs2Teams(apiKey) {
         if (t.short_name) byName[t.short_name.toLowerCase()] = entry;
         if (t.id) byId[t.id] = entry;
       }
-      // Follow DRF next link — strip base URL to keep only path+query
-      const nextUrl = res.data?.next || null;
-      if (nextUrl) {
-        try { const u = new URL(nextUrl); endpoint = u.pathname + u.search; }
-        catch (_) { endpoint = null; }
-      } else {
-        endpoint = null;
-      }
+      // next is already a full URL — use directly, no base-prefix manipulation
+      url = res.data?.next || null;
       pages++;
     }
     _bsdTeamsBulkCache = { ts: Date.now(), byName, byId };
