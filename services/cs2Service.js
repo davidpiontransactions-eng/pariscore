@@ -495,7 +495,7 @@ async function fetchCsApiRankings() {
       const arr = Array.isArray(res.data) ? res.data : (res.data.rankings || []);
       const byName = {};
       for (const t of arr) {
-        if (t.name) byName[t.name.toLowerCase()] = { rank: t.rank, points: t.points };
+        if (t.name) byName[t.name.toLowerCase()] = { id: t.id || null, rank: t.rank, points: t.points };
       }
       _csapiRankingsCache = { ts: Date.now(), byName };
       console.log(`[CS2/OverModel] ${Object.keys(byName).length} teams in rankings`);
@@ -633,7 +633,7 @@ const HLTV_MAPSTATS_FILE  = path.join(__dirname, '..', 'data', 'hltv_team_mapsta
 const HLTV_MAPSTATS_TTL   = 24 * 60 * 60 * 1000;  // 24h re-read from disk
 
 let _csapiTeamCache    = {};   // teamId → { ts, data }
-let _csapiPlayersCache = { ts: 0, byName: {} };  // playerName.lower() → stats
+let _csapiPlayersCache = { ts: 0, byName: {}, byTeam: {} };  // byName: playerName.lower() → stats | byTeam: teamName.lower() → [stats]
 let _hltvMapStatsCache = { ts: 0, byTeam: {} };  // teamName.lower() → { Mirage: 72, Inferno: 48, ... }
 
 // ─── csapi.de: player stats index ────────────────────────────────────────────
@@ -642,23 +642,45 @@ async function fetchCsApiPlayerStats() {
   try {
     const res = await _csapiGet('/players/stats').catch(() => null);
     if (res && res.status === 200 && Array.isArray(res.data)) {
-      const byName = {};
+      const byName = {}, byTeam = {};
       for (const p of res.data) {
         if (!p.name) continue;
-        const kd = p.d > 0 ? +(p.k / p.d).toFixed(2) : null;
-        byName[p.name.toLowerCase()] = {
+        const kd   = p.d > 0 ? +(p.k / p.d).toFixed(2) : null;
+        const entry = {
           id: p.id, name: p.name, rank: p.rank,
           rating: p.rating || null, adr: p.adr || null,
           kast: p.kast || null, kd, kills: p.k, deaths: p.d,
-          swing: p.swing || null, maps: p.N || null
+          swing: p.swing || null, maps: p.N || null,
+          team: p.team || null,
         };
+        byName[p.name.toLowerCase()] = entry;
+        // Build team→players index (csapi.de includes team name per player)
+        if (p.team) {
+          const tk = _normalizeTeamName(p.team) || p.team.toLowerCase();
+          if (!byTeam[tk]) byTeam[tk] = [];
+          byTeam[tk].push(entry);
+          // Also index by raw team name lower for fallback
+          const rawTk = p.team.toLowerCase();
+          if (rawTk !== tk) { if (!byTeam[rawTk]) byTeam[rawTk] = []; byTeam[rawTk].push(entry); }
+        }
       }
-      _csapiPlayersCache = { ts: Date.now(), byName };
-      console.log(`[CS2/Players] ${Object.keys(byName).length} players indexed`);
+      // Sort each team's players by rating desc
+      for (const tk of Object.keys(byTeam)) byTeam[tk].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      _csapiPlayersCache = { ts: Date.now(), byName, byTeam };
+      console.log(`[CS2/Players] ${Object.keys(byName).length} players | ${Object.keys(byTeam).length} teams indexed`);
       return byName;
     }
   } catch (e) { console.warn('[CS2/Players]', e.message); }
   return _csapiPlayersCache.byName || {};
+}
+
+// Returns players array for a team by name (from byTeam index built in fetchCsApiPlayerStats)
+function getPlayersByTeamName(teamName) {
+  const tk  = _normalizeTeamName(teamName) || (teamName || '').toLowerCase();
+  const raw = (teamName || '').toLowerCase();
+  return _csapiPlayersCache.byTeam[tk]
+      || _csapiPlayersCache.byTeam[raw]
+      || [];
 }
 
 // ─── csapi.de: team info (streak + roster) ───────────────────────────────────
@@ -789,6 +811,15 @@ function computeFormScore(teamName, matches) {
   return Math.round((sumR / sumW) * 100);
 }
 
+// ─── Form Score → trajectory proxy (when csapi.de match history unavailable) ──
+function _formScoreToTraj(score) {
+  if (score == null) return null;
+  if (score >= 70) return { arrow: '↗',  label: 'RISING',    last3: [], wins_last3: null, n: 0, source: 'form_score' };
+  if (score >= 50) return { arrow: '→',  label: 'STABLE',    last3: [], wins_last3: null, n: 0, source: 'form_score' };
+  if (score >= 35) return { arrow: '↘',  label: 'DECLINING', last3: [], wins_last3: null, n: 0, source: 'form_score' };
+  return              { arrow: '↓↓', label: 'COLD',      last3: [], wins_last3: null, n: 0, source: 'form_score' };
+}
+
 // ─── Roster Strength Score (normalized mean Rating, 0-100) ───────────────────
 // Star bonus: +5pts per player rating >1.30 (capped 0-100)
 function computeRosterStrength(players) {
@@ -824,14 +855,20 @@ function computeMapPoolEntropy(mapStats) {
   };
 }
 
-// ─── Form Trajectory (last-3 results → arrow + label) ────────────────────────
+// ─── Form Trajectory (last-2+ results → arrow + label) ───────────────────────
+// Threshold 2 (not 3) — csapi.de coverage often sparse for top teams
 function computeFormTrajectory(form) {
-  if (!form || !form.form || form.form.length < 3) return null;
-  const last3 = form.form.slice(-3);
+  if (!form || !form.form || form.form.length < 2) return null;
+  const last3 = form.form.slice(-3); // up to 3, minimum 2
   const wins  = last3.filter(r => r === 'W').length;
-  const map = { 3: ['↑↑','HOT'], 2: ['↗','RISING'], 1: ['↘','DECLINING'], 0: ['↓↓','COLD'] };
-  const [arrow, label] = map[wins];
-  return { arrow, label, last3, wins_last3: wins };
+  const n     = last3.length;
+  let arrow, label;
+  if (wins === n)           { arrow = '↑↑'; label = 'HOT'; }
+  else if (wins >= n * 0.6) { arrow = '↗';  label = 'RISING'; }
+  else if (wins >= n * 0.4) { arrow = '→';  label = 'STABLE'; }
+  else if (wins > 0)        { arrow = '↘';  label = 'DECLINING'; }
+  else                      { arrow = '↓↓'; label = 'COLD'; }
+  return { arrow, label, last3, wins_last3: wins, n };
 }
 
 // ─── Pistol Index — CT/T round winrate differential as pistol proxy ───────────
@@ -898,9 +935,11 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
   const t1data = t1info.status === 'fulfilled' ? t1info.value : null;
   const t2data = t2info.status === 'fulfilled' ? t2info.value : null;
 
-  // Player stats for each team's roster
-  const t1players = await getTeamPlayerStats(t1data?.roster, playerStats);
-  const t2players = await getTeamPlayerStats(t2data?.roster, playerStats);
+  // Player stats: byTeam direct lookup (primary) → roster fallback (secondary)
+  const t1byTeam = getPlayersByTeamName(t1name);
+  const t2byTeam = getPlayersByTeamName(t2name);
+  const t1players = t1byTeam.length ? t1byTeam.slice(0, 5) : await getTeamPlayerStats(t1data?.roster, playerStats);
+  const t2players = t2byTeam.length ? t2byTeam.slice(0, 5) : await getTeamPlayerStats(t2data?.roster, playerStats);
 
   // HLTV map winrates for current map
   const mapKey = (mapName || '').toLowerCase().replace('de_', '');
@@ -936,7 +975,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       streak         : t1data?.streak ?? null,
       form           : t1form,
       form_score     : t1form_score,
-      form_trajectory: computeFormTrajectory(t1form),
+      form_trajectory: computeFormTrajectory(t1form) || _formScoreToTraj(t1form_score),
       players        : t1players,
       roster_strength: computeRosterStrength(t1players),
       map_pool_entropy: computeMapPoolEntropy(t1mapsClean),
@@ -954,7 +993,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       streak         : t2data?.streak ?? null,
       form           : t2form,
       form_score     : t2form_score,
-      form_trajectory: computeFormTrajectory(t2form),
+      form_trajectory: computeFormTrajectory(t2form) || _formScoreToTraj(t2form_score),
       players        : t2players,
       roster_strength: computeRosterStrength(t2players),
       map_pool_entropy: computeMapPoolEntropy(t2mapsClean),
