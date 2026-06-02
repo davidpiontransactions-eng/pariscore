@@ -14,7 +14,7 @@ echo "[deploy] Setting pull strategy to merge (no more divergence hint)..."
 git config pull.rebase false
 
 echo "[deploy] Restarting pm2..."
-pm2 restart pariscore
+pm2 restart server
 
 echo "[deploy] Done. Current commit:"
 git log --oneline -1
