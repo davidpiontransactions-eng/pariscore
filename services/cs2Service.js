@@ -139,6 +139,65 @@ function _loadHltvRankings() {
   }
 }
 
+// ─── BSD CS2 team bulk fetch (ELO + map_stats) ───────────────────────────────
+let _bsdTeamsBulkCache = { ts: 0, byName: {}, byId: {} };
+const BSD_TEAMS_BULK_TTL = 6 * 60 * 60 * 1000; // 6h
+let _bsdTeamDetailCache = new Map(); // id → { ts, data }
+const BSD_TEAM_DETAIL_TTL = 24 * 60 * 60 * 1000; // 24h
+let _bsdApiKeyRef = null; // stored on first call
+
+async function fetchBSDCs2Teams(apiKey) {
+  _bsdApiKeyRef = apiKey || _bsdApiKeyRef;
+  if (!_bsdApiKeyRef) return {};
+  if (Date.now() - _bsdTeamsBulkCache.ts < BSD_TEAMS_BULK_TTL) return _bsdTeamsBulkCache.byName;
+  try {
+    // 479 teams total — one call covers all with limit=500
+    const res = await _bsdCs2('/api/v2/teams/?limit=500', _bsdApiKeyRef, 1);
+    if (!res || res.status !== 200) return _bsdTeamsBulkCache.byName;
+    const items = res.data?.results || res.data || [];
+    const byName = {}, byId = {};
+    for (const t of (Array.isArray(items) ? items : [])) {
+      if (!t.name) continue;
+      const entry = { id: t.id, elo_rating: t.elo_rating || null, elo_peak: t.elo_peak || null };
+      byName[t.name.toLowerCase()] = entry;
+      if (t.short_name) byName[t.short_name.toLowerCase()] = entry;
+      if (t.id) byId[t.id] = entry;
+    }
+    _bsdTeamsBulkCache = { ts: Date.now(), byName, byId };
+    console.log(`[CS2/BSD-Teams] ${Object.keys(byId).length} teams with ELO loaded`);
+    return byName;
+  } catch (e) { console.warn('[CS2/BSD-Teams]', e.message); return _bsdTeamsBulkCache.byName; }
+}
+
+async function fetchBSDCs2TeamDetail(teamId) {
+  if (!teamId || !_bsdApiKeyRef) return null;
+  const cid = String(teamId);
+  const cached = _bsdTeamDetailCache.get(cid);
+  if (cached && Date.now() - cached.ts < BSD_TEAM_DETAIL_TTL) return cached.data;
+  try {
+    const res = await _bsdCs2(`/api/v2/teams/${cid}/`, _bsdApiKeyRef, 1);
+    if (!res || res.status !== 200 || !res.data) return null;
+    _bsdTeamDetailCache.set(cid, { ts: Date.now(), data: res.data });
+    return res.data;
+  } catch (e) { return null; }
+}
+
+// Convert BSD team map_stats → HLTV-compatible lookup { mapNameLower: winrate% }
+// Also preserves CT/T side winrates as _round_winrate_ct/_t fields.
+function _bsdMapStatsToLookup(bsdMapStats) {
+  if (!bsdMapStats || !Array.isArray(bsdMapStats.maps)) return null;
+  const out = {
+    _map_winrate: bsdMapStats.map_winrate ?? null,
+    _round_winrate_t: bsdMapStats.round_winrate_t ?? null,
+    _round_winrate_ct: bsdMapStats.round_winrate_ct ?? null,
+    _sample_size: bsdMapStats.sample_size ?? null,
+  };
+  for (const m of bsdMapStats.maps) {
+    if (m.map) out[m.map.toLowerCase()] = m.winrate;
+  }
+  return out;
+}
+
 // ─── Map advantage indicator ──────────────────────────────────────────────────
 // t1MapStats / t2MapStats: { mirage: 72, inferno: 45, ... } (winrate %)
 // Returns null when map unknown or no stats.
@@ -668,6 +727,19 @@ async function buildMatchEnrichment(t1name, t2name, mapName) {
   const h2h    = buildH2H(t1name, t2name, matches, 15);
   const mapStats = loadHltvMapStats();
 
+  // BSD team detail: ELO + map_stats (CT/T winrate) — parallel fetch
+  const bsdTeams = await fetchBSDCs2Teams().catch(() => ({}));
+  const b1entry = bsdTeams[t1name.toLowerCase()];
+  const b2entry = bsdTeams[t2name.toLowerCase()];
+  const [bsdT1Detail, bsdT2Detail] = await Promise.allSettled([
+    b1entry?.id ? fetchBSDCs2TeamDetail(b1entry.id) : Promise.resolve(null),
+    b2entry?.id ? fetchBSDCs2TeamDetail(b2entry.id) : Promise.resolve(null),
+  ]);
+  const bsdT1 = bsdT1Detail.status === 'fulfilled' ? bsdT1Detail.value : null;
+  const bsdT2 = bsdT2Detail.status === 'fulfilled' ? bsdT2Detail.value : null;
+  const bsdMaps1 = bsdT1?.map_stats ? _bsdMapStatsToLookup(bsdT1.map_stats) : null;
+  const bsdMaps2 = bsdT2?.map_stats ? _bsdMapStatsToLookup(bsdT2.map_stats) : null;
+
   // Team IDs for streak lookup
   const t1rank = rankings[t1name.toLowerCase()];
   const t2rank = rankings[t2name.toLowerCase()];
@@ -684,32 +756,55 @@ async function buildMatchEnrichment(t1name, t2name, mapName) {
 
   // HLTV map winrates for current map
   const mapKey = (mapName || '').toLowerCase().replace('de_', '');
-  const t1maps = mapStats[t1name.toLowerCase()] || {};
-  const t2maps = mapStats[t2name.toLowerCase()] || {};
+  // BSD map_stats primary, HLTV file fallback
+  const t1maps = bsdMaps1 || mapStats[t1name.toLowerCase()] || {};
+  const t2maps = bsdMaps2 || mapStats[t2name.toLowerCase()] || {};
+  const mapSource = bsdMaps1 ? 'bsd' : Object.keys(mapStats[t1name.toLowerCase()] || {}).length > 0 ? 'hltv' : 'unavailable';
 
   const mapWinrate = mapName ? {
     map    : mapName,
     team1  : t1maps[mapKey] ?? null,
     team2  : t2maps[mapKey] ?? null,
-    source : Object.keys(t1maps).length > 0 ? 'hltv' : 'unavailable'
+    source : mapSource,
+    // BSD CT/T side advantage on this map (new edge signal)
+    team1_ct_wr: bsdMaps1?._round_winrate_ct ?? null,
+    team1_t_wr : bsdMaps1?._round_winrate_t  ?? null,
+    team2_ct_wr: bsdMaps2?._round_winrate_ct ?? null,
+    team2_t_wr : bsdMaps2?._round_winrate_t  ?? null,
   } : null;
 
   return {
     team1: {
-      name   : t1name,
-      rank   : t1rank?.rank || null,
-      streak : t1data?.streak ?? null,
-      form   : t1form,
-      players: t1players,
-      all_maps: Object.keys(t1maps).length > 0 ? t1maps : null
+      name      : t1name,
+      rank      : t1rank?.rank || null,
+      elo_rating: b1entry?.elo_rating ?? null,
+      elo_peak  : b1entry?.elo_peak   ?? null,
+      streak    : t1data?.streak ?? null,
+      form      : t1form,
+      players   : t1players,
+      all_maps  : Object.keys(t1maps).filter(k => !k.startsWith('_')).length > 0
+                  ? Object.fromEntries(Object.entries(t1maps).filter(([k]) => !k.startsWith('_')))
+                  : null,
+      map_stats_meta: bsdMaps1 ? {
+        map_winrate: bsdMaps1._map_winrate, round_winrate_ct: bsdMaps1._round_winrate_ct,
+        round_winrate_t: bsdMaps1._round_winrate_t, sample_size: bsdMaps1._sample_size,
+      } : null,
     },
     team2: {
-      name   : t2name,
-      rank   : t2rank?.rank || null,
-      streak : t2data?.streak ?? null,
-      form   : t2form,
-      players: t2players,
-      all_maps: Object.keys(t2maps).length > 0 ? t2maps : null
+      name      : t2name,
+      rank      : t2rank?.rank || null,
+      elo_rating: b2entry?.elo_rating ?? null,
+      elo_peak  : b2entry?.elo_peak   ?? null,
+      streak    : t2data?.streak ?? null,
+      form      : t2form,
+      players   : t2players,
+      all_maps  : Object.keys(t2maps).filter(k => !k.startsWith('_')).length > 0
+                  ? Object.fromEntries(Object.entries(t2maps).filter(([k]) => !k.startsWith('_')))
+                  : null,
+      map_stats_meta: bsdMaps2 ? {
+        map_winrate: bsdMaps2._map_winrate, round_winrate_ct: bsdMaps2._round_winrate_ct,
+        round_winrate_t: bsdMaps2._round_winrate_t, sample_size: bsdMaps2._sample_size,
+      } : null,
     },
     h2h,
     map_winrate: mapWinrate,
@@ -785,7 +880,7 @@ module.exports = {
       const mapStats = loadHltvMapStats();
       const matches = raw.map(m => _normalizeMatch(m, predMap[String(m.id)] || null, mapStats));
 
-      // Attach HLTV rankings from local JSON file (no HTTP call)
+      // Attach HLTV rankings from local JSON file (fallback)
       const hltvR = _loadHltvRankings();
       for (const m of matches) {
         const r1 = hltvR[m.team1.name.toLowerCase()];
@@ -793,6 +888,16 @@ module.exports = {
         m.team1.hltv_rank = r1 ? r1.rank : null;
         m.team2.hltv_rank = r2 ? r2.rank : null;
       }
+      // Attach BSD ELO (live, replaces stale HLTV file) — 1 bulk call per 6h
+      try {
+        const bsdTeams = await fetchBSDCs2Teams(apiKey);
+        for (const m of matches) {
+          const b1 = bsdTeams[m.team1.name.toLowerCase()];
+          const b2 = bsdTeams[m.team2.name.toLowerCase()];
+          if (b1) { m.team1.elo_rating = b1.elo_rating; m.team1.elo_peak = b1.elo_peak; m.team1._bsd_team_id = b1.id; }
+          if (b2) { m.team2.elo_rating = b2.elo_rating; m.team2.elo_peak = b2.elo_peak; m.team2._bsd_team_id = b2.id; }
+        }
+      } catch (_) {}
 
       // Sort: live first → then by date
       matches.sort((a, b) => {
