@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
 class HomePage extends StatelessWidget {
   final Widget child;
@@ -13,7 +12,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-
     return Scaffold(
       body: child,
       bottomNavigationBar: _BottomNav(location: location),
@@ -30,7 +28,9 @@ class _BottomNav extends StatelessWidget {
     if (location.startsWith(AppRouter.live)) return 1;
     if (location.startsWith(AppRouter.tennis)) return 2;
     if (location.startsWith(AppRouter.aiScout)) return 3;
-    return 0; // football
+    if (location.startsWith(AppRouter.bets)) return 4;
+    if (location.startsWith(AppRouter.profile)) return 5;
+    return 0;
   }
 
   @override
@@ -51,6 +51,8 @@ class _BottomNav extends StatelessWidget {
             case 1: context.go(AppRouter.live);
             case 2: context.go(AppRouter.tennis);
             case 3: context.go(AppRouter.aiScout);
+            case 4: context.go(AppRouter.bets);
+            case 5: context.go(AppRouter.profile);
           }
         },
         destinations: const [
@@ -73,6 +75,16 @@ class _BottomNav extends StatelessWidget {
             icon: Icon(Icons.psychology_outlined, color: AppColors.text3),
             selectedIcon: Icon(Icons.psychology, color: AppColors.amber),
             label: 'IA Scout',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined, color: AppColors.text3),
+            selectedIcon: Icon(Icons.receipt_long, color: AppColors.green),
+            label: 'Paris',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline, color: AppColors.text3),
+            selectedIcon: Icon(Icons.person, color: AppColors.text),
+            label: 'Profil',
           ),
         ],
       ),

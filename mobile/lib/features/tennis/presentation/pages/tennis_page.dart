@@ -37,7 +37,7 @@ class _TennisView extends StatelessWidget {
       body: BlocBuilder<TennisCubit, TennisState>(
         builder: (context, state) {
           return switch (state) {
-            TennisLoading() => const Center(
+            TennisLoading() => Center(
                 child: CircularProgressIndicator(color: AppColors.blue),
               ),
             TennisError(:final message) => Center(
@@ -57,7 +57,7 @@ class _TennisView extends StatelessWidget {
                 ),
               ),
             TennisLoaded(:final matches) => matches.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

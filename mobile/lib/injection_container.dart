@@ -3,6 +3,10 @@ import 'package:get_it/get_it.dart';
 
 import 'core/network/api_client.dart';
 import 'features/ai_scout/data/datasources/scout_remote_datasource.dart';
+import 'features/bets/data/datasources/bets_remote_datasource.dart';
+import 'features/bets/data/repositories/bets_repository_impl.dart';
+import 'features/bets/domain/repositories/bets_repository.dart';
+import 'features/bets/presentation/cubit/bets_cubit.dart';
 import 'features/ai_scout/data/repositories/scout_repository_impl.dart';
 import 'features/ai_scout/domain/repositories/scout_repository.dart';
 import 'features/ai_scout/domain/usecases/get_top_picks_usecase.dart';
@@ -75,6 +79,15 @@ Future<void> init() async {
     () => LiveSseDataSourceImpl(sl()),
   );
   sl.registerFactory(() => LiveCubit(sl()));
+
+  // ─── Bets ──────────────────────────────────────────────
+  sl.registerLazySingleton<BetsRemoteDataSource>(
+    () => BetsRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<BetsRepository>(
+    () => BetsRepositoryImpl(sl()),
+  );
+  sl.registerFactory(() => BetsCubit(sl()));
 
   // ─── AI Scout ──────────────────────────────────────────
   sl.registerLazySingleton<ScoutRemoteDataSource>(
