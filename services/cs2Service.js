@@ -152,22 +152,37 @@ async function fetchBSDCs2Teams(apiKey) {
   if (!_bsdApiKeyRef) return {};
   if (Date.now() - _bsdTeamsBulkCache.ts < BSD_TEAMS_BULK_TTL) return _bsdTeamsBulkCache.byName;
   try {
-    // 479 teams total — one call covers all with limit=500
-    const res = await _bsdCs2('/api/v2/teams/?limit=500', _bsdApiKeyRef, 1);
-    if (!res || res.status !== 200) return _bsdTeamsBulkCache.byName;
-    const items = res.data?.results || res.data || [];
+    // BSD paginates at ~10/page regardless of limit param — follow next URLs
     const byName = {}, byId = {};
-    for (const t of (Array.isArray(items) ? items : [])) {
-      if (!t.name) continue;
-      const entry = { id: t.id, elo_rating: t.elo_rating || null, elo_peak: t.elo_peak || null };
-      byName[t.name.toLowerCase()] = entry;
-      const normName = _normalizeTeamName(t.name);
-      if (normName) byName[normName] = entry;
-      if (t.short_name) byName[t.short_name.toLowerCase()] = entry;
-      if (t.id) byId[t.id] = entry;
+    let endpoint = '/api/v2/teams/?page_size=100';
+    let pages = 0;
+    while (endpoint && pages < 20) { // safety cap: 20 pages × 100 = 2000 teams max
+      const res = await _bsdCs2(endpoint, _bsdApiKeyRef, 1);
+      if (!res || res.status !== 200) break;
+      const items = Array.isArray(res.data?.results) ? res.data.results
+                  : Array.isArray(res.data)           ? res.data
+                  : [];
+      for (const t of items) {
+        if (!t.name) continue;
+        const entry = { id: t.id, elo_rating: t.elo_rating || null, elo_peak: t.elo_peak || null };
+        byName[t.name.toLowerCase()] = entry;
+        const normName = _normalizeTeamName(t.name);
+        if (normName) byName[normName] = entry;
+        if (t.short_name) byName[t.short_name.toLowerCase()] = entry;
+        if (t.id) byId[t.id] = entry;
+      }
+      // Follow DRF next link — strip base URL to keep only path+query
+      const nextUrl = res.data?.next || null;
+      if (nextUrl) {
+        try { const u = new URL(nextUrl); endpoint = u.pathname + u.search; }
+        catch (_) { endpoint = null; }
+      } else {
+        endpoint = null;
+      }
+      pages++;
     }
     _bsdTeamsBulkCache = { ts: Date.now(), byName, byId };
-    console.log(`[CS2/BSD-Teams] ${Object.keys(byId).length} teams with ELO loaded`);
+    console.log(`[CS2/BSD-Teams] ${Object.keys(byId).length} teams with ELO loaded (${pages} pages)`);
     return byName;
   } catch (e) { console.warn('[CS2/BSD-Teams]', e.message); return _bsdTeamsBulkCache.byName; }
 }
