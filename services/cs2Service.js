@@ -335,6 +335,8 @@ function _normalizeMatch(raw, predictions, mapStats) {
       team1_form      : pred.home_form_score || null,
       team2_form      : pred.away_form_score || null
     } : null,
+    is_lan      : /IEM|ESL|PGL|BLAST|Major|EPL|Pro League|ELEAGUE|ESWC|DreamHack/i.test(
+                    raw.tournament?.name || raw.tournament_name || String(raw.tournament || '')),
     map_advantage: computeMapAdvantage(
       lookup[_normalizeTeamName(t1.name)?.toLowerCase()],
       lookup[_normalizeTeamName(t2.name)?.toLowerCase()],
@@ -760,6 +762,33 @@ async function getTeamPlayerStats(roster, playerIndex) {
     .slice(0, 5);
 }
 
+// ─── Form Score SOS-weighted (0-100, opponent strength adjusted) ─────────────
+// Weights wins against top-ranked opponents higher than wins vs lower-ranked.
+// Returns null if no data. Falls back to BSD prediction form_score if provided.
+function computeFormScore(teamName, matches) {
+  const key = teamName.toLowerCase();
+  function _tn(t) { return (typeof t === 'string' ? t : (t?.name || '')).toLowerCase(); }
+  const relevant = matches
+    .filter(m => {
+      const mt1 = _tn(m.team1); const mt2 = _tn(m.team2);
+      return mt1 === key || mt2 === key || _normalizeTeamName(mt1) === key || _normalizeTeamName(mt2) === key;
+    })
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+    .slice(0, 15);
+  if (!relevant.length) return null;
+  let sumW = 0, sumR = 0;
+  for (const m of relevant) {
+    const isT1 = _tn(m.team1) === key || _normalizeTeamName(_tn(m.team1)) === key;
+    const oppRankRaw = isT1 ? (m.team2?.rank ?? 50) : (m.team1?.rank ?? 50);
+    const oppRank    = typeof oppRankRaw === 'number' ? oppRankRaw : 50;
+    const weight     = 1 + Math.max(0, 50 - oppRank) / 50; // top-50 opp → up to 2x weight
+    const winnerN    = _tn(m.winner);
+    const won        = (winnerN === key || _normalizeTeamName(winnerN) === key) ? 1 : 0;
+    sumW += weight; sumR += won * weight;
+  }
+  return Math.round((sumR / sumW) * 100);
+}
+
 // ─── Master enrichment: all stats for a matchup ──────────────────────────────
 async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
   const [matches, rankings, playerStats] = await Promise.all([
@@ -768,8 +797,10 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
     fetchCsApiPlayerStats().catch(() => ({}))
   ]);
 
-  const t1form = buildTeamForm(t1name, matches, 10);
-  const t2form = buildTeamForm(t2name, matches, 10);
+  const t1form       = buildTeamForm(t1name, matches, 10);
+  const t2form       = buildTeamForm(t2name, matches, 10);
+  const t1form_score = computeFormScore(t1name, matches);
+  const t2form_score = computeFormScore(t2name, matches);
   const h2h    = buildH2H(t1name, t2name, matches, 15);
   const mapStats = loadHltvMapStats();
 
@@ -827,6 +858,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       elo_peak  : b1entry?.elo_peak   ?? null,
       streak    : t1data?.streak ?? null,
       form      : t1form,
+      form_score: t1form_score,
       players   : t1players,
       all_maps  : Object.keys(t1maps).filter(k => !k.startsWith('_')).length > 0
                   ? Object.fromEntries(Object.entries(t1maps).filter(([k]) => !k.startsWith('_')))
@@ -843,6 +875,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       elo_peak  : b2entry?.elo_peak   ?? null,
       streak    : t2data?.streak ?? null,
       form      : t2form,
+      form_score: t2form_score,
       players   : t2players,
       all_maps  : Object.keys(t2maps).filter(k => !k.startsWith('_')).length > 0
                   ? Object.fromEntries(Object.entries(t2maps).filter(([k]) => !k.startsWith('_')))
