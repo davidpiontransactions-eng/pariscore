@@ -5560,6 +5560,36 @@ function _psLtsSseWire() {
   } catch (_) {}
 }
 
+async function _fetchPsltsOdds(matchId) {
+  const target = document.getElementById('pslts-bsd-odds');
+  if (!target || !matchId) return;
+  const bsdId = String(matchId).replace(/^bsd_t_/, '');
+  if (!/^\d+$/.test(bsdId)) { target.innerHTML = ''; return; }
+  try {
+    const r = await fetch('/api/v1/tennis/match/' + bsdId + '/odds');
+    if (!r.ok) { target.innerHTML = ''; return; }
+    const d = await r.json();
+    if (!d.available || !d.summary) { target.innerHTML = ''; return; }
+    const s = d.summary;
+    const mv = dir => dir === 'SHORTENING' ? '<span style="color:#00e676;font-weight:700;">↓</span>' : dir === 'DRIFTING' ? '<span style="color:#ef4444;font-weight:700;">↑</span>' : '';
+    target.innerHTML = '<div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;padding:10px 12px;">' +
+      '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3,#5a6068);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">📊 Cotes · ' + s.books_count + ' bookmakers</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+      '<div style="text-align:center;background:var(--bg3,#181c20);border-radius:8px;padding:8px;">' +
+      '<div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;">' + (s.best_p1 ? s.best_p1.toFixed(2) : '—') + ' ' + mv(s.movement_p1) + '</div>' +
+      '<div style="font-size:8px;color:var(--text3,#5a6068);margin-top:1px;">' + (s.best_p1_bk || '') + '</div>' +
+      '<div style="font-size:11px;color:var(--blue,#29b6f6);margin-top:3px;font-weight:600;">' + (s.fair_p1 != null ? s.fair_p1 + '%' : '') + '</div>' +
+      '</div>' +
+      '<div style="text-align:center;background:var(--bg3,#181c20);border-radius:8px;padding:8px;">' +
+      '<div style="font-size:20px;font-weight:700;font-family:\'DM Mono\',monospace;">' + mv(s.movement_p2) + ' ' + (s.best_p2 ? s.best_p2.toFixed(2) : '—') + '</div>' +
+      '<div style="font-size:8px;color:var(--text3,#5a6068);margin-top:1px;">' + (s.best_p2_bk || '') + '</div>' +
+      '<div style="font-size:11px;color:var(--blue,#29b6f6);margin-top:3px;font-weight:600;">' + (s.fair_p2 != null ? s.fair_p2 + '%' : '') + '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>';
+  } catch(_) { target.innerHTML = ''; }
+}
+
 function openPsLiveTennisSheet(matchId) {
   if (!matchId) return;
   const sheet = document.getElementById('ps-live-tennis-sheet');
@@ -5577,6 +5607,7 @@ function openPsLiveTennisSheet(matchId) {
   // Phase 2 : SSE wire (idempotent) + fetch BSD prediction one-shot
   _psLtsSseWire();
   _psLtsFetchPrediction(matchId);
+  _fetchPsltsOdds(matchId);
   if (window._psLtsTimer) clearInterval(window._psLtsTimer);
   // Ticker 30s : refresh tennis live cache + re-fetch prediction (TTL 5min server)
   window._psLtsTimer = setInterval(() => {
