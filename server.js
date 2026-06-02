@@ -3667,7 +3667,23 @@ async function enrichMatchWithBSDFullStack(match) {
     const prevDerby   = match.is_local_derby;
     match.is_neutral_ground = !!detail.is_neutral_ground;
     match.is_local_derby    = !!detail.is_local_derby;
-    if (detail.travel_distance_km != null) match.travel_distance_km = detail.travel_distance_km;
+    if (detail.travel_distance_km != null) {
+      match.travel_distance_km = detail.travel_distance_km;
+      if (!match.match_travel || match.match_travel._source !== 'bsd') {
+        const km = detail.travel_distance_km;
+        match.match_travel = {
+          distance_km: km,
+          fatigue_factor: _travelFatigueFactor(km),
+          bucket: km < 300 ? 'local' : km < 500 ? 'court' : km < 1000 ? 'moyen' : km < 2500 ? 'long' : 'intercontinental',
+          _source: 'bsd',
+        };
+      }
+    }
+    if (Array.isArray(detail.highlights) && detail.highlights.length) {
+      match.highlights = detail.highlights.slice(0, 5).map(h => ({
+        url: h.url || null, title: h.title || null, thumbnail: h.thumbnail || null,
+      }));
+    }
     // Recompute Poisson when context changes and we have stored lambdas + _ha_dynamic
     const contextChanged = prevNeutral !== match.is_neutral_ground || prevDerby !== match.is_local_derby;
     if (contextChanged && (match.is_neutral_ground || match.is_local_derby) && match.expectedGoals) {
@@ -35589,6 +35605,10 @@ if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') 
     market_divergence: m.market_divergence || null,
     home_manager: m.home_manager || null,
     away_manager: m.away_manager || null,
+    highlights: m.highlights || null,
+    is_neutral_ground: m.is_neutral_ground ?? null,
+    is_local_derby: m.is_local_derby ?? null,
+    travel_distance_km: m.travel_distance_km ?? null,
     fetched_at: new Date().toISOString(),
   });
 }
@@ -35892,8 +35912,29 @@ if (pathname.startsWith('/api/v1/bsd/compos/') && req.method === 'GET') {
   const eventId = _bsdResolveEventId(rawId);
   if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
   try {
-    const { data, cached } = await _bsdEnrichFetch('lineups', eventId);
-    return jsonResponse(res, 200, { source: 'bsd_compos', event_id: Number(eventId), data: data || {}, cached });
+    const [lineupsFetch, statsFetch] = await Promise.allSettled([
+      _bsdEnrichFetch('lineups', eventId),
+      bsdFetch(`/player-stats/?event=${eventId}&page_size=100`),
+    ]);
+    const { data: lineupData, cached } = lineupsFetch.status === 'fulfilled' ? lineupsFetch.value : { data: null, cached: false };
+    // Build ai_points map: player_id → ai_points
+    const aiMap = new Map();
+    if (statsFetch.status === 'fulfilled' && statsFetch.value?.status === 200) {
+      const stats = statsFetch.value.data?.results || statsFetch.value.data || [];
+      for (const s of (Array.isArray(stats) ? stats : [])) {
+        if (s?.player?.id != null && s.ai_points != null) aiMap.set(s.player.id, s.ai_points);
+      }
+    }
+    // Merge ai_points onto lineup players
+    const enrichedData = lineupData || {};
+    if (aiMap.size && enrichedData.lineups) {
+      for (const side of ['home', 'away']) {
+        for (const p of (enrichedData.lineups?.[side]?.players || [])) {
+          if (p?.player_id != null && aiMap.has(p.player_id)) p.ai_points = aiMap.get(p.player_id);
+        }
+      }
+    }
+    return jsonResponse(res, 200, { source: 'bsd_compos', event_id: Number(eventId), data: enrichedData, cached });
   } catch (e) {
     return jsonResponse(res, 502, { error: 'bsd_compos_failed', message: String(e.message || e) });
   }
