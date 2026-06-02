@@ -3747,6 +3747,15 @@ async function enrichMatchWithBSDFullStack(match) {
         match.odds._source = 'bsd_compare';
         match.odds._books_count = summary.books_count;
       }
+      // Market depth bonus: patch reliability_score after BSD books count known
+      const _depthBonus = summary.books_count >= 10 ? 8 : summary.books_count >= 6 ? 4 : 0;
+      if (_depthBonus > 0 && match.reliability_score != null) {
+        match.reliability_score = Math.min(100, match.reliability_score + _depthBonus);
+        match.confidence_score  = match.reliability_score;
+        if (match.reliability_components) {
+          match.reliability_components._market_depth = { books: summary.books_count, bonus: _depthBonus };
+        }
+      }
     }
   }
   if (pred && pred.markets) {
@@ -3760,6 +3769,12 @@ async function enrichMatchWithBSDFullStack(match) {
       recommendations: pred.recommendations || null,
       confidence: pred.model ? pred.model.confidence : null,
       version: pred.model ? pred.model.version : null,
+    };
+    match.bsd_bet_signal = {
+      bet_favorite: !!(pred.recommendations && pred.recommendations.bet_favorite),
+      winner:       !!(pred.recommendations && pred.recommendations.winner),
+      confidence:   pred.model ? pred.model.confidence : null,
+      model_version: pred.model ? pred.model.version : null,
     };
   }
   if (pm && match.bsd_odds_summary) {
@@ -3792,6 +3807,21 @@ async function enrichMatchWithBSDFullStack(match) {
     const prevDerby   = match.is_local_derby;
     match.is_neutral_ground = !!detail.is_neutral_ground;
     match.is_local_derby    = !!detail.is_local_derby;
+    if (detail.attendance != null) {
+      match.attendance = detail.attendance;
+      // High-attendance crowd boost: >40k → +3% λH, -3% λA (empirical crowd factor)
+      if (!match.is_neutral_ground && detail.attendance > 40000 && match.expectedGoals
+          && Number.isFinite(match.expectedGoals.home) && Number.isFinite(match.expectedGoals.away)) {
+        const crowdBoost = 1.03;
+        const adjH = Math.min(8, match.expectedGoals.home * crowdBoost);
+        const adjA = Math.max(0.1, match.expectedGoals.away / crowdBoost);
+        match.expectedGoals = {
+          home: +adjH.toFixed(2), away: +adjA.toFixed(2),
+          _context: { ...(match.expectedGoals._context || {}), high_attendance: detail.attendance },
+        };
+        match.poisson = computePoisson(adjH, adjA);
+      }
+    }
     if (detail.travel_distance_km != null) {
       match.travel_distance_km = detail.travel_distance_km;
       if (!match.match_travel || match.match_travel._source !== 'bsd') {

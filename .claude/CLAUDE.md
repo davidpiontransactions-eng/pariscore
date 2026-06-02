@@ -131,6 +131,28 @@ Source autoritaire : `bd ready`. Items ci-dessous = en attente DG ou dev.
 
 ---
 
+## 8. WORKFLOW BSD API UPDATE
+
+Quand BSD publie une newsletter ou annonce de nouveaux endpoints, exécuter ce workflow :
+
+```
+1. /using-superpowers          # charger les skills disponibles
+2. Lire l'annonce BSD          # identifier les nouvelles features
+3. Auditer le codebase         # grep server.js + pariscore.js/html pour l'existant
+4. Produire rapport pré-GO     # statut par feature : ✅ déjà impl / ⚠️ partial / ❌ manquant
+                               # tâches priorisées T1..Tn avec effort estimé
+5. ATTENDRE GO utilisateur     # ne pas coder sans confirmation explicite
+6. Implémenter                 # T1 d'abord (HIGH), puis MED/LOW selon scope validé
+                               # toujours patcher dual path : server.js + pariscore.js/html
+7. Vérifier                    # node --check server.js + grep nouveaux champs exposés
+8. Rapport final de mission    # liste livraisons commit par commit, gaps résiduels
+9. Mettre à jour CLAUDE.md     # bump version + noter nouveaux endpoints/champs BSD
+```
+
+**Contrainte BSD tennis** : dual rendering — patcher mobile sheet (`pariscore.js _psLtsRenderContext`) ET desktop modal indépendamment.
+
+---
+
 ## 7. RÈGLES CONNEXES
 
 Chargées automatiquement sur les fichiers pertinents :
