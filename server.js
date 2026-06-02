@@ -3617,14 +3617,17 @@ function computePolymarketDivergence(bsdOddsSummary, polymarketData) {
 async function enrichMatchWithBSDFullStack(match) {
   if (!match || !match._bsd_event_id) return;
   const eid = match._bsd_event_id;
-  const [oddsRaw, predRaw, pmRaw] = await Promise.allSettled([
+  const [oddsRaw, predRaw, pmRaw, detailRaw] = await Promise.allSettled([
     fetchBSDCompareOdds(eid),
     fetchBSDPredictionByEvent(eid),
     fetchBSDPolymarket(eid),
+    bsdFetch(`/api/v2/events/${eid}/`),
   ]);
-  const odds = oddsRaw.status === 'fulfilled' ? oddsRaw.value : null;
-  const pred = predRaw.status === 'fulfilled' ? predRaw.value : null;
-  const pm   = pmRaw.status === 'fulfilled' ? pmRaw.value : null;
+  const odds   = oddsRaw.status   === 'fulfilled' ? oddsRaw.value   : null;
+  const pred   = predRaw.status   === 'fulfilled' ? predRaw.value   : null;
+  const pm     = pmRaw.status     === 'fulfilled' ? pmRaw.value     : null;
+  const detail = detailRaw.status === 'fulfilled' && detailRaw.value?.status === 200
+    ? detailRaw.value.data : null;
 
   if (odds) {
     const summary = extractBSDOddsSummary(odds);
@@ -3657,6 +3660,39 @@ async function enrichMatchWithBSDFullStack(match) {
   if (pm && match.bsd_odds_summary) {
     const div = computePolymarketDivergence(match.bsd_odds_summary, pm);
     if (div) match.market_divergence = div;
+  }
+  // BSD event detail — context flags for Poisson adjustment
+  if (detail) {
+    const prevNeutral = match.is_neutral_ground;
+    const prevDerby   = match.is_local_derby;
+    match.is_neutral_ground = !!detail.is_neutral_ground;
+    match.is_local_derby    = !!detail.is_local_derby;
+    if (detail.travel_distance_km != null) match.travel_distance_km = detail.travel_distance_km;
+    // Recompute Poisson when context changes and we have stored lambdas + _ha_dynamic
+    const contextChanged = prevNeutral !== match.is_neutral_ground || prevDerby !== match.is_local_derby;
+    if (contextChanged && (match.is_neutral_ground || match.is_local_derby) && match.expectedGoals) {
+      const haD = match._ha_dynamic || 1.10;
+      let adjH = match.expectedGoals.home;
+      let adjA = match.expectedGoals.away;
+      if (match.is_neutral_ground) {
+        // Reverse home advantage applied in buildMatchRecord (expHome×haD, expAway÷haD)
+        adjH = adjH / haD;
+        adjA = adjA * haD;
+      }
+      if (match.is_local_derby) {
+        adjH *= 1.06;
+        adjA *= 1.06;
+      }
+      if (Number.isFinite(adjH) && Number.isFinite(adjA) && adjH > 0 && adjA > 0 && adjH <= 8 && adjA <= 8) {
+        match.poisson = computePoisson(adjH, adjA);
+        match.expectedGoals = {
+          home: +adjH.toFixed(2),
+          away: +adjA.toFixed(2),
+          _context: { neutral: match.is_neutral_ground, derby: match.is_local_derby },
+        };
+        console.log(`  [BSD-Context] ${match.home_team} vs ${match.away_team} — neutral=${match.is_neutral_ground} derby=${match.is_local_derby} → λH=${adjH.toFixed(2)} λA=${adjA.toFixed(2)}`);
+      }
+    }
   }
 }
 
@@ -8744,6 +8780,7 @@ function buildMatchRecord(raw) {
     },
   };
   record.all_bookmakers = processAllBookmakers(raw.bookmakers, raw.home_team, raw.away_team);
+  record._ha_dynamic = ha_dynamic;
 
   // ── P1 QUANT — Bootstrap UQD + Reliability Score + Bet Signal ───────────────
   const playedHome = homeStats.played || 10;
