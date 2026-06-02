@@ -42705,6 +42705,10 @@ cs2Service.fetchTeamStickers().catch(e => console.warn('[CS2/Stickers bootstrap]
 cs2Service.fetchCsApiMatches().catch(e => console.warn('[CS2/OverModel bootstrap]', e.message));
 cs2Service.fetchCsApiRankings().catch(e => console.warn('[CS2/Rankings bootstrap]', e.message));
 cs2Service.fetchCsApiPlayerStats().catch(e => console.warn('[CS2/Players bootstrap]', e.message));
+// Preload BSD map world rankings (24h cache) — needs BSD teams bulk loaded first
+cs2Service.fetchBSDCs2Teams(BSD_API_KEY)
+  .then(() => cs2Service.computeBSDMapRankings(30))
+  .catch(e => console.warn('[CS2/MapRankings bootstrap]', e.message));
 // Tier-3 scrapers bootstrap
 berserkService.getMatches().catch(e => console.warn('[Berserk bootstrap]', e.message));
 liquipediaService.getMatches().catch(e => console.warn('[Liquipedia bootstrap]', e.message));
