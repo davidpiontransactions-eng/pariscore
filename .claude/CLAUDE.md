@@ -120,8 +120,8 @@ Source autoritaire : `bd ready`. Items ci-dessous = en attente DG ou dev.
 ### P1 — Dev ouvert
 - `dl49` Phase 3-7 : ETL tennis interne (déféré 6 mois — wait daily ETL accumulation)
 - `j5lb` : GO/NO-GO 6 études bloquées (FBref/RapidAPI/TheSportsDB/Apify/OddsPortal)
-- `968x` Phase 3 : SSR scores crawler
-- `6jro` Plan J : Sofascore continuous scraper webhook
+- `bjv` : OddsPapi tennis intégré ✅ — football Pinnacle sharp pending DG signup
+- `8lqf` : FBref via soccerdata Python — spike éval légal+technique P2
 
 ### P2-P3 — Backlog
 - In-Play Live Funnel (bloqueur : API live $50-200/mois)
