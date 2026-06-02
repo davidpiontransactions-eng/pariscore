@@ -56,40 +56,52 @@ class _TennisView extends StatelessWidget {
                   ],
                 ),
               ),
-            TennisLoaded(:final matches) => matches.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.sports_tennis_outlined,
-                            size: 48, color: AppColors.text3),
-                        SizedBox(height: 12),
-                        Text('Aucun match en cours',
-                            style: AppTextStyles.bodyMedium),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                    itemCount: matches.length,
-                    itemBuilder: (context, index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: 1),
-                        duration:
-                            Duration(milliseconds: 300 + index * 40),
-                        curve: Curves.easeOut,
-                        builder: (context, v, child) => Opacity(
-                          opacity: v,
-                          child: Transform.translate(
-                            offset: Offset(0, 16 * (1 - v)),
-                            child: child,
+            TennisLoaded(:final matches) => RefreshIndicator(
+                color: AppColors.blue,
+                backgroundColor: AppColors.bg2,
+                onRefresh: () => context.read<TennisCubit>().loadMatches(),
+                child: matches.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 180),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.sports_tennis_outlined,
+                                    size: 48, color: AppColors.text3),
+                                const SizedBox(height: 12),
+                                Text('Aucun match en cours',
+                                    style: AppTextStyles.bodyMedium),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        itemCount: matches.length,
+                        itemBuilder: (context, index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration:
+                                Duration(milliseconds: 300 + index * 40),
+                            curve: Curves.easeOut,
+                            builder: (context, v, child) => Opacity(
+                              opacity: v,
+                              child: Transform.translate(
+                                offset: Offset(0, 16 * (1 - v)),
+                                child: child,
+                              ),
+                            ),
+                            child: TennisMatchCard(match: matches[index]),
                           ),
                         ),
-                        child: TennisMatchCard(match: matches[index]),
                       ),
-                    ),
-                  ),
+              ),
             _ => const SizedBox.shrink(),
           };
         },

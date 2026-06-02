@@ -62,6 +62,11 @@ class _FootballViewState extends State<_FootballView> {
         ),
         actions: [
           IconButton(
+            icon: const Text('🏆', style: TextStyle(fontSize: 16)),
+            onPressed: () => context.push(AppRouter.worldcup),
+            tooltip: 'Coupe du Monde 2026',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh_outlined, size: 20),
             onPressed: () =>
                 context.read<MatchesCubit>().loadMatches(league: _activeLeague),
@@ -136,9 +141,16 @@ class _MatchesList extends StatelessWidget {
               message: message,
               onRetry: () => context.read<MatchesCubit>().loadMatches(),
             ),
-          MatchesLoaded(:final matches) => matches.isEmpty
-              ? const _EmptyView()
-              : _AnimatedList(matches: matches),
+          MatchesLoaded(:final matches) => RefreshIndicator(
+              color: AppColors.green,
+              backgroundColor: AppColors.bg2,
+              onRefresh: () => context.read<MatchesCubit>().loadMatches(),
+              child: matches.isEmpty
+                  ? ListView(
+                      children: const [SizedBox(height: 200), _EmptyView()],
+                    )
+                  : _AnimatedList(matches: matches),
+            ),
           _ => const SizedBox.shrink(),
         };
       },
@@ -154,6 +166,7 @@ class _AnimatedList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: matches.length,
       itemBuilder: (context, index) {

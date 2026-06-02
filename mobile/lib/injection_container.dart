@@ -16,10 +16,12 @@ import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
 import 'features/auth/presentation/cubit/auth_cubit.dart';
+import 'features/football/data/datasources/ai_analysis_datasource.dart';
 import 'features/football/data/datasources/football_remote_datasource.dart';
 import 'features/football/data/repositories/match_repository_impl.dart';
 import 'features/football/domain/repositories/match_repository.dart';
 import 'features/football/domain/usecases/get_matches_usecase.dart';
+import 'features/football/presentation/cubit/ai_analysis_cubit.dart';
 import 'features/football/presentation/cubit/matches_cubit.dart';
 import 'features/live/data/datasources/live_sse_datasource.dart';
 import 'features/live/presentation/cubit/live_cubit.dart';
@@ -28,6 +30,10 @@ import 'features/tennis/data/repositories/tennis_repository_impl.dart';
 import 'features/tennis/domain/repositories/tennis_repository.dart';
 import 'features/tennis/domain/usecases/get_tennis_matches_usecase.dart';
 import 'features/tennis/presentation/cubit/tennis_cubit.dart';
+import 'features/worldcup/data/datasources/wc_remote_datasource.dart';
+import 'features/worldcup/data/repositories/wc_repository_impl.dart';
+import 'features/worldcup/domain/repositories/wc_repository.dart';
+import 'features/worldcup/presentation/cubit/wc_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -63,6 +69,10 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetMatchesUseCase(sl()));
   sl.registerFactory(() => MatchesCubit(sl()));
+  sl.registerLazySingleton<AiAnalysisDataSource>(
+    () => AiAnalysisDataSourceImpl(sl()),
+  );
+  sl.registerFactory(() => AiAnalysisCubit(sl()));
 
   // ─── Tennis ────────────────────────────────────────────
   sl.registerLazySingleton<TennisRemoteDataSource>(
@@ -98,4 +108,13 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetTopPicksUseCase(sl()));
   sl.registerFactory(() => ScoutCubit(sl()));
+
+  // ─── World Cup 2026 ────────────────────────────────────
+  sl.registerLazySingleton<WcRemoteDataSource>(
+    () => WcRemoteDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<WcRepository>(
+    () => WcRepositoryImpl(sl()),
+  );
+  sl.registerFactory(() => WcCubit(sl()));
 }
