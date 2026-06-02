@@ -69,3 +69,12 @@ Si un item `[ ]` est en réalité déjà implémenté → le marquer `[x]` avec 
 - Lire les fichiers avant de conclure — ne pas s'appuyer uniquement sur CLAUDE.md
 - Signaler explicitement si un `[ ]` semble partiellement implémenté
 - Toujours terminer par une recommandation actionnable (1 sprint)
+
+## Gotchas (failure points in past audits)
+
+- **CLAUDE.md drift** → les `[x]` CLAUDE.md sont souvent en avance sur le code réel. Toujours grep le code avant de confirmer "livré".
+- **server.js ligne > 40 000** → `grep -n "functionName" server.js` est plus fiable que lire le fichier entier. Utiliser les numéros de ligne dans les rapports.
+- **Dual-env confusion** → certaines features sont sur VPS OVH mais pas encore pushées (ou vice-versa). L'audit doit distinguer "code local" vs "code VPS prod".
+- **bd issues vs CLAUDE.md** → CLAUDE.md est un miroir partiel. Source autoritaire tâches = `bd ready` + `bd list --status=in_progress`. Ne pas déduire l'état des tâches de CLAUDE.md seul.
+- **`[ ]` partiellement implémenté** → courant sur features multi-phase (ex: Stripe = code livré mais DG non activé). Signaler l'état exact de chaque phase.
+

@@ -21,6 +21,18 @@
         ],
         "matcher": ""
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"try{var s=require('child_process').execSync;var st=s('git status --porcelain 2>NUL',{encoding:'utf8'}).trim();var up='';try{up=s('git log --oneline origin/main..HEAD 2>NUL',{encoding:'utf8'}).trim();}catch(e2){}var m=[];if(st)m.push('Uncommitted: '+st.split('\\n').length+' files');if(up)m.push('Unpushed:\\n'+up);if(m.length)console.log(JSON.stringify({systemMessage:'\\u26a0\\ufe0f  UNPUSHED WORK\\n'+m.join('\\n')+'\\n\\u2192 Run: git add + commit + push + bd dolt push'}));}catch(e){}\"",
+            "statusMessage": "Checking git state..."
+          }
+        ],
+        "matcher": ""
+      }
     ]
   }
 }
