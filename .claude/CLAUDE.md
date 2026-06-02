@@ -165,4 +165,18 @@ Chargées automatiquement sur les fichiers pertinents :
 
 ---
 
-*v3.2 — 2026-06-02 — 678→185 lignes. Source vérité tâches = `bd ready`.*
+---
+
+## 9. BSD TENNIS ENDPOINTS — État Juin 2026
+
+| Endpoint BSD | Route PariScore | État |
+|---|---|---|
+| `/tennis/api/v2/matches/{id}/odds/` | `GET /api/v1/tennis/match/:matchId/odds` | ✅ implémenté + mobile sheet |
+| `/tennis/api/v2/matches/{id}/h2h/` | `GET /api/v1/tennis/h2h?matchId=` | ✅ backend + frontend câblé |
+| `/tennis/api/v2/matches/{id}/` (sets_detail) | via normalizer `_normalizeBSDTennisMatch` | ✅ aces/DF par set capturés |
+| `/tennis/api/v2/matches/live/` | SSE + `fetchBSDTennisLive` | ✅ |
+
+**Champs sets capturés (juin 2026)** : `p1_aces`, `p2_aces`, `p1_df`, `p2_df` par set dans `match.sets[i]`
+**H2H surface breakdown** : `_psLtsFetchH2H()` — `by_surface.{hard|clay|grass}.{p1_wins|p2_wins}`
+
+*v3.3 — 2026-06-02 — BSD June 2026 features wired (commit 6831577).*
