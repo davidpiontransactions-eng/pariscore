@@ -1,0 +1,12 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    sort_constructors_first: true
+    use_super_parameters: true
+    require_trailing_commas: true
+    prefer_final_locals: true
