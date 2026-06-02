@@ -19485,8 +19485,8 @@ async function handleAPI(req, res, pathname, query) {
 
   // GET /api/v1/cs2/map-rankings[?map=Mirage&top=30] — per-map world rankings (BSD source)
   if (pathname === '/api/v1/cs2/map-rankings' && req.method === 'GET') {
-    const mapFilter = sp.get('map') || null;
-    const top = Math.min(parseInt(sp.get('top') || '30', 10), 50);
+    const mapFilter = (query.map || '').trim() || null;
+    const top = Math.min(parseInt(query.top || '30', 10), 50);
     try {
       const rankings = await cs2Service.computeBSDMapRankings(top);
       if (!rankings) {
