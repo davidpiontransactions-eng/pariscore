@@ -27,6 +27,8 @@ import json, os, sys, time, re
 from datetime import date, timedelta
 from pathlib import Path
 
+import urllib.request
+
 try:
     import cloudscraper
 except ImportError:
@@ -57,41 +59,54 @@ WINDOWS = [
 ]
 
 # ─── HLTV URLs ────────────────────────────────────────────────────────────────
-# Map stats page: /stats/teams/maps/{id}/{slug}?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
-HLTV_MAPS_URL = 'https://www.hltv.org/stats/teams/maps/{team_id}/{slug}?startDate={start}&endDate={end}'
+HLTV_MAPS_URL  = 'https://www.hltv.org/stats/teams/maps/{team_id}/{slug}?startDate={start}&endDate={end}'
+CSAPI_RANKINGS = 'https://api.csapi.de/rankings/'   # returns [{id, name, rank, points}]
 
 def date_str(d): return d.strftime('%Y-%m-%d')
 def days_ago(n): return date.today() - timedelta(days=n)
 def slugify(name): return re.sub(r'[^a-z0-9]', '-', name.lower()).strip('-')
 
-# ─── Load team list from rankings JSON ───────────────────────────────────────
-def load_teams():
+# ─── Fetch HLTV team IDs from csapi.de (reliable, no CF) ─────────────────────
+def fetch_team_ids_from_csapi():
+    """csapi.de /rankings/ returns [{id, name, rank, points, ...}] — id = HLTV team ID."""
     try:
-        raw = json.loads(RANKINGS_F.read_text(encoding='utf-8'))
+        req  = urllib.request.Request(CSAPI_RANKINGS, headers={'Accept': 'application/json'})
+        resp = urllib.request.urlopen(req, timeout=10)
+        raw  = json.loads(resp.read())
+        arr  = raw if isinstance(raw, list) else raw.get('rankings', raw.get('data', []))
+        by_name = {}
+        for t in arr:
+            if not t.get('name') or not t.get('id'): continue
+            by_name[t['name'].lower()]              = t['id']
+            by_name[t['name'].lower().replace(' ','')] = t['id']
+            # Common aliases
+            by_name[slugify(t['name'])]             = t['id']
+        print(f'[MultiWindow] {len(arr)} team IDs loaded from csapi.de')
+        return by_name
+    except Exception as e:
+        print(f'[WARN] csapi.de IDs fetch failed: {e}', file=sys.stderr)
+        return {}
+
+# ─── Load team list from rankings JSON ───────────────────────────────────────
+def load_teams(csapi_ids):
+    try:
+        raw   = json.loads(RANKINGS_F.read_text(encoding='utf-8'))
         teams = raw.get('teams', [])[:MAX_TEAMS]
-        print(f'[MultiWindow] {len(teams)} teams from {RANKINGS_F.name}')
-        return teams  # [{ rank, name, points }]
+        # Inject HLTV IDs from csapi.de
+        for t in teams:
+            key = t.get('name','').lower()
+            t['hltv_id'] = (
+                t.get('id') or
+                csapi_ids.get(key) or
+                csapi_ids.get(key.replace(' ','')) or
+                csapi_ids.get(slugify(t.get('name','')))
+            )
+        found = sum(1 for t in teams if t.get('hltv_id'))
+        print(f'[MultiWindow] {len(teams)} teams | {found} with HLTV ID')
+        return teams
     except Exception as e:
         print(f'[ERROR] Cannot read {RANKINGS_F}: {e}', file=sys.stderr)
         sys.exit(1)
-
-# ─── HLTV team ID lookup via search ──────────────────────────────────────────
-HLTV_SEARCH = 'https://www.hltv.org/search?query={name}'
-# Fallback: known IDs from hltv_rankings.json if available
-def extract_team_id_from_page(html, team_name):
-    """Try to extract team ID from HLTV search result page."""
-    soup = BeautifulSoup(html, 'html.parser')
-    # Search results: <a href="/team/9565/vitality" ...>
-    pattern = re.compile(r'/team/(\d+)/' + slugify(team_name), re.IGNORECASE)
-    for a in soup.find_all('a', href=True):
-        m = pattern.search(a['href'])
-        if m: return int(m.group(1))
-    # Broader search
-    for a in soup.find_all('a', href=True):
-        m = re.search(r'/team/(\d+)/', a['href'])
-        if m and team_name.split()[0].lower() in a.get_text(strip=True).lower():
-            return int(m.group(1))
-    return None
 
 # ─── Parse map stats from HLTV stats page ────────────────────────────────────
 def parse_map_stats(html):
@@ -173,45 +188,24 @@ def write_output(teams_data, window):
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
-    teams_list = load_teams()
+    csapi_ids  = fetch_team_ids_from_csapi()
+    teams_list = load_teams(csapi_ids)
     scraper    = cloudscraper.create_scraper(
         browser={ 'browser': 'chrome', 'platform': 'windows', 'mobile': False }
     )
-    today = date.today()
-
-    # data[window_key] = list of { name, hltv_id, maps:{} }
-    data = { w['key']: [] for w in WINDOWS }
-
+    today    = date.today()
+    data     = { w['key']: [] for w in WINDOWS }
     cf_fails = 0
     total    = len(teams_list)
 
     for i, team in enumerate(teams_list):
-        name = team['name']
-        print(f'\n[{i+1}/{total}] {name}')
-
-        # ── Step 1: resolve HLTV team ID ─────────────────────────────────────
-        # Try from rankings JSON first (if id was stored)
-        hltv_id = team.get('id') or team.get('hltv_id')
-
-        if not hltv_id:
-            search_url = HLTV_SEARCH.format(name=name.replace(' ', '+'))
-            print(f'  Resolving ID via search...', end=' ')
-            try:
-                r = scraper.get(search_url, timeout=15)
-                hltv_id = extract_team_id_from_page(r.text, name)
-                if hltv_id: print(f'id={hltv_id}')
-                else:        print('NOT FOUND — skipped')
-            except Exception as e:
-                print(f'FAILED: {e}')
-                cf_fails += 1
-                time.sleep(DELAY_S)
-                continue
-            time.sleep(DELAY_S)
-
+        name    = team['name']
+        hltv_id = team.get('hltv_id')
+        print(f'\n[{i+1}/{total}] {name}', f'id={hltv_id}' if hltv_id else 'NO ID — skipped')
         if not hltv_id:
             continue
 
-        # ── Step 2: fetch stats for each time window ──────────────────────────
+        # ── Fetch stats for each time window ─────────────────────────────────
         slug = slugify(name)
         for w in WINDOWS:
             start_str = date_str(days_ago(w['days']))
@@ -219,9 +213,9 @@ def main():
             url = HLTV_MAPS_URL.format(
                 team_id=hltv_id, slug=slug, start=start_str, end=end_str
             )
-            print(f'  [{w["key"]}] {start_str} → {end_str} ...', end=' ')
+            print(f'  [{w["key"]}] {start_str} → {end_str} ...', end=' ', flush=True)
             try:
-                r    = scraper.get(url, timeout=15)
+                r = scraper.get(url, timeout=15)
                 if r.status_code == 403 or 'Access denied' in r.text[:500]:
                     print(f'CF BLOCK (status={r.status_code})')
                     cf_fails += 1
