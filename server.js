@@ -3206,6 +3206,38 @@ async function fetchBSDPlayerTransfers(playerId) {
   return out;
 }
 
+// Lightweight player profile — attributes + market value + availability (no season stats fetch)
+async function bsdGetPlayerProfile(playerId) {
+  if (!BSD_API_KEY || !playerId) return null;
+  const ck = `bsd_player_profile_${playerId}`;
+  const cached = apiCacheGet(ck);
+  if (cached) return cached;
+  try {
+    const res = await bsdFetch(`/players/${playerId}/`);
+    const p = res.data;
+    if (!p) return null;
+    const out = {
+      id: p.id,
+      name: p.name,
+      short_name: p.short_name,
+      position: p.position,
+      specific_position: p.specific_position,
+      nationality: p.nationality,
+      date_of_birth: p.date_of_birth || null,
+      height_cm: p.height_cm || null,
+      preferred_foot: p.preferred_foot || null,
+      market_value_eur: p.market_value_eur || null,
+      contract_until: p.contract_until || null,
+      availability: p.availability || null,
+      attributes: p.attributes || null,
+      strengths: p.strengths || [],
+      weaknesses: p.weaknesses || [],
+    };
+    apiCacheSet(ck, out, 'bsd_player_profile', 6 * 3600 * 1000);
+    return out;
+  } catch (e) { return null; }
+}
+
 // -------------------------------------------------
 //  BSD: Fiche détaillée équipe
 // -------------------------------------------------
@@ -19866,7 +19898,11 @@ function _normalizeBSDTennisMatch(m) {
   const isLive = (/progress|live|playing|in_play|inplay|set/.test(st) && !finishedRx.test(st))
     || (m.current_set != null && !finishedRx.test(st));
   const sets = Array.isArray(m.sets_detail)
-    ? m.sets_detail.map(s => ({ p1: s.p1 ?? s.player1 ?? null, p2: s.p2 ?? s.player2 ?? null }))
+    ? m.sets_detail.map(s => ({
+        p1: s.p1 ?? s.player1 ?? null,
+        p2: s.p2 ?? s.player2 ?? null,
+        tb: Array.isArray(s.tiebreak) ? s.tiebreak : null,
+      }))
     : [];
   const tn = m.tournament || {};
   return {
@@ -19884,6 +19920,8 @@ function _normalizeBSDTennisMatch(m) {
     sets,
     current_set_index: m.current_set != null ? Math.max(0, (parseInt(m.current_set, 10) || 1) - 1) : (sets.length ? sets.length - 1 : 0),
     current_point: m.current_point || '',
+    current_game_p1: m.current_game_p1 ?? null,
+    current_game_p2: m.current_game_p2 ?? null,
     serving: (() => {
       // bd patch BSD 29 mai — is_serving_p1 n'est PLUS inversé/absent,
       // la synchro list↔detail est corrigée côté BSD. Valeur fiable prioritaire.
@@ -19915,6 +19953,8 @@ function _normalizeBSDTennisMatch(m) {
       // Extended — BSD may expose these depending on match detail level; null if absent
       p1_first_won: m.p1_first_serve_won_pct ?? m.p1_first_serve_points_won_pct ?? null,
       p2_first_won: m.p2_first_serve_won_pct ?? m.p2_first_serve_points_won_pct ?? null,
+      p1_second_won: m.p1_second_serve_won_pct ?? null,
+      p2_second_won: m.p2_second_serve_won_pct ?? null,
       p1_bp_saved: m.p1_break_points_saved ?? null, p2_bp_saved: m.p2_break_points_saved ?? null,
       p1_ret_won: m.p1_return_points_won_pct ?? m.p1_return_games_won_pct ?? null,
       p2_ret_won: m.p2_return_points_won_pct ?? m.p2_return_games_won_pct ?? null,
@@ -19949,8 +19989,10 @@ function _needsDetailEnrich(stats) {
 function _mergeDetailStats(match, detail) {
   if (!match._bsd_stats || !detail) return match;
   const s = match._bsd_stats;
-  s.p1_first_won = s.p1_first_won ?? detail.p1_first_serve_won_pct ?? detail.p1_first_serve_points_won_pct ?? null;
-  s.p2_first_won = s.p2_first_won ?? detail.p2_first_serve_won_pct ?? detail.p2_first_serve_points_won_pct ?? null;
+  s.p1_first_won  = s.p1_first_won  ?? detail.p1_first_serve_won_pct  ?? detail.p1_first_serve_points_won_pct ?? null;
+  s.p2_first_won  = s.p2_first_won  ?? detail.p2_first_serve_won_pct  ?? detail.p2_first_serve_points_won_pct ?? null;
+  s.p1_second_won = s.p1_second_won ?? detail.p1_second_serve_won_pct ?? null;
+  s.p2_second_won = s.p2_second_won ?? detail.p2_second_serve_won_pct ?? null;
   s.p1_bp_saved  = s.p1_bp_saved  ?? detail.p1_break_points_saved  ?? null;
   s.p2_bp_saved  = s.p2_bp_saved  ?? detail.p2_break_points_saved  ?? null;
   s.p1_ret_won   = s.p1_ret_won   ?? detail.p1_return_points_won_pct ?? null;
@@ -35938,6 +35980,15 @@ if (pathname.startsWith('/api/v1/bsd/compos/') && req.method === 'GET') {
   } catch (e) {
     return jsonResponse(res, 502, { error: 'bsd_compos_failed', message: String(e.message || e) });
   }
+}
+
+// GET /api/v1/bsd/player-profile/:playerId — attributes (0-100) + market value + availability
+if (pathname.startsWith('/api/v1/bsd/player-profile/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/player-profile/'.length)).trim();
+  if (!rawId || !/^\d+$/.test(rawId)) return jsonResponse(res, 400, { error: 'bad_player_id' });
+  const profile = await bsdGetPlayerProfile(rawId);
+  if (!profile) return jsonResponse(res, 404, { error: 'player_not_found' });
+  return jsonResponse(res, 200, { source: 'bsd', data: profile });
 }
 
 // GET /api/v1/bsd/clips/:matchId — manifest JSON des clips buts disponibles
