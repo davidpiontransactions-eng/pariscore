@@ -751,7 +751,7 @@ async function getTeamPlayerStats(roster, playerIndex) {
 }
 
 // ─── Master enrichment: all stats for a matchup ──────────────────────────────
-async function buildMatchEnrichment(t1name, t2name, mapName) {
+async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
   const [matches, rankings, playerStats] = await Promise.all([
     fetchCsApiMatches().catch(() => []),
     fetchCsApiRankings().catch(() => ({})),
@@ -764,7 +764,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName) {
   const mapStats = loadHltvMapStats();
 
   // BSD team detail: ELO + map_stats (CT/T winrate) — parallel fetch
-  const bsdTeams = await fetchBSDCs2Teams().catch(() => ({}));
+  const bsdTeams = await fetchBSDCs2Teams(apiKey).catch(() => ({}));
   const b1entry = bsdTeams[t1name.toLowerCase()];
   const b2entry = bsdTeams[t2name.toLowerCase()];
   const [bsdT1Detail, bsdT2Detail] = await Promise.allSettled([

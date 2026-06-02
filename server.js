@@ -19381,7 +19381,7 @@ async function handleAPI(req, res, pathname, query) {
       return res.end(JSON.stringify({ ok: false, error: 'team1 and team2 required' }));
     }
     try {
-      const enrichment = await cs2Service.buildMatchEnrichment(t1, t2, map);
+      const enrichment = await cs2Service.buildMatchEnrichment(t1, t2, map, BSD_API_KEY);
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
       return res.end(JSON.stringify({ ok: true, enrichment }));
     } catch (e) {
