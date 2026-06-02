@@ -34,6 +34,14 @@ class ApiConstants {
 
   static String betSettle(int id) => '/api/v1/bets/$id/settle';
 
+  // Gemini AI
+  static const String gemini = '/api/v1/gemini';
+
+  // World Cup 2026
+  static const String wcOverview = '/api/v1/worldcup/overview';
+  static const String wcSchedule = '/api/v1/worldcup/schedule';
+  static const String wcBracket = '/api/v1/worldcup/bracket';
+
   // Status
   static const String status = '/api/v1/status';
 

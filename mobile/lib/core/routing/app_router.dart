@@ -11,6 +11,7 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/tennis/presentation/pages/tennis_page.dart';
+import '../../features/worldcup/presentation/pages/worldcup_page.dart';
 
 class AppRouter {
   AppRouter._();
@@ -23,6 +24,7 @@ class AppRouter {
   static const String aiScout = '/ai-scout';
   static const String bets = '/bets';
   static const String profile = '/profile';
+  static const String worldcup = '/worldcup';
   static const String matchDetail = '/match/:id';
 
   static String matchDetailPath(String id) => '/match/$id';
@@ -71,6 +73,10 @@ class AppRouter {
       GoRoute(
         path: login,
         builder: (_, __) => const LoginPage(),
+      ),
+      GoRoute(
+        path: worldcup,
+        builder: (_, __) => const WorldCupPage(),
       ),
       GoRoute(
         path: matchDetail,

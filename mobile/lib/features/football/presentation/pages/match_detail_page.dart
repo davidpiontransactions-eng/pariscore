@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../injection_container.dart';
 import '../../domain/entities/match.dart';
+import '../cubit/ai_analysis_cubit.dart';
 
 class MatchDetailPage extends StatelessWidget {
   final Match match;
 
   const MatchDetailPage({super.key, required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<AiAnalysisCubit>(),
+      child: _MatchDetailView(match: match),
+    );
+  }
+}
+
+class _MatchDetailView extends StatelessWidget {
+  final Match match;
+
+  const _MatchDetailView({required this.match});
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +71,9 @@ class MatchDetailPage extends StatelessWidget {
         children: [
           // Live score
           if (match.liveScore != null) _LiveScoreCard(score: match.liveScore!),
+
+          // AI analysis (Gemini)
+          _AiAnalysisCard(match: match),
 
           // Value bet banner
           if (match.hasValueBet && match.bestEdge != null)
@@ -111,6 +131,115 @@ class MatchDetailPage extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// ─── AI analysis card ────────────────────────────────────────────────────────
+
+class _AiAnalysisCard extends StatelessWidget {
+  final Match match;
+
+  const _AiAnalysisCard({required this.match});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.green.withOpacity(0.06),
+            AppColors.blue.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.green.withOpacity(0.2)),
+      ),
+      child: BlocBuilder<AiAnalysisCubit, AiAnalysisState>(
+        builder: (context, state) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.psychology_outlined,
+                        color: AppColors.green, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Analyse IA',
+                        style: AppTextStyles.labelLarge
+                            .copyWith(color: AppColors.green)),
+                    const Spacer(),
+                    if (state is AiAnalysisInitial)
+                      TextButton(
+                        onPressed: () =>
+                            context.read<AiAnalysisCubit>().analyze(match),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(0, 32),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: Text('Analyser',
+                            style: AppTextStyles.labelMedium
+                                .copyWith(color: AppColors.green)),
+                      ),
+                  ],
+                ),
+                switch (state) {
+                  AiAnalysisInitial() => Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Demandez une analyse Gemini de ce match.',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ),
+                  AiAnalysisLoading() => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: AppColors.green),
+                          ),
+                          const SizedBox(width: 10),
+                          Text('Gemini analyse…',
+                              style: AppTextStyles.bodySmall),
+                        ],
+                      ),
+                    ),
+                  AiAnalysisLoaded(:final text) => Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        text,
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(height: 1.6),
+                      ),
+                    ),
+                  AiAnalysisError(:final message) => Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Text(message, style: AppTextStyles.bodySmall),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => context
+                                .read<AiAnalysisCubit>()
+                                .analyze(match),
+                            child: const Text('Réessayer'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  _ => const SizedBox.shrink(),
+                },
+              ],
+            ),
+          );
+        },
       ),
     );
   }
