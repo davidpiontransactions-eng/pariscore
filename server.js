@@ -19470,6 +19470,19 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // ── CS2 veto sequence (map picks/bans from BSD match detail) ─────────────
+  if (/^\/api\/v1\/cs2\/veto\/[^/]+$/.test(pathname) && req.method === 'GET') {
+    const matchId = decodeURIComponent(pathname.split('/').pop());
+    try {
+      const veto = await cs2Service.fetchMatchVeto(matchId, BSD_API_KEY);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify({ ok: true, matchId, veto: veto || [] }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, veto: [] }));
+    }
+  }
+
   if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
