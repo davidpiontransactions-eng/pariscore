@@ -24988,18 +24988,24 @@ function renderComparateur(d) {
       else signals.push({ key:'prob', label:'50/50', color:'grey', val: maxP });
     }
 
-    // 2. Team 1 form
+    // 2. Team 1 form — csapi.de preferred, BSD prediction form_score fallback for tier-1 teams
     if (e && e.team1 && e.team1.form) {
       var wr1 = e.team1.form.winrate || 0;
       var f1 = e.team1.form.form || [];
       signals.push({ key:'form1', label: f1.slice(-5).join(''), color: wr1>=65?'green':wr1>=45?'amber':'red', val: wr1 });
+    } else if (m.prediction && m.prediction.team1_form != null) {
+      var fs1 = Math.round(m.prediction.team1_form * 100);
+      signals.push({ key:'form1', label: '⚡' + fs1 + '%', color: fs1>=65?'green':fs1>=45?'amber':'red', val: fs1 });
     }
 
-    // 3. Team 2 form
+    // 3. Team 2 form — csapi.de preferred, BSD prediction form_score fallback
     if (e && e.team2 && e.team2.form) {
       var wr2 = e.team2.form.winrate || 0;
       var f2 = e.team2.form.form || [];
       signals.push({ key:'form2', label: f2.slice(-5).join(''), color: wr2>=65?'green':wr2>=45?'amber':'red', val: wr2 });
+    } else if (m.prediction && m.prediction.team2_form != null) {
+      var fs2 = Math.round(m.prediction.team2_form * 100);
+      signals.push({ key:'form2', label: '⚡' + fs2 + '%', color: fs2>=65?'green':fs2>=45?'amber':'red', val: fs2 });
     }
 
     // 4. H2H
