@@ -3601,6 +3601,54 @@ async function fetchBSDPredictionByEvent(eventId) {
   } catch (e) { return null; }
 }
 
+// Predicted lineup (BETA) — AI-predicted starters + injury report for upcoming matches
+const _bsdPredLinupCache = new Map(); // eventId → {ts, data}
+const BSD_PRED_LINEUP_TTL = 60 * 60 * 1000; // 1h
+async function fetchBSDPredictedLineup(eventId) {
+  if (!eventId) return null;
+  const eid = String(eventId);
+  const cached = _bsdPredLinupCache.get(eid);
+  if (cached && Date.now() - cached.ts < BSD_PRED_LINEUP_TTL) return cached.data;
+  try {
+    const res = await bsdFetch(`/api/predicted-lineup/${eid}/`);
+    if (!res || res.status !== 200 || !res.data) return null;
+    _bsdPredLinupCache.set(eid, { ts: Date.now(), data: res.data });
+    return res.data;
+  } catch (e) { return null; }
+}
+
+// Extract compact injury report from predicted lineup (for match card display)
+function _extractInjuryReport(lineupData) {
+  if (!lineupData || !lineupData.lineups) return null;
+  const out = { home: [], away: [] };
+  for (const side of ['home', 'away']) {
+    const team = lineupData.lineups[side];
+    if (!team) continue;
+    for (const p of (team.unavailable || [])) {
+      out[side].push({
+        name: p.short_name || p.name,
+        availability: p.availability, // 'injured' | 'doubtful' | 'suspended'
+        injury_type: p.injury_type || null,
+        return_date: p.injury_expected_return || null,
+        ai_score: p.ai_score || 0,
+      });
+    }
+    // Also grab doubtful starters
+    for (const p of (team.starters || [])) {
+      if (p.availability === 'doubtful') {
+        out[side].push({
+          name: p.short_name || p.name,
+          availability: 'doubtful',
+          injury_type: p.injury_type || null,
+          return_date: p.injury_expected_return || null,
+          ai_score: p.ai_score || 0,
+        });
+      }
+    }
+  }
+  return (out.home.length || out.away.length) ? out : null;
+}
+
 // D-suite — Devig Shin-Hurley 3-way avec Polymarket (si dispo)
 // Retourne { fair_home, fair_draw, fair_away, divergence_pct } ou null.
 // divergence_pct = écart maximal entre proba book consensus et proba Polymarket → signal sharp money.
@@ -3649,17 +3697,19 @@ function computePolymarketDivergence(bsdOddsSummary, polymarketData) {
 async function enrichMatchWithBSDFullStack(match) {
   if (!match || !match._bsd_event_id) return;
   const eid = match._bsd_event_id;
-  const [oddsRaw, predRaw, pmRaw, detailRaw] = await Promise.allSettled([
+  const [oddsRaw, predRaw, pmRaw, detailRaw, lineupRaw] = await Promise.allSettled([
     fetchBSDCompareOdds(eid),
     fetchBSDPredictionByEvent(eid),
     fetchBSDPolymarket(eid),
     bsdFetch(`/api/v2/events/${eid}/`),
+    fetchBSDPredictedLineup(eid),
   ]);
   const odds   = oddsRaw.status   === 'fulfilled' ? oddsRaw.value   : null;
   const pred   = predRaw.status   === 'fulfilled' ? predRaw.value   : null;
   const pm     = pmRaw.status     === 'fulfilled' ? pmRaw.value     : null;
   const detail = detailRaw.status === 'fulfilled' && detailRaw.value?.status === 200
     ? detailRaw.value.data : null;
+  const lineup = lineupRaw.status === 'fulfilled' ? lineupRaw.value : null;
 
   if (odds) {
     const summary = extractBSDOddsSummary(odds);
@@ -3692,6 +3742,26 @@ async function enrichMatchWithBSDFullStack(match) {
   if (pm && match.bsd_odds_summary) {
     const div = computePolymarketDivergence(match.bsd_odds_summary, pm);
     if (div) match.market_divergence = div;
+  }
+  // Predicted lineup (BETA) — formation + injury report
+  if (lineup && lineup.lineups) {
+    match.predicted_lineup = {
+      home_formation: lineup.lineups.home?.predicted_formation || null,
+      away_formation: lineup.lineups.away?.predicted_formation || null,
+      home_confidence: lineup.lineups.home?.confidence || null,
+      away_confidence: lineup.lineups.away?.confidence || null,
+      home_starters: (lineup.lineups.home?.starters || []).map(p => ({
+        name: p.short_name || p.name, position: p.predicted_slot || p.position,
+        ai_score: p.ai_score, availability: p.availability, player_id: p.player_id,
+      })),
+      away_starters: (lineup.lineups.away?.starters || []).map(p => ({
+        name: p.short_name || p.name, position: p.predicted_slot || p.position,
+        ai_score: p.ai_score, availability: p.availability, player_id: p.player_id,
+      })),
+      beta: !!lineup.beta,
+    };
+    const injuryReport = _extractInjuryReport(lineup);
+    if (injuryReport) match.injury_report = injuryReport;
   }
   // BSD event detail — context flags for Poisson adjustment
   if (detail) {
@@ -20802,9 +20872,13 @@ function archiveFinishedTennisFromLiveCache(liveData) {
         ml_odds: m.bsd_prediction.prob_p1_wins > 0.50
           ? parseFloat((1 / Math.max(0.01, m.bsd_prediction.prob_p1_wins)).toFixed(2))
           : parseFloat((1 / Math.max(0.01, 1 - m.bsd_prediction.prob_p1_wins)).toFixed(2)),
-        set1: null, // BSD ne prédit pas le set1 individuellement
+        set1_p1_prob: m.bsd_prediction.prob_player1_wins_first_set ?? null,
+        expected_sets: m.bsd_prediction.expected_total_sets ?? null,
+        prob_over_2_5_sets: m.bsd_prediction.prob_over_2_5_sets ?? null,
         total_games_thr: m.bsd_prediction.expected_total_games ?? null,
-        total_games_over: true,
+        prob_over_20_5_games: m.bsd_prediction.prob_over_20_5_games ?? null,
+        prob_over_21_5_games: m.bsd_prediction.prob_over_21_5_games ?? null,
+        prob_over_22_5_games: m.bsd_prediction.prob_over_22_5_games ?? null,
       } : {},
     };
     tennisHistory.push(archived);
@@ -35742,6 +35816,8 @@ if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') 
     is_neutral_ground: m.is_neutral_ground ?? null,
     is_local_derby: m.is_local_derby ?? null,
     travel_distance_km: m.travel_distance_km ?? null,
+    predicted_lineup: m.predicted_lineup || null,
+    injury_report: m.injury_report || null,
     fetched_at: new Date().toISOString(),
   });
 }
@@ -36071,6 +36147,16 @@ if (pathname.startsWith('/api/v1/bsd/compos/') && req.method === 'GET') {
   } catch (e) {
     return jsonResponse(res, 502, { error: 'bsd_compos_failed', message: String(e.message || e) });
   }
+}
+
+// GET /api/v1/bsd/predicted-lineup/:matchId — AI-predicted starters + injuries (BETA)
+if (pathname.startsWith('/api/v1/bsd/predicted-lineup/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/predicted-lineup/'.length)).trim();
+  const eventId = _bsdResolveEventId(rawId);
+  if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
+  const data = await fetchBSDPredictedLineup(eventId);
+  if (!data) return jsonResponse(res, 404, { error: 'predicted_lineup_not_found' });
+  return jsonResponse(res, 200, { source: 'bsd', event_id: Number(eventId), beta: !!data.beta, data });
 }
 
 // GET /api/v1/bsd/player-profile/:playerId — attributes (0-100) + market value + availability
