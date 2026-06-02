@@ -17583,6 +17583,10 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
   // Glicko-2 stats + live enriched + momentum — public read-only
   if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum') return false;
+  // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
+  if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
+  if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
+      pathname.startsWith('/api/v1/tennis/players/') || pathname.startsWith('/api/v1/tennis/tournament/')) return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
