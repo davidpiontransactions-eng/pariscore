@@ -20109,6 +20109,59 @@ async function _fetchBSDTennisH2H(bsdMatchId) {
   return null;
 }
 
+// ── BSD Tennis match odds (14+ bookmakers, SHORTENING/DRIFTING) ─────────────
+const _bsdTennisOddsCache = new Map();
+const BSD_TENNIS_ODDS_TTL = 3 * 60 * 60 * 1000; // 3h — BSD refresh rate
+
+async function _fetchBSDTennisOdds(bsdMatchId) {
+  const cid = String(bsdMatchId);
+  const cached = _bsdTennisOddsCache.get(cid);
+  if (cached && Date.now() - cached.ts < BSD_TENNIS_ODDS_TTL) return cached.data;
+  const res = await bsdTennisFetch(`/api/v2/matches/${cid}/odds/`, 0);
+  if (res && res.status === 200 && res.data && res.data.bookmakers_count > 0) {
+    _bsdTennisOddsCache.set(cid, { ts: Date.now(), data: res.data });
+    return res.data;
+  }
+  return null;
+}
+
+// Extract compact odds summary from BSD Tennis /odds/ payload
+function _extractTennisOddsSummary(payload) {
+  if (!payload || !Array.isArray(payload.bookmakers) || !payload.bookmakers.length) return null;
+  const books = payload.bookmakers;
+  let bestP1 = null, bestP1Bk = null, bestP2 = null, bestP2Bk = null;
+  let sP1 = 0, dP1 = 0, sP2 = 0, dP2 = 0;
+  const probs1 = [], probs2 = [];
+  for (const b of books) {
+    if (b.odds_player1 != null) {
+      if (bestP1 === null || b.odds_player1 > bestP1) { bestP1 = b.odds_player1; bestP1Bk = b.bookmaker_slug; }
+      probs1.push(1 / b.odds_player1);
+    }
+    if (b.odds_player2 != null) {
+      if (bestP2 === null || b.odds_player2 > bestP2) { bestP2 = b.odds_player2; bestP2Bk = b.bookmaker_slug; }
+      probs2.push(1 / b.odds_player2);
+    }
+    if (b.movement_player1 === 'SHORTENING') sP1++; else if (b.movement_player1 === 'DRIFTING') dP1++;
+    if (b.movement_player2 === 'SHORTENING') sP2++; else if (b.movement_player2 === 'DRIFTING') dP2++;
+  }
+  // Shin-Hurley no-vig devig on best prices
+  const fair_p1 = bestP1 && bestP2 ? parseFloat(((1/bestP1) / (1/bestP1 + 1/bestP2) * 100).toFixed(1)) : null;
+  const fair_p2 = fair_p1 !== null ? parseFloat((100 - fair_p1).toFixed(1)) : null;
+  // avg implied prob across all books
+  const avg_p1 = probs1.length ? parseFloat((probs1.reduce((a,b)=>a+b,0)/probs1.length*100).toFixed(1)) : null;
+  const avg_p2 = probs2.length ? parseFloat((probs2.reduce((a,b)=>a+b,0)/probs2.length*100).toFixed(1)) : null;
+  return {
+    books_count: payload.bookmakers_count || books.length,
+    best_p1: bestP1, best_p1_bk: bestP1Bk,
+    best_p2: bestP2, best_p2_bk: bestP2Bk,
+    fair_p1, fair_p2,
+    avg_implied_p1: avg_p1, avg_implied_p2: avg_p2,
+    movement_p1: sP1 > dP1 ? 'SHORTENING' : dP1 > sP1 ? 'DRIFTING' : null,
+    movement_p2: sP2 > dP2 ? 'SHORTENING' : dP2 > sP2 ? 'DRIFTING' : null,
+    updated_at: books[0]?.updated_at || null,
+  };
+}
+
 async function fetchBSDTennisLive() {
   const res = await bsdTennisFetch('/api/v2/matches/live/');
   if (!res || res.status !== 200) return [];
@@ -20146,24 +20199,41 @@ async function fetchBSDTennisLive() {
     })
   );
   const enriched = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
-  // H2H factor enrichment — parallel, non-blocking, cache 30min
+  // H2H + Odds enrichment — parallel per match, non-blocking
   await Promise.allSettled(enriched.map(async (m) => {
-    if (!m._bsd_match_id || m._h2h != null) return;
-    try {
-      const h2h = await Promise.race([
+    if (!m._bsd_match_id) return;
+    const [h2hRes, oddsRes] = await Promise.allSettled([
+      m._h2h == null ? Promise.race([
         _fetchBSDTennisH2H(m._bsd_match_id),
         new Promise(r => setTimeout(() => r(null), 2000)),
-      ]);
-      if (!h2h || !h2h.h2h || !h2h.h2h.total_matches) return;
-      const total = h2h.h2h.total_matches;
-      const p1w = h2h.h2h.player1_wins;
-      m._h2h = {
-        total, p1_wins: p1w, p2_wins: h2h.h2h.player2_wins,
-        p1_win_rate: +((p1w + 0.5) / (total + 1)).toFixed(3),
-        by_surface: h2h.h2h.by_surface || null,
-        p1_last5: (h2h.player1_last5 || []).slice(0, 5).map(x => ({ won: x.won, surface: x.surface, round: x.round, date: x.date })),
-        p2_last5: (h2h.player2_last5 || []).slice(0, 5).map(x => ({ won: x.won, surface: x.surface, round: x.round, date: x.date })),
-      };
+      ]) : Promise.resolve(null),
+      m._bsd_odds == null ? Promise.race([
+        _fetchBSDTennisOdds(m._bsd_match_id),
+        new Promise(r => setTimeout(() => r(null), 2000)),
+      ]) : Promise.resolve(null),
+    ]);
+    // H2H
+    try {
+      const h2h = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
+      if (h2h && h2h.h2h && h2h.h2h.total_matches && m._h2h == null) {
+        const total = h2h.h2h.total_matches;
+        const p1w = h2h.h2h.player1_wins;
+        m._h2h = {
+          total, p1_wins: p1w, p2_wins: h2h.h2h.player2_wins,
+          p1_win_rate: +((p1w + 0.5) / (total + 1)).toFixed(3),
+          by_surface: h2h.h2h.by_surface || null,
+          p1_last5: (h2h.player1_last5 || []).slice(0, 5).map(x => ({ won: x.won, surface: x.surface, round: x.round, date: x.date })),
+          p2_last5: (h2h.player2_last5 || []).slice(0, 5).map(x => ({ won: x.won, surface: x.surface, round: x.round, date: x.date })),
+        };
+      }
+    } catch (_) {}
+    // Multi-book odds
+    try {
+      const oddsRaw = oddsRes.status === 'fulfilled' ? oddsRes.value : null;
+      if (oddsRaw && m._bsd_odds == null) {
+        const summary = _extractTennisOddsSummary(oddsRaw);
+        if (summary) m._bsd_odds = summary;
+      }
     } catch (_) {}
   }));
   return enriched;
@@ -33030,6 +33100,22 @@ if (pathname.startsWith('/api/v1/tennis/player/') && req.method === 'GET') {
   const out = await handleTennisBSD(`/api/v2/players/${playerId}/`, ck, 6 * 3600 * 1000);
   if (out.status !== 200) return jsonResponse(res, out.status, out.body);
   return jsonResponse(res, 200, { source: 'bsd_tennis', player_id: Number(playerId), data: out.body, cached: out.cache === 'hit' });
+}
+
+// GET /api/v1/tennis/match/:matchId/odds — multi-bookmaker odds (14+ books, movement)
+if (pathname.startsWith('/api/v1/tennis/match/') && pathname.endsWith('/odds') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/tennis/match/'.length, -'/odds'.length)).trim();
+  // Accept bsd_t_NNN or bare NNN
+  const bsdId = rawId.startsWith('bsd_t_') ? rawId.slice('bsd_t_'.length) : rawId;
+  if (!bsdId || !/^\d+$/.test(bsdId)) return jsonResponse(res, 400, { error: 'bad_match_id' });
+  const raw = await _fetchBSDTennisOdds(bsdId);
+  if (!raw) return jsonResponse(res, 200, { source: 'bsd_tennis', match_id: Number(bsdId), available: false, data: null });
+  const summary = _extractTennisOddsSummary(raw);
+  return jsonResponse(res, 200, {
+    source: 'bsd_tennis', match_id: Number(bsdId), available: true,
+    summary,
+    bookmakers: raw.bookmakers,
+  });
 }
 
 // GET /api/v1/tennis/players/search?q=<name> — resolve player name → profile + ranking
