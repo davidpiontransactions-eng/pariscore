@@ -5514,7 +5514,7 @@ function _psLtsRenderSetStats(m) {
   if (dfP.length) makeRow(`DF ${p1n}/${p2n}`, dfP.join(' · '));
 }
 
-// T3 — async BSD H2H with surface breakdown, updates pslts-ctx-h2h when ready
+// T3 — async BSD H2H (real schema: {h2h:null|[...], player1_last5, player2_last5})
 async function _psLtsFetchH2H(m) {
   if (!m || !m._bsd_match_id) return;
   const el = document.getElementById('pslts-ctx-h2h');
@@ -5525,26 +5525,49 @@ async function _psLtsFetchH2H(m) {
     const json = await r.json();
     const d = json.data;
     if (!d) return;
-    const tot1 = d.total_wins_p1 ?? d.p1_wins ?? (d.total && d.total.p1_wins) ?? null;
-    const tot2 = d.total_wins_p2 ?? d.p2_wins ?? (d.total && d.total.p2_wins) ?? null;
-    if (tot1 == null && tot2 == null) return;
-    let txt = `${tot1??'?'}-${tot2??'?'} total`;
-    const surf = String(m.surface || '').toLowerCase();
-    const byS  = d.by_surface || d.surfaces || null;
-    if (byS) {
-      const map = [['hard','dur'],['clay','terre'],['grass','gazon']];
-      const parts = [];
-      for (const [key, label] of map) {
-        const sv = byS[key] || byS[key[0].toUpperCase() + key.slice(1)];
-        if (!sv) continue;
-        const s1 = sv.p1_wins ?? sv.player1 ?? null;
-        const s2 = sv.p2_wins ?? sv.player2 ?? null;
-        if (s1 == null && s2 == null) continue;
-        const cur = surf && (surf.includes(key.slice(0,4)) || (key === 'grass' && surf.includes('grass')));
-        parts.push((cur ? '▶ ' : '') + `${label} ${s1??'?'}-${s2??'?'}`);
+    const p1id = d.player1 && d.player1.id;
+    const p2id = d.player2 && d.player2.id;
+    const curSurf = String(m.surface || '').toLowerCase();
+    const surfLabel = { hard: 'dur', clay: 'terre', grass: 'gazon' };
+    // H2H record + per-surface breakdown
+    let h2hTxt = '0-0';
+    if (Array.isArray(d.h2h) && d.h2h.length) {
+      let p1w = 0, p2w = 0;
+      const sc = {};
+      for (const hm of d.h2h) {
+        let wid = hm.winner_id ?? (hm.winner && hm.winner.id) ?? null;
+        if (wid == null && Array.isArray(hm.score)) {
+          let s1 = 0, s2 = 0;
+          for (const s of hm.score) { (s.p1 ?? s.player1 ?? 0) > (s.p2 ?? s.player2 ?? 0) ? s1++ : s2++; }
+          wid = s1 > s2 ? p1id : p2id;
+        }
+        const sf = String(hm.surface || (hm.tournament && hm.tournament.surface) || '').toLowerCase();
+        if (!sc[sf]) sc[sf] = { p1: 0, p2: 0 };
+        if (wid === p1id) { p1w++; sc[sf].p1++; }
+        else if (wid === p2id) { p2w++; sc[sf].p2++; }
       }
-      if (parts.length) txt += ' · ' + parts.join(' · ');
+      h2hTxt = `${p1w}-${p2w}`;
+      if (curSurf && sc[curSurf]) h2hTxt += ` · ▶ ${surfLabel[curSurf] || curSurf} ${sc[curSurf].p1}-${sc[curSurf].p2}`;
     }
+    // Last5 form — W/L inferred from set scores (p1 sets > p2 sets = Win)
+    const formStr = (arr) => {
+      if (!Array.isArray(arr) || !arr.length) return '';
+      return arr.slice(0, 5).map(hm => {
+        if (hm.result) return hm.result === 'win' ? 'W' : 'L';
+        if (Array.isArray(hm.score)) {
+          let s1 = 0, s2 = 0;
+          for (const s of hm.score) { (s.p1 ?? s.player1 ?? 0) > (s.p2 ?? s.player2 ?? 0) ? s1++ : s2++; }
+          return s1 > s2 ? 'W' : 'L';
+        }
+        return '?';
+      }).join('');
+    };
+    const f1 = formStr(d.player1_last5);
+    const f2 = formStr(d.player2_last5);
+    const p1n = m.player1 ? String(m.player1.name || 'J1').split(' ').pop() : 'J1';
+    const p2n = m.player2 ? String(m.player2.name || 'J2').split(' ').pop() : 'J2';
+    let txt = h2hTxt;
+    if (f1 || f2) txt += ` · ${p1n}:${f1||'—'} ${p2n}:${f2||'—'}`;
     el.textContent = txt;
   } catch (_) {}
 }
@@ -24847,9 +24870,12 @@ function renderComparateur(d) {
         '</div>' +
       '</div>' +
       mapBarHtml +
+      _buildMomentumGauge(m) +
       '<div class="cs2-map-winrate-bar" style="display:none;align-items:center;gap:4px;font-family:\'DM Mono\',monospace;font-size:10px;padding:3px 12px 5px;"></div>' +
       _buildHighlightSection(clips) +
-      '<div class="cs2-card-foot">' + oddsHtml + timeHtml + '</div>' +
+      '<div class="cs2-card-foot">' + oddsHtml +
+        '<button class="cs2-bet-btn" style="font-size:10px;padding:4px 10px;" data-mid="' + _esc(m.id) + '" data-t1="' + _esc(t1.name||'') + '" data-t2="' + _esc(t2.name||'') + '" data-map="' + _esc(m.current_map||'') + '" onclick="openCs2ScoutDrawer(this.dataset.mid,this.dataset.t1,this.dataset.t2,this.dataset.map)">🔍 Scout</button>' +
+        timeHtml + '</div>' +
     '</div>';
   }
 
@@ -25173,6 +25199,228 @@ function renderComparateur(d) {
         '<button class="cs2-hl-close" onclick="this.closest(\'.cs2-hl-player\').style.display=\'none\';this.previousElementSibling.pause()">✕</button>' +
       '</div>';
     return html;
+  }
+
+  // ── Live Momentum Gauge ────────────────────────────────────────────────────
+  function _buildMomentumGauge(m) {
+    if (!m.is_live || !m.live_momentum) return '';
+    var mom  = m.live_momentum;
+    var pct  = Math.round(((mom.momentum + 100) / 200) * 100);
+    var eco1 = mom.eco_t1 || 'full-buy';
+    var eco2 = mom.eco_t2 || 'full-buy';
+    var ecoColor = { 'eco': '#ff4d4d', 'semi-eco': '#ffa726', 'full-buy': '#00e676' };
+    var ecoLabel = { 'eco': 'ECO', 'semi-eco': 'SEMI', 'full-buy': 'BUY' };
+    var glowT1 = mom.momentum >= 40 ? ';box-shadow:0 0 8px rgba(255,107,0,0.45)' : '';
+    var glowT2 = mom.momentum <= -40 ? ';box-shadow:0 0 8px rgba(59,130,246,0.45)' : '';
+    var t1name = _esc((m.team1 && m.team1.name || 'T1').slice(0, 8));
+    var t2name = _esc((m.team2 && m.team2.name || 'T2').slice(0, 8));
+    return '<div class="cs2-momentum-wrap">' +
+      '<div class="cs2-momentum-labels">' +
+        '<span class="cs2-rds-t1" style="font-family:\'DM Mono\',monospace;font-size:9px;">' + t1name + (mom.streak === 'T1' ? ' 🔥' : '') + '</span>' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--text3);">MOMENTUM</span>' +
+        '<span class="cs2-rds-t2" style="font-family:\'DM Mono\',monospace;font-size:9px;">' + (mom.streak === 'T2' ? '🔥 ' : '') + t2name + '</span>' +
+      '</div>' +
+      '<div class="cs2-momentum-bar">' +
+        '<div class="cs2-momentum-t1" style="width:' + pct + '%' + glowT1 + ';"></div>' +
+        '<div class="cs2-momentum-t2" style="width:' + (100 - pct) + '%' + glowT2 + ';"></div>' +
+      '</div>' +
+      '<div class="cs2-eco-row">' +
+        '<span class="cs2-eco-badge" style="color:' + ecoColor[eco1] + ';">' + ecoLabel[eco1] + '</span>' +
+        '<span style="flex:1;"></span>' +
+        '<span class="cs2-eco-badge" style="color:' + ecoColor[eco2] + ';">' + ecoLabel[eco2] + '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // ── Pro Scout Drawer ───────────────────────────────────────────────────────
+  var _scoutCtx = { matchId: null, t1: '', t2: '', map: '' };
+  var ACTIVE_MAPS_SCOUT = ['mirage','inferno','nuke','ancient','anubis','vertigo','dust2'];
+
+  window.openCs2ScoutDrawer = function(matchId, t1, t2, map) {
+    var drawer = document.getElementById('cs2-scout-drawer');
+    if (!drawer) return;
+    _scoutCtx = { matchId: matchId, t1: t1, t2: t2, map: map || '' };
+    var titleEl = document.getElementById('cs2-scout-title');
+    var subEl   = document.getElementById('cs2-scout-sub');
+    if (titleEl) titleEl.textContent = t1 + ' vs ' + t2;
+    if (subEl)   subEl.textContent = map ? 'Carte : ' + map : 'Pré-match';
+    drawer.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.querySelectorAll('.cs2-scout-tab').forEach(function(b) { b.classList.remove('active'); });
+    var first = document.querySelector('.cs2-scout-tab[data-tab="maps"]');
+    if (first) first.classList.add('active');
+    _loadScoutContent('maps');
+  };
+
+  window.closeCs2ScoutDrawer = function() {
+    var drawer = document.getElementById('cs2-scout-drawer');
+    if (drawer) drawer.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+
+  window.cs2ScoutTab = function(tab, btn) {
+    document.querySelectorAll('.cs2-scout-tab').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    _loadScoutContent(tab);
+  };
+
+  function _loadScoutContent(tab) {
+    var el = document.getElementById('cs2-scout-content');
+    if (!el) return;
+    if (!_scoutCtx.t1) { el.innerHTML = '<div class="cs2-scout-empty">Sélectionnez un match</div>'; return; }
+    if (tab === 'veto') { _loadVetoContent(_scoutCtx.matchId, el); return; }
+    el.innerHTML = '<div class="cs2-scout-loading">⏳ Chargement…</div>';
+    var cacheKey = _scoutCtx.t1 + '|' + _scoutCtx.t2;
+    var cached = _cs2EnrichCache[cacheKey];
+    if (cached) { _renderScoutContent(tab, cached, el); return; }
+    var url = '/api/v1/cs2/enrich?team1=' + encodeURIComponent(_scoutCtx.t1) +
+              '&team2=' + encodeURIComponent(_scoutCtx.t2) +
+              (_scoutCtx.map ? '&map=' + encodeURIComponent(_scoutCtx.map) : '');
+    fetch(url, { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        var e = j && j.enrichment ? j.enrichment : null;
+        if (e) { _cs2EnrichCache[cacheKey] = e; _renderScoutContent(tab, e, el); }
+        else el.innerHTML = '<div class="cs2-scout-empty">Données indisponibles pour ce match</div>';
+      }).catch(function() { el.innerHTML = '<div class="cs2-scout-empty">Erreur chargement</div>'; });
+  }
+
+  function _renderScoutContent(tab, e, el) {
+    if (tab === 'maps')    _renderScoutMaps(e, el);
+    if (tab === 'players') _renderScoutPlayers(e, el);
+    if (tab === 'h2h')     _renderScoutH2H(e, el);
+  }
+
+  function _renderScoutMaps(e, el) {
+    var t1 = _scoutCtx.t1; var t2 = _scoutCtx.t2; var currentMap = _scoutCtx.map;
+    var t1maps = (e.team1 && e.team1.all_maps) || {};
+    var t2maps = (e.team2 && e.team2.all_maps) || {};
+    var t1meta = e.team1 && e.team1.map_stats_meta;
+    var t2meta = e.team2 && e.team2.map_stats_meta;
+    var html = '<div style="margin-bottom:10px;">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
+        '<span class="cs2-rds-t1" style="font-size:11px;font-family:\'DM Mono\',monospace;">' + _esc(t1) + '</span>' +
+        '<span style="font-size:9px;color:var(--text3);">WINRATE PAR CARTE</span>' +
+        '<span class="cs2-rds-t2" style="font-size:11px;font-family:\'DM Mono\',monospace;">' + _esc(t2) + '</span>' +
+      '</div>';
+    for (var i = 0; i < ACTIVE_MAPS_SCOUT.length; i++) {
+      var mk = ACTIVE_MAPS_SCOUT[i];
+      var ml = mk.charAt(0).toUpperCase() + mk.slice(1);
+      var w1 = t1maps[mk] != null ? t1maps[mk] : null;
+      var w2 = t2maps[mk] != null ? t2maps[mk] : null;
+      var isCur = currentMap && currentMap.toLowerCase().replace(/[^a-z]/g,'') === mk;
+      var isVal = w1 != null && w2 != null && Math.abs(w1 - w2) >= 20;
+      var b1 = w1 != null ? w1 : 50; var b2 = w2 != null ? w2 : 50;
+      var p1 = ((b1 / (b1 + b2)) * 100).toFixed(1); var p2 = (100 - p1).toFixed(1);
+      html += '<div class="cs2-scout-map-row' + (isCur ? ' scout-map-current' : '') + '">' +
+        '<span class="cs2-scout-map-name">' + (isCur ? '▶ ' : '') + ml + (isVal ? ' ✓' : '') + '</span>' +
+        '<span class="cs2-scout-wr t1">' + (w1 != null ? w1 + '%' : '?') + '</span>' +
+        '<div class="cs2-scout-bar-wrap"><div class="cs2-scout-bar-t1" style="width:' + p1 + '%;"></div><div class="cs2-scout-bar-t2" style="width:' + p2 + '%;"></div></div>' +
+        '<span class="cs2-scout-wr t2">' + (w2 != null ? w2 + '%' : '?') + '</span>' +
+      '</div>';
+    }
+    if (t1meta || t2meta) {
+      function sideBlock(name, meta) {
+        if (!meta) return '<div></div>';
+        return '<div><div style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px;">' + _esc(name) + '</div>' +
+          '<div style="font-size:10px;color:' + (meta.round_winrate_ct>=55?'#00e676':meta.round_winrate_ct>=45?'#ffa726':'#ff4d4d') + '">CT: ' + (meta.round_winrate_ct!=null?meta.round_winrate_ct+'%':'?') + '</div>' +
+          '<div style="font-size:10px;color:' + (meta.round_winrate_t>=55?'#00e676':meta.round_winrate_t>=45?'#ffa726':'#ff4d4d') + '">T: ' + (meta.round_winrate_t!=null?meta.round_winrate_t+'%':'?') + '</div>' +
+          '<div style="font-size:9px;color:var(--text3);">n=' + (meta.sample_size||'?') + '</div></div>';
+      }
+      html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">' +
+        '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);margin-bottom:6px;letter-spacing:.05em;">CT / T SIDE WINRATES (BSD)</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' + sideBlock(t1, t1meta) + sideBlock(t2, t2meta) + '</div></div>';
+    }
+    var src = (e.map_winrate && e.map_winrate.source) ? e.map_winrate.source.toUpperCase() : 'N/A';
+    html += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);text-align:right;margin-top:6px;">Source: ' + src + (e.data_age_h!=null?' · '+e.data_age_h+'h':'') + '</div></div>';
+    el.innerHTML = html;
+  }
+
+  function _renderScoutPlayers(e, el) {
+    function teamBlock(teamData, teamName) {
+      if (!teamData || !teamData.players || !teamData.players.length)
+        return '<div style="color:var(--text3);font-size:11px;margin-bottom:12px;">Roster ' + _esc(teamName) + ' indisponible</div>';
+      var maxR = Math.max.apply(null, teamData.players.map(function(p){ return p.rating||0; }));
+      var html = '<div style="margin-bottom:14px;"><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.05em;margin-bottom:6px;">' + _esc(teamName) + ' — RATING 2.0</div>';
+      for (var i=0;i<teamData.players.length;i++) {
+        var p = teamData.players[i];
+        var rc = (p.rating||0)>=1.10?'#00e676':(p.rating||0)>=0.95?'#ffa726':'#ff4d4d';
+        html += '<div class="cs2-scout-player-row">' +
+          '<span class="cs2-scout-player-name">' + (p.rating===maxR&&maxR>0?'⭐ ':'') + _esc(p.name||'?') + '</span>' +
+          '<span class="cs2-scout-stat">' + (p.adr!=null?'ADR '+p.adr:'') + '</span>' +
+          '<span class="cs2-scout-stat">' + (p.kast!=null?'KAST '+p.kast+'%':'') + '</span>' +
+          '<span class="cs2-scout-rating" style="color:'+rc+';">' + (p.rating!=null?p.rating.toFixed(2):'?') + '</span></div>';
+      }
+      if (teamData.elo_rating||teamData.rank)
+        html += '<div style="margin-top:5px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);">' +
+          (teamData.rank?'#'+teamData.rank+' mondial':'') + (teamData.elo_rating?' · ELO '+teamData.elo_rating:'') +
+          (teamData.elo_peak?' (peak '+teamData.elo_peak+')':'') + '</div>';
+      return html + '</div>';
+    }
+    el.innerHTML = teamBlock(e.team1, _scoutCtx.t1) + teamBlock(e.team2, _scoutCtx.t2);
+  }
+
+  function _renderScoutH2H(e, el) {
+    var h2h = e.h2h; var t1 = _scoutCtx.t1; var t2 = _scoutCtx.t2;
+    if (!h2h||!h2h.n) { el.innerHTML = '<div class="cs2-scout-empty">Aucun H2H disponible</div>'; return; }
+    var tot = h2h.t1wins + h2h.t2wins;
+    var p1 = tot>0 ? Math.round(h2h.t1wins/tot*100) : 50;
+    var html = '<div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+        '<div style="text-align:center;"><div class="cs2-rds-t1" style="font-size:30px;font-weight:800;font-family:\'DM Mono\',monospace;">' + h2h.t1wins + '</div><div style="font-size:10px;color:var(--text2);">' + _esc(t1) + '</div></div>' +
+        '<div style="text-align:center;color:var(--text3);font-size:10px;">' + h2h.n + ' matchs<br><span style="font-size:9px;">' + (h2h.last_date?h2h.last_date.slice(0,10):'') + '</span></div>' +
+        '<div style="text-align:center;"><div class="cs2-rds-t2" style="font-size:30px;font-weight:800;font-family:\'DM Mono\',monospace;">' + h2h.t2wins + '</div><div style="font-size:10px;color:var(--text2);">' + _esc(t2) + '</div></div>' +
+      '</div>' +
+      '<div style="height:6px;border-radius:3px;overflow:hidden;background:var(--bg3);margin-bottom:12px;">' +
+        '<div style="width:'+p1+'%;height:100%;background:#FF6B00;border-radius:3px 0 0 3px;"></div></div>';
+    if (h2h.results&&h2h.results.length) {
+      html += '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);margin-bottom:5px;">HISTORIQUE (ancien → récent)</div><div class="cs2-scout-h2h-dots">';
+      for (var i=0;i<h2h.results.length;i++) {
+        var r=h2h.results[i]; var c=r==='T1'?'#FF6B00':r==='T2'?'#3b82f6':'#5a6068';
+        html += '<span class="cs2-scout-h2h-dot" title="'+(r==='T1'?_esc(t1):r==='T2'?_esc(t2):'N/A')+'" style="background:'+c+';"></span>';
+      }
+      html += '</div>';
+    }
+    el.innerHTML = html + '</div>';
+  }
+
+  function _loadVetoContent(matchId, el) {
+    el.innerHTML = '<div class="cs2-scout-loading">⏳ Chargement veto…</div>';
+    if (!matchId) { el.innerHTML = '<div class="cs2-scout-empty">ID match indisponible</div>'; return; }
+    fetch('/api/v1/cs2/veto/' + encodeURIComponent(matchId), { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        var veto = j && j.veto ? j.veto : null;
+        if (!veto || (Array.isArray(veto) && !veto.length))
+          el.innerHTML = '<div class="cs2-scout-empty">Séquence veto non disponible<br><span style="font-size:10px;">Disponible uniquement via BSD CSGO addon avant/pendant le match</span></div>';
+        else _renderVetoContent(veto, el);
+      }).catch(function() { el.innerHTML = '<div class="cs2-scout-empty">Erreur chargement veto</div>'; });
+  }
+
+  function _renderVetoContent(veto, el) {
+    var items = Array.isArray(veto) ? veto : (veto.picks || veto.bans || []);
+    var cacheKey = _scoutCtx.t1 + '|' + _scoutCtx.t2;
+    var enriched = _cs2EnrichCache[cacheKey];
+    var html = '<div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:.05em;margin-bottom:8px;">SÉQUENCE BAN/PICK</div>';
+    if (!items.length) { html += '<div class="cs2-scout-empty">Veto non commencé</div>'; }
+    else {
+      for (var i=0;i<items.length;i++) {
+        var v=items[i];
+        var action=(v.action||v.type||'').toLowerCase();
+        var mapName=v.map||v.map_name||'?';
+        var team=v.team||(v.team_id?'Équipe '+v.team_id:'?');
+        var aCls=action==='ban'?'ban':action==='pick'?'pick':'decider';
+        var aIcon=action==='ban'?'❌':action==='pick'?'✅':'🎲';
+        var wrHint='';
+        if (enriched&&action==='pick') {
+          var isT1=_scoutCtx.t1&&team.toLowerCase().includes(_scoutCtx.t1.slice(0,4).toLowerCase());
+          var tMaps=isT1?(enriched.team1&&enriched.team1.all_maps):(enriched.team2&&enriched.team2.all_maps);
+          if (tMaps) { var mk2=mapName.toLowerCase().replace(/[^a-z]/g,''); var wr=tMaps[mk2]; if (wr!=null) wrHint=' <span class="cs2-veto-wr">wr '+wr+'%</span>'; }
+        }
+        html += '<div class="cs2-veto-row"><span class="cs2-veto-num">'+(i+1)+'</span><span class="cs2-veto-team">'+_esc(team)+'</span><span class="cs2-veto-action '+aCls+'">'+aIcon+' '+action.toUpperCase()+'</span><span class="cs2-veto-map">'+_esc(mapName)+'</span>'+wrHint+'</div>';
+      }
+    }
+    el.innerHTML = html + '</div>';
   }
 
   function _esc(s) {

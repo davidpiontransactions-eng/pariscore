@@ -183,6 +183,25 @@ async function fetchBSDCs2TeamDetail(teamId) {
   } catch (e) { return null; }
 }
 
+// ─── BSD CS2 veto/map-picks fetch ────────────────────────────────────────────
+let _vetoCache = new Map(); // matchId → { ts, data }
+const VETO_TTL_MS = 20 * 1000; // 20s — veto changes frequently pre-match
+
+async function fetchMatchVeto(matchId, apiKey) {
+  const _key = String(matchId);
+  const _key2 = apiKey || _bsdApiKeyRef;
+  if (!_key2) return null;
+  const cached = _vetoCache.get(_key);
+  if (cached && Date.now() - cached.ts < VETO_TTL_MS) return cached.data;
+  try {
+    const res = await _bsdCs2(`/api/v2/matches/${_key}/`, _key2, 1);
+    if (!res || res.status !== 200 || !res.data) return null;
+    const veto = res.data.map_picks || res.data.veto || res.data.map_veto || null;
+    _vetoCache.set(_key, { ts: Date.now(), data: veto });
+    return veto;
+  } catch (e) { return null; }
+}
+
 // Convert BSD team map_stats → HLTV-compatible lookup { mapNameLower: winrate% }
 // Also preserves CT/T side winrates as _round_winrate_ct/_t fields.
 function _bsdMapStatsToLookup(bsdMapStats) {
@@ -817,6 +836,55 @@ async function buildMatchEnrichment(t1name, t2name, mapName) {
   };
 }
 
+// ─── Live Momentum Ring Buffer ────────────────────────────────────────────────
+const MOMENTUM_RING   = 5;
+const _roundHistories = new Map(); // matchId → { ring, t1, t2 }
+
+function _updateRoundHistory(matchId, rounds1, rounds2) {
+  if (rounds1 == null || rounds2 == null) return;
+  const key  = String(matchId);
+  const prev = _roundHistories.get(key) || { ring: [], t1: null, t2: null };
+  if (rounds1 === prev.t1 && rounds2 === prev.t2) return;
+  const ring = prev.ring.slice();
+  const d1 = rounds1 - (prev.t1 != null ? prev.t1 : rounds1);
+  const d2 = rounds2 - (prev.t2 != null ? prev.t2 : rounds2);
+  for (let i = 0; i < Math.max(0, d1); i++) { ring.push(1);  if (ring.length > MOMENTUM_RING) ring.shift(); }
+  for (let i = 0; i < Math.max(0, d2); i++) { ring.push(-1); if (ring.length > MOMENTUM_RING) ring.shift(); }
+  _roundHistories.set(key, { ring, t1: rounds1, t2: rounds2 });
+}
+
+function computeLiveMomentum(matchId, rounds1, rounds2) {
+  _updateRoundHistory(matchId, rounds1, rounds2);
+  const hist = _roundHistories.get(String(matchId));
+  const ring = hist ? hist.ring : [];
+  // Weighted recent rounds (most recent = highest weight)
+  const W = [0.10, 0.15, 0.20, 0.25, 0.30];
+  let mom = 0;
+  for (let i = 0; i < ring.length; i++) {
+    mom += ring[i] * (W[ring.length - 1 - i] || 0.2) * 100;
+  }
+  mom = Math.round(Math.max(-100, Math.min(100, mom)));
+  // Infer eco state: consecutive losses in current half
+  function _ecoState(won, total) {
+    const halfLen = Math.min(total, 12); // CS2 MR12: first half 12 rounds max
+    const losses  = halfLen - Math.min(won, halfLen);
+    if (losses >= 3) return 'eco';
+    if (losses >= 2) return 'semi-eco';
+    return 'full-buy';
+  }
+  const total   = (rounds1 || 0) + (rounds2 || 0);
+  const streak3 = ring.slice(-3);
+  const streak  = streak3.length >= 3 && streak3.every(v => v === streak3[0])
+    ? (streak3[0] > 0 ? 'T1' : 'T2') : null;
+  return {
+    momentum  : mom,
+    eco_t1    : _ecoState(rounds1 || 0, total),
+    eco_t2    : _ecoState(rounds2 || 0, total),
+    streak,
+    ring_size : ring.length
+  };
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 module.exports = {
   ACTIVE_MAPS,
@@ -829,6 +897,8 @@ module.exports = {
   fetchCsApiRankings,
   computeMapOverModel,
 
+  fetchMatchVeto,
+  computeLiveMomentum,
   fetchCsApiPlayerStats,
   buildTeamForm,
   buildH2H,
@@ -905,6 +975,13 @@ module.exports = {
           if (b2) { m.team2.elo_rating = b2.elo_rating; m.team2.elo_peak = b2.elo_peak; m.team2._bsd_team_id = b2.id; }
         }
       } catch (_) {}
+
+      // Attach live momentum for in-progress matches (ring-buffer based)
+      for (const m of matches) {
+        if (m.is_live && m.round_score) {
+          m.live_momentum = computeLiveMomentum(m.id, m.round_score.team1, m.round_score.team2);
+        }
+      }
 
       // Sort: live first → then by date
       matches.sort((a, b) => {
