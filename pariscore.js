@@ -24376,6 +24376,8 @@ function renderComparateur(d) {
     document.querySelectorAll('.cs2-view-btn').forEach(function (b) {
       b.classList.toggle('active', b.dataset.view === mode);
     });
+    var grid = document.getElementById('cs2-grid');
+    if (grid) grid.style.display = mode === 'dashboard' ? 'block' : '';
     _applyCs2Filter();
   };
 
@@ -24688,6 +24690,7 @@ function renderComparateur(d) {
   window.renderCs2Matches = function (matches) {
     var grid = document.getElementById('cs2-grid');
     if (!grid) return;
+    grid.style.display = '';
 
     if (!matches || matches.length === 0) {
       var label = _cs2Filter === 'live' ? 'en cours' : _cs2Filter === 'prematch' ? 'à venir' : 'disponible';
@@ -25056,7 +25059,7 @@ function renderComparateur(d) {
 
   // ── Auto-verdict from signals ──────────────────────────────────────────
   function _cs2Verdict(signals) {
-    if (!signals.length) return { txt: '⏳ Chargement…', cls: 'cs2-verdict-hold' };
+    if (!signals.length) return { txt: '⚪ HOLD', cls: 'cs2-verdict-hold' };
     var greens = signals.filter(function(s){ return s.color==='green'; }).length;
     var reds   = signals.filter(function(s){ return s.color==='red';   }).length;
     var n = signals.length;
@@ -25078,6 +25081,7 @@ function renderComparateur(d) {
   window.renderCs2Dashboard = function (matches) {
     var grid = document.getElementById('cs2-grid');
     if (!grid) return;
+    grid.style.display = 'block';
 
     if (!matches || !matches.length) {
       grid.innerHTML = '<div class="cs2-empty"><div class="cs2-empty-icon">🎮</div><div class="cs2-empty-msg">Aucun match disponible</div></div>';
