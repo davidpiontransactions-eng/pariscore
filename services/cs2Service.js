@@ -1252,6 +1252,7 @@ module.exports = {
   computeMapTrend,
   computeAllMapTrends,
   getTeamMapRankings,
+  fetchBSDCs2Teams,
   computeBSDMapRankings,
   getTeamMapRankBSD,
   buildMatchEnrichment,
