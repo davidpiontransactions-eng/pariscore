@@ -3473,6 +3473,7 @@ function renderTennisValueBets(rawMatches) {
     const _tnStr = t => (t && typeof t === 'object') ? (t.name || t.short_name || '') : String(t || '');
     const names = [...new Set(matches.map(x => _tnStr(x && x.tournament)).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr'));
     window.__tnCompNames = names;
+    if (typeof _psBuildSidebarAllTennis === 'function') _psBuildSidebarAllTennis();
     const sig = names.join('|');
     if (_compSel && _compSel.dataset.sig !== sig) {
       _compSel.innerHTML = '<option value="ALL">Toutes</option>' + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
@@ -6953,6 +6954,60 @@ function mlToggleLeague(sport) {
   mlSyncUI();
   renderMatches(allMatches);
 }
+// ── Sidebar Sport : sélecteur ligues/tournois ─────────────────────────────
+function _psSbPickFoot(key) {
+  mlPickAll();
+  if (key !== 'all') mlToggleLeague(key);
+  document.querySelectorAll('#ps-foot-sidebar .sidebar-league-item').forEach(function(btn) {
+    var bk = btn.dataset.sbKey || (btn.id === 'ps-sb-foot-all' ? 'all' : null);
+    if (bk !== null) btn.classList.toggle('is-active', bk === key);
+  });
+  document.querySelectorAll('#ps-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.classList.toggle('is-active', (btn.dataset.sbKey || '') === key);
+  });
+}
+function _psSbPickTennis(name) {
+  tncFromLegacy(name === 'ALL' ? 'ALL' : name);
+  document.querySelectorAll('#ps-tennis-sidebar .sidebar-league-item, #ps-tennis-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.classList.toggle('is-active', (btn.dataset.sbTournoi || '') === name);
+  });
+}
+function _psBuildSidebarAllFoot() {
+  var list = document.getElementById('ps-sidebar-all-list');
+  if (!list || typeof leaguesByCountry === 'undefined') return;
+  var html = '';
+  Object.keys(leaguesByCountry).sort().forEach(function(country) {
+    (leaguesByCountry[country] || []).forEach(function(l) {
+      var key = l.odds_key;
+      html += '<button class="sidebar-league-item" data-sb-key="' + _mlEsc(key) + '" onclick="_psSbPickFoot(\'' + key.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' +
+        '<span class="sidebar-league-flag">⚽</span>' + (l.name || key) + '</button>';
+    });
+  });
+  list.innerHTML = html || '<div class="sidebar-all-empty">Aucune ligue disponible</div>';
+}
+function _psBuildSidebarAllTennis() {
+  var list = document.getElementById('ps-tennis-sidebar-all-list');
+  if (!list) return;
+  var names = Array.isArray(window.__tnCompNames) ? window.__tnCompNames : [];
+  if (!names.length) { list.innerHTML = '<div class="sidebar-all-empty">Aucun tournoi</div>'; return; }
+  list.innerHTML = names.map(function(n) {
+    var safe = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<button class="sidebar-league-item" data-sb-tournoi="' + n.replace(/"/g,'&quot;') + '" onclick="_psSbPickTennis(\'' + safe + '\')">' +
+      '<span class="sidebar-league-flag">🎾</span>' + n + '</button>';
+  }).join('');
+}
+function _psSbFilterFoot(q) {
+  var lq = (q || '').toLowerCase();
+  document.querySelectorAll('#ps-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.style.display = !lq || btn.textContent.toLowerCase().indexOf(lq) !== -1 ? '' : 'none';
+  });
+}
+function _psSbFilterTennis(q) {
+  var lq = (q || '').toLowerCase();
+  document.querySelectorAll('#ps-tennis-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.style.display = !lq || btn.textContent.toLowerCase().indexOf(lq) !== -1 ? '' : 'none';
+  });
+}
 // Fermeture clic extérieur + repositionnement panneau fixe
 document.addEventListener('click', function(e) {
   var wrap = document.getElementById('ml-league');
@@ -7312,6 +7367,7 @@ async function initLeagueFilters() {
     var sortSel = document.getElementById('country-sort-select');
     if (sortSel) sortSel.value = countrySortMode;
     rebuildCountryChips();
+    _psBuildSidebarAllFoot();
   } catch (e) { console.error('initLeagueFilters error:', e); }
 }
 
