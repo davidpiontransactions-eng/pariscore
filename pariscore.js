@@ -740,7 +740,7 @@ function showPage(pageId, linkEl) {
   if (_lk) _lk.style.display = 'none';
   const page = document.getElementById('page-' + pageId);
   if (page) {
-    page.style.display = (['matchs','tennis'].includes(pageId) && document.documentElement.classList.contains('ps-desktop-v1')) ? 'grid' : 'block';
+    page.style.display = (['matchs','tennis','cs2'].includes(pageId) && document.documentElement.classList.contains('ps-desktop-v1')) ? 'grid' : 'block';
     // Forcer la visibilité des sections fade-up (elles sont invisible depuis display:none)
     page.querySelectorAll('.fade-up').forEach(el => {
       el.classList.add('visible');
@@ -6972,16 +6972,212 @@ function _psSbPickTennis(name) {
     btn.classList.toggle('is-active', (btn.dataset.sbTournoi || '') === name);
   });
 }
+// ── Comptage matchs par ligue (sport = odds_key) ────────────────────
+function _leagueMatchCounts() {
+  var counts = {};
+  if (!allMatches || !allMatches.length) return counts;
+  allMatches.forEach(function(m) {
+    if (!m.sport) return;
+    counts[m.sport] = (counts[m.sport] || 0) + 1;
+  });
+  return counts;
+}
+// ── Logo map BSD : odds_key → URL logo officiel ──
+var _bsdLeagueLogoMap = {};
+function _bsdBuildLeagueLogoMap() {
+  _bsdLeagueLogoMap = {};
+  if (!allMatches || !allMatches.length) return;
+  allMatches.forEach(function(m) {
+    if (m.league_logo_url && m.sport && !_bsdLeagueLogoMap[m.sport]) {
+      _bsdLeagueLogoMap[m.sport] = m.league_logo_url;
+    }
+  });
+}
+// ── Logo des compétitions : football-data.org crests + SVG fallback ──
+var FOOTBALL_DATA_CODES = {
+  'soccer_epl':'PL','soccer_england_championship':'ELC','soccer_fa_cup':'FAC','soccer_england_efl_cup':'ELC',
+  'soccer_spain_la_liga':'PD','soccer_spain_segunda_division':'SD',
+  'soccer_italy_serie_a':'SA','soccer_italy_serie_b':'SB','soccer_italy_coppa_italia':'CIT',
+  'soccer_germany_bundesliga':'BL1','soccer_germany_bundesliga2':'BL2','soccer_germany_dfb_pokal':'DFB',
+  'soccer_france_ligue_one':'FL1','soccer_france_ligue_two':'FL2','soccer_france_coupe_de_france':'CDF',
+  'soccer_netherlands_eredivisie':'ED','soccer_portugal_primeira_liga':'PPL',
+  'soccer_scotland_premiership':'SPL','soccer_usa_mls':'MLS',
+  'soccer_uefa_champs_league':'CL','soccer_uefa_europa_league':'EL',
+  'soccer_conmebol_copa_libertadores':'CLI',
+};
+var LEAGUE_LOGO_SVG = {
+  // T1 Featured
+  'soccer_epl':                '<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" fill="#3d195b" stroke="#fff" stroke-width="3"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="4"/><circle cx="50" cy="50" r="10" fill="#fff"/><path d="M50 18L56 40h24l-19 14 7 24-18-13-18 13 7-24L20 40h24z" fill="#fad000"/></svg>',
+  'soccer_spain_la_liga':      '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#1a1a2e" stroke="#f5c518" stroke-width="2"/><text x="50" y="62" text-anchor="middle" font-family="serif" font-weight="900" font-size="28" fill="#f5c518">LFP</text><circle cx="50" cy="50" r="14" fill="none" stroke="#f5c518" stroke-width="3"/></svg>',
+  'soccer_italy_serie_a':      '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a2050" stroke="#d4af37" stroke-width="3"/><path d="M50 20c-16.6 0-30 13.4-30 30s13.4 30 30 30 30-13.4 30-30-13.4-30-30-30z" fill="#fff" opacity=".15"/><text x="50" y="58" text-anchor="middle" font-family="serif" font-weight="900" font-size="22" fill="#fff">A</text><circle cx="50" cy="50" r="8" fill="#d4af37"/></svg>',
+  'soccer_germany_bundesliga': '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#e2001a" stroke="#fff" stroke-width="2"/><text x="50" y="62" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="34" fill="#fff">BL</text></svg>',
+  'soccer_france_ligue_one':   '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#091c3d" stroke="#d4af37" stroke-width="2"/><text x="50" y="56" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="24" fill="#fff">L1</text><path d="M30 55l20-15 20 15" stroke="#d4af37" stroke-width="3" fill="none"/></svg>',
+  // Europe
+  'soccer_uefa_champs_league': '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a1e42" stroke="#a5d6ff" stroke-width="2"/><path d="M50 18L38 82h24L50 18z" fill="#a5d6ff"/><path d="M50 18L18 50h64L50 18z" fill="none" stroke="#fff" stroke-width="2"/></svg>',
+  'soccer_uefa_europa_league': '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#e84a00" stroke="#fff" stroke-width="2"/><text x="50" y="62" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="26" fill="#fff">UEL</text></svg>',
+  // International — logos FIFA/UEFA/CONMEBOL/etc
+  'soccer_fifa_world_cup':          '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a3d6b" stroke="#d4af37" stroke-width="3"/><path d="M50 18c-14 0-26 9-30 22h60c-4-13-16-22-30-22z" fill="#fff" opacity=".2"/><circle cx="50" cy="43" r="12" fill="#d4af37"/><text x="50" y="82" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="14" fill="#fff">FIFA</text></svg>',
+  'soccer_friendly':                '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a3d6b" stroke="#d4af37" stroke-width="3"/><path d="M50 20a30 30 0 1 0 0 60 30 30 0 0 0 0-60zm0 5a20 20 0 0 1 15 8H35a20 20 0 0 1 15-8z" fill="#fff" opacity=".3"/><text x="50" y="78" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#fff">FIFA</text></svg>',
+  'soccer_friendly_international':   '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a3d6b" stroke="#d4af37" stroke-width="3"/><path d="M50 20a30 30 0 1 0 0 60 30 30 0 0 0 0-60zm0 5a20 20 0 0 1 15 8H35a20 20 0 0 1 15-8z" fill="#fff" opacity=".3"/><text x="50" y="78" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#fff">FIFA</text></svg>',
+  'soccer_international_friendlies': '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a3d6b" stroke="#d4af37" stroke-width="3"/><path d="M50 20a30 30 0 1 0 0 60 30 30 0 0 0 0-60zm0 5a20 20 0 0 1 15 8H35a20 20 0 0 1 15-8z" fill="#fff" opacity=".3"/><text x="50" y="78" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#fff">FIFA</text></svg>',
+  'soccer_uefa_euro':               '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#003399" stroke="#ffcc00" stroke-width="2"/><text x="50" y="64" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="22" fill="#fff">EURO</text></svg>',
+  'soccer_uefa_euro_qualification':  '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#003399" stroke="#fff" stroke-width="2"/><text x="50" y="64" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#fff">EQ</text></svg>',
+  'soccer_uefa_nations_league':      '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#1a3a6b" stroke="#ffcc00" stroke-width="2"/><text x="50" y="60" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#fff">UNL</text></svg>',
+  'soccer_copa_america':             '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#003300" stroke="#ffcc00" stroke-width="2"/><text x="50" y="60" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#fff">COPA</text></svg>',
+  'soccer_africa_cup_of_nations':     '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#006400" stroke="#ffcc00" stroke-width="2"/><text x="50" y="60" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#fff">CAN</text></svg>',
+  'soccer_afc_asian_cup':             '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#cc0000" stroke="#ffcc00" stroke-width="2"/><text x="50" y="60" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="16" fill="#fff">AC</text></svg>',
+  'soccer_wc_qualification':          '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0a3d6b" stroke="#d4af37" stroke-width="1.5"/><text x="50" y="60" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="14" fill="#fff">WQ</text></svg>',
+};
+var LEAGUE_INTERNATIONAL_KEYS = ['soccer_fifa_world_cup','soccer_fifa_world_cup_women','soccer_friendly','soccer_friendly_international','soccer_international_friendlies','soccer_uefa_nations_league','soccer_afc_asian_cup','soccer_africa_cup_of_nations','soccer_africa_nations_cup','soccer_copa_america','soccer_conmebol_copa_america','soccer_concacaf_nations_league','soccer_concacaf_gold_cup','soccer_uefa_euro','soccer_uefa_euro_qualification','soccer_wc_qualification','soccer_wc_qual_uefa','soccer_wc_qual_conmebol','soccer_wc_qual_afc','soccer_wc_qual_caf','soccer_wc_qual_concacaf','soccer_fifa_world_cup_qualifier_uefa','soccer_fifa_world_cup_qualifier_conmebol','soccer_fifa_world_cup_qualifier_caf','soccer_fifa_world_cup_qualifier_afc','soccer_fifa_world_cup_qualifier_concacaf','soccer_fifa_world_cup_qualifier_ofc'];
+function _isInternationalLeague(key) {
+  return LEAGUE_INTERNATIONAL_KEYS.indexOf(key) !== -1;
+}
+// Génère un badge SVG auto (couleurs vives, dégradé) — dernier recours uniquement
+var _LEAGUE_COLORS = ['#3b82f6','#f59e0b','#8b5cf6','#10b981','#ef4444','#06b6d4','#ec4899','#f97316','#6366f1'];
+function _autoLeagueSVG(name) {
+  var words = (name || 'LG').split(/\s+/);
+  var abbr = words.length >= 2 ? (words[0][0] + words[1][0]).toUpperCase() : (words[0] || 'LG').substring(0, 2).toUpperCase();
+  var hash = 0; for (var i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  var c1 = _LEAGUE_COLORS[Math.abs(hash) % _LEAGUE_COLORS.length];
+  var c2 = _LEAGUE_COLORS[(Math.abs(hash) + 3) % _LEAGUE_COLORS.length];
+  return '<svg viewBox="0 0 100 100"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + c1 + '"/><stop offset="100%" stop-color="' + c2 + '"/></linearGradient></defs><rect width="100" height="100" rx="16" fill="url(#bg)"/><text x="50" y="68" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="' + (abbr.length > 2 ? '22' : '34') + '" fill="#fff">' + abbr + '</text></svg>';
+}
+// btoa compatible Unicode (emoji-safe)
+function _btoaSafe(str) {
+  try { return btoa(str); } catch (e) {}
+  return btoa(unescape(encodeURIComponent(str)));
+}
+// Cascade error handler for league logos (P1/P2 fail → P3→P4→P5→⚽)
+// Reads key/name from data-lk / data-ln attributes to avoid onerror escaping issues
+function _leagueLogoFallback(img) {
+  img.onerror = null;
+  var key = img.getAttribute('data-lk') || '';
+  var name = img.getAttribute('data-ln') || '';
+  // Try P3: SVG inline
+  var svg = LEAGUE_LOGO_SVG[key];
+  if (svg) { img.src = 'data:image/svg+xml;base64,' + _btoaSafe(svg); return; }
+  // Try P4: international globe
+  if (_isInternationalLeague(key)) {
+    img.outerHTML = '<span class="sidebar-league-logo sidebar-intl-globe" title="Compétition internationale">🌍</span>';
+    return;
+  }
+  // P5: auto-badge → final fallback ⚽
+  var autoSvg = _autoLeagueSVG(name);
+  img.src = 'data:image/svg+xml;base64,' + _btoaSafe(autoSvg);
+  img.onerror = function() {
+    this.onerror = null;
+    this.outerHTML = '<span class="sidebar-league-logo" style="font-size:15px;display:inline-flex!important;align-items:center;justify-content:center;width:22px;height:22px;">⚽</span>';
+  };
+}
+function _getLeagueLogo(key, name, country) {
+  var esc = function(s) { return (s || '').replace(/"/g, '&quot;'); };
+  var da = ' data-lk="' + esc(key) + '" data-ln="' + esc(name) + '"';
+  // P1 : logo officiel football-data.org (CDN gratuit, 20+ ligues)
+  var fdCode = FOOTBALL_DATA_CODES[key];
+  if (fdCode) {
+    return '<img class="sidebar-league-logo"' + da + ' src="https://crests.football-data.org/' + fdCode + '.png" alt="' + esc(name) + '" onerror="_leagueLogoFallback(this)">';
+  }
+  // P2 : logo officiel BSD (extrait de league_logo_url sur les matchs du jour)
+  if (_bsdLeagueLogoMap[key]) {
+    return '<img class="sidebar-league-logo"' + da + ' src="' + _bsdLeagueLogoMap[key] + '" alt="' + esc(name) + '" onerror="_leagueLogoFallback(this)">';
+  }
+  // P3 : SVG inline connu (international + vedettes)
+  var svg = LEAGUE_LOGO_SVG[key];
+  if (svg) {
+    return '<img class="sidebar-league-logo" src="data:image/svg+xml;base64,' + _btoaSafe(svg) + '" alt="' + esc(name) + '">';
+  }
+  // P4 : compétition internationale → globe FIFA
+  if (_isInternationalLeague(key)) {
+    return '<span class="sidebar-league-logo sidebar-intl-globe" title="Compétition internationale">🌍</span>';
+  }
+  // P5 : badge auto-généré (initiales colorées) → final fallback ⚽ (pas de drapeau pays — déjà dans l'en-tête country)
+  var autoSvg = _autoLeagueSVG(name);
+  return '<img class="sidebar-league-logo"' + da + ' src="data:image/svg+xml;base64,' + _btoaSafe(autoSvg) + '" alt="' + esc(name) + '" onerror="this.onerror=null;this.outerHTML=\'<span class=\\\"sidebar-league-logo\\\" style=\\\"font-size:15px;display:inline-flex!important;align-items:center;justify-content:center;width:22px;height:22px;\\\">⚽</span>\'">';
+}
+// Drapeau pays avec classe sidebar-league-logo (fallback P5)
+function _getCountryFlagLogo(country) {
+  var n = (country || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').trim();
+  var iso = ({
+    'france':'fr','england':'gb-eng','spain':'es','germany':'de','italy':'it','netherlands':'nl','belgium':'be','portugal':'pt',
+    'scotland':'gb-sct','wales':'gb-wls','turkey':'tr','denmark':'dk','norway':'no','sweden':'se','greece':'gr','switzerland':'ch',
+    'czech republic':'cz','austria':'at','poland':'pl','hungary':'hu','romania':'ro','croatia':'hr','serbia':'rs','slovakia':'sk',
+    'finland':'fi','ireland':'ie','ukraine':'ua','bulgaria':'bg','slovenia':'si','iceland':'is','cyprus':'cy',
+    'brazil':'br','argentina':'ar','mexico':'mx','usa':'us','canada':'ca','colombia':'co','chile':'cl','peru':'pe','ecuador':'ec',
+    'uruguay':'uy','paraguay':'py','bolivia':'bo','venezuela':'ve','costa rica':'cr',
+    'japan':'jp','south korea':'kr','saudi arabia':'sa','uae':'ae','qatar':'qa','china':'cn','india':'in',
+    'australia':'au','thailand':'th','indonesia':'id',
+    'morocco':'ma','egypt':'eg','south africa':'za','nigeria':'ng','senegal':'sn','ghana':'gh','algeria':'dz','tunisia':'tn',
+    'cameroon':'cm','ivory coast':'ci','kenya':'ke',
+    'europe':'eu','world':'world','international':'world','south america':'xx','north america':'xx','africa':'xx','asia':'xx','oceania':'xx',
+    'angleterre':'gb-eng','espagne':'es','allemagne':'de','italie':'it','pays bas':'nl','bresil':'br','argentine':'ar',
+    'mexique':'mx','japon':'jp','coree du sud':'kr','maroc':'ma','tunisie':'tn','suisse':'ch','turquie':'tr',
+    'autriche':'at','pologne':'pl','roumanie':'ro','croatie':'hr','serbie':'rs','slovaquie':'sk','slovenie':'si',
+    'bulgarie':'bg','hongrie':'hu','norvege':'no','suede':'se','danemark':'dk','finlande':'fi','irlande':'ie',
+    'ukraine':'ua','russie':'ru','grece':'gr','tchequie':'cz','tcheque':'cz','belgique':'be','portugal':'pt',
+    'ecosse':'gb-sct','algerie':'dz','egypte':'eg','nigeria':'ng','senegal':'sn',
+    'europe':'eu','monde':'world','amerique du sud':'xx','afrique':'xx',
+  })[n] || 'xx';
+  return '<img class="sidebar-league-logo" src="https://flagcdn.com/w40/' + iso + '.png" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="object-fit:cover;border-radius:2px;">';
+}
+function _psLogoCountryFallback(name, country) {
+  var c = country || _psGuessCountryFromName(name);
+  if (c) {
+    var f = getCountryFlag(c).replace(/class="country-flag"/g,'style="width:20px;height:15px;object-fit:cover;border-radius:2px;"');
+    return '<img class="sidebar-league-logo" src="data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/><text x="12" y="16" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="14" fill="#f59e0b">' + ((name||'LG').replace(/[^a-zA-Z]/g,'').substring(0,2).toUpperCase()||'LG') + '</text></svg>') + '" alt="" style="width:22px;height:22px;display:inline-block!important">';
+  }
+  return '<span class="sidebar-league-logo sidebar-intl-globe" style="font-size:16px;">⚽</span>';
+}
+// ── Construction Sidebar Foot (Bloc A vedette + Bloc B exhaustif) ──
+var SIDEBAR_FEATURED_FOOT = [
+  { key:'soccer_epl',               name:'Premier League',   country:'England' },
+  { key:'soccer_spain_la_liga',     name:'La Liga',          country:'Spain' },
+  { key:'soccer_italy_serie_a',     name:'Serie A',          country:'Italy' },
+  { key:'soccer_germany_bundesliga',name:'Bundesliga',       country:'Germany' },
+  { key:'soccer_france_ligue_one',  name:'Ligue 1',          country:'France' },
+  { key:'soccer_uefa_champs_league',name:'Champions League', country:'Europe' },
+  { key:'soccer_uefa_europa_league',name:'Europa League',    country:'Europe' },
+  { key:'soccer_fifa_world_cup',    name:'World Cup 2026',   country:'World' }
+];
+function _psBuildSidebarFeaturedFoot() {
+  var block = document.getElementById('ps-featured-foot-list');
+  if (!block) return;
+  var counts = _leagueMatchCounts();
+  block.innerHTML = '<button class="sidebar-league-item is-active" id="ps-sb-foot-all" onclick="_psSbPickFoot(\'all\')">' +
+    '<span class="sidebar-league-logo" style="font-size:16px;">⚽</span><span class="sidebar-league-name">Toutes les ligues</span>' +
+    '<span class="match-count-badge">' + (allMatches ? allMatches.length : 0) + '</span></button>' +
+    SIDEBAR_FEATURED_FOOT.map(function(f) {
+      var cnt = counts[f.key] || 0;
+      var logoHtml = _getLeagueLogo(f.key, f.name, f.country);
+      return '<button class="sidebar-league-item" data-sb-key="' + _mlEsc(f.key) + '" onclick="_psSbPickFoot(\'' + f.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' +
+        logoHtml + '<span class="sidebar-league-name">' + f.name + '</span>' +
+        (cnt > 0 ? '<span class="match-count-badge">' + cnt + '</span>' : '') +
+        '</button>';
+    }).join('');
+}
 function _psBuildSidebarAllFoot() {
   var list = document.getElementById('ps-sidebar-all-list');
   if (!list || typeof leaguesByCountry === 'undefined') return;
+  var counts = _leagueMatchCounts();
   var html = '';
   Object.keys(leaguesByCountry).sort().forEach(function(country) {
+    var activeLeagues = [];
     (leaguesByCountry[country] || []).forEach(function(l) {
-      var key = l.odds_key;
-      html += '<button class="sidebar-league-item" data-sb-key="' + _mlEsc(key) + '" onclick="_psSbPickFoot(\'' + key.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' +
-        '<span class="sidebar-league-flag">⚽</span>' + (l.name || key) + '</button>';
+      var cnt = counts[l.odds_key] || 0;
+      if (cnt > 0) activeLeagues.push({ league: l, count: cnt });
     });
+    if (activeLeagues.length === 0) return;
+    var flagImg = getCountryFlag(country);
+    var frName = frCountry(country);
+    html += '<div class="sidebar-country-group">';
+    html += '<div class="sidebar-country-header">' + flagImg + '<span>' + frName + '</span></div>';
+    activeLeagues.forEach(function(item) {
+      var l = item.league, key = l.odds_key;
+      var logoHtml = _getLeagueLogo(key, l.name, l.country);
+      html += '<button class="sidebar-league-item" data-sb-key="' + _mlEsc(key) + '" onclick="_psSbPickFoot(\'' + key.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' +
+        logoHtml + '<span class="sidebar-league-name">' + (l.name || key) + '</span>' +
+        '<span class="match-count-badge">' + item.count + '</span></button>';
+    });
+    html += '</div>';
   });
   list.innerHTML = html || '<div class="sidebar-all-empty">Aucune ligue disponible</div>';
 }
@@ -6998,8 +7194,16 @@ function _psBuildSidebarAllTennis() {
 }
 function _psSbFilterFoot(q) {
   var lq = (q || '').toLowerCase();
+  // Show/hide league items
   document.querySelectorAll('#ps-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
     btn.style.display = !lq || btn.textContent.toLowerCase().indexOf(lq) !== -1 ? '' : 'none';
+  });
+  // Show/hide country group headers based on visible children
+  document.querySelectorAll('#ps-sidebar-all-list .sidebar-country-group').forEach(function(grp) {
+    var visible = grp.querySelectorAll('.sidebar-league-item').length > 0 &&
+      Array.from(grp.querySelectorAll('.sidebar-league-item')).some(function(b) { return b.style.display !== 'none'; });
+    var hdr = grp.querySelector('.sidebar-country-header');
+    if (hdr) hdr.style.display = visible ? '' : 'none';
   });
 }
 function _psSbFilterTennis(q) {
@@ -7007,6 +7211,61 @@ function _psSbFilterTennis(q) {
   document.querySelectorAll('#ps-tennis-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
     btn.style.display = !lq || btn.textContent.toLowerCase().indexOf(lq) !== -1 ? '' : 'none';
   });
+}
+// ── CS2 Sidebar ─────────────────────────────────────────────
+function _psSbPickCs2(key) {
+  _cs2Tournament = key;
+  // Update sidebar active states
+  document.querySelectorAll('#ps-cs2-sidebar .sidebar-league-item').forEach(function(btn) {
+    btn.classList.toggle('is-active', (btn.dataset.sbCs2 || '') === key);
+  });
+  document.querySelectorAll('#ps-cs2-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.classList.toggle('is-active', (btn.dataset.sbCs2 || '') === key);
+  });
+  // Apply filter via CS2 engine
+  if (typeof _applyCs2Filter === 'function') _applyCs2Filter();
+}
+function _psSbFilterCs2(q) {
+  var lq = (q || '').toLowerCase();
+  document.querySelectorAll('#ps-cs2-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.style.display = !lq || btn.textContent.toLowerCase().indexOf(lq) !== -1 ? '' : 'none';
+  });
+}
+function _psBuildSidebarAllCs2() {
+  var list = document.getElementById('ps-cs2-sidebar-all-list');
+  if (!list) return;
+  if (!_cs2LastData || !_cs2LastData.length) {
+    list.innerHTML = '<div class="sidebar-all-empty">Aucun tournoi chargé</div>';
+    return;
+  }
+  // Extract unique tournament names, sort alphabetically
+  var names = [];
+  var seen = {};
+  _cs2LastData.forEach(function (m) {
+    var n = String(m.tournament || '').trim();
+    if (n && !seen[n]) { seen[n] = true; names.push(n); }
+  });
+  names.sort(function (a, b) { return a.localeCompare(b); });
+  if (!names.length) {
+    list.innerHTML = '<div class="sidebar-all-empty">Aucun tournoi</div>';
+    return;
+  }
+  list.innerHTML = names.map(function (n) {
+    var safe = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<button class="sidebar-league-item" data-sb-cs2="' + n.replace(/"/g,'&quot;') + '" onclick="_psSbPickCs2(\'' + safe + '\')">' +
+      '<span class="sidebar-league-flag">🎮</span>' + n + '</button>';
+  }).join('');
+}
+function _psSyncCs2SidebarUI() {
+  document.querySelectorAll('#ps-cs2-sidebar .sidebar-league-item, #ps-cs2-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
+    btn.classList.toggle('is-active', (btn.dataset.sbCs2 || '') === _cs2Tournament);
+  });
+}
+// Rebuild complet de la sidebar Foot (vedette + liste exhaustive) après chargement matchs
+function _psSidebarRebuildAll() {
+  try { _bsdBuildLeagueLogoMap(); } catch (e) {}
+  try { _psBuildSidebarFeaturedFoot(); } catch (e) {}
+  try { _psBuildSidebarAllFoot(); } catch (e) {}
 }
 // Fermeture clic extérieur + repositionnement panneau fixe
 document.addEventListener('click', function(e) {
@@ -7367,6 +7626,7 @@ async function initLeagueFilters() {
     var sortSel = document.getElementById('country-sort-select');
     if (sortSel) sortSel.value = countrySortMode;
     rebuildCountryChips();
+    _psBuildSidebarFeaturedFoot();
     _psBuildSidebarAllFoot();
   } catch (e) { console.error('initLeagueFilters error:', e); }
 }
@@ -7451,6 +7711,7 @@ async function loadMatches() {
 
       updateStatusBar(json.meta);
       renderMatches(allMatches);
+      _psSidebarRebuildAll();
       loadFavoritesFromAccount();
       document.getElementById('table-title').textContent = 'Matchs à venir — ' + allMatches.length + ' matchs';
       if (_accM.footPro) loadAIScout();
@@ -24384,6 +24645,7 @@ function renderComparateur(d) {
   // ── State ────────────────────────────────────────────────────────────────
   var _cs2Timer      = null;
   var _cs2Filter     = 'all';
+  var _cs2Tournament = 'ALL';
   var _cs2LastData   = [];
   var _cs2Loaded     = false;
   var CS2_POLL_MS    = 30 * 1000;
@@ -24398,12 +24660,15 @@ function renderComparateur(d) {
   // ── Public API ────────────────────────────────────────────────────────────
   window.initCs2Page = function () {
     if (_cs2Loaded && !window._cs2ForceRefresh) {
+      _cs2Tournament = 'ALL';
+      _psSyncCs2SidebarUI();
       _applyCs2Filter();
       _startCs2Poll();
       return;
     }
     window._cs2ForceRefresh = false;
     _cs2Loaded = true;
+    _cs2Tournament = 'ALL';
     _renderCs2Skeleton();
     _fetchAndRender();
     _startCs2Poll();
@@ -24667,6 +24932,7 @@ function renderComparateur(d) {
         _cs2LastData = (json && Array.isArray(json.matches)) ? json.matches : [];
         _updateCs2Status(json);
         _applyCs2Filter();
+        _psBuildSidebarAllCs2();
       })
       .catch(function (e) {
         console.warn('[CS2]', e.message);
@@ -24706,6 +24972,14 @@ function renderComparateur(d) {
     var matches = _cs2LastData;
     if (_cs2Filter === 'live')     matches = matches.filter(function (m) { return m.is_live; });
     if (_cs2Filter === 'prematch') matches = matches.filter(function (m) { return !m.is_live && m.status !== 'finished'; });
+    // Sidebar tournament filter
+    if (_cs2Tournament && _cs2Tournament !== 'ALL') {
+      var tKey = _cs2Tournament.toUpperCase();
+      matches = matches.filter(function (m) {
+        var tn = String(m.tournament || '').toUpperCase();
+        return tn.indexOf(tKey) !== -1;
+      });
+    }
     if (_cs2ViewMode === 'dashboard') {
       renderCs2Dashboard(matches);
     } else {

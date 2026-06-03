@@ -8615,14 +8615,16 @@
   .nav-links a.nav-locked:hover { opacity: .85; }
   /* ─── Sport Sidebar Layout ──────────────────────────── */
   html.ps-desktop-v1 #page-matchs,
-  html.ps-desktop-v1 #page-tennis {
-    display: grid;
-    grid-template-columns: 280px 1fr;
+  html.ps-desktop-v1 #page-tennis,
+  html.ps-desktop-v1 #page-cs2 {
+    display: grid !important;
+    grid-template-columns: 280px 1fr !important;
     gap: 0 20px;
     align-items: start;
   }
   html.ps-desktop-v1 #page-matchs > :not(.ps-sidebar),
-  html.ps-desktop-v1 #page-tennis > :not(.ps-sidebar) { grid-column: 2; }
+  html.ps-desktop-v1 #page-tennis > :not(.ps-sidebar),
+  html.ps-desktop-v1 #page-cs2 > :not(.ps-sidebar) { grid-column: 2; }
   html.ps-desktop-v1 .ps-sidebar {
     grid-column: 1;
     position: sticky;
@@ -8635,17 +8637,19 @@
   }
   html.ps-mobile-v2 .ps-sidebar { display: none; }
   .sidebar-nav-block {
-    background: #0e1525;
-    border-radius: 14px;
+    background: #0b132b !important;
+    border-radius: 16px;
     padding: 18px 16px;
     margin-bottom: 16px;
-    border: 1px solid rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.06) !important;
   }
   .sidebar-block-title {
-    color: #f1f5f9;
+    color: #ffffff !important;
     font-size: 13px;
     font-weight: 700;
     font-family: var(--font-body, sans-serif);
+    text-transform: uppercase;
+    letter-spacing: .04em;
     padding-left: 10px;
     border-left: 3px solid #f59e0b;
     margin-bottom: 12px;
@@ -8659,36 +8663,70 @@
     gap: 10px;
     padding: 7px 8px;
     border-radius: 8px;
-    color: #94a3b8;
+    color: #94a3b8 !important;
     font-size: 12.5px;
     font-family: var(--font-body, sans-serif);
     cursor: pointer;
-    transition: background .15s, color .15s;
+    transition: background .15s, color .15s, transform .1s;
     border: none;
-    background: transparent;
+    background: transparent !important;
     width: 100%;
     text-align: left;
+    transform: translateY(0);
   }
-  .sidebar-league-item:hover { background: rgba(255,255,255,.06); color: #e2e8f0; }
-  .sidebar-league-item.is-active { background: rgba(245,158,11,.14); color: #f59e0b; font-weight: 600; }
+  .sidebar-league-item:hover { background: rgba(255,255,255,.05) !important; color: #ffffff !important; }
+  .sidebar-league-item:hover .match-count-badge { background: #f59e0b !important; color: #0b132b !important; box-shadow: 0 2px 8px rgba(245,158,11,.3) !important; }
+  .sidebar-league-item.is-active .match-count-badge { background: #f59e0b !important; color: #0b132b !important; }
+  .sidebar-league-item:active { transform: translateY(1px); }
+  .sidebar-league-item.is-active { background: rgba(245,158,11,.14) !important; color: #f59e0b !important; font-weight: 600; }
   .sidebar-league-flag { width: 22px; text-align: center; font-size: 15px; flex-shrink: 0; line-height: 1; }
-  .sidebar-league-icon { width: 22px; height: 16px; object-fit: contain; flex-shrink: 0; border-radius: 2px; }
+  .sidebar-league-icon { width: 20px; height: 15px; object-fit: cover; flex-shrink: 0; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .sidebar-league-icon img { width: 20px; height: 15px; object-fit: cover; border-radius: 2px; display: block; }
+  .sidebar-league-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* ─── Logo officiel BSD / SVG ── */
+  .sidebar-league-logo {
+    width: 22px; height: 22px; object-fit: contain;
+    margin-right: 12px; flex-shrink: 0; border-radius: 2px;
+    display: inline-block !important; opacity: 1;
+  }
+  .sidebar-league-logo.sidebar-intl-globe {
+    display: inline-flex !important; align-items: center; justify-content: center;
+    width: 22px; height: 22px; font-size: 15px; line-height: 1;
+  }
+  .sidebar-league-logo img { width: 100%; height: 100%; }
+  /* Anti-broken-link: masquer img sans src valide avant que onerror cascade */
+  img.sidebar-league-logo[src=""], img.sidebar-league-logo:not([src]) { visibility: hidden; }
+  /* ─── Country Group Headers ────── */
+  .sidebar-country-group { margin-bottom: 8px; }
+  .sidebar-country-header {
+    display: flex; align-items: center;
+    padding: 12px 12px 6px 12px;
+    color: #64748b; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    font-family: var(--font-mono, monospace);
+  }
+  .sidebar-country-header img,
+  .sidebar-header-flag {
+    width: 18px; height: 13px; border-radius: 2px;
+    object-fit: cover; margin-right: 8px; flex-shrink: 0;
+  }
+  .sidebar-country-header span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sidebar-search {
     width: 100%; box-sizing: border-box;
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 8px; color: #e2e8f0;
+    background: rgba(255,255,255,.07) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 8px; color: #e2e8f0 !important;
     font-size: 12px; font-family: var(--font-mono, monospace);
     padding: 7px 10px; outline: none; margin-bottom: 8px;
     transition: border-color .15s;
   }
-  .sidebar-search:focus { border-color: rgba(245,158,11,.5); }
-  .sidebar-search::placeholder { color: #475569; }
-  #ps-sidebar-all-list, #ps-tennis-sidebar-all-list {
+  .sidebar-search:focus { border-color: rgba(245,158,11,.5) !important; }
+  .sidebar-search::placeholder { color: #475569 !important; }
+  #ps-sidebar-all-list, #ps-tennis-sidebar-all-list, #ps-cs2-sidebar-all-list {
     max-height: 360px; overflow-y: auto;
     scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08) transparent;
   }
-  .sidebar-all-empty { color: #475569; font-size: 11px; font-family: var(--font-mono, monospace); padding: 8px 4px; text-align: center; }
+  .sidebar-all-empty { color: #475569 !important; font-size: 11px; font-family: var(--font-mono, monospace); padding: 8px 4px; text-align: center; }
   /* ─── Dark Premium Utilities ────── */
   .section-title-premium {
     padding-left: 10px; border-left: 3px solid #f59e0b;
@@ -11830,33 +11868,12 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 <div class="ps-sidebar" id="ps-foot-sidebar">
   <div class="sidebar-nav-block">
     <div class="sidebar-block-title">Ligues en vedette</div>
-    <button class="sidebar-league-item is-active" id="ps-sb-foot-all" onclick="_psSbPickFoot('all')">
-      <span class="sidebar-league-flag">⚽</span>Toutes les ligues
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_epl" onclick="_psSbPickFoot('soccer_epl')">
-      <span class="sidebar-league-flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>Premier League
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_spain_la_liga" onclick="_psSbPickFoot('soccer_spain_la_liga')">
-      <span class="sidebar-league-flag">🇪🇸</span>La Liga
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_italy_serie_a" onclick="_psSbPickFoot('soccer_italy_serie_a')">
-      <span class="sidebar-league-flag">🇮🇹</span>Serie A
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_germany_bundesliga" onclick="_psSbPickFoot('soccer_germany_bundesliga')">
-      <span class="sidebar-league-flag">🇩🇪</span>Bundesliga
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_france_ligue_one" onclick="_psSbPickFoot('soccer_france_ligue_one')">
-      <span class="sidebar-league-flag">🇫🇷</span>Ligue 1
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_uefa_champs_league" onclick="_psSbPickFoot('soccer_uefa_champs_league')">
-      <span class="sidebar-league-flag">🏆</span>Champions League
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_uefa_europa_league" onclick="_psSbPickFoot('soccer_uefa_europa_league')">
-      <span class="sidebar-league-flag">🟠</span>Europa League
-    </button>
-    <button class="sidebar-league-item" data-sb-key="soccer_fifa_world_cup" onclick="_psSbPickFoot('soccer_fifa_world_cup')">
-      <span class="sidebar-league-flag">🌍</span>World Cup 2026
-    </button>
+    <div id="ps-featured-foot-list">
+      <button class="sidebar-league-item is-active" id="ps-sb-foot-all" onclick="_psSbPickFoot('all')">
+        <span class="sidebar-league-icon">⚽</span>Toutes les ligues
+        <span class="match-count-badge" id="ps-featured-total">0</span>
+      </button>
+    </div>
   </div>
   <div class="sidebar-nav-block">
     <div class="sidebar-block-title">
@@ -18872,6 +18889,36 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
 /* LAN tag */
 #page-cs2 .cs2-lan-tag { color: #D48900; background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.3); }
 </style>
+
+  <!-- ─── SIDEBAR COMPÉTITIONS CS2 ─── -->
+  <div class="ps-sidebar" id="ps-cs2-sidebar">
+    <div class="sidebar-nav-block">
+      <div class="sidebar-block-title">Compétitions en vedette</div>
+      <button class="sidebar-league-item is-active" data-sb-cs2="ALL" onclick="_psSbPickCs2('ALL')">
+        <span class="sidebar-league-flag">🎮</span>Toutes les compétitions
+      </button>
+      <button class="sidebar-league-item" data-sb-cs2="Major" onclick="_psSbPickCs2('Major')">
+        <span class="sidebar-league-flag">🏆</span>Majors &amp; RMR
+      </button>
+      <button class="sidebar-league-item" data-sb-cs2="ESL Pro League" onclick="_psSbPickCs2('ESL Pro League')">
+        <span class="sidebar-league-flag">⭐</span>ESL Pro League
+      </button>
+      <button class="sidebar-league-item" data-sb-cs2="BLAST Premier" onclick="_psSbPickCs2('BLAST Premier')">
+        <span class="sidebar-league-flag">💥</span>BLAST Premier
+      </button>
+      <button class="sidebar-league-item" data-sb-cs2="IEM" onclick="_psSbPickCs2('IEM')">
+        <span class="sidebar-league-flag">🏅</span>Intel Extreme Masters
+      </button>
+    </div>
+    <div class="sidebar-nav-block">
+      <div class="sidebar-block-title">
+        Tous les tournois
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" aria-hidden="true" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <input type="search" class="sidebar-search" id="ps-sb-cs2-search" placeholder="Rechercher un tournoi…" oninput="_psSbFilterCs2(this.value)" aria-label="Rechercher un tournoi CS2">
+      <div id="ps-cs2-sidebar-all-list"><div class="sidebar-all-empty">Chargement…</div></div>
+    </div>
+  </div>
 
   <!-- Header -->
   <div class="cs2-header fade-up">
