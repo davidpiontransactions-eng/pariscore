@@ -8637,14 +8637,14 @@
   }
   html.ps-mobile-v2 .ps-sidebar { display: none; }
   .sidebar-nav-block {
-    background: #0b132b !important;
+    background: var(--bg2) !important;
     border-radius: 16px;
     padding: 18px 16px;
     margin-bottom: 16px;
-    border: 1px solid rgba(255,255,255,.06) !important;
+    border: 1px solid var(--border2) !important;
   }
   .sidebar-block-title {
-    color: #ffffff !important;
+    color: var(--text) !important;
     font-size: 13px;
     font-weight: 700;
     font-family: var(--font-body, sans-serif);
@@ -8663,7 +8663,7 @@
     gap: 10px;
     padding: 7px 8px;
     border-radius: 8px;
-    color: #94a3b8 !important;
+    color: var(--text2) !important;
     font-size: 12.5px;
     font-family: var(--font-body, sans-serif);
     cursor: pointer;
@@ -8674,7 +8674,7 @@
     text-align: left;
     transform: translateY(0);
   }
-  .sidebar-league-item:hover { background: rgba(255,255,255,.05) !important; color: #ffffff !important; }
+  .sidebar-league-item:hover { background: var(--bg3) !important; color: var(--text) !important; }
   .sidebar-league-item:hover .match-count-badge { background: #f59e0b !important; color: #0b132b !important; box-shadow: 0 2px 8px rgba(245,158,11,.3) !important; }
   .sidebar-league-item.is-active .match-count-badge { background: #f59e0b !important; color: #0b132b !important; }
   .sidebar-league-item:active { transform: translateY(1px); }
@@ -8699,7 +8699,7 @@
   .sidebar-country-header {
     display: flex; align-items: center;
     padding: 12px 12px 6px 12px;
-    color: #64748b; font-size: 13px; font-weight: 700;
+    color: var(--text3); font-size: 13px; font-weight: 700;
     text-transform: uppercase; letter-spacing: .05em;
     font-family: var(--font-mono, monospace);
   }
@@ -8711,18 +8711,18 @@
   .sidebar-country-header span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sidebar-search {
     width: 100%; box-sizing: border-box;
-    background: rgba(255,255,255,.07) !important;
-    border: 1px solid rgba(255,255,255,.10) !important;
-    border-radius: 8px; color: #e2e8f0 !important;
+    background: var(--bg3) !important;
+    border: 1px solid var(--border2) !important;
+    border-radius: 8px; color: var(--text) !important;
     font-size: 12px; font-family: var(--font-mono, monospace);
     padding: 7px 10px; outline: none; margin-bottom: 8px;
     transition: border-color .15s;
   }
   .sidebar-search:focus { border-color: rgba(245,158,11,.5) !important; }
-  .sidebar-search::placeholder { color: #475569 !important; }
+  .sidebar-search::placeholder { color: var(--text3) !important; }
   #ps-sidebar-all-list, #ps-tennis-sidebar-all-list, #ps-cs2-sidebar-all-list {
     max-height: 360px; overflow-y: auto;
-    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08) transparent;
+    scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
   }
   .sidebar-all-empty { color: #475569 !important; font-size: 11px; font-family: var(--font-mono, monospace); padding: 8px 4px; text-align: center; }
   /* ─── Dark Premium Utilities ────── */
