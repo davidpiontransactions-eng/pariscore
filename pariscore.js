@@ -7005,6 +7005,81 @@ var FOOTBALL_DATA_CODES = {
   'soccer_uefa_champs_league':'CL','soccer_uefa_europa_league':'EL',
   'soccer_conmebol_copa_libertadores':'CLI',
 };
+// API-Football CDN logos — https://media.api-sports.io/football/leagues/{id}.png
+// Public CDN, no auth needed for img src. Covers 90+ leagues not in football-data.org.
+var LEAGUE_LOGO_AF_IDS = {
+  // England
+  'soccer_epl':39,'soccer_england_championship':40,'soccer_fa_cup':45,'soccer_england_efl_cup':48,
+  // Spain
+  'soccer_spain_la_liga':140,'soccer_spain_segunda_division':141,'soccer_spain_copa_del_rey':143,'soccer_spain_liga_f':56,
+  // Germany
+  'soccer_germany_bundesliga':78,'soccer_germany_bundesliga2':79,'soccer_germany_dfb_pokal':81,
+  // Italy
+  'soccer_italy_serie_a':135,'soccer_italy_serie_b':136,'soccer_italy_coppa_italia':137,
+  // France
+  'soccer_france_ligue_one':61,'soccer_france_ligue_two':62,'soccer_france_coupe_de_france':66,
+  // Benelux / Iberia
+  'soccer_netherlands_eredivisie':88,
+  'soccer_portugal_primeira_liga':94,'soccer_portugal_segunda_liga':95,
+  'soccer_belgium_first_div':144,'soccer_belgium_second_div':145,
+  // Europe T2
+  'soccer_turkey_super_league':203,
+  'soccer_scotland_premiership':179,'soccer_scotland_championship':180,
+  'soccer_greece_super_league':197,'soccer_greece_super_league_2':198,
+  'soccer_switzerland_super_league':207,'soccer_switzerland_challenge_league':208,
+  'soccer_sweden_allsvenskan':113,'soccer_sweden_superettan':114,
+  'soccer_poland_ekstraklasa':106,'soccer_poland_first_league':107,'soccer_poland_cup':108,
+  'soccer_romania_liga_1':283,'soccer_romania_liga_2':284,
+  'soccer_hungary_otp_bank_liga':271,'soccer_hungary_nemzeti_bajnoksag_i':271,
+  'soccer_slovakia_super_liga':332,
+  'soccer_finland_veikkausliiga':244,'soccer_finland_ykkonen':245,'soccer_finland_cup':246,
+  'soccer_ireland_premier_division':357,'soccer_ireland_first_div':358,
+  'soccer_austria_football_bundesliga':218,
+  'soccer_czech_republic_first_league':345,
+  'soccer_denmark_superliga':119,
+  'soccer_norway_eliteserien':103,
+  'soccer_croatia_primera_hnl':210,
+  'soccer_serbia_super_liga':286,
+  'soccer_ukraine_premier_league':333,
+  'soccer_bulgaria_first_league':172,
+  // Americas
+  'soccer_mexico_ligamx':262,'soccer_mexico_ligamx_expansion':265,
+  'soccer_brazil_campeonato':71,'soccer_brazil_serie_b':72,'soccer_brazil_copa_do_brasil':73,
+  'soccer_argentina_primera_division':128,'soccer_argentina_primera_nacional':131,
+  'soccer_chile_campeonato':335,
+  'soccer_colombia_primera_a':239,
+  'soccer_ecuador_liga_pro':258,
+  'soccer_paraguay_primera_division':285,
+  'soccer_usa_mls':253,'soccer_usa_usl_championship':255,
+  // Asia / Middle East / Oceania
+  'soccer_saudi_premier_league':307,
+  'soccer_japan_j_league':98,'soccer_japan_j2_league':99,'soccer_japan_emperor_cup':196,
+  'soccer_korea_kleague1':292,'soccer_korea_kleague2':293,
+  'soccer_china_super_league':169,
+  'soccer_australia_aleague':188,
+  // Africa
+  'soccer_morocco_botola_pro':200,
+  'soccer_algeria_ligue_professionelle_1':379,
+  'soccer_tunisia_ligue_1':397,
+  'soccer_nigeria_premier_league':490,
+  // UEFA / CONMEBOL / CAF club competitions
+  'soccer_uefa_champs_league':2,'soccer_uefa_europa_league':3,'soccer_uefa_europa_conference_league':848,
+  'soccer_conmebol_copa_libertadores':13,'soccer_conmebol_copa_sudamericana':11,
+  'soccer_africa_caf_champions_league':12,
+  // International / national team competitions
+  'soccer_fifa_world_cup':1,
+  'soccer_africa_nations_cup':6,
+  'soccer_international_friendlies':10,
+  'soccer_fifa_world_cup_qualifier_uefa':32,'soccer_fifa_world_cup_qualifier_conmebol':34,
+  'soccer_fifa_world_cup_qualifier_caf':30,'soccer_fifa_world_cup_qualifier_afc':36,
+  'soccer_fifa_world_cup_qualifier_concacaf':31,'soccer_fifa_world_cup_qualifier_ofc':37,
+  'soccer_uefa_nations_league':5,
+  'soccer_concacaf_nations_league':681,
+  'soccer_uefa_euro':4,
+  'soccer_conmebol_copa_america':9,
+  'soccer_afc_asian_cup':7,
+  'soccer_concacaf_gold_cup':8,
+};
 var LEAGUE_LOGO_SVG = {
   // T1 Featured
   'soccer_epl':                '<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" fill="#3d195b" stroke="#fff" stroke-width="3"/><circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="4"/><circle cx="50" cy="50" r="10" fill="#fff"/><path d="M50 18L56 40h24l-19 14 7 24-18-13-18 13 7-24L20 40h24z" fill="#fad000"/></svg>',
@@ -7078,6 +7153,11 @@ function _getLeagueLogo(key, name, country) {
   var fdCode = FOOTBALL_DATA_CODES[key];
   if (fdCode) {
     return '<img class="sidebar-league-logo"' + da + ' src="https://crests.football-data.org/' + fdCode + '.png" alt="' + esc(name) + '" onerror="_leagueLogoFallback(this)">';
+  }
+  // P1b : API-Football CDN (90+ leagues, public no-auth CDN)
+  var afId = LEAGUE_LOGO_AF_IDS[key];
+  if (afId) {
+    return '<img class="sidebar-league-logo"' + da + ' src="https://media.api-sports.io/football/leagues/' + afId + '.png" alt="' + esc(name) + '" onerror="_leagueLogoFallback(this)">';
   }
   // P2 : logo officiel BSD (extrait de league_logo_url sur les matchs du jour)
   if (_bsdLeagueLogoMap[key]) {
