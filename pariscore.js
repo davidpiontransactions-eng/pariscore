@@ -25147,10 +25147,11 @@ function renderComparateur(d) {
         }
 
         // Map + over model cell
+        var _fmtLabel = m.format ? '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3);">' + _esc(m.format) + '</span>' : '';
         var mapCell = m.current_map
           ? '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);">' + _esc(m.current_map) + '</span>' +
             (model ? '<br>' + _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':model.confidence==='MED'?'amber':'grey' }) : '')
-          : (model ? _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':'amber' }) : '<span style="color:var(--text3);font-size:10px;">—</span>');
+          : (model ? _kpiBadge({ label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':'amber' }) + (_fmtLabel ? '<br>' + _fmtLabel : '') : (_fmtLabel || '<span style="color:var(--text3);font-size:10px;">—</span>'));
 
         // Odds cell + EV badge
         var odds = m.odds || {};
@@ -25162,15 +25163,26 @@ function renderComparateur(d) {
         var _evHtml = _bestEv != null
           ? '<br><span class="cs2-ev-badge ' + (_bestEv >= 0.05 ? 'ev-pos' : _bestEv >= 0 ? 'ev-flat' : 'ev-neg') + '">EV ' + (_bestEv >= 0 ? '+' : '') + (_bestEv * 100).toFixed(1) + '%</span>'
           : '';
-        var oddsCell = (odds.team1 != null && odds.team2 != null)
-          ? '<span style="font-family:\'DM Mono\',monospace;font-size:11px;">' +
+        var _eloProb = kd.signals.find(function(s){return s.key==='prob';});
+        var oddsCell;
+        if (odds.team1 != null && odds.team2 != null) {
+          oddsCell = '<span style="font-family:\'DM Mono\',monospace;font-size:11px;">' +
             Number(odds.team1).toFixed(2) + '<span style="color:var(--text3);margin:0 4px;">vs</span>' +
-            Number(odds.team2).toFixed(2) + '</span>' + _evHtml
-          : '<span style="color:var(--text3);font-size:10px;">—</span>';
+            Number(odds.team2).toFixed(2) + '</span>' + _evHtml;
+        } else if (_eloProb && _eloProb.val > 0 && _eloProb.val < 1) {
+          var _io1 = (1 / _eloProb.val).toFixed(2);
+          var _io2 = (1 / (1 - _eloProb.val)).toFixed(2);
+          oddsCell = '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3);" title="Cotes implicites ELO">~' + _io1 + '<span style="margin:0 3px;">vs</span>~' + _io2 + '</span>';
+        } else {
+          oddsCell = '<span style="color:var(--text3);font-size:10px;">—</span>';
+        }
 
-        // Form cells (team1 last 5 as dots)
-        function formDots(formArr) {
-          if (!formArr) return '<span style="color:var(--text3);font-size:10px;">—</span>';
+        // Form cells (team1 last 5 as dots, or trajectory arrow fallback)
+        function formDots(formArr, traj) {
+          if (!formArr || !formArr.length) {
+            if (traj && traj.arrow) return '<span style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--text2);" title="' + (traj.label||'') + '">' + traj.arrow + '</span>';
+            return '<span style="color:var(--text3);font-size:10px;">—</span>';
+          }
           return formArr.slice(-5).map(function(r){
             var c = r==='W'?'#00e676':r==='L'?'#ff4d4d':'#5a6068';
             return '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+c+';margin:0 1px;" title="'+r+'"></span>';
@@ -25178,6 +25190,8 @@ function renderComparateur(d) {
         }
         var f1 = e && e.team1 && e.team1.form ? e.team1.form.form : null;
         var f2 = e && e.team2 && e.team2.form ? e.team2.form.form : null;
+        var f1traj = e && e.team1 ? e.team1.form_trajectory : null;
+        var f2traj = e && e.team2 ? e.team2.form_trajectory : null;
 
         // KPI signals row (all except form)
         var kpiCells = kd.signals
@@ -25195,9 +25209,9 @@ function renderComparateur(d) {
           return _esc(t.name) + rankHtml;
         }
 
-        // Prediction confidence badge
-        var probCell = m.prediction
-          ? _kpiBadge(kd.signals.find(function(s){return s.key==='prob';}) || { label:'—', color:'grey' })
+        // Prediction confidence badge — uses prob signal (ELO fallback if no BSD ML)
+        var probCell = _eloProb
+          ? _kpiBadge(_eloProb)
           : '<span style="color:var(--text3);font-size:10px;">—</span>';
 
         return '<tr class="cs2-dash-row' + (m.is_live ? ' cs2-dash-live' : '') + (m.map_advantage && m.map_advantage.value_flag ? ' has-value-map' : '') + '">' +
@@ -25210,8 +25224,8 @@ function renderComparateur(d) {
           '<td class="cs2-dash-odds">' + oddsCell + '</td>' +
           '<td class="cs2-dash-prob">' + probCell + '</td>' +
           '<td class="cs2-dash-form">' +
-            '<div style="margin-bottom:2px;">' + formDots(f1) + '</div>' +
-            '<div>' + formDots(f2) + '</div>' +
+            '<div style="margin-bottom:2px;">' + formDots(f1, f1traj) + '</div>' +
+            '<div>' + formDots(f2, f2traj) + '</div>' +
           '</td>' +
           '<td class="cs2-dash-map">' + mapCell + '</td>' +
           '<td class="cs2-dash-kpi">' + (kpiCells || '<span style="color:var(--text3);font-size:10px;">⏳</span>') + '</td>' +
