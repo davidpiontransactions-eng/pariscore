@@ -740,7 +740,7 @@ function showPage(pageId, linkEl) {
   if (_lk) _lk.style.display = 'none';
   const page = document.getElementById('page-' + pageId);
   if (page) {
-    page.style.display = 'block';
+    page.style.display = (['matchs','tennis'].includes(pageId) && document.documentElement.classList.contains('ps-desktop-v1')) ? 'grid' : 'block';
     // Forcer la visibilité des sections fade-up (elles sont invisible depuis display:none)
     page.querySelectorAll('.fade-up').forEach(el => {
       el.classList.add('visible');
