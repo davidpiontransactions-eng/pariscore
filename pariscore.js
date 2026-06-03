@@ -7047,6 +7047,11 @@ function _btoaSafe(str) {
   try { return btoa(str); } catch (e) {}
   return btoa(unescape(encodeURIComponent(str)));
 }
+// Final ⚽ fallback — called from onerror (named fn avoids HTML-attr escaping issues)
+function _leagueLogoFinal(img) {
+  img.onerror = null;
+  img.outerHTML = '<span class="sidebar-league-logo" style="font-size:15px;display:inline-flex!important;align-items:center;justify-content:center;width:22px;height:22px;">⚽</span>';
+}
 // Cascade error handler for league logos (P1/P2 fail → P3→P4→P5→⚽)
 // Reads key/name from data-lk / data-ln attributes to avoid onerror escaping issues
 function _leagueLogoFallback(img) {
@@ -7064,10 +7069,7 @@ function _leagueLogoFallback(img) {
   // P5: auto-badge → final fallback ⚽
   var autoSvg = _autoLeagueSVG(name);
   img.src = 'data:image/svg+xml;base64,' + _btoaSafe(autoSvg);
-  img.onerror = function() {
-    this.onerror = null;
-    this.outerHTML = '<span class="sidebar-league-logo" style="font-size:15px;display:inline-flex!important;align-items:center;justify-content:center;width:22px;height:22px;">⚽</span>';
-  };
+  img.onerror = function() { _leagueLogoFinal(this); };
 }
 function _getLeagueLogo(key, name, country) {
   var esc = function(s) { return (s || '').replace(/"/g, '&quot;'); };
@@ -7090,9 +7092,10 @@ function _getLeagueLogo(key, name, country) {
   if (_isInternationalLeague(key)) {
     return '<span class="sidebar-league-logo sidebar-intl-globe" title="Compétition internationale">🌍</span>';
   }
-  // P5 : badge auto-généré (initiales colorées) → final fallback ⚽ (pas de drapeau pays — déjà dans l'en-tête country)
+  // P5 : badge auto-généré (initiales colorées) → final fallback ⚽
+  // NOTE: onerror must call a named function — inline HTML in onerror attr breaks on unescaped "
   var autoSvg = _autoLeagueSVG(name);
-  return '<img class="sidebar-league-logo"' + da + ' src="data:image/svg+xml;base64,' + _btoaSafe(autoSvg) + '" alt="' + esc(name) + '" onerror="this.onerror=null;this.outerHTML=\'<span class=\\\"sidebar-league-logo\\\" style=\\\"font-size:15px;display:inline-flex!important;align-items:center;justify-content:center;width:22px;height:22px;\\\">⚽</span>\'">';
+  return '<img class="sidebar-league-logo"' + da + ' src="data:image/svg+xml;base64,' + _btoaSafe(autoSvg) + '" alt="' + esc(name) + '" onerror="_leagueLogoFinal(this)">';
 }
 // Drapeau pays avec classe sidebar-league-logo (fallback P5)
 function _getCountryFlagLogo(country) {
