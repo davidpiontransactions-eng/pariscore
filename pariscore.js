@@ -6615,6 +6615,61 @@ function renderTennisDashboard(data, preds) {
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);font-size:10px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Source : BSD · Rafraîchi toutes les 30s</div>`;
 }
 
+// ─── QUICK FILTERS BAR (Timelapse + Stratégies + Confiance) ──────────────────
+function initQuickFilterBar() {
+  var container = document.getElementById('ps-quick-filters');
+  if (!container) return;
+  var kickopts = [{v:0,l:'Tous'},{v:1,l:'1h'},{v:2,l:'2h'},{v:6,l:'6h'},{v:12,l:'12h'}];
+  var kickHtml = '<span class="qfb-icon">⏱</span>' +
+    kickopts.map(function(o) {
+      return '<button class="qfb-pill' + (o.v===0?' is-active':'') + '" data-qfb-kick="' + o.v + '">' + o.l + '</button>';
+    }).join('');
+  var stratList = typeof STRATEGIES_UI !== 'undefined' ? STRATEGIES_UI : [];
+  var stratHtml = '<span class="qfb-icon">🎯</span>' +
+    stratList.map(function(s) {
+      return '<button class="qfb-pill" data-qfb-strat="' + s.key + '" title="' + s.tipster + '">' + s.label + '</button>';
+    }).join('');
+  var confHtml = '<span class="qfb-conf-lbl">Confiance</span>' +
+    '<input type="range" class="qfb-slider" id="qfb-conf-slider" min="0" max="100" step="5" value="0">' +
+    '<span class="qfb-conf-val" id="qfb-conf-val">Tous</span>';
+  container.innerHTML =
+    '<div class="qfb-section">' + kickHtml + '</div>' +
+    '<div class="qfb-sep"></div>' +
+    '<div class="qfb-strat-scroll">' + stratHtml + '</div>' +
+    '<div class="qfb-sep"></div>' +
+    '<div class="qfb-conf">' + confHtml + '</div>';
+  // Click: timelapse + strategies
+  container.addEventListener('click', function(e) {
+    var kick = e.target.closest('.qfb-pill[data-qfb-kick]');
+    if (kick) {
+      container.querySelectorAll('.qfb-pill[data-qfb-kick]').forEach(function(b) { b.classList.remove('is-active'); });
+      kick.classList.add('is-active');
+      activeKickoff = parseInt(kick.dataset.qfbKick);
+      document.querySelectorAll('.filter-chip[data-kick]').forEach(function(c) { c.classList.remove('active'); });
+      if (typeof renderMatches === 'function') renderMatches(allMatches);
+    }
+    var strat = e.target.closest('.qfb-pill[data-qfb-strat]');
+    if (strat) {
+      strat.classList.toggle('is-active');
+      activeStrategies = Array.from(container.querySelectorAll('.qfb-pill[data-qfb-strat].is-active'))
+        .map(function(b) { return b.dataset.qfbStrat; });
+      if (typeof renderMatches === 'function') renderMatches(allMatches);
+    }
+  });
+  // Confidence slider
+  var slider = document.getElementById('qfb-conf-slider');
+  var confValEl = document.getElementById('qfb-conf-val');
+  if (slider) {
+    slider.addEventListener('input', function() {
+      var v = parseInt(this.value) || 0;
+      activeO25Min = v;
+      if (confValEl) confValEl.textContent = v > 0 ? v + '%' : 'Tous';
+      var pct = (v) + '%';
+      this.style.background = 'linear-gradient(to right, #f59e0b ' + pct + ', var(--border2) ' + pct + ')';
+      if (typeof renderMatches === 'function') renderMatches(allMatches);
+    });
+  }
+}
 // ─── DATE PICKER BAR ─────────────────────────────────────────────────────────
 function initDatePicker() {
   var container = document.getElementById('ps-date-picker');
@@ -17580,6 +17635,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!_navFlag) {
     showPage('accueil', document.querySelector('[data-page="accueil"]'));
   }
+  initQuickFilterBar();
   initDatePicker();
   initDayFilters();
   initLeagueFilters();

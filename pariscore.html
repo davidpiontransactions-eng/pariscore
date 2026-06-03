@@ -8745,6 +8745,46 @@
   body[data-cf-light="1"] #ps-cs2-sidebar-all-list {
     scrollbar-color: var(--cf-border) transparent;
   }
+  /* ─── Quick Filters Bar ────── */
+  #ps-quick-filters {
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px;
+    padding: 6px 10px; display: flex; align-items: center; gap: 8px; overflow: hidden;
+  }
+  .qfb-section { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .qfb-sep { width: 1px; height: 22px; background: var(--border2); flex-shrink: 0; margin: 0 4px; }
+  .qfb-strat-scroll {
+    display: flex; align-items: center; gap: 4px;
+    overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none;
+  }
+  .qfb-strat-scroll::-webkit-scrollbar { display: none; }
+  .qfb-icon { font-size: 14px; flex-shrink: 0; opacity: 0.6; cursor: default; }
+  .qfb-pill {
+    padding: 4px 10px; border-radius: 8px; border: 1.5px solid transparent;
+    background: transparent; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    transition: background .12s, border-color .12s, color .12s;
+  }
+  .qfb-pill:hover { background: var(--bg3); color: var(--text2); }
+  .qfb-pill.is-active { border-color: #f59e0b; background: rgba(245,158,11,0.10); color: #f59e0b; }
+  .qfb-conf { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .qfb-conf-lbl { font-size: 10px; font-weight: 700; color: var(--text3); white-space: nowrap; }
+  .qfb-conf-val { font-size: 11px; font-weight: 800; color: #f59e0b; font-family: var(--font-mono, monospace); min-width: 34px; text-align: right; }
+  .qfb-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 90px; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+    background: linear-gradient(to right, var(--border2) 0%, var(--border2) 100%);
+  }
+  .qfb-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: #f59e0b; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .qfb-slider::-moz-range-thumb {
+    width: 14px; height: 14px; border: none; border-radius: 50%;
+    background: #f59e0b; cursor: pointer;
+  }
+  body[data-cf-light="1"] #ps-quick-filters { background: var(--bg3); border-color: var(--cf-border); }
+  body[data-cf-light="1"] .qfb-pill:hover { background: var(--bg4); }
   /* ─── Date Picker Bar ────── */
   #ps-date-picker {
     background: var(--bg2);
@@ -11984,6 +12024,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 
   <!-- DATE PICKER BAR -->
   <div id="ps-date-picker" style="margin-bottom:8px;"></div>
+  <!-- QUICK FILTERS BAR (Timelapse + Stratégies + Confiance) -->
+  <div id="ps-quick-filters" style="margin-bottom:8px;"></div>
+
 
   <!-- ═══ FILTER CONSOLE — masquée (sidebar gère la sélection ligues) ═══ -->
   <div class="filter-console" id="filter-console" style="display:none;">
