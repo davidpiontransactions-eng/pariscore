@@ -18580,6 +18580,150 @@ body[data-page="cs2"] footer { display: none !important; }
   .cs2-grid { grid-template-columns: 1fr; padding: 0 8px 96px; }
   .cs2-map-score { font-size: 20px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   CS2 — L'ÉQUIPE × HLTV LIGHT THEME
+   Charte L'Équipe : blanc, rouge #E3001B, typo éditoriale
+   ═══════════════════════════════════════════════════════════ */
+
+/* Page background */
+body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
+
+/* Header barre rouge L'Équipe */
+#page-cs2 .cs2-header { background: linear-gradient(135deg,#E3001B 0%,#C40018 100%); padding: 20px 24px 16px; max-width: 100%; }
+#page-cs2 .cs2-title { color: #fff; font-family: Syne,sans-serif; font-weight: 900; font-size: 22px; text-transform: uppercase; letter-spacing: .05em; }
+#page-cs2 .cs2-subtitle { color: rgba(255,255,255,.75); }
+#page-cs2 .cs2-badge-live { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.4); color: #fff; }
+#page-cs2 .cs2-badge-live .cs2-ldot,
+#page-cs2 .cs2-live-pill .cs2-ldot { background: #fff; }
+#page-cs2 .cs2-live-pill { color: #E3001B; }
+
+/* Toolbar — onglets style L'Équipe */
+#page-cs2 .cs2-toolbar { background: #fff; border-bottom: 2px solid #E0E0E0; margin: 0; padding: 0 16px; max-width: 100%; gap: 0; flex-wrap: nowrap; overflow-x: auto; }
+#page-cs2 .cs2-pill { background: transparent; border: none; border-bottom: 3px solid transparent; border-radius: 0; color: #666; padding: 11px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: -2px; }
+#page-cs2 .cs2-pill.active { color: #E3001B; border-bottom-color: #E3001B; background: transparent; }
+#page-cs2 .cs2-pill:hover:not(.active) { color: #E3001B; border-bottom-color: rgba(227,0,27,.3); background: transparent; }
+#page-cs2 .cs2-refresh-btn { background: transparent; border: none; color: #aaa; }
+#page-cs2 .cs2-refresh-btn:hover { color: #E3001B; border-color: transparent; }
+
+/* Status */
+#cs2-status-bar { color: #999 !important; background: #fff; border-bottom: 1px solid #EBEBEB; padding: 5px 16px !important; }
+
+/* Dashboard table */
+#page-cs2 .cs2-dash-section { padding: 0 0 16px; max-width: 100%; }
+#page-cs2 .cs2-dash-section-title { font-family: Syne,sans-serif; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; color: #1A1A1A; padding: 12px 16px; border-left: 4px solid #E3001B; background: #fff; border-bottom: 1px solid #EBEBEB; margin: 0; }
+#page-cs2 .cs2-dash-wrap { background: #fff; border: none; border-radius: 0; border-bottom: 1px solid #EBEBEB; }
+#page-cs2 .cs2-dash-table thead tr { background: #F5F5F5; border-bottom: 2px solid #E3001B; }
+#page-cs2 .cs2-dash-table th { color: #1A1A1A; font-weight: 800; font-size: 9px; letter-spacing: .08em; }
+#page-cs2 .cs2-dash-row { background: #fff; border-bottom: 1px solid #F2F2F0; }
+#page-cs2 .cs2-dash-row:hover { background: #FFF5F5; }
+#page-cs2 .cs2-dash-row.cs2-dash-live { border-left: 3px solid #E3001B; background: #FFFAFA; }
+#page-cs2 .cs2-dash-t1 { color: #1A1A1A; font-size: 14px; }
+#page-cs2 .cs2-dash-t2 { color: #666; font-size: 12px; }
+#page-cs2 .cs2-dash-t1 .cs2-hltv,
+#page-cs2 .cs2-hltv { color: #aaa; }
+
+/* Verdict badges */
+#page-cs2 .cs2-verdict-strong { background: rgba(0,166,81,.09); border-color: rgba(0,166,81,.5); color: #00A651; }
+#page-cs2 .cs2-verdict-mild   { background: rgba(245,166,35,.09); border-color: rgba(245,166,35,.5); color: #D48900; }
+#page-cs2 .cs2-verdict-skip   { background: rgba(227,0,27,.07); border-color: rgba(227,0,27,.4); color: #E3001B; }
+#page-cs2 .cs2-verdict-hold   { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.15); color: #999; }
+
+/* EV badges */
+#page-cs2 .cs2-ev-badge.ev-pos { color: #00A651; background: rgba(0,166,81,.07); border-color: rgba(0,166,81,.3); }
+#page-cs2 .cs2-ev-badge.ev-flat { color: #D48900; background: rgba(245,166,35,.07); border-color: rgba(245,166,35,.2); }
+#page-cs2 .cs2-ev-badge.ev-neg { color: #bbb; }
+
+/* Cards */
+#page-cs2 .cs2-grid { background: #F2F2F0; }
+#page-cs2 .cs2-card { background: #fff; border: none; border-top: 3px solid #E0E0E0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+#page-cs2 .cs2-card:hover { border-top-color: #E3001B; box-shadow: 0 3px 10px rgba(227,0,27,.10); }
+#page-cs2 .cs2-card.is-live { border-top-color: #E3001B; }
+#page-cs2 .cs2-card-head { background: #F8F8F8; border-bottom: 1px solid #EBEBEB; }
+#page-cs2 .cs2-tour-name, #page-cs2 .cs2-format, #page-cs2 .cs2-map-num,
+#page-cs2 .cs2-round-score, #page-cs2 .cs2-vs-txt, #page-cs2 .cs2-time { color: #aaa; }
+#page-cs2 .cs2-team-name { color: #1A1A1A; }
+#page-cs2 .cs2-map-score { color: #1A1A1A; }
+#page-cs2 .cs2-map-label { color: #1A1A1A; }
+#page-cs2 .cs2-value-flag { color: #00A651; }
+#page-cs2 .cs2-team-logo-wrap { background: #F5F5F5; }
+#page-cs2 .cs2-card-foot { border-top-color: #F0F0F0; }
+#page-cs2 .cs2-odd { background: #F8F8F8; border-color: #EBEBEB; color: #555; }
+#page-cs2 .cs2-odd.best { background: rgba(0,166,81,.06); border-color: rgba(0,166,81,.4); color: #00A651; }
+
+/* Bet button neumorphic light */
+#page-cs2 .cs2-bet-btn { background: #fff; box-shadow: 2px 2px 6px rgba(0,0,0,.10),-1px -1px 4px rgba(255,255,255,.9); border: 1px solid #E0E0E0; color: #1A1A1A; }
+#page-cs2 .cs2-bet-btn:active { box-shadow: inset 2px 2px 4px rgba(0,0,0,.10); }
+#page-cs2 .cs2-bet-btn.green { color: #00A651; border-color: rgba(0,166,81,.35); }
+#page-cs2 .cs2-bet-btn.amber { color: #D48900; border-color: rgba(245,166,35,.35); }
+
+/* Tier 3 badge */
+#page-cs2 .cs2-tier3-badge { background: rgba(227,0,27,.07); border-color: rgba(227,0,27,.3); color: #E3001B; }
+
+/* Map atmospheres light */
+#page-cs2 .cs2-map-bar { background: #F5F5F5; }
+#page-cs2 .cs2-map-bar.map-mirage  { background: linear-gradient(90deg,rgba(120,90,40,.06) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.map-inferno { background: linear-gradient(90deg,rgba(200,60,10,.07) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.map-nuke    { background: linear-gradient(90deg,rgba(30,160,100,.06) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.map-ancient { background: linear-gradient(90deg,rgba(60,130,70,.06) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.map-anubis  { background: linear-gradient(90deg,rgba(180,140,40,.07) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.map-vertigo { background: linear-gradient(90deg,rgba(40,100,200,.06) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.map-dust2   { background: linear-gradient(90deg,rgba(200,160,80,.06) 0%,#F5F5F5 70%); }
+#page-cs2 .cs2-map-bar.adv-t1 { border-left-color: #E3001B; box-shadow: inset 3px 0 10px rgba(227,0,27,.08); }
+
+/* Value pulse light */
+@keyframes cs2-value-pulse-light {
+  0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,.07); border-top-color: rgba(0,166,81,.4); }
+  50%      { box-shadow: 0 4px 12px rgba(0,166,81,.14); border-top-color: #00A651; }
+}
+#page-cs2 .cs2-card.has-value-map { animation: cs2-value-pulse-light 1.8s ease-in-out infinite; border-color: transparent; }
+#page-cs2 .cs2-dash-row.has-value-map td:first-child { border-left: 3px solid rgba(0,166,81,.6); }
+
+/* Momentum light */
+#page-cs2 .cs2-momentum-wrap { border-top-color: #EBEBEB; }
+#page-cs2 .cs2-momentum-bar { background: #EBEBEB; }
+
+/* Scout drawer light */
+#page-cs2 .cs2-scout-panel { background: #fff; border-left: 1px solid #E0E0E0; }
+#page-cs2 .cs2-scout-hd { border-bottom-color: #EBEBEB; }
+#page-cs2 .cs2-scout-tabs-bar { border-bottom-color: #EBEBEB; }
+#page-cs2 .cs2-scout-tab { color: #999; }
+#page-cs2 .cs2-scout-tab.active, #page-cs2 .cs2-scout-tab:hover { color: #E3001B; border-bottom-color: #E3001B; }
+#page-cs2 .cs2-scout-map-row { border-bottom-color: #F0F0F0; }
+#page-cs2 .cs2-scout-map-name { color: #666; }
+#page-cs2 .cs2-scout-bar-wrap { background: #EBEBEB; }
+#page-cs2 .cs2-scout-bar-t1 { background: #E3001B; }
+#page-cs2 .cs2-scout-bar-t2 { background: #1A1A1A; }
+#page-cs2 .cs2-scout-wr.t1 { color: #E3001B; }
+#page-cs2 .cs2-scout-wr.t2 { color: #1A1A1A; }
+#page-cs2 .cs2-scout-player-row { border-bottom-color: #F0F0F0; }
+#page-cs2 .cs2-scout-player-name { color: #1A1A1A !important; }
+#page-cs2 .cs2-veto-row { border-bottom-color: #F0F0F0; }
+#page-cs2 .cs2-veto-team { color: #666; }
+#page-cs2 .cs2-veto-action.ban { color: #E3001B; }
+#page-cs2 .cs2-veto-action.pick { color: #00A651; }
+#page-cs2 .cs2-veto-action.decider { color: #D48900; }
+#page-cs2 #cs2-scout-title { color: #1A1A1A !important; font-family: Syne,sans-serif !important; }
+#page-cs2 #cs2-scout-sub { color: #999 !important; }
+#page-cs2 .cs2-scout-loading { color: #999; }
+#page-cs2 .cs2-scout-empty { color: #bbb; }
+#page-cs2 .cs2-scout-hd button { color: #666 !important; }
+
+/* Empty state */
+#page-cs2 .cs2-empty-msg { color: #555; }
+#page-cs2 .cs2-empty-sub { color: #aaa; }
+
+/* Skeleton shimmer light */
+#page-cs2 .cs2-skel { background: linear-gradient(90deg,#EBEBEB 0%,#F5F5F5 50%,#EBEBEB 100%); background-size: 200% 100%; }
+
+/* Highlights bar */
+#page-cs2 .cs2-highlights-bar { background: #F8F8F8; border-top-color: #EBEBEB; }
+#page-cs2 .cs2-hl-btn { background: #fff; border-color: #EBEBEB; color: #555; }
+#page-cs2 .cs2-hl-btn:hover, #page-cs2 .cs2-hl-btn.active { border-color: #E3001B; color: #E3001B; background: rgba(227,0,27,.05); }
+
+/* Prob bars keep CT=blue/T=orange (game semantics) */
+/* LAN tag */
+#page-cs2 .cs2-lan-tag { color: #D48900; background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.3); }
 </style>
 
   <!-- Header -->
