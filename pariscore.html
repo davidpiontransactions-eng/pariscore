@@ -95,61 +95,59 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Source+Sans+3:wght@300;400;500;600;700&family=Anton&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    color-scheme: light;  /* opt-out Chrome Auto Dark Mode before JS runs */
-    /* ── Light Premium — L'Équipe × Flashscore ── */
-    --bg: #f4f6f8;
-    --bg2: #ffffff;
-    --bg3: #efefef;
-    --bg4: #e4e4e4;
+    color-scheme: dark;  /* Dark Premium — KèoĐỉnh × PariScore */
+    /* ── Dark Premium — Bleu nuit profond, accents ambre ── */
+    --bg: #060b26;
+    --bg2: #111a36;
+    --bg3: #0e1525;
+    --bg4: #1a2548;
     --accent: #ed1c24;
     --accent-dim: #c4151e;
-    --accent-bg: rgba(237,28,36,0.07);
-    --green: #1a8c45;
-    --green-dim: #146b34;
-    --green-bg: rgba(26,140,69,0.09);
-    --red: #cc1a1a;
-    --red-bg: rgba(204,26,26,0.08);
-    --amber: #b45309;
-    --amber-bg: rgba(180,83,9,0.09);
-    --blue: #1558d6;
-    --blue-bg: rgba(21,88,214,0.08);
-    --text: #111111;
-    --text2: #4a4a4a;
-    --text3: #888888;
-    --border: rgba(0,0,0,0.09);
-    --border2: rgba(0,0,0,0.16);
+    --accent-bg: rgba(237,28,36,0.12);
+    --green: #22c55e;
+    --green-dim: #16a34a;
+    --green-bg: rgba(34,197,94,0.12);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.12);
+    --amber: #f59e0b;
+    --amber-bg: rgba(245,158,11,0.12);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.12);
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
     --card-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.85),
-      0 1px 2px rgba(0,0,0,0.04),
-      0 4px 12px rgba(0,0,0,0.07),
-      0 14px 28px rgba(0,0,0,0.04);
+      0 1px 3px rgba(0,0,0,0.5),
+      0 4px 12px rgba(0,0,0,0.35),
+      0 0 0 1px rgba(255,255,255,0.04);
     --card-shadow-hover:
-      inset 0 1px 0 rgba(255,255,255,0.95),
-      0 2px 4px rgba(0,0,0,0.05),
-      0 8px 24px rgba(0,0,0,0.10),
-      0 24px 48px rgba(0,0,0,0.06);
-    --gauge-rail: rgba(0,0,0,0.10);
+      0 2px 6px rgba(0,0,0,0.6),
+      0 8px 24px rgba(0,0,0,0.45),
+      0 0 0 1px rgba(255,255,255,0.08);
+    --gauge-rail: rgba(255,255,255,0.08);
     --gauge-rail-opacity: 1;
     --font-head: 'Barlow Condensed', sans-serif;
     --font-body: 'Source Sans 3', sans-serif;
     --font-mono: 'DM Mono', monospace;
-    --radius: 4px;
-    --radius-lg: 6px;
-    --radius-xl: 10px;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
     /* bd rcmw V12 Mobile Premium B — Safe Area vars (iPhone notch, Dynamic Island, gesture bar) */
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
-    /* Bottom nav glassmorphic (C2 sera plus large, ces vars sont la base) */
+    /* Bottom nav glassmorphic — dark premium */
     --psm-bn-height: 64px;
-    --psm-bn-bg: rgba(255, 255, 255, 0.78);
-    --psm-bn-border: rgba(0, 0, 0, 0.07);
-    --psm-bn-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+    --psm-bn-bg: rgba(11, 19, 43, 0.92);
+    --psm-bn-border: rgba(255, 255, 255, 0.06);
+    --psm-bn-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
     /* Bottom sheet (C4) */
     --psm-bs-radius: 24px;
-    --psm-bs-bg: rgba(255, 255, 255, 0.96);
-    --psm-bs-handle: rgba(0, 0, 0, 0.22);
+    --psm-bs-bg: rgba(14, 21, 37, 0.98);
+    --psm-bs-handle: rgba(255, 255, 255, 0.20);
     /* Tactile feedback */
     --psm-press-scale: 0.985;
     --psm-press-duration: 80ms;
@@ -8691,6 +8689,13 @@
     scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08) transparent;
   }
   .sidebar-all-empty { color: #475569; font-size: 11px; font-family: var(--font-mono, monospace); padding: 8px 4px; text-align: center; }
+  /* ─── Dark Premium Utilities ────── */
+  .section-title-premium {
+    padding-left: 10px; border-left: 3px solid #f59e0b;
+    font-weight: 700; color: var(--text); letter-spacing: .02em;
+  }
+  .match-row:hover, tr.match-row:hover { background: rgba(255,255,255,0.04) !important; transition: background 0.2s ease; }
+  .tn-vb-row:hover { background: rgba(255,255,255,0.04) !important; transition: background 0.2s ease; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
@@ -11604,143 +11609,133 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
      Le mobile (<768px) garde son design sombre neomorphic intact. -->
 <style id="desktop-filters-flat">
   @media (min-width: 768px) {
-    /* État inactif : bouton plat gris clair, texte foncé, sans relief */
+    /* Chips dark premium */
     #page-matchs .filter-chip,
     #page-matchs #steam-filter-chip,
     #page-matchs #fav-filter-chip,
     #page-matchs .country-chip,
     #page-matchs .filter-chip[data-edge="5"] {
-      background: #f8fafc !important;
-      color: #020617 !important;
-      border: 1px solid rgba(0,0,0,0.10) !important;
-      border-radius: 6px !important;
+      background: #1a2548 !important;
+      color: #94a3b8 !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-radius: 8px !important;
       box-shadow: none !important;
       text-shadow: none !important;
-      transition: background-color .15s ease-in-out, border-color .15s ease-in-out, color .15s ease-in-out !important;
+      transition: background .15s, border-color .15s, color .15s !important;
       transform: none !important;
     }
-    /* Survol : léger gris, toujours plat (aucune lueur rouge néomorphique) */
     #page-matchs .filter-chip:hover:not(.active),
     #page-matchs #steam-filter-chip:hover:not(.active),
     #page-matchs #fav-filter-chip:hover:not(.active),
     #page-matchs .country-chip:hover:not(.active) {
-      background: #eef2f7 !important;
-      color: #020617 !important;
-      border-color: rgba(0,0,0,0.18) !important;
+      background: rgba(255,255,255,0.06) !important;
+      color: #e2e8f0 !important;
+      border-color: rgba(255,255,255,0.14) !important;
       box-shadow: none !important;
       transform: none !important;
     }
-    /* État actif/sélectionné : vert très clair, bordure verte, texte foncé */
+    /* Active : ambre premium */
     #page-matchs .filter-chip.active,
     #page-matchs .filter-chip[data-edge="5"].active,
     #page-matchs #steam-filter-chip.active,
     #page-matchs #fav-filter-chip.active,
     #page-matchs .country-chip.active {
-      background: #f1fdf5 !important;
-      color: #020617 !important;
-      border: 1px solid #4ade80 !important;
-      border-radius: 6px !important;
+      background: rgba(245,158,11,0.15) !important;
+      color: #f59e0b !important;
+      border: 1px solid rgba(245,158,11,0.35) !important;
+      border-radius: 8px !important;
       font-weight: 600 !important;
       box-shadow: none !important;
       text-shadow: none !important;
       transform: none !important;
     }
-    /* Focus clavier : anneau accessible, sans relief 3D */
     #page-matchs .filter-chip:focus-visible,
     #page-matchs .country-chip:focus-visible {
       outline: none !important;
-      border-color: #4ade80 !important;
-      box-shadow: 0 0 0 3px rgba(74,222,128,0.35) !important;
+      border-color: rgba(245,158,11,0.6) !important;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.2) !important;
     }
 
-    /* ── Uniformisation : dropdowns ligues/stratégies + selects ──
-       (.mls-trigger = pilules sombres « Toutes les ligues / stratégies ») */
+    /* Dropdowns dark */
     #page-matchs .mls-trigger,
     #page-matchs .filter-dd,
     #page-matchs .mls-search {
-      background: #f8fafc !important;
-      color: #020617 !important;
-      border: 1px solid rgba(0,0,0,0.10) !important;
-      border-radius: 6px !important;
+      background: #1a2548 !important;
+      color: #94a3b8 !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-radius: 8px !important;
       box-shadow: none !important;
       text-shadow: none !important;
-      transition: background-color .15s ease-in-out, border-color .15s ease-in-out !important;
+      transition: background .15s, border-color .15s !important;
       transform: none !important;
     }
     #page-matchs .mls-trigger:hover,
     #page-matchs .filter-dd:hover {
-      background: #eef2f7 !important;
-      border-color: rgba(0,0,0,0.18) !important;
+      background: rgba(255,255,255,0.06) !important;
+      border-color: rgba(255,255,255,0.14) !important;
       box-shadow: none !important;
       transform: none !important;
     }
     #page-matchs .mls-label {
-      color: #020617 !important;
+      color: #94a3b8 !important;
       background: transparent !important;
       background-image: none !important;
       box-shadow: none !important;
       border: 0 !important;
       text-shadow: none !important;
     }
-    /* Chevron : slate foncé au lieu du rouge (teinte uniforme) */
-    #page-matchs .mls-caret path { stroke: #475569 !important; }
-    /* Panneau déroulant ouvert + options */
+    #page-matchs .mls-caret path { stroke: #64748b !important; }
     #page-matchs .mls-panel {
-      background: #ffffff !important;
-      border: 1px solid rgba(0,0,0,0.12) !important;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+      background: #0e1525 !important;
+      border: 1px solid rgba(255,255,255,0.10) !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
     }
-    #page-matchs .mls-opt { color: #020617 !important; background: transparent !important; }
-    #page-matchs .mls-opt:hover { background: #eef2f7 !important; }
+    #page-matchs .mls-opt { color: #94a3b8 !important; background: transparent !important; }
+    #page-matchs .mls-opt:hover { background: rgba(255,255,255,0.05) !important; color: #f1f5f9 !important; }
     #page-matchs .mls-opt[aria-selected="true"],
     #page-matchs .mls-opt.is-on {
-      background: #f1fdf5 !important; color: #166534 !important;
+      background: rgba(34,197,94,0.12) !important; color: #22c55e !important;
     }
-    /* FIX visibilité : rangées stratégies (.mls-row) — texte foncé lisible
-       sur panneau blanc (le bloc ne stylait que .mls-opt, pas .mls-row). */
     #page-matchs .mls-row .mls-rowmain,
-    #page-matchs .mls-row .mls-name { color: #020617 !important; }
+    #page-matchs .mls-row .mls-name { color: #94a3b8 !important; }
     #page-matchs .mls-cnt { color: #64748b !important; }
-    #page-matchs .mls-row:hover { background: #eef2f7 !important; }
-    #page-matchs .mls-row:hover .mls-rowmain { color: #020617 !important; }
-    #page-matchs .mls-row.sel { background: #f1fdf5 !important; }
+    #page-matchs .mls-row:hover { background: rgba(255,255,255,0.04) !important; }
+    #page-matchs .mls-row:hover .mls-rowmain { color: #f1f5f9 !important; }
+    #page-matchs .mls-row.sel { background: rgba(34,197,94,0.10) !important; }
     #page-matchs .mls-row.sel .mls-rowmain,
-    #page-matchs .mls-row.sel .mls-name { color: #166534 !important; }
-
-    /* ── Carte « Degré Confiance » : surface plate claire ── */
+    #page-matchs .mls-row.sel .mls-name { color: #22c55e !important; }
+    /* Confidence card dark */
     #page-matchs .conf-wrap {
-      background: #f8fafc !important;
-      border: 1px solid rgba(0,0,0,0.10) !important;
-      border-radius: 8px !important;
+      background: #1a2548 !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-radius: 12px !important;
       box-shadow: none !important;
     }
-    #page-matchs .conf-title { color: #334155 !important; }
-    /* Badge valeur : vert clair cohérent avec l'état actif (plus de rouge) */
+    #page-matchs .conf-title { color: #94a3b8 !important; }
     #page-matchs .conf-val {
-      background: #f1fdf5 !important;
-      color: #166534 !important;
-      border: 1px solid #4ade80 !important;
+      background: rgba(34,197,94,0.12) !important;
+      color: #22c55e !important;
+      border: 1px solid rgba(34,197,94,0.3) !important;
       box-shadow: none !important;
       text-shadow: none !important;
     }
-    /* Slider : rail gris clair, pouce blanc bord vert (sans lueur rouge) */
     #page-matchs .conf-range,
     #page-matchs input.adv-slider.conf-range {
-      background: #e2e8f0 !important;
+      background: rgba(255,255,255,0.10) !important;
       box-shadow: none !important;
     }
     #page-matchs .conf-range::-webkit-slider-thumb {
-      background: #ffffff !important;
-      border: 2px solid #4ade80 !important;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+      background: #1a2548 !important;
+      border: 2px solid #f59e0b !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
     }
     #page-matchs .conf-range::-moz-range-thumb {
-      background: #ffffff !important;
-      border: 2px solid #4ade80 !important;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+      background: #1a2548 !important;
+      border: 2px solid #f59e0b !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
     }
     #page-matchs .conf-ticks span { color: #64748b !important; }
-    #page-matchs .conf-info { color: #475569 !important; }
+    #page-matchs .conf-info { color: #64748b !important; }
   }
 </style>
 
