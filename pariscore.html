@@ -8725,6 +8725,26 @@
     scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
   }
   .sidebar-all-empty { color: #475569 !important; font-size: 11px; font-family: var(--font-mono, monospace); padding: 8px 4px; text-align: center; }
+  /* ─── Sidebar Light Theme Overrides (body[data-cf-light="1"]) ────── */
+  body[data-cf-light="1"] .sidebar-nav-block {
+    background: var(--bg3) !important;
+    border-color: var(--cf-border) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  body[data-cf-light="1"] .sidebar-search {
+    background: var(--bg4) !important;
+    border-color: var(--cf-border) !important;
+    color: var(--text) !important;
+  }
+  body[data-cf-light="1"] .sidebar-league-item:hover {
+    background: var(--bg4) !important;
+    color: var(--text) !important;
+  }
+  body[data-cf-light="1"] #ps-sidebar-all-list,
+  body[data-cf-light="1"] #ps-tennis-sidebar-all-list,
+  body[data-cf-light="1"] #ps-cs2-sidebar-all-list {
+    scrollbar-color: var(--cf-border) transparent;
+  }
   /* ─── Dark Premium Utilities ────── */
   .section-title-premium {
     padding-left: 10px; border-left: 3px solid #f59e0b;
