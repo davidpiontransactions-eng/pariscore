@@ -6615,6 +6615,37 @@ function renderTennisDashboard(data, preds) {
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);font-size:10px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Source : BSD · Rafraîchi toutes les 30s</div>`;
 }
 
+// ─── DATE PICKER BAR ─────────────────────────────────────────────────────────
+function initDatePicker() {
+  var container = document.getElementById('ps-date-picker');
+  if (!container) return;
+  var today = new Date(); today.setHours(0,0,0,0);
+  var DAY_SHORT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  var html = '<span class="dpk-cal">📅</span>';
+  for (var i = -3; i <= 3; i++) {
+    var d = new Date(today); d.setDate(today.getDate() + i);
+    var name = i === -1 ? 'HIER' : i === 0 ? 'AUJ.' : i === 1 ? 'DEMAIN' : DAY_SHORT[d.getDay()];
+    var dd = String(d.getDate()).padStart(2,'0');
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var cls = 'dpk-btn' + (i === 0 ? ' is-active' : '');
+    html += '<button class="' + cls + '" data-dpk-day="' + i + '">' +
+      '<span class="dpk-dn">' + name + '</span>' +
+      '<span class="dpk-dd">' + dd + '/' + mm + '</span>' +
+      '</button>';
+  }
+  container.innerHTML = html;
+  container.addEventListener('click', function(e) {
+    var btn = e.target.closest('.dpk-btn[data-dpk-day]');
+    if (!btn) return;
+    container.querySelectorAll('.dpk-btn').forEach(function(b) { b.classList.remove('is-active'); });
+    btn.classList.add('is-active');
+    activeDay = parseInt(btn.dataset.dpkDay);
+    // Sync hidden day chips
+    document.querySelectorAll('.filter-chip[data-day]').forEach(function(c) { c.classList.remove('active'); });
+    if (typeof renderMatches === 'function') renderMatches(allMatches);
+  });
+}
+
 // ─── INIT DAY FILTERS ────────────────────────────────────────────────────────
 function initDayFilters() {
   const days = ['Aujourd\'hui', 'Demain', 'Dans 2j', 'Dans 3j'];
@@ -17535,6 +17566,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!_navFlag) {
     showPage('accueil', document.querySelector('[data-page="accueil"]'));
   }
+  initDatePicker();
   initDayFilters();
   initLeagueFilters();
   buildFilterDropdowns();
