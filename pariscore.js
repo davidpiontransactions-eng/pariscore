@@ -6643,6 +6643,8 @@ function initDatePicker() {
     // Sync hidden day chips
     document.querySelectorAll('.filter-chip[data-day]').forEach(function(c) { c.classList.remove('active'); });
     if (typeof renderMatches === 'function') renderMatches(allMatches);
+    // Rebuild sidebar avec counts filtrés par date
+    if (typeof _psSidebarRebuildAll === 'function') _psSidebarRebuildAll();
   });
 }
 
@@ -7003,11 +7005,23 @@ function _psSbPickTennis(name) {
     btn.classList.toggle('is-active', (btn.dataset.sbTournoi || '') === name);
   });
 }
-// ── Comptage matchs par ligue (sport = odds_key) ────────────────────
+// ── Comptage matchs par ligue (sport = odds_key) — day-aware ────────
 function _leagueMatchCounts() {
   var counts = {};
   if (!allMatches || !allMatches.length) return counts;
-  allMatches.forEach(function(m) {
+  var matches = allMatches;
+  // Filtre par jour actif (miroir exact de renderMatches)
+  if (typeof activeDay !== 'undefined' && activeDay !== 'all') {
+    var target = new Date(); target.setDate(target.getDate() + activeDay);
+    var targetDate = target.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
+    matches = allMatches.filter(function(m) {
+      try {
+        var d = typeof parseKickoff === 'function' ? parseKickoff(m.commence_time) : new Date(m.commence_time);
+        return d && d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) === targetDate;
+      } catch(e) { return false; }
+    });
+  }
+  matches.forEach(function(m) {
     if (!m.sport) return;
     counts[m.sport] = (counts[m.sport] || 0) + 1;
   });
