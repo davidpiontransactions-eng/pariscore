@@ -25054,6 +25054,40 @@ function renderComparateur(d) {
       signals.push({ key:'over', label: model.signal + ' ' + model.line, color: model.confidence==='HIGH'?'green':model.confidence==='MED'?'amber':'grey', val: model.predicted });
     }
 
+    // 7. ELO win probability — fallback when no BSD ML prediction (tier-2/3 matches)
+    if (!signals.find(function(s){return s.key==='prob';}) &&
+        m.team1 && m.team2 && m.team1.elo_rating && m.team2.elo_rating) {
+      var _elo1 = Number(m.team1.elo_rating);
+      var _elo2 = Number(m.team2.elo_rating);
+      var _p1   = 1 / (1 + Math.pow(10, (_elo2 - _elo1) / 400));
+      var _maxP = Math.max(_p1, 1 - _p1);
+      var _favT = _p1 >= 0.5 ? (m.team1.name || '') : (m.team2.name || '');
+      signals.push({ key:'prob', label: '⚡' + (_favT.split(' ')[0] || _favT) + ' ' + Math.round(_maxP * 100) + '%',
+        color: _maxP >= 0.72 ? 'green' : _maxP >= 0.60 ? 'amber' : 'grey', val: _maxP });
+    }
+
+    // 8. ELO gap signal — when significant advantage exists
+    if (m.team1 && m.team2 && m.team1.elo_rating && m.team2.elo_rating) {
+      var _ediff = Number(m.team1.elo_rating) - Number(m.team2.elo_rating);
+      var _eabs  = Math.abs(_ediff);
+      if (_eabs >= 80) {
+        var _eTeam = _ediff > 0 ? (m.team1.name || 'T1') : (m.team2.name || 'T2');
+        signals.push({ key:'elo', label: '⚡' + (_eTeam.split(' ')[0] || _eTeam) + '+' + _eabs + ' ELO',
+          color: _eabs >= 200 ? 'green' : _eabs >= 120 ? 'amber' : 'grey', val: _eabs });
+      }
+    }
+
+    // 9. HLTV rank gap signal
+    if (e && e.team1 && e.team2 && e.team1.rank && e.team2.rank) {
+      var _rdiff = e.team2.rank - e.team1.rank; // positive = team1 higher ranked
+      var _rabs  = Math.abs(_rdiff);
+      if (_rabs >= 20) {
+        var _rTeam = _rdiff > 0 ? e.team1 : e.team2;
+        signals.push({ key:'rank', label: '#' + _rTeam.rank + ' (Δ' + _rabs + ')',
+          color: _rabs >= 50 ? 'green' : 'amber', val: _rabs });
+      }
+    }
+
     return { signals: signals, enrichment: e, model: model };
   }
 
