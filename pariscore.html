@@ -8694,8 +8694,6 @@
     width: 22px; height: 22px; font-size: 15px; line-height: 1;
   }
   .sidebar-league-logo img { width: 100%; height: 100%; }
-  /* Anti-broken-link: masquer img sans src valide avant que onerror cascade */
-  img.sidebar-league-logo[src=""], img.sidebar-league-logo:not([src]) { visibility: hidden; }
   /* ─── Country Group Headers ────── */
   .sidebar-country-group { margin-bottom: 8px; }
   .sidebar-country-header {
@@ -11930,8 +11928,8 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <span id="team-search-count" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);"></span>
   </div>
 
-  <!-- ═══ FILTER CONSOLE — panneau filtres 3D L'Équipe ═══ -->
-  <div class="filter-console" id="filter-console">
+  <!-- ═══ FILTER CONSOLE — masquée (sidebar gère la sélection ligues) ═══ -->
+  <div class="filter-console" id="filter-console" style="display:none;">
   <div class="fc-head">
     <span class="fc-title">Filtres</span>
     <span class="fc-sub" id="fc-active-count">Affinez votre sélection</span>
@@ -11945,17 +11943,6 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <button class="filter-chip" data-day="2" id="day-btn-2">—</button>
     <button class="filter-chip" data-day="3" id="day-btn-3">—</button>
     <select class="filter-dd" id="day-dd" onchange="pickChipDD(this)" aria-label="Jour"></select>
-    <div id="ml-league" class="mls" style="margin-left:auto;">
-      <button type="button" class="mls-trigger" id="ml-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="mlToggle(event)">
-        <span class="mls-label" id="ml-label">Toutes les ligues</span>
-        <svg class="fc-ic mls-caret" viewBox="0 0 10 6" aria-hidden="true" style="margin:0 0 0 8px;"><path d="M1 1l4 4 4-4" stroke="#ff3b3b" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
-      </button>
-      <div class="mls-panel" id="ml-panel" role="listbox" aria-multiselectable="true">
-        <input type="search" class="mls-search" id="ml-search" placeholder="Rechercher un pays…" oninput="mlFilter(this.value)" aria-label="Rechercher un pays">
-        <button type="button" class="mls-opt mls-all" id="ml-opt-all" onclick="mlPickAll()">Toutes les ligues</button>
-        <div class="mls-list" id="ml-list"></div>
-      </div>
-    </div>
     <button id="fav-filter-chip" class="filter-chip" onclick="toggleFavFilter()" title="Afficher mes favoris uniquement" style="margin-left:6px;"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6L12 17l-5.4 2.6 1-6L3.3 9.4l6-.9Z"/></svg>Favoris</button>
     <button id="steam-filter-chip" class="filter-chip" onclick="toggleSteamFilter()" title="Cotes en chute — dropping odds détectés" style="margin-left:4px;"><svg class="fc-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l6 6 4-4 7 7M17 16h4v-4"/></svg>Dropping Cotes</button>
   </div>
