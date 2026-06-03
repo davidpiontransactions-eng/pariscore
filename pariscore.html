@@ -4562,11 +4562,22 @@
   /* TABLE WRAPPER */
   .table-wrap {
     background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); overflow: clip;
-    /* v10.79 : `contain:layout` retiré (V73) — bloquait l'ascenseur horizontal du tableau Foot.
-       `overflow: clip` préserve le border-radius sans créer de containing block intrusif. */
+    border-radius: var(--radius-lg);
+    /* overflow:auto active scrollbars H+V (remplace clip qui les bloquait) */
+    overflow: auto;
+    max-height: calc(100vh - 260px); /* scroll vertical — thead sticky fonctionne dans overflow:auto */
     position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.15) transparent;
   }
+  .table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-wrap::-webkit-scrollbar-track { background: transparent; }
+  .table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 3px; }
+  .table-wrap::-webkit-scrollbar-corner { background: transparent; }
+  body[data-cf-light="1"] .table-wrap {
+    scrollbar-color: rgba(0,0,0,.15) transparent;
+  }
+  body[data-cf-light="1"] .table-wrap::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); }
   #vb-table thead { position: sticky; top: 0; z-index: 5; }
   #vb-table thead tr { background: var(--bg2); }
   /* ── En-tête « Hybride Hero-Chip » (Concept C) ── */
