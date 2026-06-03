@@ -24894,7 +24894,7 @@ function renderComparateur(d) {
       '<div class="cs2-map-winrate-bar" style="display:none;align-items:center;gap:4px;font-family:\'DM Mono\',monospace;font-size:10px;padding:3px 12px 5px;"></div>' +
       _buildHighlightSection(clips) +
       '<div class="cs2-card-foot">' + oddsHtml +
-        '<button class="cs2-bet-btn" style="font-size:10px;padding:4px 10px;" data-mid="' + _esc(m.id) + '" data-t1="' + _esc(t1.name||'') + '" data-t2="' + _esc(t2.name||'') + '" data-map="' + _esc(m.current_map||'') + '" onclick="openCs2ScoutDrawer(this.dataset.mid,this.dataset.t1,this.dataset.t2,this.dataset.map)">🔍 Scout</button>' +
+        '<button class="cs2-bet-btn" style="font-size:10px;padding:4px 10px;" data-mid="' + _esc(m.id) + '" data-t1="' + _esc(t1.name||'') + '" data-t2="' + _esc(t2.name||'') + '" data-map="' + _esc(m.current_map||'') + '" data-elo1="' + (t1.elo_rating||'') + '" data-elo2="' + (t2.elo_rating||'') + '" data-pred1="' + (m.prediction?m.prediction.team1_win_prob||'':'') + '" data-pred2="' + (m.prediction?m.prediction.team2_win_prob||'':'') + '" data-fmt="' + _esc(m.format||'') + '" data-tournament="' + _esc(m.tournament||'') + '" onclick="openCs2ScoutDrawer(this.dataset.mid,this.dataset.t1,this.dataset.t2,this.dataset.map,{elo1:this.dataset.elo1,elo2:this.dataset.elo2,pred1:this.dataset.pred1,pred2:this.dataset.pred2,fmt:this.dataset.fmt,tournament:this.dataset.tournament})">🔍 Scout</button>' +
         timeHtml + '</div>' +
     '</div>';
   }
@@ -25229,7 +25229,10 @@ function renderComparateur(d) {
           '</td>' +
           '<td class="cs2-dash-map">' + mapCell + '</td>' +
           '<td class="cs2-dash-kpi">' + (kpiCells || '<span style="color:var(--text3);font-size:10px;">⏳</span>') + '</td>' +
-          '<td class="cs2-dash-verdict"><span class="cs2-verdict-badge ' + verdict.cls + '">' + verdict.txt + '</span></td>' +
+          '<td class="cs2-dash-verdict">' +
+            '<span class="cs2-verdict-badge ' + verdict.cls + '">' + verdict.txt + '</span>' +
+            '<button onclick="openCs2ScoutDrawer(\'' + _esc(m.id) + '\',\'' + _esc(m.team1.name||'') + '\',\'' + _esc(m.team2.name||'') + '\',\'' + _esc(m.current_map||'') + '\',{elo1:\'' + (m.team1.elo_rating||'') + '\',elo2:\'' + (m.team2.elo_rating||'') + '\',pred1:\'' + (m.prediction?m.prediction.team1_win_prob||'':'') + '\',pred2:\'' + (m.prediction?m.prediction.team2_win_prob||'':'') + '\',fmt:\'' + _esc(m.format||'') + '\',tournament:\'' + _esc(m.tournament||'') + '\'})" style="margin-left:6px;font-size:9px;padding:2px 7px;background:var(--bg3,#f8f8f8);border:1px solid var(--bg4,#e0e0e0);border-radius:4px;cursor:pointer;font-family:\'DM Mono\',monospace;color:var(--text3,#999);">🔍</button>' +
+          '</td>' +
         '</tr>';
       }).join('');
 
@@ -25319,20 +25322,23 @@ function renderComparateur(d) {
   var _scoutCtx = { matchId: null, t1: '', t2: '', map: '' };
   var ACTIVE_MAPS_SCOUT = ['mirage','inferno','nuke','ancient','anubis','vertigo','dust2'];
 
-  window.openCs2ScoutDrawer = function(matchId, t1, t2, map) {
+  window.openCs2ScoutDrawer = function(matchId, t1, t2, map, meta) {
     var drawer = document.getElementById('cs2-scout-drawer');
     if (!drawer) return;
-    _scoutCtx = { matchId: matchId, t1: t1, t2: t2, map: map || '' };
+    _scoutCtx = { matchId: matchId, t1: t1, t2: t2, map: map || '',
+      elo1: (meta && meta.elo1) || '', elo2: (meta && meta.elo2) || '',
+      pred1: (meta && meta.pred1) || '', pred2: (meta && meta.pred2) || '',
+      fmt: (meta && meta.fmt) || '', tournament: (meta && meta.tournament) || '' };
     var titleEl = document.getElementById('cs2-scout-title');
     var subEl   = document.getElementById('cs2-scout-sub');
     if (titleEl) titleEl.textContent = t1 + ' vs ' + t2;
-    if (subEl)   subEl.textContent = map ? 'Carte : ' + map : 'Pré-match';
+    if (subEl)   subEl.textContent = (meta && meta.tournament ? meta.tournament + ' · ' : '') + (map ? 'Map : ' + map : (meta && meta.fmt ? meta.fmt : 'Pré-match'));
     drawer.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     document.querySelectorAll('.cs2-scout-tab').forEach(function(b) { b.classList.remove('active'); });
-    var first = document.querySelector('.cs2-scout-tab[data-tab="maps"]');
+    var first = document.querySelector('.cs2-scout-tab[data-tab="overview"]');
     if (first) first.classList.add('active');
-    _loadScoutContent('maps');
+    _loadScoutContent('overview');
   };
 
   window.closeCs2ScoutDrawer = function() {
@@ -25369,10 +25375,101 @@ function renderComparateur(d) {
   }
 
   function _renderScoutContent(tab, e, el) {
+    if (tab === 'overview')  _renderScoutOverview(e, el);
     if (tab === 'maps')      _renderScoutMaps(e, el);
     if (tab === 'players')   _renderScoutPlayers(e, el);
     if (tab === 'h2h')       _renderScoutH2H(e, el);
     if (tab === 'analytics') _renderScoutAnalytics(e, el);
+  }
+
+  function _renderScoutOverview(e, el) {
+    var t1name = _scoutCtx.t1 || (e.team1 && e.team1.name) || 'T1';
+    var t2name = _scoutCtx.t2 || (e.team2 && e.team2.name) || 'T2';
+    var elo1 = Number(_scoutCtx.elo1 || (e.team1 && e.team1.elo_rating) || 0);
+    var elo2 = Number(_scoutCtx.elo2 || (e.team2 && e.team2.elo_rating) || 0);
+    var p1raw = _scoutCtx.pred1 ? Number(_scoutCtx.pred1) : (elo1 && elo2 ? 1/(1+Math.pow(10,(elo2-elo1)/400)) : 0.5);
+    var p1 = Math.max(0.01, Math.min(0.99, p1raw));
+    var pct1 = Math.round(p1*100); var pct2 = 100-pct1;
+    var isElo = !_scoutCtx.pred1;
+    var confidence = Math.max(pct1,pct2);
+    var confColor = confidence>=70?'#00A651':confidence>=60?'#D48900':'#999';
+    var eloDiff = Math.abs(elo1-elo2);
+    var t1meta = (e.team1&&e.team1.map_stats_meta)||{};
+    var t2meta = (e.team2&&e.team2.map_stats_meta)||{};
+    var t1form = e.team1&&e.team1.form&&e.team1.form.form?e.team1.form.form:null;
+    var t2form = e.team2&&e.team2.form&&e.team2.form.form?e.team2.form.form:null;
+    var t1rank = e.team1&&e.team1.rank?'#'+e.team1.rank:'';
+    var t2rank = e.team2&&e.team2.rank?'#'+e.team2.rank:'';
+
+    var statDefs=[
+      {label:'MAP WIN %',  v1:t1meta.map_winrate,      v2:t2meta.map_winrate,      u:'%'},
+      {label:'CT SIDE WR', v1:t1meta.round_winrate_ct, v2:t2meta.round_winrate_ct, u:'%'},
+      {label:'T SIDE WR',  v1:t1meta.round_winrate_t,  v2:t2meta.round_winrate_t,  u:'%'},
+    ].filter(function(s){return s.v1!=null&&s.v2!=null;});
+
+    var statsHtml='';
+    if(statDefs.length){
+      statsHtml='<div style="margin-top:14px;border:1px solid var(--cs2-border,#E0E0E0);border-radius:8px;padding:12px;background:var(--cs2-card,#fff);">'+
+        '<div style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--cs2-text3,#999);margin-bottom:10px;">TEAM STATS</div>';
+      statDefs.forEach(function(s){
+        var tot=(s.v1||0)+(s.v2||0);
+        var b1=tot>0?Math.round(s.v1/tot*100):50; var b2=100-b1;
+        statsHtml+='<div style="display:flex;align-items:center;gap:5px;padding:3px 0;">'+
+          '<span style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:#2563eb;width:38px;text-align:right;">'+s.v1.toFixed(1)+s.u+'</span>'+
+          '<div style="flex:1;height:4px;border-radius:2px;overflow:hidden;background:#f0f0f0;display:flex;">'+
+            '<div style="background:#2563eb;width:'+b1+'%;"></div>'+
+          '</div>'+
+          '<span style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--cs2-text3,#999);width:80px;text-align:center;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0;">'+s.label+'</span>'+
+          '<div style="flex:1;height:4px;border-radius:2px;overflow:hidden;background:#f0f0f0;display:flex;flex-direction:row-reverse;">'+
+            '<div style="background:#E3001B;width:'+b2+'%;"></div>'+
+          '</div>'+
+          '<span style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:#E3001B;width:38px;">'+s.v2.toFixed(1)+s.u+'</span>'+
+        '</div>';
+      });
+      statsHtml+='</div>';
+    }
+
+    function formPills(form){
+      if(!form||!form.length)return'<span style="color:var(--cs2-text3,#999);font-size:10px;">—</span>';
+      return form.slice(-6).map(function(r){
+        var bg=r==='W'?'#00A651':r==='L'?'#E3001B':'#ccc';
+        return'<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:'+bg+';color:#fff;font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;margin:1px;">'+r+'</span>';
+      }).join('');
+    }
+
+    var formHtml=(t1form||t2form)?
+      '<div style="margin-top:14px;border:1px solid var(--cs2-border,#E0E0E0);border-radius:8px;padding:12px;background:var(--cs2-card,#fff);">'+
+        '<div style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--cs2-text3,#999);margin-bottom:8px;">RECENT FORM (last 6, oldest → newest)</div>'+
+        '<div style="display:flex;gap:16px;">'+
+          '<div style="flex:1;"><div style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">'+_esc(t1name)+'</div>'+formPills(t1form)+'</div>'+
+          '<div style="flex:1;"><div style="font-size:10px;font-weight:700;color:#E3001B;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">'+_esc(t2name)+'</div>'+formPills(t2form)+'</div>'+
+        '</div>'+
+      '</div>':'';
+
+    el.innerHTML='<div style="padding:2px 0;">'+
+      ((_scoutCtx.tournament||_scoutCtx.fmt)?'<div style="font-family:\'DM Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--cs2-text3,#999);margin-bottom:10px;">'+_esc(_scoutCtx.tournament||'')+(_scoutCtx.fmt?' · '+_esc(_scoutCtx.fmt):'')+'</div>':'')+
+      '<div style="border:1px solid var(--cs2-border,#E0E0E0);border-radius:8px;padding:12px;background:var(--cs2-card,#fff);">'+
+        '<div style="font-family:\'DM Mono\',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--cs2-text3,#999);margin-bottom:10px;">ML PREDICTION · '+(isElo?'ELO-AWARE':'BSD ML')+'</div>'+
+        '<div style="display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:8px;">'+
+          '<div style="background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;width:'+pct1+'%;">'+pct1+'%</div>'+
+          '<div style="background:#E3001B;color:#fff;display:flex;align-items:center;justify-content:center;font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;width:'+pct2+'%;">'+pct2+'%</div>'+
+        '</div>'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">'+
+          '<span style="font-family:\'Instrument Sans\',sans-serif;font-size:11px;color:var(--cs2-text2,#555);">'+_esc(t1name)+'</span>'+
+          '<span style="font-family:\'Instrument Sans\',sans-serif;font-size:11px;color:var(--cs2-text2,#555);">'+_esc(t2name)+'</span>'+
+        '</div>'+
+        ((elo1||elo2)?'<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'+
+          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#2563eb;font-weight:700;">'+(elo1?'ELO '+elo1:'')+' '+t1rank+'</span>'+
+          '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#E3001B;font-weight:700;">'+(elo2?'ELO '+elo2:'')+' '+t2rank+'</span>'+
+        '</div>':'')+
+        '<div style="display:flex;gap:14px;flex-wrap:wrap;">'+
+          '<span style="font-family:\'DM Mono\',monospace;font-size:10px;">Confidence <strong style="color:'+confColor+';">'+confidence+'%</strong></span>'+
+          (eloDiff?'<span style="font-family:\'DM Mono\',monospace;font-size:10px;">ELO diff <strong>'+eloDiff+'</strong></span>':'')+
+          (isElo?'<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--cs2-text3,#999);">⚡ ELO-based</span>':'')+
+        '</div>'+
+      '</div>'+
+      statsHtml+formHtml+
+    '</div>';
   }
 
   function _renderScoutMaps(e, el) {
