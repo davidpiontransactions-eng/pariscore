@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="0.3" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#4ade80"/>
+    </linearGradient>
+    <linearGradient id="ps-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8eaed"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background dark with radial -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bg)"/>
+
+  <!-- Outer ring cyan→emerald gradient -->
+  <circle cx="256" cy="256" r="172" fill="none" stroke="url(#ring)" stroke-width="16" opacity="0.85"/>
+
+  <!-- Inner accent dot -->
+  <circle cx="256" cy="100" r="22" fill="#4ade80"/>
+
+  <!-- Letter P (manually drawn paths, no font dep) -->
+  <g fill="url(#ps-grad)">
+    <!-- P -->
+    <path d="M 168 200 L 168 360 L 200 360 L 200 290 L 240 290 Q 280 290 280 245 Q 280 200 240 200 Z M 200 230 L 240 230 Q 252 230 252 245 Q 252 260 240 260 L 200 260 Z"/>
+    <!-- S -->
+    <path d="M 296 230 Q 296 200 332 200 L 352 200 Q 380 200 380 230 L 354 230 Q 354 220 340 220 L 326 220 Q 320 220 320 230 Q 320 240 332 244 L 360 254 Q 384 262 384 290 Q 384 320 348 320 L 326 320 Q 296 320 294 290 L 320 290 Q 320 302 332 302 L 348 302 Q 360 302 360 290 Q 360 280 348 276 L 320 268 Q 296 260 296 230 Z"/>
+  </g>
+
+  <!-- PARI label below (geometric, no font) -->
+  <g fill="#38bdf8" opacity="0.85">
+    <!-- P -->
+    <rect x="178" y="395" width="6" height="36" rx="1"/>
+    <rect x="184" y="395" width="14" height="6" rx="1"/>
+    <rect x="184" y="411" width="14" height="6" rx="1"/>
+    <rect x="198" y="395" width="6" height="22" rx="1"/>
+    <!-- A -->
+    <polygon points="214,431 224,395 234,431 230,431 228,420 220,420 218,431"/>
+    <rect x="222" y="416" width="4" height="4"/>
+    <!-- R -->
+    <rect x="248" y="395" width="6" height="36" rx="1"/>
+    <rect x="254" y="395" width="14" height="6" rx="1"/>
+    <rect x="254" y="411" width="14" height="6" rx="1"/>
+    <rect x="268" y="395" width="6" height="22" rx="1"/>
+    <polygon points="262,417 274,431 268,431 258,417"/>
+    <!-- I -->
+    <rect x="290" y="395" width="6" height="36" rx="1"/>
+  </g>
+</svg>
