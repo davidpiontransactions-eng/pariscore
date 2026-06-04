@@ -9021,6 +9021,16 @@ function buildMatchRecord(raw) {
       away: awayStats,
       isReal: isRealData,
     },
+    is_neutral_ground: raw.is_neutral_ground || false,
+    // Terrain neutre — stats domicile de l'équipe visiteuse (PPG/avgScored/avgConceded quand elle joue chez elle)
+    away_home_stats: aRaw?.home ? {
+      ppg: aRaw.home.ppg ?? null,
+      avgScored: aRaw.home.avgScored ?? null,
+      avgConceded: aRaw.home.avgConceded ?? null,
+      played: aRaw.home.played ?? null,
+      wins: aRaw.home.wins ?? null,
+      draws: aRaw.home.draws ?? null,
+    } : null,
   };
   record.all_bookmakers = processAllBookmakers(raw.bookmakers, raw.home_team, raw.away_team);
   record._ha_dynamic = ha_dynamic;
