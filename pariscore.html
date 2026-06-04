@@ -8843,6 +8843,33 @@
   body[data-cf-light="1"] .dpk-btn:hover { background: var(--bg4); }
   body[data-cf-light="1"] .dpk-btn.is-active .dpk-dn { color: var(--text); }
 
+  /* ─── Filter Panel DARK FORCE — align sidebar/nav premium ────── */
+  #ps-team-search-row,
+  #ps-date-picker,
+  #ps-quick-filters {
+    background: #0d1420 !important;
+    border-color: rgba(255,255,255,0.07) !important;
+  }
+  #ps-team-search-row span { color: rgba(255,255,255,0.42) !important; }
+  #team-search {
+    background: rgba(255,255,255,0.06) !important;
+    border-color: rgba(255,255,255,0.10) !important;
+    color: #e2e8f0 !important;
+  }
+  #team-search::placeholder { color: rgba(255,255,255,0.28) !important; }
+  #ps-date-picker .dpk-dn { color: rgba(255,255,255,0.42); }
+  #ps-date-picker .dpk-dd { color: rgba(255,255,255,0.68); }
+  #ps-date-picker .dpk-btn:hover { background: rgba(255,255,255,0.06) !important; }
+  #ps-date-picker .dpk-btn.is-active .dpk-dn { color: #f1f5f9 !important; font-weight: 800; }
+  #ps-date-picker .dpk-btn.is-active .dpk-dd { color: #f59e0b !important; }
+  #ps-quick-filters .qfb-pill { color: rgba(255,255,255,0.45); }
+  #ps-quick-filters .qfb-pill:hover { background: rgba(255,255,255,0.07) !important; color: #e2e8f0 !important; }
+  #ps-quick-filters .qfb-pill.is-active { color: #f59e0b !important; background: rgba(245,158,11,0.15) !important; }
+  #ps-quick-filters .qfb-conf-lbl { color: rgba(255,255,255,0.40); }
+  #ps-quick-filters .qfb-conf-val { color: #f59e0b; }
+  #ps-quick-filters .qfb-sep { background: rgba(255,255,255,0.10); }
+  #ps-quick-filters .qfb-icon { opacity: 0.5; }
+
   /* ─── Dark Premium Utilities ────── */
   .section-title-premium {
     padding-left: 10px; border-left: 3px solid #f59e0b;
@@ -12191,7 +12218,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   </div>
 
   <!-- TEAM SEARCH -->
-  <div class="filter-row" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);margin-bottom:8px;padding:10px 16px;gap:8px;">
+  <div id="ps-team-search-row" class="filter-row" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);margin-bottom:8px;padding:10px 16px;gap:8px;">
     <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);white-space:nowrap;">Équipe :</span>
     <input type="search" id="team-search" placeholder="PSG, Real Madrid…" oninput="setTeamSearch(this.value)" style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--font-mono);padding:4px 8px;width:200px;outline:none;transition:border-color .15s;" />
     <span id="team-search-count" style="font-size:11px;color:var(--text3);font-family:var(--font-mono);"></span>
