@@ -19689,6 +19689,24 @@ async function handleAPI(req, res, pathname, query) {
       const active = ((vb.body && vb.body.matches) || []).filter(e =>
         !_FINISHED_RX.test(String(e.status || ''))
       );
+      // Batch-enrich BSD odds for matches missing movement data.
+      // _bsdTennisOddsCache (TTL 3h) means live/recently-viewed matches hit instantly.
+      // Unknown matches get a parallel fetch with 2s timeout — non-blocking via allSettled.
+      await Promise.allSettled(active.map(async e => {
+        const alreadyHas = e.bsd_odds_summary
+          || (e._live && e._live._bsd_odds) || e._bsd_odds;
+        if (alreadyHas || !e._bsd_match_id) return;
+        try {
+          const raw = await Promise.race([
+            _fetchBSDTennisOdds(e._bsd_match_id),
+            new Promise(r => setTimeout(() => r(null), 2000)),
+          ]);
+          if (raw) {
+            const s = _extractTennisOddsSummary(raw);
+            if (s) e._bsd_odds = s;
+          }
+        } catch (_) {}
+      }));
       const scored = active.map(e => {
         const s = computeScoreTop10Tennis(e, mode);
         const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
@@ -19724,7 +19742,7 @@ async function handleAPI(req, res, pathname, query) {
           books_count:     (e.bsd_odds_summary && e.bsd_odds_summary.books_count) || null,
           confidence_level:(e.confidence_badge && e.confidence_badge.level) || null,
           rlm:             (() => {
-            const _ods = e.bsd_odds_summary;
+            const _ods = e.bsd_odds_summary || (e._live && e._live._bsd_odds) || e._bsd_odds;
             const _ev  = (e.best_edge && e.best_edge.edge) || 0;
             const _bl  = e.predictions && e.predictions.blended;
             if (!_ods || !_bl || _ev <= 5) return false;
@@ -23134,7 +23152,9 @@ function computeScoreTop10Tennis(e, mode) {
   const D_urgency = _tnT10Urgency(e.start_time, isLive);
 
   // ── D6: Line Movement + Books depth ─────────────────────────────────────
-  const ods = e.bsd_odds_summary || null;
+  // Priority: e.bsd_odds_summary (football pattern) → e._live._bsd_odds (live tennis)
+  // → e._bsd_odds (pre-match enriched via Top10 batch fetch)
+  const ods = e.bsd_odds_summary || (e._live && e._live._bsd_odds) || e._bsd_odds || null;
   const mvScore = ((ods && ods.movement_p1 === 'SHORTENING') ? 0.5 : 0)
                 + ((ods && ods.movement_p2 === 'SHORTENING') ? 0.5 : 0);
   const bkNorm  = ods && ods.books_count ? _tnT10Clamp(Number(ods.books_count) / 14, 0, 1) : 0;
