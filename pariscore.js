@@ -4010,6 +4010,14 @@ function _tnTop10Card(m, rank) {
 
   const safeId = _tnEsc(String(m.matchId || ''));
 
+  // Player photo avatars — BSD tennis route + initials fallback
+  const av1 = m.player_id_p1
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+    : `<span style="width:28px;height:28px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 9px/1 var(--font-mono);color:#fff;flex-shrink:0">${playerInitials(m.player1||'?')}</span>`;
+  const av2 = m.player_id_p2
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+    : `<span style="width:28px;height:28px;border-radius:50%;background:var(--violet,#9c27b0);display:flex;align-items:center;justify-content:center;font:700 9px/1 var(--font-mono);color:#fff;flex-shrink:0">${playerInitials(m.player2||'?')}</span>`;
+
   // Win prob bar
   const probPct = m.blended_p1 != null ? m.blended_p1 : null;
   const probBar = probPct != null
@@ -4033,9 +4041,9 @@ function _tnTop10Card(m, rank) {
   <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
   ${liveScore}
   <div class="tn-t10-players">
-    <div class="tn-t10-player"><span class="tn-t10-player-name">${_tnEsc(m.player1 || '—')}</span>${r1}</div>
+    <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc(m.player1 || '—')}</span>${r1}</div>
     <div class="tn-t10-vs">vs</div>
-    <div class="tn-t10-player"><span class="tn-t10-player-name">${_tnEsc(m.player2 || '—')}</span>${r2}</div>
+    <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc(m.player2 || '—')}</span>${r2}</div>
   </div>
   ${surfacePill}
   ${probBar}

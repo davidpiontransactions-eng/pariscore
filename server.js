@@ -19737,6 +19737,8 @@ async function handleAPI(req, res, pathname, query) {
           elo_p2:          (e.player2 && e.player2.elo_surface) || null,
           rank_p1:         (e.player1 && e.player1.rank) || null,
           rank_p2:         (e.player2 && e.player2.rank) || null,
+          player_id_p1:    (e.player1 && e.player1.id) || null,
+          player_id_p2:    (e.player2 && e.player2.id) || null,
           best_edge_ev:    (e.best_edge && e.best_edge.edge != null) ? Number(e.best_edge.edge) : null,
           blended_p1:      (e.predictions && e.predictions.blended && e.predictions.blended.p1 != null)
                              ? Math.round(e.predictions.blended.p1 * 100) : null,
