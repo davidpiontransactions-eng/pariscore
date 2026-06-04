@@ -19686,7 +19686,9 @@ async function handleAPI(req, res, pathname, query) {
       return jsonResponse(res, 200, _tnTop10Cache[mode]);
     }
     try {
-      const vb = await buildTennisValueBets({});
+      const _tnVbFn = globalThis.__tennisVBWarm;
+      if (typeof _tnVbFn !== 'function') return jsonResponse(res, 503, { error: 'tennis_data_unavailable', detail: 'VB engine not ready' });
+      const vb = await _tnVbFn({});
       if (!vb || vb.status !== 200) return jsonResponse(res, 503, { error: 'tennis_data_unavailable' });
       const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
       const active = ((vb.body && vb.body.matches) || []).filter(e =>
