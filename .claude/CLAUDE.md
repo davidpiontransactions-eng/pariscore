@@ -155,7 +155,7 @@ Quand BSD publie une newsletter ou annonce de nouveaux endpoints, exécuter ce w
 
 | Date | Trigger | GO | Commits | Résidu |
 |---|---|---|---|---|
-| 2026-06-02 | Newsletter BSD Juin 2026 (odds multi-books, H2H, aces/DF par set) | ✅ "oui" utilisateur | `72ff270` `fad55b1` `6ff2296` `a76a2e0` | aces_per_set normalizer server.js (schéma `aces_per_set[]` confirmé, patch pending) |
+| 2026-06-02 | Newsletter BSD Juin 2026 (odds multi-books, H2H, aces/DF par set) | ✅ "oui" utilisateur | `72ff270` `fad55b1` `6ff2296` `a76a2e0` | ✅ `_mergeDetailStats` server.js:20327 patché `aces_per_set[]` + `double_faults_per_set[]` |
 
 ---
 
@@ -179,17 +179,16 @@ Chargées automatiquement sur les fichiers pertinents :
 |---|---|---|
 | `/tennis/api/v2/matches/{id}/odds/` | `GET /api/v1/tennis/match/:matchId/odds` | ✅ backend + mobile sheet `pslts-bsd-odds` |
 | `/tennis/api/v2/matches/{id}/h2h/` | `GET /api/v1/tennis/h2h?matchId=` | ✅ backend + `_psLtsFetchH2H()` frontend câblé |
-| `/tennis/api/v2/matches/{id}/` (sets_detail) | `_mergeDetailStats()` server.js | ⚠️ backend existe, schema réel = `aces_per_set[]` / `double_faults_per_set[]` — normalizer à patcher |
+| `/tennis/api/v2/matches/{id}/` (sets_detail) | `_mergeDetailStats()` server.js | ✅ patché server.js:20327 — `aces_per_set[]` + `double_faults_per_set[]` |
 | `/tennis/api/v2/matches/live/` | SSE + `fetchBSDTennisLive` | ✅ |
 
 **Schéma BSD réel confirmé sur match 36312 (2026-06-02)** :
 - Odds multi-books : `bookmakers[].{odds_player1, odds_player2, movement_player1, movement_player2}` → déjà extrait par `_extractTennisOddsSummary()`
 - H2H : `{ h2h: null|[...], player1_last5: [...], player2_last5: [...] }` → `_psLtsFetchH2H()` patché schéma réel commit `6ff2296`
-- Aces/DF par set : `aces_per_set: [[p1,p2], ...]` + `double_faults_per_set: [[p1,p2], ...]` dans match detail — ⚠️ normalizer utilise encore ancien schéma `sets_detail[i].p1_aces`
+- Aces/DF par set : `aces_per_set: [[p1,p2], ...]` + `double_faults_per_set: [[p1,p2], ...]` dans match detail — ✅ `_mergeDetailStats` server.js:20327 patché (primaire `aces_per_set[]`, fallback `sets_detail[i].p1_aces`)
 
 **H2H label** : `pslts-ctx-h2h` span — label fixé "H2H clay" → "H2H" commit `72ff270`
 **Stale panel** : `dataset.rendered` stocke matchId (pas `'1'`) depuis commit `fad55b1`
 
-**Action restante** : patcher `_normalizeBSDTennisMatch()` + `_mergeDetailStats()` server.js avec `aces_per_set` / `double_faults_per_set` schéma réel.
 
-*v3.3 — 2026-06-02 — BSD June 2026 mission : H2H câblé + odds mobile sheet + stale panel fix. Aces/DF per set pending schema fix.*
+*v3.4 — 2026-06-04 — Aces/DF per set ✅ confirmé patché `_mergeDetailStats` server.js:20327. Bug ic90 wipe fixé server.js:16504.*
