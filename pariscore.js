@@ -7507,6 +7507,68 @@ function _psLogoCountryFallback(name, country) {
   }
   return '<span class="sidebar-league-logo sidebar-intl-globe" style="font-size:16px;">⚽</span>';
 }
+// ── Tennis tournament logos — API-Sports tennis CDN ──────────────────────
+var TENNIS_TOURNAMENT_LOGO_IDS = {
+  'Australian Open':1,
+  'Roland Garros':2,'French Open':2,
+  'Wimbledon':3,
+  'US Open':4,
+  'ATP Finals':5,'Nitto ATP Finals':5,'ATP World Tour Finals':5,
+  'Indian Wells':6,'BNP Paribas Open':6,
+  'Miami Open':7,'Miami':7,
+  'Monte-Carlo':8,'Monte Carlo':8,'Rolex Monte-Carlo Masters':8,
+  'Madrid':9,'Madrid Open':9,'Mutua Madrid Open':9,
+  'Rome':10,'Italian Open':10,'Internazionali BNL':10,
+  'Canadian Open':11,'Rogers Cup':11,
+  'Cincinnati':12,'Western & Southern Open':12,
+  'Shanghai':13,'Rolex Shanghai Masters':13,
+  'Paris':14,'Paris Bercy':14,'Rolex Paris Masters':14,
+  'Dubai':15,'Dubai Duty Free':15,
+  'Barcelona':16,'Barcelona Open':16,
+  'Halle':17,'Halle Open':17,
+  'Hamburg':18,'Hamburg Open':18,
+  "Queen's Club":19,"Queen's":19,
+  'Vienna':20,'Erste Bank Open':20,
+  'Basel':21,'Swiss Indoors':21,
+  'Washington':24,'Citi Open':24,
+  'Stuttgart':26,
+  'Lyon':27,'Open Parc':27,
+  'Geneva':28,'Genève':28,
+  'Munich':29,'BMW Open':29,
+  'Estoril':30,
+  'Marrakech':31,
+  'Eastbourne':38,
+  'Mallorca':37,
+};
+function _getTennisTournamentLogo(name) {
+  var esc = function(s) { return (s||'').replace(/"/g,'&quot;'); };
+  var id = TENNIS_TOURNAMENT_LOGO_IDS[name];
+  if (id) {
+    return '<img class="sidebar-league-logo" src="https://media.api-sports.io/tennis/leagues/' + id + '.png" alt="' + esc(name) + '" onerror="_tnLogoFallback(this)">';
+  }
+  return _tnAutoLogoHtml(name);
+}
+function _tnAutoLogoHtml(name) {
+  var n = String(name || '');
+  var color = /clay|garros|madrid|rome|barcelona|monte|marrakech|estoril/i.test(n) ? '#c84b11'
+            : /wimbledon|grass|queen|halle|hertogenbosch|eastbourne|nottingham/i.test(n) ? '#2d7a3a'
+            : '#1a6bb5';
+  var words = n.replace(/[^a-zA-Z\s]/g,'').split(/\s+/).filter(Boolean);
+  var init = (words.length >= 2 ? words[0][0]+words[1][0] : words[0] ? words[0].substring(0,2) : 'TN').toUpperCase();
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="' + color + '"/><text x="14" y="18.5" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#fff">' + init + '</text></svg>';
+  return '<img class="sidebar-league-logo" src="data:image/svg+xml;base64,' + _btoaSafe(svg) + '" alt="' + n.replace(/"/g,'&quot;') + '">';
+}
+function _tnLogoFallback(img) {
+  img.onerror = null;
+  var n = img.alt || '';
+  var color = /clay|garros|madrid|rome|barcelona|monte|marrakech|estoril/i.test(n) ? '#c84b11'
+            : /wimbledon|grass|queen|halle|hertogenbosch/i.test(n) ? '#2d7a3a'
+            : '#1a6bb5';
+  var words = n.replace(/[^a-zA-Z\s]/g,'').split(/\s+/).filter(Boolean);
+  var init = (words.length >= 2 ? words[0][0]+words[1][0] : words[0] ? words[0].substring(0,2) : 'TN').toUpperCase();
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="' + color + '"/><text x="14" y="18.5" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#fff">' + init + '</text></svg>';
+  img.src = 'data:image/svg+xml;base64,' + _btoaSafe(svg);
+}
 // ── Construction Sidebar Foot (Bloc A vedette + Bloc B exhaustif) ──
 var SIDEBAR_FEATURED_FOOT = [
   { key:'soccer_epl',               name:'Premier League',   country:'England' },
@@ -7569,7 +7631,7 @@ function _psBuildSidebarAllTennis() {
   list.innerHTML = names.map(function(n) {
     var safe = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<button class="sidebar-league-item" data-sb-tournoi="' + n.replace(/"/g,'&quot;') + '" onclick="_psSbPickTennis(\'' + safe + '\')">' +
-      '<span class="sidebar-league-flag">🎾</span>' + n + '</button>';
+      _getTennisTournamentLogo(n) + '<span class="sidebar-league-name">' + n + '</span></button>';
   }).join('');
 }
 function _psSbFilterFoot(q) {
