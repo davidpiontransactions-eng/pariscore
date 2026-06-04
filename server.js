@@ -17705,8 +17705,8 @@ function srvPlanGate(req, res, pathname) {
   // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
   // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
-  // Glicko-2 stats + live enriched + momentum — public read-only
-  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum') return false;
+  // Glicko-2 stats + live enriched + momentum + top10 widget — public read-only
+  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10') return false;
   // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
   if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
   if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
