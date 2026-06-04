@@ -695,6 +695,7 @@ let globalAccuracy = null; // stocke meta.accuracy pour colonne 2
 let activeTopN    = 0;        // Top N meilleurs paris (0 = tous)
 let activeTopMarket = '';    // legacy (marché unique) — conservé pour compat
 let activeStrategies = [];   // multi-sélection clés STRATEGIES_UI (Top stratégies)
+let pinnedMatchIds = new Set(); // lignes épinglées en haut du tableau
 let activeTopValue = 0;      // 1 = value bets only (edge ≥ 3%)
 let topRankMap = {};         // { matchId: rank } pour les badges de rang
 let activeEdge  = 0;       // filtre edge minimum (0 = tous)
@@ -11197,6 +11198,7 @@ const label = country
     const _skillPids = (m.topButteurs || []).filter(p => p.id).slice(0, 4).map(p => p.id).join(',');
     tr.innerHTML = `
       <td style="min-width:60px;text-align:center;">
+        <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
         <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
         ${_live ? '' : `<div class="cf-t2k" data-cf-t2k="${m.commence_time || ''}" style="display:none;"></div>`}
@@ -11287,13 +11289,7 @@ const label = country
       <td>
         <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}${renderTopKPI(m.topKPI, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}</div>
       </td>
-      <td>
-        <div style="display:flex;gap:5px;align-items:center;">
-          <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
-          <button class="ins-btn" onclick="openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
-          <button class="ai-gen-btn" onclick="openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
-        </div>
-      </td>
+      <td></td>
       ${vbHeroHtml}
       ${sc(homePpg,'ppg')}${sc(hs.avgScored,'avg')}${sc(p.btts)}${sc(p.over25)}
       ${(()=>{
