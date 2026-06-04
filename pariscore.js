@@ -271,7 +271,7 @@ function _paintBracket(el,data){
     const statusEl = document.getElementById('rg-status');
     const bracketEl = document.getElementById('rg-bracket');
     const contendersEl = document.getElementById('rg-contenders');
-    if (statusEl) statusEl.textContent = isRetry ? 'Nouvelle tentative…' : 'Chargement…';
+    if (statusEl) statusEl.textContent = isRetry ? I18N.t('status.retrying') : I18N.t('status.loading');
     if (bracketEl) bracketEl.innerHTML = '<div class="rg-loading">Calcul prédictif en cours…</div>';
     if (contendersEl) contendersEl.innerHTML = '';
     // AbortController 60s — évite "Failed to fetch" hang sur calcul long.
@@ -3862,7 +3862,7 @@ async function analyzeTennisMatch(matchId) {
 async function tickTennisValueBets() {
   const statusEl = document.getElementById('tennis-vb-status');
   try {
-    if (statusEl && !window._tennisVbBuildRetries) statusEl.textContent = 'Chargement…';
+    if (statusEl && !window._tennisVbBuildRetries) statusEl.textContent = I18N.t('status.loading');
     // Timeout client 25s : une requête pendue ne doit pas figer l'UI.
     const r = await Promise.race([
       apiFetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } }),
@@ -4177,7 +4177,7 @@ function _texFmtOdds(v) {
 async function loadTexMatches() {
   const body = document.getElementById('tex-body');
   const status = document.getElementById('tex-status');
-  if (status) status.textContent = 'Chargement…';
+  if (status) status.textContent = I18N.t('status.loading');
   try {
     const tour = _texCurrentTour;
     let dateParam = '';
@@ -4624,7 +4624,7 @@ async function openTexPlayerModal(slug) {
 async function loadTennisAbstractRome() {
   const statusEl = document.getElementById('ta-rome-status');
   const upcomingEl = document.getElementById('ta-rome-upcoming');
-  if (statusEl) statusEl.textContent = 'Chargement…';
+  if (statusEl) statusEl.textContent = I18N.t('status.loading');
   try {
     const [atpRes, wtaRes] = await Promise.all([
       apiFetch('/api/v1/tennis-abstract?event=atp-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
@@ -11362,7 +11362,7 @@ function renderMatches(matches) {
 
   if (!filtered.length) {
     if (mt) mt.style.display = 'none';
-    if (es) { es.style.display = 'block'; es.textContent = activeDay !== 'all' ? 'Aucun match trouvé pour ce jour.' : 'Aucun match trouvé.'; }
+    if (es) { es.style.display = 'block'; es.textContent = activeDay !== 'all' ? 'Aucun match trouvé pour ce jour.' : I18N.t('empty.no_match'); }
     const bc = document.getElementById('bet-count');
     if (bc) bc.textContent = '';
     try { if (typeof renderMobileCards === 'function') renderMobileCards([]); } catch (e) {}
