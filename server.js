@@ -24530,6 +24530,11 @@ function getTennisPlayerStatsCached(name, tour, surface) {
 // Page inlines JS string vars: projCurrent (HTML table seed/name/CTR/F%/W%),
 // upcomingSingles, completedSingles. Scrape + parse + cache 6h.
 const TENNIS_ABSTRACT_BASE = 'https://www.tennisabstract.com/current';
+// CF Bot Management bloque les fetch Node (TLS JA3) → HTTP 403 systématique.
+// Source redondante (Elo interne BSD/ESPN bd dl49). Désactivée par défaut.
+// Réactiver : TENNIS_ABSTRACT_ENABLED=1 (.env) — utile seulement via proxy CF (curl-impersonate / Web Unlocker).
+const TENNIS_ABSTRACT_ENABLED = String(process.env.TENNIS_ABSTRACT_ENABLED ?? '0').trim() !== '0';
+if (!TENNIS_ABSTRACT_ENABLED) console.log('  [TennisAbstract] DISABLED (Cloudflare 403 — set TENNIS_ABSTRACT_ENABLED=1 to retry via proxy). Fallback: Elo interne BSD.');
 const TENNIS_ABSTRACT_TTL_MS = 6 * 3600 * 1000;
 const TENNIS_ABSTRACT_EVENTS = {
   'wta-rome-2026': { file: '2026WTARome.html', tour: 'WTA', city: 'Rome', year: 2026 },
@@ -24598,6 +24603,12 @@ function _taParseMatches(blob) {
 async function fetchTennisAbstractTournament(slug) {
   const meta = TENNIS_ABSTRACT_EVENTS[slug];
   if (!meta) throw new Error(`Unknown tennis-abstract event: ${slug}`);
+  // CF-walled + disabled : retour vide silencieux (zéro fetch, zéro spam 403).
+  if (!TENNIS_ABSTRACT_ENABLED) {
+    return { slug, tour: meta.tour, city: meta.city, year: meta.year, source_url: null,
+      fetched_at: new Date().toISOString(), rounds: [], players: [],
+      upcoming_matches: [], completed_matches: [], disabled: true };
+  }
   const cached = tennisAbstractCache.get(slug);
   if (cached && Date.now() - cached.ts < TENNIS_ABSTRACT_TTL_MS) return cached.data;
   const url = `${TENNIS_ABSTRACT_BASE}/${meta.file}`;
@@ -24675,6 +24686,11 @@ function _taParseReportTable(html) {
 async function fetchTennisAbstractReport(slug) {
   const meta = TENNIS_ABSTRACT_REPORTS[slug];
   if (!meta) throw new Error(`Unknown TA report: ${slug}`);
+  // CF-walled + disabled : retour vide silencieux.
+  if (!TENNIS_ABSTRACT_ENABLED) {
+    return { slug, source_url: null, fetched_at: new Date().toISOString(),
+      headers: [], rows: [], playerSlugs: [], disabled: true };
+  }
   const cached = tennisAbstractReportsCache.get(slug);
   if (cached && Date.now() - cached.ts < meta.ttl) return cached.data;
   const url = `${TENNIS_ABSTRACT_BASE.replace('/current', '')}${meta.path}`;
@@ -24705,10 +24721,14 @@ async function fetchTennisAbstractReport(slug) {
 const BETMINES_API = 'https://api.betmines.com/betmines/v1';
 const BETMINES_TTL_MS = 30 * 60 * 1000;
 const betminesCache = new Map();
-const BETMINES_ENABLED = String(process.env.BETMINES_ENABLED ?? '1').trim() !== '0';
-if (!BETMINES_ENABLED) console.log('  [BetMines] cron DISABLED (BETMINES_ENABLED=0) — fixtures indisponibles.');
+// CF Bot Management bloque l'API (réponse = challenge HTML). 403 systématique.
+// Désactivé par défaut. Consensus presse couvert par Sofascore/Forebet/OddAlerts.
+// Réactiver via proxy CF : BETMINES_ENABLED=1 (.env).
+const BETMINES_ENABLED = String(process.env.BETMINES_ENABLED ?? '0').trim() !== '0';
+if (!BETMINES_ENABLED) console.log('  [BetMines] DISABLED (Cloudflare 403 — set BETMINES_ENABLED=1 to retry via proxy). Consensus: Sofascore/Forebet.');
 
 async function fetchBetminesFixtures(dateFrom, dateTo) {
+  if (!BETMINES_ENABLED) return []; // CF 403 — fetch désactivé (set BETMINES_ENABLED=1 via proxy)
   const from = dateFrom || _texFmtDate(new Date());
   const to = dateTo || from;
   const cacheKey = `${from}|${to}`;
@@ -42752,6 +42772,7 @@ function _msUntilNextParisHour(targetHour) {
   return target.getTime() - nowParis.getTime();
 }
 async function _runTennisAbstractDailyRefresh() {
+  if (!TENNIS_ABSTRACT_ENABLED) return; // CF 403 — cron désactivé
   const slugs = Object.keys(TENNIS_ABSTRACT_EVENTS);
   console.log(`  [Cron:TennisAbstract] Refresh ${slugs.length} event(s) + reports daily à 10:00 Europe/Paris…`);
   for (const slug of slugs) {
