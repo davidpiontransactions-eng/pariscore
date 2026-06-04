@@ -3995,21 +3995,36 @@ function _tnTop10Card(m, rank) {
 
   const safeId = _tnEsc(String(m.matchId || ''));
 
-  return `<div class="tn-t10-card" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisDetail==='function')openTennisDetail('${safeId}')">
+  // Win prob bar
+  const probPct = m.blended_p1 != null ? m.blended_p1 : null;
+  const probBar = probPct != null
+    ? `<div class="tn-t10-prob-row"><div class="tn-t10-prob-bar"><div class="tn-t10-prob-fill" style="width:${probPct}%"></div></div><span class="tn-t10-prob-label">${probPct}%</span></div>` : '';
+
+  // Surface + round pill
+  const surfacePill = (m.surface || m.round)
+    ? `<div class="tn-t10-surface">${surfaceIcon} ${_tnEsc([m.surface, m.round].filter(Boolean).join(' · '))}</div>` : '';
+
+  // Chips with semantic colors
+  const chipsHtml = chips.slice(0, 4).map(c => {
+    const cls = c.includes('EV') ? 'ev' : c.includes('steam') ? 'steam' : c.includes('RLM') ? 'rlm' : '';
+    return `<span class="tn-t10-chip ${cls}">${_tnEsc(c)}</span>`;
+  }).join('');
+
+  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisDetail==='function')openTennisDetail('${safeId}')">
   <div class="tn-t10-card-top">
     <span class="tn-t10-rank">#${rank}</span>
-    <div style="display:flex;gap:4px;align-items:center;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
+    <span class="tn-t10-score-badge ${scoreColor}">${m.score_top10.toFixed(1)}<span>/100</span></span>
   </div>
+  <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
   ${liveScore}
   <div class="tn-t10-players">
-    <div class="tn-t10-player">${_tnEsc(m.player1 || '—')} ${r1}</div>
+    <div class="tn-t10-player"><span class="tn-t10-player-name">${_tnEsc(m.player1 || '—')}</span>${r1}</div>
     <div class="tn-t10-vs">vs</div>
-    <div class="tn-t10-player">${_tnEsc(m.player2 || '—')} ${r2}</div>
+    <div class="tn-t10-player"><span class="tn-t10-player-name">${_tnEsc(m.player2 || '—')}</span>${r2}</div>
   </div>
-  <div class="tn-t10-meta">${_tnEsc(meta || '—')}</div>
-  <div class="tn-t10-score-bar"><div class="tn-t10-score-fill ${scoreColor}" style="width:${Math.min(100, m.score_top10)}%"></div></div>
-  <div class="tn-t10-score-val">${m.score_top10.toFixed(1)}<span>/100</span></div>
-  <div class="tn-t10-chips">${chips.slice(0, 4).map(c => `<span class="tn-t10-chip">${_tnEsc(c)}</span>`).join('')}</div>
+  ${surfacePill}
+  ${probBar}
+  <div class="tn-t10-chips">${chipsHtml}</div>
 </div>`;
 }
 
