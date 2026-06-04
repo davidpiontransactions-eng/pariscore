@@ -763,7 +763,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
   if (pageId === 'cs2') initCs2Page();
   if (pageId === 'tennis-alerts') loadTennisAlerts();
@@ -3885,6 +3885,101 @@ function startTennisValueBets() {
 
 function stopTennisValueBets() {
   if (_tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
+}
+
+// ─── Top 10 Matchs du Jour — Tennis ──────────────────────────────────────
+let _tnTop10Mode = 'viewer';
+let _tnTop10Timer = null;
+
+function _tnEsc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _tnTop10SetMode(mode, btn) {
+  _tnTop10Mode = mode;
+  document.querySelectorAll('.tn-t10-mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+  fetchTennisTop10();
+}
+
+function _tnTop10Card(m, rank) {
+  const reasonRaw = String(m.reason || 'ANALYSE');
+  const tagCss = 'tn-t10-tag-' + reasonRaw.replace(/ /g, '');
+  const reasonLabel = {
+    'EN DIRECT': '🔴 EN DIRECT', VALEUR: '💰 VALEUR', VAPEUR: '🔥 VAPEUR',
+    CLASSIQUE: '🏆 CLASSIQUE', DRAMA: '🎭 DRAMA', UPSET: '⚡ UPSET', ANALYSE: '📊 ANALYSE',
+  }[reasonRaw] || reasonRaw;
+
+  const scoreColor = m.score_top10 >= 70 ? 'high' : m.score_top10 >= 45 ? 'med' : '';
+
+  let liveScore = '';
+  if (m.is_live && m.sets_live && m.sets_live.length) {
+    const setsStr = m.sets_live.join('  ');
+    const setsLabel = (m.player1_sets != null && m.player2_sets != null)
+      ? ` (${m.player1_sets}-${m.player2_sets} sets)` : '';
+    liveScore = `<div class="tn-t10-live-score">🔴 ${_tnEsc(setsStr)}${_tnEsc(setsLabel)}</div>`;
+  }
+
+  const chips = [];
+  if (m.elo_p1 && m.elo_p2)        chips.push(`ELO ${m.elo_p1}/${m.elo_p2}`);
+  if (m.best_edge_ev > 0)           chips.push(`EV +${Number(m.best_edge_ev).toFixed(1)}%`);
+  if (m.blended_p1 != null)         chips.push(`J1 ${m.blended_p1}%`);
+  if (m.books_count)                chips.push(`${m.books_count} books`);
+  if (m.movement_p1 === 'SHORTENING') chips.push('📈 J1 steam');
+  if (m.movement_p2 === 'SHORTENING') chips.push('📈 J2 steam');
+  if (m.rlm)                          chips.push('⚡ RLM');
+
+  const meta = [m.tournament, m.round, m.surface].filter(Boolean).join(' · ');
+
+  return `<div class="tn-t10-card" onclick="(function(){var id='${_tnEsc(m.matchId)}';if(typeof openMatchDetail==='function')openMatchDetail(id);})()">
+  <div class="tn-t10-card-top">
+    <span class="tn-t10-rank">#${rank}</span>
+    <span class="tn-t10-tag ${tagCss}">${reasonLabel}</span>
+  </div>
+  ${liveScore}
+  <div class="tn-t10-players">
+    <div class="tn-t10-player">${_tnEsc(m.player1 || '—')}</div>
+    <div class="tn-t10-vs">vs</div>
+    <div class="tn-t10-player">${_tnEsc(m.player2 || '—')}</div>
+  </div>
+  <div class="tn-t10-meta">${_tnEsc(meta || '—')}</div>
+  <div class="tn-t10-score-bar"><div class="tn-t10-score-fill ${scoreColor}" style="width:${Math.min(100, m.score_top10)}%"></div></div>
+  <div class="tn-t10-score-val">${m.score_top10.toFixed(1)}<span>/100</span></div>
+  <div class="tn-t10-chips">${chips.slice(0, 4).map(c => `<span class="tn-t10-chip">${_tnEsc(c)}</span>`).join('')}</div>
+</div>`;
+}
+
+async function fetchTennisTop10() {
+  const container = document.getElementById('tn-top10-container');
+  const statusEl  = document.getElementById('tn-top10-status');
+  if (!container) return;
+  try {
+    const res = await fetch(`/api/v1/tennis/top10?mode=${_tnTop10Mode}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (statusEl) {
+      const t = new Date(data.computed_at || Date.now());
+      statusEl.textContent = `${data.total_active || 0} matchs · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    }
+    const top10 = data.top10 || [];
+    if (!top10.length) {
+      container.innerHTML = '<div class="tn-t10-empty">Aucun match disponible pour le moment</div>';
+      return;
+    }
+    container.innerHTML = top10.map((m, i) => _tnTop10Card(m, i + 1)).join('');
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Indisponible';
+    if (container) container.innerHTML = '<div class="tn-t10-empty">Données indisponibles</div>';
+  }
+}
+
+function startTennisTop10() {
+  fetchTennisTop10();
+  if (_tnTop10Timer) clearInterval(_tnTop10Timer);
+  _tnTop10Timer = setInterval(fetchTennisTop10, 60_000);
+}
+
+function stopTennisTop10() {
+  if (_tnTop10Timer) { clearInterval(_tnTop10Timer); _tnTop10Timer = null; }
 }
 
 // ─── Tennis Abstract Rome 2026 (ATP+WTA) — forecasts ─────────────────────

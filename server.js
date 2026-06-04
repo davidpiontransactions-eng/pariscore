@@ -19674,6 +19674,77 @@ async function handleAPI(req, res, pathname, query) {
     return jsonResponse(res, 200, mom);
   }
 
+  // GET /api/v1/tennis/top10?mode=viewer|bettor
+  if (pathname === '/api/v1/tennis/top10' && req.method === 'GET') {
+    const mode = query.mode === 'bettor' ? 'bettor' : 'viewer';
+    const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : _TN_TOP10_TTL_VIEWER;
+    const now  = Date.now();
+    if (_tnTop10Cache[mode] && (now - _tnTop10Cache[`ts_${mode}`]) < ttl) {
+      return jsonResponse(res, 200, _tnTop10Cache[mode]);
+    }
+    try {
+      const vb = await buildTennisValueBets({});
+      if (!vb || vb.status !== 200) return jsonResponse(res, 503, { error: 'tennis_data_unavailable' });
+      const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
+      const active = ((vb.body && vb.body.matches) || []).filter(e =>
+        !_FINISHED_RX.test(String(e.status || ''))
+      );
+      const scored = active.map(e => {
+        const s = computeScoreTop10Tennis(e, mode);
+        const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
+        const lv = e._live || {};
+        return {
+          matchId:         e.id,
+          player1:         (e.player1 && e.player1.name) || null,
+          player2:         (e.player2 && e.player2.name) || null,
+          tournament:      e.tournament || null,
+          tour:            e.tour || null,
+          surface:         e.surface || null,
+          round:           e.round || null,
+          start_time:      e.start_time || null,
+          status:          e.status || null,
+          is_live:         isLive,
+          score_top10:     s.score,
+          reason:          s.reason,
+          data_completeness: s.data_completeness,
+          dims:            s.dims,
+          elo_p1:          (e.player1 && e.player1.elo_surface) || null,
+          elo_p2:          (e.player2 && e.player2.elo_surface) || null,
+          rank_p1:         (e.player1 && e.player1.rank) || null,
+          rank_p2:         (e.player2 && e.player2.rank) || null,
+          best_edge_ev:    (e.best_edge && e.best_edge.edge != null) ? Number(e.best_edge.edge) : null,
+          blended_p1:      (e.predictions && e.predictions.blended && e.predictions.blended.p1 != null)
+                             ? Math.round(e.predictions.blended.p1 * 100) : null,
+          sets_live:       Array.isArray(lv.sets)
+                             ? lv.sets.map(s => `${s.p1 ?? 0}-${s.p2 ?? 0}`) : [],
+          player1_sets:    lv.player1_sets ?? null,
+          player2_sets:    lv.player2_sets ?? null,
+          movement_p1:     (e.bsd_odds_summary && e.bsd_odds_summary.movement_p1) || null,
+          movement_p2:     (e.bsd_odds_summary && e.bsd_odds_summary.movement_p2) || null,
+          books_count:     (e.bsd_odds_summary && e.bsd_odds_summary.books_count) || null,
+          confidence_level:(e.confidence_badge && e.confidence_badge.level) || null,
+          rlm:             (() => {
+            const _ods = e.bsd_odds_summary;
+            const _ev  = (e.best_edge && e.best_edge.edge) || 0;
+            const _bl  = e.predictions && e.predictions.blended;
+            if (!_ods || !_bl || _ev <= 5) return false;
+            const _fp1 = (_bl.p1 || 0) > 0.5;
+            return (_fp1 && _ods.movement_p1 === 'DRIFTING') || (!_fp1 && _ods.movement_p2 === 'DRIFTING');
+          })(),
+        };
+      });
+      scored.sort((a, b) => b.score_top10 - a.score_top10);
+      const top10 = _applyTop10DiversityFilter(scored).slice(0, 10);
+      const payload = { top10, mode, computed_at: now, total_active: active.length };
+      _tnTop10Cache[mode] = payload;
+      _tnTop10Cache[`ts_${mode}`] = now;
+      return jsonResponse(res, 200, payload);
+    } catch (err) {
+      console.error('[TennisTop10]', err.message);
+      return jsonResponse(res, 500, { error: 'top10_compute_error', detail: err.message });
+    }
+  }
+
   // Player Momentum Score (OSS Pulse-inspired)
   if (pathname === '/api/v1/players/momentum' && req.method === 'GET') {
     if (!playerMomentumScorer) return jsonResponse(res, 503, { error: 'momentum_not_initialized' });
@@ -22975,6 +23046,164 @@ function computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format = 'BO3' } =
  * @returns {{ p1_win_mean:number, p1_win_ic90:[number,number], width:number,
  *             n_simulations:number, format:string }|null}
  */
+// ═══════════════════════════════════════════════════════════════════════════
+// TOP 10 MATCHS DU JOUR — Tennis Scoring Engine
+// Formule composite 6 dimensions × dual mode (viewer/bettor).
+// Source: buildTennisValueBets() enriched match objects.
+// Route: GET /api/v1/tennis/top10?mode=viewer|bettor
+// ═══════════════════════════════════════════════════════════════════════════
+let _tnTop10Cache = { viewer: null, bettor: null, ts_viewer: 0, ts_bettor: 0 };
+const _TN_TOP10_TTL_VIEWER = 60_000;
+const _TN_TOP10_TTL_BETTOR = 30_000;
+
+function _tnT10Clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, isFinite(v) ? v : lo)); }
+
+function _tnT10TierWeight(tour) {
+  const t = String(tour || '').toLowerCase();
+  if (/grand.slam|roland.garros|wimbledon|us.open|australian.open|french.open/i.test(t)) return 1.0;
+  if (/masters.1000|atp.masters|wta.1000|1000/i.test(t)) return 0.9;
+  if (/atp.?500|wta.?500|500/i.test(t)) return 0.75;
+  if (/wta$|wta\s/i.test(t)) return 0.55;
+  if (/atp.?250|250/i.test(t)) return 0.60;
+  if (/challenger/i.test(t)) return 0.40;
+  if (/itf/i.test(t)) return 0.20;
+  if (/atp|wta/i.test(t)) return 0.55;
+  return 0.45;
+}
+
+function _tnT10RoundWeight(round) {
+  const r = String(round || '').toUpperCase().replace(/[\s_\-]/g, '');
+  if (/^F$|FINAL/.test(r)) return 1.0;
+  if (/^SF$|SEMI/.test(r)) return 0.9;
+  if (/^QF$|QUARTER/.test(r)) return 0.8;
+  if (/R16|ROUNDOF16|3RD/.test(r)) return 0.65;
+  if (/R32|ROUNDOF32|4TH/.test(r)) return 0.50;
+  if (/R64|ROUNDOF64/.test(r)) return 0.40;
+  if (/RR|ROBIN/.test(r)) return 0.60;
+  return 0.50;
+}
+
+function _tnT10Urgency(startTime, isLive) {
+  if (isLive) return 1.0;
+  if (!startTime) return 0.3;
+  let ts = typeof startTime === 'number' ? startTime : new Date(startTime).getTime();
+  if (!Number.isFinite(ts) || ts <= 0) return 0.3;
+  const hours = (ts - Date.now()) / 3_600_000;
+  if (hours <= 0) return 0.7;
+  if (hours <= 1) return 0.9;
+  if (hours <= 3) return 0.75;
+  if (hours <= 12) return 0.5;
+  return 0.2;
+}
+
+function computeScoreTop10Tennis(e, mode) {
+  const isBettor = mode === 'bettor';
+
+  // ── Data completeness gate ──────────────────────────────────────────────
+  const hasOdds  = (e.odds && (e.odds.p1 || e.odds.p2)) ? 1 : 0;
+  const hasElo   = (e.player1 && e.player1.elo_surface != null) ? 1 : 0;
+  const hasBl    = (e.predictions && e.predictions.blended) ? 1 : 0;
+  const hasEdge  = (e.best_edge != null) ? 1 : 0;
+  const hasConf  = (e.confidence_badge != null) ? 1 : 0;
+  const completeness = (hasOdds + hasElo + hasBl + hasEdge + hasConf) / 5;
+  const dataGate = completeness < 0.6 ? 0.3 : 1.0;
+
+  // ── D1: Entropy (match balance) ─────────────────────────────────────────
+  const bl = (e.predictions && e.predictions.blended) || null;
+  const p1 = _tnT10Clamp((bl && bl.p1 != null) ? Number(bl.p1) : 0.5, 0.01, 0.99);
+  const p2 = 1 - p1;
+  const D_entropy = _tnT10Clamp(-(p1 * Math.log2(p1) + p2 * Math.log2(p2)), 0, 1);
+
+  // ── D2: EV Quality (confidence-weighted) ───────────────────────────────
+  const ev = (e.best_edge && e.best_edge.edge != null) ? Number(e.best_edge.edge) : 0;
+  const confAcc = (e.confidence_badge && e.confidence_badge.accuracy != null)
+    ? _tnT10Clamp(Number(e.confidence_badge.accuracy) / 100, 0, 1) : 0.4;
+  const D_ev = ev > 0 ? _tnT10Clamp(ev * confAcc / 15, 0, 1) : 0;
+
+  // ── D3: Elo Competitiveness ─────────────────────────────────────────────
+  const elo1 = (e.player1 && e.player1.elo_surface != null) ? Number(e.player1.elo_surface) : 1500;
+  const elo2 = (e.player2 && e.player2.elo_surface != null) ? Number(e.player2.elo_surface) : 1500;
+  const eloDelta = Math.abs(elo1 - elo2);
+  const D_elo = _tnT10Clamp(((elo1 + elo2) / 2 / 2200) * Math.max(0, 1 - eloDelta / 400), 0, 1);
+
+  // ── D4: Stakes (tier × round) ───────────────────────────────────────────
+  const D_stakes = _tnT10Clamp(_tnT10TierWeight(e.tour) * _tnT10RoundWeight(e.round), 0, 1);
+
+  // ── D5: Urgency ─────────────────────────────────────────────────────────
+  const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
+  const D_urgency = _tnT10Urgency(e.start_time, isLive);
+
+  // ── D6: Line Movement + Books depth ─────────────────────────────────────
+  const ods = e.bsd_odds_summary || null;
+  const mvScore = ((ods && ods.movement_p1 === 'SHORTENING') ? 0.5 : 0)
+                + ((ods && ods.movement_p2 === 'SHORTENING') ? 0.5 : 0);
+  const bkNorm  = ods && ods.books_count ? _tnT10Clamp(Number(ods.books_count) / 14, 0, 1) : 0;
+  const D_movement = _tnT10Clamp(mvScore * 0.6 + bkNorm * 0.4, 0, 1);
+
+  // ── Weighted composite ──────────────────────────────────────────────────
+  const W = isBettor
+    ? { e: 0.20, ev: 0.30, elo: 0.20, stakes: 0.05, urgency: 0.15, move: 0.10 }
+    : { e: 0.20, ev: 0.15, elo: 0.15, stakes: 0.20, urgency: 0.20, move: 0.10 };
+
+  let score = W.e * D_entropy + W.ev * D_ev + W.elo * D_elo
+            + W.stakes * D_stakes + W.urgency * D_urgency + W.move * D_movement;
+
+  // ── Flat bonuses ────────────────────────────────────────────────────────
+  if (isLive) {
+    const lv = e._live || {};
+    const setsPlayed = (lv.player1_sets || 0) + (lv.player2_sets || 0);
+    if (setsPlayed >= 2) score += 0.15; // late set drama
+    const sets = Array.isArray(lv.sets) ? lv.sets : [];
+    const cur = sets[sets.length - 1] || {};
+    if (cur.p1 === 6 && cur.p2 === 6) score += 0.10; // tiebreak 6-6
+  }
+  // Reverse Line Movement (bettor only) — model favors p1 but market drifts p1 (or vice versa)
+  // = public money wrong, sharps not following → value opportunity
+  if (isBettor && ev > 5 && ods) {
+    const modelFavorsP1 = p1 > 0.5;
+    const marketDriftsP1 = ods.movement_p1 === 'DRIFTING';
+    const marketDriftsP2 = ods.movement_p2 === 'DRIFTING';
+    if ((modelFavorsP1 && marketDriftsP1) || (!modelFavorsP1 && marketDriftsP2)) {
+      score += 0.15; // RLM bonus
+    }
+  }
+
+  score = _tnT10Clamp(score * dataGate, 0, 1);
+
+  // ── Reason tag ──────────────────────────────────────────────────────────
+  let reason;
+  if (isLive)             reason = 'EN DIRECT';
+  else if (D_ev > 0.55)   reason = 'VALEUR';
+  else if (D_movement > 0.5) reason = 'VAPEUR';
+  else if (D_stakes > 0.7)   reason = 'CLASSIQUE';
+  else if (D_entropy > 0.88) reason = 'DRAMA';
+  else if (eloDelta > 200)   reason = 'UPSET';
+  else                       reason = 'ANALYSE';
+
+  return {
+    score: Math.round(score * 1000) / 10,
+    reason,
+    data_completeness: Math.round(completeness * 10) / 10,
+    dims: {
+      entropy:  Math.round(D_entropy  * 100),
+      ev:       Math.round(D_ev       * 100),
+      elo:      Math.round(D_elo      * 100),
+      stakes:   Math.round(D_stakes   * 100),
+      urgency:  Math.round(D_urgency  * 100),
+      movement: Math.round(D_movement * 100),
+    },
+  };
+}
+
+function _applyTop10DiversityFilter(ranked) {
+  const cnt = {};
+  return ranked.filter(m => {
+    const k = String(m.tournament || '').toLowerCase().slice(0, 40);
+    cnt[k] = (cnt[k] || 0) + 1;
+    return cnt[k] <= 3;
+  });
+}
+
 function computeBootstrapUQDTennis({
   p1_serve_pct, p2_serve_pct,
   p1_sample = 50, p2_sample = 50,
