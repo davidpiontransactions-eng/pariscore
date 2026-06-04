@@ -14075,6 +14075,28 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tn-t10-empty,.tn-t10-loading{padding:24px 0;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:11px;text-align:center;}
   @media(max-width:900px){.tn-top10-scroll{grid-template-columns:repeat(2,1fr);}}
   @media(max-width:520px){.tn-top10-scroll{grid-template-columns:1fr;}}
+
+  /* ── Dark glass override — forced même en light mode (aligné charte L'Équipe) ── */
+  #tn-top10-section .tn-t10-card {
+    background:
+      linear-gradient(135deg, rgba(56,189,248,.05) 0%, transparent 55%),
+      linear-gradient(180deg, #0d1420 0%, #080c14 100%) !important;
+    border-top-color:    rgba(255,255,255,.07) !important;
+    border-right-color:  rgba(255,255,255,.07) !important;
+    border-bottom-color: rgba(255,255,255,.07) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 16px rgba(0,0,0,.3);
+    --text:  #e8eaed;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --bg2:   rgba(255,255,255,.04);
+    --bg3:   rgba(255,255,255,.06);
+  }
+  #tn-top10-section .tn-t10-card:hover {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 32px rgba(0,0,0,.45) !important;
+  }
+  /* Accent borders conservés — pas d'!important sur border-left-color */
+  #tn-top10-section .tn-top10-header .tn-top10-title { color: var(--text,#e8eaed) !important; }
+  #tn-top10-section #tn-top10-status { color: #64748b !important; }
   </style>
 
   <section id="tn-top10-section">
