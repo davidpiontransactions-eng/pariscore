@@ -36835,6 +36835,57 @@ if (pathname.startsWith('/api/v1/bsd/clip-video/') && req.method === 'GET') {
   return;
 }
 
+// GET /api/v1/scorebat/match/:matchId — ScoreBat free API highlights (post-match iframes YouTube)
+// Fuzzy match par noms équipes + date (±2j). Cache 30min. $0 — PL/UCL/Liga/SerieA/L1 etc.
+if (pathname.startsWith('/api/v1/scorebat/match/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/scorebat/match/'.length)).trim();
+  if (!rawId) return jsonResponse(res, 400, { error: 'bad_match_id' });
+  const m = db.matches.find(x => x.id === rawId);
+  if (!m) return jsonResponse(res, 404, { error: 'match_not_found' });
+  const cacheKey = `scorebat_${rawId}`;
+  const hit = apiCacheGet(cacheKey);
+  if (hit !== undefined) return jsonResponse(res, 200, { ok: true, source: 'scorebat', cached: true, videos: hit === '__NEG__' ? [] : hit });
+  try {
+    const sbRes = await httpsGet('https://www.scorebat.com/video-api/v3/?json', {}, 10000);
+    if (!sbRes || sbRes.status !== 200 || !Array.isArray(sbRes.data)) {
+      apiCacheSet(cacheKey, '__NEG__', 'scorebat', 15 * 60 * 1000);
+      return jsonResponse(res, 200, { ok: true, source: 'scorebat', cached: false, videos: [] });
+    }
+    const _sbNorm = s => (s || '').toLowerCase()
+      .replace(/[àáâã]/g,'a').replace(/[éèêë]/g,'e').replace(/[íìî]/g,'i').replace(/[óòôõ]/g,'o').replace(/[úùû]/g,'u')
+      .replace(/ñ/g,'n').replace(/ç/g,'c')
+      .replace(/\b(fc|sc|ac|as|cf|rc|us|sk|bk|if|1\.|fk|cd|sd|atletico|atlético)\b/g,'')
+      .replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim();
+    const homeN = _sbNorm(m.home); const awayN = _sbNorm(m.away);
+    const matchDateStr = m.date ? m.date.slice(0, 10) : null;
+    const matched = sbRes.data.filter(v => {
+      const s1 = _sbNorm(v.side1?.name); const s2 = _sbNorm(v.side2?.name);
+      const h4 = homeN.slice(0,4); const a4 = awayN.slice(0,4);
+      const nameOk = h4.length >= 3 && a4.length >= 3 &&
+        (s1.includes(h4) || homeN.includes(s1.slice(0,4) || h4)) &&
+        (s2.includes(a4) || awayN.includes(s2.slice(0,4) || a4));
+      if (!nameOk) return false;
+      if (matchDateStr && v.date) return Math.abs(new Date(v.date.slice(0,10)) - new Date(matchDateStr)) < 2 * 86400000;
+      return true;
+    });
+    const videos = matched.flatMap(v =>
+      (Array.isArray(v.videos) && v.videos.length ? v.videos : [{ title: v.title, embed: v.embed, url: v.url }])
+        .map(clip => ({
+          title: clip.title || v.title || 'Highlights',
+          embed: clip.embed || v.embed || null,
+          thumbnail: v.thumbnail || null,
+          url: clip.url || v.url || null,
+          competition: v.competition?.name || null,
+        }))
+    ).filter(x => x.embed).slice(0, 8);
+    apiCacheSet(cacheKey, videos.length ? videos : '__NEG__', 'scorebat', 30 * 60 * 1000);
+    return jsonResponse(res, 200, { ok: true, source: 'scorebat', cached: false, videos });
+  } catch (e) {
+    apiCacheSet(cacheKey, '__NEG__', 'scorebat', 10 * 60 * 1000);
+    return jsonResponse(res, 200, { ok: true, source: 'scorebat', cached: false, videos: [], error: e.message });
+  }
+}
+
 // ─── COUPE DU MONDE 2026 — routes ────────────────────────────────────────────
 
 // GET /api/v1/worldcup/overview — groupes + classements + matchs imminents

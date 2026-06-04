@@ -12736,49 +12736,74 @@ function bsdClipClose(matchId) {
   if (player) { player.style.display = 'none'; }
 }
 
-// BSD 26/05 — onglet Vidéos : post-match highlights via social_items type='video'
+// Onglet Vidéos — 2 sources en parallèle :
+// 1. BSD clips live (goal-N.mp4, générés ~2 min après but, proxy auth)
+// 2. ScoreBat free API (iframes YouTube post-match, ~15 min après coup de sifflet)
 async function buildBsdVideos(matchId) {
   const el = document.getElementById('ins-tab-videos');
   if (!el) return;
-  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement vidéos BSD…</div>';
-  try {
-    const res = await apiFetch(`/api/v1/social/match/${encodeURIComponent(matchId)}`);
-    if (!res.ok) {
-      el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Vidéos non disponibles pour ce match.</div>';
-      return;
+  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement vidéos…</div>';
+
+  const m = (typeof allMatches !== 'undefined' ? allMatches : []).find(x => x.id === matchId);
+  const totalGoals = m ? ((m.home_score || 0) + (m.away_score || 0)) : 0;
+  const isActive = m && ['inprogress', 'finished', 'HT', 'finished_aet', 'finished_ap'].includes(m.status);
+
+  const [sbData] = await Promise.all([
+    apiFetch(`/api/v1/scorebat/match/${encodeURIComponent(matchId)}`).then(r => r.ok ? r.json() : null).catch(() => null),
+  ]);
+
+  // ── Section 1 : BSD goal clips (live/finished, si buts) ──────────────────
+  let bsdSection = '';
+  if (isActive && totalGoals > 0) {
+    const goalCards = [];
+    for (let n = 1; n <= Math.min(totalGoals, 10); n++) {
+      const src = `/api/v1/bsd/clip-video/${encodeURIComponent(matchId)}/goal-${n}.mp4`;
+      goalCards.push(`<div class="sb-clip-card" style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;overflow:hidden">
+        <div style="font-size:10px;color:var(--amber);padding:5px 10px;font-family:'DM Mono',monospace;background:rgba(255,171,0,.08);letter-spacing:.05em">⚽ BUT ${n}</div>
+        <video controls preload="metadata" playsinline
+               style="width:100%;display:block;background:#000;max-height:300px"
+               src="${src}"
+               onerror="this.closest('.sb-clip-card').style.display='none'">
+        </video>
+      </div>`);
     }
-    const out = await res.json();
-    const videos = Array.isArray(out.videos) ? out.videos : [];
-    if (!videos.length) {
-      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">
-        <div style="font-size:32px;margin-bottom:12px">🎬</div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Aucune vidéo disponible</div>
-        <div style="font-size:11px">Les highlights post-match apparaissent ~15 min après le coup de sifflet final.</div>
-      </div>`;
-      return;
-    }
-    const cards = videos.map(v => {
-      const title = v.title || v.name || 'Vidéo';
-      const thumb = v.thumbnail || v.image || '';
-      const url   = v.url || v.link || v.permalink || '';
-      const dur   = v.duration ? `<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${Math.round(v.duration / 60)}min</span>` : '';
-      const thumbHtml = thumb ? `<img src="${thumb}" style="width:100%;height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block" loading="lazy" onerror="this.style.display='none'">` : `<div style="height:60px;background:var(--bg4);border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div>`;
-      const linkAttr = url ? `href="${url}" target="_blank" rel="noopener noreferrer"` : '';
-      return `<a ${linkAttr} style="display:block;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;overflow:hidden;text-decoration:none;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--bg4)'">
-        ${thumbHtml}
-        <div style="padding:8px 10px">
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3">${title}</div>
-          ${dur}
-        </div>
-      </a>`;
-    }).join('');
-    el.innerHTML = `<div style="padding:14px 12px">
-      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px">BSD · POST-MATCH HIGHLIGHTS · ${videos.length} vidéo${videos.length > 1 ? 's' : ''} · sync /15min</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">${cards}</div>
+    bsdSection = `<div style="padding:14px 12px 4px">
+      <div style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase">⚡ BSD · Clips Buts · Live</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">${goalCards.join('')}</div>
     </div>`;
-  } catch (e) {
-    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement vidéos : ${e.message}</div>`;
   }
+
+  // ── Section 2 : ScoreBat iframes ─────────────────────────────────────────
+  let sbSection = '';
+  const sbVideos = Array.isArray(sbData?.videos) ? sbData.videos : [];
+  if (sbVideos.length) {
+    const cards = sbVideos.map(v => {
+      const title = v.title ? escapeHtml(v.title) : 'Highlights';
+      const comp = v.competition ? `<span style="opacity:.55;font-weight:400"> · ${escapeHtml(v.competition)}</span>` : '';
+      const embed = (v.embed || '')
+        .replace(/width=["'][\d%]+["']/g, 'width="100%"')
+        .replace(/height=["']\d+["']/g, 'height="200"')
+        .replace(/allowfullscreen/gi, 'allowfullscreen loading="lazy"');
+      return `<div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;overflow:hidden;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:600;color:var(--text);padding:7px 10px;border-bottom:1px solid var(--bg4)">${title}${comp}</div>
+        <div style="background:#000;line-height:0">${embed}</div>
+      </div>`;
+    }).join('');
+    sbSection = `<div style="padding:14px 12px 4px">
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase">🎬 ScoreBat · Highlights Post-Match</div>
+      ${cards}
+    </div>`;
+  }
+
+  if (!bsdSection && !sbSection) {
+    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">
+      <div style="font-size:28px;margin-bottom:10px">🎬</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">Aucune vidéo disponible</div>
+      <div style="font-size:11px;line-height:1.6;max-width:280px;margin:0 auto">BSD clips : disponibles ~2 min après chaque but pendant le live.<br>ScoreBat highlights : ~15 min après le coup de sifflet final.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div style="padding-bottom:16px">${bsdSection}${sbSection}</div>`;
 }
 
 async function buildBsdShotmap(matchId) {
