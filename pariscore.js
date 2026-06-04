@@ -62,7 +62,7 @@ window.renderWCGroups=function(){
   if(!el)return;
   _startWCCountdown();
   if(_wcD.overview){_paintGroups(el,_wcD.overview.groups);return;}
-  el.innerHTML='<div class="wc-loading">Chargement des groupes…</div>';
+  el.innerHTML=`<div class="wc-loading">${I18N.t('status.loading_groups')}</div>`;
   fetch('/api/v1/worldcup/overview').then(function(r){return r.json();}).then(function(data){
     _wcD.overview=data;
     var badge=document.getElementById('wc-status-badge');
@@ -109,7 +109,7 @@ window.loadWCSchedule=function(round,btn){
   document.querySelectorAll('#wc-rnd-ctrl .wc-rnd-btn').forEach(function(b){b.classList.remove('active');});
   if(btn)btn.classList.add('active');
   if(_wcD.schedule[key]){_paintSchedule(el,_wcD.schedule[key]);return;}
-  el.innerHTML='<div class="wc-loading">Chargement…</div>';
+  el.innerHTML=`<div class="wc-loading">${I18N.t('status.loading')}</div>`;
   var url='/api/v1/worldcup/schedule'+(round!=null?'?round='+round:'');
   fetch(url).then(function(r){return r.json();}).then(function(data){
     _wcD.schedule[key]=data;
@@ -149,7 +149,7 @@ window.renderWCBracket=function(){
   var el=document.getElementById('wc-bracket-container');
   if(!el)return;
   if(_wcD.bracket){_paintBracket(el,_wcD.bracket);return;}
-  el.innerHTML='<div class="wc-loading">Chargement…</div>';
+  el.innerHTML=`<div class="wc-loading">${I18N.t('status.loading')}</div>`;
   fetch('/api/v1/worldcup/bracket').then(function(r){return r.json();}).then(function(data){
     _wcD.bracket=data;
     _paintBracket(el,data);
@@ -272,7 +272,7 @@ function _paintBracket(el,data){
     const bracketEl = document.getElementById('rg-bracket');
     const contendersEl = document.getElementById('rg-contenders');
     if (statusEl) statusEl.textContent = isRetry ? I18N.t('status.retrying') : I18N.t('status.loading');
-    if (bracketEl) bracketEl.innerHTML = '<div class="rg-loading">Calcul prédictif en cours…</div>';
+    if (bracketEl) bracketEl.innerHTML = `<div class="rg-loading">${I18N.t('status.calculating')}</div>`;
     if (contendersEl) contendersEl.innerHTML = '';
     // AbortController 60s — évite "Failed to fetch" hang sur calcul long.
     const ctrl = new AbortController();
@@ -4267,7 +4267,7 @@ async function loadBetminesPicks() {
   const minProb = document.getElementById('bm-min-prob')?.value || '75';
   const minValue = document.getElementById('bm-min-value')?.value || '1.10';
   const liveOnly = window._bmLiveOnly;
-  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>';
+  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     // Si liveOnly : fetch raw fixtures et filter, sinon best-bets pre-match
     const endpoint = liveOnly
@@ -4334,7 +4334,7 @@ async function openBetminesModal(matchId) {
   const body = document.getElementById('bm-modal-body');
   if (!modal || !body || !matchId) return;
   modal.style.display = 'flex';
-  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>';
+  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     const m = await fetch(`/api/v1/betmines/match?id=${encodeURIComponent(matchId)}`).then(r => r.json());
     if (m.error) throw new Error(m.detail || m.error);
@@ -4416,7 +4416,7 @@ async function loadTexCalendar() {
   const body = document.getElementById('tex-cal-body');
   const status = document.getElementById('tex-cal-status');
   if (!body) return;
-  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement…</div>';
+  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">${I18N.t('status.loading')}</div>`;
   try {
     const r = await apiFetch(`/api/v1/tennis/tex/calendar?tour=${_texCalTour}`).then(r => r.json());
     if (r.error) throw new Error(r.detail || r.error);
@@ -4495,7 +4495,7 @@ async function openTexBooksModal(matchId) {
   const body = document.getElementById('tex-books-modal-body');
   if (!modal || !body || !matchId) return;
   modal.style.display = 'flex';
-  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement multi-books…</div>';
+  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     const [r, history] = await Promise.all([
       apiFetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json()),
@@ -4566,7 +4566,7 @@ async function openTexPlayerModal(slug) {
   const body = document.getElementById('tex-player-modal-body');
   if (!modal || !body || !slug) return;
   modal.style.display = 'flex';
-  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Chargement profil…</div>';
+  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     const p = await apiFetch(`/api/v1/tennis/tex/player?slug=${encodeURIComponent(slug)}`).then(r => r.json());
     if (p.error) throw new Error(p.detail || p.error);
@@ -9617,7 +9617,7 @@ function openTeamDetail(teamNameOrId) {
           <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
         </div>`;
     })
-    .catch(() => { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">Erreur chargement équipe</div>'; });
+    .catch(() => { _tdContent.innerHTML = `<div style="padding:40px;color:var(--red);">${I18N.t('status.error_load')} équipe</div>`; });
 }
 
 function openPlayerDetail(playerName, teamCtx, leagueId) {
@@ -9794,7 +9794,7 @@ function openPlayerDetail(playerName, teamCtx, leagueId) {
           </button>
         </div>`;
     })
-    .catch(() => { _pdContent.innerHTML = '<div style="padding:40px;color:#E2001A;font-family:\'Instrument Sans\',sans-serif;">Erreur chargement joueur</div>'; });
+    .catch(() => { _pdContent.innerHTML = `<div style="padding:40px;color:#E2001A;font-family:'Instrument Sans',sans-serif;">${I18N.t('status.error_load')} joueur</div>`; });
 }
 
 function toggleFavFilter() {
@@ -9915,7 +9915,7 @@ async function showOddsGraph(matchId, e) {
   }
   tt._matchId = matchId;
   tt.classList.remove('visible');
-  tt.innerHTML = '<div class="ogt-title">Chargement…</div>';
+  tt.innerHTML = `<div class="ogt-title">${I18N.t('status.loading')}</div>`;
   const x = Math.min(e.clientX, window.innerWidth - 290);
   const y = Math.min(e.clientY + 14, window.innerHeight - 200);
   tt.style.left = x + 'px';
@@ -9956,7 +9956,7 @@ async function showOddsGraph(matchId, e) {
       }
     });
   } catch {
-    tt.innerHTML = '<div class="ogt-title" style="color:var(--red)">Erreur chargement</div>';
+    tt.innerHTML = `<div class="ogt-title" style="color:var(--red)">${I18N.t('status.error_load')}</div>`;
   }
 }
 
@@ -10237,7 +10237,7 @@ async function toggleSkillDrawer(matchId) {
         ? _renderSkillDrawerContent(valid)
         : '<div class="ft-skill-loader">Profils non disponibles (ligue mineure)</div>';
     } catch (_) {
-      content.innerHTML = '<div class="ft-skill-loader" style="color:var(--red);">Erreur chargement</div>';
+      content.innerHTML = `<div class="ft-skill-loader" style="color:var(--red);">${I18N.t('status.error_load')}</div>`;
     }
   }
 }
@@ -12544,7 +12544,7 @@ let bsdIncidentsTimer = null;
 async function buildBsdCompos(matchId) {
   const el = document.getElementById('ins-tab-compos');
   if (!el) return;
-  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement compositions BSD…</div>';
+  el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>${I18N.t('status.loading_compos')}…</div>`;
   try {
     const res = await apiFetch(`/api/v1/bsd/lineups/${encodeURIComponent(matchId)}`);
     if (!res.ok) {
@@ -12607,7 +12607,7 @@ async function buildBsdCompos(matchId) {
         ${d.unavailable_players ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">${renderInjured(d.unavailable_players.home, 'dom')}${renderInjured(d.unavailable_players.away, 'ext')}</div>` : ''}
       </div>`;
   } catch (e) {
-    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement compositions BSD : ${e.message}</div>`;
+    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">${I18N.t('status.error_load')} : ${e.message}</div>`;
   }
 }
 
@@ -12616,7 +12616,7 @@ async function buildBsdIncidents(matchId, autoRefresh) {
   if (!el) return;
   // 1er chargement : loader. Refresh : silencieux.
   if (!el.dataset.loaded) {
-    el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement timeline incidents…</div>';
+    el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>${I18N.t('status.loading_timeline')} incidents…</div>`;
   }
   try {
     const res = await apiFetch(`/api/v1/bsd/incidents/${encodeURIComponent(matchId)}`);
@@ -12628,7 +12628,7 @@ async function buildBsdIncidents(matchId, autoRefresh) {
     const d = out.data || {};
     const incidents = Array.isArray(d.incidents) ? d.incidents : [];
     if (!incidents.length) {
-      el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Aucun incident enregistré pour ce match.</div>';
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">${I18N.t('empty.no_incidents')}</div>`;
       el.dataset.loaded = '1';
       return;
     }
@@ -12687,7 +12687,7 @@ async function buildBsdIncidents(matchId, autoRefresh) {
     }
   } catch (e) {
     if (!el.dataset.loaded) {
-      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement incidents : ${e.message}</div>`;
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">${I18N.t('status.error_load')} : ${e.message}</div>`;
     }
   }
 }
@@ -12742,7 +12742,7 @@ function bsdClipClose(matchId) {
 async function buildBsdVideos(matchId) {
   const el = document.getElementById('ins-tab-videos');
   if (!el) return;
-  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement vidéos…</div>';
+  el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>${I18N.t('status.loading_video')}s…</div>`;
 
   const m = (typeof allMatches !== 'undefined' ? allMatches : []).find(x => x.id === matchId);
   const totalGoals = m ? ((m.home_score || 0) + (m.away_score || 0)) : 0;
@@ -12809,7 +12809,7 @@ async function buildBsdVideos(matchId) {
 async function buildBsdShotmap(matchId) {
   const el = document.getElementById('ins-tab-shotmap');
   if (!el) return;
-  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement shotmap BSD…</div>';
+  el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>${I18N.t('status.loading_shotmap')} BSD…</div>`;
   try {
     const res = await apiFetch(`/api/v1/bsd/shotmap/${encodeURIComponent(matchId)}`);
     if (!res.ok) {
@@ -12914,7 +12914,7 @@ async function buildBsdShotmap(matchId) {
         </div>
       </div>`;
   } catch (e) {
-    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement shotmap : ${e.message}</div>`;
+    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">${I18N.t('status.error_load')} : ${e.message}</div>`;
   }
 }
 
@@ -14144,7 +14144,7 @@ function buildJoueursTab(d) {
   };
 
   const renderBSDGrid = (teamName, color, ratings, squad) => {
-    if (!ratings.length) return `<div style="color:var(--text3);font-size:12px;padding:8px 0">Aucun joueur noté.</div>`;
+    if (!ratings.length) return `<div style="color:var(--text3);font-size:12px;padding:8px 0">${I18N.t('empty.no_player')}</div>`;
     const id = 'bsd-grid-' + (color === 'var(--blue)' ? 'home' : 'away');
     const buildSortBtn = (col, label) =>
       `<button onclick="sortBSDGrid('${id}','${col}')" style="background:var(--bg4);border:0;padding:2px 6px;border-radius:3px;font:10px var(--font-mono);color:var(--text3);cursor:pointer;transition:all .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">${label}</button>`;
@@ -14255,7 +14255,7 @@ function buildJoueursTab(d) {
     </div>`;
 
   const renderTeam = (list, mvp) => {
-    if (!list.length) return `<div style="color:var(--text3);font-size:12px;padding:8px 0">Aucun joueur dans le top buteurs.</div>`;
+    if (!list.length) return `<div style="color:var(--text3);font-size:12px;padding:8px 0">${I18N.t('empty.no_scorer')}</div>`;
     const sorted = mvp ? [mvp, ...list.filter(p => p.id !== mvp.id)] : list;
     return sorted.map(p => playerCard(p, mvp && p.id === mvp.id)).join('');
   };
@@ -15123,7 +15123,7 @@ async function openInsights(matchId) {
 
   ['ins-tab-resume','ins-tab-stats','ins-tab-graphique','ins-tab-classement','ins-tab-corners','ins-tab-powerscore','ins-tab-compos','ins-tab-incidents','ins-tab-shotmap','ins-tab-videos'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement…</div>`; el.dataset.loaded = ''; }
+    if (el) { el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>${I18N.t('status.loading')}</div>`; el.dataset.loaded = ''; }
   });
   // v68.0: Scouting garde son DOM interne (scout-content) — loader séparé
   const scoutEl = document.getElementById('ins-tab-scouting');
@@ -15319,7 +15319,7 @@ async function buildCornersTab(matchId) {
           ? '<span class="cr-rec-badge">✓ Value</span>'
           : '<span class="cr-rec-badge cr-rec-skip">Skip</span>'}
       </div>
-    `).join('') : '<div style="color:var(--text3);font-size:11px;">Aucune recommandation.</div>';
+    `).join('') : `<div style="color:var(--text3);font-size:11px;">${I18N.t('empty.no_recommendation')}</div>`;
 
     const maxTotal = 12, maxFA = 8;
     const crPct = (v, max) => Math.min(100, Math.max(0, ((parseFloat(v) || 0) / max) * 100)).toFixed(1);
@@ -18044,7 +18044,7 @@ async function initLeagueHub(oddsKey) {
   banner.style.display = 'block';
 
   if (_leagueHubCache[oddsKey]) { renderLeagueHub(_leagueHubCache[oddsKey]); return; }
-  document.getElementById('lh-standings').innerHTML = '<span style="color:var(--text3);font-size:12px;">Chargement…</span>';
+  document.getElementById('lh-standings').innerHTML = `<span style="color:var(--text3);font-size:12px;">${I18N.t('status.loading')}</span>`;
   document.getElementById('lh-scorer').innerHTML = '';
   try {
     const r = await apiFetch(`/api/v1/league-hub/${encodeURIComponent(oddsKey)}`);
@@ -18168,13 +18168,13 @@ window.addEventListener('DOMContentLoaded', () => {
 // PREDICTIONS — connecté à /api/v1/predictions
 async function loadPredictions() {
   const grid = document.getElementById('pred-grid');
-  grid.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;">Chargement des prédictions…</div>';
+  grid.innerHTML = `<div style="color:#888;font-size:13px;padding:20px;">${I18N.t('status.loading_predictions')}</div>`;
   try {
     const res  = await apiFetch('/api/v1/predictions');
     if (!res.ok) throw new Error();
     const data = await res.json();
     const preds = data.predictions || [];
-    if (!preds.length) { grid.innerHTML = '<div style="color:#888;padding:20px;font-size:13px;">Aucune prédiction disponible.</div>'; return; }
+    if (!preds.length) { grid.innerHTML = `<div style="color:#888;padding:20px;font-size:13px;">${I18N.t('empty.no_prediction')}</div>`; return; }
     grid.style.display = 'flex';
     grid.style.flexDirection = 'column';
     grid.style.gap = '8px';
@@ -18762,7 +18762,7 @@ async function loadCLVByStrategy() {
   const meta = document.getElementById('paris-clv-meta');
   if (!tbody) return;
   const period = (document.getElementById('paris-clv-period') || {}).value || '30d';
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">Chargement…</td></tr>';
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">${I18N.t('status.loading')}</td></tr>`;
   try {
     const res = await apiFetch('/api/v1/analytics/clv-by-strategy?period=' + encodeURIComponent(period));
     if (!res.ok) {
@@ -19500,7 +19500,7 @@ async function initHistoriquePage() {
 
   // Legacy hist-kpis loader (kept for accordion héritage)
   const legacyKpis = document.getElementById('hist-kpis');
-  if (legacyKpis) legacyKpis.innerHTML = '<div style="color:var(--text3);font-size:11px;padding:10px 0;">Chargement legacy…</div>';
+  if (legacyKpis) legacyKpis.innerHTML = `<div style="color:var(--text3);font-size:11px;padding:10px 0;">${I18N.t('status.loading')}</div>`;
 
   // Fetch legacy accuracy en parallèle (pour alert + hist-kpis legacy)
   apiFetch('/api/v1/history?limit=100')
@@ -21522,7 +21522,7 @@ async function triggerBacktest() {
 // TRENDS — connecté à /api/v1/trends
 async function loadTrends() {
   const grid = document.getElementById('trends-grid');
-  grid.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;">Chargement des tendances…</div>';
+  grid.innerHTML = `<div style="color:#888;font-size:13px;padding:20px;">${I18N.t('status.loading_trends')}</div>`;
   try {
     const res  = await apiFetch('/api/v1/trends');
     if (!res.ok) throw new Error();
@@ -22014,7 +22014,7 @@ function loadGuidePage() {
       guideLoaded = true;
     })
     .catch(e => {
-      container.innerHTML = '<div class="guide-loading" style="color:var(--red);">Erreur chargement guide. Assurez-vous que le serveur est actif.</div>';
+      container.innerHTML = `<div class="guide-loading" style="color:var(--red);">${I18N.t('status.error_load')}. Assurez-vous que le serveur est actif.</div>`;
     });
 }
 
@@ -22190,7 +22190,7 @@ async function loadAlertHistory() {
     const data = await r.json();
     const hist = data.history || [];
     if (!hist.length) {
-      el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">Aucune alerte envoyée pour l\'instant. Les alertes sont déclenchées automatiquement lors du refresh des cotes.</div>';
+      el.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:12px 0;">${I18N.t('empty.no_alert')} pour l'instant. Les alertes sont déclenchées automatiquement lors du refresh des cotes.</div>`;
       return;
     }
     el.innerHTML = hist.map(h => {
@@ -23880,9 +23880,9 @@ async function initComparateur(force) {
     if (status) status.textContent = `${_compFeed.length} matchs · ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
     renderCompGrid();
   } catch (e) {
-    if (status) status.textContent = 'Erreur chargement matchs';
+    if (status) status.textContent = `${I18N.t('status.error_load')} matchs`;
     const g = document.getElementById('comp-grid');
-    if (g) g.innerHTML = '<div class="comp-empty">❌ Erreur chargement — réessayez</div>';
+    if (g) g.innerHTML = `<div class="comp-empty">❌ ${I18N.t('status.error_load')} — réessayez</div>`;
   }
 }
 
@@ -23977,7 +23977,7 @@ async function loadComparateur(matchId) {
     const d = await r.json();
     content.innerHTML = renderComparateur(d);
   } catch (e) {
-    content.innerHTML = '<div class="comp-empty">❌ Erreur chargement — réessayez</div>';
+    content.innerHTML = `<div class="comp-empty">❌ ${I18N.t('status.error_load')} — réessayez</div>`;
   }
 }
 
@@ -26343,7 +26343,7 @@ function renderComparateur(d) {
     if (!el) return;
     if (!_scoutCtx.t1) { el.innerHTML = '<div class="cs2-scout-empty">Sélectionnez un match</div>'; return; }
     if (tab === 'veto') { _loadVetoContent(_scoutCtx.matchId, el); return; }
-    el.innerHTML = '<div class="cs2-scout-loading">⏳ Chargement…</div>';
+    el.innerHTML = `<div class="cs2-scout-loading">⏳ ${I18N.t('status.loading')}</div>`;
     var cacheKey = _scoutCtx.t1 + '|' + _scoutCtx.t2;
     var cached = _cs2EnrichCache[cacheKey];
     if (cached) { _renderScoutContent(tab, cached, el); return; }
@@ -26356,7 +26356,7 @@ function renderComparateur(d) {
         var e = j && j.enrichment ? j.enrichment : null;
         if (e) { _cs2EnrichCache[cacheKey] = e; _renderScoutContent(tab, e, el); }
         else el.innerHTML = '<div class="cs2-scout-empty">Données indisponibles pour ce match</div>';
-      }).catch(function() { el.innerHTML = '<div class="cs2-scout-empty">Erreur chargement</div>'; });
+      }).catch(function() { el.innerHTML = `<div class="cs2-scout-empty">${I18N.t('status.error_load')}</div>`; });
   }
 
   function _renderScoutContent(tab, e, el) {
@@ -26641,7 +26641,7 @@ function renderComparateur(d) {
         if (!veto || (Array.isArray(veto) && !veto.length))
           el.innerHTML = '<div class="cs2-scout-empty">Séquence veto non disponible<br><span style="font-size:10px;">Disponible uniquement via BSD CSGO addon avant/pendant le match</span></div>';
         else _renderVetoContent(veto, el);
-      }).catch(function() { el.innerHTML = '<div class="cs2-scout-empty">Erreur chargement veto</div>'; });
+      }).catch(function() { el.innerHTML = `<div class="cs2-scout-empty">${I18N.t('status.error_load')} veto</div>`; });
   }
 
   function _renderVetoContent(veto, el) {
@@ -26845,7 +26845,7 @@ async function loadTennisAlerts() {
   let rows = res.alerts;
   if (typeF) rows = rows.filter(r => r.alert_type === typeF);
   if (outF)  rows = rows.filter(r => r.outcome === outF);
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text2)">Aucune alerte</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text2)">${I18N.t('empty.no_alert')}</td></tr>`; return; }
   const typeLabel = { break_set:'🎯 Break', under_jeu:'📐 Under Jeu', oddspapi_prematch:'📡 OddsPapi', live_set_score:'⚡ Live' };
   tbody.innerHTML = rows.map(r => {
     const dt = new Date(r.fired_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -26901,7 +26901,7 @@ async function loadFootAlerts() {
   let rows = res.alerts;
   if (typeF) rows = rows.filter(r => r.alert_type === typeF);
   if (outF)  rows = rows.filter(r => r.outcome === outF);
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text2)">Aucune alerte</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text2)">${I18N.t('empty.no_alert')}</td></tr>`; return; }
   tbody.innerHTML = rows.map(r => {
     const dt = new Date(r.fired_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const oc = r.outcome==='WIN'?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS':'⏳';
