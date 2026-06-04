@@ -4027,6 +4027,23 @@ function _tnTop10Card(m, rank) {
   const surfacePill = (m.surface || m.round)
     ? `<div class="tn-t10-surface">${surfaceIcon} ${_tnEsc([m.surface, m.round].filter(Boolean).join(' · '))}</div>` : '';
 
+  // Date badge (hidden if live — EN DIRECT already displayed)
+  let dateBadge = '';
+  if (m.start_time && !m.is_live) {
+    const d = typeof m.start_time === 'number' ? new Date(m.start_time * 1000) : new Date(m.start_time);
+    if (!isNaN(d.getTime())) {
+      const now = new Date();
+      const hm  = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const isToday    = d.toDateString() === now.toDateString();
+      const tomorrow   = new Date(now); tomorrow.setDate(now.getDate() + 1);
+      const isTomorrow = d.toDateString() === tomorrow.toDateString();
+      const label = isToday    ? `Auj. ${hm}`
+                  : isTomorrow ? `Demain ${hm}`
+                  : `${d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} ${hm}`;
+      dateBadge = `<div class="tn-t10-date-badge">🕐 ${_tnEsc(label)}</div>`;
+    }
+  }
+
   // Chips with semantic colors
   const chipsHtml = chips.slice(0, 4).map(c => {
     const cls = c.includes('EV') ? 'ev' : c.includes('steam') ? 'steam' : c.includes('RLM') ? 'rlm' : '';
@@ -4046,6 +4063,7 @@ function _tnTop10Card(m, rank) {
     <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc(m.player2 || '—')}</span>${r2}</div>
   </div>
   ${surfacePill}
+  ${dateBadge}
   ${probBar}
   <div class="tn-t10-chips">${chipsHtml}</div>
 </div>`;
