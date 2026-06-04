@@ -27020,6 +27020,11 @@ function renderMatchSeoPage(m, origin) {
 <meta property="og:title" content="${escHtml(title)}">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:url" content="${escHtml(canonical)}">
+<meta property="og:image" content="https://pariscore.fr/icon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHtml(title)}">
+<meta name="twitter:description" content="${escHtml(desc)}">
+<meta name="twitter:image" content="https://pariscore.fr/icon.svg">
 <meta name="robots" content="index,follow">
 <script type="application/ld+json">${jsonLd}</script>
 <script type="application/ld+json">${breadcrumbLd}</script>
@@ -27123,7 +27128,13 @@ function renderPronosticsHubPage(origin) {
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Pronostics Foot & Tennis | PariScore">
+<meta property="og:description" content="Tous les pronostics foot et tennis analysés par l'algorithme PariScore : Power Score, xG, value bets dévigés. ${total} matchs analysés.">
 <meta property="og:url" content="${escHtml(canonical)}">
+<meta property="og:image" content="https://pariscore.fr/icon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pronostics Foot & Tennis | PariScore">
+<meta name="twitter:description" content="Pronostics foot & tennis par algorithme PariScore : Power Score, xG, value bets dévigés.">
+<meta name="twitter:image" content="https://pariscore.fr/icon.svg">
 <script type="application/ld+json">${itemList}</script>
 <style>
 :root{--bg:#0a0d0f;--bg2:#111417;--green:#00e676;--blue:#29b6f6;--text:#e8eaed;--text2:#8d9399}
@@ -27208,7 +27219,13 @@ function renderLeagueHubPage(origin, leagueName) {
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${escHtml(`Pronostics ${leagueName} | PariScore`)}">
+<meta property="og:description" content="${escHtml(`Pronostics ${leagueName} : analyse data-science, Power Score, xG et value bets dévigés par l'algorithme PariScore. ${items.length} matchs analysés.`)}">
 <meta property="og:url" content="${escHtml(canonical)}">
+<meta property="og:image" content="https://pariscore.fr/icon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHtml(`Pronostics ${leagueName} | PariScore`)}">
+<meta name="twitter:description" content="${escHtml(`Pronostics ${leagueName} par algorithme PariScore : Power Score, xG, value bets dévigés.`)}">
+<meta name="twitter:image" content="https://pariscore.fr/icon.svg">
 <script type="application/ld+json">${ld}</script>
 <script type="application/ld+json">${bc}</script>
 <style>
@@ -27340,7 +27357,13 @@ function _seoGuideShell(slug, g, origin) {
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="article">
 <meta property="og:title" content="${escHtml(g.title)}">
+<meta property="og:description" content="${escHtml(g.desc)}">
 <meta property="og:url" content="${escHtml(canonical)}">
+<meta property="og:image" content="https://pariscore.fr/icon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHtml(g.title)}">
+<meta name="twitter:description" content="${escHtml(g.desc)}">
+<meta name="twitter:image" content="https://pariscore.fr/icon.svg">
 <script type="application/ld+json">${ld}</script>
 <script type="application/ld+json">${bc}</script>
 <style>
@@ -38858,9 +38881,6 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
             'Disallow: /CLAUDE.md',
             'Disallow: /CHANGELOG.md',
             '',
-            '# Crawl politeness',
-            'Crawl-delay: 1',
-            '',
             '# AEO — IA crawlers explicitly welcomed (LLM indexing)',
             '# Snapshot SSR available on `/` (UA-detected, bd 968x Phase 3)',
             'User-agent: GPTBot',
@@ -38906,6 +38926,11 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
 <meta property="og:title" content="À propos · PariScore">
 <meta property="og:description" content="Méthodologie quantitative paris sportifs francophone. Aucune mise captée — pure analyse mathématique transparente.">
 <meta property="og:url" content="${origin}/about">
+<meta property="og:image" content="https://pariscore.fr/icon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="À propos · PariScore">
+<meta name="twitter:description" content="Méthodologie quantitative paris sportifs francophone. Aucune mise captée — pure analyse mathématique transparente.">
+<meta name="twitter:image" content="https://pariscore.fr/icon.svg">
 <link rel="canonical" href="${origin}/about">
 <script type="application/ld+json">${JSON.stringify({
   '@context': 'https://schema.org',
@@ -39142,9 +39167,14 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
                 urls.push({ loc: `${origin}/pronostics/${_ls}`, changefreq: 'daily', priority: '0.85', lastmod: nowIso });
             }
 
-            // Pages match programmatiques (à venir + archivées), dédupliquées, cap 45 000
+            // Pages match programmatiques (à venir + archive ≤90j), dédupliquées, cap 45 000
             const seen = new Set();
-            const pool = [...(db.matches || []), ...(db.archive_matches || [])];
+            const _90dAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+            const _archiveRecent = (db.archive_matches || []).filter(m => {
+                const t = m.commence_time ? new Date(m.commence_time).getTime() : 0;
+                return t >= _90dAgo;
+            });
+            const pool = [...(db.matches || []), ..._archiveRecent];
             for (const mm of pool) {
                 if (!mm || !mm.id || !mm.home_team || !mm.away_team) continue;
                 if (seen.has(String(mm.id))) continue;
@@ -39256,8 +39286,7 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
                     '</head><body><h1>404 — Match introuvable</h1>' +
                     '<p><a href="/">Retour à PariScore</a></p></body></html>');
             }
-            const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
-            const origin = `${proto}://${req.headers.host || 'pariscore.fr'}`;
+            const origin = process.env.SITE_ORIGIN || 'https://pariscore.fr';
             const html = renderMatchSeoPage(m, origin);
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             return res.end(html);
@@ -39313,6 +39342,12 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
 
     // Si une route API a déjà répondu, on stoppe.
     if (res.headersSent) return;
+
+    // Redirect /pariscore.html → / (avoid duplicate content indexation)
+    if (pathname === '/pariscore.html') {
+        res.writeHead(301, { Location: '/', 'Cache-Control': 'public, max-age=86400' });
+        return res.end();
+    }
 
     const filePath = path.join(__dirname, pathname === '/' ? 'pariscore.html' : pathname);
 
