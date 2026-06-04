@@ -11060,7 +11060,7 @@ const I18N = (() => {
     <a href="#" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span>Guide</a>
     <a href="#" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span>Tarifs</a>
     <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Accueil</a>
-    <a href="#" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span>Réglages</a>
+    <a href="#" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><span data-i18n="mobile.settings">Réglages</span></a>
   </div>
 </div>
 
@@ -11069,12 +11069,12 @@ const I18N = (() => {
 <div id="mob-filter-sheet" role="dialog" aria-label="Filtres avancés">
   <div class="bn-more-grab"></div>
   <div class="mfs-head">
-    <div class="bn-more-title" style="font-size:22px;margin:2px 0 0;">Filtres</div>
+    <div class="bn-more-title" style="font-size:22px;margin:2px 0 0;" data-i18n="mob.filters_title">Filtres</div>
     <button class="mfs-close" onclick="closeMobFilters()" aria-label="Fermer">✕</button>
   </div>
   <div id="mfs-count" class="mfs-count">—</div>
   <div id="mfs-body"></div>
-  <button class="mfs-apply" onclick="closeMobFilters()">Voir les résultats</button>
+  <button class="mfs-apply" onclick="closeMobFilters()" data-i18n="mob.see_results">Voir les résultats</button>
 </div>
 
 <!-- AUTH MODAL -->
@@ -11082,10 +11082,10 @@ const I18N = (() => {
   <div class="auth-box">
     <button class="auth-close" onclick="closeAuthModal()">×</button>
     <h2>PariScore</h2>
-    <p class="auth-subtitle">Le sport décodé par les chiffres — détectez l'edge avant les bookmakers</p>
+    <p class="auth-subtitle" data-i18n="auth.title_subtitle">Le sport décodé par les chiffres — détectez l'edge avant les bookmakers</p>
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Se connecter</button>
-      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">S'inscrire</button>
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')" data-i18n="auth.tab_login">Se connecter</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')" data-i18n="auth.tab_register">S'inscrire</button>
     </div>
     <!-- LOGIN FORM -->
     <div id="auth-form-login">
@@ -11094,7 +11094,7 @@ const I18N = (() => {
         <input type="email" id="login-email" placeholder="vous@exemple.com" autocomplete="email">
       </div>
       <div class="auth-field">
-        <label for="login-password">Mot de passe</label>
+        <label for="login-password" data-i18n="auth.label_password">Mot de passe</label>
         <div class="pwd-wrap">
           <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
             onkeydown="if(event.key==='Enter') submitLogin()">
@@ -11102,7 +11102,7 @@ const I18N = (() => {
         </div>
       </div>
       <div class="auth-error" id="login-error"></div>
-      <button class="auth-submit" id="login-btn" onclick="submitLogin()">Se connecter →</button>
+      <button class="auth-submit" id="login-btn" onclick="submitLogin()" data-i18n="auth.login_btn">Se connecter →</button>
     </div>
     <!-- REGISTER FORM -->
     <div id="auth-form-register" style="display:none;">
@@ -11119,7 +11119,7 @@ const I18N = (() => {
         </div>
       </div>
       <div class="auth-error" id="reg-error"></div>
-      <button class="auth-submit" id="reg-btn" onclick="submitRegister()">Créer mon compte →</button>
+      <button class="auth-submit" id="reg-btn" onclick="submitRegister()" data-i18n="auth.register_btn">Créer mon compte →</button>
     </div>
   </div>
 </div>
@@ -11127,7 +11127,7 @@ const I18N = (() => {
 <!-- MES PARIS — MODAL : Nouveau pari -->
 <div id="bet-modal" class="paris-modal">
   <div class="paris-modal-card">
-    <h3>Nouveau pari</h3>
+    <h3 data-i18n="modal.new_bet">Nouveau pari</h3>
     <div class="paris-modal-err" id="bet-modal-err"></div>
     <input type="hidden" id="bet-match-id">
     <label>Match (autocomplete depuis matchs PariScore)
@@ -11226,8 +11226,8 @@ const I18N = (() => {
       <textarea id="bet-notes" maxlength="500" placeholder="Conviction, source, observation..."></textarea>
     </label>
     <div class="paris-modal-actions">
-      <button class="btn-cancel" type="button" onclick="closeBetModal()">Annuler</button>
-      <button class="btn-save" type="button" id="bet-save-btn" onclick="submitBet()">Enregistrer</button>
+      <button class="btn-cancel" type="button" onclick="closeBetModal()" data-i18n="modal.cancel">Annuler</button>
+      <button class="btn-save" type="button" id="bet-save-btn" onclick="submitBet()" data-i18n="modal.save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -11255,8 +11255,8 @@ const I18N = (() => {
     </label>
     <div id="settle-payout-preview" style="font-size:12px;color:var(--text2);font-family:var(--font-mono);margin-bottom:12px;"></div>
     <div class="paris-modal-actions">
-      <button class="btn-cancel" type="button" onclick="closeSettleModal()">Annuler</button>
-      <button class="btn-save" type="button" onclick="submitSettle()">Confirmer</button>
+      <button class="btn-cancel" type="button" onclick="closeSettleModal()" data-i18n="modal.cancel">Annuler</button>
+      <button class="btn-save" type="button" onclick="submitSettle()" data-i18n="modal.confirm">Confirmer</button>
     </div>
   </div>
 </div>
@@ -11299,8 +11299,8 @@ const I18N = (() => {
       <input type="text" id="cash-note" maxlength="200">
     </label>
     <div class="paris-modal-actions">
-      <button class="btn-cancel" type="button" onclick="closeCashModal()">Annuler</button>
-      <button class="btn-save" type="button" onclick="submitCash()">Enregistrer</button>
+      <button class="btn-cancel" type="button" onclick="closeCashModal()" data-i18n="modal.cancel">Annuler</button>
+      <button class="btn-save" type="button" onclick="submitCash()" data-i18n="modal.save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -11329,8 +11329,8 @@ const I18N = (() => {
       ⚠ Compound 20 %/jour : 300 € → 535 € (J3) → 1 547 € (J10) → 7 982 € (J20). Variance réelle écrase souvent ces projections — la table "Plan" affiche capital théorique vs réel.
     </div>
     <div class="paris-modal-actions">
-      <button class="btn-cancel" type="button" onclick="closePlanModal()">Annuler</button>
-      <button class="btn-save" type="button" onclick="submitPlan()">Enregistrer</button>
+      <button class="btn-cancel" type="button" onclick="closePlanModal()" data-i18n="modal.cancel">Annuler</button>
+      <button class="btn-save" type="button" onclick="submitPlan()" data-i18n="modal.save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -11352,8 +11352,8 @@ const I18N = (() => {
         </div>
       </label>
       <div class="paris-modal-actions">
-        <button class="btn-cancel" type="button" onclick="closeImportModal()">Annuler</button>
-        <button class="btn-save" type="button" onclick="submitReverify()">Re-vérifier mdp →</button>
+        <button class="btn-cancel" type="button" onclick="closeImportModal()" data-i18n="modal.cancel">Annuler</button>
+        <button class="btn-save" type="button" onclick="submitReverify()" data-i18n="modal.reverify">Re-vérifier</button>
       </div>
     </div>
 
@@ -11383,9 +11383,9 @@ const I18N = (() => {
         <textarea id="import-csv" placeholder="Date;Sport;Événement;Marché;Cote;Mise;Statut;Gain&#10;..." style="min-height:120px;font-size:11px;"></textarea>
       </label>
       <div class="paris-modal-actions">
-        <button class="btn-cancel" type="button" onclick="closeImportModal()">Annuler</button>
+        <button class="btn-cancel" type="button" onclick="closeImportModal()" data-i18n="modal.cancel">Annuler</button>
         <button class="btn-ghost" type="button" onclick="submitImport(true)">🔍 Aperçu (dry-run)</button>
-        <button class="btn-save" type="button" onclick="submitImport(false)">Importer</button>
+        <button class="btn-save" type="button" onclick="submitImport(false)" data-i18n="modal.import">Importer</button>
       </div>
       <div id="import-preview" style="margin-top:14px;font-size:11px;font-family:var(--font-mono);"></div>
     </div>
@@ -11482,10 +11482,10 @@ const I18N = (() => {
   <!-- TOP MATCHES WIDGET -->
   <div class="top-matches-section">
     <div class="top-matches-header">
-      <h2>Top Matchs à Jouer</h2>
+      <h2 data-i18n="topmatch.title">Top Matchs à Jouer</h2>
       <div class="top-matches-tabs">
-        <button class="tm-tab active" onclick="switchTopMatchesTab('today',this)">Aujourd'hui</button>
-        <button class="tm-tab" onclick="switchTopMatchesTab('week',this)">Cette semaine</button>
+        <button class="tm-tab active" onclick="switchTopMatchesTab('today',this)" data-i18n="topmatch.today">Aujourd'hui</button>
+        <button class="tm-tab" onclick="switchTopMatchesTab('week',this)" data-i18n="topmatch.week">Cette semaine</button>
       </div>
     </div>
     <div class="tm-grid" id="top-matches-grid">
@@ -11502,19 +11502,19 @@ const I18N = (() => {
   <div class="stats-bar-inner">
     <div class="stat-item">
       <div class="stat-num">3 200<span>+</span></div>
-      <div class="stat-lbl">Ligues couvertes</div>
+      <div class="stat-lbl" data-i18n="stats.leagues">Ligues couvertes</div>
     </div>
     <div class="stat-item">
       <div class="stat-num">20<span>+</span></div>
-      <div class="stat-lbl">Bookmakers suivis</div>
+      <div class="stat-lbl" data-i18n="stats.bookmakers">Bookmakers suivis</div>
     </div>
     <div class="stat-item">
       <div class="stat-num">50<span>k+</span></div>
-      <div class="stat-lbl">Matchs analysés/an</div>
+      <div class="stat-lbl" data-i18n="stats.matches">Matchs analysés/an</div>
     </div>
     <div class="stat-item">
       <div class="stat-num">47</div>
-      <div class="stat-lbl">Alertes aujourd'hui</div>
+      <div class="stat-lbl" data-i18n="stats.alerts_today">Alertes aujourd'hui</div>
     </div>
   </div>
 </div>
@@ -11523,7 +11523,7 @@ const I18N = (() => {
 <section class="partner-access-section fade-up">
   <div class="partner-access-inner">
     <div class="pa-header">
-      <div class="pa-badge">OFFRE PARTENAIRE</div>
+      <div class="pa-badge" data-i18n="partner.badge">OFFRE PARTENAIRE</div>
       <h2>Accédez à PariScore Premium <span>gratuitement</span></h2>
       <p>Inscrivez-vous chez l'un de nos bookmakers partenaires et débloquez un accès Premium gratuit. Le bookmaker finance votre abonnement.</p>
     </div>
@@ -11869,9 +11869,9 @@ const I18N = (() => {
           <button type="button" class="ss-pill" data-ssf="dropping" aria-pressed="true">Dropping Cotes</button>
           <label class="ss-select-wrap"><span>Jours</span>
             <select class="ss-select" data-ssf="days" aria-label="Filtre jours">
-              <option value="all">Tous les jours</option>
-              <option value="0">Aujourd'hui</option>
-              <option value="1">Demain</option>
+              <option value="all" data-i18n="filter.all">Tous les jours</option>
+              <option value="0" data-i18n="filter.today">Aujourd'hui</option>
+              <option value="1" data-i18n="filter.tomorrow">Demain</option>
             </select></label>
           <span class="ss-pill ss-pill--info">Ligues : <b>Toutes</b></span>
           <label class="ss-select-wrap"><span>Période</span>
@@ -12317,15 +12317,15 @@ const I18N = (() => {
   <!-- ═══ FILTER CONSOLE — masquée (sidebar gère la sélection ligues) ═══ -->
   <div class="filter-console" id="filter-console" style="display:none;">
   <div class="fc-head">
-    <span class="fc-title">Filtres</span>
+    <span class="fc-title" data-i18n="mob.filters_title">Filtres</span>
     <span class="fc-sub" id="fc-active-count">Affinez votre sélection</span>
   </div>
 
   <!-- DAY FILTERS -->
   <div class="filter-row" id="day-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;">
-    <button class="filter-chip active" data-day="all">Tous les jours</button>
-    <button class="filter-chip" data-day="0" id="day-btn-0">Aujourd'hui</button>
-    <button class="filter-chip" data-day="1" id="day-btn-1">Demain</button>
+    <button class="filter-chip active" data-day="all" data-i18n="filter.all">Tous les jours</button>
+    <button class="filter-chip" data-day="0" id="day-btn-0" data-i18n="filter.today">Aujourd'hui</button>
+    <button class="filter-chip" data-day="1" id="day-btn-1" data-i18n="filter.tomorrow">Demain</button>
     <button class="filter-chip" data-day="2" id="day-btn-2">—</button>
     <button class="filter-chip" data-day="3" id="day-btn-3">—</button>
     <select class="filter-dd" id="day-dd" onchange="pickChipDD(this)" aria-label="Jour"></select>
@@ -12452,7 +12452,7 @@ const I18N = (() => {
         <select id="match-tab-mob" aria-label="Filtrer les matchs"
           onchange="setMatchTab(this.value, document.getElementById('tab-'+this.value))">
           <option value="all">Tous les matchs</option>
-          <option value="live">🔴 En direct</option>
+          <option value="live" data-i18n="filter.live">🔴 En direct</option>
           <option value="prematch">Prematch</option>
         </select>
       </div>
@@ -12508,7 +12508,7 @@ const I18N = (() => {
       <div id="mob-chips">
         <button class="mob-chip" data-mchip="live" onclick="mobChip('live',this)">Live</button>
         <button class="mob-chip" data-mchip="edge5" onclick="mobChip('edge5',this)">Edge&gt;5%</button>
-        <button class="mob-chip" data-mchip="today" onclick="mobChip('today',this)">Aujourd'hui</button>
+        <button class="mob-chip" data-mchip="today" onclick="mobChip('today',this)" data-i18n="filter.today">Aujourd'hui</button>
         <button class="mob-chip" data-mchip="o25" onclick="mobChip('o25',this)">O2.5</button>
         <button class="mob-chip" data-mchip="btts" onclick="mobChip('btts',this)">BTTS</button>
         <button class="mob-chip" data-mchip="fav" onclick="mobChip('fav',this)">Favoris</button>
@@ -14538,8 +14538,8 @@ const I18N = (() => {
           <button class="tex-tour-btn" data-tour="atp-double" onclick="setTexTour('atp-double')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;" title="Doubles ATP">2×ATP</button>
           <button class="tex-tour-btn" data-tour="wta-double" onclick="setTexTour('wta-double')" style="padding:6px 12px;background:var(--bg2,#111417);color:var(--text2,#8d9399);border:1px solid var(--bg4,#1e2328);border-radius:6px;cursor:pointer;font-family:'Instrument Sans',sans-serif;font-size:12px;" title="Doubles WTA">2×WTA</button>
           <select id="tex-day-select" onchange="setTexDay(this.value)" style="padding:6px 10px;background:var(--bg2,#111417);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:6px;font-family:'Instrument Sans',sans-serif;font-size:12px;">
-            <option value="0">Aujourd'hui</option>
-            <option value="1">Demain</option>
+            <option value="0" data-i18n="filter.today">Aujourd'hui</option>
+            <option value="1" data-i18n="filter.tomorrow">Demain</option>
             <option value="2">J+2</option>
             <option value="3">J+3</option>
             <option value="4">J+4</option>
@@ -18948,9 +18948,9 @@ const I18N = (() => {
       <div class="comp-controls">
         <select id="comp-f-sport" onchange="renderCompGrid()"><option value="">Tous sports</option></select>
         <select id="comp-f-day" onchange="renderCompGrid()">
-          <option value="all">Tous les jours</option>
-          <option value="today">Aujourd'hui</option>
-          <option value="tomorrow">Demain</option>
+          <option value="all" data-i18n="filter.all">Tous les jours</option>
+          <option value="today" data-i18n="filter.today">Aujourd'hui</option>
+          <option value="tomorrow" data-i18n="filter.tomorrow">Demain</option>
           <option value="j2">J+2</option>
         </select>
         <select id="comp-f-sort" onchange="renderCompGrid()">
