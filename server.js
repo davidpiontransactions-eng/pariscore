@@ -5606,6 +5606,8 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_api_cache_expires ON api_cache(expires_at)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_api_cache_source ON api_cache(source)`);
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_enrich_snap (snap_key TEXT PRIMARY KEY, ts INTEGER NOT NULL, data TEXT NOT NULL)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_enrich_snap_ts ON tennis_enrich_snap(ts)`);
   // ── API Cache Buffer (24h resilience layer — fallback si API échoue) ──
   sqldb.exec(`CREATE TABLE IF NOT EXISTS api_cache_buffer (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32253,11 +32255,18 @@ function _tnSrvStoreSnap(e) {
   if (!_tnSrvEnrichSignal(e)) return;
   const p1 = e.player1.name, p2 = e.player2.name;
   if (!p1 || !p2) return;
-  const entry = { ts: Date.now(), data: e };
-  if (e.id != null) _tennisEnrichSnap.set('id:' + e.id, entry);
-  const pk = _tnSrvPairKey(p1, p2); if (pk) _tennisEnrichSnap.set('pk:' + pk, entry);
-  const lk = _tnSrvPairLastKey(p1, p2); if (lk && lk !== pk) _tennisEnrichSnap.set('lk:' + lk, entry);
-  for (const k of _tnSrvAllPairKeys(p1, p2)) _tennisEnrichSnap.set('tk:' + k, entry);
+  const ts = Date.now();
+  const entry = { ts, data: e };
+  const keys = [];
+  if (e.id != null) { const k = 'id:' + e.id; _tennisEnrichSnap.set(k, entry); keys.push(k); }
+  const pk = _tnSrvPairKey(p1, p2); if (pk) { _tennisEnrichSnap.set('pk:' + pk, entry); keys.push('pk:' + pk); }
+  const lk = _tnSrvPairLastKey(p1, p2); if (lk && lk !== pk) { _tennisEnrichSnap.set('lk:' + lk, entry); keys.push('lk:' + lk); }
+  for (const k of _tnSrvAllPairKeys(p1, p2)) { _tennisEnrichSnap.set('tk:' + k, entry); keys.push('tk:' + k); }
+  try {
+    const data = JSON.stringify(e);
+    const stmt = sqldb.prepare('INSERT OR REPLACE INTO tennis_enrich_snap (snap_key, ts, data) VALUES (?, ?, ?)');
+    for (const k of keys) stmt.run(k, ts, data);
+  } catch (_) {}
 }
 function _tnSrvLookupSnap(lo) {
   if (!lo) return null;
@@ -32279,6 +32288,23 @@ function _tnSrvLookupSnap(lo) {
       if (hit) break;
     }
   }
+  if (!hit) {
+    try {
+      const _keys = [];
+      if (lo.id != null) _keys.push('id:' + lo.id);
+      if (p1 && p2) {
+        const pk = _tnSrvPairKey(p1, p2); if (pk) _keys.push('pk:' + pk);
+        const lk = _tnSrvPairLastKey(p1, p2); if (lk) _keys.push('lk:' + lk);
+        for (const k of _tnSrvAllPairKeys(p1, p2)) _keys.push('tk:' + k);
+      }
+      const _cutoff = Date.now() - _TN_ENRICH_TTL_MS;
+      const _stmt = sqldb.prepare('SELECT ts, data FROM tennis_enrich_snap WHERE snap_key = ? AND ts > ?');
+      for (const k of _keys) {
+        const row = _stmt.get(k, _cutoff);
+        if (row) { try { hit = { ts: row.ts, data: JSON.parse(row.data) }; _tennisEnrichSnap.set(k, hit); break; } catch (_) {} }
+      }
+    } catch (_) {}
+  }
   if (!hit) return null;
   if (Date.now() - hit.ts > _TN_ENRICH_TTL_MS) return null;
   return hit.data;
@@ -32289,12 +32315,22 @@ function _tnSrvJanitor() {
   for (const [k, v] of _tennisEnrichSnap) {
     if (now - v.ts > _TN_ENRICH_TTL_MS) { _tennisEnrichSnap.delete(k); dropped++; }
   }
+  try { sqldb.prepare('DELETE FROM tennis_enrich_snap WHERE ts <= ?').run(now - _TN_ENRICH_TTL_MS); } catch (_) {}
   if (dropped) console.log(`  [TennisSnap] janitor — ${dropped} entrées expirées`);
 }
 if (!globalThis.__tnSnapJanitorOn) {
   globalThis.__tnSnapJanitorOn = true;
   const _h = setInterval(_tnSrvJanitor, 60 * 60 * 1000);
   if (_h && typeof _h.unref === 'function') _h.unref();
+  try {
+    const _cutoff = Date.now() - _TN_ENRICH_TTL_MS;
+    const _rows = sqldb.prepare('SELECT snap_key, ts, data FROM tennis_enrich_snap WHERE ts > ?').all(_cutoff);
+    let _loaded = 0;
+    for (const row of _rows) {
+      try { _tennisEnrichSnap.set(row.snap_key, { ts: row.ts, data: JSON.parse(row.data) }); _loaded++; } catch (_) {}
+    }
+    if (_loaded) console.log(`  [TennisSnap] loaded ${_loaded} entries from SQLite on startup`);
+  } catch (_) {}
 }
 
 // Wrapper stale-while-revalidate : le build cold = ~15-20 s (420 matchs ×
