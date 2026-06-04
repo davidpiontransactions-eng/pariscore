@@ -11085,13 +11085,19 @@ const label = country
     const odds = m.odds || {};
     const favActive = favoriteMatchIds.has(m.id) ? 'active' : '';
 
+    // ── TERRAIN NEUTRE — équipe visiteuse utilise ses stats domicile ────────
+    const _isNeutral = !!m.is_neutral_ground;
+    const _awayDisplayStats = (_isNeutral && m.away_home_stats) ? m.away_home_stats : as;
+
     // ── POWERSCORE V44 — Σ(R × Wt × Wopp) ──────────────────────────────────
     const homePower = calcPowerScoreV44(m.home_form, hs, xg.home, m.away_rank);
-    const awayPower = calcPowerScoreV44(m.away_form, as, xg.away, m.home_rank);
+    const awayPower = calcPowerScoreV44(m.away_form, _awayDisplayStats, xg.away, m.home_rank);
 
     // PPG L5 Home/Away specifique (stats contextuelles domicile/exterieur)
     const homePpgL5 = hs.ppgHome ?? hs.ppg ?? ppgFromFormStr(m.home_form, 5) ?? 0;
-    const awayPpgL5 = as.ppgAway ?? as.ppg ?? ppgFromFormStr(m.away_form, 5) ?? 0;
+    const awayPpgL5 = _isNeutral
+      ? (_awayDisplayStats.ppg ?? ppgFromFormStr(m.away_form, 5) ?? 0)
+      : (as.ppgAway ?? as.ppg ?? ppgFromFormStr(m.away_form, 5) ?? 0);
 
     const powerCls = (v) => v >= 65 ? '#E2001A' : v >= 45 ? '#1A1A1A' : '#888';
     const powerBar = (v) => `<span style="display:inline-block;width:36px;height:4px;background:#EAEAEA;border-radius:2px;vertical-align:middle;margin:0 3px;"><span style="display:block;height:100%;border-radius:2px;background:${powerCls(v)};width:${v}%;"></span></span>`;
