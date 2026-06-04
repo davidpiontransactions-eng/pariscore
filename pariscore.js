@@ -10730,6 +10730,127 @@ function bigRadar(hs, as) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${grid}${axisLines}<polygon points="${hPts}" fill="rgba(41,182,246,0.3)" stroke="#29b6f6" stroke-width="1.5"/><polygon points="${aPts}" fill="rgba(171,71,188,0.3)" stroke="#ab47bc" stroke-width="1.5"/>${labels}</svg><div style="margin-top:8px;text-align:left;">${stats}</div>`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  DATA VIZ HELPERS — Colonne RANG/PPG/PWR (v12.70)
+// ═══════════════════════════════════════════════════════════════════════════
+function _dvSparkline(form, n) {
+  if (!form || form.length < 3) return '';
+  const pts = form.slice(0, n || 8).split('').map(c => c === 'W' ? 3 : c === 'D' ? 1 : 0);
+  const w = 44, h = 12, step = w / Math.max(pts.length - 1, 1);
+  const coords = pts.map((v, i) => (i * step).toFixed(1) + ',' + (h - (v / 3) * h).toFixed(1)).join(' ');
+  const r3 = pts.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
+  const r5 = pts.slice(0, Math.min(5, pts.length)).reduce((a, b) => a + b, 0) / Math.min(5, pts.length);
+  const col = r3 - r5 > 0.25 ? '#22c55e' : r3 - r5 < -0.25 ? '#ef4444' : '#94a3b8';
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block;overflow:visible;margin:2px 0;">'
+    + '<polyline points="' + coords + '" fill="none" stroke="' + col + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>'
+    + pts.map((v, i) => '<circle cx="' + (i * step).toFixed(1) + '" cy="' + (h - (v / 3) * h).toFixed(1) + '" r="' + (i === 0 ? '2' : '1.4') + '" fill="' + col + '" opacity="' + (i === 0 ? '1' : '0.5') + '"/>').join('')
+    + '</svg>';
+}
+function _dvPwrGauge(value) {
+  const v = Math.max(0, Math.min(100, value || 0));
+  const sz = 34, cx = sz / 2, cy = sz / 2, r = 12;
+  const circ = 2 * Math.PI * r, sweep = circ * 0.75, filled = (v / 100) * sweep;
+  const col = v >= 65 ? '#22c55e' : v >= 45 ? '#f59e0b' : '#ef4444';
+  return '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 ' + sz + ' ' + sz + '" style="display:inline-block;vertical-align:middle;flex-shrink:0;" title="PowerScore: ' + v + '/100">'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3" stroke-dasharray="' + sweep.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round" transform="rotate(-225 ' + cx + ' ' + cy + ')"/>'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="3" stroke-dasharray="' + filled.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round" transform="rotate(-225 ' + cx + ' ' + cy + ')" opacity="0.9"/>'
+    + '<text x="' + cx + '" y="' + (cy + 1) + '" text-anchor="middle" dominant-baseline="middle" font-size="7.5" font-weight="700" fill="' + col + '" font-family="monospace">' + v + '</text>'
+    + '</svg>';
+}
+function _dvRankLadder(rank, leagueSize) {
+  if (!rank || !leagueSize || leagueSize < 4) return '';
+  const w = 5, h = 26, pct = (rank - 1) / (leagueSize - 1), y = Math.round(pct * h);
+  const col = pct <= 0.25 ? '#22c55e' : pct >= 0.75 ? '#ef4444' : '#94a3b8';
+  return '<svg width="' + (w + 2) + '" height="' + (h + 2) + '" viewBox="0 0 ' + (w + 2) + ' ' + (h + 2) + '" style="display:inline-block;vertical-align:middle;margin-right:2px;flex-shrink:0;" title="' + rank + '/' + leagueSize + '">'
+    + '<rect x="1" y="1" width="' + w + '" height="' + h + '" rx="2" fill="rgba(255,255,255,0.05)"/>'
+    + '<rect x="1" y="1" width="' + w + '" height="' + Math.round(h * 0.25) + '" rx="2" fill="rgba(34,197,94,0.13)"/>'
+    + '<rect x="1" y="' + (1 + Math.round(h * 0.75)) + '" width="' + w + '" height="' + Math.round(h * 0.25) + '" rx="2" fill="rgba(239,68,68,0.13)"/>'
+    + '<circle cx="' + (1 + w / 2) + '" cy="' + (1 + y) + '" r="2.5" fill="' + col + '"/>'
+    + '</svg>';
+}
+function _dvMomentumArrow(form) {
+  if (!form || form.length < 5) return '';
+  const pts = form.slice(0, 10).split('').map(c => c === 'W' ? 3 : c === 'D' ? 1 : 0);
+  const r3 = pts.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
+  const r5 = pts.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+  const delta = r3 - r5;
+  const angle = Math.max(-42, Math.min(42, delta * 18));
+  const col = delta > 0.25 ? '#22c55e' : delta < -0.25 ? '#ef4444' : '#94a3b8';
+  const thick = Math.abs(delta) > 0.5 ? 2 : 1.4;
+  return '<svg width="14" height="12" viewBox="-7 -6 14 12" style="display:inline-block;vertical-align:middle;transform:rotate(' + (-angle).toFixed(0) + 'deg);" title="Vélocité: ' + (delta > 0 ? '+' : '') + delta.toFixed(2) + ' PPG (L3vsL5)">'
+    + '<line x1="-5" y1="0" x2="3.5" y2="0" stroke="' + col + '" stroke-width="' + thick + '" stroke-linecap="round"/>'
+    + '<polyline points="0.5,-2.5 4,0 0.5,2.5" fill="none" stroke="' + col + '" stroke-width="' + thick + '" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '</svg>';
+}
+function _dvICMini(ic90) {
+  if (!ic90 || typeof ic90.low !== 'number' || typeof ic90.high !== 'number') return '';
+  const lo = ic90.low, hi = ic90.high, w = 44, h = 8, mid = w / 2, scale = w / 24;
+  const loX = Math.max(1, Math.min(w - 1, mid + lo * scale));
+  const hiX = Math.max(1, Math.min(w - 1, mid + hi * scale));
+  const col = lo > 0 ? '#22c55e' : hi > 0 ? '#f59e0b' : '#ef4444';
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block;margin:2px 0;" title="IC90: [' + (lo > 0 ? '+' : '') + lo.toFixed(1) + '% · ' + (hi > 0 ? '+' : '') + hi.toFixed(1) + '%]">'
+    + '<rect x="0" y="' + (h / 2 - 0.75) + '" width="' + w + '" height="1.5" rx="0.75" fill="rgba(255,255,255,0.07)"/>'
+    + '<line x1="' + mid + '" y1="0" x2="' + mid + '" y2="' + h + '" stroke="rgba(255,255,255,0.15)" stroke-width="0.5" stroke-dasharray="2,2"/>'
+    + '<rect x="' + Math.min(loX, hiX).toFixed(1) + '" y="' + (h / 2 - 2) + '" width="' + Math.max(1, Math.abs(hiX - loX)).toFixed(1) + '" height="4" rx="2" fill="' + col + '" opacity="0.82"/>'
+    + '<circle cx="' + loX.toFixed(1) + '" cy="' + h / 2 + '" r="2" fill="' + col + '"/>'
+    + '<circle cx="' + hiX.toFixed(1) + '" cy="' + h / 2 + '" r="2" fill="' + col + '"/>'
+    + '</svg>';
+}
+function _dvDualPpgBar(ppgH, ppgA) {
+  const max = 3, w = 44, bH = 4, gap = 3, h = bH * 2 + gap;
+  const avgX = (1.35 / max) * w;
+  const hX = Math.min(w, ((ppgH || 0) / max) * w);
+  const aX = Math.min(w, ((ppgA || 0) / max) * w);
+  const hCol = ppgH >= 2.0 ? '#22c55e' : ppgH >= 1.3 ? '#f59e0b' : '#ef4444';
+  const aCol = ppgA >= 2.0 ? '#22c55e' : ppgA >= 1.3 ? '#f59e0b' : '#ef4444';
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block;margin:2px 0;" title="D: ' + (ppgH || 0).toFixed(2) + ' / E: ' + (ppgA || 0).toFixed(2) + ' PPG (ligne = moy. ligue)">'
+    + '<rect x="0" y="0" width="' + w + '" height="' + bH + '" rx="2" fill="rgba(255,255,255,0.05)"/>'
+    + '<rect x="0" y="0" width="' + hX.toFixed(1) + '" height="' + bH + '" rx="2" fill="' + hCol + '" opacity="0.75"/>'
+    + '<rect x="0" y="' + (bH + gap) + '" width="' + w + '" height="' + bH + '" rx="2" fill="rgba(255,255,255,0.05)"/>'
+    + '<rect x="0" y="' + (bH + gap) + '" width="' + aX.toFixed(1) + '" height="' + bH + '" rx="2" fill="' + aCol + '" opacity="0.75"/>'
+    + '<line x1="' + avgX.toFixed(1) + '" y1="0" x2="' + avgX.toFixed(1) + '" y2="' + h + '" stroke="rgba(255,255,255,0.22)" stroke-width="0.75" stroke-dasharray="2,1.5"/>'
+    + '</svg>';
+}
+function _dvConfidenceBand(ppg, played, reliability) {
+  const p = Math.max(3, played || 5), sigma = 1.5 / Math.sqrt(p);
+  const max = 3, w = 44, h = 10;
+  const cxv = Math.max(2, Math.min(w - 2, ((ppg || 0) / max) * w));
+  const bw = Math.min(cxv - 1, Math.min(w - cxv - 1, (sigma / max) * w * 1.5));
+  const col = (reliability || 0) >= 70 ? '#22c55e' : (reliability || 0) >= 40 ? '#f59e0b' : '#94a3b8';
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block;margin:1px 0;" title="PPG ' + (ppg || 0).toFixed(2) + ' ±' + sigma.toFixed(2) + ' (n=' + p + ')">'
+    + '<rect x="' + Math.max(0, cxv - bw).toFixed(1) + '" y="' + (h / 2 - 3) + '" width="' + (bw * 2).toFixed(1) + '" height="6" rx="3" fill="' + col + '" opacity="0.12"/>'
+    + '<line x1="0" y1="' + h / 2 + '" x2="' + w + '" y2="' + h / 2 + '" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>'
+    + '<line x1="' + Math.max(0, cxv - bw).toFixed(1) + '" y1="' + (h / 2 - 3) + '" x2="' + Math.max(0, cxv - bw).toFixed(1) + '" y2="' + (h / 2 + 3) + '" stroke="' + col + '" stroke-width="1" opacity="0.45"/>'
+    + '<line x1="' + Math.min(w, cxv + bw).toFixed(1) + '" y1="' + (h / 2 - 3) + '" x2="' + Math.min(w, cxv + bw).toFixed(1) + '" y2="' + (h / 2 + 3) + '" stroke="' + col + '" stroke-width="1" opacity="0.45"/>'
+    + '<circle cx="' + cxv.toFixed(1) + '" cy="' + h / 2 + '" r="2.5" fill="' + col + '" opacity="0.9"/>'
+    + '</svg>';
+}
+function _dvMicroRadar(hs, as, pwrH, pwrA, eloH, eloA) {
+  if (!hs || !as || (hs.ppg == null && as.ppg == null)) return '';
+  const sz = 56, cx = sz / 2, cy = sz / 2, r = 19, n = 5, stp = (2 * Math.PI) / n;
+  const nrm = (v, mn, mx) => Math.max(0.05, Math.min(1, ((v || 0) - mn) / (mx - mn)));
+  const hV = [nrm(hs.ppg,0,3), nrm(hs.avgScored,0,3), nrm(2-(hs.avgConceded||1.5),0,2), nrm(pwrH,0,100), nrm(eloH,800,2000)];
+  const aV = [nrm(as.ppg,0,3), nrm(as.avgScored,0,3), nrm(2-(as.avgConceded||1.5),0,2), nrm(pwrA,0,100), nrm(eloA,800,2000)];
+  const poly = vals => vals.map((v, i) => {
+    const a = i * stp - Math.PI / 2;
+    return (cx + r * v * Math.cos(a)).toFixed(1) + ',' + (cy + r * v * Math.sin(a)).toFixed(1);
+  }).join(' ');
+  const grid = [0.33, 0.67, 1].map(p => '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r*p).toFixed(1) + '" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>').join('');
+  const axes = Array.from({length: n}, (_, i) => {
+    const a = i * stp - Math.PI / 2;
+    return '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx+r*Math.cos(a)).toFixed(1) + '" y2="' + (cy+r*Math.sin(a)).toFixed(1) + '" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>';
+  }).join('');
+  const lbls = ['PPG','ATT','DEF','PWR','ELO'].map((l, i) => {
+    const a = i * stp - Math.PI / 2;
+    return '<text x="' + (cx+(r+8)*Math.cos(a)).toFixed(1) + '" y="' + (cy+(r+8)*Math.sin(a)).toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" font-size="5" fill="rgba(255,255,255,0.28)" font-family="monospace">' + l + '</text>';
+  }).join('');
+  return '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 ' + sz + ' ' + sz + '" style="display:block;margin:3px auto;" title="Radar: bleu=D, rouge=E">'
+    + grid + axes
+    + '<polygon points="' + poly(hV) + '" fill="rgba(41,182,246,0.18)" stroke="#29b6f6" stroke-width="1.2" opacity="0.85"/>'
+    + '<polygon points="' + poly(aV) + '" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="1.2" opacity="0.85"/>'
+    + lbls + '</svg>';
+}
+
 function renderMatches(matches) {
   if (!matches) return;
   const tbody = document.getElementById('vb-body');
@@ -11084,6 +11205,8 @@ const label = country
     const bestLabel = best.label || '';
     const odds = m.odds || {};
     const favActive = favoriteMatchIds.has(m.id) ? 'active' : '';
+    const _rkPct = leaguePctMap.get(m.id) || 50;
+    const _rkPctBg = _rkPct <= 20 ? 'background:rgba(34,197,94,0.04);' : _rkPct >= 80 ? 'background:rgba(239,68,68,0.04);' : '';
 
     // ── TERRAIN NEUTRE — équipe visiteuse utilise ses stats domicile ────────
     const _isNeutral = !!m.is_neutral_ground;
@@ -11236,18 +11359,45 @@ const label = country
           return `<div style="margin-top:5px;"><button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG Dom/Ext">🔴 LIVE${xgRow}</button></div>`;
         })() : ''}
       </td>
-      <td style="min-width:70px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;">
-        <div style="margin-bottom:2px;">
-          <span style="color:var(--text3);">D:</span> <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
-          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${(!hs.played && homePpgL5 === 0) ? '—' : (typeof homePpgL5==='number'?safeFixed(homePpgL5, 1):'-')}</span>
-          <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${homePower>=65?'#15803D':homePower>=45?'#B45309':'#B91C1C'};font-weight:700;">${homePower}${momentumArrow(m.home_form)}</span>
-          ${renderFatigueDot(m.home_fatigue, m.home_fatigue_level, m.home_fatigue_meta)}
+      <td style="min-width:130px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;${_rkPctBg}">
+        <div style="margin-bottom:3px;">
+          <div style="display:flex;align-items:center;gap:2px;margin-bottom:1px;">
+            ${_dvRankLadder(m.home_rank, m.league_size)}
+            <span style="color:var(--text3);font-size:7px;">D:</span>
+            <span class="rk-badge-s ${m.home_rank <= 4 ? 'rk-top' : m.home_rank <= 8 ? 'rk-mid' : 'rk-low'}" style="${m.home_fatigue > 70 ? 'box-shadow:0 0 0 2px rgba(239,68,68,0.65);' : m.home_fatigue > 40 ? 'box-shadow:0 0 0 2px rgba(245,158,11,0.55);' : ''}" title="Rang${m.home_fatigue > 40 ? ' · Fatigue ' + m.home_fatigue + '%' : ''}">${m.home_rank ? m.home_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '—')}</span>
+          </div>
+          ${_dvSparkline(m.home_form, 8)}
+          <div style="display:flex;align-items:center;gap:3px;margin-top:2px;">
+            ${_dvPwrGauge(homePower)}
+            ${_dvMomentumArrow(m.home_form)}
+          </div>
+          <div style="display:flex;align-items:center;gap:3px;margin-top:1px;">
+            <span style="color:var(--text3);font-size:7px;">PPG</span>
+            <span style="color:var(--blue);font-weight:700;">${(!hs.played && homePpgL5 === 0) ? '—' : (typeof homePpgL5==='number'?safeFixed(homePpgL5,1):'-')}</span>
+            ${_dvConfidenceBand(homePpgL5, hs.played, m.reliability_score)}
+          </div>
         </div>
-        <div>
-          <span style="color:var(--text3);">E:</span> <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" title="Classement">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '-')}</span>
-          <span style="color:var(--text3);font-size:7px;">PPG:</span><span style="color:var(--blue);font-weight:600;">${(!as.played && awayPpgL5 === 0) ? '—' : (typeof awayPpgL5==='number'?safeFixed(awayPpgL5, 1):'-')}</span>
-          <span style="color:var(--text3);font-size:7px;margin-left:4px;">PWR:</span><span style="color:${awayPower>=65?'#15803D':awayPower>=45?'#B45309':'#B91C1C'};font-weight:700;">${awayPower}${momentumArrow(m.away_form)}</span>
-          ${renderFatigueDot(m.away_fatigue, m.away_fatigue_level, m.away_fatigue_meta)}
+        <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:3px;margin-bottom:3px;">
+          <div style="display:flex;align-items:center;gap:2px;margin-bottom:1px;">
+            ${_dvRankLadder(m.away_rank, m.league_size)}
+            <span style="color:var(--text3);font-size:7px;">E:</span>
+            <span class="rk-badge-s ${m.away_rank <= 4 ? 'rk-top' : m.away_rank <= 8 ? 'rk-mid' : 'rk-low'}" style="${m.away_fatigue > 70 ? 'box-shadow:0 0 0 2px rgba(239,68,68,0.65);' : m.away_fatigue > 40 ? 'box-shadow:0 0 0 2px rgba(245,158,11,0.55);' : ''}" title="Rang${m.away_fatigue > 40 ? ' · Fatigue ' + m.away_fatigue + '%' : ''}">${m.away_rank ? m.away_rank + 'e' : (m._standings_loading ? '<span class="rk-loading">…</span>' : '—')}</span>
+          </div>
+          ${_dvSparkline(m.away_form, 8)}
+          <div style="display:flex;align-items:center;gap:3px;margin-top:2px;">
+            ${_dvPwrGauge(awayPower)}
+            ${_dvMomentumArrow(m.away_form)}
+          </div>
+          <div style="display:flex;align-items:center;gap:3px;margin-top:1px;">
+            <span style="color:var(--text3);font-size:7px;">PPG</span>
+            <span style="color:var(--blue);font-weight:700;">${(!_awayDisplayStats.played && awayPpgL5 === 0) ? '—' : (typeof awayPpgL5==='number'?safeFixed(awayPpgL5,1):'-')}</span>
+            ${_dvConfidenceBand(awayPpgL5, _awayDisplayStats.played || as.played, m.reliability_score)}
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:3px;">
+          ${_dvDualPpgBar(homePpgL5, awayPpgL5)}
+          ${_dvMicroRadar(hs, _awayDisplayStats, homePower, awayPower, m.elo_home, m.elo_away)}
+          ${_dvICMini(m.best_edge && m.best_edge.ic90 ? m.best_edge.ic90 : null)}
         </div>
       </td>
       <td style="min-width:85px;text-align:center;padding:4px 6px !important;vertical-align:middle;">${(()=>{
