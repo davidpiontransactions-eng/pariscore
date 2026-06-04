@@ -2093,6 +2093,7 @@ function _tvbDRLive(lo, sets, s1, s2) {
     drP1 = (gA + 6 * (s1 || 0) + 0.5) / (gB + 6 * (s2 || 0) + 0.5);
   }
   if (!Number.isFinite(drP1) || drP1 <= 0) return '';
+  if (!exact && gA + gB === 0 && (s1 || 0) + (s2 || 0) === 0) return '';
   const drP2 = 1 / drP1;
   const id = String(lo.id || lo._id || (lo.player1 && lo.player1.name) || '');
   if (!window._tnDRHist) window._tnDRHist = {};
