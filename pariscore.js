@@ -2082,11 +2082,11 @@ function _tvbPBPSparkline(sets, s1, s2) {
 function _tvbDRLive(lo, sets, s1, s2) {
   if (!lo) return '';
   let drP1, exact = false;
+  let gA = 0, gB = 0;
   const dx = lo.dr_exact;
   if (dx && typeof dx.dr === 'number' && Number.isFinite(dx.dr) && dx.dr > 0) {
     drP1 = dx.dr; exact = true;
   } else {
-    let gA = 0, gB = 0;
     (Array.isArray(sets) ? sets : []).forEach(st => {
       if (st) { gA += Number(st.p1) || 0; gB += Number(st.p2) || 0; }
     });
