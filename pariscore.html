@@ -4622,6 +4622,10 @@
   @media (prefers-reduced-motion: reduce) {
     #vb-table thead th.sortable::after { transition: none; }
   }
+  #vb-table thead tr.stat-header-main th {
+    height: 0; padding: 0; font-size: 0; line-height: 0;
+    visibility: hidden; border: none;
+  }
   #vb-table thead tr.stat-header-sub th {
     font-size: 8.5px; color: var(--text3); padding: 3px 5px;
     border-bottom: 2px solid var(--border);
