@@ -3383,6 +3383,10 @@
     filter: drop-shadow(0 2px 5px rgba(226,0,26,0.22)); }
   .logo-mark .lm-ring { transform-box: fill-box; transform-origin: center;
     animation: lmPulse 1.8s ease-out infinite; }
+  /* WC 2026 logo temporaire — actif jusqu'au 19 juillet 2026 */
+  img.logo-wc2026 { width: 36px; height: 36px; flex: 0 0 auto; object-fit: contain;
+    border-radius: 6px; filter: drop-shadow(0 2px 8px rgba(0,100,255,0.35)); }
+  html.ps-mobile-v2 nav img.logo-wc2026 { width: 28px; height: 28px; }
   @keyframes lmPulse {
     0% { opacity: .85; transform: scale(.5); }
     70%,100% { opacity: 0; transform: scale(1.55); }
@@ -10996,6 +11000,23 @@ const I18N = (() => {
     </div>
   </div>
 </nav>
+<script>
+(function(){
+  var e=new Date('2026-07-19T23:59:59'),n=new Date();
+  if(n<=e){
+    var m=document.querySelector('nav:not(#bottom-nav) .logo-mark');
+    if(m){
+      var i=document.createElement('img');
+      i.src='/assets/logo-wc2026.png';
+      i.className='logo-wc2026';
+      i.alt='PariScore CdM 2026';
+      i.onerror=function(){this.remove();m.style.display='';};
+      m.style.display='none';
+      m.parentNode.insertBefore(i,m);
+    }
+  }
+})();
+</script>
 
 <!-- ░░ BOTTOM TAB BAR — mobile only (≤768px) ░░ -->
 <nav id="bottom-nav" aria-label="Navigation mobile">
