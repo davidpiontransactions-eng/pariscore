@@ -7521,7 +7521,17 @@ function _psLogoCountryFallback(name, country) {
   }
   return '<span class="sidebar-league-logo sidebar-intl-globe" style="font-size:16px;">⚽</span>';
 }
-// ── Tennis tournament logos — API-Sports tennis CDN ──────────────────────
+// ── Tennis tournament logos — local cache + SVG fallback ─────────────────
+// Populated by _loadTennisLogoMap() from /assets/tennis-logos/map.json
+window.__tnLogoMap = window.__tnLogoMap || {};
+(function _loadTennisLogoMap() {
+  if (window.__tnLogoMapLoaded) return;
+  window.__tnLogoMapLoaded = true;
+  fetch('/assets/tennis-logos/map.json').then(function(r) { return r.json(); }).then(function(m) {
+    Object.assign(window.__tnLogoMap, m);
+  }).catch(function() {});
+})();
+
 var TENNIS_TOURNAMENT_LOGO_IDS = {
   'Australian Open':1,
   'Roland Garros':2,'French Open':2,
@@ -7556,10 +7566,12 @@ var TENNIS_TOURNAMENT_LOGO_IDS = {
 };
 function _getTennisTournamentLogo(name) {
   var esc = function(s) { return (s||'').replace(/"/g,'&quot;'); };
-  var id = TENNIS_TOURNAMENT_LOGO_IDS[name];
-  if (id) {
-    return '<img class="sidebar-league-logo" src="https://media.api-sports.io/tennis/leagues/' + id + '.png" alt="' + esc(name) + '" onerror="_tnLogoFallback(this)">';
+  // P1: local cached logo from map.json
+  var local = window.__tnLogoMap && window.__tnLogoMap[name];
+  if (local) {
+    return '<img class="sidebar-league-logo" src="' + local + '" alt="' + esc(name) + '" onerror="_tnLogoFallback(this)">';
   }
+  // P2: auto SVG badge (surface-colored circle with initials)
   return _tnAutoLogoHtml(name);
 }
 function _tnAutoLogoHtml(name) {
