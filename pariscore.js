@@ -731,6 +731,7 @@ function showPage(pageId, linkEl) {
   // Stop tennis poll quand on quitte l'onglet
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
+  if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10();
   // Verrou tier/sport — bloque les modules non accessibles
   if (typeof psPageBlocked === 'function') {
     const _blk = psPageBlocked(pageId);
@@ -3901,6 +3902,15 @@ function _tnTop10SetMode(mode, btn) {
   fetchTennisTop10();
 }
 
+function _tnTop10SurfaceIcon(surface) {
+  const s = String(surface || '').toLowerCase();
+  if (s.includes('clay'))  return '🟧';
+  if (s.includes('grass')) return '🟩';
+  if (s.includes('hard'))  return '🟦';
+  if (s.includes('carpet'))return '🟫';
+  return '🎾';
+}
+
 function _tnTop10Card(m, rank) {
   const reasonRaw = String(m.reason || 'ANALYSE');
   const tagCss = 'tn-t10-tag-' + reasonRaw.replace(/ /g, '');
@@ -3910,42 +3920,85 @@ function _tnTop10Card(m, rank) {
   }[reasonRaw] || reasonRaw;
 
   const scoreColor = m.score_top10 >= 70 ? 'high' : m.score_top10 >= 45 ? 'med' : '';
+  const surfaceIcon = _tnTop10SurfaceIcon(m.surface);
 
+  // Live score row
   let liveScore = '';
   if (m.is_live && m.sets_live && m.sets_live.length) {
     const setsStr = m.sets_live.join('  ');
     const setsLabel = (m.player1_sets != null && m.player2_sets != null)
-      ? ` (${m.player1_sets}-${m.player2_sets} sets)` : '';
+      ? ` (${m.player1_sets}-${m.player2_sets})` : '';
     liveScore = `<div class="tn-t10-live-score">🔴 ${_tnEsc(setsStr)}${_tnEsc(setsLabel)}</div>`;
   }
 
+  // Player rank suffix
+  const r1 = m.rank_p1 ? `<span class="tn-t10-rank-badge">#${m.rank_p1}</span>` : '';
+  const r2 = m.rank_p2 ? `<span class="tn-t10-rank-badge">#${m.rank_p2}</span>` : '';
+
+  // Confidence badge
+  const confBadge = m.confidence_level
+    ? `<span class="tn-t10-conf tn-t10-conf-${m.confidence_level.toLowerCase()}">${m.confidence_level}</span>` : '';
+
+  // Chips
   const chips = [];
-  if (m.elo_p1 && m.elo_p2)        chips.push(`ELO ${m.elo_p1}/${m.elo_p2}`);
-  if (m.best_edge_ev > 0)           chips.push(`EV +${Number(m.best_edge_ev).toFixed(1)}%`);
-  if (m.blended_p1 != null)         chips.push(`J1 ${m.blended_p1}%`);
-  if (m.books_count)                chips.push(`${m.books_count} books`);
-  if (m.movement_p1 === 'SHORTENING') chips.push('📈 J1 steam');
-  if (m.movement_p2 === 'SHORTENING') chips.push('📈 J2 steam');
-  if (m.rlm)                          chips.push('⚡ RLM');
+  if (m.elo_p1 && m.elo_p2)           chips.push(`ELO ${m.elo_p1}/${m.elo_p2}`);
+  if (m.best_edge_ev > 0)              chips.push(`EV +${Number(m.best_edge_ev).toFixed(1)}%`);
+  if (m.blended_p1 != null)            chips.push(`J1 ${m.blended_p1}%`);
+  if (m.books_count)                   chips.push(`${m.books_count} books`);
+  if (m.movement_p1 === 'SHORTENING')  chips.push('📈 J1 steam');
+  if (m.movement_p2 === 'SHORTENING')  chips.push('📈 J2 steam');
+  if (m.rlm)                           chips.push('⚡ RLM');
 
-  const meta = [m.tournament, m.round, m.surface].filter(Boolean).join(' · ');
+  // Meta line
+  const meta = [surfaceIcon + ' ' + (m.surface || ''), m.round].filter(Boolean).join(' · ');
 
-  return `<div class="tn-t10-card" onclick="(function(){var id='${_tnEsc(m.matchId)}';if(typeof openMatchDetail==='function')openMatchDetail(id);})()">
+  // Explainability tooltip (title attr = accessible, zero JS needed)
+  const d = m.dims || {};
+  const tooltipText = m.tournament
+    + (d.entropy  != null ? `\nÉquilibre: ${d.entropy}` : '')
+    + (d.ev       != null ? `\nValeur EV: ${d.ev}` : '')
+    + (d.stakes   != null ? `\nPrestige: ${d.stakes}` : '')
+    + (d.urgency  != null ? `\nUrgence: ${d.urgency}` : '')
+    + (d.movement != null ? `\nMouvement: ${d.movement}` : '');
+
+  const safeId = _tnEsc(String(m.matchId || ''));
+
+  return `<div class="tn-t10-card" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisDetail==='function')openTennisDetail('${safeId}')">
   <div class="tn-t10-card-top">
     <span class="tn-t10-rank">#${rank}</span>
-    <span class="tn-t10-tag ${tagCss}">${reasonLabel}</span>
+    <div style="display:flex;gap:4px;align-items:center;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
   </div>
   ${liveScore}
   <div class="tn-t10-players">
-    <div class="tn-t10-player">${_tnEsc(m.player1 || '—')}</div>
+    <div class="tn-t10-player">${_tnEsc(m.player1 || '—')} ${r1}</div>
     <div class="tn-t10-vs">vs</div>
-    <div class="tn-t10-player">${_tnEsc(m.player2 || '—')}</div>
+    <div class="tn-t10-player">${_tnEsc(m.player2 || '—')} ${r2}</div>
   </div>
   <div class="tn-t10-meta">${_tnEsc(meta || '—')}</div>
   <div class="tn-t10-score-bar"><div class="tn-t10-score-fill ${scoreColor}" style="width:${Math.min(100, m.score_top10)}%"></div></div>
   <div class="tn-t10-score-val">${m.score_top10.toFixed(1)}<span>/100</span></div>
   <div class="tn-t10-chips">${chips.slice(0, 4).map(c => `<span class="tn-t10-chip">${_tnEsc(c)}</span>`).join('')}</div>
 </div>`;
+}
+
+let _tnTop10PrevTop3 = [];
+
+function _tnTop10AlertNewEntry(top10) {
+  if (!top10 || !top10.length) return;
+  const newTop3Ids = top10.slice(0, 3).map(m => String(m.matchId));
+  const prevIds    = new Set(_tnTop10PrevTop3);
+  const newEntries = newTop3Ids.filter(id => !prevIds.has(id));
+  _tnTop10PrevTop3 = newTop3Ids;
+  if (!newEntries.length || prevIds.size === 0) return; // skip first load
+  const m = top10.find(x => newEntries.includes(String(x.matchId)));
+  if (!m) return;
+  const msg = `🏆 Top 3 Tennis : ${m.player1} vs ${m.player2} — ${m.reason}`;
+  // Show existing toast system if available, else console
+  if (typeof showToast === 'function') {
+    showToast(msg, 'info', 6000);
+  } else if (typeof _psShowAlert === 'function') {
+    _psShowAlert(msg, 'info');
+  }
 }
 
 async function fetchTennisTop10() {
@@ -3965,6 +4018,7 @@ async function fetchTennisTop10() {
       container.innerHTML = '<div class="tn-t10-empty">Aucun match disponible pour le moment</div>';
       return;
     }
+    _tnTop10AlertNewEntry(top10);
     container.innerHTML = top10.map((m, i) => _tnTop10Card(m, i + 1)).join('');
   } catch (err) {
     if (statusEl) statusEl.textContent = 'Indisponible';
