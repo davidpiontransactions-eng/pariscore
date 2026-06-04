@@ -14292,6 +14292,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
           <span class="tn-vb-cell tn-cell-score" role="columnheader" style="color:#38bdf8;">Score</span>
           <span class="tn-vb-cell tn-cell-elo" role="columnheader" style="color:var(--blue,#29b6f6);">Elo</span>
           <span class="tn-vb-cell tn-cell-proba" role="columnheader" style="color:var(--green,#00e676);">Proba</span>
+          <span class="tn-vb-cell tn-cell-gou" role="columnheader" style="color:var(--blue,#29b6f6);"><span class="tgou-hwrap" style="justify-content:flex-start;">Jeux O/U<button type="button" class="tgou-info" onclick="event.stopPropagation();openTennisGamesGuide()" title="Guide colonne Jeux O/U" aria-label="Aide Jeux O/U">i</button></span></span>
           <span class="tn-vb-cell tn-cell-value" role="columnheader" style="color:var(--green,#00e676);">Value EV+</span>
           <span class="tn-vb-cell tn-cell-expand" role="columnheader" aria-label="Détails">▸</span>
         </div>
@@ -15129,8 +15130,8 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tn-vb-thead { background:var(--bg3,#181c20); border-bottom:1px solid var(--border,rgba(255,255,255,0.07)); }
   .tn-vb-header-row, .tn-vb-row {
     display:grid;
-    grid-template-columns: 32px 290px 180px 200px 100px 100px 115px 90px;
-    min-width:1107px; align-items:center;
+    grid-template-columns: 32px 290px 180px 200px 100px 100px 110px 115px 90px;
+    min-width:1217px; align-items:center;
   }
   .tn-vb-header-row { padding:2px 0; }
   .tn-vb-row { border-bottom:1px solid var(--border,rgba(255,255,255,0.05)); transition:background 90ms; cursor:pointer; }
@@ -15150,8 +15151,9 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .tn-cell-match { flex-direction:column; align-items:flex-start; gap:3px; padding:8px 12px; overflow:hidden; }
   .tn-cell-signal { align-items:flex-start; overflow:hidden; min-width:0; }
   .tn-cell-score { align-items:flex-start; overflow:hidden; }
-  .tn-cell-elo, .tn-cell-proba, .tn-cell-value { justify-content:center; flex-direction:column; align-items:center; gap:3px; }
-  .tn-cell-elo:empty::after, .tn-cell-proba:empty::after, .tn-cell-value:empty::after { content:'—'; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:10px; opacity:0.4; }
+  .tn-cell-elo, .tn-cell-proba, .tn-cell-gou, .tn-cell-value { justify-content:center; flex-direction:column; align-items:center; gap:3px; }
+  .tn-cell-elo:empty::after, .tn-cell-proba:empty::after, .tn-cell-gou:empty::after, .tn-cell-value:empty::after { content:'—'; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:10px; opacity:0.4; }
+  .tgou-set-lbl { font-size:9px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; letter-spacing:0.3em; text-transform:uppercase; margin-bottom:1px; }
   .tn-cell-expand { justify-content:center; align-items:center; padding:4px 2px; gap:4px; flex-wrap:wrap; }
   /* Match cell sub-elements */
   .tn-match-meta { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }

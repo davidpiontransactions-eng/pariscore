@@ -3229,6 +3229,36 @@ function _tvbExtractMarkets(chips, kpi){
   return slots;
 }
 
+// ── O/U Jeux colonne — O7.5 / O8.5 / O9.5 / U12.5 par set en cours ──────────
+function _tvbGouCell(m) {
+  var ouc = m && m.over_under_set_calculations;
+  if (!ouc) return '<span class="tgou-na">—</span>';
+  var setKey = 'set1';
+  if (m._isLive && m._live) {
+    var ss = m._live.sets_score;
+    var sp = (ss && ss.p1 != null ? ss.p1 : 0) + (ss && ss.p2 != null ? ss.p2 : 0);
+    setKey = 'set' + Math.max(1, Math.min(5, sp + 1));
+  }
+  var sets = ouc.sets || {};
+  var s = sets[setKey] || sets.set1;
+  var o75, o85, o95, u125;
+  if (s) {
+    o75 = s.o75; o85 = s.o85; o95 = s.o95; u125 = s.u125;
+  } else {
+    o75 = ouc.O7_5; o85 = ouc.O8_5; o95 = ouc.O9_5; u125 = ouc.U12_5;
+  }
+  if (o75 == null && o85 == null) return '<span class="tgou-na">—</span>';
+  var mid = _escTennis(m.id || '');
+  var setLbl = m._isLive ? setKey.replace('set','S') : 'S1';
+  var onclk = mid ? 'onclick="event.stopPropagation();openTennisGamesPopup(\''+mid+'\',\''+setKey+'\')"' : '';
+  function _r(lbl, val) {
+    if (val == null) return '';
+    var cls = val >= 65 ? 'tgou-strong' : val >= 50 ? 'tgou-mid' : 'tgou-low';
+    return '<div class="tgou-srow '+cls+'" '+onclk+'><span class="tgou-stag">'+lbl+'</span><span class="tgou-sbest">'+val+'%</span></div>';
+  }
+  return '<div class="tgou-stack"><div class="tgou-set-lbl">'+setLbl+'</div>'+_r('O7.5',o75)+_r('O8.5',o85)+_r('O9.5',o95)+_r('U12.5',u125)+'</div>';
+}
+
 function _tvbPredictiveCell(m){
   try{
     if(m&&m._isLive){
@@ -3353,6 +3383,7 @@ function patchTennisLive(){
   var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];
   for(var i=0;i<live.length;i++){var lo=live[i];if(!lo||lo.is_live!==true)continue;
     var sc=tbody.querySelector('[data-tn-sc="'+String(lo.id)+'"]');if(sc)sc.innerHTML=_tvbScoreCell({_isLive:true,_live:lo});
+    var gc=tbody.querySelector('[data-tn-gou="'+String(lo.id)+'"]');if(gc){var bg=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bg)gc.innerHTML=_tvbGouCell(bg);}
     var pc=tbody.querySelector('[data-tn-pred="'+String(lo.id)+'"]');
     if(pc){var bm=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bm)pc.innerHTML=_tvbPredictiveCell(bm);}
     // QA fix CRIT-5 (rapport_qa_foot_tennis.md): si predictive cell absente
@@ -3721,6 +3752,7 @@ function renderTennisValueBets(rawMatches) {
 <span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
 <span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbWOM(m.betfair_wom)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>
 <span class="tn-vb-cell tn-cell-proba" role="cell">${_tvbConfBadge(m.confidence_badge)}${probaNew}${_tvbMlDiv(m.ml_market_div)}</span>
+<span class="tn-vb-cell tn-cell-gou" role="cell"${_tnLiveId ? ` data-tn-gou="${_tnLiveId}"` : ''}>${_tvbGouCell(m)}</span>
 <span class="tn-vb-cell tn-cell-value" role="cell">${valueHtml}</span>
 <span class="tn-vb-cell tn-cell-expand" role="cell">${aiBtn}<button class="tn-expand-btn" aria-label="Détails ${ariaLbl}" aria-expanded="false" aria-controls="${drawerId}" onclick="event.stopPropagation();_tnExpandDrawer('${matchId}')">▸</button></span>
 </div><div class="tn-vb-drawer" id="${drawerId}" role="row" hidden aria-label="Détails ${ariaLbl}"><div class="tn-drawer-cell"></div></div>`;
