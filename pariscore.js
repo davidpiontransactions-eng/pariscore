@@ -3383,7 +3383,7 @@ function patchTennisLive(){
   var live=Array.isArray(window._tennisLastFetch)?window._tennisLastFetch:[];
   for(var i=0;i<live.length;i++){var lo=live[i];if(!lo||lo.is_live!==true)continue;
     var sc=tbody.querySelector('[data-tn-sc="'+String(lo.id)+'"]');if(sc)sc.innerHTML=_tvbScoreCell({_isLive:true,_live:lo});
-    var gc=tbody.querySelector('[data-tn-gou="'+String(lo.id)+'"]');if(gc){var bg=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bg)gc.innerHTML=_tvbGouCell(bg);}
+    var gc=tbody.querySelector('[data-tn-gou="'+String(lo.id)+'"]');if(gc){var bg=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bg)gc.innerHTML=_tvbGouCell(Object.assign({},bg,{_live:lo,_isLive:true}));}
     var pc=tbody.querySelector('[data-tn-pred="'+String(lo.id)+'"]');
     if(pc){var bm=(window.psTennisMatches||[]).find(function(x){return x&&x._live&&String(x._live.id)===String(lo.id);});if(bm)pc.innerHTML=_tvbPredictiveCell(bm);}
     // QA fix CRIT-5 (rapport_qa_foot_tennis.md): si predictive cell absente
