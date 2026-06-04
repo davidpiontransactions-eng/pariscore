@@ -10861,6 +10861,59 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 </nav>
 </noscript>
 
+<script>
+/* ── i18n module — PariScore multilang ── */
+const I18N = (() => {
+  const SUPPORTED = ['fr','en','es','de','it','pt','nl'];
+  let dict = {}, current = 'fr';
+
+  function _savedLang() {
+    try { return localStorage.getItem('ps_lang'); } catch(_) { return null; }
+  }
+
+  async function load(lang) {
+    if (!SUPPORTED.includes(lang)) lang = 'fr';
+    try {
+      const r = await fetch('/locales/' + lang + '.json');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      dict = await r.json();
+      current = lang;
+      try { localStorage.setItem('ps_lang', lang); } catch(_) {}
+      document.documentElement.lang = lang;
+      const sel = document.getElementById('ps-lang-select');
+      if (sel) sel.value = lang;
+      apply();
+    } catch(e) {
+      if (lang !== 'fr') { console.warn('[i18n] fallback fr:', e.message); load('fr'); }
+    }
+  }
+
+  function t(key, vars) {
+    let s = dict[key] !== undefined ? dict[key] : key;
+    if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+    return s;
+  }
+
+  function apply() {
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+      el.title = t(el.dataset.i18nTitle);
+    });
+  }
+
+  const saved = _savedLang();
+  const detected = saved || ((navigator.language || 'fr').slice(0, 2));
+  load(SUPPORTED.includes(detected) ? detected : 'fr');
+
+  return { t: t, load: load, apply: apply, current: function() { return current; }, SUPPORTED: SUPPORTED };
+})();
+</script>
+
 <!-- Goal Horn Sound -->
 <audio id="goal-horn" preload="auto">
   <source src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU" type="audio/wav">
@@ -10873,7 +10926,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
 <!-- UPDATE BAR -->
 <div class="update-bar">
   <div class="live-dot"></div>
-  <span>Mise à jour en continu — 3 200+ ligues couvertes — <strong>47 paris de valeur</strong> détectés aujourd'hui</span>
+  <span data-i18n="live.update_bar">Mise à jour en continu — 3 200+ ligues couvertes</span>
 </div>
 
 <!-- NAVIGATION -->
@@ -10906,31 +10959,40 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <span class="logo-tag-mob">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
-    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football">Football</a>
-    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis">Tennis</a>
-    <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2">CS2</a>
-    <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026">CdM 2026</a>
-    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros">Roland Garros</a>
-    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies">Top Stratégies</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks" aria-label="Hot Picks">Hot Picks</a>
-    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris" aria-label="Mes Paris">Mes Paris</a>
-    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide" aria-label="Guide">Guide</a>
-    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets" aria-label="Sure Bets">Sure Bets</a>
-    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur" aria-label="Comparateur">Comparateur</a>
-    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions" aria-label="Prédictions IA">Prédictions IA</a>
-    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances" aria-label="Tendances">Tendances</a>
-    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes">Alertes</a>
-    <a href="#" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts" aria-label="Alertes Tennis">Alertes Tennis</a>
-    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique">Historique</a>
-    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil">Accueil</a>
-    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs" aria-label="Tarifs">Tarifs</a>
+    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football" data-i18n="nav.football">Football</a>
+    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis" data-i18n="nav.tennis">Tennis</a>
+    <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2" data-i18n="nav.cs2">CS2</a>
+    <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
+    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
+    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
+    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks" aria-label="Hot Picks" data-i18n="nav.hotpicks">Hot Picks</a>
+    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris" aria-label="Mes Paris" data-i18n="nav.mybets">Mes Paris</a>
+    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide" aria-label="Guide" data-i18n="nav.guide">Guide</a>
+    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets" aria-label="Sure Bets" data-i18n="nav.surebets">Sure Bets</a>
+    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur" aria-label="Comparateur" data-i18n="nav.comparateur">Comparateur</a>
+    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions" aria-label="Prédictions IA" data-i18n="nav.predictions">Prédictions IA</a>
+    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances" aria-label="Tendances" data-i18n="nav.tendances">Tendances</a>
+    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes" data-i18n="nav.alertes">Alertes</a>
+    <a href="#" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts" aria-label="Alertes Tennis" data-i18n="nav.tennis_alerts">Alertes Tennis</a>
+    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique" data-i18n="nav.historique">Historique</a>
+    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil" data-i18n="nav.accueil">Accueil</a>
+    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs" aria-label="Tarifs" data-i18n="nav.tarifs">Tarifs</a>
     <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres" class="nav-icon-only"></a>
   </div>
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
   <div class="nav-right">
     <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <select id="ps-lang-select" onchange="I18N.load(this.value)" title="Langue / Language" style="font-size:11px;background:var(--bg3,#0e1525);color:var(--text2,#94a3b8);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:6px;padding:4px 7px;cursor:pointer;outline:none;font-family:var(--font-mono,'DM Mono',monospace);letter-spacing:.04em;transition:border-color .15s;">
+      <option value="fr">🇫🇷 FR</option>
+      <option value="en">🇬🇧 EN</option>
+      <option value="es">🇪🇸 ES</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="it">🇮🇹 IT</option>
+      <option value="pt">🇵🇹 PT</option>
+      <option value="nl">🇳🇱 NL</option>
+    </select>
     <div id="nav-auth-area">
-      <button class="nav-auth-btn" onclick="openAuthModal('login')">Se connecter</button>
+      <button class="nav-auth-btn" onclick="openAuthModal('login')" data-i18n="auth.login">Se connecter</button>
     </div>
   </div>
 </nav>
@@ -12204,7 +12266,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="live-dot" id="status-dot"></div>
-        <span style="font-size:13px;font-weight:600;" id="status-label">Connexion au serveur…</span>
+        <span style="font-size:13px;font-weight:600;" id="status-label" data-i18n="status.connecting">Connexion au serveur…</span>
         <span style="font-size:11px;font-family:var(--font-mono);color:var(--text3);" id="status-meta"></span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
