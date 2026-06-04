@@ -3329,19 +3329,20 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* NAV */
+  /* NAV — Dark Premium #0b132b (raccord fond sombre, redesign 2026-06-04) */
   nav {
     position: sticky; top: 0; z-index: 100;
-    background: #ffffff;
+    background: #0b132b;
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding: 0 20px;
     height: 66px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
   }
   body[data-cf-light="1"] nav {
-    background: #ffffff !important;
+    background: #0b132b !important;
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
   }
   body.dark-theme nav {
     background: #ffffff;
@@ -8952,24 +8953,77 @@
   /* ── PHASE 1 : NAV ─────────────────────────────────────── */
 
   /* Bordure rouge signature sous la nav (light uniquement) */
-  body[data-cf-light="1"] nav {
-    border-bottom: 3px solid var(--accent);
-  }
+  /* ═══════════════════════════════════════════════════════════════
+     TOP NAV REDESIGN — Dark Premium + icônes vectorielles + underline actif
+     2026-06-04 — mirror reference sport nav (line-icons + barre rouge active)
+     ═══════════════════════════════════════════════════════════════ */
 
-  /* Lien actif : texte rouge + gras 700 */
-  .nav-links a.active {
-    color: var(--accent);
+  /* Logo + zone droite : texte clair sur fond sombre */
+  nav .logo { color: #ffffff !important; }
+  nav .logo .logo-tag-mob { color: #94a3b8 !important; }
+  nav .live-pill { color: #cbd5e1 !important; }
+  nav #nav-auth-area, nav #nav-auth-area span { color: #cbd5e1 !important; }
+  nav .nav-auth-btn { color: #cbd5e1 !important; border-color: rgba(255,255,255,0.18) !important; }
+  nav .nav-auth-btn:hover { color: #ffffff !important; border-color: rgba(255,255,255,0.40) !important; }
+
+  /* Onglets : gris clair élégant par défaut, réservation underline (anti-saut) */
+  nav .nav-links a {
+    color: #94a3b8;
+    font-size: 13px;
     font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0 16px;
+    border-bottom: 3px solid transparent;
+    transition: color .2s ease, border-color .2s ease;
   }
-  /* Underline actif devient invisible (on mise sur la couleur) */
-  .nav-links a.active::after {
-    display: none;
+  nav .nav-links a:hover { color: #ffffff; transform: none; }
+
+  /* Onglet actif : texte rouge + ligne rouge vif alignée pile sur la largeur */
+  nav .nav-links a.active { color: #ef4444; font-weight: 800; }
+  nav .nav-links a.active::after {
+    display: block;
+    transform: scaleX(1);
+    left: 16px; right: 16px; bottom: -1px;
+    height: 3px; border-radius: 0;
+    background: #ff0043;
+    box-shadow: 0 0 8px rgba(255,0,67,0.55);
   }
 
-  /* Hover : accent rouge au lieu du texte par défaut */
-  .nav-links a:hover {
-    color: var(--accent);
+  /* ── Icônes vectorielles minimalistes (mask currentColor — zéro CDN, indéformable) ── */
+  nav .nav-links a::before {
+    content: '';
+    width: 16px; height: 16px; flex: 0 0 16px;
+    margin-right: 2px;
+    background-color: currentColor;
+    -webkit-mask: var(--nic) center / contain no-repeat;
+    mask: var(--nic) center / contain no-repeat;
+    opacity: 0.6;
+    transition: opacity .2s ease, filter .2s ease;
   }
+  nav .nav-links a:hover::before { opacity: 1; }
+  nav .nav-links a.active::before { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,0,67,0.5)); }
+  nav .nav-links a.nav-icon-only { padding: 0 14px; }
+  nav .nav-links a.nav-icon-only::before { margin-right: 0; }
+
+  nav .nav-links a[data-page="matchs"]      { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7l4 3-1.5 5h-5L8 10z'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="tennis"]      { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M5 5a13 13 0 0 1 0 14'/%3E%3Cpath d='M19 5a13 13 0 0 0 0 14'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="cs2"]         { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='6' y1='11' x2='10' y2='11'/%3E%3Cline x1='8' y1='9' x2='8' y2='13'/%3E%3Cline x1='15' y1='12' x2='15.01' y2='12'/%3E%3Cline x1='18' y1='10' x2='18.01' y2='10'/%3E%3Crect x='2' y='6' width='20' height='12' rx='2'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="worldcup"]    { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cpath d='M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="rg"]          { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9H4.5a2.5 2.5 0 0 1 0-5H6'/%3E%3Cpath d='M18 9h1.5a2.5 2.5 0 0 0 0-5H18'/%3E%3Cpath d='M4 22h16'/%3E%3Cpath d='M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22'/%3E%3Cpath d='M14 14.7V17c0 .6.5 1 1 1.2 1.1.5 2 1.9 2 3.8'/%3E%3Cpath d='M18 2H6v7a6 6 0 0 0 12 0V2z'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="strategies"]  { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="hot-picks"]   { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="paris"]       { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z'/%3E%3Cline x1='13' y1='5' x2='13' y2='19'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="guide"]       { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/%3E%3Cpath d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="sure-bets"]   { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3Cpath d='M9 12l2 2 4-4'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="comparateur"] { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v18'/%3E%3Cpath d='M5 7h14'/%3E%3Cpath d='M6.5 7 4 13h5z'/%3E%3Cpath d='M17.5 7 15 13h5z'/%3E%3Cpath d='M8 21h8'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="predictions"] { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Crect x='9' y='9' width='6' height='6'/%3E%3Cpath d='M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="tendances"]   { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='22 7 13.5 15.5 8.5 10.5 2 17'/%3E%3Cpolyline points='16 7 22 7 22 13'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="alertes"]     { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.73 21a2 2 0 0 1-3.46 0'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="tennis-alerts"] { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='20' x2='12' y2='10'/%3E%3Cline x1='18' y1='20' x2='18' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='16'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="historique"]  { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpolyline points='12 7 12 12 15 14'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="accueil"]     { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.5 12 3l9 7.5'/%3E%3Cpath d='M5 9.5V21h14V9.5'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="tarifs"]      { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 18h20'/%3E%3Cpath d='M3 8l4 5 5-8 5 8 4-5-2 10H5z'/%3E%3C/svg%3E"); }
+  nav .nav-links a[data-page="parametres"]  { --nic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E"); }
 
   /* Logo : uppercase extra-bold Barlow Condensed */
   .logo {
@@ -10816,25 +10870,25 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <span class="logo-tag-mob">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
-    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Soccer%20ball/3D/soccer_ball_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-football.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚽</span>';}" alt="Icone Football PariScore" loading="lazy" />Football</a>
-    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Tennis/3D/tennis_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-tennis.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎾</span>';}" alt="Icone Tennis PariScore" loading="lazy" />Tennis</a>
-    <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2"><span style="font-size:18px;line-height:1;vertical-align:middle;">🎮</span>CS2</a>
-    <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Globe%20Showing%20Americas/3D/globe_showing_americas_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-world.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🌎</span>';}" alt="Coupe du Monde 2026" loading="lazy" />CdM 2026</a>
-    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Trophy/3D/trophy_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-trophy.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🏆</span>';}" alt="Icone Roland Garros trophée terre battue" loading="lazy" />Roland Garros</a>
-    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Bullseye/3D/bullseye_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-strategy.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎯</span>';}" alt="Icone Top Stratégies PariScore" loading="lazy" />Top Stratégies</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Fire/3D/fire_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-fire.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🔥</span>';}" alt="Icone Hot Picks paris sportifs" loading="lazy" />Hot Picks</a>
-    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Admission%20tickets/3D/admission_tickets_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-ticket.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🎫</span>';}" alt="Icone Mes Paris ticket" loading="lazy" />Mes Paris</a>
-    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Open%20book/3D/open_book_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-book.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>📖</span>';}" alt="Icone Guide paris sportifs" loading="lazy" />Guide</a>
-    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Shield/3D/shield_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-shield.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🛡️</span>';}" alt="Icone Sure Bets bouclier" loading="lazy" />Sure Bets</a>
-    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Balance%20scale/3D/balance_scale_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-compare.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚖️</span>';}" alt="Icone Comparateur cotes bookmakers" loading="lazy" />Comparateur</a>
-    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Brain/3D/brain_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-brain.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🧠</span>';}" alt="Icone Prédictions IA intelligence artificielle" loading="lazy" />Prédictions IA</a>
-    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Chart%20increasing/3D/chart_increasing_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-chart.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>📈</span>';}" alt="Icone Tendances statistiques" loading="lazy" />Tendances</a>
-    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Bell/3D/bell_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-bell.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🔔</span>';}" alt="Icone Alertes notifications Telegram" loading="lazy" />Alertes</a>
-    <a href="#" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts">📊 Alertes Tennis</a>
-    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Mantelpiece%20clock/3D/mantelpiece_clock_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-clock.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🕰️</span>';}" alt="Icone Historique paris vérifiés" loading="lazy" />Historique</a>
-    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/House/3D/house_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-home.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>🏠</span>';}" alt="Icone Accueil PariScore" loading="lazy" />Accueil</a>
-    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Crown/3D/crown_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-crown.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>👑</span>';}" alt="Icone Tarifs Pro abonnement" loading="lazy" />Tarifs</a>
-    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres"><img class="nav-icon-3d" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Gear/3D/gear_3d.png" onerror="this.onerror=null;if(!this.dataset.fb1){this.dataset.fb1=1;this.src='/assets/icons/3d-settings.svg';}else{this.outerHTML='<span class=&quot;nav-icon-emoji&quot;>⚙️</span>';}" alt="Icone Paramètres compte" loading="lazy" /></a>
+    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football">Football</a>
+    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis">Tennis</a>
+    <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2">CS2</a>
+    <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026">CdM 2026</a>
+    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros">Roland Garros</a>
+    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies">Top Stratégies</a>
+    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks" aria-label="Hot Picks">Hot Picks</a>
+    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris" aria-label="Mes Paris">Mes Paris</a>
+    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide" aria-label="Guide">Guide</a>
+    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets" aria-label="Sure Bets">Sure Bets</a>
+    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur" aria-label="Comparateur">Comparateur</a>
+    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions" aria-label="Prédictions IA">Prédictions IA</a>
+    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances" aria-label="Tendances">Tendances</a>
+    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes">Alertes</a>
+    <a href="#" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts" aria-label="Alertes Tennis">Alertes Tennis</a>
+    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique">Historique</a>
+    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil">Accueil</a>
+    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs" aria-label="Tarifs">Tarifs</a>
+    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres" class="nav-icon-only"></a>
   </div>
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
   <div class="nav-right">
