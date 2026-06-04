@@ -6897,6 +6897,47 @@ function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
   });
 }
 
+// ─── curl-impersonate — bypass Cloudflare TLS JA3 (zéro dep npm) ─────────────
+// CF Bot Management fingerprint le TLS/HTTP2 de Node → 403. curl-impersonate
+// (github.com/lwthiker/curl-impersonate) mime le handshake Chrome → passe.
+// Install VPS : voir .context/curl-impersonate-setup.md. Échoue si Turnstile JS.
+const CURL_IMPERSONATE_BIN = (process.env.CURL_IMPERSONATE_BIN || 'curl_chrome116').trim();
+const USE_CURL_IMPERSONATE = String(process.env.USE_CURL_IMPERSONATE ?? '0').trim() !== '0';
+if (USE_CURL_IMPERSONATE) console.log(`  [curl-impersonate] ENABLED (bin=${CURL_IMPERSONATE_BIN}) — CF TLS bypass actif (TA + BetMines).`);
+
+// Même signature/retour que httpsGet : { status, data } (data = JSON parsé ou string).
+function curlImpersonateGet(urlStr, headers = {}, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const { execFile } = require('child_process'); // nosemgrep: detect-child-process
+    // Le wrapper fournit déjà UA + sec-ch-ua + ciphers Chrome cohérents ;
+    // on retire ces clés pour éviter un mismatch TLS/UA détectable par CF.
+    const OWNED = new Set(['user-agent', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform', 'accept-encoding']);
+    const args = ['-s', '-S', '--compressed', '--max-time', String(Math.ceil(timeoutMs / 1000))];
+    for (const [k, v] of Object.entries(headers)) {
+      if (OWNED.has(String(k).toLowerCase())) continue;
+      args.push('-H', `${k}: ${v}`);
+    }
+    args.push('-w', '\n__HTTPSTATUS__%{http_code}', urlStr); // code HTTP en fin de stdout
+    execFile(CURL_IMPERSONATE_BIN, args, { timeout: timeoutMs + 5000, maxBuffer: 16 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err && err.code === 'ENOENT') return reject(new Error(`curl-impersonate introuvable: ${CURL_IMPERSONATE_BIN} (install VPS requis)`));
+      if (!stdout) return reject(new Error(`curl-impersonate échec: ${err ? err.message : 'empty'}${stderr ? ' — ' + String(stderr).slice(0, 120) : ''}`));
+      const out = String(stdout);
+      const i = out.lastIndexOf('__HTTPSTATUS__');
+      let status = 0, body = out;
+      if (i !== -1) { status = parseInt(out.slice(i + 14), 10) || 0; body = out.slice(0, i); }
+      let data; try { data = JSON.parse(body); } catch (e) { data = body; }
+      resolve({ status, data });
+    });
+  });
+}
+
+// Sélecteur transparent : curl-impersonate si activé, sinon https natif.
+function cfBypassGet(urlStr, headers = {}, timeoutMs = 20000) {
+  return USE_CURL_IMPERSONATE
+    ? curlImpersonateGet(urlStr, headers, timeoutMs)
+    : httpsGet(urlStr, headers, timeoutMs);
+}
+
 function httpsPost(urlStr, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr);
@@ -24533,8 +24574,8 @@ const TENNIS_ABSTRACT_BASE = 'https://www.tennisabstract.com/current';
 // CF Bot Management bloque les fetch Node (TLS JA3) → HTTP 403 systématique.
 // Source redondante (Elo interne BSD/ESPN bd dl49). Désactivée par défaut.
 // Réactiver : TENNIS_ABSTRACT_ENABLED=1 (.env) — utile seulement via proxy CF (curl-impersonate / Web Unlocker).
-const TENNIS_ABSTRACT_ENABLED = String(process.env.TENNIS_ABSTRACT_ENABLED ?? '0').trim() !== '0';
-if (!TENNIS_ABSTRACT_ENABLED) console.log('  [TennisAbstract] DISABLED (Cloudflare 403 — set TENNIS_ABSTRACT_ENABLED=1 to retry via proxy). Fallback: Elo interne BSD.');
+const TENNIS_ABSTRACT_ENABLED = USE_CURL_IMPERSONATE || (String(process.env.TENNIS_ABSTRACT_ENABLED ?? '0').trim() !== '0');
+if (!TENNIS_ABSTRACT_ENABLED) console.log('  [TennisAbstract] DISABLED (Cloudflare 403 — set USE_CURL_IMPERSONATE=1 ou TENNIS_ABSTRACT_ENABLED=1). Fallback: Elo interne BSD.');
 const TENNIS_ABSTRACT_TTL_MS = 6 * 3600 * 1000;
 const TENNIS_ABSTRACT_EVENTS = {
   'wta-rome-2026': { file: '2026WTARome.html', tour: 'WTA', city: 'Rome', year: 2026 },
@@ -24612,7 +24653,7 @@ async function fetchTennisAbstractTournament(slug) {
   const cached = tennisAbstractCache.get(slug);
   if (cached && Date.now() - cached.ts < TENNIS_ABSTRACT_TTL_MS) return cached.data;
   const url = `${TENNIS_ABSTRACT_BASE}/${meta.file}`;
-  const res = await httpsGet(url, {
+  const res = await cfBypassGet(url, {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.9',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -24694,7 +24735,7 @@ async function fetchTennisAbstractReport(slug) {
   const cached = tennisAbstractReportsCache.get(slug);
   if (cached && Date.now() - cached.ts < meta.ttl) return cached.data;
   const url = `${TENNIS_ABSTRACT_BASE.replace('/current', '')}${meta.path}`;
-  const res = await httpsGet(url, {
+  const res = await cfBypassGet(url, {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.9',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -24724,8 +24765,8 @@ const betminesCache = new Map();
 // CF Bot Management bloque l'API (réponse = challenge HTML). 403 systématique.
 // Désactivé par défaut. Consensus presse couvert par Sofascore/Forebet/OddAlerts.
 // Réactiver via proxy CF : BETMINES_ENABLED=1 (.env).
-const BETMINES_ENABLED = String(process.env.BETMINES_ENABLED ?? '0').trim() !== '0';
-if (!BETMINES_ENABLED) console.log('  [BetMines] DISABLED (Cloudflare 403 — set BETMINES_ENABLED=1 to retry via proxy). Consensus: Sofascore/Forebet.');
+const BETMINES_ENABLED = USE_CURL_IMPERSONATE || (String(process.env.BETMINES_ENABLED ?? '0').trim() !== '0');
+if (!BETMINES_ENABLED) console.log('  [BetMines] DISABLED (Cloudflare 403 — set USE_CURL_IMPERSONATE=1 ou BETMINES_ENABLED=1). Consensus: Sofascore/Forebet.');
 
 async function fetchBetminesFixtures(dateFrom, dateTo) {
   if (!BETMINES_ENABLED) return []; // CF 403 — fetch désactivé (set BETMINES_ENABLED=1 via proxy)
@@ -24737,47 +24778,25 @@ async function fetchBetminesFixtures(dateFrom, dateTo) {
   const u = new URL(`${BETMINES_API}/fixtures`);
   u.searchParams.set('from', from);
   u.searchParams.set('to', to);
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: u.hostname, port: 443,
-      path: u.pathname + (u.search || ''),
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Origin': 'https://www.betmines.com',
-        'Referer': 'https://www.betmines.com/football/predictions',
-        'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-    }, (res) => {
-      let body = '';
-      res.on('data', c => body += c);
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          // Log body partiel pour diagnostiquer 403 (IP ban vs auth vs bot detection)
-          const snippet = body.substring(0, 200);
-          return reject(new Error(`betmines HTTP ${res.statusCode} — ${snippet}`));
-        }
-        try {
-          const arr = JSON.parse(body);
-          if (!Array.isArray(arr)) return reject(new Error('betmines: non-array response'));
-          betminesCache.set(cacheKey, { ts: Date.now(), data: arr });
-          resolve(arr);
-        } catch (e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout betmines')); });
-    req.end();
-  });
+  // cfBypassGet : curl-impersonate (CF bypass) si USE_CURL_IMPERSONATE, sinon https natif.
+  const res = await cfBypassGet(u.toString(), {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Origin': 'https://www.betmines.com',
+    'Referer': 'https://www.betmines.com/football/predictions',
+    'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+  }, 15000);
+  if (res.status !== 200) {
+    const snippet = (typeof res.data === 'string' ? res.data : JSON.stringify(res.data || '')).substring(0, 200);
+    throw new Error(`betmines HTTP ${res.status} — ${snippet}`);
+  }
+  const arr = res.data;
+  if (!Array.isArray(arr)) throw new Error('betmines: non-array response');
+  betminesCache.set(cacheKey, { ts: Date.now(), data: arr });
+  return arr;
 }
 
 function adaptBetminesFixture(fx) {
