@@ -12552,7 +12552,7 @@ const I18N = (() => {
 
     <!-- LIVE STRATEGY DASHBOARD — remplace la liste scrollée en onglet Live -->
     <div id="live-dashboard" style="display:none;">
-      <div id="ld-empty">Aucun match en direct actuellement.</div>
+      <div id="ld-empty" data-i18n="empty.live_no_match">Aucun match en direct actuellement.</div>
       <div id="ld-content" style="display:none;">
         <div class="ld-strip" id="ld-strip"></div>
 
@@ -13020,7 +13020,7 @@ const I18N = (() => {
           </table>
           <div id="dh-empty" class="dh-empty" style="display:none;">
             <div class="ico">📊</div>
-            Aucun match ne correspond aux filtres.<br>
+            <span data-i18n="empty.no_match_filter">Aucun match ne correspond aux filtres.</span><br>
             <span style="font-size:11px;margin-top:4px;display:block;">Essayez de relâcher un filtre ou changez de période.</span>
           </div>
         </div>
@@ -13115,7 +13115,7 @@ const I18N = (() => {
         </table>
         <div id="hist-empty" class="hist-empty" style="display:none;">
           <div class="ico">📊</div>
-          Aucun match archivé pour l'instant.<br>
+          <span data-i18n="empty.no_archived">Aucun match archivé pour l'instant.</span><br>
           <span style="font-size:11px;margin-top:4px;display:block;">Les matchs sont archivés automatiquement 3h après le coup d'envoi.</span>
         </div>
       </div>
@@ -13238,7 +13238,7 @@ const I18N = (() => {
       <tbody id="paris-bets-tbody"></tbody>
     </table>
     <div id="paris-empty" class="paris-empty" style="display:none;">
-      Aucun pari pour le moment.<br>
+      <span data-i18n="empty.no_bets">Aucun pari pour le moment.</span><br>
       <span style="font-size:11px;">Clique "+ Nouveau pari" pour commencer.</span>
     </div>
   </div>
@@ -13258,7 +13258,7 @@ const I18N = (() => {
       <tbody id="paris-cash-tbody"></tbody>
     </table>
     <div id="paris-cash-empty" class="paris-empty" style="display:none;">
-      Aucun mouvement de trésorerie.
+      <span data-i18n="empty.no_cash">Aucun mouvement de trésorerie.</span>
     </div>
   </div>
 
@@ -13318,7 +13318,7 @@ const I18N = (() => {
       <tbody id="paris-clv-tbody"></tbody>
     </table>
     <div id="paris-clv-empty" class="paris-empty" style="display:none;">
-      Aucune donnée CLV disponible pour le moment.<br>
+      <span data-i18n="empty.no_clv">Aucune donnée CLV disponible pour le moment.</span><br>
       <span style="font-size:11px;">Le snapshot de cote clôture nécessite des paris settled avec match_id et kickoff couvert par la fenêtre T-15 → T-1 min. Données indisponibles tant que le cron tourne moins de 30 jours.</span>
     </div>
   </div>
