@@ -86,7 +86,18 @@
 // cache-first elargi assets/icons/svg/fonts, network-only API conserve,
 // navigation preload active pour TTFB optimal. Shell elargi avec icons.
 // Cache layers separes pour granular invalidation : shell + assets + runtime.
-const CACHE_VERSION = 'v33';
+// v34 (2026-06-04) : invalide v33 — CRITIQUE post-extraction JS (commit 1967c58
+// "extract 23k lines JS from HTML -> pariscore.js"). showPage() + TOUS les
+// handlers nav ont quitte le HTML inline pour /pariscore.js. v33 servait le HTML
+// et le JS en stale-while-revalidate INDEPENDAMMENT -> les users PWA recevaient
+// une paire html<->js DESYNCHRONISEE (HTML redesign sans showPage inline + JS
+// stale ou pas encore en cache) -> "showPage is not defined" -> 100% des onglets
+// nav morts au clic, alors que le design CSS restait parfait.
+// FIX racine : (1) /pariscore.js ajoute au SHELL precache (paire atomique HTML+JS).
+//   (2) navigation HTML + /pariscore.js passent en NETWORK-FIRST (avec navigation
+//   preload) -> paire coherente fraiche garantie online ; cache = fallback offline
+//   seulement. SWR conserve pour manifest / sw.js / autres runtime.
+const CACHE_VERSION = 'v34';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
@@ -94,6 +105,7 @@ const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
 const SHELL = [
   '/',
   '/pariscore.html',
+  '/pariscore.js',
   '/manifest.json',
   '/icon.svg'
 ];
@@ -198,12 +210,30 @@ self.addEventListener('fetch', (e) => {
   // API + SSE : network-only, jamais cache (donnees fraiches obligatoires)
   if (url.pathname.startsWith('/api/')) return;
 
-  // Navigation HTML : stale-while-revalidate (boot rapide cache + refresh background)
+  // Navigation HTML : NETWORK-FIRST (paire coherente avec /pariscore.js).
+  // navigation preload -> TTFB proche du SWR ; cache = fallback offline uniquement.
+  // (SWR retire ici : il servait un HTML stale desynchronise du JS, cf. v34.)
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
-      const preload = await e.preloadResponse;
-      return staleWhileRevalidate(req, CACHE_SHELL, preload);
+      try {
+        const preload = await e.preloadResponse;
+        const fresh = preload || await fetch(req);
+        if (fresh && fresh.status === 200 && fresh.type === 'basic') {
+          const clone = fresh.clone();
+          caches.open(CACHE_SHELL).then((c) => c.put('/pariscore.html', clone)).catch(() => {});
+        }
+        return fresh;
+      } catch (_) {
+        return (await caches.match(req)) || (await caches.match('/pariscore.html')) || (await caches.match('/'));
+      }
     })());
+    return;
+  }
+
+  // App JS : NETWORK-FIRST aussi -> jamais servi stale isolement du HTML.
+  // (.js n'est pas dans isStaticAsset ; sans cette branche il tombait en SWR.)
+  if (url.pathname === '/pariscore.js') {
+    e.respondWith(networkFirst(req, CACHE_SHELL));
     return;
   }
 
