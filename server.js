@@ -16501,7 +16501,10 @@ async function forceSyncFixture(fixtureId) {
       if (edge) {
         match.edge = edge.edge;
         match.fair = edge.fair;
-        match.best_edge = edge.best;
+        // Preserve ic90 from buildMatchRecord — do NOT wipe UQD on cron refresh
+        match.best_edge = match.best_edge && match.best_edge.ic90
+          ? Object.assign({}, edge.best, { ic90: match.best_edge.ic90 })
+          : edge.best;
       }
     }
 
