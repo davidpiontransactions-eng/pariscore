@@ -8630,9 +8630,13 @@
   .nav-links a.nav-locked { opacity: .55; }
   .nav-links a.nav-locked:hover { opacity: .85; }
   /* ─── Sport Sidebar Layout ──────────────────────────── */
-  html.ps-desktop-v1 #page-matchs,
-  html.ps-desktop-v1 #page-tennis,
-  html.ps-desktop-v1 #page-cs2 {
+  /* IMPORTANT : scoper au data-page ACTIF. Sans le body[data-page], le
+     display:grid !important forçait page-matchs/tennis/cs2 visibles EN PERMANENCE
+     (override de l'inline display:none de showPage) -> les 3 pages empilées,
+     le football restait au-dessus du tennis -> onglet Tennis "cassé". */
+  html.ps-desktop-v1 body[data-page="matchs"] #page-matchs,
+  html.ps-desktop-v1 body[data-page="tennis"] #page-tennis,
+  html.ps-desktop-v1 body[data-page="cs2"] #page-cs2 {
     display: grid !important;
     grid-template-columns: 280px 1fr !important;
     gap: 0 20px;
