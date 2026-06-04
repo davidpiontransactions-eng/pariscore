@@ -1863,6 +1863,25 @@ function _tvbSurfaceIcon(surface) {
 }
 
 // Surface → libellé FR premium + pastille couleur (desktop merged cell).
+// Surface texture SVGs — realistic court patterns (clay rake lines, grass mowing stripes, hard court grid)
+var _TN_SURFACE_SVG = {
+  clay:   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#c1440e"/><line x1="0" y1="4" x2="24" y2="4" stroke="#a33a0b" stroke-width="1.5"/><line x1="0" y1="7" x2="24" y2="7" stroke="#d45820" stroke-width="0.8"/><line x1="0" y1="10" x2="24" y2="10" stroke="#a33a0b" stroke-width="1.5"/><line x1="0" y1="13" x2="24" y2="13" stroke="#d45820" stroke-width="0.8"/><line x1="0" y1="16" x2="24" y2="16" stroke="#a33a0b" stroke-width="1.5"/><line x1="0" y1="19" x2="24" y2="19" stroke="#d45820" stroke-width="0.8"/></svg>',
+  grass:  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#2a6b30"/><rect x="0" y="0" width="4" height="24" fill="#327a3c" opacity="0.7"/><rect x="8" y="0" width="4" height="24" fill="#327a3c" opacity="0.7"/><rect x="16" y="0" width="4" height="24" fill="#327a3c" opacity="0.7"/></svg>',
+  hard:   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#1565c0"/><line x1="12" y1="0" x2="12" y2="24" stroke="#1976d2" stroke-width="2" opacity="0.45"/><line x1="0" y1="12" x2="24" y2="12" stroke="#1976d2" stroke-width="2" opacity="0.45"/></svg>',
+  indoor: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#5c35a8"/><line x1="0" y1="8" x2="24" y2="8" stroke="#7c4dcc" stroke-width="1.5" opacity="0.55"/><line x1="0" y1="16" x2="24" y2="16" stroke="#7c4dcc" stroke-width="1.5" opacity="0.55"/></svg>',
+  na:     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#374151"/></svg>',
+};
+function _tnSurfaceImg(surface, size) {
+  var s = String(surface || '').toLowerCase().trim();
+  var key = 'na';
+  if (s === 'hard' || s === 'dur') key = 'hard';
+  else if (s === 'clay' || s.indexOf('terre') === 0) key = 'clay';
+  else if (s === 'grass' || s === 'herbe') key = 'grass';
+  else if (s === 'carpet' || s === 'indoor' || s === 'indoors' || s === 'salle') key = 'indoor';
+  else if (s) key = 'na';
+  var sz = size || 18;
+  return '<img src="data:image/svg+xml;base64,' + _btoaSafe(_TN_SURFACE_SVG[key]) + '" width="' + sz + '" height="' + sz + '" style="border-radius:3px;vertical-align:middle;flex-shrink:0;" alt="' + (surface || '') + '">';
+}
 function _tvbSurfaceBadge(surface) {
   const s = String(surface || '').toLowerCase().trim();
   let key = 'na', label = '—';
@@ -1871,7 +1890,7 @@ function _tvbSurfaceBadge(surface) {
   else if (s === 'grass' || s === 'herbe') { key = 'grass'; label = 'Herbe'; }
   else if (s === 'carpet' || s === 'indoor' || s === 'indoors' || s === 'salle') { key = 'indoor'; label = 'Indoors'; }
   else if (s) { key = 'na'; label = _escTennis(surface); }
-  return `<span class="tvb-surf-badge tvb-surf-${key}" title="Surface : ${label}"><i class="tvb-surf-dot"></i>${label}</span>`;
+  return `<span class="tvb-surf-badge tvb-surf-${key}" title="Surface : ${label}">${_tnSurfaceImg(surface, 16)}${label}</span>`;
 }
 
 // current_point peut être {p1,p2} | "15-30" | "15" | null/'' — extraction robuste.
@@ -3935,12 +3954,7 @@ function _tnTop10SetMode(mode, btn) {
 }
 
 function _tnTop10SurfaceIcon(surface) {
-  const s = String(surface || '').toLowerCase();
-  if (s.includes('clay'))  return '🟧';
-  if (s.includes('grass')) return '🟩';
-  if (s.includes('hard'))  return '🟦';
-  if (s.includes('carpet'))return '🟫';
-  return '🎾';
+  return _tnSurfaceImg(surface, 16);
 }
 
 function _tnTop10Card(m, rank) {
