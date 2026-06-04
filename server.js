@@ -17708,7 +17708,7 @@ function srvPlanGate(req, res, pathname) {
   // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
   // Glicko-2 stats + live enriched + momentum + top10 widget — public read-only
-  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10') return false;
+  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10' || pathname.startsWith('/api/v1/tennis/detail/')) return false;
   // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
   if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
   if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
@@ -19758,6 +19758,9 @@ async function handleAPI(req, res, pathname, query) {
             const _fp1 = (_bl.p1 || 0) > 0.5;
             return (_fp1 && _ods.movement_p1 === 'DRIFTING') || (!_fp1 && _ods.movement_p2 === 'DRIFTING');
           })(),
+          // 3 bets prédictifs (top3 PredScore) + verdict KPI — déjà calculés par
+          // computeTennisPredictiveBets() lors de l'enrichissement (server.js:33263)
+          predictive:      e.predictive || null,
         };
       });
       scored.sort((a, b) => b.score_top10 - a.score_top10);
@@ -19769,6 +19772,115 @@ async function handleAPI(req, res, pathname, query) {
     } catch (err) {
       console.error('[TennisTop10]', err.message);
       return jsonResponse(res, 500, { error: 'top10_compute_error', detail: err.message });
+    }
+  }
+
+  // GET /api/v1/tennis/detail/:id — payload pro consolidé pour le modal desktop
+  // déclenché par le Top10. Réutilise l'objet enrichi buildTennisValueBets
+  // (predictions, serve_dominance, confidence_badge, bsd_markets, predictive)
+  // + UQD IC90 bootstrap. Zéro nouveau fetch réseau. Cache 60s/id.
+  if (pathname.startsWith('/api/v1/tennis/detail/') && req.method === 'GET') {
+    const id = decodeURIComponent(pathname.slice('/api/v1/tennis/detail/'.length));
+    if (!id) return jsonResponse(res, 400, { error: 'missing_id' });
+    const now = Date.now();
+    if (!globalThis.__tnDetailCache) globalThis.__tnDetailCache = new Map();
+    const cached = globalThis.__tnDetailCache.get(id);
+    if (cached && (now - cached.ts) < 60_000) return jsonResponse(res, 200, cached.payload);
+    try {
+      const _tnVbFn = globalThis.__tennisVBWarm;
+      if (typeof _tnVbFn !== 'function') return jsonResponse(res, 503, { error: 'tennis_data_unavailable' });
+      const vb = await _tnVbFn({});
+      if (!vb || vb.status !== 200) return jsonResponse(res, 503, { error: 'tennis_data_unavailable' });
+      const e = ((vb.body && vb.body.matches) || []).find(m => String(m.id) === String(id));
+      if (!e) return jsonResponse(res, 404, { error: 'match_not_found' });
+
+      // Dérive SPW (0-1) depuis serve_dominance pour le bootstrap UQD IC90.
+      const sd = e.serve_dominance || {};
+      const spw1 = (sd.p1 && Number.isFinite(sd.p1.serve_pts_won_pct)) ? sd.p1.serve_pts_won_pct / 100 : null;
+      const spw2 = (sd.p2 && Number.isFinite(sd.p2.serve_pts_won_pct)) ? sd.p2.serve_pts_won_pct / 100 : null;
+      const fmt = /grand|slam|roland|wimbledon|us open|australian/i.test(String(e.tournament || '') + ' ' + String(e.tour || '')) && /atp|men|grand/i.test(String(e.tour || '')) ? 'BO5' : 'BO3';
+      let uqd = null;
+      if (spw1 != null && spw2 != null) {
+        try {
+          uqd = computeBootstrapUQDTennis({
+            p1_serve_pct: spw1, p2_serve_pct: spw2,
+            p1_sample: (sd.p1 && sd.p1.sample) || 50,
+            p2_sample: (sd.p2 && sd.p2.sample) || 50,
+            format: fmt,
+          });
+        } catch (_) { uqd = null; }
+      }
+
+      // Features d'âge enhanced (arXiv 2502.01613) — DOB via profil BSD (légal).
+      // Réf = start_time du match (âge au moment du match) sinon now.
+      let ageFeatures = null;
+      try {
+        const refTs = e.start_time ? (typeof e.start_time === 'number' ? e.start_time * 1000 : new Date(e.start_time).getTime()) : Date.now();
+        const id1 = e.player1 && e.player1.id, id2 = e.player2 && e.player2.id;
+        const [dob1, dob2] = await Promise.all([
+          id1 ? fetchTennisPlayerDOB(id1) : Promise.resolve(null),
+          id2 ? fetchTennisPlayerDOB(id2) : Promise.resolve(null),
+        ]);
+        const af1 = _tnAgeFeatures(dob1, refTs), af2 = _tnAgeFeatures(dob2, refTs);
+        if (af1 || af2) {
+          ageFeatures = {
+            p1: af1, p2: af2,
+            // Différences J2−J1 (convention paper) — null si une borne manque.
+            age30_diff:  (af1 && af2) ? parseFloat((af2.age30 - af1.age30).toFixed(2)) : null,
+            ageint_diff: (af1 && af2) ? parseFloat((af2.ageint - af1.ageint).toFixed(2)) : null,
+            source: 'bsd_dob',
+          };
+        }
+      } catch (_) { ageFeatures = null; }
+
+      const payload = {
+        id: e.id,
+        meta: {
+          tournament: e.tournament || null, surface: e.surface || null,
+          round: e.round || null, start_time: e.start_time || null,
+          status: e.status || null, tour: e.tour || null, court: e.court || null,
+          is_live: !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || ''))),
+        },
+        players: {
+          p1: {
+            name: (e.player1 && e.player1.name) || null, rank: (e.player1 && e.player1.rank) || null,
+            elo_surface: (e.player1 && e.player1.elo_surface) || null,
+            surf_rank: (e.player1 && e.player1.surf_rank) || null, surf_form: (e.player1 && e.player1.surf_form) || null,
+            powerscore: (e.player1 && e.player1.powerscore) || null, id: (e.player1 && e.player1.id) || null,
+          },
+          p2: {
+            name: (e.player2 && e.player2.name) || null, rank: (e.player2 && e.player2.rank) || null,
+            elo_surface: (e.player2 && e.player2.elo_surface) || null,
+            surf_rank: (e.player2 && e.player2.surf_rank) || null, surf_form: (e.player2 && e.player2.surf_form) || null,
+            powerscore: (e.player2 && e.player2.powerscore) || null, id: (e.player2 && e.player2.id) || null,
+          },
+        },
+        predictions: e.predictions || null,
+        serve_dominance: e.serve_dominance || null,
+        bsd_markets: e.bsd_markets || null,
+        confidence_badge: e.confidence_badge || null,
+        market_confidence: e.market_confidence || null,
+        rank_momentum: e.rank_momentum || null,
+        fatigue: e.fatigue || null,
+        log_diff: e.log_diff || null,
+        trap_bet: e.trap_bet || null,
+        first_set: e.first_set || null,
+        totals_convergence: e.totals_convergence || null,
+        set_model: e.set_model || null,
+        over_under_set_calculations: e.over_under_set_calculations || null,
+        odds: e.odds || null, fair: e.fair || null, edge: e.edge || null,
+        best_edge: e.best_edge || null, ev_model: e.ev_model || null, best_ev_model: e.best_ev_model || null,
+        predictive: e.predictive || null,
+        uqd,
+        age_features: ageFeatures,
+        sources: e.sources || null,
+        computed_at: now,
+      };
+      globalThis.__tnDetailCache.set(id, { ts: now, payload });
+      return jsonResponse(res, 200, payload);
+    } catch (err) {
+      console.error('[TennisDetail]', err.message);
+      return jsonResponse(res, 500, { error: 'detail_compute_error', detail: err.message });
     }
   }
 
@@ -23277,6 +23389,49 @@ function computeBootstrapUQDTennis({
     p1_base: baseProb.p1_win,
     method: 'bootstrap_log_normal_spw',
   };
+}
+
+// ─── Features d'âge "statistically enhanced" (arXiv 2502.01613) ──────────────
+// Age.30 = |age − 30| (pic perf ATP, Weston 2014). Age.int = distance à
+// l'intervalle optimal [28,32]. Calculées comme features candidates pour le
+// modèle ; exposées + backtest Brier A/B AVANT tout câblage dans le blend
+// (math-invariants.md : pas de régression proba sans backtest).
+function _tnAgeFeatures(dobStr, refTs) {
+  if (!dobStr) return null;
+  const dob = new Date(dobStr);
+  if (isNaN(dob.getTime())) return null;
+  const ref = Number.isFinite(refTs) ? refTs : Date.now();
+  const age = (ref - dob.getTime()) / 31557600000; // ms → années (365.25j)
+  if (!Number.isFinite(age) || age < 12 || age > 60) return null; // garde-fou parse
+  const age30 = Math.abs(age - 30);
+  const ageint = age < 28 ? (28 - age) : age > 32 ? (age - 32) : 0;
+  return {
+    age: parseFloat(age.toFixed(1)),
+    age30: parseFloat(age30.toFixed(2)),
+    ageint: parseFloat(ageint.toFixed(2)),
+  };
+}
+
+// DOB joueur via profil BSD (légal, addon payé). Cache 30j (DOB statique) sur
+// api_cache. Réutilise handleTennisBSD (auth + rate-limit + cache 6h interne).
+async function fetchTennisPlayerDOB(bsdPlayerId) {
+  const id = String(bsdPlayerId || '').trim();
+  if (!/^\d+$/.test(id)) return null;
+  const ck = `tennis_dob_${id}`;
+  try {
+    const hit = apiCacheGet(ck);
+    if (hit !== null && hit !== undefined) return hit.dob || null; // {dob} ou {dob:null} négatif
+  } catch (_) {}
+  let dob = null;
+  try {
+    const out = await handleTennisBSD(`/api/v2/players/${id}/`, `bsd_tennis_player_${id}`, 6 * 3600 * 1000);
+    if (out && out.status === 200 && out.body) {
+      const b = out.body.data || out.body;
+      dob = b.date_of_birth || b.birth_date || b.dob || b.birthdate || null;
+    }
+  } catch (_) { dob = null; }
+  try { apiCacheSet(ck, { dob }, 'tennis_dob', 30 * 24 * 3600 * 1000); } catch (_) {}
+  return dob;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

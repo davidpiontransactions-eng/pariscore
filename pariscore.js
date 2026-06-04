@@ -4050,6 +4050,34 @@ function _tnTop10Card(m, rank) {
     return `<span class="tn-t10-chip ${cls}">${_tnEsc(c)}</span>`;
   }).join('');
 
+  // 3 bets prédictifs (top3 PredScore) + verdict KPI — payload `m.predictive`
+  let betsHtml = '';
+  const pred = m.predictive;
+  if (pred && Array.isArray(pred.prematch) && pred.prematch.length) {
+    const kpi = pred.kpi || {};
+    const verdictTone = String(kpi.tone || 'pass');
+    const verdictBadge = kpi.verdict
+      ? `<span class="tn-t10-verdict tn-t10-verdict-${_tnEsc(verdictTone)}">${_tnEsc(kpi.verdict)}${kpi.conf_pct != null ? ` · ${kpi.conf_pct}%` : ''}</span>`
+      : '';
+    const rows = pred.prematch.slice(0, 3).map(b => {
+      const prob = (b.prob != null) ? `${Number(b.prob).toFixed(0)}%` : '—';
+      const oddVal = (b.odds != null) ? Number(b.odds) : (b.odds_fair != null ? Number(b.odds_fair) : null);
+      const oddTxt = oddVal != null ? `@${oddVal.toFixed(2)}` : '';
+      const oddCls = b.odds_type === 'fair' ? 'tn-t10-bet-fair' : '';
+      const evTxt  = (b.ev != null && b.ev > 0) ? `<span class="tn-t10-bet-ev">+${Number(b.ev).toFixed(1)}%</span>` : '';
+      return `<div class="tn-t10-bet-row">
+        <span class="tn-t10-bet-label">${_tnEsc(b.label || b.mkt || '')}</span>
+        <span class="tn-t10-bet-prob">${prob}</span>
+        <span class="tn-t10-bet-odds ${oddCls}">${oddTxt}</span>
+        ${evTxt}
+      </div>`;
+    }).join('');
+    betsHtml = `<div class="tn-t10-bets">
+      <div class="tn-t10-bets-head">🎯 BETS PRÉDICTIFS ${verdictBadge}</div>
+      ${rows}
+    </div>`;
+  }
+
   return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisDetail==='function')openTennisDetail('${safeId}')">
   <div class="tn-t10-card-top">
     <span class="tn-t10-rank">#${rank}</span>
@@ -4066,6 +4094,7 @@ function _tnTop10Card(m, rank) {
   ${dateBadge}
   ${probBar}
   <div class="tn-t10-chips">${chipsHtml}</div>
+  ${betsHtml}
 </div>`;
 }
 
@@ -6146,7 +6175,31 @@ function _renderTennisDegradedDetail(matchId) {
 async function _fetchAndRenderTennisDetail(matchId) {
   const body = document.getElementById('tennis-detail-body');
   if (!body) return;
-  const ENRICH_PLACEHOLDER = '<div id="tennis-matchstat-enrich" style="margin-top:24px;"><div class="tennis-empty-state" style="opacity:.6;font-size:12px;">📊 MatchStat — chargement H2H + perf-breakdown…</div></div>';
+  const ENRICH_PLACEHOLDER = '<div id="tennis-matchstat-enrich" style="margin-top:24px;"><div class="tennis-empty-state" style="opacity:.6;font-size:12px;">MATCHSTAT — chargement H2H + perf-breakdown…</div></div>';
+  // ── Chemin PRO consolidé (modal desktop Top10) ───────────────────────────
+  // Un seul fetch enrichi → rendu pro (CSS-3D + Chart.js, zéro émoji). Fallback
+  // silencieux vers le flux historique ci-dessous si le match est hors builder.
+  try {
+    const detRes = await apiFetch(`/api/v1/tennis/detail/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } });
+    if (detRes.ok) {
+      const detail = await detRes.json().catch(() => null);
+      if (detail && !detail.error && detail.id != null) {
+        const MS   = '<div id="tennis-matchstat-enrich" style="margin-top:20px;"></div>';
+        const SOFA = '<div id="tennis-sofa-profile-enrich" style="margin-top:20px;"></div>';
+        const PBP  = `<div id="tennis-pbp-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:20px;"></div>`;
+        const SETO = `<div id="tennis-set-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:20px;"></div>`;
+        const BSDO = `<div id="tennis-bsd-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:16px;"></div>`;
+        body.innerHTML = renderTennisProDashboard(detail) + MS + SOFA + PBP + SETO + BSDO;
+        try { initTennisProCharts(detail); } catch (_) {}
+        fetchTennisMatchstatEnrich(matchId);
+        fetchTennisSofaProfile({ id: matchId, player1: { name: detail.players && detail.players.p1 && detail.players.p1.name }, player2: { name: detail.players && detail.players.p2 && detail.players.p2.name } });
+        fetchTennisPBP(matchId);
+        fetchTennisSetOdds(matchId);
+        fetchTennisBSDOdds(matchId);
+        return;
+      }
+    }
+  } catch (_) { /* fallback flux historique */ }
   try {
     const [matchRes, predRes] = await Promise.all([
       apiFetch(`/api/v1/tennis/match/${encodeURIComponent(matchId)}`, { headers: { 'Accept': 'application/json' } }),
@@ -6222,17 +6275,17 @@ async function _fetchAndRenderTennisDetail(matchId) {
 async function fetchTennisSetOdds(matchId) {
   const target = document.getElementById('tennis-set-odds-enrich');
   if (!target || !matchId) return;
-  target.innerHTML = `<div class="ins-section" style="opacity:.55;font-size:11px;font-family:'DM Mono',monospace;padding:8px 0;color:var(--text3,#5a6068);">⚡ COTES JEUX/SET — chargement Pinnacle…</div>`;
+  target.innerHTML = `<div class="ins-section" style="opacity:.55;font-size:11px;font-family:'DM Mono',monospace;padding:8px 0;color:var(--text3,#5a6068);">COTES JEUX/SET — chargement Pinnacle…</div>`;
   try {
     const r = await apiFetch(`/api/v1/tennis/set-odds?matchId=${encodeURIComponent(matchId)}`, { headers: { Accept: 'application/json' } });
     if (r.status === 404) {
-      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;" title="Cotes jeux/set disponibles pour les tournois couverts par OddsPapi (Roland Garros, ATP/WTA majeurs). Données Pinnacle sharp.">⚡ Cotes jeux/set indisponibles pour ce tournoi</div>`;
+      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;" title="Cotes jeux/set disponibles pour les tournois couverts par OddsPapi (Roland Garros, ATP/WTA majeurs). Données Pinnacle sharp.">Cotes jeux/set indisponibles pour ce tournoi</div>`;
       return;
     }
     if (!r.ok) { target.innerHTML = ''; return; }
     const d = await r.json();
     if ((!d.set1 || !d.set1.length) && (!d.set2 || !d.set2.length)) {
-      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;">⚡ Cotes jeux/set non encore disponibles (trop tôt)</div>`;
+      target.innerHTML = `<div class="ins-section" style="border:1px dashed var(--bg4,#1e2328);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);text-align:center;">Cotes jeux/set non encore disponibles (trop tôt)</div>`;
       return;
     }
     target.innerHTML = _renderTennisSetOdds(d);
@@ -6247,7 +6300,7 @@ async function fetchTennisBSDOdds(matchId) {
   if (!target || !matchId) return;
   const bsdId = String(matchId).replace(/^bsd_t_/, '');
   if (!/^\d+$/.test(bsdId)) { target.innerHTML = ''; return; }
-  target.innerHTML = '<div class="ins-section" style="opacity:.5;font-size:11px;font-family:\'DM Mono\',monospace;padding:8px 0;color:var(--text3,#5a6068);">📊 Cotes multi-books — chargement BSD…</div>';
+  target.innerHTML = '<div class="ins-section" style="opacity:.5;font-size:11px;font-family:\'DM Mono\',monospace;padding:8px 0;color:var(--text3,#5a6068);">COTES MULTI-BOOKS — chargement BSD…</div>';
   try {
     const r = await fetch('/api/v1/tennis/match/' + bsdId + '/odds');
     if (!r.ok) { target.innerHTML = ''; return; }
@@ -6851,6 +6904,242 @@ function renderTennisDashboard(data, preds) {
     ${predHtml}
     ${pbpHtml}
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);font-size:10px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">Source : BSD · Rafraîchi toutes les 30s</div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PRO TENNIS DETAIL — rendu desktop refondu (Top10). CSS-3D + Chart.js, sans
+//  émoji. Consomme le payload consolidé /api/v1/tennis/detail/:id.
+// ════════════════════════════════════════════════════════════════════════════
+function _tnProNum(v, d) { return (v == null || !Number.isFinite(Number(v))) ? null : Number(v); }
+function _tnProPct(v) { const n = _tnProNum(v); if (n == null) return null; return n <= 1 ? Math.round(n * 100) : Math.round(n); }
+function _tnProClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// Gauge semi-circulaire SVG (0-100), sans dépendance.
+function _tnProGauge(pct, label, sub, color) {
+  const p = _tnProClamp(_tnProNum(pct) || 0, 0, 100);
+  const R = 34, C = Math.PI * R; // demi-cercle
+  const off = C * (1 - p / 100);
+  return `<div class="tn-pro-gauge">
+    <svg viewBox="0 0 84 50" width="84" height="50">
+      <path d="M8 46 A34 34 0 0 1 76 46" fill="none" stroke="var(--gauge-rail,rgba(255,255,255,.08))" stroke-width="8" stroke-linecap="round"/>
+      <path d="M8 46 A34 34 0 0 1 76 46" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+      <text x="42" y="42" text-anchor="middle" fill="var(--text,#f1f5f9)" font-family="'DM Mono',monospace" font-size="15" font-weight="700">${Math.round(p)}</text>
+    </svg>
+    <div class="tn-pro-gauge-lbl">${_escTennis(label)}</div>
+    ${sub ? `<div class="tn-pro-gauge-sub">${_escTennis(sub)}</div>` : ''}
+  </div>`;
+}
+
+function renderTennisProDashboard(d) {
+  if (!d || typeof d !== 'object') return '<div class="tennis-empty-state">Réponse vide.</div>';
+  const meta = d.meta || {}, P = d.players || {}, p1 = P.p1 || {}, p2 = P.p2 || {};
+  const n1 = p1.name || 'J1', n2 = p2.name || 'J2';
+  const esc = _escTennis;
+
+  // ── Header ──────────────────────────────────────────────────────────────
+  const dateLabel = (() => {
+    if (!meta.start_time) return null;
+    const dt = typeof meta.start_time === 'number' ? new Date(meta.start_time * 1000) : new Date(meta.start_time);
+    if (isNaN(dt.getTime())) return null;
+    return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  })();
+  const metaChips = [meta.tournament, meta.round, meta.surface, dateLabel].filter(Boolean)
+    .map(x => `<span class="tn-pro-chip">${esc(String(x))}</span>`).join('');
+
+  // ── Win probability + IC90 ────────────────────────────────────────────────
+  const bl = (d.predictions && d.predictions.blended) || null;
+  const p1prob = bl ? _tnProPct(bl.p1) : null;
+  const p2prob = p1prob != null ? (100 - p1prob) : null;
+  const cb = d.confidence_badge || {};
+  const cbLevel = String(cb.level || 'grey').toLowerCase();
+  const cbColorMap = { green: '#22c55e', amber: '#f59e0b', red: '#f87171', grey: '#64748b' };
+  const cbColor = cbColorMap[cbLevel] || cbColorMap.grey;
+  let ic90 = '';
+  if (d.uqd && Array.isArray(d.uqd.p1_win_ic90)) {
+    const lo = Math.round(d.uqd.p1_win_ic90[0] * 100), hi = Math.round(d.uqd.p1_win_ic90[1] * 100);
+    ic90 = `<div class="tn-pro-ic-wrap" title="Intervalle de confiance 90% (bootstrap ${d.uqd.n_simulations || 500} simulations)">
+      <div class="tn-pro-ic-track">
+        <div class="tn-pro-ic-band" style="left:${lo}%;width:${Math.max(1, hi - lo)}%;"></div>
+        <div class="tn-pro-ic-mark" style="left:${p1prob != null ? p1prob : 50}%;"></div>
+      </div>
+      <div class="tn-pro-ic-lbl">IC90 ${n1 ? esc(n1) : 'J1'} : ${lo}% – ${hi}%</div>
+    </div>`;
+  }
+  const probMethod = bl && bl.method ? String(bl.method) : 'blended';
+  const probCard = `<div class="tn-pro-card">
+    <div class="tn-pro-h">WIN PROBABILITY</div>
+    <div class="tn-pro-prob">
+      <div class="tn-pro-prob-fill" style="width:${p1prob != null ? p1prob : 50}%;"></div>
+      <div class="tn-pro-prob-lbl"><span>${esc(n1)} · ${p1prob != null ? p1prob : '—'}%</span><span>${p2prob != null ? p2prob : '—'}% · ${esc(n2)}</span></div>
+    </div>
+    ${ic90}
+    <div class="tn-pro-meta-row">
+      <span class="tn-pro-conf" style="color:${cbColor};border-color:${cbColor};">CONFIANCE ${cbLevel.toUpperCase()}${cb.accuracy != null ? ' · ' + Math.round(cb.accuracy) + '%' : ''}</span>
+      <span class="tn-pro-model">MODÈLE ${esc(probMethod.toUpperCase())}</span>
+      ${cb.sample != null ? `<span class="tn-pro-model">n=${cb.sample}</span>` : ''}
+    </div>
+  </div>`;
+
+  // ── Radar (canvas Chart.js) ───────────────────────────────────────────────
+  const radarCard = `<div class="tn-pro-card tn-pro-radar-wrap">
+    <div class="tn-pro-h">RADAR PERFORMANCE</div>
+    <canvas id="tn-pro-radar" width="320" height="280"></canvas>
+    <div class="tn-pro-legend"><span class="tn-pro-leg-dot" style="background:#60a5fa;"></span>${esc(n1)}<span class="tn-pro-leg-dot" style="background:#a78bfa;margin-left:14px;"></span>${esc(n2)}</div>
+  </div>`;
+
+  // ── Serve & return gauges ─────────────────────────────────────────────────
+  const sd = d.serve_dominance || {};
+  const sd1 = sd.p1 || {}, sd2 = sd.p2 || {};
+  const serveCard = `<div class="tn-pro-card">
+    <div class="tn-pro-h">SERVICE & DOMINANCE</div>
+    <div class="tn-pro-gauges">
+      <div class="tn-pro-gauge-col"><div class="tn-pro-gauge-name">${esc(n1)}</div>
+        ${_tnProGauge(sd1.sdi, 'SDI', null, '#60a5fa')}
+        ${_tnProGauge(sd1.serve_pts_won_pct, 'PTS SVC', sd1.sample ? 'n=' + sd1.sample : null, '#60a5fa')}
+      </div>
+      <div class="tn-pro-gauge-col"><div class="tn-pro-gauge-name">${esc(n2)}</div>
+        ${_tnProGauge(sd2.sdi, 'SDI', null, '#a78bfa')}
+        ${_tnProGauge(sd2.serve_pts_won_pct, 'PTS SVC', sd2.sample ? 'n=' + sd2.sample : null, '#a78bfa')}
+      </div>
+    </div>
+    ${(sd1.ace_pct != null || sd2.ace_pct != null) ? `<div class="tn-pro-statline"><span>ACES %</span><span>${sd1.ace_pct != null ? sd1.ace_pct : '—'}</span><span>${sd2.ace_pct != null ? sd2.ace_pct : '—'}</span></div>` : ''}
+  </div>`;
+
+  // ── Marchés prédictifs (top3) ──────────────────────────────────────────────
+  let betsCard = '';
+  const pred = d.predictive;
+  if (pred && Array.isArray(pred.prematch) && pred.prematch.length) {
+    const kpi = pred.kpi || {};
+    const tone = String(kpi.tone || 'pass');
+    const rows = pred.prematch.slice(0, 3).map(b => {
+      const prob = b.prob != null ? Math.round(b.prob) + '%' : '—';
+      const oddVal = b.odds != null ? Number(b.odds) : (b.odds_fair != null ? Number(b.odds_fair) : null);
+      const oddTxt = oddVal != null ? '@' + oddVal.toFixed(2) : '';
+      const oddCls = b.odds_type === 'fair' ? 'tn-pro-bet-fair' : '';
+      const ev = (b.ev != null && b.ev > 0) ? `<span class="tn-pro-bet-ev">+${Number(b.ev).toFixed(1)}%</span>` : '';
+      return `<div class="tn-pro-bet-row"><span class="tn-pro-bet-label">${esc(b.label || b.mkt || '')}</span><span class="tn-pro-bet-prob">${prob}</span><span class="tn-pro-bet-odds ${oddCls}">${oddTxt}</span>${ev}</div>`;
+    }).join('');
+    betsCard = `<div class="tn-pro-card">
+      <div class="tn-pro-h">MARCHÉS PRÉDICTIFS ${kpi.verdict ? `<span class="tn-pro-verdict tn-pro-verdict-${esc(tone)}">${esc(kpi.verdict)}${kpi.conf_pct != null ? ' · ' + kpi.conf_pct + '%' : ''}</span>` : ''}</div>
+      ${rows}
+    </div>`;
+  }
+
+  // ── Totaux & sets ─────────────────────────────────────────────────────────
+  const bm = d.bsd_markets || {};
+  const totalsBits = [];
+  const ouLine = (lbl, v) => { const p = _tnProPct(v); if (p == null) return; totalsBits.push(`<div class="tn-pro-statline"><span>${lbl}</span><span class="tn-pro-statval">${p}%</span></div>`); };
+  ouLine('+2.5 SETS', bm.prob_over_2_5_sets);
+  ouLine('+20.5 JEUX', bm.prob_over_20_5_games);
+  ouLine('+21.5 JEUX', bm.prob_over_21_5_games);
+  ouLine('+22.5 JEUX', bm.prob_over_22_5_games);
+  ouLine('SET 1 → J1', bm.prob_player1_wins_first_set);
+  let setProbsHtml = '';
+  const sp = (d.predictions && Array.isArray(d.predictions.set_probs)) ? d.predictions.set_probs : [];
+  if (sp.length) {
+    setProbsHtml = '<div class="tn-pro-setprobs">' + sp.map(s => {
+      const a = _tnProPct(s.p1) || 0, b = _tnProPct(s.p2) || 0, v = Math.max(a, b);
+      return `<div class="tn-pro-setprob-row"><span class="tn-pro-setprob-out">${esc(s.outcome || '')}</span><div class="tn-pro-setprob-bar"><div style="width:${v}%;"></div></div><span class="tn-pro-setprob-v">${v}%</span></div>`;
+    }).join('') + '</div>';
+  }
+  const tc = d.totals_convergence || {};
+  const convNote = (tc.agree != null) ? `<div class="tn-pro-sub">Convergence BSD↔Markov : ${tc.agree ? 'OUI' : 'NON'}${tc.conviction ? ' · ' + esc(String(tc.conviction)) : ''}</div>` : '';
+  const totalsCard = (totalsBits.length || setProbsHtml) ? `<div class="tn-pro-card">
+    <div class="tn-pro-h">TOTAUX & SETS</div>
+    ${totalsBits.join('')}
+    ${setProbsHtml}
+    ${convNote}
+  </div>` : '';
+
+  // ── Momentum / contexte ───────────────────────────────────────────────────
+  const rm = d.rank_momentum || {};
+  const momArrow = (o) => {
+    if (!o || o.delta_pos == null) return '';
+    const up = o.delta_pos > 0; const flat = o.delta_pos === 0;
+    const col = flat ? 'var(--text3,#64748b)' : (up ? '#22c55e' : '#f87171');
+    const ch = flat ? '–' : (up ? '▲' : '▼');
+    return `<span style="color:${col};font-weight:700;">${ch} ${Math.abs(o.delta_pos)}</span>`;
+  };
+  const ctxBits = [];
+  if (rm.p1 || rm.p2) ctxBits.push(`<div class="tn-pro-statline"><span>MOMENTUM RANG</span><span>${momArrow(rm.p1) || '—'}</span><span>${momArrow(rm.p2) || '—'}</span></div>`);
+  if (d.fatigue && (d.fatigue.p1 != null || d.fatigue.p2 != null)) ctxBits.push(`<div class="tn-pro-statline"><span>FATIGUE (matchs récents)</span><span>${d.fatigue.p1 != null ? d.fatigue.p1 : '—'}</span><span>${d.fatigue.p2 != null ? d.fatigue.p2 : '—'}</span></div>`);
+  // Features d'âge enhanced (arXiv 2502.01613) : âge + écart au pic 30 ans.
+  const af = d.age_features;
+  if (af && (af.p1 || af.p2)) {
+    const cell = (a) => a && a.age != null ? `${a.age}<span class="tn-pro-age-sub"> (Δ30 ${a.age30})</span>` : '—';
+    ctxBits.push(`<div class="tn-pro-statline" title="Âge au match + écart au pic de performance (30 ans). Plus Δ30 est faible, plus le joueur est dans sa fenêtre optimale [28-32]."><span>ÂGE · ÉCART PIC 30</span><span>${cell(af.p1)}</span><span>${cell(af.p2)}</span></div>`);
+  }
+  if (p1.elo_surface != null || p2.elo_surface != null) ctxBits.push(`<div class="tn-pro-statline"><span>ELO SURFACE</span><span>${p1.elo_surface != null ? p1.elo_surface : '—'}</span><span>${p2.elo_surface != null ? p2.elo_surface : '—'}</span></div>`);
+  let trapHtml = '';
+  if (d.trap_bet && d.trap_bet.flag) trapHtml = `<div class="tn-pro-trap">PIÈGE DÉTECTÉ · ${esc(String(d.trap_bet.type || ''))}${d.trap_bet.detail ? ' — ' + esc(String(d.trap_bet.detail)) : ''}</div>`;
+  const ctxCard = (ctxBits.length || trapHtml) ? `<div class="tn-pro-card">
+    <div class="tn-pro-h">MOMENTUM & CONTEXTE</div>
+    ${ctxBits.join('')}
+    ${trapHtml}
+  </div>` : '';
+
+  return `<div class="tn-pro-root">
+    <div class="tn-pro-header">
+      <div class="tn-pro-title" id="tennis-detail-title">${esc(n1)} <span class="tn-pro-vs">VS</span> ${esc(n2)}</div>
+      <div class="tn-pro-ranks">${p1.rank ? '#' + p1.rank : ''}${p1.rank && p2.rank ? ' · ' : ''}${p2.rank ? '#' + p2.rank : ''}</div>
+      <div class="tn-pro-chips">${metaChips}</div>
+    </div>
+    <div class="tn-pro-grid">
+      ${probCard}
+      ${radarCard}
+      ${serveCard}
+      ${betsCard}
+      ${totalsCard}
+      ${ctxCard}
+    </div>
+    <div class="tn-pro-footer">Source : BSD · modèle ${esc(probMethod)} · IC90 bootstrap · MAJ 30s</div>
+  </div>`;
+}
+
+function initTennisProCharts(d) {
+  if (typeof Chart === 'undefined') return;
+  if (!window._tnProCharts) window._tnProCharts = {};
+  if (window._tnProCharts.radar) { try { window._tnProCharts.radar.destroy(); } catch (_) {} window._tnProCharts.radar = null; }
+  const ctx = document.getElementById('tn-pro-radar');
+  if (!ctx) return;
+  const P = d.players || {}, p1 = P.p1 || {}, p2 = P.p2 || {};
+  const sd = d.serve_dominance || {}, sd1 = sd.p1 || {}, sd2 = sd.p2 || {};
+  const bl = (d.predictions && d.predictions.blended) || {};
+  const clamp = (v) => Math.max(0, Math.min(100, Number.isFinite(Number(v)) ? Number(v) : 0));
+  const eloNorm = (e) => e == null ? 0 : clamp((Number(e) - 1400) / 8); // 1400→0, 2200→100
+  const probP1 = bl.p1 != null ? (bl.p1 <= 1 ? bl.p1 * 100 : bl.p1) : 50;
+  const axis = (a) => [
+    clamp(a.serve_pts_won_pct),       // Service
+    clamp((a.ace_pct || 0) * 5),      // Aces (≈20% → 100)
+    clamp(a.sdi),                     // SDI
+    eloNorm(a.elo_surface),           // Elo surface
+    clamp(a.powerscore),              // Puissance
+  ];
+  const d1 = axis(Object.assign({}, sd1, { elo_surface: p1.elo_surface, powerscore: p1.powerscore })).concat([clamp(probP1)]);
+  const d2 = axis(Object.assign({}, sd2, { elo_surface: p2.elo_surface, powerscore: p2.powerscore })).concat([clamp(100 - probP1)]);
+  try {
+    window._tnProCharts.radar = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['Service', 'Aces', 'SDI', 'Elo surf.', 'Puissance', 'Proba'],
+        datasets: [
+          { label: p1.name || 'J1', data: d1, backgroundColor: 'rgba(96,165,250,.15)', borderColor: 'rgba(96,165,250,.9)', borderWidth: 2, pointBackgroundColor: '#60a5fa', pointRadius: 3 },
+          { label: p2.name || 'J2', data: d2, backgroundColor: 'rgba(167,139,250,.15)', borderColor: 'rgba(167,139,250,.9)', borderWidth: 2, pointBackgroundColor: '#a78bfa', pointRadius: 3 },
+        ],
+      },
+      options: {
+        responsive: false, animation: { duration: 600 },
+        plugins: { legend: { display: false } },
+        scales: { r: {
+          min: 0, max: 100,
+          grid: { color: 'rgba(255,255,255,.08)' },
+          angleLines: { color: 'rgba(255,255,255,.08)' },
+          pointLabels: { color: '#94a3b8', font: { family: "'DM Mono', monospace", size: 10 } },
+          ticks: { display: false, stepSize: 25 },
+        } },
+      },
+    });
+  } catch (_) { /* chart non bloquant */ }
 }
 
 // ─── QUICK FILTERS BAR (Timelapse + Stratégies + Confiance) ──────────────────
