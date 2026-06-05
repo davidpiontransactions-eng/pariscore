@@ -25907,20 +25907,33 @@ function renderComparateur(d) {
         }
         _cs2LastData = (json && Array.isArray(json.matches)) ? json.matches : [];
         _updateCs2Status(json);
-        try {
-          _applyCs2Filter();
-        } catch(e) {
-          var bar = document.getElementById('cs2-status-bar');
-          if (bar) bar.textContent = 'CS2 RENDER ERR: ' + e.message + ' @ ' + (e.stack||'').split('\n')[1];
-          console.error('[CS2 render]', e);
-          throw e;
-        }
-        _psBuildSidebarAllCs2();
+        _applyCs2Filter();
+        _buildCs2SidebarLocal();
+        try { _psBuildSidebarAllCs2(); } catch(_e) {}
       })
       .catch(function (e) {
         console.warn('[CS2]', e.message);
         _renderCs2Error();
       });
+  }
+
+  // ── Sidebar builder (in-scope, accesses _cs2LastData) ───────────────────
+  function _buildCs2SidebarLocal() {
+    var list = document.getElementById('ps-cs2-sidebar-all-list');
+    if (!list || !_cs2LastData || !_cs2LastData.length) return;
+    var names = [], seen = {};
+    _cs2LastData.forEach(function (m) {
+      var n = String(m.tournament || '').trim();
+      if (n && !seen[n]) { seen[n] = true; names.push(n); }
+    });
+    names.sort(function (a, b) { return a.localeCompare(b); });
+    if (!names.length) return;
+    list.innerHTML = names.map(function (n) {
+      var safe = n.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return '<button class="sidebar-league-item" data-sb-cs2="' + n.replace(/"/g, '&quot;') +
+        '" onclick="_psSbPickCs2(\'' + safe + '\')">' +
+        '<span class="sidebar-league-flag">🎮</span>' + n + '</button>';
+    }).join('');
   }
 
   function _renderCs2AddonDisabled() {
