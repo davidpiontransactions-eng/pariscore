@@ -19565,6 +19565,29 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/cs2/map-rounds[?team=Vitality&map=de_inferno] — avg TOTAL rounds/map (bo3.gg, over/under)
+  // Dataset : tools/refresh_bo3_map_rounds.js → data/bo3_map_rounds.json. NON calibré (backtest Brier requis avant signal BET).
+  if (pathname === '/api/v1/cs2/map-rounds' && req.method === 'GET') {
+    try {
+      const fp = path.join(__dirname, 'data', 'bo3_map_rounds.json');
+      if (!fs.existsSync(fp)) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'dataset absent — run tools/refresh_bo3_map_rounds.js', teams: [] }));
+      }
+      const data = JSON.parse(fs.readFileSync(fp, 'utf8'));
+      const teamFilter = (query.team || '').trim().toLowerCase();
+      const mapFilter  = (query.map  || '').trim().toLowerCase();
+      let teams = Array.isArray(data.teams) ? data.teams : [];
+      if (teamFilter) teams = teams.filter(t => (t.name || '').toLowerCase().includes(teamFilter));
+      if (mapFilter)  teams = teams.map(t => ({ ...t, maps: (t.maps && t.maps[mapFilter]) ? { [mapFilter]: t.maps[mapFilter] } : {} }));
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, generated: data.generated, source: data.source, windows_days: data.windows_days, note: data.note, teams }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
   if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
