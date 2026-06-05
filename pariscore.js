@@ -770,7 +770,67 @@ function showPage(pageId, linkEl) {
   if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage();
   if (pageId === 'mma') initMMAPage();
   if (pageId === 'tennis-alerts') loadTennisAlerts();
+  if (pageId !== 'nba' && typeof stopNbaPage === 'function') stopNbaPage();
+  if (pageId === 'nba') initNbaPage();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── NBA vertical (basket — ESPN Elo records + Four Factors + value) ────────────
+var _nbaLoaded = false, _nbaPoll = null;
+function _nbaEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+window.initNbaPage = function () {
+  _fetchAndRenderNba();
+  if (_nbaPoll) clearInterval(_nbaPoll);
+  _nbaPoll = setInterval(() => { if (document.body.dataset.page === 'nba') _fetchAndRenderNba(); }, 60000);
+};
+if (typeof window.stopNbaPage !== 'function') window.stopNbaPage = function () { if (_nbaPoll) { clearInterval(_nbaPoll); _nbaPoll = null; } };
+function _fetchAndRenderNba() {
+  fetch('/api/v1/nba/matches', { cache: 'no-store' })
+    .then(r => r.json())
+    .then(j => {
+      var st = document.getElementById('nba-status');
+      var matches = (j && Array.isArray(j.matches)) ? j.matches : [];
+      if (st) st.textContent = matches.length + ' match' + (matches.length > 1 ? 's' : '') + ' · ESPN';
+      _renderNbaCards(matches);
+    })
+    .catch(e => {
+      console.warn('[NBA]', e.message);
+      var g = document.getElementById('nba-grid');
+      if (g) g.innerHTML = '<div class="nba-empty">⚠️ Erreur de chargement NBA</div>';
+    });
+}
+function _renderNbaCards(matches) {
+  var g = document.getElementById('nba-grid');
+  if (!g) return;
+  if (!matches.length) { g.innerHTML = '<div class="nba-empty">Aucun match NBA aujourd\'hui</div>'; return; }
+  g.innerHTML = matches.map(function (m) {
+    var h = m.home || {}, a = m.away || {}, p = m.predictions || {}, wp = p.win_prob || {}, val = p.value || {}, te = p.total_edge || {};
+    var pH = wp.p_home != null ? wp.p_home : 50, pA = wp.p_away != null ? wp.p_away : 50;
+    var live = m.status === 'in';
+    var evH = val.ev_home, evHcls = evH == null ? '' : (evH > 0 ? 'ev-pos' : 'ev-neg');
+    var teamRow = function (t, score, prob) {
+      return '<div class="nba-team">' +
+        (t.logo ? '<img src="' + _nbaEsc(t.logo) + '" alt="" loading="lazy">' : '') +
+        '<span class="nba-tn">' + _nbaEsc(t.name || '—') + '</span>' +
+        '<span class="nba-rec">' + _nbaEsc(t.record || '') + '</span>' +
+        (live && score != null ? '<span class="nba-sc">' + _nbaEsc(score) + '</span>' : '') +
+      '</div>';
+    };
+    return '<div class="nba-card">' +
+      '<div class="nba-c-head"><span>' + _nbaEsc(m.status_detail || '') + (m.series ? ' · ' + _nbaEsc(m.series) : '') + '</span>' +
+        '<span>' + (m.odds && m.odds.details ? _nbaEsc(m.odds.details) : '') + '</span></div>' +
+      teamRow(a, a.score, pA) +
+      teamRow(h, h.score, pH) +
+      '<div class="nba-prob-bar"><div class="nba-pf" style="width:' + pH + '%"></div></div>' +
+      '<div class="nba-prob-lbl"><span>' + _nbaEsc(a.abbr || 'AWAY') + ' ' + pA + '%</span><span>' + pH + '% ' + _nbaEsc(h.abbr || 'HOME') + '</span></div>' +
+      '<div class="nba-foot">' +
+        (evH != null ? '<span class="nba-chip ' + evHcls + '">EV ' + _nbaEsc(h.abbr || 'H') + ' ' + (evH > 0 ? '+' : '') + evH + '%</span>' : '') +
+        (val.fair_home != null ? '<span class="nba-chip">Fair ' + val.fair_home + '/' + val.fair_away + '</span>' : '') +
+        (te.line != null ? '<span class="nba-chip">O/U ' + _nbaEsc(te.line) + ' · off ' + _nbaEsc(te.combined_offense) + '</span>' : '') +
+        (wp.edge_elo != null ? '<span class="nba-chip">ΔElo ' + (wp.edge_elo > 0 ? '+' : '') + wp.edge_elo + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 // ─── SPORT HUB (écran d'orientation) ────────────────────────────────────────

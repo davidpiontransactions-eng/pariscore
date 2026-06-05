@@ -118,5 +118,6 @@
   "empty.no_bets": "Noch keine Wetten.",
   "empty.no_cash": "Keine Kassenbewegungen.",
   "empty.no_clv": "Noch keine CLV-Daten verfügbar.",
-  "empty.no_alert": "Noch keine Alarme gesendet."
+  "empty.no_alert": "Noch keine Alarme gesendet.",
+  "nav.nba": "NBA"
 }

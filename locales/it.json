@@ -118,5 +118,6 @@
   "empty.no_bets": "Nessuna scommessa per ora.",
   "empty.no_cash": "Nessun movimento di cassa.",
   "empty.no_clv": "Nessun dato CLV disponibile per ora.",
-  "empty.no_alert": "Nessun avviso inviato per ora."
+  "empty.no_alert": "Nessun avviso inviato per ora.",
+  "nav.nba": "NBA"
 }
