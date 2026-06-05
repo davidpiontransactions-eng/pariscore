@@ -826,7 +826,8 @@ function _renderNbaCards(matches) {
       '<div class="nba-foot">' +
         (evH != null ? '<span class="nba-chip ' + evHcls + '">EV ' + _nbaEsc(h.abbr || 'H') + ' ' + (evH > 0 ? '+' : '') + evH + '%</span>' : '') +
         (val.fair_home != null ? '<span class="nba-chip">Fair ' + val.fair_home + '/' + val.fair_away + '</span>' : '') +
-        (te.line != null ? '<span class="nba-chip">O/U ' + _nbaEsc(te.line) + ' · off ' + _nbaEsc(te.combined_offense) + '</span>' : '') +
+        (te.line != null ? '<span class="nba-chip">O/U ' + _nbaEsc(te.line) +
+          (te.status === 'modeled' && te.lean ? ' · ' + _nbaEsc(te.model) + (te.lean !== 'NEUTRAL' ? ' ' + (te.diff > 0 ? '▲' : '▼') + _nbaEsc(te.lean) : '') : ' · off ' + _nbaEsc(te.combined_offense)) + '</span>' : '') +
         (wp.edge_elo != null ? '<span class="nba-chip">ΔElo ' + (wp.edge_elo > 0 ? '+' : '') + wp.edge_elo + '</span>' : '') +
       '</div>' +
     '</div>';
