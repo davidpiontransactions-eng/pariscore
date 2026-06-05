@@ -827,6 +827,7 @@ function _renderNbaCards(matches) {
       teamRow(h, h.score, pH) +
       '<div class="nba-prob-bar"><div class="nba-pf" style="width:' + pH + '%"></div></div>' +
       '<div class="nba-prob-lbl"><span>' + _nbaEsc(a.abbr || 'AWAY') + ' ' + pA + '%</span><span>' + pH + '% ' + _nbaEsc(h.abbr || 'HOME') + '</span></div>' +
+      _nbaModelsPanel(p) +
       '<div class="nba-foot">' +
         (evH != null ? '<span class="nba-chip ' + evHcls + '">EV ' + _nbaEsc(h.abbr || 'H') + ' ' + (evH > 0 ? '+' : '') + evH + '%</span>' : '') +
         (val.fair_home != null ? '<span class="nba-chip">Fair ' + val.fair_home + '/' + val.fair_away + '</span>' : '') +
@@ -840,6 +841,22 @@ function _renderNbaCards(matches) {
       '<button class="nba-ai-btn" onclick="openNbaAI(\'' + _nbaEsc(m.id) + '\',\'' + _nbaEsc((a.abbr || '') + ' @ ' + (h.abbr || '')) + '\')">🤖 Analyse + Revue de presse</button>' +
     '</div>';
   }).join('');
+}
+
+// Panel modèles de comparaison + badge consensus/contradiction (home POV)
+function _nbaModelsPanel(p) {
+  var panel = (p && p.models_panel) || [], cons = (p && p.consensus) || null;
+  if (!panel.length) return '';
+  var contraName = cons && cons.contrarian ? cons.contrarian.name : null;
+  var badgeColor = { CONSENSUS_FORT: '#4ade80', CONSENSUS: '#86efac', DIVERGENT: '#fbbf24', CONTRADICTION: '#f87171' };
+  var badge = cons ? '<span class="nba-cons-badge" style="color:' + (badgeColor[cons.label] || '#999') + ';border-color:' + (badgeColor[cons.label] || '#999') + '44;">' +
+    (cons.label === 'CONTRADICTION' ? '⚡ CONTRADICTION' : cons.label === 'DIVERGENT' ? '⚠ DIVERGENT' : '✓ ' + _nbaEsc(cons.label)) +
+    ' · σ' + cons.stddev + (contraName ? ' · contre: ' + _nbaEsc(contraName) : '') + '</span>' : '';
+  var chips = panel.map(function (mm) {
+    var hot = mm.name === contraName;
+    return '<span class="nba-model-chip' + (hot ? ' contra' : '') + '">' + _nbaEsc(mm.name) + ' ' + mm.p + '</span>';
+  }).join('');
+  return '<div class="nba-models">' + badge + '<div class="nba-model-chips">' + chips + '</div></div>';
 }
 
 // Banner Top 3 bets prédictifs (rank déterministe modèles)

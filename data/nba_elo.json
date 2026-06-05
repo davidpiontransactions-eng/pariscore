@@ -1,181 +1,247 @@
 {
-  "generated": "2026-06-05T21:56:11.781Z",
+  "generated": "2026-06-05T22:49:26.140Z",
   "source": "espn-scoreboard",
   "season_start": "2025-10-21",
-  "games_count": 1313,
+  "games_count": 1315,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 1313,
-    "brier": 0.2093,
+    "n": 1315,
+    "brier": 0.2078,
     "baseline_brier": 0.25,
-    "accuracy": 66.2
+    "accuracy": 66.8
   },
   "ratings": {
     "1": {
       "name": "Atlanta Hawks",
-      "elo": 1535,
-      "gp": 87
+      "elo": 1534,
+      "gp": 88,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -11.8
     },
     "2": {
       "name": "Boston Celtics",
-      "elo": 1637,
-      "gp": 89
+      "elo": 1638,
+      "gp": 89,
+      "form_l10_winpct": 50,
+      "form_l10_margin": 4.5
     },
     "3": {
       "name": "New Orleans Pelicans",
       "elo": 1387,
-      "gp": 81
+      "gp": 82,
+      "form_l10_winpct": 10,
+      "form_l10_margin": -10.4
     },
     "4": {
       "name": "Chicago Bulls",
-      "elo": 1286,
-      "gp": 81
+      "elo": 1281,
+      "gp": 81,
+      "form_l10_winpct": 20,
+      "form_l10_margin": -10.6
     },
     "5": {
       "name": "Cleveland Cavaliers",
-      "elo": 1622,
-      "gp": 99
+      "elo": 1621,
+      "gp": 100,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -5.7
     },
     "6": {
       "name": "Dallas Mavericks",
       "elo": 1329,
-      "gp": 81
+      "gp": 82,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -7.5
     },
     "7": {
       "name": "Denver Nuggets",
-      "elo": 1648,
-      "gp": 88
+      "elo": 1652,
+      "gp": 87,
+      "form_l10_winpct": 60,
+      "form_l10_margin": 2.5
     },
     "8": {
       "name": "Detroit Pistons",
-      "elo": 1660,
-      "gp": 95
+      "elo": 1659,
+      "gp": 96,
+      "form_l10_winpct": 60,
+      "form_l10_margin": 3.3
     },
     "9": {
       "name": "Golden State Warriors",
-      "elo": 1371,
-      "gp": 84
+      "elo": 1377,
+      "gp": 83,
+      "form_l10_winpct": 20,
+      "form_l10_margin": -7.7
     },
     "10": {
       "name": "Houston Rockets",
-      "elo": 1606,
-      "gp": 88
+      "elo": 1605,
+      "gp": 87,
+      "form_l10_winpct": 50,
+      "form_l10_margin": 3.7
     },
     "11": {
       "name": "Indiana Pacers",
-      "elo": 1303,
-      "gp": 82
+      "elo": 1302,
+      "gp": 82,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -1.6
     },
     "12": {
       "name": "LA Clippers",
-      "elo": 1501,
-      "gp": 82
+      "elo": 1506,
+      "gp": 82,
+      "form_l10_winpct": 50,
+      "form_l10_margin": -0.9
     },
     "13": {
       "name": "Los Angeles Lakers",
       "elo": 1604,
-      "gp": 91
+      "gp": 91,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -4.9
     },
     "14": {
       "name": "Miami Heat",
-      "elo": 1521,
-      "gp": 82
+      "elo": 1517,
+      "gp": 82,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -2.2
     },
     "15": {
       "name": "Milwaukee Bucks",
-      "elo": 1317,
-      "gp": 81
+      "elo": 1316,
+      "gp": 82,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -7.9
     },
     "16": {
       "name": "Minnesota Timberwolves",
-      "elo": 1625,
-      "gp": 93
+      "elo": 1629,
+      "gp": 93,
+      "form_l10_winpct": 50,
+      "form_l10_margin": -6.4
     },
     "17": {
       "name": "Brooklyn Nets",
-      "elo": 1220,
-      "gp": 82
+      "elo": 1219,
+      "gp": 82,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -13.7
     },
     "18": {
       "name": "New York Knicks",
       "elo": 1893,
-      "gp": 98
+      "gp": 98,
+      "form_l10_winpct": 100,
+      "form_l10_margin": 22.7
     },
     "19": {
       "name": "Orlando Magic",
       "elo": 1597,
-      "gp": 90
+      "gp": 91,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -1.9
     },
     "20": {
       "name": "Philadelphia 76ers",
       "elo": 1592,
-      "gp": 94
+      "gp": 93,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -7.7
     },
     "21": {
       "name": "Phoenix Suns",
-      "elo": 1498,
-      "gp": 87
+      "elo": 1497,
+      "gp": 87,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -6.3
     },
     "22": {
       "name": "Portland Trail Blazers",
-      "elo": 1558,
-      "gp": 87
+      "elo": 1559,
+      "gp": 88,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -4.3
     },
     "23": {
       "name": "Sacramento Kings",
-      "elo": 1330,
-      "gp": 82
+      "elo": 1333,
+      "gp": 81,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -10.3
     },
     "24": {
       "name": "San Antonio Spurs",
-      "elo": 1840,
-      "gp": 101
+      "elo": 1842,
+      "gp": 101,
+      "form_l10_winpct": 60,
+      "form_l10_margin": 7.5
     },
     "25": {
       "name": "Oklahoma City Thunder",
-      "elo": 1793,
-      "gp": 97
+      "elo": 1794,
+      "gp": 97,
+      "form_l10_winpct": 60,
+      "form_l10_margin": 2
     },
     "26": {
       "name": "Utah Jazz",
-      "elo": 1227,
-      "gp": 81
+      "elo": 1224,
+      "gp": 81,
+      "form_l10_winpct": 10,
+      "form_l10_margin": -14.2
     },
     "27": {
       "name": "Washington Wizards",
-      "elo": 1137,
-      "gp": 81
+      "elo": 1134,
+      "gp": 82,
+      "form_l10_winpct": 0,
+      "form_l10_margin": -18.1
     },
     "28": {
       "name": "Toronto Raptors",
-      "elo": 1551,
-      "gp": 89
+      "elo": 1548,
+      "gp": 88,
+      "form_l10_winpct": 50,
+      "form_l10_margin": 2
     },
     "29": {
       "name": "Memphis Grizzlies",
       "elo": 1176,
-      "gp": 82
+      "gp": 82,
+      "form_l10_winpct": 10,
+      "form_l10_margin": -20.4
     },
     "30": {
       "name": "Charlotte Hornets",
       "elo": 1637,
-      "gp": 83
+      "gp": 84,
+      "form_l10_winpct": 60,
+      "form_l10_margin": 2.6
     },
     "111386": {
       "name": "World",
       "elo": 1480,
-      "gp": 2
+      "gp": 2,
+      "form_l10_winpct": 0,
+      "form_l10_margin": -2.5
     },
     "132374": {
       "name": "Team Stars",
       "elo": 1540,
-      "gp": 3
+      "gp": 3,
+      "form_l10_winpct": 66.7,
+      "form_l10_margin": 8.7
     },
     "132375": {
       "name": "Team Stripes",
       "elo": 1480,
-      "gp": 3
+      "gp": 3,
+      "form_l10_winpct": 66.7,
+      "form_l10_margin": -7
     }
   }
 }

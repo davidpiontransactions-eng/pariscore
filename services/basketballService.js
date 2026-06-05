@@ -254,6 +254,58 @@ function computeNbaSpreadUQD(eloDiff, expTotal, bookSpreadHome, bookOU) {
   return out;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  MODÈLES DE COMPARAISON & CONTRADICTION (indépendants — peuvent diverger du blend)
+// ════════════════════════════════════════════════════════════════════════════
+
+// (A) SRS / margin model — point differential saison (indépendant du chemin Elo)
+function computeNbaSRS(homeId, awayId) {
+  const sH = _standings.map && _standings.map[homeId];
+  const sA = _standings.map && _standings.map[awayId];
+  if (!sH || !sA || sH.diff == null || sA.diff == null) return null;
+  const expMargin = sH.diff - sA.diff + HCA_PTS; // marges nettes saison + HCA
+  const p = _normCdf(expMargin / SD_MARGIN);
+  return { p_home: +(p * 100).toFixed(1), exp_margin: +expMargin.toFixed(1) };
+}
+
+// (B) Recent-form model — momentum L10 (margin moyen 10 derniers). Contredit l'Elo saison si hot/cold.
+function computeNbaRecentForm(homeId, awayId) {
+  const elo = _loadNbaElo();
+  if (!elo || !elo.ratings) return null;
+  const rH = elo.ratings[homeId], rA = elo.ratings[awayId];
+  if (!rH || !rA || rH.form_l10_margin == null || rA.form_l10_margin == null) return null;
+  const expMargin = rH.form_l10_margin - rA.form_l10_margin + HCA_PTS;
+  const p = _normCdf(expMargin / SD_MARGIN);
+  return { p_home: +(p * 100).toFixed(1), home_l10: rH.form_l10_winpct, away_l10: rA.form_l10_winpct };
+}
+
+// (C) Consensus / divergence — agrège tous les modèles, flag contradiction + contrarian
+function computeNbaConsensus(models) {
+  const valid = (models || []).filter(m => m && m.p != null);
+  if (valid.length < 2) return null;
+  const ps = valid.map(m => m.p);
+  const mean = ps.reduce((a, b) => a + b, 0) / ps.length;
+  const variance = ps.reduce((s, p) => s + (p - mean) ** 2, 0) / ps.length;
+  const stddev = Math.sqrt(variance);
+  const lo = Math.min(...ps), hi = Math.max(...ps);
+  // contrarian = modèle le plus éloigné de la moyenne
+  let contrarian = null, maxDist = -1;
+  for (const m of valid) { const d = Math.abs(m.p - mean); if (d > maxDist) { maxDist = d; contrarian = m; } }
+  // label : agrément si écart faible, divergent si fort, + side cross (modèles de part et d'autre de 50%)
+  const crossesFifty = lo < 50 && hi > 50;
+  let label;
+  if (stddev <= 4) label = 'CONSENSUS_FORT';
+  else if (stddev <= 9 && !crossesFifty) label = 'CONSENSUS';
+  else if (crossesFifty) label = 'CONTRADICTION'; // modèles désaccord sur le vainqueur
+  else label = 'DIVERGENT';
+  return {
+    mean_p_home: +mean.toFixed(1), stddev: +stddev.toFixed(1), range: [+lo.toFixed(1), +hi.toFixed(1)],
+    label, crosses_fifty: crossesFifty,
+    contrarian: contrarian ? { name: contrarian.name, p: contrarian.p, dist: +maxDist.toFixed(1) } : null,
+    n_models: valid.length,
+  };
+}
+
 // ─── Devig moneyline 2-way (proportionnel) → fair + EV (cotes en SORTIE) ─────────
 function _devigEv(mlHome, mlAway, model) {
   const iH = _amOddsToProb(mlHome), iA = _amOddsToProb(mlAway);
@@ -317,6 +369,19 @@ function _normalizeEvent(ev) {
     }
   }
 
+  // Modèles de comparaison & contradiction (indépendants du blend)
+  const srs = computeNbaSRS(hTeam.id, aTeam.id);
+  const recentForm = computeNbaRecentForm(hTeam.id, aTeam.id);
+  const modelsPanel = [
+    { name: 'Elo', p: winProb && winProb.p_home },
+    { name: 'Pythagorean', p: pyth && pyth.p_home },
+    { name: 'Four Factors', p: ff && ff.p_home },
+    { name: 'SRS', p: srs && srs.p_home },
+    { name: 'Recent L10', p: recentForm && recentForm.p_home },
+    { name: 'Marché', p: value && value.fair_home },
+  ].filter(m => m.p != null);
+  const consensus = computeNbaConsensus(modelsPanel); // sur modèles indépendants (hors blend)
+
   return {
     id: ev.id,
     date: ev.date,
@@ -346,6 +411,7 @@ function _normalizeEvent(ev) {
     } : null,
     predictions: {
       win_prob: winProb, blended: blend, pythagorean: pyth, four_factors: ff,
+      srs, recent_form: recentForm, models_panel: modelsPanel, consensus,
       total, total_edge: totalEdge, spread_uqd: spreadUQD, value,
     },
     note: 'Elo game-by-game + Pythagorean + Four Factors → blend. UQD analytique IC90. Indépendant des cotes (EV en sortie). NON calibré vs marché — devig-vs-Pinnacle requis avant signal BET.',
@@ -408,6 +474,9 @@ module.exports = {
   computeNbaBlend,
   computeNbaSpreadUQD,
   computeNbaTopBets,
+  computeNbaSRS,
+  computeNbaRecentForm,
+  computeNbaConsensus,
   invalidateCache() { _cache.ts = 0; },
   _normalizeEvent, _devigEv, // testing
 };

@@ -35927,6 +35927,11 @@ Statut : ${match.status_detail || '—'}
 Win prob BLENDED : ${h.name} ${bl.p_home != null ? bl.p_home + '%' : '—'} | ${a.name} ${bl.p_away != null ? bl.p_away + '%' : '—'}
 Elo : ${h.name} ${wp.home_rating ?? '—'} vs ${a.name} ${wp.away_rating ?? '—'} (Δ ${wp.edge_elo ?? '—'})
 Pythagorean : ${p.pythagorean ? p.pythagorean.p_home + '%' : '—'} | Four Factors : ${p.four_factors ? p.four_factors.p_home + '%' : '—'}
+SRS (margin saison) : ${p.srs ? p.srs.p_home + '%' : '—'} | Recent L10 (momentum) : ${p.recent_form ? p.recent_form.p_home + '%' : '—'} | Marché (devig) : ${val.fair_home != null ? val.fair_home + '%' : '—'}
+
+[CONSENSUS / CONTRADICTION DES MODÈLES (${h.name})]
+${p.consensus ? `Moyenne ${p.consensus.mean_p_home}% · σ${p.consensus.stddev} · range ${p.consensus.range.join('-')}% · verdict ${p.consensus.label}${p.consensus.contrarian ? ` · contrarian = ${p.consensus.contrarian.name} (${p.consensus.contrarian.p}%)` : ''}` : '—'}
+IMPORTANT : si verdict = CONTRADICTION/DIVERGENT, les modèles ne s'accordent PAS — signale-le comme facteur d'incertitude et explique POURQUOI un modèle contredit les autres (forme récente vs niveau saison, etc.).
 
 [MARGE / SPREAD — UQD]
 Marge attendue (${h.name}) : ${su.exp_margin ?? '—'} pts (IC90 ${su.margin_ic90 ? su.margin_ic90.join(' à ') : '—'})
