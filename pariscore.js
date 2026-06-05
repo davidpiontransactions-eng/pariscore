@@ -9570,6 +9570,15 @@ function initSSE() {
     } catch (err) { console.warn('[SSE] alert_trigger error', err); }
   });
 
+  // bd #2 — Market Alert SPW/RPW live → value shift (toast)
+  sseConnection.addEventListener('spw_value_shift', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d) return;
+      _showAlertToast(d);
+    } catch (err) { console.warn('[SSE] spw_value_shift error', err); }
+  });
+
   sseConnection.onopen = () => {
     console.log('[SSE] Connecté — polling 5min désactivé');
     if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
@@ -18987,6 +18996,11 @@ function _showAlertToast(d) {
   } else if (d.type === 'goal_flood') {
     icon = 'BUTS'; title = 'Goal flood 15min'; typeCls = 'type-flood';
     msg = (pl.goals_15min || '3+') + ' buts en 15min — ' + (pl.home_team || 'DOM') + ' vs ' + (pl.away_team || 'EXT') + ' score ' + (pl.score || '?');
+  } else if (d.type === 'spw_value_shift') {
+    icon = 'VALUE'; title = 'Shift SPW/RPW live'; typeCls = 'type-value';
+    const who = d.improved_player || (d.side === 'p1' ? d.player1 : d.player2) || 'Joueur';
+    const dir = d.prob_shift > 0 ? '+' : '';
+    msg = who + ' s\'améliore — win prob ' + d.prob_base_p1 + '% → ' + d.prob_live_p1 + '% (' + dir + d.prob_shift + 'pt) · cote ' + (d.odds_movement || 'flat') + (d.best_odds != null ? ' @' + d.best_odds : '');
   } else {
     title = String(d.type).toUpperCase();
     msg = JSON.stringify(pl).slice(0, 100);

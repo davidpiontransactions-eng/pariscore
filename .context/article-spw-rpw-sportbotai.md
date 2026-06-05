@@ -89,3 +89,20 @@ Outil : `tools/backtest-hand-matchup-brier.js` (offline, Sackmann, recherche). V
 **NO-GO câblage.** La latéralité n'apporte rien une fois Elo/rank/points contrôlés : l'edge gaucher est **déjà absorbé dans l'Elo/SPW/RPW** du joueur (rating gagné en partie via cet edge → terme hand redondant). Même schéma que l'âge : les features "contexte" marginales n'ajoutent pas sur un baseline de skill fort.
 
 **Conséquence priorités** : abandonner les features additives linéaires (âge, hand). Le vrai levier reste **#2 Market Alert SPW/RPW rolling live** (timing/edge marché, pas prédiction pré-match) et éventuellement un **GBM** captant les interactions (où ces features pourraient contribuer via splits, pas en additif).
+
+## MAJ — #2 Market Alert SPW/RPW live LIVRÉ (2026-06-05)
+
+Implémenté dans `pollTennisLive` (server.js) : `detectTennisSpwValueShift(m)` à chaque poll 30s sur les matchs live.
+
+**Logique** :
+1. SPW/RPW **cumulés** live depuis `_bsd_stats` (`_tnLiveServeStats` : SPW = first_pct·first_won + (1−first_pct)·second_won, RPW = ret_won). NB : BSD n'expose pas le point-level → cumulé, pas fenêtre glissante 3-5 jeux.
+2. Baseline pré-match via snapshot enrichi `serve_dominance.serve_pts_won_pct` (`_tnSrvLookupSnap`).
+3. Si |SPW live − baseline| ≥ 5pts sur un joueur → recompute win prob (`computeTennisMatchProb` BO3/BO5).
+4. Si |Δ win prob| ≥ 6pts ET cote du joueur amélioré PAS `SHORTENING` (marché en retard) → **value**.
+5. Cooldown 10min/match+side, broadcast SSE `spw_value_shift`.
+
+**Frontend** : listener SSE + toast vert `type-value` (`_showAlertToast` case `spw_value_shift`), message "Joueur s'améliore — win prob X%→Y% (+Zpt) · cote flat".
+
+**Garde-fous** : ≥6 jeux joués, baseline requise (sinon skip), additif (ne touche aucune proba shippée). Verdict : seul incrément retenu des 4 (edge de **timing marché**, pas prédiction statique). Validé runtime : 5 matchs live traités sans erreur.
+
+**Limites** : SPW cumulé ≠ rolling 3-5 jeux (manque point-level BSD) ; coverage baseline = matchs avec `serve_dominance`. Amélioration future : aiscore PBP pour vrai rolling + persistance `tennis_alerts` + push Discord/Telegram.
