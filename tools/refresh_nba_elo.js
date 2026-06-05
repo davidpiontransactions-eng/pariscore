@@ -94,6 +94,7 @@ async function main() {
   const elo = {};       // id -> rating
   const names = {};     // id -> name
   const gp = {};        // id -> games played
+  const recent = {};    // id -> [{won, margin}, ...] (chronologique, pour form L10)
   const get = (id) => (elo[id] != null ? elo[id] : 1500);
   let brierSum = 0, baseBrierSum = 0, correct = 0, n = 0;
 
@@ -116,10 +117,21 @@ async function main() {
     elo[g.awayId] = rA - delta;
     gp[g.homeId] = (gp[g.homeId] || 0) + 1;
     gp[g.awayId] = (gp[g.awayId] || 0) + 1;
+    (recent[g.homeId] = recent[g.homeId] || []).push({ won: homeWon, margin: g.hs - g.as });
+    (recent[g.awayId] = recent[g.awayId] || []).push({ won: 1 - homeWon, margin: g.as - g.hs });
   }
 
   const ratings = {};
-  for (const id of Object.keys(elo)) ratings[id] = { name: names[id], elo: Math.round(elo[id]), gp: gp[id] || 0 };
+  for (const id of Object.keys(elo)) {
+    const r10 = (recent[id] || []).slice(-10);
+    const wpct = r10.length ? r10.filter(x => x.won).length / r10.length : null;
+    const mavg = r10.length ? r10.reduce((s, x) => s + x.margin, 0) / r10.length : null;
+    ratings[id] = {
+      name: names[id], elo: Math.round(elo[id]), gp: gp[id] || 0,
+      form_l10_winpct: wpct != null ? +(wpct * 100).toFixed(1) : null,
+      form_l10_margin: mavg != null ? +mavg.toFixed(1) : null,
+    };
+  }
 
   const payload = {
     generated: new Date().toISOString(),
