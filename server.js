@@ -274,10 +274,16 @@ const RSS_FEEDS = [
   { url: 'https://feeds.bbci.co.uk/sport/tennis/rss.xml', lang: 'en', source: 'BBC Tennis', sport: 'tennis' },
   { url: 'https://www.espn.com/espn/rss/tennis/news', lang: 'en', source: 'ESPN Tennis', sport: 'tennis' },
   { url: 'https://www.tennisworldusa.org/index.php?format=feed&type=rss', lang: 'en', source: 'Tennis World USA', sport: 'tennis' },
+  // MMA / UFC (revue de presse combattants — bd 8gz3)
+  { url: 'https://www.ufc.com/rss/news.xml', lang: 'en', source: 'UFC News', sport: 'mma' },
   // CS2 / Esport (AI Scout — extension p2if chain-of-thought, eval cs2-match-prediction GO-partiel)
   { url: 'https://www.hltv.org/rss/news', lang: 'en', source: 'HLTV', sport: 'cs2' },
   { url: 'https://www.dexerto.com/cs2/feed/', lang: 'en', source: 'Dexerto CS2', sport: 'cs2' },
   { url: 'https://dust2.us/feed', lang: 'en', source: 'Dust2', sport: 'cs2' },
+  // NBA / Basket (revue de presse vertical NBA)
+  { url: 'https://www.espn.com/espn/rss/nba/news', lang: 'en', source: 'ESPN NBA', sport: 'nba' },
+  { url: 'https://www.cbssports.com/rss/headlines/nba/', lang: 'en', source: 'CBS NBA', sport: 'nba' },
+  { url: 'https://sports.yahoo.com/nba/rss/', lang: 'en', source: 'Yahoo NBA', sport: 'nba' },
 ];
 
 // Parseur XML RSS minimaliste (natif — zéro dépendance)
@@ -342,7 +348,7 @@ async function fetchGNews(query, lang = 'fr') {
 // Agrège toutes les sources et retourne { text, articleCount, sourceNames } pour Gemini + UI
 // bd p2if Phase 3 — param `sport` (default 'football' back-compat) route feeds RSS pertinents.
 async function fetchPressContext(homeTeam, awayTeam, sport = 'football') {
-  const sportNorm = (sport === 'tennis' || sport === 'cs2' || sport === 'all') ? sport : 'football';
+  const sportNorm = (sport === 'tennis' || sport === 'cs2' || sport === 'mma' || sport === 'nba' || sport === 'all') ? sport : 'football';
   const cacheKey = `press_${sportNorm}_${normName(homeTeam)}_${normName(awayTeam)}`;
   const cached = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < PRESS_CACHE_TTL)) {
@@ -19636,8 +19642,9 @@ async function handleAPI(req, res, pathname, query) {
   if (pathname === '/api/v1/nba/matches' && req.method === 'GET') {
     try {
       const matches = await basketballService.getNbaMatches();
+      const topBets = basketballService.computeNbaTopBets(matches, 3);
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
-      return res.end(JSON.stringify({ ok: true, count: matches.length, source: 'espn', matches }));
+      return res.end(JSON.stringify({ ok: true, count: matches.length, source: 'espn', top_bets: topBets, matches }));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
@@ -19676,6 +19683,105 @@ async function handleAPI(req, res, pathname, query) {
       console.error('[MMA route]', e.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: 'MMA fetch failed', events: [] }));
+    }
+  }
+
+  // GET /api/v1/mma/fight-analysis?fa=Belal+Muhammad&fb=Gabriel+Bonfim&prob_a=0.51&prob_b=0.49&dr_prob_a=0.508&ev_a=3.2&ev_b=-1.1
+  // Returns Gemini AI fight analysis: press review + bet recommendation
+  if (pathname === '/api/v1/mma/fight-analysis' && req.method === 'GET') {
+    if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+    const fa     = (query.fa || '').toString().trim();
+    const fb     = (query.fb || '').toString().trim();
+    if (!fa || !fb) return jsonResponse(res, 400, { error: 'fa et fb requis' });
+
+    const cacheKey = `mma_analysis_v1_${normName(fa)}_${normName(fb)}`;
+    const cached   = getCachedAIAnalysis ? getCachedAIAnalysis(cacheKey) : null;
+    if (cached && cached.text) {
+      return jsonResponse(res, 200, { text: cached.text, provider: 'cache', _from_cache: true });
+    }
+
+    // Numerical context from query params
+    const probA  = parseFloat(query.prob_a  || 0);
+    const probB  = parseFloat(query.prob_b  || 0);
+    const drA    = parseFloat(query.dr_prob_a || 0);
+    const drB    = parseFloat(query.dr_prob_b || 0);
+    const evA    = parseFloat(query.ev_a  || 0);
+    const evB    = parseFloat(query.ev_b  || 0);
+    const bestOddsA = parseFloat(query.best_odds_a || 0);
+    const bestOddsB = parseFloat(query.best_odds_b || 0);
+    const hasBetA = query.bet_a === 'true';
+    const hasBetB = query.bet_b === 'true';
+
+    // Fetch press context
+    let pressCtx = null;
+    try {
+      pressCtx = await Promise.race([
+        fetchPressContext(fa, fb, 'mma'),
+        new Promise(r => setTimeout(() => r(null), 5000)),
+      ]);
+    } catch (_) {}
+
+    const pressBlock = pressCtx && pressCtx.text
+      ? `[REVUE DE PRESSE RÉCENTE]\n${pressCtx.text}`
+      : '[REVUE DE PRESSE]\nAucune actualité presse récente trouvée.';
+
+    const prompt = `Tu es un analyste MMA expert de PariScore. Analyse ce combat UFC avec rigueur et synthèse.
+
+[DONNÉES DU COMBAT]
+Combat : ${fa} vs ${fb}
+Probabilités marché (devig consensus) : ${fa} ${(probA*100).toFixed(1)}% / ${fb} ${(probB*100).toFixed(1)}%
+${drA > 0 ? `Probabilités modèle DRatings : ${fa} ${(drA*100).toFixed(1)}% / ${fb} ${(drB*100).toFixed(1)}%` : ''}
+Meilleures cotes : ${fa} ${bestOddsA > 0 ? bestOddsA.toFixed(2) : '—'} / ${fb} ${bestOddsB > 0 ? bestOddsB.toFixed(2) : '—'}
+EV estimé : ${fa} ${evA > 0 ? '+' : ''}${evA.toFixed(1)}% / ${fb} ${evB > 0 ? '+' : ''}${evB.toFixed(1)}%
+Alerte Value Bet : ${hasBetA ? fa + ' ✓' : hasBetB ? fb + ' ✓' : 'Aucun'}
+
+${pressBlock}
+
+INSTRUCTIONS STRICTES :
+1. **REVUE DE PRESSE** (2-3 bullets max) : synthèse factuelle des infos presse sur les deux combattants. Si aucune info pertinente, indique brièvement les styles de combat connus.
+2. **ANALYSE CLÉS** (3 bullets) : avantages/faiblesses distinctifs, style matchup (striking vs grappling), facteur X.
+3. **PARI RECOMMANDÉ** : 1 pari max, format structuré :
+   - Combattant : [nom]
+   - Cote minimale : [X.XX]
+   - EV estimé : [+X.X%]
+   - Confiance : [Faible/Moyenne/Haute] selon convergence devig + DRatings
+   - Raisonnement : 1 phrase max
+
+Réponds en français. Sois concis (max 250 mots). Pas de disclaimer ou de mise en garde excessive.`;
+
+    try {
+      const body = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
+      });
+      const geminiRes = await httpsGet(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        { 'Content-Type': 'application/json' },
+        15000
+      );
+      // POST not GET — use manual approach
+      const geminiData = await new Promise((resolve, reject) => {
+        const u = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`);
+        const req2 = require('https').request({
+          hostname: u.hostname, port: 443,
+          path: u.pathname + u.search,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        }, (r) => {
+          let d = ''; r.on('data', c => d += c); r.on('end', () => {
+            try { resolve(JSON.parse(d)); } catch (_) { resolve(null); }
+          });
+        });
+        req2.on('error', reject); req2.write(body); req2.end();
+      });
+      const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+      if (text && typeof getCachedAIAnalysis !== 'undefined') {
+        try { kvSet(cacheKey, { text, provider: 'gemini', fetchedAt: new Date().toISOString() }); } catch (_) {}
+      }
+      return jsonResponse(res, 200, { text: text || 'Analyse indisponible.', provider: 'gemini', press_articles: pressCtx?.articleCount || 0 });
+    } catch (e) {
+      console.error('[MMA Analysis]', e.message);
+      return jsonResponse(res, 500, { error: e.message });
     }
   }
 
@@ -35781,6 +35887,121 @@ ${dataBlock}`;
     return jsonResponse(res, 200, { text, provider });
   } catch (e) {
     console.error('  [CS2AI] Erreur:', e.message);
+    return jsonResponse(res, 500, { error: e.message });
+  }
+}
+
+// ─── AI Scout NBA — revue de presse + top 3 bets (chain-of-thought Gemini) ──────
+// UI-only / explicabilité. Modèles (Elo+Pyth+FF blend + UQD) injectés au prompt.
+if (pathname.startsWith('/api/v1/ai/nba-analyze/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.split('/api/v1/ai/nba-analyze/')[1] || '').trim();
+  console.log('[AI NBA] Requête match ID: ' + matchId);
+  if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+  if (!matchId) return jsonResponse(res, 400, { error: 'matchId requis' });
+
+  const cacheKey = `deep_nba_v1_${matchId}`;
+  const cached = getCachedAIAnalysis(cacheKey);
+  if (cached?.text) return jsonResponse(res, 200, { text: cached.text, provider: cached.provider || 'cache', _from_cache: true });
+
+  let match = null;
+  try { match = await basketballService.getNbaMatchById(matchId); }
+  catch (e) { console.warn('  [NBAAI] getNbaMatchById KO:', e.message); }
+  if (!match) return jsonResponse(res, 404, { error: 'Match NBA non trouvé', matchId });
+
+  const h = match.home || {}, a = match.away || {}, p = match.predictions || {};
+  const wp = p.win_prob || {}, bl = p.blended || {}, su = p.spread_uqd || {}, val = p.value || {}, te = p.total_edge || {};
+  const t1 = h.name || '—', t2 = a.name || '—';
+
+  let pressCtx = null;
+  try {
+    pressCtx = await Promise.race([ fetchPressContext(t1, t2, 'nba'), new Promise(r => setTimeout(() => r(null), 5000)) ]);
+  } catch (e) { console.warn('  [NBAAI] press KO:', e.message); }
+
+  const dataBlock = `
+[DONNÉES DU MATCH FOURNIES PAR PARISCORE]
+${a.name} (${a.record || '?'}) @ ${h.name} (${h.record || '?'})${match.series ? ' · ' + match.series : ''}
+Statut : ${match.status_detail || '—'}
+
+[MODÈLE PARISCORE — proba consolidée (Elo game-by-game + Pythagorean + Four Factors)]
+Win prob BLENDED : ${h.name} ${bl.p_home != null ? bl.p_home + '%' : '—'} | ${a.name} ${bl.p_away != null ? bl.p_away + '%' : '—'}
+Elo : ${h.name} ${wp.home_rating ?? '—'} vs ${a.name} ${wp.away_rating ?? '—'} (Δ ${wp.edge_elo ?? '—'})
+Pythagorean : ${p.pythagorean ? p.pythagorean.p_home + '%' : '—'} | Four Factors : ${p.four_factors ? p.four_factors.p_home + '%' : '—'}
+
+[MARGE / SPREAD — UQD]
+Marge attendue (${h.name}) : ${su.exp_margin ?? '—'} pts (IC90 ${su.margin_ic90 ? su.margin_ic90.join(' à ') : '—'})
+ATS : pick ${su.ats_pick || '—'}${su.p_home_cover != null ? ' · P(cover ' + h.name + ') ' + su.p_home_cover + '%' : ''}
+
+[TOTAL O/U]
+Total modèle : ${te.model ?? (p.total ? p.total.expected_total : '—')} vs ligne ${te.line ?? '—'} · lean ${su.ou_lean || '—'}${su.p_over != null ? ' · P(over) ' + su.p_over + '%' : ''}
+
+[COTES & VALUE]
+Spread book : ${match.odds ? match.odds.details : '—'} · ML ${h.name} ${match.odds ? match.odds.ml_home : '—'} / ${a.name} ${match.odds ? match.odds.ml_away : '—'} · O/U ${match.odds ? match.odds.over_under : '—'}
+EV modèle vs cote : ${h.name} ${val.ev_home != null ? val.ev_home + '%' : '—'} | ${a.name} ${val.ev_away != null ? val.ev_away + '%' : '—'}
+${(pressCtx && pressCtx.articleCount > 0) ? `
+[REVUE DE PRESSE REELLE — ${pressCtx.articleCount} articles via ${(pressCtx.sourceNames || []).join(', ')}]
+${pressCtx.text}
+[FIN REVUE DE PRESSE REELLE]` : ''}`;
+
+  const _pressInstruction = (pressCtx && pressCtx.articleCount > 0)
+    ? `PRIORITE ABSOLUE — La section [REVUE DE PRESSE REELLE] contient ${pressCtx.articleCount} articles réels. Au minimum 3 des 5 avis doivent être grounded sur ces articles : nom du média en gras puis paraphrase de l'angle.`
+    : `Pas de recherche web live. Génère 5 avis médiatiques NBA plausibles (ESPN, The Athletic, Bleacher Report, CBS Sports, Yahoo Sports).`;
+
+  const systemPrompt = `Agis comme un analyste NBA expert et trader paris sportifs. Je te fournis les données d'un match NBA avec le modèle quantitatif PariScore (proba blended, marge UQD, ATS, total O/U, EV). Produis une analyse "Deep Scout" prête à publier sur Telegram.
+
+MÉTHODE (chain-of-thought) :
+- <ANALYSE> interne : confronte le modèle (blended win prob, Elo, marge attendue+IC, ATS cover, total) à la dynamique presse (forme, blessures, repos/back-to-back, momentum série playoff). Pèse pour/contre.
+- <CONCLUSION> : lecture synthétique.
+
+CONTRAINTES :
+1. Ne JAMAIS présenter ces probas comme certitudes : ce sont des estimations modèle NON calibrées vs marché.
+2. Message Telegram final dans un bloc \`\`\`text ... \`\`\`.
+3. Ton pro, analytique, orienté Value.
+
+STRUCTURE OBLIGATOIRE :
+- TITRE accrocheur (équipes, contexte, émojis 🏀).
+- 📊 DEEP SCOUT : PowerScore /100 par équipe, proba victoire, marge projetée, lecture du total.
+- 📰 REVUE DE PRESSE (5 AVIS MÉDIAS) : ${_pressInstruction}
+  Format strict, 5 items numérotés (1-2 lignes) :
+  1. **[Média]** : "angle sur forme/blessures/matchup/momentum."
+  2. à 5. idem, varie les angles.
+- 🎯 TOP 3 BETS PRÉDICTIFS (classés par valeur, base-toi sur le modèle fourni) :
+  1. Le Safe (proba la plus haute / faible variance) + raison courte.
+  2. La Value (meilleur EV ou ATS/total edge) + raison.
+  3. Le Risk (gros payout / underdog / total extrême) + raison.
+  Pour chaque : marché précis (Moneyline / Spread ±X / Total O/U X.5) + la donnée modèle qui le soutient.
+- ⚠️ L'AVIS DU TRADER : le piège à éviter (variance NBA, repos, garbage time, line trap).
+
+${dataBlock}`;
+
+  try {
+    console.log(`  [NBAAI] Appel Gemini — ${t1} vs ${t2}`);
+    const gemRes = await httpsPost(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      { contents: [{ parts: [{ text: systemPrompt }] }], safetySettings: GEMINI_SAFETY_SETTINGS, generationConfig: { temperature: 0.8, maxOutputTokens: 4096 } }
+    );
+    let text = '', provider = 'gemini';
+    if (gemRes.status === 200) {
+      text = (gemRes.data?.candidates?.[0]?.content?.parts?.[0]?.text) || '';
+    } else console.warn(`  [NBAAI] Gemini KO (${gemRes.status})`);
+    if (!text) {
+      for (const prov of AI_DEEP_PROVIDERS) {
+        if (prov.type !== 'openai') continue;
+        try {
+          const r = await httpsPost(`https://${prov.host}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: systemPrompt }], temperature: 0.8, max_tokens: 4096 },
+            { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore AI-AL NBA' });
+          if (r.status === 200) { const t = r.data?.choices?.[0]?.message?.content || ''; if (t) { text = t; provider = prov.name; break; } }
+        } catch (provErr) { console.warn(`  [NBAAI] ${prov.name} → ${provErr.message}`); }
+      }
+    }
+    if (!text) {
+      if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
+      return jsonResponse(res, 500, { error: 'Tous les providers IA ont échoué' });
+    }
+    saveAIAnalysisToCache(cacheKey, { text, provider });
+    console.log(`  [NBAAI] OK via ${provider} — ${text.length} chars`);
+    return jsonResponse(res, 200, { text, provider });
+  } catch (e) {
+    console.error('  [NBAAI] Erreur:', e.message);
     return jsonResponse(res, 500, { error: e.message });
   }
 }
