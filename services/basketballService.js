@@ -352,6 +352,36 @@ function _normalizeEvent(ev) {
   };
 }
 
+// ─── Top bets prédictifs (rank déterministe depuis les modèles, pas LLM) ─────────
+// Edge commun = points de % (pp) vs marché/50. ML: edge vs fair devig ; ATS/OU: prob - 50.
+function computeNbaTopBets(matches, topN = 3) {
+  const cands = [];
+  for (const m of (matches || [])) {
+    const p = m.predictions || {}, val = p.value || {}, su = p.spread_uqd || {}, te = p.total_edge || {};
+    const lbl = (m.away && m.away.abbr || '?') + ' @ ' + (m.home && m.home.abbr || '?');
+    // Moneyline value (edge modèle vs cote devigée)
+    if (val.edge_home != null && val.ev_home != null && val.edge_home > 1.5) {
+      cands.push({ matchId: m.id, match: lbl, market: 'Moneyline', selection: (m.home && m.home.name) || 'Home', edge_pp: +val.edge_home.toFixed(1), ev: val.ev_home, basis: 'blend vs cote devigée' });
+    }
+    if (val.edge_away != null && val.ev_away != null && val.edge_away > 1.5) {
+      cands.push({ matchId: m.id, match: lbl, market: 'Moneyline', selection: (m.away && m.away.name) || 'Away', edge_pp: +val.edge_away.toFixed(1), ev: val.ev_away, basis: 'blend vs cote devigée' });
+    }
+    // ATS (spread cover)
+    if (su.ats_pick && su.ats_pick !== 'NEUTRAL' && su.p_home_cover != null) {
+      const cover = su.ats_pick === 'HOME' ? su.p_home_cover : (100 - su.p_home_cover);
+      const sel = su.ats_pick === 'HOME' ? (m.home && m.home.name) : (m.away && m.away.name);
+      cands.push({ matchId: m.id, match: lbl, market: 'Spread' + (m.odds && m.odds.spread != null ? ' ' + (su.ats_pick === 'HOME' ? m.odds.spread : -m.odds.spread) : ''), selection: sel || su.ats_pick, edge_pp: +(cover - 50).toFixed(1), cover_pct: cover, basis: 'marge UQD vs ligne' });
+    }
+    // Total O/U
+    if (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null && te.line != null) {
+      const prob = su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over);
+      cands.push({ matchId: m.id, match: lbl, market: 'Total ' + su.ou_lean + ' ' + te.line, selection: su.ou_lean, edge_pp: +(prob - 50).toFixed(1), prob_pct: prob, basis: 'total modèle vs ligne' });
+    }
+  }
+  cands.sort((a, b) => b.edge_pp - a.edge_pp);
+  return cands.slice(0, topN);
+}
+
 // ─── Public ──────────────────────────────────────────────────────────────────────
 async function getNbaMatches() {
   if (Date.now() - _cache.ts < TTL_MS && _cache.data) return _cache.data;
@@ -377,6 +407,7 @@ module.exports = {
   computeNbaFourFactors,
   computeNbaBlend,
   computeNbaSpreadUQD,
+  computeNbaTopBets,
   invalidateCache() { _cache.ts = 0; },
   _normalizeEvent, _devigEv, // testing
 };

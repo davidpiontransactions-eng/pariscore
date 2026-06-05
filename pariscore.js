@@ -791,6 +791,7 @@ function _fetchAndRenderNba() {
       var st = document.getElementById('nba-status');
       var matches = (j && Array.isArray(j.matches)) ? j.matches : [];
       if (st) st.textContent = matches.length + ' match' + (matches.length > 1 ? 's' : '') + ' · ESPN';
+      _renderNbaTopBets((j && j.top_bets) || []);
       _renderNbaCards(matches);
     })
     .catch(e => {
@@ -836,9 +837,56 @@ function _renderNbaCards(matches) {
         (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null ? '<span class="nba-chip">' + _nbaEsc(su.ou_lean) + ' ' + (su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over)) + '%</span>' : '') +
         (bl.n_models ? '<span class="nba-chip">⊕ blend ' + bl.n_models + '</span>' : '') +
       '</div>' +
+      '<button class="nba-ai-btn" onclick="openNbaAI(\'' + _nbaEsc(m.id) + '\',\'' + _nbaEsc((a.abbr || '') + ' @ ' + (h.abbr || '')) + '\')">🤖 Analyse + Revue de presse</button>' +
     '</div>';
   }).join('');
 }
+
+// Banner Top 3 bets prédictifs (rank déterministe modèles)
+function _renderNbaTopBets(bets) {
+  var el = document.getElementById('nba-topbets');
+  if (!el) return;
+  if (!bets || !bets.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="nba-tb-head">🎯 TOP 3 BETS PRÉDICTIFS · classés par edge modèle</div><div class="nba-tb-bar">' +
+    bets.map(function (b, i) {
+      var edge = b.edge_pp != null ? '+' + b.edge_pp + 'pp' : '';
+      var detail = b.ev != null ? ('EV ' + (b.ev > 0 ? '+' : '') + b.ev + '%') : (b.cover_pct != null ? ('cover ' + b.cover_pct + '%') : (b.prob_pct != null ? (b.prob_pct + '%') : ''));
+      return '<div class="nba-tb-card">' +
+        '<span class="nba-tb-rank">#' + (i + 1) + ' · ' + _nbaEsc(b.match || '') + '</span>' +
+        '<div class="nba-tb-mkt">' + _nbaEsc(b.market || '') + '</div>' +
+        '<div class="nba-tb-sel">' + _nbaEsc(b.selection || '') + '</div>' +
+        '<div class="nba-tb-edge">' + _nbaEsc(detail) + ' · ' + _nbaEsc(edge) + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+
+// AI Scout NBA — revue de presse + top3 (Gemini chain-of-thought)
+window.openNbaAI = function (matchId, label) {
+  var modal = document.getElementById('nba-ai-modal');
+  var body = document.getElementById('nba-ai-body');
+  var title = document.getElementById('nba-ai-title');
+  if (!modal || !body) return;
+  if (title) title.textContent = '🤖 AI Scout NBA · ' + (label || '');
+  body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3,#5a6068);">🤖 Analyse IA en cours… (~10-20 s)</div>';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  fetch('/api/v1/ai/nba-analyze/' + encodeURIComponent(matchId), { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+    .then(function (res) {
+      if (!res.ok) throw new Error((res.j && res.j.error) || ('HTTP ' + res.status));
+      var text = (res.j && res.j.text) || '';
+      if (!text) throw new Error('Réponse IA vide');
+      var pre = document.createElement('pre');
+      pre.textContent = text; // XSS-safe
+      body.className = 'nba-ai-body'; body.innerHTML = ''; body.appendChild(pre);
+    })
+    .catch(function (e) { body.innerHTML = '<div style="padding:20px;color:#f87171;">⚠️ ' + _nbaEsc(e.message || 'Erreur') + '</div>'; });
+};
+window.closeNbaAI = function () {
+  var modal = document.getElementById('nba-ai-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
 
 // ─── SPORT HUB (écran d'orientation) ────────────────────────────────────────
 let _psStrategySport = 'football';
