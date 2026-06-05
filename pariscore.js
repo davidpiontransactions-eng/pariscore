@@ -27676,10 +27676,11 @@ async function loadFootAlerts() {
       + '<span class="mma-fighter-prob' + (favA ? ' favorite' : '') + '">' + probA + '%</span>'
       + '</div>'
       + '</div>'
-      // Center bar
+      // Center bar + DRatings badge
       + '<div class="mma-bar-wrap">'
       + '<span class="mma-vs">VS</span>'
       + '<div class="mma-prob-bar"><div class="mma-prob-fill" style="width:' + probA + '%"></div></div>'
+      + (f.dr_prob_a != null ? '<span class="mma-dr-badge">DR ' + Math.round(f.dr_prob_a * 100) + '/' + Math.round(f.dr_prob_b * 100) + '</span>' : '')
       + '</div>'
       // Fighter B (right)
       + '<div class="mma-fighter side-b">'

@@ -26,16 +26,19 @@ const UFC_EVENT_NAMES = {
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CACHE_TTL_ODDS = 60 * 60 * 1000;  // 1h
-const CACHE_TTL_FULL = 20 * 60 * 1000;  // 20 min
+const CACHE_TTL_ODDS     = 60 * 60 * 1000;  // 1h
+const CACHE_TTL_FULL     = 20 * 60 * 1000;  // 20 min
+const CACHE_TTL_DRATINGS = 30 * 60 * 1000;  // 30 min
 
 // ─── Caches ───────────────────────────────────────────────────────────────────
-const _oddsCache = { data: null, ts: 0 };
-const _fullCache = { data: null, ts: 0 };
-let   _isFetching = false;
+const _oddsCache    = { data: null, ts: 0 };
+const _dratingsCache = { data: null, ts: 0 }; // Map: "name_a|name_b" → {prob_a, prob_b}
+const _fullCache    = { data: null, ts: 0 };
+let   _isFetching   = false;
 
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
-function _get(urlStr, timeoutMs = 12000) {
+function _get(urlStr, extraHeaders, timeoutMs = 12000) {
+  if (typeof extraHeaders === 'number') { timeoutMs = extraHeaders; extraHeaders = null; }
   return new Promise((resolve, reject) => {
     const u    = new URL(urlStr);
     const opts = {
@@ -43,7 +46,7 @@ function _get(urlStr, timeoutMs = 12000) {
       port: 443,
       path: u.pathname + (u.search || ''),
       method: 'GET',
-      headers: { 'Accept': 'application/json', 'User-Agent': 'PariScore/2.0' },
+      headers: extraHeaders || { 'Accept': 'application/json', 'User-Agent': 'PariScore/2.0' },
     };
     const req = https.request(opts, (res) => {
       const chunks = [];
@@ -111,6 +114,76 @@ function _devig(bookmakers, nameA, nameB) {
   };
 }
 
+// ─── DRatings scraper ─────────────────────────────────────────────────────────
+// Source: dratings.com/predictor/ufc-mma-predictions/
+// Rows: "[date] [time] [FA] [FB] [%A] [%B] [ML...] ..."
+// Returns Map: "fa_lower|fb_lower" → { prob_a, prob_b }
+async function _fetchDRatings() {
+  if (_dratingsCache.data && (Date.now() - _dratingsCache.ts) < CACHE_TTL_DRATINGS) {
+    return _dratingsCache.data;
+  }
+  const index = {};
+  try {
+    const res = await _get(
+      'https://www.dratings.com/predictor/ufc-mma-predictions/',
+      { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'text/html' },
+      12000
+    );
+    if (!res || res.status !== 200 || typeof res.data !== 'string') return index;
+
+    const html = res.data;
+    // Each <tr> row: strip tags → "MM/DD/YYYY HH:MM [AP]M FighterA FighterB X.X% Y.Y% ..."
+    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    let m;
+    while ((m = rowRe.exec(html)) !== null) {
+      const text = m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      // Must contain two percentages
+      const pcts = text.match(/(\d{1,3}\.\d)\%/g);
+      if (!pcts || pcts.length < 2) continue;
+      const probA = parseFloat(pcts[0]) / 100;
+      const probB = parseFloat(pcts[1]) / 100;
+      // Fighter names: text between datetime and first % — split on date pattern
+      const dateRe = /^\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}\s*[AP]M\s+/;
+      const stripped = text.replace(dateRe, '');
+      const pctIdx   = stripped.indexOf(pcts[0]);
+      if (pctIdx < 2) continue;
+      const namePart  = stripped.slice(0, pctIdx).trim();
+      // Split name part into two fighter names (heuristic: longest common split)
+      // DRatings lists "FighterA FighterB" — split at midpoint of word boundary
+      const words = namePart.split(' ').filter(Boolean);
+      if (words.length < 2) continue;
+      const mid = Math.ceil(words.length / 2);
+      const fa  = words.slice(0, mid).join(' ').toLowerCase();
+      const fb  = words.slice(mid).join(' ').toLowerCase();
+      if (fa && fb) {
+        index[`${fa}|${fb}`] = { prob_a: Math.round(probA * 1000) / 1000, prob_b: Math.round(probB * 1000) / 1000 };
+        index[`${fb}|${fa}`] = { prob_a: Math.round(probB * 1000) / 1000, prob_b: Math.round(probA * 1000) / 1000 };
+      }
+    }
+    console.log(`[MMA] DRatings: ${Object.keys(index).length / 2} fights indexed`);
+  } catch (e) {
+    console.warn('[MMA] DRatings fetch:', e.message);
+  }
+  _dratingsCache.data = index;
+  _dratingsCache.ts   = Date.now();
+  return index;
+}
+
+function _matchDRatings(idx, nameA, nameB) {
+  const a = nameA.toLowerCase().trim();
+  const b = nameB.toLowerCase().trim();
+  // Exact match first
+  if (idx[`${a}|${b}`]) return idx[`${a}|${b}`];
+  // Fuzzy: try partial last-name match
+  const lastA = a.split(' ').pop();
+  const lastB = b.split(' ').pop();
+  for (const key of Object.keys(idx)) {
+    const [ka, kb] = key.split('|');
+    if (ka.includes(lastA) && kb.includes(lastB)) return idx[key];
+  }
+  return null;
+}
+
 // ─── Fetch Odds API ───────────────────────────────────────────────────────────
 async function _fetchOdds(apiKey) {
   if (!apiKey) return [];
@@ -170,8 +243,11 @@ async function getMMAFights(apiKey) {
   _isFetching = true;
 
   try {
-    const rawFights = await _fetchOdds(apiKey);
-    const enriched  = [];
+    const [rawFights, drIdx] = await Promise.all([
+      _fetchOdds(apiKey),
+      _fetchDRatings(),
+    ]);
+    const enriched = [];
 
     for (const ev of rawFights) {
       const nameA = ev.home_team || '';
@@ -180,21 +256,23 @@ async function getMMAFights(apiKey) {
 
       const books = ev.bookmakers || [];
       const d     = _devig(books, nameA, nameB);
+      const dr    = _matchDRatings(drIdx, nameA, nameB);
 
       enriched.push({
         fighter_a:      nameA,
         fighter_b:      nameB,
         commence_time:  ev.commence_time || null,
-        // Probabilities from devig
+        // Devig consensus probabilities
         prob_a:         d ? d.fair_a : null,
         prob_b:         d ? d.fair_b : null,
+        // DRatings model probabilities (independent signal)
+        dr_prob_a:      dr ? dr.prob_a : null,
+        dr_prob_b:      dr ? dr.prob_b : null,
         // Best odds
         best_odds_a:    d ? d.best_odds_a : null,
         best_odds_b:    d ? d.best_odds_b : null,
-        // AI odds = same as fair (no stats model yet)
         ai_odds_a:      d ? Math.round(1 / d.fair_a * 100) / 100 : null,
         ai_odds_b:      d ? Math.round(1 / d.fair_b * 100) / 100 : null,
-        // Vegas = best available
         vegas_odds_a:   d ? d.best_odds_a : null,
         vegas_odds_b:   d ? d.best_odds_b : null,
         // EV
@@ -228,10 +306,11 @@ function computeMMAWinProb() { return 0.5; }
 
 function getCacheStatus() {
   return {
-    full_age_s:    _fullCache.ts ? Math.round((Date.now() - _fullCache.ts) / 1000) : null,
-    odds_cached:   !!_oddsCache.data,
-    fights_cached: _fullCache.data ? _fullCache.data.reduce((n, e) => n + e.fights.length, 0) : 0,
-    source:        'the-odds-api/mma_mixed_martial_arts',
+    full_age_s:      _fullCache.ts ? Math.round((Date.now() - _fullCache.ts) / 1000) : null,
+    odds_cached:     !!_oddsCache.data,
+    dratings_cached: !!_dratingsCache.data,
+    fights_cached:   _fullCache.data ? _fullCache.data.reduce((n, e) => n + e.fights.length, 0) : 0,
+    source:          'the-odds-api + dratings.com',
   };
 }
 
