@@ -76,3 +76,16 @@ L'article décrit exactement notre moteur tennis existant, mais nous utilisons d
 
 ## Verdict
 Article = **validation externe** de notre architecture (on est state-of-art, voire au-dessus). Pas de refonte. 4 incréments actionnables, le plus rentable = **#2 Market Alert SPW/RPW rolling** (réutilise alertes SSE + moteur proba existant) et **#1 hand matchup** (quick win backtestable).
+
+## MAJ — Backtest #1 hand matchup (2026-06-05) : NO-GO
+
+Outil : `tools/backtest-hand-matchup-brier.js` (offline, Sackmann, recherche). Variantes base / lefty_adv (gaucher-vs-droitier orienté) / lefty_raw (être gaucher), expanding window.
+
+| Circuit | base Brier | lefty_adv Δ | lefty_raw Δ |
+|---|---|---|---|
+| ATP (2147, gauchers 13.3%) | 0.1822 | +0.0001 | +0.0001 |
+| WTA (2131, gauchers ~9%) | 0.1990 | −0.0000 | −0.0000 |
+
+**NO-GO câblage.** La latéralité n'apporte rien une fois Elo/rank/points contrôlés : l'edge gaucher est **déjà absorbé dans l'Elo/SPW/RPW** du joueur (rating gagné en partie via cet edge → terme hand redondant). Même schéma que l'âge : les features "contexte" marginales n'ajoutent pas sur un baseline de skill fort.
+
+**Conséquence priorités** : abandonner les features additives linéaires (âge, hand). Le vrai levier reste **#2 Market Alert SPW/RPW rolling live** (timing/edge marché, pas prédiction pré-match) et éventuellement un **GBM** captant les interactions (où ces features pourraient contribuer via splits, pas en additif).
