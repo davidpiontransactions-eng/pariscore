@@ -26664,6 +26664,7 @@ function renderComparateur(d) {
     if (!el) return;
     if (!_scoutCtx.t1) { el.innerHTML = '<div class="cs2-scout-empty">Sélectionnez un match</div>'; return; }
     if (tab === 'veto') { _loadVetoContent(_scoutCtx.matchId, el); return; }
+    if (tab === 'ai')   { _loadScoutAI(el); return; }
     el.innerHTML = `<div class="cs2-scout-loading">⏳ ${I18N.t('status.loading')}</div>`;
     var cacheKey = _scoutCtx.t1 + '|' + _scoutCtx.t2;
     var cached = _cs2EnrichCache[cacheKey];
@@ -26678,6 +26679,53 @@ function renderComparateur(d) {
         if (e) { _cs2EnrichCache[cacheKey] = e; _renderScoutContent(tab, e, el); }
         else el.innerHTML = '<div class="cs2-scout-empty">Données indisponibles pour ce match</div>';
       }).catch(function() { el.innerHTML = `<div class="cs2-scout-empty">${I18N.t('status.error_load')}</div>`; });
+  }
+
+  // 🤖 AI Scout CS2 — appelle /api/v1/ai/cs2-analyze (Gemini chain-of-thought, UI-only)
+  var _cs2AICache = {}; // matchId → text
+  function _loadScoutAI(el) {
+    var mid = _scoutCtx.matchId;
+    if (!mid) { el.innerHTML = '<div class="cs2-scout-empty">Match ID indisponible</div>'; return; }
+    if (_cs2AICache[mid]) { _renderScoutAI(el, _cs2AICache[mid]); return; }
+    el.innerHTML = '<div class="cs2-scout-loading">🤖 Analyse IA en cours… (~10-20 s)</div>';
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var to = setTimeout(function() { if (ctrl) ctrl.abort(); }, 35000);
+    fetch('/api/v1/ai/cs2-analyze/' + encodeURIComponent(mid),
+          { headers: { 'Accept': 'application/json' }, cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function(res) {
+        clearTimeout(to);
+        if (!res.ok) throw new Error((res.j && res.j.error) || ('HTTP ' + res.status));
+        var text = (res.j && res.j.text) || '';
+        if (!text) throw new Error('Réponse IA vide');
+        _cs2AICache[mid] = text;
+        _renderScoutAI(el, text);
+      })
+      .catch(function(e) {
+        clearTimeout(to);
+        var msg = (e && e.name === 'AbortError') ? 'Délai dépassé (35 s)' : (e && e.message) || 'Erreur';
+        el.innerHTML = '<div class="cs2-scout-empty">⚠️ ' + msg + '</div>';
+      });
+  }
+
+  function _renderScoutAI(el, text) {
+    el.innerHTML = '';
+    var bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;';
+    var lbl = document.createElement('span');
+    lbl.style.cssText = 'font-family:DM Mono,monospace;font-size:9px;font-weight:700;letter-spacing:.04em;color:#FF6B00;';
+    lbl.textContent = '🤖 AI SCOUT · ANALYSE EXPLICABLE (non calibrée)';
+    var copyBtn = document.createElement('button');
+    copyBtn.textContent = '📋 Copier';
+    copyBtn.style.cssText = 'background:0;border:1px solid var(--bg4,#1e2328);color:var(--text2,#8d9399);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;';
+    copyBtn.onclick = function() {
+      try { navigator.clipboard.writeText(text); copyBtn.textContent = '✓ Copié'; setTimeout(function(){ copyBtn.textContent = '📋 Copier'; }, 1500); } catch (_) {}
+    };
+    bar.appendChild(lbl); bar.appendChild(copyBtn);
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'white-space:pre-wrap;word-break:break-word;font-family:DM Mono,monospace;font-size:11px;line-height:1.5;color:var(--text1,#d8dadf);margin:0;';
+    pre.textContent = text; // XSS-safe : jamais innerHTML sur sortie LLM
+    el.appendChild(bar); el.appendChild(pre);
   }
 
   function _renderScoutContent(tab, e, el) {
