@@ -118,5 +118,6 @@
   "empty.no_bets": "Nog geen inzetten.",
   "empty.no_cash": "Geen kassabewegingen.",
   "empty.no_clv": "Nog geen CLV-gegevens beschikbaar.",
-  "empty.no_alert": "Nog geen meldingen verzonden."
+  "empty.no_alert": "Nog geen meldingen verzonden.",
+  "nav.nba": "NBA"
 }

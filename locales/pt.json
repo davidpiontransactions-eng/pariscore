@@ -118,5 +118,6 @@
   "empty.no_bets": "Nenhuma aposta por agora.",
   "empty.no_cash": "Nenhum movimento de caixa.",
   "empty.no_clv": "Nenhum dado CLV disponível por agora.",
-  "empty.no_alert": "Nenhum alerta enviado por agora."
+  "empty.no_alert": "Nenhum alerta enviado por agora.",
+  "nav.nba": "NBA"
 }

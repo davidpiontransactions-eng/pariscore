@@ -118,5 +118,6 @@
   "empty.no_bets": "No bets yet.",
   "empty.no_cash": "No cash movements.",
   "empty.no_clv": "No CLV data available yet.",
-  "empty.no_alert": "No alerts sent yet."
+  "empty.no_alert": "No alerts sent yet.",
+  "nav.nba": "NBA"
 }

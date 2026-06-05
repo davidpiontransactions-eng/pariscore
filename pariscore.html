@@ -10969,6 +10969,7 @@ const I18N = (() => {
     <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis" data-i18n="nav.tennis">Tennis</a>
     <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2" data-i18n="nav.cs2">CS2</a>
     <a href="#" onclick="showPage('mma',this);return false;" data-page="mma" aria-label="MMA/UFC">MMA</a>
+    <a href="#" onclick="showPage('nba',this);return false;" data-page="nba" aria-label="NBA" data-i18n="nav.nba">NBA</a>
     <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
     <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
@@ -11056,6 +11057,7 @@ const I18N = (() => {
   <div class="bn-more-title">Plus</div>
   <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()">☾ Mode Nuit</button>
   <div class="bn-more-grid">
+    <a href="#" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span>NBA</a>
     <a href="#" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>Alertes</a>
     <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span>Hot Picks</a>
     <a href="#" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Sure Bets</a>
@@ -19070,6 +19072,38 @@ const I18N = (() => {
      PAGE : CS2 / Counter-Strike 2
      Source BSD CSGO addon + HLTV rankings (fallback-safe)
      ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════
+     NBA — Basket vertical (ESPN, Elo records + Four Factors + value)
+     ══════════════════════════════════════════════════════════════ -->
+<div id="page-nba" data-page="nba" style="display:none;">
+<style>
+#page-nba { padding: 12px 16px; background: var(--bg,#0a0d0f); max-width:1100px; margin:0 auto; }
+#page-nba .nba-head { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+#page-nba .nba-head h2 { font-size:20px; font-weight:800; color:var(--text1,#e8eaed); margin:0; }
+#page-nba .nba-sub { font-size:11px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; }
+#page-nba .nba-disclaimer { font-size:10px; color:var(--text3,#5a6068); margin:6px 0 14px; font-style:italic; }
+#page-nba .nba-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:12px; }
+.nba-card { background:var(--bg2,#12161a); border:1px solid var(--bg4,#1e2328); border-radius:12px; padding:14px; }
+.nba-card .nba-c-head { display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; margin-bottom:10px; }
+.nba-team { display:flex; align-items:center; gap:8px; margin:6px 0; }
+.nba-team img { width:30px; height:30px; object-fit:contain; }
+.nba-team .nba-tn { font-weight:700; color:var(--text1,#e8eaed); font-size:14px; flex:1; }
+.nba-team .nba-rec { font-size:11px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; }
+.nba-team .nba-sc { font-size:16px; font-weight:800; color:var(--text1,#e8eaed); min-width:28px; text-align:right; }
+.nba-prob-bar { height:8px; border-radius:4px; background:var(--bg4,#1e2328); overflow:hidden; display:flex; margin:8px 0 4px; }
+.nba-prob-bar .nba-pf { background:linear-gradient(90deg,#ff6b00,#ffae42); }
+.nba-prob-lbl { display:flex; justify-content:space-between; font-size:11px; font-family:'DM Mono',monospace; color:var(--text2,#8d9399); }
+.nba-foot { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; font-size:11px; font-family:'DM Mono',monospace; }
+.nba-chip { padding:3px 8px; border-radius:6px; background:var(--bg3,#171c21); color:var(--text2,#8d9399); }
+.nba-chip.ev-pos { background:#0d3b1e; color:#4ade80; }
+.nba-chip.ev-neg { background:#3b0d0d; color:#f87171; }
+.nba-empty { padding:50px; text-align:center; color:var(--text3,#5a6068); }
+</style>
+<div class="nba-head"><h2>🏀 NBA</h2><span class="nba-sub" id="nba-status">…</span></div>
+<div class="nba-disclaimer">Modèle Elo (records) + Four Factors, indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré — usage analytique, pas un conseil de pari.</div>
+<div class="nba-grid" id="nba-grid"><div class="nba-empty">⏳ Chargement…</div></div>
+</div>
+
 <div id="page-cs2" data-page="cs2" style="display:none;">
 <style>
 /* ── CS2 Tab Styles ─────────────────────────────────────────── */
