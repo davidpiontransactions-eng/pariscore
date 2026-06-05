@@ -19750,32 +19750,22 @@ INSTRUCTIONS STRICTES :
 Réponds en français. Sois concis (max 250 mots). Pas de disclaimer ou de mise en garde excessive.`;
 
     try {
-      const body = JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
-      });
-      const geminiRes = await httpsGet(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        { 'Content-Type': 'application/json' },
-        15000
+      console.log(`  [MMA Analysis] Gemini — ${fa} vs ${fb}`);
+      const gemRes = await httpsPost(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          safetySettings: GEMINI_SAFETY_SETTINGS,
+          generationConfig: { temperature: 0.5, maxOutputTokens: 700 },
+        }
       );
-      // POST not GET — use manual approach
-      const geminiData = await new Promise((resolve, reject) => {
-        const u = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`);
-        const req2 = require('https').request({
-          hostname: u.hostname, port: 443,
-          path: u.pathname + u.search,
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-        }, (r) => {
-          let d = ''; r.on('data', c => d += c); r.on('end', () => {
-            try { resolve(JSON.parse(d)); } catch (_) { resolve(null); }
-          });
-        });
-        req2.on('error', reject); req2.write(body); req2.end();
-      });
-      const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-      if (text && typeof getCachedAIAnalysis !== 'undefined') {
+      let text = '';
+      if (gemRes.status === 200) {
+        text = (gemRes.data?.candidates?.[0]?.content?.parts?.[0]?.text) || '';
+      } else {
+        console.warn(`  [MMA Analysis] Gemini KO (${gemRes.status})`);
+      }
+      if (text) {
         try { kvSet(cacheKey, { text, provider: 'gemini', fetchedAt: new Date().toISOString() }); } catch (_) {}
       }
       return jsonResponse(res, 200, { text: text || 'Analyse indisponible.', provider: 'gemini', press_articles: pressCtx?.articleCount || 0 });
