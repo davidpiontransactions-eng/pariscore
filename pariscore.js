@@ -27534,7 +27534,7 @@ async function loadFootAlerts() {
   function _updateAccBadge() {
     var badge = document.getElementById('mma-acc-badge');
     if (!badge) return;
-    badge.textContent = '~70% accuracy';
+    badge.textContent = '61.9% accuracy · 7207 bouts';
     badge.style.display = '';
   }
 

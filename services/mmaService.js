@@ -25,20 +25,22 @@ const THROTTLE_MS        = 2200;              // ufcstats rate limit
 const MAX_EVENTS         = 3;                 // upcoming events to enrich
 
 // ─── Model coefficients ───────────────────────────────────────────────────────
-// Logistic regression on fighter differentials (A - B).
-// Positive = favours fighter A. Calibrate with jansen88 dataset.
+// Logistic regression — calibrated on jansen88/ufc-data 7207 bouts (train-mma-model.py)
+// Test accuracy: 61.93%  Brier: 0.2289  CV: 64.4% ± 2.7%
+// Positive coef = favours fighter A (higher value = better for A).
 const MMA_COEFS = {
-  intercept:         0.02,
-  slpm:              0.18,   // sig strikes landed/min
-  str_acc:           0.90,   // strike accuracy (0-1)
-  str_def:           0.80,   // strike defense (0-1)
-  td_avg:            0.08,   // takedowns avg per 15min
-  td_acc:            0.50,   // takedown accuracy (0-1)
-  td_def:            0.40,   // takedown defense (0-1)
-  sub_avg:           0.12,   // submission avg per 15min
-  reach_cm:          0.005,  // reach differential in cm
-  age:              -0.018,  // age (older = slight disadvantage)
-  finish_proxy:      0.22,   // (slpm/5) proxy for finishing ability
+  intercept:     0.000000,
+  slpm:          0.212912,   // sig strikes landed/min
+  str_acc:       1.401249,   // strike accuracy (0-1) — most predictive
+  sapm:         -0.274483,   // sig strikes absorbed/min (negative = penalise)
+  str_def:       1.266799,   // strike defense (0-1)
+  td_avg:        0.095772,   // takedowns avg per 15min
+  td_acc:        0.013466,   // takedown accuracy
+  td_def:        0.890758,   // takedown defense
+  sub_avg:       0.201357,   // submission avg per 15min
+  reach_cm:      0.009593,   // reach in cm
+  age:          -0.049109,   // age differential (older = disadvantage)
+  finish_proxy:  0.768608,   // slpm/5 finishing proxy
 };
 
 // ─── In-memory caches ─────────────────────────────────────────────────────────
@@ -216,6 +218,7 @@ function computeMMAWinProb(fa, fb) {
   const logit = MMA_COEFS.intercept
     + MMA_COEFS.slpm         * (fa.slpm    - fb.slpm)
     + MMA_COEFS.str_acc      * (fa.str_acc - fb.str_acc)
+    + MMA_COEFS.sapm         * (fa.sapm    - fb.sapm)
     + MMA_COEFS.str_def      * (fa.str_def - fb.str_def)
     + MMA_COEFS.td_avg       * (fa.td_avg  - fb.td_avg)
     + MMA_COEFS.td_acc       * (fa.td_acc  - fb.td_acc)
