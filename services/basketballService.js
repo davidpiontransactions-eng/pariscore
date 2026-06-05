@@ -14,15 +14,53 @@
  */
 
 const https = require('https');
+const fs    = require('fs');
+const path  = require('path');
 
 const ESPN_HOST = 'site.api.espn.com';
 const ESPN_SCOREBOARD = '/apis/site/v2/sports/basketball/nba/scoreboard';
+const ESPN_STANDINGS  = '/apis/v2/sports/basketball/nba/standings';
+const NBA_ELO_FILE    = path.join(__dirname, '..', 'data', 'nba_elo.json');
 const HCA_PTS   = 3.2;     // home-court advantage (points) — littérature NBA ~2.5-3.5
 const PTS_PER_ELO = 28;    // ~28 pts NBA spread par 400 Elo (calibrable)
 const ELO_DIV   = 400;
 const TTL_MS    = 90 * 1000; // 90s cache live
 
 let _cache = { ts: 0, data: null };
+let _standings = { ts: 0, map: null, leagueAvg: 114.5 };
+let _eloCache = { ts: 0, data: null };
+
+// Standings ESPN → map teamId → { avgPF, avgPA, gp, diff } (défense modélisée)
+async function _fetchStandings() {
+  if (Date.now() - _standings.ts < 6 * 3600 * 1000 && _standings.map) return _standings;
+  const d = await httpsGetJson(ESPN_HOST, ESPN_STANDINGS);
+  const map = {};
+  let sumPF = 0, cnt = 0;
+  const children = (d && Array.isArray(d.children)) ? d.children : [];
+  for (const ch of children) {
+    const entries = (ch.standings && Array.isArray(ch.standings.entries)) ? ch.standings.entries : [];
+    for (const e of entries) {
+      const id = e.team && e.team.id;
+      if (!id) continue;
+      const stat = (name) => { const s = (e.stats || []).find(x => x.name === name); return s ? s.value : null; };
+      const pf = stat('avgPointsFor'), pa = stat('avgPointsAgainst');
+      map[id] = { avgPF: pf, avgPA: pa, gp: stat('gamesPlayed'), diff: stat('differential') };
+      if (pf != null) { sumPF += pf; cnt++; }
+    }
+  }
+  if (Object.keys(map).length) _standings = { ts: Date.now(), map, leagueAvg: cnt ? +(sumPF / cnt).toFixed(1) : 114.5 };
+  return _standings;
+}
+
+// Elo game-by-game (tools/refresh_nba_elo.js) → { ratings:{id:{elo,gp}}, backtest }
+function _loadNbaElo() {
+  if (_eloCache.data && Date.now() - _eloCache.ts < 3600 * 1000) return _eloCache.data;
+  try {
+    const d = JSON.parse(fs.readFileSync(NBA_ELO_FILE, 'utf8'));
+    _eloCache = { ts: Date.now(), data: d };
+    return d;
+  } catch { return null; }
+}
 
 // ─── HTTP natif ────────────────────────────────────────────────────────────────
 function httpsGetJson(host, path) {
@@ -91,31 +129,50 @@ function _teamRating(rec, isHome) {
   return 1500 + (wp - 0.5) * 700;
 }
 
-function computeNbaWinProb(homeRec, awayRec) {
-  const rH = _teamRating(homeRec, true);
-  const rA = _teamRating(awayRec, false);
-  if (rH == null || rA == null) return null;
+function computeNbaWinProb(homeRec, awayRec, homeId, awayId) {
   const hcaElo = (HCA_PTS / PTS_PER_ELO) * ELO_DIV; // HCA points → Elo
+  let rH, rA, source;
+  // (c) Elo game-by-game réel si dispo (>= 10 matchs joués) — sinon proxy records
+  const eloData = _loadNbaElo();
+  const eH = eloData && eloData.ratings && eloData.ratings[homeId];
+  const eA = eloData && eloData.ratings && eloData.ratings[awayId];
+  if (eH && eA && (eH.gp || 0) >= 10 && (eA.gp || 0) >= 10) {
+    rH = eH.elo; rA = eA.elo; source = 'elo_game_by_game';
+  } else {
+    rH = _teamRating(homeRec, true); rA = _teamRating(awayRec, false); source = 'records_proxy';
+  }
+  if (rH == null || rA == null) return null;
   const diff = (rH + hcaElo) - rA;
   const pHome = 1 / (1 + Math.pow(10, -diff / ELO_DIV));
   return {
     home_rating: Math.round(rH), away_rating: Math.round(rA),
     p_home: +(pHome * 100).toFixed(1), p_away: +((1 - pHome) * 100).toFixed(1),
-    edge_elo: Math.round(diff),
+    edge_elo: Math.round(diff), source,
+    backtest: (source === 'elo_game_by_game' && eloData.backtest) ? eloData.backtest : null,
   };
 }
 
 // ─── Total O/U (scoring saison, INDÉPENDANT des cotes) ──────────────────────────
-// ⚠️ Total PRÉLIMINAIRE : avgPoints = scoring offensif saison, défense adverse NON modélisée
-// (ESPN scoreboard n'expose pas points-allowed). Biaisé haut (surtout playoffs, pace lent).
-// Phase 2 : intégrer defensive rating via team-stats endpoint → expected = f(offRtg, defRtg, pace).
-// En v1 : expose la somme offensive comme INDICATIF, sans émettre de lean BET.
-function computeNbaTotal(homeStats, awayStats) {
+// (b) Total avec défense modélisée (standings PF/PA, log5-style).
+// expected_home = avgPF_home × avgPA_away / leagueAvg  (offense vs défense adverse, ancré ligue)
+// Si standings absent → fallback combined_offense indicatif (défense non modélisée).
+function computeNbaTotal(homeStats, awayStats, homeId, awayId) {
   const ptsH = _statVal(homeStats, 'avgPoints');
   const ptsA = _statVal(awayStats, 'avgPoints');
+  const sH = _standings.map && _standings.map[homeId];
+  const sA = _standings.map && _standings.map[awayId];
+  const LA = _standings.leagueAvg || 114.5;
+  if (sH && sA && sH.avgPF != null && sH.avgPA != null && sA.avgPF != null && sA.avgPA != null) {
+    const expH = (sH.avgPF * sA.avgPA) / LA;
+    const expA = (sA.avgPF * sH.avgPA) / LA;
+    const expected = +(expH + expA + HCA_PTS * 0.3).toFixed(1);
+    return {
+      expected_total: expected, exp_home: +expH.toFixed(1), exp_away: +expA.toFixed(1),
+      defense_modeled: true, league_avg: LA,
+    };
+  }
   if (ptsH == null || ptsA == null) return null;
-  const combinedOffense = +(ptsH + ptsA).toFixed(1);
-  return { combined_offense: combinedOffense, home_avg_pts: ptsH, away_avg_pts: ptsA, defense_modeled: false };
+  return { combined_offense: +(ptsH + ptsA).toFixed(1), home_avg_pts: ptsH, away_avg_pts: ptsA, defense_modeled: false };
 }
 
 // ─── Devig moneyline 2-way (proportionnel) → fair + EV (cotes en SORTIE) ─────────
@@ -147,8 +204,8 @@ function _normalizeEvent(ev) {
   const hTeam = home.team || {}, aTeam = away.team || {};
   const odds = (comp.odds && comp.odds[0]) || null;
 
-  const winProb = computeNbaWinProb(home.records, away.records);
-  const total   = computeNbaTotal(home.statistics, away.statistics);
+  const winProb = computeNbaWinProb(home.records, away.records, hTeam.id, aTeam.id);
+  const total   = computeNbaTotal(home.statistics, away.statistics, hTeam.id, aTeam.id);
 
   let value = null;
   if (odds && odds.moneyline && winProb) {
@@ -157,11 +214,16 @@ function _normalizeEvent(ev) {
     if (mlH && mlA) value = _devigEv(mlH, mlA, winProb);
   }
 
-  // Total : INDICATIF uniquement (défense non modélisée en v1) — pas de lean BET émis.
+  // Total edge : si défense modélisée (standings) → lean réel vs ligne ; sinon indicatif.
   let totalEdge = null;
   if (total && odds && odds.overUnder != null) {
-    totalEdge = { line: odds.overUnder, combined_offense: total.combined_offense,
-      lean: null, status: 'preliminary_no_defense' };
+    if (total.defense_modeled && total.expected_total != null) {
+      const diff = +(total.expected_total - odds.overUnder).toFixed(1);
+      totalEdge = { line: odds.overUnder, model: total.expected_total, diff,
+        lean: Math.abs(diff) >= 3 ? (diff > 0 ? 'OVER' : 'UNDER') : 'NEUTRAL', status: 'modeled' };
+    } else {
+      totalEdge = { line: odds.overUnder, combined_offense: total.combined_offense, lean: null, status: 'preliminary_no_defense' };
+    }
   }
 
   return {
@@ -199,6 +261,7 @@ function _normalizeEvent(ev) {
 // ─── Public ──────────────────────────────────────────────────────────────────────
 async function getNbaMatches() {
   if (Date.now() - _cache.ts < TTL_MS && _cache.data) return _cache.data;
+  await _fetchStandings().catch(() => {}); // défense (PF/PA) — best-effort
   const d = await httpsGetJson(ESPN_HOST, ESPN_SCOREBOARD);
   const events = (d && Array.isArray(d.events)) ? d.events : [];
   const matches = events.map(_normalizeEvent).filter(m => m.id);
