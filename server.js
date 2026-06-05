@@ -19750,25 +19750,36 @@ INSTRUCTIONS STRICTES :
 Réponds en français. Sois concis (max 250 mots). Pas de disclaimer ou de mise en garde excessive.`;
 
     try {
-      console.log(`  [MMA Analysis] Gemini — ${fa} vs ${fb}`);
-      const gemRes = await httpsPost(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-          safetySettings: GEMINI_SAFETY_SETTINGS,
-          generationConfig: { temperature: 0.5, maxOutputTokens: 700 },
-        }
-      );
       let text = '';
-      if (gemRes.status === 200) {
-        text = (gemRes.data?.candidates?.[0]?.content?.parts?.[0]?.text) || '';
-      } else {
-        console.warn(`  [MMA Analysis] Gemini KO (${gemRes.status})`);
+      let provider = 'none';
+      for (const prov of AI_DEEP_PROVIDERS) {
+        try {
+          console.log(`  [MMA Analysis] ${prov.name} — ${fa} vs ${fb}`);
+          let r;
+          if (prov.type === 'gemini') {
+            r = await httpsPost(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+              { contents: [{ parts: [{ text: prompt }] }], safetySettings: GEMINI_SAFETY_SETTINGS, generationConfig: { temperature: 0.5, maxOutputTokens: 700 } }
+            );
+            if (r.status === 200) text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            else console.warn(`  [MMA Analysis] Gemini KO (${r.status})`);
+          } else {
+            r = await httpsPost(`https://${prov.host}${prov.path}`,
+              { model: prov.model, messages: [{ role: 'user', content: prompt }], temperature: 0.5, max_tokens: 700 },
+              { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore MMA' }
+            );
+            if (r.status === 200) text = r.data?.choices?.[0]?.message?.content || '';
+            else console.warn(`  [MMA Analysis] ${prov.name} KO (${r.status})`);
+          }
+          if (text) { provider = prov.name; break; }
+        } catch (provErr) {
+          console.warn(`  [MMA Analysis] ${prov.name} →`, provErr.message);
+        }
       }
       if (text) {
-        try { kvSet(cacheKey, { text, provider: 'gemini', fetchedAt: new Date().toISOString() }); } catch (_) {}
+        try { kvSet(cacheKey, { text, provider, fetchedAt: new Date().toISOString() }); } catch (_) {}
       }
-      return jsonResponse(res, 200, { text: text || 'Analyse indisponible.', provider: 'gemini', press_articles: pressCtx?.articleCount || 0 });
+      return jsonResponse(res, 200, { text: text || 'Analyse indisponible.', provider, press_articles: pressCtx?.articleCount || 0 });
     } catch (e) {
       console.error('[MMA Analysis]', e.message);
       return jsonResponse(res, 500, { error: e.message });
