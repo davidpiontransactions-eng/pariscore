@@ -10968,6 +10968,7 @@ const I18N = (() => {
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football" data-i18n="nav.football">Football</a>
     <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis" data-i18n="nav.tennis">Tennis</a>
     <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2" data-i18n="nav.cs2">CS2</a>
+    <a href="#" onclick="showPage('mma',this);return false;" data-page="mma" aria-label="MMA/UFC">MMA</a>
     <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
     <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
@@ -11030,6 +11031,9 @@ const I18N = (() => {
   </a>
   <a href="#" data-page="cs2" onclick="bnGo('cs2',this);return false;">
     <span class="bn-lbl">🎮 CS2</span>
+  </a>
+  <a href="#" data-page="mma" onclick="bnGo('mma',this);return false;">
+    <span class="bn-lbl">🥊 MMA</span>
   </a>
   <a href="#" data-page="strategies" onclick="bnGo('strategies',this);return false;">
     <span class="bn-lbl">Stratégies</span>
@@ -19578,6 +19582,98 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
       <div id="cs2-scout-content" class="cs2-scout-content"></div>
     </div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAGE : MMA / UFC  (bd 8gz3)
+     Data: ufcstats.com scraping + The Odds API mma_mixed_martial_arts
+     ══════════════════════════════════════════════════════════════ -->
+<div id="page-mma" data-page="mma" style="display:none;">
+<style>
+/* ── MMA Tab Styles ──────────────────────────────────────────── */
+#page-mma { padding-top: 4px; background: var(--bg,#0a0d0f); }
+body[data-page="mma"] .footer-newsletter,
+body[data-page="mma"] footer { display: none !important; }
+.mma-header { padding: 18px 16px 0; max-width: 960px; margin: 0 auto; }
+.mma-title { font-family: Syne,sans-serif; font-weight: 800; font-size: 26px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+.mma-accuracy-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.35); border-radius: 20px; padding: 3px 10px; font-family:'DM Mono',monospace; font-size: 11px; font-weight: 700; color: #D4AF37; }
+.mma-subtitle { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.mma-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 16px 16px; max-width: 960px; }
+.mma-pill { display: inline-flex; align-items: center; gap: 4px; padding: 5px 13px; border-radius: 20px; border: 1px solid var(--bg4,#1e2328); background: var(--bg2,#111417); color: var(--text2,#8d9399); font-family:'Instrument Sans',sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.mma-pill.active { background: #E3001B; border-color: #E3001B; color: #fff; }
+.mma-pill:hover:not(.active) { border-color: #E3001B; color: #E3001B; }
+.mma-refresh-btn { margin-left: auto; padding: 6px 13px; background: var(--bg3,#181c20); color: var(--text,#e8eaed); border: 1px solid var(--bg4,#1e2328); border-radius: 6px; cursor: pointer; font-family:'Instrument Sans',sans-serif; font-size: 12px; }
+.mma-refresh-btn:hover { border-color: #E3001B; }
+/* Event groups */
+.mma-feed { max-width: 960px; margin: 0 auto; padding: 0 16px 96px; }
+.mma-event-group { margin-bottom: 24px; }
+.mma-event-head { display: flex; align-items: center; gap: 10px; padding: 8px 0 10px; border-bottom: 1px solid var(--bg4,#1e2328); margin-bottom: 10px; }
+.mma-event-name { font-family: Syne,sans-serif; font-weight: 700; font-size: 15px; color: var(--text,#e8eaed); }
+.mma-event-date { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); }
+.mma-event-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
+/* Fight card */
+.mma-fight { background: var(--bg2,#111417); border: 1px solid var(--bg4,#1e2328); border-radius: 10px; margin-bottom: 8px; overflow: hidden; transition: border-color 0.15s; }
+.mma-fight:hover { border-color: rgba(227,0,27,0.3); }
+.mma-fight.has-bet { border-color: rgba(212,175,55,0.4); }
+.mma-fight-meta { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg3,#181c20); border-bottom: 1px solid var(--bg4,#1e2328); font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.05em; }
+.mma-title-belt { color: #D4AF37; font-size: 11px; }
+/* Fighters row */
+.mma-fighters { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 14px 12px 10px; }
+.mma-fighter { display: flex; flex-direction: column; }
+.mma-fighter.side-b { align-items: flex-end; }
+.mma-fighter-name { font-family: Syne,sans-serif; font-weight: 700; font-size: 14px; color: var(--text,#e8eaed); line-height: 1.2; }
+.mma-fighter-record { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-top: 2px; }
+.mma-fighter-prob { font-family: Syne,sans-serif; font-weight: 800; font-size: 22px; margin-top: 4px; }
+.mma-fighter.side-a .mma-fighter-prob { color: #e8eaed; }
+.mma-fighter.side-b .mma-fighter-prob { color: #e8eaed; }
+.mma-fighter.side-a .mma-fighter-prob.favorite { color: #E3001B; }
+.mma-fighter.side-b .mma-fighter-prob.favorite { color: #E3001B; }
+/* Prob bar center */
+.mma-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 80px; }
+.mma-vs { font-family: Syne,sans-serif; font-weight: 900; font-size: 11px; color: var(--text3,#5a6068); }
+.mma-prob-bar { width: 80px; height: 5px; background: var(--bg4,#1e2328); border-radius: 3px; overflow: hidden; }
+.mma-prob-fill { height: 100%; background: linear-gradient(90deg,#E3001B,#ff4444); border-radius: 3px; transition: width 0.4s ease; }
+/* Odds row */
+.mma-odds-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 12px; }
+.mma-odds-cell { background: var(--bg3,#181c20); border: 1px solid var(--bg4,#1e2328); border-radius: 7px; padding: 7px 10px; }
+.mma-odds-label { font-family:'DM Mono',monospace; font-size: 9px; color: var(--text3,#5a6068); text-transform: uppercase; margin-bottom: 3px; }
+.mma-odds-line { display: flex; justify-content: space-between; align-items: center; font-family:'DM Mono',monospace; font-size: 12px; }
+.mma-odds-ai { color: #E3001B; font-weight: 700; }
+.mma-odds-vgs { color: var(--text2,#8d9399); }
+.mma-ev { font-size: 11px; margin-top: 3px; }
+.mma-ev.positive { color: #00E676; }
+.mma-ev.negative { color: var(--text3,#5a6068); }
+.mma-bet-chip { display: inline-flex; align-items: center; gap: 3px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); border-radius: 4px; padding: 1px 6px; font-size: 9px; font-weight: 700; color: #D4AF37; font-family:'DM Mono',monospace; margin-top: 3px; }
+/* Empty / loading states */
+.mma-skeleton { background: var(--bg2,#111417); border-radius: 10px; height: 120px; margin-bottom: 8px; animation: mma-pulse 1.4s ease-in-out infinite; }
+@keyframes mma-pulse { 0%,100%{opacity:0.4;} 50%{opacity:0.8;} }
+.mma-empty { text-align: center; padding: 60px 20px; color: var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size: 13px; }
+.mma-empty-icon { font-size: 40px; margin-bottom: 12px; }
+@media (max-width: 480px) {
+  .mma-fighter-name { font-size: 12px; }
+  .mma-fighter-prob { font-size: 18px; }
+  .mma-bar-wrap { min-width: 56px; }
+  .mma-prob-bar { width: 56px; }
+}
+</style>
+
+<div class="mma-header">
+  <div class="mma-title">
+    🥊 MMA / UFC
+    <span class="mma-accuracy-badge" id="mma-acc-badge" style="display:none;"></span>
+  </div>
+  <div class="mma-subtitle">Modèle différentiel · ufcstats.com · The Odds API</div>
+</div>
+
+<div class="mma-toolbar">
+  <button class="mma-pill active" data-mmaf="all"      onclick="setMMAFilter('all',this)">Tous</button>
+  <button class="mma-pill"        data-mmaf="value"    onclick="setMMAFilter('value',this)">💰 Value</button>
+  <button class="mma-refresh-btn" onclick="mmaForceRefresh()">🔄</button>
+</div>
+
+<div class="mma-feed" id="mma-feed">
+  <!-- Rendered by JS -->
+</div>
 </div>
 
 <!-- ============================================================

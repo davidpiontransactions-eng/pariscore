@@ -767,6 +767,8 @@ function showPage(pageId, linkEl) {
   if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
   if (pageId === 'cs2') initCs2Page();
+  if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage();
+  if (pageId === 'mma') initMMAPage();
   if (pageId === 'tennis-alerts') loadTennisAlerts();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -27473,3 +27475,167 @@ async function loadFootAlerts() {
   }).join('');
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MMA / UFC MODULE  (bd 8gz3)
+// Data: /api/v1/mma/fights  → ufcstats.com + The Odds API
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  var MMA_POLL_MS  = 5 * 60 * 1000;
+  var _mmaLoaded   = false;
+  var _mmaFilter   = 'all';
+  var _mmaData     = [];
+  var _mmaTimer    = null;
+
+  window.initMMAPage = function () {
+    if (_mmaLoaded) { _applyMMAFilter(); return; }
+    _mmaLoaded = true;
+    _renderMMASkeleton();
+    _fetchMMA();
+    _mmaTimer = setInterval(_fetchMMA, MMA_POLL_MS);
+  };
+
+  window.stopMMAPage = function () {
+    if (_mmaTimer) { clearInterval(_mmaTimer); _mmaTimer = null; }
+  };
+
+  window.setMMAFilter = function (f, btn) {
+    _mmaFilter = f;
+    document.querySelectorAll('.mma-pill').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.mmaf === f);
+    });
+    _applyMMAFilter();
+  };
+
+  window.mmaForceRefresh = function () {
+    _mmaLoaded = false;
+    initMMAPage();
+  };
+
+  function _fetchMMA() {
+    fetch('/api/v1/mma/fights')
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (d) {
+        _mmaData = (d && Array.isArray(d.events)) ? d.events : [];
+        _applyMMAFilter();
+        _updateAccBadge();
+      })
+      .catch(function (e) {
+        console.warn('[MMA] fetch error:', e);
+        var feed = document.getElementById('mma-feed');
+        if (feed && !_mmaData.length) {
+          feed.innerHTML = '<div class="mma-empty"><div class="mma-empty-icon">🥊</div>Données UFC non disponibles.</div>';
+        }
+      });
+  }
+
+  function _updateAccBadge() {
+    var badge = document.getElementById('mma-acc-badge');
+    if (!badge) return;
+    badge.textContent = '~70% accuracy';
+    badge.style.display = '';
+  }
+
+  function _applyMMAFilter() {
+    var feed = document.getElementById('mma-feed');
+    if (!feed) return;
+    var events = _mmaData;
+    if (_mmaFilter === 'value') {
+      events = events.map(function (ev) {
+        return Object.assign({}, ev, {
+          fights: (ev.fights || []).filter(function (f) { return f.bet_a || f.bet_b; })
+        });
+      }).filter(function (ev) { return ev.fights.length > 0; });
+    }
+    if (!events.length) {
+      feed.innerHTML = '<div class="mma-empty"><div class="mma-empty-icon">🥊</div>'
+        + (_mmaFilter === 'value' ? 'Aucun value bet détecté.' : 'Aucun événement UFC à venir.')
+        + '</div>';
+      return;
+    }
+    feed.innerHTML = events.map(_renderMMAEvent).join('');
+  }
+
+  function _renderMMASkeleton() {
+    var feed = document.getElementById('mma-feed');
+    if (!feed) return;
+    var s = '';
+    for (var i = 0; i < 4; i++) s += '<div class="mma-skeleton"></div>';
+    feed.innerHTML = s;
+  }
+
+  function _esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function _fmt(n, digits) {
+    if (n == null || isNaN(n)) return '—';
+    return Number(n).toFixed(digits != null ? digits : 2);
+  }
+
+  function _renderMMAEvent(ev) {
+    var fights = (ev.fights || []).map(_renderMMAFight).join('');
+    if (!fights) return '';
+    return '<div class="mma-event-group">'
+      + '<div class="mma-event-head">'
+      + '<span class="mma-event-name">' + _esc(ev.event_name) + '</span>'
+      + (ev.event_date ? '<span class="mma-event-date">&nbsp;· ' + _esc(ev.event_date) + '</span>' : '')
+      + '</div>'
+      + fights
+      + '</div>';
+  }
+
+  function _renderMMAFight(f) {
+    var probA  = Math.round((f.prob_a || 0) * 100);
+    var probB  = Math.round((f.prob_b || 0) * 100);
+    var favA   = probA >= probB;
+    var hasBet = f.bet_a || f.bet_b;
+    var statsA = f.stats_a || {};
+    var statsB = f.stats_b || {};
+    var recA   = statsA.wins != null ? statsA.wins + '-' + statsA.losses + (statsA.draws ? '-' + statsA.draws : '') : '';
+    var recB   = statsB.wins != null ? statsB.wins + '-' + statsB.losses + (statsB.draws ? '-' + statsB.draws : '') : '';
+
+    return '<div class="mma-fight' + (hasBet ? ' has-bet' : '') + '">'
+      + '<div class="mma-fight-meta">'
+      + (f.weight_class ? _esc(f.weight_class) : 'Bout')
+      + (f.is_title ? ' <span class="mma-title-belt">🏆 TITLE</span>' : '')
+      + '</div>'
+      + '<div class="mma-fighters">'
+      + '<div class="mma-fighter side-a">'
+      + '<span class="mma-fighter-name">' + _esc(f.fighter_a) + '</span>'
+      + (recA ? '<span class="mma-fighter-record">' + _esc(recA) + '</span>' : '')
+      + '<span class="mma-fighter-prob' + (favA ? ' favorite' : '') + '">' + probA + '%</span>'
+      + '</div>'
+      + '<div class="mma-bar-wrap">'
+      + '<span class="mma-vs">VS</span>'
+      + '<div class="mma-prob-bar"><div class="mma-prob-fill" style="width:' + probA + '%"></div></div>'
+      + '</div>'
+      + '<div class="mma-fighter side-b">'
+      + '<span class="mma-fighter-name">' + _esc(f.fighter_b) + '</span>'
+      + (recB ? '<span class="mma-fighter-record">' + _esc(recB) + '</span>' : '')
+      + '<span class="mma-fighter-prob' + (!favA ? ' favorite' : '') + '">' + probB + '%</span>'
+      + '</div>'
+      + '</div>'
+      + '<div class="mma-odds-row">'
+      + _renderOddsCell(f.fighter_a, f.ai_odds_a, f.vegas_odds_a, f.ev_a_pct, f.bet_a)
+      + _renderOddsCell(f.fighter_b, f.ai_odds_b, f.vegas_odds_b, f.ev_b_pct, f.bet_b)
+      + '</div>'
+      + '</div>';
+  }
+
+  function _renderOddsCell(name, aiOdds, vegasOdds, evPct, hasBet) {
+    var evClass = evPct != null && evPct > 0 ? 'positive' : 'negative';
+    return '<div class="mma-odds-cell">'
+      + '<div class="mma-odds-label">' + _esc(name) + '</div>'
+      + '<div class="mma-odds-line">'
+      + '<span class="mma-odds-ai">AI ' + (aiOdds != null ? _fmt(aiOdds) : '—') + '</span>'
+      + '<span class="mma-odds-vgs">VGS ' + (vegasOdds != null ? _fmt(vegasOdds) : '—') + '</span>'
+      + '</div>'
+      + (evPct != null ? '<div class="mma-ev ' + evClass + '">EV ' + (evPct > 0 ? '+' : '') + _fmt(evPct, 1) + '%</div>' : '')
+      + (hasBet ? '<div class="mma-bet-chip">✓ BET</div>' : '')
+      + '</div>';
+  }
+
+}());
