@@ -1284,9 +1284,70 @@ function computeLiveMomentum(matchId, rounds1, rounds2) {
   };
 }
 
+// ─── Map-play likelihood predictor (proxy veto) ───────────────────────────────
+// Réutilise data/bo3_map_rounds.json : prédit la map jouée (co-play propensity)
+// + rounds attendus → sharpening marché Over/Under. NON calibré (backtest requis).
+const BO3_ROUNDS_FILE = path.join(__dirname, '..', 'data', 'bo3_map_rounds.json');
+let _bo3RoundsCache = { ts: 0, data: null };
+function _loadBo3Rounds() {
+  if (_bo3RoundsCache.data && Date.now() - _bo3RoundsCache.ts < 3600000) return _bo3RoundsCache.data;
+  try {
+    const d = JSON.parse(fs.readFileSync(BO3_ROUNDS_FILE, 'utf8'));
+    _bo3RoundsCache = { ts: Date.now(), data: d };
+    return d;
+  } catch { return null; }
+}
+function _findBo3Team(data, name) {
+  if (!data || !Array.isArray(data.teams) || !name) return null;
+  const n = String(name).toLowerCase();
+  return data.teams.find(t => (t.name || '').toLowerCase() === n)
+      || data.teams.find(t => { const tn = (t.name || '').toLowerCase(); return tn && (tn.includes(n) || n.includes(tn)); });
+}
+function computeMapPlayLikelihood(t1name, t2name, windowDays = 180) {
+  const data = _loadBo3Rounds();
+  if (!data) return { ok: false, error: 'bo3_map_rounds dataset absent (run tools/refresh_bo3_map_rounds.js)', maps: [] };
+  const wk = `w${windowDays}`;
+  const t1 = _findBo3Team(data, t1name);
+  const t2 = _findBo3Team(data, t2name);
+  if (!t1 || !t2) return { ok: false, error: 'équipe(s) absente(s) du dataset', t1_found: !!t1, t2_found: !!t2, maps: [] };
+
+  const mapsSet = new Set([...Object.keys(t1.maps || {}), ...Object.keys(t2.maps || {})]);
+  const nOf   = (t, m) => (t.maps && t.maps[m] && t.maps[m][wk] && t.maps[m][wk].n) || 0;
+  const avgOf = (t, m) => (t.maps && t.maps[m] && t.maps[m][wk] && t.maps[m][wk].avg != null) ? t.maps[m][wk].avg : null;
+  const tot1 = [...mapsSet].reduce((s, m) => s + nOf(t1, m), 0);
+  const tot2 = [...mapsSet].reduce((s, m) => s + nOf(t2, m), 0);
+  if (!tot1 || !tot2) return { ok: false, error: 'données insuffisantes sur la fenêtre', maps: [] };
+
+  const rows = [];
+  for (const m of mapsSet) {
+    const pr1 = nOf(t1, m) / tot1, pr2 = nOf(t2, m) / tot2;
+    const score = pr1 * pr2; // co-play propensity = proxy probabilité map jouée
+    const a1 = avgOf(t1, m), a2 = avgOf(t2, m);
+    const n1 = nOf(t1, m), n2 = nOf(t2, m);
+    const exp = (a1 != null && a2 != null) ? (a1 * n1 + a2 * n2) / ((n1 + n2) || 1) : (a1 != null ? a1 : a2);
+    rows.push({
+      map: m, score,
+      t1_play_pct: +(pr1 * 100).toFixed(1), t2_play_pct: +(pr2 * 100).toFixed(1),
+      expected_rounds: exp != null ? +exp.toFixed(2) : null, t1_avg: a1, t2_avg: a2, n: n1 + n2,
+    });
+  }
+  const sum = rows.reduce((s, r) => s + r.score, 0) || 1;
+  rows.forEach(r => { r.prob = +(r.score / sum * 100).toFixed(1); delete r.score; });
+  rows.sort((a, b) => b.prob - a.prob);
+  const top = rows[0] || null;
+  return {
+    ok: true, window_days: windowDays, t1: t1.name, t2: t2.name,
+    predicted_map: top ? top.map : null,
+    predicted_expected_rounds: top ? top.expected_rounds : null,
+    maps: rows,
+    note: 'Empirical co-play likelihood (proxy veto). NON calibré — backtest Brier requis avant signal BET.',
+  };
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 module.exports = {
   ACTIVE_MAPS,
+  computeMapPlayLikelihood,
   computeMapAdvantage,
   fetchHighlights,
   fetchTeamStickers,

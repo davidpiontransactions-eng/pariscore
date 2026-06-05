@@ -19611,6 +19611,25 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/cs2/map-prediction?team1=Vitality&team2=FaZe[&window=180] — proxy veto (co-play) + rounds attendus
+  if (pathname === '/api/v1/cs2/map-prediction' && req.method === 'GET') {
+    const t1 = (query.team1 || '').trim();
+    const t2 = (query.team2 || '').trim();
+    const window = [90, 180, 365].includes(parseInt(query.window, 10)) ? parseInt(query.window, 10) : 180;
+    if (!t1 || !t2) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'team1 et team2 requis' }));
+    }
+    try {
+      const out = cs2Service.computeMapPlayLikelihood(t1, t2, window);
+      res.writeHead(out.ok ? 200 : 422, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
+      return res.end(JSON.stringify(out));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
   if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
