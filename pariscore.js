@@ -27845,14 +27845,71 @@ async function loadFootAlerts() {
       .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
       .then(function(d) {
         drawer.dataset.loaded = '1';
-        var text = (d.text || 'Analyse indisponible.')
-          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\n/g, '<br>')
-        drawer.innerHTML = '<div class="mma-analysis-body">' + text + '</div>';
+        drawer.innerHTML = _renderMMAAnalysis(d.text || 'Analyse indisponible.');
       })
       .catch(function(e) {
         drawer.innerHTML = '<div class="mma-analysis-body" style="color:var(--red,#ff4d4d)">Analyse indisponible (' + e + ')</div>';
       });
   };
+
+  // Parse Gemini MMA analysis text into rich HTML with bet cards
+  function _renderMMAAnalysis(text) {
+    // Section: ANALYSE (bullets before TOP 3 PARIS)
+    var analyseHtml = '';
+    var betsHtml    = '';
+
+    // Split on TOP 3 PARIS marker
+    var parts = text.split(/\*?\*?TOP 3 PARIS\*?\*?/i);
+    if (parts.length >= 2) {
+      // Analyse section
+      var analysePart = parts[0].replace(/\*\*ANALYSE\*\*/gi, '').trim();
+      analyseHtml = '<div class="mma-analysis-body">'
+        + analysePart.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/^[•\-]\s*/gm, '• ')
+                      .replace(/\n/g, '<br>')
+        + '</div>';
+
+      // Bets section — parse 3 cards by emoji headers
+      var betText = parts[1];
+      var betDefs = [
+        { re: /🥇[^\n]*\n([\s\S]*?)(?=🎯|⚡|$)/,  cls: 'safe',  label: '🥇 Bankroll Builder' },
+        { re: /🎯[^\n]*\n([\s\S]*?)(?=⚡|$)/,       cls: 'value', label: '🎯 Value Bet'        },
+        { re: /⚡[^\n]*\n([\s\S]*?)$/,               cls: 'wild',  label: '⚡ Wild Card'        },
+      ];
+
+      betsHtml = '<div style="margin-top:6px;">';
+      betDefs.forEach(function(def) {
+        var m = betText.match(def.re);
+        if (!m) return;
+        var body = m[1].trim();
+        // First non-empty line = pick, rest = meta/reason
+        var bodyLines = body.split('\n').filter(function(l){return l.trim();});
+        var pick   = (bodyLines[0] || '').replace(/^Pari:\s*/i, '').trim();
+        var meta   = '';
+        var reason = '';
+        bodyLines.slice(1).forEach(function(l) {
+          l = l.trim();
+          if (/^(Cote|EV|Confiance)/i.test(l)) meta += l + ' ';
+          else if (/^[→>]/.test(l)) reason = l.replace(/^[→>]\s*/, '');
+          else if (!meta) meta += l + ' ';
+          else reason += l + ' ';
+        });
+        betsHtml += '<div class="mma-bet-card ' + def.cls + '">'
+          + '<div class="mma-bet-card-head">' + def.label + '</div>'
+          + '<div class="mma-bet-card-pick">' + _esc(pick) + '</div>'
+          + (meta   ? '<div class="mma-bet-card-meta">' + _esc(meta.trim()) + '</div>' : '')
+          + (reason ? '<div class="mma-bet-card-reason">' + _esc(reason.trim()) + '</div>' : '')
+          + '</div>';
+      });
+      betsHtml += '</div>';
+    } else {
+      // Fallback: render raw
+      analyseHtml = '<div class="mma-analysis-body">'
+        + text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
+        + '</div>';
+    }
+    return analyseHtml + betsHtml;
+  }
+
 
 }());
