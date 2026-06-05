@@ -21626,6 +21626,8 @@ async function pollTennisLive() {
     }
     // Purge BPPI prev pour matchs disparus
     for (const k of _tennisBPPIPrev.keys()) if (!_liveIds.has(k)) _tennisBPPIPrev.delete(k);
+    // bd #2 — Market Alert SPW/RPW live vs baseline → value shift (SSE)
+    try { for (const m of data) { if (m && m.is_live) detectTennisSpwValueShift(m); } } catch (_) { /* non bloquant */ }
     // bd 6v0 — DR Spike detection on every poll for live tennis matches.
     // Compare DR_set_courant vs DR_match → si |delta|/dr_match > seuil → SSE.
     // Fire-and-forget, debounce 30s per matchId garantit pas de spam.
@@ -23156,6 +23158,87 @@ function computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format = 'BO3' } =
     format: format,
     method: 'klaassen_magnus_closed_form',
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  Market Alert — déviation SPW/RPW live vs baseline → value shift (article
+//  sportbotai #2). NB : BSD n'expose pas le point-level → on compare le SPW/RPW
+//  CUMULÉ live (_bsd_stats) au baseline pré-match (serve_dominance snapshot),
+//  pas une vraie fenêtre glissante 3-5 jeux. Recompute la win prob Klaassen-
+//  Magnus ; alerte si le modèle bouge ≥ seuil ALORS QUE la cote du joueur qui
+//  s'améliore n'a pas raccourci (marché en retard = value). Additif : ne touche
+//  aucune proba shippée, juste un nouvel événement SSE.
+// ═══════════════════════════════════════════════════════════════════════════════
+const _TN_SPWVAL = {
+  MIN_GAMES: 6,                  // assez de jeux joués pour des stats fiables
+  SPW_DEV: 0.05,                 // |SPW/RPW live − baseline| min (fraction)
+  PROB_SHIFT: 0.06,              // décalage win prob min
+  COOLDOWN_MS: 10 * 60 * 1000,
+};
+function _tnPctFrac(x) {
+  if (x == null || !Number.isFinite(Number(x))) return null;
+  const v = Number(x); return v > 1 ? v / 100 : v;
+}
+// SPW/RPW cumulés live depuis _bsd_stats (fractions 0-1). null si insuffisant.
+function _tnLiveServeStats(m) {
+  const s = m && m._bsd_stats; if (!s) return null;
+  const spwOf = (firstPct, firstWon, secondWon) => {
+    const fp = _tnPctFrac(firstPct), fw = _tnPctFrac(firstWon), sw = _tnPctFrac(secondWon);
+    if (fp != null && fw != null && sw != null) return fp * fw + (1 - fp) * sw;
+    return fw; // dégradé : 1er service gagné seul
+  };
+  const p1_spw = spwOf(s.p1_first_pct, s.p1_first_won, s.p1_second_won);
+  const p2_spw = spwOf(s.p2_first_pct, s.p2_first_won, s.p2_second_won);
+  if (p1_spw == null || p2_spw == null) return null;
+  return { p1_spw, p2_spw, p1_rpw: _tnPctFrac(s.p1_ret_won), p2_rpw: _tnPctFrac(s.p2_ret_won) };
+}
+function _tnTotalGames(m) {
+  if (!Array.isArray(m.sets)) return 0;
+  return m.sets.reduce((a, st) => a + (Number(st.p1) || 0) + (Number(st.p2) || 0), 0);
+}
+function detectTennisSpwValueShift(m) {
+  try {
+    if (!m || !m.is_live) return;
+    if (_tnTotalGames(m) < _TN_SPWVAL.MIN_GAMES) return;
+    const live = _tnLiveServeStats(m); if (!live) return;
+    // Baseline pré-match (serve_dominance) via snapshot enrichi.
+    const snap = (typeof _tnSrvLookupSnap === 'function') ? _tnSrvLookupSnap(m) : null;
+    const sd = snap && snap.serve_dominance;
+    const b1 = sd && sd.p1 && Number.isFinite(sd.p1.serve_pts_won_pct) ? sd.p1.serve_pts_won_pct / 100 : null;
+    const b2 = sd && sd.p2 && Number.isFinite(sd.p2.serve_pts_won_pct) ? sd.p2.serve_pts_won_pct / 100 : null;
+    if (b1 == null || b2 == null) return;
+    const dev1 = live.p1_spw - b1, dev2 = live.p2_spw - b2;
+    if (Math.abs(dev1) < _TN_SPWVAL.SPW_DEV && Math.abs(dev2) < _TN_SPWVAL.SPW_DEV) return;
+    const fmt = /grand|slam|roland|wimbledon|us open|australian/i.test(String(m.tournament || ''))
+      && /atp|men/i.test(String(m.tour || '')) ? 'BO5' : 'BO3';
+    const cl = (x) => Math.max(0.3, Math.min(0.95, x));
+    const pBase = computeTennisMatchProb({ p1_serve_pct: cl(b1), p2_serve_pct: cl(b2), format: fmt });
+    const pLive = computeTennisMatchProb({ p1_serve_pct: cl(live.p1_spw), p2_serve_pct: cl(live.p2_spw), format: fmt });
+    if (!pBase || !pLive) return;
+    const dProb = pLive.p1_win - pBase.p1_win;
+    if (Math.abs(dProb) < _TN_SPWVAL.PROB_SHIFT) return;
+    const side = dProb > 0 ? 'p1' : 'p2';
+    // Value seulement si la cote du joueur amélioré n'a PAS raccourci.
+    const ods = m.bsd_odds_summary || m._bsd_odds || (snap && snap._bsd_odds) || null;
+    const mv = ods ? (side === 'p1' ? ods.movement_p1 : ods.movement_p2) : null;
+    if (mv === 'SHORTENING') return; // marché déjà aligné → pas de value
+    const key = `spwval_${m.id}_${side}`;
+    if (_tnAlertOnCooldown(key, _TN_SPWVAL.COOLDOWN_MS)) return;
+    _tnAlertMark(key);
+    const improved = side === 'p1' ? m.player1 : m.player2;
+    broadcastSSE('spw_value_shift', {
+      type: 'spw_value_shift', sport: 'tennis', match_id: m.id, tournament: m.tournament || null,
+      player1: m.player1 && m.player1.name, player2: m.player2 && m.player2.name,
+      side, improved_player: improved && improved.name,
+      spw_dev_p1: parseFloat((dev1 * 100).toFixed(1)), spw_dev_p2: parseFloat((dev2 * 100).toFixed(1)),
+      prob_base_p1: parseFloat((pBase.p1_win * 100).toFixed(1)),
+      prob_live_p1: parseFloat((pLive.p1_win * 100).toFixed(1)),
+      prob_shift: parseFloat((dProb * 100).toFixed(1)),
+      odds_movement: mv || 'flat',
+      best_odds: ods ? (side === 'p1' ? (ods.best_p1 ?? null) : (ods.best_p2 ?? null)) : null,
+      ts: Date.now(),
+    });
+  } catch (_) { /* non bloquant */ }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
