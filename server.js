@@ -19685,6 +19685,52 @@ async function handleAPI(req, res, pathname, query) {
     return res.end(JSON.stringify({ ok: true, cache: mmaService.getCacheStatus(), model: 'logistic_differential_v1' }));
   }
 
+  // GET /api/v1/mma/fighter-photo?name=Belal+Muhammad
+  // Fetches UFC fighter headshot from ufc.com/athlete/{slug}, caches 7 days in api_cache
+  if (pathname === '/api/v1/mma/fighter-photo' && req.method === 'GET') {
+    const rawName = (query.name || '').toString().trim();
+    if (!rawName) return jsonResponse(res, 400, { ok: false, error: 'name required' });
+    const slug     = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const cacheKey = `mma_photo_${slug}`;
+    const TTL_MS   = 7 * 24 * 3600 * 1000; // 7 days
+    try {
+      // Check SQLite cache
+      if (sqldb) {
+        const cached = sqldb.prepare('SELECT data, expires_at FROM api_cache WHERE key = ?').get(cacheKey);
+        if (cached && cached.data && Date.now() < (cached.expires_at || 0)) {
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+          return res.end(cached.data);
+        }
+      }
+      // Fetch UFC athlete page
+      const ufcUrl = `https://www.ufc.com/athlete/${slug}`;
+      const fetchRes = await httpsGet(ufcUrl, {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html',
+      }, 10000);
+      let photoUrl = null;
+      if (fetchRes && fetchRes.status === 200 && typeof fetchRes.data === 'string') {
+        const m = fetchRes.data.match(/event_results_athlete_headshot[^"']+/);
+        if (m) photoUrl = `https://ufc.com/images/styles/${m[0]}`;
+      }
+      const payload = JSON.stringify({ ok: true, url: photoUrl, slug });
+      // Store in api_cache (key, data, source, created_at, expires_at)
+      if (sqldb && photoUrl) {
+        try {
+          const now = Date.now();
+          sqldb.prepare(`INSERT INTO api_cache (key, data, source, created_at, expires_at) VALUES (?,?,?,?,?)
+            ON CONFLICT(key) DO UPDATE SET data=excluded.data, expires_at=excluded.expires_at`)
+            .run(cacheKey, payload, 'ufc_photo', now, now + TTL_MS);
+        } catch (_) {}
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+      return res.end(payload);
+    } catch (e) {
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ ok: false, url: null, error: e.message }));
+    }
+  }
+
   // 2b. Match Details (proxy interne pour modal STATS)
   if (pathname === '/api/v1/match-details' && req.method === 'GET') {
     const matchId = (query.id || '').toString().trim();

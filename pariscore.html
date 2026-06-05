@@ -19651,10 +19651,15 @@ body[data-page="mma"] footer { display: none !important; }
 .mma-fight.has-bet { border-color: rgba(212,175,55,0.4); }
 .mma-fight-meta { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg3,#181c20); border-bottom: 1px solid var(--bg4,#1e2328); font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.05em; }
 .mma-title-belt { color: #D4AF37; font-size: 11px; }
+/* Fighter photo */
+.mma-fighter-photo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; object-position: top center; background: var(--bg3,#181c20); border: 2px solid var(--bg4,#1e2328); flex-shrink: 0; transition: border-color 0.2s; }
+.mma-fight.has-bet .mma-fighter-photo { border-color: rgba(212,175,55,0.4); }
 /* Fighters row */
 .mma-fighters { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 14px 12px 10px; }
-.mma-fighter { display: flex; flex-direction: column; }
-.mma-fighter.side-b { align-items: flex-end; }
+.mma-fighter { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+.mma-fighter-info { display: flex; flex-direction: column; }
+.mma-fighter.side-b { flex-direction: row-reverse; align-items: center; }
+.mma-fighter.side-b .mma-fighter-info { align-items: flex-end; }
 .mma-fighter-name { font-family: Syne,sans-serif; font-weight: 700; font-size: 14px; color: var(--text,#e8eaed); line-height: 1.2; }
 .mma-fighter-record { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-top: 2px; }
 .mma-fighter-prob { font-family: Syne,sans-serif; font-weight: 800; font-size: 22px; margin-top: 4px; }

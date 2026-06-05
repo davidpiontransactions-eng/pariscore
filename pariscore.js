@@ -27618,6 +27618,7 @@ async function loadFootAlerts() {
       return;
     }
     feed.innerHTML = events.map(_renderMMAEvent).join('');
+    _loadMMAPhotos();
   }
 
   function _renderMMASkeleton() {
@@ -27665,19 +27666,28 @@ async function loadFootAlerts() {
       + (f.is_title ? ' <span class="mma-title-belt">🏆 TITLE</span>' : '')
       + '</div>'
       + '<div class="mma-fighters">'
+      // Fighter A (left)
       + '<div class="mma-fighter side-a">'
+      + '<img class="mma-fighter-photo" data-fighter="' + _esc(f.fighter_a) + '" alt="' + _esc(f.fighter_a) + '">'
+      + '<div class="mma-fighter-info">'
       + '<span class="mma-fighter-name">' + _esc(f.fighter_a) + '</span>'
       + (recA ? '<span class="mma-fighter-record">' + _esc(recA) + '</span>' : '')
       + '<span class="mma-fighter-prob' + (favA ? ' favorite' : '') + '">' + probA + '%</span>'
       + '</div>'
+      + '</div>'
+      // Center bar
       + '<div class="mma-bar-wrap">'
       + '<span class="mma-vs">VS</span>'
       + '<div class="mma-prob-bar"><div class="mma-prob-fill" style="width:' + probA + '%"></div></div>'
       + '</div>'
+      // Fighter B (right)
       + '<div class="mma-fighter side-b">'
+      + '<div class="mma-fighter-info">'
       + '<span class="mma-fighter-name">' + _esc(f.fighter_b) + '</span>'
       + (recB ? '<span class="mma-fighter-record">' + _esc(recB) + '</span>' : '')
       + '<span class="mma-fighter-prob' + (!favA ? ' favorite' : '') + '">' + probB + '%</span>'
+      + '</div>'
+      + '<img class="mma-fighter-photo" data-fighter="' + _esc(f.fighter_b) + '" alt="' + _esc(f.fighter_b) + '">'
       + '</div>'
       + '</div>'
       + '<div class="mma-odds-row">'
@@ -27685,6 +27695,30 @@ async function loadFootAlerts() {
       + _renderOddsCell(f.fighter_b, f.ai_odds_b, f.vegas_odds_b, f.ev_b_pct, f.bet_b)
       + '</div>'
       + '</div>';
+  }
+
+  // Lazy-load fighter photos — batch fetch, dedup by name
+  var _photoCache = {};
+  function _loadMMAPhotos() {
+    var imgs = document.querySelectorAll('#mma-feed img.mma-fighter-photo[data-fighter]');
+    var pending = {};
+    imgs.forEach(function (img) {
+      var name = img.dataset.fighter;
+      if (!name) return;
+      if (_photoCache[name]) { img.src = _photoCache[name]; return; }
+      if (!pending[name]) pending[name] = [];
+      pending[name].push(img);
+    });
+    Object.keys(pending).forEach(function (name) {
+      fetch('/api/v1/mma/fighter-photo?name=' + encodeURIComponent(name))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.url) return;
+          _photoCache[name] = d.url;
+          pending[name].forEach(function (el) { el.src = d.url; });
+        })
+        .catch(function () {});
+    });
   }
 
   function _renderOddsCell(name, aiOdds, vegasOdds, evPct, hasBet) {
