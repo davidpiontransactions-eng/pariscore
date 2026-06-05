@@ -25667,7 +25667,7 @@ function renderComparateur(d) {
   };
 
   // ── View mode toggle ──────────────────────────────────────────────────────
-  var _cs2ViewMode = 'dashboard'; // default = dashboard for quick betting
+  var _cs2ViewMode = 'cards'; // default = egamersworld list view
   window.setCs2View = function (mode, btn) {
     _cs2ViewMode = mode;
     document.querySelectorAll('.cs2-view-btn').forEach(function (b) {
@@ -25992,10 +25992,11 @@ function renderComparateur(d) {
       '</div>';
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render — egamersworld-style tournament-grouped list ───────────────────
   window.renderCs2Matches = function (matches) {
     var grid = document.getElementById('cs2-grid');
     if (!grid) return;
+    grid.className = 'cs2-list';
     grid.style.display = '';
 
     if (!matches || matches.length === 0) {
@@ -26008,9 +26009,40 @@ function renderComparateur(d) {
       return;
     }
 
-    var html = '';
+    // Group by tournament
+    var groups = Object.create(null);
+    var groupOrder = [];
     for (var i = 0; i < matches.length; i++) {
-      html += _buildCs2Card(matches[i]);
+      var _gm = matches[i];
+      var _gt = _gm.tournament || 'Counter-Strike 2';
+      if (!groups[_gt]) { groups[_gt] = []; groupOrder.push(_gt); }
+      groups[_gt].push(_gm);
+    }
+
+    var html = '';
+    for (var gi = 0; gi < groupOrder.length; gi++) {
+      var tname = groupOrder[gi];
+      var tmatches = groups[tname];
+      var first = tmatches[0];
+      var tourLogo = first.tournament_logo
+        ? '<img class="cs2-tg-logo" src="' + _esc(first.tournament_logo) + '" alt="" onerror="this.style.display=\'none\'" loading="lazy">'
+        : '<span style="font-size:14px;flex-shrink:0;">🏆</span>';
+      var liveCount = 0;
+      for (var li = 0; li < tmatches.length; li++) { if (tmatches[li].is_live) liveCount++; }
+
+      html += '<div class="cs2-tgroup">' +
+        '<div class="cs2-tgroup-head">' + tourLogo +
+        '<span class="cs2-tg-name">' + _esc(tname) +
+          (first.is_lan ? ' <span class="cs2-lan-tag">🏟 LAN</span>' : '') +
+        '</span>' +
+        (liveCount > 0 ? '<span class="cs2-tg-live-pill"><span class="cs2-ldot"></span>' + liveCount + ' LIVE</span>' : '') +
+        '<span class="cs2-tg-count">' + tmatches.length + ' match' + (tmatches.length > 1 ? 's' : '') + '</span>' +
+        '</div>';
+
+      for (var mi = 0; mi < tmatches.length; mi++) {
+        html += _buildCs2Row(tmatches[mi]);
+      }
+      html += '</div>';
     }
     grid.innerHTML = html;
   };
@@ -26203,6 +26235,133 @@ function renderComparateur(d) {
         '<button class="cs2-bet-btn" style="font-size:10px;padding:4px 10px;" data-mid="' + _esc(m.id) + '" data-t1="' + _esc(t1.name||'') + '" data-t2="' + _esc(t2.name||'') + '" data-map="' + _esc(m.current_map||'') + '" data-elo1="' + (t1.elo_rating||'') + '" data-elo2="' + (t2.elo_rating||'') + '" data-pred1="' + (m.prediction?m.prediction.team1_win_prob||'':'') + '" data-pred2="' + (m.prediction?m.prediction.team2_win_prob||'':'') + '" data-fmt="' + _esc(m.format||'') + '" data-tournament="' + _esc(m.tournament||'') + '" onclick="openCs2ScoutDrawer(this.dataset.mid,this.dataset.t1,this.dataset.t2,this.dataset.map,{elo1:this.dataset.elo1,elo2:this.dataset.elo2,pred1:this.dataset.pred1,pred2:this.dataset.pred2,fmt:this.dataset.fmt,tournament:this.dataset.tournament})">🔍 Scout</button>' +
         timeHtml + '</div>' +
     '</div>';
+  }
+
+  // ── egamersworld-style compact match row ──────────────────────────────────
+  function _buildCs2Row(m) {
+    var isLive = !!m.is_live;
+    var t1     = m.team1       || {};
+    var t2     = m.team2       || {};
+    var maps   = m.maps_score  || {};
+    var rounds = m.round_score || {};
+    var odds   = m.odds        || {};
+    var mapAdv = m.map_advantage || null;
+
+    function rowLogo(team) {
+      if (team.logo) {
+        return '<div class="cs2-row-logo-wrap"><img class="cs2-row-logo" src="' + _esc(team.logo) +
+          '" alt="' + _esc(team.name) + '" onerror="this.style.display=\'none\'" loading="lazy"></div>';
+      }
+      return '<div class="cs2-row-logo-wrap"><span style="font-size:15px;">🏢</span></div>';
+    }
+
+    function rowRank(team) {
+      if (team.hltv_rank) return '<div class="cs2-row-rank">HLTV #' + team.hltv_rank + '</div>';
+      if (team.elo_rating) return '<div class="cs2-row-rank" style="color:var(--blue,#29b6f6);">⚡' + team.elo_rating + '</div>';
+      return '';
+    }
+
+    // Status
+    var statusHtml = isLive
+      ? '<span class="cs2-live-pill"><span class="cs2-ldot"></span>LIVE</span>'
+      : (m.scheduled ? '<span class="cs2-time">' + _cs2FmtMatchTime(new Date(m.scheduled)) + '</span>'
+          : '<span class="cs2-time">—</span>');
+
+    // Center: score or VS
+    var scoreHtml, subScoreHtml = '';
+    if (maps.team1 != null && maps.team2 != null) {
+      scoreHtml = '<div class="cs2-row-dots-wrap">' + _mapDots(maps.team1, maps.team2, m.best_of || 3) + '</div>';
+      if (isLive && rounds.team1 != null) {
+        subScoreHtml = '<div class="cs2-row-fmt"><span class="cs2-rds-t1">' + rounds.team1 +
+          '</span>–<span class="cs2-rds-t2">' + rounds.team2 + '</span> <span style="font-size:9px;">rds</span></div>';
+      } else {
+        subScoreHtml = '<div class="cs2-row-fmt">BO' + (m.best_of || 3) + '</div>';
+      }
+    } else if (isLive && rounds.team1 != null && rounds.team2 != null) {
+      scoreHtml = '<div class="cs2-row-score"><span class="cs2-rds-t1">' + rounds.team1 +
+        '</span><span style="color:var(--text3,#5a6068)">–</span><span class="cs2-rds-t2">' + rounds.team2 + '</span></div>';
+      subScoreHtml = '<div class="cs2-row-fmt">rds</div>';
+    } else {
+      scoreHtml = '<div class="cs2-row-fmt" style="font-size:13px;font-weight:700;color:var(--text2,#8d9399);">BO' + (m.best_of || 3) + '</div>';
+    }
+
+    // Win-prob mini bar
+    var probHtml = '';
+    if (m.prediction && m.prediction.team1_win_prob != null) {
+      var _p1 = Math.round((m.prediction.team1_win_prob || 0) * 100);
+      var _p2 = 100 - _p1;
+      probHtml = '<div class="cs2-row-prob"><div class="cs2-row-prob-bar">' +
+        '<div class="cs2-row-prob-ct" style="width:' + _p1 + '%"></div>' +
+        '<div class="cs2-row-prob-t" style="width:' + _p2 + '%"></div>' +
+        '</div></div>';
+    }
+
+    // Odds
+    var oddsHtml = '<div class="cs2-row-odds">';
+    if (odds.team1 != null || odds.team2 != null) {
+      var best = (odds.team1 && odds.team2) ? (Number(odds.team1) < Number(odds.team2) ? 1 : 2) : 0;
+      if (odds.team1 != null) {
+        oddsHtml += '<button class="cs2-row-odd' + (best === 1 ? ' best' : '') + '" title="' + _esc(t1.name || '') + '">' +
+          Number(odds.team1).toFixed(2) + '</button>';
+      }
+      if (odds.team2 != null) {
+        oddsHtml += '<button class="cs2-row-odd' + (best === 2 ? ' best' : '') + '" title="' + _esc(t2.name || '') + '">' +
+          Number(odds.team2).toFixed(2) + '</button>';
+      }
+    } else {
+      oddsHtml += '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3);">—</span>';
+    }
+    oddsHtml += '</div>';
+
+    // Map sub-bar (live only)
+    var mapBarHtml = '';
+    if (isLive && m.current_map) {
+      var valueFlag = (mapAdv && mapAdv.value_flag)
+        ? ' <span class="cs2-value-flag">' + _esc(mapAdv.value_flag) + '</span>' : '';
+      var mapCls = 'map-' + (m.current_map).toLowerCase().replace(/[^a-z]/g, '');
+      var advCls = mapAdv && mapAdv.advantage !== 'neutral'
+        ? (mapAdv.advantage === 'team1' ? ' adv-t1' : ' adv-t2') : '';
+      var modelId = 'cs2-model-' + _esc(m.id);
+      mapBarHtml = '<div class="cs2-row-mapbar ' + mapCls + advCls + '">' +
+        '🗺 ' + _esc(m.current_map) + valueFlag +
+        '<span id="' + modelId + '" style="margin-left:auto;opacity:.5;">…</span></div>';
+      _fetchMapOverModel(m.id, t1.name, t2.name, m.current_map, modelId);
+    }
+
+    // Scout button data attrs
+    var scoutAttrs = 'data-mid="' + _esc(m.id) + '"' +
+      ' data-t1="' + _esc(t1.name || '') + '" data-t2="' + _esc(t2.name || '') + '"' +
+      ' data-map="' + _esc(m.current_map || '') + '"' +
+      ' data-elo1="' + (t1.elo_rating || '') + '" data-elo2="' + (t2.elo_rating || '') + '"' +
+      ' data-pred1="' + (m.prediction ? m.prediction.team1_win_prob || '' : '') + '"' +
+      ' data-pred2="' + (m.prediction ? m.prediction.team2_win_prob || '' : '') + '"' +
+      ' data-fmt="' + _esc(m.format || '') + '" data-tournament="' + _esc(m.tournament || '') + '"';
+
+    _fetchEnrichment(m.id, t1.name, t2.name, m.current_map || null);
+
+    return '<div class="cs2-row' + (isLive ? ' is-live' : '') + (mapAdv && mapAdv.value_flag ? ' has-value-map' : '') + '" data-cs2-match-id="' + _esc(m.id) + '">' +
+      '<div class="cs2-row-status">' + statusHtml + '</div>' +
+      '<div class="cs2-row-t1">' +
+        rowLogo(t1) +
+        '<div class="cs2-row-info">' +
+          '<div class="cs2-row-tname">' + _esc(t1.name || 'TBD') + '</div>' +
+          rowRank(t1) +
+          '<div class="cs2-form-pills-t1" style="display:flex;gap:2px;margin-top:2px;"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cs2-row-center">' + scoreHtml + subScoreHtml + probHtml + '</div>' +
+      '<div class="cs2-row-t2">' +
+        rowLogo(t2) +
+        '<div class="cs2-row-info">' +
+          '<div class="cs2-row-tname">' + _esc(t2.name || 'TBD') + '</div>' +
+          rowRank(t2) +
+          '<div class="cs2-form-pills-t2" style="display:flex;gap:2px;justify-content:flex-end;margin-top:2px;"></div>' +
+        '</div>' +
+      '</div>' +
+      oddsHtml +
+      '<div class="cs2-row-action"><button class="cs2-row-scout-btn" ' + scoutAttrs +
+        ' onclick="openCs2ScoutDrawer(this.dataset.mid,this.dataset.t1,this.dataset.t2,this.dataset.map,{elo1:this.dataset.elo1,elo2:this.dataset.elo2,pred1:this.dataset.pred1,pred2:this.dataset.pred2,fmt:this.dataset.fmt,tournament:this.dataset.tournament});event.stopPropagation();">🔍 Scout</button></div>' +
+    '</div>' + mapBarHtml;
   }
 
   // ── Tier 3 league data loaders ───────────────────────────────────────────
@@ -26421,6 +26580,7 @@ function renderComparateur(d) {
   window.renderCs2Dashboard = function (matches) {
     var grid = document.getElementById('cs2-grid');
     if (!grid) return;
+    grid.className = 'cs2-grid';
     grid.style.display = 'block';
 
     if (!matches || !matches.length) {
