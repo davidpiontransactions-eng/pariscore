@@ -25907,7 +25907,14 @@ function renderComparateur(d) {
         }
         _cs2LastData = (json && Array.isArray(json.matches)) ? json.matches : [];
         _updateCs2Status(json);
-        _applyCs2Filter();
+        try {
+          _applyCs2Filter();
+        } catch(e) {
+          var bar = document.getElementById('cs2-status-bar');
+          if (bar) bar.textContent = 'CS2 RENDER ERR: ' + e.message + ' @ ' + (e.stack||'').split('\n')[1];
+          console.error('[CS2 render]', e);
+          throw e;
+        }
         _psBuildSidebarAllCs2();
       })
       .catch(function (e) {
