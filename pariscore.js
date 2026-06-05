@@ -27534,7 +27534,7 @@ async function loadFootAlerts() {
   function _updateAccBadge() {
     var badge = document.getElementById('mma-acc-badge');
     if (!badge) return;
-    badge.textContent = '61.9% accuracy · 7207 bouts';
+    badge.textContent = 'Devig consensus · The Odds API';
     badge.style.display = '';
   }
 
@@ -27630,8 +27630,8 @@ async function loadFootAlerts() {
     return '<div class="mma-odds-cell">'
       + '<div class="mma-odds-label">' + _esc(name) + '</div>'
       + '<div class="mma-odds-line">'
-      + '<span class="mma-odds-ai">AI ' + (aiOdds != null ? _fmt(aiOdds) : '—') + '</span>'
-      + '<span class="mma-odds-vgs">VGS ' + (vegasOdds != null ? _fmt(vegasOdds) : '—') + '</span>'
+      + '<span class="mma-odds-ai">FAIR ' + (aiOdds != null ? _fmt(aiOdds) : '—') + '</span>'
+      + '<span class="mma-odds-vgs">BEST ' + (vegasOdds != null ? _fmt(vegasOdds) : '—') + '</span>'
       + '</div>'
       + (evPct != null ? '<div class="mma-ev ' + evClass + '">EV ' + (evPct > 0 ? '+' : '') + _fmt(evPct, 1) + '%</div>' : '')
       + (hasBet ? '<div class="mma-bet-chip">✓ BET</div>' : '')
