@@ -19415,6 +19415,82 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
 /* Prob bars keep CT=blue/T=orange (game semantics) */
 /* LAN tag */
 #page-cs2 .cs2-lan-tag { color: #D48900; background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.3); }
+
+/* ── egamersworld-style Match List ─────────────────────────── */
+.cs2-list { max-width: 1100px; margin: 0 auto; padding: 0 16px 96px; }
+.cs2-tgroup { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--bg4,#1e2328); }
+.cs2-tgroup-head { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--bg3,#181c20); }
+.cs2-tg-logo { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; flex-shrink: 0; }
+.cs2-tg-name { font-family: 'Instrument Sans',sans-serif; font-weight: 700; font-size: 12px; color: var(--text,#e8eaed); flex: 1; text-transform: uppercase; letter-spacing: 0.05em; }
+.cs2-tg-live-pill { display: inline-flex; align-items: center; gap: 3px; font-family: 'DM Mono',monospace; font-size: 9px; font-weight: 700; color: #FF6B00; margin-right: 4px; }
+.cs2-tg-count { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); }
+/* Match row */
+.cs2-row { display: flex; align-items: center; background: var(--bg2,#111417); border-top: 1px solid var(--bg4,#1e2328); transition: background 0.12s; min-height: 58px; position: relative; }
+.cs2-row:hover { background: rgba(255,107,0,0.03); }
+.cs2-row.is-live { border-left: 2px solid #FF6B00; background: rgba(255,107,0,0.015); }
+.cs2-row.has-value-map { border-left: 2px solid rgba(0,230,118,0.6); background: rgba(0,230,118,0.015); }
+/* Status col */
+.cs2-row-status { width: 74px; flex-shrink: 0; padding: 0 10px; text-align: center; }
+/* Team cols */
+.cs2-row-t1, .cs2-row-t2 { flex: 1; display: flex; align-items: center; gap: 10px; padding: 10px 8px; min-width: 0; }
+.cs2-row-t2 { flex-direction: row-reverse; }
+.cs2-row-logo-wrap { width: 34px; height: 34px; flex-shrink: 0; background: var(--bg3,#181c20); border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.cs2-row-logo { width: 28px; height: 28px; object-fit: contain; }
+.cs2-row-info { min-width: 0; flex: 1; }
+.cs2-row-t2 .cs2-row-info { text-align: right; }
+.cs2-row-tname { font-family: 'Instrument Sans',sans-serif; font-weight: 700; font-size: 13px; color: var(--text,#e8eaed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs2-row-rank { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-top: 1px; }
+/* Center col */
+.cs2-row-center { width: 90px; flex-shrink: 0; text-align: center; padding: 0 4px; }
+.cs2-row-score { font-family: 'DM Mono',monospace; font-size: 18px; font-weight: 700; color: var(--text,#e8eaed); letter-spacing: -1px; line-height: 1; }
+.cs2-row-dots-wrap { display: flex; justify-content: center; align-items: center; }
+.cs2-row-fmt { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-top: 3px; }
+/* Prob mini bar */
+.cs2-row-prob { margin-top: 5px; }
+.cs2-row-prob-bar { height: 3px; border-radius: 2px; overflow: hidden; display: flex; }
+.cs2-row-prob-ct { background: #3b82f6; }
+.cs2-row-prob-t  { background: #FF6B00; }
+/* Odds col */
+.cs2-row-odds { display: flex; flex-direction: column; gap: 4px; padding: 0 10px; flex-shrink: 0; min-width: 68px; }
+.cs2-row-odd { font-family: 'DM Mono',monospace; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; border: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); color: var(--text2,#8d9399); cursor: pointer; white-space: nowrap; transition: all 0.12s; text-align: center; }
+.cs2-row-odd:hover { border-color: rgba(255,107,0,0.5); color: #FF6B00; }
+.cs2-row-odd.best { border-color: rgba(0,230,118,0.45); color: #00e676; background: rgba(0,230,118,0.07); }
+/* Action col */
+.cs2-row-action { flex-shrink: 0; padding: 0 14px 0 4px; }
+.cs2-row-scout-btn { background: var(--bg3,#181c20); border: 1px solid var(--bg4,#1e2328); color: var(--text3,#5a6068); cursor: pointer; font-family: 'DM Mono',monospace; font-size: 10px; padding: 4px 9px; border-radius: 4px; transition: all 0.12s; white-space: nowrap; }
+.cs2-row-scout-btn:hover { border-color: #FF6B00; color: #FF6B00; }
+/* Map sub-bar (live) */
+.cs2-row-mapbar { display: flex; align-items: center; gap: 8px; padding: 4px 74px 5px; border-top: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); font-family: 'DM Mono',monospace; font-size: 10px; color: var(--text2,#8d9399); }
+/* Responsive */
+@media (max-width: 680px) {
+  .cs2-list { padding: 0 6px 96px; }
+  .cs2-row-status { width: 56px; padding: 0 6px; }
+  .cs2-row-rank { display: none; }
+  .cs2-row-center { width: 64px; }
+  .cs2-row-odds { min-width: 52px; padding: 0 6px; }
+  .cs2-row-action { padding: 0 8px 0 2px; }
+}
+/* Light theme overrides */
+#page-cs2 .cs2-tgroup { border-color: #E8E8E8; }
+#page-cs2 .cs2-tgroup-head { background: #F5F5F5; border-bottom: 1px solid #EBEBEB; }
+#page-cs2 .cs2-tg-name { color: #1A1A1A; }
+#page-cs2 .cs2-tg-count { color: #aaa; }
+#page-cs2 .cs2-row { background: #fff; border-top-color: #F2F2F0; }
+#page-cs2 .cs2-row:hover { background: #FFF9F5; }
+#page-cs2 .cs2-row.is-live { border-left-color: #E3001B; background: #FFFAFA; }
+#page-cs2 .cs2-row.has-value-map { border-left-color: rgba(0,166,81,.6); background: rgba(0,166,81,.02); }
+#page-cs2 .cs2-row-tname { color: #1A1A1A; }
+#page-cs2 .cs2-row-rank { color: #aaa; }
+#page-cs2 .cs2-row-score { color: #1A1A1A; }
+#page-cs2 .cs2-row-logo-wrap { background: #F5F5F5; }
+#page-cs2 .cs2-row-odd { background: #F8F8F8; border-color: #EBEBEB; color: #555; }
+#page-cs2 .cs2-row-odd:hover { border-color: rgba(227,0,27,.4); color: #E3001B; }
+#page-cs2 .cs2-row-odd.best { background: rgba(0,166,81,.06); border-color: rgba(0,166,81,.4); color: #00A651; }
+#page-cs2 .cs2-row-scout-btn { background: #fff; border-color: #EBEBEB; color: #888; }
+#page-cs2 .cs2-row-scout-btn:hover { border-color: #E3001B; color: #E3001B; }
+#page-cs2 .cs2-row-mapbar { background: #F8F8F8; border-top-color: #EBEBEB; color: #888; }
+#page-cs2 .cs2-tg-live-pill { color: #E3001B; }
+#page-cs2 .cs2-tg-live-pill .cs2-ldot { background: #E3001B; }
 </style>
 
   <!-- ─── SIDEBAR COMPÉTITIONS CS2 ─── -->
@@ -19464,8 +19540,8 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
     <button class="cs2-pill"        data-cs2f="live"     onclick="setCs2Filter('live',this)">🔴 Live</button>
     <button class="cs2-pill"        data-cs2f="prematch" onclick="setCs2Filter('prematch',this)">📅 À venir</button>
     <span style="width:1px;height:22px;background:var(--bg4);margin:0 4px;flex-shrink:0;"></span>
-    <button class="cs2-pill cs2-view-btn active" data-view="dashboard" onclick="setCs2View('dashboard',this)" title="Dashboard KPI pari rapide">📊 Dashboard</button>
-    <button class="cs2-pill cs2-view-btn" data-view="cards" onclick="setCs2View('cards',this)" title="Vue cartes détaillées">🃏 Cartes</button>
+    <button class="cs2-pill cs2-view-btn" data-view="dashboard" onclick="setCs2View('dashboard',this)" title="Dashboard KPI pari rapide">📊 Dashboard</button>
+    <button class="cs2-pill cs2-view-btn active" data-view="cards" onclick="setCs2View('cards',this)" title="Vue liste matchs">📋 Matchs</button>
     <button class="cs2-refresh-btn" onclick="cs2ForceRefresh()">🔄</button>
   </div>
 
