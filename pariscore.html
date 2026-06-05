@@ -19100,8 +19100,31 @@ const I18N = (() => {
 .nba-empty { padding:50px; text-align:center; color:var(--text3,#5a6068); }
 </style>
 <div class="nba-head"><h2>🏀 NBA</h2><span class="nba-sub" id="nba-status">…</span></div>
-<div class="nba-disclaimer">Modèle Elo (records) + Four Factors, indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré — usage analytique, pas un conseil de pari.</div>
+<div class="nba-disclaimer">Modèle Elo game-by-game + Pythagorean + Four Factors (blend), indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré — usage analytique, pas un conseil de pari.</div>
+<div id="nba-topbets"></div>
 <div class="nba-grid" id="nba-grid"><div class="nba-empty">⏳ Chargement…</div></div>
+
+<div id="nba-ai-modal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--bg2,#12161a);border:1px solid var(--bg4,#1e2328);border-radius:14px;max-width:680px;width:100%;max-height:86vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bg4,#1e2328);">
+      <span id="nba-ai-title" style="font-weight:700;color:var(--text1,#e8eaed);font-size:14px;">🤖 AI Scout NBA</span>
+      <button onclick="closeNbaAI()" style="background:0;border:0;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div id="nba-ai-body" style="overflow-y:auto;padding:14px 16px;"></div>
+  </div>
+</div>
+<style>
+#nba-topbets { margin:8px 0 14px; }
+.nba-tb-head { font-size:11px; font-weight:700; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; letter-spacing:.05em; margin-bottom:6px; }
+.nba-tb-bar { display:flex; gap:8px; flex-wrap:wrap; }
+.nba-tb-card { flex:1; min-width:180px; background:linear-gradient(135deg,#1a1206,#12161a); border:1px solid #ff6b0033; border-radius:10px; padding:10px 12px; }
+.nba-tb-rank { font-size:10px; font-weight:800; color:#ff6b00; font-family:'DM Mono',monospace; }
+.nba-tb-mkt { font-size:13px; font-weight:700; color:var(--text1,#e8eaed); margin:3px 0; }
+.nba-tb-sel { font-size:11px; color:var(--text2,#8d9399); }
+.nba-tb-edge { font-size:11px; color:#4ade80; font-family:'DM Mono',monospace; margin-top:4px; }
+.nba-ai-btn { background:0; border:1px solid var(--bg4,#1e2328); color:#ff6b00; font-size:10px; font-family:'DM Mono',monospace; padding:4px 10px; border-radius:6px; cursor:pointer; margin-top:8px; }
+.nba-ai-body pre { white-space:pre-wrap; word-break:break-word; font-family:'DM Mono',monospace; font-size:11px; line-height:1.5; color:var(--text1,#d8dadf); margin:0; }
+</style>
 </div>
 
 <div id="page-cs2" data-page="cs2" style="display:none;">
