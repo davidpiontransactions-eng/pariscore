@@ -10071,16 +10071,18 @@
       box-shadow: 0 -2px 12px rgba(0,0,0,0.12);
     }
     #bottom-nav a {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      padding: 15px 1px 13px; text-decoration: none; color: var(--text2);
-      font-family: var(--font-head); font-size: 12.5px; font-weight: 900;
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px; padding: 8px 1px 10px; text-decoration: none; color: var(--text2);
+      font-family: var(--font-head); font-size: 10px; font-weight: 900;
       font-style: italic; text-transform: uppercase; letter-spacing: 0; white-space: nowrap;
       transition: color .16s, transform .16s; position: relative;
       -webkit-tap-highlight-color: transparent; min-width: 0; overflow: hidden;
       text-shadow: 0 1px 0 rgba(0,0,0,0.20), 0 2px 0 rgba(0,0,0,0.10);
     }
+    #bottom-nav .bn-icon { font-size: 20px; line-height: 1; display: block;
+      font-style: normal; }
     #bottom-nav .bn-lbl { overflow: hidden; text-overflow: ellipsis; max-width: 100%;
-      transform: skewX(-3deg); }
+      transform: skewX(-3deg); font-size: 9.5px; }
     #bottom-nav a.active {
       color: var(--accent); transform: translateY(-2px) scale(1.06);
       text-shadow:
@@ -11025,27 +11027,35 @@ const I18N = (() => {
 <!-- ░░ BOTTOM TAB BAR — mobile only (≤768px) ░░ -->
 <nav id="bottom-nav" aria-label="Navigation mobile">
   <a href="#" data-page="matchs" onclick="bnGo('matchs',this);return false;">
+    <span class="bn-icon">⚽</span>
     <span class="bn-lbl">Football</span>
   </a>
   <a href="#" data-page="tennis" onclick="bnGo('tennis',this);return false;">
+    <span class="bn-icon">🎾</span>
     <span class="bn-lbl">Tennis</span>
   </a>
   <a href="#" data-page="cs2" onclick="bnGo('cs2',this);return false;">
-    <span class="bn-lbl">🎮 CS2</span>
+    <span class="bn-icon">🎮</span>
+    <span class="bn-lbl">CS2</span>
   </a>
   <a href="#" data-page="mma" onclick="bnGo('mma',this);return false;">
-    <span class="bn-lbl">🥊 MMA</span>
+    <span class="bn-icon">🥊</span>
+    <span class="bn-lbl">MMA</span>
   </a>
-  <a href="#" data-page="strategies" onclick="bnGo('strategies',this);return false;">
-    <span class="bn-lbl">Stratégies</span>
+  <a href="#" data-page="nba" onclick="bnGo('nba',this);return false;">
+    <span class="bn-icon">🏀</span>
+    <span class="bn-lbl">NBA</span>
   </a>
   <a href="#" data-page="__live" onclick="bnGo('__live',this);return false;">
+    <span class="bn-icon">🔴</span>
     <span class="bn-lbl">Live<span id="bn-live-badge" class="bn-badge" style="display:none;">0</span></span>
   </a>
   <a href="#" data-page="paris" onclick="bnGo('paris',this);return false;">
+    <span class="bn-icon">🎯</span>
     <span class="bn-lbl">Paris</span>
   </a>
   <a href="#" data-page="__more" onclick="bnGo('__more',this);return false;">
+    <span class="bn-icon">⋯</span>
     <span class="bn-lbl">Plus</span>
   </a>
 </nav>
