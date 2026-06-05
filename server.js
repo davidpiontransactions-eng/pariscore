@@ -272,6 +272,10 @@ const RSS_FEEDS = [
   { url: 'https://feeds.bbci.co.uk/sport/tennis/rss.xml', lang: 'en', source: 'BBC Tennis', sport: 'tennis' },
   { url: 'https://www.espn.com/espn/rss/tennis/news', lang: 'en', source: 'ESPN Tennis', sport: 'tennis' },
   { url: 'https://www.tennisworldusa.org/index.php?format=feed&type=rss', lang: 'en', source: 'Tennis World USA', sport: 'tennis' },
+  // CS2 / Esport (AI Scout — extension p2if chain-of-thought, eval cs2-match-prediction GO-partiel)
+  { url: 'https://www.hltv.org/rss/news', lang: 'en', source: 'HLTV', sport: 'cs2' },
+  { url: 'https://www.dexerto.com/cs2/feed/', lang: 'en', source: 'Dexerto CS2', sport: 'cs2' },
+  { url: 'https://dust2.us/feed', lang: 'en', source: 'Dust2', sport: 'cs2' },
 ];
 
 // Parseur XML RSS minimaliste (natif — zéro dépendance)
@@ -336,7 +340,7 @@ async function fetchGNews(query, lang = 'fr') {
 // Agrège toutes les sources et retourne { text, articleCount, sourceNames } pour Gemini + UI
 // bd p2if Phase 3 — param `sport` (default 'football' back-compat) route feeds RSS pertinents.
 async function fetchPressContext(homeTeam, awayTeam, sport = 'football') {
-  const sportNorm = (sport === 'tennis' || sport === 'all') ? sport : 'football';
+  const sportNorm = (sport === 'tennis' || sport === 'cs2' || sport === 'all') ? sport : 'football';
   const cacheKey = `press_${sportNorm}_${normName(homeTeam)}_${normName(awayTeam)}`;
   const cached = kvGet(cacheKey);
   if (cached && (Date.now() - new Date(cached.fetchedAt).getTime() < PRESS_CACHE_TTL)) {
@@ -35427,6 +35431,194 @@ ${dataBlock}`;
     return jsonResponse(res, 200, { text, provider });
   } catch (e) {
     console.error('  [TennisAI] Erreur:', e.message);
+    return jsonResponse(res, 500, { error: e.message });
+  }
+}
+
+// ─── AI Scout CS2 — extension p2if chain-of-thought (eval cs2-match-prediction GO-partiel) ──
+// UI-only / explicabilité. JAMAIS injecté dans bayesianBlend sans backtest Brier (leçon age/hand NO-GO).
+// Concept volé au repo luizcieslak/cs2-match-prediction : raisonnement ANALYSE→CONCLUSION sur stats+news.
+if (pathname.startsWith('/api/v1/ai/cs2-analyze/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.split('/api/v1/ai/cs2-analyze/')[1] || '').trim();
+  console.log('[AI CS2] Requête reçue pour le match ID: ' + matchId);
+  if (!GEMINI_API_KEY) return jsonResponse(res, 503, { error: 'Clé Gemini non configurée' });
+  if (!matchId) return jsonResponse(res, 400, { error: 'matchId requis' });
+
+  const cacheKey = `deep_cs2_v1_${matchId}`;
+  const cached = getCachedAIAnalysis(cacheKey);
+  if (cached?.text) {
+    console.log(`  [CS2AI] HIT cache — ${matchId}`);
+    return jsonResponse(res, 200, { text: cached.text, provider: cached.provider || 'cache', _from_cache: true });
+  }
+
+  let match = null;
+  try {
+    const all = await cs2Service.getCs2Matches(BSD_API_KEY);
+    const list = Array.isArray(all) ? all : (all && Array.isArray(all.matches) ? all.matches : []);
+    match = list.find(m => String(m.id) === String(matchId));
+  } catch (e) {
+    console.warn('  [CS2AI] getCs2Matches erreur:', e.message);
+  }
+  if (!match) return jsonResponse(res, 404, { error: 'Match CS2 non trouvé', matchId });
+
+  const t1 = (match.team1 && match.team1.name) || '—';
+  const t2 = (match.team2 && match.team2.name) || '—';
+
+  // Enrichment BSD/HLTV (rank, elo, form, roster, map winrates, h2h, pistol) — défensif
+  let enr = null;
+  try {
+    enr = await Promise.race([
+      cs2Service.buildMatchEnrichment(t1, t2, null, BSD_API_KEY),
+      new Promise(r => setTimeout(() => r(null), 6000)),
+    ]);
+  } catch (e) { console.warn('  [CS2AI] buildMatchEnrichment KO:', e.message); }
+
+  // Press context CS2 (RSS HLTV / Dexerto / Dust2 — 5s race fallback narratif)
+  let pressCtx = null;
+  try {
+    pressCtx = await Promise.race([
+      fetchPressContext(t1, t2, 'cs2'),
+      new Promise(r => setTimeout(() => r(null), 5000)),
+    ]);
+  } catch (e) { console.warn('  [CS2AI] fetchPressContext KO:', e.message); }
+
+  const e1 = (enr && enr.team1) || {};
+  const e2 = (enr && enr.team2) || {};
+  const h2h = (enr && enr.h2h) || {};
+  const pistol = (enr && enr.pistol_index) || {};
+  const tournament = match.tournament || 'CS2';
+  const bestOf = match.best_of || 3;
+  const pred = match.predictions || {};
+  const odds = match.odds || {};
+
+  const trajLabel = (t) => (t && (t.arrow || t.label)) ? `${t.arrow || ''} ${t.label || ''}`.trim() : '—';
+  const mapsBlock = (e) => {
+    const am = e && e.all_maps;
+    if (!am || typeof am !== 'object') return '—';
+    return Object.keys(am).map(k => {
+      const v = am[k]; const wr = (v && (v.winrate ?? v.wr ?? v)) ?? null;
+      return `${k} ${wr != null ? safeFixed(wr, 0) + '%' : '—'}`;
+    }).slice(0, 7).join(' · ') || '—';
+  };
+
+  const dataBlock = `
+[DONNÉES DU MATCH FOURNIES PAR PARISCORE]
+Tournoi : ${tournament} · Format : BO${bestOf}
+
+[ÉQUIPES]
+${t1}${e1.rank ? ' (HLTV #' + e1.rank + ')' : ''}  vs  ${t2}${e2.rank ? ' (HLTV #' + e2.rank + ')' : ''}
+
+[ELO BSD]
+${t1} : ${e1.elo_rating != null ? Math.round(e1.elo_rating) : '—'}${e1.elo_peak ? ' (peak ' + Math.round(e1.elo_peak) + ')' : ''}
+${t2} : ${e2.elo_rating != null ? Math.round(e2.elo_rating) : '—'}${e2.elo_peak ? ' (peak ' + Math.round(e2.elo_peak) + ')' : ''}
+
+[FORME & TRAJECTOIRE]
+${t1} : score ${e1.form_score != null ? safeFixed(e1.form_score, 0) : '—'} · ${trajLabel(e1.form_trajectory)} · roster ${e1.roster_strength != null ? safeFixed(e1.roster_strength * 100, 0) + '%' : '—'}
+${t2} : score ${e2.form_score != null ? safeFixed(e2.form_score, 0) : '—'} · ${trajLabel(e2.form_trajectory)} · roster ${e2.roster_strength != null ? safeFixed(e2.roster_strength * 100, 0) + '%' : '—'}
+
+[MAP WINRATES]
+${t1} : ${mapsBlock(e1)}
+${t2} : ${mapsBlock(e2)}
+
+[H2H] ${t1} ${h2h.t1wins ?? 0} — ${h2h.t2wins ?? 0} ${t2} (n=${h2h.n ?? 0})
+[PISTOL INDEX] ${pistol.trade_signal || pistol.signal_strength || '—'}
+
+[PROBABILITÉ BSD ML]
+${t1} : ${pred.team1_win_prob != null ? safeFixed(pred.team1_win_prob, 1) + '%' : '—'} | ${t2} : ${pred.team2_win_prob != null ? safeFixed(pred.team2_win_prob, 1) + '%' : '—'}
+
+[COTES BOOKMAKERS]
+${t1} : ${odds.team1 ?? '—'} | ${t2} : ${odds.team2 ?? '—'}
+${(pressCtx && pressCtx.articleCount > 0) ? `
+[REVUE DE PRESSE REELLE — ${pressCtx.articleCount} articles via ${(pressCtx.sourceNames || []).join(', ')}]
+${pressCtx.text}
+[FIN REVUE DE PRESSE REELLE]
+` : ''}`;
+
+  const _pressInstruction = (pressCtx && pressCtx.articleCount > 0)
+    ? `PRIORITE ABSOLUE — La section [REVUE DE PRESSE REELLE] contient ${pressCtx.articleCount} articles réels. Au minimum 3 des 5 items de "📰 REVUE DE PRESSE" doivent être grounded sur ces articles : nom du média en gras puis paraphrase de l'angle. Complete avec narratifs plausibles si besoin.`
+    : `Tu n'as pas de recherche web live. Génère 5 narratifs médiatiques esport plausibles (HLTV, Dexerto, Dust2, ESPN Esports, 1pv.fr) sur ce match.`;
+
+  const systemPrompt = `Agis comme un analyste expert Counter-Strike 2 et un trader paris esport. Je te fournis les données d'un match CS2 (Elo, forme, map winrates, H2H, cotes, presse). Produis une analyse "Deep Scout" prête à publier sur Telegram.
+
+MÉTHODE DE RAISONNEMENT OBLIGATOIRE (chain-of-thought) :
+- Commence par une étape interne <ANALYSE> où tu confrontes méthodiquement : écart Elo, trajectoire de forme, avantage map pool (qui gagne le veto probable), H2H, pistol index, et ce que dit la presse. Pèse le pour/contre de chaque équipe.
+- Termine par <CONCLUSION> : la lecture synthétique qui découle de l'analyse.
+Le bloc <ANALYSE>...</ANALYSE> doit apparaître AVANT le message Telegram, puis le message final encapsulé.
+
+CONTRAINTES STRICTES :
+1. Ne JAMAIS prétendre disposer d'un modèle propriétaire calibré : ces estimations sont des lectures d'analyste, PAS des probabilités calibrées PariScore. Reste sur le terrain de l'aide à la décision explicable.
+2. Le message Telegram final intégralement dans un bloc \`\`\`text ... \`\`\`.
+3. Ton professionnel, analytique, orienté Value Bet.
+
+STRUCTURE OBLIGATOIRE DU MESSAGE TELEGRAM :
+- TITRE : accrocheur avec tournoi, format BO et émojis.
+- INTRO : contexte court + cotes affichées.
+- 📊 DEEP SCOUT & PROJECTIONS : pour chaque équipe estime de façon cohérente : un PowerScore /100, la probabilité de victoire du match (W%), la map la plus favorable et la map à éviter.
+- 🗺️ LECTURE DU VETO : map probablement jouée et l'équipe avantagée dessus (winrate delta).
+- 📰 REVUE DE PRESSE (AVIS MÉDIAS) : ${_pressInstruction}
+  Format strict, 5 items numérotés (1-2 lignes) :
+  1. **[Nom du Média]** : "Citation ou analyse sur la dynamique d'une équipe (forme, roster, map pool, mental)."
+  2. **[Nom du Média]** : "..."
+  3. **[Nom du Média]** : "..."
+  4. **[Nom du Média]** : "..."
+  5. **[Nom du Média]** : "..."
+- 💰 TOP 3 PARIS À JOUER : 1. Le Safe (Bankroll Builder) + analyse courte. 2. La Value (meilleur rapport risque/gain) + analyse. 3. Le Risk (grosse cote / map handicap / over rounds) + analyse.
+- ⚠️ L'AVIS DU TRADER : le piège à éviter sur ce match.
+
+${dataBlock}`;
+
+  try {
+    console.log(`  [CS2AI] Appel Gemini — ${t1} vs ${t2}`);
+    const gemRes = await httpsPost(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [{ parts: [{ text: systemPrompt }] }],
+        safetySettings: GEMINI_SAFETY_SETTINGS,
+        generationConfig: { temperature: 0.8, maxOutputTokens: 4096 },
+      }
+    );
+    let text = '';
+    let provider = 'gemini';
+    if (gemRes.status === 200) {
+      text = (gemRes.data && gemRes.data.candidates && gemRes.data.candidates[0] && gemRes.data.candidates[0].content && gemRes.data.candidates[0].content.parts && gemRes.data.candidates[0].content.parts[0] && gemRes.data.candidates[0].content.parts[0].text) || '';
+    } else {
+      console.warn(`  [CS2AI] Gemini KO (${gemRes.status}) — tentative fallback providers`);
+    }
+    if (!text) {
+      for (const prov of AI_DEEP_PROVIDERS) {
+        if (prov.type !== 'openai') continue;
+        try {
+          console.log(`  [CS2AI] Fallback → ${prov.name}`);
+          const r = await httpsPost(`https://${prov.host}${prov.path}`, {
+            model: prov.model,
+            messages: [{ role: 'user', content: systemPrompt }],
+            temperature: 0.8,
+            max_tokens: 4096,
+          }, {
+            'Authorization': `Bearer ${prov.key}`,
+            'HTTP-Referer': 'https://pariscore.io',
+            'X-Title': 'PariScore AI-AL CS2',
+          });
+          if (r.status === 200) {
+            const t = (r.data && r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || '';
+            if (t) { text = t; provider = prov.name; break; }
+          } else {
+            console.warn(`  [CS2AI] ${prov.name} → HTTP ${r.status}`);
+          }
+        } catch (provErr) {
+          console.warn(`  [CS2AI] ${prov.name} → ${provErr.message}`);
+        }
+      }
+    }
+    if (!text) {
+      if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data);
+      return jsonResponse(res, 500, { error: 'Tous les providers IA ont échoué ou renvoyé une réponse vide' });
+    }
+    saveAIAnalysisToCache(cacheKey, { text, provider });
+    console.log(`  [CS2AI] OK via ${provider} — ${text.length} chars`);
+    return jsonResponse(res, 200, { text, provider });
+  } catch (e) {
+    console.error('  [CS2AI] Erreur:', e.message);
     return jsonResponse(res, 500, { error: e.message });
   }
 }
