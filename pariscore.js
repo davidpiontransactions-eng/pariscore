@@ -805,7 +805,10 @@ function _renderNbaCards(matches) {
   if (!matches.length) { g.innerHTML = '<div class="nba-empty">Aucun match NBA aujourd\'hui</div>'; return; }
   g.innerHTML = matches.map(function (m) {
     var h = m.home || {}, a = m.away || {}, p = m.predictions || {}, wp = p.win_prob || {}, val = p.value || {}, te = p.total_edge || {};
-    var pH = wp.p_home != null ? wp.p_home : 50, pA = wp.p_away != null ? wp.p_away : 50;
+    var bl = p.blended || {}, su = p.spread_uqd || {};
+    // Barre = proba BLENDED (Elo+Pythagorean+Four Factors) si dispo, sinon Elo
+    var pH = bl.p_home != null ? bl.p_home : (wp.p_home != null ? wp.p_home : 50);
+    var pA = bl.p_away != null ? bl.p_away : (wp.p_away != null ? wp.p_away : 50);
     var live = m.status === 'in';
     var evH = val.ev_home, evHcls = evH == null ? '' : (evH > 0 ? 'ev-pos' : 'ev-neg');
     var teamRow = function (t, score, prob) {
@@ -829,6 +832,9 @@ function _renderNbaCards(matches) {
         (te.line != null ? '<span class="nba-chip">O/U ' + _nbaEsc(te.line) +
           (te.status === 'modeled' && te.lean ? ' · ' + _nbaEsc(te.model) + (te.lean !== 'NEUTRAL' ? ' ' + (te.diff > 0 ? '▲' : '▼') + _nbaEsc(te.lean) : '') : ' · off ' + _nbaEsc(te.combined_offense)) + '</span>' : '') +
         (wp.edge_elo != null ? '<span class="nba-chip">ΔElo ' + (wp.edge_elo > 0 ? '+' : '') + wp.edge_elo + '</span>' : '') +
+        (su.ats_pick && su.ats_pick !== 'NEUTRAL' ? '<span class="nba-chip">ATS ' + _nbaEsc(su.ats_pick === 'HOME' ? (h.abbr || 'H') : (a.abbr || 'A')) + ' ' + (su.p_home_cover != null ? (su.ats_pick === 'HOME' ? su.p_home_cover : (100 - su.p_home_cover)) + '%' : '') + '</span>' : '') +
+        (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null ? '<span class="nba-chip">' + _nbaEsc(su.ou_lean) + ' ' + (su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over)) + '%</span>' : '') +
+        (bl.n_models ? '<span class="nba-chip">⊕ blend ' + bl.n_models + '</span>' : '') +
       '</div>' +
     '</div>';
   }).join('');

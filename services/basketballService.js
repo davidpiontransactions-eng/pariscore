@@ -175,6 +175,85 @@ function computeNbaTotal(homeStats, awayStats, homeId, awayId) {
   return { combined_offense: +(ptsH + ptsA).toFixed(1), home_avg_pts: ptsH, away_avg_pts: ptsA, defense_modeled: false };
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  MODÈLES POUSSÉS (couche quant — mirror philosophie foot : blend + UQD + signal)
+// ════════════════════════════════════════════════════════════════════════════
+
+// Normal CDF (erf Abramowitz-Stegun 7.1.26) — pour UQD analytique
+function _normCdf(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return z > 0 ? 1 - p : p;
+}
+
+// (1) Pythagorean expectation (Hollinger E=16.5) → win% saison, log5 pour matchup
+const PYTHAG_EXP = 16.5;
+function computeNbaPythagorean(homeId, awayId) {
+  const sH = _standings.map && _standings.map[homeId];
+  const sA = _standings.map && _standings.map[awayId];
+  if (!sH || !sA || sH.avgPF == null || sH.avgPA == null || sA.avgPF == null || sA.avgPA == null) return null;
+  const pyth = (pf, pa) => Math.pow(pf, PYTHAG_EXP) / (Math.pow(pf, PYTHAG_EXP) + Math.pow(pa, PYTHAG_EXP));
+  const wH = pyth(sH.avgPF, sH.avgPA), wA = pyth(sA.avgPF, sA.avgPA);
+  // log5 (Bill James) : P(H bat A) sur terrain neutre
+  let p = (wH - wH * wA) / (wH + wA - 2 * wH * wA);
+  p = Math.max(0.02, Math.min(0.98, p + 0.035)); // +HCA ~3.5pp
+  return { p_home: +(p * 100).toFixed(1), pyth_home: +(wH * 100).toFixed(1), pyth_away: +(wA * 100).toFixed(1) };
+}
+
+// (2) Four Factors partiels (eFG% + FT rate — TOV/ORB non exposés ESPN scoreboard)
+function computeNbaFourFactors(homeStats, awayStats) {
+  const efgH = _efgPct(homeStats), efgA = _efgPct(awayStats);
+  const ftH = _ftRate(homeStats), ftA = _ftRate(awayStats);
+  if (efgH == null || efgA == null) return null;
+  // eFG% pondéré 0.40, FT rate 0.15 (poids Oliver) → score différentiel → logistic
+  const scoreH = 0.40 * efgH + 0.15 * (ftH || 0);
+  const scoreA = 0.40 * efgA + 0.15 * (ftA || 0);
+  const p = 1 / (1 + Math.exp(-(scoreH - scoreA) / 3.2)); // pente calibrable
+  return { p_home: +(p * 100).toFixed(1), efg_home: efgH, efg_away: efgA, partial: true };
+}
+
+// (3) Bayesian blend Elo + Pythagorean + Four Factors → proba consolidée
+function computeNbaBlend(eloP, pythP, ffP) {
+  const parts = [];
+  if (eloP != null)  parts.push({ p: eloP / 100,  w: 0.55 });
+  if (pythP != null) parts.push({ p: pythP / 100, w: 0.30 });
+  if (ffP != null)   parts.push({ p: ffP / 100,   w: 0.15 });
+  if (!parts.length) return null;
+  const wSum = parts.reduce((s, x) => s + x.w, 0);
+  const p = parts.reduce((s, x) => s + x.p * x.w, 0) / wSum;
+  return { p_home: +(p * 100).toFixed(1), p_away: +((1 - p) * 100).toFixed(1), n_models: parts.length };
+}
+
+// (4) Spread/margin + (5) UQD analytique IC90 + ATS cover + O/U over probabilities
+const SD_MARGIN = 12.0; // écart-type marge NBA (pts)
+const SD_TOTAL  = 18.0; // écart-type total NBA (pts)
+function computeNbaSpreadUQD(eloDiff, expTotal, bookSpreadHome, bookOU) {
+  if (eloDiff == null) return null;
+  const expMargin = +(eloDiff * PTS_PER_ELO / ELO_DIV).toFixed(1); // Elo diff → marge attendue (home - away)
+  const z = 1.645; // IC90
+  const out = {
+    exp_margin: expMargin,
+    margin_ic90: [+(expMargin - z * SD_MARGIN).toFixed(1), +(expMargin + z * SD_MARGIN).toFixed(1)],
+    p_home_cover: null, ats_pick: null, total_ic90: null, p_over: null, ou_lean: null,
+  };
+  // ATS : bookSpreadHome négatif si home favori (ex -6.5). Home couvre si marge > -spread.
+  if (bookSpreadHome != null) {
+    const coverProb = _normCdf((expMargin + bookSpreadHome) / SD_MARGIN); // P(margin + spread > 0)
+    out.p_home_cover = +(coverProb * 100).toFixed(1);
+    out.ats_pick = coverProb >= 0.55 ? 'HOME' : coverProb <= 0.45 ? 'AWAY' : 'NEUTRAL';
+  }
+  if (expTotal != null) {
+    out.total_ic90 = [+(expTotal - z * SD_TOTAL).toFixed(1), +(expTotal + z * SD_TOTAL).toFixed(1)];
+    if (bookOU != null) {
+      const overProb = 1 - _normCdf((bookOU - expTotal) / SD_TOTAL);
+      out.p_over = +(overProb * 100).toFixed(1);
+      out.ou_lean = overProb >= 0.55 ? 'OVER' : overProb <= 0.45 ? 'UNDER' : 'NEUTRAL';
+    }
+  }
+  return out;
+}
+
 // ─── Devig moneyline 2-way (proportionnel) → fair + EV (cotes en SORTIE) ─────────
 function _devigEv(mlHome, mlAway, model) {
   const iH = _amOddsToProb(mlHome), iA = _amOddsToProb(mlAway);
@@ -206,12 +285,24 @@ function _normalizeEvent(ev) {
 
   const winProb = computeNbaWinProb(home.records, away.records, hTeam.id, aTeam.id);
   const total   = computeNbaTotal(home.statistics, away.statistics, hTeam.id, aTeam.id);
+  // Modèles poussés
+  const pyth  = computeNbaPythagorean(hTeam.id, aTeam.id);
+  const ff    = computeNbaFourFactors(home.statistics, away.statistics);
+  const blend = computeNbaBlend(winProb && winProb.p_home, pyth && pyth.p_home, ff && ff.p_home);
+  const spreadUQD = computeNbaSpreadUQD(
+    winProb && winProb.edge_elo,
+    total && total.expected_total,
+    odds && odds.spread,
+    odds && odds.overUnder
+  );
 
+  // Value EV sur la proba BLENDED (consolidée), pas l'Elo brut
   let value = null;
-  if (odds && odds.moneyline && winProb) {
+  const modelForValue = blend || winProb;
+  if (odds && odds.moneyline && modelForValue) {
     const mlH = odds.moneyline.home && odds.moneyline.home.close && odds.moneyline.home.close.odds;
     const mlA = odds.moneyline.away && odds.moneyline.away.close && odds.moneyline.away.close.odds;
-    if (mlH && mlA) value = _devigEv(mlH, mlA, winProb);
+    if (mlH && mlA) value = _devigEv(mlH, mlA, modelForValue);
   }
 
   // Total edge : si défense modélisée (standings) → lean réel vs ligne ; sinon indicatif.
@@ -253,8 +344,11 @@ function _normalizeEvent(ev) {
       ml_home: odds.moneyline && odds.moneyline.home && odds.moneyline.home.close && odds.moneyline.home.close.odds,
       ml_away: odds.moneyline && odds.moneyline.away && odds.moneyline.away.close && odds.moneyline.away.close.odds,
     } : null,
-    predictions: { win_prob: winProb, total, total_edge: totalEdge, value },
-    note: 'Modèle records+scoring indépendant des cotes. NON calibré — backtest Brier requis avant signal BET.',
+    predictions: {
+      win_prob: winProb, blended: blend, pythagorean: pyth, four_factors: ff,
+      total, total_edge: totalEdge, spread_uqd: spreadUQD, value,
+    },
+    note: 'Elo game-by-game + Pythagorean + Four Factors → blend. UQD analytique IC90. Indépendant des cotes (EV en sortie). NON calibré vs marché — devig-vs-Pinnacle requis avant signal BET.',
   };
 }
 
@@ -279,6 +373,10 @@ module.exports = {
   getNbaMatchById,
   computeNbaWinProb,
   computeNbaTotal,
+  computeNbaPythagorean,
+  computeNbaFourFactors,
+  computeNbaBlend,
+  computeNbaSpreadUQD,
   invalidateCache() { _cache.ts = 0; },
   _normalizeEvent, _devigEv, // testing
 };
