@@ -19703,16 +19703,17 @@ async function handleAPI(req, res, pathname, query) {
         }
       }
       // Fetch UFC athlete page
-      const ufcUrl = `https://www.ufc.com/athlete/${slug}`;
-      const fetchRes = await httpsGet(ufcUrl, {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-      }, 12000);
+      // Wikipedia REST API — thumbnail.source, no Cloudflare, JSON clean
+      // Title: "Belal Muhammad" → "Belal_Muhammad"
+      const wikiTitle = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('_');
+      const wikiUrl   = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
+      const fetchRes  = await httpsGet(wikiUrl, {
+        'User-Agent': 'PariScore/2.0 (https://pariscore.io; contact@pariscore.io)',
+        'Accept': 'application/json',
+      }, 10000);
       let photoUrl = null;
-      if (fetchRes && fetchRes.status === 200 && typeof fetchRes.data === 'string') {
-        const m = fetchRes.data.match(/event_results_athlete_headshot[^"']+/);
-        if (m) photoUrl = `https://ufc.com/images/styles/${m[0]}`;
+      if (fetchRes && fetchRes.status === 200 && fetchRes.data && fetchRes.data.thumbnail) {
+        photoUrl = fetchRes.data.thumbnail.source || null;
       }
       const payload = JSON.stringify({ ok: true, url: photoUrl, slug });
       // Store in api_cache (key, data, source, created_at, expires_at)
