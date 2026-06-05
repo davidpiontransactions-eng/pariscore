@@ -36,6 +36,7 @@ const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissem
 const cs2Service        = require('./services/cs2Service');        // CS2/CSGO BSD addon + HLTV rankings
 const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
+const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -5569,6 +5570,28 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_newsletter_email ON newsletter(email)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_newsletter_active ON newsletter(active)`);
+  // bd 8gz3 — MMA/UFC fighter stats cache
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS mma_fighters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL COLLATE NOCASE,
+    slpm REAL DEFAULT 0,
+    str_acc REAL DEFAULT 0,
+    sapm REAL DEFAULT 0,
+    str_def REAL DEFAULT 0,
+    td_avg REAL DEFAULT 0,
+    td_acc REAL DEFAULT 0,
+    td_def REAL DEFAULT 0,
+    sub_avg REAL DEFAULT 0,
+    reach_cm REAL DEFAULT 175,
+    height_cm REAL DEFAULT 175,
+    age INTEGER DEFAULT 28,
+    wins INTEGER DEFAULT 0,
+    losses INTEGER DEFAULT 0,
+    draws INTEGER DEFAULT 0,
+    total_fights INTEGER DEFAULT 0,
+    last_updated INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_mma_fighters_name ON mma_fighters(name)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -19592,6 +19615,27 @@ async function handleAPI(req, res, pathname, query) {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     return res.end(JSON.stringify({ ok: true, tournaments: tracked }));
+  }
+
+  // ── MMA / UFC routes (bd 8gz3) ────────────────────────────────────────────
+  // GET /api/v1/mma/fights — upcoming UFC events with win prob + odds + EV
+  if (pathname === '/api/v1/mma/fights' && req.method === 'GET') {
+    try {
+      const events = await mmaService.getMMAFights(ODDS_API_KEY);
+      const status = mmaService.getCacheStatus();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1200' });
+      return res.end(JSON.stringify({ ok: true, count: events.length, events, cache: status }));
+    } catch (e) {
+      console.error('[MMA route]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'MMA fetch failed', events: [] }));
+    }
+  }
+
+  // GET /api/v1/mma/status — cache status + model info
+  if (pathname === '/api/v1/mma/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    return res.end(JSON.stringify({ ok: true, cache: mmaService.getCacheStatus(), model: 'logistic_differential_v1' }));
   }
 
   // 2b. Match Details (proxy interne pour modal STATS)
