@@ -19739,10 +19739,20 @@ body[data-page="mma"] footer { display: none !important; }
 .mma-analysis-btn:hover { color: #E3001B; }
 .mma-analysis-drawer { display: none; padding: 14px 14px 16px; border-top: 1px solid var(--bg4,#1e2328); background: var(--bg,#0a0d0f); }
 .mma-analysis-drawer.open { display: block; }
-.mma-analysis-body { font-family:'Instrument Sans',sans-serif; font-size: 13px; color: var(--text2,#8d9399); line-height: 1.6; white-space: pre-wrap; }
+.mma-analysis-body { font-family:'Instrument Sans',sans-serif; font-size: 12.5px; color: var(--text2,#8d9399); line-height: 1.6; }
 .mma-analysis-spinner { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); animation: mma-pulse 1.2s ease-in-out infinite; }
 .mma-analysis-body strong { color: var(--text,#e8eaed); }
-.mma-analysis-body em { color: #D4AF37; font-style: normal; }
+.mma-bet-card { border-radius: 8px; padding: 10px 12px; margin: 8px 0 0; border: 1px solid; }
+.mma-bet-card.safe  { background: rgba(0,230,118,0.06); border-color: rgba(0,230,118,0.25); }
+.mma-bet-card.value { background: rgba(212,175,55,0.08); border-color: rgba(212,175,55,0.30); }
+.mma-bet-card.wild  { background: rgba(255,107,0,0.07); border-color: rgba(255,107,0,0.25); }
+.mma-bet-card-head { font-family: Syne,sans-serif; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+.mma-bet-card.safe  .mma-bet-card-head { color: #00E676; }
+.mma-bet-card.value .mma-bet-card-head { color: #D4AF37; }
+.mma-bet-card.wild  .mma-bet-card-head { color: #FF6B00; }
+.mma-bet-card-pick { font-family:'Instrument Sans',sans-serif; font-size: 13px; font-weight: 700; color: var(--text,#e8eaed); margin-bottom: 3px; }
+.mma-bet-card-meta { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-bottom: 3px; }
+.mma-bet-card-reason { font-size: 11.5px; color: var(--text2,#8d9399); line-height: 1.4; }
 /* Empty / loading states */
 .mma-skeleton { background: var(--bg2,#111417); border-radius: 10px; height: 120px; margin-bottom: 8px; animation: mma-pulse 1.4s ease-in-out infinite; }
 @keyframes mma-pulse { 0%,100%{opacity:0.4;} 50%{opacity:0.8;} }

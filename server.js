@@ -19737,17 +19737,31 @@ Alerte Value Bet : ${hasBetA ? fa + ' ✓' : hasBetB ? fb + ' ✓' : 'Aucun'}
 
 ${pressBlock}
 
-INSTRUCTIONS STRICTES :
-1. **REVUE DE PRESSE** (2-3 bullets max) : synthèse factuelle des infos presse sur les deux combattants. Si aucune info pertinente, indique brièvement les styles de combat connus.
-2. **ANALYSE CLÉS** (3 bullets) : avantages/faiblesses distinctifs, style matchup (striking vs grappling), facteur X.
-3. **PARI RECOMMANDÉ** : 1 pari max, format structuré :
-   - Combattant : [nom]
-   - Cote minimale : [X.XX]
-   - EV estimé : [+X.X%]
-   - Confiance : [Faible/Moyenne/Haute] selon convergence devig + DRatings
-   - Raisonnement : 1 phrase max
+INSTRUCTIONS STRICTES — respecte exactement ce format :
 
-Réponds en français. Sois concis (max 250 mots). Pas de disclaimer ou de mise en garde excessive.`;
+**ANALYSE**
+• [Style matchup en 1 ligne : striking vs grappling, avantage clé]
+• [Facteur X décisif : fatigue, reach, camp, préparation]
+• [Convergence signaux : si devig + DRatings concordent → signal fort]
+
+**TOP 3 PARIS**
+
+🥇 BANKROLL BUILDER (pari sûr)
+Pari: [description précise — ex: "Belal Muhammad vainqueur"]
+Cote: [X.XX] | Confiance: [Haute/Moyenne] | EV: [+X.X%]
+→ [Justification 1 phrase]
+
+🎯 VALUE BET (meilleur rapport risque/gain)
+Pari: [description — ex: "Combat à la décision" ou "Muhammad par décision"]
+Cote: [X.XX] | Confiance: [Moyenne] | EV: [+X.X%]
+→ [Justification 1 phrase — base ton raisonnement sur les styles]
+
+⚡ WILD CARD (cote élevée / surprise)
+Pari: [description — ex: "Bonfim par submission R1-R2" ou "KO avant R3"]
+Cote: [X.XX estimée] | Confiance: [Faible] | EV: [estimé]
+→ [Justification 1 phrase]
+
+Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro disclaimer.`;
 
     try {
       let text = '';
@@ -19759,13 +19773,13 @@ Réponds en français. Sois concis (max 250 mots). Pas de disclaimer ou de mise 
           if (prov.type === 'gemini') {
             r = await httpsPost(
               `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-              { contents: [{ parts: [{ text: prompt }] }], safetySettings: GEMINI_SAFETY_SETTINGS, generationConfig: { temperature: 0.5, maxOutputTokens: 700 } }
+              { contents: [{ parts: [{ text: prompt }] }], safetySettings: GEMINI_SAFETY_SETTINGS, generationConfig: { temperature: 0.6, maxOutputTokens: 900 } }
             );
             if (r.status === 200) text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             else console.warn(`  [MMA Analysis] Gemini KO (${r.status})`);
           } else {
             r = await httpsPost(`https://${prov.host}${prov.path}`,
-              { model: prov.model, messages: [{ role: 'user', content: prompt }], temperature: 0.5, max_tokens: 700 },
+              { model: prov.model, messages: [{ role: 'user', content: prompt }], temperature: 0.6, max_tokens: 900 },
               { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore MMA' }
             );
             if (r.status === 200) text = r.data?.choices?.[0]?.message?.content || '';
