@@ -63,18 +63,15 @@ for (const r of allRows) {
     const W = { age: r.winner_age, rank: r.winner_rank, pts: r.winner_rank_points, elo: eW };
     const L = { age: r.loser_age, rank: r.loser_rank, pts: r.loser_rank_points, elo: eL };
     const p1 = p1IsWinner ? W : L, p2 = p1IsWinner ? L : W;
-    const age30 = (a) => Math.abs(a - 30);
-    const ageint = (a) => a < 28 ? 28 - a : a > 32 ? a - 32 : 0;
     const lpts = (x) => Math.log(Math.max(1, x)); // points très skewés → log
     samples.push({
       year,
       y: p1IsWinner ? 1 : 0,
+      p1age: p1.age, p2age: p2.age,             // âges bruts → features dérivées par variante
       f: {
-        d_rank:   p2.rank - p1.rank,          // rang bas = fort → (p2−p1) positif si p1 mieux classé
+        d_rank:   p2.rank - p1.rank,            // rang bas = fort → (p2−p1) positif si p1 mieux classé
         d_lpoints: lpts(p1.pts) - lpts(p2.pts),
         d_elo:    p1.elo - p2.elo,
-        d_age30:  age30(p2.age) - age30(p1.age),   // convention paper J2−J1 (p1 avantagé si plus proche pic)
-        d_ageint: ageint(p2.age) - ageint(p1.age),
       },
     });
   }
@@ -134,47 +131,98 @@ function metrics(probs, y) {
   return { brier: brier / n, logloss: -ll / n, classif: correct / n, n };
 }
 
-// ── 4. Expanding window par année ────────────────────────────────────────────
-const BASE_KEYS = ['d_rank', 'd_lpoints', 'd_elo'];
-const ENH_KEYS = [...BASE_KEYS, 'd_age30', 'd_ageint'];
-const MIN_TRAIN_YEARS = 1; // train requiert ≥1 année antérieure
+// ── 4. Features dérivées par variante (peak recalibré par circuit) ───────────
+const peakdist = (a, peak) => Math.abs(a - peak);
+const intdist = (a, lo, hi) => a < lo ? lo - a : a > hi ? a - hi : 0;
+const C = 28; // centrage âge pour la variante quadratique (stabilité GD)
 
-function runVariant(keys, testYear) {
-  const train = samples.filter(s => s.year < testYear);
-  const test = samples.filter(s => s.year === testYear);
+// featurize : retourne un objet f selon la variante. peak = pic recalibré.
+function featurize(s, variant, peak) {
+  const f = { d_rank: s.f.d_rank, d_lpoints: s.f.d_lpoints, d_elo: s.f.d_elo };
+  if (variant === 'base') return f;
+  if (variant === 'fixed30') {            // paper : pic fixe 30, intervalle [28,32]
+    f.d_agepk = peakdist(s.p2age, 30) - peakdist(s.p1age, 30);
+    f.d_ageint = intdist(s.p2age, 28, 32) - intdist(s.p1age, 28, 32);
+  } else if (variant === 'recal') {       // pic recalibré + intervalle [pic-2, pic+2]
+    f.d_agepk = peakdist(s.p2age, peak) - peakdist(s.p1age, peak);
+    f.d_ageint = intdist(s.p2age, peak - 2, peak + 2) - intdist(s.p1age, peak - 2, peak + 2);
+  } else if (variant === 'quad') {        // âge libre : modèle trouve l'optimum (âge + âge²)
+    const a1 = s.p1age - C, a2 = s.p2age - C;
+    f.d_age = a1 - a2;
+    f.d_age2 = a1 * a1 - a2 * a2;
+  }
+  return f;
+}
+function keysOf(variant) {
+  if (variant === 'base') return ['d_rank', 'd_lpoints', 'd_elo'];
+  if (variant === 'quad') return ['d_rank', 'd_lpoints', 'd_elo', 'd_age', 'd_age2'];
+  return ['d_rank', 'd_lpoints', 'd_elo', 'd_agepk', 'd_ageint'];
+}
+function featurizeRows(rows, variant, peak) {
+  return rows.map(s => ({ y: s.y, year: s.year, f: featurize(s, variant, peak) }));
+}
+
+// ── 5. Dérivation du pic d'âge par circuit (grid search in-sample logloss) ────
+// Sur le dataset complet : pour chaque pic candidat, on ajoute |age-pic| (diff)
+// au modèle base et on garde le pic minimisant la logloss. Estimation coarse
+// d'hyperparamètre (recherche, pas de prod).
+function derivePeak(rows) {
+  let best = { peak: 30, ll: Infinity };
+  for (let peak = 18; peak <= 36; peak += 0.5) {
+    const fr = rows.map(s => ({ y: s.y, f: {
+      d_rank: s.f.d_rank, d_lpoints: s.f.d_lpoints, d_elo: s.f.d_elo,
+      d_agepk: peakdist(s.p2age, peak) - peakdist(s.p1age, peak),
+    } }));
+    const keys = ['d_rank', 'd_lpoints', 'd_elo', 'd_agepk'];
+    const tr = standardize(fr, keys);
+    const model = trainLogistic(tr.X, fr.map(r => r.y), { iters: 900, lr: 0.2 });
+    const m = metrics(predict(model, tr.X), fr.map(r => r.y));
+    if (m.logloss < best.ll) best = { peak, ll: m.logloss };
+  }
+  return best.peak;
+}
+const PEAK = derivePeak(samples);
+console.log(`\nPic d'âge recalibré (data-driven, ${TOUR}) : ${PEAK} ans  (paper fixe = 30)`);
+
+// ── 6. Expanding window — comparaison 4 variantes ────────────────────────────
+const VARIANTS = ['base', 'fixed30', 'recal', 'quad'];
+const MIN_TRAIN_YEARS = 1;
+function runVariant(variant, testYear) {
+  const train = featurizeRows(samples.filter(s => s.year < testYear), variant, PEAK);
+  const test = featurizeRows(samples.filter(s => s.year === testYear), variant, PEAK);
   if (train.length < 100 || !test.length) return null;
+  const keys = keysOf(variant);
   const tr = standardize(train, keys);
-  const model = trainLogistic(tr.X, train.map(s => s.y));
+  const model = trainLogistic(tr.X, train.map(r => r.y));
   const te = standardize(test, keys, tr.st);
-  return metrics(predict(model, te.X), test.map(s => s.y));
+  return metrics(predict(model, te.X), test.map(r => r.y));
 }
 
 const testYears = years.filter((_, i) => i >= MIN_TRAIN_YEARS);
-const agg = { base: [], enh: [] };
-console.log('\n── Expanding window (train < année, test = année) ──');
-console.log('année |   n  | Brier base | Brier +age |  ΔBrier  | Classif base→+age');
+const agg = Object.fromEntries(VARIANTS.map(v => [v, []]));
+console.log('\n── Expanding window — Brier par variante ──');
+console.log('année |   n  |  base  | fixed30 | recal@' + PEAK + ' |  quad  ');
 for (const ty of testYears) {
-  const b = runVariant(BASE_KEYS, ty), e = runVariant(ENH_KEYS, ty);
-  if (!b || !e) continue;
-  agg.base.push(b); agg.enh.push(e);
-  const dB = e.brier - b.brier;
-  console.log(`${ty}  | ${String(b.n).padStart(4)} |   ${b.brier.toFixed(4)}   |   ${e.brier.toFixed(4)}   | ${(dB >= 0 ? '+' : '') + dB.toFixed(4)} | ${(b.classif * 100).toFixed(1)}% → ${(e.classif * 100).toFixed(1)}%`);
+  const r = Object.fromEntries(VARIANTS.map(v => [v, runVariant(v, ty)]));
+  if (!r.base) continue;
+  for (const v of VARIANTS) if (r[v]) agg[v].push(r[v]);
+  console.log(`${ty}  | ${String(r.base.n).padStart(4)} | ${r.base.brier.toFixed(4)} | ${r.fixed30.brier.toFixed(4)}  | ${r.recal.brier.toFixed(4)}   | ${r.quad.brier.toFixed(4)}`);
 }
 
 function mean(arr, k) { return arr.reduce((a, m) => a + m[k], 0) / arr.length; }
-if (agg.base.length) {
-  const bB = mean(agg.base, 'brier'), eB = mean(agg.enh, 'brier');
-  const bL = mean(agg.base, 'logloss'), eL = mean(agg.enh, 'logloss');
-  const bC = mean(agg.base, 'classif'), eC = mean(agg.enh, 'classif');
-  console.log('\n── Moyenne sur fenêtres ──');
-  console.log(`Brier    baseline=${bB.toFixed(4)}  +age=${eB.toFixed(4)}  Δ=${(eB - bB >= 0 ? '+' : '') + (eB - bB).toFixed(4)}  (${eB < bB ? 'AGE AIDE' : 'pas de gain'})`);
-  console.log(`LogLoss  baseline=${bL.toFixed(4)}  +age=${eL.toFixed(4)}  Δ=${(eL - bL >= 0 ? '+' : '') + (eL - bL).toFixed(4)}`);
-  console.log(`Classif  baseline=${(bC * 100).toFixed(1)}%  +age=${(eC * 100).toFixed(1)}%`);
-  const gain = bB - eB;
-  console.log('\nVERDICT : ' + (gain > 0.0005
-    ? `Age features réduisent le Brier de ${(gain).toFixed(4)} → GO wire dans bayesianBlend (bd c0li Phase 3).`
-    : gain < -0.0005
-      ? 'Age features dégradent le Brier → NO-GO, ne pas câbler dans le blend.'
-      : 'Effet négligeable (|Δ|<0.0005) → NO-GO net, garder exposé/UI seulement.'));
+console.log('\n── Moyenne sur fenêtres (vs baseline) ──');
+const bB = mean(agg.base, 'brier'), bL = mean(agg.base, 'logloss'), bC = mean(agg.base, 'classif');
+console.log(`baseline   Brier=${bB.toFixed(4)}  LogLoss=${bL.toFixed(4)}  Classif=${(bC * 100).toFixed(1)}%`);
+let bestVar = 'base', bestGain = 0;
+for (const v of VARIANTS.slice(1)) {
+  const vB = mean(agg[v], 'brier'), vL = mean(agg[v], 'logloss'), vC = mean(agg[v], 'classif');
+  const dB = vB - bB;
+  console.log(`${v.padEnd(10)} Brier=${vB.toFixed(4)}  ΔBrier=${(dB >= 0 ? '+' : '') + dB.toFixed(4)}  LogLoss=${vL.toFixed(4)}  Classif=${(vC * 100).toFixed(1)}%`);
+  if (bB - vB > bestGain) { bestGain = bB - vB; bestVar = v; }
 }
+console.log('\nVERDICT : ' + (bestGain > 0.0010
+  ? `Variante "${bestVar}" réduit le Brier de ${bestGain.toFixed(4)} (>0.001) → candidat GO blend (re-valider sur l'autre circuit).`
+  : bestGain > 0.0005
+    ? `Meilleure variante "${bestVar}" gain ${bestGain.toFixed(4)} — marginal, GO prudent sous réserve cohérence ATP+WTA.`
+    : 'Aucune variante ne dépasse +0.0005 Brier → NO-GO blend, garder exposé/UI.'));
 db.close();
