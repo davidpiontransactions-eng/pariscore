@@ -37,6 +37,7 @@ const cs2Service        = require('./services/cs2Service');        // CS2/CSGO B
 const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
+const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -19624,6 +19625,33 @@ async function handleAPI(req, res, pathname, query) {
       const out = cs2Service.computeMapPlayLikelihood(t1, t2, window);
       res.writeHead(out.ok ? 200 : 422, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
       return res.end(JSON.stringify(out));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // ─── NBA vertical (ESPN, JS-natif — Elo records + Four Factors + totals + value) ───
+  // GET /api/v1/nba/matches — matchs NBA du jour + prédictions (win prob, total, EV non-circulaire)
+  if (pathname === '/api/v1/nba/matches' && req.method === 'GET') {
+    try {
+      const matches = await basketballService.getNbaMatches();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
+      return res.end(JSON.stringify({ ok: true, count: matches.length, source: 'espn', matches }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
+    }
+  }
+  // GET /api/v1/nba/insights/:id — détail d'un match NBA
+  if (pathname.startsWith('/api/v1/nba/insights/') && req.method === 'GET') {
+    const id = decodeURIComponent(pathname.split('/api/v1/nba/insights/')[1] || '').trim();
+    if (!id) { res.writeHead(400, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'id requis' })); }
+    try {
+      const match = await basketballService.getNbaMatchById(id);
+      if (!match) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'match NBA non trouvé', id })); }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
+      return res.end(JSON.stringify({ ok: true, match }));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message }));
