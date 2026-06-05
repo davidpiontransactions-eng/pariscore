@@ -27702,6 +27702,15 @@ async function loadFootAlerts() {
       + _renderOddsCell(f.fighter_a, f.ai_odds_a, f.vegas_odds_a, f.ev_a_pct, f.bet_a)
       + _renderOddsCell(f.fighter_b, f.ai_odds_b, f.vegas_odds_b, f.ev_b_pct, f.bet_b)
       + '</div>'
+      + '<button class="mma-analysis-btn" onclick="toggleMMAAnalysis(this,'
+      + JSON.stringify(f.fighter_a) + ',' + JSON.stringify(f.fighter_b) + ','
+      + (f.prob_a||0) + ',' + (f.prob_b||0) + ','
+      + (f.dr_prob_a||0) + ',' + (f.dr_prob_b||0) + ','
+      + (f.ev_a_pct||0) + ',' + (f.ev_b_pct||0) + ','
+      + (f.best_odds_a||0) + ',' + (f.best_odds_b||0) + ','
+      + (f.bet_a?'true':'false') + ',' + (f.bet_b?'true':'false')
+      + ')">🔍 Analyse &amp; Paris</button>'
+      + '<div class="mma-analysis-drawer"></div>'
       + '</div>';
   }
 
@@ -27741,5 +27750,44 @@ async function loadFootAlerts() {
       + (hasBet ? '<div class="mma-bet-chip">✓ BET</div>' : '')
       + '</div>';
   }
+
+
+  // Toggle analysis drawer + lazy-fetch Gemini fight analysis
+  window.toggleMMAAnalysis = function(btn, fa, fb, probA, probB, drA, drB, evA, evB, oddsA, oddsB, betA, betB) {
+    var card    = btn.closest('.mma-fight');
+    if (!card) return;
+    var drawer  = card.querySelector('.mma-analysis-drawer');
+    if (!drawer) return;
+    var isOpen  = drawer.classList.contains('open');
+    if (isOpen) {
+      drawer.classList.remove('open');
+      btn.textContent = '🔍 Analyse & Paris';
+      return;
+    }
+    drawer.classList.add('open');
+    btn.textContent = '▲ Fermer';
+    if (drawer.dataset.loaded) return; // already fetched
+    drawer.innerHTML = '<div class="mma-analysis-spinner">Analyse en cours...</div>';
+    var params = new URLSearchParams({
+      fa: fa, fb: fb,
+      prob_a: probA, prob_b: probB,
+      dr_prob_a: drA, dr_prob_b: drB,
+      ev_a: evA, ev_b: evB,
+      best_odds_a: oddsA, best_odds_b: oddsB,
+      bet_a: betA, bet_b: betB,
+    });
+    fetch('/api/v1/mma/fight-analysis?' + params)
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(d) {
+        drawer.dataset.loaded = '1';
+        var text = (d.text || 'Analyse indisponible.')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>')
+        drawer.innerHTML = '<div class="mma-analysis-body">' + text + '</div>';
+      })
+      .catch(function(e) {
+        drawer.innerHTML = '<div class="mma-analysis-body" style="color:var(--red,#ff4d4d)">Analyse indisponible (' + e + ')</div>';
+      });
+  };
 
 }());

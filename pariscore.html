@@ -19684,6 +19684,15 @@ body[data-page="mma"] footer { display: none !important; }
 .mma-ev.positive { color: #00E676; }
 .mma-ev.negative { color: var(--text3,#5a6068); }
 .mma-bet-chip { display: inline-flex; align-items: center; gap: 3px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); border-radius: 4px; padding: 1px 6px; font-size: 9px; font-weight: 700; color: #D4AF37; font-family:'DM Mono',monospace; margin-top: 3px; }
+/* Analysis expand */
+.mma-analysis-btn { width: 100%; padding: 7px 12px; background: none; border: none; border-top: 1px solid var(--bg4,#1e2328); color: var(--text3,#5a6068); font-family:'Instrument Sans',sans-serif; font-size: 11px; cursor: pointer; text-align: left; transition: color 0.15s; }
+.mma-analysis-btn:hover { color: #E3001B; }
+.mma-analysis-drawer { display: none; padding: 14px 14px 16px; border-top: 1px solid var(--bg4,#1e2328); background: var(--bg,#0a0d0f); }
+.mma-analysis-drawer.open { display: block; }
+.mma-analysis-body { font-family:'Instrument Sans',sans-serif; font-size: 13px; color: var(--text2,#8d9399); line-height: 1.6; white-space: pre-wrap; }
+.mma-analysis-spinner { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); animation: mma-pulse 1.2s ease-in-out infinite; }
+.mma-analysis-body strong { color: var(--text,#e8eaed); }
+.mma-analysis-body em { color: #D4AF37; font-style: normal; }
 /* Empty / loading states */
 .mma-skeleton { background: var(--bg2,#111417); border-radius: 10px; height: 120px; margin-bottom: 8px; animation: mma-pulse 1.4s ease-in-out infinite; }
 @keyframes mma-pulse { 0%,100%{opacity:0.4;} 50%{opacity:0.8;} }
