@@ -19705,9 +19705,10 @@ async function handleAPI(req, res, pathname, query) {
       // Fetch UFC athlete page
       const ufcUrl = `https://www.ufc.com/athlete/${slug}`;
       const fetchRes = await httpsGet(ufcUrl, {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html',
-      }, 10000);
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+      }, 12000);
       let photoUrl = null;
       if (fetchRes && fetchRes.status === 200 && typeof fetchRes.data === 'string') {
         const m = fetchRes.data.match(/event_results_athlete_headshot[^"']+/);
