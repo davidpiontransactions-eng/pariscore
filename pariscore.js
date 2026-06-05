@@ -27490,11 +27490,13 @@ async function loadFootAlerts() {
   var _mmaTimer    = null;
 
   window.initMMAPage = function () {
-    if (_mmaLoaded) { _applyMMAFilter(); return; }
-    _mmaLoaded = true;
+    if (_mmaLoaded && _mmaData.length > 0) { _applyMMAFilter(); return; }
+    if (!_mmaLoaded) {
+      _mmaLoaded = true;
+      _mmaTimer = setInterval(_fetchMMA, MMA_POLL_MS);
+    }
     _renderMMASkeleton();
     _fetchMMA();
-    _mmaTimer = setInterval(_fetchMMA, MMA_POLL_MS);
   };
 
   window.stopMMAPage = function () {
