@@ -38,6 +38,7 @@ const berserkService    = require('./services/berserkService');    // Berserk Le
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
+let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -19801,6 +19802,24 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
     } catch (e) {
       console.error('[MMA Analysis]', e.message);
       return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
+  // GET /api/v1/mma/breakdown?fa=Jordan+Leavitt&fb=Joanderson+Brito
+  // agentmma.com fight breakdown (winner, confidence%, method, records, FAQ).
+  // Sourced ONLY from robots-allowed /articles pages (never /api/). Cached 6h in
+  // mmaService. Returns am:null when agentmma has no article (non-UFC) -> UI uses
+  // our own devig + DRatings only.
+  if (pathname === '/api/v1/mma/breakdown' && req.method === 'GET') {
+    const fa = (query.fa || '').toString().trim();
+    const fb = (query.fb || '').toString().trim();
+    if (!fa || !fb) return jsonResponse(res, 400, { ok: false, error: 'fa et fb requis' });
+    try {
+      const am = await mmaService.getFightBreakdown(fa, fb);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, am: am || null }));
+    } catch (e) {
+      return jsonResponse(res, 200, { ok: false, am: null, error: e.message });
     }
   }
 

@@ -490,6 +490,151 @@ async function getFighterPhoto(rawName) {
   return null;
 }
 
+// ─── agentmma.com fight breakdown (robots-allowed /articles only) ────────────
+// agentmma publishes per-fight breakdown articles whose JSON-LD FAQPage block
+// server-renders the model output: winner, confidence %, method narrative,
+// records, striking, event. We parse ONLY this allowed page (never /api/, which
+// robots Disallows). Used on-demand by the breakdown endpoint, not the card list.
+const _breakdownCache = {};                 // slugA|slugB -> { data, ts }
+const CACHE_TTL_BREAKDOWN = 6 * 3600 * 1000; // 6h (articles change slowly)
+
+function _decodeEntities(s) {
+  return String(s || '')
+    .replace(/\\u0026/g, '&').replace(/\\"/g, '"').replace(/\\n/g, ' ').replace(/\\\//g, '/')
+    .replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+}
+
+// Pull the JSON-LD FAQPage Q&A pairs out of an article's HTML.
+function _extractFaq(html) {
+  const faqs = [];
+  const re = /"@type":"Question","name":"([^"]+)"[\s\S]{0,160}?"text":"([\s\S]*?)"\}\}/g;
+  let m;
+  while ((m = re.exec(html)) !== null && faqs.length < 20) {
+    faqs.push({ q: _decodeEntities(m[1]), a: _decodeEntities(m[2]) });
+  }
+  return faqs;
+}
+
+// Derive structured model output from the article HTML + names.
+function _parseAgentMmaArticle(html, nameA, nameB) {
+  const faqs = _extractFaq(html);
+  if (!faqs.length) return null;
+  const get = (rx) => { for (const f of faqs) { const x = f.a.match(rx); if (x) return x; } return null; };
+
+  // Confidence: title "(NN% Confidence)" or FAQ "Confidence level: NN%"
+  const title = (html.match(/<title>([^<]+)<\/title>/) || [])[1] || '';
+  let confidence = parseInt((title.match(/\((\d{1,3})%\s*Confidence\)/i) || [])[1] || (get(/Confidence level:\s*(\d{1,3})%/i) || [])[1] || '', 10);
+  if (isNaN(confidence)) confidence = null;
+
+  // Winner + method: "with NN% confidence, WINNER is predicted to win against LOSER. METHOD"
+  const win = get(/(\d{1,3})% confidence,\s*(.+?)\s+is predicted to win against\s+(.+?)\.\s*(.*)/i);
+  let winner = win ? win[2].trim() : null;
+  const method = win ? win[4].trim() : null;
+  if (confidence == null && win) confidence = parseInt(win[1], 10);
+
+  // Map winner to side a/b by name match
+  const norm = (s) => String(s || '').toLowerCase();
+  const lastOf = (s) => norm(s).split(/\s+/).pop();
+  let winner_side = null;
+  if (winner) {
+    if (norm(winner).includes(lastOf(nameA))) winner_side = 'a';
+    else if (norm(winner).includes(lastOf(nameB))) winner_side = 'b';
+  }
+
+  // Records: "N-M-K record" pairs — assign by surrounding name
+  const recOf = (name) => {
+    const rx = new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^.]{0,40}?(\\d+-\\d+-\\d+)', 'i');
+    const x = html.match(rx); return x ? x[1] : null;
+  };
+  const records = { a: recOf(nameA), b: recOf(nameB) };
+
+  // Striking: "X averages N strikes per minute with M% accuracy"
+  const strk = (name) => {
+    const rx = new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^.]*?([\\d.]+) strikes per minute(?: with (\\d+)% accuracy)?', 'i');
+    const x = html.match(rx); return x ? { spm: parseFloat(x[1]), acc: x[2] ? parseInt(x[2], 10) : null } : null;
+  };
+
+  // Event / date / venue
+  const ev = get(/scheduled for\s*(.+?)\s*on\s*(.+?)\s*at\s*(.+?)\./i);
+  const acc = get(/accuracy rate of\s*(\d{1,3})%/i);
+
+  if (confidence == null && !winner) return null; // not a real prediction article
+  return {
+    winner, winner_side, confidence, method,
+    records,
+    striking: { a: strk(nameA), b: strk(nameB) },
+    event:  ev ? { name: ev[1].trim(), date: ev[2].trim(), venue: ev[3].trim() } : null,
+    model_accuracy: acc ? parseInt(acc[1], 10) : null,
+    faq: faqs,
+    source: 'agentmma.com',
+  };
+}
+
+// Article index from the sitemap. Only the id-prefixed canonical URLs render the
+// full FAQ reliably (slug-only URLs serve a shell). The sitemap lists those URLs;
+// we key them by the order-independent fighter-slug pair so a card fight maps to
+// its canonical article regardless of corner order.
+const _articleIndexCache = { data: null, ts: 0 };
+const CACHE_TTL_ARTIDX = 12 * 3600 * 1000; // 12h
+
+function _pairKey(slugA, slugB) { return [slugA, slugB].sort().join('|'); }
+
+async function _loadArticleIndex() {
+  if (_articleIndexCache.data && (Date.now() - _articleIndexCache.ts) < CACHE_TTL_ARTIDX) {
+    return _articleIndexCache.data;
+  }
+  const index = {};
+  try {
+    const res = await _get('https://agentmma.com/articles/sitemap.xml',
+      { 'User-Agent': BROWSER_UA, 'Accept': 'application/xml,text/xml' }, 12000);
+    if (res && res.status === 200 && typeof res.data === 'string') {
+      const re = /<loc>https:\/\/agentmma\.com\/articles\/(\d+-\d+-[a-z0-9-]+?-vs-[a-z0-9-]+)<\/loc>/gi;
+      let m;
+      while ((m = re.exec(res.data)) !== null) {
+        const path     = m[1];                              // {idA}-{idB}-{slugA}-vs-{slugB}
+        const slugPart = path.replace(/^\d+-\d+-/, '');     // {slugA}-vs-{slugB}
+        const parts    = slugPart.split('-vs-');
+        if (parts.length !== 2) continue;
+        index[_pairKey(parts[0], parts[1])] = `https://agentmma.com/articles/${path}`;
+      }
+    }
+    console.log(`[MMA] agentmma article index: ${Object.keys(index).length} fights`);
+  } catch (e) {
+    console.warn('[MMA] agentmma sitemap:', e.message);
+  }
+  _articleIndexCache.data = index;
+  _articleIndexCache.ts   = Date.now();
+  return index;
+}
+
+// Public: on-demand fight breakdown from agentmma's robots-allowed article page.
+// Resolves the canonical (id-prefixed) URL via the sitemap index, then parses the
+// server-rendered JSON-LD. Returns null when agentmma has no article for the fight
+// (e.g. non-UFC/regional), so the UI falls back to our own devig + DRatings.
+async function getFightBreakdown(nameA, nameB) {
+  const a = String(nameA || '').trim(), b = String(nameB || '').trim();
+  if (!a || !b) return null;
+  const slugA = fighterSlug(a), slugB = fighterSlug(b);
+  const key = _pairKey(slugA, slugB);
+  const cached = _breakdownCache[key];
+  if (cached && (Date.now() - cached.ts) < CACHE_TTL_BREAKDOWN) return cached.data;
+
+  let data = null;
+  try {
+    const index = await _loadArticleIndex();
+    const url   = index[key];
+    if (url) {
+      const res = await _get(url, { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' }, 12000);
+      if (res && res.status === 200 && typeof res.data === 'string') {
+        const parsed = _parseAgentMmaArticle(res.data, a, b);
+        if (parsed) { parsed.url = url; data = parsed; }
+      }
+    }
+  } catch (_) {}
+  _breakdownCache[key] = { data, ts: Date.now() };
+  return data;
+}
+
 // ─── Kept for future use when fighter stats source found ─────────────────────
 function computeMMAWinProb() { return 0.5; }
 
@@ -503,4 +648,4 @@ function getCacheStatus() {
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown };
