@@ -27673,7 +27673,7 @@ async function loadFootAlerts() {
   function _updateAccBadge() {
     var badge = document.getElementById('mma-acc-badge');
     if (!badge) return;
-    badge.textContent = 'Ensemble multi-modèle';
+    badge.textContent = 'Analyse PariScore';
     badge.style.display = '';
     // T3 — real backtest of PariScore verdicts (accumulates as fights resolve)
     fetch('/api/v1/mma/performance').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
@@ -27681,7 +27681,7 @@ async function loadFootAlerts() {
       if (p.resolved > 0) {
         var roi = p.roi_pct != null ? ' · ROI ' + (p.roi_pct > 0 ? '+' : '') + p.roi_pct + '%' : '';
         badge.textContent = '📊 ' + p.resolved + ' picks · ' + Math.round(p.accuracy * 100) + '%' + roi;
-        badge.title = 'Backtest réel des verdicts PariScore · Brier ' + p.brier + ' · ' + p.pending + ' en attente';
+        badge.title = 'Suivi des verdicts PariScore · ' + p.pending + ' en attente';
       } else if (p.pending > 0) {
         badge.textContent = '📊 ' + p.pending + ' picks suivis (résultats à venir)';
       }
@@ -27726,6 +27726,17 @@ async function loadFootAlerts() {
     return Number(n).toFixed(digits != null ? digits : 2);
   }
 
+  // FR date+time (Europe/Paris) from an ISO/UTC commence_time. '' if absent/invalid.
+  function _mmaWhen(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    try {
+      var s = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).format(d);
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    } catch (e) { return ''; }
+  }
+
   function _renderMMAEvent(ev) {
     var fights = (ev.fights || []).map(_renderMMAFight).join('');
     if (!fights) return '';
@@ -27752,6 +27763,7 @@ async function loadFootAlerts() {
       + '<div class="mma-fight-meta">'
       + (f.weight_class ? _esc(f.weight_class) : 'Bout')
       + (f.is_title ? ' <span class="mma-title-belt">🏆 TITLE</span>' : '')
+      + (_mmaWhen(f.commence_time) ? ' <span class="mma-fight-when" style="text-transform:none;opacity:.78;font-weight:600;">· ' + _esc(_mmaWhen(f.commence_time)) + '</span>' : '')
       + '</div>'
       + '<div class="mma-fighters">'
       // Fighter A (left)
@@ -27767,7 +27779,6 @@ async function loadFootAlerts() {
       + '<div class="mma-bar-wrap">'
       + '<span class="mma-vs">VS</span>'
       + '<div class="mma-prob-bar"><div class="mma-prob-fill" style="width:' + probA + '%"></div></div>'
-      + (f.dr_prob_a != null ? '<span class="mma-dr-badge">DR ' + Math.round(f.dr_prob_a * 100) + '/' + Math.round(f.dr_prob_b * 100) + '</span>' : '')
       + '</div>'
       // Fighter B (right)
       + '<div class="mma-fighter side-b">'
@@ -27879,7 +27890,7 @@ async function loadFootAlerts() {
     if (drawer.dataset.loaded) return; // already fetched
     drawer.dataset.loaded = '1';
     drawer.innerHTML =
-      '<div class="mma-bd-slot"><div class="mma-analysis-spinner">Consensus multi-modèle…</div></div>' +
+      '<div class="mma-bd-slot"><div class="mma-analysis-spinner">Probabilités…</div></div>' +
       '<div class="mma-gem-slot"><div class="mma-analysis-spinner">Analyse IA…</div></div>';
     // 1. AgentMMA multi-model breakdown (consensus + full-analysis modal)
     _loadMMABreakdown(drawer.querySelector('.mma-bd-slot'), fa, fb, probA, probB, drA, drB, mpA, mpB, mpLo, mpHi);
@@ -27919,7 +27930,7 @@ async function loadFootAlerts() {
     if (psA == null) return '';
     var favA = psA >= 0.5, vp = Math.round((favA ? psA : 1 - psA) * 100), who = favA ? fa : fb;
     return '<div class="mma-verdict"><div class="mma-verdict-info">' +
-      '<div class="mma-verdict-lbl">⚡ Verdict PariScore · ensemble</div>' +
+      '<div class="mma-verdict-lbl">⚡ Verdict PariScore</div>' +
       '<div class="mma-verdict-pick" title="' + _esc(who) + '">' + _esc(who) + '</div></div>' +
       '<div class="mma-verdict-val">' + vp + '%</div></div>';
   }
@@ -27980,21 +27991,20 @@ async function loadFootAlerts() {
     var psA = _psBlend([{ p: probA, w: 0.45 }, { p: drA, w: 0.28 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.17 }, { p: mpA, w: 0.10 }]);
 
     var h = '<div class="mma-bd">' + _verdictBlock(psA, fa, fb) +
-      '<div class="mma-bd-title">Consensus multi-modèles</div><div class="mma-consensus">';
-    h += _modelCell('Devig', pa, pb, fa, fb);
-    h += _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb);
-    h += _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am');
-    h += _modelCell('PariScore ML', mla, mla != null ? 100 - mla : null, fa, fb, 'ml');
+      '<div class="mma-bd-title">Probabilités</div><div class="mma-consensus">';
+    h += _modelCell('Marché', pa, pb, fa, fb);
+    h += _modelCell('Stats', dra, dra != null ? 100 - dra : null, fa, fb);
+    h += _modelCell('Forme', amv.a, amv.b, fa, fb, 'am');
+    h += _modelCell('PariScore', mla, mla != null ? 100 - mla : null, fa, fb, 'ml');
     h += '</div>';
     h += '<div class="mma-consensus-verdict"><span class="mma-agree ' + (agree ? 'hi' : 'lo') + '">' +
          (agree ? '✓ ACCORD' : '⚠ DIVERGENCE') + '</span><span>' +
-         (agree ? ('Convergence sur ' + _esc(favName)) : 'Modèles en désaccord') + '</span></div>';
+         (agree ? ('Convergence sur ' + _esc(favName)) : 'Signaux en désaccord') + '</span></div>';
     if (am && am.method) h += '<div class="mma-bd-method">“' + _esc(am.method) + '”</div>';
     if (am) {
-      h += '<button class="mma-bd-full-btn" onclick="openMMABreakdownModal(' + id + ')">📊 Voir l’analyse complète AgentMMA</button>';
-      h += '<div class="mma-bd-src">Modèle ML AgentMMA' + (am.model_accuracy ? ' · ' + am.model_accuracy + '% précision historique' : '') + '</div>';
+      h += '<button class="mma-bd-full-btn" onclick="openMMABreakdownModal(' + id + ')">📊 Voir l’analyse complète</button>';
     } else {
-      h += '<div class="mma-bd-src">AgentMMA : pas d’article pour ce combat (hors UFC)</div>';
+      h += '<div class="mma-bd-src">Pas d’analyse détaillée pour ce combat</div>';
     }
     h += '</div>';
     slot.innerHTML = h;
@@ -28051,19 +28061,19 @@ async function loadFootAlerts() {
     h += '<div class="mma-modal-fighters">' + mf(fa, recA, winA) + '<div class="mma-modal-vs">VS</div>' + mf(fb, recB, winB) + '</div></div>';
 
     var winner = am.winner || (winA ? fa : fb);
-    h += '<div class="mma-modal-conf"><div class="mma-conf-label"><span>Prédiction AgentMMA</span><span>' + conf + '% confiance</span></div>' +
+    h += '<div class="mma-modal-conf"><div class="mma-conf-label"><span>Pronostic</span><span>' + conf + '% confiance</span></div>' +
          '<div class="mma-conf-bar"><div class="mma-conf-fill" style="width:' + conf + '%"></div></div>' +
-         '<div style="font-size:12px;color:var(--text2,#8d9399);margin-top:8px;">Vainqueur prédit : <strong style="color:#ff5a4d">' + _esc(winner) + '</strong>' + (am.method ? ' — ' + _esc(am.method) : '') + '</div></div>';
+         '<div style="font-size:12px;color:var(--text2,#8d9399);margin-top:8px;">Favori : <strong style="color:#ff5a4d">' + _esc(winner) + '</strong>' + (am.method ? ' — ' + _esc(am.method) : '') + '</div></div>';
 
     var mla = (st.mpA != null ? _pct(st.mpA) : null);
     var psA = _psBlend([{ p: st.probA, w: 0.45 }, { p: st.drA, w: 0.28 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.17 }, { p: st.mpA, w: 0.10 }]);
-    h += '<div class="mma-modal-sec"><div class="mma-sec-title">Consensus multi-modèles</div>' +
+    h += '<div class="mma-modal-sec"><div class="mma-sec-title">Probabilités</div>' +
          _verdictBlock(psA, fa, fb) + '<div class="mma-consensus">' +
-         _modelCell('Devig', pa, pb, fa, fb) +
-         _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb) +
-         _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am') +
-         _modelCell('PariScore ML', mla, mla != null ? 100 - mla : null, fa, fb, 'ml') + '</div>' +
-         (st.mpA != null ? '<div class="mma-method-cap" style="margin-top:6px">PariScore ML = modèle logistique maison (KTH + reach/âge + damage/Elo + symétrie, ~64% précision OOS — poids faible)' + ((st.mpLo != null && st.mpHi != null) ? ' · incertitude ±' + Math.round((st.mpHi - st.mpLo) / 2 * 100) + ' pts (bootstrap)' : '') + '</div>' : '') +
+         _modelCell('Marché', pa, pb, fa, fb) +
+         _modelCell('Stats', dra, dra != null ? 100 - dra : null, fa, fb) +
+         _modelCell('Forme', amv.a, amv.b, fa, fb, 'am') +
+         _modelCell('PariScore', mla, mla != null ? 100 - mla : null, fa, fb, 'ml') + '</div>' +
+         '' +
          '</div>';
 
     var sa = am.striking && am.striking.a, sb = am.striking && am.striking.b;
@@ -28092,7 +28102,7 @@ async function loadFootAlerts() {
         h += '</div>';
       }
     }
-    h += '<div class="mma-modal-foot">Source : <a href="' + _esc(am.url) + '" target="_blank" rel="noopener">AgentMMA</a> (modèle ML' + (am.model_accuracy ? ', ' + am.model_accuracy + '% précision' : '') + ') · fusionné PariScore devig + DRatings</div>';
+    h += '<div class="mma-modal-foot">Analyse PariScore</div>';
     h += '</div>';
     return h;
   }
