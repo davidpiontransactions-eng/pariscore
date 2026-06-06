@@ -87,9 +87,8 @@ for (const s of stats) {
   cur.l += ss.l; cur.a += ss.a; cur.ctrl += toSec(s.CTRL); cur.td += td.l; cur.kd += (parseInt(s.KD, 10) || 0);
 }
 
-// build per-fighter chronological fight list with the per-fight raw stats + outcome
-const hist = {}; // fighterName -> [{date, strk, ctrl, won}]
-let usedFights = 0;
+// Chronological fight list (needed for Elo + damage_ratio — mmamodel.ai top features)
+const fights = [];
 for (const r of results) {
   const ev = r.EVENT.trim(), bout = r.BOUT.trim();
   const date = eventDate[ev]; if (!date) continue;
@@ -99,13 +98,31 @@ for (const r of results) {
   let aWon; if (out === 'W/L') aWon = 1; else if (out === 'L/W') aWon = 0; else continue; // skip draw/NC
   const dur = Math.max(1, (parseInt(r.ROUND, 10) - 1 || 0) * 300 + toSec(r.TIME));
   const k = key(ev, bout); const ag = agg[k]; if (!ag || !ag[A] || !ag[B]) continue;
-  const featOf = (st) => ({ strk: (st.a ? st.l / st.a : 0) * (st.l / dur), ctrl: st.ctrl / dur, td: st.td / dur, kd: st.kd / dur });
-  const fa = featOf(ag[A]), fb = featOf(ag[B]);
-  (hist[A] = hist[A] || []).push({ date, strk: fa.strk, ctrl: fa.ctrl, td: fa.td, kd: fa.kd, won: aWon });
-  (hist[B] = hist[B] || []).push({ date, strk: fb.strk, ctrl: fb.ctrl, td: fb.td, kd: fb.kd, won: 1 - aWon });
+  fights.push({ date, A, B, aWon, dur, sA: ag[A], sB: ag[B] });
+}
+fights.sort((a, b) => a.date - b.date);
+
+// Walk fights in time order: per-fight features (incl damage_ratio = sig landed /
+// sig absorbed, and opp_elo = opponent's pre-fight Elo = strength of schedule),
+// then update Elo. No leakage: opp_elo uses Elo BEFORE this fight.
+const elo = {}; const E0 = 1500, KELO = 32;
+const getElo = (n) => (elo[n] != null ? elo[n] : E0);
+const hist = {};
+let usedFights = 0;
+for (const ft of fights) {
+  const eA = getElo(ft.A), eB = getElo(ft.B);
+  const featOf = (st, oppLanded, oppElo) => ({
+    strk: (st.a ? st.l / st.a : 0) * (st.l / ft.dur), ctrl: st.ctrl / ft.dur, td: st.td / ft.dur, kd: st.kd / ft.dur,
+    damage: oppLanded > 0 ? st.l / oppLanded : (st.l > 0 ? 3 : 1), opp_elo: oppElo,
+  });
+  const fa = featOf(ft.sA, ft.sB.l, eB), fb = featOf(ft.sB, ft.sA.l, eA);
+  (hist[ft.A] = hist[ft.A] || []).push(Object.assign({ date: ft.date, won: ft.aWon }, fa));
+  (hist[ft.B] = hist[ft.B] || []).push(Object.assign({ date: ft.date, won: 1 - ft.aWon }, fb));
+  const expA = 1 / (1 + Math.pow(10, (eB - eA) / 400));
+  elo[ft.A] = eA + KELO * (ft.aWon - expA);
+  elo[ft.B] = eB + KELO * ((1 - ft.aWon) - (1 - expA));
   usedFights++;
 }
-for (const f in hist) hist[f].sort((x, y) => x.date - y.date);
 console.log(`[build] ${usedFights} decisive fights, ${Object.keys(hist).length} fighters`);
 
 // rolling-5 average of a fighter's fights strictly BEFORE index idx
@@ -113,9 +130,9 @@ const MINH = 3, WINDOW = 5;
 function rolling(list, idx) {
   const past = list.slice(Math.max(0, idx - WINDOW), idx);
   if (past.length < MINH) return null;
-  let sw = 0, s = 0, c = 0, t = 0, k = 0;
-  past.forEach((p, i) => { const w = i + 1; sw += w; s += w * p.strk; c += w * p.ctrl; t += w * p.td; k += w * p.kd; }); // recency-weighted
-  return { strk: s / sw, ctrl: c / sw, td: t / sw, kd: k / sw };
+  let sw = 0, s = 0, c = 0, t = 0, k = 0, dm = 0, el = 0;
+  past.forEach((p, i) => { const w = i + 1; sw += w; s += w * p.strk; c += w * p.ctrl; t += w * p.td; k += w * p.kd; dm += w * p.damage; el += w * p.opp_elo; }); // recency-weighted
+  return { strk: s / sw, ctrl: c / sw, td: t / sw, kd: k / sw, damage: dm / sw, opp_elo: el / sw };
 }
 
 // training set: each fight where BOTH fighters have >= MINH prior fights
@@ -133,7 +150,8 @@ for (const r of results) {
   const ra = rolling(ha, ia), rb = rolling(hb, ib); if (!ra || !rb) continue;
   const ta = tottMap[A] || {}, tb = tottMap[B] || {};
   samples.push({ date, x: [ra.strk, rb.strk, ra.ctrl, rb.ctrl, ra.td, rb.td, ra.kd, rb.kd,
-    diff(ta.reach, tb.reach), diff(ta.height, tb.height), diff(ageAt(ta.dob, date), ageAt(tb.dob, date))], y: aWon });
+    diff(ta.reach, tb.reach), diff(ta.height, tb.height), diff(ageAt(ta.dob, date), ageAt(tb.dob, date)),
+    ra.damage, rb.damage, ra.opp_elo, rb.opp_elo], y: aWon });
 }
 samples.sort((a, b) => a.date - b.date);
 console.log(`[build] ${samples.length} training samples (both fighters >= ${MINH} prior fights)`);
@@ -166,15 +184,15 @@ const feats = {};
 for (const f in hist) {
   const list = hist[f]; if (list.length < MINH) continue;
   const last = list.slice(Math.max(0, list.length - WINDOW));
-  let sw = 0, s = 0, c = 0, t = 0, k = 0; last.forEach((p, i) => { const w = i + 1; sw += w; s += w * p.strk; c += w * p.ctrl; t += w * p.td; k += w * p.kd; });
+  let sw = 0, s = 0, c = 0, t = 0, k = 0, dm = 0, el = 0; last.forEach((p, i) => { const w = i + 1; sw += w; s += w * p.strk; c += w * p.ctrl; t += w * p.td; k += w * p.kd; dm += w * p.damage; el += w * p.opp_elo; });
   const rnd = v => Math.round(v / sw * 1e6) / 1e6;
   const tt = tottMap[f] || {};
-  feats[ml.fighterSlug(f)] = { strk: rnd(s), ctrl: rnd(c), td: rnd(t), kd: rnd(k), reach: tt.reach || null, height: tt.height || null, dob: tt.dob || null, n: list.length };
+  feats[ml.fighterSlug(f)] = { strk: rnd(s), ctrl: rnd(c), td: rnd(t), kd: rnd(k), damage: rnd(dm), opp_elo: Math.round(el / sw), reach: tt.reach || null, height: tt.height || null, dob: tt.dob || null, n: list.length };
 }
 
 fs.writeFileSync(OUT_MODEL, JSON.stringify({
   weights: model.weights, bias: model.bias, mean: model.mean, std: model.std,
-  features: ['fighter_strike_eff', 'opp_strike_eff', 'fighter_ctrl_pct', 'opp_ctrl_pct', 'fighter_td_rate', 'opp_td_rate', 'fighter_kd_rate', 'opp_kd_rate', 'reach_diff', 'height_diff', 'age_diff'],
+  features: ['fighter_strike_eff', 'opp_strike_eff', 'fighter_ctrl_pct', 'opp_ctrl_pct', 'fighter_td_rate', 'opp_td_rate', 'fighter_kd_rate', 'opp_kd_rate', 'reach_diff', 'height_diff', 'age_diff', 'fighter_damage', 'opp_damage', 'fighter_opp_elo', 'opp_opp_elo'],
   test_accuracy: Math.round(teAcc * 1000) / 1000, train_accuracy: Math.round(trAcc * 1000) / 1000,
   n_train: trX.length, n_test: teX.length, window: WINDOW, min_history: MINH,
   source: 'KTH 2024 thesis method; ufcstats facts via Greco1899', built_from_fights: usedFights,

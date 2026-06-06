@@ -270,28 +270,36 @@ function _mmaFeatVec(fa, fb) {
   const d = (a, b) => (a != null && b != null) ? a - b : 0;
   const YEAR = 365.25 * 864e5, now = Date.now();
   const ageA = fa.dob ? (now - fa.dob) / YEAR : null, ageB = fb.dob ? (now - fb.dob) / YEAR : null;
-  return [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd, d(fa.reach, fb.reach), d(fa.height, fb.height), d(ageA, ageB)];
+  return [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd, d(fa.reach, fb.reach), d(fa.height, fb.height), d(ageA, ageB),
+    fa.damage != null ? fa.damage : 1, fb.damage != null ? fb.damage : 1, fa.opp_elo != null ? fa.opp_elo : 1500, fb.opp_elo != null ? fb.opp_elo : 1500];
+}
+// Symmetry-enforced prediction (mmamodel.ai): P(A) = avg[pred(A,B), 1-pred(B,A)]
+// so the model can't disagree with itself when the corners are swapped.
+function _symPredict(model, fa, fb) {
+  const a = _logit.predict(model, _mmaFeatVec(fa, fb));
+  const b = _logit.predict(model, _mmaFeatVec(fb, fa));
+  if (a == null || b == null || isNaN(a) || isNaN(b)) return null;
+  return (a + (1 - b)) / 2;
 }
 function mmaModelPredict(nameA, nameB) {
   if (!MMA_MODEL || !_logit) return null;
   const fa = MMA_FEATS[fighterSlug(nameA)], fb = MMA_FEATS[fighterSlug(nameB)];
   if (!fa || !fb) return null;
-  const p = _logit.predict(MMA_MODEL, _mmaFeatVec(fa, fb));
-  return p == null || isNaN(p) ? null : Math.round(p * 1000) / 1000;
+  const p = _symPredict(MMA_MODEL, fa, fb);
+  return p == null ? null : Math.round(p * 1000) / 1000;
 }
 // Point estimate + bootstrap 80% uncertainty band (P10..P90). null if no model/fighters.
 function mmaModelBand(nameA, nameB) {
   if (!MMA_MODEL || !_logit) return null;
   const fa = MMA_FEATS[fighterSlug(nameA)], fb = MMA_FEATS[fighterSlug(nameB)];
   if (!fa || !fb) return null;
-  const x = _mmaFeatVec(fa, fb);
-  const p = _logit.predict(MMA_MODEL, x);
-  if (p == null || isNaN(p)) return null;
+  const p = _symPredict(MMA_MODEL, fa, fb);
+  if (p == null) return null;
   const pr = Math.round(p * 1000) / 1000;
   const boots = MMA_MODEL.bootstrap;
   if (!Array.isArray(boots) || boots.length < 5) return { p: pr, lo: pr, hi: pr };
   const preds = [];
-  for (const bm of boots) { const bp = _logit.predict(bm, x); if (bp != null && !isNaN(bp)) preds.push(bp); }
+  for (const bm of boots) { const bp = _symPredict(bm, fa, fb); if (bp != null && !isNaN(bp)) preds.push(bp); }
   if (preds.length < 5) return { p: pr, lo: pr, hi: pr };
   preds.sort((a, b) => a - b);
   const q = (f) => preds[Math.min(preds.length - 1, Math.max(0, Math.floor(f * (preds.length - 1))))];
