@@ -27783,7 +27783,7 @@ async function loadFootAlerts() {
       + _renderOddsCell(f.fighter_a, f.ai_odds_a, f.vegas_odds_a, f.ev_a_pct, f.bet_a)
       + _renderOddsCell(f.fighter_b, f.ai_odds_b, f.vegas_odds_b, f.ev_b_pct, f.bet_b)
       + '</div>'
-      + '<button class="mma-analysis-btn" onclick="toggleMMAAnalysis(this,'
+      + '<button class="mma-analysis-btn" onclick="' + _esc('toggleMMAAnalysis(this,'
       + JSON.stringify(f.fighter_a) + ',' + JSON.stringify(f.fighter_b) + ','
       + (f.prob_a||0) + ',' + (f.prob_b||0) + ','
       + (f.dr_prob_a||0) + ',' + (f.dr_prob_b||0) + ','
@@ -27792,7 +27792,7 @@ async function loadFootAlerts() {
       + (f.bet_a?'true':'false') + ',' + (f.bet_b?'true':'false') + ','
       + (f.model_prob_a!=null?f.model_prob_a:'null') + ',' + (f.model_prob_b!=null?f.model_prob_b:'null') + ','
       + (f.model_lo_a!=null?f.model_lo_a:'null') + ',' + (f.model_hi_a!=null?f.model_hi_a:'null')
-      + ')">🔍 Analyse &amp; Paris</button>'
+      + ')') + '">🔍 Analyse &amp; Paris</button>'
       + '<div class="mma-analysis-drawer"></div>'
       + '</div>';
   }
