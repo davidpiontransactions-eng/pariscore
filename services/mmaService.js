@@ -266,16 +266,36 @@ function blendProbs(parts) {
 // Own logistic model: P(fighter A wins) from each fighter's rolling-5 feature
 // snapshot. Returns null when either fighter is unknown to the model (debut /
 // non-UFC / missing history) — caller falls back to the other signals.
+function _mmaFeatVec(fa, fb) {
+  const d = (a, b) => (a != null && b != null) ? a - b : 0;
+  const YEAR = 365.25 * 864e5, now = Date.now();
+  const ageA = fa.dob ? (now - fa.dob) / YEAR : null, ageB = fb.dob ? (now - fb.dob) / YEAR : null;
+  return [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd, d(fa.reach, fb.reach), d(fa.height, fb.height), d(ageA, ageB)];
+}
 function mmaModelPredict(nameA, nameB) {
   if (!MMA_MODEL || !_logit) return null;
   const fa = MMA_FEATS[fighterSlug(nameA)], fb = MMA_FEATS[fighterSlug(nameB)];
   if (!fa || !fb) return null;
-  const d = (a, b) => (a != null && b != null) ? a - b : 0;
-  const YEAR = 365.25 * 864e5, now = Date.now();
-  const ageA = fa.dob ? (now - fa.dob) / YEAR : null, ageB = fb.dob ? (now - fb.dob) / YEAR : null;
-  const p = _logit.predict(MMA_MODEL, [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd,
-    d(fa.reach, fb.reach), d(fa.height, fb.height), d(ageA, ageB)]);
+  const p = _logit.predict(MMA_MODEL, _mmaFeatVec(fa, fb));
   return p == null || isNaN(p) ? null : Math.round(p * 1000) / 1000;
+}
+// Point estimate + bootstrap 80% uncertainty band (P10..P90). null if no model/fighters.
+function mmaModelBand(nameA, nameB) {
+  if (!MMA_MODEL || !_logit) return null;
+  const fa = MMA_FEATS[fighterSlug(nameA)], fb = MMA_FEATS[fighterSlug(nameB)];
+  if (!fa || !fb) return null;
+  const x = _mmaFeatVec(fa, fb);
+  const p = _logit.predict(MMA_MODEL, x);
+  if (p == null || isNaN(p)) return null;
+  const pr = Math.round(p * 1000) / 1000;
+  const boots = MMA_MODEL.bootstrap;
+  if (!Array.isArray(boots) || boots.length < 5) return { p: pr, lo: pr, hi: pr };
+  const preds = [];
+  for (const bm of boots) { const bp = _logit.predict(bm, x); if (bp != null && !isNaN(bp)) preds.push(bp); }
+  if (preds.length < 5) return { p: pr, lo: pr, hi: pr };
+  preds.sort((a, b) => a - b);
+  const q = (f) => preds[Math.min(preds.length - 1, Math.max(0, Math.floor(f * (preds.length - 1))))];
+  return { p: pr, lo: Math.round(q(0.1) * 1000) / 1000, hi: Math.round(q(0.9) * 1000) / 1000 };
 }
 function mmaModelInfo() { return MMA_MODEL ? { test_accuracy: MMA_MODEL.test_accuracy, n_train: MMA_MODEL.n_train, fighters: Object.keys(MMA_FEATS).length } : null; }
 
@@ -302,7 +322,8 @@ async function getMMAFights(apiKey) {
       const books = ev.bookmakers || [];
       const d     = _devig(books, nameA, nameB);
       const dr    = _matchDRatings(drIdx, nameA, nameB);
-      const mp    = mmaModelPredict(nameA, nameB); // own logistic model P(A wins) | null
+      const mb    = mmaModelBand(nameA, nameB);    // {p,lo,hi} own model + bootstrap CI | null
+      const mp    = mb ? mb.p : null;              // P(A wins) point estimate
 
       enriched.push({
         fighter_a:      nameA,
@@ -314,9 +335,11 @@ async function getMMAFights(apiKey) {
         // DRatings model probabilities (independent signal)
         dr_prob_a:      dr ? dr.prob_a : null,
         dr_prob_b:      dr ? dr.prob_b : null,
-        // Own logistic model signal (KTH method, ~55% test acc — low weight)
+        // Own logistic model signal (KTH method + reach/age — low weight) + CI
         model_prob_a:   mp,
         model_prob_b:   mp != null ? Math.round((1 - mp) * 1000) / 1000 : null,
+        model_lo_a:     mb ? mb.lo : null,
+        model_hi_a:     mb ? mb.hi : null,
         // PariScore stacked ensemble (devig market-anchored + DRatings + own model)
         ps_prob_a:      blendProbs([{ p: d ? d.fair_a : null, w: 0.55 }, { p: dr ? dr.prob_a : null, w: 0.30 }, { p: mp, w: 0.15 }]),
         ps_prob_b:      blendProbs([{ p: d ? d.fair_b : null, w: 0.55 }, { p: dr ? dr.prob_b : null, w: 0.30 }, { p: mp != null ? 1 - mp : null, w: 0.15 }]),
@@ -429,6 +452,25 @@ async function _agentMmaPhoto(slug) {
 
 // Oktagon is a Next.js site reachable server-side (no Cloudflare block). Its
 // per-fighter JSON-LD exposes the canonical fighter image. Slug is predictable.
+// ESPN public search API -> MMA headshot CDN (licensed, no key). Broad UFC +
+// majors coverage; complements Oktagon (regional) and agentmma (UFC).
+async function _espnPhoto(name) {
+  try {
+    const r = await _get(`https://site.api.espn.com/apis/search/v2?query=${encodeURIComponent(name)}&limit=6`,
+      { 'User-Agent': BROWSER_UA, 'Accept': 'application/json' }, 10000);
+    if (!r || r.status !== 200 || !r.data) return null;
+    const data = typeof r.data === 'string' ? safeJson(r.data) : r.data;
+    if (!data) return null;
+    const want = name.toLowerCase().trim();
+    const contents = (data.results || []).reduce((acc, x) => acc.concat(x.contents || []), []);
+    const url = (c) => c && c.image && c.image.default;
+    const isMmaHead = (u) => typeof u === 'string' && /\/headshots\/mma\//.test(u);
+    for (const c of contents) { const u = url(c); if (isMmaHead(u) && String(c.displayName || '').toLowerCase().trim() === want) return u; }
+    for (const c of contents) { const u = url(c); if (isMmaHead(u)) return u; }
+  } catch (_) {}
+  return null;
+}
+
 async function _oktagonPhoto(slug) {
   if (!slug) return null;
   try {
@@ -525,10 +567,13 @@ async function getFighterPhoto(rawName) {
   // 3. Oktagon roster (auto by slug)
   const okta = await _oktagonPhoto(slug);
   if (okta) return okta;
-  // 4. Wikipedia (notable UFC names)
+  // 4. ESPN MMA headshot (search API, licensed CDN — UFC + majors)
+  const espn = await _espnPhoto(name);
+  if (espn) return espn;
+  // 5. Wikipedia (notable UFC names)
   const wiki = await _wikiPhoto(name);
   if (wiki) return wiki;
-  // 5. Bright Data SERP (dormant hook)
+  // 6. Bright Data SERP (dormant hook)
   const bd = await _brightDataPhoto(name);
   if (bd) return bd;
 
@@ -811,4 +856,4 @@ function getCacheStatus() {
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance };
