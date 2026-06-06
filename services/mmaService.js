@@ -569,14 +569,20 @@ async function _ufcPhoto(name) {
   const slug = String(name || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
     .toLowerCase().replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   if (!slug) return null;
-  try {
-    const res = await _get(`https://www.ufc.com/athlete/${slug}`,
-      { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' }, 10000);
-    if (!res || res.status !== 200 || typeof res.data !== 'string') return null;
-    const m = res.data.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-    const url = m && m[1];
-    if (url && /ufc\.com\/images\//i.test(url) && /\.(png|jpe?g|webp)/i.test(url)) return url;
-  } catch (_) {}
+  // ufc.com (Cloudflare) 403s node's TLS fingerprint but allows curl; shell to curl.
+  // slug is sanitized to [a-z0-9-] above and execFile uses an args array (no shell)
+  // — injection-safe. ~12s timeout, 4MB cap; failure -> null (cascade continues).
+  const html = await new Promise((resolve) => {
+    try {
+      const { execFile } = require('child_process');
+      execFile('curl', ['-sL', '-m', '12', '-A', BROWSER_UA, `https://www.ufc.com/athlete/${slug}`],
+        { maxBuffer: 4 * 1024 * 1024 }, (err, stdout) => resolve(err ? null : String(stdout || '')));
+    } catch (_) { resolve(null); }
+  });
+  if (!html) return null;
+  const m = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+  const url = m && m[1];
+  if (url && /ufc\.com\/images\//i.test(url) && /\.(png|jpe?g|webp)/i.test(url)) return url;
   return null;
 }
 
