@@ -562,12 +562,33 @@ async function _brightDataPhoto(name) {
 function safeJson(s) { try { return JSON.parse(s); } catch (_) { return null; } }
 
 // Public: resolve one fighter photo URL (or null). Caching lives in the route.
+// Official UFC.com headshot via the athlete page's og:image meta. UFC slug = first-last
+// with apostrophes/periods stripped (Sean O'Malley -> sean-omalley). Unknown / non-UFC
+// fighters return a 200 page with no fighter og:image -> null (clean fallthrough).
+async function _ufcPhoto(name) {
+  const slug = String(name || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (!slug) return null;
+  try {
+    const res = await _get(`https://www.ufc.com/athlete/${slug}`,
+      { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' }, 10000);
+    if (!res || res.status !== 200 || typeof res.data !== 'string') return null;
+    const m = res.data.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+    const url = m && m[1];
+    if (url && /ufc\.com\/images\//i.test(url) && /\.(png|jpe?g|webp)/i.test(url)) return url;
+  } catch (_) {}
+  return null;
+}
+
 async function getFighterPhoto(rawName) {
   const name = String(rawName || '').trim();
   if (!name) return null;
   const slug = fighterSlug(name);
 
-  // 1. Curated memory map
+  // 1. Official UFC.com headshot (athlete page og:image) — primary, on-brand
+  const ufc = await _ufcPhoto(name);
+  if (ufc) return ufc;
+  // 2. Curated memory map (manual overrides / non-UFC fighters)
   const entry = FIGHTER_PHOTOS[slug];
   if (entry && typeof entry === 'object') {
     if (entry.url) return entry.url;
