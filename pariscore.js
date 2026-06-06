@@ -8045,6 +8045,11 @@ function _tnLogoFallback(img) {
   var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="' + color + '"/><text x="14" y="18.5" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#fff">' + init + '</text></svg>';
   img.src = 'data:image/svg+xml;base64,' + _btoaSafe(svg);
 }
+// Exposé global : référencé par inline onerror="_tnLogoFallback(this)" dans
+// pariscore.html (sidebar tennis) + strings générées. L'IIFE 'use strict' rend
+// la déclaration locale → sans ce window.* l'inline handler throw ReferenceError
+// (régression post-extraction JS commit 1967c58). bd ParisScorebis-4n12.
+window._tnLogoFallback = _tnLogoFallback;
 // ── Construction Sidebar Foot (Bloc A vedette + Bloc B exhaustif) ──
 var SIDEBAR_FEATURED_FOOT = [
   { key:'soccer_epl',               name:'Premier League',   country:'England' },
@@ -27740,7 +27745,7 @@ async function loadFootAlerts() {
       + '<div class="mma-fighters">'
       // Fighter A (left)
       + '<div class="mma-fighter side-a">'
-      + '<img class="mma-fighter-photo" data-fighter="' + _esc(f.fighter_a) + '" alt="' + _esc(f.fighter_a) + '">'
+      + '<img class="mma-fighter-photo" src="' + _MMA_BLANK + '" data-fighter="' + _esc(f.fighter_a) + '" data-name="' + _esc(f.fighter_a) + '" alt="' + _esc(f.fighter_a) + '" loading="lazy" onerror="_mmaPhotoFallback(this)">'
       + '<div class="mma-fighter-info">'
       + '<span class="mma-fighter-name">' + _esc(f.fighter_a) + '</span>'
       + (recA ? '<span class="mma-fighter-record">' + _esc(recA) + '</span>' : '')
@@ -27760,7 +27765,7 @@ async function loadFootAlerts() {
       + (recB ? '<span class="mma-fighter-record">' + _esc(recB) + '</span>' : '')
       + '<span class="mma-fighter-prob' + (!favA ? ' favorite' : '') + '">' + probB + '%</span>'
       + '</div>'
-      + '<img class="mma-fighter-photo" data-fighter="' + _esc(f.fighter_b) + '" alt="' + _esc(f.fighter_b) + '">'
+      + '<img class="mma-fighter-photo" src="' + _MMA_BLANK + '" data-fighter="' + _esc(f.fighter_b) + '" data-name="' + _esc(f.fighter_b) + '" alt="' + _esc(f.fighter_b) + '" loading="lazy" onerror="_mmaPhotoFallback(this)">'
       + '</div>'
       + '</div>'
       + '<div class="mma-odds-row">'
@@ -27779,7 +27784,26 @@ async function loadFootAlerts() {
       + '</div>';
   }
 
-  // Lazy-load fighter photos — batch fetch, dedup by name
+  // Transparent 1x1 placeholder so the avatar never paints alt-text while loading.
+  var _MMA_BLANK = 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%221%22%20height=%221%22%3E%3C/svg%3E';
+
+  // Final fallback: replace a photo-less <img> with a clean initials avatar.
+  // Fires from onerror (broken src) and from _loadMMAPhotos on a backend miss.
+  window._mmaPhotoFallback = function (img) {
+    if (!img || img.dataset.fb === '1') return;            // guard re-entry (onerror can refire)
+    img.dataset.fb = '1';
+    var name = (img.dataset.name || img.alt || '?').trim();
+    var initials = name.split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase() || '?';
+    var h = 0; for (var i = 0; i < name.length; i++) { h = (h * 31 + name.charCodeAt(i)) % 360; }  // stable hue per fighter
+    var span = document.createElement('span');
+    span.className = 'mma-fighter-photo mma-fighter-initials';
+    span.textContent = initials;
+    span.title = name;
+    span.style.background = 'linear-gradient(135deg,hsl(' + h + ',42%,32%),hsl(' + ((h + 28) % 360) + ',46%,22%))';
+    if (img.parentNode) img.parentNode.replaceChild(span, img);
+  };
+
+  // Lazy-load fighter photos — batch fetch, dedup by name. Miss -> initials avatar.
   var _photoCache = {};
   function _loadMMAPhotos() {
     var imgs = document.querySelectorAll('#mma-feed img.mma-fighter-photo[data-fighter]');
@@ -27787,7 +27811,9 @@ async function loadFootAlerts() {
     imgs.forEach(function (img) {
       var name = img.dataset.fighter;
       if (!name) return;
-      if (_photoCache[name]) { img.src = _photoCache[name]; return; }
+      var cached = _photoCache[name];
+      if (cached === false) { _mmaPhotoFallback(img); return; }   // known miss
+      if (cached) { img.src = cached; return; }                   // known hit (onerror still guards)
       if (!pending[name]) pending[name] = [];
       pending[name].push(img);
     });
@@ -27795,11 +27821,17 @@ async function loadFootAlerts() {
       fetch('/api/v1/mma/fighter-photo?name=' + encodeURIComponent(name))
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
-          if (!d || !d.url) return;
-          _photoCache[name] = d.url;
-          pending[name].forEach(function (el) { el.src = d.url; });
+          if (d && d.url) {
+            _photoCache[name] = d.url;
+            pending[name].forEach(function (el) { el.src = d.url; });
+          } else {
+            _photoCache[name] = false;                            // cache the miss
+            pending[name].forEach(function (el) { _mmaPhotoFallback(el); });
+          }
         })
-        .catch(function () {});
+        .catch(function () {
+          pending[name].forEach(function (el) { _mmaPhotoFallback(el); });
+        });
     });
   }
 
