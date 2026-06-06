@@ -16,6 +16,13 @@ const https = require('https');
 let FIGHTER_PHOTOS = {};
 try { FIGHTER_PHOTOS = require('./mma_fighter_photos.json') || {}; } catch (_) { FIGHTER_PHOTOS = {}; }
 
+// Own logistic win model (offline-trained by tools/build_mma_model.js, KTH method).
+// All defensive — a missing artifact just disables the model signal, never crashes.
+let MMA_MODEL = null, MMA_FEATS = {}, _logit = null;
+try { MMA_MODEL = require('./mma_model.json'); } catch (_) {}
+try { MMA_FEATS = require('./mma_fighter_features.json') || {}; } catch (_) {}
+try { _logit = require('./mlLogistic'); } catch (_) {}
+
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 // ─── Static UFC event names (keyed by YYYY-MM-DD) ────────────────────────────
@@ -256,6 +263,18 @@ function blendProbs(parts) {
   return Math.round((sv / sw) * 1000) / 1000;
 }
 
+// Own logistic model: P(fighter A wins) from each fighter's rolling-5 feature
+// snapshot. Returns null when either fighter is unknown to the model (debut /
+// non-UFC / missing history) — caller falls back to the other signals.
+function mmaModelPredict(nameA, nameB) {
+  if (!MMA_MODEL || !_logit) return null;
+  const fa = MMA_FEATS[fighterSlug(nameA)], fb = MMA_FEATS[fighterSlug(nameB)];
+  if (!fa || !fb) return null;
+  const p = _logit.predict(MMA_MODEL, [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd]);
+  return p == null || isNaN(p) ? null : Math.round(p * 1000) / 1000;
+}
+function mmaModelInfo() { return MMA_MODEL ? { test_accuracy: MMA_MODEL.test_accuracy, n_train: MMA_MODEL.n_train, fighters: Object.keys(MMA_FEATS).length } : null; }
+
 // ─── Public: getMMAFights ─────────────────────────────────────────────────────
 async function getMMAFights(apiKey) {
   if (_fullCache.data && (Date.now() - _fullCache.ts) < CACHE_TTL_FULL) {
@@ -279,6 +298,7 @@ async function getMMAFights(apiKey) {
       const books = ev.bookmakers || [];
       const d     = _devig(books, nameA, nameB);
       const dr    = _matchDRatings(drIdx, nameA, nameB);
+      const mp    = mmaModelPredict(nameA, nameB); // own logistic model P(A wins) | null
 
       enriched.push({
         fighter_a:      nameA,
@@ -290,9 +310,12 @@ async function getMMAFights(apiKey) {
         // DRatings model probabilities (independent signal)
         dr_prob_a:      dr ? dr.prob_a : null,
         dr_prob_b:      dr ? dr.prob_b : null,
-        // PariScore stacked ensemble (devig market-anchored + DRatings model)
-        ps_prob_a:      blendProbs([{ p: d ? d.fair_a : null, w: 0.62 }, { p: dr ? dr.prob_a : null, w: 0.38 }]),
-        ps_prob_b:      blendProbs([{ p: d ? d.fair_b : null, w: 0.62 }, { p: dr ? dr.prob_b : null, w: 0.38 }]),
+        // Own logistic model signal (KTH method, ~55% test acc — low weight)
+        model_prob_a:   mp,
+        model_prob_b:   mp != null ? Math.round((1 - mp) * 1000) / 1000 : null,
+        // PariScore stacked ensemble (devig market-anchored + DRatings + own model)
+        ps_prob_a:      blendProbs([{ p: d ? d.fair_a : null, w: 0.55 }, { p: dr ? dr.prob_a : null, w: 0.30 }, { p: mp, w: 0.15 }]),
+        ps_prob_b:      blendProbs([{ p: d ? d.fair_b : null, w: 0.55 }, { p: dr ? dr.prob_b : null, w: 0.30 }, { p: mp != null ? 1 - mp : null, w: 0.15 }]),
         // Best odds
         best_odds_a:    d ? d.best_odds_a : null,
         best_odds_b:    d ? d.best_odds_b : null,
@@ -679,4 +702,4 @@ function getCacheStatus() {
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelInfo };
