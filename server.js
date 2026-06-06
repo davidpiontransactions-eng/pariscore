@@ -43291,14 +43291,44 @@ setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[C
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
 
-// MMA T3 — auto-reconcile verdict outcomes from the ufcstats results CSV every 12h
-// so ROI / calibration self-update without waiting for a /performance hit.
+// Prewarm the upcoming MMA card's fighter photos into api_cache so the first
+// frontend load is instant (resolves the same cascade the photo route uses).
+async function prewarmMMAPhotos() {
+  if (!sqldb) return;
+  let events = [];
+  try { events = await mmaService.getMMAFights(ODDS_API_KEY); } catch (_) { return; }
+  const names = new Set();
+  for (const ev of (events || [])) for (const f of (ev.fights || [])) { if (f.fighter_a) names.add(f.fighter_a); if (f.fighter_b) names.add(f.fighter_b); }
+  let warmed = 0;
+  for (const name of names) {
+    const slug = mmaService.fighterSlug(name);
+    const cacheKey = `mma_photo_${slug}`;
+    try {
+      const cached = sqldb.prepare('SELECT expires_at FROM api_cache WHERE key=?').get(cacheKey);
+      if (cached && Date.now() < (cached.expires_at || 0)) continue; // already fresh
+      const url = await mmaService.getFighterPhoto(name);
+      const now = Date.now();
+      sqldb.prepare(`INSERT INTO api_cache (key, data, source, created_at, expires_at) VALUES (?,?,?,?,?)
+        ON CONFLICT(key) DO UPDATE SET data=excluded.data, expires_at=excluded.expires_at`)
+        .run(cacheKey, JSON.stringify({ ok: true, url: url || null, slug }), 'mma_photo', now, now + (url ? 7 * 24 * 3600 * 1000 : 24 * 3600 * 1000));
+      warmed++;
+    } catch (_) {}
+  }
+  if (warmed) console.log(`[MMA prewarm] ${warmed} fighter photo(s) cached`);
+}
+
+// MMA cron — auto-reconcile T3 verdict outcomes + prewarm card photos every 12h.
 setInterval(() => {
-  if (!sqldb || !mmaService.reconcileMMAOutcomes) return;
-  mmaService.reconcileMMAOutcomes(sqldb)
-    .then(n => { if (n) console.log(`[MMA cron] reconciled ${n} outcome(s)`); })
-    .catch(e => console.warn('[MMA cron]', e.message));
+  if (!sqldb) return;
+  if (mmaService.reconcileMMAOutcomes) {
+    mmaService.reconcileMMAOutcomes(sqldb)
+      .then(n => { if (n) console.log(`[MMA cron] reconciled ${n} outcome(s)`); })
+      .catch(e => console.warn('[MMA cron]', e.message));
+  }
+  prewarmMMAPhotos().catch(e => console.warn('[MMA prewarm]', e.message));
 }, 12 * 3600 * 1000).unref();
+// Warm once shortly after boot (offset so it doesn't compete with startup fetches).
+setTimeout(() => { prewarmMMAPhotos().catch(() => {}); }, 90 * 1000).unref();
 
 // Cron quotidien 06:00 UTC — après resync BSD (05:30 UTC), force refresh standings + odds
 // Reset db.statsUpdateByLeague pour bypasser tous les gates T1/T2 → fetch frais garanti

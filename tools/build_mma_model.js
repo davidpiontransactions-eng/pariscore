@@ -149,6 +149,18 @@ const teLL = logit.logLoss(model, teX, teY);
 console.log(`[build] train acc ${(trAcc * 100).toFixed(1)}% | TEST acc ${(teAcc * 100).toFixed(1)}% | test logloss ${teLL.toFixed(3)}`);
 console.log(`[build] weights ${model.weights.map(w => w.toFixed(3))} bias ${model.bias.toFixed(3)}`);
 
+// Bootstrap K models (resample train with replacement) -> prediction uncertainty
+// band at runtime. The thesis valued the Bayesian posterior for exactly this.
+const KBOOT = 25;
+const boots = [];
+for (let b = 0; b < KBOOT; b++) {
+  const bx = [], by = [];
+  for (let i = 0; i < trX.length; i++) { const j = Math.floor(Math.random() * trX.length); bx.push(trX[j]); by.push(trY[j]); }
+  const bm = logit.train(bx, by, { lr: 0.2, epochs: 2500, l2: 0.02 });
+  boots.push({ weights: bm.weights, bias: bm.bias, mean: bm.mean, std: bm.std });
+}
+console.log(`[build] ${boots.length} bootstrap models for uncertainty band`);
+
 // per-fighter latest rolling-5 snapshot (for runtime prediction of upcoming fights)
 const feats = {};
 for (const f in hist) {
@@ -166,6 +178,7 @@ fs.writeFileSync(OUT_MODEL, JSON.stringify({
   test_accuracy: Math.round(teAcc * 1000) / 1000, train_accuracy: Math.round(trAcc * 1000) / 1000,
   n_train: trX.length, n_test: teX.length, window: WINDOW, min_history: MINH,
   source: 'KTH 2024 thesis method; ufcstats facts via Greco1899', built_from_fights: usedFights,
+  bootstrap: boots,
 }, null, 2));
 fs.writeFileSync(OUT_FEATS, JSON.stringify(feats));
 console.log(`[build] wrote ${OUT_MODEL} + ${OUT_FEATS} (${Object.keys(feats).length} fighters)`);
