@@ -38,7 +38,6 @@ const berserkService    = require('./services/berserkService');    // Berserk Le
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
-const rotowireService   = require('./services/rotowireService');   // Rotowire scaffold (injuries/lineups/projections — clé DG payante)
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
