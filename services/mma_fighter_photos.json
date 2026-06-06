@@ -2,5 +2,11 @@
   "_doc": "MMA fighter photo memory map. Key = fighterSlug(name) (lowercase, diacritics folded, non-alnum -> '-'). Value: { url } direct image URL, OR { sofascore_id } -> served via https://sports.bzzoiro.com/img/team/{id}/ (clean Sofascore headshot cutout). Resolution order in mmaService.getFighterPhoto: this map first, then Oktagon JSON-LD, Wikipedia, Bright Data SERP (env-gated). Seed new fighters here for guaranteed/curated coverage. Verified entries below.",
   "patrick-vespaziani": { "sofascore_id": 473812 },
   "ketlen-souza":       { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4566308.png" },
-  "ariane-carnelossi":  { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4565903.png" }
+  "ariane-carnelossi":  { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4565903.png" },
+  "jeisla-chaves":      { "url": "https://a.espncdn.com/i/headshots/mma/players/full/5308769.png" },
+  "yuneisy-duben":      { "url": "https://a.espncdn.com/i/headshots/mma/players/full/5211223.png" },
+  "jordan-leavitt":     { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4686565.png" },
+  "joanderson-brito":   { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4422355.png" },
+  "priscila-cachoeira": { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4277049.png" },
+  "chelsea-chandler":   { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4319785.png" }
 }
