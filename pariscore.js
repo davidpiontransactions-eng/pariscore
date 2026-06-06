@@ -772,6 +772,8 @@ function showPage(pageId, linkEl) {
   if (pageId === 'tennis-alerts') loadTennisAlerts();
   if (pageId !== 'nba' && typeof stopNbaPage === 'function') stopNbaPage();
   if (pageId === 'nba') initNbaPage();
+  if (pageId !== 'wnba' && typeof stopWnbaPage === 'function') stopWnbaPage();
+  if (pageId === 'wnba') initWnbaPage();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -904,6 +906,87 @@ window.closeNbaAI = function () {
   if (modal) modal.style.display = 'none';
   document.body.style.overflow = '';
 };
+
+// ─── WNBA vertical (basket — ESPN, miroir NBA. Réutilise _nbaEsc/_nbaModelsPanel + styles .nba-*) ──
+var _wnbaPoll = null;
+window.initWnbaPage = function () {
+  _fetchAndRenderWnba();
+  if (_wnbaPoll) clearInterval(_wnbaPoll);
+  _wnbaPoll = setInterval(() => { if (document.body.dataset.page === 'wnba') _fetchAndRenderWnba(); }, 60000);
+};
+if (typeof window.stopWnbaPage !== 'function') window.stopWnbaPage = function () { if (_wnbaPoll) { clearInterval(_wnbaPoll); _wnbaPoll = null; } };
+function _fetchAndRenderWnba() {
+  fetch('/api/v1/wnba/matches', { cache: 'no-store' })
+    .then(r => r.json())
+    .then(j => {
+      var st = document.getElementById('wnba-status');
+      var matches = (j && Array.isArray(j.matches)) ? j.matches : [];
+      if (st) st.textContent = matches.length + ' match' + (matches.length > 1 ? 's' : '') + ' · ESPN';
+      _renderWnbaTopBets((j && j.top_bets) || []);
+      _renderWnbaCards(matches);
+    })
+    .catch(e => {
+      console.warn('[WNBA]', e.message);
+      var g = document.getElementById('wnba-grid');
+      if (g) g.innerHTML = '<div class="nba-empty">⚠️ Erreur de chargement WNBA</div>';
+    });
+}
+function _renderWnbaCards(matches) {
+  var g = document.getElementById('wnba-grid');
+  if (!g) return;
+  if (!matches.length) { g.innerHTML = '<div class="nba-empty">Aucun match WNBA aujourd\'hui</div>'; return; }
+  g.innerHTML = matches.map(function (m) {
+    var h = m.home || {}, a = m.away || {}, p = m.predictions || {}, wp = p.win_prob || {}, val = p.value || {}, te = p.total_edge || {};
+    var bl = p.blended || {}, su = p.spread_uqd || {};
+    var pH = bl.p_home != null ? bl.p_home : (wp.p_home != null ? wp.p_home : 50);
+    var pA = bl.p_away != null ? bl.p_away : (wp.p_away != null ? wp.p_away : 50);
+    var live = m.status === 'in';
+    var evH = val.ev_home, evHcls = evH == null ? '' : (evH > 0 ? 'ev-pos' : 'ev-neg');
+    var teamRow = function (t, score) {
+      return '<div class="nba-team">' +
+        (t.logo ? '<img src="' + _nbaEsc(t.logo) + '" alt="" loading="lazy">' : '') +
+        '<span class="nba-tn">' + _nbaEsc(t.name || '—') + '</span>' +
+        '<span class="nba-rec">' + _nbaEsc(t.record || '') + '</span>' +
+        (live && score != null ? '<span class="nba-sc">' + _nbaEsc(score) + '</span>' : '') +
+      '</div>';
+    };
+    return '<div class="nba-card">' +
+      '<div class="nba-c-head"><span>' + _nbaEsc(m.status_detail || '') + (m.series ? ' · ' + _nbaEsc(m.series) : '') + '</span>' +
+        '<span>' + (m.odds && m.odds.details ? _nbaEsc(m.odds.details) : '') + '</span></div>' +
+      teamRow(a, a.score) +
+      teamRow(h, h.score) +
+      '<div class="nba-prob-bar"><div class="nba-pf" style="width:' + pH + '%"></div></div>' +
+      '<div class="nba-prob-lbl"><span>' + _nbaEsc(a.abbr || 'AWAY') + ' ' + pA + '%</span><span>' + pH + '% ' + _nbaEsc(h.abbr || 'HOME') + '</span></div>' +
+      _nbaModelsPanel(p) +
+      '<div class="nba-foot">' +
+        (evH != null ? '<span class="nba-chip ' + evHcls + '">EV ' + _nbaEsc(h.abbr || 'H') + ' ' + (evH > 0 ? '+' : '') + evH + '%</span>' : '') +
+        (val.fair_home != null ? '<span class="nba-chip">Fair ' + val.fair_home + '/' + val.fair_away + '</span>' : '') +
+        (te.line != null ? '<span class="nba-chip">O/U ' + _nbaEsc(te.line) +
+          (te.status === 'modeled' && te.lean ? ' · ' + _nbaEsc(te.model) + (te.lean !== 'NEUTRAL' ? ' ' + (te.diff > 0 ? '▲' : '▼') + _nbaEsc(te.lean) : '') : ' · off ' + _nbaEsc(te.combined_offense)) + '</span>' : '') +
+        (wp.edge_elo != null ? '<span class="nba-chip">ΔElo ' + (wp.edge_elo > 0 ? '+' : '') + wp.edge_elo + '</span>' : '') +
+        (su.ats_pick && su.ats_pick !== 'NEUTRAL' ? '<span class="nba-chip">ATS ' + _nbaEsc(su.ats_pick === 'HOME' ? (h.abbr || 'H') : (a.abbr || 'A')) + ' ' + (su.p_home_cover != null ? (su.ats_pick === 'HOME' ? su.p_home_cover : (100 - su.p_home_cover)) + '%' : '') + '</span>' : '') +
+        (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null ? '<span class="nba-chip">' + _nbaEsc(su.ou_lean) + ' ' + (su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over)) + '%</span>' : '') +
+        (bl.n_models ? '<span class="nba-chip">⊕ blend ' + bl.n_models + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function _renderWnbaTopBets(bets) {
+  var el = document.getElementById('wnba-topbets');
+  if (!el) return;
+  if (!bets || !bets.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="nba-tb-head">🎯 TOP 3 BETS PRÉDICTIFS · classés par edge modèle</div><div class="nba-tb-bar">' +
+    bets.map(function (b, i) {
+      var edge = b.edge_pp != null ? '+' + b.edge_pp + 'pp' : '';
+      var detail = b.ev != null ? ('EV ' + (b.ev > 0 ? '+' : '') + b.ev + '%') : (b.cover_pct != null ? ('cover ' + b.cover_pct + '%') : (b.prob_pct != null ? (b.prob_pct + '%') : ''));
+      return '<div class="nba-tb-card">' +
+        '<span class="nba-tb-rank">#' + (i + 1) + ' · ' + _nbaEsc(b.match || '') + '</span>' +
+        '<div class="nba-tb-mkt">' + _nbaEsc(b.market || '') + '</div>' +
+        '<div class="nba-tb-sel">' + _nbaEsc(b.selection || '') + '</div>' +
+        '<div class="nba-tb-edge">' + _nbaEsc(detail) + ' · ' + _nbaEsc(edge) + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+}
 
 // ─── SPORT HUB (écran d'orientation) ────────────────────────────────────────
 let _psStrategySport = 'football';
