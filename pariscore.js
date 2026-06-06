@@ -27794,7 +27794,7 @@ async function loadFootAlerts() {
       + _renderOddsCell(f.fighter_a, f.ai_odds_a, f.vegas_odds_a, f.ev_a_pct, f.bet_a)
       + _renderOddsCell(f.fighter_b, f.ai_odds_b, f.vegas_odds_b, f.ev_b_pct, f.bet_b)
       + '</div>'
-      + '<button class="mma-analysis-btn" onclick="' + _esc('toggleMMAAnalysis(this,'
+      + '<button class="mma-analysis-btn" aria-expanded="false" onclick="' + _esc('toggleMMAAnalysis(this,'
       + JSON.stringify(f.fighter_a) + ',' + JSON.stringify(f.fighter_b) + ','
       + (f.prob_a||0) + ',' + (f.prob_b||0) + ','
       + (f.dr_prob_a||0) + ',' + (f.dr_prob_b||0) + ','
@@ -27883,10 +27883,12 @@ async function loadFootAlerts() {
     if (isOpen) {
       drawer.classList.remove('open');
       btn.textContent = '🔍 Analyse & Paris';
+      btn.setAttribute('aria-expanded', 'false');
       return;
     }
     drawer.classList.add('open');
     btn.textContent = '▲ Fermer';
+    btn.setAttribute('aria-expanded', 'true');
     if (drawer.dataset.loaded) return; // already fetched
     drawer.dataset.loaded = '1';
     drawer.innerHTML =
