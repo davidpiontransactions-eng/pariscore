@@ -374,7 +374,11 @@ async function getMMAFights(apiKey) {
 
     const events = _groupByDate(enriched);
     _fullCache.data = events;
-    _fullCache.ts   = Date.now();
+    // An empty result (e.g. boot-time Odds API timeout, where _fetchOdds returns [])
+    // gets only a ~60s TTL instead of CACHE_TTL_FULL — otherwise it poisons the cache
+    // and the MMA tab shows "Aucun événement" for 20min after a pm2 restart. Short TTL
+    // lets the next poll retry; a real "no upcoming fights" also refreshes quickly.
+    _fullCache.ts   = events.length ? Date.now() : (Date.now() - CACHE_TTL_FULL + 60 * 1000);
     return events;
   } catch (e) {
     console.error('[MMA] getMMAFights:', e.message);
