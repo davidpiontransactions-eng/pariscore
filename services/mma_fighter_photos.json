@@ -1,4 +1,6 @@
 {
   "_doc": "MMA fighter photo memory map. Key = fighterSlug(name) (lowercase, diacritics folded, non-alnum -> '-'). Value: { url } direct image URL, OR { sofascore_id } -> served via https://sports.bzzoiro.com/img/team/{id}/ (clean Sofascore headshot cutout). Resolution order in mmaService.getFighterPhoto: this map first, then Oktagon JSON-LD, Wikipedia, Bright Data SERP (env-gated). Seed new fighters here for guaranteed/curated coverage. Verified entries below.",
-  "patrick-vespaziani": { "sofascore_id": 473812 }
+  "patrick-vespaziani": { "sofascore_id": 473812 },
+  "ketlen-souza":       { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4566308.png" },
+  "ariane-carnelossi":  { "url": "https://a.espncdn.com/i/headshots/mma/players/full/4565903.png" }
 }

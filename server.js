@@ -19883,9 +19883,10 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
     const cacheKey = `mma_photo_${slug}`;
     const TTL_HIT  = 7  * 24 * 3600 * 1000; // 7 days  (photo found)
     const TTL_MISS = 24 * 3600 * 1000;      // 24 hours (no photo — retry sooner)
+    const force    = (query.refresh === '1' || query.refresh === 'true'); // bypass read-cache to backfill new curated seeds
     try {
-      // Check SQLite cache
-      if (sqldb) {
+      // Check SQLite cache (skip read when ?refresh=1 — forces curated/cascade re-resolve)
+      if (sqldb && !force) {
         const cached = sqldb.prepare('SELECT data, expires_at FROM api_cache WHERE key = ?').get(cacheKey);
         if (cached && cached.data && Date.now() < (cached.expires_at || 0)) {
           res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
