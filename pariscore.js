@@ -27894,6 +27894,33 @@ async function loadFootAlerts() {
   function _pct(x) { return Math.round((x || 0) * 100); }
   function _lastName(n) { var p = String(n || '').trim().split(/\s+/); return p[p.length - 1] || n; }
 
+  // Stacked ensemble (mirrors backend mmaService.blendProbs): weighted blend of
+  // side-A probabilities from whichever signals are present. parts=[{p,w},...].
+  function _psBlend(parts) {
+    var sw = 0, sv = 0;
+    parts.forEach(function(p) { if (p && p.p != null && !isNaN(p.p) && p.w > 0) { sw += p.w; sv += p.w * p.p; } });
+    return sw === 0 ? null : sv / sw;
+  }
+  // PariScore verdict block from a side-A probability
+  function _verdictBlock(psA, fa, fb) {
+    if (psA == null) return '';
+    var favA = psA >= 0.5, vp = Math.round((favA ? psA : 1 - psA) * 100), who = favA ? fa : fb;
+    return '<div class="mma-verdict"><div class="mma-verdict-info">' +
+      '<div class="mma-verdict-lbl">⚡ Verdict PariScore · ensemble</div>' +
+      '<div class="mma-verdict-pick" title="' + _esc(who) + '">' + _esc(who) + '</div></div>' +
+      '<div class="mma-verdict-val">' + vp + '%</div></div>';
+  }
+  // Career method-of-victory tendency bar from {ko,sub,dec}
+  function _methodBar(fin) {
+    if (!fin) return '<span style="color:var(--text3,#5a6068);font-size:11px;">—</span>';
+    var tot = (fin.ko || 0) + (fin.sub || 0) + (fin.dec || 0);
+    if (!tot) return '<span style="color:var(--text3,#5a6068);font-size:11px;">—</span>';
+    var ko = Math.round(fin.ko / tot * 100), sub = Math.round(fin.sub / tot * 100), dec = Math.max(0, 100 - ko - sub);
+    return '<div class="mma-method-bar"><span class="mma-mko" style="width:' + ko + '%"></span>' +
+      '<span class="mma-msub" style="width:' + sub + '%"></span><span class="mma-mdec" style="width:' + dec + '%"></span></div>' +
+      '<div class="mma-method-cap">' + fin.ko + ' KO · ' + fin.sub + ' SUB · ' + fin.dec + ' DEC</div>';
+  }
+
   // One model gauge cell (Devig / DRatings / AgentMMA)
   function _modelCell(name, va, vb, fa, fb, cls) {
     if (va == null) return '<div class="mma-model ' + (cls || '') + '"><div class="mma-model-name">' + name + '</div><div class="mma-model-val">—</div><div class="mma-model-pick">n/d</div></div>';
@@ -27934,7 +27961,11 @@ async function loadFootAlerts() {
     var id = ++_bdSeq;
     _bdStore[id] = { am: am, probA: probA, probB: probB, drA: drA, drB: drB, fa: fa, fb: fb };
 
-    var h = '<div class="mma-bd"><div class="mma-bd-title">Consensus 3 modèles</div><div class="mma-consensus">';
+    // Stacked ensemble verdict (devig + DRatings + AgentMMA, weighted)
+    var psA = _psBlend([{ p: probA, w: 0.5 }, { p: drA, w: 0.3 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.2 }]);
+
+    var h = '<div class="mma-bd">' + _verdictBlock(psA, fa, fb) +
+      '<div class="mma-bd-title">Consensus 3 modèles</div><div class="mma-consensus">';
     h += _modelCell('Devig', pa, pb, fa, fb);
     h += _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb);
     h += _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am');
@@ -28008,7 +28039,9 @@ async function loadFootAlerts() {
          '<div class="mma-conf-bar"><div class="mma-conf-fill" style="width:' + conf + '%"></div></div>' +
          '<div style="font-size:12px;color:var(--text2,#8d9399);margin-top:8px;">Vainqueur prédit : <strong style="color:#ff5a4d">' + _esc(winner) + '</strong>' + (am.method ? ' — ' + _esc(am.method) : '') + '</div></div>';
 
-    h += '<div class="mma-modal-sec"><div class="mma-sec-title">Consensus 3 modèles</div><div class="mma-consensus">' +
+    var psA = _psBlend([{ p: st.probA, w: 0.5 }, { p: st.drA, w: 0.3 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.2 }]);
+    h += '<div class="mma-modal-sec"><div class="mma-sec-title">Consensus 3 modèles</div>' +
+         _verdictBlock(psA, fa, fb) + '<div class="mma-consensus">' +
          _modelCell('Devig', pa, pb, fa, fb) +
          _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb) +
          _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am') + '</div></div>';
@@ -28021,6 +28054,14 @@ async function loadFootAlerts() {
       if (sa || sb) h += row(sa ? sa.spm + '/min' : '—', 'Frappes', sb ? sb.spm + '/min' : '—');
       if ((sa && sa.acc != null) || (sb && sb.acc != null)) h += row(sa && sa.acc != null ? sa.acc + '%' : '—', 'Précision', sb && sb.acc != null ? sb.acc + '%' : '—');
       h += '</div></div>';
+    }
+
+    // Method-of-victory tendency (career finishes) — T1 surfaced from AgentMMA
+    if (am.finishes && (am.finishes.a || am.finishes.b)) {
+      h += '<div class="mma-modal-sec"><div class="mma-sec-title">Méthode de victoire · carrière</div>' +
+        '<div class="mma-method-row"><div>' + _methodBar(am.finishes.a) + '</div>' +
+        '<div class="mma-method-lbl">KO<br>SUB<br>DEC</div>' +
+        '<div>' + _methodBar(am.finishes.b) + '</div></div></div>';
     }
 
     if (am.faq && am.faq.length) {
