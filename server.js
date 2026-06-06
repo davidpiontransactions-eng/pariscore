@@ -5600,6 +5600,24 @@ function initSQLite() {
     last_updated INTEGER NOT NULL DEFAULT (strftime('%s','now'))
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_mma_fighters_name ON mma_fighters(name)`);
+  // T3 — forward ROI/CLV tracking of PariScore MMA verdicts (KTH calibration loop)
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS mma_predictions (
+    id TEXT PRIMARY KEY,
+    event_date TEXT,
+    commence_time TEXT,
+    fighter_a TEXT NOT NULL,
+    fighter_b TEXT NOT NULL,
+    ps_prob_a REAL,
+    devig_a REAL,
+    dr_a REAL,
+    model_a REAL,
+    pick_side TEXT,
+    pick_odds REAL,
+    logged_at INTEGER NOT NULL,
+    winner TEXT,
+    resolved_at INTEGER
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_mma_pred_unresolved ON mma_predictions(winner) WHERE winner IS NULL`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -19682,6 +19700,8 @@ async function handleAPI(req, res, pathname, query) {
     try {
       const events = await mmaService.getMMAFights(ODDS_API_KEY);
       const status = mmaService.getCacheStatus();
+      // T3 — log every verdict for forward ROI/calibration tracking (best-effort)
+      if (sqldb) { try { mmaService.logMMAPredictions(sqldb, events); } catch (_) {} }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1200' });
       return res.end(JSON.stringify({ ok: true, count: events.length, events, cache: status }));
     } catch (e) {
@@ -19826,7 +19846,30 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
   // GET /api/v1/mma/status — cache status + model info
   if (pathname === '/api/v1/mma/status' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    return res.end(JSON.stringify({ ok: true, cache: mmaService.getCacheStatus(), model: 'logistic_differential_v1' }));
+    return res.end(JSON.stringify({ ok: true, cache: mmaService.getCacheStatus(), model: mmaService.mmaModelInfo() }));
+  }
+
+  // GET /api/v1/mma/performance — T3 forward ROI/CLV/calibration of verdicts.
+  // Reconciles outcomes from the ufcstats results CSV at most once / 6h.
+  if (pathname === '/api/v1/mma/performance' && req.method === 'GET') {
+    try {
+      if (sqldb) {
+        let lastRec = 0;
+        try { const row = sqldb.prepare('SELECT value FROM kv WHERE key=?').get('mma_reconcile_ts'); lastRec = row ? +row.value : 0; } catch (_) {}
+        if (Date.now() - lastRec > 6 * 3600 * 1000) {
+          try {
+            const n = await mmaService.reconcileMMAOutcomes(sqldb);
+            sqldb.prepare('INSERT INTO kv(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run('mma_reconcile_ts', String(Date.now()));
+            if (n) console.log(`[MMA T3] reconciled ${n} outcome(s)`);
+          } catch (_) {}
+        }
+      }
+      const perf = mmaService.getMMAPerformance(sqldb);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, performance: perf }));
+    } catch (e) {
+      return jsonResponse(res, 200, { ok: false, error: e.message });
+    }
   }
 
   // GET /api/v1/mma/fighter-photo?name=Belal+Muhammad

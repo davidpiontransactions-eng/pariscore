@@ -689,6 +689,111 @@ async function getFightBreakdown(nameA, nameB) {
   return data;
 }
 
+// ─── T3: forward ROI/CLV tracking of PariScore verdicts ──────────────────────
+// Logs every production verdict, resolves outcomes from the ufcstats results
+// CSV (facts, fetched transiently — never stored/redistributed), and aggregates
+// accuracy / Brier / ROI / calibration. This is the data loop that will let the
+// ensemble be calibrated once enough outcomes accrue. sqldb is injected by the
+// route layer so the service stays storage-agnostic.
+
+function logMMAPredictions(sqldb, events) {
+  if (!sqldb || !Array.isArray(events)) return 0;
+  const now = Date.now();
+  let ins;
+  try {
+    ins = sqldb.prepare(`INSERT INTO mma_predictions
+      (id,event_date,commence_time,fighter_a,fighter_b,ps_prob_a,devig_a,dr_a,model_a,pick_side,pick_odds,logged_at)
+      VALUES (@id,@event_date,@commence_time,@fighter_a,@fighter_b,@ps_prob_a,@devig_a,@dr_a,@model_a,@pick_side,@pick_odds,@logged_at)
+      ON CONFLICT(id) DO UPDATE SET ps_prob_a=excluded.ps_prob_a, devig_a=excluded.devig_a, dr_a=excluded.dr_a,
+        model_a=excluded.model_a, pick_side=excluded.pick_side, pick_odds=excluded.pick_odds
+      WHERE mma_predictions.winner IS NULL`);
+  } catch (_) { return 0; }
+  let n = 0;
+  for (const ev of events) for (const f of (ev.fights || [])) {
+    if (f.ps_prob_a == null) continue;
+    const pickA = f.ps_prob_a >= 0.5;
+    const id = `${fighterSlug(f.fighter_a)}|${fighterSlug(f.fighter_b)}|${(ev.event_date || '').slice(0, 10)}`;
+    try {
+      ins.run({
+        id, event_date: ev.event_date || null, commence_time: f.commence_time || null,
+        fighter_a: f.fighter_a, fighter_b: f.fighter_b, ps_prob_a: f.ps_prob_a,
+        devig_a: f.prob_a != null ? f.prob_a : null, dr_a: f.dr_prob_a != null ? f.dr_prob_a : null,
+        model_a: f.model_prob_a != null ? f.model_prob_a : null,
+        pick_side: pickA ? 'a' : 'b', pick_odds: pickA ? (f.best_odds_a || null) : (f.best_odds_b || null),
+        logged_at: now,
+      });
+      n++;
+    } catch (_) {}
+  }
+  return n;
+}
+
+async function reconcileMMAOutcomes(sqldb) {
+  if (!sqldb) return 0;
+  let pend;
+  try { pend = sqldb.prepare(`SELECT id,fighter_a,fighter_b FROM mma_predictions WHERE winner IS NULL`).all(); }
+  catch (_) { return 0; }
+  if (!pend.length) return 0;
+  let csv = null;
+  try {
+    const r = await _get('https://raw.githubusercontent.com/Greco1899/scrape_ufc_stats/main/ufc_fight_results.csv',
+      { 'User-Agent': BROWSER_UA, 'Accept': 'text/csv' }, 20000);
+    if (r && r.status === 200 && typeof r.data === 'string') csv = r.data;
+  } catch (_) {}
+  if (!csv) return 0;
+  const idx = {};
+  const lines = csv.split('\n');
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(','); if (cols.length < 3) continue;
+    const parts = (cols[1] || '').split(/\s+vs\.?\s+/i); if (parts.length !== 2) continue;
+    const sa = fighterSlug(parts[0]), sb = fighterSlug(parts[1]);
+    const outc = (cols[2] || '').replace(/\s/g, '').toUpperCase();
+    let win = null; if (outc === 'W/L') win = sa; else if (outc === 'L/W') win = sb; else continue;
+    idx[[sa, sb].sort().join('|')] = win;
+  }
+  let upd;
+  try { upd = sqldb.prepare(`UPDATE mma_predictions SET winner=@w, resolved_at=@t WHERE id=@id`); }
+  catch (_) { return 0; }
+  let n = 0; const now = Date.now();
+  for (const p of pend) {
+    const sa = fighterSlug(p.fighter_a), sb = fighterSlug(p.fighter_b);
+    const win = idx[[sa, sb].sort().join('|')]; if (!win) continue;
+    try { upd.run({ w: win === sa ? 'a' : 'b', t: now, id: p.id }); n++; } catch (_) {}
+  }
+  return n;
+}
+
+function getMMAPerformance(sqldb) {
+  if (!sqldb) return null;
+  let rows, pending;
+  try {
+    rows = sqldb.prepare(`SELECT ps_prob_a,pick_side,pick_odds,winner FROM mma_predictions WHERE winner IS NOT NULL`).all();
+    pending = sqldb.prepare(`SELECT COUNT(*) c FROM mma_predictions WHERE winner IS NULL`).get().c;
+  } catch (_) { return null; }
+  if (!rows.length) return { resolved: 0, pending, accuracy: null, roi_pct: null };
+  let correct = 0, brier = 0, staked = 0, returned = 0;
+  const bins = {};
+  for (const r of rows) {
+    const won = r.pick_side === r.winner;
+    if (won) correct++;
+    const aWon = r.winner === 'a' ? 1 : 0;
+    brier += Math.pow((r.ps_prob_a != null ? r.ps_prob_a : 0.5) - aWon, 2);
+    if (r.pick_odds && r.pick_odds > 1) { staked += 1; returned += won ? r.pick_odds : 0; }
+    const pPick = r.pick_side === 'a' ? r.ps_prob_a : (1 - r.ps_prob_a);
+    const b = Math.min(0.9, Math.max(0.5, Math.floor((pPick || 0.5) * 10) / 10));
+    (bins[b] = bins[b] || { n: 0, w: 0, sump: 0 }); bins[b].n++; bins[b].w += won ? 1 : 0; bins[b].sump += pPick || 0.5;
+  }
+  const n = rows.length;
+  return {
+    resolved: n, pending,
+    accuracy: Math.round(correct / n * 1000) / 1000,
+    brier: Math.round(brier / n * 1000) / 1000,
+    roi_pct: staked ? Math.round((returned - staked) / staked * 1000) / 10 : null,
+    staked, returned: Math.round(returned * 100) / 100,
+    calibration: Object.keys(bins).sort().map(b => ({ bin: +b, n: bins[b].n, predicted: Math.round(bins[b].sump / bins[b].n * 1000) / 1000, actual: Math.round(bins[b].w / bins[b].n * 1000) / 1000 })),
+  };
+}
+
 // ─── Kept for future use when fighter stats source found ─────────────────────
 function computeMMAWinProb() { return 0.5; }
 
@@ -702,4 +807,4 @@ function getCacheStatus() {
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelInfo };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance };

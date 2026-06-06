@@ -27673,8 +27673,19 @@ async function loadFootAlerts() {
   function _updateAccBadge() {
     var badge = document.getElementById('mma-acc-badge');
     if (!badge) return;
-    badge.textContent = 'Devig consensus · The Odds API';
+    badge.textContent = 'Ensemble multi-modèle';
     badge.style.display = '';
+    // T3 — real backtest of PariScore verdicts (accumulates as fights resolve)
+    fetch('/api/v1/mma/performance').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      var p = d && d.performance; if (!p) return;
+      if (p.resolved > 0) {
+        var roi = p.roi_pct != null ? ' · ROI ' + (p.roi_pct > 0 ? '+' : '') + p.roi_pct + '%' : '';
+        badge.textContent = '📊 ' + p.resolved + ' picks · ' + Math.round(p.accuracy * 100) + '%' + roi;
+        badge.title = 'Backtest réel des verdicts PariScore · Brier ' + p.brier + ' · ' + p.pending + ' en attente';
+      } else if (p.pending > 0) {
+        badge.textContent = '📊 ' + p.pending + ' picks suivis (résultats à venir)';
+      }
+    }).catch(function () {});
   }
 
   function _applyMMAFilter() {
