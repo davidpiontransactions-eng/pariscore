@@ -10985,6 +10985,7 @@ const I18N = (() => {
     <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2" data-i18n="nav.cs2">CS2</a>
     <a href="#" onclick="showPage('mma',this);return false;" data-page="mma" aria-label="MMA/UFC"><svg class="nav-icon-3d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="7" width="11" height="8" rx="3"/><path d="M8 7V5.5a2.5 2.5 0 0 1 5 0V7M6 11h12M6 12.5C5 12.5 4 13.3 4 14.5S5 16 6 16"/></svg>MMA</a>
     <a href="#" onclick="showPage('nba',this);return false;" data-page="nba" aria-label="NBA" data-i18n="nav.nba">NBA</a>
+    <a href="#" onclick="showPage('wnba',this);return false;" data-page="wnba" aria-label="WNBA">WNBA</a>
     <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
     <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
     <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
@@ -11058,6 +11059,10 @@ const I18N = (() => {
   <a href="#" data-page="nba" onclick="bnGo('nba',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span>
     <span class="bn-lbl">NBA</span>
+  </a>
+  <a href="#" data-page="wnba" onclick="bnGo('wnba',this);return false;">
+    <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span>
+    <span class="bn-lbl">WNBA</span>
   </a>
   <a href="#" data-page="__live" onclick="bnGo('__live',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="#fff"/><path d="M5.5 5.5a9 9 0 0 0 0 13M18.5 5.5a9 9 0 0 1 0 13M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7"/></svg></span>
@@ -19153,6 +19158,25 @@ const I18N = (() => {
 .nba-model-chip { font-size:10px; font-family:'DM Mono',monospace; color:var(--text2,#8d9399); background:var(--bg3,#171c21); padding:2px 6px; border-radius:5px; }
 .nba-model-chip.contra { color:#f87171; background:#3b0d0d; font-weight:700; }
 </style>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     WNBA — Basket vertical (ESPN, miroir NBA). Réutilise les styles .nba-*
+     ══════════════════════════════════════════════════════════════ -->
+<div id="page-wnba" data-page="wnba" style="display:none;">
+<style>
+#page-wnba { padding: 12px 16px; background: var(--bg,#0a0d0f); max-width:1100px; margin:0 auto; }
+#page-wnba .nba-head { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+#page-wnba .nba-head h2 { font-size:20px; font-weight:800; color:var(--text1,#e8eaed); margin:0; }
+#page-wnba .nba-sub { font-size:11px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; }
+#page-wnba .nba-disclaimer { font-size:10px; color:var(--text3,#5a6068); margin:6px 0 14px; font-style:italic; }
+#page-wnba .nba-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:12px; }
+#wnba-topbets { margin:8px 0 14px; }
+</style>
+<div class="nba-head"><h2>🏀 WNBA</h2><span class="nba-sub" id="wnba-status">…</span></div>
+<div class="nba-disclaimer">Modèle Elo + Pythagorean + Four Factors (blend), indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré WNBA — usage analytique, pas un conseil de pari.</div>
+<div id="wnba-topbets"></div>
+<div class="nba-grid" id="wnba-grid"><div class="nba-empty">⏳ Chargement…</div></div>
 </div>
 
 <div id="page-cs2" data-page="cs2" style="display:none;">

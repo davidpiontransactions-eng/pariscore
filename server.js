@@ -38,6 +38,7 @@ const berserkService    = require('./services/berserkService');    // Berserk Le
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
+const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
@@ -19680,6 +19681,34 @@ async function handleAPI(req, res, pathname, query) {
     try {
       const match = await basketballService.getNbaMatchById(id);
       if (!match) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'match NBA non trouvé', id })); }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
+      return res.end(JSON.stringify({ ok: true, match }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // ─── WNBA vertical (ESPN, JS-natif — miroir NBA : Elo records + Four Factors + totals + value) ───
+  // GET /api/v1/wnba/matches — matchs WNBA du jour + prédictions (win prob, total, EV non-circulaire)
+  if (pathname === '/api/v1/wnba/matches' && req.method === 'GET') {
+    try {
+      const matches = await wnbaService.getWnbaMatches();
+      const topBets = wnbaService.computeNbaTopBets(matches, 3);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
+      return res.end(JSON.stringify({ ok: true, count: matches.length, source: 'espn', top_bets: topBets, matches }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
+    }
+  }
+  // GET /api/v1/wnba/insights/:id — détail d'un match WNBA
+  if (pathname.startsWith('/api/v1/wnba/insights/') && req.method === 'GET') {
+    const id = decodeURIComponent(pathname.split('/api/v1/wnba/insights/')[1] || '').trim();
+    if (!id) { res.writeHead(400, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'id requis' })); }
+    try {
+      const match = await wnbaService.getWnbaMatchById(id);
+      if (!match) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'match WNBA non trouvé', id })); }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
       return res.end(JSON.stringify({ ok: true, match }));
     } catch (e) {
