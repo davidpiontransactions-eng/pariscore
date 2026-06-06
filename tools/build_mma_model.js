@@ -59,6 +59,18 @@ console.log('[build] reading CSVs…');
 const events  = toObjects(parseCSV(fs.readFileSync(path.join(DATA, 'ufc_event_details.csv'), 'utf8')));
 const results = toObjects(parseCSV(fs.readFileSync(path.join(DATA, 'ufc_fight_results.csv'), 'utf8')));
 const stats   = toObjects(parseCSV(fs.readFileSync(path.join(DATA, 'ufc_fight_stats.csv'), 'utf8')));
+let tott = []; try { tott = toObjects(parseCSV(fs.readFileSync(path.join(DATA, 'ufc_fighter_tott.csv'), 'utf8'))); } catch (_) {}
+
+// Tale-of-the-tape: reach/height (inches) + DOB (epoch) per fighter — the thesis'
+// explicit "future work" (reach known to matter, omitted there).
+function parseHeight(h) { const m = String(h || '').match(/(\d+)'\s*(\d+)/); return m ? (+m[1]) * 12 + (+m[2]) : null; }
+function parseReach(r) { if (String(r || '').indexOf('--') >= 0) return null; const m = String(r).match(/([\d.]+)/); return m ? +m[1] : null; }
+function parseDOB(d) { const t = Date.parse(d); return isNaN(t) ? null : t; }
+const tottMap = {};
+for (const t of tott) { const f = (t.FIGHTER || '').trim(); if (f) tottMap[f] = { height: parseHeight(t.HEIGHT), reach: parseReach(t.REACH), dob: parseDOB(t.DOB) }; }
+const YEAR = 365.25 * 864e5;
+function ageAt(dob, when) { return dob ? (when - dob) / YEAR : null; }
+function diff(a, b) { return (a != null && b != null) ? a - b : 0; }
 
 // event -> epoch date
 const eventDate = {};
@@ -101,8 +113,9 @@ const MINH = 3, WINDOW = 5;
 function rolling(list, idx) {
   const past = list.slice(Math.max(0, idx - WINDOW), idx);
   if (past.length < MINH) return null;
-  let s = 0, c = 0, t = 0, k = 0; past.forEach(p => { s += p.strk; c += p.ctrl; t += p.td; k += p.kd; });
-  const n = past.length; return { strk: s / n, ctrl: c / n, td: t / n, kd: k / n };
+  let sw = 0, s = 0, c = 0, t = 0, k = 0;
+  past.forEach((p, i) => { const w = i + 1; sw += w; s += w * p.strk; c += w * p.ctrl; t += w * p.td; k += w * p.kd; }); // recency-weighted
+  return { strk: s / sw, ctrl: c / sw, td: t / sw, kd: k / sw };
 }
 
 // training set: each fight where BOTH fighters have >= MINH prior fights
@@ -118,7 +131,9 @@ for (const r of results) {
   const ib = hb.findIndex(p => p.date === date && Math.abs(p.won - (1 - aWon)) < 0.5);
   if (ia < 0 || ib < 0) continue;
   const ra = rolling(ha, ia), rb = rolling(hb, ib); if (!ra || !rb) continue;
-  samples.push({ date, x: [ra.strk, rb.strk, ra.ctrl, rb.ctrl, ra.td, rb.td, ra.kd, rb.kd], y: aWon });
+  const ta = tottMap[A] || {}, tb = tottMap[B] || {};
+  samples.push({ date, x: [ra.strk, rb.strk, ra.ctrl, rb.ctrl, ra.td, rb.td, ra.kd, rb.kd,
+    diff(ta.reach, tb.reach), diff(ta.height, tb.height), diff(ageAt(ta.dob, date), ageAt(tb.dob, date))], y: aWon });
 }
 samples.sort((a, b) => a.date - b.date);
 console.log(`[build] ${samples.length} training samples (both fighters >= ${MINH} prior fights)`);
@@ -139,14 +154,15 @@ const feats = {};
 for (const f in hist) {
   const list = hist[f]; if (list.length < MINH) continue;
   const last = list.slice(Math.max(0, list.length - WINDOW));
-  let s = 0, c = 0, t = 0, k = 0; last.forEach(p => { s += p.strk; c += p.ctrl; t += p.td; k += p.kd; });
-  const nn = last.length, rnd = v => Math.round(v / nn * 1e6) / 1e6;
-  feats[ml.fighterSlug(f)] = { strk: rnd(s), ctrl: rnd(c), td: rnd(t), kd: rnd(k), n: list.length };
+  let sw = 0, s = 0, c = 0, t = 0, k = 0; last.forEach((p, i) => { const w = i + 1; sw += w; s += w * p.strk; c += w * p.ctrl; t += w * p.td; k += w * p.kd; });
+  const rnd = v => Math.round(v / sw * 1e6) / 1e6;
+  const tt = tottMap[f] || {};
+  feats[ml.fighterSlug(f)] = { strk: rnd(s), ctrl: rnd(c), td: rnd(t), kd: rnd(k), reach: tt.reach || null, height: tt.height || null, dob: tt.dob || null, n: list.length };
 }
 
 fs.writeFileSync(OUT_MODEL, JSON.stringify({
   weights: model.weights, bias: model.bias, mean: model.mean, std: model.std,
-  features: ['fighter_strike_eff', 'opp_strike_eff', 'fighter_ctrl_pct', 'opp_ctrl_pct', 'fighter_td_rate', 'opp_td_rate', 'fighter_kd_rate', 'opp_kd_rate'],
+  features: ['fighter_strike_eff', 'opp_strike_eff', 'fighter_ctrl_pct', 'opp_ctrl_pct', 'fighter_td_rate', 'opp_td_rate', 'fighter_kd_rate', 'opp_kd_rate', 'reach_diff', 'height_diff', 'age_diff'],
   test_accuracy: Math.round(teAcc * 1000) / 1000, train_accuracy: Math.round(trAcc * 1000) / 1000,
   n_train: trX.length, n_test: teX.length, window: WINDOW, min_history: MINH,
   source: 'KTH 2024 thesis method; ufcstats facts via Greco1899', built_from_fights: usedFights,

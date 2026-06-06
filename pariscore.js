@@ -28062,7 +28062,7 @@ async function loadFootAlerts() {
          _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb) +
          _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am') +
          _modelCell('PariScore ML', mla, mla != null ? 100 - mla : null, fa, fb, 'ml') + '</div>' +
-         (st.mpA != null ? '<div class="mma-method-cap" style="margin-top:6px">PariScore ML = modèle logistique maison (méthode KTH, ~55% précision test, expérimental — poids faible)</div>' : '') +
+         (st.mpA != null ? '<div class="mma-method-cap" style="margin-top:6px">PariScore ML = modèle logistique maison (méthode KTH + reach/âge, ~62% précision test out-of-sample — poids faible)</div>' : '') +
          '</div>';
 
     var sa = am.striking && am.striking.a, sb = am.striking && am.striking.b;
