@@ -25,8 +25,8 @@ const NBA_ELO_FILE    = path.join(__dirname, '..', 'data', 'wnba_elo.json');
 const STAR_OUT_PTS = 3.5;  // impact pts d'un scoreur leader absent
 const ROLE_OUT_PTS = 0.8;  // impact pts d'un rotation player absent
 const B2B_PTS      = 1.6;  // pénalité back-to-back (fatigue)
-const HCA_PTS   = 3.2;     // home-court advantage (points) — littérature NBA ~2.5-3.5
-const PTS_PER_ELO = 28;    // ~28 pts NBA spread par 400 Elo (calibrable)
+const HCA_PTS   = 2.6;     // WNBA home-court ~2.5 pts (plus bas que NBA)
+const PTS_PER_ELO = 20;    // WNBA ~20 pts/400 Elo (scoring ~72% NBA → spread compressé)
 const ELO_DIV   = 400;
 const TTL_MS    = 90 * 1000; // 90s cache live
 
@@ -219,8 +219,8 @@ function _normCdf(z) {
   return z > 0 ? 1 - p : p;
 }
 
-// (1) Pythagorean expectation (Hollinger E=16.5) → win% saison, log5 pour matchup
-const PYTHAG_EXP = 16.5;
+// (1) Pythagorean expectation → win% saison, log5 pour matchup (exp WNBA ~14, ligue moins prolifique)
+const PYTHAG_EXP = 14;
 function computeNbaPythagorean(homeId, awayId) {
   const sH = _standings.map && _standings.map[homeId];
   const sA = _standings.map && _standings.map[awayId];
@@ -258,8 +258,8 @@ function computeNbaBlend(eloP, pythP, ffP) {
 }
 
 // (4) Spread/margin + (5) UQD analytique IC90 + ATS cover + O/U over probabilities
-const SD_MARGIN = 12.0; // écart-type marge NBA (pts)
-const SD_TOTAL  = 18.0; // écart-type total NBA (pts)
+const SD_MARGIN = 11.5; // écart-type marge WNBA (pts)
+const SD_TOTAL  = 13.5; // écart-type total WNBA (pts) — scoring + bas → totaux + serrés (edge sharp)
 function computeNbaSpreadUQD(eloDiff, expTotal, bookSpreadHome, bookOU) {
   if (eloDiff == null) return null;
   const expMargin = +(eloDiff * PTS_PER_ELO / ELO_DIV).toFixed(1); // Elo diff → marge attendue (home - away)
