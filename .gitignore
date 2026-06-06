@@ -83,3 +83,4 @@ data/rg_predictions_*.json
 # Debug capture files
 .debug_*.txt
 .debug_*.log
+.context/_mma_data/

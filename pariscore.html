@@ -19769,7 +19769,8 @@ body[data-page="mma"] footer { display: none !important; }
 /* ── agentmma multi-model breakdown (drawer compact) ── */
 .mma-bd { margin-bottom: 14px; }
 .mma-bd-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--text3,#5a6068); margin-bottom:8px; }
-.mma-consensus { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+.mma-consensus { display:grid; grid-template-columns:repeat(auto-fit,minmax(68px,1fr)); gap:8px; margin-bottom:10px; }
+.mma-model.ml { border-color:rgba(47,129,247,.35); }
 .mma-model { background:var(--bg2,#111417); border:1px solid var(--bg4,#1e2328); border-radius:8px; padding:8px 10px; }
 .mma-model.am { border-color:rgba(227,0,27,.35); }
 .mma-model-name { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--text3,#5a6068); }

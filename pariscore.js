@@ -27778,7 +27778,8 @@ async function loadFootAlerts() {
       + (f.dr_prob_a||0) + ',' + (f.dr_prob_b||0) + ','
       + (f.ev_a_pct||0) + ',' + (f.ev_b_pct||0) + ','
       + (f.best_odds_a||0) + ',' + (f.best_odds_b||0) + ','
-      + (f.bet_a?'true':'false') + ',' + (f.bet_b?'true':'false')
+      + (f.bet_a?'true':'false') + ',' + (f.bet_b?'true':'false') + ','
+      + (f.model_prob_a!=null?f.model_prob_a:'null') + ',' + (f.model_prob_b!=null?f.model_prob_b:'null')
       + ')">🔍 Analyse &amp; Paris</button>'
       + '<div class="mma-analysis-drawer"></div>'
       + '</div>';
@@ -27850,7 +27851,7 @@ async function loadFootAlerts() {
 
 
   // Toggle analysis drawer + lazy-fetch Gemini fight analysis
-  window.toggleMMAAnalysis = function(btn, fa, fb, probA, probB, drA, drB, evA, evB, oddsA, oddsB, betA, betB) {
+  window.toggleMMAAnalysis = function(btn, fa, fb, probA, probB, drA, drB, evA, evB, oddsA, oddsB, betA, betB, mpA, mpB) {
     var card    = btn.closest('.mma-fight');
     if (!card) return;
     var drawer  = card.querySelector('.mma-analysis-drawer');
@@ -27869,7 +27870,7 @@ async function loadFootAlerts() {
       '<div class="mma-bd-slot"><div class="mma-analysis-spinner">Consensus multi-modèle…</div></div>' +
       '<div class="mma-gem-slot"><div class="mma-analysis-spinner">Analyse IA…</div></div>';
     // 1. AgentMMA multi-model breakdown (consensus + full-analysis modal)
-    _loadMMABreakdown(drawer.querySelector('.mma-bd-slot'), fa, fb, probA, probB, drA, drB);
+    _loadMMABreakdown(drawer.querySelector('.mma-bd-slot'), fa, fb, probA, probB, drA, drB, mpA, mpB);
     // 2. Gemini Top-3-Paris (existing)
     var gem = drawer.querySelector('.mma-gem-slot');
     var params = new URLSearchParams({
@@ -27939,36 +27940,39 @@ async function loadFootAlerts() {
       : { b: am.confidence, a: 100 - am.confidence };
   }
 
-  function _loadMMABreakdown(slot, fa, fb, probA, probB, drA, drB) {
+  function _loadMMABreakdown(slot, fa, fb, probA, probB, drA, drB, mpA, mpB) {
     if (!slot) return;
     fetch('/api/v1/mma/breakdown?fa=' + encodeURIComponent(fa) + '&fb=' + encodeURIComponent(fb))
       .then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(d) { _renderConsensusInto(slot, d && d.am ? d.am : null, fa, fb, probA, probB, drA, drB); })
-      .catch(function() { _renderConsensusInto(slot, null, fa, fb, probA, probB, drA, drB); });
+      .then(function(d) { _renderConsensusInto(slot, d && d.am ? d.am : null, fa, fb, probA, probB, drA, drB, mpA); })
+      .catch(function() { _renderConsensusInto(slot, null, fa, fb, probA, probB, drA, drB, mpA); });
   }
 
-  function _renderConsensusInto(slot, am, fa, fb, probA, probB, drA, drB) {
+  function _renderConsensusInto(slot, am, fa, fb, probA, probB, drA, drB, mpA) {
     var pa = _pct(probA), pb = _pct(probB);
     var dra = (drA ? _pct(drA) : null);
     var amv = _amSides(am);
+    var mla = (mpA != null ? _pct(mpA) : null);
     // agreement across models that have an opinion
     var favs = [pa >= pb ? 'a' : 'b'];
     if (dra != null) favs.push(dra >= (100 - dra) ? 'a' : 'b');
     if (amv.a != null) favs.push(amv.a >= amv.b ? 'a' : 'b');
+    if (mla != null) favs.push(mla >= 50 ? 'a' : 'b');
     var agree = favs.every(function(f) { return f === favs[0]; });
     var favName = favs[0] === 'a' ? fa : fb;
 
     var id = ++_bdSeq;
-    _bdStore[id] = { am: am, probA: probA, probB: probB, drA: drA, drB: drB, fa: fa, fb: fb };
+    _bdStore[id] = { am: am, probA: probA, probB: probB, drA: drA, drB: drB, mpA: mpA, fa: fa, fb: fb };
 
-    // Stacked ensemble verdict (devig + DRatings + AgentMMA, weighted)
-    var psA = _psBlend([{ p: probA, w: 0.5 }, { p: drA, w: 0.3 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.2 }]);
+    // Stacked ensemble verdict (devig + DRatings + AgentMMA + own ML model, weighted)
+    var psA = _psBlend([{ p: probA, w: 0.45 }, { p: drA, w: 0.28 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.17 }, { p: mpA, w: 0.10 }]);
 
     var h = '<div class="mma-bd">' + _verdictBlock(psA, fa, fb) +
-      '<div class="mma-bd-title">Consensus 3 modèles</div><div class="mma-consensus">';
+      '<div class="mma-bd-title">Consensus multi-modèles</div><div class="mma-consensus">';
     h += _modelCell('Devig', pa, pb, fa, fb);
     h += _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb);
     h += _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am');
+    h += _modelCell('PariScore ML', mla, mla != null ? 100 - mla : null, fa, fb, 'ml');
     h += '</div>';
     h += '<div class="mma-consensus-verdict"><span class="mma-agree ' + (agree ? 'hi' : 'lo') + '">' +
          (agree ? '✓ ACCORD' : '⚠ DIVERGENCE') + '</span><span>' +
@@ -28039,12 +28043,16 @@ async function loadFootAlerts() {
          '<div class="mma-conf-bar"><div class="mma-conf-fill" style="width:' + conf + '%"></div></div>' +
          '<div style="font-size:12px;color:var(--text2,#8d9399);margin-top:8px;">Vainqueur prédit : <strong style="color:#ff5a4d">' + _esc(winner) + '</strong>' + (am.method ? ' — ' + _esc(am.method) : '') + '</div></div>';
 
-    var psA = _psBlend([{ p: st.probA, w: 0.5 }, { p: st.drA, w: 0.3 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.2 }]);
-    h += '<div class="mma-modal-sec"><div class="mma-sec-title">Consensus 3 modèles</div>' +
+    var mla = (st.mpA != null ? _pct(st.mpA) : null);
+    var psA = _psBlend([{ p: st.probA, w: 0.45 }, { p: st.drA, w: 0.28 }, { p: amv.a != null ? amv.a / 100 : null, w: 0.17 }, { p: st.mpA, w: 0.10 }]);
+    h += '<div class="mma-modal-sec"><div class="mma-sec-title">Consensus multi-modèles</div>' +
          _verdictBlock(psA, fa, fb) + '<div class="mma-consensus">' +
          _modelCell('Devig', pa, pb, fa, fb) +
          _modelCell('DRatings', dra, dra != null ? 100 - dra : null, fa, fb) +
-         _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am') + '</div></div>';
+         _modelCell('AgentMMA', amv.a, amv.b, fa, fb, 'am') +
+         _modelCell('PariScore ML', mla, mla != null ? 100 - mla : null, fa, fb, 'ml') + '</div>' +
+         (st.mpA != null ? '<div class="mma-method-cap" style="margin-top:6px">PariScore ML = modèle logistique maison (méthode KTH, ~55% précision test, expérimental — poids faible)</div>' : '') +
+         '</div>';
 
     var sa = am.striking && am.striking.a, sb = am.striking && am.striking.b;
     if (recA || recB || sa || sb) {
