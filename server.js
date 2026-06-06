@@ -43291,6 +43291,15 @@ setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[C
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
 
+// MMA T3 — auto-reconcile verdict outcomes from the ufcstats results CSV every 12h
+// so ROI / calibration self-update without waiting for a /performance hit.
+setInterval(() => {
+  if (!sqldb || !mmaService.reconcileMMAOutcomes) return;
+  mmaService.reconcileMMAOutcomes(sqldb)
+    .then(n => { if (n) console.log(`[MMA cron] reconciled ${n} outcome(s)`); })
+    .catch(e => console.warn('[MMA cron]', e.message));
+}, 12 * 3600 * 1000).unref();
+
 // Cron quotidien 06:00 UTC — après resync BSD (05:30 UTC), force refresh standings + odds
 // Reset db.statsUpdateByLeague pour bypasser tous les gates T1/T2 → fetch frais garanti
 (function scheduleDailyFootballRefresh() {

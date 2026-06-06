@@ -270,7 +270,11 @@ function mmaModelPredict(nameA, nameB) {
   if (!MMA_MODEL || !_logit) return null;
   const fa = MMA_FEATS[fighterSlug(nameA)], fb = MMA_FEATS[fighterSlug(nameB)];
   if (!fa || !fb) return null;
-  const p = _logit.predict(MMA_MODEL, [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd]);
+  const d = (a, b) => (a != null && b != null) ? a - b : 0;
+  const YEAR = 365.25 * 864e5, now = Date.now();
+  const ageA = fa.dob ? (now - fa.dob) / YEAR : null, ageB = fb.dob ? (now - fb.dob) / YEAR : null;
+  const p = _logit.predict(MMA_MODEL, [fa.strk, fb.strk, fa.ctrl, fb.ctrl, fa.td, fb.td, fa.kd, fb.kd,
+    d(fa.reach, fb.reach), d(fa.height, fb.height), d(ageA, ageB)]);
   return p == null || isNaN(p) ? null : Math.round(p * 1000) / 1000;
 }
 function mmaModelInfo() { return MMA_MODEL ? { test_accuracy: MMA_MODEL.test_accuracy, n_train: MMA_MODEL.n_train, fighters: Object.keys(MMA_FEATS).length } : null; }
