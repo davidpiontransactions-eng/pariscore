@@ -241,6 +241,21 @@ function _groupByDate(fights) {
     }));
 }
 
+// ─── Stacked ensemble ─────────────────────────────────────────────────────────
+// Weighted blend of the available signals into one PariScore probability.
+// Market devig is the sharpest anchor; model signals (DRatings, AgentMMA) refine.
+// Weights renormalize over whichever signals are present. parts = [{p, w}, ...].
+// Honest note: this is a weighted ensemble, NOT yet a calibrated model — true
+// calibration needs a labelled MMA outcome history (see ROI tracking backlog).
+function blendProbs(parts) {
+  let sw = 0, sv = 0;
+  for (const p of (parts || [])) {
+    if (p && p.p != null && !isNaN(p.p) && p.w > 0) { sw += p.w; sv += p.w * p.p; }
+  }
+  if (sw === 0) return null;
+  return Math.round((sv / sw) * 1000) / 1000;
+}
+
 // ─── Public: getMMAFights ─────────────────────────────────────────────────────
 async function getMMAFights(apiKey) {
   if (_fullCache.data && (Date.now() - _fullCache.ts) < CACHE_TTL_FULL) {
@@ -275,6 +290,9 @@ async function getMMAFights(apiKey) {
         // DRatings model probabilities (independent signal)
         dr_prob_a:      dr ? dr.prob_a : null,
         dr_prob_b:      dr ? dr.prob_b : null,
+        // PariScore stacked ensemble (devig market-anchored + DRatings model)
+        ps_prob_a:      blendProbs([{ p: d ? d.fair_a : null, w: 0.62 }, { p: dr ? dr.prob_a : null, w: 0.38 }]),
+        ps_prob_b:      blendProbs([{ p: d ? d.fair_b : null, w: 0.62 }, { p: dr ? dr.prob_b : null, w: 0.38 }]),
         // Best odds
         best_odds_a:    d ? d.best_odds_a : null,
         best_odds_b:    d ? d.best_odds_b : null,
@@ -558,11 +576,24 @@ function _parseAgentMmaArticle(html, nameA, nameB) {
   const ev = get(/scheduled for\s*(.+?)\s*on\s*(.+?)\s*at\s*(.+?)\./i);
   const acc = get(/accuracy rate of\s*(\d{1,3})%/i);
 
+  // Career finish breakdown (method-of-victory tendency) from each fighter's
+  // record FAQ answer: "Career highlights include N KO/TKO, M submission, K decision".
+  const finOf = (name) => {
+    const nl = name.toLowerCase();
+    for (const f of faqs) {
+      if (f.a.toLowerCase().indexOf(nl) !== 0) continue; // record answer starts with the name
+      const x = f.a.match(/(\d+)\s*KO\/TKO[^0-9]{0,30}(\d+)\s*submission[^0-9]{0,30}(\d+)\s*decision/i);
+      if (x) return { ko: +x[1], sub: +x[2], dec: +x[3] };
+    }
+    return null;
+  };
+
   if (confidence == null && !winner) return null; // not a real prediction article
   return {
     winner, winner_side, confidence, method,
     records,
     striking: { a: strk(nameA), b: strk(nameB) },
+    finishes: { a: finOf(nameA), b: finOf(nameB) },
     event:  ev ? { name: ev[1].trim(), date: ev[2].trim(), venue: ev[3].trim() } : null,
     model_accuracy: acc ? parseInt(acc[1], 10) : null,
     faq: faqs,
@@ -648,4 +679,4 @@ function getCacheStatus() {
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs };
