@@ -38,6 +38,7 @@ const berserkService    = require('./services/berserkService');    // Berserk Le
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
+const rotowireService   = require('./services/rotowireService');   // Rotowire scaffold (injuries/lineups/projections — clé DG payante)
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -17743,6 +17744,10 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
   // Glicko-2 stats + live enriched + momentum + top10 widget — public read-only
   if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10' || pathname.startsWith('/api/v1/tennis/detail/')) return false;
+  // RG showcase public (live momentum SSE + fiche joueur). EventSource ne peut PAS
+  // envoyer de header Authorization → la gate Pro renvoyait 403 pour TOUS (y compris
+  // Pro). Aligné sur /tennis/live + /tennis/momentum déjà publics. bd ParisScorebis-4n12.
+  if (pathname === '/api/v1/tennis/rg-live-stream' || pathname.startsWith('/api/v1/tennis/rg-player/')) return false;
   // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
   if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
   if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
@@ -19807,13 +19812,16 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
   }
 
   // GET /api/v1/mma/fighter-photo?name=Belal+Muhammad
-  // Fetches UFC fighter headshot from ufc.com/athlete/{slug}, caches 7 days in api_cache
+  // Resolves a fighter headshot via mmaService cascade (memory map -> Sofascore
+  // proxy -> Oktagon JSON-LD -> Wikipedia -> Bright Data SERP). Cached in
+  // api_cache: 7d on hit, 24h on miss (lets new sources/seeds backfill).
   if (pathname === '/api/v1/mma/fighter-photo' && req.method === 'GET') {
     const rawName = (query.name || '').toString().trim();
     if (!rawName) return jsonResponse(res, 400, { ok: false, error: 'name required' });
-    const slug     = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug     = mmaService.fighterSlug(rawName);
     const cacheKey = `mma_photo_${slug}`;
-    const TTL_MS   = 7 * 24 * 3600 * 1000; // 7 days
+    const TTL_HIT  = 7  * 24 * 3600 * 1000; // 7 days  (photo found)
+    const TTL_MISS = 24 * 3600 * 1000;      // 24 hours (no photo — retry sooner)
     try {
       // Check SQLite cache
       if (sqldb) {
@@ -19823,27 +19831,15 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
           return res.end(cached.data);
         }
       }
-      // Fetch UFC athlete page
-      // Wikipedia REST API — thumbnail.source, no Cloudflare, JSON clean
-      // Title: "Belal Muhammad" → "Belal_Muhammad"
-      const wikiTitle = rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('_');
-      const wikiUrl   = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
-      const fetchRes  = await httpsGet(wikiUrl, {
-        'User-Agent': 'PariScore/2.0 (https://pariscore.io; contact@pariscore.io)',
-        'Accept': 'application/json',
-      }, 10000);
-      let photoUrl = null;
-      if (fetchRes && fetchRes.status === 200 && fetchRes.data && fetchRes.data.thumbnail) {
-        photoUrl = fetchRes.data.thumbnail.source || null;
-      }
-      const payload = JSON.stringify({ ok: true, url: photoUrl, slug });
-      // Store in api_cache (key, data, source, created_at, expires_at)
-      if (sqldb && photoUrl) {
+      const photoUrl = await mmaService.getFighterPhoto(rawName);
+      const payload  = JSON.stringify({ ok: true, url: photoUrl || null, slug });
+      // Store in api_cache (key, data, source, created_at, expires_at) — cache misses too.
+      if (sqldb) {
         try {
           const now = Date.now();
           sqldb.prepare(`INSERT INTO api_cache (key, data, source, created_at, expires_at) VALUES (?,?,?,?,?)
             ON CONFLICT(key) DO UPDATE SET data=excluded.data, expires_at=excluded.expires_at`)
-            .run(cacheKey, payload, 'ufc_photo', now, now + TTL_MS);
+            .run(cacheKey, payload, 'mma_photo', now, now + (photoUrl ? TTL_HIT : TTL_MISS));
         } catch (_) {}
       }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });

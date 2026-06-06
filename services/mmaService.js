@@ -11,6 +11,13 @@
 
 const https = require('https');
 
+// Curated fighter photo "memory" map (slug -> {url} | {sofascore_id}).
+// Defensive require: a malformed/missing file must never crash the server.
+let FIGHTER_PHOTOS = {};
+try { FIGHTER_PHOTOS = require('./mma_fighter_photos.json') || {}; } catch (_) { FIGHTER_PHOTOS = {}; }
+
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
 // ─── Static UFC event names (keyed by YYYY-MM-DD) ────────────────────────────
 // Source: ufc.com/events — refresh each month
 const UFC_EVENT_NAMES = {
@@ -301,6 +308,156 @@ async function getMMAFights(apiKey) {
   }
 }
 
+// ─── Fighter photo resolution ────────────────────────────────────────────────
+// Multi-source cascade so regional fighters (Oktagon/KSW/PFL...) get a photo,
+// not just notable UFC names on Wikipedia. Order = best quality first:
+//   1. curated memory map (mma_fighter_photos.json)
+//   2. Sofascore headshot via bzzoiro proxy (when a sofascore_id is mapped)
+//   3. Oktagon JSON-LD image (auto-covers the Oktagon roster by slug)
+//   4. Wikipedia REST summary thumbnail (direct title, then site search)
+//   5. Bright Data SERP image search (dormant — only if BRIGHTDATA_API_KEY set)
+// Returns a photo URL string or null. The frontend renders a clean initials
+// avatar whenever this is null, so a miss never shows a broken image.
+
+// Fold diacritics (incl. letters NFD leaves intact: ł, ø, đ, ı, ß) then slugify.
+function fighterSlug(name) {
+  return String(name || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[łŁ]/g, 'l').replace(/[øØ]/g, 'o').replace(/[đĐ]/g, 'd')
+    .replace(/[ıİ]/g, 'i').replace(/ß/g, 'ss')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+// Native https POST (Bright Data direct API). Mirrors _get but with a body.
+function _post(urlStr, body, headers, timeoutMs = 12000) {
+  return new Promise((resolve, reject) => {
+    const u    = new URL(urlStr);
+    const data = typeof body === 'string' ? body : JSON.stringify(body || {});
+    const opts = {
+      hostname: u.hostname, port: 443, path: u.pathname + (u.search || ''),
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }, headers || {}),
+    };
+    const req = https.request(opts, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const raw = chunks.join('');
+        try { resolve({ status: res.statusCode, data: JSON.parse(raw) }); }
+        catch (_) { resolve({ status: res.statusCode, data: raw }); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('timeout')); });
+    req.end(data);
+  });
+}
+
+// Oktagon is a Next.js site reachable server-side (no Cloudflare block). Its
+// per-fighter JSON-LD exposes the canonical fighter image. Slug is predictable.
+async function _oktagonPhoto(slug) {
+  if (!slug) return null;
+  try {
+    const res = await _get(`https://oktagonmma.com/en/fighters/${slug}/`,
+      { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' }, 10000);
+    if (!res || res.status !== 200 || typeof res.data !== 'string') return null;
+    const m = res.data.match(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/);
+    if (!m) return null;
+    const j     = JSON.parse(m[1]);
+    const graph = Array.isArray(j['@graph']) ? j['@graph'] : [j];
+    for (const node of graph) {
+      const person = node.mainEntity || (node['@type'] === 'Person' ? node : null);
+      if (person && person.image) {
+        const im = Array.isArray(person.image) ? person.image[0] : person.image;
+        const url = im && (im.contentUrl || im.url || (typeof im === 'string' ? im : null));
+        if (url) return url;
+      }
+      if (node.primaryImageOfPage && node.primaryImageOfPage.contentUrl) {
+        return node.primaryImageOfPage.contentUrl;
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Wikipedia REST summary thumbnail. Try the naive title first, then resolve via
+// the search API (handles diacritics / disambiguation) before giving up.
+async function _wikiPhoto(name) {
+  const title = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('_');
+  try {
+    const r = await _get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+      { 'User-Agent': 'PariScore/2.0 (https://pariscore.io; contact@pariscore.io)', 'Accept': 'application/json' }, 10000);
+    if (r && r.status === 200 && r.data && r.data.thumbnail && r.data.thumbnail.source) {
+      return r.data.thumbnail.source;
+    }
+  } catch (_) {}
+  // Search fallback: best page match + pageimages thumbnail.
+  try {
+    const q = encodeURIComponent(`${name} mixed martial artist`);
+    const r = await _get(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrlimit=1&prop=pageimages&piprop=thumbnail&pithumbsize=200&format=json`,
+      { 'User-Agent': 'PariScore/2.0 (https://pariscore.io; contact@pariscore.io)', 'Accept': 'application/json' }, 10000);
+    const pages = r && r.data && r.data.query && r.data.query.pages;
+    if (pages) {
+      for (const k of Object.keys(pages)) {
+        const t = pages[k] && pages[k].thumbnail;
+        if (t && t.source) return t.source;
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Universal web image search via Bright Data SERP API. DORMANT unless
+// BRIGHTDATA_API_KEY is set in .env (free tier = 5000 req/mo). Defensive: any
+// shape mismatch or error returns null so the cascade falls through to initials.
+async function _brightDataPhoto(name) {
+  const key  = process.env.BRIGHTDATA_API_KEY;
+  if (!key) return null;
+  const zone = process.env.BRIGHTDATA_SERP_ZONE || 'serp';
+  try {
+    const searchUrl = `https://www.google.com/search?tbm=isch&brd_json=1&q=${encodeURIComponent(name + ' mma fighter')}`;
+    const r = await _post('https://api.brightdata.com/request',
+      { zone, url: searchUrl, format: 'json' },
+      { 'Authorization': `Bearer ${key}` }, 15000);
+    if (!r || r.status !== 200 || !r.data) return null;
+    // brd_json SERP image results land under one of these shapes depending on plan.
+    const body    = (typeof r.data.body === 'string') ? safeJson(r.data.body) : r.data;
+    const imgs    = (body && (body.images || body.image_results || body.organic_images)) || [];
+    for (const it of imgs) {
+      const u = it && (it.image || it.original || it.source || it.link || it.url);
+      if (typeof u === 'string' && /^https?:\/\//.test(u)) return u;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function safeJson(s) { try { return JSON.parse(s); } catch (_) { return null; } }
+
+// Public: resolve one fighter photo URL (or null). Caching lives in the route.
+async function getFighterPhoto(rawName) {
+  const name = String(rawName || '').trim();
+  if (!name) return null;
+  const slug = fighterSlug(name);
+
+  // 1. Curated memory map
+  const entry = FIGHTER_PHOTOS[slug];
+  if (entry && typeof entry === 'object') {
+    if (entry.url) return entry.url;
+    if (entry.sofascore_id) return `https://sports.bzzoiro.com/img/team/${entry.sofascore_id}/?bg=transparent`;
+  }
+  // 2. Oktagon roster (auto by slug)
+  const okta = await _oktagonPhoto(slug);
+  if (okta) return okta;
+  // 3. Wikipedia (notable UFC names)
+  const wiki = await _wikiPhoto(name);
+  if (wiki) return wiki;
+  // 4. Bright Data SERP (dormant hook)
+  const bd = await _brightDataPhoto(name);
+  if (bd) return bd;
+
+  return null;
+}
+
 // ─── Kept for future use when fighter stats source found ─────────────────────
 function computeMMAWinProb() { return 0.5; }
 
@@ -314,4 +471,4 @@ function getCacheStatus() {
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus };
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug };
