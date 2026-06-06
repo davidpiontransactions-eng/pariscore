@@ -19766,6 +19766,58 @@ body[data-page="mma"] footer { display: none !important; }
   .mma-bar-wrap { min-width: 56px; }
   .mma-prob-bar { width: 56px; }
 }
+/* ── agentmma multi-model breakdown (drawer compact) ── */
+.mma-bd { margin-bottom: 14px; }
+.mma-bd-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--text3,#5a6068); margin-bottom:8px; }
+.mma-consensus { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+.mma-model { background:var(--bg2,#111417); border:1px solid var(--bg4,#1e2328); border-radius:8px; padding:8px 10px; }
+.mma-model.am { border-color:rgba(227,0,27,.35); }
+.mma-model-name { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--text3,#5a6068); }
+.mma-model-val { font-family:Syne,sans-serif; font-weight:800; font-size:18px; color:var(--text,#e8eaed); line-height:1.2; margin-top:2px; }
+.mma-model-pick { font-size:10px; color:var(--text2,#8d9399); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mma-model-bar { height:4px; border-radius:2px; background:var(--bg4,#1e2328); margin-top:6px; overflow:hidden; }
+.mma-model-fill { height:100%; background:linear-gradient(90deg,#E3001B,#ff5a4d); }
+.mma-consensus-verdict { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2,#8d9399); margin-bottom:8px; }
+.mma-agree { font-family:'DM Mono',monospace; font-size:10px; padding:2px 7px; border-radius:10px; font-weight:600; }
+.mma-agree.hi { background:rgba(21,128,61,.15); color:#37d36b; }
+.mma-agree.lo { background:rgba(227,0,27,.12); color:#ff6a5a; }
+.mma-bd-method { font-family:'Instrument Sans',sans-serif; font-size:12px; color:var(--text2,#8d9399); font-style:italic; border-left:2px solid rgba(227,0,27,.4); padding-left:9px; margin:0 0 10px; }
+.mma-bd-full-btn { width:100%; padding:9px; border:1px solid var(--bg4,#1e2328); background:var(--bg2,#111417); color:var(--text,#e8eaed); border-radius:8px; font-family:Syne,sans-serif; font-weight:700; font-size:12px; cursor:pointer; transition:border-color .15s; }
+.mma-bd-full-btn:hover { border-color:rgba(227,0,27,.5); }
+.mma-bd-src { font-size:9px; color:var(--text3,#5a6068); text-align:center; margin-top:6px; font-family:'DM Mono',monospace; }
+.mma-gem-slot { border-top:1px dashed var(--bg4,#1e2328); padding-top:12px; margin-top:4px; }
+/* ── full breakdown modal (article-style) ── */
+.mma-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); backdrop-filter:blur(4px); z-index:99999; display:flex; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; animation:mma-fade .2s ease; }
+@keyframes mma-fade { from{opacity:0;} to{opacity:1;} }
+.mma-modal { background:var(--bg,#0a0d0f); border:1px solid var(--bg4,#1e2328); border-radius:16px; max-width:560px; width:100%; overflow:hidden; box-shadow:0 24px 80px rgba(0,0,0,.6); }
+.mma-modal-head { position:relative; padding:18px 18px 14px; background:linear-gradient(160deg,#102e45,#0a0d0f); border-bottom:1px solid var(--bg4,#1e2328); }
+.mma-modal-close { position:absolute; top:10px; right:12px; background:none; border:none; color:var(--text3,#9aa0a6); font-size:24px; cursor:pointer; line-height:1; }
+.mma-modal-event { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--text3,#8a93a0); margin-bottom:12px; }
+.mma-modal-fighters { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; }
+.mma-mf { display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; }
+.mma-mf img, .mma-mf .mma-fighter-initials { width:64px; height:64px; }
+.mma-mf-name { font-family:Syne,sans-serif; font-weight:700; font-size:13px; color:#e8eaed; }
+.mma-mf-rec { font-family:'DM Mono',monospace; font-size:10px; color:#8a93a0; }
+.mma-mf.win .mma-mf-name { color:#ff5a4d; }
+.mma-mf.win::after { content:'★ PICK'; font-family:'DM Mono',monospace; font-size:8px; color:#ff5a4d; letter-spacing:.05em; }
+.mma-modal-vs { font-family:Syne,sans-serif; font-weight:800; font-size:12px; color:#8a93a0; }
+.mma-modal-conf { padding:14px 18px; border-bottom:1px solid var(--bg4,#1e2328); }
+.mma-conf-label { font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--text3,#5a6068); margin-bottom:6px; display:flex; justify-content:space-between; }
+.mma-conf-bar { height:10px; border-radius:5px; background:var(--bg3,#181c20); overflow:hidden; }
+.mma-conf-fill { height:100%; background:linear-gradient(90deg,#E3001B,#ff6a5a); border-radius:5px; transition:width .4s ease; }
+.mma-modal-sec { padding:14px 18px; border-bottom:1px solid var(--bg4,#1e2328); }
+.mma-sec-title { font-family:Syne,sans-serif; font-weight:800; font-size:13px; color:var(--text,#e8eaed); margin-bottom:10px; }
+.mma-tape { display:grid; grid-template-columns:1fr auto 1fr; gap:7px 10px; align-items:center; font-size:12px; }
+.mma-tape-a { text-align:right; color:var(--text,#e8eaed); font-weight:600; }
+.mma-tape-b { text-align:left; color:var(--text,#e8eaed); font-weight:600; }
+.mma-tape-lbl { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; color:var(--text3,#5a6068); text-align:center; white-space:nowrap; }
+.mma-faq-item { margin-bottom:12px; }
+.mma-faq-item:last-child { margin-bottom:0; }
+.mma-faq-q { font-family:Syne,sans-serif; font-weight:700; font-size:12px; color:var(--text,#e8eaed); margin-bottom:4px; }
+.mma-faq-a { font-family:'Instrument Sans',sans-serif; font-size:12px; color:var(--text2,#8d9399); line-height:1.55; }
+.mma-modal-foot { padding:12px 18px; font-size:10px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; text-align:center; }
+.mma-modal-foot a { color:#ff5a4d; text-decoration:none; }
+@media (max-width:480px){ .mma-consensus{gap:6px;} .mma-model{padding:6px 7px;} .mma-model-val{font-size:15px;} }
 </style>
 
 <div class="mma-header">
