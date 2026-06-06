@@ -311,8 +311,8 @@ async function getMMAFights(apiKey) {
 // ─── Fighter photo resolution ────────────────────────────────────────────────
 // Multi-source cascade so regional fighters (Oktagon/KSW/PFL...) get a photo,
 // not just notable UFC names on Wikipedia. Order = best quality first:
-//   1. curated memory map (mma_fighter_photos.json)
-//   2. Sofascore headshot via bzzoiro proxy (when a sofascore_id is mapped)
+//   1. curated memory map (mma_fighter_photos.json)  — also serves Sofascore ids
+//   2. agentmma.com clean UFC headshot (assets.agentmma.com/{slug}.png, robots-OK)
 //   3. Oktagon JSON-LD image (auto-covers the Oktagon roster by slug)
 //   4. Wikipedia REST summary thumbnail (direct title, then site search)
 //   5. Bright Data SERP image search (dormant — only if BRIGHTDATA_API_KEY set)
@@ -351,6 +351,35 @@ function _post(urlStr, body, headers, timeoutMs = 12000) {
     req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('timeout')); });
     req.end(data);
   });
+}
+
+// Native https HEAD — status/headers only, no body download.
+function _head(urlStr, headers, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    try {
+      const u   = new URL(urlStr);
+      const req = https.request({ hostname: u.hostname, port: 443, path: u.pathname + (u.search || ''), method: 'HEAD', headers: headers || {} }, (res) => {
+        res.resume();
+        resolve({ status: res.statusCode, headers: res.headers });
+      });
+      req.on('error', () => resolve(null));
+      req.setTimeout(timeoutMs, () => { req.destroy(); resolve(null); });
+      req.end();
+    } catch (_) { resolve(null); }
+  });
+}
+
+// agentmma.com serves clean UFC fighter headshots at a predictable slug URL,
+// zero-key, robots-allowed (assets host, not /api/). 404s for non-UFC fighters
+// -> cascade falls through to Oktagon/Wikipedia. HEAD-verify so misses are cheap.
+async function _agentMmaPhoto(slug) {
+  if (!slug) return null;
+  const url = `https://assets.agentmma.com/${slug}.png`;
+  try {
+    const r = await _head(url, { 'User-Agent': BROWSER_UA }, 8000);
+    if (r && r.status === 200 && /image/i.test(r.headers['content-type'] || '')) return url;
+  } catch (_) {}
+  return null;
 }
 
 // Oktagon is a Next.js site reachable server-side (no Cloudflare block). Its
@@ -445,13 +474,16 @@ async function getFighterPhoto(rawName) {
     if (entry.url) return entry.url;
     if (entry.sofascore_id) return `https://sports.bzzoiro.com/img/team/${entry.sofascore_id}/?bg=transparent`;
   }
-  // 2. Oktagon roster (auto by slug)
+  // 2. agentmma.com clean UFC headshot (robots-allowed assets host)
+  const am = await _agentMmaPhoto(slug);
+  if (am) return am;
+  // 3. Oktagon roster (auto by slug)
   const okta = await _oktagonPhoto(slug);
   if (okta) return okta;
-  // 3. Wikipedia (notable UFC names)
+  // 4. Wikipedia (notable UFC names)
   const wiki = await _wikiPhoto(name);
   if (wiki) return wiki;
-  // 4. Bright Data SERP (dormant hook)
+  // 5. Bright Data SERP (dormant hook)
   const bd = await _brightDataPhoto(name);
   if (bd) return bd;
 
