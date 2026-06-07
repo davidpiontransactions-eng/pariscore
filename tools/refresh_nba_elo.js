@@ -95,6 +95,7 @@ async function main() {
   const names = {};     // id -> name
   const gp = {};        // id -> games played
   const recent = {};    // id -> [{won, margin}, ...] (chronologique, pour form L10)
+  const lastGame = {};  // id -> ISO date dernier match (rest/B2B)
   const get = (id) => (elo[id] != null ? elo[id] : 1500);
   let brierSum = 0, baseBrierSum = 0, correct = 0, n = 0;
 
@@ -119,6 +120,7 @@ async function main() {
     gp[g.awayId] = (gp[g.awayId] || 0) + 1;
     (recent[g.homeId] = recent[g.homeId] || []).push({ won: homeWon, margin: g.hs - g.as });
     (recent[g.awayId] = recent[g.awayId] || []).push({ won: 1 - homeWon, margin: g.as - g.hs });
+    lastGame[g.homeId] = g.ts; lastGame[g.awayId] = g.ts; // pour rest/B2B
   }
 
   const ratings = {};
@@ -130,6 +132,7 @@ async function main() {
       name: names[id], elo: Math.round(elo[id]), gp: gp[id] || 0,
       form_l10_winpct: wpct != null ? +(wpct * 100).toFixed(1) : null,
       form_l10_margin: mavg != null ? +mavg.toFixed(1) : null,
+      last_game: lastGame[id] || null,
     };
   }
 

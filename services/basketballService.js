@@ -20,7 +20,11 @@ const path  = require('path');
 const ESPN_HOST = 'site.api.espn.com';
 const ESPN_SCOREBOARD = '/apis/site/v2/sports/basketball/nba/scoreboard';
 const ESPN_STANDINGS  = '/apis/v2/sports/basketball/nba/standings';
+const ESPN_INJURIES   = '/apis/site/v2/sports/basketball/nba/injuries';
 const NBA_ELO_FILE    = path.join(__dirname, '..', 'data', 'nba_elo.json');
+const STAR_OUT_PTS = 3.5;  // impact pts d'un scoreur leader absent
+const ROLE_OUT_PTS = 0.8;  // impact pts d'un rotation player absent
+const B2B_PTS      = 1.6;  // pénalité back-to-back (fatigue)
 const HCA_PTS   = 3.2;     // home-court advantage (points) — littérature NBA ~2.5-3.5
 const PTS_PER_ELO = 28;    // ~28 pts NBA spread par 400 Elo (calibrable)
 const ELO_DIV   = 400;
@@ -29,6 +33,26 @@ const TTL_MS    = 90 * 1000; // 90s cache live
 let _cache = { ts: 0, data: null };
 let _standings = { ts: 0, map: null, leagueAvg: 114.5 };
 let _eloCache = { ts: 0, data: null };
+let _injuries = { ts: 0, map: null }; // teamId -> [{ name, status, type }]
+
+// Injuries ESPN (gratuit) → map teamId → joueurs absents/incertains
+async function _fetchInjuries() {
+  if (Date.now() - _injuries.ts < 15 * 60 * 1000 && _injuries.map) return _injuries;
+  const d = await httpsGetJson(ESPN_HOST, ESPN_INJURIES);
+  const map = {};
+  const list = (d && Array.isArray(d.injuries)) ? d.injuries : [];
+  for (const t of list) {
+    const tid = t.id;
+    if (!tid) continue;
+    map[tid] = (t.injuries || []).map(x => ({
+      name: (x.athlete && x.athlete.displayName) || '',
+      status: x.status || '',
+      type: (x.details && x.details.type) || '',
+    })).filter(x => x.name);
+  }
+  if (Object.keys(map).length) _injuries = { ts: Date.now(), map };
+  return _injuries;
+}
 
 // Standings ESPN → map teamId → { avgPF, avgPA, gp, diff } (défense modélisée)
 async function _fetchStandings() {
@@ -115,6 +139,14 @@ function _ftRate(stats) {
   const fga = _statVal(stats, 'fieldGoalsAttempted');
   if (fta == null || !fga) return null;
   return +((fta / fga) * 100).toFixed(1);
+}
+
+// Leader PPG d'un competitor ESPN (pour détecter star out)
+function _ppgLeader(competitor) {
+  const cats = (competitor && competitor.leaders) || [];
+  const ppg = cats.find(c => c.name === 'pointsPerGame') || cats[0];
+  const l = ppg && ppg.leaders && ppg.leaders[0];
+  return (l && l.athlete && l.athlete.displayName) || null;
 }
 
 // ─── Power rating (records + margin, INDÉPENDANT des cotes) ─────────────────────
@@ -306,6 +338,84 @@ function computeNbaConsensus(models) {
   };
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  AJUSTEMENTS CONTEXTUELS — blessures (ESPN), repos/B2B, line movement, Kelly
+// ════════════════════════════════════════════════════════════════════════════
+
+// (1) Impact blessures : croise injuries ESPN avec le leader (PPG) du match
+function computeNbaInjuryImpact(teamId, leaderName) {
+  const inj = _injuries.map && _injuries.map[teamId];
+  if (!inj || !inj.length) return { n_out: 0, stars_out: [], penalty_pts: 0, out_list: [] };
+  const isOut = (s) => /out|doubtful/i.test(s || '');
+  const out = inj.filter(x => isOut(x.status));
+  const ln = (leaderName || '').toLowerCase();
+  const stars = out.filter(x => ln && x.name.toLowerCase() === ln);
+  const others = out.length - stars.length;
+  let penalty = stars.length * STAR_OUT_PTS + others * ROLE_OUT_PTS;
+  penalty = Math.min(penalty, 9); // cap (équipe décimée)
+  return {
+    n_out: out.length, stars_out: stars.map(x => x.name),
+    penalty_pts: +penalty.toFixed(1), out_list: out.slice(0, 6).map(x => `${x.name} (${x.status})`),
+  };
+}
+
+// (2) Repos / Back-to-back depuis Elo file (last_game)
+function computeNbaRest(teamId, gameDateISO) {
+  const elo = _loadNbaElo();
+  const r = elo && elo.ratings && elo.ratings[teamId];
+  if (!r || !r.last_game || !gameDateISO) return null;
+  const days = (new Date(gameDateISO).getTime() - new Date(r.last_game).getTime()) / 86400000;
+  if (!(days >= 0) || days > 30) return null;
+  const b2b = days <= 1.2;
+  return { rest_days: Math.round(days), b2b, penalty_pts: b2b ? B2B_PTS : 0 };
+}
+
+// (3) Line movement open→close (spread + total) → signal sharp/steam
+function computeNbaLineMovement(rawOdds) {
+  if (!rawOdds) return null;
+  const out = {};
+  const ps = rawOdds.pointSpread;
+  if (ps && ps.home && ps.home.open && ps.home.close) {
+    const o = parseFloat(ps.home.open.line), c = parseFloat(ps.home.close.line);
+    if (Number.isFinite(o) && Number.isFinite(c) && o !== c) {
+      out.spread = { open: o, close: c, move: +(c - o).toFixed(1), toward: c < o ? 'home' : 'away' };
+    }
+  }
+  const tot = rawOdds.total;
+  if (tot && tot.over && tot.over.open && tot.over.close) {
+    const o = parseFloat(String(tot.over.open.line).replace(/[ou]/i, ''));
+    const c = parseFloat(String(tot.over.close.line).replace(/[ou]/i, ''));
+    if (Number.isFinite(o) && Number.isFinite(c) && o !== c) {
+      out.total = { open: o, close: c, move: +(c - o).toFixed(1), toward: c > o ? 'over' : 'under' };
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+// (4) Kelly stake (cap 25%, sur EV worst-case) — fairProb = proba modèle, dec = cote décimale brute
+function computeNbaKelly(modelProb, decimalOdds) {
+  if (modelProb == null || !decimalOdds || decimalOdds <= 1) return null;
+  const p = modelProb / 100, b = decimalOdds - 1;
+  const k = (b * p - (1 - p)) / b; // Kelly
+  if (k <= 0) return { fraction: 0, capped: 0, note: 'pas de mise (EV≤0)' };
+  const capped = Math.min(k, 0.25); // cap 25% bankroll (règle CLAUDE.md)
+  return { fraction: +(k * 100).toFixed(1), capped: +(capped * 100).toFixed(1) };
+}
+
+// (5) Win prob ajustée contexte (margin-space) : base Elo margin + Δ blessures + Δ repos
+function computeNbaAdjusted(baseMargin, injHome, injAway, restHome, restAway) {
+  if (baseMargin == null) return null;
+  const pAway = (injAway ? injAway.penalty_pts : 0) + (restAway ? restAway.penalty_pts : 0);
+  const pHome = (injHome ? injHome.penalty_pts : 0) + (restHome ? restHome.penalty_pts : 0);
+  const delta = pAway - pHome; // home gagne en marge si away plus pénalisé
+  const adjMargin = +(baseMargin + delta).toFixed(1);
+  const p = _normCdf(adjMargin / SD_MARGIN);
+  return {
+    p_home: +(p * 100).toFixed(1), p_away: +((1 - p) * 100).toFixed(1),
+    base_margin: baseMargin, adj_margin: adjMargin, delta_pts: +delta.toFixed(1),
+  };
+}
+
 // ─── Devig moneyline 2-way (proportionnel) → fair + EV (cotes en SORTIE) ─────────
 function _devigEv(mlHome, mlAway, model) {
   const iH = _amOddsToProb(mlHome), iA = _amOddsToProb(mlAway);
@@ -380,7 +490,30 @@ function _normalizeEvent(ev) {
     { name: 'Recent L10', p: recentForm && recentForm.p_home },
     { name: 'Marché', p: value && value.fair_home },
   ].filter(m => m.p != null);
+  // Ajustements contextuels : blessures (ESPN), repos/B2B, line movement, adjusted, Kelly
+  const leadH = _ppgLeader(home), leadA = _ppgLeader(away);
+  const injHome = computeNbaInjuryImpact(hTeam.id, leadH);
+  const injAway = computeNbaInjuryImpact(aTeam.id, leadA);
+  const restHome = computeNbaRest(hTeam.id, ev.date);
+  const restAway = computeNbaRest(aTeam.id, ev.date);
+  const lineMovement = computeNbaLineMovement(odds);
+  const adjusted = computeNbaAdjusted(spreadUQD && spreadUQD.exp_margin, injHome, injAway, restHome, restAway);
+  if (adjusted) modelsPanel.push({ name: 'Ajusté', p: adjusted.p_home });
   const consensus = computeNbaConsensus(modelsPanel); // sur modèles indépendants (hors blend)
+  // Kelly sur le côté EV+ (proba ajustée si dispo, sinon blend)
+  let kelly = null;
+  if (value && odds && odds.moneyline) {
+    const evH = value.ev_home, evA = value.ev_away;
+    const useHome = (evH != null ? evH : -99) >= (evA != null ? evA : -99);
+    const ml = useHome ? (odds.moneyline.home && odds.moneyline.home.close && odds.moneyline.home.close.odds)
+                       : (odds.moneyline.away && odds.moneyline.away.close && odds.moneyline.away.close.odds);
+    const ip = _amOddsToProb(ml);
+    const prob = adjusted ? (useHome ? adjusted.p_home : adjusted.p_away) : (blend ? (useHome ? blend.p_home : blend.p_away) : null);
+    if (ip && prob != null) {
+      const k = computeNbaKelly(prob, 1 / ip);
+      if (k) kelly = { side: useHome ? (hTeam.displayName || 'Home') : (aTeam.displayName || 'Away'), ...k, ev: useHome ? evH : evA };
+    }
+  }
 
   return {
     id: ev.id,
@@ -411,7 +544,10 @@ function _normalizeEvent(ev) {
     } : null,
     predictions: {
       win_prob: winProb, blended: blend, pythagorean: pyth, four_factors: ff,
-      srs, recent_form: recentForm, models_panel: modelsPanel, consensus,
+      srs, recent_form: recentForm, adjusted,
+      injuries: { home: injHome, away: injAway }, rest: { home: restHome, away: restAway },
+      line_movement: lineMovement, kelly,
+      models_panel: modelsPanel, consensus,
       total, total_edge: totalEdge, spread_uqd: spreadUQD, value,
     },
     note: 'Elo game-by-game + Pythagorean + Four Factors → blend. UQD analytique IC90. Indépendant des cotes (EV en sortie). NON calibré vs marché — devig-vs-Pinnacle requis avant signal BET.',
@@ -451,7 +587,10 @@ function computeNbaTopBets(matches, topN = 3) {
 // ─── Public ──────────────────────────────────────────────────────────────────────
 async function getNbaMatches() {
   if (Date.now() - _cache.ts < TTL_MS && _cache.data) return _cache.data;
-  await _fetchStandings().catch(() => {}); // défense (PF/PA) — best-effort
+  await Promise.all([
+    _fetchStandings().catch(() => {}),   // défense (PF/PA)
+    _fetchInjuries().catch(() => {}),    // blessures
+  ]);
   const d = await httpsGetJson(ESPN_HOST, ESPN_SCOREBOARD);
   const events = (d && Array.isArray(d.events)) ? d.events : [];
   const matches = events.map(_normalizeEvent).filter(m => m.id);
@@ -477,6 +616,11 @@ module.exports = {
   computeNbaSRS,
   computeNbaRecentForm,
   computeNbaConsensus,
+  computeNbaInjuryImpact,
+  computeNbaRest,
+  computeNbaLineMovement,
+  computeNbaKelly,
+  computeNbaAdjusted,
   invalidateCache() { _cache.ts = 0; },
   _normalizeEvent, _devigEv, // testing
 };
