@@ -612,6 +612,7 @@ async function getWnbaMatchById(id) {
 const _rosterCache = {};      // teamId   -> { ts, players }
 const _playerAvgCache = {};   // athleteId-> { ts, avg }
 const _propsCache = {};       // matchId  -> { ts, data }
+const _gamelogCache = {};     // athleteId-> { ts, games }
 const PROP_TTL   = 60 * 60 * 1000;     // 1h props
 const PLAYER_TTL = 12 * 3600 * 1000;   // 12h roster/avg
 
@@ -651,6 +652,42 @@ async function _fetchPlayerAvg(athleteId) {
   return avg;
 }
 
+// Game log ESPN (events les plus récents d'abord) → forme récente par stat
+async function _fetchPlayerGamelog(athleteId) {
+  if (!athleteId) return [];
+  const c = _gamelogCache[athleteId];
+  if (c && Date.now() - c.ts < 6 * 3600 * 1000) return c.games;
+  const d = await httpsGetJson('site.web.api.espn.com', `/apis/common/v3/sports/basketball/wnba/athletes/${athleteId}/gamelog`);
+  const names = (d && d.names) || [];
+  const idx = { min: names.indexOf('minutes'), pts: names.indexOf('points'), reb: names.indexOf('totalRebounds'), ast: names.indexOf('assists') };
+  const games = [];
+  for (const s of ((d && d.seasonTypes) || [])) {
+    for (const cat of (s.categories || [])) {
+      for (const ev of (cat.events || [])) {
+        const st = ev.stats || [];
+        const num = (i) => { const v = i >= 0 ? parseFloat(st[i]) : NaN; return Number.isFinite(v) ? v : null; };
+        games.push({ min: num(idx.min), pts: num(idx.pts), reb: num(idx.reb), ast: num(idx.ast) });
+      }
+    }
+  }
+  if (games.length) _gamelogCache[athleteId] = { ts: Date.now(), games };
+  return games;
+}
+// Moyenne pondérée-récence des N derniers matchs (games[0] = plus récent)
+function _recentForm(games, key, n) {
+  const last = (games || []).slice(0, n).filter(g => g && g[key] != null);
+  if (!last.length) return null;
+  let sw = 0, sv = 0;
+  last.forEach((g, i) => { const w = n - i; sw += w; sv += w * g[key]; }); // récent = poids fort
+  return sw ? sv / sw : null;
+}
+// Blend forme récente (45%) + saison (55%) — best practice props (github/web)
+function _blendForm(seasonMu, recentMu) {
+  if (seasonMu == null) return recentMu;
+  if (recentMu == null) return seasonMu;
+  return 0.45 * recentMu + 0.55 * seasonMu;
+}
+
 // P(X > line) — points ~ Normal (sur-dispersé), rebonds/passes ~ Poisson
 function _poissonCdf(k, lam) { if (lam <= 0) return 1; let s = 0, t = Math.exp(-lam); for (let i = 0; i <= k; i++) { s += t; t *= lam / (i + 1); } return Math.min(1, s); }
 function _overProb(mu, line, kind) {
@@ -659,7 +696,8 @@ function _overProb(mu, line, kind) {
   return +(100 * (1 - _poissonCdf(Math.floor(line), mu))).toFixed(0);
 }
 
-function _projectPlayer(p, avg, oppPaceAdj) {
+function _projectPlayer(p, avg, form, oppPaceAdj) {
+  const base = (k) => _blendForm(avg[k], form ? form[k] : null); // forme récente + saison
   const proj = (mu, w) => mu == null ? null : +(mu * (1 + (oppPaceAdj - 1) * w)).toFixed(1);
   const props = [];
   const mk = (stat, label, mu, kind, floorMin) => {
@@ -668,9 +706,9 @@ function _projectPlayer(p, avg, oppPaceAdj) {
     const over = _overProb(mu, line, kind);
     props.push({ stat, label, proj: mu, line, over_pct: over, lean: over >= 55 ? 'OVER' : over <= 45 ? 'UNDER' : 'NEUTRAL' });
   };
-  mk('pts', 'Points', proj(avg.pts, 1.0), 'pts', 6);
-  mk('reb', 'Rebonds', proj(avg.reb, 0.4), 'reb', 2);
-  mk('ast', 'Passes', proj(avg.ast, 0.6), 'ast', 1.5);
+  mk('pts', 'Points', proj(base('pts'), 1.0), 'pts', 6);
+  mk('reb', 'Rebonds', proj(base('reb'), 0.4), 'reb', 2);
+  mk('ast', 'Passes', proj(base('ast'), 0.6), 'ast', 1.5);
   const conf = Math.min(100, Math.round(((avg.min || 0) / 34 * 60) + Math.min(40, (avg.gp || 0) * 4)));
   return { id: p.id, name: p.name, pos: p.pos, photo: p.photo, min: avg.min, gp: avg.gp, props, confidence: conf };
 }
@@ -686,12 +724,13 @@ async function getWnbaPlayerProps(matchId) {
     const roster = await _fetchRoster(team.id);
     const oppStand = _standings.map && _standings.map[opp.id];
     const oppPaceAdj = (oppStand && oppStand.avgPA) ? Math.max(0.9, Math.min(1.12, oppStand.avgPA / LA)) : 1.0;
-    const out = [];
-    for (const p of roster) {
-      const avg = await _fetchPlayerAvg(p.id);
-      if (!avg || (avg.min || 0) < 16) continue; // titulaires + rotation
-      out.push(_projectPlayer(p, avg, oppPaceAdj));
-    }
+    const resolved = await Promise.all(roster.map(async (p) => {
+      const [avg, games] = await Promise.all([_fetchPlayerAvg(p.id), _fetchPlayerGamelog(p.id)]);
+      if (!avg || (avg.min || 0) < 16) return null; // titulaires + rotation
+      const form = { pts: _recentForm(games, 'pts', 5), reb: _recentForm(games, 'reb', 5), ast: _recentForm(games, 'ast', 5) };
+      return _projectPlayer(p, avg, form, oppPaceAdj);
+    }));
+    const out = resolved.filter(Boolean);
     out.sort((a, b) => (b.min || 0) - (a.min || 0));
     return out.slice(0, 6);
   };
