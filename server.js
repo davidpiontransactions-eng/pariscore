@@ -39,6 +39,7 @@ const liquipediaService = require('./services/liquipediaService'); // Liquipedia
 const mmaService        = require('./services/mmaService');        // MMA/UFC pipeline bd 8gz3
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
 const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
+const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
@@ -19729,6 +19730,45 @@ async function handleAPI(req, res, pathname, query) {
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // ── Formule 1 vertical (Jolpica-Ergast + ESPN, JS-natif — Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp ──
+  // GET /api/v1/f1 — prochain GP : grille pilotes + 3 value bets (Podium/Vainqueur, H2H coéquipiers, Top10/Fiabilité) + UQD
+  if (pathname === '/api/v1/f1' && req.method === 'GET') {
+    try {
+      const [bets, drivers] = await Promise.all([f1Service.getF1ValueBets(), f1Service.getF1Drivers()]);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' });
+      return res.end(JSON.stringify({
+        ok: bets.ok !== false, season: bets.season, round: bets.round, race: bets.race,
+        calibrated: bets.calibrated === true, note: bets.note, sims: bets.sims,
+        bets: bets.bets || [], drivers: drivers.drivers || [],
+      }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, bets: [], drivers: [] }));
+    }
+  }
+  // GET /api/v1/f1/bets — 3 value bets seuls
+  if (pathname === '/api/v1/f1/bets' && req.method === 'GET') {
+    try {
+      const b = await f1Service.getF1ValueBets();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' });
+      return res.end(JSON.stringify(b));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, bets: [] }));
+    }
+  }
+  // GET /api/v1/f1/races — calendrier saison + prochain GP
+  if (pathname === '/api/v1/f1/races' && req.method === 'GET') {
+    try {
+      const r = await f1Service.getF1Races();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
+      return res.end(JSON.stringify(r));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, races: [] }));
     }
   }
 
