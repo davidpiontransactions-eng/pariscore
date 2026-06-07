@@ -968,6 +968,7 @@ function _renderWnbaCards(matches) {
         (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null ? '<span class="nba-chip">' + _nbaEsc(su.ou_lean) + ' ' + (su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over)) + '%</span>' : '') +
         (bl.n_models ? '<span class="nba-chip">⊕ blend ' + bl.n_models + '</span>' : '') +
       '</div>' +
+      (m.top3_bets && m.top3_bets.length ? '<div class="wnba-c3"><div class="wnba-c3-h">🎯 Top 3 paris</div><ol>' + m.top3_bets.map(function (b) { var d = b.ev != null ? ('EV ' + (b.ev > 0 ? '+' : '') + b.ev + '%') : (b.edge_pp != null ? ('+' + b.edge_pp + 'pp') : ''); return '<li>' + _nbaEsc((b.market || '') + ' · ' + (b.selection || '')) + ' <b>' + (b.prob != null ? b.prob + '%' : '') + (d ? ' · ' + _nbaEsc(d) : '') + '</b></li>'; }).join('') + '</ol></div>' : '') +
       '<button class="nba-ai-btn" onclick="toggleWnbaProps(this,\'' + _nbaEsc(m.id) + '\')">🎯 Props joueuses</button>' +
       '<div class="wnba-props-drawer"></div>' +
     '</div>';
