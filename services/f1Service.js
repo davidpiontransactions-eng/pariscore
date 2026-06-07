@@ -33,6 +33,7 @@ const TTL_STAND = 10 * 60 * 1000;    // standings / quali / results : 10 min
 const TTL_SCHED = 60 * 60 * 1000;    // calendrier : 1 h
 const TTL_TRACK = 24 * 3600 * 1000;  // historique circuit : 24 h
 const TTL_BETS  = 15 * 60 * 1000;    // sortie modèle : 15 min
+const TTL_HIST  = 24 * 3600 * 1000;  // consistance pilote (2 saisons) : 24 h
 const MC_SIMS   = 4000;
 const RECENT_FORM_GP = 5;            // fenêtre form
 const DECAY_ROUND = 0.075;           // décroissance par manche (arXiv 2508.00200)
@@ -40,6 +41,7 @@ const DECAY_ROUND = 0.075;           // décroissance par manche (arXiv 2508.002
 const BETA_CAR = 1.6, BETA_DRV = 0.55, BETA_QUALI = 0.9, BETA_FORM = 0.4, BETA_TRACK = 0.25;
 const SHRINK_DRV = 4, SHRINK_TRK = 3, TEMP = 1.0;
 const DNF_PRIOR = 0.10, DNF_STRENGTH = 20; // Beta-Binomial : moyenne 10%, force ~20 départs
+const DRV_PRIOR_STRENGTH = 15, DRV_PRIOR_DEFAULT = 0.05; // prior incident pilote = consistance historique (idée f1-predictor driver_confidence)
 const INCIDENT_DNF = /accident|collision|spun|disqualif|damage|contact|debris|did not start/i;
 
 function _today() { return new Date().toISOString().slice(0, 10); }
@@ -169,6 +171,27 @@ async function _raceHistory() {
   });
 }
 
+// Consistance pilote long-terme (2 saisons précédentes) → prior d'incident + driver_confidence.
+// Reprend l'idée de JaideepGuntupalli/f1-predictor (driver_confidence), version bayésienne propre.
+async function _driverConsistency(seasonYear) {
+  if (!seasonYear) return {};
+  return _cached('consistency:' + seasonYear, TTL_HIST, async () => {
+    const acc = {};
+    for (const y of [seasonYear - 1, seasonYear - 2]) {
+      const j = await _getJson(JOLPICA_HOST, '/ergast/f1/' + y + '/results.json?limit=900');
+      const races = (j && j.MRData && j.MRData.RaceTable && j.MRData.RaceTable.Races) || [];
+      for (const r of races) for (const x of (r.Results || [])) {
+        const code = _code(x.Driver), dnf = _isDnf(x.status);
+        const a = acc[code] || (acc[code] = { starts: 0, finishes: 0, incidents: 0 });
+        a.starts++; if (!dnf) a.finishes++; else if (INCIDENT_DNF.test(x.status)) a.incidents++;
+      }
+    }
+    const map = {};
+    for (const c in acc) { const a = acc[c]; map[c] = { finishRate: a.starts ? a.finishes / a.starts : null, incidentRate: a.starts ? a.incidents / a.starts : null, n: a.starts }; }
+    return map;
+  });
+}
+
 async function _schedule() {
   return _cached('schedule', TTL_SCHED, async () => {
     const j = await _getJson(JOLPICA_HOST, '/ergast/f1/current.json');
@@ -203,6 +226,7 @@ async function _build() {
   const track = next ? await _trackHistory(next.circuit) : {};
   const cmap = (cstand && cstand.map) || {};
   const H = hist || { formAvg: {}, deltaAvg: {}, starts: {}, drvDnf: {}, carDnf: {}, carStarts: {} };
+  const consistency = await _driverConsistency(parseInt(stand.season, 10) || 0);
 
   const raw = stand.drivers.map(d => {
     const th = track[d.code];
@@ -229,8 +253,12 @@ async function _build() {
     const RecentForm = (x.form != null) ? ((x.form - zForm.m) / zForm.sd) : 0;
     const TrackAff = (x.trackScore != null) ? (x.trackN / (x.trackN + SHRINK_TRK)) * ((x.trackScore - zTrack.m) / zTrack.sd) : 0;
     const eta = BETA_CAR * CarRating + BETA_DRV * DriverSkill + BETA_QUALI * QualiPace + BETA_FORM * RecentForm + BETA_TRACK * TrackAff;
+    // Prior d'incident pilote = consistance historique (2 saisons) au lieu du prior plat → mieux en début de saison.
+    const hc = consistency[d.code];
+    const priorInc = (hc && hc.incidentRate != null) ? hc.incidentRate : DRV_PRIOR_DEFAULT;
+    const aDrvP = priorInc * DRV_PRIOR_STRENGTH, bDrvP = (1 - priorInc) * DRV_PRIOR_STRENGTH;
     const pCar = ((H.carDnf[d.teamId] || 0) + aDnf) / ((H.carStarts[d.teamId] || 0) + aDnf + bDnf);
-    const pDrv = ((H.drvDnf[d.code] || 0) + aDnf) / (x.starts + aDnf + bDnf);
+    const pDrv = ((H.drvDnf[d.code] || 0) + aDrvP) / (x.starts + aDrvP + bDrvP);
     const pDNF = _clamp01(1 - (1 - pCar) * (1 - pDrv));
     return {
       code: d.code, name: d.name, team: d.team, teamId: d.teamId, pos: d.pos, points: d.points, wins: d.wins,
@@ -238,6 +266,7 @@ async function _build() {
       carRating: +CarRating.toFixed(2), driverSkill: +DriverSkill.toFixed(2), qualiPace: +QualiPace.toFixed(2),
       formScore: +RecentForm.toFixed(2), trackScore: +TrackAff.toFixed(2), eta: +eta.toFixed(3),
       dnfRate: +pDNF.toFixed(3), reliability: +(1 - pDNF).toFixed(3),
+      driverConfidence: (hc && hc.finishRate != null) ? +hc.finishRate.toFixed(3) : null,
       strength: Math.exp(eta / TEMP),
       photo: (A.drivers[d.code] && A.drivers[d.code].photo) || null,
       logo: (A.teams[d.teamId] && A.teams[d.teamId].logo) || null,
@@ -317,8 +346,8 @@ async function _model() {
     });
     return {
       season: built.season, round: built.round, race: built.next, fieldN: built.fieldN, sims: sim.sims,
-      model: 'rol-hierarchique-v2', calibrated: false,
-      note: 'Modèle v2 (écurie/pilote dissociés, shrinkage, écart-temps qualif, DNF 2 niveaux) — non calibré (Brier/reliability à mesurer), probas indicatives, aucun signal BET dur (règle CLAUDE.md UQD).',
+      model: 'rol-hierarchique-v2.1', calibrated: false,
+      note: 'Modèle v2.1 (écurie/pilote dissociés, shrinkage, écart-temps qualif, DNF 2 niveaux + prior consistance pilote 2 saisons) — non calibré, probas indicatives, aucun signal BET dur (règle CLAUDE.md UQD).',
       drivers: D, bets,
     };
   });
@@ -345,5 +374,5 @@ async function getF1ValueBets() {
 
 module.exports = {
   getF1Races, getF1Drivers, getF1ValueBets,
-  _meta: { model: 'rol-hierarchique-v2', sources: ['jolpica-ergast'], MC_SIMS, betas: { car: BETA_CAR, drv: BETA_DRV, quali: BETA_QUALI, form: BETA_FORM, track: BETA_TRACK }, temp: TEMP },
+  _meta: { model: 'rol-hierarchique-v2.1', sources: ['jolpica-ergast'], MC_SIMS, betas: { car: BETA_CAR, drv: BETA_DRV, quali: BETA_QUALI, form: BETA_FORM, track: BETA_TRACK }, temp: TEMP, driverPrior: true },
 };
