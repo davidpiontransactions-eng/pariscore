@@ -585,6 +585,29 @@ function computeNbaTopBets(matches, topN = 3) {
 }
 
 // ─── Public ──────────────────────────────────────────────────────────────────────
+// Top 3 paris pour UN match : Moneyline (pick modèle blend) + ATS + O/U, classés par confiance
+function computeMatchTop3(m) {
+  const p = m.predictions || {}, val = p.value || {}, su = p.spread_uqd || {}, te = p.total_edge || {}, bl = p.blended || {};
+  const c = [];
+  const pHome = bl.p_home != null ? bl.p_home : (p.win_prob && p.win_prob.p_home);
+  if (pHome != null) {
+    const homeFav = pHome >= 50;
+    c.push({ market: 'Moneyline', selection: homeFav ? (m.home && m.home.name) : (m.away && m.away.name),
+      prob: +(homeFav ? pHome : 100 - pHome).toFixed(1), edge_pp: homeFav ? val.edge_home : val.edge_away, ev: homeFav ? val.ev_home : val.ev_away });
+  }
+  if (su.ats_pick && su.ats_pick !== 'NEUTRAL' && su.p_home_cover != null) {
+    const cover = su.ats_pick === 'HOME' ? su.p_home_cover : (100 - su.p_home_cover);
+    c.push({ market: 'Spread' + (m.odds && m.odds.spread != null ? ' ' + (su.ats_pick === 'HOME' ? m.odds.spread : -m.odds.spread) : ''),
+      selection: su.ats_pick === 'HOME' ? (m.home && m.home.name) : (m.away && m.away.name), prob: +cover.toFixed(1) });
+  }
+  if (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null) {
+    const prob = su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over);
+    c.push({ market: 'Total ' + su.ou_lean + (te.line != null ? ' ' + te.line : ''), selection: su.ou_lean, prob: +prob.toFixed(1) });
+  }
+  c.sort((a, b) => (b.prob || 0) - (a.prob || 0));
+  return c.slice(0, 3);
+}
+
 async function getWnbaMatches() {
   if (Date.now() - _cache.ts < TTL_MS && _cache.data) return _cache.data;
   await Promise.all([
@@ -594,6 +617,7 @@ async function getWnbaMatches() {
   const d = await httpsGetJson(ESPN_HOST, ESPN_SCOREBOARD);
   const events = (d && Array.isArray(d.events)) ? d.events : [];
   const matches = events.map(_normalizeEvent).filter(m => m.id);
+  matches.forEach(m => { m.top3_bets = computeMatchTop3(m); }); // top 3 paris par match
   _cache = { ts: Date.now(), data: matches };
   return matches;
 }
