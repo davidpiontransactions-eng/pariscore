@@ -97,7 +97,11 @@
 //   (2) navigation HTML + /pariscore.js passent en NETWORK-FIRST (avec navigation
 //   preload) -> paire coherente fraiche garantie online ; cache = fallback offline
 //   seulement. SWR conserve pour manifest / sw.js / autres runtime.
-const CACHE_VERSION = 'v34';
+// v35 (2026-06-06) : invalide v34 — bd 4n12 PWA icon gap. Ajout set PNG raster
+// (icon-192/512 "any", icon-512-maskable Android adaptive, apple-touch-icon 180
+// iOS). manifest icons[] enrichi + apple-touch link PNG. Precache PNGs + bump
+// pour purger manifest v34 (1 seul icon.svg) chez users installes.
+const CACHE_VERSION = 'v35';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
@@ -112,6 +116,10 @@ const SHELL = [
 
 // Pre-cache icons + assets critiques (best-effort, missing files OK)
 const ASSETS_PREFETCH = [
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-512-maskable.png',
+  '/apple-touch-icon.png',
   '/assets/icons/3d-football.svg',
   '/assets/icons/3d-tennis.svg',
   '/assets/icons/3d-trophy.svg',
