@@ -19717,6 +19717,21 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/wnba/props/:id — props prédictifs joueuses (PTS/REB/AST) pour un match
+  if (pathname.startsWith('/api/v1/wnba/props/') && req.method === 'GET') {
+    const id = decodeURIComponent(pathname.split('/api/v1/wnba/props/')[1] || '').trim();
+    if (!id) { res.writeHead(400, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'id requis' })); }
+    try {
+      const props = await wnbaService.getWnbaPlayerProps(id);
+      if (!props) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: false, error: 'match WNBA non trouvé', id })); }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=600' });
+      return res.end(JSON.stringify({ ok: true, props }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
   if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

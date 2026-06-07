@@ -19172,6 +19172,22 @@ const I18N = (() => {
 #page-wnba .nba-disclaimer { font-size:10px; color:var(--text3,#5a6068); margin:6px 0 14px; font-style:italic; }
 #page-wnba .nba-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:12px; }
 #wnba-topbets { margin:8px 0 14px; }
+.wnba-props-drawer { display:none; margin-top:10px; border-top:1px solid var(--bg4,#1e2328); padding-top:10px; }
+.wnba-props-drawer.open { display:block; }
+.wnba-props-load { padding:14px; text-align:center; color:var(--text3,#5a6068); font-size:12px; }
+.wnba-props-h { font-size:10px; font-weight:800; color:#ff6b00; font-family:'DM Mono',monospace; letter-spacing:.05em; margin:10px 0 5px; }
+.wnba-bets { display:flex; flex-direction:column; gap:5px; margin-bottom:6px; }
+.wnba-prop-bet { display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,#1a1206,#12161a); border:1px solid #ff6b0033; border-radius:8px; padding:6px 9px; }
+.wnba-prop-bet img { width:28px; height:28px; border-radius:50%; object-fit:cover; }
+.wnba-pb-name { font-size:12px; font-weight:700; color:var(--text1,#e8eaed); } .wnba-pb-name span { color:var(--text3,#5a6068); font-size:10px; }
+.wnba-pb-mkt { font-size:11px; color:#4ade80; font-family:'DM Mono',monospace; }
+.wnba-pb-prob { margin-left:auto; text-align:right; font-size:14px; font-weight:800; color:#4ade80; } .wnba-pb-prob span { display:block; font-size:9px; color:var(--text3,#5a6068); font-weight:400; }
+.wnba-pl { display:flex; gap:8px; padding:5px 0; align-items:center; }
+.wnba-pl img, .wnba-pl-noimg { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; background:var(--bg3,#171c21); display:inline-flex; align-items:center; justify-content:center; color:var(--text2,#8d9399); font-weight:700; font-size:13px; }
+.wnba-pl-name { font-size:12px; font-weight:700; color:var(--text1,#e8eaed); } .wnba-pl-name span { color:var(--text3,#5a6068); font-size:10px; font-weight:400; }
+.wnba-pl-props { display:flex; gap:5px; flex-wrap:wrap; margin-top:3px; }
+.wnba-pp { font-size:10px; font-family:'DM Mono',monospace; color:var(--text2,#8d9399); background:var(--bg3,#171c21); padding:2px 6px; border-radius:5px; }
+.wnba-pp.over { color:#4ade80; background:#0d3b1e; } .wnba-pp.under { color:#f87171; background:#3b0d0d; }
 </style>
 <div class="nba-head"><h2>🏀 WNBA</h2><span class="nba-sub" id="wnba-status">…</span></div>
 <div class="nba-disclaimer">Modèle Elo + Pythagorean + Four Factors (blend), indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré WNBA — usage analytique, pas un conseil de pari.</div>
