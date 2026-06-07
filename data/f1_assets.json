@@ -1,0 +1,151 @@
+{
+ "_src": "wikipedia-rest + wikidata-P154",
+ "_generated": "2026-06-07T09:25:28.960Z",
+ "drivers": {
+  "ANT": {
+   "name": "Andrea Kimi Antonelli",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Kimi_Antonelli_at_the_2025_US_Grand_Prix_in_Austin%2C_TX_%28cropped%29.jpg/330px-Kimi_Antonelli_at_the_2025_US_Grand_Prix_in_Austin%2C_TX_%28cropped%29.jpg"
+  },
+  "RUS": {
+   "name": "George Russell",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/KingsLeonSilverstne040724_%2828_of_112%29_%2853838006028%29_%28cropped%29.jpg/330px-KingsLeonSilverstne040724_%2828_of_112%29_%2853838006028%29_%28cropped%29.jpg"
+  },
+  "LEC": {
+   "name": "Charles Leclerc",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/2024-08-25_Motorsport%2C_Formel_1%2C_Gro%C3%9Fer_Preis_der_Niederlande_2024_STP_3978_by_Stepro_%28cropped2%29.jpg/330px-2024-08-25_Motorsport%2C_Formel_1%2C_Gro%C3%9Fer_Preis_der_Niederlande_2024_STP_3978_by_Stepro_%28cropped2%29.jpg"
+  },
+  "HAM": {
+   "name": "Lewis Hamilton",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Prime_Minister_Keir_Starmer_meets_Sir_Lewis_Hamilton_%2854566928382%29_%28cropped%29.jpg/330px-Prime_Minister_Keir_Starmer_meets_Sir_Lewis_Hamilton_%2854566928382%29_%28cropped%29.jpg"
+  },
+  "NOR": {
+   "name": "Lando Norris",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/2024-08-25_Motorsport%2C_Formel_1%2C_Gro%C3%9Fer_Preis_der_Niederlande_2024_STP_3968_by_Stepro_%28cropped2%29.jpg/330px-2024-08-25_Motorsport%2C_Formel_1%2C_Gro%C3%9Fer_Preis_der_Niederlande_2024_STP_3968_by_Stepro_%28cropped2%29.jpg"
+  },
+  "PIA": {
+   "name": "Oscar Piastri",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/2026_Chinese_GP_-_Oscar_Piastri_%28cropped%29_%28cropped%29.jpg/330px-2026_Chinese_GP_-_Oscar_Piastri_%28cropped%29_%28cropped%29.jpg"
+  },
+  "VER": {
+   "name": "Max Verstappen",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/2024-08-25_Motorsport%2C_Formel_1%2C_Gro%C3%9Fer_Preis_der_Niederlande_2024_STP_3973_by_Stepro_%28medium_crop%29.jpg/330px-2024-08-25_Motorsport%2C_Formel_1%2C_Gro%C3%9Fer_Preis_der_Niederlande_2024_STP_3973_by_Stepro_%28medium_crop%29.jpg"
+  },
+  "GAS": {
+   "name": "Pierre Gasly",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/2022_French_Grand_Prix_%2852279065728%29_%28midcrop%29.png/330px-2022_French_Grand_Prix_%2852279065728%29_%28midcrop%29.png"
+  },
+  "BEA": {
+   "name": "Oliver Bearman",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/2025_Japan_GP_-_Haas_-_Oliver_Bearman_-_Thursday_%28cropped%29.jpg/330px-2025_Japan_GP_-_Haas_-_Oliver_Bearman_-_Thursday_%28cropped%29.jpg"
+  },
+  "LAW": {
+   "name": "Liam Lawson",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Liam_Lawson_at_the_Red_Bull_Fan_Zone_%E2%80%93_Crown_Riverwalk%2C_Melbourne_%28028A7793%29.jpg/330px-Liam_Lawson_at_the_Red_Bull_Fan_Zone_%E2%80%93_Crown_Riverwalk%2C_Melbourne_%28028A7793%29.jpg"
+  },
+  "COL": {
+   "name": "Franco Colapinto",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Franco_Colapinto_at_the_Melbourne_Walk_during_the_2026_Australian_Grand_Prix_%28028A8704%29_%28cropped%29.jpg/330px-Franco_Colapinto_at_the_Melbourne_Walk_during_the_2026_Australian_Grand_Prix_%28028A8704%29_%28cropped%29.jpg"
+  },
+  "HAD": {
+   "name": "Isack Hadjar",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Isack_Hadjar_at_the_Melbourne_Walk_during_the_2026_Australian_Grand_Prix_%28028A8753%29_%28cropped%29.jpg/330px-Isack_Hadjar_at_the_Melbourne_Walk_during_the_2026_Australian_Grand_Prix_%28028A8753%29_%28cropped%29.jpg"
+  },
+  "SAI": {
+   "name": "Carlos Sainz",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Formula1Gabelhofen2022_%2804%29_%28cropped2%29.jpg/330px-Formula1Gabelhofen2022_%2804%29_%28cropped2%29.jpg"
+  },
+  "LIN": {
+   "name": "Arvid Lindblad",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Arvid_Lindblad_at_the_Red_Bull_Fan_Zone_%E2%80%93_Crown_Riverwalk%2C_Melbourne_%28028A7869%29_%28cropped%29.jpg/330px-Arvid_Lindblad_at_the_Red_Bull_Fan_Zone_%E2%80%93_Crown_Riverwalk%2C_Melbourne_%28028A7869%29_%28cropped%29.jpg"
+  },
+  "BOR": {
+   "name": "Gabriel Bortoleto",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Gabriel_Bortoleto_at_the_Melbourne_Walk_during_the_2026_Australian_Grand_Prix_%28028A8581%29_cropped.jpg/330px-Gabriel_Bortoleto_at_the_Melbourne_Walk_during_the_2026_Australian_Grand_Prix_%28028A8581%29_cropped.jpg"
+  },
+  "OCO": {
+   "name": "Esteban Ocon",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Esteban_Ocon_2024_Suzuka_%28cropped%29.jpg/330px-Esteban_Ocon_2024_Suzuka_%28cropped%29.jpg"
+  },
+  "ALB": {
+   "name": "Alexander Albon",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Alex_Albon_%28cropped%29.jpg/330px-Alex_Albon_%28cropped%29.jpg"
+  },
+  "HUL": {
+   "name": "Nico Hülkenberg",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/2019_Formula_One_tests_Barcelona%2C_Hulkenberg_%2840287128313%29.jpg/330px-2019_Formula_One_tests_Barcelona%2C_Hulkenberg_%2840287128313%29.jpg"
+  },
+  "BOT": {
+   "name": "Valtteri Bottas",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Valtteri_Bottas_at_the_2026_Adelaide_Motorsport_Festival_%28028A7556%29.jpg/330px-Valtteri_Bottas_at_the_2026_Adelaide_Motorsport_Festival_%28028A7556%29.jpg"
+  },
+  "PER": {
+   "name": "Sergio Pérez",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/2021_US_GP_driver_parade_%28cropped2%29.jpg/330px-2021_US_GP_driver_parade_%28cropped2%29.jpg"
+  },
+  "STR": {
+   "name": "Lance Stroll",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/2025_Japan_GP_-_Aston_Martin_-_Lance_Stroll_-_Fanzone_Stage_%28cropped%29.jpg/330px-2025_Japan_GP_-_Aston_Martin_-_Lance_Stroll_-_Fanzone_Stage_%28cropped%29.jpg"
+  },
+  "ALO": {
+   "name": "Fernando Alonso",
+   "photo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Alonso-68_%2824710447098%29.jpg/330px-Alonso-68_%2824710447098%29.jpg"
+  }
+ },
+ "teams": {
+  "mercedes": {
+   "name": "Mercedes",
+   "qid": "Q65954812",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Mercedes-AMG%20Petronas%20F1%20Team%20logo%20(2026).svg?width=200"
+  },
+  "ferrari": {
+   "name": "Ferrari",
+   "qid": "Q169898",
+   "logo": null
+  },
+  "mclaren": {
+   "name": "McLaren",
+   "qid": "Q172030",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/McLaren%20Racing%20logo.png?width=200"
+  },
+  "red_bull": {
+   "name": "Red Bull",
+   "qid": "Q173663",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/RED%20BULL%20LOGO%202026.svg?width=200"
+  },
+  "alpine": {
+   "name": "Alpine F1 Team",
+   "qid": "Q98930155",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Alpine%20F1%20Team%20Logo.svg?width=200"
+  },
+  "haas": {
+   "name": "Haas F1 Team",
+   "qid": "Q16300222",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Haas%20F1%20Team%20Logo.svg?width=200"
+  },
+  "rb": {
+   "name": "RB F1 Team",
+   "qid": "Q124350606",
+   "logo": null
+  },
+  "williams": {
+   "name": "Williams",
+   "qid": "Q171337",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Atlassian%20Williams%20F1%20Team%20logo.svg?width=200"
+  },
+  "audi": {
+   "name": "Audi",
+   "qid": "Q113640151",
+   "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Audif1.com%20logo17%20(cropped).svg?width=200"
+  },
+  "cadillac": {
+   "name": "Cadillac F1 Team",
+   "qid": "Q131323401",
+   "logo": null
+  },
+  "aston_martin": {
+   "name": "Aston Martin",
+   "qid": "Q25412511",
+   "logo": null
+  }
+ }
+}

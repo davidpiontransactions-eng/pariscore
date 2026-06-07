@@ -774,7 +774,87 @@ function showPage(pageId, linkEl) {
   if (pageId === 'nba') initNbaPage();
   if (pageId !== 'wnba' && typeof stopWnbaPage === 'function') stopWnbaPage();
   if (pageId === 'wnba') initWnbaPage();
+  if (pageId !== 'f1' && typeof stopF1Page === 'function') stopF1Page();
+  if (pageId === 'f1') initF1Page();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── F1 vertical (Jolpica-Ergast + ESPN — Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp ───
+var _f1Poll = null;
+function _f1Esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+window.initF1Page = function () {
+  _fetchAndRenderF1();
+  if (_f1Poll) clearInterval(_f1Poll);
+  _f1Poll = setInterval(() => { if (document.body.dataset.page === 'f1') _fetchAndRenderF1(); }, 300000);
+};
+if (typeof window.stopF1Page !== 'function') window.stopF1Page = function () { if (_f1Poll) { clearInterval(_f1Poll); _f1Poll = null; } };
+function _fetchAndRenderF1() {
+  fetch('/api/v1/f1', { cache: 'no-store' })
+    .then(r => r.json())
+    .then(j => {
+      var st = document.getElementById('f1-status'), rb = document.getElementById('f1-race-badge'), nt = document.getElementById('f1-note');
+      if (!j || j.ok === false) { if (st) st.textContent = 'Données F1 indisponibles'; return; }
+      if (rb && j.race) rb.textContent = j.race.name || '—';
+      if (st) st.textContent = 'Saison ' + (j.season || '') + ' · Round ' + (j.round || '') + ' · ' + Number(j.sims || 0).toLocaleString('fr') + ' simulations' + (j.calibrated ? '' : ' · non calibré');
+      _renderF1Bets(j.bets || []);
+      _renderF1Grid(j.drivers || []);
+      if (nt) nt.textContent = j.note || '';
+    })
+    .catch(() => { var st = document.getElementById('f1-status'); if (st) st.textContent = 'Erreur de chargement F1'; });
+}
+var _F1_TEAM_COLORS = { mercedes:'#27F4D2', red_bull:'#3671C6', ferrari:'#E8002D', mclaren:'#FF8000', aston_martin:'#229971', alpine:'#0093CC', williams:'#64C4FF', rb:'#6692FF', racing_bulls:'#6692FF', haas:'#B6BABD', sauber:'#52E252', kick_sauber:'#52E252', audi:'#52E252', cadillac:'#C9A227' };
+function _f1TeamColor(team, teamId) {
+  var k = String(teamId || '').toLowerCase(), n = String(team || '').toLowerCase();
+  if (_F1_TEAM_COLORS[k]) return _F1_TEAM_COLORS[k];
+  if (n.indexOf('red bull') >= 0) return _F1_TEAM_COLORS.red_bull;
+  if (n.indexOf('mercedes') >= 0) return _F1_TEAM_COLORS.mercedes;
+  if (n.indexOf('ferrari') >= 0) return _F1_TEAM_COLORS.ferrari;
+  if (n.indexOf('mclaren') >= 0) return _F1_TEAM_COLORS.mclaren;
+  if (n.indexOf('aston') >= 0) return _F1_TEAM_COLORS.aston_martin;
+  if (n.indexOf('alpine') >= 0) return _F1_TEAM_COLORS.alpine;
+  if (n.indexOf('williams') >= 0) return _F1_TEAM_COLORS.williams;
+  if (n.indexOf('racing bull') >= 0 || n.indexOf('rb') >= 0) return _F1_TEAM_COLORS.rb;
+  if (n.indexOf('haas') >= 0) return _F1_TEAM_COLORS.haas;
+  if (n.indexOf('sauber') >= 0 || n.indexOf('audi') >= 0) return _F1_TEAM_COLORS.sauber;
+  if (n.indexOf('cadillac') >= 0) return _F1_TEAM_COLORS.cadillac;
+  return '#8d9399';
+}
+function _f1BetIcon(type) {
+  var T = {
+    podium_winner: '<path d="M7 4h10v3a5 5 0 0 1-10 0V4zM5 5H3v1.5A2.5 2.5 0 0 0 5.5 9M19 5h2v1.5A2.5 2.5 0 0 1 18.5 9M9 13h6l-1 8h-4l-1-8z"/>',
+    teammate_h2h: '<path d="M4 6h6v12H4zM14 6h6v12h-6M12 8v8"/>',
+    top10_reliability: '<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6l7-3zM9 12l2 2 4-4"/>'
+  };
+  return '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + (T[type] || T.podium_winner) + '</svg>';
+}
+function _renderF1Bets(bets) {
+  var c = document.getElementById('f1-bets'); if (!c) return;
+  if (!bets.length) { c.innerHTML = '<div class="f1-empty">Aucun bet disponible</div>'; return; }
+  var CIRC = 138.23; // 2·π·r (r=22)
+  c.innerHTML = bets.map(function (b) {
+    var pct = (b.probPct != null) ? b.probPct : Math.round((b.prob || 0) * 100);
+    var p = Math.max(0, Math.min(1, pct / 100));
+    var off = (CIRC * (1 - p)).toFixed(1);
+    var ci = (b.ci95 && b.ci95.length === 2) ? ('IC ' + Math.round(b.ci95[0] * 100) + '–' + Math.round(b.ci95[1] * 100) + '%') : '';
+    var ring = '<div class="f1bet-ring"><svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg)"><circle cx="29" cy="29" r="22" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/><circle cx="29" cy="29" r="22" fill="none" stroke="var(--f1-accent,#ff0043)" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + CIRC + '" stroke-dashoffset="' + off + '"/></svg><b>' + pct + '%</b></div>';
+    var photo = b.photo ? '<img class="f1bet-photo" src="' + _f1Esc(b.photo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '';
+    var logo = b.logo ? '<img class="f1bet-logo" src="' + _f1Esc(b.logo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '';
+    return '<div class="f1bet">' + photo + '<div class="f1bet-ico">' + _f1BetIcon(b.type) + '</div><div class="f1bet-type">' + _f1Esc(b.label) + '</div><div class="f1bet-pick">' + _f1Esc(b.pick) + '</div><div class="f1bet-foot">' + ring + '<div class="f1bet-info"><div class="f1bet-team">' + logo + _f1Esc(b.team || b.market || '') + '</div><div class="f1bet-ci">' + ci + '</div></div></div></div>';
+  }).join('');
+}
+function _renderF1Grid(drivers) {
+  var c = document.getElementById('f1-grid'); if (!c) return;
+  if (!drivers.length) { c.innerHTML = ''; return; }
+  var pc = function (v) { return v != null ? v * 100 : 0; };
+  var head = '<div class="f1drv f1drv-h"><span>#</span><span></span><span></span><span>Pilote / Écurie</span><span>Win · Pod</span><span style="text-align:right">Fiab</span></div>';
+  c.innerHTML = head + drivers.map(function (d, i) {
+    var medal = i === 0 ? 'g' : i === 1 ? 's' : i === 2 ? 'b' : '';
+    var crown = i === 0 ? '<span class="f1-crown">♛</span>' : '';
+    var tc = _f1TeamColor(d.team, d.teamId);
+    var win = pc(d.win).toFixed(0), pod = pc(d.podium).toFixed(0), rel = pc(d.reliability).toFixed(0);
+    var ava = '<span class="f1drv-ava" style="--tc:' + tc + '">' + (d.photo ? '<img src="' + _f1Esc(d.photo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + '<b>' + _f1Esc(d.code) + '</b></span>';
+    return '<div class="f1drv" style="--tc:' + tc + '"><span class="f1drv-pos ' + medal + '">' + _f1Esc(d.pos) + '</span>' + ava + '<span class="f1drv-code">' + _f1Esc(d.code) + '</span><span class="f1drv-id"><span class="f1drv-name">' + _f1Esc(d.name) + crown + '</span><span class="f1drv-team">' + _f1Esc(d.team) + '</span></span><span class="f1drv-bars"><span class="f1bar" title="Win ' + win + '%"><i style="width:' + win + '%"></i></span><span class="f1bar f1bar--pod" title="Podium ' + pod + '%"><i style="width:' + pod + '%"></i></span></span><span class="f1drv-rel">' + rel + '%</span></div>';
+  }).join('');
 }
 
 // ─── NBA vertical (basket — ESPN Elo records + Four Factors + value) ────────────
