@@ -968,8 +968,46 @@ function _renderWnbaCards(matches) {
         (su.ou_lean && su.ou_lean !== 'NEUTRAL' && su.p_over != null ? '<span class="nba-chip">' + _nbaEsc(su.ou_lean) + ' ' + (su.ou_lean === 'OVER' ? su.p_over : (100 - su.p_over)) + '%</span>' : '') +
         (bl.n_models ? '<span class="nba-chip">⊕ blend ' + bl.n_models + '</span>' : '') +
       '</div>' +
+      '<button class="nba-ai-btn" onclick="toggleWnbaProps(this,\'' + _nbaEsc(m.id) + '\')">🎯 Props joueuses</button>' +
+      '<div class="wnba-props-drawer"></div>' +
     '</div>';
   }).join('');
+}
+window.toggleWnbaProps = function (btn, matchId) {
+  var card = btn.closest('.nba-card'); if (!card) return;
+  var drawer = card.querySelector('.wnba-props-drawer'); if (!drawer) return;
+  if (drawer.classList.contains('open')) { drawer.classList.remove('open'); btn.textContent = '🎯 Props joueuses'; return; }
+  drawer.classList.add('open'); btn.textContent = '▲ Fermer';
+  if (drawer.dataset.loaded) return;
+  drawer.dataset.loaded = '1';
+  drawer.innerHTML = '<div class="wnba-props-load">Calcul des props joueuses…</div>';
+  fetch('/api/v1/wnba/props/' + encodeURIComponent(matchId), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (j) { drawer.innerHTML = _renderWnbaProps(j.props); })
+    .catch(function (e) { drawer.innerHTML = '<div class="wnba-props-load" style="color:#f87171">Props indisponibles (' + e + ')</div>'; drawer.dataset.loaded = ''; });
+};
+function _renderWnbaProps(d) {
+  if (!d) return '<div class="wnba-props-load">—</div>';
+  var betChip = function (b) {
+    return '<div class="wnba-prop-bet">' +
+      (b.photo ? '<img src="' + _nbaEsc(b.photo) + '" loading="lazy" onerror="this.style.display=\'none\'">' : '') +
+      '<div><div class="wnba-pb-name">' + _nbaEsc(b.player) + ' <span>' + _nbaEsc(b.pos || '') + '</span></div>' +
+      '<div class="wnba-pb-mkt">' + _nbaEsc(b.market) + '</div></div>' +
+      '<div class="wnba-pb-prob">' + b.prob + '%<span>proj ' + b.proj + '</span></div></div>';
+  };
+  var playerRow = function (pl) {
+    return '<div class="wnba-pl">' +
+      (pl.photo ? '<img src="' + _nbaEsc(pl.photo) + '" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;wnba-pl-noimg&quot;>' + _nbaEsc((pl.name || '?').slice(0, 1)) + '</span>\'">' : '<span class="wnba-pl-noimg">' + _nbaEsc((pl.name || '?').slice(0, 1)) + '</span>') +
+      '<div class="wnba-pl-info"><div class="wnba-pl-name">' + _nbaEsc(pl.name) + ' <span>' + _nbaEsc(pl.pos || '') + ' · ' + (pl.min != null ? pl.min : '-') + 'min</span></div>' +
+      '<div class="wnba-pl-props">' + (pl.props || []).map(function (p) { return '<span class="wnba-pp' + (p.lean === 'OVER' ? ' over' : p.lean === 'UNDER' ? ' under' : '') + '">' + _nbaEsc(p.label) + ' ' + p.proj + (p.lean !== 'NEUTRAL' ? ' ' + (p.lean === 'OVER' ? '▲' : '▼') + p.line + ' ' + p.over_pct + '%' : '') + '</span>'; }).join('') + '</div></div></div>';
+  };
+  var h = '';
+  if (d.top_prop_bets && d.top_prop_bets.length) {
+    h += '<div class="wnba-props-h">🎯 Top props prédictifs</div><div class="wnba-bets">' + d.top_prop_bets.map(betChip).join('') + '</div>';
+  }
+  h += '<div class="wnba-props-h">' + _nbaEsc((d.away && d.away.team) || 'AWAY') + '</div>' + ((d.away && d.away.players) || []).map(playerRow).join('');
+  h += '<div class="wnba-props-h">' + _nbaEsc((d.home && d.home.team) || 'HOME') + '</div>' + ((d.home && d.home.players) || []).map(playerRow).join('');
+  return h || '<div class="wnba-props-load">Pas de props (données joueuses indisponibles).</div>';
 }
 function _renderWnbaTopBets(bets) {
   var el = document.getElementById('wnba-topbets');

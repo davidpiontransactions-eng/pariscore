@@ -603,9 +603,121 @@ async function getWnbaMatchById(id) {
   return all.find(m => String(m.id) === String(id)) || null;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  PLAYER PROPS (joueuses) — projections PTS/REB/AST par matchup
+//  Métriques (recherche web : dimers/sportsgrid) : minutes/usage, moyenne/match,
+//  forme, pace + défense adverse. Modèle : projection = avg × pace_adj ;
+//  P(over) Normal (points, sur-dispersé) / Poisson (rebonds/passes). Photos ESPN.
+// ════════════════════════════════════════════════════════════════════════════
+const _rosterCache = {};      // teamId   -> { ts, players }
+const _playerAvgCache = {};   // athleteId-> { ts, avg }
+const _propsCache = {};       // matchId  -> { ts, data }
+const PROP_TTL   = 60 * 60 * 1000;     // 1h props
+const PLAYER_TTL = 12 * 3600 * 1000;   // 12h roster/avg
+
+async function _fetchRoster(teamId) {
+  if (!teamId) return [];
+  const c = _rosterCache[teamId];
+  if (c && Date.now() - c.ts < PLAYER_TTL) return c.players;
+  const d = await httpsGetJson(ESPN_HOST, `/apis/site/v2/sports/basketball/wnba/teams/${teamId}/roster`);
+  let ath = (d && Array.isArray(d.athletes)) ? d.athletes : [];
+  if (ath.length && ath[0] && Array.isArray(ath[0].items)) ath = ath.flatMap(g => g.items || []); // groupé par poste
+  const players = ath.map(a => ({
+    id: a.id, name: a.displayName || a.fullName,
+    pos: (a.position && a.position.abbreviation) || '',
+    jersey: a.jersey || '', photo: (a.headshot && a.headshot.href) || null,
+  })).filter(p => p.id && p.name);
+  if (players.length) _rosterCache[teamId] = { ts: Date.now(), players };
+  return players;
+}
+
+async function _fetchPlayerAvg(athleteId) {
+  if (!athleteId) return null;
+  const c = _playerAvgCache[athleteId];
+  if (c && Date.now() - c.ts < PLAYER_TTL) return c.avg;
+  const d = await httpsGetJson('site.web.api.espn.com', `/apis/common/v3/sports/basketball/wnba/athletes/${athleteId}/stats`);
+  const cats = (d && Array.isArray(d.categories)) ? d.categories : [];
+  const avgCat = cats.find(x => /average/i.test((x.name || '') + (x.displayName || '')));
+  const split = avgCat && avgCat.statistics && avgCat.statistics[0];
+  const names = (avgCat && (avgCat.names || avgCat.labels)) || [];
+  if (!split || !Array.isArray(split.stats)) { _playerAvgCache[athleteId] = { ts: Date.now(), avg: null }; return null; }
+  const val = (k) => { const i = names.indexOf(k); const v = i >= 0 ? parseFloat(split.stats[i]) : NaN; return Number.isFinite(v) ? v : null; };
+  const avg = {
+    gp: val('gamesPlayed'), min: val('avgMinutes'),
+    pts: val('avgPoints'), reb: val('avgRebounds'), ast: val('avgAssists'),
+    stl: val('avgSteals'), blk: val('avgBlocks'), tov: val('avgTurnovers'),
+  };
+  _playerAvgCache[athleteId] = { ts: Date.now(), avg };
+  return avg;
+}
+
+// P(X > line) — points ~ Normal (sur-dispersé), rebonds/passes ~ Poisson
+function _poissonCdf(k, lam) { if (lam <= 0) return 1; let s = 0, t = Math.exp(-lam); for (let i = 0; i <= k; i++) { s += t; t *= lam / (i + 1); } return Math.min(1, s); }
+function _overProb(mu, line, kind) {
+  if (mu == null || mu <= 0) return null;
+  if (kind === 'pts') { const sd = Math.max(3, 0.5 * Math.sqrt(mu) + 0.22 * mu); return +(100 * (1 - _normCdf((line - mu) / sd))).toFixed(0); }
+  return +(100 * (1 - _poissonCdf(Math.floor(line), mu))).toFixed(0);
+}
+
+function _projectPlayer(p, avg, oppPaceAdj) {
+  const proj = (mu, w) => mu == null ? null : +(mu * (1 + (oppPaceAdj - 1) * w)).toFixed(1);
+  const props = [];
+  const mk = (stat, label, mu, kind, floorMin) => {
+    if (mu == null || mu < floorMin) return;
+    const line = Math.max(0.5, Math.round(mu) - 0.5); // ligne "valeur" 0.5 sous la projection
+    const over = _overProb(mu, line, kind);
+    props.push({ stat, label, proj: mu, line, over_pct: over, lean: over >= 55 ? 'OVER' : over <= 45 ? 'UNDER' : 'NEUTRAL' });
+  };
+  mk('pts', 'Points', proj(avg.pts, 1.0), 'pts', 6);
+  mk('reb', 'Rebonds', proj(avg.reb, 0.4), 'reb', 2);
+  mk('ast', 'Passes', proj(avg.ast, 0.6), 'ast', 1.5);
+  const conf = Math.min(100, Math.round(((avg.min || 0) / 34 * 60) + Math.min(40, (avg.gp || 0) * 4)));
+  return { id: p.id, name: p.name, pos: p.pos, photo: p.photo, min: avg.min, gp: avg.gp, props, confidence: conf };
+}
+
+async function getWnbaPlayerProps(matchId) {
+  const c = _propsCache[matchId];
+  if (c && Date.now() - c.ts < PROP_TTL) return c.data;
+  const match = await getWnbaMatchById(matchId);
+  if (!match) return null;
+  await _fetchStandings().catch(() => {});
+  const LA = (_standings.leagueAvg || 82);
+  const sideProps = async (team, opp) => {
+    const roster = await _fetchRoster(team.id);
+    const oppStand = _standings.map && _standings.map[opp.id];
+    const oppPaceAdj = (oppStand && oppStand.avgPA) ? Math.max(0.9, Math.min(1.12, oppStand.avgPA / LA)) : 1.0;
+    const out = [];
+    for (const p of roster) {
+      const avg = await _fetchPlayerAvg(p.id);
+      if (!avg || (avg.min || 0) < 16) continue; // titulaires + rotation
+      out.push(_projectPlayer(p, avg, oppPaceAdj));
+    }
+    out.sort((a, b) => (b.min || 0) - (a.min || 0));
+    return out.slice(0, 6);
+  };
+  const [home, away] = await Promise.all([ sideProps(match.home, match.away), sideProps(match.away, match.home) ]);
+  const allBets = [];
+  [...home, ...away].forEach(pl => (pl.props || []).forEach(pr => {
+    if (pr.lean !== 'NEUTRAL' && pr.over_pct != null) {
+      const prob = pr.lean === 'OVER' ? pr.over_pct : (100 - pr.over_pct);
+      allBets.push({ player: pl.name, photo: pl.photo, pos: pl.pos, market: pr.label + ' ' + pr.lean + ' ' + pr.line, proj: pr.proj, prob, conf: pl.confidence });
+    }
+  }));
+  allBets.sort((a, b) => (b.prob * b.conf) - (a.prob * a.conf));
+  const data = {
+    match: (match.away && match.away.abbr) + ' @ ' + (match.home && match.home.abbr),
+    home: { team: match.home && match.home.abbr, players: home },
+    away: { team: match.away && match.away.abbr, players: away },
+    top_prop_bets: allBets.slice(0, 6),
+  };
+  _propsCache[matchId] = { ts: Date.now(), data };
+  return data;
+}
+
 module.exports = {
   getWnbaMatches,
   getWnbaMatchById,
+  getWnbaPlayerProps,
   computeNbaWinProb,
   computeNbaTotal,
   computeNbaPythagorean,
