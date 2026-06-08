@@ -9557,6 +9557,7 @@ function loadHistory() {
   if (persistedTennis && Array.isArray(persistedTennis) && persistedTennis.length) {
     tennisHistory = persistedTennis;
     console.log(`  ✓ Historique Tennis SQLite chargé (${tennisHistory.length} matchs archivés)`);
+    pruneTennisHistory(); // bd phuf — borne au boot (dédup + cap) avant tout save
   }
 
   // bd ParisScorebis-9je — Merge historique_football.json (ETL output) dans
@@ -10026,10 +10027,36 @@ function loadHistory() {
   }
 }
 
+// bd phuf — tennisHistory atteignait ~516k entrées / ~496MB → JSON.stringify dépassait la limite
+// V8 (~512MB) → "Invalid string length" → saveHistory échouait → historique tennis jamais persisté.
+// Borne : dédup par id (dernière occurrence gagne) + cap par récence. Garde le backtest, évite l'overflow.
+const TENNIS_HISTORY_MAX = Math.max(10000, parseInt(process.env.TENNIS_HISTORY_MAX || '150000', 10));
+function pruneTennisHistory() {
+  if (!Array.isArray(tennisHistory) || !tennisHistory.length) return 0;
+  const before = tennisHistory.length;
+  const byId = new Map();
+  let noId = 0;
+  for (const h of tennisHistory) {
+    if (!h) continue;
+    byId.set((h.id != null) ? String(h.id) : ('__noid_' + (noId++)), h);
+  }
+  let arr = Array.from(byId.values());
+  if (arr.length > TENNIS_HISTORY_MAX) {
+    const ts = (h) => Date.parse((h && (h.commence_time || h._archived_at || h.date)) || '') || 0;
+    const ranked = arr.map(h => ({ h, t: ts(h) }));
+    ranked.sort((a, b) => b.t - a.t); // plus récents d'abord
+    arr = ranked.slice(0, TENNIS_HISTORY_MAX).map(x => x.h);
+  }
+  tennisHistory = arr;
+  const removed = before - tennisHistory.length;
+  if (removed > 0) console.log(`  [pruneTennisHistory] ${before} → ${tennisHistory.length} (-${removed} : dédup id + cap ${TENNIS_HISTORY_MAX})`);
+  return removed;
+}
+
 function saveHistory() {
+  pruneTennisHistory(); // bd phuf — borne tennisHistory AVANT stringify (anti "Invalid string length")
   // Sauvegarde clé par clé : si une valeur dépasse la limite V8 de JSON.stringify
-  // ("Invalid string length"), on isole l'échec (log + taille) sans casser les autres
-  // ni l'appelant (bootInit throwait dessus → serverReady bloqué). Pruning = bd suivi.
+  // ("Invalid string length"), on isole l'échec (log + taille) sans casser les autres ni l'appelant.
   for (const [k, v] of [['history_matches', history], ['tennis_history_matches', tennisHistory], ['history_accuracy', accuracy]]) {
     try {
       kvSet(k, v);
