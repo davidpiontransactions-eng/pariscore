@@ -17765,8 +17765,9 @@ function srvPlanGate(req, res, pathname) {
   // avec /upcoming). Gate s'applique sur picks/AI analyses Premium uniquement.
   // Couvre /api/v1/sps?ids=... (batch) ET /api/v1/sps/<matchId> (single).
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
-  // Glicko-2 stats + live enriched + momentum + top10 widget — public read-only
-  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10' || pathname.startsWith('/api/v1/tennis/detail/')) return false;
+  // Glicko-2 stats + live enriched + momentum + top10 + WOM leaderboard — public read-only widgets
+  // wom-top (bd ab6s) = volume Betfair agrégé (betwatch), même classe vitrine que top10. Aucun pick premium.
+  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10' || pathname === '/api/v1/tennis/wom-top' || pathname.startsWith('/api/v1/tennis/detail/')) return false;
   // RG showcase public (live momentum SSE + fiche joueur). EventSource ne peut PAS
   // envoyer de header Authorization → la gate Pro renvoyait 403 pour TOUS (y compris
   // Pro). Aligné sur /tennis/live + /tennis/momentum déjà publics. bd ParisScorebis-4n12.
@@ -34314,6 +34315,32 @@ if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
     return jsonResponse(res, 200, { source: 'wom', available: !!d, wom: d });
   } catch (e) {
     return jsonResponse(res, 200, { source: 'wom', available: false, error: String(e && e.message || e), wom: null });
+  }
+}
+
+// GET /api/v1/tennis/wom-top?limit=5 — Top matchs tennis par € total misé sur Betfair (betwatch.fr, gratuit).
+// bd ab6s. Volume total = libre ; le split par joueur reste paywallé (betwatch Extra Sports).
+// Inerte (available:false, listes vides) si le provider local WOM est absent → le frontend masque le panneau.
+if (pathname === '/api/v1/tennis/wom-top' && req.method === 'GET') {
+  const _prov = (womLocal && womLocal.enabled && womLocal.enabled()) ? womLocal : null;
+  if (!_prov || typeof _prov.topByMatched !== 'function') {
+    return jsonResponse(res, 200, { source: 'betwatch', available: false, reason: 'provider_disabled', prematch: [], live: [], ts: null, stale: null });
+  }
+  const limit = Math.max(1, Math.min(10, parseInt(query.limit || '5', 10) || 5));
+  try {
+    const prematch = _prov.topByMatched('tennis', { live: false, limit });
+    const live     = _prov.topByMatched('tennis', { live: true,  limit });
+    const st = (_prov.status && _prov.status()) || {};
+    return jsonResponse(res, 200, {
+      source: 'betwatch',
+      available: (prematch.length + live.length) > 0,
+      prematch, live,
+      ts: st.ts || null,
+      stale: (st.stale != null) ? st.stale : null,
+      note: 'total_matched_free__player_split_paywalled',
+    });
+  } catch (e) {
+    return jsonResponse(res, 200, { source: 'betwatch', available: false, error: String(e && e.message || e), prematch: [], live: [] });
   }
 }
 

@@ -732,6 +732,7 @@ function showPage(pageId, linkEl) {
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
   if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10();
+  if (pageId !== 'tennis' && typeof stopTennisWomTop === 'function') stopTennisWomTop();
   // Verrou tier/sport — bloque les modules non accessibles
   if (typeof psPageBlocked === 'function') {
     const _blk = psPageBlocked(pageId);
@@ -764,7 +765,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10(); startTennisWomTop(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
   if (pageId === 'cs2') initCs2Page();
   if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage();
@@ -4503,6 +4504,63 @@ function startTennisTop10() {
 
 function stopTennisTop10() {
   if (_tnTop10Timer) { clearInterval(_tnTop10Timer); _tnTop10Timer = null; }
+}
+
+// ─── Tennis WOM Top-5 — Argent Betfair (volume misé, via betwatch.fr) — bd ab6s ──
+// Source gratuite : total € misé par match. Split par joueur paywallé en tennis → non affiché.
+// Panneau masqué si le provider WOM est absent (available:false).
+let _tnWomTimer = null;
+function _tnWomFmtEur(n) {
+  if (n == null || !isFinite(n)) return '—';
+  if (n >= 1e6) return safeFixed(n / 1e6, n >= 1e7 ? 0 : 1).replace('.', ',') + ' M€';
+  if (n >= 1e3) return safeFixed(n / 1e3, 0) + ' k€';
+  return safeFixed(n, 0) + ' €';
+}
+function _tnWomRow(m, rank) {
+  const p1 = escapeHtml(m.player1 || '?');
+  const p2 = escapeHtml(m.player2 || '?');
+  const tour = m.tournament ? escapeHtml(m.tournament) : '';
+  const mkt = (m.market && m.market !== 'Match Odds') ? ` · <span class="tn-wom-mkt">${escapeHtml(m.market)}</span>` : '';
+  return `<div class="tn-wom-row">
+    <div class="tn-wom-rank">${rank}</div>
+    <div class="tn-wom-main">
+      <div class="tn-wom-names">${p1} <span style="color:var(--text3,#64748b);font-weight:400;font-size:10px;">vs</span> ${p2}</div>
+      <div class="tn-wom-meta">${tour}${mkt}</div>
+    </div>
+    <div class="tn-wom-amt">${_tnWomFmtEur(m.totalMatched)}<small>misé</small></div>
+  </div>`;
+}
+async function fetchTennisWomTop() {
+  const sec = document.getElementById('tn-wom-section');
+  const pre = document.getElementById('tn-wom-prematch');
+  const liv = document.getElementById('tn-wom-live');
+  const statusEl = document.getElementById('tn-wom-status');
+  if (!sec || !pre || !liv) return;
+  try {
+    const res = await fetch('/api/v1/tennis/wom-top?limit=5');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const pm = data.prematch || [], lv = data.live || [];
+    if (!data.available || (pm.length + lv.length) === 0) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    pre.innerHTML = pm.length ? pm.map((m, i) => _tnWomRow(m, i + 1)).join('') : '<div class="tn-wom-empty">Aucun prématch</div>';
+    liv.innerHTML = lv.length ? lv.map((m, i) => _tnWomRow(m, i + 1)).join('') : '<div class="tn-wom-empty">Aucun live</div>';
+    if (statusEl) {
+      const t = data.ts ? new Date(data.ts) : null;
+      const hhmm = t ? `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}` : '';
+      statusEl.textContent = (data.stale ? '⚠ ' : '') + (hhmm ? ('maj ' + hhmm) : '');
+    }
+  } catch (err) {
+    sec.style.display = 'none';
+  }
+}
+function startTennisWomTop() {
+  fetchTennisWomTop();
+  if (_tnWomTimer) clearInterval(_tnWomTimer);
+  _tnWomTimer = setInterval(fetchTennisWomTop, 90_000);
+}
+function stopTennisWomTop() {
+  if (_tnWomTimer) { clearInterval(_tnWomTimer); _tnWomTimer = null; }
 }
 
 // ─── Tennis Abstract Rome 2026 (ATP+WTA) — forecasts ─────────────────────
