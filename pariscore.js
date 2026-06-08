@@ -4521,6 +4521,7 @@ function _tnWomRow(m, rank) {
   const p2 = escapeHtml(m.player2 || '?');
   const tour = m.tournament ? escapeHtml(m.tournament) : '';
   const mkt = (m.market && m.market !== 'Match Odds') ? ` · <span class="tn-wom-mkt">${escapeHtml(m.market)}</span>` : '';
+  const da = `data-p1="${escapeHtml(m.player1 || '')}" data-p2="${escapeHtml(m.player2 || '')}" data-tournament="${escapeHtml(m.tournament || '')}" data-sport="tennis" data-live="${m.live ? 1 : 0}" data-market="${escapeHtml(m.market || '')}" data-volume="${m.totalMatched || 0}"`;
   return `<div class="tn-wom-row">
     <div class="tn-wom-rank">${rank}</div>
     <div class="tn-wom-main">
@@ -4528,6 +4529,7 @@ function _tnWomRow(m, rank) {
       <div class="tn-wom-meta">${tour}${mkt}</div>
     </div>
     <div class="tn-wom-amt">${_tnWomFmtEur(m.totalMatched)}<small>misé</small></div>
+    <button class="tn-wom-ai" ${da} onclick="analyzeWomMatch(this)" title="Analyse IA Gemini + script Discord à copier" aria-label="Analyse IA">🤖</button>
   </div>`;
 }
 async function fetchTennisWomTop() {
@@ -4561,6 +4563,43 @@ function startTennisWomTop() {
 }
 function stopTennisWomTop() {
   if (_tnWomTimer) { clearInterval(_tnWomTimer); _tnWomTimer = null; }
+}
+
+// Analyse IA Gemini déclenchée depuis une ligne WOM → réutilise le modal tennis-ai + copyTennisAIText. bd ab6s
+async function analyzeWomMatch(btn) {
+  if (!btn) return;
+  const d = btn.dataset || {};
+  const p1 = (d.p1 || '').trim(), p2 = (d.p2 || '').trim();
+  if (!p1 || !p2) return;
+  if (typeof openTennisAIModal === 'function') openTennisAIModal();
+  const loading = document.getElementById('tennis-ai-loading');
+  const output = document.getElementById('tennis-ai-output');
+  const errBox = document.getElementById('tennis-ai-error');
+  const copyBtn = document.getElementById('tennis-ai-copy-btn');
+  const subtitle = document.getElementById('tennis-ai-subtitle');
+  if (loading) loading.style.display = 'block';
+  if (output) { output.style.display = 'none'; output.textContent = ''; }
+  if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+  if (copyBtn) { copyBtn.disabled = true; copyBtn.style.opacity = '.4'; }
+  _tennisAICurrentRawText = '';
+  if (subtitle) subtitle.textContent = `${p1} vs ${p2} · ${d.tournament || '—'} · 💰 ${d.live === '1' ? 'Live' : 'Prématch'} Betfair`;
+  try {
+    const qs = new URLSearchParams({ p1, p2, tournament: d.tournament || '', sport: d.sport || 'tennis', live: d.live || '0', market: d.market || '', volume: d.volume || '0' });
+    const r = await fetch('/api/v1/tennis/wom-analyze?' + qs.toString(), { headers: { 'Accept': 'application/json' } });
+    if (r.status === 401 || r.status === 403) throw new Error('Analyse IA réservée Pro Tennis / Duo — connecte-toi pour générer le script Discord.');
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    const text = data.text || '';
+    if (!text) throw new Error('Réponse IA vide');
+    _tennisAICurrentRawText = text;
+    if (loading) loading.style.display = 'none';
+    if (output) { output.textContent = text; output.style.display = 'block'; }
+    if (copyBtn) { copyBtn.disabled = false; copyBtn.style.opacity = '1'; }
+  } catch (e) {
+    console.warn('[WomAI] erreur:', e.message);
+    if (loading) loading.style.display = 'none';
+    if (errBox) { errBox.textContent = 'Erreur : ' + (e.message || e); errBox.style.display = 'block'; }
+  }
 }
 
 // ─── Tennis Abstract Rome 2026 (ATP+WTA) — forecasts ─────────────────────

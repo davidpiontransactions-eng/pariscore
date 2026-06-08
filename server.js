@@ -34344,6 +34344,128 @@ if (pathname === '/api/v1/tennis/wom-top' && req.method === 'GET') {
   }
 }
 
+// GET /api/v1/tennis/wom-analyze?p1=&p2=&tournament=&sport=&live=&market=&volume= — bd ab6s
+// Analyse IA « prête à publier » (prompt PariScore complet + script Discord) déclenchée depuis le panneau WOM.
+// Gated tennisPro (hors allowlist publique) → protège la facturation Gemini. Cache 6h + fallback providers.
+if (pathname === '/api/v1/tennis/wom-analyze' && req.method === 'GET') {
+  if (!GEMINI_API_KEY && AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré' });
+  const p1 = String(query.p1 || '').trim().slice(0, 80);
+  const p2 = String(query.p2 || '').trim().slice(0, 80);
+  if (!p1 || !p2) return jsonResponse(res, 400, { error: 'p1_p2_required' });
+  const sport = (String(query.sport || 'tennis').toLowerCase() === 'football') ? 'football' : 'tennis';
+  const tournament = String(query.tournament || '').trim().slice(0, 120) || '—';
+  const isLive = (String(query.live || '') === '1' || String(query.live || '') === 'true');
+  const market = String(query.market || '').trim().slice(0, 60);
+  const volume = Math.max(0, parseInt(query.volume || '0', 10) || 0);
+
+  const _normNm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  const cacheKey = `deep_wom_v1_${sport}_${_normNm(p1)}_${_normNm(p2)}`;
+  const cached = getCachedAIAnalysis(cacheKey);
+  if (cached?.text) return jsonResponse(res, 200, { text: cached.text, provider: cached.provider || 'cache', _from_cache: true });
+
+  // Enrichissement best-effort : retrouver le match tennis (ELO/devig/EV) par nom pour ancrer le Power Score.
+  let enrich = '';
+  if (sport === 'tennis') {
+    try {
+      const out = await buildTennisValueBets({});
+      const list = (out && out.body && Array.isArray(out.body.matches)) ? out.body.matches : [];
+      const n1 = _normNm(p1), n2 = _normNm(p2);
+      const hit = list.find((x) => {
+        const a = _normNm((x.player1 && x.player1.name) || ''), b = _normNm((x.player2 && x.player2.name) || '');
+        if (!a || !b) return false;
+        const ab = (a.includes(n1) || n1.includes(a)) && (b.includes(n2) || n2.includes(b));
+        const ba = (a.includes(n2) || n2.includes(a)) && (b.includes(n1) || n1.includes(b));
+        return ab || ba;
+      });
+      if (hit) {
+        const elo = (hit.predictions && hit.predictions.elo) || null;
+        const fair = hit.fair || {};
+        const bestEv = hit.best_ev_model || {};
+        enrich = `\n[DONNEES PARISCORE — match resolu, ancre le Power Score dessus]\n` +
+          `Surface: ${hit.surface || '—'} | Tour: ${hit.tour || '—'} | Round: ${hit.round || '—'}\n` +
+          `ELO ${p1}: ${elo && elo.p1_elo != null ? Math.round(elo.p1_elo) : '—'} | ELO ${p2}: ${elo && elo.p2_elo != null ? Math.round(elo.p2_elo) : '—'}\n` +
+          `Proba no-vig ${p1}: ${fair.p1 != null ? safeFixed(fair.p1, 1) + '%' : '—'} | ${p2}: ${fair.p2 != null ? safeFixed(fair.p2, 1) + '%' : '—'}\n` +
+          `Best EV: ${bestEv.side === 'p1' ? p1 : (bestEv.side === 'p2' ? p2 : '—')} ${bestEv.ev != null ? safeFixed(bestEv.ev, 2) + '%' : '—'}\n`;
+      }
+    } catch (e) { /* enrich best-effort */ }
+  }
+
+  const _volStr = volume >= 1e6 ? (safeFixed(volume / 1e6, 1).replace('.', ',') + ' M€') : (volume >= 1e3 ? (Math.round(volume / 1e3) + ' k€') : (volume + ' €'));
+
+  const WOM_ANALYSIS_PROMPT = `Tu es l'expert principal en data-science et analyse sportive de la plateforme PariScore (pariscore.fr). Ton rôle est de compiler des données statistiques, des probabilités d'algorithmes et des éléments contextuels pour générer une analyse de match ultra-complète, structurée et prête pour la publication.
+
+Tu dois impérativement t'adapter au sport concerné (Football ou Tennis) en utilisant le lexique approprié :
+- Si Football : xG/xGA, corners, buts, possession, blocs tactiques, pistons, etc.
+- Si Tennis : ELO, ATP/WTA ranking, surface (ocre, dur, gazon), sets, tie-break, aces, etc.
+
+Tu respecteras scrupuleusement la structure de sortie suivante pour ton analyse :
+
+### 1. EN-TETE DU MATCH : [Equipe/Joueur A] vs [Equipe/Joueur B] ([Competition])
+
+### 2. POWER SCORE PARISCORE :
+* **[Equipe/Joueur A] (Dom/Ext ou Classement) : [Score]/100**
+* **[Equipe/Joueur B] (Dom/Ext ou Classement) : [Score]/100**
+
+### 3. ANALYSE DETAILLEE :
+* **Le Duel Tactique (ou Analyse Surface) :** Redige un paragraphe fluide expliquant le rapport de force terrain (style de jeu, gestion de la profondeur, duel de fond de court, ou impact de la surface). Repere le "mismatch" tactique majeur entre les deux opposants.
+* **La Synthese Web & Medias (Les 5 Avis Presse) :** Simule ou agrege l'avis de 5 medias sportifs pertinents (ex: L'Equipe, Marca, Sky Sports, Kicker, The Athletic, Gazzetta, etc.) sous forme de liste numerotee de 1 a 5, en resumant leur vision du match en une phrase percutante.
+* **L'Alerte Statistiques Cles (ou Corners) :** Mets en evidence une anomalie statistique ou une tendance lourde propre a la physionomie du match (ex: grosse probabilite de corners a cause d'un bloc bas, forte chance de tie-break entre deux gros serveurs, ou alerte Value EV).
+
+### 4. PROBABILITES MATHEMATIQUES :
+* Fournis sous forme de liste a puces les pourcentages estimes pour les principaux marches (1N2/Vainqueur, Over/Under buts ou jeux, BTTS, Corners ou sets).
+
+### 5. LE TOP 5 DES PARIS :
+Genere 5 types de paris specifiques et justifie chacun d'eux en une phrase courte basee sur la data :
+- Le Safe : Le pari a forte probabilite pour securiser les combines.
+- Le Bankroll Builder : Le pari ideal pour faire monter une cote avec un risque maitrise.
+- Le Value Bet : Le pari ou la cote du marche fait une erreur d'estimation par rapport a notre modele (ex: indicateur EV+).
+- Le Coup Tactique : Un pari alternatif ultra-cible (ex: Corners d'une seule equipe, Handicap de jeux, etc.).
+- Le Coup Risque : Le pari fun ou a grosse cote (ex: score exact multiple, scenario de match a rebondissements).
+
+---
+
+### 6. SCRIPT CANAL (TELEGRAM OU DISCORD) :
+Genere ensuite un resume pret a l'emploi pour les reseaux sociaux.
+- Utilise un ton de "Bettor Professionnel" : dynamique, communautaire et confiant.
+- Inclus des barres de progression graphiques avec des emojis colores (vert, jaune, orange) pour illustrer visuellement les graphiques de probabilites.
+- Termine toujours en renvoyant vers la plateforme avec un lien propre : https://pariscore.fr/`;
+
+  const dataBlock = `\n\n---\n[CONTEXTE FOURNI PAR PARISCORE — NE PAS INVENTER LES NOMS]\n` +
+    `Sport : ${sport === 'tennis' ? 'Tennis' : 'Football'}\n` +
+    `Match : ${p1} vs ${p2}\n` +
+    `Competition : ${tournament}\n` +
+    `Statut : ${isLive ? 'LIVE (en cours)' : 'Prematch'}\n` +
+    `Argent Betfair (Weight of Money) : ${_volStr} mise${market && market !== 'Match Odds' ? ' — marche ' + market : ''} -> forte liquidite = interet marche, exploite-le dans l'alerte Value EV.${enrich}\n` +
+    `[FIN CONTEXTE]\n\nIMPERATIF FORMAT : encapsule UNIQUEMENT la section « 6. SCRIPT CANAL » dans un bloc \`\`\`text ... \`\`\` (et rien d'autre) afin que le message Discord soit copiable en un clic.`;
+
+  const fullPrompt = WOM_ANALYSIS_PROMPT + dataBlock;
+
+  try {
+    const gemRes = await httpsPost(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      { contents: [{ parts: [{ text: fullPrompt }] }], safetySettings: GEMINI_SAFETY_SETTINGS, generationConfig: { temperature: 0.85, maxOutputTokens: 4096 } }
+    );
+    let text = '', provider = 'gemini';
+    if (gemRes.status === 200) {
+      text = (gemRes.data && gemRes.data.candidates && gemRes.data.candidates[0] && gemRes.data.candidates[0].content && gemRes.data.candidates[0].content.parts && gemRes.data.candidates[0].content.parts[0] && gemRes.data.candidates[0].content.parts[0].text) || '';
+    }
+    if (!text) {
+      for (const prov of AI_DEEP_PROVIDERS) {
+        if (prov.type !== 'openai') continue;
+        try {
+          const r = await httpsPost(`https://${prov.host}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: fullPrompt }], temperature: 0.85, max_tokens: 4096 }, { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.fr', 'X-Title': 'PariScore WOM Analysis' });
+          if (r.status === 200) { const t = (r.data && r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || ''; if (t) { text = t; provider = prov.name; break; } }
+        } catch (_) { /* provider next */ }
+      }
+    }
+    if (!text) { if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data); return jsonResponse(res, 500, { error: 'Tous les providers IA ont echoue' }); }
+    saveAIAnalysisToCache(cacheKey, { text, provider });
+    return jsonResponse(res, 200, { text, provider });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: e.message });
+  }
+}
+
 // GET /api/v1/tennis/players/search?q=<name> — resolve player name → profile + ranking
 if (pathname === '/api/v1/tennis/players/search' && req.method === 'GET') {
   const q = String(query.q || '').trim();
