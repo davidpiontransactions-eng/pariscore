@@ -34,7 +34,8 @@ const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
 const betfair = require('./betfairService'); // bd 17y6 — Betfair Exchange WOM via API (inerte sans BETFAIR_* .env ; geo-bloqué FR)
-const betwatch = require('./betwatchService'); // bd 17y6 — Betfair WOM via cache betwatch.fr (scraper tools/scrape-betwatch-wom.js)
+// Fournisseur WOM local optionnel (non committé). No-op si le module est absent.
+let womLocal = null; try { womLocal = require('./wom.local'); } catch (e) { /* optionnel */ }
 const cs2Service        = require('./services/cs2Service');        // CS2/CSGO BSD addon + HLTV rankings
 const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
@@ -34297,7 +34298,8 @@ if (pathname.startsWith('/api/v1/tennis/match/') && pathname.endsWith('/odds') &
 // GET /api/v1/tennis/wom?p1=&p2=&date=&id= — Betfair Exchange WOM tennis (sharp, inerte sans BETFAIR_*) — bd 17y6
 // Le frontend tennis connaît déjà les noms joueurs → les passe ici (l'endpoint odds n'a que des IDs).
 if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
-  if (!betfair.enabled()) return jsonResponse(res, 200, { source: 'betfair', available: false, reason: 'disabled', wom: null });
+  const _prov = (womLocal && womLocal.enabled && womLocal.enabled()) ? womLocal : (betfair.enabled() ? betfair : null);
+  if (!_prov) return jsonResponse(res, 200, { source: 'wom', available: false, reason: 'disabled', wom: null });
   const p1 = String(query.p1 || '').trim();
   const p2 = String(query.p2 || '').trim();
   if (!p1 || !p2) return jsonResponse(res, 400, { error: 'p1_p2_required' });
@@ -34308,10 +34310,10 @@ if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
     commence_time: query.date || query.commence_time || null,
   };
   try {
-    const d = await betfair.fetchMatchWOM(m);
-    return jsonResponse(res, 200, { source: 'betfair', available: !!d, wom: d });
+    const d = await _prov.fetchMatchWOM(m);
+    return jsonResponse(res, 200, { source: 'wom', available: !!d, wom: d });
   } catch (e) {
-    return jsonResponse(res, 200, { source: 'betfair', available: false, error: String(e && e.message || e), wom: null });
+    return jsonResponse(res, 200, { source: 'wom', available: false, error: String(e && e.message || e), wom: null });
   }
 }
 
@@ -38641,20 +38643,13 @@ if (comparateurMatch && req.method === 'GET') {
   // ('betfairexchange' → getBookWeight≈3.5) → ancre low-vig dans le WFV ci-dessous.
   // Tennis : fetchMatchRows renvoie [] ; le WOM est exposé via `betfairWom`.
   let betfairWom = null;
-  if (betwatch.enabled()) {
-    // Primaire : WOM Betfair via cache betwatch.fr (foot, sans compte, FR-accessible)
+  const _womProv = (womLocal && womLocal.enabled && womLocal.enabled()) ? womLocal : (betfair.enabled() ? betfair : null);
+  if (_womProv) {
     try {
-      betfairWom = betwatch.fetchMatchWOM(match);
-      const exRows = betwatch.fetchMatchRows(match);
-      if (exRows.length) rows = betwatch.mergeRows(rows.filter(r => !r._fallback), exRows);
-    } catch (e) { console.warn('[betwatch] enrich skip — ' + e.message); }
-  } else if (betfair.enabled()) {
-    // Fallback : API Betfair directe (nécessite egress non-FR + BETFAIR_* .env)
-    try {
-      betfairWom = await betfair.fetchMatchWOM(match);
-      const exRows = await betfair.fetchMatchRows(match);
-      if (exRows.length) rows = betfair.mergeRows(rows.filter(r => !r._fallback), exRows);
-    } catch (e) { console.warn('[Betfair] enrich skip — ' + e.message); }
+      betfairWom = await _womProv.fetchMatchWOM(match);
+      const exRows = await _womProv.fetchMatchRows(match);
+      if (exRows && exRows.length) rows = _womProv.mergeRows(rows.filter(r => !r._fallback), exRows);
+    } catch (e) { console.warn('[wom] enrich skip — ' + e.message); }
   }
 
   // ── Weighted Fair Value (WFV) — moyenne pondérée no-vig par book ──────────
