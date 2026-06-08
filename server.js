@@ -3516,7 +3516,7 @@ async function bsdPostWOM(movements, adUrl) {
 const WOM_AP_ENABLED      = process.env.WOM_AUTOPUBLISH !== 'false';
 const WOM_AP_PROB_DELTA   = Math.max(1, parseFloat(process.env.WOM_AP_PROB_DELTA || '12'));    // Δ WoM% (points)
 const WOM_AP_VOL_MIN      = Math.max(0, parseFloat(process.env.WOM_AP_VOL_MIN || '8000'));      // € totalMatched min
-const WOM_AP_INTERVAL_MIN = Math.max(5, parseInt(process.env.WOM_AP_INTERVAL_MIN || '30', 10));
+const WOM_AP_INTERVAL_MIN = Math.max(5, parseInt(process.env.WOM_AP_INTERVAL_MIN || '10', 10));
 const WOM_AP_DAILY_CAP    = Math.max(1, parseInt(process.env.WOM_AP_DAILY_CAP || '8', 10));
 const WOM_AP_COOLDOWN_H   = Math.max(1, parseInt(process.env.WOM_AP_COOLDOWN_H || '24', 10));
 const WOM_AP_SPORTS       = String(process.env.WOM_AP_SPORTS || 'football').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
