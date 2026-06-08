@@ -3527,22 +3527,32 @@ function _womProviderOn() { return !!(womLocal && womLocal.enabled && womLocal.e
 
 // Diffe le snapshot WOM courant vs précédent (football, db.matches). Met à jour la baseline et
 // retourne les mouvements qualifiants { sport, bsd_id, selection, prob_before/after, volume_*}.
-function _womDetectMovements() {
+async function _womDetectMovements() {
   const out = [];
   let scanned = 0, withWom = 0;
   if (!WOM_AP_SPORTS.includes('football') || !_womProviderOn()) return { movements: out, scanned, withWom };
   const now = Date.now();
-  const matches = (db && Array.isArray(db.matches)) ? db.matches : [];
   const fin = (v) => { const n = Number(v); return Number.isFinite(n) ? n : NaN; };
-  for (const m of matches) {
-    if (!m || m.live) continue;
-    const bsdId = Number(m._bsd_event_id);
+  // Source = events foot BSD `notstarted` (la WOM API exige un match futur). Découplé de db.matches
+  // qui, le soir, ne contient que du live/terminé. bsd_id = ev.id ; WOM rapproché par nom via womLocal.
+  let events = [];
+  try {
+    const d0 = new Date(now).toISOString().slice(0, 10);
+    const d1 = new Date(now + 3 * 86400000).toISOString().slice(0, 10);
+    const res = await bsdFetch(`/events/?status=notstarted&date_from=${d0}&date_to=${d1}&limit=50`);
+    if (res && res.status === 200 && res.data) {
+      events = Array.isArray(res.data.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []);
+    }
+  } catch (_) { events = []; }
+  for (const ev of events) {
+    if (!ev) continue;
+    const bsdId = Number(ev.id);
     if (!Number.isInteger(bsdId) || bsdId <= 0) continue;
-    const ct = m.commence_time ? Date.parse(m.commence_time) : null;
-    if (ct && ct <= now) continue; // la WOM API exige un match futur
+    const ct = ev.event_date ? Date.parse(ev.event_date) : null;
+    if (ct && ct <= now) continue; // futur only
     scanned++;
     let d = null;
-    try { d = womLocal.fetchMatchWOM(m); } catch (_) { d = null; }
+    try { d = womLocal.fetchMatchWOM({ home_team: ev.home_team, away_team: ev.away_team }); } catch (_) { d = null; }
     if (!d || !d.wom || !d.money) continue;
     withWom++;
     const cur = {
@@ -3582,7 +3592,7 @@ async function _runWomAutoPublish() {
   const now = Date.now(), coolMs = WOM_AP_COOLDOWN_H * 3600 * 1000;
   for (const k of Object.keys(st.published)) { if (now - st.published[k] > coolMs) delete st.published[k]; }
   if (st.count >= WOM_AP_DAILY_CAP) { console.log(`  [WOM:AutoPublish] tick: cap quotidien atteint (${st.count}/${WOM_AP_DAILY_CAP}) — skip`); kvSet('wom_ap_state', st); return; }
-  const { movements, scanned, withWom } = _womDetectMovements();
+  const { movements, scanned, withWom } = await _womDetectMovements();
   const fresh = [];
   for (const mv of movements) {
     if (st.published[String(mv.bsd_id)]) continue;
