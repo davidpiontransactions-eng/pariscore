@@ -113,3 +113,30 @@ bd close <id>         # Complete work
 **Sécurité** : zéro hardcoding clé Stripe. Webhook valide signature brute (`stripe.webhooks.constructEvent`). Sync atomique DB sur `invoice.paid` / `subscription.deleted`. Code reste TEST MODE jusqu'à DG validation.
 
 *v12.67 — 2026-06-05. Purge : tâches fermées → bd notes, missions → CHANGELOG.md. Source vérité = `bd ready`.*
+
+---
+
+## 🚀 Deploy Configuration (configured by /setup-deploy)
+- Platform: **Custom VPS OVH (primary)** + **Render.com (mirror, auto-deploy)**
+- Production URL: `https://pariscore.fr`
+- Deploy workflow: VPS = manual SSH + `scripts/update_vps.sh` · Render = auto-deploy on push to `main` (`render.yaml`)
+- Deploy status command: `ssh pariscore "pm2 list && pm2 logs server --lines 10 --nostream"`
+- Merge method: push to `main` (solo repo, no PR gate)
+- Project type: web app / API — Node.js vanilla, SPA `pariscore.html` + `/api/v1/*`
+- Post-deploy health check: `https://pariscore.fr/api/v1/status` → `{ status: "ok", matches: N }`
+
+### VPS OVH (primary)
+- SSH alias: `pariscore` (→ `ubuntu@51.75.21.239`) — SSH config on dev machine, also in `.claude/skills/ps-deploy`
+- Dir: `/home/ubuntu/pariscore` · PM2 process: **`server`** (id 6 — NOT `pariscore`)
+
+### Custom deploy hooks
+- **Pre-merge gate**: `node --check server.js` — STOP on error, never deploy broken syntax
+- **Push**: `git pull --rebase && git push` — verify `git status` = "up to date with origin/main"
+- **Deploy trigger (VPS)**: `ssh pariscore "cd /home/ubuntu/pariscore && bash scripts/update_vps.sh"`
+  — 6 steps: git fetch → reset --hard origin/main → pull --rebase → npm install --omit=dev → npm rebuild better-sqlite3 → pm2 restart server --update-env → Discord notify
+- **Deploy trigger (Render)**: automatic on push to `main` (`render.yaml`: web `pariscore` + pserv `pariscore-sofa` python/Playwright)
+- **Deploy status**: `ssh pariscore "sleep 12 && pm2 list && pm2 logs server --lines 10 --nostream"` — success = status `online`, same PID after 12s, mem > 100MB, restart count stable
+- **Health check**: `curl -sf https://pariscore.fr/api/v1/status` (also `/api/v1/matches`, `/api/v1/tennis/matches`, `/api/v1/cs2/matches`)
+- **Gotcha**: crash loop after restart → `ssh pariscore "cd /home/ubuntu/pariscore && npm rebuild better-sqlite3 && pm2 restart server --update-env"` (Node/better-sqlite3 ABI mismatch)
+
+*Deploy config v1 — 2026-06-08 via /setup-deploy. Full procedure: `/ps-deploy` skill (`.claude/skills/ps-deploy`).*
