@@ -9623,7 +9623,12 @@ function loadHistory() {
       if (seed && seed.seasons && typeof seed.seasons === 'object') {
         let totalSeed = 0;
         let totalAdded = 0;
-        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        // bd phuf — inclure tennisHistory (persisté) ET db.archive_matches : le seed pushe dans
+        // tennisHistory (9665) mais ne gardait que db.archive_matches → re-push de 30k à chaque boot.
+        const existingIds = new Set([
+          ...(db.archive_matches || []).map(m => String(m.id)),
+          ...(tennisHistory || []).map(h => String(h.id)),
+        ]);
         for (const seasonKey of Object.keys(seed.seasons)) {
           const seasonData = seed.seasons[seasonKey];
           if (!seasonData || typeof seasonData !== 'object') continue;
