@@ -24734,11 +24734,12 @@ function renderComparateur(d) {
   // Null tant que BETFAIR_* .env absent → rien ne s'affiche (zéro impact).
   let womBadge = '', womPanel = '';
   if (d.wom && d.wom.wom) {
-    const w = d.wom.wom;
+    const w = d.wom.wom, mon = d.wom.money || {};
+    const fmtEur = n => (n == null) ? '' : ' · ' + Math.round(n).toLocaleString('fr-FR') + ' €';
     const parts = [
-      { k: 'home', lbl: home_team, v: w.home },
-      { k: 'draw', lbl: 'Nul',     v: w.draw },
-      { k: 'away', lbl: away_team, v: w.away },
+      { k: 'home', lbl: home_team, v: w.home, eur: mon.home },
+      { k: 'draw', lbl: 'Nul',     v: w.draw, eur: mon.draw },
+      { k: 'away', lbl: away_team, v: w.away, eur: mon.away },
     ].filter(p => p.v != null);
     if (parts.length) {
       const top = parts.slice().sort((a, b) => b.v - a.v)[0];
@@ -24748,7 +24749,7 @@ function renderComparateur(d) {
       const bar = p => {
         const pct = Math.max(0, Math.min(100, p.v)), col = colOf(p.k);
         return `<div style="margin:4px 0;">
-          <div style="display:flex;justify-content:space-between;font-size:.74rem;color:#555;margin-bottom:2px;"><span>${p.lbl}</span><span style="font-weight:700;color:${col};">${safeFixed(p.v, 0)}%</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;color:#555;margin-bottom:2px;"><span>${p.lbl}</span><span style="font-weight:700;color:${col};">${safeFixed(p.v, 0)}%<span style="font-weight:500;color:#90A4AE;">${fmtEur(p.eur)}</span></span></div>
           <div style="height:7px;background:#e9eef3;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${col};"></div></div>
         </div>`;
       };
@@ -24761,7 +24762,7 @@ function renderComparateur(d) {
         }
       }
       womPanel = `<div style="background:#fff;border:1px solid #e3e8ee;border-radius:8px;padding:10px 14px;margin:8px 0;">
-        <div style="font-size:.78rem;font-weight:800;color:#37474F;margin-bottom:6px;">💰 Weight of Money — Betfair Exchange <span style="font-weight:400;color:#90A4AE;">(argent en attente, données retardées)</span></div>
+        <div style="font-size:.78rem;font-weight:800;color:#37474F;margin-bottom:6px;">💰 Weight of Money — Betfair Exchange${d.wom.totalMatched ? ` <span style="font-weight:600;color:#1565C0;">${Math.round(d.wom.totalMatched).toLocaleString('fr-FR')} € matchés</span>` : ''} <span style="font-weight:400;color:#90A4AE;">(données retardées)</span></div>
         ${parts.map(bar).join('')}${signal}
       </div>`;
     }
