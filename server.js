@@ -3498,6 +3498,15 @@ async function bsdFetch(endpoint, retries = 2) {
   }
 }
 
+// Helper BSD Tipsters — POST des mouvements Weight-of-Money → carte Discord #weight-of-money (bd h68q)
+// Réutilise BSD_API_KEY : le token tipsters == le token sports. Host racine = BSD_BASE_URL sans suffixe /api.
+const BSD_ROOT_URL = String(BSD_BASE_URL || '').replace(/\/api\/?$/, '') || 'https://sports.bzzoiro.com';
+async function bsdPostWOM(movements, adUrl) {
+  const body = { movements };
+  if (adUrl) body.ad_url = adUrl;
+  return httpsPost(`${BSD_ROOT_URL}/tipsters/api/wom/`, body, { 'Authorization': `Token ${BSD_API_KEY}` });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // bd c81b — BSD MCP enrichments Foot (A=compare_odds, C=predictions ML, D=polymarket, E=managers)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -30856,6 +30865,63 @@ if (pathname === '/api/v1/discord/tennis-dr/test' && req.method === 'POST') {
     discord: !!DISCORD_TENNIS_MORNING_WEBHOOK_URL,
     message: 'Test DR tennis envoyé',
   });
+}
+
+// POST /api/v1/wom/publish — publie 1..20 mouvements Weight-of-Money → BSD Discord #weight-of-money (admin)
+// Réutilise le token BSD (tipsters). Poste sous notre bannière éditeur (ad_url). Doc : tipsters/api/wom.
+if (pathname === '/api/v1/wom/publish' && req.method === 'POST') {
+  let _isAdmin = false;
+  try { const _tok = (req.headers['authorization'] || '').replace('Bearer ', '').trim(); const _d = jwtVerify(_tok); _isAdmin = _d && _d.role === 'admin'; } catch (_) {}
+  if (!_isAdmin) return jsonResponse(res, 403, { error: 'Admin requis' });
+  if (!BSD_API_KEY) return jsonResponse(res, 503, { error: 'BSD_API_KEY absent du .env' });
+  readBodyLimited(req, 64 * 1024).then(async (raw) => {
+    let payload;
+    try { payload = JSON.parse(raw || '{}'); } catch (_) { return jsonResponse(res, 400, { error: 'JSON invalide' }); }
+    const movements = Array.isArray(payload.movements) ? payload.movements : null;
+    if (!movements || movements.length < 1 || movements.length > 20) {
+      return jsonResponse(res, 400, { error: 'movements requis : tableau de 1 à 20 éléments' });
+    }
+    const adUrl = payload.ad_url != null ? String(payload.ad_url).trim() : '';
+    if (adUrl && !adUrl.startsWith('https://')) {
+      return jsonResponse(res, 400, { error: 'ad_url doit commencer par https://' });
+    }
+    const NUM_FIELDS = ['prob_before', 'prob_after', 'volume_before', 'volume_after', 'volume_total'];
+    const clean = [];
+    for (let i = 0; i < movements.length; i++) {
+      const m = movements[i] || {};
+      const sport = String(m.sport || '').toLowerCase();
+      if (sport !== 'football' && sport !== 'tennis') {
+        return jsonResponse(res, 400, { error: `movements[${i}].sport doit être "football" ou "tennis"` });
+      }
+      const selection = String(m.selection || '').toLowerCase();
+      if (selection !== 'home' && selection !== 'away') {
+        return jsonResponse(res, 400, { error: `movements[${i}].selection doit être "home" ou "away"` });
+      }
+      const bsdId = Number(m.bsd_id);
+      if (!Number.isInteger(bsdId) || bsdId <= 0) {
+        return jsonResponse(res, 400, { error: `movements[${i}].bsd_id doit être un entier positif` });
+      }
+      const out = { sport, bsd_id: bsdId, selection };
+      for (const k of NUM_FIELDS) {
+        const v = Number(m[k]);
+        if (!Number.isFinite(v)) {
+          return jsonResponse(res, 400, { error: `movements[${i}].${k} doit être numérique` });
+        }
+        out[k] = v;
+      }
+      clean.push(out);
+    }
+    try {
+      const r = await bsdPostWOM(clean, adUrl || undefined);
+      if (r.status === 200 || r.status === 201) {
+        return jsonResponse(res, 200, { ok: true, bsd: r.data });
+      }
+      return jsonResponse(res, (r.status >= 400 && r.status < 600) ? r.status : 502, { ok: false, error: 'BSD a refusé la requête', bsd: r.data });
+    } catch (e) {
+      return jsonResponse(res, 502, { ok: false, error: String((e && e.message) || e) });
+    }
+  }).catch((e) => jsonResponse(res, 400, { error: String((e && e.message) || e) }));
+  return;
 }
 
 // GET /api/v1/alerts/history — 10 dernières alertes envoyées
