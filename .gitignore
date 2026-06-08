@@ -84,3 +84,7 @@ data/rg_predictions_*.json
 .debug_*.txt
 .debug_*.log
 .context/_mma_data/
+.gstack/
+
+# Runtime scraped cache (betwatch Betfair WOM — do not redistribute, bd 17y6)
+data/betwatch_wom.json
