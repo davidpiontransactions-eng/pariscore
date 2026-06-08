@@ -1,0 +1,10 @@
+services:
+  scrapy:
+    build: .
+    image: pariscore-scrapy:latest
+    working_dir: /work
+    volumes:
+      - ./project:/work        # your spiders/projects live here, persisted on host
+    # Stateless CLI tool: run on demand, e.g.
+    #   docker compose run --rm scrapy scrapy startproject demo
+    #   docker compose run --rm scrapy scrapy crawl quotes -o out.json

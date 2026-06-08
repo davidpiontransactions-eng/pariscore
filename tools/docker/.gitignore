@@ -1,0 +1,13 @@
+# Cloned upstream repo (re-clone via README — not vendored in git)
+hermes-agent/
+
+# Ollama models + data (multi-GB)
+ollama-data/
+
+# Scrapy runtime artifacts
+scrapy/project/.scrapy/
+scrapy/project/output/
+
+# Secrets / local env
+.env
+*.local.env
