@@ -25,6 +25,13 @@ npm rebuild better-sqlite3
 echo "[6/6] PM2 restart..."
 pm2 restart "$PM2_NAME" --update-env
 
+# [6b] Cron RG découplé — garantir l'enregistrement (cron_restart '0 */2') après
+#      chaque deploy + reboot. startOrRestart = start si absent, restart si présent.
+#      autorestart:false (ecosystem) → "stopped" entre les ticks 2h = normal, pas une panne.
+echo "[6b] Cron RG (pariscore-cron-rg) — réenregistrement + persist..."
+pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env || echo "[6b] startOrRestart cron-rg échec (non bloquant)"
+pm2 save || echo "[6b] pm2 save échec (non bloquant)"
+
 echo ""
 echo "--- VPS mis à jour avec succès ! ---"
 echo "Commit actif : $(git log --oneline -1)"
