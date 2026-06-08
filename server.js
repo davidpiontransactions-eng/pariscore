@@ -10027,11 +10027,17 @@ function loadHistory() {
 }
 
 function saveHistory() {
-  kvSetBatch([
-    ['history_matches', history],
-    ['tennis_history_matches', tennisHistory],
-    ['history_accuracy', accuracy],
-  ]);
+  // Sauvegarde clé par clé : si une valeur dépasse la limite V8 de JSON.stringify
+  // ("Invalid string length"), on isole l'échec (log + taille) sans casser les autres
+  // ni l'appelant (bootInit throwait dessus → serverReady bloqué). Pruning = bd suivi.
+  for (const [k, v] of [['history_matches', history], ['tennis_history_matches', tennisHistory], ['history_accuracy', accuracy]]) {
+    try {
+      kvSet(k, v);
+    } catch (e) {
+      const n = Array.isArray(v) ? v.length : (v && typeof v === 'object' ? Object.keys(v).length : 0);
+      console.error(`  [saveHistory] ⚠ ${k} non sauvegardé (${n} entrées) : ${e.message}`);
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -43432,7 +43438,13 @@ async function bootInit() {
 
     if (typeof syncCacheBuffers === 'function') syncCacheBuffers();
 
+    // Readiness = données coeur chargées (fetchOdds + buffers). Le retro-enrich tennis ci-dessous
+    // est non-critique et throwait "Invalid string length" (saveHistory → JSON.stringify history trop
+    // gros) → bloquait serverReady → ready:false permanent. On flippe AVANT + on garde l'enrich.
+    serverReady = true;
+
     // bd fix — Enrich retroactif tennisHistory: entries sans verified/realResult/p1/p2
+    try {
     if (tennisHistory && tennisHistory.length) {
       let enriched = 0;
       for (const h of tennisHistory) {
@@ -43468,8 +43480,7 @@ async function bootInit() {
         console.log(`  ✓ Historique Tennis retro-enrichi: ${enriched}/${tennisHistory.length} matchs (verified+realResult+p1/p2) — ${withPreds} matchs avec prédictions`);
       }
     }
-
-    serverReady = true;
+    } catch (e) { console.warn('  [Boot] ⚠ retro-enrich tennisHistory (non-bloquant):', e.message); }
 
     // Init WElo Tennis calculator
     try {
