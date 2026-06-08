@@ -10909,6 +10909,9 @@ const I18N = (() => {
       const sel = document.getElementById('ps-lang-select');
       if (sel) sel.value = lang;
       apply();
+      // Re-render dynamic JS content of the active page (epic 0n4x). apply() only
+      // swaps static [data-i18n]; this event lets page modules refresh from cache.
+      try { document.dispatchEvent(new CustomEvent('i18n:changed', { detail: { lang: current } })); } catch(_) {}
     } catch(e) {
       if (lang !== 'fr') { console.warn('[i18n] fallback fr:', e.message); load('fr'); }
     }
@@ -10937,6 +10940,125 @@ const I18N = (() => {
   load(SUPPORTED.includes(detected) ? detected : 'fr');
 
   return { t: t, load: load, apply: apply, current: function() { return current; }, SUPPORTED: SUPPORTED };
+})();
+</script>
+
+<script>
+/* ── i18n RUNTIME OVERLAY (interim, epic 0n4x) ───────────────────────────────
+   Translates rendered DOM text + tooltip attrs (title/placeholder/aria-label)
+   from FR to the active language using the locale dicts, until per-key source
+   wraps are applied. Covers static HTML AND JS-rendered content (match cards,
+   modals, etc.) via a MutationObserver. Pure read+swap of DOM text — touches no
+   logic, no template literals. Language switch reloads to a clean FR baseline,
+   then the overlay re-applies, so FR⇄EN is always consistent. Remove once the
+   full per-key wrap pass lands. */
+function psSetLang(v) {
+  try { localStorage.setItem('ps_lang', v); } catch (_) {}
+  try { document.documentElement.lang = v; } catch (_) {}
+  location.reload();
+}
+(function () {
+  var SUPPORTED = ['fr','en','es','de','it','pt','nl'];
+  var ATTRS = ['title','placeholder','aria-label'];
+  var SKIP = { SCRIPT:1, STYLE:1, TEXTAREA:1, NOSCRIPT:1, CODE:1, PRE:1, OPTION:1, SELECT:1 };
+  var _map = null, _active = false, _obs = null, _pending = false, _queue = [];
+
+  function _lang() {
+    try { var s = localStorage.getItem('ps_lang'); if (s) return s; } catch (_) {}
+    return (navigator.language || 'fr').slice(0, 2);
+  }
+  function _eligible(t) {
+    if (!t || t.length < 3) return false;       // skip tiny / ambiguous tokens
+    if (!/[A-Za-zÀ-ÿ]/.test(t)) return false;   // need a letter (skip pure numbers/symbols)
+    return true;
+  }
+  async function _build(lang) {
+    var m = {};
+    try {
+      var fr = await fetch('/locales/fr.json').then(function (r) { return r.json(); });
+      var tg = await fetch('/locales/' + lang + '.json').then(function (r) { return r.json(); });
+      for (var k in fr) {
+        var f = (fr[k] || '').trim(), e = (tg[k] || '').trim();
+        if (f && e && f !== e && _eligible(f)) m[f] = e;
+      }
+    } catch (err) { console.warn('[i18n-overlay] map load failed:', err && err.message); }
+    return m;
+  }
+  function _txt(tn) {
+    var raw = tn.nodeValue; if (!raw) return;
+    var key = raw.trim(); if (!key) return;
+    var tr = _map[key]; if (tr === undefined) return;
+    tn.nodeValue = raw.replace(key, tr);        // literal string replace, preserves whitespace
+  }
+  function _attrs(el) {
+    if (!el || el.nodeType !== 1 || !el.hasAttribute) return;
+    for (var i = 0; i < ATTRS.length; i++) {
+      var a = ATTRS[i];
+      if (!el.hasAttribute(a)) continue;
+      var v = el.getAttribute(a), key = (v || '').trim(); if (!key) continue;
+      var tr = _map[key]; if (tr === undefined) continue;
+      el.setAttribute(a, v.replace(key, tr));
+    }
+  }
+  function _walk(root) {
+    if (!_map || !root) return;
+    if (root.nodeType === 1) {
+      _attrs(root);
+      if (root.querySelectorAll) {
+        var els = root.querySelectorAll('[title],[placeholder],[aria-label]');
+        for (var j = 0; j < els.length; j++) _attrs(els[j]);
+      }
+    }
+    var sr = (root.nodeType === 1 || root.nodeType === 9) ? root : root.parentNode;
+    if (!sr || !sr.nodeType) return;
+    var w = document.createTreeWalker(sr, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        var p = n.parentNode;
+        if (!p || SKIP[p.nodeName]) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var batch = [], n;
+    while ((n = w.nextNode())) batch.push(n);
+    for (var i = 0; i < batch.length; i++) _txt(batch[i]);
+  }
+  function _flush() {
+    _pending = false;
+    var q = _queue; _queue = [];
+    for (var i = 0; i < q.length; i++) _walk(q[i]);
+  }
+  function _observe() {
+    if (_obs || !document.body) return;
+    _obs = new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          var nd = added[j];
+          if (nd.nodeType === 1 || nd.nodeType === 3) _queue.push(nd);
+        }
+      }
+      if (!_pending && _queue.length) {
+        _pending = true;
+        if (window.requestAnimationFrame) requestAnimationFrame(_flush); else setTimeout(_flush, 16);
+      }
+    });
+    // childList+subtree only (NOT characterData) → our text swaps never re-trigger us.
+    _obs.observe(document.body, { childList: true, subtree: true });
+  }
+  async function activate() {
+    if (_active) return;
+    var lang = _lang();
+    if (!lang || lang === 'fr' || SUPPORTED.indexOf(lang) === -1) return;
+    _active = true;
+    _map = await _build(lang);
+    if (!_map || !Object.keys(_map).length) { _active = false; return; }
+    if (document.body) { _walk(document.body); _observe(); }
+    else document.addEventListener('DOMContentLoaded', function () { _walk(document.body); _observe(); });
+  }
+  // Idempotent: react to I18N boot event AND self-init (whichever happens first).
+  document.addEventListener('i18n:changed', activate);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', activate);
+  else activate();
 })();
 </script>
 
@@ -11012,7 +11134,7 @@ const I18N = (() => {
   <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
   <div class="nav-right">
     <div class="live-pill"><div class="live-dot"></div>LIVE</div>
-    <select id="ps-lang-select" onchange="I18N.load(this.value)" title="Langue / Language" style="font-size:11px;background:var(--bg3,#0e1525);color:var(--text2,#94a3b8);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:6px;padding:4px 7px;cursor:pointer;outline:none;font-family:var(--font-mono,'DM Mono',monospace);letter-spacing:.04em;transition:border-color .15s;">
+    <select id="ps-lang-select" onchange="psSetLang(this.value)" title="Langue / Language" style="font-size:11px;background:var(--bg3,#0e1525);color:var(--text2,#94a3b8);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:6px;padding:4px 7px;cursor:pointer;outline:none;font-family:var(--font-mono,'DM Mono',monospace);letter-spacing:.04em;transition:border-color .15s;">
       <option value="fr">🇫🇷 FR</option>
       <option value="en">🇬🇧 EN</option>
       <option value="es">🇪🇸 ES</option>
