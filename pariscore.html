@@ -14398,7 +14398,48 @@ function psSetLang(v) {
   .tn-pro-footer{margin-top:14px;padding:10px 4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3,#64748b);letter-spacing:.4px;text-align:center;border-top:1px solid var(--border,rgba(255,255,255,.08));}
   @media(max-width:720px){.tn-pro-grid{grid-template-columns:1fr;}.tn-pro-card{transform:none;}.tn-pro-card:hover{transform:translateY(-2px);}.tn-pro-title{font-size:22px;}}
 
+  /* ── Tennis WOM Top-5 (Argent Betfair via betwatch) — bd ab6s ── */
+  .tn-wom-section{padding:0 2px;margin-bottom:24px;min-width:0;}
+  .tn-wom-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .tn-wom-title{font-size:16px;font-weight:800;letter-spacing:.2px;color:var(--text,#e8eaed);margin:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .tn-wom-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3,#64748b);font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+  .tn-wom-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#64748b);white-space:nowrap;}
+  .tn-wom-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tn-wom-col{background:var(--bg3,#181c20);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:12px;padding:12px 12px 8px;min-width:0;}
+  .tn-wom-col-h{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;color:var(--text2,#94a3b8);}
+  .tn-wom-col-h .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
+  .tn-wom-row{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px solid var(--border,rgba(255,255,255,.06));min-width:0;}
+  .tn-wom-row:last-child{border-bottom:none;}
+  .tn-wom-rank{flex:0 0 auto;width:18px;height:18px;border-radius:5px;font-family:'DM Mono',monospace;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;background:rgba(56,189,248,.14);color:var(--cf-cyan,#38bdf8);}
+  .tn-wom-main{flex:1 1 auto;min-width:0;}
+  .tn-wom-names{font-size:12px;font-weight:600;color:var(--text,#e8eaed);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tn-wom-meta{font-size:9px;color:var(--text3,#64748b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+  .tn-wom-mkt{font-family:'DM Mono',monospace;font-size:8px;color:var(--cf-amber,#fbbf24);}
+  .tn-wom-amt{flex:0 0 auto;text-align:right;font-family:'DM Mono',monospace;font-weight:800;font-size:12px;color:var(--cf-emerald,#34d399);line-height:1.15;}
+  .tn-wom-amt small{display:block;font-size:8px;font-weight:600;color:var(--text3,#64748b);letter-spacing:.3px;}
+  .tn-wom-empty{padding:14px 6px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);}
+  @media(max-width:720px){.tn-wom-grid{grid-template-columns:1fr;}}
+
   </style>
+
+  <section class="section fade-up tn-wom-section" id="tn-wom-section" style="display:none;">
+    <div class="tn-wom-header">
+      <h3 class="tn-wom-title">💰 Top 5 Argent Betfair
+        <span class="tn-wom-sub">volume misé · marché principal</span>
+      </h3>
+      <span class="tn-wom-status" id="tn-wom-status"></span>
+    </div>
+    <div class="tn-wom-grid">
+      <div class="tn-wom-col">
+        <div class="tn-wom-col-h"><span class="dot" style="background:var(--cf-cyan,#38bdf8);"></span>Prématch</div>
+        <div id="tn-wom-prematch"></div>
+      </div>
+      <div class="tn-wom-col">
+        <div class="tn-wom-col-h"><span class="dot" style="background:#ef4444;"></span>Live</div>
+        <div id="tn-wom-live"></div>
+      </div>
+    </div>
+  </section>
 
   <section id="tn-top10-section">
     <div class="tn-top10-header">
