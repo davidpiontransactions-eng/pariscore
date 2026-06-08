@@ -33,6 +33,7 @@ const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momen
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
+const betfair = require('./betfairService'); // bd 17y6 — Betfair Exchange WOM (sharp, inerte sans BETFAIR_* .env)
 const cs2Service        = require('./services/cs2Service');        // CS2/CSGO BSD addon + HLTV rankings
 const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
@@ -34292,6 +34293,27 @@ if (pathname.startsWith('/api/v1/tennis/match/') && pathname.endsWith('/odds') &
   });
 }
 
+// GET /api/v1/tennis/wom?p1=&p2=&date=&id= — Betfair Exchange WOM tennis (sharp, inerte sans BETFAIR_*) — bd 17y6
+// Le frontend tennis connaît déjà les noms joueurs → les passe ici (l'endpoint odds n'a que des IDs).
+if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
+  if (!betfair.enabled()) return jsonResponse(res, 200, { source: 'betfair', available: false, reason: 'disabled', wom: null });
+  const p1 = String(query.p1 || '').trim();
+  const p2 = String(query.p2 || '').trim();
+  if (!p1 || !p2) return jsonResponse(res, 400, { error: 'p1_p2_required' });
+  const m = {
+    id: String(query.id || ('t_' + p1 + '_' + p2)).slice(0, 80),
+    sport: 'tennis', is_tennis: true,
+    home_team: p1, away_team: p2,
+    commence_time: query.date || query.commence_time || null,
+  };
+  try {
+    const d = await betfair.fetchMatchWOM(m);
+    return jsonResponse(res, 200, { source: 'betfair', available: !!d, wom: d });
+  } catch (e) {
+    return jsonResponse(res, 200, { source: 'betfair', available: false, error: String(e && e.message || e), wom: null });
+  }
+}
+
 // GET /api/v1/tennis/players/search?q=<name> — resolve player name → profile + ranking
 if (pathname === '/api/v1/tennis/players/search' && req.method === 'GET') {
   const q = String(query.q || '').trim();
@@ -38613,6 +38635,19 @@ if (comparateurMatch && req.method === 'GET') {
     } catch (e) { console.warn('[OddsPapi] enrich skip — ' + e.message); }
   }
 
+  // ── Enrichissement Betfair Exchange WOM (sharp, best-effort, inerte sans .env) ──
+  // bd 17y6. Foot : injecte le prix exchange (mid back/lay) comme row haut-poids
+  // ('betfairexchange' → getBookWeight≈3.5) → ancre low-vig dans le WFV ci-dessous.
+  // Tennis : fetchMatchRows renvoie [] ; le WOM est exposé via `betfairWom`.
+  let betfairWom = null;
+  if (betfair.enabled()) {
+    try {
+      betfairWom = await betfair.fetchMatchWOM(match);
+      const exRows = await betfair.fetchMatchRows(match);
+      if (exRows.length) rows = betfair.mergeRows(rows.filter(r => !r._fallback), exRows);
+    } catch (e) { console.warn('[Betfair] enrich skip — ' + e.message); }
+  }
+
   // ── Weighted Fair Value (WFV) — moyenne pondérée no-vig par book ──────────
   function computeWFV1N2(bkRows) {
     let sw = 0, sh = 0, sd = 0, sa = 0;
@@ -38729,6 +38764,7 @@ if (comparateurMatch && req.method === 'GET') {
     wfv,
     ic,
     surebet,
+    wom: betfairWom,
     oddsHistory,
     market: marketParam,
     source: rows.length ? (rows[0]?._fallback ? 'fallback' : 'db') : 'empty',

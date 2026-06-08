@@ -24729,6 +24729,44 @@ function renderComparateur(d) {
   }
   const surebetBadge = surebet != null ? `<span class="comp-surebet-badge" title="Arbitrage détecté — couverture rentable">ARBI +${safeFixed(surebet, 2)}%</span>` : '';
 
+  // ── WOM badge + panel (Betfair Exchange — argent sharp, données retardées) ──
+  // bd 17y6. d.wom = { wom:{home,draw,away}% argent qui BACK chaque issue, ... }.
+  // Null tant que BETFAIR_* .env absent → rien ne s'affiche (zéro impact).
+  let womBadge = '', womPanel = '';
+  if (d.wom && d.wom.wom) {
+    const w = d.wom.wom;
+    const parts = [
+      { k: 'home', lbl: home_team, v: w.home },
+      { k: 'draw', lbl: 'Nul',     v: w.draw },
+      { k: 'away', lbl: away_team, v: w.away },
+    ].filter(p => p.v != null);
+    if (parts.length) {
+      const top = parts.slice().sort((a, b) => b.v - a.v)[0];
+      const topLbl = top.lbl.length > 14 ? top.lbl.slice(0, 12) + '…' : top.lbl;
+      womBadge = `<span class="comp-ic-badge comp-ic-mid" title="Weight of Money Betfair Exchange — part de l'argent en attente sur chaque issue (signal sharp, données retardées)">💰 WOM ${topLbl} ${safeFixed(top.v, 0)}%</span>`;
+      const colOf = k => k === 'home' ? '#1565C0' : k === 'away' ? '#C62828' : '#757575';
+      const bar = p => {
+        const pct = Math.max(0, Math.min(100, p.v)), col = colOf(p.k);
+        return `<div style="margin:4px 0;">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;color:#555;margin-bottom:2px;"><span>${p.lbl}</span><span style="font-weight:700;color:${col};">${safeFixed(p.v, 0)}%</span></div>
+          <div style="height:7px;background:#e9eef3;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${col};"></div></div>
+        </div>`;
+      };
+      let signal = '';
+      if (wfv) {
+        const wfvBest = [['home', wfv.home], ['draw', wfv.draw], ['away', wfv.away]].filter(x => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
+        if (wfvBest) {
+          const agree = wfvBest[0] === top.k;
+          signal = `<div style="font-size:.74rem;margin-top:6px;padding:5px 8px;border-radius:5px;background:${agree ? '#E8F5E9' : '#FFF3E0'};color:${agree ? '#1B5E20' : '#E65100'};">${agree ? '✓ L\'argent Betfair confirme le favori du marché.' : '⚠ L\'argent Betfair penche ailleurs que le favori du marché — prudence.'}</div>`;
+        }
+      }
+      womPanel = `<div style="background:#fff;border:1px solid #e3e8ee;border-radius:8px;padding:10px 14px;margin:8px 0;">
+        <div style="font-size:.78rem;font-weight:800;color:#37474F;margin-bottom:6px;">💰 Weight of Money — Betfair Exchange <span style="font-weight:400;color:#90A4AE;">(argent en attente, données retardées)</span></div>
+        ${parts.map(bar).join('')}${signal}
+      </div>`;
+    }
+  }
+
   // ── Market sections ──
   function buildOUSection(lineStr, ovField, unField, payField, probField) {
     const bestOv = Math.max(...rows.map(r => r[ovField] || 0));
@@ -24916,8 +24954,9 @@ function renderComparateur(d) {
         <div class="comp-header-title">${home_team} vs ${away_team}</div>
         <div class="comp-meta">${league} · ${dateStr} à ${timeStr}</div>
       </div>
-      <div class="comp-header-badges">${icBadge}${surebetBadge}</div>
+      <div class="comp-header-badges">${icBadge}${surebetBadge}${womBadge}</div>
     </div>
+    ${womPanel}
     <div style="overflow-x:auto;">
     <table class="comp-table">
       <thead>${thead}</thead>
