@@ -3507,6 +3507,99 @@ async function bsdPostWOM(movements, adUrl) {
   return httpsPost(`${BSD_ROOT_URL}/tipsters/api/wom/`, body, { 'Authorization': `Token ${BSD_API_KEY}` });
 }
 
+// ─── WOM auto-publish (bd h68q) ───────────────────────────────────────────────
+// Cron : détecte un mouvement d'argent Betfair sur un match prematch (provider WOM local
+// = womLocal, même source que le panneau WOM), puis publie une carte → Discord BSD
+// #weight-of-money via bsdPostWOM. bsd_id = match._bsd_event_id. Football uniquement
+// (le split money tennis est paywallé). Tout off si WOM_AUTOPUBLISH=false ou provider absent.
+// Seuils conservateurs + dédup + cap quotidien = anti-spam (poste sous notre bannière éditeur).
+const WOM_AP_ENABLED      = process.env.WOM_AUTOPUBLISH !== 'false';
+const WOM_AP_PROB_DELTA   = Math.max(1, parseFloat(process.env.WOM_AP_PROB_DELTA || '12'));    // Δ WoM% (points)
+const WOM_AP_VOL_MIN      = Math.max(0, parseFloat(process.env.WOM_AP_VOL_MIN || '8000'));      // € totalMatched min
+const WOM_AP_INTERVAL_MIN = Math.max(5, parseInt(process.env.WOM_AP_INTERVAL_MIN || '30', 10));
+const WOM_AP_DAILY_CAP    = Math.max(1, parseInt(process.env.WOM_AP_DAILY_CAP || '8', 10));
+const WOM_AP_COOLDOWN_H   = Math.max(1, parseInt(process.env.WOM_AP_COOLDOWN_H || '24', 10));
+const WOM_AP_SPORTS       = String(process.env.WOM_AP_SPORTS || 'football').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const WOM_AP_AD_URL       = (() => { const u = String(process.env.WOM_AP_AD_URL || 'https://pariscore.fr/').trim(); return u.startsWith('https://') ? u : 'https://pariscore.fr/'; })();
+const _womApPrev = new Map(); // bsd_id → { wom:{home,away}, money:{home,away}, total } — snapshot précédent
+
+function _womProviderOn() { return !!(womLocal && womLocal.enabled && womLocal.enabled()); }
+
+// Diffe le snapshot WOM courant vs précédent (football, db.matches). Met à jour la baseline et
+// retourne les mouvements qualifiants { sport, bsd_id, selection, prob_before/after, volume_*}.
+function _womDetectMovements() {
+  const out = [];
+  if (!WOM_AP_SPORTS.includes('football') || !_womProviderOn()) return out;
+  const now = Date.now();
+  const matches = (db && Array.isArray(db.matches)) ? db.matches : [];
+  const fin = (v) => { const n = Number(v); return Number.isFinite(n) ? n : NaN; };
+  for (const m of matches) {
+    if (!m || m.live) continue;
+    const bsdId = Number(m._bsd_event_id);
+    if (!Number.isInteger(bsdId) || bsdId <= 0) continue;
+    const ct = m.commence_time ? Date.parse(m.commence_time) : null;
+    if (ct && ct <= now) continue; // la WOM API exige un match futur
+    let d = null;
+    try { d = womLocal.fetchMatchWOM(m); } catch (_) { d = null; }
+    if (!d || !d.wom || !d.money) continue;
+    const cur = {
+      wom:   { home: fin(d.wom.home),   away: fin(d.wom.away) },
+      money: { home: fin(d.money.home), away: fin(d.money.away) },
+      total: fin(d.totalMatched),
+    };
+    const key = String(bsdId);
+    const prev = _womApPrev.get(key);
+    _womApPrev.set(key, cur);
+    if (!prev || !(cur.total >= WOM_AP_VOL_MIN)) continue;
+    let best = null;
+    for (const side of ['home', 'away']) {
+      const pb = prev.wom[side], pa = cur.wom[side], vb = prev.money[side], va = cur.money[side];
+      if (![pb, pa, vb, va].every(Number.isFinite)) continue;
+      const dProb = pa - pb;
+      if (dProb >= WOM_AP_PROB_DELTA && (!best || dProb > best.dProb)) best = { side, dProb, pb, pa, vb, va };
+    }
+    if (!best) continue;
+    out.push({
+      sport: 'football', bsd_id: bsdId, selection: best.side,
+      prob_before: Math.round(best.pb * 10) / 10, prob_after: Math.round(best.pa * 10) / 10,
+      volume_before: Math.round(best.vb), volume_after: Math.round(best.va),
+      volume_total: Math.round(cur.total),
+    });
+  }
+  out.sort((a, b) => (b.prob_after - b.prob_before) - (a.prob_after - a.prob_before));
+  return out;
+}
+
+// Tick cron : cap quotidien + dédup (cooldown par match), poste le batch (≤20) → Discord BSD.
+async function _runWomAutoPublish() {
+  if (!WOM_AP_ENABLED || !BSD_API_KEY || !_womProviderOn()) return;
+  const today = new Date().toISOString().slice(0, 10);
+  let st = kvGet('wom_ap_state') || { day: today, count: 0, published: {} };
+  if (st.day !== today) st = { day: today, count: 0, published: st.published || {} };
+  const now = Date.now(), coolMs = WOM_AP_COOLDOWN_H * 3600 * 1000;
+  for (const k of Object.keys(st.published)) { if (now - st.published[k] > coolMs) delete st.published[k]; }
+  if (st.count >= WOM_AP_DAILY_CAP) { kvSet('wom_ap_state', st); return; }
+  const movements = _womDetectMovements();
+  const fresh = [];
+  for (const mv of movements) {
+    if (st.published[String(mv.bsd_id)]) continue;
+    if (st.count + fresh.length >= WOM_AP_DAILY_CAP || fresh.length >= 20) break;
+    fresh.push(mv);
+  }
+  if (!fresh.length) { kvSet('wom_ap_state', st); return; }
+  try {
+    const r = await bsdPostWOM(fresh, WOM_AP_AD_URL);
+    if (r.status === 200 || r.status === 201) {
+      for (const mv of fresh) st.published[String(mv.bsd_id)] = now;
+      st.count += fresh.length;
+      console.log(`  [WOM:AutoPublish] ${fresh.length} mouvement(s) postés → Discord BSD (batch ${r.data && r.data.batch_id}, jour ${st.count}/${WOM_AP_DAILY_CAP})`);
+    } else {
+      console.warn(`  [WOM:AutoPublish] BSD refus ${r.status}: ${JSON.stringify(r.data).slice(0, 200)}`);
+    }
+  } catch (e) { console.warn('  [WOM:AutoPublish]', e.message); }
+  kvSet('wom_ap_state', st);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // bd c81b — BSD MCP enrichments Foot (A=compare_odds, C=predictions ML, D=polymarket, E=managers)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -43630,6 +43723,18 @@ setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.mess
 setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+
+// bd h68q — WOM auto-publish : mouvement d'argent Betfair (provider WOM local) → carte Discord BSD #weight-of-money
+if (WOM_AP_ENABLED) {
+  setTimeout(() => {
+    // 1er tick = pose la baseline (prev vide → 0 post) ; les mouvements sortent dès le 2e tick
+    _runWomAutoPublish().catch(e => console.warn('[WOM:AutoPublish]', e.message));
+    setInterval(() => _runWomAutoPublish().catch(e => console.warn('[WOM:AutoPublish]', e.message)), WOM_AP_INTERVAL_MIN * 60 * 1000);
+  }, 2 * 60 * 1000);
+  console.log(`  [WOM:AutoPublish] activé — Δ≥${WOM_AP_PROB_DELTA}pts · vol≥${WOM_AP_VOL_MIN}€ · ${WOM_AP_INTERVAL_MIN}min · cap ${WOM_AP_DAILY_CAP}/j · sports ${WOM_AP_SPORTS.join(',')} · provider ${_womProviderOn() ? 'on' : 'absent'}`);
+} else {
+  console.log('  [WOM:AutoPublish] désactivé (WOM_AUTOPUBLISH=false)');
+}
 
 // Prewarm the upcoming MMA card's fighter photos into api_cache so the first
 // frontend load is instant (resolves the same cascade the photo route uses).
