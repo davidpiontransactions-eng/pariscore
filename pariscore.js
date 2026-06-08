@@ -779,6 +779,22 @@ function showPage(pageId, linkEl) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ─── i18n re-render on language switch (epic 0n4x) ───────────────────────────
+// I18N.apply() updates static [data-i18n] elements; this re-renders the active
+// page's dynamic JS content from CACHED data (no refetch, no double-init of
+// polls/intervals). Guarded so a missing fn or absent data never breaks the UI.
+// Per-page cases are added as each module is wired during the i18n rollout.
+document.addEventListener('i18n:changed', function () {
+  try {
+    var pg = (document.body && document.body.dataset) ? document.body.dataset.page : null;
+    if (pg === 'matchs' && typeof renderMatches === 'function' && typeof allMatches !== 'undefined' && allMatches) {
+      renderMatches(allMatches);
+    }
+    // Other pages: static [data-i18n] already refreshed by I18N.apply(); dynamic
+    // content refreshes on next poll. Add page cases here during rollout (0n4x).
+  } catch (e) { /* never break UI on language switch */ }
+});
+
 // ─── F1 vertical (Jolpica-Ergast + ESPN — Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp ───
 var _f1Poll = null;
 function _f1Esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
