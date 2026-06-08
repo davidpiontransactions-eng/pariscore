@@ -1,0 +1,39 @@
+# Hermes Agent (NousResearch) — Windows Docker Desktop.
+# Reuses the HOST-installed Ollama (port 11434, already has models incl. hermes3:latest)
+# via host.docker.internal — no bundled ollama container, no model pull, zero API key.
+# Model config: %USERPROFILE%\.hermes\config.yaml (mounted to /opt/data).
+#
+# Usage (see tools/docker/README.md):
+#   docker compose up -d
+#   open http://127.0.0.1:9119   (dashboard)
+services:
+  gateway:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach the host's Ollama on :11434
+    volumes:
+      - ${USERPROFILE}/.hermes:/opt/data
+    environment:
+      - HERMES_UID=10000
+      - HERMES_GID=10000
+    command: ["gateway", "run"]
+
+  dashboard:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes-dashboard
+    restart: unless-stopped
+    depends_on:
+      - gateway
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${USERPROFILE}/.hermes:/opt/data
+    environment:
+      - HERMES_UID=10000
+      - HERMES_GID=10000
+      - HERMES_DASHBOARD_HOST=0.0.0.0
+    ports:
+      - "127.0.0.1:9119:9119"
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "9119", "--no-open", "--insecure"]
