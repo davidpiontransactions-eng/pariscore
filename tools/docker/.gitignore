@@ -4,9 +4,11 @@ hermes-agent/
 # Ollama models + data (multi-GB)
 ollama-data/
 
-# Scrapy runtime artifacts
+# Scrapy runtime artifacts (keep spider code, ignore caches + scraped output)
 scrapy/project/.scrapy/
+scrapy/project/**/.scrapy/
 scrapy/project/output/
+scrapy/project/**/output/
 
 # Secrets / local env
 .env
