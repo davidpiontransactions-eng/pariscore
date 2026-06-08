@@ -3519,7 +3519,7 @@ const WOM_AP_VOL_MIN      = Math.max(0, parseFloat(process.env.WOM_AP_VOL_MIN ||
 const WOM_AP_INTERVAL_MIN = Math.max(5, parseInt(process.env.WOM_AP_INTERVAL_MIN || '10', 10));
 const WOM_AP_DAILY_CAP    = Math.max(1, parseInt(process.env.WOM_AP_DAILY_CAP || '8', 10));
 const WOM_AP_COOLDOWN_H   = Math.max(1, parseInt(process.env.WOM_AP_COOLDOWN_H || '24', 10));
-const WOM_AP_SPORTS       = String(process.env.WOM_AP_SPORTS || 'football').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const WOM_AP_SPORTS       = String(process.env.WOM_AP_SPORTS || 'football').split('#')[0].split(',').map(s => s.trim().toLowerCase()).filter(Boolean); // split('#') : tolère un commentaire inline .env
 const WOM_AP_AD_URL       = (() => { const u = String(process.env.WOM_AP_AD_URL || 'https://pariscore.fr/').trim(); return u.startsWith('https://') ? u : 'https://pariscore.fr/'; })();
 const _womApPrev = new Map(); // bsd_id → { wom:{home,away}, money:{home,away}, total } — snapshot précédent
 
@@ -3529,7 +3529,8 @@ function _womProviderOn() { return !!(womLocal && womLocal.enabled && womLocal.e
 // retourne les mouvements qualifiants { sport, bsd_id, selection, prob_before/after, volume_*}.
 function _womDetectMovements() {
   const out = [];
-  if (!WOM_AP_SPORTS.includes('football') || !_womProviderOn()) return out;
+  let scanned = 0, withWom = 0;
+  if (!WOM_AP_SPORTS.includes('football') || !_womProviderOn()) return { movements: out, scanned, withWom };
   const now = Date.now();
   const matches = (db && Array.isArray(db.matches)) ? db.matches : [];
   const fin = (v) => { const n = Number(v); return Number.isFinite(n) ? n : NaN; };
@@ -3539,9 +3540,11 @@ function _womDetectMovements() {
     if (!Number.isInteger(bsdId) || bsdId <= 0) continue;
     const ct = m.commence_time ? Date.parse(m.commence_time) : null;
     if (ct && ct <= now) continue; // la WOM API exige un match futur
+    scanned++;
     let d = null;
     try { d = womLocal.fetchMatchWOM(m); } catch (_) { d = null; }
     if (!d || !d.wom || !d.money) continue;
+    withWom++;
     const cur = {
       wom:   { home: fin(d.wom.home),   away: fin(d.wom.away) },
       money: { home: fin(d.money.home), away: fin(d.money.away) },
@@ -3567,7 +3570,7 @@ function _womDetectMovements() {
     });
   }
   out.sort((a, b) => (b.prob_after - b.prob_before) - (a.prob_after - a.prob_before));
-  return out;
+  return { movements: out, scanned, withWom };
 }
 
 // Tick cron : cap quotidien + dédup (cooldown par match), poste le batch (≤20) → Discord BSD.
@@ -3578,14 +3581,15 @@ async function _runWomAutoPublish() {
   if (st.day !== today) st = { day: today, count: 0, published: st.published || {} };
   const now = Date.now(), coolMs = WOM_AP_COOLDOWN_H * 3600 * 1000;
   for (const k of Object.keys(st.published)) { if (now - st.published[k] > coolMs) delete st.published[k]; }
-  if (st.count >= WOM_AP_DAILY_CAP) { kvSet('wom_ap_state', st); return; }
-  const movements = _womDetectMovements();
+  if (st.count >= WOM_AP_DAILY_CAP) { console.log(`  [WOM:AutoPublish] tick: cap quotidien atteint (${st.count}/${WOM_AP_DAILY_CAP}) — skip`); kvSet('wom_ap_state', st); return; }
+  const { movements, scanned, withWom } = _womDetectMovements();
   const fresh = [];
   for (const mv of movements) {
     if (st.published[String(mv.bsd_id)]) continue;
     if (st.count + fresh.length >= WOM_AP_DAILY_CAP || fresh.length >= 20) break;
     fresh.push(mv);
   }
+  console.log(`  [WOM:AutoPublish] tick: ${scanned} foot · ${withWom} avec WOM · ${movements.length} candidat(s) ≥${WOM_AP_PROB_DELTA}pts · ${fresh.length} à poster (jour ${st.count}/${WOM_AP_DAILY_CAP})`);
   if (!fresh.length) { kvSet('wom_ap_state', st); return; }
   try {
     const r = await bsdPostWOM(fresh, WOM_AP_AD_URL);
