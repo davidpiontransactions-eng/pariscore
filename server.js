@@ -33,7 +33,8 @@ const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momen
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
-const betfair = require('./betfairService'); // bd 17y6 — Betfair Exchange WOM (sharp, inerte sans BETFAIR_* .env)
+const betfair = require('./betfairService'); // bd 17y6 — Betfair Exchange WOM via API (inerte sans BETFAIR_* .env ; geo-bloqué FR)
+const betwatch = require('./betwatchService'); // bd 17y6 — Betfair WOM via cache betwatch.fr (scraper tools/scrape-betwatch-wom.js)
 const cs2Service        = require('./services/cs2Service');        // CS2/CSGO BSD addon + HLTV rankings
 const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
@@ -38640,7 +38641,15 @@ if (comparateurMatch && req.method === 'GET') {
   // ('betfairexchange' → getBookWeight≈3.5) → ancre low-vig dans le WFV ci-dessous.
   // Tennis : fetchMatchRows renvoie [] ; le WOM est exposé via `betfairWom`.
   let betfairWom = null;
-  if (betfair.enabled()) {
+  if (betwatch.enabled()) {
+    // Primaire : WOM Betfair via cache betwatch.fr (foot, sans compte, FR-accessible)
+    try {
+      betfairWom = betwatch.fetchMatchWOM(match);
+      const exRows = betwatch.fetchMatchRows(match);
+      if (exRows.length) rows = betwatch.mergeRows(rows.filter(r => !r._fallback), exRows);
+    } catch (e) { console.warn('[betwatch] enrich skip — ' + e.message); }
+  } else if (betfair.enabled()) {
+    // Fallback : API Betfair directe (nécessite egress non-FR + BETFAIR_* .env)
     try {
       betfairWom = await betfair.fetchMatchWOM(match);
       const exRows = await betfair.fetchMatchRows(match);
