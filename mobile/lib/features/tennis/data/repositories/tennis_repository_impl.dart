@@ -8,9 +8,9 @@ import '../../domain/repositories/tennis_repository.dart';
 import '../datasources/tennis_remote_datasource.dart';
 
 class TennisRepositoryImpl implements TennisRepository {
-  final TennisRemoteDataSource _remote;
-
   const TennisRepositoryImpl(this._remote);
+
+  final TennisRemoteDataSource _remote;
 
   @override
   Future<Either<Failure, List<TennisMatch>>> getLiveMatches() async {

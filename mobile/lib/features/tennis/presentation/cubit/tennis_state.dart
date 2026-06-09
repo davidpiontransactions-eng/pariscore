@@ -16,9 +16,9 @@ class TennisLoading extends TennisState {
 }
 
 class TennisLoaded extends TennisState {
-  final List<TennisMatch> matches;
-
   const TennisLoaded(this.matches);
+
+  final List<TennisMatch> matches;
 
   List<TennisMatch> get live =>
       matches.where((m) => m.isLive).toList();
@@ -30,9 +30,9 @@ class TennisLoaded extends TennisState {
 }
 
 class TennisError extends TennisState {
-  final String message;
-
   const TennisError(this.message);
+
+  final String message;
 
   @override
   List<Object> get props => [message];
