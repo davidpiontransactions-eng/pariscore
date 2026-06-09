@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,8 +9,29 @@ import '../../../../injection_container.dart';
 import '../cubit/tennis_cubit.dart';
 import '../widgets/tennis_match_card.dart';
 
-class TennisPage extends StatelessWidget {
+class TennisPage extends StatefulWidget {
   const TennisPage({super.key});
+
+  @override
+  State<TennisPage> createState() => _TennisPageState();
+}
+
+class _TennisPageState extends State<TennisPage> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      sl<TennisCubit>().loadMatches();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +60,7 @@ class _TennisView extends StatelessWidget {
       body: BlocBuilder<TennisCubit, TennisState>(
         builder: (context, state) {
           return switch (state) {
-            TennisLoading() => Center(
+            TennisLoading() => const Center(
                 child: CircularProgressIndicator(color: AppColors.blue),
               ),
             TennisError(:final message) => Center(
@@ -45,7 +68,7 @@ class _TennisView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.wifi_off_outlined,
-                        size: 48, color: AppColors.text3),
+                        size: 48, color: AppColors.text3,),
                     const SizedBox(height: 12),
                     Text(message, style: AppTextStyles.bodyMedium),
                     TextButton(
@@ -70,10 +93,10 @@ class _TennisView extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(Icons.sports_tennis_outlined,
-                                    size: 48, color: AppColors.text3),
+                                    size: 48, color: AppColors.text3,),
                                 const SizedBox(height: 12),
                                 Text('Aucun match en cours',
-                                    style: AppTextStyles.bodyMedium),
+                                    style: AppTextStyles.bodyMedium,),
                               ],
                             ),
                           ),

@@ -1,0 +1,1208 @@
+{
+  "strings": [
+    {
+      "fr": "Roland Garros — Tableau Final",
+      "key": "rg.hero_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "loading=\"eager\" />Roland Garros — Tableau Final</h1>"
+    },
+    {
+      "fr": "Bracket interactif · Clay Elo interne PariScore · Modèle Prédictif (10 000 simulations) · Terre battue Paris",
+      "key": "rg.hero_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"rg-hero-sub\">Bracket interactif · Clay Elo"
+    },
+    {
+      "fr": "Actualiser",
+      "key": "rg.refresh",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"loadRolandGarros()\">🔄 Actualiser</button>"
+    },
+    {
+      "fr": "Top 16 favoris au titre",
+      "key": "rg.contenders_head",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<h2 class=\"rg-contenders-head\">Top 16 favoris au titre</h2>"
+    },
+    {
+      "fr": "Filtres value bets",
+      "key": "rg.filter_bar_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "role=\"toolbar\" aria-label=\"Filtres value bets\">"
+    },
+    {
+      "fr": "Filtre Value",
+      "key": "rg.filter_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-filter-label\">Filtre Value</span>"
+    },
+    {
+      "fr": "Tous",
+      "key": "rg.filter_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "data-rg-filter=\"all\" onclick=\"rgSetFilter('all', this)\">Tous</button>"
+    },
+    {
+      "fr": "Tous matches avec edge positif (Monte Carlo prob > fair implicite)",
+      "key": "rg.filter_value_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Tous matches avec edge positif (Monte Carlo"
+    },
+    {
+      "fr": "Value",
+      "key": "rg.filter_value",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "fair implicite)\">🟢 Value</button>"
+    },
+    {
+      "fr": "Edge ≥ +5pp (modérée)",
+      "key": "rg.filter_ev5_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"rgSetFilter('ev5', this)\" title=\"Edge ≥ +5pp (modérée)\""
+    },
+    {
+      "fr": "Edge ≥ +10pp (strong)",
+      "key": "rg.filter_ev10_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"rgSetFilter('ev10', this)\" title=\"Edge ≥ +10pp (strong)\""
+    },
+    {
+      "fr": "Trap du marché (modèle sous bookmaker)",
+      "key": "rg.filter_trap_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"rgSetFilter('trap', this)\" title=\"Trap du marché"
+    },
+    {
+      "fr": "Traps",
+      "key": "rg.filter_traps",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "sous bookmaker)\">🔴 Traps</button>"
+    },
+    {
+      "fr": "{0} matches",
+      "key": "rg.filter_count",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "color:#5a6068;\">— matches</span>"
+    },
+    {
+      "fr": "Chargement du tableau Roland Garros…",
+      "key": "rg.bracket_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"rg-loading\">Chargement du tableau Roland Garros"
+    },
+    {
+      "fr": "ⓘ Probabilités calculées par simulation probabiliste (10 000 itérations) sur le draw BSD officiel et l'Elo terre battue PariScore interne. Modèle Elo Sackmann-style (K=200 surface, MoV façon 538, régression inactivité). Ne tient pas compte des forfaits/blessures de dernière minute.",
+      "key": "rg.disclaimer",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"rg-disclaimer\">\n    ⓘ Probabilités calculées"
+    },
+    {
+      "fr": "Fermer fiche joueur",
+      "key": "rg.player_card_close_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "onclick=\"closeRgPlayerCard()\" aria-label=\"Fermer fiche joueur\""
+    },
+    {
+      "fr": "Métriques PariScore",
+      "key": "rg.section_metrics",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<h3 class=\"rg-pc-section-title\">Métriques PariScore</h3>"
+    },
+    {
+      "fr": "Elo Terre Battue",
+      "key": "rg.metric_clay_elo",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-pc-metric-label\">Elo Terre Battue</span>"
+    },
+    {
+      "fr": "Probabilité Titre",
+      "key": "rg.metric_title_prob",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-pc-metric-label\">🏆 Probabilité Titre</span>"
+    },
+    {
+      "fr": "Demi-finale",
+      "key": "rg.metric_semifinal",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-pc-metric-label\">Demi-finale</span>"
+    },
+    {
+      "fr": "Monte Carlo 10 000",
+      "key": "rg.metric_monte_carlo",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-pc-metric-sub\">Monte Carlo 10 000</span>"
+    },
+    {
+      "fr": "Dominance Ratio",
+      "key": "rg.metric_dominance_ratio",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-pc-metric-label\">Dominance Ratio</span>"
+    },
+    {
+      "fr": "Service · Retour",
+      "key": "rg.metric_service_return",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"rg-pc-metric-sub\">Service · Retour</span>"
+    },
+    {
+      "fr": "Forme récente — 5 derniers matchs clay",
+      "key": "rg.section_recent_form",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "section-title\">Forme récente — 5 derniers matchs clay</h3>"
+    },
+    {
+      "fr": "Chargement L5 clay…",
+      "key": "rg.form_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "rg-pc-skeleton\">Chargement L5 clay…</p>"
+    },
+    {
+      "fr": "Source : BSD + PariScore Clay Elo · cache 6h",
+      "key": "rg.player_card_source",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span>Source : BSD + PariScore Clay Elo · cache 6h</span>"
+    },
+    {
+      "fr": "Top Tournois",
+      "key": "tennis.sidebar_top_tournaments",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"sidebar-block-title\">Top Tournois</div>"
+    },
+    {
+      "fr": "Tous les tournois",
+      "key": "tennis.sidebar_all_tournaments_item",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"sidebar-league-flag\">🎾</span>Tous les tournois"
+    },
+    {
+      "fr": "Tous les tournois",
+      "key": "tennis.sidebar_all_tournaments_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"sidebar-block-title\">\n      Tous les tournois"
+    },
+    {
+      "fr": "Rechercher un tournoi…",
+      "key": "tennis.sidebar_search_placeholder",
+      "file": "pariscore.html",
+      "wrap": "html-attr-placeholder",
+      "snippet": "id=\"ps-sb-tennis-search\" placeholder=\"Rechercher un tournoi…\""
+    },
+    {
+      "fr": "Rechercher un tournoi",
+      "key": "tennis.sidebar_search_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "_psSbFilterTennis(this.value)\" aria-label=\"Rechercher un tournoi\">"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.sidebar_all_list_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"sidebar-all-empty\">Chargement…</div>"
+    },
+    {
+      "fr": "Top 10 Matchs du Jour",
+      "key": "tennis.top10_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-top10-title\">\n        🏆 Top 10 Matchs du Jour"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.top10_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<div class=\"tn-t10-loading\">Chargement…</div>"
+    },
+    {
+      "fr": "Tennis — Value Bets",
+      "key": "tennis.valuebets_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:28px;\">Tennis — Value Bets</h2>"
+    },
+    {
+      "fr": "Actualiser",
+      "key": "tennis.valuebets_refresh",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tickTennisValueBets()\" style=\"padding:8px 14px;background:var(--bg3"
+    },
+    {
+      "fr": "Filtres avancés",
+      "key": "tennis.filters_toggle_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "this.classList.toggle('open')\" aria-label=\"Filtres avancés\">"
+    },
+    {
+      "fr": "Filtres avancés",
+      "key": "tennis.filters_toggle_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span>⚙️ Filtres avancés</span><span class=\"tvb-ft-caret\">"
+    },
+    {
+      "fr": "Tour",
+      "key": "tennis.filter_tour_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Tour</span>\n        <button class=\"tennis-vb-filter-btn is-active\" data-filter=\"tour\""
+    },
+    {
+      "fr": "Tous",
+      "key": "tennis.filter_tour_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "data-filter=\"tour\" data-value=\"ALL\" onclick=\"applyTennisFilter(this)\">Tous</button>"
+    },
+    {
+      "fr": "Surface",
+      "key": "tennis.filter_surface_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Surface</span>"
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.filter_surface_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "data-filter=\"surface\" data-value=\"ALL\" onclick=\"applyTennisFilter(this)\">Toutes</button>"
+    },
+    {
+      "fr": "Format",
+      "key": "tennis.filter_format_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "Plan I 6jro — Filtre Format Singles/Doubles\">Format</span>"
+    },
+    {
+      "fr": "Tous",
+      "key": "tennis.filter_format_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "data-filter=\"format\" data-value=\"ALL\" onclick=\"applyTennisFilter(this)\">Tous</button>"
+    },
+    {
+      "fr": "Matchs singles uniquement (1v1)",
+      "key": "tennis.filter_singles_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"SINGLES\" onclick=\"applyTennisFilter(this)\" title=\"Matchs singles uniquement (1v1)\""
+    },
+    {
+      "fr": "Singles",
+      "key": "tennis.filter_singles",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "uniquement (1v1)\">👤 Singles</button>"
+    },
+    {
+      "fr": "Matchs doubles uniquement (paire vs paire)",
+      "key": "tennis.filter_doubles_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"DOUBLES\" onclick=\"applyTennisFilter(this)\" title=\"Matchs doubles uniquement"
+    },
+    {
+      "fr": "Doubles",
+      "key": "tennis.filter_doubles",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "vs paire)\">👥 Doubles</button>"
+    },
+    {
+      "fr": "Catégorie",
+      "key": "tennis.filter_tier_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Catégorie</span>"
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.filter_tier_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "data-filter=\"tier\" data-value=\"ALL\" onclick=\"applyTennisFilter(this)\">Toutes</button>"
+    },
+    {
+      "fr": "Grand Chelem",
+      "key": "tennis.filter_tier_gs_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"GS\" onclick=\"applyTennisFilter(this)\" title=\"Grand Chelem\">GC</button>"
+    },
+    {
+      "fr": "Masters 1000 / WTA 1000",
+      "key": "tennis.filter_tier_1000_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"1000\" onclick=\"applyTennisFilter(this)\" title=\"Masters 1000 / WTA 1000\""
+    },
+    {
+      "fr": "Challenger / WTA 125",
+      "key": "tennis.filter_tier_125_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"125\" onclick=\"applyTennisFilter(this)\" title=\"Challenger / WTA 125\""
+    },
+    {
+      "fr": "ITF World Tennis Tour / Futures",
+      "key": "tennis.filter_tier_itf_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"ITF\" onclick=\"applyTennisFilter(this)\" title=\"ITF World Tennis Tour / Futures\""
+    },
+    {
+      "fr": "Top Stratégies",
+      "key": "tennis.filter_strategy_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.06em;\">Top Stratégies</span>"
+    },
+    {
+      "fr": "Aucun preset — toutes stratégies",
+      "key": "tennis.filter_strategy_all_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"ALL\" onclick=\"applyTennisFilter(this)\" title=\"Aucun preset — toutes stratégies\""
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.filter_strategy_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "toutes stratégies\">Toutes</button>"
+    },
+    {
+      "fr": "Pré-match — écart classement Elo surface ≥ 30 places entre les 2 joueurs",
+      "key": "tennis.filter_strategy_surface_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"SURFACE_SPEC\" onclick=\"applyTennisFilter(this)\" title=\"Pré-match — écart classement Elo surface"
+    },
+    {
+      "fr": "Spécialiste Surface",
+      "key": "tennis.filter_strategy_surface",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "entre les 2 joueurs\">🎯 Spécialiste Surface</button>"
+    },
+    {
+      "fr": "Pré-match — signal King of Aces (favori aces P≥60%)",
+      "key": "tennis.filter_strategy_aces_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"ACES_SHOCK\" onclick=\"applyTennisFilter(this)\" title=\"Pré-match — signal King of Aces"
+    },
+    {
+      "fr": "Serveur Lourd / Choc Aces",
+      "key": "tennis.filter_strategy_aces",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "aces P≥60%)\">⚡ Serveur Lourd / Choc Aces</button>"
+    },
+    {
+      "fr": "Pré-match — forme L5/L10 chaude (max pts ≥ 7) avec EV modèle ≥ 3%",
+      "key": "tennis.filter_strategy_form_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"FORM_VALUE\" onclick=\"applyTennisFilter(this)\" title=\"Pré-match — forme L5/L10 chaude"
+    },
+    {
+      "fr": "Value Forme L5/L10",
+      "key": "tennis.filter_strategy_form",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "EV modèle ≥ 3%\">📈 Value Forme L5/L10</button>"
+    },
+    {
+      "fr": "Live — bascule de momentum, |ΔDR| ≥ 0.30 sur le set en cours",
+      "key": "tennis.filter_strategy_dr_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"DR_SPIKE\" onclick=\"applyTennisFilter(this)\" title=\"Live — bascule de momentum"
+    },
+    {
+      "fr": "Bascule Momentum (Spike DR)",
+      "key": "tennis.filter_strategy_dr",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "set en cours\">🔥 Bascule Momentum (Spike DR)</button>"
+    },
+    {
+      "fr": "Live — favori modèle (≥58%) mené en sets",
+      "key": "tennis.filter_strategy_danger_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"FAVORITE_DANGER\" onclick=\"applyTennisFilter(this)\" title=\"Live — favori modèle"
+    },
+    {
+      "fr": "Favori en Danger",
+      "key": "tennis.filter_strategy_danger",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "mené en sets\">⚠️ Favori en Danger</button>"
+    },
+    {
+      "fr": "Live — remontée algorithmique : score perdant mais momentum (DR) basculé",
+      "key": "tennis.filter_strategy_comeback_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "data-value=\"COMEBACK\" onclick=\"applyTennisFilter(this)\" title=\"Live — remontée algorithmique"
+    },
+    {
+      "fr": "Remontée Algorithmique",
+      "key": "tennis.filter_strategy_comeback",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "(DR) basculé\">🔁 Remontée Algorithmique</button>"
+    },
+    {
+      "fr": "Recherche",
+      "key": "tennis.filter_search_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Recherche</span>"
+    },
+    {
+      "fr": "Joueur, tournoi, round…",
+      "key": "tennis.filter_search_placeholder",
+      "file": "pariscore.html",
+      "wrap": "html-attr-placeholder",
+      "snippet": "id=\"tennis-vb-search\" class=\"tvb-search\" placeholder=\"Joueur, tournoi, round…\""
+    },
+    {
+      "fr": "Effacer",
+      "key": "tennis.filter_search_clear_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "class=\"tvb-search-clear\" title=\"Effacer\" aria-label=\"Effacer la recherche\""
+    },
+    {
+      "fr": "Effacer la recherche",
+      "key": "tennis.filter_search_clear_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "title=\"Effacer\" aria-label=\"Effacer la recherche\""
+    },
+    {
+      "fr": "Compétition",
+      "key": "tennis.filter_competition_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Compétition</span>"
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.filter_competition_all_option",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onchange=\"tncFromLegacy(this.value)\"><option value=\"ALL\">Toutes</option>"
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.filter_competition_ms_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"tncToggle(event)\"><span id=\"tnc-ms-lbl\">Toutes</span>"
+    },
+    {
+      "fr": "Filtrer un tournoi…",
+      "key": "tennis.filter_competition_ms_placeholder",
+      "file": "pariscore.html",
+      "wrap": "html-attr-placeholder",
+      "snippet": "id=\"tnc-ms-q\" class=\"tnc-ms-q\" placeholder=\"Filtrer un tournoi…\""
+    },
+    {
+      "fr": "Tout",
+      "key": "tennis.filter_competition_ms_all",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "class=\"tnc-ms-a\" onclick=\"tncAll(true)\">Tout</button>"
+    },
+    {
+      "fr": "Aucun",
+      "key": "tennis.filter_competition_ms_none",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "class=\"tnc-ms-a\" onclick=\"tncAll(false)\">Aucun</button>"
+    },
+    {
+      "fr": "Trier",
+      "key": "tennis.filter_sort_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Trier</span>"
+    },
+    {
+      "fr": "Plus proche de maintenant",
+      "key": "tennis.sort_time",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"time\">⏱ Plus proche de maintenant</option>"
+    },
+    {
+      "fr": "Chronologique ↑",
+      "key": "tennis.sort_chrono",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"chrono\">📅 Chronologique ↑</option>"
+    },
+    {
+      "fr": "Value EV+ ↓",
+      "key": "tennis.sort_ev",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"ev\">📈 Value EV+ ↓</option>"
+    },
+    {
+      "fr": "Proba match ↓",
+      "key": "tennis.sort_prob",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"prob\">🎯 Proba match ↓</option>"
+    },
+    {
+      "fr": "Δ DR live ↓ (set en cours · prematch en bas)",
+      "key": "tennis.sort_delta_dr",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"delta_dr\">🔥 Δ DR live ↓ (set en cours · prematch en bas)</option>"
+    },
+    {
+      "fr": "Gain Set 1 ↓",
+      "key": "tennis.sort_set1",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"set1\">💥 Gain Set 1 ↓</option>"
+    },
+    {
+      "fr": "Elo P1 ↓",
+      "key": "tennis.sort_elo",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<option value=\"elo\">⭐ Elo P1 ↓</option>"
+    },
+    {
+      "fr": "Live",
+      "key": "tennis.filter_live_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"tvb-live-dot\"></span>Live\n      </label>"
+    },
+    {
+      "fr": "Avec Elo seulement",
+      "key": "tennis.filter_elo_only",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "id=\"tennis-vb-elo-only\" onchange=\"renderTennisValueBets(window._tennisVbLastFetch||[])\"> Avec Elo seulement"
+    },
+    {
+      "fr": "EV modèle > 0",
+      "key": "tennis.filter_positive_ev",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "id=\"tennis-vb-positive-ev\" onchange=\"renderTennisValueBets(window._tennisVbLastFetch||[])\"> EV modèle > 0"
+    },
+    {
+      "fr": "Masquer terminés",
+      "key": "tennis.filter_hide_finished",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "id=\"tennis-vb-hide-finished\" checked onchange=\"renderTennisValueBets(window._tennisVbLastFetch||[])\"> Masquer terminés"
+    },
+    {
+      "fr": "Tableau value bets tennis",
+      "key": "tennis.vb_table_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "id=\"tennis-vb-table\" role=\"table\" aria-label=\"Tableau value bets tennis\">"
+    },
+    {
+      "fr": "Favoris",
+      "key": "tennis.vb_col_fav_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "tn-cell-fav\" role=\"columnheader\" aria-label=\"Favoris\">★</span>"
+    },
+    {
+      "fr": "Match",
+      "key": "tennis.vb_col_match",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-cell-match\" role=\"columnheader\" aria-sort=\"none\">Match</span>"
+    },
+    {
+      "fr": "Bets Prédictifs",
+      "key": "tennis.vb_col_predictive",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "justify-content:flex-start;\">Bets Prédictifs<button type=\"button\" class=\"tgou-info\""
+    },
+    {
+      "fr": "Comment lire cette colonne",
+      "key": "tennis.vb_col_predictive_info_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "openTennisPredictiveGuide()\" title=\"Comment lire cette colonne\""
+    },
+    {
+      "fr": "Aide Bets Prédictifs",
+      "key": "tennis.vb_col_predictive_info_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "title=\"Comment lire cette colonne\" aria-label=\"Aide Bets Prédictifs\""
+    },
+    {
+      "fr": "Score",
+      "key": "tennis.vb_col_score",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-cell-score\" role=\"columnheader\" style=\"color:#38bdf8;\">Score</span>"
+    },
+    {
+      "fr": "Jeux O/U",
+      "key": "tennis.vb_col_games_ou",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "justify-content:flex-start;\">Jeux O/U<button type=\"button\" class=\"tgou-info\""
+    },
+    {
+      "fr": "Guide colonne Jeux O/U",
+      "key": "tennis.vb_col_games_ou_info_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "openTennisGamesGuide()\" title=\"Guide colonne Jeux O/U\""
+    },
+    {
+      "fr": "Aide Jeux O/U",
+      "key": "tennis.vb_col_games_ou_info_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "title=\"Guide colonne Jeux O/U\" aria-label=\"Aide Jeux O/U\""
+    },
+    {
+      "fr": "Value EV+",
+      "key": "tennis.vb_col_value_ev",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "color:var(--green,#00e676);\">Value EV+</span>"
+    },
+    {
+      "fr": "Détails",
+      "key": "tennis.vb_col_expand_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "tn-cell-expand\" role=\"columnheader\" aria-label=\"Détails\">▸</span>"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.vb_tbody_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-align:center;color:var(--text3,#5a6068);\">Chargement…</span>\n      </div>\n      </div>\n  </section>\n\n  <section class=\"section fade-up\" id=\"tennis-live-section\">"
+    },
+    {
+      "fr": "Tennis — Live",
+      "key": "tennis.live_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:28px;\">Tennis — Live</h2>"
+    },
+    {
+      "fr": "ATP + WTA · Données ESPN · Rafraîchi toutes les 30 s",
+      "key": "tennis.live_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "ATP + WTA · Données ESPN · Rafraîchi toutes les 30 s</p>"
+    },
+    {
+      "fr": "Actualiser",
+      "key": "tennis.live_refresh",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"tickTennisLive()\" style=\"padding:8px 14px"
+    },
+    {
+      "fr": "Live uniquement",
+      "key": "tennis.live_only",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "id=\"tennis-live-only\" checked onchange=\"renderTennisLive(window._tennisLastFetch||[])\"> Live uniquement"
+    },
+    {
+      "fr": "Filtrer matchs tennis par source de données",
+      "key": "tennis.live_source_filter_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "role=\"group\" aria-label=\"Filtrer matchs tennis par source de données\""
+    },
+    {
+      "fr": "Source :",
+      "key": "tennis.live_source_label",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<span class=\"tn-src-label\">Source :</span>"
+    },
+    {
+      "fr": "Toutes les sources",
+      "key": "tennis.live_source_all_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "aria-pressed=\"true\" title=\"Toutes les sources\">ALL</button>"
+    },
+    {
+      "fr": "BSD Sports Addon — source primaire (stats/serving/points)",
+      "key": "tennis.live_source_bsd_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "aria-pressed=\"false\" title=\"BSD Sports Addon — source primaire"
+    },
+    {
+      "fr": "ESPN public scoreboard",
+      "key": "tennis.live_source_espn_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "aria-pressed=\"false\" title=\"ESPN public scoreboard\">ESPN</button>"
+    },
+    {
+      "fr": "LiveScore fallback (BSD/ESPN absents)",
+      "key": "tennis.live_source_livescore_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "aria-pressed=\"false\" title=\"LiveScore fallback (BSD/ESPN absents)\""
+    },
+    {
+      "fr": "AiScore — enrichissement serving (cache + on-demand throttled)",
+      "key": "tennis.live_source_aiscore_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "aria-pressed=\"false\" title=\"AiScore — enrichissement serving"
+    },
+    {
+      "fr": "Tableau tennis live",
+      "key": "tennis.live_table_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "id=\"tennis-live-table\" role=\"table\" aria-label=\"Tableau tennis live\">"
+    },
+    {
+      "fr": "Favoris",
+      "key": "tennis.live_col_fav_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "tn-live-cell tn-cell-fav\" role=\"columnheader\" aria-label=\"Favoris\">★</span>"
+    },
+    {
+      "fr": "Tournoi",
+      "key": "tennis.live_col_tournament",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-live-cell\" role=\"columnheader\">Tournoi</span>"
+    },
+    {
+      "fr": "Tour",
+      "key": "tennis.live_col_round",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-live-cell\" role=\"columnheader\">Tour</span>"
+    },
+    {
+      "fr": "Joueur 1",
+      "key": "tennis.live_col_player1",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-live-cell\" role=\"columnheader\">Joueur 1</span>"
+    },
+    {
+      "fr": "Joueur 2",
+      "key": "tennis.live_col_player2",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "tn-live-cell\" role=\"columnheader\">Joueur 2</span>"
+    },
+    {
+      "fr": "Bets Prédictifs",
+      "key": "tennis.live_col_predictive",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "role=\"columnheader\" style=\"color:#00e676;\">Bets Prédictifs</span>"
+    },
+    {
+      "fr": "Sets",
+      "key": "tennis.live_col_sets",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "style=\"justify-content:center;\">Sets</span>"
+    },
+    {
+      "fr": "Jeux",
+      "key": "tennis.live_col_games",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "style=\"justify-content:center;\">Jeux</span>"
+    },
+    {
+      "fr": "Point",
+      "key": "tennis.live_col_point",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "style=\"justify-content:center;\">Point</span>"
+    },
+    {
+      "fr": "Break Point Pressure Index",
+      "key": "tennis.live_col_bppi_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "color:#E2001A;\" title=\"Break Point Pressure Index\">BPPI</span>"
+    },
+    {
+      "fr": "Statut",
+      "key": "tennis.live_col_status",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "style=\"justify-content:center;\">Statut</span>"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.live_tbody_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "text-align:center;color:var(--text3,#5a6068);\">Chargement…</span>\n        </div>\n      </div>\n    </div>\n  </section>\n\n  <!-- Modal détail tennis"
+    },
+    {
+      "fr": "Fermer",
+      "key": "tennis.detail_modal_close_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "class=\"tennis-modal-close\" onclick=\"closeTennisDetail()\" aria-label=\"Fermer\">✕</button>"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.detail_modal_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3,#5a6068);\">Chargement…</div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Modal AI-AL Tennis -->"
+    },
+    {
+      "fr": "Fermer",
+      "key": "tennis.ai_modal_close_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "class=\"tennis-modal-close\" onclick=\"closeTennisAIModal()\" aria-label=\"Fermer\">✕</button>"
+    },
+    {
+      "fr": "AI-AL Tennis — Deep Data",
+      "key": "tennis.ai_modal_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "color:var(--text,#e8eaed);\">AI-AL Tennis — Deep Data</div>"
+    },
+    {
+      "fr": "Analyse prête à publier sur Telegram",
+      "key": "tennis.ai_modal_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "margin-top:4px;\">Analyse prête à publier sur Telegram</div>"
+    },
+    {
+      "fr": "Copier le bloc Telegram",
+      "key": "tennis.ai_modal_copy",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"copyTennisAIText()\" disabled style=\"padding:8px 14px;background:#E2001A;color:#fff"
+    },
+    {
+      "fr": "Analyse IA en cours… (10-25s)",
+      "key": "tennis.ai_modal_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:13px;\">Analyse IA en cours… (10-25s)</div>"
+    },
+    {
+      "fr": "Rome 2026 — Forecasts",
+      "key": "tennis.abstract_rome_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:24px;\">🏛️ Rome 2026 — Forecasts</h2>"
+    },
+    {
+      "fr": "Probabilités tournoi par tour (R64→W) · Cache 6h",
+      "key": "tennis.abstract_rome_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "Probabilités tournoi par tour (R64→W) · Cache 6h"
+    },
+    {
+      "fr": "Actualiser",
+      "key": "tennis.abstract_rome_refresh",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"loadTennisAbstractRome()\" style=\"padding:8px 14px"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.abstract_rome_atp_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Chargement…</div>\n        </div>\n      </div>\n      <div class=\"ta-rome-card\""
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.abstract_rome_wta_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Chargement…</div>\n        </div>\n      </div>\n    </div>\n    <div id=\"ta-rome-upcoming\""
+    },
+    {
+      "fr": "Odds Drift",
+      "key": "tennis.tex_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:24px;\">📈 Odds Drift</h2>"
+    },
+    {
+      "fr": "Open vs Current odds (player 1) · Δ% positif = chute favori · Cache 30min · Clic joueur = profil",
+      "key": "tennis.tex_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "Open vs Current odds (player 1) · Δ% positif = chute favori"
+    },
+    {
+      "fr": "Doubles ATP",
+      "key": "tennis.tex_tour_atp_double_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"setTexTour('atp-double')\" style=\"padding:6px 12px;background:var(--bg2"
+    },
+    {
+      "fr": "Doubles WTA",
+      "key": "tennis.tex_tour_wta_double_title",
+      "file": "pariscore.html",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"setTexTour('wta-double')\" style=\"padding:6px 12px;background:var(--bg2"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.tex_body_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Chargement…</div>\n      </div>\n    </div>\n  </section>\n\n  <!-- ═══════════════════════════════════════════════════════════════════════\n       TENNIS ABSTRACT — MCP Ladder"
+    },
+    {
+      "fr": "MCP Leaders — Serve & Return (52w)",
+      "key": "tennis.mcp_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:22px;\">🎯 MCP Leaders — Serve & Return (52w)</h2>"
+    },
+    {
+      "fr": "Match Charting Project · Top 10 par effectivité serve/return sur 52 dernières semaines",
+      "key": "tennis.mcp_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "Match Charting Project · Top 10 par effectivité serve/return"
+    },
+    {
+      "fr": "Hommes",
+      "key": "tennis.mcp_tour_men",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"setTaMcpTour('men')\" style=\"padding:6px 12px;background:var(--bg3"
+    },
+    {
+      "fr": "Femmes",
+      "key": "tennis.mcp_tour_women",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"setTaMcpTour('women')\" style=\"padding:6px 12px;background:var(--bg2"
+    },
+    {
+      "fr": "Calendrier Tournois",
+      "key": "tennis.tex_calendar_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:22px;\">🗓️ Calendrier Tournois</h2>"
+    },
+    {
+      "fr": "Tournois en cours · prize money + surface + draw",
+      "key": "tennis.tex_calendar_subtitle",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "Tournois en cours · prize money + surface + draw"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.tex_books_modal_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "color:var(--text,#e8eaed);\">Chargement…</div>\n    </div>\n  </div>\n\n  <!-- Player profile modal"
+    },
+    {
+      "fr": "Chargement…",
+      "key": "tennis.tex_player_modal_loading",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "color:var(--text,#e8eaed);\">Chargement…</div>\n    </div>\n  </div>\n\n  <!-- Popup O/U Jeux par set -->"
+    },
+    {
+      "fr": "Fermer",
+      "key": "tennis.games_modal_close_aria",
+      "file": "pariscore.html",
+      "wrap": "html-attr-aria",
+      "snippet": "class=\"tennis-modal-close\" onclick=\"closeTennisGamesPopup()\" aria-label=\"Fermer\">✕</button>"
+    },
+    {
+      "fr": "Roland Garros — Chemin probable",
+      "key": "tennis.rg_path_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:24px;\">🏟️ Roland Garros — Chemin probable</h2>"
+    },
+    {
+      "fr": "terre · ATP/WTA",
+      "key": "tennis.rg_path_status",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "id=\"rg-path-status\" style=\"font-size:12px;color:var(--text3,#5a6068);\">terre · ATP/WTA</span>"
+    },
+    {
+      "fr": "Joueur (ex : Carlos Alcaraz)",
+      "key": "tennis.rg_path_input_placeholder",
+      "file": "pariscore.html",
+      "wrap": "html-attr-placeholder",
+      "snippet": "id=\"rg-player-input\" placeholder=\"Joueur (ex : Carlos Alcaraz)\""
+    },
+    {
+      "fr": "Calculer le parcours",
+      "key": "tennis.rg_path_calc",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "onclick=\"loadRgPath()\" style=\"padding:9px 16px;background:var(--green,#00e676);color:#0a0d0f;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;\">Calculer le parcours</button>"
+    },
+    {
+      "fr": "Entre un joueur pour estimer sa probabilité cumulée de franchir chaque tour (modèle ML BSD).",
+      "key": "tennis.rg_path_hint",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "font-size:13px;\">Entre un joueur pour estimer sa probabilité cumulée"
+    },
+    {
+      "fr": "Saisis un nom de joueur.",
+      "key": "tennis.rg_path_no_name",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "if (!name) { box.innerHTML = 'Saisis un nom de joueur.'; return; }"
+    },
+    {
+      "fr": "Calcul…",
+      "key": "tennis.rg_path_calculating",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "box.innerHTML = 'Calcul…'; if (st) st.textContent = 'chargement…';"
+    },
+    {
+      "fr": "chargement…",
+      "key": "tennis.rg_path_status_loading",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "if (st) st.textContent = 'chargement…';"
+    },
+    {
+      "fr": "terre · ATP/WTA",
+      "key": "tennis.rg_path_status_done",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "if (st) st.textContent = 'terre · ATP/WTA';"
+    },
+    {
+      "fr": "Tournoi RG introuvable côté BSD.",
+      "key": "tennis.rg_path_err_not_found",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "d.reason === 'rg_not_found' ? 'Tournoi RG introuvable côté BSD.'"
+    },
+    {
+      "fr": "Aucun match RG trouvé pour ce joueur (tirage pas encore publié ou nom inexact).",
+      "key": "tennis.rg_path_err_no_matches",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "'no_matches_for_player' ? 'Aucun match RG trouvé pour ce joueur"
+    },
+    {
+      "fr": "Donnée indisponible.",
+      "key": "tennis.rg_path_err_unavailable",
+      "file": "pariscore.html",
+      "wrap": "js-literal",
+      "snippet": "ou nom inexact).'\n          : 'Donnée indisponible.';"
+    },
+    {
+      "fr": "Tour",
+      "key": "tennis.rg_path_th_round",
+      "file": "pariscore.html",
+      "wrap": "js-template",
+      "snippet": "<th style=\"text-align:left;padding:6px 10px;\">Tour</th>"
+    },
+    {
+      "fr": "Adversaire",
+      "key": "tennis.rg_path_th_opponent",
+      "file": "pariscore.html",
+      "wrap": "js-template",
+      "snippet": "<th style=\"text-align:left;padding:6px 10px;\">Adversaire</th>"
+    },
+    {
+      "fr": "P(gagne)",
+      "key": "tennis.rg_path_th_pwin",
+      "file": "pariscore.html",
+      "wrap": "js-template",
+      "snippet": "<th style=\"padding:6px 10px;\">P(gagne)</th>"
+    },
+    {
+      "fr": "Cumulé",
+      "key": "tennis.rg_path_th_cumulative",
+      "file": "pariscore.html",
+      "wrap": "js-template",
+      "snippet": "<th style=\"padding:6px 10px;\">Cumulé</th>"
+    },
+    {
+      "fr": "Erreur : {0}",
+      "key": "tennis.rg_path_error",
+      "file": "pariscore.html",
+      "wrap": "js-template",
+      "snippet": "color:var(--red,#ff4d4d);\">Erreur : ' + (e && e.message || e)"
+    }
+  ]
+}

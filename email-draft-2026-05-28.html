@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PariScore — Mise à jour Tennis v12.66</title>
+</head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;">
+<tr>
+<td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #334155;">
+
+  <!-- Header -->
+  <tr>
+    <td style="padding:32px 40px 0;text-align:center;">
+      <h1 style="margin:0;font-size:28px;font-weight:800;color:#f8fafc;letter-spacing:-0.5px;">
+        <span style="color:#22d3ee;">Pari</span><span style="color:#f8fafc;">Score</span>
+      </h1>
+      <p style="margin:8px 0 0;font-size:13px;color:#94a3b8;font-weight:500;">TENNIS DATA PIPELINE &mdash; v12.66</p>
+    </td>
+  </tr>
+
+  <!-- Accent line -->
+  <tr><td style="padding:24px 40px 0;"><div style="height:2px;background:linear-gradient(90deg,#22d3ee,#a78bfa,#22d3ee);border-radius:1px;"></div></td></tr>
+
+  <!-- Body -->
+  <tr>
+    <td style="padding:32px 40px;color:#cbd5e1;font-size:15px;line-height:1.7;">
+
+      <p style="margin:0 0 16px;">Bonjour,</p>
+
+      <p style="margin:0 0 16px;">Ce soir, l&rsquo;onglet <strong style="color:#f8fafc;">Tennis</strong> de PariScore re&ccedil;oit une mise &agrave; jour majeure de son pipeline de donn&eacute;es statistiques. Voici le d&eacute;tail des &eacute;volutions d&eacute;ploy&eacute;es ce 28 mai 2026.</p>
+
+      <!-- Fix 4 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:12px;border:1px solid #334155;margin-bottom:20px;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:0.5px;">Fix #4 &mdash; Source Elo</p>
+            <h3 style="margin:0 0 8px;font-size:16px;color:#f8fafc;">Switch source legacy &rarr; union</h3>
+            <p style="margin:0;font-size:14px;color:#94a3b8;">Le calculateur Elo lisait exclusivement la table Sackmann (sync d&eacute;sactiv&eacute; depuis la purge CC-BY-NC-SA). <strong style="color:#4ade80;">Toutes les stats &eacute;taient fig&eacute;es.</strong> La source par d&eacute;faut est maintenant <code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a78bfa;">union</code> : Sackmann legacy + tennis_matches_internal (ETL propri&eacute;taire BSD/ESPN).</p>
+            <p style="margin:8px 0 0;font-size:13px;color:#34d399;">&rarr; Elo, surface rank, form, powerscore : valeurs fra&icirc;ches chaque jour.</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Fix 1 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:12px;border:1px solid #334155;margin-bottom:20px;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.5px;">Fix #1 &mdash; Cron quotidien</p>
+            <h3 style="margin:0 0 8px;font-size:16px;color:#f8fafc;">Recomputation Elo automatique &agrave; 02h10</h3>
+            <p style="margin:0;font-size:14px;color:#94a3b8;"><code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a78bfa;">computeTennisElo()</code> ne tournait qu&rsquo;au boot, puis plus jamais. Un cron quotidien rebuild d&eacute;sormais la table apr&egrave;s l&rsquo;ETL nocturne (02h00).</p>
+            <p style="margin:8px 0 0;font-size:13px;color:#34d399;">&rarr; Ratings Elo automatiquement &agrave; jour chaque nuit.</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Fix 2 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:12px;border:1px solid #334155;margin-bottom:20px;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#f0a32a;text-transform:uppercase;letter-spacing:0.5px;">Fix #2 &mdash; Live WElo</p>
+            <h3 style="margin:0 0 8px;font-size:16px;color:#f8fafc;">Mise &agrave; jour Elo en direct depuis les matchs live</h3>
+            <p style="margin:0;font-size:14px;color:#94a3b8;">Les matchs termin&eacute;s d&eacute;tect&eacute;s par <code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a78bfa;">pollTennisLive()</code> (toutes les 30s) alimentent d&eacute;sormais <code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a78bfa;">tennis_players_elo</code> automatiquement. R&eacute;solution player_id par nom si absent du flux BSD/ESPN.</p>
+            <p style="margin:8px 0 0;font-size:13px;color:#34d399;">&rarr; WElo suit le circuit en temps r&eacute;el, plus seulement au boot.</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Fix 3 -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:12px;border:1px solid #334155;margin-bottom:20px;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.5px;">Fix #3 &mdash; SPS Pipeline</p>
+            <h3 style="margin:0 0 8px;font-size:16px;color:#f8fafc;">Fallback player_id pour le cron SPS</h3>
+            <p style="margin:0;font-size:14px;color:#94a3b8;">L&rsquo;endpoint <code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a78bfa;">/api/v1/tennis/upcoming</code> exigeait un player_id que BSD ne fournit pas toujours. R&eacute;solution par nom dans <code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a78bfa;">tennis_players_elo</code> en fallback.</p>
+            <p style="margin:8px 0 0;font-size:13px;color:#34d399;">&rarr; Plus de matchs trait&eacute;s par le cron SPS → chips SPS visibles.</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Cron schedule -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:12px;border:1px solid #334155;margin-bottom:20px;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#f0a32a;text-transform:uppercase;letter-spacing:0.5px;">Calendrier des crons</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="padding:6px 0;font-size:13px;color:#94a3b8;width:120px;">Toutes les 30s</td><td style="padding:6px 0;font-size:13px;color:#e2e8f0;">pollTennisLive + WElo auto-update</td></tr>
+              <tr><td style="padding:6px 0;font-size:13px;color:#94a3b8;">02h00 Paris</td><td style="padding:6px 0;font-size:13px;color:#e2e8f0;">ETL tennis_matches_internal (BSD/ESPN)</td></tr>
+              <tr><td style="padding:6px 0;font-size:13px;color:#94a3b8;">02h05 Paris</td><td style="padding:6px 0;font-size:13px;color:#e2e8f0;">SPS updater (player_surface_scores)</td></tr>
+              <tr><td style="padding:6px 0;font-size:13px;color:#94a3b8;">02h10 Paris</td><td style="padding:6px 0;font-size:13px;color:#e2e8f0;">Recompute tennis_elo (union source)</td></tr>
+              <tr><td style="padding:6px 0;font-size:13px;color:#94a3b8;">06h00 Paris</td><td style="padding:6px 0;font-size:13px;color:#e2e8f0;">Tex daily refresh + odds snapshots</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 16px;">Le d&eacute;ploiement a &eacute;t&eacute; effectu&eacute; ce soir &agrave; 22h30. Les premiers r&eacute;sultats (Elo frais, SPS, WElo live) seront visibles d&egrave;s le cycle cron de 02h10.</p>
+
+      <p style="margin:0;">&Agrave; bient&ocirc;t sur <a href="https://pariscore.fr" style="color:#22d3ee;text-decoration:none;">pariscore.fr</a>.</p>
+
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td style="padding:24px 40px;background:#0f172a;text-align:center;border-top:1px solid #334155;">
+      <p style="margin:0;font-size:11px;color:#475569;">
+        PariScore v12.66 &middot; Tennis Data Pipeline Update &middot; 28 mai 2026
+      </p>
+      <p style="margin:4px 0 0;font-size:11px;color:#334155;">
+        Cet email est un brouillon &middot; Modifier avant envoi
+      </p>
+    </td>
+  </tr>
+
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>

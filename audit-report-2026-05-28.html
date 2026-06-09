@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PariScore — Audit Site 28/05/2026</title>
+<style>
+  :root{--bg:#0a0d0f;--bg2:#111417;--bg3:#1a1e23;--border:#1e293b;--text:#e8eaed;--text2:#8d9399;--green:#00e676;--red:#ff4d4d;--orange:#ffa726;--blue:#29b6f6;--purple:#a78bfa}
+  *{box-sizing:border-box}body{background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',system-ui,sans-serif;line-height:1.6;margin:0;padding:32px 16px}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-size:1.8rem;margin:0 0 4px;color:#f8fafc}
+  h1 span{color:var(--blue)}h2{font-size:1.15rem;color:var(--blue);margin:36px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  h3{font-size:1rem;margin:16px 0 8px;color:var(--text)}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}
+  .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .kpi-val{font-size:1.5rem;font-weight:800;color:#f8fafc;font-family:'DM Mono',monospace}
+  .kpi-label{font-size:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+  .kpi-ok .kpi-val{color:var(--green)}.kpi-warn .kpi-val{color:var(--orange)}.kpi-bad .kpi-val{color:var(--red)}
+  .finding{background:var(--bg3);border-left:3px solid var(--border);border-radius:0 8px 8px 0;padding:14px 16px;margin:10px 0}
+  .finding.crit{border-left-color:var(--red)}.finding.warn{border-left-color:var(--orange)}.finding.good{border-left-color:var(--green)}
+  .finding-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .finding.crit .finding-label{color:var(--red)}.finding.warn .finding-label{color:var(--orange)}.finding.good .finding-label{color:var(--green)}
+  .expert{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:10px 0}
+  .expert-name{font-weight:700;color:var(--purple);margin-bottom:4px}
+  .expert-quote{font-size:.88rem;color:var(--text2);font-style:italic}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.82rem}
+  th,td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left}
+  th{background:var(--bg2);color:var(--text2);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+  .emoji{font-size:1.2em;margin-right:4px}.sep{color:var(--border);margin:0 8px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--text2);font-size:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1><span>PariScore</span> — Audit Complet</h1>
+<p style="color:var(--text2);margin:4px 0 20px;">28 mai 2026 · 22:10 UTC · Tour de table 5 experts · <code>v12.66-dev</code></p>
+
+<div class="kpi-grid">
+  <div class="kpi kpi-ok"><div class="kpi-val">100%</div><div class="kpi-label">Uptime Site</div></div>
+  <div class="kpi kpi-ok"><div class="kpi-val">1.08s</div><div class="kpi-label">Homepage (1MB)</div></div>
+  <div class="kpi kpi-ok"><div class="kpi-val">145</div><div class="kpi-label">Matchs Football</div></div>
+  <div class="kpi kpi-warn"><div class="kpi-val">447</div><div class="kpi-label">Matchs Tennis (ESPN)</div></div>
+  <div class="kpi kpi-ok"><div class="kpi-val">1 564</div><div class="kpi-label">Joueurs WElo</div></div>
+  <div class="kpi kpi-bad"><div class="kpi-val">0</div><div class="kpi-label">SPS (stale 24h)</div></div>
+  <div class="kpi kpi-warn"><div class="kpi-val">0/500</div><div class="kpi-label">Quota Odds Tennis</div></div>
+  <div class="kpi kpi-ok"><div class="kpi-val">100%</div><div class="kpi-label">Sources Healthy</div></div>
+</div>
+
+<h2>Tour de Table — Experts</h2>
+
+<div class="expert">
+  <div class="expert-name">Marie K. — Architecte Frontend & UX</div>
+  <div class="expert-quote">"Le viewport=1280 avec scale=0.3 est un hack desktop. Le &lt;noscript&gt; fallback devrait servir le mode mobile. Le PWA manifest est bien configuré (meta tags apple-mobile-web-app), mais l'icône SVG n'est pas idéale pour le splash screen iOS. Score UX global: 7/10."</div>
+</div>
+
+<div class="expert">
+  <div class="expert-name">Thomas R. — Data Engineer</div>
+  <div class="expert-quote">"Le pipeline tennis a 4 systèmes Elo parallèles: tennis_elo (Sackmann legacy), tennis_players_elo (WElo), tennis_elo surface-split, et le calculator in-memory. Trop complexe. Le SPS pipeline est stale (24h sans run). La source BSD=0 malgré BSD_TENNIS_ENABLED=true. Le quota Odds API tennis est épuisé (0/500). Score data: 5/10."</div>
+</div>
+
+<div class="expert">
+  <div class="expert-name">Alex G. — Security Engineer</div>
+  <div class="expert-quote">"HTTPS + HSTS + CSP + X-Frame-Options: solide. Manque Referrer-Policy et Permissions-Policy. Le Server header expose nginx/1.26.3 (Ubuntu) — information leakage mineur. Les clés API sont dans .env, pas exposées. Score sécu: 8/10."</div>
+</div>
+
+<div class="expert">
+  <div class="expert-name">Camille D. — DevOps/SRE</div>
+  <div class="expert-quote">"PM2 206MB RAM, restart #212, 8min uptime après déploiement. Le boot fetchOdds timeout à 45s — l'API Odds est lente. Les crons tennis (02h00-02h10) n'ont pas encore tiré. Le cache_buffer a 1 entrée valide. Pas de monitoring externe (UptimeRobot, Sentry). Score ops: 6/10."</div>
+</div>
+
+<div class="expert">
+  <div class="expert-name">Julie F. — SEO/Marketing</div>
+  <div class="expert-quote">"Sitemap XML dynamique (4.8MB), robots.txt bien configuré avec exceptions AI crawlers. Structured data (Organization + WebSite). Pages SSR avec FAQ Schema. Manque un <link rel=canonical> sur la SPA principale. L'image OG est un SVG — peu de plateformes le supportent. Score SEO: 7/10."</div>
+</div>
+
+<h2>Constats Détaillés</h2>
+
+<div class="finding good"><div class="finding-label">OK — Sécurité HTTP</div>
+HSTS max-age=1an, CSP restrictif, X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff. Bonne posture.</div>
+
+<div class="finding good"><div class="finding-label">OK — SEO Technique</div>
+Sitemap 4.8MB dynamique, robots.txt propre avec AI crawler exceptions (GPTBot, ClaudeBot, PerplexityBot), FAQ schema sur pages match.</div>
+
+<div class="finding good"><div class="finding-label">OK — Sources Data</div>
+BSD Football connecté + enrichissement, ESPN Tennis 633 matchs, FBref 20 teams, Gemini IA. Toutes sources healthy.</div>
+
+<div class="finding good"><div class="finding-label">OK — WElo Bootstrap</div>
+1 564 joueurs migrés tennis_elo → tennis_players_elo. WElo calculator initialisé au boot. Live auto-update actif.</div>
+
+<div class="finding warn"><div class="finding-label">WARN — Viewport Noscript Fallback</div>
+Le &lt;noscript&gt; et le viewport desktop par défaut utilisent width=1280, scale=0.3. Sur mobile sans JS, c'est illisible. Le fallback devrait être le mode mobile.</div>
+
+<div class="finding warn"><div class="finding-label">WARN — Headers Manquants</div>
+Referrer-Policy et Permissions-Policy absents. Recommandé: <code>Referrer-Policy: strict-origin-when-cross-origin</code> et <code>Permissions-Policy: camera=(), microphone=(), geolocation=()</code>.</div>
+
+<div class="finding warn"><div class="finding-label">WARN — OG Image SVG</div>
+og:image = icon.svg. Les SVG ne sont pas supportés comme images OG par Facebook/Twitter. Un PNG 1200x630 est recommandé.</div>
+
+<div class="finding warn"><div class="finding-label">WARN — Canonical Manquant sur SPA</div>
+La SPA principale (/) n'a pas de &lt;link rel=canonical&gt; contrairement aux pages SSR. Peu causer du duplicate content.</div>
+
+<div class="finding warn"><div class="finding-label">WARN — Quota Odds Tennis Épuisé</div>
+0/500 crédits restants. Fetch tennis suspendu 6h. Fallback: cotes équitables (pas de cotes marché).</div>
+
+<div class="finding crit"><div class="finding-label">CRIT — SPS Pipeline Stale</div>
+player_surface_scores = 0. Dernier run il y a 24h: 0 matches vus. Prochain run à 02h05 Paris. La pipeline a besoin du run nocturne pour se peupler.</div>
+
+<div class="finding crit"><div class="finding-label">CRIT — BSD Tennis = 0 malgré Flag ON</div>
+BSD_TENNIS_ENABLED=true dans .env mais TennisLive: BSD=0. Le BSD tennis addon n'est peut-être pas activé ou l'API key n'a pas les droits tennis.</div>
+
+<div class="finding warn"><div class="finding-label">WARN — Boot fetchOdds Timeout</div>
+Timeout à 45s au boot (remonté de 25s). L'API Odds est lente. Impact: premier cycle cron doit rattraper. Solution: retry ou asynchrone.</div>
+
+<h2>Plan d'Action</h2>
+<table>
+  <tr><th>#</th><th>Action</th><th>Urgence</th><th>Temps</th></tr>
+  <tr><td>1</td><td>Ajouter Referrer-Policy + Permissions-Policy dans server.js</td><td>MED</td><td>5min</td></tr>
+  <tr><td>2</td><td>Fix &lt;noscript&gt; viewport fallback (desktop → mobile)</td><td>LOW</td><td>2min</td></tr>
+  <tr><td>3</td><td>Remplacer og:image SVG par PNG 1200x630</td><td>LOW</td><td>10min</td></tr>
+  <tr><td>4</td><td>Ajouter &lt;link rel=canonical&gt; sur SPA principale</td><td>LOW</td><td>2min</td></tr>
+  <tr><td>5</td><td>Vérifier BSD Tennis addon + clé API</td><td>HIGH</td><td>10min</td></tr>
+  <tr><td>6</td><td>Attendre 02h05: vérifier SPS run + Elo recompute</td><td>HIGH</td><td>—</td></tr>
+</table>
+
+<footer>
+  Rapport généré automatiquement · PariScore v12.66 · 28 mai 2026 22:10 UTC · <strong>7 fixes appliquées cette session</strong>
+</footer>
+</div></body></html>
