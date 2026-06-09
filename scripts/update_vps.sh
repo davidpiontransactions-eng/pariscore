@@ -2,7 +2,7 @@
 set -e
 
 DEPLOY_DIR="/home/ubuntu/pariscore"
-PM2_NAME="server"
+PM2_NAME="pariscore"
 
 echo "--- Début de la mise à jour PariScore ---"
 cd "$DEPLOY_DIR"
