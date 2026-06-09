@@ -5338,6 +5338,36 @@ const WC2026_STATIC_GROUPS = {
   L: [{name:'South Africa',flag:'za',elo:1804},{name:'Congo DR',flag:'cd', elo:1761},{name:'Jordan',   flag:'jo',  elo:1735},{name:'New Zealand',       flag:'nz',  elo:1745}],
 };
 
+// ─── WC2026 venue & altitude adaptation ─────────────────────────────────────
+// Altitude adaptation score 0-1: teams that regularly train/play at 1500m+
+const WC2026_ALT_ADAPTED = {
+  'Mexico': 0.85, 'Ecuador': 0.80, 'Colombia': 0.70,
+  'South Africa': 0.45, 'Peru': 0.35,
+  'USA': 0.30, 'Argentina': 0.30,
+  'Uzbekistan': 0.25, 'Switzerland': 0.22, 'Austria': 0.20,
+  'Iran': 0.20, 'Canada': 0.18, 'Morocco': 0.15,
+  'Jordan': 0.15, 'Congo DR': 0.15, 'New Zealand': 0.15,
+};
+
+// Average venue conditions per group (alt m, heat 0-1, rain 0-1)
+// Based on FIFA WC2026 host city distribution
+const WC2026_GROUP_CONDITIONS = {
+  A: { alt: 180, heat: 0.72, rain: 0.18 }, // Dallas + New York + Kansas City
+  B: { alt: 1600, heat: 0.62, rain: 0.18 }, // Mexico City (2240m) + Guadalajara (1566m) + Monterrey (538m)
+  C: { alt: 80,  heat: 0.35, rain: 0.28 }, // Toronto + Vancouver + Seattle
+  D: { alt: 160, heat: 0.75, rain: 0.22 }, // Dallas + Miami + Atlanta
+  E: { alt: 100, heat: 0.45, rain: 0.15 }, // Los Angeles + San Francisco + Seattle
+  F: { alt: 900, heat: 0.68, rain: 0.18 }, // Guadalajara (1566m) + Monterrey (538m) + Dallas
+  G: { alt: 100, heat: 0.78, rain: 0.28 }, // Miami + Atlanta + Philadelphia
+  H: { alt: 90,  heat: 0.52, rain: 0.10 }, // Los Angeles + San Francisco
+  I: { alt: 100, heat: 0.50, rain: 0.20 }, // New York + Boston + Philadelphia
+  J: { alt: 200, heat: 0.65, rain: 0.18 }, // Kansas City + Dallas
+  K: { alt: 700, heat: 0.72, rain: 0.16 }, // Monterrey (538m) + Dallas
+  L: { alt: 70,  heat: 0.32, rain: 0.30 }, // Toronto + Vancouver
+};
+// Knockout rounds: large USA stadiums (MetLife NJ, AT&T Dallas, Rose Bowl LA…)
+const WC2026_KO_VENUE = { alt: 120, heat: 0.52, rain: 0.15 };
+
 // ─── WC2026 Monte Carlo simulation helpers ─────────────────────────────────────
 
 function _wcPoisson(lambda) {
@@ -5348,14 +5378,31 @@ function _wcPoisson(lambda) {
   return k - 1;
 }
 
-function _wcSimGroupMatch(eloA, eloB) {
-  const dr = Math.max(-1.5, Math.min(1.5, (eloA - eloB) / 400));
-  return [_wcPoisson(Math.min(1.35 * Math.exp(dr * 0.7), 4.5)),
-          _wcPoisson(Math.min(1.35 * Math.exp(-dr * 0.7), 4.5))];
+// venue: {alt (m), heat (0-1), rain (0-1)}
+// altAdaptA/B: 0-1 adaptation score (higher = better at altitude)
+function _wcSimGroupMatch(eloA, eloB, altAdaptA, altAdaptB, venue) {
+  const alt  = venue ? (venue.alt  || 0)   : 0;
+  const heat = venue ? (venue.heat || 0.4) : 0.4;
+  const rain = venue ? (venue.rain || 0.1) : 0.1;
+  // Altitude: ball flies further → more goals; adapted team gains Elo advantage
+  const altGoalMult = 1 + Math.min(alt / 13000, 0.20);
+  const altEloAdj   = alt > 800 ? (altAdaptA - altAdaptB) * (alt / 2500) * 150 : 0;
+  // Heat: compress Elo gap — high-pressing style suffers in extreme heat
+  const heatCompress = 1 - heat * 0.12;
+  // Rain: slight goal reduction
+  const rainMult = 1 - rain * 0.06;
+  const dr = Math.max(-1.5, Math.min(1.5, ((eloA + altEloAdj) - eloB) / 400 * heatCompress));
+  const lam = 1.35 * altGoalMult * rainMult;
+  return [_wcPoisson(Math.min(lam * Math.exp(dr * 0.7), 4.5)),
+          _wcPoisson(Math.min(lam * Math.exp(-dr * 0.7), 4.5))];
 }
 
-function _wcSimKnockout(eloA, eloB) {
-  const dr = (eloA - eloB) / 400;
+function _wcSimKnockout(eloA, eloB, altAdaptA, altAdaptB, venue) {
+  const alt  = venue ? (venue.alt  || 0)   : 0;
+  const heat = venue ? (venue.heat || 0.4) : 0.4;
+  const altEloAdj    = alt > 800 ? (altAdaptA - altAdaptB) * (alt / 2500) * 150 : 0;
+  const heatCompress = 1 - heat * 0.10;
+  const dr = ((eloA + altEloAdj) - eloB) / 400 * heatCompress;
   const pA = 1 / (1 + Math.pow(10, -dr));
   return Math.random() < (pA * 0.82 + 0.5 * 0.18) ? 0 : 1; // 18% ET/pen regression
 }
@@ -5379,12 +5426,17 @@ function computeWC2026Predictions(groups) {
     const thirds = [];
 
     // ── Group stage ────────────────────────────────────────────────
-    for (const [, teams] of Object.entries(groups)) {
+    for (const [g, teams] of Object.entries(groups)) {
+      const vc = WC2026_GROUP_CONDITIONS[g] || WC2026_KO_VENUE;
       const pts = {}, gd = {}, gf = {};
       for (const t of teams) { pts[t.name] = 0; gd[t.name] = 0; gf[t.name] = 0; }
       for (let i = 0; i < teams.length; i++) {
         for (let j = i + 1; j < teams.length; j++) {
-          const [ga, gb] = _wcSimGroupMatch(teams[i].elo || 1600, teams[j].elo || 1600);
+          const [ga, gb] = _wcSimGroupMatch(
+            teams[i].elo || 1600, teams[j].elo || 1600,
+            WC2026_ALT_ADAPTED[teams[i].name] || 0.08,
+            WC2026_ALT_ADAPTED[teams[j].name] || 0.08,
+            vc);
           gf[teams[i].name] += ga; gf[teams[j].name] += gb;
           gd[teams[i].name] += ga - gb; gd[teams[j].name] += gb - ga;
           if (ga > gb)      pts[teams[i].name] += 3;
@@ -5420,7 +5472,11 @@ function computeWC2026Predictions(groups) {
       const next = [];
       for (let i = 0; i < n / 2; i++) {
         const a = round[i], b = round[n - 1 - i];
-        const wi = _wcSimKnockout(a.elo || 1600, b.elo || 1600);
+        const wi = _wcSimKnockout(
+          a.elo || 1600, b.elo || 1600,
+          WC2026_ALT_ADAPTED[a.name] || 0.08,
+          WC2026_ALT_ADAPTED[b.name] || 0.08,
+          WC2026_KO_VENUE);
         const winner = wi === 0 ? a : b;
         cnt[winner.name][stages[rnd]]++;
         next.push(winner);
@@ -5433,6 +5489,8 @@ function computeWC2026Predictions(groups) {
     team_id: t.team_id || null,
     name: t.name, flag: t.flag || '', elo: t.elo || null,
     elo_rank: t.elo_rank || null, fifa_rank: t.fifa_rank || null, group: t.group,
+    alt_adapted: WC2026_ALT_ADAPTED[t.name] || 0.08,
+    venue: WC2026_GROUP_CONDITIONS[t.group] || null,
     probs: {
       qualif: +(cnt[t.name].qualif / ITERS * 100).toFixed(1),
       r16:    +(cnt[t.name].r16    / ITERS * 100).toFixed(1),

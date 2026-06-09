@@ -240,7 +240,7 @@ function _paintWCPred(el,data){
   el.innerHTML=
     '<div class="wc-pred-meta">'+
       '<span class="wc-pred-src">'+src+'</span>'+
-      '<span class="wc-pred-iters">'+iters+' simulations · Elo-based Poisson · ET/pen +18% régression</span>'+
+      '<span class="wc-pred-iters">'+iters+' simulations · Elo + Altitude + Météo · ET/pen +18% régression</span>'+
     '</div>'+
     '<div class="wc-pred-table">'+hdr+rows+'</div>';
 }
