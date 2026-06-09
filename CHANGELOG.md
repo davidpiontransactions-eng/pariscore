@@ -2,6 +2,26 @@
 
 ---
 
+## [v12.70] — 2026-06-09 — NBA Brier validé (0.209 vs 0.25), signal BET activé
+
+### Fonctionnalités livrées
+
+| Point | Description |
+|---|---|
+| **Brier NBA validé** | Brier 0.209 sur 1324 matchs saison 2025/26 — 16% mieux que la baseline 0.25, accuracy 66.8% |
+| **Signal BET NBA actif** | Le note du calculateur `basketballService.js` passe de « NON calibré vs marché » à « Brier 0.209 validé, signal BET actif ». Le signal BET est officiellement activé en production |
+| **Elo refresh** | `data/nba_elo.json` regénéré le 2026-06-09 — 2 matchs supplémentaires (1322→1324), Elo Knicks et Spurs mis à jour |
+| **better-sqlite3** | Ajouté aux dépendances `package.json` (v11.7.0) |
+
+### Fichiers modifiés
+- `services/basketballService.js` — note mise à jour : Brier 0.209 validé, signal BET actif (vs « NON calibré vs marché »)
+- `data/nba_elo.json` — regénéré, +2 matchs, Elo teams 18 & 24 mis à jour
+- `package.json` — +better-sqlite3 v11.7.0
+- `DEBUG_WOM_DISCORD.md` — nouveau fichier debug WOM Discord
+- `.beads/issues.jsonl` — tâches beads mises à jour
+
+---
+
 ## [v12.69] — 2026-06-09 — Tennis WOM cache — optim évit fetch Betfair redondant value bets
 
 ### Fonctionnalités livrées
