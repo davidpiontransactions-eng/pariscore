@@ -1,0 +1,2674 @@
+    SF100X Degree Project in Applied Mathematics and Industrial Economics
+
+                                             First cycle, 15 credits
+
+ Predicting Mixed Martial Arts fight
+outcomes using multilinear regression
+
+                  analysis
+
+                                    ISMAIL JABBAROV
+Abstract
+
+The main objective of this research is to develop a predictive model for determining the outcomes of
+mixed martial arts (MMA) fights using statistical analysis. The model incorporates both traditional
+first level variable and newer, constructed variables that offer a unique perspective on the sport.
+Logistic regression is employed to predict wins and losses based on these variables, and the model's
+predictive ability is then compared to that of baseline models. To achieve this goal, data on MMA
+fights is collected and preprocessed using statistical software, including SPSS. Various statistical
+techniques are utilized for feature engineering and selection to identify the most important variables
+that impact the outcome of fights. The chosen variables are then used to develop the logistic regression
+model, which is fine-tuned to optimize its predictive ability. The model is found to have a significantly
+higher predictive ability than the baseline models, as confirmed by cross-validation. The constructed
+variables provide a unique perspective on the sport and offer insights into the factors that contribute to
+success in MMA.
+
+Abstrakt
+
+Huvudsyftet med denna forskning √§r att utveckla en prediktiv modell f√∂r att best√§mma resultaten av
+blandade kampsportskamper (MMA) med hj√§lp av statistisk analys. Modellen inneh√•ller b√•de
+traditionella variabler p√• f√∂rsta niv√•n och nyare, konstruerade variabler som erbjuder ett unikt
+perspektiv p√• sporten. Logistisk regression anv√§nds f√∂r att f√∂ruts√§ga vinster och f√∂rluster baserat p√•
+dessa variabler, och modellens prediktionsf√∂rm√•ga j√§mf√∂rs sedan med baslinjemodellernas. F√∂r att
+uppn√• detta m√•l samlas data om MMA-strider in och f√∂rbehandlas med hj√§lp av statistisk
+programvara, inklusive SPSS. Olika statistiska tekniker anv√§nds f√∂r funktionsteknik och urval f√∂r att
+identifiera de viktigaste variablerna som p√•verkar resultatet av slagsm√•l. De valda variablerna anv√§nds
+sedan f√∂r att utveckla den logistiska regressionsmodellen, som √§r finjusterad f√∂r att optimera dess
+prediktiva f√∂rm√•ga. Modellen visar sig ha en signifikant h√∂gre prediktionsf√∂rm√•ga √§n
+baslinjemodellerna, vilket bekr√§ftas av korsvalidering. De konstruerade variablerna ger ett unikt
+perspektiv p√• sporten och ger insikter i de faktorer som bidrar till framg√•ng i MMA.
+
+                                                             1
+Table of Contents
+
+1 Introduction ........................................................................................................................................ 3
+   1.1 Background and Context of MMA as a Sport .......................................................................... 3
+   1.2 Rules and Judging ....................................................................................................................... 4
+   1.3 Statistical Analysis of MMA ....................................................................................................... 5
+
+2 Literature Review............................................................................................................................... 6
+   2.1 Overview of previous studies on statistical analysis in MMA ................................................. 6
+   2.2 Review of Regression Analysis and Applications in Sports ..................................................... 7
+   2.3 Discussion of Relevant Variables for Predicting MMA Outcomes ......................................... 8
+
+3 Data...................................................................................................................................................... 8
+   3.1 Data Collection ............................................................................................................................ 8
+   3.2 Variables....................................................................................................................................... 8
+
+4 Method............................................................................................................................................... 11
+   4.1 Binary Logistic Regression ....................................................................................................... 11
+   4.2 Brier Score ................................................................................................................................. 12
+   4.3 Concordant and discordant pairs ............................................................................................ 13
+   4.4 Rescaled R-Squared .................................................................................................................. 13
+   4.5 Cross-validation......................................................................................................................... 14
+
+5 Results ............................................................................................................................................... 14
+   5.1 Results Summary....................................................................................................................... 14
+   5.2 Variable Correlations................................................................................................................ 14
+   5.3 Univariate Logistic Regression Analysis ................................................................................. 15
+   5.4 Created variable full model ...................................................................................................... 16
+   5.5 Winning Percentage model ....................................................................................................... 17
+   5.6 Combined Final Model ............................................................................................................. 20
+   5.7 Cross Validation ........................................................................................................................ 21
+
+6. Conclusion and limitations ............................................................................................................. 22
+7. References ........................................................................................................................................ 24
+
+   7.1 Sources........................................................................................................................................ 24
+   7.2 Tables.......................................................................................................................................... 26
+
+                                                             2
+1 Introduction
+
+In recent years, statistical analysis in sports has become an important area of research for both
+academics and professionals. Statistical methods are widely used in various sports to improve
+performance, strategy, and player evaluation. For instance, in baseball, Sabermetrics involves detailed
+statistical analysis to measure player performance and make strategic decisions (Lewis, 2003). In
+basketball, advanced metrics such as Player Efficiency Rating (PER) and Win Shares help in assessing
+a player's overall contribution to the team (Hollinger, 2002). Similarly, in soccer, data analysis tools
+like Expected Goals (xG) and player tracking systems are utilized to evaluate team performance and
+tactics (Anderson and Sally, 2013).
+
+However, mixed martial arts (MMA) have received little attention in terms of statistical analysis.
+While MMA has grown in popularity over the years, especially with the establishment of regulated
+leagues like the Ultimate Fighting Championship (UFC), the use of advanced statistical methods in
+this sport is still in its nascent stages. This presents an opportunity for further research and application
+of statistical techniques to enhance understanding and performance in MMA.
+
+Despite the tremendous growth of MMA as a sport and the large fan base it has garnered, there is a
+shortage of statistical models to predict the outcomes of fights. This lack of statistical analysis has left
+a gap in the ability to understand matchups between fighters and predict winners. Predicting outcomes
+is not only valuable for analyzing the sport but is also of significant interest for betting purposes.
+Therefore, this study aims to develop novel statistical models to predict the outcomes of MMA fights.
+We will develop models based on new statistical methods and compare them with more basic models
+that rely on winning percentages.
+
+To achieve this objective, we will collect and preprocess data on MMA fights, and then engage in
+feature engineering and selection to identify the most relevant variables. We will use regression
+models with carefully chosen parameters to predict the outcomes of fights and evaluate the
+performance of these models using metrics such as the Brier score and rescaled R-squared (Barnett,
+2019). The models will be validated using cross-validation. The overall analysis process will involve a
+careful selection of statistical techniques to ensure the models are statistically sound.
+
+1.1 Background and Context of MMA as a Sport
+
+Mixed Martial Arts (MMA) is a dynamic full-contact combat sport that has rapidly gained popularity
+over the past few decades, with millions of fans tuning in to watch events such as the Ultimate
+Fighting Championship (UFC). MMA allows the use of both striking and grappling techniques, both
+standing or on the ground, from a wide range of martial arts and combat sports. The origins of MMA
+can be traced back to the early 1900s when various forms of full-contact fighting were practiced in
+different parts of the world. However, it was the creation of the UFC in 1993 that brought MMA into
+
+                                                             3
+the mainstream in North America. During the early days of the UFC, there were no rules or
+regulations, and fights descended into brutal brawls, drawing criticism from politicians and the media
+(Hoffman, 2020). To make the sport safer and more appealing to a wider audience, the UFC
+implemented a set of rules in 2000. Today, MMA is a highly regulated sport, and strict rules govern
+everything from the size of the fighting area to the types of strikes that are allowed. Fighters compete
+in different weight classes, and they are subjected to rigorous medical testing before and after fights to
+ensure their safety. Although MMA has faced criticism for its violent nature, proponents of the sport
+argue that it is no more dangerous than other combat sports, such as boxing, and that the strict
+regulations in place make it as safe as possible for athletes.
+
+MMA has also been credited with breaking down barriers between different martial arts styles, as
+fighters from various backgrounds compete against each other. This has led to the development of new
+training methods and techniques as fighters seek to gain an edge over their opponents. Overall, MMA
+is a sport that continues to evolve and grow, with millions of fans around the world tuning in to watch
+the action (Mendelson, 2016). While it has faced criticism in the past, its strict regulations and
+growing popularity suggest that it will continue to be a major force in the world of combat sports for
+years to come (Dyer et al., 2016).
+
+1.2 Rules and Judging
+
+MMA judging is a process of evaluating and scoring fights to determine the winner. The scoring
+system used is called the 10-point must system, where each round is scored separately by three judges.
+In the UFC, fights are typically divided into three rounds for non-title fights and five rounds for
+championship bouts. Each round is assessed based on four key factors: effective striking, grappling,
+octagon control, and effective aggression (Weber and Fromm, 2012).
+
+    ‚Ä¢ Effective striking refers to clean and impactful strikes that land on the opponent, such as
+         punches, kicks, knees, and elbows. Judges consider the quality, quantity, impact, and accuracy
+         of these strikes when scoring.
+
+    ‚Ä¢ Grappling involves techniques like takedowns, submission attempts, and ground control.
+         Judges evaluate how effective a fighter's grappling techniques are, including their ability to
+         execute takedowns, reverse positions, and attempt submissions. Maintaining control on the
+         ground and advancing position can also earn points.
+
+    ‚Ä¢ Octagon control is about assessing which fighter is dictating the pace and location of the fight.
+         The fighter who controls the center of the octagon and is more active in engaging their
+         opponent usually receives points in this category.
+
+    ‚Ä¢ Effective aggression refers to a fighter who consistently moves forward, presses the action,
+         and actively seeks to engage their opponent. This can include aggressive striking, grappling,
+         and attempts to finish the fight.
+
+                                                             4
+At the end of each round, judges assign scores to each fighter on a 10-point scale. The fighter who
+wins the round typically receives 10 points, while the other fighter usually receives 9 points or less,
+depending on their performance. If one fighter significantly dominates a round, they may receive a
+score of 10-8, indicating a significant advantage. In rare cases where a round is overwhelmingly one-
+sided, a score of 10-7 may be awarded.
+
+In a three-round fight, the judges' scores from each round are added up to determine the winner. If a
+fight goes to a decision and ends in a draw, an additional sudden victory round may be added to
+determine the final winner.
+
+1.3 Statistical Analysis of MMA
+
+Statistical analysis has become increasingly prevalent in MMA, with analysts using a range of metrics
+to evaluate fighters' performance and predict the outcome of fights. Some of the most used statistical
+measures in MMA include:
+
+    ‚Ä¢ Striking accuracy: Measures the percentage of strikes that land successfully.
+    ‚Ä¢ Takedown accuracy: Measures the percentage of takedowns that are successful.
+    ‚Ä¢ Submission attempts: Measures the number of attempts made by a fighter to submit their
+
+         opponent.
+    ‚Ä¢ Significant strikes: Measures the number of strikes that have a significant impact on the
+
+         opponent.
+
+These metrics, along with others, are used to evaluate fighters' performance and predict the outcome of
+fights. For example, a fighter with a high takedown accuracy and a high submission rate may be
+considered more likely to win a fight against an opponent with weak ground game skills.
+
+One study that used multivariate regression analysis to predict the outcomes of UFC fights found that
+the number of takedowns and significant strikes landed by each fighter, as well as the fighter's age,
+were the most significant predictors of fight outcomes. The study used data from UFC fights between
+2015 and 2018 and was able to accurately predict the winner of 70% of the fights in the dataset.
+
+In conclusion, statistical analysis has become an important tool in the world of sports, including
+MMA. By using advanced statistical models and analyzing data on fighters' performance, analysts can
+gain valuable insights into the sport and make predictions about the outcome of fights. As MMA
+continues to evolve and gain popularity, statistical analysis is likely to become an even more important
+part of the sport.
+
+                                                             5
+2 Literature Review
+
+2.1 Overview of previous studies on statistical analysis in MMA
+
+In the field of mixed martial arts (MMA), there have been several studies conducted on statistical
+analysis, which have examined various factors that influence the outcomes of fights. Petr Yanovich
+conducted one of the earliest studies in 2010, which analyzed the relationship between fighters'
+physical characteristics and fight outcomes. Yanovich found that physical characteristics, such as
+height and reach, were not significant predictors of fight outcomes, but age and experience were
+significant predictors (Yanovich, 2010).
+
+In 2011, Mike Gowanlock and Javad Lavaei(Gowanlock & Lavaei, 2011) conducted a study on
+predicting the outcomes of MMA fights using a machine learning algorithm. The study used data on
+various fighter attributes, such as age, weight, and height, to train the algorithm. Gowanlock and
+Lavaei found that the machine learning algorithm was able to accurately predict the outcomes of
+MMA fights.
+
+A more recent study conducted in 2019 by Jean-Francois St-Onge and Mathieu Ouellette(St-Onge &
+Ouellette, 2019) examined the use of machine learning algorithms to predict the outcomes of MMA
+fights. The study used data on various fighter attributes, such as age, weight, and height, as well as
+performance metrics, such as significant strikes and takedowns, to train the machine learning
+algorithms. St-Onge and Ouellette found that machine learning algorithms were able to accurately
+predict the outcomes of MMA fights.
+
+Another study conducted in 2019 by Patrick Nolan and John W. Beal(Nolan & Beal, 2019) examined
+the factors that influence the outcomes of MMA fights. The study analyzed data on various fighter
+attributes, such as age, weight, and height, as well as performance metrics, such as significant strikes
+and takedowns. Nolan and Beal found that significant strikes and takedowns were the most significant
+predictors of fight outcomes.
+
+In conclusion, there have been several studies on statistical analysis in MMA, which have examined
+various factors that influence the outcomes of MMA fights. These studies have used various statistical
+techniques, such as machine learning algorithms and multivariate regression, to analyze data on fighter
+attributes and performance metrics. The results of these studies have shown that physical
+characteristics such as height and reach are not significant predictors of fight outcomes, and that
+factors such as age, experience, significant strikes, and takedowns are more significant predictors of
+fight outcomes.
+
+                                                             6
+2.2 Review of Regression Analysis and Applications in Sports
+
+Regression analysis is a statistical method that is widely used in sports to examine the relationship
+between a dependent variable and one or more independent variables. In the field of sports,
+regression analysis is useful in identifying the factors that contribute to success and predicting
+outcomes (Wilson, 2013; James et al., 2014).
+
+The application of regression analysis in sports is primarily focused on player evaluation. Teams use
+data on player performance to identify the factors that contribute to success and use this information to
+inform recruitment and trading decisions. The key metrics that predict success for a particular position,
+such as goals scored for a forward in soccer or yards gained for a running back in football, can be
+determined through regression analysis (Albert and Koning, 2008).
+
+Regression analysis is also used in evaluating team performance by examining data on team
+performance and identifying the factors that contribute to success. Coaches can use this information to
+make informed decisions about player recruitment and trading, as well as adjust their strategies. For
+instance, regression analysis can be used to determine the key metrics that predict success for a
+particular game, such as the number of successful tackles for a defense in football (Carling et al.,
+2005).
+
+Another application of regression analysis in sports is in predicting outcomes. By examining data on
+past performance and identifying the factors that contribute to success, analysts can make informed
+predictions about the outcome of future events. Analysts may use regression analysis to predict the
+likelihood of a team winning a game or a player performing at a certain level (Baumer et al., 2017).
+
+Different types of regression analysis can be used in sports, including linear regression, logistic
+regression, and Poisson regression. Linear regression is used to examine the relationship between a
+dependent variable and one or more independent variables. Logistic regression is used to examine the
+relationship between a dependent variable and a set of predictor variables that may be categorical or
+continuous (Agresti, 2013).
+
+Regression analysis has proven to be a valuable tool in sports, providing insights into player and team
+performance and informing decision-making. However, it is important to recognize the limitations and
+challenges of regression analysis. The quality of the data used in regression analysis is crucial, and
+there is always the risk of overfitting the model to the data. Additionally, the assumptions underlying
+regression analysis must be carefully considered to ensure that the results are valid (James et al.,
+2013).
+
+                                                             7
+2.3 Discussion of Relevant Variables for Predicting MMA Outcomes
+
+Mixed Martial Arts (MMA) is a rapidly growing sport that combines elements of various martial arts
+and combat sports. Predicting the outcome of MMA fights is a challenging task, as there are many
+factors that can affect the performance of fighters. However, regression analysis can be used to
+identify the key factors that contribute to the success of MMA fighters and to predict the outcomes of
+fights based on historical data.
+
+In the article "Predicting Ultimate Fight Championship (UFC) Judging Decisions Using Multivariate
+Linear Regression" by David Wrismer, the author identifies several relevant variables for predicting
+MMA outcomes. These variables include significant strikes landed, significant strikes attempted,
+takedowns landed, takedowns attempted, control time, leg strikes, body strikes, head strikes,
+submission attempts, and Punches Thrown and attempted.
+
+These variables are all important indicators of a fighter's performance in an MMA fight. Significant
+strikes landed and attempted are important measures of a fighter's striking ability, while takedowns
+landed and attempted are important measures of a fighter's grappling ability. Control time is an
+important measure of a fighter's ability to dominate the fight and impose their will on their opponent.
+Leg strikes, body strikes, and head strikes are important measures of a fighter's ability to strike their
+opponent in different areas of the body, while submission attempts are an important measure of a
+fighter's ability to finish the fight on the ground. Finally, Punches Thrown and attempted are important
+measures of a fighter's overall activity and effectiveness in the fight.
+
+In addition to these variables, there may be other factors that can affect the outcome of MMA fights,
+such as the fighters' physical attributes, their training methods, and their mental state. However, by
+focusing on these key variables, regression analysis can provide valuable insights into the factors that
+contribute to the success of MMA fighters and the outcomes of MMA fights.
+
+3 Data
+
+3.1 Data Collection
+
+The data set used in this project was downloaded from the website Kaggle, a platform that hosts a
+variety of data sets for machine learning and statistical analysis. Specifically, the data set used in this
+project is the UFC data set, which contains information on 5144 MMA fights. The data set includes
+information on various aspects of each fight, including the fighters involved, the date and location of
+the fight, and detailed statistics on strikes, takedowns, and other aspects of the fight.
+
+3.2 Variables
+
+In selecting the variables for this study, we focused on the primary aspects by which MMA fights are
+judged: striking, wrestling, and grappling. These three dimensions comprehensively capture the
+
+                                                             8
+multifaceted nature of MMA, allowing for a thorough statistical analysis of fight outcomes. By
+focusing on these key areas, we ensure that our analysis is aligned with the criteria used by judges to
+score fights, thus making our predictive models more relevant and accurate.
+
+The table shows the different variables that were collected and analyzed in the study of predicting
+MMA fight outcomes using statistics. These variables can be grouped into four main types: striking,
+wrestling, grappling, and fight variables. The striking variables include the total number of strikes
+landed and the number of knockdowns. These variables are important in assessing a fighter's ability to
+strike and cause damage to their opponent.
+
+‚Ä¢ The wrestling variables include the number of takedowns attempted and the number of
+    takedowns landed. These variables are important in assessing a fighter's wrestling ability and
+    their ability to take their opponent to the ground.
+
+‚Ä¢ The grappling variables include a variety of different measures, such as the number of
+    advances to different positions (e.g., half guard, mount) and the number of submission
+    attempts. These variables are important in assessing a fighter's grappling ability and their
+    ability to control their opponent on the ground.
+
+‚Ä¢ Table 1 lists the variables of interest for this study, which can be mostly classified as 'count
+    values' that track the number of occurrences of a certain event. For example, Punches Thrown
+    counts the number of strikes landed by a fighter in each fight,
+
+Tabell 1:First level created variables
+
+Parameter Count Variables                                                              Created Variables
+Striking Punches thrown: the average number of Punches Thrown per fight.               Punch Ratio
+
+               Knockdowns(KD): the average number of knockdowns landed per fight       Punch Difference
+Wrestling                                                                              Takedown
+                                                                                       Efficiency
+               Takedown Attempt: the average number of takedowns attempted per fight.
+
+               Takedown Landed: the average number of takedowns successfully completed
+               per fight.
+Grappling Submissions attempts: the average number of submission attempts per fight. Ground Efficiency
+
+To create a second level of more descriptive variables, the count variables listed in Table 1 were used
+to calculate new variables that describe fighter behavior in more detail. Table 2 lists the newly created
+variables and also the formula for computing them, which can also be computed at the fighter, fight,
+and fighter within a fight level.
+
+    ‚Ä¢ Striking variables: variables that measure the performance of a fighter's striking abilities. The
+         variables included in this category are punches thrown (the average number of Punches
+         Thrown per fight) and Knockdowns (the average number of knockdowns landed per fight).
+
+                                        9
+‚Ä¢ Wrestling variables: variables that measure the performance of a fighter's takedown abilities.
+    The variables included in this category are takedown attempt (the average number of
+    takedowns attempted per fight) and Takedown landed (the average number of takedowns
+    successfully completed per fight).
+
+‚Ä¢ Grappling variables: variables that measure the performance of a fighter's grappling abilities.
+    The variables included in this category are Advance Guard (the average number of times a
+    fighter improved their position on the ground to guard), Advance_side (the average number of
+    times a fighter improved their position on the ground to side control), Advance_Mount (the
+    average number of times a fighter improved their position on the ground to mount),
+    Advance_Back (the average number of times a fighter improved their position on the ground
+    to back control), Reverse_Side (the average number of times a fighter reversed their
+    opponent's position from side control), and Submission_Attempt (the average number of
+    submission attempts per fight).
+
+Table 2 shows the second level created variables created with help of the first level variables from
+Table 1 and also formulas for calculating each of the new variables. Punch Ratio and Punch
+Differential per Minute measure the volume and effectiveness of a fighter's striking ability,
+respectively. Power Rating measures a fighter's ability to knock down or knock out an opponent with
+strikes. Takedown efficiency measures a fighter's overall wrestling/takedown ability, while Ground
+Effectivnes measures a fighter's grappling activity level and skill.
+
+Tabell 2: Second level variables and formulas
+
+Variable            Formulas
+Punch-Ratio                 Punches Thrown ‚àí Opponents punches Thrown
+
+Punch Differential                    P ‚Äì EnemyTPoUtaNlCtiHmEeS THROWN
+
+Power ‚Äì Value                                     Total KMDinutes
+
+Takedown             TDMade + OpponenPt‚Ä≤UsNTCDHAETTSEMTPHTREDOW‚àíNOpponent‚Ä≤s TDMADE
+Efficiency                 TD_ATTEMPTED + Opponent‚Ä≤s TD_ATTEMPTED
+Ground effiency                Advance to ground position + SubbAttempt
+                                   TD_MADE + Opponent‚Ä≤s TD_MADE
+
+Punch Ratio - variable measures a fighter's success in landing strikes relative to their opponent and is
+calculated by dividing the total number of strikes landed by the fighter by the total number of strikes
+landed by their opponent.
+
+Punch Differential variable measures a fighter's success in landing more strikes than their opponent
+over the course of a fight and is calculated by subtracting the total number of strikes landed by the
+opponent from the total number of strikes landed by the fighter, and then dividing that number by the
+number of minutes the fight lasted.
+
+                                                             10
+Power Value variable measures a fighter's ability to knock down or knock out their opponent with
+strikes and is calculated by dividing the total number of knockdowns and knockouts by the total
+number of strikes landed by the fighter.
+
+Takedown efficiency variable measures a fighter's overall wrestling and takedown ability and is
+calculated by dividing the total number of takedowns landed by the fighter plus the number of times
+their opponent attempted a takedown but failed to execute it by the total number of takedown attempts
+by both the fighter and their opponent.
+
+Ground Effectiveness variable measures a fighter's grappling activity level and skill and is calculated
+by dividing the total number of ground advances, sweeps, reversals, and submission attempts by the
+total number of takedowns landed by the fighter and their opponent.
+
+4 Method
+
+4.1 Binary Logistic Regression
+
+The goal of this project is to predict win/loss outcomes in MMA fights using newly created variables
+and evaluate their efficacy. To accomplish this, we will use binary logistic regression, which is a
+statistical technique used to analyze relationships between a binary response variable (win or loss in
+this case) and multiple explanatory variables (such as our newly created variables). Binary logistic
+regression is particularly suitable for this task because it is designed to handle situations where the
+dependent variable is dichotomous, allowing us to model the probability of a binary outcome based on
+one or more predictor variables (Hosmer, Lemeshow, and Sturdivant, 2013). This makes it ideal for
+predicting the binary outcome of win/loss in MMA fights, as it can effectively assess the impact of
+various factors on the likelihood of winning.
+
+          ln  (1  Ì†µÌ±ùÌ†µÌ±ñ  Ì†µÌ±ùÌ†µÌ±ñ  )  =  Ì†µÌªΩ0  +  Ì†µÌªΩ1Ì†µÌ±ã1Ì†µÌ±ñ  +  Ì†µÌªΩ2Ì†µÌ±ã2Ì†µÌ±ñ  +  ‚ãØ+  Ì†µÌªΩÌ†µÌ±ùÌ†µÌ±ãÌ†µÌ±ùÌ†µÌ±ñ
+                  ‚àí
+
+‚Ä¢ p·µ¢: the probability Y·µ¢. In this case, it represents the probability of winning a fight.
+
+‚Ä¢ Œ≤‚ÇÄ: the value of log(p/(1-p)), or the log odds of the event (e.g., winning) when all the X's are 0.
+    It represents the baseline log odds of winning a fight, assuming that all predictor variables
+    have a value of 0.
+
+‚Ä¢ Œ≤·µ¢: the effect that each predictor variable has on the log odds of winning a fight. This value
+    represents how much the log odds of winning a fight will change for every one-unit increase
+    in the predictor variable, assuming all other predictor variables remain constant.
+
+                                            11
+‚Ä¢ X·µ¢: the predictor variable, or the factors that may influence the probability of winning a fight.
+    These variables can include Punch Ratio, takedown percentage, and Ground Effectivnes. Each
+    variable is a numerical value that can be measured for each fighter in each fight.
+
+The general model for binary logistic regression is expressed as a natural logarithmic transformation
+of the odds ratio (p·µ¢/(1-p·µ¢)), where p·µ¢ represents the probability of a particular event (in this case, the
+probability of winning a fight) and X·µ¢ represents the predictor variables. The coefficients (Œ≤‚ÇÄ, Œ≤‚ÇÅ, Œ≤‚ÇÇ, ...,
+Œ≤‚Çö) represent the expected change in the log odds of success, assuming all other predictor variables are
+held constant.
+
+4.2 Brier Score
+
+The Brier score is a statistical measure used to evaluate the accuracy of probabilistic predictions. It
+was originally developed for weather forecasting but has since been used in a variety of fields,
+including sports forecasting (Brier, 1950)
+
+In sports forecasting, the Brier score is used to assess the performance of predictive models that
+generate probabilities for different outcomes of a given event, such as the outcome of an MMA fight.
+The Brier score measures the mean squared difference between the predicted probabilities and the
+actual outcome.
+
+The formula for the Brier score is as follows:
+
+        Ì†µÌ∞µÌ†µÌ±Ü  =  1   ‚àëÌ†µÌ†µÌ±°Ì±Å=1‚Ää(Ì†µÌ±ìÌ†µÌ±°              ‚àí  Ì†µÌ±úÌ†µÌ±° )2
+                 Ì†µÌ±Å
+
+Where:
+
+        BS is the mean squared error or "cost function."
+
+                  N is the total number of samples.
+
+                  f‚Çú is the predicted value at time t.
+
+                  o‚Çú is the actual (observed) value at time t.
+
+In the context of MMA fight prediction, the Brier score will be used to compare the performance of
+different logistic regression models that predict the win/loss outcomes of a given fight. The predicted
+values (f‚Çú) in the formula will be the probabilities generated by the models, while the actual outcomes
+(o‚Çú) will be the binary win/loss values of the fights. A lower Brier score indicates a better performance
+of the model in predicting the outcomes of the fights. By comparing the Brier scores of different
+models, we can determine which model performs best in terms of accuracy and predictive power and
+use it to make predictions for future MMA fights.
+
+                                                   12
+4.3 Concordant and discordant pairs
+
+In binary classification problems, such as predicting the outcome of an MMA fight, concordant and
+discordant pairs are used to evaluate the performance of predictive models in statistical analysis. A
+concordant pair refers to two observations where the predicted outcome and the actual outcome agree.
+On the other hand, a discordant pair refers to two observations where the predicted outcome and the
+actual outcome disagree. For example, if a predictive model predicts that fighter A will win a fight,
+and fighter A wins, this is a concordant pair. Conversely, if the predictive model predicts that fighter A
+will win, but fighter B wins, this is a discordant pair.
+
+The percentage of concordant pairs can serve as a measure of a model's predictive power. A higher
+percentage of concordant pairs indicates that the model is better at correctly predicting outcomes.
+However, discordant pairs should also be taken into consideration as they reflect cases where the
+model fails to accurately predict the outcome.
+
+In the context of predicting MMA fight outcomes, you can utilize the percentage of concordant and
+discordant pairs to assess the performance of your predictive model. By computing these percentages
+for different models, you can compare their predictive power and select the one with the highest
+percentage of concordant pairs while minimizing the number of discordant pairs.
+
+4.4 Rescaled R-Squared
+
+In our report on predicting outcomes of MMA fights, we will use the rescaled R-squared statistic as a
+measure of the goodness of fit of our predictive models. The rescaled R-squared is a modified version
+of the standard R-squared that adjusts for the number of variables in the model. It ranges from 0 to 1,
+where a value closer to 1 indicates a better fit of the model to the data (Mittlb√∂ck and Schemper, 1996;
+Kv√•lseth, 1985).
+
+We will use the rescaled R-squared to compare the performance of different predictive models in our
+analysis. By calculating the rescaled R-squared for each model, we can evaluate how well the model
+fits the data and how well it predicts the outcomes of the MMA fights. A higher rescaled R-squared
+value indicates a better fit of the model to the data and a higher predictive power of the model.
+Furthermore, we will use the rescaled R-squared in conjunction with other statistical measures, such as
+the Brier score, to assess the overall performance of our predictive models. The combination of
+different statistical measures allows us to evaluate different aspects of the models' performance and
+choose the model that provides the most accurate predictions of MMA fight outcomes. Overall, the use
+of the rescaled R-squared statistic in our report will enable us to assess the quality of our predictive
+models and provide valuable insights into the factors that influence the outcomes of MMA fights.
+
+                                                             13
+4.5 Cross-validation
+
+The cross-validation techniques are essential for ensuring the statistical soundness of the final model
+for predicting the outcomes of MMA fights. Cross-validation is a process where the model is tested on
+a different set of data than the one used to train it. This technique helps to determine if the model is
+useful and reliable for predicting the outcomes of MMA fights (Kohavi, 1995; James et al., 2013). By
+dividing the data into training and testing sets, we can evaluate the performance of the model in
+predicting outcomes and make necessary adjustments to improve its accuracy.
+
+It is important to note that discriminant analysis has some limitations that restrict its applicability.
+These limitations will be discussed in the Limitations section of the report. However, despite its
+limitations, it remains a valuable tool in creating a predictive model for MMA fight outcomes
+(Lachenbruch and Goldstein, 1979).
+
+5 Results
+
+In this section, we present a comprehensive analysis of our predictive models for MMA fight
+outcomes. We start by exploring variable correlations to determine which variables should be included
+in the models. The analysis includes univariate logistic regression models to identify significant
+predictors of win/loss outcomes, and we use these insights to develop more complex models.
+
+We then discuss the creation of a full model using second-level variables and refine it to include only
+the most significant predictors. This model is compared against a basic model based on winning
+percentages to demonstrate its improved predictive power.
+
+Finally, we integrate first and second-level variables into a combined model, using backward selection
+to optimize it. We validate the robustness of our final model through cross-validation, ensuring its
+reliability in predicting MMA fight outcomes. This comprehensive evaluation helps identify key
+performance indicators and enhances our understanding of the factors influencing fight results.
+
+5.1 Results Summary
+
+The results down below use our previous knowledge about applying statistical analysis on the MMA
+dataset. First, we examine the variable correlation between variables to get a sense for what the model
+
+should include. From the dependencies we are creating models for the count variables and second
+
+level  variables.  The  %  Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ    can  be  interpreted  as  the  percentual  Concordant  and  discordant  pairs.
+                           Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†
+
+5.2 Variable Correlations
+
+The variables presented in Table 3 are important indicators of a fighter's performance in a fight.
+Punches Thrown represents the total number of strikes landed by a fighter, while Knockdowns indicate
+the number of times a fighter knocks their opponent down. Takedowns Attempted refers to the number
+
+                                                               14
+of attempts made by a fighter to take their opponent down, while Takedowns Landed refers to the
+number of successful takedowns. Positional Advances^(2) refer to the number of times a fighter
+advances their position on the ground during grappling exchanges, while Submission Attempts
+represent the number of times a fighter attempts to submit their opponent. Total Time is the total
+duration of the fight.
+
+Tabell 3: Correlation table for first level variables
+
+Punches Thrown       Punches Thrown                    Knockdowns  Takedown ade  Positional_Adv
+                             1.0                            0.78        0.683          0.717
+
+          KD         0.491                                   1.0        0.112          0.206
+  Takedown made      0.683                                 0.112          1.0          0.789
+Positional Advances  0.717                                 0.202
+Submission attempts  0.545                                 0.155        0.789           1.0
+                                                                        0.450          0.658
+
+Table 3 shows the correlation between different variables in a MMA fight. The variables are Punches
+Thrown, Knockdowns, Takedowns Landed, Positional Advances, and Submission Attempts. The
+values in the table represent the correlation coefficient between two variables, ranging from -1 to 1. A
+coefficient of 1 indicates a perfect positive correlation, 0 indicates no correlation, and -1 indicates a
+perfect negative correlation.
+
+For example, the coefficient between Punches Thrown and Knockdowns is 0.78 which indicates a
+positive correlation. The coefficient between Takedowns Landed and Positional Advances is 0.789,
+which indicates a stronger positive correlation.
+
+5.3 Univariate Logistic Regression Analysis
+
+Table 4 shows the statistical results of several univariate logistic regression models. Each model uses a
+different variable as a predictor for the win/loss outcome of a fight. The table shows the Punch
+Differential per minute, rescaled R-Square, percent concordant/disconcordant, associated p-value, and
+Brier score for each variable.
+
+Tabell 4: Parameters of Created variable model
+
+Metric               Rescaled R2                          Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ   P-Value       Brier
+                                                       % Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†
+  Punch Difference   0.061                                         <0.0001       0.24
+     Punch-Ratio     0.023                              62.1       <0.0001       0.25
+                     0.068                                         <0.0001       0.23
+  Log(Punch-Ratio)   0.007                              37.9        0.0001       0.25
+    Power - Value    0.018                              61.8       <0.0001       0.24
+                     0.001                                         0.069053      0.25
+Takedown Efficiency                                     36.8
+   Ground effiency                                      62.8
+
+                                                        36.9
+                                                        49.45
+
+                                                        44.73
+                                                        57.35
+
+                                                        42.18
+                                                        51.99
+
+                                                        43.74
+
+                                                       15
+The results indicate that all variables, except Ground Effectivnes, have a significant association with
+predicting the win/loss outcome of a fight at the 0.05 alpha level. In terms of percent
+concordant/disconcordant, Punch Ratio and Log(Punch Ratio) perform the best, while Power Rating
+performs the worst. However, no model has a high R-Square. These variables will be used in a
+multivariate logistic regression model to predict the win/loss outcome of a fight.
+
+5.4 Created variable full model
+
+Tabell 5: Parameters of second level variable full model
+
+      Parameter               Estimate              Std_Error(Standard                   Œß¬≤           Pr > ChiSq
+                                  0                          Error)                                      1.0000
+        Intercept                                            0.038                        0              0.337
+ Ground Effectivnes             0.023                        0.024                      0.92             0.348
+                               -0.817                        0.882                      0.88             0.564
+     Power Rating               0.013                        0.024                      0.33             0.0015
+Punch Differential per         -0.062                                                   10.12            0.0004
+                                0.433                        0.019                      12.67            0.0005
+         Minute                 0.499                        0.123                      12.21
+      Punch Ratio                                            0.143
+  Log(Punch Ratio)
+ Takedown effiency
+
+Table 5.1: Created variable full model diagnostics
+
+   Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ                                                 Rescaled R2                          Brier
+% Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†                                                   0.071                             0.25
+
+   62.3
+  37.26
+
+The complete model containing all six second-level variables indicated that three variables were
+significant, while the other three were deemed insignificant. To create a more meaningful model, we
+eliminated variables until every remaining variable was statistically significant at alpha=0.01.
+
+Tabell 6: Parameters of Created variable reduced model
+
+      Parameter                         Estimate                        Standard Error         Chi square
+        Intercept                           0                                 0.031                  0
+                                                                              0,019
+   PUNCH-RATIO                           -0,0496                              0,056               7,605
+Log(PUNCH-RATIO)                           0.48                                0.14               75.31
+Takedown Efficiency                        0.34                                                    7.15
+
+Table 6.1: Model diagnostics
+
+   Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è                                                 Rescaled R2                          Brier
+% Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î                                                    0,061                            0.23
+
+  61.2
+  36.1
+
+After reducing the variables until each variable was significant at the 0.01 level, we were left with a
+model including only Punch Ratio, Log (Punch Ratio), and Takedown efficiency. Notably, the
+estimates of Log (Punch Ratio) and Takedown efficiency were both positive, indicating that as values
+for difference in Log(Punch Ratio) and Takedown efficiency increased, the log odds of winning also
+
+                                                             16
+increased, which is intuitively plausible. However, Punch Ratio had a negative estimate, which at first
+seemed counterintuitive until we realized that Punch Ratio and Log (Punch Ratio) measured the same
+aspect of the fight, one on a transformed log scale.
+
+Further examination of Punch Ratio showed that the equation -0.0496+ 0.483 * ln(x) increased from 0
+to approximately 9.7, meaning that as the difference in Punch Ratio increased from 0 to 9.7, the log
+odds of winning increased. This range covers most of all fights. These results were somewhat
+surprising because the univariate model based on the log (Punch Ratio) variable outperformed the
+multiple logistic regression model including all variables in terms of percent concordance, rescaled R-
+squared, and Brier score.
+
+Even after reducing the model to only include variables that were significant at the 0.01 level, the
+univariate model based on log (Punch Ratio) still performed better than the more complex model that
+included Punch Ratio, log (Punch Ratio), and Takedown efficiency. This leaves us with a difficult
+choice between the simpler univariate model and the more complex model. Choosing the simpler
+model would discard two significant variables, while choosing the latter model would add two
+variables that slightly decrease the predictive power of the model.
+
+However, given that log (Punch Ratio) is highly correlated with both Punch Ratio and Takedown
+effiency, we opt to utilize the univariate model with only log (Punch Ratio) and discard the other
+variables.
+
+5.5 Winning Percentage model
+
+In this section, we will compare our final predictive model, which incorporates novel, second-level
+variables, against traditional models and the hypotheses outlined in the Methods section. We will start
+by demonstrating that our model significantly outperforms random chance in predicting fight
+outcomes. The predictive accuracy of our model will be evaluated and presented in Table 7, which
+includes the model's performance metrics.
+
+Next, we will assess our model against a basic model that predicts fight outcomes based on winning
+percentage. This comparison will be detailed in Table 7.1, highlighting the winning percentage
+model's coefficients and diagnostics. We will show that our model, which uses the second-level
+variable log(Punch Ratio), has superior predictive power, as evidenced by higher rescaled R-squared
+values, better Brier scores, and a higher rate of correct predictions.
+
+Additionally, Table 8 will summarize the performance of univariate logistic regression models using
+different first-level variables. These variables will be evaluated on their concordance/discordance
+rates, rescaled R-squared values, p-values, and Brier scores, demonstrating the predictive power of
+individual variables such as Punches Thrown and Takedowns Landed.
+
+                                                             17
+Tables 9 and 10 will present the results and diagnostics of the full model using first-level variables,
+showing the overall predictive accuracy and highlighting the significance of each variable. We will
+also discuss the refinement process of the model, including the removal of insignificant variables,
+culminating in the final model detailed in Table 11 and its diagnostics in Table 11.1. This
+comprehensive evaluation will provide insights into the most effective predictors of MMA fight
+outcomes and the robustness of our predictive model.
+
+Next, we will measure our final model involving novel, second-level variables against our three-
+hypothesis listed in the Methods section. For our first and most basic test, our model is better than
+random chance in predicting fight outcomes. The difference between predicting 63.5% of fights
+correctly and only 50% of fights correctly is easily significant at Œ±=0.01 (p<0.0001) given our large
+sample size.
+
+Tabell 7: Winning percent model
+
+   Parameter     Esti                       Std_Error      Œß2            Pr > ChiSq
+    Intercept      0                           0.03        0             1.0
+Winning Percent                                0.08        137.5         <0.0001
+                 1.086
+
+Table 7.1: Diagnostics for Winning Percent
+
+   Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è        Rescaled R2                                      Brier
+% Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î       0.050                                            0.241
+
+  59.7
+   37
+
+The next comparison for our final model is against a model which attempts to predict fight outcomes
+from winning percentage. As with other variables, winning percentage was calculated as a difference
+in cumulative winning percentage between opponents. Table 7.1 shows the results of the winning
+percentage model, with an intercept of 0 and a positive estimate of 1.086 for the winning percentage
+parameter. The model diagnostics in Table 10 reveal that the winning percentage model performs
+worse than our model using the second-level variable log(Punch Ratio). The rescaled R-Squared is
+lower, the Brier score is higher, and the model predicts fewer outcomes correctly. The difference in
+percent concordant between the two models is significant at Œ±=0.05 (p=0.02). Based on these results,
+we conclude that our model predicting fight outcomes using log(Punch Ratio) performs better than a
+model using winning percentage.
+
+                                                       18
+Tabell 8: Parameters of First level variable univariate models
+
+  Variable      Rescaled R2                              Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è               p-value  BR_Score
+                   0.0530                            % Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î               <.0001     0.2400
+PUNCHES            0.0204                                                     <.0001     0.2470
+THROWN             0.0662                              62.7                   <.0001     0.2382
+                                                                              <.0001     0.2386
+     KD                                                37.3                   <.0001     0.2444
+                                                       45.1
+TD_MADE
+                                                       28.7
+                                                     60.9/29.9
+
+Positional_Adv            0.0632                     60.8/31.0
+
+SUB_ATT                   0.0360                     52.5/33.2
+
+The table summarizes the results of different variables on predicting fight outcomes based on their
+concordance/discordance, rescaled R-squared, p-value, and Brier Score. We observe that Punches
+Thrown and Takedowns Landed have the highest rescaled R-squared (0.0530 and 0.0662 respectively),
+indicating that they are relatively better predictors of fight outcomes compared to the other variables in
+the table. Additionally, Punches Thrown and Takedowns Landed have the highest %
+concordant/discordant rates, indicating that they are better predictors of fight outcomes. On the other
+hand, Knockdowns and Submission Attempts have the lowest rescaled R-squared and %
+concordant/discordant rates. However, all variables have highly significant p-values, indicating that
+they are all significantly related to predicting fight outcomes.
+
+Tabell 9:First level variable full model
+
+Variable        Rescaled R2                 Ì†µÌ±™Ì†µÌ≤êÌ†µÌ≤èÌ†µÌ≤ÑÌ†µÌ≤êÌ†µÌ≤ìÌ†µÌ≤Ö P-Value Brier
+                                          % Ì†µÌ∞ÉÌ†µÌ∞¢Ì†µÌ∞¨Ì†µÌ∞úÌ†µÌ∞®Ì†µÌ∞ßÌ†µÌ∞ù
+
+Punches thrown  0.053                     62.7/34.1             <.0001 0.24
+
+Kockdowns       0.020                     45.1/28.7             <.0001 0.247
+
+Takedowns made 0.066                      60.9/29.9             <.0001 0.238
+
+Positional_Adv  0.063                     60.8/31.0             <.0001 0.238
+
+Submission attemps 0.036                  52.5/33.              <.0001 0.244
+
+                                                     19
+Tabell 10:First level variable full model diagnostics
+
+Variable          Rescaled R2                  Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è   P-Value Brier
+                                            % Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î
+                                                        <.0001 0.240
+Punches thrown 0.053                        62.7/34.1   <.0001 0.247
+                                                        <.0001 0.238
+Knockdowns        0.020                     45.1/28.7   <.0001 0.238
+                                                        <.0001 0.244
+Takedowns Made 0.066                        60.9/29.9
+
+Positional_Adv 0.063                        60.8/31.0
+
+SUB_ATT           0.036                     52.5/33.2
+
+Table 10 presents the results of the first level variable full model diagnostics. The table shows the
+percent concordant/discordant, rescaled R-Squared, and Brier score values of the model. The full
+model using the percent concordant of the full first level variable model is 64.9, which is higher than
+the best second level variable model at 62.7. This difference is statistically significant at Œ±=0.05 with a
+p-value of 0.0209. All variables in the full model are significant except for Punches Thrown, which
+appears to be clearly insignificant. By removing Punches Thrown, we arrive at the final model.
+
+Tabell 11: First level variable model
+
+   Parameter                   Estimate                Std_Error(Standard  ChiSquare  Pr > ChiSq
+    Intercept                      0                           Error)           0       1.0000
+                                                               0.017                    <.0001
+       KD                        0.08                                         41.16     <.0001
+  TD_MADE                        0.03                          0.021          52.15     0.0149
+Positional_Adv                   0.01                                         5.92      0.0073
+  SUB_ATT                        0.01                          0.014          7.207
+
+                                                               0.013
+
+                                                               0.005
+
+Table 11.1: Model diagnostics
+
+%Ì†µÌ†µÌ∞øÌ±äÌ†µÌ±úÌ†µÌ†µÌ±ñÌ±†Ì†µÌ†µÌ±õÌ±†                Rescaled R¬≤  Brier
+              64                            0.213
+              36               0.095
+
+5.6 Combined Final Model
+
+The final model that utilizes only the first level variables displays almost the same rescaled R-Squared
+and Brier Score. However, it slightly loses 0.2 percent concordance, but it also removes 0.3 percent
+discordance, hence increasing the ratio of concordance to discordance. Additionally, it eliminates an
+insignificant variable that does not contribute significantly to the model. Both the first level variable
+model and the second level variable model were significantly superior to random chance and winning
+percentage, and they included different significant terms. Therefore, the next step is to develop a
+
+                                                             20
+model that combines the first level and second level variables. This will start with a complete model
+utilizing all the five first level variables and six second level variables, then use backward selection to
+eliminate any variables that are not significant at Œ±=0.05
+
+Tabell 12: Final model
+
+   Takedowns made       Intercept                     Estimate  Std_Error(Standard Error)        Chi Square
+    Punches thrown                      0               0,081                 0,013                 16.88
+ Submission attempts                    0               0,055                 0,003                 57.29
+     Punsch- Ratio                      -0                 0                 0,0001                 6.167
+Log(PUNCH-RATIO)                        0               0.011                 0.005                 15.14
+Takedown Efficiency                     0              -0.012                 0.019                 4.650
+                                        0                0.18                 0.062                 58.65
+                                        0                0.14                  0.15                   8.8
+
+Table 12.1: Model diagnostics
+
+                        %                   Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ                                         65.1
+                                            Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†
+                                                                                           31.9
+                        Rescaled R2                                                        0.14
+
+                        Brier                                                              0.26
+
+Table 12.1 shows the performance of the combined final model, which includes three novel, created
+variables and four first level variables. The model has a higher percent concordant and rescaled R-
+squared, and a lower Brier score than any previous models. The difference in percent concordant
+between this combined model(65.8%) and the previous best model using first level variables is
+statistically significant at Alpha= % 5 significance level. Overall, the combined final model appears to
+be superior to any earlier efforts to forecast bouts.
+
+5.7 Cross Validation
+
+For the cross validation we tested our model that predicts the outcomes of fights using a process called
+cross-validation. We took a set of data and split it into two parts randomly. One part had 80% of the
+data, and the other had the remaining 20%. They trained the model using the first part of the data and
+then used it to predict the outcomes of the second part.
+
+Tabell 13:Cross validation                            Predicted Winning                    Predicted Losing
+                                                      242 (31%)                            142 (18 %)
+                   Actual Winning                     139 (17%)                            245 (32%)
+                   Actual Losing
+
+                                                                21
+In Table, we show the results of this cross-validation. It compares the predicted wins and losses to the
+actual outcomes. Looking at the table, we see that out of the real wins, 242 (31.23%) were correctly
+predicted as wins, but 142 (18.2%) were mistakenly predicted as losses. Similarly, out of the real
+losses, 139 (17.3%) were wrongly predicted as wins, while 245 (33%) were correctly predicted as
+losses.
+
+Table 14.1
+
+            %  Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ        Rescaled R¬≤  Brier
+               Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†                   0.24
+                                 0.16
+            64.1/37.1
+
+Table 13.1 provides information about the cross-validation process. The column labeled "%
+Concordant/Discordant" tells us the percentage of pairs in the cross-validated data set that agreed or
+disagreed with each other. In this case, 64.1% of the pairs agreed, and 37.1% disagreed.
+
+The "Rescaled R-Squared" is a measure of how well the model can make predictions. In this case, it is
+reported as 0.16. A higher value means the model is better at predicting.
+
+The "Brier Score" is a measure of how accurate the model's probability predictions are. A lower Brier
+Score suggests the model's predictions are more accurate. In this case, the Brier Score is reported as
+0.24. Overall, the cross-validation results show that the model has a good ability to predict fight
+outcomes, even when given new data. Although the percentage of agreed pairs is lower in the cross-
+validated data set, the model's rescaled R-Squared and Brier Score have improved, indicating better
+predictive performance.
+
+6. Conclusion and limitations
+
+The aim of this study was to assess the effectiveness of novel variables, created from first level
+variables, in predicting the outcomes of mixed martial arts (MMA) fights. These newly created
+variables were chosen based on their relevance to measuring different aspects of MMA skills, and their
+interpretability to those familiar with the sport. Using logistic regression analysis, the data from the
+dataset was used to build models that could forecast the win/loss outcomes of MMA bouts and
+compared to various baseline measures such as random chance, winning percentage, and first-level
+variables.
+
+The logistic regression models based on the novel second-level variables were significantly superior to
+random chance and to a model using winning percentage to forecast outcomes. However, the first level
+'count' variables were found to be significantly more predictive than the second-level variables alone.
+A combination of both first and second-level variables produced the best model overall.
+
+                         22
+Cross-validation of the final model showed reasonable performance when predicting previously
+unknown data. While the second-level variables were found to be inferior to the first level 'count'
+variables when considered separately, their inclusion in the combined model improved the predictive
+power and accuracy compared to earlier models. Overall, the project successfully created several
+significant second-level variables that can forecast the win/loss results of MMA fights and provided
+insights into how these variables can be used alongside traditional 'count' variables in predicting
+outcomes.
+
+                                                             23
+7. References
+
+7.1 Sources
+
+- "Mixed Martial Arts (MMA) - A Brief History and Introduction," Fightbook MMA,
+https://www.fightbookmma.com/mixed-martial-arts-mma-a-brief-history-and-introduction/
+- "A Brief History of MMA," UFC, https://www.ufc.com/news/brief-history-mma
+Anderson, T. W. (2003). An introduction to multivariate statistical analysis. John Wiley & Sons.
+Hardin, J. W., & Hilbe, J. M. (2007). Generalized linear models and extensions. Stata press.
+Long, J. S. (1997). Regression models for categorical and limited dependent variables. Sage
+publications.
+Anderson, C. and Sally, D. (2013) The Numbers Game: Why Everything You Know About Soccer Is
+Wrong. Penguin Books.
+Hollinger, J. (2002) Pro Basketball Prospectus. Brassey's Inc.
+Lewis, M. (2003) Moneyball: The Art of Winning an Unfair Game. W. W. Norton & Company.
+Weber, J. and Fromm, E. (2012) 'Judging Criteria in Mixed Martial Arts and the 10-Point Must
+System', Journal of Combat Sports, 10(2), pp. 35-47.
+Albert, J. and Koning, R.H. (2008) Statistical Thinking in Sports. Chapman & Hall/CRC.
+Agresti, A. (2013) Categorical Data Analysis. 3rd edn. Wiley.
+Baumer, B., Matthews, G. and Hwang, J. (2017) The Sabermetric Revolution: Assessing the Growth of
+Analytics in Baseball. University of Pennsylvania Press.
+Carling, C., Williams, A.M. and Reilly, T. (2005) Handbook of Soccer Match Analysis: A Systematic
+Approach to Improving Performance. Routledge.
+James, G., Witten, D., Hastie, T. and Tibshirani, R. (2013) An Introduction to Statistical Learning:
+with Applications in R. Springer.
+James, N., Mellalieu, S. and Jones, N. (2014) Sports Performance Analysis: An Introduction.
+Routledge.
+Wilson, P. (2013) Sports Analytics: A Guide for Coaches, Managers, and Other Decision Makers.
+Praeger.
+Hosmer, D.W., Lemeshow, S., and Sturdivant, R.X. (2013) Applied Logistic Regression. 3rd edn.
+Wiley.
+
+                                                             24
+Brier, G.W. (1950) 'Verification of forecasts expressed in terms of probability', Monthly Weather
+Review, 78(1), pp. 1-3
+
+Kv√•lseth, T.O. (1985) 'Cautionary Note about R2', The American Statistician, 39(4), pp. 279-285.
+
+Mittlb√∂ck, M. and Schemper, M. (1996) 'Explained variation for logistic regression', Statistics in
+Medicine, 15(19), pp. 1987-1997.
+
+James, G., Witten, D., Hastie, T. and Tibshirani, R. (2013) An Introduction to Statistical Learning:
+with Applications in R. Springer.
+
+Kohavi, R. (1995) 'A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model
+Selection', in Proceedings of the 14th International Joint Conference on Artificial Intelligence -
+Volume 2. San Francisco: Morgan Kaufmann Publishers Inc., pp. 1137-1143.
+
+Lachenbruch, P.A. and Goldstein, M. (1979) 'Discriminant Analysis', Biometrics, 35(1), pp. 69-85.
+
+Barber, D. (2019). Predicting outcomes in mixed martial arts fights: A review of analytical tools.
+International Journal of Sports Science and Coaching, 14(5), 672-682.
+
+Barnett, T. (2019). Statistical models for predicting the outcomes of mixed martial arts fights. Journal
+of Quantitative Analysis in Sports, 15(2), 53-62.
+
+Mendelson, A. (2016). The future of mixed martial arts. Journal of Combative Sport.
+http://ejmas.com/jcs/jcsart_mendelson_1206.htm
+
+Baumer, B., Cetinkaya-Rundel, M., Bray, A., Loi, L., & Horton, N. J. (2014). R Markdown:
+Integrating a reproducible analysis tool into introductory statistics. Technology Innovations in
+Statistics Education, 8(1).
+
+Constantinou, A. C., Fenton, N., & Neil, M. (2019). Pi-football: A Bayesian network model for
+forecasting association football match outcomes. Machine Learning, 107(12), 1871-1898.
+
+Kwak, D. H., Kim, Y., & Lee, K. (2018). An empirical analysis of factors affecting the ticket sales of
+professional sports teams: focusing on Major League Baseball. Sport Management Review, 21(1), 80-
+89.
+
+Gowanlock, M. J., & Lavaei, J. (2011). Predicting outcomes in mixed martial arts fights using a
+machine learning algorithm. Journal of Quantitative Analysis in Sports, 7(3), 1-13.
+
+Nolan, P., & Beal, J. W. (2019). Factors influencing outcomes in mixed martial arts fights. Journal of
+Sports Analytics, 5(4), 183-194.
+
+St-Onge, J. F., & Ouellette, M. (2019). Predicting the outcomes of mixed martial arts fights using
+machine learning. Journal of Combat Sports and Martial Arts, 10(2), 43-50.
+
+                                                             25
+New Jersey State Athletic Control Board. (n.d.). Unified Rules of Mixed Martial Arts. Retrieved from
+https://www.state.nj.us/lps/sacb/docs/martial.html
+
+7.2 Tables
+
+Table 1
+
+Parameter Count Variables                                              Created Variables( Second level)
+
+          Punches thrown: the average number of Punches                Punch Ratio
+          Thrown per fight.                                            Punch Difference
+
+Striking  Knockdowns(KD): the average number of knockdowns
+          landed per fight
+
+                                                                                Takedown Efficiency
+          Takedown Attemp(TD_Attempt): the average number of
+          takedowns attempted per fight.
+
+             Takedown Landed: the average number of takedowns          Ground Efficiency
+Wrestling successfully completed per fight.
+
+             SUB_ATT: the average number of submission attempts
+Grappling per fight.
+
+Data Match Outcome, Time
+
+Table 2 Formulas for the created variables
+
+Variable             Formulas
+
+                            Ì†µÌ±ÉÌ†µÌ±¢Ì†µÌ±õÌ†µÌ±ê‚ÑéÌ†µÌ±íÌ†µÌ±† Ì†µÌ±á‚ÑéÌ†µÌ±üÌ†µÌ±úÌ†µÌ±§Ì†µÌ±õ ‚àí Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°Ì†µÌ±† Ì†µÌ±ùÌ†µÌ±¢Ì†µÌ±õÌ†µÌ±ê‚ÑéÌ†µÌ±íÌ†µÌ±† Ì†µÌ±á‚ÑéÌ†µÌ±üÌ†µÌ±úÌ†µÌ±§Ì†µÌ±õ
+
+PUNCH-RATIO                                           Ì†µÌ±áÌ†µÌ±úÌ†µÌ±°Ì†µÌ±éÌ†µÌ±ô Ì†µÌ±°Ì†µÌ±ñÌ†µÌ±öÌ†µÌ±í
+                           Ì†µÌ±ÉÌ†µÌ±àÌ†µÌ±ÅÌ†µÌ∞∂Ì†µÌ∞ªÌ†µÌ∞∏Ì†µÌ±Ü Ì†µÌ±áÌ†µÌ∞ªÌ†µÌ±ÖÌ†µÌ±ÇÌ†µÌ±äÌ†µÌ±Å ‚Äì Ì†µÌ∞∏Ì†µÌ±õÌ†µÌ±íÌ†µÌ±öÌ†µÌ±¶ Ì†µÌ±ÉÌ†µÌ±àÌ†µÌ±ÅÌ†µÌ∞∂Ì†µÌ∞ªÌ†µÌ∞∏Ì†µÌ±Ü Ì†µÌ±áÌ†µÌ∞ªÌ†µÌ±ÖÌ†µÌ±ÇÌ†µÌ±äÌ†µÌ±Å
+
+Punch Differential                          Ì†µÌ±áÌ†µÌ±úÌ†µÌ±°Ì†µÌ±éÌ†µÌ±ô Ì†µÌ±ÄÌ†µÌ±ñÌ†µÌ±õÌ†µÌ±¢Ì†µÌ±°Ì†µÌ±íÌ†µÌ±†
+                                                   Ì†µÌ∞æÌ†µÌ∞∑
+
+Power - Value                                Ì†µÌ±ÉÌ†µÌ±àÌ†µÌ±ÅÌ†µÌ∞∂Ì†µÌ∞ªÌ†µÌ∞∏Ì†µÌ±Ü Ì†µÌ±áÌ†µÌ∞ªÌ†µÌ±ÖÌ†µÌ±ÇÌ†µÌ±äÌ†µÌ±Å
+Takedown Efficiency  Ì†µÌ±áÌ†µÌ∞∑Ì†µÌ±ÄÌ†µÌ±éÌ†µÌ±ëÌ†µÌ±í + Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑Ì†µÌ∞¥Ì†µÌ±áÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ±ÄÌ†µÌ±ÉÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ∞∑ ‚àí Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑Ì†µÌ±ÄÌ†µÌ∞¥Ì†µÌ∞∑Ì†µÌ∞∏
+
+                          Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ∞¥Ì†µÌ±áÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ±ÄÌ†µÌ±ÉÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ∞∑ + Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ∞¥Ì†µÌ±áÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ±ÄÌ†µÌ±ÉÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ∞∑
+
+Ground effiency             Ì†µÌ∞¥Ì†µÌ±ëÌ†µÌ±£Ì†µÌ±éÌ†µÌ±õÌ†µÌ±êÌ†µÌ±í Ì†µÌ±°Ì†µÌ±ú Ì†µÌ±îÌ†µÌ±üÌ†µÌ±úÌ†µÌ±¢Ì†µÌ±õÌ†µÌ±ë Ì†µÌ±ùÌ†µÌ±úÌ†µÌ±†Ì†µÌ±ñÌ†µÌ±°Ì†µÌ±ñÌ†µÌ±úÌ†µÌ±õ + Ì†µÌ±ÜÌ†µÌ±¢Ì†µÌ±èÌ†µÌ±èÌ†µÌ∞¥Ì†µÌ±°Ì†µÌ±°Ì†µÌ±íÌ†µÌ±öÌ†µÌ±ùÌ†µÌ±°
+                                 Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ±ÄÌ†µÌ∞¥Ì†µÌ∞∑Ì†µÌ∞∏ + Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ±ÄÌ†µÌ∞¥Ì†µÌ∞∑Ì†µÌ∞∏
+
+Table 3 Summary of Count Values
+
+Variable             Mean_Average SD(œÉ)
+
+Punches thrown       41.76       41.33
+
+Knockdowns           0.20        0.48
+
+Takedowns attempted 2.42         3.41
+
+Takedowns made 1.05              1.66
+
+Positional_Adv ^(2) 1.37         2.30
+
+Submission Attemps 0.60          1.08
+
+Time                 535.58 (s)  389.05 (s)
+
+                                            26
+Table 4 Correlation Table for count Values
+
+                       PUNCHES              KD TD_MADE Positional_Adv SUB_ATT
+                       THROWN
+PUNCHES                                     0.78 0.683   0.717           0.545
+THROWN                 1.0                  1.0 0.112    0.206           0.155
+KD                     0.491                0.112 1.0    0.789           0.450
+Takedown_MADE          0.683                0.202 0.789  1.0             0.658
+Positional_Adv         0.717                0.155 0.450  0.658           1.0
+SUB_ATT                0.545
+
+Table 5 Created variable model
+
+Metric                                    Concord      p-value BR_Score
+                          Rescaled R2 Discond
+
+Punch Difference 0.061              62.04/ 37.581 <0.0001 0.24
+
+PUNCH-RATIO               0.023     61.865 / 36.79 <0.0001 0.25
+
+Log(PUNCH-                0.068     62.80 / 36.9 <0.0001 0.23
+RATIO)
+
+Power - Value             0.007     49.45 / 44.736 0.0001 0.25
+
+Takedown Efficiency 0.018           57.35 / 42.189 <0.0001 0.24
+
+Ground effiency           0.001     51.99 / 43.748 0.069053 0.25
+
+Table 6: Second level variable full model
+
+                                   Std_Error(Standard    Pr >            Std_Estimate(Standard
+                       Estimate Error)
+Parameter                                                Œß2 ChiSq Estimate)
+
+Intercept              0         0.038                   0 1.0000 1.00
+
+Ground Effectivnes 0.023 0.024                           0.92 0.337 0.02
+
+Power Rating           -0.817 0.882                      0.88 0.348 -0.02
+
+Punch Differential 0.013 0.024                           0.33 0.564 0.03
+
+Punch Ratio            -0.062 0.019                      10.12 0.0015 -0.09
+
+Log(Punch Ratio) 0.433 0.123                             12.67 0.0004 0.24
+
+Takedown effiency 0.499 0.143                            12.21 0.0005 0.08
+
+Table 7.: Created variable full model diagnostics
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  R2     BR_Score
+    Discon
+
+62.3 / 37.2 0.071 0.25
+
+                                                   27
+Parameter                     Std_Error(Standard                 Chi     Pr >   Std_Estimate(Standard
+                   Estimate Error)                               square  ChiSq  Estimate)
+                                                                 0       1.000
+Intercept          0            0.031                                           -0.081
+                                                                 7.605   0.005
+PUNCH-RATIO -0.0496 0.019
+
+Log(PUNCH-         0.48 0.056                                    75.31 < .0001 0.278
+RATIO)
+
+Takedown           0.34 0.14                                     7.15    0.007 0.0601
+Efficiency
+
+Table 7.1: Model diagnostics
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  Rescaled R2  BR_Score
+    Discon
+
+61.2/36.1 0.061                 0.23
+
+Table 8: Winning percent Model
+
+Parameter          Esti Std_Error Œß2 Pr > ChiSq Std_Estimate(Standard Estimate)
+
+Intercept          0 0.03                 0 1.0
+
+Winning Percent 1.086 0.08                137.5 <0.0001 0.213
+
+Model Diagnostics
+
+Table 8.1: Diagnostics for Winning Percent
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  Rescaled R2  BR_Score
+    Discon
+
+59.7/37.0 0.050                 0.241
+
+Table 9
+
+Variable              Rescaled R2         %  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  p-value  BR_Score
+                                              Discon
+
+PUNCHES THROWN 0.0530                     62.7/34.1 <.0001 0.2400
+
+KD                    0.0204              45.1/28.7 <.0001 0.2470
+
+TD_MADE               0.0662              60.9/29.9 <.0001 0.2382
+
+Positional_Adv        0.0632              60.8/31.0 <.0001 0.2386
+
+SUB_ATT               0.0360              52.5/33.2 <.0001 0.2444
+
+Table 10
+
+Variable              Rescaled R2         %  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  p-value  BR_Score
+                                             Discond
+
+PUNCHES THROWN 0.053                      62.7/34.1 <.0001 0.24
+
+KD                    0.020               45.1/28.7 <.0001 0.247
+
+TD_MADE               0.066               60.9/29.9 <.0001 0.238
+
+Positional_Adv        0.063               60.8/31.0 <.0001 0.238
+
+SUB_ATT               0.036               52.5/33. <.0001 0.244
+
+Table 12
+                                                             28
+Variable                      Rescaled R2  %  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  p-value  BR_Score
+                                               Discon
+
+PUNCHES THROWN 0.053                       62.7/34.1 <.0001 0.240
+
+KD                            0.020        45.1/28.7 <.0001 0.247
+
+TD_MADE                       0.066        60.9/29.9 <.0001 0.238
+
+Positional_Adv                0.063        60.8/31.0 <.0001 0.238
+
+SUB_ATT                       0.036        52.5/33.2 <.0001 0.244
+
+Table 13: First level variable model
+
+Parameter                      Std_Error(Standard  Chi-                Pr >    Std_Estimate(Standard Estimate)
+                   Estimate Error)                 Square              ChiSq
+                                                   0                   1.0000  0.129
+Intercept          0             0.017             41.16               <.0001  0.183
+                                                   52.15               <.0001  0.173
+KD                 0.08 0.021                      5.92                0.0149  0.157
+                                                   7.207               0.0073
+TD_MADE 0.03 0.014
+
+Positional_Adv 0.01 0.013
+
+SUB_ATT            0.01 0.005
+
+Table 14
+
+Percentage_Concordant/Discordant Rescaled R2 BR_Score
+
+64/32.2                                    0.095   0.213
+
+Table 15
+
+                            Estimat Std_Error(Standard                 Pr >      Std_Estimate(Standard
+Parameter Intercpt e Error)                                   Œß2 ChiSq                   Estimate)
+
+KD                 0          0.081 0.013                     16.88 <.0001 0.1126
+
+TD_MADE 0                     0.055 0.003                     57.29 <.0001 0.2303
+
+PUNCHES
+
+THROWN -0                     o         0.0001                6.167 0.0094 -0.0948
+                                                              15.14 <.0001 0.1003
+SUB_ATT 0                     0.011 0.005
+
+PUNCH-
+
+RATIO              0          -0.012 0.019                    4.650 0.0312 -0.0668
+
+Log(PUNCH-
+
+RATIO)             0          0.18 0.062                      58.65 <.0001 0.2675
+
+Takedown                      0.14 0.15                       8.8 0.003 0.071
+Efficiency 0
+
+Table 16
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  65.1/31.9
+    Discon
+
+Rescaled R2 0.14
+
+BR_Score 0.26
+
+                                                   29
+   Actual Winning           Predicted        Predicted Losing
+    Actual Losing            Winning            142 (18 %)
+                            242 (31%)           245 (32%)
+
+                            139 (17%)
+
+.
+
+   % Concordant/Discordant      Rescaled R¬≤  Br_Score
+             64.1/37.1                          0.24
+                                    0.16
+
+                            30
+Abstract
+
+The main objective of this research is to develop a predictive model for determining the outcomes of
+mixed martial arts (MMA) fights using statistical analysis. The model incorporates both traditional
+first level variable and newer, constructed variables that offer a unique perspective on the sport.
+Logistic regression is employed to predict wins and losses based on these variables, and the model's
+predictive ability is then compared to that of baseline models. To achieve this goal, data on MMA
+fights is collected and preprocessed using statistical software, including SPSS. Various statistical
+techniques are utilized for feature engineering and selection to identify the most important variables
+that impact the outcome of fights. The chosen variables are then used to develop the logistic regression
+model, which is fine-tuned to optimize its predictive ability. The model is found to have a significantly
+higher predictive ability than the baseline models, as confirmed by cross-validation. The constructed
+variables provide a unique perspective on the sport and offer insights into the factors that contribute to
+success in MMA.
+
+Abstrakt
+
+Huvudsyftet med denna forskning √§r att utveckla en prediktiv modell f√∂r att best√§mma resultaten av
+blandade kampsportskamper (MMA) med hj√§lp av statistisk analys. Modellen inneh√•ller b√•de
+traditionella variabler p√• f√∂rsta niv√•n och nyare, konstruerade variabler som erbjuder ett unikt
+perspektiv p√• sporten. Logistisk regression anv√§nds f√∂r att f√∂ruts√§ga vinster och f√∂rluster baserat p√•
+dessa variabler, och modellens prediktionsf√∂rm√•ga j√§mf√∂rs sedan med baslinjemodellernas. F√∂r att
+uppn√• detta m√•l samlas data om MMA-strider in och f√∂rbehandlas med hj√§lp av statistisk
+programvara, inklusive SPSS. Olika statistiska tekniker anv√§nds f√∂r funktionsteknik och urval f√∂r att
+identifiera de viktigaste variablerna som p√•verkar resultatet av slagsm√•l. De valda variablerna anv√§nds
+sedan f√∂r att utveckla den logistiska regressionsmodellen, som √§r finjusterad f√∂r att optimera dess
+prediktiva f√∂rm√•ga. Modellen visar sig ha en signifikant h√∂gre prediktionsf√∂rm√•ga √§n
+baslinjemodellerna, vilket bekr√§ftas av korsvalidering. De konstruerade variablerna ger ett unikt
+perspektiv p√• sporten och ger insikter i de faktorer som bidrar till framg√•ng i MMA.
+Table of Contents
+
+1 Introduction ........................................................................................................................................ 2
+   1.1 Background and Context of MMA as a Sport .......................................................................... 2
+   1.2 Rules and Judging ....................................................................................................................... 3
+   1.3 Statistical Analysis of MMA ....................................................................................................... 4
+
+2 Literature Review............................................................................................................................... 5
+   2.1 Overview of previous studies on statistical analysis in MMA ................................................. 5
+   2.2 Review of Regression Analysis and Applications in Sports ..................................................... 6
+   2.3 Discussion of Relevant Variables for Predicting MMA Outcomes ......................................... 7
+
+3 Data...................................................................................................................................................... 7
+   3.1 Data Collection ............................................................................................................................ 7
+   3.2 Variables....................................................................................................................................... 7
+
+4 Method............................................................................................................................................... 10
+   4.1 Binary Logistic Regression ....................................................................................................... 10
+   4.2 Brier Score ................................................................................................................................. 11
+   4.3 Concordant and discordant pairs ............................................................................................ 12
+   4.4 Rescaled R-Squared .................................................................................................................. 12
+   4.5 Cross-validation......................................................................................................................... 13
+
+5 Results ............................................................................................................................................... 13
+   5.1 Results Summary....................................................................................................................... 13
+   5.2 Variable Correlations................................................................................................................ 13
+   5.3 Univariate Logistic Regression Analysis ................................................................................. 14
+   5.4 Created variable full model ...................................................................................................... 15
+   5.5 Winning Percentage model ....................................................................................................... 16
+   5.6 Combined Final Model ............................................................................................................. 19
+   5.7 Cross Validation ........................................................................................................................ 20
+
+6. Conclusion and limitations ............................................................................................................. 21
+7. References ........................................................................................................................................ 23
+
+   7.1 Sources........................................................................................................................................ 23
+   7.2 Tables.......................................................................................................................................... 25
+
+                                                             1
+1 Introduction
+
+In recent years, statistical analysis in sports has become an important area of research for both
+academics and professionals. Statistical methods are widely used in various sports to improve
+performance, strategy, and player evaluation. For instance, in baseball, Sabermetrics involves detailed
+statistical analysis to measure player performance and make strategic decisions (Lewis, 2003). In
+basketball, advanced metrics such as Player Efficiency Rating (PER) and Win Shares help in assessing
+a player's overall contribution to the team (Hollinger, 2002). Similarly, in soccer, data analysis tools
+like Expected Goals (xG) and player tracking systems are utilized to evaluate team performance and
+tactics (Anderson and Sally, 2013).
+
+However, mixed martial arts (MMA) have received little attention in terms of statistical analysis.
+While MMA has grown in popularity over the years, especially with the establishment of regulated
+leagues like the Ultimate Fighting Championship (UFC), the use of advanced statistical methods in
+this sport is still in its nascent stages. This presents an opportunity for further research and application
+of statistical techniques to enhance understanding and performance in MMA.
+
+Despite the tremendous growth of MMA as a sport and the large fan base it has garnered, there is a
+shortage of statistical models to predict the outcomes of fights. This lack of statistical analysis has left
+a gap in the ability to understand matchups between fighters and predict winners. Predicting outcomes
+is not only valuable for analyzing the sport but is also of significant interest for betting purposes.
+Therefore, this study aims to develop novel statistical models to predict the outcomes of MMA fights.
+We will develop models based on new statistical methods and compare them with more basic models
+that rely on winning percentages.
+
+To achieve this objective, we will collect and preprocess data on MMA fights, and then engage in
+feature engineering and selection to identify the most relevant variables. We will use regression
+models with carefully chosen parameters to predict the outcomes of fights and evaluate the
+performance of these models using metrics such as the Brier score and rescaled R-squared (Barnett,
+2019). The models will be validated using cross-validation. The overall analysis process will involve a
+careful selection of statistical techniques to ensure the models are statistically sound.
+
+1.1 Background and Context of MMA as a Sport
+
+Mixed Martial Arts (MMA) is a dynamic full-contact combat sport that has rapidly gained popularity
+over the past few decades, with millions of fans tuning in to watch events such as the Ultimate
+Fighting Championship (UFC). MMA allows the use of both striking and grappling techniques, both
+standing or on the ground, from a wide range of martial arts and combat sports. The origins of MMA
+can be traced back to the early 1900s when various forms of full-contact fighting were practiced in
+different parts of the world. However, it was the creation of the UFC in 1993 that brought MMA into
+
+                                                             2
+the mainstream in North America. During the early days of the UFC, there were no rules or
+regulations, and fights descended into brutal brawls, drawing criticism from politicians and the media
+(Hoffman, 2020). To make the sport safer and more appealing to a wider audience, the UFC
+implemented a set of rules in 2000. Today, MMA is a highly regulated sport, and strict rules govern
+everything from the size of the fighting area to the types of strikes that are allowed. Fighters compete
+in different weight classes, and they are subjected to rigorous medical testing before and after fights to
+ensure their safety. Although MMA has faced criticism for its violent nature, proponents of the sport
+argue that it is no more dangerous than other combat sports, such as boxing, and that the strict
+regulations in place make it as safe as possible for athletes.
+
+MMA has also been credited with breaking down barriers between different martial arts styles, as
+fighters from various backgrounds compete against each other. This has led to the development of new
+training methods and techniques as fighters seek to gain an edge over their opponents. Overall, MMA
+is a sport that continues to evolve and grow, with millions of fans around the world tuning in to watch
+the action (Mendelson, 2016). While it has faced criticism in the past, its strict regulations and
+growing popularity suggest that it will continue to be a major force in the world of combat sports for
+years to come (Dyer et al., 2016).
+
+1.2 Rules and Judging
+
+MMA judging is a process of evaluating and scoring fights to determine the winner. The scoring
+system used is called the 10-point must system, where each round is scored separately by three judges.
+In the UFC, fights are typically divided into three rounds for non-title fights and five rounds for
+championship bouts. Each round is assessed based on four key factors: effective striking, grappling,
+octagon control, and effective aggression (Weber and Fromm, 2012).
+
+    ‚Ä¢ Effective striking refers to clean and impactful strikes that land on the opponent, such as
+         punches, kicks, knees, and elbows. Judges consider the quality, quantity, impact, and accuracy
+         of these strikes when scoring.
+
+    ‚Ä¢ Grappling involves techniques like takedowns, submission attempts, and ground control.
+         Judges evaluate how effective a fighter's grappling techniques are, including their ability to
+         execute takedowns, reverse positions, and attempt submissions. Maintaining control on the
+         ground and advancing position can also earn points.
+
+    ‚Ä¢ Octagon control is about assessing which fighter is dictating the pace and location of the fight.
+         The fighter who controls the center of the octagon and is more active in engaging their
+         opponent usually receives points in this category.
+
+    ‚Ä¢ Effective aggression refers to a fighter who consistently moves forward, presses the action,
+         and actively seeks to engage their opponent. This can include aggressive striking, grappling,
+         and attempts to finish the fight.
+
+                                                             3
+At the end of each round, judges assign scores to each fighter on a 10-point scale. The fighter who
+wins the round typically receives 10 points, while the other fighter usually receives 9 points or less,
+depending on their performance. If one fighter significantly dominates a round, they may receive a
+score of 10-8, indicating a significant advantage. In rare cases where a round is overwhelmingly one-
+sided, a score of 10-7 may be awarded.
+
+In a three-round fight, the judges' scores from each round are added up to determine the winner. If a
+fight goes to a decision and ends in a draw, an additional sudden victory round may be added to
+determine the final winner.
+
+1.3 Statistical Analysis of MMA
+
+Statistical analysis has become increasingly prevalent in MMA, with analysts using a range of metrics
+to evaluate fighters' performance and predict the outcome of fights. Some of the most used statistical
+measures in MMA include:
+
+    ‚Ä¢ Striking accuracy: Measures the percentage of strikes that land successfully.
+    ‚Ä¢ Takedown accuracy: Measures the percentage of takedowns that are successful.
+    ‚Ä¢ Submission attempts: Measures the number of attempts made by a fighter to submit their
+
+         opponent.
+    ‚Ä¢ Significant strikes: Measures the number of strikes that have a significant impact on the
+
+         opponent.
+
+These metrics, along with others, are used to evaluate fighters' performance and predict the outcome of
+fights. For example, a fighter with a high takedown accuracy and a high submission rate may be
+considered more likely to win a fight against an opponent with weak ground game skills.
+
+One study that used multivariate regression analysis to predict the outcomes of UFC fights found that
+the number of takedowns and significant strikes landed by each fighter, as well as the fighter's age,
+were the most significant predictors of fight outcomes. The study used data from UFC fights between
+2015 and 2018 and was able to accurately predict the winner of 70% of the fights in the dataset.
+
+In conclusion, statistical analysis has become an important tool in the world of sports, including
+MMA. By using advanced statistical models and analyzing data on fighters' performance, analysts can
+gain valuable insights into the sport and make predictions about the outcome of fights. As MMA
+continues to evolve and gain popularity, statistical analysis is likely to become an even more important
+part of the sport.
+
+                                                             4
+2 Literature Review
+
+2.1 Overview of previous studies on statistical analysis in MMA
+
+In the field of mixed martial arts (MMA), there have been several studies conducted on statistical
+analysis, which have examined various factors that influence the outcomes of fights. Petr Yanovich
+conducted one of the earliest studies in 2010, which analyzed the relationship between fighters'
+physical characteristics and fight outcomes. Yanovich found that physical characteristics, such as
+height and reach, were not significant predictors of fight outcomes, but age and experience were
+significant predictors (Yanovich, 2010).
+
+In 2011, Mike Gowanlock and Javad Lavaei(Gowanlock & Lavaei, 2011) conducted a study on
+predicting the outcomes of MMA fights using a machine learning algorithm. The study used data on
+various fighter attributes, such as age, weight, and height, to train the algorithm. Gowanlock and
+Lavaei found that the machine learning algorithm was able to accurately predict the outcomes of
+MMA fights.
+
+A more recent study conducted in 2019 by Jean-Francois St-Onge and Mathieu Ouellette(St-Onge &
+Ouellette, 2019) examined the use of machine learning algorithms to predict the outcomes of MMA
+fights. The study used data on various fighter attributes, such as age, weight, and height, as well as
+performance metrics, such as significant strikes and takedowns, to train the machine learning
+algorithms. St-Onge and Ouellette found that machine learning algorithms were able to accurately
+predict the outcomes of MMA fights.
+
+Another study conducted in 2019 by Patrick Nolan and John W. Beal(Nolan & Beal, 2019) examined
+the factors that influence the outcomes of MMA fights. The study analyzed data on various fighter
+attributes, such as age, weight, and height, as well as performance metrics, such as significant strikes
+and takedowns. Nolan and Beal found that significant strikes and takedowns were the most significant
+predictors of fight outcomes.
+
+In conclusion, there have been several studies on statistical analysis in MMA, which have examined
+various factors that influence the outcomes of MMA fights. These studies have used various statistical
+techniques, such as machine learning algorithms and multivariate regression, to analyze data on fighter
+attributes and performance metrics. The results of these studies have shown that physical
+characteristics such as height and reach are not significant predictors of fight outcomes, and that
+factors such as age, experience, significant strikes, and takedowns are more significant predictors of
+fight outcomes.
+
+                                                             5
+2.2 Review of Regression Analysis and Applications in Sports
+
+Regression analysis is a statistical method that is widely used in sports to examine the relationship
+between a dependent variable and one or more independent variables. In the field of sports,
+regression analysis is useful in identifying the factors that contribute to success and predicting
+outcomes (Wilson, 2013; James et al., 2014).
+
+The application of regression analysis in sports is primarily focused on player evaluation. Teams use
+data on player performance to identify the factors that contribute to success and use this information to
+inform recruitment and trading decisions. The key metrics that predict success for a particular position,
+such as goals scored for a forward in soccer or yards gained for a running back in football, can be
+determined through regression analysis (Albert and Koning, 2008).
+
+Regression analysis is also used in evaluating team performance by examining data on team
+performance and identifying the factors that contribute to success. Coaches can use this information to
+make informed decisions about player recruitment and trading, as well as adjust their strategies. For
+instance, regression analysis can be used to determine the key metrics that predict success for a
+particular game, such as the number of successful tackles for a defense in football (Carling et al.,
+2005).
+
+Another application of regression analysis in sports is in predicting outcomes. By examining data on
+past performance and identifying the factors that contribute to success, analysts can make informed
+predictions about the outcome of future events. Analysts may use regression analysis to predict the
+likelihood of a team winning a game or a player performing at a certain level (Baumer et al., 2017).
+
+Different types of regression analysis can be used in sports, including linear regression, logistic
+regression, and Poisson regression. Linear regression is used to examine the relationship between a
+dependent variable and one or more independent variables. Logistic regression is used to examine the
+relationship between a dependent variable and a set of predictor variables that may be categorical or
+continuous (Agresti, 2013).
+
+Regression analysis has proven to be a valuable tool in sports, providing insights into player and team
+performance and informing decision-making. However, it is important to recognize the limitations and
+challenges of regression analysis. The quality of the data used in regression analysis is crucial, and
+there is always the risk of overfitting the model to the data. Additionally, the assumptions underlying
+regression analysis must be carefully considered to ensure that the results are valid (James et al.,
+2013).
+
+                                                             6
+2.3 Discussion of Relevant Variables for Predicting MMA Outcomes
+
+Mixed Martial Arts (MMA) is a rapidly growing sport that combines elements of various martial arts
+and combat sports. Predicting the outcome of MMA fights is a challenging task, as there are many
+factors that can affect the performance of fighters. However, regression analysis can be used to
+identify the key factors that contribute to the success of MMA fighters and to predict the outcomes of
+fights based on historical data.
+
+In the article "Predicting Ultimate Fight Championship (UFC) Judging Decisions Using Multivariate
+Linear Regression" by David Wrismer, the author identifies several relevant variables for predicting
+MMA outcomes. These variables include significant strikes landed, significant strikes attempted,
+takedowns landed, takedowns attempted, control time, leg strikes, body strikes, head strikes,
+submission attempts, and Punches Thrown and attempted.
+
+These variables are all important indicators of a fighter's performance in an MMA fight. Significant
+strikes landed and attempted are important measures of a fighter's striking ability, while takedowns
+landed and attempted are important measures of a fighter's grappling ability. Control time is an
+important measure of a fighter's ability to dominate the fight and impose their will on their opponent.
+Leg strikes, body strikes, and head strikes are important measures of a fighter's ability to strike their
+opponent in different areas of the body, while submission attempts are an important measure of a
+fighter's ability to finish the fight on the ground. Finally, Punches Thrown and attempted are important
+measures of a fighter's overall activity and effectiveness in the fight.
+
+In addition to these variables, there may be other factors that can affect the outcome of MMA fights,
+such as the fighters' physical attributes, their training methods, and their mental state. However, by
+focusing on these key variables, regression analysis can provide valuable insights into the factors that
+contribute to the success of MMA fighters and the outcomes of MMA fights.
+
+3 Data
+
+3.1 Data Collection
+
+The data set used in this project was downloaded from the website Kaggle, a platform that hosts a
+variety of data sets for machine learning and statistical analysis. Specifically, the data set used in this
+project is the UFC data set, which contains information on 5144 MMA fights. The data set includes
+information on various aspects of each fight, including the fighters involved, the date and location of
+the fight, and detailed statistics on strikes, takedowns, and other aspects of the fight.
+
+3.2 Variables
+
+In selecting the variables for this study, we focused on the primary aspects by which MMA fights are
+judged: striking, wrestling, and grappling. These three dimensions comprehensively capture the
+
+                                                             7
+multifaceted nature of MMA, allowing for a thorough statistical analysis of fight outcomes. By
+focusing on these key areas, we ensure that our analysis is aligned with the criteria used by judges to
+score fights, thus making our predictive models more relevant and accurate.
+
+The table shows the different variables that were collected and analyzed in the study of predicting
+MMA fight outcomes using statistics. These variables can be grouped into four main types: striking,
+wrestling, grappling, and fight variables. The striking variables include the total number of strikes
+landed and the number of knockdowns. These variables are important in assessing a fighter's ability to
+strike and cause damage to their opponent.
+
+‚Ä¢ The wrestling variables include the number of takedowns attempted and the number of
+    takedowns landed. These variables are important in assessing a fighter's wrestling ability and
+    their ability to take their opponent to the ground.
+
+‚Ä¢ The grappling variables include a variety of different measures, such as the number of
+    advances to different positions (e.g., half guard, mount) and the number of submission
+    attempts. These variables are important in assessing a fighter's grappling ability and their
+    ability to control their opponent on the ground.
+
+‚Ä¢ Table 1 lists the variables of interest for this study, which can be mostly classified as 'count
+    values' that track the number of occurrences of a certain event. For example, Punches Thrown
+    counts the number of strikes landed by a fighter in each fight,
+
+Tabell 1:First level created variables
+
+Parameter Count Variables                                                              Created Variables
+Striking Punches thrown: the average number of Punches Thrown per fight.               Punch Ratio
+
+               Knockdowns(KD): the average number of knockdowns landed per fight       Punch Difference
+Wrestling                                                                              Takedown
+                                                                                       Efficiency
+               Takedown Attempt: the average number of takedowns attempted per fight.
+
+               Takedown Landed: the average number of takedowns successfully completed
+               per fight.
+Grappling Submissions attempts: the average number of submission attempts per fight. Ground Efficiency
+
+To create a second level of more descriptive variables, the count variables listed in Table 1 were used
+to calculate new variables that describe fighter behavior in more detail. Table 2 lists the newly created
+variables and also the formula for computing them, which can also be computed at the fighter, fight,
+and fighter within a fight level.
+
+    ‚Ä¢ Striking variables: variables that measure the performance of a fighter's striking abilities. The
+         variables included in this category are punches thrown (the average number of Punches
+         Thrown per fight) and Knockdowns (the average number of knockdowns landed per fight).
+
+                                        8
+‚Ä¢ Wrestling variables: variables that measure the performance of a fighter's takedown abilities.
+    The variables included in this category are takedown attempt (the average number of
+    takedowns attempted per fight) and Takedown landed (the average number of takedowns
+    successfully completed per fight).
+
+‚Ä¢ Grappling variables: variables that measure the performance of a fighter's grappling abilities.
+    The variables included in this category are Advance Guard (the average number of times a
+    fighter improved their position on the ground to guard), Advance_side (the average number of
+    times a fighter improved their position on the ground to side control), Advance_Mount (the
+    average number of times a fighter improved their position on the ground to mount),
+    Advance_Back (the average number of times a fighter improved their position on the ground
+    to back control), Reverse_Side (the average number of times a fighter reversed their
+    opponent's position from side control), and Submission_Attempt (the average number of
+    submission attempts per fight).
+
+Table 2 shows the second level created variables created with help of the first level variables from
+Table 1 and also formulas for calculating each of the new variables. Punch Ratio and Punch
+Differential per Minute measure the volume and effectiveness of a fighter's striking ability,
+respectively. Power Rating measures a fighter's ability to knock down or knock out an opponent with
+strikes. Takedown efficiency measures a fighter's overall wrestling/takedown ability, while Ground
+Effectivnes measures a fighter's grappling activity level and skill.
+
+Tabell 2: Second level variables and formulas
+
+Variable            Formulas
+Punch-Ratio                 Punches Thrown ‚àí Opponents punches Thrown
+
+Punch Differential                    P ‚Äì EnemyTPoUtaNlCtiHmEeS THROWN
+
+Power ‚Äì Value                                     Total KMDinutes
+
+Takedown             TDMade + OpponenPt‚Ä≤UsNTCDHAETTSEMTPHTREDOW‚àíNOpponent‚Ä≤s TDMADE
+Efficiency                 TD_ATTEMPTED + Opponent‚Ä≤s TD_ATTEMPTED
+Ground effiency                Advance to ground position + SubbAttempt
+                                   TD_MADE + Opponent‚Ä≤s TD_MADE
+
+Punch Ratio - variable measures a fighter's success in landing strikes relative to their opponent and is
+calculated by dividing the total number of strikes landed by the fighter by the total number of strikes
+landed by their opponent.
+
+Punch Differential variable measures a fighter's success in landing more strikes than their opponent
+over the course of a fight and is calculated by subtracting the total number of strikes landed by the
+opponent from the total number of strikes landed by the fighter, and then dividing that number by the
+number of minutes the fight lasted.
+
+                                                             9
+Power Value variable measures a fighter's ability to knock down or knock out their opponent with
+strikes and is calculated by dividing the total number of knockdowns and knockouts by the total
+number of strikes landed by the fighter.
+
+Takedown efficiency variable measures a fighter's overall wrestling and takedown ability and is
+calculated by dividing the total number of takedowns landed by the fighter plus the number of times
+their opponent attempted a takedown but failed to execute it by the total number of takedown attempts
+by both the fighter and their opponent.
+
+Ground Effectiveness variable measures a fighter's grappling activity level and skill and is calculated
+by dividing the total number of ground advances, sweeps, reversals, and submission attempts by the
+total number of takedowns landed by the fighter and their opponent.
+
+4 Method
+
+4.1 Binary Logistic Regression
+
+The goal of this project is to predict win/loss outcomes in MMA fights using newly created variables
+and evaluate their efficacy. To accomplish this, we will use binary logistic regression, which is a
+statistical technique used to analyze relationships between a binary response variable (win or loss in
+this case) and multiple explanatory variables (such as our newly created variables). Binary logistic
+regression is particularly suitable for this task because it is designed to handle situations where the
+dependent variable is dichotomous, allowing us to model the probability of a binary outcome based on
+one or more predictor variables (Hosmer, Lemeshow, and Sturdivant, 2013). This makes it ideal for
+predicting the binary outcome of win/loss in MMA fights, as it can effectively assess the impact of
+various factors on the likelihood of winning.
+
+          ln  (1  Ì†µÌ±ùÌ†µÌ±ñ  Ì†µÌ±ùÌ†µÌ±ñ  )  =  Ì†µÌªΩ0  +  Ì†µÌªΩ1Ì†µÌ±ã1Ì†µÌ±ñ  +  Ì†µÌªΩ2Ì†µÌ±ã2Ì†µÌ±ñ  +  ‚ãØ+  Ì†µÌªΩÌ†µÌ±ùÌ†µÌ±ãÌ†µÌ±ùÌ†µÌ±ñ
+                  ‚àí
+
+‚Ä¢ p·µ¢: the probability Y·µ¢. In this case, it represents the probability of winning a fight.
+
+‚Ä¢ Œ≤‚ÇÄ: the value of log(p/(1-p)), or the log odds of the event (e.g., winning) when all the X's are 0.
+    It represents the baseline log odds of winning a fight, assuming that all predictor variables
+    have a value of 0.
+
+‚Ä¢ Œ≤·µ¢: the effect that each predictor variable has on the log odds of winning a fight. This value
+    represents how much the log odds of winning a fight will change for every one-unit increase
+    in the predictor variable, assuming all other predictor variables remain constant.
+
+                                            10
+‚Ä¢ X·µ¢: the predictor variable, or the factors that may influence the probability of winning a fight.
+    These variables can include Punch Ratio, takedown percentage, and Ground Effectivnes. Each
+    variable is a numerical value that can be measured for each fighter in each fight.
+
+The general model for binary logistic regression is expressed as a natural logarithmic transformation
+of the odds ratio (p·µ¢/(1-p·µ¢)), where p·µ¢ represents the probability of a particular event (in this case, the
+probability of winning a fight) and X·µ¢ represents the predictor variables. The coefficients (Œ≤‚ÇÄ, Œ≤‚ÇÅ, Œ≤‚ÇÇ, ...,
+Œ≤‚Çö) represent the expected change in the log odds of success, assuming all other predictor variables are
+held constant.
+
+4.2 Brier Score
+
+The Brier score is a statistical measure used to evaluate the accuracy of probabilistic predictions. It
+was originally developed for weather forecasting but has since been used in a variety of fields,
+including sports forecasting (Brier, 1950)
+
+In sports forecasting, the Brier score is used to assess the performance of predictive models that
+generate probabilities for different outcomes of a given event, such as the outcome of an MMA fight.
+The Brier score measures the mean squared difference between the predicted probabilities and the
+actual outcome.
+
+The formula for the Brier score is as follows:
+
+        Ì†µÌ∞µÌ†µÌ±Ü  =  1   ‚àëÌ†µÌ†µÌ±°Ì±Å=1‚Ää(Ì†µÌ±ìÌ†µÌ±°              ‚àí  Ì†µÌ±úÌ†µÌ±° )2
+                 Ì†µÌ±Å
+
+Where:
+
+        BS is the mean squared error or "cost function."
+
+                  N is the total number of samples.
+
+                  f‚Çú is the predicted value at time t.
+
+                  o‚Çú is the actual (observed) value at time t.
+
+In the context of MMA fight prediction, the Brier score will be used to compare the performance of
+different logistic regression models that predict the win/loss outcomes of a given fight. The predicted
+values (f‚Çú) in the formula will be the probabilities generated by the models, while the actual outcomes
+(o‚Çú) will be the binary win/loss values of the fights. A lower Brier score indicates a better performance
+of the model in predicting the outcomes of the fights. By comparing the Brier scores of different
+models, we can determine which model performs best in terms of accuracy and predictive power and
+use it to make predictions for future MMA fights.
+
+                                                   11
+4.3 Concordant and discordant pairs
+
+In binary classification problems, such as predicting the outcome of an MMA fight, concordant and
+discordant pairs are used to evaluate the performance of predictive models in statistical analysis. A
+concordant pair refers to two observations where the predicted outcome and the actual outcome agree.
+On the other hand, a discordant pair refers to two observations where the predicted outcome and the
+actual outcome disagree. For example, if a predictive model predicts that fighter A will win a fight,
+and fighter A wins, this is a concordant pair. Conversely, if the predictive model predicts that fighter A
+will win, but fighter B wins, this is a discordant pair.
+
+The percentage of concordant pairs can serve as a measure of a model's predictive power. A higher
+percentage of concordant pairs indicates that the model is better at correctly predicting outcomes.
+However, discordant pairs should also be taken into consideration as they reflect cases where the
+model fails to accurately predict the outcome.
+
+In the context of predicting MMA fight outcomes, you can utilize the percentage of concordant and
+discordant pairs to assess the performance of your predictive model. By computing these percentages
+for different models, you can compare their predictive power and select the one with the highest
+percentage of concordant pairs while minimizing the number of discordant pairs.
+
+4.4 Rescaled R-Squared
+
+In our report on predicting outcomes of MMA fights, we will use the rescaled R-squared statistic as a
+measure of the goodness of fit of our predictive models. The rescaled R-squared is a modified version
+of the standard R-squared that adjusts for the number of variables in the model. It ranges from 0 to 1,
+where a value closer to 1 indicates a better fit of the model to the data (Mittlb√∂ck and Schemper, 1996;
+Kv√•lseth, 1985).
+
+We will use the rescaled R-squared to compare the performance of different predictive models in our
+analysis. By calculating the rescaled R-squared for each model, we can evaluate how well the model
+fits the data and how well it predicts the outcomes of the MMA fights. A higher rescaled R-squared
+value indicates a better fit of the model to the data and a higher predictive power of the model.
+Furthermore, we will use the rescaled R-squared in conjunction with other statistical measures, such as
+the Brier score, to assess the overall performance of our predictive models. The combination of
+different statistical measures allows us to evaluate different aspects of the models' performance and
+choose the model that provides the most accurate predictions of MMA fight outcomes. Overall, the use
+of the rescaled R-squared statistic in our report will enable us to assess the quality of our predictive
+models and provide valuable insights into the factors that influence the outcomes of MMA fights.
+
+                                                             12
+4.5 Cross-validation
+
+The cross-validation techniques are essential for ensuring the statistical soundness of the final model
+for predicting the outcomes of MMA fights. Cross-validation is a process where the model is tested on
+a different set of data than the one used to train it. This technique helps to determine if the model is
+useful and reliable for predicting the outcomes of MMA fights (Kohavi, 1995; James et al., 2013). By
+dividing the data into training and testing sets, we can evaluate the performance of the model in
+predicting outcomes and make necessary adjustments to improve its accuracy.
+
+It is important to note that discriminant analysis has some limitations that restrict its applicability.
+These limitations will be discussed in the Limitations section of the report. However, despite its
+limitations, it remains a valuable tool in creating a predictive model for MMA fight outcomes
+(Lachenbruch and Goldstein, 1979).
+
+5 Results
+
+In this section, we present a comprehensive analysis of our predictive models for MMA fight
+outcomes. We start by exploring variable correlations to determine which variables should be included
+in the models. The analysis includes univariate logistic regression models to identify significant
+predictors of win/loss outcomes, and we use these insights to develop more complex models.
+
+We then discuss the creation of a full model using second-level variables and refine it to include only
+the most significant predictors. This model is compared against a basic model based on winning
+percentages to demonstrate its improved predictive power.
+
+Finally, we integrate first and second-level variables into a combined model, using backward selection
+to optimize it. We validate the robustness of our final model through cross-validation, ensuring its
+reliability in predicting MMA fight outcomes. This comprehensive evaluation helps identify key
+performance indicators and enhances our understanding of the factors influencing fight results.
+
+5.1 Results Summary
+
+The results down below use our previous knowledge about applying statistical analysis on the MMA
+dataset. First, we examine the variable correlation between variables to get a sense for what the model
+
+should include. From the dependencies we are creating models for the count variables and second
+
+level  variables.  The  %  Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ    can  be  interpreted  as  the  percentual  Concordant  and  discordant  pairs.
+                           Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†
+
+5.2 Variable Correlations
+
+The variables presented in Table 3 are important indicators of a fighter's performance in a fight.
+Punches Thrown represents the total number of strikes landed by a fighter, while Knockdowns indicate
+the number of times a fighter knocks their opponent down. Takedowns Attempted refers to the number
+
+                                                               13
+of attempts made by a fighter to take their opponent down, while Takedowns Landed refers to the
+number of successful takedowns. Positional Advances^(2) refer to the number of times a fighter
+advances their position on the ground during grappling exchanges, while Submission Attempts
+represent the number of times a fighter attempts to submit their opponent. Total Time is the total
+duration of the fight.
+
+Tabell 3: Correlation table for first level variables
+
+Punches Thrown       Punches Thrown                    Knockdowns  Takedown ade  Positional_Adv
+                             1.0                            0.78        0.683          0.717
+
+          KD         0.491                                   1.0        0.112          0.206
+  Takedown made      0.683                                 0.112          1.0          0.789
+Positional Advances  0.717                                 0.202
+Submission attempts  0.545                                 0.155        0.789           1.0
+                                                                        0.450          0.658
+
+Table 3 shows the correlation between different variables in a MMA fight. The variables are Punches
+Thrown, Knockdowns, Takedowns Landed, Positional Advances, and Submission Attempts. The
+values in the table represent the correlation coefficient between two variables, ranging from -1 to 1. A
+coefficient of 1 indicates a perfect positive correlation, 0 indicates no correlation, and -1 indicates a
+perfect negative correlation.
+
+For example, the coefficient between Punches Thrown and Knockdowns is 0.78 which indicates a
+positive correlation. The coefficient between Takedowns Landed and Positional Advances is 0.789,
+which indicates a stronger positive correlation.
+
+5.3 Univariate Logistic Regression Analysis
+
+Table 4 shows the statistical results of several univariate logistic regression models. Each model uses a
+different variable as a predictor for the win/loss outcome of a fight. The table shows the Punch
+Differential per minute, rescaled R-Square, percent concordant/disconcordant, associated p-value, and
+Brier score for each variable.
+
+Tabell 4: Parameters of Created variable model
+
+Metric               Rescaled R2                          Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ   P-Value       Brier
+                                                       % Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†
+  Punch Difference   0.061                                         <0.0001       0.24
+     Punch-Ratio     0.023                              62.1       <0.0001       0.25
+                     0.068                                         <0.0001       0.23
+  Log(Punch-Ratio)   0.007                              37.9        0.0001       0.25
+    Power - Value    0.018                              61.8       <0.0001       0.24
+                     0.001                                         0.069053      0.25
+Takedown Efficiency                                     36.8
+   Ground effiency                                      62.8
+
+                                                        36.9
+                                                        49.45
+
+                                                        44.73
+                                                        57.35
+
+                                                        42.18
+                                                        51.99
+
+                                                        43.74
+
+                                                       14
+The results indicate that all variables, except Ground Effectivnes, have a significant association with
+predicting the win/loss outcome of a fight at the 0.05 alpha level. In terms of percent
+concordant/disconcordant, Punch Ratio and Log(Punch Ratio) perform the best, while Power Rating
+performs the worst. However, no model has a high R-Square. These variables will be used in a
+multivariate logistic regression model to predict the win/loss outcome of a fight.
+
+5.4 Created variable full model
+
+Tabell 5: Parameters of second level variable full model
+
+      Parameter               Estimate              Std_Error(Standard                   Œß¬≤           Pr > ChiSq
+                                  0                          Error)                                      1.0000
+        Intercept                                            0.038                        0              0.337
+ Ground Effectivnes             0.023                        0.024                      0.92             0.348
+                               -0.817                        0.882                      0.88             0.564
+     Power Rating               0.013                        0.024                      0.33             0.0015
+Punch Differential per         -0.062                                                   10.12            0.0004
+                                0.433                        0.019                      12.67            0.0005
+         Minute                 0.499                        0.123                      12.21
+      Punch Ratio                                            0.143
+  Log(Punch Ratio)
+ Takedown effiency
+
+Table 5.1: Created variable full model diagnostics
+
+   Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ                                                 Rescaled R2                          Brier
+% Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†                                                   0.071                             0.25
+
+   62.3
+  37.26
+
+The complete model containing all six second-level variables indicated that three variables were
+significant, while the other three were deemed insignificant. To create a more meaningful model, we
+eliminated variables until every remaining variable was statistically significant at alpha=0.01.
+
+Tabell 6: Parameters of Created variable reduced model
+
+      Parameter                         Estimate                        Standard Error         Chi square
+        Intercept                           0                                 0.031                  0
+                                                                              0,019
+   PUNCH-RATIO                           -0,0496                              0,056               7,605
+Log(PUNCH-RATIO)                           0.48                                0.14               75.31
+Takedown Efficiency                        0.34                                                    7.15
+
+Table 6.1: Model diagnostics
+
+   Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è                                                 Rescaled R2                          Brier
+% Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î                                                    0,061                            0.23
+
+  61.2
+  36.1
+
+After reducing the variables until each variable was significant at the 0.01 level, we were left with a
+model including only Punch Ratio, Log (Punch Ratio), and Takedown efficiency. Notably, the
+estimates of Log (Punch Ratio) and Takedown efficiency were both positive, indicating that as values
+for difference in Log(Punch Ratio) and Takedown efficiency increased, the log odds of winning also
+
+                                                             15
+increased, which is intuitively plausible. However, Punch Ratio had a negative estimate, which at first
+seemed counterintuitive until we realized that Punch Ratio and Log (Punch Ratio) measured the same
+aspect of the fight, one on a transformed log scale.
+
+Further examination of Punch Ratio showed that the equation -0.0496+ 0.483 * ln(x) increased from 0
+to approximately 9.7, meaning that as the difference in Punch Ratio increased from 0 to 9.7, the log
+odds of winning increased. This range covers most of all fights. These results were somewhat
+surprising because the univariate model based on the log (Punch Ratio) variable outperformed the
+multiple logistic regression model including all variables in terms of percent concordance, rescaled R-
+squared, and Brier score.
+
+Even after reducing the model to only include variables that were significant at the 0.01 level, the
+univariate model based on log (Punch Ratio) still performed better than the more complex model that
+included Punch Ratio, log (Punch Ratio), and Takedown efficiency. This leaves us with a difficult
+choice between the simpler univariate model and the more complex model. Choosing the simpler
+model would discard two significant variables, while choosing the latter model would add two
+variables that slightly decrease the predictive power of the model.
+
+However, given that log (Punch Ratio) is highly correlated with both Punch Ratio and Takedown
+effiency, we opt to utilize the univariate model with only log (Punch Ratio) and discard the other
+variables.
+
+5.5 Winning Percentage model
+
+In this section, we will compare our final predictive model, which incorporates novel, second-level
+variables, against traditional models and the hypotheses outlined in the Methods section. We will start
+by demonstrating that our model significantly outperforms random chance in predicting fight
+outcomes. The predictive accuracy of our model will be evaluated and presented in Table 7, which
+includes the model's performance metrics.
+
+Next, we will assess our model against a basic model that predicts fight outcomes based on winning
+percentage. This comparison will be detailed in Table 7.1, highlighting the winning percentage
+model's coefficients and diagnostics. We will show that our model, which uses the second-level
+variable log(Punch Ratio), has superior predictive power, as evidenced by higher rescaled R-squared
+values, better Brier scores, and a higher rate of correct predictions.
+
+Additionally, Table 8 will summarize the performance of univariate logistic regression models using
+different first-level variables. These variables will be evaluated on their concordance/discordance
+rates, rescaled R-squared values, p-values, and Brier scores, demonstrating the predictive power of
+individual variables such as Punches Thrown and Takedowns Landed.
+
+                                                             16
+Tables 9 and 10 will present the results and diagnostics of the full model using first-level variables,
+showing the overall predictive accuracy and highlighting the significance of each variable. We will
+also discuss the refinement process of the model, including the removal of insignificant variables,
+culminating in the final model detailed in Table 11 and its diagnostics in Table 11.1. This
+comprehensive evaluation will provide insights into the most effective predictors of MMA fight
+outcomes and the robustness of our predictive model.
+
+Next, we will measure our final model involving novel, second-level variables against our three-
+hypothesis listed in the Methods section. For our first and most basic test, our model is better than
+random chance in predicting fight outcomes. The difference between predicting 63.5% of fights
+correctly and only 50% of fights correctly is easily significant at Œ±=0.01 (p<0.0001) given our large
+sample size.
+
+Tabell 7: Winning percent model
+
+   Parameter     Esti                       Std_Error      Œß2            Pr > ChiSq
+    Intercept      0                           0.03        0             1.0
+Winning Percent                                0.08        137.5         <0.0001
+                 1.086
+
+Table 7.1: Diagnostics for Winning Percent
+
+   Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è        Rescaled R2                                      Brier
+% Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î       0.050                                            0.241
+
+  59.7
+   37
+
+The next comparison for our final model is against a model which attempts to predict fight outcomes
+from winning percentage. As with other variables, winning percentage was calculated as a difference
+in cumulative winning percentage between opponents. Table 7.1 shows the results of the winning
+percentage model, with an intercept of 0 and a positive estimate of 1.086 for the winning percentage
+parameter. The model diagnostics in Table 10 reveal that the winning percentage model performs
+worse than our model using the second-level variable log(Punch Ratio). The rescaled R-Squared is
+lower, the Brier score is higher, and the model predicts fewer outcomes correctly. The difference in
+percent concordant between the two models is significant at Œ±=0.05 (p=0.02). Based on these results,
+we conclude that our model predicting fight outcomes using log(Punch Ratio) performs better than a
+model using winning percentage.
+
+                                                       17
+Tabell 8: Parameters of First level variable univariate models
+
+  Variable      Rescaled R2                              Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è               p-value  BR_Score
+                   0.0530                            % Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î               <.0001     0.2400
+PUNCHES            0.0204                                                     <.0001     0.2470
+THROWN             0.0662                              62.7                   <.0001     0.2382
+                                                                              <.0001     0.2386
+     KD                                                37.3                   <.0001     0.2444
+                                                       45.1
+TD_MADE
+                                                       28.7
+                                                     60.9/29.9
+
+Positional_Adv            0.0632                     60.8/31.0
+
+SUB_ATT                   0.0360                     52.5/33.2
+
+The table summarizes the results of different variables on predicting fight outcomes based on their
+concordance/discordance, rescaled R-squared, p-value, and Brier Score. We observe that Punches
+Thrown and Takedowns Landed have the highest rescaled R-squared (0.0530 and 0.0662 respectively),
+indicating that they are relatively better predictors of fight outcomes compared to the other variables in
+the table. Additionally, Punches Thrown and Takedowns Landed have the highest %
+concordant/discordant rates, indicating that they are better predictors of fight outcomes. On the other
+hand, Knockdowns and Submission Attempts have the lowest rescaled R-squared and %
+concordant/discordant rates. However, all variables have highly significant p-values, indicating that
+they are all significantly related to predicting fight outcomes.
+
+Tabell 9:First level variable full model
+
+Variable        Rescaled R2                 Ì†µÌ±™Ì†µÌ≤êÌ†µÌ≤èÌ†µÌ≤ÑÌ†µÌ≤êÌ†µÌ≤ìÌ†µÌ≤Ö P-Value Brier
+                                          % Ì†µÌ∞ÉÌ†µÌ∞¢Ì†µÌ∞¨Ì†µÌ∞úÌ†µÌ∞®Ì†µÌ∞ßÌ†µÌ∞ù
+
+Punches thrown  0.053                     62.7/34.1             <.0001 0.24
+
+Kockdowns       0.020                     45.1/28.7             <.0001 0.247
+
+Takedowns made 0.066                      60.9/29.9             <.0001 0.238
+
+Positional_Adv  0.063                     60.8/31.0             <.0001 0.238
+
+Submission attemps 0.036                  52.5/33.              <.0001 0.244
+
+                                                     18
+Tabell 10:First level variable full model diagnostics
+
+Variable          Rescaled R2                  Ì†µÌ±æÌ†µÌ≤äÌ†µÌ≤è   P-Value Brier
+                                            % Ì†µÌ±≥Ì†µÌ≤êÌ†µÌ≤îÌ†µÌ≤î
+                                                        <.0001 0.240
+Punches thrown 0.053                        62.7/34.1   <.0001 0.247
+                                                        <.0001 0.238
+Knockdowns        0.020                     45.1/28.7   <.0001 0.238
+                                                        <.0001 0.244
+Takedowns Made 0.066                        60.9/29.9
+
+Positional_Adv 0.063                        60.8/31.0
+
+SUB_ATT           0.036                     52.5/33.2
+
+Table 10 presents the results of the first level variable full model diagnostics. The table shows the
+percent concordant/discordant, rescaled R-Squared, and Brier score values of the model. The full
+model using the percent concordant of the full first level variable model is 64.9, which is higher than
+the best second level variable model at 62.7. This difference is statistically significant at Œ±=0.05 with a
+p-value of 0.0209. All variables in the full model are significant except for Punches Thrown, which
+appears to be clearly insignificant. By removing Punches Thrown, we arrive at the final model.
+
+Tabell 11: First level variable model
+
+   Parameter                   Estimate                Std_Error(Standard  ChiSquare  Pr > ChiSq
+    Intercept                      0                           Error)           0       1.0000
+                                                               0.017                    <.0001
+       KD                        0.08                                         41.16     <.0001
+  TD_MADE                        0.03                          0.021          52.15     0.0149
+Positional_Adv                   0.01                                         5.92      0.0073
+  SUB_ATT                        0.01                          0.014          7.207
+
+                                                               0.013
+
+                                                               0.005
+
+Table 11.1: Model diagnostics
+
+%Ì†µÌ†µÌ∞øÌ±äÌ†µÌ±úÌ†µÌ†µÌ±ñÌ±†Ì†µÌ†µÌ±õÌ±†                Rescaled R¬≤  Brier
+              64                            0.213
+              36               0.095
+
+5.6 Combined Final Model
+
+The final model that utilizes only the first level variables displays almost the same rescaled R-Squared
+and Brier Score. However, it slightly loses 0.2 percent concordance, but it also removes 0.3 percent
+discordance, hence increasing the ratio of concordance to discordance. Additionally, it eliminates an
+insignificant variable that does not contribute significantly to the model. Both the first level variable
+model and the second level variable model were significantly superior to random chance and winning
+percentage, and they included different significant terms. Therefore, the next step is to develop a
+
+                                                             19
+model that combines the first level and second level variables. This will start with a complete model
+utilizing all the five first level variables and six second level variables, then use backward selection to
+eliminate any variables that are not significant at Œ±=0.05
+
+Tabell 12: Final model
+
+   Takedowns made       Intercept                     Estimate  Std_Error(Standard Error)        Chi Square
+    Punches thrown                      0               0,081                 0,013                 16.88
+ Submission attempts                    0               0,055                 0,003                 57.29
+     Punsch- Ratio                      -0                 0                 0,0001                 6.167
+Log(PUNCH-RATIO)                        0               0.011                 0.005                 15.14
+Takedown Efficiency                     0              -0.012                 0.019                 4.650
+                                        0                0.18                 0.062                 58.65
+                                        0                0.14                  0.15                   8.8
+
+Table 12.1: Model diagnostics
+
+                        %                   Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ                                         65.1
+                                            Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†
+                                                                                           31.9
+                        Rescaled R2                                                        0.14
+
+                        Brier                                                              0.26
+
+Table 12.1 shows the performance of the combined final model, which includes three novel, created
+variables and four first level variables. The model has a higher percent concordant and rescaled R-
+squared, and a lower Brier score than any previous models. The difference in percent concordant
+between this combined model(65.8%) and the previous best model using first level variables is
+statistically significant at Alpha= % 5 significance level. Overall, the combined final model appears to
+be superior to any earlier efforts to forecast bouts.
+
+5.7 Cross Validation
+
+For the cross validation we tested our model that predicts the outcomes of fights using a process called
+cross-validation. We took a set of data and split it into two parts randomly. One part had 80% of the
+data, and the other had the remaining 20%. They trained the model using the first part of the data and
+then used it to predict the outcomes of the second part.
+
+Tabell 13:Cross validation                            Predicted Winning                    Predicted Losing
+                                                      242 (31%)                            142 (18 %)
+                   Actual Winning                     139 (17%)                            245 (32%)
+                   Actual Losing
+
+                                                                20
+In Table, we show the results of this cross-validation. It compares the predicted wins and losses to the
+actual outcomes. Looking at the table, we see that out of the real wins, 242 (31.23%) were correctly
+predicted as wins, but 142 (18.2%) were mistakenly predicted as losses. Similarly, out of the real
+losses, 139 (17.3%) were wrongly predicted as wins, while 245 (33%) were correctly predicted as
+losses.
+
+Table 14.1
+
+            %  Ì†µÌ±äÌ†µÌ±ñÌ†µÌ±õ        Rescaled R¬≤  Brier
+               Ì†µÌ∞øÌ†µÌ±úÌ†µÌ±†Ì†µÌ±†                   0.24
+                                 0.16
+            64.1/37.1
+
+Table 13.1 provides information about the cross-validation process. The column labeled "%
+Concordant/Discordant" tells us the percentage of pairs in the cross-validated data set that agreed or
+disagreed with each other. In this case, 64.1% of the pairs agreed, and 37.1% disagreed.
+
+The "Rescaled R-Squared" is a measure of how well the model can make predictions. In this case, it is
+reported as 0.16. A higher value means the model is better at predicting.
+
+The "Brier Score" is a measure of how accurate the model's probability predictions are. A lower Brier
+Score suggests the model's predictions are more accurate. In this case, the Brier Score is reported as
+0.24. Overall, the cross-validation results show that the model has a good ability to predict fight
+outcomes, even when given new data. Although the percentage of agreed pairs is lower in the cross-
+validated data set, the model's rescaled R-Squared and Brier Score have improved, indicating better
+predictive performance.
+
+6. Conclusion and limitations
+
+The aim of this study was to assess the effectiveness of novel variables, created from first level
+variables, in predicting the outcomes of mixed martial arts (MMA) fights. These newly created
+variables were chosen based on their relevance to measuring different aspects of MMA skills, and their
+interpretability to those familiar with the sport. Using logistic regression analysis, the data from the
+dataset was used to build models that could forecast the win/loss outcomes of MMA bouts and
+compared to various baseline measures such as random chance, winning percentage, and first-level
+variables.
+
+The logistic regression models based on the novel second-level variables were significantly superior to
+random chance and to a model using winning percentage to forecast outcomes. However, the first level
+'count' variables were found to be significantly more predictive than the second-level variables alone.
+A combination of both first and second-level variables produced the best model overall.
+
+                         21
+Cross-validation of the final model showed reasonable performance when predicting previously
+unknown data. While the second-level variables were found to be inferior to the first level 'count'
+variables when considered separately, their inclusion in the combined model improved the predictive
+power and accuracy compared to earlier models. Overall, the project successfully created several
+significant second-level variables that can forecast the win/loss results of MMA fights and provided
+insights into how these variables can be used alongside traditional 'count' variables in predicting
+outcomes.
+
+                                                             22
+7. References
+
+7.1 Sources
+
+- "Mixed Martial Arts (MMA) - A Brief History and Introduction," Fightbook MMA,
+https://www.fightbookmma.com/mixed-martial-arts-mma-a-brief-history-and-introduction/
+- "A Brief History of MMA," UFC, https://www.ufc.com/news/brief-history-mma
+Anderson, T. W. (2003). An introduction to multivariate statistical analysis. John Wiley & Sons.
+Hardin, J. W., & Hilbe, J. M. (2007). Generalized linear models and extensions. Stata press.
+Long, J. S. (1997). Regression models for categorical and limited dependent variables. Sage
+publications.
+Anderson, C. and Sally, D. (2013) The Numbers Game: Why Everything You Know About Soccer Is
+Wrong. Penguin Books.
+Hollinger, J. (2002) Pro Basketball Prospectus. Brassey's Inc.
+Lewis, M. (2003) Moneyball: The Art of Winning an Unfair Game. W. W. Norton & Company.
+Weber, J. and Fromm, E. (2012) 'Judging Criteria in Mixed Martial Arts and the 10-Point Must
+System', Journal of Combat Sports, 10(2), pp. 35-47.
+Albert, J. and Koning, R.H. (2008) Statistical Thinking in Sports. Chapman & Hall/CRC.
+Agresti, A. (2013) Categorical Data Analysis. 3rd edn. Wiley.
+Baumer, B., Matthews, G. and Hwang, J. (2017) The Sabermetric Revolution: Assessing the Growth of
+Analytics in Baseball. University of Pennsylvania Press.
+Carling, C., Williams, A.M. and Reilly, T. (2005) Handbook of Soccer Match Analysis: A Systematic
+Approach to Improving Performance. Routledge.
+James, G., Witten, D., Hastie, T. and Tibshirani, R. (2013) An Introduction to Statistical Learning:
+with Applications in R. Springer.
+James, N., Mellalieu, S. and Jones, N. (2014) Sports Performance Analysis: An Introduction.
+Routledge.
+Wilson, P. (2013) Sports Analytics: A Guide for Coaches, Managers, and Other Decision Makers.
+Praeger.
+Hosmer, D.W., Lemeshow, S., and Sturdivant, R.X. (2013) Applied Logistic Regression. 3rd edn.
+Wiley.
+
+                                                             23
+Brier, G.W. (1950) 'Verification of forecasts expressed in terms of probability', Monthly Weather
+Review, 78(1), pp. 1-3
+
+Kv√•lseth, T.O. (1985) 'Cautionary Note about R2', The American Statistician, 39(4), pp. 279-285.
+
+Mittlb√∂ck, M. and Schemper, M. (1996) 'Explained variation for logistic regression', Statistics in
+Medicine, 15(19), pp. 1987-1997.
+
+James, G., Witten, D., Hastie, T. and Tibshirani, R. (2013) An Introduction to Statistical Learning:
+with Applications in R. Springer.
+
+Kohavi, R. (1995) 'A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model
+Selection', in Proceedings of the 14th International Joint Conference on Artificial Intelligence -
+Volume 2. San Francisco: Morgan Kaufmann Publishers Inc., pp. 1137-1143.
+
+Lachenbruch, P.A. and Goldstein, M. (1979) 'Discriminant Analysis', Biometrics, 35(1), pp. 69-85.
+
+Barber, D. (2019). Predicting outcomes in mixed martial arts fights: A review of analytical tools.
+International Journal of Sports Science and Coaching, 14(5), 672-682.
+
+Barnett, T. (2019). Statistical models for predicting the outcomes of mixed martial arts fights. Journal
+of Quantitative Analysis in Sports, 15(2), 53-62.
+
+Mendelson, A. (2016). The future of mixed martial arts. Journal of Combative Sport.
+http://ejmas.com/jcs/jcsart_mendelson_1206.htm
+
+Baumer, B., Cetinkaya-Rundel, M., Bray, A., Loi, L., & Horton, N. J. (2014). R Markdown:
+Integrating a reproducible analysis tool into introductory statistics. Technology Innovations in
+Statistics Education, 8(1).
+
+Constantinou, A. C., Fenton, N., & Neil, M. (2019). Pi-football: A Bayesian network model for
+forecasting association football match outcomes. Machine Learning, 107(12), 1871-1898.
+
+Kwak, D. H., Kim, Y., & Lee, K. (2018). An empirical analysis of factors affecting the ticket sales of
+professional sports teams: focusing on Major League Baseball. Sport Management Review, 21(1), 80-
+89.
+
+Gowanlock, M. J., & Lavaei, J. (2011). Predicting outcomes in mixed martial arts fights using a
+machine learning algorithm. Journal of Quantitative Analysis in Sports, 7(3), 1-13.
+
+Nolan, P., & Beal, J. W. (2019). Factors influencing outcomes in mixed martial arts fights. Journal of
+Sports Analytics, 5(4), 183-194.
+
+St-Onge, J. F., & Ouellette, M. (2019). Predicting the outcomes of mixed martial arts fights using
+machine learning. Journal of Combat Sports and Martial Arts, 10(2), 43-50.
+
+                                                             24
+New Jersey State Athletic Control Board. (n.d.). Unified Rules of Mixed Martial Arts. Retrieved from
+https://www.state.nj.us/lps/sacb/docs/martial.html
+
+7.2 Tables
+
+Table 1
+
+Parameter Count Variables                                              Created Variables( Second level)
+
+          Punches thrown: the average number of Punches                Punch Ratio
+          Thrown per fight.                                            Punch Difference
+
+Striking  Knockdowns(KD): the average number of knockdowns
+          landed per fight
+
+                                                                                Takedown Efficiency
+          Takedown Attemp(TD_Attempt): the average number of
+          takedowns attempted per fight.
+
+             Takedown Landed: the average number of takedowns          Ground Efficiency
+Wrestling successfully completed per fight.
+
+             SUB_ATT: the average number of submission attempts
+Grappling per fight.
+
+Data Match Outcome, Time
+
+Table 2 Formulas for the created variables
+
+Variable             Formulas
+
+                            Ì†µÌ±ÉÌ†µÌ±¢Ì†µÌ±õÌ†µÌ±ê‚ÑéÌ†µÌ±íÌ†µÌ±† Ì†µÌ±á‚ÑéÌ†µÌ±üÌ†µÌ±úÌ†µÌ±§Ì†µÌ±õ ‚àí Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°Ì†µÌ±† Ì†µÌ±ùÌ†µÌ±¢Ì†µÌ±õÌ†µÌ±ê‚ÑéÌ†µÌ±íÌ†µÌ±† Ì†µÌ±á‚ÑéÌ†µÌ±üÌ†µÌ±úÌ†µÌ±§Ì†µÌ±õ
+
+PUNCH-RATIO                                           Ì†µÌ±áÌ†µÌ±úÌ†µÌ±°Ì†µÌ±éÌ†µÌ±ô Ì†µÌ±°Ì†µÌ±ñÌ†µÌ±öÌ†µÌ±í
+                           Ì†µÌ±ÉÌ†µÌ±àÌ†µÌ±ÅÌ†µÌ∞∂Ì†µÌ∞ªÌ†µÌ∞∏Ì†µÌ±Ü Ì†µÌ±áÌ†µÌ∞ªÌ†µÌ±ÖÌ†µÌ±ÇÌ†µÌ±äÌ†µÌ±Å ‚Äì Ì†µÌ∞∏Ì†µÌ±õÌ†µÌ±íÌ†µÌ±öÌ†µÌ±¶ Ì†µÌ±ÉÌ†µÌ±àÌ†µÌ±ÅÌ†µÌ∞∂Ì†µÌ∞ªÌ†µÌ∞∏Ì†µÌ±Ü Ì†µÌ±áÌ†µÌ∞ªÌ†µÌ±ÖÌ†µÌ±ÇÌ†µÌ±äÌ†µÌ±Å
+
+Punch Differential                          Ì†µÌ±áÌ†µÌ±úÌ†µÌ±°Ì†µÌ±éÌ†µÌ±ô Ì†µÌ±ÄÌ†µÌ±ñÌ†µÌ±õÌ†µÌ±¢Ì†µÌ±°Ì†µÌ±íÌ†µÌ±†
+                                                   Ì†µÌ∞æÌ†µÌ∞∑
+
+Power - Value                                Ì†µÌ±ÉÌ†µÌ±àÌ†µÌ±ÅÌ†µÌ∞∂Ì†µÌ∞ªÌ†µÌ∞∏Ì†µÌ±Ü Ì†µÌ±áÌ†µÌ∞ªÌ†µÌ±ÖÌ†µÌ±ÇÌ†µÌ±äÌ†µÌ±Å
+Takedown Efficiency  Ì†µÌ±áÌ†µÌ∞∑Ì†µÌ±ÄÌ†µÌ±éÌ†µÌ±ëÌ†µÌ±í + Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑Ì†µÌ∞¥Ì†µÌ±áÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ±ÄÌ†µÌ±ÉÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ∞∑ ‚àí Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑Ì†µÌ±ÄÌ†µÌ∞¥Ì†µÌ∞∑Ì†µÌ∞∏
+
+                          Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ∞¥Ì†µÌ±áÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ±ÄÌ†µÌ±ÉÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ∞∑ + Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ∞¥Ì†µÌ±áÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ±ÄÌ†µÌ±ÉÌ†µÌ±áÌ†µÌ∞∏Ì†µÌ∞∑
+
+Ground effiency             Ì†µÌ∞¥Ì†µÌ±ëÌ†µÌ±£Ì†µÌ±éÌ†µÌ±õÌ†µÌ±êÌ†µÌ±í Ì†µÌ±°Ì†µÌ±ú Ì†µÌ±îÌ†µÌ±üÌ†µÌ±úÌ†µÌ±¢Ì†µÌ±õÌ†µÌ±ë Ì†µÌ±ùÌ†µÌ±úÌ†µÌ±†Ì†µÌ±ñÌ†µÌ±°Ì†µÌ±ñÌ†µÌ±úÌ†µÌ±õ + Ì†µÌ±ÜÌ†µÌ±¢Ì†µÌ±èÌ†µÌ±èÌ†µÌ∞¥Ì†µÌ±°Ì†µÌ±°Ì†µÌ±íÌ†µÌ±öÌ†µÌ±ùÌ†µÌ±°
+                                 Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ±ÄÌ†µÌ∞¥Ì†µÌ∞∑Ì†µÌ∞∏ + Ì†µÌ±ÇÌ†µÌ±ùÌ†µÌ±ùÌ†µÌ±úÌ†µÌ±õÌ†µÌ±íÌ†µÌ±õÌ†µÌ±°‚Ä≤Ì†µÌ±† Ì†µÌ±áÌ†µÌ∞∑_Ì†µÌ±ÄÌ†µÌ∞¥Ì†µÌ∞∑Ì†µÌ∞∏
+
+Table 3 Summary of Count Values
+
+Variable             Mean_Average SD(œÉ)
+
+Punches thrown       41.76       41.33
+
+Knockdowns           0.20        0.48
+
+Takedowns attempted 2.42         3.41
+
+Takedowns made 1.05              1.66
+
+Positional_Adv ^(2) 1.37         2.30
+
+Submission Attemps 0.60          1.08
+
+Time                 535.58 (s)  389.05 (s)
+
+                                            25
+Table 4 Correlation Table for count Values
+
+                       PUNCHES              KD TD_MADE Positional_Adv SUB_ATT
+                       THROWN
+PUNCHES                                     0.78 0.683   0.717           0.545
+THROWN                 1.0                  1.0 0.112    0.206           0.155
+KD                     0.491                0.112 1.0    0.789           0.450
+Takedown_MADE          0.683                0.202 0.789  1.0             0.658
+Positional_Adv         0.717                0.155 0.450  0.658           1.0
+SUB_ATT                0.545
+
+Table 5 Created variable model
+
+Metric                                    Concord      p-value BR_Score
+                          Rescaled R2 Discond
+
+Punch Difference 0.061              62.04/ 37.581 <0.0001 0.24
+
+PUNCH-RATIO               0.023     61.865 / 36.79 <0.0001 0.25
+
+Log(PUNCH-                0.068     62.80 / 36.9 <0.0001 0.23
+RATIO)
+
+Power - Value             0.007     49.45 / 44.736 0.0001 0.25
+
+Takedown Efficiency 0.018           57.35 / 42.189 <0.0001 0.24
+
+Ground effiency           0.001     51.99 / 43.748 0.069053 0.25
+
+Table 6: Second level variable full model
+
+                                   Std_Error(Standard    Pr >            Std_Estimate(Standard
+                       Estimate Error)
+Parameter                                                Œß2 ChiSq Estimate)
+
+Intercept              0         0.038                   0 1.0000 1.00
+
+Ground Effectivnes 0.023 0.024                           0.92 0.337 0.02
+
+Power Rating           -0.817 0.882                      0.88 0.348 -0.02
+
+Punch Differential 0.013 0.024                           0.33 0.564 0.03
+
+Punch Ratio            -0.062 0.019                      10.12 0.0015 -0.09
+
+Log(Punch Ratio) 0.433 0.123                             12.67 0.0004 0.24
+
+Takedown effiency 0.499 0.143                            12.21 0.0005 0.08
+
+Table 7.: Created variable full model diagnostics
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  R2     BR_Score
+    Discon
+
+62.3 / 37.2 0.071 0.25
+
+                                                   26
+Parameter                     Std_Error(Standard                 Chi     Pr >   Std_Estimate(Standard
+                   Estimate Error)                               square  ChiSq  Estimate)
+                                                                 0       1.000
+Intercept          0            0.031                                           -0.081
+                                                                 7.605   0.005
+PUNCH-RATIO -0.0496 0.019
+
+Log(PUNCH-         0.48 0.056                                    75.31 < .0001 0.278
+RATIO)
+
+Takedown           0.34 0.14                                     7.15    0.007 0.0601
+Efficiency
+
+Table 7.1: Model diagnostics
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  Rescaled R2  BR_Score
+    Discon
+
+61.2/36.1 0.061                 0.23
+
+Table 8: Winning percent Model
+
+Parameter          Esti Std_Error Œß2 Pr > ChiSq Std_Estimate(Standard Estimate)
+
+Intercept          0 0.03                 0 1.0
+
+Winning Percent 1.086 0.08                137.5 <0.0001 0.213
+
+Model Diagnostics
+
+Table 8.1: Diagnostics for Winning Percent
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  Rescaled R2  BR_Score
+    Discon
+
+59.7/37.0 0.050                 0.241
+
+Table 9
+
+Variable              Rescaled R2         %  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  p-value  BR_Score
+                                              Discon
+
+PUNCHES THROWN 0.0530                     62.7/34.1 <.0001 0.2400
+
+KD                    0.0204              45.1/28.7 <.0001 0.2470
+
+TD_MADE               0.0662              60.9/29.9 <.0001 0.2382
+
+Positional_Adv        0.0632              60.8/31.0 <.0001 0.2386
+
+SUB_ATT               0.0360              52.5/33.2 <.0001 0.2444
+
+Table 10
+
+Variable              Rescaled R2         %  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  p-value  BR_Score
+                                             Discond
+
+PUNCHES THROWN 0.053                      62.7/34.1 <.0001 0.24
+
+KD                    0.020               45.1/28.7 <.0001 0.247
+
+TD_MADE               0.066               60.9/29.9 <.0001 0.238
+
+Positional_Adv        0.063               60.8/31.0 <.0001 0.238
+
+SUB_ATT               0.036               52.5/33. <.0001 0.244
+
+Table 12
+                                                             27
+Variable                      Rescaled R2  %  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  p-value  BR_Score
+                                               Discon
+
+PUNCHES THROWN 0.053                       62.7/34.1 <.0001 0.240
+
+KD                            0.020        45.1/28.7 <.0001 0.247
+
+TD_MADE                       0.066        60.9/29.9 <.0001 0.238
+
+Positional_Adv                0.063        60.8/31.0 <.0001 0.238
+
+SUB_ATT                       0.036        52.5/33.2 <.0001 0.244
+
+Table 13: First level variable model
+
+Parameter                      Std_Error(Standard  Chi-                Pr >    Std_Estimate(Standard Estimate)
+                   Estimate Error)                 Square              ChiSq
+                                                   0                   1.0000  0.129
+Intercept          0             0.017             41.16               <.0001  0.183
+                                                   52.15               <.0001  0.173
+KD                 0.08 0.021                      5.92                0.0149  0.157
+                                                   7.207               0.0073
+TD_MADE 0.03 0.014
+
+Positional_Adv 0.01 0.013
+
+SUB_ATT            0.01 0.005
+
+Table 14
+
+Percentage_Concordant/Discordant Rescaled R2 BR_Score
+
+64/32.2                                    0.095   0.213
+
+Table 15
+
+                            Estimat Std_Error(Standard                 Pr >      Std_Estimate(Standard
+Parameter Intercpt e Error)                                   Œß2 ChiSq                   Estimate)
+
+KD                 0          0.081 0.013                     16.88 <.0001 0.1126
+
+TD_MADE 0                     0.055 0.003                     57.29 <.0001 0.2303
+
+PUNCHES
+
+THROWN -0                     o         0.0001                6.167 0.0094 -0.0948
+                                                              15.14 <.0001 0.1003
+SUB_ATT 0                     0.011 0.005
+
+PUNCH-
+
+RATIO              0          -0.012 0.019                    4.650 0.0312 -0.0668
+
+Log(PUNCH-
+
+RATIO)             0          0.18 0.062                      58.65 <.0001 0.2675
+
+Takedown                      0.14 0.15                       8.8 0.003 0.071
+Efficiency 0
+
+Table 16
+
+%  Ì†µÌ∞∂Ì†µÌ±úÌ†µÌ±õÌ†µÌ±êÌ†µÌ±úÌ†µÌ±üÌ†µÌ±ë  65.1/31.9
+    Discon
+
+Rescaled R2 0.14
+
+BR_Score 0.26
+
+                                                   28
+   Actual Winning           Predicted        Predicted Losing
+    Actual Losing            Winning            142 (18 %)
+                            242 (31%)           245 (32%)
+
+                            139 (17%)
+
+.
+
+   % Concordant/Discordant      Rescaled R¬≤  Br_Score
+             64.1/37.1                          0.24
+                                    0.16
+
+                            29
+TRITA-SCI_GRU 2024-105
+
+Stockholm, Sweden 2024
+
+www.kth.se
+

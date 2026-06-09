@@ -1,0 +1,81 @@
+{
+  "strings": [
+    {
+      "fr": "Aller au contenu principal",
+      "key": "common.skip_to_content",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "class=\"skip-link\">Aller au contenu principal</a>"
+    },
+    {
+      "fr": "Maintenance sécurité",
+      "key": "security.banner_title",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<strong>Maintenance sécurité</strong> — Reconnexion"
+    },
+    {
+      "fr": "Reconnexion requise. Nous avons renforcé la sécurité de vos données. Merci de vous reconnecter pour continuer.",
+      "key": "security.banner_body",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "— Reconnexion requise. Nous avons renforcé la sécurité"
+    },
+    {
+      "fr": "PariScore — Pronostics Football & Tennis par algorithme.",
+      "key": "seo.noscript_tagline",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "<strong>PariScore — Pronostics Football & Tennis par algorithme.</strong>"
+    },
+    {
+      "fr": "Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.",
+      "key": "seo.noscript_description",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "Analyse data-science des paris sportifs : Power Score"
+    },
+    {
+      "fr": "Tous les pronostics du jour",
+      "key": "seo.noscript_link_pronostics",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "href=\"/pronostics\">Tous les pronostics du jour</a>"
+    },
+    {
+      "fr": "Guides paris sportifs",
+      "key": "seo.noscript_link_guides",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "href=\"/guides\">Guides paris sportifs</a>"
+    },
+    {
+      "fr": "Qu'est-ce qu'un value bet",
+      "key": "seo.noscript_link_value_bet",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "href=\"/guide/value-bet\">Qu'est-ce qu'un value bet</a>"
+    },
+    {
+      "fr": "Le Power Score expliqué",
+      "key": "seo.noscript_link_power_score",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "href=\"/guide/power-score\">Le Power Score expliqué</a>"
+    },
+    {
+      "fr": "Les Expected Goals (xG)",
+      "key": "seo.noscript_link_xg",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "href=\"/guide/xg-explique\">Les Expected Goals (xG)</a>"
+    },
+    {
+      "fr": "Le critère de Kelly",
+      "key": "seo.noscript_link_kelly",
+      "file": "pariscore.html",
+      "wrap": "html-text",
+      "snippet": "href=\"/guide/critere-kelly\">Le critère de Kelly</a>"
+    }
+  ]
+}

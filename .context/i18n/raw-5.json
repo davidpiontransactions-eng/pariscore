@@ -1,0 +1,1068 @@
+{
+  "strings": [
+    {
+      "fr": "Proba P1 gagne le 1er set (ML BSD)",
+      "key": "tennis.vb.first_set_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Proba P1 gagne le 1er set (ML BSD)'"
+    },
+    {
+      "fr": " — diverge du pronostic match (signal)",
+      "key": "tennis.vb.first_set_diverge_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "? ' — diverge du pronostic match (signal)'"
+    },
+    {
+      "fr": "Totaux jeux — BSD {0} vs Markov {1} (Δ{2})",
+      "key": "tennis.vb.totals_conv_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Totaux jeux — BSD ' + tc.bsd_expected"
+    },
+    {
+      "fr": "Cote marché (Odds API)",
+      "key": "tennis.vb.chip_market_odds_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "<span class=\"oc\" title=\"Cote marché (Odds API)\">@'"
+    },
+    {
+      "fr": "Cote équitable modèle (no-vig) = 1/proba",
+      "key": "tennis.vb.chip_fair_odds_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "<span class=\"fc\" title=\"Cote équitable modèle (no-vig) = 1/proba\">"
+    },
+    {
+      "fr": "{0} vainqueur",
+      "key": "tennis.live.bet_match_winner",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "add((s?n1:n2)+' vainqueur'+(lead?"
+    },
+    {
+      "fr": "{0} gagne le set en cours",
+      "key": "tennis.live.bet_current_set_winner",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "add((ss?n1:n2)+' gagne le set en cours',ss?base"
+    },
+    {
+      "fr": "Set en cours +8.5 jeux",
+      "key": "tennis.live.bet_current_set_over_games",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if(sp>=50) add('Set en cours +8.5 jeux',sp)"
+    },
+    {
+      "fr": "Set en cours -8.5 jeux",
+      "key": "tennis.live.bet_current_set_under_games",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "else add('Set en cours -8.5 jeux',100-sp)"
+    },
+    {
+      "fr": "Total match +21.5 jeux",
+      "key": "tennis.live.bet_total_match_over_games",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if(mp>=50) add('Total match +21.5 jeux',mp)"
+    },
+    {
+      "fr": "Total match -21.5 jeux",
+      "key": "tennis.live.bet_total_match_under_games",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "else add('Total match -21.5 jeux',100-mp)"
+    },
+    {
+      "fr": "{0} gagne ≥1 set",
+      "key": "tennis.live.bet_at_least_one_set",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "add((tr==='p1'?n1:n2)+' gagne ≥1 set'"
+    },
+    {
+      "fr": "Tie-break set en cours : Oui",
+      "key": "tennis.live.bet_tiebreak_current_set_yes",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "add('Tie-break set en cours : Oui',cl(55"
+    },
+    {
+      "fr": "{0} mène",
+      "key": "tennis.live.verdict_player_leads",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "res._verdict=lead>0?(n1+' mène')"
+    },
+    {
+      "fr": "serré",
+      "key": "tennis.live.verdict_tight",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(n2+' mène'):'serré');"
+    },
+    {
+      "fr": "LIVE · {0}",
+      "key": "tennis.vb.pred_kpi_live",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tvb-pred-kpi live\">LIVE · '+_escTennis(lb._verdict"
+    },
+    {
+      "fr": "SUIVI",
+      "key": "tennis.vb.verdict_follow_default",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "_escTennis(lb._verdict||'SUIVI')"
+    },
+    {
+      "fr": "— pas de signal",
+      "key": "tennis.vb.pred_empty_no_signal",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "tvb-pred-empty\">— pas de signal</span>"
+    },
+    {
+      "fr": "{0} vainqueur",
+      "key": "tennis.live.score_bet_winner_lead",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<b>'+_escTennis(n1)+' vainqueur</b> <span class=\"pp\">mène"
+    },
+    {
+      "fr": "mène {0}-{1}",
+      "key": "tennis.live.score_bet_leads_by",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<span class=\"pp\">mène '+s1+'-'+s2+'</span>"
+    },
+    {
+      "fr": "Set 1 décisif",
+      "key": "tennis.live.score_bet_set1_decisive",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<b>Set 1 décisif</b> <span class=\"pp\">"
+    },
+    {
+      "fr": "{0} tient son service",
+      "key": "tennis.live.score_bet_holds_serve",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<b>'+_escTennis(n1)+' tient son service</b>"
+    },
+    {
+      "fr": "Set long (tie-break ?)",
+      "key": "tennis.live.score_bet_long_set",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ">=8?'Set long (tie-break ?)':'Set rapide'"
+    },
+    {
+      "fr": "Set rapide",
+      "key": "tennis.live.score_bet_fast_set",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Set long (tie-break ?)':'Set rapide'"
+    },
+    {
+      "fr": "jeux {0}-{1}",
+      "key": "tennis.live.score_bet_games_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<span class=\"pp\">jeux '+gp1+'-'+gp2+'</span>"
+    },
+    {
+      "fr": "LIVE · {0}",
+      "key": "tennis.live.score_kpi_live",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tvb-pred-kpi '+(lead!==0?'live':'pass')+'\">LIVE · "
+    },
+    {
+      "fr": "Aucun match disponible.",
+      "key": "tennis.vb.empty_no_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3,#5a6068);\">Aucun match disponible.</span>"
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.vb.comp_filter_all_option",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "'<option value=\"ALL\">Toutes</option>'"
+    },
+    {
+      "fr": "Toutes",
+      "key": "tennis.vb.comp_filter_all_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "_sel.length === 0 ? 'Toutes' : (_sel.length === 1"
+    },
+    {
+      "fr": "{0} tournois",
+      "key": "tennis.vb.comp_filter_count_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "_sel[0] : _sel.length + ' tournois')"
+    },
+    {
+      "fr": "Aucun match ne correspond aux filtres.",
+      "key": "tennis.vb.empty_no_match_filters",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucun match ne correspond aux filtres.</span>"
+    },
+    {
+      "fr": "MES FAVORIS ({0})",
+      "key": "tennis.vb.fav_pin_header",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tn-fav-pin-hdr\">★ MES FAVORIS (${_tvbFavCount})"
+    },
+    {
+      "fr": "Analyse Deep Data IA — Telegram-ready",
+      "key": "tennis.vb.ai_button_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Analyse Deep Data IA — Telegram-ready\">AI-AL"
+    },
+    {
+      "fr": "Détails {0}",
+      "key": "tennis.vb.expand_button_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "<button class=\"tn-expand-btn\" aria-label=\"Détails ${ariaLbl}\""
+    },
+    {
+      "fr": "Détails {0}",
+      "key": "tennis.vb.drawer_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "role=\"row\" hidden aria-label=\"Détails ${ariaLbl}\">"
+    },
+    {
+      "fr": "Copié !",
+      "key": "tennis.ai.copy_done",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "btn.innerHTML = '✅ Copié !'; setTimeout"
+    },
+    {
+      "fr": "Copié !",
+      "key": "tennis.ai.copy_done_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "btn.innerHTML = '✅ Copié !'; setTimeout(() => { btn.innerHTML = '📋 Copier le bloc Telegram'"
+    },
+    {
+      "fr": "Copier le bloc Telegram",
+      "key": "tennis.ai.copy_button",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "btn.innerHTML = '📋 Copier le bloc Telegram'; }"
+    },
+    {
+      "fr": "Réponse IA vide",
+      "key": "tennis.ai.empty_response_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (!text) throw new Error('Réponse IA vide')"
+    },
+    {
+      "fr": "Erreur : {0}",
+      "key": "tennis.ai.error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "errBox.textContent = 'Erreur : ' + (e.message || e)"
+    },
+    {
+      "fr": "Accès réservé",
+      "key": "tennis.vb.status_access_restricted",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (statusEl) statusEl.textContent = 'Accès réservé'"
+    },
+    {
+      "fr": "Module Tennis réservé Pro Tennis / Duo.",
+      "key": "tennis.vb.access_restricted_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "🔒 Module Tennis réservé <b>Pro Tennis / Duo</b>."
+    },
+    {
+      "fr": "Connecte-toi pour accéder aux value bets tennis.",
+      "key": "tennis.vb.access_restricted_cta",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Connecte-toi pour accéder aux value bets tennis.</span>"
+    },
+    {
+      "fr": "Préparation des données tennis (1er chargement, ~20 s)…",
+      "key": "tennis.vb.building_first_load",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "⏳ Préparation des données tennis (1er chargement, ~20 s)…</span>"
+    },
+    {
+      "fr": "Préparation… ({0})",
+      "key": "tennis.vb.status_building_progress",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statusEl.textContent = `⏳ Préparation… (${window._tennisVbBuildRetries})`"
+    },
+    {
+      "fr": "Build trop long — réessaie plus tard",
+      "key": "tennis.vb.status_build_too_long",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusEl.textContent = 'Build trop long — réessaie plus tard'"
+    },
+    {
+      "fr": "Erreur d'affichage — voir console (F12).",
+      "key": "tennis.vb.render_crash_message",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Erreur d\\'affichage — voir console (F12).</span>"
+    },
+    {
+      "fr": "Erreur rendu",
+      "key": "tennis.vb.status_render_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (statusEl) statusEl.textContent = 'Erreur rendu'"
+    },
+    {
+      "fr": "{0} matchs · {1} avec Elo · src={2} · {3}",
+      "key": "tennis.vb.status_summary",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statusEl.textContent = `${matches.length} matchs · ${withElo} avec Elo · src="
+    },
+    {
+      "fr": "Reconnexion… ({0})",
+      "key": "tennis.vb.status_reconnecting",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statusEl.textContent = `Reconnexion… (${window._tennisVbBuildRetries})`"
+    },
+    {
+      "fr": "Préparation des données tennis…",
+      "key": "tennis.vb.building_short",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "⏳ Préparation des données tennis…</span>"
+    },
+    {
+      "fr": "Erreur réseau",
+      "key": "tennis.vb.status_network_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (statusEl) statusEl.textContent = 'Erreur réseau'"
+    },
+    {
+      "fr": "Erreur de chargement (build serveur indisponible).",
+      "key": "tennis.vb.load_error_build_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Erreur de chargement (build serveur indisponible).</span>"
+    },
+    {
+      "fr": "BETS PRÉDICTIFS",
+      "key": "tennis.top10.bets_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "tn-t10-bets-head\">🎯 BETS PRÉDICTIFS ${verdictBadge}"
+    },
+    {
+      "fr": "Équilibre: {0}",
+      "key": "tennis.top10.tooltip_balance",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "d.entropy  != null ? `\\nÉquilibre: ${d.entropy}`"
+    },
+    {
+      "fr": "Valeur EV: {0}",
+      "key": "tennis.top10.tooltip_ev_value",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "d.ev       != null ? `\\nValeur EV: ${d.ev}`"
+    },
+    {
+      "fr": "Prestige: {0}",
+      "key": "tennis.top10.tooltip_prestige",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "d.stakes   != null ? `\\nPrestige: ${d.stakes}`"
+    },
+    {
+      "fr": "Urgence: {0}",
+      "key": "tennis.top10.tooltip_urgency",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "d.urgency  != null ? `\\nUrgence: ${d.urgency}`"
+    },
+    {
+      "fr": "Mouvement: {0}",
+      "key": "tennis.top10.tooltip_movement",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "d.movement != null ? `\\nMouvement: ${d.movement}`"
+    },
+    {
+      "fr": "Auj. {0}",
+      "key": "tennis.top10.date_today",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "const label = isToday    ? `Auj. ${hm}`"
+    },
+    {
+      "fr": "Demain {0}",
+      "key": "tennis.top10.date_tomorrow",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": isTomorrow ? `Demain ${hm}`"
+    },
+    {
+      "fr": "Top 3 Tennis : {0} vs {1} — {2}",
+      "key": "tennis.top10.toast_new_top3",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "const msg = `🏆 Top 3 Tennis : ${m.player1} vs ${m.player2} — ${m.reason}`"
+    },
+    {
+      "fr": "Aucun match disponible pour le moment",
+      "key": "tennis.top10.empty_no_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "tn-t10-empty\">Aucun match disponible pour le moment</div>"
+    },
+    {
+      "fr": "Indisponible",
+      "key": "tennis.top10.status_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (statusEl) statusEl.textContent = 'Indisponible'"
+    },
+    {
+      "fr": "Données indisponibles",
+      "key": "tennis.top10.empty_data_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "tn-t10-empty\">Données indisponibles</div>"
+    },
+    {
+      "fr": "Aucune donnée disponible.",
+      "key": "tennis.abstract.empty_no_data",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Aucune donnée disponible.</div>"
+    },
+    {
+      "fr": "{0} joueurs · {1}",
+      "key": "tennis.abstract.meta_players_rounds",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`${data.players.length} joueurs · ${data.rounds.join('→')}`"
+    },
+    {
+      "fr": "{0} joueurs",
+      "key": "tennis.abstract.meta_players",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": `${data.players.length} joueurs`"
+    },
+    {
+      "fr": "Joueur",
+      "key": "tennis.abstract.col_player",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<thead><tr><th>Joueur</th><th>Pays</th>"
+    },
+    {
+      "fr": "Pays",
+      "key": "tennis.abstract.col_country",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Joueur</th><th>Pays</th><th style=\"text-align:right;\">Finale"
+    },
+    {
+      "fr": "Finale",
+      "key": "tennis.abstract.col_final",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th style=\"text-align:right;\">Finale</th>"
+    },
+    {
+      "fr": "Titre",
+      "key": "tennis.abstract.col_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th style=\"text-align:right;\">Titre</th>"
+    },
+    {
+      "fr": "Aucun match disponible.",
+      "key": "tennis.tex.empty_no_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Aucun match disponible.</div>"
+    },
+    {
+      "fr": "{0} matchs · {1} avec drift · MAJ {2}",
+      "key": "tennis.tex.status_summary",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "status.textContent = `${matches.length} matchs · ${driftCount} avec drift · MAJ"
+    },
+    {
+      "fr": "Multi-books comparison",
+      "key": "tennis.tex.books_button_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "font-family:'DM Mono',monospace;\" title=\"Multi-books comparison\">📊"
+    },
+    {
+      "fr": "Heure",
+      "key": "tennis.tex.col_time",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<thead><tr>\\n        <th>Heure</th><th>Joueur 1</th>"
+    },
+    {
+      "fr": "Joueur 1",
+      "key": "tennis.tex.col_player1",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Heure</th><th>Joueur 1</th><th></th><th>Joueur 2</th>"
+    },
+    {
+      "fr": "Joueur 2",
+      "key": "tennis.tex.col_player2",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th></th><th>Joueur 2</th>"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "tennis.tex.error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-size:12px;\">Erreur: ${_escapeHtmlSafe(e.message)}</div>"
+    },
+    {
+      "fr": "Erreur",
+      "key": "tennis.tex.status_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (status) status.textContent = 'Erreur';"
+    },
+    {
+      "fr": "Aucune prédiction au-dessus du seuil.",
+      "key": "betmines.empty_no_prediction_threshold",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucune prédiction au-dessus du seuil.</div>"
+    },
+    {
+      "fr": "Date",
+      "key": "betmines.col_date",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<thead><tr>\\n        <th>Date</th>\\n        <th>Match</th>"
+    },
+    {
+      "fr": "Match",
+      "key": "betmines.col_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Date</th>\\n        <th>Match</th>"
+    },
+    {
+      "fr": "Cote",
+      "key": "betmines.col_odds",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th style=\"text-align:right;\">Cote</th>"
+    },
+    {
+      "fr": "Proba",
+      "key": "betmines.col_proba",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th style=\"text-align:right;\">Proba</th>"
+    },
+    {
+      "fr": "{0} matchs LIVE · MAJ {1}",
+      "key": "betmines.status_live_summary",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`${picks.length} matchs LIVE · MAJ ${fmtKickoffTime"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "betmines.error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--red,#ff4d4d);\">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n    if (status)"
+    },
+    {
+      "fr": "Erreur",
+      "key": "betmines.status_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "</div>`;\n    if (status) status.textContent = 'Erreur';\n  }\n}\n\nasync function openBetminesModal"
+    },
+    {
+      "fr": "Best Pick (BetMines IA)",
+      "key": "betmines.modal_best_pick_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Best Pick (BetMines IA)</div>"
+    },
+    {
+      "fr": "Proba {0}%",
+      "key": "betmines.modal_proba_inline",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-size:12px;\">· Proba ${m.best_pick?.probability"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "betmines.modal_error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--red,#ff4d4d);\">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }"
+    },
+    {
+      "fr": "{0} actifs · MAJ {1}",
+      "key": "tennis.tex.calendar_status_summary",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "status.textContent = `${r.count} actifs · MAJ ${fmtKickoffTime(r.fetched_at)}`"
+    },
+    {
+      "fr": "Tournoi",
+      "key": "tennis.tex.calendar_col_tournament",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Start</th><th>Tournoi</th><th style=\"text-align:center;\">Surface"
+    },
+    {
+      "fr": "Surface",
+      "key": "tennis.tex.calendar_col_surface",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th style=\"text-align:center;\">Surface</th>"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "tennis.tex.calendar_error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }\n}\n\nfunction _texRenderMarketTable"
+    },
+    {
+      "fr": "Voir détail complet ↗",
+      "key": "tennis.tex.books_view_full_detail",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--blue,#29b6f6);\">Voir détail complet ↗</a>"
+    },
+    {
+      "fr": "Aucune cote disponible pour ce match.",
+      "key": "tennis.tex.books_empty_no_odds",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucune cote disponible pour ce match.</div>"
+    },
+    {
+      "fr": "Over / Under (sets)",
+      "key": "tennis.tex.market_over_under_sets",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "r.markets?.over_under, '🎯 Over / Under (sets)')"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "tennis.tex.books_error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }\n}\n\nasync function openTexPlayerModal"
+    },
+    {
+      "fr": "Lottery (7j)",
+      "key": "tennis.tex.player_lottery_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Lottery (7j)</td>"
+    },
+    {
+      "fr": "{0}W / {1}L · {2} close matches",
+      "key": "tennis.tex.player_lottery_value",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--amber,#ffa726);\">${lot.wins}W / ${lot.losses}L · ${lot.total} close matches"
+    },
+    {
+      "fr": "Pays",
+      "key": "tennis.tex.player_country",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Pays</td><td style=\"padding:4px 8px;\">${_escapeHtmlSafe(p.country"
+    },
+    {
+      "fr": "Date naissance",
+      "key": "tennis.tex.player_dob",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Date naissance</td>"
+    },
+    {
+      "fr": "{0} ans",
+      "key": "tennis.tex.player_age_suffix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${_escapeHtmlSafe(p.dob || '—')} · ${age} ans</td>"
+    },
+    {
+      "fr": "Sexe",
+      "key": "tennis.tex.player_sex",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Sexe</td>"
+    },
+    {
+      "fr": "Main",
+      "key": "tennis.tex.player_hand",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Main</td>"
+    },
+    {
+      "fr": "Taille/Poids",
+      "key": "tennis.tex.player_height_weight",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Taille/Poids</td>"
+    },
+    {
+      "fr": "Rank simple",
+      "key": "tennis.tex.player_rank_singles",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Rank simple</td>"
+    },
+    {
+      "fr": "Rank double",
+      "key": "tennis.tex.player_rank_doubles",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--text3,#5a6068);\">Rank double</td>"
+    },
+    {
+      "fr": "haut: {0}",
+      "key": "tennis.tex.player_rank_highest",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${p.rank_singles.current ?? '—'} (haut: ${p.rank_singles.highest"
+    },
+    {
+      "fr": "Career W/L par surface",
+      "key": "tennis.tex.player_career_by_surface",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;margin-bottom:6px;\">🎾 Career W/L par surface</div>"
+    },
+    {
+      "fr": "Voir profile complet ↗",
+      "key": "tennis.tex.player_view_full_profile",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--blue,#29b6f6);\">Voir profile complet ↗</a>"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "tennis.tex.player_error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }\n}\n\nasync function loadTennisAbstractRome"
+    },
+    {
+      "fr": "ATP à venir :",
+      "key": "tennis.abstract.upcoming_atp",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--text,#e8eaed);\">ATP à venir :</strong> ${upATP.map"
+    },
+    {
+      "fr": "WTA à venir :",
+      "key": "tennis.abstract.upcoming_wta",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--text,#e8eaed);\">WTA à venir :</strong> ${upWTA.map"
+    },
+    {
+      "fr": "MAJ {0}",
+      "key": "tennis.abstract.status_updated",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statusEl.textContent = ts ? 'MAJ ' + fmtKickoffTime(ts)"
+    },
+    {
+      "fr": "Erreur",
+      "key": "tennis.abstract.status_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (statusEl) statusEl.textContent = 'Erreur';\n    console.error('[TennisAbstract]"
+    },
+    {
+      "fr": "Chargement MCP…",
+      "key": "tennis.abstract.mcp_loading",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Chargement MCP…</div>'"
+    },
+    {
+      "fr": "Joueur",
+      "key": "tennis.abstract.mcp_col_player",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<tr><th>#</th><th>Joueur</th><th style=\"text-align:right;\">M</th>"
+    },
+    {
+      "fr": "Erreur: {0}",
+      "key": "tennis.abstract.mcp_error_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }\n}\n\nfunction setTaMcpTour"
+    },
+    {
+      "fr": "{0} ans · rank {1}",
+      "key": "tennis.abstract.birthday_age_rank",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "(${_escapeHtmlSafe(r[iCountry])}) · ${_escapeHtmlSafe(r[iAge])} ans · rank ${_escapeHtmlSafe(r[iRank])}"
+    },
+    {
+      "fr": "Ignorer alerte",
+      "key": "tennis.slb.dismiss_button_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "class=\"pslts-slb-dismiss\" aria-label=\"Ignorer alerte\""
+    },
+    {
+      "fr": "alerte live",
+      "key": "tennis.slb.pill_alert_singular",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "lEl.textContent = count === 1 ? 'alerte live' : 'alertes live'"
+    },
+    {
+      "fr": "alertes live",
+      "key": "tennis.slb.pill_alert_plural",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "count === 1 ? 'alerte live' : 'alertes live'"
+    },
+    {
+      "fr": "BREAK A VENIR",
+      "key": "tennis.slb.rule_r1_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "icon: '🎯', title: 'BREAK A VENIR',"
+    },
+    {
+      "fr": "{0} prochain jeu (service {1})",
+      "key": "tennis.slb.rule_r1_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "label: `${_slbName(m, pick)} prochain jeu (service ${_slbName(m, other)})`"
+    },
+    {
+      "fr": "RESET TRAP SET",
+      "key": "tennis.slb.rule_r2_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "icon: '⚡', title: 'RESET TRAP SET',"
+    },
+    {
+      "fr": "{0} vainqueur du set (pression cumulee terre battue)",
+      "key": "tennis.slb.rule_r2_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "label: `${_slbName(m, pick)} vainqueur du set (pression cumulee terre battue)`"
+    },
+    {
+      "fr": "TIE-BREAK LOCK",
+      "key": "tennis.slb.rule_r3_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "icon: '🎲', title: 'TIE-BREAK LOCK',"
+    },
+    {
+      "fr": "Tie-break probable ce set (equilibre + holds fermes)",
+      "key": "tennis.slb.rule_r3_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "label: `Tie-break probable ce set (equilibre + holds fermes)`"
+    },
+    {
+      "fr": "COMEBACK WINDOW",
+      "key": "tennis.slb.rule_r4_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "icon: '🔁', title: 'COMEBACK WINDOW',"
+    },
+    {
+      "fr": "{0} remonte ce set (renversement detecte)",
+      "key": "tennis.slb.rule_r4_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "label: `${_slbName(m, pick)} remonte ce set (renversement detecte)`"
+    },
+    {
+      "fr": "HOLD STALL",
+      "key": "tennis.slb.rule_r5_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "icon: '✅', title: 'HOLD STALL',"
+    },
+    {
+      "fr": "Securitaire : Over 11.5 jeux ce set (holds des deux cotes)",
+      "key": "tennis.slb.rule_r5_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "label: `Securitaire : Over 11.5 jeux ce set (holds des deux cotes)`"
+    },
+    {
+      "fr": "Vainqueur match",
+      "key": "tennis.pslts.edge_market_match_winner",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "cards.push({\n      market: 'Vainqueur match',"
+    },
+    {
+      "fr": "Vainqueur set en cours · {0}-{1}",
+      "key": "tennis.pslts.edge_market_current_set_winner",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "market: `Vainqueur set en cours · ${gp1}-${gp2}`,"
+    },
+    {
+      "fr": "Set serré",
+      "key": "tennis.pslts.edge_set_tight",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "leadPick = 'Set serré';"
+    },
+    {
+      "fr": "Atteint ({0} joues)",
+      "key": "tennis.pslts.edge_over_sets_reached",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "? `Atteint (${setsPlayed} joues)`"
+    },
+    {
+      "fr": "Reste {0} set(s) requis",
+      "key": "tennis.pslts.edge_over_sets_remaining",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": `Reste ${remaining} set(s) requis`,"
+    },
+    {
+      "fr": "Donnees prediction indispo · re-essai dans 60s",
+      "key": "tennis.pslts.edge_empty_no_prediction",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-align:center;padding:12px 0;\">Donnees prediction indispo · re-essai dans 60s</div>"
+    },
+    {
+      "fr": "{0} (tous terrains)",
+      "key": "tennis.pslts.ctx_h2h_all_surfaces",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "h2hTxt = `${h1}-${h2} (tous terrains)`;"
+    },
+    {
+      "fr": "vent {0} km/h",
+      "key": "tennis.pslts.ctx_weather_wind",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push('vent ' + Math.round(w.wind_speed_kmh) + ' km/h')"
+    },
+    {
+      "fr": "{0}% HR",
+      "key": "tennis.pslts.ctx_weather_humidity",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(Math.round(w.humidity_pct) + '% HR')"
+    },
+    {
+      "fr": "pluie {0}mm",
+      "key": "tennis.pslts.ctx_weather_rain",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push('pluie ' + w.precipitation_mm + 'mm')"
+    },
+    {
+      "fr": "Surface {0}",
+      "key": "tennis.pslts.ctx_weather_surface_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "weatherTxt = 'Surface ' + m.surface;"
+    },
+    {
+      "fr": "Aces {0}/{1}",
+      "key": "tennis.pslts.set_stat_aces",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "if (aceP.length) makeRow(`Aces ${p1n}/${p2n}`, aceP.join"
+    },
+    {
+      "fr": "DF {0}/{1}",
+      "key": "tennis.pslts.set_stat_df",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "if (dfP.length) makeRow(`DF ${p1n}/${p2n}`, dfP.join"
+    },
+    {
+      "fr": "Reliability {0}/100 — échantillon limité",
+      "key": "tennis.pslts.reliability_score_reason",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "reason = `Reliability ${Math.round(Number(m.reliability_score))}/100 — échantillon limité`"
+    },
+    {
+      "fr": "Confiance modèle {0} — données Elo limitées sur cette surface",
+      "key": "tennis.pslts.reliability_confidence_reason",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "reason = `Confiance modèle ${conf} — données Elo limitées sur cette surface`"
+    },
+    {
+      "fr": "Fiabilité limitée · {0}",
+      "key": "tennis.pslts.reliability_limited_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "el.textContent = 'Fiabilité limitée · ' + reason;"
+    },
+    {
+      "fr": "Cotes · {0} bookmakers",
+      "key": "tennis.pslts.odds_header",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-bottom:8px;\">📊 Cotes · ' + s.books_count + ' bookmakers</div>"
+    },
+    {
+      "fr": "Chargement détail…",
+      "key": "tennis.detail.loading",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3,#5a6068);\">Chargement détail…</div>'"
+    }
+  ]
+}
