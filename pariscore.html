@@ -13822,6 +13822,26 @@ function psSetLang(v) {
 .wc-loading { text-align:center; padding:36px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:12px; }
 .wc-err { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:10px 14px; color:#ff4d4d; font-family:'DM Mono',monospace; font-size:11px; margin:8px 0; }
 .wc-total-line { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); margin-bottom:12px; }
+/* ── WC Prévisions tab ── */
+.wc-pred-meta { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px; padding:7px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; }
+.wc-pred-src,.wc-pred-iters { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3,#5a6068); }
+.wc-pred-table { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.wc-pred-hdr,.wc-pred-row { display:grid; grid-template-columns:26px 1fr 54px 46px 46px 46px 46px 54px 92px; gap:0; align-items:center; padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.05); }
+.wc-pred-hdr { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.4px; color:var(--text3,#5a6068); border-bottom:1px solid rgba(255,255,255,0.1); position:sticky; top:0; background:var(--bg,#0d1117); z-index:1; }
+.wc-pred-row:nth-child(1) { background:rgba(232,184,75,0.06); }
+.wc-pred-row:nth-child(2),.wc-pred-row:nth-child(3) { background:rgba(232,184,75,0.03); }
+.wc-pred-row:hover { background:rgba(255,255,255,0.04); }
+.wc-pred-rk { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3,#5a6068); text-align:center; }
+.wc-pred-team { display:flex; align-items:center; gap:5px; min-width:0; overflow:hidden; }
+.wc-pred-nm { font-family:'Instrument Sans',sans-serif; font-size:12px; font-weight:600; color:var(--text,#e8eaed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wc-pred-gr { font-size:9px; color:var(--text3,#5a6068); background:rgba(255,255,255,0.07); padding:1px 4px; border-radius:3px; white-space:nowrap; flex-shrink:0; font-family:'DM Mono',monospace; }
+.wc-pred-elo { font-family:'DM Mono',monospace; font-size:10px; color:var(--text2,#8d9399); text-align:right; padding-right:4px; }
+.wc-prob-c { text-align:center; font-family:'DM Mono',monospace; font-size:11px; font-weight:600; }
+.wc-prob-w { display:flex; flex-direction:column; gap:3px; padding-right:2px; }
+.wc-prob-w span { font-family:'DM Mono',monospace; font-size:12px; font-weight:700; }
+.wc-wbar { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+.wc-wfill { height:100%; background:linear-gradient(90deg,#E8B84B,#00E676); border-radius:2px; }
+@media(max-width:700px){.wc-pred-hdr,.wc-pred-row{grid-template-columns:24px 1fr 46px 42px 42px 46px 80px;}.wc-pred-elo,.wc-prob-c:nth-child(4),.wc-prob-c:nth-child(5){display:none;}}
 </style>
 
 <div class="wc-hero">
@@ -13841,6 +13861,7 @@ function psSetLang(v) {
   <button class="wc-tab active" onclick="switchWCTab('groups',this)">📊 Groupes</button>
   <button class="wc-tab" onclick="switchWCTab('schedule',this)">📅 Calendrier</button>
   <button class="wc-tab" onclick="switchWCTab('bracket',this)">🏆 Phase Finale</button>
+  <button class="wc-tab" onclick="switchWCTab('pred',this)">🔮 Prévisions</button>
 </div>
 
 <div class="wc-panel active" id="wc-panel-groups">
@@ -13861,6 +13882,9 @@ function psSetLang(v) {
 </div>
 <div class="wc-panel" id="wc-panel-bracket">
   <div id="wc-bracket-container"><div class="wc-loading">Chargement…</div></div>
+</div>
+<div class="wc-panel" id="wc-panel-pred">
+  <div id="wc-pred-container"><div class="wc-loading">Chargement…</div></div>
 </div>
 
 </div>
