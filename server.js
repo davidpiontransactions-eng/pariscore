@@ -43,6 +43,7 @@ const mmaService        = require('./services/mmaService');        // MMA/UFC pi
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
 const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
 const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
+const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
@@ -19927,6 +19928,20 @@ async function handleAPI(req, res, pathname, query) {
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message, races: [] }));
+    }
+  }
+
+  // ── BetExplorer Tennis Dropping Odds ─────────────────────────────────────
+  // GET /api/v1/tennis/dropping-odds?min=20 — matchs tennis avec cotes descendantes
+  if (pathname === '/api/v1/tennis/dropping-odds' && req.method === 'GET') {
+    const min = parseInt(url.searchParams.get('min') || '0', 10);
+    try {
+      const matches = await betexplorerService.getDroppingOddsFiltered(min);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=900' });
+      return res.end(JSON.stringify({ ok: true, count: matches.length, matches }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
     }
   }
 
