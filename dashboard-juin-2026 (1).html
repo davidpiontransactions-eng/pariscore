@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PariScore — Simulation Juin 2026 · 200€ + Prêt</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0a0d0f; --bg2:#111417; --bg3:#181c20; --bg4:#1e2328;
+  --green:#00e676; --red:#ff4d4d; --amber:#ffa726; --blue:#29b6f6;
+  --purple:#b39ddb; --teal:#26c6da; --pink:#f06292;
+  --text:#e8eaed; --text2:#8d9399; --text3:#5a6068; --border:#2a2f35;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 32px;}
+
+/* HEADER */
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.header h1{font-size:26px;font-weight:800;letter-spacing:-0.5px;}
+.header h1 span{color:var(--green);}
+.header-sub{font-size:13px;color:var(--text2);margin-top:5px;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid;}
+.c-g{background:rgba(0,230,118,0.1);color:var(--green);border-color:rgba(0,230,118,0.25);}
+.c-a{background:rgba(255,167,38,0.1);color:var(--amber);border-color:rgba(255,167,38,0.25);}
+.c-b{background:rgba(41,182,246,0.1);color:var(--blue);border-color:rgba(41,182,246,0.25);}
+.c-p{background:rgba(240,98,146,0.1);color:var(--pink);border-color:rgba(240,98,146,0.25);}
+.header-right{text-align:right;font-size:12px;color:var(--text3);line-height:1.8;}
+.header-right strong{color:var(--text);font-size:13px;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px;}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
+.kpi.g::before{background:linear-gradient(90deg,#00e676,#69f0ae);}
+.kpi.a::before{background:linear-gradient(90deg,#ffa726,#ffcc02);}
+.kpi.b::before{background:linear-gradient(90deg,#29b6f6,#4fc3f7);}
+.kpi.p::before{background:linear-gradient(90deg,#f06292,#f48fb1);}
+.kpi.t::before{background:linear-gradient(90deg,#26c6da,#4dd0e1);}
+.kpi.pu::before{background:linear-gradient(90deg,#b39ddb,#ce93d8);}
+.kpi-icon{font-size:16px;margin-bottom:6px;}
+.kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:5px;font-weight:700;}
+.kpi-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi.g .kpi-val{color:var(--green);}
+.kpi.a .kpi-val{color:var(--amber);}
+.kpi.b .kpi-val{color:var(--blue);}
+.kpi.p .kpi-val{color:var(--pink);}
+.kpi.t .kpi-val{color:var(--teal);}
+.kpi.pu .kpi-val{color:var(--purple);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.kpi-badge{display:inline-block;margin-top:7px;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:800;letter-spacing:0.3px;}
+.bg-g{background:rgba(0,230,118,0.14);color:var(--green);}
+.bg-a{background:rgba(255,167,38,0.14);color:var(--amber);}
+.bg-p{background:rgba(240,98,146,0.14);color:var(--pink);}
+
+/* LOAN PROGRESS */
+.loan-progress{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+.lp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.lp-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);}
+.lp-pct{font-size:22px;font-weight:800;color:var(--pink);}
+.lp-bar{height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;margin-bottom:8px;}
+.lp-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#f06292,#ffa726);transition:width 0.8s ease;}
+.lp-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);}
+.lp-labels strong{color:var(--text2);}
+
+/* CHARTS */
+.charts-row{display:grid;gap:16px;margin-bottom:16px;}
+.c2{grid-template-columns:2fr 1fr;}
+.c3{grid-template-columns:1fr 1fr 1fr;}
+.c1{grid-template-columns:1fr;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.chart-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.dot8{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* MILESTONES */
+.milestones{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+.ms-head{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;color:var(--text2);margin-bottom:20px;}
+.ms-track{position:relative;padding:10px 0;}
+.ms-bg{position:absolute;top:50%;left:0;right:0;height:4px;background:var(--bg4);border-radius:2px;transform:translateY(-50%);}
+.ms-fill{position:absolute;top:50%;left:0;height:4px;background:linear-gradient(90deg,#00e676,#ffa726,#29b6f6);border-radius:2px;transform:translateY(-50%);transition:width 0.8s;}
+.ms-nodes{display:flex;justify-content:space-between;position:relative;z-index:1;}
+.ms-node{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.ms-dot{width:16px;height:16px;border-radius:50%;background:var(--bg4);border:2px solid var(--border);}
+.ms-dot.hit{background:var(--green);border-color:var(--green);box-shadow:0 0 8px rgba(0,230,118,0.4);}
+.ms-dot.nx{background:var(--bg3);border-color:var(--amber);box-shadow:0 0 6px rgba(255,167,38,0.35);}
+.ms-cap{font-size:10px;font-weight:800;color:var(--text3);}
+.ms-cap.hit{color:var(--green);}
+.ms-cap.nx{color:var(--amber);}
+.ms-date{font-size:9px;color:var(--text3);}
+.ms-date.hit{color:var(--text2);}
+.ms-date.nx{color:var(--amber);}
+
+/* TABLE */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+.table-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.table-head h2{font-size:14px;font-weight:700;}
+.tleg{display:flex;gap:14px;}
+.tleg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+.tleg-dot{width:9px;height:9px;border-radius:50%;}
+
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{
+  padding:10px 12px;text-align:right;
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.7px;
+  color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap;
+}
+thead th:first-child{text-align:left;padding-left:20px;}
+thead th:last-child{padding-right:20px;}
+thead th.h-pink{color:#f06292;}
+thead th.h-green{color:var(--green);}
+thead th.h-amber{color:var(--amber);}
+
+tbody tr{border-bottom:1px solid rgba(42,47,53,0.4);transition:background 0.1s;}
+tbody tr:hover{background:rgba(255,255,255,0.02);}
+tbody tr.wknd{background:rgba(255,255,255,0.007);}
+tbody tr.wsep td{border-top:2px solid rgba(90,96,104,0.3);}
+tbody tr.today-row{background:rgba(0,230,118,0.04) !important;border-left:3px solid var(--green);}
+tbody tr.today-row td:first-child{padding-left:17px;}
+
+tbody td{padding:9px 12px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+tbody td:first-child{text-align:left;padding-left:20px;}
+tbody td:last-child{padding-right:20px;}
+
+.d-wrap{display:flex;flex-direction:column;gap:1px;}
+.d-main{font-size:13px;font-weight:700;}
+.d-dow{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);}
+.d-tag{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:3px;font-size:8px;font-weight:800;letter-spacing:0.4px;text-transform:uppercase;vertical-align:middle;}
+.tag-week{background:rgba(90,96,104,0.2);color:var(--text2);}
+
+.v-g{color:var(--green);font-weight:600;}
+.v-a{color:var(--amber);}
+.v-p{color:var(--pink);font-weight:600;}
+.v-cap{font-weight:800;color:var(--text);}
+.v-loan{color:var(--text3);font-size:11px;}
+.v-netb{color:var(--teal);font-weight:600;}
+.v-cum{color:var(--amber);font-weight:700;}
+.v-ahead{color:var(--green);font-weight:700;}
+.v-behind{color:var(--red);font-weight:700;}
+.v-dash{color:var(--text3);}
+.reel-badge{display:inline-block;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:0.5px;}
+.rb-ahead{background:rgba(0,230,118,0.14);color:var(--green);}
+.rb-behind{background:rgba(255,77,77,0.14);color:var(--red);}
+.col-sep{border-left:2px solid rgba(255,255,255,0.07) !important;}
+
+.bar-cell{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+.mbar{height:5px;border-radius:3px;background:linear-gradient(90deg,#00e676,#69f0ae);min-width:2px;}
+.mpct{font-size:10px;color:var(--green);font-weight:800;width:36px;text-align:right;}
+
+tr.wt td{
+  background:rgba(255,255,255,0.02);font-weight:700;font-size:11px;
+  color:var(--text2);border-top:1px solid rgba(90,96,104,0.3);border-bottom:2px solid rgba(90,96,104,0.35);
+}
+tr.wt td:first-child{color:var(--text);padding-left:20px;}
+tr.wt .wt-g{color:var(--green);}
+tr.wt .wt-p{color:var(--pink);}
+tr.wt .wt-a{color:var(--amber);}
+tr.wt .wt-t{color:var(--teal);}
+
+.footer{text-align:center;font-size:11px;color:var(--text3);padding:12px 0 4px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>PariScore &mdash; <span>Juin 2026</span></h1>
+    <div class="header-sub">Capital composé + Remboursement prêt quotidien · 31/05 → 30/06</div>
+    <div class="chips">
+      <span class="chip c-g">💰 Capital : 200 €</span>
+      <span class="chip c-g">📈 Gain/j : +20%</span>
+      <span class="chip c-a">🏦 Banque : 50% gains</span>
+      <span class="chip c-b">♻️ Bankroll : 50% réinvesti</span>
+      <span class="chip c-p">💳 Prêt 200 € · 31j · ≈6,45€/j</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div>Départ <strong>31/05/2026</strong> · Fin <strong>30/06/2026</strong></div>
+    <div>31 jours · Croissance nette : <strong style="color:var(--green)">+10%/j</strong></div>
+    <div>Rembt/j = solde prêt ÷ jours restants</div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="kpi-grid">
+  <div class="kpi g">
+    <div class="kpi-icon">🚀</div>
+    <div class="kpi-label">Capital 30/06</div>
+    <div class="kpi-val" id="kpi-cap">—</div>
+    <div class="kpi-sub">Départ 200 €</div>
+    <div class="kpi-badge bg-g" id="kpi-mult">—</div>
+  </div>
+  <div class="kpi a">
+    <div class="kpi-icon">💵</div>
+    <div class="kpi-label">Gains bruts totaux</div>
+    <div class="kpi-val" id="kpi-gains">—</div>
+    <div class="kpi-sub">Avant split 50/50</div>
+  </div>
+  <div class="kpi b">
+    <div class="kpi-icon">💼</div>
+    <div class="kpi-label">Banque brute 30/06</div>
+    <div class="kpi-val" id="kpi-bank-gross">—</div>
+    <div class="kpi-sub">50% de tous les gains</div>
+  </div>
+  <div class="kpi p">
+    <div class="kpi-icon">💳</div>
+    <div class="kpi-label">Prêt remboursé</div>
+    <div class="kpi-val">200,00 €</div>
+    <div class="kpi-sub">Solde final : 0 €</div>
+    <div class="kpi-badge bg-p">≈ 6,67 €/jour</div>
+  </div>
+  <div class="kpi t">
+    <div class="kpi-icon">✅</div>
+    <div class="kpi-label">Banque NETTE 30/06</div>
+    <div class="kpi-val" id="kpi-bank-net">—</div>
+    <div class="kpi-sub">Après rembt 200 €</div>
+    <div class="kpi-badge bg-a" id="kpi-net-badge">—</div>
+  </div>
+  <div class="kpi pu">
+    <div class="kpi-icon">📅</div>
+    <div class="kpi-label">Rembt/j moyen</div>
+    <div class="kpi-val" id="kpi-rembt">—</div>
+    <div class="kpi-sub">Prêt 200 € ÷ 30 jours</div>
+  </div>
+</div>
+
+<!-- SUIVI RÉEL vs OBJECTIF -->
+<div id="suivi-reel" style="display:none;background:var(--bg2);border:1px solid rgba(0,230,118,0.2);border-radius:12px;padding:18px 24px;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);">📍 Suivi réel vs Objectif</div>
+    <div id="sr-badge"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;">
+    <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:5px;font-weight:700;">Jours saisis</div><div id="sr-days" style="font-size:22px;font-weight:800;color:var(--text)">—</div></div>
+    <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:5px;font-weight:700;">Dernier gain réel</div><div id="sr-gain" style="font-size:22px;font-weight:800;color:var(--green)">—</div></div>
+    <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:5px;font-weight:700;">Capital réel actuel</div><div id="sr-cap" style="font-size:22px;font-weight:800;color:var(--green)">—</div></div>
+    <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:5px;font-weight:700;">Objectif du jour</div><div id="sr-obj" style="font-size:22px;font-weight:800;color:var(--text2)">—</div></div>
+    <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:5px;font-weight:700;">Écart vs objectif</div><div id="sr-ecart" style="font-size:22px;font-weight:800;">—</div><div id="sr-ecart-pct" style="font-size:11px;color:var(--text3);margin-top:4px;"></div></div>
+  </div>
+</div>
+
+<!-- LOAN PROGRESS BAR -->
+<div class="loan-progress">
+  <div class="lp-head">
+    <div class="lp-title">💳 Progression remboursement prêt — 200 € sur 30 jours</div>
+    <div class="lp-pct" id="lp-pct">0%</div>
+  </div>
+  <div class="lp-bar"><div class="lp-fill" id="lp-fill" style="width:0%"></div></div>
+  <div class="lp-labels">
+    <span>Départ : <strong>200,00 €</strong> dû</span>
+    <span id="lp-mid">Rembt/j : <strong>~6,67 €</strong></span>
+    <span>Fin : <strong>0,00 €</strong> dû</span>
+  </div>
+</div>
+
+<!-- CHARTS ROW 1 -->
+<div class="charts-row c2">
+  <div class="chart-card">
+    <div class="chart-title">
+      <span class="dot8" style="background:var(--green)"></span>
+      Capital (bankroll) vs Banque nette cumulée
+    </div>
+    <canvas id="chartCapital" height="220"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">
+      <span class="dot8" style="background:var(--pink)"></span>
+      Solde prêt restant (↓ chaque jour)
+    </div>
+    <canvas id="chartLoan" height="220"></canvas>
+  </div>
+</div>
+
+<!-- CHARTS ROW 2 -->
+<div class="charts-row c1">
+  <div class="chart-card">
+    <div class="chart-title">
+      <span class="dot8" style="background:var(--amber)"></span>
+      Gain brut/j vs Remboursement prêt/j vs Net banque/j
+    </div>
+    <canvas id="chartGains" height="100"></canvas>
+  </div>
+</div>
+
+<!-- MILESTONES -->
+<div class="milestones">
+  <div class="ms-head">🎯 Paliers capital (bankroll) — Juin 2026</div>
+  <div class="ms-track">
+    <div class="ms-bg"></div>
+    <div class="ms-fill" id="ms-fill"></div>
+    <div class="ms-nodes" id="ms-nodes"></div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <div class="table-head">
+    <h2>Détail journalier — 31 jours · 31 Mai → 30 Juin 2026</h2>
+    <div class="tleg">
+      <div class="tleg-item"><div class="tleg-dot" style="background:var(--green)"></div>Bankroll (réinvesti)</div>
+      <div class="tleg-item"><div class="tleg-dot" style="background:var(--pink)"></div>Rembt prêt</div>
+      <div class="tleg-item"><div class="tleg-dot" style="background:var(--teal)"></div>Net banque</div>
+      <div class="tleg-item"><div class="tleg-dot" style="background:var(--amber)"></div>Banque cum. nette</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Capital début</th>
+          <th class="h-green">Gain brut (+20%)</th>
+          <th class="h-green">→ Réinvesti (50%)</th>
+          <th>→ Banque brute (50%)</th>
+          <th class="h-pink">→ Rembt prêt</th>
+          <th class="h-amber">→ Net banque</th>
+          <th>Capital fin</th>
+          <th class="h-pink">Prêt restant</th>
+          <th class="h-amber">Banque nette cum.</th>
+          <th class="col-sep" style="color:var(--text2)">Gain réel</th>
+          <th style="color:var(--text2)">Cap. réel</th>
+          <th style="color:var(--text2)">Écart obj.</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  PariScore · Capital 200 € · +20%/j · 50% bankroll · 50% banque · Prêt 200 € rembt sur 30j · 31/05/2026
+</div>
+
+<script>
+// ─── SIMULATION ───────────────────────────────────────────────────────────────
+const INIT      = 200;
+const LOAN      = 200;
+const RATE      = 0.20;
+const SPLIT     = 0.50;
+const TOTAL_DAYS = 31; // 31/05 → 30/06
+
+// d=1 → 31/05/2026, d=2 → 01/06, ... d=31 → 30/06
+function getDate(d) {
+  const base = new Date(2026, 4, 31); // May 31
+  base.setDate(base.getDate() + d - 1);
+  return base;
+}
+function getLabel(d) {
+  const dt = getDate(d);
+  return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+}
+function getDOW(d) { return ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][getDate(d).getDay()]; }
+function isWknd(d) { const x = getDate(d).getDay(); return x===0||x===6; }
+function getMonthDay(d) { const dt = getDate(d); return `${String(dt.getDate()).padStart(2,'0')} ${['Jan','Fév','Mar','Avr','Mai','Jun','Jul'][dt.getMonth()]}`; }
+
+const DATA = [];
+let cap         = INIT;
+let loanBal     = LOAN;
+let bankGrossCum = 0;
+let bankNetCum  = 0;
+
+for (let d = 1; d <= TOTAL_DAYS; d++) {
+  const daysLeft   = TOTAL_DAYS + 1 - d;                           // days remaining incl. today
+  const gain       = Math.round(cap * RATE * 100) / 100;
+  const reinv      = Math.round(gain * SPLIT * 100) / 100;
+  const bankGross  = Math.round(gain * SPLIT * 100) / 100;
+  // Last day: clear whatever remains to avoid rounding dust
+  const loanPay    = d === TOTAL_DAYS
+    ? Math.round(loanBal * 100) / 100
+    : Math.round((loanBal / daysLeft) * 100) / 100;
+  const netBank    = Math.round((bankGross - loanPay) * 100) / 100;
+  const fin        = Math.round((cap + reinv) * 100) / 100;
+
+  bankGrossCum = Math.round((bankGrossCum + bankGross) * 100) / 100;
+  bankNetCum   = Math.round((bankNetCum + netBank) * 100) / 100;
+  loanBal      = Math.round((loanBal - loanPay) * 100) / 100;
+
+  DATA.push({ d, cap, gain, reinv, bankGross, loanPay, netBank, fin, loanBal, bankGrossCum, bankNetCum });
+  cap = fin;
+}
+
+// ─── DONNÉES RÉELLES — compléter chaque soir ─────────────────────────────────
+// { d: <jour 1-30>, gainReel: <€>, capReel: <capital fin €> }
+const REAL_DATA = [
+  { d: 1, gainReel:  47.00, capReel: 223.50 }, // 31/05 — EN AVANCE +3.50€
+  { d: 2, gainReel: -62.50, capReel: 161.00 }, // 01/06 — PERTE → retard -85.50€
+];
+const RMAP = Object.fromEntries(REAL_DATA.map(r => [r.d, r]));
+
+// ─── RATTRAPAGE ───────────────────────────────────────────────────────────────
+// Formule user : écart / jours restants → extra gain/j à partir du lendemain du retard
+const lastReal     = REAL_DATA.length ? REAL_DATA[REAL_DATA.length-1] : null;
+const lastRealDay  = lastReal?.d ?? 0;
+const lastRealCap  = lastReal?.capReel ?? INIT;
+// Objectif réel = cap réel du jour précédent × 1.10 (pas l'objectif simulation)
+const prevRealCap  = lastRealDay >= 2 ? (RMAP[lastRealDay-1]?.capReel ?? DATA[lastRealDay-2]?.fin ?? INIT) : INIT;
+const lastObjCap   = lastRealDay >= 2
+  ? Math.round(prevRealCap * 1.10 * 100) / 100
+  : (lastReal ? DATA[lastReal.d-1].fin : INIT);
+const ecartGlobal  = Math.round((lastRealCap - lastObjCap)*100)/100; // négatif = retard
+const joursRestant = TOTAL_DAYS - lastRealDay + 1;                   // incl. jour actuel (formule user)
+const rattrapageJour = joursRestant > 0
+  ? Math.round(Math.abs(ecartGlobal) / joursRestant * 100) / 100
+  : 0;
+
+// Trajectoire objectif rattrapé : à partir du dernier cap réel, compound +10%/j + rattrapage/j
+const ADJ_TRAJ = {};
+if (lastReal) {
+  ADJ_TRAJ[lastRealDay] = lastRealCap;
+  let adjCap = lastRealCap;
+  for (let d = lastRealDay + 1; d <= TOTAL_DAYS; d++) {
+    // formule user : gain réinvesti = 50% × (20% × cap réel J-2) + rattrapage/j → capital
+    // rembt prêt vient de la banque (pas du capital)
+    const prevPrevCap = RMAP[d-2]?.capReel ?? ADJ_TRAJ[d-2] ?? adjCap;
+    adjCap = Math.round((adjCap + prevPrevCap * RATE * SPLIT + rattrapageJour) * 100) / 100;
+    ADJ_TRAJ[d] = adjCap;
+  }
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const fmt = (n, dec=2) => n.toLocaleString('fr-FR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+
+// ─── KPIs ──────────────────────────────────────────────────────────────────────
+const last = DATA[DATA.length-1];
+const totalGains = DATA.reduce((s,r)=>s+r.gain,0);
+const avgLoanPay = LOAN/30;
+document.getElementById('kpi-cap').textContent       = fmt(last.fin) + ' €';
+document.getElementById('kpi-mult').textContent      = `×${(last.fin/INIT).toFixed(2)} — +${Math.round((last.fin/INIT-1)*100)}%`;
+document.getElementById('kpi-gains').textContent     = fmt(totalGains) + ' €';
+document.getElementById('kpi-bank-gross').textContent= fmt(last.bankGrossCum) + ' €';
+document.getElementById('kpi-bank-net').textContent  = fmt(last.bankNetCum) + ' €';
+document.getElementById('kpi-net-badge').textContent = `Brut ${fmt(last.bankGrossCum)} € − 200 €`;
+document.getElementById('kpi-rembt').textContent     = fmt(avgLoanPay) + ' €';
+
+// Loan progress = 100% (always fully repaid by end of June)
+document.getElementById('lp-pct').textContent = '100% 30/06';
+document.getElementById('lp-fill').style.width = '100%';
+document.getElementById('lp-mid').innerHTML = `Rembt/j : <strong>≈ ${fmt(avgLoanPay)} €</strong> · Total : <strong>200,00 €</strong>`;
+
+// ─── CHARTS ────────────────────────────────────────────────────────────────────
+Chart.defaults.color = '#8d9399';
+Chart.defaults.borderColor = '#2a2f35';
+Chart.defaults.font.family = 'monospace';
+const labels = DATA.map(r => getLabel(r.d));
+
+// Chart 1 — Capital vs Banque nette cumulée
+new Chart(document.getElementById('chartCapital'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Capital (bankroll)',
+        data: DATA.map(r => r.fin),
+        borderColor: '#00e676',
+        backgroundColor: ctx => {
+          const g = ctx.chart.ctx.createLinearGradient(0,0,0,220);
+          g.addColorStop(0,'rgba(0,230,118,0.18)');
+          g.addColorStop(1,'rgba(0,230,118,0.01)');
+          return g;
+        },
+        borderWidth:2.5, pointRadius:0, fill:true, tension:0.4,
+      },
+      {
+        label: 'Banque nette cumulée',
+        data: DATA.map(r => r.bankNetCum),
+        borderColor: '#26c6da',
+        backgroundColor: 'transparent',
+        borderWidth:2, borderDash:[5,3], pointRadius:0, fill:false, tension:0.4,
+      },
+      {
+        label: 'Banque brute cumulée',
+        data: DATA.map(r => r.bankGrossCum),
+        borderColor: '#ffa726',
+        backgroundColor: 'transparent',
+        borderWidth:1.5, borderDash:[3,4], pointRadius:0, fill:false, tension:0.4, borderOpacity:0.5,
+      },
+      {
+        label: '🟠 Obj. rattrapé',
+        data: labels.map((_,i) => ADJ_TRAJ[i+1] ?? null),
+        borderColor: '#ffa726',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [4,3],
+        pointRadius: 0,
+        fill: false, tension: 0.3, spanGaps: false, order: 1,
+      },
+      {
+        label: '📍 Capital réel',
+        data: labels.map((_,i) => RMAP[i+1]?.capReel ?? null),
+        borderColor: '#ffffff',
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointRadius: ctx => RMAP[ctx.dataIndex+1] ? 6 : 0,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#00e676',
+        pointBorderWidth: 2,
+        fill: false, tension: 0.3, spanGaps: false, order: 0,
+      }
+    ]
+  },
+  options: {
+    responsive:true,
+    plugins:{
+      legend:{position:'bottom',labels:{font:{size:10},boxWidth:12,padding:12}},
+      tooltip:{mode:'index',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)} €`}}
+    },
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{font:{size:9},maxTicksLimit:16}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:9},callback:v=>v>=1000?`${(v/1000).toFixed(1)}k€`:`${v}€`}}
+    }
+  }
+});
+
+// Chart 2 — Solde prêt restant
+new Chart(document.getElementById('chartLoan'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Solde prêt restant',
+      data: DATA.map(r => r.loanBal),
+      borderColor: '#f06292',
+      backgroundColor: ctx => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,220);
+        g.addColorStop(0,'rgba(240,98,146,0.2)');
+        g.addColorStop(1,'rgba(240,98,146,0.01)');
+        return g;
+      },
+      borderWidth:2.5, pointRadius:0, fill:true, tension:0.4,
+    }]
+  },
+  options: {
+    responsive:true,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>` Restant: ${fmt(c.raw)} €`}}
+    },
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{font:{size:9},maxTicksLimit:16}},
+      y:{
+        grid:{color:'rgba(255,255,255,0.04)'},
+        min:0, max:210,
+        ticks:{font:{size:9},callback:v=>`${v}€`}
+      }
+    }
+  }
+});
+
+// Chart 3 — Gain vs Rembt vs Net banque
+new Chart(document.getElementById('chartGains'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Net banque/j',
+        data: DATA.map(r => r.netBank),
+        backgroundColor: 'rgba(38,198,218,0.65)',
+        borderColor:'#26c6da', borderWidth:1, borderRadius:2, stack:'a',
+      },
+      {
+        label: 'Rembt prêt/j',
+        data: DATA.map(r => r.loanPay),
+        backgroundColor: 'rgba(240,98,146,0.65)',
+        borderColor:'#f06292', borderWidth:1, borderRadius:2, stack:'a',
+      }
+    ]
+  },
+  options: {
+    responsive:true,
+    plugins:{
+      legend:{position:'top',labels:{font:{size:10},boxWidth:12,padding:12}},
+      tooltip:{mode:'index',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)} €`}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:16}},
+      y:{
+        stacked:true,
+        grid:{color:'rgba(255,255,255,0.04)'},
+        ticks:{font:{size:9},callback:v=>v>=1000?`${(v/1000).toFixed(1)}k`:`${v}`}
+      }
+    }
+  }
+});
+
+// ─── MILESTONES ───────────────────────────────────────────────────────────────
+const TARGETS = [200, 300, 500, 750, 1000, 1500, 2000, 3000, 3500];
+const msNodes = document.getElementById('ms-nodes');
+let hitCount  = 0;
+TARGETS.forEach((tgt, i) => {
+  const hitRow = DATA.find(r => r.fin >= tgt);
+  const hit    = !!hitRow;
+  if (hit) hitCount++;
+  const isNx = !hit && hitCount === i;
+  const node = document.createElement('div');
+  node.className = 'ms-node';
+  const dateStr = hit ? (hitRow.d===1?'Départ':`${String(hitRow.d).padStart(2,'0')}/06`) : '—';
+  const capLbl  = tgt>=1000?`${(tgt/1000).toFixed(1)}k€`:`${tgt}€`;
+  node.innerHTML = `
+    <div class="ms-cap${hit?' hit':isNx?' nx':''}">${capLbl}</div>
+    <div class="ms-dot${hit?' hit':isNx?' nx':''}"></div>
+    <div class="ms-date${hit?' hit':isNx?' nx':''}">${dateStr}</div>
+  `;
+  msNodes.appendChild(node);
+});
+document.getElementById('ms-fill').style.width = Math.min(100,Math.round(hitCount/TARGETS.length*100)) + '%';
+
+// ─── SUIVI RÉEL KPI ────────────────────────────────────────────────────────────
+if (REAL_DATA.length > 0) {
+  document.getElementById('suivi-reel').style.display = 'block';
+  const ahead    = ecartGlobal >= 0;
+  const ecartPct = Math.round(Math.abs(ecartGlobal) / lastObjCap * 100 * 10) / 10;
+  const gainDisp = lastReal.gainReel >= 0
+    ? `+${fmt(lastReal.gainReel)} €`
+    : `${fmt(lastReal.gainReel)} €`;
+  document.getElementById('sr-days').textContent      = `${REAL_DATA.length} / ${TOTAL_DAYS}`;
+  document.getElementById('sr-gain').textContent      = gainDisp;
+  document.getElementById('sr-gain').style.color      = lastReal.gainReel >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('sr-cap').textContent       = `${fmt(lastRealCap)} €`;
+  document.getElementById('sr-cap').style.color       = ahead ? 'var(--green)' : 'var(--red)';
+  document.getElementById('sr-obj').textContent       = `${fmt(lastObjCap)} €`;
+  document.getElementById('sr-ecart').textContent     = `${ahead?'+':''}${fmt(ecartGlobal)} €`;
+  document.getElementById('sr-ecart').style.color     = ahead ? 'var(--green)' : 'var(--red)';
+  document.getElementById('sr-ecart-pct').textContent = `${ahead?'En avance':'En retard'} de ${ecartPct}% · Rattrap. ${fmt(rattrapageJour)} €/j × ${joursRestant}j`;
+  document.getElementById('sr-badge').innerHTML       = ahead
+    ? '<span class="reel-badge rb-ahead">✓ EN AVANCE</span>'
+    : `<span class="reel-badge rb-behind">⚠ EN RETARD · −${fmt(Math.abs(ecartGlobal))} €</span>`;
+}
+
+// ─── TABLE ─────────────────────────────────────────────────────────────────────
+const tbody  = document.getElementById('tbody');
+const maxGain = Math.max(...DATA.map(r => r.gain));
+// d=1→31/05, d=2→01/06 ... d=8→07/06 ... d=31→30/06
+const WEEKS  = [[1,7],[8,14],[15,21],[22,28],[29,31]];
+
+WEEKS.forEach((range, wi) => {
+  const [from, to] = range;
+  const wr = DATA.filter(r => r.d>=from && r.d<=to);
+  const wGain      = wr.reduce((s,r)=>s+r.gain,0);
+  const wLoan      = wr.reduce((s,r)=>s+r.loanPay,0);
+  const wNet       = wr.reduce((s,r)=>s+r.netBank,0);
+  const wStart     = wr[0].cap;
+  const wEnd       = wr[wr.length-1].fin;
+
+  wr.forEach((row, ri) => {
+    const tr = document.createElement('tr');
+    const isToday = row.d === 1;
+    const cls = [
+      isWknd(row.d)?'wknd':'',
+      ri===0&&wi>0?'wsep':'',
+      isToday?'today-row':'',
+    ].filter(Boolean).join(' ');
+    if (cls) tr.className = cls;
+
+    const barW = Math.round((row.gain/maxGain)*60);
+    const reel  = RMAP[row.d];
+    const ecart = reel ? Math.round((reel.capReel - row.fin)*100)/100 : null;
+    const ecartCls = ecart === null ? 'v-dash' : ecart >= 0 ? 'v-ahead' : 'v-behind';
+    const dash  = '<span class="v-dash">—</span>';
+
+    tr.innerHTML = `
+      <td>
+        <div class="d-wrap">
+          <div class="d-main">
+            ${getMonthDay(row.d)}
+            ${isToday?'<span class="d-tag" style="background:rgba(0,230,118,0.2);color:var(--green)">AUJOURD\'HUI</span>':''}
+            ${ri===0&&!isToday?`<span class="d-tag tag-week">S${wi+1}</span>`:''}
+            ${ri===0&&isToday?`<span class="d-tag tag-week">S${wi+1}</span>`:''}
+          </div>
+          <div class="d-dow">${getDOW(row.d)}</div>
+        </div>
+      </td>
+      <td>${fmt(row.cap)} €</td>
+      <td class="v-g">+${fmt(row.gain)} €</td>
+      <td class="v-g" style="opacity:0.75">${fmt(row.reinv)} €</td>
+      <td class="v-a">${fmt(row.bankGross)} €</td>
+      <td class="v-p">−${fmt(row.loanPay)} €</td>
+      <td class="v-netb">+${fmt(row.netBank)} €</td>
+      <td class="v-cap">${fmt(row.fin)} €</td>
+      <td class="v-loan">${fmt(row.loanBal)} €</td>
+      <td class="v-cum">${fmt(row.bankNetCum)} €</td>
+      <td class="col-sep">${reel ? `<span class="v-g">+${fmt(reel.gainReel)} €</span>` : dash}</td>
+      <td>${reel ? `<strong>${fmt(reel.capReel)} €</strong>` : dash}</td>
+      <td class="${ecartCls}">${ecart!==null ? `${ecart>=0?'+':''}${fmt(ecart)} €` : dash}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Week total
+  const trT = document.createElement('tr');
+  trT.className = 'wt';
+  trT.innerHTML = `
+    <td>Sous-total Sem. ${wi+1}</td>
+    <td>${fmt(wStart)} €</td>
+    <td class="wt-g">+${fmt(wGain)} €</td>
+    <td class="wt-g">${fmt(wGain/2)} €</td>
+    <td class="wt-a">${fmt(wGain/2)} €</td>
+    <td class="wt-p">−${fmt(wLoan)} €</td>
+    <td class="wt-t">+${fmt(wNet)} €</td>
+    <td>${fmt(wEnd)} €</td>
+    <td>—</td>
+    <td class="wt-a">${fmt(wr[wr.length-1].bankNetCum)} €</td>
+    <td class="col-sep" style="color:var(--text3)">—</td>
+    <td style="color:var(--text3)">—</td>
+    <td style="color:var(--text3)">—</td>
+  `;
+  tbody.appendChild(trT);
+});
+</script>
+</body>
+</html>

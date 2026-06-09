@@ -1,0 +1,3168 @@
+{
+  "strings": [
+    {
+      "fr": "{0} · {1} à {2}",
+      "key": "gemini.modal_subtitle",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "gm-sub').textContent = `${m.league} · ${fmtKickoffDate"
+    },
+    {
+      "fr": "♾ ILLIMITÉ",
+      "key": "gemini.quota_unlimited",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "qb.textContent = '♾ ILLIMITÉ';"
+    },
+    {
+      "fr": "{0} restant{1}/{2}",
+      "key": "gemini.quota_remaining",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "qb.textContent = `${_psQuota.remaining} restant"
+    },
+    {
+      "fr": "L'IA analyse le match en temps réel…",
+      "key": "ai.analyzing_realtime",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "gm-status-txt').textContent = \"L'IA analyse le match"
+    },
+    {
+      "fr": "Quota Power Score épuisé",
+      "key": "quota.powerscore_exhausted_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:800;margin-bottom:4px;\">Quota Power Score épuisé</div>"
+    },
+    {
+      "fr": "Vous avez utilisé votre analyse gratuite du jour ({0}/{1})",
+      "key": "quota.free_analysis_used",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Vous avez utilisé votre analyse gratuite du jour (${q.used}"
+    },
+    {
+      "fr": "🎫 Matchday Foot — 1,50€ / 24h",
+      "key": "quota.matchday_foot_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--amber);\">🎫 Matchday Foot — 1,50€ / 24h</div>"
+    },
+    {
+      "fr": "Tout le Foot Pro pendant 24h",
+      "key": "quota.matchday_foot_desc",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:2px;\">Tout le Foot Pro pendant 24h</div>"
+    },
+    {
+      "fr": "Acheter →",
+      "key": "common.buy_arrow",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--amber);font-weight:600;\">Acheter →</div>"
+    },
+    {
+      "fr": "👑 Pro Foot — 19,5€/mois",
+      "key": "quota.pro_foot_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--green);\">👑 Pro Foot — 19,5€/mois</div>"
+    },
+    {
+      "fr": "Foot illimité + IA + toutes les fonctionnalités",
+      "key": "quota.pro_foot_desc",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:2px;\">Foot illimité + IA + toutes les fonctionnalités</div>"
+    },
+    {
+      "fr": "S'abonner →",
+      "key": "common.subscribe_arrow",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--green);font-weight:600;\">S'abonner →</div>"
+    },
+    {
+      "fr": "Votre quota se réinitialisera dans",
+      "key": "quota.reset_in",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "padding-top:8px;\">\n          Votre quota se réinitialisera dans <span"
+    },
+    {
+      "fr": "✓ Analyse terminée",
+      "key": "ai.analysis_complete",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusTxt.textContent = '✓ Analyse terminée';"
+    },
+    {
+      "fr": "📰 {0} source{1} presse",
+      "key": "ai.press_sources_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "pb.textContent = `📰 ${d.press_count} source"
+    },
+    {
+      "fr": "Reconnexion…",
+      "key": "common.reconnecting",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusTxt.textContent = \"Reconnexion…\";"
+    },
+    {
+      "fr": "⚠ Erreur",
+      "key": "common.error_short",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusTxt.textContent = '⚠ Erreur';"
+    },
+    {
+      "fr": "⚠ Authentification requise. <a href=\"#\">Se connecter</a>",
+      "key": "ai.auth_required",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "? '⚠ Authentification requise. <a href=\\\"#\\\" onclick"
+    },
+    {
+      "fr": "⚠ Quota épuisé ({0}/{1}). <a href=\"#\">Passer à Premium</a>",
+      "key": "ai.quota_exhausted_upsell",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "return `⚠ Quota épuisé (${d.used}/${d.limit}). <a"
+    },
+    {
+      "fr": "⚠ Quota épuisé.",
+      "key": "ai.quota_exhausted",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "catch { return '⚠ Quota épuisé.'; }"
+    },
+    {
+      "fr": "⚠ Impossible de contacter l'IA. Vérifiez que node server.js tourne.",
+      "key": "ai.cannot_contact",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`⚠ Impossible de contacter l'IA. Vérifiez que node"
+    },
+    {
+      "fr": "{0} vs {1}",
+      "key": "attributes.modal_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "attr-title').textContent = `${m.home_team} vs ${m.away_team}`"
+    },
+    {
+      "fr": "{0} · λ dom: {1}, λ ext: {2}",
+      "key": "score_matrix.subtitle",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "score-match-sub').textContent = `${m.league} · λ dom:"
+    },
+    {
+      "fr": "Victoire domicile",
+      "key": "score_matrix.home_win_section",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSection([6,5,4,3,2,1], 'Victoire domicile')"
+    },
+    {
+      "fr": "Match nul",
+      "key": "score_matrix.draw_section",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSection([0], 'Match nul')"
+    },
+    {
+      "fr": "Victoire extérieur",
+      "key": "score_matrix.away_win_section",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSection([-1,-2,-3,-4,-5,-6], 'Victoire extérieur')"
+    },
+    {
+      "fr": "VICTOIRE {0}",
+      "key": "score_matrix.home_win_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:4px\">VICTOIRE ${m.home_team.toUpperCase()}</div>"
+    },
+    {
+      "fr": "MATCH NUL",
+      "key": "score_matrix.draw_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3);margin-top:4px\">MATCH NUL</div>"
+    },
+    {
+      "fr": "Compositions à venir",
+      "key": "compos.upcoming_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:6px\">Compositions à venir</div>"
+    },
+    {
+      "fr": "Disponibles ~60 min avant coup d'envoi",
+      "key": "compos.upcoming_desc",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:11px\">Disponibles ~60 min avant coup d'envoi</div>"
+    },
+    {
+      "fr": "Compositions indisponibles pour ce match.",
+      "key": "compos.unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ">Compositions indisponibles pour ce match.<br>"
+    },
+    {
+      "fr": "Statut BSD : {0}",
+      "key": "compos.bsd_status",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-size:11px\">Statut BSD : ${d.lineup_status"
+    },
+    {
+      "fr": "CONFIRMÉE",
+      "key": "compos.status_confirmed",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--green);font-weight:700\">CONFIRMÉE</span>"
+    },
+    {
+      "fr": "IA-PRÉDITE",
+      "key": "compos.status_predicted",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--blue);font-weight:700\">IA-PRÉDITE</span>"
+    },
+    {
+      "fr": "{0} : pas de données",
+      "key": "compos.side_no_data",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "padding:24px 16px\">${sideLabel} : pas de données</div>"
+    },
+    {
+      "fr": "Titulaires",
+      "key": "compos.starters",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.05em;margin-bottom:4px\">Titulaires</div>"
+    },
+    {
+      "fr": "Banc (top 8)",
+      "key": "compos.bench_top8",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "letter-spacing:.05em;margin:10px 0 4px\">Banc (top 8)</div>"
+    },
+    {
+      "fr": "Absents {0}",
+      "key": "compos.absent_side",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text-transform:uppercase\">Absents ${sideLabel}</div>"
+    },
+    {
+      "fr": "Domicile",
+      "key": "common.home",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "renderSide(d.lineups.home, 'Domicile')"
+    },
+    {
+      "fr": "Extérieur",
+      "key": "common.away",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "renderSide(d.lineups.away, 'Extérieur')"
+    },
+    {
+      "fr": "dom",
+      "key": "compos.injured_home_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "renderInjured(d.unavailable_players.home, 'dom')"
+    },
+    {
+      "fr": "ext",
+      "key": "compos.injured_away_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "renderInjured(d.unavailable_players.away, 'ext')"
+    },
+    {
+      "fr": "Timeline incidents indisponible",
+      "key": "incidents.timeline_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:8px\">📋</div>Timeline incidents indisponible</div>"
+    },
+    {
+      "fr": "Replay — {0} ({1})",
+      "key": "incidents.replay_player",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "inc.player ? `Replay — ${inc.player} (${minute})`"
+    },
+    {
+      "fr": "Replay but #{0}",
+      "key": "incidents.replay_goal",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": `Replay but #${myGoalN}`;"
+    },
+    {
+      "fr": "{0} évts · {1}",
+      "key": "incidents.events_count_cache",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "monospace\">${incidents.length} évts · ${out.cached"
+    },
+    {
+      "fr": "⏳ Génération du clip BSD… (~10s premier accès)",
+      "key": "incidents.clip_generating",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:11px\">⏳ Génération du clip BSD… (~10s premier accès)</div>"
+    },
+    {
+      "fr": "✕ Fermer",
+      "key": "common.close_x",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text-decoration:underline\">✕ Fermer</button>"
+    },
+    {
+      "fr": "⏳ Vérification manifest clips BSD…",
+      "key": "incidents.clip_verifying_manifest",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "loader.textContent = '⏳ Vérification manifest clips BSD…';"
+    },
+    {
+      "fr": "⚠️ But #{0} en génération. Clips disponibles : {1}",
+      "key": "incidents.clip_generating_avail",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`⚠️ But #${goalN} en génération. Clips disponibles :"
+    },
+    {
+      "fr": "⚠️ Clip but #{0} en cours de génération par BSD — réessayer dans ~30s",
+      "key": "incidents.clip_generating_retry",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`⚠️ Clip but #${goalN} en cours de génération par BSD"
+    },
+    {
+      "fr": "But de {0}{1}",
+      "key": "incidents.goal_by_player",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "playerName ? `But de ${playerName}${minuteStr"
+    },
+    {
+      "fr": "But #{0}",
+      "key": "incidents.goal_number",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": `But #${goalN}`;"
+    },
+    {
+      "fr": "⏳ {0} — génération BSD… (~10s premier accès)",
+      "key": "incidents.clip_label_generating",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "loader.textContent = `⏳ ${labelBut} — génération BSD…"
+    },
+    {
+      "fr": "⚠️ Clip non disponible pour {0}.",
+      "key": "incidents.clip_unavailable_for",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "loader.textContent = `⚠️ Clip non disponible pour ${labelBut}.`"
+    },
+    {
+      "fr": "⚽ BUT {0}",
+      "key": "videos.goal_clip_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "letter-spacing:.05em\">⚽ BUT ${n}</div>"
+    },
+    {
+      "fr": "⚡ BSD · Clips Buts · Live",
+      "key": "videos.bsd_clips_section",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase\">⚡ BSD · Clips Buts · Live</div>"
+    },
+    {
+      "fr": "Highlights",
+      "key": "videos.highlights_default",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "v.title ? escapeHtml(v.title) : 'Highlights';"
+    },
+    {
+      "fr": "🎬 ScoreBat · Highlights Post-Match",
+      "key": "videos.scorebat_section",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase\">🎬 ScoreBat · Highlights Post-Match</div>"
+    },
+    {
+      "fr": "Aucune vidéo disponible",
+      "key": "videos.none_available_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:6px\">Aucune vidéo disponible</div>"
+    },
+    {
+      "fr": "BSD clips : disponibles ~2 min après chaque but pendant le live.",
+      "key": "videos.none_available_desc1",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "auto\">BSD clips : disponibles ~2 min après chaque but"
+    },
+    {
+      "fr": "ScoreBat highlights : ~15 min après le coup de sifflet final.",
+      "key": "videos.none_available_desc2",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "ScoreBat highlights : ~15 min après le coup de sifflet final."
+    },
+    {
+      "fr": "Shotmap indisponible pour ce match",
+      "key": "shotmap.unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:8px\">🎯</div>Shotmap indisponible pour ce match</div>"
+    },
+    {
+      "fr": "Dom",
+      "key": "common.home_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "isHome ? 'Dom' : 'Ext',"
+    },
+    {
+      "fr": "Ext",
+      "key": "common.away_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "isHome ? 'Dom' : 'Ext',"
+    },
+    {
+      "fr": "xG cumulé Domicile · Extérieur",
+      "key": "shotmap.xg_cumul_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "<span title=\"xG cumulé Domicile · Extérieur\""
+    },
+    {
+      "fr": "xG {0} - {1} · Buts {2}-{3}",
+      "key": "shotmap.xg_goals_legend",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text3);\">xG ${totalXgH.toFixed(2)} -"
+    },
+    {
+      "fr": "Shotmap ({0} tirs)",
+      "key": "shotmap.shots_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<span>Shotmap (${shots.length} tirs)</span>"
+    },
+    {
+      "fr": "taille = √xG",
+      "key": "shotmap.legend_size",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>· taille = √xG</span>"
+    },
+    {
+      "fr": "plein = BUT",
+      "key": "shotmap.legend_filled",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>· plein = BUT</span>"
+    },
+    {
+      "fr": "semi = Save",
+      "key": "shotmap.legend_semi",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>· semi = Save</span>"
+    },
+    {
+      "fr": "vide = Miss/Block",
+      "key": "shotmap.legend_empty",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>· vide = Miss/Block</span>"
+    },
+    {
+      "fr": "Aucun tir détaillé disponible (match non commencé ou shotmap non publiée par BSD).",
+      "key": "shotmap.no_detailed_shots",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "border-radius:6px\">Aucun tir détaillé disponible (match non commencé"
+    },
+    {
+      "fr": "Possession %",
+      "key": "shotmap.stat_possession",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('Possession %', sh.ball_possession"
+    },
+    {
+      "fr": "Tirs cadrés",
+      "key": "shotmap.stat_shots_on",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('Tirs cadrés', sh.shots_on_target"
+    },
+    {
+      "fr": "Tirs non cadrés",
+      "key": "shotmap.stat_shots_off",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('Tirs non cadrés', sh.shots_off_target"
+    },
+    {
+      "fr": "Corners",
+      "key": "shotmap.stat_corners",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('Corners', sh.corner_kicks"
+    },
+    {
+      "fr": "Jaunes",
+      "key": "shotmap.stat_yellows",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('Jaunes', sh.yellow_cards"
+    },
+    {
+      "fr": "Rouges",
+      "key": "shotmap.stat_reds",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('Rouges', sh.red_cards"
+    },
+    {
+      "fr": "xG (réel)",
+      "key": "shotmap.stat_xg_actual",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statCell('xG (réel)', sh.xg?.actual"
+    },
+    {
+      "fr": "Pression dom/ext (15 dernières mises à jour) — DOM {0} · EXT {1}",
+      "key": "foot.pressure_domext_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "const title = `Pression dom/ext (15 dernières mises à jour)"
+    },
+    {
+      "fr": "Intensité live ({0} pts) — actuel {1}",
+      "key": "foot.intensity_live_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "const title = `Intensité live (${vals.length} pts) — actuel"
+    },
+    {
+      "fr": "{0} vs {1}",
+      "key": "radar.fullscreen_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--font-head);margin-bottom:4px\">${homeName.split(' ').pop()} vs"
+    },
+    {
+      "fr": "Comparateur 5 axes — valeurs exactes aux sommets",
+      "key": "radar.fullscreen_subtitle",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:16px\">Comparateur 5 axes — valeurs exactes aux sommets</div>"
+    },
+    {
+      "fr": "Données en cours de consolidation — le fournisseur ne couvre pas encore complètement cette ligue.",
+      "key": "stats.data_consolidating",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Données en cours de consolidation — le fournisseur"
+    },
+    {
+      "fr": "🏟️ STADE & ARBITRE · {0}",
+      "key": "resume.venue_referee_badge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-weight:800;\">🏟️ STADE & ARBITRE · ${_refData"
+    },
+    {
+      "fr": "Stade",
+      "key": "resume.venue_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--font-mono);margin-bottom:6px;\">Stade</div>"
+    },
+    {
+      "fr": "Capacité: {0}",
+      "key": "resume.venue_capacity",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--font-mono);\">Capacité: <strong"
+    },
+    {
+      "fr": "⚖️ Arbitre",
+      "key": "resume.referee_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--font-mono);margin-bottom:6px;\">⚖️ Arbitre</div>"
+    },
+    {
+      "fr": "Matchs arbitrés",
+      "key": "resume.referee_games_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "<span title=\"Matchs arbitrés\">⚖️ ${_refData.games}</span>"
+    },
+    {
+      "fr": "Cartons jaunes / match",
+      "key": "resume.referee_yc_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "<span title=\"Cartons jaunes / match\""
+    },
+    {
+      "fr": "Cartons rouges / match",
+      "key": "resume.referee_rc_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "<span title=\"Cartons rouges / match\""
+    },
+    {
+      "fr": "Très sévère",
+      "key": "resume.referee_severity_very_severe",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ label: 'Très sévère', c: '#ef4444'"
+    },
+    {
+      "fr": "Sévère",
+      "key": "resume.referee_severity_severe",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ label: 'Sévère',      c: '#f97316'"
+    },
+    {
+      "fr": "Modéré",
+      "key": "resume.referee_severity_moderate",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ label: 'Modéré',      c: '#eab308'"
+    },
+    {
+      "fr": "Indulgent",
+      "key": "resume.referee_severity_lenient",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ label: 'Indulgent',     c: '#22c55e'"
+    },
+    {
+      "fr": "📺 TV DIFFUSEUR · BSD",
+      "key": "resume.tv_broadcaster_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:800;\">📺 TV DIFFUSEUR · BSD</span>"
+    },
+    {
+      "fr": "{0} chaîne{1}",
+      "key": "resume.tv_channels_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--font-mono);\">${tvDedup.length} chaîne"
+    },
+    {
+      "fr": "+{0} autres",
+      "key": "resume.tv_more_channels",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "padding:4px 8px;\">+${tvDedup.length - 12} autres</span>"
+    },
+    {
+      "fr": "📰 AVANT-MATCH · SOFASCORE",
+      "key": "resume.editorial_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:800;\">📰 AVANT-MATCH · SOFASCORE</span>"
+    },
+    {
+      "fr": "✈️ TRAVEL FACTOR · {0}",
+      "key": "resume.travel_factor_badge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-weight:800;\">✈️ TRAVEL FACTOR · ${m.away_team}"
+    },
+    {
+      "fr": "Voyage extrême",
+      "key": "resume.travel_level_severe",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tf.level === 'severe' ? 'Voyage extrême'"
+    },
+    {
+      "fr": "Voyage long",
+      "key": "resume.travel_level_high",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tf.level === 'high' ? 'Voyage long'"
+    },
+    {
+      "fr": "Voyage modéré",
+      "key": "resume.travel_level_moderate",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tf.level === 'moderate' ? 'Voyage modéré'"
+    },
+    {
+      "fr": "Voyage léger",
+      "key": "resume.travel_level_light",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": 'Voyage léger';"
+    },
+    {
+      "fr": "{0} — {1}/100",
+      "key": "resume.travel_level_score",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text2);\">${lvlLabel} — ${tf.score}/100</span>"
+    },
+    {
+      "fr": "Distance",
+      "key": "resume.travel_distance",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">Distance</span>"
+    },
+    {
+      "fr": "Δ Fuseau",
+      "key": "resume.travel_timezone",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">Δ Fuseau</span>"
+    },
+    {
+      "fr": "Climat",
+      "key": "resume.travel_climate",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">Climat</span>"
+    },
+    {
+      "fr": "Shift",
+      "key": "resume.travel_climate_shift",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${tf.climate_shift ? 'Shift' : 'Stable'}"
+    },
+    {
+      "fr": "Stable",
+      "key": "resume.travel_climate_stable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${tf.climate_shift ? 'Shift' : 'Stable'}"
+    },
+    {
+      "fr": "Repos",
+      "key": "resume.travel_rest",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">Repos</span>"
+    },
+    {
+      "fr": "Impact xG",
+      "key": "resume.travel_xg_impact",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">Impact xG</span>"
+    },
+    {
+      "fr": "Forme récente (5 derniers matchs)",
+      "key": "resume.recent_form_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Forme récente (5 derniers matchs)</div>"
+    },
+    {
+      "fr": "Comparaison statistique",
+      "key": "resume.stat_comparison_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Comparaison statistique</div>"
+    },
+    {
+      "fr": "Victoires",
+      "key": "stats.wins",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Victoires', hs.wins, as.wins, '%')"
+    },
+    {
+      "fr": "Moy. Buts Marqués",
+      "key": "stats.avg_goals_scored",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Moy. Buts Marqués', hs.avgScored"
+    },
+    {
+      "fr": "Moy. Buts Encaissés",
+      "key": "stats.avg_goals_conceded",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Moy. Buts Encaissés', hs.avgConceded"
+    },
+    {
+      "fr": "xG Diff :",
+      "key": "resume.xg_diff_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:4px\">\n          xG Diff : <span"
+    },
+    {
+      "fr": "{0} favori",
+      "key": "resume.xg_favorite",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text3)\"> · ${(xg.home - xg.away) > 0 ? m.home_team : m.away_team} favori"
+    },
+    {
+      "fr": "Marchés",
+      "key": "common.markets",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Marchés</div>"
+    },
+    {
+      "fr": "Nul",
+      "key": "markets.draw",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ lbl: 'Nul',        val: p.draw,    ok: 'draw' }"
+    },
+    {
+      "fr": "Excellent",
+      "key": "markets.opportunity_excellent",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "_bdg = op => op >= 70 ? 'Excellent'"
+    },
+    {
+      "fr": "Bon",
+      "key": "markets.opportunity_good",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": op >= 50 ? 'Bon'"
+    },
+    {
+      "fr": "Moyen",
+      "key": "markets.opportunity_medium",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": op >= 35 ? 'Moyen' : 'Faible'"
+    },
+    {
+      "fr": "Faible",
+      "key": "markets.opportunity_weak",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": op >= 35 ? 'Moyen' : 'Faible'"
+    },
+    {
+      "fr": "🔵 CHOIX SÛR",
+      "key": "markets.safe_choice_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:4px\">🔵 CHOIX SÛR</div>"
+    },
+    {
+      "fr": "{0}% · Score {1}/100",
+      "key": "markets.safe_choice_score",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:2px\">' + vBest.val + '% · Score ' + vBest.op + '/100'"
+    },
+    {
+      "fr": "⚡ MEILLEUR COMPROMIS",
+      "key": "markets.best_compromise_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:4px\">⚡ MEILLEUR COMPROMIS</div>"
+    },
+    {
+      "fr": "Edge +{0}% · {1}",
+      "key": "markets.best_compromise_edge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:2px\">Edge +' + vComp.e + '% · ' + (_mBk[vComp.ok]"
+    },
+    {
+      "fr": "🔵 Sûr",
+      "key": "ml.row_badge_safe",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "white-space:nowrap\">🔵 Sûr</span>"
+    },
+    {
+      "fr": "⚡ Compromis",
+      "key": "ml.row_badge_compromise",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "white-space:nowrap\">⚡ Compromis</span>"
+    },
+    {
+      "fr": "🎯 Value",
+      "key": "ml.row_badge_value",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "white-space:nowrap\">🎯 Value</span>"
+    },
+    {
+      "fr": "Fort",
+      "key": "ml.strength_strong",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mk.val > 65 ? 'Fort' : mk.val > 45 ? 'Moyen' : 'Faible'"
+    },
+    {
+      "fr": "LE CHOIX SÛR — {0}",
+      "key": "ml.verdict_safe_choice",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:#1d4ed8\">LE CHOIX SÛR — ' + choixSur.lbl"
+    },
+    {
+      "fr": "Probabilité {0}%",
+      "key": "ml.verdict_probability",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:1px\">Probabilité ' + choixSur.val + '%'"
+    },
+    {
+      "fr": "cote {0}",
+      "key": "ml.verdict_odds",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "choixSur.bkOdds ? ' · cote ' + choixSur.bkOdds"
+    },
+    {
+      "fr": "LE MEILLEUR COMPROMIS — {0}",
+      "key": "ml.verdict_best_compromise",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:#047857\">LE MEILLEUR COMPROMIS — ' + compromis.lbl"
+    },
+    {
+      "fr": "Proba {0}% · edge +{1}%",
+      "key": "ml.verdict_compromise_detail",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:1px\">Proba ' + compromis.val + '% · edge <strong"
+    },
+    {
+      "fr": "LE COUP DE POKER — {0}",
+      "key": "ml.verdict_poker",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:#6d28d9\">LE COUP DE POKER — ' + coupPoker.lbl"
+    },
+    {
+      "fr": "Proba {0}% · anomalie cote +{1}%",
+      "key": "ml.verdict_poker_detail",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:1px\">Proba ' + coupPoker.val + '% · anomalie cote"
+    },
+    {
+      "fr": "Priorité au Choix Sûr : {0} pour vos combinés (probabilité {1}%).",
+      "key": "ml.advice_safe_choice",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "advParts.push('Priorité au <strong style=\"color:#1d4ed8\">Choix Sûr :"
+    },
+    {
+      "fr": "Pour un pari simple équilibré, le Compromis : {0} ({1}%, edge +{2}%).",
+      "key": "ml.advice_compromise",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "advParts.push('Pour un pari simple équilibré, le <strong"
+    },
+    {
+      "fr": "Pour risque calculé, le Coup de Poker : {0} offre +{1}% de value sur cote {2}{3}.",
+      "key": "ml.advice_poker",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "advParts.push('Pour risque calculé, le <strong"
+    },
+    {
+      "fr": "Aucune value bet 1X2 détectée — surveiller BTTS {0}% et Over 2.5 {1}%.",
+      "key": "ml.advice_no_value",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "advParts.push('Aucune value bet 1X2 détectée — surveiller BTTS"
+    },
+    {
+      "fr": "🎯 +{0}% VALUE",
+      "key": "ml.header_badge_value",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "padding:4px 10px\">🎯 +' + coupPoker.edge + '% VALUE</span>"
+    },
+    {
+      "fr": "ML CatBoost",
+      "key": "ml.catboost_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase\">ML CatBoost</div>"
+    },
+    {
+      "fr": "Hybride · 60% CB + 40% Poisson",
+      "key": "ml.catboost_subtitle",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:1px\">Hybride · 60% CB + 40% Poisson</div>"
+    },
+    {
+      "fr": "🎯 Verdict PariScore & Aide à la Décision",
+      "key": "ml.verdict_panel_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:9px\">🎯 Verdict PariScore &amp; Aide à la Décision</div>"
+    },
+    {
+      "fr": "Conseil PariScore : {0}",
+      "key": "ml.advice_intro",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:4px\">Conseil PariScore : ' + advice"
+    },
+    {
+      "fr": "Notes par Secteur",
+      "key": "resume.sector_ratings_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Notes par Secteur</div>"
+    },
+    {
+      "fr": "Rang ligue {0}/{1}",
+      "key": "resume.sector_league_rank_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "title=\"Rang ligue ${rank}/${total}\""
+    },
+    {
+      "fr": "Gardiens",
+      "key": "resume.position_goalkeepers",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "posLabel = { G: 'Gardiens', D: 'Défense'"
+    },
+    {
+      "fr": "Défense",
+      "key": "resume.position_defense",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "G: 'Gardiens', D: 'Défense', M: 'Milieu'"
+    },
+    {
+      "fr": "Milieu",
+      "key": "resume.position_midfield",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "D: 'Défense', M: 'Milieu', A: 'Attaque'"
+    },
+    {
+      "fr": "Attaque",
+      "key": "resume.position_attack",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "M: 'Milieu', A: 'Attaque' }"
+    },
+    {
+      "fr": "Attaque (proxy)",
+      "key": "resume.attack_proxy",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sectorBar('Attaque (proxy)', atk"
+    },
+    {
+      "fr": "Défense (proxy)",
+      "key": "resume.defense_proxy",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sectorBar('Défense (proxy)', def"
+    },
+    {
+      "fr": "Formation",
+      "key": "resume.formation_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Formation</div>"
+    },
+    {
+      "fr": "Joueurs a Suivre",
+      "key": "resume.players_to_watch_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Joueurs a Suivre</div>"
+    },
+    {
+      "fr": "{0} buts · {1} passes",
+      "key": "players.goals_assists",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:2px\">${topH.goals||0} buts · ${topH.assists||0} passes</div>"
+    },
+    {
+      "fr": "KPI",
+      "key": "players.kpi_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div style=\"font-size:8px;color:var(--text3)\">KPI</div>"
+    },
+    {
+      "fr": "Données indisponibles",
+      "key": "common.data_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "padding:40px 0\">Données indisponibles</div>"
+    },
+    {
+      "fr": "{0} (Dom)",
+      "key": "stats.performance_home_suffix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "activeMode === 'home' ? ' (Dom)' : ' (Ext)'"
+    },
+    {
+      "fr": "PERFORMANCE{0}",
+      "key": "stats.performance_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "const title = `PERFORMANCE${label}`;"
+    },
+    {
+      "fr": "Nuls",
+      "key": "stats.draws",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Nuls', getH('draws')"
+    },
+    {
+      "fr": "Défaites",
+      "key": "stats.losses",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Défaites', getH('losses')"
+    },
+    {
+      "fr": "🎯 TIRS",
+      "key": "stats.section_shots",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sec('🎯 TIRS')+row('Tirs Cadrés /match'"
+    },
+    {
+      "fr": "Tirs Cadrés /match",
+      "key": "stats.shots_on_per_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Tirs Cadrés /match',shotsOnH,shotsOnA)"
+    },
+    {
+      "fr": "Tirs Totaux /match",
+      "key": "stats.shots_total_per_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Tirs Totaux /match',shotsTotH,shotsTotA)"
+    },
+    {
+      "fr": "RECORDS",
+      "key": "stats.section_records",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ha.biggest_win_home || aa.biggest_win_home ? sec('RECORDS')"
+    },
+    {
+      "fr": "Plus grande victoire {0}",
+      "key": "stats.biggest_win",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Plus grande victoire '+(activeMode==='home'?'Dom'"
+    },
+    {
+      "fr": "Plus lourde défaite {0}",
+      "key": "stats.biggest_loss",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Plus lourde défaite '+(activeMode==='home'?'Dom'"
+    },
+    {
+      "fr": "Plus grande série Victoires",
+      "key": "stats.longest_win_streak",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Plus grande série Victoires', ha.streak_wins"
+    },
+    {
+      "fr": "PÉNALTYS",
+      "key": "stats.section_penalties",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sec('PÉNALTYS')+row('Marqués'"
+    },
+    {
+      "fr": "Marqués",
+      "key": "stats.penalties_scored",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Marqués',ha.penalties_scored"
+    },
+    {
+      "fr": "Manqués",
+      "key": "stats.penalties_missed",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Manqués',ha.penalties_missed"
+    },
+    {
+      "fr": "🟨 DISCIPLINE",
+      "key": "stats.section_discipline",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sec('🟨 DISCIPLINE')"
+    },
+    {
+      "fr": "Cartons Jaunes /match",
+      "key": "stats.yellow_cards_per_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Cartons Jaunes /match', yelH, yelA)"
+    },
+    {
+      "fr": "Cartons Rouges /match",
+      "key": "stats.red_cards_per_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Cartons Rouges /match', redH, redA)"
+    },
+    {
+      "fr": "Clean Sheet %",
+      "key": "stats.clean_sheet_pct",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Clean Sheet %', csH, csA)"
+    },
+    {
+      "fr": "🚩 CORNERS",
+      "key": "stats.section_corners",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sec('🚩 CORNERS')+row('Corners/match'"
+    },
+    {
+      "fr": "Corners/match",
+      "key": "stats.corners_per_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Corners/match',ch,ca)"
+    },
+    {
+      "fr": "Pour",
+      "key": "stats.corners_for",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Pour',cfH,cfA)"
+    },
+    {
+      "fr": "Contre",
+      "key": "stats.corners_against",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row('Contre',cgH,cgA)"
+    },
+    {
+      "fr": "Global",
+      "key": "common.global",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "btn('global','Global')"
+    },
+    {
+      "fr": "(Dom)",
+      "key": "stats.home_paren",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "activeMode==='home'?'(Dom)':'(Ext)'"
+    },
+    {
+      "fr": "(Ext)",
+      "key": "stats.away_paren",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "activeMode==='home'?'(Dom)':'(Ext)'"
+    },
+    {
+      "fr": "Statistique",
+      "key": "stats.statistic_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th style=\"text-align:left\">Statistique${statsHeader}</th>"
+    },
+    {
+      "fr": "Victoires %",
+      "key": "stats.wins_pct",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Victoires %', hs.wins, as.wins, '%')"
+    },
+    {
+      "fr": "Buts Marqués",
+      "key": "stats.goals_scored",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Buts Marqués', hs.avgScored"
+    },
+    {
+      "fr": "Buts Encaissés",
+      "key": "stats.goals_conceded",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Buts Encaissés', hs.avgConceded"
+    },
+    {
+      "fr": "Corners Obtenus",
+      "key": "stats.corners_obtained",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Corners Obtenus', hCorn.avgCornersFor"
+    },
+    {
+      "fr": "Corners Concédés",
+      "key": "stats.corners_conceded",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cmpBar('Corners Concédés', hCorn.avgCornersAgainst"
+    },
+    {
+      "fr": "Joueurs Clés",
+      "key": "players.key_players_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Joueurs Clés</div>"
+    },
+    {
+      "fr": "Forme Récente (5 derniers)",
+      "key": "stats.recent_form_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Forme Récente (5 derniers)</div>"
+    },
+    {
+      "fr": "Performance",
+      "key": "stats.performance",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Performance</div>"
+    },
+    {
+      "fr": "KPI = (buts×3 + passes×2 + note) / 90min",
+      "key": "players.kpi_formula",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span class=\"ins-kpi-formula\">KPI = (buts×3 + passes×2 + note) / 90min</span>"
+    },
+    {
+      "fr": "Statistiques individuelles indisponibles pour cette ligue",
+      "key": "players.individual_stats_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "font-size:12px\">Statistiques individuelles indisponibles pour cette ligue</div>"
+    },
+    {
+      "fr": "Comparateur {0} vs {1}",
+      "key": "players.radar_comparator",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Comparateur ${topHome.name.split(' ').pop()} vs"
+    },
+    {
+      "fr": "Agrandir",
+      "key": "common.enlarge_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"showRadarFullscreen()\" title=\"Agrandir\">🔍 Agrandir</span>"
+    },
+    {
+      "fr": "🔍 Agrandir",
+      "key": "common.enlarge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "title=\"Agrandir\">🔍 Agrandir</span>"
+    },
+    {
+      "fr": "Buts",
+      "key": "players.radar_axis_goals",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key: 'goals',   label: 'Buts',   max: 25"
+    },
+    {
+      "fr": "Passes",
+      "key": "players.radar_axis_assists",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key: 'assists', label: 'Passes', max: 20"
+    },
+    {
+      "fr": "Note",
+      "key": "players.radar_axis_rating",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key: 'rating',  label: 'Note',   max: 10"
+    },
+    {
+      "fr": "Min",
+      "key": "players.radar_axis_minutes",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key: 'minutes', label: 'Min',    max: 30"
+    },
+    {
+      "fr": "Excellente forme",
+      "key": "players.trend_excellent_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "font-size:12px\" title=\"Excellente forme\">&#8593;</span>"
+    },
+    {
+      "fr": "Forme correcte",
+      "key": "players.trend_correct_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "font-size:12px\" title=\"Forme correcte\">&#8594;</span>"
+    },
+    {
+      "fr": "Meforme",
+      "key": "players.trend_poor_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "font-size:12px\" title=\"Meforme\">&#8595;</span>"
+    },
+    {
+      "fr": "Tendance de Forme",
+      "key": "players.form_trend_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "align-items:center;gap:8px\">\n        Tendance de Forme"
+    },
+    {
+      "fr": "↑ Excellente · → Correcte · ↓ Meforme",
+      "key": "players.form_trend_legend",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:400\">&#8593; Excellente &#183; &#8594; Correcte &#183; &#8595; Meforme</span>"
+    },
+    {
+      "fr": "KPI Avancé: xG×3+xA×2+note×2+buts×1 / 90min",
+      "key": "players.advanced_kpi_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"KPI Avancé: xG×3+xA×2+note×2+buts×1 / 90min\""
+    },
+    {
+      "fr": "Blessé",
+      "key": "players.injured_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "class=\"bsd-badge bsd-injured\" title=\"Blessé\">🏥</span>"
+    },
+    {
+      "fr": "Note ↓",
+      "key": "players.sort_rating",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSortBtn('rating','Note ↓')"
+    },
+    {
+      "fr": "KPI ↓",
+      "key": "players.sort_kpi",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSortBtn('kpi','KPI ↓')"
+    },
+    {
+      "fr": "Buts ↓",
+      "key": "players.sort_goals",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSortBtn('goals','Buts ↓')"
+    },
+    {
+      "fr": "xG ↓",
+      "key": "players.sort_xg",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSortBtn('xg','xG ↓')"
+    },
+    {
+      "fr": "Joueur",
+      "key": "players.grid_header_player",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span></span><span>Joueur</span><span>Pos</span>"
+    },
+    {
+      "fr": "Pos",
+      "key": "players.grid_header_pos",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>Joueur</span><span>Pos</span><span>Note</span>"
+    },
+    {
+      "fr": "Notes BSD par Poste",
+      "key": "players.bsd_ratings_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "align-items:center;gap:8px\">\n        Notes BSD par Poste"
+    },
+    {
+      "fr": "{0}% couverture",
+      "key": "players.coverage_pct",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-weight:400\">${covPct}% couverture</span>"
+    },
+    {
+      "fr": "KPI Avancé = (xG×3 + xA×2 + note×2 + buts×1) / 90min",
+      "key": "players.advanced_kpi_header_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"KPI Avancé = (xG×3 + xA×2 + note×2 + buts×1) / 90min\">KPI Avancé</span>"
+    },
+    {
+      "fr": "KPI Avancé",
+      "key": "players.advanced_kpi_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "/ 90min\">KPI Avancé</span>"
+    },
+    {
+      "fr": "★ MVP",
+      "key": "players.mvp_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:4px\">★ MVP</div>"
+    },
+    {
+      "fr": "{0} passes",
+      "key": "players.assists_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:3px\">${p.assists} passes</div>"
+    },
+    {
+      "fr": "Statistiques individuelles indisponibles pour cette ligue.",
+      "key": "players.individual_stats_unavailable_period",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ins-empty\">Statistiques individuelles indisponibles pour cette ligue.<br>"
+    },
+    {
+      "fr": "Les données seront chargées lors de la prochaine mise à jour.",
+      "key": "players.data_loaded_next_update",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:11px\">Les données seront chargées lors de la prochaine mise à jour.</span>"
+    },
+    {
+      "fr": "Top Buteurs de la Ligue",
+      "key": "players.top_scorers_league",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Top Buteurs de la Ligue</div>"
+    },
+    {
+      "fr": "Forme indisponible",
+      "key": "graphique.form_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3);padding:8px\">Forme indisponible</div>"
+    },
+    {
+      "fr": "✈ Ext",
+      "key": "graphique.barcode_away",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`${isAwayMatch ? '✈ Ext' : c.isHome === true ? '🏠 Dom' : ''}"
+    },
+    {
+      "fr": "🏠 Dom",
+      "key": "graphique.barcode_home",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "c.isHome === true ? '🏠 Dom' : ''} vs"
+    },
+    {
+      "fr": "J-{0} : {1}",
+      "key": "graphique.barcode_day_result",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": `J-${i+1} : ${c.result}`;"
+    },
+    {
+      "fr": "récent ← → ancien",
+      "key": "graphique.barcode_recent_old",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.4px\">récent ← → ancien</span>"
+    },
+    {
+      "fr": "Données insuffisantes pour générer un verdict.",
+      "key": "graphique.verdict_insufficient",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ text: 'Données insuffisantes pour générer un verdict.'"
+    },
+    {
+      "fr": "{0} en pleine ascension (Form {1} vs {2}).",
+      "key": "graphique.verdict_home_rising",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(`<strong>${m.home_team}</strong> en pleine ascension (Form"
+    },
+    {
+      "fr": "Domicile favorable. Pari recommandé : 1 ou Double Chance 1X.",
+      "key": "graphique.verdict_home_recommend",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "recommend = `Domicile favorable. Pari recommandé :"
+    },
+    {
+      "fr": "{0} en pleine forme (Form {1} vs {2}).",
+      "key": "graphique.verdict_away_form",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(`<strong>${m.away_team}</strong> en pleine forme (Form"
+    },
+    {
+      "fr": "Extérieur favorable. Pari à considérer : 2 ou Double Chance X2 (cote bonifiée habituelle).",
+      "key": "graphique.verdict_away_recommend",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "recommend = `Extérieur favorable. Pari à considérer :"
+    },
+    {
+      "fr": "Forces équilibrées (Form {0} vs {1}).",
+      "key": "graphique.verdict_balanced",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(`Forces équilibrées (Form ${hScore"
+    },
+    {
+      "fr": "Match incertain. Considérer marché Over 1.5 ou BTTS au lieu de 1N2.",
+      "key": "graphique.verdict_uncertain_recommend",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "recommend = `Match incertain. Considérer marché"
+    },
+    {
+      "fr": "Léger avantage {0} (Δ {1} points).",
+      "key": "graphique.verdict_slight_advantage",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(`Léger avantage <strong>${fav}</strong> (Δ"
+    },
+    {
+      "fr": "Edge modeste. Vérifier EV et xG diff avant de miser.",
+      "key": "graphique.verdict_modest_edge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "recommend = `Edge modeste. Vérifier <strong>EV</strong>"
+    },
+    {
+      "fr": "xG différentiel favorise {0} — bookmakers pourraient sous-évaluer.",
+      "key": "graphique.verdict_xg_diff",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(`xG différentiel favorise <strong>${better}</strong>"
+    },
+    {
+      "fr": "{0} performant vs Top 8 ({1}% W).",
+      "key": "graphique.verdict_top8_perf",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "parts.push(`${m.home_team} performant vs Top 8"
+    },
+    {
+      "fr": "Form Snapshot — Lecture rapide",
+      "key": "graphique.snapshot_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Form Snapshot — Lecture rapide</div>"
+    },
+    {
+      "fr": "FORM SCORE /100",
+      "key": "graphique.form_score_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:1px\">FORM SCORE /100</div>"
+    },
+    {
+      "fr": "PPG L5",
+      "key": "graphique.ppg_l5",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.5px\">PPG L5</span>"
+    },
+    {
+      "fr": "saison",
+      "key": "graphique.season_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:5px\">saison <span"
+    },
+    {
+      "fr": "xG diff",
+      "key": "graphique.xg_diff",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.5px\">xG diff</span>"
+    },
+    {
+      "fr": "sur-perf",
+      "key": "graphique.overperf",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "xgDiff > 0.3 ? 'sur-perf'"
+    },
+    {
+      "fr": "sous-perf",
+      "key": "graphique.underperf",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "xgDiff < -0.3 ? 'sous-perf' : 'équilibré'"
+    },
+    {
+      "fr": "équilibré",
+      "key": "graphique.balanced",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "xgDiff < -0.3 ? 'sous-perf' : 'équilibré'"
+    },
+    {
+      "fr": "Form Barcode — 10 derniers matchs",
+      "key": "graphique.barcode_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Form Barcode — 10 derniers matchs</div>"
+    },
+    {
+      "fr": "Adversaire Top 5",
+      "key": "graphique.legend_top5_opponent",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "vertical-align:middle\"></span> Adversaire Top 5</span>"
+    },
+    {
+      "fr": "Match à l'extérieur",
+      "key": "graphique.legend_away_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "vertical-align:middle\"></span> Match à l'extérieur</span>"
+    },
+    {
+      "fr": "Hauteur = pondération récence",
+      "key": "graphique.legend_height",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Hauteur = pondération récence</span>"
+    },
+    {
+      "fr": "Verdict Forme",
+      "key": "graphique.verdict_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-section-title\">Verdict Forme</div>"
+    },
+    {
+      "fr": "Voir Top 3 Conseils IA →",
+      "key": "graphique.see_top3_ai",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.5px\">Voir Top 3 Conseils IA →</a>"
+    },
+    {
+      "fr": "Gr. {0}",
+      "key": "classement.group_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--font-mono)\">Gr. ${g}</button>"
+    },
+    {
+      "fr": "Classement de ligue non disponible",
+      "key": "classement.league_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:4px\">Classement de ligue non disponible</div>"
+    },
+    {
+      "fr": "Comparaison directe des équipes :",
+      "key": "classement.direct_comparison",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:16px\">Comparaison directe des équipes :</div>"
+    },
+    {
+      "fr": "PPG",
+      "key": "stats.ppg",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:3px;font-size:9px;color:var(--text3)\">PPG</div>"
+    },
+    {
+      "fr": "Buts/match",
+      "key": "stats.goals_per_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Buts/match</div>"
+    },
+    {
+      "fr": "Encaissés/match",
+      "key": "stats.conceded_per_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Encaissés/match</div>"
+    },
+    {
+      "fr": "Classement non disponible pour cette compétition.",
+      "key": "classement.unavailable_competition",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "ins-empty\">Classement non disponible pour cette compétition.</div>"
+    },
+    {
+      "fr": "Sportif",
+      "key": "classement.mode_sportif",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"insSetSmartMode('sportif')\">Sportif</div>"
+    },
+    {
+      "fr": "Stratégies",
+      "key": "classement.mode_strategies",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"insSetSmartMode('strategies')\">Stratégies</div>"
+    },
+    {
+      "fr": "Lieu : Global",
+      "key": "classement.place_global",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${lieu === 'global' ? 'selected' : ''}>Lieu : Global</option>"
+    },
+    {
+      "fr": "Lieu : Domicile",
+      "key": "classement.place_home",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${lieu === 'home'   ? 'selected' : ''}>Lieu : Domicile</option>"
+    },
+    {
+      "fr": "Lieu : Extérieur",
+      "key": "classement.place_away",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${lieu === 'away'   ? 'selected' : ''}>Lieu : Extérieur</option>"
+    },
+    {
+      "fr": "Période : Saison",
+      "key": "classement.period_season",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${period === 'season' ? 'selected' : ''}>Période : Saison</option>"
+    },
+    {
+      "fr": "Période : L10",
+      "key": "classement.period_l10",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${period === 'l10'    ? 'selected' : ''}>Période : L10</option>"
+    },
+    {
+      "fr": "Période : L5",
+      "key": "classement.period_l5",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${period === 'l5'     ? 'selected' : ''}>Période : L5</option>"
+    },
+    {
+      "fr": "{0} — {1}",
+      "key": "classement.strategy_option",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "}>${s.tipster} — ${s.label}</option>"
+    },
+    {
+      "fr": "Équipe",
+      "key": "classement.team_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Pos</th><th style=\"text-align:left\">Équipe</th>"
+    },
+    {
+      "fr": "Pts",
+      "key": "classement.points_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Pts</th><th>J</th>"
+    },
+    {
+      "fr": "V",
+      "key": "classement.wins_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--green)\">V</th><th style=\"color:var(--amber)\">N</th>"
+    },
+    {
+      "fr": "N",
+      "key": "classement.draws_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--amber)\">N</th><th style=\"color:var(--red)\">D</th>"
+    },
+    {
+      "fr": "D",
+      "key": "classement.losses_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--red)\">D</th>\n          <th>Buts</th>"
+    },
+    {
+      "fr": "Buts",
+      "key": "classement.goals_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Buts</th><th>Forme</th>"
+    },
+    {
+      "fr": "Forme",
+      "key": "classement.form_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Buts</th><th>Forme</th>"
+    },
+    {
+      "fr": "Données non disponibles depuis le classement statique pour cette stratégie.",
+      "key": "classement.strategy_static_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Données non disponibles depuis le classement statique"
+    },
+    {
+      "fr": "→ Voir l'onglet Top Stratégies du menu principal pour la version complète match-par-match.",
+      "key": "classement.see_top_strategies",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:8px\">→ Voir l'onglet <strong>Top Stratégies</strong>"
+    },
+    {
+      "fr": "Pas assez de matchs archivés ({0} matchs) pour calculer Hit Rate réel.",
+      "key": "classement.not_enough_archived",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text3)\">Pas assez de matchs archivés (${payload.sampleSize} matchs)"
+    },
+    {
+      "fr": "→ Affichage Poisson estimate ci-dessous.",
+      "key": "classement.poisson_estimate_below",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:8px\">→ Affichage Poisson estimate ci-dessous.</div>"
+    },
+    {
+      "fr": "Hit Rate {0}",
+      "key": "classement.hit_rate_header",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>Hit Rate ${strategyLabel}</th>"
+    },
+    {
+      "fr": "Validés / Joués",
+      "key": "classement.validated_played_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Validés / Joués</th>"
+    },
+    {
+      "fr": "→ stable",
+      "key": "classement.trend_stable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:10px\">→ stable</span>"
+    },
+    {
+      "fr": "⏳ Chargement Hit Rate réel sur matchs archivés…",
+      "key": "classement.loading_hit_rate",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">⏳ Chargement Hit Rate réel sur matchs archivés…</div>"
+    },
+    {
+      "fr": "Pas de données Poisson suffisantes pour \"{0}\".",
+      "key": "classement.no_poisson_data",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text2)\">Pas de données Poisson suffisantes pour \\\"${strategyLabel}\\\".</div>"
+    },
+    {
+      "fr": "Matchs Joués",
+      "key": "classement.matches_played_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Matchs Joués</th>"
+    },
+    {
+      "fr": "% {0} ({1})",
+      "key": "classement.pct_strategy_header",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>% ${strategyLabel} (${period === 'season' ? 'Saison'"
+    },
+    {
+      "fr": "Saison",
+      "key": "common.season",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "period === 'season' ? 'Saison' : period.toUpperCase()"
+    },
+    {
+      "fr": "Tendance L5 vs Saison",
+      "key": "classement.trend_l5_season_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Tendance L5 vs Saison</th>"
+    },
+    {
+      "fr": "Buts/Cartons L5/L10 non disponibles — affichage saison complète",
+      "key": "classement.cards_l5l10_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "* Buts/Cartons L5/L10 non disponibles — affichage saison complète"
+    },
+    {
+      "fr": "Rankings",
+      "key": "classement.view_rankings",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"insSetTabView('rankings')\">Rankings</div>"
+    },
+    {
+      "fr": "Standings",
+      "key": "classement.view_standings",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"insSetTabView('standings')\">Standings</div>"
+    },
+    {
+      "fr": "Buts+",
+      "key": "classement.stat_goals_for",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ppg:'PPG', avgFor:'Buts+', avgAg:'Buts-'"
+    },
+    {
+      "fr": "Buts-",
+      "key": "classement.stat_goals_against",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "avgFor:'Buts+', avgAg:'Buts-', cards:'Cartons'"
+    },
+    {
+      "fr": "Cartons",
+      "key": "classement.stat_cards",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "avgAg:'Buts-', cards:'Cartons' }"
+    },
+    {
+      "fr": "L5",
+      "key": "classement.period_l5_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "season:'Saison', l5:'L5', l10:'L10', l25:'L25'"
+    },
+    {
+      "fr": "L10",
+      "key": "classement.period_l10_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "l5:'L5', l10:'L10', l25:'L25'"
+    },
+    {
+      "fr": "L25",
+      "key": "classement.period_l25_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "l10:'L10', l25:'L25' }"
+    },
+    {
+      "fr": "Aucune donnée.",
+      "key": "common.no_data_period",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ins-empty\">Aucune donnée.</div>"
+    },
+    {
+      "fr": "Moy+",
+      "key": "classement.avg_for_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Moy+</th><th>Moy-</th><th>Pts</th>"
+    },
+    {
+      "fr": "Moy-",
+      "key": "classement.avg_against_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Moy+</th><th>Moy-</th><th>Pts</th>"
+    },
+    {
+      "fr": "⚡ Intensité {0}/100",
+      "key": "insights.intensity_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "` · ⚡ Intensité <strong style=\"color:${m.live_intensity"
+    },
+    {
+      "fr": "{0} — {1}{2}",
+      "key": "insights.teams_header",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ins-teams').textContent = `${m.home_team} — ${m.away_team}${insLiveScore}`"
+    },
+    {
+      "fr": "Génération du rapport Pro Scout 5 Piliers…",
+      "key": "scouting.generating_report",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>Génération du rapport Pro Scout 5 Piliers…</span>"
+    },
+    {
+      "fr": "PRO SCOUT v2",
+      "key": "scouting.pro_scout_badge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${data.cached ? 'CACHE 24H' : 'PRO SCOUT v2'}"
+    },
+    {
+      "fr": "5 PILIERS · GEMINI 2.0 FLASH",
+      "key": "scouting.pillars_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "monospace;\">5 PILIERS · GEMINI 2.0 FLASH</span>"
+    },
+    {
+      "fr": "Script Telegram",
+      "key": "scouting.telegram_script_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text2);\">Script Telegram</span>"
+    },
+    {
+      "fr": "Copier pour Telegram",
+      "key": "scouting.copy_telegram",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "monospace;\">\n            Copier pour Telegram\n          </button>"
+    },
+    {
+      "fr": "Analyse temporairement indisponible.",
+      "key": "scouting.temp_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text3)\">Analyse temporairement indisponible.<br>"
+    },
+    {
+      "fr": "Réessayez dans quelques secondes.",
+      "key": "scouting.retry_seconds",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:11px\">Réessayez dans quelques secondes.</span>"
+    },
+    {
+      "fr": "Match ouvert — avantage offensif",
+      "key": "scouting.scenario_open",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "xgTotal > 2.5 ? 'Match ouvert — avantage offensif'"
+    },
+    {
+      "fr": "Match fermé — avantage défensif",
+      "key": "scouting.scenario_closed",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "xgTotal < 2.0 ? 'Match fermé — avantage défensif' : 'Match équilibré'"
+    },
+    {
+      "fr": "Match équilibré",
+      "key": "scouting.scenario_balanced",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": ": 'Match équilibré';"
+    },
+    {
+      "fr": "RAPPORT SYNTHÉTIQUE (fallback — IA indisponible)",
+      "key": "scouting.synthetic_report_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "monospace\">RAPPORT SYNTHÉTIQUE (fallback — IA indisponible)</div>"
+    },
+    {
+      "fr": "Rapport Scouting — {0} vs {1}",
+      "key": "scouting.report_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin:0 0 12px\">Rapport Scouting — ${m.home_team} vs"
+    },
+    {
+      "fr": "Scénario :",
+      "key": "scouting.scenario_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<p><strong>Scénario :</strong> ${scenario} (xG"
+    },
+    {
+      "fr": "Marchés :",
+      "key": "scouting.markets_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<p><strong>Marchés :</strong> O2.5 ${p.over25"
+    },
+    {
+      "fr": "L'analyse IA Pro Scout est temporairement indisponible. Ce rapport est généré à partir des statistiques du match.",
+      "key": "scouting.ai_unavailable_note",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:12px\">L'analyse IA Pro Scout est temporairement indisponible."
+    },
+    {
+      "fr": "Over $1.$2",
+      "key": "corners.over_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "k.replace(/over_(\\d+)_(\\d+)/, 'Over $1.$2')"
+    },
+    {
+      "fr": "✓ Value",
+      "key": "corners.rec_value",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "'<span class=\"cr-rec-badge\">✓ Value</span>'"
+    },
+    {
+      "fr": "Skip",
+      "key": "corners.rec_skip",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cr-rec-badge cr-rec-skip\">Skip</span>"
+    },
+    {
+      "fr": "Estimation\nligue moy.",
+      "key": "corners.estimate_league_avg",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cr-no-data\">Estimation<br>ligue moy.</div>"
+    },
+    {
+      "fr": "∑ match",
+      "key": "corners.sum_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statRow('∑ match', total"
+    },
+    {
+      "fr": "Pour ↑",
+      "key": "corners.for_up",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statRow('Pour ↑',  forC"
+    },
+    {
+      "fr": "Contre ↓",
+      "key": "corners.against_down",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "statRow('Contre ↓',agst"
+    },
+    {
+      "fr": "🗂 {0} matchs",
+      "key": "corners.sample_matches",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cr-sample-badge\">🗂 ${hist.matches_sample || '?'} matchs</div>"
+    },
+    {
+      "fr": "🚩 Corners",
+      "key": "corners.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"cr-title\">🚩 Corners</div>"
+    },
+    {
+      "fr": "Données BSD réelles",
+      "key": "corners.source_bsd",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "d.source === 'bsd' ? 'Données BSD réelles' : 'Modèle Poisson'"
+    },
+    {
+      "fr": "Modèle Poisson",
+      "key": "corners.source_poisson",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Données BSD réelles' : 'Modèle Poisson'"
+    },
+    {
+      "fr": "λ attendu",
+      "key": "corners.lambda_expected",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"cr-vs-label\">λ attendu</div>"
+    },
+    {
+      "fr": "Distribution Over/Under",
+      "key": "corners.distribution_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"cr-section-title\">Distribution Over/Under</div>"
+    },
+    {
+      "fr": "Recommandations",
+      "key": "corners.recommendations_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"cr-recs-title\">Recommandations</div>"
+    },
+    {
+      "fr": "Erreur corners : {0}",
+      "key": "corners.error",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ins-empty\">Erreur corners : ' + e.message"
+    },
+    {
+      "fr": "Fiabilité {0}/100 — composantes indisponibles",
+      "key": "reliability.no_components",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "return `Fiabilité ${score}/100 — composantes indisponibles`"
+    },
+    {
+      "fr": "Fiabilité {0}/100 — formule composite :",
+      "key": "reliability.composite_formula",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lines.push(`Fiabilité ${score}/100 — formule composite :`)"
+    },
+    {
+      "fr": "• Volume Data (35%) : {0}/100",
+      "key": "reliability.volume_data",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lines.push(`• Volume Data (35%) : ${v.score"
+    },
+    {
+      "fr": "{0} matchs joués moyens (max @ 20+)",
+      "key": "reliability.avg_played",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lines.push(`  ${vRaw.avg_played} matchs joués moyens (max @ 20+)`)"
+    },
+    {
+      "fr": "• Stabilité IC (35%) : {0}/100",
+      "key": "reliability.stability_ic",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lines.push(`• Stabilité IC (35%) : ${s.score"
+    },
+    {
+      "fr": "IC over25 width {0}pts (étroit = stable)",
+      "key": "reliability.ic_width",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lines.push(`  IC over25 width ${sRaw.ic_width_over25}pts (étroit = stable)`)"
+    },
+    {
+      "fr": "• Qualité Source (30%) : {0}/100",
+      "key": "reliability.quality_source",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lines.push(`• Qualité Source (30%) : ${q.score"
+    },
+    {
+      "fr": "Données réelles BSD/API",
+      "key": "reliability.real_data",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "qRaw.is_real_data ? 'Données réelles BSD/API' : 'Données simulées (sim)'"
+    },
+    {
+      "fr": "Données simulées (sim)",
+      "key": "reliability.simulated_data",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Données réelles BSD/API' : 'Données simulées (sim)'"
+    },
+    {
+      "fr": "Intervalle étroit — modèle confiant",
+      "key": "static_insight.ic_robust_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "['robust',   'ROBUSTE', 'Intervalle étroit — modèle confiant']"
+    },
+    {
+      "fr": "Données suffisantes",
+      "key": "static_insight.ic_moderate_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "['moderate', 'MODÉRÉ',  'Données suffisantes']"
+    },
+    {
+      "fr": "Peu de matchs — fourchette large",
+      "key": "static_insight.ic_uncertain_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "['uncertain','INCERT.', 'Peu de matchs — fourchette large']"
+    },
+    {
+      "fr": "Cote bk: {0} = {1}% implicite",
+      "key": "static_insight.book_odds_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "title=\"Cote bk: ${safeFixed(bookOdds, 2)} = ${bookPct}% implicite\""
+    },
+    {
+      "fr": "Over 2.5",
+      "key": "markets.over25",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "gaugeCell('Over 2.5', p.over25 || null"
+    },
+    {
+      "fr": "Vic. Dom.",
+      "key": "static_insight.home_win_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "gaugeCell('Vic. Dom.', hwPct"
+    },
+    {
+      "fr": "Forme : {0}",
+      "key": "static_insight.form_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ps-streak-chip ${cls}\" title=\"Forme : ${form}\""
+    },
+    {
+      "fr": "victoire",
+      "key": "static_insight.streak_win",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "s.result === 'W' ? 'victoire' : s.result === 'D' ? 'nul' : 'défaite'"
+    },
+    {
+      "fr": "nul",
+      "key": "static_insight.streak_draw",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "s.result === 'D' ? 'nul' : 'défaite'"
+    },
+    {
+      "fr": "défaite",
+      "key": "static_insight.streak_loss",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'nul' : 'défaite';"
+    },
+    {
+      "fr": "{0} · {1} {2}{3}",
+      "key": "static_insight.streak_chip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${icon} ${teamName} · ${s.count} ${lbl}${s.count > 1 ? 's' : ''}"
+    },
+    {
+      "fr": "Poss.",
+      "key": "static_insight.live_possession",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "const labels = ['Poss.','xG','Tirs','Corners','Att.Dang.']"
+    },
+    {
+      "fr": "Tirs",
+      "key": "static_insight.live_shots",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "['Poss.','xG','Tirs','Corners','Att.Dang.']"
+    },
+    {
+      "fr": "Att.Dang.",
+      "key": "static_insight.live_dangerous_attacks",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Corners','Att.Dang.']"
+    },
+    {
+      "fr": "🎯 Pari recommandé",
+      "key": "static_insight.bet_recommended_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ps-bet-cta-title\">🎯 Pari recommandé</div>"
+    },
+    {
+      "fr": "EV +{0}%",
+      "key": "static_insight.ev_value",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "border:1px solid rgba(0,230,118,0.25)\">EV +${safeFixed(ev, 1)}%</span>"
+    },
+    {
+      "fr": "✅ IC confirmé",
+      "key": "static_insight.ic_confirmed",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "border:1px solid rgba(0,230,118,0.18)\">✅ IC confirmé</span>"
+    },
+    {
+      "fr": "Fiabilité {0}/100",
+      "key": "static_insight.reliability_badge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cursor:help\">Fiabilité ${rel}/100 ${relComp"
+    },
+    {
+      "fr": "Parier",
+      "key": "static_insight.bet_cta",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "href=\"${affHrefOk}\">\n          Parier <span class=\"aff-cta__odds\">@${oddsStr}</span>"
+    },
+    {
+      "fr": "⚠️ Value potentielle — IC non confirmé",
+      "key": "static_insight.bet_warn_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ps-bet-cta-title\">⚠️ Value potentielle — IC non confirmé</div>"
+    },
+    {
+      "fr": "✗ EV pessimiste ≤ 0%",
+      "key": "static_insight.ev_pessimistic",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "border:1px solid rgba(239,68,68,0.2)\">✗ EV pessimiste ≤ 0%</span>"
+    },
+    {
+      "fr": "Tenter",
+      "key": "static_insight.bet_try_cta",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "href=\"${affHrefWarn}\">\n          Tenter <span class=\"aff-cta__odds\">@${oddsStr}</span>"
+    },
+    {
+      "fr": "🛑 Pas de value bet confirmé",
+      "key": "static_insight.bet_skip_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ps-bet-cta-title\">🛑 Pas de value bet confirmé</div>"
+    },
+    {
+      "fr": "EV insuffisant ou intervalle de confiance trop large",
+      "key": "static_insight.bet_skip_reason",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "bs.reason.slice(0,80) : 'EV insuffisant ou intervalle de confiance trop large'"
+    },
+    {
+      "fr": "✈ DÉPLACEMENT · Haversine",
+      "key": "static_insight.travel_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:800\">✈ DÉPLACEMENT · Haversine</span>"
+    },
+    {
+      "fr": "Distance >500km — fatigue jet-lag corrélée perf dégradée visiteurs",
+      "key": "static_insight.jetlag_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Distance >500km — fatigue jet-lag corrélée perf dégradée visiteurs\">⚠ JET-LAG</span>"
+    },
+    {
+      "fr": "⚠ JET-LAG",
+      "key": "static_insight.jetlag_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "perf dégradée visiteurs\">⚠ JET-LAG</span>"
+    },
+    {
+      "fr": "Facteur multiplicatif λ_away (edge math future)",
+      "key": "static_insight.lambda_away_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Facteur multiplicatif λ_away (edge math future)\""
+    },
+    {
+      "fr": "🌦 MÉTÉO · Open-Meteo",
+      "key": "static_insight.weather_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:800\">🌦 MÉTÉO · Open-Meteo</span>"
+    },
+    {
+      "fr": "Précipitation horaire",
+      "key": "static_insight.precip_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "color:var(--text2)\" title=\"Précipitation horaire\">${precip}</span>"
+    },
+    {
+      "fr": "Vitesse vent à 10m",
+      "key": "static_insight.wind_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "color:var(--text2)\" title=\"Vitesse vent à 10m\">${wind}</span>"
+    },
+    {
+      "fr": "Pluie >3mm/h ou vent >30km/h — corrélation négative avec λ buts (passes longues moins précises, contrôle dégradé)",
+      "key": "static_insight.weather_edge_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Pluie >3mm/h ou vent >30km/h — corrélation négative avec λ buts"
+    },
+    {
+      "fr": "⚠ ÉDGE-MATH",
+      "key": "static_insight.edge_math_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "contrôle dégradé)\">⚠ ÉDGE-MATH</span>"
+    },
+    {
+      "fr": "⚡ PRÉDICTIONS LIVE AJUSTÉES · Poisson Time-Inhomogène",
+      "key": "static_insight.live_poisson_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:800\">⚡ PRÉDICTIONS LIVE AJUSTÉES · Poisson Time-Inhomogène</span>"
+    },
+    {
+      "fr": "Dom.",
+      "key": "static_insight.home_short_dot",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lbl: m.home_team || 'Dom.', pre: pm.homeWin"
+    },
+    {
+      "fr": "Ext.",
+      "key": "static_insight.away_short_dot",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "lbl: m.away_team || 'Ext.', pre: pm.awayWin"
+    },
+    {
+      "fr": "Marché",
+      "key": "static_insight.market_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "padding:5px 0\">Marché</th><th style=\"text-align:right;padding:5px 0\">Pre-match</th>"
+    },
+    {
+      "fr": "Live",
+      "key": "static_insight.live_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "padding:5px 0\">Live</th><th style=\"text-align:right;padding:5px 0\">Δ</th>"
+    },
+    {
+      "fr": "📊 Analyse instantanée",
+      "key": "static_insight.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"ps-static-title\">📊 Analyse instantanée</div>"
+    },
+    {
+      "fr": "Résultats dominants {0} (+{1})",
+      "key": "team_radar.verdict_dominant_results",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "verdicts.push(`Résultats dominants <strong>${m.home_team}</strong> (+"
+    },
+    {
+      "fr": "Qualité offensive/défensive {0}",
+      "key": "team_radar.verdict_quality",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "verdicts.push(`Qualité offensive/défensive <strong>${m.home_team}</strong>`)"
+    },
+    {
+      "fr": "Forces équilibrées",
+      "key": "team_radar.verdict_balanced",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (!verdicts.length) verdicts.push('Forces équilibrées')"
+    },
+    {
+      "fr": "Power Score V44 — Comparatif",
+      "key": "team_radar.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.08em\">Power Score V44 — Comparatif</div>"
+    },
+    {
+      "fr": "4 piliers : Résultats · Streak · Qualité · Opposition",
+      "key": "team_radar.pillars_subtitle",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:2px\">4 piliers : Résultats · Streak · Qualité · Opposition</div>"
+    },
+    {
+      "fr": "Avantage",
+      "key": "team_radar.advantage",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--font-mono)\">Avantage</div>"
+    },
+    {
+      "fr": "PWR /100",
+      "key": "team_radar.pwr_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div style=\"font-size:9px;color:var(--text3)\">PWR /100</div>"
+    },
+    {
+      "fr": "Résultats",
+      "key": "team_radar.pillar_results",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "card('Résultats', hP.pillerA, aP.pillerA, 40, 40)"
+    },
+    {
+      "fr": "Streak",
+      "key": "team_radar.pillar_streak",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "card('Streak', hP.pillerB, aP.pillerB, 25, 25)"
+    },
+    {
+      "fr": "Qualité",
+      "key": "team_radar.pillar_quality",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "card('Qualité', hP.pillerC, aP.pillerC, 20, 20)"
+    },
+    {
+      "fr": "Opposition",
+      "key": "team_radar.pillar_opposition",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "card('Opposition', hP.pillerD, aP.pillerD, 15, 15)"
+    },
+    {
+      "fr": "Verdict :",
+      "key": "team_radar.verdict_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text)\">Verdict :</strong> ${verdicts.join(' · ')}"
+    },
+    {
+      "fr": "Résultats (40%)",
+      "key": "team_radar.chart_results",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "labels: ['Résultats (40%)', 'Streak (25%)'"
+    },
+    {
+      "fr": "Streak (25%)",
+      "key": "team_radar.chart_streak",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Résultats (40%)', 'Streak (25%)', 'Qualité (20%)'"
+    },
+    {
+      "fr": "Qualité (20%)",
+      "key": "team_radar.chart_quality",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Streak (25%)', 'Qualité (20%)', 'Opposition (15%)'"
+    },
+    {
+      "fr": "Opposition (15%)",
+      "key": "team_radar.chart_opposition",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Qualité (20%)', 'Opposition (15%)']"
+    },
+    {
+      "fr": "Voir onglet Joueurs",
+      "key": "powerscore.see_players_tab",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "onclick=\"insShowTab('joueurs')\" title=\"Voir onglet Joueurs\""
+    },
+    {
+      "fr": "Top {0}",
+      "key": "powerscore.percentile_badge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--font-mono)\">Top ${pct}</span>"
+    },
+    {
+      "fr": "Données indisponibles",
+      "key": "powerscore.data_unavailable_player",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (!p) return 'Données indisponibles';"
+    },
+    {
+      "fr": "{0} vs moy.",
+      "key": "powerscore.delta_vs_avg",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-weight:700\">${sign}${safeFixed(delta, 1)} vs moy.</span>"
+    },
+    {
+      "fr": "Victoire",
+      "key": "powerscore.form_dot_win",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "c==='W' ? 'Victoire' : c==='D' ? 'Nul' : 'Défaite'"
+    },
+    {
+      "fr": "Nul",
+      "key": "powerscore.form_dot_draw",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "c==='D' ? 'Nul' : 'Défaite'"
+    },
+    {
+      "fr": "Défaite",
+      "key": "powerscore.form_dot_loss",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Nul' : 'Défaite';"
+    },
+    {
+      "fr": "Connexion à l'IA…",
+      "key": "powerscore.connecting_ai",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span id=\"ps-status-txt\">Connexion à l'IA…</span>"
+    },
+    {
+      "fr": "📦 En cache",
+      "key": "powerscore.cached_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "var(--font-mono);\">📦 En cache</span>"
+    },
+    {
+      "fr": "📲 SCRIPT TELEGRAM",
+      "key": "powerscore.telegram_script_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:8px;\">📲 SCRIPT TELEGRAM</div>"
+    },
+    {
+      "fr": "📋 Copier pour Telegram",
+      "key": "powerscore.copy_telegram_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "transition:background .15s;\">📋 Copier pour Telegram</button>"
+    },
+    {
+      "fr": "Cette analyse vous a été utile ?",
+      "key": "powerscore.feedback_question",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3);\">Cette analyse vous a été utile ?</span>"
+    },
+    {
+      "fr": "Utile",
+      "key": "powerscore.feedback_useful",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "cursor:pointer;\" title=\"Utile\">👍</button>"
+    },
+    {
+      "fr": "Pas utile",
+      "key": "powerscore.feedback_not_useful",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "cursor:pointer;\" title=\"Pas utile\">👎</button>"
+    },
+    {
+      "fr": "Merci pour votre retour !",
+      "key": "powerscore.feedback_thanks",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--green);font-size:12px;\">Merci pour votre retour !</span>"
+    },
+    {
+      "fr": "📰 {0} source{1} presse",
+      "key": "powerscore.press_sources_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "pb.textContent = `📰 ${d.press_count} source"
+    },
+    {
+      "fr": "Reconnexion…",
+      "key": "powerscore.reconnecting",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusTxt.textContent = 'Reconnexion…';"
+    },
+    {
+      "fr": "⚠ Match introuvable. Les données sont peut-être en cours de synchronisation.",
+      "key": "powerscore.match_not_found",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'⚠ Match introuvable. Les données sont peut-être en cours de synchronisation.'"
+    },
+    {
+      "fr": "⚠ Erreur — vérifiez que le serveur est lancé",
+      "key": "powerscore.error_server",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'⚠ Erreur — vérifiez que le serveur est lancé';"
+    },
+    {
+      "fr": "✓ Copié !",
+      "key": "common.copied",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = '✓ Copié !'; btn.style.background"
+    },
+    {
+      "fr": "Possession (%)",
+      "key": "live_detail.possession",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'possession', label:'Possession (%)' }"
+    },
+    {
+      "fr": "Volume Attaque",
+      "key": "live_detail.attack_volume",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'attack',     label:'Volume Attaque' }"
+    },
+    {
+      "fr": "Attaques Dangereuses",
+      "key": "live_detail.dangerous_attacks",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'danger',     label:'Attaques Dangereuses' }"
+    },
+    {
+      "fr": "xG Live",
+      "key": "live_detail.xg_live",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'xg',         label:'xG Live' }"
+    },
+    {
+      "fr": "Tirs",
+      "key": "live_detail.shots",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'shots',      label:'Tirs' }"
+    },
+    {
+      "fr": "Tirs cadrés",
+      "key": "live_detail.shots_on",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'sot',        label:'Tirs cadrés' }"
+    },
+    {
+      "fr": "Tirs non cadrés",
+      "key": "live_detail.shots_off",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'soff',       label:'Tirs non cadrés' }"
+    },
+    {
+      "fr": "Tirs contrés",
+      "key": "live_detail.shots_blocked",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'sblk',       label:'Tirs contrés' }"
+    },
+    {
+      "fr": "⛳ Corners",
+      "key": "live_detail.corners",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'corners',    label:'⛳ Corners' }"
+    },
+    {
+      "fr": "🎯 Big Chances",
+      "key": "live_detail.big_chances",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'bigchances', label:'🎯 Big Chances' }"
+    },
+    {
+      "fr": "Penalty",
+      "key": "live_detail.penalty",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'penalty',  label:'Penalty' }"
+    },
+    {
+      "fr": "Fautes",
+      "key": "live_detail.fouls",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'fouls',    label:'Fautes' }"
+    },
+    {
+      "fr": "Cartons jaunes",
+      "key": "live_detail.yellow_cards",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'cy',       label:'Cartons jaunes' }"
+    },
+    {
+      "fr": "Cartons rouges",
+      "key": "live_detail.red_cards",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'cr',       label:'Cartons rouges' }"
+    },
+    {
+      "fr": "Hors-jeux",
+      "key": "live_detail.offsides",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'offsides', label:'Hors-jeux' }"
+    },
+    {
+      "fr": "Total Passes",
+      "key": "live_detail.passes_total",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'passes_total',    label:'Total Passes' }"
+    },
+    {
+      "fr": "Passes clés",
+      "key": "live_detail.key_passes",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'key_passes',      label:'Passes clés' }"
+    },
+    {
+      "fr": "Passes réussies",
+      "key": "live_detail.passes_accurate",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'passes_accurate', label:'Passes réussies' }"
+    },
+    {
+      "fr": "Centres réussies",
+      "key": "live_detail.crosses",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'crosses',         label:'Centres réussies' }"
+    },
+    {
+      "fr": "Passes Longues réussies",
+      "key": "live_detail.long_balls",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'long_balls',      label:'Passes Longues réussies' }"
+    },
+    {
+      "fr": "Tacles",
+      "key": "live_detail.tackles",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'tackles',       label:'Tacles' }"
+    },
+    {
+      "fr": "Interceptions",
+      "key": "live_detail.interceptions",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'interceptions', label:'Interceptions' }"
+    },
+    {
+      "fr": "Dégagements",
+      "key": "live_detail.clearances",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'clearances',    label:'Dégagements' }"
+    },
+    {
+      "fr": "Parades",
+      "key": "live_detail.saves",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ key:'saves',         label:'Parades' }"
+    },
+    {
+      "fr": "⚡ {0}/100",
+      "key": "live_detail.intensity",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "iEl.textContent = `⚡ ${intensity}/100`;"
+    },
+    {
+      "fr": "⏳ Stats live en cours de récupération…",
+      "key": "live_detail.stats_loading_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "⏳ <strong>Stats live en cours de récupération…</strong>"
+    },
+    {
+      "fr": "Match à {0}' — les données détaillées (xG, attaques, tirs) arrivent progressivement. Rafraîchissement auto toutes les 30 s. Score live fiable dès maintenant.",
+      "key": "live_detail.stats_loading_desc",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text3);\">Match à ${matchMinute}' — les données détaillées"
+    },
+    {
+      "fr": "⚠️ Statistiques live indisponibles pour {0}.",
+      "key": "live_detail.stats_unavailable_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "⚠️ <strong>Statistiques live indisponibles</strong> pour <em>${m.league"
+    },
+    {
+      "fr": "cette compétition",
+      "key": "live_detail.this_competition",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "${m.league || 'cette compétition'}</em>."
+    },
+    {
+      "fr": "Couverture data limitée pour cette compétition (data provider). Le score live et le résultat final restent fiables.",
+      "key": "live_detail.coverage_limited_desc",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3);\">Couverture data limitée pour cette compétition (data provider)."
+    }
+  ]
+}

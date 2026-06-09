@@ -1,0 +1,2062 @@
+{
+  "strings": [
+    {
+      "fr": "Aucun résultat trouvé",
+      "key": "guide.search_no_results",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "guide-search-no-results\">Aucun résultat trouvé</div>"
+    },
+    {
+      "fr": "🧮 Outils de Calcul",
+      "key": "guide.calc_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "guide-calc-title\">🧮 Outils de Calcul</div>"
+    },
+    {
+      "fr": "Marge",
+      "key": "guide.calc_tab_margin",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-tab=\"margin\">Marge</button>"
+    },
+    {
+      "fr": "Cotes",
+      "key": "guide.calc_tab_odds",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-tab=\"odds\">Cotes</button>"
+    },
+    {
+      "fr": "Gain",
+      "key": "guide.calc_tab_payout",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-tab=\"payout\">Gain</button>"
+    },
+    {
+      "fr": "Cote Domicile",
+      "key": "guide.calc_label_home_odd",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "guide-calc-label\">Cote Domicile</div>"
+    },
+    {
+      "fr": "Cote Nul",
+      "key": "guide.calc_label_draw_odd",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "guide-calc-label\" style=\"margin-top:8px\">Cote Nul</div>"
+    },
+    {
+      "fr": "Cote Exterieur",
+      "key": "guide.calc_label_away_odd",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:8px\">Cote Exterieur</div>"
+    },
+    {
+      "fr": "Calculer la marge",
+      "key": "guide.calc_btn_margin",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"calcMargin()\" style=\"width:100%;margin-top:12px\">Calculer la marge"
+    },
+    {
+      "fr": "Cote Decimale",
+      "key": "guide.calc_label_decimal_odd",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "guide-calc-label\">Cote Decimale</div>"
+    },
+    {
+      "fr": "Convertir",
+      "key": "guide.calc_btn_convert",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"calcOdds()\" style=\"width:100%;margin-top:12px\">Convertir"
+    },
+    {
+      "fr": "Cote",
+      "key": "guide.calc_label_odd",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "section\" data-section=\"payout\">\n          <div class=\"guide-calc-label\">Cote</div>"
+    },
+    {
+      "fr": "Mise (€)",
+      "key": "guide.calc_label_stake",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:8px\">Mise (€)</div>"
+    },
+    {
+      "fr": "Calculer",
+      "key": "guide.calc_btn_payout",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "onclick=\"calcPayout()\" style=\"width:100%;margin-top:12px\">Calculer"
+    },
+    {
+      "fr": "EV (Expected Value)",
+      "key": "guide.glossary_ev_term",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ term: 'EV (Expected Value)', def:"
+    },
+    {
+      "fr": "Valeur attendue - Profit moyen attendu par unite misee. EV = (probabilité de gain × gain) - (probabilité de perte × mise)",
+      "key": "guide.glossary_ev_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "def: 'Valeur attendue - Profit moyen attendu par unite"
+    },
+    {
+      "fr": "Système de classement de la force des équipes. Échelle: 1500 (débutant) à 2500+ (élite mondiale)",
+      "key": "guide.glossary_elo_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "def: 'Système de classement de la force des équipes"
+    },
+    {
+      "fr": "xG (Expected Goals)",
+      "key": "guide.glossary_xg_term",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ term: 'xG (Expected Goals)', def:"
+    },
+    {
+      "fr": "Nombre de buts attendus basé sur la qualité des occasions. xG = somme des probabilités de chaque tir",
+      "key": "guide.glossary_xg_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "def: 'Nombre de buts attendus basé sur la qualité"
+    },
+    {
+      "fr": "Points Par Match - Moyenne de points obtenus par match",
+      "key": "guide.glossary_ppg_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'PPG', def: 'Points Par Match"
+    },
+    {
+      "fr": "Marge du bookmaker - Surplus par rapport à 100% des probabilités",
+      "key": "guide.glossary_overround_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'Overround', def: 'Marge du bookmaker"
+    },
+    {
+      "fr": "Both To Score - Les deux équipes marquent au moins un but",
+      "key": "guide.glossary_btts_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'BTTS', def: 'Both To Score"
+    },
+    {
+      "fr": "Victoire avec remboursement si match nul",
+      "key": "guide.glossary_dnb_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'Draw No Bet', def: 'Victoire avec remboursement"
+    },
+    {
+      "fr": "Avantage ou désavantage de points ajouté au score final",
+      "key": "guide.glossary_handicap_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'Handicap', def: 'Avantage ou désavantage"
+    },
+    {
+      "fr": "Mise sur tous les résultats pour garantir un profit quelle que soit l'issue",
+      "key": "guide.glossary_arbitrage_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'Arbitrage', def: 'Mise sur tous les résultats"
+    },
+    {
+      "fr": "Pari où la probabilité réelle est supérieure à la probabilité implicite de la cote",
+      "key": "guide.glossary_valuebet_def",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term: 'Value Bet', def: 'Pari où la probabilité réelle"
+    },
+    {
+      "fr": "Glossaire",
+      "key": "guide.glossary_btn_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "helpBtn.title = 'Glossaire';"
+    },
+    {
+      "fr": "📖 Glossaire Rapide",
+      "key": "guide.glossary_header",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "guide-help-header\">📖 Glossaire Rapide</div>"
+    },
+    {
+      "fr": "Rechercher un terme...",
+      "key": "guide.glossary_search_placeholder",
+      "file": "pariscore.js",
+      "wrap": "html-attr-placeholder",
+      "snippet": "id=\"help-search-input\" placeholder=\"Rechercher un terme...\">"
+    },
+    {
+      "fr": "Home",
+      "key": "guide.breadcrumb_home",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "showPage(\\'home\\');return false;\">Home</a> / Guide /"
+    },
+    {
+      "fr": "Introduction",
+      "key": "guide.breadcrumb_intro",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span id=\"current-section\">Introduction</span>"
+    },
+    {
+      "fr": "Progression",
+      "key": "guide.nav_progress_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "progress.innerHTML = `<span>Progression</span>"
+    },
+    {
+      "fr": "← Précédent",
+      "key": "guide.nav_prev",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "prevBtn.innerHTML = '← Précédent';"
+    },
+    {
+      "fr": "Suivant →",
+      "key": "guide.nav_next",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "nextBtn.innerHTML = 'Suivant →';"
+    },
+    {
+      "fr": "Entrez les 3 cotes",
+      "key": "guide.calc_margin_err_inputs",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if(!h||!d||!a){r.innerHTML='Entrez les 3 cotes';"
+    },
+    {
+      "fr": "Marge: <strong>{0}%</strong>",
+      "key": "guide.calc_margin_result",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "r.innerHTML='Marge: <strong>'+margin+'%</strong>';"
+    },
+    {
+      "fr": "Cote invalide",
+      "key": "guide.calc_odds_err_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if(!d||d<=1){r.innerHTML='Cote invalide';return}"
+    },
+    {
+      "fr": "Valeurs invalides",
+      "key": "guide.calc_payout_err_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if(!o||!s||o<=1){r.innerHTML='Valeurs invalides';return}"
+    },
+    {
+      "fr": "Profit: +{0}€ | Total: {1}€",
+      "key": "guide.calc_payout_result",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "r.innerHTML='Profit: +'+profit+'€ | Total: '+total+'€'"
+    },
+    {
+      "fr": "Alertes actives",
+      "key": "alerts.enabled_on",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label.textContent = p.enabled ? 'Alertes actives'"
+    },
+    {
+      "fr": "Alertes désactivées",
+      "key": "alerts.enabled_off",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Alertes actives' : 'Alertes désactivées';"
+    },
+    {
+      "fr": "Activées",
+      "key": "alerts.live_on",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "liveLab.textContent = p.liveEnabled ? 'Activées'"
+    },
+    {
+      "fr": "Désactivées",
+      "key": "alerts.live_off",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "p.liveEnabled ? 'Activées' : 'Désactivées';"
+    },
+    {
+      "fr": "⚠️ Saisissez votre Chat ID avant de tester",
+      "key": "alerts.test_missing_chatid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "msg.textContent = '⚠️ Saisissez votre Chat ID avant de tester';"
+    },
+    {
+      "fr": "⏳ Envoi…",
+      "key": "alerts.test_sending",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = '⏳ Envoi…';"
+    },
+    {
+      "fr": "✓ Message envoyé — vérifiez Telegram",
+      "key": "alerts.test_sent_ok",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "msg.textContent = '✓ Message envoyé — vérifiez Telegram';"
+    },
+    {
+      "fr": "Échec de l'envoi",
+      "key": "alerts.test_send_failed",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(data.error || 'Échec de l\\'envoi');"
+    },
+    {
+      "fr": "✗ Erreur réseau — serveur injoignable",
+      "key": "alerts.test_network_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "msg.textContent = '✗ Erreur réseau — serveur injoignable';"
+    },
+    {
+      "fr": "Erreur lors de la sauvegarde. Vérifiez que le serveur est lancé.",
+      "key": "alerts.save_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "catch { alert('Erreur lors de la sauvegarde. Vérifiez"
+    },
+    {
+      "fr": "pour l'instant. Les alertes sont déclenchées automatiquement lors du refresh des cotes.",
+      "key": "alerts.history_empty_suffix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "no_alert')} pour l'instant. Les alertes sont déclenchées"
+    },
+    {
+      "fr": "Lancez node server.js pour accéder à l'historique.",
+      "key": "alerts.history_load_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "12px 0;\">Lancez node server.js pour accéder à l\\'historique.</div>"
+    },
+    {
+      "fr": "GRATUIT",
+      "key": "pricing.plan_free_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'GRATUIT',"
+    },
+    {
+      "fr": "Inscription requise. Foot seul.",
+      "key": "pricing.plan_free_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Inscription requise. Foot seul.\","
+    },
+    {
+      "fr": "Tableau Matchs Foot",
+      "key": "pricing.feature_foot_table",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Tableau Matchs Foot',"
+    },
+    {
+      "fr": "5 grandes ligues UE (L1, PL, Liga, Bundesliga, Serie A)",
+      "key": "pricing.feature_5_leagues",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'5 grandes ligues UE (L1, PL, Liga, Bundesliga, Serie A)',"
+    },
+    {
+      "fr": "Cotes & probabilités Poisson",
+      "key": "pricing.feature_odds_poisson",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Cotes & probabilités Poisson'],"
+    },
+    {
+      "fr": "Tennis",
+      "key": "pricing.feature_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "disabled:['Tennis','IA / Power Score'"
+    },
+    {
+      "fr": "IA / Power Score",
+      "key": "pricing.feature_ai_powerscore",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'IA / Power Score','Top Stratégies'"
+    },
+    {
+      "fr": "Top Stratégies",
+      "key": "pricing.feature_top_strategies",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Top Stratégies','Alertes Telegram'"
+    },
+    {
+      "fr": "Alertes Telegram",
+      "key": "pricing.feature_alerts_telegram",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Alertes Telegram','Mes Paris & bankroll'"
+    },
+    {
+      "fr": "Mes Paris & bankroll",
+      "key": "pricing.feature_bets_bankroll",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Mes Paris & bankroll','Toutes les ligues'"
+    },
+    {
+      "fr": "Toutes les ligues",
+      "key": "pricing.feature_all_leagues",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Mes Paris & bankroll','Toutes les ligues'],"
+    },
+    {
+      "fr": "Créer mon compte",
+      "key": "pricing.btn_create_account",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Créer mon compte',"
+    },
+    {
+      "fr": "MATCHDAY FOOT",
+      "key": "pricing.plan_matchday_foot_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'MATCHDAY FOOT',"
+    },
+    {
+      "fr": "Tout le Foot Pro pendant 24h.",
+      "key": "pricing.plan_matchday_foot_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Tout le Foot Pro pendant 24h.\","
+    },
+    {
+      "fr": "Foot illimité 24h",
+      "key": "pricing.feature_foot_unlimited_24h",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Foot illimité 24h','Toutes les ligues'"
+    },
+    {
+      "fr": "Pass Foot du Jour",
+      "key": "pricing.btn_pass_foot",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Pass Foot du Jour',"
+    },
+    {
+      "fr": "MATCHDAY TENNIS",
+      "key": "pricing.plan_matchday_tennis_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'MATCHDAY TENNIS',"
+    },
+    {
+      "fr": "Tout le Tennis Pro pendant 24h.",
+      "key": "pricing.plan_matchday_tennis_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Tout le Tennis Pro pendant 24h.\","
+    },
+    {
+      "fr": "Tennis illimité 24h",
+      "key": "pricing.feature_tennis_unlimited_24h",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Tennis illimité 24h','Value bets & Elo Tennis'"
+    },
+    {
+      "fr": "Value bets & Elo Tennis",
+      "key": "pricing.feature_valuebets_elo_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Value bets & Elo Tennis','IA Tennis'"
+    },
+    {
+      "fr": "IA Tennis",
+      "key": "pricing.feature_ai_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Value bets & Elo Tennis','IA Tennis','Top Stratégies Tennis'"
+    },
+    {
+      "fr": "Top Stratégies Tennis",
+      "key": "pricing.feature_top_strategies_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'IA Tennis','Top Stratégies Tennis','Alertes Telegram'"
+    },
+    {
+      "fr": "Foot Pro",
+      "key": "pricing.feature_foot_pro",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "disabled:['Foot Pro'], btn:'Pass Tennis du Jour'"
+    },
+    {
+      "fr": "Pass Tennis du Jour",
+      "key": "pricing.btn_pass_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Pass Tennis du Jour',"
+    },
+    {
+      "fr": "DUO MATCHDAY",
+      "key": "pricing.plan_duo_matchday_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'DUO MATCHDAY',"
+    },
+    {
+      "fr": "Foot + Tennis Pro pendant 24h.",
+      "key": "pricing.plan_duo_matchday_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Foot + Tennis Pro pendant 24h.\","
+    },
+    {
+      "fr": "Foot + Tennis illimités 24h",
+      "key": "pricing.feature_duo_unlimited_24h",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Foot + Tennis illimités 24h','Toutes les ligues + ATP/WTA'"
+    },
+    {
+      "fr": "Toutes les ligues + ATP/WTA",
+      "key": "pricing.feature_all_leagues_atp_wta",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Toutes les ligues + ATP/WTA','IA / Power Score'"
+    },
+    {
+      "fr": "Top Stratégies (2 sports)",
+      "key": "pricing.feature_top_strategies_2sports",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Top Stratégies (2 sports)','Alertes Telegram'"
+    },
+    {
+      "fr": "Pass Duo du Jour",
+      "key": "pricing.btn_pass_duo",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Pass Duo du Jour',"
+    },
+    {
+      "fr": "PRO FOOT",
+      "key": "pricing.plan_pro_foot_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'PRO FOOT',"
+    },
+    {
+      "fr": "Pour les parieurs Foot.",
+      "key": "pricing.plan_pro_foot_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Pour les parieurs Foot.\","
+    },
+    {
+      "fr": "Foot illimité — toutes les ligues",
+      "key": "pricing.feature_foot_unlimited_all",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Foot illimité — toutes les ligues','IA / Power Score illimité'"
+    },
+    {
+      "fr": "IA / Power Score illimité",
+      "key": "pricing.feature_ai_powerscore_unlimited",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'IA / Power Score illimité','Top Stratégies'"
+    },
+    {
+      "fr": "Alertes Telegram temps réel",
+      "key": "pricing.feature_alerts_realtime",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Alertes Telegram temps réel','Mes Paris, bankroll, Plan 20%/j'"
+    },
+    {
+      "fr": "Mes Paris, bankroll, Plan 20%/j",
+      "key": "pricing.feature_bets_bankroll_plan",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Mes Paris, bankroll, Plan 20%/j','BetMines best picks IA'"
+    },
+    {
+      "fr": "BetMines best picks IA",
+      "key": "pricing.feature_betmines_picks",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'BetMines best picks IA','Comparateur 20+ bookmakers'"
+    },
+    {
+      "fr": "Comparateur 20+ bookmakers",
+      "key": "pricing.feature_comparator_books",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Comparateur 20+ bookmakers'], disabled:['Tennis']"
+    },
+    {
+      "fr": "Choisir Pro Foot",
+      "key": "pricing.btn_choose_pro_foot",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Choisir Pro Foot',"
+    },
+    {
+      "fr": "PRO TENNIS",
+      "key": "pricing.plan_pro_tennis_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'PRO TENNIS',"
+    },
+    {
+      "fr": "Pour les parieurs Tennis.",
+      "key": "pricing.plan_pro_tennis_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Pour les parieurs Tennis.\","
+    },
+    {
+      "fr": "Tennis illimité — ATP / WTA",
+      "key": "pricing.feature_tennis_unlimited_atp_wta",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Tennis illimité — ATP / WTA','Value bets & indices Elo'"
+    },
+    {
+      "fr": "Value bets & indices Elo",
+      "key": "pricing.feature_valuebets_elo_index",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Value bets & indices Elo','IA Tennis'"
+    },
+    {
+      "fr": "Foot Pro (reste niveau gratuit)",
+      "key": "pricing.feature_foot_pro_stays_free",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "disabled:['Foot Pro (reste niveau gratuit)'],"
+    },
+    {
+      "fr": "Choisir Pro Tennis",
+      "key": "pricing.btn_choose_pro_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Choisir Pro Tennis',"
+    },
+    {
+      "fr": "DUO PRO",
+      "key": "pricing.plan_duo_pro_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'DUO PRO',"
+    },
+    {
+      "fr": "Les 2 sports, tout illimité.",
+      "key": "pricing.plan_duo_pro_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Les 2 sports, tout illimité.\","
+    },
+    {
+      "fr": "Foot + Tennis illimités",
+      "key": "pricing.feature_duo_unlimited",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Foot + Tennis illimités','Toutes les ligues + ATP/WTA'"
+    },
+    {
+      "fr": "BetMines + Comparateur",
+      "key": "pricing.feature_betmines_comparator",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'BetMines + Comparateur','Accès Discord'"
+    },
+    {
+      "fr": "Accès Discord",
+      "key": "pricing.feature_discord_access",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'BetMines + Comparateur','Accès Discord'],"
+    },
+    {
+      "fr": "Commencer l'essai gratuit",
+      "key": "pricing.btn_start_trial",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:\"Commencer l'essai gratuit\","
+    },
+    {
+      "fr": "ANNUEL DUO",
+      "key": "pricing.plan_annual_duo_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'ANNUEL DUO',"
+    },
+    {
+      "fr": "/ mois - 27%",
+      "key": "pricing.period_annual_discount",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "period:'/ mois - 27%',"
+    },
+    {
+      "fr": "Duo Pro annuel — économisez ~96€/an.",
+      "key": "pricing.plan_annual_duo_desc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "desc:\"Duo Pro annuel — économisez ~96€/an.\","
+    },
+    {
+      "fr": "Tout Duo Pro inclus",
+      "key": "pricing.feature_all_duo_included",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "features:['Tout Duo Pro inclus','Accès anticipé nouvelles fonctions'"
+    },
+    {
+      "fr": "Accès anticipé nouvelles fonctions",
+      "key": "pricing.feature_early_access",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Accès anticipé nouvelles fonctions','Backtesting 2 ans'"
+    },
+    {
+      "fr": "Backtesting 2 ans",
+      "key": "pricing.feature_backtesting_2y",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Backtesting 2 ans','Export CSV / API'"
+    },
+    {
+      "fr": "Export CSV / API",
+      "key": "pricing.feature_export_csv_api",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Backtesting 2 ans','Export CSV / API','Alertes prioritaires'"
+    },
+    {
+      "fr": "Alertes prioritaires",
+      "key": "pricing.feature_priority_alerts",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Export CSV / API','Alertes prioritaires'],"
+    },
+    {
+      "fr": "Choisir Annuel",
+      "key": "pricing.btn_choose_annual",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn:'Choisir Annuel',"
+    },
+    {
+      "fr": "POPULAIRE",
+      "key": "pricing.badge_popular",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "price-badge\">POPULAIRE</div>"
+    },
+    {
+      "fr": "ACCES INSTANTANE",
+      "key": "pricing.badge_instant_access",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "price-badge-amber\">ACCES INSTANTANE</div>"
+    },
+    {
+      "fr": "Erreur lors de la creation du paiement.",
+      "key": "payment.matchday_create_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "alert(data.error || 'Erreur lors de la creation du paiement.');"
+    },
+    {
+      "fr": "Impossible de contacter le serveur de paiement.",
+      "key": "payment.server_unreachable",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "alert('Impossible de contacter le serveur de paiement.');"
+    },
+    {
+      "fr": "Inscription requise pour souscrire.",
+      "key": "payment.subscribe_register_required",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "else alert('Inscription requise pour souscrire.');"
+    },
+    {
+      "fr": "Erreur lors de la création du paiement.",
+      "key": "payment.checkout_create_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "alert(data.error || 'Erreur lors de la création du paiement.');"
+    },
+    {
+      "fr": "Aucun abonnement actif.",
+      "key": "payment.no_active_subscription",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "else alert(data.error || 'Aucun abonnement actif.');"
+    },
+    {
+      "fr": "Impossible d'ouvrir le portail client.",
+      "key": "payment.portal_open_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "alert('Impossible d\\'ouvrir le portail client.');"
+    },
+    {
+      "fr": "Abonnement actif ! Bienvenue dans la version Pro.",
+      "key": "payment.subscription_active_notif",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "showNotification('Abonnement actif ! Bienvenue dans la version Pro.', 'green');"
+    },
+    {
+      "fr": "Matchday Pass active ! Acces Pro pendant 24h.",
+      "key": "payment.matchday_active_notif",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "showNotification('Matchday Pass active ! Acces Pro pendant 24h.', 'green');"
+    },
+    {
+      "fr": "Inscription requise",
+      "key": "lock.register_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "const title = isReg ? 'Inscription requise'"
+    },
+    {
+      "fr": "Module réservé Pro",
+      "key": "lock.pro_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Inscription requise' : 'Module réservé Pro';"
+    },
+    {
+      "fr": "Créez votre compte gratuit pour accéder au tableau des matchs.",
+      "key": "lock.register_sub",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "? 'Créez votre compte gratuit pour accéder au tableau des matchs.'"
+    },
+    {
+      "fr": "Le module Tennis est inclus dans Pro Tennis et Pro Foot & Tennis.",
+      "key": "lock.tennis_sub",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Le module Tennis est inclus dans Pro Tennis et Pro Foot &amp; Tennis.'"
+    },
+    {
+      "fr": "Ce module est réservé aux abonnés Pro et Matchday Pass.",
+      "key": "lock.pro_sub",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Ce module est réservé aux abonnés Pro et Matchday Pass.');"
+    },
+    {
+      "fr": "Créer mon compte →",
+      "key": "lock.btn_create_account",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "onclick=\"openAuthModal('register')\">Créer mon compte →</button>"
+    },
+    {
+      "fr": "Voir les offres →",
+      "key": "lock.btn_see_offers",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "onclick=\"showPage('tarifs')\">Voir les offres →</button>"
+    },
+    {
+      "fr": "Matchday Pass 1,50€",
+      "key": "lock.btn_matchday_pass",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "onclick=\"buyMatchdayPass()\">Matchday Pass 1,50€</button>"
+    },
+    {
+      "fr": "Se connecter",
+      "key": "lock.btn_login",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "onclick=\"openAuthModal('login')\">Se connecter</button>"
+    },
+    {
+      "fr": "Liens affiliés activés",
+      "key": "settings.affiliate_on",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "_settings.affiliateLinks ? 'Liens affiliés activés'"
+    },
+    {
+      "fr": "Liens affiliés désactivés",
+      "key": "settings.affiliate_off",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Liens affiliés activés' : 'Liens affiliés désactivés';"
+    },
+    {
+      "fr": "Alertes Telegram activées",
+      "key": "settings.telegram_on",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "_settings.telegramAlerts ? 'Alertes Telegram activées'"
+    },
+    {
+      "fr": "Alertes Telegram désactivées",
+      "key": "settings.telegram_off",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Alertes Telegram activées' : 'Alertes Telegram désactivées';"
+    },
+    {
+      "fr": "Utilisateur connecté",
+      "key": "settings.account_logged_in",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "info.textContent = p.email || 'Utilisateur connecté';"
+    },
+    {
+      "fr": "✓ GAGNÉ",
+      "key": "bet.badge_won",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "badge-won\">✓ GAGNÉ</span>"
+    },
+    {
+      "fr": "✗ PERDU",
+      "key": "bet.badge_lost",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "badge-lost\">✗ PERDU</span>"
+    },
+    {
+      "fr": "API indisponible (HTTP {0}).",
+      "key": "hotpicks.api_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ico\">⚠️</div>API indisponible (HTTP ' + res.status + ').</div>"
+    },
+    {
+      "fr": "Aucun Hot Pick disponible pour le moment.",
+      "key": "hotpicks.empty_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ico\">🔍</div>Aucun Hot Pick disponible pour le moment."
+    },
+    {
+      "fr": "Revenez quand les prochains matchs seront chargés.",
+      "key": "hotpicks.empty_hint",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text3);\">Revenez quand les prochains matchs seront chargés.</span>"
+    },
+    {
+      "fr": "🎯 Stratégies représentées :",
+      "key": "hotpicks.strategies_represented",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-size:11px;\">🎯 Stratégies représentées :</span>"
+    },
+    {
+      "fr": "Value",
+      "key": "common.metric_value",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "letter-spacing:.05em;\">Value</div>"
+    },
+    {
+      "fr": "Fiab.",
+      "key": "common.metric_reliability_short",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "letter-spacing:.05em;\">Fiab.</div>"
+    },
+    {
+      "fr": "{0} edge",
+      "key": "hotpicks.badge_edge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ppc-badge\">${edgeStr} edge</span>"
+    },
+    {
+      "fr": "Erreur de chargement.",
+      "key": "common.load_error",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ico\">⚠</div>Erreur de chargement.</div>"
+    },
+    {
+      "fr": "API indisponible.",
+      "key": "surebets.api_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ico\">⚠️</div>API indisponible.</div>"
+    },
+    {
+      "fr": "Aucun Sure Bet pour le moment.",
+      "key": "surebets.empty_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ico\">🔍</div>Aucun Sure Bet pour le moment."
+    },
+    {
+      "fr": "Les Sure Bets nécessitent une confiance ≥ 75% et un indice de fiabilité ≥ 70%.",
+      "key": "surebets.empty_hint",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Les Sure Bets nécessitent une confiance ≥ 75% et un indice"
+    },
+    {
+      "fr": "~40% hit rate",
+      "key": "surebets.hitrate_default",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "data.hitRateEstimate || '~40% hit rate'"
+    },
+    {
+      "fr": "MAX",
+      "key": "surebets.level_max",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "lvl >= 10 ? 'MAX' : lvl >= 9 ? 'TRÈS ÉLEVÉ'"
+    },
+    {
+      "fr": "TRÈS ÉLEVÉ",
+      "key": "surebets.level_very_high",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'MAX' : lvl >= 9 ? 'TRÈS ÉLEVÉ' : 'ÉLEVÉ';"
+    },
+    {
+      "fr": "ÉLEVÉ",
+      "key": "surebets.level_high",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'TRÈS ÉLEVÉ' : 'ÉLEVÉ';"
+    },
+    {
+      "fr": "AI-AL — Terminal d'analyse Pariscore\n> Connexion au moteur IA…\n> Injection des données du match : {0}",
+      "key": "deep.terminal_boot",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term.textContent = '> AI-AL — Terminal d\\'analyse Pariscore"
+    },
+    {
+      "fr": "Scout :",
+      "key": "deep.scout_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "let line = '> Scout :';"
+    },
+    {
+      "fr": "Signal → {0}",
+      "key": "deep.scout_signal",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "line += '  Signal → ' + scout.topSignal;"
+    },
+    {
+      "fr": "Edge → {0}",
+      "key": "deep.scout_edge",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "line += '  |  Edge → ' + scout.edge;"
+    },
+    {
+      "fr": "Fiabilité : {0}/100 [{1}]",
+      "key": "deep.scout_reliability",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "line += '  |  Fiabilité : ' + scout.confidence + '/100 ['"
+    },
+    {
+      "fr": "Fiabilité données : {0}/100 ({1})",
+      "key": "deep.terminal_reliability_data",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term.textContent += '> Fiabilité données : ' + meta.confidence"
+    },
+    {
+      "fr": "DIVERGENCE {0}%",
+      "key": "deep.divergence_badge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "dp-div-badge ${d.gap > 0 ? 'up' : 'down'}\">DIVERGENCE"
+    },
+    {
+      "fr": "Modèle {0}% vs marché {1}%",
+      "key": "deep.divergence_model_vs_market",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text3)\">Modèle ${d.poisson}% vs marché ${d.implied}%</span>"
+    },
+    {
+      "fr": "{0} divergence(s) marché détectée(s)",
+      "key": "deep.divergence_count",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "meta.divergences.length + ' divergence(s) marché détectée(s)"
+    },
+    {
+      "fr": "Analyse reçue :",
+      "key": "deep.terminal_analysis_received",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term.textContent += '> Analyse reçue :"
+    },
+    {
+      "fr": "Analysé à {0}",
+      "key": "deep.timestamp_analyzed_at",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "tsEl2.textContent = 'Analysé à ' + _deepTimestamp.toLocaleTimeString"
+    },
+    {
+      "fr": "Analyse complète.",
+      "key": "deep.terminal_analysis_complete",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term.textContent += '\\n\\n> Analyse complète.'"
+    },
+    {
+      "fr": "Connexion interrompue",
+      "key": "deep.error_connection_interrupted",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "let msg = 'Connexion interrompue';"
+    },
+    {
+      "fr": "ERREUR : {0}",
+      "key": "deep.terminal_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term.textContent += '\\n\\n> ERREUR : ' + msg;"
+    },
+    {
+      "fr": "Connexion SSE perdue.",
+      "key": "deep.terminal_sse_lost",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "term.textContent += '\\n\\n> Connexion SSE perdue.';"
+    },
+    {
+      "fr": "Victoire dom",
+      "key": "deep.pro_row_home_win",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Victoire dom', poisson: p.homeWin,"
+    },
+    {
+      "fr": "Nul",
+      "key": "deep.pro_row_draw",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Nul',          poisson: p.draw,"
+    },
+    {
+      "fr": "Victoire ext",
+      "key": "deep.pro_row_away_win",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Victoire ext', poisson: p.awayWin,"
+    },
+    {
+      "fr": "Marché",
+      "key": "deep.pro_table_market",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<thead><tr><th>Marché</th><th>Proba</th>"
+    },
+    {
+      "fr": "Proba",
+      "key": "deep.pro_table_proba",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>Marché</th><th>Proba</th><th>Cote</th>"
+    },
+    {
+      "fr": "Cote",
+      "key": "deep.pro_table_odd",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>Proba</th><th>Cote</th><th>EV%</th>"
+    },
+    {
+      "fr": "λ domicile : {0} | λ extérieur : {1}",
+      "key": "deep.pro_lambda",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "λ domicile : ${λ.home} | λ extérieur : ${λ.away}"
+    },
+    {
+      "fr": "📐 Mise recommandée : {0}%",
+      "key": "deep.kelly_recommended_stake",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "const base = '📐 Mise recommandée : ' + safeFixed(pct, 1) + '%';"
+    },
+    {
+      "fr": "📰 Revue de presse — Avis médias",
+      "key": "deep.section_press_review",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "dp-section-title\">📰 Revue de presse — Avis médias</span>"
+    },
+    {
+      "fr": "Domicile",
+      "key": "deep.powerscore_home_ctx",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "const ctx  = domM ? 'Domicile' : 'Extérieur';"
+    },
+    {
+      "fr": "Extérieur",
+      "key": "deep.powerscore_away_ctx",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "domM ? 'Domicile' : 'Extérieur';"
+    },
+    {
+      "fr": "Code",
+      "key": "deep.code_block_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "dp-code-label\">Code</div>"
+    },
+    {
+      "fr": "Copier",
+      "key": "deep.code_copy",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "dp-code-copy\" onclick=\"dpCopy(this)\">Copier</button>"
+    },
+    {
+      "fr": "Copié !",
+      "key": "deep.code_copied",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = 'Copié !';"
+    },
+    {
+      "fr": "☀ Jour",
+      "key": "theme.toggle_day",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "const label = dark ? '☀ Jour' : '☾ Nuit';"
+    },
+    {
+      "fr": "☾ Nuit",
+      "key": "theme.toggle_night",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'☀ Jour' : '☾ Nuit';"
+    },
+    {
+      "fr": "🔊 Alertes sonores activées",
+      "key": "audio.alerts_on",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "showNotification(window._psAudio.enabled ? '🔊 Alertes sonores activées'"
+    },
+    {
+      "fr": "🔇 Alertes sonores désactivées",
+      "key": "audio.alerts_off",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'🔊 Alertes sonores activées' : '🔇 Alertes sonores désactivées'"
+    },
+    {
+      "fr": "Alertes sonores actives — cliquer pour désactiver",
+      "key": "audio.toggle_title_on",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "b.setAttribute('title', window._psAudio.enabled ? 'Alertes sonores actives — cliquer pour désactiver'"
+    },
+    {
+      "fr": "Alertes sonores désactivées — cliquer pour activer",
+      "key": "audio.toggle_title_off",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "'Alertes sonores désactivées — cliquer pour activer');"
+    },
+    {
+      "fr": "↔ Pincez pour zoomer",
+      "key": "mobile.pinch_zoom_hint",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "hint.textContent = '↔ Pincez pour zoomer';"
+    },
+    {
+      "fr": "Reglages affichage",
+      "key": "mobile.settings_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "panel.setAttribute('aria-label', 'Reglages affichage');"
+    },
+    {
+      "fr": "Densite",
+      "key": "mobile.settings_density_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "sui-settings-label\">Densite</span>"
+    },
+    {
+      "fr": "Compact",
+      "key": "mobile.density_compact",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-sui-value=\"compact\" aria-pressed=\"' + (currentDensity === 'compact') + '\">Compact</button>"
+    },
+    {
+      "fr": "Confort",
+      "key": "mobile.density_comfortable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-sui-value=\"comfortable\" aria-pressed=\"' + (currentDensity === 'comfortable') + '\">Confort</button>"
+    },
+    {
+      "fr": "Spacieux",
+      "key": "mobile.density_spacious",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-sui-value=\"spacious\" aria-pressed=\"' + (currentDensity === 'spacious') + '\">Spacieux</button>"
+    },
+    {
+      "fr": "Theme",
+      "key": "mobile.settings_theme_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "sui-settings-label\">Theme</span>"
+    },
+    {
+      "fr": "Auto OS",
+      "key": "mobile.theme_auto",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-sui-value=\"auto\" aria-pressed=\"' + (currentTheme === 'auto') + '\">Auto OS</button>"
+    },
+    {
+      "fr": "⚽ Football",
+      "key": "comp.sport_football",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "const SPORT_LBL = { football: '⚽ Football',"
+    },
+    {
+      "fr": "🎾 Tennis",
+      "key": "comp.sport_tennis",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "tennis: '🎾 Tennis', basketball:"
+    },
+    {
+      "fr": "🏀 Basket",
+      "key": "comp.sport_basketball",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "basketball: '🏀 Basket' };"
+    },
+    {
+      "fr": "☀ Thème clair",
+      "key": "comp.theme_light",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "b.textContent = dark ? '☀ Thème clair' : '◐ Thème L\\'Équipe';"
+    },
+    {
+      "fr": "◐ Thème L'Équipe",
+      "key": "comp.theme_lequipe",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'☀ Thème clair' : '◐ Thème L\\'Équipe';"
+    },
+    {
+      "fr": "⏳ Actualisation serveur...",
+      "key": "comp.refreshing_server",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (status) status.textContent = '⏳ Actualisation serveur...';"
+    },
+    {
+      "fr": "Erreur actualisation",
+      "key": "comp.refresh_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (status) status.textContent = 'Erreur actualisation';"
+    },
+    {
+      "fr": "Chargement des matchs...",
+      "key": "comp.loading_matches",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (status) status.textContent = 'Chargement des matchs...';"
+    },
+    {
+      "fr": "Tous sports",
+      "key": "comp.filter_all_sports",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sportSel.innerHTML = '<option value=\"\">Tous sports</option>'"
+    },
+    {
+      "fr": "{0} matchs · {1}",
+      "key": "comp.status_match_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "status.textContent = `${_compFeed.length} matchs · ${new Date()"
+    },
+    {
+      "fr": "Aucun match pour ces filtres.",
+      "key": "comp.empty_no_match_filters",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "g.innerHTML = '<div class=\"comp-empty\">Aucun match pour ces filtres.</div>';"
+    },
+    {
+      "fr": "Heure",
+      "key": "comp.col_time",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "comp-ghead\"><div>Heure</div><div>Match</div>"
+    },
+    {
+      "fr": "Match",
+      "key": "comp.col_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<div>Heure</div><div>Match</div><div style=\"text-align:center\">1</div>"
+    },
+    {
+      "fr": "TRJ",
+      "key": "comp.col_trj",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text-align:center\">TRJ</div><div style=\"text-align:right\">Books</div>"
+    },
+    {
+      "fr": "Books",
+      "key": "comp.col_books",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text-align:right\">Books</div></div>"
+    },
+    {
+      "fr": "Arbitrage +{0}%",
+      "key": "comp.flag_surebet_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "comp-gflag sb\" title=\"Arbitrage +${m.surebet}%\">SURE</span>"
+    },
+    {
+      "fr": "Edge {0}%",
+      "key": "comp.flag_value_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "comp-gflag vb\" title=\"Edge ${m.valuebet}%\">VALUE</span>"
+    },
+    {
+      "fr": "Cote 1 {0}",
+      "key": "comp.flag_decote_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "comp-gflag dc\" title=\"Cote 1 ${m.decote}\">DÉCOTE</span>"
+    },
+    {
+      "fr": "DÉCOTE",
+      "key": "comp.flag_decote",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "title=\"Cote 1 ${m.decote}\">DÉCOTE</span>"
+    },
+    {
+      "fr": "⏳ Chargement des cotes...",
+      "key": "comp.loading_odds",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "comp-empty\">⏳ Chargement des cotes...</div>"
+    },
+    {
+      "fr": "Aucune cote multi-bookmakers disponible pour ce match.",
+      "key": "comp.detail_no_odds",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "comp-empty\">Aucune cote multi-bookmakers disponible pour ce match."
+    },
+    {
+      "fr": "Les cotes détaillées sont collectées au cycle suivant (toutes les 12h).",
+      "key": "comp.detail_odds_next_cycle",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<small>Les cotes détaillées sont collectées au cycle suivant"
+    },
+    {
+      "fr": "Bookmakers non agréés en France — informatif uniquement",
+      "key": "comp.sep_unlicensed_informative",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "colspan=\"${span}\">Bookmakers non agréés en France — informatif uniquement"
+    },
+    {
+      "fr": "Moyenne du Marché",
+      "key": "comp.row_market_average",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "comp-bk-name\">Moyenne du Marché</div>"
+    },
+    {
+      "fr": "Moyenne pondérée no-vig par liquidité book",
+      "key": "comp.row_wfv_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "comp-bk-name\" title=\"Moyenne pondérée no-vig par liquidité book\">Val. Marché Pondérée"
+    },
+    {
+      "fr": "Val. Marché Pondérée",
+      "key": "comp.row_wfv_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "liquidité book\">Val. Marché Pondérée</div>"
+    },
+    {
+      "fr": "Cotes {0} non disponibles pour ce match (prochain cycle dans 12h).",
+      "key": "comp.fallback_odds_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Cotes ${label} non disponibles pour ce match (prochain cycle dans 12h)."
+    },
+    {
+      "fr": "Probabilité modèle : {0} = {1}%",
+      "key": "comp.fallback_model_proba",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<strong>Probabilité modèle : ${label} = ${prob}%</strong>"
+    },
+    {
+      "fr": "Consensus fort",
+      "key": "comp.consensus_strong",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "const icLbl = icPct >= 80 ? 'Consensus fort'"
+    },
+    {
+      "fr": "Consensus moyen",
+      "key": "comp.consensus_medium",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Consensus fort' : icPct >= 60 ? 'Consensus moyen'"
+    },
+    {
+      "fr": "Marché divisé",
+      "key": "comp.consensus_divided",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Consensus moyen' : 'Marché divisé';"
+    },
+    {
+      "fr": "Indice de Consensus — mesure l'accord entre bookmakers",
+      "key": "comp.ic_badge_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "comp-ic-badge ${icCls}\" title=\"Indice de Consensus — mesure l'accord entre bookmakers\">IC"
+    },
+    {
+      "fr": "IC {0}% — {1}",
+      "key": "comp.ic_badge_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "entre bookmakers\">IC ${icPct}% — ${icLbl}</span>"
+    },
+    {
+      "fr": "Arbitrage détecté — couverture rentable",
+      "key": "comp.surebet_badge_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "comp-surebet-badge\" title=\"Arbitrage détecté — couverture rentable\">ARBI +"
+    },
+    {
+      "fr": "ARBI +{0}%",
+      "key": "comp.surebet_badge_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "couverture rentable\">ARBI +${safeFixed(surebet, 2)}%</span>"
+    },
+    {
+      "fr": "Bookmaker",
+      "key": "comp.th_bookmaker",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "text-align:left;\">Bookmaker</th>"
+    },
+    {
+      "fr": "+ {0} buts (Over)",
+      "key": "comp.th_over_goals",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>+ ${lineStr} buts (Over)</th><th>- ${lineStr} buts (Under)</th>"
+    },
+    {
+      "fr": "- {0} buts (Under)",
+      "key": "comp.th_under_goals",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buts (Over)</th><th>- ${lineStr} buts (Under)</th><th>Payout</th>"
+    },
+    {
+      "fr": "Payout",
+      "key": "comp.th_payout",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buts (Under)</th><th>Payout</th>"
+    },
+    {
+      "fr": "Meilleure cote",
+      "key": "comp.row_best_odd",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "comp-bk-name\">Meilleure cote</div>"
+    },
+    {
+      "fr": "Over/Under 1.5",
+      "key": "comp.market_ou15",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (res.noData) return poissonFallback('Over/Under 1.5', res.prob ?? null);"
+    },
+    {
+      "fr": "Over/Under 2.5",
+      "key": "comp.market_ou25",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (res.noData) return poissonFallback('Over/Under 2.5', poisson?.over25);"
+    },
+    {
+      "fr": "Over/Under 3.5",
+      "key": "comp.market_ou35",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (res.noData) return poissonFallback('Over/Under 3.5', poisson?.over35);"
+    },
+    {
+      "fr": "Les deux marquent — Oui",
+      "key": "comp.th_btts_yes",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>Les deux marquent — Oui</th><th>Les deux marquent — Non</th>"
+    },
+    {
+      "fr": "Les deux marquent — Non",
+      "key": "comp.th_btts_no",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "marquent — Oui</th><th>Les deux marquent — Non</th><th>Payout</th>"
+    },
+    {
+      "fr": "Double Chance",
+      "key": "comp.market_dc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (!rows.some(r => r.dc1X || r.dcX2)) return poissonFallback('Double Chance', null);"
+    },
+    {
+      "fr": "1X — Dom. ou Nul",
+      "key": "comp.th_dc_1x",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>1X — Dom. ou Nul</th><th>X2 — Ext. ou Nul</th>"
+    },
+    {
+      "fr": "X2 — Ext. ou Nul",
+      "key": "comp.th_dc_x2",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Dom. ou Nul</th><th>X2 — Ext. ou Nul</th><th>12 — Dom. ou Ext.</th>"
+    },
+    {
+      "fr": "12 — Dom. ou Ext.",
+      "key": "comp.th_dc_12",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Ext. ou Nul</th><th>12 — Dom. ou Ext.</th>"
+    },
+    {
+      "fr": "Victoire {0}",
+      "key": "comp.market_home_or_away_win",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "buildSingleSection(`Victoire ${home_team}`, 'home'));"
+    },
+    {
+      "fr": "Match Nul",
+      "key": "comp.market_draw",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "buildSingleSection('Match Nul', 'draw'));"
+    },
+    {
+      "fr": "1 — {0}",
+      "key": "comp.th_home_team",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>1 — ${home_team}</th><th>N</th><th>2 — ${away_team}</th>"
+    },
+    {
+      "fr": "2 — {0}",
+      "key": "comp.th_away_team",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<th>N</th><th>2 — ${away_team}</th><th>Payout</th>"
+    },
+    {
+      "fr": "Δ vs {0}min ago",
+      "key": "comp.delta_vs_ago",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:#888;margin-left:6px;\">Δ vs ${oddsHistory.ageMin}min ago</span>"
+    },
+    {
+      "fr": "Cote modèle (no-vig)",
+      "key": "comp.row_model_odd_novig",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "comp-bk-name\">Cote modèle (no-vig)</div>"
+    },
+    {
+      "fr": "Bookmakers Belgique",
+      "key": "comp.ph_bookmakers_belgium",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "['Bet365 (FR)', 'Bookmakers Belgique', 'Bookmakers Suisse']"
+    },
+    {
+      "fr": "Bookmakers Suisse",
+      "key": "comp.ph_bookmakers_switzerland",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Bookmakers Belgique', 'Bookmakers Suisse']"
+    },
+    {
+      "fr": "bientôt",
+      "key": "comp.ph_soon",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<td>—</td><td>—</td><td>bientôt</td></tr>"
+    },
+    {
+      "fr": "Bookmakers non agréés en France — aucun lien de redirection",
+      "key": "comp.sep_unlicensed_no_redirect",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "colspan=\"5\">Bookmakers non agréés en France — aucun lien de redirection"
+    },
+    {
+      "fr": "Sources non disponibles — intégration ultérieure",
+      "key": "comp.sep_sources_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "colspan=\"5\">Sources non disponibles — intégration ultérieure"
+    },
+    {
+      "fr": "Données partielles",
+      "key": "comp.fallback_banner_title",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<strong>Données partielles</strong> — cotes multi-bookmakers"
+    },
+    {
+      "fr": "— cotes multi-bookmakers non disponibles (ligue secondaire). Cycle suivant dans 12h.",
+      "key": "comp.fallback_banner_body",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "Données partielles</strong> — cotes multi-bookmakers non disponibles (ligue secondaire)."
+    },
+    {
+      "fr": "Filtres appliqués",
+      "key": "mobile.filters_applied",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (typeof showNotification === 'function') showNotification('Filtres appliqués', 'green');"
+    },
+    {
+      "fr": "✕ Réinitialiser les filtres ({0} matchs disponibles)",
+      "key": "mobile.reset_filters_cta",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'✕ Réinitialiser les filtres (' + total + ' matchs disponibles)</button>'"
+    },
+    {
+      "fr": "Aucun match pour ces filtres.",
+      "key": "mobile.cards_empty_no_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mc-empty\">Aucun match pour ces filtres.<br>' + resetCta"
+    },
+    {
+      "fr": "DATA —",
+      "key": "mobile.verdict_no_data",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "vC = 'na';  vT = 'DATA —';"
+    },
+    {
+      "fr": "VALUE",
+      "key": "mobile.verdict_value",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "vC = 'go';  vT = 'VALUE';"
+    },
+    {
+      "fr": "À TENTER",
+      "key": "mobile.verdict_try",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "vC = 'try'; vT = 'À TENTER';"
+    },
+    {
+      "fr": "NEUTRE",
+      "key": "mobile.verdict_neutral",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "vC = 'neu'; vT = 'NEUTRE';"
+    },
+    {
+      "fr": "ÉVITER",
+      "key": "mobile.verdict_avoid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "vC = 'no';  vT = 'ÉVITER';"
+    },
+    {
+      "fr": "LIVE",
+      "key": "mobile.card_live",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(esc(m.live_minute ? m.live_minute + \"'\" : 'LIVE'))"
+    },
+    {
+      "fr": "Pas d'edge net — prudence",
+      "key": "mobile.reco_no_edge",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(vC === 'neu' ? 'Pas d\\'edge net — prudence'"
+    },
+    {
+      "fr": "Aucune valeur — éviter",
+      "key": "mobile.reco_no_value",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Pas d\\'edge net — prudence' : 'Aucune valeur — éviter');"
+    },
+    {
+      "fr": "PPG D/E",
+      "key": "mobile.detail_ppg",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>PPG D/E</span>"
+    },
+    {
+      "fr": "Win% D/E",
+      "key": "mobile.detail_winrate",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>Win% D/E</span>"
+    },
+    {
+      "fr": "Buts m. D/E",
+      "key": "mobile.detail_goals_scored",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>Buts m. D/E</span>"
+    },
+    {
+      "fr": "Buts e. D/E",
+      "key": "mobile.detail_goals_conceded",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>Buts e. D/E</span>"
+    },
+    {
+      "fr": "1 N 2",
+      "key": "mobile.detail_1n2",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>1 N 2</span>"
+    },
+    {
+      "fr": "O1.5/2.5/3.5",
+      "key": "mobile.detail_over_lines",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>O1.5/2.5/3.5</span>"
+    },
+    {
+      "fr": "Edge dévigé",
+      "key": "mobile.detail_edge_devig",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-c\"><span>Edge dévigé</span>"
+    },
+    {
+      "fr": "Analyse complète →",
+      "key": "mobile.card_full_analysis",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mcd-more\" onclick=\"...mcOpen...\">Analyse complète →</button>"
+    },
+    {
+      "fr": "Favori",
+      "key": "mobile.card_favorite_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "mc-star...aria-label=\"Favori\" '"
+    },
+    {
+      "fr": "→ {0} edge dévigé",
+      "key": "mobile.card_pick_edge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mc-v-' + vC + '\">→ ' + edgeTxt + ' edge dévigé'"
+    },
+    {
+      "fr": "Edge",
+      "key": "mobile.metric_edge",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mc-cell edge ...mc-k\">Edge</div>"
+    },
+    {
+      "fr": "+ Suivre",
+      "key": "mobile.card_track",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mc-track\" onclick=\"...mcTrack...\">+ Suivre</button>"
+    },
+    {
+      "fr": "PARIS DU JOUR",
+      "key": "mobile.cta_bets_of_day",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "mc-cta-t\">PARIS DU JOUR</div>"
+    },
+    {
+      "fr": "{0} value bets · edge dévigé positif",
+      "key": "mobile.cta_value_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "topPicks.length > 1 ? 's' : '') + ' · edge dévigé positif</div>'"
+    },
+    {
+      "fr": "★ Top value — sélection PariScore",
+      "key": "mobile.group_top_value",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "mc-grp-top\">★ Top value — sélection PariScore</div>"
+    },
+    {
+      "fr": "Tous les matchs",
+      "key": "mobile.group_all_matches",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "mc-grp-all\" id=\"mc-all-anchor\">Tous les matchs</div>"
+    },
+    {
+      "fr": "Aucun value bet sur ces filtres — liste complète ci-dessous",
+      "key": "mobile.cta_no_value_filters",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "mc-cta-s\">Aucun value bet sur ces filtres — liste complète ci-dessous</div>"
+    },
+    {
+      "fr": "★ Favoris",
+      "key": "mobile.group_favorites",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "mc-acc-name\">★ Favoris</span>"
+    },
+    {
+      "fr": "🔔 Mes alertes ›",
+      "key": "mobile.link_my_alerts",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "showPage(\\'alertes\\')\">🔔 Mes alertes &rsaquo;</button>"
+    },
+    {
+      "fr": "⚡ Excellent",
+      "key": "mobile.league_quality_excellent",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (a >= 4)   return { c: 'hi',  t: '⚡ Excellent' };"
+    },
+    {
+      "fr": "Bon",
+      "key": "mobile.league_quality_good",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (a >= 1.5) return { c: 'ok',  t: 'Bon' };"
+    },
+    {
+      "fr": "Moyen",
+      "key": "mobile.league_quality_medium",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (a > 0)    return { c: 'mid', t: 'Moyen' };"
+    },
+    {
+      "fr": "Faible",
+      "key": "mobile.league_quality_low",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "return { c: 'lo', t: 'Faible' };"
+    },
+    {
+      "fr": "Installer PariScore comme app",
+      "key": "pwa.install_btn_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "btn.setAttribute('aria-label', 'Installer PariScore comme app');"
+    },
+    {
+      "fr": "Installer PariScore",
+      "key": "pwa.install_btn_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cf-pwa-label\">Installer PariScore</span>"
+    },
+    {
+      "fr": "Plus tard",
+      "key": "pwa.install_dismiss_aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "cf-pwa-close\" data-dismiss=\"1\" aria-label=\"Plus tard\">×</span>"
+    }
+  ]
+}

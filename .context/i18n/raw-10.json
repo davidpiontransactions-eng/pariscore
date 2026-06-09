@@ -1,0 +1,2020 @@
+{
+  "strings": [
+    {
+      "fr": "cote combinée estimée",
+      "key": "strategy.acca.combined_odds_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>cote combinée estimée</span>"
+    },
+    {
+      "fr": "Pari mathématique - responsabilité individuelle. Cotes estimées via modèle probabiliste.",
+      "key": "strategy.acca.disclaimer",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Pari mathématique - responsabilité individuelle. Cotes"
+    },
+    {
+      "fr": "Impossible de charger les matchs (HTTP {0}).",
+      "key": "strategy.error.load_matches_http",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Impossible de charger les matchs (HTTP ${res.status})"
+    },
+    {
+      "fr": "Stratégie : {0} · {1} match{2} avec confiance ≥ {3}%{4} · Trié par confiance ↓",
+      "key": "strategy.meta_summary",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Stratégie : <strong>${data.label || key}</strong>"
+    },
+    {
+      "fr": "Trié par confiance ↓",
+      "key": "strategy.meta.sorted_by_confidence",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Trié par confiance ↓</span>"
+    },
+    {
+      "fr": "Aucun match avec une confiance suffisante pour cette stratégie aujourd'hui.",
+      "key": "strategy.empty.no_match_confidence",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucun match avec une confiance suffisante pour"
+    },
+    {
+      "fr": "Essayez une autre stratégie ou revenez plus tard.",
+      "key": "strategy.empty.try_another",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Essayez une autre stratégie ou revenez plus tard."
+    },
+    {
+      "fr": "Lancez {0} pour charger les stratégies.",
+      "key": "strategy.error.run_server",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "node server.js;\">node server.js</code> pour charger les stratégies"
+    },
+    {
+      "fr": "Mise à jour : {0}",
+      "key": "paris.last_refresh",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Mise à jour : ' + new Date().toLocaleTimeString"
+    },
+    {
+      "fr": "Alerte live",
+      "key": "alert.toast.default_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "title = 'Alerte live', msg = ''"
+    },
+    {
+      "fr": "Favori",
+      "key": "alert.toast.trap.favorite_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "pl.favorite_team || 'Favori'"
+    },
+    {
+      "fr": "Adversaire",
+      "key": "alert.toast.trap.opponent_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "pl.opponent_team || 'Adversaire'"
+    },
+    {
+      "fr": "Favori en deficit",
+      "key": "alert.toast.trap.title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "title = 'Favori en deficit'; typeCls = 'type-trap'"
+    },
+    {
+      "fr": "{0} mene par {1} — score {2}{3}",
+      "key": "alert.toast.trap.msg",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "fav + ' mene par ' + opp + ' — score '"
+    },
+    {
+      "fr": " (edge pre-match {0}{1}%)",
+      "key": "alert.toast.trap.edge_suffix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "' (edge pre-match ' + (pl.best_edge_pct > 0"
+    },
+    {
+      "fr": "Goal flood 15min",
+      "key": "alert.toast.goal_flood.title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "title = 'Goal flood 15min'; typeCls = 'type-flood'"
+    },
+    {
+      "fr": "{0} buts en 15min — {1} vs {2} score {3}",
+      "key": "alert.toast.goal_flood.msg",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "' buts en 15min — ' + (pl.home_team || 'DOM')"
+    },
+    {
+      "fr": "Shift SPW/RPW live",
+      "key": "alert.toast.spw_shift.title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "title = 'Shift SPW/RPW live'; typeCls = 'type-value'"
+    },
+    {
+      "fr": "Joueur",
+      "key": "alert.toast.spw_shift.player_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "d.side === 'p1' ? d.player1 : d.player2) || 'Joueur'"
+    },
+    {
+      "fr": "{0} s'améliore — win prob {1}% → {2}% ({3}{4}pt) · cote {5}{6}",
+      "key": "alert.toast.spw_shift.msg",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "who + ' s\\'améliore — win prob '"
+    },
+    {
+      "fr": "cote {0}",
+      "key": "alert.toast.spw_shift.odds_label",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'pt) · cote ' + (d.odds_movement || 'flat')"
+    },
+    {
+      "fr": "minute {0} • {1}",
+      "key": "alert.toast.meta_minute",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "alert-toast-meta\">minute ' + (pl.minute"
+    },
+    {
+      "fr": "Flat",
+      "key": "clv.verdict.flat",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "verdictCls = 'flat', verdictLbl = 'Flat'"
+    },
+    {
+      "fr": "Sharp",
+      "key": "clv.verdict.sharp",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "verdictCls = 'sharp'; verdictLbl = 'Sharp'"
+    },
+    {
+      "fr": "Square",
+      "key": "clv.verdict.square",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "verdictCls = 'square'; verdictLbl = 'Square'"
+    },
+    {
+      "fr": "Erreur de chargement CLV (HTTP {0}).",
+      "key": "clv.error.load_http",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Erreur de chargement CLV (HTTP ' + res.status"
+    },
+    {
+      "fr": "{0} stratégies · {1}j · {2}ms",
+      "key": "clv.meta_summary",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "rows.length} stratégies · ${data.period_days}j"
+    },
+    {
+      "fr": "Régler",
+      "key": "paris.bets.action.settle",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "openSettleModal(${b.id})\">Régler</button>"
+    },
+    {
+      "fr": "Supprimer ce pari ?",
+      "key": "paris.bets.confirm_delete",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "confirm('Supprimer ce pari ?')"
+    },
+    {
+      "fr": "Bankroll",
+      "key": "paris.kpi.bankroll",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Bankroll', val: centsToEur(s.current_cents)"
+    },
+    {
+      "fr": "Disponible",
+      "key": "paris.kpi.available",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Disponible', val: centsToEur(s.free_cents)"
+    },
+    {
+      "fr": "(en jeu : {0})",
+      "key": "paris.kpi.available_in_play",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`(en jeu : ${centsToEur(s.open_stake_cents)})`"
+    },
+    {
+      "fr": "P&L cumul",
+      "key": "paris.kpi.pl_cumul",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'P&L cumul', val: eurFmt(s.settled_pl_cents"
+    },
+    {
+      "fr": "ROI",
+      "key": "paris.kpi.roi",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'ROI', val: (s.roi_pct >= 0"
+    },
+    {
+      "fr": "Win Rate",
+      "key": "paris.kpi.win_rate",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Win Rate', val: (s.win_rate * 100)"
+    },
+    {
+      "fr": "Drawdown max",
+      "key": "paris.kpi.drawdown_max",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Drawdown max', val: '-' + s.max_drawdown_pct"
+    },
+    {
+      "fr": "risk : -{0}%",
+      "key": "paris.kpi.drawdown_risk",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: 'risk : -' + s.raw_drawdown_pct + '%'"
+    },
+    {
+      "fr": "Ouverts",
+      "key": "paris.kpi.open",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Ouverts', val: s.totals.pending"
+    },
+    {
+      "fr": "Longest streak",
+      "key": "paris.kpi.longest_streak",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Longest streak', val: s.longest_win_streak"
+    },
+    {
+      "fr": "Dépôts",
+      "key": "paris.chart.deposits",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Dépôts', type: 'scatter', data: deposits"
+    },
+    {
+      "fr": "Retraits",
+      "key": "paris.chart.withdrawals",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Retraits', type: 'scatter', data: withdrawals"
+    },
+    {
+      "fr": "Victoire domicile",
+      "key": "bet.market.1x2_home",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'1X2:HOME': 'Victoire domicile'"
+    },
+    {
+      "fr": "Match nul",
+      "key": "bet.market.1x2_draw",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'1X2:DRAW': 'Match nul'"
+    },
+    {
+      "fr": "Victoire extérieur",
+      "key": "bet.market.1x2_away",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'1X2:AWAY': 'Victoire extérieur'"
+    },
+    {
+      "fr": "BTTS Oui",
+      "key": "bet.market.btts_yes",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'BTTS:YES': 'BTTS Oui'"
+    },
+    {
+      "fr": "BTTS Non",
+      "key": "bet.market.btts_no",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'BTTS:NO': 'BTTS Non'"
+    },
+    {
+      "fr": "Double chance 1X",
+      "key": "bet.market.dc_1x",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'DC:1X': 'Double chance 1X'"
+    },
+    {
+      "fr": "Double chance X2",
+      "key": "bet.market.dc_x2",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'DC:X2': 'Double chance X2'"
+    },
+    {
+      "fr": "Double chance 12",
+      "key": "bet.market.dc_12",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'DC:12': 'Double chance 12'"
+    },
+    {
+      "fr": "AH -0.5 Dom",
+      "key": "bet.market.ah_home_05",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'AH:HOME:-0.5': 'AH -0.5 Dom'"
+    },
+    {
+      "fr": "AH -0.5 Ext",
+      "key": "bet.market.ah_away_05",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'AH:AWAY:-0.5': 'AH -0.5 Ext'"
+    },
+    {
+      "fr": "Bankroll = 0",
+      "key": "bet.kelly.bankroll_zero",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "document.getElementById('k-full').textContent = 'Bankroll = 0'"
+    },
+    {
+      "fr": "Libellé sélection requis",
+      "key": "bet.error.selection_required",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Libellé sélection requis'"
+    },
+    {
+      "fr": "Cote invalide",
+      "key": "bet.error.odds_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Cote invalide'"
+    },
+    {
+      "fr": "Mise invalide",
+      "key": "bet.error.stake_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Mise invalide'"
+    },
+    {
+      "fr": "Erreur {0}",
+      "key": "common.error.http_status",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "j.error || 'Erreur ' + res.status"
+    },
+    {
+      "fr": "Erreur réseau",
+      "key": "common.error.network",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "e.message || 'Erreur réseau'"
+    },
+    {
+      "fr": "Score {0} → Suggéré : {1}",
+      "key": "settle.suggestion.banner",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>Score ${sug.score}</strong> → Suggéré :"
+    },
+    {
+      "fr": "Accepter",
+      "key": "settle.suggestion.accept",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "acceptSuggestion('${sug.suggested_status}')\">Accepter</button>"
+    },
+    {
+      "fr": "Mise {0}",
+      "key": "settle.summary.stake",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`Mise ${centsToEur(bet.stake_cents)}`"
+    },
+    {
+      "fr": "P&L prévu : {0}",
+      "key": "settle.payout.preview",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "`P&L prévu : <span class=\"${cls}\">"
+    },
+    {
+      "fr": "Montant invalide",
+      "key": "cash.error.amount_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Montant invalide'"
+    },
+    {
+      "fr": "Supprimer cette transaction ?",
+      "key": "cash.confirm_delete",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "confirm('Supprimer cette transaction ?')"
+    },
+    {
+      "fr": "Capital départ",
+      "key": "plan.summary.starting_capital",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Capital départ', val: centsToEur(p.starting_capital_cents)"
+    },
+    {
+      "fr": "Capital actuel",
+      "key": "plan.summary.current_capital",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Capital actuel', val: centsToEur(data.summary.current_capital_cents)"
+    },
+    {
+      "fr": "Banque cumulée",
+      "key": "plan.summary.cumul_bank",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Banque cumulée', val: centsToEur(data.summary.cumul_bank_cents)"
+    },
+    {
+      "fr": "Total (cap. + banque)",
+      "key": "plan.summary.total_cap_bank",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Total (cap. + banque)', val: centsToEur(totalValue)"
+    },
+    {
+      "fr": "Cible J+{0}",
+      "key": "plan.summary.target_day",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "{ label: 'Cible J+' + (data.days.length - 1)"
+    },
+    {
+      "fr": "Écart cible",
+      "key": "plan.summary.gap_target",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Écart cible', val: (gap >= 0"
+    },
+    {
+      "fr": "cible ✓",
+      "key": "plan.table.target_hit",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "bet-status-pill won\">cible ✓</span>"
+    },
+    {
+      "fr": "sous cible",
+      "key": "plan.table.below_target",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "bet-status-pill lost\">sous cible</span>"
+    },
+    {
+      "fr": "Capital invalide",
+      "key": "plan.error.capital_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Capital invalide'"
+    },
+    {
+      "fr": "Objectif invalide",
+      "key": "plan.error.target_invalid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Objectif invalide'"
+    },
+    {
+      "fr": "Split doit être entre 0 et 100",
+      "key": "plan.error.split_range",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Split doit être entre 0 et 100'"
+    },
+    {
+      "fr": "Mot de passe requis",
+      "key": "import.error.password_required",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Mot de passe requis'"
+    },
+    {
+      "fr": "Mot de passe incorrect",
+      "key": "import.error.password_wrong",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "j.error || 'Mot de passe incorrect'"
+    },
+    {
+      "fr": "Fichier trop gros (max 500 Ko)",
+      "key": "import.error.file_too_large",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "throw new Error('Fichier trop gros (max 500 Ko)')"
+    },
+    {
+      "fr": "Session de re-vérification expirée. Recommence.",
+      "key": "import.error.reverify_expired",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'Session de re-vérification expirée. Recommence.'"
+    },
+    {
+      "fr": "CSV vide (ni fichier ni texte)",
+      "key": "import.error.csv_empty",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "errEl.textContent = 'CSV vide (ni fichier ni texte)'"
+    },
+    {
+      "fr": "{0} ligne(s) parsées · {1} erreur(s)",
+      "key": "import.dryrun.parsed_summary",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>${j.rows_parsed}</strong> ligne(s) parsées"
+    },
+    {
+      "fr": "{0} erreur(s) — ex : {1} (ligne {2})",
+      "key": "import.dryrun.errors_example",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${j.errors.length} erreur(s) — ex : "
+    },
+    {
+      "fr": "✓ Import terminé : {0} pari(s) insérés / {1} parsés ({2} erreurs)",
+      "key": "import.success.summary",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "✓ Import terminé : <strong>${j.rows_inserted}</strong>"
+    },
+    {
+      "fr": "Data Hub indisponible — {0}",
+      "key": "datahub.error.unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "⚠️ Data Hub indisponible — <span"
+    },
+    {
+      "fr": "Erreur API",
+      "key": "datahub.error.api_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(e && e.message) || 'Erreur API'"
+    },
+    {
+      "fr": "↻ Réessayer",
+      "key": "datahub.action.retry",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "display:inline-block;\">↻ Réessayer</a>"
+    },
+    {
+      "fr": "Les filtres actifs ne retournent aucun pick. Élargis pour simuler.",
+      "key": "datahub.backtest.empty_body",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Les filtres actifs ne retournent aucun pick"
+    },
+    {
+      "fr": "Aucun pick",
+      "key": "datahub.backtest.empty_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-soon-title\">🧪 Aucun pick</div>"
+    },
+    {
+      "fr": "Bankroll finale",
+      "key": "datahub.backtest.final_bankroll",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Bankroll finale</div>"
+    },
+    {
+      "fr": "départ {0}u · {1}{2}u",
+      "key": "datahub.backtest.final_bankroll_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "départ ${r.start_bankroll}u · ${pl >= 0"
+    },
+    {
+      "fr": "Yield",
+      "key": "datahub.backtest.yield",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Yield</div>"
+    },
+    {
+      "fr": "{0}u misés total",
+      "key": "datahub.backtest.total_staked",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${r.total_staked}u misés total"
+    },
+    {
+      "fr": "ROI Bankroll",
+      "key": "datahub.backtest.roi_bankroll",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">ROI Bankroll</div>"
+    },
+    {
+      "fr": "vs bankroll départ",
+      "key": "datahub.backtest.roi_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">vs bankroll départ</div>"
+    },
+    {
+      "fr": "Max Drawdown",
+      "key": "datahub.kpi.max_drawdown",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Max Drawdown</div>"
+    },
+    {
+      "fr": "Winrate",
+      "key": "datahub.backtest.winrate",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Winrate</div>"
+    },
+    {
+      "fr": "{0}W / {1}L · n={2}",
+      "key": "datahub.backtest.winrate_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${r.wins}W / ${r.losses}L · n=${r.sample}"
+    },
+    {
+      "fr": "Bankroll simulée — staking {0}",
+      "key": "datahub.backtest.chart_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Bankroll simulée — staking <code>"
+    },
+    {
+      "fr": "Bankroll : {0}u",
+      "key": "datahub.backtest.tooltip_bankroll",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "label: c => 'Bankroll : ' + c.parsed.y + 'u'"
+    },
+    {
+      "fr": "Le Variance Tracker n'est pas encore disponible pour le tennis.",
+      "key": "datahub.variance.tennis_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Le Variance Tracker n\\'est pas encore disponible pour le tennis.'"
+    },
+    {
+      "fr": "Aucun pick perdu dans ce sous-ensemble. Élargis la période.",
+      "key": "datahub.variance.empty_body",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Aucun pick perdu dans ce sous-ensemble. Élargis la période.'"
+    },
+    {
+      "fr": "Variance Tracker",
+      "key": "datahub.variance.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-soon-title\">🎲 Variance Tracker</div>"
+    },
+    {
+      "fr": "Bad Beats détectés",
+      "key": "datahub.variance.bad_beats_count",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Bad Beats détectés</div>"
+    },
+    {
+      "fr": "sur {0} picks perdus",
+      "key": "datahub.variance.bad_beats_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "sur ${bb.total_picks_lost} picks perdus"
+    },
+    {
+      "fr": "P/L réel",
+      "key": "datahub.variance.pl_actual",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">P/L réel</div>"
+    },
+    {
+      "fr": "portefeuille actuel",
+      "key": "datahub.variance.pl_actual_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">portefeuille actuel</div>"
+    },
+    {
+      "fr": "P/L sans Bad Beats",
+      "key": "datahub.variance.pl_without_bad_beats",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">P/L sans Bad Beats</div>"
+    },
+    {
+      "fr": "scénario chance neutre",
+      "key": "datahub.variance.pl_without_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">scénario chance neutre</div>"
+    },
+    {
+      "fr": "Variance shortfall",
+      "key": "datahub.variance.shortfall",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Variance shortfall</div>"
+    },
+    {
+      "fr": "manque-à-gagner variance",
+      "key": "datahub.variance.shortfall_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">manque-à-gagner variance</div>"
+    },
+    {
+      "fr": "Top 10 Bad Beats (unluck score décroissant)",
+      "key": "datahub.variance.top_list_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "🎲 Top 10 Bad Beats (unluck score décroissant)"
+    },
+    {
+      "fr": "Match",
+      "key": "datahub.table.col_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<thead><tr><th>Match</th><th>Ligue</th>"
+    },
+    {
+      "fr": "Ligue",
+      "key": "datahub.table.col_league",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Match</th><th>Ligue</th><th>Date</th>"
+    },
+    {
+      "fr": "Date",
+      "key": "datahub.table.col_date",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Ligue</th><th>Date</th><th>Marché</th>"
+    },
+    {
+      "fr": "Marché",
+      "key": "datahub.table.col_market",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Date</th><th>Marché</th><th>Pred %</th>"
+    },
+    {
+      "fr": "Unluck",
+      "key": "datahub.table.col_unluck",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Score</th><th>Unluck</th></tr>"
+    },
+    {
+      "fr": "P/L cumul — Réel vs Sans Bad Beats",
+      "key": "datahub.variance.chart_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "hist-chart-title\">P/L cumul — Réel vs Sans Bad Beats</div>"
+    },
+    {
+      "fr": "Sans Bad Beats",
+      "key": "datahub.variance.series_no_bad_beats",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Sans Bad Beats', data: bb.series_no_bad_beats"
+    },
+    {
+      "fr": "Le Profit Attribution n'est pas encore disponible pour le tennis.",
+      "key": "datahub.attribution.tennis_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Le Profit Attribution n\\'est pas encore disponible pour le tennis.'"
+    },
+    {
+      "fr": "Aucun pick dans ce sous-ensemble filtré. Élargis la période pour voir la décomposition P/L.",
+      "key": "datahub.attribution.empty_body",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Aucun pick dans ce sous-ensemble filtré. Élargis"
+    },
+    {
+      "fr": "Profit Attribution",
+      "key": "datahub.attribution.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-soon-title\">💰 Profit Attribution</div>"
+    },
+    {
+      "fr": "Aucune donnée",
+      "key": "datahub.attribution.no_data",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:12px;\">Aucune donnée</div>"
+    },
+    {
+      "fr": "P/L Total",
+      "key": "datahub.attribution.pl_total",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">P/L Total</div>"
+    },
+    {
+      "fr": "{0} picks tous marchés",
+      "key": "datahub.attribution.pl_total_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${attr.total_picks} picks tous marchés"
+    },
+    {
+      "fr": "Top 15 Ligues",
+      "key": "datahub.attribution.section_leagues",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "renderSection('Top 15 Ligues', '🏆', attr.by_league)"
+    },
+    {
+      "fr": "Stratégies IA",
+      "key": "datahub.attribution.section_strategies",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "renderSection('Stratégies IA', '🎯', attr.by_strategy)"
+    },
+    {
+      "fr": "Heatmap WR — Ligue × Marché",
+      "key": "datahub.heatmap.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "🔥 Heatmap WR — Ligue × Marché"
+    },
+    {
+      "fr": "Σ Picks",
+      "key": "datahub.heatmap.col_total_picks",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:500;\">Σ Picks</th>"
+    },
+    {
+      "fr": "Vert ≥60% · Ambre 50-60% · Rouge <50% · Gris n<3 (sample insuffisant)",
+      "key": "datahub.heatmap.legend",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Vert ≥60% · Ambre 50-60% · Rouge &lt;50%"
+    },
+    {
+      "fr": "{0} : {1} picks",
+      "key": "datahub.heatmap.cell_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"${mk} : ${cell.sample} picks\""
+    },
+    {
+      "fr": "PORTFOLIO HEALTHY",
+      "key": "datahub.exec.alert_healthy_kind",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-alert-kind\">PORTFOLIO HEALTHY</div>"
+    },
+    {
+      "fr": "Aucun drift détecté · pas de bad streak · cohort stable.",
+      "key": "datahub.exec.alert_healthy_msg",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucun drift détecté · pas de bad streak · cohort stable."
+    },
+    {
+      "fr": "Total Picks · Sample",
+      "key": "datahub.exec.total_picks_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Total Picks · Sample</div>"
+    },
+    {
+      "fr": "{0} matchs · {1}W / {2}L",
+      "key": "datahub.exec.total_picks_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${total} matchs · ${totalWins}W / ${totalPicks - totalWins}L"
+    },
+    {
+      "fr": "Winrate Global",
+      "key": "datahub.exec.winrate_global",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Winrate Global</div>"
+    },
+    {
+      "fr": "tous marchés cumul",
+      "key": "datahub.exec.winrate_global_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">tous marchés cumul</div>"
+    },
+    {
+      "fr": "{0} picks · avg {1}",
+      "key": "datahub.exec.yield_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${gy.sample_with_odds} picks · avg ${gy.avg_odds"
+    },
+    {
+      "fr": "odds H2+ requis",
+      "key": "datahub.exec.yield_empty_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">odds H2+ requis</div>"
+    },
+    {
+      "fr": "P/L {0}{1}u",
+      "key": "datahub.exec.max_drawdown_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "P/L ${(kpis.final_pl_units || 0) >= 0 ? '+' : ''}"
+    },
+    {
+      "fr": "Longest Losing Streak",
+      "key": "datahub.exec.longest_losing_streak",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Longest Losing Streak</div>"
+    },
+    {
+      "fr": "pertes consécutives",
+      "key": "datahub.kpi.consecutive_losses",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">pertes consécutives</div>"
+    },
+    {
+      "fr": "Strike Break-Even",
+      "key": "datahub.exec.strike_break_even",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Strike Break-Even</div>"
+    },
+    {
+      "fr": "vs WR actuel {0}",
+      "key": "datahub.exec.strike_be_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "vs WR actuel ${fmtPct(aggWR)}"
+    },
+    {
+      "fr": "Verified Matchs",
+      "key": "datahub.exec.verified_matches",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-label\">Verified Matchs</div>"
+    },
+    {
+      "fr": "backtest base",
+      "key": "datahub.exec.verified_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-exec-card-sub\">backtest base</div>"
+    },
+    {
+      "fr": "Top 3 Ligues (par sample)",
+      "key": "datahub.exec.top_leagues_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "🏆 Top 3 Ligues (par sample)"
+    },
+    {
+      "fr": "Picks",
+      "key": "datahub.table.col_picks",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Ligue</th><th>Picks</th><th>WR</th>"
+    },
+    {
+      "fr": "IC 95%",
+      "key": "datahub.table.col_ic95",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>WR</th><th>IC 95%</th></tr>"
+    },
+    {
+      "fr": "Aucune ligue",
+      "key": "datahub.exec.no_league",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "padding:8px;\">Aucune ligue</div>"
+    },
+    {
+      "fr": "Performance par Marché",
+      "key": "datahub.exec.perf_by_market",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "💹 Performance par Marché"
+    },
+    {
+      "fr": "Sample",
+      "key": "datahub.table.col_sample",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Marché</th><th>Sample</th><th>WR</th>"
+    },
+    {
+      "fr": "Aucun marché",
+      "key": "datahub.exec.no_market",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "padding:8px;\">Aucun marché</div>"
+    },
+    {
+      "fr": "Match Replay",
+      "key": "datahub.replay.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-drill-title\">🎬 Match Replay</div>"
+    },
+    {
+      "fr": "Fermer",
+      "key": "common.aria.close",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "dh-drill-close\" type=\"button\" aria-label=\"Fermer\""
+    },
+    {
+      "fr": "Chargement timeline…",
+      "key": "datahub.replay.loading_timeline",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-align:center;\">Chargement timeline…</div>"
+    },
+    {
+      "fr": "Replay non disponible",
+      "key": "datahub.replay.unavailable_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-soon-title\">🎬 Replay non disponible</div>"
+    },
+    {
+      "fr": "Aucun snapshot capturé pour ce match.",
+      "key": "datahub.replay.no_snapshot",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucun snapshot capturé pour ce match."
+    },
+    {
+      "fr": "Le pipeline capture timeline (R10) démarre sur matchs joués post-deploy.",
+      "key": "datahub.replay.pipeline_note",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Le pipeline capture timeline (R10) démarre sur matchs joués"
+    },
+    {
+      "fr": "Les matchs antérieurs n'ont pas de snapshots minute-par-minute.",
+      "key": "datahub.replay.no_historic_snapshots",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Les matchs antérieurs n'ont pas de snapshots minute-par-minute."
+    },
+    {
+      "fr": "Score final : {0}–{1}",
+      "key": "datahub.replay.final_score",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Score final : ${m.realScore.home}–${m.realScore.away}"
+    },
+    {
+      "fr": "Dominance Ratio (minute-par-minute)",
+      "key": "datahub.replay.chart_dominance",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "hist-chart-title\">Dominance Ratio (minute-par-minute)</div>"
+    },
+    {
+      "fr": "xG cumulé",
+      "key": "datahub.replay.chart_xg",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "hist-chart-title\">xG cumulé</div>"
+    },
+    {
+      "fr": "Pressure Index",
+      "key": "datahub.replay.chart_pressure",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "hist-chart-title\">Pressure Index</div>"
+    },
+    {
+      "fr": "{0} snapshots · capturés toutes 5min pendant cron live",
+      "key": "datahub.replay.snapshots_footer",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${snaps.length} snapshots · capturés toutes 5min"
+    },
+    {
+      "fr": "Erreur",
+      "key": "common.error.generic",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-soon-title\">❌ Erreur</div>"
+    },
+    {
+      "fr": "Nul",
+      "key": "match.result.draw_short",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "rs.away > rs.home ? m.away_team : 'Nul'"
+    },
+    {
+      "fr": "Score final :",
+      "key": "datahub.drill.final_score_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>Score final :</strong> ${escapeHtml(setsScore)}"
+    },
+    {
+      "fr": "vainqueur :",
+      "key": "datahub.drill.winner_label_lc",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${escapeHtml(setsScore)} · vainqueur :"
+    },
+    {
+      "fr": "Total jeux :",
+      "key": "datahub.drill.total_games_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>Total jeux :</strong> ${r.total_games"
+    },
+    {
+      "fr": "Tie-break :",
+      "key": "datahub.drill.tiebreak_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aces : ${(r.aces_p1 ?? '?')}/${(r.aces_p2 ?? '?')} · Tie-break :"
+    },
+    {
+      "fr": "oui",
+      "key": "common.yes_lc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "r.had_tiebreak ? 'oui' : 'non'"
+    },
+    {
+      "fr": "non",
+      "key": "common.no_lc",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "r.had_tiebreak ? 'oui' : 'non'"
+    },
+    {
+      "fr": "Snapshot prédiction",
+      "key": "datahub.drill.prediction_snapshot",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.5px;\">Snapshot prédiction</div>"
+    },
+    {
+      "fr": "Aucune stratégie taggée (entrée pré-H4)",
+      "key": "datahub.drill.no_strategy_tagged",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucune stratégie taggée (entrée pré-H4)"
+    },
+    {
+      "fr": "Score réel :",
+      "key": "datahub.drill.real_score_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>Score réel :</strong> ${score}"
+    },
+    {
+      "fr": "Vainqueur :",
+      "key": "datahub.drill.winner_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "${score} · Vainqueur : <strong>"
+    },
+    {
+      "fr": "Prédictions au moment du pick :",
+      "key": "datahub.drill.predictions_at_pick",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>Prédictions au moment du pick :</strong>"
+    },
+    {
+      "fr": "Best Edge :",
+      "key": "datahub.drill.best_edge_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<li>Best Edge : ${escapeHtml(m.predicted?.bestEdge"
+    },
+    {
+      "fr": "cote {0} ({1})",
+      "key": "datahub.drill.edge_odds_suffix",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "· cote ${m.predicted.bestEdgeOdds} (${escapeHtml(m.predicted.bestEdgeBk"
+    },
+    {
+      "fr": "Stratégies IA tagguées",
+      "key": "datahub.drill.strategies_tagged",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.5px;margin-bottom:6px;\">Stratégies IA tagguées</div>"
+    },
+    {
+      "fr": "Match Replay",
+      "key": "datahub.drill.replay_button",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "border-color:transparent;\">🎬 Match Replay</button>"
+    },
+    {
+      "fr": "Détail match — backtest",
+      "key": "datahub.drill.modal_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-drill-title\">Détail match — backtest</div>"
+    },
+    {
+      "fr": "L'Artilleur",
+      "key": "datahub.strategy.btts_yes",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "BTTS_YES:  { label: 'L\\'Artilleur', market: 'BTTS Oui'"
+    },
+    {
+      "fr": "Le Foudroyeur",
+      "key": "datahub.strategy.over_2_5",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "OVER_2_5:  { label: 'Le Foudroyeur', market: 'Over 2.5'"
+    },
+    {
+      "fr": "Le Prudent",
+      "key": "datahub.strategy.over_1_5",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "OVER_1_5:  { label: 'Le Prudent', market: 'Over 1.5'"
+    },
+    {
+      "fr": "Le Gardien",
+      "key": "datahub.strategy.under_2_5",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "UNDER_2_5: { label: 'Le Gardien', market: 'Under 2.5'"
+    },
+    {
+      "fr": "Le Localier",
+      "key": "datahub.strategy.home_win",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "HOME_WIN:  { label: 'Le Localier', market: 'Domicile'"
+    },
+    {
+      "fr": "Domicile",
+      "key": "datahub.market.home",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Le Localier', market: 'Domicile'"
+    },
+    {
+      "fr": "L'Aventurier",
+      "key": "datahub.strategy.away_win",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "AWAY_WIN:  { label: 'L\\'Aventurier', market: 'Extérieur'"
+    },
+    {
+      "fr": "Extérieur",
+      "key": "datahub.market.away",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'L\\'Aventurier', market: 'Extérieur'"
+    },
+    {
+      "fr": "Le Diplomate",
+      "key": "datahub.strategy.draw",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "DRAW:      { label: 'Le Diplomate', market: 'Match Nul'"
+    },
+    {
+      "fr": "Match Nul",
+      "key": "datahub.market.draw",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Le Diplomate', market: 'Match Nul'"
+    },
+    {
+      "fr": "Le Sceptique",
+      "key": "datahub.strategy.cs_00",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "CS_00:     { label: 'Le Sceptique', market: '0-0'"
+    },
+    {
+      "fr": "Stratégie",
+      "key": "datahub.strategy.col_strategy",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Stratégie</th>"
+    },
+    {
+      "fr": "Winrate",
+      "key": "datahub.table.col_winrate",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Winrate</th>"
+    },
+    {
+      "fr": "Trend",
+      "key": "datahub.table.col_trend",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Trend</th>"
+    },
+    {
+      "fr": "Sparkline",
+      "key": "datahub.table.col_sparkline",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Sparkline</th>"
+    },
+    {
+      "fr": "↗ +{0}pts",
+      "key": "datahub.strategy.trend_up",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--green);\">↗ +${(s.trend * 100)"
+    },
+    {
+      "fr": "↘ {0}pts",
+      "key": "datahub.strategy.trend_down",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--red);\">↘ ${(s.trend * 100)"
+    },
+    {
+      "fr": "→ stable",
+      "key": "datahub.strategy.trend_stable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3);\">→ stable</span>"
+    },
+    {
+      "fr": "Stratégies sans data dans le record (corners, cartons, etc.) → exclues.",
+      "key": "datahub.strategy.exclusion_note",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Stratégies sans data dans le record (corners, cartons"
+    },
+    {
+      "fr": "Aucune stratégie taggée dans ce filtre. Le tag {0} est posé à partir de Phase H4 sur chaque nouvelle entrée archivée. L'historique antérieur reste non taggé.",
+      "key": "datahub.strategy.empty_body",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucune stratégie taggée dans ce filtre. Le tag"
+    },
+    {
+      "fr": "Matchs Pièges",
+      "key": "datahub.trap.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "🚫 Matchs Pièges</div>"
+    },
+    {
+      "fr": "Équipes où nos picks historiques sous-performent (sample ≥ 5 · WR < 40%). À considérer pour exclusion des stratégies futures.",
+      "key": "datahub.trap.description",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Équipes où nos picks historiques sous-performent"
+    },
+    {
+      "fr": "Équipe",
+      "key": "datahub.table.col_team",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Équipe</th>"
+    },
+    {
+      "fr": "Ligues",
+      "key": "datahub.table.col_leagues",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Ligues</th>"
+    },
+    {
+      "fr": "Aucune équipe ne dépasse les seuils trap (sample ≥ 5 picks ET winrate < 40%) sur le sous-ensemble filtré. Élargissez la période pour révéler les patterns.",
+      "key": "datahub.trap.empty_body",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucune équipe ne dépasse les seuils trap"
+    },
+    {
+      "fr": "Yield",
+      "key": "datahub.kpi.yield",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Yield', val: (yieldPct >= 0 ? '+'"
+    },
+    {
+      "fr": "{0} picks cotes · avg {1}",
+      "key": "datahub.kpi.yield_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "gy.sample_with_odds + ' picks cotes · avg '"
+    },
+    {
+      "fr": "Picks totaux",
+      "key": "datahub.kpi.total_picks",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Picks totaux', val: totalPicks"
+    },
+    {
+      "fr": "{0} matchs tennis · {1}W / {2}L",
+      "key": "datahub.kpi.total_picks_tennis_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "totalMatches + ' matchs tennis · ' + totalWins"
+    },
+    {
+      "fr": "Strike B/E",
+      "key": "datahub.kpi.strike_be",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Strike B/E', val: (breakEven * 100)"
+    },
+    {
+      "fr": "WR mini · actuel {0}",
+      "key": "datahub.kpi.strike_be_tennis_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: 'WR mini · actuel ' + (aggWR != null"
+    },
+    {
+      "fr": "Tournois",
+      "key": "datahub.kpi.tournaments",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Tournois', val: (kpis.verified_matches || 0)"
+    },
+    {
+      "fr": "matchs vérifiés",
+      "key": "datahub.kpi.matches_verified",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "sub: 'matchs vérifiés'"
+    },
+    {
+      "fr": "Winrate global",
+      "key": "datahub.kpi.winrate_global",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Winrate global'"
+    },
+    {
+      "fr": "{0} picks · {1}",
+      "key": "datahub.kpi.winrate_picks_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "totalPicks + ' picks · ' + icMethodAgg"
+    },
+    {
+      "fr": "P/L : {0}{1}u",
+      "key": "datahub.kpi.pl_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'P/L : ' + (kpis.final_pl_units >= 0 ? '+' : '')"
+    },
+    {
+      "fr": "Longest Losing",
+      "key": "datahub.kpi.longest_losing",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Longest Losing'"
+    },
+    {
+      "fr": "WR Moneyline",
+      "key": "datahub.kpi.wr_moneyline",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'WR Moneyline'"
+    },
+    {
+      "fr": "{0} picks ML",
+      "key": "datahub.kpi.ml_picks_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: mlSample + ' picks ML'"
+    },
+    {
+      "fr": "Wins/Loss : {0}/{1}\nTotal picks : {2}\nIC 95% : {3}\nMéthode IC : {4}\nMarchés : ML ({5}) · Set 1 ({6}) · ≥1 Set ({7}) · Tot. jeux ({8}) · Aces ({9}) · TB ({10})",
+      "key": "datahub.kpi.detailed_tooltip",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "`Wins/Loss : ${totalWins}/${aggLoss}\\nTotal picks"
+    },
+    {
+      "fr": "{0} matchs · {1}W / {2}L",
+      "key": "datahub.kpi.total_picks_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "totalMatches + ' matchs · ' + totalWins + 'W / '"
+    },
+    {
+      "fr": "WR mini rentabilité · actuel {0}",
+      "key": "datahub.kpi.strike_be_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: 'WR mini rentabilité · actuel '"
+    },
+    {
+      "fr": "Avg Proba",
+      "key": "datahub.kpi.avg_proba",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Avg Proba'"
+    },
+    {
+      "fr": "Over 2.5 + BTTS picks",
+      "key": "datahub.kpi.avg_proba_sub",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "sub: 'Over 2.5 + BTTS picks'"
+    },
+    {
+      "fr": "Avg EV (Edge)",
+      "key": "datahub.kpi.avg_ev_edge",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Avg EV (Edge)'"
+    },
+    {
+      "fr": "{0} edge picks",
+      "key": "datahub.kpi.edge_picks_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: kpis.edge.sample + ' edge picks'"
+    },
+    {
+      "fr": "Tournoi",
+      "key": "datahub.table.col_tournament",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Tournoi</th>"
+    },
+    {
+      "fr": "Surface",
+      "key": "datahub.table.col_surface",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Surface</th>"
+    },
+    {
+      "fr": "Sets",
+      "key": "datahub.table.col_sets",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Sets</th>"
+    },
+    {
+      "fr": "≥1 Set",
+      "key": "datahub.table.col_geq1_set",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>≥1 Set</th>"
+    },
+    {
+      "fr": "Tot. jeux",
+      "key": "datahub.table.col_total_games",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Tot. jeux</th>"
+    },
+    {
+      "fr": "Issue",
+      "key": "datahub.table.col_outcome",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Issue</th>"
+    },
+    {
+      "fr": "Score",
+      "key": "datahub.table.col_score",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Date</th>\n      <th>Score</th>"
+    },
+    {
+      "fr": "Oui",
+      "key": "datahub.tennis.tiebreak_yes",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(p.tie_break ? 'Oui' : 'Non')"
+    },
+    {
+      "fr": "Non",
+      "key": "datahub.tennis.tiebreak_no",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(p.tie_break ? 'Oui' : 'Non')"
+    },
+    {
+      "fr": "{0} matchs · page {1}/{2}",
+      "key": "datahub.pagination.summary",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span>${data.total} matchs · page ${data.page}/${totalPages}</span>"
+    },
+    {
+      "fr": "‹ Préc",
+      "key": "datahub.pagination.prev",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dhGoToPage(${data.page - 1})\">‹ Préc</button>"
+    },
+    {
+      "fr": "Suiv ›",
+      "key": "datahub.pagination.next",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dhGoToPage(${data.page + 1})\">Suiv ›</button>"
+    },
+    {
+      "fr": "Tennis archive — scaffold actif",
+      "key": "datahub.table.tennis_empty_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text2);\">Tennis archive — scaffold actif</strong>"
+    },
+    {
+      "fr": "La structure backend est en place (Phase H3).",
+      "key": "datahub.table.tennis_empty_l1",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "La structure backend est en place (Phase H3)."
+    },
+    {
+      "fr": "L'historique tennis se rempliera progressivement à partir des prochains matchs terminés.",
+      "key": "datahub.table.tennis_empty_l2",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "L'historique tennis se rempliera progressivement"
+    },
+    {
+      "fr": "6 marchés natifs ciblés : Moneyline · Set 1 · ≥1 set · Total jeux · Aces · Tie-break.",
+      "key": "datahub.table.tennis_empty_markets",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "6 marchés natifs ciblés : Moneyline · Set 1"
+    },
+    {
+      "fr": "Aucun match ne correspond aux filtres.",
+      "key": "datahub.table.empty_no_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucun match ne correspond aux filtres."
+    },
+    {
+      "fr": "Essayez de relâcher un filtre ou changez de période.",
+      "key": "datahub.table.empty_try_relax",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Essayez de relâcher un filtre ou changez de période."
+    },
+    {
+      "fr": "Cohort A — {0}",
+      "key": "datahub.chart.cohort_a",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`Cohort A — ${cohortA === 'all' ? 'All' : cohortA + 'j'}`"
+    },
+    {
+      "fr": "Cohort B — {0}",
+      "key": "datahub.chart.cohort_b",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`Cohort B — ${cohortB === 'all' ? 'All' : cohortB + 'j'}`"
+    },
+    {
+      "fr": "Modèle",
+      "key": "datahub.chart.model",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Modèle', data: points, backgroundColor: '#38bdf8'"
+    },
+    {
+      "fr": "Calibration parfaite",
+      "key": "datahub.chart.perfect_calibration",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Calibration parfaite', data: [{ x: 0, y: 0 }"
+    },
+    {
+      "fr": "pred {0}% → realized {1}% (n={2})",
+      "key": "datahub.chart.calibration_tooltip",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`pred ${Math.round(c.parsed.x)}% → realized"
+    },
+    {
+      "fr": "Ex: Sinner, Djokovic…",
+      "key": "datahub.filter.team_placeholder_tennis",
+      "file": "pariscore.js",
+      "wrap": "html-attr-placeholder",
+      "snippet": "teamInput.placeholder = dhState.sport === 'tennis' ? 'Ex: Sinner, Djokovic…'"
+    },
+    {
+      "fr": "Ex: PSG, Sinner…",
+      "key": "datahub.filter.team_placeholder_football",
+      "file": "pariscore.js",
+      "wrap": "html-attr-placeholder",
+      "snippet": "'Ex: Sinner, Djokovic…' : 'Ex: PSG, Sinner…'"
+    },
+    {
+      "fr": "⏳ Simulation…",
+      "key": "datahub.backtest.running",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = '⏳ Simulation…'"
+    },
+    {
+      "fr": "❌ Erreur backtest",
+      "key": "datahub.backtest.error_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "dh-soon-title\">❌ Erreur backtest</div>"
+    },
+    {
+      "fr": "🧪 Lancer Backtest",
+      "key": "datahub.backtest.run_button",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = '🧪 Lancer Backtest'"
+    },
+    {
+      "fr": "Nom de stratégie requis",
+      "key": "datahub.backtest.name_required",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "alert('Nom de stratégie requis')"
+    },
+    {
+      "fr": "Stratégie \"{0}\" sauvegardée (id {1}).",
+      "key": "datahub.backtest.saved",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "alert('Stratégie \"' + name + '\" sauvegardée (id '"
+    },
+    {
+      "fr": "Échec sauvegarde : {0}",
+      "key": "datahub.backtest.save_failed",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "alert('Échec sauvegarde : ' + (e.message"
+    },
+    {
+      "fr": "Export CSV échoué : {0}",
+      "key": "datahub.export.csv_failed",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "alert('Export CSV échoué : ' + (e?.message"
+    },
+    {
+      "fr": "Over 2.5: {0}% ({1} paris) · BTTS: {2}% · Total: {3} paris",
+      "key": "history.alert.detail",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'Over 2.5: ' + acc.alert.over25 + '% ('"
+    },
+    {
+      "fr": "Win Rate Over 2.5",
+      "key": "history.kpi.wr_over25",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Win Rate Over 2.5'"
+    },
+    {
+      "fr": "{0} paris tracés",
+      "key": "history.kpi.bets_tracked",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: `${acc.over25?.sample || 0} paris tracés`"
+    },
+    {
+      "fr": "Win Rate BTTS",
+      "key": "history.kpi.wr_btts",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Win Rate BTTS'"
+    },
+    {
+      "fr": "Win Rate Edge",
+      "key": "history.kpi.wr_edge",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Win Rate Edge'"
+    },
+    {
+      "fr": "Matchs vérifiés",
+      "key": "history.kpi.matches_verified",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Matchs vérifiés', val: acc.total_verified"
+    },
+    {
+      "fr": "{0} archivés au total",
+      "key": "history.kpi.archived_total",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: `${data.total || 0} archivés au total`"
+    },
+    {
+      "fr": "Rolling 30 Over 2.5",
+      "key": "history.kpi.rolling30_over25",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "label: 'Rolling 30 Over 2.5'"
+    },
+    {
+      "fr": "{0} derniers",
+      "key": "history.kpi.rolling30_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub: `${acc.rolling30.sample} derniers`"
+    },
+    {
+      "fr": "Bankroll (100u)",
+      "key": "history.bankroll.kpi_bankroll",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Bankroll (100u)', val: d.finalBankroll + 'u'"
+    },
+    {
+      "fr": "P&L",
+      "key": "history.bankroll.kpi_pl",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'P&L', val: (d.totalPL >= 0"
+    },
+    {
+      "fr": "ROI/parl",
+      "key": "history.bankroll.kpi_roi",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'ROI/parl', val: (d.roi >= 0"
+    },
+    {
+      "fr": "Drawdown Max",
+      "key": "history.bankroll.kpi_drawdown",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ label: 'Drawdown Max', val: '-' + d.maxDrawdown"
+    },
+    {
+      "fr": "{0} paris)",
+      "key": "history.accuracy_trend.tooltip_bets_suffix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "'%  (' + data[c.dataIndex][c.dataset.label === 'Over 2.5'"
+    },
+    {
+      "fr": "⚠ Premium requis",
+      "key": "backtest.premium_required",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "textContent = '⚠ Premium requis'"
+    },
+    {
+      "fr": "⏳ Back-test en cours…",
+      "key": "backtest.in_progress",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusEl.textContent = '⏳ Back-test en cours…'"
+    },
+    {
+      "fr": "✓ {0} vérifiés sur {1}j (existants: {2})",
+      "key": "backtest.success_summary",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "`✓ ${data.new_verified} vérifiés sur ${data.days_scanned}j"
+    },
+    {
+      "fr": " · Over: {0} · BTTS: {1}",
+      "key": "backtest.success_accuracy_suffix",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "` · Over: ${over} · BTTS: ${btts}`"
+    },
+    {
+      "fr": "Erreur inconnue",
+      "key": "backtest.error_unknown",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'⚠ ' + (data.error || 'Erreur inconnue')"
+    },
+    {
+      "fr": "⚠ Erreur réseau",
+      "key": "backtest.error_network",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "statusEl.textContent = '⚠ Erreur réseau'"
+    },
+    {
+      "fr": "Les deux équipes marquent",
+      "key": "trends.btts_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'Les deux équipes marquent', sub:`Probabilité moyenne"
+    },
+    {
+      "fr": "Probabilité moyenne · {0} matchs",
+      "key": "trends.btts_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub:`Probabilité moyenne · ${g.total_matches} matchs`"
+    },
+    {
+      "fr": "xG dom {0} · xG ext {1}",
+      "key": "trends.btts_meta",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "meta: `xG dom ${g.xg_home_avg} · xG ext ${g.xg_away_avg}`"
+    },
+    {
+      "fr": "+2.5 buts",
+      "key": "trends.over25_name",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{ name:'+2.5 buts', sub:'Probabilité moyenne tous matchs'"
+    },
+    {
+      "fr": "Probabilité moyenne tous matchs",
+      "key": "trends.over25_sub",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "sub:'Probabilité moyenne tous matchs'"
+    },
+    {
+      "fr": "{0} value bets actifs (edge >5%)",
+      "key": "trends.over25_meta",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "meta: `${data.value_bets_count} value bets actifs (edge >5%)`"
+    },
+    {
+      "fr": "{0} matchs analysés",
+      "key": "trends.league_sub",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "sub:`${l.count} matchs analysés`"
+    },
+    {
+      "fr": "BTTS moy: {0}%",
+      "key": "trends.league_meta",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "meta:`BTTS moy: ${l.btts_avg}%`"
+    },
+    {
+      "fr": "⚠ Lancez node server.js pour charger les tendances.",
+      "key": "trends.error.run_server",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "⚠ Lancez node server.js pour charger les tendances."
+    }
+  ]
+}

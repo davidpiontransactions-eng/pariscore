@@ -14555,6 +14555,7 @@ function psSetLang(v) {
           <option value="delta_dr">🔥 Δ DR live ↓ (set en cours · prematch en bas)</option>
           <option value="set1">💥 Gain Set 1 ↓</option>
           <option value="elo">⭐ Elo P1 ↓</option>
+          <option value="wom">💰 WOM ↓</option>
         </select>
       </div>
       <label class="tvb-live-flt" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#ff4d4d;cursor:pointer;border:1px solid rgba(255,77,77,.35);background:rgba(255,77,77,.08);border-radius:8px;padding:5px 10px;">
@@ -14566,6 +14567,7 @@ function psSetLang(v) {
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
         <input type="checkbox" id="tennis-vb-positive-ev" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> EV modèle > 0
       </label>
+<label style="font-size:13px;display:flex;align-items:center;gap:3px;white-space:nowrap;"><input type="checkbox" id="tennis-vb-wom-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Avec WOM seulement</label>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2,#8d9399);cursor:pointer;">
         <input type="checkbox" id="tennis-vb-hide-finished" checked onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Masquer terminés
       </label>
