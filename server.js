@@ -22682,6 +22682,7 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
     } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
+    try { await enrichMatchesWithBetfairWOM(data, 'tennis'); } catch (_) {}
     _tennisLiveCache = { ts: Date.now(), data };
     try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
     try { verifyPendingFootAlerts(); } catch (e) { console.warn('  [FootAlerts] verifyPending:', e.message); }
@@ -33749,6 +33750,18 @@ async function _buildTennisValueBetsCore({ date }) {
   const _vbT0 = Date.now();
   let _vbI = 0;
   console.log(`  [TennisVB] build start — ${bsdMatches.length} matchs (src=${matchSource})`);
+  // WOM map from live cache (évite fetch Betfair redondant pour les matchs live déjà enrichis)
+  const _liveWomCache = new Map();
+  try {
+    const _lc = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+    for (const _lm of _lc) {
+      if (_lm.betfair_wom) {
+        const _n1 = (_lm.home_team || (_lm.player1 && _lm.player1.name) || '').toLowerCase();
+        const _n2 = (_lm.away_team || (_lm.player2 && _lm.player2.name) || '').toLowerCase();
+        if (_n1 && _n2) _liveWomCache.set(_n1 + '|' + _n2, _lm.betfair_wom);
+      }
+    }
+  } catch (_) {}
   for (const m of bsdMatches) {
     // Yield event-loop tous les 20 matchs : la boucle CPU bloquait le process
     // ~20s (autres routes/SSE gelées) et empêchait tout timeout de tirer.
@@ -34099,7 +34112,7 @@ async function _buildTennisValueBetsCore({ date }) {
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: (eloProb && bsdProb) ? 'elo+bsd' : (eloProb ? 'elo' : (bsdProb ? 'bsd' : null)) },
-      betfair_wom: await fetchBetfairWOM(p1Name, p2Name, 'tennis').catch(() => null),
+      betfair_wom: _liveWomCache.get((p1Name || '').toLowerCase() + '|' + (p2Name || '').toLowerCase()) || await fetchBetfairWOM(p1Name, p2Name, 'tennis').catch(() => null),
       youtube_url: m.youtube_url || null,
     });
   }
