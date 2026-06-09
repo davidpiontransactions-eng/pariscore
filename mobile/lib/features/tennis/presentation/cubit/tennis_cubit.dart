@@ -7,9 +7,9 @@ import '../../domain/usecases/get_tennis_matches_usecase.dart';
 part 'tennis_state.dart';
 
 class TennisCubit extends Cubit<TennisState> {
-  final GetTennisMatchesUseCase _getMatches;
-
   TennisCubit(this._getMatches) : super(const TennisInitial());
+
+  final GetTennisMatchesUseCase _getMatches;
 
   Future<void> loadMatches() async {
     emit(const TennisLoading());

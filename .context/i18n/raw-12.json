@@ -1,0 +1,1341 @@
+{
+  "strings": [
+    {
+      "fr": "Mode d'affichage du tableau",
+      "key": "cf.mode_toggle.aria",
+      "file": "pariscore.js",
+      "wrap": "html-attr-aria",
+      "snippet": "role=\"tablist\" aria-label=\"Mode d\\'affichage du tableau\""
+    },
+    {
+      "fr": "Mode Trading: 4-5 colonnes prioritaires (Pro)",
+      "key": "cf.mode_toggle.trading_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Mode Trading: 4-5 colonnes prioritaires (Pro)\""
+    },
+    {
+      "fr": "Trading",
+      "key": "cf.mode_toggle.trading",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-cf-mode=\"trading\" role=\"tab\" ...>Trading</button>"
+    },
+    {
+      "fr": "Mode Analyse: layout complet",
+      "key": "cf.mode_toggle.analyse_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Mode Analyse: layout complet\""
+    },
+    {
+      "fr": "Analyse",
+      "key": "cf.mode_toggle.analyse",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "data-cf-mode=\"analyse\" role=\"tab\">Analyse</button>"
+    },
+    {
+      "fr": "Plus de filtres",
+      "key": "cf.filters.show_more",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span class=\"cf-ft-label\">Plus de filtres</span>"
+    },
+    {
+      "fr": "Moins de filtres",
+      "key": "cf.filters.show_less",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "querySelector('.cf-ft-label').textContent = 'Moins de filtres'"
+    },
+    {
+      "fr": "Mes profils",
+      "key": "cf.profiles.modal_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "text-transform:uppercase;\">Mes profils</h3>"
+    },
+    {
+      "fr": "Nom du profil (ex: Clay GS Live)",
+      "key": "cf.profiles.name_placeholder",
+      "file": "pariscore.js",
+      "wrap": "html-attr-placeholder",
+      "snippet": "placeholder=\"Nom du profil (ex: Clay GS Live)\""
+    },
+    {
+      "fr": "Sauvegarder",
+      "key": "cf.profiles.save_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "id=\"cf-profile-save-btn\" ...>Sauvegarder</button>"
+    },
+    {
+      "fr": "Capture: filtres tennis, sort, mode Trading/Analyse.",
+      "key": "cf.profiles.capture_hint",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Capture: filtres tennis, sort, mode Trading/Analyse.</div>"
+    },
+    {
+      "fr": "Profil",
+      "key": "cf.profiles.default_name_prefix",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "|| ('Profil ' + (new Date().toLocaleTimeString"
+    },
+    {
+      "fr": "Aucun profil sauvegardé. Configurez vos filtres puis cliquez Sauvegarder.",
+      "key": "cf.profiles.empty",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Aucun profil sauvegardé. Configurez vos filtres puis cliquez"
+    },
+    {
+      "fr": "Tous filtres",
+      "key": "cf.profiles.summary_all",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "summary.length ? summary.join(' · ') : 'Tous filtres'"
+    },
+    {
+      "fr": "Profil",
+      "key": "cf.profiles.item_default",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "ellipsis;\">' + (p.name || 'Profil') + '</div>"
+    },
+    {
+      "fr": "Charger",
+      "key": "cf.profiles.load_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cursor:pointer;\">Charger</button>"
+    },
+    {
+      "fr": "Profils",
+      "key": "cf.profiles.trigger_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "btn.innerHTML = '⭐ Profils';"
+    },
+    {
+      "fr": "BSD CS2 Addon non activé",
+      "key": "cs2.addon_disabled.title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text);margin-bottom:8px;\">BSD CS2 Addon non activé</div>"
+    },
+    {
+      "fr": "Le feed CS2 live nécessite l'addon {0} ($5/mo).",
+      "key": "cs2.addon_disabled.body1",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Le feed CS2 live nécessite l\\'addon <strong>Bzzoiro"
+    },
+    {
+      "fr": "Bzzoiro Sports CS2",
+      "key": "cs2.addon_disabled.addon_name",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<strong>Bzzoiro Sports CS2</strong>"
+    },
+    {
+      "fr": "Envoie un email à l'équipe BSD pour l'activer sur ton compte.",
+      "key": "cs2.addon_disabled.body2",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Envoie un email à l\\'équipe BSD pour l\\'activer sur ton compte."
+    },
+    {
+      "fr": "Template email",
+      "key": "cs2.addon_disabled.email_template_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:0.06em;\">Template email</div>"
+    },
+    {
+      "fr": "À :",
+      "key": "cs2.addon_disabled.email_to_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">À :</span>"
+    },
+    {
+      "fr": "Objet :",
+      "key": "cs2.addon_disabled.email_subject_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span style=\"color:var(--text3);\">Objet :</span> Activation CS2"
+    },
+    {
+      "fr": "Activation CS2 addon — compte [ton email]",
+      "key": "cs2.addon_disabled.email_subject_value",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Objet :</span> Activation CS2 addon — compte [ton email]"
+    },
+    {
+      "fr": "Bonjour, je voudrais activer l'addon CS2/CSGO sur mon compte Bzzoiro Sports ($5/mo). Pourriez-vous l'activer ? Merci.",
+      "key": "cs2.addon_disabled.email_body",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Bonjour, je voudrais activer l\\'addon CS2/CSGO sur mon compte"
+    },
+    {
+      "fr": "📧 Envoyer l'email",
+      "key": "cs2.addon_disabled.send_email_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:13px;\">📧 Envoyer l\\'email</a>"
+    },
+    {
+      "fr": "🌐 bzzoiro.com/pricing",
+      "key": "cs2.addon_disabled.pricing_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:13px;\">🌐 bzzoiro.com/pricing</a>"
+    },
+    {
+      "fr": "Aucun match disponible — BSD CSGO addon requis",
+      "key": "cs2.status.no_match",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": ": 'Aucun match disponible — BSD CSGO addon requis';"
+    },
+    {
+      "fr": "Impossible de charger les matchs CS2",
+      "key": "cs2.error.load_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"cs2-empty-msg\">Impossible de charger les matchs CS2</div>"
+    },
+    {
+      "fr": "Vérifiez que le BSD CSGO addon est activé ($5/mo) sur votre compte Bzzoiro",
+      "key": "cs2.error.load_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Vérifiez que le BSD CSGO addon est activé ($5/mo) sur votre"
+    },
+    {
+      "fr": "Réessayer",
+      "key": "cs2.error.retry_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:13px;\">Réessayer</button>"
+    },
+    {
+      "fr": "en cours",
+      "key": "cs2.empty.label_live",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "_cs2Filter === 'live' ? 'en cours' : _cs2Filter"
+    },
+    {
+      "fr": "à venir",
+      "key": "cs2.empty.label_prematch",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'prematch' ? 'à venir' : 'disponible'"
+    },
+    {
+      "fr": "disponible",
+      "key": "cs2.empty.label_all",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "? 'à venir' : 'disponible';"
+    },
+    {
+      "fr": "Aucun match CS2 {0}",
+      "key": "cs2.empty.no_match",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cs2-empty-msg\">Aucun match CS2 ' + label + '</div>"
+    },
+    {
+      "fr": "Prochaines compétitions : ESL Pro League · PGL Major · BLAST Premier",
+      "key": "cs2.empty.next_competitions",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Prochaines compétitions : ESL Pro League · PGL Major · BLAST"
+    },
+    {
+      "fr": "LAN",
+      "key": "cs2.tag.lan",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span class=\"cs2-lan-tag\">🏟 LAN</span>"
+    },
+    {
+      "fr": "LIVE",
+      "key": "cs2.tag.live",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "cs2-ldot\"></span>' + liveCount + ' LIVE</span>"
+    },
+    {
+      "fr": "{0} match",
+      "key": "cs2.group.count_singular",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "tmatches.length + ' match' + (tmatches.length > 1 ? 's'"
+    },
+    {
+      "fr": "rds en cours",
+      "key": "cs2.card.rounds_inprogress",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"cs2-round-score\">rds en cours</div>"
+    },
+    {
+      "fr": "Cotes N/A",
+      "key": "cs2.card.odds_na",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3)\">Cotes N/A</span>"
+    },
+    {
+      "fr": "🔍 Scout",
+      "key": "cs2.card.scout_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "tournament})\">🔍 Scout</button>"
+    },
+    {
+      "fr": "Joueur 1",
+      "key": "cs2.tier3.berserk.col_player1",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>#</th><th>Joueur 1</th><th>Score</th>"
+    },
+    {
+      "fr": "Score",
+      "key": "cs2.tier3.berserk.col_score",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Joueur 1</th><th>Score</th><th>Joueur 2</th>"
+    },
+    {
+      "fr": "Joueur 2",
+      "key": "cs2.tier3.berserk.col_player2",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Score</th><th>Joueur 2</th><th>Statut</th>"
+    },
+    {
+      "fr": "Statut",
+      "key": "cs2.tier3.berserk.col_status",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Joueur 2</th><th>Statut</th></tr>"
+    },
+    {
+      "fr": "FIN",
+      "key": "cs2.tier3.status_finished",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:#8d9399;font-size:9px;\">FIN</span>"
+    },
+    {
+      "fr": "À VENIR",
+      "key": "cs2.tier3.status_upcoming",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:700;\">À VENIR</span>"
+    },
+    {
+      "fr": "Équipe 1",
+      "key": "cs2.tier3.liquipedia.col_team1",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Équipe 1</th><th>Maps</th><th>Équipe 2</th>"
+    },
+    {
+      "fr": "Maps",
+      "key": "cs2.tier3.liquipedia.col_maps",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Équipe 1</th><th>Maps</th><th>Équipe 2</th>"
+    },
+    {
+      "fr": "Équipe 2",
+      "key": "cs2.tier3.liquipedia.col_team2",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Maps</th><th>Équipe 2</th><th>Résultat</th>"
+    },
+    {
+      "fr": "Résultat",
+      "key": "cs2.tier3.liquipedia.col_result",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Équipe 2</th><th>Résultat</th></tr>"
+    },
+    {
+      "fr": "Chargement ligues Tier 3…",
+      "key": "cs2.tier3.loading",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:11px;\">⏳ Chargement ligues Tier 3…</div>"
+    },
+    {
+      "fr": "50/50",
+      "key": "cs2.signal.prob_even",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "else signals.push({ key:'prob', label:'50/50', color:'grey'"
+    },
+    {
+      "fr": "🟢 BET FORT",
+      "key": "cs2.verdict.strong",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "return { txt: '🟢 BET FORT',   cls: 'cs2-verdict-strong' }"
+    },
+    {
+      "fr": "🟡 BET LÉGER",
+      "key": "cs2.verdict.mild",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "return { txt: '🟡 BET LÉGER',  cls: 'cs2-verdict-mild' }"
+    },
+    {
+      "fr": "🔴 SKIP",
+      "key": "cs2.verdict.skip",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "return { txt: '🔴 SKIP',       cls: 'cs2-verdict-skip' }"
+    },
+    {
+      "fr": "🔴 ÉVITER",
+      "key": "cs2.verdict.avoid",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "return { txt: '🔴 ÉVITER',     cls: 'cs2-verdict-skip' }"
+    },
+    {
+      "fr": "⚪ HOLD",
+      "key": "cs2.verdict.hold",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "return { txt: '⚪ HOLD', cls: 'cs2-verdict-hold' }"
+    },
+    {
+      "fr": "Aucun match disponible",
+      "key": "cs2.dashboard.empty",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-empty-msg\">Aucun match disponible</div>"
+    },
+    {
+      "fr": "Cotes implicites ELO",
+      "key": "cs2.dashboard.implied_odds_title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "title=\"Cotes implicites ELO\">~' + _io1"
+    },
+    {
+      "fr": "🔴 LIVE",
+      "key": "cs2.dashboard.section_live",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "return m.is_live;}) ? '🔴 LIVE' : '📅 PRÉ-MATCH'"
+    },
+    {
+      "fr": "📅 PRÉ-MATCH",
+      "key": "cs2.dashboard.section_prematch",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "? '🔴 LIVE' : '📅 PRÉ-MATCH'"
+    },
+    {
+      "fr": "Score / Heure",
+      "key": "cs2.dashboard.col_score_time",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Score / Heure</th><th>Match</th><th>Cotes</th>"
+    },
+    {
+      "fr": "Match",
+      "key": "cs2.dashboard.col_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Score / Heure</th><th>Match</th><th>Cotes</th>"
+    },
+    {
+      "fr": "Cotes",
+      "key": "cs2.dashboard.col_odds",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Match</th><th>Cotes</th><th>Prob ML</th>"
+    },
+    {
+      "fr": "Prob ML",
+      "key": "cs2.dashboard.col_prob_ml",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Cotes</th><th>Prob ML</th>"
+    },
+    {
+      "fr": "Forme",
+      "key": "cs2.dashboard.col_form",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Forme<br><span style=\"font-size:8px"
+    },
+    {
+      "fr": "T1 / T2 last 5",
+      "key": "cs2.dashboard.col_form_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-weight:400;\">T1 / T2 last 5</span></th>"
+    },
+    {
+      "fr": "Map / Rounds",
+      "key": "cs2.dashboard.col_map_rounds",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Map / Rounds</th><th>Signaux KPI</th>"
+    },
+    {
+      "fr": "Signaux KPI",
+      "key": "cs2.dashboard.col_signals",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Map / Rounds</th><th>Signaux KPI</th><th>VERDICT</th>"
+    },
+    {
+      "fr": "VERDICT",
+      "key": "cs2.dashboard.col_verdict",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<th>Signaux KPI</th><th>VERDICT</th>"
+    },
+    {
+      "fr": "🎬 Highlights",
+      "key": "cs2.highlights.label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span class=\"cs2-hl-label\">🎬 Highlights</span>"
+    },
+    {
+      "fr": "MOMENTUM",
+      "key": "cs2.momentum.label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--text3);\">MOMENTUM</span>"
+    },
+    {
+      "fr": "Map : {0}",
+      "key": "cs2.scout.sub_map",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "(map ? 'Map : ' + map : (meta && meta.fmt"
+    },
+    {
+      "fr": "Pré-match",
+      "key": "cs2.scout.sub_prematch",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "meta.fmt ? meta.fmt : 'Pré-match')"
+    },
+    {
+      "fr": "Sélectionnez un match",
+      "key": "cs2.scout.select_match",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">Sélectionnez un match</div>"
+    },
+    {
+      "fr": "Données indisponibles pour ce match",
+      "key": "cs2.scout.data_unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">Données indisponibles pour ce match</div>"
+    },
+    {
+      "fr": "Match ID indisponible",
+      "key": "cs2.scout.ai_no_match_id",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">Match ID indisponible</div>"
+    },
+    {
+      "fr": "🤖 Analyse IA en cours… (~10-20 s)",
+      "key": "cs2.scout.ai_loading",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-loading\">🤖 Analyse IA en cours… (~10-20 s)</div>"
+    },
+    {
+      "fr": "Réponse IA vide",
+      "key": "cs2.scout.ai_empty_response",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "if (!text) throw new Error('Réponse IA vide')"
+    },
+    {
+      "fr": "Délai dépassé (35 s)",
+      "key": "cs2.scout.ai_timeout",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'AbortError') ? 'Délai dépassé (35 s)' : (e"
+    },
+    {
+      "fr": "Erreur",
+      "key": "cs2.scout.ai_error",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(e && e.message) || 'Erreur';"
+    },
+    {
+      "fr": "🤖 AI SCOUT · ANALYSE EXPLICABLE (non calibrée)",
+      "key": "cs2.scout.ai_header",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "lbl.textContent = '🤖 AI SCOUT · ANALYSE EXPLICABLE (non calibrée)'"
+    },
+    {
+      "fr": "📋 Copier",
+      "key": "cs2.scout.ai_copy_btn",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "copyBtn.textContent = '📋 Copier';"
+    },
+    {
+      "fr": "✓ Copié",
+      "key": "cs2.scout.ai_copied",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "copyBtn.textContent = '✓ Copié';"
+    },
+    {
+      "fr": "TEAM STATS",
+      "key": "cs2.scout.overview.team_stats",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--cs2-text3,#999);margin-bottom:10px;\">TEAM STATS</div>"
+    },
+    {
+      "fr": "MAP WIN %",
+      "key": "cs2.scout.overview.stat_map_win",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{label:'MAP WIN %',  v1:t1meta.map_winrate"
+    },
+    {
+      "fr": "CT SIDE WR",
+      "key": "cs2.scout.overview.stat_ct_wr",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{label:'CT SIDE WR', v1:t1meta.round_winrate_ct"
+    },
+    {
+      "fr": "T SIDE WR",
+      "key": "cs2.scout.overview.stat_t_wr",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{label:'T SIDE WR',  v1:t1meta.round_winrate_t"
+    },
+    {
+      "fr": "RECENT FORM (last 6, oldest → newest)",
+      "key": "cs2.scout.overview.recent_form",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:8px;\">RECENT FORM (last 6, oldest → newest)</div>"
+    },
+    {
+      "fr": "ML PREDICTION · {0}",
+      "key": "cs2.scout.overview.ml_prediction",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-bottom:10px;\">ML PREDICTION · '+(isElo?'ELO-AWARE'"
+    },
+    {
+      "fr": "ELO-AWARE",
+      "key": "cs2.scout.overview.elo_aware",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'ML PREDICTION · '+(isElo?'ELO-AWARE':'BSD ML')"
+    },
+    {
+      "fr": "Confidence",
+      "key": "cs2.scout.overview.confidence",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:10px;\">Confidence <strong style="
+    },
+    {
+      "fr": "ELO diff",
+      "key": "cs2.scout.overview.elo_diff",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "font-size:10px;\">ELO diff <strong>'+eloDiff"
+    },
+    {
+      "fr": "⚡ ELO-based",
+      "key": "cs2.scout.overview.elo_based",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "color:var(--cs2-text3,#999);\">⚡ ELO-based</span>"
+    },
+    {
+      "fr": "WR · RANG MONDIAL",
+      "key": "cs2.scout.maps.wr_world_rank",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(hasWorldRank ? 'WR · RANG MONDIAL' : 'WINRATE PAR CARTE')"
+    },
+    {
+      "fr": "WINRATE PAR CARTE",
+      "key": "cs2.scout.maps.winrate_per_map",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'WR · RANG MONDIAL' : 'WINRATE PAR CARTE')"
+    },
+    {
+      "fr": "EDGE",
+      "key": "cs2.scout.maps.edge_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.04em;\">EDGE</span>"
+    },
+    {
+      "fr": "{0} meilleure équipe mondiale sur {1} (#{2} vs #{3})",
+      "key": "cs2.scout.maps.best_world_team",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "_esc(t2)) + ' meilleure équipe mondiale sur ' + ml"
+    },
+    {
+      "fr": "CT / T SIDE WINRATES (BSD)",
+      "key": "cs2.scout.maps.ct_t_winrates",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.05em;\">CT / T SIDE WINRATES (BSD)</div>"
+    },
+    {
+      "fr": "Source: {0}",
+      "key": "cs2.scout.maps.source",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-top:6px;\">Source: ' + src + (e.data_age_h"
+    },
+    {
+      "fr": "Roster {0} indisponible",
+      "key": "cs2.scout.players.roster_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "margin-bottom:12px;\">Roster ' + _esc(teamName) + ' indisponible</div>"
+    },
+    {
+      "fr": "TOP",
+      "key": "cs2.scout.players.top_badge",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "vertical-align:middle;\">TOP</span>"
+    },
+    {
+      "fr": "{0} mondial",
+      "key": "cs2.scout.players.world_rank",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "(teamData.rank ? '#' + teamData.rank + ' mondial' : '')"
+    },
+    {
+      "fr": "Aucun H2H disponible",
+      "key": "cs2.scout.h2h.empty",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">Aucun H2H disponible</div>"
+    },
+    {
+      "fr": "{0} matchs",
+      "key": "cs2.scout.h2h.match_count",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "font-size:10px;\">' + h2h.n + ' matchs<br>"
+    },
+    {
+      "fr": "HISTORIQUE (ancien → récent)",
+      "key": "cs2.scout.h2h.history",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-bottom:5px;\">HISTORIQUE (ancien → récent)</div>"
+    },
+    {
+      "fr": "Chargement veto…",
+      "key": "cs2.scout.veto.loading",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-loading\">⏳ Chargement veto…</div>"
+    },
+    {
+      "fr": "ID match indisponible",
+      "key": "cs2.scout.veto.no_match_id",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">ID match indisponible</div>"
+    },
+    {
+      "fr": "Séquence veto non disponible",
+      "key": "cs2.scout.veto.unavailable",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">Séquence veto non disponible<br>"
+    },
+    {
+      "fr": "Disponible uniquement via BSD CSGO addon avant/pendant le match",
+      "key": "cs2.scout.veto.unavailable_sub",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "Disponible uniquement via BSD CSGO addon avant/pendant le match"
+    },
+    {
+      "fr": "SÉQUENCE BAN/PICK",
+      "key": "cs2.scout.veto.ban_pick_seq",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "letter-spacing:.05em;margin-bottom:8px;\">SÉQUENCE BAN/PICK</div>"
+    },
+    {
+      "fr": "Veto non commencé",
+      "key": "cs2.scout.veto.not_started",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "cs2-scout-empty\">Veto non commencé</div>"
+    },
+    {
+      "fr": "Équipe {0}",
+      "key": "cs2.scout.veto.team_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "(v.team_id?'Équipe '+v.team_id:'?')"
+    },
+    {
+      "fr": "WIN% SUR {0}",
+      "key": "cs2.scout.veto.win_pct_on",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "color:var(--text3);\">WIN% SUR ' + mapName.toUpperCase()"
+    },
+    {
+      "fr": "VALUE MAP ✓",
+      "key": "cs2.scout.veto.value_map",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "absDelta>=25?'VALUE MAP ✓':absDelta>=15?'Avantage'"
+    },
+    {
+      "fr": "Avantage",
+      "key": "cs2.scout.veto.advantage",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "absDelta>=15?'Avantage':'≈ Équilibre'"
+    },
+    {
+      "fr": "≈ Équilibre",
+      "key": "cs2.scout.veto.balanced",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'Avantage':'≈ Équilibre';"
+    },
+    {
+      "fr": "Trajectoire",
+      "key": "cs2.scout.analytics.trajectory",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "var trajContent = _kpiRow('Trajectoire',"
+    },
+    {
+      "fr": "FORME · BO3 RÉCENTS + SOS",
+      "key": "cs2.scout.analytics.form_section",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "html += _section('FORME · BO3 RÉCENTS + SOS', trajContent)"
+    },
+    {
+      "fr": "Force roster",
+      "key": "cs2.scout.analytics.roster_strength_row",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "var rsContent = _kpiRow('Force roster',"
+    },
+    {
+      "fr": "HLTV Rank",
+      "key": "cs2.scout.analytics.hltv_rank",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "rsContent += _kpiRow('HLTV Rank',"
+    },
+    {
+      "fr": "ROSTER STRENGTH · RATING 3.0",
+      "key": "cs2.scout.analytics.roster_section",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "html += _section('ROSTER STRENGTH · RATING 3.0', rsContent)"
+    },
+    {
+      "fr": "SIGNAL · {0}",
+      "key": "cs2.scout.analytics.pistol_signal",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "letter-spacing:.04em;\">SIGNAL · ' + _esc(pi.trade_signal.toUpperCase())"
+    },
+    {
+      "fr": "PISTOL ROUND INDEX · BSD PROXY",
+      "key": "cs2.scout.analytics.pistol_section",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "html += _section('PISTOL ROUND INDEX · BSD PROXY', piContent)"
+    },
+    {
+      "fr": "Entropie pool",
+      "key": "cs2.scout.analytics.pool_entropy_row",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "var entropyContent = _kpiRow('Entropie pool',"
+    },
+    {
+      "fr": "{0} · POOL CONCENTRE — RISQUE VETO FORCING",
+      "key": "cs2.scout.analytics.pool_concentrated",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "_esc(t1.toUpperCase()) + ' · POOL CONCENTRE — RISQUE VETO FORCING'"
+    },
+    {
+      "fr": "MAP POOL ENTROPY · VETO RISK",
+      "key": "cs2.scout.analytics.entropy_section",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "html += _section('MAP POOL ENTROPY · VETO RISK', entropyContent)"
+    },
+    {
+      "fr": "Aujourd'hui {0}",
+      "key": "cs2.time.today",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "if (dayDiff === 0) return \"Aujourd'hui \" + t;"
+    },
+    {
+      "fr": "Demain {0}",
+      "key": "cs2.time.tomorrow",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "if (dayDiff === 1) return 'Demain ' + t;"
+    },
+    {
+      "fr": "🎯 Break",
+      "key": "tennis.alerts.type.break_set",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "break_set:'🎯 Break', under_jeu:'📐 Under Jeu'"
+    },
+    {
+      "fr": "📐 Under Jeu",
+      "key": "tennis.alerts.type.under_jeu",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "under_jeu:'📐 Under Jeu', oddspapi_prematch:'📡 OddsPapi'"
+    },
+    {
+      "fr": "⚡ Live",
+      "key": "tennis.alerts.type.live_set_score",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "live_set_score:'⚡ Live' };"
+    },
+    {
+      "fr": "✅ WIN",
+      "key": "alerts.outcome.win",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "r.outcome==='WIN'?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS'"
+    },
+    {
+      "fr": "❌ LOSS",
+      "key": "alerts.outcome.loss",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS':'⏳'"
+    },
+    {
+      "fr": "🔥 Intensité",
+      "key": "foot.alerts.type.live_intensity",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "{'live_intensity':'🔥 Intensité','live_pressure'"
+    },
+    {
+      "fr": "📈 Pression",
+      "key": "foot.alerts.type.live_pressure",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'live_pressure':'📈 Pression','live_poisson'"
+    },
+    {
+      "fr": "📐 Poisson",
+      "key": "foot.alerts.type.live_poisson",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'live_poisson':'📐 Poisson','morning_picks'"
+    },
+    {
+      "fr": "🌅 Morning",
+      "key": "foot.alerts.type.morning_picks",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'morning_picks':'🌅 Morning','xg_intensity'"
+    },
+    {
+      "fr": "⚡ xG",
+      "key": "foot.alerts.type.xg_intensity",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'xg_intensity':'⚡ xG'}[r.alert_type]"
+    },
+    {
+      "fr": "Données UFC non disponibles.",
+      "key": "mma.error.no_data",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-empty-icon\">🥊</div>Données UFC non disponibles.</div>"
+    },
+    {
+      "fr": "Analyse PariScore",
+      "key": "mma.acc_badge.default",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "badge.textContent = 'Analyse PariScore';"
+    },
+    {
+      "fr": "📊 {0} picks · {1}%{2}",
+      "key": "mma.acc_badge.resolved",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "badge.textContent = '📊 ' + p.resolved + ' picks · '"
+    },
+    {
+      "fr": "Suivi des verdicts PariScore · {0} en attente",
+      "key": "mma.acc_badge.title",
+      "file": "pariscore.js",
+      "wrap": "html-attr-title",
+      "snippet": "badge.title = 'Suivi des verdicts PariScore · ' + p.pending"
+    },
+    {
+      "fr": "📊 {0} picks suivis (résultats à venir)",
+      "key": "mma.acc_badge.pending",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "badge.textContent = '📊 ' + p.pending + ' picks suivis"
+    },
+    {
+      "fr": "Aucun value bet détecté.",
+      "key": "mma.empty.no_value",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(_mmaFilter === 'value' ? 'Aucun value bet détecté.'"
+    },
+    {
+      "fr": "Aucun événement UFC à venir.",
+      "key": "mma.empty.no_event",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": ": 'Aucun événement UFC à venir.')"
+    },
+    {
+      "fr": "Bout",
+      "key": "mma.fight.weight_class_fallback",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "f.weight_class ? _esc(f.weight_class) : 'Bout'"
+    },
+    {
+      "fr": "🏆 TITLE",
+      "key": "mma.fight.title_belt",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span class=\"mma-title-belt\">🏆 TITLE</span>"
+    },
+    {
+      "fr": "VS",
+      "key": "mma.fight.vs",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<span class=\"mma-vs\">VS</span>"
+    },
+    {
+      "fr": "🔍 Analyse & Paris",
+      "key": "mma.fight.analysis_btn",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "')) + '\">🔍 Analyse &amp; Paris</button>"
+    },
+    {
+      "fr": "FAIR {0}",
+      "key": "mma.odds.fair",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mma-odds-ai\">FAIR ' + (aiOdds != null ? _fmt(aiOdds)"
+    },
+    {
+      "fr": "BEST {0}",
+      "key": "mma.odds.best",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mma-odds-vgs\">BEST ' + (vegasOdds != null ? _fmt(vegasOdds)"
+    },
+    {
+      "fr": "✓ BET",
+      "key": "mma.odds.bet_chip",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-bet-chip\">✓ BET</div>"
+    },
+    {
+      "fr": "🔍 Analyse & Paris",
+      "key": "mma.analysis.btn_closed",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = '🔍 Analyse & Paris';"
+    },
+    {
+      "fr": "▲ Fermer",
+      "key": "mma.analysis.btn_open",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "btn.textContent = '▲ Fermer';"
+    },
+    {
+      "fr": "Probabilités…",
+      "key": "mma.analysis.spinner_probs",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-analysis-spinner\">Probabilités…</div>"
+    },
+    {
+      "fr": "Analyse IA…",
+      "key": "mma.analysis.spinner_ai",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-analysis-spinner\">Analyse IA…</div>"
+    },
+    {
+      "fr": "Analyse indisponible.",
+      "key": "mma.analysis.unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "_renderMMAAnalysis(d.text || 'Analyse indisponible.')"
+    },
+    {
+      "fr": "Analyse IA indisponible ({0})",
+      "key": "mma.analysis.ai_unavailable",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "var(--red,#ff4d4d)\">Analyse IA indisponible (' + e + ')</div>"
+    },
+    {
+      "fr": "⚡ Verdict PariScore",
+      "key": "mma.verdict.label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-verdict-lbl\">⚡ Verdict PariScore</div>"
+    },
+    {
+      "fr": "{0} KO · {1} SUB · {2} DEC",
+      "key": "mma.method.caption",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "mma-method-cap\">' + fin.ko + ' KO · ' + fin.sub + ' SUB · '"
+    },
+    {
+      "fr": "n/d",
+      "key": "mma.model.no_data",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-model-val\">—</div><div class=\"mma-model-pick\">n/d</div>"
+    },
+    {
+      "fr": "Marché",
+      "key": "mma.model.market",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "h += _modelCell('Marché', pa, pb, fa, fb)"
+    },
+    {
+      "fr": "Stats",
+      "key": "mma.model.stats",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "h += _modelCell('Stats', dra, dra != null ? 100 - dra"
+    },
+    {
+      "fr": "Forme",
+      "key": "mma.model.form",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "h += _modelCell('Forme', amv.a, amv.b, fa, fb, 'am')"
+    },
+    {
+      "fr": "Probabilités",
+      "key": "mma.breakdown.probs_title",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'<div class=\"mma-bd-title\">Probabilités</div>"
+    },
+    {
+      "fr": "✓ ACCORD",
+      "key": "mma.consensus.agree",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "(agree ? '✓ ACCORD' : '⚠ DIVERGENCE')"
+    },
+    {
+      "fr": "⚠ DIVERGENCE",
+      "key": "mma.consensus.disagree",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "'✓ ACCORD' : '⚠ DIVERGENCE')"
+    },
+    {
+      "fr": "Convergence sur {0}",
+      "key": "mma.consensus.convergence",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "(agree ? ('Convergence sur ' + _esc(favName))"
+    },
+    {
+      "fr": "Signaux en désaccord",
+      "key": "mma.consensus.signals_disagree",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "_esc(favName)) : 'Signaux en désaccord')"
+    },
+    {
+      "fr": "📊 Voir l'analyse complète",
+      "key": "mma.breakdown.full_btn",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "openMMABreakdownModal(' + id + ')\">📊 Voir l’analyse complète</button>"
+    },
+    {
+      "fr": "Pas d'analyse détaillée pour ce combat",
+      "key": "mma.breakdown.no_detail",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-bd-src\">Pas d’analyse détaillée pour ce combat</div>"
+    },
+    {
+      "fr": "VS",
+      "key": "mma.breakdown.modal_vs",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-modal-vs\">VS</div>"
+    },
+    {
+      "fr": "Pronostic",
+      "key": "mma.breakdown.forecast_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "mma-conf-label\"><span>Pronostic</span>"
+    },
+    {
+      "fr": "{0}% confiance",
+      "key": "mma.breakdown.confidence_pct",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "<span>' + conf + '% confiance</span>"
+    },
+    {
+      "fr": "Favori :",
+      "key": "mma.breakdown.favorite_label",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "margin-top:8px;\">Favori : <strong style="
+    },
+    {
+      "fr": "Probabilités",
+      "key": "mma.breakdown.modal_probs_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-sec-title\">Probabilités</div>"
+    },
+    {
+      "fr": "Tale of the Tape",
+      "key": "mma.breakdown.tape_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-sec-title\">Tale of the Tape</div>"
+    },
+    {
+      "fr": "Record",
+      "key": "mma.breakdown.tape_record",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "h += row(_esc(recA), 'Record', _esc(recB))"
+    },
+    {
+      "fr": "Frappes",
+      "key": "mma.breakdown.tape_strikes",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "spm + '/min' : '—', 'Frappes', sb ? sb.spm"
+    },
+    {
+      "fr": "{0}/min",
+      "key": "mma.breakdown.tape_per_min",
+      "file": "pariscore.js",
+      "wrap": "js-template",
+      "snippet": "row(sa ? sa.spm + '/min' : '—', 'Frappes'"
+    },
+    {
+      "fr": "Précision",
+      "key": "mma.breakdown.tape_accuracy",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "sa.acc + '%' : '—', 'Précision', sb && sb.acc"
+    },
+    {
+      "fr": "Méthode de victoire · carrière",
+      "key": "mma.breakdown.method_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-sec-title\">Méthode de victoire · carrière</div>"
+    },
+    {
+      "fr": "Analyse IA",
+      "key": "mma.breakdown.faq_title",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-sec-title\">Analyse IA</div>"
+    },
+    {
+      "fr": "Analyse PariScore",
+      "key": "mma.breakdown.modal_foot",
+      "file": "pariscore.js",
+      "wrap": "html-text",
+      "snippet": "<div class=\"mma-modal-foot\">Analyse PariScore</div>"
+    },
+    {
+      "fr": "🥇 Bankroll Builder",
+      "key": "mma.bet.label_safe",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "cls: 'safe',  label: '🥇 Bankroll Builder'"
+    },
+    {
+      "fr": "🎯 Value Bet",
+      "key": "mma.bet.label_value",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "cls: 'value', label: '🎯 Value Bet'"
+    },
+    {
+      "fr": "⚡ Wild Card",
+      "key": "mma.bet.label_wild",
+      "file": "pariscore.js",
+      "wrap": "js-literal",
+      "snippet": "cls: 'wild',  label: '⚡ Wild Card'"
+    }
+  ]
+}

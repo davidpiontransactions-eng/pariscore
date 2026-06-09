@@ -5,9 +5,9 @@ import '../entities/tennis_match.dart';
 import '../repositories/tennis_repository.dart';
 
 class GetTennisMatchesUseCase {
-  final TennisRepository _repository;
-
   const GetTennisMatchesUseCase(this._repository);
+
+  final TennisRepository _repository;
 
   Future<Either<Failure, List<TennisMatch>>> call() =>
       _repository.getLiveMatches();

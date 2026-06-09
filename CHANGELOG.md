@@ -2,6 +2,21 @@
 
 ---
 
+## [v12.69] — 2026-06-09 — Tennis WOM cache — optim évit fetch Betfair redondant value bets
+
+### Fonctionnalités livrées
+
+| Point | Description |
+|---|---|
+| **Live WOM cache** | `_tennisLiveCache` (Map) — évite fetch Betfair redondant pour les matchs déjà enrichis live dans le re-build du value bets builder |
+| **Cache population** | `enrichMatchesWithBetfairWOM` appelé après build cache live tennis, peuple le cache WOM pour tous les matchs live |
+| **Fallback fetch** | `fetchBetfairWOM` uniquement en cache miss dans le value bets builder — pas de requête Betfair superflue |
+
+### Fichiers modifiés
+- `server.js` — `_tennisLiveCache`, `enrichMatchesWithBetfairWOM`, value bets builder fallback
+
+---
+
 ## [v12.68] — 2026-05-28 — Intégration annonces BSD 26-27/05/2026
 
 ### Fonctionnalités livrées

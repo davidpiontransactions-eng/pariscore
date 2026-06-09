@@ -3872,6 +3872,7 @@ function renderTennisValueBets(rawMatches) {
   const positiveEv = document.getElementById('tennis-vb-positive-ev')?.checked;
   const hideFinished = document.getElementById('tennis-vb-hide-finished')?.checked;
   const liveOnly = document.getElementById('tennis-vb-live-only')?.checked;
+  const womOnly = document.getElementById('tennis-vb-wom-only')?.checked;
 
   // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
   const _compSel = document.getElementById('tennis-vb-comp');
@@ -3936,6 +3937,7 @@ function renderTennisValueBets(rawMatches) {
       const s = String(m.status || '').toUpperCase();
       if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
     }
+    if (womOnly && !(m.betfair_wom?.p1 != null && m.betfair_wom?.p2 != null)) return false;
     if (f.strategy && f.strategy !== 'ALL' && !_tnStrategyMatch(m, f.strategy)) return false;
     // bd 6jro Plan I — filtre format Singles/Doubles. Heuristique : doubles si name slash-pair,
     // ou tournament/round flag doubles, ou is_doubles explicite (server-side).
@@ -3986,6 +3988,13 @@ function renderTennisValueBets(rawMatches) {
         const ta = Date.parse(a.start_time || a.commence_time || '') || Infinity;
         const tb = Date.parse(b.start_time || b.commence_time || '') || Infinity;
         return ta - tb;
+      }
+      case 'wom': {
+        const wa = a.betfair_wom;
+        const wb = b.betfair_wom;
+        const av = (wa && wa.p1 != null && wa.p2 != null) ? Math.max(wa.p1, wa.p2) : -1;
+        const bv = (wb && wb.p1 != null && wb.p2 != null) ? Math.max(wb.p1, wb.p2) : -1;
+        return bv - av;
       }
       case 'time':
       default: {
@@ -25786,7 +25795,7 @@ function renderComparateur(d) {
     var page = document.querySelector('#page-tennis');
     if (!page) return;
     /* Find the filter row containers — each is the parent <div> of one filter group */
-    var filterGroups = page.querySelectorAll('.tnc-ms-pop, [data-filter], #tennis-vb-sort, #tennis-vb-live-only, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished');
+    var filterGroups = page.querySelectorAll('.tnc-ms-pop, [data-filter], #tennis-vb-sort, #tennis-vb-live-only, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished, #tennis-vb-wom-only');
     /* Strategy: mark the parent <div style="display:flex;…"> of NON-essential filters as extra.
        Essential (keep visible always): Tour (data-filter="tour"), Surface (data-filter="surface"), Live label. */
     var essentialFilters = new Set(['tour', 'surface']);
@@ -25799,7 +25808,7 @@ function renderComparateur(d) {
       }
     });
     /* Sort, multi-comp, search, checkboxes: mark all as extra except live */
-    page.querySelectorAll('#tennis-vb-comp, #tennis-vb-sort, #tnc-ms-btn, .tvb-search, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished').forEach(function (el) {
+    page.querySelectorAll('#tennis-vb-comp, #tennis-vb-sort, #tnc-ms-btn, .tvb-search, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished, #tennis-vb-wom-only').forEach(function (el) {
       var row = el.closest('div[style*="display:flex"]') || el.closest('label');
       if (row && !row.hasAttribute('data-cf-filter-extra')) {
         row.setAttribute('data-cf-filter-extra', 'true');
@@ -25870,6 +25879,7 @@ function renderComparateur(d) {
       elo_only: !!document.querySelector('#tennis-vb-elo-only')?.checked,
       positive_ev: !!document.querySelector('#tennis-vb-positive-ev')?.checked,
       hide_finished: !!document.querySelector('#tennis-vb-hide-finished')?.checked,
+      wom_only: !!document.querySelector('#tennis-vb-wom-only')?.checked,
       cf_mode: document.body.getAttribute('data-cf-mode') || 'analyse'
     };
   }
@@ -25891,6 +25901,7 @@ function renderComparateur(d) {
     setChk('tennis-vb-elo-only', f.elo_only);
     setChk('tennis-vb-positive-ev', f.positive_ev);
     setChk('tennis-vb-hide-finished', f.hide_finished);
+    setChk('tennis-vb-wom-only', f.wom_only);
     var sortSel = document.querySelector('#tennis-vb-sort'); if (sortSel) sortSel.value = f.sort || 'time';
     var searchInput = document.querySelector('#tennis-vb-search'); if (searchInput) searchInput.value = f.q || '';
     /* Reflect filter button active state */

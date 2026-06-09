@@ -5,10 +5,10 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/tennis_match.dart';
 
 class TennisMatchCard extends StatelessWidget {
+  const TennisMatchCard({super.key, required this.match, this.onTap});
+
   final TennisMatch match;
   final VoidCallback? onTap;
-
-  const TennisMatchCard({super.key, required this.match, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +61,14 @@ class TennisMatchCard extends StatelessWidget {
             // Edge badge
             if (match.edge?.edge != null) ...[
               const SizedBox(height: 12),
-              Divider(color: AppColors.border, height: 1),
+              const Divider(color: AppColors.border, height: 1),
               const SizedBox(height: 12),
               _EdgeRow(edge: match.edge!),
+            ],
+            // WOM
+            if (match.betfairWom != null) ...[
+              const SizedBox(height: 12),
+              _TennisWomBar(wom: match.betfairWom!),
             ],
           ],
         ),
@@ -73,9 +78,9 @@ class TennisMatchCard extends StatelessWidget {
 }
 
 class _SurfaceChip extends StatelessWidget {
-  final String surface;
-
   const _SurfaceChip({required this.surface});
+
+  final String surface;
 
   Color get _color => switch (surface.toLowerCase()) {
         'clay' => const Color(0xFFE07B54),
@@ -102,15 +107,15 @@ class _SurfaceChip extends StatelessWidget {
 }
 
 class _PlayerRow extends StatelessWidget {
-  final TennisPlayer player;
-  final List<int> sets;
-  final bool isServing;
-
   const _PlayerRow({
     required this.player,
     required this.sets,
     required this.isServing,
   });
+
+  final TennisPlayer player;
+  final List<int> sets;
+  final bool isServing;
 
   @override
   Widget build(BuildContext context) {
@@ -153,9 +158,9 @@ class _PlayerRow extends StatelessWidget {
 }
 
 class _EdgeRow extends StatelessWidget {
-  final TennisEdge edge;
-
   const _EdgeRow({required this.edge});
+
+  final TennisEdge edge;
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +191,74 @@ class _EdgeRow extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _TennisWomBar extends StatelessWidget {
+  const _TennisWomBar({required this.wom});
+
+  final WomData wom;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = wom.p1 + wom.p2;
+    final p1Frac = total > 0 ? wom.p1 / total : 0.5;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.bg3,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // P1 %
+              Text(
+                'P1 ${wom.p1.toStringAsFixed(1)}%',
+                style: AppTextStyles.monoBadge.copyWith(
+                  color: AppColors.blue,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'WOM',
+                style: AppTextStyles.monoBadge.copyWith(
+                  color: AppColors.text3,
+                ),
+              ),
+              const Spacer(),
+              // P2 %
+              Text(
+                'P2 ${wom.p2.toStringAsFixed(1)}%',
+                style: AppTextStyles.monoBadge.copyWith(
+                  color: AppColors.amber,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: (p1Frac * 100).round().clamp(1, 99),
+                  child: Container(height: 6, color: AppColors.blue),
+                ),
+                Expanded(
+                  flex: ((1 - p1Frac) * 100).round().clamp(1, 99),
+                  child: Container(height: 6, color: AppColors.amber),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

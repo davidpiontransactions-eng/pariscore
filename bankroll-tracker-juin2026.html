@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi Bankroll — Juin 2026</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text2: #8b949e;
+      --green: #3fb950;
+      --green-bg: rgba(63,185,80,.12);
+      --red: #f85149;
+      --red-bg: rgba(248,81,73,.12);
+      --yellow: #d29922;
+      --yellow-bg: rgba(210,153,34,.12);
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+      --accent: #1f6feb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
+      font-size: 13px;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+    .subtitle { color: var(--text2); margin-bottom: 24px; font-size: 12px; }
+
+    /* Summary cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .card-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .card-value { font-size: 22px; font-weight: 700; }
+    .card-value.green { color: var(--green); }
+    .card-value.blue { color: var(--blue); }
+    .card-value.purple { color: var(--purple); }
+    .card-value.yellow { color: var(--yellow); }
+    .card-value.red { color: var(--red); }
+    .card-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+    /* Legend */
+    .legend {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin-bottom: 16px; font-size: 11px; color: var(--text2);
+    }
+    .legend span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      white-space: nowrap;
+    }
+    thead th {
+      background: var(--bg3);
+      color: var(--text2);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+    thead th:first-child,
+    thead th:nth-child(2) { text-align: left; }
+    thead th.section-br { border-left: 2px solid var(--border); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:hover { background: var(--bg3); }
+    tbody tr.neg-day { background: rgba(248,81,73,.04); }
+    tbody tr.pos-day { background: rgba(63,185,80,.03); }
+    tbody tr.milestone { border-top: 2px solid var(--accent); }
+    tbody tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 9px 12px;
+      text-align: right;
+      color: var(--text);
+    }
+    td:first-child { text-align: left; color: var(--text2); font-size: 12px; font-weight: 600; }
+    td:nth-child(2) { text-align: left; font-weight: 500; }
+    td.section-br { border-left: 2px solid var(--border); }
+
+    .val-green { color: var(--green); font-weight: 600; }
+    .val-red { color: var(--red); font-weight: 600; }
+    .val-yellow { color: var(--yellow); }
+    .val-blue { color: var(--blue); }
+    .val-purple { color: var(--purple); }
+    .val-dim { color: var(--text2); }
+
+    tfoot td {
+      background: var(--bg3);
+      font-weight: 700;
+      border-top: 2px solid var(--border);
+      color: var(--text);
+    }
+    tfoot td:first-child { text-align: left; }
+
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-red { background: var(--red-bg); color: var(--red); }
+    .badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+
+    .footnote {
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.8;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .footnote b { color: var(--text); }
+
+    @media print {
+      body { background: white; color: black; padding: 10px; }
+      .card-value.green { color: #196f2a; }
+      .card-value.blue { color: #0550ae; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>📊 Suivi Bankroll — Juin 2026</h1>
+<p class="subtitle">Période : 3 juin → 30 juin 2026 · 28 jours · Capital initial : 200 €</p>
+
+<div class="cards" id="cards"></div>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--green-bg);border:1px solid var(--green)"></span>Épargne nette positive</span>
+  <span><span class="dot" style="background:var(--red-bg);border:1px solid var(--red)"></span>Épargne nette négative (puiser en banque)</span>
+  <span><span class="dot" style="border:2px solid var(--accent);background:none"></span>Jalon (bankroll × 2 / × 5 / × 10)</span>
+</div>
+
+<div class="table-wrap">
+  <table id="tracker">
+    <thead>
+      <tr>
+        <th>Jour</th>
+        <th>Date</th>
+        <th>Bankroll début</th>
+        <th>Gain brut (20%)</th>
+        <th class="section-br">→ Bankroll (+50%)</th>
+        <th>→ Banque brut (50%)</th>
+        <th class="section-br">💳 Rembours. dette</th>
+        <th>🔧 PariScore dev</th>
+        <th>📈 Épargne nette</th>
+        <th class="section-br">Bankroll fin</th>
+        <th>Cumul épargne</th>
+        <th>Cumul dette</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+    <tfoot id="tfoot"></tfoot>
+  </table>
+</div>
+
+<div class="footnote" id="footnote"></div>
+
+<script>
+  // ── Paramètres ──────────────────────────────────────────────────
+  const CAPITAL_INIT   = 200;
+  const GAIN_RATE      = 0.20;   // 20%/jour
+  const KEEP_RATE      = 0.50;   // 50% gain → bankroll
+  const TOTAL_DEBT     = 400;    // à rembourser
+  const PARISCORE_DAY  = 10;     // €/jour développement PariScore
+  const START          = new Date(2026, 5, 4);  // 4 juin
+  const END            = new Date(2026, 5, 30); // 30 juin
+
+  const msDay = 86400000;
+  const TOTAL_DAYS = Math.round((END - START) / msDay) + 1; // 28
+  const DAILY_DEBT = TOTAL_DEBT / TOTAL_DAYS;
+
+  const MONTHS_FR = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  const DAYS_FR   = ['dim','lun','mar','mer','jeu','ven','sam'];
+  function fmtDate(d) {
+    return DAYS_FR[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + ' ' + MONTHS_FR[d.getMonth()];
+  }
+  function eur(v) {
+    return (v >= 0 ? '' : '−') + Math.abs(v).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  }
+  function eurSigned(v) { return (v > 0 ? '+' : '') + eur(v); }
+
+  // ── Calcul ──────────────────────────────────────────────────────
+  let bankroll    = CAPITAL_INIT;
+  let cumulBank   = 0;
+  let cumulDebt   = 0;
+  let cumulPS     = 0;
+  let totalGain   = 0;
+  const rows = [];
+
+  const milestones = new Set();
+  [2, 5, 10].forEach(m => milestones.add(m)); // multiples du capital initial
+
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const date       = new Date(START.getTime() + i * msDay);
+    const bkStart    = bankroll;
+    const gain       = bkStart * GAIN_RATE;
+    const toBankroll = gain * KEEP_RATE;        // 50% → bankroll
+    const toBankGross= gain * (1 - KEEP_RATE);  // 50% → banque
+    const debtPay    = DAILY_DEBT;
+    const ps         = PARISCORE_DAY;
+    const netBank    = toBankGross - debtPay - ps;
+
+    cumulBank  += netBank;
+    cumulDebt  += debtPay;
+    cumulPS    += ps;
+    totalGain  += gain;
+    bankroll    = bkStart + toBankroll;
+
+    // Jalon ?
+    let milestone = null;
+    [10, 5, 2].forEach(m => {
+      if (!milestone && bkStart < CAPITAL_INIT * m && bankroll >= CAPITAL_INIT * m) {
+        milestone = m;
+      }
+    });
+
+    rows.push({
+      day: i + 1, date, bkStart, gain,
+      toBankroll, toBankGross, debtPay, ps, netBank,
+      bkEnd: bankroll, cumulBank, cumulDebt, milestone
+    });
+  }
+
+  // ── Summary cards ───────────────────────────────────────────────
+  const lastRow = rows[rows.length - 1];
+  const cards = [
+    { label: 'Bankroll finale', value: eur(lastRow.bkEnd), cls: 'green',
+      sub: `×${(lastRow.bkEnd / CAPITAL_INIT).toFixed(1)} vs capital initial` },
+    { label: 'Cumul épargne banque', value: eur(cumulBank), cls: cumulBank >= 0 ? 'blue' : 'red',
+      sub: 'Net après dette + PariScore' },
+    { label: 'Cumul gains bruts', value: eur(totalGain), cls: 'purple',
+      sub: 'Somme des gains journaliers' },
+    { label: 'Dette remboursée', value: eur(cumulDebt), cls: 'yellow',
+      sub: `400 € en ${TOTAL_DAYS} jours` },
+    { label: 'Invest. PariScore', value: eur(cumulPS), cls: 'yellow',
+      sub: `10 €/jour × ${TOTAL_DAYS} jours` },
+    { label: 'Jours bilan négatif', value: rows.filter(r => r.netBank < 0).length, cls: 'red',
+      sub: 'Épargne nette < 0' },
+  ];
+  document.getElementById('cards').innerHTML = cards.map(c => `
+    <div class="card">
+      <div class="card-label">${c.label}</div>
+      <div class="card-value ${c.cls}">${c.value}</div>
+      <div class="card-sub">${c.sub}</div>
+    </div>
+  `).join('');
+
+  // ── Table rows ──────────────────────────────────────────────────
+  const tbody = document.getElementById('tbody');
+  rows.forEach(r => {
+    const neg = r.netBank < 0;
+    const milestone = r.milestone ? ' milestone' : '';
+    const rowCls = neg ? 'neg-day' : 'pos-day';
+    const badge = r.milestone ? `<span class="badge badge-green">×${r.milestone}</span> ` : '';
+
+    tbody.innerHTML += `<tr class="${rowCls}${milestone}">
+      <td>${r.day}</td>
+      <td>${badge}${fmtDate(r.date)}</td>
+      <td class="val-dim">${eur(r.bkStart)}</td>
+      <td class="val-purple">${eur(r.gain)}</td>
+      <td class="section-br val-green">+${eur(r.toBankroll)}</td>
+      <td class="val-blue">${eur(r.toBankGross)}</td>
+      <td class="section-br val-yellow">−${eur(r.debtPay)}</td>
+      <td class="val-yellow">−${eur(r.ps)}</td>
+      <td class="${neg ? 'val-red' : 'val-green'}">${neg ? '−' : '+'}${eur(Math.abs(r.netBank))}${neg ? ' <span class="badge badge-red">⚠</span>' : ''}</td>
+      <td class="section-br" style="font-weight:700">${eur(r.bkEnd)}</td>
+      <td class="${r.cumulBank >= 0 ? 'val-blue' : 'val-red'}">${eur(r.cumulBank)}</td>
+      <td class="val-dim">${eur(r.cumulDebt)}</td>
+    </tr>`;
+  });
+
+  // ── Footer ───────────────────────────────────────────────────────
+  const tfoot = document.getElementById('tfoot');
+  tfoot.innerHTML = `<tr>
+    <td colspan="2">TOTAUX</td>
+    <td>—</td>
+    <td>${eur(totalGain)}</td>
+    <td class="section-br">—</td>
+    <td>—</td>
+    <td class="section-br">${eur(cumulDebt)}</td>
+    <td>${eur(cumulPS)}</td>
+    <td class="${cumulBank >= 0 ? 'val-green' : 'val-red'}">${eur(cumulBank)}</td>
+    <td class="section-br val-green">${eur(lastRow.bkEnd)}</td>
+    <td class="${cumulBank >= 0 ? 'val-blue' : 'val-red'}">${eur(cumulBank)}</td>
+    <td>${eur(TOTAL_DEBT)}</td>
+  </tr>`;
+
+  // ── Footnote ─────────────────────────────────────────────────────
+  const breakDay = rows.findIndex(r => r.netBank >= 0) + 1;
+  document.getElementById('footnote').innerHTML = `
+    <b>Logique de calcul :</b><br>
+    • <b>Gain brut</b> = Bankroll début × 20%<br>
+    • <b>→ Bankroll (+50%)</b> = 50% du gain brut réinvesti → bankroll croît à <b>+10%/jour</b><br>
+    • <b>→ Banque brut (50%)</b> = 50% du gain brut alloué à la banque<br>
+    • <b>Épargne nette</b> = Banque brut − ${eur(DAILY_DEBT)} (dette/j) − ${eur(PARISCORE_DAY)} (PariScore/j)<br>
+    • Les 3 premières journées, l'épargne nette est légèrement négative → puiser momentanément dans l'épargne existante.<br>
+    • <b>Break-even épargne nette</b> : atteint au <b>jour ${breakDay} (${fmtDate(rows[breakDay-1].date)})</b> — à partir de là, tous les jours sont positifs.<br>
+    • <b>Remboursement dette</b> = ${eur(TOTAL_DEBT)} / ${TOTAL_DAYS} jours = <b>${eur(DAILY_DEBT)}/jour</b>
+  `;
+</script>
+</body>
+</html>

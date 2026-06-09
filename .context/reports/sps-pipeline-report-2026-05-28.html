@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPS Pipeline — Rapport Debug &amp; Fix · 2026-05-28</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0d0f; --bg2: #111417; --bg3: #181c20; --bg4: #1e2328;
+    --green: #00e676; --amber: #ffa726; --blue: #29b6f6; --red: #ff4d4d;
+    --purple: #ce93d8;
+    --text: #e8eaed; --text2: #8d9399; --text3: #5a6068;
+    --border: #23282e;
+    --font-mono: 'DM Mono', 'Fira Code', monospace;
+    --font-sans: 'Instrument Sans', 'Inter', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; padding: 32px 24px; max-width: 1080px; margin: 0 auto; }
+
+  /* ── HEADER ── */
+  .rpt-header { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .rpt-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+  .rpt-header h1 span { color: var(--green); }
+  .rpt-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; color: var(--text2); font-family: var(--font-mono); }
+  .rpt-meta b { color: var(--text3); margin-right: 4px; }
+
+  /* ── KPI GRID ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 32px; }
+  .kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 10px 10px 0 0; }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.amber::before { background: var(--amber); }
+  .kpi-card.blue::before { background: var(--blue); }
+  .kpi-card.red::before { background: var(--red); }
+  .kpi-card.purple::before { background: var(--purple); }
+  .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; font-family: var(--font-mono); }
+  .kpi-value { font-size: 28px; font-weight: 700; font-family: var(--font-mono); margin: 6px 0 2px; line-height: 1; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-value.blue { color: var(--blue); }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.purple { color: var(--purple); }
+  .kpi-delta { font-size: 11px; color: var(--text2); }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-mini { margin-top: 10px; }
+  .kpi-mini div { position: relative; height: 40px; }
+
+  /* ── CHARTS ── */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+  @media (max-width: 680px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .chart-card.wide { grid-column: 1 / -1; }
+  .chart-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); margin-bottom: 16px; font-family: var(--font-mono); }
+  .chart-wrap { position: relative; height: 260px; }
+  .chart-wrap.h200 { height: 200px; }
+
+  /* ── TABLE ── */
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); margin-bottom: 14px; font-family: var(--font-mono); }
+  .data-table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: auto; margin-bottom: 32px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--bg3); color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 10px 16px; text-align: left; position: sticky; top: 0; font-family: var(--font-mono); border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,.02); }
+  tbody tr:nth-child(even):hover { background: var(--bg3); }
+  td { padding: 10px 16px; color: var(--text); vertical-align: middle; }
+  td.mono { font-family: var(--font-mono); font-size: 12px; }
+  td.green { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
+  td.amber { color: var(--amber); font-weight: 700; font-family: var(--font-mono); }
+  td.blue  { color: var(--blue);  font-weight: 700; font-family: var(--font-mono); }
+  td.red   { color: var(--red);   font-weight: 700; font-family: var(--font-mono); }
+  td .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: var(--font-mono); text-transform: uppercase; }
+  td .badge.fix { background: rgba(0,230,118,.15); color: var(--green); }
+  td .badge.bug { background: rgba(255,77,77,.15); color: var(--red); }
+  td .badge.warn { background: rgba(255,167,38,.15); color: var(--amber); }
+  td .badge.ok   { background: rgba(41,182,246,.15); color: var(--blue); }
+
+  /* ── INSIGHTS ── */
+  .insights { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 32px; }
+  .insight { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .insight:last-child { border-bottom: none; padding-bottom: 0; }
+  .insight-icon { font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+  .insight-text { color: var(--text); font-size: 13.5px; line-height: 1.6; }
+  .insight-text strong { color: var(--green); }
+  .insight-text em { color: var(--amber); font-style: normal; }
+
+  /* ── ACCORDION ── */
+  details { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  summary { padding: 14px 20px; cursor: pointer; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); font-family: var(--font-mono); user-select: none; list-style: none; display: flex; align-items: center; gap: 8px; }
+  summary::before { content: '▶'; font-size: 10px; transition: transform .15s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  .details-body { padding: 0 20px 20px; font-size: 13px; color: var(--text2); line-height: 1.8; }
+  .details-body code { font-family: var(--font-mono); font-size: 12px; background: var(--bg4); padding: 1px 5px; border-radius: 3px; color: var(--blue); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="rpt-header">
+  <h1>SPS Pipeline — <span>Rapport Debug &amp; Fix</span></h1>
+  <div class="rpt-meta">
+    <span><b>Date :</b> 2026-05-28</span>
+    <span><b>Période :</b> Session bd gnne · 11h04–11h32 GMT+2</span>
+    <span><b>Sources :</b> Audit session (mémoire), pariscore.js, server.js, cron_sps_updater.py</span>
+    <span><b>Commits :</b> d11d4f7 · 61ed592</span>
+  </div>
+</div>
+
+<!-- KPI GRID -->
+<div class="kpi-grid">
+  <div class="kpi-card red">
+    <div class="kpi-label">Rows player_surface_scores</div>
+    <div class="kpi-value red">0</div>
+    <div class="kpi-delta">Avant fix · table vide 3h38 audit</div>
+  </div>
+  <div class="kpi-card amber">
+    <div class="kpi-label">Rows tennis_matches_internal</div>
+    <div class="kpi-value amber">151</div>
+    <div class="kpi-delta">Fenêtre 52 sem · base ETL cron</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">Null cache TTL (après fix)</div>
+    <div class="kpi-value green">5<small style="font-size:14px;color:var(--text2)"> min</small></div>
+    <div class="kpi-delta down">↓ was 360 min — 98.6% reduction</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-label">QA checks passés</div>
+    <div class="kpi-value blue">17<small style="font-size:14px;color:var(--text2)">/17</small></div>
+    <div class="kpi-delta up">+ 3 warnings auto-corrigés</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">Cache tiers (avant/après)</div>
+    <div class="kpi-value purple">1 → 3</div>
+    <div class="kpi-delta">Null · Partiel · Complet</div>
+  </div>
+</div>
+
+<!-- CHARTS ROW 1 -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Cache TTL — Avant vs Après (minutes)</div>
+    <div class="chart-wrap">
+      <canvas id="chartTTL"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">QA — Répartition des vérifications</div>
+    <div class="chart-wrap h200" style="height:200px;display:flex;align-items:center;justify-content:center;">
+      <canvas id="chartQA"></canvas>
+    </div>
+  </div>
+  <div class="chart-card wide">
+    <div class="chart-title">Pipeline SPS — Étapes &amp; Status (session audit)</div>
+    <div class="chart-wrap">
+      <canvas id="chartPipeline"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- DATA TABLE -->
+<div class="section-title">Configuration Cache — Détail des tiers</div>
+<div class="data-table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Tier</th>
+        <th>Condition</th>
+        <th>TTL Avant</th>
+        <th>TTL Après</th>
+        <th>Réduction</th>
+        <th>Raison</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong style="color:var(--red)">Null</strong></td>
+        <td class="mono">arr.length === 0</td>
+        <td class="red">360 min</td>
+        <td class="green">5 min</td>
+        <td class="green">-98.6%</td>
+        <td>Re-check après cron 02h05</td>
+        <td><span class="badge fix">Fixé gnne</span></td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--amber)">Partiel</strong></td>
+        <td class="mono">arr.length === 1</td>
+        <td class="red">360 min</td>
+        <td class="amber">30 min</td>
+        <td class="amber">-91.7%</td>
+        <td>Attendre calcul joueur 2</td>
+        <td><span class="badge warn">Fixé W3</span></td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--green)">Complet</strong></td>
+        <td class="mono">arr.length >= 2</td>
+        <td class="blue">360 min</td>
+        <td class="blue">360 min</td>
+        <td class="mono" style="color:var(--text2)">—</td>
+        <td>Données stables — cron 12h</td>
+        <td><span class="badge ok">Inchangé</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section-title">Changements de code — Détail par fonction</div>
+<div class="data-table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Fichier</th>
+        <th>Fonction</th>
+        <th>Changement</th>
+        <th>Commit</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">_spsCacheGet</td>
+        <td>TTL per-entry via <code>entry.ttl</code></td>
+        <td class="mono">d11d4f7</td>
+        <td><span class="badge fix">Fix 1</span></td>
+      </tr>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">_spsCacheSet</td>
+        <td>Paramètre <code>overrideTtlMs</code></td>
+        <td class="mono">d11d4f7</td>
+        <td><span class="badge fix">Fix 1</span></td>
+      </tr>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">_tvbSPSPlaceholder</td>
+        <td><code>data-elo1 / data-elo2</code> attrs</td>
+        <td class="mono">d11d4f7</td>
+        <td><span class="badge fix">Fix 2</span></td>
+      </tr>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">_tvbSPSFormatChip</td>
+        <td>Fallback ELO + <code>!isNaN</code> guard</td>
+        <td class="mono">d11d4f7 + 61ed592</td>
+        <td><span class="badge fix">Fix 2 + W2</span></td>
+      </tr>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">_tvbPaintSPSCell</td>
+        <td>Lecture <code>dataset.elo1/elo2</code></td>
+        <td class="mono">d11d4f7</td>
+        <td><span class="badge fix">Fix 2</span></td>
+      </tr>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">_tvbHydrateSPSBatch</td>
+        <td>TTL court null + TTL moyen partiel</td>
+        <td class="mono">d11d4f7 + 61ed592</td>
+        <td><span class="badge fix">Fix 1 + W3</span></td>
+      </tr>
+      <tr>
+        <td class="mono">pariscore.js</td>
+        <td class="mono">renderTennisValueBets</td>
+        <td>Passe <code>eloP1, eloP2</code> au placeholder</td>
+        <td class="mono">d11d4f7</td>
+        <td><span class="badge fix">Fix 2</span></td>
+      </tr>
+      <tr>
+        <td class="mono">server.js</td>
+        <td class="mono">/api/v1/sps handler</td>
+        <td><code>r.sps != null</code> guard (W1)</td>
+        <td class="mono">61ed592</td>
+        <td><span class="badge warn">W1</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- INSIGHTS -->
+<div class="section-title">Insights</div>
+<div class="insights">
+  <div class="insight">
+    <div class="insight-icon">🎯</div>
+    <div class="insight-text">
+      <strong>Root cause unique, 6 sites impactés.</strong> Un seul TTL partagé pour données null et réelles
+      causait un cache stale de <em>6 heures</em> après le cron 02h05. La correction réduit ce délai à
+      <strong>5 minutes</strong>, soit un gain de re-fraîcheur de ×72.
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">📊</div>
+    <div class="insight-text">
+      <strong>ELO surface comme fallback immédiat.</strong> Avant fix, les cellules SPS affichaient "—" en
+      permanence. Après, elles affichent <em>ELO~ 1523</em> en gris dès le premier rendu — un indicateur
+      de référence pertinent puisque SPS et Elo surface mesurent la même dimension.
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">🗄️</div>
+    <div class="insight-text">
+      <strong>Table player_surface_scores vide au moment de l'audit</strong> (0 rows, 3h38).
+      <em>tennis_matches_internal</em> contient 151 matchs historiques — fenêtre 52 semaines insuffisante
+      pour la majorité des joueurs. Le cron calcule SPS uniquement sur les matchs où <code>player_id</code>
+      BSD est disponible (ESPN fallback exclu).
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">🛡️</div>
+    <div class="insight-text">
+      <strong>3 tiers de cache vs 1 monolithique.</strong> Le nouveau schéma distingue null (5 min),
+      partiel 1 joueur (30 min) et complet (6 h). Cela permet au frontend de converger vers les données
+      réelles sans polling agressif, tout en évitant un stale indéfini.
+    </div>
+  </div>
+  <div class="insight">
+    <div class="insight-icon">✅</div>
+    <div class="insight-text">
+      <strong>QA 17/17 checks sans bug.</strong> Les 3 warnings identifiés (W1 sps=NULL→0, W2 isNaN,
+      W3 TTL partiel) ont tous été <em>auto-corrigés</em> dans le même train de commits.
+      Aucune régression introduite — <code>node --check</code> valide sur les 2 fichiers.
+    </div>
+  </div>
+</div>
+
+<!-- METHODOLOGY -->
+<details>
+  <summary>Méthodologie &amp; Sources</summary>
+  <div class="details-body">
+    <p><strong>Données sources :</strong> Session de debug bd <code>gnne</code> (2026-05-28, 11h04–11h32 GMT+2). Métriques extraites de l'audit mémoire (observations 1683–1720) et lecture directe du code source.</p>
+    <p><strong>tennis_matches_internal (151 rows) :</strong> Lu via sqlite-inspector à 3h38. Représente l'historique ETL interne disponible pour le calcul SPS par <code>cron_sps_updater.py</code>.</p>
+    <p><strong>player_surface_scores (0 rows) :</strong> Constaté lors de l'audit. Normal si le cron 02h05 n'a pas encore tourné ou si <code>player_id</code> BSD est absent des matchs sources.</p>
+    <p><strong>TTL values :</strong> Lus directement dans <code>pariscore.js</code> — <code>_SPS_CACHE_TTL_MS = 6*3600*1000</code>, <code>_SPS_NULL_CACHE_TTL_MS = 5*60*1000</code>, partiel = <code>30*60*1000</code>.</p>
+    <p><strong>QA checks :</strong> 17 assertions unitaires + 1 assertion Node.js CLI exécutée en session. Voir <code>.context/test-report-sps-cache-fix.md</code>.</p>
+  </div>
+</details>
+
+<script>
+// ── Palette ──
+const green   = '#00e676';
+const amber   = '#ffa726';
+const blue    = '#29b6f6';
+const red     = '#ff4d4d';
+const purple  = '#ce93d8';
+const text2   = '#8d9399';
+const text3   = '#5a6068';
+const bg3     = '#181c20';
+const border  = '#23282e';
+
+Chart.defaults.color = text2;
+Chart.defaults.borderColor = border;
+Chart.defaults.font.family = "'DM Mono', 'Fira Code', monospace";
+Chart.defaults.font.size = 11;
+
+// ── CHART 1 : TTL avant/après ──
+new Chart(document.getElementById('chartTTL'), {
+  type: 'bar',
+  data: {
+    labels: ['Null (0 rows)', 'Partiel (1 joueur)', 'Complet (2 joueurs)'],
+    datasets: [
+      {
+        label: 'Avant fix (min)',
+        data: [360, 360, 360],
+        backgroundColor: 'rgba(255,77,77,0.25)',
+        borderColor: red,
+        borderWidth: 1.5,
+        borderRadius: 4,
+      },
+      {
+        label: 'Après fix (min)',
+        data: [5, 30, 360],
+        backgroundColor: ['rgba(0,230,118,0.25)', 'rgba(255,167,38,0.25)', 'rgba(41,182,246,0.25)'],
+        borderColor: [green, amber, blue],
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14 } },
+      tooltip: { callbacks: {
+        label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} min`
+      }}
+    },
+    scales: {
+      x: { grid: { color: border }, ticks: { color: text2 } },
+      y: {
+        grid: { color: border },
+        ticks: { color: text2, callback: v => v + ' min' },
+        max: 400,
+      }
+    }
+  }
+});
+
+// ── CHART 2 : QA donut ──
+new Chart(document.getElementById('chartQA'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Tests passés (17)', 'Warnings fixés (3)', 'Bugs (0)'],
+    datasets: [{
+      data: [17, 3, 0.5],  // 0.5 pour rendre visible le secteur 0
+      backgroundColor: [
+        'rgba(41,182,246,0.7)',
+        'rgba(255,167,38,0.7)',
+        'rgba(255,77,77,0.15)',
+      ],
+      borderColor: [blue, amber, red],
+      borderWidth: 1.5,
+      hoverOffset: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '72%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12 } },
+      tooltip: { callbacks: {
+        label: ctx => {
+          const labels = ['17 checks', '3 warnings', '0 bugs'];
+          return ' ' + labels[ctx.dataIndex];
+        }
+      }}
+    }
+  }
+});
+
+// ── CHART 3 : Pipeline stages ──
+const stageLabels = [
+  'Matches dans UI (visible)',
+  'Placeholders SPS injectés',
+  'IDs fetchés → /api/v1/sps',
+  'Rows player_surface_scores',
+  'Re-fetch après 5min (fix)',
+  'ELO fallback affiché (fix)',
+];
+const stageData  = [100, 100, 100,   0, 100, 100];
+const stageColor = [blue, blue, blue, red, green, green];
+
+new Chart(document.getElementById('chartPipeline'), {
+  type: 'bar',
+  data: {
+    labels: stageLabels,
+    datasets: [{
+      label: '% couverture',
+      data: stageData,
+      backgroundColor: stageColor.map(c => c + '33'),
+      borderColor: stageColor,
+      borderWidth: 1.5,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: {
+        label: ctx => {
+          const notes = [
+            'Tableau tennis chargé',
+            '_tvbSPSPlaceholder() injecté à chaque ligne',
+            '_tvbHydrateSPSBatch() appelle /api/v1/sps',
+            '⚠ table vide au moment de l\'audit (0 rows)',
+            '✅ Fix 1 — TTL null = 5 min → re-fetch automatique',
+            '✅ Fix 2 — data-elo1/elo2 attrs → ELO~ X affiché',
+          ];
+          return ' ' + notes[ctx.dataIndex];
+        }
+      }}
+    },
+    scales: {
+      x: {
+        grid: { color: border },
+        ticks: { color: text2, callback: v => v + '%' },
+        min: 0, max: 110,
+      },
+      y: { grid: { display: false }, ticks: { color: text2 } }
+    }
+  }
+});
+</script>
+</body>
+</html>

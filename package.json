@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "hltv": "^3.5.0",
+    "better-sqlite3": "^11.7.0"
+  }
+}

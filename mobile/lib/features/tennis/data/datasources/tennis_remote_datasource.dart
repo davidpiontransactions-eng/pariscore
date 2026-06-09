@@ -8,9 +8,9 @@ abstract class TennisRemoteDataSource {
 }
 
 class TennisRemoteDataSourceImpl implements TennisRemoteDataSource {
-  final ApiClient _client;
-
   const TennisRemoteDataSourceImpl(this._client);
+
+  final ApiClient _client;
 
   @override
   Future<List<TennisMatchModel>> getLiveMatches() async {
