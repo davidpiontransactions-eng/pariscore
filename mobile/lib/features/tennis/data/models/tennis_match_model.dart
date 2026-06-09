@@ -13,6 +13,7 @@ class TennisMatchModel extends TennisMatch {
     super.isLive,
     super.servingPlayer,
     super.edge,
+    super.betfairWom,
   });
 
   factory TennisMatchModel.fromJson(Map<String, dynamic> j) {
@@ -31,6 +32,7 @@ class TennisMatchModel extends TennisMatch {
       player2: _parsePlayer(p2Raw),
       sets: _parseSets(j['sets']),
       edge: _parseEdge(j),
+      betfairWom: _parseWom(j['betfair_wom']),
     );
   }
 
@@ -63,6 +65,22 @@ class TennisMatchModel extends TennisMatch {
       p2WinProb: _toDouble(j['p2_win_prob']),
       edge: edge,
       recommendation: j['recommendation'] as String?,
+    );
+  }
+
+  static WomData? _parseWom(dynamic raw) {
+    if (raw == null) return null;
+    final m = raw as Map<String, dynamic>;
+    final p1 = _toDouble(m['p1']);
+    final p2 = _toDouble(m['p2']);
+    if (p1 == null || p2 == null) return null;
+    return WomData(
+      p1: p1,
+      p2: p2,
+      totalMatched: _toDouble(m['total_matched']) ?? 0,
+      currency: m['currency'] as String?,
+      marketId: m['market_id']?.toString(),
+      ts: _toInt(m['ts']),
     );
   }
 
