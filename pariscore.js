@@ -19,7 +19,7 @@
 
 (function(){
 'use strict';
-var _wcD={overview:null,schedule:{},bracket:null};
+var _wcD={overview:null,schedule:{},bracket:null,pred:null};
 
 function _flag(code,name){
   if(!code)return'<span style="display:inline-block;width:20px;height:14px;background:rgba(255,255,255,0.08);border-radius:2px;"></span>';
@@ -37,6 +37,7 @@ window.switchWCTab=function(tab,btn){
   if(tab==='groups')renderWCGroups();
   if(tab==='schedule'&&!_wcD.schedule.all)loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));
   if(tab==='bracket')renderWCBracket();
+  if(tab==='pred')renderWCPred();
 };
 
 function _startWCCountdown(){
@@ -177,6 +178,71 @@ function _paintBracket(el,data){
     return'<div class="wc-date-section"><div class="wc-date-lbl">'+label+'</div>'+cards+'</div>';
   }).join('');
   el.innerHTML=html||'<div class="wc-loading">Données knockout à venir.</div>';
+}
+
+// ── Predictions tab ────────────────────────────────────────────────────────────
+window.renderWCPred=function(){
+  var el=document.getElementById('wc-pred-container');
+  if(!el)return;
+  if(_wcD.pred){_paintWCPred(el,_wcD.pred);return;}
+  el.innerHTML='<div class="wc-loading">Simulation Monte Carlo en cours… (10 000 itérations)</div>';
+  fetch('/api/v1/worldcup/predictions').then(function(r){return r.json();}).then(function(data){
+    _wcD.pred=data;
+    _paintWCPred(el,data);
+  }).catch(function(e){el.innerHTML='<div class="wc-err">Erreur prévisions : '+e.message+'</div>';});
+};
+
+function _pClr(v){
+  if(v>=25)return'#00E676';
+  if(v>=12)return'#69F0AE';
+  if(v>=5)return'#E8B84B';
+  if(v>=1.5)return'#FF9800';
+  return'rgba(255,255,255,0.25)';
+}
+function _pFmt(v){return v==null||isNaN(v)?'—':v.toFixed(v>=10?1:1)+'%';}
+
+function _paintWCPred(el,data){
+  if(!data||!data.teams||!data.teams.length){
+    el.innerHTML='<div class="wc-bp"><div class="wc-bp-icon">🔮</div><h3>Simulation indisponible</h3><p>Données insuffisantes.</p></div>';
+    return;
+  }
+  var src=data.groups_source==='bsd'?'📡 Groupes BSD (live)':'📋 Groupes estimés (tirage déc. 2024)';
+  var iters=(data.iterations||10000).toLocaleString('fr-FR');
+  var hdr='<div class="wc-pred-hdr">'+
+    '<div></div>'+
+    '<div>Équipe</div>'+
+    '<div style="text-align:right;padding-right:4px">Elo</div>'+
+    '<div style="text-align:center">32e</div>'+
+    '<div style="text-align:center">8ème</div>'+
+    '<div style="text-align:center">QF</div>'+
+    '<div style="text-align:center">SF</div>'+
+    '<div style="text-align:center">Finale</div>'+
+    '<div style="text-align:center">🏆 Titre</div>'+
+    '</div>';
+  var rows=data.teams.map(function(t,i){
+    var p=t.probs;
+    var bw=Math.min(p.winner/18*100,100).toFixed(1);
+    return'<div class="wc-pred-row">'+
+      '<div class="wc-pred-rk">'+(i+1)+'</div>'+
+      '<div class="wc-pred-team">'+_flag(t.flag,t.name)+'<span class="wc-pred-nm">'+t.name+'</span><span class="wc-pred-gr">'+t.group+'</span></div>'+
+      '<div class="wc-pred-elo">'+(t.elo||'—')+'</div>'+
+      '<div class="wc-prob-c" style="color:'+_pClr(p.qualif)+'">'+_pFmt(p.qualif)+'</div>'+
+      '<div class="wc-prob-c" style="color:'+_pClr(p.r16)+'">'+_pFmt(p.r16)+'</div>'+
+      '<div class="wc-prob-c" style="color:'+_pClr(p.qf)+'">'+_pFmt(p.qf)+'</div>'+
+      '<div class="wc-prob-c" style="color:'+_pClr(p.sf)+'">'+_pFmt(p.sf)+'</div>'+
+      '<div class="wc-prob-c" style="color:'+_pClr(p.final)+'">'+_pFmt(p.final)+'</div>'+
+      '<div class="wc-prob-w">'+
+        '<span style="color:'+_pClr(p.winner*1.5)+'">'+_pFmt(p.winner)+'</span>'+
+        '<div class="wc-wbar"><div class="wc-wfill" style="width:'+bw+'%"></div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  el.innerHTML=
+    '<div class="wc-pred-meta">'+
+      '<span class="wc-pred-src">'+src+'</span>'+
+      '<span class="wc-pred-iters">'+iters+' simulations · Elo-based Poisson · ET/pen +18% régression</span>'+
+    '</div>'+
+    '<div class="wc-pred-table">'+hdr+rows+'</div>';
 }
 })();
 

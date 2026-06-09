@@ -5321,6 +5321,131 @@ const WC2026_FLAG_CODES = {
   494: 'hr', 493: 'gb-eng', 495: 'gh', 496: 'pa',
 };
 
+// ─── WC2026 static group assignments (fallback: BSD standings take precedence) ─
+// Estimated from the Dec 2024 draw — update once BSD returns live standings
+const WC2026_STATIC_GROUPS = {
+  A: [{name:'USA',      flag:'us',  elo:1950},{name:'Uruguay',  flag:'uy', elo:1966},{name:'Sweden',    flag:'se',  elo:1869},{name:'Egypt',              flag:'eg',  elo:1862}],
+  B: [{name:'Mexico',   flag:'mx',  elo:1944},{name:'Brazil',   flag:'br', elo:2031},{name:'Germany',   flag:'de',  elo:2024},{name:'Japan',              flag:'jp',  elo:1942}],
+  C: [{name:'Canada',   flag:'ca',  elo:1793},{name:'Argentina',flag:'ar', elo:2048},{name:'Netherlands',flag:'nl', elo:2003},{name:'Senegal',            flag:'sn',  elo:1925}],
+  D: [{name:'Panama',   flag:'pa',  elo:1790},{name:'Colombia', flag:'co', elo:1953},{name:'Czech Republic',flag:'cz',elo:1884},{name:'South Korea',     flag:'kr',  elo:1912}],
+  E: [{name:'Curacao',  flag:'cw',  elo:1564},{name:'Ecuador',  flag:'ec', elo:1899},{name:'Turkey',    flag:'tr',  elo:1878},{name:'Australia',         flag:'au',  elo:1905}],
+  F: [{name:'Haiti',    flag:'ht',  elo:1755},{name:'Paraguay', flag:'py', elo:1832},{name:'Bosnia and Herzegovina',flag:'ba',elo:1692},{name:'Iran',    flag:'ir',  elo:1888}],
+  G: [{name:'France',   flag:'fr',  elo:2083},{name:'England',  flag:'gb-eng',elo:2055},{name:'Morocco',flag:'ma', elo:1958},{name:'Qatar',             flag:'qa',  elo:1800}],
+  H: [{name:'Spain',    flag:'es',  elo:2086},{name:'Portugal', flag:'pt', elo:2018},{name:'Ivory Coast',flag:'ci',elo:1850},{name:'Saudi Arabia',      flag:'sa',  elo:1767}],
+  I: [{name:'Belgium',  flag:'be',  elo:1980},{name:'Croatia',  flag:'hr', elo:1938},{name:'Ghana',     flag:'gh',  elo:1844},{name:'Uzbekistan',        flag:'uz',  elo:1723}],
+  J: [{name:'Norway',   flag:'no',  elo:1872},{name:'Scotland', flag:'gb-sct',elo:1865},{name:'Algeria',flag:'dz', elo:1841},{name:'Iraq',              flag:'iq',  elo:1808}],
+  K: [{name:'Switzerland',flag:'ch',elo:1935},{name:'Austria',  flag:'at', elo:1918},{name:'Tunisia',   flag:'tn',  elo:1787},{name:'Cape Verde',        flag:'cv',  elo:1680}],
+  L: [{name:'South Africa',flag:'za',elo:1804},{name:'Congo DR',flag:'cd', elo:1761},{name:'Jordan',   flag:'jo',  elo:1735},{name:'New Zealand',       flag:'nz',  elo:1745}],
+};
+
+// ─── WC2026 Monte Carlo simulation helpers ─────────────────────────────────────
+
+function _wcPoisson(lambda) {
+  if (lambda <= 0) return 0;
+  const L = Math.exp(-Math.min(lambda, 20));
+  let k = 0, p = 1;
+  do { k++; p *= Math.random(); } while (p > L);
+  return k - 1;
+}
+
+function _wcSimGroupMatch(eloA, eloB) {
+  const dr = Math.max(-1.5, Math.min(1.5, (eloA - eloB) / 400));
+  return [_wcPoisson(Math.min(1.35 * Math.exp(dr * 0.7), 4.5)),
+          _wcPoisson(Math.min(1.35 * Math.exp(-dr * 0.7), 4.5))];
+}
+
+function _wcSimKnockout(eloA, eloB) {
+  const dr = (eloA - eloB) / 400;
+  const pA = 1 / (1 + Math.pow(10, -dr));
+  return Math.random() < (pA * 0.82 + 0.5 * 0.18) ? 0 : 1; // 18% ET/pen regression
+}
+
+// Monte Carlo — 10k iterations over 12 groups (48 teams)
+// groups: { A: [{name, elo, flag, team_id?, fifa_rank?}, ...], ... }
+function computeWC2026Predictions(groups) {
+  const ITERS = 10000;
+  const teamList = [];
+  const cnt = {};
+  for (const [g, teams] of Object.entries(groups)) {
+    for (const t of teams) {
+      teamList.push({ ...t, group: g });
+      cnt[t.name] = { qualif: 0, r16: 0, qf: 0, sf: 0, final: 0, winner: 0 };
+    }
+  }
+  if (!teamList.length) return { teams: [], iterations: 0 };
+
+  for (let iter = 0; iter < ITERS; iter++) {
+    const r32 = [];
+    const thirds = [];
+
+    // ── Group stage ────────────────────────────────────────────────
+    for (const [, teams] of Object.entries(groups)) {
+      const pts = {}, gd = {}, gf = {};
+      for (const t of teams) { pts[t.name] = 0; gd[t.name] = 0; gf[t.name] = 0; }
+      for (let i = 0; i < teams.length; i++) {
+        for (let j = i + 1; j < teams.length; j++) {
+          const [ga, gb] = _wcSimGroupMatch(teams[i].elo || 1600, teams[j].elo || 1600);
+          gf[teams[i].name] += ga; gf[teams[j].name] += gb;
+          gd[teams[i].name] += ga - gb; gd[teams[j].name] += gb - ga;
+          if (ga > gb)      pts[teams[i].name] += 3;
+          else if (ga < gb) pts[teams[j].name] += 3;
+          else              { pts[teams[i].name]++; pts[teams[j].name]++; }
+        }
+      }
+      const sorted = [...teams].sort((a, b) => {
+        const dp = pts[b.name] - pts[a.name]; if (dp) return dp;
+        const dd = gd[b.name] - gd[a.name];  if (dd) return dd;
+        const df = gf[b.name] - gf[a.name];  if (df) return df;
+        return Math.random() - 0.5;
+      });
+      cnt[sorted[0].name].qualif++; r32.push({ ...sorted[0], _pts: pts[sorted[0].name], _gd: gd[sorted[0].name], _gf: gf[sorted[0].name] });
+      cnt[sorted[1].name].qualif++; r32.push({ ...sorted[1], _pts: pts[sorted[1].name], _gd: gd[sorted[1].name], _gf: gf[sorted[1].name] });
+      thirds.push({ ...sorted[2], _pts: pts[sorted[2].name], _gd: gd[sorted[2].name], _gf: gf[sorted[2].name] });
+    }
+
+    // ── Best 8 third-place teams also qualify ──────────────────────
+    thirds.sort((a, b) => {
+      const dp = b._pts - a._pts; if (dp) return dp;
+      const dd = b._gd - a._gd;  if (dd) return dd;
+      return b._gf - a._gf;
+    });
+    for (let i = 0; i < 8; i++) { cnt[thirds[i].name].qualif++; r32.push(thirds[i]); }
+
+    // ── Knockout (5 rounds: 32→16→8→4→2→1) — snake-seeded per round ─
+    const stages = ['r16', 'qf', 'sf', 'final', 'winner'];
+    let round = r32;
+    for (let rnd = 0; rnd < 5; rnd++) {
+      round.sort((a, b) => (b.elo || 1600) - (a.elo || 1600));
+      const n = round.length;
+      const next = [];
+      for (let i = 0; i < n / 2; i++) {
+        const a = round[i], b = round[n - 1 - i];
+        const wi = _wcSimKnockout(a.elo || 1600, b.elo || 1600);
+        const winner = wi === 0 ? a : b;
+        cnt[winner.name][stages[rnd]]++;
+        next.push(winner);
+      }
+      round = next;
+    }
+  }
+
+  const teams = teamList.map(t => ({
+    team_id: t.team_id || null,
+    name: t.name, flag: t.flag || '', elo: t.elo || null,
+    elo_rank: t.elo_rank || null, fifa_rank: t.fifa_rank || null, group: t.group,
+    probs: {
+      qualif: +(cnt[t.name].qualif / ITERS * 100).toFixed(1),
+      r16:    +(cnt[t.name].r16    / ITERS * 100).toFixed(1),
+      qf:     +(cnt[t.name].qf     / ITERS * 100).toFixed(1),
+      sf:     +(cnt[t.name].sf     / ITERS * 100).toFixed(1),
+      final:  +(cnt[t.name].final  / ITERS * 100).toFixed(1),
+      winner: +(cnt[t.name].winner / ITERS * 100).toFixed(1),
+    },
+  }));
+  teams.sort((a, b) => b.probs.winner - a.probs.winner);
+  return { teams, iterations: ITERS, method: 'monte_carlo_elo' };
+}
+
 const _wc2026Cache = {};
 let _catboostCache = {};     // { matchId → { home, draw, away, over25, btts } } — declared early, used in buildMatchRecord (line ~8101)
 
@@ -38322,6 +38447,43 @@ if (pathname === '/api/v1/worldcup/bracket' && req.method === 'GET') {
   } catch (e) {
     console.error('[WC2026/bracket]', e.message);
     return jsonResponse(res, 502, { error: 'wc2026_bracket_failed', message: String(e.message || e) });
+  }
+}
+
+// GET /api/v1/worldcup/predictions — Monte Carlo Elo (10k iter) probabilities per stage
+if (pathname === '/api/v1/worldcup/predictions' && req.method === 'GET') {
+  const cached = _wcCached('predictions');
+  if (cached) return jsonResponse(res, 200, { ...cached, cached: true });
+  try {
+    let groups = {};
+    let groupsSource = 'static';
+    try {
+      const ov = await fetchWC2026Overview();
+      if (ov && ov.groups && Object.keys(ov.groups).length >= 12) {
+        groupsSource = 'bsd';
+        for (const [g, teams] of Object.entries(ov.groups)) {
+          groups[g] = teams.map(t => {
+            const ed = getNationalElo(t.team_name);
+            return { name: t.team_name, elo: ed?.elo || 1600, elo_rank: ed?.rank || null, flag: t.flag || '', team_id: t.team_id || null, fifa_rank: t.fifa_rank || null };
+          });
+        }
+      }
+    } catch (_) {}
+    if (groupsSource === 'static') {
+      for (const [g, arr] of Object.entries(WC2026_STATIC_GROUPS)) {
+        groups[g] = arr.map(t => {
+          const ed = getNationalElo(t.name);
+          return { name: t.name, elo: ed?.elo || t.elo || 1600, elo_rank: ed?.rank || null, flag: t.flag, team_id: null, fifa_rank: null };
+        });
+      }
+    }
+    const result = computeWC2026Predictions(groups);
+    result.groups_source = groupsSource;
+    _wcSetCache('predictions', result);
+    return jsonResponse(res, 200, { ...result, cached: false });
+  } catch (e) {
+    console.error('[WC2026/predictions]', e.message);
+    return jsonResponse(res, 502, { error: 'wc2026_predictions_failed', message: String(e.message || e) });
   }
 }
 
