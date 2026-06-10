@@ -6217,6 +6217,25 @@ function initSQLite() {
     PRIMARY KEY (player_id, surface, match_id)
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_pss_match_id ON player_surface_scores(match_id)`);
+
+  // bd corners-v12.72 — Table historique corners 3 saisons (ETL seed_historique_bsd_corners.js)
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS corner_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bsd_event_id TEXT UNIQUE NOT NULL,
+    bsd_league_id TEXT NOT NULL,
+    match_date TEXT NOT NULL,
+    season TEXT NOT NULL,
+    home_team TEXT NOT NULL,
+    away_team TEXT NOT NULL,
+    home_corners INTEGER,
+    away_corners INTEGER,
+    total_corners INTEGER,
+    fetched_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_ch_team ON corner_history(home_team, away_team)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_ch_date ON corner_history(match_date)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_ch_season ON corner_history(season)`);
+
   // user_bets : col CLV (pct) — idempotent ALTER via pragma check
   try {
     const cols = sqldb.prepare("PRAGMA table_info(user_bets)").all();
@@ -14960,6 +14979,13 @@ async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
 // Fetch recent matches for a team to extract corner averages
 async function fetchBSDTeamCornerHistory(teamName, bsdLeagueId, limit = 10) {
   try {
+    // BSD-CORNERS-ODDS: Try local DB first (3 saisons) before BSD live
+    const localHist = fetchLocalCornerHistory(teamName, bsdLeagueId);
+    if (localHist && localHist.totalMatches >= 5) {
+      console.log(`[BSD-CORNERS] Using local DB: ${localHist.totalMatches} matches for ${teamName}`);
+      return localHist;
+    }
+
     // Fetch finished matches for this league (last ~30 days)
     const now = new Date();
     const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -14997,6 +15023,95 @@ async function fetchBSDTeamCornerHistory(teamName, bsdLeagueId, limit = 10) {
       totalCornersPerMatch: (totalCornersFor + totalCornersAgainst) / count,
     };
   } catch (e) {
+    return null;
+  }
+}
+
+// BSD-CORNERS-ODDS: Fetch corner odds from BSD compare_odds endpoint
+async function fetchBSDCornerOdds(bsdEventId) {
+  if (!bsdEventId) return null;
+  try {
+    const res = await bsdFetch(`/odds/compare/?event=${bsdEventId}`);
+    if (res.status !== 200 || !res.data?.markets) return null;
+    const markets = res.data.markets;
+    const thresholdMap = {
+      'over_6.5': 'over_6_5', 'over_7.5': 'over_7_5',
+      'over_8.5': 'over_8_5', 'over_9.5': 'over_9_5', 'over_10.5': 'over_10_5',
+    };
+    const result = {};
+    for (const [bsdKey, localKey] of Object.entries(thresholdMap)) {
+      const marketData = markets[bsdKey] || markets[`over_under_${bsdKey.replace('over_', '')}`] || null;
+      if (marketData?.over) {
+        result[localKey] = {
+          decimal: marketData.over.best_odds || null,
+          bookmaker: marketData.over.best_bookmaker_slug || null,
+          bookmaker_name: marketData.over.best_bookmaker_name || null,
+          movement: _extractBSDMovement(marketData.over),
+          source: 'bsd_compare',
+        };
+      }
+    }
+    return Object.keys(result).length > 0 ? result : null;
+  } catch (e) {
+    console.error('[BSD-CORNERS] fetchBSDCornerOdds error:', e.message);
+    return null;
+  }
+}
+
+// BSD-CORNERS-ODDS: Helper movement extraction
+function _extractBSDMovement(outcome) {
+  if (!outcome?.bookmakers) return null;
+  let s = 0, d = 0;
+  for (const bk of Object.values(outcome.bookmakers)) {
+    if (bk.movement === 'SHORTENING') s++;
+    else if (bk.movement === 'DRIFTING') d++;
+  }
+  if (!s && !d) return 'STABLE';
+  return s > d ? 'SHORTENING' : (d > s ? 'DRIFTING' : 'STABLE');
+}
+
+// BSD-CORNERS-ODDS: Calcule la cote théorique IA depuis la probabilité Poisson
+function _computeTheoryOdds(probability) {
+  if (!probability || probability <= 0 || probability >= 100) return null;
+  return Math.round((1 / (probability / 100)) * 100) / 100;
+}
+
+// BSD-CORNERS-ODDS: Fetch depuis la DB SQLite locale (3 saisons) — Priorité vs BSD live
+function fetchLocalCornerHistory(teamName, bsdLeagueId) {
+  try {
+    const stmt = sqldb.prepare(`
+      SELECT home_team, away_team, home_corners, away_corners, total_corners, match_date, season
+      FROM corner_history
+      WHERE (home_team LIKE ? OR away_team LIKE ?)
+        AND bsd_league_id = ?
+      ORDER BY match_date DESC
+      LIMIT 20
+    `);
+    const likeName = `%${teamName}%`;
+    const rows = stmt.all(likeName, likeName, String(bsdLeagueId));
+    if (!rows.length) return null;
+    let totalFor = 0, totalAgainst = 0, totalTotal = 0, count = 0;
+    for (const r of rows) {
+      const isHome = r.home_team.toLowerCase().includes(teamName.toLowerCase());
+      if (isHome) {
+        if (r.home_corners != null) { totalFor += r.home_corners; totalTotal += r.total_corners; count++; }
+        if (r.away_corners != null) totalAgainst += r.away_corners;
+      } else {
+        if (r.away_corners != null) { totalFor += r.away_corners; totalTotal += r.total_corners; count++; }
+        if (r.home_corners != null) totalAgainst += r.home_corners;
+      }
+    }
+    if (!count) return null;
+    return {
+      avgCornersFor: totalFor / count,
+      avgCornersAgainst: totalAgainst / count,
+      totalMatches: count,
+      totalCornersPerMatch: totalTotal / count,
+      source: 'local_db',
+      seasons: [...new Set(rows.map(r => r.season))].join(','),
+    };
+  } catch (e) {
+    console.error('[BSD-CORNERS] fetchLocalCornerHistory error:', e.message);
     return null;
   }
 }
@@ -15590,6 +15705,31 @@ async function handleCornersRoute(res, matchId) {
 
     const prediction = predictCorners(homeAvg, awayAvg, undefined, sampleSize || null);
 
+    // BSD-CORNERS-ODDS: Enrich prediction with odds
+    let oddsData = { source: null, markets: {} };
+    // Fetch BSD odds if we have the BSD event ID
+    const matchBsdId = match._bsd_event_id || match.bsd_id;
+    if (matchBsdId) {
+      const bsdOdds = await fetchBSDCornerOdds(matchBsdId);
+      if (bsdOdds) oddsData = { source: 'bsd', markets: bsdOdds };
+    }
+    // Fallback: compute theory odds from probabilities
+    if (!oddsData.markets.over_6_5) {
+      const thresholds = [6.5, 7.5, 8.5, 9.5, 10.5];
+      for (const t of thresholds) {
+        const key = `over_${String(t).replace('.', '_')}`;
+        const prob = prediction.probabilities?.[key];
+        if (prob) {
+          oddsData.markets[key] = {
+            decimal: _computeTheoryOdds(prob),
+            theory: true,
+            implied_probability: prob,
+          };
+        }
+      }
+      if (Object.keys(oddsData.markets).length > 0) oddsData.source = oddsData.source || 'theory_ai';
+    }
+
     const result = {
       match: `${match.home_team} vs ${match.away_team}`,
       league: match.league,
@@ -15600,14 +15740,21 @@ async function handleCornersRoute(res, matchId) {
         avg_corners_for: homeCorners.avgCornersFor,
         avg_corners_against: homeCorners.avgCornersAgainst,
         matches_sample: homeCorners.totalMatches,
+        source: homeCorners.source || 'bsd_live',
       } : 'No data — using league average',
       away_corner_history: awayCorners ? {
         avg_corners_per_match: awayCorners.totalCornersPerMatch,
         avg_corners_for: awayCorners.avgCornersFor,
         avg_corners_against: awayCorners.avgCornersAgainst,
         matches_sample: awayCorners.totalMatches,
+        source: awayCorners.source || 'bsd_live',
       } : 'No data — using league average',
-      prediction,
+      prediction: {
+        expected_total: prediction.expected_total,
+        probabilities: prediction.probabilities,
+        confidence: prediction.confidence,
+        odds: oddsData,  // BSD-CORNERS-ODDS: Added odds to prediction
+      },
       recommendations: Object.entries(prediction.probabilities)
         .map(([k, v]) => ({ market: k.replace(/over_(\d+)_(\d+)/, 'Over $1.$2'), probability: v, recommended: v >= 60 }))
         .sort((a, b) => b.probability - a.probability),

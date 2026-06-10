@@ -16340,12 +16340,20 @@ async function buildCornersTab(matchId) {
     const probBar = (pct) =>
       `<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-${probCls(pct)}" style="width:${Math.max(0, Math.min(100, Number(pct) || 0))}%"></div></div>`;
 
+    // CORNERS-ODDS-UI: extract odds from prediction object (backend sends pred.odds)
+    const odds = pred.odds || {};
     const probRows = Object.entries(probs).map(([k, v]) => {
       const label = k.replace(/over_(\d+)_(\d+)/, 'Over $1.$2');
       const c = probCls(v);
+      // CORNERS-ODDS-UI: render optional odds badge between probBar and cr-prob-val
+      const oddData = odds[k] || {};
+      const oddDisplay = oddData.decimal
+        ? `<span class="corner-odds-badge">${oddData.decimal.toFixed(2)}</span>`
+        : '';
       return `<div class="cr-prob-row">
         <div class="cr-prob-label">${label}</div>
         ${probBar(v)}
+        ${oddDisplay}
         <div class="cr-prob-val cr-prob-val-${c}">${safeFixed(v, 0)}%</div>
       </div>`;
     }).join('');
