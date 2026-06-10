@@ -15288,7 +15288,7 @@ function buildJoueursTab(d) {
       ${p.id ? `<img class="player-photo" src="${playerImgURL(p)}" alt="${p.name}" loading="lazy" data-name="${p.name}" data-bg="var(--bg4)" onerror="fixBrokenPlayerPhoto(this)">` : `<span style="width:38px;height:38px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3);flex-shrink:0">${playerInitials(p.name)}</span>`}
       <div style="flex:1;min-width:0">
         <div class="player-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
-        <div class="player-team">${p.team}${p.rating ? ` · <span class="player-rating" style="${ratingColor(p.rating)}">${parseFloat(p.rating).toFixed(1)}</span>` : ''}</div>
+        <div class="player-team">${p.team}${p.rating ? ` · <span class="player-rating" style="${ratingColor(p.rating)}">${safeFixed(p.rating, 1)}</span>` : ''}</div>
       </div>
       <div style="text-align:right">
         <div class="player-stat" style="color:var(--green)">${p.goals}</div>
@@ -15606,19 +15606,19 @@ function buildClassementTab(d) {
           <div style="background:var(--bg3);border-radius:10px;padding:14px">
             <div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:8px">${d.match.home_team}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;font-family:var(--font-mono);color:var(--text2)">
-              <div><span style="font:800 22px/1 var(--font-head);color:var(--green)">${hStats?.ppg?.toFixed(2) || '—'}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">PPG</div></div>
+              <div><span style="font:800 22px/1 var(--font-head);color:var(--green)">${safeFixed(hStats?.ppg, 2)}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">PPG</div></div>
               <div><span style="font:800 22px/1 var(--font-head);color:var(--amber)">${hStats?.wins || '—'}%</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Victoires</div></div>
-              <div><span style="font:800 22px/1 var(--font-head);color:var(--blue)">${hStats?.avgScored?.toFixed(1) || '—'}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Buts/match</div></div>
-              <div><span style="font:800 22px/1 var(--font-head);color:var(--red)">${hStats?.avgConceded?.toFixed(1) || '—'}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Encaissés/match</div></div>
+              <div><span style="font:800 22px/1 var(--font-head);color:var(--blue)">${safeFixed(hStats?.avgScored, 1)}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Buts/match</div></div>
+              <div><span style="font:800 22px/1 var(--font-head);color:var(--red)">${safeFixed(hStats?.avgConceded, 1)}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Encaissés/match</div></div>
             </div>
           </div>
           <div style="background:var(--bg3);border-radius:10px;padding:14px">
             <div style="font-size:12px;color:#ab47bc;font-weight:600;margin-bottom:8px">${d.match.away_team}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;font-family:var(--font-mono);color:var(--text2)">
-              <div><span style="font:800 22px/1 var(--font-head);color:var(--green)">${aStats?.ppg?.toFixed(2) || '—'}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">PPG</div></div>
+              <div><span style="font:800 22px/1 var(--font-head);color:var(--green)">${safeFixed(aStats?.ppg, 2)}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">PPG</div></div>
               <div><span style="font:800 22px/1 var(--font-head);color:var(--amber)">${aStats?.wins || '—'}%</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Victoires</div></div>
-              <div><span style="font:800 22px/1 var(--font-head);color:var(--blue)">${aStats?.avgScored?.toFixed(1) || '—'}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Buts/match</div></div>
-              <div><span style="font:800 22px/1 var(--font-head);color:var(--red)">${aStats?.avgConceded?.toFixed(1) || '—'}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Encaissés/match</div></div>
+              <div><span style="font:800 22px/1 var(--font-head);color:var(--blue)">${safeFixed(aStats?.avgScored, 1)}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Buts/match</div></div>
+              <div><span style="font:800 22px/1 var(--font-head);color:var(--red)">${safeFixed(aStats?.avgConceded, 1)}</span><div style="margin-top:3px;font-size:9px;color:var(--text3)">Encaissés/match</div></div>
             </div>
           </div>
         </div>
@@ -15780,7 +15780,7 @@ function buildClassementTab(d) {
   const ppgFromForm = (form, n) => {
     const chars = [...(form || '')].slice(0, n);
     if (!chars.length) return null;
-    return parseFloat((chars.reduce((s, c) => s + (c === 'W' ? 3 : c === 'D' ? 1 : 0), 0) / chars.length).toFixed(2));
+    return parseFloat(safeFixed(chars.reduce((s, c) => s + (c === 'W' ? 3 : c === 'D' ? 1 : 0), 0) / chars.length, 2));
   };
 
   // ── Contrôles UI : Toggle + 3 dropdowns ──────────────────────────────────
@@ -15831,7 +15831,7 @@ function buildClassementTab(d) {
             const isA = r.team === aKey;
             const s = getSt(r);
             const butsCol = (s.avgFor != null && s.avgAg != null)
-              ? `<span style="color:var(--green)">${(s.avgFor * (s.played || 0)).toFixed(0)}</span>:<span style="color:var(--red)">${(s.avgAg * (s.played || 0)).toFixed(0)}</span>`
+              ? `<span style="color:var(--green)">${safeFixed(s.avgFor * (s.played || 0), 0)}</span>:<span style="color:var(--red)">${safeFixed(s.avgAg * (s.played || 0), 0)}</span>`
               : '—';
             return `<tr class="${isH || isA ? 'st-highlighted' : ''}">
               <td class="st-rank">${(lieu === 'global' && period === 'season') ? r.rank : i + 1}</td>
@@ -16968,7 +16968,7 @@ function buildPowerScoreTab(matchId) {
   // Barre de progression /20
   const kpiBar = (kpi) => {
     if (kpi == null || typeof kpi !== 'number') return '';
-    const pct = Math.min(100, (kpi / 20) * 100).toFixed(0);
+    const pct = Math.round(Math.min(100, (kpi / 20) * 100));
     const col = kpi >= 15 ? '#00e676' : kpi >= 12 ? '#ffa726' : '#ef4444';
     return `<div class="ps-player-bar-wrap" title="${safeFixed(kpi, 1)}/20">
       <div class="ps-player-bar-fill" style="width:${pct}%;background:${col}"></div>
@@ -17915,7 +17915,7 @@ function buildH2HTab(d) {
       if (conceded === 0) cs++;
     }
     const n = five.filter(f => f.home_goals != null).length || 1;
-    return { w, d, l, gf: (gf/n).toFixed(1), ga: (ga/n).toFixed(1), cs };
+    return { w, d, l, gf: safeFixed(gf/n, 1), ga: safeFixed(ga/n, 1), cs };
   }
 
   function h2hStats(meetings, homeTeam) {
@@ -17933,7 +17933,7 @@ function buildH2HTab(d) {
       if (scored > 0 && conceded > 0) btts++;
     }
     const n = five.filter(x => x.home_goals != null).length || 1;
-    return { w, d, l, gf: (gf/n).toFixed(1), ga: (ga/n).toFixed(1), btts, n };
+    return { w, d, l, gf: safeFixed(gf/n, 1), ga: safeFixed(ga/n, 1), btts, n };
   }
 
   function statsBadge(label, val, color) {
@@ -18021,7 +18021,7 @@ function buildH2HTab(d) {
       ${statsBadge('V', hh.w, '#00e676')}
       ${statsBadge('Nul', hh.d, '#ffa726')}
       ${statsBadge('D', hh.l, '#ff4d4d')}
-      ${statsBadge('Buts/M', (parseFloat(hh.gf) + parseFloat(hh.ga)).toFixed(1), 'var(--text)')}
+      ${statsBadge('Buts/M', safeFixed(parseFloat(hh.gf) + parseFloat(hh.ga), 1), 'var(--text)')}
       ${statsBadge('BTTS', hh.btts + '/' + hh.n, '#ffa726')}
     </div>
   </div>` : ''}`;
