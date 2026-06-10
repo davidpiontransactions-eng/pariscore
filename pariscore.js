@@ -3281,19 +3281,26 @@ function _tvbWOM(wom) {
       + (tot ? '<span style="color:var(--text3);font-size:7px;">' + tot + '</span>' : '')
       + '</div>';
   }
-  // Football (h/d/a)
+  // Football (h/d/a) — desktop MATCH column, grande barre lisible, normalisée à 100%
   if (wom.h != null && wom.d != null && wom.a != null) {
-    return '<div title="' + tip + '" style="margin-top:3px;display:flex;align-items:center;gap:3px;font-size:8px;font-family:var(--font-mono);">'
-      + '<span style="color:var(--text3);font-size:7px;font-weight:700;letter-spacing:.5px;">WOM</span>'
-      + '<div style="width:52px;height:5px;border-radius:3px;overflow:hidden;background:#1e2328;display:flex;">'
-        + '<div style="width:' + wom.h + '%;background:#00e676;"></div>'
-        + '<div style="width:' + wom.d + '%;background:#ffa726;"></div>'
-        + '<div style="width:' + wom.a + '%;background:#ff4d4d;"></div>'
+    var wh = Math.max(0, Number(wom.h) || 0), wd = Math.max(0, Number(wom.d) || 0), wa = Math.max(0, Number(wom.a) || 0);
+    var wsum = wh + wd + wa;
+    if (wsum <= 0) return '';
+    var nh = Math.round(wh / wsum * 100), nd = Math.round(wd / wsum * 100), na = 100 - nh - nd;
+    if (na < 0) na = 0;
+    var wmax = Math.max(nh, nd, na);
+    return '<div class="dt-wom-wrap" title="' + tip + '">'
+      + '<div class="dt-wom-head"><span class="dt-wom-tag">💰 WOM</span><span class="dt-wom-sub">Argent Betfair' + (tot ? ' · ' + tot + ' misés' : '') + '</span></div>'
+      + '<div class="dt-wom-bar">'
+        + '<span class="dt-wb-h" style="width:' + nh + '%"></span>'
+        + '<span class="dt-wb-d" style="width:' + nd + '%"></span>'
+        + '<span class="dt-wb-a" style="width:' + na + '%"></span>'
       + '</div>'
-      + '<span style="color:#00e676;font-weight:700;">' + wom.h + '%</span>'
-      + '<span style="color:#ffa726;font-size:7px;">N' + wom.d + '</span>'
-      + '<span style="color:#ff4d4d;font-weight:700;">' + wom.a + '%</span>'
-      + (tot ? '<span style="color:var(--text3);font-size:7px;">' + tot + '</span>' : '')
+      + '<div class="dt-wom-lbls">'
+        + '<span class="dt-wl h' + (nh === wmax ? ' dom' : '') + '"><i></i>1<b>' + nh + '%</b></span>'
+        + '<span class="dt-wl d' + (nd === wmax ? ' dom' : '') + '"><i></i>N<b>' + nd + '%</b></span>'
+        + '<span class="dt-wl a' + (na === wmax ? ' dom' : '') + '"><i></i>2<b>' + na + '%</b></span>'
+      + '</div>'
       + '</div>';
   }
   return '';
@@ -12507,12 +12514,36 @@ const label = country
         ${renderPredBets(m)}
         ${_tvbWOM(m.betfair_wom)}
         ${(() => {
-          const _pH = p.homeWin != null ? Math.round(p.homeWin) : null;
-          const _pD = p.draw != null ? Math.round(p.draw) : null;
-          const _pA = p.awayWin != null ? Math.round(p.awayWin) : null;
-          if (_pH == null || _pD == null || _pA == null) return '';
-          const _domH = _pH >= _pA;
-          return '<div class="dt-prob-wrap"><div class="dt-prob-bar"><div class="dt-pb-h" style="width:' + _pH + '%"></div><div class="dt-pb-d" style="width:' + _pD + '%"></div><div class="dt-pb-a" style="width:' + _pA + '%"></div></div><div class="dt-prob-lbls"><span class="' + (_domH ? 'dom' : '') + '">1 ' + _pH + '%</span><span>N ' + _pD + '%</span><span class="' + (!_domH ? 'dom' : '') + '">2 ' + _pA + '%</span></div></div>';
+          // Barre 1N2 — probabilités implicites devig des cotes affichées (jamais en
+          // contradiction avec la colonne MARCHÉ). Repli modèle si cotes absentes.
+          const _bo = m.bsd_odds_summary && m.bsd_odds_summary.best;
+          const _oh = _bo && _bo.home ? _bo.home.value : (odds && odds.home);
+          const _od = _bo && _bo.draw ? _bo.draw.value : (odds && odds.draw);
+          const _oa = _bo && _bo.away ? _bo.away.value : (odds && odds.away);
+          let _pH, _pD, _pA, _src;
+          const _oddsOk = [_oh, _od, _oa].every(o => o != null && isFinite(Number(o)) && Number(o) > 1);
+          if (_oddsOk) {
+            const _ih = 1 / Number(_oh), _id = 1 / Number(_od), _ia = 1 / Number(_oa);
+            const _s = _ih + _id + _ia;
+            _pH = Math.round(_ih / _s * 100); _pD = Math.round(_id / _s * 100); _pA = Math.round(_ia / _s * 100);
+            _src = 'cotes';
+          } else {
+            const _mp = m.calibrated || m.blended || p || {};
+            if (_mp.homeWin == null || _mp.draw == null || _mp.awayWin == null) return '';
+            const _s = (Number(_mp.homeWin) + Number(_mp.draw) + Number(_mp.awayWin)) || 1;
+            _pH = Math.round(Number(_mp.homeWin) / _s * 100); _pD = Math.round(Number(_mp.draw) / _s * 100); _pA = Math.round(Number(_mp.awayWin) / _s * 100);
+            _src = 'modèle';
+          }
+          // garantit somme = 100 (corrige l'arrondi sur le segment dominant)
+          const _delta = 100 - (_pH + _pD + _pA);
+          if (_delta !== 0) { const _mx = Math.max(_pH, _pD, _pA); if (_pH === _mx) _pH += _delta; else if (_pA === _mx) _pA += _delta; else _pD += _delta; }
+          const _mxv = Math.max(_pH, _pD, _pA);
+          const _cH = _pH === _mxv ? ' dom' : '', _cD = _pD === _mxv ? ' dom' : '', _cA = _pA === _mxv ? ' dom' : '';
+          return '<div class="dt-prob-wrap">'
+            + '<div class="dt-prob-head"><span class="dt-prob-tag">Proba 1N2 · ' + _src + '</span></div>'
+            + '<div class="dt-prob-bar"><span class="dt-pb-h" style="width:' + _pH + '%"></span><span class="dt-pb-d" style="width:' + _pD + '%"></span><span class="dt-pb-a" style="width:' + _pA + '%"></span></div>'
+            + '<div class="dt-prob-lbls"><span class="dt-pl h' + _cH + '"><i></i>1<b>' + _pH + '%</b></span><span class="dt-pl d' + _cD + '"><i></i>N<b>' + _pD + '%</b></span><span class="dt-pl a' + _cA + '"><i></i>2<b>' + _pA + '%</b></span></div>'
+            + '</div>';
         })()}
         ${(() => {
           const _wom = m.wom || m.betfair_wom;
