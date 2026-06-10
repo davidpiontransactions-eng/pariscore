@@ -25518,6 +25518,26 @@ function renderComparateur(d) {
             '<div class="mc-prob-lbl"><span>' + pH + '%</span><span>' + pD + '%</span><span>' + pA + '%</span></div>' +
           '</div>'
         : '<div class="mc-cell"><div class="mc-k">1N2</div><div class="mc-v">' + (pH != null ? pH + '%' : '—') + '</div></div>';
+      // ── V2 card: form dots, wide prob bar, dark mkt badge, WoM row ──
+      function formDots(f) {
+        if (!f || typeof f !== 'string') return '';
+        return f.split('').slice(-5).map(function(c) {
+          var cls = c === 'W' ? 'w' : (c === 'D' ? 'd' : 'l');
+          var lbl = c === 'W' ? 'V' : (c === 'D' ? 'N' : 'D');
+          return '<span class="mc-fd mc-fd-' + cls + '">' + lbl + '</span>';
+        }).join('');
+      }
+      var homeFormHtml = formDots(m.home_form);
+      var awayFormHtml = formDots(m.away_form);
+      var probBarWide = (pH != null && pD != null && pA != null)
+        ? '<div class="mc-prob2"><div class="mc-prob2-bar"><div class="mc-pb-h" style="width:' + pH + '%"></div><div class="mc-pb-d" style="width:' + pD + '%"></div><div class="mc-pb-a" style="width:' + pA + '%"></div></div><div class="mc-prob2-lbls"><span class="mc-prob2-l' + (pH >= pA ? ' dom' : '') + '">' + esc((m.home_team || '').split(' ').slice(-1)[0]) + ' ' + pH + '%</span><span class="mc-prob2-c">' + pD + '%</span><span class="mc-prob2-r' + (pA > pH ? ' dom' : '') + '">' + pA + '% ' + esc((m.away_team || '').split(' ').slice(-1)[0]) + '</span></div></div>'
+        : '';
+      var womRowHtml = (womBacking > 50)
+        ? '<div class="mc-wom-row"><span class="mc-wom-ico">💰</span><span class="mc-wom-txt">WoM Betfair — ' + esc(womDir || 'backing') + '</span><span class="mc-wom-pct">' + Math.round(womBacking) + '%</span></div>'
+        : '';
+      var mktBadgeDark = ((vC === 'go' || vC === 'try') && mktLbl)
+        ? '<div class="mc-mkt-dark"><div class="mc-mktd-l"><span class="mc-mktd-lbl">Marché value</span><span class="mc-mktd-name">' + mktLbl + '</span></div><div class="mc-mktd-r"><span class="mc-mktd-elbl">Edge dévigué</span><span class="mc-mktd-edge">' + edgeTxt + '</span>' + (mktOddsVal ? '<span class="mc-mktd-odds">@ ' + mktOddsVal + '</span>' : '') + '</div></div>'
+        : '';
       var detail =
         '<div class="mc-detail">' +
           '<div class="mcd-reco mc-v-' + vC + '"><b>' + vT + '</b> ' + reco + '</div>' +
@@ -25552,17 +25572,20 @@ function renderComparateur(d) {
             ? '<div class="mc-pick mc-v-' + vC + '">→ ' + edgeTxt + ' edge dévigé' + (pickTxt ? ' ·' + pickTxt : '') + '</div>'
             : '') +
           '<div class="mc-teams">' +
-            '<div class="mc-team">' + rkH + '<span>' + esc(m.home_team) + '</span>' + scH + '</div>' +
-            '<div class="mc-team">' + rkA + '<span>' + esc(m.away_team) + '</span>' + scA + '</div>' +
+            '<div class="mc-team">' + rkH + '<span class="mc-tn">' + esc(m.home_team) + '</span>' + scH +
+              (homeFormHtml ? '<span class="mc-form">' + homeFormHtml + '</span>' : '') + '</div>' +
+            '<div class="mc-team">' + rkA + '<span class="mc-tn">' + esc(m.away_team) + '</span>' + scA +
+              (awayFormHtml ? '<span class="mc-form">' + awayFormHtml + '</span>' : '') + '</div>' +
           '</div>' +
           (function(){ try { return (typeof renderPredBets==='function') ? renderPredBets(m) : ''; } catch(e){ return ''; } })() +
+          probBarWide +
+          womRowHtml +
           (womEdgeConverge ? '<div class="mc-signal-fort">⚡ Signal Fort · WoM ' + Math.round(womBacking) + '% + Edge ' + edgeTxt + '</div>' : '') +
+          mktBadgeDark +
           '<div class="mc-metrics">' +
-            '<div class="mc-cell edge ' + edgeCls + '"><div class="mc-k">Edge</div><div class="mc-v">' + edgeTxt + '</div></div>' +
             '<div class="mc-cell"><div class="mc-k">O2.5</div><div class="mc-v">' + (po.over25 != null ? Math.round(po.over25) + '%' : '—') + '</div></div>' +
             '<div class="mc-cell"><div class="mc-k">BTTS</div><div class="mc-v">' + (po.btts != null ? Math.round(po.btts) + '%' : '—') + '</div></div>' +
-            probBar1N2 +
-            (mktLbl ? '<div class="mc-cell mc-mkt"><div class="mc-k">Marché</div><div class="mc-v mc-mkt-v"><span class="mc-mkt-lbl">' + mktLbl + '</span>' + (mktOddsVal ? '<span class="mc-mkt-odds">@ ' + mktOddsVal + '</span>' : '') + '</div></div>' : '') +
+            '<div class="mc-cell edge ' + edgeCls + '"><div class="mc-k">Edge</div><div class="mc-v">' + edgeTxt + '</div></div>' +
           '</div>' +
           '<div class="mc-bottom">' +
             '<div class="mc-odds">' + oddCell('home', '1') + oddCell('draw', 'N') + oddCell('away', '2') + '</div>' +
