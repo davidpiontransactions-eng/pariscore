@@ -4753,6 +4753,45 @@
   body[data-cf-light="1"] #vb-body tr.is-value-hot td.vb-value-col { background: #f0fdf4 !important; border-left-color: #22c55e !important; }
   body[data-cf-light="1"] #vb-body tr.is-value td.vb-value-col { background: #fffbeb !important; border-left-color: #f59e0b !important; }
 
+  /* ── V3 Desktop 15" — layout 5+1 colonnes ── */
+  @media (min-width: 769px) {
+    /* Masquer colonnes denses: RANG/PPG(3) ELO(4) ANALYSE IA(8) BUTEURS(9) SUIVI(10) */
+    #vb-table th:nth-child(3), #vb-table td:nth-child(3),
+    #vb-table th:nth-child(4), #vb-table td:nth-child(4),
+    #vb-table th:nth-child(8), #vb-table td:nth-child(8),
+    #vb-table th:nth-child(9), #vb-table td:nth-child(9),
+    #vb-table th:nth-child(10), #vb-table td:nth-child(10) { display: none !important; }
+  }
+  /* Prob bar V3 — plus haute, plus lisible */
+  .dt-prob-bar { height: 10px !important; border-radius: 4px !important; }
+  .dt-prob-wrap { margin: 6px 0 3px !important; }
+  .dt-prob-lbls { font-size: 10px !important; margin-top: 3px !important; }
+  .dt-prob-lbls .dom { font-weight: 900 !important; font-size: 11px !important; }
+  /* Form dots V3 — per team inline */
+  .dt3-form-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 2px; vertical-align: middle; }
+  .dt3-fw { background: #16a34a; } .dt3-fd { background: #94a3b8; } .dt3-fl { background: #dc2626; }
+  /* Tier pill KO column */
+  .dt3-tier { display: inline-block; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 10px; letter-spacing: .04em; text-transform: uppercase; }
+  .dt3-t-hot { background: #15803d; color: #fff; }
+  .dt3-t-try { background: #22c55e; color: #fff; }
+  .dt3-t-live { background: #ed1c24; color: #fff; }
+  /* Team name V3 — plus grande */
+  .dt3-team-nm { font-size: 13px; font-weight: 700; }
+  /* MARCHÉ — odds 1/N/2 grid */
+  .dt3-mkt { display: flex; flex-direction: column; gap: 3px; }
+  .dt3-odds-row { display: flex; align-items: center; gap: 5px; }
+  .dt3-odds-lbl { font-size: 9px; color: var(--text3); min-width: 12px; font-family: var(--font-mono); }
+  .dt3-odds-v { font-family: var(--font-mono); font-size: 13px; font-weight: 700; background: var(--bg3); padding: 1px 6px; border-radius: 3px; min-width: 42px; text-align: center; }
+  .dt3-odds-best { background: rgba(34,197,94,0.12) !important; color: #15803d !important; border: 1px solid rgba(34,197,94,0.3) !important; }
+  /* Column width adjustments */
+  @media (min-width: 769px) {
+    #vb-table th:nth-child(2), #vb-table td:nth-child(2) { min-width: 240px !important; }
+    #vb-table th:nth-child(5), #vb-table td:nth-child(5) { min-width: 105px !important; }
+    #vb-table th:nth-child(7), #vb-table td:nth-child(7) { min-width: 130px !important; }
+    .vb-value-col { min-width: 120px !important; }
+    .vbh-edge { font-size: 22px !important; font-weight: 900 !important; }
+  }
+
   /* Séparateurs verticaux entre groupes de colonnes */
   #vb-table th:nth-child(2),
   #vb-table td:nth-child(2) { border-right: 2px solid rgba(255,255,255,0.14); }
@@ -11807,7 +11846,8 @@ function psSetLang(v) {
 #sport-hub{
   position:fixed; inset:0; z-index:9000;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:clamp(32px,6vh,64px); padding:24px;
+  gap:clamp(16px,3vh,48px); padding:20px 16px;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
   background:
     radial-gradient(ellipse 70% 50% at 50% 30%, var(--accent-bg) 0%, transparent 60%),
     var(--bg);
@@ -11825,11 +11865,21 @@ function psSetLang(v) {
   letter-spacing:2px; text-transform:uppercase; color:var(--text3);
 }
 .hub-grid{ display:flex; gap:clamp(18px,3vw,32px); width:100%; max-width:760px; }
-@media(max-width:640px){ .hub-grid{ flex-direction:column; max-width:420px; } }
+@media(max-width:640px){
+  .hub-grid{ flex-direction:column; max-width:420px; }
+  .hub-card{ min-height:clamp(150px,28vh,240px); padding:18px 16px; gap:10px; }
+  .hub-emblem-3d{ width:clamp(70px,16vw,100px); height:clamp(70px,16vw,100px); }
+  .hub-card-title{ font-size:clamp(32px,9vw,52px); }
+  .hub-card-go{ padding:10px; font-size:12px; }
+}
+@media(max-width:380px){
+  .hub-card{ min-height:130px; padding:14px; gap:8px; }
+  .hub-card-stats{ gap:12px; font-size:11px; }
+}
 .hub-card{
   flex:1; position:relative; overflow:hidden;
   display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px;
-  min-height:clamp(240px,40vh,320px); padding:28px;
+  min-height:clamp(180px,32vh,320px); padding:22px 20px;
   border:1px solid rgba(255,255,255,0.15);
   border-radius:20px;
   background:linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
@@ -12569,6 +12619,21 @@ function psSetLang(v) {
     <select id="country-mobile-select" onchange="onCountryMobileSelect(this.value)" hidden aria-hidden="true"><option value="all">Toutes les ligues</option></select>
   </div>
 
+  <!-- LEAGUE MULTI-SELECT — mobile: relocalisé dans #mfs-body via _mfsRelocate -->
+  <div class="filter-row" id="league-select-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;align-items:center;">
+    <div id="ml-league" class="mls" style="width:100%;">
+      <button type="button" class="mls-trigger" id="ml-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="mlToggle(event)" aria-label="Filtrer par ligue">
+        <span class="mls-label" id="ml-label">Toutes les ligues</span>
+        <svg class="fc-ic mls-caret" viewBox="0 0 10 6" aria-hidden="true" style="margin:0 0 0 8px;flex-shrink:0;"><path d="M1 1l4 4 4-4" stroke="#ff3b3b" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <div class="mls-panel" id="ml-panel" role="listbox" aria-multiselectable="true">
+        <input type="search" class="mls-search" id="ml-search" placeholder="Rechercher une ligue…" oninput="mlFilter(this.value)" aria-label="Rechercher une ligue">
+        <button type="button" class="mls-opt mls-all" id="ml-opt-all" onclick="mlPickAll()">Toutes les ligues</button>
+        <div class="mls-list" id="ml-list"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- TOP N BEST BETS FILTER -->
   <div class="filter-row" id="topn-filter-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:6px 16px;flex-wrap:wrap;gap:4px;align-items:center;">
     <button class="filter-chip topn-chip active" data-topn="0">Tous</button>
@@ -12746,20 +12811,20 @@ function psSetLang(v) {
       <div id="scrollbar-top-inner" style="height:1px;"></div>
     </div>
     <div id="table-scroll">
-      <table id="vb-table" class="neu-table" style="min-width:900px;width:100%;">
+      <table id="vb-table" class="neu-table" style="min-width:750px;width:100%;">
         <thead>
           <tr class="stat-header-main">
-            <th style="min-width:55px;" title="Heure de coup d'envoi">KO</th>
-            <th style="min-width:180px;" title="Équipes + paris prédictifs">MATCH</th>
+            <th style="min-width:80px;" title="Heure de coup d'envoi · Signal tier HOT / BET / WATCH">KO · SIGNAL</th>
+            <th style="min-width:240px;" title="Équipes + Forme 5J (W/D/L) + Probabilités Poisson + Signal Fort">MATCH + FORME</th>
             <th style="min-width:130px;" title="Classement + Points par match + Power Rating">RANG / PPG</th>
             <th id="th-nat-elo" style="min-width:85px;cursor:pointer;" title="Elo Rating eloratings.net — cliquer pour trier" onclick="setSort('elo_home',this)">ELO ↕</th>
-            <th style="min-width:70px;" title="Forme sur 5 derniers matchs + Stats avancées">FORME</th>
-            <th style="min-width:170px;" title="Scores les plus probables · H2H · xG · Dixon-Coles">PRÉDICTIONS</th>
-            <th class="th-hero" style="min-width:80px;text-align:center;" title="Mouvement de cote — baisse = argent sharp détecté">COTES</th>
+            <th style="min-width:105px;" title="Forme récente · Boutons STATS · Analyse approfondie">CONTEXTE</th>
+            <th style="min-width:180px;" title="H2H · Scores Poisson · Dixon-Coles · Live xG">PRÉDICTIONS</th>
+            <th class="th-hero" style="min-width:130px;text-align:left;" title="Meilleurs cotes 1/N/2 · Mouvement sharp · 20+ bookmakers">MARCHÉ</th>
             <th style="min-width:200px;" title="Top 3 paris IA + Verdict CatBoost">ANALYSE IA</th>
             <th style="min-width:150px;" title="Top buteurs potentiels + KPIs offensifs">BUTEURS</th>
             <th style="min-width:100px;" title="Favoris · Insights · Analyse approfondie">SUIVI</th>
-            <th class="vb-value-col th-hero" title="Edge dévigé — métrique de valeur (modèle vs cote book)">💎 VALUE</th>
+            <th class="vb-value-col th-hero" title="Edge dévigué — probabilité Poisson vs cote marché · IC90">💎 EDGE</th>
             <th class="stats-col" style="min-width:50px;">PPG</th>
             <th class="stats-col" style="min-width:50px;">Rés.</th>
             <th class="stats-col" style="min-width:50px;">BTTS</th>
