@@ -11996,6 +11996,15 @@ function _dvMicroRadar(hs, as, pwrH, pwrA, eloH, eloA) {
     + lbls + '</svg>';
 }
 
+function _dt3FormDots(form) {
+  if (!form) return '';
+  return String(form).slice(-5).split('').map(function(c) {
+    var cls = c === 'W' ? 'dt3-fw' : c === 'L' ? 'dt3-fl' : 'dt3-fd';
+    var lbl = c === 'W' ? 'V' : c === 'D' ? 'N' : 'D';
+    return '<span class="dt3-form-dot ' + cls + '" title="' + lbl + '"></span>';
+  }).join('');
+}
+
 function renderMatches(matches) {
   if (!matches) return;
   const tbody = document.getElementById('vb-body');
@@ -12475,6 +12484,7 @@ const label = country
         <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
         <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
+        <div style="margin-top:3px;">${_live ? '<span class="dt3-tier dt3-t-live">⚡ LIVE</span>' : vbTier === 'hot' ? '<span class="dt3-tier dt3-t-hot">💎 HOT</span>' : vbTier === 'try' ? '<span class="dt3-tier dt3-t-try">✓ BET</span>' : ''}</div>
         ${_live ? '' : `<div class="cf-t2k" data-cf-t2k="${m.commence_time || ''}" style="display:none;"></div>`}
         <div data-tv-badge="${m.id}" style="margin:5px auto 0;font-size:9px;color:#555;display:${tvBadgeInline ? 'inline-flex' : 'none'};justify-content:center;align-items:center;flex-wrap:wrap;gap:3px;" title="Diffuseur TV">${tvBadgeInline}</div>
         ${streamBadgeInline ? `<div style="margin:3px auto 0;display:inline-flex;justify-content:center;">${streamBadgeInline}</div>` : ''}
@@ -12487,11 +12497,11 @@ const label = country
           </div>
           <span data-intensity-val="${m.id}" style="font-size:7px;color:var(--text3);">⚡${m.live_intensity||0}</span>
         </div>` : ''}
-        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
-          ${homeLogoImg}<span style="font-size:12px;font-weight:600;cursor:pointer;" onclick="trackClick('team','${(m.home_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.home_team}</span>${liveScoreHtml(m)}
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;flex-wrap:wrap;">
+          ${homeLogoImg}<span class="dt3-team-nm" style="cursor:pointer;" onclick="trackClick('team','${(m.home_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.home_team}</span>${liveScoreHtml(m)}<span style="margin-left:auto;flex-shrink:0;">${_dt3FormDots(m.home_form)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          ${awayLogoImg}<span style="font-size:12px;font-weight:600;cursor:pointer;" onclick="trackClick('team','${(m.away_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.away_team}</span>${awayLiveScoreHtml(m)}
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+          ${awayLogoImg}<span class="dt3-team-nm" style="cursor:pointer;" onclick="trackClick('team','${(m.away_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.away_team}</span>${awayLiveScoreHtml(m)}<span style="margin-left:auto;flex-shrink:0;">${_dt3FormDots(m.away_form)}</span>
         </div>
         ${(()=>{const hI=Array.isArray(m.tm_home_injured)?m.tm_home_injured.filter(p=>p&&p.name):[];const aI=Array.isArray(m.tm_away_injured)?m.tm_away_injured.filter(p=>p&&p.name):[];if(!hI.length&&!aI.length)return'';const _b=(n,names)=>n?'<span style="font-size:8px;color:#ef4444;background:rgba(239,68,68,.12);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);cursor:default;" title="Blessés : '+names+'">🏥'+n+'</span>':'';const hB=_b(hI.length,hI.slice(0,5).map(p=>p.name).join(', '));const aB=_b(aI.length,aI.slice(0,5).map(p=>p.name).join(', '));return'<div style="display:flex;align-items:center;gap:3px;margin-top:1px;">'+(hB?'<span style="font-size:7px;color:var(--text3);">D:</span>'+hB:'')+(hB&&aB?'<span style="color:var(--text3);font-size:7px;">·</span>':'')+(aB?'<span style="font-size:7px;color:var(--text3);">E:</span>'+aB:'')+'</div>';})()}
         ${renderPredBets(m)}
@@ -12597,8 +12607,22 @@ const label = country
         ${formatTopScores(m.poisson?.topScores, 3)}
         ${m.dixonColes?.method === 'dixon-coles' ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--blue);margin-top:1px;">DC: O25 ${m.dixonColes.over25}% · BTTS ${m.dixonColes.btts}% · CS0-0 ${m.dixonColes.cs00}% ${m.dixonColes.rho ? '(ρ='+m.dixonColes.rho+')' : ''}</div>` : ''}
         ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}</td>
-      <td style="min-width:80px;padding:4px 6px !important;text-align:center;">
-        ${renderOddsDeltaCell(m)}${renderSharpMoneySignal(m)}
+      <td style="min-width:130px;padding:6px 8px !important;text-align:left;vertical-align:middle;">
+        ${(function() {
+          var _oh = (m.bsd_odds_summary && m.bsd_odds_summary.best && m.bsd_odds_summary.best.home) ? m.bsd_odds_summary.best.home.value : (m.odds && m.odds.home);
+          var _od = (m.bsd_odds_summary && m.bsd_odds_summary.best && m.bsd_odds_summary.best.draw) ? m.bsd_odds_summary.best.draw.value : (m.odds && m.odds.draw);
+          var _oa = (m.bsd_odds_summary && m.bsd_odds_summary.best && m.bsd_odds_summary.best.away) ? m.bsd_odds_summary.best.away.value : (m.odds && m.odds.away);
+          var _bl = best.label || '';
+          var fmt = function(v) { return (v != null && isFinite(Number(v))) ? safeFixed(Number(v), 2) : '—'; };
+          var rCls = function(lbl) { return _bl === lbl ? ' dt3-odds-best' : ''; };
+          var hasOdds = _oh != null || _od != null || _oa != null;
+          var grid = hasOdds ? '<div class="dt3-mkt">' +
+            '<div class="dt3-odds-row"><span class="dt3-odds-lbl">1</span><span class="dt3-odds-v' + rCls('1') + '">' + fmt(_oh) + '</span></div>' +
+            '<div class="dt3-odds-row"><span class="dt3-odds-lbl">N</span><span class="dt3-odds-v' + rCls('N') + '">' + fmt(_od) + '</span></div>' +
+            '<div class="dt3-odds-row"><span class="dt3-odds-lbl">2</span><span class="dt3-odds-v' + rCls('2') + '">' + fmt(_oa) + '</span></div>' +
+            '</div>' : '';
+          return grid + '<div style="margin-top:4px;">' + renderOddsDeltaCell(m) + renderSharpMoneySignal(m) + '</div>';
+        })()}
       </td>
       <td>
         <div class="t3c-wrap">${top3}${renderCatboostVerdict(m)}</div>
