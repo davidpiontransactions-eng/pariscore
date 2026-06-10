@@ -12586,14 +12586,13 @@ const label = country
         const diffHtml = diff != null ? `<div style="font-size:8px;color:var(--text3);margin-top:1px;">Δ${diff}</div>` : '';
         return hLine + aLine + diffHtml;
       })()}</td>
-      <td style="min-width:70px;padding:4px 6px !important;">
-        <div style="margin-bottom:2px;">${formBalls(m.home_form)}</div>
-        <div>${formBalls(m.away_form)}</div>
-        <div style="display:flex;gap:4px;align-items:center;margin-top:4px;">
-          <button class="ins-btn" style="font-size:9px;padding:3px 5px;" onclick="event.stopPropagation();openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
-          <button class="ai-gen-btn" style="font-size:9px;padding:3px 5px;" onclick="event.stopPropagation();openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
-          ${_skillPids ? `<button class="skill-btn" onclick="event.stopPropagation();toggleSkillDrawer('${m.id}')" title="Profils Skill Bzzoiro V3.2">⚡</button>` : ''}
+      <td style="min-width:105px;padding:6px 8px !important;vertical-align:middle;">
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+          <button class="ins-btn" style="font-size:10px;padding:4px 8px;" onclick="event.stopPropagation();openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
+          <button class="ai-gen-btn" style="font-size:10px;padding:4px 8px;" onclick="event.stopPropagation();openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
         </div>
+        ${_live && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding:3px 6px;background:rgba(237,28,36,0.07);border-radius:4px;border:1px solid rgba(237,28,36,0.15);"><span style="font-size:9px;color:#ed1c24;font-weight:700;">⚡ Live</span><span style="font-size:12px;font-weight:800;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#d97706':'#888'};font-family:var(--font-mono);">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}
+        ${_live ? (() => { const xgH = m.live_xg && m.live_xg.home != null ? m.live_xg.home : (m.expectedGoals && m.expectedGoals.home != null ? m.expectedGoals.home : null); const xgA = m.live_xg && m.live_xg.away != null ? m.live_xg.away : (m.expectedGoals && m.expectedGoals.away != null ? m.expectedGoals.away : null); return (xgH !== null && xgA !== null) ? '<div style="margin-top:3px;font-size:10px;font-family:var(--font-mono);color:var(--text3);">xG <span style="color:var(--text2);font-weight:700;">'+Number(xgH).toFixed(1)+'</span> – <span style="color:var(--text2);font-weight:700;">'+Number(xgA).toFixed(1)+'</span></div>' : ''; })() : ''}
       </td>
       <td style="min-width:100px;font-size:10px;padding:4px 6px !important;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
@@ -12605,8 +12604,7 @@ const label = country
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
           : ''}
         ${formatTopScores(m.poisson?.topScores, 3)}
-        ${m.dixonColes?.method === 'dixon-coles' ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--blue);margin-top:1px;">DC: O25 ${m.dixonColes.over25}% · BTTS ${m.dixonColes.btts}% · CS0-0 ${m.dixonColes.cs00}% ${m.dixonColes.rho ? '(ρ='+m.dixonColes.rho+')' : ''}</div>` : ''}
-        ${m.live_score && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px;"><span style="font-size:9px;color:var(--text3);">⚡</span><span style="font-size:10px;font-weight:700;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#1A1A1A':'#888'}">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}</td>
+        ${m.dixonColes?.method === 'dixon-coles' ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--blue);margin-top:1px;">DC: O25 ${m.dixonColes.over25}% · BTTS ${m.dixonColes.btts}% · CS0-0 ${m.dixonColes.cs00}% ${m.dixonColes.rho ? '(ρ='+m.dixonColes.rho+')' : ''}</div>` : ''}</td>
       <td style="min-width:130px;padding:6px 8px !important;text-align:left;vertical-align:middle;">
         ${(function() {
           var _oh = (m.bsd_odds_summary && m.bsd_odds_summary.best && m.bsd_odds_summary.best.home) ? m.bsd_odds_summary.best.home.value : (m.odds && m.odds.home);
