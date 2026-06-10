@@ -7060,6 +7060,59 @@ function renderInsightsSocialBuzz(d) {
   </div>`;
 }
 
+// Insights — section Force & Classement : Elo dom/ext + rang mondial (proxy FIFA pour
+// sélections / rang international club), rang championnat domestique, terrain neutre.
+function _insForceRankSection(m) {
+  if (!m) return '';
+  const num = (v) => (v != null && isFinite(Number(v))) ? Number(v) : null;
+  const eloH = num(m.elo_home), eloA = num(m.elo_away);
+  const erH = num(m.elo_home_rank), erA = num(m.elo_away_rank);
+  const rkH = num(m.home_rank), rkA = num(m.away_rank);
+  const lsz = num(m.league_size);
+  const neutral = !!m.is_neutral_ground;
+  const intl = /friendly|international|nations|world.?cup|coupe du monde|euro\b|copa|qualif|fifa|afcon|gold.?cup|concacaf|olympic/i.test(String(m.league || '') + ' ' + String(m.sport || ''));
+  if (eloH == null && eloA == null && rkH == null && rkA == null) return '';
+  const hCol = '#3b82f6', aCol = '#ab47bc';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const win = (a, b) => (a != null && b != null) ? (a > b ? '#16a34a' : a < b ? '#dc2626' : 'var(--text2)') : 'var(--text2)';
+  const rkTag = (n) => n != null ? ' <span style="font-size:9px;color:var(--text3);">#' + n + '</span>' : '';
+  const dash = '<span style="color:var(--text3);">—</span>';
+  const row = (label, hHtml, aHtml, title) =>
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--font-mono);margin-bottom:7px;"' + (title ? ' title="' + esc(title) + '"' : '') + '>'
+    + '<span style="font-size:12px;font-weight:700;min-width:80px;">' + (hHtml || dash) + '</span>'
+    + '<span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;text-align:center;">' + label + '</span>'
+    + '<span style="font-size:12px;font-weight:700;min-width:80px;text-align:right;">' + (aHtml || dash) + '</span>'
+    + '</div>';
+  let rows = '';
+  if (eloH != null || eloA != null) {
+    rows += row('Elo' + (intl ? ' · rang mondial' : ''),
+      eloH != null ? '<span style="color:' + win(eloH, eloA) + ';">' + eloH + '</span>' + rkTag(erH) : null,
+      eloA != null ? '<span style="color:' + win(eloA, eloH) + ';">' + eloA + '</span>' + rkTag(erA) : null,
+      'Elo eloratings.net' + (intl ? ' + rang mondial (proxy FIFA pour sélections / rang international club)' : ''));
+    if (eloH != null && eloA != null) {
+      const dE = eloH - eloA;
+      const fav = dE > 0 ? (m.home_team || 'Domicile') : dE < 0 ? (m.away_team || 'Extérieur') : null;
+      rows += '<div style="text-align:center;font-size:10px;font-family:var(--font-mono);color:var(--text3);margin:-2px 0 9px;">Écart <span style="color:var(--text2);font-weight:700;">' + (dE > 0 ? '+' : '') + dE + '</span> Elo' + (fav ? ' · favori <span style="color:' + (dE > 0 ? hCol : aCol) + ';font-weight:700;">' + esc(fav) + '</span>' : '') + '</div>';
+    }
+  }
+  if (rkH != null || rkA != null) {
+    const fmtRk = (n) => n != null ? n + 'e' + (lsz ? '<span style="font-size:9px;color:var(--text3);">/' + lsz + '</span>' : '') : null;
+    rows += row('Rang championnat', fmtRk(rkH), fmtRk(rkA), 'Position au classement domestique (pays de chaque équipe)');
+  }
+  const neutralBadge = neutral
+    ? '<div style="margin-top:4px;font-size:10px;font-family:var(--font-mono);color:#b45309;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.25);border-radius:6px;padding:4px 8px;text-align:center;">⚖ Terrain neutre — avantage domicile annulé (Elo sans bonus stade)</div>'
+    : '';
+  return '<div class="ins-section" style="border:1px solid rgba(16,185,129,0.22);background:linear-gradient(135deg,rgba(16,185,129,0.05),rgba(16,185,129,0.01));border-radius:10px;padding:14px 16px;margin-bottom:16px;">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'
+    + '<span style="font-size:9px;font-family:var(--font-mono);color:#047857;background:rgba(16,185,129,0.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">💪 FORCE &amp; CLASSEMENT</span>'
+    + (intl ? '<span style="font-size:9px;font-family:var(--font-mono);color:#7e22ce;background:rgba(168,85,247,0.12);padding:2px 6px;border-radius:4px;">🌍 International</span>' : '')
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--font-mono);margin-bottom:10px;"><span style="color:' + hCol + ';font-weight:700;">' + esc(m.home_team || 'Domicile') + '</span><span style="color:' + aCol + ';font-weight:700;">' + esc(m.away_team || 'Extérieur') + '</span></div>'
+    + rows
+    + neutralBadge
+    + '</div>';
+}
+
 // bd 6jro Plan G — Tennis profile enrichment (Sofascore Apify ETL)
 // Fetch rankings + grandSlamBestResults pour les 2 joueurs, render section dédiée.
 async function fetchTennisSofaProfile(matchData) {
@@ -14272,7 +14325,7 @@ function buildResumeTab(d) {
     ${venueRefereeHtml}
     ${travelFactorHtml}
     ${tmSectionHtml}
-    <div id="ins-social-buzz-slot"></div>
+    ${_insForceRankSection(m)}
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -16152,7 +16205,6 @@ async function openInsights(matchId) {
     }
 
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
-    fetchInsightsSocialBuzz(m.id);  // bd ueg0 — async lazy fetch + populate slot
     const statsEl = document.getElementById('ins-tab-stats');
     if (statsEl) statsEl.innerHTML = buildStatsTab(d);
     document.getElementById('ins-tab-graphique').innerHTML  = buildGraphiqueTab(d);
