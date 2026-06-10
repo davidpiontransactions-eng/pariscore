@@ -2,6 +2,26 @@
 
 ---
 
+## [v12.71] — 2026-06-10 — Football card: Signal Fort + prob bar 1N2 + market badge
+
+### Fonctionnalités livrées (benchmark BetMines/BeSoccer)
+
+| Point | Description |
+|---|---|
+| **Signal Fort badge** | Badge gradient `⚡ Signal Fort` affiché sur la carte quand WoM Betfair >55% + edge dévigué >3% convergent sur le même marché — différenciateur unique vs BetMines (raw Bayesian) et BeSoccer (pas de signal value) |
+| **Prob bar 1N2** | Barre tricolore home/draw/away (Poisson Shin-Hurley calibré) remplace le texte brut `1N2%` — même lisibilité que BetMines mais probabilités déviguées |
+| **Badge Marché** | Nouvelle cellule `mc-mkt` dans `mc-metrics` affichant le marché edge (BTTS/O2.5/1/N/2) + cote best inline — même info que BetMines mais ancrée sur edge dévigué |
+| **CSS design system** | Tokens `.mc-signal-fort`, `.mc-prob-bar`, `.mc-pb-h/d/a`, `.mc-prob-lbl`, `.mc-mkt-v/lbl/odds` ajoutés — cohérent avec `--cf-*` et `--accent` |
+| **FlareSolverr Betfair** | `_bfFetchIndexHtml()` route le fetch HTML Betfair via FlareSolverr si `FLARESOLVERR_URL` défini — bypass Cloudflare VPS optionnel |
+
+### Fichiers modifiés
+- `pariscore.js` — `buildCard()` : +26 lignes vars + Signal Fort + probBar1N2 + mktBadge
+- `pariscore.html` — +15 lignes CSS nouvelles classes mc-card
+- `server.js` — `_bfFetchIndexHtml()` helper FlareSolverr
+- `locales/*.json` — sync i18n 7 langues
+
+---
+
 ## [v12.70] — 2026-06-09 — NBA Brier validé (0.209 vs 0.25), signal BET activé
 
 ### Fonctionnalités livrées
