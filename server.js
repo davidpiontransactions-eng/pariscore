@@ -16182,10 +16182,13 @@ async function fetchOdds(force = false, opts = {}) {
     const upcoming = db.matches.filter(m => new Date(m.commence_time).getTime() > now).length;
     if (upcoming > 0) {
       console.log(`  [Cron:Odds] ⚡ Données fraîches en cache (${upcoming} matchs) — skip API [key=${cacheKey}]`);
-      // WOM enrich même sur cache-hit — seulement matchs sans betfair_wom (10min TTL cache interne)
-      if (typeof enrichMatchesWithBetfairWOM === 'function') {
-        const _needsWOM = db.matches.filter(m => m && !m.betfair_wom);
-        if (_needsWOM.length) enrichMatchesWithBetfairWOM(_needsWOM, 'football').catch(() => {});
+      // WOM enrich même sur cache-hit — betwatch first-pass (sync), Betfair fallback async
+      { const _needsWOM = db.matches.filter(m => m && !m.betfair_wom);
+        if (_needsWOM.length && womLocal?.fetchMatchWOM) {
+          _needsWOM.forEach(m => { try { const _bw = womLocal.fetchMatchWOM({ home_team: m.home_team, away_team: m.away_team }); if (_bw?.wom?.home != null) m.betfair_wom = { h: _bw.wom.home, d: _bw.wom.draw, a: _bw.wom.away, total_matched: _bw.totalMatched || null, currency: 'GBP', source: 'betwatch', ts: _bw.ts }; } catch(_){} });
+        }
+        const _stillNoWOM = db.matches.filter(m => m && !m.betfair_wom);
+        if (_stillNoWOM.length && typeof enrichMatchesWithBetfairWOM === 'function') enrichMatchesWithBetfairWOM(_stillNoWOM, 'football').catch(() => {});
       }
       return;
     }
@@ -16461,10 +16464,12 @@ async function fetchOdds(force = false, opts = {}) {
     db.lastOddsUpdate = new Date().toISOString();
     // FIX historique : archiver AVANT purge pour éviter le wipe des matchs terminés
     await archiveThenPurge('post-fetchOdds');
-    // Betfair WOM — fire-and-forget, mutate db.matches in place avant saveDB
-    // typeof guard : defensive against hoisting edge-case (async fn defined line ~31804)
+    // Betfair WOM — betwatch first-pass (sync), Betfair direct async fallback
+    if (womLocal?.fetchMatchWOM) {
+      db.matches.forEach(m => { try { if (m.betfair_wom) return; const _bw = womLocal.fetchMatchWOM({ home_team: m.home_team, away_team: m.away_team }); if (_bw?.wom?.home != null) m.betfair_wom = { h: _bw.wom.home, d: _bw.wom.draw, a: _bw.wom.away, total_matched: _bw.totalMatched || null, currency: 'GBP', source: 'betwatch', ts: _bw.ts }; } catch(_){} });
+    }
     if (typeof enrichMatchesWithBetfairWOM === 'function') {
-      enrichMatchesWithBetfairWOM(db.matches, 'football').catch(() => {});
+      enrichMatchesWithBetfairWOM(db.matches.filter(m => !m.betfair_wom), 'football').catch(() => {});
     }
     saveDB();
     syncCacheBuffers();
