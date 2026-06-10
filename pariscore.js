@@ -25496,6 +25496,28 @@ function renderComparateur(d) {
       var reco = (vC === 'go' || vC === 'try')
         ? bestPick + (bestOdds ? ' @ ' + bestOdds : '') + ' · ' + edgeTxt + ' edge'
         : (vC === 'neu' ? 'Pas d\'edge net — prudence' : 'Aucune valeur — éviter');
+      // ── P0: competitive improvements (BetMines / BeSoccer benchmarks) ──
+      var womBacking = m.wom && typeof m.wom.backing_pct === 'number' ? m.wom.backing_pct : 0;
+      var womDir = m.wom && m.wom.backing_team ? String(m.wom.backing_team).toLowerCase() : '';
+      var edgeDir = be.label ? String(be.label).toLowerCase() : '';
+      var womEdgeConverge = womBacking > 55 && edge != null && edge > 3 && edgeDir && womDir && (
+        (/dom|1|home/i.test(edgeDir) && /dom|1|home/i.test(womDir)) ||
+        (/nul|x|draw/i.test(edgeDir) && /nul|x|draw/i.test(womDir)) ||
+        (/ext|2|away/i.test(edgeDir) && /ext|2|away/i.test(womDir))
+      );
+      var mktLbl = be.label ? esc(String(be.label).toUpperCase()) : '';
+      var mktOddsVal = be.odds ? safeFixed(Number(be.odds), 2) : (be.bestOdds ? safeFixed(Number(be.bestOdds), 2) : '');
+      var pH = po.homeWin != null ? Math.round(po.homeWin) : null;
+      var pD = po.draw != null ? Math.round(po.draw) : null;
+      var pA = po.awayWin != null ? Math.round(po.awayWin) : null;
+      var probBar1N2 = (pH != null && pD != null && pA != null)
+        ? '<div class="mc-cell mc-prob"><div class="mc-k">1 N 2</div>' +
+            '<div class="mc-prob-bar"><div class="mc-pb-h" style="width:' + pH + '%"></div>' +
+            '<div class="mc-pb-d" style="width:' + pD + '%"></div>' +
+            '<div class="mc-pb-a" style="width:' + pA + '%"></div></div>' +
+            '<div class="mc-prob-lbl"><span>' + pH + '%</span><span>' + pD + '%</span><span>' + pA + '%</span></div>' +
+          '</div>'
+        : '<div class="mc-cell"><div class="mc-k">1N2</div><div class="mc-v">' + (pH != null ? pH + '%' : '—') + '</div></div>';
       var detail =
         '<div class="mc-detail">' +
           '<div class="mcd-reco mc-v-' + vC + '"><b>' + vT + '</b> ' + reco + '</div>' +
@@ -25534,11 +25556,13 @@ function renderComparateur(d) {
             '<div class="mc-team">' + rkA + '<span>' + esc(m.away_team) + '</span>' + scA + '</div>' +
           '</div>' +
           (function(){ try { return (typeof renderPredBets==='function') ? renderPredBets(m) : ''; } catch(e){ return ''; } })() +
+          (womEdgeConverge ? '<div class="mc-signal-fort">⚡ Signal Fort · WoM ' + Math.round(womBacking) + '% + Edge ' + edgeTxt + '</div>' : '') +
           '<div class="mc-metrics">' +
             '<div class="mc-cell edge ' + edgeCls + '"><div class="mc-k">Edge</div><div class="mc-v">' + edgeTxt + '</div></div>' +
             '<div class="mc-cell"><div class="mc-k">O2.5</div><div class="mc-v">' + (po.over25 != null ? Math.round(po.over25) + '%' : '—') + '</div></div>' +
             '<div class="mc-cell"><div class="mc-k">BTTS</div><div class="mc-v">' + (po.btts != null ? Math.round(po.btts) + '%' : '—') + '</div></div>' +
-            '<div class="mc-cell"><div class="mc-k">1N2</div><div class="mc-v">' + (po.homeWin != null ? Math.round(po.homeWin) + '%' : '—') + '</div></div>' +
+            probBar1N2 +
+            (mktLbl ? '<div class="mc-cell mc-mkt"><div class="mc-k">Marché</div><div class="mc-v mc-mkt-v"><span class="mc-mkt-lbl">' + mktLbl + '</span>' + (mktOddsVal ? '<span class="mc-mkt-odds">@ ' + mktOddsVal + '</span>' : '') + '</div></div>' : '') +
           '</div>' +
           '<div class="mc-bottom">' +
             '<div class="mc-odds">' + oddCell('home', '1') + oddCell('draw', 'N') + oddCell('away', '2') + '</div>' +
