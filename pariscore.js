@@ -13920,16 +13920,18 @@ function formBadges(form) {
   return [...form].slice(0, 5).map(c => `<span class="form-badge form-${c}">${c}</span>`).join('');
 }
 
-function cmpBar(label, homeVal, awayVal, unit = '', decimals = 1) {
+function cmpBar(label, homeVal, awayVal, unit = '', decimals = 1, lowerBetter = false) {
   if (homeVal == null && awayVal == null) return '';
   const h = parseFloat(homeVal) || 0;
   const a = parseFloat(awayVal) || 0;
   const total = h + a;
-  const wH = total > 0 ? Math.round(h / total * 100) : 50;
+  // Part visuelle : par défaut plus grand = mieux ; lowerBetter inverse (buts/corners encaissés)
+  const hShare = lowerBetter ? a : h;
+  const wH = total > 0 ? Math.round(hShare / total * 100) : 50;
   const wA = 100 - wH;
-  const hFmt = Number.isInteger(h) ? h : h.toFixed(decimals);
-  const aFmt = Number.isInteger(a) ? a : a.toFixed(decimals);
-  const hWins = h >= a;
+  const hFmt = Number.isInteger(h) ? h : safeFixed(h, decimals);
+  const aFmt = Number.isInteger(a) ? a : safeFixed(a, decimals);
+  const hWins = lowerBetter ? (h <= a) : (h >= a);
   return '<div style="margin-bottom:11px">'
     + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
       + '<span style="font:' + (hWins ? '800' : '600') + ' 12px/1 var(--font-mono,monospace);color:var(--blue,#2563eb)">' + hFmt + unit + '</span>'
@@ -14349,7 +14351,7 @@ function buildResumeTab(d) {
       ${cmpBar('Victoires', hs.wins, as.wins, '%')}
       ${_statsBad ? _dataNotice : `
         ${cmpBar('Moy. Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
-        ${cmpBar('Moy. Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
+        ${cmpBar('Moy. Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2, true)}
         ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
         ${(xg.home != null && xg.away != null) ? `<div style="text-align:center;font-size:10px;color:var(--text3);margin-top:4px">
           xG Diff : <span style="color:${(xg.home - xg.away) > 0 ? 'var(--blue)' : '#ab47bc'};font-weight:700">${(xg.home - xg.away) > 0 ? '+' : ''}${safeFixed(xg.home - xg.away, 2)}</span>
@@ -14405,7 +14407,7 @@ function buildResumeTab(d) {
           out += '<div style="display:grid;grid-template-columns:110px 1fr 44px 56px 72px;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05)">'
             + '<span style="font-size:10px;font-weight:600;color:var(--text2,#888)">' + r.lbl + '</span>'
             + '<div style="height:10px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.18);box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)">'
-            + '<div style="height:100%;width:' + r.val + '%;background:' + g + ';transform-origin:left;animation:poisFill .8s ease;position:relative;overflow:hidden">'
+            + '<div style="height:100%;width:' + Math.max(0, Math.min(100, Number(r.val) || 0)) + '%;background:' + g + ';transform-origin:left;animation:poisFill .8s ease;position:relative;overflow:hidden">'
             + '<div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent)"></div>'
             + '</div></div>'
             + '<span style="font:700 11px/1 var(--font-mono,monospace);color:' + c + ';text-align:right">' + r.val + '%</span>'
@@ -14498,7 +14500,7 @@ function buildResumeTab(d) {
         return '<div style="display:grid;grid-template-columns:90px 1fr 44px 48px 96px;align-items:center;gap:8px;margin-bottom:8px">'
           + '<span style="font-size:11px;font-weight:600;color:var(--text,#1f2937)">' + mk.lbl + '</span>'
           + '<div style="height:14px;background:rgba(0,0,0,0.05);border-radius:10px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.12),inset 0 1px 2px rgba(0,0,0,0.07)">'
-            + '<div style="height:100%;width:' + mk.val + '%;background:linear-gradient(90deg,' + c.g1 + ',' + c.g2 + ');border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.28);transform-origin:left;animation:cbFill .9s cubic-bezier(.34,1.1,.64,1) both;position:relative;overflow:hidden">'
+            + '<div style="height:100%;width:' + Math.max(0, Math.min(100, Number(mk.val) || 0)) + '%;background:linear-gradient(90deg,' + c.g1 + ',' + c.g2 + ');border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.28);transform-origin:left;animation:cbFill .9s cubic-bezier(.34,1.1,.64,1) both;position:relative;overflow:hidden">'
               + '<div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.22),transparent);border-radius:10px 10px 0 0"></div>'
             + '</div>'
           + '</div>'
@@ -14870,14 +14872,14 @@ function buildStatsTab(d) {
     ? cmpBar('Corners Obtenus', hCorn.avgCornersFor, aCorn.avgCornersFor, '', 2)
     : '';
   const cornersAgainstRow = (hCorn.avgCornersAgainst != null || aCorn.avgCornersAgainst != null)
-    ? cmpBar('Corners Concédés', hCorn.avgCornersAgainst, aCorn.avgCornersAgainst, '', 2)
+    ? cmpBar('Corners Concédés', hCorn.avgCornersAgainst, aCorn.avgCornersAgainst, '', 2, true)
     : '';
   const statsRows = `
     ${cmpBar('PPG', hs.ppg, as.ppg, '', 2)}
     ${cmpBar('Victoires %', hs.wins, as.wins, '%')}
     ${_statsBad ? _dataNotice : `
       ${cmpBar('Buts Marqués', hs.avgScored, as.avgScored, '', 2)}
-      ${cmpBar('Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2)}
+      ${cmpBar('Buts Encaissés', hs.avgConceded, as.avgConceded, '', 2, true)}
       ${(xg.home != null || xg.away != null) ? cmpBar('xG', xg.home, xg.away, '', 2) : ''}
       ${cornersForRow}
       ${cornersAgainstRow}`}
@@ -14930,7 +14932,7 @@ function buildStatsTab(d) {
       out += '<div style="display:grid;grid-template-columns:110px 1fr 44px 56px 72px;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05)">'
         + '<span style="font-size:10px;font-weight:600;color:var(--text2,#888)">' + r.lbl + '</span>'
         + '<div style="height:10px;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.18);box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)">'
-        + '<div style="height:100%;width:' + r.val + '%;background:' + g + ';transform-origin:left;animation:poisFill .8s ease;position:relative;overflow:hidden">'
+        + '<div style="height:100%;width:' + Math.max(0, Math.min(100, Number(r.val) || 0)) + '%;background:' + g + ';transform-origin:left;animation:poisFill .8s ease;position:relative;overflow:hidden">'
         + '<div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent)"></div>'
         + '</div></div>'
         + '<span style="font:700 11px/1 var(--font-mono,monospace);color:' + c + ';text-align:right">' + r.val + '%</span>'
@@ -16336,7 +16338,7 @@ async function buildCornersTab(matchId) {
 
     const probCls = (pct) => pct >= 65 ? 'g' : pct >= 50 ? 'a' : 'r';
     const probBar = (pct) =>
-      `<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-${probCls(pct)}" style="width:${pct}%"></div></div>`;
+      `<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-${probCls(pct)}" style="width:${Math.max(0, Math.min(100, Number(pct) || 0))}%"></div></div>`;
 
     const probRows = Object.entries(probs).map(([k, v]) => {
       const label = k.replace(/over_(\d+)_(\d+)/, 'Over $1.$2');
@@ -16344,7 +16346,7 @@ async function buildCornersTab(matchId) {
       return `<div class="cr-prob-row">
         <div class="cr-prob-label">${label}</div>
         ${probBar(v)}
-        <div class="cr-prob-val cr-prob-val-${c}">${v}%</div>
+        <div class="cr-prob-val cr-prob-val-${c}">${safeFixed(v, 0)}%</div>
       </div>`;
     }).join('');
 
@@ -16354,7 +16356,7 @@ async function buildCornersTab(matchId) {
     const recCards = recs.length ? recs.map(r => `
       <div class="cr-rec-card ${r.recommended ? 'cr-rec-yes' : 'cr-rec-no'}">
         <div class="cr-rec-market">${fmtCrMkt(r.market)}</div>
-        <div class="cr-rec-prob">${r.probability}%</div>
+        <div class="cr-rec-prob">${safeFixed(r.probability, 0)}%</div>
         ${r.recommended
           ? '<span class="cr-rec-badge">✓ Value</span>'
           : '<span class="cr-rec-badge cr-rec-skip">Skip</span>'}
