@@ -2989,5 +2989,9 @@
   "mma.breakdown.faq_title": "KI-Analyse",
   "mma.bet.label_safe": "🥇 Bankroll Builder",
   "mma.bet.label_value": "🎯 Value Bet",
-  "mma.bet.label_wild": "⚡ Wild Card"
+  "mma.bet.label_wild": "⚡ Wild Card",
+  "hotpicks.bureau_title": "Tipster-Büro",
+  "wc.tab_forecast": "🔮 Prognosen",
+  "tennis.wom_col_prematch": "Prematch",
+  "tennis.wom_filter_wom_only": "Nur mit WOM"
 }

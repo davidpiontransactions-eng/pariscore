@@ -28816,18 +28816,31 @@ function _bfScore(query, label) {
   if (!words.length) return 0;
   return words.filter(w => h.includes(w)).length / words.length;
 }
+async function _bfFetchIndexHtml(url) {
+  const fsUrl = (process.env.FLARESOLVERR_URL || '').replace(/\/$/, '');
+  if (fsUrl) {
+    const body = JSON.stringify({ cmd: 'request.get', url, maxTimeout: 60000 });
+    return new Promise((resolve, reject) => {
+      const parsed = new URL(fsUrl + '/v1');
+      const req = require('http').request({ hostname: parsed.hostname, port: parsed.port || 8191, path: '/v1', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, res => {
+        let d = ''; res.on('data', c => d += c); res.on('end', () => {
+          try { const j = JSON.parse(d); resolve(j?.solution?.response || ''); } catch { resolve(''); }
+        });
+      });
+      req.on('error', reject); req.setTimeout(65000, () => { req.destroy(); reject(new Error('fs timeout')); });
+      req.write(body); req.end();
+    });
+  }
+  const res = await httpsGet(url, { ..._BF_HDR, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' }, 20000);
+  return typeof res.data === 'string' ? res.data : '';
+}
 async function _bfFetchIndex(sport) {
   const hit = _bfIdxCache.get(sport);
   if (hit && Date.now() - hit.ts < _BF_IDX_TTL) return hit.markets;
   const path = sport === 'tennis' ? 'tennis' : 'football';
   let markets = [];
   try {
-    const res = await httpsGet(
-      `https://www.betfair.com/exchange/plus/${path}`,
-      { ..._BF_HDR, 'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8' },
-      20000
-    );
-    const html = typeof res.data === 'string' ? res.data : '';
+    const html = await _bfFetchIndexHtml(`https://www.betfair.com/exchange/plus/${path}`);
     const re   = /href="[^"]*\/market\/(1\.\d{9,12})"[^>]*>([^<]{5,100})<\/a>/g;
     const seen = new Set();
     let m;
@@ -28840,7 +28853,7 @@ async function _bfFetchIndex(sport) {
         if (!seen.has(m[1])) { seen.add(m[1]); markets.push({ marketId: m[1], label: '' }); }
       }
     }
-    console.log(`  [BetfairWOM] ${path} index: ${markets.length} markets`);
+    console.log(`  [BetfairWOM] ${path} index: ${markets.length} markets${process.env.FLARESOLVERR_URL ? ' (FlareSolverr)' : ''}`);
   } catch (e) { console.warn(`  [BetfairWOM] index fetch: ${e.message}`); }
   _bfIdxCache.set(sport, { markets, ts: Date.now() });
   return markets;
