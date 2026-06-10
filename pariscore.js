@@ -25294,7 +25294,7 @@ function renderComparateur(d) {
     // Rows visibles à relocaliser dans le bottom-sheet mobile (ordre = affichage).
     // Maj v10.43 : topn-filter-row (Top stratégies + slider Confiance) AJOUTÉ ;
     // period-kickoff-row (fusion) ; league-filter-row exclu (display:none) ; edge supprimé.
-    ['day-filter-row', 'topn-filter-row', 'period-kickoff-row', 'adv-filter-row'].forEach(function (id) {
+    ['day-filter-row', 'league-select-row', 'topn-filter-row', 'period-kickoff-row', 'adv-filter-row'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) body.appendChild(el); // déplace (handlers délégués → intacts)
     });
