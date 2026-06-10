@@ -14974,7 +14974,7 @@ async function fetchBSDTeamCornerHistory(teamName, bsdLeagueId, limit = 10) {
       const oppStats = isHome ? m.live_stats.away : m.live_stats.home;
       if (stats?.corner_kicks != null) {
         totalCornersFor += stats.corner_kicks;
-        totalCornersAgainst += oppStats.corner_kicks || 0;
+        totalCornersAgainst += oppStats?.corner_kicks || 0;
         count++;
       }
     }
@@ -15510,7 +15510,7 @@ async function getTop3PlayersWithFallback(match) {
   }
 }
 
-function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5]) {
+function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5], sampleSize = null) {
   // Expected total corners = average of both teams' averages
   const expectedTotal = (homeAvg + awayAvg) / 2;
 
@@ -15534,7 +15534,11 @@ function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5
   return {
     expected_total: Math.round(lambda * 10) / 10,
     probabilities: probs,
-    confidence: Math.min(Math.round((expectedTotal / 12) * 100), 85),
+    // Confiance = qualité de l'échantillon (nb de matchs), pas le volume de corners.
+    // null = aucune donnée réelle (moyenne ligue) → faible ; asymptote ~85% avec l'historique.
+    confidence: sampleSize == null
+      ? 25
+      : Math.min(85, Math.round(35 + 50 * (sampleSize / (sampleSize + 6)))),
   };
 }
 
@@ -15560,7 +15564,7 @@ async function handleCornersRoute(res, matchId) {
         league: match.league,
         error: 'League not covered by BSD for corners data',
         fallback: 'Using Poisson model with league averages',
-        prediction: predictCorners(5.5, 5.0), // Default league averages
+        prediction: predictCorners(5.25, 5.25), // Default league averages (symétrique, neutre)
       });
     }
 
@@ -15570,10 +15574,12 @@ async function handleCornersRoute(res, matchId) {
       fetchBSDTeamCornerHistory(match.away_team, bsdLeagueId),
     ]);
 
-    const homeAvg = homeCorners?.totalCornersPerMatch || 5.5;
-    const awayAvg = awayCorners?.totalCornersPerMatch || 5.0;
+    const homeAvg = homeCorners?.totalCornersPerMatch ?? 5.25;
+    const awayAvg = awayCorners?.totalCornersPerMatch ?? 5.25;
+    // Échantillon = min des 2 historiques (0 si une équipe n'a aucune donnée → confiance basse)
+    const sampleSize = Math.min(homeCorners?.totalMatches || 0, awayCorners?.totalMatches || 0);
 
-    const prediction = predictCorners(homeAvg, awayAvg);
+    const prediction = predictCorners(homeAvg, awayAvg, undefined, sampleSize || null);
 
     const result = {
       match: `${match.home_team} vs ${match.away_team}`,

@@ -10884,7 +10884,7 @@ function setPeriod(period, btn) {
 }
 
 function ppgFromFormStr(form, n) {
-  const chars = [...(form || '')].slice(-n);
+  const chars = [...(form || '')].slice(0, n); // forme = récent→ancien : prendre les n plus récents
   if (!chars.length) return null;
   return parseFloat((chars.reduce((s, c) => s + (c==='W'?3:c==='D'?1:0), 0) / chars.length).toFixed(2));
 }
@@ -15993,7 +15993,7 @@ function _buildClassementTabLegacy(d) {
 
   // ── PPG depuis la chaîne de forme (L5/L10/L25) ───────────────────────────────
   function ppgFromForm(form, n) {
-    const chars = [...(form || '')].slice(-n);
+    const chars = [...(form || '')].slice(0, n); // forme = récent→ancien : prendre les n plus récents
     if (!chars.length) return null;
     return parseFloat((chars.reduce((s, c) => s + (c==='W'?3:c==='D'?1:0), 0) / chars.length).toFixed(2));
   }
