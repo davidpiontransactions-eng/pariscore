@@ -7660,6 +7660,15 @@ function computePoisson(expHome, expAway) {
     }
   }
 
+  // Renormalisation sur la grille tronquée 0..MAX-1 (cohérence avec computeDixonColes).
+  // Sans ça les marchés over/BTTS sont sous-estimés (jusqu'à ~20% à fort λ) car la
+  // masse au-delà de MAX-1 buts est ignorée. Négligeable à λ calibré (~0.07%).
+  let _gridTotal = 0;
+  for (let h = 0; h < MAX; h++) for (let a = 0; a < MAX; a++) _gridTotal += matrix[h][a];
+  if (_gridTotal > 0) {
+    for (let h = 0; h < MAX; h++) for (let a = 0; a < MAX; a++) matrix[h][a] /= _gridTotal;
+  }
+
   let over05 = 0, over15 = 0, over25 = 0, over35 = 0;
   let btts = 0, under15 = 0, cs00 = 0;
   let homeWin = 0, draw = 0, awayWin = 0;
@@ -8051,7 +8060,7 @@ function computeEloProbs(match) {
   const awayElo = (as.ppg || 1.3) * 100 + (as.avgScored || 1.2) * 20 - (as.avgConceded || 1.3) * 15;
 
   const expected = 1 / (1 + Math.pow(10, (awayElo - homeElo) / 400));
-  const drawProb = 0.25 + Math.abs(homeElo - awayElo) < 50 ? 0.05 : 0; // closer = more draws
+  const drawProb = 0.25 + (Math.abs(homeElo - awayElo) < 50 ? 0.05 : 0); // closer = more draws (fix précédence : base 25%, +5% si Elo proches)
 
   const homeWin = expected * (1 - drawProb);
   const awayWin = (1 - expected) * (1 - drawProb);
