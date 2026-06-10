@@ -11023,15 +11023,22 @@ function rankInfoStr(m) {
   return m.home_rank && m.away_rank ? ` · #${m.home_rank} vs #${m.away_rank}` : '';
 }
 
-// v9.8.4 — Top3 scores prédits (depuis poisson.topScores)
+// v12.x — Top3 scores exacts (poisson.topScores) — module trading-pro :
+// score isolé du %, classé par probabilité décroissante, hiérarchie de valeur 3 tiers.
 function formatTopScores(topScores, n = 3) {
   if (!topScores || !topScores.length) return '';
-  const items = topScores.slice(0, n).map(s => {
+  const sorted = topScores.slice().sort((a, b) => (b.prob || 0) - (a.prob || 0)).slice(0, n);
+  const items = sorted.map((s, i) => {
     const pct = Math.round(s.prob || 0);
-    const cls = pct >= 12 ? 'ts-safe' : pct >= 8 ? 'ts-value' : 'ts-cold';
-    return `<span class="ts-pill ${cls}"><b>${s.score}</b> ${pct}%</span>`;
+    const tier = pct >= 20 ? 'tier-hot' : pct >= 11 ? 'tier-warm' : 'tier-cold';
+    const score = String(s.score || '').replace('-', ' - ');
+    return '<span class="score-predict-badge ' + tier + '" title="Score exact #' + (i + 1) + ' — ' + pct + '% (Poisson)">'
+      + '<span class="rank-dot">' + (i + 1) + '</span>'
+      + '<span class="score-text">' + score + '</span>'
+      + '<span class="score-percentage">' + pct + '%</span>'
+      + '</span>';
   }).join('');
-  return `<div class="ts-row" title="Top 3 scores Poisson les plus probables">${items}</div>`;
+  return '<div class="exact-scores-row" title="Top 3 scores exacts les plus probables (Poisson)">' + items + '</div>';
 }
 
 function calcStatsFlash(m, hs, as, p) {
@@ -12634,8 +12641,22 @@ const label = country
         ${m.h2h && m.h2h.total > 0
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
           : ''}
-        ${formatTopScores(m.poisson?.topScores, 3)}
-        ${m.dixonColes?.method === 'dixon-coles' ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--blue);margin-top:1px;">DC: O25 ${m.dixonColes.over25}% · BTTS ${m.dixonColes.btts}% · CS0-0 ${m.dixonColes.cs00}% ${m.dixonColes.rho ? '(ρ='+m.dixonColes.rho+')' : ''}</div>` : ''}</td>
+        ${(m.poisson?.topScores?.length || m.dixonColes?.method === 'dixon-coles') ? `<div class="pred-data">
+          ${formatTopScores(m.poisson?.topScores, 3)}
+          ${m.dixonColes?.method === 'dixon-coles' ? (() => {
+            const dc = m.dixonColes;
+            const rho = dc.rho != null ? Number(dc.rho) : null;
+            const rhoHtml = (rho != null && isFinite(rho))
+              ? '<span class="rho-coefficient ' + (rho < 0 ? 'rho-neg' : 'rho-pos') + '" title="Coefficient Dixon-Coles ρ — corrélation des scores faibles (négatif = matchs serrés)">ρ ' + (rho > 0 ? '+' : '') + safeFixed(rho, 2) + '</span>'
+              : '';
+            return '<div class="algo-metrics-grid">'
+              + '<span class="meta-algo-badge"><strong>O2.5</strong>' + dc.over25 + '%</span>'
+              + '<span class="meta-algo-badge"><strong>BTTS</strong>' + dc.btts + '%</span>'
+              + '<span class="meta-algo-badge"><strong>CS 0-0</strong>' + dc.cs00 + '%</span>'
+              + rhoHtml
+              + '</div>';
+          })() : ''}
+        </div>` : ''}</td>
       <td style="min-width:130px;padding:6px 8px !important;text-align:left;vertical-align:middle;">
         ${(function() {
           var _oh = (m.bsd_odds_summary && m.bsd_odds_summary.best && m.bsd_odds_summary.best.home) ? m.bsd_odds_summary.best.home.value : (m.odds && m.odds.home);
