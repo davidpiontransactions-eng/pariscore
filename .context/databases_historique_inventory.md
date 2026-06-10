@@ -116,6 +116,23 @@ Chargées une fois au démarrage du serveur depuis fichiers JSON. Mergées dans 
 | **Use** | ⚠️ **RESEARCH ONLY** — marker `_research_only=true`, env gate `ETL_FBREF_LOAD=1` requis |
 | **Status** | ✅ CODE LIVRÉ, prérequis `pip install soccerdata pandas` |
 
+### 2.6 `historique_footballdata.json` — football-data.co.uk CSV ⭐
+| Champ | Valeur |
+|---|---|
+| **Fichier** | `seed_historique_footballdata.js` + server.js loadHistory (load) |
+| **Bd** | `ParisScorebis-sc0o` (P1) |
+| **Source** | football-data.co.uk CSV `mmz4281/<saison>/<div>.csv` |
+| **License** | Gratuit, usage libre (attribution courtoise) |
+| **Coverage** | 22 divisions (E0-EC, SC0-3, D1-2, I1-2, SP1-2, F1-2, N1, B1, P1, T1, G1) |
+| **Saisons** | 3 dernières par défaut (`--seasons=N` jusqu'à 25+) |
+| **Stats par match** | tirs, tirs cadrés, corners, fautes, cartons J/R, arbitre (E0) |
+| **Cotes** | B365 + Pinnacle ouverture/**closing** (PSC*), Max/Avg marché, O/U 2.5, AH |
+| **Volume réel** | **23 126 matchs** 3 saisons (21 463 avec stats) — 21,4 MB JSON |
+| **Bonus** | `--corners` → backfill `corner_history` SQLite : +13 484 rows (mapping 13 ligues BSD + TEAM_MAP normalisation noms) |
+| **Sport** | Football uniquement |
+| **Use** | Commercial OK |
+| **Status** | ✅ CODE LIVRÉ + run local OK — run VPS au deploy |
+
 ### 2.5 `historique_elofootball.json` — elofootball.com community
 | Champ | Valeur |
 |---|---|

@@ -174,8 +174,11 @@ async function main() {
           const awayCorners = awayStats?.corner_kicks ?? 0;
           const totalCorners = homeCorners + awayCorners;
 
-          // Extraction propre de la date ISO (YYYY-MM-DD)
-          const matchDate = event.date ? event.date.split('T')[0] : '';
+          // Extraction propre de la date ISO (YYYY-MM-DD) — bd sc0o: event.date
+          // était vide sur les payloads BSD réels (2178 rows match_date='') →
+          // chaîne défensive sur les champs date connus BSD.
+          const rawDate = event.date || event.event_date || event.start_time || event.start_at || '';
+          const matchDate = rawDate ? String(rawDate).split('T')[0] : '';
 
           if (isDry) {
             console.log(`  [DRY] ${event.id} | ${matchDate} | ${event.home_team} vs ${event.away_team} → ${homeCorners}A${awayCorners} (total: ${totalCorners})`);
