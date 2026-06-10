@@ -2,6 +2,37 @@
 
 ---
 
+## [v12.74] — 2026-06-11 — ETL football-data.co.uk : stats matchs 3 saisons × 22 divisions — bd `sc0o`
+
+### Recherche comparative (web + GitHub)
+
+| Candidat | Verdict |
+|---|---|
+| **football-data.co.uk** | ✅ **RETENU** — source canonique (les repos GitHub en dérivent), 22 divisions, stats par match + cotes closing, maj 2×/semaine, gratuit, 25+ saisons |
+| xgabora/Club-Football-Match-Data-2000-2025 | ❌ dérivé de football-data.co.uk — intermédiaire avec lag |
+| eatpizzanot/soccer-dataset (367k matchs) | ❌ provenance scraping grise, cadence refresh inconnue |
+| FiveThirtyEight SPI | ❌ gelé mi-2023 — échoue critère "3 dernières saisons" |
+| StatsBomb open-data | ❌ event-level mais compétitions sélectives + licence non-commerciale |
+| openfootball / footballcsv | ❌ scores uniquement, zéro stats (déjà intégré bd `6du6`) |
+
+### Livré
+
+- **`seed_historique_footballdata.js`** : CSV `mmz4281/<saison>/<div>.csv` → **23 126 matchs** 3 saisons (2023-24→2025-26) × 22 divisions, **21 463 avec stats** (tirs, cadrés, corners, fautes, cartons, arbitre E0) + cotes **closing Pinnacle** (`PSC*`), B365, Max/Avg marché, O/U 2.5, Asian Handicap. 0 erreurs. Flags `--seasons=N --div=X --corners --corners-only --dry`.
+- **`loadHistory()` merge** → `db.archive_matches` (`_source: 'etl-seed-footballdata'`, champs `stats` + `odds_historical` + `referee`). Parse boot 534 ms / 21,4 MB.
+- **Backfill `corner_history`** : +13 484 rows (2 178 → **15 662**, ×7.2) via mapping 13 ligues BSD + `TEAM_MAP` (~130 entrées fd→BSD calibrées sur rosters réels DISTINCT). Le modèle corners (`fetchLocalCornerHistory`) gagne 3 saisons de profondeur d'échantillon.
+- **Fix défensif `seed_historique_bsd_corners.js`** : `event.date` vide sur payloads BSD réels → 2 178 rows `match_date=''` ; chaîne `date || event_date || start_time || start_at`.
+
+### Edge mathématique ouvert
+
+- Ancrage devig **closing Pinnacle** → backtest CLV / calibration `computeWFV1N2` sans OddsPapi (bd `bjv` complément).
+- Calibration corners 3 saisons (IC par volume réel d'échantillon), λ Poisson par ligue/saison.
+
+### Ops VPS
+
+`node seed_historique_footballdata.js --corners` après deploy (JSON 21,4 MB gitignored — généré sur place), puis `pm2 restart server` → log boot attendu : `✓ ETL seed merge (football-data.co.uk): 23126/23126`.
+
+---
+
 ## [v12.73] — 2026-06-11 — Fix Corners: historique équipe vide (England) — bd `upav`
 
 ### Root cause (prouvé par probes BSD `.context/_probe_corners_england*.js`)

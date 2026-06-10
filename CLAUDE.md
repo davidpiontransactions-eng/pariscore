@@ -25,7 +25,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Sources data** : BSD ($5/mo + WS push), ESPN public, Odds API, openfootball ODbL, Wikidata CC0, felipeall/transfermarkt-api, elofootball, aiscore.com on-demand throttled
 - **Sources backlog DG** : xvalue.ai (GO 85/100 bd `ffh`), OddsPapi.io Pinnacle sharp (bd `bjv` POC)
 - **Déploiement** : VPS OVH `/home/ubuntu/pariscore` — `git pull && pm2 restart pariscore`
-- **Persistance ETL** : `db.archive_matches` 8 sources. Inventaire : `.context/databases_historique_inventory.md`
+- **Persistance ETL** : `db.archive_matches` 9 sources (+ football-data.co.uk v12.74 — stats + closing odds 3 saisons). Inventaire : `.context/databases_historique_inventory.md`
 
 ---
 
@@ -40,6 +40,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 | 9 | **POC OddsPapi.io** | DG | Signup free 250 req → `ODDSPAPI_KEY` .env → `node .context/_probe_oddspapi_pinnacle.js` (bd `bjv`) | 🟢 LOW |
 | 10 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd `ffh` GO 85/100) | 🟢 LOW |
 | 14 | **DG ligues BSD secondary** | DG | 11 ligues non mappées (Africa Cup, Liga F WOMEN, coupes mineures, Nigeria PFL, Liga MX Clausura). $0 incrémental. | 🟡 MED |
+| 15 | **ETL footballdata VPS run** | ops | bd `sc0o` — post-deploy : `node seed_historique_footballdata.js --corners` puis `pm2 restart server` (JSON 21 MB gitignored, généré sur place) | 🟡 MED |
 
 ---
 

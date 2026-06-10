@@ -9773,6 +9773,7 @@ const HISTORIQUE_OPENFOOTBALL_FILE = path.join(__dirname, 'historique_openfootba
 const HISTORIQUE_WIKIDATA_FILE = path.join(__dirname, 'historique_wikidata.json'); // bd 6du6 Phase 2 — Wikidata CC0 (GS singles + foot finals)
 const HISTORIQUE_FBREF_FILE = path.join(__dirname, 'historique_fbref.json'); // bd 8lqf ETL output (RESEARCH ONLY)
 const HISTORIQUE_ELOFOOTBALL_FILE = path.join(__dirname, 'historique_elofootball.json'); // bd 8lvf ETL output
+const HISTORIQUE_FOOTBALLDATA_FILE = path.join(__dirname, 'historique_footballdata.json'); // bd sc0o ETL output (football-data.co.uk)
 const HISTORIQUE_BSD_TENNIS_FILE = path.join(__dirname, 'historique_bsd_tennis.json'); // bd rxh Phase 2 ETL output
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
@@ -9971,6 +9972,58 @@ function loadHistory() {
       }
     } catch (e) {
       console.warn('[ETL Seed Load openfootball]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-sc0o — Merge historique_footballdata.json (football-data.co.uk)
+  // dans db.archive_matches au boot. Schema: leagues.<div_code>.{meta, matches[]}.
+  // Records portent stats par match (tirs/corners/fautes/cartons) + cotes closing
+  // (Pinnacle PSC*, B365, Avg/Max marché, O/U 2.5, AH) — base backtest devig/CLV.
+  if (fs.existsSync(HISTORIQUE_FOOTBALLDATA_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_FOOTBALLDATA_FILE, 'utf8'));
+      if (seed && seed.leagues && typeof seed.leagues === 'object') {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const key of Object.keys(seed.leagues)) {
+          const leagueData = seed.leagues[key];
+          if (!leagueData || !Array.isArray(leagueData.matches)) continue;
+          for (const m of leagueData.matches) {
+            totalSeed++;
+            if (!m || !m.id || existingIds.has(String(m.id))) continue;
+            const archived = {
+              id: m.id,
+              sport: 'football',
+              sport_key: `fd_${m.league_id}`,
+              league: m.league_name,
+              country: m.country,
+              commence_time: m.date,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              home_score: m.home_score,
+              away_score: m.away_score,
+              live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
+              halftime_score: m.halftime_score,
+              status: m.status || 'finished',
+              season: m.season,
+              referee: m.referee || null,
+              stats: m.stats || null,
+              odds_historical: m.odds || null,
+              _source: 'etl-seed-footballdata',
+              _attribution: m._attribution || 'football-data.co.uk',
+            };
+            (db.archive_matches = db.archive_matches || []).push(archived);
+            existingIds.add(String(m.id));
+            totalAdded++;
+          }
+        }
+        if (totalSeed > 0) {
+          console.log(`  ✓ ETL seed merge (football-data.co.uk): ${totalAdded}/${totalSeed} matchs ajoutes a db.archive_matches (stats + closing odds)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load footballdata]', e.message);
     }
   }
 
