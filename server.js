@@ -69,7 +69,18 @@ function loadEnv() {
     const idx = trimmed.indexOf('=');
     if (idx === -1) continue;
     const key = trimmed.slice(0, idx).trim();
-    const val = trimmed.slice(idx + 1).trim();
+    const raw = trimmed.slice(idx + 1).trim();
+    let val;
+    if (raw.startsWith('"')) {
+      const close = raw.indexOf('"', 1);
+      val = close !== -1 ? raw.slice(1, close) : raw.slice(1);
+    } else if (raw.startsWith("'")) {
+      const close = raw.indexOf("'", 1);
+      val = close !== -1 ? raw.slice(1, close) : raw.slice(1);
+    } else {
+      const ci = raw.search(/ #/);
+      val = ci !== -1 ? raw.slice(0, ci).trimEnd() : raw;
+    }
     // Sémantique dotenv standard : une variable déjà présente dans l'environnement
     // du process (shell, pm2 --update-env, override CI) a PRIORITÉ sur .env.
     // Évite qu'un .env stale clobber une valeur injectée volontairement à l'exécution.
@@ -3520,7 +3531,7 @@ const WOM_AP_VOL_MIN      = Math.max(0, parseFloat(process.env.WOM_AP_VOL_MIN ||
 const WOM_AP_INTERVAL_MIN = Math.max(5, parseInt(process.env.WOM_AP_INTERVAL_MIN || '10', 10));
 const WOM_AP_DAILY_CAP    = Math.max(1, parseInt(process.env.WOM_AP_DAILY_CAP || '8', 10));
 const WOM_AP_COOLDOWN_H   = Math.max(1, parseInt(process.env.WOM_AP_COOLDOWN_H || '24', 10));
-const WOM_AP_SPORTS       = String(process.env.WOM_AP_SPORTS || 'football').split('#')[0].split(',').map(s => s.trim().toLowerCase()).filter(Boolean); // split('#') : tolère un commentaire inline .env
+const WOM_AP_SPORTS       = String(process.env.WOM_AP_SPORTS || 'football').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const WOM_AP_AD_URL       = (() => { const u = String(process.env.WOM_AP_AD_URL || 'https://pariscore.fr/').trim(); return u.startsWith('https://') ? u : 'https://pariscore.fr/'; })();
 const _womApPrev = new Map(); // bsd_id → { wom:{home,away}, money:{home,away}, total } — snapshot précédent
 
