@@ -11716,7 +11716,7 @@ function psSetLang(v) {
       <a href="https://www.bureau-des-tipsters.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">BT</div>
         <div class="partner-info">
-          <h3>Bureau des Tipsters</h3>
+          <h3 data-i18n="hotpicks.bureau_title">Bureau des Tipsters</h3>
           <p>Communauté 30K+ membres. Pari responsable, discipline et gestion de bankroll.</p>
         </div>
       </a>
@@ -13861,7 +13861,7 @@ function psSetLang(v) {
   <button class="wc-tab active" onclick="switchWCTab('groups',this)">📊 Groupes</button>
   <button class="wc-tab" onclick="switchWCTab('schedule',this)">📅 Calendrier</button>
   <button class="wc-tab" onclick="switchWCTab('bracket',this)">🏆 Phase Finale</button>
-  <button class="wc-tab" onclick="switchWCTab('pred',this)">🔮 Prévisions</button>
+  <button class="wc-tab" data-i18n="wc.tab_forecast" onclick="switchWCTab('pred',this)">🔮 Prévisions</button>
 </div>
 
 <div class="wc-panel active" id="wc-panel-groups">
@@ -14421,6 +14421,12 @@ function psSetLang(v) {
   .tn-pro-trap{margin-top:10px;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:6px 10px;border-radius:6px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#f87171;letter-spacing:.3px;}
   .tn-pro-footer{margin-top:14px;padding:10px 4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3,#64748b);letter-spacing:.4px;text-align:center;border-top:1px solid var(--border,rgba(255,255,255,.08));}
   @media(max-width:720px){.tn-pro-grid{grid-template-columns:1fr;}.tn-pro-card{transform:none;}.tn-pro-card:hover{transform:translateY(-2px);}.tn-pro-title{font-size:22px;}}
+
+  /* ── WOM inline badge (row joueur — bd wom-inline) ── */
+  .tn-wom-badge{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.3px;padding:1px 5px;border-radius:4px;white-space:nowrap;vertical-align:middle;margin-left:4px;}
+  .tn-wom-badge.wom-high{background:rgba(0,230,118,.15);color:#00e676;border:1px solid rgba(0,230,118,.3);}
+  .tn-wom-badge.wom-mid{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25);}
+  .tn-wom-badge.wom-low{background:rgba(100,116,139,.1);color:#94a3b8;border:1px solid rgba(100,116,139,.2);}
 
   /* ── Tennis WOM Top-5 (Argent Betfair via betwatch) — bd ab6s ── */
   .tn-wom-section{padding:0 2px;margin-bottom:24px;min-width:0;}

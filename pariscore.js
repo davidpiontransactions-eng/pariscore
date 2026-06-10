@@ -1682,6 +1682,13 @@ function _tnRenderSourceBadge(m) {
 }
 
 // bd — Glicko-2 badge (serve/return rating) next to player name
+function _tnWomBadge(wom, side) {
+  if (!wom || wom[side] == null) return '';
+  const pct = wom[side];
+  const cls = pct >= 60 ? 'wom-high' : pct >= 50 ? 'wom-mid' : 'wom-low';
+  const vol = wom.total_matched ? ' · £' + (wom.total_matched >= 1000 ? Math.round(wom.total_matched / 1000) + 'k' : wom.total_matched) : '';
+  return `<span class="tn-wom-badge ${cls}" title="WoM Betfair : ${pct}% du volume misé sur ce joueur${vol}">BF ${pct}%</span>`;
+}
 function _tnGlickoBadge(m, playerIdx) {
   if (!m.glicko2) return '';
   const sv = playerIdx === 1 ? m.glicko2.p1_serve : m.glicko2.p2_serve;
@@ -2072,8 +2079,8 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
-<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
-<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}${_tnWomBadge(m.betfair_wom, 'p1')}</span>
+<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}${_tnWomBadge(m.betfair_wom, 'p2')}</span>
 <span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
@@ -4195,7 +4202,7 @@ function renderTennisValueBets(rawMatches) {
     const tnp2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? ' tn-pfav' : '';
     return _tHdr + _cHdr + `<div class="tn-vb-row${_tnRowCls}" role="row" data-match-id="${matchId}" data-status="${m._isLive ? 'live' : 'pre'}" aria-expanded="false" ${onclick} style="cursor:pointer;">
 <span class="tn-vb-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
-<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
+<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tnWomBadge(m.betfair_wom, 'p1')}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tnWomBadge(m.betfair_wom, 'p2')}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
 <span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
 <span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
 <span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbWOM(m.betfair_wom)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>

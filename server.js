@@ -45572,3 +45572,16 @@ setInterval(() => checkLineups().catch(e => console.warn('[Lineups]', e.message)
 
 // Vérifier toutes les 30 minutes (press conferences)
 setInterval(() => checkPressConferenceVideos().catch(e => console.warn('[PressConf]', e.message)), 30 * 60 * 1000);
+
+// Betwatch WOM scraping toutes les 15 min → data/betwatch_wom.json (bd wom-inline)
+// betwatchService.js lit ce fichier en zero-dep. Désactivé si BETWATCH_DISABLED=1.
+if (!process.env.BETWATCH_DISABLED) {
+  const _bwScript = require('path').join(__dirname, 'tools', 'scrape-betwatch-wom.js');
+  const _runBetwatch = () => {
+    const _p = require('child_process').spawn(process.execPath, [_bwScript], { stdio: 'inherit', timeout: 120000 });
+    _p.on('error', e => console.warn('[BetWatch-cron] spawn error:', e.message));
+    _p.on('exit', code => { if (code !== 0) console.warn('[BetWatch-cron] exit code:', code); });
+  };
+  setInterval(_runBetwatch, 15 * 60 * 1000);
+  setTimeout(_runBetwatch, 10000); // premier run 10s après boot
+}
