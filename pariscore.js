@@ -12496,6 +12496,20 @@ const label = country
         ${(()=>{const hI=Array.isArray(m.tm_home_injured)?m.tm_home_injured.filter(p=>p&&p.name):[];const aI=Array.isArray(m.tm_away_injured)?m.tm_away_injured.filter(p=>p&&p.name):[];if(!hI.length&&!aI.length)return'';const _b=(n,names)=>n?'<span style="font-size:8px;color:#ef4444;background:rgba(239,68,68,.12);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);cursor:default;" title="Blessés : '+names+'">🏥'+n+'</span>':'';const hB=_b(hI.length,hI.slice(0,5).map(p=>p.name).join(', '));const aB=_b(aI.length,aI.slice(0,5).map(p=>p.name).join(', '));return'<div style="display:flex;align-items:center;gap:3px;margin-top:1px;">'+(hB?'<span style="font-size:7px;color:var(--text3);">D:</span>'+hB:'')+(hB&&aB?'<span style="color:var(--text3);font-size:7px;">·</span>':'')+(aB?'<span style="font-size:7px;color:var(--text3);">E:</span>'+aB:'')+'</div>';})()}
         ${renderPredBets(m)}
         ${_tvbWOM(m.betfair_wom)}
+        ${(() => {
+          const _pH = p.homeWin != null ? Math.round(p.homeWin) : null;
+          const _pD = p.draw != null ? Math.round(p.draw) : null;
+          const _pA = p.awayWin != null ? Math.round(p.awayWin) : null;
+          if (_pH == null || _pD == null || _pA == null) return '';
+          const _domH = _pH >= _pA;
+          return '<div class="dt-prob-wrap"><div class="dt-prob-bar"><div class="dt-pb-h" style="width:' + _pH + '%"></div><div class="dt-pb-d" style="width:' + _pD + '%"></div><div class="dt-pb-a" style="width:' + _pA + '%"></div></div><div class="dt-prob-lbls"><span class="' + (_domH ? 'dom' : '') + '">1 ' + _pH + '%</span><span>N ' + _pD + '%</span><span class="' + (!_domH ? 'dom' : '') + '">2 ' + _pA + '%</span></div></div>';
+        })()}
+        ${(() => {
+          const _wom = m.wom || m.betfair_wom;
+          const _wb = _wom ? Math.max(_wom.h || 0, _wom.a || 0, _wom.backing_pct || 0) : 0;
+          if (!(_wb > 55 && edge >= 3)) return '';
+          return '<div class="dt-signal-fort">⚡ Signal Fort · WoM ' + Math.round(_wb) + '% + ' + (edge > 0 ? '+' : '') + safeFixed(edge, 1) + '%</div>';
+        })()}
         ${_live ? (() => {
           const xgH = m.live_xg?.home ?? m.expectedGoals?.home ?? null;
           const xgA = m.live_xg?.away ?? m.expectedGoals?.away ?? null;
