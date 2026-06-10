@@ -34511,7 +34511,7 @@ async function _buildTennisValueBetsCore({ date }) {
       ev_model: evModel,
       best_ev_model: bestEvModel,
       sources: { match: matchSource, odds: oddsSource, predictions: (eloProb && bsdProb) ? 'elo+bsd' : (eloProb ? 'elo' : (bsdProb ? 'bsd' : null)) },
-      betfair_wom: _liveWomCache.get((p1Name || '').toLowerCase() + '|' + (p2Name || '').toLowerCase()) || await fetchBetfairWOM(p1Name, p2Name, 'tennis').catch(() => null),
+      betfair_wom: (() => { const _bw = womLocal?.fetchMatchWOM?.({ player1: p1Name, player2: p2Name }); return (_bw?.wom?.home != null) ? { p1: _bw.wom.home, p2: _bw.wom.away, total_matched: _bw.totalMatched || null, currency: 'GBP', source: 'betwatch', ts: _bw.ts } : null; })() || _liveWomCache.get((p1Name || '').toLowerCase() + '|' + (p2Name || '').toLowerCase()) || await fetchBetfairWOM(p1Name, p2Name, 'tennis').catch(() => null),
       youtube_url: m.youtube_url || null,
     });
   }
