@@ -45598,7 +45598,17 @@ if (!process.env.BETWATCH_DISABLED) {
   const _runBetwatch = () => {
     const _p = require('child_process').spawn(process.execPath, [_bwScript], { stdio: 'inherit', timeout: 120000 });
     _p.on('error', e => console.warn('[BetWatch-cron] spawn error:', e.message));
-    _p.on('exit', code => { if (code !== 0) console.warn('[BetWatch-cron] exit code:', code); });
+    _p.on('exit', code => {
+      if (code !== 0) { console.warn('[BetWatch-cron] exit code:', code); return; }
+      // Enrichit db.matches après chaque scrape réussi (sans attendre le cron fetchOdds)
+      try {
+        if (Array.isArray(db.matches) && womLocal?.fetchMatchWOM) {
+          let n = 0;
+          db.matches.forEach(m => { try { if (m.betfair_wom) return; const _bw = womLocal.fetchMatchWOM({ home_team: m.home_team, away_team: m.away_team }); if (_bw?.wom?.home != null) { m.betfair_wom = { h: _bw.wom.home, d: _bw.wom.draw, a: _bw.wom.away, total_matched: _bw.totalMatched || null, currency: 'GBP', source: 'betwatch', ts: _bw.ts }; n++; } } catch(_){} });
+          if (n > 0) console.log(`  [BetWatch-cron] ${n} match(es) enrichi(s) avec WOM betwatch`);
+        }
+      } catch(_) {}
+    });
   };
   setInterval(_runBetwatch, 15 * 60 * 1000);
   setTimeout(_runBetwatch, 10000); // premier run 10s après boot
