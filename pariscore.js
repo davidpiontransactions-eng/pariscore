@@ -12458,36 +12458,7 @@ const label = country
     else if (edge >= 1.5)     { vbTier = 'try'; vbTag = 'À TENTER'; }
     else if (edge > 0)        { vbTier = 'neu'; vbTag = 'NEUTRE'; }
     else                      { vbTier = 'no';  vbTag = 'ÉVITER'; }
-    const _vbOdds = (_hasEdge && best.odds != null)
-      ? (typeof best.odds === 'number' ? safeFixed(best.odds, 2) : best.odds) : '';
-    /* UI-002 — IC Corridor inline (Sprint 1 P0) — only if backend exposes best.ic90 */
-    let icCorridorHtml = '';
-    if (_hasEdge && best && best.ic90 && typeof best.ic90.low === 'number' && typeof best.ic90.high === 'number') {
-      const lo = best.ic90.low;
-      const hi = best.ic90.high;
-      const icCls = (lo > 0) ? 'cf-ic-safe' : (hi > 0 ? 'cf-ic-warn' : 'cf-ic-trap');
-      const fmt = (v) => (v > 0 ? '+' : '') + safeFixed(v, 1) + '%';
-      icCorridorHtml = `<span class="cf-ic-corridor ${icCls}" title="Intervalle de confiance 90% sur EV — borne basse ${fmt(lo)} · borne haute ${fmt(hi)}. ${lo > 0 ? 'Statistiquement positif' : hi > 0 ? 'Borne basse négative (piège possible)' : 'Statistiquement négatif'}.">
-        <span class="cf-ic-bracket">[</span>${fmt(lo)}<span class="cf-ic-dot">•</span>${fmt(hi)}<span class="cf-ic-bracket">]</span>
-      </span>`;
-    }
-    /* UI-014 — Choke-O-Meter pastille (bd ParisScorebis-2l9, uses BD-DATA-005) */
-    let chokeHtml = '';
-    if (m.favorite_winrate && typeof m.favorite_winrate.hold_pct === 'number') {
-      const hp = m.favorite_winrate.hold_pct;
-      const cls = hp >= 70 ? 'cf-choke-strong' : hp >= 60 ? 'cf-choke-mid' : 'cf-choke-trap';
-      const title = `Favorite Win Rate ligue (90j, ${m.favorite_winrate.sample} matchs, cote ≤${m.favorite_winrate.threshold_odds}): ${hp}%${hp < 60 ? ' — pieges frequents (favorite_trap)' : ''}`;
-      chokeHtml = `<span class="cf-choke-dot ${cls}" title="${title}" aria-label="${title}">🎯 ${hp}%</span>`;
-    }
-    const vbHeroHtml = `<td class="vb-value-col">
-      <span class="vb-hero-value vbh-${vbTier}" title="Edge dévigé${best.bk ? ' · '+best.bk : ''} — ${vbTag}">
-        <span class="vbh-edge">${_hasEdge ? (edge > 0 ? '▲' : edge < 0 ? '▼' : '＝') : ''}${_hasEdge ? (edge > 0 ? '+' : '') + safeFixed(edge, 1) + '%' : '—'}</span>
-        ${best.label ? `<span class="vbh-pick">${best.label}${_vbOdds ? ' @'+_vbOdds : ''}</span>` : ''}
-        <span class="vbh-tag">${vbTag}</span>
-        ${icCorridorHtml}
-        ${chokeHtml}
-      </span>
-    </td>`;
+    // Colonne VALUE/EDGE retirée (demande user 2026-06-10) — vbTier conservé pour la pastille tier (col KO).
 
     // [FIX live] source unique de vérité = isMatchInProgress (status live OU
     // live_score OU live_minute). Avant : gating sur m.live_score seul → matchs
@@ -12713,7 +12684,6 @@ const label = country
         <div class="buteurs-block">${renderTopButteurs(m.topButteurs, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}${renderTopKPI(m.topKPI, { home: m.home_team, away: m.away_team, leagueId: m._config_league_id || null })}</div>
       </td>
       <td></td>
-      ${vbHeroHtml}
       ${sc(homePpg,'ppg')}${sc(hs.avgScored,'avg')}${sc(p.btts)}${sc(p.over25)}
       ${(()=>{
         const xgH = xg.home ?? '—';
