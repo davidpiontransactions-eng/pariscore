@@ -14924,50 +14924,39 @@ async function fetchTeamLastFixtures(teamId, limit = 15) {
   } catch (e) { return []; }
 }
 
-// BSD fallback: last N finished matches for a team from BSD /events/ with pagination
+// BSD fallback: last N finished matches for a team from BSD /events/
+// bd corners-fix v12.73 : BSD ignore le param `page` (l'ancienne boucle relisait 6× la
+// même page) et trie ascendant → on passe par fetchBSDLeagueFinishedTail (limit/offset).
 async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
   if (!bsdLeagueId) return []; // guard: no BSD league → skip
   try {
     const cacheKey = `bsd_last_fx_${bsdLeagueId}_${teamName.replace(/\s+/g, '_')}`;
-    const cached = apiCacheGet(cacheKey, 'bsd_last_fx');
+    const cached = apiCacheGet(cacheKey);
     if (cached) return cached;
-    const now = new Date();
-    const from = new Date(now.getTime() - 320 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const to = now.toISOString().split('T')[0];
     const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const teamNorm = norm(teamName);
     const stopWords = new Set(['al', 'fc', 'sc', 'ac', 'cf', 'sd', 'cd', 'fk', 'sk', 'if', 'bk', 'afc', 'bfc']);
     const sigWord = teamNorm.split(' ').find(w => w.length >= 3 && !stopWords.has(w)) || teamNorm.split(' ')[0];
 
-    // Paginate BSD /events/ (max 6 pages), collect all matching, dedup, reverse (recent first)
-    const seen = new Set();
+    const events = await fetchBSDLeagueFinishedTail(bsdLeagueId);
     const allMatches = [];
-    for (let page = 1; page <= 6; page++) {
-      const res = await bsdFetch(`/events/?date_from=${from}&date_to=${to}&league=${bsdLeagueId}&status=finished&page_size=50&page=${page}`);
-      if (res.status !== 200 || !res.data?.results?.length) break;
-      for (const e of res.data.results) {
-        if (!(norm(e.home_team).includes(sigWord) || norm(e.away_team).includes(sigWord))) continue;
-        const dedupeKey = `${e.home_team}|${e.away_team}|${e.event_date || e.date || ''}`;
-        if (seen.has(dedupeKey)) continue;
-        seen.add(dedupeKey);
-        allMatches.push({
-          date: (e.event_date || e.date || e.start_time || '').slice(0, 10),
-          league: e.league?.name || e.league_name || String(bsdLeagueId),
-          home: e.home_team || '',
-          away: e.away_team || '',
-          home_id: null,
-          away_id: null,
-          home_goals: e.home_score != null ? Number(e.home_score) : null,
-          away_goals: e.away_score != null ? Number(e.away_score) : null,
-          _bsd: true,
-        });
-      }
-      if (!res.data.next) break;
+    for (const e of events) {
+      if (!(norm(e.home_team).includes(sigWord) || norm(e.away_team).includes(sigWord))) continue;
+      allMatches.push({
+        date: String(e.event_date || '').slice(0, 10),
+        league: e.league_name || String(bsdLeagueId),
+        home: e.home_team || '',
+        away: e.away_team || '',
+        home_id: null,
+        away_id: null,
+        home_goals: e.home_score != null ? Number(e.home_score) : null,
+        away_goals: e.away_score != null ? Number(e.away_score) : null,
+        _bsd: true,
+      });
     }
-    // Sort most recent first
-    allMatches.sort((a, b) => b.date.localeCompare(a.date));
+    // events déjà dédupliqués + triés récents d'abord par le helper
     const result = allMatches.slice(0, limit);
-    apiCacheSet(cacheKey, result, 'bsd_last_fx', 6 * 3600);
+    apiCacheSet(cacheKey, result, 'bsd_last_fx', 6 * 3600 * 1000);
     return result;
   } catch (e) { return []; }
 }
@@ -14975,6 +14964,67 @@ async function fetchBSDTeamLastFixtures(teamName, bsdLeagueId, limit = 30) {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  CORNERS — Predictions Over/Under via BSD historical data
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// bd corners-fix v12.73 — BSD /events/ : tri ascendant FIXE, params `page`/`ordering`/
+// `page_size` custom ignorés ; la vraie pagination est limit/offset (cf. URL `next`).
+// Page 1 = les 50 matchs les plus VIEUX de la fenêtre → pour les matchs récents il faut
+// lire les DERNIÈRES pages : 1 appel offset=0 donne `count`, puis offsets en remontant
+// depuis la fin. Événements aplatis (slim) + cache 6h par ligue, partagé entre
+// fetchBSDTeamCornerHistory et fetchBSDTeamLastFixtures.
+async function fetchBSDLeagueFinishedTail(bsdLeagueId, days = 365, maxPages = 6) {
+  if (!bsdLeagueId) return [];
+  const cacheKey = `bsd_lg_tail_${bsdLeagueId}_${days}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const to = now.toISOString().split('T')[0];
+    const base = `/events/?date_from=${from}&date_to=${to}&league=${bsdLeagueId}&status=finished`;
+    const first = await bsdFetch(`${base}&limit=50&offset=0`);
+    if (first.status !== 200 || !first.data) return [];
+    const count = Number(first.data.count) || 0;
+    const rawEvents = Array.isArray(first.data.results) ? first.data.results.slice() : [];
+    if (count > 50) {
+      const offsets = [];
+      for (let o = count - 50; o > 0 && offsets.length < maxPages - 1; o -= 50) offsets.push(o);
+      const pages = await Promise.all(offsets.map(o => bsdFetch(`${base}&limit=50&offset=${o}`).catch(() => null)));
+      for (const p of pages) {
+        if (p && p.status === 200 && Array.isArray(p.data?.results)) rawEvents.push(...p.data.results);
+      }
+    }
+    // Slim + dedup id + tri desc (récent d'abord)
+    rawEvents.sort((a, b) => String(b.event_date || '').localeCompare(String(a.event_date || '')));
+    const seen = new Set();
+    const events = [];
+    for (const e of rawEvents) {
+      const k = e.id ?? `${e.home_team}|${e.away_team}|${e.event_date || ''}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      events.push({
+        id: e.id ?? null,
+        event_date: String(e.event_date || e.date || e.start_time || ''),
+        league_id: (e.league && e.league.id) ?? e.league_id ?? bsdLeagueId,
+        league_name: (e.league && e.league.name) || e.league_name || '',
+        home_team: e.home_team || '',
+        away_team: e.away_team || '',
+        home_score: e.home_score != null ? Number(e.home_score) : null,
+        away_score: e.away_score != null ? Number(e.away_score) : null,
+        home_corners: e.live_stats?.home?.corner_kicks ?? null,
+        away_corners: e.live_stats?.away?.corner_kicks ?? null,
+      });
+    }
+    apiCacheSet(cacheKey, events, 'bsd_lg_tail', 6 * 3600 * 1000);
+    return events;
+  } catch (e) {
+    return [];
+  }
+}
+
+// Ligues BSD "équipes nationales" : les sélections jouent ~1 match/mois par compétition →
+// l'historique corners doit agréger amicaux (31) + qualifications WC (58-63) + Nations League (64-65).
+const NATIONAL_BSD_LEAGUES = new Set(['27', '30', '31', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69']);
+const NATIONAL_CORNER_SCAN = ['31', '58', '59', '60', '61', '62', '63', '64', '65'];
 
 // Fetch recent matches for a team to extract corner averages
 async function fetchBSDTeamCornerHistory(teamName, bsdLeagueId, limit = 10) {
@@ -14986,35 +15036,43 @@ async function fetchBSDTeamCornerHistory(teamName, bsdLeagueId, limit = 10) {
       return localHist;
     }
 
-    // Fetch finished matches for this league (last ~30 days)
-    const now = new Date();
-    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const to = now.toISOString().split('T')[0];
+    const nameLc = String(teamName || '').toLowerCase().trim();
+    if (!nameLc || !bsdLeagueId) return localHist || null;
 
-    const res = await bsdFetch(`/events/?date_from=${from}&date_to=${to}&league=${bsdLeagueId}&status=finished`);
-    if (res.status !== 200 || !res.data?.results?.length) return null;
-
-    // Filter matches involving this team
-    const teamMatches = res.data.results
-      .filter(e => e.home_team?.toLowerCase().includes(teamName.toLowerCase()) || e.away_team?.toLowerCase().includes(teamName.toLowerCase()))
-      .slice(0, limit);
-
-    if (!teamMatches.length) return null;
-
-    let totalCornersFor = 0, totalCornersAgainst = 0, count = 0;
-    for (const m of teamMatches) {
-      if (!m.live_stats) continue; // Need finished match with stats
-      const isHome = m.home_team?.toLowerCase().includes(teamName.toLowerCase());
-      const stats = isHome ? m.live_stats.home : m.live_stats.away;
-      const oppStats = isHome ? m.live_stats.away : m.live_stats.home;
-      if (stats?.corner_kicks != null) {
-        totalCornersFor += stats.corner_kicks;
-        totalCornersAgainst += oppStats?.corner_kicks || 0;
-        count++;
+    // bd corners-fix v12.73 : fenêtre 365j (l'ancienne 30j excluait les sélections —
+    // England-Japan 31/03 corners 11-1 invisible) + pagination tail via helper.
+    // Équipes nationales : agrégation amicaux + qualifs + Nations League.
+    const leagueIds = [String(bsdLeagueId)];
+    if (NATIONAL_BSD_LEAGUES.has(String(bsdLeagueId))) {
+      for (const lg of NATIONAL_CORNER_SCAN) {
+        if (!leagueIds.includes(lg)) leagueIds.push(lg);
       }
     }
+    const perLeague = await Promise.all(leagueIds.map(lg => fetchBSDLeagueFinishedTail(lg)));
 
-    if (!count) return null;
+    const teamMatches = [];
+    for (const events of perLeague) {
+      for (const e of events) {
+        const isHome = (e.home_team || '').toLowerCase().includes(nameLc);
+        const isAway = (e.away_team || '').toLowerCase().includes(nameLc);
+        if (!isHome && !isAway) continue;
+        const forCorners = isHome ? e.home_corners : e.away_corners;
+        const againstCorners = isHome ? e.away_corners : e.home_corners;
+        if (forCorners == null) continue; // Need finished match with corner stats
+        teamMatches.push({ date: e.event_date, forCorners, againstCorners: againstCorners || 0 });
+      }
+    }
+    if (!teamMatches.length) return localHist || null;
+
+    // Les `limit` matchs les plus récents toutes ligues confondues
+    teamMatches.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const recent = teamMatches.slice(0, limit);
+    let totalCornersFor = 0, totalCornersAgainst = 0;
+    for (const m of recent) {
+      totalCornersFor += m.forCorners;
+      totalCornersAgainst += m.againstCorners;
+    }
+    const count = recent.length;
 
     return {
       avgCornersFor: totalCornersFor / count,
