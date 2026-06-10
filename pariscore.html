@@ -12051,7 +12051,7 @@ function psSetLang(v) {
             </select></label>
           <label class="ss-select-wrap"><span>Kickoff</span>
             <select class="ss-select" data-ssf="kickoff" aria-label="Filtre kickoff">
-              <option value="0">Tous</option>
+              <option value="0" data-i18n="filters.confidence_all_default">Tous</option>
               <option value="1">&lt; 1h</option>
               <option value="2">&lt; 2h</option>
               <option value="6">&lt; 6h</option>
@@ -12435,9 +12435,9 @@ function psSetLang(v) {
   <!-- MATCHDAY BANNER (masqué si pass actif) -->
   <div id="matchday-banner" style="display:none;">
     <div class="mb-text">
-      <strong>⚡ Matchday Pass</strong> — Débloquez toutes les fonctionnalités Pro pendant 24h pour seulement <strong>1,50 €</strong>.
+      <strong>⚡ <span data-i18n="matchday.banner_title">Matchday Pass</span></strong> <span data-i18n="matchday.banner_text">— Débloquez toutes les fonctionnalités Pro pendant 24h pour seulement</span> <strong>1,50 €</strong>.
     </div>
-    <button onclick="buyMatchdayPass()">Acheter le Pass du Jour</button>
+    <button onclick="buyMatchdayPass()" data-i18n="matchday.buy_btn">Acheter le Pass du Jour</button>
   </div>
 
   <!-- AI SCOUT PANEL -->
@@ -12652,10 +12652,10 @@ function psSetLang(v) {
       <div id="mob-sort-row">
         <span id="mob-bet-count"></span>
         <div style="display:flex;align-items:center;gap:8px;">
-          <label class="mob-sort">Trier&nbsp;:
+          <label class="mob-sort" data-i18n="matchs.mob_sort_label">Trier&nbsp;:
             <select id="mob-sort-sel" onchange="mobSetSort(this.value)">
               <option value="edge">Edge ↓</option>
-              <option value="time">Heure ↑</option>
+              <option value="time" data-i18n="matchs.sort_time">Heure ↑</option>
               <option value="poisson_over25">Over 2.5 ↓</option>
               <option value="poisson_btts">BTTS ↓</option>
               <option value="pressure">Pression live ↓</option>
@@ -13327,7 +13327,7 @@ function psSetLang(v) {
   <div class="paris-filters" id="paris-filters">
     <label>Statut
       <select id="paris-f-status" onchange="applyParisFilters()">
-        <option value="">Tous</option>
+        <option value="" data-i18n="filters.confidence_all_default">Tous</option>
         <option value="pending">En attente</option>
         <option value="won">Gagné</option>
         <option value="lost">Perdu</option>
@@ -13339,7 +13339,7 @@ function psSetLang(v) {
     </label>
     <label>Bookmaker
       <select id="paris-f-bookmaker" onchange="applyParisFilters()">
-        <option value="">Tous</option>
+        <option value="" data-i18n="filters.confidence_all_default">Tous</option>
         <option value="1xbet">1xbet</option>
         <option value="Winamax">Winamax</option>
         <option value="Betclic">Betclic</option>
@@ -13355,7 +13355,7 @@ function psSetLang(v) {
     </label>
     <label>Sport
       <select id="paris-f-sport" onchange="applyParisFilters()">
-        <option value="">Tous</option>
+        <option value="" data-i18n="filters.confidence_all_default">Tous</option>
         <option value="football">Football</option>
         <option value="basketball">Basketball</option>
         <option value="tennis">Tennis</option>
