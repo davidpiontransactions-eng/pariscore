@@ -11041,6 +11041,27 @@ function formatTopScores(topScores, n = 3) {
   return '<div class="exact-scores-row" title="Top 3 scores exacts les plus probables (Poisson)">' + items + '</div>';
 }
 
+// Oriente les scores exacts dom-ext selon la devig des cotes (source fiable).
+// Le bloc Poisson serveur peut inverser dom/ext sur amicaux/ligues exotiques
+// (ex: favori @1.21 affiché 0-1/0-2/0-0). On détecte le désaccord net modèle vs
+// marché et on permute alors les chiffres "h-a" -> "a-h".
+function _orientTopScores(topScores, poisson, oddsHome, oddsAway) {
+  if (!topScores || !topScores.length) return topScores;
+  const ih = (oddsHome != null && isFinite(Number(oddsHome)) && Number(oddsHome) > 1) ? 1 / Number(oddsHome) : null;
+  const ia = (oddsAway != null && isFinite(Number(oddsAway)) && Number(oddsAway) > 1) ? 1 / Number(oddsAway) : null;
+  if (ih == null || ia == null) return topScores;            // pas de marché de référence → on garde le serveur
+  const modelLean  = (poisson && poisson.homeWin || 0) - (poisson && poisson.awayWin || 0);
+  const marketLean = ih - ia;
+  const inverted = Math.abs(modelLean) > 12
+    && Math.sign(modelLean) !== 0 && Math.sign(marketLean) !== 0
+    && Math.sign(modelLean) !== Math.sign(marketLean);
+  if (!inverted) return topScores;
+  return topScores.map(s => {
+    const mm = String(s.score || '').match(/^(\d+)\s*-\s*(\d+)$/);
+    return mm ? Object.assign({}, s, { score: mm[2] + '-' + mm[1] }) : s;
+  });
+}
+
 function calcStatsFlash(m, hs, as, p) {
   const chips = [];
   const homeWinPct = p.homeWin || 0;
@@ -12641,22 +12662,33 @@ const label = country
         ${m.h2h && m.h2h.total > 0
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
           : ''}
-        ${(m.poisson?.topScores?.length || m.dixonColes?.method === 'dixon-coles') ? `<div class="pred-data">
-          ${formatTopScores(m.poisson?.topScores, 3)}
-          ${m.dixonColes?.method === 'dixon-coles' ? (() => {
+        ${(() => {
+          const tsRaw = m.poisson?.topScores;
+          const hasDC = m.dixonColes?.method === 'dixon-coles';
+          if (!(tsRaw?.length || hasDC)) return '';
+          // Scores exacts : oriente dom-ext via devig des cotes (Poisson serveur fiable en magnitude, pas en orientation)
+          const _bo = m.bsd_odds_summary && m.bsd_odds_summary.best;
+          const _oh = _bo && _bo.home ? _bo.home.value : (odds && odds.home);
+          const _oa = _bo && _bo.away ? _bo.away.value : (odds && odds.away);
+          const ts = _orientTopScores(tsRaw, m.poisson, _oh, _oa);
+          const scoresZone = (ts && ts.length)
+            ? '<div class="pred-zone"><span class="pred-zone-lbl">Scores exacts</span>' + formatTopScores(ts, 3) + '</div>'
+            : '';
+          let algoZone = '';
+          if (hasDC) {
             const dc = m.dixonColes;
             const rho = dc.rho != null ? Number(dc.rho) : null;
             const rhoHtml = (rho != null && isFinite(rho))
-              ? '<span class="rho-coefficient ' + (rho < 0 ? 'rho-neg' : 'rho-pos') + '" title="Coefficient Dixon-Coles ρ — corrélation des scores faibles (négatif = matchs serrés)">ρ ' + (rho > 0 ? '+' : '') + safeFixed(rho, 2) + '</span>'
+              ? '<span class="rho-coefficient ' + (rho < 0 ? 'rho-neg' : 'rho-pos') + '" title="Coefficient Dixon-Coles ρ — corrélation des scores faibles (négatif = matchs serrés)"><strong>ρ</strong><span class="rho-val">' + (rho > 0 ? '+' : '') + safeFixed(rho, 2) + '</span></span>'
               : '';
-            return '<div class="algo-metrics-grid">'
-              + '<span class="meta-algo-badge"><strong>O2.5</strong>' + dc.over25 + '%</span>'
-              + '<span class="meta-algo-badge"><strong>BTTS</strong>' + dc.btts + '%</span>'
-              + '<span class="meta-algo-badge"><strong>CS 0-0</strong>' + dc.cs00 + '%</span>'
-              + rhoHtml
-              + '</div>';
-          })() : ''}
-        </div>` : ''}</td>
+            algoZone = '<div class="pred-zone"><span class="pred-zone-lbl">Marchés modèle</span><div class="algo-metrics-grid">'
+              + '<span class="meta-algo-badge" title="Over 2.5 buts (Dixon-Coles)"><strong>O2.5</strong>' + dc.over25 + '%</span>'
+              + '<span class="meta-algo-badge" title="Les deux équipes marquent"><strong>BTTS</strong>' + dc.btts + '%</span>'
+              + '<span class="meta-algo-badge" title="Probabilité score 0-0"><strong>CS 0-0</strong>' + dc.cs00 + '%</span>'
+              + rhoHtml + '</div></div>';
+          }
+          return '<div class="pred-data">' + scoresZone + algoZone + '</div>';
+        })()}</td>
       <td style="min-width:130px;padding:6px 8px !important;text-align:left;vertical-align:middle;">
         ${(function() {
           var _oh = (m.bsd_odds_summary && m.bsd_odds_summary.best && m.bsd_odds_summary.best.home) ? m.bsd_odds_summary.best.home.value : (m.odds && m.odds.home);
