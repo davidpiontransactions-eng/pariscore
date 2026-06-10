@@ -12486,6 +12486,7 @@ const label = country
         <div style="display:flex;align-items:center;gap:4px;">
           ${awayLogoImg}<span style="font-size:12px;font-weight:600;cursor:pointer;" onclick="trackClick('team','${(m.away_team||'').replace(/'/g,"\\'")}',event)" title="Voir fiche équipe">${m.away_team}</span>${awayLiveScoreHtml(m)}
         </div>
+        ${(()=>{const hI=Array.isArray(m.tm_home_injured)?m.tm_home_injured.filter(p=>p&&p.name):[];const aI=Array.isArray(m.tm_away_injured)?m.tm_away_injured.filter(p=>p&&p.name):[];if(!hI.length&&!aI.length)return'';const _b=(n,names)=>n?'<span style="font-size:8px;color:#ef4444;background:rgba(239,68,68,.12);padding:1px 4px;border-radius:3px;font-family:var(--font-mono);cursor:default;" title="Blessés : '+names+'">🏥'+n+'</span>':'';const hB=_b(hI.length,hI.slice(0,5).map(p=>p.name).join(', '));const aB=_b(aI.length,aI.slice(0,5).map(p=>p.name).join(', '));return'<div style="display:flex;align-items:center;gap:3px;margin-top:1px;">'+(hB?'<span style="font-size:7px;color:var(--text3);">D:</span>'+hB:'')+(hB&&aB?'<span style="color:var(--text3);font-size:7px;">·</span>':'')+(aB?'<span style="font-size:7px;color:var(--text3);">E:</span>'+aB:'')+'</div>';})()}
         ${renderPredBets(m)}
         ${_tvbWOM(m.betfair_wom)}
         ${_live ? (() => {
@@ -12536,6 +12537,7 @@ const label = country
           ${_dvDualPpgBar(homePpgL5, awayPpgL5)}
           ${_dvMicroRadar(hs, _awayDisplayStats, homePower, awayPower, m.elo_home, m.elo_away)}
           ${_dvICMini(m.best_edge && m.best_edge.ic90 ? m.best_edge.ic90 : null)}
+          ${(()=>{const hMV=m.tm_home_squad_mv,aMV=m.tm_away_squad_mv;if(!hMV&&!aMV)return'';const fmt=v=>{if(!v||isNaN(v))return'—';return v>=1e8?'€'+safeFixed(v/1e6,0)+'M':v>=1e6?'€'+safeFixed(v/1e6,1)+'M':'€'+safeFixed(v/1e3,0)+'K';};const r=m.tm_squad_mv_ratio;const bW=(hMV&&aMV)?Math.round(hMV/(hMV+aMV)*100):50;const hC=r&&r>1.2?'#22c55e':r&&r<0.83?'#ef4444':'#3b82f6';const aC=r&&r<0.83?'#22c55e':r&&r>1.2?'#ef4444':'#64748b';return'<div style="border-top:1px solid rgba(255,255,255,.06);padding-top:3px;margin-top:2px;"><div style="font-size:7px;color:var(--text3);margin-bottom:1px;letter-spacing:.04em;font-family:var(--font-mono);">TM MV</div><div style="display:flex;justify-content:space-between;font-size:8px;font-weight:700;font-family:var(--font-mono);"><span style="color:'+hC+';">'+fmt(hMV)+'</span><span style="color:'+aC+';">'+fmt(aMV)+'</span></div>'+(hMV&&aMV?'<div style="height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:1px;"><div style="width:'+bW+'%;height:100%;background:'+hC+';border-radius:2px;"></div></div>':'')+(m.tm_home_avg_age||m.tm_away_avg_age?'<div style="display:flex;justify-content:space-between;font-size:7px;color:var(--text3);font-family:var(--font-mono);margin-top:1px;"><span>'+(m.tm_home_avg_age?'⌀'+safeFixed(m.tm_home_avg_age,1)+'a':'')+'</span><span>'+(m.tm_away_avg_age?'⌀'+safeFixed(m.tm_away_avg_age,1)+'a':'')+'</span></div>':'')+'</div>';})()}
         </div>
       </td>
       <td style="min-width:85px;text-align:center;padding:4px 6px !important;vertical-align:middle;">${(()=>{
@@ -14124,11 +14126,55 @@ function buildResumeTab(d) {
     </div>`;
   })() : '';
 
+  const tmSectionHtml = (() => {
+    const hMV = d.tm_home_squad_mv, aMV = d.tm_away_squad_mv;
+    const hI = Array.isArray(d.tm_home_injured) ? d.tm_home_injured.filter(p => p && p.name) : [];
+    const aI = Array.isArray(d.tm_away_injured) ? d.tm_away_injured.filter(p => p && p.name) : [];
+    const hAge = d.tm_home_avg_age, aAge = d.tm_away_avg_age;
+    if (!hMV && !aMV && !hI.length && !aI.length) return '';
+    const fmt = v => {
+      if (!v || isNaN(v)) return '—';
+      return v >= 1e8 ? '€' + safeFixed(v / 1e6, 0) + 'M' : v >= 1e6 ? '€' + safeFixed(v / 1e6, 1) + 'M' : '€' + safeFixed(v / 1e3, 0) + 'K';
+    };
+    const r = d.tm_squad_mv_ratio;
+    const bW = (hMV && aMV) ? Math.round(hMV / (hMV + aMV) * 100) : 50;
+    const rColor = r ? (r > 1.2 ? '#22c55e' : r < 0.83 ? '#ef4444' : 'var(--text2)') : 'var(--text2)';
+    let out = '<div class="ins-section" style="border:1px solid rgba(59,130,246,.2);background:rgba(59,130,246,.03);border-radius:10px;padding:12px 14px;margin-bottom:14px;">';
+    out += '<div style="font-size:9px;font-family:var(--font-mono);color:#3b82f6;background:rgba(59,130,246,.15);padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;display:inline-block;margin-bottom:10px;">💰 TRANSFERMARKT</div>';
+    if (hMV || aMV) {
+      out += '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;font-family:var(--font-mono);margin-bottom:4px;">';
+      out += '<span style="color:var(--blue);">' + fmt(hMV) + '</span>';
+      out += '<span style="font-size:9px;color:var(--text3);">Valeur Marchande</span>';
+      out += '<span style="color:#ab47bc;">' + fmt(aMV) + '</span></div>';
+      if (hMV && aMV) {
+        out += '<div style="height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;"><div style="width:' + bW + '%;height:100%;background:linear-gradient(90deg,var(--blue),#3b82f6);border-radius:4px;"></div></div>';
+        if (r) out += '<div style="text-align:center;font-size:9px;color:var(--text3);margin-top:4px;">Ratio D/E : <span style="color:' + rColor + ';font-weight:700;">' + safeFixed(r, 2) + '×</span></div>';
+      }
+      out += '</div>';
+    }
+    if (hAge || aAge) {
+      out += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);font-family:var(--font-mono);margin-bottom:8px;">';
+      out += '<span style="color:var(--blue);">' + (hAge ? '⌀ ' + safeFixed(hAge, 1) + ' ans' : '') + '</span>';
+      out += '<span style="color:#ab47bc;">' + (aAge ? '⌀ ' + safeFixed(aAge, 1) + ' ans' : '') + '</span></div>';
+    }
+    const injBlock = (team, injuries, c) => {
+      if (!injuries.length) return '';
+      const names = injuries.slice(0, 8).map(p => '<span style="font-size:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);padding:2px 6px;border-radius:4px;color:var(--text2);">' + (p.name || '') + '</span>').join('');
+      const more = injuries.length > 8 ? '<span style="font-size:9px;color:var(--text3);">+' + (injuries.length - 8) + '</span>' : '';
+      return '<div style="margin-bottom:8px;"><div style="font-size:9px;font-family:var(--font-mono);color:' + c + ';background:rgba(239,68,68,.08);padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:4px;">🏥 ' + (team || '') + ' — ' + injuries.length + ' blessé' + (injuries.length > 1 ? 's' : '') + '</div><div style="display:flex;flex-wrap:wrap;gap:4px;">' + names + more + '</div></div>';
+    };
+    out += injBlock(d.home_team, hI, '#3b82f6');
+    out += injBlock(d.away_team, aI, '#ab47bc');
+    out += '</div>';
+    return out;
+  })();
+
   return `
     ${tvHtml}
     ${editorialHtml}
     ${venueRefereeHtml}
     ${travelFactorHtml}
+    ${tmSectionHtml}
     <div id="ins-social-buzz-slot"></div>
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
