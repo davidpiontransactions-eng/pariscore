@@ -4068,6 +4068,26 @@ async function cronEnrichBSDFullStack() {
   finally { _isEnrichingBSD = false; }
 }
 
+// Enrichissement TM squad values en arrière-plan (toutes les 3h).
+// Max 10 matchs/tick × 2 appels club = 20 req TM fly.dev/tick — safe.
+let _isTMEnrichingSquads = false;
+async function cronEnrichTMSquads() {
+  if (_isTMEnrichingSquads) return;
+  _isTMEnrichingSquads = true;
+  try {
+    const candidates = (db.matches || [])
+      .filter(m => m && m.home_team && m.away_team &&
+        (!m._tm_squad_enriched || Date.now() - m._tm_squad_enriched > TM_CLUB_TTL_MS))
+      .slice(0, 10);
+    for (const m of candidates) {
+      await enrichMatchWithTMSquadValues(m);
+      await new Promise(r => setTimeout(r, 600)); // ~1.5 req/sec
+    }
+    if (candidates.length) console.log(`  [TM Squads Cron] ${candidates.length} matchs enrichis`);
+  } catch (e) { console.warn('[TM Squads Cron]', e.message); }
+  finally { _isTMEnrichingSquads = false; }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TV BROADCASTERS — BSD REST integration (Phase 1 backend)
 // Endpoints REST BSD :
@@ -12770,53 +12790,138 @@ async function fetchAFTransfers(teamId, sinceDays = 180) {
   }
 }
 
-// ─── Transfermarkt — cache (voie D : felipeall self-host, cf. fetchTransfermarkt) ─
-// Cache 24h (data carrière/valeurs peu volatile). Scaffold Apify retiré
-// (actor payant) au profit du sidecar felipeall/transfermarkt-api.
-const TM_TTL_MS = 24 * 3600 * 1000;
+// ─── Transfermarkt — felipeall/transfermarkt-api (MIT) ───────────────────────
+// Endpoints complets : players + clubs + competitions.
+// Primary : sidecar Docker local (TRANSFERMARKT_API_URL env).
+// Fallback : https://transfermarkt-api.fly.dev (déploiement public felipeall).
+const TM_TTL_MS      = 24 * 3600 * 1000; // joueurs : profil/blessures/transferts
+const TM_CLUB_TTL_MS =  6 * 3600 * 1000; // clubs : squads mis à jour + souvent
 const _tmCache = new Map();
 
-// ─── Option A : felipeall/transfermarkt-api auto-hébergé (sidecar Docker) ────
-// Microservice Python/FastAPI MIT déployé en conteneur ; Node l'appelle en
-// HTTP clé-zéro (zero-dep préservé, https natif). Schéma JSON propre (schemas
-// Pydantic). Endpoints : /players/{id}/{profile|market_value|transfers|injuries}.
-// ⚠ Pas d'endpoint « rumeurs » côté felipeall → transferts CONFIRMÉS + valeurs
-// uniquement (rumeurs = follow-up : route custom /geruechte ou RapidAPI apidojo).
-const TM_API_URL = (process.env.TRANSFERMARKT_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
-const _TM_PATHS = { profile: 'profile', market_value: 'market_value', transfers: 'transfers', injuries: 'injuries' };
+const TM_API_URL = (process.env.TRANSFERMARKT_API_URL || 'https://transfermarkt-api.fly.dev').replace(/\/+$/, '');
+
+// Helper HTTP/HTTPS protocol-aware (remplace httpsGet qui hardcode port 443).
+function _tmFetch(urlStr, timeoutMs = 15000) {
+  return new Promise((resolve, reject) => {
+    try {
+      const u = new URL(urlStr);
+      const lib = u.protocol === 'https:' ? require('https') : require('http');
+      const port = u.port ? Number(u.port) : (u.protocol === 'https:' ? 443 : 80);
+      const req = lib.request({
+        hostname: u.hostname, port,
+        path: u.pathname + (u.search || ''),
+        method: 'GET', family: 4,
+        headers: { 'Accept': 'application/json', 'User-Agent': 'PariScore/2.0' },
+      }, (res) => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', c => body += c);
+        res.on('end', () => {
+          try { resolve({ status: res.statusCode, data: JSON.parse(body) }); }
+          catch { resolve({ status: res.statusCode, data: body }); }
+        });
+        res.on('error', reject);
+      });
+      req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('TM timeout')); });
+      req.on('error', reject);
+      req.end();
+    } catch (e) { reject(e); }
+  });
+}
+
+// ── Joueurs ──────────────────────────────────────────────────────────────────
+// Kinds : profile | market_value | transfers | injuries | stats | achievements | jersey_numbers
+const _TM_PLAYER_PATHS = {
+  profile:        'profile',
+  market_value:   'market_value',
+  transfers:      'transfers',
+  injuries:       'injuries',
+  stats:          'stats',
+  achievements:   'achievements',
+  jersey_numbers: 'jersey_numbers',
+};
 
 async function fetchTransfermarkt(kind, id, slug) {
-  if (!_TM_PATHS[kind]) throw new Error(`kind invalide: ${kind}`);
+  if (!_TM_PLAYER_PATHS[kind]) throw new Error(`kind invalide: ${kind}`);
   const pid = String(id || '').replace(/\D/g, '');
   if (!pid) throw new Error('id Transfermarkt numérique requis');
   const ck = `tm_${kind}_${pid}`;
   const cached = _tmCache.get(ck);
   if (cached && Date.now() - cached.ts < TM_TTL_MS) return cached.data;
-  const url = `${TM_API_URL}/players/${pid}/${_TM_PATHS[kind]}`;
+  const url = `${TM_API_URL}/players/${pid}/${_TM_PLAYER_PATHS[kind]}`;
   let res;
-  try {
-    res = await httpsGet(url, { Accept: 'application/json' });
-  } catch (e) {
-    throw new Error(`transfermarkt-api injoignable (${TM_API_URL}) : ${e.message}`);
-  }
+  try { res = await _tmFetch(url); }
+  catch (e) { throw new Error(`transfermarkt-api injoignable (${TM_API_URL}) : ${e.message}`); }
   if (res.status === 404) throw new Error('joueur introuvable Transfermarkt');
   if (res.status !== 200) throw new Error(`transfermarkt-api HTTP ${res.status}`);
   const body = (res.data && typeof res.data === 'object') ? res.data : null;
   if (!body) throw new Error('réponse transfermarkt-api invalide');
   const data = {
     source: 'transfermarkt',
-    via: 'felipeall/transfermarkt-api (self-host)',
-    kind,
-    tm_id: pid,
-    fetched_at: new Date().toISOString(),
-    data: body,
+    via: 'felipeall/transfermarkt-api',
+    kind, tm_id: pid, fetched_at: new Date().toISOString(), data: body,
   };
   _tmCache.set(ck, { ts: Date.now(), data });
   return data;
 }
 
-// Résolveur nom → id Transfermarkt (felipeall /players/search/{name}).
-// Désambiguïse via indices club puis âge ; fallback 1er résultat. Cache 24h.
+// ── Clubs ────────────────────────────────────────────────────────────────────
+// Kinds : profile | players
+// Football season: Aug–Jul cycle. 2024/25 = season_id 2024.
+function _tmCurrentSeason() {
+  const now = new Date();
+  return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+async function fetchTMClub(kind, clubId) {
+  if (kind !== 'profile' && kind !== 'players') throw new Error(`kind club invalide: ${kind}`);
+  const cid = String(clubId || '').replace(/\D/g, '');
+  if (!cid) throw new Error('clubId TM numérique requis');
+  const season = kind === 'players' ? _tmCurrentSeason() : null;
+  const ck = `tmc_${kind}_${cid}${season ? '_' + season : ''}`;
+  const cached = _tmCache.get(ck);
+  if (cached && Date.now() - cached.ts < TM_CLUB_TTL_MS) return cached.data;
+
+  const seasons = season ? [season, season - 1] : [null];
+  let res, lastErr;
+  for (const s of seasons) {
+    const qs = s ? `?season_id=${s}` : '';
+    const url = `${TM_API_URL}/clubs/${cid}/${kind}${qs}`;
+    try { res = await _tmFetch(url); } catch (e) { lastErr = e; continue; }
+    if (res.status === 200) break;
+    lastErr = new Error(`HTTP ${res.status}`);
+    res = null;
+  }
+  if (!res) throw new Error(`transfermarkt-api club injoignable : ${lastErr && lastErr.message}`);
+  if (res.status === 404) throw new Error(`club ${cid} introuvable TM`);
+  if (res.status !== 200) throw new Error(`transfermarkt-api club HTTP ${res.status}`);
+  const body = (res.data && typeof res.data === 'object') ? res.data : null;
+  if (!body) throw new Error('réponse transfermarkt-api club invalide');
+  _tmCache.set(ck, { ts: Date.now(), data: body });
+  return body;
+}
+
+// ── Compétitions ─────────────────────────────────────────────────────────────
+async function fetchTMCompetition(competitionId, seasonId) {
+  const cid = String(competitionId || '').trim();
+  if (!cid) throw new Error('competitionId TM requis');
+  const season = String(seasonId || '').trim();
+  const ck = `tmc_comp_${cid}_${season}`;
+  const cached = _tmCache.get(ck);
+  if (cached && Date.now() - cached.ts < TM_CLUB_TTL_MS) return cached.data;
+  const qs = season ? `?season_id=${encodeURIComponent(season)}` : '';
+  const url = `${TM_API_URL}/competitions/${encodeURIComponent(cid)}/clubs${qs}`;
+  let res;
+  try { res = await _tmFetch(url); }
+  catch (e) { throw new Error(`transfermarkt-api competition injoignable : ${e.message}`); }
+  if (res.status !== 200) throw new Error(`transfermarkt-api competition HTTP ${res.status}`);
+  const body = (res.data && typeof res.data === 'object') ? res.data : null;
+  if (!body) throw new Error('réponse transfermarkt-api competition invalide');
+  _tmCache.set(ck, { ts: Date.now(), data: body });
+  return body;
+}
+
+// ── Résolveurs nom → ID ───────────────────────────────────────────────────────
 async function tmResolvePlayerId(name, hints = {}) {
   const q = String(name || '').trim();
   if (!q) return null;
@@ -12824,9 +12929,8 @@ async function tmResolvePlayerId(name, hints = {}) {
   const cached = _tmCache.get(ck);
   if (cached && Date.now() - cached.ts < TM_TTL_MS) return cached.data;
   let res;
-  try {
-    res = await httpsGet(`${TM_API_URL}/players/search/${encodeURIComponent(q)}?page_number=1`, { Accept: 'application/json' });
-  } catch (e) { return null; }
+  try { res = await _tmFetch(`${TM_API_URL}/players/search/${encodeURIComponent(q)}?page_number=1`); }
+  catch { return null; }
   const results = (res && res.status === 200 && res.data && Array.isArray(res.data.results)) ? res.data.results : [];
   if (!results.length) { _tmCache.set(ck, { ts: Date.now(), data: null }); return null; }
   const nClub = (hints.club && normName) ? normName(hints.club) : null;
@@ -12840,8 +12944,27 @@ async function tmResolvePlayerId(name, hints = {}) {
   return id;
 }
 
-// Bio + blessure 100% via Transfermarkt (felipeall sidecar). Orphelin
-// API-Football : profil (la bible) + blessure en cours (until_date null).
+async function tmResolveClubId(teamName) {
+  const q = String(teamName || '').trim();
+  if (!q) return null;
+  const ck = `tmc_search_${q.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+  const cached = _tmCache.get(ck);
+  if (cached && Date.now() - cached.ts < 24 * 3600 * 1000) return cached.data;
+  let res;
+  try { res = await _tmFetch(`${TM_API_URL}/clubs/search/${encodeURIComponent(q)}`); }
+  catch { return null; }
+  const results = (res && res.status === 200 && res.data && Array.isArray(res.data.results)) ? res.data.results : [];
+  if (!results.length) { _tmCache.set(ck, { ts: Date.now(), data: null }); return null; }
+  const qLow = q.toLowerCase();
+  let pick = results.find(r => r.name && r.name.toLowerCase() === qLow);
+  if (!pick) pick = results.find(r => r.name && (r.name.toLowerCase().includes(qLow) || qLow.includes(r.name.toLowerCase())));
+  if (!pick) pick = results[0];
+  const id = pick ? String(pick.id) : null;
+  _tmCache.set(ck, { ts: Date.now(), data: id });
+  return id;
+}
+
+// ── Bio joueur (profil + blessure active) ────────────────────────────────────
 async function getTransfermarktBio(name, hints = {}) {
   const id = await tmResolvePlayerId(name, hints);
   if (!id) return null;
@@ -12872,6 +12995,73 @@ async function getTransfermarktBio(name, hints = {}) {
   out.current_injury = cur ? { injury: cur.injury, since: cur.from_date, until: cur.until_date || null, days: cur.days } : null;
   out.injury_history = injs.slice(0, 5);
   return out;
+}
+
+// ── Enrichissement match football : squad market values + blessés actifs ──────
+// Ajoute sur match :
+//   tm_home_squad_mv / tm_away_squad_mv  (total valeur marchande effectif, €)
+//   tm_squad_mv_ratio                    (home/away — signal favori)
+//   tm_home_injured / tm_away_injured    (blessés actifs [{name, injury, position}])
+//   tm_home_profile / tm_away_profile    (stade, capacité, bilan transferts, couleurs)
+const _tmEnrichLock = new Set();
+async function enrichMatchWithTMSquadValues(match) {
+  if (!match || !match.home_team || !match.away_team) return;
+  const mk = `tm_sq_${match.id}`;
+  if (_tmEnrichLock.has(mk)) return;
+  if (match._tm_squad_enriched && Date.now() - match._tm_squad_enriched < TM_CLUB_TTL_MS) return;
+  _tmEnrichLock.add(mk);
+  try {
+    const [homeId, awayId] = await Promise.all([
+      tmResolveClubId(match.home_team),
+      tmResolveClubId(match.away_team),
+    ]);
+    async function enrichSide(clubId, prefix) {
+      if (!clubId) return;
+      try {
+        const sq = await fetchTMClub('players', clubId);
+        if (sq && Array.isArray(sq.players)) {
+          const active = sq.players.filter(p => p.marketValue > 0);
+          match[`${prefix}_squad_mv`] = active.reduce((s, p) => s + (p.marketValue || 0), 0);
+          match[`${prefix}_squad_size`] = active.length;
+          match[`${prefix}_tm_id`] = clubId;
+          match[`${prefix}_injured`] = sq.players
+            .filter(p => p.status && /return|surgery|injury|muscle|ligament|fracture/i.test(p.status))
+            .map(p => ({ name: p.name, injury: p.status, position: p.position }))
+            .slice(0, 8);
+          const avgAge = sq.players.filter(p => p.age).reduce((s, p, _, a) => s + p.age / a.length, 0);
+          if (avgAge) match[`${prefix}_avg_age`] = parseFloat(avgAge.toFixed(1));
+        }
+      } catch (_) {}
+      try {
+        const prof = await fetchTMClub('profile', clubId);
+        if (prof) {
+          match[`${prefix}_profile`] = {
+            stadium:          prof.stadiumName        || null,
+            capacity:         prof.stadiumSeats       || null,
+            market_value:     prof.currentMarketValue || null,
+            transfer_balance: prof.currentTransferRecord != null ? prof.currentTransferRecord : null,
+            colors:           Array.isArray(prof.colors) ? prof.colors : [],
+            founded:          prof.foundedOn          || null,
+            avg_age:          prof.squad?.averageAge  || null,
+            foreigners:       prof.squad?.foreigners  || null,
+          };
+        }
+      } catch (_) {}
+    }
+    await Promise.all([
+      enrichSide(homeId, 'tm_home'),
+      enrichSide(awayId, 'tm_away'),
+    ]);
+    if (match.tm_home_squad_mv && match.tm_away_squad_mv && match.tm_away_squad_mv > 0) {
+      match.tm_squad_mv_ratio = parseFloat((match.tm_home_squad_mv / match.tm_away_squad_mv).toFixed(3));
+    }
+    match._tm_squad_enriched = Date.now();
+    const h = match.tm_home_squad_mv ? `${(match.tm_home_squad_mv / 1e6).toFixed(0)}M€` : '?';
+    const a = match.tm_away_squad_mv ? `${(match.tm_away_squad_mv / 1e6).toFixed(0)}M€` : '?';
+    const r = match.tm_squad_mv_ratio ? ` ratio=${match.tm_squad_mv_ratio}` : '';
+    console.log(`  [TM Squads] ${match.home_team} vs ${match.away_team} — ${h} vs ${a}${r}`);
+  } catch (_) {}
+  finally { _tmEnrichLock.delete(mk); }
 }
 
 // ─── SCOUTING REPORT (Gemini, cache 24h) ─────────────────────────────────────
@@ -18120,7 +18310,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/') || pathname.startsWith('/api/v1/bsd/compos/') || pathname.startsWith('/api/v1/bsd/clips/') || pathname.startsWith('/api/v1/bsd/clip-video/') || pathname === '/api/v1/bsd/ws-status') {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/tm/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/') || pathname.startsWith('/api/v1/bsd/compos/') || pathname.startsWith('/api/v1/bsd/clips/') || pathname.startsWith('/api/v1/bsd/clip-video/') || pathname === '/api/v1/bsd/ws-status') {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -37519,12 +37709,15 @@ if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
 }
 
 // GET /api/v1/insights/:matchId — Hub Stats Elite (modal PariScore Insights)
+// ── GET /api/v1/transfermarkt/{kind}?id=<playerId> — player endpoints ────────
+// kind ∈ profile | market_value | transfers | injuries | stats | achievements | jersey_numbers
 if (pathname.startsWith('/api/v1/transfermarkt/') && req.method === 'GET') {
   const kind = decodeURIComponent(pathname.slice('/api/v1/transfermarkt/'.length)).trim();
   const id = String(query.id || '').trim();
   const slug = query.slug ? String(query.slug).trim() : null;
-  if (!['profile', 'market_value', 'transfers', 'injuries'].includes(kind)) {
-    return jsonResponse(res, 400, { error: 'bad_kind', message: 'kind ∈ profile|market_value|transfers|injuries' });
+  const PLAYER_KINDS = ['profile', 'market_value', 'transfers', 'injuries', 'stats', 'achievements', 'jersey_numbers'];
+  if (!PLAYER_KINDS.includes(kind)) {
+    return jsonResponse(res, 400, { error: 'bad_kind', message: `kind ∈ ${PLAYER_KINDS.join('|')}` });
   }
   if (!/^\d+$/.test(id)) {
     return jsonResponse(res, 400, { error: 'bad_id', message: 'id Transfermarkt numérique requis (?id=)' });
@@ -37535,6 +37728,89 @@ if (pathname.startsWith('/api/v1/transfermarkt/') && req.method === 'GET') {
     const msg = String(e.message || e);
     const code = /injoignable|introuvable|HTTP 5\d\d/.test(msg) ? 503 : 502;
     return jsonResponse(res, code, { error: 'transfermarkt_failed', message: msg });
+  }
+}
+
+// ── GET /api/v1/tm/club/{kind}?id=<clubId> — club endpoints ─────────────────
+// kind ∈ profile | players
+// Ex: /api/v1/tm/club/players?id=583   → effectif PSG avec market values + injuries
+//     /api/v1/tm/club/profile?id=583   → stade, couleurs, bilan transferts
+if (pathname.startsWith('/api/v1/tm/club/') && req.method === 'GET') {
+  const kind = decodeURIComponent(pathname.slice('/api/v1/tm/club/'.length)).trim();
+  const id   = String(query.id || '').replace(/\D/g, '');
+  if (!['profile', 'players'].includes(kind)) {
+    return jsonResponse(res, 400, { error: 'bad_kind', message: 'kind ∈ profile|players' });
+  }
+  if (!id) {
+    return jsonResponse(res, 400, { error: 'bad_id', message: 'id club TM numérique requis (?id=)' });
+  }
+  try {
+    return jsonResponse(res, 200, await fetchTMClub(kind, id));
+  } catch (e) {
+    const msg = String(e.message || e);
+    const code = /injoignable|introuvable|HTTP 5\d\d/.test(msg) ? 503 : 502;
+    return jsonResponse(res, code, { error: 'tm_club_failed', message: msg });
+  }
+}
+
+// ── GET /api/v1/tm/club/resolve?name=<teamName> — résolution nom→id TM ───────
+if (pathname === '/api/v1/tm/club/resolve' && req.method === 'GET') {
+  const name = String(query.name || '').trim();
+  if (!name) return jsonResponse(res, 400, { error: 'name_required' });
+  try {
+    const id = await tmResolveClubId(name);
+    return jsonResponse(res, 200, { name, tm_id: id, found: !!id });
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'tm_resolve_failed', message: String(e.message || e) });
+  }
+}
+
+// ── GET /api/v1/tm/competition?id=<compId>&season=<year> — clubs d'une ligue ─
+// Ex: /api/v1/tm/competition?id=FR1&season=2024   → 18 clubs Ligue 1 avec IDs TM
+if (pathname === '/api/v1/tm/competition' && req.method === 'GET') {
+  const compId = String(query.id || '').trim();
+  const season = String(query.season || query.season_id || '').trim();
+  if (!compId) return jsonResponse(res, 400, { error: 'id_required', message: '?id=FR1 (competition TM id)' });
+  try {
+    return jsonResponse(res, 200, await fetchTMCompetition(compId, season));
+  } catch (e) {
+    const msg = String(e.message || e);
+    const code = /injoignable|HTTP 5\d\d/.test(msg) ? 503 : 502;
+    return jsonResponse(res, code, { error: 'tm_competition_failed', message: msg });
+  }
+}
+
+// ── GET /api/v1/tm/match-squads?home=<team>&away=<team> — squads + MV d'un match
+// Résout les noms d'équipes → IDs TM, retourne les deux effectifs enrichis
+if (pathname === '/api/v1/tm/match-squads' && req.method === 'GET') {
+  const home = String(query.home || '').trim();
+  const away = String(query.away || '').trim();
+  if (!home || !away) return jsonResponse(res, 400, { error: 'home_away_required' });
+  try {
+    const [homeId, awayId] = await Promise.all([tmResolveClubId(home), tmResolveClubId(away)]);
+    const result = { home: { name: home, tm_id: homeId }, away: { name: away, tm_id: awayId } };
+    await Promise.all([
+      (async () => {
+        if (!homeId) return;
+        try { result.home.players = (await fetchTMClub('players', homeId)).players || []; } catch (_) {}
+        try { result.home.profile = await fetchTMClub('profile', homeId); } catch (_) {}
+      })(),
+      (async () => {
+        if (!awayId) return;
+        try { result.away.players = (await fetchTMClub('players', awayId)).players || []; } catch (_) {}
+        try { result.away.profile = await fetchTMClub('profile', awayId); } catch (_) {}
+      })(),
+    ]);
+    // Calcul squad market value
+    const calcMV = players => (players || []).filter(p => p.marketValue > 0).reduce((s, p) => s + p.marketValue, 0);
+    if (result.home.players) result.home.squad_mv = calcMV(result.home.players);
+    if (result.away.players) result.away.squad_mv = calcMV(result.away.players);
+    if (result.home.squad_mv && result.away.squad_mv) {
+      result.mv_ratio = parseFloat((result.home.squad_mv / result.away.squad_mv).toFixed(3));
+    }
+    return jsonResponse(res, 200, result);
+  } catch (e) {
+    return jsonResponse(res, 502, { error: 'tm_match_squads_failed', message: String(e.message || e) });
   }
 }
 // PROTOTYPE BSD transferts confirmés natifs (gate footPro). Accepte
@@ -44028,6 +44304,9 @@ setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.mess
 setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+// TM squad values + blessés actifs toutes 3h (fly.dev ~20 req/tick, safe)
+setInterval(() => cronEnrichTMSquads().catch(e => console.warn('[TM Squads]', e.message)), 3 * 3600 * 1000);
+setTimeout(() => cronEnrichTMSquads().catch(() => {}), 2 * 60 * 1000); // 1er tick 2min après boot
 
 // bd h68q — WOM auto-publish : mouvement d'argent Betfair (provider WOM local) → carte Discord BSD #weight-of-money
 if (WOM_AP_ENABLED) {
