@@ -2,6 +2,35 @@
 
 ---
 
+## [v12.73] — 2026-06-11 — Fix Corners: historique équipe vide (England) — bd `upav`
+
+### Root cause (prouvé par probes BSD `.context/_probe_corners_england*.js`)
+
+| # | Défaut | Effet |
+|---|---|---|
+| 1 | BSD `/events/` trié **ascendant** fixe, page 1 = les 50 plus **vieux** ; params `page`/`ordering`/`page_size` custom **ignorés** (vraie pagination = `limit/offset` cf. URL `next`) | `fetchBSDTeamCornerHistory` ne voyait que les 50 plus vieux de 143 amicaux (16/05→04/06) — England–New Zealand 06/06 invisible |
+| 2 | Fenêtre 30 jours | Sélections jouent ~1 match/mois — England–Japan 31/03 (corners 11-1) exclu |
+| 3 | Requête mono-ligue | Qualifs WC (Albania–England 5-5, L58) + Nations League jamais agrégés |
+| 4 | `fetchBSDTeamLastFixtures` paginait avec `page=` (ignoré) | Relisait 6× la même page, dedup masquait — formes récentes tronquées aux plus vieux 50 |
+| 5 | TTL `apiCacheSet(..., 6 * 3600)` — unité = **ms** | Cache last-fixtures expirait en 21,6 s au lieu de 6 h |
+
+### Fix
+
+- **`fetchBSDLeagueFinishedTail(leagueId, days=365, maxPages=6)`** : lit `count` puis pagine depuis la **fin** (offsets décroissants) → les ~300 matchs les plus récents ; events slim (id/date/teams/scores/corners) ; cache SQLite 6 h par ligue, partagé corners + last-fixtures.
+- **`fetchBSDTeamCornerHistory`** : fenêtre 365 j ; équipes nationales (ligues 27/30/31/58-65/66-69) → scan agrégé amicaux 31 + qualifs 58-63 + Nations League 64-65 en `Promise.all` ; tri desc toutes ligues, top `limit` ; fallback `localHist` partiel (<5 matchs) si BSD vide.
+- **`fetchBSDTeamLastFixtures`** : pagination via helper (fix `page=` ignoré), TTL 6 h réel.
+
+### Backtest validation (BSD live, `.context/_test_corners_fix.js`)
+
+| Équipe | Avant | Après |
+|---|---|---|
+| England | `null` → « Estimation ligue moy. » | **5 matchs** — CR 11-1, NZ 8-1, Japan 11-1, Uruguay 7-0, Albania 5-5 → For 8.40 / Against 1.60 |
+| Costa Rica | 1 match | **3 matchs** — For 4.33 / Against 7.33 |
+
+Déploiement : purge `api_cache` sources `corners` + `bsd_last_fx` (entrées stales persistées SQLite).
+
+---
+
 ## [v12.71] — 2026-06-10 — Football card: Signal Fort + prob bar 1N2 + market badge
 
 ### Fonctionnalités livrées (benchmark BetMines/BeSoccer)
