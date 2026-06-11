@@ -17,6 +17,18 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 
 3. **Source de vérité tâches** = **bd (beads)**. Ce fichier = miroir lisible ; `bd ready` reste autoritaire.
 
+
+4. **PLAN → EXECUTE → VERIFY (OBLIGATOIRE tâches > 3 fichiers)** :
+   - **PLAN** : exploration codebase + `plan.md`. ZÉRO écriture de code.
+   - **ACT** (Plan/Act toggle) : implémentation avec commits atomiques. Par défaut en mode PLAN. Passer en ACT explicitement.
+   - **VERIFY** : `node scripts/test-quick.js` + `node --check server.js` + vérif manuelle.
+
+5. **3-STRIKE RULE** : 3 tentatives échouées consécutives sur le même fichier → STOP immédiat. Demander à l'utilisateur.
+
+6. **AUTO-VERIFY POST-EDIT** :
+   - `server.js` modifié → `node --check server.js` obligatoire avant commit
+   - `pariscore.html` modifié → `node scripts/test-quick.js` (vérifie sync STRATEGIES)
+   - Tout commit DOIT passer les vérifications
 ## 🏗️ ARCHITECTURE & STACK
 
 - **Backend** : Node.js (Vanilla, zero-dep sauf `better-sqlite3`), SQLite3 WAL, SSE

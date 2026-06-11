@@ -1,5 +1,18 @@
 # PariScore — Journal des modifications
 
+## [v12.77] — 2026-06-11 — Quality gates : Plan→Execute→Verify workflow + test-quick.js
+
+### Ajouté
+- **CLAUDE.md** : 3 nouvelles règles systématiques :
+  - `PLAN → EXECUTE → VERIFY` (obligatoire > 3 fichiers)
+  - `3-STRIKE RULE` (stop après 3 échecs consécutifs)
+  - `AUTO-VERIFY POST-EDIT` (node --check + test-quick.js automatiques)
+- **`.claude/settings.json`** : Hook gstack-careful activé (protection rm -rf, force-push, DROP TABLE)
+- **`scripts/test-quick.js`** : Quality gate rapide — syntaxe Node, sync STRATEGIES, DB integrity
+- **`.context/knowledge/`** : Base de connaissance persistante (5 dossiers : architecture, strategies, etl, math, ops)
+
+---
+
 ## [v9.8] — 2026-06-11
 
 ### Ajouté
@@ -9,6 +22,8 @@
   - Fichiers modifiés : `pariscore.html` (option select), `pariscore.js` (case switch)
 
 ---
+
+
 
 ## [v12.76] — 2026-06-11 — Sélections nationales : ETL international_results → λ/form/H2H World Cup 2026 — bd `qgfm`
 

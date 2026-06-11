@@ -2,5 +2,10 @@
   "dependencies": {
     "hltv": "^3.5.0",
     "better-sqlite3": "^11.7.0"
+  },
+  "scripts": {
+    "tennis-elo": "node tools/recompute-tennis-elo.js",
+    "tennis-elo:ta": "TENNIS_ABSTRACT_ELO_SCRAPER=1 LEGAL_OVERRIDE_CONFIRMED=1 node tools/scrape-tennis-abstract-elo.js --enable-legal-bypass-confirmed",
+    "tennis-elo:cron": "bash scripts/cron-tennis-elo.sh"
   }
 }
