@@ -8924,18 +8924,24 @@ function _fdSideFromAgg(agg, minPlayed) {
 }
 
 function buildFDStatsIndex() {
+  // bd qgfm — index étendu aux sélections nationales (etl-seed-international).
+  // "Saison courante" : fd = label saison max ('2025-2026') ; intl = saisons
+  // année civile → fenêtre année courante + précédente (~18 mois de sélection).
+  const FD_SRC = 'etl-seed-footballdata';
+  const INTL_SRC = 'etl-seed-international';
   const idx = new Map();
   let latestSeason = '';
   for (const m of (db.archive_matches || [])) {
-    if (m._source === 'etl-seed-footballdata' && m.season > latestSeason) latestSeason = m.season;
+    if (m._source === FD_SRC && m.season > latestSeason) latestSeason = m.season;
   }
-  const bump = (team, side, season, gf, ga) => {
+  const intlCurFloor = String(new Date().getFullYear() - 1); // ex '2025' → 2025+2026
+  const bump = (team, side, isCur, gf, ga, srcLabel) => {
     const key = normName(team);
     if (!key) return;
     let e = idx.get(key);
     if (!e) {
       const z = () => ({ played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 });
-      e = { home_cur: z(), home_all: z(), away_cur: z(), away_all: z() };
+      e = { home_cur: z(), home_all: z(), away_cur: z(), away_all: z(), src: srcLabel };
       idx.set(key, e);
     }
     const add = (a) => {
@@ -8943,19 +8949,23 @@ function buildFDStatsIndex() {
       if (gf > ga) a.w++; else if (gf === ga) a.d++; else a.l++;
     };
     add(e[`${side}_all`]);
-    if (season === latestSeason) add(e[`${side}_cur`]);
+    if (isCur) add(e[`${side}_cur`]);
   };
-  let scanned = 0;
+  let scanned = 0, scannedIntl = 0;
   for (const m of (db.archive_matches || [])) {
-    if (m._source !== 'etl-seed-footballdata') continue;
+    const isFD = m._source === FD_SRC;
+    const isIntl = m._source === INTL_SRC;
+    if (!isFD && !isIntl) continue;
     if (m.home_score == null || m.away_score == null) continue;
-    bump(m.home_team, 'home', m.season, m.home_score, m.away_score);
-    bump(m.away_team, 'away', m.season, m.away_score, m.home_score);
-    scanned++;
+    const isCur = isFD ? (m.season === latestSeason) : (String(m.season) >= intlCurFloor);
+    const srcLabel = isFD ? 'fd-archive' : 'intl-archive';
+    bump(m.home_team, 'home', isCur, m.home_score, m.away_score, srcLabel);
+    bump(m.away_team, 'away', isCur, m.away_score, m.home_score, srcLabel);
+    if (isFD) scanned++; else scannedIntl++;
   }
   _fdStatsIndex = idx;
-  if (scanned > 0) {
-    console.log(`  ✓ FD stats index: ${idx.size} équipes (${scanned} matchs football-data, saison ref ${latestSeason})`);
+  if (scanned > 0 || scannedIntl > 0) {
+    console.log(`  ✓ FD stats index: ${idx.size} équipes (${scanned} matchs football-data + ${scannedIntl} internationaux, saison ref ${latestSeason || 'n/a'})`);
   }
   return idx;
 }
@@ -8965,11 +8975,11 @@ function getFDTeamStats(teamName) {
   if (!_fdStatsIndex) buildFDStatsIndex();
   const e = _fdStatsIndex.get(normName(teamName));
   if (!e) return null;
-  // Saison courante d'abord (≥6 matchs/split), sinon pool 3 saisons (≥10)
+  // Saison/fenêtre courante d'abord (≥6 matchs/split), sinon pool complet (≥10)
   const home = _fdSideFromAgg(e.home_cur, 6) || _fdSideFromAgg(e.home_all, 10);
   const away = _fdSideFromAgg(e.away_cur, 6) || _fdSideFromAgg(e.away_all, 10);
   if (!home || !away) return null;
-  return { home, away, _real: true, _source: 'fd-archive' };
+  return { home, away, _real: true, _source: e.src || 'fd-archive' };
 }
 
 function computeEdge(match) {
@@ -9357,8 +9367,8 @@ function buildMatchRecord(raw) {
   const awayStats = _aSideDB || fdAway?.away || simStats(raw.away_team, false);
   const isRealData = !!((hRaw?._real || fdHome) && (aRaw?._real || fdAway));
   const statSource = {
-    home: _hSideDB ? (hRaw?._source || 'db') : (fdHome ? 'fd-archive' : 'sim'),
-    away: _aSideDB ? (aRaw?._source || 'db') : (fdAway ? 'fd-archive' : 'sim'),
+    home: _hSideDB ? (hRaw?._source || 'db') : (fdHome ? fdHome._source : 'sim'),
+    away: _aSideDB ? (aRaw?._source || 'db') : (fdAway ? fdAway._source : 'sim'),
   };
 
   if (!_hSideDB && !fdHome) console.warn(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (non trouvé en DB ni archive FD)`);
@@ -9858,6 +9868,7 @@ const HISTORIQUE_WIKIDATA_FILE = path.join(__dirname, 'historique_wikidata.json'
 const HISTORIQUE_FBREF_FILE = path.join(__dirname, 'historique_fbref.json'); // bd 8lqf ETL output (RESEARCH ONLY)
 const HISTORIQUE_ELOFOOTBALL_FILE = path.join(__dirname, 'historique_elofootball.json'); // bd 8lvf ETL output
 const HISTORIQUE_FOOTBALLDATA_FILE = path.join(__dirname, 'historique_footballdata.json'); // bd sc0o ETL output (football-data.co.uk)
+const HISTORIQUE_INTERNATIONAL_FILE = path.join(__dirname, 'historique_international.json'); // bd qgfm ETL output (martj42 internationaux CC0)
 const HISTORIQUE_BSD_TENNIS_FILE = path.join(__dirname, 'historique_bsd_tennis.json'); // bd rxh Phase 2 ETL output
 let history = [];
 let accuracy = { total: 0, over25_correct: 0, over25_total: 0, btts_correct: 0, btts_total: 0, edge_correct: 0, edge_total: 0 };
@@ -10108,6 +10119,54 @@ function loadHistory() {
       }
     } catch (e) {
       console.warn('[ETL Seed Load footballdata]', e.message);
+    }
+  }
+
+  // bd ParisScorebis-qgfm — Merge historique_international.json (martj42 CC0)
+  // dans db.archive_matches au boot. Sélections nationales (WC 2026, Euro,
+  // qualifs, Nations League, amicaux) → λ Poisson / form / H2H via index FD étendu.
+  if (fs.existsSync(HISTORIQUE_INTERNATIONAL_FILE)) {
+    try {
+      const seed = JSON.parse(fs.readFileSync(HISTORIQUE_INTERNATIONAL_FILE, 'utf8'));
+      if (seed && seed.leagues && typeof seed.leagues === 'object') {
+        let totalSeed = 0;
+        let totalAdded = 0;
+        const existingIds = new Set((db.archive_matches || []).map(m => String(m.id)));
+        for (const key of Object.keys(seed.leagues)) {
+          const leagueData = seed.leagues[key];
+          if (!leagueData || !Array.isArray(leagueData.matches)) continue;
+          for (const m of leagueData.matches) {
+            totalSeed++;
+            if (!m || !m.id || existingIds.has(String(m.id))) continue;
+            const archived = {
+              id: m.id,
+              sport: 'football',
+              sport_key: 'intl',
+              league: m.league_name,
+              country: m.country,
+              commence_time: m.date,
+              home_team: m.home_team,
+              away_team: m.away_team,
+              home_score: m.home_score,
+              away_score: m.away_score,
+              live_score: (m.home_score != null && m.away_score != null) ? `${m.home_score}-${m.away_score}` : null,
+              status: m.status || 'finished',
+              season: m.season,
+              is_neutral_ground: !!m.is_neutral,
+              _source: 'etl-seed-international',
+              _attribution: m._attribution || 'martj42/international_results (CC0 1.0)',
+            };
+            (db.archive_matches = db.archive_matches || []).push(archived);
+            existingIds.add(String(m.id));
+            totalAdded++;
+          }
+        }
+        if (totalSeed > 0) {
+          console.log(`  ✓ ETL seed merge (international): ${totalAdded}/${totalSeed} matchs selections ajoutes a db.archive_matches (CC0)`);
+        }
+      }
+    } catch (e) {
+      console.warn('[ETL Seed Load international]', e.message);
     }
   }
 
@@ -15308,6 +15367,136 @@ function fetchLocalCornerHistory(teamName, bsdLeagueId) {
   } catch (e) {
     console.error('[BSD-CORNERS] fetchLocalCornerHistory error:', e.message);
     return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// bd 6kzf Phase A — Profil xG depuis match_stats_history + team_season_stats
+// (ETL seed_historique_bsd_stats.js, bd rm3d). LECTURE SEULE — n'altère PAS le
+// blend Poisson/Elo/xG (Phase B = backtest obligatoire, math-invariants).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Derniers matchs avec stats riches pour une équipe (toutes ligues confondues —
+// agrège championnat + coupes UCL/UEL comme le scan corners multi-ligues).
+function fetchTeamXgRecent(teamName, limit = 10) {
+  try {
+    const run = (like) => sqldb.prepare(`
+      SELECT home_team, away_team, home_score, away_score,
+             home_xg, away_xg, home_sot, away_sot,
+             home_corners, away_corners, home_big_chances, away_big_chances,
+             match_date
+      FROM match_stats_history
+      WHERE (home_team LIKE ? OR away_team LIKE ?)
+        AND home_xg IS NOT NULL AND away_xg IS NOT NULL
+      ORDER BY match_date DESC
+      LIMIT ?
+    `).all(like, like, limit);
+
+    let rows = run(`%${teamName}%`);
+    // Fallback nom partiel : "Wolverhampton Wanderers" (Odds API) vs "Wolverhampton" (BSD)
+    if (!rows.length) {
+      const words = String(teamName || '').split(/\s+/).filter(w => w.length > 3);
+      if (words.length) rows = run(`%${words[0]}%`);
+    }
+    if (!rows.length) return null;
+
+    const nameLc = String(teamName || '').toLowerCase();
+    const firstWord = (String(teamName || '').split(/\s+/).find(w => w.length > 3) || teamName || '').toLowerCase();
+    let n = 0, xgFor = 0, xgAgainst = 0, goalsFor = 0, goalsAgainst = 0, sotFor = 0, cornersFor = 0, bigChances = 0;
+    for (const r of rows) {
+      const homeLc = (r.home_team || '').toLowerCase();
+      const isHome = homeLc.includes(nameLc) || homeLc.includes(firstWord);
+      const F = isHome
+        ? { xg: r.home_xg, g: r.home_score, sot: r.home_sot, c: r.home_corners, bc: r.home_big_chances }
+        : { xg: r.away_xg, g: r.away_score, sot: r.away_sot, c: r.away_corners, bc: r.away_big_chances };
+      const A = isHome ? { xg: r.away_xg, g: r.away_score } : { xg: r.home_xg, g: r.home_score };
+      if (F.xg == null) continue;
+      xgFor += F.xg; xgAgainst += (A.xg || 0);
+      goalsFor += (F.g || 0); goalsAgainst += (A.g || 0);
+      sotFor += (F.sot || 0); cornersFor += (F.c || 0); bigChances += (F.bc || 0);
+      n++;
+    }
+    if (!n) return null;
+    return {
+      sample: n,
+      xg_for: +(xgFor / n).toFixed(2),
+      xg_against: +(xgAgainst / n).toFixed(2),
+      goals_for: +(goalsFor / n).toFixed(2),
+      goals_against: +(goalsAgainst / n).toFixed(2),
+      finishing_delta: +((goalsFor - xgFor) / n).toFixed(2), // >0 = clinique, <0 = gaspille
+      sot: +(sotFor / n).toFixed(1),
+      corners_for: +(cornersFor / n).toFixed(1),
+      big_chances: +(bigChances / n).toFixed(1),
+      last_date: rows[0].match_date || null,
+    };
+  } catch (e) {
+    console.error('[XG-PROFILE] fetchTeamXgRecent error:', e.message);
+    return null;
+  }
+}
+
+// Ligne standings saison courante (xGF/xGA saison + sur/sous-performance)
+function fetchTeamSeasonXg(teamName) {
+  try {
+    const run = (like) => sqldb.prepare(`
+      SELECT team_name, season_name, played, won, drawn, lost, gf, ga, pts,
+             position, xgf, xga, xgd, xg_games, form
+      FROM team_season_stats
+      WHERE team_name LIKE ? AND is_current = 1
+      ORDER BY xg_games DESC, played DESC
+      LIMIT 1
+    `).get(like);
+    let row = run(`%${teamName}%`);
+    if (!row) {
+      const words = String(teamName || '').split(/\s+/).filter(w => w.length > 3);
+      if (words.length) row = run(`%${words[0]}%`);
+    }
+    if (!row) return null;
+    const hasXg = row.xgf > 0 && row.xg_games > 0;
+    return {
+      season: row.season_name,
+      position: row.position,
+      played: row.played,
+      pts: row.pts,
+      gf: row.gf, ga: row.ga,
+      xgf: hasXg ? row.xgf : null,
+      xga: hasXg ? row.xga : null,
+      overperf_goals: hasXg ? +(row.gf - row.xgf).toFixed(1) : null, // buts marqués vs attendus
+      underperf_def: hasXg ? +(row.ga - row.xga).toFixed(1) : null,  // buts pris vs attendus
+      form: row.form || null,
+    };
+  } catch (e) {
+    console.error('[XG-PROFILE] fetchTeamSeasonXg error:', e.message);
+    return null;
+  }
+}
+
+// GET /api/v1/stats/xg-profile?home=X&away=Y — profil xG des 2 équipes
+function handleXgProfileRoute(res, query) {
+  try {
+    const home = String(query.home || '').slice(0, 80).trim();
+    const away = String(query.away || '').slice(0, 80).trim();
+    if (!home || !away) return jsonResponse(res, 400, { error: 'params home & away requis' });
+
+    const cacheKey = `xgprofile_${home.toLowerCase()}_${away.toLowerCase()}`;
+    const cached = apiCacheGet(cacheKey);
+    if (cached) return jsonResponse(res, 200, { ...cached, cached: true });
+
+    const result = {
+      home: { name: home, recent: fetchTeamXgRecent(home), season: fetchTeamSeasonXg(home) },
+      away: { name: away, recent: fetchTeamXgRecent(away), season: fetchTeamSeasonXg(away) },
+      source: 'bsd_match_stats_history',
+      generated_at: new Date().toISOString(),
+    };
+
+    // Pas de data du tout → 200 avec flag (le frontend masque le bloc)
+    result.empty = !result.home.recent && !result.away.recent
+      && !result.home.season && !result.away.season;
+
+    apiCacheSet(cacheKey, result, 'corners'); // TTL 6h — tables statiques entre runs ETL
+    return jsonResponse(res, 200, result);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: e.message });
   }
 }
 
@@ -33517,6 +33706,13 @@ if (pathname.startsWith('/api/v1/standings/') && req.method === 'GET') {
     flashscoreFallback,
     standings: rows,
   });
+}
+
+// GET /api/v1/xg-profile?home=X&away=Y — profil xG BSD (bd 6kzf Phase A)
+// NB: PAS sous /api/v1/stats/ — ce préfixe est capté par le handler legacy
+// stats-par-matchId (ligne ~21084) plus haut dans la chaîne.
+if (pathname === '/api/v1/xg-profile' && req.method === 'GET') {
+  return handleXgProfileRoute(res, query);
 }
 
 // GET /api/v1/corners/:matchId — Corner predictions (BSD history + Poisson)
