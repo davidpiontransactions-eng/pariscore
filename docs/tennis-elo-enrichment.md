@@ -171,7 +171,7 @@ npm run tennis-elo:cron   # Les deux (cron complet)
 ### Cron scheduler
 
 ```cron
-0 6 * * 1 cd /home/deploy/pariscore && bash scripts/cron-tennis-elo.sh
+0 6 * * 1 cd /home/ubuntu/pariscore && bash scripts/cron-tennis-elo.sh
 ```
 
 (Chaque lundi à 6h du matin)
