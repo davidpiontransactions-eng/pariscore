@@ -1,0 +1,9 @@
+{
+  "name": "pm-go-to-market",
+  "version": "1.0.0",
+  "description": "Go-to-market strategy toolkit — GTM strategy, GTM motions, beachhead segments, ideal customer profiles, competitive battlecards, and growth loops.",
+  "skills": ["beachhead-segment", "competitive-battlecard", "growth-loops", "gtm-motions", "gtm-strategy", "ideal-customer-profile"],
+  "commands": ["battlecard", "growth-strategy", "plan-launch"],
+  "source": "https://github.com/phuryn/pm-skills/tree/d384f0c9/pm-go-to-market",
+  "author": "phuryn"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "pm-execution",
+  "version": "1.0.0",
+  "description": "Product execution toolkit for PMs — OKRs, PRDs, user stories, sprint planning, retrospectives, stakeholder maps, release notes, pre-mortems, strategy red-teaming, and test scenarios.",
+  "skills": ["brainstorm-okrs", "create-prd", "dummy-dataset", "job-stories", "outcome-roadmap", "pre-mortem", "prioritization-frameworks", "release-notes", "retro", "sprint-plan", "stakeholder-map", "strategy-red-team", "summarize-meeting", "test-scenarios", "user-stories", "wwas"],
+  "commands": ["generate-data", "meeting-notes", "plan-okrs", "pre-mortem", "red-team-prd", "sprint", "stakeholder-map", "test-scenarios", "transform-roadmap", "write-prd", "write-stories"],
+  "source": "https://github.com/phuryn/pm-skills/tree/d384f0c9/pm-execution",
+  "author": "phuryn"
+}
