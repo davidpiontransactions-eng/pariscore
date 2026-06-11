@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Usage: ./scripts/update_vps.sh [--tennis-elo]
+#   --tennis-elo   Après restart pm2, exécute le recompute tennis Elo
+
 DEPLOY_DIR="/home/ubuntu/pariscore"
 PM2_NAME="pariscore"
 
@@ -66,4 +69,10 @@ JSON
     || echo "[7/7] Discord échec (non bloquant)"
 else
   echo "[7/7] DISCORD_DEPLOY_WEBHOOK_URL absent du .env — notif Discord skip"
+fi
+
+# [8] Tennis Elo recompute (optionnel)
+if [ "$1" = "--tennis-elo" ] || [ "${TENNIS_ELO:-0}" = "1" ]; then
+  echo "[8/8] Tennis Elo recompute..."
+  node tools/recompute-tennis-elo.js 2>&1 || echo "[8/8] Tennis Elo échec (non bloquant)"
 fi
