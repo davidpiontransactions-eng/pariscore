@@ -1,4 +1,4 @@
-# 📊 Inventaire Bases de Données — Onglet Historique PariScore
+/# 📊 Inventaire Bases de Données — Onglet Historique PariScore
 
 > **Date** : 21 mai 2026
 > **Document** : `.context/databases_historique_inventory.md`

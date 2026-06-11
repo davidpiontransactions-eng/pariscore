@@ -1,0 +1,292 @@
+PROMPT PER CLAUDE — INTEGRAZIONE STATISTICHE BSD E CALCOLO OVER/UNDER
+
+==============================================================
+OBIETTIVO
+==============================================================
+
+Integrare tutte le statistiche live della API BSD (Betting Sports Data) nel sistema PariScore e implementare il calcolo delle probabilità Over/Under per i seguenti mercati: cartellini (cards), tiri (shots), tiri in porta (shots on target), calci d''angolo (corners), falli (fouls), fuorigioco (offsides), parate (saves), e altri mercati statistici.
+
+==============================================================
+DATI DISPONIBILI — BSD live_stats
+==============================================================
+
+La API BSD (bsdGetMatchDetail) restituisce per ogni partita un oggetto `detail.live_stats` con la seguente struttura per lato (home/away):
+
+```
+live_stats: {
+  home: {
+    total_shots:            number,   // Tiri totali
+    shots_on_target:        number,   // Tiri in porta
+    shots_off_target:       number,   // Tiri fuori porta
+    blocked_shots:          number,   // Tiri bloccati
+    shots_inside_box:       number,   // Tiri dentro l''area
+    shots_outside_box:      number,   // Tiri fuori area
+    shots_woodwork:         number,   // Tiri ai pali/legni
+    big_chances:            number,   // Grandi occasioni
+    big_chances_scored:     number,   // Grandi occasioni segnate
+    big_chances_missed:     number,   // Grandi occasioni sbagliate
+    corner_kicks:           number,   // Calci d''angolo
+    yellow_cards:           number,   // Cartellini gialli
+    red_cards:              number,   // Cartellini rossi
+    fouls:                  number,   // Falli commessi
+    offsides:               number,   // Fuorigioco
+    key_passes:             number,   // Passaggi chiave
+    tackles:                number,   // Tackle
+    interceptions:          number,   // Intercettazioni
+    clearances:             number,   // Chiarimenti (rinvii)
+    goalkeeper_saves:       number,   // Parate del portiere
+    penalties:              number,   // Rigori
+    possession:             number,   // Possesso palla (%)
+    passes:                 number,   // Passaggi totali
+    pass_accuracy:          number,   // Precisione passaggi (%)
+    dangerous_attacks:      number,   // Attacchi pericolosi
+  },
+  away: { ... stessa struttura ... }
+}
+```
+
+Questi dati sono già parsati in `server.js` nella funzione che popola `match.live_stats` (righe ~29640-29680) e nel websocket push (`POST /api/v1/ws-push`).
+
+==============================================================
+SISTEMI ESISTENTI DA CUI PARTIRE
+==============================================================
+
+1. Modello Poisson per i CORNERS (già implementato):
+   - `cornerProbFromXG(homeXG, awayXG)` in pariscore.js:11145
+   - `predictCorners(homeAvg, awayAvg, thresholds)` in server.js:15637
+   - `API /api/v1/corners/:matchId` in server.js:15671
+   - λ = (xG_casa + xG_ospite) × 3.0
+   - Predice probabilità Over per soglie [6.5, 7.5, 8.5, 9.5, 10.5]
+
+2. Visualizzazione live stats esistente:
+   - `_renderStatsFlash(m)` in pariscore.js (~linea 9511)
+   - Pannello `live-stats-panel` nel dashboard
+   - Barre percentuali casa/ospite
+
+3. Strategia ANGLE_CORNERS in server.js (~linea 14999)
+4. Badge corners +6.5 nei Top 3 Consigli (pariscore.js:11473-11501)
+5. Bookmaker drawer: O/U 9.5 corners (pariscore.js:4972-4976)
+6. `calcPowerScoreV44Detailed()` (pariscore.js ~linea 10987) — già usa possession, corners, shots per momentum
+
+==============================================================
+RICHESTE SPECIFICHE
+==============================================================
+
+1. IMPLEMENTARE MODELLI POISSON PER TUTTI I MERCATI:
+
+   a) SHOTS — Over/Under tiri totali
+      - λ = media storica tiri totali per partita (dati BSD)
+      - Soglie: Over 20.5, 25.5, 30.5, 35.5
+      - Visualizzazione: barra live + badge nei consigli
+
+   b) SHOTS ON TARGET — Over/Under tiri in porta
+      - λ = media storica tiri in porta
+      - Soglie: Over 8.5, 10.5, 12.5, 14.5
+      - Visualizzazione: barra live + badge
+
+   c) CARDS — Over/Under cartellini (gialli + rossi × 2)
+      - λ = media storica cartellini per partita
+      - Soglie: Over 3.5, 4.5, 5.5, 6.5
+      - Peso rosso = 2 gialli (già usato in cards calc esistente)
+
+   d) FOULS — Over/Under falli
+      - λ = media storica falli
+      - Soglie: Over 20.5, 25.5, 30.5
+
+   e) OFFSIDES — Over/Under fuorigioco
+      - λ = media storica offsides
+      - Soglie: Over 2.5, 3.5, 4.5
+
+   f) SAVES — Over/Under parate
+      - λ = media storica parate
+      - Soglie: Over 4.5, 6.5, 8.5
+
+2. STRATEGIE PREDITTIVE (stile ANGLE_CORNERS):
+
+   Creare nuove strategie nel sistema PariScore:
+   - `OVER_SHOTS` — Over 25.5 tiri totali
+   - `OVER_SOT` — Over 10.5 tiri in porta
+   - `OVER_CARDS` — Over 4.5 cartellini
+   - `OVER_FOULS` — Over 25.5 falli
+   - `OVER_CORNERS_V2` — Versione avanzata con media BSD (già esiste ANGLE_CORNERS)
+   - Ogni strategia con tipsterDesc, probabilityFn, icona
+
+3. API REST:
+
+   Creare endpoint stile `/api/v1/corners/:matchId` per ogni mercato:
+   - `/api/v1/shots/:matchId`
+   - `/api/v1/sot/:matchId` (shots on target)
+   - `/api/v1/cards/:matchId`
+   - `/api/v1/fouls/:matchId`
+   - `/api/v1/offsides/:matchId`
+   - `/api/v1/saves/:matchId`
+
+   Ogni endpoint deve:
+   - Recuperare storico BSD per entrambe le squadre
+   - Calcolare media per squadra → λ
+   - Calcolare probabilità Poisson per ogni soglia
+   - Arricchire con cote reali BSD se disponibili, altrimenti cote teoriche
+   - Raccomandare markets con prob >= 60%
+
+4. VISUALIZZAZIONE FRONTEND:
+
+   a) Pannello live stats — aggiungere righe per:
+      - Tiri totali con barra e probabilità Over
+      - Tiri in porta con barra e probabilità Over
+      - Cartellini con barra e probabilità Over
+      - Falli con barra e probabilità Over
+
+   b) Bookmaker drawer — aggiungere sezioni O/U per:
+      - Shots 25.5
+      - Shots on target 10.5
+      - Cards 4.5
+      - Fouls 25.5
+      Mantenere struttura esistente (corners 9.5)
+
+   c) Top 3 Consigli — aggiungere badge per:
+      - '+25.5 Tiri'
+      - '+10.5 SOT'
+      - '+4.5 Cards'
+
+5. CALCOLO LAMBDA DINAMICO:
+
+   Implementare `fetchBSDTeamStatsHistory(teamName, bsdLeagueId, statType)` generico che:
+   - Recupera gli ultimi N match della squadra via BSD
+   - Estrae lo statType richiesto (total_shots, shots_on_target, yellow_cards, fouls, etc.)
+   - Calcola media, mediana, deviazione standard
+   - Ritorna: { avg, median, stddev, sampleSize, lastN }
+
+   Usare questo per popolare λ in ogni modello.
+
+6. CONFIDENCE SCORE PER OGNI MERCATO:
+
+   La confidence deve considerare:
+   - Dimensione del campione (almeno 5 match recenti)
+   - Consistenza (deviazione standard bassa = +confidenza)
+   - Qualità fonte (BSD real = alta, media lega = bassa)
+   Formula: `min(85, 35 + 50 × (sampleSize / (sampleSize + 6)) - stddevPenalty)`
+
+==============================================================
+CODICE DI RIFERIMENTO — MODELLO CORNERS ESISTENTE
+==============================================================
+
+// server.js — predictCorners()
+function predictCorners(homeAvg, awayAvg, thresholds = [6.5, 7.5, 8.5, 9.5, 10.5], sampleSize = null) {
+  const expectedTotal = (homeAvg + awayAvg) / 2;
+  const lambda = expectedTotal;
+  const probs = {};
+  for (const threshold of thresholds) {
+    let cumulative = 0;
+    const maxX = Math.floor(threshold);
+    for (let k = 0; k <= maxX; k++) {
+      let logP = -lambda + k * Math.log(Math.max(lambda, 0.001));
+      for (let i = 1; i <= k; i++) logP -= Math.log(i);
+      cumulative += Math.exp(logP);
+    }
+    probs[`over_${String(threshold).replace(''.'', ''_'')}`] = Math.round((1 - cumulative) * 100);
+  }
+  return {
+    expected_total: Math.round(lambda * 10) / 10,
+    probabilities: probs,
+    confidence: sampleSize == null ? 25 : Math.min(85, Math.round(35 + 50 * (sampleSize / (sampleSize + 6)))),
+  };
+}
+
+// server.js — cornerProbFromXG() (frontend fallback)
+function cornerProbFromXG(homeXG, awayXG) {
+  const lambda = Math.max(1.0, (homeXG + awayXG) * 3.0);
+  let cumulative = 0;
+  for (let k = 0; k <= 6; k++) {
+    let logP = -lambda + k * Math.log(Math.max(lambda, 0.001));
+    for (let i = 1; i <= k; i++) logP -= Math.log(i);
+    cumulative += Math.exp(logP);
+  }
+  return Math.round(Math.max(0, Math.min(99, (1 - cumulative) * 100)));
+}
+
+// server.js — enrichCornersFromBSD()
+async function enrichCornersFromBSD(matches) {
+  for (const m of matches) {
+    const homeData = await fetchBSDTeamCornerHistory(m.home_team, bsdLeagueId, 5);
+    const awayData = await fetchBSDTeamCornerHistory(m.away_team, bsdLeagueId, 5);
+    const homeAvg = homeData?.totalCornersPerMatch ?? 5.25;
+    const awayAvg = awayData?.totalCornersPerMatch ?? 5.25;
+    const prediction = predictCorners(homeAvg, awayAvg, undefined, sampleSize);
+    m.corners_poisson = { over_6_5: prediction.probabilities.over_6_5, source: ''bsd'', home_avg: homeAvg, away_avg: awayAvg };
+  }
+}
+
+// server.js — handleCornersRoute()
+// GET /api/v1/corners/:matchId — recupera storico BSD, calcola Poisson, restituisce probabilità + cote + raccomandazioni
+
+==============================================================
+FORMULE MATEMATICHE DA APPLICARE
+==============================================================
+
+Per OGNI mercato statistico (shots, sot, cards, fouls, offsides, saves):
+
+1. Recupera media storica per squadra (ultimi N match):
+   avg_home = media(shots_home_ultimi_N_match)
+   avg_away = media(shots_away_ultimi_N_match)
+
+2. Calcola λ atteso per la partita:
+   λ = (avg_home + avg_away) / 2
+
+3. Distribuzione Poisson:
+   P(X = k) = λ^k × e^(-λ) / k!
+
+4. Probabilità Over X.5:
+   P(Over X.5) = 1 - Σ_{k=0}^{floor(X)} P(X = k)
+
+5. Cote teorica equa:
+   cote = 1 / P(Over X.5)
+
+6. Edge vs bookmaker reale:
+   Edge = (P(Over X.5) - 1/cote_bookmaker) × 100
+
+==============================================================
+STRUTTURA OUTPUT ATTESA
+==============================================================
+
+Il sistema deve produrre per ogni partita live:
+
+```
+{
+  "match": "SquadraA vs SquadraB",
+  "shots": {
+    "expected_total": 28.5,
+    "probabilities": { "over_20_5": 85, "over_25_5": 62, "over_30_5": 38, "over_35_5": 18 },
+    "confidence": 72,
+    "odds": { "source": "bsd|theory_ai", "markets": { "over_25_5": { "decimal": 1.61, "implied_probability": 62 } } },
+    "recommendations": [{ "market": "Over 25.5", "probability": 62, "recommended": true }]
+  },
+  "sot": { ... stessa struttura ... },
+  "cards": { ... stessa struttura ... },
+  "fouls": { ... },
+  "offsides": { ... },
+  "saves": { ... }
+}
+```
+
+==============================================================
+PRIORITÀ
+==============================================================
+
+1. MUST HAVE — Modello Poisson generico + Shots + Shots on Target + Cards
+2. SHOULD HAVE — Fouls + Offsides + API REST per tutti i mercati
+3. NICE TO HAVE — Saves + strategie predittive + edge calcolo
+4. FUTURE — Visualizzazione frontend completa (badge, barre, bookmaker drawer)
+
+==============================================================
+CONSIDERAZIONI TECNICHE
+==============================================================
+
+- Usare sempre la media ENTAMBE le squadre per λ, non solo una
+- Cache API 6 ore per dati storici (come corners)
+- Fallback: se mancano dati BSD, usare media campionato (default: shots=22, sot=9, cards=4, fouls=24)
+- Tenere traccia della dimensione del campione per calcolare confidenza
+- Non modificare il modello corners esistente, estenderlo
+- Testare con partite reali e confrontare con cote bookmaker
+- mantenere la struttura lock-in del frontend: nuove righe in _renderStatsFlash(), nuove sezioni nel bookmaker drawer, nuovi badge nei Top 3 Consigli
+
+FINE PROMPT

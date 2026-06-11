@@ -4076,6 +4076,13 @@ function renderTennisValueBets(rawMatches) {
         const bv = (wb && wb.p1 != null && wb.p2 != null) ? Math.max(wb.p1, wb.p2) : -1;
         return bv - av;
       }
+      case 'elo_surf_diff': {
+        const _p1ea = a.predictions?.elo?.p1_surface?.elo ?? a.predictions?.elo?.p1_all?.elo ?? 0;
+        const _p2ea = a.predictions?.elo?.p2_surface?.elo ?? a.predictions?.elo?.p2_all?.elo ?? 0;
+        const _p1eb = b.predictions?.elo?.p1_surface?.elo ?? b.predictions?.elo?.p1_all?.elo ?? 0;
+        const _p2eb = b.predictions?.elo?.p2_surface?.elo ?? b.predictions?.elo?.p2_all?.elo ?? 0;
+        return Math.abs(_p1eb - _p2eb) - Math.abs(_p1ea - _p2ea);
+      }
       case 'time':
       default: {
         // Match le PLUS PROCHE de l'heure actuelle (live/imminent en tête,
