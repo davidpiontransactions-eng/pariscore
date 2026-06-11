@@ -16209,6 +16209,8 @@ async function openInsights(matchId) {
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
     const statsEl = document.getElementById('ins-tab-stats');
     if (statsEl) statsEl.innerHTML = buildStatsTab(d);
+    // bd 6kzf Phase A — profil xG BSD injecté en tête de l'onglet Stats (non bloquant)
+    enrichStatsTabWithXg(m).catch(() => {});
     document.getElementById('ins-tab-graphique').innerHTML  = buildGraphiqueTab(d);
     document.getElementById('ins-tab-classement').innerHTML = buildClassementTab(d);
     document.getElementById('ins-tab-corners').innerHTML    = await buildCornersTab(m.id);
@@ -16320,6 +16322,64 @@ async function buildScoutingTab(matchId) {
       </div>
     `;
   }
+}
+
+// ─── bd 6kzf Phase A — Profil xG BSD (match_stats_history + team_season_stats) ───
+// Fetch lazy à l'ouverture du modal, injecté en tête de l'onglet Stats.
+// Lecture seule : n'influence PAS le modèle Poisson (Phase B = backtest gated).
+async function enrichStatsTabWithXg(m) {
+  if (!m || !m.home_team || !m.away_team) return;
+  const res = await fetch(`/api/v1/xg-profile?home=${encodeURIComponent(m.home_team)}&away=${encodeURIComponent(m.away_team)}`);
+  if (!res.ok) return;
+  const d = await res.json();
+  if (!d || d.empty) return;
+  const el = document.getElementById('ins-tab-stats');
+  if (!el || el.querySelector('.xgp-wrap')) return; // déjà injecté ou onglet recyclé
+  el.insertAdjacentHTML('afterbegin', buildXgProfileBlock(d));
+}
+
+function buildXgProfileBlock(d) {
+  const finBadge = (delta) => {
+    if (delta == null) return '';
+    const v = Number(delta);
+    if (v >= 0.15) return `<span style="color:var(--green);font-weight:600">🎯 Clinique +${safeFixed(v, 2)}</span>`;
+    if (v <= -0.15) return `<span style="color:var(--red);font-weight:600">🧊 Froid ${safeFixed(v, 2)}</span>`;
+    return `<span style="color:var(--text3)">≈ Conforme xG</span>`;
+  };
+  const seasonLine = (s) => {
+    if (!s) return '<div style="color:var(--text3);font-size:10px">Saison : n/d</div>';
+    let perf = '';
+    if (s.overperf_goals != null) {
+      const v = Number(s.overperf_goals);
+      const col = v >= 2 ? 'var(--green)' : v <= -2 ? 'var(--red)' : 'var(--text3)';
+      perf = ` · <span style="color:${col}">${v > 0 ? '+' : ''}${safeFixed(v, 1)} buts vs xG</span>`;
+    }
+    return `<div style="font-size:10px;color:var(--text3);margin-top:4px">${s.season || 'Saison'} · ${s.gf ?? '?'} BP/${s.ga ?? '?'} BC${s.xgf ? ` · xG ${safeFixed(s.xgf, 1)}/${safeFixed(s.xga, 1)}` : ''}${perf}${s.form ? ` · <span style="font-family:'DM Mono',monospace">${s.form}</span>` : ''}</div>`;
+  };
+  const col = (side, isAway) => {
+    const r = side.recent;
+    if (!r) return `<div style="flex:1;min-width:0;${isAway ? 'text-align:right' : ''}">
+      <div style="font-weight:600;font-size:12px;color:var(--text);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${side.name}</div>
+      <div style="color:var(--text3);font-size:11px">Pas de données xG BSD</div>
+      ${seasonLine(side.season)}
+    </div>`;
+    return `<div style="flex:1;min-width:0;${isAway ? 'text-align:right' : ''}">
+      <div style="font-weight:600;font-size:12px;color:var(--text);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${side.name}</div>
+      <div style="font-size:18px;font-family:'DM Mono',monospace;color:var(--green)">${safeFixed(r.xg_for, 2)} <span style="font-size:10px;color:var(--text3)">xG/match</span></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">xG concédé <span style="color:var(--red);font-family:'DM Mono',monospace">${safeFixed(r.xg_against, 2)}</span></div>
+      <div style="font-size:11px;margin-top:4px">${finBadge(r.finishing_delta)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">⚽ ${safeFixed(r.goals_for, 1)} buts · 🎯 ${safeFixed(r.sot, 1)} cadrés · 🚩 ${safeFixed(r.corners_for, 1)} corners · 💥 ${safeFixed(r.big_chances, 1)} g.occas</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px">${r.sample} derniers matchs</div>
+      ${seasonLine(side.season)}
+    </div>`;
+  };
+  return `<div class="xgp-wrap" style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text);letter-spacing:0.4px">⚡ PROFIL xG RÉEL</div>
+      <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">BSD · ${d.cached ? '💾 cache' : 'live'}</div>
+    </div>
+    <div style="display:flex;gap:16px">${col(d.home, false)}${col(d.away, true)}</div>
+  </div>`;
 }
 
 async function buildCornersTab(matchId) {
