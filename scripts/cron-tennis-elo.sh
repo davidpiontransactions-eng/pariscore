@@ -7,7 +7,7 @@
 #   bash scripts/cron-tennis-elo.sh --dry    # dry-run (skip scrap, recompute avec --dry-run)
 set -e
 
-DEPLOY_DIR="/home/deploy/pariscore"
+DEPLOY_DIR="/home/ubuntu/pariscore"
 LOG_DIR="$DEPLOY_DIR/logs"
 LOG_FILE="$LOG_DIR/cron-tennis-elo.log"
 TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S %Z')"
