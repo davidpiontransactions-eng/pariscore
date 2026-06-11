@@ -192,3 +192,48 @@ Chargées automatiquement sur les fichiers pertinents :
 
 
 *v3.4 — 2026-06-04 — Aces/DF per set ✅ confirmé patché `_mergeDetailStats` server.js:20327. Bug ic90 wipe fixé server.js:16504.*
+
+
+---
+
+## 10. PM-SKILLS — Product Management Plugins
+
+4 plugins installés + 1 super-skill d'orchestration. Les skills sont chargés depuis `pm-skills-plugins/` et la super-skill depuis `.claude/skills/pm-product-cycle/`.
+
+### Plugins installés
+
+| Plugin | Skills | Commandes |
+|--------|--------|-----------|
+| `pm-product-strategy` | swot-analysis, porters-five-forces, product-vision, business-model, value-proposition | `/strategy`, `/business-model`, `/market-scan` |
+| `pm-execution` | create-prd, brainstorm-okrs, outcome-roadmap, user-stories, sprint-plan, prioritization-frameworks | `/write-prd`, `/plan-okrs`, `/sprint`, `/write-stories` |
+| `pm-ai-shipping` | document-app, derive-tests, test-scenarios, dummy-dataset, ship-check, release-notes, structured-dataset | `/document-app`, `/derive-tests`, `/ship-check` |
+| `pm-go-to-market` | pricing-strategy, monetization-strategy, job-stories, sales-playbook, go-to-market, adoption-strategy, vendor-evaluation | `/pricing`, `/gtm`, `/sales-playbook` |
+
+### Super-skill d'orchestration : `pm-product-cycle`
+
+Pipeline 5 phases : **Strategy → Vision/PRD → Sprint → Document & Test → Ship Check**
+
+Chaque phase produit un artefact dans `pm-skills-plugins/artifacts/`. La phase suivante le consomme avant de s'exécuter.
+
+**Déclencheurs :**
+- "lance le cycle produit complet pour [feature]"
+- "strategy to ship pour [feature]"
+- "orchestrate the full pm workflow"
+
+**Documentation :** `pm-skills-plugins/WORKFLOW.md`
+**Super-skill :** `.claude/skills/pm-product-cycle/SKILL.md`
+
+### Intégration gstack
+
+```
+/gstack-office-hours → Définition du problème
+pm-product-cycle Phase 1-2 → Stratégie + Vision
+/gstack-plan-ceo-review → Revue CEO
+/gstack-plan-eng-review → Revue Engineering
+pm-product-cycle Phase 3 → PRD + Sprint
+→ Implémentation ←
+pm-product-cycle Phase 4-5 → Tests + Ship
+/gstack-ship → PR + Déploiement
+```
+
+*v3.5 — 2026-06-11 — pm-skills 4 plugins installés + super-skill pm-product-cycle créée.
