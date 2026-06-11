@@ -1405,6 +1405,105 @@ function broadcastMarketDivergence(matchId) {
   return true;
 }
 
+// bd 040 — Steam detector multi-bookmaker (BD-DATA-012)
+// "Steam" = mouvement coordonné de N >= threshold bookmakers dans même direction
+// (cote favori baisse) en fenêtre courte (≤5min). Signal sharp money.
+//
+// Schema: KV `odds_snap_bk_${matchId}` = [{ ts, books: [{bk:'pinnacle', home, draw, away}, ...] }]
+// (max 12 snapshots). Append-only, capped. Décision: pas de migration SQLite (zero-dep + KV pattern
+// déjà en place pour odds_snap_${id}).
+//
+// detectSteam(matchId, opts)
+//   - windowMs (default 300_000 = 5min) — fenêtre temporelle
+//   - threshold (default 3) — N bookmakers minimum
+//   - dropPctMin (default 2.0) — delta minimum par bookmaker pour compter comme "drop"
+// Retour: null OU {direction, n_bookmakers, magnitude_avg_pct, severity, samples_window}.
+function detectSteam(matchId, opts) {
+  try {
+    if (matchId == null) return null;
+    const o = opts || {};
+    const windowMs = Number.isFinite(o.windowMs) ? o.windowMs : 300_000;
+    const threshold = Number.isFinite(o.threshold) ? o.threshold : 3;
+    const dropPctMin = Number.isFinite(o.dropPctMin) ? o.dropPctMin : 2.0;
+    const history = kvGet(`odds_snap_bk_${matchId}`) || [];
+    if (!Array.isArray(history) || history.length < 2) return null;
+    const now = Date.now();
+    const window = history.filter(s => s && s.ts && (now - s.ts) <= windowMs && Array.isArray(s.books));
+    if (window.length < 2) return null;
+    const first = window[0];
+    const last = window[window.length - 1];
+    // Build map bk → {homeFirst, homeLast, drawFirst, drawLast, awayFirst, awayLast}
+    const bkMap = new Map();
+    for (const b of first.books) {
+      if (!b || !b.bk) continue;
+      bkMap.set(b.bk, { homeFirst: b.home, drawFirst: b.draw, awayFirst: b.away });
+    }
+    for (const b of last.books) {
+      if (!b || !b.bk) continue;
+      const e = bkMap.get(b.bk) || {};
+      e.homeLast = b.home; e.drawLast = b.draw; e.awayLast = b.away;
+      bkMap.set(b.bk, e);
+    }
+    // Pour chaque direction (home/draw/away), compter N bookmakers avec drop >= dropPctMin
+    const counts = { home: [], draw: [], away: [] };
+    for (const [bk, e] of bkMap) {
+      for (const side of ['home', 'draw', 'away']) {
+        const fst = e[side + 'First'], lst = e[side + 'Last'];
+        if (!Number.isFinite(fst) || !Number.isFinite(lst) || fst <= 0) continue;
+        const deltaPct = ((lst - fst) / fst) * 100;
+        // Steam = baisse de cote => deltaPct négatif <= -dropPctMin
+        if (deltaPct <= -dropPctMin) counts[side].push({ bk, deltaPct });
+      }
+    }
+    // Sélectionne la direction avec le plus de bookmakers convergents
+    let bestDir = null;
+    let bestList = [];
+    for (const side of ['home', 'draw', 'away']) {
+      if (counts[side].length > bestList.length) { bestDir = side; bestList = counts[side]; }
+    }
+    if (!bestDir || bestList.length < threshold) return null;
+    // Magnitude moyenne (en %, clamp [-50, 50] anti-outlier)
+    const magnitudes = bestList.map(x => Math.max(-50, Math.min(50, x.deltaPct)));
+    const magAvg = magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length;
+    const magAbs = Math.abs(magAvg);
+    let severity = 'low';
+    if (magAbs >= 5) severity = 'high';
+    else if (magAbs >= 3) severity = 'med';
+    return {
+      direction: bestDir,
+      n_bookmakers: bestList.length,
+      magnitude_avg_pct: parseFloat(magAvg.toFixed(2)),
+      severity,
+      samples_window: window.length,
+      window_ms: windowMs,
+      bookmakers: bestList.map(x => x.bk).slice(0, 10), // tronque pour SSE payload
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+// bd 040 — Broadcast SSE steam_detected si signal valide + debounce 5min.
+// matchId sanitize string truncated 64 char alnum. Magnitude clamp [-50, 50]%.
+function broadcastSteamDetected(matchId, opts) {
+  const steam = detectSteam(matchId, opts);
+  if (!steam) return false;
+  if (!_pulseShouldBroadcast('steam_detected', matchId)) return false;
+  if (sseClients.size === 0) return false;
+  const safeId = String(matchId).slice(0, 64);
+  broadcastSSE('steam_detected', {
+    type: 'steam_detected',
+    matchId: safeId,
+    direction: steam.direction,
+    n_bookmakers: steam.n_bookmakers,
+    magnitude_avg_pct: steam.magnitude_avg_pct,
+    severity: steam.severity,
+    bookmakers: steam.bookmakers,
+    window_min: parseFloat((steam.window_ms / 60000).toFixed(1)),
+  });
+  return true;
+}
+
 // bd 6v0 — DR Spike SSE event broadcast tennis live.
 // Détecte écart |DR_set_courant - DR_match| > seuil (threshold env DR_SPIKE_THRESHOLD_PCT,
 // exprimé en % du DR_match). Sécurité: side ∈ {p1,p2}, matchId string truncated 64.
@@ -4371,7 +4470,21 @@ function initSQLite() {
     if (!cols.some(c => c.name === 'source')) {
       sqldb.exec(`ALTER TABLE user_bets ADD COLUMN source TEXT DEFAULT 'manual'`);
     }
+    // bd cty — CLV par stratégie 30j : strategy tag + closing line snapshot
+    if (!cols.some(c => c.name === 'strategy')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN strategy TEXT`);
+    }
+    if (!cols.some(c => c.name === 'closing_odds')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN closing_odds REAL`);
+    }
+    if (!cols.some(c => c.name === 'closing_odds_captured_at')) {
+      sqldb.exec(`ALTER TABLE user_bets ADD COLUMN closing_odds_captured_at INTEGER`);
+    }
   } catch (e) { console.error('  [Migration v9.8.1] user_bets ALTER failed:', e.message); }
+  // bd cty — index dédié pour requêtes CLV (user_id, strategy, settled_at)
+  try {
+    sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_user_bets_strategy ON user_bets(user_id, strategy, settled_at)`);
+  } catch (e) { console.error('  [Migration cty] idx_user_bets_strategy failed:', e.message); }
 
   // bankroll_plan — config par user pour suivi objectif quotidien
   sqldb.exec(`CREATE TABLE IF NOT EXISTS bankroll_plan (
@@ -4765,6 +4878,86 @@ function apiCacheClear(source) {
   } else {
     sqldb.prepare('DELETE FROM api_cache').run();
   }
+}
+
+// ─── bd 3vn — TTL cache homogène (Phase 1) ──────────────────────────────────
+// Source unique TTL via cache_profiles.json (root projet, sibling de leagues_config.json).
+// Override env var: CACHE_TTL_<PROFILE_UPPERCASE> (ex: CACHE_TTL_BSD_INCIDENTS=120000)
+// Fallback: si profile.json absent OU clé absente OU parsing fail → renvoie `fallbackMs`
+// → ZÉRO régression : code existant continue à utiliser TTL hardcoded en l'absence du config.
+// Lecture fichier mise en cache 60s (mtime check + reload), évite I/O répété sur chemin chaud.
+const _CACHE_PROFILES_FILE = path.join(__dirname, 'cache_profiles.json');
+const _CACHE_PROFILES_RELOAD_MS = 60 * 1000;
+let _cacheProfilesCache = { data: null, loadedAt: 0, mtimeMs: 0, lastErr: null };
+
+function _loadCacheProfiles() {
+  const now = Date.now();
+  if (_cacheProfilesCache.data && (now - _cacheProfilesCache.loadedAt) < _CACHE_PROFILES_RELOAD_MS) {
+    return _cacheProfilesCache.data;
+  }
+  try {
+    const stat = fs.statSync(_CACHE_PROFILES_FILE);
+    if (_cacheProfilesCache.data && stat.mtimeMs === _cacheProfilesCache.mtimeMs) {
+      _cacheProfilesCache.loadedAt = now;
+      return _cacheProfilesCache.data;
+    }
+    const raw = fs.readFileSync(_CACHE_PROFILES_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    _cacheProfilesCache = { data: parsed, loadedAt: now, mtimeMs: stat.mtimeMs, lastErr: null };
+    return parsed;
+  } catch (e) {
+    if (!_cacheProfilesCache.lastErr || _cacheProfilesCache.lastErr.code !== e.code) {
+      console.warn(`  ⚠ cache_profiles.json indisponible (${e.code || e.message}) — fallbacks hardcoded utilisés`);
+    }
+    _cacheProfilesCache = { data: null, loadedAt: now, mtimeMs: 0, lastErr: e };
+    return null;
+  }
+}
+
+/**
+ * getCacheTTL(profileKey, fallbackMs)
+ * - Lit cache_profiles.json (cache fichier 60s + mtime invalidation)
+ * - Override prioritaire: process.env.CACHE_TTL_<PROFILE_UPPERCASE> (parseInt strict)
+ * - Renvoie fallbackMs si profile absent OU fichier introuvable OU env var invalide
+ * → ZÉRO régression: les call sites passent leur TTL hardcoded historique en fallback.
+ */
+function getCacheTTL(profileKey, fallbackMs) {
+  if (typeof profileKey === 'string' && profileKey.length > 0) {
+    const envKey = 'CACHE_TTL_' + profileKey.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+    const envVal = process.env[envKey];
+    if (envVal !== undefined) {
+      const n = parseInt(envVal, 10);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  }
+  const profiles = _loadCacheProfiles();
+  if (profiles && Object.prototype.hasOwnProperty.call(profiles, profileKey)) {
+    const v = profiles[profileKey];
+    if (Number.isFinite(v) && v > 0) return v;
+  }
+  if (Number.isFinite(fallbackMs) && fallbackMs > 0) return fallbackMs;
+  return API_CACHE_TTL;
+}
+
+/** Diag route admin — snapshot état runtime profiles + overrides env */
+function getCacheProfilesSnapshot() {
+  const profiles = _loadCacheProfiles();
+  const overrides = {};
+  for (const k of Object.keys(process.env)) {
+    if (k.startsWith('CACHE_TTL_')) {
+      const n = parseInt(process.env[k], 10);
+      overrides[k] = Number.isFinite(n) && n > 0 ? n : `<invalid: ${process.env[k]}>`;
+    }
+  }
+  return {
+    file: _CACHE_PROFILES_FILE,
+    loadedAt: _cacheProfilesCache.loadedAt,
+    mtimeMs: _cacheProfilesCache.mtimeMs,
+    lastError: _cacheProfilesCache.lastErr ? (_cacheProfilesCache.lastErr.code || _cacheProfilesCache.lastErr.message) : null,
+    profileCount: profiles ? Object.keys(profiles).filter(k => k !== '_meta').length : 0,
+    profiles: profiles || null,
+    envOverrides: overrides,
+  };
 }
 
 function apiCacheCleanExpired() {
@@ -7021,6 +7214,32 @@ function buildMatchRecord(raw) {
     // bd a8n — Post snapshot, check market divergence (delta+slope 15min) → SSE.
     // Debounce 30s per matchId garantit absence spam si fetchOdds cron tape.
     try { broadcastMarketDivergence(record.id); } catch (_) {}
+
+    // bd 040 — Capture per-bookmaker snapshot pour steam detection.
+    // record.all_bookmakers = rows processAllBookmakers (home/draw/away par bk).
+    // Stocke compact pour steam detector fenêtre 5min.
+    try {
+      const bkRows = Array.isArray(record.all_bookmakers) ? record.all_bookmakers : [];
+      if (bkRows.length >= 2) {
+        const bkSnapKey = `odds_snap_bk_${record.id}`;
+        const bkHistory = kvGet(bkSnapKey) || [];
+        const bkArr = Array.isArray(bkHistory) ? bkHistory : [];
+        const books = bkRows
+          .filter(r => r && (r.key || r.title) && (r.home || r.away))
+          .slice(0, 25) // cap bookmaker count par snapshot
+          .map(r => ({
+            bk: String(r.key || r.title || '').toLowerCase().slice(0, 32),
+            home: Number.isFinite(r.home) ? r.home : null,
+            draw: Number.isFinite(r.draw) ? r.draw : null,
+            away: Number.isFinite(r.away) ? r.away : null,
+          }));
+        if (books.length >= 2) {
+          kvSet(bkSnapKey, [...bkArr, { ts: Date.now(), books }].slice(-12));
+          // Steam check post-snapshot. Debounce 5min géré par _pulseShouldBroadcast.
+          broadcastSteamDetected(record.id);
+        }
+      }
+    } catch (_) {}
   }
 
   // ── SPRINT 1 P0 — BD-DATA-001 — IC90 bornes sur best_edge (Normal-approx) ──
@@ -7086,6 +7305,35 @@ function buildMatchRecord(raw) {
     }
   } catch (e) {
     // fatigue is optional decoration
+  }
+
+  // ── BD-DATA-009 (bd kgd) — Travel Factor : distance + jet-lag + climat ──────
+  // Modulateur xG visiteur (max -8% literature betting analytics).
+  // Sport football uniquement (tennis/individuel hors scope).
+  try {
+    if (typeof computeTravelFactor === 'function') {
+      const sport = raw._sport || raw.sport_key || '';
+      const isFootball = !sport.startsWith('tennis_') && sport !== 'tennis';
+      if (isFootball) {
+        const lastAwayMatchISO = (typeof _lastMatchDateBeforeKickoff === 'function')
+          ? _lastMatchDateBeforeKickoff(raw.away_team, raw.commence_time)
+          : null;
+        const tf = computeTravelFactor(raw.home_team, raw.away_team, raw.commence_time, lastAwayMatchISO);
+        if (tf) {
+          record.travel_factor = tf;
+          // Modulateur xG sur visiteur (attaque dégradée) — n'applique que si score > 0 et non missing
+          if (!tf.missing && typeof tf.xg_modulator === 'number' && tf.xg_modulator < 1) {
+            const origXgAway = record.expectedGoals?.away;
+            if (typeof origXgAway === 'number' && origXgAway > 0) {
+              record.expectedGoals.away_raw = origXgAway;
+              record.expectedGoals.away = parseFloat((origXgAway * tf.xg_modulator).toFixed(2));
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // travel factor is optional decoration
   }
 
   // Injuries — mappées directement depuis le flux BSD (unavailable_players)
@@ -8689,6 +8937,137 @@ function _strategyWonOf(strategyKey, h) {
     // Stratégies sans data dans le record archivé (corners, cartons, etc.) → null
     default: return null;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// bd cty — BD-DATA-006 : CLV (Closing Line Value) par stratégie 30 jours
+// CLV = (cote_pari_pris / cote_clôture - 1) × 100
+// Métrique gold-standard sharp vs square : CLV+ = sharp, CLV~0 = flat, CLV- = square
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Infère un tag stratégie depuis (market, selection_label) quand bet POST ne fournit pas
+// d'explicite `strategy`. Mapping conservateur — null si ambigu (pas de pollution data).
+function inferStrategyTag(market, selectionLabel) {
+  if (!market || typeof market !== 'string') return null;
+  const m = market.toUpperCase().replace(/[\s\-]/g, '_');
+  const sl = (selectionLabel || '').toLowerCase();
+  // Match direct sur les clés STRATEGIES si déjà au bon format
+  if (typeof STRATEGIES === 'object' && STRATEGIES && Object.prototype.hasOwnProperty.call(STRATEGIES, m)) return m;
+  // Heuristiques marchés courants
+  if (m.includes('BTTS') || m === 'GG' || m === 'GGNG') return sl.includes('non') || sl === 'no' ? null : 'BTTS_YES';
+  if (m.includes('OVER_2_5') || m === 'O25' || m === 'PLUS_2_5') return 'OVER_2_5';
+  if (m.includes('OVER_1_5') || m === 'O15') return 'OVER_1_5';
+  if (m.includes('UNDER_2_5') || m === 'U25' || m === 'MOINS_2_5') return 'UNDER_2_5';
+  if (m === '1X2' || m === '1N2') {
+    if (sl === '1' || sl.includes('home') || sl.includes('domicile')) return 'HOME_WIN';
+    if (sl === '2' || sl.includes('away') || sl.includes('exterieur') || sl.includes('extérieur')) return 'AWAY_WIN';
+    if (sl === 'x' || sl === 'n' || sl.includes('nul') || sl.includes('draw')) return 'DRAW';
+  }
+  if (m.includes('HOME_WIN') || m === 'HOME') return 'HOME_WIN';
+  if (m.includes('AWAY_WIN') || m === 'AWAY') return 'AWAY_WIN';
+  if (m.includes('DRAW') || m === 'NUL') return 'DRAW';
+  if (m.includes('CS_0_0') || m === 'SCORE_00' || m === '0_0') return 'CS_00';
+  return null;
+}
+
+// Clip outliers CLV pour robustesse stats : [-90%, +300%]
+// CLV < -90% = bet sur 100x outsider qui clos 10x = ratio non-informatif (bug data)
+// CLV > 300% = artefact closing line non-snapshoté (cote stale)
+function _clipCLV(pct) {
+  if (!Number.isFinite(pct)) return null;
+  return Math.max(-90, Math.min(300, pct));
+}
+
+// Median d'un array de nombres (sans dep)
+function _medianOf(arr) {
+  if (!arr || !arr.length) return 0;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// Helper bas-niveau : CLV moyen pour une stratégie spécifique sur fenêtre N jours
+// userId : null = aggregate cross-users (anonymized public mode)
+// Returns: { strategy, n_bets, clv_mean_pct, clv_median_pct, win_rate_pct, roi_pct, sparkline }
+function computeStrategyCLV(userId, strategy, periodDays = 30) {
+  if (!sqldb) return null;
+  const periodSec = Math.max(1, Math.min(365, periodDays | 0)) * 86400;
+  const sinceTs = Math.floor(Date.now() / 1000) - periodSec;
+
+  // Where clause : bets settled (non-pending, non-void), strategy match, closing_odds disponible
+  const whereParts = [
+    "strategy = ?",
+    "closing_odds IS NOT NULL",
+    "closing_odds > 1.01",
+    "odds > 1.01",
+    "status IN ('won','lost','half_won','half_lost','cashout')",
+    "settled_at >= ?",
+  ];
+  const params = [strategy, sinceTs];
+  if (userId != null) {
+    whereParts.push("user_id = ?");
+    params.push(userId);
+  }
+  const sql = `SELECT odds, closing_odds, stake_cents, payout_cents, status, settled_at
+               FROM user_bets WHERE ${whereParts.join(' AND ')} ORDER BY settled_at ASC`;
+  let rows;
+  try { rows = sqldb.prepare(sql).all(...params); }
+  catch (e) { _traceCatch('clv_query', e); return null; }
+  if (!rows.length) return { strategy, n_bets: 0, clv_mean_pct: null, clv_median_pct: null, win_rate_pct: null, roi_pct: null, sparkline: [] };
+
+  const clvs = [];
+  let wins = 0, totalStake = 0, totalPayout = 0;
+  for (const r of rows) {
+    const clv = _clipCLV(((r.odds / r.closing_odds) - 1) * 100);
+    if (clv != null) clvs.push({ clv, ts: r.settled_at });
+    if (r.status === 'won' || r.status === 'half_won') wins++;
+    totalStake += (r.stake_cents || 0);
+    totalPayout += (r.payout_cents || 0);
+  }
+  const clvOnly = clvs.map(c => c.clv);
+  const mean = clvOnly.reduce((s, v) => s + v, 0) / clvOnly.length;
+  // Sparkline : moyenne glissante par bucket de 3 jours (max 10 points)
+  const bucketSec = Math.max(1, Math.floor(periodSec / 10));
+  const buckets = new Map();
+  for (const { clv, ts } of clvs) {
+    const k = Math.floor(ts / bucketSec);
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(clv);
+  }
+  const sparkline = Array.from(buckets.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([k, vs]) => ({ ts: k * bucketSec, clv: +(vs.reduce((s, v) => s + v, 0) / vs.length).toFixed(2) }));
+
+  return {
+    strategy,
+    n_bets: rows.length,
+    clv_mean_pct: +mean.toFixed(2),
+    clv_median_pct: +(_medianOf(clvOnly)).toFixed(2),
+    win_rate_pct: +(100 * wins / rows.length).toFixed(1),
+    roi_pct: totalStake > 0 ? +(100 * (totalPayout / totalStake)).toFixed(2) : null,
+    sparkline,
+  };
+}
+
+// Top-level : balaye toutes les stratégies présentes en DB pour user (ou global) sur N jours
+function computeAllStrategyCLV(userId, periodDays = 30) {
+  if (!sqldb) return [];
+  const periodSec = Math.max(1, Math.min(365, periodDays | 0)) * 86400;
+  const sinceTs = Math.floor(Date.now() / 1000) - periodSec;
+  const params = [sinceTs];
+  let where = "strategy IS NOT NULL AND closing_odds IS NOT NULL AND settled_at >= ? AND status IN ('won','lost','half_won','half_lost','cashout')";
+  if (userId != null) {
+    where += " AND user_id = ?";
+    params.push(userId);
+  }
+  let strats;
+  try {
+    strats = sqldb.prepare(`SELECT DISTINCT strategy FROM user_bets WHERE ${where}`).all(...params);
+  } catch (e) { _traceCatch('clv_distinct', e); return []; }
+  return strats
+    .map(r => computeStrategyCLV(userId, r.strategy, periodDays))
+    .filter(r => r && r.n_bets > 0)
+    .sort((a, b) => (b.clv_mean_pct || 0) - (a.clv_mean_pct || 0));
 }
 
 // H3 : décompose un record tennis en picks-par-marché.
@@ -14179,6 +14558,189 @@ function computeFatigueIndex(teamName, matchDate) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BD-DATA-009 — TRAVEL FACTOR (bd kgd) — Context Engine composante voyage
+//  Distance Haversine + jet-lag (Δtz) + climate shift + recovery factor
+//  Output: xG modulator -8% max applied to away team attack (literature betting analytics)
+//  Ref:
+//   - Recht/Schwartz/Mecklenburg (1995) "Insomnia and sleepiness in patients with traveling"
+//     → Effet jet-lag ~5-10% performance baisse cross-Atlantic
+//   - Caia et al. (2019) "Sleep, travel, & performance in athletes" Sports Med Open
+//     → 1-2% drop per Δtz > 3h. Tropical→tempéré shift = 3-5% perf loss
+//   - Recht (2003) "Westward travel deficit in MLB" Nature 386:434
+//     → Westward (gain tz) easier than eastward (loss tz) — pondéré asymetrique optionnel
+//  Score 0-100 (haut = handicap voyage). xG modulator = 1 - score/100 × 0.08 (cap -8%)
+// ═══════════════════════════════════════════════════════════════════════════════
+let _STADIUMS_GEO = null;
+function _loadStadiumsGeo() {
+  if (_STADIUMS_GEO !== null) return _STADIUMS_GEO;
+  try {
+    const p = path.join(__dirname, '.context', 'stadiums_geo.json');
+    if (fs.existsSync(p)) {
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+      _STADIUMS_GEO = (raw && raw.teams) ? raw.teams : {};
+      console.log(`  ✓ stadiums_geo.json chargé (${Object.keys(_STADIUMS_GEO).length} stades — Travel Factor BD-DATA-009)`);
+    } else {
+      _STADIUMS_GEO = {};
+      console.warn('  ⚠ .context/stadiums_geo.json introuvable — Travel Factor désactivé');
+    }
+  } catch (e) {
+    console.warn('  [TravelFactor] load stadiums_geo.json:', e.message);
+    _STADIUMS_GEO = {};
+  }
+  return _STADIUMS_GEO;
+}
+
+// Lookup stade par nom équipe (exact normName puis fuzzy first-word).
+function _lookupStadiumGeo(teamName) {
+  if (!teamName) return null;
+  const geo = _loadStadiumsGeo();
+  if (!geo || !Object.keys(geo).length) return null;
+  const key = normName(teamName);
+  if (geo[key]) return geo[key];
+  // Fuzzy : premier mot ≥ 4 chars matchant une clé
+  const firstWord = key.split(' ')[0];
+  if (firstWord.length >= 4) {
+    for (const [k, v] of Object.entries(geo)) {
+      if (k === firstWord || k.startsWith(firstWord + ' ') || k.endsWith(' ' + firstWord)) return v;
+    }
+  }
+  return null;
+}
+
+// Haversine distance en km (math pure, zéro dépendance).
+function _haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371; // rayon Terre km
+  const toRad = (d) => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Δ heures entre deux IANA timezones à une date donnée. Math pure via Intl API.
+function _tzOffsetDiffHours(tzA, tzB, atDate) {
+  if (!tzA || !tzB || tzA === tzB) return 0;
+  const d = atDate instanceof Date ? atDate : new Date(atDate);
+  if (isNaN(d.getTime())) return 0;
+  // Intl.DateTimeFormat retourne le format avec timezone — on extrait l'offset via 2 dates UTC.
+  try {
+    const opts = { timeZone: '', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const parseLocal = (tz) => {
+      const fmt = new Intl.DateTimeFormat('en-US', { ...opts, timeZone: tz });
+      const parts = fmt.formatToParts(d);
+      const lookup = {};
+      for (const p of parts) lookup[p.type] = p.value;
+      // ISO-like: YYYY-MM-DDTHH:mm:ss
+      const iso = `${lookup.year}-${lookup.month}-${lookup.day}T${lookup.hour}:${lookup.minute}:${lookup.second}Z`;
+      return new Date(iso).getTime();
+    };
+    const tA = parseLocal(tzA);
+    const tB = parseLocal(tzB);
+    return (tA - tB) / 3600000;
+  } catch (_) {
+    return 0;
+  }
+}
+
+/**
+ * computeTravelFactor — Évalue handicap voyage équipe visiteuse vers équipe domicile.
+ *
+ * Inputs :
+ *   homeTeam {string}  — équipe à domicile (lookup geo)
+ *   awayTeam {string}  — équipe visiteuse (lookup geo)
+ *   kickoffISO {string}— kickoff datetime (used for tz delta computation)
+ *   prevAwayMatchDate {string|null} — date dernier match équipe visiteuse (recovery)
+ *
+ * Output :
+ *   { distance_km, tz_delta_hours, climate_shift, days_since_last,
+ *     travel_score (0-100, haut=handicap), xg_modulator (0.92-1.00),
+ *     missing (bool si géocodes absents) }
+ *
+ * Formule (literature betting analytics) :
+ *   distance_penalty = clamp(distance_km / 5000, 0, 1) × 30
+ *   tz_penalty       = min(|Δtz|, 12) / 12 × 25
+ *   climate_penalty  = climate_shift ? 15 : 0
+ *   recovery_penalty = days_since_last < 3 ? 20 : (days_since_last > 7 ? 10 : 0)
+ *   travel_score     = min(100, sum)
+ *   xg_modulator     = 1 - travel_score/100 × 0.08   (max -8% xG visiteur)
+ */
+function computeTravelFactor(homeTeam, awayTeam, kickoffISO, prevAwayMatchDate) {
+  const homeGeo = _lookupStadiumGeo(homeTeam);
+  const awayGeo = _lookupStadiumGeo(awayTeam);
+  if (!homeGeo || !awayGeo) {
+    return { missing: true, score: null, xg_modulator: 1, source: 'stadiums_geo' };
+  }
+  // Distance Haversine, arrondi 2 décimales (~1km précision)
+  const distance_km = parseFloat(_haversineKm(homeGeo.lat, homeGeo.lng, awayGeo.lat, awayGeo.lng).toFixed(2));
+  const tz_delta_hours = parseFloat(_tzOffsetDiffHours(homeGeo.tz, awayGeo.tz, kickoffISO || Date.now()).toFixed(2));
+  const climate_shift = !!(homeGeo.climate && awayGeo.climate && homeGeo.climate !== awayGeo.climate);
+
+  // Days since last match (recovery). Si pas dispo, neutralisé (10 = mid-range optimal).
+  let days_since_last = null;
+  if (prevAwayMatchDate && kickoffISO) {
+    const ms = new Date(kickoffISO).getTime() - new Date(prevAwayMatchDate).getTime();
+    if (Number.isFinite(ms) && ms > 0) days_since_last = parseFloat((ms / 86400000).toFixed(1));
+  }
+
+  const distance_penalty = Math.min(distance_km / 5000, 1) * 30;
+  const tz_penalty = Math.min(Math.abs(tz_delta_hours), 12) / 12 * 25;
+  const climate_penalty = climate_shift ? 15 : 0;
+  let recovery_penalty = 0;
+  if (days_since_last != null) {
+    if (days_since_last < 3) recovery_penalty = 20;
+    else if (days_since_last > 7) recovery_penalty = 10;
+  }
+  const travel_score = Math.min(100, Math.round(distance_penalty + tz_penalty + climate_penalty + recovery_penalty));
+  const xg_modulator = parseFloat((1 - travel_score / 100 * 0.08).toFixed(4));
+
+  // Catégorie pour UI (badge couleur)
+  let level;
+  if (travel_score >= 60) level = 'severe';
+  else if (travel_score >= 35) level = 'high';
+  else if (travel_score >= 15) level = 'moderate';
+  else level = 'low';
+
+  return {
+    missing: false,
+    distance_km,
+    tz_delta_hours,
+    climate_shift,
+    home_climate: homeGeo.climate || null,
+    away_climate: awayGeo.climate || null,
+    home_city: homeGeo.city || null,
+    away_city: awayGeo.city || null,
+    days_since_last,
+    travel_score,
+    score: travel_score,
+    level,
+    xg_modulator,
+    source: 'stadiums_geo',
+  };
+}
+
+// Helper : dernier match passé d'une équipe (db.matches + archive_matches),
+// utilisé pour days_since_last du Travel Factor.
+function _lastMatchDateBeforeKickoff(teamName, kickoffISO) {
+  const tsKO = new Date(kickoffISO).getTime();
+  if (!Number.isFinite(tsKO)) return null;
+  let bestTs = null;
+  const upd = (m) => {
+    if (!m || !m.commence_time) return;
+    if (m.home_team !== teamName && m.away_team !== teamName) return;
+    const ts = new Date(m.commence_time).getTime();
+    if (!Number.isFinite(ts) || ts >= tsKO) return;
+    if (bestTs === null || ts > bestTs) bestTs = ts;
+  };
+  // db.matches (live + upcoming pool)
+  if (Array.isArray(db.matches)) for (const m of db.matches) upd(m);
+  // db.archive_matches (finished pool)
+  if (Array.isArray(db.archive_matches)) for (const m of db.archive_matches) upd(m);
+  return bestTs ? new Date(bestTs).toISOString() : null;
+}
+
 function computeAbsenceImpact(squad, teamName) {
   // P2 Fix: Graded impact (-5 to -25) based on all positions, weighted by contribution
   if (!squad || !squad.length) return { impact: 0, player: null, grade: 'none' };
@@ -15660,6 +16222,38 @@ const STRATEGIES = {
       return Math.round((o25 + u15) / 2);
     },
     getOdds: () => null,
+  },
+  // bd 040 — Steam Detector multi-bookmaker (BD-DATA-012)
+  // Sharp money signal: N>=3 bookmakers baissent cote même outcome <5min.
+  // getProb: combine confidence Poisson de la direction steamée + bonus magnitude/severity.
+  STEAM_DETECTED: {
+    label: 'Steam Multi-Bookmaker',
+    icon: '',
+    tipster: 'Le Sharp',
+    tipsterDesc: 'Détecte les mouvements coordonnés multi-bookmakers (>=3 books, <5min). Signal sharp money.',
+    tipsterFlag: '🇲🇨',
+    getProb: m => {
+      const steam = detectSteam(m.id);
+      if (!steam) return null;
+      const dir = steam.direction;
+      // Confiance Poisson sur la direction steamée
+      let baseProb = null;
+      if (dir === 'home' && m.poisson?.homeWin != null) baseProb = m.poisson.homeWin;
+      else if (dir === 'draw' && m.poisson?.draw != null) baseProb = m.poisson.draw;
+      else if (dir === 'away' && m.poisson?.awayWin != null) baseProb = m.poisson.awayWin;
+      if (baseProb == null) return null;
+      // Bonus severity: high +8, med +4, low +0
+      const sevBonus = steam.severity === 'high' ? 8 : steam.severity === 'med' ? 4 : 0;
+      return Math.min(99, Math.round(baseProb + sevBonus));
+    },
+    getOdds: m => {
+      const steam = detectSteam(m.id);
+      if (!steam) return null;
+      if (steam.direction === 'home') return m.odds?.home || null;
+      if (steam.direction === 'draw') return m.odds?.draw || null;
+      if (steam.direction === 'away') return m.odds?.away || null;
+      return null;
+    },
   },
 };
 
@@ -25154,10 +25748,14 @@ if (pathname === '/api/v1/bets' && req.method === 'POST') {
   const stakeCents = Math.round(body.stake * 100);
   const bookmaker = normalizeBookmaker(body.bookmaker);
   const sport = normalizeSport(body.sport);
+  // bd cty — strategy tag (optionnel, auto-derive si absent)
+  const strategyTag = (typeof body.strategy === 'string' && body.strategy.trim())
+    ? body.strategy.trim().slice(0, 48)
+    : inferStrategyTag(body.market, body.selection_label);
   const result = sqldb.prepare(`INSERT INTO user_bets
     (user_id, match_id, home_team, away_team, league, commence_time, market, selection_label,
-     odds, stake_cents, bookmaker, notes, model_prob, edge_pct, kelly_fraction, sport, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual')`).run(
+     odds, stake_cents, bookmaker, notes, model_prob, edge_pct, kelly_fraction, sport, source, strategy)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual', ?)`).run(
     user.userId,
     body.match_id || null,
     body.home_team || null,
@@ -25174,6 +25772,7 @@ if (pathname === '/api/v1/bets' && req.method === 'POST') {
     typeof body.edge_pct === 'number' ? body.edge_pct : null,
     typeof body.kelly_fraction === 'number' ? body.kelly_fraction : null,
     sport,
+    strategyTag,
   );
   const inserted = sqldb.prepare('SELECT * FROM user_bets WHERE id = ?').get(result.lastInsertRowid);
   return jsonResponse(res, 201, inserted);
@@ -25331,6 +25930,40 @@ if (pathname.match(/^\/api\/v1\/bankroll\/tx\/\d+$/) && req.method === 'DELETE')
   const result = sqldb.prepare('DELETE FROM bankroll_transactions WHERE id = ? AND user_id = ?').run(txId, user.userId);
   if (result.changes === 0) return jsonResponse(res, 404, { error: 'Transaction introuvable' });
   return jsonResponse(res, 200, { deleted: true, id: txId });
+}
+
+// bd cty — GET /api/v1/analytics/clv-by-strategy?period=30d&public=1
+// CLV moyen par stratégie sur fenêtre N jours glissants
+// Mode authentifié : CLV personnel par user_id JWT
+// Mode public (param public=1) : CLV agrégé tous users (anonymized)
+// Security : period sanitize regex, user_id depuis JWT (jamais query param)
+if (pathname === '/api/v1/analytics/clv-by-strategy' && req.method === 'GET') {
+  const periodRaw = String(query.period || '30d');
+  const m = /^(\d{1,3})d$/.exec(periodRaw);
+  if (!m) return jsonResponse(res, 400, { error: 'invalid_period', allowed_format: '<N>d (ex: 7d, 30d, 90d)' });
+  const periodDays = Math.max(1, Math.min(365, parseInt(m[1], 10)));
+  const isPublic = query.public === '1' || query.public === 'true';
+  let userId = null;
+  if (!isPublic) {
+    const user = requireUserAuth(req, res); if (!user) return;
+    userId = user.userId;
+  }
+  try {
+    const t0 = Date.now();
+    const rows = computeAllStrategyCLV(userId, periodDays);
+    return jsonResponse(res, 200, {
+      mode: isPublic ? 'public_aggregate' : 'user',
+      period_days: periodDays,
+      total_strategies: rows.length,
+      data: rows,
+      elapsed_ms: Date.now() - t0,
+      notice: rows.length === 0
+        ? 'Aucun bet settled avec closing_odds. CLV requires closing line snapshot — see /docs#clv or wait 30j post-deploy.'
+        : null,
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'clv_compute_error', detail: e.message });
+  }
 }
 
 // GET /api/v1/accuracy/trends — Weekly accuracy trend chart
@@ -33593,6 +34226,56 @@ setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.mess
 setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+
+// bd cty — Closing line snapshot : pour chaque pending bet dont kickoff dans [now+1min, now+10min],
+// snapshot la cote courante (selon market) depuis db.matches → user_bets.closing_odds.
+// Idempotent : skip si closing_odds déjà settée. Tourne toutes les 2min pour densifier la fenêtre.
+async function cronSnapshotClosingLines() {
+  if (!sqldb) return;
+  try {
+    const nowSec = Math.floor(Date.now() / 1000);
+    // Pending bets avec match_id + commence_time dans fenêtre [now+1min, now+15min], pas encore snapshotés
+    const candidates = sqldb.prepare(`
+      SELECT id, match_id, market, selection_label, home_team, away_team, commence_time
+      FROM user_bets
+      WHERE status = 'pending'
+        AND closing_odds IS NULL
+        AND match_id IS NOT NULL
+        AND commence_time IS NOT NULL
+    `).all();
+    if (!candidates.length) return;
+    let snapped = 0;
+    for (const bet of candidates) {
+      const koSec = Math.floor(new Date(bet.commence_time).getTime() / 1000);
+      // Fenêtre serrée [now+60s, now+900s] = T-1 à T-15min avant kickoff
+      if (!Number.isFinite(koSec) || koSec - nowSec < 60 || koSec - nowSec > 900) continue;
+      const match = db.matches.find(m => String(m.id) === String(bet.match_id));
+      if (!match || !match.odds) continue;
+      // Map market → odds field
+      const market = (bet.market || '').toUpperCase().replace(/[\s\-]/g, '_');
+      const sl = (bet.selection_label || '').toLowerCase();
+      let closeOdd = null;
+      if (market === 'BTTS' || market.includes('BTTS')) closeOdd = match.odds.btts || null;
+      else if (market.includes('OVER_2_5') || market === 'O25') closeOdd = match.odds.over25 || null;
+      else if (market.includes('UNDER_2_5') || market === 'U25') closeOdd = match.odds.under25 || null;
+      else if (market === '1X2' || market === '1N2') {
+        if (sl === '1' || sl.includes('home') || sl.includes('domicile')) closeOdd = match.odds.home || null;
+        else if (sl === '2' || sl.includes('away') || sl.includes('exterieur') || sl.includes('extérieur')) closeOdd = match.odds.away || null;
+        else if (sl === 'x' || sl === 'n' || sl.includes('nul')) closeOdd = match.odds.draw || null;
+      }
+      else if (market === 'HOME_WIN' || market === 'HOME') closeOdd = match.odds.home || null;
+      else if (market === 'AWAY_WIN' || market === 'AWAY') closeOdd = match.odds.away || null;
+      else if (market === 'DRAW' || market === 'NUL') closeOdd = match.odds.draw || null;
+      if (closeOdd && closeOdd > 1.01) {
+        sqldb.prepare('UPDATE user_bets SET closing_odds = ?, closing_odds_captured_at = ? WHERE id = ?')
+          .run(closeOdd, nowSec, bet.id);
+        snapped++;
+      }
+    }
+    if (snapped > 0) console.log(`  [Cron CLV] ${snapped} closing odds snapshotted`);
+  } catch (e) { _traceCatch('clv_snapshot_cron', e); }
+}
+setInterval(() => cronSnapshotClosingLines().catch(e => console.warn('[CLV Snapshot]', e.message)), 2 * 60 * 1000);
 // bd 0hf4 Phase 1.1 — Cron pre-fetch BSD TV channels + broadcasts FR fenêtre J→J+7 (6h)
 // Populates bsdBroadcastsCache → attachBSDBroadcasts (cache-only) enrichit match.tv_channels[]
 async function cronPreFetchBSDBroadcasts() {

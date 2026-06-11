@@ -9356,6 +9356,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     <button class="paris-tab" data-tab="settled" onclick="setParisTab('settled')">Historique</button>
     <button class="paris-tab" data-tab="cash" onclick="setParisTab('cash')">Trésorerie</button>
     <button class="paris-tab" data-tab="plan" onclick="setParisTab('plan')">Plan 20 %/jour</button>
+    <button class="paris-tab" data-tab="clv" onclick="setParisTab('clv')" title="Closing Line Value — sharp/square par stratégie">CLV 30j</button>
   </div>
 
   <div class="paris-filters" id="paris-filters">
@@ -9484,6 +9485,44 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
     </table>
     <div id="paris-plan-empty" class="paris-empty" style="display:none;">
       Configure ton plan via le bouton ⚙ Plan.
+    </div>
+  </div>
+
+  <!-- bd cty — CLV par stratégie 30j (Closing Line Value) -->
+  <div class="hist-table-wrap" id="paris-clv-table-wrap" style="display:none;">
+    <div style="margin-bottom:14px;padding:12px 14px;background:var(--bg2);border-radius:8px;border:1px solid rgba(255,255,255,0.05);font-size:12px;color:var(--text2);line-height:1.5;">
+      <strong style="color:var(--text);">📊 Closing Line Value (CLV)</strong> — Métrique gold-standard pour évaluer le skill du parieur.<br>
+      CLV = (cote prise / cote clôture − 1) × 100. <span style="color:var(--green);">CLV+ = sharp</span>, <span style="color:var(--amber);">CLV~0 = flat</span>, <span style="color:var(--red);">CLV− = square</span>.<br>
+      Fenêtre : 30 derniers jours. Stratégie taguée automatiquement à la saisie selon marché.
+    </div>
+    <div style="margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:11px;color:var(--text3);">Période
+        <select id="paris-clv-period" onchange="loadCLVByStrategy()" style="background:var(--bg4);color:var(--text);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+          <option value="7d">7j</option>
+          <option value="30d" selected>30j</option>
+          <option value="90d">90j</option>
+        </select>
+      </label>
+      <button class="btn-ghost" onclick="loadCLVByStrategy()" style="font-size:11px;padding:4px 12px;">🔄 Rafraîchir</button>
+      <span id="paris-clv-meta" style="margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--font-mono);"></span>
+    </div>
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Stratégie</th>
+          <th title="Nombre de paris settled avec closing_odds capturé">N bets</th>
+          <th title="CLV moyen — gold standard sharp/square">CLV moyen</th>
+          <th title="CLV médian — robuste aux outliers">CLV médian</th>
+          <th>Win rate</th>
+          <th title="Return on Investment cumulé">ROI</th>
+          <th title="Tendance CLV sur la période (sparkline)">Tendance</th>
+        </tr>
+      </thead>
+      <tbody id="paris-clv-tbody"></tbody>
+    </table>
+    <div id="paris-clv-empty" class="paris-empty" style="display:none;">
+      Aucune donnée CLV disponible pour le moment.<br>
+      <span style="font-size:11px;">Le snapshot de cote clôture nécessite des paris settled avec match_id et kickoff couvert par la fenêtre T-15 → T-1 min. Données indisponibles tant que le cron tourne moins de 30 jours.</span>
     </div>
   </div>
 </section>
@@ -10316,6 +10355,34 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .cf-divergence-pulse.cyan   { animation-name: psDivergencePulse-cyan; }
   .cf-divergence-pulse.amber  { animation-name: psDivergencePulse-amber; }
   .cf-divergence-pulse.red    { animation-name: psDivergencePulse-red; }
+  /* bd 040 — Steam Detector multi-bookmaker pulse (BD-DATA-012). Pattern visuel "train à vapeur"
+     gradient gold → amber pulsing 2 itérations. Distinct des divergence pulses pour signal sharp money.
+     GPU-friendly: transform + filter brightness + box-shadow. */
+  @keyframes psSteamPulse {
+    0%   { transform: scale(1);     opacity: 1;    filter: brightness(1); box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+    25%  { transform: scale(1.07);  opacity: 0.92; filter: brightness(1.45) drop-shadow(0 0 7px rgba(251,191,36,0.85)); box-shadow: 0 0 0 4px rgba(251,191,36,0.35); }
+    55%  { transform: scale(1.03);  opacity: 1;    filter: brightness(1.20) drop-shadow(0 0 4px rgba(245,158,11,0.55)); box-shadow: 0 0 0 8px rgba(245,158,11,0.15); }
+    100% { transform: scale(1);     opacity: 1;    filter: brightness(1); box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+  }
+  .cf-steam-pulse { animation: psSteamPulse 1.0s ease-out 2; will-change: transform, opacity, filter, box-shadow; border-radius: 4px; }
+  /* Badge inline STEAM (côté cellule match). <60px largeur, lisible mobile. */
+  .cf-steam-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
+    padding: 2px 5px; border-radius: 4px;
+    background: linear-gradient(90deg, rgba(251,191,36,0.20), rgba(245,158,11,0.30));
+    color: #fbbf24;
+    border: 1px solid rgba(251,191,36,0.45);
+    text-shadow: 0 0 4px rgba(251,191,36,0.45);
+    cursor: help;
+    white-space: nowrap;
+    max-width: 60px;
+    vertical-align: middle;
+  }
+  .cf-steam-badge.severity-low  { opacity: 0.80; }
+  .cf-steam-badge.severity-med  { opacity: 1; }
+  .cf-steam-badge.severity-high { background: linear-gradient(90deg, rgba(255,77,77,0.25), rgba(245,158,11,0.35)); color: #fde68a; border-color: rgba(255,77,77,0.55); }
   /* bd 647 — DR Live Pulse (cellule .tn-dr-delta + cellule DR foot/tennis) */
   /* Sprint 2 P1 TOP 1 spec: 1.5s ease-out, cyan→amber transition, expanding ring.
      Distinct des divergence pulses (cyan/amber/red). GPU-friendly: transform + box-shadow + filter brightness. */
@@ -10328,7 +10395,7 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
   .cf-dr-pulse { animation: psDRPulse 1.5s ease-out 1; will-change: transform, box-shadow, filter; border-radius: 4px; display: inline-block; }
   /* Accessibility — respect prefers-reduced-motion (animation disable, contrast preserved) */
   @media (prefers-reduced-motion: reduce) {
-    .cf-divergence-pulse, .cf-dr-pulse { animation: none !important; box-shadow: none !important; filter: none !important; transform: none !important; }
+    .cf-divergence-pulse, .cf-dr-pulse, .cf-steam-pulse { animation: none !important; box-shadow: none !important; filter: none !important; transform: none !important; }
   }
   #tennis-vb-table .tn-dr { grid-column:1/-1; display:flex; flex-direction:column; gap:3px; margin-top:5px; padding-top:5px; border-top:1px solid #1e293b; }
   #tennis-vb-table .tn-dr-line { display:flex; align-items:center; justify-content:space-between; gap:8px; line-height:1.25; }
@@ -19467,6 +19534,55 @@ function initSSE() {
     } catch (err) { console.warn('[SSE] dr_spike error', err); }
   });
 
+  // bd 040 — Steam Detector multi-bookmaker (BD-DATA-012)
+  // SSE event 'steam_detected' → cellule cote/edge match pulse 1.0s ease-out 2 iter
+  // + badge inline STEAM avec tooltip détails (N books · magnitude · severity).
+  // Reuse pattern divergence (debounce 5min géré côté serveur).
+  var _cfSteamTimers = (typeof _cfSteamTimers !== 'undefined') ? _cfSteamTimers : new Map();
+  sseConnection.addEventListener('steam_detected', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || !d.matchId) return;
+      // Sanitize matchId (defense-in-depth: server tronque déjà).
+      const safeId = String(d.matchId).slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!safeId) return;
+      const sev = (d.severity === 'low' || d.severity === 'med' || d.severity === 'high') ? d.severity : 'med';
+      const dir = (d.direction === 'home' || d.direction === 'draw' || d.direction === 'away') ? d.direction : 'home';
+      const nBooks = Math.max(0, Math.min(50, parseInt(d.n_bookmakers) || 0));
+      const mag = Math.max(-50, Math.min(50, parseFloat(d.magnitude_avg_pct) || 0));
+      const row = document.querySelector('tr[data-match-id="' + safeId + '"]');
+      if (!row) return;
+      const target = row.querySelector('.edge-cell, [data-col="edge"], .odds-cell') || row;
+      // Cleanup previous animation
+      const existing = _cfSteamTimers.get(safeId);
+      if (existing) {
+        clearTimeout(existing);
+        target.classList.remove('cf-steam-pulse');
+        const old = row.querySelector('.cf-steam-badge[data-steam-temp="1"]');
+        if (old) old.remove();
+      }
+      // Force reflow for restart
+      void target.offsetWidth;
+      target.classList.add('cf-steam-pulse');
+      // Inline badge attaché à la cellule match (.match-cell ou row fallback)
+      const labelCell = row.querySelector('.match-cell, [data-col="match"]') || target;
+      const badge = document.createElement('span');
+      badge.className = 'cf-steam-badge severity-' + sev;
+      badge.setAttribute('data-steam-temp', '1');
+      const dirLabel = dir === 'home' ? '1' : (dir === 'draw' ? 'N' : '2');
+      badge.textContent = '🚂 STEAM ' + dirLabel;
+      badge.title = nBooks + ' bookmakers · ' + mag.toFixed(1) + '% · severity ' + sev;
+      labelCell.appendChild(badge);
+      const timer = setTimeout(() => {
+        target.classList.remove('cf-steam-pulse');
+        // Garde le badge visible 60s (signal persistant) avant retrait
+        setTimeout(() => { if (badge.parentNode) badge.remove(); }, 60000);
+        _cfSteamTimers.delete(safeId);
+      }, 2200); // 1.0s × 2 iter + 200ms safety
+      _cfSteamTimers.set(safeId, timer);
+    } catch (err) { console.warn('[SSE] steam_detected error', err); }
+  });
+
   // v11.0 — Badge néon WebSocket BSD (statut connexion)
   sseConnection.addEventListener('ws_status', e => {
     try {
@@ -23037,10 +23153,42 @@ function buildResumeTab(d) {
       </div>
     </div>` : '';
 
+  // bd kgd — BD-DATA-009 Travel Factor (distance + jet-lag + climat) section UI.
+  // Affiché uniquement si non missing ET score > 0 (skip si voyage négligeable).
+  const tf = m.travel_factor || null;
+  const travelFactorHtml = (tf && !tf.missing && typeof tf.score === 'number' && tf.score > 0) ? (() => {
+    const lvlColor = tf.level === 'severe' ? '#ef4444' : tf.level === 'high' ? '#f59e0b' : tf.level === 'moderate' ? '#3b82f6' : '#10b981';
+    const lvlLabel = tf.level === 'severe' ? 'Voyage extrême' : tf.level === 'high' ? 'Voyage long' : tf.level === 'moderate' ? 'Voyage modéré' : 'Voyage léger';
+    const tzAbs = Math.abs(tf.tz_delta_hours || 0);
+    const tzEmoji = tzAbs >= 6 ? '🌗' : tzAbs >= 3 ? '🌓' : tzAbs > 0 ? '🌒' : '';
+    const climEmoji = tf.climate_shift ? '🌡️' : '';
+    const impactPct = Math.round((1 - (tf.xg_modulator || 1)) * 100);
+    const bar = `<div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:6px;">
+      <div style="width:${tf.score}%;height:100%;background:${lvlColor};border-radius:3px;"></div>
+    </div>`;
+    return `
+    <div class="ins-section" style="border:1px solid ${lvlColor}40;background:linear-gradient(135deg,${lvlColor}10,${lvlColor}03);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-size:9px;font-family:var(--font-mono);color:${lvlColor};background:${lvlColor}28;padding:3px 7px;border-radius:4px;letter-spacing:.06em;font-weight:800;">✈️ TRAVEL FACTOR · ${m.away_team}</span>
+        <span style="font-size:10px;font-family:var(--font-mono);color:var(--text2);">${lvlLabel} — ${tf.score}/100</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:8px;font-family:var(--font-mono);font-size:11px;">
+        <div><span style="color:var(--text3);">Distance</span><div style="color:var(--text);font-weight:700;">${Math.round(tf.distance_km).toLocaleString('fr-FR')} km</div></div>
+        <div><span style="color:var(--text3);">Δ Fuseau</span><div style="color:var(--text);font-weight:700;">${tzEmoji} ${tf.tz_delta_hours > 0 ? '+' : ''}${tf.tz_delta_hours}h</div></div>
+        <div><span style="color:var(--text3);">Climat</span><div style="color:var(--text);font-weight:700;">${climEmoji} ${tf.climate_shift ? 'Shift' : 'Stable'}</div></div>
+        ${tf.days_since_last != null ? `<div><span style="color:var(--text3);">Repos</span><div style="color:var(--text);font-weight:700;">${tf.days_since_last}j</div></div>` : ''}
+        <div><span style="color:var(--text3);">Impact xG</span><div style="color:${impactPct > 0 ? '#ef4444' : 'var(--text)'};font-weight:700;">${impactPct > 0 ? '-' : ''}${impactPct}%</div></div>
+      </div>
+      ${bar}
+      <div style="margin-top:6px;font-size:10px;color:var(--text3);line-height:1.4;">${tf.home_city || ''}${tf.away_city ? ` ← ${tf.away_city}` : ''} · modèle Context Engine (Caia 2019, Recht 2003)</div>
+    </div>`;
+  })() : '';
+
   return `
     ${tvHtml}
     ${editorialHtml}
     ${venueRefereeHtml}
+    ${travelFactorHtml}
     <div id="ins-social-buzz-slot"></div>
     <div class="ins-section">
       <div class="ins-section-title">Forme récente (5 derniers matchs)</div>
@@ -27588,6 +27736,7 @@ const STRATEGIES_UI = [
   { key: 'DC_AWAY',           label: 'Double Chance X2',      icon: '', tipster: 'L\'Assureur' },
   { key: 'HT_HOME_FT_HOME',  label: 'Mi-Temps Victoire Dom.', icon: '', tipster: 'Le Sprint' },
   { key: 'HT_UNDER_FT_OVER', label: 'Explosion 2e Mi-Temps',  icon: '', tipster: 'Le Dynamiteur' },
+  { key: 'STEAM_DETECTED',   label: 'Steam Multi-Book',       icon: '', tipster: 'Le Sharp' },
 ];
 let currentStrategies = ['BTTS_YES'];
 let strategiesPageInitialized = false;
@@ -27986,13 +28135,88 @@ function setParisTab(tab) {
   const betsWrap = document.getElementById('paris-bets-table-wrap');
   const cashWrap = document.getElementById('paris-cash-table-wrap');
   const planWrap = document.getElementById('paris-plan-table-wrap');
+  const clvWrap = document.getElementById('paris-clv-table-wrap');
   const filtersEl = document.getElementById('paris-filters');
   betsWrap.style.display = (tab === 'open' || tab === 'settled') ? 'block' : 'none';
   cashWrap.style.display = (tab === 'cash') ? 'block' : 'none';
   planWrap.style.display = (tab === 'plan') ? 'block' : 'none';
+  if (clvWrap) clvWrap.style.display = (tab === 'clv') ? 'block' : 'none';
   filtersEl.style.display = (tab === 'open' || tab === 'settled') ? 'grid' : 'none';
   if (tab === 'open' || tab === 'settled') renderUserBetsTable();
   if (tab === 'plan') loadDailyTracker();
+  if (tab === 'clv') loadCLVByStrategy();
+}
+
+// bd cty — Load CLV by strategy 30j (Closing Line Value)
+async function loadCLVByStrategy() {
+  const tbody = document.getElementById('paris-clv-tbody');
+  const empty = document.getElementById('paris-clv-empty');
+  const meta = document.getElementById('paris-clv-meta');
+  if (!tbody) return;
+  const period = (document.getElementById('paris-clv-period') || {}).value || '30d';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">Chargement…</td></tr>';
+  try {
+    const res = await apiFetch('/api/v1/analytics/clv-by-strategy?period=' + encodeURIComponent(period));
+    if (!res.ok) {
+      tbody.innerHTML = '';
+      if (empty) { empty.style.display = 'block'; empty.firstChild && (empty.firstChild.textContent = 'Erreur de chargement CLV (HTTP ' + res.status + ').'); }
+      return;
+    }
+    const data = await res.json();
+    const rows = data.data || [];
+    if (meta) meta.textContent = `${rows.length} stratégies · ${data.period_days}j · ${data.elapsed_ms}ms`;
+    if (!rows.length) {
+      tbody.innerHTML = '';
+      if (empty) { empty.style.display = 'block'; }
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    tbody.innerHTML = rows.map(r => {
+      const clv = r.clv_mean_pct;
+      const clvCls = clv == null ? '' : (clv >= 2 ? 'bet-pl-pos' : clv <= -2 ? 'bet-pl-neg' : '');
+      const clvColor = clv == null ? 'var(--text3)' : (clv >= 2 ? 'var(--green)' : clv <= -2 ? 'var(--red)' : 'var(--amber)');
+      const clvStr = clv == null ? '—' : (clv > 0 ? '+' : '') + clv.toFixed(2) + '%';
+      const medStr = r.clv_median_pct == null ? '—' : (r.clv_median_pct > 0 ? '+' : '') + r.clv_median_pct.toFixed(2) + '%';
+      const wr = r.win_rate_pct == null ? '—' : r.win_rate_pct.toFixed(1) + '%';
+      const roi = r.roi_pct == null ? '—' : ((r.roi_pct - 100) > 0 ? '+' : '') + (r.roi_pct - 100).toFixed(1) + '%';
+      const spark = renderCLVSparkline(r.sparkline || []);
+      return `<tr>
+        <td style="font-weight:700;font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;">${escapeHtml(r.strategy)}</td>
+        <td style="font-family:var(--font-mono);">${r.n_bets}</td>
+        <td class="${clvCls}" style="color:${clvColor};font-weight:700;font-family:var(--font-mono);">${clvStr}</td>
+        <td style="font-family:var(--font-mono);color:var(--text2);">${medStr}</td>
+        <td style="font-family:var(--font-mono);">${wr}</td>
+        <td style="font-family:var(--font-mono);">${roi}</td>
+        <td>${spark}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+  }
+}
+
+// Mini sparkline SVG inline (zéro dep) pour tendance CLV
+function renderCLVSparkline(points) {
+  if (!points || points.length < 2) return '<span style="color:var(--text3);font-size:10px;">—</span>';
+  const w = 80, h = 22, pad = 2;
+  const vals = points.map(p => p.clv);
+  const min = Math.min(...vals, 0);
+  const max = Math.max(...vals, 0);
+  const range = (max - min) || 1;
+  const path = points.map((p, i) => {
+    const x = pad + (i * (w - 2 * pad)) / (points.length - 1);
+    const y = h - pad - ((p.clv - min) / range) * (h - 2 * pad);
+    return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const last = vals[vals.length - 1];
+  const color = last >= 2 ? '#00e676' : last <= -2 ? '#ff4d4d' : '#ffa726';
+  // Ligne de référence 0
+  const yZero = h - pad - ((0 - min) / range) * (h - 2 * pad);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle;">
+    <line x1="${pad}" y1="${yZero.toFixed(1)}" x2="${w - pad}" y2="${yZero.toFixed(1)}" stroke="rgba(255,255,255,0.1)" stroke-dasharray="2,2" stroke-width="0.8"/>
+    <path d="${path}" stroke="${color}" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 function applyParisFilters() {
