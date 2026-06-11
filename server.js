@@ -8900,6 +8900,78 @@ function simStats(name, isHome) {
   };
 }
 
+// ── bd 6dpi — FD archive fallback stats (football-data.co.uk, 3 saisons) ─────
+// Reconstruit des moyennes home/away depuis db.archive_matches
+// (_source='etl-seed-footballdata') pour les équipes SANS standings réels.
+// Priorité : saison courante (≥6 matchs par split) sinon pool 3 saisons.
+// Shape de sortie = buildSideStats (ppg/wins%/avgScored/avgConceded/played).
+let _fdStatsIndex = null;
+
+function _fdSideFromAgg(agg, minPlayed) {
+  if (!agg || agg.played < minPlayed) return null;
+  const avgFor = agg.gf / agg.played, avgAg = agg.ga / agg.played;
+  return {
+    ppg: parseFloat(((agg.w * 3 + agg.d) / agg.played).toFixed(2)),
+    wins: Math.round(agg.w / agg.played * 100),
+    draws: Math.round(agg.d / agg.played * 100),
+    losses: Math.round(agg.l / agg.played * 100),
+    scored: Math.round(Math.min(95, avgFor * 55)),
+    conceded: Math.round(Math.min(95, avgAg * 50)),
+    avgScored: parseFloat(avgFor.toFixed(2)),
+    avgConceded: parseFloat(avgAg.toFixed(2)),
+    played: agg.played,
+  };
+}
+
+function buildFDStatsIndex() {
+  const idx = new Map();
+  let latestSeason = '';
+  for (const m of (db.archive_matches || [])) {
+    if (m._source === 'etl-seed-footballdata' && m.season > latestSeason) latestSeason = m.season;
+  }
+  const bump = (team, side, season, gf, ga) => {
+    const key = normName(team);
+    if (!key) return;
+    let e = idx.get(key);
+    if (!e) {
+      const z = () => ({ played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 });
+      e = { home_cur: z(), home_all: z(), away_cur: z(), away_all: z() };
+      idx.set(key, e);
+    }
+    const add = (a) => {
+      a.played++; a.gf += gf; a.ga += ga;
+      if (gf > ga) a.w++; else if (gf === ga) a.d++; else a.l++;
+    };
+    add(e[`${side}_all`]);
+    if (season === latestSeason) add(e[`${side}_cur`]);
+  };
+  let scanned = 0;
+  for (const m of (db.archive_matches || [])) {
+    if (m._source !== 'etl-seed-footballdata') continue;
+    if (m.home_score == null || m.away_score == null) continue;
+    bump(m.home_team, 'home', m.season, m.home_score, m.away_score);
+    bump(m.away_team, 'away', m.season, m.away_score, m.home_score);
+    scanned++;
+  }
+  _fdStatsIndex = idx;
+  if (scanned > 0) {
+    console.log(`  ✓ FD stats index: ${idx.size} équipes (${scanned} matchs football-data, saison ref ${latestSeason})`);
+  }
+  return idx;
+}
+
+function getFDTeamStats(teamName) {
+  if (!teamName) return null;
+  if (!_fdStatsIndex) buildFDStatsIndex();
+  const e = _fdStatsIndex.get(normName(teamName));
+  if (!e) return null;
+  // Saison courante d'abord (≥6 matchs/split), sinon pool 3 saisons (≥10)
+  const home = _fdSideFromAgg(e.home_cur, 6) || _fdSideFromAgg(e.home_all, 10);
+  const away = _fdSideFromAgg(e.away_cur, 6) || _fdSideFromAgg(e.away_all, 10);
+  if (!home || !away) return null;
+  return { home, away, _real: true, _source: 'fd-archive' };
+}
+
 function computeEdge(match) {
   const home = match.home_team, away = match.away_team;
   let bestH = null, bestN = null, bestA = null;
@@ -9274,12 +9346,23 @@ function buildMatchRecord(raw) {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
-  const homeStats = hRaw?.home || simStats(raw.home_team, true);
-  const awayStats = aRaw?.away || simStats(raw.away_team, false);
-  const isRealData = !!(hRaw?._real && aRaw?._real);
+  // bd 6dpi — Fallback FD archive (vraies moyennes football-data.co.uk 3 saisons)
+  // AVANT simStats : équipes sans standings (ligue hors BSD/API-Football, quota out).
+  // played>0 requis sur le split DB sinon buildSideStats zéro → BAD_LAMBDA.
+  const _hSideDB = (hRaw?.home && hRaw.home.played > 0) ? hRaw.home : null;
+  const _aSideDB = (aRaw?.away && aRaw.away.played > 0) ? aRaw.away : null;
+  const fdHome = _hSideDB ? null : getFDTeamStats(raw.home_team);
+  const fdAway = _aSideDB ? null : getFDTeamStats(raw.away_team);
+  const homeStats = _hSideDB || fdHome?.home || simStats(raw.home_team, true);
+  const awayStats = _aSideDB || fdAway?.away || simStats(raw.away_team, false);
+  const isRealData = !!((hRaw?._real || fdHome) && (aRaw?._real || fdAway));
+  const statSource = {
+    home: _hSideDB ? (hRaw?._source || 'db') : (fdHome ? 'fd-archive' : 'sim'),
+    away: _aSideDB ? (aRaw?._source || 'db') : (fdAway ? 'fd-archive' : 'sim'),
+  };
 
-  if (!hRaw) console.warn(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (non trouvé en DB)`);
-  if (!aRaw) console.warn(`  [BuildMatch] "${raw.away_team}" (Away) — stats simulées (non trouvé en DB)`);
+  if (!_hSideDB && !fdHome) console.warn(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (non trouvé en DB ni archive FD)`);
+  if (!_aSideDB && !fdAway) console.warn(`  [BuildMatch] "${raw.away_team}" (Away) — stats simulées (non trouvé en DB ni archive FD)`);
 
   // ── FIX v20.0 — getTeamForm() : Normalisateur Universel (symétrique Home/Away) ──
   // Niveaux : 1) DB exacte  2) Fuzzy  3) Prefix fallback  4) Historique de matchs
@@ -9439,6 +9522,7 @@ function buildMatchRecord(raw) {
       home: homeStats,
       away: awayStats,
       isReal: isRealData,
+      source: statSource, // bd 6dpi — 'bsd'|'api-football'|'espn'|'db'|'fd-archive'|'sim' par côté
     },
     is_neutral_ground: raw.is_neutral_ground || false,
     // Terrain neutre — stats domicile de l'équipe visiteuse (PPG/avgScored/avgConceded quand elle joue chez elle)
