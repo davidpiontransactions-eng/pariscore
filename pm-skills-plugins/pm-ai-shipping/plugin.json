@@ -1,0 +1,9 @@
+{
+  "name": "pm-ai-shipping",
+  "version": "1.0.0",
+  "description": "Shipping readiness and quality assurance plugin — document-app, ship-check, derive-tests, security/performance audit, and intended-vs-implemented verification.",
+  "skills": ["intended-vs-implemented", "shipping-artifacts"],
+  "commands": ["derive-tests", "document-app", "performance-audit-static", "security-audit-static", "ship-check"],
+  "source": "https://github.com/phuryn/pm-skills/tree/d384f0c9/pm-ai-shipping",
+  "author": "phuryn"
+}
