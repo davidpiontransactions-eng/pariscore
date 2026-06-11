@@ -236,8 +236,10 @@ function transformRow(row, divMeta, code) {
     season,
     date: isoDate,
     time: row.Time || null,
-    home_team: home,
-    away_team: away,
+    // bd 6dpi — noms normalisés fd→BSD : computeH2H / deriveFormFromHistory /
+    // index FD stats matchent en exact sur les noms live (id reste basé noms bruts fd).
+    home_team: normalizeTeam(home),
+    away_team: normalizeTeam(away),
     home_score: num(row.FTHG),
     away_score: num(row.FTAG),
     result: row.FTR || null,                              // H / D / A

@@ -2,6 +2,19 @@
 
 ---
 
+## [v12.75] — 2026-06-11 — FD fallback : archive football-data alimente λ Poisson / form / H2H — bd `6dpi`
+
+La DB football-data.co.uk (v12.74) alimente maintenant les champs existants des matchs :
+
+- **`buildFDStatsIndex()` + `getFDTeamStats()`** (server.js, avant `computeEdge`) : index in-memory 454 équipes depuis `db.archive_matches` (`_source='etl-seed-footballdata'`) — splits home/away, saison courante (≥6 matchs/split) sinon pool 3 saisons (≥10). Shape identique `buildSideStats` (ppg/wins%/avgScored/avgConceded/played).
+- **`buildMatchRecord` λ Poisson** : chaîne fallback `standings DB → FD archive → simStats`. Les équipes sans standings (ligues hors BSD/API-Football : League One/Two, National League, SC1-3, D2/I2/F2…) reçoivent de **vraies moyennes** au lieu du hash simulé. `stats.isReal=true` si FD, nouveau champ `stats.source = {home, away}` ('bsd'|'api-football'|'db'|'fd-archive'|'sim').
+- **Noms normalisés dans le JSON seed** (`TEAM_MAP` appliqué au transform, id stable sur noms bruts) → `computeH2H` (match exact `normName`) et `deriveFormFromHistory` (Level 4 forme) voient désormais les 23 126 matchs fd pour les équipes live.
+- Validation : index standalone — PSG avgScored dom 2.41, Galatasaray 2.71, Wolves ppg 0.74, Stockport (League One, hors BSD) 23 matchs couverts.
+
+Guard : split DB avec `played=0` (buildSideStats zéro) bascule aussi sur FD — évite BAD_LAMBDA.
+
+---
+
 ## [v12.74] — 2026-06-11 — ETL football-data.co.uk : stats matchs 3 saisons × 22 divisions — bd `sc0o`
 
 ### Recherche comparative (web + GitHub)
