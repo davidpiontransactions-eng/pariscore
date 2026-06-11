@@ -2,6 +2,23 @@
 
 ---
 
+## [v12.76] — 2026-06-11 — Sélections nationales : ETL international_results → λ/form/H2H World Cup 2026 — bd `qgfm`
+
+**Audit runtime v12.75** : 58/62 records prod avec `stats.source` ✅ mais distribution `{sim:50}` — 43/46 côtés sim = **équipes nationales WC 2026** (football-data.co.uk = clubs uniquement). Le tournoi démarre le 11/06 : gap critique.
+
+### Livré
+
+- **`seed_historique_international.js`** : martj42/international_results (CC0 1.0, 49 472 lignes, fixtures WC 27/06 incluses) → **4 568 matchs ≥ 2022** (1,7 MB JSON). `INTL_TEAM_MAP` calibré sur db.matches réels (USA, Türkiye, Czechia, Côte d'Ivoire, Cabo Verde, Bosnia & Herzegovina, UAE). Flag `is_neutral` conservé.
+- **`loadHistory()` merge** → `db.archive_matches` (`_source: 'etl-seed-international'`, `sport_key: 'intl'`).
+- **Index FD étendu 2 sources** : fenêtre courante intl = année civile N-1/N (~18 mois sélection) vs label saison fd ; `src` par entrée → `stats.source = 'intl-archive'`.
+- Validation : **15/15 sélections WC** lookup OK (England dom 1.80, France 2.50, USA ext 0.92, New Zealand ext 0.38).
+
+### Effet
+
+Les 43 sélections WC 2026 passent de `simStats` (hash) à vraies moyennes 2022-2026 + H2H + forme via archive. λ Poisson WC réels dès le restart.
+
+---
+
 ## [v12.75] — 2026-06-11 — FD fallback : archive football-data alimente λ Poisson / form / H2H — bd `6dpi`
 
 La DB football-data.co.uk (v12.74) alimente maintenant les champs existants des matchs :
