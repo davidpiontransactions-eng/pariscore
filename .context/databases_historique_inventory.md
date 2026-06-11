@@ -114,7 +114,7 @@ Chargées une fois au démarrage du serveur depuis fichiers JSON. Mergées dans 
 | **Volume estimé** | ~3-4k matchs / saison × 10 ligues |
 | **Sport** | Football uniquement |
 | **Use** | ⚠️ **RESEARCH ONLY** — marker `_research_only=true`, env gate `ETL_FBREF_LOAD=1` requis |
-| **Status** | ✅ CODE LIVRÉ, prérequis `pip install soccerdata pandas` |
+| **Status** | ❌ **OBSOLÈTE 2026-06-11** — Stats Perform/Opta a retiré TOUTES les stats avancées (xG, npxG, SCA/GCA, shooting) de FBref le 20/01/2026 + Cloudflare interactif site-wide bloque soccerdata (v1.9.0 contourne via Selenium = aggravant légal). La donnée visée n'existe plus sur le site. → remplacé par ETL BSD stats (§2.7) |
 
 ### 2.6 `historique_footballdata.json` — football-data.co.uk CSV ⭐
 | Champ | Valeur |
@@ -132,6 +132,24 @@ Chargées une fois au démarrage du serveur depuis fichiers JSON. Mergées dans 
 | **Sport** | Football uniquement |
 | **Use** | Commercial OK |
 | **Status** | ✅ CODE LIVRÉ + run local OK — run VPS au deploy |
+
+### 2.7 SQLite `match_stats_history` + `team_season_stats` — BSD stats avancées ⭐ (bd `rm3d`)
+| Champ | Valeur |
+|---|---|
+| **Fichier** | `seed_historique_bsd_stats.js` (écrit direct SQLite, pas de JSON intermédiaire) |
+| **Bd** | `ParisScorebis-rm3d` (P1) |
+| **Source** | BSD `/events/?status=finished` (live_stats embarqué, AUCUN appel par match) + `/leagues/{id}/standings/?season=` |
+| **License** | BSD $5/mo payé — usage commercial OK |
+| **Coverage** | 66 ligues BSD (Big5 + exotiques : Brasileirão, Liga MX, Saudi, CSL, J1, CAF…) |
+| **`match_stats_history`** (77 cols) | xG (+ **splits 1re/2e MT**), tirs/cadrés/dans la surface/bloqués, corners (+ splits MT), possession, big chances (+ missed), passes + précision, jaunes, fautes, hors-jeux, touches surface, entrées dernier tiers, montants, goals_prevented GK, **cotes closing 1N2/O-U 1.5-3.5/BTTS** (prospectives), météo (code/temp/vent), arbitre, distance déplacement, derby/terrain neutre, affluence |
+| **`team_season_stats`** | standings 5 saisons/ligue : position, W/D/L, GF/GA, pts, forme, xGF/xGA/xGD (saison courante uniquement côté BSD) |
+| **⚠️ Coverage stats** | live_stats/xG/splits = **saison 2025-26 uniquement** (probe 6 fenêtres 2026-06-11). Saisons antérieures = score-only + fixtures fantômes (ex. Man Utd-Bolton PL 2023) → défaut 2025-26, flag `--all-seasons` |
+| **Volume** | ~12-15k matchs saison 25/26 (380/ligue majeure) + ~5k rows standings |
+| **Sport** | Football uniquement |
+| **Status** | ✅ CODE LIVRÉ + pilote PL 380/380 stats 0 err — sweep 66 ligues + run VPS au deploy |
+| **Refresh** | Re-run idempotent (resume-safe par PK) — cron incrémental à câbler (bd follow-up) |
+
+**Verdicts recon web 2026-06-11** (4 agents, mission "stats foot/tennis") : soccerstats.com **NO-GO 22/100** (ToS interdit scraping+commercial), FotMob **NO-GO 22/100** (header signé + data Opta non-licenciée), FBref **DROP** (xG retiré du site 01/2026), OddAlerts **scraping NO-GO / API officielle £69.99/mo = étude DG** (pressure algo, Pinnacle dropping, referee stats).
 
 ### 2.5 `historique_elofootball.json` — elofootball.com community
 | Champ | Valeur |

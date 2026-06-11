@@ -25,7 +25,7 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Sources data** : BSD ($5/mo + WS push), ESPN public, Odds API, openfootball ODbL, Wikidata CC0, felipeall/transfermarkt-api, elofootball, aiscore.com on-demand throttled
 - **Sources backlog DG** : xvalue.ai (GO 85/100 bd `ffh`), OddsPapi.io Pinnacle sharp (bd `bjv` POC)
 - **Déploiement** : VPS OVH `/home/ubuntu/pariscore` — `git pull && pm2 restart pariscore`
-- **Persistance ETL** : `db.archive_matches` 9 sources (+ football-data.co.uk v12.74 — stats + closing odds 3 saisons). Inventaire : `.context/databases_historique_inventory.md`
+- **Persistance ETL** : `db.archive_matches` 9 sources (+ football-data.co.uk v12.74 — stats + closing odds 3 saisons) + SQLite `match_stats_history` (xG + splits MT + 45 stats/match, 66 ligues BSD saison 25/26, bd `rm3d`) + `team_season_stats` (standings 5 saisons/ligue). Inventaire : `.context/databases_historique_inventory.md`
 
 ---
 
@@ -45,8 +45,10 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 
 ## 🧠 INNOVATION BACKLOG (Edge mathématique)
 
-Tout l'historique livré → `CHANGELOG.md`. Nouvelles pistes session 22/05/2026 :
+Tout l'historique livré → `CHANGELOG.md`. Nouvelles pistes session 22/05/2026 + 11/06/2026 :
 
+- **λ xG-adjusted depuis `match_stats_history`** (bd `6kzf` P1) — xG réel BSD agrégé fenêtre 10 matchs + shrinkage → alimente le poids xG 25% du bayesianBlend. Splits 1re/2e MT → marchés HT/FT + O/U 1.5 1re MT. Badge sur/sous-performance (gf vs xgf) via `team_season_stats`. Backtest obligatoire (math-invariants).
+- **OddAlerts API officielle £69.99/mo** (bd `49pe`) — pressure algorithm in-play, Pinnacle dropping odds (complète `bjv`), referee/foul stats. Scraping NO-GO (Turnstile + ToS) ; route contractuelle propre.
 - **xvalue.ai ML scouting clustering** (bd `ffh` GO 85/100) — form-style fingerprint, anomalies tactiques pré-match (coach change, blessure clé). Sortie : `style_shift_score` 0-100 dans `confidence_badge`.
 - **Pinnacle sharp calibration via OddsPapi.io** (bd `bjv` Plan C 250 req/mo) — ancrage low-vig dans `computeWFV1N2`, réduction faux positifs ValueBet (-5 à -10% bias). POC backtest 50 matchs.
 
