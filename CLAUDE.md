@@ -1,4 +1,4 @@
-# 🏟️ PariScore — Poste de Pilotage (v12.67 — bd-driven)
+# 🏟️ PariScore — Poste de Pilotage (v12.78 — bd-driven)
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
@@ -47,10 +47,9 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 |---|---|---|---|---|
 | 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS minuit UTC (bd `9je`) | 🟡 MED |
 | 6 | **DG decision Stripe** | DG+ops | bd `s77m` — LOCKED: €19/mo, trial 7j, mono-sport OUI, matchday €2.99. PENDING: prix annuel + refund policy. Créer compte Stripe + 5 products + webhook + `.env` VPS | 🟡 MED |
-| 7 | **Sackmann purge Phase 3-7** | code | bd `dl49` — ETL interne BSD/ESPN. Phase 1+2 ✅ (`SACKMANN_SYNC_DISABLED=true`). VPS : `node tools/backup-tennis-matches.js` + deploy patché | 🔴 HIGH legal |
-| 8 | **DG decision 6 études** | DG | bd `j5lb` — GO/NO-GO FBref/RapidAPI/TheSportsDB/Apify/OddsPortal/Marketing | 🟡 MED |
-| 9 | **POC OddsPapi.io** | DG | Signup free 250 req → `ODDSPAPI_KEY` .env → `node .context/_probe_oddspapi_pinnacle.js` (bd `bjv`) | 🟢 LOW |
-| 10 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd `ffh` GO 85/100) | 🟢 LOW |
+| 7 | **Sackmann purge Phase 3-7** | code | bd \`dl49\` — ETL interne BSD/ESPN. Phase 1+2 ✅ (\`SACKMANN_SYNC_DISABLED=true\`). VPS : \`node tools/backup-tennis-matches.js\` + deploy patché | 🔴 HIGH legal |
+| 8 | **POC OddsPapi.io** | DG | Signup free 250 req → \`ODDSPAPI_KEY\` .env → \`node .context/_probe_oddspapi_pinnacle.js\` (bd \`bjv\`) | 🟢 LOW |
+| 9 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd \`qyfr\` — POC 1j gratuit) | 🟢 LOW |
 | 14 | **DG ligues BSD secondary** | DG | 11 ligues non mappées (Africa Cup, Liga F WOMEN, coupes mineures, Nigeria PFL, Liga MX Clausura). $0 incrémental. | 🟡 MED |
 
 ---
@@ -61,7 +60,7 @@ Tout l'historique livré → `CHANGELOG.md`. Nouvelles pistes session 22/05/2026
 
 - **λ xG-adjusted depuis `match_stats_history`** (bd `6kzf` P1) — xG réel BSD agrégé fenêtre 10 matchs + shrinkage → alimente le poids xG 25% du bayesianBlend. Splits 1re/2e MT → marchés HT/FT + O/U 1.5 1re MT. Badge sur/sous-performance (gf vs xgf) via `team_season_stats`. Backtest obligatoire (math-invariants).
 - **OddAlerts API officielle £69.99/mo** (bd `49pe`) — pressure algorithm in-play, Pinnacle dropping odds (complète `bjv`), referee/foul stats. Scraping NO-GO (Turnstile + ToS) ; route contractuelle propre.
-- **xvalue.ai ML scouting clustering** (bd `ffh` GO 85/100) — form-style fingerprint, anomalies tactiques pré-match (coach change, blessure clé). Sortie : `style_shift_score` 0-100 dans `confidence_badge`.
+- **xvalue.ai ML scouting clustering** (bd \`qyfr\`) — form-style fingerprint, anomalies tactiques pré-match (coach change, blessure clé). Sortie : \`style_shift_score\` 0-100 dans \`confidence_badge\`.
 - **Pinnacle sharp calibration via OddsPapi.io** (bd `bjv` Plan C 250 req/mo) — ancrage low-vig dans `computeWFV1N2`, réduction faux positifs ValueBet (-5 à -10% bias). POC backtest 50 matchs.
 
 ---

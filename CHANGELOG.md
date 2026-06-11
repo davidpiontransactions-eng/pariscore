@@ -1,5 +1,20 @@
 # PariScore — Journal des modifications
 
+## [v12.78] — 2026-06-11 — Tennis Elo surface + DG closures 8lqf/j5lb + xvalue.ai ticket
+
+### Ajouté
+- **Tennis Elo surface (3 phases)** : scraper Tennis Abstract (1055 lignes, 38 alarmes drift >100) + `tools/recompute-tennis-elo.js` (4391 ratings ALL/Hard/Clay/Grass) + cron hebdo VPS (`cron-tennis-elo.sh`) + doc `docs/tennis-elo-enrichment.md`
+- **bd ParisScorebis-qyfr** : nouveau ticket POC xvalue.ai 1j gratuit (Advanced xG + scouting ML)
+
+### Fermé
+- **bd `8lqf`** (FBref/soccerdata) → OBSOLÈTE : Stats Perform/Opta a retiré toutes les stats avancées de FBref (20/01/2026). Cloudflare bloque le scraping. Scripts Python livrés mais donnée cible n'existe plus.
+- **bd `j5lb`** (DG 6 études) → NO-GO sur les 6 sources : FBref (obsolète), RapidAPI/The Odds API (redondant BSD), TheSportsDB (pas de stats utiles), Transfermarkt/Apify (defer roadmap Fiche Quant), OddsPortal (redondant BSD), Marketing (pas de trafic à monétiser)
+
+### Modifié
+- **CLAUDE.md** : roadmap mise à jour — retrait des lignes j5lb/8lqf, ajout xvalue.ai ticket qyfr
+
+---
+
 ## [v12.77] — 2026-06-11 — Quality gates : Plan→Execute→Verify workflow + test-quick.js
 
 ### Ajouté
