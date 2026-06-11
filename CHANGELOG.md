@@ -1,5 +1,13 @@
 # PariScore — Journal des modifications
 
+## [v9.8] — 2026-06-11
+
+### Ajouté
+- **Tri Δ Elo Surface tennis** : nouvelle option dans le sélecteur de tri de l'onglet Tennis
+  - Trie les matchs par écart d'Elo surface décroissant (du plus déséquilibré au plus équilibré)
+  - Fallback sur Elo global si pas d'Elo surface disponible
+  - Fichiers modifiés : `pariscore.html` (option select), `pariscore.js` (case switch)
+
 ---
 
 ## [v12.76] — 2026-06-11 — Sélections nationales : ETL international_results → λ/form/H2H World Cup 2026 — bd `qgfm`
