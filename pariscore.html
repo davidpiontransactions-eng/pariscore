@@ -4107,8 +4107,8 @@
   .score-probas-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
 
   /* ── PariScore Insights Modal ──────────────────────────────────────────── */
-  .ins-btn { font: 700 9px/1 var(--font-mono); padding: 5px 7px; border-radius: 5px; border: 1px solid rgba(0,230,118,0.35); color: var(--green); background: rgba(0,230,118,0.08); letter-spacing: .5px; transition: background .15s, border-color .15s, transform .15s; }
-  .ins-btn:hover { background: rgba(0,230,118,0.18); border-color: var(--green); transform: scale(1.05); }
+  .ins-btn { font: 600 11px/1 var(--font-sans); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(0,230,118,0.4); color: #fff; background: linear-gradient(135deg, rgba(0,230,118,0.9), rgba(0,200,83,0.85)); letter-spacing: .3px; transition: all .2s ease; box-shadow: 0 2px 8px rgba(0,230,118,0.25); text-transform: uppercase; }
+.ins-btn:hover { background: linear-gradient(135deg, rgba(0,230,118,1), rgba(0,200,83,1)); box-shadow: 0 4px 16px rgba(0,230,118,0.4); transform: translateY(-1px); }
 
   /* ── Deep Analysis Pro Modal ───────────────────────────────────────────── */
   .ai-gen-btn { font: 700 9px/1 var(--font-mono); padding: 5px 7px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.45); color: #ce93d8; background: rgba(171,71,188,0.1); letter-spacing: .5px; transition: background .15s, border-color .15s, transform .15s; cursor: pointer; }
@@ -4231,10 +4231,16 @@
   .ins-teams { font: 800 20px/1.2 var(--font-head); }
   .ins-league { font-size: 12px; color: var(--text3); margin-top: 4px; }
   /* Tabs */
-  .ins-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
-  .ins-tab { padding: 9px 18px; font-size: 12.5px; font-weight: 600; color: var(--text3); border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s, border-color .15s; }
-  .ins-tab:hover { color: var(--text); }
-  .ins-tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .ins-tabs { display: flex; gap: 8px; padding: 6px; margin-bottom: 22px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; flex-wrap: nowrap; scrollbar-width: none; -ms-overflow-style: none; position: relative; }
+.ins-tabs::-webkit-scrollbar { display: none; }
+.ins-tab { padding: 8px 16px; font: 500 12px/1 var(--font-sans); color: var(--text2); border: 1px solid var(--border); border-radius: 20px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; background: var(--bg2); letter-spacing: 0.2px; position: relative; overflow: hidden; }
+.ins-tab:hover { color: var(--text); border-color: var(--text2); background: var(--bg3); }
+.ins-tab.active { color: #fff; background: linear-gradient(135deg, var(--green), rgba(0,200,83,0.9)); border-color: transparent; box-shadow: 0 2px 8px rgba(0,230,118,0.3); font-weight: 600; }
+  
+  /* Segmented Control iOS */
+  .stats-segmented { display: flex; gap: 2px; padding: 3px; background: var(--bg3); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; max-width: 320px; }
+  .stats-segmented-btn { flex: 1; padding: 8px 12px; border-radius: 8px; border: none; background: transparent; color: var(--text2); font: 500 12px/1 var(--font-sans); cursor: pointer; transition: all 0.2s; text-align: center; }
+  .stats-segmented-btn.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.2); font-weight: 600; }
   /* Section headings */
   .ins-section { margin-bottom: 20px; }
   .ins-section-title { font: 700 10px/1 var(--font-mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
@@ -4257,6 +4263,12 @@
   .poisson-thermo:hover .pt-fill { filter:brightness(1.25); }
   .pt-label { font:600 10.5px/1.2 var(--font-mono); color:var(--text2); display:flex; align-items:center; gap:5px; white-space:nowrap; }
   .pt-label::before { content:''; display:block; width:5px; height:5px; border-radius:50%; background:var(--color); opacity:0.85; flex-shrink:0; }
+  
+  /* Animations */
+  @keyframes tabEnter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  [id^="ins-tab-"] { animation: tabEnter 0.3s cubic-bezier(0.22, 0.61, 0.36, 1); }
+  @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .cmp-fill { animation: barGrow 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; transform-origin: left; }
   /* Form badges */
   .form-badges { display: flex; gap: 4px; }
   .form-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 5px; font: 700 10px/1 var(--font-mono); }
@@ -14963,6 +14975,9 @@ function psSetLang(v) {
   .tn-wom-ai{flex:0 0 auto;width:26px;height:26px;border-radius:7px;border:1px solid var(--border,rgba(255,255,255,.12));background:rgba(124,58,237,.14);color:var(--text,#e8eaed);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .12s,background .12s;}
   .tn-wom-ai:hover{background:rgba(124,58,237,.32);transform:scale(1.08);}
   .tn-wom-ai:active{transform:scale(.95);}
+  .tn-t10-ai{flex:0 0 auto;width:24px;height:24px;border-radius:6px;border:1px solid var(--border,rgba(255,255,255,.12));background:rgba(124,58,237,.14);color:var(--text,#e8eaed);font-size:12px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:transform .12s,background .12s;}
+  .tn-t10-ai:hover{background:rgba(124,58,237,.32);transform:scale(1.08);}
+  .tn-t10-ai:active{transform:scale(.95);}
   .tn-wom-empty{padding:14px 6px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3,#5a6068);}
   @media(max-width:720px){.tn-wom-grid{grid-template-columns:1fr;}}
 
@@ -19499,31 +19514,31 @@ function psSetLang(v) {
         <div class="ins-league" id="ins-league">—</div>
       </div>
       <div class="ins-tabs">
-        <div class="ins-tab active" onclick="insShowTab('resume')">Résumé</div>
-        <div class="ins-tab" onclick="insShowTab('stats')">Stats</div>
-        <div class="ins-tab" onclick="insShowTab('joueurs')">Stats Joueurs</div>
-        <div class="ins-tab" onclick="insShowTab('scouting')">PRO SCOUT</div>
-        <div class="ins-tab" onclick="insShowTab('graphique')">Forme</div>
-        <div class="ins-tab" onclick="insShowTab('classement')">Classement</div>
-        <div class="ins-tab" onclick="insShowTab('corners')">Corners</div>
-        <div class="ins-tab" onclick="insShowTab('powerscore')">Power Score</div>
-        <div class="ins-tab" onclick="insShowTab('h2h')">H2H</div>
-        <div class="ins-tab" onclick="insShowTab('compos')">Compos</div>
-        <div class="ins-tab" onclick="insShowTab('incidents')">Incidents</div>
-        <div class="ins-tab" onclick="insShowTab('shotmap')">Shotmap</div>
-        <div class="ins-tab" onclick="insShowTab('videos')">🎬 Vidéos</div>
+        <button class="ins-tab active" data-tab="resume" onclick="insShowTab('resume')">Résumé</button>
+        <button class="ins-tab" data-tab="stats" onclick="insShowTab('stats')">Stats</button>
+        <button class="ins-tab" data-tab="joueurs" onclick="insShowTab('joueurs')">Stats Joueurs</button>
+        <button class="ins-tab" data-tab="compos" onclick="insShowTab('compos')">Compos</button>
+        <button class="ins-tab" data-tab="scouting" onclick="insShowTab('scouting')">Pro Scout</button>
+        <button class="ins-tab" data-tab="graphique" onclick="insShowTab('graphique')">Forme</button>
+        <button class="ins-tab" data-tab="classement" onclick="insShowTab('classement')">Classement</button>
+        <button class="ins-tab" data-tab="corners" onclick="insShowTab('corners')">Corners</button>
+        <button class="ins-tab" data-tab="powerscore" onclick="insShowTab('powerscore')">Power Score</button>
+        <button class="ins-tab" data-tab="h2h" onclick="insShowTab('h2h')">H2H</button>
+        <button class="ins-tab" data-tab="incidents" onclick="insShowTab('incidents')">Incidents</button>
+        <button class="ins-tab" data-tab="shotmap" onclick="insShowTab('shotmap')">Shotmap</button>
+        <button class="ins-tab" data-tab="videos" onclick="insShowTab('videos')">🎬 Vidéos</button>
       </div>
       <select id="ins-tab-mob" aria-label="Section" onchange="insShowTab(this.value)">
         <option value="resume">Résumé</option>
         <option value="stats">Stats</option>
         <option value="joueurs">Stats Joueurs</option>
-        <option value="scouting">PRO SCOUT</option>
+        <option value="compos">Compos</option>
+        <option value="scouting">Pro Scout</option>
         <option value="graphique">Forme</option>
         <option value="classement">Classement</option>
         <option value="corners">Corners</option>
         <option value="powerscore">Power Score</option>
         <option value="h2h">H2H</option>
-        <option value="compos">Compos</option>
         <option value="incidents">Incidents</option>
         <option value="shotmap">Shotmap</option>
         <option value="videos">🎬 Vidéos</option>

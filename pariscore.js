@@ -4542,7 +4542,10 @@ function _tnTop10Card(m, rank) {
   ${surfacePill}
   ${dateBadge}
   ${probBar}
-  <div class="tn-t10-chips">${chipsHtml}</div>
+  <div class="tn-t10-chips">
+    <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🤖</button>
+    ${chipsHtml}
+  </div>
   ${betsHtml}
 </div>`;
 }
@@ -4626,6 +4629,7 @@ function _tnWomRow(m, rank) {
     </div>
     <div class="tn-wom-amt">${_tnWomFmtEur(m.totalMatched)}<small>misé</small></div>
     <button class="tn-wom-ai" ${da} onclick="analyzeWomMatch(this)" title="Analyse IA Gemini + script Discord à copier" aria-label="Analyse IA">🤖</button>
+    <button class="tn-wom-ai" data-p1="${escapeHtml(m.player1||'')}" data-p2="${escapeHtml(m.player2||'')}" data-tournament="${escapeHtml(m.tournament||'')}" data-surface="" data-source="wom" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">📡</button>
   </div>`;
 }
 async function fetchTennisWomTop() {
@@ -4695,6 +4699,43 @@ async function analyzeWomMatch(btn) {
     console.warn('[WomAI] erreur:', e.message);
     if (loading) loading.style.display = 'none';
     if (errBox) { errBox.textContent = 'Erreur : ' + (e.message || e); errBox.style.display = 'block'; }
+  }
+}
+
+// Envoi prédiction IA → Discord (bouton 🤖 Top 10 + 📡 WOM) — bd 57f3
+async function aiSendToDiscord(btn) {
+  if (!btn) return;
+  const d = btn.dataset || {};
+  const p1 = (d.p1 || '').trim(), p2 = (d.p2 || '').trim();
+  const tournament = (d.tournament || '').trim();
+  const surface = (d.surface || '').trim();
+  const source = (d.source || 'top10').trim();
+  if (!p1 || !p2) return;
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  btn.dataset.wasEmoji = origText;
+  try {
+    const r = await fetch('/api/v1/tennis/ai-send-discord', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ p1, p2, tournament, surface, source })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    if (data.already_sent) {
+      if (typeof showNotification === 'function') showNotification('✅ Déjà envoyé sur Discord', 'green');
+    } else if (data.discord_sent) {
+      if (typeof showNotification === 'function') showNotification('✅ Prédiction envoyée sur Discord', 'green');
+    } else {
+      if (typeof showNotification === 'function') showNotification('⚠ Prédiction générée mais webhook Discord indisponible', 'orange');
+    }
+  } catch (e) {
+    console.warn('[aiSendToDiscord] erreur:', e.message);
+    if (typeof showNotification === 'function') showNotification('❌ Erreur : ' + (e.message || e), 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.wasEmoji || '🤖';
   }
 }
 
@@ -13480,8 +13521,8 @@ function insShowTab(tab) {
     const el = document.getElementById(`ins-tab-${t}`);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
-  document.querySelectorAll('.ins-tab').forEach((el, i) => {
-    el.classList.toggle('active', tabs[i] === tab);
+  document.querySelectorAll('.ins-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
   });
   if (tab === 'powerscore') {
     const container = document.getElementById('ins-tab-powerscore');
