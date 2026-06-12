@@ -1,0 +1,65 @@
+============================================================================
+ANALYSE DE REMPLACEMENT BSD - COMPOSITIONS (LINEUPS) COUPE DU MONDE 2026
+============================================================================
+Date     : 12 juin 2026
+Contexte : Elimination du routage BSD (Bzzoiro Sports Data, 5$/mo)
+           pour les compositions d'equipes.
+Projet   : PariScore - analyse de paris sportifs temps reel
+============================================================================
+
+1. SOLUTIONS COMPAREES - LINEUPS CDM 2026
+
+Solution                    Type     Cout CDM   Fiability  Integration
+----------------------------------------------------------------------
+football-data.org (free)    API      0 EUR      ***        Tres facile (code)
+football-data.org Tier One  API      49 EUR/mo  ****       Tres facile (code)
+API-Football Pro            API      19 USD/mo  ****       Facile (kill-switch)
+FIFA.com scraping           Scraping 0 EUR      *****      Moyen (BS4)
+FBref scraping              Scraping 0 EUR      ***        Moyen (risque legal)
+BeSoccer scraping           Scraping 0 EUR      ***        Moyen-eleve
+Sofascore (direct)          API      0 EUR      BLOQUE     N/A
+Sofascore (Playwright)      Scraping 0 EUR      ***        Eleve (pas scalable)
+Sportmonks Growth           API      149 EUR/mo ****       Facile (cher)
+
+2. ARCHITECTURE CIBLE
+
+Route maintenue : GET /api/v1/bsd/lineups/:matchId
+   L1: football-data.org (PRIMARY, 0 EUR, deja code)
+   L2: FIFA.com scraping (FALLBACK, 0 EUR, officiel)
+   L3: football-data.org Tier One (49 EUR/mo si besoin)
+
+3. PLAN D'IMPLEMENTATION (4-6h)
+
+Phase 1 - football-data.org (2-3h) :
+   - Adapter fetchFootballDataMatchDetail() au format BSD
+   - Ajouter le mapper footballDataToBsdLineups()
+   - Fallback dans _bsdEnrichFetch() si BSD KO
+   - Reduire cache 24h -> 30min
+
+Phase 2 - FIFA.com (2h) :
+   - Implementer scrapeFifaLineups() avec LD+JSON
+   - Completer unavailable_players
+   - Inferer lineup_status (H-1 -> predicted)
+
+Phase 3 - Tests (1h) :
+   - Mode dual BSD + football-data.org
+   - Verifier 5 matchs CDM
+   - Couper BSD apres validation
+
+4. RECOMMANDATION
+
+PRIMARY  : football-data.org (GRATUIT, deja code)
+FALLBACK : FIFA.com scraping (GRATUIT)
+PLAN B   : football-data.org Tier One (49 EUR/mois si besoin)
+
+BUDGET   : 0 EUR (ou 49 EUR max si montee en charge)
+DUREE    : 4-6h de dev - une session
+DEPS     : ZERO nouvelle dependance (Node natif)
+
+ATTENTION rate limit : 10 req/min sur le free tier
+- Solution : stagger les polls + cache agressif
+- Si insuffisant pour la CDM : 49 EUR/mois = investissement ponctuel
+
+============================================================================
+Document genere le 12 juin 2026 - PariScore
+============================================================================

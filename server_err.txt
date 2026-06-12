@@ -1,0 +1,5 @@
+  [33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif.[0m
+
+  ✗ PORT 3000 OCCUPÉ - un autre processus Node est déjà actif.
+  → Fermer l'instance existante ou changer PORT dans les variables d'environnement.
+

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PariScore — Prototype Redesign STATS & Onglets</title>
+<style>
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'DM Mono', 'SF Mono', Monaco, monospace;
+    --font-head: 'Inter', sans-serif;
+    --bg: #0a0e13;
+    --bg2: #111820;
+    --bg3: #1a2332;
+    --bg4: #243447;
+    --text: #e8eaed;
+    --text2: #8d9399;
+    --text3: #5a6068;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --green: #00e676;
+    --blue: #29b6f6;
+    --amber: #ffa726;
+    --red: #ff4d4d;
+    --purple: #ab47bc;
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f5;
+    --bg2: #ffffff;
+    --bg3: #f0f0f0;
+    --bg4: #e8e8e8;
+    --text: #111111;
+    --text2: #555555;
+    --text3: #888888;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.12);
+    --green: #15803D;
+    --blue: #2563EB;
+    --amber: #B45309;
+    --red: #DC2626;
+    --purple: #7C3AED;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px;
+    line-height: 1.5;
+  }
+  .match-row {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .match-info { flex: 1; }
+  .match-teams { font: 700 15px/1.3 var(--font-sans); margin-bottom: 4px; }
+  .match-meta { font-size: 11px; color: var(--text3); }
+  .btn-stats {
+    font: 600 11px/1 var(--font-sans);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(0,230,118,0.45);
+    color: var(--green);
+    background: linear-gradient(135deg, rgba(0,230,118,0.14), rgba(0,230,118,0.04));
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-stats::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+  }
+  .btn-stats:hover {
+    background: linear-gradient(135deg, rgba(0,230,118,0.24), rgba(0,230,118,0.08));
+    border-color: var(--green);
+    box-shadow: 0 4px 14px rgba(0,230,118,0.18);
+    transform: translateY(-2px);
+  }
+  .btn-stats:active { transform: translateY(0) scale(0.97); transition-duration: 0.1s; }
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(12px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 720px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    overflow: hidden;
+    animation: modalIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    position: relative;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-header { padding: 24px 28px 0; flex-shrink: 0; }
+  .modal-teams { font: 800 22px/1.2 var(--font-head); margin-bottom: 4px; }
+  .modal-league { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 24px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 5;
+  }
+  .modal-close:hover {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+    transform: rotate(90deg);
+  }
+  .pill-nav { position: relative; margin: 20px 28px 16px; flex-shrink: 0; }
+  .pill-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding: 4px 2px;
+    mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+  }
+  .pill-scroll::-webkit-scrollbar { display: none; }
+  .pill-chip {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    font: 500 12.5px/1 var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  .pill-chip:hover { border-color: var(--border2); color: var(--text); background: var(--bg4); }
+  .pill-chip.active {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green);
+    font-weight: 600;
+    box-shadow: 0 2px 12px rgba(0,230,118,0.25);
+  }
+  .pill-chip .chip-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+  .pill-chip.active .chip-dot { background: #000; opacity: 1; box-shadow: 0 0 4px rgba(0,0,0,0.3); }
+  .tab-content { flex: 1; overflow-y: auto; padding: 0 28px 28px; scroll-behavior: smooth; }
+  .tab-pane { display: none; animation: tabEnter 0.3s cubic-bezier(0.22, 0.61, 0.36, 1); }
+  .tab-pane.active { display: block; }
+  @keyframes tabEnter {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .segmented {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--bg3);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    max-width: 320px;
+  }
+  .segmented-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font: 500 12px/1 var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .segmented-btn.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.2); font-weight: 600; }
+  .stats-section-title {
+    font: 700 10px/1 var(--font-mono);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stats-section-title::before { content: ''; width: 3px; height: 12px; background: var(--green); border-radius: 2px; }
+  .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stats-table th {
+    font: 600 10px/1 var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-table td { padding: 10px; text-align: center; border-bottom: 1px solid var(--border); }
+  .stats-table .row-label { text-align: left; color: var(--text2); font-size: 12.5px; }
+  .stats-table .val-home { color: var(--blue); font-family: var(--font-mono); font-weight: 700; }
+  .stats-table .val-away { color: var(--purple); font-family: var(--font-mono); font-weight: 700; }
+  .stats-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .cmp-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .cmp-label { color: var(--text2); }
+  .cmp-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .cmp-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .cmp-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1); transform-origin: left; }
+  .cmp-fill.home { background: var(--blue); }
+  .cmp-fill.away { background: var(--purple); }
+  .cmp-val { font: 600 12px/1 var(--font-mono); min-width: 42px; text-align: right; }
+  .cmp-val.home { color: var(--blue); }
+  .cmp-val.away { color: var(--purple); }
+  .form-badges { display: flex; gap: 4px; }
+  .form-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    font: 700 10px/1 var(--font-mono);
+  }
+  .form-W { background: rgba(0,230,118,0.18); color: var(--green); }
+  .form-D { background: rgba(255,167,38,0.18); color: var(--amber); }
+  .form-L { background: rgba(255,77,77,0.18); color: var(--red); }
+  .poisson-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 12px; }
+  .poisson-card {
+    flex: 0 0 calc(25% - 8px);
+    min-width: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 8px 10px;
+    transition: all 0.2s;
+  }
+  .poisson-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .poisson-val { font: 800 20px/1 var(--font-head); }
+  .poisson-lbl { font: 600 10px/1 var(--font-mono); color: var(--text3); text-transform: uppercase; }
+  .player-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+  .player-card:hover { border-color: var(--border2); transform: translateX(4px); }
+  .player-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 11px/1 var(--font-mono);
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+  .player-info { flex: 1; min-width: 0; }
+  .player-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .player-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .player-kpi { font: 800 18px/1 var(--font-head); }
+  .player-kpi-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; margin-top: 2px; }
+  .theme-toggle {
+    position: fixed;
+    top: 20px; right: 20px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    font: 500 12px var(--font-sans);
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+  }
+  .theme-toggle:hover { border-color: var(--green); color: var(--green); }
+  .legend-bar { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; font-size: 11px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  @media (max-width: 640px) {
+    .modal-panel { max-height: 95vh; border-radius: 16px; }
+    .modal-header { padding: 20px 20px 0; }
+    .modal-teams { font-size: 18px; }
+    .pill-nav { margin: 16px 20px 12px; }
+    .pill-chip { padding: 7px 12px; font-size: 11.5px; }
+    .tab-content { padding: 0 20px 20px; }
+    .poisson-card { flex: 0 0 calc(33.333% - 7px); }
+    .cmp-row { grid-template-columns: 100px 1fr 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+
+<div class="match-row">
+  <div class="match-info">
+    <div class="match-teams">PSG vs Marseille</div>
+    <div class="match-meta">Ligue 1 · Dim 15 juin · 21h00</div>
+  </div>
+  <button class="btn-stats" onclick="openModal()">STATS</button>
+</div>
+
+<div class="match-row">
+  <div class="match-info">
+    <div class="match-teams">Real Madrid vs Barcelona</div>
+    <div class="match-meta">La Liga · Sam 14 juin · 18h30</div>
+  </div>
+  <button class="btn-stats" onclick="openModal()">STATS</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-panel">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-header">
+      <div class="modal-teams">PSG vs Marseille</div>
+      <div class="modal-league">Ligue 1 · Journée 34</div>
+    </div>
+    <div class="pill-nav">
+      <div class="pill-scroll" id="pillScroll">
+        <button class="pill-chip active" data-tab="resume" onclick="switchTab('resume')"><span class="chip-dot"></span>Résumé</button>
+        <button class="pill-chip" data-tab="stats" onclick="switchTab('stats')"><span class="chip-dot"></span>Stats</button>
+        <button class="pill-chip" data-tab="joueurs" onclick="switchTab('joueurs')"><span class="chip-dot"></span>Joueurs</button>
+        <button class="pill-chip" data-tab="compos" onclick="switchTab('compos')"><span class="chip-dot"></span>Compos</button>
+        <button class="pill-chip" data-tab="proscout" onclick="switchTab('proscout')"><span class="chip-dot"></span>Pro Scout</button>
+        <button class="pill-chip" data-tab="forme" onclick="switchTab('forme')"><span class="chip-dot"></span>Forme</button>
+        <button class="pill-chip" data-tab="classement" onclick="switchTab('classement')"><span class="chip-dot"></span>Classement</button>
+        <button class="pill-chip" data-tab="corners" onclick="switchTab('corners')"><span class="chip-dot"></span>Corners</button>
+        <button class="pill-chip" data-tab="powerscore" onclick="switchTab('powerscore')"><span class="chip-dot"></span>Power Score</button>
+        <button class="pill-chip" data-tab="h2h" onclick="switchTab('h2h')"><span class="chip-dot"></span>H2H</button>
+        <button class="pill-chip" data-tab="incidents" onclick="switchTab('incidents')"><span class="chip-dot"></span>Incidents</button>
+        <button class="pill-chip" data-tab="shotmap" onclick="switchTab('shotmap')"><span class="chip-dot"></span>Shotmap</button>
+        <button class="pill-chip" data-tab="videos" onclick="switchTab('videos')"><span class="chip-dot"></span>Vidéos</button>
+      </div>
+    </div>
+    <div class="tab-content">
+      <div class="tab-pane active" id="tab-stats">
+        <div class="segmented">
+          <button class="segmented-btn active" onclick="setSeg(this,'global')">Global</button>
+          <button class="segmented-btn" onclick="setSeg(this,'home')">Domicile</button>
+          <button class="segmented-btn" onclick="setSeg(this,'away')">Extérieur</button>
+        </div>
+        <div class="legend-bar">
+          <span><span class="legend-dot" style="background:var(--blue)"></span>PSG</span>
+          <span><span class="legend-dot" style="background:var(--purple)"></span>Marseille</span>
+        </div>
+        <div class="stats-section-title">Performance</div>
+        <div class="cmp-row">
+          <div class="cmp-label">PPG</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:85%"></div></div><span class="cmp-val home">2.35</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:62%"></div></div><span class="cmp-val away">1.72</span></div>
+        </div>
+        <div class="cmp-row">
+          <div class="cmp-label">Victoires %</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:78%"></div></div><span class="cmp-val home">78%</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:45%"></div></div><span class="cmp-val away">45%</span></div>
+        </div>
+        <div class="cmp-row">
+          <div class="cmp-label">Buts Marqués</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:92%"></div></div><span class="cmp-val home">2.8</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:58%"></div></div><span class="cmp-val away">1.4</span></div>
+        </div>
+        <div class="cmp-row">
+          <div class="cmp-label">Buts Encaissés</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:35%"></div></div><span class="cmp-val home">0.6</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:72%"></div></div><span class="cmp-val away">1.8</span></div>
+        </div>
+        <div class="cmp-row">
+          <div class="cmp-label">xG</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:88%"></div></div><span class="cmp-val home">2.45</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:55%"></div></div><span class="cmp-val away">1.32</span></div>
+        </div>
+        <div class="stats-section-title">🎯 Tirs</div>
+        <table class="stats-table">
+          <thead><tr><th style="text-align:left">Statistique</th><th style="color:var(--blue)">PSG</th><th style="color:var(--purple)">Marseille</th></tr></thead>
+          <tbody>
+            <tr><td class="row-label">Tirs Cadrés /match</td><td class="val-home">5.2</td><td class="val-away">3.8</td></tr>
+            <tr><td class="row-label">Tirs Totaux /match</td><td class="val-home">14.5</td><td class="val-away">10.2</td></tr>
+          </tbody>
+        </table>
+        <div class="stats-section-title">🟨 Discipline</div>
+        <table class="stats-table">
+          <thead><tr><th style="text-align:left">Statistique</th><th style="color:var(--blue)">PSG</th><th style="color:var(--purple)">Marseille</th></tr></thead>
+          <tbody>
+            <tr><td class="row-label">Cartons Jaunes /match</td><td class="val-home">1.8</td><td class="val-away">2.4</td></tr>
+            <tr><td class="row-label">Cartons Rouges /match</td><td class="val-home">0.1</td><td class="val-away">0.3</td></tr>
+            <tr><td class="row-label">Clean Sheet %</td><td class="val-home">52%</td><td class="val-away">28%</td></tr>
+          </tbody>
+        </table>
+        <div class="stats-section-title">🚩 Corners</div>
+        <table class="stats-table">
+          <thead><tr><th style="text-align:left">Statistique</th><th style="color:var(--blue)">PSG</th><th style="color:var(--purple)">Marseille</th></tr></thead>
+          <tbody>
+            <tr><td class="row-label">Corners /match</td><td class="val-home">6.2</td><td class="val-away">4.8</td></tr>
+            <tr><td class="row-label">Pour</td><td class="val-home">3.8</td><td class="val-away">2.5</td></tr>
+            <tr><td class="row-label">Contre</td><td class="val-home">2.4</td><td class="val-away">2.3</td></tr>
+          </tbody>
+        </table>
+        <div class="stats-section-title">Marchés</div>
+        <div class="poisson-grid">
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--green)">68%</div><div class="poisson-lbl">GG</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--green)">72%</div><div class="poisson-lbl">O1.5</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--amber)">48%</div><div class="poisson-lbl">O2.5</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--red)">22%</div><div class="poisson-lbl">O3.5</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--green)">62%</div><div class="poisson-lbl">1</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--amber)">24%</div><div class="poisson-lbl">N</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--red)">14%</div><div class="poisson-lbl">2</div></div>
+        </div>
+      </div>
+      <div class="tab-pane" id="tab-resume">
+        <div class="stats-section-title">Forme Récente (5 derniers)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px">
+          <div>
+            <div style="font-size:11px;color:var(--blue);margin-bottom:8px;font-weight:600">PSG <span style="color:var(--text3)">#1</span></div>
+            <div class="form-badges">
+              <span class="form-badge form-W">W</span>
+              <span class="form-badge form-W">W</span>
+              <span class="form-badge form-D">D</span>
+              <span class="form-badge form-W">W</span>
+              <span class="form-badge form-W">W</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--purple);margin-bottom:8px;font-weight:600">Marseille <span style="color:var(--text3)">#5</span></div>
+            <div class="form-badges">
+              <span class="form-badge form-L">L</span>
+              <span class="form-badge form-W">W</span>
+              <span class="form-badge form-W">W</span>
+              <span class="form-badge form-D">D</span>
+              <span class="form-badge form-L">L</span>
+            </div>
+          </div>
+        </div>
+        <div class="stats-section-title">Performance</div>
+        <div class="cmp-row">
+          <div class="cmp-label">PPG</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:85%"></div></div><span class="cmp-val home">2.35</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:62%"></div></div><span class="cmp-val away">1.72</span></div>
+        </div>
+        <div class="cmp-row">
+          <div class="cmp-label">Buts Marqués</div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill home" style="width:92%"></div></div><span class="cmp-val home">2.8</span></div>
+          <div class="cmp-bar-wrap"><div class="cmp-track"><div class="cmp-fill away" style="width:58%"></div></div><span class="cmp-val away">1.4</span></div>
+        </div>
+        <div class="stats-section-title">Marchés</div>
+        <div class="poisson-grid">
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--green)">68%</div><div class="poisson-lbl">GG</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--green)">72%</div><div class="poisson-lbl">O1.5</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--amber)">48%</div><div class="poisson-lbl">O2.5</div></div>
+          <div class="poisson-card"><div class="poisson-val" style="color:var(--red)">22%</div><div class="poisson-lbl">O3.5</div></div>
+        </div>
+      </div>
+      <div class="tab-pane" id="tab-joueurs">
+        <div class="stats-section-title">Joueurs Clés</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:12px;color:var(--blue);font-weight:600;margin-bottom:10px">PSG</div>
+            <div class="player-card">
+              <div class="player-avatar">KM</div>
+              <div class="player-info">
+                <div class="player-name">Kylian Mbappé</div>
+                <div class="player-meta">ATT · 28 buts · 8 passes</div>
+              </div>
+              <div><div class="player-kpi" style="color:var(--green)">3.2</div><div class="player-kpi-lbl">KPI</div></div>
+            </div>
+            <div class="player-card">
+              <div class="player-avatar" style="background:var(--blue);color:#fff">VO</div>
+              <div class="player-info">
+                <div class="player-name">Vitinha</div>
+                <div class="player-meta">MIL · 6 buts · 12 passes</div>
+              </div>
+              <div><div class="player-kpi" style="color:var(--amber)">1.8</div><div class="player-kpi-lbl">KPI</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--purple);font-weight:600;margin-bottom:10px">Marseille</div>
+            <div class="player-card">
+              <div class="player-avatar" style="background:var(--purple);color:#fff">PA</div>
+              <div class="player-info">
+                <div class="player-name">Pierre-Emerick Aubameyang</div>
+                <div class="player-meta">ATT · 18 buts · 4 passes</div>
+              </div>
+              <div><div class="player-kpi" style="color:var(--amber)">1.9</div><div class="player-kpi-lbl">KPI</div></div>
+            </div>
+            <div class="player-card">
+              <div class="player-avatar">AM</div>
+              <div class="player-info">
+                <div class="player-name">Amine Harit</div>
+                <div class="player-meta">MIL · 4 buts · 9 passes</div>
+              </div>
+              <div><div class="player-kpi" style="color:var(--text3)">0.9</div><div class="player-kpi-lbl">KPI</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane" id="tab-compos"><div style="padding:40px 0;text-align:center;color:var(--text3)">Compositions — En cours de chargement…</div></div>
+      <div class="tab-pane" id="tab-proscout"><div style="padding:40px 0;text-align:center;color:var(--text3)">Pro Scout — Analyse IA en préparation…</div></div>
+      <div class="tab-pane" id="tab-forme"><div style="padding:40px 0;text-align:center;color:var(--text3)">Graphique de forme — En cours…</div></div>
+      <div class="tab-pane" id="tab-classement"><div style="padding:40px 0;text-align:center;color:var(--text3)">Classement — En cours…</div></div>
+      <div class="tab-pane" id="tab-corners"><div style="padding:40px 0;text-align:center;color:var(--text3)">Corners — En cours…</div></div>
+      <div class="tab-pane" id="tab-powerscore"><div style="padding:40px 0;text-align:center;color:var(--text3)">Power Score — Streaming IA…</div></div>
+      <div class="tab-pane" id="tab-h2h"><div style="padding:40px 0;text-align:center;color:var(--text3)">H2H — En cours…</div></div>
+      <div class="tab-pane" id="tab-incidents"><div style="padding:40px 0;text-align:center;color:var(--text3)">Incidents — En cours…</div></div>
+      <div class="tab-pane" id="tab-shotmap"><div style="padding:40px 0;text-align:center;color:var(--text3)">Shotmap — En cours…</div></div>
+      <div class="tab-pane" id="tab-videos"><div style="padding:40px 0;text-align:center;color:var(--text3)">🎬 Vidéos — En cours…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      const active = document.querySelector('.pill-chip.active');
+      if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }, 100);
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function switchTab(tab) {
+    document.querySelectorAll('.pill-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.tab === tab);
+    });
+    const activeChip = document.querySelector('.pill-chip[data-tab="' + tab + '"]');
+    if (activeChip) {
+      activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    const target = document.getElementById('tab-' + tab);
+    if (target) target.classList.add('active');
+  }
+  function setSeg(btn, mode) {
+    btn.parentElement.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    console.log('Mode:', mode);
+  }
+  function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+</body>
+</html>
