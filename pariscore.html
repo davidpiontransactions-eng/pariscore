@@ -11638,9 +11638,9 @@ function psSetLang(v) {
   <source src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU" type="audio/wav">
 </audio>
 
-<button id="theme-toggle" onclick="toggleTheme()" title="Basculer mode jour/nuit">☾ Nuit</button>
+<button id="theme-toggle" onclick="toggleTheme()" data-i18n-title="theme.toggle_title" data-i18n="theme.toggle_night">☾ Nuit</button>
 <!-- bd 21m7 — Toggle alertes sonores trading (next to theme toggle) -->
-<button id="audio-toggle" data-audio-toggle onclick="psToggleAudioAlerts()" title="Alertes sonores désactivées — cliquer pour activer" style="position:fixed;top:14px;right:80px;z-index:200;background:transparent;color:var(--text2);border:1px solid var(--bg3);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;transition:color .15s,border-color .15s;">🔇</button>
+<button id="audio-toggle" data-audio-toggle onclick="psToggleAudioAlerts()" title="Alertes sonores désactivées — cliquer pour activer" style="position:fixed;top:14px;right:80px;z-index:200;background:transparent;color:var(--text2);border:1px solid var(--bg3);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;transition:color .15s,border-color .15s;" data-i18n-title="alerts.sound_off_title">🔇</button>
 
 <!-- UPDATE BAR -->
 <div class="update-bar">
@@ -11675,7 +11675,7 @@ function psSetLang(v) {
       <circle cx="52" cy="16" r="5.4" fill="url(#lmNode)"/>
     </svg>
     PariScore
-    <span class="logo-tag-mob">Cotes live · Modèle Poisson · Edge dévigé</span>
+    <span class="logo-tag-mob" data-i18n="logo.tagline">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
     <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football" data-i18n="nav.football">Football</a>
@@ -11700,11 +11700,11 @@ function psSetLang(v) {
     <a href="#" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique" data-i18n="nav.historique">Historique</a>
     <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil" data-i18n="nav.accueil">Accueil</a>
     <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs" aria-label="Tarifs" data-i18n="nav.tarifs">Tarifs</a>
-    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres" class="nav-icon-only"></a>
+    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres" data-i18n-title="page.settings" class="nav-icon-only"></a>
   </div>
-  <span id="live-update-toast" class="live-update-toast">⚡ Mise à jour</span>
+  <span id="live-update-toast" class="live-update-toast" data-i18n="live.update_toast">⚡ Mise à jour</span>
   <div class="nav-right">
-    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <div class="live-pill"><div class="live-dot"></div><span data-i18n="badge.live">LIVE</span></div>
     <select id="ps-lang-select" onchange="psSetLang(this.value)" title="Langue / Language" style="font-size:11px;background:var(--bg3,#0e1525);color:var(--text2,#94a3b8);border:1px solid var(--border2,rgba(255,255,255,0.12));border-radius:6px;padding:4px 7px;cursor:pointer;outline:none;font-family:var(--font-mono,'DM Mono',monospace);letter-spacing:.04em;transition:border-color .15s;">
       <option value="fr">🇫🇷 FR</option>
       <option value="en">🇬🇧 EN</option>
