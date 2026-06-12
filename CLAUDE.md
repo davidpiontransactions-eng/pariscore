@@ -6,6 +6,10 @@ Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
 - **Rigueur Scientifique** : Aucun modèle n'est mis en production sans calcul d'Intervalle de Confiance (UQD).
 - **Recrutement** : Si l'architecture requiert une expertise en ML ou scraping temps réel complexe, déploie un agent dédié.
 
+## gstack Orchestrator
+gstack skills (`/gstack-*`) sont disponibles — cf. `AGENTS.md` pour la liste complète et le skill routing.
+Utiliser `/gstack-plan-ceo-review` pour les décisions stratégiques, `/gstack-autoplan` pour le pipeline complet CEO→Design→Eng→DX.
+
 ## 🛠️ RÈGLES DE COMPORTEMENT SYSTÉMATIQUES
 
 1. **PROTOCOLE DE CLÔTURE (OBLIGATOIRE)** :
@@ -152,4 +156,31 @@ bd close <id>         # Complete work
 - **Health check**: `curl -sf https://pariscore.fr/api/v1/status` (also `/api/v1/matches`, `/api/v1/tennis/matches`, `/api/v1/cs2/matches`)
 - **Gotcha**: crash loop after restart → `ssh pariscore "cd /home/ubuntu/pariscore && npm rebuild better-sqlite3 && pm2 restart server --update-env"` (Node/better-sqlite3 ABI mismatch)
 
-*Deploy config v1 — 2026-06-08 via /setup-deploy. Full procedure: `/ps-deploy` skill (`.claude/skills/ps-deploy`).*
+*Deploy config v1 — 2026-06-08 via /setup-deploy. Full procedure: `/ps-deploy` skill (`.claude/skills/ps-deploy`).
+
+---
+
+## Roadmap
+
+- [ ] **Étude Betfair scraping** — Analyser la faisabilité d'obtenir le WOM par joueur tennis via scraping betfair.com ou API officielle
+
+## Étude — Scraping Betfair.com pour WOM par joueur (tennis)
+
+**Contexte** : Actuellement, le WOM tennis ne peut afficher que le `totalMatched` (volume total misé) car betwatch.fr paywalle le split par joueur (Extra Sports). Le panneau WOM tennis ne montre donc pas de pourcentage BACK par joueur.
+
+**Objectif** : Étudier la faisabilité de scraper directement betfair.com (ou son API publique/privée) pour obtenir le Weight of Money PAR JOUEUR sur les matchs de tennis.
+
+**Pistes à explorer** :
+1. **Betfair Exchange API** (officielle) — nécessite clé API + certificat, mais donne le WOM par joueur via `listMarketBook`. Vérifier si le compte gratuit suffit ou si un abonnement Premium est requis.
+2. **Betfair.com scraping** — la page Exchange affiche le montant BACK/LAY disponible pour chaque joueur. Analyser la structure DOM/API interne de betfair.com/com/en/exchange/. Risques : blocage IP, rate limiting, TOS.
+3. **Sources alternatives** : 
+   - `betfair.com/sport/tennis` pages match → extraction des volumes BACK/LAY visibles
+   - API non documentée de betfair.com (XHR calls du site web)
+   - Matchbook / Smarkets (autres exchanges)
+
+**Livrables attendus** :
+- Rapport de faisabilité (data/étude_betfair_scraping.md)
+- Si faisable : script Node.js `tools/scrape-betfair-wom.js` utilisant les patterns existants (fetch HTTP + parsing HTML) ou API officielle
+- Si non faisable : justification claire (TOS, blocage, coût)
+
+**Priorité** : À faire après stabilisation du backend WOM actuel

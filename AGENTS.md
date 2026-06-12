@@ -87,6 +87,61 @@ Required env vars listed in render.yaml.
 - `.env` contains live API keys — **NEVER commit**
 - Git already ignores `.env`, `*.db`, `*.log`
 
+## gstack — Orchestration & Review
+
+[gstack](https://github.com/garrytan/gstack) v1.57.9 is installed at `~/.claude/skills/gstack`.
+
+### Available Slash Commands
+
+**Plan-mode reviews:**
+- `/gstack-office-hours` — Reframe product idea before writing code
+- `/gstack-plan-ceo-review` — CEO-level: find the 10-star product, challenge scope
+- `/gstack-plan-eng-review` — Lock architecture, data flow, edge cases
+- `/gstack-plan-design-review` — Design dimension scoring 0-10
+- `/gstack-plan-devex-review` — Developer experience audit
+- `/gstack-autoplan` — Full pipeline: CEO → Design → Eng → DX (auto-decisions)
+- `/gstack-design-consultation` — Build complete design system from scratch
+- `/gstack-spec` — Turn vague intent into executable spec + GitHub issue
+
+**Implementation + review:**
+- `/gstack-review` — Pre-landing PR review (finds CI-passing prod-breakers)
+- `/gstack-investigate` — Systematic root-cause debugging
+- `/gstack-design-review` — Live-site visual audit + fix loop
+- `/gstack-design-shotgun` — Generate AI design variants, compare, iterate
+- `/gstack-qa` — Open real browser, find bugs, fix, re-verify
+- `/gstack-qa-only` — Report-only QA (no code changes)
+
+**Release + deploy:**
+- `/gstack-ship` — Run tests, review, push, create PR
+- `/gstack-land-and-deploy` — Merge PR, wait for CI/deploy, verify production
+- `/gstack-canary` — Post-deploy monitoring
+- `/gstack-document-release` — Update docs to match what shipped
+- `/gstack-document-generate` — Generate Diataxis docs from code
+- `/gstack-setup-deploy` — Detect & configure deploy platform
+
+**Safety + memory:**
+- `/gstack-careful` — Warn before destructive commands
+- `/gstack-freeze` — Lock edits to one directory
+- `/gstack-context-save` — Save working context (git state, decisions)
+- `/gstack-context-restore` — Resume saved context across sessions
+- `/gstack-learn` — Manage cross-session learnings
+- `/gstack-retro` — Weekly engineering retrospective
+- `/gstack-cso` — OWASP + STRIDE security audit
+- `/gstack-health` — Code quality dashboard
+
+### Skill Routing (for /gstack-autoplan)
+- **Strategy/scope decisions** → `/gstack-plan-ceo-review`
+- **Architecture/edge cases/testing** → `/gstack-plan-eng-review`
+- **UI/UX/design direction** → `/gstack-plan-design-review` or `/gstack-design-consultation`
+- **Developer experience** → `/gstack-plan-devex-review` or `/gstack-devex-review`
+- **Full review pipeline** → `/gstack-autoplan`
+- **Pre-merge quality gate** → `/gstack-review` + `/gstack-qa`
+- **Bug/regression** → `/gstack-investigate`
+- **Deploy** → `/gstack-ship` + `/gstack-land-and-deploy`
+
+### Web Browsing
+ALWAYS use the `/gstack-browse` skill for web browsing. NEVER use `mcp__claude-in-chrome__*` tools.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
 
