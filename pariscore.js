@@ -485,7 +485,7 @@ function _paintWCPred(el,data){
     if (dotsEl) {
       dotsEl.innerHTML = '<span class="rg-pc-form-dot skeleton">?</span>'.repeat(5);
     }
-    _rgPcFormNote('Chargement L5 clay…', true);
+    _rgPcFormNote(I18N.t('status.loading_clay'), true);
 
     // === Open ===
     backdrop.classList.add('open');
@@ -5327,7 +5327,7 @@ async function loadTaMCPLadder(tour = 'men') {
   const body = document.getElementById('ta-mcp-body');
   const status = document.getElementById('ta-mcp-status');
   if (!body) return;
-  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement MCP…</div>';
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">' + I18N.t('status.loading_mcp') + '</div>';
   try {
     const [serveRes, returnRes] = await Promise.all([
       apiFetch(`/api/v1/tennis-abstract/report?slug=mcp-serve-${tourN}-52`).then(r => r.json()),
@@ -6485,7 +6485,7 @@ async function openTennisDetail(matchId) {
   const body = document.getElementById('tennis-detail-body');
   if (!modal || !body) return;
   modal.style.display = 'flex';
-  body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">Chargement détail…</div>';
+  body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">' + I18N.t('status.loading_detail') + '</div>';
   // Lignes LiveScore (id "ls:<eid>") → détail dédié, pas le détail BSD
   if (_tennisDetailCurrentId.startsWith('ls:')) {
     await _renderLivescoreDetail(_tennisDetailCurrentId.slice(3));
@@ -10432,7 +10432,7 @@ function openTeamDetail(teamNameOrId) {
   const _tdContent = document.getElementById('team-detail-content');
   _tdContent.style.background = 'var(--bg2)';
   _tdContent.style.padding = '30px';
-  _tdContent.innerHTML = '<div style="padding:40px;text-align:center;">Chargement...</div>';
+  _tdContent.innerHTML = '<div style="padding:40px;text-align:center;">' + I18N.t('status.loading') + '</div>';
   fetch('/api/v1/team?name=' + encodeURIComponent(teamNameOrId))
     .then(r => r.json())
     .then(data => {
@@ -10462,7 +10462,7 @@ function openPlayerDetail(playerName, teamCtx, leagueId) {
   const _pdContent = document.getElementById('team-detail-content');
   _pdContent.style.background = '#fff';
   _pdContent.style.padding = '0';
-  _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">Chargement...</div>';
+  _pdContent.innerHTML = '<div style="padding:40px;text-align:center;color:#1A1A1A;font-family:\'Instrument Sans\',sans-serif;font-size:13px;">' + I18N.t('status.loading') + '</div>';
 
   const teamQ = teamCtx ? '&team=' + encodeURIComponent(teamCtx) : '';
   const leagueQ = leagueId ? '&league=' + encodeURIComponent(leagueId) : '';
@@ -11090,7 +11090,7 @@ async function toggleSkillDrawer(matchId) {
       if (content) content.innerHTML = '<div class="ft-skill-loader">Profils non disponibles</div>';
       return;
     }
-    content.innerHTML = '<div class="ft-skill-loader">⚡ Chargement profils Bzzoiro...</div>';
+    content.innerHTML = '<div class="ft-skill-loader">' + I18N.t('status.loading_bzzoiro') + '</div>';
     try {
       const profiles = await Promise.all(
         pids.map(id => fetch('/api/v1/bsd/player-skill/' + id).then(r => r.json()).catch(() => null))
@@ -12690,7 +12690,7 @@ const label = country
       _sdTr.id = 'ftsk-' + m.id;
       _sdTr.dataset.pids = _skillPids;
       _sdTr.style.display = 'none';
-      _sdTr.innerHTML = `<td colspan="99" style="padding:0 !important;"><div class="ft-skill-drawer-inner" id="ftsk-content-${m.id}"><div class="ft-skill-loader">⚡ Chargement profils...</div></div></td>`;
+      _sdTr.innerHTML = `<td colspan="99" style="padding:0 !important;"><div class="ft-skill-drawer-inner" id="ftsk-content-${m.id}"><div class="ft-skill-loader">${I18N.t('status.loading_profiles')}</div></div></td>`;
       tbody.appendChild(_sdTr);
     }
     } catch (e) {
@@ -15871,14 +15871,14 @@ function buildClassementTab(d) {
 
   if (!ranked.length) {
     return controls + `
-      <div id="${placeholderId}" style="margin-bottom:18px"><div class="ins-empty" style="padding:14px 0;font-size:11px;color:var(--text3)">⏳ Chargement Hit Rate réel sur matchs archivés…</div></div>
+      <div id="${placeholderId}" style="margin-bottom:18px"><div class="ins-empty" style="padding:14px 0;font-size:11px;color:var(--text3)">${I18N.t('status.loading_hitrate')}</div></div>
       <div class="ins-empty" style="padding:30px 0">
         <div style="font-size:13px;color:var(--text2)">Pas de données Poisson suffisantes pour "${strategyLabel}".</div>
       </div>`;
   }
 
   return controls + `
-    <div id="${placeholderId}" style="margin-bottom:18px"><div class="ins-empty" style="padding:14px 0;font-size:11px;color:var(--text3)">⏳ Chargement Hit Rate réel sur matchs archivés…</div></div>
+    <div id="${placeholderId}" style="margin-bottom:18px"><div class="ins-empty" style="padding:14px 0;font-size:11px;color:var(--text3)">${I18N.t('status.loading_hitrate')}</div></div>
     <table class="standings-table" style="font-family:var(--font-mono)">
       <thead><tr>
         <th>Pos</th><th style="text-align:left">Équipe</th>
@@ -16258,16 +16258,26 @@ async function enrichStatsTabWithXg(m) {
   if (!d || d.empty) return;
   const el = document.getElementById('ins-tab-stats');
   if (!el || el.querySelector('.xgp-wrap')) return; // déjà injecté ou onglet recyclé
-  el.insertAdjacentHTML('afterbegin', buildXgProfileBlock(d));
+  el.insertAdjacentHTML('afterbegin', buildXgProfileBlock(d, m.xgBlend));
 }
 
-function buildXgProfileBlock(d) {
+function buildXgProfileBlock(d, xb) {
   const finBadge = (delta) => {
     if (delta == null) return '';
     const v = Number(delta);
     if (v >= 0.15) return `<span style="color:var(--green);font-weight:600">🎯 Clinique +${safeFixed(v, 2)}</span>`;
     if (v <= -0.15) return `<span style="color:var(--red);font-weight:600">🧊 Froid ${safeFixed(v, 2)}</span>`;
     return `<span style="color:var(--text3)">≈ Conforme xG</span>`;
+  };
+  // bd 6kzf Phase B — ligne de blend pour chaque côté (depuis xgBlend du match)
+  const blendLine = (sideLabel) => {
+    if (!xb) return '';
+    const s = sideLabel === 'home' ? xb.home : xb.away;
+    if (!s || s.lambda_prior == null || s.lambda_blend == null) return '';
+    const adj = s.lambda_blend - s.lambda_prior;
+    const aC = adj > 0 ? 'var(--green)' : adj < 0 ? 'var(--red)' : 'var(--text3)';
+    const aS = adj > 0 ? '+' : '';
+    return `<div style="font-size:9px;color:var(--text3);margin-top:2px">λ blend: ${safeFixed(s.lambda_prior,3)} → <span style="color:${aC};font-weight:500">${safeFixed(s.lambda_blend,3)}</span> (ε=${safeFixed(s.epsilon,3)} · ${safeFixed(s.sample || 0,0)}mchs)</div>`;
   };
   const seasonLine = (s) => {
     if (!s) return '<div style="color:var(--text3);font-size:10px">Saison : n/d</div>';
@@ -16279,11 +16289,12 @@ function buildXgProfileBlock(d) {
     }
     return `<div style="font-size:10px;color:var(--text3);margin-top:4px">${s.season || 'Saison'} · ${s.gf ?? '?'} BP/${s.ga ?? '?'} BC${s.xgf ? ` · xG ${safeFixed(s.xgf, 1)}/${safeFixed(s.xga, 1)}` : ''}${perf}${s.form ? ` · <span style="font-family:'DM Mono',monospace">${s.form}</span>` : ''}</div>`;
   };
-  const col = (side, isAway) => {
+  const col = (side, isAway, sideLabel) => {
     const r = side.recent;
     if (!r) return `<div style="flex:1;min-width:0;${isAway ? 'text-align:right' : ''}">
       <div style="font-weight:600;font-size:12px;color:var(--text);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${side.name}</div>
       <div style="color:var(--text3);font-size:11px">Pas de données xG BSD</div>
+      ${blendLine(sideLabel)}
       ${seasonLine(side.season)}
     </div>`;
     return `<div style="flex:1;min-width:0;${isAway ? 'text-align:right' : ''}">
@@ -16293,6 +16304,7 @@ function buildXgProfileBlock(d) {
       <div style="font-size:11px;margin-top:4px">${finBadge(r.finishing_delta)}</div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px">⚽ ${safeFixed(r.goals_for, 1)} buts · 🎯 ${safeFixed(r.sot, 1)} cadrés · 🚩 ${safeFixed(r.corners_for, 1)} corners · 💥 ${safeFixed(r.big_chances, 1)} g.occas</div>
       <div style="font-size:9px;color:var(--text3);margin-top:2px">${r.sample} derniers matchs</div>
+      ${blendLine(sideLabel)}
       ${seasonLine(side.season)}
     </div>`;
   };
@@ -16301,7 +16313,7 @@ function buildXgProfileBlock(d) {
       <div style="font-size:11px;font-weight:700;color:var(--text);letter-spacing:0.4px">⚡ PROFIL xG RÉEL</div>
       <div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">BSD · ${d.cached ? '💾 cache' : 'live'}</div>
     </div>
-    <div style="display:flex;gap:16px">${col(d.home, false)}${col(d.away, true)}</div>
+    <div style="display:flex;gap:16px">${col(d.home, false, 'home')}${col(d.away, true, 'away')}</div>
   </div>`;
 }
 
@@ -21050,7 +21062,7 @@ async function _dhOpenReplay(matchId) {
     <div class="dh-drill-content" style="max-width:900px;">
       <button class="dh-drill-close" type="button" aria-label="Fermer">×</button>
       <div class="dh-drill-title">🎬 Match Replay</div>
-      <div id="dh-replay-body"><div style="color:var(--dh-text-3);font-size:13px;padding:24px;text-align:center;">Chargement timeline…</div></div>
+      <div id="dh-replay-body"><div style="color:var(--dh-text-3);font-size:13px;padding:24px;text-align:center;">${I18N.t('status.loading_timeline')}</div></div>
     </div>`;
   document.body.appendChild(overlay);
   const close = () => { overlay.remove(); for (const k of ['dominance','xg','pressure']) { if (_dhReplayCharts[k]) { _dhReplayCharts[k].destroy(); _dhReplayCharts[k] = null; } } };
@@ -23111,7 +23123,7 @@ async function loadAlertConfig() {
     if (probaEl) { probaEl.value = p.probaMin ?? 55; probaVal.textContent = (p.probaMin ?? 55) + '%'; }
     if (toggle && label) {
       toggle.classList.toggle('on', !!p.enabled);
-      label.textContent = p.enabled ? 'Alertes actives' : 'Alertes désactivées';
+      label.textContent = p.enabled ? I18N.t('alerts.status_on') : I18N.t('alerts.status_off');
       label.style.color = p.enabled ? 'var(--green)' : 'var(--text2)';
     }
     if (leagSel && p.leagues?.length) leagSel.value = p.leagues[0] || '';
@@ -23124,7 +23136,7 @@ async function loadAlertConfig() {
     const liveLab = document.getElementById('al-live-label');
     if (liveTog && liveLab) {
       liveTog.classList.toggle('on', !!p.liveEnabled);
-      liveLab.textContent = p.liveEnabled ? 'Activées' : 'Désactivées';
+      liveLab.textContent = p.liveEnabled ? I18N.t('alerts.live_on') : I18N.t('alerts.live_off');
       liveLab.style.color = p.liveEnabled ? 'var(--green)' : 'var(--text2)';
     }
     const intEl = document.getElementById('al-intensity-slider');
@@ -23142,7 +23154,7 @@ function toggleAlertEnabled() {
   const label  = document.getElementById('al-enabled-label');
   if (!toggle) return;
   const on = toggle.classList.toggle('on');
-  label.textContent = on ? 'Alertes actives' : 'Alertes désactivées';
+  label.textContent = on ? I18N.t('alerts.status_on') : I18N.t('alerts.status_off');
   label.style.color = on ? 'var(--green)' : 'var(--text2)';
 }
 
@@ -23151,7 +23163,7 @@ function toggleAlertLiveEnabled() {
   const label  = document.getElementById('al-live-label');
   if (!toggle) return;
   const on = toggle.classList.toggle('on');
-  label.textContent = on ? 'Activées' : 'Désactivées';
+  label.textContent = on ? I18N.t('alerts.live_on') : I18N.t('alerts.live_off');
   label.style.color = on ? 'var(--green)' : 'var(--text2)';
 }
 
@@ -24442,12 +24454,11 @@ document.addEventListener('keydown', e => {
     localStorage.setItem('cf_audio_enabled', window._psAudio.enabled ? '1' : '0');
     if (window._psAudio.enabled) _psAudioUnlock();
     if (typeof showNotification === 'function') {
-      showNotification(window._psAudio.enabled ? '🔊 Alertes sonores activées' : '🔇 Alertes sonores désactivées', 'green');
+      showNotification(window._psAudio.enabled ? '🔊 ' + I18N.t('alerts.sound_on') : '🔇 ' + I18N.t('alerts.sound_off'), 'green');
     }
-    // Met a jour bouton si present
     document.querySelectorAll('[data-audio-toggle]').forEach(b => {
       b.textContent = window._psAudio.enabled ? '🔊' : '🔇';
-      b.setAttribute('title', window._psAudio.enabled ? 'Alertes sonores actives — cliquer pour désactiver' : 'Alertes sonores désactivées — cliquer pour activer');
+      b.setAttribute('title', window._psAudio.enabled ? I18N.t('alerts.sound_active') : I18N.t('alerts.sound_inactive'));
     });
     return window._psAudio.enabled;
   };
@@ -24903,7 +24914,7 @@ async function initComparateur(force) {
   if (_compLoaded && !force) { renderCompGrid(); return; }
   _compLoaded = true;
   const status = document.getElementById('comp-status');
-  if (status) status.textContent = 'Chargement des matchs...';
+  if (status) status.textContent = I18N.t('status.loading_matches');
   try {
     const r = await fetch('/api/v1/comparateur/feed');
     const data = await r.json();
@@ -25009,7 +25020,7 @@ async function loadComparateur(matchId) {
   if (!matchId) return;
   const status = document.getElementById('comp-status');
   const content = document.getElementById('comp-content');
-  content.innerHTML = '<div class="comp-empty">⏳ Chargement des cotes...</div>';
+  content.innerHTML = '<div class="comp-empty">' + I18N.t('status.loading_odds') + '</div>';
   try {
     const r = await fetch(`/api/v1/comparateur/${encodeURIComponent(matchId)}?market=${_compMarket}`);
     const d = await r.json();
@@ -25584,6 +25595,29 @@ function renderComparateur(d) {
       return;
     }
 
+    // bd 6kzf Phase B — badge xGD : sur/sous-performance xG
+    function xgdBadge(xb) {
+      if (!xb) return '';
+      var h = xb.home, a = xb.away;
+      if (!h || !a) return '';
+      var xgdHome = h.finishing_delta;
+      var xgdAway = a.finishing_delta;
+      // buts vs xG : >0 = sur-performance (fini mieux que les occasions)
+      var hBadge = xgdHome == null ? '' : buildXdBadge(xgdHome);
+      var aBadge = xgdAway == null ? '' : buildXdBadge(xgdAway);
+      var tip = esc('xG blend BSD (ε=' + h.epsilon + ') — ' + (h.lambda_prior || 0).toFixed(2) + '→' + (h.lambda_blend || 0).toFixed(2) + ' (n=' + h.sample + ') / ' + (a.lambda_prior || 0).toFixed(2) + '→' + (a.lambda_blend || 0).toFixed(2) + ' (n=' + a.sample + ')');
+      return '<span class="mc-xgd-badge" title="' + tip + '">xGD ' +
+        '<span class="mc-xgd-h">' + hBadge + '</span>' +
+        ' <span class="mc-xgd-vs">vs</span> ' +
+        '<span class="mc-xgd-a">' + aBadge + '</span>' +
+        '</span>';
+    }
+    function buildXdBadge(v) {
+      if (v == null || isNaN(v)) return '—';
+      var c = v >= 0.15 ? '#22c55e' : (v <= -0.15 ? '#ef4444' : '#64748b');
+      var s = v > 0 ? '+' : '';
+      return '<span style="color:' + c + ';font-weight:600">' + s + safeFixed(v, 2) + '</span>';
+    }
     function buildCard(m) {
       var live = isLive(m);
       var sc = m.live_score;
@@ -25692,12 +25726,14 @@ function renderComparateur(d) {
         ? favoriteMatchIds.has(m.id) : false;
       var rankChip = (m.home_rank && m.away_rank)
         ? '<span class="mc-chip">' + esc(m.home_rank) + 'e v ' + esc(m.away_rank) + 'e</span>' : '';
+      var xgdChip = xgdBadge(m.xgBlend);
       return (
         '<div class="mc" onclick="mcToggle(this)">' +
           '<div class="mc-top">' +
             '<span class="mc-verdict mc-v-' + vC + '">' + vT + '</span>' +
             '<span class="mc-league">' + esc(m.league || m.sport || '') + '</span>' +
             rankChip +
+            xgdChip +
             '<span class="mc-time' + (live ? ' live' : '') + '">' + timeTxt + '</span>' +
             '<button class="mc-star' + (isFav ? ' active' : '') + '" aria-label="Favori" ' +
               'onclick="event.stopPropagation();toggleFavorite(\'' + esc(m.id) + '\',this)">★</button>' +
@@ -27274,7 +27310,7 @@ function renderComparateur(d) {
       });
     }
 
-    if (!html) return '<div style="padding:20px 16px;color:var(--text3);font-family:\'DM Mono\',monospace;font-size:11px;">⏳ Chargement ligues Tier 3…</div>';
+    if (!html) return '<div style="padding:20px 16px;color:var(--text3);font-family:\'DM Mono\',monospace;font-size:11px;">' + I18N.t('status.loading_tier3') + '</div>';
     return html;
   }
 
@@ -27987,7 +28023,7 @@ function renderComparateur(d) {
   }
 
   function _loadVetoContent(matchId, el) {
-    el.innerHTML = '<div class="cs2-scout-loading">⏳ Chargement veto…</div>';
+    el.innerHTML = '<div class="cs2-scout-loading">' + I18N.t('status.loading_veto') + '</div>';
     if (!matchId) { el.innerHTML = '<div class="cs2-scout-empty">ID match indisponible</div>'; return; }
     fetch('/api/v1/cs2/veto/' + encodeURIComponent(matchId), { cache: 'no-store' })
       .then(function(r) { return r.json(); })

@@ -64,19 +64,19 @@
 })();
 </script>
 <noscript><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></noscript>
-<title>PariScore — Paris de Valeur & Statistiques Football</title>
-<meta name="description" content="PariScore : pronostics foot &amp; tennis par algorithme. Power Score, xG, statistiques avancées et value bets dévigés pour parier avec les maths.">
+<title data-i18n="seo.title">PariScore — Paris de Valeur &amp; Statistiques Football</title>
+<meta name="description" data-i18n-content="seo.description" content="PariScore : pronostics foot &amp; tennis par algorithme. Power Score, xG, statistiques avancées et value bets dévigés pour parier avec les maths.">
 <link rel="canonical" href="https://pariscore.fr/">
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PariScore">
-<meta property="og:title" content="PariScore — Paris de Valeur & Statistiques Football">
-<meta property="og:description" content="Pronostics foot &amp; tennis par algorithme : Power Score, xG, value bets dévigés. Pariez avec les maths, pas l'instinct.">
+<meta property="og:title" data-i18n-content="seo.title" content="PariScore — Paris de Valeur & Statistiques Football">
+<meta property="og:description" data-i18n-content="seo.description" content="Pronostics foot &amp; tennis par algorithme : Power Score, xG, value bets dévigés. Pariez avec les maths, pas l'instinct.">
 <meta property="og:url" content="https://pariscore.fr/">
 <meta property="og:image" content="https://pariscore.fr/icon.svg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PariScore — Paris de Valeur & Statistiques Football">
-<meta name="twitter:description" content="Pronostics foot &amp; tennis par algorithme : Power Score, xG, value bets dévigés.">
+<meta name="twitter:title" data-i18n-content="seo.title" content="PariScore — Paris de Valeur & Statistiques Football">
+<meta name="twitter:description" data-i18n-content="seo.description" content="Pronostics foot &amp; tennis par algorithme : Power Score, xG, value bets dévigés.">
 <meta name="twitter:image" content="https://pariscore.fr/icon.svg">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"PariScore","url":"https://pariscore.fr/","logo":"https://pariscore.fr/icon.svg","description":"Plateforme d'analyse de paris sportifs football et tennis : Power Score, xG, value bets dévigés.","sameAs":[]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"PariScore","url":"https://pariscore.fr/","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://pariscore.fr/?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
@@ -2768,6 +2768,22 @@
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.04em !important;
+  }
+  html.ps-mobile-v2 .mc .mc-xgd-badge {
+    background: color-mix(in oklch, var(--sui-cream-text, #0a0a0a) 4%, transparent) !important;
+    color: var(--sui-cream-text-2, #555) !important;
+    border-radius: 4px !important;
+    padding: 1px 6px !important;
+    font-family: var(--sui-font-mono) !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    cursor: help !important;
+    flex: 0 0 auto !important;
+    margin-right: 6px !important;
+  }
+  html.ps-mobile-v2 .mc .mc-xgd-vs {
+    color: var(--sui-cream-text-3, #888) !important;
+    margin: 0 2px !important;
   }
 
   /* Group header (championnat divider) : gradient L'Equipe rouge */
@@ -11099,6 +11115,12 @@
       background: var(--bg4); color: var(--text2); padding: 2px 7px;
       border-radius: 999px; margin-right: 6px;
     }
+    .mc-xgd-badge {
+      flex: 0 0 auto; font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+      background: var(--bg3); color: var(--text2); padding: 2px 7px;
+      border-radius: 999px; margin-right: 6px; cursor: help;
+    }
+    .mc-xgd-vs { color: var(--text3); margin: 0 2px; }
     .mc-star {
       flex: 0 0 auto; background: none; border: none; font-size: 17px;
       color: var(--text3); padding: 0 4px; -webkit-tap-highlight-color: transparent;
@@ -11479,6 +11501,9 @@ const I18N = (() => {
     document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
       el.title = t(el.dataset.i18nTitle);
     });
+    document.querySelectorAll('[data-i18n-content]').forEach(function(el) {
+      el.content = t(el.dataset.i18nContent);
+    });
   }
 
   const saved = _savedLang();
@@ -11716,43 +11741,43 @@ function psSetLang(v) {
 <nav id="bottom-nav" aria-label="Navigation mobile">
   <a href="#" data-page="matchs" onclick="bnGo('matchs',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3c0 3-2 5-2 9s2 6 2 9M3 12c3 0 5-2 9-2s6 2 9 2M5.5 6.5l2 2.5M16.5 6.5l-2 2.5M5.5 17.5l2-2.5M16.5 17.5l-2-2.5"/></svg></span>
-    <span class="bn-lbl">Football</span>
+    <span class="bn-lbl" data-i18n="bnav.football">Football</span>
   </a>
   <a href="#" data-page="tennis" onclick="bnGo('tennis',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M4 7.5C6.5 8.5 8 10 8 12s-1.5 3.5-4 4.5M20 7.5C17.5 8.5 16 10 16 12s1.5 3.5 4 4.5"/></svg></span>
-    <span class="bn-lbl">Tennis</span>
+    <span class="bn-lbl" data-i18n="bnav.tennis">Tennis</span>
   </a>
   <a href="#" data-page="cs2" onclick="bnGo('cs2',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span>
-    <span class="bn-lbl">CS2</span>
+    <span class="bn-lbl" data-i18n="bnav.cs2">CS2</span>
   </a>
   <a href="#" data-page="mma" onclick="bnGo('mma',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="7" width="11" height="8" rx="3"/><path d="M8 7V5.5a2.5 2.5 0 0 1 5 0V7M6 11h12M6 12.5C5 12.5 4 13.3 4 14.5S5 16 6 16"/></svg></span>
-    <span class="bn-lbl">MMA</span>
+    <span class="bn-lbl" data-i18n="bnav.mma">MMA</span>
   </a>
   <a href="#" data-page="nba" onclick="bnGo('nba',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span>
-    <span class="bn-lbl">NBA</span>
+    <span class="bn-lbl" data-i18n="bnav.nba">NBA</span>
   </a>
   <a href="#" data-page="wnba" onclick="bnGo('wnba',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span>
-    <span class="bn-lbl">WNBA</span>
+    <span class="bn-lbl" data-i18n="bnav.wnba">WNBA</span>
   </a>
   <a href="#" data-page="f1" onclick="bnGo('f1',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h2l2.5-2.5h4L14 13h7"/><path d="M3 11.5V14"/><path d="M21 12v2.5"/><path d="M8 10.5l1-1.5h3l1 1.5"/><circle cx="8" cy="16" r="2"/><circle cx="17" cy="16" r="2"/><path d="M10 16h5"/></svg></span>
-    <span class="bn-lbl">F1</span>
+    <span class="bn-lbl" data-i18n="bnav.f1">F1</span>
   </a>
   <a href="#" data-page="__live" onclick="bnGo('__live',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="#fff"/><path d="M5.5 5.5a9 9 0 0 0 0 13M18.5 5.5a9 9 0 0 1 0 13M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7"/></svg></span>
-    <span class="bn-lbl">Live<span id="bn-live-badge" class="bn-badge" style="display:none;">0</span></span>
+    <span class="bn-lbl" data-i18n="bnav.live">Live<span id="bn-live-badge" class="bn-badge" style="display:none;">0</span></span>
   </a>
   <a href="#" data-page="paris" onclick="bnGo('paris',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span>
-    <span class="bn-lbl">Paris</span>
+    <span class="bn-lbl" data-i18n="bnav.bets">Paris</span>
   </a>
   <a href="#" data-page="__more" onclick="bnGo('__more',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><circle cx="5" cy="12" r="1.5" fill="#fff"/><circle cx="12" cy="12" r="1.5" fill="#fff"/><circle cx="19" cy="12" r="1.5" fill="#fff"/></svg></span>
-    <span class="bn-lbl">Plus</span>
+    <span class="bn-lbl" data-i18n="bnav.more">Plus</span>
   </a>
 </nav>
 
@@ -11760,20 +11785,20 @@ function psSetLang(v) {
 <div id="bn-more-overlay" onclick="bnCloseMore()"></div>
 <div id="bn-more-sheet" role="dialog" aria-label="Plus de pages">
   <div class="bn-more-grab"></div>
-  <div class="bn-more-title">Plus</div>
-  <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()">☾ Mode Nuit</button>
+  <div class="bn-more-title" data-i18n="bnav.more">Plus</div>
+  <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()" data-i18n="bnav.night_mode">☾ Mode Nuit</button>
   <div class="bn-more-grid">
-    <a href="#" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span>NBA</a>
-    <a href="#" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>Alertes</a>
-    <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span>Hot Picks</a>
-    <a href="#" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Sure Bets</a>
-    <a href="#" onclick="bnGo('comparateur',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8h14M12 4l-7 4 7 4 7-4z"/><path d="M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/></svg></span>Comparateur</a>
-    <a href="#" onclick="bnGo('predictions',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/><path d="M9 15h6M12 6V3M9 3h6M3 10h3M3 14h3M18 10h3M18 14h3M9 21h6"/></svg></span>Prédictions IA</a>
-    <a href="#" onclick="bnGo('tendances',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 4 7-7"/><path d="M15 7h5v5"/></svg></span>Tendances</a>
-    <a href="#" onclick="bnGo('historique',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 18v-4h4"/><path d="M12 8v4l3 2"/></svg></span>Historique</a>
-    <a href="#" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span>Guide</a>
-    <a href="#" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span>Tarifs</a>
-    <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Accueil</a>
+    <a href="#" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span><span data-i18n="bnav.nba">NBA</span></a>
+    <a href="#" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span data-i18n="nav.alertes">Alertes</span></a>
+    <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span><span data-i18n="nav.hotpicks">Hot Picks</span></a>
+    <a href="#" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span data-i18n="nav.surebets">Sure Bets</span></a>
+    <a href="#" onclick="bnGo('comparateur',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8h14M12 4l-7 4 7 4 7-4z"/><path d="M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/></svg></span><span data-i18n="nav.comparateur">Comparateur</span></a>
+    <a href="#" onclick="bnGo('predictions',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/><path d="M9 15h6M12 6V3M9 3h6M3 10h3M3 14h3M18 10h3M18 14h3M9 21h6"/></svg></span><span data-i18n="nav.predictions">Prédictions IA</span></a>
+    <a href="#" onclick="bnGo('tendances',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 4 7-7"/><path d="M15 7h5v5"/></svg></span><span data-i18n="nav.tendances">Tendances</span></a>
+    <a href="#" onclick="bnGo('historique',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 18v-4h4"/><path d="M12 8v4l3 2"/></svg></span><span data-i18n="nav.historique">Historique</span></a>
+    <a href="#" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span><span data-i18n="nav.guide">Guide</span></a>
+    <a href="#" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span><span data-i18n="nav.tarifs">Tarifs</span></a>
+    <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span data-i18n="nav.accueil">Accueil</span></a>
     <a href="#" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><span data-i18n="mobile.settings">Réglages</span></a>
   </div>
 </div>
@@ -11804,7 +11829,7 @@ function psSetLang(v) {
     <!-- LOGIN FORM -->
     <div id="auth-form-login">
       <div class="auth-field">
-        <label for="login-email">Email</label>
+        <label for="login-email" data-i18n="auth.label_email">Email</label>
         <input type="email" id="login-email" placeholder="vous@exemple.com" autocomplete="email">
       </div>
       <div class="auth-field">
@@ -11821,11 +11846,11 @@ function psSetLang(v) {
     <!-- REGISTER FORM -->
     <div id="auth-form-register" style="display:none;">
       <div class="auth-field">
-        <label for="reg-email">Email</label>
+        <label for="reg-email" data-i18n="auth.label_email">Email</label>
         <input type="email" id="reg-email" placeholder="vous@exemple.com" autocomplete="email">
       </div>
       <div class="auth-field">
-        <label for="reg-password">Mot de passe <span style="color:var(--text3)">(8 caractères min.)</span></label>
+        <label for="reg-password" data-i18n="auth.label_password_register">Mot de passe <span style="color:var(--text3)" data-i18n="auth.password_min">(8 caractères min.)</span></label>
         <div class="pwd-wrap">
           <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password"
             onkeydown="if(event.key==='Enter') submitRegister()">
@@ -11844,14 +11869,14 @@ function psSetLang(v) {
     <h3 data-i18n="modal.new_bet">Nouveau pari</h3>
     <div class="paris-modal-err" id="bet-modal-err"></div>
     <input type="hidden" id="bet-match-id">
-    <label>Match (autocomplete depuis matchs PariScore)
-      <input list="bet-match-list" id="bet-match-search" placeholder="Tape une équipe..." oninput="onBetMatchInput()">
+    <label data-i18n="modal.match_label">Match (autocomplete depuis matchs PariScore)
+      <input list="bet-match-list" id="bet-match-search" data-i18n-placeholder="modal.match_placeholder" placeholder="Tape une équipe..." oninput="onBetMatchInput()">
       <datalist id="bet-match-list"></datalist>
     </label>
-    <label>Ligue
-      <input type="text" id="bet-league" placeholder="ex : Ligue 1">
+    <label data-i18n="bet.league">Ligue
+      <input type="text" id="bet-league" data-i18n-placeholder="bet.league_placeholder" placeholder="ex : Ligue 1">
     </label>
-    <label>Marché
+    <label data-i18n="bet.market">Marché
       <select id="bet-market" onchange="onBetMarketChange()">
         <option value="1X2:HOME">1X2 — Victoire domicile</option>
         <option value="1X2:DRAW">1X2 — Nul</option>
@@ -11872,16 +11897,16 @@ function psSetLang(v) {
         <option value="FREE">Autre (libre)</option>
       </select>
     </label>
-    <label>Libellé sélection
-      <input type="text" id="bet-selection" placeholder="ex : Over 2.5">
+    <label data-i18n="bet.selection_label">Libellé sélection
+      <input type="text" id="bet-selection" data-i18n-placeholder="bet.selection_placeholder" placeholder="ex : Over 2.5">
     </label>
-    <label>Cote
+    <label data-i18n="bet.odds_label">Cote
       <input type="number" id="bet-odds" step="0.01" min="1.01" value="1.85">
     </label>
-    <label>Mise (€)
+    <label data-i18n="bet.stake_label">Mise (€)
       <input type="number" id="bet-stake" step="0.5" min="0.5" value="10">
     </label>
-    <label>Bookmaker
+    <label data-i18n="bet.bookmaker">Bookmaker
       <select id="bet-bookmaker">
         <option value="1xbet" selected>1xbet</option>
         <option value="Winamax">Winamax (ANJ)</option>
@@ -13189,15 +13214,15 @@ function psSetLang(v) {
   <div class="table-wrap">
     <div class="table-header">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div class="table-header-title" id="table-title">Matchs à venir</div>
+        <div class="table-header-title" id="table-title" data-i18n="matches.upcoming">Matchs à venir</div>
         <div class="match-tabs">
-          <button class="match-tab active" id="tab-all" onclick="setMatchTab('all',this)">Tous</button>
+          <button class="match-tab active" id="tab-all" onclick="setMatchTab('all',this)" data-i18n="matches.tab_all">Tous</button>
           <button class="match-tab live-tab" id="tab-live" onclick="setMatchTab('live',this)" title="🔴 Matchs en cours · ⚡ Propulsé WebSocket Bzzoiro : xG live, Momentum, Attaques Dangereuses, Cotes temps réel (push <5s)">🔴 Live <span class="live-count-badge" id="live-count-badge" style="display:none;">0</span><span class="ws-status-dot" id="ws-status-dot" title="WebSocket : statut inconnu"></span></button>
-          <button class="match-tab" id="tab-prematch" onclick="setMatchTab('prematch',this)">Prematch</button>
+          <button class="match-tab" id="tab-prematch" onclick="setMatchTab('prematch',this)" data-i18n="matches.tab_prematch">Prematch</button>
         </div>
         <select id="match-tab-mob" aria-label="Filtrer les matchs"
           onchange="setMatchTab(this.value, document.getElementById('tab-'+this.value))">
-          <option value="all">Tous les matchs</option>
+          <option value="all" data-i18n="matches.option_all">Tous les matchs</option>
           <option value="live" data-i18n="filter.live">🔴 En direct</option>
           <option value="prematch">Prematch</option>
         </select>
@@ -13214,7 +13239,7 @@ function psSetLang(v) {
     </div>
 
     <!-- EMPTY STATE -->
-    <div id="empty-state" style="padding:48px;text-align:center;color:var(--text3);font-size:14px;">
+    <div id="empty-state" style="padding:48px;text-align:center;color:var(--text3);font-size:14px;" data-i18n="status.loading_matches">
       Chargement des matchs depuis le serveur…
     </div>
 
@@ -13465,9 +13490,9 @@ function psSetLang(v) {
 <div id="page-predictions" data-page="predictions" style="display:none;">
 <!-- PREDICTIONS -->
 <section class="section fade-up" id="predictions" style="background: radial-gradient(ellipse 60% 30% at 30% 50%, rgba(0,230,118,0.03) 0%, transparent 60%);">
-  <div class="section-label">Prédictions IA</div>
-  <div class="section-title">Intelligence artificielle<br>au service du parieur.</div>
-  <div class="section-sub">Simulations probabilistes, xG, forme récente et analyse contextuelle. Chaque prédiction est expliquée, pas juste un chiffre.</div>
+  <div class="section-label" data-i18n="predictions.label">Prédictions IA</div>
+  <div class="section-title" data-i18n="predictions.title">Intelligence artificielle<br>au service du parieur.</div>
+  <div class="section-sub" data-i18n="predictions.subtitle">Simulations probabilistes, xG, forme récente et analyse contextuelle. Chaque prédiction est expliquée, pas juste un chiffre.</div>
   <div class="pred-grid" id="pred-grid"></div>
 </section>
 
@@ -13514,7 +13539,7 @@ function psSetLang(v) {
 <div id="bm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:720px;width:100%;max-height:85vh;overflow:auto;padding:20px;position:relative;">
     <button onclick="document.getElementById('bm-modal').style.display='none'" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;">✕</button>
-    <div id="bm-modal-body" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">Chargement…</div>
+    <div id="bm-modal-body" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);" data-i18n="status.loading">Chargement…</div>
   </div>
 </div>
 
@@ -13523,8 +13548,8 @@ function psSetLang(v) {
 <!-- PAGE : HISTORIQUE — Data Hub (Phase H1+H2) -->
 <div id="page-historique" data-page="historique" style="display:none;">
 <section class="section fade-up" id="historique" style="background: radial-gradient(ellipse 60% 30% at 50% 60%, rgba(226,0,26,0.04) 0%, transparent 60%);">
-  <div class="section-label">Data Hub Historique</div>
-  <div class="section-title">Backtesting &amp;<br>Stratégies.</div>
+  <div class="section-label" data-i18n="history.label">Data Hub Historique</div>
+  <div class="section-title" data-i18n="history.title">Backtesting &amp;<br>Stratégies.</div>
   <div class="section-sub">Foot &amp; Tennis séparés. Filtrez, comparez, exportez. Mesurez ROI, drawdown et streak réels.</div>
 
   <!-- BACK-TEST CONTROLS — Premium/Admin (legacy) -->
@@ -13894,9 +13919,9 @@ function psSetLang(v) {
   </div>
 
   <div class="paris-tabs">
-    <button class="paris-tab active" data-tab="open" onclick="setParisTab('open')">Paris ouverts</button>
-    <button class="paris-tab" data-tab="settled" onclick="setParisTab('settled')">Historique</button>
-    <button class="paris-tab" data-tab="cash" onclick="setParisTab('cash')">Trésorerie</button>
+    <button class="paris-tab active" data-tab="open" onclick="setParisTab('open')" data-i18n="bets.tab_open">Paris ouverts</button>
+    <button class="paris-tab" data-tab="settled" onclick="setParisTab('settled')" data-i18n="bets.tab_history">Historique</button>
+    <button class="paris-tab" data-tab="cash" onclick="setParisTab('cash')" data-i18n="bets.tab_cash">Trésorerie</button>
     <button class="paris-tab" data-tab="plan" onclick="setParisTab('plan')">Plan 20 %/jour</button>
     <button class="paris-tab" data-tab="clv" onclick="setParisTab('clv')" title="Closing Line Value — sharp/square par stratégie">CLV 30j</button>
   </div>
@@ -14146,11 +14171,11 @@ function psSetLang(v) {
 <section class="section fade-up" id="tendances">
   <div class="section-head-row">
     <div>
-      <div class="section-label">Tendances</div>
-      <div class="section-title">Les stats qui<br>font la différence.</div>
-      <div class="section-sub">Analysez les tendances sur 5, 10, 20 ou 30 matchs. BTTS, plus/moins de buts, corners, cartons — toutes les ligues majeures.</div>
+      <div class="section-label" data-i18n="trends.label">Tendances</div>
+      <div class="section-title" data-i18n="trends.title">Les stats qui<br>font la différence.</div>
+      <div class="section-sub" data-i18n="trends.subtitle">Analysez les tendances sur 5, 10, 20 ou 30 matchs. BTTS, plus/moins de buts, corners, cartons — toutes les ligues majeures.</div>
     </div>
-    <a href="#" class="view-all">Tout voir →</a>
+    <a href="#" class="view-all" data-i18n="common.view_all">Tout voir →</a>
   </div>
   <div class="trends-grid" id="trends-grid"></div>
 </section>
@@ -14160,9 +14185,9 @@ function psSetLang(v) {
 <!-- PAGE : ALERTES -->
 <div id="page-alertes" data-page="alertes" style="display:none;">
 <section class="section fade-up" id="alertes" style="background: radial-gradient(ellipse 50% 40% at 70% 50%, rgba(0,230,118,0.03) 0%, transparent 60%);">
-  <div class="section-label">Mes Alertes</div>
-  <div class="section-title">Alertes<br>Personnalisées.</div>
-  <div class="section-sub">Configurez vos critères une fois. Recevez une alerte Telegram instantanée dès qu'une opportunité correspond à votre profil.</div>
+  <div class="section-label" data-i18n="alerts.label">Mes Alertes</div>
+  <div class="section-title" data-i18n="alerts.title">Alertes<br>Personnalisées.</div>
+  <div class="section-sub" data-i18n="alerts.subtitle">Configurez vos critères une fois. Recevez une alerte Telegram instantanée dès qu'une opportunité correspond à votre profil.</div>
 
   <!-- Gate : non connecté -->
   <div id="al-login-gate" class="al-login-gate" style="display:none;">
@@ -14179,8 +14204,8 @@ function psSetLang(v) {
       <div class="alert-cfg-title">📲 Configuration Telegram</div>
       <div class="alert-cfg-sub">Envoyez <code style="color:var(--text2);background:var(--bg4);padding:1px 6px;border-radius:4px;">/start</code> à <strong>@PariScoreBot</strong> sur Telegram pour obtenir votre Chat ID, puis collez-le ci-dessous.</div>
       <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;">
-        <input id="al-chatid" class="al-chatid-input" type="text" placeholder="Votre Chat ID Telegram (ex: 123456789)">
-        <button id="al-test-btn" type="button" onclick="testTelegramAlert()" style="padding:8px 14px;background:var(--bg4);border:1px solid var(--text3);color:var(--text);border-radius:6px;cursor:pointer;font-size:13px;">✉️ Tester l'alerte</button>
+        <input id="al-chatid" class="al-chatid-input" type="text" data-i18n-placeholder="alerts.chatid_placeholder" placeholder="Votre Chat ID Telegram (ex: 123456789)">
+        <button id="al-test-btn" type="button" onclick="testTelegramAlert()" style="padding:8px 14px;background:var(--bg4);border:1px solid var(--text3);color:var(--text);border-radius:6px;cursor:pointer;font-size:13px;" data-i18n="alerts.test_alert">✉️ Tester l'alerte</button>
         <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleAlertEnabled()">
           <div id="al-enabled-toggle" class="toggle"></div>
           <span id="al-enabled-label" style="font-size:13px;color:var(--text2);">Alertes désactivées</span>
@@ -14191,54 +14216,54 @@ function psSetLang(v) {
 
     <!-- Filtres -->
     <div class="alert-cfg-card">
-      <div class="alert-cfg-title">🎯 Filtres personnalisés</div>
-      <div class="alert-cfg-sub">Définissez les seuils et marchés qui vous intéressent.</div>
+      <div class="alert-cfg-title" data-i18n="alerts.filters_title">🎯 Filtres personnalisés</div>
+      <div class="alert-cfg-sub" data-i18n="alerts.filters_sub">Définissez les seuils et marchés qui vous intéressent.</div>
 
       <div class="al-slider-row">
-        <span class="al-slider-label">Edge minimum :</span>
+        <span class="al-slider-label" data-i18n="alerts.edge_min">Edge minimum :</span>
         <input type="range" id="al-edge-slider" class="al-slider" min="0" max="20" step="1" value="8" oninput="document.getElementById('al-edge-val').textContent=this.value+'%'">
         <span id="al-edge-val" class="al-slider-val">8%</span>
       </div>
 
       <div class="al-slider-row">
-        <span class="al-slider-label">Proba. min :</span>
+        <span class="al-slider-label" data-i18n="alerts.proba_min">Proba. min :</span>
         <input type="range" id="al-proba-slider" class="al-slider" min="50" max="90" step="5" value="55" oninput="document.getElementById('al-proba-val').textContent=this.value+'%'">
         <span id="al-proba-val" class="al-slider-val">55%</span>
       </div>
 
       <div class="al-slider-row" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--bg3);">
-        <span class="al-slider-label">📊 Alertes Live :</span>
+        <span class="al-slider-label" data-i18n="alerts.live_alerts">📊 Alertes Live :</span>
         <div onclick="toggleAlertLiveEnabled()" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
           <div id="al-live-toggle" class="toggle"></div>
           <span id="al-live-label" style="font-size:13px;color:var(--text2);">Désactivées</span>
         </div>
       </div>
       <div class="al-slider-row">
-        <span class="al-slider-label">Intensité min :</span>
+        <span class="al-slider-label" data-i18n="alerts.intensity_min">Intensité min :</span>
         <input type="range" id="al-intensity-slider" class="al-slider" min="50" max="100" step="5" value="70" oninput="document.getElementById('al-intensity-val').textContent=this.value+'/100'">
         <span id="al-intensity-val" class="al-slider-val">70/100</span>
       </div>
       <div class="al-slider-row">
-        <span class="al-slider-label">Δ pression min :</span>
+        <span class="al-slider-label" data-i18n="alerts.pressure_min">Δ pression min :</span>
         <input type="range" id="al-pressure-slider" class="al-slider" min="15" max="80" step="5" value="35" oninput="document.getElementById('al-pressure-val').textContent=this.value">
         <span id="al-pressure-val" class="al-slider-val">35</span>
       </div>
 
       <div style="margin-top:16px;">
-        <div class="alert-cfg-sub" style="margin-bottom:4px;">Marchés :</div>
+        <div class="alert-cfg-sub" style="margin-bottom:4px;" data-i18n="alerts.markets_label">Marchés :</div>
         <div class="al-market-chips" id="al-markets">
-          <div class="al-chip active" data-mkt="BTTS_YES">🥅 BTTS Oui</div>
-          <div class="al-chip active" data-mkt="OVER_2_5">⚡ +2.5 buts</div>
-          <div class="al-chip" data-mkt="OVER_1_5">🎯 +1.5 buts</div>
-          <div class="al-chip" data-mkt="HOME_WIN">🏠 Victoire Dom.</div>
-          <div class="al-chip" data-mkt="AWAY_WIN">✈️ Victoire Ext.</div>
+          <div class="al-chip active" data-mkt="BTTS_YES"><span data-i18n="alerts.chip_btts">BTTS Oui</span></div>
+          <div class="al-chip active" data-mkt="OVER_2_5">+2.5 <span data-i18n="bet.goals">buts</span></div>
+          <div class="al-chip" data-mkt="OVER_1_5">+1.5 <span data-i18n="bet.goals">buts</span></div>
+          <div class="al-chip" data-mkt="HOME_WIN"><span data-i18n="alerts.chip_home_win">Victoire Dom.</span></div>
+          <div class="al-chip" data-mkt="AWAY_WIN"><span data-i18n="alerts.chip_away_win">Victoire Ext.</span></div>
         </div>
       </div>
 
       <div style="margin-top:16px;">
-        <div class="alert-cfg-sub" style="margin-bottom:6px;">Ligue (laisser vide = toutes) :</div>
+        <div class="alert-cfg-sub" style="margin-bottom:6px;" data-i18n="alerts.league_label">Ligue (laisser vide = toutes) :</div>
         <select id="al-league-select" class="al-leagues-select">
-          <option value="">Toutes les ligues</option>
+          <option value="" data-i18n="alerts.all_leagues">Toutes les ligues</option>
           <option value="soccer_france_ligue1">Ligue 1</option>
           <option value="soccer_epl">Premier League</option>
           <option value="soccer_spain_la_liga">La Liga</option>
@@ -14259,7 +14284,7 @@ function psSetLang(v) {
     <!-- Historique alertes -->
     <div class="alert-cfg-card">
       <div class="alert-cfg-title">📨 Dernières alertes envoyées</div>
-      <div id="al-history"><div style="color:var(--text3);font-size:13px;padding:12px 0;">Chargement…</div></div>
+      <div id="al-history"><div style="color:var(--text3);font-size:13px;padding:12px 0;" data-i18n="status.loading">Chargement…</div></div>
     </div>
 
   </div><!-- /al-dashboard -->
@@ -14301,7 +14326,7 @@ function psSetLang(v) {
           <th>Set</th><th>DR set</th><th>Pari</th><th>Cote</th><th>Conf%</th>
           <th>Score alerte</th><th>Score final</th><th>Outcome</th>
         </tr></thead>
-        <tbody id="ta-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)">Chargement…</td></tr></tbody>
+        <tbody id="ta-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)" data-i18n="status.loading">Chargement…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -14331,7 +14356,7 @@ function psSetLang(v) {
           <th>Pari</th><th>Prob%</th><th>Cote</th>
           <th>Score final</th><th>Outcome</th>
         </tr></thead>
-        <tbody id="fa-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)">Chargement…</td></tr></tbody>
+        <tbody id="fa-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)" data-i18n="status.loading">Chargement…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -14442,7 +14467,7 @@ function psSetLang(v) {
 </div>
 
 <div class="wc-panel active" id="wc-panel-groups">
-  <div id="wc-groups-container"><div class="wc-loading">Chargement des groupes…</div></div>
+  <div id="wc-groups-container"><div class="wc-loading" data-i18n="status.loading_groups">Chargement des groupes…</div></div>
 </div>
 <div class="wc-panel" id="wc-panel-schedule">
   <div class="wc-schedule-ctrl" id="wc-rnd-ctrl">
@@ -14455,13 +14480,13 @@ function psSetLang(v) {
     <button class="wc-rnd-btn" onclick="loadWCSchedule(27,this)">Demi</button>
     <button class="wc-rnd-btn" onclick="loadWCSchedule(29,this)">Finale</button>
   </div>
-  <div id="wc-schedule-container"><div class="wc-loading">Chargement…</div></div>
+  <div id="wc-schedule-container"><div class="wc-loading" data-i18n="status.loading">Chargement…</div></div>
 </div>
 <div class="wc-panel" id="wc-panel-bracket">
-  <div id="wc-bracket-container"><div class="wc-loading">Chargement…</div></div>
+  <div id="wc-bracket-container"><div class="wc-loading" data-i18n="status.loading">Chargement…</div></div>
 </div>
 <div class="wc-panel" id="wc-panel-pred">
-  <div id="wc-pred-container"><div class="wc-loading">Chargement…</div></div>
+  <div id="wc-pred-container"><div class="wc-loading" data-i18n="status.loading">Chargement…</div></div>
 </div>
 
 </div>
@@ -14755,7 +14780,7 @@ function psSetLang(v) {
 
   <div class="rg-bracket-wrap">
     <div id="rg-bracket" class="rg-bracket">
-      <div class="rg-loading">Chargement du tableau Roland Garros…</div>
+      <div class="rg-loading" data-i18n="status.loading">Chargement du tableau Roland Garros…</div>
     </div>
   </div>
 
@@ -14816,7 +14841,7 @@ function psSetLang(v) {
         <span class="rg-pc-form-dot skeleton">?</span>
         <span class="rg-pc-form-dot skeleton">?</span>
       </div>
-      <p id="rg-pc-form-note" class="rg-pc-form-note rg-pc-skeleton">Chargement L5 clay…</p>
+      <p id="rg-pc-form-note" class="rg-pc-form-note rg-pc-skeleton" data-i18n="status.loading_clay">Chargement L5 clay…</p>
     </section>
 
     <footer class="rg-pc-footer">
@@ -14860,7 +14885,7 @@ function psSetLang(v) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" aria-hidden="true" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </div>
     <input type="search" class="sidebar-search" id="ps-sb-tennis-search" placeholder="Rechercher un tournoi…" oninput="_psSbFilterTennis(this.value)" aria-label="Rechercher un tournoi">
-    <div id="ps-tennis-sidebar-all-list"><div class="sidebar-all-empty">Chargement…</div></div>
+    <div id="ps-tennis-sidebar-all-list"><div class="sidebar-all-empty" data-i18n="status.loading">Chargement…</div></div>
   </div>
 </div>
 
@@ -15016,7 +15041,7 @@ function psSetLang(v) {
       <span id="tn-top10-status"></span>
     </div>
     <div id="tn-top10-container" class="tn-top10-scroll">
-      <div class="tn-t10-loading">Chargement…</div>
+      <div class="tn-t10-loading" data-i18n="status.loading">Chargement…</div>
     </div>
   </section>
 
@@ -15254,7 +15279,7 @@ function psSetLang(v) {
         </div>
       </div>
       <div class="tn-vb-tbody" id="tennis-vb-tbody" role="rowgroup">
-        <div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Chargement…</span></div>
+        <div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);" data-i18n="status.loading">Chargement…</span></div>
       </div>
     </div>
   </section>
@@ -15300,7 +15325,7 @@ function psSetLang(v) {
         <span class="tn-live-cell" role="columnheader" style="justify-content:center;">Statut</span>
       </div>
       <div id="tennis-live-tbody" role="rowgroup">
-        <div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Chargement…</span></div>
+        <div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);" data-i18n="status.loading">Chargement…</span></div>
       </div>
     </div>
   </section>
@@ -15311,7 +15336,7 @@ function psSetLang(v) {
     <div class="tennis-modal-card" role="dialog" aria-modal="true" aria-labelledby="tennis-detail-title">
       <button class="tennis-modal-close" onclick="closeTennisDetail()" aria-label="Fermer">✕</button>
       <div id="tennis-detail-body">
-        <div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">Chargement…</div>
+        <div style="padding:48px;text-align:center;color:var(--text3,#5a6068);" data-i18n="status.loading">Chargement…</div>
       </div>
     </div>
   </div>
@@ -15363,7 +15388,7 @@ function psSetLang(v) {
           <span id="ta-rome-atp-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">—</span>
         </div>
         <div id="ta-rome-atp-body" style="overflow:auto;max-height:520px;">
-          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement…</div>
+          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;" data-i18n="status.loading">Chargement…</div>
         </div>
       </div>
       <div class="ta-rome-card" style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
@@ -15372,7 +15397,7 @@ function psSetLang(v) {
           <span id="ta-rome-wta-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">—</span>
         </div>
         <div id="ta-rome-wta-body" style="overflow:auto;max-height:520px;">
-          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement…</div>
+          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;" data-i18n="status.loading">Chargement…</div>
         </div>
       </div>
     </div>
@@ -15414,7 +15439,7 @@ function psSetLang(v) {
     </div>
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
       <div id="tex-body" style="overflow:auto;max-height:600px;">
-        <div style="padding:32px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement…</div>
+        <div style="padding:32px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;" data-i18n="status.loading">Chargement…</div>
       </div>
     </div>
   </section>
@@ -15467,7 +15492,7 @@ function psSetLang(v) {
   <div id="tex-books-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:760px;width:100%;max-height:80vh;overflow:auto;padding:20px;position:relative;">
       <button onclick="document.getElementById('tex-books-modal').style.display='none'" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;">✕</button>
-      <div id="tex-books-modal-body" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">Chargement…</div>
+      <div id="tex-books-modal-body" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);" data-i18n="status.loading">Chargement…</div>
     </div>
   </div>
 
@@ -15475,7 +15500,7 @@ function psSetLang(v) {
   <div id="tex-player-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:520px;width:100%;padding:20px;position:relative;">
       <button onclick="document.getElementById('tex-player-modal').style.display='none'" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:var(--text2,#8d9399);font-size:22px;cursor:pointer;">✕</button>
-      <div id="tex-player-modal-body" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text,#e8eaed);">Chargement…</div>
+      <div id="tex-player-modal-body" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text,#e8eaed);" data-i18n="status.loading">Chargement…</div>
     </div>
   </div>
 
@@ -18474,9 +18499,9 @@ function psSetLang(v) {
 <!-- TARIFS -->
 <section class="section fade-up" id="tarifs">
   <div style="text-align: center; margin-bottom: 8px;">
-    <div class="section-label" style="justify-content: center;">Tarifs</div>
-    <div class="section-title">Commencez gratuitement.</div>
-    <div class="section-sub" style="max-width: 500px; margin: 0 auto;">Toutes les fonctionnalités essentielles dans la version gratuite. Passez Pro pour débloquer les alertes illimitées et les filtres avancés.</div>
+    <div class="section-label" style="justify-content: center;" data-i18n="pricing.label">Tarifs</div>
+    <div class="section-title" data-i18n="pricing.title">Commencez gratuitement.</div>
+    <div class="section-sub" style="max-width: 500px; margin: 0 auto;" data-i18n="pricing.subtitle">Toutes les fonctionnalités essentielles dans la version gratuite. Passez Pro pour débloquer les alertes illimitées et les filtres avancés.</div>
   </div>
   <div class="pricing-grid" id="pricing-grid"></div>
 </section>
@@ -18487,9 +18512,9 @@ function psSetLang(v) {
 <div id="page-guide" data-page="guide" style="display:none;">
   <section class="section fade-up guide-hero">
     <div class="guide-hero-content">
-      <div class="guide-badge">Documentation</div>
-      <h2 class="guide-title">Guide PariScore</h2>
-      <p class="guide-subtitle">Maîtrisez les probabilités, dominez les paris</p>
+      <div class="guide-badge" data-i18n="guide.badge">Documentation</div>
+      <h2 class="guide-title" data-i18n="guide.title">Guide PariScore</h2>
+      <p class="guide-subtitle" data-i18n="guide.subtitle">Maîtrisez les probabilités, dominez les paris</p>
       <div class="guide-meta">
         <span class="guide-version">v9.7</span>
         <span class="guide-date">Mai 2026</span>
@@ -19375,7 +19400,7 @@ function psSetLang(v) {
         <div class="settings-card-icon">👤</div>
         <div class="settings-card-body">
           <div class="settings-card-title">Votre compte</div>
-          <div class="settings-card-desc" id="settings-account-info">Chargement...</div>
+          <div class="settings-card-desc" id="settings-account-info" data-i18n="settings.account_loading">Chargement...</div>
         </div>
       </div>
       <div class="settings-actions">
@@ -19655,7 +19680,7 @@ function psSetLang(v) {
       <div class="pslts-edge-title">Marchés live · règle BET stricte (EV&gt;5% &amp; IC_inf&gt;0)</div>
       <div class="pslts-bet-grid" id="pslts-bet-grid">
         <div style="grid-column:1/-1;font-family:'DM Mono',monospace;font-size:11px;color:var(--cf-text-muted,#64748b);text-align:center;padding:12px 0;">
-          Chargement des marchés…
+          <span data-i18n="status.loading_markets">Chargement des marchés…</span>
         </div>
       </div>
     </section>
@@ -19910,7 +19935,7 @@ function psSetLang(v) {
 <div id="strat-help-overlay" style="display:none;" onclick="if(event.target===this)closeStratHelp()">
   <div id="strat-help-modal" role="dialog" aria-modal="true" aria-labelledby="shm-title-id">
     <div class="shm-head">
-      <span class="shm-title" id="shm-title-id">Guide — Top Stratégies</span>
+      <span class="shm-title" id="shm-title-id" data-i18n="guide.strategies_title">Guide — Top Stratégies</span>
       <button class="shm-close" onclick="closeStratHelp()" aria-label="Fermer">✕</button>
     </div>
     <div class="shm-body">
@@ -19972,9 +19997,9 @@ function psSetLang(v) {
 <div id="page-comparateur" data-page="comparateur" style="display:none;">
 <section class="section fade-up">
   <div style="text-align:center;margin-bottom:28px;">
-    <div class="section-label" style="justify-content:center;">Comparateur de Cotes</div>
-    <div class="section-title">Meilleure cote, max valeur</div>
-    <div class="section-sub" style="max-width:520px;margin:0 auto;">Comparaison multi-bookmakers en temps réel — bookmakers ANJ France en priorité.</div>
+    <div class="section-label" style="justify-content:center;" data-i18n="comparator.label">Comparateur de Cotes</div>
+    <div class="section-title" data-i18n="comparator.title">Meilleure cote, max valeur</div>
+    <div class="section-sub" style="max-width:520px;margin:0 auto;" data-i18n="comparator.subtitle">Comparaison multi-bookmakers en temps réel — bookmakers ANJ France en priorité.</div>
   </div>
   <div id="comp-root" class="comp-root comp-light">
     <!-- Vue LISTE (grille style OddsPortal) -->
@@ -20006,7 +20031,7 @@ function psSetLang(v) {
         <span id="comp-status" style="font-size:.78rem;color:var(--cq-mut);"></span>
       </div>
       <div id="comp-grid" class="comp-grid-wrap">
-        <div class="comp-empty">⏳ Chargement des matchs…</div>
+        <div class="comp-empty" data-i18n="status.loading_matches">⏳ Chargement des matchs…</div>
       </div>
     </div>
     <!-- Vue DÉTAIL (un match, multi-bookmakers) -->
@@ -20023,7 +20048,7 @@ function psSetLang(v) {
         <button class="comp-market-tab"        data-market="OU35"     onclick="setCompMarket('OU35',this)">+/- 3.5</button>
         <button class="comp-market-tab"        data-market="BTTS"     onclick="setCompMarket('BTTS',this)">BTTS</button>
       </div>
-      <div id="comp-content"><div class="comp-empty">Chargement…</div></div>
+      <div id="comp-content"><div class="comp-empty" data-i18n="status.loading">Chargement…</div></div>
     </div>
   </div>
   <div class="comp-note">⚠️ Les bookmakers non agréés ANJ (Autorité Nationale des Jeux) sont affichés à titre informatif uniquement. PariScore ne redirige vers aucun opérateur non autorisé en France. Jouez responsable — <strong>jeux-interdits-aux-mineurs.fr</strong></div>
@@ -20066,7 +20091,7 @@ function psSetLang(v) {
 <div class="nba-head"><h2>🏀 NBA</h2><span class="nba-sub" id="nba-status">…</span></div>
 <div class="nba-disclaimer">Modèle Elo game-by-game + Pythagorean + Four Factors (blend), indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré — usage analytique, pas un conseil de pari.</div>
 <div id="nba-topbets"></div>
-<div class="nba-grid" id="nba-grid"><div class="nba-empty">⏳ Chargement…</div></div>
+<div class="nba-grid" id="nba-grid"><div class="nba-empty" data-i18n="status.loading">⏳ Chargement…</div></div>
 
 <div id="nba-ai-modal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:16px;">
   <div style="background:var(--bg2,#12161a);border:1px solid var(--bg4,#1e2328);border-radius:14px;max-width:680px;width:100%;max-height:86vh;display:flex;flex-direction:column;">
@@ -20133,7 +20158,7 @@ function psSetLang(v) {
 <div class="nba-head"><h2>🏀 WNBA</h2><span class="nba-sub" id="wnba-status">…</span></div>
 <div class="nba-disclaimer">Modèle Elo + Pythagorean + Four Factors (blend), indépendant des cotes. Value = EV vs cote devigée. ⚠️ Non calibré WNBA — usage analytique, pas un conseil de pari.</div>
 <div id="wnba-topbets"></div>
-<div class="nba-grid" id="wnba-grid"><div class="nba-empty">⏳ Chargement…</div></div>
+<div class="nba-grid" id="wnba-grid"><div class="nba-empty" data-i18n="status.loading">⏳ Chargement…</div></div>
 </div>
 
 <div id="page-cs2" data-page="cs2" style="display:none;">
@@ -20589,7 +20614,7 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" aria-hidden="true" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </div>
       <input type="search" class="sidebar-search" id="ps-sb-cs2-search" placeholder="Rechercher un tournoi…" oninput="_psSbFilterCs2(this.value)" aria-label="Rechercher un tournoi CS2">
-      <div id="ps-cs2-sidebar-all-list"><div class="sidebar-all-empty">Chargement…</div></div>
+      <div id="ps-cs2-sidebar-all-list"><div class="sidebar-all-empty" data-i18n="status.loading">Chargement…</div></div>
     </div>
   </div>
 
@@ -20714,7 +20739,7 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
 <div class="f1-wrap">
   <div class="f1-head">
     <div class="f1-title"><svg width="30" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--f1-accent,#ff0043)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13h2l2.5-2.5h4L14 13h7"/><path d="M3 11.5V14"/><path d="M21 12v2.5"/><path d="M8 10.5l1-1.5h3l1 1.5"/><circle cx="8" cy="16" r="2"/><circle cx="17" cy="16" r="2"/><path d="M10 16h5"/></svg>Formule 1<span class="f1-badge" id="f1-race-badge">—</span></div>
-    <div class="f1-sub" id="f1-status">Chargement…</div>
+    <div class="f1-sub" id="f1-status" data-i18n="status.loading">Chargement…</div>
   </div>
   <div class="f1-bets" id="f1-bets"></div>
   <div class="f1-grid-head">Grille pilotes · projections modèle (Monte-Carlo)</div>
