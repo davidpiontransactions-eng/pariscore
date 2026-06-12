@@ -168,6 +168,25 @@ const FOOTBALL_DATA_COMPETITIONS = {
 const FOOTBALL_DATA_TTL_MS = 6 * 3600 * 1000;
 const FOOTBALL_DATA_DETAIL_TTL_MS = 24 * 3600 * 1000;
 
+// ─── Rate-limiter FIFO football-data.org (free tier: 10 req/min) ──────────
+const FD_RATE_LIMIT = { maxPerMin: 10, queue: [], intervalMs: 7000 };
+function fdRateLimit() {
+  return new Promise(resolve => {
+    const now = Date.now();
+    FD_RATE_LIMIT.queue = FD_RATE_LIMIT.queue.filter(t => now - t < 60000);
+    if (FD_RATE_LIMIT.queue.length < FD_RATE_LIMIT.maxPerMin) {
+      FD_RATE_LIMIT.queue.push(now);
+      return resolve();
+    }
+    const wait = FD_RATE_LIMIT.queue[0] + 60000 - now + 500;
+    setTimeout(() => {
+      FD_RATE_LIMIT.queue.shift();
+      FD_RATE_LIMIT.queue.push(Date.now());
+      resolve();
+    }, wait);
+  });
+}
+
 // ─── OpenFootball GitHub (L4 zero-key fallback) ──────────────────────────────
 // Repo public domain : github.com/openfootball/football.json
 // Format : raw.githubusercontent.com/openfootball/football.json/master/{season}/{code}.json
@@ -9609,7 +9628,7 @@ function buildMatchRecord(raw) {
           }));
         if (books.length >= 2) {
           kvSet(bkSnapKey, [...bkArr, { ts: Date.now(), books }].slice(-12));
-          // Steam check post-snapshot. Debounce 30s géré par _pulseShouldBroadcast.
+          // Steam check post-snapshot. Debounce 5min géré par _pulseShouldBroadcast.
           broadcastSteamDetected(record.id);
         }
       }
@@ -15814,13 +15833,50 @@ async function findSofaEventId(match) {
     : new Date().toISOString().slice(0, 10);
   const events = await getSofaScheduledEvents(dateStr);
   const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const found = events.find(e => {
+
+  // Passe 1: match direct par ID ou nom normalis�e
+  var found = events.find(e => {
     if (match.home_sofa_id && match.away_sofa_id) {
       return e.homeTeam?.id === match.home_sofa_id && e.awayTeam?.id === match.away_sofa_id;
     }
     return norm(e.homeTeam?.name) === norm(match.home_team) &&
            norm(e.awayTeam?.name) === norm(match.away_team);
   });
+
+  // Passe 2: si pas trouv�e et c'est la World Cup, filtrer par tournoi puis r�e-essayer
+  if (!found && match._fd_competition === 'WC') {
+    const wcEvents = events.filter(e => {
+      const tn = (e.tournament?.name || '').toLowerCase();
+      return tn.includes('world cup') || tn.includes('fifa');
+    });
+    if (wcEvents.length) {
+      found = wcEvents.find(e =>
+        norm(e.homeTeam?.name) === norm(match.home_team) &&
+        norm(e.awayTeam?.name) === norm(match.away_team)
+      );
+    }
+  }
+
+  // Passe 3: fallback recherche par �equipe (r�esout les noms diff�erents)
+  if (!found) {
+    try {
+      const homeSearch = await sofaGet('/search/teams?q=' + encodeURIComponent(match.home_team || ''));
+      const awaySearch = await sofaGet('/search/teams?q=' + encodeURIComponent(match.away_team || ''));
+      const homeId = homeSearch?.data?.results?.[0]?.entity?.id || homeSearch?.data?.results?.[0]?.id;
+      const awayId = awaySearch?.data?.results?.[0]?.entity?.id || awaySearch?.data?.results?.[0]?.id;
+      if (homeId && awayId) {
+        found = events.find(e =>
+          (e.homeTeam?.id === homeId && e.awayTeam?.id === awayId) ||
+          (e.homeTeam?.id === awayId && e.awayTeam?.id === homeId)
+        );
+        if (found) {
+          match.home_sofa_id = homeId;
+          match.away_sofa_id = awayId;
+        }
+      }
+    } catch (e) { /* silencieux */ }
+  }
+
   if (found?.id) _sofaEventIdCache[cacheKey] = found.id;
   return found?.id || null;
 }
@@ -15852,6 +15908,157 @@ async function getTop3PlayersFromSofa(match) {
     return { home, away, homeAvg: avg(home), awayAvg: avg(away), available: true, _source: 'sofascore', _sofaEventId: sofaEventId };
   } catch (e) {
     console.warn('[SofaRatings]', e.message);
+    return null;
+  }
+}
+
+// ── NOUVEAU: fetchSofaLineups — remplace BSD pour les compositions (CdM 2026) ──
+// Source primaire: Sofascore /event/{id}/lineups (gratuit, coverage 100% CdM)
+// Format normalise compatible frontend (meme schema que l ancien BSD lineups)
+// Cache court: 2min pre-match, 10min confirme
+async function fetchSofaLineups(match) {
+  if (!match) return null;
+  const sofaEventId = await findSofaEventId(match);
+  if (!sofaEventId) {
+    return await fetchSofaLineupsByTeamName(match);
+  }
+  const cacheKey = "sofa_lineups_" + sofaEventId;
+  const cached = apiCacheGet(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    if (cached === "__NEG__") return null;
+    return Object.assign({}, cached, { cached: true });
+  }
+  try {
+    const res = await sofaGet("/event/" + sofaEventId + "/lineups");
+    if (res.status !== 200 || !res.data) {
+      apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 120000);
+      return null;
+    }
+    const d = res.data;
+    const isConfirmed = d.confirmed === true;
+    var _playersCount = 0;
+    var _normSide = function(side, teamName) {
+      var s = d[side];
+      if (!s) return null;
+      var players = (s.players || []).filter(function(p) { return !p.substitute; }).map(function(p) {
+        return {
+          jersey_number: p.player && (p.player.jerseyNumber || p.player.jersey_number) || null,
+          short_name: p.player && (p.player.shortName || p.player.name) || "",
+          name: p.player && (p.player.name || p.player.shortName) || "",
+          position: p.position && (p.position.name || p.position) || "",
+          player_id: p.player && p.player.id || null,
+        };
+      });
+      var substitutes = (s.players || []).filter(function(p) { return p.substitute; }).map(function(p) {
+        return {
+          jersey_number: p.player && (p.player.jerseyNumber || p.player.jersey_number) || null,
+          short_name: p.player && (p.player.shortName || p.player.name) || "",
+          name: p.player && (p.player.name || p.player.shortName) || "",
+          position: p.position && (p.position.name || p.position) || "",
+          player_id: p.player && p.player.id || null,
+        };
+      });
+      _playersCount += players.length;
+      return {
+        team_name: teamName || "",
+        formation: s.formation || "",
+        confidence: isConfirmed ? 1.0 : 0.85,
+        players: players.slice(0, 11),
+        substitutes: substitutes.slice(0, 12),
+      };
+    };
+    var homeTeam = match.home_team || d.home && (d.home.team_name || d.homeTeam) || "";
+    var awayTeam = match.away_team || d.away && (d.away.team_name || d.awayTeam) || "";
+    var result = {
+      source: "sofascore",
+      sofa_event_id: sofaEventId,
+      data: {
+        lineups: {
+          home: _normSide("home", homeTeam),
+          away: _normSide("away", awayTeam),
+        },
+        unavailable_players: { home: [], away: [] },
+        lineup_status: isConfirmed ? "confirmed" : "predicted",
+      },
+      cached: false,
+      fetched_at: new Date().toISOString(),
+    };
+    var ttl = isConfirmed ? 600000 : 120000;
+    apiCacheSet(cacheKey, result, "sofa_lineups", ttl);
+    console.log("  [SofaLineups] event=" + sofaEventId + " " + homeTeam + " vs " + awayTeam + " — " + _playersCount + " titulaires, status=" + result.data.lineup_status);
+    return result;
+  } catch (e) {
+    console.warn("[SofaLineups] fetch error:", e.message);
+    apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 120000);
+    return null;
+  }
+}
+
+// Fallback: cherche les lineups par nom d equipe via /search/teams + /team/{id}/squad
+async function fetchSofaLineupsByTeamName(match) {
+  if (!match) return null;
+  var cacheKey = "sofa_lineups_tn_" + (match.id || match.home_team + "_" + match.away_team);
+  var cached = apiCacheGet(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    if (cached === "__NEG__") return null;
+    return Object.assign({}, cached, { cached: true });
+  }
+  try {
+    var _fetchSquad = async function(teamName) {
+      if (!teamName) return null;
+      var searchRes = await sofaGet("/search/teams?q=" + encodeURIComponent(teamName));
+      if (searchRes.status !== 200 || !searchRes.data || !searchRes.data.results || !searchRes.data.results.length) return null;
+      var first = searchRes.data.results[0];
+      var teamId = first.entity && first.entity.id || first.id;
+      if (!teamId) return null;
+      var squadRes = await sofaGet("/team/" + teamId + "/squad");
+      if (squadRes.status !== 200 || !squadRes.data || !squadRes.data.squad) return null;
+      var squad = squadRes.data.squad;
+      return {
+        team_name: teamName,
+        formation: "",
+        confidence: 0.5,
+        players: squad.filter(function(p) { return p.isStarter; }).slice(0, 11).map(function(p) {
+          return {
+            jersey_number: p.jerseyNumber || p.jersey_number || null,
+            short_name: p.player && (p.player.shortName || p.player.name) || p.shortName || p.name || "",
+            name: p.player && (p.player.name || p.player.shortName) || p.name || p.shortName || "",
+            position: p.position && (p.position.name || p.position) || "",
+          };
+        }),
+        substitutes: squad.filter(function(p) { return !p.isStarter; }).slice(0, 12).map(function(p) {
+          return {
+            jersey_number: p.jerseyNumber || p.jersey_number || null,
+            short_name: p.player && (p.player.shortName || p.player.name) || p.shortName || p.name || "",
+            name: p.player && (p.player.name || p.player.shortName) || p.name || p.shortName || "",
+            position: p.position && (p.position.name || p.position) || "",
+          };
+        }),
+      };
+    };
+    var homeP = _fetchSquad(match.home_team);
+    var awayP = _fetchSquad(match.away_team);
+    var homeData = await homeP;
+    var awayData = await awayP;
+    if (!homeData && !awayData) {
+      apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 300000);
+      return null;
+    }
+    var result = {
+      source: "sofascore_squad",
+      data: {
+        lineups: { home: homeData, away: awayData },
+        unavailable_players: { home: [], away: [] },
+        lineup_status: "predicted",
+      },
+      cached: false,
+      fetched_at: new Date().toISOString(),
+    };
+    apiCacheSet(cacheKey, result, "sofa_lineups", 300000);
+    return result;
+  } catch (e) {
+    console.warn("[SofaLineupsByTeamName] error:", e.message);
+    apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 300000);
     return null;
   }
 }
@@ -16176,6 +16383,7 @@ async function fetchFootballDataMatches(dateFrom, dateTo) {
   try {
     const codes = Object.keys(FOOTBALL_DATA_COMPETITIONS).join(',');
     const url = `${FOOTBALL_DATA_BASE}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}&competitions=${codes}`;
+    await fdRateLimit();
     const res = await httpsGet(url, { 'X-Auth-Token': FOOTBALL_DATA_API_KEY });
     if (res.status === 429) {
       console.warn('  [Football-Data] 429 rate-limited (10/min free) — backoff cache négatif 5min');
@@ -16231,6 +16439,7 @@ async function fetchFootballDataMatchDetail(fdMatchId) {
   const cached = apiCacheGet(cacheKey);
   if (cached) return cached === '__NEG__' ? null : cached;
   try {
+    await fdRateLimit();
     const res = await httpsGet(`${FOOTBALL_DATA_BASE}/matches/${fdMatchId}`, {
       'X-Auth-Token': FOOTBALL_DATA_API_KEY,
     });
@@ -16271,6 +16480,50 @@ async function fetchFootballDataMatchDetail(fdMatchId) {
     console.warn(`  [Football-Data] detail ${fdMatchId} erreur:`, e.message);
     return null;
   }
+}
+
+// ── Convertit le format football-data.org vers le format frontend (compatible Sofascore) ──
+function _formatFdLineupsToFrontend(detail, match) {
+  if (!detail) return null;
+  if (!detail.home && !detail.away) return null;
+  var homeLineup = Array.isArray(detail.home && detail.home.lineup) ? detail.home.lineup : [];
+  var awayLineup = Array.isArray(detail.away && detail.away.lineup) ? detail.away.lineup : [];
+  if (!homeLineup.length && !awayLineup.length) return null;
+  var isConfirmed = detail.status === 'FINISHED' || detail.status === 'IN_PLAY' || detail.status === 'PAUSED';
+  function _fdPlayer(p) {
+    return {
+      jersey_number: p.shirtNumber || null,
+      short_name: p.name || "",
+      name: p.name || "",
+      position: p.position || "",
+      player_id: p.id || null,
+      ai_score: null,
+      expected_goals: null,
+    };
+  }
+  function _normSide(sideData, teamName) {
+    if (!sideData) return null;
+    return {
+      team_name: teamName || sideData.name || "",
+      formation: sideData.formation || "",
+      confidence: 1.0,
+      players: (Array.isArray(sideData.lineup) ? sideData.lineup : []).slice(0, 11).map(_fdPlayer),
+      substitutes: (Array.isArray(sideData.bench) ? sideData.bench : []).slice(0, 12).map(_fdPlayer),
+    };
+  }
+  return {
+    source: "football_data",
+    data: {
+      lineups: {
+        home: _normSide(detail.home, match ? match.home_team : null),
+        away: _normSide(detail.away, match ? match.away_team : null),
+      },
+      unavailable_players: { home: [], away: [] },
+      lineup_status: isConfirmed ? "confirmed" : "predicted",
+    },
+    cached: false,
+    fetched_at: new Date().toISOString(),
+  };
 }
 
 // ─── OpenFootball GitHub (L4 zero-key fallback) ──────────────────────────────
@@ -18021,17 +18274,21 @@ function _tzOffsetDiffHours(tzA, tzB, atDate) {
   if (!tzA || !tzB || tzA === tzB) return 0;
   const d = atDate instanceof Date ? atDate : new Date(atDate);
   if (isNaN(d.getTime())) return 0;
+  // Intl.DateTimeFormat retourne le format avec timezone — on extrait l'offset via 2 dates UTC.
   try {
-    const opts = { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const opts = { timeZone: '', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' };
     const parseLocal = (tz) => {
       const fmt = new Intl.DateTimeFormat('en-US', { ...opts, timeZone: tz });
       const parts = fmt.formatToParts(d);
       const lookup = {};
       for (const p of parts) lookup[p.type] = p.value;
+      // ISO-like: YYYY-MM-DDTHH:mm:ss
       const iso = `${lookup.year}-${lookup.month}-${lookup.day}T${lookup.hour}:${lookup.minute}:${lookup.second}Z`;
       return new Date(iso).getTime();
     };
-    return (parseLocal(tzA) - parseLocal(tzB)) / 3600000;
+    const tA = parseLocal(tzA);
+    const tB = parseLocal(tzB);
+    return (tA - tB) / 3600000;
   } catch (_) {
     return 0;
   }
@@ -18065,10 +18322,12 @@ function computeTravelFactor(homeTeam, awayTeam, kickoffISO, prevAwayMatchDate) 
   if (!homeGeo || !awayGeo) {
     return { missing: true, score: null, xg_modulator: 1, source: 'stadiums_geo' };
   }
+  // Distance Haversine, arrondi 2 décimales (~1km précision)
   const distance_km = parseFloat(_haversineKm(homeGeo.lat, homeGeo.lng, awayGeo.lat, awayGeo.lng).toFixed(2));
   const tz_delta_hours = parseFloat(_tzOffsetDiffHours(homeGeo.tz, awayGeo.tz, kickoffISO || Date.now()).toFixed(2));
   const climate_shift = !!(homeGeo.climate && awayGeo.climate && homeGeo.climate !== awayGeo.climate);
 
+  // Days since last match (recovery). Si pas dispo, neutralisé (10 = mid-range optimal).
   let days_since_last = null;
   if (prevAwayMatchDate && kickoffISO) {
     const ms = new Date(kickoffISO).getTime() - new Date(prevAwayMatchDate).getTime();
@@ -18086,6 +18345,7 @@ function computeTravelFactor(homeTeam, awayTeam, kickoffISO, prevAwayMatchDate) 
   const travel_score = Math.min(100, Math.round(distance_penalty + tz_penalty + climate_penalty + recovery_penalty));
   const xg_modulator = parseFloat((1 - travel_score / 100 * 0.08).toFixed(4));
 
+  // Catégorie pour UI (badge couleur)
   let level;
   if (travel_score >= 60) level = 'severe';
   else if (travel_score >= 35) level = 'high';
@@ -18123,7 +18383,9 @@ function _lastMatchDateBeforeKickoff(teamName, kickoffISO) {
     if (!Number.isFinite(ts) || ts >= tsKO) return;
     if (bestTs === null || ts > bestTs) bestTs = ts;
   };
+  // db.matches (live + upcoming pool)
   if (Array.isArray(db.matches)) for (const m of db.matches) upd(m);
+  // db.archive_matches (finished pool)
   if (Array.isArray(db.archive_matches)) for (const m of db.archive_matches) upd(m);
   return bestTs ? new Date(bestTs).toISOString() : null;
 }
@@ -19964,9 +20226,9 @@ const STRATEGIES = {
       const dir = steam.direction;
       // Confiance Poisson sur la direction steamée
       let baseProb = null;
-      if (dir === 'home') baseProb = bestModelProb(m, 'homeWin');
-      else if (dir === 'draw') baseProb = bestModelProb(m, 'draw');
-      else if (dir === 'away') baseProb = bestModelProb(m, 'awayWin');
+      if (dir === 'home' && m.poisson?.homeWin != null) baseProb = m.poisson.homeWin;
+      else if (dir === 'draw' && m.poisson?.draw != null) baseProb = m.poisson.draw;
+      else if (dir === 'away' && m.poisson?.awayWin != null) baseProb = m.poisson.awayWin;
       if (baseProb == null) return null;
       // Bonus severity: high +8, med +4, low +0
       const sevBonus = steam.severity === 'high' ? 8 : steam.severity === 'med' ? 4 : 0;
@@ -20525,6 +20787,7 @@ async function handleAPI(req, res, pathname, query) {
         notes: m.notes,
         start_time: m.start_time,
         live_stats: m._bsd_stats || null,
+        betfair_wom: m.betfair_wom || null,
         last_update_ts: m.last_update_ts
       }));
       res.writeHead(200, {
@@ -31493,6 +31756,28 @@ if (pathname === '/api/v1/trends') {
   return jsonResponse(res, 200, getTrends());
 }
 
+// GET /api/v1/league-xg/:league — xG moyen par match pour une compétition
+if (pathname.startsWith('/api/v1/league-xg/') && req.method === 'GET') {
+  var leagueName = decodeURIComponent(pathname.slice('/api/v1/league-xg/'.length)).trim().toLowerCase();
+  if (!leagueName) return jsonResponse(res, 400, { error: 'bad_league' });
+  var matches = db.matches.filter(function(m) {
+    return m.expectedGoals && (m.expectedGoals.home != null || m.expectedGoals.away != null) &&
+      m.league && m.league.toLowerCase().includes(leagueName);
+  });
+  if (!matches.length) return jsonResponse(res, 200, { xg_avg: null, total_matches: 0 });
+  var homeXg = matches.map(function(m) { return m.expectedGoals.home || 0; });
+  var awayXg = matches.map(function(m) { return m.expectedGoals.away || 0; });
+  var totalXg = homeXg.map(function(h, i) { return h + awayXg[i]; });
+  var avg = totalXg.reduce(function(s, v) { return s + v; }, 0) / totalXg.length;
+  return jsonResponse(res, 200, {
+    league: leagueName,
+    xg_avg: parseFloat(avg.toFixed(2)),
+    xg_home_avg: parseFloat((homeXg.reduce(function(s, v) { return s + v; }, 0) / homeXg.length).toFixed(2)),
+    xg_away_avg: parseFloat((awayXg.reduce(function(s, v) { return s + v; }, 0) / awayXg.length).toFixed(2)),
+    total_matches: matches.length,
+  });
+}
+
 // GET /api/v1/history/query — Data Hub Historique (Phase H1)
 // Filtres avancés + agrégations + pagination. Tennis branché en Phase H3.
 if (pathname === '/api/v1/history/query') {
@@ -35660,6 +35945,84 @@ Genere ensuite un resume pret a l'emploi pour les reseaux sociaux.
   }
 }
 
+// POST /api/v1/tennis/ai-send-discord — Prédiction IA → envoi direct Discord — bd 57f3
+// Déclenché depuis les boutons 🤖 des sections Top 10 Matchs du Jour et WOM Top 5.
+// Génère une prédiction concise via Gemini, l'envoie sur le webhook Discord général.
+// Cache 5min pour éviter les appels redondants sur un même match.
+if (pathname === '/api/v1/tennis/ai-send-discord' && req.method === 'POST') {
+  if (!GEMINI_API_KEY && AI_DEEP_PROVIDERS.length === 0) return jsonResponse(res, 503, { error: 'Aucun provider IA configuré' });
+  let body = {};
+  try { body = JSON.parse(rawBody || '{}'); } catch(e) { return jsonResponse(res, 400, { error: 'invalid_json' }); }
+  const p1 = String(body.p1 || '').trim().slice(0, 80);
+  const p2 = String(body.p2 || '').trim().slice(0, 80);
+  const tournament = String(body.tournament || '').trim().slice(0, 120) || '—';
+  const surface = String(body.surface || '').trim().slice(0, 40) || '';
+  const source = String(body.source || 'top10').trim();
+  if (!p1 || !p2) return jsonResponse(res, 400, { error: 'p1_et_p2_requis' });
+
+  const _normNm2 = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  const cacheKey = `ai_discord_v1_${_normNm2(p1)}_${_normNm2(p2)}`;
+  const cached = getCachedAIAnalysis(cacheKey);
+  if (cached?.discordEmbed) {
+    if (cached.discord_sent) {
+      return jsonResponse(res, 200, { success: true, cached: true, discord_sent: true, already_sent: true });
+    }
+    const sent = await sendDiscordAlert(cached.discordEmbed).catch(() => false);
+    saveAIAnalysisToCache(cacheKey, { discordEmbed: cached.discordEmbed, discord_sent: sent });
+    return jsonResponse(res, 200, { success: true, cached: true, discord_sent: sent });
+  }
+
+  const AI_DISCORD_PROMPT = `Tu es l'analyste prédictif de PariScore (pariscore.fr). Génère une prédiction tennis CONCISE et percutante pour un parieur, prête à être postée sur Discord.
+
+Match : ${p1} vs ${p2}
+Tournoi : ${tournament}${surface ? '\nSurface : ' + surface : ''}
+
+Format de sortie (garde la structure mais sois bref, max 1500 caractères) :
+1️⃣ **POWER SCORE** — Note /100 pour chaque joueur avec justification en 1 phrase.
+2️⃣ **ANALYSE RAPIDE** — 2-3 phrases sur le rapport de force, le style, le contexte clé.
+3️⃣ **PRONOSTIC** — Vainqueur pressenti + confiance (Haute/Moyenne/Faible) + durée estimée (2 ou 3 sets).
+4️⃣ **LE PICK** — Un conseil pari explicite (ex: "J1 gagne 2-0", "Over 22.5 jeux", etc.).
+
+Termine par "🔗 https://pariscore.fr/" + un message communautaire court. Utilise des emojis.`;
+
+  try {
+    let text = '', provider = 'gemini';
+    const gemRes = await httpsPost(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      { contents: [{ parts: [{ text: AI_DISCORD_PROMPT }] }], safetySettings: GEMINI_SAFETY_SETTINGS, generationConfig: { temperature: 0.7, maxOutputTokens: 1500 } }
+    );
+    if (gemRes.status === 200) {
+      text = (gemRes.data && gemRes.data.candidates && gemRes.data.candidates[0] && gemRes.data.candidates[0].content && gemRes.data.candidates[0].content.parts && gemRes.data.candidates[0].content.parts[0] && gemRes.data.candidates[0].content.parts[0].text) || '';
+    }
+    if (!text) {
+      for (const prov of AI_DEEP_PROVIDERS) {
+        if (prov.type !== 'openai') continue;
+        try {
+          const r = await httpsPost(`https://${prov.host}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: AI_DISCORD_PROMPT }], temperature: 0.7, max_tokens: 1500 }, { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.fr', 'X-Title': 'PariScore Discord Prediction' });
+          if (r.status === 200) { const t = (r.data && r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || ''; if (t) { text = t; provider = prov.name; break; } }
+        } catch (_) { /* provider next */ }
+      }
+    }
+    if (!text) return jsonResponse(res, 500, { error: 'Échec génération prédiction IA' });
+
+    // Construire l'embed Discord
+    const embed = {
+      title: `🤖 Prédiction IA · ${p1} vs ${p2}`,
+      description: text.length > 2000 ? text.slice(0, 1997) + '...' : text,
+      color: 0x7C3AED, // violet PariScore
+      footer: { text: `PariScore · ${provider} · ${source === 'wom' ? '💰 Top 5 Argent Betfair' : '🏆 Top 10 Matchs du Jour'}` },
+      timestamp: new Date().toISOString()
+    };
+
+    const discordSent = await sendDiscordAlert(embed).catch(() => false);
+    saveAIAnalysisToCache(cacheKey, { discordEmbed: embed, discord_sent: discordSent });
+
+    return jsonResponse(res, 200, { success: true, discord_sent: discordSent, provider });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: e.message });
+  }
+}
+
 // GET /api/v1/tennis/players/search?q=<name> — resolve player name → profile + ranking
 if (pathname === '/api/v1/tennis/players/search' && req.method === 'GET') {
   const q = String(query.q || '').trim();
@@ -38871,6 +39234,62 @@ if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') 
     fetched_at: new Date().toISOString(),
   });
 }
+// GET /api/v1/lineups/:matchId — cascade L1 football-data.org → L2 Sofascore (CdM 2026)
+// Gratuit, L1 10req/min, L2 Sofascore fallback. Cache court.
+// Retourne le meme format que l ancien /api/v1/bsd/lineups/ pour compatibilite frontend.
+if (pathname.startsWith('/api/v1/lineups/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/lineups/'.length)).trim();
+  if (!rawId) return jsonResponse(res, 400, { error: 'bad_match_id' });
+  const match = db.matches.find(m => m.id === rawId) || null;
+  if (!match) return jsonResponse(res, 404, { error: 'match_not_found', message: 'Aucun match trouve pour id=' + rawId });
+  try {
+    // L1 : football-data.org (API officielle, gratuite, deja codee)
+    if (match._fd_match_id) {
+      const fdLineupCacheKey = 'fd_lineups_' + (match.id || rawId);
+      const fdCached = apiCacheGet(fdLineupCacheKey);
+      if (fdCached) {
+        if (fdCached === '__NEG__') { /* silent fallthrough to L2 */ }
+        else return jsonResponse(res, 200, Object.assign({}, fdCached, { cached: true }));
+      }
+      try {
+        const fdDetail = await fetchFootballDataMatchDetail(match._fd_match_id);
+        if (fdDetail) {
+          const formatted = _formatFdLineupsToFrontend(fdDetail, match);
+          if (formatted) {
+            const isConfirmed = formatted.data && formatted.data.lineup_status === 'confirmed';
+            apiCacheSet(fdLineupCacheKey, formatted, 'fd_lineups', isConfirmed ? 86400000 : 300000);
+            return jsonResponse(res, 200, formatted);
+          }
+        }
+      } catch (fdErr) {
+        console.warn('[LineupsRoute] L1 football-data error:', fdErr.message);
+      }
+      // Cache negatif court pour eviter de bombarder l API
+      apiCacheSet(fdLineupCacheKey, '__NEG__', 'fd_lineups', 300000);
+    }
+    // L2 : Sofascore (fallback, existant)
+    const result = await fetchSofaLineups(match);
+    if (!result) {
+      return jsonResponse(res, 200, {
+        source: 'sofascore',
+        data: { lineups: { home: null, away: null }, unavailable_players: { home: [], away: [] }, lineup_status: 'unavailable' },
+        cached: false,
+        fetched_at: new Date().toISOString(),
+      });
+    }
+    return jsonResponse(res, 200, result);
+  } catch (e) {
+    console.warn('[LineupsRoute] error:', e.message);
+    return jsonResponse(res, 200, {
+      source: 'error',
+      data: { lineups: { home: null, away: null }, unavailable_players: { home: [], away: [] }, lineup_status: 'unavailable' },
+      error: String(e.message || e),
+      cached: false,
+      fetched_at: new Date().toISOString(),
+    });
+  }
+}
+
 for (const kind of BSD_ENRICH_PATHS) {
   const prefix = `/api/v1/bsd/${kind}/`;
   if (pathname.startsWith(prefix) && req.method === 'GET') {
@@ -46092,53 +46511,78 @@ async function checkLineups() {
   }
 }
 
-// Fonction pour récupérer les compositions via BSD/Sofascore
 async function fetchLineups(match) {
-  const lineups = { home: null, away: null, source: null };
-  
-  // Essayer Sofascore pour les compositions
-  if (match.home_bsd_id) {
+  // Cascade L1: football-data.org
+  if (match && match._fd_match_id && FOOTBALL_DATA_API_KEY) {
     try {
-      // Chercher via l'ID BSD de l'équipe
-      const res = await sofaGet(`/team/${match.home_bsd_id}/squad`);
-      if (res.status === 200 && res.data?.squad) {
-        lineups.home = res.data.squad.filter(p => p.isStarter).map(p => p.name);
-        lineups.source = 'sofascore';
-      }
-    } catch (e) { /* ignore */ }
-  }
-  
-  // Fallback: recherche par nom d'équipe
-  if (!lineups.home) {
-    try {
-      const hRes = await sofaGet(`/search/teams?q=${encodeURIComponent(match.home_team)}`);
-      if (hRes.status === 200 && hRes.data?.results?.[0]) {
-        const hId = hRes.data.results[0].entity.id;
-        const squadRes = await sofaGet(`/team/${hId}/squad`);
-        if (squadRes.status === 200 && squadRes.data?.squad) {
-          lineups.home = squadRes.data.squad.filter(p => p.isStarter).map(p => p.name);
+      await fdRateLimit();
+      const fdDetail = await fetchFootballDataMatchDetail(match._fd_match_id);
+      if (fdDetail) {
+        const homeLP = Array.isArray(fdDetail.home && fdDetail.home.lineup) ? fdDetail.home.lineup : [];
+        const awayLP = Array.isArray(fdDetail.away && fdDetail.away.lineup) ? fdDetail.away.lineup : [];
+        if (homeLP.length > 0 || awayLP.length > 0) {
+          const isConfirmed = fdDetail.status === 'FINISHED' || fdDetail.status === 'IN_PLAY' || fdDetail.status === 'PAUSED';
+          console.log('  [LineupsCron] L1 football-data ' + (match.id || '') + ' ' + (match.home_team || '') + ' vs ' + (match.away_team || '') + ' --- ' + homeLP.length + '/' + awayLP.length + ' joueurs');
+          return {
+            home: homeLP.slice(0, 11).map(p => p.name || '').filter(Boolean),
+            away: awayLP.slice(0, 11).map(p => p.name || '').filter(Boolean),
+            source: 'football_data',
+            formation: { home: fdDetail.home.formation || '', away: fdDetail.away.formation || '' },
+            _confirmed: isConfirmed,
+          };
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) { /* silencieux - fallback L2 */ }
   }
-  
-  if (!lineups.away) {
-    try {
-      const aRes = await sofaGet(`/search/teams?q=${encodeURIComponent(match.away_team)}`);
-      if (aRes.status === 200 && aRes.data?.results?.[0]) {
-        const aId = aRes.data.results[0].entity.id;
-        const squadRes = await sofaGet(`/team/${aId}/squad`);
-        if (squadRes.status === 200 && squadRes.data?.squad) {
-          lineups.away = squadRes.data.squad.filter(p => p.isStarter).map(p => p.name);
-        }
-      }
-    } catch (e) { /* ignore */ }
-  }
-  
-  return (lineups.home || lineups.away) ? lineups : null;
-}
 
-// Vérifier toutes les 15 minutes
+  // L2: Sofascore event lineups officiel
+  try {
+    const sofaEventId = await findSofaEventId(match);
+    if (sofaEventId) {
+      const res = await sofaGet('/event/' + sofaEventId + '/lineups');
+      if (res.status === 200 && res.data) {
+        const d = res.data;
+        var home = null, away = null;
+        if (d.home && d.home.players) {
+          home = d.home.players.filter(function(p) { return !p.substitute; }).slice(0, 11).map(function(p) {
+            return p.player && (p.player.shortName || p.player.name) || '';
+          }).filter(Boolean);
+        }
+        if (d.away && d.away.players) {
+          away = d.away.players.filter(function(p) { return !p.substitute; }).slice(0, 11).map(function(p) {
+            return p.player && (p.player.shortName || p.player.name) || '';
+          }).filter(Boolean);
+        }
+        if (home && home.length) {
+          console.log('  [LineupsCron] event=' + sofaEventId + ' ' + (match.home_team || '') + ' vs ' + (match.away_team || '') + ' --- ' + home.length + '/' + (away ? away.length : 0) + ' joueurs');
+          return { home: home, away: away, source: 'sofascore_event', formation: { home: d.home.formation || '', away: d.away.formation || '' } };
+        }
+      }
+    }
+  } catch (e) { /* silencieux - fallback squad */ }
+
+  // Fallback: squad search par nom d'equipe (predicted)
+  try {
+    var out = { home: null, away: null, source: 'sofascore_squad' };
+    var _ff = async function(teamName) {
+      if (!teamName) return null;
+      var r = await sofaGet('/search/teams?q=' + encodeURIComponent(teamName));
+      if (r.status !== 200 || !r.data || !r.data.results || !r.data.results.length) return null;
+      var tid = (r.data.results[0].entity && r.data.results[0].entity.id) || r.data.results[0].id;
+      if (!tid) return null;
+      var sr = await sofaGet('/team/' + tid + '/squad');
+      if (sr.status !== 200 || !sr.data || !sr.data.squad) return null;
+      return sr.data.squad.filter(function(p) { return p.isStarter; }).map(function(p) {
+        return (p.player && (p.player.shortName || p.player.name)) || p.shortName || p.name || '';
+      }).filter(Boolean).slice(0, 11);
+    };
+    out.home = await _ff(match.home_team);
+    out.away = await _ff(match.away_team);
+    if (out.home || out.away) return out;
+  } catch (e) { /* ignore */ }
+
+  return null;
+}
 setInterval(() => checkLineups().catch(e => console.warn('[Lineups]', e.message)), 15 * 60 * 1000);
 
 // Vérifier toutes les 30 minutes (press conferences)
