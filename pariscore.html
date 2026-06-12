@@ -13750,13 +13750,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <div class="ins-tab active" onclick="insShowTab('resume')">Résumé</div>
         <div class="ins-tab" onclick="insShowTab('stats')">Stats</div>
         <div class="ins-tab" onclick="insShowTab('joueurs')">Stats Joueurs</div>
+        <div class="ins-tab" onclick="insShowTab('compos')">Compos</div>
         <div class="ins-tab" onclick="insShowTab('scouting')">PRO SCOUT</div>
         <div class="ins-tab" onclick="insShowTab('graphique')">Forme</div>
         <div class="ins-tab" onclick="insShowTab('classement')">Classement</div>
         <div class="ins-tab" onclick="insShowTab('corners')">Corners</div>
         <div class="ins-tab" onclick="insShowTab('powerscore')">Power Score</div>
         <div class="ins-tab" onclick="insShowTab('h2h')">H2H</div>
-        <div class="ins-tab" onclick="insShowTab('compos')">Compos</div>
         <div class="ins-tab" onclick="insShowTab('incidents')">Incidents</div>
         <div class="ins-tab" onclick="insShowTab('shotmap')">Shotmap</div>
       </div>
@@ -13764,13 +13764,13 @@ Analyse data-science des paris sportifs : Power Score, xG, value bets dévigés.
         <option value="resume">Résumé</option>
         <option value="stats">Stats</option>
         <option value="joueurs">Stats Joueurs</option>
+        <option value="compos">Compos</option>
         <option value="scouting">PRO SCOUT</option>
         <option value="graphique">Forme</option>
         <option value="classement">Classement</option>
         <option value="corners">Corners</option>
         <option value="powerscore">Power Score</option>
         <option value="h2h">H2H</option>
-        <option value="compos">Compos</option>
         <option value="incidents">Incidents</option>
         <option value="shotmap">Shotmap</option>
       </select>
@@ -22553,7 +22553,7 @@ function insShowTab(tab) {
   if (tab !== 'incidents' && typeof bsdIncidentsTimer !== 'undefined' && bsdIncidentsTimer) {
     clearInterval(bsdIncidentsTimer); bsdIncidentsTimer = null;
   }
-  const tabs = ['resume','stats','joueurs','scouting','graphique','classement','corners','powerscore','h2h','compos','incidents','shotmap'];
+  const tabs = ['resume','stats','joueurs','compos','scouting','graphique','classement','corners','powerscore','h2h','incidents','shotmap'];
   tabs.forEach(t => {
     const el = document.getElementById(`ins-tab-${t}`);
     if (el) el.style.display = t === tab ? '' : 'none';
@@ -22588,7 +22588,7 @@ function insShowTab(tab) {
     const container = document.getElementById('ins-tab-compos');
     if (container && container.dataset.loaded !== '1' && insCurrentMatchId) {
       container.dataset.loaded = '1';
-      buildBsdCompos(insCurrentMatchId);
+      buildLineupsCompos(insCurrentMatchId);
     }
   }
   if (tab === 'incidents') {
@@ -22616,72 +22616,183 @@ function insShowTab(tab) {
 // (BSD upstream KO ou match sans lineups), placeholder + retry manuel.
 let bsdIncidentsTimer = null;
 
-async function buildBsdCompos(matchId) {
+
+async function buildLineupsCompos(matchId) {
   const el = document.getElementById('ins-tab-compos');
   if (!el) return;
-  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement compositions BSD…</div>';
+  el.innerHTML = '<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>Chargement compositions...</div>';
   try {
-    const res = await apiFetch(`/api/v1/bsd/lineups/${encodeURIComponent(matchId)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await apiFetch('/api/v1/lineups/' + encodeURIComponent(matchId));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const out = await res.json();
-    const d = out.data || {};
-    if (!d.lineups) {
-      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">Compositions indisponibles pour ce match.<br><span style="font-size:11px">Statut BSD : ${d.lineup_status || 'unknown'}</span></div>`;
+    var data = out && out.data;
+    if (!data || !data.lineups || (!data.lineups.home && !data.lineups.away)) {
+      el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">Compositions indisponibles pour ce match.<br><span style="font-size:11px">Statut : ' + (data && data.lineup_status || 'unknown') + '</span></div>';
       return;
     }
-    const status = d.lineup_status || 'unknown';
-    const beta = d.beta ? ' · <span style="color:var(--amber)">BETA</span>' : '';
-    const statusBadge = status === 'confirmed'
-      ? '<span style="color:var(--green);font-weight:700">CONFIRMÉE</span>'
+    var status = data.lineup_status || 'unknown';
+    var statusHtml = status === 'confirmed'
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,0.12);color:#15803D;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600">✅ CONFIRMEE</span>'
       : status === 'predicted'
-        ? '<span style="color:var(--blue);font-weight:700">IA-PRÉDITE</span>'
-        : `<span style="color:var(--text3)">${status}</span>`;
-    const renderSide = (side, sideLabel) => {
-      if (!side) return `<div class="ins-empty" style="padding:24px 16px">${sideLabel} : pas de données</div>`;
-      const players = (side.players || []).map(p => `
-        <li style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--bg4);">
-          <span style="font-family:'DM Mono',monospace;color:var(--text2);font-size:11px;min-width:28px;text-align:right">#${p.jersey_number ?? '—'}</span>
-          <span style="flex:1;padding-left:10px;color:var(--text);font-size:13px">${p.short_name || p.name}</span>
-          <span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px;min-width:30px;text-align:center">${p.position || '—'}</span>
-          ${p.ai_score != null ? `<span style="font-family:'DM Mono',monospace;color:${p.ai_score > 0.7 ? 'var(--green)' : p.ai_score > 0.4 ? 'var(--amber)' : 'var(--text3)'};font-size:10px;min-width:40px;text-align:right">${(p.ai_score*100).toFixed(0)}%</span>` : ''}
-        </li>`).join('');
-      const bench = (side.substitutes || []).slice(0, 8).map(p => `
-        <li style="display:flex;justify-content:space-between;padding:4px 8px;color:var(--text3);font-size:11px">
-          <span>#${p.jersey_number ?? '—'} ${p.short_name || p.name}</span>
-          <span>${p.position || ''}</span>
-        </li>`).join('');
-      return `
-        <div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
-            <strong style="color:var(--green);font-size:13px">${side.team_name}</strong>
-            <span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px">${side.formation || '—'} · conf ${side.confidence != null ? (side.confidence*100).toFixed(0)+'%' : '—'}</span>
-          </div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Titulaires</div>
-          <ul style="list-style:none;padding:0;margin:0">${players || '<li style="color:var(--text3);padding:8px">—</li>'}</ul>
-          ${bench ? `<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 4px">Banc (top 8)</div><ul style="list-style:none;padding:0;margin:0">${bench}</ul>` : ''}
-        </div>`;
-    };
-    const renderInjured = (list, sideLabel) => {
-      if (!list || !list.length) return '';
-      const items = list.map(p => `<li style="font-size:11px;color:var(--text3);padding:2px 0">⚕️ ${p.short_name || p.name} <span style="color:var(--red)">(${p.status})</span>${p.reason && p.reason !== 'Unknown' ? ` — ${p.reason}` : ''}</li>`).join('');
-      return `<div style="margin-top:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Absents ${sideLabel}</div><ul style="list-style:none;padding:0;margin:4px 0 0">${items}</ul></div>`;
-    };
-    el.innerHTML = `
-      <div style="padding:14px 12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · ${statusBadge}${beta}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${out.cached ? 'CACHE 6H' : 'LIVE'} · event ${out.event_id}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          ${renderSide(d.lineups.home, 'Domicile')}
-          ${renderSide(d.lineups.away, 'Extérieur')}
-        </div>
-        ${d.unavailable_players ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">${renderInjured(d.unavailable_players.home, 'dom')}${renderInjured(d.unavailable_players.away, 'ext')}</div>` : ''}
-      </div>`;
+        ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(37,99,235,0.12);color:#2563EB;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600">🤖 PREDITE IA</span>'
+        : '<span style="color:var(--text3);font-size:11px">' + status + '</span>';
+    var isCached = out.cached ? '<span style="font-size:10px;color:var(--text3)">CACHE</span>' : '<span style="font-size:10px;color:var(--green)">LIVE</span>';
+    var source = out.source || 'sofascore';
+    var sourceBadge = source === 'sofascore_squad'
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,0.12);color:#D97706;padding:2px 8px;border-radius:8px;font-size:9px">⚠ PREDICTION</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,0.08);color:#15803D;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600">SOFASCORE</span>';
+
+    // Render ONE side (home/away)
+    function _renderSide(side, sideLabel, sideData) {
+      if (!sideData) return '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px;background:var(--bg3);border-radius:10px;border:1px dashed var(--bg4)">' + sideLabel + ' : pas de donnees</div>';
+      var formation = sideData.formation || '—';
+      var teamName = sideData.team_name || sideLabel;
+      var players = sideData.players || [];
+      var substitutes = sideData.substitutes || [];
+
+      // Group players by position
+      var groups = { G: [], D: [], M: [], A: [] };
+      var posName = { G: 'Gardiens', D: 'Defenseurs', M: 'Milieux', A: 'Attaquants' };
+      var posColor = { G: 'var(--blue)', D: 'var(--green)', M: 'var(--amber)', A: 'var(--red)' };
+      var posIcon = { G: '🧤', D: '🛡️', M: '⚡', A: '🎯' };
+
+      for (var pi = 0; pi < players.length; pi++) {
+        var p = players[pi];
+        var pos = p.position || '';
+        var group = 'M';
+        if (pos === 'Goalkeeper' || pos === 'G') group = 'G';
+        else if (pos === 'Defender' || pos === 'D' || pos === 'Defence') group = 'D';
+        else if (pos === 'Midfielder' || pos === 'M') group = 'M';
+        else if (pos === 'Forward' || pos === 'A' || pos === 'Attacker' || pos === 'Striker' || pos === 'F') group = 'A';
+        if (!groups[group]) groups[group] = [];
+        groups[group].push(p);
+      }
+
+      // Player card HTML
+      function _playerCard(p) {
+        var name = p.short_name || p.name || '';
+        var shortName = name.length > 15 ? name.split(' ').map(function(w,i,a){return i<a.length-1?w[0]+'.':w;}).join(' ') : name;
+        var jersey = p.jersey_number ? '<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text3);min-width:18px;display:inline-block">#' + p.jersey_number + '</span>' : '';
+        var photoUrl = p.player_id ? 'https://img.sofascore.com/api/v1/player/' + p.player_id + '/image' : '';
+        var photo = photoUrl ? '<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--bg4)"><img src="' + photoUrl + '" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display=\'none\'"></div>' : '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);flex-shrink:0">' + (name.charAt(0) || '?') + '</div>';
+        var rating = p.ai_score != null ? '<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:' + (p.ai_score > 0.7 ? 'var(--green)' : p.ai_score > 0.4 ? 'var(--amber)' : 'var(--text3)') + '">' + (p.ai_score * 100).toFixed(0) + '%</span>' : '';
+        var xgDisplay = p.expected_goals != null ? '<span style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">xG ' + Number(p.expected_goals).toFixed(2) + '</span>' : '';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;transition:background 0.15s">'
+          + photo
+          + '<div style="flex:1;min-width:0;display:flex;flex-direction:column">'
+          + '<div style="display:flex;align-items:center;gap:4px">'
+          + jersey
+          + '<span style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + shortName + '</span>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;gap:6px;margin-top:1px">'
+          + (rating ? rating : '')
+          + (xgDisplay ? xgDisplay : '')
+          + '</div>'
+          + '</div>'
+          + '</div>';
+      }
+
+      // Formation visual: show players in their zones
+      var formationVisual = '';
+      if (players.length > 0 && formation !== '—') {
+        var formParts = formation.split('-');
+        var formRows = [];
+        if (formParts.length === 3) {
+          // 4-3-3, 4-4-2, etc.
+          var defCount = parseInt(formParts[0]) || 4;
+          var midCount = parseInt(formParts[1]) || 3;
+          var fwdCount = parseInt(formParts[2]) || 3;
+          var gk = players.slice(0, 1);  // GK
+          var def = players.slice(1, 1 + defCount);
+          var mid = players.slice(1 + defCount, 1 + defCount + midCount);
+          var fwd = players.slice(1 + defCount + midCount, 1 + defCount + midCount + fwdCount);
+          formRows = [gk, def, mid, fwd];
+        } else {
+          formRows = [players.slice(0, 1), players.slice(1)];
+        }
+        formationVisual = '<div style="position:relative;padding:12px 4px 8px;background:linear-gradient(180deg,rgba(21,128,61,0.05) 0%,transparent 100%);border-radius:8px;margin-bottom:8px">'
+          + '<div style="position:absolute;top:2px;right:6px;font-size:18px;opacity:0.15;font-family:var(--font-mono);font-weight:700">' + formation + '</div>';
+        for (var ri = 0; ri < formRows.length; ri++) {
+          var row = formRows[ri] || [];
+          if (row.length === 0) continue;
+          formationVisual += '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px">';
+          for (var rj = 0; rj < row.length; rj++) {
+            var rp = row[rj];
+            var rname = (rp.short_name || rp.name || '').split(' ').map(function(w,i,a){return i<a.length-1?w[0]+'.':w;}).join(' ') || '?';
+            formationVisual += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:56px">'
+              + '<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;border:2px solid ' + posColor[groups.G && groups.G.indexOf(rp) >= 0 ? 'G' : 'var(--bg4)'] + ';background:var(--bg4)"><img src="https://img.sofascore.com/api/v1/player/' + (rp.player_id || '') + '/image" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + (rname.charAt(0) || '?') + '\'"></div>'
+              + '<span style="font-size:9px;color:var(--text2);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px;line-height:1.2">' + rname + '</span>'
+              + (rp.expected_goals != null ? '<span style="font-size:8px;color:var(--text3);font-family:var(--font-mono)">xG ' + Number(rp.expected_goals).toFixed(2) + '</span>' : '')
+              + '</div>';
+          }
+          formationVisual += '</div>';
+        }
+        formationVisual += '</div>';
+      }
+
+      // Substitutes
+      var subsHtml = '';
+      if (substitutes.length > 0) {
+        var subList = substitutes.slice(0, 8).map(function(p) { return _playerCard(p); }).join('');
+        subsHtml = '<div style="margin-top:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="font-size:14px">🔄</span> Banc (' + substitutes.length + ')</div><div style="display:flex;flex-direction:column;gap:4px">' + subList + '</div></div>';
+      }
+
+      // Build all players list (for collapsed view when no formation)
+      var allPlayersHtml = Object.keys(groups).filter(function(g){return g !== 'G';}).map(function(g) {
+        var gp = groups[g] || [];
+        if (!gp.length) return '';
+        return '<div style="margin-top:8px"><div style="font-size:10px;color:' + posColor[g] + ';text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;display:flex;align-items:center;gap:4px"><span style="font-size:12px">' + posIcon[g] + '</span> ' + posName[g] + '</div><div style="display:flex;flex-direction:column;gap:3px">' + gp.map(_playerCard).join('') + '</div></div>';
+      }).join('');
+
+      return '<div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:12px;overflow:hidden">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+        + '<strong style="font-size:14px;color:var(--text)">' + teamName + '</strong>'
+        + '<span style="font-family:var(--font-mono);font-size:11px;color:var(--text3);background:var(--bg4);padding:2px 8px;border-radius:6px">' + formation + '</span>'
+        + '</div>'
+        + formationVisual
+        + (players.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"><span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">' + players.length + ' titulaires</span><span style="font-size:10px;color:var(--text3)">·</span><span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">' + formation + '</span></div>' : '')
+        + allPlayersHtml
+        + subsHtml
+        + '</div>';
+    }
+
+    var homeHtml = _renderSide('home', 'Domicile', data.lineups.home);
+    var awayHtml = _renderSide('away', 'Exterieur', data.lineups.away);
+
+    // Unavailable players
+    var injuredHtml = '';
+    var unavail = data.unavailable_players;
+    if (unavail && ((unavail.home && unavail.home.length) || (unavail.away && unavail.away.length))) {
+      var items = [];
+      if (unavail.home) unavail.home.forEach(function(p) {
+        items.push('<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(220,38,38,0.08);padding:3px 8px;border-radius:6px;font-size:11px">⚕️ ' + (p.short_name || p.name || '') + ' <span style="color:var(--red);font-size:10px">' + (p.status || '') + '</span></span>');
+      });
+      if (unavail.away) unavail.away.forEach(function(p) {
+        items.push('<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(220,38,38,0.08);padding:3px 8px;border-radius:6px;font-size:11px">⚕️ ' + (p.short_name || p.name || '') + ' <span style="color:var(--red);font-size:10px">' + (p.status || '') + '</span></span>');
+      });
+      if (items.length) injuredHtml = '<div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border:1px solid rgba(220,38,38,0.15);border-radius:10px"><div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">⚠️ ABSENTS / BLESSES</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + items.join('') + '</div></div>';
+    }
+
+    // Update comment
+    var comment = '';
+    if (out.source === 'sofascore') comment = 'Sofascore';
+
+    var fullHtml = '<div style="padding:10px 8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">'
+      + '<div style="display:flex;align-items:center;gap:8px">' + sourceBadge + ' ' + statusHtml + '</div>'
+      + '<div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">' + isCached + '</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + homeHtml + awayHtml + '</div>'
+      + injuredHtml
+      + '<div style="margin-top:8px;text-align:center;font-size:9px;color:var(--text3);opacity:0.6">Photos et stats fournies par Sofascore · Les photos peuvent ne pas etre disponibles avant J-1</div>'
+      + '</div>';
+
+    el.innerHTML = fullHtml;
   } catch (e) {
-    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement compositions BSD : ${e.message}</div>`;
+    el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement compositions : ' + e.message + '</div>';
   }
 }
+
 
 async function buildBsdIncidents(matchId, autoRefresh) {
   const el = document.getElementById('ins-tab-incidents');
@@ -22729,7 +22840,7 @@ async function buildBsdIncidents(matchId, autoRefresh) {
     el.innerHTML = `
       <div style="padding:14px 12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · TIMELINE INCIDENTS</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Sofascore · TIMELINE INCIDENTS</div>
           <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${incidents.length} évts · ${out.cached ? 'CACHE 1min' : 'LIVE'}</div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;max-height:60vh;overflow:auto">${rows}</ul>
@@ -22832,7 +22943,7 @@ async function buildBsdShotmap(matchId) {
     el.innerHTML = `
       <div style="padding:14px 12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · SHOTMAP & STATS LIVE</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Sofascore · SHOTMAP & STATS LIVE</div>
           <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${out.cached ? 'CACHE 2min' : 'LIVE'} · event ${out.event_id}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:12px">

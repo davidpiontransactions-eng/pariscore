@@ -12684,6 +12684,155 @@ async function getTop3PlayersFromSofa(match) {
   }
 }
 
+// ── NOUVEAU: fetchSofaLineups — remplace BSD pour les compositions (CdM 2026) ──
+// Source primaire: Sofascore /event/{id}/lineups (gratuit, coverage 100% CdM)
+// Format normalise compatible frontend (meme schema que l ancien BSD lineups)
+// Cache court: 2min pre-match, 10min confirme
+async function fetchSofaLineups(match) {
+  if (!match) return null;
+  const sofaEventId = await findSofaEventId(match);
+  if (!sofaEventId) {
+    return await fetchSofaLineupsByTeamName(match);
+  }
+  const cacheKey = "sofa_lineups_" + sofaEventId;
+  const cached = apiCacheGet(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    if (cached === "__NEG__") return null;
+    return Object.assign({}, cached, { cached: true });
+  }
+  try {
+    const res = await sofaGet("/event/" + sofaEventId + "/lineups");
+    if (res.status !== 200 || !res.data) {
+      apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 120000);
+      return null;
+    }
+    const d = res.data;
+    const isConfirmed = d.confirmed === true;
+    var _playersCount = 0;
+    var _normSide = function(side, teamName) {
+      var s = d[side];
+      if (!s) return null;
+      var players = (s.players || []).filter(function(p) { return !p.substitute; }).map(function(p) {
+        return {
+          jersey_number: p.player && (p.player.jerseyNumber || p.player.jersey_number) || null,
+          short_name: p.player && (p.player.shortName || p.player.name) || "",
+          name: p.player && (p.player.name || p.player.shortName) || "",
+          position: p.position && (p.position.name || p.position) || "",
+        };
+      });
+      var substitutes = (s.players || []).filter(function(p) { return p.substitute; }).map(function(p) {
+        return {
+          jersey_number: p.player && (p.player.jerseyNumber || p.player.jersey_number) || null,
+          short_name: p.player && (p.player.shortName || p.player.name) || "",
+          name: p.player && (p.player.name || p.player.shortName) || "",
+          position: p.position && (p.position.name || p.position) || "",
+        };
+      });
+      _playersCount += players.length;
+      return {
+        team_name: teamName || "",
+        formation: s.formation || "",
+        confidence: isConfirmed ? 1.0 : 0.85,
+        players: players.slice(0, 11),
+        substitutes: substitutes.slice(0, 12),
+      };
+    };
+    var homeTeam = match.home_team || d.home && (d.home.team_name || d.homeTeam) || "";
+    var awayTeam = match.away_team || d.away && (d.away.team_name || d.awayTeam) || "";
+    var result = {
+      source: "sofascore",
+      sofa_event_id: sofaEventId,
+      data: {
+        lineups: {
+          home: _normSide("home", homeTeam),
+          away: _normSide("away", awayTeam),
+        },
+        unavailable_players: { home: [], away: [] },
+        lineup_status: isConfirmed ? "confirmed" : "predicted",
+      },
+      cached: false,
+      fetched_at: new Date().toISOString(),
+    };
+    var ttl = isConfirmed ? 600000 : 120000;
+    apiCacheSet(cacheKey, result, "sofa_lineups", ttl);
+    console.log("  [SofaLineups] event=" + sofaEventId + " " + homeTeam + " vs " + awayTeam + " — " + _playersCount + " titulaires, status=" + result.data.lineup_status);
+    return result;
+  } catch (e) {
+    console.warn("[SofaLineups] fetch error:", e.message);
+    apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 120000);
+    return null;
+  }
+}
+
+// Fallback: cherche les lineups par nom d equipe via /search/teams + /team/{id}/squad
+async function fetchSofaLineupsByTeamName(match) {
+  if (!match) return null;
+  var cacheKey = "sofa_lineups_tn_" + (match.id || match.home_team + "_" + match.away_team);
+  var cached = apiCacheGet(cacheKey);
+  if (cached !== null && cached !== undefined) {
+    if (cached === "__NEG__") return null;
+    return Object.assign({}, cached, { cached: true });
+  }
+  try {
+    var _fetchSquad = async function(teamName) {
+      if (!teamName) return null;
+      var searchRes = await sofaGet("/search/teams?q=" + encodeURIComponent(teamName));
+      if (searchRes.status !== 200 || !searchRes.data || !searchRes.data.results || !searchRes.data.results.length) return null;
+      var first = searchRes.data.results[0];
+      var teamId = first.entity && first.entity.id || first.id;
+      if (!teamId) return null;
+      var squadRes = await sofaGet("/team/" + teamId + "/squad");
+      if (squadRes.status !== 200 || !squadRes.data || !squadRes.data.squad) return null;
+      var squad = squadRes.data.squad;
+      return {
+        team_name: teamName,
+        formation: "",
+        confidence: 0.5,
+        players: squad.filter(function(p) { return p.isStarter; }).slice(0, 11).map(function(p) {
+          return {
+            jersey_number: p.jerseyNumber || p.jersey_number || null,
+            short_name: p.player && (p.player.shortName || p.player.name) || p.shortName || p.name || "",
+            name: p.player && (p.player.name || p.player.shortName) || p.name || p.shortName || "",
+            position: p.position && (p.position.name || p.position) || "",
+          };
+        }),
+        substitutes: squad.filter(function(p) { return !p.isStarter; }).slice(0, 12).map(function(p) {
+          return {
+            jersey_number: p.jerseyNumber || p.jersey_number || null,
+            short_name: p.player && (p.player.shortName || p.player.name) || p.shortName || p.name || "",
+            name: p.player && (p.player.name || p.player.shortName) || p.name || p.shortName || "",
+            position: p.position && (p.position.name || p.position) || "",
+          };
+        }),
+      };
+    };
+    var homeP = _fetchSquad(match.home_team);
+    var awayP = _fetchSquad(match.away_team);
+    var homeData = await homeP;
+    var awayData = await awayP;
+    if (!homeData && !awayData) {
+      apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 300000);
+      return null;
+    }
+    var result = {
+      source: "sofascore_squad",
+      data: {
+        lineups: { home: homeData, away: awayData },
+        unavailable_players: { home: [], away: [] },
+        lineup_status: "predicted",
+      },
+      cached: false,
+      fetched_at: new Date().toISOString(),
+    };
+    apiCacheSet(cacheKey, result, "sofa_lineups", 300000);
+    return result;
+  } catch (e) {
+    console.warn("[SofaLineupsByTeamName] error:", e.message);
+    apiCacheSet(cacheKey, "__NEG__", "sofa_lineups", 300000);
+    return null;
+  }
+}
+
 // ── Fallback API-Football pour ligues non couvertes par BSD ratings ──────────
 // Mapping BSD league_id → API-Football league_id (saison 2024 accessible Free)
 const BSD_TO_APIF_LEAGUE = {
@@ -15427,7 +15576,7 @@ function srvPlanGate(req, res, pathname) {
   }
   // Analytics Foot Pro
   const FOOT_PRO = new Set(['/api/v1/ai-scout', '/api/v1/strategies', '/api/v1/hot-picks', '/api/v1/sure-bets', '/api/v1/trends', '/api/v1/predictions']);
-  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/')) {
+  if (FOOT_PRO.has(pathname) || pathname.startsWith('/api/v1/insights/') || pathname.startsWith('/api/v1/deep-stats/') || pathname.startsWith('/api/v1/transfermarkt/') || pathname.startsWith('/api/v1/bsd/transfers/') || pathname.startsWith('/api/v1/lineups/') || pathname.startsWith('/api/v1/bsd/lineups/') || pathname.startsWith('/api/v1/bsd/shotmap/') || pathname.startsWith('/api/v1/bsd/incidents/') || pathname.startsWith('/api/v1/bsd/predictions/') || pathname.startsWith('/api/v1/bsd/polymarket/') || pathname.startsWith('/api/v1/bsd/broadcasts/')) {
     if (!a.footPro) { jsonResponse(res, 403, { error: 'Module réservé Pro Foot / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
   }
@@ -29227,6 +29376,31 @@ if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') 
     fetched_at: new Date().toISOString(),
   });
 }
+// NOUVEAU: GET /api/v1/lineups/:matchId — compositions via Sofascore (remplace BSD, CdM 2026)
+// Gratuit, coverage 100%, cache 2-10min. Fallback squad search si eventId inconnu.
+// Retourne le meme format que l ancien /api/v1/bsd/lineups/ pour compatibilite frontend.
+if (pathname.startsWith('/api/v1/lineups/') && req.method === 'GET') {
+  const rawId = decodeURIComponent(pathname.slice('/api/v1/lineups/'.length)).trim();
+  if (!rawId) return jsonResponse(res, 400, { error: 'bad_match_id' });
+  const match = db.matches.find(m => m.id === rawId) || null;
+  if (!match) return jsonResponse(res, 404, { error: 'match_not_found', message: 'Aucun match trouve pour id=' + rawId });
+  try {
+    const result = await fetchSofaLineups(match);
+    if (!result) {
+      return jsonResponse(res, 200, {
+        source: 'sofascore',
+        data: { lineups: { home: null, away: null }, unavailable_players: { home: [], away: [] }, lineup_status: 'unavailable' },
+        cached: false,
+        fetched_at: new Date().toISOString(),
+      });
+    }
+    return jsonResponse(res, 200, result);
+  } catch (e) {
+    console.warn('[LineupsRoute] error:', e.message);
+    return jsonResponse(res, 502, { error: 'lineups_failed', message: String(e.message || e) });
+  }
+}
+
 for (const kind of BSD_ENRICH_PATHS) {
   const prefix = `/api/v1/bsd/${kind}/`;
   if (pathname.startsWith(prefix) && req.method === 'GET') {
@@ -34726,51 +34900,54 @@ async function checkLineups() {
 
 // Fonction pour récupérer les compositions via BSD/Sofascore
 async function fetchLineups(match) {
-  const lineups = { home: null, away: null, source: null };
-  
-  // Essayer Sofascore pour les compositions
-  if (match.home_bsd_id) {
-    try {
-      // Chercher via l'ID BSD de l'équipe
-      const res = await sofaGet(`/team/${match.home_bsd_id}/squad`);
-      if (res.status === 200 && res.data?.squad) {
-        lineups.home = res.data.squad.filter(p => p.isStarter).map(p => p.name);
-        lineups.source = 'sofascore';
-      }
-    } catch (e) { /* ignore */ }
-  }
-  
-  // Fallback: recherche par nom d'équipe
-  if (!lineups.home) {
-    try {
-      const hRes = await sofaGet(`/search/teams?q=${encodeURIComponent(match.home_team)}`);
-      if (hRes.status === 200 && hRes.data?.results?.[0]) {
-        const hId = hRes.data.results[0].entity.id;
-        const squadRes = await sofaGet(`/team/${hId}/squad`);
-        if (squadRes.status === 200 && squadRes.data?.squad) {
-          lineups.home = squadRes.data.squad.filter(p => p.isStarter).map(p => p.name);
+  // Sofascore event lineups officiel (remplace BSD, CdM 2026)
+  try {
+    const sofaEventId = await findSofaEventId(match);
+    if (sofaEventId) {
+      const res = await sofaGet('/event/' + sofaEventId + '/lineups');
+      if (res.status === 200 && res.data) {
+        const d = res.data;
+        var home = null, away = null;
+        if (d.home && d.home.players) {
+          home = d.home.players.filter(function(p) { return !p.substitute; }).slice(0, 11).map(function(p) {
+            return p.player && (p.player.shortName || p.player.name) || '';
+          }).filter(Boolean);
+        }
+        if (d.away && d.away.players) {
+          away = d.away.players.filter(function(p) { return !p.substitute; }).slice(0, 11).map(function(p) {
+            return p.player && (p.player.shortName || p.player.name) || '';
+          }).filter(Boolean);
+        }
+        if (home && home.length) {
+          console.log('  [LineupsCron] event=' + sofaEventId + ' ' + (match.home_team || '') + ' vs ' + (match.away_team || '') + ' --- ' + home.length + '/' + (away ? away.length : 0) + ' joueurs');
+          return { home: home, away: away, source: 'sofascore_event', formation: { home: d.home.formation || '', away: d.away.formation || '' } };
         }
       }
-    } catch (e) { /* ignore */ }
-  }
+    }
+  } catch (e) { /* silencieux - fallback */ }
   
-  if (!lineups.away) {
-    try {
-      const aRes = await sofaGet(`/search/teams?q=${encodeURIComponent(match.away_team)}`);
-      if (aRes.status === 200 && aRes.data?.results?.[0]) {
-        const aId = aRes.data.results[0].entity.id;
-        const squadRes = await sofaGet(`/team/${aId}/squad`);
-        if (squadRes.status === 200 && squadRes.data?.squad) {
-          lineups.away = squadRes.data.squad.filter(p => p.isStarter).map(p => p.name);
-        }
-      }
-    } catch (e) { /* ignore */ }
-  }
+  // Fallback: squad search par nom d'equipe (predicted)
+  try {
+    var out = { home: null, away: null, source: 'sofascore_squad' };
+    var _ff = async function(teamName) {
+      if (!teamName) return null;
+      var r = await sofaGet('/search/teams?q=' + encodeURIComponent(teamName));
+      if (r.status !== 200 || !r.data || !r.data.results || !r.data.results.length) return null;
+      var tid = (r.data.results[0].entity && r.data.results[0].entity.id) || r.data.results[0].id;
+      if (!tid) return null;
+      var sr = await sofaGet('/team/' + tid + '/squad');
+      if (sr.status !== 200 || !sr.data || !sr.data.squad) return null;
+      return sr.data.squad.filter(function(p) { return p.isStarter; }).map(function(p) {
+        return (p.player && (p.player.shortName || p.player.name)) || p.shortName || p.name || '';
+      }).filter(Boolean).slice(0, 11);
+    };
+    out.home = await _ff(match.home_team);
+    out.away = await _ff(match.away_team);
+    if (out.home || out.away) return out;
+  } catch (e) { /* ignore */ }
   
-  return (lineups.home || lineups.away) ? lineups : null;
+  return null;
 }
-
-// Vérifier toutes les 15 minutes
 setInterval(() => checkLineups().catch(e => console.warn('[Lineups]', e.message)), 15 * 60 * 1000);
 
 // Vérifier toutes les 30 minutes (press conferences)
