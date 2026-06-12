@@ -33,6 +33,10 @@ pm2 restart "$PM2_NAME" --update-env
 #      autorestart:false (ecosystem) → "stopped" entre les ticks 2h = normal, pas une panne.
 echo "[6b] Cron RG (pariscore-cron-rg) — réenregistrement + persist..."
 pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env || echo "[6b] startOrRestart cron-rg échec (non bloquant)"
+
+echo "[6c] Cron match-stats (pariscore-cron-match-stats) — réenregistrement + persist..."
+pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env || echo "[6c] startOrRestart cron-match-stats échec (non bloquant)"
+
 pm2 save || echo "[6b] pm2 save échec (non bloquant)"
 
 echo ""
