@@ -8202,31 +8202,39 @@ function bayesianBlend(poissonProbs, eloProbs, xgProbs, weights = null) {
 }
 
 // ── CALIBRATION MAP — Ajuste les probabilités brutes via reliability diagram ─
-// Basé sur l'historique des 500 derniers matchs
+// HISTORIQUE DES CALIBRATIONS
+// v1 (avant fixes) : calibré << raw (agressif) car le bug Elo (draw~5%) déformait 1X2.
+// bd h6lv : computePoisson renormalise (over/BTTS +0-20% à fort λ) + Elo drawProb
+//   corrigé (nul ~5%→25-30%). Les bins passent en identité quasi-pure car les
+//   corrections structurelles du moteur rendent les extrêmes moins nécessaires.
+// Mise à jour : 2026-06-12
 
 const CALIBRATION_BINS = [
-  { min: 0, max: 10, raw: 5, calibrated: 4 },  // Modèle surestime les improbables
-  { min: 10, max: 20, raw: 15, calibrated: 13 },
-  { min: 20, max: 30, raw: 25, calibrated: 23 },
-  { min: 30, max: 40, raw: 35, calibrated: 33 },
-  { min: 40, max: 50, raw: 45, calibrated: 44 },
+  { min: 0, max: 10, raw: 5, calibrated: 5 },    // Identité — corrections structurelles suffisent
+  { min: 10, max: 20, raw: 15, calibrated: 15 },  // Identité
+  { min: 20, max: 30, raw: 25, calibrated: 25 },  // Identité
+  { min: 30, max: 40, raw: 35, calibrated: 35 },  // Identité
+  { min: 40, max: 50, raw: 45, calibrated: 45 },  // Identité
   { min: 50, max: 60, raw: 55, calibrated: 55 },  // Zone bien calibrée
-  { min: 60, max: 70, raw: 65, calibrated: 64 },
-  { min: 70, max: 80, raw: 75, calibrated: 72 },  // Modèle sous-estime les probables
-  { min: 80, max: 90, raw: 85, calibrated: 80 },
-  { min: 90, max: 100, raw: 95, calibrated: 88 },
+  { min: 60, max: 70, raw: 65, calibrated: 64 },  // Léger under — Poisson sur-estime en haut
+  { min: 70, max: 80, raw: 75, calibrated: 73 },  // Under modéré
+  { min: 80, max: 90, raw: 85, calibrated: 82 },  // Under modéré
+  { min: 90, max: 100, raw: 95, calibrated: 90 }, // Under modéré — queue de Poisson
 ];
 
 function calibrateProbability(rawProb) {
   if (rawProb == null) return null;
   for (const bin of CALIBRATION_BINS) {
     if (rawProb >= bin.min && rawProb < bin.max) {
-      // Interpolation linéaire dans le bin
-      const t = (rawProb - bin.min) / (bin.max - bin.min);
-      return Math.round((bin.raw + t * (bin.calibrated - bin.raw)) * 10) / 10;
+      // Bin identité (calibrated ≈ raw) → sortie exacte, pas de quantification
+      if (Math.abs(bin.calibrated - bin.raw) < 0.5) {
+        return Math.round(rawProb * 10) / 10;
+      }
+      // Bin de correction → valeur calibrée (reliability diagram piecewise constant)
+      return Math.round(bin.calibrated * 10) / 10;
     }
   }
-  return rawProb;
+  return Math.round(rawProb * 10) / 10;
 }
 
 // Applique la calibration à un objet de probabilités Poisson/blended
@@ -9443,12 +9451,26 @@ function buildMatchRecord(raw) {
   const expHome = (homeStats.avgScored / LEAGUE_AVG) * (awayStats.avgConceded || LEAGUE_AVG) * ha_dynamic;
   const expAway = (awayStats.avgScored / LEAGUE_AVG) * (homeStats.avgConceded || LEAGUE_AVG) / ha_dynamic;
 
+  // bd 6kzf Phase B — xG Bayesian λ blend : ε·λ_prior + (1-ε)·λ_xg
+  // Remplace expHome/expAway par le blend xG quand les données BSD sont disponibles
+  const _rawXgBlend = computeXgBlendedLambdas(raw.home_team, raw.away_team, expHome, expAway, ha_dynamic);
+  let xgBlend = null;
+  // Anti-zero guard : si λ invalide, on ne blend PAS (le blend serait faux)
+  const _lamBad = !Number.isFinite(expHome) || !Number.isFinite(expAway) ||
+                  expHome > 8 || expAway > 8 || (expHome === 0 && expAway === 0);
+  if (!_lamBad && _rawXgBlend) {
+    xgBlend = _rawXgBlend;
+    console.log('  [xG-λ] %s λ %.3f→%.3f (xG:%.3f ε=%.3f n=%d) | %s λ %.3f→%.3f (xG:%.3f ε=%.3f n=%d)',
+      raw.home_team, expHome, xgBlend.home.lambda_blend, xgBlend.home.lambda_xg, xgBlend.home.epsilon, xgBlend.home.sample,
+      raw.away_team, expAway, xgBlend.away.lambda_blend, xgBlend.away.lambda_xg, xgBlend.away.epsilon, xgBlend.away.sample);
+    expHome = xgBlend.home.lambda_blend;
+    expAway = xgBlend.away.lambda_blend;
+  }
+
   // v9.0/v9.9: Anti-Zero + Sanity λ — bloquer si moyennes à 0 OU λ aberrant
   // (cumuls saison pris pour moyennes → expHome≈136 → matrice Poisson sous-flow = 0%).
   let poisson;
   let dixonColes = null;
-  const _lamBad = !Number.isFinite(expHome) || !Number.isFinite(expAway) ||
-                  expHome > 8 || expAway > 8 || (expHome === 0 && expAway === 0);
   if (_lamBad) {
     console.error("\x1b[31m[POISSON] λ invalide (expHome=%s expAway=%s) pour %s vs %s — calcul bloqué\x1b[0m", expHome, expAway, raw.home_team, raw.away_team);
     poisson = { error: 'BAD_LAMBDA', message: 'Moyennes invalides — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
@@ -9541,6 +9563,7 @@ function buildMatchRecord(raw) {
     calibrated,
     evs,
     expectedGoals: { home: parseFloat(expHome.toFixed(2)), away: parseFloat(expAway.toFixed(2)) },
+    xgBlend, // bd 6kzf Phase B — null si pas de données xG BSD, sinon {home,away} blend
     poissonEdge: bestPoissonEdge,
     shield,
     elo: eloProbs,
@@ -15488,6 +15511,58 @@ function fetchTeamSeasonXg(teamName) {
     console.error('[XG-PROFILE] fetchTeamSeasonXg error:', e.message);
     return null;
   }
+}
+
+// bd 6kzf Phase B — λ xG-adjusted blend : mélange Bayesian λ_prior × λ_xg BSD
+// ε (epsilon) = poids du prior (small 0.3 pour que le xG réel domine).
+// Shrinkage : n/(n+5) — quand sample < 5, le prior pèse plus.
+// Retourne null si données xG insuffisantes (fallback λ_prior pur).
+function computeXgBlendedLambdas(homeTeam, awayTeam, lambdaPriorHome, lambdaPriorAway, haDynamic) {
+  const LEAGUE_AVG = 1.35;
+  const homeXg = fetchTeamXgRecent(homeTeam, 10);
+  const awayXg = fetchTeamXgRecent(awayTeam, 10);
+  if (!homeXg || !awayXg || homeXg.sample < 3 || awayXg.sample < 3) return null;
+
+  // λ_xg : attendus depuis xG réel BSD (au lieu des buts)
+  // attack_xg = xG créé par match, defense_xg = xG concédé par match
+  const lambdaXgHome = (homeXg.xg_for / LEAGUE_AVG) * awayXg.xg_against * haDynamic;
+  const lambdaXgAway = (awayXg.xg_for / LEAGUE_AVG) * homeXg.xg_against / haDynamic;
+
+  if (!Number.isFinite(lambdaXgHome) || !Number.isFinite(lambdaXgAway)) return null;
+  if (lambdaXgHome > 8 || lambdaXgAway > 8) return null;
+
+  // epsilon ajusté par shrinkage Bayesian (sample size)
+  const shrink = (s) => s / (s + 5);
+  const epsHome = 1 - shrink(homeXg.sample);
+  const epsAway = 1 - shrink(awayXg.sample);
+  const eps = 0.3; // poids du prior plancher — clip à 0.3 max pour garder prior low
+
+  const blend = (prior, xg, e) => Math.min(8, Math.max(0.1, e * prior + (1 - e) * xg));
+  // epsilon clip : ni trop fort ni trop faible
+  const clipEps = (s) => Math.min(0.4, Math.max(0.2, 1 - shrink(s)));
+  const eHome = clipEps(homeXg.sample);
+  const eAway = clipEps(awayXg.sample);
+
+  return {
+    home: {
+      lambda_prior: +lambdaPriorHome.toFixed(3),
+      lambda_xg: +lambdaXgHome.toFixed(3),
+      lambda_blend: +blend(lambdaPriorHome, lambdaXgHome, eHome).toFixed(3),
+      epsilon: +eHome.toFixed(3),
+      sample: homeXg.sample,
+      xg_for: homeXg.xg_for,
+      finishing_delta: homeXg.finishing_delta,
+    },
+    away: {
+      lambda_prior: +lambdaPriorAway.toFixed(3),
+      lambda_xg: +lambdaXgAway.toFixed(3),
+      lambda_blend: +blend(lambdaPriorAway, lambdaXgAway, eAway).toFixed(3),
+      epsilon: +eAway.toFixed(3),
+      sample: awayXg.sample,
+      xg_for: awayXg.xg_for,
+      finishing_delta: awayXg.finishing_delta,
+    },
+  };
 }
 
 // GET /api/v1/stats/xg-profile?home=X&away=Y — profil xG des 2 équipes
