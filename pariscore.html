@@ -1194,8 +1194,8 @@
   .ins-teams { font: 800 20px/1.2 var(--font-head); }
   .ins-league { font-size: 12px; color: var(--text3); margin-top: 4px; }
   /* Tabs */
-  .ins-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
-  .ins-tab { padding: 9px 18px; font-size: 12.5px; font-weight: 600; color: var(--text3); border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s, border-color .15s; }
+  .ins-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 22px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; flex-wrap: nowrap; scrollbar-width: thin; }
+  .ins-tab { padding: 9px 18px; font-size: 12.5px; font-weight: 600; color: var(--text3); border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s, border-color .15s; flex-shrink: 0; }
   .ins-tab:hover { color: var(--text); }
   .ins-tab.active { color: var(--green); border-bottom-color: var(--green); }
   /* Section headings */
@@ -22640,7 +22640,9 @@ async function buildLineupsCompos(matchId) {
     var source = out.source || 'sofascore';
     var sourceBadge = source === 'sofascore_squad'
       ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,0.12);color:#D97706;padding:2px 8px;border-radius:8px;font-size:9px">⚠ PREDICTION</span>'
-      : '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,0.08);color:#15803D;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600">SOFASCORE</span>';
+      : source === 'football_data'
+        ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,0.12);color:#3B82F6;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600">📊 FOOTBALL-DATA</span>'
+        : '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,0.08);color:#15803D;padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600">SOFASCORE</span>';
 
     // Render ONE side (home/away)
     function _renderSide(side, sideLabel, sideData) {
@@ -22776,6 +22778,7 @@ async function buildLineupsCompos(matchId) {
     // Update comment
     var comment = '';
     if (out.source === 'sofascore') comment = 'Sofascore';
+    else if (out.source === 'football_data') comment = 'football-data.org';
 
     var fullHtml = '<div style="padding:10px 8px">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">'
@@ -22784,10 +22787,69 @@ async function buildLineupsCompos(matchId) {
       + '</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + homeHtml + awayHtml + '</div>'
       + injuredHtml
-      + '<div style="margin-top:8px;text-align:center;font-size:9px;color:var(--text3);opacity:0.6">Photos et stats fournies par Sofascore · Les photos peuvent ne pas etre disponibles avant J-1</div>'
+      + (source === 'football_data'
+        ? '<div style="margin-top:8px;text-align:center;font-size:9px;color:var(--text3);opacity:0.6">Compositions fournies par football-data.org · Les photos peuvent ne pas etre disponibles</div>'
+        : '<div style="margin-top:8px;text-align:center;font-size:9px;color:var(--text3);opacity:0.6">Photos et stats fournies par Sofascore · Les photos peuvent ne pas etre disponibles avant J-1</div>')
       + '</div>';
 
     el.innerHTML = fullHtml;
+
+    // xG moyen de la compétition
+    if (insCurrentMatchId) {
+      var _xgMatch = null;
+      if (typeof window._insMatchObj !== 'undefined' && window._insMatchObj && window._insMatchObj.id === insCurrentMatchId) {
+        _xgMatch = window._insMatchObj;
+      } else if (typeof window.matches !== 'undefined') {
+        for (var _xi = 0; _xi < window.matches.length; _xi++) {
+          if (window.matches[_xi].id === insCurrentMatchId) { _xgMatch = window.matches[_xi]; break; }
+        }
+      }
+      if (_xgMatch && _xgMatch.league) {
+        var xgEl = document.createElement('div');
+        xgEl.style.cssText = 'margin:6px 10px 0;padding:5px 10px;background:var(--bg3);border-radius:6px;font-size:10px;color:var(--text3);display:flex;justify-content:space-between;align-items:center';
+        xgEl.innerHTML = '<span>📊 xG moyen ' + _xgMatch.league + '</span><span style="font-family:var(--font-mono);font-weight:600">Chargement...</span>';
+        el.appendChild(xgEl);
+        apiFetch('/api/v1/league-xg/' + encodeURIComponent(_xgMatch.league))
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d && d.xg_avg != null) {
+              xgEl.innerHTML = '<span>📊 xG moyen ' + (d.league || _xgMatch.league) + '</span>'
+                + '<span style="font-family:var(--font-mono);font-weight:600;color:var(--amber)">' + d.xg_avg + ' /match</span>'
+                + '<span style="font-size:9px;color:var(--text3)">(' + d.total_matches + ' matchs)</span>';
+            } else {
+              xgEl.style.display = 'none';
+            }
+          })
+          .catch(function() { xgEl.style.display = 'none'; });
+      }
+    }
+
+    // Auto-polling : si lineups pas dispo et match approche, refresh toutes les 10min
+    // Detection si on est dans la fenetre H-4h → H+0
+    if (data && data.lineup_status !== 'confirmed' && insCurrentMatchId) {
+      var matchObj = window._insMatchObj || null;
+      if (!matchObj && typeof window.matchCache !== 'undefined') {
+        // Chercher le match dans le cache global
+        for (var _mi = 0; _mi < window.matches.length; _mi++) {
+          if (window.matches[_mi].id === insCurrentMatchId) { matchObj = window.matches[_mi]; break; }
+        }
+      }
+      var now = Date.now();
+      var matchTime = matchObj && matchObj.commence_time ? new Date(matchObj.commence_time).getTime() : null;
+      if (matchTime && matchTime > now && (matchTime - now) < 4 * 3600 * 1000) {
+        // Match dans moins de 4h → lancer polling 10min
+        if (window._lineupsPollTimer) clearInterval(window._lineupsPollTimer);
+        window._lineupsPollTimer = setInterval(function() {
+          // Ne pas refresher si l'onglet n'est plus visible
+          var composTab = document.getElementById('ins-tab-compos');
+          if (!composTab || composTab.style.display === 'none') return;
+          // Verifier si le match a commence (plus besoin de polling)
+          if (matchTime && Date.now() > matchTime + 7200000) { clearInterval(window._lineupsPollTimer); window._lineupsPollTimer = null; return; }
+          console.log('[LineupsPoll] Rafraichissement compositions...');
+          buildLineupsCompos(insCurrentMatchId);
+        }, 600000); // 10 min
+      }
+    }
   } catch (e) {
     el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">Erreur chargement compositions : ' + e.message + '</div>';
   }
