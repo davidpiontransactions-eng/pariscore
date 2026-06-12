@@ -4615,45 +4615,71 @@ function _tnWomFmtEur(n) {
   if (n >= 1e3) return safeFixed(n / 1e3, 0) + ' k€';
   return safeFixed(n, 0) + ' €';
 }
-function _tnWomRow(m, rank) {
+function _tnWomRow(m, rank, maxVol) {
   const p1 = escapeHtml(m.player1 || '?');
   const p2 = escapeHtml(m.player2 || '?');
   const tour = m.tournament ? escapeHtml(m.tournament) : '';
-  const mkt = (m.market && m.market !== 'Match Odds') ? ` · <span class="tn-wom-mkt">${escapeHtml(m.market)}</span>` : '';
-  const da = `data-p1="${escapeHtml(m.player1 || '')}" data-p2="${escapeHtml(m.player2 || '')}" data-tournament="${escapeHtml(m.tournament || '')}" data-sport="tennis" data-live="${m.live ? 1 : 0}" data-market="${escapeHtml(m.market || '')}" data-volume="${m.totalMatched || 0}"`;
-  return `<div class="tn-wom-row">
-    <div class="tn-wom-rank">${rank}</div>
-    <div class="tn-wom-main">
-      <div class="tn-wom-names">${p1} <span style="color:var(--text3,#64748b);font-weight:400;font-size:10px;">vs</span> ${p2}</div>
-      <div class="tn-wom-meta">${tour}${mkt}</div>
-    </div>
-    <div class="tn-wom-amt">${_tnWomFmtEur(m.totalMatched)}<small>misé</small></div>
-    <button class="tn-wom-ai" ${da} onclick="analyzeWomMatch(this)" title="Analyse IA Gemini + script Discord à copier" aria-label="Analyse IA">🤖</button>
-    <button class="tn-wom-ai" data-p1="${escapeHtml(m.player1||'')}" data-p2="${escapeHtml(m.player2||'')}" data-tournament="${escapeHtml(m.tournament||'')}" data-surface="" data-source="wom" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">📡</button>
-  </div>`;
+  const isLive = m.live ? true : false;
+  const vol = Math.max(0, Number(m.totalMatched) || 0);
+  const rankCls = rank <= 3 ? ' tn-wom-rank-' + rank : '';
+  const liveCls = isLive ? ' tn-wom-card-live' : '';
+  // Volume bar: percentage of maxVol (capped at 100%)
+  var volPct = maxVol > 0 ? Math.min(100, Math.round((vol / maxVol) * 100)) : 0;
+  if (volPct < 2 && vol > 0) volPct = 4; // ensure tiny volumes still show a sliver
+  var da = 'data-p1="' + (m.player1 ? escapeHtml(m.player1) : '') + '" data-p2="' + (m.player2 ? escapeHtml(m.player2) : '') + '" data-tournament="' + (m.tournament ? escapeHtml(m.tournament) : '') + '" data-sport="tennis" data-live="' + (isLive ? 1 : 0) + '" data-volume="' + vol + '"';
+  return '<div class="tn-wom-card' + liveCls + '">'
+    + '<div class="tn-wom-rank' + rankCls + '">' + rank + '</div>'
+    + '<div class="tn-wom-players">'
+      + '<div class="tn-wom-player-names">' + p1 + ' <span class="tn-wom-vs">vs</span> ' + p2 + '</div>'
+      + '<div class="tn-wom-tourney">' + tour + '</div>'
+    + '</div>'
+    + '<div class="tn-wom-vol-wrap">'
+      + '<div class="tn-wom-vol-amt">' + _tnWomFmtEur(vol) + '</div>'
+      + '<div class="tn-wom-vol-bar-track"><div class="tn-wom-vol-bar-fill" style="width:' + volPct + '%"></div></div>'
+      + '<div class="tn-wom-vol-label">misé</div>'
+    + '</div>'
+    + '<div class="tn-wom-actions">'
+      + '<button class="tn-wom-btn" ' + da + ' onclick="analyzeWomMatch(this)" title="Analyse IA Gemini" aria-label="Analyse IA">&#x1F916;</button>'
+      + '<button class="tn-wom-btn tn-wom-btn-dsc" data-p1="' + (m.player1 ? escapeHtml(m.player1) : '') + '" data-p2="' + (m.player2 ? escapeHtml(m.player2) : '') + '" data-tournament="' + (m.tournament ? escapeHtml(m.tournament) : '') + '" data-surface="" data-source="wom" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Publier sur Discord" aria-label="Discord">&#x1F4E1;</button>'
+    + '</div>'
+  + '</div>';
 }
 async function fetchTennisWomTop() {
   const sec = document.getElementById('tn-wom-section');
-  const pre = document.getElementById('tn-wom-prematch');
-  const liv = document.getElementById('tn-wom-live');
+  const body = document.getElementById('tn-wom-body');
   const statusEl = document.getElementById('tn-wom-status');
-  if (!sec || !pre || !liv) return;
+  if (!sec || !body) return;
   try {
-    const res = await fetch('/api/v1/tennis/wom-top?limit=5');
+    const res = await fetch('/api/v1/tennis/wom-top?limit=6');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const pm = data.prematch || [], lv = data.live || [];
-    if (!data.available || (pm.length + lv.length) === 0) { sec.style.display = 'none'; return; }
+    var pm = data.prematch || [], lv = data.live || [];
+    if (!data.available || (pm.length + lv.length) === 0) {
+      body.innerHTML = '<div class="tn-wom-empty"><div class="tn-wom-empty-icon">📊</div><div class="tn-wom-empty-text">Aucune donnée Betfair disponible pour le tennis</div></div>';
+      sec.style.display = ''; return;
+    }
     sec.style.display = '';
-    pre.innerHTML = pm.length ? pm.map((m, i) => _tnWomRow(m, i + 1)).join('') : '<div class="tn-wom-empty">Aucun prématch</div>';
-    liv.innerHTML = lv.length ? lv.map((m, i) => _tnWomRow(m, i + 1)).join('') : '<div class="tn-wom-empty">Aucun live</div>';
+    // Merge prematch + live, keeping prematch first
+    var all = pm.concat(lv);
+    // Compute max volume for progress bar scaling
+    var maxVol = 0;
+    for (var i = 0; i < all.length; i++) {
+      var v = Number(all[i].totalMatched) || 0;
+      if (v > maxVol) maxVol = v;
+    }
+    var html = '';
+    for (var i = 0; i < all.length; i++) {
+      html += _tnWomRow(all[i], i + 1, maxVol);
+    }
+    body.innerHTML = html;
     if (statusEl) {
-      const t = data.ts ? new Date(data.ts) : null;
-      const hhmm = t ? `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}` : '';
-      statusEl.textContent = (data.stale ? '⚠ ' : '') + (hhmm ? ('maj ' + hhmm) : '');
+      var t = data.ts ? new Date(data.ts) : null;
+      var hhmm = t ? String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') : '';
+      statusEl.textContent = (data.stale ? '⚠️ ' : '') + (hhmm ? 'maj ' + hhmm : '');
     }
   } catch (err) {
-    sec.style.display = 'none';
+    body.innerHTML = '<div class="tn-wom-error">&#x26A0;&#xFE0F; Erreur de chargement — réessaie dans 90s</div>';
+    sec.style.display = '';
   }
 }
 function startTennisWomTop() {

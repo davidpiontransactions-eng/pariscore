@@ -19119,15 +19119,20 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/sps' || pathname.startsWith('/api/v1/sps/')) return false;
   // Glicko-2 stats + live enriched + momentum + top10 + WOM leaderboard — public read-only widgets
   // wom-top (bd ab6s) = volume Betfair agrégé (betwatch), même classe vitrine que top10. Aucun pick premium.
-  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10' || pathname === '/api/v1/tennis/wom-top' || pathname.startsWith('/api/v1/tennis/detail/')) return false;
+  if (pathname.startsWith('/api/v1/tennis/glicko2/') || pathname === '/api/v1/tennis/live' || pathname === '/api/v1/tennis/momentum' || pathname === '/api/v1/tennis/top10' || pathname === '/api/v1/tennis/wom-top' || pathname === '/api/v1/tennis/wom' || pathname.startsWith('/api/v1/tennis/detail/')) return false;
   // RG showcase public (live momentum SSE + fiche joueur). EventSource ne peut PAS
   // envoyer de header Authorization → la gate Pro renvoyait 403 pour TOUS (y compris
   // Pro). Aligné sur /tennis/live + /tennis/momentum déjà publics. bd ParisScorebis-4n12.
   if (pathname === '/api/v1/tennis/rg-live-stream' || pathname.startsWith('/api/v1/tennis/rg-player/')) return false;
   // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
   if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
-  if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
+   if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
       pathname.startsWith('/api/v1/tennis/players/') || pathname.startsWith('/api/v1/tennis/tournament/')) return false;
+  // wom-analyze (bd ab6s) = analyse IA Gemini déclenchée depuis le panneau WOM.
+  // Résultat mis en cache mémoire avec start_time du match → expire après fin du match.
+  // Protégé par la limite de débit Gemini côté serveur (pas par paywall). Ouvert en public
+  // car le frontend ne gère pas le refresh JWT et le cache évite les appels abusifs.
+  if (pathname === '/api/v1/tennis/wom-analyze') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -29741,6 +29746,15 @@ async function enrichMatchesWithBetfairWOM(matches, sport) {
 //  SERVEUR HTTP (VERSION SYNTAXE VÉRIFIÉE)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Cache mémoire wom-analyze : stocke les analyses Gemini jusqu'à la fin estimée du match (start_time + 5h)
+const _womMatchCache = {};
+setInterval(() => {
+  const now = Date.now();
+  for (const k in _womMatchCache) {
+    const e = _womMatchCache[k];
+    if (e.matchStartTimeMs && now > e.matchStartTimeMs + 5 * 3600000) delete _womMatchCache[k];
+  }
+}, 30 * 60 * 1000).unref();
 const server = http.createServer(async (req, res) => {
     // 1. On parse l'URL en premier (pathname + query toujours disponibles)
     const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
@@ -35797,30 +35811,58 @@ if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
   }
 }
 
-// GET /api/v1/tennis/wom-top?limit=5 — Top matchs tennis par € total misé sur Betfair (betwatch.fr, gratuit).
-// bd ab6s. Volume total = libre ; le split par joueur reste paywallé (betwatch Extra Sports).
-// Inerte (available:false, listes vides) si le provider local WOM est absent → le frontend masque le panneau.
+// GET /api/v1/tennis/wom-top?limit=5 — Top matchs tennis par € total misé sur Betfair.
+// bd ab6s. Sources: 1) betwatch cache (womLocal) 2) tennis value bets cache (VB enriched)
+// 3) unavailable. Volume total uniquement ; split joueur non dispo sans Betfair API directe.
 if (pathname === '/api/v1/tennis/wom-top' && req.method === 'GET') {
   const _prov = (womLocal && womLocal.enabled && womLocal.enabled()) ? womLocal : null;
-  if (!_prov || typeof _prov.topByMatched !== 'function') {
-    return jsonResponse(res, 200, { source: 'betwatch', available: false, reason: 'provider_disabled', prematch: [], live: [], ts: null, stale: null });
-  }
   const limit = Math.max(1, Math.min(10, parseInt(query.limit || '5', 10) || 5));
-  try {
-    const prematch = _prov.topByMatched('tennis', { live: false, limit });
-    const live     = _prov.topByMatched('tennis', { live: true,  limit });
-    const st = (_prov.status && _prov.status()) || {};
-    return jsonResponse(res, 200, {
-      source: 'betwatch',
-      available: (prematch.length + live.length) > 0,
-      prematch, live,
-      ts: st.ts || null,
-      stale: (st.stale != null) ? st.stale : null,
-      note: 'total_matched_free__player_split_paywalled',
-    });
-  } catch (e) {
-    return jsonResponse(res, 200, { source: 'betwatch', available: false, error: String(e && e.message || e), prematch: [], live: [] });
+
+  // Source 1: betwatch cache (womLocal)
+  if (_prov && typeof _prov.topByMatched === 'function') {
+    try {
+      const prematch = _prov.topByMatched('tennis', { live: false, limit });
+      const live     = _prov.topByMatched('tennis', { live: true,  limit });
+      if ((prematch.length + live.length) > 0) {
+        const st = (_prov.status && _prov.status()) || {};
+        return jsonResponse(res, 200, {
+          source: 'betwatch', available: true, prematch, live,
+          ts: st.ts || null, stale: (st.stale != null) ? st.stale : null,
+          note: 'total_matched_free__player_split_paywalled',
+        });
+      }
+    } catch (e) { /* fall through to VB fallback */ }
   }
+
+  // Source 2: tennis value bets cache (VB enriched matches with betfair_wom.total_matched)
+  try {
+    const _vbKey = query.date ? String(query.date).replace(/[^0-9-]/g, '').slice(0, 10) : 'today';
+    const vbEntry = _tennisVBCache.get(_vbKey);
+    if (vbEntry && vbEntry.result && vbEntry.result.body && Array.isArray(vbEntry.result.body.matches)) {
+      const withWom = vbEntry.result.body.matches.filter(m => m && m.betfair_wom && m.betfair_wom.total_matched != null && m.betfair_wom.total_matched > 0);
+      if (withWom.length > 0) {
+        const mapped = withWom.map(m => ({
+          player1: (m.player1 && (m.player1.name || m.player1.full_name)) || '?',
+          player2: (m.player2 && (m.player2.name || m.player2.full_name)) || '?',
+          tournament: m.tournament || '',
+          market: 'Match Odds',
+          totalMatched: m.betfair_wom.total_matched,
+          live: /live|in_progress|in_play|1st|2nd|3rd|set/i.test(String(m.status || '')) || m._isLive === true,
+        }));
+        const prematch = mapped.filter(m => !m.live).slice(0, limit);
+        const live     = mapped.filter(m => m.live).slice(0, limit);
+        if ((prematch.length + live.length) > 0) {
+          return jsonResponse(res, 200, {
+            source: 'vb_fallback', available: true, prematch, live,
+            ts: vbEntry.ts || Date.now(), stale: false,
+            note: 'total_matched_from_value_bets',
+          });
+        }
+      }
+    }
+  } catch (e) { /* fall through to unavailable */ }
+
+  return jsonResponse(res, 200, { source: 'unavailable', available: false, reason: 'no_data', prematch: [], live: [], ts: null, stale: null });
 }
 
 // GET /api/v1/tennis/wom-analyze?p1=&p2=&tournament=&sport=&live=&market=&volume= — bd ab6s
@@ -35839,11 +35881,21 @@ if (pathname === '/api/v1/tennis/wom-analyze' && req.method === 'GET') {
 
   const _normNm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
   const cacheKey = `deep_wom_v1_${sport}_${_normNm(p1)}_${_normNm(p2)}`;
-  const cached = getCachedAIAnalysis(cacheKey);
-  if (cached?.text) return jsonResponse(res, 200, { text: cached.text, provider: cached.provider || 'cache', _from_cache: true });
+  // Cache mémoire dédié : valide tant que le match n'est pas terminé (start_time + 5h max).
+  // Pas de persistance SQLite — on évite la facturation d'un appel Gemini redondant.
+  const womEntry = _womMatchCache[cacheKey];
+  if (womEntry) {
+    const ended = womEntry.matchStartTimeMs ? (Date.now() > womEntry.matchStartTimeMs + 5 * 3600000) : false;
+    if (ended) {
+      delete _womMatchCache[cacheKey]; // match terminé → faire un nouvel appel
+    } else {
+      return jsonResponse(res, 200, { text: womEntry.data.text, provider: womEntry.data.provider || 'cache', _from_cache: true });
+    }
+  }
 
   // Enrichissement best-effort : retrouver le match tennis (ELO/devig/EV) par nom pour ancrer le Power Score.
   let enrich = '';
+  let matchStartTimeMs = null; // utilisé pour l'expiration du cache (fin de match)
   if (sport === 'tennis') {
     try {
       const out = await buildTennisValueBets({});
@@ -35857,6 +35909,9 @@ if (pathname === '/api/v1/tennis/wom-analyze' && req.method === 'GET') {
         return ab || ba;
       });
       if (hit) {
+        // start_time du match pour invalider le cache après la fin estimée
+        const rawStart = hit.start_time || hit.kickoff || hit.date || hit.match_date || null;
+        if (rawStart) { const d = new Date(rawStart); if (!isNaN(d.getTime())) matchStartTimeMs = d.getTime(); }
         const elo = (hit.predictions && hit.predictions.elo) || null;
         const fair = hit.fair || {};
         const bestEv = hit.best_ev_model || {};
@@ -35938,7 +35993,8 @@ Genere ensuite un resume pret a l'emploi pour les reseaux sociaux.
       }
     }
     if (!text) { if (gemRes.status !== 200) return jsonResponse(res, gemRes.status, gemRes.data); return jsonResponse(res, 500, { error: 'Tous les providers IA ont echoue' }); }
-    saveAIAnalysisToCache(cacheKey, { text, provider });
+    // Cache mémoire jusqu'à la fin du match (start_time + 5h). Pas de persistance SQLite.
+    _womMatchCache[cacheKey] = { data: { text, provider }, cachedAt: Date.now(), matchStartTimeMs };
     return jsonResponse(res, 200, { text, provider });
   } catch (e) {
     return jsonResponse(res, 500, { error: e.message });
