@@ -4,12 +4,12 @@
 <meta name="ga-site-verification" content="SmmkqlT_jyUQZaKKREF6z87c" />
 <meta charset="UTF-8">
 <meta name="color-scheme" content="light dark">
-<!-- bd ParisScorebis-rcmw V12 Mobile Premium B — viewport conditional swap (Option B locked 2026-05-24).
-     Script synchrone pre-paint : detecte mobile via UA + pointer:coarse + width <= 820 (iPad portrait inclus).
-     Mobile  → width=device-width + class .ps-mobile-v2 sur <html>
-     Desktop → width=1280 scaled 0.3 + class .ps-desktop-v1 (V11 comportement preservé)
+<!-- bd ParisScorebis-rcmw V12 Mobile Premium B — viewport unique width=device-width (fix 2026-06-12).
+     Script synchrone pre-paint : detection conservative mobile via UA uniquement.
+     Mobile  → class .ps-mobile-v2 sur <html>
+     Desktop → class .ps-desktop-v1 sur <html> + barrieres CSS securite (display:none !important)
      Escape hatch : ?view=mobile|desktop + localStorage ps_view + window.psSwitchView('mobile|desktop')
-     Default fallback (noscript) = desktop scaled = aucune regression utilisateurs habitues. -->
+     Default fallback (noscript) = desktop. -->
 <script>
 (function () {
   'use strict';
@@ -27,22 +27,24 @@
     if (mode === 'auto') {
       var ua = navigator.userAgent || '';
       var isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-      var isIPadOS13Plus = ua.indexOf('Macintosh') > -1 && 'ontouchend' in document;
+      var isIPadOS13Plus = ua.indexOf('Macintosh') > -1 && 'ontouchend' in document && /Safari/i.test(ua);
       var isTabletUA = /iPad|Tablet|PlayBook|Silk/i.test(ua) || isIPadOS13Plus;
+      var isDesktopOS = /Windows|Mac OS X|Linux|CrOS/i.test(ua);
+      var smallWidth = (window.innerWidth || document.documentElement.clientWidth || 0) <= 640;
       var isCoarsePointer = (typeof matchMedia === 'function') && matchMedia('(pointer: coarse)').matches;
-      var smallWidth = (window.innerWidth || document.documentElement.clientWidth || 0) <= 820;
-      mode = (isMobileUA || isTabletUA || (isCoarsePointer && smallWidth)) ? 'mobile' : 'desktop';
+      mode = (isMobileUA || isTabletUA || (!isDesktopOS && isCoarsePointer && smallWidth)) ? 'mobile' : 'desktop';
     }
     var meta = document.createElement('meta');
     meta.name = 'viewport';
-    if (mode === 'mobile') {
-      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content';
-      document.documentElement.classList.add('ps-mobile-v2');
-    } else {
-      meta.content = 'width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover';
-      document.documentElement.classList.add('ps-desktop-v1');
-    }
+    meta.content = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover';
     document.head.appendChild(meta);
+    if (mode === 'mobile') {
+      document.documentElement.classList.add('ps-mobile-v2');
+      document.documentElement.classList.remove('ps-desktop-v1');
+    } else {
+      document.documentElement.classList.add('ps-desktop-v1');
+      document.documentElement.classList.remove('ps-mobile-v2');
+    }
     window.psSwitchView = function (target) {
       if (target !== 'mobile' && target !== 'desktop' && target !== 'auto') return;
       try {
@@ -55,13 +57,13 @@
   } catch (err) {
     var fallback = document.createElement('meta');
     fallback.name = 'viewport';
-    fallback.content = 'width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover';
+    fallback.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
     document.head.appendChild(fallback);
     document.documentElement.classList.add('ps-desktop-v1');
   }
 })();
 </script>
-<noscript><meta name="viewport" content="width=1280, initial-scale=0.3, minimum-scale=0.2, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover"></noscript>
+<noscript><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></noscript>
 <title>PariScore — Paris de Valeur & Statistiques Football</title>
 <meta name="description" content="PariScore : pronostics foot &amp; tennis par algorithme. Power Score, xG, statistiques avancées et value bets dévigés pour parier avec les maths.">
 <link rel="canonical" href="https://pariscore.fr/">
@@ -266,6 +268,52 @@
       padding: 0 !important;
       overscroll-behavior: auto !important;
     }
+  }
+
+  /* ===========================================================
+     BARRIERE DE SECURITE DESKTOP
+     Si .ps-desktop-v1 est present, on force le masquage des
+     composants mobile-only quelle que soit la largeur.
+     =========================================================== */
+  html.ps-desktop-v1 #bottom-nav,
+  html.ps-desktop-v1 #bn-more-overlay,
+  html.ps-desktop-v1 #bn-more-sheet,
+  html.ps-desktop-v1 #mob-toolbar,
+  html.ps-desktop-v1 #vb-cards,
+  html.ps-desktop-v1 #mob-home-cta,
+  html.ps-desktop-v1 .bn-theme-toggle,
+  html.ps-desktop-v1 .adv-chips-m,
+  html.ps-desktop-v1 #mob-filter-overlay,
+  html.ps-desktop-v1 #mob-filter-sheet,
+  html.ps-desktop-v1 #mob-filter-btn,
+  html.ps-desktop-v1 #match-tab-mob,
+  html.ps-desktop-v1 #ins-tab-mob,
+  html.ps-desktop-v1 #mob-quick,
+  html.ps-desktop-v1 .logo-tag-mob,
+  html.ps-desktop-v1 #strat-mob {
+    display: none !important;
+  }
+
+  /* Sur desktop, on force l affichage du tableau et on masque les cartes */
+  html.ps-desktop-v1 #matches-table,
+  html.ps-desktop-v1 #scrollbar-top,
+  html.ps-desktop-v1 #table-scroll {
+    display: block !important;
+  }
+  html.ps-desktop-v1 #vb-cards {
+    display: none !important;
+  }
+
+  /* Le nav desktop garde sa barre de liens */
+  html.ps-desktop-v1 nav .nav-links {
+    display: flex !important;
+  }
+  html.ps-desktop-v1 nav {
+    position: relative !important;
+    height: auto !important;
+    min-height: 66px !important;
+    background: var(--bg2) !important;
+    border-bottom: 1px solid var(--border) !important;
   }
 
   /* ===========================================================
@@ -10514,9 +10562,13 @@
      Desktop : tous ces éléments masqués. Activés ≤768px uniquement.
      ═══════════════════════════════════════════════════════════════════ */
   #bottom-nav, #bn-more-overlay, #bn-more-sheet,
-  #mob-toolbar, #vb-cards, #mob-home-cta { display: none; }
+  #mob-toolbar, #vb-cards, #mob-home-cta { display: none !important; }
 
   @media (max-width: 768px) {
+    html.ps-mobile-v2 #bottom-nav { display: flex !important; }
+    html.ps-mobile-v2 #mob-toolbar { display: block !important; }
+    html.ps-mobile-v2 #vb-cards { display: flex !important; }
+    html.ps-mobile-v2 #mob-home-cta { display: block !important; }
     /* — Nav haute : on garde logo + auth, on cache la barre scroll — */
     nav .nav-links { display: none !important; }
     nav { padding: 8px 14px !important; min-height: 52px; }
@@ -20929,3 +20981,6 @@ body[data-page="mma"] footer { display: none !important; }
 <script src="/pariscore.js"></script>
 </body>
 </html>
+
+
+
