@@ -35789,11 +35789,9 @@ if (pathname.startsWith('/api/v1/tennis/match/') && pathname.endsWith('/odds') &
   });
 }
 
-// GET /api/v1/tennis/wom?p1=&p2=&date=&id= — Betfair Exchange WOM tennis (sharp, inerte sans BETFAIR_*) — bd 17y6
-// Le frontend tennis connaît déjà les noms joueurs → les passe ici (l'endpoint odds n'a que des IDs).
+// GET /api/v1/tennis/wom?p1=&p2=&date=&id= — Betfair Exchange WOM tennis — bd 17y6
+// Sources: 1) womLocal (betwatch) 2) betfairService (API officielle) 3) _tennisLiveCache (scraping betfair.com via _BF_AK)
 if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
-  const _prov = (womLocal && womLocal.enabled && womLocal.enabled()) ? womLocal : (betfair.enabled() ? betfair : null);
-  if (!_prov) return jsonResponse(res, 200, { source: 'wom', available: false, reason: 'disabled', wom: null });
   const p1 = String(query.p1 || '').trim();
   const p2 = String(query.p2 || '').trim();
   if (!p1 || !p2) return jsonResponse(res, 400, { error: 'p1_p2_required' });
@@ -35803,12 +35801,43 @@ if (pathname === '/api/v1/tennis/wom' && req.method === 'GET') {
     home_team: p1, away_team: p2,
     commence_time: query.date || query.commence_time || null,
   };
-  try {
-    const d = await _prov.fetchMatchWOM(m);
-    return jsonResponse(res, 200, { source: 'wom', available: !!d, wom: d });
-  } catch (e) {
-    return jsonResponse(res, 200, { source: 'wom', available: false, error: String(e && e.message || e), wom: null });
+
+  // Source 1: womLocal (betwatch cache)
+  if (womLocal && womLocal.enabled && womLocal.enabled()) {
+    try {
+      const d = await womLocal.fetchMatchWOM(m);
+      if (d) return jsonResponse(res, 200, { source: 'betwatch', available: true, wom: d });
+    } catch (_) {}
   }
+
+  // Source 2: betfairService (API officielle, nécessite .env)
+  if (betfair.enabled()) {
+    try {
+      const d = await betfair.fetchMatchWOM(m);
+      if (d) return jsonResponse(res, 200, { source: 'betfair_api', available: true, wom: d });
+    } catch (_) {}
+  }
+
+  // Source 3: _tennisLiveCache (matches enrichis par enrichMatchesWithBetfairWOM via _BF_AK)
+  // Recherche par nom joueur dans les matchs tennis live en mémoire
+  try {
+    const _norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/['´`]/g, '').trim();
+    const np1 = _norm(p1);
+    const np2 = _norm(p2);
+    const liveData = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
+    for (const match of liveData) {
+      const mn1 = _norm(match.home_team || (match.player1 && (match.player1.name || match.player1.full_name)) || '');
+      const mn2 = _norm(match.away_team || (match.player2 && (match.player2.name || match.player2.full_name)) || '');
+      if ((mn1 === np1 && mn2 === np2) || (mn1 === np2 && mn2 === np1)) {
+        const bw = match.betfair_wom;
+        if (bw && bw.p1 != null && bw.p2 != null) {
+          return jsonResponse(res, 200, { source: 'live_cache', available: true, wom: bw });
+        }
+      }
+    }
+  } catch (_) {}
+
+  return jsonResponse(res, 200, { source: 'wom', available: false, reason: 'no_provider', wom: null });
 }
 
 // GET /api/v1/tennis/wom-top?limit=5 — Top matchs tennis par € total misé sur Betfair.
