@@ -1,0 +1,1951 @@
+[Boot] CATBOOST_ENABLED=false
+  [AF] API-Football RETIRÉ (kill-switch v10.77) — fallbacks BSD/ESPN/felipeall actifs
+  ✓ Providers IA: Gemini → Groq/Llama
+  ✓ leagues_config.json chargé (105 ligues)
+  ✓ bsd_config.json chargé (64 ligues BSD, 6 fallback API-Football)
+  ✓ VAPID keys chargées depuis .env (subject: mailto:admin@pariscore.fr)
+  [TennisAbstract] DISABLED (Cloudflare 403 — set USE_CURL_IMPERSONATE=1 ou TENNIS_ABSTRACT_ENABLED=1). Fallback: Elo interne BSD.
+  [BetMines] DISABLED (Cloudflare 403 — set USE_CURL_IMPERSONATE=1 ou BETMINES_ENABLED=1). Consensus: Sofascore/Forebet.
+  i  GA_PID absent — seeds Gambling-Affiliation skip (fallback direct uniquement)
+  ✓ SQLite initialisé (WAL mode) — C:\Users\david\Documents\dev PariScore\ParisScorebis\pariscore.db
+  ✓ SQLite chargé (56 matchs, 1555 équipes, 55 stats avancées)
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 1
+  [Backfill] ✓ 8 champs home_form/away_form synthétisés depuis PPG
+  ✓ Historique SQLite chargé (49380 matchs archivés)
+  ✓ Historique Tennis SQLite chargé (783 matchs archivés)
+  ✓ ETL seed merge (football-data.co.uk): 23126/23126 matchs ajoutes a db.archive_matches (stats + closing odds)
+  ✓ ETL seed merge (international): 4567/4568 matchs selections ajoutes a db.archive_matches (CC0)
+  ✓ AI Cache chargé per-entry (0 analyses valides)
+  ✓ FBref advanced stats : 20 équipes (100 stat rows) depuis 1 fichiers
+  [WOM:AutoPublish] activé — Δ≥12pts · vol≥8000€ · 10min · cap 8/j · sports football · provider on
+  [DailyRefresh] Next forced refresh: 2026-06-13T06:00:00.000Z (in 1083 min)
+  [BSD-WS] activé — connexion sports.bzzoiro.com/ws/live/
+  [DailyPicks] cron armé — premier tick à 8h00 Europe/Paris (EV+ ≥ +10%, top 3)
+  [MorningPicks:Discord] cron armé — 8h00 Paris, 16 stratégies, conf ≥ 60%, cote ≥ 1.2
+  [FootBets:Matchday] detector armé — scan horaire 28h window
+  [LiveFootPoisson] cron armé — scan 5min, seuil prob>65% + cote>1.2
+  [XgIntAlert] cron armé — scan 5min, xG>0.5 + intensité≥15 + conf>60%
+  [MorningTennis:Discord] cron armé — 10h00 Paris, top 5 ATP surface-weighted Elo
+  [TT-OOP] cron armé — prefetch quotidien à 8h00 Europe/Paris
+  [CS2] poll armé — 30 s interval
+  [OddsPapi:Alert] cron armé — 2h interval · Over7.5/8.5 + Under12.5 ∈ [1.10-1.25] → Discord BREAK_SET
+  [Sackmann] cron DÉSACTIVÉ (SACKMANN_SYNC_DISABLED=true) — CC-BY-NC-SA bd 8uoc.
+  [Cron:TennisInternalETL] schedulé · prochain run 2026-06-13T00:00:00.752Z (~723min)
+  [Cron:SPS] schedulé · prochain run 2026-06-13T00:05:00.753Z (~728min)
+  [Matchstat] Resolver index : 1855 joueurs, sync 140h ago.
+  [Tennis internal] schema OK · 21281 rows (ETL tool: node tools/build-tennis-internal-history.js)
+  [Sackmann] boot sync skip — SACKMANN_SYNC_DISABLED actif (bd 8uoc CC-BY-NC-SA).
+
+  ✓ PariScore Server running on port 3000 [env: development]
+  ✓ SQLite DB: C:\Users\david\Documents\dev PariScore\ParisScorebis\pariscore.db
+
+  [Boot] Initialisation des données...
+
+════════════════════════════════════════════════════════════
+  [Cron:Odds] Lancement du routing intelligent (BSD-First)...
+  [Routing] L1 : Récupération des matchs via BSD...
+  [TT-OOP] ✓ 2 joueurs/courts pour "roland garros"
+  [TT-OOP] prefetch — 1/1 tournoi(s) mis en cache (24h)
+[CS2/MapStats] HLTV map winrates: 20 teams
+[CS2/HLTV] Rankings loaded from file — 30 teams
+[CS2/Players] 20 players | 0 teams indexed
+[Liquipedia] FRAG TAP Reloaded 2026: 0 matches
+[CS2/OverModel] 326 teams in rankings
+[CS2/OverModel] 10 matches fetched from csapi.de
+[CS2/Highlights] 865 clips loaded
+[CS2/BSD-Teams] 250 teams with ELO loaded (5 pages)
+[CS2/MapRank] Loaded from hltv_map_rankings.json (window=all)
+[CS2/BSD-Teams] 250 teams with ELO loaded (5 pages)
+[CS2Service] 20 matches (4 live, 1 predictions)
+  [TennisSnap] loaded 889 entries from SQLite on startup
+[Liquipedia] Exort Series: 48 matches
+[CS2/Stickers] 1415 teams indexed
+[CacheBuffer] Updated bsd/bsd_bulk_2026-06-12_2026-06-19
+  [Routing] ✓ 74 matchs trouvés via BSD.
+  [Routing] L1.5 : Enrichissement cotes via odds-api1 (RapidAPI)...
+  [NatElo] Loaded 139 teams from seed file (2026-05-31)
+[Liquipedia] Total: 48 matches across 2 tournaments
+  [Routing] L2 : Football-Data.org fixtures (top 12 free forever)...
+  [Routing] ✓ Football-Data : 5 ajoutés, 21 enrichis (_fd_match_id/referee) sur 26 total.
+  [Routing] L3 : Enrichissement des cotes via ESPN (zéro quota)...
+  [ESPN odds] ✓ bra.2 → 10 matchs (zéro quota)
+  [ESPN odds] ✓ esp.2 → 1 matchs (zéro quota)
+  [ESPN odds] ✓ irl.1 → 5 matchs (zéro quota)
+  [ESPN odds] ✓ usa.usl.1 → 12 matchs (zéro quota)
+  [ESPN odds] ✓ chi.1 → 8 matchs (zéro quota)
+  [Routing] ✓ ESPN : 15 matchs ajoutés, 0 enrichis (cotes) sur 36 total.
+  [Routing] L4 : OpenFootball GitHub (zero-key fallback)...
+  [Routing] OpenFootball : aucun match dans la fenêtre.
+  ✓ FD stats index: 716 équipes (23125 matchs football-data + 4567 internationaux, saison ref 2025-2026)
+  [FATIGUE] Fallback archive_matches pour Bosnia & Herzegovina: 163h depuis dernier match
+  ✓ stadiums_geo.json chargé (192 stades — Travel Factor BD-DATA-009)
+  [FATIGUE] Fallback archive_matches pour Morocco: 166h depuis dernier match
+  [FATIGUE] Fallback archive_matches pour Netherlands: 164h depuis dernier match
+  [FATIGUE] Fallback archive_matches pour Saudi Arabia: 166h depuis dernier match
+  [Cron:Odds] ✅ Succès : 57 matchs injectés.
+  [Archive] 1 matchs terminés à archiver…
+  [Archive] 80 matchs non vérifiés à re-tenter…
+  [Challenger ATP] 49 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.250 stdev=0.500
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.117 stdev=0.342
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.391 stdev=0.625
+  [Tennis DR Diff] bsd_t_37148 gap=0.36 dominant=Divna Ratkovic ratio=1.36
+  [Tennis DR Var] bsd_t_37815 sets=3 var=5.135 stdev=2.266
+  [Tennis DR Diff] bsd_t_37815 gap=0.69 dominant=Daniil Medvedev ratio=1.69
+  [Tennis DR Var] bsd_t_37843 sets=2 var=2.250 stdev=1.500
+  [Tennis:BreakSet] bsd_t_37843 dom=Tristan Boyer drAvg=6 set=2-0 cote=1.92
+  [Tennis DR Diff] bsd_t_37843 gap=0.22 dominant=Tristan Boyer ratio=1.22
+  [Tennis:BreakSet] bsd_t_37848 dom=Katarzyna Kawa drAvg=0.333 set=1-3 cote=2.14
+  [Tennis DR Diff] bsd_t_37848 gap=0.48 dominant=Katarzyna Kawa ratio=0.52
+  [Tennis:BreakSet] bsd_t_37870 dom=Andreas Messis drAvg=0.6 set=3-5 cote=1.28
+  [Tennis DR Diff] bsd_t_37870 gap=0.22 dominant=Andreas Messis ratio=0.78
+  [Tennis DR Diff] bsd_t_37839 gap=0.26 dominant=Harriet Dart ratio=1.26
+  [Tennis DR Diff] bsd_t_37127 gap=6.00 dominant=Raghav Jaisinghani ratio=7.00
+  [TennisLive] BSD=17 ESPN=338 merged=286 live=14
+  [LiveDBG] idle-skip #1 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+[betwatch] transport: browse C:\Users\david\.claude\skills\gstack\browse\dist\browse.exe
+  [BetfairWOM] tennis index: 0 markets
+  [Tennis Odds] Discovered 1 active tennis sports: tennis_wta_queens_club_champ
+  [Tennis Odds] tennis_wta_queens_club_champ → 1 matches
+  [TennisVB] build start — 151 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+[betwatch] CF OK — "Betwatch | Betfair Money - Dropping Odds - Suspicious Bets"
+[betwatch] football — 0 marchés, 0 WOM
+[betwatch] tennis — 0 marchés, 0 WOM
+[betwatch] pas d'évolution WOM notable
+[betwatch] écrit C:\Users\david\Documents\dev PariScore\ParisScorebis\data\betwatch_wom.json — 0 matchs, 0 avec WOM
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 2
+  ✓ WElo Tennis initialized — 0 joueurs chargés depuis SQLite
+  ✓ Glicko-2 Tennis initialized — fresh (0 joueurs)
+  ✓ K-Flow + SM Momentum Tennis + Player Momentum initialized
+  [Backfill] Aucun match exploitable dans db.archive_matches (1000 entrées scannées)
+  [Archive] 80 matchs non vérifiés à re-tenter…
+  [FootBets:Matchday] Nouvelles dates détectées: 2026-06-12,2026-06-13 → envoi picks
+  [MorningPicks:Discord] HOME_WIN — 0 picks conf ≥ 60%
+  [MorningPicks:Discord] AWAY_WIN — 0 picks conf ≥ 60%
+  [MorningPicks:Discord] DRAW — 0 picks conf ≥ 60%
+  [MorningPicks:Discord] CS_00 — 0 picks conf ≥ 60%
+  [MorningPicks:Discord] GOLDEN_PPG_GAP — 0 picks conf ≥ 60%
+  [MorningPicks:Discord] HT_HOME_FT_HOME — 0 picks conf ≥ 60%
+  [MorningPicks:Discord] HT_UNDER_FT_OVER — 0 picks conf ≥ 60%
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+[CS2Service] 20 matches (4 live, 1 predictions)
+  [TennisVB] build done — 159 matchs en 38239ms · snap_stored=151 · live_rehydrated=8 · live_orphans=6 · snap_map_size=889
+  [Cron:TexOdds] Snapshot tour ATP+WTA…
+  [Cron:TexOdds] ✓ 262 matchs traités, 234 matchs avec historique
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis DR Diff] bsd_t_37829 gap=0.50 dominant=Petr Brunclik ratio=1.50
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+[MMA] DRatings: 23 fights indexed
+  [BSD-TV] pre-fetch FR 2026-06-12→2026-06-19: 31 broadcasts
+  [AutoPurge] Aucun match à purger (56 actifs)
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 3
+  [BetfairWOM] football index: 0 markets
+[CS2Service] 20 matches (4 live, 1 predictions)
+  [AutoPurge] Aucun match à purger (56 actifs)
+  [Boot] ✓ Système prêt.
+  [Boot] Tennis Abstract Elo scraper DISABLED (CC BY-NC-SA license — bd h6a + 8uoc legal DG pending).
+  [Boot] fetchStats différé 30s (HTTP responsive immédiat, ETL démarre à T+30s).
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TM Squads] Derry City vs Bohemians — ? vs ?
+  [WOM:AutoPublish] tick: 46 foot · 0 avec WOM · 0 candidat(s) ≥12pts · 0 à poster (jour 0/8)
+  [TM Squads] Galway United FC vs Dundalk — ? vs ?
+  [TM Squads] St Patrick's Athletic vs Drogheda United — ? vs ?
+  [TM Squads] Waterford vs Sligo Rovers — ? vs ?
+  [TM Squads] Canada vs Bosnia & Herzegovina — ? vs ?
+  [LiveDBG] idle-skip #6 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TM Squads] Shelbourne vs Shamrock Rovers — ? vs ?
+  [TM Squads] Atlético Goianiense vs CRB — ? vs ?
+  [TM Squads] Audax Italiano vs La Serena — ? vs ?
+  [TM Squads] USA vs Paraguay — ? vs ?
+  [TM Squads] United States vs Paraguay — ? vs ?
+  [TM Squads Cron] 10 matchs enrichis
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+
+════════════════════════════════════════════════════════════
+  [Cron:Stats] Mise à jour des stats équipes…
+  [Cron:Stats] Phase 1: BSD standings (ligues couvertes)…
+  [DATA AUDIT] "CONCACAF Gold Cup 2025" (BSD 69 / config 1) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 69 (config 1)…
+  [TennisRank BSD] 1000 joueurs indexés
+  [DEBUG STANDINGS] BSD 69 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Panama, played=3, gf=10, ga=3, form=DWWW
+  [BSD] Splits estimés (50/50 ratio) pour Panama — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Panama : 3.33 marqués, 1 encaissés (home) | 5 marqués, 1 encaissés (away) | form: DWWW
+  [BSD] Splits estimés (50/50 ratio) pour USA — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Canada — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mexico — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Costa Rica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guatemala — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Honduras — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Jamaica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Trinidad and Tobago — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dominican Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Suriname — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour El Salvador — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guadeloupe — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/69_1
+  [BSD] Ligue 1 → OK (16 équipes)
+  [DATA AUDIT] "Champions League" (BSD 7 / config 2) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 7 (config 2)…
+  [DEBUG STANDINGS] BSD 7 → seasonId=268
+  [DEBUG STANDINGS] BSD 7 → 36 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Arsenal, played=8, gf=23, ga=4, form=DWDDD
+  [BSD] Splits estimés (50/50 ratio) pour Arsenal — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Arsenal : 2.88 marqués, 0.5 encaissés (home) | 2.75 marqués, 0.5 encaissés (away) | form: DWDDD
+  [BSD] Splits estimés (50/50 ratio) pour FC Bayern München — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liverpool FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tottenham Hotspur — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Barcelona — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chelsea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sporting CP — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Manchester City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Madrid — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Inter — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Paris Saint-Germain — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Newcastle United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Juventus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlético Madrid — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atalanta — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bayer 04 Leverkusen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Borussia Dortmund — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympiacos FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Brugge KV — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Galatasaray — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AS Monaco — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Qarabağ FK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bodø/Glimt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Benfica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympique de Marseille — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pafos FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Royale Union Saint-Gilloise — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour PSV Eindhoven — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Athletic Club — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SSC Napoli — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC København — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AFC Ajax — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Eintracht Frankfurt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SK Slavia Praha — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Villarreal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kairat Almaty — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/7_2
+  [BSD] Ligue 2 → OK (36 équipes)
+  [DATA AUDIT] "Europa League" (BSD 8 / config 3) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 8 (config 3)…
+  [DEBUG STANDINGS] BSD 8 → seasonId=280
+  [DEBUG STANDINGS] BSD 8 → 36 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Olympique Lyonnais, played=8, gf=18, ga=5, form=LDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Olympique Lyonnais — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Olympique Lyonnais : 2.25 marqués, 0.63 encaissés (home) | 2.25 marqués, 0.5 encaissés (away) | form: LDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Aston Villa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Midtjylland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Porto — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Betis — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sporting Braga — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SC Freiburg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AS Roma — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KRC Genk — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bologna — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour VfB Stuttgart — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ferencváros TC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nottingham Forest — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Viktoria Plzeň — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FK Crvena zvezda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Celta Vigo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour PAOK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lille — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fenerbahçe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Panathinaikos FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Celtic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ludogorets — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour GNK Dinamo Zagreb — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SK Brann — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour BSC Young Boys — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SK Sturm Graz — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FCSB — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Go Ahead Eagles — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Feyenoord — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Basel — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Red Bull Salzburg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rangers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nice — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Utrecht — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Malmö FF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Maccabi Tel Aviv — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/8_3
+  [BSD] Ligue 3 → OK (36 équipes)
+  [DATA AUDIT] "UEFA Euro 2024" (BSD 66 / config 4) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 66 (config 4)…
+  [DATA AUDIT] "UEFA Nations League" (BSD 64 / config 5) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 64 (config 5)…
+  [DATA AUDIT] "Africa Cup of Nations" (BSD 30 / config 6) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 30 (config 6)…
+  [DEBUG STANDINGS] BSD 30 → seasonId=211
+  [DEBUG STANDINGS] BSD 30 → groups{} structure: 24 teams total
+  [DEBUG STANDINGS] BSD 30 → 24 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live, _group_name
+  [DATA MAPPING] BSD sample: team=Morocco, played=3, gf=6, ga=1, form=DDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Morocco — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Morocco : 2 marqués, 0.33 encaissés (home) | 3 marqués, 0 encaissés (away) | form: DDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Mali — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Comoros — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zambia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Egypt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour South Africa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Angola — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zimbabwe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nigeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tunisia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tanzania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Uganda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Senegal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour DR Congo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Benin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botswana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Algeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burkina Faso — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sudan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Equatorial Guinea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Côte d'Ivoire — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cameroon — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mozambique — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gabon — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/30_6
+  [BSD] Ligue 6 → OK (24 équipes)
+  [DATA AUDIT] "Copa America 2024" (BSD 67 / config 9) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 67 (config 9)…
+  [DATA AUDIT] "Int. Friendly Games" (BSD 31 / config 10) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 31 (config 10)…
+  [DEBUG STANDINGS] BSD 31 → seasonId=133
+  [DEBUG STANDINGS] BSD 31 → 175 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Mexico, played=8, gf=15, ga=2, form=WWWDD
+  [BSD] Splits estimés (50/50 ratio) pour Mexico — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Mexico : 1.88 marqués, 0.25 encaissés (home) | 1.75 marqués, 0.25 encaissés (away) | form: WWWDD
+  [BSD] Splits estimés (50/50 ratio) pour Argentina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Germany — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Morocco — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Algeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belgium — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Russia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pakistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belarus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hungary — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Portugal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iran — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brazil — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Austria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Côte d'Ivoire — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zimbabwe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour France — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Canada — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Japan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Panama — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ireland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Togo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Spain — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ecuador — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Georgia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Egypt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Senegal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sint Maarten — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Slovakia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour England — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour British Virgin Islands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Montenegro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cyprus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Netherlands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Benin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Philippines — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gibraltar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cabo Verde — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cambodia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Scotland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saint Martin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Türkiye — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Paraguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guyana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Indonesia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Czechia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ukraine — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Italy — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Colombia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour South Korea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Croatia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burkina Faso — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Switzerland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Norway — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour China — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nigeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour El Salvador — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kenya — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Angola — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tajikistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vanuatu — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour DR Congo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Israel — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ethiopia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Jamaica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liberia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mauritania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Equatorial Guinea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Madagascar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Slovenia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Northern Ireland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Romania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iraq — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cayman Islands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Peru — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Afghanistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Andorra — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tunisia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bolivia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Singapore — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sri Lanka — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia U23 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vietnam — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kosovo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Montenegro U19 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Myanmar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Malta — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Venezuela — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Faroe Islands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Comoros — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Oman — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chile — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hong Kong — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lithuania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bangladesh U23 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Luxembourg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saint Vincent and the Grenadines — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour South Africa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Azerbaijan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sierra Leone — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Anguilla — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bangladesh — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botswana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bonaire — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour USA — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Serbia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cuba — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Libya — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Thailand — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bosnia & Herzegovina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Uruguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Palestine — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Armenia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wales — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dominican Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Greece — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Malawi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Niger — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Moldova — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kyrgyzstan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour North Macedonia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Jordan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iceland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kuwait — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Denmark — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fiji — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bulgaria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Martinique — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Australia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Qatar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zambia U23 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sweden — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guinea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Honduras — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kazakhstan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Poland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dominica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mali — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour San Marino — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Uzbekistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour India — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Central African Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lesotho — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Maldives — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guinea-Bissau — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nicaragua — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ghana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Costa Rica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bahrain — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FK Arsenal Tivat — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belize — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bahamas — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Syria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Albania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Puerto Rico — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sudan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gambia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mozambique — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Aruba — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liechtenstein — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Barbados — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Finland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bermuda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burundi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New Zealand — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zambia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Grenada — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mongolia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bhutan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guam — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Trinidad and Tobago — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guatemala — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/31_10
+  [BSD] Ligue 10 → OK (175 équipes)
+  [DATA AUDIT] "Copa Sudamericana" (BSD 33 / config 11) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 33 (config 11)…
+  [DEBUG STANDINGS] BSD 33 → seasonId=114
+  [DEBUG STANDINGS] BSD 33 → groups{} structure: 32 teams total
+  [DEBUG STANDINGS] BSD 33 → 32 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live, _group_name
+  [DATA MAPPING] BSD sample: team=Macará, played=6, gf=6, ga=3, form=DDDWW
+  [BSD] Splits estimés (50/50 ratio) pour Macará — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Macará : 1 marqués, 0.5 encaissés (home) | 1 marqués, 0.33 encaissés (away) | form: DDDWW
+  [BSD] Splits estimés (50/50 ratio) pour Tigre — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour América de Cali — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Alianza Atlético de Sullana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlético Mineiro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cienciano — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Juventud de Las Piedras — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Academia Puerto Cabello — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour São Paulo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour O'Higgins — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Millonarios — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Boston River — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Recoleta FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Santos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour San Lorenzo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Deportivo Cuenca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botafogo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Caracas F.C. — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Racing Club — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Independiente Petrolero — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Montevideo City Torque — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Grêmio — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Deportivo Riestra — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Palestino — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olimpia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vasco da Gama — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Audax Italiano — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Barracas Central — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour River Plate — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Red Bull Bragantino — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Carabobo FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Blooming — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/33_11
+  [BSD] Ligue 11 → OK (32 équipes)
+  [DATA AUDIT] "CAF Champions League" (BSD 29 / config 12) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 29 (config 12)…
+  [DEBUG STANDINGS] BSD 29 → seasonId=229
+  [DEBUG STANDINGS] BSD 29 → groups{} structure: 16 teams total
+  [DEBUG STANDINGS] BSD 29 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live, _group_name
+  [DATA MAPPING] BSD sample: team=Pyramids FC, played=6, gf=14, ga=2, form=LDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Pyramids FC — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Pyramids FC : 2.33 marqués, 0.33 encaissés (home) | 2.33 marqués, 0.33 encaissés (away) | form: LDWWW
+  [BSD] Splits estimés (50/50 ratio) pour RS Berkane — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Power Dynamos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rivers United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al Ahly FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AS FAR Rabat — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Young Africans SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour JS Kabylie — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Hilal Omdurman — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mamelodi Sundowns — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour MC Alger — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Saint-Éloi Lupopo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Stade Malien — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Espérance Tunis — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlético Petróleos de Luanda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Simba SC — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/29_12
+  [BSD] Ligue 12 → OK (16 équipes)
+  [DATA AUDIT] "Copa Libertadores" (BSD 32 / config 13) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 32 (config 13)…
+  [DEBUG STANDINGS] BSD 32 → seasonId=96
+  [DEBUG STANDINGS] BSD 32 → groups{} structure: 32 teams total
+  [DEBUG STANDINGS] BSD 32 → 32 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live, _group_name
+  [DATA MAPPING] BSD sample: team=Flamengo, played=5, gf=11, ga=2, form=WWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Flamengo — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Flamengo : 2.2 marqués, 0.4 encaissés (home) | 2.5 marqués, 0.5 encaissés (away) | form: WWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Estudiantes de La Plata — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Independiente Medellín — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cusco FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Coquimbo Unido — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Deportes Tolima — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nacional — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Universitario de Deportes — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Independiente Rivadavia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fluminense — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bolívar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Deportivo La Guaira — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Universidad Católica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cruzeiro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Boca Juniors — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Barcelona SC Guayaquil — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Corinthians — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Atlético Platense — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Independiente Santa Fe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Peñarol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cerro Porteño — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Palmeiras — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Sporting Cristal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Junior Barranquilla — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour LDU — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mirassol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CA Lanús — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Always Ready — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rosario Central — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Independiente del Valle — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Universidad Central — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Libertad — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/32_13
+  [BSD] Ligue 13 → OK (32 équipes)
+  [DATA AUDIT] "WC Qual. CONMEBOL" (BSD 59 / config 30) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 59 (config 30)…
+  [DEBUG STANDINGS] BSD 59 → 10 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Colombia, played=2, gf=9, ga=3, form=WWDDD
+  [BSD] Splits estimés (50/50 ratio) pour Colombia — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Colombia : 4.5 marqués, 1.5 encaissés (home) | 4 marqués, 1 encaissés (away) | form: WWDDD
+  [BSD] Splits estimés (50/50 ratio) pour Uruguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ecuador — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Paraguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Argentina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brazil — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bolivia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chile — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Peru — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Venezuela — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/59_30
+  [BSD] Ligue 30 → OK (10 équipes)
+  [DATA AUDIT] "WC Qual. CAF" (BSD 60 / config 31) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 60 (config 31)…
+  [DEBUG STANDINGS] BSD 60 → 53 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Tunisia, played=4, gf=13, ga=0, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Tunisia — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Tunisia : 3.25 marqués, 0 encaissés (home) | 3 marqués, 0 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Senegal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Côte d'Ivoire — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burkina Faso — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gabon — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ghana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cabo Verde — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Algeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nigeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Egypt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gambia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Morocco — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mali — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Uganda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour DR Congo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Madagascar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Benin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Niger — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour South Africa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guinea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Libya — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cameroon — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sierra Leone — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kenya — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mozambique — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Angola — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liberia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mauritania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Equatorial Guinea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Malawi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guinea-Bissau — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Togo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zambia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Namibia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Comoros — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rwanda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ethiopia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lesotho — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Central African Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour São Tomé and Príncipe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour South Sudan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tanzania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Congo Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zimbabwe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sudan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chad — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botswana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mauritius — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Eswatini — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burundi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Somalia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Djibouti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Seychelles — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/60_31
+  [BSD] Ligue 31 → OK (53 équipes)
+  [DATA AUDIT] "WC Qual. AFC" (BSD 61 / config 32) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 61 (config 32)…
+  [DEBUG STANDINGS] BSD 61 → 6 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Saudi Arabia, played=2, gf=3, ga=2, form=DWLWD
+  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Saudi Arabia : 1.5 marqués, 1 encaissés (home) | 1 marqués, 1 encaissés (away) | form: DWLWD
+  [BSD] Splits estimés (50/50 ratio) pour Qatar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iraq — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour United Arab Emirates — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Oman — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Indonesia — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/61_32
+  [BSD] Ligue 32 → OK (6 équipes)
+  [DATA AUDIT] "WC Qual. CONCACAF" (BSD 62 / config 33) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 62 (config 33)…
+  [DEBUG STANDINGS] BSD 62 → 12 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Curaçao, played=6, gf=13, ga=3, form=DWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Curaçao : 2.17 marqués, 0.5 encaissés (home) | 2 marqués, 0.33 encaissés (away) | form: DWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Panama — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Jamaica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Suriname — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Honduras — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Guatemala — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Costa Rica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Trinidad and Tobago — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nicaragua — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour El Salvador — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bermuda — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/62_33
+  [BSD] Ligue 33 → OK (12 équipes)
+  [DATA AUDIT] "WC Qual. UEFA" (BSD 58 / config 34) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 58 (config 34)…
+  [DEBUG STANDINGS] BSD 58 → 54 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Spain, played=6, gf=21, ga=2, form=DWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Spain — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Spain : 3.5 marqués, 0.33 encaissés (home) | 3.33 marqués, 0.33 encaissés (away) | form: DWWWW
+  [BSD] Splits estimés (50/50 ratio) pour France — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Croatia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour England — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Germany — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Italy — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belgium — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Netherlands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Switzerland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Portugal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Austria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Scotland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Türkiye — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Norway — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Slovakia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Denmark — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Poland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kosovo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ireland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ukraine — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wales — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Faroe Islands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Northern Ireland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Albania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Serbia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bosnia & Herzegovina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hungary — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Czechia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Romania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iceland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Greece — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Israel — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cyprus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour North Macedonia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kazakhstan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Malta — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Slovenia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Finland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Georgia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Montenegro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Armenia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bulgaria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sweden — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belarus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Andorra — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lithuania — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Latvia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Estonia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Azerbaijan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Moldova — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gibraltar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Luxembourg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liechtenstein — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour San Marino — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/58_34
+  [BSD] Ligue 34 → OK (54 équipes)
+  [DATA AUDIT] "WC Qual. OFC" (BSD 63 / config 35) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 63 (config 35)…
+  [DATA AUDIT] "AFC Asian Cup 2023" (BSD 68 / config 36) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 68 (config 36)…
+  [DATA AUDIT] "Premier League" (BSD 1 / config 39) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 1 (config 39)…
+  [DEBUG STANDINGS] BSD 1 → seasonId=337
+  [DEBUG STANDINGS] BSD 1 → 20 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Arsenal, played=38, gf=71, ga=27, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Arsenal — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Arsenal : 1.87 marqués, 0.71 encaissés (home) | 1.84 marqués, 0.68 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Manchester City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Manchester United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Aston Villa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liverpool FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bournemouth — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sunderland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brighton & Hove Albion — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brentford — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chelsea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fulham — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Newcastle United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Everton — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Leeds United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Crystal Palace — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nottingham Forest — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tottenham Hotspur — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour West Ham United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burnley — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wolverhampton — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/1_39
+  [BSD] Ligue 39 → OK (20 équipes)
+  [DATA AUDIT] "Championship" (BSD 12 / config 40) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 12 (config 40)…
+  [DEBUG STANDINGS] BSD 12 → seasonId=243
+  [DEBUG STANDINGS] BSD 12 → 24 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Coventry City, played=46, gf=97, ga=45, form=WWWDD
+  [BSD] Splits estimés (50/50 ratio) pour Coventry City — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Coventry City : 2.11 marqués, 0.98 encaissés (home) | 2.09 marqués, 0.96 encaissés (away) | form: WWWDD
+  [BSD] Splits estimés (50/50 ratio) pour Ipswich Town — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Millwall — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Southampton — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Middlesbrough — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hull City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wrexham — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Derby County — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Norwich City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Birmingham City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Swansea City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bristol City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sheffield United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Preston North End — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Queens Park Rangers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Watford — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Stoke City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Portsmouth — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour West Bromwich Albion — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Charlton Athletic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Leicester City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Blackburn Rovers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Oxford United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sheffield Wednesday — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/12_40
+  [BSD] Ligue 40 → OK (24 équipes)
+  [DATA AUDIT] "FA Cup" (BSD 39 / config 45) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 39 (config 45)…
+  [DATA AUDIT] "Carabao Cup" (BSD 40 / config 48) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 40 (config 48)…
+  [DATA AUDIT] "Ligue 1" (BSD 6 / config 61) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 6 (config 61)…
+  [DEBUG STANDINGS] BSD 6 → seasonId=317
+  [DEBUG STANDINGS] BSD 6 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Paris Saint-Germain, played=34, gf=74, ga=29, form=LWWDW
+  [BSD] Splits estimés (50/50 ratio) pour Paris Saint-Germain — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Paris Saint-Germain : 2.18 marqués, 0.85 encaissés (home) | 2.18 marqués, 0.82 encaissés (away) | form: LWWDW
+  [BSD] Splits estimés (50/50 ratio) pour RC Lens — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lille — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympique Lyonnais — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympique de Marseille — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Stade Rennais — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AS Monaco — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RC Strasbourg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lorient — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Toulouse — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Paris FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Stade Brestois — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Angers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Le Havre — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Auxerre — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nice — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nantes — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Metz — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/6_61
+  [BSD] Ligue 61 → OK (18 équipes)
+  [DATA AUDIT] "Coupe de France" (BSD 44 / config 63) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 44 (config 63)…
+  [DATA AUDIT] "Brasileirao" (BSD 9 / config 71) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 9 (config 71)…
+  [DEBUG STANDINGS] BSD 9 → seasonId=28
+  [DEBUG STANDINGS] BSD 9 → 20 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Palmeiras, played=18, gf=30, ga=13, form=WWDDD
+  [BSD] Splits estimés (50/50 ratio) pour Palmeiras — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Palmeiras : 1.67 marqués, 0.72 encaissés (home) | 1.67 marqués, 0.67 encaissés (away) | form: WWDDD
+  [BSD] Splits estimés (50/50 ratio) pour Flamengo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fluminense — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Athletico — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Red Bull Bragantino — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bahia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Coritiba — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour São Paulo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlético Mineiro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Corinthians — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cruzeiro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botafogo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vitória — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Internacional — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Santos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Grêmio — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vasco da Gama — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Remo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mirassol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chapecoense — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/9_71
+  [BSD] Ligue 71 → OK (20 équipes)
+  [DATA AUDIT] "Serie B" (BSD 34 / config 72) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 34 (config 72)…
+  [DEBUG STANDINGS] BSD 34 → seasonId=52
+  [DEBUG STANDINGS] BSD 34 → 20 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Vila Nova FC, played=12, gf=18, ga=11, form=WWWWL
+  [BSD] Splits estimés (50/50 ratio) pour Vila Nova FC — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Vila Nova FC : 1.5 marqués, 0.92 encaissés (home) | 1.5 marqués, 0.83 encaissés (away) | form: WWWWL
+  [BSD] Splits estimés (50/50 ratio) pour São Bernardo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sport Recife — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fortaleza — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Grêmio Novorizontino — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Criciúma — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Náutico — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Operário-PR — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Athletic Club — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Goiás — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Juventude — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cuiabá — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ceará — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlético Goianiense — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Clube De Regatas Brasil — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botafogo-SP — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Avaí — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Londrina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ponte Preta — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour América Mineiro — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/34_72
+  [BSD] Ligue 72 → OK (20 équipes)
+  [DATA AUDIT] "Copa do Brasil" (BSD 35 / config 73) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 35 (config 73)…
+  [DEBUG STANDINGS] BSD 35 → seasonId=78
+  [DATA AUDIT] "Bundesliga" (BSD 5 / config 78) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 5 (config 78)…
+  [DEBUG STANDINGS] BSD 5 → seasonId=228
+  [DEBUG STANDINGS] BSD 5 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=FC Bayern München, played=34, gf=122, ga=36, form=WWDWW
+  [BSD] Splits estimés (50/50 ratio) pour FC Bayern München — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour FC Bayern München : 3.59 marqués, 1.06 encaissés (home) | 3.59 marqués, 1.06 encaissés (away) | form: WWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Borussia Dortmund — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RB Leipzig — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour VfB Stuttgart — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour TSG Hoffenheim — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bayer 04 Leverkusen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SC Freiburg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Eintracht Frankfurt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Augsburg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour 1. FSV Mainz 05 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour 1. FC Union Berlin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Borussia M'gladbach — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hamburger SV — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour 1. FC Köln — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SV Werder Bremen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour VfL Wolfsburg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour 1. FC Heidenheim — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC St. Pauli — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/5_78
+  [BSD] Ligue 78 → OK (18 équipes)
+  [DATA AUDIT] "DFB Pokal" (BSD 43 / config 81) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 43 (config 81)…
+  [DATA AUDIT] "Eredivisie" (BSD 10 / config 88) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 10 (config 88)…
+  [DEBUG STANDINGS] BSD 10 → seasonId=279
+  [DEBUG STANDINGS] BSD 10 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=PSV Eindhoven, played=34, gf=101, ga=45, form=WWDWW
+  [BSD] Splits estimés (50/50 ratio) pour PSV Eindhoven — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour PSV Eindhoven : 2.97 marqués, 1.32 encaissés (home) | 2.94 marqués, 1.29 encaissés (away) | form: WWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Feyenoord — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour NEC Nijmegen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Twente — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AFC Ajax — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Utrecht — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AZ Alkmaar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SC Heerenveen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Groningen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sparta Rotterdam — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fortuna Sittard — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Go Ahead Eagles — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Excelsior — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SC Telstar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour PEC Zwolle — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Volendam — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour NAC Breda — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Heracles Almelo — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/10_88
+  [BSD] Ligue 88 → OK (18 équipes)
+  [DATA AUDIT] "Primeira Liga" (BSD 2 / config 94) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 2 (config 94)…
+  [DEBUG STANDINGS] BSD 2 → seasonId=305
+  [DEBUG STANDINGS] BSD 2 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=FC Porto, played=34, gf=66, ga=18, form=WLWWW
+  [BSD] Splits estimés (50/50 ratio) pour FC Porto — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour FC Porto : 1.94 marqués, 0.53 encaissés (home) | 1.94 marqués, 0.53 encaissés (away) | form: WLWWW
+  [BSD] Splits estimés (50/50 ratio) pour Sporting CP — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Benfica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sporting Braga — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Famalicão — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gil Vicente — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Moreirense — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vitória SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Arouca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Estoril Praia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Alverca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Santa Clara — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rio Ave — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CD Nacional — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CF Estrela Amadora — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Casa Pia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tondela — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AVS - Futebol SAD — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/2_94
+  [BSD] Ligue 94 → OK (18 équipes)
+  [DATA AUDIT] "J1 League" (BSD 49 / config 98) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 49 (config 98)…
+  [DEBUG STANDINGS] BSD 49 → 20 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Kashima Antlers, played=18, gf=29, ga=9, form=WLWWD
+  [BSD] Splits estimés (50/50 ratio) pour Kashima Antlers — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Kashima Antlers : 1.61 marqués, 0.5 encaissés (home) | 1.56 marqués, 0.44 encaissés (away) | form: WLWWD
+  [BSD] Splits estimés (50/50 ratio) pour FC Tokyo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vissel Kobe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Machida Zelvia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nagoya Grampus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sanfrecce Hiroshima — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cerezo Osaka — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Urawa Red Diamonds — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kawasaki Frontale — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tokyo Verdy — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fagiano Okayama — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gamba Osaka — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Yokohama F. Marinos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Shimizu S-Pulse — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kyoto Sanga FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour V-Varen Nagasaki — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kashiwa Reysol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Avispa Fukuoka — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mito Hollyhock — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour JEF United Chiba — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/49_98
+  [BSD] Ligue 98 → OK (20 équipes)
+  [DATA AUDIT] "Emperor Cup" (BSD 51 / config 100) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 51 (config 100)…
+  [DATA AUDIT] "Eliteserien" (BSD 54 / config 103) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 54 (config 103)…
+  [DEBUG STANDINGS] BSD 54 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Viking FK, played=10, gf=29, ga=10, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Viking FK — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Viking FK : 2.9 marqués, 1 encaissés (home) | 2.8 marqués, 1 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Tromsø IL — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bodø/Glimt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lillestrøm SK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Molde FK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour HamKam — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sarpsborg 08 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sandefjord Fotball — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Vålerenga IF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fredrikstad FK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SK Brann — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KFUM Oslo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Aalesunds FK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kristiansund BK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rosenborg BK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour IK Start — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/54_103
+  [BSD] Ligue 103 → OK (16 équipes)
+  [DATA AUDIT] "Ekstraklasa" (BSD 25 / config 106) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 25 (config 106)…
+  [DEBUG STANDINGS] BSD 25 → seasonId=271
+  [DEBUG STANDINGS] BSD 25 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Lech Poznań, played=34, gf=62, ga=45, form=DWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Lech Poznań — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Lech Poznań : 1.82 marqués, 1.32 encaissés (home) | 1.82 marqués, 1.29 encaissés (away) | form: DWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Jagiellonia Białystok — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Górnik Zabrze — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Raków Częstochowa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour GKS Katowice — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Legia Warszawa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zagłębie Lubin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wisła Płock — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pogoń Szczecin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Radomiak Radom — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour MKS Korona Kielce — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KS Lechia Gdańsk — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Motor Lublin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Widzew Łódź — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cracovia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Piast Gliwice — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour MZKS Arka Gdynia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bruk-Bet Termalica Nieciecza — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/25_106
+  [BSD] Ligue 106 → OK (18 équipes)
+  [DATA AUDIT] "Puchar Polski" (BSD 46 / config 108) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 46 (config 108)…
+  [DATA AUDIT] "Allsvenskan" (BSD 26 / config 113) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 26 (config 113)…
+  [DEBUG STANDINGS] BSD 26 → seasonId=9
+  [DEBUG STANDINGS] BSD 26 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=IK Sirius, played=10, gf=27, ga=10, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour IK Sirius — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour IK Sirius : 2.7 marqués, 1 encaissés (home) | 2.6 marqués, 1 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour BK Häcken — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour IF Elfsborg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hammarby IF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour GAIS — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mjällby AIF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour IF Brommapojkarna — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Djurgårdens IF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Malmö FF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AIK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Västerås SK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Degerfors IF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kalmar FF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour IFK Göteborg — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Halmstads BK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Örgryte IS — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/26_113
+  [BSD] Ligue 113 → OK (16 équipes)
+  [DATA AUDIT] "Serie A" (BSD 4 / config 135) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 4 (config 135)…
+  [DEBUG STANDINGS] BSD 4 → seasonId=358
+  [DEBUG STANDINGS] BSD 4 → 20 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Inter, played=38, gf=89, ga=35, form=DDWWD
+  [BSD] Splits estimés (50/50 ratio) pour Inter — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Inter : 2.34 marqués, 0.92 encaissés (home) | 2.32 marqués, 0.89 encaissés (away) | form: DDWWD
+  [BSD] Splits estimés (50/50 ratio) pour SSC Napoli — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AS Roma — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Como — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AC Milan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Juventus — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atalanta — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bologna — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lazio — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Udinese — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sassuolo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Parma — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Torino — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cagliari — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fiorentina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Genoa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lecce — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cremonese — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hellas Verona — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pisa — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/4_135
+  [BSD] Ligue 135 → OK (20 équipes)
+  [DATA AUDIT] "Coppa Italia" (BSD 42 / config 137) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 42 (config 137)…
+  [DATA AUDIT] "La Liga" (BSD 3 / config 140) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 3 (config 140)…
+[CS2Service] 20 matches (4 live, 1 predictions)
+  [Tennis DR Diff] bsd_t_37152 gap=0.20 dominant=Gabriella Goyins ratio=1.20
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [DEBUG LIGA] /events/?league=3 → 1000 matchs parsés, 20 équipes agrégées
+[DEBUG LIGA] Classement récupéré avec succès via l'endpoint Events (ID 3)
+[CacheBuffer] Updated bsd_standings/3_140
+  [BSD] Ligue 140 → OK (20 équipes)
+  [DATA AUDIT] "Segunda Division" (BSD 38 / config 141) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 38 (config 141)…
+  [DEBUG STANDINGS] BSD 38 → 23 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Real Racing Club, played=43, gf=91, ga=65, form=WDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Real Racing Club — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Real Racing Club : 2.12 marqués, 1.51 encaissés (home) | 2.14 marqués, 1.52 encaissés (away) | form: WDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Deportivo de La Coruña — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Almería — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Málaga CF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Las Palmas — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CD Castellón — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Burgos Club de Fútbol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Eibar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sporting Gijón — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Córdoba — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AD Ceuta — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Albacete Balompié — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Andorra — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Granada — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Sociedad B U21 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Leganés — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Valladolid — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mirandés — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cádiz — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Huesca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cultural Leonesa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Zaragoza — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Oviedo — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/38_141
+  [BSD] Ligue 141 → OK (23 équipes)
+  [DATA AUDIT] "Copa del Rey" (BSD 41 / config 143) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 41 (config 143)…
+  [DATA AUDIT] "Jupiler Pro League" (BSD 14 / config 144) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 14 (config 144)…
+  [DEBUG STANDINGS] BSD 14 → seasonId=338
+  [DEBUG STANDINGS] BSD 14 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Club Brugge KV, played=40, gf=91, ga=45, form=WDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Club Brugge KV — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Club Brugge KV : 2.27 marqués, 1.13 encaissés (home) | 2.25 marqués, 1.1 encaissés (away) | form: WDWWW
+  [BSD] Splits estimés (50/50 ratio) pour Royale Union Saint-Gilloise — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sint-Truidense VV — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KRC Genk — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Standard Liège — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RSC Anderlecht — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KVC Westerlo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RC Sporting Charleroi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KAA Gent — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour KV Mechelen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SV Zulte Waregem — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Royal Antwerp FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cercle Brugge — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Oud-Heverlee Leuven — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RAAL La Louvière — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FCV Dender — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/14_144
+  [BSD] Ligue 144 → OK (16 équipes)
+  [DATA AUDIT] "Chinese Super League" (BSD 52 / config 169) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 52 (config 169)…
+  [DEBUG STANDINGS] BSD 52 → seasonId=1040
+  [DEBUG STANDINGS] BSD 52 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Chengdu Rongcheng, played=15, gf=33, ga=13, form=WLLWW
+  [BSD] Splits estimés (50/50 ratio) pour Chengdu Rongcheng — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Chengdu Rongcheng : 2.2 marqués, 0.87 encaissés (home) | 2.29 marqués, 0.86 encaissés (away) | form: WLLWW
+  [BSD] Splits estimés (50/50 ratio) pour Chongqing Tonglianglong FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Shandong Taishan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Shanghai Shenhua — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Zhejiang — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dalian Yingbo FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Yunnan Yukun — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Henan FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Beijing Guoan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Qingdao West Coast — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Shanghai Port — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Qingdao Hainiu — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Liaoning Tieren FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Shenzhen Peng City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tianjin Jinmen Tiger — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wuhan Three Towns — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/52_169
+  [BSD] Ligue 169 → OK (16 équipes)
+  [DATA AUDIT] "Parva Liga" (BSD 22 / config 172) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 22 (config 172)…
+  [DEBUG STANDINGS] BSD 22 → seasonId=321
+  [DEBUG STANDINGS] BSD 22 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Levski Sofia, played=36, gf=71, ga=25, form=DWDLW
+  [BSD] Splits estimés (50/50 ratio) pour Levski Sofia — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Levski Sofia : 1.97 marqués, 0.69 encaissés (home) | 1.94 marqués, 0.67 encaissés (away) | form: DWDLW
+  [BSD] Splits estimés (50/50 ratio) pour Ludogorets — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC CSKA 1948 Sofia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CSKA Sofia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lokomotiv Plovdiv — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Arda Kardzhali — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cherno More Varna — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botev Vratsa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lokomotiv Sofia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Botev Plovdiv — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Slavia Sofia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FK Spartak Varna — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FK Septemvri Sofia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Beroe Stara Zagora — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FK Dobrudzha Dobrich — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour PFK Montana 1921 — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/22_172
+  [BSD] Ligue 172 → OK (16 équipes)
+  [DATA AUDIT] "Scottish Premiership" (BSD 13 / config 188) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 13 (config 188)…
+  [DEBUG STANDINGS] BSD 13 → seasonId=345
+  [DEBUG STANDINGS] BSD 13 → 12 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Celtic, played=38, gf=73, ga=41, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Celtic — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Celtic : 1.92 marqués, 1.08 encaissés (home) | 1.89 marqués, 1.05 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Heart of Midlothian — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rangers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Motherwell — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hibernian — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Falkirk FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dundee United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dundee FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Aberdeen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kilmarnock — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour St. Mirren — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Livingston — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/13_188
+  [BSD] Ligue 188 → OK (12 équipes)
+  [DATA AUDIT] "Botola Pro" (BSD 53 / config 200) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 53 (config 200)…
+  [DEBUG STANDINGS] BSD 53 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=RS Berkane, played=23, gf=34, ga=20, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour RS Berkane — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour RS Berkane : 1.48 marqués, 0.87 encaissés (home) | 1.55 marqués, 0.91 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour AS FAR Rabat — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour MAS de Fès — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wydad Casablanca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Raja Club Athletic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Difaâ Hassani El-Jadidi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CODM Meknès — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kawkab Athletic Club Marrakech — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fath Union Sport — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ittihad Tanger — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Renaissance Zemamra — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hassania d'Agadir — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Union Touarga Sport — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympique Dcheira — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Union Sportive Yacoub El Mansour — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympic Safi — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/53_200
+  [BSD] Ligue 200 → OK (16 équipes)
+  [DATA AUDIT] "Tunisian Ligue Pro 1" (BSD 47 / config 202) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 47 (config 202)…
+  [DEBUG STANDINGS] BSD 47 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Club Africain, played=30, gf=43, ga=10, form=DWWDW
+  [BSD] Splits estimés (50/50 ratio) pour Club Africain — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Club Africain : 1.43 marqués, 0.33 encaissés (home) | 1.4 marqués, 0.33 encaissés (away) | form: DWWDW
+  [BSD] Splits estimés (50/50 ratio) pour Espérance Tunis — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CS Sfaxien — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Stade Tunisien — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour US Monastir — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour ES Zarzis — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Etoile Sportive Du Sahel — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour ES Métlaoui — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour JS Omrane — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour US Ben Guerdane — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Avenir Sportif De La Marsa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CA Bizertin — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Olympique Béja — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour JS Kairouanaise — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AS Soliman — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Avenir Sportif De Gabes — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/47_202
+  [BSD] Ligue 202 → OK (16 équipes)
+  [DATA AUDIT] "Super Lig" (BSD 11 / config 203) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 11 (config 203)…
+  [DEBUG STANDINGS] BSD 11 → seasonId=380
+  [DEBUG STANDINGS] BSD 11 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Galatasaray, played=34, gf=77, ga=30, form=LWLWW
+  [BSD] Splits estimés (50/50 ratio) pour Galatasaray — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Galatasaray : 2.26 marqués, 0.88 encaissés (home) | 2.24 marqués, 0.88 encaissés (away) | form: LWLWW
+  [BSD] Splits estimés (50/50 ratio) pour Fenerbahçe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Trabzonspor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Beşiktaş JK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Başakşehir FK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Göztepe — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Samsunspor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Çaykur Rizespor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Konyaspor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Alanyaspor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kocaelispor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gaziantep FK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kasımpaşa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gençlerbirliği — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Eyüpspor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Antalyaspor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fatih Karagümrük — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kayserispor — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/11_203
+  [BSD] Ligue 203 → OK (18 équipes)
+  [DATA AUDIT] "Superliga" (BSD 15 / config 207) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 15 (config 207)…
+  [DEBUG STANDINGS] BSD 15 → seasonId=371
+  [DEBUG STANDINGS] BSD 15 → 12 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=FC Thun, played=38, gf=80, ga=52, form=DLLLL
+  [BSD] Splits estimés (50/50 ratio) pour FC Thun — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour FC Thun : 2.11 marqués, 1.37 encaissés (home) | 2.11 marqués, 1.37 encaissés (away) | form: DLLLL
+  [BSD] Splits estimés (50/50 ratio) pour FC St. Gallen 1879 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Lugano — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Sion — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Basel — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour BSC Young Boys — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Luzern — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Servette FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Lausanne-Sport — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Zürich — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Grasshopper Club Zürich — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Winterthur — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/15_207
+  [BSD] Ligue 207 → OK (12 équipes)
+  [DATA AUDIT] "Liga MX" (BSD 19 / config 218) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 19 (config 218)…
+  [DEBUG STANDINGS] BSD 19 → seasonId=296
+  [DEBUG STANDINGS] BSD 19 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=CD Toluca, played=17, gf=43, ga=18, form=WLWLD
+  [BSD] Splits estimés (50/50 ratio) pour CD Toluca — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour CD Toluca : 2.53 marqués, 1.06 encaissés (home) | 2.63 marqués, 1.13 encaissés (away) | form: WLWLD
+  [BSD] Splits estimés (50/50 ratio) pour Tigres UANL — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cruz Azul — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club América — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CF Monterrey — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CD Guadalajara — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Tijuana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Juárez — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CF Pachuca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pumas UNAM — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Santos Laguna — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Querétaro FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Necaxa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlas FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlético San Luis — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mazatlán FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club León — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Puebla — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/19_218
+  [BSD] Ligue 218 → OK (18 équipes)
+  [DATA AUDIT] "Veikkausliiga" (BSD 55 / config 244) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 55 (config 244)…
+  [DEBUG STANDINGS] BSD 55 → 12 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Inter Turku, played=11, gf=17, ga=8, form=DWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Inter Turku — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Inter Turku : 1.55 marqués, 0.73 encaissés (home) | 1.6 marqués, 0.8 encaissés (away) | form: DWWWW
+  [BSD] Splits estimés (50/50 ratio) pour AC Oulu — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kuopion Palloseura — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour HJK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Turun Palloseura — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour VPS — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Lahti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour IF Gnistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ilves — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FF Jaro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SJK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour IFK Mariehamn — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/55_244
+  [BSD] Ligue 244 → OK (12 équipes)
+  [DATA AUDIT] "Suomen Cup" (BSD 56 / config 246) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 56 (config 246)…
+  [DATA AUDIT] "MLS" (BSD 18 / config 253) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 18 (config 253)…
+  [DEBUG STANDINGS] BSD 18 → seasonId=158
+  [DEBUG STANDINGS] BSD 18 → 30 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Nashville SC, played=14, gf=31, ga=11, form=WWWDD
+  [BSD] Splits estimés (50/50 ratio) pour Nashville SC — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Nashville SC : 2.21 marqués, 0.79 encaissés (home) | 2.14 marqués, 0.71 encaissés (away) | form: WWWDD
+  [BSD] Splits estimés (50/50 ratio) pour Vancouver Whitecaps — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour San Jose Earthquakes — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Inter Miami CF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Chicago Fire — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Salt Lake — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Dallas — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New England Revolution — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Los Angeles FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Seattle Sounders FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Houston Dynamo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Minnesota United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New York Red Bulls — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Charlotte FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour LA Galaxy — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Cincinnati — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New York City FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour DC United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour San Diego FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Colorado Rapids — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Columbus Crew — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour St.Louis City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Portland Timbers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Toronto FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CF Montréal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Austin FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Orlando City SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Atlanta United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sporting Kansas City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Philadelphia Union — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/18_253
+  [BSD] Ligue 253 → OK (30 équipes)
+  [DATA AUDIT] "USL Championship" (BSD 57 / config 254) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 57 (config 254)…
+  [DEBUG STANDINGS] BSD 57 → 25 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=FC Tampa Bay Rowdies, played=12, gf=21, ga=7, form=DWWWD
+  [BSD] Splits estimés (50/50 ratio) pour FC Tampa Bay Rowdies — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour FC Tampa Bay Rowdies : 1.75 marqués, 0.58 encaissés (home) | 1.67 marqués, 0.5 encaissés (away) | form: DWWWD
+  [BSD] Splits estimés (50/50 ratio) pour San Antonio FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Louisville City FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Orange County SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Indy Eleven — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Detroit City FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Charleston Battery — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Tulsa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Oakland Roots SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Phoenix Rising FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pittsburgh Riverhounds — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Miami FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour El Paso Locomotive FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New Mexico United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Hartford Athletic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Colorado Springs Switchbacks FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sacramento Republic FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Rhode Island FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Lexington SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Las Vegas Lights — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Birmingham Legion FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Monterey Bay FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Loudoun United FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brooklyn FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SC Jacksonville — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/57_254
+  [BSD] Ligue 254 → OK (25 équipes)
+  [DATA AUDIT] "Superliga" (BSD 23 / config 283) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 23 (config 283)…
+  [DEBUG STANDINGS] BSD 23 → seasonId=374
+  [DEBUG STANDINGS] BSD 23 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Universitatea Craiova, played=40, gf=65, ga=33, form=DWDWW
+  [BSD] Splits estimés (50/50 ratio) pour Universitatea Craiova — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Universitatea Craiova : 1.63 marqués, 0.82 encaissés (home) | 1.6 marqués, 0.8 encaissés (away) | form: DWDWW
+  [BSD] Splits estimés (50/50 ratio) pour FC Universitatea Cluj — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour CFR 1907 Cluj — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Dinamo București — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Rapid București — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FCSB — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour UTA Arad — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Argeș Pitești — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SC Oțelul Galați — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Botoșani — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FK Csíkszereda Miercurea Ciuc — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Farul Constanța — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Petrolul Ploiești — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Hermannstadt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AFC Unirea 04 Slobozia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Metaloglobus București — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/23_283
+  [BSD] Ligue 283 → OK (16 équipes)
+  [DATA AUDIT] "K-League 1" (BSD 50 / config 292) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 50 (config 292)…
+  [DEBUG STANDINGS] BSD 50 → 12 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=FC Seoul, played=15, gf=27, ga=12, form=WWLDL
+  [BSD] Splits estimés (50/50 ratio) pour FC Seoul — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour FC Seoul : 1.8 marqués, 0.8 encaissés (home) | 1.86 marqués, 0.86 encaissés (away) | form: WWLDL
+  [BSD] Splits estimés (50/50 ratio) pour Jeonbuk Hyundai Motors — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ulsan HD — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gangwon FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pohang Steelers — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Incheon United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Anyang — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Jeju SK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bucheon FC 1995 — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Daejeon Hana Citizen — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gimcheon Sangmu FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Gwangju FC — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/50_292
+  [BSD] Ligue 292 → OK (12 équipes)
+  [DATA AUDIT] "Saudi Pro League" (BSD 17 / config 307) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 17 (config 307)…
+  [DEBUG STANDINGS] BSD 17 → seasonId=339
+  [DEBUG STANDINGS] BSD 17 → 18 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Al-Nassr, played=34, gf=91, ga=28, form=WDWLW
+  [BSD] Splits estimés (50/50 ratio) pour Al-Nassr — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Al-Nassr : 2.68 marqués, 0.82 encaissés (home) | 2.65 marqués, 0.82 encaissés (away) | form: WDWLW
+  [BSD] Splits estimés (50/50 ratio) pour Al-Hilal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Ahli — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Qadsiah — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Ittihad — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Taawoun — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Ettifaq — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Neom SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Hazem — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Fayha — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Khaleej — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Fateh — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Shabab — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Kholood — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Riyadh — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Damac FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Okhdood — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Al-Najma SC — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/17_307
+  [BSD] Ligue 307 → OK (18 équipes)
+  [DATA AUDIT] "Super League" (BSD 24 / config 318) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 24 (config 318)…
+  [DEBUG STANDINGS] BSD 24 → seasonId=364
+  [DEBUG STANDINGS] BSD 24 → 14 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=AEK Athens, played=32, gf=55, ga=19, form=DDWDW
+  [BSD] Splits estimés (50/50 ratio) pour AEK Athens — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour AEK Athens : 1.72 marqués, 0.59 encaissés (home) | 1.69 marqués, 0.56 encaissés (away) | form: DDWDW
+  [BSD] Splits estimés (50/50 ratio) pour Olympiacos FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour PAOK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Panathinaikos FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour APO Levadiakos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Aris Thessaloniki — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour APS Atromitos Athinon — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AE Kifisia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Asteras Aktor — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour OFI Crete — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour GFS Panetolikos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour NPS Volos — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour AEL Novibet — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour MGS Panserraikos — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/24_318
+  [BSD] Ligue 318 → OK (14 équipes)
+  [DATA AUDIT] "Nigeria Premier Football League" (BSD 28 / config 436) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 28 (config 436)…
+  [DEBUG STANDINGS] BSD 28 → seasonId=318
+  [DEBUG STANDINGS] BSD 28 → 20 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Enugu Rangers International, played=38, gf=47, ga=27, form=WWWWD
+  [BSD] Splits estimés (50/50 ratio) pour Enugu Rangers International — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Enugu Rangers International : 1.24 marqués, 0.71 encaissés (home) | 1.21 marqués, 0.68 encaissés (away) | form: WWWWD
+  [BSD] Splits estimés (50/50 ratio) pour Rivers United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Shooting Stars — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ikorodu City — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Nasarawa United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Abia Warriors — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bendel Insurance FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Barau FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Katsina United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kano Pillars — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Plateau United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kwara United — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Enyimba — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Kun Khalifat FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Warri Wolves FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Niger Tornadoes — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Remo Stars — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour El Kanemi Warriors — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bayelsa United FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wikki Tourists FC — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/28_436
+  [BSD] Ligue 436 → OK (20 équipes)
+  [DATA AUDIT] "Liga F" (BSD 36 / config 558) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 36 (config 558)…
+  [DEBUG STANDINGS] BSD 36 → seasonId=295
+  [DEBUG STANDINGS] BSD 36 → 16 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+  [DATA MAPPING] BSD sample: team=Fútbol Club Barcelona, played=30, gf=130, ga=9, form=WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Fútbol Club Barcelona — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Fútbol Club Barcelona : 4.33 marqués, 0.3 encaissés (home) | 4.33 marqués, 0.27 encaissés (away) | form: WWWWW
+  [BSD] Splits estimés (50/50 ratio) pour Real Madrid — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Sociedad — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Costa Adeje Tenerife — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Club Atlético de Madrid — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Granada Club de Fútbol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Athletic Club — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sevilla FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Badalona — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Madrid CFF — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RCD Espanyol de Barcelona — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Real Club Deportivo de la Coruña — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour SD Eibar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour DUX Logroño — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Alhama Club de Fútbol — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Levante UD — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/36_558
+  [BSD] Ligue 558 → OK (16 équipes)
+  [DATA AUDIT] "Coupe de Tunisie" (BSD 48 / config 575) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 48 (config 575)…
+  [DATA AUDIT] "CONCACAF Nations League" (BSD 65 / config 683) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 65 (config 683)…
+  [DATA AUDIT] "World Cup 2026" (BSD 27 / config 999) — Standings sync started.
+  [DEBUG STANDINGS] Fetching league BSD 27 (config 999)…
+  [DEBUG STANDINGS] BSD 27 → seasonId=188
+  [DEBUG STANDINGS] BSD 27 → groups{} structure: 48 teams total
+  [DEBUG STANDINGS] BSD 27 → 48 équipes reçues
+  [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live, _group_name
+  [DATA MAPPING] BSD sample: team=Mexico, played=1, gf=2, ga=0, form=WWLDL
+  [BSD] Splits estimés (50/50 ratio) pour Mexico — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour Mexico : 2 marqués, 0 encaissés (home) | 0 marqués, 0 encaissés (away) | form: WWLDL
+  [BSD] Splits estimés (50/50 ratio) pour South Korea — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Czechia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour South Africa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Bosnia & Herzegovina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Canada — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Qatar — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Switzerland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brazil — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Morocco — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Scotland — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Australia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Paraguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Türkiye — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour USA — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Côte d'Ivoire — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ecuador — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Germany — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Japan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Netherlands — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sweden — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Tunisia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belgium — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Egypt — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iran — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New Zealand — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cabo Verde — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Spain — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Uruguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour France — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Iraq — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Norway — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Senegal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Algeria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Argentina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Austria — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Jordan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Colombia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour DR Congo — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Portugal — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Uzbekistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Croatia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour England — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ghana — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Panama — BSD ne fournit pas played_home/played_away
+[CacheBuffer] Updated bsd_standings/27_999
+  [BSD] Ligue 999 → OK (48 équipes)
+  [BSD] Phase 1 terminée: 1142 équipes (échecs à fallback: 17)
+  [Cron:Stats] Phase 1bis: ESPN standings (ligues ESPN-only: 99, 119, 128, 136, 239, 240, 262, 265, 480, 900)…
+  [ESPN] Danish Superliga (den.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 119 → OK (slug den.1)
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [ESPN] Liga Profesional (arg.1) → OK (30 équipes, saison en cours)
+  [ESPN] Ligue 128 → OK (slug arg.1)
+  [ESPN] Serie B (ita.2) → OK (20 équipes, saison en cours)
+  [ESPN] Ligue 136 → OK (slug ita.2)
+  [ESPN] Liga BetPlay (col.1) → OK (20 équipes, saison en cours)
+  [ESPN] Ligue 239 → OK (slug col.1)
+  [ESPN] LigaPro (ecu.1) → OK (16 équipes, saison en cours)
+  [ESPN] Ligue 240 → OK (slug ecu.1)
+  [ESPN] Austrian Bundesliga (aut.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 262 → OK (slug aut.1)
+  [ESPN] Campeonato Nacional (chi.1) → OK (16 équipes, saison en cours)
+  [ESPN] Ligue 265 → OK (slug chi.1)
+  [TennisRank BSD] 1000 joueurs indexés
+  [ESPN] División Profesional (par.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 480 → OK (slug par.1)
+  [ESPN] A-League (aus.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 900 → OK (slug aus.1)
+  [DATA AUDIT] League sizes computed: 1:1, 2:6, 3:6, 10:49, 11:12, 12:12, 13:14, 30:4, 31:43, 32:6, 33:12, 34:38, 39:20, 40:24, 45:32, 48:48, 61:18, 63:181, 71:20, 72:19, 73:89, 78:18, 81:46, 88:18, 94:18, 98:20, 99:15, 103:16, 106:18, 113:16, 119:12, 128:30, 135:20, 136:20, 137:5, 140:12, 141:23, 143:87, 144:16, 169:16, 172:16, 188:12, 200:16, 202:16, 203:18, 207:12, 210:9, 218:18, 239:20, 240:16, 244:12, 253:30, 254:25, 262:12, 265:16, 269:14, 283:16, 292:12, 307:18, 318:14, 333:14, 345:15, 383:13, 436:20, 480:12, 558:16, 900:12, 999:42
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 4
+  [Cron:Stats] ✓ 1292 équipes mises à jour (BSD: 1292, Fallback: 0)
+════════════════════════════════════════════════════════════
+✅ [OPTIMISATION] Données Injuries mappées directement via le flux principal (Appel API tiers supprimé).
+  [Cron:Stats] Phase 3: Sofascore supplement — 6 équipes sans stats réelles…
+  [Cron:Odds] ⚡ Données fraîches en cache (56 matchs) — skip API [key=odds_raw_matches]
+  [EnrichHistory] 0 enrichis sur 49380 (skipped: 48436)
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 5
+  [Boot] ✓ Enrichissement stats terminé.
+  [EnrichHistory] 0 enrichis sur 49380 (skipped: 48436)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #11 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [Challenger ATP] 50 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.391 stdev=0.625
+  [Tennis DR Diff] bsd_t_37148 gap=0.48 dominant=Divna Ratkovic ratio=1.48
+  [Tennis DR Var] bsd_t_37815 sets=3 var=5.135 stdev=2.266
+  [Tennis DR Diff] bsd_t_37815 gap=0.68 dominant=Daniil Medvedev ratio=1.68
+  [Tennis DR Var] bsd_t_37843 sets=2 var=0.250 stdev=0.500
+  [Tennis DR Diff] bsd_t_37848 gap=0.51 dominant=Katarzyna Kawa ratio=0.49
+  [Tennis DR Diff] bsd_t_37839 gap=0.25 dominant=Harriet Dart ratio=1.25
+  [Tennis DR Diff] bsd_t_37127 gap=0.54 dominant=Raghav Jaisinghani ratio=1.54
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.250 stdev=0.500
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.302 stdev=0.550
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis:BreakSet] bsd_t_37152 dom=Styliani Roussopoulou drAvg=0.6 set=3-5 cote=2.30
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisVB] build start — 152 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [LiveDBG] idle-skip #16 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisVB] build done — 160 matchs en 58864ms · snap_stored=152 · live_rehydrated=8 · live_orphans=5 · snap_map_size=889
+[CS2Service] 18 matches (4 live, 0 predictions)
+  [TennisLive] BSD=0 ESPN=338 merged=277 live=6 fetched+5aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x5
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis:BreakSet] bsd_t_37829 dom=Petr Brunclik drAvg=2 set=4-2 cote=1.88
+  [Tennis DR Diff] bsd_t_37829 gap=0.73 dominant=Petr Brunclik ratio=1.73
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisPBP] SSE pbp_update broadcast x5
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #21 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [Tennis DR Diff] bsd_t_37830 gap=0.86 dominant=Zdenek Kolar ratio=1.86
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis DR Var] bsd_t_37781 sets=3 var=5.323 stdev=2.307
+  [Tennis:BreakSet] bsd_t_37781 dom=Elena Rybakina drAvg=6 set=2-0 cote=1.19
+  [Tennis:DomOdds13] bsd_t_37830 dominant=Federico Cinà DR=1.667 cote=1.43
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [LiveDBG] idle-skip #26 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Challenger ATP] 74 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.490 stdev=0.700
+  [Tennis DR Diff] bsd_t_37148 gap=0.52 dominant=Divna Ratkovic ratio=1.52
+  [Tennis DR Var] bsd_t_37815 sets=3 var=1.876 stdev=1.370
+  [Tennis DR Diff] bsd_t_37815 gap=0.58 dominant=Daniil Medvedev ratio=1.58
+  [Tennis DR Var] bsd_t_37843 sets=2 var=1.000 stdev=1.000
+  [Tennis DR Diff] bsd_t_37848 gap=0.52 dominant=Katarzyna Kawa ratio=0.48
+  [Tennis DR Diff] bsd_t_37127 gap=0.74 dominant=Raghav Jaisinghani ratio=1.74
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.154 stdev=0.393
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.327 stdev=0.572
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisPBP] fetched+3aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x3
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=15 ESPN=338 merged=311 live=12
+  [Tennis Archive] 1 matchs finished archives vers tennisHistory (+db.archive_matches) — persisté
+  [TennisPBP] fetched+1aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x1
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #31 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisLive] BSD=15 ESPN=338 merged=311 live=12
+  [TennisAlerts] ✓ alert#1700 gagne_set set2 3-6 → WIN
+  [TennisAlerts] ✓ alert#1699 under_12.5 set2 3-6 → WIN
+  [WOM:AutoPublish] tick: 46 foot · 0 avec WOM · 0 candidat(s) ≥12pts · 0 à poster (jour 0/8)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisVB] build start — 176 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [Tennis DR Diff] bsd_t_37829 gap=0.73 dominant=Petr Brunclik ratio=1.73
+  [TennisLive] BSD=15 ESPN=0 merged=89 live=12
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisVB] build done — 184 matchs en 55255ms · snap_stored=176 · live_rehydrated=8 · live_orphans=4 · snap_map_size=889
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis DR Diff] bsd_t_37839 gap=0.34 dominant=Harriet Dart ratio=1.34
+  [TennisLive] BSD=15 ESPN=338 merged=311 live=13 fetched+1aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x1
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #36 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [Tennis:BreakSet] bsd_t_37824 dom=Ajla Tomljanović drAvg=2 set=4-2 cote=2.30
+  [Tennis DR Diff] bsd_t_37773 gap=0.40 dominant=Mary Stoiana ratio=0.60
+  [TennisLive] BSD=16 ESPN=338 merged=311 live=14
+  [TennisPBP] SSE pbp_update broadcast x1
+  [Tennis DR Diff] bsd_t_37830 gap=0.24 dominant=Zdenek Kolar ratio=1.24
+  [TennisLive] BSD=16 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [TennisPred BSD] 97 prédictions chargées (upcoming)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [Tennis DR Var] bsd_t_37781 sets=3 var=5.323 stdev=2.307
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Archive] 80 matchs non vérifiés à re-tenter…
+[betwatch] transport: browse C:\Users\david\.claude\skills\gstack\browse\dist\browse.exe
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+[betwatch] CF OK — "Betwatch | Betfair Money - Dropping Odds - Suspicious Bets"
+[betwatch] football — 0 marchés, 0 WOM
+[betwatch] tennis — 0 marchés, 0 WOM
+[betwatch] pas d'évolution WOM notable
+[betwatch] écrit C:\Users\david\Documents\dev PariScore\ParisScorebis\data\betwatch_wom.json — 0 matchs, 0 avec WOM
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [LiveDBG] idle-skip #41 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisRank BSD] 1000 joueurs indexés
+  [AutoPurge] Aucun match à purger (56 actifs)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [Challenger ATP] 74 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.563 stdev=0.750
+  [Tennis DR Var] bsd_t_37815 sets=3 var=0.395 stdev=0.628
+  [Tennis DR Diff] bsd_t_37815 gap=0.49 dominant=Daniil Medvedev ratio=1.49
+  [Tennis DR Var] bsd_t_37843 sets=2 var=1.361 stdev=1.167
+  [Tennis DR Diff] bsd_t_37870 gap=0.25 dominant=Andreas Messis ratio=0.75
+  [Tennis DR Diff] bsd_t_37127 gap=0.62 dominant=Raghav Jaisinghani ratio=1.62
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.327 stdev=0.572
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.302 stdev=0.550
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [LiveDBG] idle-skip #46 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [Tennis DR Var] bsd_t_37670 sets=3 var=0.259 stdev=0.508
+  [TennisLive] BSD=17 ESPN=284 merged=276 live=14
+  [TennisAlerts] ✓ alert#1702 gagne_set set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#1701 under_12.5 set1 6-3 → WIN
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisAlerts] ✓ alert#1697 under_12.5 set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1698 gagne_set set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1690 gagne_set set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1689 under_12.5 set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1687 under_12.5 set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1688 gagne_set set1 5-7 → WIN
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisVB] build start — 176 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [LiveDBG] idle-skip #51 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [TennisVB] build done — 185 matchs en 45599ms · snap_stored=176 · live_rehydrated=9 · live_orphans=5 · snap_map_size=889
+  [Tennis DR Diff] bsd_t_37829 gap=0.50 dominant=Petr Brunclik ratio=1.50
+  [Tennis DR Var] bsd_t_37773 sets=2 var=0.111 stdev=0.334
+  [Tennis DR Diff] bsd_t_37773 gap=0.35 dominant=Mary Stoiana ratio=0.65
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–

@@ -1,0 +1,275 @@
+  [33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif.[0m
+[31m[SANITY] 6 data anomalies detected:[0m
+  [31m• luxembourg: home PPG=0 but played=6[0m
+  [31m• club independiente petrolero: home PPG=0 but played=6[0m
+  [31m• sevilla: away PPG=0 but played=40[0m
+  [31m• mallorca: away PPG=0 but played=60[0m
+  [31m• getafe: home PPG=0 but played=20[0m
+  [31m• getafe: away PPG=0 but played=60[0m
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 2s
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 4s
+  [Tennis Odds] ⚠️ PariScore — Odds API quota faible : 7/500 restants (<10%). Fetch tennis basculera en mode low-quota (fenêtre J+1).
+[CS2/BSD-Teams] timeout
+  [OddsPapi] resolveTourId "WTA 125K Modena, Italy Women Singles": OddsPapi 429 {"error":{"message":"Request limit exceeded","code":"REQUEST_LIMIT_EXCEEDED","details":"You have exceeded your request l
+  [OddsPapi] ⚠ 429 circuit-breaker activé — pause 1h jusqu'à 2026-06-12T12:51:26.379Z
+[browse] Starting server...
+[betwatch] football 2026-06-12 skip
+[betwatch] football 2026-06-13 skip
+[betwatch] tennis 2026-06-12 skip
+[betwatch] tennis 2026-06-13 skip
+[CS2/Stickers] timeout
+  [Boot] ⚠ fetchOdds: fetchOdds timeout (25000ms)
+  [MorningPicks:Discord] erreur: Timeout
+  [KOA] matchmx David Ekpenyong error: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 8s
+  [Cron:TexOdds] ⚠ wta: socket hang up
+  [RapidFree] A-League: réponse inattendue (HTTP 429)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "San Antonio FC" → "san antonio fc" (away)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "FC Tulsa" → "fc tulsa" (away)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "FC Tampa Bay Rowdies" → "fc tampa bay rowdies" (home)
+  [Coherence] ⚠ FUZZY AMBIGUË: "Colorado Springs Switchbacks FC" → clé "colorado rapids" plus proche de Away "Sacramento Republic FC". Home forcé simStats.
+  [BuildMatch] "Colorado Springs Switchbacks FC" (Home) — stats simulées (non trouvé en DB ni archive FD)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "El Paso Locomotive FC" → "el paso locomotive fc" (home)
+  [Forme] "South Africa" → fallback forme depuis "southend united" (LLLLL)
+  [Fuzzy] "turkey" → "turkiye" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "st patrick s athletic" → "st patricks athletic" (dist=1) — ATTENTION: match approximatif
+  [BuildMatch] "St Patrick's Athletic" (Home) — stats simulées (non trouvé en DB ni archive FD)
+  [BuildMatch] "Shelbourne" (Home) — stats simulées (non trouvé en DB ni archive FD)
+  [Forme] "Shelbourne" → forme synthétisée depuis PPG (WWLLL)
+  [Forme] "Sporting JAX" → fallback forme depuis "sporting cp" (WWWDD)
+[MMA] Odds API quota low: 6 remaining
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 16s
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 32s
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [STANDINGS] "panama" préservé ligue 33(T1) rang 2 — skip ligue 1(CUP) rang 1
+  [STANDINGS] "costa rica" préservé ligue 33(T1) rang 8 — skip ligue 1(CUP) rang 5
+  [STANDINGS] "guatemala" préservé ligue 33(T1) rang 7 — skip ligue 1(CUP) rang 6
+  [STANDINGS] "honduras" préservé ligue 33(T1) rang 6 — skip ligue 1(CUP) rang 7
+  [STANDINGS] "saudi arabia" préservé ligue 32(T1) rang 1 — skip ligue 1(CUP) rang 8
+  [STANDINGS] "jamaica" préservé ligue 33(T1) rang 3 — skip ligue 1(CUP) rang 9
+  [STANDINGS] "curacao" préservé ligue 33(T1) rang 1 — skip ligue 1(CUP) rang 10
+  [STANDINGS] "trinidad and tobago" préservé ligue 33(T1) rang 9 — skip ligue 1(CUP) rang 11
+  [STANDINGS] "haiti" préservé ligue 33(T1) rang 4 — skip ligue 1(CUP) rang 13
+  [STANDINGS] "suriname" préservé ligue 33(T1) rang 5 — skip ligue 1(CUP) rang 14
+  [STANDINGS] "el salvador" préservé ligue 33(T1) rang 11 — skip ligue 1(CUP) rang 15
+  [STANDINGS] "arsenal" préservé ligue 39(T1) rang 1 — skip ligue 2(T1) rang 1
+  [STANDINGS] "fc bayern munchen" préservé ligue 78(T1) rang 1 — skip ligue 2(T1) rang 2
+  [STANDINGS] "liverpool fc" préservé ligue 39(T1) rang 5 — skip ligue 2(T1) rang 3
+  [STANDINGS] "tottenham hotspur" préservé ligue 39(T1) rang 17 — skip ligue 2(T1) rang 4
+  [STANDINGS] "fc barcelona" préservé ligue 140(T1) rang 1 — skip ligue 2(T1) rang 5
+  [STANDINGS] "chelsea" préservé ligue 39(T1) rang 10 — skip ligue 2(T1) rang 6
+  [STANDINGS] "sporting cp" préservé ligue 94(T1) rang 2 — skip ligue 2(T1) rang 7
+  [STANDINGS] "manchester city" préservé ligue 39(T1) rang 2 — skip ligue 2(T1) rang 8
+  [STANDINGS] "real madrid" préservé ligue 558(T1) rang 2 — skip ligue 2(T1) rang 9
+  [STANDINGS] "inter" préservé ligue 135(T1) rang 1 — skip ligue 2(T1) rang 10
+  [STANDINGS] "paris saint germain" préservé ligue 61(T1) rang 1 — skip ligue 2(T1) rang 11
+  [STANDINGS] "newcastle united" préservé ligue 39(T1) rang 12 — skip ligue 2(T1) rang 12
+  [STANDINGS] "juventus" préservé ligue 135(T1) rang 6 — skip ligue 2(T1) rang 13
+  [STANDINGS] "atalanta" préservé ligue 135(T1) rang 7 — skip ligue 2(T1) rang 15
+  [STANDINGS] "bayer 04 leverkusen" préservé ligue 78(T1) rang 6 — skip ligue 2(T1) rang 16
+  [STANDINGS] "borussia dortmund" préservé ligue 78(T1) rang 2 — skip ligue 2(T1) rang 17
+  [STANDINGS] "olympiacos fc" préservé ligue 318(T1) rang 2 — skip ligue 2(T1) rang 18
+  [STANDINGS] "club brugge kv" préservé ligue 144(T1) rang 1 — skip ligue 2(T1) rang 19
+  [STANDINGS] "galatasaray" préservé ligue 203(T1) rang 1 — skip ligue 2(T1) rang 20
+  [STANDINGS] "as monaco" préservé ligue 61(T1) rang 7 — skip ligue 2(T1) rang 21
+  [STANDINGS] "bod glimt" préservé ligue 103(T1) rang 3 — skip ligue 2(T1) rang 23
+  [STANDINGS] "benfica" préservé ligue 94(T1) rang 3 — skip ligue 2(T1) rang 24
+  [STANDINGS] "olympique de marseille" préservé ligue 61(T1) rang 5 — skip ligue 2(T1) rang 25
+  [STANDINGS] "royale union saint gilloise" préservé ligue 144(T1) rang 2 — skip ligue 2(T1) rang 27
+  [STANDINGS] "psv eindhoven" préservé ligue 88(T1) rang 1 — skip ligue 2(T1) rang 28
+  [STANDINGS] "athletic club" préservé ligue 558(T1) rang 7 — skip ligue 2(T1) rang 29
+  [STANDINGS] "ssc napoli" préservé ligue 135(T1) rang 2 — skip ligue 2(T1) rang 30
+  [STANDINGS] "afc ajax" préservé ligue 88(T1) rang 5 — skip ligue 2(T1) rang 32
+  [STANDINGS] "eintracht frankfurt" préservé ligue 78(T1) rang 8 — skip ligue 2(T1) rang 33
+  [STANDINGS] "villarreal" préservé ligue 140(T1) rang 2 — skip ligue 2(T1) rang 35
+  [STANDINGS] "olympique lyonnais" préservé ligue 61(T1) rang 4 — skip ligue 3(T1) rang 1
+  [STANDINGS] "aston villa" préservé ligue 39(T1) rang 4 — skip ligue 3(T1) rang 2
+  [STANDINGS] "fc midtjylland" préservé ligue 119(T1) rang 2 — skip ligue 3(T1) rang 3
+  [STANDINGS] "fc porto" préservé ligue 94(T1) rang 1 — skip ligue 3(T1) rang 4
+  [STANDINGS] "real betis" préservé ligue 140(T1) rang 4 — skip ligue 3(T1) rang 5
+  [STANDINGS] "sporting braga" préservé ligue 94(T1) rang 4 — skip ligue 3(T1) rang 6
+  [STANDINGS] "sc freiburg" préservé ligue 78(T1) rang 7 — skip ligue 3(T1) rang 7
+  [STANDINGS] "as roma" préservé ligue 135(T1) rang 3 — skip ligue 3(T1) rang 8
+  [STANDINGS] "krc genk" préservé ligue 144(T1) rang 4 — skip ligue 3(T1) rang 9
+  [STANDINGS] "bologna" préservé ligue 135(T1) rang 8 — skip ligue 3(T1) rang 10
+  [STANDINGS] "vfb stuttgart" préservé ligue 78(T1) rang 4 — skip ligue 3(T1) rang 11
+  [STANDINGS] "nottingham forest" préservé ligue 39(T1) rang 16 — skip ligue 3(T1) rang 13
+  [STANDINGS] "celta vigo" préservé ligue 140(T1) rang 6 — skip ligue 3(T1) rang 16
+  [STANDINGS] "paok" préservé ligue 318(T1) rang 3 — skip ligue 3(T1) rang 17
+  [STANDINGS] "lille" préservé ligue 61(T1) rang 3 — skip ligue 3(T1) rang 18
+  [STANDINGS] "fenerbahce" préservé ligue 203(T1) rang 2 — skip ligue 3(T1) rang 19
+  [STANDINGS] "panathinaikos fc" préservé ligue 318(T1) rang 4 — skip ligue 3(T1) rang 20
+  [STANDINGS] "celtic" préservé ligue 188(T1) rang 1 — skip ligue 3(T1) rang 21
+  [STANDINGS] "ludogorets" préservé ligue 172(T1) rang 2 — skip ligue 3(T1) rang 22
+  [STANDINGS] "sk brann" préservé ligue 103(T1) rang 11 — skip ligue 3(T1) rang 24
+  [STANDINGS] "bsc young boys" préservé ligue 207(T1) rang 6 — skip ligue 3(T1) rang 25
+  [STANDINGS] "sk sturm graz" préservé ligue 262(T1) rang 2 — skip ligue 3(T1) rang 26
+  [STANDINGS] "fcsb" préservé ligue 283(T1) rang 6 — skip ligue 3(T1) rang 27
+  [STANDINGS] "go ahead eagles" préservé ligue 88(T1) rang 12 — skip ligue 3(T1) rang 28
+  [STANDINGS] "feyenoord" préservé ligue 88(T1) rang 2 — skip ligue 3(T1) rang 29
+  [STANDINGS] "basel" préservé ligue 207(T1) rang 5 — skip ligue 3(T1) rang 30
+  [STANDINGS] "rangers" préservé ligue 188(T1) rang 3 — skip ligue 3(T1) rang 32
+  [STANDINGS] "nice" préservé ligue 61(T1) rang 16 — skip ligue 3(T1) rang 33
+  [STANDINGS] "fc utrecht" préservé ligue 88(T1) rang 6 — skip ligue 3(T1) rang 34
+  [STANDINGS] "malmo ff" préservé ligue 113(T1) rang 9 — skip ligue 3(T1) rang 35
+  [DEBUG STANDINGS] Standings vides BSD 66 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/66_4. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/66_4
+  [DEBUG STANDINGS] BSD KO pour ligue 4 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 64 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/64_5. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/64_5
+  [DEBUG STANDINGS] BSD KO pour ligue 5 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 67 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/67_9. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/67_9
+  [DEBUG STANDINGS] BSD KO pour ligue 9 — ajout au fallback API-Football
+  [STANDINGS] "panama" préservé ligue 33(T1) rang 2 — skip ligue 10(T2) rang 20
+  [STANDINGS] "indonesia" préservé ligue 32(T1) rang 6 — skip ligue 10(T2) rang 45
+  [STANDINGS] "el salvador" préservé ligue 33(T1) rang 11 — skip ligue 10(T2) rang 57
+  [STANDINGS] "haiti" préservé ligue 33(T1) rang 4 — skip ligue 10(T2) rang 60
+  [STANDINGS] "jamaica" préservé ligue 33(T1) rang 3 — skip ligue 10(T2) rang 66
+  [STANDINGS] "iraq" préservé ligue 32(T1) rang 3 — skip ligue 10(T2) rang 74
+  [STANDINGS] "saudi arabia" préservé ligue 32(T1) rang 1 — skip ligue 10(T2) rang 77
+  [STANDINGS] "curacao" préservé ligue 33(T1) rang 1 — skip ligue 10(T2) rang 89
+  [STANDINGS] "oman" préservé ligue 32(T1) rang 5 — skip ligue 10(T2) rang 94
+  [STANDINGS] "qatar" préservé ligue 32(T1) rang 2 — skip ligue 10(T2) rang 133
+  [STANDINGS] "honduras" préservé ligue 33(T1) rang 6 — skip ligue 10(T2) rang 137
+  [STANDINGS] "nicaragua" préservé ligue 33(T1) rang 10 — skip ligue 10(T2) rang 149
+  [STANDINGS] "costa rica" préservé ligue 33(T1) rang 8 — skip ligue 10(T2) rang 151
+  [STANDINGS] "bermuda" préservé ligue 33(T1) rang 12 — skip ligue 10(T2) rang 166
+  [STANDINGS] "trinidad and tobago" préservé ligue 33(T1) rang 9 — skip ligue 10(T2) rang 174
+  [STANDINGS] "guatemala" préservé ligue 33(T1) rang 7 — skip ligue 10(T2) rang 175
+  [STANDINGS] "macara" préservé ligue 240(T1) rang 10 — skip ligue 11(T1) rang 1
+  [STANDINGS] "tigre" préservé ligue 128(T1) rang 19 — skip ligue 11(T1) rang 2
+  [STANDINGS] "america de cali" préservé ligue 239(T1) rang 4 — skip ligue 11(T1) rang 3
+  [STANDINGS] "atletico mineiro" préservé ligue 71(T1) rang 9 — skip ligue 11(T1) rang 1
+  [STANDINGS] "sao paulo" préservé ligue 71(T1) rang 8 — skip ligue 11(T1) rang 1
+  [STANDINGS] "o higgins" préservé ligue 265(T1) rang 10 — skip ligue 11(T1) rang 2
+  [STANDINGS] "millonarios" préservé ligue 239(T1) rang 10 — skip ligue 11(T1) rang 3
+  [STANDINGS] "santos" préservé ligue 71(T1) rang 15 — skip ligue 11(T1) rang 2
+  [STANDINGS] "san lorenzo" préservé ligue 128(T1) rang 14 — skip ligue 11(T1) rang 3
+  [STANDINGS] "deportivo cuenca" préservé ligue 240(T1) rang 2 — skip ligue 11(T1) rang 4
+  [STANDINGS] "botafogo" préservé ligue 71(T1) rang 12 — skip ligue 11(T1) rang 1
+  [STANDINGS] "racing club" préservé ligue 128(T1) rang 16 — skip ligue 11(T1) rang 3
+  [STANDINGS] "gremio" préservé ligue 71(T1) rang 16 — skip ligue 11(T1) rang 2
+  [STANDINGS] "deportivo riestra" préservé ligue 128(T1) rang 28 — skip ligue 11(T1) rang 3
+  [STANDINGS] "palestino" préservé ligue 265(T1) rang 7 — skip ligue 11(T1) rang 4
+  [STANDINGS] "vasco da gama" préservé ligue 71(T1) rang 17 — skip ligue 11(T1) rang 2
+  [STANDINGS] "audax italiano" préservé ligue 265(T1) rang 13 — skip ligue 11(T1) rang 3
+  [STANDINGS] "barracas central" préservé ligue 128(T1) rang 18 — skip ligue 11(T1) rang 4
+  [STANDINGS] "river plate" préservé ligue 128(T1) rang 4 — skip ligue 11(T1) rang 1
+  [STANDINGS] "red bull bragantino" préservé ligue 71(T1) rang 5 — skip ligue 11(T1) rang 2
+  [STANDINGS] "rs berkane" préservé ligue 200(T1) rang 1 — skip ligue 12(T1) rang 2
+  [STANDINGS] "rivers united" préservé ligue 436(T1) rang 2 — skip ligue 12(T1) rang 4
+  [STANDINGS] "as far rabat" préservé ligue 200(T1) rang 2 — skip ligue 12(T1) rang 2
+  [STANDINGS] "esperance tunis" préservé ligue 202(T1) rang 2 — skip ligue 12(T1) rang 2
+  [STANDINGS] "flamengo" préservé ligue 71(T1) rang 2 — skip ligue 13(T1) rang 1
+  [STANDINGS] "estudiantes de la plata" préservé ligue 128(T1) rang 2 — skip ligue 13(T1) rang 2
+  [STANDINGS] "independiente medellin" préservé ligue 239(T1) rang 11 — skip ligue 13(T1) rang 3
+  [STANDINGS] "coquimbo unido" préservé ligue 265(T1) rang 3 — skip ligue 13(T1) rang 1
+  [STANDINGS] "deportes tolima" préservé ligue 239(T1) rang 6 — skip ligue 13(T1) rang 2
+  [STANDINGS] "independiente rivadavia" préservé ligue 128(T1) rang 1 — skip ligue 13(T1) rang 1
+  [STANDINGS] "fluminense" préservé ligue 71(T1) rang 3 — skip ligue 13(T1) rang 2
+  [STANDINGS] "universidad catolica" préservé ligue 265(T1) rang 2 — skip ligue 13(T1) rang 1
+  [STANDINGS] "cruzeiro" préservé ligue 71(T1) rang 11 — skip ligue 13(T1) rang 2
+  [STANDINGS] "boca juniors" préservé ligue 128(T1) rang 3 — skip ligue 13(T1) rang 3
+  [STANDINGS] "corinthians" préservé ligue 71(T1) rang 10 — skip ligue 13(T1) rang 1
+  [STANDINGS] "independiente santa fe" préservé ligue 239(T1) rang 7 — skip ligue 13(T1) rang 3
+  [STANDINGS] "cerro porteno" préservé ligue 480(T1) rang 3 — skip ligue 13(T1) rang 1
+  [STANDINGS] "palmeiras" préservé ligue 71(T1) rang 1 — skip ligue 13(T1) rang 2
+  [STANDINGS] "mirassol" préservé ligue 71(T1) rang 19 — skip ligue 13(T1) rang 2
+  [STANDINGS] "rosario central" préservé ligue 128(T1) rang 7 — skip ligue 13(T1) rang 1
+  [STANDINGS] "independiente del valle" préservé ligue 240(T1) rang 1 — skip ligue 13(T1) rang 2
+  [STANDINGS] "libertad" préservé ligue 480(T1) rang 6 — skip ligue 13(T1) rang 4
+  [DEBUG STANDINGS] Standings vides BSD 63 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/63_35. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/63_35
+  [DEBUG STANDINGS] BSD KO pour ligue 35 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 68 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/68_36. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/68_36
+  [DEBUG STANDINGS] BSD KO pour ligue 36 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 39 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/39_45. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/39_45
+  [DEBUG STANDINGS] BSD KO pour ligue 45 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 40 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/40_48. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/40_48
+  [DEBUG STANDINGS] BSD KO pour ligue 48 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 44 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/44_63. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/44_63
+  [DEBUG STANDINGS] BSD KO pour ligue 63 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 35 saison 78 status=200
+[CacheBuffer] Invalid data from bsd_standings/35_73. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/35_73
+  [DEBUG STANDINGS] BSD KO pour ligue 73 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 43 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/43_81. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/43_81
+  [DEBUG STANDINGS] BSD KO pour ligue 81 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 51 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/51_100. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/51_100
+  [DEBUG STANDINGS] BSD KO pour ligue 100 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 46 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/46_108. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/46_108
+  [DEBUG STANDINGS] BSD KO pour ligue 108 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 42 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/42_137. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/42_137
+  [DEBUG STANDINGS] BSD KO pour ligue 137 — ajout au fallback API-Football
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [DEBUG STANDINGS] Standings vides BSD 41 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/41_143. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/41_143
+  [DEBUG STANDINGS] BSD KO pour ligue 143 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 56 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/56_246. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/56_246
+  [DEBUG STANDINGS] BSD KO pour ligue 246 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 48 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/48_575. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/48_575
+  [DEBUG STANDINGS] BSD KO pour ligue 575 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 65 saison n/a status=200
+[CacheBuffer] Invalid data from bsd_standings/65_683. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/65_683
+  [DEBUG STANDINGS] BSD KO pour ligue 683 — ajout au fallback API-Football
+  [STANDINGS] "qatar" préservé ligue 32(T1) rang 2 — skip ligue 999(CUP) rang 3
+  [STANDINGS] "haiti" préservé ligue 33(T1) rang 4 — skip ligue 999(CUP) rang 2
+  [STANDINGS] "curacao" préservé ligue 33(T1) rang 1 — skip ligue 999(CUP) rang 1
+  [STANDINGS] "saudi arabia" préservé ligue 32(T1) rang 1 — skip ligue 999(CUP) rang 2
+  [STANDINGS] "iraq" préservé ligue 32(T1) rang 3 — skip ligue 999(CUP) rang 2
+  [STANDINGS] "panama" préservé ligue 33(T1) rang 2 — skip ligue 999(CUP) rang 4
+  [ESPN] J2 League (jpn.2) — HTTP 400
+  [ESPN] Ligue 99 (slug jpn.2) → vide/échec
+  [Boot] ⚠ Enrichissement stats: fetchStats (background) timeout (90000ms)
+  [Cron:Stats] 17 ligue(s) BSD en échec (4, 5, 9, 35, 36, 45, 48, 63, 73, 81, 100, 108, 137, 143, 246, 575, 683) — PAS de fallback API-Football (anti-contamination saison N-1), dernière table BSD conservée
+  [Fuzzy] "aifk" → "aik" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "vjs" → "vps" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "aek athen" → "aek athens" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "ferencvarosi tc" → "ferencvaros tc" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "ae kifisias" → "ae kifisia" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "cosenza" → "cesena" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "lecco" → "lecce" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "lamia" → "latvia" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "boulogne" → "bologna" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "brunei" → "burundi" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "macau" → "manaus" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "ticino" → "torino" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "shetland" → "scotland" (dist=2) — ATTENTION: match approximatif
+  [Fuzzy] "tonga" → "togo" (dist=2) — ATTENTION: match approximatif
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 500 Internal server error
+  [BSD-WS] déconnecté, reconnect dans 60s

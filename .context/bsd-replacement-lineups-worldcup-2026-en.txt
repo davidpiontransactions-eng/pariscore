@@ -1,0 +1,65 @@
+============================================================================
+BSD REPLACEMENT ANALYSIS - WORLD CUP 2026 LINEUPS
+============================================================================
+Date     : June 12, 2026
+Context  : Elimination of BSD (Bzzoiro Sports Data, $5/mo) routing
+           for team lineups.
+Project  : PariScore - real-time sports betting analysis platform
+============================================================================
+
+1. SOLUTION COMPARISON - WC 2026 LINEUPS
+
+Solution                    Type     WC Cost    Reliability  Integration
+----------------------------------------------------------------------
+football-data.org (free)    API      0 EUR      ***          Very Easy (coded)
+football-data.org Tier One  API      49 EUR/mo  ****         Very Easy (coded)
+API-Football Pro            API      19 USD/mo  ****         Easy (kill-switch)
+FIFA.com scraping           Scraping 0 EUR      *****        Medium (BS4)
+FBref scraping              Scraping 0 EUR      ***          Medium (legal risk)
+BeSoccer scraping           Scraping 0 EUR      ***          Med-High
+Sofascore (direct)          API      0 EUR      BLOCKED      N/A
+Sofascore (Playwright)      Scraping 0 EUR      ***          High (not scalable)
+Sportmonks Growth           API      149 EUR/mo ****         Easy (expensive)
+
+2. TARGET ARCHITECTURE
+
+Route maintained: GET /api/v1/bsd/lineups/:matchId
+   L1: football-data.org (PRIMARY, 0 EUR, already coded)
+   L2: FIFA.com scraping (FALLBACK, 0 EUR, official)
+   L3: football-data.org Tier One (49 EUR/mo if needed)
+
+3. IMPLEMENTATION PLAN (4-6h)
+
+Phase 1 - football-data.org (2-3h) :
+   - Adapt fetchFootballDataMatchDetail() to BSD format
+   - Add footballDataToBsdLineups() mapper
+   - Fallback in _bsdEnrichFetch() if BSD fails
+   - Reduce cache 24h -> 30min
+
+Phase 2 - FIFA.com (2h) :
+   - Implement scrapeFifaLineups() with LD+JSON
+   - Complete unavailable_players
+   - Infer lineup_status (H-1 -> predicted)
+
+Phase 3 - Tests (1h) :
+   - Dual mode BSD + football-data.org
+   - Verify 5 WC matches
+   - Cut BSD after validation
+
+4. RECOMMENDATION
+
+PRIMARY  : football-data.org (FREE, already coded)
+FALLBACK : FIFA.com scraping (FREE)
+PLAN B   : football-data.org Tier One (49 EUR/month if needed)
+
+BUDGET   : 0 EUR (or 49 EUR max if scaling up)
+DURATION : 4-6h dev - one session
+DEPS     : ZERO new dependencies (Node native)
+
+ATTENTION rate limit: 10 req/min on free tier
+- Solution: stagger polls + aggressive cache
+- If insufficient for WC: 49 EUR/month = one-time investment
+
+============================================================================
+Document generated June 12, 2026 - PariScore
+============================================================================

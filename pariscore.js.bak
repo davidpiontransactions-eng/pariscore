@@ -798,8 +798,7 @@ function showPage(pageId, linkEl) {
   if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
   if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
   if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10();
-
-
+  if (pageId !== 'tennis' && typeof stopTennisWomTop === 'function') stopTennisWomTop();
   // Verrou tier/sport — bloque les modules non accessibles
   if (typeof psPageBlocked === 'function') {
     const _blk = psPageBlocked(pageId);
@@ -832,7 +831,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10();  loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
+  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10(); startTennisWomTop(); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
   if (pageId === 'cs2') initCs2Page();
   if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage();
@@ -1682,6 +1681,14 @@ function _tnRenderSourceBadge(m) {
   return `<span class="tn-src-chip" data-source="${src}" title="${_escTennis(tooltip)}" aria-label="${_escTennis('Source données: ' + src)}" tabindex="0">${_escTennis(display)}</span>${warn}`;
 }
 
+// bd — Glicko-2 badge (serve/return rating) next to player name
+function _tnWomBadge(wom, side) {
+  if (!wom || wom[side] == null) return '';
+  const pct = wom[side];
+  const cls = pct >= 60 ? 'wom-high' : pct >= 50 ? 'wom-mid' : 'wom-low';
+  const vol = wom.total_matched ? ' · £' + (wom.total_matched >= 1000 ? Math.round(wom.total_matched / 1000) + 'k' : wom.total_matched) : '';
+  return `<span class="tn-wom-badge ${cls}" title="WoM Betfair : ${pct}% du volume misé sur ce joueur${vol}">BF ${pct}%</span>`;
+}
 function _tnGlickoBadge(m, playerIdx) {
   if (!m.glicko2) return '';
   const sv = playerIdx === 1 ? m.glicko2.p1_serve : m.glicko2.p2_serve;
@@ -2072,8 +2079,8 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
-<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
-<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}${_tnWomBadge(m.betfair_wom, 'p1')}</span>
+<span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}${_tnWomBadge(m.betfair_wom, 'p2')}</span>
 <span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;" title="Tous les sets : ${_escTennis(allSets)}"><span class="tennis-games">${_escTennis(gamesScore)}</span>${_tvbServeSpark(m.serve_momentum)}</span>
@@ -3258,6 +3265,22 @@ function _tvbWOM(wom) {
     : '';
   var tip = 'Betfair Exchange — Weight of Money' + (tot ? ' · ' + tot + ' misés' : '');
   // Tennis (p1/p2)
+  if (wom.p1 != null && wom.p2 != null) {
+    var p1 = wom.p1, p2 = wom.p2;
+    var c1 = p1 >= p2 ? '#00e676' : '#ff4d4d';
+    var c2 = p2 > p1  ? '#00e676' : '#ff4d4d';
+    return '<div title="' + tip + '" style="margin-top:3px;display:flex;align-items:center;gap:3px;font-size:8px;font-family:var(--font-mono);">'
+      + '<span style="color:var(--text3);font-size:7px;font-weight:700;letter-spacing:.5px;">WOM</span>'
+      + '<div style="width:52px;height:5px;border-radius:3px;overflow:hidden;background:#1e2328;display:flex;">'
+        + '<div style="width:' + p1 + '%;background:' + c1 + ';"></div>'
+        + '<div style="width:' + p2 + '%;background:' + c2 + ';"></div>'
+      + '</div>'
+      + '<span style="color:' + c1 + ';font-weight:700;">' + p1 + '%</span>'
+      + '<span style="color:var(--text3);">·</span>'
+      + '<span style="color:' + c2 + ';font-weight:700;">' + p2 + '%</span>'
+      + (tot ? '<span style="color:var(--text3);font-size:7px;">' + tot + '</span>' : '')
+      + '</div>';
+  }
   // Football (h/d/a) — desktop MATCH column, grande barre lisible, normalisée à 100%
   if (wom.h != null && wom.d != null && wom.a != null) {
     var wh = Math.max(0, Number(wom.h) || 0), wd = Math.max(0, Number(wom.d) || 0), wa = Math.max(0, Number(wom.a) || 0);
@@ -3929,8 +3952,7 @@ function renderTennisValueBets(rawMatches) {
   const positiveEv = document.getElementById('tennis-vb-positive-ev')?.checked;
   const hideFinished = document.getElementById('tennis-vb-hide-finished')?.checked;
   const liveOnly = document.getElementById('tennis-vb-live-only')?.checked;
-
-
+  const womOnly = document.getElementById('tennis-vb-wom-only')?.checked;
 
   // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
   const _compSel = document.getElementById('tennis-vb-comp');
@@ -3995,7 +4017,7 @@ function renderTennisValueBets(rawMatches) {
       const s = String(m.status || '').toUpperCase();
       if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
     }
-
+    if (womOnly && !(m.betfair_wom?.p1 != null && m.betfair_wom?.p2 != null)) return false;
     if (f.strategy && f.strategy !== 'ALL' && !_tnStrategyMatch(m, f.strategy)) return false;
     // bd 6jro Plan I — filtre format Singles/Doubles. Heuristique : doubles si name slash-pair,
     // ou tournament/round flag doubles, ou is_doubles explicite (server-side).
@@ -4047,7 +4069,13 @@ function renderTennisValueBets(rawMatches) {
         const tb = Date.parse(b.start_time || b.commence_time || '') || Infinity;
         return ta - tb;
       }
-
+      case 'wom': {
+        const wa = a.betfair_wom;
+        const wb = b.betfair_wom;
+        const av = (wa && wa.p1 != null && wa.p2 != null) ? Math.max(wa.p1, wa.p2) : -1;
+        const bv = (wb && wb.p1 != null && wb.p2 != null) ? Math.max(wb.p1, wb.p2) : -1;
+        return bv - av;
+      }
       case 'elo_surf_diff': {
         const _p1ea = a.predictions?.elo?.p1_surface?.elo ?? a.predictions?.elo?.p1_all?.elo ?? 0;
         const _p2ea = a.predictions?.elo?.p2_surface?.elo ?? a.predictions?.elo?.p2_all?.elo ?? 0;
@@ -4188,10 +4216,10 @@ function renderTennisValueBets(rawMatches) {
     const tnp2Fav = (eloP1 != null && eloP2 != null && eloP2 > eloP1) ? ' tn-pfav' : '';
     return _tHdr + _cHdr + `<div class="tn-vb-row${_tnRowCls}" role="row" data-match-id="${matchId}" data-status="${m._isLive ? 'live' : 'pre'}" aria-expanded="false" ${onclick} style="cursor:pointer;">
 <span class="tn-vb-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
-<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
+<span class="tn-vb-cell tn-cell-match" role="cell"><div class="tn-match-meta">${liveTagV3}${surfBadgeV3}${ctxDate}</div><div class="tn-tournament">${tournStr}</div><div class="tn-match-players">${_tvbTrap(m.trap_bet)}<div class="tn-player">${p1Flag}<span class="tn-pname${tnp1Fav}">${p1Name}</span>${r1}${_tnWomBadge(m.betfair_wom, 'p1')}${_tvbMom(m.rank_momentum && m.rank_momentum.p1)}${_tvbSurfMeta(m.player1, m.surface)}</div><div class="tn-player">${p2Flag}<span class="tn-pname${tnp2Fav}">${p2Name}</span>${r2}${_tnWomBadge(m.betfair_wom, 'p2')}${_tvbMom(m.rank_momentum && m.rank_momentum.p2)}${_tvbSurfMeta(m.player2, m.surface)}</div></div></span>
 <span class="tn-vb-cell tn-cell-signal" role="cell"${_tnLiveId ? ` data-tn-pred="${_tnLiveId}"` : ''}>${_tvbPredictiveCell(m)}</span>
 <span class="tn-vb-cell tn-cell-score" role="cell"${_tnLiveId ? ` data-tn-sc="${_tnLiveId}"` : ''}>${_tvbScoreCell(m)}</span>
-<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>
+<span class="tn-vb-cell tn-cell-elo" role="cell">${_tvbEloMinibar(eloP1, eloP2)}${_tvbSDI(m.serve_dominance)}${_tvbWOM(m.betfair_wom)}${_tvbSPSPlaceholder(matchId, eloP1, eloP2)}</span>
 <span class="tn-vb-cell tn-cell-proba" role="cell">${_tvbConfBadge(m.confidence_badge)}${probaNew}${_tvbMlDiv(m.ml_market_div)}</span>
 <span class="tn-vb-cell tn-cell-gou" role="cell"${_tnLiveId ? ` data-tn-gou="${_tnLiveId}"` : ''}>${_tvbGouCell(m)}</span>
 <span class="tn-vb-cell tn-cell-value" role="cell">${valueHtml}</span>
@@ -4575,6 +4603,129 @@ function startTennisTop10() {
 
 function stopTennisTop10() {
   if (_tnTop10Timer) { clearInterval(_tnTop10Timer); _tnTop10Timer = null; }
+}
+
+// ─── Tennis WOM Top-5 — Argent Betfair (volume misé, via betwatch.fr) — bd ab6s ──
+// Source gratuite : total € misé par match. Split par joueur paywallé en tennis → non affiché.
+// Panneau masqué si le provider WOM est absent (available:false).
+let _tnWomTimer = null;
+function _tnWomFmtEur(n) {
+  if (n == null || !isFinite(n)) return '—';
+  if (n >= 1e6) return safeFixed(n / 1e6, n >= 1e7 ? 0 : 1).replace('.', ',') + ' M€';
+  if (n >= 1e3) return safeFixed(n / 1e3, 0) + ' k€';
+  return safeFixed(n, 0) + ' €';
+}
+function _tnWomRow(m, rank, maxVol) {
+  const p1 = escapeHtml(m.player1 || '?');
+  const p2 = escapeHtml(m.player2 || '?');
+  const tour = m.tournament ? escapeHtml(m.tournament) : '';
+  const isLive = m.live ? true : false;
+  const vol = Math.max(0, Number(m.totalMatched) || 0);
+  const rankCls = rank <= 3 ? ' tn-wom-rank-' + rank : '';
+  const liveCls = isLive ? ' tn-wom-card-live' : '';
+  // Volume bar: percentage of maxVol (capped at 100%)
+  var volPct = maxVol > 0 ? Math.min(100, Math.round((vol / maxVol) * 100)) : 0;
+  if (volPct < 2 && vol > 0) volPct = 4; // ensure tiny volumes still show a sliver
+  var da = 'data-p1="' + (m.player1 ? escapeHtml(m.player1) : '') + '" data-p2="' + (m.player2 ? escapeHtml(m.player2) : '') + '" data-tournament="' + (m.tournament ? escapeHtml(m.tournament) : '') + '" data-sport="tennis" data-live="' + (isLive ? 1 : 0) + '" data-volume="' + vol + '"';
+  return '<div class="tn-wom-card' + liveCls + '">'
+    + '<div class="tn-wom-rank' + rankCls + '">' + rank + '</div>'
+    + '<div class="tn-wom-players">'
+      + '<div class="tn-wom-player-names">' + p1 + ' <span class="tn-wom-vs">vs</span> ' + p2 + '</div>'
+      + '<div class="tn-wom-tourney">' + tour + '</div>'
+    + '</div>'
+    + '<div class="tn-wom-vol-wrap">'
+      + '<div class="tn-wom-vol-amt">' + _tnWomFmtEur(vol) + '</div>'
+      + '<div class="tn-wom-vol-bar-track"><div class="tn-wom-vol-bar-fill" style="width:' + volPct + '%"></div></div>'
+      + '<div class="tn-wom-vol-label">misé</div>'
+    + '</div>'
+    + '<div class="tn-wom-actions">'
+      + '<button class="tn-wom-btn" ' + da + ' onclick="analyzeWomMatch(this)" title="Analyse IA Gemini" aria-label="Analyse IA">&#x1F916;</button>'
+      + '<button class="tn-wom-btn tn-wom-btn-dsc" data-p1="' + (m.player1 ? escapeHtml(m.player1) : '') + '" data-p2="' + (m.player2 ? escapeHtml(m.player2) : '') + '" data-tournament="' + (m.tournament ? escapeHtml(m.tournament) : '') + '" data-surface="" data-source="wom" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Publier sur Discord" aria-label="Discord">&#x1F4E1;</button>'
+    + '</div>'
+  + '</div>';
+}
+async function fetchTennisWomTop() {
+  const sec = document.getElementById('tn-wom-section');
+  const body = document.getElementById('tn-wom-body');
+  const statusEl = document.getElementById('tn-wom-status');
+  if (!sec || !body) return;
+  try {
+    const res = await fetch('/api/v1/tennis/wom-top?limit=6');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    var pm = data.prematch || [], lv = data.live || [];
+    if (!data.available || (pm.length + lv.length) === 0) {
+      body.innerHTML = '<div class="tn-wom-empty"><div class="tn-wom-empty-icon">📊</div><div class="tn-wom-empty-text">Aucune donnée Betfair disponible pour le tennis</div></div>';
+      sec.style.display = ''; return;
+    }
+    sec.style.display = '';
+    // Merge prematch + live, keeping prematch first
+    var all = pm.concat(lv);
+    // Compute max volume for progress bar scaling
+    var maxVol = 0;
+    for (var i = 0; i < all.length; i++) {
+      var v = Number(all[i].totalMatched) || 0;
+      if (v > maxVol) maxVol = v;
+    }
+    var html = '';
+    for (var i = 0; i < all.length; i++) {
+      html += _tnWomRow(all[i], i + 1, maxVol);
+    }
+    body.innerHTML = html;
+    if (statusEl) {
+      var t = data.ts ? new Date(data.ts) : null;
+      var hhmm = t ? String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') : '';
+      statusEl.textContent = (data.stale ? '⚠️ ' : '') + (hhmm ? 'maj ' + hhmm : '');
+    }
+  } catch (err) {
+    body.innerHTML = '<div class="tn-wom-error">&#x26A0;&#xFE0F; Erreur de chargement — réessaie dans 90s</div>';
+    sec.style.display = '';
+  }
+}
+function startTennisWomTop() {
+  fetchTennisWomTop();
+  if (_tnWomTimer) clearInterval(_tnWomTimer);
+  _tnWomTimer = setInterval(fetchTennisWomTop, 90_000);
+}
+function stopTennisWomTop() {
+  if (_tnWomTimer) { clearInterval(_tnWomTimer); _tnWomTimer = null; }
+}
+
+// Analyse IA Gemini déclenchée depuis une ligne WOM → réutilise le modal tennis-ai + copyTennisAIText. bd ab6s
+async function analyzeWomMatch(btn) {
+  if (!btn) return;
+  const d = btn.dataset || {};
+  const p1 = (d.p1 || '').trim(), p2 = (d.p2 || '').trim();
+  if (!p1 || !p2) return;
+  if (typeof openTennisAIModal === 'function') openTennisAIModal();
+  const loading = document.getElementById('tennis-ai-loading');
+  const output = document.getElementById('tennis-ai-output');
+  const errBox = document.getElementById('tennis-ai-error');
+  const copyBtn = document.getElementById('tennis-ai-copy-btn');
+  const subtitle = document.getElementById('tennis-ai-subtitle');
+  if (loading) loading.style.display = 'block';
+  if (output) { output.style.display = 'none'; output.textContent = ''; }
+  if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+  if (copyBtn) { copyBtn.disabled = true; copyBtn.style.opacity = '.4'; }
+  _tennisAICurrentRawText = '';
+  if (subtitle) subtitle.textContent = `${p1} vs ${p2} · ${d.tournament || '—'} · 💰 ${d.live === '1' ? 'Live' : 'Prématch'} Betfair`;
+  try {
+    const qs = new URLSearchParams({ p1, p2, tournament: d.tournament || '', sport: d.sport || 'tennis', live: d.live || '0', market: d.market || '', volume: d.volume || '0' });
+    const r = await fetch('/api/v1/tennis/wom-analyze?' + qs.toString(), { headers: { 'Accept': 'application/json' } });
+    if (r.status === 401 || r.status === 403) throw new Error('Analyse IA réservée Pro Tennis / Duo — connecte-toi pour générer le script Discord.');
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    const text = data.text || '';
+    if (!text) throw new Error('Réponse IA vide');
+    _tennisAICurrentRawText = text;
+    if (loading) loading.style.display = 'none';
+    if (output) { output.textContent = text; output.style.display = 'block'; }
+    if (copyBtn) { copyBtn.disabled = false; copyBtn.style.opacity = '1'; }
+  } catch (e) {
+    console.warn('[WomAI] erreur:', e.message);
+    if (loading) loading.style.display = 'none';
+    if (errBox) { errBox.textContent = 'Erreur : ' + (e.message || e); errBox.style.display = 'block'; }
+  }
 }
 
 // Envoi prédiction IA → Discord (bouton 🤖 Top 10 + 📡 WOM) — bd 57f3
@@ -26096,7 +26247,7 @@ function renderComparateur(d) {
     var page = document.querySelector('#page-tennis');
     if (!page) return;
     /* Find the filter row containers — each is the parent <div> of one filter group */
-    var filterGroups = page.querySelectorAll('.tnc-ms-pop, [data-filter], #tennis-vb-sort, #tennis-vb-live-only, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished');
+    var filterGroups = page.querySelectorAll('.tnc-ms-pop, [data-filter], #tennis-vb-sort, #tennis-vb-live-only, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished, #tennis-vb-wom-only');
     /* Strategy: mark the parent <div style="display:flex;…"> of NON-essential filters as extra.
        Essential (keep visible always): Tour (data-filter="tour"), Surface (data-filter="surface"), Live label. */
     var essentialFilters = new Set(['tour', 'surface']);
@@ -26109,7 +26260,7 @@ function renderComparateur(d) {
       }
     });
     /* Sort, multi-comp, search, checkboxes: mark all as extra except live */
-    page.querySelectorAll('#tennis-vb-comp, #tennis-vb-sort, #tnc-ms-btn, .tvb-search, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished').forEach(function (el) {
+    page.querySelectorAll('#tennis-vb-comp, #tennis-vb-sort, #tnc-ms-btn, .tvb-search, #tennis-vb-elo-only, #tennis-vb-positive-ev, #tennis-vb-hide-finished, #tennis-vb-wom-only').forEach(function (el) {
       var row = el.closest('div[style*="display:flex"]') || el.closest('label');
       if (row && !row.hasAttribute('data-cf-filter-extra')) {
         row.setAttribute('data-cf-filter-extra', 'true');
@@ -26180,7 +26331,7 @@ function renderComparateur(d) {
       elo_only: !!document.querySelector('#tennis-vb-elo-only')?.checked,
       positive_ev: !!document.querySelector('#tennis-vb-positive-ev')?.checked,
       hide_finished: !!document.querySelector('#tennis-vb-hide-finished')?.checked,
-
+      wom_only: !!document.querySelector('#tennis-vb-wom-only')?.checked,
       cf_mode: document.body.getAttribute('data-cf-mode') || 'analyse'
     };
   }
@@ -26202,7 +26353,7 @@ function renderComparateur(d) {
     setChk('tennis-vb-elo-only', f.elo_only);
     setChk('tennis-vb-positive-ev', f.positive_ev);
     setChk('tennis-vb-hide-finished', f.hide_finished);
-
+    setChk('tennis-vb-wom-only', f.wom_only);
     var sortSel = document.querySelector('#tennis-vb-sort'); if (sortSel) sortSel.value = f.sort || 'time';
     var searchInput = document.querySelector('#tennis-vb-search'); if (searchInput) searchInput.value = f.q || '';
     /* Reflect filter button active state */

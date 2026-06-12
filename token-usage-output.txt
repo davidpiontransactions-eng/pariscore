@@ -1,0 +1,158 @@
+═══════════════════════════════════════════════════════════════════════════
+Token Analysis: Session ses_1473acecdffejND9WScpEFxETS
+Model: deepseek-v4-flash
+═══════════════════════════════════════════════════════════════════════════
+
+TOKEN BREAKDOWN BY CATEGORY
+─────────────────────────────────────────────────────────────────────────
+Estimated using tokenizer analysis of message content:
+
+Input Categories:
+  USER      ██████████████████████████████        100.0% (50)
+
+  Subtotal: 50 estimated input tokens
+
+Output Categories:
+  REASONING ██████████████████████████████        100.0% (34)
+
+  Subtotal: 34 estimated output tokens
+
+Local Total: 84 tokens (estimated)
+
+TOOL USAGE BREAKDOWN
+─────────────────────────────────────────────────────────────────────────
+
+TOP CONTRIBUTORS
+─────────────────────────────────────────────────────────────────────────
+• User#1                       50 tokens (59.5%)
+• Reasoning#1                  34 tokens (40.5%)
+
+═══════════════════════════════════════════════════════════════════════════
+MOST RECENT API CALL
+─────────────────────────────────────────────────────────────────────────
+
+Raw telemetry from last API response:
+  Input (fresh):              0 tokens
+  Cache read:                 0 tokens
+  Output:                     0 tokens
+  ─────────────────────────────────────
+  Total:                      0 tokens
+
+═══════════════════════════════════════════════════════════════════════════
+SESSION TOTALS (All 0 API calls)
+─────────────────────────────────────────────────────────────────────────
+
+Assistant messages observed: 1 (structural count)
+
+Total tokens processed across the entire session (for cost calculation):
+
+  Input tokens:               0 (fresh tokens across all calls)
+  Cache read:                 0 (cached tokens across all calls)
+  Cache write:                0 (tokens written to cache)
+  Output tokens:              0 (all model responses)
+  ─────────────────────────────────────
+  Session Total:              0 tokens (for billing)
+
+═══════════════════════════════════════════════════════════════════════════
+SESSION COST
+─────────────────────────────────────────────────────────────────────────
+
+Token usage breakdown:
+  Input tokens:               0
+  Output tokens:              0
+
+─────────────────────────────────────────────────────────────────────────
+ACTUAL COST (from API):  $0.0000
+
+Note: Actual cost is OpenCode-recorded provider cost. Estimates use live OpenCode model metadata when available, then bundled models.json pricing.
+
+═══════════════════════════════════════════════════════════════════════════
+AVAILABLE SUBAGENTS (in task tool definition)
+─────────────────────────────────────────────────────────────────────────
+
+These subagents are embedded in the task tool description and consume tokens on every API call.
+
+  Subagent               Description                                        Tokens
+  ───────────────────────────────────────────────────────────────────────
+  explore                Fast agent specialized for exploring codebases. U…    ~105
+  gsd-doc-synthesizer    Synthesizes classified planning docs into a singl…     ~85
+  gsd-domain-researcher  Researches the business domain and real-world app…     ~80
+  gsd-eval-auditor       Retroactive audit of an implemented AI phase's ev…     ~80
+  gsd-eval-planner       Designs a structured evaluation strategy for an A…     ~76
+  gsd-ai-researcher      Researches a chosen AI framework's official docs …     ~73
+  gsd-debug-session-man… Manages multi-cycle /gsd-debug checkpoint and con…     ~69
+  gsd-doc-classifier     Classifies a single planning document as ADR, PRD…     ~68
+  gsd-framework-selector Presents an interactive decision matrix to surfac…     ~61
+  gsd-project-researcher Researches domain ecosystem before roadmap creati…     ~51
+  gsd-codebase-mapper    Explores codebase and writes structured analysis …     ~49
+  gsd-ui-researcher      Produces UI-SPEC.md design contract for frontend …     ~47
+  gsd-ui-checker         Validates UI-SPEC.md design contracts against 6 q…     ~46
+  gsd-code-fixer         Applies fixes to code review findings from REVIEW…     ~45
+  gsd-pattern-mapper     Analyzes codebase for existing patterns and produ…     ~45
+  gsd-ui-auditor         Retroactive 6-pillar visual audit of implemented …     ~43
+  gsd-code-reviewer      Reviews source files for bugs, security issues, a…     ~42
+  gsd-doc-writer         Writes and updates project documentation. Spawned…     ~41
+  gsd-phase-researcher   Researches how to implement a phase before planni…     ~41
+  gsd-security-auditor   Verifies threat mitigations from PLAN.md threat m…     ~41
+  gstack-reviewer        资深工程师视角的代码审查。找出 CI 过了但上线会炸的隐患：竞态条件、信任边界、重试逻辑、资源泄漏…     ~40
+  gsd-executor           Executes GSD plans with atomic commits, deviation…     ~38
+  gsd-research-synthesi… Synthesizes research outputs from parallel resear…     ~38
+  gsd-user-profiler      Analyzes extracted session messages across 8 beha…     ~38
+  gsd-verifier           Verifies phase goal achievement through goal-back…     ~38
+  gsd-plan-checker       Verifies plans will achieve phase goal before exe…     ~37
+  gsd-roadmapper         Creates project roadmaps with phase breakdown, re…     ~37
+  gstack-eng-manager     工程经理视角的架构设计和技术规划。关注系统边界、数据流、扩展性、测试策略，不写具体实现代码。         ~37
+  gsd-planner            Creates executable phase plans with task breakdow…     ~35
+  gsd-advisor-researcher Researches a single gray area decision and return…     ~34
+  gsd-debugger           Investigates bugs using scientific method, manage…     ~34
+  gsd-assumptions-analy… Deeply analyzes codebase for a phase and returns …     ~33
+  gsd-integration-check… Verifies cross-phase integration and E2E flows. C…     ~32
+  gstack-ceo             CEO 视角的产品愿景和需求验证。重构问题本质，挖掘隐含需求，判断优先级，而不是直接给解决方案。       ~31
+  gstack-ship            发布经理视角的版本管理和发布流程。准备发布说明、检查清单、回滚策略，确保顺利上线。              ~31
+  gstack-docs            文档专家视角。确保项目的 README、API 文档和代码注释清晰、准确且易于理解。             ~29
+  general                General-purpose agent for researching complex que…     ~28
+  gsd-doc-verifier       Verifies factual claims in generated docs against…     ~28
+  gstack-qa              QA 工程师视角的测试验证。自动探索边界情况，设计测试用例，验证功能正确性。                 ~28
+  gsd-intel-updater      Analyzes codebase and writes structured intel fil…     ~25
+  gsd-nyquist-auditor    Fills Nyquist validation gaps by generating tests…     ~25
+  gstack-ui-ux           UI/UX 设计师视角。关注用户交互、界面美学、可用性和无障碍。                       ~25
+  gstack-security        安全专家视角。识别潜在的安全漏洞、隐私泄露和不安全的编程实践。                        ~22
+  gstack-template        自定义角色模板。复制此文件创建新角色。                                    ~17
+  ───────────────────────────────────────────────────────────────────────
+  Total: ~1,948 tokens (44 subagents available)
+
+  Note: Full task tool description is ~2,451 tokens (includes instructions/examples).
+
+═══════════════════════════════════════════════════════════════════════════
+TOOL DEFINITION COSTS (Tokenized from OpenCode tool metadata)
+─────────────────────────────────────────────────────────────────────────
+
+  Tool                Est. Tokens   Args   Complexity
+  ───────────────────────────────────────────────────────────────────
+  task                     ~2,709       5   simple
+  bash                     ~1,587       4   simple
+  todowrite                  ~694       1   complex (arrays/objects)
+  edit                       ~494       4   simple
+  read                       ~468       3   simple
+  question                   ~460       1   complex (arrays/objects)
+  webfetch                   ~366       3   simple
+  grep                       ~334       3   simple
+  glob                       ~287       2   simple
+  write                      ~271       2   simple
+  tokenscope                 ~205       3   simple
+  skill                      ~173       1   simple
+  invalid                    ~105       2   simple
+  ───────────────────────────────────────────────────────────────────
+  Total:             ~      8,153 tokens (13 enabled tools)
+
+  Note: Tokenized from the current OpenCode tool descriptions and JSON schemas.
+        Provider-specific schema wrapping may still add small overhead.
+
+═══════════════════════════════════════════════════════════════════════════
+SUMMARY
+─────────────────────────────────────────────────────────────────────────
+
+                          Cost        Tokens          API Calls
+  Session:           $    0.0000             0             0
+
+═══════════════════════════════════════════════════════════════════════════
