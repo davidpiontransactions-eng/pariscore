@@ -777,6 +777,65 @@ let activeCoteMax    = 0;        // cote max des trois issues (0 = tous)
 let activeTeamSearch = '';       // recherche équipe (vide = tous)
 let activeMatchTab   = 'all';   // 'all' | 'live' | 'prematch'
 let matchesRetryTimer = null;   // retry auto si /api/v1/matches échoue
+// ─── APP CACHE — stale-while-revalidate in-memory ──────────────────────────
+const AppCache = {
+  _store: new Map(),
+  _defaultTTL: 60000,
+  _defaultStaleTTL: 300000,
+
+  get(key) {
+    const entry = this._store.get(key);
+    if (!entry) return null;
+    const now = Date.now();
+    const age = now - entry.fetchedAt;
+    if (age < (entry.ttl || this._defaultTTL)) return entry;
+    if (age < (entry.staleTtl || this._defaultStaleTTL)) return entry;
+    this._store.delete(key);
+    return null;
+  },
+
+  set(key, data, ttl, staleTtl) {
+    this._store.set(key, {
+      data: data,
+      fetchedAt: Date.now(),
+      ttl: ttl || this._defaultTTL,
+      staleTtl: staleTtl || this._defaultStaleTTL
+    });
+  },
+
+  async fetch(url, fetcher, ttl, staleTtl) {
+    const cached = this.get(url);
+    if (cached) {
+      const age = Date.now() - cached.fetchedAt;
+      if (age > cached.ttl) {
+        this._refresh(url, fetcher, ttl, staleTtl);
+      }
+      return cached.data;
+    }
+    const data = await fetcher();
+    this.set(url, data, ttl, staleTtl);
+    return data;
+  },
+
+  async _refresh(url, fetcher, ttl, staleTtl) {
+    try {
+      const data = await fetcher();
+      this.set(url, data, ttl, staleTtl);
+    } catch(e) {
+      // silencieux
+    }
+  },
+
+  invalidate(pattern) {
+    for (const key of this._store.keys()) {
+      if (key.includes(pattern)) this._store.delete(key);
+    }
+  },
+
+  clear() {
+    this._store.clear();
+  }
+};
 
 // ─── PAGE ROUTER ─────────────────────────────────────────────────────────────
 function showPage(pageId, linkEl) {
@@ -1271,25 +1330,8 @@ function chooseSport(sport) {
     setup.classList.toggle('ss-tennis', _psStrategySport === 'tennis');
     setup.classList.toggle('ss-football', _psStrategySport === 'football');
     wireStrategyPills();
-    // Compétition tennis : pré-charger données + cloner options dès dispo
     if (_psStrategySport === 'tennis') {
-      const ssC = document.getElementById('ss-comp-sel');
-      const cloneComp = () => {
-        const real = document.getElementById('tennis-vb-comp');
-        if (real && ssC && real.options.length > 1) {
-          const keep = window.psStrategyFilters.comp || 'ALL';
-          ssC.innerHTML = real.innerHTML;
-          ssC.value = [...ssC.options].some(o => o.value === keep) ? keep : 'ALL';
-          window.psStrategyFilters.comp = ssC.value;
-          return true;
-        }
-        return false;
-      };
-      if (!cloneComp()) {
-        try { if (typeof startTennisValueBets === 'function') startTennisValueBets(); } catch (e) {}
-        let _n = 0;
-        const _iv = setInterval(() => { if (cloneComp() || ++_n > 25) clearInterval(_iv); }, 400);
-      }
+      try { if (typeof startTennisValueBets === 'function') startTennisValueBets(); } catch (e) {}
     }
     setup.querySelectorAll('.ss-pill[data-ssf]').forEach(b => {
       const k = b.getAttribute('data-ssf');
@@ -1349,8 +1391,8 @@ function applyFootballPreset() {
     // Kickoff
     const kBtn = document.querySelector('#kickoff-filter-row .filter-chip[data-kick="' + (F.kickoff || '0') + '"]');
     if (kBtn && !kBtn.classList.contains('active')) kBtn.click();
-    if (typeof renderMatches === 'function' && typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
-      renderMatches(allMatches);
+    if (typeof renderMatchesDebounced === 'function' && typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+      renderMatchesDebounced(allMatches);
     }
   } catch (e) { console.warn('[applyFootballPreset]', e); }
 }
@@ -1360,27 +1402,12 @@ function applyTennisPreset() {
     const F = window.psStrategyFilters || {};
     ['ATP', 'WTA'].forEach(v => {
       const want = (v === 'ATP') ? (F.atp !== false) : (F.wta !== false);
-      const b = document.querySelector(`.tennis-vb-filter-btn[data-filter="tour"][data-value="${v}"]`);
+      const b = document.querySelector(`.tennis-premium-btn[data-filter="tour"][data-value="${v}"]`);
       if (b && b.classList.contains('is-active') !== want) b.click();
     });
     const surfVal = F.surface || 'Clay';
-    const surfBtn = document.querySelector(`.tennis-vb-filter-btn[data-filter="surface"][data-value="${surfVal}"]`);
+    const surfBtn = document.querySelector(`.tennis-premium-btn[data-filter="surface"][data-value="${surfVal}"]`);
     if (surfBtn && !surfBtn.classList.contains('is-active')) surfBtn.click();
-    // Catégorie / tier (incl. 125 = Challenger)
-    const tierVal = F.tier || 'ALL';
-    const tierBtn = document.querySelector(`.tennis-vb-filter-btn[data-filter="tier"][data-value="${tierVal}"]`);
-    if (tierBtn && !tierBtn.classList.contains('is-active')) tierBtn.click();
-    // Compétition
-    const compVal = F.comp || 'ALL';
-    const realComp = document.getElementById('tennis-vb-comp');
-    if (realComp) {
-      window._tennisVbFilters = window._tennisVbFilters || {};
-      window._tennisVbFilters.comp = compVal;
-      if (realComp.value !== compVal) { realComp.value = compVal; }
-      _ssFire(realComp, 'change');
-    }
-    const sort = document.getElementById('tennis-vb-sort');
-    if (sort) { sort.value = 'time'; _ssFire(sort, 'change'); }
     [['tennis-vb-elo-only', F.elo], ['tennis-vb-positive-ev', F.ev], ['tennis-vb-hide-finished', F.hide]].forEach(([id, want]) => {
       const c = document.getElementById(id);
       if (c && c.checked !== (want !== false)) { c.checked = (want !== false); _ssFire(c, 'change'); }
@@ -2118,9 +2145,11 @@ async function tickTennisLive() {
   const statusEl = document.getElementById('tennis-live-status');
   try {
     if (statusEl) statusEl.textContent = 'Mise à jour…';
+    // Vérifier le cache pour affichage immédiat
     const r = await fetch('/api/v1/tennis/live', { headers: { 'Accept': 'application/json' } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
+    try { AppCache.set('/api/v1/tennis/live', data, 30000, 120000); } catch(e) {}
     let list = Array.isArray(data) ? data : [];
     let srcLabel = 'BSD';
     if (!list.length) {
@@ -2167,7 +2196,7 @@ function stopTennisLive() {
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
 window._tennisVbLastFetch = [];
-window._tennisVbFilters = { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', strategy: 'ALL', format: 'ALL', sort: 'time', q: '' };
+window._tennisVbFilters = { tour: 'ALL', surface: 'ALL' };
 let _tennisVbTimer = null;
 
 // ── Filtre Compétition multi-sélection (tennis) ──────────────────────────────
@@ -2175,114 +2204,14 @@ let _tennisVbTimer = null;
 // f.comp reste compat : 'ALL' si vide, sinon tableau (filtre array-aware).
 window._tennisCompSel = window._tennisCompSel || [];
 window.__tnCompNames = window.__tnCompNames || [];
-function _tncNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
-function tncSync() {
-  const sel = Array.isArray(window._tennisCompSel) ? window._tennisCompSel : [];
-  window._tennisVbFilters = window._tennisVbFilters || {};
-  window._tennisVbFilters.comp = sel.length ? sel.slice() : 'ALL';
-  const lbl = document.getElementById('tnc-ms-lbl');
-  if (lbl) lbl.textContent = sel.length === 0 ? 'Toutes' : (sel.length === 1 ? sel[0] : sel.length + ' tournois');
-  const hidden = document.getElementById('tennis-vb-comp');
-  if (hidden) { const v = sel.length === 1 ? sel[0] : 'ALL'; if ([...(hidden.options||[])].some(o => o.value === v)) hidden.value = v; }
-  renderTennisValueBets(window._tennisVbLastFetch || []);
-}
-function tncRenderList(filterTxt) {
-  const wrap = document.getElementById('tnc-ms-list');
-  if (!wrap) return;
-  const names = Array.isArray(window.__tnCompNames) ? window.__tnCompNames : [];
-  const sel = new Set(Array.isArray(window._tennisCompSel) ? window._tennisCompSel : []);
-  const q = _tncNorm(filterTxt);
-  const rows = names.filter(n => !q || _tncNorm(n).includes(q)).map(n => {
-    const c = sel.has(n) ? 'checked' : '';
-    const safe = String(n).replace(/"/g, '&quot;');
-    return `<label class="tnc-ms-it"><input type="checkbox" ${c} value="${safe}" onchange="tncCheck(this)"><span>${_escTennis(n)}</span></label>`;
-  }).join('');
-  wrap.innerHTML = rows || '<div class="tnc-ms-empty">Aucun tournoi</div>';
-}
-function tncCheck(cb) {
-  const n = cb.value;
-  let sel = Array.isArray(window._tennisCompSel) ? window._tennisCompSel.slice() : [];
-  if (cb.checked) { if (!sel.includes(n)) sel.push(n); } else { sel = sel.filter(x => x !== n); }
-  window._tennisCompSel = sel;
-  tncSync();
-}
-function tncAll(on) {
-  window._tennisCompSel = on ? (Array.isArray(window.__tnCompNames) ? window.__tnCompNames.slice() : []) : [];
-  tncRenderList(document.getElementById('tnc-ms-q') ? document.getElementById('tnc-ms-q').value : '');
-  tncSync();
-}
-function tncFilter(v) { tncRenderList(v); }
-function tncOutside(ev) {
-  const w = document.getElementById('tnc-ms');
-  if (w && !w.contains(ev.target)) {
-    const pop = document.getElementById('tnc-ms-pop');
-    if (pop) pop.classList.remove('open');
-    const btn = document.getElementById('tnc-ms-btn');
-    if (btn) btn.setAttribute('aria-expanded', 'false');
-    document.removeEventListener('mousedown', tncOutside, true);
-  }
-}
-function tncToggle(e) {
-  if (e) e.stopPropagation();
-  const pop = document.getElementById('tnc-ms-pop');
-  const btn = document.getElementById('tnc-ms-btn');
-  if (!pop) return;
-  const open = pop.classList.toggle('open');
-  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (open) {
-    tncRenderList('');
-    const q = document.getElementById('tnc-ms-q');
-    if (q) { q.value = ''; setTimeout(() => q.focus(), 30); }
-    document.addEventListener('mousedown', tncOutside, true);
-  } else {
-    document.removeEventListener('mousedown', tncOutside, true);
-  }
-}
-// Pont legacy : <select> caché (preset mobile / clone strategy) → sélection mono.
-function tncFromLegacy(v) {
-  window._tennisCompSel = (!v || v === 'ALL') ? [] : [v];
-  tncSync();
-}
-
-// bd 6jro Plan I — Heuristique détection doubles (slash-pair name OR tournament/round contient
-// 'doubles', OR is_doubles server-side). Pas de regex sur nom contenant simple slash dans tournament.
-function _tnIsDoublesMatch(m) {
-  if (!m) return false;
-  if (m.is_doubles === true) return true;
-  const _toStr = v => (v && typeof v === 'object') ? (v.name || v.short_name || '') : String(v || '');
-  const tname = _toStr(m.tournament);
-  const round = String(m.round || '');
-  if (/doubles?\b/i.test(tname) || /doubles?\b/i.test(round)) return true;
-  const p1 = (m.player1 && m.player1.name) || '';
-  const p2 = (m.player2 && m.player2.name) || '';
-  // Pair name pattern : "Bopanna R. / Ebden M." (slash entouré d'espaces, deux noms).
-  const slashPair = /\s\/\s/;
-  if (slashPair.test(p1) && slashPair.test(p2)) return true;
-  return false;
-}
-
 function applyTennisFilter(btnEl) {
   const filterName = btnEl.dataset.filter;
   const value = btnEl.dataset.value;
   if (!filterName) return;
   window._tennisVbFilters[filterName] = value;
-  document.querySelectorAll(`.tennis-vb-filter-btn[data-filter="${filterName}"]`).forEach(b => b.classList.remove('is-active'));
+  document.querySelectorAll(`.tennis-premium-btn[data-filter="${filterName}"]`).forEach(b => b.classList.remove('is-active'));
   btnEl.classList.add('is-active');
   renderTennisValueBets(window._tennisVbLastFetch || []);
-}
-
-// Classifie le tier d'un tournoi depuis son nom (heuristique mots-clés).
-// GS=Grand Chelem · 1000 · 500 · 250 · 125=Challenger/WTA125 · ITF · OTHER.
-function _tvbTier(name) {
-  if (!name) return 'OTHER';
-  const n = String(name).toLowerCase();
-  if (/roland.?garros|wimbledon|us open|australian open|french open/.test(n)) return 'GS';
-  if (/\bitf\b|\b[wm](15|25|35|40|50|60|75|80|100|125)\b|world tennis tour|futures/.test(n)) return 'ITF';
-  if (/challenger|\b125\b|wta\s*125/.test(n)) return '125';
-  if (/\b1000\b|masters|indian wells|miami open|monte.?carlo|madrid open|mutua madrid|internazionali|italian open|rome masters|cincinnati|western\s*&\s*southern|shanghai|canadian open|national bank|rolex paris|paris masters|dubai duty|qatar total|doha open|beijing|china open|wuhan|guadalajara/.test(n)) return '1000';
-  if (/\b500\b|atp\s*500|wta\s*500|barcelona open|queen|halle|hamburg|washington open|tokyo|vienna open|swiss indoors|basel|acapulco|rio open|rotterdam|strasbourg|stuttgart|berlin|eastbourne|adelaide international/.test(n)) return '500';
-  if (/\b250\b|atp\s*250|wta\s*250|geneva open|gonet geneva|parma ladies|lalla meryem|rabat|troph[ée]+ clarins|estoril|munich|marrakech|kitzb[üu]hel|gstaad|umag|bucharest|winston-salem|chengdu|hangzhou|metz|moselle|brisbane|hobart|auckland|cordoba|santiago|houston|s-hertogenbosch|mallorca|newport|atlanta|los cabos|bastad|nottingham|cluj|jiangxi|hua hin|guangzhou|seoul|tokyo open/.test(n)) return '250';
-  return 'OTHER';
 }
 
 function _tvbSurfaceCls(surface) {
@@ -3877,65 +3806,7 @@ function _tnDeltaDR(m){ const d = _tnComputeDR(m); return d ? d.delta : -1; }
 
 // Returns true if match satisfies the requested expert strategy preset.
 // Conditions volontairement strictes pour livrer un set étroit, actionnable.
-function _tnStrategyMatch(m, strat){
-  if (!strat || strat === 'ALL') return true;
-  if (!m) return false;
-  switch (strat) {
-    case 'SURFACE_SPEC': {
-      const r1 = m.player1 && m.player1.surf_rank, r2 = m.player2 && m.player2.surf_rank;
-      if (r1 == null || r2 == null) return false;
-      return Math.abs(Number(r1) - Number(r2)) >= 30;
-    }
-    case 'ACES_SHOCK': {
-      const a = m.predictions && m.predictions.most_aces;
-      if (!a) return false;
-      const p = Number(a.prob != null ? a.prob : (a.p != null ? a.p : a.probability));
-      if (!Number.isFinite(p)) return !!(a.player || a.side);
-      const pct = p <= 1 ? p * 100 : p;
-      return pct >= 60;
-    }
-    case 'FORM_VALUE': {
-      const f = (p) => p ? Math.max(Number(p.l5_pts)||0, Number(p.l10_pts)||0) : 0;
-      const maxForm = Math.max(f(m.player1), f(m.player2));
-      if (maxForm < 7) return false;
-      const ev = m.best_ev_model && m.best_ev_model.ev;
-      const evModel = m.ev_model ? Math.max(Number(m.ev_model.p1)||-999, Number(m.ev_model.p2)||-999) : -999;
-      const evBest = Math.max(Number.isFinite(ev) ? ev : -999, evModel);
-      return evBest >= 3;
-    }
-    case 'DR_SPIKE': {
-      const d = _tnComputeDR(m);
-      return !!(d && d.delta >= 0.30);
-    }
-    case 'FAVORITE_DANGER': {
-      if (!_tnActuallyLive(m)) return false;
-      const bl = m.predictions && (m.predictions.blended || m.predictions.elo);
-      if (!bl) return false;
-      const lo = m._live || {};
-      const s1 = Number(lo.player1_sets!=null?lo.player1_sets:(lo.p1_sets||0))||0;
-      const s2 = Number(lo.player2_sets!=null?lo.player2_sets:(lo.p2_sets||0))||0;
-      const lead = s1 - s2;
-      if (lead === 0) return false;
-      const p1 = Number(bl.p1)||0;
-      const favP1 = p1 >= 0.58;
-      const favP2 = (1 - p1) >= 0.58;
-      return (favP1 && lead < 0) || (favP2 && lead > 0);
-    }
-    case 'COMEBACK': {
-      if (!_tnActuallyLive(m)) return false;
-      const d = _tnComputeDR(m);
-      if (!d) return false;
-      const lo = m._live || {};
-      const s1 = Number(lo.player1_sets!=null?lo.player1_sets:(lo.p1_sets||0))||0;
-      const s2 = Number(lo.player2_sets!=null?lo.player2_sets:(lo.p2_sets||0))||0;
-      const lead = s1 - s2;
-      if (lead === 0) return false;
-      // Joueur en retard au score mais DR > 1.05 (momentum basculé en sa faveur).
-      return (lead < 0 && d.drP1 >= 1.05) || (lead > 0 && d.drP2 >= 1.05);
-    }
-    default: return true;
-  }
-}
+
 
 function renderTennisValueBets(rawMatches) {
   const tbody = document.getElementById('tennis-vb-tbody');
@@ -3947,67 +3818,23 @@ function renderTennisValueBets(rawMatches) {
     return;
   }
 
-  const f = window._tennisVbFilters || { tour: 'ALL', surface: 'ALL', tier: 'ALL', comp: 'ALL', sort: 'time' };
+  const f = window._tennisVbFilters || { tour: 'ALL', surface: 'ALL' };
   const eloOnly = document.getElementById('tennis-vb-elo-only')?.checked;
   const positiveEv = document.getElementById('tennis-vb-positive-ev')?.checked;
   const hideFinished = document.getElementById('tennis-vb-hide-finished')?.checked;
   const liveOnly = document.getElementById('tennis-vb-live-only')?.checked;
-
-
-
-  // Peuple le <select> Compétition depuis tous les matchs (signature = évite reflow inutile).
-  const _compSel = document.getElementById('tennis-vb-comp');
-  {
-    const _tnStr = t => (t && typeof t === 'object') ? (t.name || t.short_name || '') : String(t || '');
-    const names = [...new Set(matches.map(x => _tnStr(x && x.tournament)).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr'));
-    window.__tnCompNames = names;
-    if (typeof _psBuildSidebarAllTennis === 'function') _psBuildSidebarAllTennis();
-    const sig = names.join('|');
-    if (_compSel && _compSel.dataset.sig !== sig) {
-      _compSel.innerHTML = '<option value="ALL">Toutes</option>' + names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
-      _compSel.dataset.sig = sig;
-    }
-    // Purge sélection périmée + recalcule f.comp/label SANS re-render (anti-récursion).
-    if (!Array.isArray(window._tennisCompSel)) window._tennisCompSel = [];
-    const _keep = window._tennisCompSel.filter(n => names.includes(n));
-    if (_keep.length !== window._tennisCompSel.length) window._tennisCompSel = _keep;
-    const _sel = window._tennisCompSel;
-    window._tennisVbFilters = window._tennisVbFilters || {};
-    window._tennisVbFilters.comp = _sel.length ? _sel.slice() : 'ALL';
-    f.comp = window._tennisVbFilters.comp;
-    const _lbl = document.getElementById('tnc-ms-lbl');
-    if (_lbl) _lbl.textContent = _sel.length === 0 ? 'Toutes' : (_sel.length === 1 ? _sel[0] : _sel.length + ' tournois');
-    if (_compSel) { const _v = _sel.length === 1 ? _sel[0] : 'ALL'; if ([...(_compSel.options||[])].some(o => o.value === _v)) _compSel.value = _v; }
-    const _pop = document.getElementById('tnc-ms-pop');
-    if (_pop && _pop.classList.contains('open')) tncRenderList(document.getElementById('tnc-ms-q') ? document.getElementById('tnc-ms-q').value : '');
-  }
-
-  // Recherche texte : normalise (minuscule + sans accents), tous les termes (AND).
-  const _norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  const _qTerms = _norm(f.q).split(/\s+/).filter(Boolean);
 
   let filtered = matches.filter(m => {
     // Exclut les matchs sans joueurs identifiés (TBD / qualifs ESPN → "?").
     const _n1 = String((m.player1 && m.player1.name) || '').trim();
     const _n2 = String((m.player2 && m.player2.name) || '').trim();
     if (!_n1 || !_n2 || _n1 === '?' || _n2 === '?' || /^(tbd|n\/a|bye|qualifier|q\.?)$/i.test(_n1) || /^(tbd|n\/a|bye|qualifier|q\.?)$/i.test(_n2)) return false;
-    if (_qTerms.length) {
-      const hay = _norm([_n1, _n2, m.tournament, m.round, m.tour, m.surface].filter(Boolean).join(' '));
-      if (!_qTerms.every(t => hay.includes(t))) return false;
-    }
     // bd k3ex fix: matchs MIXED visibles sous ATP ET WTA (impliquent les 2 genres).
-    // Avant: strict equality excluait mixed-doubles des deux filtres.
     if (f.tour !== 'ALL') {
       const mt = String(m.tour || '').toUpperCase();
       if (mt !== f.tour && mt !== 'MIXED') return false;
     }
     if (f.surface !== 'ALL' && String(m.surface || '') !== f.surface) return false;
-    if (f.tier && f.tier !== 'ALL' && _tvbTier(m.tournament) !== f.tier) return false;
-    if (f.comp && f.comp !== 'ALL') {
-      const _ct = (m.tournament && typeof m.tournament === 'object') ? (m.tournament.name || m.tournament.short_name || '') : String(m.tournament || '');
-      if (Array.isArray(f.comp)) { if (!f.comp.includes(_ct)) return false; }
-      else if (_ct !== f.comp) return false;
-    }
     if (liveOnly && !_tnActuallyLive(m)) return false;
     if (eloOnly && !(m.predictions && m.predictions.elo)) return false;
     if (positiveEv) {
@@ -4018,17 +3845,10 @@ function renderTennisValueBets(rawMatches) {
       const s = String(m.status || '').toUpperCase();
       if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
     }
-
-    if (f.strategy && f.strategy !== 'ALL' && !_tnStrategyMatch(m, f.strategy)) return false;
-    // bd 6jro Plan I — filtre format Singles/Doubles. Heuristique : doubles si name slash-pair,
-    // ou tournament/round flag doubles, ou is_doubles explicite (server-side).
-    if (f.format && f.format !== 'ALL') {
-      const isDoubles = _tnIsDoublesMatch(m);
-      if (f.format === 'DOUBLES' && !isDoubles) return false;
-      if (f.format === 'SINGLES' && isDoubles) return false;
-    }
     return true;
   });
+  // Compteurs visibles sur chaque bouton filtre (circuit/surface/format/catégorie)
+  _tvbUpdateCounters(matches);
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</span></div>';
@@ -4043,53 +3863,16 @@ function renderTennisValueBets(rawMatches) {
     return `<span class="tvb-mono" style="font-family:'DM Mono',monospace;font-size:12px;">${date}<span class="tvb-book">${time}</span></span>`;
   };
 
-  // Tri sélectionnable (défaut : heure de match croissante).
-  const _sortBy = (f && f.sort) || 'time';
-  filtered.sort((a, b) => {/*TN_UNIFY_SORT*/
+  // Tri par heure de match (live/imminent en tête).
+  filtered.sort((a, b) => {
     const _ra = _tnRank(a), _rb = _tnRank(b);
     if (_ra !== _rb) return _ra - _rb;
-    switch (_sortBy) {
-      case 'ev':
-        return (b.best_ev_model?.ev ?? -999) - (a.best_ev_model?.ev ?? -999);
-      case 'prob': {
-        const pa = a.predictions?.blended?.p1 ?? a.predictions?.elo?.p1 ?? 0;
-        const pb = b.predictions?.blended?.p1 ?? b.predictions?.elo?.p1 ?? 0;
-        return pb - pa;
-      }
-      case 'delta_dr': {
-        // |DR_J1 − DR_J2| set en cours, max → min. Prematch sans DR : -1
-        // (relégué en fin de liste, conformément à la spec).
-        return _tnDeltaDR(b) - _tnDeltaDR(a);
-      }
-      case 'set1':
-        return (b.set_model?.set1?.p1_pct ?? -1) - (a.set_model?.set1?.p1_pct ?? -1);
-      case 'elo':
-        return (b.predictions?.elo?.p1_elo || 0) - (a.predictions?.elo?.p1_elo || 0);
-      case 'chrono': {
-        const ta = Date.parse(a.start_time || a.commence_time || '') || Infinity;
-        const tb = Date.parse(b.start_time || b.commence_time || '') || Infinity;
-        return ta - tb;
-      }
-
-      case 'elo_surf_diff': {
-        const _p1ea = a.predictions?.elo?.p1_surface?.elo ?? a.predictions?.elo?.p1_all?.elo ?? 0;
-        const _p2ea = a.predictions?.elo?.p2_surface?.elo ?? a.predictions?.elo?.p2_all?.elo ?? 0;
-        const _p1eb = b.predictions?.elo?.p1_surface?.elo ?? b.predictions?.elo?.p1_all?.elo ?? 0;
-        const _p2eb = b.predictions?.elo?.p2_surface?.elo ?? b.predictions?.elo?.p2_all?.elo ?? 0;
-        return Math.abs(_p1eb - _p2eb) - Math.abs(_p1ea - _p2ea);
-      }
-      case 'time':
-      default: {
-        // Match le PLUS PROCHE de l'heure actuelle (live/imminent en tête,
-        // passés et lointains repoussés). Écart absolu à maintenant.
-        const now = Date.now();
-        const pa = Date.parse(a.start_time || a.commence_time || '');
-        const pb = Date.parse(b.start_time || b.commence_time || '');
-        const da = Number.isFinite(pa) ? Math.abs(pa - now) : Infinity;
-        const db = Number.isFinite(pb) ? Math.abs(pb - now) : Infinity;
-        return da - db;
-      }
-    }
+    const now = Date.now();
+    const pa = Date.parse(a.start_time || a.commence_time || '');
+    const pb = Date.parse(b.start_time || b.commence_time || '');
+    const da = Number.isFinite(pa) ? Math.abs(pa - now) : Infinity;
+    const db = Number.isFinite(pb) ? Math.abs(pb - now) : Infinity;
+    return da - db;
   });
 
   // Favoris épinglés en tête (pin-to-top)
@@ -4223,6 +4006,44 @@ function renderTennisValueBets(rawMatches) {
   } catch(rowErr) { console.warn('[TennisVB] row render error:', rowErr && rowErr.message, 'match:', m && m.id); return ''; } }).join('');
 }
 
+// ── Compteurs filtres tennis (badges sur chaque bouton) ─────────────────────
+function _tvbUpdateCounters(matches) {
+  if (!Array.isArray(matches)) return;
+  var c = { tour: { ALL: 0, ATP: 0, WTA: 0 }, surface: { ALL: 0, Hard: 0, Clay: 0, Grass: 0 } };
+  for (var i = 0; i < matches.length; i++) {
+    var m = matches[i];
+    var t = String(m.tour || '').toUpperCase();
+    c.tour.ALL++;
+    if (t === 'ATP' || t === 'MIXED') c.tour.ATP++;
+    if (t === 'WTA' || t === 'MIXED') c.tour.WTA++;
+    var s = String(m.surface || '').toUpperCase();
+    c.surface.ALL++;
+    if (s === 'HARD') c.surface.Hard++;
+    else if (s === 'CLAY') c.surface.Clay++;
+    else if (s === 'GRASS') c.surface.Grass++;
+  }
+  _tvbSetBadge('tour', c.tour);
+  _tvbSetBadge('surface', c.surface);
+}
+
+function _tvbSetBadge(filter, counts) {
+  var btns = document.querySelectorAll('.tennis-premium-btn[data-filter="' + filter + '"]');
+  for (var i = 0; i < btns.length; i++) {
+    var b = btns[i];
+    var val = b.getAttribute('data-value');
+    var n = (counts && counts[val] !== undefined) ? counts[val] : 0;
+    var existing = b.querySelector('.badge-count');
+    if (existing) {
+      existing.textContent = n;
+    } else if (n > 0) {
+      var badge = document.createElement('span');
+      badge.className = 'badge-count';
+      badge.textContent = n;
+      b.appendChild(badge);
+    }
+  }
+}
+
 // ── AI-AL Tennis ────────────────────────────────────────────────────────────
 let _tennisAICurrentRawText = '';
 
@@ -4307,6 +4128,7 @@ async function tickTennisValueBets() {
   const statusEl = document.getElementById('tennis-vb-status');
   try {
     if (statusEl && !window._tennisVbBuildRetries) statusEl.textContent = I18N.t('status.loading');
+    // Vérifier le cache pour affichage immédiat
     // Timeout client 25s : une requête pendue ne doit pas figer l'UI.
     const r = await Promise.race([
       apiFetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } }),
@@ -4320,6 +4142,7 @@ async function tickTennisValueBets() {
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
+    try { AppCache.set('/api/v1/tennis/value-bets', data, 30000, 120000); } catch(e) {}
     const matches = Array.isArray(data.matches) ? data.matches : [];
     // Cold : le serveur construit en fond et renvoie loading → on ré-essaie.
     if (data.meta && (data.meta.loading || data.meta.building) && matches.length === 0) {
@@ -4570,9 +4393,11 @@ async function fetchTennisTop10() {
   const statusEl  = document.getElementById('tn-top10-status');
   if (!container) return;
   try {
+    // Vérifier le cache pour affichage immédiat
     const res = await fetch(`/api/v1/tennis/top10?mode=${_tnTop10Mode}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
+    try { AppCache.set('/api/v1/tennis/top10', data, 30000, 120000); } catch(e) {}
     if (statusEl) {
       const t = new Date(data.computed_at || Date.now());
       statusEl.textContent = `${data.total_active || 0} matchs · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
@@ -7710,14 +7535,14 @@ function initQuickFilterBar() {
       kick.classList.add('is-active');
       activeKickoff = parseInt(kick.dataset.qfbKick);
       document.querySelectorAll('.filter-chip[data-kick]').forEach(function(c) { c.classList.remove('active'); });
-      if (typeof renderMatches === 'function') renderMatches(allMatches);
+      if (typeof renderMatchesDebounced === 'function') renderMatchesDebounced(allMatches);
     }
     var strat = e.target.closest('.qfb-pill[data-qfb-strat]');
     if (strat) {
       strat.classList.toggle('is-active');
       activeStrategies = Array.from(container.querySelectorAll('.qfb-pill[data-qfb-strat].is-active'))
         .map(function(b) { return b.dataset.qfbStrat; });
-      if (typeof renderMatches === 'function') renderMatches(allMatches);
+      if (typeof renderMatchesDebounced === 'function') renderMatchesDebounced(allMatches);
     }
   });
   // Confidence slider
@@ -7730,7 +7555,7 @@ function initQuickFilterBar() {
       if (confValEl) confValEl.textContent = v > 0 ? v + '%' : 'Tous';
       var pct = (v) + '%';
       this.style.background = 'linear-gradient(to right, #f59e0b ' + pct + ', var(--border2) ' + pct + ')';
-      if (typeof renderMatches === 'function') renderMatches(allMatches);
+      if (typeof renderMatchesDebounced === 'function') renderMatchesDebounced(allMatches);
     });
   }
 }
@@ -7761,7 +7586,7 @@ function initDatePicker() {
     activeDay = parseInt(btn.dataset.dpkDay);
     // Sync hidden day chips
     document.querySelectorAll('.filter-chip[data-day]').forEach(function(c) { c.classList.remove('active'); });
-    if (typeof renderMatches === 'function') renderMatches(allMatches);
+    if (typeof renderMatchesDebounced === 'function') renderMatchesDebounced(allMatches);
     // Rebuild sidebar avec counts filtrés par date
     if (typeof _psSidebarRebuildAll === 'function') _psSidebarRebuildAll();
   });
@@ -7872,12 +7697,12 @@ function setMatchTab(tab, el) {
   // Ancien #live-dashboard désactivé — remplacé par modale Dashboard V2 (openLiveDetail).
   if (tbl) tbl.style.display = 'block';
   if (dash) dash.style.display = 'none';
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'tab');
 }
 
 function setTeamSearch(val) {
   activeTeamSearch = val.trim();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'team');
   const el = document.getElementById('team-search-count');
   if (el) el.textContent = activeTeamSearch ? `${document.querySelectorAll('#vb-body tr').length} résultat(s)` : '';
 }
@@ -8054,7 +7879,7 @@ function mlPickAll() {
   activeLeague = 'all';
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'ml-all');
 }
 // Pays propriétaire d'une ligue (odds_key) via leaguesByCountry
 function _countryOfLeague(sport) {
@@ -8081,7 +7906,7 @@ function mlToggleCountry(country) {
   activeLeague = 'all';
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'ml-country');
 }
 // Multi-sélection ligues : toggle. Sélectionner une ligue précise ÉCRASE le
 // blanket pays (ex: Serie B seule ≠ tout Italie). Bug filtre championnats.
@@ -8104,7 +7929,7 @@ function mlToggleLeague(sport) {
   activeLeague = 'all';
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'ml-league');
 }
 // ── Sidebar Sport : sélecteur ligues/tournois ─────────────────────────────
 function _psSbPickFoot(key) {
@@ -8119,7 +7944,6 @@ function _psSbPickFoot(key) {
   });
 }
 function _psSbPickTennis(name) {
-  tncFromLegacy(name === 'ALL' ? 'ALL' : name);
   document.querySelectorAll('#ps-tennis-sidebar .sidebar-league-item, #ps-tennis-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
     btn.classList.toggle('is-active', (btn.dataset.sbTournoi || '') === name);
   });
@@ -8507,17 +8331,7 @@ function _psBuildSidebarAllFoot() {
   });
   list.innerHTML = html || '<div class="sidebar-all-empty">Aucune ligue disponible</div>';
 }
-function _psBuildSidebarAllTennis() {
-  var list = document.getElementById('ps-tennis-sidebar-all-list');
-  if (!list) return;
-  var names = Array.isArray(window.__tnCompNames) ? window.__tnCompNames : [];
-  if (!names.length) { list.innerHTML = '<div class="sidebar-all-empty">Aucun tournoi</div>'; return; }
-  list.innerHTML = names.map(function(n) {
-    var safe = n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return '<button class="sidebar-league-item" data-sb-tournoi="' + n.replace(/"/g,'&quot;') + '" onclick="_psSbPickTennis(\'' + safe + '\')">' +
-      _getTennisTournamentLogo(n) + '<span class="sidebar-league-name">' + n + '</span></button>';
-  }).join('');
-}
+
 function _psSbFilterFoot(q) {
   var lq = (q || '').toLowerCase();
   // Show/hide league items
@@ -8681,7 +8495,7 @@ function tsFilter(q) {
 function tsPickAll() {
   activeStrategies = [];
   tsSyncUI();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'strat-all');
 }
 function tsToggleStrat(key) {
   var i = activeStrategies.indexOf(key);
@@ -8689,7 +8503,7 @@ function tsToggleStrat(key) {
   else activeStrategies.splice(i, 1);
   activeTopMarket = ''; // strat prime sur marché legacy
   tsSyncUI();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'strat');
 }
 document.addEventListener('click', function(e) {
   var wrap = document.getElementById('ts-select');
@@ -8704,18 +8518,18 @@ function onCountryMobileSelect(val) {
     activeLeague = sport;
     activeCountries = [];
     activeCountry = 'all';
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'mob-sport');
     initLeagueHub(sport);
   } else if (val === 'all') {
     activeCountries = [];
     activeCountry = 'all';
     activeLeague = 'all';
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'mob-all');
   } else {
     activeCountries = [val];
     activeCountry = val;
     activeLeague = 'all';
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'mob-country');
   }
   if (typeof mlSyncUI === 'function') mlSyncUI();
 }
@@ -8923,7 +8737,7 @@ function removeCountry(e, country) {
   activeCountry = activeCountries.length === 1 ? activeCountries[0] : (activeCountries.length === 0 ? 'all' : activeCountries[0]);
   activeLeague = 'all';
   syncCountryChipUI();
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'remove-country');
 }
 
 async function initLeagueFilters() {
@@ -8980,7 +8794,7 @@ function setSort(key, el) {
 //  CHARGEMENT DES DONNÉES — UN SEUL fetch()
 // ═══════════════════════════════════════════════════════════════════════════════
 async function loadMatches() {
-  setLoading(true); clearError();
+  setLoading(true, 'matchs'); clearError();
   var retries = 3;
   var delay = 2000;
   var lastError = null;
@@ -9016,6 +8830,7 @@ async function loadMatches() {
 
       var json = await res.json();
       allMatches = json.matches || [];
+      try { AppCache.set('/api/v1/matches', json, 30000, 120000); } catch(e) {}
       // Verrou freemium : tableau foot limité à 5 ligues UE
       var _accM = (typeof psAccess === 'function') ? psAccess() : { footPro: true };
       document.body.classList.toggle('ps-free', !_accM.footPro);
@@ -10665,14 +10480,14 @@ function toggleFavFilter() {
   activeFavFilter = !activeFavFilter;
   const chip = document.getElementById('fav-filter-chip');
   if (chip) chip.classList.toggle('active', activeFavFilter);
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'fav');
 }
 
 function toggleSteamFilter() {
   activeSteamFilter = !activeSteamFilter;
   const chip = document.getElementById('steam-filter-chip');
   if (chip) chip.classList.toggle('active', activeSteamFilter);
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'steam');
 }
 
 // bd u4ib — Chip Verdict IA CatBoost (BSD ML v5) — affiche recommandations vérifiées + confidence
@@ -10832,7 +10647,7 @@ function setPeriod(period, btn) {
   if (hdr) hdr.textContent = period === 'season' ? 'PPG' : `PPG (${period.toUpperCase()})`;
   const note = document.getElementById('period-note');
   if (note) note.textContent = period !== 'season' ? `Calculé sur les ${period.slice(1)} derniers matchs` : '';
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches, 'period');
 }
 
 function ppgFromFormStr(form, n) {
@@ -12743,8 +12558,18 @@ const label = country
   // v10.8: enrichissement asynchrone des badges TV après render (cache localStorage 6h pour éviter spam)
   enrichTVChannels();
 }
+// ─── RENDER MATCHES DEBOUNCED ─────────────────────────────────────────────
+const _rmDebounce = {};
+function renderMatchesDebounced(matches, key) {
+  if (!matches) return;
+  key = key || 'default';
+  if (_rmDebounce[key]) cancelAnimationFrame(_rmDebounce[key]);
+  _rmDebounce[key] = requestAnimationFrame(function() {
+    renderMatches(matches);
+  });
+}
 
-// v10.8: async TV channel enricher — populates data-tv-badge slots after renderMatches
+// v10.8: async TV channel enricher
 const _tvBadgeFetched = new Set();
 // Deep-link streaming par broadcaster (mobile/desktop)
 const TV_DEEPLINKS = {
@@ -18617,9 +18442,17 @@ function renderAttributesRadar(m) {
 }
 
 // ─── HELPERS UI ──────────────────────────────────────────────────────────────
-function setLoading(on) {
+function setLoading(on, page) {
   document.getElementById('loading-state').style.display = on ? 'block' : 'none';
   if (on) {
+    // Cacher tous les squelettes, puis afficher celui du sport demandé
+    document.querySelectorAll('.skeleton-page').forEach(function(el) { el.style.display = 'none'; });
+    var skeletonId = 'skeleton-default';
+    if (page === 'matchs') skeletonId = 'skeleton-foot';
+    else if (page === 'tennis') skeletonId = 'skeleton-tennis';
+    else if (page === 'mma') skeletonId = 'skeleton-mma';
+    var skel = document.getElementById(skeletonId);
+    if (skel) skel.style.display = 'block';
     const mt = document.getElementById('matches-table');
     if (mt) mt.style.display = 'none';
     document.getElementById('empty-state').style.display = 'none';
@@ -18638,7 +18471,7 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('.filter-chip[data-day]').forEach(function(c) { c.classList.remove('active'); });
     dayChip.classList.add('active');
     activeDay = dayChip.dataset.day === 'all' ? 'all' : parseInt(dayChip.dataset.day);
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'day');
   }
 
   // Preset pills
@@ -18670,7 +18503,7 @@ document.addEventListener('click', function(e) {
     activeTeamSearch = '';
     var tsInput = document.getElementById('team-search');
     if (tsInput) tsInput.value = '';
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'preset');
     return;
   }
 
@@ -18717,7 +18550,7 @@ document.addEventListener('click', function(e) {
     if (tsInput2) tsInput2.value = '';
     var tsc = document.getElementById('team-search-count');
     if (tsc) tsc.textContent = '';
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'country');
     return;
   }
 
@@ -18738,7 +18571,7 @@ document.addEventListener('click', function(e) {
     if (tsInput3) tsInput3.value = '';
     var tsc2 = document.getElementById('team-search-count');
     if (tsc2) tsc2.textContent = '';
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches, 'league');
     initLeagueHub(sport);
     return;
   }
@@ -18755,7 +18588,7 @@ document.addEventListener('click', function(e) {
       document.querySelectorAll('.topm-chip').forEach(function(c) { c.classList.remove('active'); });
       document.querySelector('.topv-chip')?.classList.remove('active');
     }
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
     return;
   }
   // Top market chips
@@ -18771,7 +18604,7 @@ document.addEventListener('click', function(e) {
       var t10 = document.querySelector('.topn-chip[data-topn="10"]');
       if (t10) t10.classList.add('active');
     }
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
     return;
   }
   // Value-only toggle
@@ -18785,7 +18618,7 @@ document.addEventListener('click', function(e) {
       var t10v = document.querySelector('.topn-chip[data-topn="10"]');
       if (t10v) t10v.classList.add('active');
     }
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
     return;
   }
 
@@ -18799,14 +18632,14 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('.filter-chip[data-edge]').forEach(function(c) { c.classList.remove('active'); });
     edgeChip.classList.add('active');
     activeEdge = parseFloat(edgeChip.dataset.edge);
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
   }
   var kickChip = e.target.closest('.filter-chip[data-kick]');
   if (kickChip) {
     document.querySelectorAll('.filter-chip[data-kick]').forEach(function(c) { c.classList.remove('active'); });
     kickChip.classList.add('active');
     activeKickoff = parseInt(kickChip.dataset.kick);
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
   }
   if (e.target.id === 'adv-reset-btn') {
     activeKickoff = 0; activeO25Min = 0; activeCoteMin = 0; activeCoteMax = 0;
@@ -18822,7 +18655,7 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('.adv-chips-grp').forEach(function (g) {
       g.querySelectorAll('.filter-chip').forEach(function (c, i) { c.classList.toggle('active', i === 0); });
     });
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
   }
 });
 
@@ -18838,18 +18671,18 @@ document.addEventListener('input', e => {
     const o25Val = document.getElementById('o25-val');
     if (o25Val) o25Val.textContent = activeO25Min + '%';
     updateSliderFill(e.target);
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
   }
 });
 
 document.addEventListener('change', e => {
   if (e.target.id === 'cote-min') {
     activeCoteMin = parseFloat(e.target.value) || 0;
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
   }
   if (e.target.id === 'cote-max') {
     activeCoteMax = parseFloat(e.target.value) || 0;
-    renderMatches(allMatches);
+    renderMatchesDebounced(allMatches);
   }
 });
 
@@ -18867,7 +18700,7 @@ function setO25Preset(v, btn) {
   var o25Val = document.getElementById('o25-val');
   if (o25Val) o25Val.textContent = activeO25Min + '%';
   _advChipActivate(btn);
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches);
 }
 function setCotePreset(min, max, btn) {
   activeCoteMin = parseFloat(min) || 0;
@@ -18877,7 +18710,7 @@ function setCotePreset(min, max, btn) {
   if (cmin) cmin.value = activeCoteMin || '';
   if (cmax) cmax.value = activeCoteMax || '';
   _advChipActivate(btn);
-  renderMatches(allMatches);
+  renderMatchesDebounced(allMatches);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -18911,7 +18744,42 @@ async function apiFetch(url, opts = {}) {
     headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(opts.body);
   }
+  // Cache GET requests with stale-while-revalidate
+  const isGet = !opts.method || opts.method === 'GET';
+  if (isGet && !opts.skipCache) {
+    const cached = AppCache.get(url);
+    if (cached) {
+      const age = Date.now() - cached.fetchedAt;
+      if (age > cached.ttl && !cached._refreshing) {
+        cached._refreshing = true;
+        AppCache._refresh(url, function() {
+          return fetch(url, { ...opts, headers }).then(function(r) {
+            if (!r.ok) throw new Error('Status ' + r.status);
+            return r.clone().json();
+          });
+        }, opts.ttl);
+      }
+      var cachedBody = typeof cached.data === 'string' ? cached.data : JSON.stringify(cached.data);
+      return new Response(cachedBody, {
+        status: cached._status || 200,
+        statusText: 'OK',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   const res = await fetch(url, { ...opts, headers });
+
+  // Mettre en cache les réponses GET réussies
+  if (isGet && res.ok && !opts.skipCache) {
+    try {
+      var bodyClone = res.clone();
+      var jsonData = await bodyClone.json();
+      AppCache.set(url, jsonData, opts.ttl);
+      AppCache._store.get(url)._status = res.status;
+    } catch(e) {}
+  }
+
   if (res.status === 401) {
     // Forensic trace : 401 sur route Pro post-fenêtre test 15→18 mai peut
     // donner perception « page blanche » côté mobile (cf. CR-F rapport bug
@@ -26559,11 +26427,6 @@ function renderComparateur(d) {
     return {
       tour: f.tour || 'ALL',
       surface: f.surface || 'ALL',
-      tier: f.tier || 'ALL',
-      strategy: f.strategy || 'ALL',
-      comp: f.comp || 'ALL',
-      sort: f.sort || 'time',
-      q: f.q || '',
       live_only: !!document.querySelector('#tennis-vb-live-only')?.checked,
       elo_only: !!document.querySelector('#tennis-vb-elo-only')?.checked,
       positive_ev: !!document.querySelector('#tennis-vb-positive-ev')?.checked,
@@ -26578,11 +26441,6 @@ function renderComparateur(d) {
     if (window._tennisVbFilters) {
       window._tennisVbFilters.tour = f.tour || 'ALL';
       window._tennisVbFilters.surface = f.surface || 'ALL';
-      window._tennisVbFilters.tier = f.tier || 'ALL';
-      window._tennisVbFilters.strategy = f.strategy || 'ALL';
-      window._tennisVbFilters.comp = f.comp || 'ALL';
-      window._tennisVbFilters.sort = f.sort || 'time';
-      window._tennisVbFilters.q = f.q || '';
     }
     /* Reflect in DOM controls */
     var setChk = function (id, val) { var el = document.querySelector('#' + id); if (el) el.checked = !!val; };
@@ -26591,10 +26449,8 @@ function renderComparateur(d) {
     setChk('tennis-vb-positive-ev', f.positive_ev);
     setChk('tennis-vb-hide-finished', f.hide_finished);
 
-    var sortSel = document.querySelector('#tennis-vb-sort'); if (sortSel) sortSel.value = f.sort || 'time';
-    var searchInput = document.querySelector('#tennis-vb-search'); if (searchInput) searchInput.value = f.q || '';
     /* Reflect filter button active state */
-    document.querySelectorAll('.tennis-vb-filter-btn').forEach(function (b) {
+    document.querySelectorAll('.tennis-premium-btn').forEach(function (b) {
       var key = b.getAttribute('data-filter'); var val = b.getAttribute('data-value');
       var match = f[key] && f[key] === val;
       b.classList.toggle('is-active', !!match);
