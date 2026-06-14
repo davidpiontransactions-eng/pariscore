@@ -1,0 +1,284 @@
+Tennis Match-Fixing Detection Algorithm — Implementation Guide
+=================================================================
+Based on: Hatfield (2019) Lancaster University PhD thesis
+Source implementation: Node.js (native modules + better-sqlite3)
+
+---
+
+1. OVERVIEW
+-----------
+- Goal: Detect statistical anomalies consistent with match-fixing in live tennis matches
+- Real-time detection embedded in a 30-second polling cycle
+- Composite score 0-100 from 4 sub-detectors, each weighted
+- Three alert levels: Green (0-39), Amber (40-69 surveillance), Red (70-100 critical)
+- 4 sub-detectors: OddsDeviation (35pts), SPW/RPW Anomaly (30pts), CrossInversion (20pts), VolumeAnomaly (15pts)
+
+2. ACADEMIC FOUNDATION
+----------------------
+- Hatfield (2019) "Statistical Methods for Detecting Match-Fixing in Tennis", Lancaster University
+- Three methods from the thesis: GP pre-match (betting volume), Bayesian in-play (Glicko prior + game likelihood), GP in-play (implied lambda dominance parameter)
+- Key mathematical concepts:
+  - Markov chain hierarchy: Points -> Games -> Sets -> Match
+  - lambda (dominance parameter) = (p_ij - p_ji)/2 where p_ij is probability player i wins a point on serve vs j
+  - The function m(lambda|mu,s,b) gives match win probability given lambda, mu (avg), score s, format b — proven invertible in Chapter 3
+  - Implicit market probability: P = 1/odds, normalized by removing overround
+  - Glicko-2 ratings as Bayesian prior: theta_i ~ N(nu_i, sigma_i^2), lambda ~ N(q(nu_1-nu_2), q^2(sigma_1^2+sigma_2^2))
+  - Mahalanobis distance between observed and predicted lambda as suspicion metric
+
+3. DATA PREREQUISITES
+---------------------
+The system requires the following data sources:
+
+- Live odds for both players (any source: bookmaker, exchange)
+- SPW (Serve Points Won %) and RPW (Return Points Won %) — live stats
+- Glicko-2 ratings for both players (serve and return components) OR SPW baseline snapshots
+- Match structure: sets, games, tournament, format (BO3/BO5), tour (ATP/WTA)
+- BS odds movement direction (SHORTENING/DRIFTING) per player — optional but improves detection
+- Minimum 6 games played before detection activates
+
+4. SUB-DETECTOR 1: OddsDeviationDetector (35 pts max)
+------------------------------------------------------
+Purpose: Market odds deviate significantly from model-implied probability.
+
+Algorithm:
+
+    1. Get odds_player1, odds_player2. If missing or < 1.01 -> score 0
+    2. Compute implied probability: imp1 = 1/odds1, imp2 = 1/odds2, total = imp1+imp2
+    3. Normalize: normP1 = imp1/total
+    4. Compute model probability:
+       a) If Glicko-2 available:
+          diff = (glicko_strength_1 - glicko_strength_2) / 400
+          modelProb = 1 / (1 + 10^(-diff))
+       b) Fallback: use SPW baseline (serve_pts_won_pct from pre-match snapshot)
+          Call computeTennisMatchProb(p1_serve_pct, p2_serve_pct, format)
+          Returns { p1_win }
+    5. deviation = abs(normP1 - modelProb)
+    6. If deviation < 0.08 -> score 0
+    7. Score = min(35, round((deviation - 0.08) / 0.30 * 35))
+
+The threshold 0.08 means 8% absolute deviation between market and model.
+A 38% deviation -> 35 pts.
+
+5. SUB-DETECTOR 2: SpwRpwAnomalyDetector (30 pts max)
+------------------------------------------------------
+Purpose: Live SPW/RPW stats deviate from pre-match baseline (player not playing their level).
+
+Algorithm:
+
+    1. Compute live serve stats via _tnLiveServeStats(m):
+       - For each player:
+         spw = first_serve_pct * first_serve_won_pct + (1 - first_serve_pct) * second_serve_won_pct
+       - Returns { p1_spw, p2_spw, p1_rpw, p2_rpw }
+    2. Get pre-match baseline from snapshot (serve_dominance.serve_pts_won_pct/100)
+    3. If no baseline -> score 0
+    4. deviation_p1 = abs(live_p1_spw - baseline_p1)
+    5. deviation_p2 = abs(live_p2_spw - baseline_p2)
+    6. maxDeviation = max(deviation_p1, deviation_p2)
+    7. If maxDeviation < 0.05 -> score 0
+    8. Score = min(30, round((maxDeviation - 0.05) / 0.25 * 30))
+
+A 5% SPW deviation -> 0 pts. A 30% deviation -> 30 pts.
+
+6. SUB-DETECTOR 3: CrossInversionDetector (20 pts max)
+-------------------------------------------------------
+Purpose: The betting market favors one player but Glicko-2 ratings clearly favor the other
+— cross-inversion consistent with manipulation.
+
+Algorithm:
+
+    1. Get odds_player1, odds_player2 (must exist). Get glicko2 ratings (must exist)
+    2. Market favorite: oddsFavP1 = (odds1 <= odds2)
+    3. Glicko total strength:
+       s1 = glicko2.p1_serve + glicko2.p1_return
+       s2 = glicko2.p2_serve + glicko2.p2_return
+    4. glickoGap = abs(s1 - s2)
+    5. If glickoGap < 30 -> score 0 (gap too small to be meaningful)
+    6. Glicko favorite: glickoFavP1 = (s1 >= s2)
+    7. If oddsFavP1 !== glickoFavP1 (inversion detected):
+       Score = min(20, round(glickoGap / 200 * 20))
+    8. Else -> score 0
+
+Example: If P1 is market favorite (odds 1.50 vs 2.50) but P2 has clearly better Glicko
+ratings (gap > 30).
+
+7. SUB-DETECTOR 4: VolumeAnomalyDetector (15 pts max)
+------------------------------------------------------
+Purpose: Abnormal odds movement — one-sided sharp movement or extreme overall shift.
+
+Algorithm:
+
+    1. Get bsd_odds_summary or _bsd_odds from match object
+    2. Check movement flags: movement_p1, movement_p2
+       (SHORTENING = odds dropping = money coming in)
+    3. If ONLY one side is SHORTENING -> 12 pts
+       (asymmetric information = strong signal)
+    4. If BOTH sides SHORTENING -> 6 pts
+       (liquid market, less suspicious)
+    5. If best odds available:
+       - Compare current odds to best recorded odds:
+         move = abs(current - best) / best
+       - If maxMove > 0.10 -> score = min(15, round(maxMove / 0.30 * 15))
+    6. Otherwise -> 0
+
+8. COMPOSITE SCORE & ALERT LOGIC
+--------------------------------
+
+    totalScore = oddsDeviation + spwAnomaly + crossInversion + volumeAnomaly
+    // 0 to 100
+
+    if totalScore < 40:
+        level = 'green'   // No alert, just attach data to match object
+    else if totalScore < 70:
+        level = 'amber'   // Surveillance alert
+    else:
+        level = 'red'     // Critical alert
+
+    if totalScore >= 40 AND not on cooldown:
+        1. Save to database (alert_type='integrity_alert', store score + breakdown)
+        2. Broadcast SSE event 'integrity_alert' with full payload
+        3. Send Discord embed with color (orange=amber, red=critical), breakdown fields
+        4. Set cooldown: 10 minutes per matchId
+        5. Console log the detection
+
+The integrity object always attached to the match (even under amber threshold):
+
+    m.integrity = {
+      score: totalScore,        // 0-100
+      level: 'green'|'amber'|'red',
+      games: totalGamesPlayed,
+      breakdown: {
+        oddsDev: sOdds,         // 0-35
+        spwAnom: sSpw,          // 0-30
+        crossInv: sCross,       // 0-20
+        volAnom: sVol           // 0-15
+      }
+    }
+
+9. COOLDOWN MECHANISM
+----------------------
+- Key format: tnmf:{matchId}
+- TTL: 10 minutes (600,000 ms)
+- Implemented as a Map<string, number> storing timestamp of last alert per match
+- _tnAlertOnCooldown(key, ttl_ms) — checks if key exists and age < ttl
+- _tnAlertMark(key) — sets the timestamp
+- The cooldown only blocks alerts (save/broadcast), NOT the integrity score computation
+  — the match always gets its m.integrity object
+
+10. DATABASE SCHEMA
+--------------------
+The existing alerts table needs one new column:
+
+    ALTER TABLE tennis_alerts ADD COLUMN integrity_score INTEGER DEFAULT 0;
+
+Make this migration idempotent (try/catch DDL in case already exists).
+
+The save function inserts:
+
+    alert_type: 'integrity_alert',
+    match_id, player1, player2, tournament: from match data
+    bet_type: 'integrity_red' or 'integrity_amber'
+    bet_conf: totalScore (used as confidence/integrity value)
+    score_at_alert: sets score string like "1-0"
+    integrity_score: totalScore
+
+11. SSE EVENT PAYLOAD
+---------------------
+Event name: integrity_alert
+
+    {
+      "type": "integrity_alert",
+      "sport": "tennis",
+      "match_id": "string",
+      "tournament": "string",
+      "player1": "string",
+      "player2": "string",
+      "score": 72,
+      "level": "amber|red",
+      "breakdown": { "oddsDev": 25, "spwAnom": 18, "crossInv": 15, "volAnom": 14 },
+      "games": 14,
+      "ts": 1718000000000
+    }
+
+12. DISCORD EMBED STRUCTURE
+---------------------------
+- Title: 🚨 MATCH-FIXING SUSPECTE / ⚠️ Match-Fixing Surveille
+- Color: 0xFF0000 (red) / 0xFFA500 (orange)
+- Fields:
+    - Odds Deviation (35) — inline true, shows score/sub-max
+    - SPW/RPW Anomaly (30) — inline true
+    - Cross Inversion (20) — inline true
+    - Volume Anomaly (15) — inline true
+- Footer: "Hatfield Match-Fixing Detector | Cooldown 10min | {tournament}"
+- Timestamp: ISO 8601
+
+13. FRONTEND UI (if applicable)
+--------------------------------
+Three components to implement if the project has a live tennis view:
+
+a) Live badge: Render a colored badge next to player name showing integrity score + level:
+    - Green dot + score (score < 40)
+    - Amber dot + score with glow (score 40-69)
+    - Red dot + score with pulse animation (score >= 70)
+    - Tooltip shows full breakdown:
+      "Integrite 72/100 (red) · 14 jeux | Odds:25 SPW:18 Cross:15 Vol:14"
+
+b) SSE toast notification: Listen for integrity_alert SSE events. Display a toast with:
+    - Level-based color (red/amber)
+    - Player names vs, score/100, level
+    - Breakdown in secondary text
+    - Auto-dismiss after 8 seconds
+
+c) Alerts history table: Add an "Integrite" column in the alerts history table:
+    - Color-coded value (red >= 70, amber 40-69, grey < 40)
+    - Format: "72/100" or "--"
+    - Filter option in type dropdown
+
+14. PERFORMANCE NOTES
+---------------------
+- All sub-detectors use simple arithmetic, no heavy computation
+- Try/catch around EVERY sub-detector — individual failures score 0, never crash the main poll loop
+- Cooldown map should be module-scoped, persists during the server lifetime
+- Target: < 5ms CPU per match per polling cycle
+- The main function wraps in try/catch and is explicitly non-blocking
+
+15. CONFIGURATION (constant table)
+-----------------------------------
+    MIN_GAMES = 6                     // Minimum games before detection starts
+    SPW_DEV_THRESHOLD = 0.05          // 5% SPW deviation threshold
+    PROB_SHIFT_THRESHOLD = 0.06       // 6% probability shift threshold
+    ODDS_DEV_THRESHOLD = 0.08         // 8% odds-model deviation threshold
+    CROSS_INVERSION_MIN_GLICO = 30    // Minimum Glicko gap for cross-inversion
+    VOLUME_MOVE_THRESHOLD = 0.10      // 10% odds move threshold
+    COOLDOWN_MS = 600000              // 10 min cooldown per match
+    AMBER = 40                        // Amber alert threshold /100
+    RED = 70                          // Red alert threshold /100
+
+16. IMPLEMENTATION ORDER (for Claude Code)
+-------------------------------------------
+    1. Define the constants object
+    2. Implement _tnTotalGames(m) — sums games from match.sets array
+    3. Implement _tnLiveServeStats(m) — computes SPW from live stats
+    4. Sub-detector 1: OddsDeviation (uses Glicko-2 or SPW fallback)
+    5. Sub-detector 2: SpwAnomaly (uses live stats vs baseline snapshot)
+    6. Sub-detector 3: CrossInversion (uses Glicko-2 + odds)
+    7. Sub-detector 4: VolumeAnomaly (uses odds movement flags)
+    8. Main function: aggregate, attach to match, alert logic
+    9. Integration: call main function in the live polling loop
+    10. Database migration for integrity_score column
+    11. Update save function to include integrity_score
+    12. SSE broadcast and Discord embed
+    13. Frontend badge, toast, history column
+
+17. LIMITATIONS
+----------------
+- No point-by-point data available -> detection at game-level granularity instead
+- Court surface not modeled -> possible false positives (clay vs grass bias)
+- Minimum 6 games -> short matches not checked
+- No confirmed fixed matches for calibration -> thresholds are conservative
+- BS odds movement flags may not be available from all data sources
+- The Hatfield thesis uses Betfair exchange odds (single source); multi-bookmaker aggregation may smooth out extreme movements
+
+---
+Based on: Hatfield, O. (2019). "Statistical Methods for Detecting Match-Fixing in Tennis".
+Lancaster University PhD Thesis. https://eprints.lancs.ac.uk/id/eprint/141874/
+Reference implementation: PariScore Node.js backend, server.js lines 25138-25405

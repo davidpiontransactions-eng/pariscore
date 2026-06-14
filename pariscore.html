@@ -3737,6 +3737,256 @@
   .bsd-badge { font-size:12px;text-align:center; }
   .bsd-injured { opacity:.7; }
   .bsd-suspended { opacity:.7; }
+  /* ── BSD Pitch (Terrain de football graphique) ────────────────────────── */
+  .bsd-pitch-wrap { position:relative; width:100%; margin-bottom:16px; }
+  .bsd-pitch-status { display:flex; justify-content:space-between; font-size:10px; font-family:var(--font-mono); color:var(--text3); margin-bottom:8px; }
+  
+  .bsd-pitch {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 68 / 105;
+    background: linear-gradient(150deg, #2d8a4e 0%, #236b3e 45%, #1f5e36 100%);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.45), inset 0 0 80px rgba(0,0,0,0.12);
+    user-select: none;
+  }
+
+  /* Bandes de pelouse alternées */
+  .bsd-pitch-stripe {
+    position: absolute; left: 0; right: 0; height: 8.33%;
+    pointer-events: none; z-index: 0;
+  }
+  .bsd-pitch-stripe:nth-child(odd) { background: rgba(255,255,255,0.025); }
+  .bsd-pitch-stripe:nth-child(even) { background: rgba(0,0,0,0.025); }
+
+  /* Lignes du terrain */
+  .bsd-pitch-midline {
+    position: absolute; left: 3%; right: 3%; top: 50%;
+    height: 1.5px; background: rgba(255,255,255,0.30); z-index: 1;
+  }
+  .bsd-pitch-center-circle {
+    position: absolute; top: 50%; left: 50%;
+    width: 16%; padding-bottom: 16%;
+    transform: translate(-50%, -50%);
+    border: 1.5px solid rgba(255,255,255,0.28);
+    border-radius: 50%; z-index: 1;
+  }
+  .bsd-pitch-center-dot {
+    position: absolute; top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.30);
+    border-radius: 50%; z-index: 1;
+  }
+  .bsd-pitch-box-top, .bsd-pitch-box-bottom {
+    position: absolute; left: 10%; right: 10%; height: 22%;
+    border: 1.5px solid rgba(255,255,255,0.25); z-index: 1;
+  }
+  .bsd-pitch-box-top { top: 3.5%; border-bottom: none; border-radius: 6px 6px 0 0; }
+  .bsd-pitch-box-bottom { bottom: 3.5%; border-top: none; border-radius: 0 0 6px 6px; }
+
+  .bsd-pitch-goal-top, .bsd-pitch-goal-bottom {
+    position: absolute; left: 30%; right: 30%; height: 5%;
+    border: 1.5px solid rgba(255,255,255,0.22); z-index: 1;
+  }
+  .bsd-pitch-goal-top { top: 3.5%; border-bottom: none; }
+  .bsd-pitch-goal-bottom { bottom: 3.5%; border-top: none; }
+
+  /* ── Étiquettes d'équipe sur le terrain ── */
+  .bsd-pitch-label {
+    position: absolute; z-index: 2;
+    font: 700 9px/1 var(--font-mono);
+    text-transform: uppercase; letter-spacing: 2px;
+    color: rgba(255,255,255,0.20);
+    pointer-events: none;
+  }
+  .bsd-pitch-label.home { bottom: 1.5%; left: 50%; transform: translateX(-50%); }
+  .bsd-pitch-label.away { top: 1.5%; left: 50%; transform: translateX(-50%); }
+
+  /* ── Carte Joueur sur le terrain ── */
+  .bsd-pitch-player {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0s 0.15s;
+    cursor: default;
+  }
+  .bsd-pitch-player:hover {
+    transform: translate(-50%, -58%) scale(1.10);
+    z-index: 20;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0s;
+  }
+
+  /* Avatars */
+  .bsd-pitch-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.20);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .bsd-pitch-player:hover .bsd-pitch-avatar {
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25);
+    transform: scale(1.04);
+  }
+  .bsd-pitch-player.home .bsd-pitch-avatar {
+    border: 2px solid var(--blue);
+    background: linear-gradient(135deg, rgba(33,150,243,0.25), rgba(33,150,243,0.05));
+  }
+  .bsd-pitch-player.away .bsd-pitch-avatar {
+    border: 2px solid #ab47bc;
+    background: linear-gradient(135deg, rgba(171,71,188,0.25), rgba(171,71,188,0.05));
+  }
+  .bsd-pitch-player.gk .bsd-pitch-avatar {
+    width: 44px; height: 44px;
+    border-width: 2.5px;
+  }
+  .bsd-pitch-player.gk.home .bsd-pitch-avatar { border-color: #ffd600; }
+  .bsd-pitch-player.gk.away .bsd-pitch-avatar { border-color: #ffab00; }
+  /* ── Disposition inversée (nom au-dessus de l'avatar) ── */
+  .bsd-pitch-player.reverse { flex-direction: column-reverse; }
+  .bsd-pitch-player.reverse .bsd-pitch-name { margin-top: 0; margin-bottom: 2px; }
+  .bsd-pitch-player.reverse .bsd-pitch-stats { margin-top: 0; margin-bottom: 1px; }
+
+  /* Photo / placeholder */
+  .bsd-pitch-photo {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 50%; display: block;
+  }
+  .bsd-pitch-photo-fallback {
+    display: flex; width: 100%; height: 100%;
+    align-items: center; justify-content: center;
+    font: 700 12px/1 var(--font-mono); color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    border-radius: 50%;
+  }
+
+  /* Numéro sur l'avatar */
+  .bsd-pitch-number {
+    position: absolute; bottom: -1px; right: -1px;
+    background: var(--bg2); border: 1.5px solid rgba(255,255,255,0.7);
+    border-radius: 7px; padding: 0 4px;
+    font: 800 8px/1.5 var(--font-mono); color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.30);
+    pointer-events: none;
+  }
+
+  /* Nom du joueur */
+  .bsd-pitch-name {
+    font: 600 8.5px/1.2 var(--font-sans);
+    color: #fff; text-align: center;
+    text-shadow: 0 1px 5px rgba(0,0,0,0.75), 0 0 8px rgba(0,0,0,0.3);
+    margin-top: 2px;
+    max-width: 110px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Conteneur de badges stats */
+  .bsd-pitch-stats {
+    display: flex; gap: 2px; margin-top: 1px;
+    pointer-events: none;
+  }
+
+  /* Badge individuel (Note / xG) */
+  .bsd-pitch-badge {
+    font: 700 7.5px/1.3 var(--font-mono);
+    padding: 2px 5px; border-radius: 5px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
+  .bsd-pitch-badge.rating {
+    background: rgba(0,0,0,0.60);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+  .bsd-pitch-badge.rating.high { color: #66bb6a; }
+  .bsd-pitch-badge.rating.mid  { color: #ffa726; }
+  .bsd-pitch-badge.rating.low  { color: #ef5350; }
+  .bsd-pitch-badge.xg {
+    background: rgba(33,150,243,0.25);
+    color: #90caf9;
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+
+  /* ── Badge de formation ── */
+  .bsd-pitch-formation {
+    position: absolute; z-index: 3;
+    font: 800 11px/1 var(--font-mono);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+    padding: 3px 10px; border-radius: 8px;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    left: 50%; transform: translateX(-50%);
+    pointer-events: none; letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .bsd-pitch-formation.home {
+    bottom: 6.5%; color: #64b5f6;
+    border: 1px solid rgba(33,150,243,0.25);
+  }
+  .bsd-pitch-formation.away {
+    top: 6.5%; color: #ce93d8;
+    border: 1px solid rgba(171,71,188,0.25);
+  }
+
+  /* ── Info-bulle au survol (stats détaillées) ── */
+
+  .bsd-pitch-tooltip {
+    position: absolute; bottom: calc(100% + 8px);
+    left: 50%; transform: translateX(-50%);
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px;
+    white-space: nowrap;
+    font-size: 10px; color: var(--text);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.15s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    z-index: 30;
+  }
+  .bsd-pitch-player:hover .bsd-pitch-tooltip { opacity: 1; }
+
+  /* ── Bancs de touche (puce compactes) ── */
+  .bsd-bench-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .bsd-bench-col { }
+  .bsd-bench-header { font-size: 10px; font-weight: 600; margin-bottom: 6px; }
+  .bsd-bench-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bsd-bench-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: var(--bg3); border: 1px solid var(--bg4);
+    border-radius: 14px; padding: 2px 8px 2px 6px;
+    font-size: 9.5px; white-space: nowrap;
+  }
+  .bsd-bench-num { font-family: var(--font-mono); color: var(--text3); font-size: 9px; }
+  .bsd-bench-name { color: var(--text); }
+  .bsd-bench-pos { color: var(--text3); font-size: 8.5px; }
+
+  /* ── Absents ── */
+  .bsd-injured-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .bsd-injured-title { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .bsd-injured-list { list-style: none; padding: 0; margin: 0; }
+  .bsd-injured-item { font-size: 10.5px; color: var(--text3); padding: 2px 0; }
+  .bsd-injured-icon { margin-right: 4px; }
+  .bsd-injured-reason { color: var(--red); }
+
+  /* ── Responsive : écrans < 600px ── */
+  @media (max-width: 600px) {
+    .bsd-pitch-avatar { width: 34px; height: 34px; }
+    .bsd-pitch-player.gk .bsd-pitch-avatar { width: 38px; height: 38px; }
+    .bsd-pitch-name { font-size: 7.5px; max-width: 85px; }
+    .bsd-pitch-number { font-size: 7px; padding: 0 3px; }
+    .bsd-pitch-badge { font-size: 6.5px; padding: 0 3px; }
+    .bsd-bench-grid { gap: 6px; }
+    .bsd-bench-chip { font-size: 8.5px; padding: 1px 6px 1px 4px; }
+  }
+
 
   /* Acca Generator */
   .acca-panel { background: linear-gradient(135deg, rgba(0,230,118,0.06) 0%, rgba(41,182,246,0.04) 100%); border: 1px solid rgba(0,230,118,0.2); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
@@ -3964,7 +4214,7 @@
     letter-spacing: 0.02em; margin-bottom: 20px;
     text-transform: uppercase;
   }
-  .hero h1 span { color: var(--accent); }
+  .hero h1 span.hero-accent-word { color: var(--accent); }
   .hero-sub {
     font-family: var(--font-body);
     font-size: 17px; font-weight: 400; color: var(--text2); line-height: 1.65;
@@ -11678,29 +11928,29 @@ function psSetLang(v) {
     <span class="logo-tag-mob" data-i18n="logo.tagline">Cotes live · Modèle Poisson · Edge dévigé</span>
   </div>
   <div class="nav-links">
-    <a href="#" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football" data-i18n="nav.football">Football</a>
-    <a href="#" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis" data-i18n="nav.tennis">Tennis</a>
-    <a href="#" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2" data-i18n="nav.cs2">CS2</a>
-    <a href="#" onclick="showPage('mma',this);return false;" data-page="mma" aria-label="MMA/UFC" data-i18n="nav.mma">MMA</a>
-    <a href="#" onclick="showPage('nba',this);return false;" data-page="nba" aria-label="NBA" data-i18n="nav.nba">NBA</a>
-    <a href="#" onclick="showPage('wnba',this);return false;" data-page="wnba" aria-label="WNBA" data-i18n="nav.wnba">WNBA</a>
-    <a href="#" onclick="showPage('f1',this);return false;" data-page="f1" aria-label="Formule 1" data-i18n="nav.f1">FORMULE 1</a>
-    <a href="#" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
-    <a href="#" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
-    <a href="#" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
-    <a href="#" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks" aria-label="Hot Picks" data-i18n="nav.hotpicks">Hot Picks</a>
-    <a href="#" onclick="showPage('paris',this);return false;" data-page="paris" aria-label="Mes Paris" data-i18n="nav.mybets">Mes Paris</a>
-    <a href="#" onclick="showPage('guide',this);return false;" data-page="guide" aria-label="Guide" data-i18n="nav.guide">Guide</a>
-    <a href="#" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets" aria-label="Sure Bets" data-i18n="nav.surebets">Sure Bets</a>
-    <a href="#" onclick="showPage('comparateur',this);return false;" data-page="comparateur" aria-label="Comparateur" data-i18n="nav.comparateur">Comparateur</a>
-    <a href="#" onclick="showPage('predictions',this);return false;" data-page="predictions" aria-label="Prédictions IA" data-i18n="nav.predictions">Prédictions IA</a>
-    <a href="#" onclick="showPage('tendances',this);return false;" data-page="tendances" aria-label="Tendances" data-i18n="nav.tendances">Tendances</a>
-    <a href="#" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes" data-i18n="nav.alertes">Alertes</a>
-    <a href="#" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts" aria-label="Alertes Tennis" data-i18n="nav.tennis_alerts">Alertes Tennis</a>
-    <a href="#" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique" data-i18n="nav.historique">Historique</a>
-    <a href="#" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil" data-i18n="nav.accueil">Accueil</a>
-    <a href="#" onclick="showPage('tarifs',this);return false;" data-page="tarifs" aria-label="Tarifs" data-i18n="nav.tarifs">Tarifs</a>
-    <a href="#" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres" data-i18n-title="page.settings" class="nav-icon-only"></a>
+    <a href="javascript:void(0)" onclick="showPage('matchs',this);return false;" data-page="matchs" aria-label="Football" data-i18n="nav.football">Football</a>
+    <a href="javascript:void(0)" onclick="showPage('tennis',this);return false;" data-page="tennis" aria-label="Tennis" data-i18n="nav.tennis">Tennis</a>
+    <a href="javascript:void(0)" onclick="showPage('cs2',this);return false;" data-page="cs2" aria-label="CS2" data-i18n="nav.cs2">CS2</a>
+    <a href="javascript:void(0)" onclick="showPage('mma',this);return false;" data-page="mma" aria-label="MMA/UFC" data-i18n="nav.mma">MMA</a>
+    <a href="javascript:void(0)" onclick="showPage('nba',this);return false;" data-page="nba" aria-label="NBA" data-i18n="nav.nba">NBA</a>
+    <a href="javascript:void(0)" onclick="showPage('wnba',this);return false;" data-page="wnba" aria-label="WNBA" data-i18n="nav.wnba">WNBA</a>
+    <a href="javascript:void(0)" onclick="showPage('f1',this);return false;" data-page="f1" aria-label="Formule 1" data-i18n="nav.f1">FORMULE 1</a>
+    <a href="javascript:void(0)" onclick="showPage('worldcup',this);if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
+    <a href="javascript:void(0)" onclick="showPage('rg',this);if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
+    <a href="javascript:void(0)" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
+    <a href="javascript:void(0)" onclick="showPage('hot-picks',this);return false;" data-page="hot-picks" aria-label="Hot Picks" data-i18n="nav.hotpicks">Hot Picks</a>
+    <a href="javascript:void(0)" onclick="showPage('paris',this);return false;" data-page="paris" aria-label="Mes Paris" data-i18n="nav.mybets">Mes Paris</a>
+    <a href="javascript:void(0)" onclick="showPage('guide',this);return false;" data-page="guide" aria-label="Guide" data-i18n="nav.guide">Guide</a>
+    <a href="javascript:void(0)" onclick="showPage('sure-bets',this);return false;" data-page="sure-bets" aria-label="Sure Bets" data-i18n="nav.surebets">Sure Bets</a>
+    <a href="javascript:void(0)" onclick="showPage('comparateur',this);return false;" data-page="comparateur" aria-label="Comparateur" data-i18n="nav.comparateur">Comparateur</a>
+    <a href="javascript:void(0)" onclick="showPage('predictions',this);return false;" data-page="predictions" aria-label="Prédictions IA" data-i18n="nav.predictions">Prédictions IA</a>
+    <a href="javascript:void(0)" onclick="showPage('tendances',this);return false;" data-page="tendances" aria-label="Tendances" data-i18n="nav.tendances">Tendances</a>
+    <a href="javascript:void(0)" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes" data-i18n="nav.alertes">Alertes</a>
+    <a href="javascript:void(0)" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts" aria-label="Alertes Tennis" data-i18n="nav.tennis_alerts">Alertes Tennis</a>
+    <a href="javascript:void(0)" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique" data-i18n="nav.historique">Historique</a>
+    <a href="javascript:void(0)" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil" data-i18n="nav.accueil">Accueil</a>
+    <a href="javascript:void(0)" onclick="showPage('tarifs',this);return false;" data-page="tarifs" aria-label="Tarifs" data-i18n="nav.tarifs">Tarifs</a>
+    <a href="javascript:void(0)" onclick="showPage('parametres',this);return false;" data-page="parametres" aria-label="Paramètres" data-i18n-title="page.settings" class="nav-icon-only"></a>
   </div>
   <span id="live-update-toast" class="live-update-toast" data-i18n="live.update_toast">⚡ Mise à jour</span>
   <div class="nav-right">
@@ -11788,18 +12038,18 @@ function psSetLang(v) {
   <div class="bn-more-title" data-i18n="bnav.more">Plus</div>
   <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()" data-i18n="bnav.night_mode">☾ Mode Nuit</button>
   <div class="bn-more-grid">
-    <a href="#" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span><span data-i18n="bnav.nba">NBA</span></a>
-    <a href="#" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span data-i18n="nav.alertes">Alertes</span></a>
-    <a href="#" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span><span data-i18n="nav.hotpicks">Hot Picks</span></a>
-    <a href="#" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span data-i18n="nav.surebets">Sure Bets</span></a>
-    <a href="#" onclick="bnGo('comparateur',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8h14M12 4l-7 4 7 4 7-4z"/><path d="M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/></svg></span><span data-i18n="nav.comparateur">Comparateur</span></a>
-    <a href="#" onclick="bnGo('predictions',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/><path d="M9 15h6M12 6V3M9 3h6M3 10h3M3 14h3M18 10h3M18 14h3M9 21h6"/></svg></span><span data-i18n="nav.predictions">Prédictions IA</span></a>
-    <a href="#" onclick="bnGo('tendances',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 4 7-7"/><path d="M15 7h5v5"/></svg></span><span data-i18n="nav.tendances">Tendances</span></a>
-    <a href="#" onclick="bnGo('historique',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 18v-4h4"/><path d="M12 8v4l3 2"/></svg></span><span data-i18n="nav.historique">Historique</span></a>
-    <a href="#" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span><span data-i18n="nav.guide">Guide</span></a>
-    <a href="#" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span><span data-i18n="nav.tarifs">Tarifs</span></a>
-    <a href="#" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span data-i18n="nav.accueil">Accueil</span></a>
-    <a href="#" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><span data-i18n="mobile.settings">Réglages</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span><span data-i18n="bnav.nba">NBA</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span data-i18n="nav.alertes">Alertes</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span><span data-i18n="nav.hotpicks">Hot Picks</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span data-i18n="nav.surebets">Sure Bets</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('comparateur',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 8h14M12 4l-7 4 7 4 7-4z"/><path d="M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/></svg></span><span data-i18n="nav.comparateur">Comparateur</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('predictions',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="10" cy="11" r="1"/><circle cx="14" cy="11" r="1"/><path d="M9 15h6M12 6V3M9 3h6M3 10h3M3 14h3M18 10h3M18 14h3M9 21h6"/></svg></span><span data-i18n="nav.predictions">Prédictions IA</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('tendances',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15l5-5 4 4 7-7"/><path d="M15 7h5v5"/></svg></span><span data-i18n="nav.tendances">Tendances</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('historique',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 18v-4h4"/><path d="M12 8v4l3 2"/></svg></span><span data-i18n="nav.historique">Historique</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('guide',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-1.5v13C7 17 10 17.5 12 19c2-1.5 5-2 8-1.5v-13C17 4 14 4.5 12 6z"/><path d="M12 6v13"/></svg></span><span data-i18n="nav.guide">Guide</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('tarifs',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3 7.5 9 12 21 16.5 9 15 3"/></svg></span><span data-i18n="nav.tarifs">Tarifs</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('accueil',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span data-i18n="nav.accueil">Accueil</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('parametres',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><span data-i18n="mobile.settings">Réglages</span></a>
   </div>
 </div>
 
@@ -12137,47 +12387,47 @@ function psSetLang(v) {
 
 <!-- CTA décision rapide — mobile only -->
 <div id="mob-home-cta" style="padding:18px 16px 4px;">
-  <button onclick="showPage('matchs')" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:17px;font-family:var(--font-head);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;box-shadow:0 4px 16px rgba(237,28,36,0.25);">
+    <button onclick="showPage('matchs')" data-i18n="home.cta_value_bets" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:17px;font-family:var(--font-head);font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;box-shadow:0 4px 16px rgba(237,28,36,0.25);">
     Voir les value bets du jour
   </button>
-  <div style="text-align:center;margin-top:9px;font-size:12px;color:var(--text3);font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Cotes live · Modèle Poisson · Edge dévigé</div>
+  <div style="text-align:center;margin-top:9px;font-size:12px;color:var(--text3);font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:.4px;" data-i18n="home.cta_tagline">Cotes live · Modèle Poisson · Edge dévigé</div>
 </div>
 
 <!-- HERO -->
 <section style="background: radial-gradient(ellipse 80% 40% at 60% 50%, var(--accent-bg) 0%, transparent 60%);">
   <div class="hero">
     <div>
-      <div class="hero-eyebrow"><div class="live-dot"></div> Données en temps réel</div>
-      <h1>Pariez avec les<br><span>données,</span><br>pas l'instinct.</h1>
-      <p class="hero-sub">PariScore analyse 50 000+ matchs par an, détecte les cotes de valeur et envoie des alertes instantanées sur Telegram. L'outil qu'utilisent les parieurs professionnels.</p>
+      <div class="hero-eyebrow"><div class="live-dot"></div><span data-i18n="home.hero_eyebrow"> Données en temps réel</span></div>
+      <h1><span data-i18n="home.hero_title_line1">Pariez avec les</span><br><span class="hero-accent-word" data-i18n="home.hero_title_word">données,</span><br><span data-i18n="home.hero_title_line2">pas l'instinct.</span></h1>
+      <p class="hero-sub" data-i18n="home.hero_sub">PariScore analyse 50 000+ matchs par an, détecte les cotes de valeur et envoie des alertes instantanées sur Telegram. L'outil qu'utilisent les parieurs professionnels.</p>
       <div class="hero-btns">
-        <button class="btn-primary" onclick="openModal()">Commencer gratuitement →</button>
-        <button class="btn-ghost" onclick="showPage('matchs', document.querySelector('[data-page=matchs]'))">Voir les matchs du jour</button>
+        <button class="btn-primary" onclick="openModal()" data-i18n="home.hero_cta_start">Commencer gratuitement →</button>
+        <button class="btn-ghost" onclick="showPage('matchs', document.querySelector('[data-page=matchs]'))" data-i18n="home.hero_cta_matches">Voir les matchs du jour</button>
       </div>
       <div class="hero-stats">
         <div>
           <div class="hero-stat-num">+14.2%</div>
-          <div class="hero-stat-label">ROI moyen Pro (30j)</div>
+          <div class="hero-stat-label" data-i18n="home.stat_roi">ROI moyen Pro (30j)</div>
         </div>
         <div>
           <div class="hero-stat-num">2M+</div>
-          <div class="hero-stat-label">Alertes envoyées</div>
+          <div class="hero-stat-label" data-i18n="home.stat_alerts">Alertes envoyées</div>
         </div>
         <div>
           <div class="hero-stat-num">12 k+</div>
-          <div class="hero-stat-label">Parieurs actifs</div>
+          <div class="hero-stat-label" data-i18n="home.stat_users">Parieurs actifs</div>
         </div>
       </div>
       <div class="hero-accuracy" id="hero-accuracy-badge" style="display:none;">
         <div class="accuracy-pill accuracy-green">
           <span class="accuracy-icon">✓</span>
-          <span class="accuracy-text"><span id="accuracy-pct">--</span> de réussite sur les <span id="accuracy-count">--</span> derniers pronostics</span>
+          <span class="accuracy-text"><span id="accuracy-pct">--</span><span data-i18n="accuracy.rate_mid"> de réussite sur les </span><span id="accuracy-count">--</span><span data-i18n="accuracy.rate_end"> derniers pronostics</span></span>
         </div>
-        <span class="accuracy-updated" id="accuracy-updated">Mise à jour: --</span>
+        <span class="accuracy-updated" id="accuracy-updated"><span data-i18n="accuracy.updated_label">Mise à jour : </span><span id="accuracy-updated-time">--</span></span>
       </div>
     </div>
     <div class="hero-right">
-      <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text3); margin-bottom: 4px; letter-spacing: .5px;">PARIS DE VALEUR — MAINTENANT</div>
+      <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text3); margin-bottom: 4px; letter-spacing: .5px;" data-i18n="home.value_bets_now">PARIS DE VALEUR — MAINTENANT</div>
       <div class="match-card">
         <div class="match-league">L1</div>
         <div style="flex:1">
@@ -12280,36 +12530,36 @@ function psSetLang(v) {
 <section class="partners-section fade-up">
   <div class="partners-inner">
     <div class="partners-header">
-      <h2>Nos Partenaires de Confiance</h2>
-      <p>PariScore s'appuie sur un réseau de partenaires engagés dans le sport, la data et les paris sportifs responsables.</p>
+      <h2 data-i18n="partners.title">Nos Partenaires de Confiance</h2>
+      <p data-i18n="partners.description">PariScore s'appuie sur un réseau de partenaires engagés dans le sport, la data et les paris sportifs responsables.</p>
     </div>
     <div class="partners-grid">
       <a href="https://www.bureau-des-tipsters.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">BT</div>
         <div class="partner-info">
           <h3 data-i18n="hotpicks.bureau_title">Bureau des Tipsters</h3>
-          <p>Communauté 30K+ membres. Pari responsable, discipline et gestion de bankroll.</p>
+          <p data-i18n="partner.bureau_desc">Communauté 30K+ membres. Pari responsable, discipline et gestion de bankroll.</p>
         </div>
       </a>
       <a href="https://mediapronos.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">MP</div>
         <div class="partner-info">
-          <h3>MediaPronos</h3>
-          <p>Référence depuis 2012. Analyses pointues et résultats transparents.</p>
+          <h3 data-i18n="partner.mediapronos_title">MediaPronos</h3>
+          <p data-i18n="partner.mediapronos_desc">Référence depuis 2012. Analyses pointues et résultats transparents.</p>
         </div>
       </a>
       <a href="https://www.team-soccerbet.com/" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">TSB</div>
         <div class="partner-info">
-          <h3>Team Soccer Bet</h3>
-          <p>Formation paris sportifs football. 10+ ans d'expérience, 9,700+ abonnés YouTube.</p>
+          <h3 data-i18n="partner.teamsoccer_title">Team Soccer Bet</h3>
+          <p data-i18n="partner.teamsoccer_desc">Formation paris sportifs football. 10+ ans d'expérience, 9,700+ abonnés YouTube.</p>
         </div>
       </a>
       <a href="https://x.com/Papa_rieur" target="_blank" rel="nofollow sponsored noopener" class="partner-card">
         <div class="partner-logo partner-logo--text">PR</div>
         <div class="partner-info">
-          <h3>Papa_rieur</h3>
-          <p>Pronostics et bons plans bookmakers. Ton accessible et communautaire.</p>
+          <h3 data-i18n="partner.paparieur_title">Papa_rieur</h3>
+          <p data-i18n="partner.paparieur_desc">Pronostics et bons plans bookmakers. Ton accessible et communautaire.</p>
         </div>
       </a>
     </div>
@@ -12456,35 +12706,35 @@ function psSetLang(v) {
 .hub-card:hover .hub-card-go{ background:var(--accent); color:#fff; border-color:transparent; }
 .hub-card--tennis:hover .hub-card-go{ background:#9bbf00; }
 </style>
-<div id="sport-hub" role="dialog" aria-label="Choix du sport">
+<div id="sport-hub" role="dialog" data-i18n-title="hub.aria_dialog" aria-label="Choix du sport">
   <div class="hub-head">
     <div class="hub-brand">PARISCORE</div>
-    <div class="hub-tag">Sélectionnez votre univers</div>
+    <div class="hub-tag" data-i18n="hub.tag">Sélectionnez votre univers</div>
   </div>
   <div class="hub-grid">
-    <button class="hub-card hub-card--foot" type="button" aria-label="Football">
-      <span class="hub-card-title">FOOTBALL</span>
+    <button class="hub-card hub-card--foot" type="button" data-i18n-title="hub.aria_football" aria-label="Football">
+      <span class="hub-card-title" data-i18n="hub.title_football">FOOTBALL</span>
       <!-- UI-018 — 3D translucent football emblem -->
       <svg class="hub-emblem hub-emblem-3d" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <use href="#i3d-football"/>
       </svg>
       <span class="hub-card-stats">
-        <span><b id="hub-foot-live">—</b> MATCHS LIVE</span>
-        <span><b id="hub-foot-vb">—</b> VALUE BETS</span>
+        <span><b id="hub-foot-live">—</b> <span data-i18n="hub.matches_live">MATCHS LIVE</span></span>
+        <span><b id="hub-foot-vb">—</b> <span data-i18n="hub.value_bets">VALUE BETS</span></span>
       </span>
-      <span class="hub-card-go">Entrer</span>
+      <span class="hub-card-go" data-i18n="hub.enter">Entrer</span>
     </button>
-    <button class="hub-card hub-card--tennis" type="button" aria-label="Tennis">
-      <span class="hub-card-title">TENNIS</span>
+    <button class="hub-card hub-card--tennis" type="button" data-i18n-title="hub.aria_tennis" aria-label="Tennis">
+      <span class="hub-card-title" data-i18n="hub.title_tennis">TENNIS</span>
       <!-- UI-018 — 3D translucent tennis ball emblem -->
       <svg class="hub-emblem hub-emblem-3d" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <use href="#i3d-tennisball"/>
       </svg>
       <span class="hub-card-stats">
-        <span><b id="hub-tns-live">—</b> MATCHS LIVE</span>
-        <span><b id="hub-tns-vb">—</b> VALUE BETS</span>
+        <span><b id="hub-tns-live">—</b> <span data-i18n="hub.matches_live">MATCHS LIVE</span></span>
+        <span><b id="hub-tns-vb">—</b> <span data-i18n="hub.value_bets">VALUE BETS</span></span>
       </span>
-      <span class="hub-card-go">Entrer</span>
+      <span class="hub-card-go" data-i18n="hub.enter">Entrer</span>
     </button>
   </div>
 </div>
@@ -12612,78 +12862,78 @@ function psSetLang(v) {
 .strat-fam-mob{ display:flex; margin:10px 0 4px; max-width:100%; }
 @media (min-width:768px){ .strat-fam-mob{ display:none !important; } }
 </style>
-<div id="strategy-setup" role="dialog" aria-label="Configuration de la stratégie">
+<div id="strategy-setup" role="dialog" aria-label="Configuration de la stratégie" data-i18n-title="ss.dialog_aria">
   <div class="ss-wrap">
     <div class="ss-head">
-      <div class="ss-kicker">Stratégie pré-configurée</div>
+      <div class="ss-kicker" data-i18n="ss.kicker">Stratégie pré-configurée</div>
       <div class="ss-title" id="ss-title">FOOTBALL</div>
     </div>
     <div data-sport-panel="football">
       <div class="ss-card">
-        <span class="ss-card-lbl">Filtres — touchez pour activer/désactiver</span>
+        <span class="ss-card-lbl" data-i18n="ss.pill_label">Filtres — touchez pour activer/désactiver</span>
         <div class="ss-chips">
-          <button type="button" class="ss-pill" data-ssf="dropping" aria-pressed="true">Dropping Cotes</button>
-          <label class="ss-select-wrap"><span>Jours</span>
-            <select class="ss-select" data-ssf="days" aria-label="Filtre jours">
+          <button type="button" class="ss-pill" data-ssf="dropping" data-i18n="ss.dropping_odds" aria-pressed="true">Dropping Cotes</button>
+          <label class="ss-select-wrap"><span data-i18n="ss.label_days">Jours</span>
+            <select class="ss-select" data-ssf="days" aria-label="Filtre jours" data-i18n-title="ss.aria_days">
               <option value="all" data-i18n="filter.all">Tous les jours</option>
               <option value="0" data-i18n="filter.today">Aujourd'hui</option>
               <option value="1" data-i18n="filter.tomorrow">Demain</option>
             </select></label>
-          <span class="ss-pill ss-pill--info">Ligues : <b>Toutes</b></span>
-          <label class="ss-select-wrap"><span>Période</span>
-            <select class="ss-select" data-ssf="period" aria-label="Filtre période">
-              <option value="season">Saison</option>
-              <option value="l5">5 derniers</option>
-              <option value="l10">10 derniers</option>
-              <option value="l25">25 derniers</option>
+          <span class="ss-pill ss-pill--info"><span data-i18n="ss.leagues_label">Ligues :</span> <b>Toutes</b></span>
+          <label class="ss-select-wrap"><span data-i18n="ss.label_period">Période</span>
+            <select class="ss-select" data-ssf="period" aria-label="Filtre période" data-i18n-title="ss.aria_period">
+              <option value="season" data-i18n="filter.period_season">Saison</option>
+              <option value="l5" data-i18n="filter.period_l5">5 derniers</option>
+              <option value="l10" data-i18n="filter.period_l10">10 derniers</option>
+              <option value="l25" data-i18n="filter.period_l25">25 derniers</option>
             </select></label>
-          <label class="ss-select-wrap"><span>Kickoff</span>
-            <select class="ss-select" data-ssf="kickoff" aria-label="Filtre kickoff">
+          <label class="ss-select-wrap"><span data-i18n="ss.label_kickoff">Kickoff</span>
+            <select class="ss-select" data-ssf="kickoff" aria-label="Filtre kickoff" data-i18n-title="ss.aria_kickoff">
               <option value="0" data-i18n="filters.confidence_all_default">Tous</option>
               <option value="1">&lt; 1h</option>
               <option value="2">&lt; 2h</option>
               <option value="6">&lt; 6h</option>
               <option value="12">&lt; 12h</option>
               <option value="24">&lt; 24h</option>
-              <option value="72">&lt; 3 jours</option>
+              <option value="72" data-i18n="filter.kickoff_3days">&lt; 3 jours</option>
             </select></label>
         </div>
       </div>
     </div>
     <div data-sport-panel="tennis" style="display:none;">
       <div class="ss-card">
-        <span class="ss-card-lbl">Filtres — touchez pour activer/désactiver</span>
+        <span class="ss-card-lbl" data-i18n="ss.pill_label">Filtres — touchez pour activer/désactiver</span>
         <div class="ss-chips">
-          <button type="button" class="ss-pill" data-ssf="atp" aria-pressed="true">ATP</button>
-          <button type="button" class="ss-pill" data-ssf="wta" aria-pressed="true">WTA</button>
-          <button type="button" class="ss-pill" data-ssf="elo" aria-pressed="true">Avec Elo</button>
-          <label class="ss-select-wrap"><span>Surfaces</span>
-            <select class="ss-select" data-ssf="surface" aria-label="Filtre surface">
-              <option value="ALL">Toutes</option>
-              <option value="Clay">Terre</option>
-              <option value="Hard">Dur</option>
-              <option value="Grass">Gazon</option>
+          <button type="button" class="ss-pill" data-ssf="atp" data-i18n="ss.atp" aria-pressed="true">ATP</button>
+          <button type="button" class="ss-pill" data-ssf="wta" data-i18n="ss.wta" aria-pressed="true">WTA</button>
+          <button type="button" class="ss-pill" data-ssf="elo" data-i18n="ss.with_elo" aria-pressed="true">Avec Elo</button>
+          <label class="ss-select-wrap"><span data-i18n="ss.label_surface">Surfaces</span>
+            <select class="ss-select" data-ssf="surface" aria-label="Filtre surface" data-i18n-title="ss.aria_surface">
+              <option value="ALL" data-i18n="filter.all">Toutes</option>
+              <option value="Clay" data-i18n="filter.surface_clay">Terre</option>
+              <option value="Hard" data-i18n="ss.option_hard">Dur</option>
+              <option value="Grass" data-i18n="ss.option_grass">Gazon</option>
             </select></label>
-          <label class="ss-select-wrap"><span>Catégorie</span>
-            <select class="ss-select" data-ssf="tier" aria-label="Filtre catégorie tournoi">
-              <option value="ALL">Toutes</option>
-              <option value="GS">Grand Chelem</option>
-              <option value="1000">Masters 1000</option>
-              <option value="500">500</option>
-              <option value="250">250</option>
-              <option value="125">125 / Challenger</option>
-              <option value="ITF">ITF</option>
+          <label class="ss-select-wrap"><span data-i18n="ss.label_category">Catégorie</span>
+            <select class="ss-select" data-ssf="tier" aria-label="Filtre catégorie tournoi" data-i18n-title="ss.aria_category">
+              <option value="ALL" data-i18n="filter.all">Toutes</option>
+              <option value="GS" data-i18n="ss.option_gs">Grand Chelem</option>
+              <option value="1000" data-i18n="ss.option_m1000">Masters 1000</option>
+              <option value="500" data-i18n="ss.option_500">500</option>
+              <option value="250" data-i18n="ss.option_250">250</option>
+              <option value="125" data-i18n="ss.option_challenger">125 / Challenger</option>
+              <option value="ITF" data-i18n="ss.option_itf">ITF</option>
             </select></label>
-          <label class="ss-select-wrap"><span>Compétition</span>
-            <select class="ss-select" data-ssf="comp" id="ss-comp-sel" aria-label="Filtre compétition">
-              <option value="ALL">Toutes</option>
+          <label class="ss-select-wrap"><span data-i18n="ss.label_competition">Compétition</span>
+            <select class="ss-select" data-ssf="comp" id="ss-comp-sel" aria-label="Filtre compétition" data-i18n-title="ss.aria_competition">
+              <option value="ALL" data-i18n="filter.all">Toutes</option>
             </select></label>
-          <span class="ss-pill ss-pill--info">Tri : <b>Plus proche</b></span>
+          <span class="ss-pill ss-pill--info"><span data-i18n="ss.sort_label">Tri :</span> <b>Plus proche</b></span>
         </div>
       </div>
     </div>
-    <button class="ss-cta" type="button" onclick="confirmStrategy()">Appliquer la stratégie et voir les matchs</button>
-    <button class="ss-back" type="button" onclick="backToHub()">Changer de sport</button>
+    <button class="ss-cta" type="button" onclick="confirmStrategy()" data-i18n="ss.cta_apply">Appliquer la stratégie et voir les matchs</button>
+    <button class="ss-back" type="button" onclick="backToHub()" data-i18n="ss.back_change">Changer de sport</button>
   </div>
 </div>
 
@@ -14310,6 +14560,7 @@ function psSetLang(v) {
         <option value="break_set">Break Set</option>
         <option value="under_jeu">Under Jeu</option>
         <option value="oddspapi_prematch">OddsPapi Prematch</option>
+        <option value="integrity_alert">🔍 Intégrité</option>
       </select>
       <select id="ta-filter-outcome" class="adv-input" style="width:140px">
         <option value="">Tous outcomes</option>
@@ -14323,10 +14574,10 @@ function psSetLang(v) {
       <table class="stats-table" id="ta-table">
         <thead><tr>
           <th>Date</th><th>Type</th><th>Match</th><th>Tournoi</th>
-          <th>Set</th><th>DR set</th><th>Pari</th><th>Cote</th><th>Conf%</th>
+          <th>Set</th><th>DR set</th><th>Pari</th><th>Cote</th><th>Conf%</th><th>Intégrité</th>
           <th>Score alerte</th><th>Score final</th><th>Outcome</th>
         </tr></thead>
-        <tbody id="ta-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text2)" data-i18n="status.loading">Chargement…</td></tr></tbody>
+        <tbody id="ta-tbody"><tr><td colspan="13" style="text-align:center;color:var(--text2)" data-i18n="status.loading">Chargement…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -14851,6 +15102,7 @@ function psSetLang(v) {
 </div>
 
 
+<script>window._tnLogoFallback=window._tnLogoFallback||function(i){i.style.display="none"}</script>
 <!-- PAGE : TENNIS LIVE (ESPN ATP+WTA) -->
 <div id="page-tennis" data-page="tennis" style="display:none;">
 <!-- ─── SIDEBAR TOURNOIS TENNIS ─── -->
@@ -15050,6 +15302,8 @@ function psSetLang(v) {
        Données /api/v1/tennis/value-bets (BSD primaire, ESPN fallback,
        Sackmann Elo + The Odds API h2h + Shin-Hurley devig + 0.6·Elo+0.4·BSD).
        ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="tennis-vb-filters" class="tennis-vb-filters">
+      <div>
         <span class="tvb-btn-group">
           <button class="tennis-vb-filter-btn is-active" data-filter="tour" data-value="ALL" onclick="applyTennisFilter(this)">Tous</button>
           <button class="tennis-vb-filter-btn" data-filter="tour" data-value="ATP" onclick="applyTennisFilter(this)">ATP</button>
@@ -15162,11 +15416,6 @@ function psSetLang(v) {
         </div>
         <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
           <label class="tvb-toggle">
-
-          </label>
-        </div>
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <label class="tvb-toggle">
             <input type="checkbox" id="tennis-vb-hide-finished" checked onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Masquer terminés
           </label>
         </div>
@@ -15261,6 +15510,9 @@ function psSetLang(v) {
         <circle cx="12" cy="12" r="10" fill="none" stroke="#ffff8a" stroke-width="0.5" opacity="0.45"/>
       </symbol>
     </defs></svg>
+
+    <!-- Status value-bets — affiché par tickTennisValueBets() -->
+    <div id="tennis-vb-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#5a6068);padding:4px 0 8px;text-align:center;"></div>
 
     <!-- Tableau value-bets — Phase B ADR-001 : div role=table + CSS Grid -->
     <div id="tn-vb-scroll-top" class="tn-scroll-top"><div id="tn-vb-scroll-inner" style="height:1px;"></div></div>
@@ -18492,6 +18744,9 @@ function psSetLang(v) {
   }
 
   /* CF-END */
+  @keyframes tnIntegrityPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+  .tn-integrity-badge { transition: all .2s ease; cursor:help; }
+  .tn-integrity-badge:hover { transform: scale(1.15); }
 </style>
 
 <!-- PAGE : TARIFS -->
