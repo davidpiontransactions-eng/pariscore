@@ -315,6 +315,15 @@
     background: var(--bg2) !important;
     border-bottom: 1px solid var(--border) !important;
   }
+  /* Hide scrollbar on desktop nav — native scrollbar track swallows clicks on Windows */
+  html.ps-desktop-v1 nav .nav-links {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow-y: hidden;
+  }
+  html.ps-desktop-v1 nav .nav-links::-webkit-scrollbar {
+    display: none;
+  }
 
   /* ===========================================================
      FIN C1-B FOUNDATIONS — prochaines etapes :
@@ -3552,6 +3561,7 @@
     transition: transform .24s cubic-bezier(.4,0,.2,1);
     border-radius: 2px 2px 0 0;
     pointer-events: none;
+    z-index: -1;
   }
   .nav-links a:hover { color: var(--text); }
   .nav-links a:hover::after { transform: scaleX(1); }
@@ -9813,6 +9823,7 @@
     opacity: 0.6;
     transition: opacity .2s ease, filter .2s ease;
     pointer-events: none;
+    z-index: -1;
   }
   nav .nav-links a:hover::before { opacity: 1; }
   nav .nav-links a.active::before { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,0,67,0.5)); }
