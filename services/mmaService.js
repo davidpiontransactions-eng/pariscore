@@ -91,6 +91,7 @@ function _devig(bookmakers, nameA, nameB) {
     for (const mkt of (bk.markets || [])) {
       if (mkt.key !== 'h2h') continue;
       for (const out of (mkt.outcomes || [])) {
+        if (!out || !out.name) continue;
         const n = out.name.toLowerCase().trim();
         if (n === nA) oA = out.price;
         else if (n === nB) oB = out.price;
@@ -299,7 +300,7 @@ function mmaModelBand(nameA, nameB) {
   const boots = MMA_MODEL.bootstrap;
   if (!Array.isArray(boots) || boots.length < 5) return { p: pr, lo: pr, hi: pr };
   const preds = [];
-  for (const bm of boots) { const bp = _symPredict(bm, fa, fb); if (bp != null && !isNaN(bp)) preds.push(bp); }
+  for (const bm of boots) { try { const bp = _symPredict(bm, fa, fb); if (bp != null && !isNaN(bp)) preds.push(bp); } catch (_) {} }
   if (preds.length < 5) return { p: pr, lo: pr, hi: pr };
   preds.sort((a, b) => a - b);
   const q = (f) => preds[Math.min(preds.length - 1, Math.max(0, Math.floor(f * (preds.length - 1))))];
