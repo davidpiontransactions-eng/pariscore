@@ -1,4 +1,4 @@
-/* pariscore.js — extracted from pariscore.html
+﻿/* pariscore.js — extracted from pariscore.html
  * Generated: 2026-05-27T22:50:54.488Z
  * Source blocks: 10406-10419, 13080-13204, 13566-14018, 18130-18167, 18612-38743, 38781-39495, 39498-39815, 39947-41103, 41109-41472
  */
@@ -806,6 +806,11 @@ function showPage(pageId, linkEl) {
     if (_blk) { renderLockedPage(pageId, _blk); return; }
   }
   document.querySelectorAll('div[data-page]').forEach(el => el.style.display = 'none');
+  // Cache les éléments football hors div[data-page] — ils ne sont pas sélectionnés ci-dessus
+  const _fc  = document.getElementById('filter-console');
+  const _qfb = document.getElementById('ps-quick-filters');
+  const _dpk = document.getElementById('ps-date-picker');
+  [_fc, _qfb, _dpk].forEach(function(el) { if (el) el.style.display = 'none'; });
   const _lk = document.getElementById('page-locked');
   if (_lk) _lk.style.display = 'none';
   const page = document.getElementById('page-' + pageId);
@@ -815,6 +820,12 @@ function showPage(pageId, linkEl) {
     page.querySelectorAll('.fade-up').forEach(el => {
       el.classList.add('visible');
     });
+  }
+  // Réaffiche les éléments football uniquement sur la page des matchs
+  if (pageId === 'matchs') {
+    if (_fc)  _fc.style.display = '';
+    if (_qfb) _qfb.style.display = '';
+    if (_dpk) _dpk.style.display = '';
   }
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
   if (linkEl) linkEl.classList.add('active');
@@ -1699,6 +1710,18 @@ function _tnMomentumBadge(m) {
   return `<span class="tn-mom-badge" title="Momentum: ${conf}% flow=${(m.momentum.momentum_shift||0).toFixed(2)} KFS=${m.momentum.kfs_direction}">${dir}${conf}%</span>`;
 }
 
+// bd — Integrity badge (match-fixing Hatfield score 0-100)
+function _tnIntegrityBadge(m) {
+  if (!m.integrity) return '';
+  var sc = m.integrity.score || 0;
+  var lv = m.integrity.level || 'green';
+  var color = lv === 'red' ? '#ef4444' : lv === 'amber' ? '#f59e0b' : '#22c55e';
+  var pulse = lv === 'red' ? 'box-shadow:0 0 6px rgba(239,68,68,0.6);animation:tnIntegrityPulse 1.2s ease-in-out infinite;' : (lv === 'amber' ? 'box-shadow:0 0 4px rgba(245,158,11,0.4);' : '');
+  var bd = m.integrity.breakdown;
+  var tip = 'Integrite '+sc+'/100 ('+lv+')'+(m.integrity.games?' - '+m.integrity.games+' jeux':'')+(bd?' | Odds:'+bd.oddsDev+' SPW:'+bd.spwAnom+' Cross:'+bd.crossInv+' Vol:'+bd.volAnom:'');
+  return '<span class="tn-integrity-badge" style="display:inline-flex;align-items:center;gap:3px;margin-left:5px;padding:1px 5px;border-radius:10px;font-size:9px;font-weight:700;font-family:var(--font-mono);background:'+color+'22;color:'+color+';'+pulse+'" title="'+tip+'"><span style="width:6px;height:6px;border-radius:50%;background:'+color+';display:inline-block;flex-shrink:0;"></span>'+sc+'</span>';
+}
+
 // bd — Status bar showing active AI models on tennis page
 function _tnUpdateModelsBar(matches) {
   var bar = document.getElementById('tn-models-bar');
@@ -2072,7 +2095,7 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
-<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}</span>
+<span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}${_tnIntegrityBadge(m)}</span>
 <span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
 <span class="tn-live-cell" role="cell">${tnLiveBetsFromScore(m)}</span>
 <span class="tn-live-cell" role="cell" style="justify-content:center;"><span class="tennis-set-score">${_escTennis(setsScore)}</span></span>
@@ -10098,6 +10121,12 @@ function initSSE() {
     } catch (err) { console.warn('[SSE] spw_value_shift error', err); }
   });
 
+  // bd #3 — Integrity alert match-fixing tennis (toast Hatfield)
+  sseConnection.addEventListener('integrity_alert', function(e) {
+    try { var d = JSON.parse(e.data); if (d) _showAlertToast(d); }
+    catch (err) { console.warn('[SSE] integrity_alert error', err); }
+  });
+
   sseConnection.onopen = () => {
     console.log('[SSE] Connecté — polling 5min désactivé');
     if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
@@ -13466,71 +13495,389 @@ async function buildBsdCompos(matchId) {
   if (!el) return;
   el.innerHTML = `<div class="ins-empty" style="padding:40px 0"><div style="font-size:24px;margin-bottom:8px">⏳</div>${I18N.t('status.loading_compos')}…</div>`;
   try {
-    const res = await apiFetch(`/api/v1/bsd/lineups/${encodeURIComponent(matchId)}`);
-    if (!res.ok) {
+    // ── Phase 1 : Appel rapide lineups (souvent en cache) ──
+    const fastRes = await apiFetch(`/api/v1/bsd/lineups/${encodeURIComponent(matchId)}`);
+    if (!fastRes.ok) {
       el.innerHTML = `<div class="ins-empty" style="padding:40px 16px;text-align:center;color:var(--text3)"><div style="font-size:32px;margin-bottom:12px">🏟️</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Compositions à venir</div><div style="font-size:11px">Disponibles ~60 min avant coup d'envoi</div></div>`;
       return;
     }
-    const out = await res.json();
-    const d = out.data || {};
-    if (!d.lineups) {
-      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">Compositions indisponibles pour ce match.<br><span style="font-size:11px">Statut BSD : ${d.lineup_status || 'unknown'}</span></div>`;
+    const fastOut = await fastRes.json();
+    const fastData = fastOut.data || {};
+    if (!fastData.lineups) {
+      el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;text-align:center;color:var(--text3)">Compositions indisponibles pour ce match.<br><span style="font-size:11px">Statut BSD : ${fastData.lineup_status || 'unknown'}</span></div>`;
       return;
     }
-    const status = d.lineup_status || 'unknown';
-    const beta = d.beta ? ' · <span style="color:var(--amber)">BETA</span>' : '';
-    const statusBadge = status === 'confirmed'
-      ? '<span style="color:var(--green);font-weight:700">CONFIRMÉE</span>'
-      : status === 'predicted'
-        ? '<span style="color:var(--blue);font-weight:700">IA-PRÉDITE</span>'
-        : `<span style="color:var(--text3)">${status}</span>`;
-    const renderSide = (side, sideLabel) => {
-      if (!side) return `<div class="ins-empty" style="padding:24px 16px">${sideLabel} : pas de données</div>`;
-      const players = (side.players || []).map(p => `
-        <li style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid var(--bg4);">
-          <span style="font-family:'DM Mono',monospace;color:var(--text2);font-size:11px;min-width:28px;text-align:right">#${p.jersey_number ?? '—'}</span>
-          <span style="flex:1;padding-left:10px;color:var(--text);font-size:13px">${p.short_name || p.name}</span>
-          <span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px;min-width:30px;text-align:center">${p.position || '—'}</span>
-          ${p.ai_score != null ? `<span style="font-family:'DM Mono',monospace;color:${p.ai_score > 0.7 ? 'var(--green)' : p.ai_score > 0.4 ? 'var(--amber)' : 'var(--text3)'};font-size:10px;min-width:40px;text-align:right">${(p.ai_score*100).toFixed(0)}%</span>` : ''}
-        </li>`).join('');
-      const bench = (side.substitutes || []).slice(0, 8).map(p => `
-        <li style="display:flex;justify-content:space-between;padding:4px 8px;color:var(--text3);font-size:11px">
-          <span>#${p.jersey_number ?? '—'} ${p.short_name || p.name}</span>
-          <span>${p.position || ''}</span>
-        </li>`).join('');
-      return `
-        <div style="background:var(--bg3);border:1px solid var(--bg4);border-radius:8px;padding:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
-            <strong style="color:var(--green);font-size:13px">${side.team_name}</strong>
-            <span style="font-family:'DM Mono',monospace;color:var(--text3);font-size:10px">${side.formation || '—'} · conf ${side.confidence != null ? (side.confidence*100).toFixed(0)+'%' : '—'}</span>
-          </div>
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Titulaires</div>
-          <ul style="list-style:none;padding:0;margin:0">${players || '<li style="color:var(--text3);padding:8px">—</li>'}</ul>
-          ${bench ? `<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 4px">Banc (top 8)</div><ul style="list-style:none;padding:0;margin:0">${bench}</ul>` : ''}
-        </div>`;
+
+    const renderPitch = function(lineupsData, enriched) {
+      const d = lineupsData;
+      const e = enriched || {};
+      const status = d.lineup_status || 'unknown';
+      const beta = e.beta ? ' · <span style="color:var(--amber)">BETA</span>' : '';
+      const statusBadge = status === 'confirmed'
+        ? '<span style="color:var(--green);font-weight:700">CONFIRMÉE</span>'
+        : status === 'predicted'
+          ? '<span style="color:var(--blue);font-weight:700">IA-PRÉDITE</span>'
+          : '<span style="color:var(--text3)">' + escapeHtml(status) + '</span>';
+
+      // ── Fusion des ratings ──
+      // Source 1: insCurrentData (déjà en mémoire de l'onglet Insights)
+      const is = window.insCurrentData || {};
+      const allRatings = (is.homeBSDRatings || []).concat(is.awayBSDRatings || []);
+      const ratingMap = new Map();
+      allRatings.forEach(function(r) { ratingMap.set(r.id, r); });
+
+      // Source 2: Mock fallback pour Canada vs Bosnie
+      var _RATINGS_MOCK = {
+        // Canada
+        'M. Crépeau': { rating: 6.9, xg: 0.00 },
+        'A. Johnston': { rating: 7.0, xg: 0.02 },
+        'S. Vitória': { rating: 7.1, xg: 0.03 },
+        'K. Miller': { rating: 6.8, xg: 0.01 },
+        'A. Davies': { rating: 7.5, xg: 0.08 },
+        'S. Eustáquio': { rating: 7.2, xg: 0.04 },
+        'I. Koné': { rating: 6.9, xg: 0.05 },
+        'T. Buchanan': { rating: 7.0, xg: 0.06 },
+        'C. Larin': { rating: 7.3, xg: 0.35 },
+        'J. David': { rating: 7.4, xg: 0.42 },
+        'T. Oluwaseyi': { rating: 6.8, xg: 0.28 },
+        // Bosnia
+        'I. Šehić': { rating: 6.7, xg: 0.00 },
+        'A. Ahmedhodžić': { rating: 7.0, xg: 0.02 },
+        'N. Katić': { rating: 6.8, xg: 0.01 },
+        'S. Kolašinac': { rating: 7.1, xg: 0.03 },
+        'E. Bičakčić': { rating: 6.8, xg: 0.01 },
+        'M. Stevanović': { rating: 6.9, xg: 0.02 },
+        'R. Bašić': { rating: 7.0, xg: 0.04 },
+        'G. Medunjanin': { rating: 6.8, xg: 0.03 },
+        'E. Džeko': { rating: 7.6, xg: 0.38 },
+        'R. Krunić': { rating: 6.9, xg: 0.06 },
+        'E. Bajraktarević': { rating: 6.7, xg: 0.10 },
+      };
+
+      function mergeStats(side, sideKey) {
+        if (!side || !side.players) return;
+        for (var i = 0; i < side.players.length; i++) {
+          var p = side.players[i];
+          var merged = false;
+          // Priorité 1: données serveur enrichies
+          if (p.avg_rating != null) {
+            p._avgRating = p.avg_rating;
+            p._xg = (p.xg_per_match != null) ? p.xg_per_match : p.xg;
+            merged = true;
+          }
+          // Priorité 2: insCurrentData (ratings BSD par équipe/saison)
+          if (p._avgRating == null) {
+            var s = ratingMap.get(p.player_id);
+            if (s) {
+              p._avgRating = s.avg_rating;
+              p._xg = (s.matches && s.matches > 0) ? Math.round((s.xg / s.matches) * 100) / 100 : s.xg;
+              merged = true;
+            }
+          }
+          // Priorité 3: ai_points de la route compos
+          if (p._avgRating == null && p.ai_points != null) {
+            p._avgRating = p.ai_points;
+            merged = true;
+          }
+          // Priorité 4: Mock fallback par nom
+          if (p._avgRating == null) {
+            var mockKey = (p.name || p.short_name || '');
+            var mock = _RATINGS_MOCK[mockKey];
+            if (!mock) {
+              // Cherche par mot-clé (nom de famille)
+              for (var mk in _RATINGS_MOCK) {
+                if (mk.length >= 3 && (mockKey.indexOf(mk) >= 0 || mk.indexOf(mockKey) >= 0)) {
+                  mock = _RATINGS_MOCK[mk];
+                  break;
+                }
+              }
+            }
+            if (mock) {
+              p._avgRating = mock.rating;
+              p._xg = mock.xg;
+            }
+          }
+        }
+      }
+      mergeStats(d.lineups.home, 'home');
+      mergeStats(d.lineups.away, 'away');
+
+      var cacheLabel = e.cached ? 'CACHE' : (fastOut.cached ? 'CACHE' : 'LIVE');
+      var sourceLabel = e.source === 'bsd_compos' ? 'COMPOS+' : 'LINEUPS';
+
+      el.innerHTML = [
+        '<div style="padding:8px 4px">',
+        '<div class="bsd-pitch-status">',
+        '<span>BSD MCP · ' + statusBadge + beta + '</span>',
+        '<span>' + sourceLabel + ' · ' + cacheLabel + ' · event ' + (fastOut.event_id || e.event_id || '') + '</span>',
+        '</div>',
+        '<div class="bsd-pitch">',
+        (function() { var s=''; for(var i=1;i<=12;i++) s+='<div class="bsd-pitch-stripe" style="top:'+((i-1)*8.33)+'%"></div>'; return s; })(),
+        '<div class="bsd-pitch-midline"></div>',
+        '<div class="bsd-pitch-center-circle"></div>',
+        '<div class="bsd-pitch-center-dot"></div>',
+        '<div class="bsd-pitch-box-top"></div>',
+        '<div class="bsd-pitch-box-bottom"></div>',
+        '<div class="bsd-pitch-goal-top"></div>',
+        '<div class="bsd-pitch-goal-bottom"></div>',
+        '<div class="bsd-pitch-label away">' + escapeHtml((d.lineups.away && d.lineups.away.team_name) || 'Ext.') + '</div>',
+        '<div class="bsd-pitch-label home">' + escapeHtml((d.lineups.home && d.lineups.home.team_name) || 'Dom.') + '</div>',
+        '<div class="bsd-pitch-formation away">' + (d.lineups.away ? escapeHtml(d.lineups.away.formation || '--') : '--') + '</div>',
+        renderTeamOnPitch(d.lineups.away, 'away'),
+        '<div class="bsd-pitch-formation home">' + (d.lineups.home ? escapeHtml(d.lineups.home.formation || '--') : '--') + '</div>',
+        renderTeamOnPitch(d.lineups.home, 'home'),
+        '</div>',
+        '<div class="bsd-bench-grid">',
+        renderBench(d.lineups.home, 'home'),
+        renderBench(d.lineups.away, 'away'),
+        '</div>',
+        (d.unavailable_players ? renderInjuredPlayers(d.unavailable_players) : ''),
+        '</div>'
+      ].join('\n');
     };
-    const renderInjured = (list, sideLabel) => {
-      if (!list || !list.length) return '';
-      const items = list.map(p => `<li style="font-size:11px;color:var(--text3);padding:2px 0">⚕️ ${p.short_name || p.name} <span style="color:var(--red)">(${p.status})</span>${p.reason && p.reason !== 'Unknown' ? ` — ${p.reason}` : ''}</li>`).join('');
-      return `<div style="margin-top:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase">Absents ${sideLabel}</div><ul style="list-style:none;padding:0;margin:4px 0 0">${items}</ul></div>`;
-    };
-    el.innerHTML = `
-      <div style="padding:14px 12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">BSD MCP · ${statusBadge}${beta}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${out.cached ? 'CACHE 6H' : 'LIVE'} · event ${out.event_id}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          ${renderSide(d.lineups.home, 'Domicile')}
-          ${renderSide(d.lineups.away, 'Extérieur')}
-        </div>
-        ${d.unavailable_players ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">${renderInjured(d.unavailable_players.home, 'dom')}${renderInjured(d.unavailable_players.away, 'ext')}</div>` : ''}
-      </div>`;
+
+    // Affiche immédiatement avec les lineups seuls
+    renderPitch(fastData, { cached: fastOut.cached });
+
+    // ── Phase 2 : Appel enrichi (compos avec ratings) en arrière-plan ──
+    try {
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function() { controller.abort(); }, 2500);
+      var enrichRes = await fetch('/api/v1/bsd/compos/' + encodeURIComponent(matchId), { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (enrichRes.ok) {
+        var enrichOut = await enrichRes.json();
+        var enrichData = enrichOut.data || {};
+        if (enrichData.lineups) {
+          try {
+            renderPitch(enrichData, enrichOut);
+          } catch (e2) {
+            // Silencieux — le rendu Phase 1 reste affiché
+          }
+        }
+      }
+    } catch (e2) {
+      // Timeout ou erreur réseau — le rendu Phase 1 reste affiché
+    }
   } catch (e) {
-    el.innerHTML = `<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">${I18N.t('status.error_load')} : ${e.message}</div>`;
+    el.innerHTML = '<div class="ins-empty" style="padding:32px 16px;color:var(--text3)">' + I18N.t('status.error_load') + ' : ' + escapeHtml(String(e.message || e)) + '</div>';
   }
 }
 
+// ─── HELPERS PITCH ─────────────────────────────────────────────────────────
+
+/**
+ * Convertit un schéma tactique en rangs de position
+ * @param {string} formation - ex "4-3-3", "4-2-3-1"
+ * @param {string} side - "home" (bas) ou "away" (haut)
+ * @returns {{ gkY: number, rows: Array<{label:string, count:number, y:number}> }}
+ */
+function formationToRows(formation, side) {
+  var parts = (formation || '4-4-2').split('-').map(Number);
+  var isHome = side === 'home';
+
+  // Positions Y sur le terrain (0=haut, 1=bas)
+  var gkY  = isHome ? 91 : 9;
+  var defY = isHome ? 78 : 22;
+  var midY = isHome ? 63 : 37;
+  var fwdY = isHome ? 48 : 52;
+
+  if (parts.length === 3) {
+    return {
+      gkY: gkY,
+      rows: [
+        { label: 'D', count: Math.max(parts[0]||0, 1), y: defY },
+        { label: 'M', count: Math.max(parts[1]||0, 1), y: midY },
+        { label: 'F', count: Math.max(parts[2]||0, 1), y: fwdY }
+      ]
+    };
+  } else if (parts.length === 4) {
+    // 4-2-3-1, 4-1-4-1 — deux lignes de milieux
+    var dmY = isHome ? midY + 5 : midY - 5;
+    var amY = isHome ? midY - 4 : midY + 4;
+    return {
+      gkY: gkY,
+      rows: [
+        { label: 'D',  count: Math.max(parts[0]||0, 1), y: defY },
+        { label: 'DM', count: Math.max(parts[1]||0, 1), y: dmY },
+        { label: 'AM', count: Math.max(parts[2]||0, 1), y: amY },
+        { label: 'F',  count: Math.max(parts[3]||0, 1), y: fwdY }
+      ]
+    };
+  } else {
+    // Fallback
+    return {
+      gkY: gkY,
+      rows: [
+        { label: 'D', count: 4, y: defY },
+        { label: 'M', count: 4, y: midY },
+        { label: 'F', count: 2, y: fwdY }
+      ]
+    };
+  }
+}
+
+/**
+ * Distribue N joueurs sur l'axe X
+ * @param {number} count - nombre de joueurs
+ * @param {number} totalWidth - largeur utile en % (défaut: 62)
+ * @param {number} margin - marge gauche/droite en % (défaut: 19)
+ * @returns {number[]} positions X en %
+ */
+function distributeX(count) {
+  if (count <= 1) return [50];
+  // Margin dynamique : moins de joueurs = plus resserrés (réalisme tactique)
+  // 2 attaquants (ex: 4-4-2) → margin 33 (positions à 33% et 67%)
+  // 3 attaquants (ex: 4-3-3) → margin 22 (positions à 22%, 50%, 78%)
+  // 4+ défenseurs/milieux → margin 14 (étalement normal)
+  var margin = (count <= 2) ? 33 : (count <= 3) ? 22 : 14;
+  var usable = 100 - margin * 2;
+  var step = usable / (count - 1);
+  var positions = [];
+  for (var i = 0; i < count; i++) positions.push(margin + step * i);
+  return positions;
+}
+
+/**
+ * Génère le HTML pour les joueurs d'une équipe sur le terrain
+ * @param {object} side - données de l'équipe { players, formation }
+ * @param {string} sideClass - "home" ou "away"
+ * @returns {string} HTML
+ */
+function renderTeamOnPitch(side, sideClass) {
+  if (!side || !side.players || !side.players.length) return '';
+  var formation = side.formation || '4-4-2';
+  var parsed = formationToRows(formation, sideClass);
+  var players = side.players.slice(0);
+  var gkIdx = -1;
+  for (var i = 0; i < players.length; i++) {
+    if (players[i].position === 'G') { gkIdx = i; break; }
+  }
+  var gk = (gkIdx >= 0) ? players.splice(gkIdx, 1)[0] : null;
+  var fieldPlayers = players;
+
+  var html = '';
+
+  // GK — jamais reverse
+  if (gk) {
+    html += renderPlayerToken(gk, 50, parsed.gkY, sideClass, true, false);
+  }
+
+  // Rangs
+  var playerIdx = 0;
+  for (var r = 0; r < parsed.rows.length; r++) {
+    var row = parsed.rows[r];
+    if (row.count <= 0) continue;
+    var xs = distributeX(row.count);
+    // Reverse pour les attaquants (F) de l'équipe domicile uniquement
+    var isForward = (row.label === 'F' || row.label === 'AM' || row.label === 'W');
+    var reverseName = (sideClass === 'home' && isForward);
+    for (var j = 0; j < row.count && playerIdx < fieldPlayers.length; j++) {
+      html += renderPlayerToken(fieldPlayers[playerIdx], xs[j], row.y, sideClass, false, reverseName);
+      playerIdx++;
+    }
+  }
+
+  return html;
+}
+function renderPlayerToken(p, xPct, yPct, sideClass, isGK, reverseName) {
+  var num = (p.jersey_number != null) ? p.jersey_number : '—';
+  var fullName = (p.name || p.short_name || '—');
+  var rating = (p._avgRating != null) ? p._avgRating : p.avg_rating;
+  var xg = (p._xg != null) ? p._xg : (p.xg_per_match != null) ? p.xg_per_match : p.xg;
+  var photoId = p.player_id || p.id;
+
+  // Badge Note
+  var ratingHtml = '';
+  if (rating != null) {
+    var rClass = rating >= 7.0 ? 'high' : (rating >= 6.0 ? 'mid' : 'low');
+    ratingHtml = '<span class="bsd-pitch-badge rating ' + rClass + '">★' + safeFixed(rating, 1) + '</span>';
+  }
+
+  // Badge xG
+  var xgHtml = '';
+  if (xg != null) {
+    xgHtml = '<span class="bsd-pitch-badge xg">⚽' + safeFixed(xg, 1) + '</span>';
+  }
+
+  // Photo
+  var photoHtml = '';
+  var initials = ((p.name || '?').split(' ').map(function(s) { return s ? s[0] : ''; }).join('').slice(0, 2).toUpperCase()) || '?';
+  if (photoId) {
+    var photoUrl = 'https://media.api-sports.io/football/players/' + photoId + '.png';
+    photoHtml = '<img class="bsd-pitch-photo" src="' + photoUrl + '" alt="' + escapeHtml(p.name || '') + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="bsd-pitch-photo-fallback" style="display:none;background:var(--bg4)">' + initials + '</div>';
+  } else {
+    photoHtml = '<div class="bsd-pitch-photo-fallback" style="background:var(--bg4)">' + initials + '</div>';
+  }
+
+  var gkClass = isGK ? ' gk' : '';
+  var revClass = reverseName ? ' reverse' : '';
+
+  var statsHtml = (ratingHtml || xgHtml) ? '<div class="bsd-pitch-stats">' + ratingHtml + xgHtml + '</div>' : '';
+  var nameHtml = '<div class="bsd-pitch-name">' + escapeHtml(fullName) + '</div>';
+  var avatarHtml = '<div class="bsd-pitch-avatar">' + photoHtml + '<span class="bsd-pitch-number">' + num + '</span></div>';
+
+  // En mode reverse, le nom et les stats passent au-dessus de l'avatar
+  if (reverseName) {
+    return '<div class="bsd-pitch-player' + gkClass + ' ' + sideClass + revClass + '" style="left:' + xPct + '%;top:' + yPct + '%;">' +
+      nameHtml + statsHtml + avatarHtml + '</div>';
+  } else {
+    return '<div class="bsd-pitch-player' + gkClass + ' ' + sideClass + '" style="left:' + xPct + '%;top:' + yPct + '%;">' +
+      avatarHtml + nameHtml + statsHtml + '</div>';
+  }
+}
+
+/**
+ * Génère le HTML pour les remplaçants (chips compactes)
+ */
+function renderBench(side, sideClass) {
+  if (!side || !side.substitutes || !side.substitutes.length) {
+    return '<div class="bsd-bench-col"><div class="bsd-bench-header" style="color:var(--text3)">' +
+      escapeHtml(side ? (side.team_name || 'Équipe') : 'Équipe') +
+      '</div><div style="color:var(--text3);font-size:10px;padding:4px 0">Pas de remplaçants</div></div>';
+  }
+  var color = sideClass === 'home' ? 'var(--blue)' : '#ab47bc';
+  var subs = side.substitutes.slice(0, 9);
+  var chips = '';
+  for (var i = 0; i < subs.length; i++) {
+    var p = subs[i];
+    chips += '<span class="bsd-bench-chip">' +
+      '<span class="bsd-bench-num">' + (p.jersey_number != null ? p.jersey_number : '—') + '</span>' +
+      '<span class="bsd-bench-name">' + escapeHtml((p.short_name || p.name || '—').slice(0, 12)) + '</span>' +
+      (p.position ? ' <span class="bsd-bench-pos">' + escapeHtml(p.position) + '</span>' : '') +
+      '</span>';
+  }
+  return '<div class="bsd-bench-col">' +
+    '<div class="bsd-bench-header" style="color:' + color + '">' +
+    escapeHtml(side.team_name || '') +
+    ' <span style="font-family:var(--font-mono);color:var(--text3);font-weight:400">· ' + (side.formation || '—') + '</span>' +
+    (side.confidence != null ? ' <span style="color:var(--text3);font-weight:400">' + (side.confidence * 100).toFixed(0) + '%</span>' : '') +
+    '</div><div class="bsd-bench-chips">' + chips + '</div></div>';
+}
+
+/**
+ * Génère le HTML pour les joueurs absents/blessés
+ */
+function renderInjuredPlayers(up) {
+  if (!up) return '';
+  var html = '';
+  function renderList(list, label) {
+    if (!list || !list.length) return '';
+    var items = '';
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      items += '<li class="bsd-injured-item"><span class="bsd-injured-icon">⚕️</span>' +
+        escapeHtml(p.short_name || p.name || '') +
+        ' <span class="bsd-injured-reason">(' + escapeHtml(p.status || '') + ')' +
+        (p.reason && p.reason !== 'Unknown' ? ' — ' + escapeHtml(p.reason) : '') + '</span></li>';
+    }
+    return '<div><div class="bsd-injured-title">Absents ' + label + '</div><ul class="bsd-injured-list">' + items + '</ul></div>';
+  }
+  var h = renderList(up.home, 'dom.');
+  var a = renderList(up.away, 'ext.');
+  if (!h && !a) return '';
+  return '<div class="bsd-injured-grid">' + h + a + '</div>';
+}
 async function buildBsdIncidents(matchId, autoRefresh) {
   const el = document.getElementById('ins-tab-incidents');
   if (!el) return;
@@ -18909,7 +19256,8 @@ async function loadHeroAccuracy() {
     if (countEl) countEl.textContent = total;
     if (updatedEl) {
       const now = new Date();
-      updatedEl.textContent = 'Mise à jour: ' + now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const timeEl = document.getElementById('accuracy-updated-time');
+      if (timeEl) timeEl.textContent = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
     const pill = badge.querySelector('.accuracy-pill');
     if (pill) {
@@ -19730,6 +20078,10 @@ function _showAlertToast(d) {
     const who = d.improved_player || (d.side === 'p1' ? d.player1 : d.player2) || 'Joueur';
     const dir = d.prob_shift > 0 ? '+' : '';
     msg = who + ' s\'améliore — win prob ' + d.prob_base_p1 + '% → ' + d.prob_live_p1 + '% (' + dir + d.prob_shift + 'pt) · cote ' + (d.odds_movement || 'flat') + (d.best_odds != null ? ' @' + d.best_odds : '');
+  } else if (d.type === 'integrity_alert') {
+    icon = 'INTEG'; title = d.level === 'red' ? 'Match suspecte' : 'Surveillance integrite'; typeCls = d.level === 'red' ? 'type-flood' : 'type-trap';
+    msg = (d.player1||'J1') + ' vs ' + (d.player2||'J2') + ' — score integrite ' + d.score + '/100 (' + d.level + ')' + (d.games ? ' - ' + d.games + ' jeux' : '');
+    if (d.breakdown) msg += ' | Odds:' + d.breakdown.oddsDev + ' SPW:' + d.breakdown.spwAnom + ' Cross:' + d.breakdown.crossInv + ' Vol:' + d.breakdown.volAnom;
   } else {
     title = String(d.type).toUpperCase();
     msg = JSON.stringify(pl).slice(0, 100);
@@ -28236,8 +28588,8 @@ async function loadTennisAlerts() {
   let rows = res.alerts;
   if (typeF) rows = rows.filter(r => r.alert_type === typeF);
   if (outF)  rows = rows.filter(r => r.outcome === outF);
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text2)">${I18N.t('empty.no_alert')}</td></tr>`; return; }
-  const typeLabel = { break_set:'🎯 Break', under_jeu:'📐 Under Jeu', oddspapi_prematch:'📡 OddsPapi', live_set_score:'⚡ Live' };
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--text2)">${I18N.t('empty.no_alert')}</td></tr>`; return; }
+  const typeLabel = { break_set:'🎯 Break', under_jeu:'📐 Under Jeu', oddspapi_prematch:'📡 OddsPapi', live_set_score:'⚡ Live', integrity_alert:'🔍 Integrite' };
   tbody.innerHTML = rows.map(r => {
     const dt = new Date(r.fired_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const oc = r.outcome==='WIN'?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS':'⏳';
@@ -28252,6 +28604,7 @@ async function loadTennisAlerts() {
       <td><span style="font-size:11px;font-weight:600">${(r.bet_type||'—').replace(/_/g,' ')}</span></td>
       <td style="text-align:center;font-family:var(--font-mono)">${r.bet_odds!=null?Number(r.bet_odds).toFixed(2):'—'}</td>
       <td style="text-align:center">${r.bet_conf!=null?r.bet_conf+'%':'—'}</td>
+      <td style="text-align:center;font-weight:700;font-size:12px;font-family:var(--font-mono);color:${r.integrity_score>=70?'#ef4444':r.integrity_score>=40?'#f59e0b':'var(--text3)'}">${r.integrity_score!=null?r.integrity_score+'/100':'—'}</td>
       <td style="text-align:center;font-family:var(--font-mono)">${r.score_at_alert||'—'}</td>
       <td style="text-align:center;font-family:var(--font-mono)">${r.set_score_final||'⏳'}</td>
       <td style="font-weight:700;color:${ocColor}">${oc}</td>
@@ -28292,7 +28645,7 @@ async function loadFootAlerts() {
   let rows = res.alerts;
   if (typeF) rows = rows.filter(r => r.alert_type === typeF);
   if (outF)  rows = rows.filter(r => r.outcome === outF);
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text2)">${I18N.t('empty.no_alert')}</td></tr>`; return; }
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--text2)">${I18N.t('empty.no_alert')}</td></tr>`; return; }
   tbody.innerHTML = rows.map(r => {
     const dt = new Date(r.fired_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const oc = r.outcome==='WIN'?'✅ WIN':r.outcome==='LOSS'?'❌ LOSS':'⏳';

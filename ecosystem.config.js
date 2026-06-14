@@ -6,6 +6,8 @@
  *    1. `pariscore`                   : serveur HTTP principal (Node.js + SSE + cron internes)
  *    2. `pariscore-cron-rg`           : job découplé Roland Garros prefetch toutes les 2h
  *    3. `pariscore-cron-match-stats`  : rafraîchissement quotidien match_stats_history
+ *    4. `pariscore-vault-daily`      : note quotidienne vault Obsidian (05:00 UTC)
+ *    5. `pariscore-vault-weekly`     : revue hebdo modèles (lundi 08:00 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -16,6 +18,8 @@
  *    pm2 start ecosystem.config.js --only pariscore
  *    pm2 start ecosystem.config.js --only pariscore-cron-rg
  *    pm2 start ecosystem.config.js --only pariscore-cron-match-stats
+ *    pm2 start ecosystem.config.js --only pariscore-vault-daily
+ *    pm2 start ecosystem.config.js --only pariscore-vault-weekly
  *
  *  Logs :
  *    pm2 logs pariscore --lines 100
@@ -94,6 +98,45 @@ module.exports = {
       },
       error_file: 'logs/cron-match-stats.err.log',
       out_file: 'logs/cron-match-stats.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job vault-daily ===
+      // Chaque matin à 05:00 UTC. Génère la note quotidienne dans le vault Obsidian
+      // avec les matchs du jour, picks, performance modèles et bankroll.
+      name: 'pariscore-vault-daily',
+      script: 'scripts/vault-daily-summary.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 5 * * *', // chaque matin à 05:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/vault-daily.err.log',
+      out_file: 'logs/vault-daily.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron vault-weekly-review ===
+      // Chaque lundi à 08:00 UTC. Génère la revue hebdomadaire de performance des modèles.
+      name: 'pariscore-vault-weekly',
+      script: 'scripts/vault-weekly-review.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 8 * * 1', // chaque lundi à 08:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/vault-weekly.err.log',
+      out_file: 'logs/vault-weekly.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },

@@ -2385,13 +2385,14 @@ function saveTennisAlert(data) {
   if (!sqldb) return;
   try {
     sqldb.prepare(`INSERT INTO tennis_alerts
-      (fired_at, alert_type, match_id, player1, player2, tournament, set_num, dr_set, bet_type, bet_odds, bet_conf, score_at_alert)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      (fired_at, alert_type, match_id, player1, player2, tournament, set_num, dr_set, bet_type, bet_odds, bet_conf, score_at_alert, integrity_score)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
       Date.now(), data.alert_type, data.match_id || null,
       data.player1 || null, data.player2 || null, data.tournament || null,
       data.set_num || null, data.dr_set || null,
       data.bet_type || null, data.bet_odds || null, data.bet_conf || null,
-      data.score_at_alert || null
+      data.score_at_alert || null,
+      data.integrity_score != null ? data.integrity_score : null
     );
   } catch (e) { console.warn('[TennisAlerts] saveTennisAlert:', e.message); }
 }
@@ -6498,6 +6499,8 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_fired ON tennis_alerts(fired_at DESC)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_outcome ON tennis_alerts(outcome)`);
+  // Migration : ajouter colonne integrity_score pour le détecteur match-fixing (idempotent)
+  try { sqldb.exec(`ALTER TABLE tennis_alerts ADD COLUMN integrity_score INTEGER DEFAULT 0`); } catch (_) {}
   // Historique alertes foot — tracking outcomes par type de pari
   sqldb.exec(`CREATE TABLE IF NOT EXISTS foot_alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23508,6 +23511,8 @@ async function pollTennisLive() {
     for (const k of _tennisBPPIPrev.keys()) if (!_liveIds.has(k)) _tennisBPPIPrev.delete(k);
     // bd #2 — Market Alert SPW/RPW live vs baseline → value shift (SSE)
     try { for (const m of data) { if (m && m.is_live) detectTennisSpwValueShift(m); } } catch (_) { /* non bloquant */ }
+    // bd #3 — Hatfield Match-Fixing Detector (composite integrity 0-100)
+    try { for (const m of data) { if (m && m.is_live) detectTennisMatchFixing(m); } } catch (_) { /* non bloquant */ }
     // bd 6v0 — DR Spike detection on every poll for live tennis matches.
     // Compare DR_set_courant vs DR_match → si |delta|/dr_match > seuil → SSE.
     // Fire-and-forget, debounce 30s per matchId garantit pas de spam.
@@ -25119,6 +25124,283 @@ function detectTennisSpwValueShift(m) {
       best_odds: ods ? (side === 'p1' ? (ods.best_p1 ?? null) : (ods.best_p2 ?? null)) : null,
       ts: Date.now(),
     });
+  } catch (_) { /* non bloquant */ }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  Tennis Match-Fixing Detector — Hatfield (2019) adapté PariScore
+//  4 sous-détecteurs → score composite 0-100
+//  - OddsDeviationDetector (35%) : écart cotes observées vs proba modèle
+//  - SpwRpwAnomalyDetector (30%) : dérive SPW/RPW anormale vs baseline
+//  - CrossInversionDetector (20%) : inversion favori/cotes vs stats réelles
+//  - VolumeAnomalyDetector (15%) : mouvement de cotes anormal
+// ═══════════════════════════════════════════════════════════════════════════════
+const _TN_MF = {
+  MIN_GAMES: 6,
+  SPW_DEV_THRESHOLD: 0.05,
+  PROB_SHIFT_THRESHOLD: 0.06,
+  ODDS_DEV_THRESHOLD: 0.08,       // écart min proba implicite vs modèle
+  CROSS_INVERSION_MIN_GLICO: 30,  // pts Glicko-2 min pour inversion significative
+  VOLUME_MOVE_THRESHOLD: 0.10,    // mouvement de cote min suspect
+  COOLDOWN_MS: 10 * 60 * 1000,   // 10 min par match
+  AMBER: 40,                      // score ≥ 40 → alerte amber
+  RED: 70,                        // score ≥ 70 → alerte rouge
+};
+
+/**
+ * Sous-détecteur 1 : OddsDeviationDetector (35 pts max)
+ * Compare la probabilité implicite des cotes avec la probabilité estimée
+ * par le modèle (SPW baseline ou Glicko-2). 
+ * Un écart ≥ seuil = suspect (le marché voit qqch que le modèle ne capte pas).
+ */
+function _tnMfOddsDeviation(m) {
+  try {
+    const odds1 = Number.isFinite(m.odds_player1) ? m.odds_player1 : null;
+    const odds2 = Number.isFinite(m.odds_player2) ? m.odds_player2 : null;
+    if (!odds1 || !odds2 || odds1 < 1.01 || odds2 < 1.01) return 0;
+
+    // Probabilité implicite normalisée (sans marge bookmaker)
+    const imp1 = 1 / odds1;
+    const imp2 = 1 / odds2;
+    const totalImp = imp1 + imp2;
+    const normP1 = imp1 / totalImp; // proba implicite normalisée P1
+
+    // Proba modèle via Glicko-2 si disponible
+    let modelProb = null;
+    if (m.glicko2 && Number.isFinite(m.glicko2.p1_serve) && Number.isFinite(m.glicko2.p2_serve)) {
+      // Conversion simple Glicko rating → win prob (logistique)
+      const s1 = m.glicko2.p1_serve + m.glicko2.p1_return;
+      const s2 = m.glicko2.p2_serve + m.glicko2.p2_return;
+      const diff = (s1 - s2) / 400; // échelle Glicko
+      modelProb = 1 / (1 + Math.pow(10, -diff));
+    }
+
+    // Fallback : utiliser SPW baseline si Glicko-2 indispo
+    if (modelProb == null) {
+      const snap = (typeof _tnSrvLookupSnap === 'function') ? _tnSrvLookupSnap(m) : null;
+      const sd = snap && snap.serve_dominance;
+      const b1 = sd && sd.p1 && Number.isFinite(sd.p1.serve_pts_won_pct) ? sd.p1.serve_pts_won_pct / 100 : null;
+      const b2 = sd && sd.p2 && Number.isFinite(sd.p2.serve_pts_won_pct) ? sd.p2.serve_pts_won_pct / 100 : null;
+      if (b1 != null && b2 != null) {
+        const fmt = /grand|slam|roland|wimbledon|us open|australian/i.test(String(m.tournament || ''))
+          && /atp|men/i.test(String(m.tour || '')) ? 'BO5' : 'BO3';
+        const res = computeTennisMatchProb({ p1_serve_pct: Math.max(0.3, Math.min(0.95, b1)), p2_serve_pct: Math.max(0.3, Math.min(0.95, b2)), format: fmt });
+        if (res) modelProb = res.p1_win;
+      }
+    }
+
+    if (modelProb == null) return 0;
+
+    const dev = Math.abs(normP1 - modelProb);
+    if (dev < _TN_MF.ODDS_DEV_THRESHOLD) return 0;
+
+    // Score proportionnel : 0-35, linéaire entre seuil et 0.30 d'écart
+    const raw = Math.min(35, Math.round((dev - _TN_MF.ODDS_DEV_THRESHOLD) / 0.30 * 35));
+    return raw;
+  } catch (_) { return 0; }
+}
+
+/**
+ * Sous-détecteur 2 : SpwRpwAnomalyDetector (30 pts max)
+ * Reprend la logique de detectTennisSpwValueShift() mais score l'anomalie
+ * plutôt que de juste détecter un dépassement de seuil binaire.
+ * Une dérive SPW soudaine = possible manipulation (joueur qui ne joue pas son niveau).
+ */
+function _tnMfSpwAnomaly(m) {
+  try {
+    const live = _tnLiveServeStats(m);
+    if (!live) return 0;
+
+    const snap = (typeof _tnSrvLookupSnap === 'function') ? _tnSrvLookupSnap(m) : null;
+    const sd = snap && snap.serve_dominance;
+    const b1 = sd && sd.p1 && Number.isFinite(sd.p1.serve_pts_won_pct) ? sd.p1.serve_pts_won_pct / 100 : null;
+    const b2 = sd && sd.p2 && Number.isFinite(sd.p2.serve_pts_won_pct) ? sd.p2.serve_pts_won_pct / 100 : null;
+    if (b1 == null || b2 == null) return 0;
+
+    const dev1 = Math.abs(live.p1_spw - b1);
+    const dev2 = Math.abs(live.p2_spw - b2);
+    const maxDev = Math.max(dev1, dev2);
+
+    if (maxDev < _TN_MF.SPW_DEV_THRESHOLD) return 0;
+
+    // Score proportionnel : 0-30
+    const raw = Math.min(30, Math.round((maxDev - _TN_MF.SPW_DEV_THRESHOLD) / 0.25 * 30));
+    return raw;
+  } catch (_) { return 0; }
+}
+
+/**
+ * Sous-détecteur 3 : CrossInversionDetector (20 pts max)
+ * Détecte une inversion entre le favori des cotes et le joueur qui
+ * a les meilleures stats réelles (Glicko-2 serve/return).
+ * Si le marché favorise un joueur mais que l'autre a clairement
+ * de meilleures stats → suspect (possible fix).
+ */
+function _tnMfCrossInversion(m) {
+  try {
+    const odds1 = Number.isFinite(m.odds_player1) ? m.odds_player1 : null;
+    const odds2 = Number.isFinite(m.odds_player2) ? m.odds_player2 : null;
+    if (!odds1 || !odds2 || !m.glicko2) return 0;
+
+    // Favori des cotes
+    const oddsFavP1 = odds1 <= odds2; // true si P1 est favori (cote plus basse)
+
+    // Meilleur joueur selon Glicko-2
+    const s1 = (m.glicko2.p1_serve || 0) + (m.glicko2.p1_return || 0);
+    const s2 = (m.glicko2.p2_serve || 0) + (m.glicko2.p2_return || 0);
+    const glickoGap = Math.abs(s1 - s2);
+    if (glickoGap < _TN_MF.CROSS_INVERSION_MIN_GLICO) return 0; // pas assez de gap pour conclure
+
+    const glickoFavP1 = s1 >= s2;
+
+    // Inversion : le favori des cotes est l'opposé du meilleur Glicko
+    if (oddsFavP1 !== glickoFavP1) {
+      // Score corrélé au gap Glicko
+      const raw = Math.min(20, Math.round(glickoGap / 200 * 20));
+      return raw;
+    }
+    return 0;
+  } catch (_) { return 0; }
+}
+
+/**
+ * Sous-détecteur 4 : VolumeAnomalyDetector (15 pts max)
+ * Détecte les mouvements de cotes anormaux via bsd_odds_summary.
+ * Un mouvement brusque ET unilatéral = possible manipulation.
+ */
+function _tnMfVolumeAnomaly(m) {
+  try {
+    const ods = m.bsd_odds_summary || m._bsd_odds || null;
+    if (!ods) return 0;
+
+    const mv1 = ods.movement_p1;
+    const mv2 = ods.movement_p2;
+
+    // Mouvements extrêmes
+    const extreme1 = mv1 === 'SHORTENING';
+    const extreme2 = mv2 === 'SHORTENING';
+
+    // Un seul côté bouge = suspect (info asymétrique)
+    if (extreme1 !== extreme2) return 12; // fort signal
+
+    // Les deux bougent dans la même direction = moins suspect (marché liquide)
+    if (extreme1 && extreme2) return 6;
+
+    // Vérifier best_odds change si disponibles
+    const b1 = Number.isFinite(ods.best_p1) ? ods.best_p1 : null;
+    const b2 = Number.isFinite(ods.best_p2) ? ods.best_p2 : null;
+    if (b1 && b2) {
+      // Comparer avec odds actuels du match
+      const cur1 = Number.isFinite(m.odds_player1) ? m.odds_player1 : null;
+      const cur2 = Number.isFinite(m.odds_player2) ? m.odds_player2 : null;
+      if (cur1 && cur2) {
+        const move1 = Math.abs(cur1 - b1) / b1;
+        const move2 = Math.abs(cur2 - b2) / b2;
+        const maxMove = Math.max(move1, move2);
+        if (maxMove > _TN_MF.VOLUME_MOVE_THRESHOLD) {
+          // Mouvement global fort
+          const raw = Math.min(15, Math.round(maxMove / 0.30 * 15));
+          return raw;
+        }
+      }
+    }
+
+    return 0;
+  } catch (_) { return 0; }
+}
+
+/**
+ * Détecteur principal de match-fixing tennis.
+ * Agrège les 4 sous-détecteurs → score composite 0-100.
+ * Si score ≥ 40 : alerte Amber (surveillance).
+ * Si score ≥ 70 : alerte Red (match suspect).
+ * Broadcast SSE + Discord + sauvegarde SQLite.
+ */
+function detectTennisMatchFixing(m) {
+  try {
+    if (!m || !m.is_live) return;
+    const totGames = _tnTotalGames(m);
+    if (totGames < _TN_MF.MIN_GAMES) {
+      // Si < 6 jeux : attach integrity=null mais pas d'alerte
+      m.integrity = { score: 0, level: 'NA', games: totGames };
+      return;
+    }
+
+    const k = `tnmf:${m.id}`;
+    // Cooldown : on n'alerte que toutes les 10 min max par match
+    const onCooldown = _tnAlertOnCooldown(k, _TN_MF.COOLDOWN_MS);
+
+    // Calculer les 4 sous-scores
+    const sOdds = _tnMfOddsDeviation(m);
+    const sSpw  = _tnMfSpwAnomaly(m);
+    const sCross = _tnMfCrossInversion(m);
+    const sVol  = _tnMfVolumeAnomaly(m);
+    const total = sOdds + sSpw + sCross + sVol;
+
+    // Toujours attacher integrity au match pour l'UI
+    let level = 'green';
+    if (total >= _TN_MF.RED) level = 'red';
+    else if (total >= _TN_MF.AMBER) level = 'amber';
+    m.integrity = { score: total, level, games: totGames, breakdown: { oddsDev: sOdds, spwAnom: sSpw, crossInv: sCross, volAnom: sVol } };
+
+    // Alerte seulement si score ≥ amber ET pas en cooldown
+    if (total < _TN_MF.AMBER) return;
+    if (onCooldown) return;
+    _tnAlertMark(k);
+
+    const isRed = total >= _TN_MF.RED;
+    const emoji = isRed ? '🚨' : '⚠️';
+    const title = isRed ? 'MATCH-FIXING SUSPECTÉ' : 'Match-Fixing Surveillé';
+
+    // Sauvegarder en base
+    saveTennisAlert({
+      alert_type: 'integrity_alert',
+      match_id: m.id,
+      player1: m.player1?.name || null,
+      player2: m.player2?.name || null,
+      tournament: m.tournament || null,
+      bet_type: isRed ? 'integrity_red' : 'integrity_amber',
+      bet_conf: total,
+      score_at_alert: `${m.player1_sets || 0}-${m.player2_sets || 0}`,
+      integrity_score: total,
+    });
+
+    // Broadcast SSE
+    broadcastSSE('integrity_alert', {
+      type: 'integrity_alert',
+      sport: 'tennis',
+      match_id: m.id,
+      tournament: m.tournament || null,
+      player1: m.player1?.name || null,
+      player2: m.player2?.name || null,
+      score: total,
+      level,
+      breakdown: { oddsDev: sOdds, spwAnom: sSpw, crossInv: sCross, volAnom: sVol },
+      games: totGames,
+      ts: Date.now(),
+    });
+
+    // Discord alert
+    const discordColor = isRed ? 0xFF0000 : 0xFFA500;
+    const p1n = m.player1?.name || 'J1';
+    const p2n = m.player2?.name || 'J2';
+    const discordEmbed = {
+      title: `${emoji} ${title} — ${p1n} vs ${p2n}`,
+      description: `Score intégrité : **${total}/100** (${level})\nTournoi : ${m.tournament || 'N/A'} · Jeux joués : ${totGames}`,
+      color: discordColor,
+      fields: [
+        { name: '📊 Odds Deviation (35)', value: `**${sOdds}/35**`, inline: true },
+        { name: '🎾 SPW/RPW Anomaly (30)', value: `**${sSpw}/30**`, inline: true },
+        { name: '🔄 Cross Inversion (20)', value: `**${sCross}/20**`, inline: true },
+        { name: '📈 Volume Anomaly (15)', value: `**${sVol}/15**`, inline: true },
+        { name: '🏟 Cotes', value: `P1 @${Number.isFinite(m.odds_player1) ? m.odds_player1.toFixed(2) : '?'} · P2 @${Number.isFinite(m.odds_player2) ? m.odds_player2.toFixed(2) : '?'}`, inline: false },
+      ],
+      footer: { text: `Hatfield Match-Fixing Detector | Cooldown 10min | ${m.tournament}` },
+      timestamp: new Date().toISOString(),
+    };
+    broadcastTennisLiveAlert(null, discordEmbed).catch(() => {});
+
+    console.log(`  [Tennis:Integrity] ${m.id} score=${total}/100 level=${level} odds=${sOdds} spw=${sSpw} cross=${sCross} vol=${sVol}`);
   } catch (_) { /* non bloquant */ }
 }
 
@@ -39750,12 +40032,26 @@ if (pathname.startsWith('/api/v1/bsd/compos/') && req.method === 'GET') {
   const eventId = _bsdResolveEventId(rawId);
   if (!eventId) return jsonResponse(res, 400, { error: 'bad_match_id', message: `No _bsd_event_id for "${rawId}"` });
   try {
-    const [lineupsFetch, statsFetch] = await Promise.allSettled([
+    // Look up match for BSD team/season IDs
+    const match = db.matches.find(x => x.id === rawId) ||
+                  db.matches.find(x => String(x._bsd_event_id) === eventId);
+    const hBsdId = match?.home_bsd_id || null;
+    const aBsdId = match?.away_bsd_id || null;
+    let seasonId = match?.bsd_season_id || null;
+    if (!seasonId && match?._bsd_league_id && typeof global._bsdLeagueSeasonHints?.get === 'function') {
+      seasonId = global._bsdLeagueSeasonHints.get(match._bsd_league_id);
+    }
+
+    const [lineupsFetch, statsFetch, homeRatingsFetch, awayRatingsFetch] = await Promise.allSettled([
       _bsdEnrichFetch('lineups', eventId),
       bsdFetch(`/player-stats/?event=${eventId}&page_size=100`),
+      (hBsdId && seasonId) ? fetchBSDPlayerRatings(hBsdId, seasonId) : Promise.resolve([]),
+      (aBsdId && seasonId) ? fetchBSDPlayerRatings(aBsdId, seasonId) : Promise.resolve([]),
     ]);
+
     const { data: lineupData, cached } = lineupsFetch.status === 'fulfilled' ? lineupsFetch.value : { data: null, cached: false };
-    // Build ai_points map: player_id → ai_points
+
+    // Build ai_points map from per-event stats
     const aiMap = new Map();
     if (statsFetch.status === 'fulfilled' && statsFetch.value?.status === 200) {
       const stats = statsFetch.value.data?.results || statsFetch.value.data || [];
@@ -39763,21 +40059,46 @@ if (pathname.startsWith('/api/v1/bsd/compos/') && req.method === 'GET') {
         if (s?.player?.id != null && s.ai_points != null) aiMap.set(s.player.id, s.ai_points);
       }
     }
-    // Merge ai_points onto lineup players
+
+    // Build ratings map from team+season aggregated stats (avg_rating, xg)
+    const buildRatingMap = (ratings) => {
+      const m = new Map();
+      for (const r of (Array.isArray(ratings) ? ratings : [])) {
+        if (r.id != null) m.set(r.id, { avg_rating: r.avg_rating, xg: r.xg, xa: r.xa });
+      }
+      return m;
+    };
+    const homeRatingMap = buildRatingMap(homeRatingsFetch.status === 'fulfilled' ? homeRatingsFetch.value : []);
+    const awayRatingMap = buildRatingMap(awayRatingsFetch.status === 'fulfilled' ? awayRatingsFetch.value : []);
+
+    // Merge onto lineup players
     const enrichedData = lineupData || {};
-    if (aiMap.size && enrichedData.lineups) {
+    if (enrichedData.lineups) {
       for (const side of ['home', 'away']) {
+        const ratingMap = side === 'home' ? homeRatingMap : awayRatingMap;
         for (const p of (enrichedData.lineups?.[side]?.players || [])) {
-          if (p?.player_id != null && aiMap.has(p.player_id)) p.ai_points = aiMap.get(p.player_id);
+          if (p?.player_id != null) {
+            if (aiMap.has(p.player_id)) p.ai_points = aiMap.get(p.player_id);
+            const r = ratingMap.get(p.player_id);
+            if (r) {
+              p.avg_rating = r.avg_rating;
+              p.xg = r.xg;
+              p.xa = r.xa;
+              p.xg_per_match = (r.matches && r.matches > 0) ? Math.round((r.xg / r.matches) * 100) / 100 : r.xg;
+            }
+          }
         }
       }
     }
+
+    // Add source metadata
+    enrichedData._ratings_source = (homeRatingMap.size || awayRatingMap.size) ? 'bsd_team_season' : 'none';
+
     return jsonResponse(res, 200, { source: 'bsd_compos', event_id: Number(eventId), data: enrichedData, cached });
   } catch (e) {
     return jsonResponse(res, 502, { error: 'bsd_compos_failed', message: String(e.message || e) });
   }
 }
-
 // GET /api/v1/bsd/predicted-lineup/:matchId — AI-predicted starters + injuries (BETA)
 if (pathname.startsWith('/api/v1/bsd/predicted-lineup/') && req.method === 'GET') {
   const rawId = decodeURIComponent(pathname.slice('/api/v1/bsd/predicted-lineup/'.length)).trim();

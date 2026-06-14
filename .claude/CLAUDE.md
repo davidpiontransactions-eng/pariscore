@@ -237,3 +237,46 @@ pm-product-cycle Phase 4-5 → Tests + Ship
 ```
 
 *v3.5 — 2026-06-11 — pm-skills 4 plugins installés + super-skill pm-product-cycle créée.
+
+---
+
+## 11. VPS OPS — PRO Grant Express
+
+### SSH
+```
+Host pariscore
+  HostName 51.75.21.239
+  User ubuntu
+  IdentityFile ~/.ssh/pariscore
+```
+
+### Commande unique — Upgrade PRO
+```bash
+./scripts/grant-pro.sh user@email.com 36
+```
+- Vérifie si l'utilisateur existe sur la prod
+- Si déjà `pro_all` → prévient que le JWT est périmé
+- Si `freemium` → exécute `tools/grant-pro-access.js` via SSH
+
+### Piège JWT (le vrai problème)
+La BDD contient le bon rôle mais le navigateur garde un **vieux token 30 jours**.
+Les cadenas jaunes persistent malgré `role=pro_all` en BDD.
+
+**2 solutions :**
+1. L'utilisateur se **déconnecte et reconnecte** (le plus fiable)
+2. Coller dans la console F12 :
+   ```js
+   fetch('/api/v1/auth/me',{headers:{Authorization:'Bearer '+localStorage.getItem("ps_user_token")}})
+   .then(r=>r.json()).then(d=>{if(d.token){localStorage.setItem('ps_user_token',d.token);location.reload()}})
+   ```
+
+### Schéma users (cols cruciales)
+| Colonne | Type | Notes |
+|---------|------|-------|
+| `role` | TEXT | `freemium` / `pro_all` / `pro_foot` / `pro_tennis` |
+| `premium_until` | INTEGER | epoch UNIX, pas de check gate (⚠️ affichage seul) |
+| `subscription_status` | TEXT | `active` / `canceled` / etc. |
+
+⚠️ `pro_duo` n'est PAS reconnu par `srvAccess()` ni `psAccess()` — bug connu.
+
+*v1.0 — 2026-06-14 — scripts/grant-pro.sh créé pour upgrade express.*
