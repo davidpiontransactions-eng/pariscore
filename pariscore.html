@@ -3551,6 +3551,7 @@
     transform-origin: left center;
     transition: transform .24s cubic-bezier(.4,0,.2,1);
     border-radius: 2px 2px 0 0;
+      pointer-events: none;
   }
   .nav-links a:hover { color: var(--text); }
   .nav-links a:hover::after { transform: scaleX(1); }
@@ -9414,7 +9415,8 @@
      le football restait au-dessus du tennis -> onglet Tennis "cassé". */
   html.ps-desktop-v1 body[data-page="matchs"] #page-matchs,
   html.ps-desktop-v1 body[data-page="tennis"] #page-tennis,
-  html.ps-desktop-v1 body[data-page="cs2"] #page-cs2 {
+  html.ps-desktop-v1 body[data-page="cs2"] #page-cs2,
+  html.ps-desktop-v1 body[data-page="mma"] #page-mma {
     display: grid !important;
     grid-template-columns: 280px 1fr !important;
     gap: 0 20px;
@@ -9423,6 +9425,7 @@
   html.ps-desktop-v1 #page-matchs > :not(.ps-sidebar),
   html.ps-desktop-v1 #page-tennis > :not(.ps-sidebar),
   html.ps-desktop-v1 #page-cs2 > :not(.ps-sidebar) { grid-column: 2; }
+  html.ps-desktop-v1 #page-mma > :not(.ps-sidebar) { grid-column: 2; }
   html.ps-desktop-v1 .ps-sidebar {
     grid-column: 1;
     position: sticky;
@@ -9809,6 +9812,7 @@
     mask: var(--nic) center / contain no-repeat;
     opacity: 0.6;
     transition: opacity .2s ease, filter .2s ease;
+      pointer-events: none;
   }
   nav .nav-links a:hover::before { opacity: 1; }
   nav .nav-links a.active::before { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,0,67,0.5)); }

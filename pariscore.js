@@ -1,4 +1,4 @@
-﻿/* pariscore.js — extracted from pariscore.html
+/* pariscore.js — extracted from pariscore.html
  * Generated: 2026-05-27T22:50:54.488Z
  * Source blocks: 10406-10419, 13080-13204, 13566-14018, 18130-18167, 18612-38743, 38781-39495, 39498-39815, 39947-41103, 41109-41472
  */
@@ -28694,6 +28694,7 @@ async function loadFootAlerts() {
 
   window.stopMMAPage = function () {
     if (_mmaTimer) { clearInterval(_mmaTimer); _mmaTimer = null; }
+    _mmaLoaded = false;
   };
 
   window.setMMAFilter = function (f, btn) {
@@ -28709,23 +28710,37 @@ async function loadFootAlerts() {
     initMMAPage();
   };
 
-  function _fetchMMA() {
-    fetch('/api/v1/mma/fights')
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-      .then(function (d) {
-        _mmaData = (d && Array.isArray(d.events)) ? d.events : [];
-        _applyMMAFilter();
-        _updateAccBadge();
-      })
-      .catch(function (e) {
-        console.warn('[MMA] fetch error:', e);
-        var feed = document.getElementById('mma-feed');
-        if (feed && !_mmaData.length) {
-          feed.innerHTML = '<div class="mma-empty"><div class="mma-empty-icon">🥊</div>Données UFC non disponibles.</div>';
+  async function _fetchMMA() {
+    var feed = document.getElementById('mma-feed');
+    if (!feed) return;
+    for (var attempt = 0; attempt < 5; attempt++) {
+      try {
+        var controller = new AbortController();
+        var tm = setTimeout(function () { controller.abort(); }, 15000);
+        var r = await fetch('/api/v1/mma/fights', { signal: controller.signal });
+        clearTimeout(tm);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var d = await r.json();
+        var events = (d && Array.isArray(d.events)) ? d.events : [];
+        if (events.length > 0 || attempt === 4) {
+          _mmaData = events;
+          try { _applyMMAFilter(); } catch (re) {
+            console.error('[MMA] render crash:', re);
+            feed.innerHTML = '<div class="mma-empty"><div class="mma-empty-icon">🥊</div>Erreur affichage combats.</div>';
+          }
+          _updateAccBadge();
+          return;
         }
-      });
+      } catch (e) {
+        console.warn('[MMA] tentative ' + (attempt + 1) + '/5: ' + e.message);
+        if (e.name === 'AbortError') console.warn('[MMA] timeout 15s depasse');
+      }
+      if (attempt < 4) await new Promise(function (r) { setTimeout(r, Math.pow(2, attempt) * 1000); });
+    }
+    if (feed && !_mmaData.length) {
+      feed.innerHTML = '<div class="mma-empty"><div class="mma-empty-icon">🥊</div>Donnees UFC non disponibles.</div>';
+    }
   }
-
   function _updateAccBadge() {
     var badge = document.getElementById('mma-acc-badge');
     if (!badge) return;
@@ -28806,6 +28821,7 @@ async function loadFootAlerts() {
   }
 
   function _renderMMAFight(f) {
+    try {
     var probA  = Math.round((f.prob_a || 0) * 100);
     var probB  = Math.round((f.prob_b || 0) * 100);
     var favA   = probA >= probB;
@@ -28862,7 +28878,7 @@ async function loadFootAlerts() {
       + ')') + '">🔍 Analyse &amp; Paris</button>'
       + '<div class="mma-analysis-drawer"></div>'
       + '</div>';
-  }
+    } catch (e) { console.warn(\"[MMA] skip bad fight:\", e); return \"\"; }
 
   // Transparent 1x1 placeholder so the avatar never paints alt-text while loading.
   var _MMA_BLANK = 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%221%22%20height=%221%22%3E%3C/svg%3E';
