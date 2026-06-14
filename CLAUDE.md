@@ -1,4 +1,4 @@
-# 🏟️ PariScore — Poste de Pilotage (v12.78 — bd-driven)
+# 🏟️ PariScore — Poste de Pilotage (v12.80 — bd-driven)
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
@@ -49,11 +49,11 @@ Utiliser `/gstack-plan-ceo-review` pour les décisions stratégiques, `/gstack-a
 
 | # | Action | Type | Détail | Urgence |
 |---|---|---|---|---|
-| 4 | **ETL Football quota reset** | ops | `bash .context/run_etl_2024_2026.sh` VPS minuit UTC (bd `9je`) | 🟡 MED |
-| 6 | **DG decision Stripe** | DG+ops | bd `s77m` — LOCKED: €19/mo, trial 7j, mono-sport OUI, matchday €2.99. PENDING: prix annuel + refund policy. Créer compte Stripe + 5 products + webhook + `.env` VPS | 🟡 MED |
-| 7 | **Sackmann purge Phase 3-7** | code | bd \`dl49\` — ETL interne BSD/ESPN. Phase 1+2 ✅ (\`SACKMANN_SYNC_DISABLED=true\`). VPS : \`node tools/backup-tennis-matches.js\` + deploy patché | 🔴 HIGH legal |
-| 8 | **POC OddsPapi.io** | DG | Signup free 250 req → \`ODDSPAPI_KEY\` .env → \`node .context/_probe_oddspapi_pinnacle.js\` (bd \`bjv\`) | 🟢 LOW |
-| 9 | **POC xvalue.ai** | DG | Free trial 1j → eval xG advanced + ML scouting (bd \`qyfr\` — POC 1j gratuit) | 🟢 LOW |
+| 4 | **ETL Football quota reset** | ops ✅ CLOSED | bd `9je` — pipeline livré v12.10, cron 00:00 UTC VPS actif | ✅ |
+| 9 | **POC xvalue.ai** | DG ✅ CLOSED | bd `qyfr` — NO-GO, abandonné | ✅ |
+| 6 | **Stripe DG (suite)** | DG+ops | bd `s77m` — backend ✅. PENDING: décision prix annuel + refund policy + frontend CTAs 8 pricing | 🟡 MED |
+| 7 | **Sackmann purge Phase 3-7** | code | bd `dl49` — ETL interne BSD/ESPN. Phase 1+2 ✅. Phase 3 (TTL cache, backfill, benchmark) + Phase 4-7 restants | 🔴 HIGH legal |
+| 8 | **POC OddsPapi.io** | DG | bd `bjv` — spike en cours. Option C Pinnacle direct NO-GO. OddsPapi.io free 250 req à tester | 🟢 LOW |
 | 14 | **DG ligues BSD secondary** | DG | 11 ligues non mappées (Africa Cup, Liga F WOMEN, coupes mineures, Nigeria PFL, Liga MX Clausura). $0 incrémental. | 🟡 MED |
 
 ---
