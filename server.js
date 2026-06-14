@@ -19257,6 +19257,8 @@ function srvPlanGate(req, res, pathname) {
   // Protégé par la limite de débit Gemini côté serveur (pas par paywall). Ouvert en public
   // car le frontend ne gère pas le refresh JWT et le cache évite les appels abusifs.
   if (pathname === '/api/v1/tennis/wom-analyze') return false;
+  // tennis-abstract/dr = historical charted match stats from public GitHub CSVs (JeffSackmann). Same class as /upcoming: public metadata.
+  if (pathname === '/api/v1/tennis-abstract/dr') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -27397,6 +27399,152 @@ async function fetchTennisAbstractTournament(slug) {
   return data;
 }
 
+// ─── Tennis Abstract — Charted Match DR from GitHub CSVs ─────────────────
+// Source: github.com/JeffSackmann/tennis_MatchChartingProject
+// CSV: charting-m-matches.csv + charting-m-stats-ServeBasics.csv
+// DR = (1st serve pts won% + 2nd serve pts won%) / opponent's equivalent
+const TENNIS_CHARTING_MATCHES_URL = 'https://raw.githubusercontent.com/JeffSackmann/tennis_MatchChartingProject/master/charting-m-matches.csv';
+const TENNIS_CHARTING_STATS_URL = 'https://raw.githubusercontent.com/JeffSackmann/tennis_MatchChartingProject/master/charting-m-stats-ServeBasics.csv';
+const TENNIS_CHARTING_TTL_MS = 6 * 3600 * 1000;
+
+let _tennisChartingCache = null;
+
+function _tcsvParseCSV(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (!lines.length) return { headers: [], rows: [] };
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = lines.slice(1).map(line => {
+    const vals = line.split(',');
+    const row = {};
+    headers.forEach((h, i) => { row[h] = i < vals.length ? vals[i].trim() : ''; });
+    return row;
+  });
+  return { headers, rows };
+}
+
+function _tcsvNorm(name) {
+  return String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+}
+
+function _tcsvFuzzyMatch(csvName, queryName) {
+  const a = _tcsvNorm(csvName);
+  const b = _tcsvNorm(queryName);
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  const aP = a.split(/\s+/);
+  const bP = b.split(/\s+/);
+  if (aP.length >= 2 && bP.length >= 2 && aP[aP.length - 1] === bP[bP.length - 1]) {
+    const af = aP[0].replace('.', '');
+    const bf = bP[0].replace('.', '');
+    if (af.length <= 2 || bf.length <= 2) return true;
+  }
+  return false;
+}
+
+async function _tcsvFetch(url) {
+  const res = await httpsGet(url, { 'Accept': 'text/plain', 'User-Agent': 'PariScore/2.0' }, 30000);
+  if (res.status !== 200 || typeof res.data !== 'string')
+    throw new Error('HTTP ' + res.status + ' for ' + url);
+  return res.data;
+}
+
+async function buildTennisChartingDR(forceRefresh) {
+  const now = Date.now();
+  if (_tennisChartingCache && !forceRefresh && now - _tennisChartingCache.ts < TENNIS_CHARTING_TTL_MS)
+    return _tennisChartingCache;
+
+  const [matchesCsv, statsCsv] = await Promise.all([
+    _tcsvFetch(TENNIS_CHARTING_MATCHES_URL),
+    _tcsvFetch(TENNIS_CHARTING_STATS_URL),
+  ]);
+
+  const matches = _tcsvParseCSV(matchesCsv);
+  const stats = _tcsvParseCSV(statsCsv);
+
+  // Build match_id → { p1, p2, surface }
+  const matchMeta = new Map();
+  for (const r of matches.rows) {
+    const mid = r.match_id;
+    if (mid) matchMeta.set(mid, { p1: r['Player 1'], p2: r['Player 2'], surface: r.Surface });
+  }
+
+  // Aggregate serve stats per match per player
+  const matchServe = new Map();
+  for (const r of stats.rows) {
+    const mid = r.match_id, player = r.player;
+    if (!mid || !player) continue;
+    if (!matchServe.has(mid)) matchServe.set(mid, new Map());
+    const pm = matchServe.get(mid);
+    if (!pm.has(player)) pm.set(player, {});
+    const s = pm.get(player);
+    const pts = parseInt(r.pts, 10);
+    const won = parseInt(r.pts_won, 10);
+    if (r.row === '1') s.first = { pts: pts, won: won };
+    else if (r.row === '2') s.second = { pts: pts, won: won };
+  }
+
+  // Compute DR per match per player
+  const playerMap = new Map();
+
+  function recordDR(name, dr, surface) {
+    if (dr == null || !Number.isFinite(dr)) return;
+    const key = _tcsvNorm(name);
+    if (!playerMap.has(key)) playerMap.set(key, { name: name, drs: [], bySurface: {} });
+    const e = playerMap.get(key);
+    e.drs.push(dr);
+    if (surface) {
+      if (!e.bySurface[surface]) e.bySurface[surface] = [];
+      e.bySurface[surface].push(dr);
+    }
+  }
+
+  for (const [mid, pm] of matchServe) {
+    const meta = matchMeta.get(mid);
+    if (!meta || !meta.p1 || !meta.p2) continue;
+    const s1 = pm.get(meta.p1);
+    const s2 = pm.get(meta.p2);
+    if (!s1 || !s2 || !s1.first || !s1.second || !s2.first || !s2.second) continue;
+    if (!s1.first.pts || !s1.second.pts || !s2.first.pts || !s2.second.pts) continue;
+
+    const r1 = s1.first.won / s1.first.pts + s1.second.won / s1.second.pts;
+    const r2 = s2.first.won / s2.first.pts + s2.second.won / s2.second.pts;
+    if (!Number.isFinite(r1) || !Number.isFinite(r2)) continue;
+
+    recordDR(meta.p1, r2 > 0 ? r1 / r2 : null, meta.surface);
+    recordDR(meta.p2, r1 > 0 ? r2 / r1 : null, meta.surface);
+  }
+
+  // Build output with averages
+  const players = {};
+  for (const [key, e] of playerMap) {
+    const avg = e.drs.reduce(function(a, b) { return a + b; }, 0) / e.drs.length;
+    const surfAvg = {};
+    for (const [s, vals] of Object.entries(e.bySurface))
+      surfAvg[s] = Math.round(vals.reduce(function(a, b) { return a + b; }, 0) / vals.length * 1000) / 1000;
+    players[key] = {
+      name: e.name,
+      avgDR: Math.round(avg * 1000) / 1000,
+      matches_n: e.drs.length,
+      bySurface: surfAvg,
+    };
+  }
+
+  _tennisChartingCache = { ts: now, players: players, matchCount: matches.rows.length, playerCount: Object.keys(players).length };
+  return _tennisChartingCache;
+}
+
+function queryTennisDR(names) {
+  if (!_tennisChartingCache) return {};
+  const result = {};
+  for (const name of names) {
+    const key = _tcsvNorm(name);
+    if (_tennisChartingCache.players[key]) { result[name] = _tennisChartingCache.players[key]; continue; }
+    for (const [ck, cv] of Object.entries(_tennisChartingCache.players)) {
+      if (_tcsvFuzzyMatch(cv.name, name)) { result[name] = cv; break; }
+    }
+  }
+  return result;
+}
+
 // ─── Tennis Abstract — Reports catalog (Elo / MCP / Lottery / Birthdays) ────
 // Extension v10.10 : parser générique tablesorter pour /reports/*.html
 const TENNIS_ABSTRACT_REPORTS = {
@@ -35298,8 +35446,8 @@ async function _buildTennisValueBetsCore({ date }) {
       ? `/api/v2/matches/?date=${encodeURIComponent(dateClean)}&limit=200`
       : `/api/v2/matches/?status=scheduled&limit=200`;
     const ck = `bsd_tennis_value_bets_${dateClean || 'today'}`;
-    // TTL: 5min for date-specific queries (includes live matches), 30min for global scheduled-only
-    const _bsdTtlMs = dateClean ? 5 * 60 * 1000 : 30 * 60 * 1000;
+    // bd dl49 Phase 3: TTL 4h pour date-specific (cron 2AM accumule data), 30min global scheduled
+    const _bsdTtlMs = dateClean ? 4 * 3600 * 1000 : 30 * 60 * 1000;
     const bsd = await handleTennisBSD(suffix, ck, _bsdTtlMs);
     if (bsd.status === 200) {
       let _extracted = _extractBsdMatchesList(bsd.body);
@@ -36605,7 +36753,7 @@ async function buildRgPath(playerName) {
   for (const t of rgs) {
     // limit=200 — cap silencieux BSD (Bzzoiro mail 2026-05-23). Anciennement 300
     // était silently truncated. RG ATP/WTA = 401 matchs total, R1 = 64 sous cap.
-    const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${t.id}&limit=200`, `bsd_rg_m_${t.id}`, 30 * 60 * 1000);
+    const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${t.id}&limit=200`, `bsd_rg_m_${t.id}`, 4 * 3600 * 1000);
     if (mo.status !== 200) continue;
     const ms = (mo.body && (Array.isArray(mo.body) ? mo.body : mo.body.results)) || [];
     const mine = ms.filter(m => {
@@ -36944,7 +37092,7 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
   // limit=200 — cap silencieux BSD (Bzzoiro mail 2026-05-23). Anciennement 300
   // était silently truncated à 200. Pagination offset=200,400... = backlog V2
   // si total count > 200 (RG ATP/WTA = 401 matchs total, R1 = 64 sous cap OK).
-  const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${tournament.id}&limit=200`, `bsd_rg_m_${tournament.id}`, 30 * 60 * 1000);
+  const mo = await handleTennisBSD(`/api/v2/matches/?tournament=${tournament.id}&limit=200`, `bsd_rg_m_${tournament.id}`, 4 * 3600 * 1000);
   if (mo.status !== 200) return { available: false, reason: 'matches_fetch_failed', upstream_status: mo.status };
   const ms = (mo.body && (Array.isArray(mo.body) ? mo.body : mo.body.results)) || [];
   if (!ms.length) return { available: false, reason: 'no_matches' };
@@ -39111,6 +39259,31 @@ if (pathname === '/api/v1/tennis-abstract/report' && req.method === 'GET') {
       slug: query.slug || null, _stale: true, _error: e.message,
       headers: [], rows: [], playerSlugs: [],
     });
+  }
+}
+// Tennis Abstract — charted match DR from GitHub CSVs (JeffSackmann).
+// Query: ?players=Jannik+Sinner,Casper+Ruud returns career avg DR per player.
+if (pathname === '/api/v1/tennis-abstract/dr' && req.method === 'GET') {
+  try {
+    const playersStr = (query.players || '').toString().trim();
+    const cache = await buildTennisChartingDR();
+    if (playersStr) {
+      const names = playersStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+      return jsonResponse(res, 200, {
+        players: queryTennisDR(names),
+        cached_at: new Date(cache.ts).toISOString(),
+        playerCount: cache.playerCount,
+        matchCount: cache.matchCount,
+      });
+    }
+    return jsonResponse(res, 200, {
+      playerCount: cache.playerCount,
+      matchCount: cache.matchCount,
+      cached_at: new Date(cache.ts).toISOString(),
+    });
+  } catch (e) {
+    console.warn('[tennis-abstract/dr] error:', e.message);
+    return jsonResponse(res, 200, { _stale: true, _error: e.message, players: {}, playerCount: 0, matchCount: 0 });
   }
 }
 if (pathname === '/api/v1/tennis/mcp' && req.method === 'POST') {
