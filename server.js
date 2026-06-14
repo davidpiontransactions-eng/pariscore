@@ -6927,8 +6927,36 @@ function sanityCheckTeamStats() {
     if (stats._real && stats.rank === 0) issues.push(`${key}: rank=0 (marked real data, API returned explicit 0)`);
     const homeStats = stats.home || {};
     const awayStats = stats.away || {};
-    if (homeStats.ppg === 0 && homeStats.played > 5) issues.push(`${key}: home PPG=0 but played=${homeStats.played}`);
-    if (awayStats.ppg === 0 && awayStats.played > 5) issues.push(`${key}: away PPG=0 but played=${awayStats.played}`);
+    // v9.10+: Auto-heal PPG quand l'API a fourni played mais pas win/draw/lose pour home/away
+    // On estime PPG depuis les stats globales _raw.pts / _raw.played
+    if (homeStats.ppg === 0 && homeStats.played > 5) {
+      const raw = stats._raw;
+      if (raw?.pts && raw?.played && raw.played > 0) {
+        const estimatedPpg = parseFloat((raw.pts / raw.played).toFixed(2));
+        if (estimatedPpg > 0) {
+          stats.home.ppg = estimatedPpg;
+          console.log(`  [SANITY] ✓ Auto-repair ${key} home ppg: 0 → ${estimatedPpg} (from _raw)`);
+        } else {
+          issues.push(`${key}: home PPG=0 but played=${homeStats.played} (raw: pts=${raw.pts}, played=${raw.played})`);
+        }
+      } else {
+        issues.push(`${key}: home PPG=0 but played=${homeStats.played} (no _raw fallback)`);
+      }
+    }
+    if (awayStats.ppg === 0 && awayStats.played > 5) {
+      const raw = stats._raw;
+      if (raw?.pts && raw?.played && raw.played > 0) {
+        const estimatedPpg = parseFloat((raw.pts / raw.played).toFixed(2));
+        if (estimatedPpg > 0) {
+          stats.away.ppg = estimatedPpg;
+          console.log(`  [SANITY] ✓ Auto-repair ${key} away ppg: 0 → ${estimatedPpg} (from _raw)`);
+        } else {
+          issues.push(`${key}: away PPG=0 but played=${awayStats.played} (raw: pts=${raw.pts}, played=${raw.played})`);
+        }
+      } else {
+        issues.push(`${key}: away PPG=0 but played=${awayStats.played} (no _raw fallback)`);
+      }
+    }
     if (stats._real && !stats.form) {
       // Auto-repair: synthétise depuis PPG saison (deriveFormFromStats retourne ≥ 'LLLLL')
       const synForm = deriveFormFromStats(stats.home) || deriveFormFromStats(stats.away);
@@ -17603,6 +17631,24 @@ async function fetchStats(force = false) {
               const key = teamKey(entry.team.name);
               const homeStats = buildSideStats(entry.home);
               const awayStats = buildSideStats(entry.away);
+
+              // v9.10+: Auto-repair PPG quand l'API fournit home/away.played mais pas win/draw/lose
+              // (plan gratuit API-Football). On utilise les totaux généraux (entry.all ou entry.points)
+              // pour estimer le PPG plutôt que de retourner 0.
+              if (homeStats.played > 0 && homeStats.ppg === 0 && entry.points != null && entry.all?.played) {
+                const estimatedPpg = parseFloat((entry.points / entry.all.played).toFixed(2));
+                if (estimatedPpg > 0) {
+                  homeStats.ppg = estimatedPpg;
+                  console.log(`  [PPG_REPAIR] ${entry.team?.name} home PPG: 0 → ${estimatedPpg} (depuis totals)`);
+                }
+              }
+              if (awayStats.played > 0 && awayStats.ppg === 0 && entry.points != null && entry.all?.played) {
+                const estimatedPpg = parseFloat((entry.points / entry.all.played).toFixed(2));
+                if (estimatedPpg > 0) {
+                  awayStats.ppg = estimatedPpg;
+                  console.log(`  [PPG_REPAIR] ${entry.team?.name} away PPG: 0 → ${estimatedPpg} (depuis totals)`);
+                }
+              }
 
               // Debug log for first team only
               if (fallbackTeamsFetched === 0) {

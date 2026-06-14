@@ -1,0 +1,57 @@
+{
+  "timestamp": "2026-06-14T11:37:04.684Z",
+  "date": "14/06/2026",
+  "time": "13:37:04",
+  "summary": {
+    "totalTeams": 1555,
+    "healthyTeams": 1552,
+    "unhealthyTeams": 3,
+    "totalAnomalies": 4,
+    "autoRepairable": 2,
+    "teamsWithValidPpg": 1008
+  },
+  "anomalies": [
+    {
+      "key": "luxembourg",
+      "side": "home",
+      "severity": "high",
+      "msg": "PPG=0 played=6 no _raw fallback"
+    },
+    {
+      "key": "club independiente petrolero",
+      "side": "home",
+      "severity": "high",
+      "msg": "PPG=0 played=6 no _raw fallback"
+    },
+    {
+      "key": "getafe",
+      "side": "home",
+      "severity": "high",
+      "msg": "PPG=0 played=40 no _raw fallback"
+    },
+    {
+      "key": "getafe",
+      "side": "away",
+      "severity": "high",
+      "msg": "PPG=0 played=40 no _raw fallback"
+    }
+  ],
+  "autoRepairs": [
+    {
+      "key": "sevilla",
+      "side": "away",
+      "oldPpg": 0,
+      "newPpg": 1,
+      "from": "_raw"
+    },
+    {
+      "key": "mallorca",
+      "side": "away",
+      "oldPpg": 0,
+      "newPpg": 0.75,
+      "from": "_raw"
+    }
+  ],
+  "healthScore": 100,
+  "verdict": "ANOMALIES"
+}
