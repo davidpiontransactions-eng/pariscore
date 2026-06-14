@@ -1,5 +1,21 @@
 # PariScore — Journal des modifications
 
+## [v12.79] — 2026-06-14 — PPG auto-repair + sanity vision monitor
+
+### Ajouté
+- **Fix PPG zéro (2 couches)** : `buildSideStats()` retournait ppg=0 pour home/away quand l'API-Football fournit `played` sans `win/draw/lose`. Fix 1 au call-site (stats ~line 17638) estime PPG depuis `entry.points / entry.all.played`. Fix 2 dans `sanityCheckTeamStats()` (ligne 6932) heal depuis `_raw.pts / _raw.played`.
+- **`scripts/test-ppg-auto-repair.js`** : 4 tests unitaires couvrant les 6 anomalies connues (luxembourg, independiente, sevilla, mallorca, getafe ×2).
+- **`scripts/sanity-vision-monitor.js`** : Moniteur standalone lisant `db_team_stats` depuis SQLite, répliquant `sanityCheckTeamStats()`. Flags : `--json`, `--out`, `--watch`, `--gstack`. Rapports dans `.context/sanity-reports/`.
+- **`.context/sanity-reports/`** : Répertoire de rapports périodiques avec rotation (max 100).
+
+### Modifié
+- `server.js` ~lines 17638-17651 : auto-repair PPG au call-site API-Football
+- `server.js` ~lines 6930-6959 : auto-heal PPG dans `sanityCheckTeamStats()` (couche 2)
+
+### Techniques
+- Les 2 réparations sont non-destructives : ne touchent que les équipes avec `ppg===0 && played>0/5`, laissant intactes les stats valides.
+- 4 anomalies résiduelles sans `_raw` (luxembourg, independiente, getafe ×2) — se résoudront au prochain cycle API.
+
 ## [v12.78] — 2026-06-11 — Tennis Elo surface + DG closures 8lqf/j5lb + xvalue.ai ticket
 
 ### Ajouté
