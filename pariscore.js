@@ -28878,7 +28878,7 @@ async function loadFootAlerts() {
       + ')') + '">🔍 Analyse &amp; Paris</button>'
       + '<div class="mma-analysis-drawer"></div>'
       + '</div>';
-    } catch (e) { console.warn(\"[MMA] skip bad fight:\", e); return \"\"; }
+    } catch (e) { console.warn("[MMA] skip bad fight:", e); return ""; } }
 
   // Transparent 1x1 placeholder so the avatar never paints alt-text while loading.
   var _MMA_BLANK = 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%221%22%20height=%221%22%3E%3C/svg%3E';
