@@ -11140,7 +11140,6 @@
 
   /* ════════ MOBILE UX FIX (≤768px) — desktop strictement intact ════════ */
   /* base : éléments mobile-only masqués hors mobile (ordre AVANT le @media) */
-  .tvb-filter-toggle { display: none; }
   .bn-theme-toggle { display: none; }
   .adv-chips-m { display: none; }  /* presets mobile only */
   #mob-filter-overlay, #mob-filter-sheet, #mob-filter-btn { display: none; }
@@ -11219,38 +11218,25 @@
     }
     .footer-links { flex-wrap: wrap; gap: 12px 18px; }
 
-    /* 2 — TENNIS : accordéon « Filtres avancés » (réduit surcharge verticale) */
-    .tvb-filter-toggle {
-      display: flex; align-items: center; justify-content: space-between;
-      width: 100%; gap: 8px; margin: 0 0 10px;
-      background: var(--bg2); border: 1px solid var(--border2);
-      border-radius: var(--radius); padding: 13px 16px;
-      font-family: var(--font-head); font-weight: 800; font-size: 14px;
-      text-transform: uppercase; letter-spacing: .4px; color: var(--text);
-      -webkit-tap-highlight-color: transparent;
+    /* 2 — TENNIS : compact dark bar mobile (toujours visible) */
+    .tennis-filters-container-premium {
+      flex-direction: column !important; gap: 6px !important; padding: 8px 6px !important;
     }
-    .tvb-ft-caret { color: var(--accent); transition: transform .2s; }
-    .tvb-filter-toggle.open .tvb-ft-caret { transform: rotate(180deg); }
-    #tennis-vb-filters { display: none !important; }
-    body.tvbf-open #tennis-vb-filters {
-      display: flex !important; flex-direction: column; align-items: stretch; gap: 10px;
-    }
-    /* button groups scroll horizontally; controls/toggles wrap on mobile */
-    #tennis-vb-filters > div:not(.tvb-controls-row):not(.tvb-toggles-row) {
+    .tennis-filters-container-premium > .tennis-filter-group {
       display: flex !important; flex-wrap: nowrap !important;
       overflow-x: auto; -webkit-overflow-scrolling: touch;
-      scroll-snap-type: x proximity; gap: 6px; width: 100%;
+      scroll-snap-type: x proximity; gap: 4px; width: 100%;
       scrollbar-width: none; padding-bottom: 2px;
     }
-    #tennis-vb-filters > div:not(.tvb-controls-row):not(.tvb-toggles-row)::-webkit-scrollbar { display: none; }
-    #tennis-vb-filters > div:not(.tvb-controls-row):not(.tvb-toggles-row) > * { flex: 0 0 auto; scroll-snap-align: start; }
-    #tennis-vb-filters .tvb-select,
-    #tennis-vb-filters .tvb-search { max-width: 66vw; }
-    /* gradient scroll hint */
-    #tennis-vb-filters > div:not(.tvb-controls-row):not(.tvb-toggles-row) {
+    .tennis-filters-container-premium > .tennis-filter-group::-webkit-scrollbar { display: none; }
+    .tennis-filters-container-premium > .tennis-filter-group > * { flex: 0 0 auto; scroll-snap-align: start; }
+    .tennis-filters-container-premium > .tennis-filter-group {
       -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
               mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
     }
+    .tennis-premium-btn { min-height: 36px; padding: 6px 12px; font-size: 11px; }
+    .tennis-filter-v-divider { display: none; }
+    .group-title-label { display: none; }
 
     /* 3 — Cartes matchs aérées (padding + radius doux + séparation) */
     #vb-cards { gap: 10px; padding: 10px 12px 16px; }
@@ -11535,48 +11521,23 @@
     #mfs-body .mls-panel, #mfs-body #ts-panel { z-index: 9300; }
     /* O2.5 presets redondants : le slider « Degré Confiance » couvre déjà ce besoin */
     #mfs-body .adv-chips-m .adv-chips-grp:first-child { display: none !important; }
-    /* Refonte filtre Tennis mobile — propre, uniforme, lisible */
-    body.tvbf-open #tennis-vb-filters { gap: 16px !important; padding: 14px !important; }
-    #tennis-vb-filters > div {
-      flex-direction: row !important; flex-wrap: wrap !important;
-      align-items: center !important; gap: 7px !important;
-      overflow: visible !important;
-      -webkit-mask-image: none !important; mask-image: none !important;
-    }
-    #tennis-vb-filters > div > span {
-      flex: 0 0 100% !important; padding-left: 0 !important;
-      font-size: 10.5px !important; font-weight: 800 !important;
-      letter-spacing: 1px !important; color: var(--text3) !important;
-      margin-bottom: 1px;
-    }
-    #tennis-vb-filters > div > span::before { display: none !important; }
-    #tennis-vb-filters .tennis-vb-filter-btn {
+    /* Refonte filtre Tennis mobile — premium compact bar */
+    .tennis-filters-container-premium .tennis-premium-btn {
       min-height: 36px !important; padding: 7px 13px !important;
       font-size: 12px !important; border-radius: 8px !important;
       box-shadow: none !important; transform: none !important;
       flex: 0 0 auto;
     }
-    #tennis-vb-filters .tennis-vb-filter-btn.is-active {
+    .tennis-filters-container-premium .tennis-premium-btn.is-active {
       background: var(--accent) !important; border-color: var(--accent) !important;
       color: #fff !important; transform: none !important; box-shadow: none !important;
       filter: none !important;
     }
-    #tennis-vb-filters .tvb-search-wrap { flex: 0 0 100% !important; width: 100% !important; }
-    #tennis-vb-filters .tvb-search-wrap::before { display: none !important; }
-    #tennis-vb-filters .tvb-search,
-    #tennis-vb-filters .tvb-select {
-      width: 100% !important; max-width: 100% !important; box-sizing: border-box;
-      height: 44px !important; border-radius: 10px !important;
-      font-size: 16px !important; padding: 10px 14px !important;
-    }
-    #tennis-vb-filters .tvb-search-clear { right: 12px !important; }
-    #tennis-vb-filters > label {
-      flex: 0 0 100% !important; width: 100%; min-height: 42px;
-      font-size: 13px !important; color: var(--text2) !important;
-      padding: 8px 2px; gap: 10px !important; margin: 0 !important;
-    }
-    #tennis-vb-filters > label input[type="checkbox"] {
-      width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--accent);
+    .tennis-filters-container-premium .group-title-label {
+      flex: 0 0 100% !important; padding-left: 0 !important;
+      font-size: 10.5px !important; font-weight: 800 !important;
+      letter-spacing: 1px !important; color: var(--text3) !important;
+      margin-bottom: 1px; display: block;
     }
 
     /* Audit form — tables larges scrollables (Mes Paris/Historique/Prédictions/Tennis) */
@@ -11657,13 +11618,13 @@
     /* 6 — Anti-zoom iOS : tout champ saisissable ≥16px */
     input, select, textarea,
     #league-search, #mob-sort-sel,
-    #tennis-vb-search, .tvb-select, .tvb-search { font-size: 16px !important; }
+
 
     /* 7 — Cibles tactiles ≥44px (HIG/Material) */
-    .filter-chip, .mob-chip, .tennis-vb-filter-btn, .preset-pill,
+    .filter-chip, .mob-chip, .tennis-premium-btn, .preset-pill,
     .topn-chip, .topm-chip, .topv-chip, .country-chip, .tex-tour-btn,
     .tex-cal-tour-btn, .auth-tab, .nav-auth-btn, .pwd-eye,
-    .tvb-filter-toggle, #bottom-nav a, .bn-more-grid a {
+    #bottom-nav a, .bn-more-grid a {
       min-height: 44px;
       display: inline-flex; align-items: center; justify-content: center;
     }
@@ -12954,10 +12915,10 @@ function psSetLang(v) {
 
 <!-- ═══ CHANTIER 3 — Filtres dashboard : relief 3D + glassmorphism (theme-var, additif) ═══ -->
 <style id="filters-3d-css">
-  /* Chips filtres (jours / période / value / steam) + boutons tennis */
+  /* Chips filtres (jours / période / value / steam) + boutons tennis premium */
   #page-matchs .filter-chip,
   #page-matchs #steam-filter-chip,
-  #tennis-vb-filters .tennis-vb-filter-btn {
+  #tennis-vb-filters .tennis-premium-btn {
     background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%) !important;
     border: 1px solid var(--border) !important;
     border-radius: 12px !important;
@@ -12968,7 +12929,7 @@ function psSetLang(v) {
   }
   #page-matchs .filter-chip:hover,
   #page-matchs #steam-filter-chip:hover,
-  #tennis-vb-filters .tennis-vb-filter-btn:hover {
+  #tennis-vb-filters .tennis-premium-btn:hover {
     transform: translateY(-1px) !important;
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.14),
@@ -12977,7 +12938,7 @@ function psSetLang(v) {
   /* État actif = bouton enfoncé (inset) + accent */
   #page-matchs .filter-chip.active,
   #page-matchs #steam-filter-chip.active,
-  #tennis-vb-filters .tennis-vb-filter-btn.is-active {
+  #tennis-vb-filters .tennis-premium-btn.is-active {
     background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #000) 100%) !important;
     color: #fff !important;
     border-color: transparent !important;
@@ -12988,14 +12949,12 @@ function psSetLang(v) {
     transform: translateY(0) !important;
   }
   #page-matchs .filter-chip:active,
-  #tennis-vb-filters .tennis-vb-filter-btn:active {
+  #tennis-vb-filters .tennis-premium-btn:active {
     transform: translateY(1px) scale(.985) !important;
     box-shadow: inset 0 3px 8px rgba(0,0,0,0.40) !important;
   }
-  /* Selects (Top N foot, Tri tennis, surface dropdown) */
-  #page-matchs .filter-dd,
-  #tennis-vb-filters .tvb-select,
-  #tennis-vb-filters #tennis-vb-sort {
+  /* Selects (Top N foot, vieux selects tennis — dormant, conservé pour compat) */
+  #page-matchs .filter-dd {
     background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%) !important;
     border: 1px solid var(--border) !important;
     border-radius: 12px !important;
@@ -13495,11 +13454,44 @@ function psSetLang(v) {
       <div class="table-count" id="bet-count"></div>
     </div>
 
-    <!-- LOADING STATE -->
-    <div id="loading-state" style="display:none;padding:48px;text-align:center;">
-      <div style="display:inline-flex;align-items:center;gap:10px;color:var(--text3);font-family:var(--font-mono);font-size:13px;">
-        <div class="live-dot" style="width:8px;height:8px;"></div>
-        <span data-i18n="status.loading">Chargement des données en temps réel…</span>
+    <!-- LOADING STATE — squelettes sport-spécifiques -->
+    <div id="loading-state" style="display:none;">
+      <!-- Squelette Football (page-matchs) -->
+      <div id="skeleton-foot" class="skeleton-page">
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px 0;">
+          <div class="pa-skeleton" style="height:84px;"></div>
+          <div class="pa-skeleton" style="height:84px;"></div>
+          <div class="pa-skeleton" style="height:84px;"></div>
+          <div class="pa-skeleton" style="height:84px;"></div>
+          <div class="pa-skeleton" style="height:84px;"></div>
+        </div>
+      </div>
+      <!-- Squelette Tennis (page-tennis) -->
+      <div id="skeleton-tennis" class="skeleton-page" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px 0;">
+          <div class="tm-skeleton" style="height:90px;"></div>
+          <div class="tm-skeleton" style="height:90px;"></div>
+          <div class="tm-skeleton" style="height:90px;"></div>
+          <div class="tm-skeleton" style="height:90px;"></div>
+        </div>
+      </div>
+      <!-- Squelette MMA (page-mma) -->
+      <div id="skeleton-mma" class="skeleton-page" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px 0;">
+          <div class="mma-skeleton"></div>
+          <div class="mma-skeleton"></div>
+          <div class="mma-skeleton"></div>
+          <div class="mma-skeleton"></div>
+        </div>
+      </div>
+      <!-- Squelette fallback par défaut -->
+      <div id="skeleton-default" class="skeleton-page">
+        <div style="padding:48px;text-align:center;">
+          <div style="display:inline-flex;align-items:center;gap:10px;color:var(--text3);font-family:var(--font-mono);font-size:13px;">
+            <div class="live-dot" style="width:8px;height:8px;"></div>
+            <span data-i18n="status.loading">Chargement des données en temps réel…</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -15317,123 +15309,35 @@ function psSetLang(v) {
        Données /api/v1/tennis/value-bets (BSD primaire, ESPN fallback,
        Sackmann Elo + The Odds API h2h + Shin-Hurley devig + 0.6·Elo+0.4·BSD).
        ═══════════════════════════════════════════════════════════════════════ -->
-    <div id="tennis-vb-filters" class="tennis-vb-filters">
-      <div>
-        <span class="tvb-btn-group">
-          <button class="tennis-vb-filter-btn is-active" data-filter="tour" data-value="ALL" onclick="applyTennisFilter(this)">Tous</button>
-          <button class="tennis-vb-filter-btn" data-filter="tour" data-value="ATP" onclick="applyTennisFilter(this)">ATP</button>
-          <button class="tennis-vb-filter-btn" data-filter="tour" data-value="WTA" onclick="applyTennisFilter(this)">WTA</button>
-        </span>
+    <div id="tennis-vb-filters" class="tennis-filters-container-premium">
+      <!-- Groupe 1 : Circuits -->
+      <div class="tennis-filter-group">
+        <span class="group-title-label">Circuit</span>
+        <button class="tennis-premium-btn is-active" data-filter="tour" data-value="ALL" onclick="applyTennisFilter(this)">Tous <span class="badge-count">0</span></button>
+        <button class="tennis-premium-btn" data-filter="tour" data-value="ATP" onclick="applyTennisFilter(this)">ATP <span class="badge-count">0</span></button>
+        <button class="tennis-premium-btn" data-filter="tour" data-value="WTA" onclick="applyTennisFilter(this)">WTA <span class="badge-count">0</span></button>
       </div>
-      <!-- Surface — always visible -->
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-        <span class="tvb-btn-group-label">Surface</span>
-        <span class="tvb-btn-group">
-          <button class="tennis-vb-filter-btn is-active" data-filter="surface" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
-          <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Hard" onclick="applyTennisFilter(this)">🏟️ Hard</button>
-          <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Clay" onclick="applyTennisFilter(this)">🟧 Clay</button>
-          <button class="tennis-vb-filter-btn" data-filter="surface" data-value="Grass" onclick="applyTennisFilter(this)">🟩 Grass</button>
-        </span>
-      </div>
-      <!-- Format — behind accordion -->
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;" data-cf-filter-extra="true">
-        <span class="tvb-btn-group-label">Format</span>
-        <span class="tvb-btn-group">
-          <button class="tennis-vb-filter-btn is-active" data-filter="format" data-value="ALL" onclick="applyTennisFilter(this)">Tous</button>
-          <button class="tennis-vb-filter-btn" data-filter="format" data-value="SINGLES" onclick="applyTennisFilter(this)" title="Matchs singles uniquement (1v1)">👤 Singles</button>
-          <button class="tennis-vb-filter-btn" data-filter="format" data-value="DOUBLES" onclick="applyTennisFilter(this)" title="Matchs doubles uniquement (paire vs paire)">👥 Doubles</button>
-        </span>
-      </div>
-      <!-- Catégorie — behind accordion -->
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;" data-cf-filter-extra="true">
-        <span class="tvb-btn-group-label">Catégorie</span>
-        <span class="tvb-btn-group">
-          <button class="tennis-vb-filter-btn is-active" data-filter="tier" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
-          <button class="tennis-vb-filter-btn" data-filter="tier" data-value="GS" onclick="applyTennisFilter(this)" title="Grand Chelem">GC</button>
-          <button class="tennis-vb-filter-btn" data-filter="tier" data-value="1000" onclick="applyTennisFilter(this)" title="Masters 1000 / WTA 1000">1000</button>
-          <button class="tennis-vb-filter-btn" data-filter="tier" data-value="500" onclick="applyTennisFilter(this)">500</button>
-          <button class="tennis-vb-filter-btn" data-filter="tier" data-value="250" onclick="applyTennisFilter(this)">250</button>
-          <button class="tennis-vb-filter-btn" data-filter="tier" data-value="125" onclick="applyTennisFilter(this)" title="Challenger / WTA 125">125</button>
-          <button class="tennis-vb-filter-btn" data-filter="tier" data-value="ITF" onclick="applyTennisFilter(this)" title="ITF World Tennis Tour / Futures">ITF</button>
-        </span>
-      </div>
-      <!-- Top Stratégies — behind accordion -->
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;" data-cf-filter-extra="true">
-        <span class="tvb-group-label">Top Stratégies</span>
-        <span class="tvb-strategies-grid">
-          <button class="tennis-vb-filter-btn is-active" data-filter="strategy" data-value="ALL" onclick="applyTennisFilter(this)" title="Aucun preset — toutes stratégies">Toutes</button>
-          <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="SURFACE_SPEC" onclick="applyTennisFilter(this)" title="Pré-match — écart classement Elo surface ≥ 30 places">🎯 Spécialiste Surface</button>
-          <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="ACES_SHOCK" onclick="applyTennisFilter(this)" title="Pré-match — signal King of Aces">⚡ Serveur Lourd</button>
-          <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="FORM_VALUE" onclick="applyTennisFilter(this)" title="Pré-match — forme L5/L10 chaude avec EV ≥ 3%">📈 Value Forme</button>
-          <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="DR_SPIKE" onclick="applyTennisFilter(this)" title="Live — bascule de momentum |ΔDR| ≥ 0.30">🔥 Spike DR</button>
-          <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="FAVORITE_DANGER" onclick="applyTennisFilter(this)" title="Live — favori modèle (≥58%) mené en sets">⚠️ Favori en Danger</button>
-          <button class="tennis-vb-filter-btn" data-filter="strategy" data-value="COMEBACK" onclick="applyTennisFilter(this)" title="Live — remontée algorithmique">🔁 Remontée</button>
-        </span>
-      </div>
-      <!-- Controls row: Recherche + Compétition + Trier — each in own flex div for JS compat -->
-      <div class="tvb-controls-row">
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <span class="tvb-btn-group-label">Recherche</span>
-          <span class="tvb-search-wrap">
-            <input type="text" id="tennis-vb-search" class="tvb-search" placeholder="Joueur, tournoi, round…" autocomplete="off" spellcheck="false"
-              oninput="window._tennisVbFilters.q=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])"
-              onkeydown="if(event.key==='Escape'){this.value='';window._tennisVbFilters.q='';renderTennisValueBets(window._tennisVbLastFetch||[]);}">
-            <button type="button" class="tvb-search-clear" title="Effacer" aria-label="Effacer la recherche"
-              onclick="var i=document.getElementById('tennis-vb-search');if(i){i.value='';}window._tennisVbFilters.q='';renderTennisValueBets(window._tennisVbLastFetch||[]);">✕</button>
-          </span>
-        </div>
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <span class="tvb-btn-group-label">Compétition</span>
-          <select id="tennis-vb-comp" class="tvb-select" style="display:none;" onchange="tncFromLegacy(this.value)"><option value="ALL">Toutes</option></select>
-          <div id="tnc-ms" class="tnc-ms">
-            <button type="button" id="tnc-ms-btn" class="tvb-select tnc-ms-btn" aria-haspopup="true" aria-expanded="false" onclick="tncToggle(event)"><span id="tnc-ms-lbl">Toutes</span><span class="tnc-ms-cv">▾</span></button>
-            <div id="tnc-ms-pop" class="tnc-ms-pop" role="listbox" aria-multiselectable="true">
-              <div class="tnc-ms-bar">
-                <input type="text" id="tnc-ms-q" class="tnc-ms-q" placeholder="Filtrer un tournoi…" autocomplete="off" spellcheck="false" oninput="tncFilter(this.value)" onclick="event.stopPropagation()">
-                <button type="button" class="tnc-ms-a" onclick="tncAll(true)">Tout</button>
-                <button type="button" class="tnc-ms-a" onclick="tncAll(false)">Aucun</button>
-              </div>
-              <div id="tnc-ms-list" class="tnc-ms-list"></div>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <span class="tvb-btn-group-label">Trier</span>
-          <select id="tennis-vb-sort" class="tvb-select" onchange="window._tennisVbFilters.sort=this.value;renderTennisValueBets(window._tennisVbLastFetch||[])">
-            <option value="time">⏱ Plus proche</option>
-            <option value="chrono">📅 Chrono ↑</option>
-            <option value="ev">📈 Value EV+ ↓</option>
-            <option value="prob">🎯 Proba ↓</option>
-            <option value="delta_dr">🔥 Δ DR ↓</option>
-            <option value="set1">💥 Set 1 ↓</option>
-            <option value="elo">⭐ Elo ↓</option>
 
-            <option value="elo_surf_diff">🎾 Δ Elo Surface ↓</option>
-          </select>
-        </div>
+      <div class="tennis-filter-v-divider"></div>
+
+      <!-- Groupe 2 : Surfaces -->
+      <div class="tennis-filter-group">
+        <span class="group-title-label">Surface</span>
+        <button class="tennis-premium-btn is-active" data-filter="surface" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
+        <button class="tennis-premium-btn" data-filter="surface" data-value="Hard" onclick="applyTennisFilter(this)"><span class="dot-indicator dot-hard"></span>Hard</button>
+        <button class="tennis-premium-btn" data-filter="surface" data-value="Clay" onclick="applyTennisFilter(this)"><span class="dot-indicator dot-clay"></span>Clay</button>
+        <button class="tennis-premium-btn" data-filter="surface" data-value="Grass" onclick="applyTennisFilter(this)"><span class="dot-indicator dot-grass"></span>Grass</button>
       </div>
-      <!-- Live toggle (always visible — excluded by JS accordion) -->
-      <label class="tvb-toggle tvb-toggle--live" style="display:inline-flex;align-items:center;gap:5px;">
-        <input type="checkbox" id="tennis-vb-live-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])">
-        <span class="tvb-live-dot-new"></span> Live
-      </label>
-      <!-- Other toggles (behind accordion, each in flex div for JS closest() compat) -->
-      <div class="tvb-toggles-row" data-cf-filter-extra="true">
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <label class="tvb-toggle">
-            <input type="checkbox" id="tennis-vb-elo-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Avec Elo
-          </label>
-        </div>
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <label class="tvb-toggle">
-            <input type="checkbox" id="tennis-vb-positive-ev" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> EV &gt; 0
-          </label>
-        </div>
-        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <label class="tvb-toggle">
-            <input type="checkbox" id="tennis-vb-hide-finished" checked onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> Masquer terminés
-          </label>
-        </div>
+
+      <div class="tennis-filter-v-divider"></div>
+
+      <!-- Groupe 3 : Live Switch -->
+      <div class="tennis-filter-group live-group-box">
+        <label class="switch-premium-container">
+          <input type="checkbox" id="tennis-vb-live-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])">
+          <span class="slider-premium-round"></span>
+        </label>
+        <span class="live-label-text">LIVE</span>
       </div>
     </div>
 
@@ -15882,11 +15786,7 @@ function psSetLang(v) {
 
 <style>
   /* ── T6 Tennis Value Bets styles ── */
-  .tennis-vb-filter-btn { padding:6px 14px; background:var(--bg3); color:var(--text2); border:1px solid var(--border2); border-radius:999px; cursor:pointer; font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.3px; box-shadow:var(--card-shadow); transition:transform 90ms ease, box-shadow 140ms ease, background 140ms ease, color 140ms ease; }
-  .tennis-vb-filter-btn:hover { color:var(--text); background:var(--bg4); transform:translateY(-1px); box-shadow:var(--card-shadow-hover); }
-  .tennis-vb-filter-btn:active { transform:translateY(1px); box-shadow:0 1px 2px rgba(0,0,0,0.22); }
-  .tennis-vb-filter-btn.is-active { color:#fff; font-weight:800; background:linear-gradient(180deg,var(--accent),var(--accent-dim)); border-color:var(--accent); box-shadow:0 4px 14px rgba(0,0,0,0.18), var(--card-shadow); text-shadow:0 1px 1px rgba(0,0,0,0.28); transform:translateY(-1px); }
-  .tennis-vb-filter-btn.is-active:hover { filter:brightness(1.07); }
+
   #tennis-vb-table td { padding:11px 12px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text); }
   #tennis-vb-table td.tvb-dt-col { color:var(--text2,#8d9399); }
   #tennis-vb-table td.tvb-dt-col .tvb-book { display:block; margin-top:2px; color:var(--text3,#5a6068); }
@@ -16630,38 +16530,152 @@ function psSetLang(v) {
   #tennis-vb-table .tmental b { color:var(--text,#e8eaed); font-weight:700; }
   #tennis-vb-table .tmental-sep { color:var(--text3,#5a6068); margin:0 3px; }
   #tennis-vb-table .tvb-market-na { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); }
-  .tennis-vb-filters { background:var(--bg2) !important; border:1px solid var(--border2) !important; box-shadow:var(--card-shadow) !important; padding:14px 16px !important; border-radius:var(--radius-xl) !important; }
-  .tennis-vb-filters > div > span { font-weight:800 !important; letter-spacing:0.7px; color:var(--text3) !important; position:relative; padding-left:10px; text-transform:uppercase; }
-  .tennis-vb-filters > div > span::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:12px; border-radius:2px; background:var(--accent); }
-  .tennis-vb-filters .tvb-select { background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:9px; padding:6px 11px; font-family:var(--font-mono); font-size:11px; font-weight:600; cursor:pointer; max-width:260px; box-shadow:var(--card-shadow); transition:border-color 140ms ease, box-shadow 140ms ease; }
-  .tennis-vb-filters .tvb-select:hover { border-color:var(--accent); }
-  .tennis-vb-filters .tvb-select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg), var(--card-shadow); }
-  .tennis-vb-filters .tvb-search-wrap { position:relative; display:inline-flex; align-items:center; }
-  .tennis-vb-filters .tvb-search { background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:9px; padding:6px 26px 6px 11px; font-family:var(--font-mono); font-size:11px; font-weight:600; width:200px; box-shadow:var(--card-shadow); transition:border-color 140ms ease, box-shadow 140ms ease, width 160ms ease; }
-  .tennis-vb-filters .tvb-search::placeholder { color:var(--text3,#5a6068); font-weight:500; }
-  .tennis-vb-filters .tvb-search:hover { border-color:var(--accent); }
-  .tennis-vb-filters .tvb-search:focus { outline:none; border-color:var(--accent); width:240px; box-shadow:0 0 0 3px var(--accent-bg), var(--card-shadow); }
-  .tennis-vb-filters .tvb-search-clear { position:absolute; right:6px; top:50%; transform:translateY(-50%); width:16px; height:16px; padding:0; border:none; border-radius:50%; background:transparent; color:var(--text3,#5a6068); font-size:10px; font-weight:800; line-height:16px; cursor:pointer; transition:color 120ms ease, background 120ms ease; }
-  .tennis-vb-filters .tvb-search-clear:hover { color:#fff; background:var(--red,#ff4d4d); }
-  .tennis-vb-filters .tnc-ms { position:relative; display:inline-block; }
-  .tennis-vb-filters .tnc-ms-btn { display:inline-flex; align-items:center; gap:8px; max-width:260px; }
-  .tennis-vb-filters .tnc-ms-btn #tnc-ms-lbl, .tennis-vb-filters .tnc-ms-btn span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:210px; }
-  .tennis-vb-filters .tnc-ms-cv { margin-left:auto; color:var(--text3,#5a6068); font-size:10px; }
-  .tennis-vb-filters .tnc-ms-pop { display:none; position:absolute; z-index:60; top:calc(100% + 6px); left:0; width:280px; max-width:78vw; background:var(--bg2); border:1px solid var(--border2); border-radius:11px; box-shadow:0 12px 32px rgba(0,0,0,.28); padding:10px; }
-  .tennis-vb-filters .tnc-ms-pop.open { display:block; }
-  .tennis-vb-filters .tnc-ms-bar { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
-  .tennis-vb-filters .tnc-ms-q { flex:1; min-width:0; background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:8px; padding:6px 9px; font-family:var(--font-mono); font-size:11px; }
-  .tennis-vb-filters .tnc-ms-q:focus { outline:none; border-color:var(--accent); }
-  .tennis-vb-filters .tnc-ms-a { background:var(--bg3); color:var(--text2,#8d9399); border:1px solid var(--border2); border-radius:8px; padding:6px 8px; font-family:var(--font-mono); font-size:10px; font-weight:700; cursor:pointer; }
-  .tennis-vb-filters .tnc-ms-a:hover { border-color:var(--accent); color:var(--text); }
-  .tennis-vb-filters .tnc-ms-list { max-height:280px; overflow-y:auto; display:flex; flex-direction:column; }
-  .tennis-vb-filters .tnc-ms-it { display:flex; align-items:center; gap:8px; padding:6px 6px; border-radius:7px; font-family:var(--font-mono); font-size:12px; color:var(--text); cursor:pointer; }
-  .tennis-vb-filters .tnc-ms-it:hover { background:var(--bg3); }
-  .tennis-vb-filters .tnc-ms-it input { accent-color:var(--accent); width:14px; height:14px; cursor:pointer; }
-  .tennis-vb-filters .tnc-ms-it span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .tennis-vb-filters .tnc-ms-empty { padding:14px 6px; text-align:center; color:var(--text3,#5a6068); font-family:var(--font-mono); font-size:11px; }
-  .tennis-vb-filters label { font-weight:600; color:var(--text2); }
-  .tennis-vb-filters label input[type=checkbox] { accent-color:var(--accent); width:14px; height:14px; }
+  /* ── Premium filters container : dark glass bar ── */
+  .tennis-filters-container-premium {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(10,16,32,0.94), rgba(6,10,22,0.92));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(56,189,248,0.12);
+    border-radius: 12px;
+    padding: 8px 14px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.36), inset 0 1px 0 rgba(255,255,255,0.04);
+    flex-wrap: wrap;
+    min-height: 44px;
+  }
+  .tennis-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .group-title-label {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(148,163,184,0.5);
+    margin-right: 3px;
+    white-space: nowrap;
+  }
+  .tennis-premium-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    background: rgba(30,41,59,0.5);
+    color: rgba(148,163,184,0.85);
+    border: 1px solid rgba(71,85,105,0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  }
+  .tennis-premium-btn:hover {
+    background: rgba(51,65,85,0.7);
+    color: rgba(226,232,240,0.95);
+    border-color: rgba(56,189,248,0.3);
+  }
+  .tennis-premium-btn.is-active {
+    background: rgba(56,189,248,0.12);
+    color: #38bdf8;
+    border-color: rgba(56,189,248,0.35);
+    box-shadow: inset 0 1px 0 rgba(56,189,248,0.08), 0 0 12px rgba(56,189,248,0.08);
+    font-weight: 700;
+  }
+  /* Badge compteur dans les boutons */
+  .badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: rgba(56,189,248,0.15);
+    color: #38bdf8;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .tennis-premium-btn.is-active .badge-count {
+    background: rgba(56,189,248,0.25);
+    color: #7dd3fc;
+  }
+  /* Séparateur vertical */
+  .tennis-filter-v-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(71,85,105,0.35);
+    margin: 0 4px;
+    flex: 0 0 1px;
+  }
+  /* Dot de couleur pour surface */
+  .dot-indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex: 0 0 7px;
+  }
+  .dot-hard { background: #29b6f6; }
+  .dot-clay { background: #e65100; }
+  .dot-grass { background: #43a047; }
+  /* Live toggle : switch premium */
+  .live-group-box {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .switch-premium-container {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+    cursor: pointer;
+  }
+  .switch-premium-container input {
+    display: none;
+  }
+  .slider-premium-round {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(71,85,105,0.5);
+    border-radius: 999px;
+    transition: background 160ms ease, box-shadow 160ms ease;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .slider-premium-round::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(148,163,184,0.7);
+    transition: transform 160ms ease, background 160ms ease;
+  }
+  .switch-premium-container input:checked + .slider-premium-round {
+    background: rgba(255,77,77,0.25);
+    box-shadow: 0 0 8px rgba(255,77,77,0.25);
+  }
+  .switch-premium-container input:checked + .slider-premium-round::before {
+    transform: translateX(14px);
+    background: #ff4d4d;
+  }
+  .live-label-text {
+    font-size: 10px;
+    font-weight: 800;
+    color: rgba(255,77,77,0.7);
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
   /* ── Partie B : tableau theme-aware 3D (header sticky + variantes thème) ── */
   #tennis-vb-table { border-collapse:separate; border-spacing:0; }
   #tennis-vb-table thead th { position:sticky; top:0; z-index:5; background:linear-gradient(180deg,var(--bg3),var(--bg2)); box-shadow:0 2px 0 0 var(--accent), 0 8px 14px -8px rgba(0,0,0,0.30); }
@@ -17255,194 +17269,23 @@ function psSetLang(v) {
   body[data-cf-tennis-filters="expanded"] .cf-tennis-filters-toggle .cf-ft-arrow { transform: rotate(180deg); }
   .cf-tennis-filters-toggle .cf-ft-arrow {
     display: inline-block;
-    transition: transform .25s;
-    font-size: 10px;
+    transition: transform .2s;
+    font-size: 9px;
+    margin-left: 2px;
   }
 
-  /* UI-004b — Tennis VB refactored filter components (compact toggles, groups, controls) */
 
-  /* ── Toggle switch (hidden checkbox + track/thumb) ── */
-  .tvb-toggle {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text2);
-    cursor: pointer;
-    white-space: nowrap;
-    padding: 0;
-    background: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-  .tvb-toggle input[type=checkbox] {
-    position: relative;
-    width: 28px;
-    height: 16px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--bg4);
-    border: 1px solid var(--border2);
-    border-radius: 999px;
-    outline: none;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-    flex: 0 0 28px;
-    margin: 0;
-  }
-  .tvb-toggle input[type=checkbox]::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--text3);
-    transition: transform .15s, background .15s;
-  }
-  .tvb-toggle input[type=checkbox]:checked {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-  .tvb-toggle input[type=checkbox]:checked::after {
-    transform: translateX(12px);
-    background: #fff;
-  }
-  /* Live toggle variant */
-  .tvb-toggle--live {
-    color: #ff4d4d !important;
-    font-weight: 800;
-  }
-  .tvb-toggle--live input[type=checkbox] {
-    border-color: rgba(255,77,77,.35);
-    background: rgba(255,77,77,.15);
-  }
-  .tvb-toggle--live input[type=checkbox]:checked {
-    background: #ff4d4d;
-    border-color: #ff4d4d;
-    box-shadow: 0 0 8px rgba(255,77,77,.4);
-  }
-  .tvb-toggle--live .tvb-live-dot-new {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #ff4d4d;
-    display: inline-block;
-    flex: 0 0 7px;
-    animation: tnLivePulse 1.4s ease-in-out infinite;
-  }
-  @media (prefers-reduced-motion:reduce) {
-    .tvb-toggle--live .tvb-live-dot-new { animation: none; }
-  }
-  /* Override generic label checkbox styles for our toggles */
-  .tennis-vb-filters .tvb-toggle input[type=checkbox] {
-    accent-color: unset;
-    width: 28px;
-    height: 16px;
-  }
 
-  /* ── Compact pill button groups ── */
-  .tvb-btn-group {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .tvb-btn-group .tennis-vb-filter-btn {
-    padding: 4px 10px;
-    font-size: 10px;
-    letter-spacing: 0.2px;
-    border-radius: 6px;
-  }
-  .tvb-btn-group-label {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--text3);
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: relative;
-    padding-left: 8px;
-    margin-right: 2px;
-    white-space: nowrap;
-  }
-  .tvb-btn-group-label::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 10px;
-    border-radius: 2px;
-    background: var(--accent);
-  }
-  /* Override generic .tennis-vb-filters > div > span selector */
-  .tennis-vb-filters > div > span.tvb-btn-group-label { padding-left: 8px; color: var(--text3) !important; }
-  .tennis-vb-filters > div > span.tvb-btn-group-label::before { content: ''; }
 
-  .tvb-group-label {
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    font-family: var(--font-mono);
-    color: #E2001A;
-  }
 
-  /* ── Stratégies grid ── */
-  .tvb-strategies-grid {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .tvb-strategies-grid .tennis-vb-filter-btn {
-    padding: 4px 8px;
-    font-size: 10px;
-    letter-spacing: 0.1px;
-    border-radius: 6px;
-    white-space: nowrap;
-  }
 
-  /* ── Controls row (3-column grid) ── */
-  .tvb-controls-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 6px;
-    align-items: start;
-    width: 100%;
-  }
-  .tvb-controls-row .tvb-search {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  .tvb-controls-row .tvb-search:focus {
-    width: 100% !important;
-  }
-  .tvb-controls-row .tnc-ms-btn,
-  .tvb-controls-row .tvb-select {
-    max-width: 100% !important;
-    width: 100%;
-  }
-  @media (max-width: 768px) {
-    .tvb-controls-row {
-      grid-template-columns: 1fr;
-    }
-  }
 
-  /* ── Toggles row (live + checkboxes) ── */
-  .tvb-toggles-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    width: 100%;
-  }
+
+
+
+
+
+
 
   /* UI-005 — Mobile Card-View Tennis (cards en stack <768px) */
   @media (max-width: 768px) {
