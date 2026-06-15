@@ -52,7 +52,7 @@ Utiliser `/gstack-plan-ceo-review` pour les décisions stratégiques, `/gstack-a
 | 4 | **ETL Football quota reset** | ops ✅ CLOSED | bd `9je` — pipeline livré v12.10, cron 00:00 UTC VPS actif | ✅ |
 | 9 | **POC xvalue.ai** | DG ✅ CLOSED | bd `qyfr` — NO-GO, abandonné | ✅ |
 | 6 | **Stripe DG (suite)** | DG+ops | bd `s77m` — backend ✅. PENDING: décision prix annuel + refund policy + frontend CTAs 8 pricing | 🟡 MED |
-| 7 | **Sackmann purge Phase 3-7** | code | bd `dl49` — ETL interne BSD/ESPN. Phase 1+2 ✅. Phase 3 (TTL cache, backfill, benchmark) + Phase 4-7 restants | 🔴 HIGH legal |
+| 7 | **Sackmann purge Phase 3-7** | code | bd `dl49` — ETL interne BSD/ESPN. Phase 1+2 ✅. Phase 3 (TTL, backfill, benchmark) ✅. Phase 4.1 probe: BSD n'a PAS de stats serve (ace/df/svpt) → livré sans. Phase 4.2-7 restants | 🔴 HIGH legal |
 | 8 | **POC OddsPapi.io** | DG | bd `bjv` — spike en cours. Option C Pinnacle direct NO-GO. OddsPapi.io free 250 req à tester | 🟢 LOW |
 | 14 | **DG ligues BSD secondary** | DG | 11 ligues non mappées (Africa Cup, Liga F WOMEN, coupes mineures, Nigeria PFL, Liga MX Clausura). $0 incrémental. | 🟡 MED |
 

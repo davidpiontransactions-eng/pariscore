@@ -875,6 +875,10 @@ function showPage(pageId, linkEl) {
   const page = document.getElementById('page-' + pageId);
   if (page) {
     page.style.display = (['matchs','tennis','cs2'].includes(pageId) && document.documentElement.classList.contains('ps-desktop-v1')) ? 'grid' : 'block';
+    // Transition fade au changement de page
+    page.style.animation = 'none';
+    void page.offsetHeight;
+    page.style.animation = 'psFadeIn 0.15s ease-out';
     // Forcer la visibilité des sections fade-up (elles sont invisible depuis display:none)
     page.querySelectorAll('.fade-up').forEach(el => {
       el.classList.add('visible');
@@ -4988,6 +4992,8 @@ async function loadTennisAbstractRome() {
     ]);
     _renderTennisAbstractTable(atpRes, 'ta-rome-atp-body', 'ta-rome-atp-meta');
     _renderTennisAbstractTable(wtaRes, 'ta-rome-wta-body', 'ta-rome-wta-meta');
+    // Fetch DR data for all players in the table
+    _loadTennisDR(atpRes, wtaRes);
     if (upcomingEl) {
       const upATP = (atpRes.upcoming_matches || []).slice(0, 3);
       const upWTA = (wtaRes.upcoming_matches || []).slice(0, 3);
@@ -5004,6 +5010,90 @@ async function loadTennisAbstractRome() {
     if (statusEl) statusEl.textContent = 'Erreur';
     console.error('[TennisAbstract] load failed', e);
   }
+}
+
+// ─── Tennis Abstract — Charted Match DR enrichment ───────────────────────
+// Fetches career Dominance Ratio from TennisAbstract charted match CSV data
+async function _loadTennisDR(atpRes, wtaRes) {
+  try {
+    const playerNames = [];
+    if (atpRes && Array.isArray(atpRes.players)) {
+      atpRes.players.forEach(function(p) {
+        if (p && p.name) playerNames.push(p.name);
+      });
+    }
+    if (wtaRes && Array.isArray(wtaRes.players)) {
+      wtaRes.players.forEach(function(p) {
+        if (p && p.name) playerNames.push(p.name);
+      });
+    }
+    if (!playerNames.length) return;
+    const drRes = await apiFetch('/api/v1/tennis-abstract/dr?players=' + encodeURIComponent(playerNames.join(','))).then(function(r) { return r.json(); }).catch(function() { return null; });
+    if (!drRes || !drRes.players) return;
+    _enrichTennisTableWithDR(drRes.players, 'ta-rome-atp-body');
+    _enrichTennisTableWithDR(drRes.players, 'ta-rome-wta-body');
+  } catch (e) {
+    console.warn('[TennisAbstract DR] failed:', e.message);
+  }
+}
+
+function _enrichTennisTableWithDR(drMap, bodyId) {
+  const body = document.getElementById(bodyId);
+  if (!body || !body.querySelector) return;
+  // Add DR header if not already present
+  const headerRow = body.querySelector('thead tr');
+  if (headerRow && !headerRow.querySelector('.ta-dr-header')) {
+    var drHeader = document.createElement('th');
+    drHeader.className = 'ta-dr-header';
+    drHeader.style.cssText = 'text-align:right;font-size:10px;color:var(--text2,#8d9399);padding:4px 6px;';
+    drHeader.textContent = 'DR';
+    headerRow.appendChild(drHeader);
+  }
+  // Add DR data cell to each player row
+  var rows = body.querySelectorAll('tbody tr');
+  rows.forEach(function(row) {
+    var nameCell = row.querySelector('td:first-child');
+    if (!nameCell) return;
+    var playerName = nameCell.textContent.replace(/[^a-zA-Z\s-]/g, '').trim();
+    var drCell = document.createElement('td');
+    drCell.style.cssText = 'text-align:right;font-size:11px;padding:4px 6px;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;';
+    // Look up DR
+    var found = null;
+    for (var key in drMap) {
+      if (drMap.hasOwnProperty(key)) {
+        var entry = drMap[key];
+        if (entry.name && _taNormName(entry.name) === _taNormName(playerName)) {
+          found = entry;
+          break;
+        }
+      }
+    }
+    // Also try fuzzy match
+    if (!found) {
+      for (var key in drMap) {
+        if (drMap.hasOwnProperty(key)) {
+          var entry = drMap[key];
+          if (entry.name) {
+            var a = _taNormName(entry.name);
+            var b = _taNormName(playerName);
+            if (a === b || a.includes(b) || b.includes(a) || (a.split(/\s+/).length >= 2 && b.split(/\s+/).length >= 2 && a.split(/\s+/).pop() === b.split(/\s+/).pop())) {
+              found = entry;
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (found && found.avgDR != null) {
+      var val = found.avgDR;
+      var cls = 'ta-dr-avg';
+      var label = val.toFixed(3);
+      drCell.innerHTML = '<span class="' + cls + '" title="' + found.matches_n + ' matches">' + label + '</span>';
+    } else {
+      drCell.innerHTML = '<span style="color:var(--text3,#5a6068);font-size:10px;">—</span>';
+    }
+    row.appendChild(drCell);
+  });
 }
 
 // ─── Tennis Abstract — Reports extension (UC-1 to UC-5, v10.10) ───────────
