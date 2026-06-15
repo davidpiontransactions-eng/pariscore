@@ -15669,6 +15669,19 @@ function psSetLang(v) {
   </section>
 
   <script>
+  /* Cache des photos Tennis Warehouse (hors switch pour eviter le reset) */
+  window._tennisPhotoMap = null;
+  window._loadTennisPhotoMap = function() {
+    if (window._tennisPhotoMap) return Promise.resolve(window._tennisPhotoMap);
+    return fetch('/api/v1/tennis/player-photos')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        window._tennisPhotoMap = d.photos || {};
+        return window._tennisPhotoMap;
+      })
+      .catch(function() { window._tennisPhotoMap = {}; return window._tennisPhotoMap; });
+  };
+
   window.tn2SwitchTab = function(tabId) {
     var panels = document.querySelectorAll('.tn2-tab-panel');
     for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
@@ -15704,20 +15717,6 @@ function psSetLang(v) {
             document.getElementById('tn2-tournaments-grid').innerHTML = '<div class="tn2-empty">Erreur chargement tournois</div>';
           }
   })();
-
-// Cache des photos Tennis Warehouse
-window._tennisPhotoMap = null;
-window._loadTennisPhotoMap = function() {
-  if (window._tennisPhotoMap) return Promise.resolve(window._tennisPhotoMap);
-  return fetch('/api/v1/tennis/player-photos')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      window._tennisPhotoMap = d.photos || {};
-      return window._tennisPhotoMap;
-    })
-    .catch(function() { window._tennisPhotoMap = {}; return window._tennisPhotoMap; });
-};
-
         break;
       case 'cal':
         break;
@@ -18850,6 +18849,7 @@ window.tn2SetupH2H = function() {
   }
   #page-tennis .tn2-tab-btn {
     color: #94a3b8 !important;
+    flex-shrink: 0 !important;
   }
   #page-tennis .tn2-tab-btn.active {
     color: #0077ff !important;
@@ -21880,7 +21880,7 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-toggle input { accent-color: var(--tn2-accent); }
 
 /* ═══ 4 — LIVE TAB — MATCH CARDS ═══ */
-.tn2-card-grid { display: grid; gap: 8px; width: 100%; overflow: hidden; }
+.tn2-card-grid { display: grid; gap: 8px; width: 100%; }
 .tn2-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .tn2-grid-2 { grid-template-columns: repeat(2, 1fr); }
 
@@ -21889,7 +21889,6 @@ body[data-page="mma"] footer { display: none !important; }
   border: 1px solid var(--tn2-border-card);
   border-radius: var(--tn2-radius-sm);
   overflow: hidden;
-  max-width: 100%;
   transition: all var(--tn2-transition);
   box-shadow: var(--tn2-shadow-sm);
   position: relative;

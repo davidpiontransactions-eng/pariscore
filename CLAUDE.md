@@ -160,21 +160,14 @@ bd close <id>         # Complete work
 
 ---
 
-## 🚨 CRITICAL_BUG_FIX — 2026-06-15
+## ✅ CRITICAL_BUG_FIX — RESOLVED 2026-06-15
 
-### Layout Tennis détruit (v12.81d)
-**Symptôme** : Layout collapse — cartes disparues, menus compressés en haut à gauche.
-**Cause racine** : Padding déplacé de `.tn2-main` vers `.tn2-tab-panel.active` + règle mobile destructive.
-**Fix appliqué** : Revert complet des changements de padding + suppression règle mobile.
-**Restant** : Trouver la vraie cause du décalage droite sans casser le layout.
+Layout Tennis réparé. Causes identifiées :
+1. overflow:hidden sur .tn2-card-grid coupait les cartes
+2. Code photo dans tn2SwitchTab resetait le cache à chaque onglet
+3. Les tab-btn manquaient de flex-shrink:0
 
-### Leçons apprises
-- JAMAIS modifier le padding des conteneurs principaux (`.tn2-main`)
-- JAMAIS de règles `!important` sur les grids sans test visuel
-- Toujours tester visuellement avant de pousser
-- Les photos Tennis Warehouse doivent être vérifiées pour les dimensions
-
----
+Fixes : overflow:hidden retiré, photo map déplacée hors switch, flex-shrink:0 ajouté.
 
 ## Roadmap
 

@@ -6,17 +6,7 @@
 
 ---
 
-## 🚨 CRITICAL_BLOCKED
-
-Toutes les tâches F1 et Tennis sont BLOCKED jusqu'à résolution du layout collapse (régression v12.81d).
-
-| Tâche | Raison |
-|-------|--------|
-| #1-10 Tennis UI Design Tokens | Layout casse affichage cartes |
-| #11 Test régressions thème clair | Layout instable |
-| #12-16 Docs + Photos + Layout | Layout destruction en cours |
-
----
+**Note :** Le CRITICAL_BLOCKED layout a été résolu (v12.81e). Les tâches Tennis/F1 sont débloquées.
 
 ## TODO
 
