@@ -1,7 +1,7 @@
-# Backlog : Corners Tab Overhaul v12.72
+# Backlog : Sprint Refonte UI Tennis v12.81
 
-**Projet** : PariScore — Refonte onglet Corners  
-**Date de création** : 2026-06-10  
+**Projet** : PariScore — Refonte UI/UX onglet Tennis  
+**Date de création** : 2026-06-15  
 **Porteur** : CTO/Lead Data Scientist  
 
 ---
@@ -10,18 +10,19 @@
 
 | # | Description | Priorité | Estimation |
 |---|-------------|----------|------------|
-| 1 | Créer le script ETL seed_historique_bsd_corners.js pour charger 3 saisons de données corners depuis l'API BSD | HIGH | 4h |
-| 2 | Créer la table SQLite corner_history dans server.js avec la structure adaptée au stockage de l'historique des corners sur 3 saisons | HIGH | 2h |
-| 3 | Modifier la fonction fetchBSDTeamCornerHistory pour utiliser les données locales de la table corner_history au lieu d'interroger systématiquement l'API BSD | HIGH | 3h |
-| 4 | Développer la nouvelle fonction fetchBSDCornerOdds(bsdEventId) pour récupérer les cotes corners depuis l'API BSD avec implémentation du fallback vers la cote théorique IA | HIGH | 3h |
-| 5 | Intégrer fetchBSDCornerOdds dans handleCornersRoute pour enrichir l'objet pred.odds avec les cotes pour chaque seuil (6.5, 7.5, 8.5, 9.5, 10.5) | HIGH | 2h |
-| 6 | Restructurer la fonction buildCornersTab dans pariscore.js pour afficher la colonne Odds avec le nouveau layout : Label Over + Barre progression + Badge Odds orange + Pourcentage | HIGH | 4h |
-| 7 | Refonte CSS complète de toutes les classes .cr-* avec le design dark immersif (linear-gradient #1a2548 / #111a36 pour .cr-rec-card, #0f2d1f pour .cr-rec-yes) | HIGH | 3h |
-| 8 | Créer le fichier plan.md documentant l'architecture technique et les décisions de conception | MED | 1h |
-| 9 | Créer le fichier backlog.md listant toutes les tâches avec priorités et statut | MED | 1h |
-| 10 | Mettre à jour CLAUDE.md avec la roadmap v12.72 et les nouvelles fonctionnalités implémentées | MED | 1h |
-| 11 | Valider l'intégration complète en environnement de staging avec tests de tous les flux de données | HIGH | 3h |
-| 12 | Commit et push vers le repository Git avec message structuré documentant les modifications | HIGH | 30min |
+| 1 | Appliquer le fond global `#0e1420` à `#page-tennis` et tous les conteneurs tn2-* | HIGH | 30min |
+| 2 | Changer le fond des cartes matchs/KPI de `#182030` à `#172132` avec ombre portée | HIGH | 30min |
+| 3 | Appliquer `#111a28` aux en-têtes de section, tableaux et zones imbriquées | HIGH | 30min |
+| 4 | Créer la nouvelle classe `.tennis-odds-box-premium` avec hover bleu `#0077ff` | HIGH | 45min |
+| 5 | Créer les classes `.tennis-match-card-premium` et `.tennis-grid-header` | HIGH | 30min |
+| 6 | Normaliser les bordures en `1px solid rgba(255,255,255,0.05)` sur tous les composants tn2 | MED | 30min |
+| 7 | Ajouter l'effet de survol subtil `rgba(255,255,255,0.02)` sur les cartes | MED | 20min |
+| 8 | Remplacer l'accent vert des onglets sélectionnés par le bleu `#0077ff` sur les tab-btn actifs | MED | 15min |
+| 9 | Ajuster la typographie : Inter/Roboto, font-weight 700 titres, 500 secondaire, tailles 11-12px métriques | LOW | 30min |
+| 10 | Ajouter les design tokens CSS en variables `--tennis-bg`, `--tennis-card`, `--tennis-nested`, `--tennis-accent-blue` | MED | 20min |
+| 11 | Tester la régressions thème clair (body[data-cf-light="1"]) pour chaque modification | HIGH | 45min |
+| 12 | Mettre à jour plan.md, backlog.md et CLAUDE.md avec la roadmap v12.81 | MED | 20min |
+| 13 | Commit et push avec message structuré | HIGH | 15min |
 
 ---
 
@@ -29,8 +30,7 @@
 
 | # | Description | Début | Avancement |
 |---|-------------|-------|------------|
-| 7 | Créer le fichier plan.md (ce document) | 2026-06-10 | 100% |
-| 8 | Créer le fichier backlog.md | 2026-06-10 | En cours |
+| - | (rien) | - | - |
 
 ---
 
@@ -38,31 +38,25 @@
 
 | # | Description | Date |
 |---|-------------|------|
-| - | Audit backend complet réalisé par gsd-code-fixer — aucun bug trouvé dans fetchBSDTeamCornerHistory, predictCorners, et handleCornersRoute | 2026-06-10 |
-| - | Audit CSS réalisé par gsd-ui-auditor — problème identifié : classes .cr-rec-card avec background blanc détruisant la charte dark | 2026-06-10 |
-| - | Recherche frontend réalisée par gsd-ui-researcher — nouvelle structure visuelle pour buildCornersTab avec colonne Odds | 2026-06-10 |
-| - | Décision architecturale : création script ETL seed_historique_bsd_corners.js car aucune source corners 3 saisons n'existe | 2026-06-10 |
+| - | Diagnostic complet du système CSS tn2 existant — mapping des classes tn2 vers les nouveaux tokens | 2026-06-15 |
+| - | Analyse du HTML de page-tennis (sidebar, KPI, tabs, panels, modals, legacy sections) | 2026-06-15 |
+| - | Spécification des design tokens issue de l'image de référence "image_ad30a6.jpg" | 2026-06-15 |
 
 ---
 
 ## Notes techniques
 
-### Estimation totale du projet : 28h30
+### Estimation totale du projet : 6h30
 
 ### Dépendances entre tâches
 
-Les tâches 1, 2 et 3 sont dépendantes entre elles et doivent être réalisées dans l'ordre. La tâche 1 (script ETL) nourrit la tâche 2 (table SQLite) qui nourrit la tâche 3 (modification fetchBSDTeamCornerHistory).
-
-Les tâches 4 et 5 sont indépendantes et peuvent être réalisées en parallèle avec les tâches 1-3.
-
-Les tâches 6 et 7 peuvent commencer dès que les tâches 4 et 5 sont terminées.
-
-La tâche 11 (validation staging) doit être réalisée avant le commit final (tâche 12).
+Les tâches 1, 2, 3 sont la base et doivent précéder les autres. Les tâches 4-10 peuvent être réalisées en parallèle. La tâche 11 (test régressions) doit être faite APRÈS toutes les modifications. La tâche 12 ferme la boucle documentation.
 
 ### Critères de validation
 
-- Toutes les fonctions fetchBSD retournent des données non nulles pour les matches de test
-- Le design dark est cohérent visuellement avec le reste de l'application PariScore
-- Les cotes BSD sont affichées quand disponibles, le fallback théorique quand indisponible
-- Le script ETL charge successfully 3 saisons de données sans timeout
-- Les tests de staging passent avec un taux de succès de 100%
+- Le fond global est `#0e1420` (vérifié à l'inspection)
+- Les cartes utilisent `#172132` avec ombre
+- Les en-têtes utilisent `#111a28`
+- Les odds badges ont le hover bleu `#0077ff`
+- Aucune régression sur le thème clair
+- Les bordures sont semi-transparentes fines

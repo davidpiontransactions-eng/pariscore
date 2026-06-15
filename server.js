@@ -35596,10 +35596,16 @@ async function _buildTennisValueBetsCore({ date }) {
     const _tName = (m.tournament && typeof m.tournament === 'object')
       ? (m.tournament.name || m.tournament.short_name || m.tournament.short || null)
       : (m.tournament || null);
+    // [FIX BUG #1] Fallback robuste si le nom du tournoi est null/absent
+    // Évite les tirets '—' ou chaînes vides dans le frontend
+    const _tNameFinal = _tName
+      || (m.league && typeof m.league === 'object' ? (m.league.name || null) : (m.league || null))
+      || (m.round_name && !/^(round|quart|semi|final|r\d+|qf|sf|1st|2nd|3rd|4th)/i.test(String(m.round_name).trim()) ? m.round_name : null)
+      || null;
     if (!p1Name || !p2Name) {
       enriched.push({
         id: m.id,
-        tournament: _tName,
+        tournament: _tNameFinal,
         surface: m.surface || null,
         start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
         status: m.status || null,
@@ -35747,7 +35753,7 @@ async function _buildTennisValueBetsCore({ date }) {
       gamesOU = computeTennisGamesOverUnder({
         p1Hold: setProbs.p1_hold,
         p2Hold: setProbs.p2_hold,
-        tournament: _tName,
+      tournament: _tNameFinal,
         tour: tourGuess,
         surface: surfaceClean,
         setModel,
@@ -35870,7 +35876,7 @@ async function _buildTennisValueBetsCore({ date }) {
 
     enriched.push({
       id: m.id,
-      tournament: _tName,
+      tournament: _tNameFinal,
       surface: surfaceClean || _surfN || null,
       surface_source: surfaceSource,
       court: m.court || m.court_name || m.venue?.name || m.venue?.court_name || m.venue?.court || (m.round_name && !/^(round|quart|semi|final|r\d+|qf|sf|1st|2nd|3rd|4th)/i.test(String(m.round_name).trim()) ? m.round_name : null) || _ttLookupAll(p1Name, p2Name) || null,
