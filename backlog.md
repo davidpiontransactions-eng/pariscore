@@ -23,6 +23,7 @@
 | 11 | Tester la régressions thème clair (body[data-cf-light="1"]) pour chaque modification | HIGH | 45min |
 | 12 | Mettre à jour plan.md, backlog.md et CLAUDE.md avec la roadmap v12.81 | MED | 20min |
 | 13 | Commit et push avec message structuré | HIGH | 15min |
+| 14 | Fix crash layout Tennis — supprimer all:initial + margin:0 auto sur .tn2-main | CRITICAL | 30min |
 
 ---
 
@@ -31,6 +32,8 @@
 | # | Description | Début | Avancement |
 |---|-------------|-------|------------|
 | - | (rien) | - | - |
+
+| 15 | Pipeline photos athlètes — remplacer initiales par <img> dans les cartes Live Tennis | HIGH | 1h |
 
 ---
 
