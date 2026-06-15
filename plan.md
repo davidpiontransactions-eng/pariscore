@@ -165,3 +165,9 @@ La correction v12.81d a détruit le layout : padding déplacé sur `.tn2-tab-pan
 - **Revert** : Règle mobile `grid-template-columns:1fr` supprimée
 - **Ajout** : `overflow: hidden` + `max-width: 100%` sur les cartes
 - **Todo** : Trouver la vraie cause du décalage droite SANS modifier le padding structurel
+
+### 9.3 Résolution finale
+Layout stabilisé. Causes :
+- overflow:hidden sur la grille → retiré
+- Code photo dans tn2SwitchTab resetant le cache → déplacé hors switch
+- Tab-btn compressibles → flex-shrink:0 ajouté
