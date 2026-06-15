@@ -27293,6 +27293,8 @@ const TENNIS_ABSTRACT_BASE = 'https://www.tennisabstract.com/current';
 // Réactiver : TENNIS_ABSTRACT_ENABLED=1 (.env) — utile seulement via proxy CF (curl-impersonate / Web Unlocker).
 const TENNIS_ABSTRACT_ENABLED = USE_CURL_IMPERSONATE || (String(process.env.TENNIS_ABSTRACT_ENABLED ?? '0').trim() !== '0');
 if (!TENNIS_ABSTRACT_ENABLED) console.log('  [TennisAbstract] DISABLED (Cloudflare 403 — set USE_CURL_IMPERSONATE=1 ou TENNIS_ABSTRACT_ENABLED=1). Fallback: Elo interne BSD.');
+const TA_SERVE_STATS_SYNC = TENNIS_ABSTRACT_ENABLED && (String(process.env.TA_SERVE_STATS_SYNC ?? '0').trim() !== '0');
+if (TA_SERVE_STATS_SYNC) console.log('  [Cron:TA-serve] TA_SERVE_STATS_SYNC=1 (daily sync enabled)');
 const TENNIS_ABSTRACT_TTL_MS = 6 * 3600 * 1000;
 const TENNIS_ABSTRACT_EVENTS = {
   'wta-rome-2026': { file: '2026WTARome.html', tour: 'WTA', city: 'Rome', year: 2026 },
@@ -46935,6 +46937,53 @@ function _runTennisInternalEtlJob() {
     setInterval(_runTennisInternalEtlJob, 24 * 3600 * 1000).unref();
   }, delayMs).unref();
 })();
+
+// bd dl49 Phase 4.2 — daily TA serve stats backfill (depuis tourney.cgi).
+// Gated by TA_SERVE_STATS_SYNC (default 0) + TENNIS_ABSTRACT_ENABLED.
+// Même pattern child_process que TennisInternalETL.
+// Schedule: 02:30 Europe/Paris (30min après ETL).
+if (TA_SERVE_STATS_SYNC) {
+  function _runTASSync() {
+    return new Promise((resolve) => {
+      const cp = require('child_process');
+      const taPath = require('path').join(__dirname, 'tools', 'fetch-tennisabstract-serve-stats.js');
+      console.log('  [Cron:TA-serve] Lancement TA serve stats sync…');
+      const child = cp.spawn(process.execPath, [taPath, '--limit=0'], {
+        cwd: __dirname,
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let stdoutTail = '';
+      child.stdout.on('data', (b) => { stdoutTail = (stdoutTail + b.toString()).slice(-2000); process.stdout.write('[TA-serve] ' + b); });
+      child.stderr.on('data', (b) => { process.stderr.write('[TA-serve] ' + b); });
+      child.on('close', (code) => {
+        const _updated = stdoutTail.match(/Matchs mis à jour:\s*(\d+)/);
+        const summary = _updated ? _updated[1] : '?';
+        if (code === 0) {
+          console.log(`  [Cron:TA-serve] ✓ sync OK (updated=${summary})`);
+        } else {
+          console.warn(`  [Cron:TA-serve] ⚠ exit=${code}`);
+        }
+        resolve();
+      });
+      child.on('error', (err) => {
+        console.warn('  [Cron:TA-serve] spawn error:', err.message);
+        resolve();
+      });
+    });
+  }
+
+  // Schedule at 02:30 Paris time (after TennisInternalETL)
+  (function _scheduleTASSync() {
+    const delayMs = _msUntilNextParisHour(2) + 30 * 60 * 1000;
+    const nextRun = new Date(Date.now() + delayMs);
+    console.log(`  [Cron:TA-serve] schedulé · prochain run ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min)`);
+    setTimeout(() => {
+      _runTASSync().catch(e => console.warn('[Cron:TA-serve]', e.message));
+      setInterval(() => _runTASSync().catch(e => console.warn('[Cron:TA-serve]', e.message)), 24 * 3600 * 1000).unref();
+    }, delayMs).unref();
+  })();
+}
 
 (function _scheduleSPSUpdater() {
   const delayMs = _msUntilNextParisHour(2) + 5 * 60 * 1000;

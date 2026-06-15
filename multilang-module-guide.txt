@@ -1,0 +1,917 @@
+╔════════════════════════════════════════════════════════════════════╗
+║   MULTILANGUAGE MODULE - PariScore -> moran65.com Adaptation     ║
+║   Complete code + guide (English)                               ║
+╚════════════════════════════════════════════════════════════════════╝
+
+This module was extracted from PariScore and adapted for moran65.com.
+It is a complete client-side multilanguage system with:
+  - Automatic browser language detection
+  - localStorage persistence
+  - data-i18n attribute-based translation
+  - Runtime MutationObserver overlay for JS-generated content
+  - No external dependencies - pure vanilla JavaScript
+
+
+══════════════════════════════════════════════════════════════════════
+TABLE OF CONTENTS
+══════════════════════════════════════════════════════════════════════
+
+1.  Architecture overview
+2.  Core i18n engine (full script to copy)
+3.  Runtime overlay for dynamic JS content
+4.  Language selector UI
+5.  Locale JSON files structure
+6.  How to use data-i18n in your HTML
+7.  Next.js integration guide (for moran65.com)
+8.  Static HTML integration (alternative)
+9.  Using I18N.t() in JavaScript
+10. Adapting for moran65.com (Hebrew + English)
+
+══════════════════════════════════════════════════════════════════════
+1. ARCHITECTURE OVERVIEW
+══════════════════════════════════════════════════════════════════════
+
+The module is entirely client-side (JavaScript in the browser).
+It has 3 layers that work together:
+
+  Layer 1: Core I18N Engine
+    - Fetches /locales/{lang}.json via fetch()
+    - Stores translations in a JS object (dict)
+    - Swaps [data-i18n] elements in the DOM
+    - Fires "i18n:changed" custom event
+    - Persists choice in localStorage (key: site_lang)
+
+  Layer 2: Runtime Overlay (optional, for dynamic JS content)
+    - MutationObserver watches DOM for new nodes
+    - Scans ALL text nodes for French strings
+    - Replaces FR -> target language
+    - Handles JS-generated content (API results, modals, etc.)
+
+  Layer 3: Locale JSON files
+    - /locales/fr.json  -> REFERENCE language (French)
+    - /locales/en.json  -> English translations
+    - /locales/de.json, es.json, it.json... (any language)
+
+DATA FLOW:
+  1. Page loads
+  2. I18N checks localStorage for "site_lang"
+  3. Falls back to navigator.language (browser setting)
+  4. Falls back to "fr" (French)
+  5. Fetches /locales/{lang}.json
+  6. I18N.apply() swaps all [data-i18n] elements in DOM
+  7. Dispatches "i18n:changed" custom event
+  8. Runtime Overlay activates (if lang != fr):
+     a. Fetches both fr.json and {lang}.json
+     b. Builds map: French_string -> translated_string
+     c. Walks all DOM text nodes, replaces matches
+     d. Installs MutationObserver for future dynamic content
+  9. When user switches language: saves to localStorage, location.reload()
+
+══════════════════════════════════════════════════════════════════════
+2. CORE I18N ENGINE - FULL SCRIPT TO COPY
+══════════════════════════════════════════════════════════════════════
+
+Paste this script before </body> in your HTML page.
+It must run AFTER your language selector is in the DOM.
+
+`html
+<script>
+/* --- i18n module -- multilanguage engine --- */
+const I18N = (() => {
+  const SUPPORTED = ['fr','en','es','de','it','pt','nl'];
+  let dict = {}, current = 'fr';
+
+  function _savedLang() {
+    try { return localStorage.getItem('site_lang'); } catch(_) { return null; }
+  }
+
+  async function load(lang) {
+    if (!SUPPORTED.includes(lang)) lang = 'fr';
+    try {
+      const r = await fetch('/locales/' + lang + '.json');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      dict = await r.json();
+      current = lang;
+      try { localStorage.setItem('site_lang', lang); } catch(_) {}
+      document.documentElement.lang = lang;
+      const sel = document.getElementById('lang-select');
+      if (sel) sel.value = lang;
+      apply();
+      try { document.dispatchEvent(
+        new CustomEvent('i18n:changed', { detail: { lang: current } })
+      ); } catch(_) {}
+    } catch(e) {
+      if (lang !== 'fr') { console.warn('[i18n] fallback fr:', e.message); load('fr'); }
+    }
+  }
+
+  // t(key) returns translation, t(key, {0:'val'}) interpolates variables
+  function t(key, vars) {
+    let s = dict[key] !== undefined ? dict[key] : key;
+    if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+    return s;
+  }
+
+  function apply() {
+    // data-i18n -> textContent
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      el.textContent = t(el.dataset.i18n);
+    });
+    // data-i18n-placeholder -> placeholder attribute
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    // data-i18n-title -> title attribute
+    document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+      el.title = t(el.dataset.i18nTitle);
+    });
+    // data-i18n-content -> content attribute (meta tags)
+    document.querySelectorAll('[data-i18n-content]').forEach(function(el) {
+      el.content = t(el.dataset.i18nContent);
+    });
+  }
+
+  // Auto-detect on init
+  const saved = _savedLang();
+  const detected = saved || (navigator.language || 'fr').slice(0, 2);
+  load(SUPPORTED.includes(detected) ? detected : 'fr');
+
+  return {
+    t: t,
+    load: load,
+    apply: apply,
+    current: function() { return current; },
+    SUPPORTED: SUPPORTED
+  };
+})();
+</script>
+`
+
+PUBLIC API:
+  I18N.t("key")              -> returns translated string
+  I18N.t("key", {var:val})   -> with variable interpolation
+  I18N.load("en")             -> switch language, apply, dispatch
+  I18N.apply()                -> re-apply all [data-i18n] elements
+  I18N.current()              -> returns current language code
+  I18N.SUPPORTED              -> array of supported language codes
+
+══════════════════════════════════════════════════════════════════════
+3. RUNTIME OVERLAY - FOR JS-INJECTED DYNAMIC CONTENT
+══════════════════════════════════════════════════════════════════════
+
+This is an OPTIONAL interim solution. It works alongside the I18N engine.
+While I18N.apply() only touches elements with data-i18n attributes,
+the overlay scans the ENTIRE DOM for French text and replaces it.
+It also installs a MutationObserver to auto-translate any new
+DOM nodes added by JavaScript (e.g., API fetch results, modals).
+
+Place this script RIGHT AFTER the core I18N engine script:
+
+`html
+<script>
+/* --- i18n RUNTIME OVERLAY ---
+   Translates rendered DOM text + attrs (title/placeholder/aria-label)
+   from French to the active language using locale dicts.
+   Covers static HTML AND JS-rendered content via MutationObserver.
+   Language switch reloads to clean FR baseline, then overlay re-applies. */
+(function () {
+  var SUPPORTED = ['fr','en','es','de','it','pt','nl'];
+  var ATTRS = ['title','placeholder','aria-label'];
+  var SKIP = { SCRIPT:1, STYLE:1, TEXTAREA:1, NOSCRIPT:1, CODE:1, PRE:1, OPTION:1, SELECT:1 };
+  var _map = null, _active = false, _obs = null, _pending = false, _queue = [];
+
+  function _lang() {
+    try { var s = localStorage.getItem('site_lang'); if (s) return s; } catch (_) {}
+    return (navigator.language || 'fr').slice(0, 2);
+  }
+
+  function _eligible(t) {
+    if (!t || t.length < 3) return false;
+    if (!/[A-Za-z\xC0-\xFF]/.test(t)) return false;
+    return true;
+  }
+
+  async function _build(lang) {
+    var m = {};
+    try {
+      var fr = await fetch('/locales/fr.json').then(function(r) { return r.json(); });
+      var tg = await fetch('/locales/' + lang + '.json').then(function(r) { return r.json(); });
+      for (var k in fr) {
+        var f = (fr[k] || '').trim(), e = (tg[k] || '').trim();
+        if (f && e && f !== e && _eligible(f)) m[f] = e;
+      }
+    } catch (err) {
+      console.warn('[i18n-overlay] map load failed:', err && err.message);
+    }
+    return m;
+  }
+
+  function _txt(tn) {
+    var raw = tn.nodeValue; if (!raw) return;
+    var key = raw.trim(); if (!key) return;
+    var tr = _map[key]; if (tr === undefined) return;
+    tn.nodeValue = raw.replace(key, tr);
+  }
+
+  function _attrs(el) {
+    if (!el || el.nodeType !== 1 || !el.hasAttribute) return;
+    for (var i = 0; i < ATTRS.length; i++) {
+      var a = ATTRS[i];
+      if (!el.hasAttribute(a)) continue;
+      var v = el.getAttribute(a), key = (v || '').trim(); if (!key) continue;
+      var tr = _map[key]; if (tr === undefined) continue;
+      el.setAttribute(a, v.replace(key, tr));
+    }
+  }
+
+  function _walk(root) {
+    if (!_map || !root) return;
+    if (root.nodeType === 1) {
+      _attrs(root);
+      if (root.querySelectorAll) {
+        var els = root.querySelectorAll('[title],[placeholder],[aria-label]');
+        for (var j = 0; j < els.length; j++) _attrs(els[j]);
+      }
+    }
+    var sr = (root.nodeType === 1 || root.nodeType === 9) ? root : root.parentNode;
+    if (!sr || !sr.nodeType) return;
+    var w = document.createTreeWalker(sr, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(n) {
+        var p = n.parentNode;
+        if (!p || SKIP[p.nodeName]) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var batch = [], n;
+    while ((n = w.nextNode())) batch.push(n);
+    for (var i = 0; i < batch.length; i++) _txt(batch[i]);
+  }
+
+  function _flush() {
+    _pending = false;
+    var q = _queue; _queue = [];
+    for (var i = 0; i < q.length; i++) _walk(q[i]);
+  }
+
+  function _observe() {
+    if (_obs || !document.body) return;
+    _obs = new MutationObserver(function(muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          var nd = added[j];
+          if (nd.nodeType === 1 || nd.nodeType === 3) _queue.push(nd);
+        }
+      }
+      if (!_pending && _queue.length) {
+        _pending = true;
+        if (window.requestAnimationFrame) requestAnimationFrame(_flush);
+        else setTimeout(_flush, 16);
+      }
+    });
+    _obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  async function activate() {
+    if (_active) return;
+    var lang = _lang();
+    if (!lang || lang === 'fr' || SUPPORTED.indexOf(lang) === -1) return;
+    _active = true;
+    _map = await _build(lang);
+    if (!_map || !Object.keys(_map).length) { _active = false; return; }
+    if (document.body) { _walk(document.body); _observe(); }
+    else document.addEventListener('DOMContentLoaded', function() { _walk(document.body); _observe(); });
+  }
+
+  document.addEventListener('i18n:changed', activate);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', activate);
+  else activate();
+})();
+</script>
+`
+
+KEY DESIGN CHOICE: French is the reference language. The overlay fetches
+BOTH fr.json AND the target language JSON, builds a French->target map,
+and replaces French text in the DOM with translations. When the user
+switches language, the page RELOADS (back to French), then the overlay
+re-applies the translation. This guarantees FR<->EN consistency.
+
+══════════════════════════════════════════════════════════════════════
+4. LANGUAGE SELECTOR UI
+══════════════════════════════════════════════════════════════════════
+
+Paste this in your navigation bar where you want the language switch:
+
+`html
+<select id="lang-select"
+  onchange="switchLang(this.value)"
+  title="Language"
+  style="font-size:11px;background:var(--bg,#fff);color:var(--text,#333);
+  border:1px solid var(--border,#ccc);border-radius:6px;padding:4px 7px;
+  cursor:pointer;outline:none;">
+  <option value="fr">&zwj;&zwj; FR</option>
+  <option value="en">&zwj;&zwj; EN</option>
+  <option value="es">&zwj;&zwj; ES</option>
+  <option value="de">&zwj;&zwj; DE</option>
+  <option value="it">&zwj;&zwj; IT</option>
+  <option value="pt">&zwj;&zwj; PT</option>
+  <option value="nl">&zwj;&zwj; NL</option>
+</select>
+
+<script>
+/* Called by the <select> onchange - saves language and reloads */
+function switchLang(v) {
+  try { localStorage.setItem('site_lang', v); } catch (_) {}
+  try { document.documentElement.lang = v; } catch (_) {}
+  location.reload();
+}
+</script>
+`
+
+
+
+══════════════════════════════════════════════════════════════════════
+5. LOCALE JSON FILES STRUCTURE
+══════════════════════════════════════════════════════════════════════
+
+Place these in /locales/ at the root of your website (or /public/locales/ for Next.js).
+
+RULES:
+  - ALL language files must have the EXACT SAME keys
+  - French (fr.json) is the REFERENCE language
+  - Keys use dot-separated namespaces: "section.subsection.key"
+  - Variables use {0}, {1} or {name} syntax
+  - Files are plain JSON
+
+Example fr.json (reference - French):
+--- CODE ---
+
+{
+  "nav.accueil": "Accueil",
+  "nav.services": "Services",
+  "nav.contact": "Contact",
+  "nav.login": "Connexion",
+  "nav.signup": "S'inscrire",
+
+  "hero.title": "Bienvenue sur mon site",
+  "hero.subtitle": "Decouvrez nos solutions sur mesure",
+  "hero.cta": "Nous contacter",
+  "hero.secondary": "En savoir plus",
+
+  "section.stats.label": "Statistiques",
+  "section.features.title": "Fonctionnalites",
+  "section.how.title": "Comment ca marche",
+  "section.how.step1": "Inscription rapide",
+  "section.how.step2": "Configurez vos preferences",
+  "section.how.step3": "Suivez vos resultats",
+  "section.faq.title": "Questions frequentes",
+
+  "form.name": "Nom",
+  "form.email": "Email",
+  "form.message": "Message",
+  "form.submit": "Envoyer",
+  "form.sending": "Envoi en cours...",
+  "form.sent": "Message envoye !",
+  "form.error": "Erreur lors de l'envoi",
+
+  "footer.copyright": "{year} Moran65 - Tous droits reserves",
+  "footer.follow": "Suivez-moi",
+  "footer.contact_mail": "Contact: support@moran65.com",
+
+  "seo.title": "Moran65 - {page}",
+  "seo.description": "Site officiel de Moran65",
+
+  "theme.toggle_night": "Mode Nuit",
+  "theme.toggle_day": "Mode Jour",
+
+  "modal.cancel": "Annuler",
+  "modal.confirm": "Confirmer",
+  "modal.close": "Fermer",
+  "modal.save": "Enregistrer",
+
+  "badge.live": "EN DIRECT",
+  "badge.new": "NOUVEAU",
+  "badge.hot": "POPULAIRE",
+
+  "pwa.install": "Installer l'application",
+  "pwa.install_btn": "Installer",
+  "pwa.dismiss": "Plus tard"
+}
+
+--- END CODE ---
+
+Example en.json (English - same keys, translated):
+--- CODE ---
+
+{
+  "nav.accueil": "Home",
+  "nav.services": "Services",
+  "nav.contact": "Contact",
+  "nav.login": "Login",
+  "nav.signup": "Sign up",
+
+  "hero.title": "Welcome to my site",
+  "hero.subtitle": "Discover our tailored solutions",
+  "hero.cta": "Contact us",
+  "hero.secondary": "Learn more",
+
+  "section.stats.label": "Statistics",
+  "section.features.title": "Features",
+  "section.how.title": "How it works",
+  "section.how.step1": "Quick signup",
+  "section.how.step2": "Set your preferences",
+  "section.how.step3": "Track your results",
+  "section.faq.title": "Frequently Asked Questions",
+
+  "form.name": "Name",
+  "form.email": "Email",
+  "form.message": "Message",
+  "form.submit": "Send",
+  "form.sending": "Sending...",
+  "form.sent": "Message sent!",
+  "form.error": "Error sending message",
+
+  "footer.copyright": "{year} Moran65 - All rights reserved",
+  "footer.follow": "Follow me",
+  "footer.contact_mail": "Contact: support@moran65.com",
+
+  "seo.title": "Moran65 - {page}",
+  "seo.description": "Official site of Moran65",
+
+  "theme.toggle_night": "Night mode",
+  "theme.toggle_day": "Day mode",
+
+  "modal.cancel": "Cancel",
+  "modal.confirm": "Confirm",
+  "modal.close": "Close",
+  "modal.save": "Save",
+
+  "badge.live": "LIVE",
+  "badge.new": "NEW",
+  "badge.hot": "HOT",
+
+  "pwa.install": "Install the app",
+  "pwa.install_btn": "Install",
+  "pwa.dismiss": "Not now"
+}
+
+--- END CODE ---
+
+CRITICAL RULE: If you add a new key to fr.json, you MUST add it to ALL
+other language files too. Missing keys will cause the French text to show
+as-is (which is fine for the overlay - it just wont find a match).
+
+══════════════════════════════════════════════════════════════════════
+6. HOW TO USE DATA-I18N IN YOUR HTML
+══════════════════════════════════════════════════════════════════════
+
+
+Attribute reference:
+  data-i18n="key"             -> replaces textContent
+  data-i18n-placeholder="key" -> replaces placeholder attribute
+  data-i18n-title="key"       -> replaces title attribute
+  data-i18n-content="key"     -> replaces content attribute (meta tags)
+
+Basic text translation:
+--- CODE ---
+<h1 data-i18n="hero.title">Bienvenue sur mon site</h1>
+--- END CODE ---
+
+After switching language, textContent is replaced by hero.title from en.json
+
+Input placeholder:
+--- CODE ---
+<input type="text" data-i18n-placeholder="form.name" placeholder="Nom">
+--- END CODE ---
+
+
+Tooltip / title:
+--- CODE ---
+<button data-i18n-title="theme.toggle_night" title="Mode Nuit">Nuit</button>
+--- END CODE ---
+
+
+Meta tags (SEO):
+--- CODE ---
+<title data-i18n="seo.title">Moran65 - Accueil</title>
+--- END CODE ---
+
+--- CODE ---
+<meta name="description" data-i18n-content="seo.description" content="Site officiel de Moran65">
+--- END CODE ---
+
+
+With variable interpolation:
+  In your JSON: "footer.copyright": "{year} Moran65 - All rights reserved"
+  In your HTML: <footer data-i18n="footer.copyright">...</footer>
+  NOTE: For dynamic variables in data-i18n, call I18N.t() in JS (see section 9)
+
+Combined example:
+--- CODE ---
+
+<div class="card">
+  <h3 data-i18n="section.features.title">Features</h3>
+  <p data-i18n="section.features.sub">Everything you need</p>
+  <input data-i18n-placeholder="form.email" placeholder="Email">
+  <button data-i18n-title="badge.new" title="NEW">
+    <span data-i18n="form.submit">Send</span>
+  </button>
+</div>
+
+--- END CODE ---
+
+
+══════════════════════════════════════════════════════════════════════
+7. NEXT.JS INTEGRATION GUIDE (FOR MORAN65.COM)
+══════════════════════════════════════════════════════════════════════
+
+Since moran65.com runs on Next.js (App Router), here is how to integrate.
+
+Step 1: Create the locale files
+  Place them in /public/locales/ (Next.js serves /public/ as static files)
+
+  public/locales/fr.json  (reference)
+  public/locales/en.json  (English)
+  public/locales/he.json  (Hebrew - your current language)
+
+Step 2: Create a Client Component for the language switcher
+--- CODE ---
+
+// components/LangSwitcher.tsx
+"use client";
+import Script from "next/script";
+
+const I18N_ENGINE = 
+const I18N = (() => {
+  const SUPPORTED = ["fr","en","he"];
+  let dict = {}, current = "fr";
+  function _savedLang() {
+    try { return localStorage.getItem("site_lang"); } catch(_) { return null; }
+  }
+  async function load(lang) {
+    if (!SUPPORTED.includes(lang)) lang = "fr";
+    try {
+      const r = await fetch("/locales/" + lang + ".json");
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      dict = await r.json();
+      current = lang;
+      try { localStorage.setItem("site_lang", lang); } catch(_) {}
+      document.documentElement.lang = lang;
+      const sel = document.getElementById("lang-select");
+      if (sel) sel.value = lang;
+      document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        el.textContent = dict[el.dataset.i18n] !== undefined ? dict[el.dataset.i18n] : el.dataset.i18n;
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
+        el.placeholder = dict[el.dataset.i18nPlaceholder] !== undefined ? dict[el.dataset.i18nPlaceholder] : el.dataset.i18nPlaceholder;
+      });
+      document.querySelectorAll("[data-i18n-title]").forEach(function(el) {
+        el.title = dict[el.dataset.i18nTitle] !== undefined ? dict[el.dataset.i18nTitle] : el.dataset.i18nTitle;
+      });
+      document.querySelectorAll("[data-i18n-content]").forEach(function(el) {
+        el.content = dict[el.dataset.i18nContent] !== undefined ? dict[el.dataset.i18nContent] : el.dataset.i18nContent;
+      });
+      document.dispatchEvent(new CustomEvent("i18n:changed", { detail: { lang: current } }));
+    } catch(e) {
+      if (lang !== "fr") { console.warn("[i18n] fallback fr:", e.message); load("fr"); }
+    }
+  }
+  const saved = _savedLang();
+  const detected = saved || (navigator.language || "fr").slice(0, 2);
+  load(SUPPORTED.includes(detected) ? detected : "fr");
+  window.I18N = {
+    t: function(k,v){var s=dict[k]!==undefined?dict[k]:k;if(v)for(var kk in v)s=s.split("{"+kk+"}").join(v[kk]);return s;},
+    load: load,
+    current: function(){return current;},
+    SUPPORTED: SUPPORTED
+  };
+})();
+;
+
+export default function LangSwitcher() {
+  return (
+    <>
+      <Script id="i18n-engine" strategy="afterInteractive">
+        {I18N_ENGINE}
+      </Script>
+      <select
+        id="lang-select"
+        onChange={(e) => {
+          const v = e.target.value;
+          try { localStorage.setItem("site_lang", v); } catch (_) {}
+          try { document.documentElement.lang = v; } catch (_) {}
+          location.reload();
+        }}
+        defaultValue=""
+        className="lang-select"
+      >
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+        <option value="he">HE</option>
+      </select>
+    </>
+  );
+}
+
+--- END CODE ---
+
+
+Step 3: Add data-i18n attributes to your components
+  Go through each component and add data-i18n="key" to every text element.
+  The HTML source text stays as-is (Hebrew), and the overlay matches
+  French text from the locale files and replaces it.
+
+Step 4: Handle RTL/LTR direction change
+  Listen for the i18n:changed event to toggle dir attribute:
+--- CODE ---
+
+document.addEventListener("i18n:changed", function(e) {
+  document.documentElement.dir = e.detail.lang === "he" ? "rtl" : "ltr";
+});
+
+--- END CODE ---
+
+
+  Alternatively, use CSS with lang attribute selectors:
+--- CODE ---
+
+[lang="he"] .my-class { direction: rtl; }
+[lang="en"] .my-class { direction: ltr; }
+
+--- END CODE ---
+
+
+══════════════════════════════════════════════════════════════════════
+8. STATIC HTML INTEGRATION (ALTERNATIVE)
+══════════════════════════════════════════════════════════════════════
+
+If your site is pure static HTML (no server), you have 2 options:
+
+Option A: Fetch JSON files from server
+  Simply drop the locales/ folder at your site root.
+  The fetch() will work like: GET https://your-site.com/locales/en.json
+  Works on: Apache, Nginx, Netlify, Vercel, GitHub Pages, any static host.
+
+Option B: Inline translations directly in JavaScript (no external files)
+  Embed all language data inside the script:
+--- CODE ---
+
+<script>
+var LOCALES = {
+  fr: {
+    "nav.accueil": "Accueil",
+    "hero.title": "Bienvenue"
+  },
+  en: {
+    "nav.accueil": "Home",
+    "hero.title": "Welcome"
+  },
+  he: {
+    "nav.accueil": "",
+    "hero.title": ""
+  }
+};
+</script>
+
+--- END CODE ---
+
+
+  Then modify the I18N engine to use LOCALES instead of fetch():
+--- CODE ---
+
+async function load(lang) {
+  if (!SUPPORTED.includes(lang)) lang = "fr";
+  dict = LOCALES[lang] || LOCALES.fr;
+  current = lang;
+  try { localStorage.setItem("site_lang", lang); } catch(_) {}
+  document.documentElement.lang = lang;
+  // ... rest is identical
+}
+
+--- END CODE ---
+
+
+══════════════════════════════════════════════════════════════════════
+9. USING I18N.T() IN JAVASCRIPT
+══════════════════════════════════════════════════════════════════════
+
+For dynamic content rendered by JavaScript:
+
+Basic usage:
+--- CODE ---
+
+var translated = I18N.t("hero.title");
+console.log(translated);  // "Welcome" (if current lang is "en")
+
+--- END CODE ---
+
+
+With variable interpolation:
+--- CODE ---
+
+// JSON: "footer.copyright": "{year} Moran65 - All rights reserved"
+var text = I18N.t("footer.copyright", { year: 2026 });
+// Result: "2026 Moran65 - All rights reserved"
+
+--- END CODE ---
+
+
+Re-rendering on language change:
+--- CODE ---
+
+document.addEventListener("i18n:changed", function(e) {
+  var lang = e.detail.lang;
+  document.getElementById("my-content").innerHTML = I18N.t("hero.title");
+});
+
+--- END CODE ---
+
+
+Example: rendering HTML in JS:
+--- CODE ---
+
+function renderCard(data) {
+  return '<div class="card">'
+    + '<h3>' + I18N.t("section.features.title") + '</h3>'
+    + '<p>' + I18N.t("section.features.sub") + '</p>'
+    + '</div>';
+}
+
+// Listen for language changes to re-render
+document.addEventListener("i18n:changed", function() {
+  document.getElementById("card-container").innerHTML
+    = data.map(renderCard).join("");
+});
+
+--- END CODE ---
+
+
+══════════════════════════════════════════════════════════════════════
+10. ADAPTING FOR MORAN65.COM (HEBREW + ENGLISH)
+══════════════════════════════════════════════════════════════════════
+
+Your site is currently Hebrew-only (Next.js with lang="he" dir="rtl").
+Here is the complete adaptation plan:
+
+--- Step 1: Choose reference language ---
+
+This module uses FRENCH as reference by default (the HTML is in French,
+the overlay matches French strings -> replaces with target language).
+
+For moran65.com you have 2 choices:
+
+OPTION A: Make HEBREW the reference (recommended)
+  - Keep all HTML in Hebrew as-is
+  - Create he.json as the "reference" file (all keys must be here)
+  - Create en.json as translations
+  - Modify the overlay _build() function to use Hebrew instead of French:
+--- CODE ---
+
+async function _build(lang) {
+  var m = {};
+  try {
+    var ref = await fetch("/locales/he.json")   // Hebrew as reference
+      .then(function(r) { return r.json(); });
+    var tg = await fetch("/locales/" + lang + ".json")
+      .then(function(r) { return r.json(); });
+    for (var k in ref) {
+      var f = (ref[k] || "").trim(), e = (tg[k] || "").trim();
+      if (f && e && f !== e && _eligible(f)) m[f] = e;
+    }
+  } catch (err) { console.warn("[i18n-overlay] map load failed:", err && err.message); }
+  return m;
+}
+
+--- END CODE ---
+
+
+OPTION B: Make ENGLISH the reference
+  - Rewrite the HTML source in English
+  - Create en.json (reference) and he.json (translations)
+  - Same approach, different lang codes
+
+--- Step 2: Create locale files ---
+
+/locales/he.json (reference - based on current site content):
+--- CODE ---
+
+{
+  "nav.login": "",
+  "nav.signup": "",
+  "hero.title": " ",
+  "hero.subtitle": "   .   .   ",
+  "hero.cta": "    ",
+  "hero.secondary": "    ?   ",
+  "section.stats.teams": "   ",
+  "section.stats.leagues": "   ",
+  "section.stats.games": "   ",
+  "section.stats.knockout": "    ",
+  "section.how.step1": "   ",
+  "section.how.step2": "   ,   ",
+  "section.how.step3": "    ",
+  "section.features.predictions": "   ",
+  "section.features.bracket": "    ",
+  "section.features.private": "   ",
+  "section.features.schedule": "   ",
+  "faq.q1": "   ?",
+  "faq.q2": "    ?",
+  "faq.q3": "      ?",
+  "cta.final": "   .    .",
+  "cta.final_btn": "    ",
+  "footer.copyright": "2026 moran65.com",
+  "footer.privacy": "  ",
+  "footer.terms": "   ",
+  "seo.title": "moran65.com -   2026",
+  "seo.description": "    2026"
+}
+
+--- END CODE ---
+
+
+/locales/en.json (translations):
+--- CODE ---
+
+{
+  "nav.login": "Login",
+  "nav.signup": "Sign up",
+  "hero.title": "World Cup 2026 Predictions",
+  "hero.subtitle": "Guess. Watch. Get it wrong together.",
+  "hero.cta": "Sign up free now",
+  "hero.secondary": "Already have an account? Login",
+  "section.stats.teams": "Teams selecting",
+  "section.stats.leagues": "Private leagues",
+  "section.stats.games": "Planned games",
+  "section.stats.knockout": "Knockout stages",
+  "section.how.step1": "Quick signup",
+  "section.how.step2": "Pick matches & predictor",
+  "section.how.step3": "Follow your league",
+  "section.features.predictions": "Winning predictions",
+  "section.features.bracket": "Full bracket scoring",
+  "section.features.private": "Private leagues",
+  "section.features.schedule": "Planned games",
+  "faq.q1": "Is it free?",
+  "faq.q2": "What is the difference?",
+  "faq.q3": "Why should I join now?",
+  "cta.final": "The World Cup is coming. Register now.",
+  "cta.final_btn": "Sign up free now",
+  "footer.copyright": "2026 moran65.com",
+  "footer.privacy": "Privacy Policy",
+  "footer.terms": "Terms of Service",
+  "seo.title": "moran65.com - World Cup 2026 Predictions",
+  "seo.description": "A social prediction game for the 2026 World Cup"
+}
+
+--- END CODE ---
+
+
+--- Step 3: Add data-i18n attributes ---
+Go through every component and add data-i18n="key" to each text element:
+--- CODE ---
+
+// Before (Hebrew):
+<h1> 2026</h1>
+
+// After (Hebrew stays, data-i18n added):
+<h1 data-i18n="hero.title"> 2026</h1>
+
+--- END CODE ---
+
+
+--- Step 4: Handle RTL/LTR automatically ---
+--- CODE ---
+
+// Add to your i18n initialization:
+document.addEventListener("i18n:changed", function(e) {
+  document.documentElement.dir = e.detail.lang === "he" ? "rtl" : "ltr";
+});
+
+--- END CODE ---
+
+
+--- Summary Checklist for moran65.com ---
+  [ ] Create /public/locales/he.json (reference)
+  [ ] Create /public/locales/en.json (translations)
+  [ ] Modify overlay _build() to use he.json as reference instead of fr.json
+  [ ] Add data-i18n="key" to every text element in all components
+  [ ] Create LangSwitcher client component with the I18N engine
+  [ ] Handle RTL/LTR direction on language change
+  [ ] Test French is no longer needed (or add fr.json as a third language)
+
+
+══════════════════════════════════════════════════════════════════════
+QUICK START CHECKLIST
+══════════════════════════════════════════════════════════════════════
+
+  [ ] Create /locales/fr.json (reference) or /locales/he.json for your site
+  [ ] Create /locales/en.json (same keys, translated)
+  [ ] Add more language files as needed
+  [ ] Copy the I18N engine script into your page/layout
+  [ ] Copy the language selector HTML into your nav
+  [ ] (Optional) Add the runtime overlay for dynamic content
+  [ ] Add data-i18n="key" to every translatable element in HTML
+  [ ] Add data-i18n-placeholder / data-i18n-title / data-i18n-content
+  [ ] In JavaScript, use I18N.t("key") for dynamic content
+  [ ] Listen for "i18n:changed" to re-render dynamic modules
+  [ ] Handle RTL/LTR if your languages have different directions
+
+--- End of guide ---

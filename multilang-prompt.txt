@@ -1,0 +1,93 @@
+# moran65.com — Multilingual Integration Prompt
+
+You are going to integrate a complete multilingual system (French / English / Hebrew) on the moran65.com website.
+
+## Technical context
+- Next.js 14+ site (App Router)
+- Currently 100% Hebrew, lang="he", dir="rtl"
+- The site is a prediction game for the 2026 World Cup
+- There are components: hero, stats, features, how-it-works, FAQ, CTA, footer
+
+## Module structure to create
+
+### 1. Translation files
+Create 3 files under /public/locales/:
+
+**/public/locales/fr.json** (reference) :
+`json
+{
+  "nav.login": "Connexion",
+  "nav.signup": "S'inscrire",
+  "hero.title": "Pronostics Coupe du Monde 2026",
+  "hero.subtitle": "Devine. Regarde. Trompe-toi avec tes potes.",
+  "hero.cta": "Inscris-toi gratuitement",
+  "hero.secondary": "Déjà un compte ? Connecte-toi",
+  "section.stats.teams": "Équipes qui sélectionnent",
+  "section.stats.leagues": "Ligues privées",
+  "section.stats.games": "Matchs planifiés",
+  "section.stats.knockout": "Phases finales",
+  "section.how.step1": "Inscription rapide",
+  "section.how.step2": "Choisis tes matchs et ton pronostiqueur",
+  "section.how.step3": "Suis ta ligue en direct",
+  "section.features.predictions": "Pronostics gagnants",
+  "section.features.bracket": "Score du bracket complet",
+  "section.features.private": "Ligues privées",
+  "section.features.schedule": "Matchs programmés",
+  "faq.q1": "C'est gratuit ?",
+  "faq.q2": "Quelle est la différence ?",
+  "faq.q3": "Pourquoi devrais-je m'inscrire maintenant ?",
+  "cta.final": "La Coupe du Monde arrive. Inscris-toi maintenant.",
+  "cta.final_btn": "Inscris-toi gratuitement",
+  "footer.copyright": "2026 moran65.com",
+  "footer.privacy": "Politique de confidentialité",
+  "footer.terms": "Conditions d'utilisation",
+  "seo.title": "moran65.com - Pronostics CM 2026",
+  "seo.description": "Un jeu de pronostics social pour la Coupe du Monde 2026"
+}
+`
+
+**/public/locales/en.json** (English) — same keys, English values.
+**/public/locales/he.json** (Hebrew) — same keys, Hebrew values.
+
+### 2. I18N engine (client-side)
+Create a client component components/LangSwitcher.tsx that:
+
+1. Injects the I18N script via <Script id="i18n-engine" strategy="afterInteractive">
+2. The script must:
+   - On load, detect language: localStorage → navigator.language → "fr"
+   - Load the matching JSON file via etch("/locales/" + lang + ".json")
+   - Store the dictionary in a closure
+   - Persist the chosen language in localStorage
+   - Loop through all elements with data-i18n and replace their textContent
+   - Same for data-i18n-placeholder, data-i18n-title, data-i18n-content
+   - Dispatch a custom event i18n:changed with { detail: { lang } }
+   - Expose a window.I18N.t(key, vars) function for dynamic JS content
+
+3. Render a <select id="lang-select"> with options FR / EN / HE
+4. On change, save to localStorage and call location.reload()
+
+### 3. RTL/LTR handling
+Add this inside the initialization script:
+`js
+document.addEventListener("i18n:changed", function(e) {
+  document.documentElement.dir = e.detail.lang === "he" ? "rtl" : "ltr";
+});
+`
+
+### 4. Adding data-i18n attributes
+Go through ALL components on the site and add the attributes:
+- data-i18n="hero.title" on text elements
+- data-i18n-placeholder="form.name" on input placeholders
+- data-i18n-title="..." on tooltips
+- data-i18n-content="..." on meta tags
+
+⚠️ Order matters: add data-i18n attributes first, then the language selector.
+
+## Execution instructions
+1. Create the 3 JSON files in /public/locales/
+2. Create the components/LangSwitcher.tsx component
+3. Import LangSwitcher in the root layout (pp/layout.tsx)
+4. Add data-i18n attributes in every component, one by one
+5. Verify that language switching works
+6. Verify that switching to Hebrew sets dir="rtl" and switching to English/French sets dir="ltr"
+7. Verify that the language persists after page reload

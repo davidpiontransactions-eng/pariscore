@@ -10,19 +10,23 @@ PM2_NAME="pariscore"
 echo "--- Début de la mise à jour PariScore ---"
 cd "$DEPLOY_DIR"
 
-echo "[1/6] Fetch remote..."
+echo "[0/7] Validation syntaxique pariscore.js..."
+node --check pariscore.js || { echo "❌ ERREUR DE SYNTAXE dans pariscore.js — déploiement annulé"; exit 1; }
+echo "✅ pariscore.js syntaxe valide"
+
+echo "[1/7] Fetch remote..."
 git fetch --all
 
-echo "[2/6] Reset hard sur origin/main..."
+echo "[2/7] Reset hard sur origin/main..."
 git reset --hard origin/main
 
-echo "[3/6] Pull..."
+echo "[3/7] Pull..."
 git pull --rebase origin main
 
-echo "[4/6] npm install (omit dev)..."
+echo "[4/7] npm install (omit dev)..."
 npm install --omit=dev --silent
 
-echo "[5/6] npm rebuild native modules (node version guard)..."
+echo "[5/7] npm rebuild native modules (node version guard)..."
 npm rebuild better-sqlite3
 
 echo "[6/6] PM2 restart..."

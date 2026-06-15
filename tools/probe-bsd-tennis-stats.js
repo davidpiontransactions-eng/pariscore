@@ -86,7 +86,7 @@ const SACKMANN_SERVE_COLS = [
   const db = new Database(DB_PATH, { readonly: true });
   const cacheRows = db.prepare(`
     SELECT key, data FROM api_cache
-    WHERE key LIKE 'bsd_tennis_matches_%' OR source = 'bsd_tennis'
+    WHERE key LIKE '%calib_raw%' OR source = 'bsd_tennis'
     ORDER BY created_at DESC LIMIT 5
   `).all();
   db.close();
@@ -103,9 +103,9 @@ const SACKMANN_SERVE_COLS = [
     try { data = JSON.parse(r.data); } catch { continue; }
     const matches = Array.isArray(data) ? data : (data && data.results) || [];
     for (const m of matches) {
-      const status = String(m.status || '').toLowerCase();
-      if (m.id && /finished|complete|ended/.test(status)) {
-        candidates.push({ id: m.id, name: `${m.player1 && m.player1.name || '?'} vs ${m.player2 && m.player2.name || '?'}` });
+      const status = String(m.match?.status || m.status || '').toLowerCase();
+      if ((m.match?.id || m.id) && /finished|complete|ended/.test(status)) {
+        candidates.push({ id: (m.match?.id || m.id), name: `${(m.match?.player1?.name || m.player1?.name || '?')} vs ${(m.match?.player2?.name || m.player2?.name || '?')}` });
         if (candidates.length >= LIMIT * 3) break;
       }
     }
