@@ -154,3 +154,14 @@ Le bloc de cartes live était déporté vers la droite avec un grand espace vide
 - .tn2-tab-panel.active : ajout padding: 0 16px
 - .tn2-card-grid : ajout width: 100%
 - Mobile : grid-template-columns: 1fr quand sidebar cachée
+
+## 9. CRITICAL : Layout Revert + Stabilisation
+
+### 9.1 Contexte
+La correction v12.81d a détruit le layout : padding déplacé sur `.tn2-tab-panel.active` a tout compressé.
+
+### 9.2 Actions
+- **Revert** : `.tn2-main` padding remis à `12px 16px`
+- **Revert** : Règle mobile `grid-template-columns:1fr` supprimée
+- **Ajout** : `overflow: hidden` + `max-width: 100%` sur les cartes
+- **Todo** : Trouver la vraie cause du décalage droite SANS modifier le padding structurel

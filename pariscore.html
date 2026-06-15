@@ -9520,13 +9520,6 @@
     scrollbar-color: rgba(255,255,255,.12) transparent;
   }
   html.ps-mobile-v2 .ps-sidebar { display: none; }
-  html.ps-mobile-v2 body[data-page="tennis"] #page-tennis {
-    grid-template-columns: 1fr !important;
-    gap: 0 !important;
-  }
-  html.ps-mobile-v2 body[data-page="tennis"] #page-tennis > :not(.ps-sidebar) {
-    grid-column: 1 !important;
-  }
   /* OLD_TENNIS_DEPRECATED 2026-06: replaced by tn2-* system */
   /* #page-tennis .section { padding-top: 16px; } */
   .sidebar-nav-block {
@@ -21826,7 +21819,7 @@ body[data-page="mma"] footer { display: none !important; }
 }
 .tn2-tab-icon { font-size: 14px; line-height: 1; }
 .tn2-tab-panel { display: none; }
-.tn2-tab-panel.active { display: block; padding: 0 16px; }
+.tn2-tab-panel.active { display: block; }
 
 /* ═══ 2 — KPI BAR ═══ */
 .tn2-kpi-bar {
@@ -21887,7 +21880,7 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-toggle input { accent-color: var(--tn2-accent); }
 
 /* ═══ 4 — LIVE TAB — MATCH CARDS ═══ */
-.tn2-card-grid { display: grid; gap: 8px; width: 100%; }
+.tn2-card-grid { display: grid; gap: 8px; width: 100%; overflow: hidden; }
 .tn2-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .tn2-grid-2 { grid-template-columns: repeat(2, 1fr); }
 
@@ -21896,6 +21889,7 @@ body[data-page="mma"] footer { display: none !important; }
   border: 1px solid var(--tn2-border-card);
   border-radius: var(--tn2-radius-sm);
   overflow: hidden;
+  max-width: 100%;
   transition: all var(--tn2-transition);
   box-shadow: var(--tn2-shadow-sm);
   position: relative;
@@ -22315,7 +22309,7 @@ body[data-page="mma"] footer { display: none !important; }
 }
 
 /* ��� MISSING RULES — auto-added from audit ��� */
-.tn2-main { display: block; color: var(--tn2-text); background: var(--tn2-bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; line-height: 1.4; padding: 12px 0; width: 100%; min-width: 0; box-sizing: border-box; }
+.tn2-main { display: block; color: var(--tn2-text); background: var(--tn2-bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; line-height: 1.4; padding: 12px 16px; width: 100%; min-width: 0; box-sizing: border-box; }
 .tn2-main *, .tn2-main *::before, .tn2-main *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .tn2-modal { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 .tn2-modal-bd { position: absolute; inset: 0; cursor: pointer; }

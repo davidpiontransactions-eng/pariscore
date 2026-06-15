@@ -160,6 +160,22 @@ bd close <id>         # Complete work
 
 ---
 
+## 🚨 CRITICAL_BUG_FIX — 2026-06-15
+
+### Layout Tennis détruit (v12.81d)
+**Symptôme** : Layout collapse — cartes disparues, menus compressés en haut à gauche.
+**Cause racine** : Padding déplacé de `.tn2-main` vers `.tn2-tab-panel.active` + règle mobile destructive.
+**Fix appliqué** : Revert complet des changements de padding + suppression règle mobile.
+**Restant** : Trouver la vraie cause du décalage droite sans casser le layout.
+
+### Leçons apprises
+- JAMAIS modifier le padding des conteneurs principaux (`.tn2-main`)
+- JAMAIS de règles `!important` sur les grids sans test visuel
+- Toujours tester visuellement avant de pousser
+- Les photos Tennis Warehouse doivent être vérifiées pour les dimensions
+
+---
+
 ## Roadmap
 
 - [ ] **Sprint Refonte UI Tennis — Dark Betting Premium** — Appliquer les tokens de design extraits de "image_ad30a6.jpg" : fond `#0e1420`, cartes `#172132`, en-têtes `#111a28`, accent bleu `#0077ff` pour hover odds, bordures fines semi-transparentes, typographie Inter/Roboto. Ajout classes premium .tennis-odds-box-premium, .tennis-match-card-premium, .tennis-grid-header.
