@@ -162,6 +162,8 @@ bd close <id>         # Complete work
 
 ## Roadmap
 
+- [ ] **Sprint Refonte UI Tennis — Dark Betting Premium** — Appliquer les tokens de design extraits de "image_ad30a6.jpg" : fond `#0e1420`, cartes `#172132`, en-têtes `#111a28`, accent bleu `#0077ff` pour hover odds, bordures fines semi-transparentes, typographie Inter/Roboto. Ajout classes premium .tennis-odds-box-premium, .tennis-match-card-premium, .tennis-grid-header.
+
 - [ ] **Étude Betfair scraping** — Analyser la faisabilité d'obtenir le WOM par joueur tennis via scraping betfair.com ou API officielle
 
 ## Étude — Scraping Betfair.com pour WOM par joueur (tennis)
@@ -184,3 +186,4 @@ bd close <id>         # Complete work
 - Si non faisable : justification claire (TOS, blocage, coût)
 
 **Priorité** : À faire après stabilisation du backend WOM actuel
+

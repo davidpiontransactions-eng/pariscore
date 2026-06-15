@@ -918,7 +918,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    initAlertesPage();
   if (pageId === 'comparateur') initComparateur();
   if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { startTennisLive(); startTennisValueBets(); startTennisTop10();  loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
+  if (pageId === 'tennis')   { tn2SwitchTab('live'); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
   if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
   if (pageId === 'cs2') initCs2Page();
   if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage();
@@ -4296,6 +4296,12 @@ function _tnTop10SetMode(mode, btn) {
   fetchTennisTop10();
 }
 
+// [FIX BUG #5] Pont tn2 -> legacy : les boutons FAN/PARIEUR du système tn2
+// appellent tn2Top10Mode() qui n'était pas définie. On l'alias ici.
+window.tn2TopMode = window.tn2Top10Mode = function(mode) {
+  _tnTop10SetMode(mode, document.querySelector('.tn2-mode-btn[onclick*="' + mode + '"]'));
+};
+
 function _tnTop10SurfaceIcon(surface) {
   return _tnSurfaceImg(surface, 16);
 }
@@ -4352,13 +4358,13 @@ function _tnTop10Card(m, rank) {
 
   const safeId = _tnEsc(String(m.matchId || ''));
 
-  // Player photo avatars — BSD tennis route + initials fallback
+  // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   const av1 = m.player_id_p1
-    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
-    : `<span style="width:28px;height:28px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 9px/1 var(--font-mono);color:#fff;flex-shrink:0">${playerInitials(m.player1||'?')}</span>`;
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+    : `<span style="width:48px;height:48px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">${playerInitials(m.player1||'?')}</span>`;
   const av2 = m.player_id_p2
-    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
-    : `<span style="width:28px;height:28px;border-radius:50%;background:var(--violet,#9c27b0);display:flex;align-items:center;justify-content:center;font:700 9px/1 var(--font-mono);color:#fff;flex-shrink:0">${playerInitials(m.player2||'?')}</span>`;
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+    : `<span style="width:48px;height:48px;border-radius:50%;background:var(--violet,#9c27b0);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">${playerInitials(m.player2||'?')}</span>`;
 
   // Win prob bar
   const probPct = m.blended_p1 != null ? m.blended_p1 : null;
@@ -4464,8 +4470,9 @@ function _tnTop10AlertNewEntry(top10) {
 }
 
 async function fetchTennisTop10() {
-  const container = document.getElementById('tn-top10-container');
-  const statusEl  = document.getElementById('tn-top10-status');
+  // [FIX BUG #2] Recherche le conteneur tn2-first (système tn2), sinon legacy
+  var container = document.getElementById('tn2-top-grid') || document.getElementById('tn-top10-container');
+  var statusEl  = document.getElementById('tn-top10-status');
   if (!container) return;
   try {
     // Vérifier le cache pour affichage immédiat
@@ -4478,6 +4485,8 @@ async function fetchTennisTop10() {
       statusEl.textContent = `${data.total_active || 0} matchs · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
     }
     const top10 = data.top10 || [];
+    // [FIX BUG #3] Mise à jour des KPIs
+    if (window.tn2UpdateKPI) tn2UpdateKPI({ top: top10.length });
     if (!top10.length) {
       container.innerHTML = '<div class="tn-t10-empty">Aucun match disponible pour le moment</div>';
       return;
