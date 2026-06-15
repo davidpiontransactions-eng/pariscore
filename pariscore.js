@@ -493,6 +493,7 @@ function _paintWCPred(el,data){
     card.setAttribute('aria-hidden', 'false');
     backdrop.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    trapFocus(card);
     _rgPcCurrentPlayerId = playerData.id;
 
     // === Lazy enrichment fetch (L5 clay + DR) ===
@@ -859,6 +860,13 @@ function showPage(pageId, linkEl) {
   if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10();
 
 
+  // Sauvegarde scroll de la page courante avant de la cacher
+  var _prevPageId = document.body.dataset.page;
+  if (_prevPageId) {
+    var _prevPage = document.getElementById('page-' + _prevPageId);
+    if (_prevPage) _prevPage._scrollY = window.scrollY;
+  }
+
   // Verrou tier/sport — bloque les modules non accessibles
   if (typeof psPageBlocked === 'function') {
     const _blk = psPageBlocked(pageId);
@@ -883,6 +891,10 @@ function showPage(pageId, linkEl) {
     page.querySelectorAll('.fade-up').forEach(el => {
       el.classList.add('visible');
     });
+  } else {
+    // Page inconnue → 404
+    var notFound = document.getElementById('page-404');
+    if (notFound) notFound.style.display = 'block';
   }
   // Réaffiche les éléments football uniquement sur la page des matchs
   if (pageId === 'matchs') {
@@ -890,9 +902,9 @@ function showPage(pageId, linkEl) {
     if (_qfb) _qfb.style.display = '';
     if (_dpk) _dpk.style.display = '';
   }
-  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  if (linkEl) linkEl.classList.add('active');
-  else { const l = document.querySelector(`.nav-links a[data-page="${pageId}"]`); if(l) l.classList.add('active'); }
+  document.querySelectorAll('.nav-links a').forEach(a => { a.classList.remove('active'); a.removeAttribute('aria-current'); });
+  if (linkEl) { linkEl.classList.add('active'); linkEl.setAttribute('aria-current', 'page'); }
+  else { const l = document.querySelector(`.nav-links a[data-page="${pageId}"]`); if(l) { l.classList.add('active'); l.setAttribute('aria-current', 'page'); } }
   if (pageId === 'accueil') { initAccueilTopMatches(); loadHeroAccuracy(); loadPartnerBookmakers(); }
   if (pageId === 'hot-picks' && !hotPicksLoaded) { hotPicksLoaded = true; loadHotPicks(); }
   if (pageId === 'sure-bets' && !sureBetsLoaded) { sureBetsLoaded = true; loadSureBets(); }
@@ -918,7 +930,43 @@ function showPage(pageId, linkEl) {
   if (pageId === 'wnba') initWnbaPage();
   if (pageId !== 'f1' && typeof stopF1Page === 'function') stopF1Page();
   if (pageId === 'f1') initF1Page();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Met à jour le titre dynamique selon la page
+  setPageTitle(pageId);
+  // Restaure la position scroll sauvegardée ou scroll en haut
+  var _newPageEl = document.getElementById('page-' + pageId);
+  var _savedY = _newPageEl ? (_newPageEl._scrollY || 0) : 0;
+  window.scrollTo({ top: _savedY, behavior: _savedY > 0 ? 'auto' : 'smooth' });
+}
+
+function setPageTitle(sportName) {
+  var titles = {
+    'football':    'Football - Scores & Cotes',
+    'tennis':      'Tennis - Scores & Cotes',
+    'cs2':         'CS2 - Matchs & Statistiques',
+    'mma':         'MMA - Fight Cards & Cotes',
+    'matchs':      'Matchs du Jour - Scores & Cotes',
+    'nba':         'NBA - Scores & Statistiques',
+    'wnba':        'WNBA - Scores & Statistiques',
+    'f1':          'Formule 1 - Résultats & Classements',
+    'worldcup':    'Coupe du Monde 2026',
+    'rg':          'Roland Garros - Direct & Résultats',
+    'hot-picks':   'Hot Picks - Sélections du Moment',
+    'strategies':  'Top Stratégies - Paris de Valeur',
+    'paris':       'Mes Paris - Suivi & Performance',
+    'guide':       'Guide Paris Sportifs - Tutoriels',
+    'sure-bets':   'Sure Bets - Opportunités d\'Arbitrage',
+    'comparateur': 'Comparateur de Cotes',
+    'predictions': 'Prédictions IA - Analyses Sportives',
+    'tendances':   'Tendances - Analyses & Insights',
+    'alertes':     'Alertes - Notifications Smart',
+    'tennis-alerts': 'Alertes Tennis - Live & Paris',
+    'historique':  'Historique - Paris & Résultats',
+    'accueil':     'Accueil - Scores & Analyses',
+    'tarifs':      'Tarifs & Abonnements',
+    'parametres':  'Paramètres - Compte & Préférences'
+  };
+  var t = titles[sportName];
+  if (t) document.title = t + ' | PariScore';
 }
 
 // ─── i18n re-render on language switch (epic 0n4x) ───────────────────────────
@@ -1126,6 +1174,8 @@ window.openNbaAI = function (matchId, label) {
   if (title) title.textContent = '🤖 AI Scout NBA · ' + (label || '');
   body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3,#5a6068);">🤖 Analyse IA en cours… (~10-20 s)</div>';
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   document.body.style.overflow = 'hidden';
   fetch('/api/v1/ai/nba-analyze/' + encodeURIComponent(matchId), { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
@@ -1141,8 +1191,13 @@ window.openNbaAI = function (matchId, label) {
 };
 window.closeNbaAI = function () {
   var modal = document.getElementById('nba-ai-modal');
-  if (modal) modal.style.display = 'none';
-  document.body.style.overflow = '';
+  if (!modal) { document.body.style.overflow = ''; return; }
+  modal.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    modal.style.display = 'none';
+    modal.style.animation = '';
+    document.body.style.overflow = '';
+  }, 150);
 };
 
 // ─── WNBA vertical (basket — ESPN, miroir NBA. Réutilise _nbaEsc/_nbaModelsPanel + styles .nba-*) ──
@@ -2720,13 +2775,19 @@ function openTennisGamesPopup(matchId, setKey) {
       + `<div class="tgmp-meta">${meta}</div>`;
   }
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   document.body.style.overflow = 'hidden';
 }
 function closeTennisGamesPopup() {
   const modal = document.getElementById('tennis-games-modal');
-  if (!modal) return;
-  modal.style.display = 'none';
-  document.body.style.overflow = '';
+  if (!modal) { document.body.style.overflow = ''; return; }
+  modal.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    modal.style.display = 'none';
+    modal.style.animation = '';
+    document.body.style.overflow = '';
+  }, 150);
 }
 
 // Tuto colonne "Jeux O/U" — définition + méthode de calcul (réutilise le popup).
@@ -2778,6 +2839,8 @@ function openTennisGamesGuide() {
       &nbsp;· 100 % local (données Jeff Sackmann), aucune cote marché par set.</p>
     </div>`;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   document.body.style.overflow = 'hidden';
 }
 
@@ -2843,6 +2906,8 @@ function openTennisPredictiveGuide() {
       « PASS » signifie : aucune valeur — ne pas forcer un pari.</p>
     </div>`;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   document.body.style.overflow = 'hidden';
 }
 
@@ -4055,14 +4120,20 @@ function openTennisAIModal() {
   const modal = document.getElementById('tennis-ai-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   document.body.style.overflow = 'hidden';
 }
 function closeTennisAIModal() {
   const modal = document.getElementById('tennis-ai-modal');
-  if (!modal) return;
-  modal.style.display = 'none';
-  document.body.style.overflow = '';
-  _tennisAICurrentRawText = '';
+  if (!modal) { document.body.style.overflow = ''; return; }
+  modal.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    modal.style.display = 'none';
+    modal.style.animation = '';
+    document.body.style.overflow = '';
+    _tennisAICurrentRawText = '';
+  }, 150);
 }
 
 function _extractTennisTextBlock(raw) {
@@ -4694,6 +4765,8 @@ async function openBetminesModal(matchId) {
   const body = document.getElementById('bm-modal-body');
   if (!modal || !body || !matchId) return;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     const m = await fetch(`/api/v1/betmines/match?id=${encodeURIComponent(matchId)}`).then(r => r.json());
@@ -4855,6 +4928,8 @@ async function openTexBooksModal(matchId) {
   const body = document.getElementById('tex-books-modal-body');
   if (!modal || !body || !matchId) return;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     const [r, history] = await Promise.all([
@@ -4926,6 +5001,8 @@ async function openTexPlayerModal(slug) {
   const body = document.getElementById('tex-player-modal-body');
   if (!modal || !body || !slug) return;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
   try {
     const p = await apiFetch(`/api/v1/tennis/tex/player?slug=${encodeURIComponent(slug)}`).then(r => r.json());
@@ -6377,6 +6454,7 @@ function openPsLiveTennisSheet(matchId) {
     _psLtsRenderReliability(m);
   }
   sheet.setAttribute('data-open', 'true');
+  trapFocus(sheet);
   sheet.setAttribute('aria-hidden', 'false');
   _psLtsSetTier('peek');
   // Phase 2 : SSE wire (idempotent) + fetch BSD prediction one-shot
@@ -6423,6 +6501,8 @@ async function openTennisDetail(matchId) {
   const body = document.getElementById('tennis-detail-body');
   if (!modal || !body) return;
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--text3,#5a6068);">' + I18N.t('status.loading_detail') + '</div>';
   // Lignes LiveScore (id "ls:<eid>") → détail dédié, pas le détail BSD
   if (_tennisDetailCurrentId.startsWith('ls:')) {
@@ -6444,9 +6524,14 @@ async function openTennisDetail(matchId) {
 
 function closeTennisDetail() {
   const modal = document.getElementById('tennis-detail-modal');
-  if (modal) modal.style.display = 'none';
-  if (_tennisDetailInterval) { clearInterval(_tennisDetailInterval); _tennisDetailInterval = null; }
-  _tennisDetailCurrentId = null;
+  if (!modal) { if (_tennisDetailInterval) { clearInterval(_tennisDetailInterval); _tennisDetailInterval = null; } _tennisDetailCurrentId = null; return; }
+  modal.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    modal.style.display = 'none';
+    modal.style.animation = '';
+    if (_tennisDetailInterval) { clearInterval(_tennisDetailInterval); _tennisDetailInterval = null; }
+    _tennisDetailCurrentId = null;
+  }, 150);
 }
 
 async function _renderLivescoreDetail(eid) {
@@ -10363,6 +10448,8 @@ function openTeamDetail(teamNameOrId) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité équipe en cours de développement.'); return; }
   modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(modal);
   const _tdContent = document.getElementById('team-detail-content');
   _tdContent.style.background = 'var(--bg2)';
   _tdContent.style.padding = '30px';
@@ -10393,6 +10480,7 @@ function openPlayerDetail(playerName, teamCtx, leagueId) {
   const modal = document.getElementById('team-detail-modal');
   if (!modal) { alert('Fonctionnalité joueur en cours de développement.'); return; }
   modal.style.display = 'flex';
+  trapFocus(modal);
   const _pdContent = document.getElementById('team-detail-content');
   _pdContent.style.background = '#fff';
   _pdContent.style.padding = '0';
@@ -11783,10 +11871,19 @@ function openRadarModal(matchId) {
   const as = m.stats?.away || {};
   document.getElementById('radar-teams').innerHTML = `${m.home_team} vs ${m.away_team}`;
   document.getElementById('radar-big').innerHTML = bigRadar(hs, as);
-  document.getElementById('radar-modal').style.display = 'flex';
+  var el = document.getElementById('radar-modal');
+  el.style.display = 'flex';
+  el.style.animation = ''; void el.offsetHeight; el.style.animation = 'psModalIn 0.2s ease';
+  trapFocus(el);
 }
 function closeRadarModal() {
-  document.getElementById('radar-modal').style.display = 'none';
+  var el = document.getElementById('radar-modal');
+  if (!el) return;
+  el.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    el.style.display = 'none';
+    el.style.animation = '';
+  }, 150);
 }
 function bigRadar(hs, as) {
   const size = 160, cx = 80, cy = 80, r = 72;
@@ -12862,6 +12959,7 @@ window.psOpenTVModal = function(btn) {
       <div style="margin-top:12px;font:400 10px var(--font-mono);color:#64748b;text-align:center;">${channels.length} diffuseur${channels.length > 1 ? 's' : ''} · liens externes</div>
     `;
     overlay.appendChild(panel);
+    trapFocus(overlay);
   } catch (e) { console.warn('[psOpenTVModal]', e.message); }
 };
 
@@ -13030,6 +13128,7 @@ function _openGeminiModal(matchId, m) {
   document.getElementById('gm-status-txt').textContent = "L'IA analyse le match en temps réel…";
   document.getElementById('gm-spinner').style.animation = 'pulse 1.4s infinite';
   document.getElementById('gemini-modal').classList.add('open');
+  trapFocus(document.getElementById('gemini-modal'));
 
   startGeminiStream(matchId);
 }
@@ -13203,13 +13302,14 @@ function openAttributesRadar(matchId) {
   if (!m) return;
 
   document.getElementById('attributes-modal').classList.add('open');
+  trapFocus(document.getElementById('attributes-modal'));
   document.getElementById('attr-title').textContent = `${m.home_team} vs ${m.away_team}`;
   document.getElementById('attr-sub').textContent = `${m.league} · ${fmtKickoffDate(m.commence_time)} à ${fmtKickoffTime(m.commence_time)}`;
 
   renderAttributesRadar(m);
 }
 
-function closeAttributesRadar() { document.getElementById('attributes-modal').classList.remove('open'); }
+function closeAttributesRadar() { _animateModalOut('attributes-modal', function() { document.getElementById('attributes-modal').classList.remove('open'); }); }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SCORE MATRIX — Distribution de Poisson (calcul côté client)
@@ -13293,6 +13393,7 @@ function openScoreMatrix(matchId) {
     </div>
   `;
   document.getElementById('score-modal').classList.add('open');
+  trapFocus(document.getElementById('score-modal'));
 }
 
 function closeScoreMatrix() {
@@ -16362,6 +16463,7 @@ async function openInsights(matchId) {
   }
 
   document.getElementById('insights-modal').classList.add('open');
+  trapFocus(document.getElementById('insights-modal'));
   insShowTab('resume');
 
   // CTA-2 — bandeau bonus footer (active uniquement si match a un best_edge)
@@ -17443,6 +17545,7 @@ async function openLiveDetail(matchId) {
   if (!modal) return;
   _liveDetailMatchId = matchId;
   modal.classList.add('open');
+  trapFocus(modal);
   renderLiveDetailSkeleton();
   await refreshLiveDetailModal(matchId, { force: false });
   if (_liveDetailInterval) clearInterval(_liveDetailInterval);
@@ -17863,6 +17966,7 @@ function showLiveToast(type, msg, matchId) {
     const div = document.createElement('div');
     div.id = 'live-toast-container';
     div.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:320px;';
+    div.setAttribute('aria-live', 'polite');
     document.body.appendChild(div);
     return div;
   })();
@@ -18908,16 +19012,75 @@ async function apiFetch(url, opts = {}) {
   return res;
 }
 
+// ====== MODAL TRANSITIONS ======
+// Transition de fermeture animée pour toutes les modales
+function _closeModalAnim(el) {
+  if (!el) return;
+  el.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    el.style.display = 'none';
+    el.style.animation = '';
+  }, 150);
+}
+function _animateModalOut(modalId, cb) {
+  var el = document.getElementById(modalId);
+  if (!el) { if (typeof cb === 'function') cb(); return; }
+  el.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    if (typeof cb === 'function') cb();
+    el.style.animation = '';
+  }, 150);
+}
 // ── Auth Modal ────────────────────────────────────────────────────────────────
 function openAuthModal(tab = 'login') {
   switchAuthTab(tab);
   document.getElementById('auth-modal').classList.add('open');
+  trapFocus(document.getElementById('auth-modal'));
   setTimeout(() => {
     const f = tab === 'login' ? document.getElementById('login-email') : document.getElementById('reg-email');
     if (f) f.focus();
   }, 100);
 }
-function closeAuthModal() { document.getElementById('auth-modal').classList.remove('open'); }
+// ====== BUTTON LOADING STATE ======
+function setButtonLoading(btnId, isLoading, originalText) {
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (isLoading) {
+    btn._originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Traitement\u2026';
+    btn.classList.add('is-loading');
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = originalText || btn._originalHTML || 'Valider';
+    btn.classList.remove('is-loading');
+  }
+}
+
+function closeAuthModal() { _animateModalOut('auth-modal', function() { document.getElementById('auth-modal').classList.remove('open'); }); }
+
+// ====== INLINE FORM VALIDATION ======
+function showInlineError(inputId, message) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var existing = input.parentNode.querySelector('.inline-error');
+  if (existing) existing.remove();
+  input.classList.remove('input-error');
+  if (!message) return;
+  var err = document.createElement('span');
+  err.className = 'inline-error';
+  err.textContent = message;
+  err.setAttribute('role', 'alert');
+  input.parentNode.appendChild(err);
+  input.classList.add('input-error');
+  input.setAttribute('aria-invalid', 'true');
+}
+function clearAllInlineErrors(formId) {
+  var form = document.getElementById(formId);
+  if (!form) return;
+  form.querySelectorAll('.inline-error').forEach(function(el) { el.remove(); });
+  form.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); el.removeAttribute('aria-invalid'); });
+}
 
 async function devQuickLogin() {
   document.getElementById('login-email').value    = 'test@pariscore.fr';
@@ -18932,6 +19095,8 @@ function switchAuthTab(tab) {
   document.getElementById('tab-register').classList.toggle('active', tab === 'register');
   document.getElementById('login-error').textContent = '';
   document.getElementById('reg-error').textContent   = '';
+  clearAllInlineErrors('auth-form-login');
+  clearAllInlineErrors('auth-form-register');
 }
 
 function togglePwd(btn, inputId) {
@@ -18946,12 +19111,17 @@ function togglePwd(btn, inputId) {
 }
 
 async function submitLogin() {
+  clearAllInlineErrors('auth-form-login');
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const errEl    = document.getElementById('login-error');
   const btn      = document.getElementById('login-btn');
   errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'Identifiant et mot de passe requis'; return; }
+  var hasError = false;
+  if (!email) { showInlineError('login-email', 'Email requis'); hasError = true; }
+  if (email && !email.includes('@')) { showInlineError('login-email', 'Email ou identifiant invalide'); hasError = true; }
+  if (!password) { showInlineError('login-password', 'Mot de passe requis'); hasError = true; }
+  if (hasError) return;
   btn.disabled = true; btn.textContent = 'Connexion…';
   try {
     // Identifiant sans "@" → compte admin (username) ; sinon membre (email)
@@ -18977,12 +19147,17 @@ async function submitLogin() {
 }
 
 async function submitRegister() {
+  clearAllInlineErrors('auth-form-register');
   const email    = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
   const errEl    = document.getElementById('reg-error');
   const btn      = document.getElementById('reg-btn');
   errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'Tous les champs sont requis'; return; }
+  var hasError = false;
+  if (!email) { showInlineError('reg-email', 'Email requis'); hasError = true; }
+  if (!password) { showInlineError('reg-password', 'Mot de passe requis'); hasError = true; }
+  if (password && password.length < 8) { showInlineError('reg-password', '8 caractères minimum'); hasError = true; }
+  if (hasError) return;
   // Identifiant sans "@" = compte admin/bêta → pas une inscription
   if (!email.includes('@')) {
     switchAuthTab('login');
@@ -19446,6 +19621,7 @@ function renderLeagueHub(data) {
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+  var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   updateNavAuthState();
   // Race guard (ParisScorebis-amc Fix A) : si user a tap "Appliquer" pendant
   // que le parse 26500 lignes complète, son showPage('matchs') a déjà posé le
@@ -19629,11 +19805,17 @@ function resetStratFilters() {
 
 function openStratHelp() {
   const el = document.getElementById('strat-help-overlay');
-  if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  if (el) { el.style.display = 'flex'; el.style.animation = ''; void el.offsetHeight; el.style.animation = 'psModalIn 0.2s ease'; document.body.style.overflow = 'hidden'; }
 }
 function closeStratHelp() {
   const el = document.getElementById('strat-help-overlay');
-  if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+  if (!el) return;
+  el.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    el.style.display = 'none';
+    el.style.animation = '';
+    document.body.style.overflow = '';
+  }, 150);
 }
 
 function initStrategiesPage() {
@@ -20009,6 +20191,34 @@ function setParisTab(tab) {
   try { loadCLVMiniCard(); } catch (_) { /* swallow */ }
 }
 
+// v9.10 — showToast générique pour messages simples (success/error/info/warning)
+// Signature: showToast(message, type, duration) — type par défaut 'info', durée 3000ms (5000ms pour error)
+function showToast(msg, type, duration) {
+  type = type || 'info';
+  duration = duration || (type === 'error' ? 5000 : 3000);
+  var icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  var toast = document.getElementById('alert-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'alert-toast';
+    toast.innerHTML = '<span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span>';
+    document.body.appendChild(toast);
+  }
+  var iconEl = document.getElementById('toast-icon') || toast.querySelector('.toast-icon');
+  var msgEl  = document.getElementById('toast-msg')  || toast.querySelector('.toast-msg');
+  if (iconEl) iconEl.textContent = icons[type] || 'ℹ️';
+  if (msgEl)  msgEl.textContent  = msg;
+  toast.className = 'alert-toast alert-toast-' + type;
+  toast.style.display = 'flex';
+  toast.style.animation = 'none';
+  void toast.offsetHeight;
+  toast.style.animation = '';
+  if (window._toastTimer) clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(function() {
+    toast.style.display = 'none';
+  }, duration);
+}
+
 // bd vl02 — Alertes SSE live edge math toast UI
 // Render top-right stack (auto-create container si absent) + auto-dismiss 8s + click-dismiss.
 function _showAlertToast(d) {
@@ -20018,6 +20228,8 @@ function _showAlertToast(d) {
     stack = document.createElement('div');
     stack.id = 'alert-toast-stack';
     stack.className = 'alert-toast-stack';
+    stack.setAttribute('aria-live', 'assertive');
+    stack.setAttribute('role', 'alert');
     document.body.appendChild(stack);
   }
   const pl = d.payload || {};
@@ -20221,13 +20433,18 @@ const SPORT_EMOJI = {
 };
 
 async function loadUserBets() {
+  var _pw = document.getElementById('paris-bets-table-wrap');
+  if (_pw) _pw.classList.add('dh-loading');
   try {
     const res = await apiFetch('/api/v1/bets?' + buildBetsQueryString());
-    if (!res.ok) return;
+    if (!res.ok) { if (_pw) _pw.classList.remove('dh-loading'); return; }
     const data = await res.json();
     parisState.lastBets = data.bets || [];
     renderUserBetsTable();
-  } catch (e) { /* AUTH_REQUIRED already opened modal */ }
+  } catch (e) { /* AUTH_REQUIRED already opened modal */
+  } finally {
+    if (_pw) _pw.classList.remove('dh-loading');
+  }
 }
 
 function renderUserBetsTable() {
@@ -20369,8 +20586,9 @@ function openBetModal() {
   document.getElementById('bet-notes').value = '';
   document.getElementById('bet-kelly-panel').style.display = 'none';
   document.getElementById('bet-modal').classList.add('open');
+  trapFocus(document.getElementById('bet-modal'));
 }
-function closeBetModal() { document.getElementById('bet-modal').classList.remove('open'); }
+function closeBetModal() { _animateModalOut('bet-modal', function() { document.getElementById('bet-modal').classList.remove('open'); }); }
 
 function onBetMarketChange() {
   const m = document.getElementById('bet-market').value;
@@ -20454,7 +20672,7 @@ async function submitBet() {
     model_prob: !isNaN(probInput) ? probInput : null,
     edge_pct: !isNaN(probInput) ? (probInput * odds - 1) * 100 : null,
   };
-  btn.disabled = true;
+  setButtonLoading('bet-save-btn', true);
   try {
     const res = await apiFetch('/api/v1/bets', { method: 'POST', body });
     if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
@@ -20463,7 +20681,7 @@ async function submitBet() {
   } catch (e) {
     errEl.textContent = e.message || 'Erreur réseau';
     errEl.style.display = 'block';
-  } finally { btn.disabled = false; }
+  } finally { setButtonLoading('bet-save-btn', false, 'Enregistrer'); }
 }
 
 async function deleteBet(id) {
@@ -20502,9 +20720,10 @@ async function openSettleModal(id) {
     }
   } catch (e) { /* ignore */ }
   document.getElementById('settle-modal').classList.add('open');
+  trapFocus(document.getElementById('settle-modal'));
   updateSettlePayoutPreview();
 }
-function closeSettleModal() { document.getElementById('settle-modal').classList.remove('open'); }
+function closeSettleModal() { _animateModalOut('settle-modal', function() { document.getElementById('settle-modal').classList.remove('open'); }); }
 function acceptSuggestion(status) { document.getElementById('settle-status').value = status; onSettleStatusChange(); }
 function onSettleStatusChange() {
   const status = document.getElementById('settle-status').value;
@@ -20537,6 +20756,7 @@ async function submitSettle() {
   const cashout = parseFloat(document.getElementById('settle-cashout').value) || 0;
   const errEl = document.getElementById('settle-modal-err');
   errEl.style.display = 'none';
+  setButtonLoading('settle-btn', true);
   try {
     const res = await apiFetch('/api/v1/bets/' + id + '/settle', { method: 'POST', body: { status, cashout_amount: cashout } });
     if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
@@ -20545,7 +20765,7 @@ async function submitSettle() {
   } catch (e) {
     errEl.textContent = e.message || 'Erreur réseau';
     errEl.style.display = 'block';
-  }
+  } finally { setButtonLoading('settle-btn', false, 'Confirmer'); }
 }
 
 // ─── MODAL : Trésorerie ─────────────────────────────────────────────────────
@@ -20558,8 +20778,9 @@ function openCashModal() {
   document.getElementById('cash-note').value = '';
   document.getElementById('cash-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('cash-modal').classList.add('open');
+  trapFocus(document.getElementById('cash-modal'));
 }
-function closeCashModal() { document.getElementById('cash-modal').classList.remove('open'); }
+function closeCashModal() { _animateModalOut('cash-modal', function() { document.getElementById('cash-modal').classList.remove('open'); }); }
 
 async function submitCash() {
   const errEl = document.getElementById('cash-modal-err');
@@ -20571,6 +20792,7 @@ async function submitCash() {
   const dateStr = document.getElementById('cash-date').value;
   if (!amount || amount <= 0) { errEl.textContent = 'Montant invalide'; errEl.style.display = 'block'; return; }
   const occurredAt = dateStr ? Math.floor(new Date(dateStr + 'T12:00:00').getTime() / 1000) : Math.floor(Date.now() / 1000);
+  setButtonLoading('cash-btn', true);
   try {
     const res = await apiFetch('/api/v1/bankroll/tx', { method: 'POST', body: { kind, amount, bookmaker, note, occurred_at: occurredAt } });
     if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
@@ -20579,7 +20801,7 @@ async function submitCash() {
   } catch (e) {
     errEl.textContent = e.message || 'Erreur réseau';
     errEl.style.display = 'block';
-  }
+  } finally { setButtonLoading('cash-btn', false, 'Enregistrer'); }
 }
 
 async function deleteCashTx(id) {
@@ -20672,8 +20894,9 @@ async function openPlanModal() {
     }
   } catch (e) { /* ignore */ }
   document.getElementById('plan-modal').classList.add('open');
+  trapFocus(document.getElementById('plan-modal'));
 }
-function closePlanModal() { document.getElementById('plan-modal').classList.remove('open'); }
+function closePlanModal() { _animateModalOut('plan-modal', function() { document.getElementById('plan-modal').classList.remove('open'); }); }
 
 async function submitPlan() {
   const errEl = document.getElementById('plan-modal-err');
@@ -20686,6 +20909,7 @@ async function submitPlan() {
   if (!capital || capital <= 0) { errEl.textContent = 'Capital invalide'; errEl.style.display = 'block'; return; }
   if (isNaN(target) || target < 0) { errEl.textContent = 'Objectif invalide'; errEl.style.display = 'block'; return; }
   if (isNaN(split) || split < 0 || split > 100) { errEl.textContent = 'Split doit être entre 0 et 100'; errEl.style.display = 'block'; return; }
+  setButtonLoading('plan-btn', true);
   try {
     const res = await apiFetch('/api/v1/bankroll/plan', { method: 'PUT', body: { starting_capital: capital, daily_target_pct: target, profit_split_pct: split, start_date: start, floor } });
     if (!res.ok) { const j = await res.json().catch(() => ({})); errEl.textContent = j.error || 'Erreur ' + res.status; errEl.style.display = 'block'; return; }
@@ -20694,7 +20918,7 @@ async function submitPlan() {
   } catch (e) {
     errEl.textContent = e.message || 'Erreur réseau';
     errEl.style.display = 'block';
-  }
+  } finally { setButtonLoading('plan-btn', false, 'Enregistrer'); }
 }
 
 // ─── IMPORT CSV BOOKMAKER (sécurisé re-verify mdp) ──────────────────────────
@@ -20711,10 +20935,11 @@ function openImportModal() {
   document.getElementById('import-step-upload').style.display = 'none';
   importReverifyToken = null;
   document.getElementById('import-modal').classList.add('open');
+  trapFocus(document.getElementById('import-modal'));
   setTimeout(() => document.getElementById('import-password').focus(), 80);
 }
 function closeImportModal() {
-  document.getElementById('import-modal').classList.remove('open');
+  _animateModalOut('import-modal', function() { document.getElementById('import-modal').classList.remove('open'); });
   importReverifyToken = null;
 }
 
@@ -20723,6 +20948,7 @@ async function submitReverify() {
   errEl.style.display = 'none';
   const pwd = document.getElementById('import-password').value;
   if (!pwd) { errEl.textContent = 'Mot de passe requis'; errEl.style.display = 'block'; return; }
+  setButtonLoading('reverify-btn', true);
   try {
     const res = await apiFetch('/api/v1/auth/reverify', { method: 'POST', body: { password: pwd } });
     document.getElementById('import-password').value = ''; // clear immédiat
@@ -20759,6 +20985,8 @@ async function submitImport(dryRun) {
   catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; return; }
   if (!csv) { errEl.textContent = 'CSV vide (ni fichier ni texte)'; errEl.style.display = 'block'; return; }
   const bookmaker = document.getElementById('import-bookmaker').value;
+  var importBtnId = dryRun ? 'import-dry-btn' : 'import-btn';
+  setButtonLoading(importBtnId, true);
   try {
     const res = await apiFetch('/api/v1/bets/import', { method: 'POST', body: { csv, default_bookmaker: bookmaker, dry_run: !!dryRun, reverify_token: importReverifyToken, filename: (document.getElementById('import-file').files[0] || {}).name } });
     const j = await res.json();
@@ -20780,6 +21008,8 @@ async function submitImport(dryRun) {
   } catch (e) {
     errEl.textContent = e.message || 'Erreur réseau';
     errEl.style.display = 'block';
+  } finally {
+    setButtonLoading(importBtnId, false, dryRun ? '🔍 Aperçu (dry-run)' : 'Importer');
   }
 }
 
@@ -20918,13 +21148,16 @@ function dhRefreshDebounced(ms = 200) {
 }
 
 async function dhRefresh() {
+  var _dhStrip = document.getElementById('dh-kpi-strip');
+  if (_dhStrip) _dhStrip.classList.add('dh-loading');
   try {
     const r = await apiFetch(_dhBuildUrl());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     dhRenderAll(data);
   } catch (e) {
-    document.getElementById('dh-kpi-strip').innerHTML =
+    if (_dhStrip) _dhStrip.classList.remove('dh-loading');
+    _dhStrip.innerHTML =
       `<div style="grid-column:1/-1;color:var(--text3);font-family:var(--font-mono);font-size:13px;padding:20px 0;text-align:center;">
         ⚠️ Data Hub indisponible — <span style="font-size:11px;">${(e && e.message) || 'Erreur API'}</span>
         <br><a onclick="dhRefresh();return false;" style="color:var(--red,#E2001A);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;">↻ Réessayer</a>
@@ -20933,6 +21166,8 @@ async function dhRefresh() {
 }
 
 function dhRenderAll(data) {
+  var _ds = document.getElementById('dh-kpi-strip');
+  if (_ds) _ds.classList.remove('dh-loading');
   window._dhLastData = data; // H5 drill-down lookup
   if (dhState.sport === 'tennis') {
     dhRenderKpisTennis(data.kpis, data.total);
@@ -23528,6 +23763,7 @@ async function saveAlertConfig() {
   const markets  = [...document.querySelectorAll('#al-markets .al-chip.active')].map(c => c.dataset.mkt);
   const leagVal  = document.getElementById('al-league-select')?.value || '';
   const leagues  = leagVal ? [leagVal] : [];
+  setButtonLoading('al-save-btn', true);
   try {
     const r = await apiFetch('/api/v1/alerts/config', {
       method: 'POST',
@@ -23539,6 +23775,7 @@ async function saveAlertConfig() {
     const msg = document.getElementById('al-save-msg');
     if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2500); }
   } catch { alert('Erreur lors de la sauvegarde. Vérifiez que le serveur est lancé.'); }
+  finally { setButtonLoading('al-save-btn', false, '💾 Sauvegarder ma configuration'); }
 }
 
 async function loadAlertHistory() {
@@ -23815,9 +24052,10 @@ function psSyncNav() {
 // MODAL — inscription obligatoire : tout CTA "compte" → vrai formulaire register
 function openModal() {
   if (typeof openAuthModal === 'function') openAuthModal('register');
-  else document.getElementById('modal').classList.add('open');
+  else   document.getElementById('modal').classList.add('open');
+  trapFocus(document.getElementById('modal'));
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() { _animateModalOut('modal', function() { document.getElementById('modal').classList.remove('open'); }); }
 
 // SCROLL ANIMATIONS
 const observer = new IntersectionObserver((entries) => {
@@ -24135,6 +24373,7 @@ function openDeepAnalysis(matchId, e, force) {
   document.getElementById('deep-match-label').dataset.matchId = matchId;
   document.body.style.overflow = 'hidden';
   document.getElementById('deep-modal').classList.add('open');
+  trapFocus(document.getElementById('deep-modal'));
 
   // Same match already analysed — show render directly, no re-fetch
   if (!force && _deepMatchId === matchId && _deepText) {
@@ -24553,9 +24792,59 @@ function dpCopy(btn) {
   });
 }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && document.getElementById('deep-modal').classList.contains('open')) closeDeepAnalysis();
-  if (e.key === 'Escape' && document.getElementById('strat-help-overlay')?.style.display !== 'none') closeStratHelp();
+// ── Focus trap helper ──────────────────────────────────────────────────────
+function trapFocus(modal) {
+  if (!modal) return;
+  var f = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  function _tfHandler(e) {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+  modal.addEventListener('keydown', _tfHandler);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  var el, d = document;
+  // Modales avec classe .open
+  if (d.getElementById('auth-modal')?.classList.contains('open')) { closeAuthModal(); return; }
+  if (d.getElementById('gemini-modal')?.classList.contains('open')) { closeGemini(); return; }
+  if (d.getElementById('attributes-modal')?.classList.contains('open')) { closeAttributesRadar(); return; }
+  if (d.getElementById('score-modal')?.classList.contains('open')) { closeScoreMatrix(); return; }
+  if (d.getElementById('insights-modal')?.classList.contains('open')) { closeInsights(); return; }
+  if (d.getElementById('live-detail-modal')?.classList.contains('open')) { closeLiveDetail(); return; }
+  if (d.getElementById('deep-modal')?.classList.contains('open')) { closeDeepAnalysis(); return; }
+  if (d.getElementById('bet-modal')?.classList.contains('open')) { closeBetModal(); return; }
+  if (d.getElementById('settle-modal')?.classList.contains('open')) { closeSettleModal(); return; }
+  if (d.getElementById('cash-modal')?.classList.contains('open')) { closeCashModal(); return; }
+  if (d.getElementById('plan-modal')?.classList.contains('open')) { closePlanModal(); return; }
+  if (d.getElementById('import-modal')?.classList.contains('open')) { closeImportModal(); return; }
+  if (d.getElementById('modal')?.classList.contains('open')) { closeModal(); return; }
+  // Bottom-sheets mobiles
+  if ((el = d.getElementById('bn-more-sheet')) && el.classList.contains('open')) { bnCloseMore(); return; }
+  if ((el = d.getElementById('mob-filter-sheet')) && el.classList.contains('open')) { closeMobFilters(); return; }
+  // Modales avec style.display (flex)
+  if ((el = d.getElementById('bm-modal')) && el.style.display === 'flex') { el.style.display = 'none'; return; }
+  if ((el = d.getElementById('tex-books-modal')) && el.style.display === 'flex') { el.style.display = 'none'; return; }
+  if ((el = d.getElementById('tex-player-modal')) && el.style.display === 'flex') { el.style.display = 'none'; return; }
+  if ((el = d.getElementById('tennis-detail-modal')) && el.style.display === 'flex') { closeTennisDetail(); return; }
+  if ((el = d.getElementById('tennis-ai-modal')) && el.style.display === 'flex') { closeTennisAIModal(); return; }
+  if ((el = d.getElementById('tennis-games-modal')) && el.style.display === 'flex') { closeTennisGamesPopup(); return; }
+  if ((el = d.getElementById('radar-modal')) && el.style.display === 'flex') { closeRadarModal(); return; }
+  if ((el = d.getElementById('nba-ai-modal')) && el.style.display === 'flex') { closeNbaAI(); return; }
+  if ((el = d.getElementById('team-detail-modal')) && el.style.display === 'flex') { el.style.display = 'none'; return; }
+  // Tennis live sheet (attribut data-open)
+  if ((el = d.getElementById('ps-live-tennis-sheet')) && el.getAttribute('data-open') === 'true') { closePsLiveTennisSheet(); return; }
+  // TV channels modal (dynamique, display:flex)
+  if ((el = d.getElementById('ps-tv-modal')) && el.style.display === 'flex') { el.remove(); return; }
+  // Strat help (style.display)
+  if ((el = d.getElementById('strat-help-overlay')) && el.style.display !== 'none' && el.style.display !== '') { closeStratHelp(); return; }
 });
 
 /* ── Theme toggle — dark/light (bd z55o rollback v3.2) ── */
@@ -24568,9 +24857,11 @@ document.addEventListener('keydown', e => {
 
   function applyTheme(dark) {
     if (dark) {
+      document.documentElement.removeAttribute('data-cf-light');
       document.body.classList.add('dark-theme');
       document.body.removeAttribute('data-cf-light');
     } else {
+      document.documentElement.setAttribute('data-cf-light', '1');
       document.body.classList.remove('dark-theme');
       document.body.setAttribute('data-cf-light', '1');
     }
@@ -24583,7 +24874,18 @@ document.addEventListener('keydown', e => {
   }
 
   function init() {
-    applyTheme(shouldBeDark());
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === 'dark') applyTheme(true);
+    else if (saved === 'light') applyTheme(false);
+    else applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+
+  // Écoute les changements de thème système (seulement si pas d'override manuel)
+  var _psMq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (_psMq.addEventListener) {
+    _psMq.addEventListener('change', function(e) {
+      if (localStorage.getItem(STORAGE_KEY) === null) applyTheme(e.matches);
+    });
   }
 
   window.toggleTheme = function() {
@@ -24800,7 +25102,7 @@ document.addEventListener('keydown', e => {
 
   /* Re-check toutes les 5 min si pas d'override manuel */
   setInterval(() => {
-    if (localStorage.getItem(STORAGE_KEY) === null) applyTheme(shouldBeDark());
+    if (localStorage.getItem(STORAGE_KEY) === null) applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
   }, 5 * 60 * 1000);
 
   if (document.readyState === 'loading') {
@@ -25678,6 +25980,8 @@ function renderComparateur(d) {
   function bnSetActive(page) {
     document.querySelectorAll('#bottom-nav a').forEach(function (a) {
       a.classList.toggle('active', a.dataset.page === page);
+      if (a.dataset.page === page) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
     });
   }
   // Sync bottom-nav quand on navigue via showPage (top nav, code, etc.)
@@ -25718,6 +26022,7 @@ function renderComparateur(d) {
   window.bnOpenMore = function () {
     document.getElementById('bn-more-overlay').classList.add('open');
     document.getElementById('bn-more-sheet').classList.add('open');
+    trapFocus(document.getElementById('bn-more-sheet'));
     bnSetActive('__more');
   };
   window.bnCloseMore = function () {
@@ -25748,6 +26053,7 @@ function renderComparateur(d) {
     var s = document.getElementById('mob-filter-sheet');
     if (o) o.classList.add('open');
     if (s) s.classList.add('open');
+    trapFocus(s);
     window.mfsSyncCount();
   };
   window.closeMobFilters = function () {
@@ -26392,6 +26698,7 @@ function renderComparateur(d) {
 
   /* — Au boot : skeletons si on arrive direct sur matchs en mobile — */
   document.addEventListener('DOMContentLoaded', function () {
+    var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     if (isMobile()) mobShowSkeletons();
     bnSetActive('matchs');
   });
