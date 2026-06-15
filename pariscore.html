@@ -19013,6 +19013,45 @@ window.tn2SetupH2H = function() {
 
 
 
+  /* ═══ CRITICAL LAYOUT FIX — Reset + Stabilisation ═══ */
+  /* Mapped from user request: ten-tab-root → tn2-main */
+  .tn2-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding: 12px 0 20px !important;
+    box-sizing: border-box !important;
+  }
+  /* Mapped from user: tennis-subnav-bar → tn2-tab-nav */
+  .tn2-tab-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 18px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+    padding: 0 0 12px !important;
+    margin: 0 0 18px !important;
+    overflow: visible !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    position: static !important;
+    box-shadow: none !important;
+  }
+  /* Mapped from user: tennis-premium-btn → tn2-tab-btn */
+  .tn2-tab-btn {
+    flex-shrink: 0 !important;
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 16px !important;
+    white-space: nowrap !important;
+  }
+
   /* ═══ TENNIS TOP 10 CARDS — Premium XL Design ═══ */
   /* Cartes agrandies avec avatars 48px, grille 2 colonnes */
   #tn2-top-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
