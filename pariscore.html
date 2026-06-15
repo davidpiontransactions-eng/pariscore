@@ -15350,14 +15350,7 @@ function psSetLang(v) {
           <span id="tn-models-bar" style="margin-left:0;font-size:10px;font-family:'DM Mono',monospace;display:none;"></span>
           <button class="tn2-btn-glass" onclick="tickTennisLive()">🔄</button>
           <label class="tn2-toggle"><input type="checkbox" id="tennis-live-only" checked> Live uniquement</label>
-          <div class="tn2-src-filters" id="tn2-src-filter-bar">
-            <button type="button" class="tn2-src-chip is-active" data-src-filter="ALL" onclick="setTennisSourceFilter('ALL')">ALL</button>
-            <button type="button" class="tn2-src-chip" data-src-filter="BSD" onclick="setTennisSourceFilter('BSD')">BSD</button>
-            <button type="button" class="tn2-src-chip" data-src-filter="ESPN" onclick="setTennisSourceFilter('ESPN')">ESPN</button>
-            <button type="button" class="tn2-src-chip" data-src-filter="LIVESCORE" onclick="setTennisSourceFilter('LIVESCORE')">LIVESCORE</button>
-            <button type="button" class="tn2-src-chip" data-src-filter="AISCORE" onclick="setTennisSourceFilter('AISCORE')">AISCORE</button>
-          </div>
-        </div>
+          <!-- src-filters removed v12.81 -->
       </div>
       <div id="tn2-live-grid" class="tn2-card-grid tn2-grid-3">
         <div class="tn2-loading">Chargement...</div>
@@ -15723,6 +15716,16 @@ function psSetLang(v) {
     if (el) el.textContent = data.tournaments != null ? data.tournaments : el.textContent;
   };
 
+  /* getPlayerPhotoUrl — retourne l'URL de la photo du joueur ou null */
+  window.getPlayerPhotoUrl = function(player) {
+    if (!player) return null;
+    var id = player.id || player.player_id || player.bsdId || null;
+    if (id) return 'https://images.pariscore.fr/players/tennis/' + id + '.png';
+    var name = player.name || player.nom || '';
+    if (name) return 'https://images.pariscore.fr/players/tennis/name/' + encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-')) + '.png';
+    return null;
+  };
+
   window.tn2RenderLiveCards = function(matches) {
     var grid = document.getElementById('tn2-live-grid');
     if (!grid) return;
@@ -15786,7 +15789,13 @@ function psSetLang(v) {
       html += '</div>';
       html += '<div class="tn2-card-body">';
       html += '<div class="tn2-card-player">';
-      html += '<div class="tn2-player-photo" style="background:' + p1Color + ';">' + escapeHtml(p1Init) + '</div>';
+      var p1PhotoUrl = window.getPlayerPhotoUrl(p1);
+      if (p1PhotoUrl) {
+        html += '<img class="tn2-player-photo athlete-live-img" src="' + p1PhotoUrl + '" alt="' + escapeHtml(p1Name) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';" loading="lazy">';
+        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p1Color + ';display:none;">' + escapeHtml(p1Init) + '</div>';
+      } else {
+        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p1Color + ';">' + escapeHtml(p1Init) + '</div>';
+      }
       html += '<div class="tn2-player-info">';
       html += '<span class="tn2-player-name">' + escapeHtml(p1Name) + (serving === 1 ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="#00e676" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" fill="none" stroke="#00e676" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#00e676"/></svg>' : '') + '</span>';
       html += '<span class="tn2-player-rank">#' + escapeHtml(String(p1Rank)) + '</span>';
@@ -15797,7 +15806,13 @@ function psSetLang(v) {
       html += '<div class="tn2-points">' + escapeHtml(point) + '</div>';
       html += '</div>';
       html += '<div class="tn2-card-player tn2-card-player-right">';
-      html += '<div class="tn2-player-photo" style="background:' + p2Color + ';">' + escapeHtml(p2Init) + '</div>';
+      var p2PhotoUrl = window.getPlayerPhotoUrl(p2);
+      if (p2PhotoUrl) {
+        html += '<img class="tn2-player-photo athlete-live-img" src="' + p2PhotoUrl + '" alt="' + escapeHtml(p2Name) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';" loading="lazy">';
+        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p2Color + ';display:none;">' + escapeHtml(p2Init) + '</div>';
+      } else {
+        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p2Color + ';">' + escapeHtml(p2Init) + '</div>';
+      }
       html += '<div class="tn2-player-info">';
       html += '<span class="tn2-player-name">' + escapeHtml(p2Name) + (serving === 2 ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="#00e676" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" fill="none" stroke="#00e676" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#00e676"/></svg>' : '') + '</span>';
       html += '<span class="tn2-player-rank">#' + escapeHtml(String(p2Rank)) + '</span>';
@@ -18955,6 +18970,44 @@ window.tn2SetupH2H = function() {
   #page-tennis .tn2-tab-btn.active {
     box-shadow: inset 0 -2px 0 #0077ff !important;
   }
+  /* Photos athlètes cartes Live Tennis */
+  .athlete-live-img {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+    background: var(--tennis-card, #172132) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+  }
+  .athlete-live-fallback {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Sécurité : masquage absolu des filtres sources API (supprimés du DOM mais on ne sait jamais) */
+  #tn2-src-filter-bar,
+  .tn2-src-filters,
+  .tn2-src-chip,
+  [data-src-filter] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    opacity: 0 !important;
+  }
+
 
 
   /* ═══ TENNIS TOP 10 CARDS — Premium XL Design ═══ */
@@ -22252,7 +22305,7 @@ body[data-page="mma"] footer { display: none !important; }
 }
 
 /* ��� MISSING RULES — auto-added from audit ��� */
-.tn2-main { all: initial; display: block; color: var(--tn2-text); background: var(--tn2-bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; line-height: 1.4; padding: 12px 16px; max-width: 1440px; margin: 0 auto; }
+.tn2-main { display: block; color: var(--tn2-text); background: var(--tn2-bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; line-height: 1.4; padding: 12px 16px; width: 100%; min-width: 0; box-sizing: border-box; }
 .tn2-main *, .tn2-main *::before, .tn2-main *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .tn2-modal { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 .tn2-modal-bd { position: absolute; inset: 0; cursor: pointer; }
@@ -22337,6 +22390,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 </script>
 </body>
 </html>
+
+
 
 
 

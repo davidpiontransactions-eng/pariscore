@@ -101,3 +101,40 @@ Nouvelles classes CSS ajoutées dans pariscore.html :
 | Régressions thème clair | Tester body[data-cf-light="1"] |
 | Classes tn2 utilisées en JS dynamique | Vérifier sélecteurs JS |
 | Contraste insuffisant | Vérifier WCAG AA 4.5:1 |
+
+---
+
+## 6. Fix Crash Layout — all:initial + margin:0 auto
+
+### 6.1 Problème
+`.tn2-main` (ligne 22255) avait `all: initial` qui réinitialisait les custom properties `--tn2-*`, ET `margin: 0 auto` sur un élément CSS Grid qui forçait le shrink-wrap (~800px au lieu de `1fr`).
+
+### 6.2 Correction
+- `all: initial` → supprimé (les custom properties redeviennent héritées)
+- `max-width: 1440px; margin: 0 auto` → supprimé (la colonne grid gère la largeur)
+- `width: 100%; min-width: 0; box-sizing: border-box` → ajouté
+
+### 6.3 Résultat
+Le conteneur central remplit pleinement la colonne 2 de la grille, les boutons de navigation reprennent leur espacement normal, le layout redevient fluide.
+
+---
+
+## 7. Pipeline Photos Athlètes — Cartes Live Tennis
+
+### 7.1 Problème
+Les cartes Live Tennis affichaient les initiales des joueurs dans des cercles colorés (ex: 'J', 'H') — aspect amateur, pas de reconnaissance visuelle immédiate.
+
+### 7.2 Solution
+- Nouvelle fonction `window.getPlayerPhotoUrl(player)` générant l'URL photo depuis l'ID BSD ou le nom
+- Les initiales sont remplacées par `<img class="athlete-live-img">` avec `onerror` fallback vers les initiales
+- CSS dédié : 32px, border-radius 50%, object-fit cover
+
+### 7.3 Flux
+```
+BSD/ESPN player.id → getPlayerPhotoUrl() → https://images.pariscore.fr/players/tennis/{id}.png
+                                                      ↓ si 404
+                                          fallback: initiales colorées
+```
+
+### 7.4 Fichier modifié
+- `pariscore.html` : JS dans `tn2RenderLiveCards()` + CSS `.athlete-live-img`/`.athlete-live-fallback`
