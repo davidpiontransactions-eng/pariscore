@@ -27,6 +27,8 @@
 
 ---
 
+| 16 | Fix décalage layout droite — padding tn2-main, grid mobile, width:100% card-grid | HIGH | 30min |
+
 ## IN PROGRESS
 
 | # | Description | Début | Avancement |
@@ -63,3 +65,4 @@ Les tâches 1, 2, 3 sont la base et doivent précéder les autres. Les tâches 4
 - Les odds badges ont le hover bleu `#0077ff`
 - Aucune régression sur le thème clair
 - Les bordures sont semi-transparentes fines
+

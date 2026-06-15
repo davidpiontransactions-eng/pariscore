@@ -9520,6 +9520,13 @@
     scrollbar-color: rgba(255,255,255,.12) transparent;
   }
   html.ps-mobile-v2 .ps-sidebar { display: none; }
+  html.ps-mobile-v2 body[data-page="tennis"] #page-tennis {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+  html.ps-mobile-v2 body[data-page="tennis"] #page-tennis > :not(.ps-sidebar) {
+    grid-column: 1 !important;
+  }
   /* OLD_TENNIS_DEPRECATED 2026-06: replaced by tn2-* system */
   /* #page-tennis .section { padding-top: 16px; } */
   .sidebar-nav-block {
@@ -15703,7 +15710,21 @@ function psSetLang(v) {
           } catch (e) {
             document.getElementById('tn2-tournaments-grid').innerHTML = '<div class="tn2-empty">Erreur chargement tournois</div>';
           }
-        })();
+  })();
+
+// Cache des photos Tennis Warehouse
+window._tennisPhotoMap = null;
+window._loadTennisPhotoMap = function() {
+  if (window._tennisPhotoMap) return Promise.resolve(window._tennisPhotoMap);
+  return fetch('/api/v1/tennis/player-photos')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      window._tennisPhotoMap = d.photos || {};
+      return window._tennisPhotoMap;
+    })
+    .catch(function() { window._tennisPhotoMap = {}; return window._tennisPhotoMap; });
+};
+
         break;
       case 'cal':
         break;
@@ -15721,11 +15742,15 @@ function psSetLang(v) {
     if (el) el.textContent = data.tournaments != null ? data.tournaments : el.textContent;
   };
 
-  /* getPlayerPhotoUrl — ESPN CDN (headshot) puis ui-avatars (fallback initiales) */
+  /* getPlayerPhotoUrl — Tennis Warehouse > ESPN CDN (headshot) > ui-avatars (fallback) */
   window.getPlayerPhotoUrl = function(player) {
     if (!player) return null;
+    if (player.photo) return player.photo;
     var name = player.name || player.nom || '';
     if (!name) return null;
+    var nameKey = name.toLowerCase().trim();
+    var photoMap = window._tennisPhotoMap;
+    if (photoMap && photoMap[nameKey]) return photoMap[nameKey];
     var id = player.id || player.player_id || player.bsdId || null;
     if (id) {
       return 'https://a.espncdn.com/combiner/i?img=/i/headshots/tennis/players/full/' + id + '.png&w=68&h=68';
@@ -15998,6 +16023,7 @@ function psSetLang(v) {
       if (window.tn2SwitchTab) tn2SwitchTab('live');
       _tn2Patch();
       if (typeof window.tn2SetupH2H === 'function') tn2SetupH2H();
+      if (typeof window._loadTennisPhotoMap === 'function') window._loadTennisPhotoMap();
     });
   })();
 
@@ -21800,7 +21826,7 @@ body[data-page="mma"] footer { display: none !important; }
 }
 .tn2-tab-icon { font-size: 14px; line-height: 1; }
 .tn2-tab-panel { display: none; }
-.tn2-tab-panel.active { display: block; }
+.tn2-tab-panel.active { display: block; padding: 0 16px; }
 
 /* ═══ 2 — KPI BAR ═══ */
 .tn2-kpi-bar {
@@ -21861,7 +21887,7 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-toggle input { accent-color: var(--tn2-accent); }
 
 /* ═══ 4 — LIVE TAB — MATCH CARDS ═══ */
-.tn2-card-grid { display: grid; gap: 8px; }
+.tn2-card-grid { display: grid; gap: 8px; width: 100%; }
 .tn2-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .tn2-grid-2 { grid-template-columns: repeat(2, 1fr); }
 
@@ -22289,7 +22315,7 @@ body[data-page="mma"] footer { display: none !important; }
 }
 
 /* ��� MISSING RULES — auto-added from audit ��� */
-.tn2-main { display: block; color: var(--tn2-text); background: var(--tn2-bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; line-height: 1.4; padding: 12px 16px; width: 100%; min-width: 0; box-sizing: border-box; }
+.tn2-main { display: block; color: var(--tn2-text); background: var(--tn2-bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; line-height: 1.4; padding: 12px 0; width: 100%; min-width: 0; box-sizing: border-box; }
 .tn2-main *, .tn2-main *::before, .tn2-main *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .tn2-modal { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
 .tn2-modal-bd { position: absolute; inset: 0; cursor: pointer; }
