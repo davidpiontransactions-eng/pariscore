@@ -9499,11 +9499,16 @@
     grid-template-columns: 280px 1fr !important;
     gap: 0 20px;
     align-items: start;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   html.ps-desktop-v1 #page-matchs > :not(.ps-sidebar),
   html.ps-desktop-v1 #page-tennis > :not(.ps-sidebar),
-  html.ps-desktop-v1 #page-cs2 > :not(.ps-sidebar) { grid-column: 2; }
-  html.ps-desktop-v1 #page-mma > :not(.ps-sidebar) { grid-column: 2; }
+  html.ps-desktop-v1 #page-cs2 > :not(.ps-sidebar),
+  html.ps-desktop-v1 #page-mma > :not(.ps-sidebar) { grid-column: 2; min-width: 0; width: 100% !important; }
   html.ps-desktop-v1 .ps-sidebar {
     grid-column: 1;
     position: sticky;
@@ -15716,14 +15721,16 @@ function psSetLang(v) {
     if (el) el.textContent = data.tournaments != null ? data.tournaments : el.textContent;
   };
 
-  /* getPlayerPhotoUrl — retourne l'URL de la photo du joueur ou null */
+  /* getPlayerPhotoUrl — ESPN CDN (headshot) puis ui-avatars (fallback initiales) */
   window.getPlayerPhotoUrl = function(player) {
     if (!player) return null;
-    var id = player.id || player.player_id || player.bsdId || null;
-    if (id) return 'https://images.pariscore.fr/players/tennis/' + id + '.png';
     var name = player.name || player.nom || '';
-    if (name) return 'https://images.pariscore.fr/players/tennis/name/' + encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-')) + '.png';
-    return null;
+    if (!name) return null;
+    var id = player.id || player.player_id || player.bsdId || null;
+    if (id) {
+      return 'https://a.espncdn.com/combiner/i?img=/i/headshots/tennis/players/full/' + id + '.png&w=68&h=68';
+    }
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=172132&color=fff&size=68&bold=true&font-size=0.33';
   };
 
   window.tn2RenderLiveCards = function(matches) {
@@ -15790,12 +15797,7 @@ function psSetLang(v) {
       html += '<div class="tn2-card-body">';
       html += '<div class="tn2-card-player">';
       var p1PhotoUrl = window.getPlayerPhotoUrl(p1);
-      if (p1PhotoUrl) {
-        html += '<img class="tn2-player-photo athlete-live-img" src="' + p1PhotoUrl + '" alt="' + escapeHtml(p1Name) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';" loading="lazy">';
-        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p1Color + ';display:none;">' + escapeHtml(p1Init) + '</div>';
-      } else {
-        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p1Color + ';">' + escapeHtml(p1Init) + '</div>';
-      }
+      html += '<img class="athlete-live-img" src="' + (p1PhotoUrl || 'https://ui-avatars.com/api/?name=J&background=172132&color=fff&size=68') + '" alt="' + escapeHtml(p1Name) + '" loading="lazy">';
       html += '<div class="tn2-player-info">';
       html += '<span class="tn2-player-name">' + escapeHtml(p1Name) + (serving === 1 ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="#00e676" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" fill="none" stroke="#00e676" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#00e676"/></svg>' : '') + '</span>';
       html += '<span class="tn2-player-rank">#' + escapeHtml(String(p1Rank)) + '</span>';
@@ -15807,12 +15809,7 @@ function psSetLang(v) {
       html += '</div>';
       html += '<div class="tn2-card-player tn2-card-player-right">';
       var p2PhotoUrl = window.getPlayerPhotoUrl(p2);
-      if (p2PhotoUrl) {
-        html += '<img class="tn2-player-photo athlete-live-img" src="' + p2PhotoUrl + '" alt="' + escapeHtml(p2Name) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';" loading="lazy">';
-        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p2Color + ';display:none;">' + escapeHtml(p2Init) + '</div>';
-      } else {
-        html += '<div class="tn2-player-photo athlete-live-fallback" style="background:' + p2Color + ';">' + escapeHtml(p2Init) + '</div>';
-      }
+      html += '<img class="athlete-live-img" src="' + (p2PhotoUrl || 'https://ui-avatars.com/api/?name=J&background=172132&color=fff&size=68') + '" alt="' + escapeHtml(p2Name) + '" loading="lazy">';
       html += '<div class="tn2-player-info">';
       html += '<span class="tn2-player-name">' + escapeHtml(p2Name) + (serving === 2 ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="#00e676" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" fill="none" stroke="#00e676" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#00e676"/></svg>' : '') + '</span>';
       html += '<span class="tn2-player-rank">#' + escapeHtml(String(p2Rank)) + '</span>';
@@ -18978,19 +18975,6 @@ window.tn2SetupH2H = function() {
     object-fit: cover !important;
     flex-shrink: 0 !important;
     background: var(--tennis-card, #172132) !important;
-    border: 1px solid rgba(255,255,255,0.05) !important;
-  }
-  .athlete-live-fallback {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    color: #fff !important;
-    flex-shrink: 0 !important;
   }
 
   /* Sécurité : masquage absolu des filtres sources API (supprimés du DOM mais on ne sait jamais) */
