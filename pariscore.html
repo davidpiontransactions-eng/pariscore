@@ -15352,15 +15352,16 @@ function psSetLang(v) {
         <h2>Matchs en Direct</h2>
         <div class="tn2-header-controls">
           <span class="tn2-refresh-time" id="tn2-live-status">—</span>
-          <span id="tn-models-bar" style="margin-left:0;font-size:10px;font-family:'DM Mono',monospace;display:none;"></span>
+
           <button class="tn2-btn-glass" onclick="tickTennisLive()">🔄</button>
           <label class="tn2-toggle"><input type="checkbox" id="tennis-live-only" checked> Live uniquement</label>
           <!-- src-filters removed v12.81 -->
       </div>
-      <div id="tn2-live-grid" class="tn2-card-grid tn2-grid-3">
-        <div class="tn2-loading">Chargement...</div>
-      </div>
     </div>
+    <div id="tn2-live-grid" class="tn2-card-grid tn2-grid-3">
+      <div class="tn2-loading">Chargement...</div>
+    </div>
+  </div>
 
     <!-- ── TAB TOP ── -->
     <div class="tn2-tab-panel" data-tab="top">
@@ -15765,7 +15766,7 @@ function psSetLang(v) {
     for (var i = 0; i < matches.length; i++) {
       var m = matches[i];
       if (filter !== 'ALL' && m.source !== filter) continue;
-      if (onlyLive && m.status !== 'live') continue;
+      if (onlyLive && !m.is_live) continue;
       filtered.push(m);
     }
     var favorites = [];
@@ -15780,7 +15781,17 @@ function psSetLang(v) {
       if (window.tn2UpdateKPI) tn2UpdateKPI({ live: 0 });
       return;
     }
-    if (window.tn2UpdateKPI) tn2UpdateKPI({ live: sorted.length });
+    if (window.tn2UpdateKPI) {
+      var _betsCount = 0;
+      for (var _bi = 0; _bi < sorted.length; _bi++) {
+        var _bm = sorted[_bi];
+        if (_bm.odds_player1 && _bm.odds_player2) _betsCount++;
+        if (_bm.predictive) _betsCount += Object.keys(_bm.predictive).length;
+      }
+      var _topCount = sorted.filter(function(_x) { return (_x.odds_player1 && _x.odds_player2) || (_x.bppi && _x.bppi.p1 > 50) || (_x.bppi && _x.bppi.p2 > 50); }).length;
+      var _tourns = {}; for (var _ti = 0; _ti < sorted.length; _ti++) { var _tn = sorted[_ti].tournament || sorted[_ti].tournoi || sorted[_ti].league || ''; if (typeof _tn === 'object') _tn = _tn.name || _tn.nom || ''; if (_tn) _tourns[_tn] = true; }
+      tn2UpdateKPI({ live: sorted.length, bets: _betsCount, top: _topCount, tournaments: Object.keys(_tourns).length });
+    }
     var html = '';
     for (var i = 0; i < sorted.length; i++) {
       var m = sorted[i];
@@ -15809,7 +15820,7 @@ function psSetLang(v) {
       html += '<div class="tn2-match-card">';
       html += '<div class="tn2-card-top">';
       html += '<span class="tn2-card-tournament">' + escapeHtml(tourneyName) + '</span>';
-      if (m.status === 'live') html += '<span class="tn2-card-live-badge">🔴 LIVE</span>';
+      if (m.is_live) html += '<span class="tn2-card-live-badge">🔴 LIVE</span>';
       html += '</div>';
       html += '<div class="tn2-card-body">';
       html += '<div class="tn2-card-player">';
@@ -15905,6 +15916,7 @@ function psSetLang(v) {
       }
       html += '</div>';
     }
+    if (window.tn2UpdateKPI) tn2UpdateKPI({ top: Math.min(matches ? matches.length : 0, 10) });
     grid.innerHTML = html;
   };
 
@@ -15966,7 +15978,7 @@ function psSetLang(v) {
       if (window.tn2UpdateKPI) tn2UpdateKPI({ tournaments: 0 });
       return;
     }
-    if (window.tn2UpdateKPI) tn2UpdateKPI({ tournaments: list.length });
+    if (window.tn2UpdateKPI) tn2UpdateKPI({ tournaments: list.length, live: (document.getElementById('tn2-kpi-live') ? parseInt(document.getElementById('tn2-kpi-live').textContent) || 0 : 0), bets: (document.getElementById('tn2-kpi-bets') ? parseInt(document.getElementById('tn2-kpi-bets').textContent) || 0 : 0), top: (document.getElementById('tn2-kpi-top') ? parseInt(document.getElementById('tn2-kpi-top').textContent) || 0 : 0) });
     var html = '';
     for (var i = 0; i < list.length; i++) {
       var t = list[i];
