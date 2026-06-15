@@ -165,6 +165,7 @@ bd close <id>         # Complete work
 - [ ] **Sprint Refonte UI Tennis — Dark Betting Premium** — Appliquer les tokens de design extraits de "image_ad30a6.jpg" : fond `#0e1420`, cartes `#172132`, en-têtes `#111a28`, accent bleu `#0077ff` pour hover odds, bordures fines semi-transparentes, typographie Inter/Roboto. Ajout classes premium .tennis-odds-box-premium, .tennis-match-card-premium, .tennis-grid-header.
 - [ ] (✅) **Fix crash layout Tennis** — Suppression all:initial + margin:0 auto sur .tn2-main (l.22255) qui causaient shrink-wrap et superposition des boutons de navigation
 - [ ] (✅) **Pipeline photos athlètes Tennis** — getPlayerPhotoUrl() + <img> tags avec fallback initiales dans les cartes Live Tennis
+- [ ] (✅) **Fix décalage layout grille Tennis** — padding tn2-main réduit, grid 100%, fix mobile sidebar 280px
 
 - [ ] **Étude Betfair scraping** — Analyser la faisabilité d'obtenir le WOM par joueur tennis via scraping betfair.com ou API officielle
 
@@ -188,4 +189,5 @@ bd close <id>         # Complete work
 - Si non faisable : justification claire (TOS, blocage, coût)
 
 **Priorité** : À faire après stabilisation du backend WOM actuel
+
 

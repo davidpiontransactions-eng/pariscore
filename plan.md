@@ -138,3 +138,19 @@ BSD/ESPN player.id → getPlayerPhotoUrl() → https://images.pariscore.fr/playe
 
 ### 7.4 Fichier modifié
 - `pariscore.html` : JS dans `tn2RenderLiveCards()` + CSS `.athlete-live-img`/`.athlete-live-fallback`
+
+## 8. Fix Décalage Layout Grille Tennis
+
+### 8.1 Problème
+Le bloc de cartes live était déporté vers la droite avec un grand espace vide à gauche.
+
+### 8.2 Causes
+1. .tn2-main avait padding: 12px 16px qui s'ajoutait au gap: 0 20px de la grille
+2. En mobile (ps-mobile-v2), la sidebar était display:none mais la colonne 280px était toujours réservée par grid-template-columns: 280px 1fr
+3. .tn2-card-grid n'avait pas width: 100%
+
+### 8.3 Corrections
+- .tn2-main : padding: 12px 16px → padding: 12px 0
+- .tn2-tab-panel.active : ajout padding: 0 16px
+- .tn2-card-grid : ajout width: 100%
+- Mobile : grid-template-columns: 1fr quand sidebar cachée

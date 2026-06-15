@@ -19251,7 +19251,7 @@ function srvPlanGate(req, res, pathname) {
   // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
   if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
    if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
-      pathname.startsWith('/api/v1/tennis/players/') || pathname.startsWith('/api/v1/tennis/tournament/')) return false;
+      pathname.startsWith('/api/v1/tennis/players/') || pathname.startsWith('/api/v1/tennis/tournament/') || pathname === '/api/v1/tennis/player-photos') return false;
   // wom-analyze (bd ab6s) = analyse IA Gemini déclenchée depuis le panneau WOM.
   // Résultat mis en cache mémoire avec start_time du match → expire après fin du match.
   // Protégé par la limite de débit Gemini côté serveur (pas par paywall). Ouvert en public
@@ -20900,8 +20900,8 @@ async function handleAPI(req, res, pathname, query) {
         court: m.court,
         status: m.status,
         is_live: m.is_live,
-        player1: { name: m.player1.name, country: m.player1.country, flag: m.player1.flag },
-        player2: { name: m.player2.name, country: m.player2.country, flag: m.player2.flag },
+        player1: { name: m.player1.name, country: m.player1.country, flag: m.player1.flag, photo: m.player1.photo || null, id: m.player1.id || null },
+        player2: { name: m.player2.name, country: m.player2.country, flag: m.player2.flag, photo: m.player2.photo || null, id: m.player2.id || null },
         player1_sets: m.player1_sets,
         player2_sets: m.player2_sets,
         sets: m.sets,
@@ -21271,6 +21271,18 @@ async function handleAPI(req, res, pathname, query) {
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/tennis/player-photos — Carte des photos joueurs tennis (Tennis Warehouse)
+  if (pathname === '/api/v1/tennis/player-photos' && req.method === 'GET') {
+    try {
+      var photoMap = JSON.parse(require('fs').readFileSync('./data/tennis-player-photos.json', 'utf8'));
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ ok: true, photos: photoMap }));
+    } catch (e) {
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      return res.end(JSON.stringify({ ok: true, photos: {} }));
     }
   }
 
@@ -22180,12 +22192,14 @@ function _normalizeESPNTennisCompetition(comp, tour, tournamentName, groupingMet
     player1: {
       name: p1Raw.athlete?.displayName || p1Raw.athlete?.shortName || '?',
       country: p1Raw.athlete?.flag?.alt || '',
-      flag: p1Raw.athlete?.flag?.href || null
+      flag: p1Raw.athlete?.flag?.href || null,
+      photo: p1Raw.athlete?.headshot?.href || null
     },
     player2: {
       name: p2Raw.athlete?.displayName || p2Raw.athlete?.shortName || '?',
       country: p2Raw.athlete?.flag?.alt || '',
-      flag: p2Raw.athlete?.flag?.href || null
+      flag: p2Raw.athlete?.flag?.href || null,
+      photo: p2Raw.athlete?.headshot?.href || null
     },
     player1_sets,
     player2_sets,
@@ -22308,8 +22322,8 @@ function _normalizeBSDTennisMatch(m) {
     court: m.round_name || '',
     status: m.status || '',
     is_live: !!isLive,
-    player1: { name: m.player1.name || m.player1.short_name || '?', country: m.player1.country_name || m.player1.country_code || '', flag: null },
-    player2: { name: m.player2.name || m.player2.short_name || '?', country: m.player2.country_name || m.player2.country_code || '', flag: null },
+    player1: { name: m.player1.name || m.player1.short_name || '?', country: m.player1.country_name || m.player1.country_code || '', flag: null, id: m.player1.id || null, photo: m.player1.image_path ? bsdImgUrl('https://sports.bzzoiro.com' + m.player1.image_path) : null },
+    player2: { name: m.player2.name || m.player2.short_name || '?', country: m.player2.country_name || m.player2.country_code || '', flag: null, id: m.player2.id || null, photo: m.player2.image_path ? bsdImgUrl('https://sports.bzzoiro.com' + m.player2.image_path) : null },
     player1_sets: m.player1_sets ?? 0,
     player2_sets: m.player2_sets ?? 0,
     sets,
